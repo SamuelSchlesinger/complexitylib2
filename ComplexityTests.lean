@@ -52,6 +52,9 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
 import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
+import ComplexityTests.CountingExecution
+import ComplexityTests.CountingGuess
+import ComplexityTests.CountingMachine
 import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CyclicFeedback
@@ -166,6 +169,7 @@ import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedFirstOrder
+import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTuples
 import ComplexityTests.PCPAmplification
@@ -291,6 +295,7 @@ import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
