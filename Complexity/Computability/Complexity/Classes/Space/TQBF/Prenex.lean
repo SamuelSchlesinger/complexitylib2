@@ -25,8 +25,9 @@ A quantified Boolean formula is in **alternating prenex conjunctive normal form*
 (`Cslib.Logic.PL.QBF.rounds`, `Cslib.Logic.PL.QBF.ofCNF`). `TQBFCNF` is the set of pairs of a list
 of rounds `(xᵢ, yᵢ)` and a formula `ψ` whose formula is a true closed formula
 (`Cslib.Complexity.TQBF`).
-It is the starting point of the textbook `PSPACE`-hardness proofs of games, such as Generalized
-Geography [Sipser, Theorem 8.11][Sipser2013].
+The game played on such a formula is Sipser's FORMULA-GAME [Sipser, Theorem 8.11][Sipser2013],
+the starting point of the textbook `PSPACE`-hardness proofs of games such as Generalized Geography
+[Sipser, Theorem 8.14][Sipser2013].
 
 `TQBFCNF` is `PSPACE`-complete (`Cslib.Complexity.TQBFCNF_pspaceComplete`): it is in `PSPACE`
 because writing the formula is polynomial-time, and it is `PSPACE`-hard because the formulas of
@@ -47,10 +48,17 @@ which does not change the value (`Cslib.Logic.PL.QBF.eval_rounds_map_pair`).
 
 ## Main results
 
+* `Cslib.Logic.PL.QBF.rounds_append`, `Cslib.Logic.PL.QBF.eval_rounds_congr`,
+  `Cslib.Logic.PL.QBF.eval_exs_congr`: rounds and blocks of quantifiers.
 * `Cslib.Logic.PL.QBF.eval_rounds_map_pair`: universal quantifiers over a variable that does not
   occur are vacuous.
+* `Cslib.Logic.PL.QBF.length_roundVars`, `Cslib.Logic.PL.QBF.closed_rounds_ofCNF_iff`: the
+  variables of rounds, and closed formulas in alternating prenex conjunctive normal form.
 * `Cslib.Complexity.TQBF.eval_prenex`, `Cslib.Complexity.TQBF.closed_prenex`: the normal form of
   the formula of a game has its value and is closed.
+* `Cslib.Complexity.TQBF.prenexReduce_mem_TQBFCNF_iff`,
+  `Cslib.Complexity.TQBF.computableTidilyInPolyTime_prenexReduce`: the normal form is correct and
+  polynomial-time.
 * `Cslib.Complexity.TQBFCNF_mem_PSPACE`, `Cslib.Complexity.TQBFCNF_pspaceHard`,
   `Cslib.Complexity.TQBFCNF_pspaceComplete`: `TQBFCNF` is `PSPACE`-complete.
 
@@ -97,6 +105,29 @@ theorem eval_rounds_map_pair {φ : QBF V} {d : V} (hd : d ∉ φ.freeVars) (vs :
       hd (mem_freeVars_rounds.1 h).1
     change (ex v (all d (rounds (vs.map fun v => (v, d)) φ))).eval σ = (ex v (exs vs φ)).eval σ
     simp only [eval_ex, eval_all_of_notMem_freeVars hd', ih]
+
+omit [DecidableEq V] in
+/-- Rounds of quantifiers quantify two variables each. -/
+theorem length_roundVars (ps : List (V × V)) : (roundVars ps).length = 2 * ps.length := by
+  induction ps with
+  | nil => rfl
+  | cons p ps ih =>
+    simp only [roundVars, List.flatMap_cons, List.length_append, List.length_cons,
+      List.length_nil] at ih ⊢
+    omega
+
+/-- A formula in alternating prenex conjunctive normal form is closed exactly when all the
+variables of its clauses are quantified. -/
+theorem closed_rounds_ofCNF_iff (ps : List (V × V)) (ψ : CNF V) :
+    (rounds ps (ofCNF ψ)).Closed ↔ ∀ c ∈ ψ, ∀ l ∈ c, l.1 ∈ roundVars ps := by
+  rw [Closed, Finset.eq_empty_iff_forall_notMem]
+  simp only [mem_freeVars_rounds, mem_freeVars_ofCNF, CNF.vars, List.mem_map,
+    List.mem_flatten, not_and, not_not]
+  constructor
+  · intro h c hc l hl
+    exact h _ ⟨l, ⟨c, hc, hl⟩, rfl⟩
+  · rintro h _ ⟨l, ⟨c, hc, hl⟩, rfl⟩
+    exact h c hc l hl
 
 end Cslib.Logic.PL.QBF
 

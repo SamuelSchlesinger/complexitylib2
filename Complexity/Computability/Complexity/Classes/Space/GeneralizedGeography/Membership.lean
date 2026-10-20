@@ -21,41 +21,51 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Op
 Generalized Geography is a game of polynomially many moves, so it is in `PSPACE` by the
 characterization of `PSPACE` through games of single-bit moves
 (`Cslib.Complexity.IsGameVerifier.mem_PSPACE`). On a graph with `B` arcs, a move of Geography is a
-block of `2 * B` single-bit moves, alternately chosen by the existential and the universal player;
-the bits of the player to move in the block (`Cslib.Complexity.Geography.moverBits`: the moves at
-even positions for the first player, at odd positions for the second) name the index of the arc
-taken, as the position of their first `true` bit (`Cslib.Complexity.Geography.choice`), and the
-other player's bits in the block do not matter
-(`Cslib.Complexity.Geography.alternation_moverBits_true`,
-`Cslib.Complexity.Geography.alternation_moverBits_false`). A move naming an arc that does not leave
-the token for an unvisited declared vertex loses (`Cslib.Complexity.Geography.legal`).
+block of `2 * B` single-bit moves, alternately chosen by the existential and the universal player.
+The bits of the player to move in the block (`Cslib.Complexity.GeneralizedGeography.moverBits`:
+the moves at even positions for the first player, at odd positions for the second) name the index
+of the arc taken, as the position of their first `true` bit
+(`Cslib.Complexity.GeneralizedGeography.choice`), and the other player's bits in the block do not
+matter. A move naming an arc that does not leave the token for an unvisited declared vertex loses
+(`Cslib.Complexity.GeneralizedGeography.legal`).
 
-Each move visits a new declared vertex, so a play has fewer moves than the number `n` of declared
-vertices, and the winning condition (`Cslib.Complexity.Geography.verifier`) replays `n + 1` blocks
-(`Cslib.Complexity.Geography.step`): the existential player wins the game of single-bit moves
-exactly when the first player wins Generalized Geography
-(`Cslib.Complexity.Geography.alternation_foldl_step`). The replay is a fold whose state grows by one
-vertex per block, polynomial-time in the graph and the moves.
+Each move visits a new declared vertex, so a play has at most `n` moves for `n` declared vertex
+entries, and one more block decides the loser: the winning condition
+(`Cslib.Complexity.GeneralizedGeography.verifier`) replays `n + 1` blocks
+(`Cslib.Complexity.GeneralizedGeography.step`), and the existential player wins the game of
+single-bit moves exactly when the first player wins Generalized Geography. The replay is a fold
+whose state grows by at most one vertex per block, polynomial-time in the graph and the moves.
 
 ## Main definitions
 
-* `Cslib.Complexity.Geography.moverBits`, `Cslib.Complexity.Geography.choice`: the bits of a move
-  and the arc they name.
-* `Cslib.Complexity.Geography.step`, `Cslib.Complexity.Geography.verifier`: the replay of a play.
+* `Cslib.Complexity.GeneralizedGeography.moverBits`, `Cslib.Complexity.GeneralizedGeography.choice`:
+  the bits of a move and the arc they name.
+* `Cslib.Complexity.GeneralizedGeography.legal`: a legal move.
+* `Cslib.Complexity.GeneralizedGeography.step`, `Cslib.Complexity.GeneralizedGeography.verifier`:
+  the replay of a play.
 
 ## Main results
 
-* `Cslib.Complexity.Geography.alternation_foldl_step`: the game of single-bit moves is Generalized
-  Geography.
-* `Cslib.Complexity.Geography.isGameVerifier`: the replay is a game verifier of Generalized
-  Geography.
-* `Cslib.Complexity.Geography.computableTidilyInPolyTime_verifier`: it is polynomial-time.
+* `Cslib.Complexity.GeneralizedGeography.alternation_moverBits_true`,
+  `Cslib.Complexity.GeneralizedGeography.alternation_moverBits_false`: the other player's bits in a
+  block do not matter.
+* `Cslib.Complexity.GeneralizedGeography.exists_legal_iff`,
+  `Cslib.Complexity.GeneralizedGeography.forall_legal_iff`: the legal arcs are the moves of
+  Generalized Geography.
+* `Cslib.Complexity.GeneralizedGeography.alternation_foldl_step`: the game of single-bit moves is
+  Generalized Geography.
+* `Cslib.Complexity.GeneralizedGeography.isGameVerifier_verifier`: the replay is a game verifier of
+  Generalized Geography.
+* `Cslib.Complexity.GeneralizedGeography.length_encPlay_step_le`: a block adds at most one vertex
+  to a play.
+* `Cslib.Complexity.GeneralizedGeography.computableTidilyInPolyTime_verifier`: the replay is
+  polynomial-time.
 * `Cslib.Complexity.GeneralizedGeography_mem_PSPACE`: Generalized Geography is in `PSPACE`.
 
 ## References
 
-* [T. J. Schaefer, *On the complexity of some two-person perfect-information games*][Schaefer1978]
-* [M. Sipser, *Introduction to the Theory of Computation*, Theorem 8.11][Sipser2013]
+* [M. Sipser, *Introduction to the Theory of Computation*, Theorem 8.14][Sipser2013]
+* [D. Lichtenstein, M. Sipser, *GO is polynomial-space hard*][LichtensteinSipser1980]
 * [A. K. Chandra, D. C. Kozen, L. J. Stockmeyer, *Alternation*][ChandraKozenStockmeyer1981]
 -/
 
@@ -63,7 +73,7 @@ vertex per block, polynomial-time in the graph and the moves.
 
 namespace Cslib.Complexity
 
-namespace Geography
+namespace GeneralizedGeography
 
 open Turing.MultiTapeTM
 
@@ -389,7 +399,7 @@ theorem length_le_length_encode (x : Graph × ℕ) :
 
 /-- **The replay is a game verifier of Generalized Geography**, with `2 * (n + 1) ^ 2` single-bit
 moves on instances of encoded length `n`. -/
-theorem isGameVerifier :
+theorem isGameVerifier_verifier :
     IsGameVerifier (encPair encGraph encNat) ((Polynomial.X + 1) ^ 2) verifier
       GeneralizedGeography := by
   rintro ⟨G, s⟩
@@ -421,11 +431,6 @@ abbrev encPlay : Play ↪ List Bool :=
   encPair (encOption encBool) (encPair encBool (encPair (encList encNat) encNat))
 
 variable {γ : Type} {encIn : γ ↪ List Bool}
-
-private theorem decide_mem_eq_any (a : ℕ) (l : List ℕ) :
-    decide (a ∈ l) = l.any fun u => decide (u = a) := by
-  rw [Bool.eq_iff_iff, decide_eq_true_eq, List.any_eq_true]
-  simp
 
 /-- The bits of a move are polynomial-time. -/
 @[fun_prop]
@@ -593,14 +598,13 @@ theorem computableTidilyInPolyTime_verifier :
 
 end PolyTime
 
-end Geography
+end GeneralizedGeography
 
-open Geography Turing.MultiTapeTM
+open GeneralizedGeography Turing.MultiTapeTM
 
-/-- **Generalized Geography is in `PSPACE`** [Schaefer][Schaefer1978]
-[Sipser, Theorem 8.11][Sipser2013]: it is a game of polynomially many moves whose winning condition
-is polynomial-time. -/
+/-- **Generalized Geography is in `PSPACE`** [Sipser, Theorem 8.14][Sipser2013]: it is a game of
+polynomially many moves whose winning condition is polynomial-time. -/
 theorem GeneralizedGeography_mem_PSPACE : GeneralizedGeography ∈ PSPACE (encPair encGraph encNat) :=
-  isGameVerifier.mem_PSPACE computableTidilyInPolyTime_verifier
+  isGameVerifier_verifier.mem_PSPACE computableTidilyInPolyTime_verifier
 
 end Cslib.Complexity

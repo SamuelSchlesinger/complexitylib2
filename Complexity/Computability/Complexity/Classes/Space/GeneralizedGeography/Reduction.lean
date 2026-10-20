@@ -16,52 +16,66 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 /-!
 # Generalized Geography is `PSPACE`-hard
 
-The reduction of [Schaefer][Schaefer1978] [Sipser, Theorem 8.11][Sipser2013] from true quantified
-Boolean formulas in alternating prenex conjunctive normal form (`Cslib.Complexity.TQBFCNF`)
-`∃ x₀, ∀ x₁, ⋯, ∃ x_{n-2}, ∀ x_{n-1}, ψ`. The graph (`Cslib.Complexity.Geography.formulaGraph`)
-has a diamond for each quantifier `j`: an arc from its top to each of two value nodes, the nodes of
-`false` and of `true`, an arc from each value node to its bottom, and an arc from the bottom to the
-top of the next diamond. Three moves cross a diamond, so the first player chooses the value at the
-tops of the diamonds of the existential quantifiers and the second player at those of the universal
-quantifiers. After the last diamond the first player moves to a chooser node, from which the second
-player picks a clause, and from the node of a clause the first player may move to the value node of
-`¬b` in the diamond of the last quantifier over `x`, for each literal `(x, b)` of the clause. That
-node is unvisited exactly when the literal is true, and from it the second player can only move to
-the bottom of the diamond, already visited, and loses. The first player starts on the top of the
-first diamond.
+The reduction of [Sipser, Theorem 8.14][Sipser2013] for the vertex version of Generalized
+Geography [Lichtenstein and Sipser][LichtensteinSipser1980], which adapts Schaefer's reduction from
+quantified formulas to geography games [Schaefer1978], starts from true quantified Boolean formulas
+in alternating prenex conjunctive normal form (`Cslib.Complexity.TQBFCNF`)
+`∃ x₀, ∀ x₁, ⋯, ∃ x_{n-2}, ∀ x_{n-1}, ψ`. The graph of such a formula
+(`Cslib.Complexity.GeneralizedGeography.formulaGraph`) has a diamond for each quantifier `j`: an
+arc from its top to each of two value nodes, the nodes of `false` and of `true`, an arc from each
+value node to its bottom, and an arc from the bottom to the top of the next diamond. Three moves
+cross a diamond, so the first player chooses the value at the tops of the diamonds of the
+existential quantifiers and the second player at those of the universal quantifiers. After the
+last diamond the first player moves to a chooser node, from which the second player picks a
+clause, and from the node of a clause the first player may move to the value node of `¬b` in the
+diamond of the last quantifier over `x`, for each literal `(x, b)` of the clause. That node is
+unvisited exactly when the literal is true, and from it the second player can only move to the
+bottom of the diamond, already visited, and loses. The first player starts on the top of the first
+diamond.
 
 So the first player wins exactly when the existential player wins the game in which the moves
 choose the values of the quantified variables and the formula `ψ` must hold
-(`Cslib.Complexity.Geography.geographyWins_formulaGraph`), which is the value of the formula
-(`Cslib.Logic.PL.QBF.eval_rounds_eq_true_iff`). An instance whose formula is not closed is mapped
-to a graph without arcs, where the first player loses (`Cslib.Complexity.Geography.reduce`).
+(`Cslib.Complexity.GeneralizedGeography.geographyWins_formulaGraph`), which is the value of the
+formula (`Cslib.Logic.PL.QBF.eval_rounds_eq_true_iff`). An instance whose formula is not closed is
+mapped to a graph without arcs, where the first player loses
+(`Cslib.Complexity.GeneralizedGeography.reduce`).
 
 ## Main definitions
 
-* `Cslib.Complexity.Geography.formulaGraph`: the graph of a formula.
-* `Cslib.Complexity.Geography.reduce`: the reduction from `TQBFCNF`.
+* `Cslib.Complexity.GeneralizedGeography.formulaGraph`: the graph of a formula.
+* `Cslib.Complexity.GeneralizedGeography.visOf`: the vertices visited after some diamonds.
+* `Cslib.Complexity.GeneralizedGeography.reduce`: the reduction from `TQBFCNF`.
 
 ## Main results
 
-* `Cslib.Complexity.Geography.geographyWins_formulaGraph`: the first player wins on the graph of a
-  formula exactly when the existential player wins the game of the formula.
-* `Cslib.Complexity.Geography.reduce_mem_iff`,
-  `Cslib.Complexity.Geography.computableTidilyInPolyTime_reduce`: the reduction is correct and
-  polynomial-time.
+* `Cslib.Complexity.GeneralizedGeography.mem_formulaArcs`: the arcs of the graph of a formula, and
+  the arcs from each kind of vertex
+  (`Cslib.Complexity.GeneralizedGeography.mk_topNode_mem_formulaArcs_iff`, …).
+* `Cslib.Complexity.GeneralizedGeography.geographyWins_topNode_lt`,
+  `Cslib.Complexity.GeneralizedGeography.geographyWins_topNode_length`: crossing a diamond, and the
+  end of a play.
+* `Cslib.Complexity.GeneralizedGeography.geographyWins_formulaGraph`: the first player wins on the
+  graph of a formula exactly when the existential player wins the game of the formula.
+* `Cslib.Complexity.GeneralizedGeography.updates_eq_getD_lastIdx`: a variable takes the value of
+  its last quantifier.
+* `Cslib.Complexity.GeneralizedGeography.reduce_mem_iff`,
+  `Cslib.Complexity.GeneralizedGeography.computableTidilyInPolyTime_reduce`: the reduction is
+  correct and polynomial-time.
 * `Cslib.Complexity.polyTimeReducible_TQBFCNF_GeneralizedGeography`,
   `Cslib.Complexity.GeneralizedGeography_pspaceHard`: Generalized Geography is `PSPACE`-hard.
 
 ## References
 
+* [M. Sipser, *Introduction to the Theory of Computation*, Theorem 8.14][Sipser2013]
+* [D. Lichtenstein, M. Sipser, *GO is polynomial-space hard*][LichtensteinSipser1980]
 * [T. J. Schaefer, *On the complexity of some two-person perfect-information games*][Schaefer1978]
-* [M. Sipser, *Introduction to the Theory of Computation*, Theorem 8.11][Sipser2013]
 -/
 
 @[expose] public section
 
 namespace Cslib.Complexity
 
-namespace Geography
+namespace GeneralizedGeography
 
 open Cslib.Logic.PL Turing.MultiTapeTM
 
@@ -165,28 +179,28 @@ theorem mem_formulaArcs :
   rw [← hc, ← hl]
   simp only [Prod.mk.injEq]
 
-theorem arc_topNode {j : ℕ} :
+theorem mk_topNode_mem_formulaArcs_iff {j : ℕ} :
     (topNode j, w) ∈ formulaArcs xs ψ ↔
       (j < xs.length ∧ ∃ b, w = valueNode j b) ∨ (j = xs.length ∧ w = chooserNode) := by
   rw [mem_formulaArcs]
   simp [topNode, valueNode, bottomNode, chooserNode, clauseNode, Nat.pair_eq_pair]
 
-theorem arc_valueNode {j : ℕ} {b : Bool} (hj : j < xs.length) :
+theorem mk_valueNode_mem_formulaArcs_iff {j : ℕ} {b : Bool} (hj : j < xs.length) :
     (valueNode j b, w) ∈ formulaArcs xs ψ ↔ w = bottomNode j := by
   rw [mem_formulaArcs]
   simp [topNode, valueNode, bottomNode, chooserNode, clauseNode, Nat.pair_eq_pair, hj]
 
-theorem arc_bottomNode {j : ℕ} (hj : j < xs.length) :
+theorem mk_bottomNode_mem_formulaArcs_iff {j : ℕ} (hj : j < xs.length) :
     (bottomNode j, w) ∈ formulaArcs xs ψ ↔ w = topNode (j + 1) := by
   rw [mem_formulaArcs]
   simp [topNode, valueNode, bottomNode, chooserNode, clauseNode, Nat.pair_eq_pair, hj]
 
-theorem arc_chooserNode :
+theorem mk_chooserNode_mem_formulaArcs_iff :
     (chooserNode, w) ∈ formulaArcs xs ψ ↔ ∃ i < ψ.length, w = clauseNode i := by
   rw [mem_formulaArcs]
   simp [topNode, valueNode, bottomNode, chooserNode, clauseNode, Nat.pair_eq_pair]
 
-theorem arc_clauseNode {i : ℕ} :
+theorem mk_clauseNode_mem_formulaArcs_iff {i : ℕ} :
     (clauseNode i, w) ∈ formulaArcs xs ψ ↔
       ∃ h : i < ψ.length, ∃ l ∈ ψ[i], l.1 ∈ xs ∧ w = valueNode (lastIdx xs l.1) (!l.2) := by
   rw [mem_formulaArcs]
@@ -316,7 +330,7 @@ theorem not_geographyWins_valueNode {vis : List ℕ} {j : ℕ} {c : Bool} (hj : 
     (hvis : bottomNode j ∈ vis) : ¬(formulaGraph xs ψ).GeographyWins vis (valueNode j c) := by
   rw [geographyWins_formulaGraph_iff]
   rintro ⟨w, hw, hwvis, -⟩
-  rw [arc_valueNode hj] at hw
+  rw [mk_valueNode_mem_formulaArcs_iff hj] at hw
   exact hwvis (hw ▸ hvis)
 
 /-- From the node of a clause, with every bottom visited, the first player wins exactly when the
@@ -328,10 +342,10 @@ theorem geographyWins_clauseNode {vis : List ℕ} {i : ℕ} (hi : i < ψ.length)
   rw [geographyWins_formulaGraph_iff]
   constructor
   · rintro ⟨w, hw, hwvis, -⟩
-    obtain ⟨hi', l, hl, hlx, rfl⟩ := arc_clauseNode.1 hw
+    obtain ⟨hi', l, hl, hlx, rfl⟩ := mk_clauseNode_mem_formulaArcs_iff.1 hw
     exact ⟨l, hl, hlx, hwvis⟩
   · rintro ⟨l, hl, hlx, hvis'⟩
-    exact ⟨_, arc_clauseNode.2 ⟨hi, l, hl, hlx, rfl⟩, hvis',
+    exact ⟨_, mk_clauseNode_mem_formulaArcs_iff.2 ⟨hi, l, hl, hlx, rfl⟩, hvis',
       not_geographyWins_valueNode (lastIdx_lt hlx)
         (List.mem_cons_of_mem _ (hvis _ (lastIdx_lt hlx)))⟩
 
@@ -364,20 +378,21 @@ theorem geographyWins_topNode_length {z : List Bool} (hz : z.length = xs.length)
   rw [geographyWins_formulaGraph_iff]
   constructor
   · rintro ⟨w, hw, -, hlose⟩
-    rcases arc_topNode.1 hw with ⟨h, -⟩ | ⟨-, rfl⟩
+    rcases mk_topNode_mem_formulaArcs_iff.1 hw with ⟨h, -⟩ | ⟨-, rfl⟩
     · exact absurd h (lt_irrefl _)
     rw [geographyWins_formulaGraph_iff] at hlose
-    simp only [arc_chooserNode, not_exists, not_and, not_not] at hlose
+    simp only [mk_chooserNode_mem_formulaArcs_iff, not_exists, not_and, not_not] at hlose
     refine (CNF.eval_eq_true_iff _ _).2 fun c hc => ?_
     obtain ⟨i, hi, rfl⟩ := List.getElem_of_mem hc
     refine (hclause i hi).1 (hlose _ ⟨i, hi, rfl⟩ ?_)
     simp only [List.mem_cons, not_or]
     exact ⟨by simp [clauseNode, chooserNode, Nat.pair_eq_pair], clauseNode_notMem_visOf⟩
   · intro h
-    refine ⟨chooserNode, arc_topNode.2 (Or.inr ⟨rfl, rfl⟩), chooserNode_notMem_visOf, ?_⟩
+    refine ⟨chooserNode, mk_topNode_mem_formulaArcs_iff.2 (Or.inr ⟨rfl, rfl⟩),
+      chooserNode_notMem_visOf, ?_⟩
     rw [geographyWins_formulaGraph_iff]
     rintro ⟨w, hw, -, hlose⟩
-    obtain ⟨i, hi, rfl⟩ := arc_chooserNode.1 hw
+    obtain ⟨i, hi, rfl⟩ := mk_chooserNode_mem_formulaArcs_iff.1 hw
     exact hlose ((hclause i hi).2 ((CNF.eval_eq_true_iff _ _).1 h _ (List.getElem_mem hi)))
 
 /-- **Crossing a diamond**: from its top, the player to move wins exactly when some value leaves
@@ -391,9 +406,9 @@ theorem geographyWins_topNode_lt {z : List Bool} (hj : z.length < xs.length) :
           (valueNode z.length b) ↔
         ¬(formulaGraph xs ψ).GeographyWins (visOf (z ++ [b])) (topNode (z.length + 1)) := by
     rw [geographyWins_formulaGraph_iff]
-    simp only [arc_valueNode hj, exists_eq_left, not_and, not_not]
+    simp only [mk_valueNode_mem_formulaArcs_iff hj, exists_eq_left, not_and, not_not]
     rw [geographyWins_formulaGraph_iff]
-    simp only [arc_bottomNode hj, exists_eq_left]
+    simp only [mk_bottomNode_mem_formulaArcs_iff hj, exists_eq_left]
     have hb : bottomNode z.length ∉ valueNode z.length b :: visOf z := by
       simp only [List.mem_cons, not_or]
       exact ⟨by simp [bottomNode, valueNode, Nat.pair_eq_pair],
@@ -407,11 +422,11 @@ theorem geographyWins_topNode_lt {z : List Bool} (hj : z.length < xs.length) :
     tauto
   constructor
   · rintro ⟨w, hw, -, hlose⟩
-    rcases arc_topNode.1 hw with ⟨-, b, rfl⟩ | ⟨h, -⟩
+    rcases mk_topNode_mem_formulaArcs_iff.1 hw with ⟨-, b, rfl⟩ | ⟨h, -⟩
     · exact ⟨b, (hstep b).1 hlose⟩
     · exact absurd h (Nat.ne_of_lt hj)
   · rintro ⟨b, h⟩
-    exact ⟨valueNode z.length b, arc_topNode.2 (Or.inl ⟨hj, b, rfl⟩),
+    exact ⟨valueNode z.length b, mk_topNode_mem_formulaArcs_iff.2 (Or.inl ⟨hj, b, rfl⟩),
       fun h' => by simpa using (valueNode_mem_visOf.1 h').1, (hstep b).2 h⟩
 
 /-- **The game on the graph of a formula**, from the top of diamond `j` after the values `z` have
@@ -430,7 +445,8 @@ theorem geographyWins_topNode (heven : Even xs.length) (hvars : ∀ c ∈ ψ, �
     rw [hpar, iff_true_left rfl, List.replicate_zero, alternation_nil, List.append_nil, hz']
     exact geographyWins_topNode_length hz' hvars
   | k + 1, z, hz => by
-    have ih (b : Bool) := geographyWins_topNode heven hvars k (z ++ [b]) (by simp; omega)
+    have ih (b : Bool) := geographyWins_topNode heven hvars k (z ++ [b])
+      (by simp only [List.length_append, List.length_singleton]; omega)
     simp only [List.length_append, List.length_singleton, List.append_assoc,
       List.singleton_append] at ih
     rw [geographyWins_topNode_lt (by omega), List.replicate_succ]
@@ -491,27 +507,6 @@ theorem updates_eq_getD_lastIdx (σ : ℕ → Bool) :
       rw [lastIdx, hidx, List.length_cons, show vs.length + 1 - 1 - vs.length = 0 by omega]
       rfl
 
-theorem length_roundVars (ps : List (ℕ × ℕ)) : (QBF.roundVars ps).length = 2 * ps.length := by
-  induction ps with
-  | nil => rfl
-  | cons p ps ih =>
-    simp only [QBF.roundVars, List.flatMap_cons, List.length_append, List.length_cons,
-      List.length_nil] at ih ⊢
-    omega
-
-/-- The formula of an instance is closed exactly when all the variables of its clauses are
-quantified. -/
-theorem closed_rounds_ofCNF_iff (ps : List (ℕ × ℕ)) (ψ : CNF ℕ) :
-    (QBF.rounds ps (QBF.ofCNF ψ)).Closed ↔ ∀ c ∈ ψ, ∀ l ∈ c, l.1 ∈ QBF.roundVars ps := by
-  rw [QBF.Closed, Finset.eq_empty_iff_forall_notMem]
-  simp only [QBF.mem_freeVars_rounds, QBF.mem_freeVars_ofCNF, CNF.vars, List.mem_map,
-    List.mem_flatten, not_and, not_not]
-  constructor
-  · intro h c hc l hl
-    exact h _ ⟨l, ⟨c, hc, hl⟩, rfl⟩
-  · rintro h _ ⟨l, ⟨c, hc, hl⟩, rfl⟩
-    exact h c hc l hl
-
 /-- **The reduction is correct**: the first player wins on the graph of an instance exactly when
 its formula is a true closed formula. -/
 theorem reduce_mem_iff (x : List (ℕ × ℕ) × CNF ℕ) :
@@ -521,11 +516,11 @@ theorem reduce_mem_iff (x : List (ℕ × ℕ) × CNF ℕ) :
   split_ifs with hall
   · have hvars : ∀ c ∈ ψ, ∀ l ∈ c, l.1 ∈ QBF.roundVars ps := by
       simpa only [List.all_eq_true, decide_eq_true_eq] using hall
-    have hclosed := (closed_rounds_ofCNF_iff ps ψ).2 hvars
-    have heven : Even (QBF.roundVars ps).length := ⟨ps.length, by rw [length_roundVars]; ring⟩
+    have hclosed := (QBF.closed_rounds_ofCNF_iff ps ψ).2 hvars
+    have heven : Even (QBF.roundVars ps).length := ⟨ps.length, by rw [QBF.length_roundVars]; ring⟩
     rw [mem_GeneralizedGeography, geographyWins_formulaGraph heven hvars, TQBFCNF,
       Set.mem_ofPred_eq, mem_TQBF_iff_of_closed hclosed (fun _ => false),
-      QBF.eval_rounds_eq_true_iff, ← length_roundVars]
+      QBF.eval_rounds_eq_true_iff, ← QBF.length_roundVars]
     refine alternation_congr_of_length fun z hz => ?_
     rw [sum_replicate_one] at hz
     rw [QBF.eval_ofCNF]
@@ -535,7 +530,7 @@ theorem reduce_mem_iff (x : List (ℕ × ℕ) × CNF ℕ) :
     exact (updates_eq_getD_lastIdx _ _ z hz l.1 (hvars c hc l hlc)).symm
   · refine iff_of_false notMem_GeneralizedGeography_of_nil fun h => hall ?_
     simpa only [List.all_eq_true, decide_eq_true_eq] using
-      (closed_rounds_ofCNF_iff ps ψ).1 h.1
+      (QBF.closed_rounds_ofCNF_iff ps ψ).1 h.1
 
 /-! ### Polynomial time -/
 
@@ -544,11 +539,6 @@ section PolyTime
 open ComputableTidilyInPolyTime
 
 variable {γ : Type} {encIn : γ ↪ List Bool}
-
-private theorem decide_mem_eq_any (a : ℕ) (l : List ℕ) :
-    decide (a ∈ l) = l.any fun u => decide (u = a) := by
-  rw [Bool.eq_iff_iff, decide_eq_true_eq, List.any_eq_true]
-  simp
 
 @[fun_prop]
 theorem computableTidilyInPolyTime_topNode {j : γ → ℕ}
@@ -626,18 +616,18 @@ theorem computableTidilyInPolyTime_reduce :
 
 end PolyTime
 
-end Geography
+end GeneralizedGeography
 
-open Geography Turing.MultiTapeTM
+open GeneralizedGeography Turing.MultiTapeTM
 
-/-- **`TQBFCNF` reduces to Generalized Geography** [Schaefer][Schaefer1978]
-[Sipser, Theorem 8.11][Sipser2013]. -/
+/-- **`TQBFCNF` reduces to Generalized Geography** [Sipser, Theorem 8.14][Sipser2013]
+[LichtensteinSipser1980]. -/
 theorem polyTimeReducible_TQBFCNF_GeneralizedGeography :
     PolyTimeReducible encPrenexCNF (encPair encGraph encNat) TQBFCNF GeneralizedGeography :=
   ⟨reduce, computableTidilyInPolyTime_reduce, fun x => (reduce_mem_iff x).symm⟩
 
-/-- **Generalized Geography is `PSPACE`-hard** [Schaefer][Schaefer1978]
-[Sipser, Theorem 8.11][Sipser2013]. -/
+/-- **Generalized Geography is `PSPACE`-hard** [Sipser, Theorem 8.14][Sipser2013]
+[LichtensteinSipser1980]. -/
 theorem GeneralizedGeography_pspaceHard :
     PSPACEHard (encPair encGraph encNat) GeneralizedGeography :=
   TQBFCNF_pspaceHard.trans polyTimeReducible_TQBFCNF_GeneralizedGeography

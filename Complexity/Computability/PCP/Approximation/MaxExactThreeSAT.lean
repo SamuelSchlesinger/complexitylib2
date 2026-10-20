@@ -15,7 +15,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 # MAX-E3SAT is NP-hard to approximate
 
 `GapExactThreeSAT s` is the gap problem of MAX-3SAT (`Cslib.Complexity.GapThreeSAT`) restricted
-to formulas all of whose clauses have exactly three, not necessarily distinct, literals. Its
+to formulas all of whose clauses have exactly three, not necessarily distinct, literals. Here
+"MAX-E3SAT" always allows repeated literals in a clause, as `Cslib.Complexity.ExactThreeSAT` does;
+the version with three distinct literals per clause is not treated. Its
 yes-instances are the members of `Cslib.Complexity.ExactThreeSAT`.
 
 The gap of MAX-3SAT transfers unchanged: repeating a literal of every clause with one or two
@@ -40,8 +42,10 @@ Szegedy][AroraLundMotwaniSudanSzegedy1998].
   instances of the gap problem.
 * `Cslib.Complexity.polyTimeReducible_GapThreeSAT_GapExactThreeSAT`: MAX-3SAT reduces to
   MAX-E3SAT with the same gap, for every soundness `1 / 2 ≤ s < 1`.
-* `Cslib.Complexity.GapExactThreeSAT_npHard`: MAX-E3SAT is NP-hard to approximate within
-  `1 - 1 / (3 * 2 ^ 77)`.
+* `Cslib.Complexity.GapExactThreeSAT_npHard`: MAX-E3SAT, with repeated literals allowed, is
+  NP-hard to approximate within `1 - 1 / (3 * 2 ^ 77)`.
+* `Cslib.Complexity.GapExactThreeSAT_notMem_PromiseP`: unless `P = NP`, no polynomial-time
+  algorithm separates its gap problem.
 
 ## References
 
@@ -129,8 +133,8 @@ end GapExactThreeSAT
 
 open GapExactThreeSAT
 
-/-- **MAX-3SAT reduces to MAX-E3SAT with the same gap**, for every soundness `1 / 2 ≤ s < 1`, by
-`GapExactThreeSAT.reduce`. -/
+/-- **MAX-3SAT reduces to MAX-E3SAT with the same gap**, repeated literals allowed, for every
+soundness `1 / 2 ≤ s < 1`, by `GapExactThreeSAT.reduce`. -/
 theorem polyTimeReducible_GapThreeSAT_GapExactThreeSAT (hs : 1 / 2 ≤ s) (hs1 : s < 1) :
     PromiseProblem.PolyTimeReducible encCNF encCNF (GapThreeSAT s) (GapExactThreeSAT s) := by
   refine ⟨reduce, computableTidilyInPolyTime_reduce, fun φ hφ => ?_, fun φ hφ => ?_⟩
@@ -160,11 +164,19 @@ theorem polyTimeReducible_GapThreeSAT_GapExactThreeSAT (hs : 1 / 2 ≤ s) (hs1 :
       exact List.any_eq_true.2 ⟨d, hd, by simp [h0]⟩
 
 /-- **MAX-E3SAT is NP-hard to approximate** [AroraLundMotwaniSudanSzegedy1998]: distinguishing
-satisfiable formulas with exactly three literals per clause from those in which every assignment
-satisfies at most the proportion `1 - 1 / (3 * 2 ^ 77)` of the clauses is NP-hard. -/
+satisfiable formulas with exactly three, not necessarily distinct, literals per clause from those in
+which every assignment satisfies at most the proportion `1 - 1 / (3 * 2 ^ 77)` of the clauses is
+NP-hard. -/
 theorem GapExactThreeSAT_npHard :
     PromiseProblem.NPHard encCNF (GapExactThreeSAT (1 - 1 / (3 * 2 ^ 77))) :=
   GapThreeSAT_npHard.trans
     (polyTimeReducible_GapThreeSAT_GapExactThreeSAT (by norm_num) (by norm_num))
+
+/-- Unless `P = NP`, no polynomial-time algorithm distinguishes satisfiable formulas with exactly
+three, not necessarily distinct, literals per clause from those in which every assignment satisfies
+at most the proportion `1 - 1 / (3 * 2 ^ 77)` of the clauses. -/
+theorem GapExactThreeSAT_notMem_PromiseP {β : Type} {enc : β ↪ List Bool} (h : P enc ≠ NP enc) :
+    GapExactThreeSAT (1 - 1 / (3 * 2 ^ 77)) ∉ PromiseP encCNF :=
+  GapExactThreeSAT_npHard.notMem_PromiseP h
 
 end Cslib.Complexity

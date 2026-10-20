@@ -12,10 +12,13 @@ public import Complexity.Computability.Complexity.Problems.IndependentSet
 /-!
 # Generalized Geography
 
-**Generalized Geography** [Schaefer][Schaefer1978] [Sipser, Section 8.3][Sipser2013] is played on
-a directed graph (`Cslib.Complexity.Graph`: declared vertices and arcs) with a token on a start
+**Generalized Geography**, in the version of [Sipser, Section 8.3][Sipser2013], is played on a
+directed graph (`Cslib.Complexity.Graph`: declared vertices and arcs) with a token on a start
 vertex. Two players alternately move the token along an arc to a declared vertex that the token has
-not visited yet, the start vertex counting as visited; the player who cannot move loses.
+not visited yet, the start vertex counting as visited; the player who cannot move loses. This is
+the vertex version of the game, whose `PSPACE`-completeness is due to Lichtenstein and Sipser
+[LichtensteinSipser1980]; in Schaefer's original Generalized Geography the players may not reuse an
+arc instead [Schaefer1978].
 
 Every move visits a new declared vertex, so the game is finite, and the winner is determined by
 backward induction: with the token at `v` and the vertices `vis` visited, the player to move wins
@@ -37,11 +40,16 @@ and it is never revisited; a start vertex without usable arcs is a loss for the 
 * `Cslib.Complexity.Graph.geographyWins_iff`: the backward induction.
 * `Cslib.Complexity.Graph.geographyWins_congr`: only the set of visited vertices matters.
 * `Cslib.Complexity.Graph.card_sdiff_cons_lt`: every move visits a new declared vertex.
+* `Cslib.Complexity.Graph.not_geographyWins_iff`: the player to move loses when every move leads to
+  a position won by the other player.
+* `Cslib.Complexity.notMem_GeneralizedGeography_of_nil`: on a graph without arcs the first player
+  loses.
 
 ## References
 
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.3][Sipser2013]
+* [D. Lichtenstein, M. Sipser, *GO is polynomial-space hard*][LichtensteinSipser1980]
 * [T. J. Schaefer, *On the complexity of some two-person perfect-information games*][Schaefer1978]
-* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
 -/
 
 @[expose] public section
@@ -106,9 +114,20 @@ theorem geographyWins_congr {G : Graph} {vis vis' : List ℕ} (h : ∀ u, u ∈ 
 
 end Graph
 
-/-- **Generalized Geography** [Schaefer][Schaefer1978] [Sipser, Section 8.3][Sipser2013]: the
-graphs with a start vertex on which the first player wins, moving first with the token on the
-start vertex. -/
+namespace GeneralizedGeography
+
+/-- Membership of a number in a list as a scan of the list, the form in which polynomial-time
+membership tests are certified. -/
+theorem decide_mem_eq_any (a : ℕ) (l : List ℕ) :
+    decide (a ∈ l) = l.any fun u => decide (u = a) := by
+  rw [Bool.eq_iff_iff, decide_eq_true_eq, List.any_eq_true]
+  simp
+
+end GeneralizedGeography
+
+/-- **Generalized Geography**, vertex version [Sipser, Section 8.3][Sipser2013]
+[LichtensteinSipser1980]: the graphs with a start vertex on which the first player wins, moving
+first with the token on the start vertex, when no vertex may be visited twice. -/
 def GeneralizedGeography : Set (Graph × ℕ) := {x | x.1.GeographyWins [x.2] x.2}
 
 theorem mem_GeneralizedGeography {x : Graph × ℕ} :

@@ -52,7 +52,7 @@ example : 1 ≤ Graph.indepNum ([0], []) :=
 example : Graph.indepNum ([], []) = 0 ∧ Graph.vertexCoverNum ([], []) = 0 := by
   have h := Graph.indepNum_le_card ([], [])
   simp only [List.toFinset_nil, Finset.card_empty, Nat.le_zero] at h
-  exact ⟨h, by rw [Graph.vertexCoverNum_eq, h]; rfl⟩
+  exact ⟨h, by rw [Graph.vertexCoverNum_eq_card_sub_indepNum, h]; rfl⟩
 
 /-- Complementing a graph exchanges independent sets and cliques. -/
 example (G : Graph) : G.compl.cliqueNum = G.indepNum := Graph.cliqueNum_compl G
@@ -153,14 +153,14 @@ private theorem notMem_TQBFCNF_free :
   rw [TQBFCNF, Set.mem_ofPred_eq, mem_TQBF]
   decide
 
-example : Geography.reduce ([(0, 1)], [[(0, true)]]) ∈ GeneralizedGeography :=
-  (Geography.reduce_mem_iff _).2 mem_TQBFCNF_ex
+example : GeneralizedGeography.reduce ([(0, 1)], [[(0, true)]]) ∈ GeneralizedGeography :=
+  (GeneralizedGeography.reduce_mem_iff _).2 mem_TQBFCNF_ex
 
-example : Geography.reduce ([(0, 1)], [[(1, true)]]) ∉ GeneralizedGeography :=
-  fun h => notMem_TQBFCNF_all ((Geography.reduce_mem_iff _).1 h)
+example : GeneralizedGeography.reduce ([(0, 1)], [[(1, true)]]) ∉ GeneralizedGeography :=
+  fun h => notMem_TQBFCNF_all ((GeneralizedGeography.reduce_mem_iff _).1 h)
 
-example : Geography.reduce ([(0, 1)], [[(2, false)]]) ∉ GeneralizedGeography :=
-  fun h => notMem_TQBFCNF_free ((Geography.reduce_mem_iff _).1 h)
+example : GeneralizedGeography.reduce ([(0, 1)], [[(2, false)]]) ∉ GeneralizedGeography :=
+  fun h => notMem_TQBFCNF_free ((GeneralizedGeography.reduce_mem_iff _).1 h)
 
 /-! ### Axioms -/
 
