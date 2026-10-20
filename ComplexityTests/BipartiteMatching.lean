@@ -41,6 +41,11 @@ example : ¬HasPerfectMatching (fun _ : Fin 2 × Fin 2 => false) := by
   intro h
   simpa using h {0}
 
+-- The hard direction of Hall's theorem: the graph on `K_{2,2}` without the edge `(0, 0)` satisfies
+-- Hall's condition, so it has a perfect matching.
+example : HasPerfectMatching (fun e : Fin 2 × Fin 2 => decide (e ≠ (0, 0))) :=
+  (hasPerfectMatching_iff_forall_card_le _).2 (by decide)
+
 /-! ### The graphs of the reduction -/
 
 example : HasPerfectMatching (aliceGraph (e := 1) (![true, false, true] : BitString 3)) :=

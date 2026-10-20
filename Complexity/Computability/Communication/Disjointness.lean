@@ -558,7 +558,48 @@ theorem corrupted_hardDist (hU : Fintype.card U = 2 * m + 1) {r : ℕ}
 
 end Corruption
 
+@[deprecated (since := "2026-10-19")] alias weight := hardWeight
+
+@[deprecated (since := "2026-10-19")] alias weight_nonneg := hardWeight_nonneg
+
+@[deprecated (since := "2026-10-19")] alias sum_weight := sum_hardWeight
+
 end Disjointness
+
+@[deprecated (since := "2026-10-19")] alias disjointnessParts := Disjointness.parts
+
+@[deprecated (since := "2026-10-19")] alias mem_disjointnessParts := Disjointness.mem_parts
+
+@[deprecated (since := "2026-10-19")]
+alias compl_insert_eq_of_mem_disjointnessParts := Disjointness.compl_insert_eq_of_mem_parts
+
+@[deprecated (since := "2026-10-19")] alias sum_disjointnessParts := Disjointness.sum_parts
+
+@[deprecated (since := "2026-10-19")]
+alias sum_disjointnessParts_swap := Disjointness.sum_parts_swap
+
+@[deprecated (since := "2026-10-19")] alias card_disjointnessParts := Disjointness.card_parts
+
+@[deprecated (since := "2026-10-19")]
+alias card_disjointnessParts_pos := Disjointness.card_parts_pos
+
+@[deprecated (since := "2026-10-19")] alias disjointnessWeight := Disjointness.hardWeight
+
+@[deprecated (since := "2026-10-19")]
+alias disjointnessWeight_nonneg := Disjointness.hardWeight_nonneg
+
+@[deprecated (since := "2026-10-19")] alias sum_disjointnessWeight := Disjointness.sum_hardWeight
+
+@[deprecated (since := "2026-10-19")] alias disjointnessDist := Disjointness.hardDist
+
+@[deprecated (since := "2026-10-19")]
+alias disjointnessDist_apply_toReal := Disjointness.hardDist_apply_toReal
+
+@[deprecated (since := "2026-10-19")]
+alias disjointnessDist_toOuterMeasure_disjoint := Disjointness.hardDist_toOuterMeasure_disjoint
+
+@[deprecated (since := "2026-10-19")]
+alias corrupted_disjointnessDist := Disjointness.corrupted_hardDist
 
 /-! ### Randomized lower bounds -/
 
@@ -624,6 +665,9 @@ theorem PublicCoin.div_le_mul_ecomplexityFun_disjoint_add (hU : Fintype.card U =
     have hnat : 13 * 32 ^ r ≤ 576 * 2 ^ c * 27 ^ r := by exact_mod_cast hreal
     have := le_of_mul_pow_le hnat
     exact_mod_cast this
+
+@[deprecated (since := "2026-10-19")]
+alias PublicCoin.div_le_ecomplexityFun_disjoint := PublicCoin.div_le_mul_ecomplexityFun_disjoint_add
 
 /-- Disjointness of subsets of `Fin k` is disjointness of their indicators as bit strings of
 length `n`, along an embedding of `Fin k` into `Fin n`. -/

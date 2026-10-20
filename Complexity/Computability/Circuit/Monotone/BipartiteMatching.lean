@@ -95,6 +95,9 @@ vertices. On the left, `inl (inl i)` is the vertex `bᵢ` of the gadget of `i`; 
 abbrev Vertex (m e : ℕ) : Type :=
   (Fin m ⊕ Fin m) ⊕ Fin e
 
+@[deprecated (since := "2026-10-19")]
+alias _root_.Cslib.Circuits.BipartiteMatching.RWVertex := Vertex
+
 /-- Exchange `inl i` and `inr i` exactly when the bit `x i` is zero. -/
 def swapIf (x : BitString m) : Fin m ⊕ Fin m → Fin m ⊕ Fin m
   | .inl i => cond (x i) (.inl i) (.inr i)
