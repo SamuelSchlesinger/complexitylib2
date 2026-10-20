@@ -1033,6 +1033,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Lazy
 public import Complexity.Foundations.Combinatorics.Expander.Loops
 public import Complexity.Foundations.Combinatorics.Expander.LowerBound
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
+public import Complexity.Foundations.Combinatorics.Expander.Multigraph
 public import Complexity.Foundations.Combinatorics.Expander.OfSimpleGraph
 public import Complexity.Foundations.Combinatorics.Expander.Perm
 public import Complexity.Foundations.Combinatorics.Expander.Power
@@ -1071,6 +1072,7 @@ public import Complexity.Foundations.Combinatorics.LineCode.Menu
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Collision
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Counting
 public import Complexity.Foundations.Combinatorics.MajorityVote
+public import Complexity.Foundations.Combinatorics.Multigraph
 public import Complexity.Foundations.Combinatorics.PowersetTail
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
 public import Complexity.Foundations.Combinatorics.Sunflower
@@ -1194,6 +1196,7 @@ public import Complexity.Logics.Propositional.CNF.Coding
 public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Logics.Propositional.CNF.ModelCount
+public import Complexity.Logics.Propositional.CNF.Parity
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
@@ -1217,7 +1220,10 @@ public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Complexity.Logics.Propositional.Resolution.SizeWidth
 public import Complexity.Logics.Propositional.Resolution.TreeLike
+public import Complexity.Logics.Propositional.Resolution.Tseitin
+public import Complexity.Logics.Propositional.Resolution.TseitinExpander
 public import Complexity.Logics.Propositional.SigmaThree
+public import Complexity.Logics.Propositional.Tseitin
 public import Complexity.Logics.SecondOrder.Coloring
 public import Complexity.Logics.SecondOrder.Existential
 public import Complexity.Logics.SecondOrder.Projection
