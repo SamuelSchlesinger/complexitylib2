@@ -12,12 +12,15 @@ public import Complexity.Foundations.Data.BitString.List.Binary
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Order.PiLex
+import Complexity.Foundations.Combinatorics.MajorityVote
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Prod
 import Mathlib.Data.List.GetD
 import Mathlib.Logic.Equiv.Fin.Basic
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Ring
 
 /-!
 # Counting words
@@ -45,6 +48,10 @@ represent sets of words.
 * `Cslib.BitString.card_filter_ofFn_add`, `Cslib.BitString.card_filter_ofFn_succ`: counting
   words by a prefix or by their first bit.
 * `Cslib.BitString.card_filter_take`: counting words by a condition on a prefix.
+* `Cslib.BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le`: a quarter of failures leaves
+  two thirds of successes.
+* `Cslib.BitString.two_pow_mul_card_filter_card_filter_block_le`: majority votes of `12 e` blocks
+  err on at most a `2 ^ (-e)` fraction.
 * `Cslib.BitString.card_filter_listRows_all`: counting words by a condition on each row.
 * `Cslib.BitString.card_filter_not_any`, `Cslib.BitString.card_filter_all`: the constant words.
 * `Cslib.BitString.ofFn_decide_lt`: the unary word of `k` bits `true` among `K`.
@@ -90,6 +97,46 @@ theorem card_filter_take {k K : ℕ} (h : k ≤ K) (g : List Bool → Prop) [Dec
   rw [card_filter_ofFn_add k j fun u _ => g u, Nat.add_sub_cancel_left, card_filter, mul_sum]
   refine sum_congr rfl fun u _ => ?_
   by_cases hu : g (List.ofFn u) <;> simp [hu]
+
+/-- **Error at most `1 / 4` is error at most `1 / 3`**: if at most a quarter of the strings of `m`
+bits fail `g`, at least two thirds of them satisfy it. -/
+theorem two_mul_two_pow_le_of_four_mul_card_filter_not_le {m : ℕ}
+    (g : BitString m → Prop) [DecidablePred g] (h : 4 * #{r | ¬g r} ≤ 2 ^ m) :
+    2 * 2 ^ m ≤ 3 * #{r | g r} := by
+  have hsum : #{r | g r} + #{r | ¬g r} = 2 ^ m := by
+    rw [card_filter_add_card_filter_not, card_univ, Fintype.card_fun, Fintype.card_bool,
+      Fintype.card_fin]
+  omega
+
+/-- **Majority votes of blocks.** If at least two thirds of the strings of `m` bits satisfy `g`,
+then at most a `2 ^ (-e)` fraction of the strings of `2 R = 12 e` blocks of `m` bits have at most
+`R` blocks satisfying `g`: the exponential-moment bound `Cslib.card_filter_card_filter_le_le`, with
+`2 * 8 ^ 6 ≤ 9 ^ 6`. -/
+theorem two_pow_mul_card_filter_card_filter_block_le {m e R : ℕ} (hR : R = 6 * e)
+    (g : BitString m → Prop) [DecidablePred g] (hg : 2 * 2 ^ m ≤ 3 * #{s | g s}) :
+    2 ^ e * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R} ≤ 2 ^ (2 * R * m) := by
+  have hmaj := card_filter_card_filter_le_le (univ.filter g)
+    (by simpa only [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool] using hg) R
+  rw [Fintype.card_fun, Fintype.card_fin, Fintype.card_bool, ← pow_mul, Nat.mul_comm m] at hmaj
+  have hc : 9 ^ R * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R} ≤
+      8 ^ R * 2 ^ (2 * R * m) := by
+    refine (Nat.mul_le_mul_left _ ?_).trans hmaj
+    rw [← card_map blocksEquiv.toEmbedding]
+    refine card_le_card fun ω hω => ?_
+    obtain ⟨x, hx, rfl⟩ := mem_map.1 hω
+    refine mem_filter.2 ⟨mem_univ _, ?_⟩
+    simpa only [mem_filter, mem_univ, true_and, Equiv.coe_toEmbedding, blocksEquiv_apply] using hx
+  have hq : 2 ^ e * 8 ^ R ≤ 9 ^ R := by
+    subst hR
+    simp only [pow_mul, ← mul_pow]
+    exact Nat.pow_le_pow_left (by norm_num) _
+  refine Nat.le_of_mul_le_mul_left ?_ (by positivity : 0 < 9 ^ R)
+  calc 9 ^ R * (2 ^ e * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R})
+      = 2 ^ e * (9 ^ R * #{x : BitString (2 * R * m) | #{i | g (block x i)} ≤ R}) := by
+        ring
+    _ ≤ 2 ^ e * (8 ^ R * 2 ^ (2 * R * m)) := Nat.mul_le_mul_left _ hc
+    _ = 2 ^ e * 8 ^ R * 2 ^ (2 * R * m) := by ring
+    _ ≤ 9 ^ R * 2 ^ (2 * R * m) := Nat.mul_le_mul_right _ hq
 
 /-- **Counting words by their first bit.** -/
 theorem card_filter_ofFn_succ (n : ℕ) (g : List Bool → Prop) [DecidablePred g] :

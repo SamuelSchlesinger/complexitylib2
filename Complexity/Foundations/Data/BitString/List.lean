@@ -100,6 +100,12 @@ theorem forall_take_ofFn_iff {k K : ℕ} (h : k ≤ K) {g : List Bool → Prop} 
     (∀ y : BitString K, g ((List.ofFn y).take k)) ↔ ∀ y : BitString k, g (List.ofFn y) := by
   simpa only [not_exists, not_not] using (exists_take_ofFn_iff h (g := fun w => ¬g w)).not
 
+@[deprecated exists_take_ofFn_iff (since := "2026-10-19")]
+alias exists_take_iff := exists_take_ofFn_iff
+
+@[deprecated forall_take_ofFn_iff (since := "2026-10-19")]
+alias forall_take_iff := forall_take_ofFn_iff
+
 /-- Packing fixed-width rows in the block representation is ordinary list concatenation. -/
 theorem ofFn_blocksEquiv_symm {count width : ℕ} (rows : Fin count → BitString width) :
     List.ofFn (blocksEquiv.symm rows) =

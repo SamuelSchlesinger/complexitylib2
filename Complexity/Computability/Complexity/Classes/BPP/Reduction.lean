@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Reduction
-import Complexity.Computability.Complexity.Classes.SharpP
+import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -21,7 +21,7 @@ If `A` reduces to `B` in polynomial time and `B` is in `BPP`, then so is `A`
 The random string for an instance `a` of `A` must have a length fixed by the length of `a` alone,
 so it is taken polynomially long enough for the reduced instance, and the decider reads only the
 prefix it expects. Every prefix is extended by the same number of strings, so the fractions of
-right answers are unchanged (`Cslib.Complexity.acceptCount_add`).
+right answers are unchanged (`Cslib.BitString.card_filter_take`).
 
 ## Main results
 
@@ -45,17 +45,7 @@ number `2 ^ j` of extensions of that prefix. -/
 theorem card_filter_take_eq (W : List Bool → Bool) (k j : ℕ) (b : Bool) :
     (Finset.univ.filter fun r : Fin (k + j) → Bool => W ((List.ofFn r).take k) = b).card =
       2 ^ j * (Finset.univ.filter fun s : Fin k → Bool => W (List.ofFn s) = b).card := by
-  have h := acceptCount_add (fun x : Unit × List Bool => W (x.2.take k) == b) () k j
-  simp only [acceptCount, beq_iff_eq] at h
-  rw [h]
-  have hterm (u : Fin k → Bool) :
-      (Finset.univ.filter fun w : Fin j → Bool =>
-        W ((List.ofFn u ++ List.ofFn w).take k) = b).card =
-        if W (List.ofFn u) = b then 2 ^ j else 0 := by
-    simp only [List.take_left' (List.length_ofFn (f := u))]
-    split_ifs with hu <;> simp [hu]
-  simp only [hterm, Finset.sum_ite, Finset.sum_const, smul_eq_mul]
-  ring
+  rw [BitString.card_filter_take (Nat.le_add_right k j) fun w => W w = b, Nat.add_sub_cancel_left]
 
 /-- **`BPP` is closed under polynomial-time reductions.** The decider of `A` runs the decider of
 `B` on the reduced instance and on the prefix of the random string that this decider expects. -/

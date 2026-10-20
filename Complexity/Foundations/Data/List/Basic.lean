@@ -8,10 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Mathlib.Data.Finset.Card
-public import Mathlib.Data.Fintype.Basic
 public import Mathlib.Data.List.Basic
-import Mathlib.Data.List.FinRange
 
 /-!
 # List selection identities
@@ -21,8 +18,6 @@ import Mathlib.Data.List.FinRange
 * `List.foldr_ite_eq_of_mem`: a chain of equality tests selects the branch of a contained tag.
   Used by deterministic and probabilistic finite-control certificates.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
-* `List.countP_range_eq_card_filter`: counting the numbers below `n` that pass a test is counting
-  the elements of `Fin n` that pass it.
 
 ## References
 
@@ -56,10 +51,3 @@ theorem List.length_flatMap_le {α β : Type*} {l : List α} {f : α → List β
     have hl := ih fun b hb => h b (List.mem_cons_of_mem _ hb)
     rw [List.flatMap_cons, List.length_append, List.length_cons, Nat.succ_mul]
     omega
-
-/-- The numbers below `n` that pass a test are as many as the elements of `Fin n` that pass it. -/
-theorem List.countP_range_eq_card_filter (n : ℕ) (p : ℕ → Bool) :
-    (List.range n).countP p = (Finset.univ.filter fun j : Fin n => p j = true).card := by
-  rw [← List.map_coe_finRange_eq_range, List.countP_map, Fin.univ_def,
-    List.countP_eq_length_filter]
-  simp [Finset.filter, Finset.card, Function.comp_def]
