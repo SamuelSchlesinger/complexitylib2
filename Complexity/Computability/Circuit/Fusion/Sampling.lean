@@ -41,13 +41,17 @@ the stated constant. No efficient sampling or construction bound is asserted.
 
 ## Main definitions
 
-* `booleanPairSample`: the fixed finite sampler, including the complementary-set case.
+* `Cslib.Circuits.Fusion.booleanPairSample`: the fixed finite sampler, including the
+  complementary-set case.
 
 ## Main results
 
-* `le_booleanPairSample_expect`: the random-pair guarantee, with the sampling lemma proved.
-* `exists_pair_weight_ge`: weighted double counting against any finite witness family.
-* `fixedDistribution_counting_bound`: positivity of capacity and the reciprocal bound `8n+8`.
+* `Cslib.Circuits.Fusion.le_booleanPairSample_expect`: the random-pair guarantee, with the sampling
+  lemma proved.
+* `Cslib.Circuits.Fusion.exists_pair_weight_ge`: weighted double counting against any finite
+  witness family.
+* `Cslib.Circuits.Fusion.fixedDistribution_counting_bound`: positivity of capacity and the
+  reciprocal bound `8n+8`.
 
 ## References
 

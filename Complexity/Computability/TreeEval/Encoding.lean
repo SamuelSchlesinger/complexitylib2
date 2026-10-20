@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.TreeEval.Basic
 public import Mathlib.Data.List.OfFn
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Bit encodings of Tree Evaluation instances
@@ -127,10 +128,12 @@ def header (ℓ h : ℕ) : List Bool :=
 @[simp] theorem length_header (ℓ h : ℕ) : (header ℓ h).length = ℓ + h + 2 := by
   simp [header]; omega
 
+/-- A unary block of `true` bits followed by `false` determines both its length and the remaining
+suffix. -/
 theorem replicate_true_append_inj {n n' : ℕ} {b b' : List Bool}
     (h : List.replicate n true ++ false :: b = List.replicate n' true ++ false :: b') :
-    n = n' ∧ b = b' := by
-  induction n generalizing n' <;> cases n' <;> simp_all [List.replicate_succ]
+    n = n' ∧ b = b' :=
+  List.replicate_true_append_false_inj h
 
 /-- The header determines the value length and the height. -/
 theorem header_append_inj {ℓ' h' : ℕ} {b b' : List Bool}

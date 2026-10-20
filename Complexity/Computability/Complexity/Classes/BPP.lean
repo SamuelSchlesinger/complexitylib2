@@ -27,8 +27,9 @@ thirds of the random strings `r` of length `p (enc a).length` give the right ans
 `V (a, r) = true` exactly when `a ∈ A`.
 
 The probability is written as a count over the random strings, which are functions
-`Fin (p (enc a).length) → Bool`. The characterisation by probabilistic machines is not proved
-here.
+`Fin (p (enc a).length) → Bool`. The characterisation by probabilistic machines
+(`Cslib.Complexity.mem_BPP_iff_exists_mem_BPTIME`) is proved in
+`Complexity.Computability.Complexity.Classes.Time`.
 
 ## Main definitions
 
