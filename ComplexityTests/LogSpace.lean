@@ -110,13 +110,16 @@ private theorem accepts_loopOrAccept (input : List Bool) : loopOrAccept.Accepts 
   refine ⟨⟨(RelSeries.singleton _ _).cons (loopOrAccept.initCfg input) hstep, rfl⟩, ?_, ?_⟩ <;>
     simp [acceptAction]
 
-/-- A branch may run forever: the problem is still in `NL`, with any space constant. -/
-private theorem univ_mem_NL : (Set.univ : Set (List Bool)) ∈ NL encBits :=
-  ⟨0, Bool, inferInstance, loopOrAccept, 0, fun a =>
-    ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_loopOrAccept a⟩⟩
+/-- A branch may run forever: the machine still recognizes every word in logarithmic space, with
+any space constant. -/
+private theorem recognizesInSpace_loopOrAccept :
+    loopOrAccept.RecognizesInSpace encBits Set.univ
+      fun a => 0 * (Nat.log2 (encBits a).length + 1) :=
+  fun a => ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_loopOrAccept a⟩
 
 /-- Breadth-first search ignores the looping branch. -/
-example : (Set.univ : Set (List Bool)) ∈ P encBits := NL_subset_P univ_mem_NL
+example : (Set.univ : Set (List Bool)) ∈ P encBits :=
+  mem_P_of_recognizesInSpace recognizesInSpace_loopOrAccept
 
 /-! ### Codes of views without their input -/
 
@@ -152,6 +155,13 @@ example : Reachability.search (fun _ : ℕ => []) 4 7 = [7] := by decide
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.NL_subset_P
+
+/--
+info: 'Cslib.Complexity.mem_P_of_recognizesInSpace' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_P_of_recognizesInSpace
 
 /-- info: 'Cslib.Complexity.L_subset_NL' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/

@@ -35,17 +35,17 @@ pull request #767 (open), whose classes are indexed by languages rather than enc
 `Cslib.Complexity.NL enc` consists of the problems decided by one nondeterministic machine with a
 binary alphabet and finitely many states within logarithmic space
 (`Turing.MultiTapeNTM.DecidesInSpace`): every computation prefix on `enc a` stays within the bound,
-and `a ∈ A` exactly when some computation path halts with output `[true]`. No time bound is
-imposed.
+every branch halts, and `a ∈ A` exactly when some computation path halts with output `[true]`
+[Sipser, Definition 8.1][Sipser2013]. No time bound is imposed beyond halting; a polynomial one
+follows (`Cslib.Complexity.NL_subset_P`).
 
-**Halting convention.** Branches need not halt: a branch may run forever or end stuck, and
-neither accepts. This is looser than [Sipser, Definition 8.1][Sipser2013], which asks every branch
-of a nondeterministic logspace decider to halt, so `NL enc` contains the textbook class, and every
-upper bound proved here for `NL enc` (`Cslib.Complexity.NL_subset_P`,
-`Cslib.Complexity.NL_subset_NPSPACE`) holds for the textbook class as well. The two classes
-coincide by the standard clock argument: a shortest accepting path repeats no view, and there are
-polynomially many reachable views, so a counter of logarithmic length can cut every branch off
-without losing acceptance. That converse inclusion is not formalized here.
+**Halting convention.** Every branch must halt: on each encoded instance some number of steps
+bounds every computation path, though a path may end stuck before it, and then does not accept.
+Recognizers, whose branches may run forever (`Turing.MultiTapeNTM.RecognizesInSpace`), are no
+stronger here: a problem recognized within logarithmic space is in `P`
+(`Cslib.Complexity.mem_P_of_recognizesInSpace`), hence in every class above `P`. That it is in
+`NL` itself, by a clock of logarithmic length counting the polynomially many reachable views, is
+not formalized here.
 
 `Cslib.Complexity.LogSpaceReducible encA encB A B` asks for a logspace function mapping instances
 of `A` to instances of `B`, preserving membership [Sipser, Section 8.5][Sipser2013]. Logspace
@@ -102,9 +102,8 @@ def L (enc : α ↪ List Bool) : Set (Set α) :=
 
 /-- The problems decided by one nondeterministic machine within logarithmic space with respect to
 the encoding `enc`: every computation prefix on `enc a` visits at most `c * (Nat.log2 n + 1)`
-work-tape cells, where `n` is the length of `enc a`, and `a ∈ A` exactly when some computation path
-halts with output `[true]`. Branches need not halt, unlike [Sipser, Definition 8.1][Sipser2013]: a
-branch that runs forever or ends stuck does not accept (see the module docstring). -/
+work-tape cells, where `n` is the length of `enc a`, every branch halts, and `a ∈ A` exactly when
+some computation path halts with output `[true]` [Sipser, Definition 8.1][Sipser2013]. -/
 def NL (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State) (c : ℕ),
     ntm.DecidesInSpace enc A fun a => c * (Nat.log2 (enc a).length + 1)}

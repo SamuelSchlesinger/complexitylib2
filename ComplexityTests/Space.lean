@@ -48,16 +48,39 @@ private theorem accepts_loopOrAccept (input : List Bool) : loopOrAccept.Accepts 
   refine ⟨⟨(RelSeries.singleton _ _).cons (loopOrAccept.initCfg input) hstep, rfl⟩, ?_, ?_⟩ <;>
     simp [acceptAction]
 
-/-- No time bound is needed: the looping branch never halts, yet the problem is in `NPSPACE`. -/
-example : (Set.univ : Set (List Bool)) ∈ NPSPACE encBits :=
-  ⟨0, Bool, inferInstance, loopOrAccept, fun _ => 0, .const 0,
-    fun a => ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_loopOrAccept a⟩⟩
+/-- The looping machine recognizes every word within no space: its looping branch does not
+accept. -/
+private theorem recognizesInSpace_loopOrAccept :
+    loopOrAccept.RecognizesInSpace encBits Set.univ fun _ => 0 :=
+  fun a => ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_loopOrAccept a⟩
 
 /-- The looping branch stays at the initial configuration. -/
 private theorem step_loop (input : List Bool) :
     loopOrAccept.Step (loopOrAccept.initCfg input) (loopOrAccept.initCfg input) := by
   refine ⟨loopAction, ⟨rfl, .inr rfl⟩, ?_⟩
   apply Cfg.ext_zero_tapes <;> simp [loopAction, Action.apply, loopOrAccept]
+
+/-- The looping branch runs for any number of steps without leaving the initial configuration. -/
+private theorem exists_path_loop (input : List Bool) (n : ℕ) :
+    ∃ p : loopOrAccept.ComputationPath input, p.time = n ∧ p.last = loopOrAccept.initCfg input := by
+  induction n with
+  | zero => exact ⟨⟨RelSeries.singleton _ (loopOrAccept.initCfg input), rfl⟩, rfl, rfl⟩
+  | succ n ih =>
+    obtain ⟨p, hp, hlast⟩ := ih
+    obtain ⟨q, hq, hqlast⟩ := p.exists_snoc (c := loopOrAccept.initCfg input)
+      (by rw [hlast]; exact step_loop input)
+    exact ⟨q, by rw [hq, hp], hqlast⟩
+
+/-- **Deciders halt.** The looping machine decides no problem within any space: no number of
+steps bounds its looping branch, so the halting requirement of `NPSPACE` is not vacuous. -/
+example (A : Set (List Bool)) (s : List Bool → ℕ) :
+    ¬loopOrAccept.DecidesInSpace encBits A s := by
+  rintro ⟨-, h⟩
+  obtain ⟨t, ht⟩ := h []
+  obtain ⟨p, hp, hlast⟩ := exists_path_loop (encBits []) t
+  have hhalt := ht p hp.ge
+  rw [hlast] at hhalt
+  simp [MultiTapeNTM.initCfg, Cfg.init, Cfg.Halted, loopOrAccept] at hhalt
 
 /-- Run paths of every length stay at the initial configuration. -/
 private theorem exists_loop_path (input : List Bool) (n : ℕ) :
@@ -115,9 +138,13 @@ private theorem not_accepts_stuck (input : List Bool) : ¬stuck.Accepts input :=
   · simp [MultiTapeNTM.initView, FiniteCfg.init] at hstate
   · exact not_viewStep_stuck input next hstep
 
+/-- A stuck branch halts nowhere, yet bounds the computation: the stuck machine decides the empty
+problem, its only path ending stuck before one step. -/
 example : (∅ : Set (List Bool)) ∈ NPSPACE encBits :=
-  ⟨0, Bool, inferInstance, stuck, fun _ => 0, .const 0, fun a =>
-    ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, iff_of_false id (not_accepts_stuck a)⟩⟩
+  ⟨0, Bool, inferInstance, stuck, fun _ => 0, .const 0, ⟨fun a =>
+    ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, iff_of_false id (not_accepts_stuck a)⟩,
+    fun _ => ⟨1, MultiTapeNTM.runsInTime_one_of_forall_step_initCfg fun _ hc => by
+      simp [MultiTapeNTM.Step, MultiTapeNTM.initCfg, Cfg.init, stuck] at hc⟩⟩⟩
 
 /-- The step test rejects every successor of the stuck initial view. -/
 example (input : List Bool) (next : FiniteCfg 0 Bool Bool) :
@@ -178,11 +205,10 @@ example : ComputableTidilyInPolyTime
 /-- The classes coincide, here for raw words. -/
 example : NPSPACE encBits = PSPACE encBits := NPSPACE_eq_PSPACE
 
-/-- A machine with a forever-looping branch is decided deterministically: the problem it accepts,
-every word, is in `PSPACE`. -/
+/-- A machine with a forever-looping branch is decided deterministically: Savitch's theorem needs
+no time bound, so the problem it recognizes, every word, is in `PSPACE`. -/
 example : (Set.univ : Set (List Bool)) ∈ PSPACE encBits :=
-  NPSPACE_subset_PSPACE ⟨0, Bool, inferInstance, loopOrAccept, fun _ => 0, .const 0,
-    fun a => ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_loopOrAccept a⟩⟩
+  mem_PSPACE_of_recognizesInSpace (.const 0) recognizesInSpace_loopOrAccept
 
 /-- Savitch's decider for the looping machine accepts every input, the branch running forever
 notwithstanding. -/
@@ -210,6 +236,20 @@ info: 'Cslib.Complexity.PSPACE_subset_NPSPACE' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.PSPACE_subset_NPSPACE
+
+/--
+info: 'Cslib.Complexity.mem_PSPACE_of_recognizesInSpace' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_PSPACE_of_recognizesInSpace
+
+/--
+info: 'Turing.MultiTapeNTM.runsInTime_one_of_forall_step_initCfg' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.runsInTime_one_of_forall_step_initCfg
 
 /--
 info: 'Turing.MultiTapeNTM.accepts_iff_reflTransGen_viewStep' depends on axioms:
