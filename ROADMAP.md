@@ -40,9 +40,10 @@ The verifier-based `UP` and `CeqP` developments, basic Boolean closures, exact-c
 polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are implemented.
 The forward machine-to-verifier direction is proved for `#P` and `GapP`: accepting and
 rejecting terminal counts of fixed finite-control list-choice machines under polynomial clocks
-have actual certified binary verifiers. The reverse parsimonious machine construction remains
-open, as do machine characterizations of `UP` and polynomially bounded ambiguity; none follows
-from the verifier definitions alone. SPP, FewP, fixed-modulus ModP, coUP and coC=P
+have actual certified binary verifiers. The actual reverse guess-and-verify construction and
+[#P machine characterization](Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean)
+are now proved. Signed reverse `GapP`, machine characterizations of `UP`, and polynomially
+bounded ambiguity remain open; none follows from the verifier definitions alone. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
 PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
 Extend these with counting reductions and further oracle results, preserving exact
@@ -378,9 +379,20 @@ of the handover. The work below remains available for subsequent, independently 
      and native count laws preserve every List occurrence. From initialized empty output,
      nonblocking components with clocks `T₀` and `T₁` have native composite clock
      `T₀ + (T₀ + 4 + T₁)`; the consumer bound must hold for every produced word.
-     Witness-length and frame preparation from the encoded instance, instantiating the actual
-     guessing/verifier pipeline, the signed GapP routing and the resulting characterizations
-     remain open in [#106](https://github.com/SamuelSchlesinger/complexitylib2/issues/106).
+     The [actual guess-and-verify pipeline](Complexity/Computability/Machines/Turing/MultiTape/Counting/Verifier.lean)
+     now computes the witness length in unary, generates each witness once, retains the framed
+     instance, and runs the singleton-lifted tidy verifier (#116). Its fixed finite machine has
+     a polynomial all-branches clock in the original encoded input length, including framing,
+     both buffers and workspace restoration. The output List retains one occurrence per witness,
+     even when Boolean outcomes coincide. The
+     [#P characterization](Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean)
+     combines this construction with the forward checker and preserves accepting and rejecting
+     counts separately. All constructed transition tables are globally nonblocking; the halting
+     contract is on encoded instances, hence all binary inputs when the encoding is `encBits`.
+     **Still open in [#106](https://github.com/SamuelSchlesinger/complexitylib2/issues/106):** realize
+     every difference of two #P counts by one machine's signed accepting-minus-rejecting count.
+     Implement and charge balanced accept/reject cancellation on unsuccessful verifier branches,
+     unequal witness lengths and final verdict routing, including zero and odd gaps.
      Reuse the [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
      but preserve exact path multiplicities through choices, halting and padding. Do not collapse
      distinct nondeterministic branches with the same successor; existential witness equivalence
