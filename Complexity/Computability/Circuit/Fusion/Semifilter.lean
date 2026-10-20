@@ -151,6 +151,19 @@ structure PairCover {U : Type u} {n : ℕ} (target : Set U) (input : Fin n → S
   isCover : ∀ w : SemifilterWitness target input admissible,
     ¬ ∀ p ∈ pairs, w.filter.PreservesPair p
 
+/-- Padding by empty pairs preserves a cover. -/
+def PairCover.pad {admissible : Semifilter ↥(targetᶜ) → Prop}
+    (c : PairCover target input admissible) (t : ℕ) : PairCover target input admissible where
+  pairs := c.pairs ++ List.replicate (t - c.pairs.length) (∅, ∅)
+  isCover w hp := c.isCover w (fun p hp' => hp p (List.mem_append_left _ hp'))
+
+/-- Padding reaches any requested larger length exactly. -/
+theorem PairCover.length_pad {admissible : Semifilter ↥(targetᶜ) → Prop}
+    (c : PairCover target input admissible) {t : ℕ} (h : c.pairs.length ≤ t) :
+    (c.pad t).pairs.length = t := by
+  simp only [PairCover.pad, List.length_append, List.length_replicate]
+  lia
+
 /-- Extract the AND pairs from a native circuit producing the target at a chosen output. -/
 def PairCover.ofCircuit (c : Circuit Monotone.signature n m) (input : Fin n → Set U)
     (o : Fin m) (hc : c.eval (Monotone.setInterpretation U) input o = target)
@@ -205,6 +218,20 @@ theorem pairCoverComplexity_le {admissible : Semifilter ↥(targetᶜ) → Prop}
 theorem le_pairCoverComplexity_iff {admissible : Semifilter ↥(targetᶜ) → Prop} {k : ℕ∞} :
     k ≤ pairCoverComplexity target input admissible ↔
       ∀ c : PairCover target input admissible, k ≤ c.pairs.length := le_iInf_iff
+
+/-- Every finite bound on the cover infimum is attained by a cover within that bound. -/
+theorem pairCoverComplexity_le_iff {admissible : Semifilter ↥(targetᶜ) → Prop} {t : ℕ} :
+    pairCoverComplexity target input admissible ≤ t ↔
+      ∃ c : PairCover target input admissible, c.pairs.length ≤ t := by
+  constructor
+  · intro h
+    have hne := ne_top_of_le_ne_top (ENat.natCast_ne_top t) h
+    have : Nonempty (PairCover target input admissible) := ENat.iInf_natCast_ne_top.mp hne
+    obtain ⟨c, hc⟩ := ENat.exists_eq_iInf
+      (fun c : PairCover target input admissible => (c.pairs.length : ℕ∞))
+    exact ⟨c, by exact_mod_cast hc.trans_le h⟩
+  · rintro ⟨c, hc⟩
+    exact (pairCoverComplexity_le c).trans (by exact_mod_cast hc)
 
 /-- Any lower bound on pair-cover length transfers to the AND count of a constructing circuit. -/
 theorem pairCover_lowerBound {admissible : Semifilter ↥(targetᶜ) → Prop} {k : ℕ}
