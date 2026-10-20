@@ -232,7 +232,7 @@ the numeric value of the resulting count is asserted. Variable certificate
 lengths are padded with false bits to preserve counts exactly. The signed-product
 verifier uses $r(x)(p_+(|x|)+p_-(|x|))$ certificate bits before final padding,
 where $p_+$ and $p_-$ are the two original counting-certificate polynomials.
-These are uniform verifier closure results, not yet the AWPP amplification theorem.
+These uniform verifier closure results support the AWPP error reduction below.
 \citep{FennerFortnowKurtz1994}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{49}{Cslib.Complexity.SharpP.of_polyTime_length}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{61}{Cslib.Complexity.SharpP.sum_bits_mem}
@@ -473,9 +473,8 @@ amplification. The definitions follow Watson's formulation of the class
 introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
 characterization of AWPP.\citep{BoehlerGlasserMeister2006}
 \citep[Definition 2]{Watson2012}\citep{Fenner2003}
-Counting-machine characterizations,
-uniform AWPP amplification to input-dependent error and PP-lowness remain
-outstanding. The following entry adds fixed amplification and Boolean closure.
+Counting-machine characterizations and PP-lowness remain outstanding. The following
+entry adds uniform amplification and Boolean closure.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{90}{Cslib.Complexity.BPP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{116}{Cslib.Complexity.SBP_subset_PP}
@@ -528,8 +527,7 @@ Also $A\in\cc{SBP}$ and $B\in\cc{BPP}$ imply $A\cap B\in\cc{SBP}$,
 using the existing input-dependent BPP error reduction and a dyadic bound on
 \#P counts. This does not establish intersection closure for two SBP languages.
 All statements use verifier-based \#P and GapP; their nondeterministic-machine
-characterizations and uniform input-dependent AWPP amplification remain open
-formalization work.
+characterizations remain open formalization work.
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/WPP.lean}{42}{Cslib.Complexity.WPP_subset_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/WPP.lean}{105}{Cslib.Complexity.LWPP_subset_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{89}{Cslib.Complexity.exists_AWPP_gap_eighth}
@@ -540,3 +538,33 @@ formalization work.
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{171}{Cslib.Complexity.exists_SBP_gap_pow}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{188}{Cslib.Complexity.inter_mem_SBP_of_mem_BPP}
 \end{result}
+
+\begin{result}
+\subsection{Uniform AWPP error reduction}
+Fix an injective bit-string encoding; $|x|$ denotes its encoded length. For every
+$A\in\cc{AWPP}$ and every $r:X\to\mathbb{N}$ polynomially bounded in encoded
+input length, there are one $G\in\cc{GapP}$ and $P\in\mathbb{N}[X]$ such that,
+writing $D(x)=2^{P(|x|)}$, for every input $x$,
+\[
+0\leq G(x)\leq D(x),\qquad
+\begin{aligned}
+x\in A&\Rightarrow 2^{r(x)}(D(x)-G(x))\leq D(x),\\
+x\notin A&\Rightarrow 2^{r(x)}G(x)\leq D(x).
+\end{aligned}
+\]
+The requested rate $r$ need not be computable: the proof chooses a fixed
+$q\in\mathbb{N}[X]$ dominating it. Given an original denominator exponent $p$,
+strict majority of $12q(|x|)$ trials yields the explicit exponent $P=12qp$.
+Zero exponents and a denominator of one are allowed. Uniform GapP word sums and
+unary powers construct the numerator; a finite counting identity transfers the
+majority tail bound without assuming an efficient sampler for the original GapP
+value. The constant-error characterization and error reduction are credited to
+Fenner; the factor $12$ comes from the formalized majority estimate used for BPP. Here GapP retains the verifier-based model;
+counting-machine characterizations and PP-lowness are not established.
+\citep{Fenner2003}\citep[Section 7.4.1]{AroraBarak09}
+\declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{118}{Cslib.Complexity.AWPPAmplification.majorityPolynomial_mem}
+\declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{231}{Cslib.Complexity.AWPPAmplification.amplify}
+\declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{260}{Cslib.Complexity.exists_AWPP_gap_errorExponent}
+
+\end{result}
+

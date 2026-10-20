@@ -1210,3 +1210,37 @@ changed. The combined index contains 121 entries; all six validation gates pass.
 was rebuilt. Ordered-FO page 8 is pixel-identical to its reviewed rendering; the combined
 counting pages 19, 23 and 25 were rendered and inspected. Exact integration-head review
 is tracked in PR #37.
+
+## Uniform AWPP error reduction (PR #40, 20 October 2026)
+
+Worker `awpp-amplification-20261020` adds a uniform-amplification entry with
+one uniform GapP numerator attaining error at most `2^(-r(x))` for any requested
+exponent polynomially bounded in encoded input length. The construction chooses a
+fixed dominating length polynomial `q`, uses `12q(n)` majority trials and denominator
+exponent `12q(n)p(n)`, and does not need to compute the requested rate or efficiently
+sample the original GapP value. This adds one curated entry.
+
+Independent coordinator `/root` reviewed source and tests at
+`c7d716f413c92d69597f5f6dee1863e9cb095a68`, including the uniform GapP construction,
+finite counting identity, strict-majority ties, zero repetitions and denominator one.
+Reviewer `fusion-barrier` supplied an additional independent early source/API review.
+No findings remained. The coordinator also checked the index draft against this source,
+including quantifier order, arbitrary dominated rates, exact denominator accounting and
+the verifier-model boundary; no findings remained. Final document-head review is
+recorded in PR #40. These are AI reviews, not human editorial approval or a machine-checked
+prose equivalence. AI assistance: OpenAI Codex.
+
+All six gates pass on the source revision. Nonconstant clients have genuine quarter error
+before amplification; other clients cover a varying rate, a possibly noncomputable dominated
+rate, zero exponent and denominator one. Named axiom guards use only the three permitted
+axioms. All three new declaration links were checked against pinned Git source lines.
+The source credits Fenner's characterization and error reduction, with the explicit factor
+12 coming from the existing formalized BPP majority estimate and Arora–Barak's majority
+framework. Nondeterministic counting-machine characterizations and AWPP PP-lowness remain open.
+
+Integration includes the reviewed WPP branch at `ac5b1e70` and ordered-FO branch at
+`fc80b922`, preserving their entries and all generated imports. All six gates pass on
+the combined source tree. The combined index has 122 entries. The final PDF builds
+without undefined citations or overfull boxes; pages 25 and 26 were rendered and visually
+inspected. Uniform amplification has a separate entry to keep the existing closure entry
+within one page. Its standalone text explicitly repeats the encoding and verifier-model scope.
