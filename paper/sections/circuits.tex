@@ -225,3 +225,26 @@ non-power-of-two arity.\citep{Khrapchenko1971b,Yablonskii1954,Jukna2012}
 \decl{Complexity/Computability/Circuit/Boolean/Yablonskii.lean}{194}{Cslib.Circuits.Boolean.formulaDepth_parity_le_two_mul_clog}
 \decl{Complexity/Computability/Circuit/Boolean/KhrapchenkoDepth.lean}{88}{Cslib.Circuits.Boolean.formulaDepth_parity_two_pow}
 \end{result}
+
+\begin{result}
+\subsection{Quadratic completeness of semifilter covers}
+Let $A\subseteq U$ and let $B_1,\ldots,B_n\subseteq U$ be supplied input sets.
+A semifilter on $U\setminus A$ is an upward-closed family containing the whole
+complement and excluding the empty set. It is above a point $a\in A$ if it
+contains every $B_i\cap(U\setminus A)$ for which $a\in B_i$.
+Suppose a list of $t$ pairs of complement subsets defeats every semifilter above any point of $A$:
+for some listed pair it accepts both components but not their intersection.
+Then there is an acyclic set circuit computing $A$ from the supplied sets with
+at most $t^2$ AND gates. Binary unions and both constants are free, and fanout
+shares computed sets. Consequently the minimum AND cost is at most the square
+of the minimum unrestricted pair-cover length (with value $\infty$ if no cover exists).
+The construction works even for infinite $U$, empty input families, and trivial
+targets: each point's $t$ pair coordinates stabilize within $t$ rounds. Selecting
+free unions uses classical subset tests; no effective compiler running-time bound
+is claimed. This is the native free-constant version of Cavalar--Oliveira's
+quadratic completeness theorem, following the Fusion method.
+\citep{CavalarOliveira2025}
+\declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{226}{Cslib.Circuits.Fusion.PairCover.cost_toCircuit}
+\declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{233}{Cslib.Circuits.Fusion.PairCover.eval_toCircuit}
+\declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{258}{Cslib.Circuits.Fusion.ecomplexityFrom_le_pairCoverComplexity_sq}
+\end{result}

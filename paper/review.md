@@ -967,3 +967,21 @@ which fixes docstring references naming no declaration. The final delta review o
 "the module", and `scripts/upstream.py` now also rewrites backticked references to existing local
 modules from `Complexity.` to `Cslib.`, so such docstrings stay correct when upstreamed. These are AI reviews, not human editorial approval or a
 machine-checked equivalence between prose and Lean. AI assistance: Jetski (Gemini).
+
+## Quadratic Fusion completeness (PR #19, 20 October 2026)
+
+OpenAI Codex worker `fusion-quadratic-20261020` added the acyclic compiler and the corresponding
+index entry, under coordinator dispatch. Independent coordinator review checked core revision
+`dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542` for API design and correctness: pointwise finite-chain
+stabilization and its round count, native circuit cost and semantics, the infinity case, and
+zero/nonzero/infinite-carrier examples. Verdict: no findings.
+
+The coordinator also compared the new index entry with the final Lean statements and definitions.
+The stated cost, free-constant convention, infinite-carrier scope and noncomputability limitation
+were accurate. One quantifier clarification was requested and applied: the cover defeats
+"every semifilter above any point of A". The three declaration links are pinned to the reviewed
+core revision, and each target line was checked against `git show`. The PDF builds without
+undefined references or overfull boxes; the new entry on page 30 and bibliography entry on
+page 42 were rendered and visually inspected. Final documentation review is requested on PR #19.
+These are AI reviews, not human editorial approval or a machine-checked proof of equivalence
+between prose and Lean.
