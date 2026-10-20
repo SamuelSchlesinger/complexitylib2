@@ -7,12 +7,12 @@ its own `epic/*` branch; the state recorded here is exact as of the SHAs named.
 ## Goal and where it stands
 
 The standing goal was seventeen results that had become cheap given the library, plus "keep the
-library at cslib's standards as we go". Sixteen are on `main` (parsimonious Cook–Levin and the
-counting classes, gap Clique/IS/VC, the short collapses, Kabanets–Cai, sharp Håstad, parity not FO,
-PH ⊆ P^PP and FewP ⊆ SPP, Tseitin, KKL and Friedgut, Arthur–Merlin through BHZ, randomized
+library at cslib's standards as we go". All seventeen are on `main` (parsimonious Cook–Levin and
+the counting classes, gap Clique/IS/VC, the short collapses, Kabanets–Cai, sharp Håstad, parity not
+FO, PH ⊆ P^PP and FewP ⊆ SPP, Tseitin, KKL and Friedgut, Arthur–Merlin through BHZ, randomized
 disjointness and Raz–Wigderson, ETH, LMN and Kushilevitz–Mansour, Generalized Geography,
-IP = PSPACE, USTCON ∈ L). The seventeenth, worst-case hardness ⇒ P = BPP, is finished and approved
-on `epic/stv`. Samuel also asked for first-order (FO) reduction automation (on `main`), for as
+IP = PSPACE, USTCON ∈ L, and worst-case hardness ⇒ P = BPP), as is the deprecated-alias sweep.
+Samuel also asked for first-order (FO) reduction automation (on `main`), for as
 many reductions as possible to be made FO (`epic/fo-reductions`), and for the connection between
 FO reducibility and logarithmic space (`epic/fo-logspace`); Circuit Value P-completeness
 (`epic/circuit-value`) was added as the logspace-completeness anchor.
@@ -51,11 +51,17 @@ symbols break `pdflatex`; `until ! pgrep -f "<pattern>"` loops match themselves 
 
 ## Epics, in suggested integration order
 
+Status update (2026-10-19, after this file was first written): epics 1–3 below (`epic/stv`,
+`epic/standards-sweep`, `epic/fo-logspace` milestone 1) are integrated on `main` (merges
+`9a379211`, `7738dcea`, `b70ae996`; all six gates passed; indexed in `dc33e6e6`, which also
+appended the grandfathering note to `UPSTREAM.md`). Their sections are kept for the record, with
+their optional polish items still open. Start with epic 4.
+
 Shared low-level files are touched by several epics (`Foundations/Data/List/Basic`, `InSpaceLib`,
 `Encodings/Frame`, `Probability/PMF`, `BitString/Block`, `Logics/FirstOrder/Basic`); merge one
 epic at a time, re-run the gates after each, and expect small additive conflicts.
 
-### 1. `epic/stv`: worst-case hardness ⇒ P = BPP (goal item 15). Ready.
+### 1. `epic/stv`: worst-case hardness ⇒ P = BPP (goal item 15). Integrated.
 
 * Head `8cfc8e81` (includes a merge of `main` at `a9858e29`). Gates: all six `ok` at the head.
 * Reviews: correctness and API reviews of `6477f06f` (milestone-1 fixes and milestone 2): APPROVE.
@@ -84,7 +90,7 @@ epic at a time, re-run the gates after each, and expect small additive conflicts
   Fortnow, Nisan and Wigderson, and optional reorganizations (`Circuit/Full/`, `Matrix/` for
   `KernelVector`, cost-function namespaces, a multilinear-extension bridge).
 
-### 2. `epic/standards-sweep`: deprecated aliases for earlier renames. Ready.
+### 2. `epic/standards-sweep`: deprecated aliases for earlier renames. Integrated.
 
 * Head `b1293417`, based on `2110aa5a` (older than `main`; the merge-tree check against `main` was
   clean). Gates: all six `ok` at the head (on its base).
@@ -97,7 +103,7 @@ epic at a time, re-run the gates after each, and expect small additive conflicts
   merge SHA. Paper: no impact (the four entries that displayed old names were repinned in
   `80875a39`).
 
-### 3. `epic/fo-logspace`: first-order model checking in L. Milestone 1 ready.
+### 3. `epic/fo-logspace`: first-order model checking in L. Milestone 1 integrated.
 
 * Milestone 1 head `a1c2cb1d`; gates all six `ok`. Main results:
   `Cslib.Logic.Vocabulary.queryLanguage_mem_L` and `Cslib.Logic.FO.Definable.queryLanguage_mem_L`
@@ -211,8 +217,8 @@ What to build.
 5. Verify theorem and definition numbers against the book before citing them; earlier reviewers
    could not check Immerman's numbering offline.
 
-Order of work: integrate the ready epics first (sections 1–3 above, then the reviewed parts of 4
-and 5), so that the ordered layer is built on the merged FO code rather than beside it.
+Order of work: integrate epics 4 and 5 (and finish the two `wip` branches) first, so that the
+ordered layer is built on the merged FO code rather than beside it.
 
 ## Smaller follow-ups
 
@@ -227,6 +233,8 @@ and 5), so that the ordered layer is built on the merged FO code rather than bes
 * Unify the `length_encNat` bounds (private copies in `LogSpace.lean` and `IP/PSPACE.lean`,
   `CircuitValue.length_encNat_le_log` on `epic/circuit-value`) in fo-logspace's
   `Encodings/NatLength.lean` once both land.
-* Not pushed: `main` at `88afe178` is two commits ahead of `origin/main`; all `epic/*` branches and
-  this branch are local. Ask Samuel to run
-  `git push origin main handoff/2026-10-19 'refs/heads/epic/*:refs/heads/epic/*'`.
+* All `epic/*` branches and this branch are on `origin`. Agents cannot push; ask Samuel.
+* Optional polish left from the integrated epics: STV (`leastIrreducible` lemma placement,
+  `listBlock` at `HardnessEncoding/Program.lean:119,122`, wording in `Substitution.lean:33-34`);
+  sweep (`+typeChanged` on the five deprecated GNI theorems, `GraphNonIsomorphism.lean:473-497`);
+  fo-logspace (four non-terminal `simp`s in `ComplexityTests/FOLogSpace.lean:194-196`).
