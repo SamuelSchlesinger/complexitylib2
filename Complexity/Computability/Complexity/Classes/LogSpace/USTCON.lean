@@ -21,7 +21,9 @@ given by their adjacency matrices (`Cslib.Complexity.encUSTCON`), is in `L`
 The decider is the read machine `Cslib.USTCON.Reader.machine`, which walks in Reingold's graph of
 the input along all label sequences of length `O(log n)` and evaluates its rotation map in place
 with a constant number of labels per level; its simulation on multi-tape machines runs in space
-`O(log n)` (`Cslib.USTCON.computableInLogSpace_decide`).
+`O(log m)` on encodings of length `m` (`Cslib.USTCON.computableInLogSpace_decide`). As for every
+problem in `L enc`, the decider is only required to be correct on the encodings of instances;
+recognising which bit strings are encodings is not part of the statement.
 
 The class `SL` of symmetric logarithmic space is not defined in the library, so the corollary
 `SL = L` of [Reingold, Theorem 4.2][Reingold2008] is not stated.

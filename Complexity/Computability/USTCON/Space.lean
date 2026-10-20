@@ -21,10 +21,13 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 [Arora and Barak, Section 21.4][AroraBarak09].
 
 The step machine simulating the read machine `Cslib.USTCON.Reader.machine` is tidy within the space
-of its states and the position of its head (`Cslib.USTCON.Reader.tidy_machine`), its run on an
-encoded instance halts with the answer (`Cslib.USTCON.Reader.exists_run_eq`), and its states along
-the run, which follow the states of the read machine together with the position of the head, have
-`O(log n)` bits on encodings of length `n` (`Cslib.USTCON.Reader.length_encState_run_le`).
+of its states and the position of its head (`Cslib.USTCON.Reader.tidy_machine`). It computes the
+output of the read machine (`Turing.ReadMachine.computes_toStepMachine`), which halts on an encoded
+instance with the answer (`Cslib.USTCON.Reader.exists_run_eq`), and its states along the run are
+states of the read machine together with a head position at most `m + 1`
+(`Turing.ReadMachine.exists_state_run`), which have `O(log m)` bits on encodings of length `m`
+(`Cslib.USTCON.Reader.length_encState_run_le`). Correctness is claimed only on encodings of
+instances; recognising which bit strings are encodings is not formalised.
 
 ## Main results
 

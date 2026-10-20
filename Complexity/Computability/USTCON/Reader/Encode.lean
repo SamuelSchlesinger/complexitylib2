@@ -20,7 +20,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 The states of `Cslib.USTCON.Reader.machine` are encoded through tuples of the control, numbers in
 binary, and lists of labels and frames, every label and frame by its rank among the finitely many
 (`Turing.MultiTapeTM.encFinite`). The machines simulating the read machine keep the encoded state on
-their work tapes, so its length is their work space.
+their work tapes, so its length bounds their work space, up to a constant factor and the position
+of the input head.
 
 ## Main definitions
 

@@ -92,16 +92,16 @@ universe u
 
 variable {B : Type u} {E : Type*} (H : RotationMap B E) (e : B ≃ (Fin 2 → E × E))
 
-/-- **One step of Reingold's transformation** [Reingold, Definition 3.1][Reingold2008]
-[Arora and Barak, Section 21.4][AroraBarak09]: the square of the zig-zag product of a `B`-regular
-graph `G` with the graph `H` on `B`, whose labels `Fin 2 → E × E` are renamed back to `B` by
-`e.symm`. -/
+/-- **One step of Reingold's transformation**, a variant of [Reingold, Definition 3.1][Reingold2008]
+[Arora and Barak, Section 21.4][AroraBarak09] with the square instead of the eighth power: the
+square of the zig-zag product of a `B`-regular graph `G` with the graph `H` on `B`, whose labels
+`Fin 2 → E × E` are renamed back to `B` by `e.symm`. -/
 def reingoldStep {V : Type*} (G : RotationMap V B) : RotationMap (V × B) B :=
   ((G.zigzag H).pow 2).relabel e.symm
 
-/-- **Reingold's transformation** [Reingold, Definition 3.1][Reingold2008]: `reingold H e G ℓ` is
-the graph `G_ℓ` obtained from `G₀ = G` by `ℓ` steps `G_{i + 1} = ((G_i ⓩ H) ^ 2).relabel e.symm`.
--/
+/-- **Reingold's transformation**, a variant of [Reingold, Definition 3.1][Reingold2008] with the
+square instead of the eighth power: `reingold H e G ℓ` is the graph `G_ℓ` obtained from `G₀ = G`
+by `ℓ` steps `G_{i + 1} = ((G_i ⓩ H) ^ 2).relabel e.symm`. -/
 def reingold {V : Type u} (G : RotationMap V B) : (ℓ : ℕ) → RotationMap (ReingoldVertex V B ℓ) B
   | 0 => G
   | ℓ + 1 => reingoldStep H e (reingold G ℓ)
