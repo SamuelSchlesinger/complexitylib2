@@ -323,7 +323,7 @@ theorem realize_toInterpretation_domain_of_nontrivial [Nontrivial M] (c : Coord 
     realize_subsingletonFormula, Formula.realize_not, Formula.realize_iSup, not_subsingleton,
     false_and, not_false_eq_true, true_and, false_or]
 
-theorem realize_toInterpretation_rel_of_subsingleton [L'.IsRelational] [Subsingleton M] {n : ℕ}
+theorem realize_toInterpretation_rel_of_subsingleton [Subsingleton M] {n : ℕ}
     (R : L'.Relations n) (c : Fin n × Coord T ι → M) :
     ((I.toInterpretation S).rel R).Realize c ↔ (S.rel R).Realize fun x => c (x.1, p) := by
   simp only [toInterpretation, Formula.realize_sup, Formula.realize_inf,
@@ -331,7 +331,7 @@ theorem realize_toInterpretation_rel_of_subsingleton [L'.IsRelational] [Subsingl
   simp only [show Subsingleton M from inferInstance, true_and, not_true_eq_false, false_and,
     or_false]
 
-theorem realize_toInterpretation_rel_of_nontrivial [L'.IsRelational] [Nontrivial M] {n : ℕ}
+theorem realize_toInterpretation_rel_of_nontrivial [Nontrivial M] {n : ℕ}
     (R : L'.Relations n) (c : Fin n × Coord T ι → M) :
     ((I.toInterpretation S).rel R).Realize c ↔ (I.relAt R).Realize c := by
   simp only [toInterpretation, Formula.realize_sup, Formula.realize_inf,
