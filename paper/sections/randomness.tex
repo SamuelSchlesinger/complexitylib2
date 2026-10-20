@@ -474,7 +474,7 @@ introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
 characterization of AWPP.\citep{BoehlerGlasserMeister2006}
 \citep[Definition 2]{Watson2012}\citep{Fenner2003}
 Counting-machine characterizations and PP-lowness remain outstanding. The following
-entry adds uniform amplification and Boolean closure.
+entries add amplification and Boolean closure.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{90}{Cslib.Complexity.BPP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{116}{Cslib.Complexity.SBP_subset_PP}
@@ -543,7 +543,7 @@ characterizations remain open formalization work.
 \subsection{Uniform AWPP error reduction}
 Fix an injective bit-string encoding; $|x|$ denotes its encoded length. For every
 $A\in\cc{AWPP}$ and every $r:X\to\mathbb{N}$ polynomially bounded in encoded
-input length, there are one $G\in\cc{GapP}$ and $P\in\mathbb{N}[X]$ such that,
+input length, there exist $G\in\cc{GapP}$ and $P\in\mathbb{N}[X]$ such that,
 writing $D(x)=2^{P(|x|)}$, for every input $x$,
 \[
 0\leq G(x)\leq D(x),\qquad

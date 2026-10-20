@@ -1244,3 +1244,7 @@ the combined source tree. The combined index has 122 entries. The final PDF buil
 without undefined citations or overfull boxes; pages 25 and 26 were rendered and visually
 inspected. Uniform amplification has a separate entry to keep the existing closure entry
 within one page. Its standalone text explicitly repeats the encoding and verifier-model scope.
+Final coordinator prose review requested two wording corrections after splitting the entry:
+refer to the following entries in the plural, and use “there exist” for the witnesses.
+Both are applied; the PDF was regenerated and the corrected page rendered and checked.
+No theorem statement or proof changed.
