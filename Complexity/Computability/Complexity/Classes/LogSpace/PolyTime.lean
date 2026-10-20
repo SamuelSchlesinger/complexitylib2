@@ -23,6 +23,8 @@ other than its input is described by a code of length `O(log n)`
 
 ## Main results
 
+* `Cslib.Complexity.mem_P_of_recognizesInSpace`: logspace recognizers, whose branches need not
+  halt, are within polynomial time.
 * `Cslib.Complexity.NL_subset_P`: nondeterministic logarithmic space is within polynomial time.
 
 ## References
@@ -39,13 +41,21 @@ open _root_.Turing _root_.Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool}
 
-/-- **Nondeterministic logarithmic space is within polynomial time**: breadth-first search
-through the polynomially many reachable views decides acceptance. -/
-theorem NL_subset_P : NL enc ⊆ P enc := by
-  rintro A ⟨k, State, _, ntm, c, h⟩
+/-- **Logspace recognizers are within polynomial time**: a problem recognized by a
+nondeterministic machine within logarithmic space, whose branches need not halt, is in `P`, by
+breadth-first search through the polynomially many reachable views. -/
+theorem mem_P_of_recognizesInSpace {k : ℕ} {State : Type} [Finite State]
+    {ntm : MultiTapeNTM k Bool State} {A : Set α} {c : ℕ}
+    (h : ntm.RecognizesInSpace enc A fun a => c * (Nat.log2 (enc a).length + 1)) : A ∈ P enc := by
   obtain ⟨rounds, hrounds, hpoly⟩ :=
     ntm.exists_computableTidilyInPolyTime_searchAccepts (enc := enc) fun a => (h a).1
   exact ⟨_, hpoly, fun a =>
     (h a).2.trans (MultiTapeNTM.searchAccepts_iff (h a).1 (hrounds a)).symm⟩
+
+/-- **Nondeterministic logarithmic space is within polynomial time**: breadth-first search
+through the polynomially many reachable views decides acceptance. -/
+theorem NL_subset_P : NL enc ⊆ P enc := by
+  rintro A ⟨k, State, _, ntm, c, h⟩
+  exact mem_P_of_recognizesInSpace h.recognizesInSpace
 
 end Cslib.Complexity

@@ -27,11 +27,17 @@ time bound; such a path neither halts nor accepts. When no configuration is stuc
 computation path within the bound extends to a halted one of exactly the bound
 (`Turing.MultiTapeNTM.ComputationPath.exists_halted_extension`).
 
-A machine decides `A` within space `s` (`Turing.MultiTapeNTM.DecidesInSpace`) when on every
-encoded instance every computation prefix visits at most `s a` work-tape cells (upstream
+A machine *recognizes* `A` within space `s` (`Turing.MultiTapeNTM.RecognizesInSpace`) when on
+every encoded instance every computation prefix visits at most `s a` work-tape cells (upstream
 `Turing.MultiTapeNTM.RunsInSpace`), and `a ∈ A` exactly when some computation path accepts. No
-time bound is imposed: a branch may run forever or end stuck, and neither accepts. Textbook
-definitions ask every branch to halt [Sipser, Definition 8.1][Sipser2013]; this predicate does not.
+time bound is imposed: a branch may run forever or end stuck, and neither accepts. It *decides*
+`A` within space `s` (`Turing.MultiTapeNTM.DecidesInSpace`) when moreover every branch halts
+[Sipser, Definition 8.1][Sipser2013]: on every encoded instance some number of steps `t` bounds
+every computation path (upstream `Turing.MultiTapeNTM.RunsInTime`). A path may still end stuck
+before `t` steps; it does not accept, as a branch of a textbook machine that has no move rejects.
+The bound `t` may depend arbitrarily on the instance; as the machines branch finitely, this is
+equivalent to every branch halting. The terminology follows Sipser's for deterministic machines,
+which *recognize* a language when they may loop and *decide* it when they halt on every input.
 
 `Turing.MultiTapeNTM.DecidableInPolyTime` asks for one machine with a binary alphabet and finitely
 many states, and one polynomially bounded time bound, for all instances. Like
@@ -41,7 +47,10 @@ many states, and one polynomially bounded time bound, for all instances. Like
 
 * `Turing.MultiTapeNTM.Accepts`: some computation path halts with output `[true]`.
 * `Turing.MultiTapeNTM.DecidesInTime`: a machine decides a problem within a time bound.
-* `Turing.MultiTapeNTM.DecidesInSpace`: a machine decides a problem within a space bound.
+* `Turing.MultiTapeNTM.RecognizesInSpace`: a machine recognizes a problem within a space bound,
+  with no halting requirement.
+* `Turing.MultiTapeNTM.DecidesInSpace`: a machine decides a problem within a space bound, every
+  branch halting.
 * `Turing.MultiTapeNTM.DecidableInTime`, `Turing.MultiTapeNTM.DecidableInPolyTime`: some finite
   binary machine decides a problem within a time bound, or within a polynomial time bound.
 
@@ -54,6 +63,9 @@ many states, and one polynomially bounded time bound, for all instances. Like
   witnessed by a computation path of exactly `t` steps.
 * `Turing.MultiTapeNTM.ComputationPath.exists_halted_extension`: without stuck configurations,
   every computation path within a time bound is a prefix of a halted one.
+* `Turing.MultiTapeNTM.runsInTime_one_of_forall_step_initCfg`: a machine whose first steps all
+  halt runs within one step.
+* `Turing.MultiTapeNTM.DecidesInSpace.recognizesInSpace`: a decider is a recognizer.
 * `Turing.MultiTapeTM.ComputesFunInTimeAndSpace.decidesInSpace`,
   `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_decidesInSpace`: a deterministic decider
   within space `s` is a nondeterministic one with one computation path.
@@ -132,6 +144,17 @@ theorem ComputationPath.exists_halted_extension
   let q' : ntm.ComputationPath input := ⟨q, hhead⟩
   exact ⟨q', hlen, ht q' hlen.ge, hprefix⟩
 
+/-- If every step from the initial configuration reaches a halted configuration, every computation
+path halts within one step. -/
+theorem runsInTime_one_of_forall_step_initCfg
+    (h : ∀ c, ntm.Step (ntm.initCfg input) c → c.Halted) : ntm.RunsInTime input 1 := by
+  intro p hp
+  have hlen : 1 < p.length + 1 := by unfold ComputationPath.time RunPath.time at hp; omega
+  have hstep : ntm.Step (p.toRunPath ⟨0, by omega⟩) (p.toRunPath ⟨1, hlen⟩) :=
+    p.toRunPath.step ⟨0, by omega⟩
+  rw [show p.toRunPath ⟨0, by omega⟩ = ntm.initCfg input from p.head_eq] at hstep
+  exact (RunPath.last_eq_of_halted p.toRunPath _ (h _ hstep)) ▸ h _ hstep
+
 /-- A computation path extends by any step from its last configuration. -/
 theorem ComputationPath.exists_snoc (p : ntm.ComputationPath input) {c : Cfg k Symbol State input}
     (h : ntm.Step p.last c) : ∃ q : ntm.ComputationPath input, q.time = p.time + 1 ∧ q.last = c :=
@@ -181,29 +204,52 @@ theorem DecidesInTime.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List 
     ntm.DecidesInTime enc A t' :=
   fun a => ⟨(h a).1.mono (ht a), (h a).2⟩
 
-/-- `ntm` decides `A` within space `s` relative to the encoding `enc`: on every encoded instance
-`enc a`, every computation prefix visits at most `s a` work-tape cells, and `a ∈ A` exactly when
-some computation path accepts. No time bound is imposed: a branch may run forever or end stuck,
-and neither accepts. -/
-def DecidesInSpace (ntm : MultiTapeNTM k Bool State) (enc : α ↪ List Bool) (A : Set α)
+/-- `ntm` recognizes `A` within space `s` relative to the encoding `enc`: on every encoded
+instance `enc a`, every computation prefix visits at most `s a` work-tape cells, and `a ∈ A`
+exactly when some computation path accepts. No time bound is imposed: a branch may run forever or
+end stuck, and neither accepts. -/
+def RecognizesInSpace (ntm : MultiTapeNTM k Bool State) (enc : α ↪ List Bool) (A : Set α)
     (s : α → ℕ) : Prop :=
   ∀ a, ntm.RunsInSpace (enc a) (s a) ∧ (a ∈ A ↔ ntm.Accepts (enc a))
+
+/-- Space bounds can be increased. -/
+theorem RecognizesInSpace.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List Bool}
+    {A : Set α} {s s' : α → ℕ} (h : ntm.RecognizesInSpace enc A s) (hs : ∀ a, s a ≤ s' a) :
+    ntm.RecognizesInSpace enc A s' :=
+  fun a => ⟨(h a).1.mono (hs a), (h a).2⟩
+
+/-- `ntm` decides `A` within space `s` relative to the encoding `enc`: it recognizes `A` within
+space `s`, and every branch halts [Sipser, Definition 8.1][Sipser2013]: on every encoded instance
+some number of steps bounds every computation path. A path may end stuck before the bound; it does
+not accept. -/
+def DecidesInSpace (ntm : MultiTapeNTM k Bool State) (enc : α ↪ List Bool) (A : Set α)
+    (s : α → ℕ) : Prop :=
+  ntm.RecognizesInSpace enc A s ∧ ∀ a, ∃ t, ntm.RunsInTime (enc a) t
+
+/-- A decider within space `s` recognizes its problem within space `s`. -/
+theorem DecidesInSpace.recognizesInSpace {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List Bool}
+    {A : Set α} {s : α → ℕ} (h : ntm.DecidesInSpace enc A s) : ntm.RecognizesInSpace enc A s :=
+  h.1
 
 /-- Space bounds can be increased. -/
 theorem DecidesInSpace.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List Bool} {A : Set α}
     {s s' : α → ℕ} (h : ntm.DecidesInSpace enc A s) (hs : ∀ a, s a ≤ s' a) :
     ntm.DecidesInSpace enc A s' :=
-  fun a => ⟨(h a).1.mono (hs a), (h a).2⟩
+  ⟨h.1.mono hs, h.2⟩
 
 /-- **A deterministic decider is a nondeterministic decider** with one computation path: a machine
 computing a Boolean function `f` within time `t` and space `s` decides, as a nondeterministic
-machine, the problem where `f` is `true` within space `s`. Its prefixes and its halted extensions
-visit no more cells than the run, and it accepts exactly when it halts with output `[true]`. -/
+machine, the problem where `f` is `true` within space `s`. Its only path halts within `t a` steps,
+its prefixes and its halted extensions visit no more cells than the run, and it accepts exactly
+when it halts with output `[true]`. -/
 theorem _root_.Turing.MultiTapeTM.ComputesFunInTimeAndSpace.decidesInSpace
     {tm : MultiTapeTM k Bool State} {enc : α ↪ List Bool} {f : α → Bool} {t s : α → ℕ}
     {A : Set α} (htm : tm.ComputesFunInTimeAndSpace enc MultiTapeTM.encBool f t s)
     (hA : ∀ a, a ∈ A ↔ f a = true) : tm.toMultiTapeNTM.DecidesInSpace enc A s := by
-  intro a
+  refine ⟨fun a => ?_, fun a => ?_⟩
+  swap
+  · obtain ⟨⟨u, hhalt, -⟩, -, -⟩ := htm a
+    exact ⟨u, MultiTapeTM.runsInTime_of_halted hhalt⟩
   obtain ⟨⟨u, hhalt, hout⟩, -, hspace⟩ := htm a
   refine ⟨hspace, ?_⟩
   rw [hA a, accepts_iff_exists_time_eq (MultiTapeTM.runsInTime_of_halted hhalt)]

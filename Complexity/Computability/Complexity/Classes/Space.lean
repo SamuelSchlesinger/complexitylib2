@@ -29,9 +29,13 @@ are functions of the input length, and that comparison is not formalized here.
 with a binary alphabet and finitely many states within space `s`
 (`Turing.MultiTapeNTM.DecidesInSpace`), for an `s` polynomially bounded in the length of `enc a`:
 every computation path on `enc a` visits at most `s a` work-tape cells (upstream
-`Turing.MultiTapeNTM.RunsInSpace`, over every prefix of every path), and `a ∈ A` exactly when
-some computation path halts with output exactly `[true]` (`Turing.MultiTapeNTM.Accepts`). No
-time bound is imposed: branches may run forever or end stuck, and neither accepts.
+`Turing.MultiTapeNTM.RunsInSpace`, over every prefix of every path), every branch halts, and
+`a ∈ A` exactly when some computation path halts with output exactly `[true]`
+(`Turing.MultiTapeNTM.Accepts`) [Sipser, Definition 8.1][Sipser2013]. No time bound is imposed
+beyond halting; a path may end stuck, and then does not accept. Recognizers, whose branches may
+run forever (`Turing.MultiTapeNTM.RecognizesInSpace`), are no stronger: Savitch's theorem places a
+problem recognized within polynomial space in `PSPACE`
+(`Cslib.Complexity.mem_PSPACE_of_recognizesInSpace`).
 
 A problem is `PSPACE`-hard when every problem in `PSPACE`, with any encoding of its instances,
 reduces to it in polynomial time (`Cslib.Complexity.PolyTimeReducible`), and `PSPACE`-complete
@@ -95,8 +99,8 @@ theorem mem_PSPACE_iff : A ∈ PSPACE enc ↔
 
 /-- The problems decided by one nondeterministic machine within polynomial space, with respect to
 the encoding `enc` (`Turing.MultiTapeNTM.DecidesInSpace`): every computation path on `enc a`
-visits at most `s a` work-tape cells, for a polynomially bounded `s`, and `a ∈ A` exactly when
-some computation path halts with output `[true]`. -/
+visits at most `s a` work-tape cells, for a polynomially bounded `s`, every branch halts, and
+`a ∈ A` exactly when some computation path halts with output `[true]`. -/
 def NPSPACE (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State)
     (s : α → ℕ), PolyBounded (fun a => (enc a).length) s ∧ ntm.DecidesInSpace enc A s}

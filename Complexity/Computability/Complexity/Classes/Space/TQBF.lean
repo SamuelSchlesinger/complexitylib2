@@ -78,8 +78,8 @@ theorem TQBF_pspaceHard : PSPACEHard encQBF TQBF := by
   classical
   refine ⟨TQBF.reduce enc ntm c d tmV cV dV, TQBF.computableTidilyInPolyTime_reduce tmV cV dV,
     fun a => ?_⟩
-  rw [TQBF.reduce_mem_TQBF_iff (htmV.mono htV fun _ => le_rfl) (hA a).1 (hcd a)]
-  exact (hA a).2
+  rw [TQBF.reduce_mem_TQBF_iff (htmV.mono htV fun _ => le_rfl) (hA.1 a).1 (hcd a)]
+  exact (hA.1 a).2
 
 /-- **`TQBF` is `PSPACE`-complete** [Sipser, Theorem 8.9][Sipser2013]
 [Arora and Barak, Theorem 4.13][AroraBarak09]. -/

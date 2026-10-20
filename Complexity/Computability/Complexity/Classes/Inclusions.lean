@@ -64,6 +64,8 @@ inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subs
 * `Cslib.Complexity.compl_mem_PP`, `Cslib.Complexity.PP_eq_preimage_compl_PP`.
 * `Cslib.Complexity.coNP_subset_PP`.
 * `Turing.MultiTapeNTM.RunsInTime.runsInSpace`: space is at most time.
+* `Turing.MultiTapeNTM.DecidesInTime.decidesInSpace`: a time-bounded decider is a space-bounded
+  one.
 * `Cslib.Complexity.NP_subset_NPSPACE`, `Cslib.Complexity.NP_subset_PSPACE`.
 * `Cslib.Complexity.PSPACE_subset_EXP`, `Cslib.Complexity.NP_subset_EXP`.
 * `Cslib.Complexity.mem_PSPACE_iff_computableTidilyInO`: `PSPACE` in the quantitative calculus.
@@ -114,6 +116,13 @@ theorem RunsInTime.runsInSpace {t : ℕ} (h : ntm.RunsInTime input t) :
       exact hj'.symm
   exact (RunPath.space_le_of_subset hsub).trans
     ((RunPath.space_le_mul_time_add_one q.toRunPath).trans_eq (by rw [← hq]; rfl))
+
+/-- A decider within time `t` decides within the space it visits in that time, `k (t a + 1)`, and
+every branch halts within `t a` steps. -/
+theorem DecidesInTime.decidesInSpace {α : Type*} {ntm : MultiTapeNTM k Bool State}
+    {enc : α ↪ List Bool} {A : Set α} {t : α → ℕ} (h : ntm.DecidesInTime enc A t) :
+    ntm.DecidesInSpace enc A fun a => k * (t a + 1) :=
+  ⟨fun a => ⟨(h a).1.runsInSpace, (h a).2⟩, fun a => ⟨t a, (h a).1⟩⟩
 
 end Turing.MultiTapeNTM
 
@@ -230,7 +239,7 @@ theorem NP_subset_NPSPACE : NP enc ⊆ NPSPACE enc := by
   intro A hA
   obtain ⟨t, ht, k, State, hfinite, ntm, hdec⟩ := decidableInPolyTime_of_mem_NP hA
   exact ⟨k, State, hfinite, ntm, fun a => k * (t a + 1), (PolyBounded.const k).mul
-    (ht.add (.const 1)), fun a => ⟨(hdec a).1.runsInSpace, (hdec a).2⟩⟩
+    (ht.add (.const 1)), hdec.decidesInSpace⟩
 
 /-- **`NP ⊆ PSPACE`** [Arora and Barak, Theorem 4.2][AroraBarak09]: `NP ⊆ NPSPACE`, and
 `NPSPACE = PSPACE` by Savitch's theorem. -/
@@ -322,7 +331,7 @@ theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
       · exact hT a
       · exact (hedgeMax _).trans (Nat.mul_le_mul_left cE (Nat.pow_le_pow_left (by omega) dE))
   have hA' : A = {a | ntm.savitchDecide c d (enc a) = true} := Set.ext fun a =>
-    (hAn a).2.trans (MultiTapeNTM.savitchDecide_eq_true_iff (hAn a).1 (hcd a)).symm
+    (hAn.1 a).2.trans (MultiTapeNTM.savitchDecide_eq_true_iff (hAn.1 a).1 (hcd a)).symm
   rw [hA']
   exact mem_EXP_iff.mpr ⟨K, DTIME_mono_of_eventually_le hK hmem⟩
 

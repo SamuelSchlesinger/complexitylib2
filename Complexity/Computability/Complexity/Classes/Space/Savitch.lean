@@ -19,10 +19,14 @@ deterministic machine within polynomial space: Savitch's decider
 the codes of the finite views of the nondeterministic machine. With the converse inclusion,
 `NPSPACE = PSPACE` [Sipser, Corollary 8.6][Sipser2013]. Both classes are machine-defined: the
 deterministic class by plain total decision within polynomial space, the nondeterministic class by
-accepting computation paths, with every computation path within the space bound.
+accepting computation paths, with every computation path within the space bound and every branch
+halting. The simulation uses only the space bound and acceptance, so it applies to recognizers,
+whose branches may run forever (`Cslib.Complexity.mem_PSPACE_of_recognizesInSpace`).
 
 ## Main results
 
+* `Cslib.Complexity.mem_PSPACE_of_recognizesInSpace`: Savitch's theorem for recognizers, whose
+  branches need not halt.
 * `Cslib.Complexity.NPSPACE_subset_PSPACE`: Savitch's theorem for polynomial space.
 * `Cslib.Complexity.NPSPACE_eq_PSPACE`: the two classes are equal.
 
@@ -40,15 +44,23 @@ open _root_.Turing _root_.Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool}
 
+/-- **Savitch's theorem for recognizers**: a problem recognized by a nondeterministic machine
+within polynomial space, whose branches need not halt, is in `PSPACE`. -/
+theorem mem_PSPACE_of_recognizesInSpace {k : ℕ} {State : Type} [Finite State]
+    {ntm : MultiTapeNTM k Bool State} {A : Set α} {s : α → ℕ}
+    (hs : PolyBounded (fun a => (enc a).length) s) (hA : ntm.RecognizesInSpace enc A s) :
+    A ∈ PSPACE enc := by
+  obtain ⟨c, d, hcd⟩ := hs.exists_le
+  obtain ⟨t, s', hs', hdecide⟩ := ntm.exists_polyBounded_space_savitchDecide enc c d
+  exact ⟨fun a => ntm.savitchDecide c d (enc a), ⟨t, s', hs', hdecide.computableInTimeAndSpace⟩,
+    fun a => (hA a).2.trans (MultiTapeNTM.savitchDecide_eq_true_iff (hA a).1 (hcd a)).symm⟩
+
 /-- **Savitch's theorem for polynomial space**: every problem decided by a nondeterministic
 machine within polynomial space is decided by a deterministic machine within polynomial space,
 namely Savitch's decider [Sipser, Corollary 8.6][Sipser2013]. -/
 theorem NPSPACE_subset_PSPACE : NPSPACE enc ⊆ PSPACE enc := by
   rintro A ⟨k, State, hfinite, ntm, s, hs, hA⟩
-  obtain ⟨c, d, hcd⟩ := hs.exists_le
-  obtain ⟨t, s', hs', hdecide⟩ := ntm.exists_polyBounded_space_savitchDecide enc c d
-  refine ⟨fun a => ntm.savitchDecide c d (enc a), ⟨t, s', hs', hdecide.computableInTimeAndSpace⟩,
-    fun a => (hA a).2.trans (MultiTapeNTM.savitchDecide_eq_true_iff (hA a).1 (hcd a)).symm⟩
+  exact mem_PSPACE_of_recognizesInSpace hs hA.recognizesInSpace
 
 /-- **`NPSPACE = PSPACE`** [Sipser, Corollary 8.6][Sipser2013]. -/
 theorem NPSPACE_eq_PSPACE : NPSPACE enc = PSPACE enc :=

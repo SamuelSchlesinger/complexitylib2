@@ -113,11 +113,19 @@ private theorem accepts_writeAccept (input : List Bool) : writeAccept.Accepts in
   refine ⟨⟨(RelSeries.singleton _ _).cons (writeAccept.initCfg input) hstep, rfl⟩, ?_, ?_⟩ <;>
     simp [writeAction]
 
+/-- `writeAccept` halts after its first step. -/
+private theorem runsInTime_writeAccept (input : List Bool) : writeAccept.RunsInTime input 1 :=
+  MultiTapeNTM.runsInTime_one_of_forall_step_initCfg fun c hc => by
+    simp only [Step, MultiTapeNTM.initCfg, Cfg.init] at hc
+    obtain ⟨action, rfl, rfl⟩ := hc
+    simp [Action.apply, writeAction]
+
 /-- With a work tape that is actually written, the problem of all words is in `NPSPACE` within
 one cell. -/
 example : (Set.univ : Set (List Bool)) ∈ NPSPACE encBits :=
-  ⟨1, Unit, inferInstance, writeAccept, fun _ => 1, .const 1, fun a =>
-    ⟨runsInSpace_writeAccept a, by simpa using accepts_writeAccept a⟩⟩
+  ⟨1, Unit, inferInstance, writeAccept, fun _ => 1, .const 1, ⟨fun a =>
+    ⟨runsInSpace_writeAccept a, by simpa using accepts_writeAccept a⟩,
+    fun a => ⟨1, runsInTime_writeAccept a⟩⟩⟩
 
 /-- Savitch's decider accepts for `writeAccept`, with codes sized by the bound on views with a
 written work tape. -/
