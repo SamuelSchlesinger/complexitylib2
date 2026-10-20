@@ -205,6 +205,13 @@ of the handover. The work below remains available for subsequent, independently 
      preserves quantifier-freeness when the supplied source successor is quantifier-free.
      The canonical `≤`/BIT instance uses a universal adjacency formula; no unconditional
      quantifier-free successor claim is made for this basis.
+     **Canonical addition prerequisite completed (#64):**
+     [Ordered/Addition](Complexity/Logics/FirstOrder/Ordered/Addition.lean) defines one native
+     formula over `≤` and BIT whose semantics on every `Fin n`, `n ≥ 2`, is exact natural-number
+     addition `x + y = z`. Out-of-range sums have no satisfying result; this is not modular
+     addition. It formalizes the PLUS part of Immerman's Theorem 1.17(1), using the carry
+     characterization of Proposition 1.9. TIMES and the Bit Sum Lemma remain open, as do
+     arbitrary-base tuple BIT lifting and numeric-preserving composition.
      **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
