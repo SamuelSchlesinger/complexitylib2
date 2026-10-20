@@ -41,8 +41,9 @@ polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are impl
 The next counting milestones remain the nondeterministic-machine characterizations of
 `#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
 none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
-now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and PH ⊆ P^#P ⊆ P^PP are proved. Extend these
-with counting reductions and further oracle results (P^PP ⊆ P^#P is open), preserving exact
+now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
+PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
+Extend these with counting reductions and further oracle results, preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
@@ -56,7 +57,10 @@ WPP ⊆ AWPP is proved, including signed binary-output targets. Fixed three-roun
 amplification gives error at most one eighth; every fixed positive SBP gap exponent is
 available, and intersecting an SBP language with a BPP language stays in SBP.
 MA ⊆ SBP is proved with the Arthur–Merlin classes. Remaining approximate-counting milestones include SBP ⊆ AM, uniform AWPP
-amplification to input-dependent error, and AWPP PP-lowness.
+amplification to input-dependent error ([#31](https://github.com/SamuelSchlesinger/complexitylib2/issues/31)), and AWPP PP-lowness.
+The [uniform counting aggregation](Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean)
+prerequisite supplies input-dependent unary powers and word sums for GapP; the full AWPP
+error-reduction theorem remains outstanding.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon

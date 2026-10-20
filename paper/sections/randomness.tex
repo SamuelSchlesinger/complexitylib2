@@ -90,18 +90,32 @@ remains separate unfinished work.\citep{Toda1991}
 
 \begin{result}
 \subsection{Toda's theorem with a PP oracle}
-\[\cc{PH}\subseteq\cc{P}^{\#\cc{P}}\subseteq\cc{P}^{\cc{PP}}.\]
+\[\cc{PH}\subseteq\cc{P}^{\#\cc{P}}=\cc{P}^{\cc{PP}}.\]
 $\cc{P}^{\cc{PP}}$ uses one polynomial-time oracle program, fixed before the oracle, correct
 against every oracle language agreeing with some PP problem on its encoded instances; off-code
-answers are arbitrary and queries are not counted. It contains $\cc{P}^A$ for every $A\in\cc{PP}$.
+answers are arbitrary and no fixed query-count bound is imposed. It contains $\cc{P}^A$ for every $A\in\cc{PP}$.
 For $f\in\#\cc{P}$, $\{(b,k)\mid k\le f(b)\}\in\cc{PP}$ via GapP, and each $\#\cc{P}$ bit request is
 answered by binary search with polynomially many PP queries, substituted into the program by open
-oracle substitution. The reverse inclusion $\cc{P}^{\cc{PP}}\subseteq\cc{P}^{\#\cc{P}}$ is not
-formalized.\citep{Toda1991}
+oracle substitution.
+
+For the reverse inclusion, let $c(b)$ count the accepting strings of a PP verifier
+using $p(n)$ random bits, where $n$ is the encoded input length. The function
+$h(b)=2c(b)+(2^{p(n)}-1)$ is in $\#\cc{P}$, and its zero-based bit $p(n)+1$
+is one exactly when $2^{p(n)}<2c(b)$. This includes zero random bits and rejects
+ties. Each PP query word $w$ is replaced by the encoded pair
+$(w,p(|w|)+1)$, requesting that single bit of $h$ without decoding $w$.
+The resulting deterministic program is fixed before the bit oracle is chosen
+and works for every oracle answering $h$ on valid pair codes, with arbitrary
+answers elsewhere. Open substitution certifies uniform polynomial time,
+including the cost of constructing requests and reading replies; it is not
+merely a query bound. The direct shifted-count proof implements the standard
+equivalence of PP and counting oracles.\citep{Toda1991,Fortnow1997}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{135}{Cslib.Complexity.PWithOracle_subset_PWithPPOracle}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{156}{Cslib.Complexity.setOf_le_mem_PP}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{359}{Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle}
 \declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{467}{Cslib.Complexity.PH_subset_PWithPPOracle}
+\declat{39c2e0198d7f0db5555e7f478933789d7d772631}{Complexity/Computability/Complexity/Classes/PP/Bit.lean}{59}{Cslib.Complexity.exists_SharpP_testBit_of_mem_PP}
+\declat{39c2e0198d7f0db5555e7f478933789d7d772631}{Complexity/Computability/Complexity/Classes/Oracle/CountingEquivalence.lean}{92}{Cslib.Complexity.PWithPPOracle_eq_PWithSharpPOracle}
 \end{result}
 
 \begin{result}
@@ -203,6 +217,27 @@ bit length, so the numeric values may be exponential in input length.
 \citep[Theorem 3.5]{Fortnow1997}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{41}{Cslib.Complexity.SharpP.of_polyTime}
 \declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/SharpP/PolyTime.lean}{58}{Cslib.Complexity.GapP.of_polyTime}
+
+Uniform aggregation also permits input-dependent bounds. If $r(x)$ is computed in
+polynomial time with unary output and $g\in\cc{GapP}$, then
+$x\mapsto g(x)^{r(x)}$ is in $\cc{GapP}$, including signed values and exponent zero.
+For a jointly uniform counting function $f(x,w)$ in $\#\cc{P}$ or $\cc{GapP}$
+on the encoded pair, the function
+\[
+x\longmapsto\sum_{w\in\{0,1\}^{r(x)}} f(x,w)
+\]
+belongs to the same class. Unary output ensures that the number of repeated
+factors and the word length are polynomially bounded; no polynomial bound on
+the numeric value of the resulting count is asserted. Variable certificate
+lengths are padded with false bits to preserve counts exactly. The signed-product
+verifier uses $r(x)(p_+(|x|)+p_-(|x|))$ certificate bits before final padding,
+where $p_+$ and $p_-$ are the two original counting-certificate polynomials.
+These are uniform verifier closure results, not yet the AWPP amplification theorem.
+\citep{FennerFortnowKurtz1994}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{49}{Cslib.Complexity.SharpP.of_polyTime_length}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{61}{Cslib.Complexity.SharpP.sum_bits_mem}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{83}{Cslib.Complexity.GapP.sum_bits_mem}
+\declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{175}{Cslib.Complexity.GapP.pow_mem_polyTime}
 \end{result}
 
 \begin{result}
