@@ -1249,6 +1249,28 @@ refer to the following entries in the plural, and use “there exist” for the 
 Both are applied; the PDF was regenerated and the corrected page rendered and checked.
 No theorem statement or proof changed.
 
+## Uniform SBP multiplicative gap amplification (PR #46, 20 October 2026)
+
+Worker `sbp-amplification-20261020` adds unary variable #P powers and uniform SBP gap
+strengthening. Source `56e55d873fe57730bf723d7c56af0b6c16fc4d30` passes all six gates.
+Independent coordinator `/root` performed an early source/API review without findings,
+checking exact row counts, zero width and empty products, count-preserving certificate
+padding, the binary-output threshold power and the positive dominating repetition count.
+Exact-revision source, test and index review is requested in PR #46.
+
+The existing counting-algebra and amplification entries are extended, keeping the curated
+count at 122. The SBP statement has one #P count and one positive binary-output polynomial-time
+threshold for all inputs. The requested exponent may be noncomputable if polynomially bounded;
+a fixed dominating length polynomial supplies the repetition schedule. The prose distinguishes
+a multiplicative gap from normalized additive error. Watson's powering argument is credited,
+with the uniform dominated-rate formulation identified as a checked consequence.
+
+Tests give a nonconstant language with count 3 on members and 1 on nonmembers and threshold 3;
+clients cover varying, zero and possibly noncomputable requested rates, along with #P zero-width
+and empty-product boundaries. Named axiom guards use only the three permitted axioms. Both new
+index links were verified against the pinned source. The PDF builds without undefined citations
+or overfull boxes; pages 19 and 25 were rendered and visually inspected. Review remains AI-assisted,
+not human editorial approval or machine-checked prose equivalence. AI assistance: OpenAI Codex.
 
 ## 2026-10-20: Formula-defined target constants
 
@@ -1278,3 +1300,57 @@ on page 8 and preserved AWPP entry on page 26 were rendered and visually inspect
 lifting for arbitrary bases, numeric-preserving composition and ordered complexity/capture results
 remain open. These AI reviews do not imply human editorial approval or machine-checked prose
 equivalence. AI assistance: OpenAI Codex.
+
+### Polynomial-family wide-gap robustness (2026-10-20)
+
+- Worker `poly-wpp-20261020` added the full one-sided polynomial-family WPP/LWPP
+  characterization, including uniformly computed signed binary target lists and indexed forms,
+  at source revision `3910fa96e6b22221363c38f3b3f0f33c49d20650`.
+- Independent coordinator `coordinator-ops-20261020` reviewed the source, meaningful variable
+  target clients, and index draft against that revision. No mathematical/API findings were
+  reported. The requested prose clarification now states that the target count is computed in
+  polynomial time with unary output. The review checked the unknown accepting index, list-output
+  bounds, length-only LWPP family, negative/duplicate/empty lists, and the one-sided scope.
+- The new entry credits Hemaspaandra, Hemaspaandra, Spakowski and Watanabe (Theorems 3.1 and 3.7)
+  and Fenner--Fortnow--Kurtz. It leaves two-sided target families, oracle lowness and counting-machine
+  characterizations separate. The previous wide-gap entry now points to this result.
+- All six prescribed checks passed on the source revision. The reviewed PR41 dependency stack was
+  then integrated without changes to this source; integrated validation and final exact-head
+  coordinator approval are recorded in the PR.
+- All five new declaration anchors were checked against the pinned source. The combined PDF has
+  123 entries; rendered pages 23 and 24 were inspected for layout and clipping. This AI review is
+  not human editorial approval or a formal proof of prose equivalence.
+
+PR #46 integration merges the independently reviewed WPP branch at `8cb09256`, preserving
+its polynomial-family robustness entry and the formula-defined constants entry from PR #41.
+The combined index has 123 entries; SBP source and tests are unchanged. All six gates pass
+on the combined tree. The PDF was rebuilt without undefined citations or overfull boxes;
+the changed SBP/counting pages 19 and 26 were rendered and visually inspected. Source links
+retain their previously checked revisions. Final integration approval is recorded in PR #46.
+
+### Two-sided polynomial-target robustness (2026-10-20)
+
+- Worker `two-sided-wpp-20261020` proved both WPP/LWPP two-sided characterizations and indexed
+  forms at source `83f5e8ab8dcde006b3fb28bbd72e9ba837e23fef`, following Definition 3.8,
+  Corollary 3.11, Theorem 3.12 and Appendix A of Hemaspaandra--Hemaspaandra--Spakowski--Watanabe.
+- The existing polynomial-family robustness entry now states the full disjoint acceptance and
+  rejection family theorem. It preserves the one-sided specialization, explicit uniform binary
+  output and unary-index/count conventions, all-length LWPP disjointness, zero on either original
+  side, signed/repeated targets, unknown indices, and empty-family boundaries. The curated count
+  remains 123. Oracle lowness and counting-machine equivalences remain separate.
+- Source and tests are MCP-clean; all six prescribed gates pass. Nonvacuous tests accept zero
+  against nonzero rejection, reverse the roles, grow both signed/repeated lists, check length zero
+  and forbidden overlap, and exercise empty-family and indexed-family clients. Headline axiom
+  guards use only the standard three allowed axioms.
+- Four new declaration links were verified against the exact source. The PDF was rebuilt and
+  rendered page 24 inspected without clipping. Independent API/correctness/index review has been
+  requested from a separate coordinator; the exact-head verdict and any revisions are recorded
+  in the PR. This does not imply human editorial approval.
+
+
+PR #52 integration preserves source and tests at `83f5e8ab` and incorporates main `37f07692`,
+including PR #46. All six gates pass on the combined tree. The independent coordinator reviewed
+source, tests and the rendered entry with no correctness/API findings; its requested index
+clarification now names GapP closure for this product of differences, without asserting general
+indexed-product closure. The PDF was rebuilt after that correction; exact-head approval is
+recorded in the PR. The combined count remains 123.

@@ -245,6 +245,7 @@ import ComplexityTests.ResourceClasses4
 import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
+import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
@@ -276,6 +277,8 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
+import ComplexityTests.WPPRobustness
+import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WorstCaseHardness

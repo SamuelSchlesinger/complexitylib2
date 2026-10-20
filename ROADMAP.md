@@ -47,10 +47,14 @@ Extend these with counting reductions and further oracle results, preserving exa
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
-reduction closure, unary-indexed target normalization, and finite multiple-target robustness.
+reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
+multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
+(Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
+accepting/rejecting binary target lists. Original targets may be zero; neither index must be
+computable ([WPP.TwoSided](Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean)).
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
 MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
-polynomial-family multiple-target robustness, and WPP/LWPP oracle lowness.
+and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
@@ -60,8 +64,10 @@ dyadic denominator. The requested rate need not be computable: the construction
 uses a fixed dominating polynomial. The explicit construction uses `12q(n)` majority
 trials and denominator exponent `12q(n)p(n)`; see
 [AWPP amplification](Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean).
-Every fixed positive SBP gap exponent is available, and intersecting an SBP language
-with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
+[Uniform SBP amplification](Complexity/Computability/Complexity/Classes/SBP/Amplification.lean)
+achieves multiplicative gap `2^r(x)` for every polynomially bounded requested exponent,
+with a #P count and positive binary-output polynomial-time threshold. Intersecting an SBP
+language with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
 The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
 already proves SBP ⊆ AM. AWPP PP-lowness remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
