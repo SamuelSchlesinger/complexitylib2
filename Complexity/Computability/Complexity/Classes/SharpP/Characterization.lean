@@ -20,8 +20,8 @@ the rejecting count: each unsuccessful witness contributes exactly one rejecting
 
 The machine, number of tapes, finite state type and clock are fixed before the input. For an
 arbitrary instance encoding the halting contract is on its image; specializing to `encBits`
-covers every binary input. The signed reverse `GapP` characterization is separate work: merely
-subtracting the counts of this verifier machine does not realize an arbitrary #P difference.
+covers every binary input. `Classes.SharpP.GapMachine` uses balanced verdict routing to realize
+arbitrary #P differences and prove the signed `GapP` characterization.
 
 ## Main results
 
@@ -40,13 +40,6 @@ the forward certified checker and its source credit are in `Classes.SharpP.Machi
 @[expose] public section
 
 open Cslib Turing Turing.MultiTapeTM
-
-private theorem countP_enumList (n : ℕ) (verdict : List Bool → Bool) :
-    (BitString.enumList n).countP verdict =
-      (Finset.univ.filter fun word : BitString n => verdict (List.ofFn word)).card := by
-  have hall : (BitString.enum n).toFinset = Finset.univ := by ext; simp
-  simpa [BitString.enumList, List.countP_map, Function.comp_def, hall] using
-    ((BitString.nodup_enum n).card_eq_countP (P := fun word => verdict (List.ofFn word))).symm
 
 namespace Turing.MultiTapeCTM
 
@@ -84,7 +77,7 @@ theorem exists_verifier_counting_machine (enc : α ↪ List Bool) (p : Polynomia
     simp only [List.countP_map, Function.comp_def] at hcount
     rw [hcount]
     simpa [List.countP_map, Function.comp_def, encBool_apply] using
-      countP_enumList (p.eval (enc a).length) (fun word => verifier (a, word) == verdict)
+      BitString.countP_enumList (p.eval (enc a).length) (fun word => verifier (a, word) == verdict)
   refine ⟨hhalt, ?_, ?_⟩
   · simpa [acceptCount, Complexity.acceptCount] using hverdict true
   · have hcount := Complexity.acceptCount_add_card_filter_eq_false
