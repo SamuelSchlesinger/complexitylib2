@@ -1354,3 +1354,34 @@ source, tests and the rendered entry with no correctness/API findings; its reque
 clarification now names GapP closure for this product of differences, without asserting general
 indexed-product closure. The PDF was rebuilt after that correction; exact-head approval is
 recorded in the PR. The combined count remains 123.
+
+## 2026-10-20: Lexicographic tuple order and canonical constants
+
+Worker `ordered-tuples-20261020` first factored generic tuple helpers into a lightweight
+module at `b231228b`, retaining all public names and the existing Encoding import interface.
+Source revision `51e253c1e9d3b0ea81512eb7ff0fe830a00435bc` then adds arbitrary-base,
+first-coordinate-most-significant tuple numbering, first-difference order, native quantifier-free
+strict/weak order formulas and uniquely selected full-domain canonical constants. A new curated
+entry records this prerequisite; successor, BIT lifting, numeric-preserving composition and
+ordered complexity/capture results remain open.
+
+The independent parent coordinator reviewed the refactor, source, tests and draft index with no
+API, correctness or prose findings, and independently checked MCP diagnostics and the rendered
+entry on page 9. Review covered arbitrary bases, the full-domain hypothesis, coordinate order,
+zero-dimensional singleton behavior and positive-dimensional constants. Exact final-head review
+is tracked in PR #51. These AI reviews do not imply human editorial approval or machine-checked
+prose equivalence. AI assistance: OpenAI Codex.
+
+All six gates pass separately after the refactor and after the source addition. Tests distinguish
+base-three lexicographic order from the existing colexicographic enumeration, check a base-five
+rank and its inverse, zero dimensions, constant ranks and native sentence pullback. Named axiom
+guards use only `propext`, `Classical.choice` and `Quot.sound`. The source credits existing tuple
+helpers, Mathlib's enumeration and Pi.Lex, and Immerman's Remark 1.32 and Exercise 1.33(1). The
+primary text's restricted-domain BIT warning is retained explicitly in the roadmap. The five new
+declaration links are pinned to the source revision above and verified against its exact lines.
+
+PR #51 integration preserves PR #52 head `70766f5b29c1fd2fa83cba5d04d6e83d569c5962`,
+including current main and PR #46. Tuple source and tests remain unchanged. All six gates pass on
+the combined tree. The curated index has 124 entries; the rebuilt PDF's tuple page 9 and preserved
+two-sided counting page 25 were rendered and inspected. No undefined citations or overfull boxes
+were introduced. The final integration revision is submitted for fresh coordinator approval.

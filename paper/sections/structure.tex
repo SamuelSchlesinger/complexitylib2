@@ -107,6 +107,43 @@ The earlier canonical-expansion interface is credited separately.
 \end{result}
 
 \begin{result}
+\subsection{Lexicographic tuple order and canonical constants}
+For every base $n\ge2$ and dimension $k\ge0$, the full tuple universe
+$[n]^k$ is in bijection with $[n^k]$ through the rank
+\[
+  \operatorname{rank}(x)=\sum_{i=0}^{k-1}x_i n^{k-1-i}.
+\]
+The inverse recovers coordinate $i$ by division by $n^{k-1-i}$ and remainder
+modulo $n$. Numerical rank order is exactly the first-coordinate-most-significant
+lexicographic order: $\operatorname{rank}(x)<\operatorname{rank}(y)$ iff some
+coordinate $i$ satisfies $x_i<y_i$ and every earlier coordinate agrees.
+The construction reuses the existing tuple enumeration by reversing coordinates;
+it works for arbitrary bases, including nonpowers of two.
+
+Native quantifier-free formulas over the canonical source structure define both
+strict and weak tuple order with these exact rank semantics. For positive dimension,
+coordinate equalities define the target constants
+\[
+  (0,\ldots,0),\qquad (0,\ldots,0,1),\qquad (n-1,\ldots,n-1),
+\]
+with ranks $0$, $1$ and $n^k-1$. Their existence and uniqueness are proved in the
+full tuple interpretation, so the constant-aware formula/sentence pullback applies.
+At dimension zero, the rank bijection still exists and its universe is a singleton;
+no two distinct constants are asserted there.
+
+This completes the full-domain order and constant prerequisite of
+Immerman's Remark 1.32 and Exercise 1.33(1). Successor and canonical BIT lifting,
+numeric-preserving composition and the ordered complexity/capture endpoints remain
+open. No automatic BIT definition for a restricted tuple domain is claimed.
+\citep[Remark 1.32 and Exercise 1.33]{Immerman1999}
+\declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{52}{Cslib.Logic.FO.Ordered.lexEquiv}
+\declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{93}{Cslib.Logic.FO.Ordered.lexRank_lt_iff_lex}
+\declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{90}{Cslib.Logic.FO.Ordered.realize_tupleLe}
+\declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{76}{Cslib.Logic.FO.Ordered.isQF_tupleLe}
+\declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{142}{Cslib.Logic.FO.Ordered.lexRank_tupleConstants_value}
+\end{result}
+
+\begin{result}
 \subsection{First-order model checking in logarithmic space}
 For a finite relational vocabulary and a first-order sentence $\varphi$ whose
 atomic formulas are relation symbols and equality applied to variables, the
