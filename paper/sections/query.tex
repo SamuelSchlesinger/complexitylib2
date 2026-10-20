@@ -105,23 +105,29 @@ formalization accompanying the tromino undecidability paper.
 \end{result}
 
 \begin{result}
-\subsection{Additive word-RAM simulation with padded input}
+\subsection{Additive word-RAM simulation with charged preparation}
 Let $p$ be a fixed word-RAM program with $r$ named registers, using only constants, copies,
 addition, truncated subtraction, indirect loads and stores, equality and unsigned comparison,
-jumps and halting. There is an executable compiler, independent of input and word size, into
-the library's natural-number RAM with logarithmic instruction costs. If the input list $u$
-has length and entries below $2^w$, and $p$ halts on $u$ with output $v$ after $t$
-source instructions, including its final halt, the compiled program halts with the same output
-within logarithmic cost
+jumps and halting. Set
 \[
-8\bigl(\ell(r+5)+1\bigr)(t+1)(w+1),
-\qquad \ell(m)=\lfloor\log_2\max(1,m)\rfloor+1.
+R=r+5,\qquad \ell(m)=\lfloor\log_2\max(1,m)\rfloor+1,\qquad
+A_r=8(\ell(R)+1),\quad B_r=(24+R)(\ell(R+5)+2).
 \]
-The target input is explicitly the list of $r+5$ zeros followed by $|u|$ and the entries of $u$.
-Installing this padded, length-bearing input is uncharged; the target's two register
-initialization instructions, translated instructions and final output copy and jump are charged.
-The theorem does not certify construction of the padded input from an arbitrary raw list.
-In fact, bare RAM inputs $[]$ and $[0]$ initialize identical states.
+There is an executable compiler, independent of input and word size, into the library's
+natural-number RAM with logarithmic instruction costs. If the input list $u$ has length and
+entries below $2^w$, and $p$ halts on $u$ with output $v$ after $t$ source instructions,
+including its final halt, the prepared target program halts with the same output within cost
+\[
+(A_r+B_r)(t+|u|+1)(w+1).
+\]
+Its external input is five zeros followed by $|u|$ and the entries of $u$. Installing this
+fixed length-bearing convention is uncharged. The target then copies the header and words
+backwards to address $R$, clears the prefix, initializes the compiler registers and executes
+the translated program; every instruction, including the final output copy and jump, is charged.
+The separate padded-input theorem starts with $R$ supplied zeros followed by $|u|$ and $u$,
+and bounds the compiler execution by $A_r(t+1)(w+1)$.
+Neither statement certifies an encoding reduction from an arbitrary bare list:
+bare RAM inputs $[]$ and $[0]$ initialize identical states.
 
 This is a forward simulation of successful runs, not reflection of source overflow or
 falloff faults. Word-width access, multiplication, division, bitwise operations and shifts are
@@ -130,7 +136,35 @@ the target is the library's documented natural-number adaptation of Cook--Reckho
 No Turing-machine simulation or complexity-class equivalence is asserted.
 \citep{CookReckhow1973,Tromino2025}
 \declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{61}{Cslib.WordRAM.Instr.IsAdditive}
-\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{487}{Cslib.WordRAM.ToRAM.executes_compile}
-\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{519}{Cslib.WordRAM.ToRAM.paddedInput}
+\declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{55}{Cslib.WordRAM.ToRAM.preparedProgram}
+\declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{93}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared}
+\declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{61}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_of_bitLength_le}
 \declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{569}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded}
+\end{result}
+
+\begin{result}
+\subsection{Bounded-universe element distinctness with logarithmic RAM cost}
+A single fixed program on the library's natural-number RAM decides whether a list of $n$
+naturals, each below $n$, has no duplicates. It starts with five supplied zero scratch words,
+a length header and the input words, and halts with output $1$ for a distinct list and $0$
+otherwise within logarithmic instruction cost
+\[
+2735(n+1)\bigl(\lfloor\log_2(n+1)\rfloor+1\bigr).
+\]
+The program combines input preparation with the compiled twelve-register direct-addressing
+word-RAM algorithm above. Every relocation, clearing, initialization, simulation and output instruction
+is charged: preparation contributes at most $287(n+1)(\lfloor\log_2(n+1)\rfloor+1)$ and
+compiled execution at most $2448(n+1)(\lfloor\log_2(n+1)\rfloor+1)$. The latter bound also
+holds when the seventeen-zero padded workspace is supplied directly. The constants are not
+optimized, and the statements include the empty input.
+
+The external five-zero prefix, length header and input words are preloaded without charge.
+The entry bound is a promise; unrestricted element distinctness and a reduction from arbitrary
+encoded inputs are not established. This is a logarithmic-cost RAM result, with no claimed
+Turing-machine time bound. Mathematical and model sources are direct addressing, Cook--Reckhow
+RAM, and the lean-trominoes word-RAM formalization.
+\citep[Section 11.1]{CLRS2009}\citep{CookReckhow1973,Tromino2025}
+\declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean}{67}{Cslib.Algorithms.WordRAM.ElementDistinctness.ramProgram}
+\declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean}{111}{Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup}
+\declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean}{99}{Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded}
 \end{result}

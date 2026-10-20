@@ -540,10 +540,15 @@ space bounds. Further class-level work needs resource certificates for the actua
   prefix clearing from five zero scratch cells followed by a length header and the input words.
   It reaches the exact padded register state before arbitrary appended code in logarithmic cost
   `(24 + R) * (bitLength (R + 5) + 2) * (input.length + 1) * b` for `R ≥ 5`, given bit-length
-  bound `b` on the header and words; external input installation remains uncharged. Open: its
-  composition with the compiler and the bounded-universe element-distinctness cost corollary
-  ([#81](https://github.com/SamuelSchlesinger/complexitylib2/issues/81)), and wider-fragment or
-  Turing-machine simulations. The unrestricted converse
+  bound `b` on the header and words; external input installation remains uncharged. The
+  [composed bridge](Complexity/Computability/WordRAM/RAMInput.lean) now includes that preparation
+  in `C_r * (t + input.length + 1) * (w + 1)`, for an explicit constant depending only on the
+  source register count. The same fixed compiler gives a
+  [bounded-universe element-distinctness decider](Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean)
+  of logarithmic RAM cost `2735 * (n + 1) * (Nat.log 2 (n + 1) + 1)`, including preparation;
+  the separately supplied padded-input bound is `2448 * (n + 1) * (Nat.log 2 (n + 1) + 1)`.
+  These statements retain the explicit preloaded length-bearing convention and entry promise.
+  Wider-fragment and Turing-machine simulations remain open. The unrestricted converse
   from prescribed-width to uniform decision is false: width can supply instance-dependent advice.
   A useful conversion must specify an input-fit guarantee, a size-based width-selection procedure
   with computability and resource bounds, encoding conventions, and simulation overhead. Transfer
