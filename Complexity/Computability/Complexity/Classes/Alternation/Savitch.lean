@@ -366,7 +366,8 @@ theorem exists_isGameVerifier_of_mem_PSPACE (h : A ∈ PSPACE enc) :
       (enc a).length := by
     rw [heval]
     exact Nat.mul_le_mul_left 2 (hr a)
-  rw [(hA.1 a).2, ← MultiTapeNTM.savitchDecide_eq_true_iff (hA.1 a).1 (hcd a),
+  rw [(hA.recognizesInSpace a).2,
+    ← MultiTapeNTM.savitchDecide_eq_true_iff (hA.recognizesInSpace a).1 (hcd a),
     MultiTapeNTM.savitchDecide,
     savitch_eq, ← Nat.add_sub_cancel' hle, List.replicate_add, alternation_append_iff
       fun z => by rw [Cslib.Complexity.sum_replicate_one, savitchVerifier, savitchVerifier,

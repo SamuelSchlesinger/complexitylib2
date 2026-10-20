@@ -82,6 +82,31 @@ example (A : Set (List Bool)) (s : List Bool → ℕ) :
   rw [hlast] at hhalt
   simp [MultiTapeNTM.initCfg, Cfg.init, Cfg.Halted, loopOrAccept] at hhalt
 
+/-- Halt with output `[false]`. -/
+private def rejectAction : Action 0 Bool Bool :=
+  { inputTape := 0, workTapes := Fin.elim0, output := some false, state := none }
+
+/-- From its only running state, either accept or reject: two halting branches. -/
+private def rejectOrAccept : MultiTapeNTM 0 Bool Bool where
+  q₀ := false
+  Tr q _ _ action := q = false ∧ (action = acceptAction ∨ action = rejectAction)
+
+/-- A computation path of one step accepts. -/
+private theorem accepts_rejectOrAccept (input : List Bool) : rejectOrAccept.Accepts input := by
+  have hstep : rejectOrAccept.Step (rejectOrAccept.initCfg input)
+      (acceptAction.apply (rejectOrAccept.initCfg input)) := ⟨acceptAction, ⟨rfl, .inl rfl⟩, rfl⟩
+  refine ⟨⟨(RelSeries.singleton _ _).cons (rejectOrAccept.initCfg input) hstep, rfl⟩, ?_, ?_⟩ <;>
+    simp [acceptAction]
+
+/-- **A branching decider.** Both branches halt after one step and one of them accepts, so the
+machine decides every word within no space. -/
+example : rejectOrAccept.DecidesInSpace encBits Set.univ fun _ => 0 :=
+  ⟨fun a => ⟨MultiTapeNTM.runsInSpace_zero_tapes _ _ _, by simpa using accepts_rejectOrAccept a⟩,
+    fun _ => ⟨1, MultiTapeNTM.runsInTime_one_of_forall_step_initCfg fun c hc => by
+      simp only [MultiTapeNTM.Step, MultiTapeNTM.initCfg, Cfg.init] at hc
+      obtain ⟨action, ⟨-, rfl | rfl⟩, rfl⟩ := hc <;>
+        simp [Cfg.Halted, Action.apply, acceptAction, rejectAction]⟩⟩
+
 /-- Run paths of every length stay at the initial configuration. -/
 private theorem exists_loop_path (input : List Bool) (n : ℕ) :
     ∃ p : loopOrAccept.RunPath input, p.head = loopOrAccept.initCfg input ∧ p.length = n ∧

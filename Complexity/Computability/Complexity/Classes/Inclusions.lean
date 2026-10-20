@@ -117,7 +117,7 @@ theorem RunsInTime.runsInSpace {t : ℕ} (h : ntm.RunsInTime input t) :
   exact (RunPath.space_le_of_subset hsub).trans
     ((RunPath.space_le_mul_time_add_one q.toRunPath).trans_eq (by rw [← hq]; rfl))
 
-/-- A decider within time `t` decides within the space it visits in that time, `k (t a + 1)`, and
+/-- A decider within time `t` decides within the space it visits in that time, `k * (t a + 1)`, and
 every branch halts within `t a` steps. -/
 theorem DecidesInTime.decidesInSpace {α : Type*} {ntm : MultiTapeNTM k Bool State}
     {enc : α ↪ List Bool} {A : Set α} {t : α → ℕ} (h : ntm.DecidesInTime enc A t) :
@@ -331,7 +331,8 @@ theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
       · exact hT a
       · exact (hedgeMax _).trans (Nat.mul_le_mul_left cE (Nat.pow_le_pow_left (by omega) dE))
   have hA' : A = {a | ntm.savitchDecide c d (enc a) = true} := Set.ext fun a =>
-    (hAn.1 a).2.trans (MultiTapeNTM.savitchDecide_eq_true_iff (hAn.1 a).1 (hcd a)).symm
+    (hAn.recognizesInSpace a).2.trans
+      (MultiTapeNTM.savitchDecide_eq_true_iff (hAn.recognizesInSpace a).1 (hcd a)).symm
   rw [hA']
   exact mem_EXP_iff.mpr ⟨K, DTIME_mono_of_eventually_le hK hmem⟩
 

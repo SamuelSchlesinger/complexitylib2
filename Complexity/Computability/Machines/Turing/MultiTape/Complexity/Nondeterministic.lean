@@ -35,8 +35,10 @@ time bound is imposed: a branch may run forever or end stuck, and neither accept
 [Sipser, Definition 8.1][Sipser2013]: on every encoded instance some number of steps `t` bounds
 every computation path (upstream `Turing.MultiTapeNTM.RunsInTime`). A path may still end stuck
 before `t` steps; it does not accept, as a branch of a textbook machine that has no move rejects.
-The bound `t` may depend arbitrarily on the instance; as the machines branch finitely, this is
-equivalent to every branch halting. The terminology follows Sipser's for deterministic machines,
+The bound `t` may depend arbitrarily on the instance. For machines with finitely many states, as
+in `NL` and `NPSPACE`, there are finitely many actions, so the machine branches finitely and by
+König's lemma this is equivalent to every branch halting; with infinitely many states it is
+stronger. The terminology follows Sipser's for deterministic machines,
 which *recognize* a language when they may loop and *decide* it when they halt on every input.
 
 `Turing.MultiTapeNTM.DecidableInPolyTime` asks for one machine with a binary alphabet and finitely
@@ -66,6 +68,7 @@ many states, and one polynomially bounded time bound, for all instances. Like
 * `Turing.MultiTapeNTM.runsInTime_one_of_forall_step_initCfg`: a machine whose first steps all
   halt runs within one step.
 * `Turing.MultiTapeNTM.DecidesInSpace.recognizesInSpace`: a decider is a recognizer.
+* `Turing.MultiTapeNTM.DecidesInSpace.exists_runsInTime`: every branch of a decider halts.
 * `Turing.MultiTapeTM.ComputesFunInTimeAndSpace.decidesInSpace`,
   `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_decidesInSpace`: a deterministic decider
   within space `s` is a nondeterministic one with one computation path.
@@ -231,11 +234,18 @@ theorem DecidesInSpace.recognizesInSpace {ntm : MultiTapeNTM k Bool State} {enc 
     {A : Set α} {s : α → ℕ} (h : ntm.DecidesInSpace enc A s) : ntm.RecognizesInSpace enc A s :=
   h.1
 
+/-- Every branch of a decider halts: on every encoded instance some number of steps bounds every
+computation path. -/
+theorem DecidesInSpace.exists_runsInTime {ntm : MultiTapeNTM k Bool State}
+    {enc : α ↪ List Bool} {A : Set α} {s : α → ℕ} (h : ntm.DecidesInSpace enc A s) (a : α) :
+    ∃ t, ntm.RunsInTime (enc a) t :=
+  h.2 a
+
 /-- Space bounds can be increased. -/
 theorem DecidesInSpace.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List Bool} {A : Set α}
     {s s' : α → ℕ} (h : ntm.DecidesInSpace enc A s) (hs : ∀ a, s a ≤ s' a) :
     ntm.DecidesInSpace enc A s' :=
-  ⟨h.1.mono hs, h.2⟩
+  ⟨h.recognizesInSpace.mono hs, h.exists_runsInTime⟩
 
 /-- **A deterministic decider is a nondeterministic decider** with one computation path: a machine
 computing a Boolean function `f` within time `t` and space `s` decides, as a nondeterministic
