@@ -22,7 +22,8 @@ The complete graph with self-loops, of spectral expansion `0`, shows the hypothe
 
 The language `Cslib.Complexity.USTCON` is neither empty nor everything: the edge on two vertices
 connects its ends, and the empty graph on two vertices does not; `Cslib.Complexity.USTCON_mem_L`
-places it in `L`.
+places it in `L`. The encoding of the edge is pinned bit by bit: the header `11 0 0 1 0`, then the
+matrix `0110`.
 -/
 
 namespace ComplexityTests.Reingold
@@ -81,6 +82,11 @@ def emptyInstance : Complexity.USTCONInstance where
   s := 0
   t := 1
 
+-- The encoding of the edge: `1^2 0`, `1^0 0`, `1^1 0`, then the matrix row by row.
+example :
+    edgeInstance.encode = [true, true, false, false, true, false, false, true, true, false] := by
+  decide
+
 example : edgeInstance ∈ Complexity.USTCON :=
   SimpleGraph.Adj.reachable (by decide)
 
@@ -118,6 +124,13 @@ info: 'Cslib.RotationMap.exists_iterate_reingoldEvalStep' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.exists_iterate_reingoldEvalStep
+
+/--
+info: 'Cslib.Reachability.Reingold.reachable_iff_exists_walk_of_le_two_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Reachability.Reingold.reachable_iff_exists_walk_of_le_two_pow
 
 /--
 info: 'Cslib.Reachability.Reingold.reachable_iff_exists_walk' depends on axioms:
