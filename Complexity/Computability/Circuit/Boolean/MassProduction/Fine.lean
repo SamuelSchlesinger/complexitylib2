@@ -8,12 +8,12 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Schedule
-public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpStatement
+public import Complexity.Computability.Circuit.Boolean.MassProduction.FineStatement
 public import Complexity.Computability.Circuit.Replication
 public import Cslib.Computability.Circuit.Boolean.Complexity
 import Complexity.Computability.Circuit.Boolean.MassProduction.Pipeline
 import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler
-import Complexity.Computability.Circuit.Boolean.MassProduction.SharpParameters
+import Complexity.Computability.Circuit.Boolean.MassProduction.FineParameters
 import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 import Complexity.Foundations.Combinatorics.LineCode.Field
 import Complexity.Foundations.Combinatorics.LineCode.HighRate
@@ -25,7 +25,7 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
 /-!
-# Sharp mass production
+# Fine mass production
 
 The construction for `2 ^ D` copies of a function on `p + w` inputs:
 
@@ -40,11 +40,11 @@ The construction for `2 ^ D` copies of a function on `p + w` inputs:
 3. A pipeline looks up the information points, routes every suffix to the resources on its
    line, evaluates each resource once and sums the returned bits (`PipelineSizeBound`).
 
-With the parameters of `MassProduction.Sharp`, the resource bank costs
+With the parameters of `MassProduction.Fine`, the resource bank costs
 `(1 + o(1)) / (1 - γ) · 2 ^ n / n` and every other circuit is exponentially smaller.
 
 `SchedulerSizeBound` and `PipelineSizeBound` are the two circuit-size contracts; this module
-derives the core sharp theorem from them (`sharpMassProducesThrough_of_bounds`) and discharges
+derives the core fine theorem from them (`fineMassProducesThrough_of_bounds`) and discharges
 both (`schedulerSizeBound`, `pipelineSizeBound`). Sizes count every gate. These
 are bounds on circuit size, not on the running time of any circuit constructor.
 
@@ -57,15 +57,15 @@ are bounds on circuit size, not on the running time of any circuit constructor.
 
 * `Cslib.Circuits.Boolean.MassProduction.exists_complexity_le_of_bounds`: the finite bound at
   one input length.
-* `Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough_of_bounds`: the core sharp
+* `Cslib.Circuits.Boolean.MassProduction.fineMassProducesThrough_of_bounds`: the core fine
   theorem from the two contracts.
 * `Cslib.Circuits.Boolean.MassProduction.schedulerSizeBound`,
   `Cslib.Circuits.Boolean.MassProduction.pipelineSizeBound`: both contracts hold.
-* `Cslib.Circuits.Boolean.MassProduction.sharpMassProducesThrough`,
-  `Cslib.Circuits.Boolean.MassProduction.sharpMassProducesAt`: the sharp coefficient
+* `Cslib.Circuits.Boolean.MassProduction.fineMassProducesThrough`,
+  `Cslib.Circuits.Boolean.MassProduction.fineMassProducesAt`: the fine coefficient
   `1 / (1 - γ) + o(1)` at every rational exponent below one.
 * `Cslib.Circuits.Boolean.MassProduction.exponentialMassProduction`: the exponential copy range.
-* `Cslib.Circuits.Boolean.MassProduction.realSharpMassProduction`: real rates.
+* `Cslib.Circuits.Boolean.MassProduction.realFineMassProduction`: real rates.
 
 ## References
 
@@ -110,7 +110,7 @@ def PipelineSizeBound (A E : ℕ) : Prop :=
 theorem pow_le_pow_add {B E E' : ℕ} {x : ℕ} (hx : x ≤ B) (hB : 1 ≤ B) : x ^ E ≤ B ^ (E + E') :=
   (Nat.pow_le_pow_left hx E).trans (Nat.pow_le_pow_right hB (Nat.le_add_right E E'))
 
-/-- **The finite sharp bound** at one input length. With a field of `2 ^ (h * m)` elements,
+/-- **The finite fine bound** at one input length. With a field of `2 ^ (h * m)` elements,
 `ℓ ≤ 2 ^ h`, enough blocks for the rate precision `X`, the direction budget, a negligible last
 code copy and single copies of size at most `L` on `w` inputs, the `2 ^ D` copies of every
 function on `p + w` inputs cost a resource bank `R * L` with `X R ≤ (X + 2) 2 ^ p`, plus an
@@ -253,32 +253,32 @@ theorem pipelineSizeBound : PipelineSizeBound 1444 4 := by
   rw [Pipeline.succ_eq_card scalar]
   exact complexity_directProduct_le_explicit_of_isScheduler bits scalar C place sched hsched hL f
 
-/-- **Sharp mass production from the circuit contracts.** If schedulers and the pipeline obey
+/-- **Fine mass production from the circuit contracts.** If schedulers and the pipeline obey
 polynomial size bounds, then at every rational exponent `num / den < 1` and positive precision `P`,
 eventually every function on `n` inputs has `k ≤ 2 ^ (⌊num n / den⌋ + 1)` copies of cost at most
 `(1 + 1 / P) den / (den - num) · 2 ^ n / n`. -/
-theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerSizeBound A₁ E₁)
+theorem fineMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : SchedulerSizeBound A₁ E₁)
     (hP : PipelineSizeBound A₂ E₂) {num den : ℕ} (hnd : num < den) :
-    SharpMassProducesThrough num den := by
+    FineMassProducesThrough num den := by
   intro P
   set X := 16 * (P + 1) with hXdef
   have hX : 0 < X := by omega
   have hden : 0 < den := by omega
   obtain ⟨m₀, hm₀⟩ := eventually_atTop.mp (eventually_mul_complexity_single_le X)
-  set ℓ := Sharp.dimension num den X with hℓ
-  set h := Sharp.blockWidth num den X with hh
-  filter_upwards [Sharp.eventually_add_depth_le (X := X) hnd 9,
-    Sharp.eventually_le_blocks (num := num) (X := X) hden (X * (2 ^ (h * ℓ) - 1) + 1),
-    Sharp.eventually_le_suffixWidth (X := X) hnd hX (m₀ + 1),
-    Sharp.eventually_mul_two_pow_dimension_le (X := X) hnd.le X,
-    Sharp.eventually_overhead_le (X := X) hnd hX P ((A₁ + 4 * A₂) * 5 ^ (E₁ + E₂)) (E₁ + E₂)]
+  set ℓ := Fine.dimension num den X with hℓ
+  set h := Fine.blockWidth num den X with hh
+  filter_upwards [Fine.eventually_add_depth_le (X := X) hnd 9,
+    Fine.eventually_le_blocks (num := num) (X := X) hden (X * (2 ^ (h * ℓ) - 1) + 1),
+    Fine.eventually_le_suffixWidth (X := X) hnd hX (m₀ + 1),
+    Fine.eventually_mul_two_pow_dimension_le (X := X) hnd.le X,
+    Fine.eventually_overhead_le (X := X) hnd hX P ((A₁ + 4 * A₂) * 5 ^ (E₁ + E₂)) (E₁ + E₂)]
     with n hbud hblocks hsuf hloss hover
   intro f k hk
-  set p := Sharp.prefixWidth num den X n with hp
-  set w := Sharp.suffixWidth num den X n with hw
-  set m := Sharp.blocks num den X n with hm
-  set D := Sharp.depth num den n with hD
-  have hsplit : n = p + w := (Sharp.prefixWidth_add_suffixWidth hnd.le n).symm
+  set p := Fine.prefixWidth num den X n with hp
+  set w := Fine.suffixWidth num den X n with hw
+  set m := Fine.blocks num den X n with hm
+  set D := Fine.depth num den n with hD
+  have hsplit : n = p + w := (Fine.prefixWidth_add_suffixWidth hnd.le n).symm
   -- Single copies on the suffix.
   set L := (X + 1) * 2 ^ w / (X * w) with hLdef
   have hXw : 0 < X * w := Nat.mul_pos hX (by omega)
@@ -297,8 +297,8 @@ theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Sch
     simp only [f']
     congr 1
   obtain ⟨R, O, hcomp, hR, hO⟩ := exists_complexity_le_of_bounds (D := D) (h := h) (ℓ := ℓ)
-    (m := m) (p := p) (w := w) hS hP hX Sharp.blockWidth_pos (by omega)
-    Sharp.dimension_le_two_pow_blockWidth (by omega) hbud hloss hL f'
+    (m := m) (p := p) (w := w) hS hP hX Fine.blockWidth_pos (by omega)
+    Fine.dimension_le_two_pow_blockWidth (by omega) hbud hloss hL f'
   have hcost : massComplexity f k ≤ (R * L + O : ℕ) := by
     calc massComplexity f k = massComplexity (fun x : Fin n → Bool =>
           f' (x ∘ Fin.cast hsplit.symm)) k := by rw [hff']
@@ -309,16 +309,16 @@ theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Sch
       _ ≤ (R * L + O : ℕ) := by exact_mod_cast hcomp
   -- The overhead is negligible.
   have hbase : 2 * (p + w) + ℓ * (h * m) + D + 4 ≤ 5 * (n + 1) := by
-    have h1 := Sharp.dimension_mul_fieldWidth_le (num := num) (den := den) (X := X) n
-    have h2 := Sharp.prefixWidth_le (X := X) hnd.le n
+    have h1 := Fine.dimension_mul_fieldWidth_le (num := num) (den := den) (X := X) n
+    have h2 := Fine.prefixWidth_le (X := X) hnd.le n
     have h3 : D ≤ n + 1 := by
-      rw [hD, Sharp.depth]
+      rw [hD, Fine.depth]
       have : num * n / den ≤ n := Nat.div_le_of_le_mul (by nlinarith)
       omega
     have h4 : ℓ * (h * m) ≤ n := by
       rcases h1 with h1 | h1
-      · rw [← hℓ, ← hp] at h1; unfold Sharp.fieldWidth at h1; rw [← hh, ← hm] at h1; omega
-      · unfold Sharp.fieldWidth at h1; rw [← hh, ← hm] at h1; rw [h1, Nat.mul_zero]; omega
+      · rw [← hℓ, ← hp] at h1; unfold Fine.fieldWidth at h1; rw [← hh, ← hm] at h1; omega
+      · unfold Fine.fieldWidth at h1; rw [← hh, ← hm] at h1; rw [h1, Nat.mul_zero]; omega
     omega
   have hO' : 2 * P * (den - num) * n * O ≤ den * 2 ^ n := by
     refine le_trans ?_ hover
@@ -330,8 +330,8 @@ theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Sch
       _ = (A₁ + 4 * A₂) * 5 ^ (E₁ + E₂) * (2 ^ p + 2 ^ (D + h * m)) * (n + 1) ^ (E₁ + E₂) := by
           rw [mul_pow]; ring
   -- The leading coefficient.
-  have hfinal := Sharp.mul_add_le_of_slack (P := P)
-    (Sharp.mul_le_suffixWidth (X := X) hnd.le n) hsplit hR hLspec hO'
+  have hfinal := Fine.mul_add_le_of_slack (P := P)
+    (Fine.mul_le_suffixWidth (X := X) hnd.le n) hsplit hR hLspec hO'
   calc ((P * (den - num) * n : ℕ) : ℕ∞) * massComplexity f k
       ≤ ((P * (den - num) * n : ℕ) : ℕ∞) * (R * L + O : ℕ) := by gcongr
     _ = ((P * (den - num) * n * (R * L + O) : ℕ) : ℕ∞) := by push_cast; ring
@@ -341,27 +341,33 @@ theorem sharpMassProducesThrough_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Sch
 theorem schedulerSizeBound : SchedulerSizeBound 524288 5 :=
   fun _ _ _ _ _ _ _ _ bits scalar hmenu => exists_isScheduler bits scalar hmenu
 
-/-- **Sharp mass production** at every rational exponent `num / den < 1`: for every precision
+/-- **Fine mass production** at every rational exponent `num / den < 1`: for every precision
 `P`, eventually every function on `n` inputs has `k ≤ 2 ^ (⌊num n / den⌋ + 1)` copies of cost
 `c` with `P (den - num) n c ≤ (P + 1) den 2 ^ n`, that is, at most
 `(1 + 1 / P) / (1 - num / den) · 2 ^ n / n` when `P > 0`. -/
-theorem sharpMassProducesThrough {num den : ℕ} (hnd : num < den) :
-    SharpMassProducesThrough num den :=
-  sharpMassProducesThrough_of_bounds schedulerSizeBound pipelineSizeBound hnd
+theorem fineMassProducesThrough {num den : ℕ} (hnd : num < den) :
+    FineMassProducesThrough num den :=
+  fineMassProducesThrough_of_bounds schedulerSizeBound pipelineSizeBound hnd
 
-/-- The source's sharp statement at every rational exponent below one. -/
-theorem sharpMassProducesAt {num den : ℕ} (hnd : num < den) : SharpMassProducesAt num den :=
-  (sharpMassProducesThrough hnd).sharpMassProducesAt
+/-- The source's statement at every rational exponent below one. -/
+theorem fineMassProducesAt {num den : ℕ} (hnd : num < den) : FineMassProducesAt num den :=
+  (fineMassProducesThrough hnd).fineMassProducesAt
 
 /-- **Exponential-range mass production**: every fixed rational exponent below one has a
 constant coefficient at every positive input length. -/
 theorem exponentialMassProduction : ExponentialMassProduction :=
-  exponentialMassProduction_of_sharp fun _ _ hnd => sharpMassProducesThrough hnd
+  exponentialMassProduction_of_fine fun _ _ hnd => fineMassProducesThrough hnd
 
-/-- **Sharp mass production for real rates**: for every real `0 ≤ γ < 1` and every `ε > 0`,
+/-- **Fine mass production for real rates**: for every real `0 ≤ γ < 1` and every `ε > 0`,
 eventually every positive number of copies at most `2 ^ (γ n)` costs at most
 `(1 / (1 - γ) + ε) 2 ^ n / n`. -/
-theorem realSharpMassProduction : RealSharpMassProduction :=
-  realSharpMassProduction_of_sharp fun _ _ hnd => sharpMassProducesThrough hnd
+theorem realFineMassProduction : RealFineMassProduction :=
+  realFineMassProduction_of_fine fun _ _ hnd => fineMassProducesThrough hnd
+
+@[deprecated (since := "2026-10-20")]
+alias sharpMassProducesThrough_of_bounds := fineMassProducesThrough_of_bounds
+@[deprecated (since := "2026-10-20")] alias sharpMassProducesThrough := fineMassProducesThrough
+@[deprecated (since := "2026-10-20")] alias sharpMassProducesAt := fineMassProducesAt
+@[deprecated (since := "2026-10-20")] alias realSharpMassProduction := realFineMassProduction
 
 end Cslib.Circuits.Boolean.MassProduction

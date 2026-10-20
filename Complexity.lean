@@ -112,6 +112,9 @@ public import Complexity.Computability.Circuit.Boolean.LMN
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
 public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
+public import Complexity.Computability.Circuit.Boolean.MassProduction.Fine
+public import Complexity.Computability.Circuit.Boolean.MassProduction.FineParameters
+public import Complexity.Computability.Circuit.Boolean.MassProduction.FineStatement
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Padding
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Pipeline
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Pipeline.Circuit
@@ -123,9 +126,6 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler.
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler.Phase
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler.PhaseCircuit
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler.State
-public import Complexity.Computability.Circuit.Boolean.MassProduction.Sharp
-public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpParameters
-public import Complexity.Computability.Circuit.Boolean.MassProduction.SharpStatement
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Synthesis
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Layer

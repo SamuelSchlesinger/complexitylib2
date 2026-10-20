@@ -285,7 +285,7 @@ Jukna coverage below is an additional target beyond the V1 port:
 
 * **Mass-production constructor runtime.** Certify runtime separately from the native gate-cost
   bounds in [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean) and
-  [sharp mass production](Complexity/Computability/Circuit/Boolean/MassProduction/Sharp.lean).
+  [fine mass production](Complexity/Computability/Circuit/Boolean/MassProduction/Fine.lean).
   The current constructions choose information sets and line menus nonconstructively.
 * **Iterated-function circuits.** Port the
   [existing Lean development](https://github.com/SamuelSchlesinger/iterating-functions/blob/main/lean/README.md):
