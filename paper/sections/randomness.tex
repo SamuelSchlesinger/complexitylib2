@@ -232,12 +232,16 @@ the numeric value of the resulting count is asserted. Variable certificate
 lengths are padded with false bits to preserve counts exactly. The signed-product
 verifier uses $r(x)(p_+(|x|)+p_-(|x|))$ certificate bits before final padding,
 where $p_+$ and $p_-$ are the two original counting-certificate polynomials.
-These uniform verifier closure results support the AWPP error reduction below.
+For $f\in\#\cc{P}$, the same unary exponent condition gives
+$x\mapsto f(x)^{r(x)}\in\#\cc{P}$: an all-rows verifier uses exactly
+$r(x)p(|x|)$ certificate bits before padding, including zero rows and zero row width.
+These uniform verifier closure results support the gap amplification below.
 \citep{FennerFortnowKurtz1994}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{49}{Cslib.Complexity.SharpP.of_polyTime_length}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{61}{Cslib.Complexity.SharpP.sum_bits_mem}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{83}{Cslib.Complexity.GapP.sum_bits_mem}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{175}{Cslib.Complexity.GapP.pow_mem_polyTime}
+\declat{56e55d873fe57730bf723d7c56af0b6c16fc4d30}{Complexity/Computability/Complexity/Classes/SharpP/Power.lean}{69}{Cslib.Complexity.SharpP.pow_mem_polyTime}
 \end{result}
 
 \begin{result}
@@ -477,7 +481,8 @@ h(x)=\prod_{r\in R(x)}(r-g(x))
 \]
 vanishes on rejection. Its accepting targets are
 $\prod_{r\in R(x)}(r-y)$ for $y\in Y(x)$; disjointness makes these products nonzero.
-Uniform GapP product closure and polynomial-time binary integer products reduce to the
+Uniform GapP closure for this product of differences and polynomial-time binary integer
+products reduce to the
 one-sided target theorem.\citep[Definition 3.8, Corollary 3.11 and Theorem 3.12]{HemaspaandraEtAl2018}
 The proof is Appendix~A of the full version, arXiv:1711.01250.
 
@@ -565,14 +570,16 @@ of Fenner's amplification method.\citep{Fenner2003}
 AWPP is closed under intersection, union, difference and symmetric difference
 of two languages over the same encoding, as well as complement.
 
-For SBP, every fixed integer $m>0$ admits a \#P witness $f$ and a positive
-binary-output polynomial-time natural threshold $k$ with
+For SBP, every exponent $r(x)$ polynomially bounded in encoded input length admits
+one \#P witness $f$ and a positive binary-output polynomial-time natural threshold $k$ with
 \[
 x\in A\Rightarrow k(x)\leq f(x),\qquad
-x\notin A\Rightarrow 2^m f(x)<k(x).
+x\notin A\Rightarrow 2^{r(x)} f(x)<k(x).
 \]
-This uses fixed powers as in Watson's gap strengthening; $m$ is fixed
-independently of the input.\citep[Section 1.1]{Watson2012}
+A fixed length polynomial $q$ dominating $r$ gives $q(|x|)+1$ repetitions, raising
+both the original count and threshold to that power. The request need not be computable.
+This uniform consequence of Watson's powering argument strengthens the multiplicative gap;
+it is not a normalized additive error bound.\citep[Sections 1.1 and 3]{Watson2012}
 Also $A\in\cc{SBP}$ and $B\in\cc{BPP}$ imply $A\cap B\in\cc{SBP}$,
 using the existing input-dependent BPP error reduction and a dyadic bound on
 \#P counts. This does not establish intersection closure for two SBP languages.
@@ -585,7 +592,7 @@ characterizations remain open formalization work.
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{191}{Cslib.Complexity.union_mem_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{196}{Cslib.Complexity.diff_mem_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{200}{Cslib.Complexity.symmDiff_mem_AWPP}
-\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{171}{Cslib.Complexity.exists_SBP_gap_pow}
+\declat{56e55d873fe57730bf723d7c56af0b6c16fc4d30}{Complexity/Computability/Complexity/Classes/SBP/Amplification.lean}{64}{Cslib.Complexity.exists_SBP_gap_pow_polyBounded}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{188}{Cslib.Complexity.inter_mem_SBP_of_mem_BPP}
 \end{result}
 
