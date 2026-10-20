@@ -161,6 +161,37 @@ example (k : ℕ) (h : coBH encBits k ⊆ BH encBits k) :
 example (h : NP encBits = coNP encBits) : BooleanHierarchy encBits = NP encBits :=
   BooleanHierarchy_eq_NP_of_NP_eq_coNP h
 
+private abbrev trivialClass : Set (Set Bool) := {∅, Set.univ}
+
+private theorem inter_mem_trivialClass :
+    ∀ B₁ ∈ trivialClass, ∀ B₂ ∈ trivialClass, B₁ ∩ B₂ ∈ trivialClass := by
+  rintro B₁ (rfl | rfl) B₂ (rfl | rfl) <;> simp [trivialClass]
+
+private theorem compl_mem_differenceHierarchy_trivialClass_one :
+    ∀ D ∈ differenceHierarchy trivialClass 1, Dᶜ ∈ differenceHierarchy trivialClass 1 := by
+  rw [differenceHierarchy_one]
+  rintro D (rfl | rfl) <;> simp [trivialClass]
+
+private theorem trivialClass_succ_subset :
+    differenceHierarchy trivialClass 2 ⊆ differenceHierarchy trivialClass 1 :=
+  differenceHierarchy_succ_subset_of_compl inter_mem_trivialClass
+    compl_mem_differenceHierarchy_trivialClass_one
+
+example : differenceHierarchy trivialClass 5 = differenceHierarchy trivialClass 1 :=
+  differenceHierarchy_eq_of_succ_subset (by simp [trivialClass]) trivialClass_succ_subset
+    (by decide : 1 ≤ 5)
+
+private theorem not_coBH_zero_subset_BH_zero : ¬ (coBH encBool 0 ⊆ BH encBool 0) := by
+  intro h
+  have huniv : (Set.univ : Set Bool) ∈ BH encBool 0 := h (by simp [coBH_zero])
+  rw [BH_zero, Set.mem_singleton_iff] at huniv
+  have hmem : true ∈ (Set.univ : Set Bool) := Set.mem_univ true
+  rw [huniv] at hmem
+  exact hmem
+
+example : ¬ (BH encBool 1 ⊆ BH encBool 0) :=
+  fun h => not_coBH_zero_subset_BH_zero (BH_succ_subset_iff_coBH_subset.mp h)
+
 end ComplexityTests.ZooCountingHierarchy
 
 /--
