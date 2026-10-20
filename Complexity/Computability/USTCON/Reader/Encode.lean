@@ -29,7 +29,7 @@ their work tapes, so its length is their work space.
 
 ## Main results
 
-* `Cslib.USTCON.Reader.length_encState`: the length of an encoded state.
+* `Cslib.USTCON.Reader.length_encState_le`: the length of an encoded state.
 -/
 
 @[expose] public section

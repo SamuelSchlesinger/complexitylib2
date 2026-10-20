@@ -113,10 +113,6 @@ theorem div_pow_sub_succ {c T j : ℕ} (hj : j ≠ 0) (hjT : j ≤ T) :
     c / numLabels ^ (T - j) / numLabels = c / numLabels ^ (T - (j - 1)) := by
   rw [Nat.div_div_eq_div_mul, ← pow_succ, show T - j + 1 = T - (j - 1) by omega]
 
-/-- The size of a number below a bound. -/
-theorem size_le_of_le {m M : ℕ} (h : m ≤ M) : Nat.size m ≤ Nat.size M :=
-  Nat.size_le_size h
-
 /-! ### The invariant is kept -/
 
 /-- Close a bound on a field of an explicit state. -/
