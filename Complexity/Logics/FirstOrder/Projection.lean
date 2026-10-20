@@ -199,10 +199,9 @@ structure IsQF (I : Projection N N' L L' ι) : Prop where
   rel : ∀ {n} (R : L'.Relations n), (I.rel R).IsQF
 
 -- A concrete projection is split into its numeric interpretation and relation definitions only
--- when no lemma about its construction applies. The fields of a hypothesis prove those of an
--- abstract one.
+-- when no lemma about its construction applies. A hypothesis is split into its fields.
 attribute [aesop safe 10 apply (rule_sets := [FirstOrder])] IsQF.mk
-attribute [aesop safe 20 apply (rule_sets := [FirstOrder])] IsQF.numeric IsQF.rel
+attribute [aesop safe forward (rule_sets := [FirstOrder])] IsQF.numeric IsQF.rel
 
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.toInterpretation {I : Projection N N' L L' ι} (hI : I.IsQF) :

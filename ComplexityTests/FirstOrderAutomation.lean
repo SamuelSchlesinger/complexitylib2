@@ -49,6 +49,19 @@ example {L' : Language} [L'.IsRelational] {I : Interpretation L L' (Fin 2)} (hI 
 example [L.IsRelational] : ((Interpretation.id L).comp (Interpretation.id L)).IsQF := by
   fo_qf
 
+example {L' : Language} {I : Interpretation L L' (Fin 2)} (hI : I.IsQF) {n : ℕ}
+    (R' : L'.Relations n) : (I.rel R' ⟹ ∼(I.rel R')).IsQF := by
+  fo_qf
+
+example {N N' L' : Language} {I : Projection N N' L L' (Fin 2)} (hI : I.IsQF) {n : ℕ}
+    (R' : L'.Relations n) : ((I.rel R').not.relabel id).IsQF ∧ I.numeric.IsQF := by
+  exact ⟨by fo_qf, by fo_qf⟩
+
+/-- Without a hypothesis, an abstract interpretation is not known to be quantifier-free. -/
+example {L' : Language} (_I : Interpretation L L' (Fin 2)) : True := by
+  fail_if_success have : _I.IsQF := by fo_qf
+  trivial
+
 /-- A quantified formula is not quantifier-free, and `fo_qf` fails on it. -/
 example : ¬ (∀' R.boundedFormula₂ &0 &0 : L.Sentence).IsQF := by
   fail_if_success have : (∀' R.boundedFormula₂ &0 &0 : L.Sentence).IsQF := by fo_qf

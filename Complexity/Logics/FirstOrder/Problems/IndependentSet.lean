@@ -16,21 +16,27 @@ import Mathlib.Tactic.FinCases
 # Independent set, clique and vertex cover as classes of finite structures
 
 An instance of independent set, clique or vertex cover is a graph together with a target size.
-In descriptive complexity it is a finite structure of the vocabulary `sizedGraph`: a binary
-relation `adj`, the edges, and a unary relation `size`, whose number of elements is the target
-size, so that no arithmetic is needed to express the size [Immerman, Section 2.1][Immerman1999].
-Edges are only considered between distinct vertices, in either direction: loops are ignored and
-the edge relation need not be symmetric. On simple graphs these are the usual problems.
+Here it is a finite structure of the vocabulary `sizedGraph`: a binary relation `adj`, the edges,
+and a unary relation `size`, whose number of elements is the target size. Giving the size as a set
+of elements rather than as a number keeps the vocabulary free of numeric predicates, and makes
+the reductions below one-dimensional.
+
+The edge relation need not be symmetric, and loops are ignored: an independent set has no edge
+between two distinct vertices in either direction, a clique has edges between any two distinct
+vertices in both directions, and a vertex cover contains an endpoint of every edge between
+distinct vertices. On simple graphs these are the usual problems [Karp1972].
 
 * `sizedGraph.IndependentSet`: the graph has an independent set of `|size|` vertices.
 * `sizedGraph.Clique`: the graph has a clique of `|size|` vertices.
 * `sizedGraph.VertexCover`: the graph has a vertex cover of `|size|` vertices.
 
 The three classes are closed under isomorphism, and quantifier-free reducible to each other.
-Complementing the edge relation (`sizedGraph.complementEdges`) maps independent sets to cliques
-and back, and complementing the size relation (`sizedGraph.complementSize`) maps independent sets
-of size `k` to vertex covers of size `n - k`, their complements. Both are one-dimensional
-quantifier-free interpretations; the reductions are proved with `fo_reduction`, which leaves only
+Complementing the edge relation off the diagonal (`sizedGraph.complementEdges`) turns independent
+sets into cliques and back, and complementing the size relation (`sizedGraph.complementSize`)
+turns an instance asking for an independent set of size `k` into one asking for a vertex cover of
+size `n - k`: a set is independent exactly when its complement is a vertex cover. Both are
+one-dimensional quantifier-free interpretations, and their composite is Karp's reduction from
+clique to node cover [Karp1972]. The reductions are proved with `fo_reduction`, which leaves only
 these facts about sets of vertices.
 
 ## Main definitions
@@ -151,18 +157,21 @@ private theorem ncard_size_eq (e : M ≃[sizedGraph] N) :
 private theorem ncard_image (e : M ≃[sizedGraph] N) (s : Set M) : (e '' s).ncard = s.ncard :=
   Set.ncard_image_of_injective s e.injective
 
+/-- Independent set is closed under isomorphism. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isoClosed_IndependentSet : IsoClosed IndependentSet.{w} :=
   isoClosed_of_imp fun _ _ e ⟨s, hs, hind⟩ => ⟨e '' s, by rw [ncard_image, hs, ncard_size_eq e],
     e.injective.injOn.pairwise_image.2 fun x hx y hy hxy => by
       simpa [Function.onFun, relMap_adj_iff] using hind hx hy hxy⟩
 
+/-- Clique is closed under isomorphism. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isoClosed_Clique : IsoClosed Clique.{w} :=
   isoClosed_of_imp fun _ _ e ⟨s, hs, hcl⟩ => ⟨e '' s, by rw [ncard_image, hs, ncard_size_eq e],
     e.injective.injOn.pairwise_image.2 fun x hx y hy hxy => by
       simpa [Function.onFun, relMap_adj_iff] using hcl hx hy hxy⟩
 
+/-- Vertex cover is closed under isomorphism. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isoClosed_VertexCover : IsoClosed VertexCover.{w} := by
   refine isoClosed_of_imp fun _ _ e ⟨s, hs, hcov⟩ =>
@@ -192,9 +201,9 @@ def complementSize : Interpretation sizedGraph sizedGraph Unit where
     | .size => ∼(rel₁ size (0, ()))
 
 /-- A set of vertices is independent exactly when its complement is a vertex cover. -/
-theorem pairwise_not_adj_iff {M : Type*} [sizedGraph.Structure M] (s : Set M) :
+theorem pairwise_not_adj_iff_compl {M : Type*} [sizedGraph.Structure M] (s : Set M) :
     (s.Pairwise fun x y => ¬ RelMap adj ![x, y]) ↔
-      ∀ x y, ¬ x = y → RelMap adj ![x, y] → x ∈ sᶜ ∨ y ∈ sᶜ := by
+      ∀ x y, x ≠ y → RelMap adj ![x, y] → x ∈ sᶜ ∨ y ∈ sᶜ := by
   refine ⟨fun h x y hxy hadj => ?_, fun h x hx y hy hxy hadj => ?_⟩
   · by_contra hc
     simp only [Set.mem_compl_iff, not_or, not_not] at hc
@@ -227,8 +236,8 @@ vertices is independent exactly when its complement, of `n - k` vertices, is a v
 theorem qfReduces_IndependentSet_VertexCover : QFReduces IndependentSet.{w} VertexCover.{w} := by
   fo_reduction complementSize [mem_IndependentSet, mem_VertexCover]
   refine fun _ _ =>
-    ⟨fun ⟨s, hs, hind⟩ => ⟨sᶜ, ncard_compl_eq_iff.2 hs, (pairwise_not_adj_iff s).1 hind⟩,
-      fun ⟨t, ht, hcov⟩ => ⟨tᶜ, ncard_compl_eq_iff.1 ?_, (pairwise_not_adj_iff _).2 ?_⟩⟩
+    ⟨fun ⟨s, hs, hind⟩ => ⟨sᶜ, ncard_compl_eq_iff.2 hs, (pairwise_not_adj_iff_compl s).1 hind⟩,
+      fun ⟨t, ht, hcov⟩ => ⟨tᶜ, ncard_compl_eq_iff.1 ?_, (pairwise_not_adj_iff_compl _).2 ?_⟩⟩
   · rwa [compl_compl]
   · rwa [compl_compl]
 
@@ -237,8 +246,8 @@ vertices is a vertex cover exactly when its complement, of `n - k` vertices, is 
 theorem qfReduces_VertexCover_IndependentSet : QFReduces VertexCover.{w} IndependentSet.{w} := by
   fo_reduction complementSize [mem_IndependentSet, mem_VertexCover]
   refine fun _ _ =>
-    ⟨fun ⟨t, ht, hcov⟩ => ⟨tᶜ, ncard_compl_eq_iff.2 ht, (pairwise_not_adj_iff _).2 ?_⟩,
-      fun ⟨s, hs, hind⟩ => ⟨sᶜ, ncard_compl_eq_iff.1 ?_, (pairwise_not_adj_iff s).1 hind⟩⟩
+    ⟨fun ⟨t, ht, hcov⟩ => ⟨tᶜ, ncard_compl_eq_iff.2 ht, (pairwise_not_adj_iff_compl _).2 ?_⟩,
+      fun ⟨s, hs, hind⟩ => ⟨sᶜ, ncard_compl_eq_iff.1 ?_, (pairwise_not_adj_iff_compl s).1 hind⟩⟩
   · rwa [compl_compl]
   · rwa [compl_compl]
 

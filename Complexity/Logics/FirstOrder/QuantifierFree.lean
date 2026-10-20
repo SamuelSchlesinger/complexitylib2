@@ -194,9 +194,9 @@ structure IsQF (I : Interpretation L L' ι) : Prop where
   rel : ∀ {n} (R : L'.Relations n), (I.rel R).IsQF
 
 -- A concrete interpretation is split into its domain and relation definitions only when no
--- lemma about its construction applies. The fields of a hypothesis prove those of an abstract one.
+-- lemma about its construction applies. A hypothesis is split into its fields.
 attribute [aesop safe 10 apply (rule_sets := [FirstOrder])] IsQF.mk
-attribute [aesop safe 20 apply (rule_sets := [FirstOrder])] IsQF.domain IsQF.rel
+attribute [aesop safe forward (rule_sets := [FirstOrder])] IsQF.domain IsQF.rel
 
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.onBoundedFormula [Finite ι] [L'.IsRelational] {I : Interpretation L L' ι}
