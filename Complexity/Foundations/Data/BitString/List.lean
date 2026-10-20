@@ -27,6 +27,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 * `Cslib.BitString.ofList_ofFn`, `Cslib.BitString.ofFn_ofList`: representation round trips.
 * `Cslib.BitString.ofList_append_of_le`, `Cslib.BitString.ofList_ofFn_append`: fixed-width views
   ignore bits beyond their width.
+* `Cslib.BitString.ofFn_eq_append`: a string is its prefix followed by its suffix.
 * `Cslib.BitString.exists_take_ofFn_iff`, `Cslib.BitString.forall_take_ofFn_iff`: quantifying over
   longer strings through their prefixes.
 * `Cslib.BitString.listRows_eq_ofFn`: agreement with the finite block representation.
@@ -57,6 +58,12 @@ theorem ofFn_ofList {n : ℕ} {word : List Bool} (hlen : word.length = n) :
   apply List.ext_getElem (by simp)
   intro i hi hi'
   simp [ofList, List.getD, List.getElem?_eq_getElem hi']
+
+/-- A string of `k + j` bits is its first `k` bits followed by its last `j` bits. -/
+theorem ofFn_eq_append {k j : ℕ} (y : BitString (k + j)) :
+    List.ofFn y = List.ofFn ((Fin.appendEquiv k j).symm y).1 ++
+      List.ofFn ((Fin.appendEquiv k j).symm y).2 :=
+  List.ofFn_add
 
 /-- The fixed-width view of a word does not see bits beyond its width. -/
 theorem ofList_append_of_le {n : ℕ} {u : List Bool} (hu : n ≤ u.length) (v : List Bool) :

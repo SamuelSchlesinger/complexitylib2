@@ -65,14 +65,6 @@ variable {α : Type} {enc : α ↪ List Bool}
 
 /-! ### Existential quantification -/
 
-/-- A bit string of `k + j` bits is its first `k` bits followed by its last `j` bits. -/
-private theorem ofFn_eq_append {k j : ℕ} (y : BitString (k + j)) :
-    List.ofFn y = List.ofFn ((Fin.appendEquiv k j).symm y).1 ++
-      List.ofFn ((Fin.appendEquiv k j).symm y).2 := by
-  rw [← List.ofFn_fin_append]
-  congr 1
-  exact ((Fin.appendEquiv k j).apply_symm_apply y).symm
-
 /-- **`AM` is closed under existential quantification** [Babai][Babai1985]: if the pairs `(a, w)`
 form a problem in `AM`, with respect to the encoding of pairs, then so do the instances `a` for
 which some word `w` of length `p(n)`, `n` the length of the encoded instance, makes `(a, w)` a
@@ -119,8 +111,8 @@ theorem mem_AM_of_exists {B : Set (α × List Bool)} (hB : B ∈ AM (encPair enc
               ((pB.comp L).eval (enc a).length + p.eval (enc a).length)) =
         VB ((a, List.ofFn ((Fin.appendEquiv _ _).symm y).1),
           List.ofFn r ++ List.ofFn ((Fin.appendEquiv _ _).symm y).2) := by
-    rw [List.drop_left' List.length_ofFn, List.take_left' List.length_ofFn, ofFn_eq_append y,
-      List.take_left' List.length_ofFn, ← List.append_assoc,
+    rw [List.drop_left' List.length_ofFn, List.take_left' List.length_ofFn,
+      BitString.ofFn_eq_append y, List.take_left' List.length_ofFn, ← List.append_assoc,
       List.drop_left' (by simp)]
   simp only [hsplit]
   -- the error bounds of the pairs, at the length of the encoded instance

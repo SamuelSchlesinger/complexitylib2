@@ -322,7 +322,7 @@ def test (N : Polynomial ℕ) (x : (Graph × Graph) × List Bool) : Bool :=
 theorem computableTidilyInPolyTime_test (N : Polynomial ℕ) :
     ComputableTidilyInPolyTime (test N) (encPair (encPair encGraph encGraph) encBits) encBool := by
   unfold test check
-  simp only []
+  dsimp only
   fun_prop
 
 /-! ### Counting the certified pairs -/
