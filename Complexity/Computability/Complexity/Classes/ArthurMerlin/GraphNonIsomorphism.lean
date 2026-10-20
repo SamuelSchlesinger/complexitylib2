@@ -24,26 +24,27 @@ import Mathlib.Data.List.GetD
 The public-coin protocol of Goldwasser and Sipser for graph non-isomorphism
 [GoldwasserSipser1986], [Arora and Barak, Section 8.2][AroraBarak09]. Let the two graphs have
 `n` distinct vertices each, with adjacency matrices `A₀` and `A₁` on positions. Permutations `τ`
-relabel matrices (`Cslib.Complexity.GraphNonIsomorphism.PublicCoin.relabelMatrix`), and the pairs
-`(M, σ)` of a relabelling `M` of `A₀` or `A₁` and an automorphism `σ` of `M` form a set of
+relabel matrices by `Matrix.reindex τ τ`, and the pairs `(M, σ)` of a relabelling `M` of `A₀` or
+`A₁` and an automorphism `σ` of `M` form a set of
 `2 n!` elements when the graphs are not isomorphic and `n!` when they are
 (`Cslib.Complexity.GraphNonIsomorphism.PublicCoin.card_pairs_union`): by the orbit–stabilizer
 count, each orbit contributes `n!` pairs
 (`Cslib.Complexity.GraphNonIsomorphism.PublicCoin.card_pairs`), and the two orbits coincide or are
-disjoint.
+disjoint. Mathlib has no action of permutations on square matrices by simultaneous relabelling, so
+the orbits are finite sets of matrices here, and the orbit–stabilizer count, a sum of automorphism
+group sizes over an orbit, is proved by partitioning the permutations into fibers.
 
 Merlin can certify membership of a pair, by naming the graph and a relabelling of it. Pairs are
 written as strings of `2 L² + 1` bits, `L` the length of the encoded instance
-(`Cslib.Complexity.GraphNonIsomorphism.PublicCoin.code`): the matrix `M`, the matrix of `σ`, and
-`false` bits. When the graphs have different numbers of vertices, every string is accepted. The
-set lower bound protocol with threshold `2 n!` (`Cslib.Complexity.mem_AM_of_card_certifiedSet`)
-then gives `GraphNonIsomorphism ∈ AM` (`Cslib.Complexity.GraphNonIsomorphism.mem_AM`). The
-private-coin protocol in `Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism` is
-not used.
+(`Cslib.Complexity.GraphNonIsomorphism.PublicCoin.code`): the matrix `M` and the matrix of `σ`,
+row by row with entry `(i, j)` at `finProdFinEquiv (i, j)`, and `false` bits. When the graphs
+have different numbers of vertices, every string is accepted. The set lower bound protocol with
+threshold `2 n!` (`Cslib.Complexity.mem_AM_of_card_certifiedSet`) then gives
+`GraphNonIsomorphism ∈ AM` (`Cslib.Complexity.GraphNonIsomorphism.mem_AM`). The private-coin
+protocol in `Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism` is not used.
 
 ## Main definitions
 
-* `Cslib.Complexity.GraphNonIsomorphism.PublicCoin.relabelMatrix`: relabelling a matrix.
 * `Cslib.Complexity.GraphNonIsomorphism.PublicCoin.orbit`,
   `Cslib.Complexity.GraphNonIsomorphism.PublicCoin.pairs`: relabellings, and relabellings with an
   automorphism.
@@ -81,72 +82,69 @@ namespace PublicCoin
 
 variable {n : ℕ}
 
-/-- Relabel the rows and columns of a matrix by a permutation `τ`: entry `(τ i, τ j)` of the
-result is entry `(i, j)` of `M`. -/
-def relabelMatrix (τ : Equiv.Perm (Fin n)) (M : Fin n → Fin n → Bool) : Fin n → Fin n → Bool :=
-  fun i j => M (τ.symm i) (τ.symm j)
+/-- Relabelling by a product of permutations is relabelling twice. -/
+theorem reindex_mul (σ τ : Equiv.Perm (Fin n)) (M : Matrix (Fin n) (Fin n) Bool) :
+    Matrix.reindex (σ * τ) (σ * τ) M = Matrix.reindex σ σ (Matrix.reindex τ τ M) := by
+  ext i j
+  simp [Equiv.Perm.mul_def]
 
-theorem relabelMatrix_mul (σ τ : Equiv.Perm (Fin n)) (M : Fin n → Fin n → Bool) :
-    relabelMatrix (σ * τ) M = relabelMatrix σ (relabelMatrix τ M) := by
-  funext i j
-  simp [relabelMatrix, Equiv.Perm.mul_def]
+/-- Relabelling by the identity permutation does nothing. -/
+theorem reindex_one (M : Matrix (Fin n) (Fin n) Bool) : Matrix.reindex 1 1 M = M :=
+  rfl
 
-theorem relabelMatrix_one (M : Fin n → Fin n → Bool) : relabelMatrix 1 M = M := rfl
-
-/-- `relabelMatrix τ A = M` says that `τ` carries `A` to `M`. -/
-theorem relabelMatrix_eq_iff {τ : Equiv.Perm (Fin n)} {A M : Fin n → Fin n → Bool} :
-    relabelMatrix τ A = M ↔ ∀ i j, M (τ i) (τ j) = A i j := by
+/-- `Matrix.reindex τ τ A = M` says that `τ` carries `A` to `M`. -/
+theorem reindex_eq_iff {τ : Equiv.Perm (Fin n)} {A M : Matrix (Fin n) (Fin n) Bool} :
+    Matrix.reindex τ τ A = M ↔ ∀ i j, M (τ i) (τ j) = A i j := by
   constructor
   · rintro rfl i j
-    simp [relabelMatrix]
+    simp
   · intro h
-    funext i j
-    simpa [relabelMatrix] using (h (τ.symm i) (τ.symm j)).symm
+    ext i j
+    simpa using (h (τ.symm i) (τ.symm j)).symm
 
-/-- The relabellings of a matrix. -/
-def orbit (A : Fin n → Fin n → Bool) : Finset (Fin n → Fin n → Bool) :=
-  univ.image fun τ => relabelMatrix τ A
+/-- The relabellings of a matrix by permutations of its rows and columns. -/
+def orbit (A : Matrix (Fin n) (Fin n) Bool) : Finset (Matrix (Fin n) (Fin n) Bool) :=
+  univ.image fun τ => Matrix.reindex τ τ A
 
-theorem mem_orbit {A M : Fin n → Fin n → Bool} : M ∈ orbit A ↔ ∃ τ, relabelMatrix τ A = M := by
+theorem mem_orbit {A M : Matrix (Fin n) (Fin n) Bool} :
+    M ∈ orbit A ↔ ∃ τ, Matrix.reindex τ τ A = M := by
   simp [orbit]
 
-theorem mem_orbit_self (A : Fin n → Fin n → Bool) : A ∈ orbit A :=
-  mem_orbit.2 ⟨1, rfl⟩
-
-theorem mem_orbit_trans {A B M : Fin n → Fin n → Bool} (hB : B ∈ orbit A) (hM : M ∈ orbit B) :
-    M ∈ orbit A := by
+theorem mem_orbit_trans {A B M : Matrix (Fin n) (Fin n) Bool} (hB : B ∈ orbit A)
+    (hM : M ∈ orbit B) : M ∈ orbit A := by
   obtain ⟨τ, rfl⟩ := mem_orbit.1 hB
   obtain ⟨σ, rfl⟩ := mem_orbit.1 hM
-  exact mem_orbit.2 ⟨σ * τ, relabelMatrix_mul σ τ A⟩
+  exact mem_orbit.2 ⟨σ * τ, reindex_mul σ τ A⟩
 
-theorem mem_orbit_symm {A B : Fin n → Fin n → Bool} (hB : B ∈ orbit A) : A ∈ orbit B := by
+theorem mem_orbit_symm {A B : Matrix (Fin n) (Fin n) Bool} (hB : B ∈ orbit A) : A ∈ orbit B := by
   obtain ⟨τ, rfl⟩ := mem_orbit.1 hB
   refine mem_orbit.2 ⟨τ⁻¹, ?_⟩
-  rw [← relabelMatrix_mul, inv_mul_cancel, relabelMatrix_one]
+  rw [← reindex_mul, inv_mul_cancel, reindex_one]
 
 /-- The pairs of a relabelling of `A` and an automorphism of it. -/
-def pairs (A : Fin n → Fin n → Bool) :
-    Finset ((Fin n → Fin n → Bool) × Equiv.Perm (Fin n)) :=
-  univ.filter fun p => p.1 ∈ orbit A ∧ relabelMatrix p.2 p.1 = p.1
+def pairs (A : Matrix (Fin n) (Fin n) Bool) :
+    Finset (Matrix (Fin n) (Fin n) Bool × Equiv.Perm (Fin n)) :=
+  univ.filter fun p => p.1 ∈ orbit A ∧ Matrix.reindex p.2 p.2 p.1 = p.1
 
 /-- A relabelling `M` of `A` has as many automorphisms as there are permutations carrying `A` to
-`M`. -/
-theorem card_filter_relabelMatrix_eq {A M : Fin n → Fin n → Bool} (hM : M ∈ orbit A) :
-    #{σ : Equiv.Perm (Fin n) | relabelMatrix σ M = M} =
-      #{τ : Equiv.Perm (Fin n) | relabelMatrix τ A = M} := by
+`M`: composing with one permutation carrying `A` to `M` is a bijection. -/
+theorem card_filter_reindex_eq {A M : Matrix (Fin n) (Fin n) Bool} (hM : M ∈ orbit A) :
+    #{σ : Equiv.Perm (Fin n) | Matrix.reindex σ σ M = M} =
+      #{τ : Equiv.Perm (Fin n) | Matrix.reindex τ τ A = M} := by
   obtain ⟨τ₀, rfl⟩ := mem_orbit.1 hM
   refine card_equiv (Equiv.mulRight τ₀) fun σ => ?_
-  simp only [mem_filter, mem_univ, true_and, Equiv.coe_mulRight, relabelMatrix_mul]
+  simp only [mem_filter, mem_univ, true_and, Equiv.coe_mulRight, reindex_mul]
 
 /-- **Orbit–stabilizer count**: the pairs of a relabelling of `A` and an automorphism of it are
-`n!` many. -/
-theorem card_pairs (A : Fin n → Fin n → Bool) : #(pairs A) = n.factorial := by
-  have hsum : #(pairs A) = ∑ M : Fin n → Fin n → Bool,
-      #{τ : Equiv.Perm (Fin n) | relabelMatrix τ A = M} := by
+`n!` many. The automorphism groups along the orbit have the sizes of the fibers of
+`τ ↦ Matrix.reindex τ τ A` (`card_filter_reindex_eq`), which partition the `n!` permutations. -/
+theorem card_pairs (A : Matrix (Fin n) (Fin n) Bool) : #(pairs A) = n.factorial := by
+  have hsum : #(pairs A) = ∑ M : Matrix (Fin n) (Fin n) Bool,
+      #{τ : Equiv.Perm (Fin n) | Matrix.reindex τ τ A = M} := by
     rw [pairs, card_filter, Fintype.sum_prod_type]
     refine sum_congr rfl fun M _ => ?_
     by_cases hM : M ∈ orbit A
-    · simp only [hM, true_and, ← card_filter_relabelMatrix_eq hM, card_filter]
+    · simp only [hM, true_and, ← card_filter_reindex_eq hM, card_filter]
     · simp only [hM, false_and, ↓reduceIte, sum_const_zero]
       symm
       rw [card_eq_zero, filter_eq_empty_iff]
@@ -156,7 +154,7 @@ theorem card_pairs (A : Fin n → Fin n → Bool) : #(pairs A) = n.factorial := 
 
 /-- The pairs of the two matrices are `n!` many if one is a relabelling of the other, and `2 n!`
 many otherwise. -/
-theorem card_pairs_union (A₀ A₁ : Fin n → Fin n → Bool) :
+theorem card_pairs_union (A₀ A₁ : Matrix (Fin n) (Fin n) Bool) :
     #(pairs A₀ ∪ pairs A₁) = if A₁ ∈ orbit A₀ then n.factorial else 2 * n.factorial := by
   split_ifs with h
   · have heq : pairs A₁ = pairs A₀ := by
@@ -172,52 +170,51 @@ theorem card_pairs_union (A₀ A₁ : Fin n → Fin n → Bool) :
 
 /-! ### Positions -/
 
-private theorem pos_of_fin (i : Fin n) : 0 < n := Nat.zero_lt_of_lt i.2
+/-- Entry `(i, j)` of a matrix of size `n`, read row by row, is at position `i * n + j`, the value
+of `finProdFinEquiv (i, j)`. -/
+private theorem val_finProdFinEquiv (i j : Fin n) : (finProdFinEquiv (i, j) : ℕ) = i * n + j := by
+  rw [finProdFinEquiv_apply_val]
+  ring
 
-private theorem index_lt (i j : Fin n) : (i : ℕ) * n + j < n * n := by
-  have := i.2
-  have := j.2
-  nlinarith
+private theorem index_lt (i j : Fin n) : (i : ℕ) * n + j < n * n :=
+  val_finProdFinEquiv i j ▸ (finProdFinEquiv (i, j)).isLt
 
-private theorem index_div (i j : Fin n) : ((i : ℕ) * n + j) / n = i := by
-  rw [Nat.add_comm, Nat.add_mul_div_right _ _ (pos_of_fin i), Nat.div_eq_of_lt j.2, zero_add]
+/-- Every position below `n * n` is the position of its row and column. -/
+private theorem index_symm {q : ℕ} (h : q < n * n) :
+    ((finProdFinEquiv.symm ⟨q, h⟩).1 : ℕ) * n + (finProdFinEquiv.symm ⟨q, h⟩).2 = q := by
+  rw [← val_finProdFinEquiv, Prod.mk.eta, Equiv.apply_symm_apply]
 
-private theorem index_mod (i j : Fin n) : ((i : ℕ) * n + j) % n = j := by
-  rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt j.2]
+/-- The entry at position `q` of a matrix of size `n` read row by row, `false` beyond `n * n`. -/
+def matrixBit (A : Matrix (Fin n) (Fin n) Bool) (q : ℕ) : Bool :=
+  if h : q < n * n then A (finProdFinEquiv.symm ⟨q, h⟩).1 (finProdFinEquiv.symm ⟨q, h⟩).2
+  else false
 
-/-- The entry of a matrix at natural positions, `false` outside. -/
-def entry (M : Fin n → Fin n → Bool) (i j : ℕ) : Bool :=
-  if h : i < n ∧ j < n then M ⟨i, h.1⟩ ⟨j, h.2⟩ else false
+theorem matrixBit_index (A : Matrix (Fin n) (Fin n) Bool) (i j : Fin n) :
+    matrixBit A (i * n + j) = A i j := by
+  have hq : (⟨i * n + j, index_lt i j⟩ : Fin (n * n)) = finProdFinEquiv (i, j) :=
+    Fin.ext (val_finProdFinEquiv i j).symm
+  simp only [matrixBit, index_lt i j, ↓reduceDIte, hq, Equiv.symm_apply_apply]
 
-/-- The value of a permutation at a natural position, `0` outside. -/
-def value (σ : Equiv.Perm (Fin n)) (i : ℕ) : ℕ :=
-  if h : i < n then σ ⟨i, h⟩ else 0
-
-@[simp] theorem entry_fin (M : Fin n → Fin n → Bool) (i j : Fin n) :
-    entry M i j = M i j := by
-  simp [entry]
-
-@[simp] theorem value_fin (σ : Equiv.Perm (Fin n)) (i : Fin n) : value σ i = σ i := by
-  simp [value]
+theorem matrixBit_of_le (A : Matrix (Fin n) (Fin n) Bool) {q : ℕ} (h : n * n ≤ q) :
+    matrixBit A q = false := by
+  simp [matrixBit, Nat.not_lt.2 h]
 
 /-! ### Codes of pairs and certificates -/
 
 /-- Bit `p` of the code of a pair `(M, σ)`: the entries of `M`, then the entries of the matrix of
 `σ`, row by row, then `false`. -/
-def codeBit (M : Fin n → Fin n → Bool) (σ : Equiv.Perm (Fin n)) (p : ℕ) : Bool :=
-  if p < n * n then entry M (p / n) (p % n)
-  else if p < 2 * (n * n) then decide (value σ ((p - n * n) / n) = (p - n * n) % n)
-  else false
+def codeBit (M : Matrix (Fin n) (Fin n) Bool) (σ : Equiv.Perm (Fin n)) (p : ℕ) : Bool :=
+  if p < n * n then matrixBit M p
+  else matrixBit (Matrix.of fun i j => decide (σ i = j)) (p - n * n)
 
 /-- The code of a pair `(M, σ)` of a matrix and a permutation, in `E` bits. -/
-def code (E : ℕ) (M : Fin n → Fin n → Bool) (σ : Equiv.Perm (Fin n)) : BitString E :=
+def code (E : ℕ) (M : Matrix (Fin n) (Fin n) Bool) (σ : Equiv.Perm (Fin n)) : BitString E :=
   fun p => codeBit M σ p
 
-/-- Bit `q` of a certificate naming the graph `b` and a permutation `τ`. -/
+/-- Bit `q` of a certificate naming the graph `b` and a permutation `τ`: `b`, then the entries of
+the matrix of `τ`, row by row, then `false`. -/
 def certBit (b : Bool) (τ : Equiv.Perm (Fin n)) (q : ℕ) : Bool :=
-  if q = 0 then b
-  else if q - 1 < n * n then decide (value τ ((q - 1) / n) = (q - 1) % n)
-  else false
+  if q = 0 then b else matrixBit (Matrix.of fun i j => decide (τ i = j)) (q - 1)
 
 /-- A certificate naming the graph `b` and a permutation `τ`, in `C` bits. -/
 def cert (C : ℕ) (b : Bool) (τ : Equiv.Perm (Fin n)) : BitString C :=
@@ -228,31 +225,35 @@ private theorem getD_ofFn {E : ℕ} (x : BitString E) {p : ℕ} (hp : p < E) :
   rw [List.getD_eq_getElem _ _ (by simpa using hp), List.getElem_ofFn]
 
 /-- The matrix read from the first `n * n` bits of a word. -/
-def decodeMatrix (n : ℕ) (u : List Bool) : Fin n → Fin n → Bool :=
-  fun i j => u.getD (i * n + j) false
+def decodeMatrix (n : ℕ) (u : List Bool) : Matrix (Fin n) (Fin n) Bool :=
+  Matrix.of fun i j => u.getD (i * n + j) false
 
 /-- The map read from the matrix starting after `k` bits of a word: row `i` selects its first set
 bit (`Cslib.Complexity.GraphIsomorphism.image`). -/
 def decodeMap (n k : ℕ) (u : List Bool) (i : Fin n) : Fin n :=
-  ⟨GraphIsomorphism.image n (u.drop k) i, GraphIsomorphism.image_lt _ _ (Nat.zero_lt_of_lt i.2)⟩
+  ⟨GraphIsomorphism.image n (u.drop k) i, GraphIsomorphism.image_lt _ _ i.pos⟩
 
-theorem decodeMatrix_code {E : ℕ} (hE : n * n ≤ E) (M : Fin n → Fin n → Bool)
+theorem decodeMatrix_code {E : ℕ} (hE : n * n ≤ E) (M : Matrix (Fin n) (Fin n) Bool)
     (σ : Equiv.Perm (Fin n)) : decodeMatrix n (List.ofFn (code E M σ)) = M := by
-  funext i j
-  rw [decodeMatrix, getD_ofFn _ ((index_lt i j).trans_le hE)]
-  simp only [code, codeBit, index_lt i j, ↓reduceIte, index_div, index_mod, entry_fin]
+  ext i j
+  rw [decodeMatrix, Matrix.of_apply, getD_ofFn _ ((index_lt i j).trans_le hE)]
+  simp only [code, codeBit, index_lt i j, ↓reduceIte, matrixBit_index]
 
-theorem decodeMap_code {E : ℕ} (hE : 2 * (n * n) ≤ E) (M : Fin n → Fin n → Bool)
+/-- In the matrix of a permutation `σ`, row `i` has its set bit at `σ i`. -/
+private theorem decide_val_eq {σ : Equiv.Perm (Fin n)} {i : Fin n} {j : ℕ} (hj : j < n) :
+    decide (σ i = ⟨j, hj⟩) = decide (j = σ i) :=
+  decide_eq_decide.2 ⟨fun h => by rw [h], fun h => Fin.ext h.symm⟩
+
+theorem decodeMap_code {E : ℕ} (hE : 2 * (n * n) ≤ E) (M : Matrix (Fin n) (Fin n) Bool)
     (σ : Equiv.Perm (Fin n)) : decodeMap n (n * n) (List.ofFn (code E M σ)) = σ := by
   funext i
   refine Fin.ext (GraphIsomorphism.image_eq (σ i).2 fun j hj => ?_)
   have hlt : (i : ℕ) * n + j < n * n := index_lt i ⟨j, hj⟩
   rw [List.getD_eq_getElem?_getD, List.getElem?_drop, ← List.getD_eq_getElem?_getD,
     getD_ofFn _ (by omega)]
-  simp only [code, codeBit, show ¬(n * n + (i * n + j) < n * n) by omega,
-    show n * n + (i * n + j) < 2 * (n * n) by omega, ↓reduceIte, Nat.add_sub_cancel_left]
-  rw [index_div i ⟨j, hj⟩, index_mod i ⟨j, hj⟩, value_fin]
-  exact decide_eq_decide.2 eq_comm
+  simp only [code, codeBit, show ¬(n * n + (i * n + j) < n * n) by omega, ↓reduceIte,
+    Nat.add_sub_cancel_left]
+  rw [matrixBit_index _ i ⟨j, hj⟩, Matrix.of_apply, decide_val_eq hj]
 
 theorem getD_ofFn_cert_zero {C : ℕ} (hC : 0 < C) (b : Bool) (τ : Equiv.Perm (Fin n)) :
     (List.ofFn (cert C b τ)).getD 0 false = b := by
@@ -266,10 +267,9 @@ theorem decodeMap_cert {C : ℕ} (hC : n * n + 1 ≤ C) (b : Bool) (τ : Equiv.P
   have hlt : (i : ℕ) * n + j < n * n := index_lt i ⟨j, hj⟩
   rw [List.getD_eq_getElem?_getD, List.getElem?_drop, ← List.getD_eq_getElem?_getD,
     getD_ofFn _ (by omega)]
-  simp only [cert, certBit, show 1 + (i * n + j) ≠ 0 by omega, Nat.add_sub_cancel_left, hlt,
-    ↓reduceIte]
-  rw [index_div i ⟨j, hj⟩, index_mod i ⟨j, hj⟩, value_fin]
-  exact decide_eq_decide.2 eq_comm
+  simp only [cert, certBit, show 1 + (i * n + j) ≠ 0 by omega, ↓reduceIte,
+    Nat.add_sub_cancel_left]
+  rw [matrixBit_index _ i ⟨j, hj⟩, Matrix.of_apply, decide_val_eq hj]
 
 /-! ### The test -/
 
@@ -322,15 +322,10 @@ def test (N : Polynomial ℕ) (x : (Graph × Graph) × List Bool) : Bool :=
 theorem computableTidilyInPolyTime_test (N : Polynomial ℕ) :
     ComputableTidilyInPolyTime (test N) (encPair (encPair encGraph encGraph) encBits) encBool := by
   unfold test check
-  simp only []
+  dsimp only
   fun_prop
 
 /-! ### Counting the certified pairs -/
-
-/-- The permutation of an injective map of `Fin n`. -/
-noncomputable def permOfInjective (f : Fin n → Fin n) (hf : Function.Injective f) :
-    Equiv.Perm (Fin n) :=
-  Equiv.ofBijective f (Finite.injective_iff_bijective.1 hf)
 
 section Check
 
@@ -351,16 +346,20 @@ theorem injective_decodeMap_right (h : check n E adj u v = true) :
   · exact absurd (congrArg Fin.val hij) h'
 
 /-- The map selected by an accepted element is an automorphism of its matrix. -/
-theorem relabelMatrix_decodeMatrix (h : check n E adj u v = true) :
-    relabelMatrix (permOfInjective _ (injective_decodeMap_left h)) (decodeMatrix n u) =
+theorem reindex_decodeMatrix (h : check n E adj u v = true) :
+    Matrix.reindex
+        (Equiv.ofBijective _ (Finite.injective_iff_bijective.1 (injective_decodeMap_left h)))
+        (Equiv.ofBijective _ (Finite.injective_iff_bijective.1 (injective_decodeMap_left h)))
+        (decodeMatrix n u) =
       decodeMatrix n u :=
-  relabelMatrix_eq_iff.2 fun i j => ((check_eq_true_iff.1 h).2 i i.2 j j.2).2.2.1
+  reindex_eq_iff.2 fun i j => ((check_eq_true_iff.1 h).2 i i.2 j j.2).2.2.1
 
 /-- The matrix of an accepted element is a relabelling of the graph named by the certificate. -/
 theorem decodeMatrix_mem_orbit (h : check n E adj u v = true) :
-    decodeMatrix n u ∈ orbit fun i j : Fin n => adj (v.getD 0 false) i j :=
-  mem_orbit.2 ⟨permOfInjective _ (injective_decodeMap_right h),
-    relabelMatrix_eq_iff.2 fun i j => ((check_eq_true_iff.1 h).2 i i.2 j j.2).2.2.2.2⟩
+    decodeMatrix n u ∈ orbit (Matrix.of fun i j : Fin n => adj (v.getD 0 false) i j) :=
+  mem_orbit.2
+    ⟨Equiv.ofBijective _ (Finite.injective_iff_bijective.1 (injective_decodeMap_right h)),
+      reindex_eq_iff.2 fun i j => ((check_eq_true_iff.1 h).2 i i.2 j j.2).2.2.2.2⟩
 
 end Check
 
@@ -370,10 +369,12 @@ automorphism of it. -/
 theorem card_filter_check {E C : ℕ} (hE : 2 * (n * n) + 1 ≤ E) (hC : n * n + 1 ≤ C)
     (adj : Bool → ℕ → ℕ → Bool) :
     #{x : BitString E | ∃ z : BitString C, check n E adj (List.ofFn x) (List.ofFn z) = true} =
-      #(pairs (fun i j : Fin n => adj false i j) ∪ pairs fun i j : Fin n => adj true i j) := by
+      #(pairs (Matrix.of fun i j : Fin n => adj false i j) ∪
+        pairs (Matrix.of fun i j : Fin n => adj true i j)) := by
   refine card_bij'
-    (fun x hx => (decodeMatrix n (List.ofFn x),
-      permOfInjective _ (injective_decodeMap_left (mem_filter.1 hx).2.choose_spec)))
+    (fun x hx => (decodeMatrix n (List.ofFn x), Equiv.ofBijective _
+      (Finite.injective_iff_bijective.1
+        (injective_decodeMap_left (mem_filter.1 hx).2.choose_spec))))
     (fun t _ => code E t.1 t.2) (fun x hx => ?_) (fun t ht => ?_) (fun x hx => ?_)
     (fun t ht => ?_)
   · -- an accepted element gives a pair
@@ -381,11 +382,11 @@ theorem card_filter_check {E C : ℕ} (hE : 2 * (n * n) + 1 ≤ E) (hC : n * n +
     have horb := decodeMatrix_mem_orbit hz
     refine mem_union.2 ?_
     cases hb : (List.ofFn (mem_filter.1 hx).2.choose).getD 0 false <;> rw [hb] at horb
-    · exact Or.inl (mem_filter.2 ⟨mem_univ _, horb, relabelMatrix_decodeMatrix hz⟩)
-    · exact Or.inr (mem_filter.2 ⟨mem_univ _, horb, relabelMatrix_decodeMatrix hz⟩)
+    · exact Or.inl (mem_filter.2 ⟨mem_univ _, horb, reindex_decodeMatrix hz⟩)
+    · exact Or.inr (mem_filter.2 ⟨mem_univ _, horb, reindex_decodeMatrix hz⟩)
   · -- a pair has an accepted code
     obtain ⟨M, σ⟩ := t
-    obtain ⟨b, hb⟩ : ∃ b : Bool, (M, σ) ∈ pairs fun i j : Fin n => adj b i j := by
+    obtain ⟨b, hb⟩ : ∃ b : Bool, (M, σ) ∈ pairs (Matrix.of fun i j : Fin n => adj b i j) := by
       rcases mem_union.1 ht with h | h
       · exact ⟨false, h⟩
       · exact ⟨true, h⟩
@@ -394,7 +395,8 @@ theorem card_filter_check {E C : ℕ} (hE : 2 * (n * n) + 1 ≤ E) (hC : n * n +
     refine mem_filter.2 ⟨mem_univ _, cert C b τ, check_eq_true_iff.2 ⟨fun p hp => ?_,
       fun i hi j hj => ?_⟩⟩
     · rw [getD_ofFn _ (by omega)]
-      simp [code, codeBit, show ¬(2 * (n * n) + p < n * n) by omega]
+      simp only [code, codeBit, show ¬(2 * (n * n) + p < n * n) by omega, ↓reduceIte]
+      exact matrixBit_of_le _ (by omega)
     · have hf := congrArg Fin.val (congrFun (decodeMap_code (by omega : 2 * (n * n) ≤ E) M σ)
         ⟨i, hi⟩)
       have hg := congrArg Fin.val (congrFun (decodeMap_cert hC b τ) ⟨i, hi⟩)
@@ -402,78 +404,67 @@ theorem card_filter_check {E C : ℕ} (hE : 2 * (n * n) + 1 ≤ E) (hC : n * n +
         ⟨j, hj⟩)
       have hg' := congrArg Fin.val (congrFun (decodeMap_cert hC b τ) ⟨j, hj⟩)
       simp only [decodeMap] at hf hg hf' hg'
-      have hM := congrFun₂ (decodeMatrix_code (by omega : n * n ≤ E) M σ)
-      simp only [decodeMatrix] at hM
+      have hM (i' j' : Fin n) : (List.ofFn (code E M σ)).getD (i' * n + j') false = M i' j' := by
+        simpa [decodeMatrix] using
+          congrFun₂ (decodeMatrix_code (by omega : n * n ≤ E) M σ) i' j'
       rw [hf, hg, hf', hg', getD_ofFn_cert_zero (by omega)]
       have hlt : i * n + j < n * n := index_lt ⟨i, hi⟩ ⟨j, hj⟩
       refine ⟨?_, ?_, ?_, ?_, ?_⟩
       · rw [getD_ofFn _ (by omega)]
-        simp only [code, codeBit, show ¬(n * n + (i * n + j) < n * n) by omega,
-          show n * n + (i * n + j) < 2 * (n * n) by omega, ↓reduceIte, Nat.add_sub_cancel_left]
-        rw [index_div ⟨i, hi⟩ ⟨j, hj⟩, index_mod ⟨i, hi⟩ ⟨j, hj⟩, value_fin]
+        simp only [code, codeBit, show ¬(n * n + (i * n + j) < n * n) by omega, ↓reduceIte,
+          Nat.add_sub_cancel_left]
+        rw [matrixBit_index _ ⟨i, hi⟩ ⟨j, hj⟩, Matrix.of_apply]
+        exact decide_eq_decide.2 Fin.ext_iff
       · by_cases hij : i = j
         · exact Or.inl hij
         · exact Or.inr fun h => hij (by simpa using σ.injective (Fin.ext h))
       · rw [hM, hM ⟨i, hi⟩ ⟨j, hj⟩]
-        exact (relabelMatrix_eq_iff.1 haut ⟨i, hi⟩ ⟨j, hj⟩)
+        exact reindex_eq_iff.1 haut ⟨i, hi⟩ ⟨j, hj⟩
       · by_cases hij : i = j
         · exact Or.inl hij
         · exact Or.inr fun h => hij (by simpa using τ.injective (Fin.ext h))
       · rw [hM]
-        exact relabelMatrix_eq_iff.1 hτ ⟨i, hi⟩ ⟨j, hj⟩
+        exact reindex_eq_iff.1 hτ ⟨i, hi⟩ ⟨j, hj⟩
   · -- decoding an accepted element and coding it again gives it back
     have hz := (mem_filter.1 hx).2.choose_spec
     obtain ⟨hrest, hrows⟩ := check_eq_true_iff.1 hz
     funext p
     change codeBit _ _ p.1 = x p
     by_cases h₁ : p.1 < n * n
-    · have hn : 0 < n := Nat.pos_of_ne_zero fun h => by simp [h] at h₁
-      have hdiv : p.1 / n < n := Nat.div_lt_of_lt_mul h₁
-      have hmod : p.1 % n < n := Nat.mod_lt _ hn
-      simp only [codeBit, h₁, ↓reduceIte, entry, hdiv, hmod, and_self, ↓reduceDIte, decodeMatrix]
-      rw [Nat.div_add_mod', getD_ofFn _ p.2]
-    · by_cases h₂ : p.1 < 2 * (n * n)
-      · have hn : 0 < n := Nat.pos_of_ne_zero fun h => by simp [h] at h₂
-        have hq : p.1 - n * n < n * n := by omega
-        have hdiv : (p.1 - n * n) / n < n := Nat.div_lt_of_lt_mul hq
-        have hmod : (p.1 - n * n) % n < n := Nat.mod_lt _ hn
-        simp only [codeBit, h₁, h₂, ↓reduceIte, value, hdiv, ↓reduceDIte, permOfInjective,
+    · simp only [codeBit, h₁, ↓reduceIte, matrixBit, ↓reduceDIte, decodeMatrix, Matrix.of_apply]
+      rw [index_symm h₁, getD_ofFn _ p.2]
+    · by_cases h₂ : p.1 - n * n < n * n
+      · simp only [codeBit, h₁, ↓reduceIte, matrixBit, h₂, ↓reduceDIte, Matrix.of_apply,
           Equiv.ofBijective_apply, decodeMap]
-        rw [← (hrows _ hdiv _ hmod).1, Nat.div_add_mod', Nat.add_sub_cancel' (by omega),
-          getD_ofFn _ p.2]
-      · simp only [codeBit, h₁, h₂, ↓reduceIte]
+        have hrow := (hrows _ (finProdFinEquiv.symm ⟨p.1 - n * n, h₂⟩).1.2 _
+          (finProdFinEquiv.symm ⟨p.1 - n * n, h₂⟩).2.2).1
+        rw [index_symm h₂, Nat.add_sub_cancel' (by omega), getD_ofFn _ p.2] at hrow
+        rw [hrow]
+        exact decide_eq_decide.2 Fin.ext_iff
+      · simp only [codeBit, h₁, ↓reduceIte, matrixBit_of_le _ (Nat.not_lt.1 h₂)]
         have := hrest (p.1 - 2 * (n * n)) (by omega)
         rw [Nat.add_sub_cancel' (by omega), getD_ofFn _ p.2] at this
         exact this.symm
   · -- coding a pair and decoding it gives it back
     refine Prod.ext (decodeMatrix_code (by omega) _ _) (Equiv.ext fun i => ?_)
-    simp only [permOfInjective, Equiv.ofBijective_apply]
+    simp only [Equiv.ofBijective_apply]
     exact congrFun (decodeMap_code (by omega) _ _) i
 
 end PublicCoin
 
 open PublicCoin
 
-/-- Isomorphic graphs have equally many distinct vertices. -/
-theorem length_distinctVertices_eq_of_mem_GraphIsomorphism {G₀ G₁ : Graph}
-    (h : (G₀, G₁) ∈ GraphIsomorphism) :
-    G₁.distinctVertices.length = G₀.distinctVertices.length := by
-  obtain ⟨σ, -⟩ := mem_GraphIsomorphism_iff.1 h
-  simpa using (Fintype.card_congr σ).symm
-
 /-- Graphs with equally many distinct vertices are isomorphic exactly when the adjacency matrix of
 the second, on positions, is a relabelling of that of the first. -/
 theorem mem_GraphIsomorphism_iff_mem_orbit {G₀ G₁ : Graph}
     (h : G₁.distinctVertices.length = G₀.distinctVertices.length) :
     (G₀, G₁) ∈ GraphIsomorphism ↔
-      (fun i j : Fin G₀.distinctVertices.length => G₁.adjIndex i j) ∈
-        orbit fun i j : Fin G₀.distinctVertices.length => G₀.adjIndex i j := by
-  rw [mem_GraphIsomorphism_iff, mem_orbit]
-  constructor
-  · rintro ⟨σ, hσ⟩
-    exact ⟨σ.trans (finCongr h), relabelMatrix_eq_iff.2 fun i j => hσ i j⟩
-  · rintro ⟨τ, hτ⟩
-    exact ⟨τ.trans (finCongr h.symm), fun i j => relabelMatrix_eq_iff.1 hτ i j⟩
+      (Matrix.of fun i j : Fin G₀.distinctVertices.length => G₁.adjIndex i j) ∈
+        orbit (Matrix.of fun i j : Fin G₀.distinctVertices.length => G₀.adjIndex i j) := by
+  rw [mem_GraphIsomorphism_iff_exists_perm h, mem_orbit]
+  refine exists_congr fun τ => ?_
+  rw [reindex_eq_iff]
+  simp only [Matrix.of_apply]
 
 /-- **Graph non-isomorphism is in `AM`** [Goldwasser and Sipser][GoldwasserSipser1986],
 [Arora and Barak, Section 8.2][AroraBarak09]: the set lower bound protocol applied to the pairs
@@ -504,8 +495,8 @@ theorem mem_AM : GraphNonIsomorphism ∈ AM (encPair encGraph encGraph) := by
   -- with equally many vertices, the certified set has `n!` or `2 n!` elements
   have hpairs (G₀ G₁ : Graph) (h : G₁.distinctVertices.length = G₀.distinctVertices.length) :
       #(certifiedSet (encPair encGraph encGraph) N c (test N) (G₀, G₁)) =
-        #((pairs fun i j : Fin G₀.distinctVertices.length => G₀.adjIndex i j) ∪
-          pairs fun i j : Fin G₀.distinctVertices.length => G₁.adjIndex i j) := by
+        #(pairs (Matrix.of fun i j : Fin G₀.distinctVertices.length => G₀.adjIndex i j) ∪
+          pairs (Matrix.of fun i j : Fin G₀.distinctVertices.length => G₁.adjIndex i j)) := by
     have hset : certifiedSet (encPair encGraph encGraph) N c (test N) (G₀, G₁) =
         univ.filter fun x : BitString (N.eval (encPair encGraph encGraph (G₀, G₁)).length) =>
           ∃ z : BitString (c.eval (encPair encGraph encGraph (G₀, G₁)).length),

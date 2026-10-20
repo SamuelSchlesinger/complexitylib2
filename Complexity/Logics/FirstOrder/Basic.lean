@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Tactic.FirstOrder.Init
 public import Mathlib.ModelTheory.Semantics
 public import Mathlib.SetTheory.Cardinal.Finite
 
@@ -70,7 +71,7 @@ noncomputable def closeAll (V : Type) [Finite V] (φ : L.Formula V) : L.Sentence
 noncomputable def closeEx (V : Type) [Finite V] (φ : L.Formula V) : L.Sentence :=
   Formula.iExs V (φ.relabel Sum.inr)
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_closeAll {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ : L.Formula V) :
     (closeAll V φ).Realize M ↔ ∀ v : V → M, φ.Realize v := by
   simp only [closeAll, Sentence.Realize, Formula.realize_iAlls, Formula.realize_relabel]
@@ -79,7 +80,7 @@ theorem realize_closeAll {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ 
     funext x; rfl
   rw [h]
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_closeEx {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ : L.Formula V) :
     (closeEx V φ).Realize M ↔ ∃ v : V → M, φ.Realize v := by
   simp only [closeEx, Sentence.Realize, Formula.realize_iExs, Formula.realize_relabel]
@@ -92,7 +93,7 @@ theorem realize_closeEx {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ :
 def atVar (φ : L.Formula (Fin 1)) {V : Type*} (u : V) : L.Formula V :=
   φ.relabel (fun _ => u)
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_atVar {M : Type w} [L.Structure M] (φ : L.Formula (Fin 1)) {V : Type*}
     (v : V → M) (u : V) :
     (atVar φ u).Realize v ↔ φ.Realize ![v u] := by
@@ -113,18 +114,18 @@ def rel₁ {V : Type*} (r : L.Relations 1) (u : V) : L.Formula V :=
 def rel₂ {V : Type*} (r : L.Relations 2) (u w : V) : L.Formula V :=
   Relations.formula₂ r (.var u) (.var w)
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_varEq {M : Type w} [L.Structure M] {V : Type*} (v : V → M) (u w : V) :
     (varEq (L := L) u w).Realize v ↔ v u = v w := by
   simp [varEq]
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_rel₁ {M : Type w} [L.Structure M] {V : Type*} (v : V → M)
     (r : L.Relations 1) (u : V) :
     (rel₁ r u).Realize v ↔ RelMap r ![v u] := by
   simp [rel₁]
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_rel₂ {M : Type w} [L.Structure M] {V : Type*} (v : V → M)
     (r : L.Relations 2) (u w : V) :
     (rel₂ r u w).Realize v ↔ RelMap r ![v u, v w] := by
@@ -168,14 +169,17 @@ variable {B : ℕ} [L.Structure (Fin B)] {r : L.Relations 2}
 
 include hlt
 
+@[fo_realize]
 theorem realize_lt {V : Type*} (v : V → Fin B) (u w : V) :
     (lt r u w).Realize v ↔ v u < v w := by
   simp [lt, hlt]
 
+@[fo_realize]
 theorem realize_le {V : Type*} (v : V → Fin B) (u w : V) :
     (le r u w).Realize v ↔ v u ≤ v w := by
   simp [le, realize_lt hlt]
 
+@[fo_realize]
 theorem realize_isZero {V : Type*} (v : V → Fin B) (u : V) :
     (isZero r u).Realize v ↔ (v u : ℕ) = 0 := by
   have h1 : (isZero r u).Realize v ↔ ∀ z : Fin B, ¬ (z < v u) := by
@@ -193,6 +197,7 @@ theorem realize_isZero {V : Type*} (v : V → Fin B) (u : V) :
     simp only [Fin.lt_def, h]
     omega
 
+@[fo_realize]
 theorem realize_isMax {V : Type*} (v : V → Fin B) (u : V) :
     (isMax r u).Realize v ↔ (v u : ℕ) = B - 1 := by
   have h1 : (isMax r u).Realize v ↔ ∀ z : Fin B, ¬ (v u < z) := by
@@ -211,6 +216,7 @@ theorem realize_isMax {V : Type*} (v : V → Fin B) (u : V) :
     simp only [Fin.lt_def]
     omega
 
+@[fo_realize]
 theorem realize_succ {V : Type*} (v : V → Fin B) (u w : V) :
     (succ r u w).Realize v ↔ (v w : ℕ) = (v u : ℕ) + 1 := by
   have h1 : (succ r u w).Realize v ↔
@@ -234,6 +240,7 @@ theorem realize_succ {V : Type*} (v : V → Fin B) (u w : V) :
     simp only [Fin.lt_def]
     omega
 
+@[fo_realize]
 theorem realize_isFirstOut {inDom : L.Formula (Fin 1)} {M : ℕ} (hMB : M < B)
     (hdom : ∀ j : Fin B, inDom.Realize ![j] ↔ (j : ℕ) < M) {V : Type*}
     (v : V → Fin B) (u : V) :
@@ -267,7 +274,7 @@ finite structure `M` iff `Nat.card M = n`. -/
 def cardEqSentence (L : Language.{u, v}) (n : ℕ) : L.Sentence :=
   Sentence.cardGe L n ⊓ ∼(Sentence.cardGe L (n + 1))
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_cardEqSentence [Finite M] (n : ℕ) :
     M ⊨ cardEqSentence L n ↔ Nat.card M = n := by
   rw [cardEqSentence, Sentence.realize_inf, Sentence.realize_not, realize_cardGe_iff_le_card,
@@ -282,7 +289,7 @@ noncomputable def truthTableSentence {m : ℕ} (φ : Fin m → L.Sentence)
     BoundedFormula.iInf fun i : Fin m => if s.1 i then φ i else ∼(φ i)
 
 open scoped Classical in
-@[simp]
+@[simp, fo_realize]
 theorem realize_truthTableSentence {m : ℕ} (φ : Fin m → L.Sentence)
     (P : (Fin m → Bool) → Prop) :
     M ⊨ truthTableSentence φ P ↔ P (fun i => decide (M ⊨ φ i)) := by

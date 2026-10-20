@@ -19,7 +19,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.Sampling
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.OfFn
 import Complexity.Probability.BitString.List
 
 /-!
@@ -460,7 +460,7 @@ theorem tsum_relabelDist_le {n n' : ℕ} {A : Fin n → Fin n → Bool} {A' : Fi
     (σ : Fin n ≃ Fin n') (hσ : ∀ i j, A' (σ i) (σ j) = A i j) {f : List Bool → ENNReal}
     (hf : ∀ m, f m ≤ 1) :
     ∑' m, relabelDist n' A' m * f m ≤ ∑' m, relabelDist n A m * f m + 1 / 16 := by
-  obtain rfl : n = n' := by simpa using Fintype.card_congr σ
+  obtain rfl : n = n' := Fin.equiv_iff_eq.1 ⟨σ⟩
   refine (tsum_uniform_map_le (fun R => relabelFin A (keyValue ∘ R))
     (fun R => relabelFin A' (keyValue ∘ R)) (Equiv.arrowCongr σ.symm (Equiv.refl _))
     (fun R => Function.Injective R) (fun R hR => ?_) hf).trans ?_

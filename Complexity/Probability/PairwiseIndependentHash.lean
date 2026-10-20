@@ -67,6 +67,11 @@ is `1 / 8`.
   `S` hits a target is at most `μ`, and that it misses it at most `1 / μ`.
 * `Cslib.Probability.IsPairwiseIndependentHash.three_quarters_mul_le_dens_filter_mem_image`: the
   set lower bound protocol.
+* `Cslib.Probability.IsPairwiseIndependentHash.four_mul_card_filter_notMem_image_le`,
+  `Cslib.Probability.IsPairwiseIndependentHash.four_mul_card_filter_mem_image_le`: in counts, a
+  target is missed by at most a quarter of the seeds when `#S ≥ 4 |Y|`, and hit by at most a
+  quarter when `4 #S ≤ |Y|`.
+* `Cslib.Probability.IsPairwiseIndependentHash.comp_seedEquiv`: relabelling seeds.
 * `Cslib.Probability.IsPairwiseIndependentHash.three_sixteenths_le_dens_filter_card_filter_eq_one`:
   the Valiant–Vazirani lemma.
 
@@ -149,6 +154,25 @@ theorem comp (hh : IsPairwiseIndependentHash h) {X' : Type*} {e : X' → X}
   dens_filter_apply_eq x y := hh.dens_filter_apply_eq (e x) y
   dens_filter_apply_eq_and_apply_eq hx y₁ y₂ :=
     hh.dens_filter_apply_eq_and_apply_eq (he.ne hx) y₁ y₂
+
+omit [Fintype Y] [DecidableEq Y] in
+/-- Relabelling the seeds by an equivalence does not change densities. -/
+private theorem dens_filter_comp_equiv {ι' : Type*} [Fintype ι'] (e : ι' ≃ ι) (P : ι → Prop)
+    [DecidablePred P] : dens {i' | P (e i')} = dens {i | P i} := by
+  rw [dens_eq_card_div_card, dens_eq_card_div_card, Fintype.card_congr e]
+  congr 2
+  exact card_equiv e fun i' => by simp
+
+/-- **Relabelling seeds**: precomposing the seeds of a pairwise independent family with an
+equivalence keeps it pairwise independent. -/
+theorem comp_seedEquiv {ι' : Type*} [Fintype ι'] (hh : IsPairwiseIndependentHash h)
+    (e : ι' ≃ ι) : IsPairwiseIndependentHash fun i => h (e i) where
+  dens_filter_apply_eq x y := by
+    rw [dens_filter_comp_equiv e fun i => h i x = y]
+    exact hh.dens_filter_apply_eq x y
+  dens_filter_apply_eq_and_apply_eq hx y₁ y₂ := by
+    rw [dens_filter_comp_equiv e fun i => h i _ = y₁ ∧ h i _ = y₂]
+    exact hh.dens_filter_apply_eq_and_apply_eq hx y₁ y₂
 
 /-- **The mean cell size**: `#{x ∈ S | h i x = y}` has expectation `#S / |Y|`. -/
 theorem expect_card_filter_apply_eq [Semifield 𝕜] [CharZero 𝕜] (hh : IsPairwiseIndependentHash h)
@@ -278,6 +302,42 @@ theorem one_sub_le_dens_filter_mem_image (hh : IsPairwiseIndependentHash h) {S :
   rw [tsub_le_iff_right, ← hsplit]
   gcongr
   exact hh.dens_filter_notMem_image_le hS y
+
+/-- **Large sets are hit**: if `#S ≥ 4 |Y|`, at most a quarter of the seeds miss a target, in
+counts. -/
+theorem four_mul_card_filter_notMem_image_le (hh : IsPairwiseIndependentHash h) {S : Finset X}
+    (hS : 4 * Fintype.card Y ≤ #S) (y : Y) :
+    4 * #{i | y ∉ S.image (h i)} ≤ Fintype.card ι := by
+  have hY : 0 < Fintype.card Y := Fintype.card_pos_iff.2 ⟨y⟩
+  have hne : S.Nonempty := card_pos.1 (by omega)
+  have hι : 0 < Fintype.card ι := by
+    obtain ⟨x, -⟩ := hne
+    have := hh.nonempty x y
+    exact Fintype.card_pos
+  have hd := hh.dens_filter_notMem_image_le hne y
+  rw [dens_eq_card_div_card, div_le_div_iff₀ (by exact_mod_cast hι)
+    (by exact_mod_cast hne.card_pos)] at hd
+  have hd' : #{i | y ∉ S.image (h i)} * #S ≤ Fintype.card Y * Fintype.card ι := by
+    exact_mod_cast hd
+  nlinarith
+
+/-- **Small sets are missed**: if `4 #S ≤ |Y|`, at most a quarter of the seeds hit a target, in
+counts. -/
+theorem four_mul_card_filter_mem_image_le (hh : IsPairwiseIndependentHash h) {S : Finset X}
+    (hS : 4 * #S ≤ Fintype.card Y) (y : Y) :
+    4 * #{i | y ∈ S.image (h i)} ≤ Fintype.card ι := by
+  have hY : 0 < Fintype.card Y := Fintype.card_pos_iff.2 ⟨y⟩
+  rcases S.eq_empty_or_nonempty with rfl | hne
+  · simp
+  have hι : 0 < Fintype.card ι := by
+    obtain ⟨x, -⟩ := hne
+    have := hh.nonempty x y
+    exact Fintype.card_pos
+  have hd := hh.dens_filter_mem_image_le S y
+  rw [dens_eq_card_div_card, div_le_div_iff₀ (by exact_mod_cast hι) (by exact_mod_cast hY)] at hd
+  have hd' : #{i | y ∈ S.image (h i)} * Fintype.card Y ≤ #S * Fintype.card ι := by
+    exact_mod_cast hd
+  nlinarith
 
 /-- **Inclusion–exclusion for hitting a target**: `S` hits `y` with probability at least
 `#S / |Y| - #S (#S - 1) / (2 |Y|²)`. -/

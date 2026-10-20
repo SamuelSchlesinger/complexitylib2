@@ -17,7 +17,8 @@ for bipartite perfect matching on `2 ^ 20 + 2 ^ 20` vertices have depth at least
 
 namespace ComplexityTests.BipartiteMatching
 
-open Cslib Cslib.Circuits Cslib.Circuits.BipartiteMatching Cslib.Communication
+open Cslib Cslib.Circuits Cslib.Circuits.BipartiteMatching
+  Cslib.Circuits.BipartiteMatching.RazWigderson Cslib.Communication
 
 /-! ### The function -/
 
@@ -33,6 +34,12 @@ example : bipartitePerfectMatching 3 (fun _ => false) = false := by
 
 example : Monotone (bipartitePerfectMatching 4) :=
   monotone_bipartitePerfectMatching
+
+-- Hall's theorem: the empty graph on `K_{2,2}` has no perfect matching, as `{0}` has no neighbour.
+example : ¬HasPerfectMatching (fun _ : Fin 2 × Fin 2 => false) := by
+  rw [hasPerfectMatching_iff_forall_card_le]
+  intro h
+  simpa using h {0}
 
 /-! ### The graphs of the reduction -/
 
@@ -57,6 +64,10 @@ example : PublicCoin.ecomplexityFun (1 / 2 ^ 1) (disjointness : BitString 1 → 
       {y | bipartitePerfectMatching 2 y = false} + 1) :=
   ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching (by norm_num)
     (by norm_num) (by norm_num)
+
+-- The depth is finite (the function is monotone), so the bound below is not vacuous.
+example : Monotone.eformulaDepth (bipartitePerfectMatching (2 ^ 20)) ≠ ⊤ :=
+  Monotone.eformulaDepth_ne_top_iff.2 monotone_bipartitePerfectMatching
 
 example : (126 : ℕ∞) ≤ Monotone.eformulaDepth (bipartitePerfectMatching (2 ^ 20)) := by
   have h := Monotone.le_mul_eformulaDepth_bipartitePerfectMatching_add (2 ^ 20)
@@ -91,10 +102,18 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #print axioms Cslib.Circuits.ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching
 
 /--
-info: 'Cslib.Circuits.BipartiteMatching.two_mul_card_filter_run_oneRun_le' depends on axioms:
+info: 'Cslib.Circuits.BipartiteMatching.RazWigderson.two_mul_card_filter_run_oneRun_le' depends on
+axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.BipartiteMatching.two_mul_card_filter_run_oneRun_le
+#print axioms Cslib.Circuits.BipartiteMatching.RazWigderson.two_mul_card_filter_run_oneRun_le
+
+/--
+info: 'Cslib.Circuits.BipartiteMatching.RazWigderson.solves_reduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.BipartiteMatching.RazWigderson.solves_reduction
 
 end ComplexityTests.BipartiteMatching

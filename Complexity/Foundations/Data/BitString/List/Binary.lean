@@ -22,6 +22,7 @@ bounded on arbitrary input words; it agrees with capping the full mathematical b
 
 * `binaryValue`: the natural represented by a binary word, without a size bound.
 * `boundedBinaryValue`: the same fold with a cap at every step.
+* `binaryWord`: the word of a given width representing a number.
 
 ## Main results
 
@@ -30,6 +31,7 @@ bounded on arbitrary input words; it agrees with capping the full mathematical b
 * `boundedBinaryValue_le`: every output is at most the cap.
 * `binaryValue_lt_two_pow`, `exists_binaryValue_eq`: the words of `t` bits represent exactly the
   numbers below `2 ^ t`.
+* `length_binaryWord`, `binaryValue_binaryWord`: the word of width `t` of a number below `2 ^ t`.
 
 ## References
 
@@ -114,20 +116,27 @@ theorem binaryValue_replicate_false_append (n : ℕ) (word : List Bool) :
     | succ n ih => rw [List.replicate_succ', List.foldl_append, ih]; rfl
   rw [binaryValue, List.foldl_append, h, ← binaryValue]
 
+/-- The word of width `w` representing `a` in binary, most significant bit first, padded with
+leading zeros; it has width `w` when `a < 2 ^ w` (`length_binaryWord`). -/
+def binaryWord (w a : ℕ) : List Bool := List.replicate (w - a.bits.length) false ++ a.bits.reverse
+
+theorem length_binaryWord {w a : ℕ} (ha : a < 2 ^ w) : (binaryWord w a).length = w := by
+  have : a.bits.length ≤ w := by
+    rw [Nat.size_eq_bits_len]
+    exact Nat.size_le.2 ha
+  simp only [binaryWord, List.length_append, List.length_replicate, List.length_reverse]
+  omega
+
+@[simp] theorem binaryValue_binaryWord (w a : ℕ) : binaryValue (binaryWord w a) = a := by
+  rw [binaryWord, binaryValue_replicate_false_append, binaryValue_reverse_bits]
+
 /-- Every number below `2 ^ t` is represented by a word of `t` bits. -/
 theorem exists_binaryValue_eq {t k : ℕ} (hk : k < 2 ^ t) :
     ∃ u : Fin t → Bool, binaryValue (List.ofFn u) = k := by
-  have hlen : k.bits.length ≤ t := by
-    rw [Nat.size_eq_bits_len]
-    exact Nat.size_le.2 hk
-  set w := List.replicate (t - k.bits.length) false ++ k.bits.reverse with hw
-  have hwlen : w.length = t := by
-    simp only [hw, List.length_append, List.length_replicate, List.length_reverse]
-    omega
-  refine ⟨fun i => w[i.val]'(by omega), ?_⟩
-  rw [show (List.ofFn fun i : Fin t => w[i.val]'(by omega)) = w from
-    List.ext_getElem (by simp [hwlen]) fun i _ _ => by simp]
-  rw [hw, binaryValue_replicate_false_append, binaryValue_reverse_bits]
+  have hwlen := length_binaryWord hk
+  refine ⟨fun i => (binaryWord t k)[i.val]'(by omega), ?_⟩
+  rw [show (List.ofFn fun i : Fin t => (binaryWord t k)[i.val]'(by omega)) = binaryWord t k from
+    List.ext_getElem (by simp [hwlen]) fun i _ _ => by simp, binaryValue_binaryWord]
 
 /-- Fixed-width binary words represent their values injectively. -/
 theorem binaryValue_injective_of_length_eq {u v : List Bool} (hlen : u.length = v.length)

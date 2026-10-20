@@ -41,8 +41,8 @@ polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are impl
 The next counting milestones remain the nondeterministic-machine characterizations of
 `#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
 none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
-now have verifier-based definitions and basic closure/containment developments. Extend these
-with stronger fewness containments, counting reductions and oracle results, preserving exact
+now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and PH ⊆ P^#P ⊆ P^PP are proved. Extend these
+with counting reductions and further oracle results (P^PP ⊆ P^#P is open), preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions and elementary containments/closures.
@@ -70,7 +70,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. Preserve each reduction's resource bound. |
 | Space and alternation | Build on native `NPSPACE = PSPACE`, TQBF completeness, `NL ⊆ P`, [PH ⊆ PSPACE](Complexity/Computability/Complexity/Classes/Inclusions.lean) and [AP = PSPACE](Complexity/Computability/Complexity/Classes/Alternation/Savitch.lean). Extend the [machine-class milestones](#machine-class-milestones), alternating time/space classes and bounded-alternation characterizations of PH. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
 | Counting and modular classes | Build on `#P`, `GapP`, `PP`, [parity-P](Complexity/Computability/Complexity/Classes/ParityP.lean) and [Toda's PH ⊆ P^#P theorem](Complexity/Computability/Complexity/Classes/Toda.lean), with a fixed polynomial-time program correct against every oracle answering the counting function's bits. Extend counting reductions and machine characterizations, permanent completeness, modular/counting hierarchies and the oracle-algorithm form of Stockmeyer approximate counting. |
-| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. The Shamir–Shen algebraic protocol for TQBF, with perfect completeness and soundness against every prover, is [proved](Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean); realize it in the IP machine model to obtain PSPACE ⊆ IP; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
+| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. [IP = PSPACE](Complexity/Computability/Complexity/Classes/IP/Shamir.lean) is proved, with a machine-certified Shamir–Shen-style verifier for TQBF; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
 | Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), and [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings. Prove permanent VNP-completeness with its characteristic assumptions, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | Gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
@@ -141,7 +141,14 @@ of the handover. The work below remains available for subsequent, independently 
      substitution, identity/composition isomorphisms, and quantifier-free composition. The
      [graph-complement client](Complexity/Logics/FirstOrder/Projection/Graph.lean) and tests cover
      nonvacuity, empty universes, nullary relations and the failure of two-bit conjunction to be
-     a projection. **Still outstanding:** the classical positive-dimensional full-universe
+     a projection. Quantifier-free reducibility
+     ([QFReduces](Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean)) and the tactics
+     `fo_qf`, `fo_iso_closed`, `fo_simp` and `fo_reduction`
+     ([Tactic/FirstOrder](Complexity/Tactic/FirstOrder.lean)) are implemented, with independent
+     set, clique and vertex cover as quantifier-free reducible
+     [structure classes](Complexity/Logics/FirstOrder/Problems/SizedGraph.lean); `fo_reduction`
+     does not yet simplify the relations of composite or higher-dimensional interpretations.
+     **Still outstanding:** the classical positive-dimensional full-universe
      specialization and canonical numeric preservation, projection reducibility on finite
      structure classes, and the machine-certified encoding bridge described below. Reuse
      [FO.Interpretation](Complexity/Logics/FirstOrder/Interpretation.lean) and
@@ -259,7 +266,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   [uniform average-case-hardness implication P = BPP](Complexity/Computability/Complexity/Classes/BPP/Derandomization.lean)
   is proved. Complete the worst-case-to-average-case amplification needed to obtain this
   conclusion from exponential worst-case circuit hardness in `E`.
-* **Further PCP consequences.** Build the FGLSS clique-hardness reduction on the existing
+* **Further PCP consequences.** Constant-factor NP-hardness of approximating Independent Set,
+  Clique and Vertex Cover is [proved](Complexity/Computability/PCP/Approximation/IndependentSet.lean)
+  via Karp's occurrence graph. Build the FGLSS clique-hardness reduction and amplification on the existing
   [gap-preserving reductions](Complexity/Computability/PCP/Approximation.lean) and certified PCP
   construction; retain the exact gap and reduction runtime.
 * **Randomized communication and information.** The `Ω(n)` bounded-error randomized disjointness
@@ -356,9 +365,9 @@ space bounds. Further class-level work needs resource certificates for the actua
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
   linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
-* Reingold's theorem: the combinatorial core is [proved](Complexity/Algorithms/Reachability/Reingold.lean)
-  (reachability iff an O(log n) walk in the transformed graph); log-space evaluation of the
-  rotation map and USTCON ∈ L remain;
+* Reingold's theorem: [USTCON ∈ L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
+  is proved for the adjacency-matrix encoding; an edge-list variant by a logspace reduction, a
+  definition of SL with SL = L, and sharing the unary-header injectivity lemma with TreeEval remain;
 * `NL = coNL`, building on logspace composition, `NL ⊆ P` and Savitch; `PH ⊆ PSPACE` is
   already proved by evaluating quantified predicates in
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);

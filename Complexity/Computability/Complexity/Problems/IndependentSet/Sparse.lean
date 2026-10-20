@@ -100,6 +100,9 @@ def conflictEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
 /-- The edges of the graph. -/
 def edges (φ : CNF ℕ) : List (ℕ × ℕ) := literalEdges φ ++ cliqueEdges φ ++ conflictEdges φ
 
+@[deprecated (since := "2026-10-19")] alias variableEdges := literalEdges
+@[deprecated (since := "2026-10-19")] alias clauseEdges := cliqueEdges
+
 end SparseIndependentSet
 
 open SparseIndependentSet in

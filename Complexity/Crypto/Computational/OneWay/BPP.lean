@@ -16,7 +16,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.Sampling
-import Complexity.Crypto.Negligible.Basic
+import Complexity.Probability.PMF
 import Complexity.Probability.PMF.Map
 import Cslib.Foundations.Data.Polynomial.Monotone
 
@@ -48,10 +48,15 @@ as well (`Cslib.Crypto.OneWay.SAT_notMem_BPP`).
 
 ## Main results
 
+* `Cslib.Crypto.isPPT_randomizedPreimageSearch`: the randomized search is a uniform strict PPT
+  inverter.
 * `Cslib.Crypto.half_le_succProbability_inversionGame`: with a decider of error
   `2 ^ (-(L + 1))`, the randomized search inverts with probability at least `1 / 2`.
-* `Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP`, `Cslib.Crypto.OneWay.NP_not_subset_BPP`,
-  `Cslib.Crypto.OneWay.SAT_notMem_BPP`: one-way functions imply `NP ⊄ BPP`.
+* `Cslib.Crypto.exists_inverter_of_preimagePrefix_mem_BPP`: if the preimage-prefix problem is in
+  `BPP`, some uniform strict PPT inverter succeeds with probability at least `1 / 2`.
+* `Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP`, `Cslib.Crypto.OneWay.not_NP_subset_BPP`,
+  `Cslib.Crypto.OneWay.SAT_notMem_BPP`, `Cslib.Crypto.not_oneWay_of_SAT_mem_BPP`: one-way
+  functions imply `NP ⊄ BPP`.
 
 ## References
 
@@ -97,17 +102,6 @@ theorem isPPT_randomizedPreimageSearch {p : Polynomial ℕ}
   exact hV.comp ((snd _ _).prod (bitsTakeWithInput (fst _ _).snd'
     ((unary_eval p).comp ((encoding_length encPreimagePrefix).comp (snd _ _)))))
 
-/-- A lower bound on every outcome of the second stage bounds the outcome of the experiment. -/
-private theorem le_bind_apply {α β : Type} {q : PMF α} {g : α → PMF β} {b : β} {c : ENNReal}
-    (h : ∀ a ∈ q.support, c ≤ g a b) : c ≤ q.bind g b := by
-  rw [PMF.bind_apply]
-  calc c = ∑' a, q a * c := by rw [ENNReal.tsum_mul_right, q.tsum_coe, one_mul]
-    _ ≤ ∑' a, q a * g a b := ENNReal.tsum_le_tsum fun a => by
-        by_cases ha : a ∈ q.support
-        · gcongr
-          exact h a ha
-        · simp [(PMF.apply_eq_zero_iff q a).2 ha]
-
 /-- A decider with error at most `2 ^ (-q(L))` errs on a uniformly random prefix of a coin
 string with probability at most `2 ^ (-q(L))`. -/
 private theorem toOuterMeasure_take_wrong_le {α : Type} {enc : α ↪ List Bool}
@@ -135,7 +129,6 @@ private theorem toOuterMeasure_take_wrong_le {α : Type} {enc : α ↪ List Bool
     ENNReal.le_div_iff_mul_le (by simp) (by simp)]
   exact_mod_cast (by rw [Nat.mul_comm]; exact hcount)
 
-open scoped Classical in
 /-- **The randomized search inverts with probability at least `1 / 2`**, for a decider of the
 preimage-prefix problem with error at most `2 ^ (-(L + 1))` on instances of encoded length `L`.
 The union bound runs over the `n` queries of the exact search, each of encoded length at least
@@ -146,6 +139,7 @@ theorem half_le_succProbability_inversionGame {p : Polynomial ℕ}
     (n : ℕ) :
     1 / 2 ≤ Game.succProbability
       (ProbComp.eval (inversionGame f (randomizedPreimageSearch p V) n)) := by
+  classical
   set D : ℕ × List Bool × List Bool → Bool := fun x => decide (x ∈ preimagePrefix f)
   have hD : ∀ x, x ∈ preimagePrefix f ↔ D x = true := fun x => decide_eq_true_iff.symm
   have hgame : ProbComp.eval (inversionGame f (randomizedPreimageSearch p V) n) =
@@ -157,7 +151,7 @@ theorem half_le_succProbability_inversionGame {p : Polynomial ℕ}
   have hhalf : (1 / 2 : ENNReal) ≤
       ProbComp.eval (inversionGame f (randomizedPreimageSearch p V) n) true := by
     rw [hgame]
-    refine le_bind_apply fun x hx => ?_
+    refine PMF.le_bind_apply_on_support _ fun x hx => ?_
     have hxn := BitString.length_of_mem_support_uniformList hx
     set μ := BitString.uniformList (searchCoinLength p (n, f x))
     set g : List Bool → Bool := fun coins => f (preimageSearch (fun inst =>
@@ -234,16 +228,17 @@ theorem exists_inverter_of_preimagePrefix_mem_BPP
 
 /-- **One-way functions have preimage-prefix problems outside `BPP`.** -/
 theorem OneWay.preimagePrefix_notMem_BPP (hf : OneWay f) :
-    preimagePrefix f ∉ BPP encPreimagePrefix := by
-  intro h
-  obtain ⟨inverter, hPPT, hhalf⟩ := exists_inverter_of_preimagePrefix_mem_BPP h
-  exact not_negligible_const (c := 1 / 2) (by norm_num)
-    (negligible_of_le (hf.inversion_negligible inverter hPPT) hhalf)
+    preimagePrefix f ∉ BPP encPreimagePrefix := fun h =>
+  let ⟨inverter, hPPT, hhalf⟩ := exists_inverter_of_preimagePrefix_mem_BPP h
+  not_oneWay_of_le_succProbability (by norm_num) inverter hPPT hhalf hf
 
 /-- **One-way functions imply `NP ⊄ BPP`**, for instances of the preimage-prefix problem. -/
-theorem OneWay.NP_not_subset_BPP (hf : OneWay f) :
+theorem OneWay.not_NP_subset_BPP (hf : OneWay f) :
     ¬ NP encPreimagePrefix ⊆ BPP encPreimagePrefix := fun h =>
   hf.preimagePrefix_notMem_BPP (h (preimagePrefix_mem_NP hf.polyTime))
+
+@[deprecated (since := "2026-10-19")]
+alias OneWay.NP_not_subset_BPP := OneWay.not_NP_subset_BPP
 
 /-- **One-way functions imply `SAT ∉ BPP`**: by the Cook–Levin theorem the preimage-prefix problem
 reduces to `SAT`, and `BPP` is closed under polynomial-time reductions. -/

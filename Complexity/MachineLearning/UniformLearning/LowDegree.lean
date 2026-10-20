@@ -30,18 +30,19 @@ and outputs the sign of the truncated expansion `∑_{#S ≤ t} c̃(S) χ_S`
 (`UniformLearning.lowDegreeHypothesis`, `UniformLearning.lowDegreeLearner`).
 
 Each `c̃(S)` is an average of `m` independent values in `[-1, 1]` with mean `f̂(S)`, so by
-Hoeffding's inequality (`UniformLearning.uniform_abs_sum_div_sub_expect_ge_le`) it is off by at
+Hoeffding's inequality (`Probability.PMF.uniform_abs_sum_div_sub_expect_ge_le`) it is off by at
 least `γ` with probability at most `2 exp (-m γ² / 2)`
 (`UniformLearning.uniform_abs_empiricalCoeff_sub_ge_le`). Let `N` be the number of sets of at most
 `t` coordinates, at most `(n + 1) ^ t` for `n` coordinates (`BitString.card_filter_card_le_le_pow`).
 By the union bound, all `N` estimates are within `γ = √(ε / (2 N))` of their coefficients except
 with probability at most `2 N exp (-m ε / (4 N))`, and then rounding the truncated expansion
 misclassifies at most a fraction `N γ² + W = ε / 2 + W` of the points, where `W` is the Fourier
-weight of `f` above degree `t` (`BitString.hammingDist_signRound_sum_mul_chi_div_le`): this is
-[O'Donnell, Theorem 3.29][ODonnell2014] for the family of sets of at most `t` coordinates. So if
-`W ≤ ε / 2`, the hypothesis has error above `ε` with probability at most
-`2 N exp (-m ε / (4 N))` (`UniformLearning.uniform_error_lowDegreeHypothesis_gt_le`), which is at
-most `δ` once `m ≥ (4 N / ε) log (2 N / δ)` (`UniformLearning.lowDegreeLearner_learns`).
+weight of `f` above degree `t` (`BitString.hammingDist_signRound_sum_mul_chi_div_le`, by rounding
+to the sign as in [O'Donnell, Proposition 3.31][ODonnell2014]). So if `W ≤ ε / 2`, the hypothesis
+has error above `ε` with probability at most `2 N exp (-m ε / (4 N))`
+(`UniformLearning.uniform_lt_uniformError_lowDegreeHypothesis_le`), which is at most `δ` once
+`m ≥ (4 N / ε) log (2 N / δ)` (`UniformLearning.lowDegreeLearner_learns`). The whole argument is
+[O'Donnell, Theorem 3.29][ODonnell2014] for the family of sets of at most `t` coordinates.
 
 **Cost.** The algorithm uses `m` examples, computes `N` empirical coefficients, each an average of
 `m` characters `χ_S(x_j)` of sets of at most `t` coordinates, so `O (N m t)` arithmetic operations
@@ -58,12 +59,10 @@ only the number of examples.
 
 ## Main results
 
-* `Cslib.MachineLearning.UniformLearning.uniform_abs_sum_div_sub_expect_ge_le`: Hoeffding's
-  inequality for an empirical average.
 * `Cslib.MachineLearning.UniformLearning.uniform_abs_empiricalCoeff_sub_ge_le`: estimating one
   Fourier coefficient.
-* `Cslib.MachineLearning.UniformLearning.uniform_error_lowDegreeHypothesis_gt_le`: the failure
-  probability of the low-degree algorithm.
+* `Cslib.MachineLearning.UniformLearning.uniform_lt_uniformError_lowDegreeHypothesis_le`: the
+  failure probability of the low-degree algorithm.
 * `Cslib.MachineLearning.UniformLearning.lowDegreeLearner_learns`: the low-degree algorithm learns
   the functions with Fourier weight at most `ε / 2` above degree `t` from
   `(4 N / ε) log (2 N / δ)` examples.
@@ -86,50 +85,7 @@ open scoped BigOperators ENNReal
 
 variable {ι : Type*} {m : ℕ}
 
-/-! ### Hoeffding's inequality for an empirical average -/
-
-/-- **Hoeffding's inequality for an empirical average**: the average of a `[-1, 1]`-valued function
-at `m > 0` independent uniform points is off from its mean by at least `γ` with probability at most
-`2 exp (-m γ² / 2)`. -/
-theorem uniform_abs_sum_div_sub_expect_ge_le {α : Type*} [Fintype α] [Nonempty α] (s : α → ℝ)
-    (hs : ∀ a, s a ∈ Set.Icc (-1 : ℝ) 1) (hm : 0 < m) {γ : ℝ} (hγ : 0 ≤ γ) :
-    (PMF.uniformOfFintype (Fin m → α)).toOuterMeasure
-      {ω | γ ≤ |(∑ j, s (ω j)) / m - 𝔼 a, s a|} ≤
-        ENNReal.ofReal (2 * Real.exp (-(m * γ ^ 2) / 2)) := by
-  rw [ENNReal.le_ofReal_iff_toReal_le (PMF.toOuterMeasure_ne_top _ _) (by positivity)]
-  have h := PMF.pi_sum_abs_sub_mean_ge (fun _ : Fin m => PMF.uniformOfFintype α)
-    (fun _ a => 1 + s a) (bound := 2) (ε := m * γ) (by norm_num)
-    (fun _ a _ => ⟨by linarith [(hs a).1], by linarith [(hs a).2]⟩) (by positivity)
-  rw [PMF.pi_uniformOfFintype] at h
-  have hmean : ∑ a, ((PMF.uniformOfFintype α) a).toReal * (1 + s a) = 1 + 𝔼 a, s a := by
-    have hc : (Fintype.card α : ℝ) ≠ 0 := Nat.cast_ne_zero.2 Fintype.card_ne_zero
-    simp only [PMF.uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast, ← mul_sum,
-      sum_add_distrib, sum_const, card_univ, nsmul_eq_mul, mul_one, expect_eq_sum_div_card]
-    field_simp
-  simp only [hmean, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul] at h
-  have hmR : (0 : ℝ) < m := Nat.cast_pos.2 hm
-  have hevent : {ω : Fin m → α | γ ≤ |(∑ j, s (ω j)) / m - 𝔼 a, s a|} =
-      {ω | m * γ ≤ |∑ j, (1 + s (ω j)) - m * (1 + 𝔼 a, s a)|} := by
-    ext ω
-    have hsum : ∑ j, (1 + s (ω j)) - m * (1 + 𝔼 a, s a) =
-        m * ((∑ j, s (ω j)) / m - 𝔼 a, s a) := by
-      simp only [sum_add_distrib, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul, mul_one]
-      field_simp
-      ring
-    simp only [Set.mem_ofPred_eq, hsum, abs_mul, abs_of_pos hmR]
-    exact (mul_le_mul_iff_right₀ hmR).symm
-  rw [hevent]
-  refine h.trans_eq ?_
-  congr 2
-  field_simp
-
 /-! ### The algorithm -/
-
-/-- A sign times a character has values in `[-1, 1]`. -/
-theorem signVal_mul_chi_mem_Icc (b : Bool) (S : Finset ι) (x : ι → Bool) :
-    signVal b * chi ℝ S x ∈ Set.Icc (-1 : ℝ) 1 := by
-  rw [chi_eq_signVal_parityOn, ← signVal_xor]
-  cases (b ^^ parityOn S x) <;> norm_num
 
 variable [Fintype ι] [DecidableEq ι]
 
@@ -159,8 +115,8 @@ theorem uniform_abs_empiricalCoeff_sub_ge_le (f : (ι → Bool) → Bool) (S : F
     (PMF.uniformOfFintype (Fin m → ι → Bool)).toOuterMeasure
       {x | γ ≤ |empiricalCoeff (examples f x) S - fourierCoeff (fun x => signVal (f x)) S|} ≤
         ENNReal.ofReal (2 * Real.exp (-(m * γ ^ 2) / 2)) :=
-  uniform_abs_sum_div_sub_expect_ge_le (fun x => signVal (f x) * chi ℝ S x)
-    (fun x => signVal_mul_chi_mem_Icc _ S x) hm hγ
+  PMF.uniform_abs_sum_div_sub_expect_ge_le (fun x => signVal (f x) * chi ℝ S x)
+    (fun x => by rw [abs_mul, abs_signVal, abs_chi, one_mul]) hm hγ
 
 /-! ### The low-degree algorithm -/
 
@@ -168,7 +124,7 @@ theorem uniform_abs_empiricalCoeff_sub_ge_le (f : (ι → Bool) → Bool) (S : F
 signs, on the sets of more than `t` coordinates is at most `ε / 2`, then from `m` uniform random
 examples the low-degree hypothesis of degree `t` has error above `ε` with probability at most
 `2 N exp (-m ε / (4 N))`, where `N` is the number of sets of at most `t` coordinates. -/
-theorem uniform_error_lowDegreeHypothesis_gt_le (f : (ι → Bool) → Bool) (t m : ℕ) {ε : ℝ}
+theorem uniform_lt_uniformError_lowDegreeHypothesis_le (f : (ι → Bool) → Bool) (t m : ℕ) {ε : ℝ}
     (hε : 0 ≤ ε)
     (hf : ∑ S with t < #S, fourierCoeff (fun x => signVal (f x)) S ^ 2 ≤ ε / 2) :
     (PMF.uniformOfFintype (Fin m → ι → Bool)).toOuterMeasure
@@ -251,7 +207,7 @@ theorem lowDegreeLearner_learns {t m : ℕ} {ε δ : ℝ} (hε : 0 < ε) (hδ : 
     Learns (lowDegreeLearner ι t m) C ε δ := by
   rw [learns_iff]
   intro f hf
-  refine (uniform_error_lowDegreeHypothesis_gt_le f t m hε.le (hC f hf)).trans
+  refine (uniform_lt_uniformError_lowDegreeHypothesis_le f t m hε.le (hC f hf)).trans
     (ENNReal.ofReal_le_ofReal ?_)
   set N : ℝ := (#{S : Finset ι | #S ≤ t} : ℝ)
   have hN : 0 < N := Nat.cast_pos.2 (card_filter_card_le_pos t)
