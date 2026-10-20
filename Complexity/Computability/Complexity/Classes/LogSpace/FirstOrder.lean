@@ -74,17 +74,22 @@ namespace FO
 
 variable {L : Language.{u, v}}
 
-/-- The bound variable a term of a relational language is. -/
-def boundVar [L.IsRelational] {k : ℕ} (t : L.Term (Empty ⊕ Fin k)) : Fin k :=
-  Sum.elim (fun e => e.elim) id (termVar t)
+/-- The register holding the variable of a term of a relational language: `fv x` for the free
+variable `x`, and `base + i` for the bound variable `i`. -/
+def termReg [L.IsRelational] {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
+    (t : L.Term (α ⊕ Fin k)) : ℕ :=
+  Sum.elim fv (fun i : Fin k => base + i) (termVar t)
 
-theorem realize_boundVar [L.IsRelational] {M : Type*} [L.Structure M] {k : ℕ}
-    (t : L.Term (Empty ⊕ Fin k)) (xs : Fin k → M) :
-    t.realize (Sum.elim (default : Empty → M) xs) = xs (boundVar t) := by
-  rw [realize_termVar, boundVar]
-  rcases termVar t with e | i
-  · exact e.elim
-  · rfl
+/-- The register of the variable of a term holds the value of the term. -/
+theorem getD_termReg [L.IsRelational] {α : Type*} {n : ℕ} [L.Structure (Fin n)] {fv : α → ℕ}
+    {base k : ℕ} {regs : List ℕ} {val : α → Fin n} {xs : Fin k → Fin n}
+    (hv : ∀ x, regs.getD (fv x) 0 = val x) (hxs : ∀ i : Fin k, regs.getD (base + i) 0 = xs i)
+    (t : L.Term (α ⊕ Fin k)) :
+    regs.getD (termReg fv base t) 0 = (t.realize (Sum.elim val xs) : Fin n) := by
+  rw [realize_termVar, termReg]
+  rcases termVar t with x | i
+  · exact hv x
+  · exact hxs i
 
 /-- The number of bound variables in scope at the deepest point of a formula. -/
 def depth {α : Type*} : ∀ {k : ℕ}, L.BoundedFormula α k → ℕ
@@ -554,28 +559,32 @@ section Eval
 
 variable (v)
 
-/-- The code evaluating a formula with `k` bound variables, placed at the label `b`: with the
-cardinality in register `0` and the value of the bound variable `i` in register `3 + i`, it goes
-to `T` if the formula holds and to `F` otherwise. A quantifier over the bound variable `k` loops
-over the values of register `3 + k` below the cardinality; an atomic formula compares two
-registers, or reads a bit of a table. -/
-def compile : ∀ {k : ℕ}, L.BoundedFormula Empty k → ℕ → ℕ → ℕ → List Instr
+/-- The code evaluating a formula with free variables `α` and `k` bound variables, placed at the
+label `b`: with the cardinality in register `0`, the value of the free variable `x` in register
+`fv x` and that of the bound variable `i` in register `base + i`, it goes to `T` if the formula
+holds and to `F` otherwise. A quantifier over the bound variable `k` loops over the values of
+register `base + k` below the cardinality; an atomic formula compares two registers, or reads a
+bit of a table. -/
+def compile {α : Type*} (fv : α → ℕ) (base : ℕ) :
+    ∀ {k : ℕ}, L.BoundedFormula α k → ℕ → ℕ → ℕ → List Instr
   | _, .falsum, _, _, F => [.lt (const 0) (const 0) F F]
   | _, .equal t₁ t₂, b, T, F =>
-    [.lt (reg (3 + boundVar t₁)) (reg (3 + boundVar t₂)) F (b + 1),
-     .lt (reg (3 + boundVar t₂)) (reg (3 + boundVar t₁)) F T]
+    [.lt (reg (termReg fv base t₁)) (reg (termReg fv base t₂)) F (b + 1),
+     .lt (reg (termReg fv base t₂)) (reg (termReg fv base t₁)) F T]
   | _, .rel R ts, _, T, F =>
-    [.read (v.bitExpr (v.index ⟨_, R⟩) fun m => 3 + boundVar (ts m)) T F F]
-  | _, .imp φ ψ, b, T, F => compile φ b (b + codeSize φ) T ++ compile ψ (b + codeSize φ) T F
+    [.read (v.bitExpr (v.index ⟨_, R⟩) fun m => termReg fv base (ts m)) T F F]
+  | _, .imp φ ψ, b, T, F =>
+    compile fv base φ b (b + codeSize φ) T ++ compile fv base ψ (b + codeSize φ) T F
   | k, .all φ, b, T, F =>
     [.lt (const 0) (reg 0) (b + 1) T,
-     .assign (3 + k) (const 0) (b + 3),
-     .lt (add (reg (3 + k)) (const 1)) (reg 0) (b + 3 + codeSize φ) T] ++
-    compile φ (b + 3) (b + 2) F ++
-    [.assign (3 + k) (add (reg (3 + k)) (const 1)) (b + 3)]
+     .assign (base + k) (const 0) (b + 3),
+     .lt (add (reg (base + k)) (const 1)) (reg 0) (b + 3 + codeSize φ) T] ++
+    compile fv base φ (b + 3) (b + 2) F ++
+    [.assign (base + k) (add (reg (base + k)) (const 1)) (b + 3)]
 
-theorem length_compile : ∀ {k : ℕ} (φ : L.BoundedFormula Empty k) (b T F : ℕ),
-    (v.compile φ b T F).length = codeSize φ
+theorem length_compile {α : Type*} (fv : α → ℕ) (base : ℕ) :
+    ∀ {k : ℕ} (φ : L.BoundedFormula α k) (b T F : ℕ),
+      (v.compile fv base φ b T F).length = codeSize φ
   | _, .falsum, _, _, _ => rfl
   | _, .equal _ _, _, _, _ => rfl
   | _, .rel _ _, _, _, _ => rfl
@@ -589,68 +598,78 @@ theorem length_compile : ∀ {k : ℕ} (φ : L.BoundedFormula Empty k) (b T F : 
 variable {v}
 
 /-- **The compiled code of a formula decides its truth** in the decoded structure of a well-formed
-input: from the code of `φ` at `b`, with the cardinality in register `0` and the values `xs` of the
-bound variables in the registers from `3` on, the program goes to `T` if `φ` holds under `xs` and
-to `F` otherwise, keeping the registers below `3 + k` and the bound `B` of the registers. -/
+input: from the code of `φ` at `b`, with the cardinality in register `0`, the values `val` of the
+free variables in the registers `fv` below `base` and the values `xs` of the bound variables in the
+registers from `base` on, the program goes to `T` if `φ` holds under `val` and `xs` and to `F`
+otherwise, keeping the registers below `base + k` and the bound `B` of the registers. -/
 theorem reaches_compile {P : CounterProgram} {a : EncodedStructure} (ha : v.WellFormed a)
-    {B : ℕ} (hnB : a.1 ≤ B) :
-    ∀ {k : ℕ} (φ : L.BoundedFormula Empty k) (b T F : ℕ) (regs : List ℕ) (xs : Fin k → Fin a.1),
-      P.CodeAt b (v.compile φ b T F) → 3 + depth φ ≤ regs.length → regs.getD 0 0 = a.1 →
-      (∀ r ∈ regs, r ≤ B) → (∀ i : Fin k, regs.getD (3 + i) 0 = xs i) →
+    {B : ℕ} (hnB : a.1 ≤ B) {α : Type*} (fv : α → ℕ) (base : ℕ) (hbase : 0 < base)
+    (hfv : ∀ x, fv x < base) (val : α → Fin a.1) :
+    ∀ {k : ℕ} (φ : L.BoundedFormula α k) (b T F : ℕ) (regs : List ℕ) (xs : Fin k → Fin a.1),
+      P.CodeAt b (v.compile fv base φ b T F) → base + depth φ ≤ regs.length →
+      regs.getD 0 0 = a.1 → (∀ r ∈ regs, r ≤ B) → (∀ x, regs.getD (fv x) 0 = val x) →
+      (∀ i : Fin k, regs.getD (base + i) 0 = xs i) →
       ∃ (res : Bool) (regs' : List ℕ),
-        (res = true ↔ (letI := v.decode a; φ.Realize default xs)) ∧
+        (res = true ↔ (letI := v.decode a; φ.Realize val xs)) ∧
         P.Reaches (encStructure a) (P.Running B) (b, regs) (if res then T else F, regs') ∧
-        regs'.length = regs.length ∧ (∀ i < 3 + k, regs'.getD i 0 = regs.getD i 0) ∧
+        regs'.length = regs.length ∧ (∀ i < base + k, regs'.getD i 0 = regs.getD i 0) ∧
         ∀ r ∈ regs', r ≤ B
-  | _, .falsum, b, T, F, regs, xs, hP, _, _, hB, _ => by
+  | _, .falsum, b, T, F, regs, xs, hP, _, _, hB, _, _ => by
     simp only [compile, codeAt_cons] at hP
     refine ⟨false, regs, by simp [BoundedFormula.Realize], ?_, rfl, fun _ _ => rfl, hB⟩
     exact Reaches.lt hP.1 hB (by simpa using Reaches.refl _)
-  | _, .equal t₁ t₂, b, T, F, regs, xs, hP, _, _, hB, hxs => by
+  | _, .equal t₁ t₂, b, T, F, regs, xs, hP, _, _, hB, hv, hxs => by
     simp only [compile, codeAt_cons] at hP
     obtain ⟨h₀, h₁, -⟩ := hP
-    have e₁ := hxs (boundVar t₁)
-    have e₂ := hxs (boundVar t₂)
-    refine ⟨decide (xs (boundVar t₁) = xs (boundVar t₂)), regs, ?_, ?_, rfl, fun _ _ => rfl, hB⟩
-    · let _ := v.decode a
-      simp only [decide_eq_true_eq, BoundedFormula.Realize, realize_boundVar]
+    let _ := v.decode a
+    have e₁ := getD_termReg hv hxs t₁
+    have e₂ := getD_termReg hv hxs t₂
+    refine ⟨decide (t₁.realize (Sum.elim val xs) = t₂.realize (Sum.elim val xs)), regs, ?_, ?_,
+      rfl, fun _ _ => rfl, hB⟩
+    · simp only [decide_eq_true_eq]
+      rfl
     · refine Reaches.lt h₀ hB ?_
       simp only [eval_reg, e₁, e₂]
-      rcases lt_trichotomy (xs (boundVar t₁)) (xs (boundVar t₂)) with hlt | heq | hgt
+      rcases lt_trichotomy (t₁.realize (Sum.elim val xs)) (t₂.realize (Sum.elim val xs)) with
+        hlt | heq | hgt
       · simpa [hlt, hlt.ne] using Reaches.refl _
       · simp only [heq, lt_irrefl, ↓reduceIte, decide_true]
         refine Reaches.lt h₁ hB ?_
         simp only [eval_reg, e₁, e₂, heq, lt_irrefl, ↓reduceIte]
         exact Reaches.refl _
-      · simp only [show ¬ ((xs (boundVar t₁) : ℕ) < xs (boundVar t₂)) from
+      · simp only [show ¬ (((t₁.realize (Sum.elim val xs) : Fin a.1) : ℕ) <
+            (t₂.realize (Sum.elim val xs) : Fin a.1)) from
           not_lt.mpr (Fin.le_iff_val_le_val.mp hgt.le), ↓reduceIte, hgt.ne', decide_false]
         refine Reaches.lt h₁ hB ?_
         simp only [eval_reg, e₁, e₂, Fin.lt_def.mp hgt, ↓reduceIte, Bool.false_eq_true]
         exact Reaches.refl _
-  | l', .rel R ts, b, T, F, regs, xs, hP, _, h0, hB, hxs => by
+  | l', .rel R ts, b, T, F, regs, xs, hP, _, h0, hB, hv, hxs => by
     simp only [compile, codeAt_cons] at hP
-    set x : Fin _ → Fin a.1 := fun m => xs (boundVar (ts m)) with hxdef
+    let _ := v.decode a
+    set x : Fin _ → Fin a.1 := fun m => (ts m).realize (Sum.elim val xs) with hxdef
     have hi : v.index ⟨_, R⟩ < a.2.length := ha.1 ▸ v.index_lt _
     have htab : v.table a ⟨_, R⟩ = a.2[v.index ⟨_, R⟩] := List.getD_eq_getElem _ _ hi
     have hj : tupleIndex x < a.2[v.index ⟨_, R⟩].length := by
       rw [← htab, ha.length_table]
       exact tupleIndex_lt x
-    have hpos := eval_bitExpr ha h0 (v.index_lt ⟨_, R⟩).le (fun m => 3 + boundVar (ts m)) x
-      (fun m => hxs _)
+    have hpos := eval_bitExpr ha h0 (v.index_lt ⟨_, R⟩).le (fun m => termReg fv base (ts m)) x
+      (fun m => getD_termReg hv hxs (ts m))
     refine ⟨a.2[v.index ⟨_, R⟩][tupleIndex x], regs, ?_, ?_, rfl, fun _ _ => rfl, hB⟩
-    · let _ := v.decode a
-      change _ ↔ RelMap R fun m => (ts m).realize (Sum.elim default xs)
-      simp only [realize_boundVar, relMap_decode, htab]
-      rw [← hxdef, List.getD_eq_getElem _ _ hj]
+    · change _ ↔ RelMap R x
+      simp only [relMap_decode, htab]
+      rw [List.getD_eq_getElem _ _ hj]
     · refine Reaches.read hP.1 hB ?_
       rw [hpos, getElem?_encStructure_tableStart_two_mul_add_one hi hj]
       cases a.2[v.index ⟨_, R⟩][tupleIndex x] <;> exact Reaches.refl _
-  | _, .imp φ ψ, b, T, F, regs, xs, hP, hd, h0, hB, hxs => by
+  | _, .imp φ ψ, b, T, F, regs, xs, hP, hd, h0, hB, hv, hxs => by
     simp only [compile, codeAt_append, length_compile] at hP
-    have hd₁ : 3 + depth φ ≤ regs.length := (Nat.add_le_add_left (le_max_left _ _) 3).trans hd
-    have hd₂ : 3 + depth ψ ≤ regs.length := (Nat.add_le_add_left (le_max_right _ _) 3).trans hd
+    have hd₁ : base + depth φ ≤ regs.length :=
+      (Nat.add_le_add_left (le_max_left _ _) base).trans hd
+    have hd₂ : base + depth ψ ≤ regs.length :=
+      (Nat.add_le_add_left (le_max_right _ _) base).trans hd
     obtain ⟨r₁, regs₁, hr₁, hreach₁, hlen₁, hkeep₁, hB₁⟩ :=
-      reaches_compile ha hnB φ b (b + codeSize φ) T regs xs hP.1 hd₁ h0 hB hxs
+      reaches_compile ha hnB fv base hbase hfv val φ b (b + codeSize φ) T regs xs hP.1 hd₁ h0 hB
+        hv hxs
     cases r₁ with
     | false =>
       refine ⟨true, regs₁, ?_, by simpa using hreach₁, hlen₁, hkeep₁, hB₁⟩
@@ -659,8 +678,9 @@ theorem reaches_compile {P : CounterProgram} {a : EncodedStructure} (ha : v.Well
       exact fun h => absurd (hr₁.mpr h) (by simp)
     | true =>
       obtain ⟨r₂, regs₂, hr₂, hreach₂, hlen₂, hkeep₂, hB₂⟩ :=
-        reaches_compile ha hnB ψ (b + codeSize φ) T F regs₁ xs hP.2 (hlen₁ ▸ hd₂)
-          (by rw [hkeep₁ 0 (by omega), h0]) hB₁
+        reaches_compile ha hnB fv base hbase hfv val ψ (b + codeSize φ) T F regs₁ xs hP.2
+          (hlen₁ ▸ hd₂) (by rw [hkeep₁ 0 (by omega), h0]) hB₁
+          (fun x => by rw [hkeep₁ _ (by have := hfv x; omega), hv])
           (fun i => by rw [hkeep₁ _ (by omega), hxs])
       refine ⟨r₂, regs₂, ?_,
         (show P.Reaches _ _ _ (b + codeSize φ, regs₁) by simpa using hreach₁).trans hreach₂,
@@ -669,7 +689,7 @@ theorem reaches_compile {P : CounterProgram} {a : EncodedStructure} (ha : v.Well
       let _ := v.decode a
       rw [BoundedFormula.realize_imp, hr₂]
       exact ⟨fun h _ => h, fun h => h (hr₁.mp rfl)⟩
-  | k, .all φ, b, T, F, regs, xs, hP, hd, h0, hB, hxs => by
+  | k, .all φ, b, T, F, regs, xs, hP, hd, h0, hB, hv, hxs => by
     simp only [compile, codeAt_append, codeAt_cons, List.length_cons, List.length_nil] at hP
     obtain ⟨⟨⟨hc₀, hc₁, hc₂, -⟩, hcφ⟩, hc₃, -⟩ := hP
     rw [show b + 1 + 1 = b + 2 by omega] at hc₂
@@ -677,34 +697,35 @@ theorem reaches_compile {P : CounterProgram} {a : EncodedStructure} (ha : v.Well
     rw [List.length_append, length_compile] at hc₃
     simp only [List.length_cons, List.length_nil] at hc₃
     rw [show b + (0 + 1 + 1 + 1 + codeSize φ) = b + 3 + codeSize φ by omega] at hc₃
-    have hk : 3 + k < regs.length := by have := le_depth φ; simp only [depth] at hd; omega
+    have hk : base + k < regs.length := by have := le_depth φ; simp only [depth] at hd; omega
     let _ := v.decode a
     -- the loop over the values of the bound variable `k`
     have loop : ∀ e m (hm : m < a.1) (regsm : List ℕ), a.1 - m = e →
-        regsm.length = regs.length → (∀ i < 3 + k, regsm.getD i 0 = regs.getD i 0) →
-        regsm.getD (3 + k) 0 = m → (∀ r ∈ regsm, r ≤ B) →
-        (∀ m' (hm' : m' < m), φ.Realize default (Fin.snoc xs ⟨m', hm'.trans hm⟩)) →
+        regsm.length = regs.length → (∀ i < base + k, regsm.getD i 0 = regs.getD i 0) →
+        regsm.getD (base + k) 0 = m → (∀ r ∈ regsm, r ≤ B) →
+        (∀ m' (hm' : m' < m), φ.Realize val (Fin.snoc xs ⟨m', hm'.trans hm⟩)) →
         ∃ (res : Bool) (regs' : List ℕ),
-          (res = true ↔ ∀ y : Fin a.1, φ.Realize default (Fin.snoc xs y)) ∧
+          (res = true ↔ ∀ y : Fin a.1, φ.Realize val (Fin.snoc xs y)) ∧
           P.Reaches (encStructure a) (P.Running B) (b + 3, regsm)
             (if res then T else F, regs') ∧
-          regs'.length = regs.length ∧ (∀ i < 3 + k, regs'.getD i 0 = regs.getD i 0) ∧
+          regs'.length = regs.length ∧ (∀ i < base + k, regs'.getD i 0 = regs.getD i 0) ∧
           ∀ r ∈ regs', r ≤ B := by
       intro e
       induction e with
       | zero => intro m hm _ he; omega
       | succ e ih =>
         intro m hm regsm he hlenm hkeepm hvm hBm hprev
-        have hxs' : ∀ i : Fin (k + 1), regsm.getD (3 + i) 0 =
+        have hxs' : ∀ i : Fin (k + 1), regsm.getD (base + i) 0 =
             (Fin.snoc xs ⟨m, hm⟩ : Fin (k + 1) → Fin a.1) i := by
           intro i
           induction i using Fin.lastCases with
           | last => simpa using hvm
           | cast i => rw [Fin.snoc_castSucc, Fin.val_castSucc, hkeepm _ (by omega), hxs]
         obtain ⟨r₁, regs₁, hr₁, hreach₁, hlen₁, hkeep₁, hB₁⟩ :=
-          reaches_compile ha hnB φ (b + 3) (b + 2) F regsm (Fin.snoc xs ⟨m, hm⟩) hcφ
-            (by simp only [depth] at hd; omega)
-            (by rw [hkeepm 0 (by omega), h0]) hBm hxs'
+          reaches_compile ha hnB fv base hbase hfv val φ (b + 3) (b + 2) F regsm
+            (Fin.snoc xs ⟨m, hm⟩) hcφ (by simp only [depth] at hd; omega)
+            (by rw [hkeepm 0 (by omega), h0]) hBm
+            (fun x => by rw [hkeepm _ (by have := hfv x; omega), hv]) hxs'
         cases r₁ with
         | false =>
           refine ⟨false, regs₁, ?_, by simpa using hreach₁, hlen₁.trans hlenm,
@@ -712,9 +733,9 @@ theorem reaches_compile {P : CounterProgram} {a : EncodedStructure} (ha : v.Well
           simp only [Bool.false_eq_true, false_iff, not_forall]
           exact ⟨⟨m, hm⟩, fun h => absurd (hr₁.mpr h) (by simp)⟩
         | true =>
-          have hv₁ : regs₁.getD (3 + k) 0 = m := by rw [hkeep₁ _ (by omega), hvm]
+          have hv₁ : regs₁.getD (base + k) 0 = m := by rw [hkeep₁ _ (by omega), hvm]
           have h0₁ : regs₁.getD 0 0 = a.1 := by rw [hkeep₁ 0 (by omega), hkeepm 0 (by omega), h0]
-          have hall (hlast : ¬ m + 1 < a.1) : ∀ y : Fin a.1, φ.Realize default (Fin.snoc xs y) := by
+          have hall (hlast : ¬ m + 1 < a.1) : ∀ y : Fin a.1, φ.Realize val (Fin.snoc xs y) := by
             intro y
             rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp (show (y : ℕ) < m + 1 by omega)) with hy | hy
             · exact hprev y hy
@@ -722,7 +743,7 @@ theorem reaches_compile {P : CounterProgram} {a : EncodedStructure} (ha : v.Well
               exact this ▸ hr₁.mp rfl
           by_cases hnext : m + 1 < a.1
           · obtain ⟨r, regs', hr, hreach, hlen, hkeep, hB'⟩ :=
-              ih (m + 1) hnext (regs₁.set (3 + k) (m + 1)) (by omega)
+              ih (m + 1) hnext (regs₁.set (base + k) (m + 1)) (by omega)
                 (by rw [List.length_set, hlen₁, hlenm])
                 (fun i hi => by
                   rw [getD_set_ne (by omega), hkeep₁ i (by omega), hkeepm i hi])
@@ -748,7 +769,7 @@ theorem reaches_compile {P : CounterProgram} {a : EncodedStructure} (ha : v.Well
     -- the quantifier
     by_cases hn : 0 < a.1
     · obtain ⟨res, regs', hres, hreach, hlen, hkeep, hB'⟩ :=
-        loop (a.1 - 0) 0 hn (regs.set (3 + k) 0) rfl (by rw [List.length_set])
+        loop (a.1 - 0) 0 hn (regs.set (base + k) 0) rfl (by rw [List.length_set])
           (fun i hi => getD_set_ne (by omega)) (getD_set_self hk)
           (forall_mem_set_le hB (Nat.zero_le _)) (fun m' hm' => absurd hm' (Nat.not_lt_zero _))
       refine ⟨res, regs', by rw [hres, BoundedFormula.realize_all], ?_, hlen, hkeep, hB'⟩
@@ -775,7 +796,7 @@ the counter of the shape check, and one register per bound variable. -/
 def modelChecker (φ : L.Sentence) : CounterProgram where
   code :=
     v.shapeCode 0 (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ + 1) ++
-      v.compile φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
+      v.compile (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
         (4 + 6 * v.count + codeSize φ + 1) ++
       [.accept, .reject]
   registers := 3 + depth φ
@@ -791,16 +812,16 @@ theorem queryLanguage_mem_L (φ : L.Sentence) :
   refine ⟨fun a => decide (a ∈ v.queryLanguage {M | M ⊨ φ}), ?_, fun a => by simp⟩
   refine (v.modelChecker φ).computableInLogSpace_of_reaches v.regExponent fun a => ?_
   have hE := v.length_shapeCode 0 (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ + 1)
-  have hC := v.length_compile φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
+  have hC := v.length_compile (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
     (4 + 6 * v.count + codeSize φ + 1)
   have hshape : (v.modelChecker φ).CodeAt 0
       (v.shapeCode 0 (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ + 1)) :=
     codeAt_of_code_eq (pre := [])
-      (post := v.compile φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
+      (post := v.compile (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
         (4 + 6 * v.count + codeSize φ + 1) ++ [.accept, .reject])
       (by simp [modelChecker])
   have hcomp : (v.modelChecker φ).CodeAt (4 + 6 * v.count)
-      (v.compile φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
+      (v.compile (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
         (4 + 6 * v.count + codeSize φ + 1)) := by
     have := codeAt_of_code_eq (P := v.modelChecker φ)
       (pre := v.shapeCode 0 (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ + 1))
@@ -810,7 +831,7 @@ theorem queryLanguage_mem_L (φ : L.Sentence) :
       [.accept, .reject] := by
     have := codeAt_of_code_eq (P := v.modelChecker φ)
       (pre := v.shapeCode 0 (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ + 1) ++
-        v.compile φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
+        v.compile (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count) (4 + 6 * v.count + codeSize φ)
           (4 + 6 * v.count + codeSize φ + 1))
       (post := []) (List.append_nil _).symm
     rwa [List.length_append, hE, hC] at this
@@ -824,7 +845,8 @@ theorem queryLanguage_mem_L (φ : L.Sentence) :
   by_cases hwf : v.WellFormed a
   · rw [ite_eq_left hwf] at hreach₁
     obtain ⟨res, regs₂, hres, hreach₂, -, -, hB₂⟩ :=
-      reaches_compile hwf hnB φ _ _ _ regs₁ default hcomp (by rw [hlen₁]; simp) (h0₁ hwf) hB₁
+      reaches_compile hwf hnB (fun e : Empty => e.elim) 3 (by norm_num) (fun e => e.elim) default
+        φ _ _ _ regs₁ default hcomp (by rw [hlen₁]; simp) (h0₁ hwf) hB₁ (fun e => e.elim)
         (fun i => i.elim0)
     refine ⟨(if res then 4 + 6 * v.count + codeSize φ else 4 + 6 * v.count + codeSize φ + 1,
       regs₂), hreach₁.trans hreach₂, ?_, hB₂⟩

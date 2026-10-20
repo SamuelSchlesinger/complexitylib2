@@ -16,7 +16,8 @@ import Mathlib.Data.List.GetD
 
 A **counter program** (`Turing.CounterProgram`) is a finite list of instructions over a fixed
 number of registers holding natural numbers. An instruction assigns to a register the value of an
-arithmetic expression (`Turing.CounterProgram.Expr`: constants, registers, sums and products),
+arithmetic expression (`Turing.CounterProgram.Expr`: constants, registers, sums, products,
+quotients and remainders),
 branches on a comparison of two expressions, branches on the input bit at the position given by
 an expression (or on its absence past the end of the input), emits an output bit, or halts with a
 final output word. Labels are natural numbers; a label outside the program halts.
@@ -71,6 +72,10 @@ inductive Expr : Type where
   | add (a b : Expr)
   /-- A product. -/
   | mul (a b : Expr)
+  /-- A quotient, `0` for the divisor `0`. -/
+  | div (a b : Expr)
+  /-- A remainder. -/
+  | mod (a b : Expr)
   deriving Inhabited
 
 namespace Expr
@@ -81,6 +86,8 @@ def eval (regs : List ℕ) : Expr → ℕ
   | reg i => regs.getD i 0
   | add a b => a.eval regs + b.eval regs
   | mul a b => a.eval regs * b.eval regs
+  | div a b => a.eval regs / b.eval regs
+  | mod a b => a.eval regs % b.eval regs
 
 @[simp] theorem eval_const (regs : List ℕ) (k : ℕ) : (const k).eval regs = k := rfl
 @[simp] theorem eval_reg (regs : List ℕ) (i : ℕ) : (reg i).eval regs = regs.getD i 0 := rfl
@@ -88,6 +95,10 @@ def eval (regs : List ℕ) : Expr → ℕ
     (add a b).eval regs = a.eval regs + b.eval regs := rfl
 @[simp] theorem eval_mul (regs : List ℕ) (a b : Expr) :
     (mul a b).eval regs = a.eval regs * b.eval regs := rfl
+@[simp] theorem eval_div (regs : List ℕ) (a b : Expr) :
+    (div a b).eval regs = a.eval regs / b.eval regs := rfl
+@[simp] theorem eval_mod (regs : List ℕ) (a b : Expr) :
+    (mod a b).eval regs = a.eval regs % b.eval regs := rfl
 
 /-- A power of an expression. -/
 def pow (e : Expr) : ℕ → Expr
@@ -437,6 +448,12 @@ theorem Expr.eval_inSpace : ∀ e : Expr,
   | .mul a b =>
     have h := budget_prod (Expr.eval_inSpace a) (Expr.eval_inSpace b)
     budget_comp natMul h (.const_mul 32 (.add h.length_le (.const 1 _)))
+  | .div a b =>
+    have h := budget_prod (Expr.eval_inSpace a) (Expr.eval_inSpace b)
+    budget_comp natDiv h (.const_mul 16 (.add h.length_le (.const 1 _)))
+  | .mod a b =>
+    have h := budget_prod (Expr.eval_inSpace a) (Expr.eval_inSpace b)
+    budget_comp natMod h (.const_mul 16 (.add h.length_le (.const 1 _)))
 
 /-- An expression evaluated on the registers of a configuration. -/
 theorem Expr.evalCfg_inSpace (e : Expr) :
