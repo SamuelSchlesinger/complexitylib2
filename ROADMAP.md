@@ -134,6 +134,20 @@ of the handover. The work below remains available for subsequent, independently 
    nonvacuous client, a theorem-index entry, and independent mathematical, API and
    statement-index reviews of the completed revision.
 
+   - [ ] **Ordered first-order complexity, in standard terminology.** Decided 2026-10-19: the
+     library's first-order complexity follows the usual convention of descriptive complexity
+     [Immerman][Immerman1999]. Structures are ordered, on `{0, …, n-1}` with `n ≥ 1`, and FO
+     means FO(≤, BIT). First-order reductions are first-order queries on lexicographically
+     ordered k-tuples, and `≤_fo`, `≤_fop` and `≤_qfp` keep their standard meanings. The
+     order-free `FO.Reduces`, `FO.QFReduces` and `FO.Definable` remain as a general layer of
+     interpretations without built-in order. The ordered notions get their own names. Restate
+     the headline results in the ordered setting: SAT, 3SAT, 3COL, IS, clique and VC
+     NP-complete under first-order or quantifier-free projections; FO(≤, BIT) ⊆ L; first-order
+     reductions are logspace reductions; REACH NL-complete; Circuit Value P-complete under
+     first-order reductions. The order-free versions cannot reach several of these: SAT → 3SAT
+     appears to need an order, and SAT-hardness without order needs an empty-structure
+     hypothesis.
+
    - [ ] **FO reductions and projections.** The vocabulary-parametric, relativized core is
      implemented in [ProjectionFormula](Complexity/Logics/FirstOrder/ProjectionFormula.lean) and
      [Projection](Complexity/Logics/FirstOrder/Projection.lean): selection of one literal before
