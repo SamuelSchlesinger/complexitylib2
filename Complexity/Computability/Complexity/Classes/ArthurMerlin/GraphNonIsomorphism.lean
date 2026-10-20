@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
+public import Complexity.Foundations.Data.BitString.Block
 public import Mathlib.Data.Nat.Factorial.Basic
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -30,9 +31,10 @@ relabel matrices by `Matrix.reindex τ τ`, and the pairs `(M, σ)` of a relabel
 (`Cslib.Complexity.GraphNonIsomorphism.PublicCoin.card_pairs_union`): by the orbit–stabilizer
 count, each orbit contributes `n!` pairs
 (`Cslib.Complexity.GraphNonIsomorphism.PublicCoin.card_pairs`), and the two orbits coincide or are
-disjoint. Mathlib has no action of permutations on square matrices by simultaneous relabelling, so
-the orbits are finite sets of matrices here, and the orbit–stabilizer count, a sum of automorphism
-group sizes over an orbit, is proved by partitioning the permutations into fibers.
+disjoint. Mathlib's action of permutations on functions, `arrowAction`, is a definition rather
+than an instance and acts on uncurried functions, so the orbits are finite sets of matrices here,
+and the orbit–stabilizer count, a sum of automorphism group sizes over an orbit, is proved by
+partitioning the permutations into fibers.
 
 Merlin can certify membership of a pair, by naming the graph and a relabelling of it. Pairs are
 written as strings of `2 L² + 1` bits, `L` the length of the encoded instance
@@ -84,13 +86,12 @@ variable {n : ℕ}
 
 /-- Relabelling by a product of permutations is relabelling twice. -/
 theorem reindex_mul (σ τ : Equiv.Perm (Fin n)) (M : Matrix (Fin n) (Fin n) Bool) :
-    Matrix.reindex (σ * τ) (σ * τ) M = Matrix.reindex σ σ (Matrix.reindex τ τ M) := by
-  ext i j
-  simp [Equiv.Perm.mul_def]
+    Matrix.reindex (σ * τ) (σ * τ) M = Matrix.reindex σ σ (Matrix.reindex τ τ M) :=
+  (DFunLike.congr_fun (Matrix.reindex_trans τ τ σ σ) M).symm
 
 /-- Relabelling by the identity permutation does nothing. -/
 theorem reindex_one (M : Matrix (Fin n) (Fin n) Bool) : Matrix.reindex 1 1 M = M :=
-  rfl
+  Matrix.reindex_refl_refl M
 
 /-- `Matrix.reindex τ τ A = M` says that `τ` carries `A` to `M`. -/
 theorem reindex_eq_iff {τ : Equiv.Perm (Fin n)} {A M : Matrix (Fin n) (Fin n) Bool} :
@@ -186,14 +187,14 @@ private theorem index_symm {q : ℕ} (h : q < n * n) :
 
 /-- The entry at position `q` of a matrix of size `n` read row by row, `false` beyond `n * n`. -/
 def matrixBit (A : Matrix (Fin n) (Fin n) Bool) (q : ℕ) : Bool :=
-  if h : q < n * n then A (finProdFinEquiv.symm ⟨q, h⟩).1 (finProdFinEquiv.symm ⟨q, h⟩).2
-  else false
+  if h : q < n * n then BitString.blocksEquiv.symm (Matrix.of.symm A) ⟨q, h⟩ else false
 
 theorem matrixBit_index (A : Matrix (Fin n) (Fin n) Bool) (i j : Fin n) :
     matrixBit A (i * n + j) = A i j := by
   have hq : (⟨i * n + j, index_lt i j⟩ : Fin (n * n)) = finProdFinEquiv (i, j) :=
     Fin.ext (val_finProdFinEquiv i j).symm
-  simp only [matrixBit, index_lt i j, ↓reduceDIte, hq, Equiv.symm_apply_apply]
+  simp only [matrixBit, index_lt i j, ↓reduceDIte, hq, BitString.blocksEquiv_symm_apply,
+    Matrix.of_symm_apply, Equiv.symm_apply_apply]
 
 theorem matrixBit_of_le (A : Matrix (Fin n) (Fin n) Bool) {q : ℕ} (h : n * n ≤ q) :
     matrixBit A q = false := by
@@ -431,10 +432,12 @@ theorem card_filter_check {E C : ℕ} (hE : 2 * (n * n) + 1 ≤ E) (hC : n * n +
     funext p
     change codeBit _ _ p.1 = x p
     by_cases h₁ : p.1 < n * n
-    · simp only [codeBit, h₁, ↓reduceIte, matrixBit, ↓reduceDIte, decodeMatrix, Matrix.of_apply]
+    · simp only [codeBit, h₁, ↓reduceIte, matrixBit, ↓reduceDIte, BitString.blocksEquiv_symm_apply,
+        Matrix.of_symm_apply, decodeMatrix, Matrix.of_apply]
       rw [index_symm h₁, getD_ofFn _ p.2]
     · by_cases h₂ : p.1 - n * n < n * n
-      · simp only [codeBit, h₁, ↓reduceIte, matrixBit, h₂, ↓reduceDIte, Matrix.of_apply,
+      · simp only [codeBit, h₁, ↓reduceIte, matrixBit, h₂, ↓reduceDIte,
+          BitString.blocksEquiv_symm_apply, Matrix.of_symm_apply, Matrix.of_apply,
           Equiv.ofBijective_apply, decodeMap]
         have hrow := (hrows _ (finProdFinEquiv.symm ⟨p.1 - n * n, h₂⟩).1.2 _
           (finProdFinEquiv.symm ⟨p.1 - n * n, h₂⟩).2.2).1
@@ -539,6 +542,10 @@ theorem mem_AM : GraphNonIsomorphism ∈ AM (encPair encGraph encGraph) := by
     have h := length_distinctVertices_eq_of_mem_GraphIsomorphism hiso
     rw [hpairs G₀ G₁ h, card_pairs_union,
       ite_eq_left ((mem_GraphIsomorphism_iff_mem_orbit h).1 hiso)]
+
+@[deprecated (since := "2026-10-19")]
+alias length_distinctVertices_eq_of_mem_GraphIsomorphism :=
+  Complexity.length_distinctVertices_eq_of_mem_GraphIsomorphism
 
 end GraphNonIsomorphism
 

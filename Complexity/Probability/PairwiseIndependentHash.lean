@@ -174,6 +174,8 @@ theorem comp_seedEquiv {ι' : Type*} [Fintype ι'] (hh : IsPairwiseIndependentHa
     rw [dens_filter_comp_equiv e fun i => h i _ = y₁ ∧ h i _ = y₂]
     exact hh.dens_filter_apply_eq_and_apply_eq hx y₁ y₂
 
+@[deprecated (since := "2026-10-19")] alias comp_equiv := comp_seedEquiv
+
 /-- **The mean cell size**: `#{x ∈ S | h i x = y}` has expectation `#S / |Y|`. -/
 theorem expect_card_filter_apply_eq [Semifield 𝕜] [CharZero 𝕜] (hh : IsPairwiseIndependentHash h)
     (S : Finset X) (y : Y) :
