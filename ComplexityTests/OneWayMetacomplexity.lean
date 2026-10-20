@@ -17,7 +17,7 @@ deciders; one-wayness and `MCSP ∈ BPP` are open and are not instantiated. -/
 
 namespace ComplexityTests.OneWayMetacomplexity
 
-open Turing.MultiTapeTM Cslib Cslib.Crypto Cslib.Crypto.KabanetsCai Cslib.Complexity
+open Turing.MultiTapeTM Cslib Cslib.Crypto Cslib.Complexity
 
 -- The preimage-prefix problem of a concrete polynomial-time function is in `NP`.
 example : preimagePrefix (fun x => x ++ x) ∈ NP encPreimagePrefix :=
@@ -73,26 +73,28 @@ example : {b : Bool | b = true} ∈ BPP encBool :=
 -- Against a deterministic oracle, `queryTable` collects the first reply bits, `false` for an
 -- empty reply.
 example : OracleComp.interpret (ProbOracleComp.handler ProbComp.unifFin
-    fun request => pure (List.reverse request.2)) (queryTable [[true, false], [], [false, true]]) =
-      pure [false, false, true] :=
-  interpret_queryTable _ _ _
+    fun request => pure (List.reverse request.2))
+      (KabanetsCai.queryTable [[true, false], [], [false, true]]) = pure [false, false, true] :=
+  KabanetsCai.interpret_queryTable _ _ _
 
 -- The circuit bound applies to a concrete polynomial-time keyed family.
 example : ∃ c : ℕ, ∀ (key : List Bool) (m : ℕ), m ≤ key.length →
     Circuits.complexity Circuits.Boolean.interpretation
-      (Circuits.single (restriction (fun query => key ++ query) key.length m)) ≤
+      (Circuits.single (KabanetsCai.restriction (fun query => key ++ query) key.length m)) ≤
         c * (3 * key.length + 2) ^ c + 2 :=
-  exists_complexity_restriction_le (family := fun key query => key ++ query) (by fun_prop)
+  KabanetsCai.exists_complexity_restriction_le (family := fun key query => key ++ query)
+    (by fun_prop)
 
 -- A random function restricts to a uniformly random Boolean function.
 example : (Probability.PMF.uniformOfFintype (BitString 3 → BitString 3)).map
-    (restrictTable 3 2 (by norm_num)) = Probability.PMF.uniformOfFintype (BooleanFunction 2) :=
-  uniformOfFintype_map_restrictTable _ (by norm_num)
+    (KabanetsCai.restrictTable 3 2 (by norm_num)) =
+      Probability.PMF.uniformOfFintype (BooleanFunction 2) :=
+  KabanetsCai.uniformOfFintype_map_restrictTable _ (by norm_num)
 
 -- The distinguisher certificate applies to a concrete polynomial-time decider.
 example : Probability.IsOraclePPT Turing.MultiTapeTM.encBool
-    (mcspDistinguisher 0 (fun x => x.2.isEmpty) 3) :=
-  isOraclePPT_mcspDistinguisher 3 (by fun_prop)
+    (KabanetsCai.mcspDistinguisher 0 (fun x => x.2.isEmpty) 3) :=
+  KabanetsCai.isOraclePPT_mcspDistinguisher 3 (by fun_prop)
 
 /--
 info: 'Cslib.Crypto.preimagePrefix_mem_NP' depends on axioms:

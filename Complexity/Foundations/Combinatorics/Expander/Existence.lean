@@ -106,6 +106,7 @@ theorem exists_forall_exists_spectralExpansion_le :
       ∃ G : RotationMap V (Fin d), G.spectralExpansion ≤ μ :=
   ⟨120, 1 - 1 / 360000, by norm_num, fun V _ ↦ exists_spectralExpansion_le V⟩
 
+variable {V} in
 /-- A `120`-regular multigraph on at least two vertices of spectral expansion at most
 `1 - 1 / 360000` has edge expansion at least `1 / 6000`, by the easy half of Cheeger's
 inequality. -/
@@ -141,6 +142,6 @@ theorem graph_expanderFamily (V : Type u) [Fintype V] : expanderFamily.graph V =
 /-- On at least two vertices, `expander V` has edge expansion at least `1 / 6000`. -/
 theorem le_edgeExpansion_expander [DecidableEq V] [Nontrivial V] :
     1 / 6000 ≤ (expander V).edgeExpansion :=
-  le_edgeExpansion_of_spectralExpansion_le V (spectralExpansion_expander_le V)
+  le_edgeExpansion_of_spectralExpansion_le (spectralExpansion_expander_le V)
 
 end Cslib.RotationMap

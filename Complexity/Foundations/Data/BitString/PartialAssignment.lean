@@ -17,7 +17,10 @@ public import Mathlib.Data.Part
 public import Mathlib.Logic.Function.DependsOn
 import Complexity.Foundations.Data.BitString.Agree
 import Mathlib.Algebra.Group.Action.Defs
+import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Combinatorics.Enumerative.DoubleCounting
+import Mathlib.Tactic.GCongr
+import Mathlib.Tactic.Ring
 
 /-!
 # Partial assignments
@@ -65,6 +68,8 @@ counting them is the method of Nechiporuk.
   coordinates.
 * `Cslib.BitString.PartialAssignment.sum_card_filter_outside`,
   `Cslib.BitString.PartialAssignment.sum_card_filter_extensions`: drawing random restrictions.
+* `Cslib.BitString.PartialAssignment.mul_card_filter_withFree_le`: two stages of restrictions,
+  counted.
 * `Cslib.BitString.mem_subfunctions_iff`: subfunctions are restrictions.
 
 ## References
@@ -551,6 +556,55 @@ theorem sum_card_filter_extensions (P : PartialAssignment ι → Prop) [Decidabl
   rw [bipartiteBelow, ← hfree, card_filter_extends_withFree (hfree ▸ hℓ)]
 
 end Fintype
+
+/-- **Two stages of restrictions, counted.** Drawing a restriction with `ℓ'` free bits by first
+drawing one with `ℓ ≥ ℓ'` free bits and then an extension of it: if at most a `G / c` fraction of
+the restrictions with `ℓ` free bits satisfy `B`, and for each other one at most an `H / c` fraction
+of its extensions with `ℓ'` free bits satisfy `B'`, then at most a `(G + H) / c` fraction of the
+restrictions with `ℓ'` free bits satisfy `B'`. -/
+theorem mul_card_filter_withFree_le {n c G H G' ℓ ℓ' : ℕ} (hℓ'ℓ : ℓ' ≤ ℓ) (hℓn : ℓ ≤ n)
+    {B B' : PartialAssignment (Fin n) → Prop} [DecidablePred B] [DecidablePred B']
+    (h₁ : c * #{ρ ∈ withFree (Fin n) ℓ | B ρ} ≤ G * #(withFree (Fin n) ℓ))
+    (h₂ : ∀ ρ ∈ withFree (Fin n) ℓ, ¬ B ρ →
+      c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} ≤ H * #(ρ.extensions ℓ'))
+    (hG : G + H ≤ G') :
+    c * #{ρ ∈ withFree (Fin n) ℓ' | B' ρ} ≤ G' * #(withFree (Fin n) ℓ') := by
+  set W := withFree (Fin n) ℓ
+  set F := (n - ℓ').choose (ℓ - ℓ')
+  have hF : 0 < F := Nat.choose_pos (by omega)
+  set T := ℓ.choose ℓ' * 2 ^ (ℓ - ℓ')
+  have hT : ∀ ρ ∈ W, #(ρ.extensions ℓ') = T := fun ρ hρ => by
+    rw [card_extensions, mem_withFree.1 hρ]
+  -- each restriction with `ℓ` free bits has few bad extensions, unless it satisfies `B`
+  have hper : ∀ ρ ∈ W, c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} ≤
+      (if B ρ then c else 0) * T + H * T := fun ρ hρ => by
+    by_cases hb : B ρ
+    · simp only [hb, ↓reduceIte]
+      rw [← hT ρ hρ]
+      exact (Nat.mul_le_mul_left _ (card_filter_le _ _)).trans (Nat.le_add_right _ _)
+    · simp only [hb, ↓reduceIte, zero_mul, zero_add]
+      rw [← hT ρ hρ]
+      exact h₂ ρ hρ hb
+  -- double counting the extensions, with and without the condition
+  have hdc := sum_card_filter_extensions B' hℓ'ℓ
+  have hall := sum_card_filter_extensions (ι := Fin n) (fun _ => True) hℓ'ℓ
+  simp only [filter_true] at hall
+  rw [Fintype.card_fin] at hdc hall
+  rw [sum_congr rfl hT, sum_const, smul_eq_mul] at hall
+  refine Nat.le_of_mul_le_mul_right (?_ : _ * F ≤ _ * F) hF
+  calc c * #{ρ ∈ withFree (Fin n) ℓ' | B' ρ} * F
+      = ∑ ρ ∈ W, c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} := by
+        rw [mul_assoc, ← hdc, mul_sum]
+    _ ≤ ∑ ρ ∈ W, ((if B ρ then c else 0) * T + H * T) := sum_le_sum hper
+    _ = c * #{ρ ∈ W | B ρ} * T + #W * H * T := by
+        rw [sum_add_distrib, ← sum_mul, sum_ite, sum_const_zero, add_zero, sum_const,
+          smul_eq_mul, sum_const, smul_eq_mul]
+        ring
+    _ ≤ G * #W * T + #W * H * T := by gcongr
+    _ = (G + H) * #(withFree (Fin n) ℓ') * F := by
+        rw [mul_assoc _ #(withFree (Fin n) ℓ'), ← hall]
+        ring
+    _ ≤ G' * #(withFree (Fin n) ℓ') * F := by gcongr
 
 end PartialAssignment
 

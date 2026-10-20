@@ -39,6 +39,8 @@ distance from `f` the weight of `f` outside the subsets of `J`
   above a degree.
 * `Cslib.BitString.fourierCoeff_expect_piecewise`, `Cslib.BitString.expect_piecewise_eq_sum`: the
   average over the coordinates outside a set.
+* `Cslib.BitString.expect_sub_expect_piecewise_sq`: the mean square distance of a function from
+  that average is its Fourier weight outside the subsets of the set.
 
 ## References
 

@@ -215,6 +215,8 @@ theorem mul_card_bucketSearch_le_one (f : (ι → Bool) → Bool) {θ : ℝ} (es
     _ ≤ ∑ U, fourierCoeff F U ^ 2 := sum_bucketWeight_le F _ _
     _ = 1 := sum_fourierCoeff_sq_signVal f
 
+@[deprecated (since := "2026-10-19")] alias card_bucketSearch_le := mul_card_bucketSearch_le_one
+
 end BucketSearch
 
 /-! ### The algorithm -/

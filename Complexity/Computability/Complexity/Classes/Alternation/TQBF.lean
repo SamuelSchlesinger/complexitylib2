@@ -51,6 +51,12 @@ in particular every problem in `AP` (`Cslib.Complexity.AP_subset_PSPACE`): the i
 ## Main results
 
 * `Cslib.Logic.PL.QBF.eval_rounds_eq_true_iff`: rounds of quantifiers are a game of moves.
+* `Cslib.Logic.PL.QBF.rounds_append`, `Cslib.Logic.PL.QBF.eval_rounds_congr`,
+  `Cslib.Logic.PL.QBF.eval_exs_congr`: rounds and blocks of quantifiers.
+* `Cslib.Logic.PL.QBF.eval_rounds_map_pair`: universal quantifiers over a variable that does not
+  occur are vacuous.
+* `Cslib.Logic.PL.QBF.length_roundVars`, `Cslib.Logic.PL.QBF.closed_rounds_ofCNF_iff`: the
+  variables of rounds, and closed formulas in alternating prenex conjunctive normal form.
 * `Cslib.Complexity.TQBF.eval_gameFormula`, `Cslib.Complexity.TQBF.closed_gameFormula`: the
   formula of a game.
 * `Cslib.Complexity.TQBF.gameReduce_mem_TQBF_iff`,
@@ -91,6 +97,20 @@ theorem tokens_rounds (ps : List (ℕ × ℕ)) (φ : QBF ℕ) :
   | cons p ps ih =>
     simp only [rounds, List.foldr_cons] at ih ⊢
     simp [tokens, ih]
+
+/-- Rounds of quantifiers over a concatenation of lists nest. -/
+theorem rounds_append (ps qs : List (V × V)) (φ : QBF V) :
+    rounds (ps ++ qs) φ = rounds ps (rounds qs φ) :=
+  List.foldr_append ..
+
+/-- Rounds of quantifiers quantify two variables each. -/
+theorem length_roundVars (ps : List (V × V)) : (roundVars ps).length = 2 * ps.length := by
+  induction ps with
+  | nil => rfl
+  | cons p ps ih =>
+    simp only [roundVars, List.flatMap_cons, List.length_append, List.length_cons,
+      List.length_nil] at ih ⊢
+    omega
 
 variable [DecidableEq V]
 
@@ -149,6 +169,45 @@ theorem mem_freeVars_rounds {ps : List (V × V)} {φ : QBF V} {x : V} :
     simp only [freeVars_ex, freeVars_all, Finset.mem_erase, ih, roundVars, List.flatMap_cons,
       List.cons_append, List.nil_append, List.mem_cons, not_or]
     tauto
+
+/-- Rounds of quantifiers over formulas with the same values have the same values. -/
+theorem eval_rounds_congr {φ ψ : QBF V} (h : ∀ σ, φ.eval σ = ψ.eval σ) (ps : List (V × V))
+    (σ : V → Bool) : (rounds ps φ).eval σ = (rounds ps ψ).eval σ := by
+  induction ps generalizing σ with
+  | nil => exact h σ
+  | cons p ps ih => simp only [rounds, List.foldr_cons] at ih ⊢; simp only [eval_ex, eval_all, ih]
+
+/-- Existential quantifiers over formulas with the same values have the same values. -/
+theorem eval_exs_congr {φ ψ : QBF V} (h : ∀ σ, φ.eval σ = ψ.eval σ) (vs : List V)
+    (σ : V → Bool) : (exs vs φ).eval σ = (exs vs ψ).eval σ := by
+  induction vs generalizing σ with
+  | nil => exact h σ
+  | cons v vs ih => simp only [exs, List.foldr_cons] at ih ⊢; simp only [eval_ex, ih]
+
+/-- **Vacuous universal quantifiers**: the rounds `∃ v, ∀ d` for the variables `v` of a list, over
+a variable `d` that is not free in the body, are existential quantifiers over the list. -/
+theorem eval_rounds_map_pair {φ : QBF V} {d : V} (hd : d ∉ φ.freeVars) (vs : List V)
+    (σ : V → Bool) : (rounds (vs.map fun v => (v, d)) φ).eval σ = (exs vs φ).eval σ := by
+  induction vs generalizing σ with
+  | nil => rfl
+  | cons v vs ih =>
+    have hd' : d ∉ (rounds (vs.map fun v => (v, d)) φ).freeVars := fun h =>
+      hd (mem_freeVars_rounds.1 h).1
+    change (ex v (all d (rounds (vs.map fun v => (v, d)) φ))).eval σ = (ex v (exs vs φ)).eval σ
+    simp only [eval_ex, eval_all_of_notMem_freeVars hd', ih]
+
+/-- A formula in alternating prenex conjunctive normal form is closed exactly when all the
+variables of its clauses are quantified. -/
+theorem closed_rounds_ofCNF_iff (ps : List (V × V)) (ψ : CNF V) :
+    (rounds ps (ofCNF ψ)).Closed ↔ ∀ c ∈ ψ, ∀ l ∈ c, l.1 ∈ roundVars ps := by
+  rw [Closed, Finset.eq_empty_iff_forall_notMem]
+  simp only [mem_freeVars_rounds, mem_freeVars_ofCNF, CNF.vars, List.mem_map,
+    List.mem_flatten, not_and, not_not]
+  constructor
+  · intro h c hc l hl
+    exact h _ ⟨l, ⟨c, hc, hl⟩, rfl⟩
+  · rintro h _ ⟨l, ⟨c, hc, hl⟩, rfl⟩
+    exact h c hc l hl
 
 end Cslib.Logic.PL.QBF
 

@@ -253,3 +253,36 @@ theorem uniformOfFintype_map_restrictTable {n m : ℕ} (hn : 0 < n) (hm : m ≤ 
   rw [hemb hz.choose_spec]
 
 end Cslib.Crypto.KabanetsCai
+
+namespace Cslib.Crypto
+
+@[deprecated (since := "2026-10-19")]
+alias exists_complexity_restriction_le := KabanetsCai.exists_complexity_restriction_le
+
+@[deprecated (since := "2026-10-19")] alias interpret_queryTable := KabanetsCai.interpret_queryTable
+
+@[deprecated (since := "2026-10-19")]
+alias isOraclePPTOn_queryTable := KabanetsCai.isOraclePPTOn_queryTable
+
+@[deprecated (since := "2026-10-19")] alias map_tableQueries := KabanetsCai.map_tableQueries
+
+@[deprecated (since := "2026-10-19")] alias queryTable := KabanetsCai.queryTable
+
+@[deprecated (since := "2026-10-19")] alias queryTableStep := KabanetsCai.queryTableStep
+
+@[deprecated (since := "2026-10-19")] alias restrictTable := KabanetsCai.restrictTable
+
+@[deprecated (since := "2026-10-19")] alias restriction := KabanetsCai.restriction
+
+@[deprecated (since := "2026-10-19")]
+alias restriction_prfOracle := KabanetsCai.restriction_prfOracle
+
+@[deprecated (since := "2026-10-19")]
+alias restriction_randomFunctionOracle := KabanetsCai.restriction_randomFunctionOracle
+
+@[deprecated (since := "2026-10-19")] alias tableQueries := KabanetsCai.tableQueries
+
+@[deprecated (since := "2026-10-19")]
+alias uniformOfFintype_map_restrictTable := KabanetsCai.uniformOfFintype_map_restrictTable
+
+end Cslib.Crypto

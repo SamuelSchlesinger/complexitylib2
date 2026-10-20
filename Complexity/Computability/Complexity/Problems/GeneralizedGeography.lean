@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Generalized Geography
@@ -116,12 +117,7 @@ end Graph
 
 namespace GeneralizedGeography
 
-/-- Membership of a number in a list as a scan of the list, the form in which polynomial-time
-membership tests are certified. -/
-theorem decide_mem_eq_any (a : ℕ) (l : List ℕ) :
-    decide (a ∈ l) = l.any fun u => decide (u = a) := by
-  rw [Bool.eq_iff_iff, decide_eq_true_eq, List.any_eq_true]
-  simp
+@[deprecated (since := "2026-10-19")] alias decide_mem_eq_any := List.decide_mem_eq_any
 
 end GeneralizedGeography
 

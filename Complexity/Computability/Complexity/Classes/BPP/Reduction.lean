@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Reduction
+public import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -86,5 +87,12 @@ theorem PolyTimeReducible.mem_BPP (h : PolyTimeReducible enc encB A B) (hB : B �
     linarith
   · have := Nat.mul_le_mul_right (2 ^ j) ((hWB (g a)).2 fun hgB => ha ((hAB a).2 hgB))
     linarith
+
+@[deprecated BitString.card_filter_take +typeChanged (since := "2026-10-19")]
+theorem card_filter_take_eq (W : List Bool → Bool) (k j : ℕ) (b : Bool) :
+    (Finset.univ.filter fun r : Fin (k + j) → Bool => W ((List.ofFn r).take k) = b).card =
+      2 ^ j * (Finset.univ.filter fun s : Fin k → Bool => W (List.ofFn s) = b).card := by
+  have h := BitString.card_filter_take (Nat.le_add_right k j) fun w => W w = b
+  rwa [Nat.add_sub_cancel_left] at h
 
 end Cslib.Complexity

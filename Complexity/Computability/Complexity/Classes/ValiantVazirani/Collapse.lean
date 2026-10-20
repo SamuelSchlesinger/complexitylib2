@@ -98,7 +98,7 @@ encoding of instances. -/
 theorem NP_eq_RP_of_PromiseUSAT_mem_PromiseP (h : PromiseUSAT ∈ PromiseP encCNF)
     (enc : α ↪ List Bool) : NP enc = RP enc :=
   Set.Subset.antisymm ((NP_subset_RPWithPromiseOracle_PromiseUSAT enc).trans
-    (RPWithPromiseOracle_subset_RP Ladner.cnfDecoder h enc)) RP_subset_NP
+    (RPWithPromiseOracle_subset_RP cnfDecoder h enc)) RP_subset_NP
 
 /-- **Valiant–Vazirani: if `USAT ∈ P`, then `NP = RP`**, for every encoding of instances. This
 form is weak: `USAT` as a language is `coNP`-hard. -/
