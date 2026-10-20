@@ -75,8 +75,10 @@ with a #P count and positive binary-output polynomial-time threshold. Intersecti
 language with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
 The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
 already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
-provide a counting-algebra foundation for future oracle simulations; AWPP PP-lowness
-remains an approximate-counting milestone.
+provide a counting-algebra foundation for future oracle simulations.
+[Relativized counting and majority verifiers](Complexity/Computability/Complexity/Classes/PP/Oracle.lean)
+now provide the positive-GapP characterization and elimination of P-decidable oracles;
+AWPP PP-lowness remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
