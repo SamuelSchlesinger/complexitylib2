@@ -281,6 +281,7 @@ import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
+import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
