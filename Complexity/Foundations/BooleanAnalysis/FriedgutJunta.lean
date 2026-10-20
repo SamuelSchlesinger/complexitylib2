@@ -106,6 +106,10 @@ theorem exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq (f : 
       expect_div]
     exact expect_le_expect fun x _ => sq_signVal_sub_signVal_decide_div_four_le _ _
 
+@[deprecated (since := "2026-10-19")]
+alias exists_dependsOn_hammingDist_div_le_sum :=
+  exists_dependsOn_hammingDist_div_le_sum_not_subset_fourierCoeff_sq
+
 /-! ### The weight outside the influential coordinates -/
 
 /-- **The Fourier weight outside the influential coordinates**: if every coordinate outside `J`
