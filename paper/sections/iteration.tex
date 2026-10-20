@@ -285,3 +285,61 @@ uniform circuit-construction runtime.\citep{Schlesinger2026IteratedFunctions}
 \declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{357}{Cslib.Circuits.Boolean.Iteration.affine_controller_polynomial}
 \declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{375}{Cslib.Circuits.Boolean.Iteration.affine_controller_variable_time}
 \end{result}
+
+\begin{result}
+\subsection{Checkpoint forests, interval labels, and compressed-forest navigation}
+For a finite state space $\alpha$, self-map $f:\alpha\to\alpha$, and checkpoint set $H\subseteq\alpha$,
+the hull $\mathrm{checkpointHull}(f,H)=\{f^t(h):h\in H,\ t\le\mu(h)\}$ closes $H$ along transient
+paths up to cycle entry, and cutting outgoing edges at cyclic states ($\mu(x)=0$) forms a directed
+forest with sources $\mathrm{forestSources}(f,H)=\{x\in\mathrm{hull}:\mu(x)>0\}$. Marking all
+vertices in $H$ together with roots ($\mu(x)=0$) and branching vertices ($|\mathrm{children}(x)|\ge 2$)
+yields $\mathrm{forestMarks}(f,H)\subseteq\mathrm{checkpointHull}(f,H)$ of size at most $2|H|$ (since
+leaves lie in $H$ and $|\mathrm{branches}|+|\mathrm{roots}|\le|\mathrm{leaves}|$), and every unmarked
+hull vertex has at most one predecessor in $\mathrm{forestSources}(f,H)$. Ranking the reversed
+root-to-vertex paths $\mathrm{forestPath}(f,x)$ in lexicographic order assigns intervals
+$[\mathrm{low}(y),\mathrm{high}(y)]\subseteq[0,|\alpha|)$ such that
+$\mathrm{low}(y)\le\mathrm{low}(x)\le\mathrm{high}(y)$ if and only if $f^t(x)=y$ for some $t\le\mu(x)$.
+
+When every orbit either repeats within $L>0$ steps or hits $H$ in fewer than $2L$ steps, every
+non-root mark $x\in\mathrm{forestMarks}(f,H)$ has a unique compressed edge $\mathrm{IsForestEdge}(f,H,x,d)$
+to the next mark of length $1\le d\le 2L$, whose interior vertices are unmarked and cannot merge, so
+the last-predecessor key $f^{d-1}(x)$ uniquely identifies $(x,d)$ (`ForestEdgeTable`). Every hull
+vertex $y$ has a unique mark anchor $a$ ($\mathrm{ForestAnchor}(f,H,L,y,a)$) reaching $y$ in at most
+$2L$ steps, and for any transient target $y$ ($\mu(y)>0$), $y$ is reachable from $x$ if and only if
+either $y$ appears in the $2L$-step prefix of $x$, or the first mark $h$ hit from $x$ within $2L$ steps
+and the anchor $a$ of $y$ (verified to reach $y$ within $2L$ steps) satisfy
+$\mathrm{low}(a)\le\mathrm{low}(h)\le\mathrm{high}(a)$. These
+are combinatorial decompositions; Boolean circuit synthesis of the compressed-forest queries is
+separate.\citep{Schlesinger2026IteratedFunctions}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{70}{Cslib.FunctionalGraph.checkpointHull}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{121}{Cslib.FunctionalGraph.forestSources}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{146}{Cslib.FunctionalGraph.forestMarks}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{182}{Cslib.FunctionalGraph.forestLeaves_subset}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{193}{Cslib.FunctionalGraph.sum_forestChildren}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{203}{Cslib.FunctionalGraph.forestBranches_roots_le_leaves}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{237}{Cslib.FunctionalGraph.forestMarks_card}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean}{252}{Cslib.FunctionalGraph.forestPredecessor_unique}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean}{94}{Cslib.FunctionalGraph.forestPath}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean}{138}{Cslib.FunctionalGraph.forestPath_prefix}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean}{151}{Cslib.FunctionalGraph.list_prefix_interval}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean}{191}{Cslib.FunctionalGraph.forestRank}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean}{217}{Cslib.FunctionalGraph.forestUpper}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean}{221}{Cslib.FunctionalGraph.forest_interval_spec}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean}{241}{Cslib.FunctionalGraph.exists_forest_intervals}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean}{78}{Cslib.FunctionalGraph.IsForestEdge}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean}{104}{Cslib.FunctionalGraph.exists_short_forest_edge}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean}{131}{Cslib.FunctionalGraph.forest_edges_merge}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean}{158}{Cslib.FunctionalGraph.forest_edge_last_injective}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean}{165}{Cslib.FunctionalGraph.forest_hull_partition}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean}{212}{Cslib.FunctionalGraph.forest_segment_contains_of_depth}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean}{259}{Cslib.FunctionalGraph.checkpoint_before_distant_target}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{72}{Cslib.FunctionalGraph.ForestAnchor}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{77}{Cslib.FunctionalGraph.exists_forest_anchor}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{90}{Cslib.FunctionalGraph.forestAnchor_unique}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{108}{Cslib.FunctionalGraph.forest_anchor_contains}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{133}{Cslib.FunctionalGraph.forest_navigation_spec}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{179}{Cslib.FunctionalGraph.ForestEdgeTable}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{197}{Cslib.FunctionalGraph.exists_forest_edge_table}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{221}{Cslib.FunctionalGraph.ForestEdgeTable.key_injective}
+\declat{dc97f5bd3580ec533b31530667d7cc190d1ef911}{Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean}{226}{Cslib.FunctionalGraph.ForestEdgeTable.anchor_iff}
+\end{result}
