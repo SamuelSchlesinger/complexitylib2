@@ -24,12 +24,12 @@ elements satisfies every clause, that is, when it satisfies the existential seco
 `∃ S, ∀ c, ∃ x, (pos(c, x) ∧ S x) ∨ (neg(c, x) ∧ ¬ S x)`. It is a **3-CNF** structure
 (`CNF.IsThreeCNF`) when every clause has at most three literals.
 
-This is the presentation of satisfiability as a class of finite structures used by Immerman
-[Immerman, Section 2.3][Immerman1999]. Every formula with `m` clauses over `n` variables is
-presented by a structure with `max m n` elements, at least one: the clauses and the variables are
-numbered from the same elements, and the elements naming no clause of the formula name the
-tautology `x ∨ ¬x` of their own variable. The empty structure presents the empty formula, which is
-satisfiable.
+Descriptive complexity presents satisfiability as a class of finite structures in this way
+[Immerman, Chapter 7][Immerman1999]; the conventions above are fixed here. A formula with `m`
+clauses over `n` variables is presented by a structure with `max m n` elements: the clauses and the
+variables are numbered from the same elements, and the elements naming no clause of the formula
+name the tautology `x ∨ ¬x` of their own variable. The empty structure presents the empty
+formula, which is satisfiable.
 
 The classes `CNF.sat` and `CNF.threeSat` of satisfiable structures and of satisfiable 3-CNF
 structures are existential second-order definable, hence closed under isomorphism, and they are
@@ -54,6 +54,8 @@ invariant under disjoint copies, so that tagged interpretations reduce to them.
   existential second-order definable.
 * `Cslib.Logic.FO.CNF.isoClosed_sat`, `Cslib.Logic.FO.CNF.copyInvariant_sat` and their 3SAT
   versions.
+* `Cslib.Logic.FO.CNF.satisfies_clause_iff_of_templates`: the clauses of a CNF structure
+  interpreted by templates.
 
 ## References
 
@@ -412,6 +414,30 @@ theorem realize_threeCNFSentence : M ⊨ threeCNFSentence ↔ IsThreeCNF M := by
   · rw [show v = fun _ => v () from funext fun _ => rfl, realize_iExs_fourLiteralsFormula,
       ← encard_literals_le_three_iff]
     exact h _
+
+/-- The sentence saying that no clause is empty: `∀ c, ∃ x, pos(c, x) ∨ neg(c, x)`. -/
+def nonemptyClausesSentence : CNF.language.Sentence :=
+  ∀' ∃' (pos.boundedFormula₂ &0 &1 ⊔ neg.boundedFormula₂ &0 &1)
+
+theorem realize_nonemptyClausesSentence :
+    M ⊨ nonemptyClausesSentence ↔ ∀ c : M, (literals c).Nonempty := by
+  simp only [nonemptyClausesSentence, Sentence.Realize, Formula.Realize,
+    BoundedFormula.realize_all, BoundedFormula.realize_ex, BoundedFormula.realize_sup,
+    BoundedFormula.realize_rel₂]
+  refine forall_congr' fun c => ⟨fun ⟨x, hx⟩ => ?_, fun ⟨⟨b, x⟩, hx⟩ => ⟨x, ?_⟩⟩
+  · rcases hx with hx | hx
+    · exact ⟨(true, x), by simpa [mem_literals, Fin.snoc] using hx⟩
+    · exact ⟨(false, x), by simpa [mem_literals, Fin.snoc] using hx⟩
+  · cases b
+    · exact .inr (by simpa [mem_literals, Fin.snoc] using hx)
+    · exact .inl (by simpa [mem_literals, Fin.snoc] using hx)
+
+/-- Every clause of a satisfiable CNF structure is nonempty. -/
+theorem Satisfiable.literals_nonempty (h : Satisfiable M) (c : M) : (literals c).Nonempty := by
+  obtain ⟨A, hA⟩ := h
+  obtain ⟨x, ⟨hx, -⟩ | ⟨hx, -⟩⟩ := hA c
+  · exact ⟨(true, x), hx⟩
+  · exact ⟨(false, x), hx⟩
 
 /-- **3-CNF structures form a first-order definable class.** -/
 theorem definable_isThreeCNF :

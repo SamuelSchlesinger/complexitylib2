@@ -587,7 +587,7 @@ theorem clauseSat_all₁ (hx) :
             (fun j => some j.castSucc) j.castSucc = some i := hj
         rw [Fin.lastCases_castSucc] at hj'
         obtain rfl := Option.some.inj hj'
-        show Fin.snoc (Fin.init x) b j.castSucc = x j.castSucc
+        change Fin.snoc (Fin.init x) b j.castSucc = x j.castSucc
         simp [Fin.init]
 
 end All
