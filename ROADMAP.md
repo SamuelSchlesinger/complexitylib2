@@ -263,8 +263,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   [gap-preserving reductions](Complexity/Computability/PCP/Approximation.lean) and certified PCP
   construction; retain the exact gap and reduction runtime.
 * **Randomized communication and information.** The `Ω(n)` bounded-error randomized disjointness
-  lower bound is [proved](Complexity/Computability/Communication/Disjointness.lean); derive
-  Raz–Wigderson's monotone depth bound for matching from it. Develop
+  lower bound is [proved](Complexity/Computability/Communication/Disjointness.lean); Raz–Wigderson's
+  monotone depth bound is [proved](Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean)
+  for bipartite matching (general graphs remain). Develop
   information complexity and its reductions to streaming and sketching lower bounds.
 * **List decoding.** Extend [Sudan's Reed–Solomon list-decoding theorem](Complexity/Foundations/Data/Code/Sudan.lean)
   to Guruswami–Sudan list decoding. Keep interpolation, list-size/agreement guarantees and

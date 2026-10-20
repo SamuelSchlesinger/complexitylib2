@@ -709,3 +709,17 @@ unnormalized edge expansion in the Tseitin bounds).
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 9: monotone depth of bipartite matching (2026-10-19)
+
+Integrated `85a17075` (disjointness milestone 2 and milestone-1 cleanups), adding "Monotone depth of
+bipartite perfect matching" (`communication.tex`). Existing disjointness links stay pinned to
+`aba42b50`, where they resolve.
+
+Independent correctness and API reviews of `aba42b50..85a17075`: APPROVE (matching function, KW
+game, gadgets, symmetry argument and constants checked; milestone-1 headline statements unchanged
+under the renames). The entry states the bipartite scope and the intermediate reduction, as the
+reviewer suggested. Non-blocking findings were returned to the author.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.

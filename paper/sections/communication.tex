@@ -61,6 +61,26 @@ public-coin complexity is at most $2r$ times the complexity at error $\varepsilo
 \declat{aba42b50989b68676da488be2c26b6aa2d776244}{Complexity/Computability/Communication/Amplification.lean}{195}{Cslib.Communication.PublicCoin.ecomplexityFun_le_two_mul_mul}
 \end{result}
 
+\begin{result}
+\subsection{Monotone depth of bipartite perfect matching}
+Every monotone formula (AND/OR gates of fan-in two, constants free) deciding whether a
+subgraph of $K_{n,n}$, given by its $n^2$ edge indicators, has a perfect matching has depth at
+least $(n-2^{14})/2^{13}$, and the monotone Karchmer--Wigderson game of bipartite perfect
+matching needs that many bits. The proof is a randomized reduction from the disjointness bound
+of the preceding entry at error $1/64$: Alice's set becomes a perfect matching on three-vertex
+gadgets, Bob's set a Hall-violating graph, and after a uniformly random relabelling of both
+sides the edge found reveals an intersection with probability at least $1/2$, by a symmetry of
+both graphs; for $0<m$, $2m\le n$ and $k>0$, public-coin disjointness of $m$ bits at error
+$2^{-k}$ costs at most $k(c+1)$ bits given a game protocol of $c$ bits. Raz and Wigderson proved
+the bound for perfect matching in general graphs; this entry covers the bipartite case only,
+and the constants are not optimized.\citep{RazWigderson1992,KushilevitzNisan1997}
+\declat{85a17075af8d8c11cbd3329392b10a469cd98a07}{Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean}{520}{Cslib.Circuits.Monotone.le_mul_eformulaDepth_bipartitePerfectMatching_add}
+\declat{85a17075af8d8c11cbd3329392b10a469cd98a07}{Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean}{486}{Cslib.Circuits.le_mul_ecomplexity_bipartitePerfectMatching_add}
+\declat{85a17075af8d8c11cbd3329392b10a469cd98a07}{Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean}{464}{Cslib.Circuits.ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching}
+\declat{85a17075af8d8c11cbd3329392b10a469cd98a07}{Complexity/Computability/Circuit/BipartiteMatching.lean}{103}{Cslib.Circuits.bipartitePerfectMatching}
+\end{result}
+
+
 
 \begin{result}
 \subsection{Finite-set equality and inner-product rank}
