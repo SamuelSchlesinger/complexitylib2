@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine
-import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+public import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
@@ -24,12 +24,15 @@ final output word. Labels are natural numbers; a label outside the program halts
 
 Counter programs are the classical description of logarithmic-space algorithms: a constant number
 of counters, each bounded by a polynomial in the input length, with random read-only access to
-the input. A program whose registers stay below `(n + 1) ^ d` on inputs of length `n` computes a
+the input. A program whose registers stay at most `(n + 1) ^ d` on inputs of length `n` computes a
 function in logarithmic space (`Turing.CounterProgram.computableInLogSpace`), as a query machine
 (`Turing.QueryMachine`) whose steps are computed in space linear in the binary registers. For
 programs that never emit, the hypotheses can be established with a reachability predicate
 (`Turing.CounterProgram.Reaches`) that records an invariant of the states passed through
-(`Turing.CounterProgram.computableInLogSpace_of_reaches`).
+(`Turing.CounterProgram.computableInLogSpace_of_reaches`). Programs that emit are treated with
+the reachability predicate that records the emitted bits (`Turing.CounterProgram.ReachesOut`).
+The parts of the simulation by a query machine live in the namespace
+`Turing.CounterProgram.Simulation`.
 
 ## Main definitions
 
@@ -179,13 +182,13 @@ open Instr
 variable (P : CounterProgram) (w : List Bool)
 
 /-- The configurations: a label and the values of the registers. -/
-abbrev Cfg : Type := ℕ × List ℕ
+abbrev Config : Type := ℕ × List ℕ
 
 /-- The instruction at a label; outside the program, a halt with empty output. -/
 def instr (c : ℕ) : Instr := P.code.getD c (halt [])
 
 /-- The initial configuration: label `0`, all registers `0`. -/
-def init : Cfg := (0, List.replicate P.registers 0)
+def init : Config := (0, List.replicate P.registers 0)
 
 /-- The label a read jumps to, given the bit read. -/
 def readLabel (onTrue onFalse onEnd : ℕ) : Option Bool → ℕ
@@ -202,7 +205,7 @@ def query (i : Instr) (regs : List ℕ) : ℕ :=
   | _ => 0
 
 /-- The configuration after an instruction, given the input bit read. -/
-def exec (i : Instr) (s : Cfg) (b : Option Bool) : Cfg :=
+def exec (i : Instr) (s : Config) (b : Option Bool) : Config :=
   match i with
   | assign j e next => (next, s.2.set j (e.eval s.2))
   | lt x y yes no => (if x.eval s.2 < y.eval s.2 then yes else no, s.2)
@@ -228,22 +231,22 @@ def finish : Instr → List Bool
 end Instr
 
 /-- The position read in a configuration, or `0` if the instruction does not read. -/
-def query (s : Cfg) : ℕ := (P.instr s.1).query s.2
+def query (s : Config) : ℕ := (P.instr s.1).query s.2
 
 /-- The configuration after the instruction at the current label, given the input bit read. -/
-def exec (s : Cfg) (b : Option Bool) : Cfg := (P.instr s.1).exec s b
+def exec (s : Config) (b : Option Bool) : Config := (P.instr s.1).exec s b
 
 /-- The bits emitted by the instruction at the current label. -/
-def emitted (s : Cfg) : List Bool := (P.instr s.1).emitted
+def emitted (s : Config) : List Bool := (P.instr s.1).emitted
 
 /-- Whether the instruction at the current label halts. -/
-def halted (s : Cfg) : Bool := (P.instr s.1).halts
+def halted (s : Config) : Bool := (P.instr s.1).halts
 
 /-- The final word of a halting configuration. -/
-def finish (s : Cfg) : List Bool := (P.instr s.1).finish
+def finish (s : Config) : List Bool := (P.instr s.1).finish
 
 /-- A counter program as a query machine. -/
-def toQueryMachine : QueryMachine Cfg where
+def toQueryMachine : QueryMachine Config where
   init := P.init
   query := P.query
   next p := P.exec p.1 p.2
@@ -252,18 +255,18 @@ def toQueryMachine : QueryMachine Cfg where
   finish := P.finish
 
 /-- A step of a counter program on the input `w`. -/
-def step (s : Cfg) : Cfg := P.toQueryMachine.step w s
+def step (s : Config) : Config := P.toQueryMachine.step w s
 
 /-- The configuration after `t` steps on the input `w`. -/
-def run (t : ℕ) : Cfg := P.toQueryMachine.run w t
+def run (t : ℕ) : Config := P.toQueryMachine.run w t
 
-theorem step_eq (s : Cfg) :
+theorem step_eq (s : Config) :
     P.step w s = if P.halted s = true then s else P.exec s w[P.query s]? := rfl
 
 theorem run_succ (t : ℕ) : P.run w (t + 1) = P.step w (P.run w t) :=
   QueryMachine.run_succ _ _ _
 
-theorem step_of_isStep {s : Cfg} (h : (P.instr s.1).IsStep) :
+theorem step_of_isStep {s : Config} (h : (P.instr s.1).IsStep) :
     P.step w s = P.exec s w[P.query s]? := by
   have : P.halted s = false := by
     unfold halted
@@ -271,15 +274,15 @@ theorem step_of_isStep {s : Cfg} (h : (P.instr s.1).IsStep) :
     cases P.instr s.1 <;> simp [IsStep, Instr.halts]
   simp [step, QueryMachine.step, toQueryMachine, this, QueryMachine.read]
 
-theorem step_assign {s : Cfg} {i : ℕ} {e : Expr} {next : ℕ}
+theorem step_assign {s : Config} {i : ℕ} {e : Expr} {next : ℕ}
     (h : P.instr s.1 = assign i e next) : P.step w s = (next, s.2.set i (e.eval s.2)) := by
   rw [P.step_of_isStep w (by rw [h]; trivial), exec, h, Instr.exec]
 
-theorem step_lt {s : Cfg} {x y : Expr} {yes no : ℕ} (h : P.instr s.1 = lt x y yes no) :
+theorem step_lt {s : Config} {x y : Expr} {yes no : ℕ} (h : P.instr s.1 = lt x y yes no) :
     P.step w s = (if x.eval s.2 < y.eval s.2 then yes else no, s.2) := by
   rw [P.step_of_isStep w (by rw [h]; trivial), exec, h, Instr.exec]
 
-theorem step_read {s : Cfg} {e : Expr} {onTrue onFalse onEnd : ℕ}
+theorem step_read {s : Config} {e : Expr} {onTrue onFalse onEnd : ℕ}
     (h : P.instr s.1 = read e onTrue onFalse onEnd) :
     P.step w s = (readLabel onTrue onFalse onEnd w[e.eval s.2]?, s.2) := by
   rw [P.step_of_isStep w (by rw [h]; trivial), exec, h, Instr.exec, query, h, Instr.query]
@@ -287,13 +290,15 @@ theorem step_read {s : Cfg} {e : Expr} {onTrue onFalse onEnd : ℕ}
 /-! ### Reachability -/
 
 /-- `P.Reaches w Q s s'`: from `s`, the program reaches `s'` on the input `w`, and every
-configuration before `s'` satisfies `Q`. -/
-def Reaches (Q : Cfg → Prop) (s s' : Cfg) : Prop :=
+configuration before `s'` satisfies `Q`. This is the reflexive and transitive closure of the steps
+from configurations satisfying `Q`, stated with a number of steps, the form in which the runs of
+`Turing.CounterProgram.computableInLogSpace` are given. -/
+def Reaches (Q : Config → Prop) (s s' : Config) : Prop :=
   ∃ t, (P.step w)^[t] s = s' ∧ ∀ t' < t, Q ((P.step w)^[t'] s)
 
-variable {P w} {Q : Cfg → Prop} {s s' s'' : Cfg}
+variable {P w} {Q : Config → Prop} {s s' s'' : Config}
 
-theorem Reaches.refl (s : Cfg) : P.Reaches w Q s s := ⟨0, rfl, fun _ h => absurd h (by omega)⟩
+theorem Reaches.refl (s : Config) : P.Reaches w Q s s := ⟨0, rfl, fun _ h => absurd h (by omega)⟩
 
 theorem Reaches.trans (h : P.Reaches w Q s s') (h' : P.Reaches w Q s' s'') :
     P.Reaches w Q s s'' := by
@@ -312,7 +317,7 @@ theorem Reaches.single (hs : Q s) : P.Reaches w Q s (P.step w s) :=
 theorem Reaches.head (hs : Q s) (h : P.Reaches w Q (P.step w s) s') : P.Reaches w Q s s' :=
   (Reaches.single hs).trans h
 
-theorem Reaches.mono {Q' : Cfg → Prop} (h : P.Reaches w Q s s') (hQ : ∀ s, Q s → Q' s) :
+theorem Reaches.mono {Q' : Config → Prop} (h : P.Reaches w Q s s') (hQ : ∀ s, Q s → Q' s) :
     P.Reaches w Q' s s' :=
   let ⟨t, ht, hQt⟩ := h
   ⟨t, ht, fun u hu => hQ _ (hQt u hu)⟩
@@ -322,21 +327,24 @@ theorem Reaches.mono {Q' : Cfg → Prop} (h : P.Reaches w Q s s') (hQ : ∀ s, Q
 variable (P) in
 /-- The configurations at an assignment, a comparison or a read, with all registers at most
 `B`. -/
-def Running (B : ℕ) (s : Cfg) : Prop := (P.instr s.1).IsStep ∧ ∀ r ∈ s.2, r ≤ B
+def Running (B : ℕ) (s : Config) : Prop := (P.instr s.1).IsStep ∧ ∀ r ∈ s.2, r ≤ B
 
 variable {B : ℕ} {regs : List ℕ}
 
+/-- Stepping through an assignment. -/
 theorem Reaches.assign {c i : ℕ} {e : Expr} {next : ℕ} (hc : P.instr c = .assign i e next)
     (hB : ∀ r ∈ regs, r ≤ B) (h : P.Reaches w (P.Running B) (next, regs.set i (e.eval regs)) s') :
     P.Reaches w (P.Running B) (c, regs) s' :=
   Reaches.head ⟨by rw [hc]; trivial, hB⟩ (by rwa [P.step_assign w hc])
 
+/-- Stepping through a comparison. -/
 theorem Reaches.lt {c : ℕ} {x y : Expr} {yes no : ℕ} (hc : P.instr c = .lt x y yes no)
     (hB : ∀ r ∈ regs, r ≤ B)
     (h : P.Reaches w (P.Running B) (if x.eval regs < y.eval regs then yes else no, regs) s') :
     P.Reaches w (P.Running B) (c, regs) s' :=
   Reaches.head ⟨by rw [hc]; trivial, hB⟩ (by rwa [P.step_lt w hc])
 
+/-- Stepping through a read. -/
 theorem Reaches.read {c : ℕ} {e : Expr} {onTrue onFalse onEnd : ℕ}
     (hc : P.instr c = .read e onTrue onFalse onEnd) (hB : ∀ r ∈ regs, r ≤ B)
     (h : P.Reaches w (P.Running B) (readLabel onTrue onFalse onEnd w[e.eval regs]?, regs) s') :
@@ -369,14 +377,16 @@ theorem codeAt_append : P.CodeAt b (l₁ ++ l₂) ↔ P.CodeAt b l₁ ∧ P.Code
   constructor
   · intro h
     refine ⟨fun i hi => ?_, fun i hi => ?_⟩
-    · rw [h i (by simp; omega), List.getElem_append_left]
-    · rw [Nat.add_assoc, h _ (by simp; omega), List.getElem_append_right (by omega)]
+    · rw [h i (by simp only [List.length_append]; omega), List.getElem_append_left]
+    · rw [Nat.add_assoc, h _ (by simp only [List.length_append]; omega),
+        List.getElem_append_right (by omega)]
       simp
   · rintro ⟨h₁, h₂⟩ i hi
     rcases lt_or_ge i l₁.length with hlt | hge
     · rw [List.getElem_append_left hlt]
       exact h₁ i hlt
-    · rw [List.getElem_append_right hge, ← h₂ (i - l₁.length) (by simp at hi; omega)]
+    · rw [List.getElem_append_right hge,
+        ← h₂ (i - l₁.length) (by simp only [List.length_append] at hi; omega)]
       congr 1
       omega
 
@@ -397,29 +407,10 @@ theorem CodeAt.flatMap_range {f : ℕ → List Instr} {m : ℕ} (hf : ∀ i, (f 
 /-- Code placed in a program made of pieces. -/
 theorem codeAt_of_code_eq {pre post : List Instr} (h : P.code = pre ++ l ++ post) :
     P.CodeAt pre.length l := fun i hi => by
-  rw [instr, h, List.getD_eq_getElem _ _ (by simp; omega),
-    List.getElem_append_left (by simp; omega), List.getElem_append_right (by omega)]
+  rw [instr, h, List.getD_eq_getElem _ _ (by simp only [List.length_append]; omega),
+    List.getElem_append_left (by simp only [List.length_append]; omega),
+    List.getElem_append_right (by omega)]
   simp
-
-/-! ### Registers -/
-
-theorem getD_set_self {i x : ℕ} (h : i < regs.length) : (regs.set i x).getD i 0 = x := by
-  rw [List.getD_eq_getElem _ _ (by simpa using h), List.getElem_set_self]
-
-theorem getD_set_ne {i j x : ℕ} (h : i ≠ j) : (regs.set i x).getD j 0 = regs.getD j 0 := by
-  simp only [List.getD_eq_getElem?_getD, List.getElem?_set_ne h]
-
-theorem forall_mem_set_le {i x : ℕ} (h : ∀ r ∈ regs, r ≤ B) (hx : x ≤ B) :
-    ∀ r ∈ regs.set i x, r ≤ B := fun r hr => by
-  rcases List.mem_or_eq_of_mem_set hr with hr | rfl
-  · exact h r hr
-  · exact hx
-
-theorem getD_le {i : ℕ} (h : ∀ r ∈ regs, r ≤ B) : regs.getD i 0 ≤ B := by
-  rw [List.getD_eq_getElem?_getD]
-  rcases hi : regs[i]? with _ | r
-  · exact Nat.zero_le _
-  · exact h r (List.mem_of_getElem? hi)
 
 /-! ### The parts of a step, in linear space -/
 
@@ -427,12 +418,7 @@ section Computability
 
 open MultiTapeTM ComputableTidilyInSpace
 
-/-- The encoding of configurations: the label and the registers, in binary. -/
-abbrev encCfg : Cfg ↪ List Bool := encPair encNat (encList encNat)
-
-/-- The encoding of a configuration with the bit read. -/
-abbrev encCfgRead : Cfg × Option Bool ↪ List Bool := encPair encCfg (encOption encBool)
-
+/-- **Expressions are evaluated in linear space** in the binary registers. -/
 theorem Expr.eval_inSpace : ∀ e : Expr,
     ComputableTidilyInSpace (fun regs => e.eval regs) (encList encNat) encNat
       fun regs => (encList encNat regs).length
@@ -455,99 +441,89 @@ theorem Expr.eval_inSpace : ∀ e : Expr,
     have h := budget_prod (Expr.eval_inSpace a) (Expr.eval_inSpace b)
     budget_comp natMod h (.const_mul 16 (.add h.length_le (.const 1 _)))
 
-/-- An expression evaluated on the registers of a configuration. -/
-theorem Expr.evalCfg_inSpace (e : Expr) :
-    ComputableTidilyInSpace (fun s : Cfg => e.eval s.2) encCfg encNat
-      fun s => (encCfg s).length :=
+namespace Simulation
+
+/-! The parts of the simulation of a counter program by a query machine. -/
+
+/-- The encoding of configurations: the label and the registers, in binary. -/
+abbrev encConfig : Config ↪ List Bool := encPair encNat (encList encNat)
+
+/-- The encoding of a configuration with the bit read. -/
+abbrev encConfigRead : Config × Option Bool ↪ List Bool := encPair encConfig (encOption encBool)
+
+theorem evalConfig_inSpace (e : Expr) :
+    ComputableTidilyInSpace (fun s : Config => e.eval s.2) encConfig encNat
+      fun s => (encConfig s).length :=
   budget_comp (e.eval_inSpace) (snd _ _) (.of_le fun s => by simp only [length_encPair]; omega)
 
-theorem fst_cfgRead_inSpace :
-    ComputableTidilyInSpace (fun x : Cfg × Option Bool => x.1) encCfgRead encCfg
-      fun x => (encCfgRead x).length := fst _ _
+theorem fst_inSpace :
+    ComputableTidilyInSpace (fun x : Config × Option Bool => x.1) encConfigRead encConfig
+      fun x => (encConfigRead x).length := fst _ _
 
-theorem regs_cfgRead_inSpace :
-    ComputableTidilyInSpace (fun x : Cfg × Option Bool => x.1.2) encCfgRead (encList encNat)
-      fun x => (encCfgRead x).length :=
-  budget_comp_lin (snd _ _) (.refl _) fst_cfgRead_inSpace
+theorem regs_inSpace :
+    ComputableTidilyInSpace (fun x : Config × Option Bool => x.1.2) encConfigRead
+      (encList encNat) fun x => (encConfigRead x).length :=
+  budget_comp_lin (snd _ _) (.refl _) fst_inSpace
 
-theorem Expr.evalCfgRead_inSpace (e : Expr) :
-    ComputableTidilyInSpace (fun x : Cfg × Option Bool => e.eval x.1.2) encCfgRead encNat
-      fun x => (encCfgRead x).length :=
-  budget_comp (e.eval_inSpace) regs_cfgRead_inSpace
+theorem evalConfigRead_inSpace (e : Expr) :
+    ComputableTidilyInSpace (fun x : Config × Option Bool => e.eval x.1.2) encConfigRead encNat
+      fun x => (encConfigRead x).length :=
+  budget_comp (e.eval_inSpace) regs_inSpace
     (.of_le fun x => by simp only [length_encPair]; omega)
 
-/-- **Dispatching on the instruction at a label**: if each instruction's part is computed in linear
-space, so is the part of the instruction at a label computed in linear space. -/
-theorem dispatch_inSpace {γ β : Type} {encG : γ ↪ List Bool} {encB : β ↪ List Bool}
-    (code : List Instr) (d : Instr) (F : Instr → γ → β)
-    (hF : ∀ i, ComputableTidilyInSpace (F i) encG encB fun x => (encG x).length) :
-    ∀ (lab : γ → ℕ), ComputableTidilyInSpace lab encG encNat (fun x => (encG x).length) →
-      ComputableTidilyInSpace (fun x => F (code.getD (lab x) d) x) encG encB
-        fun x => (encG x).length := by
-  induction code with
-  | nil => intro lab _; simpa using hF d
-  | cons i code ih =>
-    intro lab hlab
-    have hz : ComputableTidilyInSpace (fun x => decide (lab x = 0)) encG encBool
-        fun x => (encG x).length := budget_comp_lin natIsZero (.refl _) hlab
-    have hpred : ComputableTidilyInSpace (fun x => lab x - 1) encG encNat
-        fun x => (encG x).length := budget_comp_lin natPred linear_succ hlab
-    refine (budget_ite hz (hF i) (ih _ hpred)).of_enc_eq fun x => ?_
-    rcases lab x with _ | c <;> simp
-
 theorem query_inSpace :
-    ComputableTidilyInSpace P.query encCfg encNat fun s => (encCfg s).length :=
-  dispatch_inSpace P.code (.halt []) (fun i s => i.query s.2)
+    ComputableTidilyInSpace P.query encConfig encNat fun s => (encConfig s).length :=
+  dispatch P.code (.halt []) (fun i s => i.query s.2)
     (fun i => by
       cases i with
-      | read e => exact e.evalCfg_inSpace
+      | read e => exact evalConfig_inSpace e
       | _ => exact budget_const 0 (.refl _))
-    _ (fst _ _)
+    (fst _ _)
 
 theorem halted_inSpace :
-    ComputableTidilyInSpace P.halted encCfg encBool fun s => (encCfg s).length :=
-  dispatch_inSpace P.code (.halt []) (fun i _ => i.halts)
-    (fun _ => budget_const _ (.refl _)) _ (fst _ _)
+    ComputableTidilyInSpace P.halted encConfig encBool fun s => (encConfig s).length :=
+  dispatch P.code (.halt []) (fun i _ => i.halts)
+    (fun _ => budget_const _ (.refl _)) (fst _ _)
 
 theorem finish_inSpace :
-    ComputableTidilyInSpace P.finish encCfg encBits fun s => (encCfg s).length :=
-  dispatch_inSpace P.code (.halt []) (fun i _ => i.finish)
-    (fun _ => budget_const _ (.refl _)) _ (fst _ _)
+    ComputableTidilyInSpace P.finish encConfig encBits fun s => (encConfig s).length :=
+  dispatch P.code (.halt []) (fun i _ => i.finish)
+    (fun _ => budget_const _ (.refl _)) (fst _ _)
 
-theorem label_cfgRead_inSpace :
-    ComputableTidilyInSpace (fun x : Cfg × Option Bool => x.1.1) encCfgRead encNat
-      fun x => (encCfgRead x).length :=
-  budget_comp_lin (fst _ _) (.refl _) fst_cfgRead_inSpace
+theorem label_inSpace :
+    ComputableTidilyInSpace (fun x : Config × Option Bool => x.1.1) encConfigRead encNat
+      fun x => (encConfigRead x).length :=
+  budget_comp_lin (fst _ _) (.refl _) fst_inSpace
 
 theorem emitted_inSpace :
-    ComputableTidilyInSpace (fun x : Cfg × Option Bool => P.emitted x.1) encCfgRead encBits
-      fun x => (encCfgRead x).length :=
-  dispatch_inSpace P.code (.halt []) (fun i _ => i.emitted)
-    (fun _ => budget_const _ (.refl _)) _ label_cfgRead_inSpace
+    ComputableTidilyInSpace (fun x : Config × Option Bool => P.emitted x.1) encConfigRead
+      encBits fun x => (encConfigRead x).length :=
+  dispatch P.code (.halt []) (fun i _ => i.emitted)
+    (fun _ => budget_const _ (.refl _)) label_inSpace
 
 theorem exec_inSpace :
-    ComputableTidilyInSpace (fun x : Cfg × Option Bool => P.exec x.1 x.2) encCfgRead encCfg
-      fun x => (encCfgRead x).length := by
-  refine dispatch_inSpace P.code (.halt []) (fun i x => i.exec x.1 x.2) (fun i => ?_) _
-    label_cfgRead_inSpace
+    ComputableTidilyInSpace (fun x : Config × Option Bool => P.exec x.1 x.2) encConfigRead
+      encConfig fun x => (encConfigRead x).length := by
+  refine dispatch P.code (.halt []) (fun i x => i.exec x.1 x.2) (fun i => ?_) label_inSpace
   cases i with
   | assign j e next =>
-    have hv := budget_prod regs_cfgRead_inSpace
-      (budget_prod (budget_const (encB := encNat) j (.refl _)) e.evalCfgRead_inSpace)
+    have hv := budget_prod regs_inSpace
+      (budget_prod (budget_const (encB := encNat) j (.refl _)) (evalConfigRead_inSpace e))
     exact budget_prod (budget_const next (.refl _))
       (budget_comp ComputableTidilyInSpace.set hv
         (.const_mul 128 (.add hv.length_le (.const 1 _))))
   | lt x y yes no =>
-    have hxy := budget_prod x.evalCfgRead_inSpace y.evalCfgRead_inSpace
+    have hxy := budget_prod (evalConfigRead_inSpace x) (evalConfigRead_inSpace y)
     refine (budget_prod (budget_ite (budget_comp natLt hxy (.add hxy.length_le (.const 1 _)))
       (budget_const (encB := encNat) yes (.refl _)) (budget_const no (.refl _)))
-      regs_cfgRead_inSpace).of_enc_eq fun s => ?_
+      regs_inSpace).of_enc_eq fun s => ?_
     simp [Instr.exec]
   | read e onTrue onFalse onEnd =>
-    exact budget_prod (budget_finite (readLabel onTrue onFalse onEnd) (snd _ _))
-      regs_cfgRead_inSpace
-  | emit b next => exact budget_prod (budget_const next (.refl _)) regs_cfgRead_inSpace
-  | halt out => exact fst_cfgRead_inSpace
+    exact budget_prod (budget_finite (readLabel onTrue onFalse onEnd) (snd _ _)) regs_inSpace
+  | emit b next => exact budget_prod (budget_const next (.refl _)) regs_inSpace
+  | halt out => exact fst_inSpace
+
+end Simulation
 
 end Computability
 
@@ -562,7 +538,7 @@ variable (P w)
 /-- The largest label the program jumps to. -/
 def maxLabel : ℕ := listMax Instr.maxLabel P.code
 
-theorem Instr.exec_fst_le {i : Instr} (hi : i.halts = false) (s : Cfg) (b : Option Bool) :
+theorem Instr.exec_fst_le {i : Instr} (hi : i.halts = false) (s : Config) (b : Option Bool) :
     (i.exec s b).1 ≤ i.maxLabel := by
   cases i with
   | assign => exact le_rfl
@@ -575,7 +551,7 @@ theorem Instr.exec_fst_le {i : Instr} (hi : i.halts = false) (s : Cfg) (b : Opti
   | emit => exact le_rfl
   | halt => simp [Instr.halts] at hi
 
-theorem Instr.exec_snd_length (i : Instr) (s : Cfg) (b : Option Bool) :
+theorem Instr.exec_snd_length (i : Instr) (s : Config) (b : Option Bool) :
     (i.exec s b).2.length = s.2.length := by
   cases i <;> simp only [Instr.exec, List.length_set]
 
@@ -605,20 +581,9 @@ theorem run_snd_length (t : ℕ) : (P.run w t).2.length = P.registers := by
     · exact ih
     · rw [exec, Instr.exec_snd_length, ih]
 
-/-- A number at most `(N + 1) ^ d` has at most `(d + 1) * (log₂ N + 1)` binary digits. -/
-theorem length_encNat_le_of_le_pow {r N d : ℕ} (h : r ≤ (N + 1) ^ d) :
-    (encNat r).length ≤ (d + 1) * (Nat.log2 N + 1) := by
-  rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_le]
-  have h₁ : N + 1 ≤ 2 ^ (Nat.log2 N + 1) := Nat.lt_log2_self
-  calc r ≤ (N + 1) ^ d := h
-    _ ≤ (2 ^ (Nat.log2 N + 1)) ^ d := Nat.pow_le_pow_left h₁ d
-    _ = 2 ^ (d * (Nat.log2 N + 1)) := by rw [← pow_mul, Nat.mul_comm]
-    _ < 2 ^ ((d + 1) * (Nat.log2 N + 1)) :=
-      Nat.pow_lt_pow_right (by norm_num) (by nlinarith)
-
-theorem length_encCfg_le {N d : ℕ} {s : Cfg} (hl : s.1 ≤ P.maxLabel)
+theorem Simulation.length_encConfig_le {N d : ℕ} {s : Config} (hl : s.1 ≤ P.maxLabel)
     (hn : s.2.length = P.registers) (hr : ∀ r ∈ s.2, r ≤ (N + 1) ^ d) :
-    (encCfg s).length ≤
+    (Simulation.encConfig s).length ≤
       (2 * (encNat P.maxLabel).length + 1 + P.registers * (2 * d + 3)) * (Nat.log2 N + 1) := by
   have hL : 1 ≤ Nat.log2 N + 1 := Nat.le_add_left _ _
   have hlab := ComputableTidilyInO.length_encNat_mono hl
@@ -635,7 +600,7 @@ theorem length_encCfg_le {N d : ℕ} {s : Cfg} (hl : s.1 ≤ P.maxLabel)
 
 /-- **Counter programs run in logarithmic space.** Let a counter program halt on every encoded
 input `enc a`, first after `time a` steps, with output `encOut (f a)`. If its registers along these
-runs stay below `(n + 1) ^ d`, where `n` is the length of the input, then `f` is computable in
+runs stay at most `(n + 1) ^ d`, where `n` is the length of the input, then `f` is computable in
 logarithmic space. -/
 theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : β ↪ List Bool}
     {f : α → β} (time : α → ℕ)
@@ -645,14 +610,17 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
     (hbound : ∃ d, ∀ a, ∀ t ≤ time a, ∀ r ∈ (P.run (enc a) t).2, r ≤ ((enc a).length + 1) ^ d) :
     ComputableInLogSpace f enc encOut := by
   obtain ⟨d, hd⟩ := hbound
-  exact P.toQueryMachine.computableInLogSpace (encS := encCfg) P.query_inSpace P.exec_inSpace
-    P.emitted_inSpace P.halted_inSpace P.finish_inSpace time hhalt hpre hf
-    ⟨_, fun a t ht => P.length_encCfg_le (P.run_fst_le _ t) (P.run_snd_length _ t) (hd a t ht)⟩
+  exact P.toQueryMachine.computableInLogSpace (encS := Simulation.encConfig)
+    (Simulation.query_inSpace (P := P)) (Simulation.exec_inSpace (P := P))
+    (Simulation.emitted_inSpace (P := P)) (Simulation.halted_inSpace (P := P))
+    (Simulation.finish_inSpace (P := P)) time hhalt hpre hf
+    ⟨_, fun a t ht => Simulation.length_encConfig_le P (P.run_fst_le _ t) (P.run_snd_length _ t)
+      (hd a t ht)⟩
 
 /-- **Counter programs without emissions run in logarithmic space**, stated with reachability: if
 on every encoded input `enc a` the program reaches a halting instruction with final word
 `encOut (f a)`, passing only through assignments, comparisons and reads, and its registers stay
-below `(n + 1) ^ d` until then, where `n` is the length of the input, then `f` is computable in
+at most `(n + 1) ^ d` until then, where `n` is the length of the input, then `f` is computable in
 logarithmic space. -/
 theorem computableInLogSpace_of_reaches {α β : Type} {enc : α ↪ List Bool}
     {encOut : β ↪ List Bool} {f : α → β} (d : ℕ)

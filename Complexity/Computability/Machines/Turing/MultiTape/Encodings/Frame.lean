@@ -26,6 +26,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
   `base` iff it agrees with the markers, the bits of `w`, and the terminator.
 * `Turing.MultiTapeTM.forall_getElem?_append_iff`: a predicate agrees with the bits of `u ++ w` iff
   it agrees with `u` and with `w` shifted by `u.length`.
+* `Turing.MultiTapeTM.length_flatMap_frame`: the length of a list of framed words.
 -/
 
 @[expose] public section
@@ -157,5 +158,13 @@ theorem forall_getElem?_append_iff (u w : List Bool) (P : ℕ → Prop) :
     · have hle : u.length ≤ p := by omega
       rw [List.getElem?_append_right hle]
       exact hw p hle hp
+
+/-- A list of framed words spends `2 * |t| + 1` bits on each word `t`. -/
+theorem length_flatMap_frame (l : List (List Bool)) :
+    (l.flatMap frame).length = (l.map fun t => 2 * t.length + 1).sum := by
+  induction l with
+  | nil => rfl
+  | cons t l ih => simp only [List.flatMap_cons, List.length_append, length_frame, ih,
+      List.map_cons, List.sum_cons]
 
 end Turing.MultiTapeTM

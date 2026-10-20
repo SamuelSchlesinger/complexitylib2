@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Output
 import ComplexityTests.FaginEncoding
 
 /-!
@@ -13,8 +14,9 @@ import ComplexityTests.FaginEncoding
 Concrete sentences over the vocabulary of graphs and over a nullary vocabulary have query
 languages in `L`; the problems are nontrivial (an encoded structure in, one out, including the
 empty structure), malformed inputs are out, the definable-class corollary applies, and the usual
-closure properties of `L` carry over. Axiom guards cover the headline results and the
-logarithmic-space machinery: query machines and counter programs.
+closure properties of `L` carry over. A counter program copying its input exercises the emitting
+path: it computes the identity in logarithmic space. Axiom guards cover the headline results and
+the logarithmic-space machinery: query machines and counter programs.
 -/
 
 namespace ComplexityTests.FOLogSpace
@@ -104,6 +106,63 @@ example : ((0, [ [] ]) : EncodedStructure) ∉
 example : ((0, []) : EncodedStructure) ∉ graphVocabulary.queryLanguage {M | M ⊨ allLoops} :=
   fun h => absurd h.1 (by decide +kernel)
 
+/-! ### Counter programs with output -/
+
+section Copy
+
+open Turing Turing.CounterProgram Turing.MultiTapeTM
+
+/-- A counter program copying its input, one bit per round: register `0` is the position. -/
+def copyProgram : CounterProgram where
+  code :=
+    [.read (.reg 0) 1 2 3,
+     .emit true 4,
+     .emit false 4,
+     .halt [],
+     .assign 0 (.add (.reg 0) (.const 1)) 0]
+  registers := 1
+
+/-- From position `k`, the copy program emits the rest of the input and halts. -/
+theorem reachesOut_copyProgram (w : List Bool) :
+    ∀ e k, w.length - k = e → k ≤ w.length →
+      copyProgram.ReachesOut w (copyProgram.Active ((w.length + 1) ^ 1)) (0, [k])
+        (3, [w.length]) (w.drop k) := by
+  have hB (k : ℕ) (hk : k ≤ w.length) : ∀ r ∈ [k], r ≤ (w.length + 1) ^ 1 := by
+    simp only [List.mem_singleton, pow_one]
+    rintro r rfl
+    omega
+  intro e
+  induction e with
+  | zero =>
+    intro k he hk
+    obtain rfl : k = w.length := by omega
+    refine ReachesOut.read (B := (w.length + 1) ^ 1) rfl (hB _ hk) ?_
+    simp only [Expr.eval_reg, List.getD_cons_zero, List.getElem?_eq_none le_rfl, readLabel,
+      List.drop_length]
+    exact ReachesOut.refl _
+  | succ e ih =>
+    intro k he hk
+    have hk' : k < w.length := by omega
+    have hrest := ih (k + 1) (by omega) hk'
+    rw [List.drop_eq_getElem_cons hk']
+    refine ReachesOut.read (B := (w.length + 1) ^ 1) rfl (hB _ hk) ?_
+    simp only [Expr.eval_reg, List.getD_cons_zero, List.getElem?_eq_getElem hk']
+    cases hb : w[k] <;> simp only [readLabel]
+    · refine ReachesOut.emit rfl (hB _ hk) (ReachesOut.assign rfl (hB _ hk) ?_)
+      simpa using hrest
+    · refine ReachesOut.emit rfl (hB _ hk) (ReachesOut.assign rfl (hB _ hk) ?_)
+      simpa using hrest
+
+/-- **The emitting path**: the copy program computes the identity in logarithmic space. -/
+example : ComputableInLogSpace (fun w : List Bool => w) encBits encBits :=
+  copyProgram.computableInLogSpace_of_reachesOut 1 fun w =>
+    ⟨(3, [w.length]), w, [], by
+      have := reachesOut_copyProgram w (w.length - 0) 0 rfl (Nat.zero_le _)
+      rw [List.drop_zero] at this
+      exact this, rfl, by simp, by simp⟩
+
+end Copy
+
 /-! ### Axioms -/
 
 /--
@@ -121,18 +180,18 @@ info: 'Cslib.Logic.FO.Definable.queryLanguage_mem_L' depends on axioms:
 #print axioms Cslib.Logic.FO.Definable.queryLanguage_mem_L
 
 /--
-info: 'Cslib.Logic.Vocabulary.reaches_shapeCode' depends on axioms:
+info: 'Cslib.Logic.Vocabulary.ModelChecker.reaches_shapeCode' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.reaches_shapeCode
+#print axioms Cslib.Logic.Vocabulary.ModelChecker.reaches_shapeCode
 
 /--
-info: 'Cslib.Logic.Vocabulary.reaches_compile' depends on axioms:
+info: 'Cslib.Logic.Vocabulary.ModelChecker.reaches_formulaCode' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.Vocabulary.reaches_compile
+#print axioms Cslib.Logic.Vocabulary.ModelChecker.reaches_formulaCode
 
 /--
 info: 'Turing.QueryMachine.computableInLogSpace' depends on axioms:
@@ -154,5 +213,12 @@ info: 'Turing.CounterProgram.computableInLogSpace_of_reaches' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.CounterProgram.computableInLogSpace_of_reaches
+
+/--
+info: 'Turing.CounterProgram.computableInLogSpace_of_reachesOut' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.CounterProgram.computableInLogSpace_of_reachesOut
 
 end ComplexityTests.FOLogSpace

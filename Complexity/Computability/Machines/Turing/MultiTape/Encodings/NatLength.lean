@@ -1,0 +1,58 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
+public import Mathlib.Data.Nat.Size
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+
+/-!
+# Binary lengths of natural numbers
+
+The binary encoding `encNat` of a number has `Nat.size` digits. Numbers at most `N` have at most
+`log₂ N + 1` digits, and numbers at most `(N + 1) ^ d` at most `(d + 1) * (log₂ N + 1)`: counters
+bounded by a polynomial in the length of the input are stored in logarithmic space.
+
+## Main results
+
+* `Turing.MultiTapeTM.length_encNat_le_log2`: numbers at most `N` have at most `log₂ N + 1`
+  digits.
+* `Turing.MultiTapeTM.length_encNat_le_of_le_pow`: numbers at most `(N + 1) ^ d` have at most
+  `(d + 1) * (log₂ N + 1)` digits.
+-/
+
+@[expose] public section
+
+namespace Turing.MultiTapeTM
+
+/-- The binary length of a number at most `N` is at most `log₂ N + 1`. -/
+theorem length_encNat_le_log2 {j N : ℕ} (h : j ≤ N) : (encNat j).length ≤ Nat.log2 N + 1 := by
+  rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_le]
+  exact lt_of_le_of_lt h Nat.lt_log2_self
+
+/-- The binary length of a number at most `N + 1` is at most `log₂ N + 2`. -/
+theorem length_encNat_le_log2_add_two {j N : ℕ} (h : j ≤ N + 1) :
+    (encNat j).length ≤ Nat.log2 N + 2 := by
+  rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_le]
+  have := Nat.lt_log2_self (n := N)
+  rw [pow_succ]
+  omega
+
+/-- A number at most `(N + 1) ^ d` has at most `(d + 1) * (log₂ N + 1)` binary digits. -/
+theorem length_encNat_le_of_le_pow {r N d : ℕ} (h : r ≤ (N + 1) ^ d) :
+    (encNat r).length ≤ (d + 1) * (Nat.log2 N + 1) := by
+  rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_le]
+  have h₁ : N + 1 ≤ 2 ^ (Nat.log2 N + 1) := Nat.lt_log2_self
+  calc r ≤ (N + 1) ^ d := h
+    _ ≤ (2 ^ (Nat.log2 N + 1)) ^ d := Nat.pow_le_pow_left h₁ d
+    _ = 2 ^ (d * (Nat.log2 N + 1)) := by rw [← pow_mul, Nat.mul_comm]
+    _ < 2 ^ ((d + 1) * (Nat.log2 N + 1)) :=
+      Nat.pow_lt_pow_right (by norm_num) (by nlinarith)
+
+end Turing.MultiTapeTM

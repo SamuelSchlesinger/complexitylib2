@@ -26,6 +26,9 @@ algorithm with random access to the encoding needs, such as the logarithmic-spac
 
 ## Main results
 
+* `Cslib.Logic.encStructure_eq`: the encoding of an input as a concatenation of frames.
+* `Cslib.Logic.drop_tableStart`: the encoding from the start of a table on.
+
 * `Cslib.Logic.getElem?_encStructure_two_mul`, `Cslib.Logic.getElem?_encStructure_two_mul_card`:
   the markers of the cardinality.
 * `Cslib.Logic.getElem?_encStructure_tableStart_two_mul`,
@@ -33,6 +36,10 @@ algorithm with random access to the encoding needs, such as the logarithmic-spac
   `Cslib.Logic.getElem?_encStructure_tableStart_two_mul_length`: the markers, bits and terminator
   of a table.
 * `Cslib.Logic.getElem?_encStructure_tableStart_length_add`: nothing follows the last table.
+
+## References
+
+* [N. Immerman, *Descriptive Complexity*, Section 2.1][Immerman1999]
 -/
 
 @[expose] public section
@@ -44,19 +51,13 @@ open Turing.MultiTapeTM
 /-- The encoding of an input: its framed cardinality in unary, then its framed tables. -/
 theorem encStructure_eq (a : EncodedStructure) :
     encStructure a = frame (List.replicate a.1 true) ++ a.2.flatMap frame := by
-  simp [encStructure, encList]
+  simp only [encStructure, encList, encPair_apply, encUnary_apply, encBits]
   rfl
 
 /-- The position of the `i`-th truth table in the encoding of an input; past the last table, the
 length of the encoding. -/
 def tableStart (a : EncodedStructure) (i : ℕ) : ℕ :=
   2 * a.1 + 1 + ((a.2.take i).map fun t => 2 * t.length + 1).sum
-
-theorem length_flatMap_frame (l : List (List Bool)) :
-    (l.flatMap frame).length = (l.map fun t => 2 * t.length + 1).sum := by
-  induction l with
-  | nil => rfl
-  | cons t l ih => simp [List.flatMap_cons, length_frame, ih]
 
 /-- The encoding from the `i`-th table on. -/
 theorem drop_tableStart (a : EncodedStructure) (i : ℕ) :
@@ -107,11 +108,14 @@ theorem two_mul_card_add_one_le_length (a : EncodedStructure) :
 
 /-! ### The bits -/
 
+/-- The markers of the cardinality. -/
 theorem getElem?_encStructure_two_mul {a : EncodedStructure} {k : ℕ} (hk : k < a.1) :
     (encStructure a)[2 * k]? = some true := by
-  rw [encStructure_eq, List.getElem?_append_left (by simp [length_frame]; omega),
+  rw [encStructure_eq, List.getElem?_append_left
+      (by simp only [length_frame, List.length_replicate]; omega),
     getElem?_frame_two_mul (by simpa using hk)]
 
+/-- The terminator of the cardinality. -/
 theorem getElem?_encStructure_two_mul_card (a : EncodedStructure) :
     (encStructure a)[2 * a.1]? = some false := by
   rw [encStructure_eq, List.getElem?_append_left (by simp [length_frame])]
@@ -126,14 +130,14 @@ theorem getElem?_encStructure_tableStart_two_mul {a : EncodedStructure} {i j : �
     (hi : i < a.2.length) (hj : j < a.2[i].length) :
     (encStructure a)[tableStart a i + 2 * j]? = some true := by
   rw [getElem?_encStructure_tableStart_add, flatMap_frame_drop hi,
-    List.getElem?_append_left (by simp [length_frame]; omega), getElem?_frame_two_mul hj]
+    List.getElem?_append_left (by simp only [length_frame]; omega), getElem?_frame_two_mul hj]
 
 /-- The bits of a table. -/
 theorem getElem?_encStructure_tableStart_two_mul_add_one {a : EncodedStructure} {i j : ℕ}
     (hi : i < a.2.length) (hj : j < a.2[i].length) :
     (encStructure a)[tableStart a i + 2 * j + 1]? = some a.2[i][j] := by
   rw [Nat.add_assoc, getElem?_encStructure_tableStart_add, flatMap_frame_drop hi,
-    List.getElem?_append_left (by simp [length_frame]; omega),
+    List.getElem?_append_left (by simp only [length_frame]; omega),
     getElem?_frame_two_mul_add_one hj, List.getElem?_eq_getElem hj]
 
 /-- The terminator of a table. -/
@@ -150,7 +154,7 @@ theorem getElem?_encStructure_tableStart_length_add (a : EncodedStructure) (q : 
   rw [length_encStructure]
   omega
 
-/-- A table is followed by a bit. -/
+/-- There is a bit at the start of every table. -/
 theorem getElem?_encStructure_tableStart_isSome {a : EncodedStructure} {i : ℕ}
     (hi : i < a.2.length) : ((encStructure a)[tableStart a i]?).isSome := by
   have h := getElem?_encStructure_tableStart_add a i 0

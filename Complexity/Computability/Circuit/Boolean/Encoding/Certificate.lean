@@ -15,6 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Mathlib.Data.List.GetD
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Circuits as certificates
@@ -113,25 +114,19 @@ def readRow (width : ℕ) (row : List Bool) : Op × List ℕ :=
     [((row.drop 3).take width).count true, ((row.drop (3 + width)).take width).count true].take
       (signature.Arity (Op.ofBits (row.getD 0 false, row.getD 1 false, row.getD 2 false))))
 
-private theorem getD_le {width : ℕ} {l : List ℕ} (h : ∀ i ∈ l, i ≤ width) (j : ℕ) :
-    l.getD j 0 ≤ width := by
-  rw [List.getD_eq_getElem?_getD]
-  cases hj : l[j]? with
-  | none => simp
-  | some a => simpa using h a (List.mem_of_getElem? hj)
-
 theorem length_gateRow {width : ℕ} {g : Op × List ℕ} (h : ∀ i ∈ g.2, i ≤ width) :
     (gateRow width g).length = 3 + 2 * width := by
   rw [gateRow, List.length_append, List.length_append, Op.length_bits,
-    length_unaryField _ _ (getD_le h 0), length_unaryField _ _ (getD_le h 1)]
+    length_unaryField _ _ (List.getD_le_of_forall_le h 0),
+    length_unaryField _ _ (List.getD_le_of_forall_le h 1)]
   omega
 
 /-- A row reads as its gate, when the gate has the arity of its operation. -/
 theorem readRow_gateRow {width : ℕ} {g : Op × List ℕ} (harity : g.2.length = signature.Arity g.1)
     (h : ∀ i ∈ g.2, i ≤ width) : readRow width (gateRow width g) = g := by
   obtain ⟨op, args⟩ := g
-  have h₀ := length_unaryField _ _ (getD_le h 0)
-  have h₁ := length_unaryField _ _ (getD_le h 1)
+  have h₀ := length_unaryField _ _ (List.getD_le_of_forall_le h 0)
+  have h₁ := length_unaryField _ _ (List.getD_le_of_forall_le h 1)
   have hop : ∀ j < 3, (gateRow width (op, args)).getD j false = op.bits.getD j false := by
     intro j hj
     rw [gateRow, List.append_assoc, List.getD_append _ _ _ _ (by simpa using hj)]

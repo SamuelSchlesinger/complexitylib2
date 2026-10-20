@@ -10,7 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
-import Complexity.Computability.Machines.Turing.MultiTape.Encodings.MultiPass
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.MultiPass
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 import Mathlib.Data.List.GetD
 
 /-!
@@ -28,6 +29,15 @@ parts are tidily computable within space linear in the encoded state
 (`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.multiPassFold`): each pass simulates one step,
 scanning the whole input with a binary position counter to fetch the queried bit, so that only
 the state, the counter and the fetched bit are ever stored [Sipser, Section 8.4][Sipser2013].
+
+## Implementation notes
+
+Christian Reitwiessner's read machines (`Turing.ReadMachine`) are the same kind of model, simulated
+by step machines that move a head one cell at a time. A query machine differs in two ways that
+the algorithms built on it need: a read past the end of the input returns `none` rather than
+`false`, so that a machine can find the end of its input (as a check of the shape of an encoded
+input must), and a final word is emitted at the halt. Its logarithmic-space bound is proved
+directly from the multi-pass fold.
 
 ## Main definitions
 
@@ -118,6 +128,8 @@ theorem run_eq_of_le {T : ℕ} (hT : M.halted (M.run w T) = true) {t : ℕ} (h :
 
 /-! ### The passes of the simulation -/
 
+namespace Simulation
+
 /-- The state of a pass of the simulation: the state of the machine, the position in the input,
 and the bit fetched so far. -/
 abbrev PassState (σ : Type*) := σ × ℕ × Option Bool
@@ -141,7 +153,7 @@ def passCont (q : PassState σ) : Bool := !M.halted q.1
 def passFinish (q : PassState σ) : List Bool := M.finish q.1
 
 theorem streamState_passNext (s : σ) {j : ℕ} (hj : j ≤ w.length) :
-    MultiTapeTM.streamState ((s, 0, none) : PassState σ) M.passNext w j =
+    MultiTapeTM.streamState ((s, 0, none) : PassState σ) (passNext M) w j =
       (s, j, (w.take j)[M.query s]?) := by
   induction j with
   | zero => simp
@@ -154,21 +166,30 @@ theorem streamState_passNext (s : σ) {j : ℕ} (hj : j ≤ w.length) :
       simp
     · simp only [decide_eq_true_eq, hq, ↓reduceIte]
       rcases lt_or_gt_of_ne hq with hlt | hgt
-      · rw [List.getElem?_eq_none (by simp; omega), List.getElem?_eq_none (by simp; omega)]
-      · rw [List.getElem?_append_left (by simp; omega)]
+      · have h₁ : (List.take j w).length ≤ M.query s := by
+          simp only [List.length_take]
+          omega
+        have h₂ : (List.take j w ++ [w[j]]).length ≤ M.query s := by
+          simp only [List.length_append, List.length_take, List.length_singleton]
+          omega
+        rw [List.getElem?_eq_none h₁, List.getElem?_eq_none h₂]
+      · have h₁ : M.query s < (List.take j w).length := by
+          simp only [List.length_take]
+          omega
+        rw [List.getElem?_append_left h₁]
 
 theorem streamState_passNext_length (s : σ) :
-    MultiTapeTM.streamState ((s, 0, none) : PassState σ) M.passNext w w.length =
+    MultiTapeTM.streamState ((s, 0, none) : PassState σ) (passNext M) w w.length =
       (s, w.length, M.read w s) := by
-  rw [M.streamState_passNext w s le_rfl, List.take_length, read]
+  rw [(streamState_passNext M) w s le_rfl, List.take_length, read]
 
 theorem passState_eq (i : ℕ) :
-    MultiTapeTM.passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd w i =
+    MultiTapeTM.passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M) w i =
       (M.run w i, 0, none) := by
   induction i with
   | zero => rfl
   | succ i ih =>
-    rw [MultiTapeTM.passState, ih, M.streamState_passNext_length, passEnd, run_succ, step]
+    rw [MultiTapeTM.passState, ih, (streamState_passNext_length M), passEnd, run_succ, step]
 
 private lemma streamEmit_const_nil {τ : Type*} (next : τ × Bool → τ) (s : τ) (l : List Bool) :
     MultiTapeTM.streamEmit next (fun _ => []) s l = [] := by
@@ -190,7 +211,7 @@ variable {σ' : Type} {M' : QueryMachine σ'} {encS' : σ' ↪ List Bool}
 
 theorem passNext_inSpace
     (hquery : ComputableTidilyInSpace M'.query encS' encNat fun s => (encS' s).length) :
-    ComputableTidilyInSpace M'.passNext (encPair (encPass encS') encBool) (encPass encS')
+    ComputableTidilyInSpace (passNext M') (encPair (encPass encS') encBool) (encPass encS')
       fun p => (encPair (encPass encS') encBool p).length := by
   have hq1 : ComputableTidilyInSpace (fun p : PassState σ' × Bool => p.1)
       (encPair (encPass encS') encBool) (encPass encS')
@@ -264,7 +285,7 @@ theorem passEmit_inSpace
     (hemit : ComputableTidilyInSpace M'.emit (encPair encS' (encOption encBool)) encBits
       fun p => (encPair encS' (encOption encBool) p).length)
     (hhalted : ComputableTidilyInSpace M'.halted encS' encBool fun s => (encS' s).length) :
-    ComputableTidilyInSpace M'.passEmit (encPass encS') encBits
+    ComputableTidilyInSpace (passEmit M') (encPass encS') encBits
       fun q => (encPass encS' q).length :=
   budget_ite (budget_comp hhalted (fst_inSpace encS') (length_fst_le encS'))
     (budget_const [] (.refl _))
@@ -274,7 +295,7 @@ theorem passEnd_inSpace
     (hnext : ComputableTidilyInSpace M'.next (encPair encS' (encOption encBool)) encS'
       fun p => (encPair encS' (encOption encBool) p).length)
     (hhalted : ComputableTidilyInSpace M'.halted encS' encBool fun s => (encS' s).length) :
-    ComputableTidilyInSpace M'.passEnd (encPass encS') (encPass encS')
+    ComputableTidilyInSpace (passEnd M') (encPass encS') (encPass encS')
       fun q => (encPass encS' q).length :=
   budget_prod
     (budget_ite (budget_comp hhalted (fst_inSpace encS') (length_fst_le encS'))
@@ -284,27 +305,22 @@ theorem passEnd_inSpace
 
 theorem passCont_inSpace
     (hhalted : ComputableTidilyInSpace M'.halted encS' encBool fun s => (encS' s).length) :
-    ComputableTidilyInSpace M'.passCont (encPass encS') encBool
+    ComputableTidilyInSpace (passCont M') (encPass encS') encBool
       fun q => (encPass encS' q).length :=
   budget_finite (encC := encBool) not
     (budget_comp hhalted (fst_inSpace encS') (length_fst_le encS'))
 
 theorem passFinish_inSpace
     (hfinish : ComputableTidilyInSpace M'.finish encS' encBits fun s => (encS' s).length) :
-    ComputableTidilyInSpace M'.passFinish (encPass encS') encBits
+    ComputableTidilyInSpace (passFinish M') (encPass encS') encBits
       fun q => (encPass encS' q).length :=
   budget_comp (f := fun q : PassState σ' => q.1) hfinish (fst_inSpace encS') (length_fst_le encS')
 
 end Parts
 
-/-! ### Logarithmic space -/
-
 open MultiTapeTM
 
-/-- The binary length of a number at most `N` is at most `log₂ N + 1`. -/
-theorem length_encNat_le_log2 {j N : ℕ} (h : j ≤ N) : (encNat j).length ≤ Nat.log2 N + 1 := by
-  rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_le]
-  exact lt_of_le_of_lt h Nat.lt_log2_self
+/-! ### Logarithmic space -/
 
 theorem length_encPass_le {τ : Type} (encS : τ ↪ List Bool) (q : PassState τ) :
     (encPass encS q).length ≤ 2 * (encS q.1).length + 2 * (encNat q.2.1).length + 4 := by
@@ -312,6 +328,10 @@ theorem length_encPass_le {τ : Type} (encS : τ ↪ List Bool) (q : PassState �
   have : (encOption encBool fd).length ≤ 2 := by cases fd <;> simp
   simp only [length_encPair]
   omega
+
+end Simulation
+
+open MultiTapeTM Simulation
 
 /-- **Query machines run in logarithmic space.** Let a query machine halt on every encoded input
 `enc a`, first after `time a` steps, with output `encOut (f a)`. If its states along these runs
@@ -352,17 +372,17 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
   obtain ⟨TC, cC, hC, -⟩ := passCont_inSpace (M' := M) hhalted
   obtain ⟨TF, cF, hF, -⟩ := passFinish_inSpace (M' := M) hfinish
   -- the states of the passes
-  have hP (a : α) (i : ℕ) := M.passState_eq (enc a) i
+  have hP (a : α) (i : ℕ) := (passState_eq M) (enc a) i
   have hQ (a : α) (i : ℕ) {j : ℕ} (hj : j ≤ (enc a).length) :
-      streamState (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd (enc a) i)
-        M.passNext (enc a) j =
+      streamState (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M) (enc a) i)
+        (passNext M) (enc a) j =
         (M.run (enc a) i, j, ((enc a).take j)[M.query (M.run (enc a) i)]?) := by
-    rw [hP, M.streamState_passNext _ _ hj]
+    rw [hP, (streamState_passNext M) _ _ hj]
   -- the encoded states of the passes are logarithmic
   set K := 2 * cS + 6 with hK
   have hlenQ (a : α) (i : ℕ) {j : ℕ} (hj : j ≤ (enc a).length) :
-      (encPass encS (streamState (passState ((M.init, 0, none) : PassState σ) M.passNext
-        M.passEnd (enc a) i) M.passNext (enc a) j)).length ≤
+      (encPass encS (streamState (passState ((M.init, 0, none) : PassState σ) (passNext M)
+        (passEnd M) (enc a) i) (passNext M) (enc a) j)).length ≤
         K * (Nat.log2 (enc a).length + 1) := by
     rw [hQ a i hj]
     refine (length_encPass_le encS _).trans ?_
@@ -372,7 +392,7 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
     rw [hK]
     nlinarith
   have hlenP (a : α) (i : ℕ) :
-      (encPass encS (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd
+      (encPass encS (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
         (enc a) i)).length ≤ K * (Nat.log2 (enc a).length + 1) := by
     rw [hP]
     refine (length_encPass_le encS _).trans ?_
@@ -382,7 +402,7 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
     nlinarith
   -- the passes
   have hpass (a : α) : ∀ i ≤ time a - 1,
-      M.passCont (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd (enc a)
+      (passCont M) (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M) (enc a)
         (i + 1)) = decide (i < time a - 1) := by
     intro i hi
     rw [hP, passCont]
@@ -399,15 +419,16 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
   -- the output
   have hout (a : α) : encOut (f a) =
       ((List.range (time a - 1 + 1)).map fun i =>
-        streamEmit M.passNext (fun p => encBits ((fun _ => ([] : List Bool)) p))
-          (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd (enc a) i) (enc a) ++
-        encBits (M.passEmit (streamState (passState ((M.init, 0, none) : PassState σ)
-          M.passNext M.passEnd (enc a) i) M.passNext (enc a) (enc a).length))).flatten ++
-      encBits (M.passFinish (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd
+        streamEmit (passNext M) (fun p => encBits ((fun _ => ([] : List Bool)) p))
+          (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M) (enc a) i)
+          (enc a) ++
+        encBits ((passEmit M) (streamState (passState ((M.init, 0, none) : PassState σ)
+          (passNext M) (passEnd M) (enc a) i) (passNext M) (enc a) (enc a).length))).flatten ++
+      encBits ((passFinish M) (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
         (enc a) (time a - 1 + 1))) := by
     rw [hf, output]
     simp only [encBits_apply, streamEmit_const_nil, List.nil_append, hP,
-      M.streamState_passNext_length, passEmit, passFinish]
+      (streamState_passNext_length M), passEmit, passFinish]
     rcases Nat.eq_zero_or_pos (time a) with h0 | hpos
     · rw [h0]
       have h1 := M.run_eq_of_le (enc a) (h0 ▸ hhalt a) (show 0 ≤ 1 by omega)
@@ -429,20 +450,20 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
     (⟨(), fun _ b => (none, some b)⟩ : InputReader Bool Unit) (fun b => [b])
     (fun _ => List.cons_ne_nil _ _) (fun a rest => by simp [InputReader.read])
     (fun a => enc a) (fun a => by simp)
-    (init := fun _ => ((M.init, 0, none) : PassState σ)) (next := M.passNext)
-    (emit := fun _ => ([] : List Bool)) (passEmit := M.passEmit) (passEnd := M.passEnd)
-    (cont := M.passCont) (finish := M.passFinish) (g := f) (passes := fun a => time a - 1)
+    (init := fun _ => ((M.init, 0, none) : PassState σ)) (next := (passNext M))
+    (emit := fun _ => ([] : List Bool)) (passEmit := (passEmit M)) (passEnd := (passEnd M))
+    (cont := (passCont M)) (finish := (passFinish M)) (g := f) (passes := fun a => time a - 1)
     hI.computableTidilyInTimeAndSpace hN hE.computableTidilyInTimeAndSpace hPE hPN hC hF
     hpass hout
     (tMax := fun a => ∑ i ∈ Finset.range (time a - 1 + 1),
       ((∑ j ∈ Finset.range (enc a).length,
-        (tN (streamState (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd
-          (enc a) i) M.passNext (enc a) j, (enc a).getD j false) + (2 * cE + 2))) +
-        (tPE (streamState (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd
-          (enc a) i) M.passNext (enc a) (enc a).length) +
-        tPN (streamState (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd
-          (enc a) i) M.passNext (enc a) (enc a).length) +
-        tC (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd (enc a) (i + 1)))))
+        (tN (streamState (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
+          (enc a) i) (passNext M) (enc a) j, (enc a).getD j false) + (2 * cE + 2))) +
+        (tPE (streamState (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
+          (enc a) i) (passNext M) (enc a) (enc a).length) +
+        tPN (streamState (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
+          (enc a) i) (passNext M) (enc a) (enc a).length) +
+        tC (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M) (enc a) (i + 1)))))
     (sMax := fun a =>
       (2 * cN + cPE + cPN + cC + 4) * ((2 * K + 3) * (Nat.log2 (enc a).length + 1)))
     (lMax := fun a => (K + 1) * (Nat.log2 (enc a).length + 1))
@@ -454,7 +475,7 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
       (Finset.mem_range.mpr (Nat.lt_succ_of_le hi)))
     refine le_trans ?_ (Nat.le_add_right _ _)
     exact Finset.single_le_sum (f := fun j => tN (streamState (passState
-      ((M.init, 0, none) : PassState σ) M.passNext M.passEnd (enc a) i) M.passNext (enc a) j,
+      ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M) (enc a) i) (passNext M) (enc a) j,
         (enc a).getD j false) + (2 * cE + 2)) (fun _ _ => Nat.zero_le _)
       (Finset.mem_range.mpr hj)
   · intro a i hi j hj
@@ -484,7 +505,7 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
   have hL : 1 ≤ Nat.log2 (enc a).length + 1 := Nat.le_add_left _ _
   simp only at h₁ ⊢
   generalize Nat.log2 (enc a).length + 1 = L at *
-  generalize (encPass encS (passState ((M.init, 0, none) : PassState σ) M.passNext M.passEnd
+  generalize (encPass encS (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
     (enc a) (time a - 1 + 1))).length = E at *
   rw [Nat.mul_assoc]
   refine Nat.mul_le_mul_left c ?_
