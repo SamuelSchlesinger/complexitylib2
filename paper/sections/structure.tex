@@ -78,14 +78,39 @@ querying input bits with logarithmic states, run in logarithmic space by a
 multi-pass simulation.\citep[Theorem 3.1]{Immerman1999}
 
 Immerman's FO also has constant symbols and the built-in predicates $\le$ and
-BIT; these are not covered (a relational language has no constants). First-order
-reductions as logspace reductions are not yet proved.
+BIT; these are not covered (a relational language has no constants). The next entry proves the order-free interpretation-to-logspace bridge.
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{829}{Cslib.Logic.Vocabulary.queryLanguage_mem_L}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{894}{Cslib.Logic.FO.Definable.queryLanguage_mem_L}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean}{341}{Turing.QueryMachine.computableInLogSpace}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram.lean}{607}{Turing.CounterProgram.computableInLogSpace}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram/Output.lean}{229}{Turing.CounterProgram.computableInLogSpace_of_reachesOut}
 \end{result}
+
+\begin{result}
+\subsection{Order-free interpretations induce logspace reductions}
+For finite relational vocabularies, every fixed finite-dimensional
+first-order interpretation without built-in order induces a total
+logarithmic-space transducer on encoded structures. The encoding gives
+universe size in unary and framed relation truth tables. The transducer
+counts domain tuples and streams the interpreted relation tables,
+reconstructing elements by their ranks instead of storing the output.
+
+Consequently, an order-free interpretation reduction from $K$ to an
+isomorphism-closed class $K'$ induces a logspace many-one reduction between
+their encoded query languages. Membership in L or P therefore transfers
+from the target query language to the source. Parsed structure data with invalid
+table sizes map to fixed invalid target data; this is the shape check within
+the encoding-relative contract. Empty universes, empty interpreted domains,
+nullary relations, and dimension-zero interpretations are included.
+These statements concern the order-free general layer; the standard
+ordered FO($\le$, BIT) results are not covered here.
+\citep{Immerman1999,Sipser2013}
+\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{892}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap}
+\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{987}{Cslib.Logic.FO.Reduces.logSpaceReducible}
+\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{1001}{Cslib.Logic.FO.Reduces.queryLanguage_mem_L}
+\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{1008}{Cslib.Logic.FO.Reduces.queryLanguage_mem_P}
+\end{result}
+
 
 \begin{result}
 \textbf{First-order projection infrastructure.}

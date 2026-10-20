@@ -173,19 +173,23 @@ of the handover. The work below remains available for subsequent, independently 
      does not yet simplify the relations of composite or higher-dimensional interpretations.
      **Still outstanding:** the classical positive-dimensional full-universe
      specialization and canonical numeric preservation, projection reducibility on finite
-     structure classes, and the machine-certified encoding bridge described below. Reuse
+     structure classes, and the standard ordered machine encoding bridge. Reuse
      [FO.Interpretation](Complexity/Logics/FirstOrder/Interpretation.lean) and
      [FO.Reduces](Complexity/Logics/FirstOrder/Reduction.lean) for the semantic interfaces. State
      the canonical order/`BIT` convention on `Fin n` explicitly; the classical qfp convention
      excludes BIT ([Immerman–Landau, Definition 3.6](https://people.cs.umass.edu/~immerman/pub/mult.pdf)).
      Arbitrary quantifier-free Boolean combinations of input relations are not projections.
      [First-order model checking in L](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean)
-     is proved for relational FO without order or BIT. Connect these
-     maps to the [finite-structure encoding](Complexity/Logics/FirstOrder/Encoding.lean) by a
-     machine-certified logarithmic-space transducer (in progress on the branch
-     `epic/fo-logspace-m2-wip`). Account for tuple enumeration, relation
-     access, output representation, malformed inputs and the empty structure; the semantic APIs
-     alone do not provide this resource bound.
+     is proved for relational FO without order or BIT.
+
+   - [x] **Order-free interpretations as logspace reductions.** The
+     [machine-certified transducer](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean)
+     streams interpreted relation tables using tuple ranks. Every order-free interpretation
+     reduction to an isomorphism-closed target induces a logspace many-one reduction of encoded
+     query languages, with L/P closure. Empty universes and domains, nullary relations,
+     dimension zero, and invalid parsed table shapes are handled. Numeric predicates computed
+     from the universe and canonical lexicographic ordered outputs remain part of the ordered
+     milestone; they are not supplied by this theorem.
 
    - [x] **Circuit Value logspace completeness.** [Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean)
      under logarithmic-space many-one reductions, via a machine-certified tableau writer.

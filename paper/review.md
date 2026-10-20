@@ -868,3 +868,29 @@ editorial approval or a machine-checked equivalence between prose and Lean.
 
 The PDF built without undefined references or overflow warnings; the changed page was rendered
 and visually checked.
+
+## Coverage batch 17: order-free interpretations in logspace (2026-10-20)
+
+Integrated `ec952980ee9ce16d14771a8738e13219dca27c81` in merge `045e147a`.
+The new entry states the finite relational model, target isomorphism closure, fixed structure
+encoding, L/P closure, and empty-domain, nullary and dimension-zero coverage. Invalid parsed
+structure shape is distinguished from arbitrary strings outside the encoding image. The previous
+model-checking entry now points to this bridge. Standard ordered FO results remain outstanding.
+
+Independent Claude full correctness/API reviews of `dc33e6e6..df5c5c18` approved the mathematics
+and requested explicit order-free terminology. The fix round `df5c5c18..ec952980` also reused
+Mathlib counting/enumeration, moved the semantic map and tuple equivalence to the logic layer,
+and added a concrete restricted two-dimensional interpretation and non-identity reduction client.
+Independent Codex correctness/API/paper delta review approved with no findings and checked all
+four links. A further Codex merge-delta check approved `045e147a`: source/test files are unchanged
+from the reviewed head, and both drivers are sorted unions. The sole merge conflict was the
+generated import index, resolved with `lake exe mk_all`.
+
+An attempted gate run before index resolution failed; after the merge was completed, all six
+gates passed on `045e147aa2ac963289816e071e8b14d24a972c72`.
+AI assistance: Claude for the earlier WIP/reviews, Codex for completion, fixes, final reviews and
+index. Source credit remains recorded. These are AI reviews, not human editorial approval or a
+machine-checked equivalence between prose and Lean. The index now contains 114 entries.
+
+The PDF built without undefined references or overflow warnings; both affected entries were
+rendered together and visually checked.
