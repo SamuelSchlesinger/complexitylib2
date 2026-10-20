@@ -170,12 +170,6 @@ theorem inversionExperiment_bind {n : ℕ} {Coins : Type*} (f : BitString n → 
   simp only [inversionExperiment, PMF.map_bind]
   rw [PMF.bind_comm]
 
-/-- Agreement with any fixed parity is a probability, hence at most one. -/
-theorem agreement_le_one {n : ℕ} (predictor : BitString n → Bool) (x : BitString n) :
-    agreement predictor x ≤ 1 := by
-  rw [agreement_eq_probability]
-  exact (ENNReal.toReal_mono (by simp) (PMF.coe_le_one _ _)).trans_eq (by simp)
-
 /-- Positive prediction bias `ε` gives inversion success at least `ε / 4`.
 For each fixed input and seed, either agreement is below `1 / 2 + ε / 2`, or decoding succeeds
 with probability at least one half. Averaging this dichotomy proves the reduction. -/

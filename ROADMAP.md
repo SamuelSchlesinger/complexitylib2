@@ -134,6 +134,20 @@ of the handover. The work below remains available for subsequent, independently 
    nonvacuous client, a theorem-index entry, and independent mathematical, API and
    statement-index reviews of the completed revision.
 
+   - [ ] **Ordered first-order complexity, in standard terminology.** Decided 2026-10-19: the
+     library's first-order complexity follows the usual convention of descriptive complexity
+     [Immerman][Immerman1999]. Structures are ordered, on `{0, …, n-1}` with `n ≥ 1`, and FO
+     means FO(≤, BIT). First-order reductions are first-order queries on lexicographically
+     ordered k-tuples, and `≤_fo`, `≤_fop` and `≤_qfp` keep their standard meanings. The
+     order-free `FO.Reduces`, `FO.QFReduces` and `FO.Definable` remain as a general layer of
+     interpretations without built-in order. The ordered notions get their own names. Restate
+     the headline results in the ordered setting: SAT, 3SAT, 3COL, IS, clique and VC
+     NP-complete under first-order or quantifier-free projections; FO(≤, BIT) ⊆ L; first-order
+     reductions are logspace reductions; REACH NL-complete; Circuit Value P-complete under
+     first-order reductions. The order-free versions cannot reach several of these: SAT → 3SAT
+     appears to need an order, and SAT-hardness without order needs an empty-structure
+     hypothesis.
+
    - [ ] **FO reductions and projections.** The vocabulary-parametric, relativized core is
      implemented in [ProjectionFormula](Complexity/Logics/FirstOrder/ProjectionFormula.lean) and
      [Projection](Complexity/Logics/FirstOrder/Projection.lean): selection of one literal before
@@ -141,16 +155,26 @@ of the handover. The work below remains available for subsequent, independently 
      substitution, identity/composition isomorphisms, and quantifier-free composition. The
      [graph-complement client](Complexity/Logics/FirstOrder/Projection/Graph.lean) and tests cover
      nonvacuity, empty universes, nullary relations and the failure of two-bit conjunction to be
-     a projection. **Still outstanding:** the classical positive-dimensional full-universe
+     a projection. Quantifier-free reducibility
+     ([QFReduces](Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean)) and the tactics
+     `fo_qf`, `fo_iso_closed`, `fo_simp` and `fo_reduction`
+     ([Tactic/FirstOrder](Complexity/Tactic/FirstOrder.lean)) are implemented, with independent
+     set, clique and vertex cover as quantifier-free reducible
+     [structure classes](Complexity/Logics/FirstOrder/Problems/SizedGraph.lean); `fo_reduction`
+     does not yet simplify the relations of composite or higher-dimensional interpretations.
+     **Still outstanding:** the classical positive-dimensional full-universe
      specialization and canonical numeric preservation, projection reducibility on finite
      structure classes, and the machine-certified encoding bridge described below. Reuse
      [FO.Interpretation](Complexity/Logics/FirstOrder/Interpretation.lean) and
      [FO.Reduces](Complexity/Logics/FirstOrder/Reduction.lean) for the semantic interfaces. State
      the canonical order/`BIT` convention on `Fin n` explicitly; the classical qfp convention
      excludes BIT ([Immerman–Landau, Definition 3.6](https://people.cs.umass.edu/~immerman/pub/mult.pdf)).
-     Arbitrary quantifier-free Boolean combinations of input relations are not projections. Connect these
+     Arbitrary quantifier-free Boolean combinations of input relations are not projections.
+     [First-order model checking in L](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean)
+     is proved for relational FO without order or BIT. Connect these
      maps to the [finite-structure encoding](Complexity/Logics/FirstOrder/Encoding.lean) by a
-     machine-certified logarithmic-space transducer. Account for tuple enumeration, relation
+     machine-certified logarithmic-space transducer (in progress on the branch
+     `epic/fo-logspace-m2-wip`). Account for tuple enumeration, relation
      access, output representation, malformed inputs and the empty structure; the semantic APIs
      alone do not provide this resource bound.
 
@@ -256,9 +280,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   and quadratic-potential representations.
 
 * **Worst-case hardness and derandomization.** The
-  [uniform average-case-hardness implication P = BPP](Complexity/Computability/Complexity/Classes/BPP/Derandomization.lean)
-  is proved. Complete the worst-case-to-average-case amplification needed to obtain this
-  conclusion from exponential worst-case circuit hardness in `E`.
+  [worst-case-hardness implication P = BPP](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean)
+  is proved for hardness at all large lengths, by the Sudan–Trevisan–Vadhan encoding and
+  Nisan–Wigderson. Remaining: the infinitely-often variant and the EXP ⊄ P/poly endpoint of
+  Babai, Fortnow, Nisan and Wigderson.
 * **Further PCP consequences.** Constant-factor NP-hardness of approximating Independent Set,
   Clique and Vertex Cover is [proved](Complexity/Computability/PCP/Approximation/IndependentSet.lean)
   via Karp's occurrence graph. Build the FGLSS clique-hardness reduction and amplification on the existing
@@ -305,7 +330,7 @@ following endpoints, rather than submitted as class definitions or conditional w
 | Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Both ports follow source `c4cfa198`. | Port sparse-counter navigation, visit schedules and hitting-time bounds using the new charts. General input-time and batch results already exist. Affine controllers and hard-power counting are later milestones; these results do not close the whole M2b scope. |
 | NL = coNL | A streaming inductive-counting algorithm with soundness/completeness and logarithmic-size counters and state, reusing [InductiveCounting](Complexity/Foundations/Relation/InductiveCounting.lean). Its certificates must be checked without retaining a whole reachable set. | Compile the procedure to the native NTM model, certify every computation prefix's logspace bound, and prove complement closure. Explicitly handle configuration enumeration, input access and the existing potentially nonhalting-branch convention. Close the clocked/textbook-model bridge; general space-constructible Savitch bounds are separate. |
 | Arthur–Merlin | Done: verifier-based MA and AM, error reduction, NP ∪ BPP ⊆ MA ⊆ AM ⊆ Π₂ᵖ, MA ⊆ Σ₂ᵖ ∩ Π₂ᵖ and MA ⊆ SBP ([ArthurMerlin](Complexity/Computability/Complexity/Classes/ArthurMerlin.lean)). | Implement the set-size lower-bound protocol, derive SBP ⊆ AM and GNI in AM, and prove that coNP ⊆ AM collapses PH. Existing private-coin GNI in IP does not provide the public-coin protocol. Interactive-machine characterizations and AM[k] = AM remain separate. |
-| Worst-case-hardness derandomization | A quantitative worst-case-to-average-case reconstruction theorem, with explicit input-length and circuit-size losses and an efficiently evaluable amplified function. Select and justify a complete amplification route; the existing small-error line decoder is not a local list decoder. | Preserve membership in E, instantiate the existing average-case-hardness derandomization theorem and prove the worst-case-hardness implication P = BPP. Specify eventual versus infinitely-often hardness. The EXP-not-in-P/poly BFNW endpoint is a later milestone. |
+| Worst-case-hardness derandomization | Done for eventual hardness: [P = BPP from 2^(γn) De Morgan circuit hardness of a language in E](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean), with the explicit field, the encoding in E and the parameter schedule certified. | The infinitely-often variant; the EXP-not-in-P/poly endpoint of Babai, Fortnow, Nisan and Wigderson. |
 
 Do not mark the last three rows complete from an abstract algorithm, a class definition, or an
 assumed reconstruction theorem: their machine/resource and quantitative conclusions are part of

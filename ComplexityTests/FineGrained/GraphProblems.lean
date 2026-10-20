@@ -83,6 +83,13 @@ example : (SAT.sparseDiamondGraph φ₁).1.length + (SAT.sparseDiamondGraph φ�
 example : SAT.toSparseDirHamPath φ₁ ∈ DirHamPath :=
   (SAT.toSparseDirHamPath_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
 
+example : SAT.toSparseDirHamPath φ₂ ∉ DirHamPath := fun h => by
+  obtain ⟨σ, hσ⟩ := (SAT.toSparseDirHamPath_mem_iff φ₂).1 h
+  cases h : σ 0 <;> simp [φ₂, CNF.eval, Clause.eval, Literal.eval, h] at hσ
+
+example : SAT.toSparseDirHamCycle φ₁ ∈ DirHamCycle :=
+  (SAT.toSparseDirHamCycle_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
+
 example : SAT.toSparseHamCycle φ₁ ∈ HamCycle :=
   (SAT.toSparseHamCycle_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
 

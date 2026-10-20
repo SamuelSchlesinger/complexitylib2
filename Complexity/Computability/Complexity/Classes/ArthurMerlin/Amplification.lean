@@ -20,7 +20,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Foundations.Data.List.OfFn
 
 /-!
-# Error reduction for MA and AM, `MA ⊆ AM` and `MA ⊆ SBP`
+# Error reduction for MA and AM, `MA ⊆ AM`, `MA ⊆ SBP` and `MAM = AM`
 
 The error `1 / 3` in the definitions of `MA` and `AM` (`Cslib.Complexity.MA`,
 `Cslib.Complexity.AM`) can be made exponentially small by majority votes over independent runs,
@@ -517,8 +517,6 @@ theorem mem_AM_of_exists {B : Set (α × List Bool)} (hB : B ∈ AM (encPair enc
       (encPair enc encBits (a, w)).length = L.eval (enc a).length := by
     simp only [length_encPair, encBits_apply, hw, hLdef, Polynomial.eval_add, Polynomial.eval_mul,
       Polynomial.eval_X, Polynomial.eval_one, Polynomial.eval_ofNat]
-  have hn : ComputableTidilyInPolyTime (fun a => (encPair enc encBits a).length)
-      (encPair enc encBits) encUnary := ComputableTidilyInPolyTime.encoding_length _
   have hP : ComputableTidilyInPolyTime (fun x : α × List Bool => (pB.comp L).eval (enc x.1).length)
       (encPair enc encBits) encUnary :=
     ((ComputableTidilyInPolyTime.unary_eval _).comp

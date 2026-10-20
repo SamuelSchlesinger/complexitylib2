@@ -593,7 +593,7 @@ theorem computableTidilyInPolyTime_literalArcs {xs : γ → List ℕ} {i : γ �
     ComputableTidilyInPolyTime (fun x => literalArcs (xs x) (i x) (c x)) encIn
       (encList (encPair encNat encNat)) := by
   unfold literalArcs
-  simp only [decide_mem_eq_any]
+  simp only [List.decide_mem_eq_any]
   fun_prop
 
 /-- The graph of a formula is polynomial-time in its quantified variables and its clauses. -/
@@ -610,7 +610,7 @@ theorem computableTidilyInPolyTime_formulaGraph {xs : γ → List ℕ} {ψ : γ 
 theorem computableTidilyInPolyTime_reduce :
     ComputableTidilyInPolyTime reduce encPrenexCNF (encPair encGraph encNat) := by
   unfold reduce QBF.roundVars encPrenexCNF
-  simp only [decide_mem_eq_any]
+  simp only [List.decide_mem_eq_any]
   unfold encCNF
   fun_prop
 

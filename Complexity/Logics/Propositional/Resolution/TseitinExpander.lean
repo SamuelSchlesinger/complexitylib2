@@ -19,9 +19,9 @@ its reversal (`Cslib.RotationMap.edgeEnds`), and its edge expansion `h(G)` bound
 `e(G)` of Ben-Sasson and Wigderson: `h(G) |V| / 3 ≤ e(G)`
 (`Cslib.RotationMap.edgeExpansion_mul_card_div_three_le_minBalancedCut`). If `h(G) > 0`, the
 multigraph is connected, and Tseitin formulas on it need resolution refutations of width at least
-`h(G) |V| / 3` (`Cslib.Logic.PL.Tseitin.edgeExpansion_le_of_refutableInWidth_rotationMap`) and,
-when `|D| + 2 ≤ h(G) |V| / 3`, of at least `exp ((h(G) |V| / 3 - |D| - 2)² / (8 |V| |D|))` lines
-(`Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize_rotationMap`).
+`h(G) |V| / 3` (`Cslib.Logic.PL.Tseitin.edgeExpansion_mul_card_div_three_le_of_refutableInWidth`)
+and, when `|D| + 2 ≤ h(G) |V| / 3`, of at least `exp ((h(G) |V| / 3 - |D| - 2)² / (8 |V| |D|))`
+lines (`Cslib.Logic.PL.Tseitin.exp_edgeExpansion_le_of_refutableInSize`).
 
 Constant-degree expanders (`Cslib.RotationMap.expander`) have `120` labels and edge expansion at
 least `1 / 6000` (`Cslib.RotationMap.le_edgeExpansion_expander`). Their Tseitin formulas with a
@@ -29,12 +29,13 @@ single charged vertex form **a family, with explicit constants, of unsatisfiable
 `O(n)` variables and clauses of constant width whose resolution refutations have `2 ^ Ω(n)`
 lines** (`Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le`) [Urquhart][Urquhart1987]
 [Ben-Sasson and Wigderson][BenSassonWigderson2001]. The expanders, and so the formulas, are
-obtained non-constructively, from a counting argument (`Expander/Existence.lean`).
+obtained non-constructively, from a counting argument
+(`Cslib.RotationMap.exists_spectralExpansion_le`).
 
 ## Main results
 
-* `Cslib.Logic.PL.Tseitin.edgeExpansion_le_of_refutableInWidth_rotationMap`,
-  `Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize_rotationMap`: the width and size lower bounds
+* `Cslib.Logic.PL.Tseitin.edgeExpansion_mul_card_div_three_le_of_refutableInWidth`,
+  `Cslib.Logic.PL.Tseitin.exp_edgeExpansion_le_of_refutableInSize`: the width and size lower bounds
   for Tseitin formulas on rotation maps, in terms of edge expansion.
 * `Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le`: for every `n ≥ 4392000`, an
   unsatisfiable formula with at most `120 n` variables and `2 ^ 120 · n` clauses of width at most
@@ -62,7 +63,7 @@ variable {V D : Type*} [Fintype V] [DecidableEq V] [Fintype D] [DecidableEq D]
 /-- **The width lower bound for Tseitin formulas on rotation maps**
 [Ben-Sasson and Wigderson][BenSassonWigderson2001]: if `h(G) > 0`, every resolution
 refutation of a Tseitin formula on `G` has width at least `h(G) |V| / 3`. -/
-theorem edgeExpansion_le_of_refutableInWidth_rotationMap (hG : 0 < G.edgeExpansion)
+theorem edgeExpansion_mul_card_div_three_le_of_refutableInWidth (hG : 0 < G.edgeExpansion)
     {χ : V → Bool} {w : ℕ} (h : (CNF.tseitinFormula G.edgeEnds χ).RefutableInWidth w) :
     G.edgeExpansion * Fintype.card V / 3 ≤ w := by
   have hc := G.connected_toSimpleGraph_of_edgeExpansion_pos hG
@@ -70,11 +71,15 @@ theorem edgeExpansion_le_of_refutableInWidth_rotationMap (hG : 0 < G.edgeExpansi
   exact G.edgeExpansion_mul_card_div_three_le_minBalancedCut.trans
     (by exact_mod_cast minBalancedCut_le_of_refutableInWidth hc h)
 
+@[deprecated (since := "2026-10-19")]
+alias edgeExpansion_le_of_refutableInWidth_rotationMap :=
+  edgeExpansion_mul_card_div_three_le_of_refutableInWidth
+
 /-- **The size lower bound for Tseitin formulas on rotation maps**
 [Ben-Sasson and Wigderson, Corollary 3.6][BenSassonWigderson2001]: if
 `|D| + 2 ≤ h(G) |V| / 3`, every resolution refutation of a Tseitin formula on `G` has at least
 `exp ((h(G) |V| / 3 - |D| - 2)² / (8 |V| |D|))` lines. -/
-theorem exp_le_of_refutableInSize_rotationMap
+theorem exp_edgeExpansion_le_of_refutableInSize
     (hG : Fintype.card D + 2 ≤ G.edgeExpansion * Fintype.card V / 3) {χ : V → Bool} {s : ℕ}
     (hs : (CNF.tseitinFormula G.edgeEnds χ).RefutableInSize s) :
     Real.exp ((G.edgeExpansion * Fintype.card V / 3 - Fintype.card D - 2) ^ 2 /
@@ -96,6 +101,9 @@ theorem exp_le_of_refutableInSize_rotationMap
   rw [mul_assoc]
   gcongr
   linarith
+
+@[deprecated (since := "2026-10-19")]
+alias exp_le_of_refutableInSize_rotationMap := exp_edgeExpansion_le_of_refutableInSize
 
 end Tseitin
 

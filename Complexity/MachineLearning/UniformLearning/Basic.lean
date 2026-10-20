@@ -179,6 +179,8 @@ theorem error_map_eq_ofReal_uniformError (f h : (ι → Bool) → Bool) :
     PMF.toOuterMeasure_map_apply]
   exact toOuterMeasure_uniformOfFintype_ne f h
 
+@[deprecated (since := "2026-10-19")] alias error_uniform_map := error_map_eq_ofReal_uniformError
+
 /-- **Learning under the uniform distribution is PAC learning** over the uniform realizable
 family: a learner that learns `C` from `m` uniform random examples with error `ε` and confidence
 `1 - δ` witnesses `PACLearning.IsPACLearnerFor m ε δ C (uniformRealizable C)`. -/

@@ -291,6 +291,12 @@ theorem agreement_eq_probability {n : ℕ} (predictor : BitString n → Bool) (x
   intro r _
   by_cases h : predictor r = x ⬝ᵥ r <;> simp [score, h, PMF.pure_apply]
 
+/-- Agreement with any fixed parity is a probability, hence at most one. -/
+theorem agreement_le_one {n : ℕ} (predictor : BitString n → Bool) (x : BitString n) :
+    agreement predictor x ≤ 1 := by
+  rw [agreement_eq_probability]
+  exact (ENNReal.toReal_mono (by simp) (PMF.coe_le_one _ _)).trans_eq (by simp)
+
 /-- Every possible output of the decoder has at most `2 ^ k` candidates. -/
 theorem card_le_of_mem_support_decode {n k : ℕ} (predictor : BitString n → Bool)
     {list : Finset (BitString n)} (h : list ∈ (decode predictor k).support) :

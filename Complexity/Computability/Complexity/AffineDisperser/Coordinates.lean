@@ -40,6 +40,8 @@ table.
 ## Main results
 
 * `Cslib.AffineDisperser.fieldOfBits_fieldMul`: `fieldMul` multiplies.
+* `Cslib.AffineDisperser.fieldOfBits_foldl_ite`, `Cslib.AffineDisperser.fieldOfBits_foldl_fieldMul`:
+  folds of products multiply.
 * `Cslib.AffineDisperser.fieldOfBits_esymmCoords`: the dynamic program for `e_t`.
 * `Cslib.AffineDisperser.traceBit_traceVector`: the trace as a bit.
 * `Cslib.AffineDisperser.traceSymCoords_eq`: `traceSymCoords` computes `traceSymBits 1 r t`.
@@ -136,6 +138,31 @@ theorem fieldOfBits_fieldMul {B : Basis (Fin n) (ZMod 2) F} {tab : List (List (L
   cases a.getD u false <;> cases b.getD w false <;>
     simp
 
+/-- A fold of products in coordinates, skipping the elements with `c x`, multiplies the selected
+factors. -/
+theorem fieldOfBits_foldl_ite {B : Basis (Fin n) (ZMod 2) F} {tab : List (List (List Bool))}
+    (htab : IsMulTable B tab) {X : Type*} (c : X → Prop) [DecidablePred c]
+    (f : X → List Bool) (l : List X) (init : List Bool) :
+    fieldOfBits B (l.foldl (fun acc x => if c x then acc else fieldMul tab acc (f x)) init) =
+      fieldOfBits B init *
+        ((l.filter fun x => !decide (c x)).map fun x => fieldOfBits B (f x)).prod := by
+  induction l generalizing init with
+  | nil => simp
+  | cons x l ih =>
+    rw [List.foldl_cons, ih, List.filter_cons]
+    by_cases hx : c x
+    · simp [hx]
+    · simp only [hx, ↓reduceIte, decide_false, Bool.not_false, List.map_cons, List.prod_cons,
+        fieldOfBits_fieldMul htab]
+      ring
+
+/-- A fold of products in coordinates multiplies all the factors. -/
+theorem fieldOfBits_foldl_fieldMul {B : Basis (Fin n) (ZMod 2) F}
+    {tab : List (List (List Bool))} (htab : IsMulTable B tab) {X : Type*} (f : X → List Bool)
+    (l : List X) (init : List Bool) :
+    fieldOfBits B (l.foldl (fun acc x => fieldMul tab acc (f x)) init) =
+      fieldOfBits B init * (l.map fun x => fieldOfBits B (f x)).prod := by
+  simpa using fieldOfBits_foldl_ite htab (fun _ : X => False) f l init
 
 /-- The power `y ^ (2 ^ (k + 1) - 1)` in coordinates, by `k` steps `z ↦ z ^ 2 * y` from `y`. -/
 def powerPred (tab : List (List (List Bool))) (y : List Bool) (k : ℕ) : List Bool :=

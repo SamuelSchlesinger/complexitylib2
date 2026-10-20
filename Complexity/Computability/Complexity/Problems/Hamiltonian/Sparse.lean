@@ -260,6 +260,9 @@ theorem length_sparseDiamondGraph_le_length_vars (φ : CNF ℕ) :
   simp only [sparseDiamondGraph, graph, Diamond.length_vertices, Diamond.length_arcs, hD]
   omega
 
+@[deprecated (since := "2026-10-19")]
+alias length_sparseDiamondGraph_le' := length_sparseDiamondGraph_le_length_vars
+
 /-- **The sparse diamond graph has linear size.** On formulas with `m` clauses of at most `k`
 literals, it has at most `(23 k + 1) m + 1` vertices and arcs in total, counted as listed. -/
 theorem length_sparseDiamondGraph_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c ∈ φ, c.length ≤ k) :
