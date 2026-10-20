@@ -383,7 +383,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
   and [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
-  are proved. Port v1's remaining gate-count consequences and explicit source-reduction family.
+  (including the single-direction, direction-run, and multilevel threshold capacity corollaries)
+  are proved. Port v1's remaining gate-count consequences (mixed activation costs, cut/component/excess
+  bounds) and explicit source-reduction family.
   Further manuscript work includes scalar enumerative coding, pending-bias simulation,
   entropy and asymptotic activity bounds, geometric cutting, integer-summary counting,
   and quadratic-potential representations.

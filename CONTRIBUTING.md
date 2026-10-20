@@ -79,7 +79,12 @@ assessment instead of changing the prose. Explain any no-impact assessment in th
 
 An independent AI reviewer must compare changed entries with the final formal definitions and
 statements, checking hypotheses, quantifiers, models and resource bounds. Record the exact
-revisions and findings, rebuild and visually inspect the PDF, and verify declaration links.
+revisions and findings, visually inspect the PDF, and verify declaration links. The **Theorem
+index PDF** workflow builds paper-related PR changes and uploads the PDF with checked-out and
+PR-head revision provenance. Reviewing that artifact satisfies the rendered-PDF requirement;
+record its workflow run/artifact and reviewed revisions. Local generation with
+`python3 scripts/build_paper.py` is optional. Keep LaTeX sources versioned and leave generated
+PDFs and auxiliary files untracked; the workflow publishes the latest main PDF as a release asset.
 This supplements the library's API and correctness reviews. It is not a formal equivalence
 check or human editorial approval. Keep the author's control over selection and wording.
 

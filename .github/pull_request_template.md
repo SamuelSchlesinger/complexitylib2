@@ -19,7 +19,8 @@ preserve statements and scope. Internal helper lemmas need no separate entry. --
 
 - Affected entries and declaration links, or reason the index is unaffected:
 - Independent AI index review (reviewer, exact Lean/prose revisions, findings/resolutions):
-- PDF build and rendered-page check (when changed):
+- PDF artifact/run, checked-out and PR-head revisions, rendered-page and declaration-link checks
+  (when changed; CI artifact review suffices, local generation is optional):
 
 ## AI assistance
 
