@@ -167,7 +167,13 @@ of the handover. The work below remains available for subsequent, independently 
      terms/formulas and language sums. Input formulas, including constants and quantifiers,
      preserve truth. [Ordered/Interpretation](Complexity/Logics/FirstOrder/Ordered/Interpretation.lean)
      realizes forgetting the numeric expansion through the existing relational interpretation
-     API, with an isomorphism to the input. Interpreting target constants remains open.
+     API, with an isomorphism to the input.
+     **Target-constant prerequisite completed (#38):**
+     [Interpretation/Constants](Complexity/Logics/FirstOrder/Interpretation/Constants.lean)
+     adds finitely many formula-defined target constants, with explicit existence and uniqueness
+     inside the interpreted domain, and native formula/sentence truth-preserving pullback.
+     [Ordered/Constants](Complexity/Logics/FirstOrder/Ordered/Constants.lean) supplies valid
+     target `0`/`1`/`max` for every canonical structure with `n ≥ 2`.
      **Next milestones:** lexicographic tuple numbering and numeric lifting; the ordered
      logspace encoding bridge; then the projection and NL/P completeness results.
      Numeric interpretations must preserve

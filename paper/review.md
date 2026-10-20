@@ -1248,3 +1248,33 @@ Final coordinator prose review requested two wording corrections after splitting
 refer to the following entries in the plural, and use “there exist” for the witnesses.
 Both are applied; the PDF was regenerated and the corrected page rendered and checked.
 No theorem statement or proof changed.
+
+
+## 2026-10-20: Formula-defined target constants
+
+Worker `ordered-fo-constants-20261020` extended the relational interpretation API at source
+revision `d5382b56b3be600056b71729e34a40aac1faf3f7`. The existing ordered-FO entry now states
+constant-aware formula and sentence pullback under explicit unique-domain selection validity,
+and the canonical `0`/`1`/`max` client for every `n ≥ 2`. No new entry is added; after incorporating
+approved PR #40 head `2c6f5cacff2aeea0efde34c5f01f9a6139dd7855`, the combined index has 122 entries.
+
+The independent parent coordinator reviewed the new API, proofs, tests and draft index without
+findings. Review covered finite constant/dimension types, validity inside the interpreted domain,
+separation of free variables and quantified constant coordinates, native Mathlib syntax reuse,
+and the relational-plus-constants target boundary. The tests include a constant defined solely
+by an input relation with no source constants, free variables under quantification, canonical
+values, missing and ambiguous definitions, and no constants on an empty domain. Exact-head
+review verdicts are tracked in PR #41.
+
+The source conventions were checked against Immerman's primary text: Definition 1.26 includes
+formula-defined constants; Definition 3.3 gives the dual syntactic map; Proposition 3.5 and
+Remark 3.6 give sentence and free-variable truth preservation. The four new declaration links
+are pinned to the source revision above, lines 103/138 in `Interpretation/Constants.lean` and
+52/66 in `Ordered/Constants.lean`, and verified with `git show`.
+
+All six gates pass on both the source and combined integration tree. The named axiom guards use
+only `propext`, `Classical.choice` and `Quot.sound`. The PDF builds; the extended ordered-FO entry
+on page 8 and preserved AWPP entry on page 26 were rendered and visually inspected. Tuple BIT
+lifting for arbitrary bases, numeric-preserving composition and ordered complexity/capture results
+remain open. These AI reviews do not imply human editorial approval or machine-checked prose
+equivalence. AI assistance: OpenAI Codex.
