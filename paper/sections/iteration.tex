@@ -217,6 +217,76 @@ selection remains nonuniform.\citep{Schlesinger2026IteratedFunctions}
 \end{result}
 
 \begin{result}
+\subsection{Autonomous controllers and affine-payload iteration}
+For arbitrary types $\alpha,\beta$, a controlled map
+$\mathrm{controlledMap}(g,a)(u,v)=(g(u),a(u)(v))$ has an autonomous controller
+$g:\alpha\to\alpha$ and a controller-selected payload map
+$a:\alpha\to\beta\to\beta$. For every $T\in\mathbb N$,
+$\mathrm{controlledMap}(g,a)^T(u,v)=(g^T(u),\mathrm{controlledPayload}(g,a,T,u)(v))$,
+where $\mathrm{controlledPayload}(g,a,0,u)=\mathrm{id}$ and
+$\mathrm{controlledPayload}(g,a,T+1,u)=a(g^T(u))\circ\mathrm{controlledPayload}(g,a,T,u)$.
+If a family $\mathcal F\subseteq\beta^\beta$ contains $\mathrm{id}$, is closed under
+composition, and contains every $a(u)$, then
+$\mathrm{controlledPayload}(g,a,T,u)\in\mathcal F$ for all $T$ and $u$.
+
+On $q$ controller bits and $p$ payload bits, the block map
+$\mathrm{controlledBits}(g,a):\{0,1\}^{q+p}\to\{0,1\}^{q+p}$ concatenates $g(u)$ and
+$a(u)(v)$ via $\mathrm{Fin.append}$, with $T$-fold iterate
+$\mathrm{controlledBits}(g,a)^T=\mathrm{controlledBits}\bigl(g^T,\mathrm{controlledPayload}(g,a,T)\bigr)$.
+If every $a(u)$ has a native De Morgan circuit of size at most $K$, then
+$\mathrm{controlledBits}(g,a)$ has a circuit of size at most
+\[
+2+2^q(K+6q+4p+1),
+\]
+without assuming any circuit bound for $g$. When every $a(u)$ lies in a
+composition-closed family $\mathcal F$ containing $\mathrm{id}$ whose members each
+have a circuit of size at most $K$, every fixed iterate
+$\mathrm{controlledBits}(g,a)^T$ has a circuit of size at most
+$2+2^q(K+6q+4p+1)$, and for every time width $m\in\mathbb N$ a circuit on
+$(q+p)+m$ inputs computes $\mathrm{inputTimeIterate}(\mathrm{controlledBits}(g,a),m)$
+with size at most
+\[
+m\bigl(2+2^q(K+6q+4p+1)+4(q+p)\bigr).
+\]
+
+Every affine hash $x\mapsto Ax+b$ from $n$ bits to $k$ bits over $\mathbb F_2$ has a
+De Morgan circuit of size at most $k(5(n+1)+1)$, and every Boolean affine map
+$a:\{0,1\}^p\to_{\mathrm{aff}}\{0,1\}^p$ agrees with the affine hash of
+$\mathrm{affineMapSeed}(a)$ and has a circuit of size at most $p(5(p+1)+1)$. For
+any autonomous controller $g:\{0,1\}^q\to\{0,1\}^q$ and affine payload family
+$a:\{0,1\}^q\to(\{0,1\}^p\to_{\mathrm{aff}}\{0,1\}^p)$, put
+\[
+B_{\mathrm{aff}}(q,p)=2+2^q\bigl(p(5(p+1)+1)+6q+4p+1\bigr)\le 32\cdot 2^q(q+p^2+1).
+\]
+Then every fixed iterate $\mathrm{controlledBits}(g,a)^T$ has a circuit of size at
+most $B_{\mathrm{aff}}(q,p)$ (and at most $32K(q+p+1)^{d+2}$ whenever
+$2^q\le K(q+p+1)^d$), and an $m$-bit input time costs at most
+$m\bigl(B_{\mathrm{aff}}(q,p)+4(q+p)\bigr)$ gates. The controller must be autonomous
+(independent of the payload), and the circuit bounds are nonuniform, hardwiring
+$g^T(u)$ and the composite payload coefficients for each $T$ without certifying a
+uniform circuit-construction runtime.\citep{Schlesinger2026IteratedFunctions}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{100}{Cslib.Circuits.Boolean.Iteration.controlledMap}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{104}{Cslib.Circuits.Boolean.Iteration.controlledPayload}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{110}{Cslib.Circuits.Boolean.Iteration.controlledMap_iterate}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{119}{Cslib.Circuits.Boolean.Iteration.controlledPayload_mem}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{129}{Cslib.Circuits.Boolean.Iteration.controlledBits}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{135}{Cslib.Circuits.Boolean.Iteration.controlledBits_append}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{142}{Cslib.Circuits.Boolean.Iteration.controlledBits_iterate}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{156}{Cslib.Circuits.Boolean.Iteration.controlled_circuit}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{233}{Cslib.Circuits.Boolean.Iteration.controlled_family_power}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{247}{Cslib.Circuits.Boolean.Iteration.controlled_family_variable_time}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{263}{Cslib.Circuits.Boolean.Iteration.affineHash_circuit}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{302}{Cslib.Circuits.Boolean.Iteration.affineMapSeed}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{307}{Cslib.Circuits.Boolean.Iteration.affineHash_affineMapSeed}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{319}{Cslib.Circuits.Boolean.Iteration.affine_payload_circuit}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{326}{Cslib.Circuits.Boolean.Iteration.affineControllerBudget}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{330}{Cslib.Circuits.Boolean.Iteration.affine_controller_power}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{345}{Cslib.Circuits.Boolean.Iteration.affineControllerBudget_le}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{357}{Cslib.Circuits.Boolean.Iteration.affine_controller_polynomial}
+\declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{375}{Cslib.Circuits.Boolean.Iteration.affine_controller_variable_time}
+\end{result}
+
+\begin{result}
 \subsection{Cycle-spectrum reduction, canonical hitting-time identities, and in-forest path duality}
 Let $f:\alpha\to\alpha$ be a map on a finite type $\alpha$ of cardinality $N=|\alpha|$, with
 transient depth $\tau(x)=\mathrm{transientDepth}(f,x)$ and eventual cycle length
