@@ -369,6 +369,31 @@ open Cslib.RAM in
 example (k : ℕ) : eval repeatedSquaring [k] = .some (2 ^ 2 ^ k) :=
   computesInTime_unitCost_repeatedSquaring.eval_eq ![k]
 
+section RAMInputCosts
+
+open Cslib Cslib.RAM
+
+/-- Free initialization and output extraction allow an arbitrary preloaded input to be returned
+in zero logarithmic time. This does not charge for reading or writing its binary encoding. -/
+example : ComputesInTime logCost 1 [] (fun x => x 0) (fun _ => 0) := by
+  intro x
+  refine ⟨0, ?_, ?_, le_rfl⟩
+  · change 0 ≤ 0
+    exact le_rfl
+  · simp [run, State.init, URM.Regs.output, URM.Regs.ofInputs]
+
+/-- Even without multiplication, one fixed program takes one unit step but has logarithmic cost
+unbounded over its freely preloaded inputs. Initial bit lengths matter in cost comparisons. -/
+example (B : ℕ) : ∃ n,
+    time unitCost [.add 0 0 0] 1 (State.init [n]) = 1 ∧
+    B < time logCost [.add 0 0 0] 1 (State.init [n]) := by
+  refine ⟨2 ^ B, rfl, ?_⟩
+  change B < bitLength (2 ^ B) + bitLength (2 ^ B)
+  rw [bitLength_two_pow]
+  lia
+
+end RAMInputCosts
+
 section Frontier
 
 open Cslib.Circuits.Frontier Set
