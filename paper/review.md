@@ -1248,3 +1248,26 @@ Final coordinator prose review requested two wording corrections after splitting
 refer to the following entries in the plural, and use “there exist” for the witnesses.
 Both are applied; the PDF was regenerated and the corrected page rendered and checked.
 No theorem statement or proof changed.
+
+## Uniform SBP multiplicative gap amplification (PR #46, 20 October 2026)
+
+Worker `sbp-amplification-20261020` adds unary variable #P powers and uniform SBP gap
+strengthening. Source `56e55d873fe57730bf723d7c56af0b6c16fc4d30` passes all six gates.
+Independent coordinator `/root` performed an early source/API review without findings,
+checking exact row counts, zero width and empty products, count-preserving certificate
+padding, the binary-output threshold power and the positive dominating repetition count.
+Exact-revision source, test and index review is requested in PR #46.
+
+The existing counting-algebra and amplification entries are extended, keeping the curated
+count at 122. The SBP statement has one #P count and one positive binary-output polynomial-time
+threshold for all inputs. The requested exponent may be noncomputable if polynomially bounded;
+a fixed dominating length polynomial supplies the repetition schedule. The prose distinguishes
+a multiplicative gap from normalized additive error. Watson's powering argument is credited,
+with the uniform dominated-rate formulation identified as a checked consequence.
+
+Tests give a nonconstant language with count 3 on members and 1 on nonmembers and threshold 3;
+clients cover varying, zero and possibly noncomputable requested rates, along with #P zero-width
+and empty-product boundaries. Named axiom guards use only the three permitted axioms. Both new
+index links were verified against the pinned source. The PDF builds without undefined citations
+or overfull boxes; pages 19 and 25 were rendered and visually inspected. Review remains AI-assisted,
+not human editorial approval or machine-checked prose equivalence. AI assistance: OpenAI Codex.
