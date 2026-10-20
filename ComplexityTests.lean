@@ -171,6 +171,7 @@ import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
+import ComplexityTests.OrderedComposition
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedSuccessor

@@ -1796,3 +1796,27 @@ checks and the headline axiom guard are clean. The local index builds without un
 references or overfull boxes, contains 138 result environments at this pre-integration base,
 and its new rendered page 12 and three pinned declaration anchors have been checked.
 Independent final prose/artifact review is still required; the PR records its verdict.
+
+## 2026-10-20: Canonical full-tuple interpretation composition (#121)
+
+Worker `ordered-times-20261020`, assisted by OpenAI Codex, adds a curated entry pinned to
+source `9263445cb6115e5a9f14385cae4ab9fb3d07629d`. The actual native construction combines the
+proved full-tuple order, BIT and constant formulas with the existing relational interpretation
+and constant-aware pullback. Its canonical rank map preserves the entire ordered language.
+Composition flattens `(j,i)` to `j*k+i`, preserving arbitrary-base ranks and all formula and
+sentence pullbacks. The entry states positive dimensions, source size at least two and relational
+intermediate/output input vocabularies; source input functions are allowed. Restricted-domain
+numeric preservation and ordered logspace/capture endpoints remain separate.
+
+Mathematical credit is Immerman's Definition 1.26, Proposition 1.28 / Exercise 1.30 and
+Remark 1.32 / Exercise 1.33, with direct source links to the composition and canonical-numeric
+passages. Five declaration links point to the fixed Lean source. Preceding numeric entries now
+refer to the completed composition result; their statements and previous source pins are preserved.
+
+Fresh Lean MCP checks and all six repository gates passed at that source. Non-vacuous clients
+cover unequal dimensions and orientation, mixed input/numeric relations, a BIT index larger than
+the source universe, high-index rejection, constants under quantification, the smallest source
+size, and the excluded zero dimension. Independent design review is recorded in issue #121;
+exact-source/API/correctness, final index and rendered CI-artifact review are recorded in the PR.
+These AI reviews do not imply human editorial approval or a Lean proof of prose equivalence.
+Generated PDFs remain outside Git.
