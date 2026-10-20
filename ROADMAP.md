@@ -346,9 +346,17 @@ of the handover. The work below remains available for subsequent, independently 
      now preserve exact occurrence multiplicities and add actual all-branches clocks (#110).
      The sequencing bound explicitly assumes nonempty transition lists at every local view;
      the actual scanner and singleton lift satisfy this condition. This is shared-tape
-     sequencing, without preparing or resetting a continuation's input.
-     Witness-length and frame preparation from the encoded instance, charged buffered verifier
-     composition, the signed GapP routing and the resulting bidirectional characterizations
+     sequencing, without preparing or resetting a continuation's input. The
+     [closed buffered compiler](Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean)
+     now feeds each source output to a consumer with separately reserved blank work tapes,
+     retaining source scratch and the real input head (#113). Output redirection emits into
+     the buffer in each source transition; singleton deterministic preparation rewinds and
+     marks it in `word.length + 4` transitions, including the empty word. Exact full-configuration
+     and native count laws preserve every List occurrence. From initialized empty output,
+     nonblocking components with clocks `T₀` and `T₁` have native composite clock
+     `T₀ + (T₀ + 4 + T₁)`; the consumer bound must hold for every produced word.
+     Witness-length and frame preparation from the encoded instance, instantiating the actual
+     guessing/verifier pipeline, the signed GapP routing and the resulting characterizations
      remain open in [#106](https://github.com/SamuelSchlesinger/complexitylib2/issues/106).
      Reuse the [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
      but preserve exact path multiplicities through choices, halting and padding. Do not collapse
