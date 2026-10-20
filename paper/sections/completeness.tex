@@ -70,24 +70,65 @@ language; it is closed under union and polynomial-time many-one reductions.
 
 \begin{result}
 \subsection{The Boolean hierarchy over NP}
-Using the difference-hierarchy convention,
+For an injectively encoded universe $X$, using the difference-hierarchy
+convention and complements relative to $X$,
 \[
 \cc{BH}_0=\{\varnothing\},\qquad
-\cc{BH}_{n+1}=\{B\setminus D:B\in\cc{NP},\ D\in\cc{BH}_n\}.
+\cc{BH}_{n+1}=\{B\setminus D:B\in\cc{NP},\ D\in\cc{BH}_n\},\qquad
+\cc{coBH}_n=\{A\subseteq X:X\setminus A\in\cc{BH}_n\}.
 \]
-We prove $\cc{BH}_1=\cc{NP}$ and $\cc{BH}_2=\cc{DP}$, monotonicity of
-levels, complement membership one level higher, and polynomial-time many-one
-reduction closure at each fixed level. Consequently the union of the finite
-levels is closed under complement. The construction and inverse-image theorem
-are generic over the base class of sets; NP supplies the complexity instance.
-This follows the difference presentation of the Boolean hierarchy; no separation
-between levels or hierarchy-collapse theorem is asserted.\citep{CaiEtAl1988}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{96}{Cslib.Complexity.BH_one}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{99}{Cslib.Complexity.BH_two}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{105}{Cslib.Complexity.BH_mono}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{111}{Cslib.Complexity.compl_mem_BH_succ}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{116}{Cslib.Complexity.compl_mem_BooleanHierarchy}
-\declat{814e76e29fa938afaed4e1bd5763fa490bc39ca9}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{122}{Cslib.Complexity.PolyTimeReducible.mem_BH}
+We prove $\cc{coBH}_0=\{X\}$, $\cc{BH}_1=\cc{NP}$, $\cc{coBH}_1=\cc{coNP}$,
+$\cc{BH}_2=\cc{DP}$, and $\cc{coBH}_2=\cc{coDP}$; monotonicity of
+$\cc{BH}_n$ and $\cc{coBH}_n$; the interleaving containments
+$\cc{BH}_n\subseteq\cc{coBH}_{n+1}$ and $\cc{coBH}_n\subseteq\cc{BH}_{n+1}$
+(hence $\bigcup_n\cc{coBH}_n=\bigcup_n\cc{BH}_n=\cc{BH}$, which is closed under
+complement); right-hand closure with $\cc{NP}$ languages ($A\cap B\in\cc{BH}_n$
+and $A\setminus B,A\cup B\in\cc{BH}_{n+1}$ for $A\in\cc{BH}_n$ and
+$B\in\cc{NP}$); and polynomial-time many-one reduction closure for $\cc{BH}_n$,
+$\cc{coBH}_n$, and $\cc{BH}$. We also prove the level-collapse equivalences:
+\[
+\cc{BH}_{k+1}\subseteq\cc{BH}_k
+\iff \cc{coBH}_k\subseteq\cc{BH}_k
+\iff \cc{BH}_k=\cc{coBH}_k
+\iff \cc{BH}_{k+1}=\cc{BH}_k,
+\]
+and when $\cc{coBH}_k\subseteq\cc{BH}_k$, every higher level collapses
+($\cc{BH}_m=\cc{coBH}_m=\cc{BH}_k$ for all $m\ge k$) and the full hierarchy
+equals $\cc{BH}_k$ (in particular, $\cc{NP}=\cc{coNP}\implies\cc{BH}=\cc{NP}$).
+On an inhabited universe $X$ the $k=0$ collapse premises are false since
+$X\ne\varnothing$, whereas on an empty universe every level is $\{\varnothing\}$.
+The difference-hierarchy construction, inverse-image closure, right-hand
+intersection/difference/union closure, and upward level collapse are proved
+generically over any base class of sets satisfying the corresponding closure
+hypotheses, and instantiated at $\cc{NP}$. Strictness of the levels and Kadin's
+collapse of $\cc{PH}$ from a Boolean-hierarchy collapse are not
+formalized.\citep{CaiEtAl1988,Kadin1988}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{207}{Cslib.Complexity.BH_zero}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{210}{Cslib.Complexity.coBH_zero}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{215}{Cslib.Complexity.BH_one}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{218}{Cslib.Complexity.coBH_one}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{223}{Cslib.Complexity.BH_two}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{229}{Cslib.Complexity.coBH_two}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{234}{Cslib.Complexity.BH_mono}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{239}{Cslib.Complexity.coBH_mono}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{243}{Cslib.Complexity.compl_mem_BH_succ}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{247}{Cslib.Complexity.BH_subset_coBH_succ}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{251}{Cslib.Complexity.coBH_subset_BH_succ}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{259}{Cslib.Complexity.iUnion_coBH_eq_BooleanHierarchy}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{265}{Cslib.Complexity.compl_mem_BooleanHierarchy}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{271}{Cslib.Complexity.inter_mem_BH_of_mem_NP}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{276}{Cslib.Complexity.diff_mem_BH_of_mem_NP}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{281}{Cslib.Complexity.union_mem_BH_of_mem_NP}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{286}{Cslib.Complexity.PolyTimeReducible.mem_BH}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{294}{Cslib.Complexity.PolyTimeReducible.mem_coBH}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{299}{Cslib.Complexity.PolyTimeReducible.mem_BooleanHierarchy}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{307}{Cslib.Complexity.BH_succ_subset_iff_coBH_subset}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{314}{Cslib.Complexity.BH_succ_eq_iff_coBH_subset}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{321}{Cslib.Complexity.BH_eq_coBH_iff_BH_succ_eq}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{335}{Cslib.Complexity.BH_eq_of_coBH_subset}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{341}{Cslib.Complexity.coBH_eq_BH_of_coBH_subset}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{350}{Cslib.Complexity.BooleanHierarchy_eq_BH_of_coBH_subset}
+\declat{80d38842205cc60f169d2438a7f683847fb9ece0}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{360}{Cslib.Complexity.BooleanHierarchy_eq_NP_of_NP_eq_coNP}
 \end{result}
 
 \begin{result}

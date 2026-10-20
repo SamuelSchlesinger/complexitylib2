@@ -46,15 +46,17 @@ PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit o
 Extend these with counting reductions and further oracle results, preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
-hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
+hierarchy (`BH` and `coBH`, base-class Boolean operations on `BH`, and the finite-hierarchy
+level-collapse equivalences `BH_{k+1} = BH_k ↔ BH_k = coBH_k ⇒ BH = BH_k`), WPP and LWPP now have
+definitions, elementary containments/closures, LWPP many-one
 reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
 multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
 (Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
 accepting/rejecting binary target lists. Original targets may be zero; neither index must be
 computable ([WPP.TwoSided](Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean)).
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
-MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
-and WPP/LWPP oracle lowness.
+MAJSAT and permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
+collapse, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
