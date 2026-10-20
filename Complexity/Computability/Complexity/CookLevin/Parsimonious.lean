@@ -103,7 +103,7 @@ variable [DecidableEq State] {tm : MultiTapeTM k Bool State} {u : List Bool}
   {L T : ℕ} {c : Clause (Var k State)} {l : Literal (Var k State)}
 
 omit [DecidableEq State] in
-theorem determined_of_mem_initClauses (hc : c ∈ initClauses tm T) (hl : l ∈ c) :
+private theorem determined_of_mem_initClauses (hc : c ∈ initClauses tm T) (hl : l ∈ c) :
     Determined (u.length + L) L T l.1 := by
   simp only [initClauses, List.mem_append, List.mem_cons, List.mem_flatMap, List.mem_map,
     List.mem_finRange, mem_windowList, List.not_mem_nil, or_false, true_and] at hc
@@ -115,7 +115,7 @@ theorem determined_of_mem_initClauses (hc : c ∈ initClauses tm T) (hl : l ∈ 
     .holds_basic (Nat.zero_le _) (head_mem_basic i (by simp)),
     .holds_basic (Nat.zero_le _) (cell_mem_basic i hz _)]
 
-theorem determined_of_mem_oneHotClauses {t : ℕ} (ht : t ≤ T)
+private theorem determined_of_mem_oneHotClauses {t : ℕ} (ht : t ≤ T)
     (hc : c ∈ oneHotClauses u L T t) (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
   obtain ⟨g, hg, hc⟩ := List.mem_flatMap.1 hc
   obtain ⟨φ, hφ, he⟩ := List.mem_map.1 (CNF.fst_mem_of_mem_exactlyOne hc hl)
@@ -123,8 +123,9 @@ theorem determined_of_mem_oneHotClauses {t : ℕ} (ht : t ≤ T)
   exact .holds_basic ht (mem_basic_iff_exists_mem_groups.2 ⟨g, hg, hφ⟩)
 
 omit [DecidableEq State] in
-theorem determined_of_mem_inputClauses {t j : ℕ} (ht : t < T) (hj : j < u.length + L + 2)
-    (hc : c ∈ inputClauses (k := k) (State := State) u L t j) (hl : l ∈ c) :
+private theorem determined_of_mem_inputClauses {t j : ℕ} (ht : t < T)
+    (hj : j < u.length + L + 2) (hc : c ∈ inputClauses (k := k) (State := State) u L t j)
+    (hl : l ∈ c) :
     Determined (u.length + L) L T l.1 := by
   have hpos : Determined (State := State) (k := k) (u.length + L) L T (.holds t (.inPos j)) :=
     .holds_basic ht.le (inPos_mem_basic hj)
@@ -153,8 +154,8 @@ theorem determined_of_mem_inputClauses {t j : ℕ} (ht : t < T) (hj : j < u.leng
         exact .holds_inRead ht _
 
 omit [DecidableEq State] in
-theorem determined_of_mem_readClauses {t : ℕ} (ht : t < T) (hc : c ∈ readClauses u L T t)
-    (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
+private theorem determined_of_mem_readClauses {t : ℕ} (ht : t < T)
+    (hc : c ∈ readClauses u L T t) (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
   simp only [readClauses, List.mem_append, List.mem_flatMap, List.mem_map, List.mem_finRange,
     mem_windowList, mem_symbols, true_and, List.mem_range] at hc
   rcases hc with ⟨i, z, hz, s, rfl⟩ | ⟨j, hj, hc⟩
@@ -167,8 +168,8 @@ theorem determined_of_mem_readClauses {t : ℕ} (ht : t < T) (hc : c ∈ readCla
   · exact determined_of_mem_inputClauses ht hj hc hl
 
 omit [DecidableEq State] in
-theorem determined_of_mem_sitClauses {t : ℕ} (ht : t < T) (hc : c ∈ sitClauses t) (hl : l ∈ c) :
-    Determined (u.length + L) L T l.1 := by
+private theorem determined_of_mem_sitClauses {t : ℕ} (ht : t < T) (hc : c ∈ sitClauses t)
+    (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
   obtain ⟨y, -, rfl⟩ := List.mem_map.1 hc
   rcases Clause.fst_mem_of_mem_imp hl with h | h
   · simp only [List.mem_cons, List.mem_map, List.mem_finRange, true_and] at h
@@ -182,8 +183,8 @@ theorem determined_of_mem_sitClauses {t : ℕ} (ht : t < T) (hc : c ∈ sitClaus
   · rw [h]
     exact .holds_sit ht y
 
-theorem determined_of_mem_uniqueClauses {t : ℕ} (ht : t < T) (hc : c ∈ uniqueClauses t)
-    (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
+private theorem determined_of_mem_uniqueClauses {t : ℕ} (ht : t < T)
+    (hc : c ∈ uniqueClauses t) (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
   simp only [uniqueClauses, List.mem_append, List.mem_flatMap, List.mem_finRange, true_and,
     mem_situations, List.mem_cons, List.mem_map] at hc
   rcases hc with (⟨i, hc⟩ | hc) | ⟨y, rfl | rfl | ⟨i, rfl⟩⟩
@@ -193,13 +194,18 @@ theorem determined_of_mem_uniqueClauses {t : ℕ} (ht : t < T) (hc : c ∈ uniqu
   · obtain ⟨s, -, he⟩ := List.mem_map.1 (CNF.fst_mem_of_mem_atMostOne hc hl)
     rw [← he]
     exact .holds_inRead ht s
-  all_goals rcases Clause.fst_mem_of_mem_imp hl with h | h
-  all_goals try (rw [List.mem_singleton.1 h]; exact .holds_sit ht y)
-  all_goals rw [h]
-  exacts [.holds_basic ht.le (state_mem_basic _), .holds_inRead ht _, .holds_read ht i _]
+  -- each implication `sit y → x` mentions `sit y` and its conclusion `x`
+  all_goals
+    rcases Clause.fst_mem_of_mem_imp hl with h | h
+    · rw [List.mem_singleton.1 h]
+      exact .holds_sit ht y
+    rw [h]
+  · exact .holds_basic ht.le (state_mem_basic _)
+  · exact .holds_inRead ht _
+  · exact .holds_read ht i _
 
-theorem determined_of_mem_stepClauses {t : ℕ} (ht : t < T) (hc : c ∈ stepClauses tm u L T t)
-    (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
+private theorem determined_of_mem_stepClauses {t : ℕ} (ht : t < T)
+    (hc : c ∈ stepClauses tm u L T t) (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
   obtain ⟨φ, hφ, hc⟩ := List.mem_flatMap.1 hc
   obtain ⟨c', hc', rfl⟩ := List.mem_map.1 hc
   rcases Clause.fst_mem_of_mem_impLits hl with ⟨h, hh, he⟩ | h
@@ -212,8 +218,9 @@ theorem determined_of_mem_stepClauses {t : ℕ} (ht : t < T) (hc : c ∈ stepCla
     exact .holds_basic ht hφ
 
 omit [DecidableEq State] in
-theorem determined_of_mem_acceptClauses (hc : c ∈ acceptClauses (k := k) (State := State) T)
-    (hl : l ∈ c) : Determined (u.length + L) L T l.1 := by
+private theorem determined_of_mem_acceptClauses
+    (hc : c ∈ acceptClauses (k := k) (State := State) T) (hl : l ∈ c) :
+    Determined (u.length + L) L T l.1 := by
   simp only [acceptClauses, List.mem_cons, List.not_mem_nil, or_false] at hc
   rcases hc with rfl | rfl <;> obtain rfl := List.mem_singleton.1 hl
   exacts [.holds_basic le_rfl (state_mem_basic _), .holds_basic le_rfl (out_mem_basic _)]
@@ -328,11 +335,6 @@ section Counting
 
 variable [DecidableEq State] {tm : MultiTapeTM k Bool State} {u : List Bool}
   {L T : ℕ}
-
-omit [Fintype State] [DecidableEq State] in
-theorem certWord_eq_ofFn (σ : Var k State → Bool) (L : ℕ) :
-    certWord σ L = List.ofFn fun j : Fin L => σ (.cert j) :=
-  List.ext_getElem (by simp) fun j _ _ => by simp [certWord]
 
 /-- **The Cook–Levin tableau is parsimonious**: its satisfying assignments correspond one to one
 to the certificates `w` of length `L` that make `tm`, started on `u ++ w`, halt within `T` steps

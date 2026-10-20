@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Classes.ModP
 public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Problems.SharpSAT
 public import Complexity.Computability.Complexity.Problems.USAT
-public import Complexity.Computability.Complexity.Reduction.Completeness
+public import Complexity.Computability.Complexity.Reduction
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Complexity.CookLevin.Counting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -27,15 +27,18 @@ ones of this library, following [Fortnow, Section 4][Fortnow1997].
 
 * `ParitySAT`, an odd number of satisfying assignments, is `⊕P`-complete
   [Papadimitriou and Zachos][PapadimitriouZachos1983];
-* `USAT`, exactly one satisfying assignment (`mem_USAT_iff`), is `US`-complete
+* `USAT`, exactly one satisfying assignment (`SharpSAT.mem_USAT_iff`), is `US`-complete
   [Blass and Gurevich][BlassGurevich1982];
 * `ModSAT k`, a number of satisfying assignments not divisible by `k`, is `ModP k`-complete, and
-  its complement is `coModP k`-complete, for every modulus `k`;
+  its complement is `coModP k`-complete, for every modulus `k`; the modular classes are those of
+  [Cai and Hemachandra][CaiHemachandra1990] and
+  [Beigel, Gill and Hertrampf][BeigelGillHertrampf1990];
 * `SharpSATAtLeast`, the pairs `(φ, m)` of a formula and a number in binary such that `φ` has at
   least `m` satisfying assignments, is `PP`-complete; it is a threshold variant of the majority
   problem MAJSAT [Gill][Gill1977], [Papadimitriou, Chapter 11][Papadimitriou94];
 * `SharpSATExact`, the pairs `(φ, m)` such that `φ` has exactly `m` satisfying assignments, is
-  `C=P`-complete, and its complement is `coC=P`-complete.
+  `C=P`-complete, and its complement is `coC=P`-complete; `C=P` and complete problems for it
+  were introduced by [Wagner][Wagner1986].
 
 The first four follow one pattern (`polyTimeComplete_sharpSAT`): a problem in the class is
 `{a | Q (f a)}` for some `f ∈ #P`, and the parsimonious reduction `r` for `f` reduces it to
@@ -56,6 +59,8 @@ with the count `2 ^ p(n)`. In both cases the number `m` is computed in polynomia
 * `Cslib.Complexity.ParitySAT_parityPComplete`: `⊕SAT` is `⊕P`-complete.
 * `Cslib.Complexity.USAT_usComplete`: `USAT` is `US`-complete.
 * `Cslib.Complexity.ModSAT_modPComplete`, `Cslib.Complexity.compl_ModSAT_coModPComplete`.
+* `Cslib.Complexity.ModSAT_two`, `Cslib.Complexity.ModSAT_zero`: `ModSAT 2` is `ParitySAT` and
+  `ModSAT 0` is `SAT`.
 * `Cslib.Complexity.SharpSATAtLeast_ppComplete`: counting threshold is `PP`-complete.
 * `Cslib.Complexity.SharpSATExact_ceqPComplete`,
   `Cslib.Complexity.compl_SharpSATExact_coCeqPComplete`.
@@ -66,6 +71,11 @@ with the count `2 ^ p(n)`. In both cases the number `m` is computed in polynomia
 * [C. H. Papadimitriou, S. Zachos, *Two remarks on the power of counting*][PapadimitriouZachos1983]
 * [A. Blass, Y. Gurevich, *On the unique satisfiability problem*][BlassGurevich1982]
 * [J. Gill, *Computational complexity of probabilistic Turing machines*][Gill1977]
+* [J.-Y. Cai, L. A. Hemachandra, *On the power of parity polynomial time*][CaiHemachandra1990]
+* [R. Beigel, J. Gill, U. Hertrampf, *Counting classes: thresholds, parity, mods, and
+  fewness*][BeigelGillHertrampf1990]
+* [K. W. Wagner, *The complexity of combinatorial problems with succinct input
+  representation*][Wagner1986]
 * [L. Fortnow, *Counting Complexity*][Fortnow1997]
 * [C. H. Papadimitriou, *Computational Complexity*][Papadimitriou94]
 -/
@@ -92,9 +102,17 @@ def SharpSATAtLeast : Set (CNF ℕ × ℕ) := {x | x.2 ≤ SharpSAT x.1}
 encoded with `m` in binary (`encPair encCNF encNat`). -/
 def SharpSATExact : Set (CNF ℕ × ℕ) := {x | SharpSAT x.1 = x.2}
 
-/-- A formula is uniquely satisfiable exactly when it has one satisfying assignment. -/
-theorem mem_USAT_iff {φ : CNF ℕ} : φ ∈ USAT ↔ SharpSAT φ = 1 :=
-  CNF.modelCount_eq_one_iff.symm
+@[deprecated (since := "2026-10-19")] alias mem_USAT_iff := SharpSAT.mem_USAT_iff
+
+/-- Modulo two, a nonzero residue is oddness. -/
+theorem ModSAT_two : ModSAT 2 = ParitySAT := by
+  ext φ
+  simp [ModSAT, ParitySAT, Nat.odd_iff]
+
+/-- Modulo zero, a nonzero residue is a positive count: `ModSAT 0` is satisfiability. -/
+theorem ModSAT_zero : ModSAT 0 = SAT := by
+  ext φ
+  simp [ModSAT, SharpSAT.mem_SAT_iff, Nat.pos_iff_ne_zero]
 
 /-! ### Completeness through the parsimonious reduction -/
 
@@ -119,7 +137,7 @@ theorem ParitySAT_parityPComplete : PolyTimeComplete ParityP encCNF ParitySAT :=
 defined by a function in `#P` equal to one. -/
 theorem USAT_usComplete : PolyTimeComplete US encCNF USAT := by
   have h := polyTimeComplete_sharpSAT (C := US) (· = 1) fun _ _ => Iff.rfl
-  rwa [show {φ | SharpSAT φ = 1} = USAT from Set.ext fun _ => mem_USAT_iff.symm] at h
+  rwa [show {φ | SharpSAT φ = 1} = USAT from Set.ext fun _ => SharpSAT.mem_USAT_iff.symm] at h
 
 /-- **`Mod_k SAT` is `ModP k`-complete**, for every modulus `k`. -/
 theorem ModSAT_modPComplete (k : ℕ) : PolyTimeComplete (ModP k) encCNF (ModSAT k) :=

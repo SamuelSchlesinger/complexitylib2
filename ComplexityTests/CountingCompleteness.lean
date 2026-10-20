@@ -45,8 +45,8 @@ example : SharpSAT [[(0, true), (0, false)]] = 2 := by decide
 
 example : [] ∈ ParitySAT := by simp [ParitySAT, sharpSAT_nil]
 example : [[(0, true), (0, false)]] ∉ ParitySAT := by change ¬Odd (SharpSAT _); decide
-example : [] ∈ USAT := mem_USAT_iff.2 sharpSAT_nil
-example : [[(0, true), (0, false)]] ∉ USAT := by rw [mem_USAT_iff]; decide
+example : [] ∈ USAT := SharpSAT.mem_USAT_iff.2 sharpSAT_nil
+example : [[(0, true), (0, false)]] ∉ USAT := by rw [SharpSAT.mem_USAT_iff]; decide
 example : [[(0, true), (0, false)]] ∈ ModSAT 3 := by change SharpSAT _ % 3 ≠ 0; decide
 example : [[(0, true), (0, false)]] ∉ ModSAT 2 := by change ¬SharpSAT _ % 2 ≠ 0; decide
 example : ([[(0, true), (1, true)]], 3) ∈ SharpSATAtLeast := by change 3 ≤ SharpSAT _; decide
@@ -64,8 +64,8 @@ example : ParsimoniousReducible encBits encCNF
       (Polynomial.X.eval (encBits w).length)) SharpSAT :=
   CookLevin.SharpSAT_sharpPHard encBits _ ⟨Polynomial.X, _, by fun_prop, fun _ => rfl⟩
 
-/-- `ModP 2` and `⊕P` have the same complete problem up to the definition of `ModSAT 2`. -/
-example : PolyTimeComplete (ModP 2) encCNF (ModSAT 2) := ModSAT_modPComplete 2
+/-- `ModP 2 = ⊕P` and `ModSAT 2 = ⊕SAT` give the same complete problem twice. -/
+example : PolyTimeComplete (ModP 2) encCNF ParitySAT := ModSAT_two ▸ ModSAT_modPComplete 2
 
 /-- Hardness for `NP` is an instance of the generic notion. -/
 example : PolyTimeComplete NP encCNF SAT :=

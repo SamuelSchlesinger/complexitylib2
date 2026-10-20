@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Problems.SAT
+public import Complexity.Computability.Complexity.Problems.USAT
 public import Complexity.Logics.Propositional.CNF.ModelCount
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -41,7 +42,8 @@ satisfying assignment once for every setting of the ignored bits. The counting v
 
 ## Main results
 
-* `Cslib.Complexity.SharpSAT.mem_SAT_iff`: `SAT` is the support of `#SAT`.
+* `Cslib.Complexity.SharpSAT.mem_SAT_iff`, `Cslib.Complexity.SharpSAT.mem_USAT_iff`: `SAT` and
+  `USAT` through `#SAT`.
 * `Cslib.Complexity.SharpSAT.acceptCount_verifier`: the verifier accepts one certificate for each
   satisfying assignment.
 * `Cslib.Complexity.SharpSAT.computableTidilyInPolyTime_verifier`: the verifier is
@@ -70,6 +72,10 @@ namespace SharpSAT
 theorem mem_SAT_iff {φ : CNF ℕ} : φ ∈ SAT ↔ 0 < SharpSAT φ :=
   CNF.modelCount_pos_iff.symm
 
+/-- A formula is uniquely satisfiable exactly when it has one satisfying assignment. -/
+theorem mem_USAT_iff {φ : CNF ℕ} : φ ∈ USAT ↔ SharpSAT φ = 1 :=
+  CNF.modelCount_eq_one_iff.symm
+
 /-! ### The counting verifier -/
 
 /-- Position `i` of a certificate for `φ` is the first occurrence of a variable in `φ.vars`. -/
@@ -85,16 +91,16 @@ def canonical (φ : CNF ℕ) (w : List Bool) : Bool :=
 read at the first occurrences of the variables. -/
 def verifier (x : CNF ℕ × List Bool) : Bool := SAT.verifier x && canonical x.1 x.2
 
-theorem isFirst_idxOf {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
+private theorem isFirst_idxOf {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
     isFirst φ (φ.vars.idxOf v) = true := by
   have hlt := List.idxOf_lt_length_iff.2 hv
   simp [isFirst, hlt]
 
-theorem getD_idxOf {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
+private theorem getD_idxOf {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
     φ.vars.getD (φ.vars.idxOf v) 0 = v := by
   rw [List.getD_eq_getElem _ _ (List.idxOf_lt_length_iff.2 hv), List.getElem_idxOf]
 
-theorem getD_mem_of_isFirst {φ : CNF ℕ} {i : ℕ} (h : isFirst φ i = true) :
+private theorem getD_mem_of_isFirst {φ : CNF ℕ} {i : ℕ} (h : isFirst φ i = true) :
     φ.vars.getD i 0 ∈ φ.vars ∧ φ.vars.idxOf (φ.vars.getD i 0) = i := by
   simp only [isFirst, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at h
   exact ⟨by rw [List.getD_eq_getElem _ _ h.1]; exact List.getElem_mem h.1, h.2⟩

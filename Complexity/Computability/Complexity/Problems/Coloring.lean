@@ -264,10 +264,6 @@ private theorem mem_endpoints {E : List (ℕ × ℕ)} {e : ℕ × ℕ} (he : e �
     e.1 ∈ E.flatMap (fun e => [e.1, e.2]) ∧ e.2 ∈ E.flatMap (fun e => [e.1, e.2]) :=
   ⟨List.mem_flatMap.2 ⟨e, he, by simp⟩, List.mem_flatMap.2 ⟨e, he, by simp⟩⟩
 
-private theorem fst_mem_vars {φ : CNF ℕ} {c : Clause ℕ} {l : Literal ℕ} (hc : c ∈ φ)
-    (hl : l ∈ c) : l.1 ∈ φ.vars :=
-  List.mem_map.2 ⟨l, List.mem_flatten.2 ⟨c, hc, hl⟩, rfl⟩
-
 private theorem variableEdges_subset {φ : CNF ℕ} {x : ℕ} (hx : x ∈ φ.vars) :
     variableEdges φ x ⊆ coloringEdges φ := fun e he => by
   simp only [coloringEdges, List.mem_append, List.mem_flatMap]
@@ -360,7 +356,7 @@ private theorem satisfiable_of_coloring {φ : CNF ℕ} {c : ℕ → ℕ}
   push Not at hsat
   have hout := output_eq_of_coloring hE hi φ[i].length le_rfl fun l hl => by
     rw [List.take_length] at hl
-    exact hfalse l (fst_mem_vars hcl hl) (hsat l hl)
+    exact hfalse l (CNF.mem_vars.2 ⟨_, hcl, l.2, hl⟩) (hsat l hl)
   have h := hE _ (clauseEdges_subset hi (by simp [clauseEdges] :
     (gadgetVertex i φ[i].length 2, paletteVertex 1) ∈ clauseEdges φ i φ[i]))
   exact h.1 hout
@@ -460,7 +456,7 @@ private theorem gadgetColoring_ne {φ : CNF ℕ} {σ : ℕ → Bool} (hσ : φ.e
     · have hj' := List.mem_zipIdx_iff_getElem?.1 hj
       simp only at hj'
       obtain ⟨hjlt, hl⟩ := List.getElem?_eq_some_iff.1 hj'
-      have hlv : l.1 ∈ φ.vars := fst_mem_vars hmem (hl ▸ List.getElem_mem hjlt)
+      have hlv : l.1 ∈ φ.vars := CNF.mem_vars.2 ⟨_, hmem, l.2, hl ▸ List.getElem_mem hjlt⟩
       have hsucc := outputColor_succ (σ := σ) hjlt
       rw [hl] at hsucc
       have hgetD : cl.getD j (0, false) = l := by
