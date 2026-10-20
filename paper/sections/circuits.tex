@@ -275,3 +275,24 @@ count.\citep{CavalarOliveira2025}
 \declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph.lean}{98}{Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_literals}
 \declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean}{212}{Cslib.Circuits.Fusion.Graph.inequality_complexities}
 \end{result}
+
+\begin{result}
+\subsection{Semi-ultrafilter bounds for universal verifiers}
+Let $g:\{0,1\}^{n+a}\to\{0,1\}$ and define
+$f(x)=1$ exactly when $g(x,y)=1$ for every $a$-bit auxiliary assignment $y$.
+Suppose a native monotone circuit computes $g$ from the positive and negative
+literals of all $n+a$ inputs, with $t$ binary AND gates. There is a pair cover
+of length exactly $t$ defeating every semi-ultrafilter above a true input of
+$f$, with respect to its primary literals. Hence
+\[
+\rho_{\mathrm{ultra}}(f;\text{primary literals})\le t.
+\]
+A semi-ultrafilter accepts every set or its complement, possibly both. The bound
+also holds for the minimum AND cost of implementing this fixed verifier.
+OR gates, constants, supplied literals, wiring and fanout are free; arbitrary
+numbers of auxiliary bits are allowed, including zero. This proves the lower-bound
+direction of the conondeterministic characterization credited to Karchmer;
+it does not construct a universal verifier from a cover or prove the converse.
+\citep{CavalarOliveira2025}
+\declat{fc111b65726f9b5bc721b9c63bef8a218fcf4b35}{Complexity/Computability/Circuit/Fusion/Conondeterministic.lean}{137}{Cslib.Circuits.Fusion.pairCoverComplexity_forallGuess_le_cost}
+\end{result}

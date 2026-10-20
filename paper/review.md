@@ -1013,3 +1013,21 @@ Integration reconciliation: PR #21 retains both the quadratic and graph entries 
 main at `f024eb43a11c80a9db843a8b354295f7bdd2d80e`; the index count is 117. The source
 declaration links remain pinned to their separately reviewed revisions. No theorem statement
 or proof changed during conflict resolution; the PDF was regenerated from both entries.
+
+## 2026-10-20: Semi-ultrafilter bounds for universal verifiers
+
+Worker `fusion-graph-20261020` added the universal-verifier lower bound and one curated index
+entry, bringing the count to 118. The independently authoring-free coordinating agent reviewed
+source revision `fc111b65726f9b5bc721b9c63bef8a218fcf4b35` for correctness and API design,
+including the counterexample pullback, auxiliary polarity selection, exact AND count,
+nonempty witness example and zero-auxiliary case. No findings remained. Its independent prose
+review checked arbitrary auxiliary counts, the fixed-verifier minimum, free literals/constants/OR,
+and the explicit lower-only boundary; no findings.
+
+All six Lean validation gates pass. The headline axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`. The declaration link is pinned to the source revision above,
+line 137, and was checked against `git show`. The PDF builds, and the new entry on page 31 was
+rendered and visually inspected. The converse and minimization over all verifiers remain in
+issue #24 under #16; this entry will be extended when they are proved. Final document-head
+review is recorded in PR #25. These are AI reviews, not human editorial approval or a
+machine-checked equivalence of prose and Lean. AI assistance: OpenAI Codex.
