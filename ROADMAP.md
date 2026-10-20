@@ -52,6 +52,11 @@ multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full tw
 (Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
 accepting/rejecting binary target lists. Original targets may be zero; neither index must be
 computable ([WPP.TwoSided](Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean)).
+Uniform bounded conjunction and disjunction also preserve both classes for a single jointly
+uniform language on instances and unary indices, with any polynomial-time unary input-dependent
+bound. The LWPP proof normalizes all possible prefix targets at each length
+([WPP.Bounded](Complexity/Computability/Complexity/Classes/WPP/Bounded.lean)); it does not
+establish adaptive oracle closure.
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
 MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
 and WPP/LWPP oracle lowness.

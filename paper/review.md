@@ -1447,3 +1447,35 @@ page 14 (preserved SL) and page 21 (preserved counting products) were rendered a
 final LaTeX log has no undefined citations or overfull boxes. Independent coordinator
 `fusion_barrier` inspected the final successor page with no findings; exact integration-head
 approval is recorded in PR #59.
+
+## 2026-10-20: Uniform bounded Boolean closure of wide-gap classes
+
+Worker `bounded-wide-gap-20261020` adds a separate curated entry for source revision
+`b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5`. It states bounded conjunction and disjunction
+closure of WPP and LWPP for a single jointly uniform language on instances and unary indices,
+with a polynomial-time unary input-dependent bound. The LWPP target family contains every
+prefix product through a fixed length-polynomial bound; it therefore normalizes counts that
+vary between inputs of the same length. Empty ranges, signed targets, the verifier model and
+remaining adaptive-oracle/lowness boundaries are explicit. The mathematical construction is
+credited as a deduction from Fenner–Fortnow–Kurtz counting algebra and the polynomial-family
+robustness of Edith Hemaspaandra, Lane A. Hemaspaandra, Holger Spakowski and Osamu Watanabe.
+
+All six source validation gates pass and source/tests have clean MCP diagnostics. Nonconstant
+indexed-bit clients use a negative length-only target, different counts on equal-length inputs,
+growing bounds, differing prefix signs/magnitudes and empty ranges. Four headline axiom guards
+admit only `propext`, `Classical.choice` and `Quot.sound`. The four declaration links are pinned
+to the source revision, lines 70, 96, 106 and 138.
+
+Independent coordinator `fusion-quadratic` approved exact-source API/correctness/tests and the
+draft index with no findings in PR #60, comment 6297275055. Final combined-head/PDF inspection
+and CI are tracked in that PR. The added entry brings the current 124-entry stack to 125.
+AI assistance: OpenAI Codex. AI review does not imply human editorial approval or a Lean proof
+of prose equivalence.
+
+Final PR #60 integration includes PR #57 and the independently approved successor head
+`dfd28a29b4e779a944e96fe7107abd9589f574b2`. The bounded-closure source and tests remain
+byte-identical to `b0490b92`. All six gates pass on the combined tree. The rebuilt PDF's new
+entry on page 27 was rendered and inspected; the four pinned declaration links were verified,
+the final LaTeX log has no undefined citations or overfull boxes, and the count is 125.
+Independent coordinator `fusion-quadratic` inspected this final rendering and the explicit
+fixed-polynomial wording with no findings; exact-head approval is tracked in the PR.
