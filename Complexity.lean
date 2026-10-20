@@ -1194,12 +1194,15 @@ public import Complexity.Logics.FirstOrder.Interpretation.Unit
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
 public import Complexity.Logics.FirstOrder.Problems.ColoringReduction
+public import Complexity.Logics.FirstOrder.Problems.ColoringToCNF
+public import Complexity.Logics.FirstOrder.Problems.IndependentSetReduction
 public import Complexity.Logics.FirstOrder.Problems.SizedGraph
 public import Complexity.Logics.FirstOrder.Projection
 public import Complexity.Logics.FirstOrder.Projection.Graph
 public import Complexity.Logics.FirstOrder.ProjectionFormula
 public import Complexity.Logics.FirstOrder.QuantifierFree
 public import Complexity.Logics.FirstOrder.Reduction
+public import Complexity.Logics.FirstOrder.Reduction.Nontrivial
 public import Complexity.Logics.FirstOrder.Reduction.QuantifierFree
 public import Complexity.Logics.FirstOrder.Subformula
 public import Complexity.Logics.Propositional.CNF
@@ -1238,6 +1241,7 @@ public import Complexity.Logics.Propositional.Tseitin
 public import Complexity.Logics.SecondOrder.Coloring
 public import Complexity.Logics.SecondOrder.Existential
 public import Complexity.Logics.SecondOrder.Grounding
+public import Complexity.Logics.SecondOrder.IndependentSet
 public import Complexity.Logics.SecondOrder.Projection
 public import Complexity.Logics.SecondOrder.Reduction
 public import Complexity.MachineLearning.UniformLearning.AC0
