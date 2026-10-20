@@ -367,3 +367,40 @@ formalized.\citep{Schlesinger2026IteratedFunctions}
 \declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{677}{Cslib.Circuits.Boolean.Iteration.PrimeCycleData.power_circuit}
 \declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{762}{Cslib.Circuits.Boolean.Iteration.PrimeCycleData.ofHash}
 \end{result}
+
+\begin{result}
+\subsection{Batched modular-counter powers and lower bounds}
+For $r$ independent $2k$-bit modular counters with batched state $x\in\{0,1\}^{r(2k)}$ and blocks
+$\mathrm{counterBlock}(x,m)\in\{0,1\}^{2k}$ ($m\in\mathrm{Fin}\,r$), the batched power
+$\mathrm{counterBatchPower}_k(T,x)$ applies $\mathrm{counterStep}_k^T$ independently to each block
+and equals $(\mathrm{counterBatchPower}_k(1))^T$. Using one shared lookup dictionary
+$\mathrm{residueKeys}_k(j)=j+1\mapsto\mathrm{residueValues}_{k,T}(j)=T\bmod(j+1)$ over the
+$2^k-1$ positive $k$-bit moduli together with $r$ parallel carry-safe residue additions
+($100(k+1)$ gates each), $\mathrm{counterBatchPower}_k(T)$ has a native De Morgan circuit of size
+at most $40000(k+1)^3(2^k+r)$ for every $r\le 2^{2k}$.
+
+Conversely, for any $r>0$, duplicating a single $2k$-bit input across all $r$ blocks extracts a
+circuit for $\mathrm{counterStep}_k^T$ of size at most $|C|$ from any circuit $C$ computing
+$\mathrm{counterBatchPower}_k(T)$, and whenever $\mathrm{counterStep}_k^T\ne\mathrm{id}$ every block
+requires its own distinct output gate, so $r\le |C|$. Combining these with the counting lower bound
+for $\mathrm{counterStep}_k$, for every $k\ge 64$ there exists an exponent $T<P_k$ such that for all
+$0<r\le 2^{2k}$, $\mathrm{counterBatchPower}_k(T)$ admits a circuit of size at most
+$40000(k+1)^3(2^k+r)$ while every circuit computing it has size strictly greater than
+$q_k=\lfloor 2^k/(1024(k+1))\rfloor$ and at least $r$. As for single counters, the dictionary is
+nonuniform and the hard exponent is obtained by counting.\citep{Schlesinger2026IteratedFunctions}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{78}{Cslib.Circuits.Boolean.Iteration.counterRemainder}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{88}{Cslib.Circuits.Boolean.Iteration.addResidue_eq_addWrapSpec}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{95}{Cslib.Circuits.Boolean.Iteration.counterRemainder_of_power}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{104}{Cslib.Circuits.Boolean.Iteration.counterPower_of_remainder}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{122}{Cslib.Circuits.Boolean.Iteration.counterBlock}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{127}{Cslib.Circuits.Boolean.Iteration.counterBatchPower}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{145}{Cslib.Circuits.Boolean.Iteration.iterate_counterBatchPower}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{177}{Cslib.Circuits.Boolean.Iteration.residueKeys}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{181}{Cslib.Circuits.Boolean.Iteration.residueValues}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{184}{Cslib.Circuits.Boolean.Iteration.residueKeys_injective}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{203}{Cslib.Circuits.Boolean.Iteration.batched_counter_power}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{306}{Cslib.Circuits.Boolean.Iteration.counterPower_of_batched}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{329}{Cslib.Circuits.Boolean.Iteration.counterBatch_size_ge_of_ne_id}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{412}{Cslib.Circuits.Boolean.Iteration.counterBatch_lower_bounds}
+\declat{f4dad04ef6c6adef3a5289df7c653a43e75228bf}{Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean}{424}{Cslib.Circuits.Boolean.Iteration.batched_hard_counter_power}
+\end{result}
