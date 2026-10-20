@@ -1,0 +1,19 @@
+\textbf{Circuit evaluation is P-complete.}
+Given a one-output De Morgan circuit with $n$ inputs and an input in
+$\{0,1\}^n$, encoded by \lean{encCircuitValue}, deciding whether the output is
+true is in P. Every problem in P, under any encoding of its instances, reduces to
+it by a logarithmic-space many-one reduction, so it is P-complete under logspace
+reductions, and it lies in L exactly when $\cc{P}=\cc{L}$ for every encoding.
+Model: deterministic multi-tape machines over $\{0,1\}$ with read-only input and
+write-only output; logspace charges work-tape cells only, with bound
+$c(\lfloor\log_2 n\rfloor+1)$. The reduction maps an instance $a$ with
+$n=|\mathrm{enc}(a)|$ to the tableau circuit of a polynomial-time decider that halts
+within $C(n+1)^d$ steps, run for $T=C(n+1)^d+n+1$ steps, with $\mathrm{enc}(a)$ as its
+input bits rather than hardwired constants; the circuit outputs whether the machine
+has written exactly $[\mathsf{true}]$ after $T$ steps. The construction is uniform:
+each gate is computed from its number within work space linear in the binary
+lengths of $n$, $T$ and the number, and a read machine writes the gates in turn. It
+works directly on multi-tape configurations, with no conversion to single-tape or
+oblivious machines. Monotone circuit value, the NC consequences and the
+first-order-reduction formulation are not formalized here.
+\citep{Ladner1975,AroraBarak09,Papadimitriou94}

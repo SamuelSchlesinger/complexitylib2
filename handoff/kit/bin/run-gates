@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# run-gates <worktree> : run scripts/check.sh (all six gates) in <worktree>, holding one of two
+# machine-wide slots so that at most two full gate runs execute at once. Run it in the background.
+set -u
+wt=${1:?usage: run-gates <worktree>}
+lockroot=${GATE_SLOTS:-${TMPDIR:-/tmp}/complexitylib2-gate-slots}
+mkdir -p "$lockroot"
+while :; do
+  for s in 1 2; do
+    if mkdir "$lockroot/slot$s" 2>/dev/null; then
+      echo "$$ $wt $(date)" > "$lockroot/slot$s/owner"
+      trap "rm -rf '$lockroot/slot$s'" EXIT
+      echo "[run-gates] slot $s acquired $(date)"
+      cd "$wt" && nice -n 10 scripts/check.sh
+      st=$?
+      echo "[run-gates] finished exit=$st $(date)"
+      exit $st
+    fi
+  done
+  for s in 1 2; do
+    if [ -f "$lockroot/slot$s/owner" ]; then
+      pid=$(cut -d' ' -f1 "$lockroot/slot$s/owner")
+      kill -0 "$pid" 2>/dev/null || rm -rf "$lockroot/slot$s"
+    fi
+  done
+  sleep 15
+done

@@ -1,0 +1,25 @@
+\begin{result}
+\subsection{First-order model checking in logarithmic space}
+For a finite relational vocabulary and a first-order sentence $\varphi$ whose
+atomic formulas are relation symbols and equality applied to variables, the
+encoded query language of the finite models of $\varphi$ is in L; hence the
+query language of every first-order definable class of finite structures is in
+L. The encoding gives the universe size in unary, then one framed truth table
+per relation symbol in the order of the vocabulary, entries indexed by the
+tuple index; malformed inputs are rejected, and the empty structure and nullary
+relations are included. The decider is a counter program with random access to
+its input: it checks the shape of the input, then evaluates $\varphi$ with one
+register per bound variable, reading table bits by index arithmetic. Counter
+programs whose registers stay polynomially bounded, and more generally machines
+querying input bits with logarithmic states, run in logarithmic space by a
+multi-pass simulation.\citep[Theorem 3.1]{Immerman1999}
+
+Immerman's FO also has constant symbols and the built-in predicates $\le$ and
+BIT; these are not covered (a relational language has no constants). First-order
+reductions as logspace reductions are not yet proved.
+\declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{829}{Cslib.Logic.Vocabulary.queryLanguage_mem_L}
+\declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{894}{Cslib.Logic.FO.Definable.queryLanguage_mem_L}
+\declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean}{341}{Turing.QueryMachine.computableInLogSpace}
+\declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram.lean}{607}{Turing.CounterProgram.computableInLogSpace}
+\declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram/Output.lean}{229}{Turing.CounterProgram.computableInLogSpace_of_reachesOut}
+\end{result}

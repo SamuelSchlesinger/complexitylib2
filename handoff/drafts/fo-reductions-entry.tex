@@ -1,0 +1,35 @@
+\begin{result}
+\subsection{SAT is NP-complete under first-order reductions, for classes containing the empty structure}
+CNF formulas are finite structures with binary relations $\mathrm{pos}(c,x)$ and
+$\mathrm{neg}(c,x)$; every element names a clause and a variable, and an element related to
+nothing is the empty clause. SAT, the satisfiable structures, has its encoded query language in
+NP. Every isomorphism-closed class of finite relational structures whose query language is in NP
+\emph{and which contains the empty structure} is first-order reducible to SAT, by grounding its
+existential second-order definition in Tseitin style; for such classes, first-order reducibility
+to SAT is equivalent to being isomorphism-closed and in NP, and every class first-order reducible
+to SAT is in NP. Without the hypothesis, every isomorphism-closed class in NP is first-order
+reducible to SAT on the nonempty finite structures. 3SAT (at most three literals per clause) and
+3COL (graph structures, loops allowed) are first-order interreducible, and the same interpretation
+reduces 3SAT to three-colorability of simple graphs. SAT reduces to independent set on structures
+with at least two elements (Karp's occurrence graph); independent set, clique and vertex cover are
+existential second-order definable.\citep[Chapter 7]{Immerman1999}\citep{Fagin1974}\citep{GareyJohnson1979}
+
+These are first-order interpretations, with quantifiers, of unordered structures, not first-order
+projections of ordered structures as in Immerman; neither statement implies the other. Interpretations
+of positive dimension map the empty structure to the empty, satisfiable CNF structure, which is the
+reason for the hypothesis. Reductions to 3SAT from SAT, hardness of 3SAT and 3COL, reachability,
+and bridges to the encoded problems remain.
+% Links below are pinned to the worker head 03d0253b; milestone 2 (the last three) is unreviewed.
+% Repin to the reviewed head at integration and drop any declaration that review changes.
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Logics/SecondOrder/Grounding.lean}{817}{Cslib.Logic.ESO.Definable.reduces_SAT}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Logics/SecondOrder/Grounding.lean}{842}{Cslib.Logic.ESO.definable_iff_reduces_SAT}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Logics/SecondOrder/Grounding.lean}{857}{Cslib.Logic.ESO.Definable.exists_interpretation_SAT_of_nonempty}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Computability/Complexity/Fagin/SAT.lean}{67}{Cslib.Logic.FO.cnf.queryLanguage_SAT_mem_NP}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Computability/Complexity/Fagin/SAT.lean}{79}{Cslib.Logic.FO.cnf.reduces_SAT_of_queryLanguage_mem_NP}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Computability/Complexity/Fagin/SAT.lean}{88}{Cslib.Logic.FO.cnf.exists_interpretation_SAT_of_queryLanguage_mem_NP}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Computability/Complexity/Fagin/SAT.lean}{103}{Cslib.Logic.FO.cnf.reduces_SAT_iff_isoClosed_and_queryLanguage_mem_NP}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Logics/FirstOrder/Problems/ColoringReduction.lean}{650}{Cslib.Logic.FO.cnf.reduces_ThreeSAT_ThreeColorable}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Logics/FirstOrder/Problems/ColoringReduction.lean}{662}{Cslib.Logic.FO.cnf.reduces_ThreeSAT_SimpleThreeColorable}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Logics/FirstOrder/Problems/ColoringToCNF.lean}{300}{Cslib.Logic.FO.graph.reduces_ThreeColorable_ThreeSAT}
+\declat{03d0253b55d59f0f2af10226a38e2e6cdf609006}{Complexity/Logics/FirstOrder/Problems/IndependentSetReduction.lean}{386}{Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet}
+\end{result}

@@ -1,0 +1,22 @@
+\begin{result}
+\subsection{Derandomization from worst-case hardness}
+Suppose a language $L$ belongs to $\cc{E}=\cc{DTIME}(2^{O(n)})$ (on bit words) and
+there is a real $\gamma>0$ such that, for every sufficiently large $n$, the De Morgan
+circuit complexity of $L$ on $n$-bit inputs (fan-in two, every gate counted) is at
+least $2^{\gamma n}$. Then $\cc{P}=\cc{BPP}$ for every encoding of every type of
+instances. The hardness is converted to average-case hardness by the
+Sudan--Trevisan--Vadhan encoding: at input length $N$, with $M=\lceil 40/\gamma\rceil+1$
+and $b=\lfloor N/(4(M+1))\rfloor$, the slice of $L$ at length $Mb$, read as $M$ blocks
+of $b$ bits, is encoded by a Reed--Muller code over the explicit field
+$\mathbb{F}_{2^{4b}}=\mathbb{F}_2[X]/(g)$, with $g$ the least irreducible polynomial of
+degree $4b$, concatenated with the Hadamard code; the remaining input bits are
+ignored. The encoded language lies in $\cc{E}$ whenever $L$ does, with the field
+arithmetic and low-degree extension certified by the time calculus, and under the
+hardness hypothesis it is average-case hard for circuits of size
+$2^{\lfloor N/c\rfloor}$, $c=200(\lceil 40/\gamma\rceil+2)$, at every sufficiently
+large $N$; the previous result then applies. The hardness is assumed at all large
+lengths, as by Impagliazzo and Wigderson; the infinitely-often variant and the
+$\cc{EXP}\not\subseteq\cc{P/poly}$ consequence of Babai, Fortnow, Nisan and
+Wigderson are not formalized.\citep{ImpagliazzoWigderson1997,SudanTrevisanVadhan2001}
+% \declat links: add at integration, pinned to the reviewed head (see HANDOFF.md)
+\end{result}
