@@ -11,11 +11,12 @@ public import Complexity.Computability.RAM.Cost
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
-# Repeated squaring: why unit cost is unsound
+# Repeated squaring separates unit and logarithmic cost
 
 The unit cost measure charges a RAM one unit per instruction, however large the numbers involved.
-With multiplication this is unsound. The fixed program `Cslib.RAM.repeatedSquaring` reads `k` in
-register `0`, puts `2` in register `1`, squares register `1` while counting register `0` down to
+With multiplication it need not be polynomially comparable to logarithmic cost. The fixed program
+`Cslib.RAM.repeatedSquaring` reads `k` in register `0`, puts `2` in register `1`, then squares
+register `1` while counting register `0` down to
 zero, and copies the result to register `0`: it computes `k ↦ 2 ^ 2 ^ k` within unit time
 `4 k + 5`, taking exactly `4 k + 5` steps. The value `2 ^ 2 ^ k` has `2 ^ k + 1` binary digits,
 and logarithmic time bounds the length of every number a RAM holds
@@ -27,8 +28,15 @@ logarithmic time are not polynomially related.
 Hartmanis and Simon showed much more: under unit cost, RAMs with multiplication and bitwise
 Boolean operations decide in polynomial time exactly the languages that Turing machines decide in
 polynomial space [Hartmanis and Simon][HartmanisSimon1974]. Without multiplication, an
-instruction other than loading a constant at most doubles the largest number held, so that unit
-and logarithmic time are polynomially related; neither fact is formalized here.
+instruction other than loading a constant at most doubles the largest number held. To obtain a
+polynomial comparison from this observation, one must also control the initial bit lengths.
+Cook and Reckhow use charged input instructions on finite-alphabet strings and time bounds at
+least the input length [Cook and Reckhow, Section 1 and Theorem 2][CookReckhow1973]. Here inputs
+are arbitrary natural numbers preloaded for free: a single addition has unit cost `1` but
+unbounded logarithmic cost across inputs. Thus no bound in unit time alone follows in this API.
+Neither the cited complexity-class result nor a RAM-to-Turing-machine simulation is formalized
+here. The parameter `k` in the proved separation is the input's numeric value, not its binary
+encoding length.
 
 ## Main definitions
 

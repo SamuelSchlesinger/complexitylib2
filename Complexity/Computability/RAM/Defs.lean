@@ -31,10 +31,14 @@ counter is past the end of the program. The instruction set is that of Cook and 
 [Cook and Reckhow, Table I][CookReckhow1973] with three changes: registers hold natural numbers
 rather than integers, so subtraction is truncated and the conditional jump tests for a nonzero
 register; there are no input and output instructions, since the inputs sit in registers as for
-URMs; and there is a multiplication instruction, which is what makes the unit cost measure unsound
-(see `Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logCost`). Halting and evaluation
+URMs; and there is a multiplication instruction, which permits a separation between unit and
+logarithmic time (see `Cslib.RAM.exists_mul_pow_lt_of_computesInTime_logCost`).
+Halting and evaluation
 (`Cslib.RAM.Halts`, `Cslib.RAM.HaltsWithResult`, `Cslib.RAM.eval`) are as for URMs, with the
-output in register `0`.
+output in register `0`. Input initialization and output extraction incur no instruction cost.
+Consequently this is a natural-number function model, not Cook and Reckhow's charged
+finite-alphabet input/output convention. Complexity comparisons with string machines require
+explicit encoding and initial-bitlength assumptions; no such simulation is proved here.
 
 ## Design notes
 

@@ -1483,6 +1483,38 @@ pages 9 (successor), 14 (SL) and 21 (counting products) were rendered and inspec
 coordinator `fusion_barrier` inspected those pages and the preservation delta without findings;
 final exact-head approval is recorded in PR #59. This integration introduces no new theorem scope.
 
+## 2026-10-20: Exact canonical addition from order and BIT
+
+Worker `ordered-addition-20261020` adds the PLUS entry for source revision
+`49531f8754cc310d21216bc7e5a0da33499036b0`. One native formula, independent of universe size,
+realizes ordinary natural-number addition on every canonical `Fin n`, `n ≥ 2`, without a fit
+premise. The out-of-range theorem rejects every result. The index records the least-significant-bit
+convention and leaves TIMES, the Bit Sum Lemma, unrestricted arbitrary-base tuple BIT lifting and
+numeric-preserving composition open. The source credits Immerman Proposition 1.9 and the PLUS
+part of Theorem 1.17(1), existing library propagation, and Lean BitVec carry/addition proofs.
+
+All six gates pass on the source revision. Source and test MCP diagnostics are clean; clients cover
+n = 2, 3, 5, 9, zero, maximum results, multiple carries, killed carries, rejection for every
+overflow candidate and native free-variable relabeling. Named headline axiom guards admit only
+`propext`, `Classical.choice` and `Quot.sound`. Declaration links are pinned to source lines
+142 and 162 and checked against their exact names.
+
+Independent coordinator `fusion_quadratic` approved the exact source/API/correctness/tests and
+draft index with no findings, checked both files with fresh MCP diagnostics, and verified the
+primary-source references. The exact-revision review is recorded in
+[PR #66](https://github.com/SamuelSchlesinger/complexitylib2/pull/66#issuecomment-6297706327).
+Final combined ancestry, dependency validation and rendered PDF review remain pending in the PR.
+AI assistance: OpenAI Codex. This review is not human editorial approval or a machine-checked
+prose-to-Lean equivalence.
+
+The PLUS preparation integrates successor revision
+`17ae942e0737495057544f6d74a8f695a85ad72b` with cslib
+`b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`. Source and tests remain byte-identical to the
+approved revision. All six preparation gates pass on the new pin. The local index contains
+125 entries; the new PLUS entry on page 8 was rendered and inspected, with no undefined
+citations or overfull boxes in the final LaTeX log. Final combined counting-stack integration,
+entry-count reconciliation and exact-head PDF review remain pending before publication.
+
 ## 2026-10-20: Uniform bounded Boolean closure of wide-gap classes
 
 Worker `bounded-wide-gap-20261020` adds a separate curated entry for source revision
@@ -1526,6 +1558,38 @@ are preserved. All six combined gates pass. The rebuilt PDF retains 125 entries,
 undefined citations or overfull boxes. Page 27 was rendered and inspected by the author and
 independent coordinator `fusion-quadratic`, who found no scope or layout issues. Final exact-head
 integration approval is recorded in PR #60. This refresh introduces no new theorem scope.
+
+## 2026-10-20: Truth-table closure of wide-gap classes
+
+Worker `truth-table-wide-gap-20261020` adds one curated entry for source revision
+`5df0e7da9798d62d5506dc90e4cb3c2f381b82d9`. It states closure of WPP and LWPP under the
+encoded polynomial-time truth-table reduction interface, together with the more general joint
+indexed-language endpoints. The unary polynomial-time count, total joint query generator,
+input-sensitive Boolean combiner and nonadaptive answer-word semantics are explicit. Query
+lengths and query counts may vary at fixed input length; LWPP uses many-one normalization and
+then polynomial-family prefix-target robustness. Empty batches are included. The entry credits
+Holger Spakowski, Mayur Thakur and Rahul Tripathi's Theorem 5.6(a), the counting algebra of
+Stephen Fenner, Lance Fortnow and Stuart Kurtz, and the robustness theorem of Edith Hemaspaandra,
+Lane A. Hemaspaandra, Holger Spakowski and Osamu Watanabe. Adaptive WPP closure, the source's
+separate UP-oracle containment and oracle lowness are not claimed.
+
+Independent coordinator `coordinator-ops-20261020` approved the exact source, tests and draft
+index in PR #69, comment 6297944865. The primary source's Theorems 5.6(a) and 5.9 were checked
+on rendered author-report pages 24 and 25. Tests include a nonconstant XOR reduction with
+signed length targets, differing query lengths in one batch, differing counts at equal input
+length, and zero-query combiners that accept, reject or depend on the original input. Four
+headline axiom guards admit only the standard allowed axioms. The five index links are pinned
+to the reviewed source revision and their declaration lines were checked.
+
+The local preparation incorporates reviewed PR #60 head
+`c46186f7ca68ae941c86b1d8b0a5f9d20bb5c135` and cslib pin
+`b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`, preserving the source and tests byte-for-byte.
+Fresh MCP diagnostics are clean and all six combined gates pass. The PDF builds without
+undefined citations or overfull boxes; page 28 was rendered and inspected. This preparation
+has 126 entries before the remaining dependency-stack entries are integrated. Final combined
+PDF/count reconciliation and exact-head independent review remain pending in PR #69.
+AI assistance: OpenAI Codex. AI review does not imply human editorial approval or a Lean proof
+of prose equivalence.
 
 ## Relativized counting and majority verifiers (PR #61, 20 October 2026)
 
@@ -1574,3 +1638,96 @@ check passes. The rebuilt PDF has no undefined citations or overfull boxes. Page
 were rendered and inspected; independent coordinator `fusion_graph` inspected the new page 22
 with no scope or layout findings. Final exact-head integration review is recorded in PR #61.
 This dependency refresh introduces no new theorem scope.
+
+## 2026-10-20: Final canonical-addition integration
+
+Worker `ordered-addition-20261020` integrated independently approved Boolean-hierarchy revision
+`7555a6120e593cc17369e019180a6e43f3ff0427`, including the merged successor, bounded-closure,
+oracle-counting and cleanup milestones. The addition source and tests are byte-identical to
+`49531f8754cc310d21216bc7e5a0da33499036b0`; no theorem statement or proof changed. Both review
+histories and all predecessor index entries are preserved. The combined index contains 127
+entries. Both addition declaration links were checked against their pinned source lines.
+
+The PDF was rebuilt and pages 9 (PLUS), 4 (Boolean hierarchy), 23 (oracle counting) and 29
+(bounded closure) were rendered and inspected. The final LaTeX log has no undefined references
+or overfull boxes. Independent coordinator `fusion_quadratic` checked source/test identity,
+predecessor prose preservation, the exact PLUS scope, links and all four rendered pages without
+findings. Fresh MCP diagnostics for the source and tests are clean. Final validation and exact
+revision approval are recorded in PR #66; this AI review does not imply human editorial approval.
+All six combined validation gates passed in
+`.worktrees/ops-coordinator-logs/ordered-addition-final-check.log`; the only subsequent edit
+records this validation evidence.
+
+## 2026-10-20: MAJSAT integration
+
+The MAJSAT development is by `worker-agy-majsat-20261020`, assisted by Claude Opus 4.6
+in Antigravity; mathematical credit is to Simon (`Simon1975`). Source revision
+`3f273bbfa63b964c32474cd341e253ddcf466fb0` and final test revision
+`f8c10c461983134f053687a529bdf4489afbcfda` received independent API, correctness and
+index review. Final bounded fixes restored the literal PR description and genuine majority-tie
+and zero-padding tests. Coordinator `fusion_quadratic` verified these fixes and approved the
+unchanged author revision in PR #67, comment 6298385907. Completeness is for general CNF;
+restricted clause-width completeness is not asserted.
+
+Coordinator `fusion_quadratic`, assisted by OpenAI Codex, integrates independently reviewed
+PR #66 revision `49b13382a079632ef215a4d23692c9cdd1170311`, preserving the original author
+branch and byte-identical MAJSAT source and tests. The roadmap union retains both MAJSAT
+completeness and the predecessor's Boolean-hierarchy milestones. This extends the existing
+counting-completeness entry, preserving all other entries and the total of 127. Its 12 source
+anchors remain pinned to the reviewed declarations. Final combined validation, rendered-page
+inspection and independent exact integration review are recorded in PR #67. AI review does not
+imply human editorial approval or machine-checked equivalence of prose and Lean.
+
+All six combined gates pass in `.worktrees/ops-coordinator-logs/majsat-final-check.log`.
+The source and tests have clean fresh MCP diagnostics. The rebuilt PDF has no undefined
+citations or overfull boxes; pages 2 (counting completeness) and 4 (Boolean hierarchy) were
+rendered and inspected. Documentation configuration and whitespace checks pass. Only this
+validation record was appended after the gates; final exact-head review is recorded in PR #67.
+
+## 2026-10-20: Tree Evaluation input-size corollary integration
+
+The corollary development is by `worker-agy-treeeval-20261020`, assisted by Claude Opus 4.6
+in Antigravity. Christian Reitwiessner's earlier formalization credit is preserved; mathematical
+sources remain Cook--Mertz and Goldreich's exposition. Source revision
+`3a10a7a7c55bc0b5ec4588e369ab19daf66418f7` and document revision
+`b110fbb558d07b1d5597a62b5828bbe568e8a998` received independent API, correctness,
+nonvacuity and theorem-index review. Coordinator `fusion_quadratic` verified the repaired
+PR-body notation and recorded final approval in PR #68, comment 6298114614.
+
+Coordinator `fusion_quadratic`, assisted by OpenAI Codex, integrates the validated MAJSAT
+revision `45fd65f150b9daaccc09c3b8dbea88ebbeac6aea` and its reviewed predecessor stack.
+The original author branch and all new bounds and clients are preserved. The only additional
+TreeEval source difference from the author's revision is the existing main-branch refactor of
+unary-block decoding to the shared list helper; its public statement is unchanged. The six new
+source anchors and entry text remain pinned to the reviewed source. The input-size result
+still restricts to positive value length and height, one fixed evaluator and valid encoded
+instances, without an asserted asymptotic running time. The sharp Cook--Mertz parameter bound,
+malformed-input recognition and Williams's simulation remain unproved here. This extends an
+existing entry, retaining all predecessor entries and the total of 127. Final validation,
+rendered-page inspection and independent exact integration review are recorded in PR #68;
+AI review is not human editorial approval or machine-checked prose equivalence.
+
+All six combined gates pass in `.worktrees/ops-coordinator-logs/treeeval-final-check.log`.
+Fresh MCP diagnostics for Encoding, Instance, Space and the TreeEval tests are clean. The
+rebuilt PDF has no undefined citations or overfull boxes; pages 18 (Tree Evaluation) and 2
+(MAJSAT) were rendered and inspected. Documentation configuration and whitespace checks pass.
+Only this validation record was appended after the gates; final exact-head review is recorded
+in PR #68.
+
+## 2026-10-20: Final truth-table closure integration (PR #69)
+
+Worker `truth-table-wide-gap-20261020` reconciled the prepared entry with independently reviewed
+PR #68 head `f5f986b4f5dd2bb4af2b1248d85dfddd23fa0b72` and main
+`9b14946fcf33415b4ad4fe7e48910a49c235a65c`. The five source/test files remain byte-identical
+to approved source `5df0e7da9798d62d5506dc90e4cb3c2f381b82d9`. Merge conflicts were confined
+to roadmap prose, appended bibliography/review records, the entry count, and the generated PDF;
+both sides' contributions and source credits are preserved. All other index sections are
+byte-identical to final PR #68; the combined index contains 128 entries.
+
+Fresh source/test MCP diagnostics are clean. All six combined gates pass (exit 0), recorded in
+`.worktrees/ops-truth-table-prepare/.lake/truth-table-final-check.log`. The PDF builds without
+undefined citations or overfull boxes; pages 31 (truth-table closure) and 18 (Tree Evaluation)
+were rendered and inspected. The five declaration anchors remain pinned to the approved source
+and were rechecked. Only this validation record was appended after the gates. Independent
+exact-revision integration and rendered-index review is recorded in PR #69; no human editorial
+approval or machine-checked prose equivalence is implied.

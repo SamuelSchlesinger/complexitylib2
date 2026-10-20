@@ -54,6 +54,27 @@ example : ([[(0, true), (1, true)]], 4) ∉ SharpSATAtLeast := by change ¬4 ≤
 example : ([[(0, true), (1, true)]], 3) ∈ SharpSATExact := by change SharpSAT _ = 3; decide
 example : ([[(0, true), (1, true)]], 2) ∉ SharpSATExact := by change ¬SharpSAT _ = 2; decide
 example : ([[(0, true)], [(0, false)]], 0) ∈ SharpSATExact := sharpSAT_contradiction
+example : [] ∈ MAJSAT := by simp [MAJSAT, sharpSAT_nil, CNF.vars]
+example : [[(0, true), (1, true)]] ∈ MAJSAT := by
+  change 2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
+example : [[(0, true)], [(0, false)]] ∉ MAJSAT := by
+  simp [MAJSAT, sharpSAT_contradiction]
+example : [[(0, true)]] ∉ MAJSAT := by
+  change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
+example : [[(0, true)], [(1, true)]] ∉ MAJSAT := by
+  change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
+example : (padMajority [] 0).vars.toFinset.card = 1 := by decide
+example : SharpSAT (padMajority [] 0) = 1 := by decide
+example : padMajority [] 0 ∉ MAJSAT := by
+  change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
+example : (padMajority [[(0, true)]] 0).vars.toFinset.card = 2 := by decide
+example : SharpSAT (padMajority [[(0, true)]] 0) = 2 := by decide
+example : padMajority [[(0, true)]] 0 ∉ MAJSAT := by
+  change ¬2 ^ (CNF.vars _).toFinset.card < 2 * SharpSAT _; decide
+example : padMajority [[(0, true), (1, true)]] 1 ∈ MAJSAT := by
+  rw [padMajority_mem_MAJSAT_iff]; decide
+example : padMajority [[(0, true), (1, true)]] 2 ∉ MAJSAT := by
+  rw [padMajority_mem_MAJSAT_iff]; decide
 
 /-! ### Clients of the parsimonious reduction -/
 
@@ -135,6 +156,27 @@ info: 'Cslib.Complexity.SharpSATAtLeast_ppComplete' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.SharpSATAtLeast_ppComplete
+
+/--
+info: 'Cslib.Complexity.MAJSAT_mem_PP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.MAJSAT_mem_PP
+
+/--
+info: 'Cslib.Complexity.MAJSAT_ppHard' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.MAJSAT_ppHard
+
+/--
+info: 'Cslib.Complexity.MAJSAT_ppComplete' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.MAJSAT_ppComplete
 
 /--
 info: 'Cslib.Complexity.SharpSATExact_ceqPComplete' depends on axioms:

@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -30,6 +30,9 @@ offset `pathOffset`, which a machine can recompute from the path alone.
 
 ## Main results
 
+* `Cslib.TreeEval.two_pow_ell_le_bodyLength`, `Cslib.TreeEval.two_pow_height_le_bodyLength`:
+  exponential lower bounds `2 ^ ℓ ≤ bodyLength ℓ H` (for `1 ≤ ℓ`, `1 ≤ H`) and
+  `2 ^ H ≤ bodyLength ℓ H` (for `1 ≤ ℓ`) on the body length.
 * `Cslib.TreeEval.Tree.getElem_body_pathOffset`: the bits of the node at a path, read off the body
   at its offset; `Cslib.TreeEval.Tree.getElem_body_gate` and `Cslib.TreeEval.Tree.getElem_body_leaf`
   for gates and leaves.
@@ -66,6 +69,37 @@ def table (f : Gate ℓ) : List Bool :=
 def bodyLength (ℓ : ℕ) : ℕ → ℕ
   | 0 => ℓ
   | d + 1 => tableLength ℓ + 2 * bodyLength ℓ d
+
+/-- A gate table on `ℓ ≥ 1` bits has at least `2 ^ ℓ` bits. -/
+theorem two_pow_le_tableLength {ℓ : ℕ} (hℓ : 1 ≤ ℓ) : 2 ^ ℓ ≤ tableLength ℓ :=
+  calc 2 ^ ℓ ≤ 4 ^ ℓ := Nat.pow_le_pow_left (by decide) ℓ
+    _ = 4 ^ ℓ * 1 := (Nat.mul_one _).symm
+    _ ≤ 4 ^ ℓ * ℓ := Nat.mul_le_mul_left _ hℓ
+
+/-- The body of a height-`H` tree has at least `2 ^ H * ℓ` bits from its leaves alone. -/
+theorem two_pow_mul_le_bodyLength (ℓ H : ℕ) : 2 ^ H * ℓ ≤ bodyLength ℓ H := by
+  induction H with
+  | zero => simp [bodyLength]
+  | succ d ih => simp only [bodyLength, Nat.pow_succ', Nat.mul_assoc]; omega
+
+/-- A tree of positive height includes at least the root gate table. -/
+theorem tableLength_le_bodyLength_of_pos {ℓ H : ℕ} (hH : 1 ≤ H) :
+    tableLength ℓ ≤ bodyLength ℓ H := by
+  rcases H with _ | d
+  · omega
+  · simp only [bodyLength]; omega
+
+/-- For `1 ≤ ℓ` and `1 ≤ H`, the body has length at least `2 ^ ℓ`. -/
+theorem two_pow_ell_le_bodyLength {ℓ H : ℕ} (hℓ : 1 ≤ ℓ) (hH : 1 ≤ H) :
+    2 ^ ℓ ≤ bodyLength ℓ H :=
+  (two_pow_le_tableLength hℓ).trans (tableLength_le_bodyLength_of_pos hH)
+
+/-- For `1 ≤ ℓ`, the body of a height-`H` tree has length at least `2 ^ H`. -/
+theorem two_pow_height_le_bodyLength {ℓ : ℕ} (hℓ : 1 ≤ ℓ) (H : ℕ) :
+    2 ^ H ≤ bodyLength ℓ H :=
+  calc 2 ^ H = 2 ^ H * 1 := (Nat.mul_one _).symm
+    _ ≤ 2 ^ H * ℓ := Nat.mul_le_mul_left _ hℓ
+    _ ≤ bodyLength ℓ H := two_pow_mul_le_bodyLength ℓ H
 
 /-- The offset of the node at a path within the body of a subtree of height `d`. -/
 def pathOffset (ℓ : ℕ) : ℕ → List Bool → ℕ
@@ -110,6 +144,10 @@ theorem header_append_inj {ℓ' h' : ℕ} {b b' : List Bool}
 
 /-- The encoding of an instance: its header, then its body. -/
 def encode (T : Tree ℓ h) : List Bool := header ℓ h ++ T.body
+
+@[simp] theorem length_encode (T : Tree ℓ h) :
+    T.encode.length = ℓ + h + 2 + bodyLength ℓ h := by
+  simp [encode]
 
 /-- The bits of a node in the body: the value of a leaf, the table of a gate. -/
 def Node.bits : Node ℓ → List Bool
