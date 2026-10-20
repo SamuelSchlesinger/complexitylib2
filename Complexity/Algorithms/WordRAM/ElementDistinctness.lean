@@ -22,7 +22,9 @@ its flag, answering *no* if it is set and setting it otherwise.
 `Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup` formalizes this: on lists of
 naturals whose entries are below their length `n`, the compiled decider decides `List.Nodup`
 within `16 (n + 1)` instructions, the final `halt` included, at every word size of at least
-`2 (⌊log₂ n⌋ + 1)`. The decider allocates its table with `Cslib.WordRAM.alloc` and reads and
+`2 (⌊log₂ n⌋ + 1)`, with one binary digit at zero. Every instance fits at this threshold
+(`Cslib.Algorithms.WordRAM.ElementDistinctness.inputFits`). The decider allocates its table with
+`Cslib.WordRAM.alloc` and reads and
 writes it with `Cslib.WordRAM.readAt` and `Cslib.WordRAM.writeAt`; its correctness rests on the
 loop rule `Cslib.WordRAM.ExecWithin.loop_invariant`.
 
@@ -36,6 +38,8 @@ loop rule `Cslib.WordRAM.ExecWithin.loop_invariant`.
 
 * `Cslib.Algorithms.WordRAM.ElementDistinctness.answers`: the decider answers whether its input
   list has no duplicates within `14 n + 15` instructions.
+* `Cslib.Algorithms.WordRAM.ElementDistinctness.inputFits`: every instance fits at the advertised
+  logarithmic word-size threshold.
 * `Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup`: the compiled decider
   decides element distinctness within `16 (n + 1)` instructions at every word size of at least
   `2 (⌊log₂ n⌋ + 1)`.
@@ -138,6 +142,12 @@ theorem fits_two_mul_add_one {n : ℕ} (hw : logWidth 2 n ≤ w) : Fits w (2 * n
   rw [fits_iff, logWidth, show 2 * (Nat.log 2 n + 1) = (Nat.log 2 n + 1) + (Nat.log 2 n + 1) by
     omega, pow_add]
   nlinarith
+
+/-- Every instance fits at the logarithmic threshold used by the decider, and at every larger
+word size. Thus the input-fit premise in its uniform decision theorem is always satisfied. -/
+theorem inputFits (a : Input) (hw : logWidth 2 a.1.length ≤ w) : InputFits w a.1 := by
+  have hn : Fits w a.1.length := (fits_two_mul_add_one hw).of_le (by omega)
+  exact ⟨hn, fun v hv => hn.of_le (a.2 v hv).le⟩
 
 theorem setup_spec (hw : Fits w (2 * l.length + 1)) :
     ∃ y, ExecWithin w setup (.init l) y (4 * l.length + 13) ∧ Invariant l y := by

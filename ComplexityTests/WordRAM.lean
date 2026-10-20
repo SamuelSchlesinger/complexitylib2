@@ -147,6 +147,73 @@ example (x : Data 3) : ∃ y, Exec 8 (double.rename ![2, 0]) x y 2 ∧
 
 end Rename
 
+/-! ## Contract boundaries
+
+These adversarial clients record the scope of the conditional time predicates. In particular,
+word-count size alone does not bound input bit lengths, and an input-dependent prescribed width
+can communicate information that the encoding does not contain.
+-/
+
+section Contracts
+
+/-- The word size itself supplies the answer on two identically encoded instances. -/
+private def widthAdvice : Program 2 :=
+  [.op (.width 0), .op (.const 1 1), .op (.bin .sub 0 0 1), .halt 0]
+
+example :
+    (∀ b : Bool, InputFits (if b then 2 else 1) []) ∧
+    DecidableInTimeAt {b : Bool | b = true} (fun _ => [])
+      (fun _ => 4) (fun b => if b then 2 else 1) := by
+  refine ⟨fun b => ⟨fits_zero _, by simp⟩, 2, widthAdvice, ?_⟩
+  intro b _
+  cases b
+  · exact ⟨0, 4, .of_run (fuel := 4) (by decide), le_rfl, by decide, by decide⟩
+  · exact ⟨1, 4, .of_run (fuel := 4) (by decide), le_rfl, by decide, by decide⟩
+
+/-- No uniform decider separates the same two instances: at a common fitting width its initial
+state is identical. Thus the unrestricted prescribed-width-to-uniform converse is false. -/
+example (time bits : Bool → ℕ) :
+    ¬DecidableInTime {b : Bool | b = true} (fun _ => []) time bits := by
+  rintro ⟨r, p, hp⟩
+  let w := max (bits false) (bits true)
+  have hi : InputFits w [] := ⟨fits_zero w, by simp⟩
+  obtain ⟨v₀, n₀, he₀, _, _, hb₀⟩ := hp false w (le_max_left _ _) hi
+  obtain ⟨v₁, n₁, he₁, _, _, hb₁⟩ := hp true w (le_max_right _ _) hi
+  have hv := (he₀.unique he₁).1
+  have h1 : v₁ = 1 := hb₁.mpr rfl
+  have : false = true := hb₀.mp (hv.trans h1)
+  cases this
+
+/-- If the prescribed width never fits the input, the conditional contract accepts any set
+without a successful run. -/
+example (A : Set Bool) :
+    DecidableInTimeAt A (fun _ => [1]) (fun _ => 0) (fun _ => 0) := by
+  refine ⟨0, [], ?_⟩
+  intro b hi
+  have h := hi.1
+  change 1 < 1 at h
+  exact False.elim (Nat.lt_irrefl 1 h)
+
+/-- A constant-answer program works at every fitting width for arbitrary singleton words. -/
+private def accept : Program 1 := [.op (.const 0 1), .halt 0]
+
+example : LinearTime (Set.univ : Set ℕ) (fun n => [n]) (fun _ => 1) := by
+  refine ⟨1, 0, 1, accept, ?_⟩
+  intro n w _ hi
+  have h1 : Fits w 1 := hi.1
+  refine ⟨1, 2, .of_run (fuel := 2) ?_, le_rfl, le_rfl, by simp⟩
+  simp [run, step, accept, Op.eval, Data.put, h1, Data.set, State.init]
+
+/-- The encoding above is injective and has constant word-count size, but no width depending
+only on that size can fit all its instances. -/
+example (w : ℕ) : Function.Injective (fun n : ℕ => [n]) ∧ ¬∀ n, InputFits w [n] := by
+  refine ⟨fun _ _ h => List.singleton_injective h, ?_⟩
+  intro h
+  have hi := (h (2 ^ w)).2 (2 ^ w) (by simp)
+  exact Nat.lt_irrefl _ hi
+
+end Contracts
+
 /-! ## Element distinctness -/
 
 section ElementDistinctness
@@ -170,6 +237,18 @@ example : logWidth 2 3 = 4 ∧ run 4 (decider.program ans) 200 (.init [2, 0, 1])
 
 /-- Neither the decider nor its compiled program reads the word size. -/
 example : ¬decider.ReadsWidth ∧ ¬(decider.program ans).ReadsWidth := by decide
+
+/-- The client has an input-fit certificate at its actual logarithmic threshold, so its
+correctness contract gives an unconditional answer there for every promised instance. -/
+example (a : Input) :
+    (decider.program ans).Answers (logWidth 2 a.1.length) a.1 a.1.Nodup
+      (16 * (a.1.length + 1)) :=
+  decidesInTime_nodup a _ le_rfl (inputFits a le_rfl)
+
+/-- The one-digit convention includes the empty input at its advertised threshold. -/
+example : logWidth 2 0 = 2 ∧ InputFits (logWidth 2 0) [] ∧
+    (run (logWidth 2 0) (decider.program ans) 16 (.init [])).map (·.1) = some 1 := by
+  decide
 
 /-- The decider also decides at any word size above its threshold, which it may read, and element
 distinctness for small entries is in polynomial time. -/

@@ -14,16 +14,22 @@ public import Cslib.Foundations.Relation.RelatesInSteps
 # Word RAMs
 
 A *word RAM* is a random-access machine whose registers and memory cells hold `w`-bit words, and
-whose every instruction costs one unit of time. Algorithms are analysed for word sizes `w` of
-order `log n`, enough for a word to address the input [Cormen et al., Section 2.2][CLRS2009]
-[Fredman and Willard][FredmanWillard1993] [Hagerup][Hagerup1998]. This is the model in which
-algorithm papers state running times. It differs from the random-access machines of Cook and
-Reckhow [Cook and Reckhow][CookReckhow1973] (`Cslib.RAM`), whose registers hold unbounded numbers
-and whose instructions are charged the lengths of their operands: here the numbers are bounded,
-so unit cost is sound.
+whose every instruction costs one unit of time. The word size must accommodate the input and
+its addresses; it may exceed `O(log n)` when input words do
+[Cormen et al., Section 2.2][CLRS2009] [Fredman and Willard][FredmanWillard1993]
+[Hagerup][Hagerup1998]. This file chooses an instruction-count model, including unit-cost
+multiplication, division and shifts. It does not establish a bit-cost simulation.
 
-This file defines the machine and its runs. Time-bounded decision, with the word size tied to the
-input size, is `Cslib.WordRAM.DecidableInTime`; structured programs (`Cslib.WordRAM.Code`) compile
+The existing `Cslib.RAM`, inspired by Cook and Reckhow [Cook and Reckhow][CookReckhow1973], has
+unbounded natural-number registers and supports both unit and logarithmic cost measures.
+`Cslib.WordRAM` instead supplies bounded, faulting operational semantics, a finite named register
+file with indirect memory, and a different input and halting convention. Changing a cost measure
+alone does not change these operational choices. No simulation between these models or Turing
+machines is proved here.
+
+This file defines the machine and its runs. Time-bounded decision, parameterized by an encoding
+and a word-size threshold, is `Cslib.WordRAM.DecidableInTime`; structured programs
+(`Cslib.WordRAM.Code`) compile
 to the flat programs of this file with the same instruction counts.
 
 ## The model
@@ -38,6 +44,8 @@ to the flat programs of this file with the same instruction counts.
   output.
 * A run starts at instruction `0` with all registers `0`, the input length at address `0` and the
   input words at addresses `1, …, n` (`Cslib.WordRAM.State.init`); all other cells hold `0`.
+  Installing this initial input and extracting the halting output are uncharged; executing the
+  final `halt` costs one instruction.
 * On a run from an input whose length and words fit a word (`Cslib.WordRAM.InputFits`), an
   instruction that would write a number of more than `w` bits into a register *faults*, and so
   does running off the end of the program. A fault is not a result: only runs that halt count.
@@ -56,10 +64,9 @@ The definitions are adapted from the Lean formalization accompanying
   succeeds identically at every larger word size (`Cslib.WordRAM.Executes.mono_width`).
   Algorithms that use arithmetic modulo `2 ^ w` [Hagerup][Hagerup1998] must reduce explicitly,
   for instance with the word size and half-word arithmetic; this is not formalized here.
-* Words are unsigned, as in most word-RAM definitions [Hagerup][Hagerup1998]. Subtraction is
-  truncated, and division and remainder by zero follow Lean's conventions `x / 0 = 0` and
-  `x % 0 = x`; each of these conventions costs a constant number of instructions to reproduce
-  with any other, so time bounds are unaffected.
+* Words are unsigned [Hagerup][Hagerup1998]. Subtraction is truncated, and division and remainder
+  by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. These are part of this machine's
+  semantics; transfer to a model with other conventions requires a separate simulation.
 * The instructions are the arithmetic, bitwise and shift operations of the standard word RAM
   [Hagerup][Hagerup1998], with an instruction reading the word size, which word-RAM algorithms
   may use [Fredman and Willard][FredmanWillard1993].

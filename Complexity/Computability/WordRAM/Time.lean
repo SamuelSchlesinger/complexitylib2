@@ -14,35 +14,44 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Time-bounded decision on the word RAM
 
-A word-RAM algorithm is analysed for word sizes `w` of order `log n`, where `n` is the size of the
-instance [Cormen et al., Section 2.2][CLRS2009]. Two ways of making this precise are useful, and
-the first implies the second.
+These predicates count instructions of the word RAM, with an explicit input encoding, time
+bound and word-size parameter. A word must accommodate the input and its addresses
+[Cormen et al., Section 2.2][CLRS2009]. Two contracts are useful, and the first specializes to the
+second above its threshold.
 
 * **Uniform decision** (`Cslib.WordRAM.Program.DecidesInTime`,
   `Cslib.WordRAM.DecidableInTime`): one program answers correctly within the time bound at
   *every* word size `w ≥ bits a` that accommodates the input words, as in the transdichotomous
-  model of [Fredman and Willard][FredmanWillard1993]. This is the strong form, in which upper
-  bounds should be proved.
+  model of [Fredman and Willard][FredmanWillard1993]. The same time bound must work at all these
+  widths, even for a program that reads the word size.
 * **Decision at a given word size** (`Cslib.WordRAM.Program.DecidesInTimeAt`,
-  `Cslib.WordRAM.DecidableInTimeAt`): one program answers correctly at the word size `width a`,
-  which it may read (`Cslib.WordRAM.Op.width`). This is the weak form, against which lower bounds
-  should be stated: `Cslib.WordRAM.DecidableInTime.decidableInTimeAt` shows that a uniform
-  decider decides at every word size above its threshold.
+  `Cslib.WordRAM.DecidableInTimeAt`): one program answers correctly at the word size `width a`
+  whenever the input fits. The program may read that word size (`Cslib.WordRAM.Op.width`).
+  `Cslib.WordRAM.DecidableInTime.decidableInTimeAt` gives this conditional contract from a
+  uniform decider at every word size above its threshold.
 
 For a program that does not read the word size, answering correctly at one word size implies
 answering correctly at every larger one (`Cslib.WordRAM.Program.Answers.mono_width`), so for such a
 program the uniform form asks for correctness only at the least word size `w ≥ bits a` that
 accommodates the input words.
 
-The word size of the weak form should depend on an instance only through its size: a program can
-read the word size, so a word size that depends on an instance in any other way passes
-information about it to the program.
+The prescribed-width contract does not require the input to fit: if no instance fits, every
+predicate satisfies it without a successful run. It also permits arbitrary `width a`, which can
+pass instance-dependent advice through the width instruction. Thus its unrestricted converse to
+uniform decision is false, even when every prescribed width fits. An interpretation as a usual
+complexity class needs an input-fit guarantee and a specified size-based width convention;
+converting it to another model also needs computability and resource bounds for selecting that
+width and for the input encoding. Those assumptions are not bundled in these low-level predicates.
 
 The classes `Cslib.WordRAM.LinearTime` and `Cslib.WordRAM.PolynomialTime` use the uniform form,
 with the threshold a constant multiple `k (⌊log₂ n⌋ + 1)` of the number of binary digits of the
-size `n`: the time bound must hold at every larger word size as well. They therefore imply, and
-may be strictly stronger than, linear or polynomial time at a word size of order `log n`; an
-algorithm whose time grows with the word size beyond the threshold is not covered.
+size `n`, taking one digit at zero: the time bound must hold at every larger width that fits the
+input. The threshold is a lower bound, not an input-fit certificate. For example, singleton
+inputs `[m]` have constant word-count size but unbounded bit length. To obtain a logarithmic-width
+specialization, supply a fixed `k'` with `InputFits (logWidth k' (size a)) (encode a)` for every
+instance and increase the threshold to the maximum of the two constants. The element-distinctness
+client supplies such a certificate. Without it these classes do not assert execution with
+`O(log(size a))`-bit words. No identification with Turing-machine polynomial time is proved here.
 
 ## Main definitions
 
@@ -53,8 +62,8 @@ algorithm whose time grows with the word size beyond the threshold is not covere
 * `Cslib.WordRAM.Program.DecidesInTimeAt`, `Cslib.WordRAM.DecidableInTimeAt`: decision at a given
   word size.
 * `Cslib.WordRAM.logWidth`: the word size `k (⌊log₂ n⌋ + 1)`.
-* `Cslib.WordRAM.LinearTime`, `Cslib.WordRAM.PolynomialTime`: linear and polynomial time,
-  uniformly at every word size of at least a constant multiple of the length of the size.
+* `Cslib.WordRAM.LinearTime`, `Cslib.WordRAM.PolynomialTime`: linear and polynomial instruction
+  bounds, uniformly at every fitting word size above a logarithmic lower threshold.
 
 ## Main results
 
@@ -118,14 +127,16 @@ end Program.Answers
 
 /-- **Uniform time-bounded decision.** The program `p` decides `A` on instances encoded by
 `encode`: for every instance `a` and every word size `w ≥ bits a` that accommodates the input
-words, it answers whether `a ∈ A` within `time a` instructions. Runs that fault do not count. -/
+words, it answers whether `a ∈ A` within `time a` instructions. Runs that fault do not count.
+The input need not fit at the threshold itself. -/
 def Program.DecidesInTime (p : Program r) (encode : α → List ℕ) (A : Set α)
     (time bits : α → ℕ) : Prop :=
   ∀ a w, bits a ≤ w → InputFits w (encode a) → p.Answers w (encode a) (a ∈ A) (time a)
 
 /-- **Decision at a given word size.** The program `p` decides `A` on instances encoded by
-`encode` when run at word size `width a`, provided the input words fit it; the program may read
-the word size. -/
+`encode` when run at word size `width a`, provided the input words fit it. This is vacuous on
+instances that do not fit; the program may read the unrestricted, instance-dependent word size.
+No input-fit or size-only width-selection guarantee is included. -/
 def Program.DecidesInTimeAt (p : Program r) (encode : α → List ℕ) (A : Set α)
     (time width : α → ℕ) : Prop :=
   ∀ a, InputFits (width a) (encode a) → p.Answers (width a) (encode a) (a ∈ A) (time a)
@@ -135,7 +146,8 @@ def Program.DecidesInTimeAt (p : Program r) (encode : α → List ℕ) (A : Set 
 def DecidableInTime (A : Set α) (encode : α → List ℕ) (time bits : α → ℕ) : Prop :=
   ∃ r, ∃ p : Program r, p.DecidesInTime encode A time bits
 
-/-- Some program decides `A` within `time a` instructions at the word size `width a`. -/
+/-- Some program decides `A` within `time a` instructions at the word size `width a`, conditional
+on the input fitting. This permits the vacuity and width advice of `Program.DecidesInTimeAt`. -/
 def DecidableInTimeAt (A : Set α) (encode : α → List ℕ) (time width : α → ℕ) : Prop :=
   ∃ r, ∃ p : Program r, p.DecidesInTimeAt encode A time width
 
@@ -218,13 +230,16 @@ theorem logWidth_mono {k k' n n' : ℕ} (hk : k ≤ k') (hn : n ≤ n') :
 
 /-- **Linear time.** A single program decides `A` within `c (size a + 1)` instructions at every
 word size of at least `k` times the number of binary digits of `size a` that accommodates the
-input words, for some constants `c` and `k`. -/
+input words, for some constants `c` and `k`. This does not assert that inputs fit at any
+logarithmic word size. -/
 def LinearTime (A : Set α) (encode : α → List ℕ) (size : α → ℕ) : Prop :=
   ∃ c k, DecidableInTime A encode (fun a => c * (size a + 1)) (fun a => logWidth k (size a))
 
 /-- **Polynomial time.** A single program decides `A` within `T (size a)` instructions for a
 polynomially bounded `T`, at every word size of at least `k` times the number of binary digits of
-`size a` that accommodates the input words, for some constant `k`. -/
+`size a` that accommodates the input words, for some constant `k`. This does not assert that
+inputs fit at any logarithmic word size or identify this class with Turing-machine polynomial
+time. -/
 def PolynomialTime (A : Set α) (encode : α → List ℕ) (size : α → ℕ) : Prop :=
   ∃ T, PolynomiallyBounded T ∧ ∃ k, DecidableInTime A encode (fun a => T (size a))
     (fun a => logWidth k (size a))
