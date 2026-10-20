@@ -9,9 +9,11 @@ module
 
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Cycle
 public import Mathlib.Data.Nat.ModEq
+public import Mathlib.Data.Set.Card
+import Mathlib.Tactic.Linarith
 
 /-!
-# Phases and first hitting times in finite functional graphs
+# Phases, first hitting times, and visit schedules in finite functional graphs
 
 Past the transient, two times give the same state exactly when they agree modulo the cycle
 length (`iterate_eq_iterate_iff_modEq`). Given a linear order on the states, every state past
@@ -24,6 +26,11 @@ representative, first after the transient of `x` and the phase difference (`cycl
 A transient target is reached only at the difference of the transient depths. In both cases the
 time is below the number of states.
 
+After the first visit to a target, subsequent visits form an arithmetic progression with step
+`Function.minimalPeriod f y`, where period zero makes a single visit a special case of the same
+formula (`visit_schedule_of_first`, `visit_schedule`), and the number of visits up to a deadline
+`T` is given by `arithmeticProgressionCount` (`visit_count_of_first`).
+
 The state type may live in any universe; it is finite, and representatives use a linear order.
 
 ## Main definitions
@@ -31,6 +38,7 @@ The state type may live in any universe; it is finite, and representatives use a
 * `Cslib.FunctionalGraph.cyclicDistance`: the phase difference from `x` to a target on its cycle.
 * `Cslib.FunctionalGraph.reaches`: whether the orbit of `x` reaches `y`, in closed form.
 * `Cslib.FunctionalGraph.hittingTime`: the first hitting time, in closed form.
+* `Cslib.FunctionalGraph.arithmeticProgressionCount`: count of progression terms up to a deadline.
 
 ## Main results
 
@@ -40,10 +48,15 @@ The state type may live in any universe; it is finite, and representatives use a
 * `Cslib.FunctionalGraph.cyclic_first_hit`: the first hit of a periodic target.
 * `Cslib.FunctionalGraph.reaches_iff`, `Cslib.FunctionalGraph.hittingTime_spec`: reachability
   and the exact first hitting time.
+* `Cslib.FunctionalGraph.visit_schedule_of_first`,
+  `Cslib.FunctionalGraph.visit_before_deadline_of_first`,
+  `Cslib.FunctionalGraph.visit_schedule`: complete schedules of visits.
+* `Cslib.FunctionalGraph.arithmeticProgressionCount_spec`,
+  `Cslib.FunctionalGraph.visit_count_of_first`: counting visits up to a deadline.
 
 ## References
 
-* Adapted from `lean/Proofs/{HittingTimes,Navigation}.lean` in
+* Adapted from `lean/Proofs/{HittingTimes,Navigation,VisitSchedules,VisitCounts}.lean` in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/
@@ -253,5 +266,114 @@ theorem hittingTime_spec [Fintype α] (x y : α) (h : reaches f x y = true) :
     · by_contra hle
       exact hfirst.2 _ (by omega) hty
   exact ⟨hfirst.1, hfirst.2, he ▸ ht⟩
+
+/-! ### Complete visit schedules and bounded visit counts -/
+
+omit [Finite α] [LinearOrder α] in
+/-- After the first visit to `y` at time `d`, subsequent visits form an arithmetic progression
+with step `Function.minimalPeriod f y`, where period zero makes a single visit a special case of
+the same formula. -/
+theorem visit_schedule_of_first (x y : α) (d : ℕ)
+    (hd : f^[d] x = y) (hfirst : ∀ j < d, f^[j] x ≠ y) (t : ℕ) :
+    f^[t] x = y ↔ ∃ k, t = d + k * Function.minimalPeriod f y := by
+  constructor
+  · intro ht
+    have hle : d ≤ t := by by_contra h; exact hfirst t (by lia) ht
+    have hp : Function.IsPeriodicPt f (t - d) y := by
+      change f^[t - d] y = y
+      rw [← hd, ← Function.iterate_add_apply, Nat.sub_add_cancel hle]
+      exact ht.trans hd.symm
+    obtain ⟨k, hk⟩ := Function.isPeriodicPt_iff_minimalPeriod_dvd.mp hp
+    exact ⟨k, by rw [Nat.mul_comm] at hk; lia⟩
+  · rintro ⟨k, rfl⟩
+    rw [Nat.add_comm, Function.iterate_add_apply, hd]
+    exact (Function.isPeriodicPt_minimalPeriod f y).const_mul k
+
+omit [Finite α] [LinearOrder α] in
+/-- When `d` is the first visit time to `y`, a visit occurs on or before `T` iff `d ≤ T`. -/
+theorem visit_before_deadline_of_first (x y : α) (d : ℕ)
+    (hd : f^[d] x = y) (hfirst : ∀ j < d, f^[j] x ≠ y) (T : ℕ) :
+    (∃ t ≤ T, f^[t] x = y) ↔ d ≤ T := by
+  constructor
+  · rintro ⟨t, ht, hy⟩
+    obtain ⟨k, rfl⟩ := (visit_schedule_of_first f x y d hd hfirst t).mp hy
+    lia
+  · exact fun h => ⟨d, h, hd⟩
+
+/-- Complete visit schedule from `x` to `y` in terms of `reaches`, `hittingTime`, and
+`Function.minimalPeriod`. -/
+theorem visit_schedule (x y : α) (t : ℕ) :
+    f^[t] x = y ↔ reaches f x y = true ∧
+      ∃ k, t = hittingTime f x y + k * Function.minimalPeriod f y := by
+  let _ := Fintype.ofFinite α
+  constructor
+  · intro ht
+    have hr := (reaches_iff f x y).mpr ⟨t, ht⟩
+    have hd := hittingTime_spec f x y hr
+    exact ⟨hr, (visit_schedule_of_first f x y _ hd.1 hd.2.1 t).mp ht⟩
+  · rintro ⟨hr, ht⟩
+    have hd := hittingTime_spec f x y hr
+    exact (visit_schedule_of_first f x y _ hd.1 hd.2.1 t).mpr ht
+
+/-- Number of progression terms `d + k * p` in `{0, ..., T}`, with `p = 0` denoting a singleton
+visit at `d`. -/
+def arithmeticProgressionCount (d p T : ℕ) : ℕ :=
+  if T < d then 0 else if p = 0 then 1 else (T - d) / p + 1
+
+/-- `arithmeticProgressionCount d p T` counts the times `t ≤ T` of the form `d + k * p`. -/
+theorem arithmeticProgressionCount_spec (d p T : ℕ) :
+    Set.ncard {t : ℕ | t ≤ T ∧ ∃ k, t = d + k * p} =
+      arithmeticProgressionCount d p T := by
+  classical
+  have hset : {t : ℕ | t ≤ T ∧ ∃ k, t = d + k * p} =
+      ↑((Finset.range (T + 1)).filter (fun t => ∃ k, t = d + k * p)) := by
+    ext t
+    simp only [Set.mem_ofPred_eq, Finset.mem_coe, Finset.mem_filter, Finset.mem_range,
+      Nat.lt_succ_iff]
+  rw [hset, Set.ncard_coe_finset]
+  unfold arithmeticProgressionCount
+  split_ifs with hT hp
+  · have he : (Finset.range (T + 1)).filter (fun t => ∃ k, t = d + k * p) = ∅ := by
+      apply Finset.eq_empty_iff_forall_notMem.mpr
+      intro t ht
+      obtain ⟨ht, k, rfl⟩ := Finset.mem_filter.mp ht
+      have hlt := Finset.mem_range.mp ht
+      lia
+    rw [he, Finset.card_empty]
+  · have he : (Finset.range (T + 1)).filter (fun t => ∃ k, t = d + k * p) = {d} := by
+      ext t
+      simp only [hp, Nat.mul_zero, Nat.add_zero, exists_const, Finset.mem_filter,
+        Finset.mem_range, Finset.mem_singleton]
+      lia
+    rw [he, Finset.card_singleton]
+  · have hpos : 0 < p := by lia
+    have he : (Finset.range (T + 1)).filter (fun t => ∃ k, t = d + k * p) =
+        (Finset.range ((T - d) / p + 1)).image (fun k => d + k * p) := by
+      ext t
+      simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_image]
+      constructor
+      · rintro ⟨ht, k, rfl⟩
+        refine ⟨k, ?_, rfl⟩
+        have hh : k ≤ (T - d) / p := (Nat.le_div_iff_mul_le hpos).mpr (by lia)
+        lia
+      · rintro ⟨k, hk, rfl⟩
+        have hh : k * p ≤ T - d :=
+          (Nat.le_div_iff_mul_le hpos).mp (show k ≤ (T - d) / p by lia)
+        exact ⟨by lia, k, rfl⟩
+    rw [he, Finset.card_image_of_injective _ (show Function.Injective
+      (fun k : ℕ => d + k * p) from by intro a b hab; nlinarith), Finset.card_range]
+
+omit [Finite α] [LinearOrder α] in
+/-- Number of visits from `x` to `y` up to time `T` when `d` is the first visit time. -/
+theorem visit_count_of_first (x y : α) (d : ℕ)
+    (hd : f^[d] x = y) (hfirst : ∀ j < d, f^[j] x ≠ y) (T : ℕ) :
+    Set.ncard {t : ℕ | t ≤ T ∧ f^[t] x = y} =
+      arithmeticProgressionCount d (Function.minimalPeriod f y) T := by
+  classical
+  have he : {t : ℕ | t ≤ T ∧ f^[t] x = y} =
+      {t : ℕ | t ≤ T ∧ ∃ k, t = d + k * Function.minimalPeriod f y} := by
+    ext t
+    simp only [Set.mem_ofPred_eq, visit_schedule_of_first f x y d hd hfirst t]
+  rw [he, arithmeticProgressionCount_spec]
 
 end Cslib.FunctionalGraph

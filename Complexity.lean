@@ -104,6 +104,7 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Scan
 public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
 public import Complexity.Computability.Circuit.Boolean.Iteration.SharedDictionary
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseDisplacement
+public import Complexity.Computability.Circuit.Boolean.Iteration.SparseNavigation
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Target
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
