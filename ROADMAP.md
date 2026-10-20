@@ -47,10 +47,14 @@ Extend these with counting reductions and further oracle results, preserving exa
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
-reduction closure, unary-indexed target normalization, and finite multiple-target robustness.
+reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
+multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
+(Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
+accepting/rejecting binary target lists. Original targets may be zero; neither index must be
+computable ([WPP.TwoSided](Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean)).
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
 MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
-polynomial-family multiple-target robustness, and WPP/LWPP oracle lowness.
+and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
@@ -60,10 +64,14 @@ dyadic denominator. The requested rate need not be computable: the construction
 uses a fixed dominating polynomial. The explicit construction uses `12q(n)` majority
 trials and denominator exponent `12q(n)p(n)`; see
 [AWPP amplification](Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean).
-Every fixed positive SBP gap exponent is available, and intersecting an SBP language
-with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
+[Uniform SBP amplification](Complexity/Computability/Complexity/Classes/SBP/Amplification.lean)
+achieves multiplicative gap `2^r(x)` for every polynomially bounded requested exponent,
+with a #P count and positive binary-output polynomial-time threshold. Intersecting an SBP
+language with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
 The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
-already proves SBP ⊆ AM. AWPP PP-lowness remains an approximate-counting milestone.
+already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
+provide a counting-algebra foundation for future oracle simulations; AWPP PP-lowness
+remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
@@ -174,13 +182,23 @@ of the handover. The work below remains available for subsequent, independently 
      inside the interpreted domain, and native formula/sentence truth-preserving pullback.
      [Ordered/Constants](Complexity/Logics/FirstOrder/Ordered/Constants.lean) supplies valid
      target `0`/`1`/`max` for every canonical structure with `n ≥ 2`.
-     **Next milestones:** lexicographic tuple numbering and numeric lifting; the ordered
-     logspace encoding bridge; then the projection and NL/P completeness results.
+     **Full-domain tuple-order prerequisite completed (#43):**
+     [Ordered/Tuple](Complexity/Logics/FirstOrder/Ordered/Tuple.lean) gives the arbitrary-base
+     lexicographic rank bijection and exact first-difference order, reusing the existing
+     colexicographic index by coordinate reversal.
+     [Ordered/TupleInterpretation](Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean)
+     defines quantifier-free strict/weak order and the canonical full-domain constants, with
+     proved unique selection and ranks `0`, `1`, `n^k - 1` for positive dimension.
+     **Next milestones:** successor and arbitrary-base BIT lifting; numeric-preserving
+     composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
-     (Immerman, Remark 1.32). A general constructor supplying numeric definitions for every
-     tuple dimension still needs the lifting theorem of Exercise 1.33; base-`n` tuples cannot
-     simply be identified with concatenated binary strings.
+     (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
+     tuple universe in every dimension still needs Exercise 1.33(3); base-`n` tuples
+     cannot simply be identified with concatenated binary strings. The full-domain hypothesis
+     matters: the paragraph after Exercise 1.33 warns that canonical BIT on an arbitrary
+     definable restricted domain need not be first-order definable. Restricted-domain numeric
+     preservation therefore requires its own explicit definitions and certificate.
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a

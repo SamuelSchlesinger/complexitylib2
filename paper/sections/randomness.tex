@@ -232,12 +232,27 @@ the numeric value of the resulting count is asserted. Variable certificate
 lengths are padded with false bits to preserve counts exactly. The signed-product
 verifier uses $r(x)(p_+(|x|)+p_-(|x|))$ certificate bits before final padding,
 where $p_+$ and $p_-$ are the two original counting-certificate polynomials.
-These uniform verifier closure results support the AWPP error reduction below.
+For $f\in\#\cc{P}$, the same unary exponent condition gives
+$x\mapsto f(x)^{r(x)}\in\#\cc{P}$: an all-rows verifier uses exactly
+$r(x)p(|x|)$ certificate bits before padding, including zero rows and zero row width.
+More generally, if $f(x,i)$ is jointly in $\#\cc{P}$ (respectively $\cc{GapP}$)
+under the pair encoding with unary index $i$, and $r(x)$ is polynomial-time with unary output,
+then $x\mapsto\prod_{i<r(x)}f(x,i)$ belongs to the same class. For a $\#\cc{P}$
+certificate polynomial $p$, the construction pads each indexed certificate to width
+$p(2|x|+1+r(x))$ and uses $r(x)$ times that width before final padding. The empty
+product is one; zero factors and signed GapP factors are allowed. The GapP proof expands
+over Boolean choices of positive and negative counts, using the uniform $\#\cc{P}$
+product and an efficiently computed parity sign. This supplies a counting-algebra
+foundation; oracle lowness is not established.
+These uniform verifier closure results support the gap amplification below.
 \citep{FennerFortnowKurtz1994}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{49}{Cslib.Complexity.SharpP.of_polyTime_length}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{61}{Cslib.Complexity.SharpP.sum_bits_mem}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{83}{Cslib.Complexity.GapP.sum_bits_mem}
 \declat{8e76ae85c0544966f2c2d074a1610d31da405c3b}{Complexity/Computability/Complexity/Classes/SharpP/Aggregation.lean}{175}{Cslib.Complexity.GapP.pow_mem_polyTime}
+\declat{56e55d873fe57730bf723d7c56af0b6c16fc4d30}{Complexity/Computability/Complexity/Classes/SharpP/Power.lean}{69}{Cslib.Complexity.SharpP.pow_mem_polyTime}
+\declat{d80cc187edf729390f830cc2a44fa508168e9587}{Complexity/Computability/Complexity/Classes/SharpP/Products.lean}{92}{Cslib.Complexity.SharpP.prod_range_mem}
+\declat{d80cc187edf729390f830cc2a44fa508168e9587}{Complexity/Computability/Complexity/Classes/SharpP/Products.lean}{139}{Cslib.Complexity.GapP.prod_range_mem}
 \end{result}
 
 \begin{result}
@@ -415,11 +430,9 @@ nonzero unary-input target $f(k(x))$ at a polynomial-time unary-computable index
 is normalized to $\prod_{i\le p(|x|)}f(i)$ by multiplying $g(x)$ by the binary-integer list
 product $\prod_{i\le p(|x|),\,i\ne k(x)}f(i)$, yielding reduction closure when $k(x)=|r(x)|$.
 These verifier-based statements follow the definitions of Fenner--Fortnow--Kurtz
-and the finite-family and known-index cases of Hemaspaandra et al.; they do not
-establish counting-machine characterizations, oracle lowness, or polynomial-family
-multiple-target robustness ($\cc{Poly\text{-}LWPP}=\cc{LWPP}$ and
-$\cc{Poly\text{-}WPP}=\cc{WPP}$) when the accepting target index is not
-polynomial-time computable from the input.
+and the finite-family and known-index cases of Hemaspaandra et al. Full polynomial-family
+robustness with an unknown accepting index is stated next. Counting-machine
+characterizations and oracle lowness are separate.
 \citep{FennerFortnowKurtz1994}\citep[Definitions 2.4--2.5 and Section 3]{HemaspaandraEtAl2018}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{95}{Cslib.Complexity.SPP_subset_LWPP}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{100}{Cslib.Complexity.LWPP_subset_WPP}
@@ -443,6 +456,59 @@ polynomial-time computable from the input.
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{358}{Cslib.Complexity.mem_LWPP_of_polyTime_index}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Complexity/Classes/WPP.lean}{411}{Cslib.Complexity.PolyTimeReducible.mem_LWPP}
 \declat{f2409a4a13c9e6b67a22ede3eb3ef963ddf9401c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Int/Binary.lean}{294}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_prod}
+\end{result}
+
+
+\begin{result}
+\subsection{Polynomial-family wide-gap robustness}
+For every fixed injective encoding, polynomial-size accepting and rejecting target families
+preserve the verifier-based wide-gap classes:
+\[
+\cc{(Poly,Poly)\text{-}WPP}=\cc{WPP},\qquad
+\cc{(Poly,Poly)\text{-}LWPP}=\cc{LWPP}.
+\]
+Precisely, let $g\in\cc{GapP}$ and let $Y(x),R(x)$ be uniformly polynomial-time computable
+lists of signed binary integers. Suppose their sets of values are disjoint at each input and
+\[
+x\in A\Rightarrow g(x)\in Y(x),\qquad
+x\notin A\Rightarrow g(x)\in R(x).
+\]
+Then $A\in\cc{WPP}$. If both lists are computed only from unary input length, and are
+disjoint at every natural length including zero, then $A\in\cc{LWPP}$.
+The list-output bounds charge both the number of targets and their binary lengths.
+Neither target index needs to be computable. Original targets may be negative, zero, or
+repeated; zero is allowed on either side, provided the two families remain disjoint.
+An empty list excludes the corresponding language side at that input, and empty products
+have value one. Conversely, singleton accepting targets and rejection list $[0]$ recover
+ordinary witnesses.
+
+The indexed forms use uniform FP functions $y(x,i),r(x,j)$, or $y(n,i),r(n,j)$ for LWPP,
+with unary indices and two independently chosen counts computed in polynomial time with unary output.
+Disjointness concerns the used index ranges. These forms include the standard positive
+polynomial-size families, after translating their one-based indices.
+The construction follows Hemaspaandra, Hemaspaandra, Spakowski and Watanabe: the new gap
+\[
+h(x)=\prod_{r\in R(x)}(r-g(x))
+\]
+vanishes on rejection. Its accepting targets are
+$\prod_{r\in R(x)}(r-y)$ for $y\in Y(x)$; disjointness makes these products nonzero.
+Uniform GapP closure for this product of differences and polynomial-time binary integer
+products reduce to the
+one-sided target theorem.\citep[Definition 3.8, Corollary 3.11 and Theorem 3.12]{HemaspaandraEtAl2018}
+The proof is Appendix~A of the full version, arXiv:1711.01250.
+
+In particular, fixing the rejection list to $[0]$ yields
+$\cc{Poly\text{-}WPP}=\cc{WPP}$ and $\cc{Poly\text{-}LWPP}=\cc{LWPP}$, with nonzero
+accepting targets and an unknown accepting index.\citep[Theorems 3.1 and 3.7]{HemaspaandraEtAl2018}
+The underlying counting algebra credits Fenner--Fortnow--Kurtz.\citep{FennerFortnowKurtz1994}
+Oracle lowness and counting-machine characterizations remain separate.
+\declat{83f5e8ab8dcde006b3fb28bbd72e9ba837e23fef}{Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean}{163}{Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets}
+\declat{83f5e8ab8dcde006b3fb28bbd72e9ba837e23fef}{Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean}{185}{Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets}
+\declat{83f5e8ab8dcde006b3fb28bbd72e9ba837e23fef}{Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean}{131}{Cslib.Complexity.mem_WPP_of_disjoint_indexed_targets}
+\declat{83f5e8ab8dcde006b3fb28bbd72e9ba837e23fef}{Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean}{147}{Cslib.Complexity.mem_LWPP_of_disjoint_indexed_targets}
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{239}{Cslib.Complexity.mem_WPP_iff_exists_polyTime_targets}
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{259}{Cslib.Complexity.mem_LWPP_iff_exists_polyTime_targets}
+\declat{3910fa96e6b22221363c38f3b3f0f33c49d20650}{Complexity/Computability/Complexity/Classes/WPP/Robustness.lean}{118}{Cslib.Complexity.GapP.prod_sub_mem}
 \end{result}
 
 
@@ -515,14 +581,16 @@ of Fenner's amplification method.\citep{Fenner2003}
 AWPP is closed under intersection, union, difference and symmetric difference
 of two languages over the same encoding, as well as complement.
 
-For SBP, every fixed integer $m>0$ admits a \#P witness $f$ and a positive
-binary-output polynomial-time natural threshold $k$ with
+For SBP, every exponent $r(x)$ polynomially bounded in encoded input length admits
+one \#P witness $f$ and a positive binary-output polynomial-time natural threshold $k$ with
 \[
 x\in A\Rightarrow k(x)\leq f(x),\qquad
-x\notin A\Rightarrow 2^m f(x)<k(x).
+x\notin A\Rightarrow 2^{r(x)} f(x)<k(x).
 \]
-This uses fixed powers as in Watson's gap strengthening; $m$ is fixed
-independently of the input.\citep[Section 1.1]{Watson2012}
+A fixed length polynomial $q$ dominating $r$ gives $q(|x|)+1$ repetitions, raising
+both the original count and threshold to that power. The request need not be computable.
+This uniform consequence of Watson's powering argument strengthens the multiplicative gap;
+it is not a normalized additive error bound.\citep[Sections 1.1 and 3]{Watson2012}
 Also $A\in\cc{SBP}$ and $B\in\cc{BPP}$ imply $A\cap B\in\cc{SBP}$,
 using the existing input-dependent BPP error reduction and a dyadic bound on
 \#P counts. This does not establish intersection closure for two SBP languages.
@@ -535,7 +603,7 @@ characterizations remain open formalization work.
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{191}{Cslib.Complexity.union_mem_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{196}{Cslib.Complexity.diff_mem_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{200}{Cslib.Complexity.symmDiff_mem_AWPP}
-\declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{171}{Cslib.Complexity.exists_SBP_gap_pow}
+\declat{56e55d873fe57730bf723d7c56af0b6c16fc4d30}{Complexity/Computability/Complexity/Classes/SBP/Amplification.lean}{64}{Cslib.Complexity.exists_SBP_gap_pow_polyBounded}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/SBP.lean}{188}{Cslib.Complexity.inter_mem_SBP_of_mem_BPP}
 \end{result}
 
