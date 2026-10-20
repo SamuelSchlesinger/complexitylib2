@@ -531,10 +531,16 @@ space bounds. Further class-level work needs resource certificates for the actua
   instruction counts, [allocation and arrays](Complexity/Computability/WordRAM/Allocation.lean) and
   a [linear-time element-distinctness client](Complexity/Algorithms/WordRAM/ElementDistinctness.lean)
   whose promised inputs provably fit at that threshold. The generic classes alone do not supply
-  this input-fit guarantee. Open: quantitative simulations to the existing
-  [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) (which supports unit and logarithmic cost)
-  and Turing machines, starting with the additive fragment under logarithmic cost
-  ([#81](https://github.com/SamuelSchlesinger/complexitylib2/issues/81)). The unrestricted converse
+  this input-fit guarantee. The [additive-memory compiler](Complexity/Computability/WordRAM/RAM.lean)
+  now forward-simulates successful fitting runs in the existing
+  [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) with logarithmic cost
+  `8 * (bitLength (r + 5) + 1) * (t + 1) * (w + 1)`, including its two register initializers
+  and final output copy/jump, from an explicitly supplied padded input. Open: the charged
+  rearrangement of a fixed length-bearing input format into this padded layout
+  ([#84](https://github.com/SamuelSchlesinger/complexitylib2/issues/84)), its composition with the
+  compiler and the bounded-universe element-distinctness cost corollary
+  ([#81](https://github.com/SamuelSchlesinger/complexitylib2/issues/81)), and wider-fragment or
+  Turing-machine simulations. The unrestricted converse
   from prescribed-width to uniform decision is false: width can supply instance-dependent advice.
   A useful conversion must specify an input-fit guarantee, a size-based width-selection procedure
   with computability and resource bounds, encoding conventions, and simulation overhead. Transfer
