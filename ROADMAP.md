@@ -189,8 +189,14 @@ of the handover. The work below remains available for subsequent, independently 
      [Ordered/TupleInterpretation](Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean)
      defines quantifier-free strict/weak order and the canonical full-domain constants, with
      proved unique selection and ranks `0`, `1`, `n^k - 1` for positive dimension.
-     **Next milestones:** successor and arbitrary-base BIT lifting; numeric-preserving
-     composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
+     **Full-domain successor prerequisite completed (#54):**
+     [Ordered/TupleSuccessor](Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean)
+     proves that the carry formula holds exactly at consecutive arbitrary-base lexicographic
+     ranks, with explicit zero-dimension and maximum/no-wrap boundaries. Its generic compiler
+     preserves quantifier-freeness when the supplied source successor is quantifier-free.
+     The canonical `≤`/BIT instance uses a universal adjacency formula; no unconditional
+     quantifier-free successor claim is made for this basis.
+     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
@@ -482,9 +488,12 @@ space bounds. Further class-level work needs resource certificates for the actua
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
   linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
-* Reingold's theorem: [USTCON ∈ L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
-  is proved for the adjacency-matrix encoding; an edge-list variant by a logspace reduction, a
-  definition of SL with SL = L, and sharing the unary-header injectivity lemma with TreeEval remain;
+* Reingold's theorem: [USTCON ∈ L and SL = L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
+  are proved for the adjacency-matrix encoding (with `SL` defined by logspace many-one reducibility
+  to `USTCON`, completeness of `USTCON` for `SL` and `L`, and the unary-header injectivity lemma
+  shared with `TreeEval` in [List/Basic.lean](Complexity/Foundations/Data/List/Basic.lean)); a
+  symmetric-Turing-machine model of `SL` and an edge-list variant of `USTCON` by a logspace
+  reduction remain;
 * `NL = coNL`, building on logspace composition, `NL ⊆ P` and Savitch; `PH ⊆ PSPACE` is
   already proved by evaluating quantified predicates in
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);

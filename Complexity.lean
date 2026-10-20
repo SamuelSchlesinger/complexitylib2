@@ -1293,6 +1293,7 @@ public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
+public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
 public import Complexity.Logics.FirstOrder.Problems.ColoringReduction

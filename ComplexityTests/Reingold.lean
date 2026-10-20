@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Algorithms.Reachability.Reingold
 import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 import Complexity.Foundations.Combinatorics.Expander.LowerBound
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Reingold's transformation tests
@@ -22,8 +23,10 @@ The complete graph with self-loops, of spectral expansion `0`, shows the hypothe
 
 The language `Cslib.Complexity.USTCON` is neither empty nor everything: the edge on two vertices
 connects its ends, and the empty graph on two vertices does not; `Cslib.Complexity.USTCON_mem_L`
-places it in `L`. The encoding of the edge is pinned bit by bit: the header `11 0 0 1 0`, then the
-matrix `0110`.
+places it in `L`, `Cslib.Complexity.USTCON_logSpaceComplete_SL` and
+`Cslib.Complexity.USTCON_logSpaceComplete_L` establish its completeness for `SL` and `L`, and
+`Cslib.Complexity.SL_eq_L` identifies `SL` with `L`. The encoding of the edge is pinned bit by bit:
+the header `11 0 0 1 0`, then the matrix `0110`.
 -/
 
 namespace ComplexityTests.Reingold
@@ -99,11 +102,51 @@ example : emptyInstance ∉ Complexity.USTCON := by
 example : Complexity.USTCON ∈ Complexity.L Complexity.encUSTCON :=
   Complexity.USTCON_mem_L
 
+example : Complexity.USTCON ∈ Complexity.SL Complexity.encUSTCON :=
+  Complexity.USTCON_mem_SL
+
+example : Complexity.LogSpaceComplete Complexity.SL Complexity.encUSTCON Complexity.USTCON :=
+  Complexity.USTCON_logSpaceComplete_SL
+
+example : Complexity.LogSpaceComplete Complexity.L Complexity.encUSTCON Complexity.USTCON :=
+  Complexity.USTCON_logSpaceComplete_L
+
+example {α : Type} (enc : α ↪ List Bool) : Complexity.SL enc = Complexity.L enc :=
+  Complexity.SL_eq_L
+
+example : Complexity.USTCONᶜ ∈ Complexity.SL Complexity.encUSTCON :=
+  Complexity.compl_mem_SL Complexity.USTCON_mem_SL
+
+example {m m' : ℕ} {l l' : List Bool}
+    (h : List.replicate m true ++ false :: l = List.replicate m' true ++ false :: l') :
+    m = m' ∧ l = l' :=
+  List.replicate_true_append_false_inj h
+
 /--
 info: 'Cslib.Complexity.USTCON_mem_L' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.USTCON_mem_L
+
+/--
+info: 'Cslib.Complexity.USTCON_logSpaceComplete_SL' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.USTCON_logSpaceComplete_SL
+
+/--
+info: 'Cslib.Complexity.USTCON_logSpaceComplete_L' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.USTCON_logSpaceComplete_L
+
+/--
+info: 'Cslib.Complexity.SL_eq_L' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SL_eq_L
 
 /--
 info: 'Cslib.USTCON.computableInLogSpace_decide' depends on axioms:
