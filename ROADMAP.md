@@ -41,8 +41,9 @@ polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are impl
 The next counting milestones remain the nondeterministic-machine characterizations of
 `#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
 none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
-now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and PH ⊆ P^#P ⊆ P^PP are proved. Extend these
-with counting reductions and further oracle results (P^PP ⊆ P^#P is open), preserving exact
+now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
+PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
+Extend these with counting reductions and further oracle results, preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions and elementary containments/closures.
