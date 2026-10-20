@@ -136,8 +136,11 @@ of the handover. The work below remains available for subsequent, independently 
 
    - [ ] **Ordered first-order complexity, in standard terminology.** Decided 2026-10-19: the
      library's first-order complexity follows the usual convention of descriptive complexity
-     [Immerman][Immerman1999]. Structures are ordered, on `{0, …, n-1}` with `n ≥ 1`, and FO
-     means FO(≤, BIT). First-order reductions are first-order queries on lexicographically
+     [Immerman][Immerman1999]. Structures are ordered, on `{0, …, n-1}` with `n ≥ 2`, and FO
+     means FO(≤, BIT). The lower bound follows
+     [Proviso 1.15, p. 16](https://people.cs.umass.edu/~immerman/pub/ch0_1_2.pdf):
+     the numeric constants 0 and 1 are distinct. This corrects the handoff's `n ≥ 1`.
+     First-order reductions are first-order queries on lexicographically
      ordered k-tuples, and `≤_fo`, `≤_fop` and `≤_qfp` keep their standard meanings. The
      order-free `FO.Reduces`, `FO.QFReduces` and `FO.Definable` remain as a general layer of
      interpretations without built-in order. The ordered notions get their own names. Restate
@@ -147,6 +150,16 @@ of the handover. The work below remains available for subsequent, independently 
      first-order reductions. The order-free versions cannot reach several of these: SAT → 3SAT
      appears to need an order, and SAT-hardness without order needs an empty-structure
      hypothesis.
+     The ordered query layer allows dependence on the canonical order; it does not impose
+     invariance under arbitrary permutations of the input relations. Numeric predicates are
+     computed from the universe size, not supplied as unverified input tables.
+     Implementation milestones are canonical numeric structures and constants-aware formulas;
+     lexicographic tuple numbering and numeric lifting; the ordered logspace encoding bridge;
+     then the projection and NL/P completeness results. Numeric interpretations must preserve
+     canonical BIT for arbitrary base `n`, and composition must preserve that certificate
+     (Immerman, Remark 1.32). A general constructor supplying numeric definitions for every
+     tuple dimension still needs the lifting theorem of Exercise 1.33; base-`n` tuples cannot
+     simply be identified with concatenated binary strings.
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
