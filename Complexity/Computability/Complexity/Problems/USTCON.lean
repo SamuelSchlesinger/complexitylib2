@@ -12,6 +12,7 @@ public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 public import Mathlib.Data.List.OfFn
 public import Mathlib.Data.List.GetD
 public import Mathlib.Data.Nat.Size
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Undirected s–t connectivity
@@ -32,6 +33,9 @@ machine reading its input by address can parse by counting.
 
 * `Cslib.Complexity.USTCONInstance`: instances of undirected `s`–`t` connectivity.
 * `Cslib.Complexity.USTCONInstance.graph`: the simple graph of an instance.
+* `Cslib.Complexity.USTCONInstance.edgeTwo`, `Cslib.Complexity.USTCONInstance.emptyTwo`,
+  `Cslib.Complexity.USTCONInstance.ofBool`: canonical two-vertex connected and disconnected
+  instances.
 * `Cslib.Complexity.encUSTCON`: the encoding of instances.
 * `Cslib.Complexity.USTCON`: the instances in which `t` is reachable from `s`.
 
@@ -42,6 +46,10 @@ machine reading its input by address can parse by counting.
 * `Cslib.Complexity.USTCONInstance.encode_injective`: the encoding is injective.
 * `Cslib.Complexity.USTCONInstance.size_n_le_log2`: the number of vertices has logarithmically many
   binary digits in the length of the encoding.
+* `Cslib.Complexity.USTCONInstance.edgeTwo_mem_USTCON`,
+  `Cslib.Complexity.USTCONInstance.emptyTwo_notMem_USTCON`,
+  `Cslib.Complexity.USTCONInstance.ofBool_mem_USTCON`: membership of the canonical two-vertex
+  instances in `USTCON`.
 
 ## References
 
@@ -181,29 +189,12 @@ theorem getD_encode_matrix (a b : Fin I.n) :
     getD_replicate_append_false_add, getD_replicate_append_false_add,
     getD_replicate_append_false_add, getD_matrix]
 
-/-- A unary block followed by `false` determines its length and the rest. -/
-private theorem replicate_append_false_inj {m m' : ℕ} {l l' : List Bool}
-    (h : List.replicate m true ++ false :: l = List.replicate m' true ++ false :: l') :
-    m = m' ∧ l = l' := by
-  induction m generalizing m' with
-  | zero =>
-    cases m' with
-    | zero => simpa using h
-    | succ m' => simp [List.replicate_succ] at h
-  | succ m ih =>
-    cases m' with
-    | zero => simp [List.replicate_succ] at h
-    | succ m' =>
-      simp only [List.replicate_succ, List.cons_append, List.cons.injEq, true_and] at h
-      obtain ⟨h₁, h₂⟩ := ih h
-      exact ⟨congrArg (· + 1) h₁, h₂⟩
-
 /-- **The encoding is injective.** -/
 theorem encode_injective : Function.Injective encode := by
   rintro ⟨n, adj, symm, loopless, s, t⟩ ⟨n', adj', symm', loopless', s', t'⟩ h
-  obtain ⟨rfl, h⟩ := replicate_append_false_inj h
-  obtain ⟨hs, h⟩ := replicate_append_false_inj h
-  obtain ⟨ht, h⟩ := replicate_append_false_inj h
+  obtain ⟨rfl, h⟩ := List.replicate_true_append_false_inj h
+  obtain ⟨hs, h⟩ := List.replicate_true_append_false_inj h
+  obtain ⟨ht, h⟩ := List.replicate_true_append_false_inj h
   have hadj : adj = adj' := by
     funext a b
     have := congrArg (fun l ↦ l.getD (a * n + b) false) h
@@ -225,5 +216,49 @@ def encUSTCON : USTCONInstance ↪ List Bool :=
 /-- **Undirected `s`–`t` connectivity**: the instances in which `t` is reachable from `s`. -/
 def USTCON : Set USTCONInstance :=
   {I | I.graph.Reachable I.s I.t}
+
+namespace USTCONInstance
+
+/-- The single edge on two vertices `0` and `1`, with source `0` and target `1`. -/
+def edgeTwo : USTCONInstance where
+  n := 2
+  adj a b := decide (a ≠ b)
+  symm a b := by simp [ne_comm]
+  loopless a := by simp
+  s := 0
+  t := 1
+
+/-- The edgeless graph on two vertices `0` and `1`, with source `0` and target `1`. -/
+def emptyTwo : USTCONInstance where
+  n := 2
+  adj _ _ := false
+  symm _ _ := rfl
+  loopless _ := rfl
+  s := 0
+  t := 1
+
+/-- Canonical two-vertex `USTCON` instance encoding a Boolean truth value: `edgeTwo` for `true`
+and `emptyTwo` for `false`. -/
+def ofBool (b : Bool) : USTCONInstance :=
+  if b then edgeTwo else emptyTwo
+
+/-- The single edge on two vertices belongs to `USTCON`. -/
+theorem edgeTwo_mem_USTCON : edgeTwo ∈ USTCON :=
+  SimpleGraph.Adj.reachable (by decide)
+
+/-- The edgeless graph on two vertices does not belong to `USTCON`. -/
+theorem emptyTwo_notMem_USTCON : emptyTwo ∉ USTCON := by
+  rintro ⟨p⟩
+  cases p with
+  | cons hadj _ => exact absurd hadj (by simp [emptyTwo, graph])
+
+/-- `USTCONInstance.ofBool b` belongs to `USTCON` if and only if `b = true`. -/
+@[simp]
+theorem ofBool_mem_USTCON {b : Bool} : ofBool b ∈ USTCON ↔ b = true := by
+  cases b
+  · simp [ofBool, emptyTwo_notMem_USTCON]
+  · simp [ofBool, edgeTwo_mem_USTCON]
+
+end USTCONInstance
 
 end Cslib.Complexity

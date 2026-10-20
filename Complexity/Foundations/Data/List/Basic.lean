@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -24,6 +24,8 @@ import Mathlib.Data.List.GetD
 * `List.getD_set_self`, `List.getD_set_ne`, `List.forall_mem_set_of_forall_mem`,
   `List.getD_le_of_forall_le`: lists as register files, updated by `List.set` and read by
   `List.getD`.
+* `List.replicate_not_append_cons_inj`, `List.replicate_true_append_false_inj`: a unary block
+  followed by a delimiter bit determines both its length and the remaining suffix.
 
 ## References
 
@@ -100,3 +102,19 @@ theorem List.getD_mem_or {α : Type*} (l : List α) (j : ℕ) (d : α) :
   rcases h : l[j]? with _ | a
   · exact Or.inr rfl
   · exact Or.inl (List.mem_of_getElem? h)
+
+/-! ### Unary headers -/
+
+/-- A unary block of copies of `!a` followed by the delimiter `a` determines both its length and the
+remaining suffix. -/
+theorem List.replicate_not_append_cons_inj {a : Bool} {m m' : ℕ} {l l' : List Bool}
+    (h : List.replicate m (!a) ++ a :: l = List.replicate m' (!a) ++ a :: l') :
+    m = m' ∧ l = l' := by
+  induction m generalizing m' <;> cases m' <;> simp_all [List.replicate_succ]
+
+/-- A unary block of `true` bits followed by `false` determines both its length and the remaining
+suffix. -/
+theorem List.replicate_true_append_false_inj {m m' : ℕ} {l l' : List Bool}
+    (h : List.replicate m true ++ false :: l = List.replicate m' true ++ false :: l') :
+    m = m' ∧ l = l' :=
+  List.replicate_not_append_cons_inj (a := false) h
