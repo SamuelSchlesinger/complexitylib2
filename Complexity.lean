@@ -90,6 +90,7 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Depth
 public import Complexity.Computability.Circuit.Boolean.Iteration.DepthSearch
 public import Complexity.Computability.Circuit.Boolean.Iteration.Encoded
 public import Complexity.Computability.Circuit.Boolean.Iteration.Eventual
+public import Complexity.Computability.Circuit.Boolean.Iteration.InPlace
 public import Complexity.Computability.Circuit.Boolean.Iteration.InputTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Label
 public import Complexity.Computability.Circuit.Boolean.Iteration.LabelCircuit
@@ -104,11 +105,13 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Residue
 public import Complexity.Computability.Circuit.Boolean.Iteration.ResidueAdd
 public import Complexity.Computability.Circuit.Boolean.Iteration.Scan
 public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
+public import Complexity.Computability.Circuit.Boolean.Iteration.SequentialSquaring
 public import Complexity.Computability.Circuit.Boolean.Iteration.SharedDictionary
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseDisplacement
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseNavigation
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Target
+public import Complexity.Computability.Circuit.Boolean.Iteration.UniversalMap
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.KeyedSort
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko

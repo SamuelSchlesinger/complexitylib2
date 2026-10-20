@@ -4,8 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Circuit.Boolean.Iteration.InPlace
 import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
+import Complexity.Computability.Circuit.Boolean.Iteration.SequentialSquaring
+import Complexity.Computability.Circuit.Boolean.Iteration.UniversalMap
 
 /-!
 # Fixed-power circuit clients
@@ -133,6 +136,47 @@ example (c : Circuit signature 3 3) (T : ℕ) : ∃ out : Circuit signature 3 3,
       out.size ≤ 120000 * (c.size + 64) * 4 := by
   simpa using fixed_power_half_exponent c T
 
+/-! ### Universal step map, in-place machines, and sequential squaring -/
+
+-- One round of `1 + 1` steps of the universal map simulates `flip`.
+example (x : BitString 1) :
+    (Universal.step interpretation)^[1 + 1]
+      (Universal.start (Universal.describe 1 flip .not) x) =
+    Universal.start (Universal.describe 1 flip .not) (flip.eval interpretation x) :=
+  Universal.step_round interpretation flip .not le_rfl x
+
+/-- A 1-head halting in-place machine on `Bool` tape with one absorbing state `Unit`. -/
+private def idleMachine : InPlace.Machine Unit Bool 1 where
+  δ q r _ _ := (q, r, fun _ => .stay)
+  start := ()
+  halting _ := True
+  embed := id
+
+private theorem idleMachine_absorbing : idleMachine.HaltingAbsorbing :=
+  fun _ _ _ _ _ => rfl
+
+example : (InPlace.reach idleMachine 2).card ≤ 8 := by
+  simpa using InPlace.reach_card_le_configs idleMachine (n := 2)
+
+example (z : InPlace.Config Unit Bool 2 1) :
+    idleMachine.step^[Fintype.card (InPlace.Config Unit Bool 2 1)] z = z :=
+  ((InPlace.iterate_card_halting idleMachine idleMachine_absorbing z).2 0 trivial)
+
+-- Sequential squaring modulo the squarefree composite `M = 15`.
+private theorem squarefree_15 : Squarefree (15 : ℕ) := by
+  rintro (_ | _ | _ | _ | d) ⟨k, hk⟩
+  · omega
+  · exact isUnit_one
+  · omega
+  · omega
+  · rcases k with _ | k
+    · omega
+    · nlinarith
+
+example (T : ℕ) (x : ZMod 15) :
+    (fun y : ZMod 15 => y ^ 2)^[T] x = x ^ SequentialSquaring.reducedExponent 15 T :=
+  SequentialSquaring.iterate_square_reduced squarefree_15 T x
+
 /-! ### Axioms -/
 
 /--
@@ -218,5 +262,159 @@ info: 'Cslib.Circuits.Synthesis.word_sub' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Synthesis.word_sub
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.simulation_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms simulation_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.prodMap_power_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms prodMap_power_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.smul_zpow_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms smul_zpow_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.smul_iterate_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms smul_iterate_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.smul_inverse_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms smul_inverse_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.Universal.step_round' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Universal.step_round
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.Universal.step_iterate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Universal.step_iterate
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.Universal.universal_power_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Universal.universal_power_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_configs' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.reach_card_le_configs
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_time' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.reach_card_le_time
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_round' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.reach_card_le_round
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.iterate_card_halting' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.iterate_card_halting
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.inplace_fixed_power_optimized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.inplace_fixed_power_optimized
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.inplace_configs_optimized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.inplace_configs_optimized
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.inplace_time_optimized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.inplace_time_optimized
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.inplace_halting' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.inplace_halting
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.round_lower_bound_of_hard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.round_lower_bound_of_hard
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.InPlace.round_bounds_of_hard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms InPlace.round_bounds_of_hard
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.SequentialSquaring.pow_carmichael_succ' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms SequentialSquaring.pow_carmichael_succ
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.SequentialSquaring.pow_eq_pow_of_modEq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms SequentialSquaring.pow_eq_pow_of_modEq
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.SequentialSquaring.iterate_square_reduced' depends on
+axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms SequentialSquaring.iterate_square_reduced
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.SequentialSquaring.crypto_table_entries' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms SequentialSquaring.crypto_table_entries
 
 end ComplexityTests.Iteration
