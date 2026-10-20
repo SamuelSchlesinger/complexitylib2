@@ -25,15 +25,15 @@ Let `Q` be the Sudan interpolant of least `Y`-degree of the received word
 `Q = (Y - P) * S` with `S(X, P(X)) ≠ 0` of degree at most `D - d`
 (`Cslib.Code.Sudan.exists_eq_mul_eval_ne_zero`), so for all but `D - d` points `τ` the root `P` is
 simple at `(τ, P(τ))`: `∂Q/∂Y (τ, P(τ)) = S(τ, P(τ)) ≠ 0`. Then the Taylor coefficients of `P` at
-`τ` are determined one at a time by Newton's (Hensel's) rule: if `A` agrees with
-`P(X + τ)` below degree `k`, then the coefficient of `X ^ k` in `P(X + τ)` is
-`-[X ^ k] Q(X + τ, A(X)) / ∂Q/∂Y (τ, a)` (`Cslib.Code.henselTrunc_coeff`). The coefficient
-`[X ^ k] Q(X + τ, A(X))` is a fixed linear combination of the values `Q(s + τ, A(s))` for
-`s ∈ F` (`Cslib.Code.sum_coeffWeight_mul_eval`), because this polynomial has degree at most
-`D < |F|`. So the whole computation `Cslib.Code.hintDecode` is an arithmetic computation on the
-received word, the hint and fixed constants, with no other branching than the tests for zero in
-the elimination; the decoded value is correct for all but `D - d` of the hint points
-(`Cslib.Code.card_hintDecode_ne_le`).
+`τ` are determined one at a time by Newton's (Hensel's) rule: if `A` has degree less than
+`k ≤ d` and agrees with `P(X + τ)` below degree `k`, then the coefficient of `X ^ k` in
+`P(X + τ)` is `-[X ^ k] Q(X + τ, A(X)) / ∂Q/∂Y (τ, a)` (`Cslib.Code.henselCoeff_eq`). The
+coefficient `[X ^ k] Q(X + τ, A(X))` is a fixed linear combination of the values
+`Q(s + τ, A(s))` for `s ∈ F` (`Cslib.Code.sum_coeffWeight_mul_eval`), because this polynomial has
+degree at most `D < |F|`. So the whole computation `Cslib.Code.hintDecode` is an arithmetic
+computation on the received word, the hint and fixed constants, with no other branching than the
+tests for zero in the elimination; the decoded value is correct for all but `D - d` of the hint
+points (`Cslib.Code.card_hintDecode_ne_le`).
 
 ## Main definitions
 
@@ -87,18 +87,12 @@ theorem sum_coeffWeight_mul_eval {R : F[X]} (hR : R.natDegree < Fintype.card F) 
 
 /-! ### Newton iteration -/
 
-omit [Fintype F] [DecidableEq F] in
-/-- `(Q.eval P)(x) = Q(x, P(x))`. -/
-theorem eval_eval_eq_evalEval (Q : F[X][Y]) (P : F[X]) (x : F) :
-    (Q.eval P).eval x = Q.evalEval x (P.eval x) := by
-  rw [← map_evalRingHom_eval, eval_map]
-  exact (hom_eval₂ Q (RingHom.id _) (evalRingHom x) P).trans (by rw [RingHom.comp_id]; rfl)
-
 /-- The polynomial `Q(X + τ, A(X))`. -/
 noncomputable def shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) : F[X] :=
   (Q.map (taylorAlgHom τ : F[X] →+* F[X])).eval A
 
 omit [Fintype F] [DecidableEq F] in
+/-- The value of `Q(X + τ, A(X))` at `s` is `Q(s + τ, A(s))`. -/
 theorem eval_shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) (s : F) :
     (shiftEval Q τ A).eval s = Q.evalEval (s + τ) (A.eval s) := by
   rw [shiftEval, eval_map, ← coe_evalRingHom, hom_eval₂, coe_evalRingHom]
@@ -132,6 +126,7 @@ theorem henselTrunc_eq_sum (Q : F[X][Y]) (τ a lam : F) (k : ℕ) :
     rw [henselTrunc, sum_range_succ, ← ih]
     rfl
 
+/-- The value at `s` of the iterate to degree `k`. -/
 theorem eval_henselTrunc (Q : F[X][Y]) (τ a lam : F) (k : ℕ) (s : F) :
     (henselTrunc Q τ a lam k).eval s = ∑ i ∈ range (k + 1), henselSeq Q τ a lam i * s ^ i := by
   simp [henselTrunc_eq_sum, eval_finsetSum]
@@ -256,7 +251,7 @@ theorem evalEval_derivative_bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × �
       ∑ m ∈ M, c m * (m.2 * x ^ m.1 * y ^ (m.2 - 1)) := by
   simp only [Sudan.bivariateOf, derivative_sum, derivative_monomial, evalEval_finsetSum]
   refine sum_congr rfl fun m _ => ?_
-  simp [evalEval, eval_monomial, eval_mul, eval_natCast]
+  simp only [evalEval, eval_monomial, eval_mul, eval_natCast, eval_pow, eval_C]
   ring
 
 /-! ### Decoding with a hint -/

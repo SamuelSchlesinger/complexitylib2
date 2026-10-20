@@ -148,43 +148,60 @@ structure IsInterpolant (α w : ι → F) (k D : ℕ) (Q : F[X][Y]) : Prop where
   /-- The interpolant vanishes at the points `(α i, w i)`. -/
   evalEval_eq_zero : ∀ i, Q.evalEval (α i) (w i) = 0
 
-/-- The bivariate polynomial with coefficient `c m` at the monomial `X ^ m.1 * Y ^ m.2`, for the
-exponents `m` in `S`. -/
-private noncomputable def ofCoeffs (S : Finset (ℕ × ℕ)) (c : S → F) : F[X][Y] :=
-  ∑ m : S, monomial m.1.2 (monomial m.1.1 (c m))
+/-- The bivariate polynomial with coefficient `c m` at `X ^ m.1 * Y ^ m.2` for `m ∈ M`. -/
+noncomputable def bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → F) : F[X][Y] :=
+  ∑ m ∈ M, monomial m.2 (monomial m.1 (c m))
 
-private theorem coeff_coeff_ofCoeffs (S : Finset (ℕ × ℕ)) (c : S → F) (a b : ℕ) :
-    ((ofCoeffs S c).coeff b).coeff a = if h : (a, b) ∈ S then c ⟨(a, b), h⟩ else 0 := by
+/-- The coefficient of `X ^ a * Y ^ b` in `bivariateOf M c` is `c (a, b)` when `(a, b) ∈ M`, and
+zero otherwise. -/
+@[simp]
+theorem coeff_coeff_bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → F) (a b : ℕ) :
+    ((bivariateOf M c).coeff b).coeff a = if (a, b) ∈ M then c (a, b) else 0 := by
   classical
-  have hm (m : S) : ((monomial m.1.2 (monomial m.1.1 (c m))).coeff b).coeff a =
-      if (m : ℕ × ℕ) = (a, b) then c m else 0 := by
-    obtain ⟨⟨a', b'⟩, hm⟩ := m
+  simp only [bivariateOf, finsetSum_coeff]
+  rw [Finset.sum_congr rfl fun m _ => (?_ :
+    ((monomial m.2 (monomial m.1 (c m))).coeff b).coeff a = if (a, b) = m then c m else 0)]
+  · exact Finset.sum_ite_eq M (a, b) c
+  · obtain ⟨a', b'⟩ := m
     simp only [coeff_monomial, Prod.mk.injEq]
-    by_cases hb : b' = b <;> by_cases ha : a' = a <;> simp [coeff_monomial, hb, ha]
-  simp only [ofCoeffs, finsetSum_coeff, hm]
-  split_ifs with h
-  · rw [Fintype.sum_eq_single ⟨(a, b), h⟩]
-    · simp
-    · intro m hm'
-      simp only [ite_eq_right_iff]
-      exact fun h' => absurd (Subtype.ext h') hm'
-  · refine Fintype.sum_eq_zero _ fun m => ?_
-    simp only [ite_eq_right_iff]
-    exact fun h' => absurd (h' ▸ m.2) h
+    by_cases hb : b' = b
+    · subst hb
+      by_cases ha : a' = a
+      · subst ha
+        simp
+      · simp [coeff_monomial, ha, Ne.symm ha]
+    · simp [hb, Ne.symm hb]
 
-private theorem evalEval_ofCoeffs (S : Finset (ℕ × ℕ)) (c : S → F) (x y : F) :
-    (ofCoeffs S c).evalEval x y = ∑ m : S, c m * x ^ m.1.1 * y ^ m.1.2 := by
-  simp only [ofCoeffs, evalEval_finsetSum]
+/-- The value of `bivariateOf M c` at `(x, y)` is `∑ m ∈ M, c m * x ^ m.1 * y ^ m.2`. -/
+theorem evalEval_bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → F) (x y : F) :
+    (bivariateOf M c).evalEval x y = ∑ m ∈ M, c m * x ^ m.1 * y ^ m.2 := by
+  simp only [bivariateOf, evalEval_finsetSum]
   refine sum_congr rfl fun m _ => ?_
-  simp [evalEval, eval_monomial]
+  simp [evalEval, eval_monomial, mul_assoc]
 
 variable {α w : ι → F} {k D : ℕ} {Q : F[X][Y]}
 
 /-- Evaluating `Q(X, P(X))` at `x` evaluates `Q` at `(x, P(x))`. -/
-private theorem eval_eval (Q : F[X][Y]) (P : F[X]) (x : F) :
+theorem _root_.Polynomial.eval_eval_eq_evalEval (Q : F[X][Y]) (P : F[X]) (x : F) :
     (Q.eval P).eval x = Q.evalEval x (P.eval x) := by
   rw [← map_evalRingHom_eval, eval_map]
   exact (hom_eval₂ Q (RingHom.id _) (evalRingHom x) P).trans (by rw [RingHom.comp_id]; rfl)
+
+/-- Substituting `Y = P(X)`, with `P` of degree at most `d`, into a bivariate polynomial whose
+monomials have `(1, d)`-weighted degree at most `E` gives a polynomial of degree at most `E`. -/
+theorem natDegree_eval_le_of_weighted {d E : ℕ} {S : F[X][Y]} {P : F[X]} (hP : P.natDegree ≤ d)
+    (hS : ∀ a b, (S.coeff b).coeff a ≠ 0 → a + d * b ≤ E) : (S.eval P).natDegree ≤ E := by
+  rw [eval_eq_sum_range]
+  refine natDegree_sum_le_of_forall_le _ _ fun b _ => ?_
+  rcases eq_or_ne (S.coeff b) 0 with h0 | h0
+  · simp [h0]
+  have := hS _ b (leadingCoeff_ne_zero.2 h0)
+  calc (S.coeff b * P ^ b).natDegree ≤ (S.coeff b).natDegree + b * P.natDegree :=
+        natDegree_mul_le.trans (Nat.add_le_add_left natDegree_pow_le _)
+    _ ≤ (S.coeff b).natDegree + d * b := by
+        rw [mul_comm d]
+        exact Nat.add_le_add_left (Nat.mul_le_mul_left b hP) _
+    _ ≤ E := this
 
 /-- The `Y`-degree of a Sudan interpolant: `deg_Y Q * (k - 1) ≤ D`. -/
 theorem IsInterpolant.natDegree_mul_sub_one_le (hQ : IsInterpolant α w k D Q) :
@@ -197,22 +214,11 @@ theorem IsInterpolant.natDegree_mul_sub_one_le (hQ : IsInterpolant α w k D Q) :
 /-- If `P` has degree less than `k`, then `Q(X, P(X))` has degree at most `D`. -/
 theorem IsInterpolant.natDegree_eval_le (hQ : IsInterpolant α w k D Q) {P : F[X]}
     (hP : P.degree < k) : (Q.eval P).natDegree ≤ D := by
-  have hPk : P.natDegree ≤ k - 1 := by
-    rcases eq_or_ne P 0 with rfl | hP0
-    · simp
-    · have := (natDegree_lt_iff_degree_lt hP0).2 hP
-      omega
-  rw [eval_eq_sum_range]
-  refine natDegree_sum_le_of_forall_le _ _ fun b _ => ?_
-  rcases eq_or_ne (Q.coeff b) 0 with h0 | h0
-  · simp [h0]
-  have := hQ.weightedDegree_le _ b (leadingCoeff_ne_zero.2 h0)
-  calc (Q.coeff b * P ^ b).natDegree ≤ (Q.coeff b).natDegree + b * P.natDegree :=
-        natDegree_mul_le.trans (Nat.add_le_add_left natDegree_pow_le _)
-    _ ≤ (Q.coeff b).natDegree + (k - 1) * b := by
-        rw [mul_comm (k - 1)]
-        exact Nat.add_le_add_left (Nat.mul_le_mul_left b hPk) _
-    _ ≤ D := this
+  refine natDegree_eval_le_of_weighted (d := k - 1) ?_ hQ.weightedDegree_le
+  rcases eq_or_ne P 0 with rfl | hP0
+  · simp
+  · have := (natDegree_lt_iff_degree_lt hP0).2 hP
+    omega
 
 variable [Fintype ι]
 
@@ -230,17 +236,18 @@ theorem exists_isInterpolant (α w : ι → F)
         Fintype.card_coe])
   obtain ⟨c, hc, hc0⟩ := (Submodule.ne_bot_iff _).1 hker
   obtain ⟨m, hm⟩ := Function.ne_iff.1 hc0
-  refine ⟨ofCoeffs M c, fun h => hm ?_, fun a b hab => ?_, fun i => ?_⟩
-  · have := coeff_coeff_ofCoeffs M c m.1.1 m.1.2
-    rw [h, dite_eq_left m.2] at this
-    simpa using this.symm
-  · rw [coeff_coeff_ofCoeffs] at hab
+  let c' : ℕ × ℕ → F := fun m' => if h : m' ∈ M then c ⟨m', h⟩ else 0
+  refine ⟨bivariateOf M c', fun h => hm ?_, fun a b hab => ?_, fun i => ?_⟩
+  · have := coeff_coeff_bivariateOf M c' m.1.1 m.1.2
+    rw [h] at this
+    simpa [c', m.2] using this.symm
+  · rw [coeff_coeff_bivariateOf] at hab
     split_ifs at hab with h
     · exact (mem_monomials.1 h).2.2
     · exact absurd rfl hab
-  · rw [evalEval_ofCoeffs]
+  · rw [evalEval_bivariateOf, ← sum_attach]
     have := congrFun (LinearMap.mem_ker.1 hc) i
-    simpa [A, Matrix.mulVec, dotProduct, mul_comm, mul_left_comm, mul_assoc] using this
+    simpa [A, c', Matrix.mulVec, dotProduct, mul_comm, mul_left_comm, mul_assoc] using this
 
 variable [DecidableEq F]
 
@@ -254,7 +261,7 @@ theorem IsInterpolant.eval_eq_zero (hα : Function.Injective α) (hQ : IsInterpo
     exact (degree_le_natDegree.trans (Nat.cast_le.2 (hQ.natDegree_eval_le hP))).trans_lt
       (by exact_mod_cast hagree)
   · obtain ⟨i, hi, rfl⟩ := mem_image.1 hx
-    rw [eval_eval, (mem_filter.1 hi).2, hQ.evalEval_eq_zero]
+    rw [eval_eval_eq_evalEval, (mem_filter.1 hi).2, hQ.evalEval_eq_zero]
 
 /-- **Root containment.** With distinct points, if `P` has degree less than `k` and agrees with the
 received word at more than `D` points, then `Y - P(X)` divides every Sudan interpolant

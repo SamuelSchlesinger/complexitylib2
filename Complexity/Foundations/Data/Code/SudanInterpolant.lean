@@ -25,17 +25,14 @@ kernel vector of the interpolation matrix restricted to the monomials of `Y`-deg
 
 Least `Y`-degree makes every polynomial `P` of degree at most `d` with more than `D` agreements a
 *simple* root of `Q`, viewed as a polynomial in `Y`: if `(Y - P)²` divided `Q`, then `Q / (Y - P)`
-would be an interpolant of smaller `Y`-degree. The weighted degree drops by exactly `d` on division
-by `Y - P` (`Cslib.Code.Sudan.add_mul_add_one_le_of_mul`), so `Q = (Y - P) * S` where `S(X, P(X))`
-is a nonzero polynomial of degree at most `D - d`
+would be an interpolant of smaller `Y`-degree. On division by `Y - P` the bound `D` on the
+weighted degree drops to `D - d` (`Cslib.Code.Sudan.add_mul_add_one_le_of_mul`, an upper bound),
+so `Q = (Y - P) * S` where `S(X, P(X))` is a nonzero polynomial of degree at most `D - d`
 (`Cslib.Code.Sudan.exists_eq_mul_eval_ne_zero`). Simplicity is what lets the root `P` be lifted
-from a single known value by Newton iteration, as in
-`Cslib.Code.HintDecoding`.
+from a single known value by Newton iteration (`Cslib.Code.henselValue_eq`).
 
 ## Main definitions
 
-* `Cslib.Code.Sudan.bivariateOf`: the bivariate polynomial with given coefficients on a set of
-  monomials.
 * `Cslib.Code.Sudan.interpMatrix`: the interpolation matrix on a set of monomials.
 * `Cslib.Code.Sudan.interpolant`: an interpolant of least `Y`-degree, by elimination.
 
@@ -65,33 +62,6 @@ open scoped Polynomial.Bivariate
 variable {F ι : Type*} [Field F]
 
 /-! ### Bivariate polynomials from coefficients -/
-
-/-- The bivariate polynomial with coefficient `c m` at `X ^ m.1 * Y ^ m.2` for `m ∈ M`. -/
-noncomputable def bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → F) : F[X][Y] :=
-  ∑ m ∈ M, monomial m.2 (monomial m.1 (c m))
-
-theorem coeff_coeff_bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → F) (a b : ℕ) :
-    ((bivariateOf M c).coeff b).coeff a = if (a, b) ∈ M then c (a, b) else 0 := by
-  classical
-  simp only [bivariateOf, finsetSum_coeff]
-  rw [Finset.sum_congr rfl fun m _ => (?_ :
-    ((monomial m.2 (monomial m.1 (c m))).coeff b).coeff a = if (a, b) = m then c m else 0)]
-  · exact Finset.sum_ite_eq M (a, b) c
-  · obtain ⟨a', b'⟩ := m
-    simp only [coeff_monomial, Prod.mk.injEq]
-    by_cases hb : b' = b
-    · subst hb
-      by_cases ha : a' = a
-      · subst ha
-        simp
-      · simp [coeff_monomial, ha, Ne.symm ha]
-    · simp [hb, Ne.symm hb]
-
-theorem evalEval_bivariateOf (M : Finset (ℕ × ℕ)) (c : ℕ × ℕ → F) (x y : F) :
-    (bivariateOf M c).evalEval x y = ∑ m ∈ M, c m * x ^ m.1 * y ^ m.2 := by
-  simp only [bivariateOf, evalEval_finsetSum]
-  refine sum_congr rfl fun m _ => ?_
-  simp [evalEval, eval_monomial, mul_assoc]
 
 /-- `bivariateOf M c` depends only on the values of `c` on `M`. -/
 theorem bivariateOf_congr {M : Finset (ℕ × ℕ)} {c c' : ℕ × ℕ → F} (h : ∀ m ∈ M, c m = c' m) :
@@ -185,7 +155,7 @@ private theorem kernelVecUpTo_ne_zero {α w : ι → F} {d D : ℕ} (hd : 1 ≤ 
       (le_natDegree_of_ne_zero fun h => hab (by rw [h, coeff_zero])).trans hj⟩
   refine kernelVec_ne_zero _ ⟨fun m =>
     (Q.coeff ((monomialsUpTo d D j).equivFin.symm m : ℕ × ℕ).2).coeff
-      ((monomialsUpTo d D j).equivFin.symm m : ℕ × ℕ).1, ?_, fun t => ?_⟩
+      ((monomialsUpTo d D j).equivFin.symm m : ℕ × ℕ).1, ?_, funext fun t => ?_⟩
   · obtain ⟨b, hb⟩ : ∃ b, Q.coeff b ≠ 0 := by
       by_contra h
       push Not at h
@@ -198,7 +168,8 @@ private theorem kernelVecUpTo_ne_zero {α w : ι → F} {d D : ℕ} (hd : 1 ≤ 
     have := congrFun h0 ((monomialsUpTo d D j).equivFin ⟨(a, b), hsupp a b ha⟩)
     simp only [Equiv.symm_apply_apply, Pi.zero_apply] at this
     exact ha this
-  · obtain ⟨i, rfl⟩ := (Fintype.equivFin ι).surjective t
+  · change interpMatrix α w (monomialsUpTo d D j) t ⬝ᵥ _ = 0
+    obtain ⟨i, rfl⟩ := (Fintype.equivFin ι).surjective t
     rw [interpMatrix_dotProduct, ← hQ.evalEval_eq_zero i]
     congr 1
     refine (bivariateOf_congr fun m hm => ?_).trans (eq_bivariateOf hsupp).symm
@@ -260,7 +231,7 @@ theorem isInterpolant_interpolant (α w : ι → F) {d D : ℕ} (hd : 1 ≤ d)
       exact (mem_monomials.1 (hsub h)).2.2
     · exact absurd rfl hab
   · have hzero : interpMatrix α w M (Fintype.equivFin ι i) ⬝ᵥ kernelVecUpTo α w d D j = 0 :=
-      kernelVec_mulVec _ _
+      congrFun (mulVec_kernelVec _) _
     rw [interpMatrix_dotProduct, evalEval_bivariateOf] at hzero
     rw [interpolant, hcoeffs, evalEval_bivariateOf, ← hzero]
     refine (Finset.sum_subset hsub fun m _ hm => ?_).symm
@@ -295,8 +266,8 @@ theorem natDegree_interpolant_le (α w : ι → F) {d D : ℕ} (hd : 1 ≤ d)
 /-! ### Simplicity of the roots -/
 
 omit [Fintype ι] [DecidableEq F] in
-/-- **Division by `Y - P` lowers the weighted degree by `d`.** If `P` has degree at most `d` and
-every monomial of `(Y - P) * S` has `(1, d)`-weighted degree at most `D`, then every monomial
+/-- **Division by `Y - P` lowers the weighted degree bound by `d`.** If `P` has degree at most `d`
+and every monomial of `(Y - P) * S` has `(1, d)`-weighted degree at most `D`, then every monomial
 `X ^ a * Y ^ b` of `S` has `a + d * (b + 1) ≤ D`. -/
 theorem add_mul_add_one_le_of_mul {d D : ℕ} {P : F[X]} (hP : P.natDegree ≤ d) {S : F[X][Y]}
     (h : ∀ a b, (((Y - C P) * S).coeff b).coeff a ≠ 0 → a + d * b ≤ D) :
@@ -358,23 +329,6 @@ omit [Fintype ι] [DecidableEq F] in
 private theorem evalEval_X_sub_C_mul (P : F[X]) (S : F[X][Y]) (x y : F) :
     ((Y - C P) * S).evalEval x y = (y - P.eval x) * S.evalEval x y := by
   rw [evalEval_mul, evalEval_sub, evalEval_X, evalEval_C]
-
-omit [Fintype ι] [DecidableEq F] in
-/-- Substituting `Y = P(X)` into a polynomial whose monomials have weighted degree at most `E`
-gives a polynomial of degree at most `E`. -/
-theorem natDegree_eval_le_of_weighted {d E : ℕ} {S : F[X][Y]} {P : F[X]} (hP : P.natDegree ≤ d)
-    (hS : ∀ a b, (S.coeff b).coeff a ≠ 0 → a + d * b ≤ E) : (S.eval P).natDegree ≤ E := by
-  rw [eval_eq_sum_range]
-  refine natDegree_sum_le_of_forall_le _ _ fun b _ => ?_
-  rcases eq_or_ne (S.coeff b) 0 with h0 | h0
-  · simp [h0]
-  have := hS _ b (leadingCoeff_ne_zero.2 h0)
-  calc (S.coeff b * P ^ b).natDegree ≤ (S.coeff b).natDegree + b * P.natDegree :=
-        natDegree_mul_le.trans (Nat.add_le_add_left natDegree_pow_le _)
-    _ ≤ (S.coeff b).natDegree + d * b := by
-        rw [mul_comm d]
-        exact Nat.add_le_add_left (Nat.mul_le_mul_left b hP) _
-    _ ≤ E := this
 
 /-- **Large agreement gives simple roots.** Let `Q` be a Sudan interpolant of least `Y`-degree for
 the dimension `d + 1`, with distinct points. If `P` has degree at most `d` and agrees with the

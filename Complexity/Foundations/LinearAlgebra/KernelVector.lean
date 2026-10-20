@@ -27,7 +27,7 @@ killed by `a` lies in their span (`Cslib.LinearAlgebra.kernelStep`). When `b = 0
 the pivot value and pivot vector are then zero, and since division by zero is zero in a field the
 update leaves `N` unchanged. After all rows the vectors span the kernel of `A`
 (`Cslib.LinearAlgebra.kernelBasis`), and the first nonzero one is the output
-(`Cslib.LinearAlgebra.kernelVec`): it lies in the kernel (`Cslib.LinearAlgebra.kernelVec_mulVec`)
+(`Cslib.LinearAlgebra.kernelVec`): it lies in the kernel (`Cslib.LinearAlgebra.mulVec_kernelVec`)
 and it is nonzero whenever the kernel is (`Cslib.LinearAlgebra.kernelVec_ne_zero`).
 
 Pivots are selected by the indicator `Cslib.LinearAlgebra.firstFlags b` of the first nonzero entry
@@ -44,8 +44,15 @@ elimination organized for straight-line evaluation, as needed to count its gates
 
 ## Main results
 
-* `Cslib.LinearAlgebra.kernelVec_mulVec`: the output lies in the kernel.
+* `Cslib.LinearAlgebra.mulVec_kernelVec`: the output lies in the kernel.
 * `Cslib.LinearAlgebra.kernelVec_ne_zero`: the output is nonzero when the kernel is nontrivial.
+
+## References
+
+* [P. Bürgisser, M. Clausen, M. A. Shokrollahi, *Algebraic Complexity Theory*]
+  [BurgisserClausenShokrollahi1997]
+* [M. Sudan, L. Trevisan, S. Vadhan, *Pseudorandom generators without the XOR lemma*]
+  [SudanTrevisanVadhan2001]
 -/
 
 @[expose] public section
@@ -53,6 +60,7 @@ elimination organized for straight-line evaluation, as needed to count its gates
 namespace Cslib.LinearAlgebra
 
 open Finset
+open scoped Matrix
 
 variable {F : Type*} [Field F] [DecidableEq F] {n r : ℕ}
 
@@ -63,6 +71,7 @@ everywhere when `b = 0`. -/
 def firstFlags (b : Fin n → F) (i : Fin n) : F :=
   if b i ≠ 0 ∧ ∀ i' < i, b i' = 0 then 1 else 0
 
+/-- The flags of the zero vector are zero. -/
 theorem firstFlags_of_eq_zero {b : Fin n → F} (hb : b = 0) : firstFlags b = 0 := by
   funext i
   simp [firstFlags, hb]
@@ -226,17 +235,18 @@ theorem spansKernel_kernelBasis (A : Fin r → Fin n → F) :
   exact h
 
 /-- **The kernel vector lies in the kernel.** -/
-theorem kernelVec_mulVec (A : Fin r → Fin n → F) (k : Fin r) : A k ⬝ᵥ kernelVec A = 0 := by
-  simp only [kernelVec, dotProduct_sum, dotProduct_smul,
+theorem mulVec_kernelVec (A : Matrix (Fin r) (Fin n) F) : A *ᵥ kernelVec A = 0 := by
+  funext k
+  simp only [Matrix.mulVec, Pi.zero_apply, kernelVec, dotProduct_sum, dotProduct_smul,
     (spansKernel_kernelBasis A).dotProduct_eq_zero (A k) ⟨k, rfl⟩, smul_zero, sum_const_zero]
 
 /-- **The kernel vector is nonzero when the kernel is nontrivial.** -/
-theorem kernelVec_ne_zero (A : Fin r → Fin n → F) (h : ∃ v, v ≠ 0 ∧ ∀ k, A k ⬝ᵥ v = 0) :
+theorem kernelVec_ne_zero (A : Matrix (Fin r) (Fin n) F) (h : ∃ v ≠ 0, A *ᵥ v = 0) :
     kernelVec A ≠ 0 := by
   obtain ⟨v, hv, hAv⟩ := h
   obtain ⟨c, rfl⟩ := (spansKernel_kernelBasis A).exists_eq_sum v (by
     rintro a ⟨k, rfl⟩
-    exact hAv k)
+    exact congrFun hAv k)
   rcases sum_firstFlags_smul_eq (fun i => if kernelBasis A i = 0 then (0 : F) else 1)
       (kernelBasis A) with ⟨hb, -⟩ | ⟨j, hj, -, hsum⟩
   · refine absurd ?_ hv
@@ -244,7 +254,8 @@ theorem kernelVec_ne_zero (A : Fin r → Fin n → F) (h : ∃ v, v ≠ 0 ∧ �
     have := congrFun hb i
     simp only [Pi.zero_apply, ite_eq_left_iff, one_ne_zero, imp_false, not_not] at this
     rw [this, smul_zero]
-  · rw [kernelVec, hsum]
+  · unfold kernelVec
+    rw [hsum]
     simpa using hj
 
 end Cslib.LinearAlgebra
