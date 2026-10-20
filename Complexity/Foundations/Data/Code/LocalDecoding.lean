@@ -48,6 +48,8 @@ half of the nonzero directions recover `f x` at every point `x`
 
 ## Main results
 
+* `Cslib.Code.exists_natDegree_le_eval_eq_of_mem_reedMuller`: Reed–Muller codewords of degree `d`
+  restrict to polynomials of degree at most `d` on lines.
 * `Cslib.Code.sum_add_smul_eq_zero_of_mem_reedMuller`: Reed–Muller codewords of degree below
   `q - 1` sum to zero on every line.
 * `Cslib.Code.lineDecode_congr`: the decoder queries only the punctured line.
@@ -74,7 +76,7 @@ variable {F : Type*} [Field F] [Fintype F] {m d : ℕ}
 omit [Fintype F] in
 /-- The restriction of a polynomial `P` in `m` variables to the line `c ↦ x + c • v`: a polynomial
 in `c` of degree at most the total degree of `P`. -/
-theorem exists_natDegree_le_and_eval_eq (P : MvPolynomial (Fin m) F) (x v : Fin m → F) :
+private theorem exists_natDegree_le_and_eval_eq (P : MvPolynomial (Fin m) F) (x v : Fin m → F) :
     ∃ g : Polynomial F, g.natDegree ≤ P.totalDegree ∧
       ∀ c : F, g.eval c = MvPolynomial.eval (x + c • v) P := by
   let line : Fin m → Polynomial F := fun i => Polynomial.C (x i) + Polynomial.C (v i) * Polynomial.X
@@ -100,14 +102,23 @@ theorem exists_natDegree_le_and_eval_eq (P : MvPolynomial (Fin m) F) (x v : Fin 
       smul_eq_mul]
     rw [mul_comm]
 
+omit [Fintype F] in
+/-- **Restriction to a line.** The restriction `t ↦ f (x + t • v)` of a codeword `f` of the
+Reed–Muller code of degree `d` is a polynomial of degree at most `d`. -/
+theorem exists_natDegree_le_eval_eq_of_mem_reedMuller {f : (Fin m → F) → F}
+    (hf : f ∈ reedMuller F m d) (x v : Fin m → F) :
+    ∃ g : Polynomial F, g.natDegree ≤ d ∧ ∀ t, g.eval t = f (x + t • v) := by
+  obtain ⟨P, hP, rfl⟩ := mem_reedMuller.1 hf
+  obtain ⟨g, hg, hgeval⟩ := exists_natDegree_le_and_eval_eq P x v
+  exact ⟨g, hg.trans hP, hgeval⟩
+
 /-- **Line sums of Reed–Muller codewords.** For `d + 1 < q`, the values of a codeword of the
 Reed–Muller code of degree `d` over a field with `q` elements sum to zero on every affine line
 `c ↦ x + c • v`, including the degenerate line `v = 0`. -/
 theorem sum_add_smul_eq_zero_of_mem_reedMuller (hd : d + 1 < Fintype.card F)
     {f : (Fin m → F) → F} (hf : f ∈ reedMuller F m d) (x v : Fin m → F) :
     ∑ c : F, f (x + c • v) = 0 := by
-  obtain ⟨P, hP, rfl⟩ := mem_reedMuller.1 hf
-  obtain ⟨g, hg, hgeval⟩ := exists_natDegree_le_and_eval_eq P x v
+  obtain ⟨g, hg, hgeval⟩ := exists_natDegree_le_eval_eq_of_mem_reedMuller hf x v
   simp only [← hgeval]
   exact HighRate.sum_eval_eq_zero_of_natDegree_lt g (by omega)
 

@@ -23,8 +23,8 @@ single out `p` among the polynomials that agree with `g` on the line.
 
 The decoder `Cslib.Code.lineListDecode g d D z a x` parametrizes the line by
 `t ↦ x + t • v`, where `v` is `z - x` scaled so that its first nonzero entry is `1`
-(`Cslib.Code.lead`); then `z = x + c • v` for `c` the first nonzero entry of `z - x`. It runs Sudan
-decoding with the hint `a` at `c` on the restriction of `g` to the line
+(`Cslib.Code.firstNonzero`); then `z = x + c • v` for `c` the first nonzero entry of `z - x`.
+It runs Sudan decoding with the hint `a` at `c` on the restriction of `g` to the line
 (`Cslib.Code.hintDecode`). The direction `v` and the received word depend only on `x` and the line,
 not on the position of `z` on it, so the hint position `c` is uniformly distributed over `F ∖ {0}`
 given the line.
@@ -42,7 +42,7 @@ advice `p(z)`, correct at all but
 
 ## Main definitions
 
-* `Cslib.Code.lead`: the first nonzero entry of a vector.
+* `Cslib.Code.firstNonzero`: the first nonzero entry of a vector.
 * `Cslib.Code.lineAgree`: the number of points of a line in a set.
 * `Cslib.Code.lineListDecode`: the local list decoder with advice.
 
@@ -70,15 +70,16 @@ variable {F : Type*} [Field F] [Fintype F] [DecidableEq F] {m : ℕ}
 /-! ### Normalized directions -/
 
 /-- The first nonzero entry of a vector, or zero for the zero vector. -/
-noncomputable def lead (u : Fin m → F) : F := ∑ i, firstFlags u i * u i
+noncomputable def firstNonzero (u : Fin m → F) : F := ∑ i, firstFlags u i * u i
 
 omit [Fintype F] in
-theorem lead_eq_zero_iff {u : Fin m → F} : lead u = 0 ↔ u = 0 := by
+/-- The first nonzero entry vanishes only for the zero vector. -/
+theorem firstNonzero_eq_zero_iff {u : Fin m → F} : firstNonzero u = 0 ↔ u = 0 := by
   rcases sum_firstFlags_smul_eq u u with ⟨hu, hsum⟩ | ⟨j, hj, -, hsum⟩
   · simp only [smul_eq_mul] at hsum
     exact ⟨fun _ => hu, fun _ => hsum⟩
   · simp only [smul_eq_mul] at hsum
-    rw [lead, hsum]
+    rw [firstNonzero, hsum]
     exact ⟨fun h => absurd h hj, fun h => absurd (congrFun h j) hj⟩
 
 omit [Fintype F] in
@@ -89,16 +90,18 @@ private theorem firstFlags_smul {c : F} (hc : c ≠ 0) (u : Fin m → F) :
   simp [firstFlags, hc]
 
 omit [Fintype F] in
-theorem lead_smul (c : F) (u : Fin m → F) : lead (c • u) = c * lead u := by
+/-- Scaling a vector scales its first nonzero entry. -/
+theorem firstNonzero_smul (c : F) (u : Fin m → F) : firstNonzero (c • u) = c * firstNonzero u := by
   rcases eq_or_ne c 0 with rfl | hc
-  · simp [lead, firstFlags]
-  · simp only [lead, firstFlags_smul hc, Pi.smul_apply, smul_eq_mul, mul_sum]
+  · simp [firstNonzero, firstFlags]
+  · simp only [firstNonzero, firstFlags_smul hc, Pi.smul_apply, smul_eq_mul, mul_sum]
     exact sum_congr rfl fun i _ => by ring
 
 omit [Fintype F] in
-/-- `z - x` is `lead (z - x)` times its normalization. -/
-theorem lead_smul_normalize {u : Fin m → F} (hu : u ≠ 0) : lead u • (lead u)⁻¹ • u = u := by
-  rw [smul_smul, mul_inv_cancel₀ (lead_eq_zero_iff.not.2 hu), one_smul]
+/-- A nonzero vector `u` is `firstNonzero u` times its normalization `(firstNonzero u)⁻¹ • u`. -/
+theorem firstNonzero_smul_inv_smul {u : Fin m → F} (hu : u ≠ 0) :
+    firstNonzero u • (firstNonzero u)⁻¹ • u = u := by
+  rw [smul_smul, mul_inv_cancel₀ (firstNonzero_eq_zero_iff.not.2 hu), one_smul]
 
 /-! ### Random lines sample well -/
 
@@ -308,19 +311,12 @@ theorem card_filter_lineAgree_le_mul_sq_le (A : Finset (Fin m → F)) {D : ℝ}
 
 /-- **The local list decoder with advice.** To decode at `x` with advice `a` at `z`: parametrize
 the line through `x` and `z` as `t ↦ x + t • v`, with `v` the normalization of `z - x`, and run
-Sudan decoding with the hint `a` at the position `c = lead (z - x)` of `z` on the restriction of
-`g` to the line. -/
+Sudan decoding with the hint `a` at the position `c = firstNonzero (z - x)` of `z` on the
+restriction of `g` to the line. -/
 noncomputable def lineListDecode (g : (Fin m → F) → F) (d D : ℕ) (z : Fin m → F) (a : F)
     (x : Fin m → F) : F :=
-  hintDecode id (fun t : F => g (x + t • (lead (z - x))⁻¹ • (z - x))) d D (lead (z - x)) a
-
-omit [Fintype F] [DecidableEq F] in
-/-- The restriction of a Reed–Muller codeword to a line is a polynomial of degree at most `d`. -/
-theorem exists_natDegree_le_line {d : ℕ} {p : (Fin m → F) → F} (hp : p ∈ reedMuller F m d)
-    (x v : Fin m → F) : ∃ P : F[X], P.natDegree ≤ d ∧ ∀ t, P.eval t = p (x + t • v) := by
-  obtain ⟨P, hP, rfl⟩ := mem_reedMuller.1 hp
-  obtain ⟨g, hg, hgeval⟩ := exists_natDegree_le_and_eval_eq P x v
-  exact ⟨g, hg.trans hP, hgeval⟩
+  hintDecode id (fun t : F => g (x + t • (firstNonzero (z - x))⁻¹ • (z - x))) d D
+    (firstNonzero (z - x)) a
 
 /-- Scaling the direction by a nonzero constant does not change the number of points of a line in
 a set. -/
@@ -333,14 +329,15 @@ theorem lineAgree_smul (A : Finset (Fin m → F)) (x u : Fin m → F) {c : F} (h
   · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at ht ⊢
     rwa [smul_smul, mul_assoc, inv_mul_cancel₀ hc, mul_one]
 
-/-- **The decoder at a pair of points.** For `z ≠ x`, with `c = lead (z - x)` and
+/-- **The decoder at a pair of points.** For `z ≠ x`, with `c = firstNonzero (z - x)` and
 `v = c⁻¹ • (z - x)`, the decoder with advice `p z` is Sudan decoding with the hint `p (x + c • v)`
 at `c` on the line `t ↦ x + t • v`. -/
 theorem lineListDecode_eq (g p : (Fin m → F) → F) (d D : ℕ) {x z : Fin m → F} (hxz : z ≠ x) :
     lineListDecode g d D z (p z) x =
-      hintDecode id (fun t : F => g (x + t • (lead (z - x))⁻¹ • (z - x))) d D (lead (z - x))
-        (p (x + lead (z - x) • (lead (z - x))⁻¹ • (z - x))) := by
-  rw [lead_smul_normalize (sub_ne_zero.2 hxz), add_sub_cancel]
+      hintDecode id (fun t : F => g (x + t • (firstNonzero (z - x))⁻¹ • (z - x))) d D
+        (firstNonzero (z - x))
+        (p (x + firstNonzero (z - x) • (firstNonzero (z - x))⁻¹ • (z - x))) := by
+  rw [firstNonzero_smul_inv_smul (sub_ne_zero.2 hxz), add_sub_cancel]
   rfl
 
 /-- **Few bad hint positions on a good line.** If the line `t ↦ x + t • v` has more than `D`
@@ -351,7 +348,7 @@ theorem card_hintDecode_line_ne_le {d D : ℕ} (hd : 1 ≤ d)
     {p : (Fin m → F) → F} (hp : p ∈ reedMuller F m d) (g : (Fin m → F) → F) (x v : Fin m → F)
     (hagree : D < lineAgree {y | g y = p y} x v) :
     #{τ | hintDecode id (fun t : F => g (x + t • v)) d D τ (p (x + τ • v)) ≠ p x} ≤ D - d := by
-  obtain ⟨P, hP, hPeval⟩ := exists_natDegree_le_line hp x v
+  obtain ⟨P, hP, hPeval⟩ := exists_natDegree_le_eval_eq_of_mem_reedMuller hp x v
   have hx : p x = P.eval 0 := by rw [hPeval, zero_smul, add_zero]
   have hag : #{t : F | P.eval (id t) = g (x + t • v)} = lineAgree {y | g y = p y} x v := by
     unfold lineAgree
@@ -365,7 +362,7 @@ theorem card_hintDecode_line_ne_le {d D : ℕ} (hd : 1 ≤ d)
 
 /-- The normalized directions: those whose first nonzero entry is `1`. -/
 private noncomputable def normDirs (m : ℕ) (F : Type*) [Field F] [Fintype F] [DecidableEq F] :
-    Finset (Fin m → F) := univ.filter fun v => lead v = 1
+    Finset (Fin m → F) := univ.filter fun v => firstNonzero v = 1
 
 /-- There are at most `(Q - 1) / (q - 1)` normalized directions. -/
 private theorem card_normDirs_mul_le :
@@ -378,12 +375,12 @@ private theorem card_normDirs_mul_le :
       rcases smul_eq_zero.1 h0 with h0 | h0
       · exact hvc.2 h0
       · rw [h0] at hvc
-        simp [lead, firstFlags] at hvc) (fun vc hvc vc' hvc' heq => by
+        simp [firstNonzero, firstFlags] at hvc) (fun vc hvc vc' hvc' heq => by
       simp only [coe_product, Set.mem_prod, mem_coe, normDirs, mem_filter, mem_univ, true_and,
         mem_erase, ne_eq, and_true] at hvc hvc'
       have hc : vc.2 = vc'.2 := by
-        have := congrArg lead heq
-        simp only [lead_smul, hvc.1, hvc'.1, mul_one] at this
+        have := congrArg firstNonzero heq
+        simp only [firstNonzero_smul, hvc.1, hvc'.1, mul_one] at this
         exact this
       have := congrArg (fun u => vc.2⁻¹ • u) heq
       simp only [smul_smul, hc, inv_mul_cancel₀ hvc'.2, one_smul] at this
@@ -391,8 +388,8 @@ private theorem card_normDirs_mul_le :
   rwa [card_product, card_erase_of_mem (mem_univ _), card_erase_of_mem (mem_univ _), card_univ,
     card_univ, Fintype.card_fun, Fintype.card_fin] at h
 
-/-- **Local list decoding of Reed–Muller codes** [SudanTrevisanVadhan2001]. Let `p` be a
-codeword of the Reed–Muller code of degree `d ≥ 1` in `m` variables over a field with `q`
+/-- **Local list decoding of Reed–Muller codes**, a variant of [SudanTrevisanVadhan2001]. Let
+`p` be a codeword of the Reed–Muller code of degree `d ≥ 1` in `m` variables over a field with `q`
 elements, `Q = q ^ m`, and let `g` agree with `p` on `a` points. Let `D < q` be such that there
 are more than `q` monomials of `(1, d)`-weighted degree at most `D`, and suppose
 `D < μ = q * a / Q`. Then for some advice point `z`, the decoder `lineListDecode g d D z (p z)`
@@ -424,7 +421,7 @@ theorem exists_card_lineListDecode_ne_le {d D : ℕ} (hd : 1 ≤ d)
     xz.2 ≠ xz.1 ∧ lineAgree A xz.1 (xz.2 - xz.1) ≤ D
   let S₃ : Finset ((Fin m → F) × (Fin m → F)) := univ.filter fun xz => xz.2 ≠ xz.1 ∧
     D < lineAgree A xz.1 (xz.2 - xz.1) ∧
-    lead (xz.2 - xz.1) ∈ bad xz.1 ((lead (xz.2 - xz.1))⁻¹ • (xz.2 - xz.1))
+    firstNonzero (xz.2 - xz.1) ∈ bad xz.1 ((firstNonzero (xz.2 - xz.1))⁻¹ • (xz.2 - xz.1))
   let fail : Finset ((Fin m → F) × (Fin m → F)) :=
     univ.filter fun xz => lineListDecode g d D xz.2 (p xz.2) xz.1 ≠ p xz.1
   have hfail : fail ⊆ S₁ ∪ S₂ ∪ S₃ := by
@@ -465,15 +462,15 @@ theorem exists_card_lineListDecode_ne_le {d D : ℕ} (hd : 1 ≤ d)
     calc #(S₃.filter fun xz => xz.1 = x)
         ≤ #(((normDirs m F).filter (fun v => D < lineAgree A x v)).sigma fun v => bad x v) := by
           refine card_le_card_of_injOn
-            (fun xz => ⟨(lead (xz.2 - x))⁻¹ • (xz.2 - x), lead (xz.2 - x)⟩)
+            (fun xz => ⟨(firstNonzero (xz.2 - x))⁻¹ • (xz.2 - x), firstNonzero (xz.2 - x)⟩)
             (fun xz hxz => ?_) (fun xz hxz xz' hxz' heq => ?_)
           · simp only [S₃, coe_filter, mem_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hxz
             obtain ⟨⟨hne, hD, hb⟩, rfl⟩ := hxz
             have hu : xz.2 - xz.1 ≠ 0 := sub_ne_zero.2 hne
-            have hl : lead (xz.2 - xz.1) ≠ 0 := lead_eq_zero_iff.not.2 hu
+            have hl : firstNonzero (xz.2 - xz.1) ≠ 0 := firstNonzero_eq_zero_iff.not.2 hu
             simp only [coe_sigma, Set.mem_sigma_iff, mem_coe, mem_filter, normDirs, mem_univ,
               true_and]
-            refine ⟨⟨by rw [lead_smul, inv_mul_cancel₀ hl], ?_⟩, hb⟩
+            refine ⟨⟨by rw [firstNonzero_smul, inv_mul_cancel₀ hl], ?_⟩, hb⟩
             rw [lineAgree_smul A _ _ (inv_ne_zero hl)]
             exact hD
           · simp only [S₃, coe_filter, mem_filter, mem_univ, true_and,
@@ -485,8 +482,8 @@ theorem exists_card_lineListDecode_ne_le {d D : ℕ} (hd : 1 ≤ d)
             have h2 := congrArg Sigma.snd heq
             simp only at h1 h2
             rw [hx'] at hne'
-            have e1 := lead_smul_normalize (sub_ne_zero.2 hne)
-            have e2 := lead_smul_normalize (sub_ne_zero.2 hne')
+            have e1 := firstNonzero_smul_inv_smul (sub_ne_zero.2 hne)
+            have e2 := firstNonzero_smul_inv_smul (sub_ne_zero.2 hne')
             have : xz.2 - xz.1 = xz'.2 - xz.1 := by rw [← e1, h1, h2, e2]
             exact Prod.ext hx'.symm (sub_left_injective this)
       _ = ∑ v ∈ (normDirs m F).filter (fun v => D < lineAgree A x v), #(bad x v) :=

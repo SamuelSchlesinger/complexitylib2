@@ -19,7 +19,7 @@ counts the arithmetic over the full binary basis of the field, where every opera
 two field elements is one gate; the oracle queries are accounted for separately.
 
 * The first nonzero entry of a vector of `m` available entries costs `4 * m + 2` gates
-  (`Cslib.Circuits.Synthesis.full_lead`).
+  (`Cslib.Circuits.Synthesis.full_firstNonzero`).
 * The points `x + t • v`, for all `t ∈ F`, of the line through `x` and a fixed point `z`
   parametrized as in `Cslib.Code.lineListDecode`, together with the hint position, cost
   `(q + 5) * m + 2` gates (`Cslib.Circuits.Synthesis.full_linePoints`).
@@ -31,8 +31,13 @@ two field elements is one gate; the oracle queries are accounted for separately.
 
 ## Main results
 
-* `Cslib.Circuits.Synthesis.full_lead`, `Cslib.Circuits.Synthesis.full_linePoints`,
+* `Cslib.Circuits.Synthesis.full_firstNonzero`, `Cslib.Circuits.Synthesis.full_linePoints`,
   `Cslib.Circuits.Synthesis.full_weightedSum`, `Cslib.Circuits.Synthesis.full_majTree`.
+
+## References
+
+* [M. Sudan, L. Trevisan, S. Vadhan, *Pseudorandom generators without the XOR lemma*]
+  [SudanTrevisanVadhan2001]
 -/
 
 @[expose] public section
@@ -44,8 +49,9 @@ open Finset Cslib.LinearAlgebra Cslib.Code
 variable {F : Type*} [Field F] [DecidableEq F] {N : ℕ} {s : Set ((Fin N → F) → F)}
 
 /-- **The first nonzero entry** of a vector of `m` available functions costs `4 * m + 2` gates. -/
-theorem full_lead {m : ℕ} (u : Fin m → (Fin N → F) → F) (hu : ∀ i, u i ∈ s) :
-    Synthesis (fullInterpretation (k := 2)) s {fun x => lead fun i => u i x} (4 * m + 2) := by
+theorem full_firstNonzero {m : ℕ} (u : Fin m → (Fin N → F) → F) (hu : ∀ i, u i ∈ s) :
+    Synthesis (fullInterpretation (k := 2)) s {fun x => firstNonzero fun i => u i x}
+      (4 * m + 2) := by
   have h₁ := full_firstFlags (s := s) u hu
   have h₂ := full_dot (s := s ∪ Set.range fun i x => firstFlags (fun j => u j x) i) univ
     (fun i x => firstFlags (fun j => u j x) i) u
@@ -55,15 +61,15 @@ theorem full_lead {m : ℕ} (u : Fin m → (Fin N → F) → F) (hu : ∀ i, u i
   omega
 
 /-- **The points of a line by a circuit.** Given the coordinates of `x` as available functions
-and a fixed point `z`, the hint position `lead (z - x)` and the coordinates of all points
-`x + t • (lead (z - x))⁻¹ • (z - x)`, `t ∈ F`, of the line through `x` and `z` cost
+and a fixed point `z`, the hint position `firstNonzero (z - x)` and the coordinates of all points
+`x + t • (firstNonzero (z - x))⁻¹ • (z - x)`, `t ∈ F`, of the line through `x` and `z` cost
 `(q + 5) * m + 2` gates of the full binary basis. -/
 theorem full_linePoints [Fintype F] {m : ℕ} (x : Fin m → (Fin N → F) → F) (hx : ∀ i, x i ∈ s)
     (z : Fin m → F) :
     Synthesis (fullInterpretation (k := 2)) s
       (Set.range fun o : Option (F × Fin m) => fun v => match o with
-        | none => lead (z - fun i => x i v)
-        | some (t, i) => ((fun i => x i v) + t • (lead (z - fun i => x i v))⁻¹ •
+        | none => firstNonzero (z - fun i => x i v)
+        | some (t, i) => ((fun i => x i v) + t • (firstNonzero (z - fun i => x i v))⁻¹ •
             (z - fun i => x i v)) i)
       ((Fintype.card F + 5) * m + 2) := by
   -- the differences
@@ -71,11 +77,12 @@ theorem full_linePoints [Fintype F] {m : ℕ} (x : Fin m → (Fin N → F) → F
     (fun _ => 1) (fun i => full_unary (fun a => z i - a) (hx i))
   set s₁ := s ∪ Set.range fun i v => z i - x i v
   -- the hint position
-  have h₂ := full_lead (s := s₁) (fun i v => z i - x i v) fun i => Set.mem_union_right _ ⟨i, rfl⟩
-  set s₂ := s₁ ∪ {fun v => lead fun i => z i - x i v}
+  have h₂ := full_firstNonzero (s := s₁) (fun i v => z i - x i v) fun i =>
+    Set.mem_union_right _ ⟨i, rfl⟩
+  set s₂ := s₁ ∪ {fun v => firstNonzero fun i => z i - x i v}
   -- the points
   have h₃ := family (I := fullInterpretation (k := 2)) (s := s₂)
-    (fun ti : F × Fin m => fun v => x ti.2 v + ti.1 * ((lead fun i => z i - x i v)⁻¹ *
+    (fun ti : F × Fin m => fun v => x ti.2 v + ti.1 * ((firstNonzero fun i => z i - x i v)⁻¹ *
       (z ti.2 - x ti.2 v))) (fun _ => 1)
     (fun ti => full_binary_mem (fun a c => a + ti.1 * (c⁻¹ * (z ti.2 - a)))
       (Set.mem_union_left _ (Set.mem_union_left _ (hx ti.2))) (Set.mem_union_right _ rfl))

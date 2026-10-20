@@ -19,7 +19,7 @@ A received word `w` that differs from a Reed–Muller codeword `p` of degree `d`
 be corrected *everywhere*, with few queries and fixed randomness. The basic step reads `w` at
 `d + 1` points `x + ν i • v` of a line through `x`, for fixed distinct nonzero nodes `ν i`, and
 interpolates: `p x = ∑ i, λ i * p (x + ν i • v)` for the Lagrange weights `λ i` of the nodes at
-`0` (`Cslib.Code.lagrangeDecode_of_mem_reedMuller`). Each queried point is uniformly distributed
+`0` (`Cslib.Code.lagrangeDecode_eq_of_mem_reedMuller`). Each queried point is uniformly distributed
 over the directions `v`, so at every point `x` at most `(d + 1) * Δ(w, p)` directions make the
 step err (`Cslib.Code.card_lagrangeDecode_ne_le`) [Arora and Barak, Chapter 19][AroraBarak09].
 
@@ -39,7 +39,7 @@ argument and need only equality tests to evaluate.
 
 ## Main results
 
-* `Cslib.Code.lagrangeDecode_of_mem_reedMuller`: interpolation is exact on codewords.
+* `Cslib.Code.lagrangeDecode_eq_of_mem_reedMuller`: interpolation is exact on codewords.
 * `Cslib.Code.card_lagrangeDecode_ne_le`: few directions err.
 * `Cslib.Code.card_majTree_ne_le`: amplification by majority trees.
 * `Cslib.Code.exists_forall_majTree_eq`: one choice of directions corrects a whole set.
@@ -86,9 +86,9 @@ noncomputable def lagrangeDecode (ν : Fin (d + 1) ↪ F) (w : (Fin m → F) →
 omit [Fintype F] [DecidableEq F] in
 /-- **Interpolation is exact on codewords** of the Reed–Muller code of degree `d`, for every
 direction. -/
-theorem lagrangeDecode_of_mem_reedMuller (ν : Fin (d + 1) ↪ F) {p : (Fin m → F) → F}
+theorem lagrangeDecode_eq_of_mem_reedMuller (ν : Fin (d + 1) ↪ F) {p : (Fin m → F) → F}
     (hp : p ∈ reedMuller F m d) (x v : Fin m → F) : lagrangeDecode ν p x v = p x := by
-  obtain ⟨P, hP, hPeval⟩ := exists_natDegree_le_line hp x v
+  obtain ⟨P, hP, hPeval⟩ := exists_natDegree_le_eval_eq_of_mem_reedMuller hp x v
   have hx : p x = P.eval 0 := by rw [hPeval, zero_smul, add_zero]
   rw [lagrangeDecode, hx, eval_zero_eq_sum_lagrangeWeight ν hP]
   simp only [hPeval]
@@ -106,7 +106,7 @@ theorem card_lagrangeDecode_ne_le (ν : Fin (d + 1) ↪ F) (hν : ∀ i, ν i �
     by_contra hnot
     simp only [mem_biUnion, mem_univ, true_and, mem_filter, not_exists, E, ne_eq,
       not_not] at hnot
-    refine hv.2 ((sum_congr rfl fun i _ => ?_).trans (lagrangeDecode_of_mem_reedMuller ν hp x v))
+    refine hv.2 ((sum_congr rfl fun i _ => ?_).trans (lagrangeDecode_eq_of_mem_reedMuller ν hp x v))
     rw [hnot i]
   refine (card_le_card hsub).trans ((card_biUnion_le).trans ?_)
   calc ∑ i, #(univ.filter fun v => x + ν i • v ∈ E) ≤ ∑ _i : Fin (d + 1), #E :=
@@ -167,7 +167,7 @@ theorem card_majTree_ne_le {Ω : Type*} [Fintype Ω] (val : Ω → α) (y : α)
       · rw [mem_coe, mem_filter] at hω ⊢
         exact ⟨mem_univ _, hω.2⟩
       · funext k
-        have hk : k = ⟨0, by simp⟩ := Fin.ext (by have := k.2; simp at this; omega)
+        have hk : k = ⟨0, by simp⟩ := Fin.ext (Nat.lt_one_iff.1 (k.2.trans_eq (pow_zero 3)))
         rw [hk]
     rw [this]
     simpa using hρ

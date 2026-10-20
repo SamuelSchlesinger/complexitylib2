@@ -35,6 +35,13 @@ The entries of the matrix may be arbitrary available functions of the circuit's 
 * `Cslib.Circuits.Synthesis.full_nonzero`: the indicator of a nonzero vector.
 * `Cslib.Circuits.Synthesis.full_kernelStep`: one elimination step.
 * `Cslib.Circuits.Synthesis.full_kernelVec`: a kernel vector.
+
+## References
+
+* [P. Bürgisser, M. Clausen, M. A. Shokrollahi, *Algebraic Complexity Theory*]
+  [BurgisserClausenShokrollahi1997]
+* [M. Sudan, L. Trevisan, S. Vadhan, *Pseudorandom generators without the XOR lemma*]
+  [SudanTrevisanVadhan2001]
 -/
 
 @[expose] public section
@@ -104,7 +111,8 @@ theorem full_firstFlags (b : Fin n → (Fin N → F) → F) (hb : ∀ i, b i ∈
       (fun z bi => if bi = 0 then 0 else z) (Set.mem_union_right s
       (⟨i.castSucc, rfl⟩ : _ ∈ Set.range fun i : Fin (n + 1) => chainValue 1 op g i))
       (Set.mem_union_left _ (hb i)))
-  refine (hchain.trans hsel).mono Set.Subset.rfl ?_ (by simp; omega)
+  refine (hchain.trans hsel).mono Set.Subset.rfl ?_
+    (by simp only [sum_const, card_univ, Fintype.card_fin, smul_eq_mul, mul_one]; omega)
   rintro _ ⟨i, rfl⟩
   refine ⟨i, funext fun x => ?_⟩
   simp only [firstFlags_eq_prefixZero, hval i i.2.le]

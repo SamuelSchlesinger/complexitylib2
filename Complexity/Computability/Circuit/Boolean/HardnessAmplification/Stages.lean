@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.AtLeast
 public import Complexity.Computability.Circuit.Boolean.BitBlast
 public import Complexity.Computability.Circuit.ReedMullerDecoding
 public import Complexity.Crypto.Computational.GoldreichLevin.Nonuniform
+public import Complexity.Foundations.Data.BitString.Block
 
 /-!
 # The stages of local list decoding as De Morgan circuits
@@ -68,23 +69,30 @@ variable {F : Type*} {w m : ℕ}
 
 /-! ### Points and their bits -/
 
-/-- The point of `F ^ m` whose coordinates have the given bits. -/
+/-- The point of `F ^ m` whose coordinates have the given bits: coordinate `i` decodes block `i`
+(`Cslib.BitString.block`). -/
 def pointOfBits (enc : F ≃ BitString w) (y : BitString (m * w)) : Fin m → F :=
-  fun i => enc.symm fun j => y (finProdFinEquiv (i, j))
+  fun i => enc.symm (BitString.block y i)
 
-/-- The bits of the coordinates of a point of `F ^ m`. -/
+/-- The bits of the coordinates of a point of `F ^ m`, block after block
+(`Cslib.BitString.blocksEquiv`). -/
 def bitsOfPoint (enc : F ≃ BitString w) (x : Fin m → F) : BitString (m * w) :=
-  fun k => enc (x (finProdFinEquiv.symm k).1) (finProdFinEquiv.symm k).2
+  BitString.blocksEquiv.symm fun i => enc (x i)
 
+/-- Decoding the bits of a point gives the point back. -/
+@[simp]
 theorem pointOfBits_bitsOfPoint (enc : F ≃ BitString w) (x : Fin m → F) :
     pointOfBits enc (bitsOfPoint enc x) = x := by
   funext i
-  simp [pointOfBits, bitsOfPoint]
+  simp only [pointOfBits, bitsOfPoint, ← BitString.blocksEquiv_apply, Equiv.apply_symm_apply,
+    Equiv.symm_apply_apply]
 
+/-- Encoding the point with given bits gives the bits back. -/
+@[simp]
 theorem bitsOfPoint_pointOfBits (enc : F ≃ BitString w) (y : BitString (m * w)) :
     bitsOfPoint enc (pointOfBits enc y) = y := by
-  funext k
-  simp only [pointOfBits, bitsOfPoint, Equiv.apply_symm_apply, Prod.mk.eta]
+  simp only [pointOfBits, bitsOfPoint, Equiv.apply_symm_apply, ← BitString.blocksEquiv_apply,
+    Equiv.symm_apply_apply]
 
 /-- `G` is *bit-synthesizable with `cost` gates*: whenever the bits of the coordinates of a point
 are available, the bits of the value of `G` at the point can be made available with `cost` further
@@ -95,6 +103,7 @@ def BitSynthesis (enc : F ≃ BitString w) (G : (Fin m → F) → F) (cost : ℕ
       Synthesis interpretation S (Set.range fun j => bitsOf enc (fun v => G fun i => φ i v) j)
         cost
 
+/-- A bit synthesis with `a` gates is one with any larger budget. -/
 theorem BitSynthesis.mono {enc : F ≃ BitString w} {G : (Fin m → F) → F} {a b : ℕ}
     (h : BitSynthesis enc G a) (hab : a ≤ b) : BitSynthesis enc G b :=
   fun n S φ hφ => (h n S φ hφ).mono Set.Subset.rfl Set.Subset.rfl hab
@@ -252,8 +261,9 @@ theorem BitSynthesis.lineListDecode {enc : F ≃ BitString w} {G : (Fin m → F)
   set q := Fintype.card F
   -- the points of the line and the hint position
   let ΨA : Option (F × Fin m) → (Fin m → F) → F := fun o v => match o with
-    | none => lead (z - fun i => v i)
-    | some (t, i) => ((fun i => v i) + t • (lead (z - fun i => v i))⁻¹ • (z - fun i => v i)) i
+    | none => firstNonzero (z - fun i => v i)
+    | some (t, i) =>
+      ((fun i => v i) + t • (firstNonzero (z - fun i => v i))⁻¹ • (z - fun i => v i)) i
   have hA : Synthesis (fullInterpretation (k := 2)) (inputs m) (Set.range ΨA)
       ((q + 5) * m + 2) :=
     Synthesis.full_linePoints (s := inputs m) (fun i v => v i) (fun i => ⟨i, rfl⟩) z

@@ -8,28 +8,30 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.Code.ReedMuller
-public import Mathlib.Algebra.MvPolynomial.Equiv
+import Mathlib.Algebra.MvPolynomial.Equiv
 public import Mathlib.LinearAlgebra.Lagrange
 
 /-!
 # Low-degree extensions
 
 Let `h : H ↪ F` embed a finite set `H` of size `|H|` in a field `F`. Every function
-`f : (Fin m → H) → F` on the grid `H ^ m` is the restriction of a polynomial of degree less than
-`|H|` in each variable: the *low-degree extension*
+`f : (Fin m → H) → F` on the grid `H ^ m` is the restriction of a polynomial of low degree: the
+*low-degree extension*
 `lowDegreeExtension h f x = ∑ u, f u * ∏ i, L (u i) (x i)`, where `L a` is the Lagrange basis
 polynomial of the node `h a` among the nodes `h H`
 [Babai, Fortnow, Levin, Szegedy][BabaiFortnowLevinSzegedy1991],
 [Arora and Barak, Chapter 19][AroraBarak09]. It agrees with `f` on the grid
 (`Cslib.Code.lowDegreeExtension_apply_embed`) and is a codeword of the Reed–Muller code of degree
-`m * (|H| - 1)` (`Cslib.Code.lowDegreeExtension_mem_reedMuller`). For `H = {0, 1}` this is the
-multilinear extension.
+`m * (|H| - 1)` (`Cslib.Code.lowDegreeExtension_mem_reedMuller`). Only this total degree bound is
+formalized; by construction the extension also has degree less than `|H|` in each variable, and
+for `H = {0, 1}` it is the multilinear extension, but neither fact is stated here.
 
 Low-degree extensions encode truth tables into Reed–Muller codewords: the truth table of a
 function on `n = m * b` bits, read as a function on `(BitString b) ^ m`, extends to a polynomial
 in `m` variables of total degree at most `m * (2 ^ b - 1)` over a field with at least `2 ^ b`
-elements. Evaluating the extension at a point costs `|H| ^ m` terms, linear in the size of the
-truth table, which is what makes encodings of functions computable in exponential time.
+elements. Informally, evaluating the extension at a point costs `|H| ^ m` terms, linear in the
+size of the truth table, which is what makes encodings of functions computable in exponential time;
+no running time is formalized in this module.
 
 ## Main definitions
 
