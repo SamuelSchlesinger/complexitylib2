@@ -87,7 +87,7 @@ theorem mem_IndependentSet_of_subsingleton [Subsingleton M] :
   exact ⟨_, rfl, fun x _ y _ hxy => absurd (Subsingleton.elim (α := M) x y) hxy⟩
 
 omit [sizedGraph.Structure M] in
-theorem ncard_copies_eq [Finite J] [Finite M] (s : Set M) :
+theorem ncard_copies_eq (s : Set M) :
     {x : Copies J M | x.val ∈ s}.ncard = Nat.card J * s.ncard := by
   rw [← Nat.card_coe_set_eq, ← Nat.card_coe_set_eq, ← Nat.card_prod]
   exact Nat.card_congr
@@ -294,7 +294,7 @@ theorem occEdge_cases {b b' : Bool} {d d' : Fin 2 → M} {hd hd'}
     cases eq_of_heq h
     exact .inr ⟨OccurrenceTag.occ.inj h₁, hc 1 1 rfl⟩
 
-theorem ncard_size [Finite M] :
+theorem ncard_size :
     {x : independentSetInterpretation.Model M | RelMap sizedGraph.size ![x]}.ncard =
       Nat.card M := by
   rw [← Nat.card_coe_set_eq]
