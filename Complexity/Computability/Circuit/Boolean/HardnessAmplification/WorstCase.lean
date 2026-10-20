@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.Stages
+public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.Data.Code.Concatenation
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -23,8 +25,10 @@ Reed–Muller code with the Hadamard code: read `f` as a function on `(BitString
 low-degree extension `p` to `F ^ m` for a field `F` of `q = 2 ^ w` elements containing
 `BitString b` (`Cslib.Code.lowDegreeExtension`), a polynomial of total degree at most
 `d = m * (2 ^ b - 1)`, and output the parity `enc (p x) ⬝ r` of the `w` bits of `p x` selected by
-`r`. The encoding is a Boolean function on `m * w + w` bits; given the truth table of `f` and the
-field arithmetic, it is evaluated with `2 ^ n` terms of the extension, in time `2 ^ O(n)`.
+`r`. The encoding is a Boolean function on `m * w + w` bits (`Cslib.Code.concat` of the extension
+with the Hadamard code, `Cslib.Circuits.Boolean.hardnessEncode_append_eq_concat`). Informally,
+given the truth table of `f` and the field arithmetic, it is evaluated with `2 ^ n` terms of the
+extension, in time `2 ^ O(n)`; this module formalizes no running time.
 
 **The reconstruction theorem** (`Cslib.Circuits.Boolean.complexity_le_of_agree_hardnessEncode`):
 if a circuit of size `s` agrees with the encoding of `f` on a `1 / 2 + ε` fraction of its inputs,
@@ -43,14 +47,17 @@ four stages, each querying the previous one:
    the grid `h (BitString b) ^ m` (`Cslib.Code.exists_forall_majTree_eq`).
 4. Reading off `f` from the value of `p` on the grid.
 
-The stages are bit-blasted De Morgan circuits whose costs are bounded in
-`Cslib.Circuits.Boolean.HardnessAmplification.Stages`. In the ranges forced by the hypotheses the
+The stages are bit-blasted De Morgan circuits whose costs are bounded by
+`Cslib.Circuits.Boolean.bitSynthesis_glPredictor`,
+`Cslib.Circuits.Boolean.BitSynthesis.lineListDecode` and
+`Cslib.Circuits.Boolean.BitSynthesis.selfCorrect`. In the ranges forced by the hypotheses the
 reconstruction cost is at most `2 ^ 11 * 3 ^ L * m * w ^ 2 * q ^ 9 * 4 ^ K * (s + 1)`
 (`Cslib.Circuits.Boolean.reconstructionCost_le`,
-`Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode`). The smallest admissible
-parameters have `2 ^ K = O(w / ε ^ 2)`, `3 ^ L = O((m * b) ^ (log₂ 3))`, `D = O(√(d * q))` and
-`q = poly(d, w, 1 / ε)`, so for `2 ^ b = poly(n / ε)` the reconstructed circuit has size
-polynomial in `s`, `n` and `1 / ε`, and the encoding has `O(n + log (1 / ε))` input bits when
+`Cslib.Circuits.Boolean.complexity_le_pow_of_agree_hardnessEncode`). Informally (none of the
+following asymptotics is formalized here), the smallest admissible parameters have
+`2 ^ K = O(w / ε ^ 2)`, `3 ^ L = O((m * b) ^ (log₂ 3))`, `D = O(√(d * q))` and
+`q = poly(d, w, 1 / ε)`, so for a block length `b = Θ(log (n / ε))` the reconstructed circuit has
+size polynomial in `s`, `n` and `1 / ε`, and the encoding has `O(n + log (1 / ε))` input bits when
 `m = n / b`.
 
 The theorem is nonuniform: the masks and guess of the Goldreich–Levin stage, the advice point of
@@ -93,37 +100,30 @@ variable {F : Type*} {w m b : ℕ}
 
 /-! ### The encoding -/
 
-/-- The blocks of `b` bits of an input of `m * b` bits. -/
-def blocks (x : BitString (m * b)) : Fin m → BitString b :=
-  fun i j => x (finProdFinEquiv (i, j))
-
-/-- The input of `m * b` bits with the given blocks. -/
-def unblocks (u : Fin m → BitString b) : BitString (m * b) :=
-  fun k => u (finProdFinEquiv.symm k).1 (finProdFinEquiv.symm k).2
-
-theorem unblocks_blocks (x : BitString (m * b)) : unblocks (blocks x) = x := by
-  funext k
-  simp only [unblocks, blocks, Equiv.apply_symm_apply, Prod.mk.eta]
-
 variable [Field F]
 
 /-- The low-degree extension of the truth table of `f`, read as a function on `(BitString b) ^ m`
 with values `0` and `1`: a codeword of the Reed–Muller code of degree `m * (2 ^ b - 1)`. -/
 noncomputable def truthTableExtension (h : BitString b ↪ F) (f : BooleanFunction (m * b)) :
     (Fin m → F) → F :=
-  lowDegreeExtension h fun u => if f (unblocks u) then 1 else 0
+  lowDegreeExtension h fun u => if f (BitString.blocksEquiv.symm u) then 1 else 0
 
+/-- The extension of a truth table on `(BitString b) ^ m` is a codeword of the Reed–Muller code of
+degree `m * (2 ^ b - 1)`. -/
 theorem truthTableExtension_mem_reedMuller (h : BitString b ↪ F) (f : BooleanFunction (m * b)) :
     truthTableExtension h f ∈ reedMuller F m (m * (2 ^ b - 1)) := by
-  have h2 : Fintype.card (BitString b) = 2 ^ b := by simp [BitString]
-  have := lowDegreeExtension_mem_reedMuller h fun u => if f (unblocks u) then (1 : F) else 0
-  rw [h2] at this
+  have := lowDegreeExtension_mem_reedMuller h fun u =>
+    if f (BitString.blocksEquiv.symm u) then (1 : F) else 0
+  rw [BitString.card] at this
   exact this
 
-theorem truthTableExtension_blocks (h : BitString b ↪ F) (f : BooleanFunction (m * b))
+/-- On the grid, the extension of a truth table is the truth table: at the point whose coordinates
+embed the blocks of `x`, it is `1` if `f x` and `0` otherwise. -/
+theorem truthTableExtension_block (h : BitString b ↪ F) (f : BooleanFunction (m * b))
     (x : BitString (m * b)) :
-    truthTableExtension h f (fun i => h (blocks x i)) = if f x then 1 else 0 := by
-  rw [truthTableExtension, lowDegreeExtension_apply_embed, unblocks_blocks]
+    truthTableExtension h f (fun i => h (BitString.block x i)) = if f x then 1 else 0 := by
+  rw [truthTableExtension, lowDegreeExtension_apply_embed]
+  exact congrArg (fun z => if f z then (1 : F) else 0) (BitString.blocksEquiv.symm_apply_apply x)
 
 /-- **The worst-case-to-average-case encoding** [SudanTrevisanVadhan2001]. On an input of
 `m * w + w` bits, read the first `m * w` bits as a point `x` of `F ^ m` and the last `w` bits as
@@ -134,13 +134,36 @@ noncomputable def hardnessEncode (enc : F ≃ BitString w) (h : BitString b ↪ 
   fun y => enc (truthTableExtension h f (pointOfBits enc fun i => y (Fin.castAdd w i))) ⬝ᵥ
     fun j => y (Fin.natAdd (m * w) j)
 
+/-- The encoding at the input `(x, r)` is the parity of the bits of `p x` selected by `r`. -/
+@[simp]
 theorem hardnessEncode_append (enc : F ≃ BitString w) (h : BitString b ↪ F)
     (f : BooleanFunction (m * b)) (x : BitString (m * w)) (r : BitString w) :
     hardnessEncode enc h f (Fin.append x r) =
       enc (truthTableExtension h f (pointOfBits enc x)) ⬝ᵥ r := by
   simp only [hardnessEncode, Fin.append_left, Fin.append_right]
 
+/-- **The encoding is a concatenated code** (`Cslib.Code.concat`): the outer word is the
+extension of the truth table, read at the point with bits `x`, and the inner code is the Hadamard
+code (`Cslib.BitString.hadamardCode`) of the bits of the field element. -/
+theorem hardnessEncode_append_eq_concat (enc : F ≃ BitString w) (h : BitString b ↪ F)
+    (f : BooleanFunction (m * b)) (x : BitString (m * w)) (r : BitString w) :
+    hardnessEncode enc h f (Fin.append x r) =
+      Code.concat (fun a => BitString.hadamardCode (enc a)) (truthTableExtension h f)
+        (pointOfBits enc x, r) := by
+  rw [hardnessEncode_append, Code.concat_apply, BitString.hadamardCode_apply]
+
 /-! ### The Goldreich–Levin stage -/
+
+/-- A fraction of agreement is at most one: agreement on a `1 / 2 + ε` fraction forces
+`ε ≤ 1 / 2`. -/
+private theorem le_half_of_agree {N : ℕ} {C E : BooleanFunction N} {ε : ℝ}
+    (hagree : (1 / 2 + ε) * 2 ^ N ≤ #{y | C y = E y}) : ε ≤ 1 / 2 := by
+  have hN : (#{y | C y = E y} : ℝ) ≤ 2 ^ N := by
+    have := card_le_univ (univ.filter fun y : BitString N => C y = E y)
+    rw [BitString.card] at this
+    exact_mod_cast this
+  have hpos : (0 : ℝ) < 2 ^ N := by positivity
+  nlinarith
 
 variable [Fintype F] [DecidableEq F]
 
@@ -168,7 +191,7 @@ theorem exists_glPredictor_agree (enc : F ≃ BitString w) (h : BitString b ↪ 
         #{xr : BitString (m * w) × BitString w |
           C (Fin.append xr.1 xr.2) = hardnessEncode enc h f (Fin.append xr.1 xr.2)} from
       (card_equiv (Fin.appendEquiv (m * w) w).symm fun y => by
-        simp [Fin.append_castAdd_natAdd]).trans rfl]
+        simp [Fin.append_castAdd_natAdd, -hardnessEncode_append]).trans rfl]
     rw [card_filter, Fintype.sum_prod_type]
     refine sum_congr rfl fun x _ => ?_
     rw [card_filter]
@@ -177,11 +200,8 @@ theorem exists_glPredictor_agree (enc : F ≃ BitString w) (h : BitString b ↪ 
   have hagr : ∀ x, Crypto.GoldreichLevin.agreement (pred x) (target x) =
       (#{r | pred x r = target x ⬝ᵥ r} : ℝ) / 2 ^ w := fun x =>
     Crypto.GoldreichLevin.agreement_eq_card_div _ _
-  have hagr_le : ∀ x, Crypto.GoldreichLevin.agreement (pred x) (target x) ≤ 1 := fun x => by
-    rw [hagr, div_le_one (by positivity)]
-    have := card_le_univ (univ.filter fun r : BitString w => pred x r = target x ⬝ᵥ r)
-    simpa [BitString] using (show ((#{r | pred x r = target x ⬝ᵥ r} : ℕ) : ℝ) ≤ 2 ^ w by
-      exact_mod_cast this.trans (by simp [BitString]))
+  have hagr_le : ∀ x, Crypto.GoldreichLevin.agreement (pred x) (target x) ≤ 1 := fun x =>
+    Crypto.GoldreichLevin.agreement_le_one _ _
   have hsum : (1 / 2 + ε) * 2 ^ (m * w) ≤
       ∑ x : BitString (m * w), Crypto.GoldreichLevin.agreement (pred x) (target x) := by
     simp only [hagr, ← sum_div]
@@ -204,9 +224,9 @@ theorem exists_glPredictor_agree (enc : F ≃ BitString w) (h : BitString b ↪ 
         have := card_filter_add_card_filter_not (s := (univ : Finset (BitString (m * w))))
           (fun x => 1 / 2 + ε / 2 ≤ Crypto.GoldreichLevin.agreement (pred x) (target x))
         rw [card_univ] at this
-        have hc : (Fintype.card (BitString (m * w)) : ℝ) = 2 ^ (m * w) := by simp [BitString]
-        rw [← hc]
-        rw [← this]
+        have hc : (Fintype.card (BitString (m * w)) : ℝ) = 2 ^ (m * w) := by
+          rw [BitString.card, Nat.cast_pow, Nat.cast_ofNat]
+        rw [← hc, ← this]
         push_cast
         ring
       have h2 : ∑ x ∈ univ.filter (fun x : BitString (m * w) =>
@@ -220,19 +240,9 @@ theorem exists_glPredictor_agree (enc : F ≃ BitString w) (h : BitString b ↪ 
       linarith
     have hgood_le : (#good : ℝ) ≤ 2 ^ (m * w) := by
       have := card_le_univ good
-      have hc : (Fintype.card (BitString (m * w)) : ℝ) = 2 ^ (m * w) := by simp [BitString]
-      rw [← hc]
+      rw [BitString.card] at this
       exact_mod_cast this
-    have hε1 : ε ≤ 1 / 2 := by
-      have hN : (#{y | C y = hardnessEncode enc h f y} : ℝ) ≤ 2 ^ (m * w + w) := by
-        have := card_le_univ (univ.filter fun y : BitString (m * w + w) =>
-          C y = hardnessEncode enc h f y)
-        have hc : (Fintype.card (BitString (m * w + w)) : ℝ) = 2 ^ (m * w + w) := by
-          simp [BitString]
-        rw [← hc]
-        exact_mod_cast this
-      have hpos : (0 : ℝ) < 2 ^ (m * w + w) := by positivity
-      nlinarith
+    have hε1 : ε ≤ 1 / 2 := le_half_of_agree hagree
     nlinarith
   -- Goldreich–Levin with fixed masks and guess
   obtain ⟨masks, guess, hgl⟩ := Crypto.GoldreichLevin.exists_card_candidate_eq pred target
@@ -417,8 +427,7 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
   set p := truthTableExtension h f
   have hp : p ∈ reedMuller F m d := truthTableExtension_mem_reedMuller h f
   have hqw : q = 2 ^ w := by
-    rw [hq_def, Fintype.card_congr enc]
-    simp [BitString]
+    rw [hq_def, Fintype.card_congr enc, BitString.card]
   have hQnat : Fintype.card (Fin m → F) = 2 ^ (m * w) := by
     rw [Fintype.card_fun, Fintype.card_fin, ← hq_def, hqw, ← pow_mul, mul_comm]
   have hq2 : 2 ≤ q := Fintype.one_lt_card
@@ -427,16 +436,7 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
   obtain ⟨masks, guess, hgl⟩ := exists_glPredictor_agree enc h f C hε hagree hK hsize
   set G := glPredictor enc C masks guess
   -- the parameters
-  have hε1 : ε ≤ 1 / 2 := by
-    have hN : (#{y | C y = hardnessEncode enc h f y} : ℝ) ≤ 2 ^ (m * w + w) := by
-      have := card_le_univ (univ.filter fun y : BitString (m * w + w) =>
-        C y = hardnessEncode enc h f y)
-      have hc : (Fintype.card (BitString (m * w + w)) : ℝ) = 2 ^ (m * w + w) := by
-        simp [BitString]
-      rw [← hc]
-      exact_mod_cast this
-    have hpos : (0 : ℝ) < 2 ^ (m * w + w) := by positivity
-    nlinarith
+  have hε1 : ε ≤ 1 / 2 := le_half_of_agree hagree
   obtain ⟨hD1, hDq, hdq⟩ := reconstruction_ranges hq2 hε hε1 hn hmargin herr
   set Q : ℝ := (q : ℝ) ^ m with hQ_def
   have hQ : (Fintype.card (Fin m → F) : ℝ) = Q := by
@@ -485,10 +485,11 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
   let ν : Fin (d + 1) ↪ F := ν₀.trans (Function.Embedding.subtype _)
   have hν : ∀ i, ν i ≠ 0 := fun i => (ν₀ i).2
   -- the self-correction stage
-  let grid : Finset (Fin m → F) := univ.image fun x : BitString (m * b) => fun i => h (blocks x i)
+  let grid : Finset (Fin m → F) :=
+    univ.image fun x : BitString (m * b) => fun i => h (BitString.block x i)
   have hgrid : #grid ≤ 2 ^ (2 ^ L) := by
     calc #grid ≤ #(univ : Finset (BitString (m * b))) := card_image_le
-      _ = 2 ^ (m * b) := by simp [BitString]
+      _ = 2 ^ (m * b) := by rw [card_univ, BitString.card]
       _ ≤ 2 ^ (2 ^ L) := Nat.pow_le_pow_right (by decide) hL
   obtain ⟨V, hV⟩ := exists_forall_majTree_eq (α := F) (Ω := Fin m → F) grid
     (fun x v => lagrangeDecode ν C1 x v) p (ρ := 1 / 6) (fun x _ => by
@@ -503,7 +504,7 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
   have hU := ((bitSynthesis_glPredictor enc hC masks guess).lineListDecode d D z (p z)).selfCorrect
     ν V
   -- the grid point
-  let gp : Fin m → (Fin (m * b) → Bool) → F := fun i x => h (blocks x i)
+  let gp : Fin m → (Fin (m * b) → Bool) → F := fun i x => h (BitString.block x i)
   have hemb : Synthesis interpretation (inputs (m * b))
       (Set.range fun ij : Fin m × Fin w => bitsOf enc (gp ij.1) ij.2)
       (m * w * (2 ^ b * (2 * b + 2) + 1)) := by
@@ -530,7 +531,7 @@ theorem complexity_le_of_agree_hardnessEncode (enc : F ≃ BitString w) (h : Bit
     have hgx : (fun i => gp i x) ∈ grid := mem_image.2 ⟨x, mem_univ _, rfl⟩
     have hUx : U (fun i => gp i x) = if f x then 1 else 0 := by
       rw [show U (fun i => gp i x) = p (fun i => gp i x) from hV _ hgx]
-      exact truthTableExtension_blocks h f x
+      exact truthTableExtension_block h f x
     simp only [single_apply, Function.comp_id, bitsOf, Equiv.symm_apply_apply]
     rw [hUx]
     cases f x
@@ -812,19 +813,9 @@ theorem complexity_le_pow_of_agree_hardnessEncode (enc : F ≃ BitString w)
   refine (complexity_le_of_agree_hardnessEncode enc h f hC hε hagree hK hsize hd hn hmargin herr
     hL).trans ?_
   have hqw : Fintype.card F = 2 ^ w := by
-    rw [Fintype.card_congr enc]
-    simp [BitString]
+    rw [Fintype.card_congr enc, BitString.card]
   have hq2 : 2 ≤ Fintype.card F := Fintype.one_lt_card
-  have hε1 : ε ≤ 1 / 2 := by
-    have hN : (#{y | C y = hardnessEncode enc h f y} : ℝ) ≤ 2 ^ (m * w + w) := by
-      have := card_le_univ (univ.filter fun y : BitString (m * w + w) =>
-        C y = hardnessEncode enc h f y)
-      have hc : (Fintype.card (BitString (m * w + w)) : ℝ) = 2 ^ (m * w + w) := by
-        simp [BitString]
-      rw [← hc]
-      exact_mod_cast this
-    have hpos : (0 : ℝ) < 2 ^ (m * w + w) := by positivity
-    nlinarith
+  have hε1 : ε ≤ 1 / 2 := le_half_of_agree hagree
   obtain ⟨-, hDq, hdq⟩ := reconstruction_ranges hq2 hε hε1 hn hmargin herr
   refine reconstructionCost_le hqw ?_ ?_ ?_ hDq ?_ (by omega)
   · by_contra hw

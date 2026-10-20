@@ -273,6 +273,16 @@ theorem uniformOfFintype_bind_bind_fst_equiv (e : α × β ≃ γ × δ) (f : γ
   simp only [PMF.bind_bind, PMF.bind_map]
   rfl
 
+omit [Fintype β] [Nonempty β] [Fintype γ] [Nonempty γ] [Finite δ] in
+/-- The uniform distribution on a finite type gives an event the fraction of its members, as an
+extended nonnegative real. -/
+theorem toOuterMeasure_uniformOfFintype (event : Set α) [DecidablePred (· ∈ event)] :
+    (uniformOfFintype α).toOuterMeasure event =
+      (Finset.univ.filter (· ∈ event)).card * (Fintype.card α : ℝ≥0∞)⁻¹ := by
+  rw [PMF.toOuterMeasure_apply, tsum_fintype]
+  simp only [Set.indicator_apply, uniformOfFintype_apply]
+  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
+
 end Uniform
 
 /-- A continuation only needs to agree on outcomes the preceding distribution can produce. -/

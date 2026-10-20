@@ -53,14 +53,6 @@ theorem agreement_eq_card_div (predictor : BitString n → Bool) (x : BitString 
   rw [← sum_filter, sum_const, nsmul_eq_mul, ENNReal.toReal_inv, ENNReal.toReal_natCast]
   simp [BitString, div_eq_mul_inv]
 
-/-- The uniform distribution gives a set of masks its fraction of all masks. -/
-private theorem toOuterMeasure_uniformOfFintype {α : Type*} [Fintype α] [Nonempty α]
-    (S : Set α) [DecidablePred (· ∈ S)] :
-    (PMF.uniformOfFintype α).toOuterMeasure S = #{a | a ∈ S} * (Fintype.card α : ℝ≥0∞)⁻¹ := by
-  rw [PMF.toOuterMeasure_apply, tsum_fintype]
-  simp only [Set.indicator_apply, PMF.uniformOfFintype_apply]
-  rw [← sum_filter, sum_const, nsmul_eq_mul]
-
 /-- **The decoding guarantee in counting form.** If a predictor agrees with the parities of `x` on
 a `1 / 2 + ε` fraction of queries and `n ≤ 2 * ε ^ 2 * (2 ^ k - 1)`, then `x` is a candidate for at
 least half of the choices of the `k` masks. -/
@@ -74,7 +66,7 @@ theorem card_le_two_mul_card_filter_mem_candidates (predictor : BitString n → 
   have hfail := decode_failure_le_half predictor x ε hε hk h hsize
   rw [decode, PMF.toOuterMeasure_map_apply,
     show (candidates predictor ⁻¹' {list | x ∉ list}) = {masks | x ∉ candidates predictor masks}
-      from rfl, toOuterMeasure_uniformOfFintype] at hfail
+      from rfl, PMF.toOuterMeasure_uniformOfFintype] at hfail
   have hne : (Fintype.card (Fin k → BitString n) : ℝ≥0∞) ≠ 0 := by
     exact_mod_cast Fintype.card_ne_zero
   rw [← div_eq_mul_inv, ENNReal.div_le_iff hne (ENNReal.natCast_ne_top _)] at hfail
@@ -145,11 +137,12 @@ theorem exists_card_candidate_eq {X : Type*} [Fintype X] (pred : X → BitString
     have : (univ : Finset ((Fin k → BitString n) × BitString k)).Nonempty := univ_nonempty
     exact sum_lt_sum_of_nonempty this fun mg _ => hcon mg.1 mg.2
   rw [sum_const, card_univ, Fintype.card_prod, smul_eq_mul] at hlt
-  have hG : Fintype.card (BitString k) = 2 ^ k := by simp [BitString]
+  have hG : Fintype.card (BitString k) = 2 ^ k := BitString.card
   rw [hG] at hlt
   have : 2 ^ (k + 1) * ∑ mg : (Fin k → BitString n) × BitString k,
       #{x | candidate (pred x) mg.1 mg.2 = target x} ≥ 2 ^ k * (#good * M) := by
     rw [pow_succ, mul_comm (2 ^ k) 2, mul_assoc]
     nlinarith [hsum]
   nlinarith
+
 end Cslib.Crypto.GoldreichLevin
