@@ -28,7 +28,8 @@ The interpolation product follows [Hemaspaandra et al., Theorems 3.1 and 3.7]
 [HemaspaandraEtAl2018]. We prove its uniform GapP membership by expanding over Boolean subsets:
 each term is a polynomial-time product of selected targets times a unary power of the gap.
 Thus the proof uses certified word sums and powers, without assuming indexed-product closure.
-The two-sided acceptance/rejection-target generalization and oracle lowness are separate results.
+The two-sided acceptance/rejection-target generalization is proved in `WPP.TwoSided`.
+Oracle lowness is a separate result.
 
 ## Main results
 
