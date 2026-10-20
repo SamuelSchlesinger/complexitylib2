@@ -38,9 +38,11 @@ milestones below remain the authority for their respective facts.
 
 The verifier-based `UP` and `CeqP` developments, basic Boolean closures, exact-count
 polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are implemented.
-The next counting milestones remain the nondeterministic-machine characterizations of
-`#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
-none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
+The forward machine-to-verifier direction is proved for `#P` and `GapP`: accepting and
+rejecting terminal counts of fixed finite-control list-choice machines under polynomial clocks
+have actual certified binary verifiers. The reverse parsimonious machine construction remains
+open, as do machine characterizations of `UP` and polynomially bounded ambiguity; none follows
+from the verifier definitions alone. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
 PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
 Extend these with counting reductions and further oracle results, preserving exact
@@ -223,9 +225,18 @@ of the handover. The work below remains available for subsequent, independently 
      packed running-sum proof. Eight bounded words encode all node bits; their native decoder
      uses exact shifts and fixed PLUS chains, with no assumed semantic certificate or variable
      multiplication predicate. A fixed finite disjunction handles small numerals.
-     **Next milestones:** native TIMES on every canonical `Fin n`, rejecting out-of-range
-     products; arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace
-     encoding bridge; then projections and NL/P completeness. These remain open.
+     **Canonical multiplication completed (#102):**
+     [Ordered/Multiplication](Complexity/Logics/FirstOrder/Ordered/Multiplication.lean) defines
+     one native TIMES formula with exact ordinary-product semantics `x * y = z` on every
+     canonical `Fin n`, `n ≥ 2`. Every candidate is rejected on overflow. This completes the
+     PLUS/TIMES endpoint of Immerman's Theorem 1.17(1), using the proved native Bit Sum and
+     a carry-table variant of the source's packed short sums. Eight words store global
+     boundary carries; sixteen words store each local block. Both block endpoints agree with
+     the global words, all decoders constrain high bits, and the final carry vanishes from the
+     input-width bound. The witnesses fit for arbitrary universe sizes; a fixed finite branch
+     handles small inputs. No multiplication relation or semantic certificate is assumed.
+     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the
+     ordered logspace encoding bridge; then projections and NL/P completeness. These remain open.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
@@ -315,11 +326,25 @@ of the handover. The work below remains available for subsequent, independently 
      and [canonical index-certificate bijection](Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean)
      now preserve accepting and rejecting counts separately, including equal-effect choices and
      early halting. Increasing a sufficient all-branches clock preserves the counts; the time
-     predicate explicitly excludes stuck states. This is the combinatorial prerequisite (#93),
-     not an efficient binary verifier. The next endpoint (#92) must certify the actual binary
-     checker in polynomial time with fixed finite control/alphabet and explicit certificate length.
-     Prove both directions of equivalence with polynomial-time machines counting accepting
-     branches and accepting-minus-rejecting branches, respectively. Reuse the
+     predicate explicitly excludes stuck states (#93). The
+     [actual binary checker](Complexity/Computability/Machines/Turing/MultiTape/Counting/Checker.lean)
+     now has a tidy polynomial-time proof through existing finite storage and the loop calculus.
+     Its exact binary/index correspondence proves
+     [both terminal counts in #P and their difference in GapP](Complexity/Computability/Complexity/Classes/SharpP/Machine.lean)
+     for every polynomial clock (#92). With fixed finite control, a fixed number of tapes and
+     Boolean alphabet, the certificate length is `b * p(|enc a|)` for a machine-dependent fixed
+     width `b > 0`; invalid codes contribute to neither verdict. This counts only branches
+     halted by the clock. `HaltsWithin` additionally supplies full termination without stuck
+     branches. Runtime is polynomial in the input/certificate pair, with the machine fixed,
+     not uniform in a supplied machine description.
+     The [binary-guess scanner](Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean)
+     supplies one terminal branch per Boolean word of the input length, with an exact `n + 1`
+     clock and singleton halt. Its shared FreeM/List execution preserves each word's multiplicity.
+     Witness-length preparation from the encoded instance and singleton deterministic verifier
+     composition still need actual constructions and charged bounds; the scanner alone does not
+     establish the reverse direction.
+     The reverse parsimonious verifier-to-machine construction, count-preserving deterministic
+     composition and the resulting bidirectional characterizations remain open. Reuse the
      [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
      but preserve exact path multiplicities through choices, halting and padding. Do not collapse
      distinct nondeterministic branches with the same successor; existential witness equivalence
@@ -380,10 +405,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   its encoded and burn-in forms, the optimized square-root bounds and permutation inversion; the
   [input-time](Complexity/Computability/Circuit/Boolean/Iteration/InputTime.lean) and
   [batched iteration](Complexity/Computability/Circuit/Boolean/Iteration/Batch.lean), cycle labels,
-  transient depths, additive long-time bounds, and
-  [autonomous-controller / affine-payload iteration bounds](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean)
-  are also implemented. The sparse-counter
-  continuation and later counting developments are listed below. Nonuniform circuit
+  transient depths, additive long-time bounds,
+  [sparse-counter navigation, visit schedules and hitting-time bounds](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean),
+  and [autonomous-controller / affine-payload iteration bounds](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean)
+  are also implemented. The later hard-power counting developments are listed below. Nonuniform circuit
   existence does not certify the preprocessing algorithm's runtime.
 * **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
   are ported; certify the generator's polynomial runtime, charging all arithmetic and storage
@@ -440,14 +465,13 @@ These do not include an efficient anti-checker generator or a hardness-magnifica
 
 Complete bounded endpoints on ordinary branches, with the six checks and independent API,
 correctness and statement-index reviews before closing a milestone. Retain the FO-reduction
-and machine-characterization priorities above. Continue with sparse-counter
-navigation from the existing source proofs; then close the native NL complement theorem. The Arthur–Merlin
+and machine-characterization priorities above. Continue with the native NL complement theorem. The Arthur–Merlin
 and hardness-amplification developments have their own prerequisites and should be split at the
 following endpoints, rather than submitted as class definitions or conditional wrappers alone.
 
 | Development | First independently useful endpoint | Remaining endpoint and dependencies |
 | --- | --- | --- |
-| Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Autonomous controllers and affine-payload iteration bounds are in [AffineController](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean). | Port sparse-counter navigation, visit schedules and hitting-time bounds using the new charts. General input-time and batch results already exist. Hard-power counting is a later milestone; these results do not close the whole M2b scope. |
+| Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Sparse-counter navigation, visit schedules, hitting-time bounds and bounded visit counts are in [SparseNavigation](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean), [ResidueAdd](Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean) and [HittingTime](Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean). Autonomous controllers and affine-payload iteration bounds are in [AffineController](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean). All ports follow source `c4cfa198`. | General input-time and batch results already exist. Hard-power counting is a later milestone; these results do not close the whole M2b scope. |
 | NL = coNL | A streaming inductive-counting algorithm with soundness/completeness and logarithmic-size counters and state, reusing [InductiveCounting](Complexity/Foundations/Relation/InductiveCounting.lean). Its certificates must be checked without retaining a whole reachable set. | Compile the procedure to the native NTM model, certify every computation prefix's logspace bound, and prove complement closure. Explicitly handle configuration enumeration and input access. `NL` follows the textbook convention that every branch halts (`DecidesInSpace`), so the complement machine must halt on every branch, for instance by bounding its loops with logarithmic counters. Proving that logspace recognizers whose branches may loop (`RecognizesInSpace`) recognize only problems in `NL` is a separate clock-construction item; general space-constructible Savitch bounds are separate. |
 | Arthur–Merlin | Done: verifier-based MA and AM, error reduction, NP ∪ BPP ⊆ MA ⊆ AM ⊆ Π₂ᵖ, MA ⊆ Σ₂ᵖ ∩ Π₂ᵖ and MA ⊆ SBP ([ArthurMerlin](Complexity/Computability/Complexity/Classes/ArthurMerlin.lean)); the [set lower bound protocol and SBP ⊆ AM](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean), [public-coin GNI in AM](Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean), and [PH = Σ₂ᵖ from coNP ⊆ AM for every encoding](Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean). | Interactive-machine characterizations, AM[k] = AM and private-to-public-coin transformations remain separate endpoints. |
 | Worst-case-hardness derandomization | Done for eventual hardness: [P = BPP from 2^(γn) De Morgan circuit hardness of a language in E](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean), with the explicit field, the encoding in E and the parameter schedule certified. | The infinitely-often variant; the EXP-not-in-P/poly endpoint of Babai, Fortnow, Nisan and Wigderson. |

@@ -4,16 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Circuit.Boolean.Iteration.SparseTime
+import Complexity.Computability.Circuit.Boolean.Iteration.SparseNavigation
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.IntervalCases
 
 /-!
-# Sparse-counter variable-time clients
+# Sparse-counter variable-time and navigation clients
 
-Exercise carry overflow, empty state/time widths, a full counter cycle, and an edited
-counter with two cycles. A concrete interval chart checks satisfiability of the chart
-contract; coordinate transfer uses actual identity circuits.
+Exercise carry overflow, modular subtraction with wraparound, arithmetic progression visit
+counts, empty state/time widths, a full counter cycle, and an edited counter with two cycles.
+A concrete interval chart checks satisfiability of the chart contract; coordinate transfer uses
+actual identity circuits.
 -/
 
 namespace ComplexityTests.Iteration.SparseTime
@@ -123,12 +124,102 @@ example (m : ℕ) : ∃ out : Circuit signature (2 + m) 2,
   rw [he] at h
   simpa [Nat.add_comm, Nat.add_left_comm] using h
 
+-- Reduced modular subtraction: both direct (a ≥ b) and wraparound/borrow (a < b) cases.
+example : subtractResidues (5 : BitVec 3) 2 7 = 3 := by decide
+example : subtractResidues (2 : BitVec 3) 5 7 = 4 := by decide
+example : subtractResidues (0 : BitVec 3) 6 7 = 1 := by decide
+example : subtractResidues (0 : BitVec 0) 0 0 = 0 := by decide
+
+-- Arithmetic progression visit counts: before first hit, singleton (period 0), and periodic.
+example : arithmeticProgressionCount 5 3 4 = 0 := by decide
+example : arithmeticProgressionCount 2 0 10 = 1 := by decide
+example : arithmeticProgressionCount 2 3 11 = 4 := by decide
+
+-- Visit schedule from a first hit on `twoCycles`.
+example (t : ℕ) : (twoCycles : BitVec 2 → BitVec 2)^[t] 0 = 1 ↔
+    ∃ k, t = 1 + k * Function.minimalPeriod (twoCycles : BitVec 2 → BitVec 2) 1 :=
+  visit_schedule_of_first (twoCycles : BitVec 2 → BitVec 2) 0 1 1 rfl
+    (by intro j hj; interval_cases j; decide) t
+
+-- Cycle-label visit schedule specification on `twoCycles`.
+example (x y : BitVec 2) (t : ℕ) :
+    (twoCycles : BitVec 2 → BitVec 2)^[t] x = y ↔
+      visitScheduleContains
+        (cycleLabelVisits (wordCycleLabel twoCycles x) (wordCycleLabel twoCycles y)) t :=
+  cycleLabelVisits_spec twoCycles twoCycles.injective x y t
+
+-- Sparse-counter visit schedule and hitting time on `twoCycles`.
+example : ∃ out : Circuit signature (2 + 2) (visitScheduleWidth 2),
+    (∀ z t, (twoCycles : BitVec 2 → BitVec 2)^[t] (word (inputLeft z)) = word (inputRight z) ↔
+      visitScheduleContains (out.eval interpretation z) t) ∧
+    (∀ z T, Set.ncard {t : ℕ | t ≤ T ∧
+      (twoCycles : BitVec 2 → BitVec 2)^[t] (word (inputLeft z)) = word (inputRight z)} =
+        visitScheduleCount (out.eval interpretation z) T) ∧
+    out.size ≤ 18000 := by
+  have h := sparse_counter_visit_schedule twoCycles
+  rw [twoCycles_disagreement] at h
+  simpa using h
+
+example : ∃ out : Circuit signature (2 + 2) (1 + (2 + 1)),
+    (∀ z, out.eval interpretation z 0 = true ↔
+      ∃ t, (twoCycles : BitVec 2 → BitVec 2)^[t] (word (inputLeft z)) = word (inputRight z)) ∧
+    (∀ z, out.eval interpretation z 0 = true →
+      let t := (word fun i : Fin (2 + 1) =>
+        out.eval interpretation z (Fin.natAdd 1 i)).toNat
+      (twoCycles : BitVec 2 → BitVec 2)^[t] (word (inputLeft z)) = word (inputRight z) ∧
+        (∀ j < t, (twoCycles : BitVec 2 → BitVec 2)^[j]
+          (word (inputLeft z)) ≠ word (inputRight z)) ∧ t < 2 ^ 2) ∧
+    out.size ≤ 18000 := by
+  have h := sparse_counter_hitting_time twoCycles
+  rw [twoCycles_disagreement] at h
+  simpa using h
+
+example : ∃ out : Circuit signature (2 + 2) (visitScheduleWidth 2),
+    (∀ z t, (twoCycles : BitVec 2 → BitVec 2)^[t] (word (inputLeft z)) = word (inputRight z) ↔
+      visitScheduleContains (out.eval interpretation z) t) ∧
+    (∀ z T, Set.ncard {t : ℕ | t ≤ T ∧
+      (twoCycles : BitVec 2 → BitVec 2)^[t] (word (inputLeft z)) = word (inputRight z)} =
+        visitScheduleCount (out.eval interpretation z) T) ∧
+    out.size ≤ 18000 := by
+  have hid : (Circuit.id signature 2).Computes interpretation
+      (fun x i => ((Equiv.refl (BitVec 2)) (word x)).getLsbD i.val) := by
+    intro x
+    funext i
+    exact (getLsbD_word x i).symm
+  have h := sparse_coordinate_visit_schedule twoCycles (Equiv.addRight 1) (Equiv.refl _)
+    (fun _ => rfl) (Circuit.id signature 2) hid
+  have he : disagreement twoCycles (Equiv.addRight (1 : BitVec 2)) = {1, 3} :=
+    twoCycles_disagreement
+  rw [he] at h
+  simpa using h
+
+/--
+info: 'Cslib.FunctionalGraph.visit_schedule' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.FunctionalGraph.visit_schedule
+
+/--
+info: 'Cslib.FunctionalGraph.visit_count_of_first' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.FunctionalGraph.visit_count_of_first
+
 /--
 info: 'Cslib.Circuits.Boolean.Iteration.toNat_addResidue' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Iteration.toNat_addResidue
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.toNat_subtractResidues' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Iteration.toNat_subtractResidues
 
 /--
 info: 'Cslib.Circuits.Boolean.Iteration.exists_counterIntervalChart' depends on axioms:
@@ -157,5 +248,26 @@ info: 'Cslib.Circuits.Boolean.Iteration.sparse_coordinate_variable_time' depends
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.Iteration.sparse_coordinate_variable_time
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.sparse_counter_visit_schedule' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Iteration.sparse_counter_visit_schedule
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.sparse_counter_hitting_time' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Iteration.sparse_counter_hitting_time
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.sparse_coordinate_visit_schedule' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Iteration.sparse_coordinate_visit_schedule
 
 end ComplexityTests.Iteration.SparseTime

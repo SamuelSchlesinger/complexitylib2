@@ -107,6 +107,7 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Scan
 public import Complexity.Computability.Circuit.Boolean.Iteration.Selection
 public import Complexity.Computability.Circuit.Boolean.Iteration.SharedDictionary
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseDisplacement
+public import Complexity.Computability.Circuit.Boolean.Iteration.SparseNavigation
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Target
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
@@ -482,6 +483,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
+public import Complexity.Computability.Complexity.Classes.SharpP.Machine
 public import Complexity.Computability.Complexity.Classes.SharpP.Oracle
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Power
@@ -688,7 +690,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Spac
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Certificate
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Checker
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Guess
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
@@ -1200,6 +1206,8 @@ public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Vote
+public import Complexity.Foundations.Data.BitString.Multiplication
+public import Complexity.Foundations.Data.BitString.Packing
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.Point
@@ -1315,6 +1323,11 @@ public import Complexity.Logics.FirstOrder.Ordered.BitSum
 public import Complexity.Logics.FirstOrder.Ordered.BitSum.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Bounds
+public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Columns
+public import Complexity.Logics.FirstOrder.Ordered.Packing
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
