@@ -79,3 +79,23 @@ complexitylib development and connects it to the library's public measures.
 \decl{Complexity/Computability/QueryComplexity/SensitivitySeparation.lean}{108}{Cslib.QueryComplexity.exists_sensitivity_rpow_le_blockSensitivityAt}
 \decl{Complexity/Computability/QueryComplexity/SensitivitySeparation.lean}{99}{Cslib.QueryComplexity.exists_mul_sensitivity_sq_lt_blockSensitivity}
 \end{result}
+
+\begin{result}
+\subsection{Element distinctness in linear time on the word RAM}
+On the bounded-word RAM, whose registers and memory cells hold $w$-bit words, whose every
+instruction costs one unit, and on which writing a constant or an arithmetic result of more than
+$w$ bits faults, a single fixed program decides whether a list of $n$ naturals, each smaller than
+$n$, has no duplicates: at every word size $w\ge 2(\lfloor\log_2 n\rfloor+1)$ it halts within
+$16(n+1)$ instructions with output $1$ exactly when the entries are distinct. It allocates a
+zeroed table of $n$ flags and uses each entry as an address into it, so it is not a comparison
+algorithm. The bound on the entries is part of the instance type; unrestricted element
+distinctness is not treated. Uniform decision requires one program for all word sizes above the
+threshold, as in the transdichotomous model. The machine, its time classes and its structured
+programs, which compile with identical instruction counts, are adapted from the Lean
+formalization accompanying the tromino undecidability paper.
+\citep[Section 2.2]{CLRS2009}\citep{FredmanWillard1993,Hagerup1998}\citep{Tromino2025}
+\declat{cf18351154910c4e27f957ae723a4e4049c193a1}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{257}{Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup}
+\declat{cf18351154910c4e27f957ae723a4e4049c193a1}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{243}{Cslib.Algorithms.WordRAM.ElementDistinctness.answers}
+\declat{cf18351154910c4e27f957ae723a4e4049c193a1}{Complexity/Computability/WordRAM/Time.lean}{111}{Cslib.WordRAM.DecidesInTime}
+\declat{cf18351154910c4e27f957ae723a4e4049c193a1}{Complexity/Computability/WordRAM/Compile.lean}{132}{Cslib.WordRAM.Exec.runs}
+\end{result}
