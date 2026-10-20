@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 
 /-!
 # Basic functions within linear work space
@@ -27,6 +28,8 @@ Combinators keep a computation within a fixed space budget.
 * `Turing.MultiTapeTM.ComputableTidilyInSpace.budget_natAdd`,
   `Turing.MultiTapeTM.ComputableTidilyInSpace.budget_cons` and their siblings: arithmetic and list
   operations on values computed within a fixed budget stay within it.
+* `Turing.MultiTapeTM.ComputableTidilyInSpace.dispatch`: a case distinction on the element of a
+  fixed list at a computed index.
 -/
 
 @[expose] public section
@@ -127,6 +130,25 @@ theorem natAdd :
     ComputableTidilyInSpace (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat
       fun p => (encPair encNat encNat p).length + 1 :=
   of_inO ComputableTidilyInO.natAdd
+
+/-- **Dispatching on the element of a fixed list at a computed index**: if `F x` is computed in
+linear space for every `x`, and the index is computed in linear space, then so is
+`F (l.getD (i a) d) a`. A finite case distinction, as on the instruction at the current label of
+a program. -/
+theorem dispatch {κ : Type*} (l : List κ) (d : κ) (F : κ → α → β)
+    (hF : ∀ x, ComputableTidilyInSpace (F x) encIn encB fun a => (encIn a).length) {i : α → ℕ}
+    (hi : ComputableTidilyInSpace i encIn encNat fun a => (encIn a).length) :
+    ComputableTidilyInSpace (fun a => F (l.getD (i a) d) a) encIn encB
+      fun a => (encIn a).length := by
+  induction l generalizing i with
+  | nil => simpa using hF d
+  | cons x l ih =>
+    have hz : ComputableTidilyInSpace (fun a => decide (i a = 0)) encIn encBool
+        fun a => (encIn a).length := budget_comp_lin natIsZero (.refl _) hi
+    have hpred : ComputableTidilyInSpace (fun a => i a - 1) encIn encNat
+        fun a => (encIn a).length := budget_comp_lin natPred linear_succ hi
+    refine (budget_ite hz (hF x) (ih hpred)).of_enc_eq fun a => ?_
+    rcases i a with _ | c <;> simp
 
 /-- A step of division: subtract the divisor from the remainder and count, while it fits. -/
 def divStep (s : ℕ × ℕ × ℕ) : ℕ × ℕ × ℕ :=
@@ -581,6 +603,39 @@ theorem budget_natDiv {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn e
     (hb : ComputableTidilyInSpace b encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => a x / b x) encIn encNat Bs :=
   budget_comp_lin natDiv (linear_mul 16) (budget_prod ha hb)
+
+/-- Truncated subtraction, within the budget. -/
+theorem budget_natSub {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x - b x) encIn encNat Bs :=
+  budget_comp_lin natSub linear_succ (budget_prod hb ha)
+
+/-- The remainder, within the budget. -/
+theorem budget_natMod {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x % b x) encIn encNat Bs :=
+  budget_comp_lin natMod (linear_mul 16) (budget_prod ha hb)
+
+/-- The strict comparison, within the budget. -/
+theorem budget_natLt {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => decide (a x < b x)) encIn encBool Bs :=
+  budget_comp_lin natLt linear_succ (budget_prod ha hb)
+
+/-- A fixed natural power, within the budget. -/
+theorem budget_natPow {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hin : (fun x => (encIn x).length) ≼ Bs) (d : ℕ) :
+    ComputableTidilyInSpace (fun x => a x ^ d) encIn encNat Bs := by
+  induction d with
+  | zero => simpa using budget_const (encB := encNat) 1 hin
+  | succ d ih => simpa [pow_succ] using budget_natMul ih ha
+
+/-- The remainder modulo a positive constant, as an element of `Fin w`. -/
+theorem budget_finMod {w : ℕ} (hw : 0 < w) {m : α → ℕ}
+    (hm : ComputableTidilyInSpace m encIn encNat Bs) (hin : (fun x => (encIn x).length) ≼ Bs) :
+    ComputableTidilyInSpace (fun x => (⟨m x % w, Nat.mod_lt _ hw⟩ : Fin w)) encIn
+      (encFinBin w) Bs :=
+  (budget_natMod hm (budget_const (encB := encNat) w hin)).of_enc_eq fun _ => rfl
 
 /-- `some` of a number, within the budget. -/
 theorem budget_optionSome {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs) :

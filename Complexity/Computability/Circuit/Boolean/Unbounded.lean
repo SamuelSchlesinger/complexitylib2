@@ -34,6 +34,17 @@ bases of TC⁰ (majority gates) and AC⁰[q] (`MOD_q` gates): `extSignature` and
 * `Cslib.Circuits.Boolean.Unbounded.extSignature`,
   `Cslib.Circuits.Boolean.Unbounded.extInterpretation`: the basis with one extra gate of every
   arity.
+
+## Main results
+
+* `Cslib.Circuits.Boolean.Unbounded.interpretation_of_op_eq_not`,
+  `Cslib.Circuits.Boolean.Unbounded.interpretation_of_op_eq_and`,
+  `Cslib.Circuits.Boolean.Unbounded.interpretation_of_op_eq_or`: the values of the gates of a
+  program.
+* `Cslib.Circuits.Boolean.Unbounded.cost_andOrCost_eq_card`: the AND/OR cost of a program is its
+  number of conjunctions and disjunctions.
+* `Cslib.Circuits.Boolean.Unbounded.preserves_deMorganToUnbounded`: the De Morgan basis embeds
+  with its meaning.
 -/
 
 @[expose] public section
@@ -137,6 +148,8 @@ theorem andOrCost_le_one (op : Op) : andOrCost op ≤ 1 := by
 /-- Conjunctions and disjunctions cost one in the AND/OR depth. -/
 theorem andOrCost_eq_one_of_ne_not {op : Op} (hop : op ≠ .not) : andOrCost op = 1 := by
   cases op <;> simp_all
+
+@[deprecated (since := "2026-10-19")] alias andOrCost_eq_one := andOrCost_eq_one_of_ne_not
 
 open Finset in
 /-- The AND/OR cost of a program is its number of conjunctions and disjunctions. -/

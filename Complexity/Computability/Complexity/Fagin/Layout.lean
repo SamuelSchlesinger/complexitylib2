@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Fagin.Power
+public import Complexity.Logics.FirstOrder.Encoding.Layout
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 
 /-!
@@ -332,6 +333,18 @@ theorem encStructurePrefix_count {a : EncodedStructure} (ha : v.WellFormed a) :
     exact List.getD_eq_getElem a.2 [] hi'
   rw [List.take_of_length_le (by simp), htables]
   rfl
+
+/-- The prefix through the first `m` tables ends where the table at position `m` starts
+(`Cslib.Logic.tableStart`). -/
+theorem length_encStructurePrefix {a : EncodedStructure} {m : ℕ} (hm : m ≤ a.2.length)
+    (hmc : m ≤ v.count) : (v.encStructurePrefix a m).length = tableStart a m := by
+  have htake : (List.ofFn fun i : Fin v.count => v.table a (v.symbol i)).take m = a.2.take m := by
+    refine List.ext_getElem (by simp only [List.length_take, List.length_ofFn]; omega)
+      fun i hi hi' => ?_
+    simp only [List.getElem_take, List.getElem_ofFn, table, index, Equiv.symm_apply_apply]
+    exact List.getD_eq_getElem a.2 [] (by simp only [List.length_take] at hi'; omega)
+  rw [encStructurePrefix, htake, List.length_append, length_frame, length_flatMap_frame,
+    tableStart, encUnary_apply, List.length_replicate]
 
 theorem length_encStructurePrefix_le (a : EncodedStructure) {m : ℕ} (hm : m ≤ v.count) :
     (v.encStructurePrefix a m).length ≤ (v.encStructurePrefix a v.count).length := by

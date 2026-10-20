@@ -60,8 +60,10 @@ abbrev DPHard (enc : α ↪ List Bool) (A : Set α) : Prop := PolyTimeHard @DP e
 /-- DP membership and hardness under polynomial-time many-one reductions. -/
 abbrev DPComplete (enc : α ↪ List Bool) (A : Set α) : Prop := PolyTimeComplete @DP enc A
 
+/-- Hardness for the class `DP` is `DPHard`. -/
 theorem polyTimeHard_DP_iff : PolyTimeHard @DP enc A ↔ DPHard enc A := Iff.rfl
 
+/-- Completeness for the class `DP` is `DPComplete`. -/
 theorem polyTimeComplete_DP_iff : PolyTimeComplete @DP enc A ↔ DPComplete enc A := Iff.rfl
 
 /-- DP is exactly the differences of two NP languages. -/

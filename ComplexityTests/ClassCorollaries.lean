@@ -78,7 +78,7 @@ example {α : Type} (enc : α ↪ List Bool) : PWithOracle Set.univ enc ⊆ PWit
 example {α : Type} {enc : α ↪ List Bool} {L : Set α} (hL : L ∈ PWithPPOracle enc) :
     ∃ (β : Type) (encβ : β ↪ List Bool) (B : Set β), B ∈ PP encβ ∧
       L ∈ PWithOracle (encβ '' B) enc :=
-  mem_PWithOracle_image hL
+  exists_mem_PP_mem_PWithOracle_image hL
 
 /-- Binary search for the constant `1 ∈ #P` reads its bit `0`. -/
 example : (Set.univ : Set (List Bool)) ∈ PWithPPOracle encBits :=
@@ -241,11 +241,11 @@ info: 'Cslib.Complexity.PWithOracle_subset_PWithPPOracle' depends on axioms:
 #print axioms Cslib.Complexity.PWithOracle_subset_PWithPPOracle
 
 /--
-info: 'Cslib.Complexity.mem_PWithOracle_image' depends on axioms:
+info: 'Cslib.Complexity.exists_mem_PP_mem_PWithOracle_image' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PWithOracle_image
+#print axioms Cslib.Complexity.exists_mem_PP_mem_PWithOracle_image
 
 /--
 info: 'Cslib.Complexity.BinarySearch.isOraclePPTOn_search' depends on axioms:

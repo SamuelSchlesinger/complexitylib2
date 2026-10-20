@@ -26,7 +26,6 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Op
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.Oracle.Substitution
 import Complexity.Languages.Probabilistic.Simulation
-import Mathlib.Data.List.GetD
 import Mathlib.Data.Nat.Bitwise
 import Cslib.Foundations.Data.Polynomial.Monotone
 
@@ -69,8 +68,9 @@ The classes do not count queries.
 
 * `Cslib.Complexity.P_subset_PWithPPOracle`, `Cslib.Complexity.PP_subset_PWithPPOracle`:
   `P ⊆ P^PP` and `PP ⊆ P^PP`.
-* `Cslib.Complexity.PWithOracle_subset_PWithPPOracle`, `Cslib.Complexity.mem_PWithOracle_image`:
-  `P^A ⊆ P^PP` for `A ∈ PP`, and `P^PP` lies in `P` relative to the codes of a `PP` problem.
+* `Cslib.Complexity.PWithOracle_subset_PWithPPOracle`,
+  `Cslib.Complexity.exists_mem_PP_mem_PWithOracle_image`: `P^A ⊆ P^PP` for `A ∈ PP`, and `P^PP`
+  lies in `P` relative to the codes of a `PP` problem.
 * `Cslib.Complexity.setOf_le_mem_PP`: comparing with a `#P` value is in `PP`.
 * `Cslib.Complexity.BinarySearch.interpret_id_search`,
   `Cslib.Complexity.BinarySearch.isOraclePPTOn_search`: binary search with an oracle is correct
@@ -128,7 +128,6 @@ theorem PP_subset_PWithPPOracle : PP enc ⊆ PWithPPOracle enc := by
     rw [languageOracle_apply, ← hA a]
     by_cases hm : enc a ∈ A <;> simp [hm]
 
-open Classical in
 /-- **`P^A ⊆ P^PP` for `A ∈ PP`**: a polynomial-time oracle program relative to a language in
 `PP` over words encoded as themselves decides its problem against every oracle agreeing with that
 language, since every word is a code. -/
@@ -141,13 +140,16 @@ theorem PWithOracle_subset_PWithPPOracle {A : Set (List Bool)} (hA : A ∈ PP en
 
 /-- **`P^PP` lies in polynomial time relative to the codes of a `PP` problem**: against the image
 of its `PP` problem under the encoding, the program of a problem in `P^PP` decides it. -/
-theorem mem_PWithOracle_image (hL : L ∈ PWithPPOracle enc) :
+theorem exists_mem_PP_mem_PWithOracle_image (hL : L ∈ PWithPPOracle enc) :
     ∃ (β : Type) (encβ : β ↪ List Bool) (B : Set β), B ∈ PP encβ ∧
       L ∈ PWithOracle (encβ '' B) enc := by
   classical
   obtain ⟨β, encβ, B, hB, program, hprogram, h⟩ := hL
   exact ⟨β, encβ, B, hB, _, ⟨program, hprogram, fun _ => rfl⟩,
     h _ fun _ => encβ.injective.mem_set_image⟩
+
+@[deprecated (since := "2026-10-19")]
+alias mem_PWithOracle_image := exists_mem_PP_mem_PWithOracle_image
 
 /-! ### Comparing with a `#P` value -/
 

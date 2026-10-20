@@ -6,7 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.Problems.CircuitValue.Completeness
 
-/-! Ladner's theorem: the circuit value problem is `P`-complete under logarithmic-space
+/-! The circuit value problem is `P`-complete under logarithmic-space
 reductions. Clients: the tableau of any machine is a well-formed circuit with its output wire
 among its wires; its hypothesis `n < 2 T` is met by the time bound of the reduction; the reduction
 applies to the circuit value problem itself and to its complement; completeness transfers to
@@ -58,6 +58,14 @@ example : PolyTimeComplete @P encCircuitValue CircuitValue :=
 example (h : CircuitValue ∈ L encCircuitValue) : P encBits = L encBits :=
   CircuitValue.mem_L_iff_forall_P_eq_L.1 h encBits
 
+/-- Hardness transfers through the identity reduction. -/
+example : LogSpaceHard @P encCircuitValue CircuitValue :=
+  CircuitValue.logSpaceHard.trans (LogSpaceReducible.refl _ _)
+
+/-- A logspace-hard problem in `L` contains the whole source class in `L`. -/
+example (h : CircuitValue ∈ L encCircuitValue) : P encBits ⊆ L encBits :=
+  CircuitValue.logSpaceHard.subset_L h encBits
+
 /-! ### Axiom guards -/
 
 /-- info: 'Cslib.Complexity.CircuitValue.logSpaceComplete' depends on axioms: [propext,
@@ -89,5 +97,15 @@ Classical.choice, Quot.sound] -/
 Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Tableau.gateCode_inSpace
+
+/-- info: 'Cslib.Complexity.CircuitValue.logSpaceReducible_of_mem_P' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms CircuitValue.logSpaceReducible_of_mem_P
+
+/-- info: 'Cslib.Complexity.CircuitValue.run_writer' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms CircuitValue.run_writer
 
 end ComplexityTests.CircuitValueCompleteness

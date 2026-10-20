@@ -83,7 +83,7 @@ def PolyTimeHard (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (enc
 
 /-- `B` is complete for the class `C` under polynomial-time many-one reductions: it is in `C` and
 every problem in `C` reduces to it. -/
-def PolyTimeComplete (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) {β : Type}
+def PolyTimeComplete {β : Type} (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α))
     (encB : β ↪ List Bool) (B : Set β) : Prop :=
   B ∈ C encB ∧ PolyTimeHard C encB B
 
@@ -101,15 +101,19 @@ abbrev coNPHard (encB : β ↪ List Bool) (B : Set β) : Prop := PolyTimeHard @c
 abbrev coNPComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop :=
   PolyTimeComplete @coNP encB B
 
+/-- Hardness for the class `NP` is `NPHard`. -/
 theorem polyTimeHard_NP_iff {encB : β ↪ List Bool} {B : Set β} :
     PolyTimeHard @NP encB B ↔ NPHard encB B := Iff.rfl
 
+/-- Completeness for the class `NP` is `NPComplete`. -/
 theorem polyTimeComplete_NP_iff {β : Type} {encB : β ↪ List Bool} {B : Set β} :
     PolyTimeComplete @NP encB B ↔ NPComplete encB B := Iff.rfl
 
+/-- Hardness for the class `coNP` is `coNPHard`. -/
 theorem polyTimeHard_coNP_iff {encB : β ↪ List Bool} {B : Set β} :
     PolyTimeHard @coNP encB B ↔ coNPHard encB B := Iff.rfl
 
+/-- Completeness for the class `coNP` is `coNPComplete`. -/
 theorem polyTimeComplete_coNP_iff {β : Type} {encB : β ↪ List Bool} {B : Set β} :
     PolyTimeComplete @coNP encB B ↔ coNPComplete encB B := Iff.rfl
 

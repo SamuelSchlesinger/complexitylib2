@@ -17,8 +17,8 @@ import Mathlib.Data.List.GetD
 The tableau circuit of a multi-tape machine (`Tableau/Basic.lean`) computes the run: on an input
 `x` of length `n`, for `T` steps with `n < 2 T`, the wire of each feature at time `t ≤ T` carries
 the value of that feature in the configuration after `t` steps
-(`Cslib.Circuits.Boolean.Tableau.inv_le`). In particular the output wire is true exactly when the
-output written after `T` steps is `[true]` (`Cslib.Circuits.Boolean.Tableau.evalOutput_gates`),
+(`Cslib.Circuits.Boolean.Tableau.invariant_le`). In particular the output wire is true exactly when
+the output written after `T` steps is `[true]` (`Cslib.Circuits.Boolean.Tableau.evalOutput_gates`),
 and the tableau circuit outputs this value (`Cslib.Circuits.Boolean.Tableau.eval_circuit`).
 
 The proof follows the blocks. In block `t + 1`, the scan accumulates the symbols under the heads
@@ -30,7 +30,7 @@ the feature.
 
 * `Cslib.Circuits.getD_evalCode`: the value of a gate of a well-formed gate list, from the values
   of its arguments.
-* `Cslib.Circuits.Boolean.Tableau.inv_le`: the features at every time `t ≤ T`.
+* `Cslib.Circuits.Boolean.Tableau.invariant_le`: the features at every time `t ≤ T`.
 * `Cslib.Circuits.Boolean.Tableau.evalOutput_gates`: the output wire carries the answer.
 * `Cslib.Circuits.Boolean.Tableau.eval_circuit`: the tableau circuit outputs the answer.
 
@@ -109,7 +109,7 @@ def opVal : Op → Bool → Bool → Bool
   | .and, a, b => a && b
   | .or, a, b => a || b
 
-theorem interpretation_argsOf (op : Op) (a b : ℕ) (f : ℕ → Bool) :
+private theorem interpretation_argsOf (op : Op) (a b : ℕ) (f : ℕ → Bool) :
     (interpretation op fun i => (argsOf op a b)[i.val]?.elim false f) = opVal op (f a) (f b) := by
   cases op <;> rfl
 
@@ -126,32 +126,32 @@ theorem val_add {g : ℕ} (hg : g < numGates k State T) :
     (by simp [gates, hg])
 
 /-- The input wires carry the input. -/
-theorem val_input {i : ℕ} (hi : i < x.length) : val tm T x i = x[i] := by
+private theorem val_input {i : ℕ} (hi : i < x.length) : val tm T x i = x[i] := by
   rw [val, List.getD_eq_getElem?_getD,
     List.getElem?_eq_getElem (by simp only [length_evalCode]; omega)]
   have hpre := prefix_evalCode interpretation false x (gates tm x.length T)
   rw [Option.getD_some, hpre.getElem hi]
 
 omit [DecidableEq State] in
-theorem two_le_numGates : 2 ≤ numGates k State T := by
+private theorem two_le_numGates : 2 ≤ numGates k State T := by
   simp only [numGates]
   omega
 
 /-- The constant `false` at wire `n`. -/
-theorem val_fls : val tm T x x.length = false := by
+private theorem val_fls : val tm T x x.length = false := by
   have := val_add tm (T := T) (x := x) (g := 0)
     (by have := two_le_numGates (k := k) (State := State) (T := T); omega)
   simpa [gateCode, interpretation] using this
 
 /-- The constant `true` at wire `n + 1`. -/
-theorem val_tru : val tm T x (x.length + 1) = true := by
+private theorem val_tru : val tm T x (x.length + 1) = true := by
   have := val_add tm (T := T) (x := x) (g := 1)
     (by have := two_le_numGates (k := k) (State := State) (T := T); omega)
   simpa [gateCode, interpretation] using this
 
 /-- **The value of a position** of block `t ≤ T`: the initial constant in block `0`, and otherwise
 the operation of the gate applied to the values of its references. -/
-theorem val_wire {t c : ℕ} {l : Loc k State} (hl : l.ColOK T c) (ht : t ≤ T) :
+private theorem val_wire {t c : ℕ} {l : Loc k State} (hl : l.ColOK T c) (ht : t ≤ T) :
     val tm T x (wire x.length T t l c) =
       if t = 0 then initBit tm T c l
       else opVal (table tm l).1 (val tm T x ((table tm l).2.1.resolve x.length T t c))
@@ -202,14 +202,14 @@ noncomputable def actSem {input : List Bool} (cfg : Cfg k Bool State input) (v :
 
 variable (T x) in
 /-- **The invariant** at time `t`: the wire of every feature carries its value after `t` steps. -/
-def Inv (t : ℕ) : Prop :=
+def Invariant (t : ℕ) : Prop :=
   (∀ f, val tm T x (wire (k := k) x.length T t (.gf f true 7) 0) =
     gfSem (tm.runFrom (tm.initCfg x) t) f) ∧
   ∀ c < numCols T, ∀ f, val tm T x (wire (State := State) x.length T t (.col f true 7) c) =
     colSem T (tm.runFrom (tm.initCfg x) t) c f
 
 /-- The first block holds the initial configuration. -/
-theorem inv_zero : Inv tm T x 0 := by
+theorem invariant_zero : Invariant tm T x 0 := by
   refine ⟨fun f => ?_, fun c hc f => ?_⟩
   · rw [val_wire tm (l := .gf f true 7) rfl (Nat.zero_le _)]
     rcases f with q | o <;> simp [initBit, gfInit, gfSem, runFrom, Cfg.init, eq_comm]
@@ -219,14 +219,17 @@ theorem inv_zero : Inv tm T x 0 := by
 
 /-! ### Values of references -/
 
-theorem val_resolve_fls {t c : ℕ} : val tm T x ((Ref.fls : Ref k State).resolve x.length T t c) =
+private theorem val_resolve_fls {t c : ℕ} : val tm T x ((Ref.fls : Ref k State).resolve x.length T t
+    c) =
     false := val_fls tm
 
-theorem val_resolve_tru {t c : ℕ} : val tm T x ((Ref.tru : Ref k State).resolve x.length T t c) =
+private theorem val_resolve_tru {t c : ℕ} : val tm T x ((Ref.tru : Ref k State).resolve x.length T t
+    c) =
     true := val_tru tm
 
 /-- The input bit of column `c`, `false` at the columns holding no input bit. -/
-theorem val_resolve_inp {t c : ℕ} : val tm T x ((Ref.inp : Ref k State).resolve x.length T t c) =
+private theorem val_resolve_inp {t c : ℕ} : val tm T x ((Ref.inp : Ref k State).resolve x.length T t
+    c) =
     (inputAt x c).getD false := by
   simp only [Ref.resolve]
   split_ifs with h
@@ -237,7 +240,7 @@ theorem val_resolve_inp {t c : ℕ} : val tm T x ((Ref.inp : Ref k State).resolv
     · simp [inputAt, hc]
     · simp [inputAt, hc, List.getElem?_eq_none (show x.length ≤ c - 1 by omega)]
 
-theorem val_resolve_node {t c : ℕ} {p : Bool} {l : Loc k State} {cs : ColSel} {g : Guard} :
+private theorem val_resolve_node {t c : ℕ} {p : Bool} {l : Loc k State} {cs : ColSel} {g : Guard} :
     val tm T x ((Ref.node p l cs g).resolve x.length T t c) =
       (g.test x.length T c && val tm T x (wire x.length T (if p then t - 1 else t) l
         (cs.apply T c))) := by
@@ -253,12 +256,12 @@ def termSem (cfg : Cfg k Bool State x) (c : ℕ) : ScanQ k → Prop
   | .inRead s => cfg.inputPos.val = c ∧ inputAt x c = s
   | .read i s => cfg.workTapePos i = (c : ℤ) - T ∧ cfg.workTapes i ((c : ℤ) - T) = s
 
-theorem inputAt_eq_none {c : ℕ} (h : ¬(1 ≤ c ∧ c ≤ x.length)) : inputAt x c = none := by
+private theorem inputAt_eq_none {c : ℕ} (h : ¬(1 ≤ c ∧ c ≤ x.length)) : inputAt x c = none := by
   by_cases hc0 : c = 0
   · simp [inputAt, hc0]
   · simp [inputAt, hc0, List.getElem?_eq_none (show x.length ≤ c - 1 by omega)]
 
-theorem inputAt_eq_some {c : ℕ} (h : 1 ≤ c ∧ c ≤ x.length) :
+private theorem inputAt_eq_some {c : ℕ} (h : 1 ≤ c ∧ c ≤ x.length) :
     inputAt x c = some (x[c - 1]'(by omega)) := by
   simp [inputAt, show c ≠ 0 by omega, List.getElem?_eq_getElem (show c - 1 < x.length by omega)]
 
@@ -269,11 +272,11 @@ def readSem (cfg : Cfg k Bool State x) : ScanQ k → Prop
   | .read i s => cfg.workTapeSymbols i = s
 
 omit [DecidableEq State] in
-theorem wire_glob (n T t c : ℕ) (l : GlobLoc k State) :
+private theorem wire_glob (n T t c : ℕ) (l : GlobLoc k State) :
     wire n T t (.glob l) c = wire n T t (.glob l) 0 := rfl
 
 omit [DecidableEq State] in
-theorem sitOf_equivFin (y : Situation k State) :
+private theorem sitOf_equivFin (y : Situation k State) :
     sitOf (Fintype.equivFin (Situation k State) y) = y :=
   (Fintype.equivFin (Situation k State)).symm_apply_apply y
 
@@ -284,11 +287,11 @@ noncomputable def termVal (t c : ℕ) (p : Ref k State × Ref k State) : Bool :=
 
 section Step
 
-variable {t : ℕ} (hinv : Inv tm T x t)
+variable {t : ℕ} (hinv : Invariant tm T x t)
 include hinv
 
 /-- A column feature of the previous block. -/
-theorem val_colF {c : ℕ} {f : ColFeat k} {cs : ColSel} {g : Guard}
+private theorem val_colF {c : ℕ} {f : ColFeat k} {cs : ColSel} {g : Guard}
     (h : g.test x.length T c = true → cs.apply T c < numCols T) :
     val tm T x ((colF f cs g : Ref k State).resolve x.length T (t + 1) c) =
       (g.test x.length T c && colSem T (tm.runFrom (tm.initCfg x) t) (cs.apply T c) f) := by
@@ -299,7 +302,7 @@ theorem val_colF {c : ℕ} {f : ColFeat k} {cs : ColSel} {g : Guard}
   · simp [hg]
 
 /-- A global feature of the previous block. -/
-theorem val_gfF {c : ℕ} {f : GFeat State} :
+private theorem val_gfF {c : ℕ} {f : GFeat State} :
     val tm T x ((gfF f : Ref k State).resolve x.length T (t + 1) c) =
       gfSem (tm.runFrom (tm.initCfg x) t) f := by
   rw [gfF, val_resolve_node]
@@ -307,7 +310,7 @@ theorem val_gfF {c : ℕ} {f : GFeat State} :
   exact hinv.1 f
 
 /-- A column feature of the previous block, in the same column. -/
-theorem val_colF_same {c : ℕ} (hc : c < numCols T) {f : ColFeat k} {g : Guard} :
+private theorem val_colF_same {c : ℕ} (hc : c < numCols T) {f : ColFeat k} {g : Guard} :
     val tm T x ((colF f .same g : Ref k State).resolve x.length T (t + 1) c) =
       (g.test x.length T c && colSem T (tm.runFrom (tm.initCfg x) t) c f) :=
   val_colF tm hinv fun _ => hc
@@ -315,7 +318,7 @@ theorem val_colF_same {c : ℕ} (hc : c < numCols T) {f : ColFeat k} {g : Guard}
 /-! ### The scan -/
 
 /-- The negated work head of a column. -/
-theorem val_nh (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (i : Fin k) :
+private theorem val_nh (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (i : Fin k) :
     val tm T x (wire (State := State) x.length T (t + 1) (.scan (.nh i)) c) =
       !colSem T (tm.runFrom (tm.initCfg x) t) c (.head i) := by
   rw [val_wire tm (l := .scan (.nh i)) hc htT]
@@ -325,7 +328,7 @@ theorem val_nh (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (i : Fin k) :
 
 omit hinv in
 /-- The negated input bit of a column. -/
-theorem val_nx (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) :
+private theorem val_nx (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) :
     val tm T x (wire (State := State) x.length T (t + 1) (.scan (.nx : ScanLoc k)) c) =
       !(inputAt x c).getD false := by
   rw [val_wire tm (l := .scan .nx) hc htT]
@@ -333,7 +336,7 @@ theorem val_nx (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) :
   rw [val_resolve_inp]
 
 /-- The contribution of a column to a scanned quantity. -/
-theorem val_term (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (q : ScanQ k) :
+private theorem val_term (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (q : ScanQ k) :
     val tm T x (wire (State := State) x.length T (t + 1) (.scan (.term q)) c) = true ↔
       termSem T x (tm.runFrom (tm.initCfg x) t) c q := by
   rw [val_wire tm (l := .scan (.term q)) hc htT]
@@ -364,7 +367,7 @@ theorem val_term (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (q : ScanQ k
     simp [Guard.test, termSem, colSem]
 
 /-- **The scan accumulates** the contributions of the columns so far. -/
-theorem val_acc (htT : t + 1 ≤ T) (q : ScanQ k) :
+private theorem val_acc (htT : t + 1 ≤ T) (q : ScanQ k) :
     ∀ c < numCols T, val tm T x (wire (State := State) x.length T (t + 1) (.scan (.acc q)) c) =
       true ↔ ∃ c' ≤ c, termSem T x (tm.runFrom (tm.initCfg x) t) c' q := by
   intro c hc
@@ -397,7 +400,7 @@ theorem val_acc (htT : t + 1 ≤ T) (q : ScanQ k) :
         exact Or.inr h
 
 /-- At the last column, the scan has found the symbols under the heads. -/
-theorem val_acc_last (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (q : ScanQ k) :
+private theorem val_acc_last (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (q : ScanQ k) :
     val tm T x (wire (State := State) x.length T (t + 1) (.scan (.acc q)) (2 * T)) = true ↔
       readSem x (tm.runFrom (tm.initCfg x) t) q := by
   rw [val_acc tm hinv htT q _ (by simp [numCols])]
@@ -426,7 +429,7 @@ theorem val_acc_last (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (q : ScanQ k) :
 /-! ### Situations and attributes -/
 
 /-- The conjunction of the first conditions of a situation. -/
-theorem val_sit (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (j : Fin (numSit k State))
+private theorem val_sit (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (j : Fin (numSit k State))
     (i : Fin (k + 1)) :
     val tm T x (wire (k := k) x.length T (t + 1) (.glob (.sit j i)) 0) = true ↔
       (tm.runFrom (tm.initCfg x) t).state = some (sitOf j).1 ∧
@@ -459,7 +462,7 @@ theorem val_sit (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (j : Fin (numSit k S
       exact h₂
 
 /-- A situation holds exactly when its gate is true. -/
-theorem val_sit_last (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (j : Fin (numSit k State)) :
+private theorem val_sit_last (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (j : Fin (numSit k State)) :
     val tm T x (wire (k := k) x.length T (t + 1) (.glob (.sit j (Fin.last k))) 0) = true ↔
       (Feature.sit (sitOf j)).Holds (tm.runFrom (tm.initCfg x) t) := by
   rw [val_sit tm hinv hn htT, Feature.holds_sit_iff]
@@ -467,7 +470,7 @@ theorem val_sit_last (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (j : Fin (numSi
     Feature.holds_read]
 
 /-- The disjunction of the first situations having an attribute. -/
-theorem val_attr (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (v : Attr k State)
+private theorem val_attr (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (v : Attr k State)
     (j : Fin (numSit k State + 1)) :
     val tm T x (wire (k := k) x.length T (t + 1) (.glob (.attr v j)) 0) = true ↔
       ∃ j' : Fin (numSit k State), j'.val < j.val ∧
@@ -510,7 +513,7 @@ theorem val_attr (hn : x.length < 2 * T) (htT : t + 1 ≤ T) (v : Attr k State)
           exact absurd h.2 hv
 
 /-- **The attributes of the action** of the step. -/
-theorem val_act (hn : x.length < 2 * T) (htT : t + 1 ≤ T) {c : ℕ} (v : Attr k State) :
+private theorem val_act (hn : x.length < 2 * T) (htT : t + 1 ≤ T) {c : ℕ} (v : Attr k State) :
     val tm T x ((act v : Ref k State).resolve x.length T (t + 1) c) =
       actSem tm (tm.runFrom (tm.initCfg x) t) v := by
   rw [act, val_resolve_node]
@@ -531,14 +534,14 @@ theorem val_act (hn : x.length < 2 * T) (htT : t + 1 ≤ T) {c : ℕ} (v : Attr 
 /-! ### The gadgets of the features -/
 
 omit hinv in
-theorem val_gf_and (htT : t + 1 ≤ T) (f : GFeat State) (j : Fin 8) :
+private theorem val_gf_and (htT : t + 1 ≤ T) (f : GFeat State) (j : Fin 8) :
     val tm T x (wire (k := k) x.length T (t + 1) (.gf f false j) 0) =
       termVal tm T x (t + 1) 0 ((gfTerms f).getD j (.fls, .fls)) := by
   rw [val_wire tm (l := .gf f false j) rfl htT]
   simp only [Nat.add_one_ne_zero, ↓reduceIte, table, opVal, termVal]
 
 omit hinv in
-theorem val_gf_or (htT : t + 1 ≤ T) (f : GFeat State) (j : Fin 8) :
+private theorem val_gf_or (htT : t + 1 ≤ T) (f : GFeat State) (j : Fin 8) :
     val tm T x (wire (k := k) x.length T (t + 1) (.gf f true j) 0) = true ↔
       ∃ j' : Fin 8, j' ≤ j ∧
         termVal tm T x (t + 1) 0 ((gfTerms f).getD j' (.fls, .fls)) = true := by
@@ -569,14 +572,16 @@ theorem val_gf_or (htT : t + 1 ≤ T) (f : GFeat State) (j : Fin 8) :
         exact Or.inr h
 
 omit hinv in
-theorem val_col_and (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (j : Fin 8) :
+private theorem val_col_and (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (j : Fin
+    8) :
     val tm T x (wire (State := State) x.length T (t + 1) (.col f false j) c) =
       termVal tm T x (t + 1) c ((colTerms f).getD j (.fls, .fls)) := by
   rw [val_wire tm (l := .col f false j) hc htT]
   simp only [Nat.add_one_ne_zero, ↓reduceIte, table, opVal, termVal]
 
 omit hinv in
-theorem val_col_or (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (j : Fin 8) :
+private theorem val_col_or (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (j : Fin
+    8) :
     val tm T x (wire (State := State) x.length T (t + 1) (.col f true j) c) = true ↔
       ∃ j' : Fin 8, j' ≤ j ∧
         termVal tm T x (t + 1) c ((colTerms f).getD j' (.fls, .fls)) = true := by
@@ -609,18 +614,18 @@ theorem val_col_or (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFe
 end Step
 
 omit [DecidableEq State] in
-theorem length_gfTerms_le (f : GFeat State) :
+private theorem length_gfTerms_le (f : GFeat State) :
     (gfTerms f : List (Ref k State × Ref k State)).length ≤ 8 := by
   rcases f with (_ | q) | (_ | b | _) <;> simp [gfTerms]
 
 omit [DecidableEq State] in
-theorem length_colTerms_le (f : ColFeat k) :
+private theorem length_colTerms_le (f : ColFeat k) :
     (colTerms f : List (Ref k State × Ref k State)).length ≤ 8 := by
   rcases f with _ | i | ⟨i, s⟩ <;> simp [colTerms]
 
 omit [DecidableEq State] in
 /-- A disjunction over the eight padded terms is a disjunction over the terms. -/
-theorem exists_getD_iff {L : List (Ref k State × Ref k State)} (hL : L.length ≤ 8)
+private theorem exists_getD_iff {L : List (Ref k State × Ref k State)} (hL : L.length ≤ 8)
     {P : Ref k State × Ref k State → Bool} (hd : P (.fls, .fls) = false) :
     (∃ j' : Fin 8, j' ≤ 7 ∧ P (L.getD j' (.fls, .fls)) = true) ↔ ∃ p ∈ L, P p = true := by
   constructor
@@ -638,7 +643,7 @@ theorem exists_getD_iff {L : List (Ref k State × Ref k State)} (hL : L.length �
 omit [Fintype State] in
 /-- The two cases of a step: a halted configuration stays, and otherwise the action of the
 situation is applied. -/
-theorem step_cases {input : List Bool} (cfg : Cfg k Bool State input) :
+private theorem step_cases {input : List Bool} (cfg : Cfg k Bool State input) :
     (cfg.state = none ∧ tm.step cfg = cfg ∧ ∀ v, actSem tm cfg v = false) ∨
       ∃ q, cfg.state = some q ∧ tm.step cfg = (tm.actionOf (cfg.situation q)).apply cfg ∧
         ∀ v, actSem tm cfg v = v.test (tm.actionOf (cfg.situation q)) := by
@@ -650,11 +655,11 @@ theorem step_cases {input : List Bool} (cfg : Cfg k Bool State input) :
 
 section Step
 
-variable {t : ℕ} (hinv : Inv tm T x t) (hn : x.length < 2 * T) (htT : t + 1 ≤ T)
+variable {t : ℕ} (hinv : Invariant tm T x t) (hn : x.length < 2 * T) (htT : t + 1 ≤ T)
 include hinv hn htT
 
 /-- **A global feature after the step.** -/
-theorem val_gf_step (f : GFeat State) :
+private theorem val_gf_step (f : GFeat State) :
     val tm T x (wire (k := k) x.length T (t + 1) (.gf f true 7) 0) =
       gfSem (tm.runFrom (tm.initCfg x) (t + 1)) f := by
   rw [Bool.eq_iff_iff, val_gf_or tm htT,
@@ -677,7 +682,7 @@ theorem val_gf_step (f : GFeat State) :
         simp [OutView.push]
 
 /-- **A column feature after the step.** -/
-theorem val_col_step {c : ℕ} (hc : c < numCols T) (f : ColFeat k) :
+private theorem val_col_step {c : ℕ} (hc : c < numCols T) (f : ColFeat k) :
     val tm T x (wire (State := State) x.length T (t + 1) (.col f true 7) c) =
       colSem T (tm.runFrom (tm.initCfg x) (t + 1)) c f := by
   rw [Bool.eq_iff_iff, val_col_or tm htT hc,
@@ -748,28 +753,28 @@ theorem val_col_step {c : ℕ} (hc : c < numCols T) (f : ColFeat k) :
     · simp [hz, Ne.symm hz]
 
 /-- One step of the simulation: the invariant passes from block `t` to block `t + 1`. -/
-theorem inv_succ : Inv tm T x (t + 1) :=
+theorem invariant_succ : Invariant tm T x (t + 1) :=
   ⟨fun f => val_gf_step tm hinv hn htT f, fun _ hc f => val_col_step tm hinv hn htT hc f⟩
 
 end Step
 
 /-- **The tableau computes the run**: on an input of length `n < 2 T`, the wire of each feature at
 time `t ≤ T` carries the value of that feature after `t` steps. -/
-theorem inv_le (hn : x.length < 2 * T) : ∀ t ≤ T, Inv tm T x t := by
+theorem invariant_le (hn : x.length < 2 * T) : ∀ t ≤ T, Invariant tm T x t := by
   intro t ht
   induction t with
-  | zero => exact inv_zero tm
-  | succ t ih => exact inv_succ tm (ih (by omega)) hn ht
+  | zero => exact invariant_zero tm
+  | succ t ih => exact invariant_succ tm (ih (by omega)) hn ht
 
 /-- **The output wire of the tableau carries the answer**: on an input of length `n < 2 T`, it is
 true exactly when the output written after `T` steps is `[true]`. -/
 theorem evalOutput_gates (hn : x.length < 2 * T) :
     evalOutput x (gates tm x.length T) (outWire k State x.length T) =
       decide (OutView.ofList (tm.runFrom (tm.initCfg x) T).output = .one true) :=
-  (inv_le tm hn T le_rfl).1 (.out (.one true))
+  (invariant_le tm hn T le_rfl).1 (.out (.one true))
 
 /-- The output wire of the tableau circuit. -/
-theorem toNat_outputs_circuit (n T : ℕ) :
+private theorem toNat_outputs_circuit (n T : ℕ) :
     ((circuit tm n T).outputs 0).toNat = outWire k State n T := by
   have h := congrArg Prod.snd (code_circuit tm n T)
   simp only [Circuit.code] at h

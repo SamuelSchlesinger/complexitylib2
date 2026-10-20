@@ -65,4 +65,7 @@ theorem two_pow_clog_two_le (n : ℕ) : 2 ^ clog 2 n ≤ 2 * (n + 1) := by
   · simp
   · exact (pow_clog_le_mul Nat.one_lt_two hn.ne').trans (by omega)
 
+@[deprecated (since := "2026-10-19")]
+alias _root_.Cslib.Crypto.two_pow_clog_le := two_pow_clog_two_le
+
 end Nat

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.SAT
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Logics.Propositional.CNF.PolyTime
 
@@ -22,6 +23,10 @@ Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
 [Arora and Barak, Section 2.3][AroraBarak09]. Combined with the tableau reduction in
 `CookLevin/PolyTime.lean`, this gives `Cslib.Complexity.CookLevin.SAT_npComplete` in
 `CookLevin/Completeness.lean`.
+
+## Main definitions
+
+* `Cslib.Complexity.cnfDecoder`: the total decoder of formulas, along `encCNF`.
 
 ## Main results
 
@@ -39,6 +44,9 @@ Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
 namespace Cslib.Complexity
 
 open Cslib.Logic.PL Turing.MultiTapeTM
+
+/-- Formulas in conjunctive normal form are decoded along their encoding `encCNF`. -/
+def cnfDecoder : Decoder encCNF := .list (.list (.pair .nat .bool))
 
 namespace SAT
 

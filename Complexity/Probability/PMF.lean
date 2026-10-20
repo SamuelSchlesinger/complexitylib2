@@ -29,6 +29,9 @@ of the whole experiment (`exists_bind_apply_le`).
   uniform.
 * `Cslib.Probability.PMF.uniformOfFintype_bind_map_fst_equiv`,
   `Cslib.Probability.PMF.uniformOfFintype_bind_bind_fst_equiv`: resampling along an equivalence.
+* `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype`,
+  `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype_toReal`: the uniform probability of an
+  event is the fraction of its members.
 * `Cslib.Probability.PMF.bind_apply_of_forall`, `Cslib.Probability.PMF.exists_bind_apply_le`:
   two-stage experiments.
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
@@ -277,6 +280,16 @@ theorem uniformOfFintype_bind_bind_fst_equiv (e : α × β ≃ γ × δ) (f : γ
   simp only [PMF.bind_bind, PMF.bind_map]
   rfl
 
+omit [Fintype β] [Nonempty β] [Fintype γ] [Nonempty γ] [Finite δ] in
+/-- The uniform distribution on a finite type gives an event the fraction of its members, as an
+extended nonnegative real. -/
+theorem toOuterMeasure_uniformOfFintype (event : Set α) [DecidablePred (· ∈ event)] :
+    (uniformOfFintype α).toOuterMeasure event =
+      (Finset.univ.filter (· ∈ event)).card * (Fintype.card α : ℝ≥0∞)⁻¹ := by
+  rw [PMF.toOuterMeasure_apply, tsum_fintype]
+  simp only [Set.indicator_apply, uniformOfFintype_apply]
+  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
+
 end Uniform
 
 /-- A continuation only needs to agree on outcomes the preceding distribution can produce. -/
@@ -354,8 +367,7 @@ theorem toOuterMeasure_uniformOfFintype_toReal [Fintype α] [Nonempty α] (event
     [DecidablePred (· ∈ event)] :
     ((uniformOfFintype α).toOuterMeasure event).toReal =
       (Finset.univ.filter (· ∈ event)).card / Fintype.card α := by
-  rw [toOuterMeasure_apply_toReal]
-  simp only [uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast]
-  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv]
+  rw [toOuterMeasure_uniformOfFintype, ENNReal.toReal_mul, ENNReal.toReal_inv,
+    ENNReal.toReal_natCast, ENNReal.toReal_natCast, div_eq_mul_inv]
 
 end Cslib.Probability.PMF
