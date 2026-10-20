@@ -1482,3 +1482,35 @@ on this dependency revision. The rebuilt PDF retains 124 entries, with clean fin
 pages 9 (successor), 14 (SL) and 21 (counting products) were rendered and inspected. Independent
 coordinator `fusion_barrier` inspected those pages and the preservation delta without findings;
 final exact-head approval is recorded in PR #59. This integration introduces no new theorem scope.
+
+## 2026-10-20: Exact canonical addition from order and BIT
+
+Worker `ordered-addition-20261020` adds the PLUS entry for source revision
+`49531f8754cc310d21216bc7e5a0da33499036b0`. One native formula, independent of universe size,
+realizes ordinary natural-number addition on every canonical `Fin n`, `n ≥ 2`, without a fit
+premise. The out-of-range theorem rejects every result. The index records the least-significant-bit
+convention and leaves TIMES, the Bit Sum Lemma, unrestricted arbitrary-base tuple BIT lifting and
+numeric-preserving composition open. The source credits Immerman Proposition 1.9 and the PLUS
+part of Theorem 1.17(1), existing library propagation, and Lean BitVec carry/addition proofs.
+
+All six gates pass on the source revision. Source and test MCP diagnostics are clean; clients cover
+n = 2, 3, 5, 9, zero, maximum results, multiple carries, killed carries, rejection for every
+overflow candidate and native free-variable relabeling. Named headline axiom guards admit only
+`propext`, `Classical.choice` and `Quot.sound`. Declaration links are pinned to source lines
+142 and 162 and checked against their exact names.
+
+Independent coordinator `fusion_quadratic` approved the exact source/API/correctness/tests and
+draft index with no findings, checked both files with fresh MCP diagnostics, and verified the
+primary-source references. The exact-revision review is recorded in
+[PR #66](https://github.com/SamuelSchlesinger/complexitylib2/pull/66#issuecomment-6297706327).
+Final combined ancestry, dependency validation and rendered PDF review remain pending in the PR.
+AI assistance: OpenAI Codex. This review is not human editorial approval or a machine-checked
+prose-to-Lean equivalence.
+
+The PLUS preparation integrates successor revision
+`17ae942e0737495057544f6d74a8f695a85ad72b` with cslib
+`b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`. Source and tests remain byte-identical to the
+approved revision. All six preparation gates pass on the new pin. The local index contains
+125 entries; the new PLUS entry on page 8 was rendered and inspected, with no undefined
+citations or overfull boxes in the final LaTeX log. Final combined counting-stack integration,
+entry-count reconciliation and exact-head PDF review remain pending before publication.
