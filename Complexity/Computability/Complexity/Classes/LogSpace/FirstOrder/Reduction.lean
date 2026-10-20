@@ -9,11 +9,11 @@ module
 
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Output
-public import Complexity.Logics.FirstOrder.Interpretation.Rank
+public import Complexity.Logics.FirstOrder.Interpretation.Encoding
 import Complexity.Foundations.Data.List.Basic
 
 /-!
-# First-order reductions are logarithmic-space reductions
+# Order-free first-order interpretations as logarithmic-space reductions
 
 For finite relational vocabularies, an order-free first-order interpretation induces a
 logarithmic-space transducer on structure encodings. It checks the input shape, counts domain
@@ -22,12 +22,15 @@ reconstructing the tuples of the requested ranks. Each loop counter is polynomia
 the input length; the existing counter-program simulation therefore supplies a total
 `ComputableInLogSpace` machine. Neither the output structure nor its tables are stored.
 
-Malformed inputs map to a fixed malformed target encoding. Empty structures, empty domains,
+Inputs `(n, tables)` with invalid table shapes map to a fixed malformed target instance.
+Raw bit strings outside the image of `encStructure` are outside the encoded-input contract.
+Empty structures, empty domains,
 nullary relations, and zero-dimensional interpretations are included. Isomorphism closure of
 the target query makes the choice of numbering immaterial.
 
 These are order-free interpretations, without built-in order or `BIT`. The standard ordered
-notion of first-order reduction in [Immerman1999] is a separate specialization.
+notion of first-order reduction in [Immerman1999] is not covered: built-in order and `BIT`
+would need to be computed rather than read from input relation tables.
 
 ## Main definitions
 
@@ -175,6 +178,14 @@ private theorem length_domCode (m b T F : ℕ) :
   length_formulaCode v _ _ _ _ _ _
 
 omit [L'.IsRelational] in
+private theorem blk_le_base {m : ℕ} (hm : m ≤ maxArity v') : blk d m d ≤ base v' d := by
+  unfold blk base
+  have : d * m + d ≤ d * (maxArity v' + 1) := by
+    rw [Nat.mul_add, Nat.mul_one]
+    exact Nat.add_le_add_right (Nat.mul_le_mul_left d hm) d
+  omega
+
+omit [L'.IsRelational] in
 private theorem blk_lt_base {m i : ℕ} (hm : m ≤ maxArity v') (hi : i < d) :
     blk d m i < base v' d := by
   unfold blk base
@@ -192,7 +203,7 @@ omit [L.IsRelational] [L'.IsRelational] in
 /-- The domain formula holds of the tuple with index `k < n ^ d` exactly when `k` is an index of
 the domain. -/
 private theorem inDomain_iff {n k : ℕ} [L.Structure (Fin n)] (hk : k < n ^ d) :
-    I.InDomain e n k ↔ I.domain.Realize (tupleAt e ⟨k, hk⟩) :=
+    I.InDomain e n k ↔ I.domain.Realize ((tupleEquiv e).symm ⟨k, hk⟩) :=
   ⟨fun ⟨_, h⟩ => h, fun h => ⟨hk, h⟩⟩
 
 omit [L'.IsRelational] in
@@ -244,17 +255,14 @@ private theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ}
     convert hx using 2; omega
   rw [show b + (4 + d) = b + 4 + d by omega] at hdom
   have hbase := le_base v' (d := d)
-  have hblk0 : blk d 0 d ≤ base v' d := by
-    unfold blk base
-    simp only [Nat.mul_zero, Nat.add_zero]
-    nlinarith
+  have hblk0 := blk_le_base v' (d := d) (Nat.zero_le _)
   -- the invariant of the loop over the indices
   let Inv : ℕ → List ℕ → Prop := fun k r => r.getD 4 0 = k ∧ r.getD 0 0 = a.1 ∧
     r.getD 3 0 = I.domainRank e a.1 k ∧ r.length = regs.length ∧ ∀ x ∈ r, x ≤ B
   let o : ℕ → List Bool := fun k => if I.InDomain e a.1 k then [true, true] else []
   have hrank (k : ℕ) (hk : k < a.1 ^ d) : I.domainRank e a.1 (k + 1) ≤ B :=
     (domainRank_mono (I := I) (e := e) (n := a.1) (show k + 1 ≤ a.1 ^ d by omega)).trans
-      ((Finset.card_filter_le _ _).trans (by simp; omega))
+      (modelCard_le_pow.trans hNB)
   have hB₀ : ∀ r ∈ regs.set 3 0, r ≤ B := List.forall_mem_set_of_forall_mem hB (Nat.zero_le _)
   obtain ⟨regsN, hloop, hinvN⟩ := reachesOut_forCode (B := B) (w := encStructure a) hfor Inv o hNB
     (fun k r ⟨h4, h0', _, hl, hB'⟩ => ⟨h4, by simp only [eval_pow, eval_reg, h0'],
@@ -266,11 +274,11 @@ private theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ}
         hkeep₁ x fun i _ => by unfold blk; omega
       obtain ⟨res, regs₂, hres, hreach₂, hlen₂, hkeep₂, hB₂⟩ :=
         reaches_formulaCode ha hnB (fun i => blk d 0 (e i)) (base v' d) (by omega)
-          (fun i => blk_lt_base v' (Nat.zero_le _) (e i).2) (tupleAt e ⟨k, hk⟩) I.domain
+          (fun i => blk_lt_base v' (Nat.zero_le _) (e i).2) ((tupleEquiv e).symm ⟨k, hk⟩) I.domain
           (b + 4 + d) (b + 4 + d + cs) (b + 3) regs₁ default hdom
           (by rw [hlen₁, hl]; exact hlen)
           (by rw [hreg 0 (by omega), h0']) hB₁
-          (fun i => by rw [hset₁ _ (e i).2, tupleAt_val]) (fun i => i.elim0)
+          (fun i => by rw [hset₁ _ (e i).2, tupleEquiv_symm_apply_val]) (fun i => i.elim0)
       have hk₂ (x : ℕ) (hx : x < 8) : regs₂.getD x 0 = r.getD x 0 := by
         rw [hkeep₂ x (by omega), hreg x hx]
       have hdomk : (res = true) ↔ I.InDomain e a.1 k := by
@@ -322,7 +330,7 @@ private theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ}
   obtain ⟨-, h0N, h3N, hlN, hBN⟩ := hinvN
   refine ⟨regsN, ?_, hlN, h0N, h3N, hBN⟩
   have hreach := ReachesOut.assign h₀ hB (hloop.trans (ReachesOut.emit hx hBN (ReachesOut.refl _)))
-  rw [modelCard, domainRank, ← flatMap_pair_append_false]
+  rw [modelCard, domainRank, Nat.count_eq_card_filter_range, ← flatMap_pair_append_false]
   simpa only [eval_const] using hreach
 
 variable (v v' e I) in
@@ -408,12 +416,7 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
   replace hc₂ : P.instr (A + 3 + d + cs + 2) = .assign 4 (add (reg 4) (const 1)) (A + 3) := by
     convert hc₂ using 2; omega
   have hbase := le_base v' (d := d)
-  have hblkm : blk d m d ≤ base v' d := by
-    unfold blk base
-    have : d * m + d ≤ d * (maxArity v' + 1) := by
-      rw [Nat.mul_add, Nat.mul_one]
-      exact Nat.add_le_add_right (Nat.mul_le_mul_left d hm) d
-    omega
+  have hblkm := blk_le_base v' (d := d) hm
   -- the target
   obtain ⟨u₀, hu₀, hru₀⟩ := exists_inDomain_of_lt (I := I) (e := e) (n := a.1) hrn
   have hu₀N : u₀ < a.1 ^ d := hu₀.1
@@ -424,7 +427,7 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
         rs.getD x 0 = regs.getD x 0) → (∀ x ∈ rs, x ≤ B) →
       ∃ regs', P.Reaches (encStructure a) (P.Running B) (A + 3, rs) (A + 3 + d + cs + 3, regs') ∧
         regs'.length = regs.length ∧
-        (∀ i : ι, regs'.getD (blk d m (e i)) 0 = (tupleAt e ⟨u₀, hu₀N⟩ i : ℕ)) ∧
+        (∀ i : ι, regs'.getD (blk d m (e i)) 0 = ((tupleEquiv e).symm ⟨u₀, hu₀N⟩ i : ℕ)) ∧
         (∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ blk d m i) →
           regs'.getD x 0 = regs.getD x 0) ∧ ∀ x ∈ regs', x ≤ B := by
     intro e'
@@ -442,11 +445,11 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
         reaches_coordsCode (w := encStructure a) hcoords huN hnB rs h0s h4 (by omega) hB'
       obtain ⟨res, regs₂, hres, hreach₂, hlen₂, hkeep₂, hB₂⟩ :=
         reaches_formulaCode ha hnB (fun i => blk d m (e i)) (base v' d) (by omega)
-          (fun i => blk_lt_base v' hm (e i).2) (tupleAt e ⟨u, huN⟩) I.domain
+          (fun i => blk_lt_base v' hm (e i).2) ((tupleEquiv e).symm ⟨u, huN⟩) I.domain
           (A + 3 + d) (A + 3 + d + cs) (A + 3 + d + cs + 2) regs₁ default hdom
           (by rw [hlen₁, hl]; exact hlen)
           (by rw [hkeep₁ 0 (fun i _ => by unfold blk; omega), h0s]) hB₁
-          (fun i => by rw [hset₁ _ (e i).2, tupleAt_val]) (fun i => i.elim0)
+          (fun i => by rw [hset₁ _ (e i).2, tupleEquiv_symm_apply_val]) (fun i => i.elim0)
       have hk₂ (x : ℕ) (hx : x < base v' d) (hxm : ∀ i < d, x ≠ blk d m i) :
           regs₂.getD x 0 = rs.getD x 0 := by
         rw [hkeep₂ x (by omega), hkeep₁ x hxm]
@@ -514,7 +517,7 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
             omega
           subst heq
           refine ⟨regs₂, ?_, hlen₂', fun i => by rw [hkeep₂ _ (blk_lt_base v' hm (e i).2),
-            hset₁ _ (e i).2, tupleAt_val], hkeepr _ fun _ _ _ _ _ => rfl, hB₂⟩
+            hset₁ _ (e i).2, tupleEquiv_symm_apply_val], hkeepr _ fun _ _ _ _ _ => rfl, hB₂⟩
           refine hreach₁.trans (hreach₂.trans ?_)
           refine Reaches.lt hc₀ hB₂ ?_
           simp only [eval_reg, h5₂, h7₂, hlt, ↓reduceIte]
@@ -571,10 +574,10 @@ private noncomputable def tableLength (j : Fin v'.count) : ℕ :=
 variable (v v' e I) in
 /-- The code emitting the framed truth table of the symbol `j` of the interpreted structure,
 placed at `b`: register `6` runs over the indices `t` of the tuples of elements, the elements of
-the tuple are found by their ranks (`Cslib.Logic.FO.Interpretation.Transducer.unrankCode`), and
+the tuple are found by their ranks using `unrankCode`, and
 `true` followed by the truth value of the defining formula is emitted for each; then `false` ends
 the frame. It continues at `b + tableLength v' d I j`. -/
-private noncomputable def tableCode (j : Fin v'.count) (b : ℕ) : List Instr :=
+private noncomputable def relTableCode (j : Fin v'.count) (b : ℕ) : List Instr :=
   forCode b 6 (pow (reg 3) (v'.symbol j).1) (b + 3)
     (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 4) ++
   (List.range (v'.symbol j).1).flatMap
@@ -617,8 +620,8 @@ private theorem length_unranks (b k : ℕ) :
 for the symbol `j`, with the cardinality of a well-formed input in register `0` and the number `n'`
 of elements of the interpreted structure in register `3`, the program emits the framed truth table
 of the symbol in the interpreted structure, numbered by ranks. -/
-private theorem reachesOut_tableCode (ha : v.WellFormed a) (j : Fin v'.count) {b : ℕ}
-    (hP : P.CodeAt b (tableCode v v' e I j b)) (hnB : a.1 ≤ B) (hNB : a.1 ^ d ≤ B)
+private theorem reachesOut_relTableCode (ha : v.WellFormed a) (j : Fin v'.count) {b : ℕ}
+    (hP : P.CodeAt b (relTableCode v v' e I j b)) (hnB : a.1 ≤ B) (hNB : a.1 ^ d ≤ B)
     (hTB : (letI := v.decode a; modelCard I e a.1) ^ (v'.symbol j).1 ≤ B)
     (regs : List ℕ) (h0 : regs.getD 0 0 = a.1)
     (h3 : regs.getD 3 0 = (letI := v.decode a; modelCard I e a.1))
@@ -635,7 +638,7 @@ private theorem reachesOut_tableCode (ha : v.WellFormed a) (j : Fin v'.count) {b
   let _ := v.decode a
   have hkm := arity_le_maxArity (v' := v') j
   have hlu := length_unranks (v := v) (v' := v') (e := e) (I := I) b (v'.symbol j).1
-  rw [tableCode] at hP
+  rw [relTableCode] at hP
   rw [tableLength]
   generalize hcs : codeLength I.domain = cs at hP hlu ⊢
   generalize hcr : relLength v' I j = cr at hP ⊢
@@ -755,7 +758,7 @@ variable (v v' e I) in
 /-- The codes of the tables of some symbols, one after the other from the label `b`. -/
 private noncomputable def tablesCode : ℕ → List (Fin v'.count) → List Instr
   | _, [] => []
-  | b, j :: js => tableCode v v' e I j b ++ tablesCode (b + tableLength v' d I j) js
+  | b, j :: js => relTableCode v v' e I j b ++ tablesCode (b + tableLength v' d I j) js
 
 omit [L'.IsRelational] in
 private theorem length_tablesCode : ∀ (b : ℕ) (js : List (Fin v'.count)),
@@ -763,7 +766,7 @@ private theorem length_tablesCode : ∀ (b : ℕ) (js : List (Fin v'.count)),
   | _, [] => rfl
   | b, j :: js => by
     rw [tablesCode, List.length_append, length_tablesCode, List.map_cons, List.sum_cons,
-      tableCode]
+      relTableCode]
     simp only [List.length_append, length_unranks, length_formulaCode, List.length_cons,
       List.length_nil, tableLength, relLength]
     rfl
@@ -786,12 +789,12 @@ private theorem reachesOut_tablesCode (ha : v.WellFormed a) (hnB : a.1 ≤ B) (h
   | [], b, regs, _, _, h0, h3, _, _, hB => ⟨regs, by simpa using ReachesOut.refl _, rfl, h0, h3, hB⟩
   | j :: js, b, regs, hP, hTB, h0, h3, hlenD, hlenR, hB => by
     rw [tablesCode, codeAt_append] at hP
-    have hl : (tableCode v v' e I j b).length = tableLength v' d I j := by
+    have hl : (relTableCode v v' e I j b).length = tableLength v' d I j := by
       have := length_tablesCode (v := v) (v' := v') (e := e) (I := I) b [j]
       simpa [tablesCode] using this
     rw [hl] at hP
     obtain ⟨regs₁, hreach₁, hl₁, h0₁, h3₁, hB₁⟩ :=
-      reachesOut_tableCode ha j hP.1 hnB hNB (hTB j List.mem_cons_self) regs h0 h3 hlenD
+      reachesOut_relTableCode ha j hP.1 hnB hNB (hTB j List.mem_cons_self) regs h0 h3 hlenD
         (hlenR j List.mem_cons_self) hB
     obtain ⟨regs₂, hreach₂, hl₂, h0₂, h3₂, hB₂⟩ :=
       reachesOut_tablesCode ha hnB hNB js _ regs₁ hP.2
@@ -881,14 +884,6 @@ variable {L : Language.{u, v}} {L' : Language.{u', v'}} [L.IsRelational] [L'.IsR
   {ι : Type} {d : ℕ} (I : Interpretation L L' ι) (v : Vocabulary L) (v' : Vocabulary L')
   (e : ι ≃ Fin d)
 
-/-- Encode the structure interpreted in a well-formed input, numbering its elements by ranks.
-Malformed inputs map to a fixed malformed structure encoding. This includes empty structures,
-empty interpreted domains, nullary relations, and interpretations of dimension zero. -/
-noncomputable def encodedMap (a : EncodedStructure) : EncodedStructure :=
-  if v.WellFormed a then
-    letI := v.decode a
-    v'.encode (I.Model (Fin a.1)) (rankEquiv I e a.1)
-  else (0, List.replicate (v'.count + 1) [])
 
 open Transducer in
 /-- Computing an order-free first-order interpretation on encoded finite relational structures
@@ -987,7 +982,8 @@ variable {L : Language.{u, v}} {L' : Language.{u', v'}} [L.IsRelational] [L'.IsR
 
 /-- An order-free first-order interpretation reduction induces a logspace many-one reduction
 between the query languages, provided the target class is closed under isomorphism. The
-transducer rejects malformed instances and includes empty structures and empty domains. -/
+transducer maps malformed instances to a fixed malformed target instance outside the target query
+language, and includes empty structures and empty domains. -/
 theorem Reduces.logSpaceReducible (h : Reduces K K') (hK' : IsoClosed K') :
     Complexity.LogSpaceReducible encStructure encStructure (v.queryLanguage K)
       (v'.queryLanguage K') := by
@@ -996,20 +992,9 @@ theorem Reduces.logSpaceReducible (h : Reduces K K') (hK' : IsoClosed K') :
   let _ := Fintype.ofFinite ι
   let e := Fintype.equivFin ι
   refine ⟨I.encodedMap v v' e, I.computableInLogSpace_encodedMap v v' e, fun a => ?_⟩
-  by_cases ha : v.WellFormed a
-  · rw [Interpretation.encodedMap, ite_eq_left ha,
-      ha.mem_queryLanguage_iff]
-    let _ := v.decode a
-    rw [v'.mem_queryLanguage_encode hK']
-    have : Finite (v.decoded a) := inferInstanceAs (Finite (Fin a.1))
-    exact hI (v.decoded a)
-  · have hbad : ¬ v'.WellFormed (0, List.replicate (v'.count + 1) []) := by
-      intro hbad
-      have := hbad.1
-      simp only [List.length_replicate] at this
-      omega
-    simp only [Interpretation.encodedMap, ha, ↓reduceIte, Vocabulary.mem_queryLanguage,
-      hbad, false_and]
+  rw [I.mem_queryLanguage_encodedMap_iff v v' e hK', Vocabulary.mem_queryLanguage]
+  have : Finite (v.decoded a) := inferInstanceAs (Finite (Fin a.1))
+  exact and_congr_right fun _ => hI (v.decoded a)
 
 /-- Query languages in `L` are closed under order-free first-order interpretation reductions
 with an isomorphism-closed target class. -/

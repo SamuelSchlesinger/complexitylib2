@@ -45,6 +45,7 @@ spelled out.
 ## Main definitions
 
 * `Cslib.Logic.Vocabulary`: an enumeration of the relation symbols of a language.
+* `Cslib.Logic.tupleEquiv`: number tuples along an enumeration of their coordinates.
 * `Cslib.Logic.tupleIndex`: the index of a tuple of `Fin n` in the truth table of its relation.
 * `Cslib.Logic.EncodedStructure`, `Cslib.Logic.encStructure`: inputs and their binary encoding.
 * `Cslib.Logic.Vocabulary.decode`, `Cslib.Logic.Vocabulary.WellFormed`,
@@ -93,6 +94,24 @@ theorem tupleIndex_lt {n k : ℕ} (x : Fin k → Fin n) : tupleIndex x < n ^ k :
 
 theorem tupleIndex_injective {n k : ℕ} : Function.Injective (tupleIndex (n := n) (k := k)) :=
   fun _ _ h => finFunctionFinEquiv.injective (Fin.ext h)
+
+/-- Number tuples whose coordinates are enumerated by `e`, using the same colexicographic
+indexing as `tupleIndex`. -/
+def tupleEquiv {ι : Type*} {n d : ℕ} (e : ι ≃ Fin d) : (ι → Fin n) ≃ Fin (n ^ d) :=
+  (e.arrowCongr (Equiv.refl (Fin n))).trans finFunctionFinEquiv
+
+@[simp]
+theorem tupleEquiv_apply_val {ι : Type*} {n d : ℕ} (e : ι ≃ Fin d) (x : ι → Fin n) :
+    (tupleEquiv e x).val = tupleIndex (x ∘ e.symm) := rfl
+
+@[simp]
+theorem tupleEquiv_symm_apply {ι : Type*} {n d : ℕ} (e : ι ≃ Fin d) (u : Fin (n ^ d))
+    (i : ι) : (tupleEquiv e).symm u i = finFunctionFinEquiv.symm u (e i) := rfl
+
+theorem tupleEquiv_symm_apply_val {ι : Type*} {n d : ℕ} (e : ι ≃ Fin d)
+    (u : Fin (n ^ d)) (i : ι) :
+    ((tupleEquiv e).symm u i : ℕ) = u / n ^ (e i : ℕ) % n := by
+  rw [tupleEquiv_symm_apply, finFunctionFinEquiv_symm_apply_val]
 
 /-- The tuple with a given index. -/
 theorem tupleIndex_symm {n k : ℕ} (i : Fin (n ^ k)) :
