@@ -366,6 +366,8 @@ public import Complexity.Computability.Complexity.Classes.IP.Repetition
 public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Tokens
+public import Complexity.Computability.Complexity.Classes.IP.TQBF.Verifier
+public import Complexity.Computability.Complexity.Classes.IP.TQBF.Words
 public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.Ladner
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
@@ -478,6 +480,7 @@ public import Complexity.Computability.Complexity.Problems.SubsetSum
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
 public import Complexity.Computability.Complexity.Problems.TQBF
+public import Complexity.Computability.Complexity.Problems.TQBF.Closed
 public import Complexity.Computability.Complexity.Problems.TSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Problems.USAT
