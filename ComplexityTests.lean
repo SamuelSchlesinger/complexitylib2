@@ -279,6 +279,7 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
+import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
 import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation

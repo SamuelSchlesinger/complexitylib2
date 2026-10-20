@@ -514,6 +514,46 @@ Oracle lowness and counting-machine characterizations remain separate.
 
 
 \begin{result}
+\subsection{Uniform bounded wide-gap closure}
+Fix an injective instance encoding, with encoded length $|x|$. Let $A$ be a single
+jointly uniform language on pairs $(x,i)$, using the pair encoding with unary $i$,
+and let $r(x)$ be computable in polynomial time with unary output. For either
+$\mathcal C=\cc{WPP}$ or $\mathcal C=\cc{LWPP}$,
+\[
+A\in\mathcal C\quad\Longrightarrow\quad
+\begin{aligned}
+\{x:\forall i<r(x),\ (x,i)\in A\}&\in\mathcal C,\\
+\{x:\exists i<r(x),\ (x,i)\in A\}&\in\mathcal C.
+\end{aligned}
+\]
+Membership of every slice separately is not the hypothesis: the joint language
+must have one uniform witness. The count may grow with the input and may differ
+between inputs of the same length. Empty ranges give the full language for
+conjunction and the empty language for disjunction.
+
+For WPP, multiply the indexed gaps and their nonzero binary FP targets.
+For LWPP, the joint encoded length is exactly $2|x|+1+i$. If $f$ is its nonzero
+length-only target and a fixed $p\in\mathbb N[X]$ bounds $r(x)$ by $p(n)$ at length $n$,
+all possible accepting
+product targets lie in the length-only polynomial family
+\[
+T(n,k)=\prod_{i<k}f(2n+1+i),\qquad 0\leq k\leq p(n).
+\]
+Every target is nonzero, including $T(n,0)=1$. Polynomial-family robustness
+normalizes this family even though the selected index $k=r(x)$ is input-dependent.
+Complement closure gives the existential result. This is a formalized deduction
+from Fenner--Fortnow--Kurtz counting algebra and the polynomial-family robustness
+of Hemaspaandra, Hemaspaandra, Spakowski and Watanabe.
+\citep{FennerFortnowKurtz1994}\citep[Theorem 3.1]{HemaspaandraEtAl2018}
+The classes retain the verifier-based model; these results do not establish
+adaptive oracle closure or PP-lowness.
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{70}{Cslib.Complexity.forall_lt_mem_WPP}
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{96}{Cslib.Complexity.exists_lt_mem_WPP}
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{106}{Cslib.Complexity.forall_lt_mem_LWPP}
+\declat{b0490b92e868b218d36cfb1fd8d1c9f0e56b8cd5}{Complexity/Computability/Complexity/Classes/WPP/Bounded.lean}{138}{Cslib.Complexity.exists_lt_mem_LWPP}
+\end{result}
+
+\begin{result}
 \subsection{Small bounded-error and almost-wide counting}
 For every fixed injective encoding,
 \[

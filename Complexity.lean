@@ -504,6 +504,7 @@ public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 public import Complexity.Computability.Complexity.Classes.WPP
+public import Complexity.Computability.Complexity.Classes.WPP.Bounded
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
 public import Complexity.Computability.Complexity.Classes.WPP.TwoSided
 public import Complexity.Computability.Complexity.Classes.ZPP
