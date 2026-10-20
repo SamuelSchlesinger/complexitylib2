@@ -248,3 +248,30 @@ quadratic completeness theorem, following the Fusion method.
 \declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{233}{Cslib.Circuits.Fusion.PairCover.eval_toCircuit}
 \declat{dbb5eddb2bd1ce9ee9971d00f22c69c26ae0d542}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{258}{Cslib.Circuits.Fusion.ecomplexityFrom_le_pairCoverComplexity_sq}
 \end{result}
+
+\begin{result}
+\subsection{Graph Fusion transfer and exact inequality complexity}
+Let $V=\{0,1\}^n$, let $G\subseteq V\times V$, and supply every row and column
+as a free source. A semifilter on $G^c$ accepts the full set, rejects the empty
+set, and is upward closed. It is above an edge when it accepts the restricted
+row and column containing that edge. A cover defeats every such witness with a
+pair of accepted sets whose intersection is rejected; $\rho(G)$ is the minimum
+number of pairs. Representing a Boolean input by two $n$-bit blocks gives
+\[
+\rho(G)\le \rho(f_G;\text{positive and negative literals}).
+\]
+The inequality also holds when both sides restrict to semi-ultrafilters (every
+set or its complement is accepted), and includes trivial graphs.
+For $G_{\ne}=\{(u,v):u\ne v\}$,
+\[
+\rho_{\mathrm{can}}(G_{\ne})=\rho(G_{\ne})=D_{\cap}(G_{\ne})=n.
+\]
+Canonical semifilters are the upward closures of a complementary row and
+column, both nonempty. Here $D_{\cap}$ counts only binary intersections in
+native acyclic circuits: unions, empty/full constants, rows, columns, wiring
+and fanout are free. The equality includes $n=0$, when the graph is empty and
+all three costs are zero. This is a graph intersection bound, not a total-gate
+count.\citep{CavalarOliveira2025}
+\declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph.lean}{98}{Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_literals}
+\declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean}{212}{Cslib.Circuits.Fusion.Graph.inequality_complexities}
+\end{result}

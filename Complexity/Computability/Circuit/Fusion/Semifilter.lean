@@ -41,6 +41,8 @@ efficient execution on an encoding of arbitrary sets.
 ## Main results
 
 * `Cslib.Circuits.Fusion.PairCover.length_ofCircuit`: extraction preserves the exact AND count.
+* `Cslib.Circuits.Fusion.pairCoverComplexity_le_of_sourceRefinement`: pointwise source
+  refinement transfers cover lower bounds without changing the pair list.
 * `Cslib.Circuits.Fusion.pairCoverComplexity_le_cost`: cover complexity bounds every construction.
 * `Cslib.Circuits.Fusion.pairCoverComplexity_le_ecomplexityFrom`: the bound for native source
   complexity.
@@ -228,5 +230,30 @@ theorem pairCoverComplexity_le_ecomplexityFrom {X : Type v} (sources : X → Fin
       ecomplexityFrom (Monotone.setInterpretation U) Monotone.andCost target sources :=
   le_ecomplexityFrom_iff.mpr fun c hc =>
     pairCoverComplexity_le_cost c (sources x) o (congrFun (hc x) o) admissible
+
+/-- A cover remains a cover when every accepted source of the old problem contains an accepted
+source of the new problem. The pair list and admissibility predicate are unchanged. -/
+def PairCover.ofSourceRefinement {U : Type*} {n m : ℕ} {target : Set U}
+    {input : Fin n → Set U} {input' : Fin m → Set U}
+    {admissible : Semifilter ↥(targetᶜ) → Prop}
+    (c : PairCover target input admissible)
+    (h : ∀ x ∈ target, ∀ i, x ∈ input i → ∃ j, x ∈ input' j ∧ input' j ⊆ input i) :
+    PairCover target input' admissible where
+  pairs := c.pairs
+  isCover w := c.isCover {
+    point := w.point
+    filter := w.filter
+    admissible_filter := w.admissible_filter
+    above := fun i hi => by
+      obtain ⟨j, hj, hsub⟩ := h w.point.val w.point.property i hi
+      exact w.filter.monotone (fun _ hx => hsub hx) (w.above j hj) }
+
+/-- Pointwise source refinement gives a lower bound on pair-cover complexity. -/
+theorem pairCoverComplexity_le_of_sourceRefinement {U : Type*} {n m : ℕ} {target : Set U}
+    {input : Fin n → Set U} {input' : Fin m → Set U}
+    (admissible : Semifilter ↥(targetᶜ) → Prop)
+    (h : ∀ x ∈ target, ∀ i, x ∈ input i → ∃ j, x ∈ input' j ∧ input' j ⊆ input i) :
+    pairCoverComplexity target input' admissible ≤ pairCoverComplexity target input admissible :=
+  le_iInf fun c => pairCoverComplexity_le (c.ofSourceRefinement h)
 
 end Cslib.Circuits.Fusion

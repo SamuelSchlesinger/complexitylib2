@@ -82,6 +82,7 @@ import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
 import ComplexityTests.FusionConsistency
 import ComplexityTests.FusionCyclic
+import ComplexityTests.FusionGraph
 import ComplexityTests.FusionHomomorphism
 import ComplexityTests.FusionQuadratic
 import ComplexityTests.FusionSemifilter

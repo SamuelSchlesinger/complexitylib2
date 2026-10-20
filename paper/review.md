@@ -985,3 +985,31 @@ undefined references or overfull boxes; the new entry on page 30 and bibliograph
 page 42 were rendered and visually inspected. Final documentation review is requested on PR #19.
 These are AI reviews, not human editorial approval or a machine-checked proof of equivalence
 between prose and Lean.
+
+## 2026-10-20: Graph Fusion transfer and inequality complexity
+
+The new circuit-index entry describes graph-to-Boolean cover transfer (including the
+semi-ultrafilter subclass) and the exact canonical/full/intersection complexity of inequality
+on `2^n` vertices per side. It links to source revision
+`45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5`, at the exact theorem lines (98 and 212).
+The index now contains 116 entries.
+
+The coordinating Codex agent, independent of authoring worker `fusion-graph-20261020`, reviewed
+correctness/API and the changed prose against the final Lean statements. It approved the
+quantifiers, two-block Boolean representation, free-OR/constant AND-cost convention,
+semi-ultrafilter restriction, trivial-graph transfer, and zero-bit equality. The source review
+requested only the missing `Main definitions` module-doc section, which was added and re-reviewed
+at the source revision above; no remaining findings. The final PR records the reviewed document
+revision. These are AI reviews, not human editorial approval or a machine-checked prose equivalence.
+
+All six Lean gates pass; the named headline axiom guards use only `propext`, `Classical.choice`,
+and `Quot.sound`. The PDF builds without undefined citations/references. Page 30 was rendered
+and visually inspected; after pinning the links, the final rendered page is pixel-identical.
+Both new declaration links were checked against their pinned Git source and line numbers.
+Mathematical credit: Cavalar–Oliveira (2025), Lemmas 39/48 and Proposition 40. Canonical definitions
+also retain credit to Samuel Schlesinger's earlier formalization. AI assistance: OpenAI Codex.
+
+Integration reconciliation: PR #21 retains both the quadratic and graph entries after merging
+main at `f024eb43a11c80a9db843a8b354295f7bdd2d80e`; the index count is 117. The source
+declaration links remain pinned to their separately reviewed revisions. No theorem statement
+or proof changed during conflict resolution; the PDF was regenerated from both entries.
