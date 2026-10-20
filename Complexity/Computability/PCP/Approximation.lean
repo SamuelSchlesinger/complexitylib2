@@ -43,7 +43,8 @@ asking every problem separating the yes-instances from the no-instances to be NP
 * `Cslib.Complexity.PromiseProblem.PolyTimeReducible`: polynomial-time reductions of promise
   problems, which between gap problems are the gap-preserving reductions.
 * `Cslib.Complexity.PromiseProblem.NPHard`: every problem in `NP` reduces to the promise problem.
-* `Cslib.Complexity.PromiseProblem.gapMax`: the gap problem of a maximization objective.
+* `Cslib.Complexity.PromiseProblem.gapMax`, `Cslib.Complexity.PromiseProblem.gapMin`: the gap
+  problems of a maximization and of a minimization objective.
 * `Cslib.Complexity.PromiseProblem.restrict`: a promise problem restricted to a set of instances.
 
 ## Main results
@@ -210,6 +211,28 @@ theorem mem_no_gapMax : x ∈ (gapMax val c s).no ↔ val x ≤ s x ∧ s x < c 
 /-- With a strictly smaller soundness threshold, the no-instances are those of value at most
 `s`. -/
 theorem mem_no_gapMax_of_lt (h : s x < c x) : x ∈ (gapMax val c s).no ↔ val x ≤ s x :=
+  and_iff_left h
+
+/-- The **gap problem** of a minimization objective `val`, with completeness threshold `c` and
+soundness threshold `s`: the yes-instances have value at most `c`, the no-instances value at least
+`s`, above `c`. The thresholds may depend on the instance; an instance with `s x ≤ c x` is not a
+no-instance, so that the two sets are disjoint. -/
+def gapMin (val c s : α → ℝ) : PromiseProblem α where
+  yes := {x | val x ≤ c x}
+  no := {x | s x ≤ val x ∧ c x < s x}
+  disjoint := Set.disjoint_left.2 fun _ hyes hno => (hyes.trans_lt hno.2).not_ge hno.1
+
+@[simp]
+theorem mem_yes_gapMin : x ∈ (gapMin val c s).yes ↔ val x ≤ c x :=
+  Iff.rfl
+
+@[simp]
+theorem mem_no_gapMin : x ∈ (gapMin val c s).no ↔ s x ≤ val x ∧ c x < s x :=
+  Iff.rfl
+
+/-- With a strictly larger soundness threshold, the no-instances are those of value at least
+`s`. -/
+theorem mem_no_gapMin_of_lt (h : c x < s x) : x ∈ (gapMin val c s).no ↔ s x ≤ val x :=
   and_iff_left h
 
 /-- The promise problem `Q` with its promise restricted to the instances in `S`. -/

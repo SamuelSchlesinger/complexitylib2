@@ -90,3 +90,43 @@ Neither side's unconditional existence is asserted.\citep{KatzLindell2020,HILL19
 \decl{Complexity/Crypto/Computational/PRGToOneWay.lean}{187}{Cslib.Crypto.PseudorandomGenerator.oneWay_of_injective}
 \decl{Complexity/Crypto/Computational/PRGToOneWay.lean}{214}{Cslib.Crypto.exists_oneWay_iff_exists_pseudorandomGenerator}
 \end{result}
+
+\begin{result}
+\subsection{One-way functions separate P and BPP from NP}
+For $f$ computable in polynomial time, the preimage-prefix problem
+$\{(1^n,y,u)\mid\exists x\sqsupseteq u,\ |x|=n,\ f(x)=y\}$ is in NP. If it is in P,
+bit-by-bit search gives a deterministic polynomial-time inverter; if it is in BPP,
+amplification to error $2^{-(L+1)}$ on instances of encoded length $L$ and a union bound over
+the $n$ queries of the search give a uniform strict PPT inverter succeeding with probability at
+least $1/2$. Hence a uniform one-way function puts its preimage-prefix problem outside P and
+BPP, and, by Cook--Levin and closure of P and BPP under polynomial-time reductions,
+$\mathrm{SAT}\notin\mathrm{P}$ and $\mathrm{SAT}\notin\mathrm{BPP}$. The existence of
+one-way functions is not asserted.\citep{Goldreich2001,KatzLindell2020}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/NP.lean}{135}{Cslib.Crypto.preimagePrefix_mem_NP}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/NP.lean}{287}{Cslib.Crypto.OneWay.P_ne_NP}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/NP.lean}{292}{Cslib.Crypto.OneWay.SAT_notMem_P}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/BPP.lean}{244}{Cslib.Crypto.OneWay.NP_not_subset_BPP}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/BPP.lean}{250}{Cslib.Crypto.OneWay.SAT_notMem_BPP}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Computability/Complexity/Classes/BPP/Reduction.lean}{62}{Cslib.Complexity.PolyTimeReducible.mem_BPP}
+\end{result}
+
+\begin{result}
+\subsection{Kabanets--Cai: MCSP in BPP rules out one-way functions}
+If MCSP, with instances encoded by the $2^m$-bit truth table followed by the size
+threshold in binary and De Morgan circuit size counting all gates, is in BPP, then
+no pseudorandom function family secure against uniform adaptive strict oracle-PPT
+adversaries exists, hence no uniform one-way function exists; in particular this
+holds if MCSP is in P. The hypothesis is MCSP $\in$ BPP at all thresholds; the
+distinguisher reads the truth table of the oracle on the $2^m$ words with $n-m$ leading
+zeros, $m=(c+2)\lceil\log_2 n\rceil$, and runs the decider only at threshold
+$\lfloor 2^m/(5m)\rfloor$: restrictions of a polynomial-time family have circuits of size
+at most $c(3n+2)^c+2$ uniformly in the key, while for $m\ge16$ at most $2^{2^m/4}$ of the
+$2^{2^m}$ truth tables have circuits with at most $\lfloor 2^m/(5m)\rfloor$ gates. The
+advantage is at least $1/4$ for all large $n$.\citep{KabanetsCai2000,GGM1986}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/MCSP.lean}{372}{Cslib.Crypto.not_pseudorandomFunction_of_MCSP_mem_BPP}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/MCSP.lean}{442}{Cslib.Crypto.not_oneWay_of_MCSP_mem_BPP}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/MCSP.lean}{448}{Cslib.Crypto.not_oneWay_of_MCSP_mem_P}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/OneWay/MCSP.lean}{291}{Cslib.Crypto.isOraclePPT_mcspDistinguisher}
+\declat{ad94a1a8bcb2196673cad3ba1fbc37a052ed8532}{Complexity/Crypto/Computational/PseudorandomFunction/TruthTable.lean}{210}{Cslib.Crypto.exists_complexity_restriction_le}
+\end{result}
+

@@ -43,6 +43,7 @@ Arora, Lund, Motwani, Sudan and Szegedy [AroraLundMotwaniSudanSzegedy1998].
 ## Main results
 
 * `Cslib.Logic.PL.CNF.unsatVal_eq_zero_iff`: the value vanishes exactly on satisfiable formulas.
+* `Cslib.Logic.PL.CNF.length_pos_of_unsatVal_pos`: a formula of positive value has a clause.
 * `Cslib.Logic.PL.CNF.countUnsat_comp_inl_le_countUnsat_to3CNF`,
   `Cslib.Logic.PL.CNF.length_to3CNF`: splitting clauses keeps every falsified clause falsified and
   replaces a clause of width `w ≥ 3` by `w - 2` clauses.
@@ -114,6 +115,14 @@ theorem unsatVal_eq_zero_iff : φ.unsatVal = 0 ↔ φ.Satisfiable := by
   · rintro ⟨σ, hσ⟩
     refine le_antisymm ?_ φ.unsatVal_nonneg
     simpa [countUnsat_eq_zero_iff.2 hσ] using φ.unsatVal_le σ
+
+/-- A formula in which every assignment falsifies a positive proportion of the clauses has a
+clause. -/
+theorem length_pos_of_unsatVal_pos {φ : CNF V} (h : 0 < φ.unsatVal) : 0 < φ.length := by
+  refine Nat.pos_of_ne_zero fun h0 => ?_
+  have hsat : φ.Satisfiable := ⟨fun _ => false, by rw [List.length_eq_zero_iff.1 h0]; rfl⟩
+  rw [(unsatVal_eq_zero_iff φ).2 hsat] at h
+  exact lt_irrefl _ h
 
 /-- Relabelling counts the falsified clauses of the composite assignment. -/
 theorem countUnsat_relabel (f : V → W) (τ : W → Bool) :

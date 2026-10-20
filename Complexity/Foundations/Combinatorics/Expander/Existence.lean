@@ -47,6 +47,7 @@ The multigraphs `expander V` form a family of expanders (`Cslib.RotationMap.Expa
 * `Cslib.RotationMap.exists_spectralExpansion_le`: such a multigraph exists on every finite type.
 * `Cslib.RotationMap.exists_forall_exists_spectralExpansion_le`: constant-degree expanders exist,
   with the same degree and spectral bound on every finite type.
+* `Cslib.RotationMap.le_edgeExpansion_expander`: they have edge expansion at least `1 / 6000`.
 
 ## References
 
@@ -105,6 +106,17 @@ theorem exists_forall_exists_spectralExpansion_le :
       ∃ G : RotationMap V (Fin d), G.spectralExpansion ≤ μ :=
   ⟨120, 1 - 1 / 360000, by norm_num, fun V _ ↦ exists_spectralExpansion_le V⟩
 
+/-- A `120`-regular multigraph on at least two vertices of spectral expansion at most
+`1 - 1 / 360000` has edge expansion at least `1 / 6000`, by the easy half of Cheeger's
+inequality. -/
+theorem le_edgeExpansion_of_spectralExpansion_le [DecidableEq V] [Nontrivial V]
+    {G : RotationMap V (Fin 120)} (hG : G.spectralExpansion ≤ 1 - 1 / 360000) :
+    1 / 6000 ≤ G.edgeExpansion := by
+  have h := G.card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion
+  have hlam := G.secondEigenvalue_le_spectralExpansion.trans hG
+  simp only [Fintype.card_fin, Nat.cast_ofNat] at h
+  linarith
+
 /-- A `120`-regular multigraph on a finite type `V` of spectral expansion at most
 `1 - 1 / 360000` (`spectralExpansion_expander_le`), chosen non-constructively by
 `exists_spectralExpansion_le`. -/
@@ -125,5 +137,10 @@ noncomputable def expanderFamily : ExpanderFamily.{u} (Fin 120) (1 - 1 / 360000)
 @[simp]
 theorem graph_expanderFamily (V : Type u) [Fintype V] : expanderFamily.graph V = expander V :=
   rfl
+
+/-- On at least two vertices, `expander V` has edge expansion at least `1 / 6000`. -/
+theorem le_edgeExpansion_expander [DecidableEq V] [Nontrivial V] :
+    1 / 6000 ≤ (expander V).edgeExpansion :=
+  le_edgeExpansion_of_spectralExpansion_le V (spectralExpansion_expander_le V)
 
 end Cslib.RotationMap

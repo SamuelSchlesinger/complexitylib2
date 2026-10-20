@@ -18,7 +18,10 @@ certificate `z`, it has a satisfying assignment encoding `z` exactly when `tm`, 
 `u ++ z`, has halted after `T` steps with output `[true]` (`exists_eval_tableau_iff`).
 
 Each family of clauses is first characterised semantically (`eval_initClauses`,
-`eval_readClauses`, `eval_stepClauses`, …). Soundness then shows, by induction on time, that a
+`eval_readClauses`, `eval_stepClauses`, …). The uniqueness clauses (`eval_uniqueClauses`) are not
+needed for soundness; they make the satisfying assignments unique for each certificate
+(`CookLevin/Parsimonious.lean`), and completeness checks that the assignment read off the run
+satisfies them. Soundness then shows, by induction on time, that a
 satisfying assignment describes the run on the certificate it encodes (`Agrees`,
 `agrees_of_eval_tableau`):
 by the one-hot clauses it suffices that the basic features holding at time `t + 1` are true
@@ -47,6 +50,10 @@ def certWord (σ : Var k State → Bool) (L : ℕ) : List Bool := (List.range L)
 
 @[simp] theorem length_certWord (σ : Var k State → Bool) (L : ℕ) : (certWord σ L).length = L := by
   simp [certWord]
+
+theorem certWord_eq_ofFn (σ : Var k State → Bool) (L : ℕ) :
+    certWord σ L = List.ofFn fun j : Fin L => σ (.cert j) :=
+  List.ext_getElem (by simp) fun j _ _ => by simp [certWord]
 
 /-! ### Semantics of the clause families -/
 
@@ -117,6 +124,28 @@ theorem eval_sitClauses (t : ℕ) :
           σ (.holds t (.sit y)) = true := by
   simp [sitClauses, CNF.eval_map_eq_true_iff]
 
+variable [DecidableEq State] in
+/-- The uniqueness clauses: each head reads at most one symbol, and a true situation has its
+state and symbols read true. -/
+theorem eval_uniqueClauses (t : ℕ) :
+    (uniqueClauses (k := k) (State := State) t).eval σ = true ↔
+      (∀ i s s', σ (.holds t (.read i s)) = true → σ (.holds t (.read i s')) = true → s = s') ∧
+      (∀ s s', σ (.holds t (.inRead s)) = true → σ (.holds t (.inRead s')) = true → s = s') ∧
+      ∀ y : Situation k State, σ (.holds t (.sit y)) = true →
+        σ (.holds t (.state (some y.1))) = true ∧ σ (.holds t (.inRead y.2.1)) = true ∧
+          ∀ i, σ (.holds t (.read i (y.2.2 i))) = true := by
+  simp only [uniqueClauses, CNF.eval_append, Bool.and_eq_true, CNF.eval_flatMap_eq_true_iff,
+    CNF.eval_atMostOne, List.forall_mem_map, List.mem_finRange, mem_symbols, mem_situations,
+    true_implies, CNF.eval_cons, CNF.eval_map_eq_true_iff, Clause.eval_imp, List.mem_cons,
+    List.mem_nil_iff, or_false, forall_eq, Var.holds.injEq, Feature.read.injEq,
+    Feature.inRead.injEq, true_and]
+  constructor
+  · rintro ⟨⟨h₁, h₂⟩, h₃⟩
+    exact ⟨h₁, h₂, fun y hy => ⟨(h₃ y).1 hy, (h₃ y).2.1 hy, fun i => (h₃ y).2.2 i hy⟩⟩
+  · rintro ⟨h₁, h₂, h₃⟩
+    exact ⟨⟨h₁, h₂⟩, fun y => ⟨fun hy => (h₃ y hy).1, fun hy => (h₃ y hy).2.1,
+      fun i hy => (h₃ y hy).2.2 i⟩⟩
+
 /-- An assignment describes the configuration `cfg` at time `t`: the basic features true at time
 `t` are those holding of `cfg`. -/
 def Agrees (σ : Var k State → Bool) (n T t : ℕ) {input : List Bool}
@@ -161,7 +190,7 @@ theorem eval_tableau :
     (tableau tm u L T).eval σ = true ↔
       (initClauses tm T).eval σ = true ∧ (∀ t ≤ T, (oneHotClauses u L T t).eval σ = true) ∧
         (∀ t < T, (readClauses u L T t).eval σ = true ∧ (sitClauses t).eval σ = true ∧
-          (stepClauses tm u L T t).eval σ = true) ∧
+          (uniqueClauses t).eval σ = true ∧ (stepClauses tm u L T t).eval σ = true) ∧
         (acceptClauses T).eval σ = true := by
   simp only [tableau, CNF.eval_append, Bool.and_eq_true, CNF.eval_flatMap_eq_true_iff,
     List.mem_range, Nat.lt_succ_iff, and_assoc]
@@ -218,7 +247,7 @@ theorem agrees_of_eval_tableau (h : (tableau tm u L T).eval σ = true) :
         wordsCfg, tapeOfList_nil] at hφs <;> subst hφs
     exacts [i₁, i₂, (i₄ i).1, (i₄ i).2 z hz, i₃]
   | succ t ih =>
-    obtain ⟨hread, hsit, hstep⟩ := hsteps t (by omega)
+    obtain ⟨hread, hsit, -, hstep⟩ := hsteps t (by omega)
     have hb' := hb (t + 1) ht
     rw [runFrom_succ] at hb' ⊢
     exact (ih (by omega)).step (hb t (by omega)) hb' hread hsit hstep (hone (t + 1) ht)
@@ -259,7 +288,7 @@ theorem eval_tableau_runAssignment {w : List Bool} (hw : w.length = L)
   have hb (t : ℕ) (ht : t ≤ T) (i : Fin k) :
       |(tm.runFrom (tm.initCfg (u ++ w)) t).workTapePos i| ≤ T :=
     (abs_workTapePos_runFrom_le _ t i).trans (by exact_mod_cast ht)
-  refine eval_tableau.2 ⟨?_, fun t ht => ?_, fun t ht => ⟨?_, ?_, ?_⟩, ?_⟩
+  refine eval_tableau.2 ⟨?_, fun t ht => ?_, fun t ht => ⟨?_, ?_, ?_, ?_⟩, ?_⟩
   · refine eval_initClauses.2 ⟨?_, ?_, ?_, fun i => ⟨?_, fun z _ => ?_⟩⟩ <;>
       simp [runFrom, OutView.ofList]
   · refine (eval_oneHotClauses t).2 fun g hg => ?_
@@ -275,6 +304,14 @@ theorem eval_tableau_runAssignment {w : List Bool} (hw : w.length = L)
   · refine (eval_sitClauses t).2 fun y hs hi hr => ?_
     rw [runAssignment_holds] at hs hi ⊢
     exact (holds_sit_iff y).2 ⟨hs, hi, fun i => runAssignment_holds.1 (hr i)⟩
+  · refine (eval_uniqueClauses t).2 ⟨fun i s s' h h' => ?_, fun s s' h h' => ?_, fun y hy => ?_⟩
+    · rw [runAssignment_holds, holds_read] at h h'
+      exact h.symm.trans h'
+    · rw [runAssignment_holds, holds_inRead] at h h'
+      exact h.symm.trans h'
+    · obtain ⟨hs, hi, hr⟩ := (holds_sit_iff y).1 (runAssignment_holds.1 hy)
+      exact ⟨runAssignment_holds.2 hs, runAssignment_holds.2 hi,
+        fun i => runAssignment_holds.2 (hr i)⟩
   · refine (eval_stepClauses t).2 fun φ hφ c hc hall => ?_
     rw [runAssignment_holds, runFrom_succ]
     refine (holds_step_iff_exists_stepTerms tm hlen (hb t ht.le) hφ).2 ⟨c, hc, fun l hl => ?_⟩

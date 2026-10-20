@@ -17,7 +17,9 @@ Given a deterministic multi-tape machine `tm` over the binary alphabet, a fixed 
 a certificate length `L` and a number of steps `T`, `tableau tm u L T` is a formula in
 conjunctive normal form that is satisfiable exactly when some certificate `w` of length `L`
 makes `tm`, started on `u ++ w`, halt within `T` steps with output `[true]`
-(`Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, in `CookLevin/Correctness.lean`).
+(`Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, in `CookLevin/Correctness.lean`). It has
+exactly one satisfying assignment (of its variables) for each such certificate
+(`Cslib.Complexity.CookLevin.modelCount_tableau`, in `CookLevin/Parsimonious.lean`).
 
 The formula describes the first `T + 1` configurations of the run directly, in the model of
 `Turing.MultiTapeTM`: a read-only input tape, `k` two-way infinite work tapes, and a write-only
@@ -29,18 +31,22 @@ The only other variables are the certificate bits.
 The clauses fix the initial configuration, ask that exactly one basic feature of each group hold
 at each time (`Turing.MultiTapeTM.Feature.groups`), force the symbols read and the situation that
 actually hold to be true, and impose the step equation: each term of
-`Turing.MultiTapeTM.Feature.stepTerms` at time `t` implies its feature at time `t + 1`. The symbols
-read and the situations are only forced in one direction: a satisfying assignment may make more of
-them true. This suffices because situations occur only positively in the terms
-(`Turing.MultiTapeTM.Feature.mem_basic_of_mem_stepTerms`). No conversion to a single-tape or
-oblivious machine is needed: the action of a step depends on the situation only, and every tape
-applies its part of the action locally.
+`Turing.MultiTapeTM.Feature.stepTerms` at time `t` implies its feature at time `t + 1`. For
+satisfiability, forcing the symbols read and the situations in one direction suffices, because
+situations occur only positively in the terms
+(`Turing.MultiTapeTM.Feature.mem_basic_of_mem_stepTerms`). The uniqueness clauses force the
+converse: each head reads at most one symbol, and a true situation has its state and symbols read
+true. Every variable of the tableau is then determined by the certificate bits, which makes the
+reduction parsimonious (`Cslib.Complexity.CookLevin.modelCount_tableau`, in
+`CookLevin/Parsimonious.lean`). No conversion to a single-tape or oblivious machine is needed: the
+action of a step depends on the situation only, and every tape applies its part of the action
+locally.
 
 The definitions are noncomputable: the transition function of `Turing.MultiTapeTM` is chosen from
 its transition relation, and the states and situations are enumerated through `Finset.toList` in
 an arbitrary order. Both depend on the machine only, so a machine producing the tableau can store
 them in a table; the enumerations that depend on the input (`Turing.windowList`, `List.range`) are
-explicit lists. Only satisfiability matters for correctness.
+explicit lists. Only the set of satisfying assignments matters for correctness.
 
 ## Main definitions
 
@@ -119,6 +125,21 @@ noncomputable def sitClauses [Fintype State] (t : ℕ) : CNF (Var k State) :=
     Clause.imp (.holds t (.state (some y.1)) :: .holds t (.inRead y.2.1) ::
       (List.finRange k).map fun i => .holds t (.read i (y.2.2 i))) (.holds t (.sit y))
 
+/-- The symbols read and the situation at time `t` are unique: each work head and the input head
+read at most one symbol, and a true situation has its state and symbols read true. With the read
+and situation clauses, the symbols read and the situation that are true are then exactly those
+that hold. -/
+noncomputable def uniqueClauses [Fintype State] [DecidableEq State] (t : ℕ) :
+    CNF (Var k State) :=
+  (List.finRange k).flatMap (fun i =>
+      CNF.atMostOne (Feature.symbols.map fun s => .holds t (.read i s))) ++
+    CNF.atMostOne (Feature.symbols.map fun s => .holds t (.inRead s)) ++
+    Feature.situations.flatMap fun y =>
+      Clause.imp [.holds t (.sit y)] (.holds t (.state (some y.1))) ::
+        Clause.imp [.holds t (.sit y)] (.holds t (.inRead y.2.1)) ::
+          (List.finRange k).map fun i =>
+            Clause.imp [.holds t (.sit y)] (.holds t (.read i (y.2.2 i)))
+
 /-- The step equation from time `t` to time `t + 1`: each term of the step equation of a basic
 feature, at time `t`, implies the feature at time `t + 1`. -/
 noncomputable def stepClauses [Fintype State] [DecidableEq State] (t : ℕ) : CNF (Var k State) :=
@@ -134,7 +155,7 @@ def acceptClauses : CNF (Var k State) :=
 noncomputable def tableau [Fintype State] [DecidableEq State] : CNF (Var k State) :=
   initClauses tm T ++ (List.range (T + 1)).flatMap (oneHotClauses u L T) ++
     (List.range T).flatMap (fun t =>
-      readClauses u L T t ++ sitClauses t ++ stepClauses tm u L T t) ++
+      readClauses u L T t ++ sitClauses t ++ uniqueClauses t ++ stepClauses tm u L T t) ++
     acceptClauses T
 
 end Clauses

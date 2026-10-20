@@ -9,10 +9,12 @@ import ComplexityTests.ApproximateCounting
 import ComplexityTests.ArithmeticHessian
 import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
+import ComplexityTests.ArthurMerlin
 import ComplexityTests.Axioms
 import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
+import ComplexityTests.BipartiteMatching
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
@@ -27,6 +29,7 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.ClassClosure
+import ComplexityTests.ClassCorollaries
 import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
@@ -44,6 +47,7 @@ import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
+import ComplexityTests.CountingCompleteness
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
@@ -59,6 +63,7 @@ import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
 import ComplexityTests.FineGrained
+import ComplexityTests.FineGrained.GraphProblems
 import ComplexityTests.FineGrained.Sparsification
 import ComplexityTests.FiniteControl
 import ComplexityTests.FiniteFieldUnitSum
@@ -66,6 +71,7 @@ import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FormulaDepth
+import ComplexityTests.FourierLearning
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
@@ -74,6 +80,7 @@ import ComplexityTests.FusionHomomorphism
 import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.GGM
+import ComplexityTests.GapGraphsGeography
 import ComplexityTests.GeneratorPadding
 import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
@@ -82,6 +89,7 @@ import ComplexityTests.Halting
 import ComplexityTests.HardCore
 import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
+import ComplexityTests.HastadSharp
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
@@ -93,6 +101,7 @@ import ComplexityTests.Iteration.Dynamics
 import ComplexityTests.Iteration.SparseDisplacement
 import ComplexityTests.Iteration.SparseTime
 import ComplexityTests.IterationFoundations
+import ComplexityTests.KahnKalaiLinialFriedgut
 import ComplexityTests.Kannan
 import ComplexityTests.KarpLipton
 import ComplexityTests.KarpLipton2
@@ -129,6 +138,7 @@ import ComplexityTests.NaturalProofs
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
+import ComplexityTests.OneWayMetacomplexity
 import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
@@ -182,6 +192,7 @@ import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.ProofComplexity
 import ComplexityTests.ProofComplexity.Resolution
+import ComplexityTests.ProofComplexity.Tseitin
 import ComplexityTests.Propagation
 import ComplexityTests.PseudoentropyBoosting
 import ComplexityTests.PseudoentropyExtraction
@@ -200,11 +211,13 @@ import ComplexityTests.QueryComplexity.Measures
 import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.QueryComplexity.Sensitivity
 import ComplexityTests.RandomOracle
+import ComplexityTests.RandomizedDisjointness
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
+import ComplexityTests.Reingold
 import ComplexityTests.Relativization
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2

@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.MapOp
 public import Cslib.Computability.Circuit.Boolean.Basic
 public import Cslib.Foundations.Data.BitString
+import Complexity.Computability.Circuit.Simulation
 
 /-!
 # The Boolean basis with unbounded fan-in
@@ -78,6 +79,39 @@ def interpretation : Interpretation signature Bool
     interpretation (.or m) x = decide (∃ j, x j = true) :=
   rfl
 
+section Lines
+
+variable {n g : ℕ}
+
+/-- A negation gate negates its argument. -/
+theorem interpretation_of_op_eq_not {l : Line signature n g} (h : l.op = .not)
+    (v : Wire n g → Bool) :
+    interpretation l.op (fun a => v (l.wires a)) = !v (l.wires ⟨0, by simp [h]⟩) := by
+  obtain ⟨op, ws⟩ := l
+  simp only at h
+  subst h
+  rfl
+
+/-- A conjunction gate is true when all its arguments are. -/
+theorem interpretation_of_op_eq_and {l : Line signature n g} {m : ℕ} (h : l.op = .and m)
+    (v : Wire n g → Bool) :
+    interpretation l.op (fun a => v (l.wires a)) = true ↔ ∀ a, v (l.wires a) = true := by
+  obtain ⟨op, ws⟩ := l
+  simp only at h
+  subst h
+  simp
+
+/-- A disjunction gate is true when one of its arguments is. -/
+theorem interpretation_of_op_eq_or {l : Line signature n g} {m : ℕ} (h : l.op = .or m)
+    (v : Wire n g → Bool) :
+    interpretation l.op (fun a => v (l.wires a)) = true ↔ ∃ a, v (l.wires a) = true := by
+  obtain ⟨op, ws⟩ := l
+  simp only at h
+  subst h
+  simp
+
+end Lines
+
 /-- The cost of an operation in the AND/OR depth: negations are free. With these costs,
 `Circuit.depthWith` is the largest number of conjunctions and disjunctions on a path, the usual
 depth of AC⁰ circuits, in which negations sit at the inputs.
@@ -99,6 +133,20 @@ def andOrCost : Op → ℕ
 
 theorem andOrCost_le_one (op : Op) : andOrCost op ≤ 1 := by
   cases op <;> simp
+
+/-- Conjunctions and disjunctions cost one in the AND/OR depth. -/
+theorem andOrCost_eq_one_of_ne_not {op : Op} (hop : op ≠ .not) : andOrCost op = 1 := by
+  cases op <;> simp_all
+
+open Finset in
+/-- The AND/OR cost of a program is its number of conjunctions and disjunctions. -/
+theorem cost_andOrCost_eq_card {n g : ℕ} (p : Program signature n g) :
+    p.cost andOrCost = #{k | (p.lines k).op ≠ .not} := by
+  rw [p.cost_eq_sum, card_eq_sum_ones, sum_filter]
+  refine sum_congr rfl fun k _ => ?_
+  by_cases h : (p.lines k).op = .not
+  · simp [h]
+  · simp [h, andOrCost_eq_one_of_ne_not h]
 
 /-- The operations of the unbounded fan-in basis, and one extra gate of every arity. -/
 inductive ExtOp where

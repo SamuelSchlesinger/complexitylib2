@@ -33,7 +33,8 @@ of the whole experiment (`exists_bind_apply_le`).
   two-stage experiments.
 * `Cslib.Probability.PMF.bind_congr_on_support`: continuations need agree only on possible inputs,
   adapted from the cslib `crypto` branch at `5ff69ca`.
-* `Cslib.Probability.PMF.bind_apply_mono_on_support`: compare two continuations at one outcome.
+* `Cslib.Probability.PMF.bind_apply_mono_on_support`,
+  `Cslib.Probability.PMF.le_bind_apply_on_support`: compare continuations at one outcome.
 * `Cslib.Probability.PMF.tsum_mul_le_of_forall_le`,
   `Cslib.Probability.PMF.tsum_mul_le_card_mul_add`: averages of bounded values, and of values
   bounded by `1` on a finite set of points of small probability.
@@ -292,6 +293,17 @@ theorem bind_apply_of_forall (μ : PMF α) {f : α → PMF β} {b : β} {c : ℝ
     (h : ∀ a, f a b = c) : μ.bind f b = c := by
   simp only [PMF.bind_apply, h, ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
 
+/-- A lower bound on an outcome's probability for every possible first-stage result bounds its
+probability in the whole experiment. -/
+theorem le_bind_apply_on_support (μ : PMF α) {f : α → PMF β} {b : β} {c : ℝ≥0∞}
+    (h : ∀ a ∈ μ.support, c ≤ f a b) : c ≤ μ.bind f b := by
+  rw [PMF.bind_apply]
+  calc c = ∑' a, μ a * c := by rw [ENNReal.tsum_mul_right, μ.tsum_coe, one_mul]
+    _ ≤ ∑' a, μ a * f a b := ENNReal.tsum_le_tsum fun a => by
+        by_cases ha : a ∈ μ.support
+        · exact mul_le_mul_right (h a ha) _
+        · simp [(PMF.apply_eq_zero_iff μ a).2 ha]
+
 /-- Increasing an outcome's probability on every possible first-stage result increases its
 probability in the whole experiment. The sample spaces may be infinite. -/
 theorem bind_apply_mono_on_support (μ : PMF α) {f g : α → PMF β} (b : β)
@@ -335,5 +347,15 @@ theorem tsum_mul_le_card_mul_add [DecidableEq α] (μ : PMF α) {ε : ℝ≥0∞
         gcongr
         calc ∑ a ∈ T, μ a ≤ ∑ _a ∈ T, ε := Finset.sum_le_sum fun a _ => hμ a
           _ = T.card * ε := by rw [Finset.sum_const, nsmul_eq_mul]
+
+/-- The probability of an event under the uniform distribution on a finite type is the fraction
+of its members. -/
+theorem toOuterMeasure_uniformOfFintype_toReal [Fintype α] [Nonempty α] (event : Set α)
+    [DecidablePred (· ∈ event)] :
+    ((uniformOfFintype α).toOuterMeasure event).toReal =
+      (Finset.univ.filter (· ∈ event)).card / Fintype.card α := by
+  rw [toOuterMeasure_apply_toReal]
+  simp only [uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast]
+  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv]
 
 end Cslib.Probability.PMF

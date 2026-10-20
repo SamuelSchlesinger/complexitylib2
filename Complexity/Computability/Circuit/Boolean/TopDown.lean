@@ -129,33 +129,6 @@ decreasing_by
     exact wireDepths_firstArg_lt p i₀ k
   all_goals exact Prod.Lex.left _ _ (Nat.lt_succ_self _)
 
-/-- A negation gate negates its argument. -/
-theorem interpretation_of_op_eq_not {l : Line signature n g} (h : l.op = .not)
-    (v : Wire n g → Bool) :
-    interpretation l.op (fun a => v (l.wires a)) = !v (l.wires ⟨0, by simp [h]⟩) := by
-  obtain ⟨op, ws⟩ := l
-  simp only at h
-  subst h
-  rfl
-
-/-- A conjunction gate is true when all its arguments are. -/
-theorem interpretation_of_op_eq_and {l : Line signature n g} {m : ℕ} (h : l.op = .and m)
-    (v : Wire n g → Bool) :
-    interpretation l.op (fun a => v (l.wires a)) = true ↔ ∀ a, v (l.wires a) = true := by
-  obtain ⟨op, ws⟩ := l
-  simp only at h
-  subst h
-  simp
-
-/-- A disjunction gate is true when one of its arguments is. -/
-theorem interpretation_of_op_eq_or {l : Line signature n g} {m : ℕ} (h : l.op = .or m)
-    (v : Wire n g → Bool) :
-    interpretation l.op (fun a => v (l.wires a)) = true ↔ ∃ a, v (l.wires a) = true := by
-  obtain ⟨op, ws⟩ := l
-  simp only at h
-  subst h
-  simp
-
 /-- **The protocol of a wire solves its game**: if the wire `w` has AND/OR depth at most `d`,
 Alice's input makes it `s` and Bob's makes it `!s`, the two inputs differ at the named
 coordinate. -/

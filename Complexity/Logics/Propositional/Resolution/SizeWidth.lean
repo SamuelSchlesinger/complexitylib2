@@ -45,6 +45,8 @@ By induction, if `f (2N - d) ^ b < (2N) ^ b` then the formula is refutable in wi
 * `Cslib.Logic.PL.CNF.exists_refutableInWidth_le_of_refutableInSize`: **the size–width
   tradeoff**: a formula with clauses of width at most `k` over `N` variables, refutable with `s`
   lines, is refutable in width at most `k + 2 √(2 N log s) + 2`.
+* `Cslib.Logic.PL.CNF.exp_le_of_refutableInSize`: the same as a size lower bound: if refutations
+  need width `W ≥ k + 2`, they need `exp ((W - k - 2)² / 8N)` lines.
 
 ## References
 
@@ -415,6 +417,31 @@ theorem exists_refutableInWidth_le_of_refutableInSize {k s N : ℕ} (hk : ∀ c 
     have := max_le_add_of_nonneg (Nat.cast_nonneg (α := ℝ) d) (Nat.cast_nonneg (α := ℝ) k)
     linarith
   linarith
+
+/-- **Width lower bounds give size lower bounds** [Ben-Sasson and Wigderson, Corollary 3.6]
+[BenSassonWigderson2001]. Let the clauses of `φ` have width at most `k`, and let `φ` have at most
+`N` variables. If every resolution refutation of `φ` has width at least `W ≥ k + 2`, then every
+resolution refutation of `φ` has at least `exp ((W - k - 2)² / 8N)` lines. -/
+theorem exp_le_of_refutableInSize {k N W s : ℕ} (hk : ∀ c ∈ φ, c.width ≤ k)
+    (hN : φ.vars.toFinset.card ≤ N) (hW : ∀ w, φ.RefutableInWidth w → W ≤ w)
+    (hkW : k + 2 ≤ W) (hs : φ.RefutableInSize s) :
+    Real.exp (((W : ℝ) - k - 2) ^ 2 / (8 * N)) ≤ s := by
+  obtain ⟨w, hw, hwle⟩ := exists_refutableInWidth_le_of_refutableInSize hk hN hs
+  have he : (W : ℝ) ≤ w := by exact_mod_cast hW w hw
+  have hs1 : (1 : ℝ) ≤ s := by
+    obtain ⟨ls, -, hnil, hlen⟩ := hs
+    exact_mod_cast (List.length_pos_of_mem hnil).trans_le hlen
+  have hlog := Real.log_nonneg hs1
+  have hkW' : (k : ℝ) + 2 ≤ W := by exact_mod_cast hkW
+  rcases Nat.eq_zero_or_pos N with rfl | hN0
+  · simpa using hs1
+  rw [← Real.exp_log (by linarith : (0 : ℝ) < s), Real.exp_le_exp,
+    div_le_iff₀ (by positivity)]
+  -- `W - k - 2 ≤ 2 √(2 N log s)`
+  have hx : (W : ℝ) - k - 2 ≤ 2 * √(2 * N * Real.log s) := by linarith
+  have hsq := pow_le_pow_left₀ (by linarith) hx 2
+  rw [mul_pow, Real.sq_sqrt (by positivity)] at hsq
+  nlinarith
 
 end CNF
 

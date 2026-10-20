@@ -14,6 +14,40 @@ three distinct literals per clause.\citep[Section 2.3]{AroraBarak09}
 \end{result}
 
 \begin{result}
+\subsection{Parsimonious Cook--Levin and complete counting problems}
+The Cook--Levin tableau is parsimonious: for a deterministic multi-tape machine $M$, input
+prefix $u$, certificate length $L$ and step bound $T$, the tableau has exactly as many
+satisfying assignments (of the variables occurring in it) as there are words
+$w\in\{0,1\}^L$ such that $M$ on $uw$ has halted with output $1$ after $T$ steps. Hence the
+existing Cook--Levin reduction of a verifier $V$ maps an instance $a$ to a CNF formula with
+exactly $|\{w\in\{0,1\}^{p(|a|)} : V(a,w)=1\}|$ satisfying assignments, and $\#\mathrm{SAT}$
+is $\#\cc{P}$-complete under parsimonious polynomial-time reductions $f(a)=\#\mathrm{SAT}(r(a))$,
+for the verifier-based $\#\cc{P}$ (certificates of exact polynomial length) and every
+injective instance encoding. The count ranges over assignments of the occurring variables.
+Consequently, under polynomial-time many-one reductions: formulas with an odd number of
+satisfying assignments form a $\oplus\cc{P}$-complete problem; unique satisfiability is
+$\cc{US}$-complete; a count not divisible by $k$ is $\cc{Mod}_k\cc{P}$-complete and its
+complement $\cc{coMod}_k\cc{P}$-complete, for every modulus $k$ (including the degenerate
+moduli $0$ and $1$ of the total definition); pairs $(\varphi,m)$, $m$ in binary, with
+$\#\varphi\ge m$ form a $\cc{PP}$-complete problem, and those with $\#\varphi=m$ a
+$\cc{C_{=}P}$-complete problem whose complement is $\cc{coC_{=}P}$-complete. All classes are the
+library's verifier-based definitions; MAJSAT itself is not treated.
+\citep{Valiant1979}\citep[Chapter 18]{Papadimitriou94}\citep{PapadimitriouZachos1983}\citep{BlassGurevich1982}\citep{Gill1977}\citep{CaiHemachandra1990,BeigelGillHertrampf1990,Wagner1986}\citep{Fortnow1997}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Parsimonious.lean}{340}{Cslib.Complexity.CookLevin.modelCount_tableau}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Parsimonious.lean}{364}{Cslib.Complexity.CookLevin.modelCount_reduce}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/SharpSAT.lean}{170}{Cslib.Complexity.SharpSAT.mem_SharpP}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/CookLevin/Counting.lean}{58}{Cslib.Complexity.CookLevin.SharpSAT_sharpPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{115}{Cslib.Complexity.ParitySAT_parityPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{120}{Cslib.Complexity.USAT_usComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{125}{Cslib.Complexity.ModSAT_modPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{129}{Cslib.Complexity.compl_ModSAT_coModPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{154}{Cslib.Complexity.SharpSATAtLeast_ppComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{172}{Cslib.Complexity.SharpSATExact_ceqPComplete}
+\declat{74a300c2d53bb4273c90e216316735cebc585051}{Complexity/Computability/Complexity/Problems/CountingSAT.lean}{188}{Cslib.Complexity.compl_SharpSATExact_coCeqPComplete}
+\end{result}
+
+
+\begin{result}
 \subsection{DP and SAT--UNSAT completeness}
 The difference class $\cc{DP}$ consists of languages $B\cap C$ with
 $B\in\cc{NP}$ and $C\in\cc{coNP}$, equivalently differences of two NP
@@ -71,6 +105,48 @@ require symmetry or the triangle inequality.\citep{Karp1972,GareyJohnson1979,Sip
 \end{result}
 
 \begin{result}
+\subsection{Exponential lower bounds for graph problems under ETH}
+Assume the exponential time hypothesis. Then for each of the following problems there is
+$\delta>0$ such that it is not decidable within time $2^{\delta\mu}$ times a polynomial in the
+length of the encoded instance: three-colorability, independent set and vertex cover (graph with
+binary target), and directed and undirected Hamiltonian cycle and path (graph with endpoints for
+paths), all with $\mu=|V|+|E|$; independent set and clique with $\mu=|V|$. A graph is a list of
+declared vertices and a list of edges, and $|V|$, $|E|$ are the list lengths with repetitions;
+they bound the distinct counts, so the bounds for distinct counts follow. The predicate negated
+allows the decider to depend on $\delta$. Each bound composes a polynomial-time reduction from
+3-CNF formulas whose output measure is linear in the number $m$ of clauses with the
+sparsification lemma, under which ETH excludes $2^{o(m)}$ for 3SAT. Three-colorability uses the
+gadget reduction (at most $(24k+12)m+9$ vertices and edges for clauses of width at most $k$);
+independent set, vertex cover and clique use the variable-edge reduction of Garey and Johnson
+(at most $(k^2+5k)m$), not Karp's occurrence graph, which can have quadratically many edges.
+Hamiltonian problems use a variant of Sipser's diamond construction with one diamond per
+distinct variable and one slot per occurrence; its directed path graph has at most $(23k+1)m+1$
+vertices and arcs in total, and the cycle and undirected graphs obtained by closing and splitting
+it stay linear (at most $(115k+5)m+10$ for undirected Hamiltonian cycle). The correctness of
+diamond graphs is proved once for arbitrary row layouts, and Sipser's construction, with
+$\Theta(m^2)$ vertices in the worst case, is an instance of it. Garey and Johnson's reduction from
+vertex cover to Hamiltonian cycle is not used: its selector edges are $\Theta(m^2)$ on these
+instances.
+\citep{ImpagliazzoPaturiZane2001,CyganEtAl2015,LokshtanovMarxSaurabh2011,GareyJohnson1979,Sipser2013}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{94}{Cslib.Complexity.ETH.not_decidableInSubexpTime_ThreeColoring}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{106}{Cslib.Complexity.ETH.not_decidableInSubexpTime_IndependentSet}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{117}{Cslib.Complexity.ETH.not_decidableInSubexpTime_IndependentSet_vertices}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{128}{Cslib.Complexity.ETH.not_decidableInSubexpTime_VertexCover}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{143}{Cslib.Complexity.ETH.not_decidableInSubexpTime_Clique}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{160}{Cslib.Complexity.ETH.not_decidableInSubexpTime_HamCycle}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{192}{Cslib.Complexity.ETH.not_decidableInSubexpTime_HamPath}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{170}{Cslib.Complexity.ETH.not_decidableInSubexpTime_DirHamCycle}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{180}{Cslib.Complexity.ETH.not_decidableInSubexpTime_DirHamPath}
+The transfer lemma and the diamond theorem hold for arbitrary measures and row layouts.
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/Reduction.lean}{182}{Cslib.Complexity.ETH.not_decidableInSubexpTime_of_reduction}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/Hamiltonian/Diamond.lean}{1052}{Cslib.Complexity.Diamond.mem_DirHamPath_iff}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/Hamiltonian/Sparse.lean}{278}{Cslib.Complexity.SAT.length_sparseDiamondGraph_le}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/Hamiltonian/Sparse.lean}{296}{Cslib.Complexity.SAT.length_toSparseHamCycle_le}
+\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/IndependentSet/Sparse.lean}{414}{Cslib.Complexity.SAT.length_toSparseIndependentSet_le}
+\end{result}
+
+
+\begin{result}
 \textbf{Circuit evaluation.}
 Given a one-output De Morgan circuit and an input of the matching arity, deciding
 whether its output is true is in P. Instances are well formed by their type;
@@ -107,6 +183,24 @@ obtained from the formalized PCP construction; no optimal approximation threshol
 is asserted.\citep{AroraLundMotwaniSudanSzegedy1998,Dinur2007}
 \decl{Complexity/Computability/PCP/Approximation/MaxThreeSAT.lean}{469}{Cslib.Complexity.GapThreeSAT_npHard}
 \end{result}
+
+\begin{result}
+\subsection{Constant gaps for Independent Set, Clique and Vertex Cover}
+For graphs given by declared vertices and edges and a target $k$, it is NP-hard, under
+polynomial-time promise reductions, to distinguish $\alpha(G)\ge k$ from
+$\alpha(G)\le(1-\frac{1}{3\cdot 2^{77}})k$, likewise for the clique number, and to distinguish
+$\tau(G)\le k$ from $\tau(G)\ge(1+\frac{1}{3\cdot 2^{78}})k$ for the vertex cover number. Values
+are taken over declared vertices. The reductions apply Karp's occurrence graph to the MAX-3SAT gap
+(an independent set yields an assignment satisfying as many clauses); for vertex cover they pass
+through MAX-E3SAT with repeated literals allowed, whose graphs have exactly $3m$ vertices. This is
+not the FGLSS construction; the constants are explicit and far from optimal, and amplification to
+every constant is not proved.\citep{AroraLundMotwaniSudanSzegedy1998}\citep[Chapter 11]{AroraBarak09}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/MaxExactThreeSAT.lean}{170}{Cslib.Complexity.GapExactThreeSAT_npHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/IndependentSet.lean}{253}{Cslib.Complexity.GapIndependentSet_npHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/IndependentSet.lean}{261}{Cslib.Complexity.GapClique_npHard}
+\declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/IndependentSet.lean}{269}{Cslib.Complexity.GapVertexCover_npHard}
+\end{result}
+
 
 \begin{result}
 \subsection{PCP without random bits}

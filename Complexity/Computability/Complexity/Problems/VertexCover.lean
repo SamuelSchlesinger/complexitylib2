@@ -39,6 +39,7 @@ declared vertices; a target `m > n` is mapped to the unsatisfiable target `n + 1
 * `Cslib.Complexity.VertexCover`.
 * `Cslib.Complexity.VertexCover.verifier`.
 * `Cslib.Complexity.IndependentSet.toVertexCover`.
+* `Cslib.Complexity.Graph.vertexCoverNum`: the vertex cover number.
 
 ## Main results
 
@@ -46,6 +47,8 @@ declared vertices; a target `m > n` is mapped to the unsatisfiable target `n + 1
   covers of at most `k` vertices.
 * `Cslib.Complexity.IndependentSet.toVertexCover_mem_iff`:
   `toVertexCover x ∈ VertexCover ↔ x ∈ IndependentSet`.
+* `Cslib.Complexity.Graph.vertexCoverNum_eq_card_sub_indepNum`: the vertex cover number is the
+  number of distinct declared vertices minus the independence number.
 * `Cslib.Complexity.IndependentSet.computableTidilyInPolyTime_toVertexCover`: the reduction is
   polynomial-time, with targets in binary.
 * `Cslib.Complexity.VertexCover.isVerifier`, `Cslib.Complexity.VertexCover.mem_NP`:
@@ -245,5 +248,34 @@ theorem VertexCover_npHard : NPHard (encPair encGraph encNat) VertexCover :=
 /-- **`VertexCover` is NP-complete.** -/
 theorem VertexCover_npComplete : NPComplete (encPair encGraph encNat) VertexCover :=
   ⟨VertexCover.mem_NP, VertexCover_npHard⟩
+
+/-! ### The vertex cover number -/
+
+namespace Graph
+
+/-- The **vertex cover number** of a graph: the least number of declared vertices meeting every
+edge between declared vertices. -/
+noncomputable def vertexCoverNum (G : Graph) : ℕ := sInf {k | (G, k) ∈ VertexCover}
+
+/-- **A vertex cover is the complement of an independent set**: the vertex cover number is the
+number of distinct declared vertices minus the independence number. -/
+theorem vertexCoverNum_eq_card_sub_indepNum (G : Graph) :
+    G.vertexCoverNum = G.1.toFinset.card - G.indepNum := by
+  have hα := indepNum_mem_IndependentSet G
+  have hαn := indepNum_le_card G
+  have hvc : (G, G.1.toFinset.card - G.indepNum) ∈ VertexCover := by
+    have := (IndependentSet.toVertexCover_mem_iff (G, G.indepNum)).2 hα
+    rwa [IndependentSet.toVertexCover, ite_eq_left hαn] at this
+  refine le_antisymm (Nat.sInf_le hvc) ?_
+  have hτ : (G, G.vertexCoverNum) ∈ VertexCover :=
+    Nat.sInf_mem (s := {k | (G, k) ∈ VertexCover}) ⟨_, hvc⟩
+  have hτn : G.vertexCoverNum ≤ G.1.toFinset.card := (mem_VertexCover_iff_exists_card_le.1 hτ).1
+  have hIS : (G, G.1.toFinset.card - G.vertexCoverNum) ∈ IndependentSet := by
+    refine (IndependentSet.toVertexCover_mem_iff _).1 ?_
+    rwa [IndependentSet.toVertexCover, ite_eq_left (Nat.sub_le _ _), Nat.sub_sub_self hτn]
+  have := le_indepNum_iff.2 hIS
+  omega
+
+end Graph
 
 end Cslib.Complexity

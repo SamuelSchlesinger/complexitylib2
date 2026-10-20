@@ -123,10 +123,10 @@ example {Seed Output : ℕ → Type}
 -- A many-to-one function accepts a different preimage, even one of a different length.
 example (n : ℕ) :
     ProbComp.eval (inversionGame (fun _ => [true]) (fun _ _ => pure []) n) = PMF.pure true :=
-  eval_inversionGame_of_rightInverse _ (fun _ => []) (fun _ => rfl) n
+  eval_inversionGame_of_rightInverse _ (fun _ _ => []) (fun _ => rfl) n
 
 example : ¬ OneWay (fun word => word) :=
-  not_oneWay_of_inverse _ id (by ppt) (fun _ => rfl)
+  not_oneWay_of_inverse _ (fun _ y => y) (by ppt) (fun _ => rfl)
 
 example (word : List Bool) : ¬ OneWay (fun _ => word) := not_oneWay_const word
 

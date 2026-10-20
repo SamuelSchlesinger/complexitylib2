@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Optio
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Foundations.Data.BitString.WordCount
 import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
@@ -160,14 +161,6 @@ private theorem card_filter_take_drop (m k : ℕ) (P : List Bool → List Bool �
   simp only [Finset.mem_filter, Finset.mem_univ, true_and]
   rw [ofFn_eq_append m k r, List.take_left' (List.length_ofFn), List.drop_left' List.length_ofFn]
 
-/-- The random strings of length `m + k` whose first `m` bits satisfy `P`. -/
-private theorem card_filter_take (m k : ℕ) (P : List Bool → Prop) [DecidablePred P] :
-    (Finset.univ.filter fun r : Fin (m + k) → Bool => P ((List.ofFn r).take m)).card =
-      (Finset.univ.filter fun u : Fin m → Bool => P (List.ofFn u)).card * 2 ^ k := by
-  rw [card_filter_take_drop m k fun u _ => P u, ← Finset.univ_product_univ,
-    Finset.filter_product_left (fun u : Fin m → Bool => P (List.ofFn u)), Finset.card_product]
-  simp
-
 /-- The random strings of length `m + k` whose last `k` bits satisfy `P`. -/
 private theorem card_filter_drop (m k : ℕ) (P : List Bool → Prop) [DecidablePred P] :
     (Finset.univ.filter fun r : Fin (m + k) → Bool => P ((List.ofFn r).drop m)).card =
@@ -238,8 +231,12 @@ theorem RP_inter_coRP_subset_ZPP : RP enc ∩ coRP enc ⊆ ZPP enc := by
       exact Bool.false_ne_true hrej
   · by_cases ha : a ∈ A
     · -- on a member, `V₁` accepts on at least half of its random strings
-      have hcount := card_filter_take (len a) (p₂.eval (enc a).length)
-        fun u => V₁ (a, u) = true
+      have hcount : (Finset.univ.filter fun r : Fin (len a + p₂.eval (enc a).length) → Bool =>
+            V₁ (a, (List.ofFn r).take (len a)) = true).card =
+          (Finset.univ.filter fun u : Fin (len a) → Bool => V₁ (a, List.ofFn u) = true).card *
+            2 ^ p₂.eval (enc a).length := by
+        rw [BitString.card_filter_take (Nat.le_add_right _ _) fun u => V₁ (a, u) = true,
+          Nat.add_sub_cancel_left, Nat.mul_comm]
       have hhalf := (h₁ a).1 ha
       calc 2 ^ (len a + p₂.eval (enc a).length)
           = 2 ^ len a * 2 ^ p₂.eval (enc a).length := pow_add _ _ _

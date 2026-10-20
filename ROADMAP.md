@@ -41,20 +41,20 @@ polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are impl
 The next counting milestones remain the nondeterministic-machine characterizations of
 `#P` and `GapP`, and machine characterizations of `UP` and polynomially bounded ambiguity;
 none is implied by the verifier definitions. SPP, FewP, fixed-modulus ModP, coUP and coC=P
-now have verifier-based definitions and basic closure/containment developments. Extend these
-with stronger fewness containments, counting reductions and oracle results, preserving exact
+now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and PH ⊆ P^#P ⊆ P^PP are proved. Extend these
+with counting reductions and further oracle results (P^PP ⊆ P^#P is open), preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions and elementary containments/closures.
-The binary-output FP-to-#P/GapP bridge is available. Remaining extensions include
-US/Unique-SAT completeness, stronger Boolean-hierarchy closure and collapse results,
+The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
+MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
 LWPP reduction closure and multiple-target robustness, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Fixed three-round AWPP
 amplification gives error at most one eighth; every fixed positive SBP gap exponent is
 available, and intersecting an SBP language with a BPP language stays in SBP.
-Remaining approximate-counting milestones include MA ⊆ SBP ⊆ AM, uniform AWPP
+MA ⊆ SBP is proved with the Arthur–Merlin classes. Remaining approximate-counting milestones include SBP ⊆ AM, uniform AWPP
 amplification to input-dependent error, and AWPP PP-lowness.
 These definitions retain the verifier-model boundary stated above.
 
@@ -70,17 +70,17 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. Preserve each reduction's resource bound. |
 | Space and alternation | Build on native `NPSPACE = PSPACE`, TQBF completeness, `NL ⊆ P`, [PH ⊆ PSPACE](Complexity/Computability/Complexity/Classes/Inclusions.lean) and [AP = PSPACE](Complexity/Computability/Complexity/Classes/Alternation/Savitch.lean). Extend the [machine-class milestones](#machine-class-milestones), alternating time/space classes and bounded-alternation characterizations of PH. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
 | Counting and modular classes | Build on `#P`, `GapP`, `PP`, [parity-P](Complexity/Computability/Complexity/Classes/ParityP.lean) and [Toda's PH ⊆ P^#P theorem](Complexity/Computability/Complexity/Classes/Toda.lean), with a fixed polynomial-time program correct against every oracle answering the counting function's bits. Extend counting reductions and machine characterizations, permanent completeness, modular/counting hierarchies and the oracle-algorithm form of Stockmeyer approximate counting. |
-| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. Prove the converse through sumcheck and arithmetization; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
+| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. The Shamir–Shen algebraic protocol for TQBF, with perfect completeness and soundness against every prover, is [proved](Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean); realize it in the IP machine model to obtain PSPACE ⊆ IP; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
 | Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), and [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings. Prove permanent VNP-completeness with its characteristic assumptions, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | Gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
 | Pseudorandomness and coding | Hardness versus randomness, space-bounded generators, extractors/condensers, limited independence, explicit expanders, and list/local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
-| Complexity-theoretic cryptography | Extend the existing OWF/PRG/PRF results with reusable adaptive reductions, commitments, zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
+| Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). Extend the existing OWF/PRG/PRF results with reusable adaptive reductions, commitments, zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
 | Communication, queries and data structures | Randomized and multiparty protocols, discrepancy and information complexity, direct-sum/product results, lifting theorems, and reductions to streaming, sketching and cell-probe lower bounds. Reuse upstream query models. |
-| Proof complexity | Build on [Cook–Reckhow systems and simulations](Complexity/Logics/Propositional/ProofSystem.lean), including the polynomially bounded-system characterization of NP = coNP, the [resolution size–width tradeoff](Complexity/Logics/Propositional/Resolution/SizeWidth.lean) and [tree-like resolution/DPLL search-tree certificates](Complexity/Logics/Propositional/Resolution/TreeLike.lean). Extend proof-space and pigeonhole/Tseitin lower bounds, Frege, cutting planes, polynomial calculus and sum-of-squares. The certificate correspondence does not certify a DPLL solver's runtime. |
-| Average-case complexity and learning | Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |
+| Proof complexity | Build on [Cook–Reckhow systems and simulations](Complexity/Logics/Propositional/ProofSystem.lean), including the polynomially bounded-system characterization of NP = coNP, the [resolution size–width tradeoff](Complexity/Logics/Propositional/Resolution/SizeWidth.lean) and [tree-like resolution/DPLL search-tree certificates](Complexity/Logics/Propositional/Resolution/TreeLike.lean). Extend proof-space and pigeonhole lower bounds (Tseitin formulas on expanders are [proved](Complexity/Logics/Propositional/Resolution/TseitinExpander.lean) hard for resolution), Frege, cutting planes, polynomial calculus and sum-of-squares. The certificate correspondence does not certify a DPLL solver's runtime. |
+| Average-case complexity and learning | Uniform-distribution learning on CSLib's PAC API, the LMN low-degree algorithm and Kushilevitz–Mansour with membership queries are [proved](Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean); running times are not machine-certified. Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |
 | Property and distribution testing | Distance and access models, one/two-sided and tolerant testing, query/sample bounds, canonical graph/algebraic/distribution testers and lower bounds. |
-| Fine-grained and parameterized complexity | Fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; FPT/XP, W/A hierarchies, kernelization, parameter-preserving reductions and lower bounds. |
+| Fine-grained and parameterized complexity | Under ETH, 3-coloring, independent set, vertex cover and Hamiltonian cycle and path have no 2^{o(\|V\|+\|E\|)} algorithms and clique none in 2^{o(\|V\|)} ([GraphProblems](Complexity/Computability/Complexity/FineGrained/GraphProblems.lean)); the Hamiltonian bounds (directed and undirected) use linear-size diamond reductions. Further fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; FPT/XP, W/A hierarchies, kernelization, parameter-preserving reductions and lower bounds. |
 | Total search and computational games | FNP/TFNP and canonical subclasses such as PLS, PPAD, PPA, PPP and CLS; local search, fixed-point and equilibrium problems, with explicit totality and solution-preserving reductions. |
 | Logic and descriptive complexity | Building on [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): logical characterizations of additional resource classes, fixed-point and order-invariant queries, and uniform translations between syntax, structures and algorithms. |
 | Kolmogorov complexity and metacomplexity | Machine-backed descriptions/decoders and invariance, resource-bounded descriptions, MCSP variants and connections to learning, cryptography and lower bounds. Revisit deferred results through independently reviewed developments. |
@@ -259,17 +259,21 @@ Jukna coverage below is an additional target beyond the V1 port:
   [uniform average-case-hardness implication P = BPP](Complexity/Computability/Complexity/Classes/BPP/Derandomization.lean)
   is proved. Complete the worst-case-to-average-case amplification needed to obtain this
   conclusion from exponential worst-case circuit hardness in `E`.
-* **Further PCP consequences.** Build the FGLSS clique-hardness reduction on the existing
+* **Further PCP consequences.** Constant-factor NP-hardness of approximating Independent Set,
+  Clique and Vertex Cover is [proved](Complexity/Computability/PCP/Approximation/IndependentSet.lean)
+  via Karp's occurrence graph. Build the FGLSS clique-hardness reduction and amplification on the existing
   [gap-preserving reductions](Complexity/Computability/PCP/Approximation.lean) and certified PCP
   construction; retain the exact gap and reduction runtime.
-* **Randomized communication and information.** Prove the `Ω(n)` bounded-error randomized
-  disjointness lower bound, building on [Yao's minimax principle](Complexity/Computability/Communication/Distributional.lean)
-  and [corruption bounds](Complexity/Computability/Communication/Corruption.lean). Develop
+* **Randomized communication and information.** The `Ω(n)` bounded-error randomized disjointness
+  lower bound is [proved](Complexity/Computability/Communication/Disjointness.lean); Raz–Wigderson's
+  monotone depth bound is [proved](Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean)
+  for bipartite matching (general graphs remain). Develop
   information complexity and its reductions to streaming and sketching lower bounds.
 * **List decoding.** Extend [Sudan's Reed–Solomon list-decoding theorem](Complexity/Foundations/Data/Code/Sudan.lean)
   to Guruswami–Sudan list decoding. Keep interpolation, list-size/agreement guarantees and
   uniform decoding runtime as separate obligations.
-* **Hypercontractivity and formula lower bounds.** Extend the existing
+* **Hypercontractivity and formula lower bounds.** KKL, Talagrand's inequality and Friedgut's junta
+  theorem are [proved](Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean). Extend the existing
   [hypercontractivity results for p ≤ 2 ≤ q](Complexity/Foundations/BooleanAnalysis/Hypercontractivity.lean)
   and their Boolean-analysis applications. Continue formula lower bounds beyond the existing
   [Khrapchenko bound](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), following the
@@ -300,7 +304,7 @@ following endpoints, rather than submitted as class definitions or conditional w
 | --- | --- | --- |
 | Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Both ports follow source `c4cfa198`. | Port sparse-counter navigation, visit schedules and hitting-time bounds using the new charts. General input-time and batch results already exist. Affine controllers and hard-power counting are later milestones; these results do not close the whole M2b scope. |
 | NL = coNL | A streaming inductive-counting algorithm with soundness/completeness and logarithmic-size counters and state, reusing [InductiveCounting](Complexity/Foundations/Relation/InductiveCounting.lean). Its certificates must be checked without retaining a whole reachable set. | Compile the procedure to the native NTM model, certify every computation prefix's logspace bound, and prove complement closure. Explicitly handle configuration enumeration, input access and the existing potentially nonhalting-branch convention. Close the clocked/textbook-model bridge; general space-constructible Savitch bounds are separate. |
-| Arthur–Merlin | Native polynomial-time MA and AM verifier semantics, error reduction and the basic NP/BPP/MA/AM inclusions, with concrete protocols. | Prove AM containment in the second universal PH level; implement the set-size lower-bound protocol and derive GNI in AM. Existing private-coin GNI in IP does not provide the public-coin protocol. |
+| Arthur–Merlin | Done: verifier-based MA and AM, error reduction, NP ∪ BPP ⊆ MA ⊆ AM ⊆ Π₂ᵖ, MA ⊆ Σ₂ᵖ ∩ Π₂ᵖ and MA ⊆ SBP ([ArthurMerlin](Complexity/Computability/Complexity/Classes/ArthurMerlin.lean)). | Implement the set-size lower-bound protocol, derive SBP ⊆ AM and GNI in AM, and prove that coNP ⊆ AM collapses PH. Existing private-coin GNI in IP does not provide the public-coin protocol. Interactive-machine characterizations and AM[k] = AM remain separate. |
 | Worst-case-hardness derandomization | A quantitative worst-case-to-average-case reconstruction theorem, with explicit input-length and circuit-size losses and an efficiently evaluable amplified function. Select and justify a complete amplification route; the existing small-error line decoder is not a local list decoder. | Preserve membership in E, instantiate the existing average-case-hardness derandomization theorem and prove the worst-case-hardness implication P = BPP. Specify eventual versus infinitely-often hardness. The EXP-not-in-P/poly BFNW endpoint is a later milestone. |
 
 Do not mark the last three rows complete from an abstract algorithm, a class definition, or an
@@ -354,6 +358,9 @@ space bounds. Further class-level work needs resource certificates for the actua
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
   linear-overhead simulation and an `f log f` time hierarchy the corresponding simulation bound;
+* Reingold's theorem: the combinatorial core is [proved](Complexity/Algorithms/Reachability/Reingold.lean)
+  (reachability iff an O(log n) walk in the transformed graph); log-space evaluation of the
+  rotation map and USTCON ∈ L remain;
 * `NL = coNL`, building on logspace composition, `NL ⊆ P` and Savitch; `PH ⊆ PSPACE` is
   already proved by evaluating quantified predicates in
   [polynomial space](Complexity/Computability/Complexity/Classes/Inclusions.lean);
