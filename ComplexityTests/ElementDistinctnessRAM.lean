@@ -10,8 +10,8 @@ import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
 # Logarithmic-cost element-distinctness clients
 
 The compiled target program is exercised on the empty list, the smallest nonempty instance,
-a distinct list and a duplicate list. The declared theorem concerns the supplied padded input;
-these clients do not assert that preparation has been charged.
+a distinct list and a duplicate list, both with the supplied padded workspace and with the
+fixed five-word scratch prefix followed by charged preparation.
 -/
 
 namespace ComplexityTests.ElementDistinctnessRAM
@@ -26,6 +26,14 @@ private def result (input : List ℕ) : ℕ × Bool :=
 #guard_msgs in
 #eval [result [], result [0], result [0, 1], result [1, 1]]
 
+private def preparedResult (input : List ℕ) : ℕ × Bool :=
+  let s := RAM.run ramProgram 350 (RAM.State.init (RAM.Input.encode 5 input))
+  (s.regs.output, decide (s.isHalted ramProgram))
+
+/-- info: [(1, true), (1, true), (1, true), (0, true)] -/
+#guard_msgs in
+#eval [preparedResult [], preparedResult [0], preparedResult [0, 1], preparedResult [1, 1]]
+
 /-- The empty-list time bound is non-vacuous and includes the target's explicit halt path. -/
 example : RAM.HaltsWithResultInTime RAM.logCost paddedRamProgram (ToRAM.paddedInput 12 [])
     1 2448 := by
@@ -37,11 +45,27 @@ example : RAM.HaltsWithResultInTime RAM.logCost paddedRamProgram (ToRAM.paddedIn
   simpa [show Nat.log 2 3 = 1 by decide] using
     haltsWithResultInTime_nodup_padded ⟨[1, 1], by simp⟩
 
+/-- The end-to-end theorem includes preparation even for the empty list. -/
+example : RAM.HaltsWithResultInTime RAM.logCost ramProgram (RAM.Input.encode 5 []) 1 2735 := by
+  simpa using haltsWithResultInTime_nodup ⟨[], by simp⟩
+
+/-- The duplicate case uses the same fixed program with the smaller external scratch prefix. -/
+example : RAM.HaltsWithResultInTime RAM.logCost ramProgram (RAM.Input.encode 5 [1, 1])
+    0 (2735 * 3 * 2) := by
+  simpa [show Nat.log 2 3 = 1 by decide] using haltsWithResultInTime_nodup ⟨[1, 1], by simp⟩
+
 /--
 info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded'
 depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded
+
+/--
+info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup
 
 end ComplexityTests.ElementDistinctnessRAM
