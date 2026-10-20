@@ -150,17 +150,12 @@ section IsoClosed
 
 variable {M N : Type*} [sizedGraph.Structure M] [sizedGraph.Structure N]
 
-private theorem relMap_adj_iff (e : M ≃[sizedGraph] N) (x y : M) :
-    RelMap sizedGraph.adj ![e x, e y] ↔ RelMap sizedGraph.adj ![x, y] := by
-  rw [← e.map_rel]
-  exact iff_of_eq (congrArg _ (funext fun i => by fin_cases i <;> rfl))
-
 private theorem ncard_size_eq (e : M ≃[sizedGraph] N) :
     {y : N | RelMap sizedGraph.size ![y]}.ncard = {x : M | RelMap sizedGraph.size ![x]}.ncard := by
   rw [← Nat.card_coe_set_eq, ← Nat.card_coe_set_eq]
   refine (Nat.card_congr (e.toEquiv.subtypeEquiv fun x => ?_)).symm
-  rw [Set.mem_ofPred_eq, Set.mem_ofPred_eq, ← e.map_rel]
-  exact iff_of_eq (congrArg _ (funext fun i => by fin_cases i; rfl))
+  rw [Set.mem_ofPred_eq, Set.mem_ofPred_eq]
+  exact (relMap_single_equiv e _ x).symm
 
 private theorem ncard_image (e : M ≃[sizedGraph] N) (s : Set M) : (e '' s).ncard = s.ncard :=
   Set.ncard_image_of_injective s e.injective
@@ -171,7 +166,7 @@ theorem isoClosed_IndependentSet : IsoClosed IndependentSet.{w} :=
   IsoClosed.of_forall_imp fun _ _ _ e ⟨s, hs, hind⟩ =>
     ⟨e '' s, by rw [ncard_image, hs, ncard_size_eq e],
     e.injective.injOn.pairwise_image.2 fun x hx y hy hxy => by
-      simpa [Function.onFun, relMap_adj_iff] using hind hx hy hxy⟩
+      simpa [Function.onFun, relMap_pair_equiv] using hind hx hy hxy⟩
 
 /-- Clique is closed under isomorphism. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
@@ -179,7 +174,7 @@ theorem isoClosed_Clique : IsoClosed Clique.{w} :=
   IsoClosed.of_forall_imp fun _ _ _ e ⟨s, hs, hcl⟩ =>
     ⟨e '' s, by rw [ncard_image, hs, ncard_size_eq e],
     e.injective.injOn.pairwise_image.2 fun x hx y hy hxy => by
-      simpa [Function.onFun, relMap_adj_iff] using hcl hx hy hxy⟩
+      simpa [Function.onFun, relMap_pair_equiv] using hcl hx hy hxy⟩
 
 /-- Vertex cover is closed under isomorphism. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
@@ -188,7 +183,7 @@ theorem isoClosed_VertexCover : IsoClosed VertexCover.{w} := by
     ⟨e '' s, by rw [ncard_image, hs, ncard_size_eq e], fun x y hxy hadj => ?_⟩
   obtain ⟨a, rfl⟩ := e.surjective x
   obtain ⟨b, rfl⟩ := e.surjective y
-  rw [relMap_adj_iff] at hadj
+  rw [relMap_pair_equiv] at hadj
   exact (hcov a b (ne_of_apply_ne e hxy) hadj).imp (Set.mem_image_of_mem e)
     (Set.mem_image_of_mem e)
 

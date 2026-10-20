@@ -105,6 +105,12 @@ def Definable (K : Set (Bundled.{w} L.Structure)) : Prop :=
 
 namespace Definable
 
+/-- The class of empty structures is first-order definable, by `∀ x, ⊥`. -/
+theorem isEmpty :
+    Definable {M : Bundled.{w} L.Structure | IsEmpty M} :=
+  ⟨∀' ⊥, fun _ _ => ⟨fun h x => h.false x, fun h => ⟨fun x => h x⟩⟩⟩
+
+
 variable {K K₁ K₂ : Set (Bundled.{w} L.Structure)}
 
 /-- A first-order definable class is closed under isomorphism. -/
