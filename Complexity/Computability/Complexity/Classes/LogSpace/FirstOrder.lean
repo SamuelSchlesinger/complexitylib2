@@ -18,7 +18,10 @@ For every finite relational vocabulary and every first-order sentence `φ`, the 
 the finite structures satisfying `φ`, with malformed inputs rejected, form a problem in `L`
 (`Cslib.Logic.Vocabulary.queryLanguage_mem_L`); so does the query language of every first-order
 definable class of finite structures (`Cslib.Logic.FO.Definable.queryLanguage_mem_L`)
-[Immerman, Theorem 3.1][Immerman1999].
+[Immerman, Theorem 3.1][Immerman1999]. The sentences are those of Mathlib's first-order logic over
+the relational language: atomic formulas are equalities and relation symbols applied to
+variables. Immerman's logic `FO` also has constants and the built-in numeric predicates `≤` and
+`BIT`; those are not covered here.
 
 The decider is a counter program (`Turing.CounterProgram`) with random access to the encoded input
 (`Cslib.Logic.Vocabulary.modelChecker`). It first checks the shape of the input
@@ -780,7 +783,8 @@ def modelChecker (φ : L.Sentence) : CounterProgram where
 /-- **First-order model checking is in logarithmic space**: for a finite relational vocabulary `v`
 and a first-order sentence `φ`, the inputs encoding the finite structures that satisfy `φ` form
 a problem in `L` [Immerman, Theorem 3.1][Immerman1999]. Malformed inputs are not in the problem;
-the empty structure is included. -/
+the empty structure is included. The sentence uses the relation symbols of the vocabulary and
+equality, without Immerman's built-in order and `BIT`. -/
 theorem queryLanguage_mem_L (φ : L.Sentence) :
     v.queryLanguage {M | M ⊨ φ} ∈ Complexity.L encStructure := by
   classical
