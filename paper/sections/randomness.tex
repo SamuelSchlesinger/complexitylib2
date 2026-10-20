@@ -275,14 +275,52 @@ also give one input-independent bound on local occurrence-list lengths.
 
 This is a combinatorial prerequisite for the classical counting-machine
 characterizations.\citep{Valiant1979,FennerFortnowKurtz1994}
-The certificates here contain natural-number indices. A certified polynomial-time
-binary checker, the reverse verifier-to-machine construction and the resulting
-$\#\cc{P}$ and $\cc{GapP}$ characterizations remain open.
+The certificates here contain natural-number indices. The binary implementation
+and forward class-membership results are recorded next; the reverse
+verifier-to-machine construction and full characterizations remain open.
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting.lean}{187}{Turing.MultiTapeCTM.mem_branches_iff}
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean}{184}{Turing.MultiTapeCTM.padCertificate_bijOn}
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean}{236}{Turing.MultiTapeCTM.certificateCounts_eq}
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting.lean}{233}{Turing.MultiTapeCTM.HaltsWithin.branches_eq}
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting.lean}{308}{Turing.MultiTapeCTM.exists_branchBound}
+\end{result}
+
+\begin{result}
+\subsection{Certified binary replay and forward counting-machine membership}
+Fix a shared-core list-choice machine $M$ with finitely many states, a fixed
+number of work tapes and Boolean alphabet. For any injective input encoding
+$\mathrm{enc}:A\hookrightarrow\{0,1\}^*$ and polynomial $p\in\mathbb N[X]$, let
+$A_p(a)$ and $R_p(a)$ count its accepting and rejecting occurrence-labelled
+branches that halt within $p(|\mathrm{enc}(a)|)$ native transitions from the
+initialized configuration. Then
+\[
+ A_p,R_p\in\#\cc{P},\qquad A_p-R_p\in\cc{GapP},
+\]
+with respect to $\mathrm{enc}$ and with the difference taken in $\mathbb Z$.
+These are the forward implications of the classical machine
+characterizations.\citep{Valiant1979,FennerFortnowKurtz1994}
+
+Choose a fixed positive block width $b$ with every transition-occurrence list
+of length at most $2^b$. The actual binary replay checker uses exactly $bT$
+witness bits for clock $T$. Its two verdict classifiers count exactly the
+accepting and rejecting terminal branches, respectively. The fixed-width code
+and canonical zero padding preserve multiplicities, including equal-effect
+choices and early halting. Out-of-range codes, nonzero padding after halting,
+unfinished replay and leftover partial blocks fail both classifiers.
+
+The checker is certified in polynomial time on every encoded input/certificate
+pair, using the existing finite native storage and loop calculus. The machine,
+its finite dispatch table and $b$ are fixed before the input; no runtime bound
+uniform in an input machine description is claimed. The counts include only
+branches halted by the chosen clock. The separate all-branches
+\texttt{HaltsWithin} condition rules out stuck branches and gives full
+termination and clock stability. The reverse parsimonious verifier-to-machine
+construction and the full bidirectional characterizations remain open.
+\declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Checker.lean}{380}{Turing.MultiTapeCTM.Checker.computableTidilyInPolyTime_checkBinary}
+\declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Complexity/Classes/SharpP/Machine.lean}{56}{Turing.MultiTapeCTM.Checker.acceptCount_checkBinary}
+\declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Complexity/Classes/SharpP/Machine.lean}{126}{Turing.MultiTapeCTM.acceptCount_mem_SharpP}
+\declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Complexity/Classes/SharpP/Machine.lean}{134}{Turing.MultiTapeCTM.rejectCount_mem_SharpP}
+\declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Complexity/Classes/SharpP/Machine.lean}{142}{Turing.MultiTapeCTM.gapCount_mem_GapP}
 \end{result}
 
 \begin{result}
