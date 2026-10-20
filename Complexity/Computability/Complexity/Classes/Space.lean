@@ -124,9 +124,11 @@ abbrev PSPACEHard {β : Type*} (encB : β ↪ List Bool) (B : Set β) : Prop :=
 abbrev PSPACEComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop :=
   PolyTimeComplete @PSPACE encB B
 
+/-- Hardness for the class `PSPACE` is `PSPACEHard`. -/
 theorem polyTimeHard_PSPACE_iff {β : Type*} {encB : β ↪ List Bool} {B : Set β} :
     PolyTimeHard @PSPACE encB B ↔ PSPACEHard encB B := Iff.rfl
 
+/-- Completeness for the class `PSPACE` is `PSPACEComplete`. -/
 theorem polyTimeComplete_PSPACE_iff {β : Type} {encB : β ↪ List Bool} {B : Set β} :
     PolyTimeComplete @PSPACE encB B ↔ PSPACEComplete encB B := Iff.rfl
 

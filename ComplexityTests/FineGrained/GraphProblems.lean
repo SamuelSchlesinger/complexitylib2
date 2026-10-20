@@ -12,8 +12,11 @@ import Complexity.Computability.Complexity.FineGrained.GraphProblems
 The reduction with variable edges on concrete formulas: its target and size against the linear
 bound, its edges against those of Karp's reduction on a formula with many complementary
 occurrences, and its correctness on satisfiable and unsatisfiable formulas, including a formula
-with no clauses and one with an empty clause; the size of the 3-coloring reduction; the
-non-vacuity of the subexponential time predicate; the lower bound for the number of distinct
+with no clauses and one with an empty clause; the sparse diamond reduction: its size against
+Sipser's construction on a formula with many occurrences of one variable, and its correctness for
+directed paths, directed cycles and undirected cycles on satisfiable and unsatisfiable formulas,
+including the formula with no clauses and the empty clause; the size of the 3-coloring reduction;
+the non-vacuity of the subexponential time predicate; the lower bound for the number of distinct
 vertices of a clique instance, by changing the measure; and the axioms of the headline theorems.
 -/
 
@@ -79,6 +82,13 @@ example : (SAT.sparseDiamondGraph φ₁).1.length + (SAT.sparseDiamondGraph φ�
 
 example : SAT.toSparseDirHamPath φ₁ ∈ DirHamPath :=
   (SAT.toSparseDirHamPath_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
+
+example : SAT.toSparseDirHamPath φ₂ ∉ DirHamPath := fun h => by
+  obtain ⟨σ, hσ⟩ := (SAT.toSparseDirHamPath_mem_iff φ₂).1 h
+  cases h : σ 0 <;> simp [φ₂, CNF.eval, Clause.eval, Literal.eval, h] at hσ
+
+example : SAT.toSparseDirHamCycle φ₁ ∈ DirHamCycle :=
+  (SAT.toSparseDirHamCycle_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
 
 example : SAT.toSparseHamCycle φ₁ ∈ HamCycle :=
   (SAT.toSparseHamCycle_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
@@ -212,6 +222,31 @@ info: 'Cslib.Complexity.Diamond.mem_DirHamPath_iff' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.Diamond.mem_DirHamPath_iff
+
+/-- info: 'Cslib.Complexity.SAT.toDirHamPath_eq' does not depend on any axioms -/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.toDirHamPath_eq
+
+/--
+info: 'Cslib.Complexity.SAT.toSparseDirHamPath_mem_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.toSparseDirHamPath_mem_iff
+
+/--
+info: 'Cslib.Complexity.SAT.toSparseDirHamCycle_mem_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.toSparseDirHamCycle_mem_iff
+
+/--
+info: 'Cslib.Complexity.SAT.length_sparseDiamondGraph_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.SAT.length_sparseDiamondGraph_le
 
 /--
 info: 'Cslib.Complexity.SAT.toSparseHamCycle_mem_iff' depends on axioms:

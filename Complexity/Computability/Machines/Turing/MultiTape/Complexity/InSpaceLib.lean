@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -24,6 +24,11 @@ Combinators keep a computation within a fixed space budget.
 * `Turing.MultiTapeTM.ComputableTidilyInSpace.natMul`: multiplication.
 * `Turing.MultiTapeTM.ComputableTidilyInSpace.getD`: the element of a list at an index.
 * `Turing.MultiTapeTM.ComputableTidilyInSpace.set`: replacing the element at an index.
+* `Turing.MultiTapeTM.ComputableTidilyInSpace.budget_natAdd`,
+  `Turing.MultiTapeTM.ComputableTidilyInSpace.budget_cons` and their siblings: arithmetic and list
+  operations on values computed within a fixed budget stay within it.
+* `Turing.MultiTapeTM.ComputableTidilyInSpace.dispatch`: a case distinction on the element of a
+  fixed list at a computed index.
 -/
 
 @[expose] public section
@@ -124,6 +129,25 @@ theorem natAdd :
     ComputableTidilyInSpace (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat
       fun p => (encPair encNat encNat p).length + 1 :=
   of_inO ComputableTidilyInO.natAdd
+
+/-- **Dispatching on the element of a fixed list at a computed index**: if `F x` is computed in
+linear space for every `x`, and the index is computed in linear space, then so is
+`F (l.getD (i a) d) a`. A finite case distinction, as on the instruction at the current label of
+a program. -/
+theorem dispatch {κ : Type*} (l : List κ) (d : κ) (F : κ → α → β)
+    (hF : ∀ x, ComputableTidilyInSpace (F x) encIn encB fun a => (encIn a).length) {i : α → ℕ}
+    (hi : ComputableTidilyInSpace i encIn encNat fun a => (encIn a).length) :
+    ComputableTidilyInSpace (fun a => F (l.getD (i a) d) a) encIn encB
+      fun a => (encIn a).length := by
+  induction l generalizing i with
+  | nil => simpa using hF d
+  | cons x l ih =>
+    have hz : ComputableTidilyInSpace (fun a => decide (i a = 0)) encIn encBool
+        fun a => (encIn a).length := budget_comp_lin natIsZero (.refl _) hi
+    have hpred : ComputableTidilyInSpace (fun a => i a - 1) encIn encNat
+        fun a => (encIn a).length := budget_comp_lin natPred linear_succ hi
+    refine (budget_ite hz (hF x) (ih hpred)).of_enc_eq fun a => ?_
+    rcases i a with _ | c <;> simp
 
 /-- A step of division: subtract the divisor from the remainder and count, while it fits. -/
 def divStep (s : ℕ × ℕ × ℕ) : ℕ × ℕ × ℕ :=
@@ -504,6 +528,85 @@ theorem mapWith {π κ : Type} {encP : π ↪ List Bool} {encK : κ ↪ List Boo
   ⟨_, ComputableTidilyInO.mapWith hf hpar hlist⟩
 
 end Generic
+
+/-! ### Operations within a fixed budget -/
+
+section BudgetOps
+
+variable {ε : Type} {enc : ε ↪ List Bool}
+
+/-- Adding an element in front of a list, within the budget. -/
+theorem budget_cons {a : α → ε} {l : α → List ε} (ha : ComputableTidilyInSpace a encIn enc Bs)
+    (hl : ComputableTidilyInSpace l encIn (encList enc) Bs) :
+    ComputableTidilyInSpace (fun x => a x :: l x) encIn (encList enc) Bs :=
+  budget_comp_linear (of_inO (ComputableTidilyInDegree.cons enc).inO_one) (budget_prod ha hl)
+
+/-- The head of a list, within the budget. -/
+theorem budget_headD (d : ε) {l : α → List ε}
+    (hl : ComputableTidilyInSpace l encIn (encList enc) Bs) :
+    ComputableTidilyInSpace (fun x => (l x).headD d) encIn enc Bs :=
+  budget_comp_linear (of_inO (.of_linear (ListEncoding.headD (enc := encList enc) d))) hl
+
+/-- The tail of a list, within the budget. -/
+theorem budget_tail {l : α → List ε} (hl : ComputableTidilyInSpace l encIn (encList enc) Bs) :
+    ComputableTidilyInSpace (fun x => (l x).tail) encIn (encList enc) Bs :=
+  budget_comp_linear (of_inO (.of_linear (ListEncoding.tail (enc₁ := enc)))) hl
+
+/-- Whether a list is empty, within the budget. -/
+theorem budget_isEmpty {l : α → List ε} (hl : ComputableTidilyInSpace l encIn (encList enc) Bs) :
+    ComputableTidilyInSpace (fun x => (l x).isEmpty) encIn encBool Bs :=
+  budget_comp_linear (of_inO (.of_linear (ListEncoding.isEmpty (enc₁ := enc)))) hl
+
+/-- The length of a list, within the budget. -/
+theorem budget_length {l : α → List ε} (hl : ComputableTidilyInSpace l encIn (encList enc) Bs) :
+    ComputableTidilyInSpace (fun x => (l x).length) encIn encNat Bs :=
+  budget_comp_lin length (linear_mul 8) hl
+
+end BudgetOps
+
+/-- The successor, within the budget. -/
+theorem budget_natSucc {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x + 1) encIn encNat Bs :=
+  budget_comp_lin natSucc linear_succ ha
+
+/-- The predecessor, within the budget. -/
+theorem budget_natPred {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x - 1) encIn encNat Bs :=
+  budget_comp_lin natPred linear_succ ha
+
+/-- The zero test, within the budget. -/
+theorem budget_natIsZero {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => decide (a x = 0)) encIn encBool Bs :=
+  budget_comp_lin natIsZero (.refl _) ha
+
+/-- Equality of numbers, within the budget. -/
+theorem budget_natEq {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => decide (a x = b x)) encIn encBool Bs :=
+  budget_comp_lin natEq (.refl _) (budget_prod ha hb)
+
+/-- The sum, within the budget. -/
+theorem budget_natAdd {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x + b x) encIn encNat Bs :=
+  budget_comp_lin natAdd linear_succ (budget_prod ha hb)
+
+/-- The product, within the budget. -/
+theorem budget_natMul {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x * b x) encIn encNat Bs :=
+  budget_comp_lin natMul (linear_mul 32) (budget_prod ha hb)
+
+/-- The quotient, within the budget. -/
+theorem budget_natDiv {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x / b x) encIn encNat Bs :=
+  budget_comp_lin natDiv (linear_mul 16) (budget_prod ha hb)
+
+/-- `some` of a number, within the budget. -/
+theorem budget_optionSome {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => some (a x)) encIn (encOption encNat) Bs :=
+  budget_comp_linear (of_inO (ComputableTidilyInDegree.optionSome (enc₁ := encNat)).inO_one) ha
 
 end ComputableTidilyInSpace
 

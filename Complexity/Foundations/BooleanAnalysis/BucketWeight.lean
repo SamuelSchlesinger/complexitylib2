@@ -12,8 +12,9 @@ public import Complexity.Foundations.BooleanAnalysis.FourierRestriction
 /-!
 # Fourier weight on the sets with a given part in a set of coordinates
 
-For a set `J` of coordinates and a set `S`, the *bucket weight* `W^{S | J} [F]` is the Fourier
-weight of `F` on the sets `U` with `U ∩ J = S` (`BitString.bucketWeight`)
+For a set `J` of coordinates and a set `S`, the *bucket weight* of `S` in `J` is the Fourier weight
+of `F` on the sets `U` with `U ∩ J = S` (`BitString.bucketWeight`). O'Donnell writes it
+`W^{S | J̄} [F] = ∑_{T ⊆ J̄} F̂(S ∪ T)²` for `S ⊆ J`, where `J̄` is the complement of `J`
 [O'Donnell, Definition 3.39][ODonnell2014]. The buckets of a fixed `J` partition the sets of
 coordinates, so the bucket weights of distinct sets `S` add up to at most the total weight
 (`BitString.sum_bucketWeight_le`), and the bucket of `U ∩ J` holds at least the weight of `U`
@@ -24,12 +25,10 @@ The bucket weight is the expected squared coefficient of the restriction of `F` 
 coordinates outside `J` at random (`BitString.expect_fourierCoeff_piecewise_sq`), hence the
 expectation of `F (x, z) χ_S(x) F (y, z) χ_S(y)` for independent uniform `x`, `y`, `z`, where
 `(x, z)` takes the coordinates in `J` from `x` and the others from `z`
-(`BitString.expect_bucketWeight_sample`) [O'Donnell, Proposition 3.40][ODonnell2014]. With query
+(`BitString.bucketWeight_eq_expect_sample`) [O'Donnell, Proposition 3.40][ODonnell2014]. With query
 access to a Boolean function this lets one estimate any bucket weight by sampling: the basis of
 the Goldreich–Levin and Kushilevitz–Mansour algorithms [GoldreichLevin1989]
-[KushilevitzMansour1993]. Since a coefficient of a Boolean function, read as signs, has absolute
-value at most one, its spectral norm `∑_S |f̂(S)|` is at least its total weight, which is one
-(`BitString.one_le_sum_abs_fourierCoeff_signVal`).
+[KushilevitzMansour1993].
 
 ## Main definitions
 
@@ -39,9 +38,7 @@ value at most one, its spectral norm `∑_S |f̂(S)|` is at least its total weig
 
 * `Cslib.BitString.sum_bucketWeight_le`: the buckets of `J` partition the Fourier weight.
 * `Cslib.BitString.sq_fourierCoeff_le_bucketWeight`: a bucket holds the weight of its sets.
-* `Cslib.BitString.expect_bucketWeight_sample`: the bucket weight as an expectation of samples.
-* `Cslib.BitString.one_le_sum_abs_fourierCoeff_signVal`: a Boolean function has spectral norm at
-  least one.
+* `Cslib.BitString.bucketWeight_eq_expect_sample`: the bucket weight as an expectation of samples.
 
 ## References
 
@@ -60,8 +57,8 @@ open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-- The *bucket weight* `W^{S | J} [F]`: the Fourier weight of `F` on the sets `U` of coordinates
-with `U ∩ J = S`. -/
+/-- The *bucket weight* of `S` in `J`: the Fourier weight of `F` on the sets `U` of coordinates
+with `U ∩ J = S`, written `W^{S | J̄} [F]` by O'Donnell, where `J̄` is the complement of `J`. -/
 noncomputable def bucketWeight (F : (ι → Bool) → ℝ) (J S : Finset ι) : ℝ :=
   ∑ U with U ∩ J = S, fourierCoeff F U ^ 2
 
@@ -99,32 +96,23 @@ theorem bucketWeight_eq_expect (F : (ι → Bool) → ℝ) (J S : Finset ι) :
     bucketWeight F J S = 𝔼 z, fourierCoeff (fun x => F (J.piecewise x z)) S ^ 2 :=
   (expect_fourierCoeff_piecewise_sq F J S).symm
 
-/-- **Estimating a bucket weight by sampling** [O'Donnell, Proposition 3.40][ODonnell2014]: for
-independent uniform `x`, `y`, `z`, the expectation of `F (x, z) χ_S(x) F (y, z) χ_S(y)` is the
-bucket weight `W^{S | J} [F]`, where `(x, z)` takes the coordinates in `J` from `x` and the others
+/-- **Estimating a bucket weight by sampling** [O'Donnell, Proposition 3.40][ODonnell2014]: the
+bucket weight of `S` in `J` is the expectation of `F (x, z) χ_S(x) F (y, z) χ_S(y)` for independent
+uniform `x`, `y`, `z`, where `(x, z)` takes the coordinates in `J` from `x` and the others
 from `z`. -/
+theorem bucketWeight_eq_expect_sample (F : (ι → Bool) → ℝ) (J S : Finset ι) :
+    bucketWeight F J S = 𝔼 p : (ι → Bool) × (ι → Bool) × (ι → Bool),
+      F (J.piecewise p.1 p.2.2) * chi ℝ S p.1 * (F (J.piecewise p.2.1 p.2.2) * chi ℝ S p.2.1) := by
+  rw [bucketWeight_eq_expect, ← univ_product_univ, expect_product]
+  simp only [← univ_product_univ, expect_product, fourierCoeff, sq, expect_mul_expect]
+  conv_rhs => enter [2, x]; rw [expect_comm]
+  conv_rhs => rw [expect_comm]
+
+@[deprecated bucketWeight_eq_expect_sample +typeChanged (since := "2026-10-19")]
 theorem expect_bucketWeight_sample (F : (ι → Bool) → ℝ) (J S : Finset ι) :
     𝔼 p : (ι → Bool) × (ι → Bool) × (ι → Bool),
       F (J.piecewise p.1 p.2.2) * chi ℝ S p.1 * (F (J.piecewise p.2.1 p.2.2) * chi ℝ S p.2.1) =
-        bucketWeight F J S := by
-  rw [bucketWeight_eq_expect, ← univ_product_univ, expect_product]
-  simp only [← univ_product_univ, expect_product, fourierCoeff, sq, expect_mul_expect]
-  conv_lhs => enter [2, x]; rw [expect_comm]
-  conv_lhs => rw [expect_comm]
-
-/-- A Boolean function, read as signs, has spectral norm at least one. -/
-theorem one_le_sum_abs_fourierCoeff_signVal (f : (ι → Bool) → Bool) :
-    1 ≤ ∑ S, |fourierCoeff (fun x => signVal (f x)) S| := by
-  rw [← sum_fourierCoeff_sq_signVal f]
-  refine sum_le_sum fun S _ => ?_
-  have h1 : fourierCoeff (fun x => signVal (f x)) S ^ 2 ≤ 1 := by
-    rw [← sum_fourierCoeff_sq_signVal f]
-    exact single_le_sum (f := fun S => fourierCoeff (fun x => signVal (f x)) S ^ 2)
-      (fun _ _ => sq_nonneg _) (mem_univ S)
-  have h2 : |fourierCoeff (fun x => signVal (f x)) S| ≤ 1 := by
-    rw [← sq_le_one_iff_abs_le_one]
-    exact h1
-  rw [← sq_abs, sq]
-  exact mul_le_of_le_one_left (abs_nonneg _) h2
+        bucketWeight F J S :=
+  (bucketWeight_eq_expect_sample F J S).symm
 
 end Cslib.BitString

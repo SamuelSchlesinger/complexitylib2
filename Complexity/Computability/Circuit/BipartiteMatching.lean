@@ -11,6 +11,8 @@ public import Cslib.Foundations.Data.BitString
 public import Mathlib.GroupTheory.Perm.Basic
 public import Mathlib.Data.Fintype.Perm
 public import Mathlib.Logic.Equiv.Fin.Basic
+public import Mathlib.Data.Finset.Union
+import Mathlib.Combinatorics.Hall.Finite
 
 /-!
 # Bipartite perfect matching
@@ -27,7 +29,10 @@ possible edges says whether the graph has a perfect matching. It is monotone
 Relabelling the left and the right vertices along bijections preserves perfect matchings
 (`BipartiteMatching.hasPerfectMatching_comp_iff`). A graph has no perfect matching when a set of
 left vertices has fewer neighbours (`BipartiteMatching.not_hasPerfectMatching_of_card_lt`), the easy
-direction of Hall's theorem.
+direction of Hall's theorem; Hall's theorem itself, from Mathlib's
+`Finset.all_card_le_biUnion_card_iff_existsInjective'`, says that a perfect matching exists exactly
+when every set of left vertices has at least as many neighbours
+(`BipartiteMatching.hasPerfectMatching_iff_forall_card_le`).
 
 ## Main definitions
 
@@ -40,6 +45,13 @@ direction of Hall's theorem.
 
 * `Cslib.Circuits.monotone_bipartitePerfectMatching`: the function is monotone.
 * `Cslib.Circuits.BipartiteMatching.hasPerfectMatching_comp_iff`: relabelling vertices.
+* `Cslib.Circuits.BipartiteMatching.hasPerfectMatching_iff_forall_card_le`: Hall's theorem.
+
+## References
+
+* [R. Raz and A. Wigderson, *Monotone circuits for matching require linear
+  depth*][RazWigderson1992]
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
 -/
 
 @[expose] public section
@@ -80,6 +92,19 @@ theorem not_hasPerfectMatching_of_card_lt {G : V × V → Bool} {S T : Finset V}
   exact absurd (Finset.card_le_card_of_injOn σ (fun v hv => hST v hv _ (hσ v))
     σ.injective.injOn) (not_le.mpr hcard)
 
+/-- **Hall's theorem** for bipartite graphs on `V × V`: a perfect matching exists exactly when
+every set of left vertices has at least as many neighbours. -/
+theorem hasPerfectMatching_iff_forall_card_le [Fintype V] [DecidableEq V] (G : V × V → Bool) :
+    HasPerfectMatching G ↔ ∀ S : Finset V,
+      S.card ≤ (S.biUnion fun v => Finset.univ.filter fun w => G (v, w) = true).card := by
+  rw [Finset.all_card_le_biUnion_card_iff_existsInjective']
+  constructor
+  · rintro ⟨σ, hσ⟩
+    exact ⟨σ, σ.injective, fun v => Finset.mem_filter.mpr ⟨Finset.mem_univ _, hσ v⟩⟩
+  · rintro ⟨f, hf, hfG⟩
+    exact ⟨Equiv.ofBijective f (Finite.injective_iff_bijective.mp hf),
+      fun v => (Finset.mem_filter.mp (hfG v)).2⟩
+
 /-- Adding edges keeps a perfect matching. -/
 theorem HasPerfectMatching.mono {G H : V × V → Bool} (hG : HasPerfectMatching G) (h : G ≤ H) :
     HasPerfectMatching H := by
@@ -105,6 +130,7 @@ def bipartitePerfectMatching (n : ℕ) : BooleanFunction (n * n) :=
 
 variable {n : ℕ}
 
+/-- The bipartite perfect matching function is true exactly on graphs with a perfect matching. -/
 theorem bipartitePerfectMatching_eq_true_iff {x : BitString (n * n)} :
     bipartitePerfectMatching n x = true ↔ HasPerfectMatching (graph x) :=
   decide_eq_true_iff

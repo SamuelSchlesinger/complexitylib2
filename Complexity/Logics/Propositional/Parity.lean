@@ -53,12 +53,6 @@ open Finset Function
 
 variable {n : ℕ}
 
-/-- Flipping a variable that a term does not mention does not change its value. -/
-theorem Term.eval_update_of_forall_ne {V : Type*} [DecidableEq V] {t : Term V} {i : V}
-    (hi : ∀ l ∈ t, l.1 ≠ i) (x : V → Bool) (b : Bool) : t.eval (update x i b) = t.eval x := by
-  rw [Bool.eq_iff_iff, Term.eval_eq_true_iff, Term.eval_eq_true_iff]
-  exact forall₂_congr fun l hl => by rw [update_of_ne (hi l hl)]
-
 /-- **A formula in disjunctive normal form has a term per isolated true input** of the function it
 computes. -/
 theorem DNF.card_isolatedInputs_le_length {g : BitString n → Bool} {D : DNF (Fin n)}

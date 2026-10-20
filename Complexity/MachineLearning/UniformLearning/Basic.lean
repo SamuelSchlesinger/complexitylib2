@@ -54,6 +54,8 @@ bound the number of examples, not the running time of the learner.
 * `Cslib.MachineLearning.UniformLearning.uniformExamples_eq_pi`: the examples are independent.
 * `Cslib.MachineLearning.UniformLearning.learns_iff`: learning in terms of uniform samples of
   points.
+* `Cslib.MachineLearning.UniformLearning.mem_uniformRealizable_iff`: the uniform realizable family
+  as pushforwards along the graphs of concepts.
 * `Cslib.MachineLearning.UniformLearning.Learns.isPACLearnerFor`: learning under the uniform
   distribution is PAC learning over the uniform realizable family.
 
@@ -116,7 +118,7 @@ theorem uniformError_le_one (f h : (ι → Bool) → Bool) : uniformError f h �
   exact_mod_cast this
 
 /-- The error is the probability that a uniform point is misclassified. -/
-theorem toOuterMeasure_uniformOfFintype_ne (f h : (ι → Bool) → Bool) :
+private theorem toOuterMeasure_uniformOfFintype_ne (f h : (ι → Bool) → Bool) :
     (PMF.uniformOfFintype (ι → Bool)).toOuterMeasure {x | h x ≠ f x} =
       ENNReal.ofReal (uniformError f h) := by
   rw [← ENNReal.ofReal_toReal (PMF.toOuterMeasure_ne_top _ _), PMF.toOuterMeasure_apply_toReal]
@@ -159,13 +161,25 @@ noncomputable def uniformRealizable (C : ConceptClass (ι → Bool) Bool) :
     Set (Measure ((ι → Bool) × Bool)) :=
   {D | ∃ f ∈ C, D = ((PMF.uniformOfFintype (ι → Bool)).map fun x => (x, f x)).toMeasure}
 
+/-- The uniform realizable family consists of the pushforwards of the uniform distribution along
+the graphs `x ↦ (x, c x)` of the concepts `c ∈ C`: the realizable distributions of
+`PACLearning` with the uniform distribution on points. -/
+theorem mem_uniformRealizable_iff {C : ConceptClass (ι → Bool) Bool}
+    {D : Measure ((ι → Bool) × Bool)} :
+    D ∈ uniformRealizable C ↔
+      ∃ c ∈ C, D = (PMF.uniformOfFintype (ι → Bool)).toMeasure.map fun x => (x, c x) := by
+  refine exists_congr fun c => and_congr_right fun _ => ?_
+  rw [PMF.toMeasure_map (hf := measurable_of_countable fun x : ι → Bool => (x, c x))]
+
 /-- Under the uniform distribution labelled by `f`, the error of `h` is its uniform error. -/
-theorem error_uniform_map (f h : (ι → Bool) → Bool) :
+theorem error_map_eq_ofReal_uniformError (f h : (ι → Bool) → Bool) :
     error ((PMF.uniformOfFintype (ι → Bool)).map fun x => (x, f x)).toMeasure h =
       ENNReal.ofReal (uniformError f h) := by
   rw [error, PMF.toMeasure_apply_eq_toOuterMeasure_apply _ ((Set.to_countable _).measurableSet),
     PMF.toOuterMeasure_map_apply]
   exact toOuterMeasure_uniformOfFintype_ne f h
+
+@[deprecated (since := "2026-10-19")] alias error_uniform_map := error_map_eq_ofReal_uniformError
 
 /-- **Learning under the uniform distribution is PAC learning** over the uniform realizable
 family: a learner that learns `C` from `m` uniform random examples with error `ε` and confidence
@@ -177,7 +191,7 @@ theorem Learns.isPACLearnerFor {A : Learner (ι → Bool) Bool m}
   obtain ⟨f, hf, rfl⟩ := hD
   set q := (PMF.uniformOfFintype (ι → Bool)).map fun x => (x, f x)
   have herr (h : (ι → Bool) → Bool) : error q.toMeasure h = ENNReal.ofReal (uniformError f h) :=
-    error_uniform_map f h
+    error_map_eq_ofReal_uniformError f h
   have hopt : optimalError q.toMeasure C = 0 :=
     le_antisymm ((iInf₂_le f hf).trans (by rw [herr, uniformError_self, ENNReal.ofReal_zero]))
       zero_le

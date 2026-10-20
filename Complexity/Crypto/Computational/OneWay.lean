@@ -11,6 +11,7 @@ public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
 public import Complexity.Languages.Probabilistic.BitString
 import Complexity.Crypto.Negligible.Basic
+import Complexity.Probability.PMF
 import Complexity.Tactic.PPT
 
 /-!
@@ -35,6 +36,8 @@ one-way functions or permutations exist.
 
 * `Cslib.Crypto.OneWay.inversion_negligible`: negligible success for each efficient inverter.
 * `Cslib.Crypto.OneWayPermutation.uniformList_append_bit`: the ideal one-bit extension is uniform.
+* `Cslib.Crypto.not_oneWay_of_le_succProbability`: inverting with probability bounded away from
+  zero at every length refutes one-wayness.
 * `Cslib.Crypto.not_oneWay_of_inverse`, `not_oneWay_const`: efficient preimages refute one-wayness.
 
 ## References
@@ -51,6 +54,7 @@ certificates and the upstream nonnegative game API.
 namespace Cslib.Crypto
 
 open Probability Turing.MultiTapeTM
+open scoped NNReal
 
 /-- An inverter receives the unary parameter and the image of the sampled input. -/
 abbrev Inverter := ℕ → List Bool → ProbComp (List Bool)
@@ -139,25 +143,39 @@ theorem inversionGame_eq_of_injective (f : List Bool → List Bool) (hf : Functi
     simp only [beq_eq_decide, hf.eq_iff]
   simp only [inversionGame, heq]
 
-/-- An inverter that always returns a preimage makes the experiment always succeed. -/
-theorem eval_inversionGame_of_rightInverse (f inverse : List Bool → List Bool)
-    (h : ∀ x, f (inverse (f x)) = f x) (n : ℕ) :
-    ProbComp.eval (inversionGame f (fun _ y => pure (inverse y)) n) = PMF.pure true := by
-  simp [inversionGame, h, PMF.map, Function.comp_def]
+/-- An inverter that, told the input length, always returns a preimage makes the experiment
+always succeed. -/
+theorem eval_inversionGame_of_rightInverse (f : List Bool → List Bool)
+    (inverse : ℕ → List Bool → List Bool) (h : ∀ x, f (inverse x.length (f x)) = f x) (n : ℕ) :
+    ProbComp.eval (inversionGame f (fun n y => pure (inverse n y)) n) = PMF.pure true := by
+  have hgame : ProbComp.eval (inversionGame f (fun n y => pure (inverse n y)) n) =
+      (BitString.uniformList n).map fun x => f (inverse n (f x)) == f x := by
+    simp [inversionGame]
+  rw [hgame, ← PMF.bind_pure_comp, PMF.bind_congr_on_support _ _ (fun _ => PMF.pure true)
+    fun x hx => by
+      rw [Function.comp_apply, ← BitString.length_of_mem_support_uniformList hx, h,
+        beq_self_eq_true],
+    PMF.bind_const]
 
-/-- Efficiently finding any preimage contradicts one-wayness. -/
-theorem not_oneWay_of_inverse (f inverse : List Bool → List Bool)
-    (hPPT : IsPPT encBits (fun _ y => pure (inverse y)))
-    (hinv : ∀ x, f (inverse (f x)) = f x) : ¬ OneWay f := by
-  intro h
-  have hnegl := h.inversion_negligible _ hPPT
-  apply not_negligible_const (c := 1) one_ne_zero
-  simpa only [Game.succProbability, eval_inversionGame_of_rightInverse f inverse hinv,
-    PMF.pure_apply_self, ENNReal.toNNReal_one] using hnegl
+/-- **Inverting with probability bounded away from zero refutes one-wayness**: an efficient
+inverter whose success probability is at least a fixed `c > 0` at every length. -/
+theorem not_oneWay_of_le_succProbability {f : List Bool → List Bool} {c : ℝ≥0} (hc : c ≠ 0)
+    (inverter : Inverter) (hPPT : IsPPT encBits inverter)
+    (h : ∀ n, c ≤ Game.succProbability (ProbComp.eval (inversionGame f inverter n))) :
+    ¬ OneWay f := fun hf =>
+  not_negligible_const hc (negligible_of_le (hf.inversion_negligible inverter hPPT) h)
+
+/-- Efficiently finding any preimage, told the input length, contradicts one-wayness. -/
+theorem not_oneWay_of_inverse (f : List Bool → List Bool) (inverse : ℕ → List Bool → List Bool)
+    (hPPT : IsPPT encBits (fun n y => pure (inverse n y)))
+    (hinv : ∀ x, f (inverse x.length (f x)) = f x) : ¬ OneWay f :=
+  not_oneWay_of_le_succProbability one_ne_zero _ hPPT fun n => by
+    rw [Game.succProbability, eval_inversionGame_of_rightInverse f inverse hinv n,
+      PMF.pure_apply_self, ENNReal.toNNReal_one]
 
 /-- Constant functions are not one-way: the empty word is always a preimage. -/
 theorem not_oneWay_const (word : List Bool) : ¬ OneWay (fun _ => word) :=
-  not_oneWay_of_inverse _ (fun _ => [])
+  not_oneWay_of_inverse _ (fun _ _ => [])
     (ComputableTidilyInPolyTime.const []).isPPT (fun _ => rfl)
 
 end Cslib.Crypto

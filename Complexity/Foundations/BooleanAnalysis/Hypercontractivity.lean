@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Derivative
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Tensorization
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.TwoPoint
 import Complexity.Foundations.Data.Finset.Expect

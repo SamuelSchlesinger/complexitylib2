@@ -25,7 +25,11 @@ least half of the edges at every vertex are self-loops, the walk operator is pos
 (`expect_mul_walk_nonneg`), so this also bounds `λ(G)`
 (`spectralExpansion_le_of_preconnected`). Reingold uses the sharper bound `1 - 1 / (D N²)` for
 connected nonbipartite graphs, due to Alon and Sudakov [Reingold, Lemma 2.5][Reingold2008]; any
-inverse polynomial gap suffices for his algorithm.
+inverse polynomial gap suffices for his algorithm. Self-loops are often added for this purpose by
+passing to the lazy graph (`Cslib.RotationMap.lazy`), whose spectral expansion edge expansion
+bounds in the same way
+(`Cslib.RotationMap.spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl`); the bound
+here applies to any graph that already has enough self-loops, without relabelling.
 
 **In a good expander, short walks reach every vertex.** If `λ(G) ^ t (|V| - 1) < 1`, then for any
 two vertices `u` and `v` some walk of length exactly `t` leads from `u` to `v`
@@ -131,7 +135,9 @@ theorem expect_mul_walk_nonneg (hG : ∀ v, Fintype.card D ≤ 2 * #{i | G.neigh
 every vertex are self-loops, then `λ(G) ≤ 1 - 1 / (2 |V|² |D|²)`: an edge leaves every set of at
 most half of the vertices, which bounds the second eigenvalue by Cheeger's inequality
 [Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006], and the self-loops make the
-walk operator positive semidefinite, so that the second eigenvalue is `λ(G)`. -/
+walk operator positive semidefinite, so that the second eigenvalue is `λ(G)`. Compare the lazy
+graph, whose walk is positive semidefinite by construction
+(`spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl`). -/
 theorem spectralExpansion_le_of_preconnected
     (hloop : ∀ v, Fintype.card D ≤ 2 * #{i | G.neighbor v i = v})
     (hconn : G.toSimpleGraph.Preconnected) :

@@ -311,9 +311,6 @@ theorem coNP_subset_NP_iff_exists_polynomiallyBounded {β : Type} {encB : β ↪
   rw [exists_polynomiallyBounded_iff_mem_NP D hne]
   exact ⟨fun h => h encB hB.1, fun h _ encC _ hA => (hB.2 encC _ hA).mem_NP h⟩
 
-/-- Formulas in conjunctive normal form are decoded along their encoding. -/
-private def cnfDecoder : Decoder encCNF := .list (.list (.pair .nat .bool))
-
 /-- **The theorem of Cook and Reckhow** [CookReckhow1979], for refutations: `NP = coNP`, for
 problems with every encoding of their instances, exactly when some proof system for the
 unsatisfiable formulas in conjunctive normal form is polynomially bounded. -/

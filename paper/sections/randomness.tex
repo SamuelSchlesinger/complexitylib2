@@ -89,6 +89,40 @@ remains separate unfinished work.\citep{Toda1991}
 \end{result}
 
 \begin{result}
+\subsection{Toda's theorem with a PP oracle}
+\[\cc{PH}\subseteq\cc{P}^{\#\cc{P}}\subseteq\cc{P}^{\cc{PP}}.\]
+$\cc{P}^{\cc{PP}}$ uses one polynomial-time oracle program, fixed before the oracle, correct
+against every oracle language agreeing with some PP problem on its encoded instances; off-code
+answers are arbitrary and queries are not counted. It contains $\cc{P}^A$ for every $A\in\cc{PP}$.
+For $f\in\#\cc{P}$, $\{(b,k)\mid k\le f(b)\}\in\cc{PP}$ via GapP, and each $\#\cc{P}$ bit request is
+answered by binary search with polynomially many PP queries, substituted into the program by open
+oracle substitution. The reverse inclusion $\cc{P}^{\cc{PP}}\subseteq\cc{P}^{\#\cc{P}}$ is not
+formalized.\citep{Toda1991}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{135}{Cslib.Complexity.PWithOracle_subset_PWithPPOracle}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{156}{Cslib.Complexity.setOf_le_mem_PP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{359}{Cslib.Complexity.PWithSharpPOracle_subset_PWithPPOracle}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PP.lean}{467}{Cslib.Complexity.PH_subset_PWithPPOracle}
+\end{result}
+
+\begin{result}
+\subsection{Easy oracles and the Valiant--Vazirani collapse}
+For an oracle language $A\in\cc{P}$, $\cc{P}^A=\cc{P}$, $\cc{NP}^A=\cc{NP}$ and $\cc{RP}^A=\cc{RP}$, and
+$\cc{RP}$ relative to a promise problem in PromiseP (under a decodable encoding) is $\cc{RP}$.
+Hence, by Valiant--Vazirani, if PromiseUSAT (yes: uniquely satisfiable; no: unsatisfiable CNF
+formulas) has a polynomial-time solver then $\cc{NP}=\cc{RP}$ for every encoding; so does
+$\mathrm{USAT}\in\cc{P}$, a weaker form since UNSAT reduces to USAT.\citep{ValiantVazirani1986,BlassGurevich1982,AroraBarak09}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PolyTime.lean}{127}{Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PolyTime.lean}{143}{Cslib.Complexity.PWithOracle_eq_P}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/Oracle/PolyTime.lean}{149}{Cslib.Complexity.NPWithOracle_eq_NP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{62}{Cslib.Complexity.RPWithOracle_eq_RP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{90}{Cslib.Complexity.RPWithPromiseOracle_eq_RP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{98}{Cslib.Complexity.NP_eq_RP_of_PromiseUSAT_mem_PromiseP}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/ValiantVazirani/Collapse.lean}{105}{Cslib.Complexity.NP_eq_RP_of_USAT_mem_P}
+\end{result}
+
+
+
+\begin{result}
 \subsection{Adleman's theorem}
 \[
 \cc{BPP}\subseteq\cc{P/poly}.
@@ -108,9 +142,36 @@ positive integer $c$ such that, for every sufficiently large $n$, every De Morga
 circuit of size at most $s_n=2^{\lfloor n/c\rfloor}$ agrees with $L$ on at most
 $1/2+1/s_n$ of the $n$-bit inputs. Then $\cc{P}=\cc{BPP}$, uniformly for encoded
 problems. The Nisan--Wigderson generator and exhaustive seed search have certified
-polynomial time. Worst-case exponential circuit hardness alone is not the
-hypothesis proved sufficient here.\citep{NisanWigderson1994}
+polynomial time. The next entry obtains the hypothesis from worst-case exponential
+circuit hardness.\citep{NisanWigderson1994}
 \decl{Complexity/Computability/Complexity/Classes/BPP/Derandomization.lean}{307}{Cslib.Complexity.P_eq_BPP_of_isAverageCaseHard}
+\end{result}
+
+\begin{result}
+\subsection{Derandomization from worst-case hardness}
+Suppose a language $L$ belongs to $\cc{E}=\cc{DTIME}(2^{O(n)})$ (on bit words) and
+there is a real $\gamma>0$ such that, for every sufficiently large $n$, the De Morgan
+circuit complexity of $L$ on $n$-bit inputs (fan-in two, every gate counted) is at
+least $2^{\gamma n}$. Then $\cc{P}=\cc{BPP}$ for every encoding of every type of
+instances. The hardness is converted to average-case hardness by the
+Sudan--Trevisan--Vadhan encoding: at input length $N$, with $M=\lceil 40/\gamma\rceil+1$
+and $b=\lfloor N/(4(M+1))\rfloor$, the slice of $L$ at length $Mb$, read as $M$ blocks
+of $b$ bits, is encoded by a Reed--Muller code over the explicit field
+$\mathbb{F}_{2^{4b}}=\mathbb{F}_2[X]/(g)$, with $g$ the least irreducible polynomial of
+degree $4b$, concatenated with the Hadamard code; the remaining input bits are
+ignored. The encoded language lies in $\cc{E}$ whenever $L$ does, with the field
+arithmetic and low-degree extension certified by the time calculus, and under the
+hardness hypothesis it is average-case hard for circuits of size
+$2^{\lfloor N/c\rfloor}$, $c=200(\lceil 40/\gamma\rceil+2)$, at every sufficiently
+large $N$; the previous result then applies. The hardness is assumed at all large
+lengths, as by Impagliazzo and Wigderson; the infinitely-often variant and the
+$\cc{EXP}\not\subseteq\cc{P/poly}$ consequence of Babai, Fortnow, Nisan and
+Wigderson are not formalized.\citep{ImpagliazzoWigderson1997,SudanTrevisanVadhan2001}
+\declat{8cfc8e81b01276d985e2ceba59c3dc243f402fa1}{Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean}{80}{Cslib.Complexity.P_eq_BPP_of_eventually_two_pow_le_complexity}
+\declat{8cfc8e81b01276d985e2ceba59c3dc243f402fa1}{Complexity/Computability/Complexity/HardnessEncoding/PolyTime.lean}{336}{Cslib.HardnessEncoding.encodedLanguage_mem_E}
+\declat{8cfc8e81b01276d985e2ceba59c3dc243f402fa1}{Complexity/Computability/Circuit/Boolean/HardnessAmplification/Schedule.lean}{438}{Cslib.HardnessEncoding.eventually_isAverageCaseHard_encodedSlice}
+\declat{8cfc8e81b01276d985e2ceba59c3dc243f402fa1}{Complexity/Computability/Complexity/HardnessEncoding/Program.lean}{369}{Cslib.HardnessEncoding.encodedProgram_eq}
+\declat{8cfc8e81b01276d985e2ceba59c3dc243f402fa1}{Complexity/Foundations/FieldTheory/Finite/BinaryField.lean}{152}{Cslib.BinaryField.card}
 \end{result}
 
 \begin{result}
@@ -234,7 +295,7 @@ SPP has these closures and complement closure. The elementary proofs reuse the
 count algebra: FewP union adds ambiguity bounds and intersection multiplies them;
 SPP complement subtracts its gap from one and intersection multiplies gaps.
 These are verifier-based results; neither a machine characterization nor the
-stronger FewP--SPP containment is established by this entry.
+stronger FewP--SPP containment is established by this entry; it is the next entry.
 The FewP definition follows Allender--Rubinstein and the explicit acceptance-set
 formulation of Borchert--Hemaspaandra--Rothe; the SPP definition and UP inclusion
 follow Fenner--Fortnow--Kurtz and Fortnow's survey.
@@ -249,6 +310,19 @@ follow Fenner--Fortnow--Kurtz and Fortnow's survey.
 \declat{2f492c03c060ed95662dd942ef7feca1bebda7aa}{Complexity/Computability/Complexity/Classes/SPP.lean}{77}{Cslib.Complexity.SPP_subset_CeqP}
 \declat{2f492c03c060ed95662dd942ef7feca1bebda7aa}{Complexity/Computability/Complexity/Classes/SPP.lean}{87}{Cslib.Complexity.SPP_subset_coCeqP}
 \end{result}
+
+\begin{result}
+\subsection{FewP is in SPP}
+\[\cc{FewP}\subseteq\cc{SPP}.\]
+With at most $q(n)$ accepted certificates, the increasing listings of accepted certificate sets of
+even and of odd size in $q(n)$ flagged slots are counted by polynomial-time verifiers
+($E,O\in\#\cc{P}$), and $1+O-E\in\cc{GapP}$ is the characteristic function; the count is an
+induction on slots. These are the verifier-based classes.
+\citep{KoeblerSchoeningTodaToran1992,FennerFortnowKurtz1994}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/SPP/FewP.lean}{188}{Cslib.Complexity.SortedSubsets.signedSum_eq}
+\declat{38bfe757e3a3f2b739c3365e15f8a081f65d0312}{Complexity/Computability/Complexity/Classes/SPP/FewP.lean}{366}{Cslib.Complexity.FewP_subset_SPP}
+\end{result}
+
 
 \begin{result}
 \subsection{Modular counting}

@@ -37,7 +37,8 @@ parities of its two ends, so flipping the edges of a path flips the parities of 
 combining such flips moves the parities to any target, up to the vertex left out.
 
 These facts underlie the resolution lower bounds for Tseitin formulas
-(`Complexity/Logics/Propositional/Resolution/Tseitin.lean`).
+(`Cslib.Logic.PL.Tseitin.minBalancedCut_le_of_refutableInWidth`,
+`Cslib.Logic.PL.Tseitin.exp_le_of_refutableInSize`).
 
 ## Main definitions
 

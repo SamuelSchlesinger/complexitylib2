@@ -140,16 +140,6 @@ theorem ZPP_subset_coRP : ZPP enc ⊆ coRP enc := fun _ hA => ZPP_subset_RP (com
 
 /-! ### Splitting random strings -/
 
-/-- A random string of length `m + k` is a random string of length `m` followed by one of
-length `k`. -/
-private def splitEquiv (m k : ℕ) : (Fin (m + k) → Bool) ≃ (Fin m → Bool) × (Fin k → Bool) :=
-  (finSumFinEquiv.symm.arrowCongr (Equiv.refl Bool)).trans (Equiv.sumArrowEquivProdArrow _ _ _)
-
-private theorem ofFn_eq_append (m k : ℕ) (r : Fin (m + k) → Bool) :
-    List.ofFn r = List.ofFn (splitEquiv m k r).1 ++ List.ofFn (splitEquiv m k r).2 := by
-  rw [List.ofFn_add]
-  rfl
-
 /-- Counting the random strings of length `m + k` by their first `m` and last `k` bits. -/
 private theorem card_filter_take_drop (m k : ℕ) (P : List Bool → List Bool → Prop)
     [∀ u v, Decidable (P u v)] :
@@ -157,9 +147,10 @@ private theorem card_filter_take_drop (m k : ℕ) (P : List Bool → List Bool �
       P ((List.ofFn r).take m) ((List.ofFn r).drop m)).card =
       (Finset.univ.filter fun x : (Fin m → Bool) × (Fin k → Bool) =>
         P (List.ofFn x.1) (List.ofFn x.2)).card := by
-  refine Finset.card_equiv (splitEquiv m k) fun r => ?_
+  refine Finset.card_equiv ((Fin.appendEquiv m k).symm) fun r => ?_
   simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-  rw [ofFn_eq_append m k r, List.take_left' (List.length_ofFn), List.drop_left' List.length_ofFn]
+  rw [BitString.ofFn_eq_append r, List.take_left' List.length_ofFn,
+    List.drop_left' List.length_ofFn]
 
 /-- The random strings of length `m + k` whose last `k` bits satisfy `P`. -/
 private theorem card_filter_drop (m k : ℕ) (P : List Bool → Prop) [DecidablePred P] :
@@ -172,12 +163,14 @@ private theorem card_filter_drop (m k : ℕ) (P : List Bool → Prop) [Decidable
 /-- A prefix of the right length is a random string of that length. -/
 private theorem exists_ofFn_eq_take {m k : ℕ} (r : Fin (m + k) → Bool) :
     ∃ u : Fin m → Bool, List.ofFn u = (List.ofFn r).take m :=
-  ⟨(splitEquiv m k r).1, by rw [ofFn_eq_append m k r, List.take_left' List.length_ofFn]⟩
+  ⟨((Fin.appendEquiv m k).symm r).1, by
+    rw [BitString.ofFn_eq_append r, List.take_left' List.length_ofFn]⟩
 
 /-- A suffix of the right length is a random string of that length. -/
 private theorem exists_ofFn_eq_drop {m k : ℕ} (r : Fin (m + k) → Bool) :
     ∃ v : Fin k → Bool, List.ofFn v = (List.ofFn r).drop m :=
-  ⟨(splitEquiv m k r).2, by rw [ofFn_eq_append m k r, List.drop_left' List.length_ofFn]⟩
+  ⟨((Fin.appendEquiv m k).symm r).2, by
+    rw [BitString.ofFn_eq_append r, List.drop_left' List.length_ofFn]⟩
 
 /-! ### `RP ∩ coRP ⊆ ZPP` -/
 

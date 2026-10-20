@@ -284,4 +284,7 @@ theorem four_mul_sum_card_filter_notMem_le (A : Finset (Finset U)) (S : Finset U
     have h8 : (0 : ℝ) ≤ 2 ^ #S * (8 * #S * (27 / 32) ^ r) := by positivity
     nlinarith
 
+@[deprecated (since := "2026-10-19")]
+alias _root_.Cslib.Communication.four_mul_sum_card_filter_le := four_mul_sum_card_filter_notMem_le
+
 end Finset

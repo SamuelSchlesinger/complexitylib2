@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
-public import Complexity.Probability.BitString.LinearHash
+public import Complexity.Probability.BitString.AffineHash
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -26,7 +26,7 @@ parity of a single number of witnesses.
 
 The Valiant–Vazirani test (`Cslib.Complexity.Toda.hashesToZero`) reads `k` random parity
 equations `A x = b` from a seed and tests whether `x` satisfies them; on bit strings it is the
-affine hash `Cslib.Complexity.ValiantVazirani.hash` of the seed's coefficients and offsets hitting
+affine hash `Cslib.BitString.LinearHash.affineHash` of the seed's coefficients and offsets hitting
 `0` (`Cslib.Complexity.Toda.hashesToZero_ofFn_iff`). For a nonempty set `S` of strings of length
 `M`, with `k = log₂ #S + 2` equations, exactly one element of `S` passes the test for at least
 `3 / 16` of the seeds of length `B ≥ (M + 2) (M + 1)`
@@ -163,10 +163,10 @@ theorem listRow_eq_ofFn_offset (k M : ℕ) (seed : List Bool) :
 seed hitting `0`. -/
 theorem hashesToZero_ofFn_iff {k M : ℕ} (seed : List Bool) (x : BitString M) :
     hashesToZero k seed (List.ofFn x) = true ↔
-      ValiantVazirani.hash (ValiantVazirani.matrix k M seed, ValiantVazirani.offset k M seed) x =
-        0 := by
+      BitString.LinearHash.affineHash
+        (ValiantVazirani.matrix k M seed, ValiantVazirani.offset k M seed) x = 0 := by
   rw [hashesToZero, beq_iff_eq, BitString.LinearHash.wordHash_eq_ofFn, List.length_ofFn,
-    listRow_eq_ofFn_offset, List.ofFn_inj, ValiantVazirani.hash]
+    listRow_eq_ofFn_offset, List.ofFn_inj, BitString.LinearHash.affineHash]
   constructor
   · intro h
     rw [ValiantVazirani.matrix, ← h]
@@ -186,7 +186,7 @@ theorem hashesToZero_ofFn_iff {k M : ℕ} (seed : List Bool) (x : BitString M) :
     revert a b
     decide
 
-open ValiantVazirani in
+open ValiantVazirani BitString.LinearHash in
 /-- **Isolation with probability `3 / 16`**: for a nonempty set `S` of strings of length `M`, with
 `k = log₂ #S + 2` equations, exactly one element of `S` passes the test for at least `3 / 16` of
 the seeds of any length `B ≥ k M + k`. -/
@@ -202,15 +202,15 @@ theorem three_mul_two_pow_le_card_filter_card_eq_one {M B : ℕ} {S : Finset (Bi
   have hlog := Nat.pow_log_le_self 2 hS.card_pos.ne'
   have hlog' := Nat.lt_pow_succ_log_self (b := 2) (by decide) #S
   have hdens :=
-    (isPairwiseIndependentHash_hash k M).three_sixteenths_le_dens_filter_card_filter_eq_one
+    (isPairwiseIndependentHash_affineHash k M).three_sixteenths_le_dens_filter_card_filter_eq_one
     (S := S) 0 (by rw [hY, hk, pow_add]; omega) (by rw [hY, hk, pow_add, pow_succ] at *; omega)
   have hU : 3 * 2 ^ (k * M + k) ≤
       16 * (univ.filter fun p : (Fin k → BitString M) × BitString k =>
-        #{x ∈ S | hash p x = 0} = 1).card := by
+        #{x ∈ S | affineHash p x = 0} = 1).card := by
     rw [dens, Fintype.card_prod, Fintype.card_fun, Fintype.card_fun, Fintype.card_fun,
       Fintype.card_bool, Fintype.card_fin, Fintype.card_fin, le_div_iff₀ (by positivity)] at hdens
     have h : (3 * 2 ^ (k * M + k) : ℚ≥0) ≤ 16 * (univ.filter fun p :
-        (Fin k → BitString M) × BitString k => #{x ∈ S | hash p x = 0} = 1).card := by
+        (Fin k → BitString M) × BitString k => #{x ∈ S | affineHash p x = 0} = 1).card := by
       rw [pow_add, pow_mul', ← mul_assoc]
       have := mul_le_mul_of_nonneg_left hdens (by norm_num : (0 : ℚ≥0) ≤ 16)
       convert this using 1
@@ -219,14 +219,14 @@ theorem three_mul_two_pow_le_card_filter_card_eq_one {M B : ℕ} {S : Finset (Bi
     exact_mod_cast h
   -- transfer to the words read by the test
   have hsplit := card_filter_take_drop (m := B) hB
-    (fun w => #{x ∈ S | hash (matrix k M w, offset k M w) x = 0} = 1) (fun _ => True)
+    (fun w => #{x ∈ S | affineHash (matrix k M w, offset k M w) x = 0} = 1) (fun _ => True)
   simp only [and_true, filter_true, card_univ, Fintype.card_fun, Fintype.card_bool,
     Fintype.card_fin, matrix_take, offset_take] at hsplit
-  rw [card_filter_seed (fun p => #{x ∈ S | hash p x = 0} = 1)] at hsplit
+  rw [card_filter_seed (fun p => #{x ∈ S | affineHash p x = 0} = 1)] at hsplit
   have hfilter : (univ.filter fun σ : Fin B → Bool =>
       #{x ∈ S | hashesToZero k (List.ofFn σ) (List.ofFn x)} = 1) =
       univ.filter fun σ : Fin B → Bool =>
-        #{x ∈ S | hash (matrix k M (List.ofFn σ), offset k M (List.ofFn σ)) x = 0} = 1 := by
+        #{x ∈ S | affineHash (matrix k M (List.ofFn σ), offset k M (List.ofFn σ)) x = 0} = 1 := by
     simp only [hashesToZero_ofFn_iff]
   rw [hfilter, hsplit]
   have hB' : B = (k * M + k) + (B - (k * M + k)) := by omega
@@ -234,7 +234,7 @@ theorem three_mul_two_pow_le_card_filter_card_eq_one {M B : ℕ} {S : Finset (Bi
         conv_lhs => rw [hB', pow_add]
         ring
     _ ≤ 16 * (univ.filter fun p : (Fin k → BitString M) × BitString k =>
-          #{x ∈ S | hash p x = 0} = 1).card * 2 ^ (B - (k * M + k)) := by gcongr
+          #{x ∈ S | affineHash p x = 0} = 1).card * 2 ^ (B - (k * M + k)) := by gcongr
     _ = _ := by ring
 
 /-! ### The isolation step -/

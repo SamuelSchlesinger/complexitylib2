@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Data.List.OfFn
 public import Mathlib.Data.Finset.Card
+import Mathlib.Data.List.FinRange
 import Mathlib.Order.Interval.Finset.Fin
 
 /-!
@@ -24,6 +25,8 @@ other keys may repeat. The key order need only be a partial order.
 
 * `List.Perm.exists_ofFn_iff`, `List.Perm.existsUnique_ofFn_iff`: predicate transport.
 * `List.Perm.card_filter_ofFn_eq`: preservation of predicate counts.
+* `List.countP_range_eq_card_filter`: counting the numbers below `n` that pass a test is counting
+  the elements of `Fin n` that pass it.
 * `List.Perm.apply_ofFn_eq_of_rank`: identify an entire entry at its sorted position.
 
 ## References
@@ -51,6 +54,11 @@ theorem List.countP_ofFn {α : Type*} {n : ℕ} (f : Fin n → α) (p : α → B
   | zero => simp
   | succ n ih =>
     rw [List.ofFn_succ, List.countP_cons, Fin.sum_univ_succ, ih, Nat.add_comm]
+
+/-- The numbers below `n` that pass a test are as many as the elements of `Fin n` that pass it. -/
+theorem List.countP_range_eq_card_filter (n : ℕ) (p : ℕ → Bool) :
+    (List.range n).countP p = #{j : Fin n | p j = true} := by
+  rw [← List.map_coe_finRange_eq_range, ← List.ofFn_eq_map, List.countP_ofFn, card_filter]
 
 /-- Permuting a finite array preserves the number of entries satisfying a predicate. -/
 theorem List.Perm.card_filter_ofFn_eq {α : Type*} {n : ℕ} {f g : Fin n → α}

@@ -8,11 +8,11 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond
-public import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 import Complexity.Computability.Complexity.FineGrained.Assignment
+import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -32,15 +32,17 @@ well formed, and directions of the rows satisfying every clause are satisfying a
 graph has a Hamiltonian path exactly when the formula is satisfiable
 (`Cslib.Complexity.SAT.toSparseDirHamPath_mem_iff`).
 
-The graph has at most `23 L + m + 1` vertices and arcs in total, for `L` occurrences of variables,
-so at most `(23 k + 1) m + 1` on formulas with clauses of at most `k` literals
-(`Cslib.Complexity.SAT.length_sparseDiamondGraph_le`). Closing the path with an arc back to the
-first top (`Cslib.Complexity.SAT.toSparseDirHamCycle`) gives directed Hamiltonian cycles, and
-splitting every vertex into three (`Cslib.Complexity.Graph.split`) gives undirected Hamiltonian
-cycles (`Cslib.Complexity.SAT.toSparseHamCycle`), still of linear size.
+The graph has at most `23 L + m + 1` vertices and arcs in total, for `L` occurrences of variables
+(`Cslib.Complexity.SAT.length_sparseDiamondGraph_le_length_vars`), so at most `(23 k + 1) m + 1` on
+formulas with clauses of at most `k` literals (`Cslib.Complexity.SAT.length_sparseDiamondGraph_le`).
+Closing the path with an arc back to the first top (`Cslib.Complexity.SAT.toSparseDirHamCycle`,
+`Cslib.Complexity.Diamond.mem_DirHamCycle_iff`) gives directed Hamiltonian cycles, and splitting
+every vertex into three (`Cslib.Complexity.Graph.split`) gives undirected Hamiltonian cycles
+(`Cslib.Complexity.SAT.toSparseHamCycle`), still of linear size.
 
 ## Main definitions
 
+* `Cslib.Complexity.SAT.occurrencePositions`: the positions of the occurrences of a variable.
 * `Cslib.Complexity.SAT.sparseSlots`, `Cslib.Complexity.SAT.sparseDetours`,
   `Cslib.Complexity.SAT.sparseDiamondGraph`: the layout of the rows and the graph.
 * `Cslib.Complexity.SAT.toSparseDirHamPath`, `Cslib.Complexity.SAT.toSparseDirHamCycle`,
@@ -55,7 +57,10 @@ cycles (`Cslib.Complexity.SAT.toSparseHamCycle`), still of linear size.
   `Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseDirHamCycle`,
   `Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseHamCycle`: the reductions are
   polynomial-time.
-* `Cslib.Complexity.SAT.length_sparseDiamondGraph_le`: the graph has linear size.
+* `Cslib.Complexity.SAT.length_sparseDiamondGraph_le_length_vars`,
+  `Cslib.Complexity.SAT.length_sparseDiamondGraph_le`,
+  `Cslib.Complexity.SAT.length_toSparseDirHamCycle_le`,
+  `Cslib.Complexity.SAT.length_toSparseHamCycle_le`: the graphs have linear size.
 
 ## References
 
@@ -101,9 +106,7 @@ def toSparseDirHamPath (φ : CNF ℕ) : Graph × ℕ × ℕ :=
 /-- The reduction from `SAT` to `DirHamCycle` of linear size: the sparse diamond graph of `φ` with
 an arc from the bottom of the last diamond back to the top of the first. -/
 def toSparseDirHamCycle (φ : CNF ℕ) : Graph :=
-  ((sparseDiamondGraph φ).1,
-    (Diamond.topNode (ThreeSAT.distinctVars φ).length, Diamond.topNode 0) ::
-      (sparseDiamondGraph φ).2)
+  cycleGraph (ThreeSAT.distinctVars φ).length (sparseSlots φ) φ.length (sparseDetours φ)
 
 /-- The reduction from `SAT` to `HamCycle` of linear size: the vertex-splitting graph of the
 closed sparse diamond graph. -/
@@ -114,19 +117,6 @@ def toSparseHamCycle (φ : CNF ℕ) : Graph := (toSparseDirHamCycle φ).split
 section Correctness
 
 variable {φ : CNF ℕ}
-
-theorem map_occurrences (φ : CNF ℕ) : (occurrences φ).map (fun o => o.2.2.1) = φ.vars := by
-  have hc : ∀ c : Clause ℕ × ℕ, (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
-      c.1.map Prod.fst := fun c => by
-    calc (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
-        (c.1.zipIdx.map Prod.fst).map Prod.fst := by rw [List.map_map]; rfl
-      _ = c.1.map Prod.fst := by rw [List.zipIdx_map_fst]
-  calc (occurrences φ).map (fun o => o.2.2.1)
-      = φ.zipIdx.flatMap fun c => c.1.map Prod.fst := by
-        simp only [occurrences, List.map_flatMap, List.map_map, Function.comp_def, hc]
-    _ = (φ.zipIdx.map Prod.fst).flatMap fun c => c.map Prod.fst := by rw [List.flatMap_map]
-    _ = φ.vars := by
-        rw [List.zipIdx_map_fst, CNF.vars, List.map_flatten, List.flatMap_def]
 
 private theorem mem_vars_of_mem_occurrences {o : Occurrence} (ho : o ∈ occurrences φ) :
     o.2.2.1 ∈ φ.vars := by
@@ -156,8 +146,7 @@ private theorem mem_sparseDetours {d : Detour} :
 private theorem mem_occurrencePositions_of_getElem? {o : Occurrence} {p : ℕ}
     (h : (occurrences φ)[p]? = some o) : p ∈ occurrencePositions φ o.2.2.1 := by
   have hp := (List.getElem?_eq_some_iff.1 h).1
-  have hlen : (occurrences φ).length = φ.vars.length := by
-    rw [← map_occurrences, List.length_map]
+  have hlen := length_occurrences φ
   rw [mem_occurrencePositions]
   refine ⟨hlen ▸ hp, ?_⟩
   rw [← map_occurrences, List.getD_eq_getElem?_getD, List.getElem?_map, h]
@@ -227,9 +216,7 @@ theorem toSparseDirHamPath_mem_iff (φ : CNF ℕ) : toSparseDirHamPath φ ∈ Di
 /-- **Correctness of the closed sparse diamond construction.** A formula is satisfiable exactly
 when its closed sparse diamond graph has a Hamiltonian cycle. -/
 theorem toSparseDirHamCycle_mem_iff (φ : CNF ℕ) : toSparseDirHamCycle φ ∈ DirHamCycle ↔ φ ∈ SAT :=
-  (Graph.mem_DirHamCycle_cons_iff (G := sparseDiamondGraph φ)
-    (mem_vertices.2 (Or.inl ⟨0, Nat.zero_le _, rfl⟩)) not_mem_arcs_topNode_zero).trans
-    (toSparseDirHamPath_mem_iff φ)
+  (mem_DirHamCycle_iff wellFormed_sparseDetours).trans satisfiable_sparseDetours_iff
 
 /-- **Correctness of the undirected construction.** A formula is satisfiable exactly when the
 vertex-splitting graph of its closed sparse diamond graph has a Hamiltonian cycle. -/
@@ -261,7 +248,7 @@ theorem sum_sparseSlots_le (φ : CNF ℕ) :
 
 /-- **The sparse diamond graph has linear size.** It has at most `23 L + m + 1` vertices and arcs
 in total, counted as listed, for `L` occurrences of variables and `m` clauses. -/
-theorem length_sparseDiamondGraph_le' (φ : CNF ℕ) :
+theorem length_sparseDiamondGraph_le_length_vars (φ : CNF ℕ) :
     (sparseDiamondGraph φ).1.length + (sparseDiamondGraph φ).2.length ≤
       23 * φ.vars.length + φ.length + 1 := by
   have hS := sum_sparseSlots_le φ
@@ -269,16 +256,19 @@ theorem length_sparseDiamondGraph_le' (φ : CNF ℕ) :
     rw [ThreeSAT.length_distinctVars]
     exact CNF.numVars_le_length_vars φ
   have hD : (sparseDetours φ).length = φ.vars.length := by
-    rw [sparseDetours, List.length_map, List.length_zipIdx, ← map_occurrences, List.length_map]
+    rw [sparseDetours, List.length_map, List.length_zipIdx, length_occurrences]
   simp only [sparseDiamondGraph, graph, Diamond.length_vertices, Diamond.length_arcs, hD]
   omega
+
+@[deprecated (since := "2026-10-19")]
+alias length_sparseDiamondGraph_le' := length_sparseDiamondGraph_le_length_vars
 
 /-- **The sparse diamond graph has linear size.** On formulas with `m` clauses of at most `k`
 literals, it has at most `(23 k + 1) m + 1` vertices and arcs in total, counted as listed. -/
 theorem length_sparseDiamondGraph_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c ∈ φ, c.length ≤ k) :
     (sparseDiamondGraph φ).1.length + (sparseDiamondGraph φ).2.length ≤
       (23 * k + 1) * φ.length + 1 := by
-  have h := length_sparseDiamondGraph_le' φ
+  have h := length_sparseDiamondGraph_le_length_vars φ
   have hL := CNF.length_vars_le_mul_length hφ
   nlinarith
 
@@ -287,7 +277,8 @@ theorem length_toSparseDirHamCycle_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c ∈ 
     (toSparseDirHamCycle φ).1.length + (toSparseDirHamCycle φ).2.length ≤
       (23 * k + 1) * φ.length + 2 := by
   have h := length_sparseDiamondGraph_le hφ
-  simp only [toSparseDirHamCycle, List.length_cons]
+  simp only [sparseDiamondGraph, graph] at h
+  simp only [toSparseDirHamCycle, cycleGraph, List.length_cons]
   omega
 
 /-- **The undirected reduction has linear size.** On formulas with `m` clauses of at most `k`
@@ -302,81 +293,72 @@ theorem length_toSparseHamCycle_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c ∈ φ,
 
 /-! ### Polynomial-time reductions -/
 
+/-- The positions of the occurrences of a variable are computable in polynomial time. -/
+theorem computableTidilyInPolyTime_occurrencePositions :
+    ComputableTidilyInPolyTime (fun p : CNF ℕ × ℕ => occurrencePositions p.1 p.2)
+      (encPair encCNF encNat) (encList encUnary) := by
+  have hvars := computableTidilyInPolyTime_vars
+  have htest : ComputableTidilyInPolyTime
+      (fun p : (CNF ℕ × ℕ) × ℕ => decide (p.1.1.vars.getD p.2 0 = p.1.2))
+      (encPair (encPair encCNF encNat) encUnary) encBool := by
+    have hget : ComputableTidilyInPolyTime (fun p : (CNF ℕ × ℕ) × ℕ => p.1.1.vars.getD p.2 0)
+        (encPair (encPair encCNF encNat) encUnary) encNat :=
+      (listGetD (encA := encNat) (encL := encList encNat) 0).comp
+        ((hvars.comp ((fst _ _).comp (fst _ _))).prod (snd _ _))
+    exact hget.decide_eq' ((snd _ _).comp (fst _ _))
+  have hrange : ComputableTidilyInPolyTime (fun p : CNF ℕ × ℕ => List.range p.1.vars.length)
+      (encPair encCNF encNat) (encList encUnary) :=
+    range.comp ((length_list encNat).comp (hvars.comp (fst _ _)))
+  unfold occurrencePositions
+  exact filterWithInput hrange htest
+
+/-- The numbers of slots are computable in polynomial time, in unary. -/
+theorem computableTidilyInPolyTime_sparseSlots :
+    ComputableTidilyInPolyTime (fun p : CNF ℕ × ℕ => sparseSlots p.1 p.2)
+      (encPair encCNF encUnary) encUnary := by
+  have hdv := ThreeSAT.computableTidilyInPolyTime_distinctVars
+  have hpos := computableTidilyInPolyTime_occurrencePositions
+  unfold sparseSlots
+  fun_prop
+
+/-- The detours are computable in polynomial time. -/
+theorem computableTidilyInPolyTime_sparseDetours :
+    ComputableTidilyInPolyTime sparseDetours encCNF (encList encDetour) := by
+  have hdv := ThreeSAT.computableTidilyInPolyTime_distinctVars
+  have hpos := computableTidilyInPolyTime_occurrencePositions
+  have hocc := computableTidilyInPolyTime_occurrences
+  unfold encOccurrence at hocc
+  unfold sparseDetours
+  fun_prop
+
+private theorem computableTidilyInPolyTime_numDiamonds :
+    ComputableTidilyInPolyTime (fun φ : CNF ℕ => (ThreeSAT.distinctVars φ).length) encCNF
+      encUnary :=
+  (length_list encNat).comp ThreeSAT.computableTidilyInPolyTime_distinctVars
+
 /-- The sparse diamond graph is computable in polynomial time: node labels are computed in unary
 from diamond, row, clause and occurrence indices, then converted to binary. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_sparseDiamondGraph :
-    ComputableTidilyInPolyTime sparseDiamondGraph encCNF encGraph := by
-  have htop : ComputableTidilyInPolyTime (fun i => Diamond.topNode i) encUnary encNat :=
-    unary_to_binary.comp (show ComputableTidilyInPolyTime (fun i => Nat.pair 0 i) _ _ by
-      fun_prop)
-  have hrow : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Diamond.rowNode p.1 p.2)
-      (encPair encUnary encUnary) encNat :=
-    unary_to_binary.comp (show ComputableTidilyInPolyTime
-      (fun p : ℕ × ℕ => Nat.pair 1 (Nat.pair p.1 p.2)) _ _ by fun_prop)
-  have hclause : ComputableTidilyInPolyTime (fun j => Diamond.clauseNode j) encUnary encNat :=
-    unary_to_binary.comp (show ComputableTidilyInPolyTime (fun j => Nat.pair 2 j) _ _ by
-      fun_prop)
-  have hdv := ThreeSAT.computableTidilyInPolyTime_distinctVars
-  have hvars := computableTidilyInPolyTime_vars
-  have hpos : ComputableTidilyInPolyTime (fun p : CNF ℕ × ℕ => occurrencePositions p.1 p.2)
-      (encPair encCNF encNat) (encList encUnary) := by
-    have htest : ComputableTidilyInPolyTime
-        (fun p : (CNF ℕ × ℕ) × ℕ => decide (p.1.1.vars.getD p.2 0 = p.1.2))
-        (encPair (encPair encCNF encNat) encUnary) encBool := by
-      have hget : ComputableTidilyInPolyTime (fun p : (CNF ℕ × ℕ) × ℕ => p.1.1.vars.getD p.2 0)
-          (encPair (encPair encCNF encNat) encUnary) encNat :=
-        (listGetD (encA := encNat) (encL := encList encNat) 0).comp
-          ((hvars.comp ((fst _ _).comp (fst _ _))).prod (snd _ _))
-      exact hget.decide_eq' ((snd _ _).comp (fst _ _))
-    have hrange : ComputableTidilyInPolyTime (fun p : CNF ℕ × ℕ => List.range p.1.vars.length)
-        (encPair encCNF encNat) (encList encUnary) :=
-      range.comp ((length_list encNat).comp (hvars.comp (fst _ _)))
-    unfold occurrencePositions
-    exact filterWithInput hrange htest
-  have hslots : ComputableTidilyInPolyTime (fun p : CNF ℕ × ℕ => sparseSlots p.1 p.2)
-      (encPair encCNF encUnary) encUnary := by
-    unfold sparseSlots
-    fun_prop
-  have hdet : ComputableTidilyInPolyTime sparseDetours encCNF
-      (encList (encPair encUnary (encPair encUnary (encPair encUnary encBool)))) := by
-    have hocc := computableTidilyInPolyTime_occurrences
-    unfold encOccurrence at hocc
-    unfold sparseDetours
-    fun_prop
-  unfold sparseDiamondGraph graph vertices arcs Diamond.diamondArcs detourArcs Diamond.rowLength
-    encGraph
-  fun_prop
+    ComputableTidilyInPolyTime sparseDiamondGraph encCNF encGraph :=
+  computableTidilyInPolyTime_graph computableTidilyInPolyTime_numDiamonds
+    computableTidilyInPolyTime_sparseSlots (length_list _) computableTidilyInPolyTime_sparseDetours
 
 /-- The reduction `toSparseDirHamPath` is computable in polynomial time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_toSparseDirHamPath :
     ComputableTidilyInPolyTime toSparseDirHamPath encCNF
       (encPair encGraph (encPair encNat encNat)) := by
-  have htop : ComputableTidilyInPolyTime (fun i => Diamond.topNode i) encUnary encNat :=
-    unary_to_binary.comp (show ComputableTidilyInPolyTime (fun i => Nat.pair 0 i) _ _ by
-      fun_prop)
-  have hdv := ThreeSAT.computableTidilyInPolyTime_distinctVars
+  have hn := computableTidilyInPolyTime_numDiamonds
   unfold toSparseDirHamPath
   fun_prop
 
 /-- The reduction `toSparseDirHamCycle` is computable in polynomial time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_toSparseDirHamCycle :
-    ComputableTidilyInPolyTime toSparseDirHamCycle encCNF encGraph := by
-  have htop : ComputableTidilyInPolyTime (fun i => Diamond.topNode i) encUnary encNat :=
-    unary_to_binary.comp (show ComputableTidilyInPolyTime (fun i => Nat.pair 0 i) _ _ by
-      fun_prop)
-  have hdv := ThreeSAT.computableTidilyInPolyTime_distinctVars
-  have hG := computableTidilyInPolyTime_sparseDiamondGraph
-  have hn : ComputableTidilyInPolyTime (fun φ : CNF ℕ => (ThreeSAT.distinctVars φ).length) encCNF
-      encUnary := (length_list encNat).comp hdv
-  have hhead : ComputableTidilyInPolyTime
-      (fun φ : CNF ℕ => (Diamond.topNode (ThreeSAT.distinctVars φ).length, Diamond.topNode 0))
-      encCNF (encPair encNat encNat) := (htop.comp hn).prod (const _)
-  unfold toSparseDirHamCycle
-  unfold encGraph at hG ⊢
-  exact hG.fst'.prod (cons' hhead hG.snd')
+    ComputableTidilyInPolyTime toSparseDirHamCycle encCNF encGraph :=
+  computableTidilyInPolyTime_cycleGraph computableTidilyInPolyTime_numDiamonds
+    computableTidilyInPolyTime_sparseSlots (length_list _) computableTidilyInPolyTime_sparseDetours
 
 /-- The reduction `toSparseHamCycle` is computable in polynomial time. -/
 @[fun_prop]

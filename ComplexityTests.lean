@@ -29,6 +29,7 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitMetric
 import ComplexityTests.ClassClosure
+import ComplexityTests.ClassCorollaries
 import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
@@ -58,6 +59,7 @@ import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExpanderHitting
 import ComplexityTests.ExplicitExpanders
+import ComplexityTests.FOLogSpace
 import ComplexityTests.Fagin
 import ComplexityTests.FaginEncoding
 import ComplexityTests.FaginNP
@@ -81,6 +83,7 @@ import ComplexityTests.FusionHomomorphism
 import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.GGM
+import ComplexityTests.GapGraphsGeography
 import ComplexityTests.GeneratorPadding
 import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
@@ -258,4 +261,5 @@ import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
+import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

@@ -26,37 +26,44 @@ import Complexity.Probability.Uniform
 # Truth tables of word oracles
 
 A distinguisher can read the truth table of a word oracle on few inputs: on the `2 ^ m` words of
-length `n` whose first `n - m` bits are `false` (`Cslib.Crypto.tableQueries`), the first bits of the
-replies form the truth table of a Boolean function on `m` inputs, the *restriction* of the oracle
-(`Cslib.Crypto.restriction`, `Cslib.Crypto.map_tableQueries`). Asking for it is strict oracle PPT
-(`Cslib.Crypto.isOraclePPTOn_queryTable`).
+length `n` whose first `n - m` bits are `false` (`tableQueries`), the first bits of the replies
+form the truth table of a Boolean function on `m` inputs, the *restriction* of the oracle
+(`restriction`, `map_tableQueries`). Asking for it is strict oracle PPT
+(`isOraclePPTOn_queryTable`).
 
 The restriction of a pseudorandom family is simple: a keyed family computable in polynomial time
 has polynomial-size circuits, uniformly in the key, so its restrictions do too
-(`Cslib.Crypto.exists_complexity_restriction_le`). The restriction of a random function is a
-uniformly random Boolean function (`Cslib.Crypto.uniformOfFintype_map_restrictTable`). These are the
-two halves of the natural-property distinguisher of Kabanets and Cai [KabanetsCai2000], in the
-spirit of Razborov and Rudich [RazborovRudich1997].
+(`exists_complexity_restriction_le`). The restriction of a random function is a uniformly random
+Boolean function (`uniformOfFintype_map_restrictTable`). These are the two halves of the
+natural-property distinguisher of Kabanets and Cai [KabanetsCai2000], in the spirit of Razborov and
+Rudich [RazborovRudich1997], assembled in `Complexity.Crypto.Computational.OneWay.MCSP`; all
+declarations here live in the namespace `Cslib.Crypto.KabanetsCai`.
 
 The truth table lists the values in the order of `Cslib.BitString.equivFin`, which is the order of
-the enumeration `Cslib.BitString.enumList` (`Cslib.BitString.enum_eq_ofFn`).
+the enumeration `Cslib.BitString.enumList` (`Cslib.BitString.enumList_eq_ofFn`).
 
 ## Main definitions
 
-* `Cslib.Crypto.queryTable`: ask a word oracle on a list of words and collect the first reply bits.
-* `Cslib.Crypto.tableQueries`: the words of length `n` with `n - m` leading `false` bits.
-* `Cslib.Crypto.restriction`: the Boolean function a word function computes on those words.
-* `Cslib.Crypto.restrictTable`: the restriction of a finite random-function table.
+* `Cslib.Crypto.KabanetsCai.queryTable`: ask a word oracle on a list of words and collect the
+  first reply bits.
+* `Cslib.Crypto.KabanetsCai.tableQueries`: the words of length `n` with `n - m` leading `false`
+  bits.
+* `Cslib.Crypto.KabanetsCai.restriction`: the Boolean function a word function computes on those
+  words.
+* `Cslib.Crypto.KabanetsCai.restrictTable`: the restriction of a finite random-function table.
 
 ## Main results
 
-* `Cslib.BitString.enum_eq_ofFn`: the enumeration of bit strings is in the order of `equivFin`.
-* `Cslib.Crypto.isOraclePPTOn_queryTable`, `Cslib.Crypto.interpret_queryTable`: asking for a table
-  is strict oracle PPT, and against a deterministic oracle returns the first reply bits.
-* `Cslib.Crypto.exists_complexity_restriction_le`: restrictions of a polynomial-time keyed family
-  have polynomial circuits, uniformly in the key.
-* `Cslib.Crypto.uniformOfFintype_map_restrictTable`: a random function restricts to a uniformly
-  random Boolean function.
+* `Cslib.Crypto.KabanetsCai.isOraclePPTOn_queryTable`,
+  `Cslib.Crypto.KabanetsCai.interpret_queryTable`: asking for a table is strict oracle PPT, and
+  against a deterministic oracle returns the first reply bits.
+* `Cslib.Crypto.KabanetsCai.map_tableQueries`: the first reply bits form the truth table of the
+  restriction.
+* `Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le`: restrictions of a polynomial-time
+  keyed family have polynomial circuits, uniformly in the key.
+* `Cslib.Crypto.KabanetsCai.restriction_randomFunctionOracle`,
+  `Cslib.Crypto.KabanetsCai.uniformOfFintype_map_restrictTable`: a random function restricts to a
+  uniformly random Boolean function.
 
 ## References
 
@@ -66,51 +73,7 @@ the enumeration `Cslib.BitString.enumList` (`Cslib.BitString.enum_eq_ofFn`).
 
 @[expose] public section
 
-namespace Cslib.BitString
-
-/-- The number of a bit string with a new first bit. -/
-theorem val_equivFin_cons {k : ℕ} (b : Bool) (z : BitString k) :
-    (equivFin (k + 1) (Fin.cons b z : BitString (k + 1)) : ℕ) = b.toNat + 2 * equivFin k z := by
-  have hbit (b : Bool) : ((finTwoEquiv.symm b : Fin 2) : ℕ) = b.toNat := by cases b <;> rfl
-  simp only [equivFin, Equiv.trans_apply, finFunctionFinEquiv_apply, Fin.sum_univ_succ,
-    Equiv.arrowCongr_apply, Function.comp_apply, Equiv.refl_symm, Equiv.refl_apply, hbit,
-    Fin.val_zero, pow_zero, Nat.mul_one, Fin.val_succ, pow_succ, Fin.cons_zero, Fin.cons_succ,
-    Finset.mul_sum]
-  congr 1
-  exact Finset.sum_congr rfl fun i _ => by ring
-
-/-- **The enumeration is in the order of `equivFin`**: binary order, least significant bit
-first. -/
-theorem enum_eq_ofFn (k : ℕ) : enum k = List.ofFn (equivFin k).symm := by
-  induction k with
-  | zero => exact List.ext_getElem (by simp) fun _ _ _ => Subsingleton.elim _ _
-  | succ k ih =>
-    rw [enum, ih, List.flatMap, List.map_ofFn, List.ofFn_congr (pow_succ 2 k), List.ofFn_mul]
-    congr 1
-    refine List.ofFn_inj.mpr (funext fun i => ?_)
-    simp only [Function.comp_apply, List.ofFn_succ, List.ofFn_zero]
-    congr 1 <;> [skip; congr 1] <;> refine (Equiv.eq_symm_apply _).2 (Fin.ext ?_) <;>
-      simp [val_equivFin_cons] <;> ring
-
-theorem enumList_eq_ofFn (k : ℕ) :
-    enumList k = List.ofFn fun i => List.ofFn ((equivFin k).symm i) := by
-  rw [enumList, enum_eq_ofFn, List.map_ofFn]
-  rfl
-
-/-- Reading a word into a bit string pads it with `false` or truncates it. -/
-theorem ofFn_ofList_eq_take (n : ℕ) (word : List Bool) :
-    List.ofFn (ofList n word) = (word ++ List.replicate n false).take n := by
-  refine List.ext_getElem (by simp) fun i hi _ => ?_
-  simp only [List.length_ofFn] at hi
-  simp only [List.getElem_ofFn, List.getElem_take, ofList, List.getD_eq_getElem?_getD,
-    List.getElem_append]
-  split_ifs with hw
-  · simp [List.getElem?_eq_getElem hw]
-  · simp [List.getElem?_eq_none (by omega : word.length ≤ i)]
-
-end Cslib.BitString
-
-namespace Cslib.Crypto
+namespace Cslib.Crypto.KabanetsCai
 
 open Probability Turing.MultiTapeTM ComputableTidilyInPolyTime Circuits Circuits.Boolean
 
@@ -278,12 +241,48 @@ theorem uniformOfFintype_map_restrictTable {n m : ℕ} (hn : 0 < n) (hm : m ≤ 
   have hemb : Function.Injective emb := fun z z' h => by
     have := congrArg List.ofFn h
     simp only [emb] at this
-    rw [BitString.ofFn_ofList (by simp; omega), BitString.ofFn_ofList (by simp; omega)] at this
+    have hlen (z : BitString m) : (List.replicate (n - m) false ++ List.ofFn z).length = n := by
+      simp only [List.length_append, List.length_replicate, List.length_ofFn]
+      omega
+    rw [BitString.ofFn_ofList (hlen z), BitString.ofFn_ofList (hlen z')] at this
     exact List.ofFn_injective (List.append_cancel_left this)
   refine ⟨fun x _ => if h : ∃ z, emb z = x then φ h.choose else false, funext fun z => ?_⟩
   have hz : ∃ z', emb z' = emb z := ⟨z, rfl⟩
   change (if h : ∃ z', emb z' = emb z then φ h.choose else false) = φ z
   simp only [hz, dite_true]
   rw [hemb hz.choose_spec]
+
+end Cslib.Crypto.KabanetsCai
+
+namespace Cslib.Crypto
+
+@[deprecated (since := "2026-10-19")]
+alias exists_complexity_restriction_le := KabanetsCai.exists_complexity_restriction_le
+
+@[deprecated (since := "2026-10-19")] alias interpret_queryTable := KabanetsCai.interpret_queryTable
+
+@[deprecated (since := "2026-10-19")]
+alias isOraclePPTOn_queryTable := KabanetsCai.isOraclePPTOn_queryTable
+
+@[deprecated (since := "2026-10-19")] alias map_tableQueries := KabanetsCai.map_tableQueries
+
+@[deprecated (since := "2026-10-19")] alias queryTable := KabanetsCai.queryTable
+
+@[deprecated (since := "2026-10-19")] alias queryTableStep := KabanetsCai.queryTableStep
+
+@[deprecated (since := "2026-10-19")] alias restrictTable := KabanetsCai.restrictTable
+
+@[deprecated (since := "2026-10-19")] alias restriction := KabanetsCai.restriction
+
+@[deprecated (since := "2026-10-19")]
+alias restriction_prfOracle := KabanetsCai.restriction_prfOracle
+
+@[deprecated (since := "2026-10-19")]
+alias restriction_randomFunctionOracle := KabanetsCai.restriction_randomFunctionOracle
+
+@[deprecated (since := "2026-10-19")] alias tableQueries := KabanetsCai.tableQueries
+
+@[deprecated (since := "2026-10-19")]
+alias uniformOfFintype_map_restrictTable := KabanetsCai.uniformOfFintype_map_restrictTable
 
 end Cslib.Crypto

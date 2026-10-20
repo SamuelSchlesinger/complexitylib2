@@ -34,21 +34,39 @@ example : bipartitePerfectMatching 3 (fun _ => false) = false := by
 example : Monotone (bipartitePerfectMatching 4) :=
   monotone_bipartitePerfectMatching
 
+-- Hall's theorem: the empty graph on `K_{2,2}` has no perfect matching, as `{0}` has no neighbour.
+example : ¬HasPerfectMatching (fun _ : Fin 2 × Fin 2 => false) := by
+  rw [hasPerfectMatching_iff_forall_card_le]
+  intro h
+  simpa using h {0}
+
+-- The hard direction of Hall's theorem: the graph on `K_{2,2}` without the edge `(0, 0)` satisfies
+-- Hall's condition, so it has a perfect matching.
+example : HasPerfectMatching (fun e : Fin 2 × Fin 2 => decide (e ≠ (0, 0))) :=
+  (hasPerfectMatching_iff_forall_card_le _).2 (by decide)
+
 /-! ### The graphs of the reduction -/
 
-example : HasPerfectMatching (aliceGraph (e := 1) (![true, false, true] : BitString 3)) :=
-  hasPerfectMatching_aliceGraph _
+example :
+    HasPerfectMatching (RazWigderson.aliceGraph (e := 1) (![true, false, true] : BitString 3)) :=
+  RazWigderson.hasPerfectMatching_aliceGraph _
 
-example : ¬HasPerfectMatching (bobGraph (e := 1) (1 : Fin 3) ![false, true, true]) :=
-  not_hasPerfectMatching_bobGraph _ _
+example : ¬HasPerfectMatching (RazWigderson.bobGraph (e := 1) (1 : Fin 3) ![false, true, true]) :=
+  RazWigderson.not_hasPerfectMatching_bobGraph _ _
 
 -- With `x = y = {1, 2}` and `i₀ = 0`, the matching edges at `b₀` and `b₂` are both missing from
 -- Bob's graph.
-example : aliceGraph (e := 0) (![false, true, true] : BitString 3)
-    (.inl (.inl 2), aliceMatching ![false, true, true] (.inl (.inl 2))) = true ∧
-      bobGraph (e := 0) (0 : Fin 3) ![false, true, true]
-        (.inl (.inl 2), aliceMatching ![false, true, true] (.inl (.inl 2))) = false := by
+example : RazWigderson.aliceGraph (e := 0) (![false, true, true] : BitString 3)
+    (.inl (.inl 2), RazWigderson.aliceMatching ![false, true, true] (.inl (.inl 2))) = true ∧
+      RazWigderson.bobGraph (e := 0) (0 : Fin 3) ![false, true, true]
+        (.inl (.inl 2), RazWigderson.aliceMatching ![false, true, true] (.inl (.inl 2))) =
+          false := by
   decide
+
+-- The deprecated names of the vertex and relabelling types still carry their instances.
+set_option linter.deprecated false in
+example : Fintype (RWVertex 2 3) × DecidableEq (RWVertex 2 3) × Fintype (Relabeling 2 3) :=
+  ⟨inferInstance, inferInstance, inferInstance⟩
 
 /-! ### Lower bounds -/
 
@@ -57,6 +75,10 @@ example : PublicCoin.ecomplexityFun (1 / 2 ^ 1) (disjointness : BitString 1 → 
       {y | bipartitePerfectMatching 2 y = false} + 1) :=
   ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching (by norm_num)
     (by norm_num) (by norm_num)
+
+-- The depth is finite (the function is monotone), so the bound below is not vacuous.
+example : Monotone.eformulaDepth (bipartitePerfectMatching (2 ^ 20)) ≠ ⊤ :=
+  Monotone.eformulaDepth_ne_top_iff.2 monotone_bipartitePerfectMatching
 
 example : (126 : ℕ∞) ≤ Monotone.eformulaDepth (bipartitePerfectMatching (2 ^ 20)) := by
   have h := Monotone.le_mul_eformulaDepth_bipartitePerfectMatching_add (2 ^ 20)
@@ -91,10 +113,18 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #print axioms Cslib.Circuits.ecomplexityFun_disjointness_le_mul_ecomplexity_bipartitePerfectMatching
 
 /--
-info: 'Cslib.Circuits.BipartiteMatching.two_mul_card_filter_run_oneRun_le' depends on axioms:
+info: 'Cslib.Circuits.BipartiteMatching.RazWigderson.two_mul_card_filter_run_oneRun_le' depends on
+axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.BipartiteMatching.two_mul_card_filter_run_oneRun_le
+#print axioms Cslib.Circuits.BipartiteMatching.RazWigderson.two_mul_card_filter_run_oneRun_le
+
+/--
+info: 'Cslib.Circuits.BipartiteMatching.RazWigderson.solves_reduction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.BipartiteMatching.RazWigderson.solves_reduction
 
 end ComplexityTests.BipartiteMatching

@@ -53,7 +53,9 @@ theorem preimagePrefix_const_mem_P :
     simpa using hle
   · simp only [Bool.and_eq_true, List.isEmpty_iff, decide_eq_true_eq] at h
     obtain ⟨rfl, hu⟩ := h
-    exact ⟨u ++ List.replicate (n - u.length) false, by simp; omega, List.prefix_append _ _, rfl⟩
+    refine ⟨u ++ List.replicate (n - u.length) false, ?_, List.prefix_append _ _, rfl⟩
+    simp only [List.length_append, List.length_replicate]
+    omega
 
 -- The randomized inverter applies once the preimage-prefix problem is in `BPP`.
 example : ∃ inverter : Inverter, Probability.IsPPT encBits inverter ∧
@@ -61,29 +63,38 @@ example : ∃ inverter : Inverter, Probability.IsPPT encBits inverter ∧
       (ProbComp.eval (inversionGame (fun _ => ([] : List Bool)) inverter n)) :=
   exists_inverter_of_preimagePrefix_mem_BPP (P_subset_BPP preimagePrefix_const_mem_P)
 
+-- Closure of `BPP` under reductions applies to a concrete reduction into a problem in `BPP`.
+example : {b : Bool | b = true} ∈ BPP encBool :=
+  PolyTimeReducible.mem_BPP
+    ⟨fun b => if b then (0, [], []) else (0, [true], []), ComputableTidilyInPolyTime.of_finite _,
+      fun b => by cases b <;> simp [preimagePrefix]⟩
+    (P_subset_BPP preimagePrefix_const_mem_P)
+
 -- Against a deterministic oracle, `queryTable` collects the first reply bits, `false` for an
 -- empty reply.
 example : OracleComp.interpret (ProbOracleComp.handler ProbComp.unifFin
-    fun request => pure (List.reverse request.2)) (queryTable [[true, false], [], [false, true]]) =
-      pure [false, false, true] :=
-  interpret_queryTable _ _ _
+    fun request => pure (List.reverse request.2))
+      (KabanetsCai.queryTable [[true, false], [], [false, true]]) = pure [false, false, true] :=
+  KabanetsCai.interpret_queryTable _ _ _
 
 -- The circuit bound applies to a concrete polynomial-time keyed family.
 example : ∃ c : ℕ, ∀ (key : List Bool) (m : ℕ), m ≤ key.length →
     Circuits.complexity Circuits.Boolean.interpretation
-      (Circuits.single (restriction (fun query => key ++ query) key.length m)) ≤
+      (Circuits.single (KabanetsCai.restriction (fun query => key ++ query) key.length m)) ≤
         c * (3 * key.length + 2) ^ c + 2 :=
-  exists_complexity_restriction_le (family := fun key query => key ++ query) (by fun_prop)
+  KabanetsCai.exists_complexity_restriction_le (family := fun key query => key ++ query)
+    (by fun_prop)
 
 -- A random function restricts to a uniformly random Boolean function.
 example : (Probability.PMF.uniformOfFintype (BitString 3 → BitString 3)).map
-    (restrictTable 3 2 (by norm_num)) = Probability.PMF.uniformOfFintype (BooleanFunction 2) :=
-  uniformOfFintype_map_restrictTable _ (by norm_num)
+    (KabanetsCai.restrictTable 3 2 (by norm_num)) =
+      Probability.PMF.uniformOfFintype (BooleanFunction 2) :=
+  KabanetsCai.uniformOfFintype_map_restrictTable _ (by norm_num)
 
 -- The distinguisher certificate applies to a concrete polynomial-time decider.
 example : Probability.IsOraclePPT Turing.MultiTapeTM.encBool
-    (mcspDistinguisher 0 (fun x => x.2.isEmpty) 3) :=
-  isOraclePPT_mcspDistinguisher 3 (by fun_prop)
+    (KabanetsCai.mcspDistinguisher 0 (fun x => x.2.isEmpty) 3) :=
+  KabanetsCai.isOraclePPT_mcspDistinguisher 3 (by fun_prop)
 
 /--
 info: 'Cslib.Crypto.preimagePrefix_mem_NP' depends on axioms:
@@ -140,6 +151,13 @@ info: 'Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP' depends on axioms:
 #print axioms Cslib.Crypto.OneWay.preimagePrefix_notMem_BPP
 
 /--
+info: 'Cslib.Crypto.OneWay.not_NP_subset_BPP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.not_NP_subset_BPP
+
+/--
 info: 'Cslib.Crypto.OneWay.SAT_notMem_BPP' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -147,18 +165,32 @@ info: 'Cslib.Crypto.OneWay.SAT_notMem_BPP' depends on axioms:
 #print axioms Cslib.Crypto.OneWay.SAT_notMem_BPP
 
 /--
-info: 'Cslib.Crypto.exists_complexity_restriction_le' depends on axioms:
+info: 'Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.exists_complexity_restriction_le
+#print axioms Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le
 
 /--
-info: 'Cslib.Crypto.isOraclePPT_mcspDistinguisher' depends on axioms:
+info: 'Cslib.Crypto.KabanetsCai.uniformOfFintype_map_restrictTable' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isOraclePPT_mcspDistinguisher
+#print axioms Cslib.Crypto.KabanetsCai.uniformOfFintype_map_restrictTable
+
+/--
+info: 'Cslib.Crypto.KabanetsCai.toReal_map_restrictTable_mem_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.KabanetsCai.toReal_map_restrictTable_mem_le
+
+/--
+info: 'Cslib.Crypto.KabanetsCai.isOraclePPT_mcspDistinguisher' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.KabanetsCai.isOraclePPT_mcspDistinguisher
 
 /--
 info: 'Cslib.Crypto.not_pseudorandomFunction_of_MCSP_mem_BPP' depends on axioms:

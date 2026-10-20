@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
 # Diamond graphs
@@ -38,14 +40,23 @@ only the slots of the detours through it makes the graph linear in the size of t
 
 ## Main definitions
 
-* `Cslib.Complexity.Diamond.graph`, with the node labels `Cslib.Complexity.Diamond.topNode`,
-  `Cslib.Complexity.Diamond.rowNode` and `Cslib.Complexity.Diamond.clauseNode`.
+* `Cslib.Complexity.Diamond.graph`, `Cslib.Complexity.Diamond.cycleGraph`: diamond graphs and
+  closed diamond graphs, with the node labels `Cslib.Complexity.Diamond.topNode`,
+  `Cslib.Complexity.Diamond.rowNode` and `Cslib.Complexity.Diamond.clauseNode`, and the detours
+  `Cslib.Complexity.Diamond.Detour`.
 * `Cslib.Complexity.Diamond.WellFormed`, `Cslib.Complexity.Diamond.Satisfiable`.
 
 ## Main results
 
 * `Cslib.Complexity.Diamond.mem_DirHamPath_iff`: Hamiltonian paths of a diamond graph are
   directions of its rows satisfying every clause.
+* `Cslib.Complexity.Diamond.mem_DirHamCycle_iff`: Hamiltonian cycles of a closed diamond graph
+  likewise.
+* `Cslib.Complexity.Diamond.length_vertices`, `Cslib.Complexity.Diamond.length_arcs`: the size of a
+  diamond graph.
+* `Cslib.Complexity.Diamond.computableTidilyInPolyTime_graph`,
+  `Cslib.Complexity.Diamond.computableTidilyInPolyTime_cycleGraph`: diamond graphs are computable
+  in polynomial time from layouts computable in polynomial time.
 
 ## References
 
@@ -108,6 +119,11 @@ def vertices (N : ℕ) (slots : ℕ → ℕ) (M : ℕ) : List ℕ :=
 detours `D`. -/
 def graph (N : ℕ) (slots : ℕ → ℕ) (M : ℕ) (D : List Detour) : Graph :=
   (vertices N slots M, arcs N slots D)
+
+/-- The diamond graph closed by an arc from the bottom of the last diamond to the top of the
+first. -/
+def cycleGraph (N : ℕ) (slots : ℕ → ℕ) (M : ℕ) (D : List Detour) : Graph :=
+  (vertices N slots M, (topNode N, topNode 0) :: arcs N slots D)
 
 /-- The detours go through declared nodes, and the detours across each slot all belong to one
 clause. -/
@@ -232,10 +248,12 @@ theorem length_arcs (N : ℕ) (slots : ℕ → ℕ) (D : List Detour) :
   ring
 
 /-- No arc enters the top of the first diamond. -/
-theorem not_mem_arcs_topNode_zero (u : ℕ) : (u, topNode 0) ∉ arcs N slots D := fun h => by
+theorem notMem_arcs_topNode_zero (u : ℕ) : (u, topNode 0) ∉ arcs N slots D := fun h => by
   rcases mem_arcs.1 h with
       ⟨i, -, ⟨-, h₂ | h₂⟩ | ⟨-, h₂⟩ | ⟨a, -, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩⟩ |
       ⟨d, -, ⟨-, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩ | ⟨-, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩⟩ <;> simp at h₂
+
+@[deprecated (since := "2026-10-19")] alias not_mem_arcs_topNode_zero := notMem_arcs_topNode_zero
 
 /-- Split an arc of the diamond graph into its kinds, simplify the label equations, and close
 position constraints by `omega`. -/
@@ -318,16 +336,16 @@ private theorem clauseNode_nbrs {j u : ℕ} (h : (u, clauseNode j) ∈ arcs N sl
 /-! ### Successors in a list -/
 
 /-- `v` immediately follows `u` in the list `p`. -/
-def Follows (p : List ℕ) (u v : ℕ) : Prop := ∃ i, p[i]? = some u ∧ p[i + 1]? = some v
+private def Follows (p : List ℕ) (u v : ℕ) : Prop := ∃ i, p[i]? = some u ∧ p[i + 1]? = some v
 
-theorem Follows.rel {R : ℕ → ℕ → Prop} {p : List ℕ} (hp : p.IsChain R) {u v : ℕ}
+private theorem Follows.rel {R : ℕ → ℕ → Prop} {p : List ℕ} (hp : p.IsChain R) {u v : ℕ}
     (h : Follows p u v) : R u v := by
   obtain ⟨i, hu, hv⟩ := h
   obtain ⟨hi, rfl⟩ := List.getElem?_eq_some_iff.1 hu
   obtain ⟨hi', rfl⟩ := List.getElem?_eq_some_iff.1 hv
   exact List.isChain_iff_getElem.1 hp i hi'
 
-theorem Follows.right_unique {p : List ℕ} (hnd : p.Nodup) {u v v' : ℕ}
+private theorem Follows.right_unique {p : List ℕ} (hnd : p.Nodup) {u v v' : ℕ}
     (h : Follows p u v) (h' : Follows p u v') : v = v' := by
   obtain ⟨i, hu, hv⟩ := h
   obtain ⟨j, hu', hv'⟩ := h'
@@ -335,7 +353,7 @@ theorem Follows.right_unique {p : List ℕ} (hnd : p.Nodup) {u v v' : ℕ}
     (hnd.getElem?_inj (List.getElem?_eq_some_iff.1 hu).1).1 (hu.trans hu'.symm)
   exact Option.some_injective _ (hv.symm.trans hv')
 
-theorem Follows.left_unique {p : List ℕ} (hnd : p.Nodup) {u u' v : ℕ}
+private theorem Follows.left_unique {p : List ℕ} (hnd : p.Nodup) {u u' v : ℕ}
     (h : Follows p u v) (h' : Follows p u' v) : u = u' := by
   obtain ⟨i, hu, hv⟩ := h
   obtain ⟨j, hu', hv'⟩ := h'
@@ -344,7 +362,7 @@ theorem Follows.left_unique {p : List ℕ} (hnd : p.Nodup) {u u' v : ℕ}
     omega
   exact Option.some_injective _ (hu.symm.trans hu')
 
-theorem Follows.asymm {p : List ℕ} (hnd : p.Nodup) {u v : ℕ} (h : Follows p u v) :
+private theorem Follows.asymm {p : List ℕ} (hnd : p.Nodup) {u v : ℕ} (h : Follows p u v) :
     ¬Follows p v u := by
   rintro ⟨j, hv', hu'⟩
   obtain ⟨i, hu, hv⟩ := h
@@ -352,7 +370,7 @@ theorem Follows.asymm {p : List ℕ} (hnd : p.Nodup) {u v : ℕ} (h : Follows p 
   have h₂ := (hnd.getElem?_inj (List.getElem?_eq_some_iff.1 hv).1).1 (hv.trans hv'.symm)
   omega
 
-theorem exists_follows_of_ne_getLast {p : List ℕ} {v : ℕ} (hv : v ∈ p)
+private theorem exists_follows_of_ne_getLast {p : List ℕ} {v : ℕ} (hv : v ∈ p)
     (hlast : p.getLast? ≠ some v) : ∃ w, Follows p v w := by
   obtain ⟨i, hi⟩ := List.mem_iff_getElem?.1 hv
   have hilt := (List.getElem?_eq_some_iff.1 hi).1
@@ -362,7 +380,7 @@ theorem exists_follows_of_ne_getLast {p : List ℕ} {v : ℕ} (hv : v ∈ p)
     rw [List.getLast?_eq_getElem?, show p.length - 1 = i by omega, hi]
   exact ⟨p[i + 1], i, hi, List.getElem?_eq_getElem this⟩
 
-theorem exists_follows_of_ne_head {p : List ℕ} {v : ℕ} (hv : v ∈ p)
+private theorem exists_follows_of_ne_head {p : List ℕ} {v : ℕ} (hv : v ∈ p)
     (hhead : p.head? ≠ some v) : ∃ u, Follows p u v := by
   obtain ⟨i, hi⟩ := List.mem_iff_getElem?.1 hv
   cases i with
@@ -584,7 +602,7 @@ private theorem exists_detour (hD : WellFormed N slots M D)
 
 /-- A Hamiltonian path of the diamond graph gives directions of the rows satisfying every
 clause. -/
-theorem satisfiable_of_mem (hD : WellFormed N slots M D)
+theorem satisfiable_of_mem_DirHamPath (hD : WellFormed N slots M D)
     (h : (graph N slots M D, topNode 0, topNode N) ∈ DirHamPath) : Satisfiable M D := by
   classical
   obtain ⟨p, hp⟩ := h
@@ -592,6 +610,8 @@ theorem satisfiable_of_mem (hD : WellFormed N slots M D)
   obtain ⟨d, hd, hdj, hiff⟩ := exists_detour hD hp hj
   refine ⟨d, hd, hdj, ?_⟩
   cases hb : d.2.2.2 <;> simp_all
+
+@[deprecated (since := "2026-10-19")] alias satisfiable_of_mem := satisfiable_of_mem_DirHamPath
 
 end PathToDirections
 
@@ -1051,10 +1071,77 @@ from the top of the first diamond to the bottom of the last exactly when its row
 directions so that every clause has a detour in the direction of its row. -/
 theorem mem_DirHamPath_iff (hD : WellFormed N slots M D) :
     (graph N slots M D, topNode 0, topNode N) ∈ DirHamPath ↔ Satisfiable M D := by
-  refine ⟨satisfiable_of_mem hD, fun ⟨dir, hdir⟩ => ?_⟩
+  refine ⟨satisfiable_of_mem_DirHamPath hD, fun ⟨dir, hdir⟩ => ?_⟩
   choose! pick hpick using hdir
   exact ⟨_, isDirHamPath_hamPath (dir := dir) hD fun j hj =>
     ⟨(hpick j hj).1, (hpick j hj).2.1, (hpick j hj).2.2⟩⟩
+
+/-- **Hamiltonian cycles of closed diamond graphs.** A well-formed closed diamond graph has a
+Hamiltonian cycle exactly when its rows can be given directions so that every clause has a detour
+in the direction of its row. -/
+theorem mem_DirHamCycle_iff {N M : ℕ} {slots : ℕ → ℕ} {D : List Detour}
+    (hD : WellFormed N slots M D) :
+    cycleGraph N slots M D ∈ DirHamCycle ↔ Satisfiable M D :=
+  (Graph.mem_DirHamCycle_cons_iff (G := graph N slots M D)
+    (mem_vertices.2 (Or.inl ⟨0, Nat.zero_le _, rfl⟩)) notMem_arcs_topNode_zero).trans
+    (mem_DirHamPath_iff hD)
+
+/-! ### Polynomial time -/
+
+section PolyTime
+
+open Turing.MultiTapeTM ComputableTidilyInPolyTime
+
+/-- Detours encoded with unary clause, row and slot indices. -/
+abbrev encDetour : Detour ↪ List Bool :=
+  encPair encUnary (encPair encUnary (encPair encUnary encBool))
+
+/-- The top nodes are computable in polynomial time from unary indices. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_topNode :
+    ComputableTidilyInPolyTime (fun i => topNode i) encUnary encNat :=
+  unary_to_binary.comp (show ComputableTidilyInPolyTime (fun i => Nat.pair 0 i) _ _ by fun_prop)
+
+/-- The row nodes are computable in polynomial time from unary indices. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_rowNode :
+    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => rowNode p.1 p.2) (encPair encUnary encUnary)
+      encNat :=
+  unary_to_binary.comp (show ComputableTidilyInPolyTime
+    (fun p : ℕ × ℕ => Nat.pair 1 (Nat.pair p.1 p.2)) _ _ by fun_prop)
+
+/-- The clause nodes are computable in polynomial time from unary indices. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_clauseNode :
+    ComputableTidilyInPolyTime (fun j => clauseNode j) encUnary encNat :=
+  unary_to_binary.comp (show ComputableTidilyInPolyTime (fun j => Nat.pair 2 j) _ _ by fun_prop)
+
+/-- A diamond graph is computable in polynomial time from a layout computable in polynomial time,
+with the numbers of diamonds, slots and clauses in unary. -/
+theorem computableTidilyInPolyTime_graph {α : Type} {encIn : α ↪ List Bool} {N M : α → ℕ}
+    {slots : α → ℕ → ℕ} {D : α → List Detour} (hN : ComputableTidilyInPolyTime N encIn encUnary)
+    (hslots : ComputableTidilyInPolyTime (fun p : α × ℕ => slots p.1 p.2)
+      (encPair encIn encUnary) encUnary)
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hD : ComputableTidilyInPolyTime D encIn (encList encDetour)) :
+    ComputableTidilyInPolyTime (fun a => graph (N a) (slots a) (M a) (D a)) encIn encGraph := by
+  unfold graph vertices arcs diamondArcs detourArcs rowLength encGraph
+  fun_prop
+
+/-- A closed diamond graph is computable in polynomial time from a layout computable in polynomial
+time, with the numbers of diamonds, slots and clauses in unary. -/
+theorem computableTidilyInPolyTime_cycleGraph {α : Type} {encIn : α ↪ List Bool} {N M : α → ℕ}
+    {slots : α → ℕ → ℕ} {D : α → List Detour} (hN : ComputableTidilyInPolyTime N encIn encUnary)
+    (hslots : ComputableTidilyInPolyTime (fun p : α × ℕ => slots p.1 p.2)
+      (encPair encIn encUnary) encUnary)
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hD : ComputableTidilyInPolyTime D encIn (encList encDetour)) :
+    ComputableTidilyInPolyTime (fun a => cycleGraph (N a) (slots a) (M a) (D a)) encIn
+      encGraph := by
+  unfold cycleGraph vertices arcs diamondArcs detourArcs rowLength encGraph
+  fun_prop
+
+end PolyTime
 
 end Diamond
 

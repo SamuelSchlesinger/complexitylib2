@@ -58,7 +58,7 @@ noncomputable def iid (μ : PMF α) : (k : ℕ) → PMF (Fin k → α)
   | k + 1 => μ.bind fun a => (iid μ k).map (Fin.cons a)
 
 /-- A tuple of independent draws has the product of the masses of its coordinates. -/
-theorem iid_apply (μ : PMF α) : ∀ {k : ℕ} (v : Fin k → α), iid μ k v = ∏ i, μ (v i)
+@[simp] theorem iid_apply (μ : PMF α) : ∀ {k : ℕ} (v : Fin k → α), iid μ k v = ∏ i, μ (v i)
   | 0, v => by
     rw [iid, Fin.prod_univ_zero, Subsingleton.elim v Fin.elim0, PMF.pure_apply_self]
   | k + 1, v => by
@@ -81,6 +81,11 @@ theorem mem_support_iid_iff (μ : PMF α) {k : ℕ} (v : Fin k → α) :
     v ∈ (iid μ k).support ↔ ∀ i, v i ∈ μ.support := by
   simp only [PMF.mem_support_iff, iid_apply, Finset.prod_ne_zero_iff, Finset.mem_univ,
     forall_const]
+
+@[deprecated mem_support_iid_iff +typeChanged (since := "2026-10-19")]
+theorem mem_support_iid {μ : PMF α} {k : ℕ} {v : Fin k → α} (hv : v ∈ (iid μ k).support) :
+    ∀ i, v i ∈ μ.support :=
+  (mem_support_iid_iff μ v).1 hv
 
 /-- Applying a function to each coordinate of independent draws gives independent draws of the
 image. -/
@@ -158,5 +163,8 @@ theorem iid_card_ge_le {q : PMF Bool} {ε : ℝ}
         have hb : b = 1 - a := by linarith
         rw [hb]
         nlinarith
+
+@[deprecated (since := "2026-10-19")]
+alias toOuterMeasure_iid_le_card_filter_toReal_le := iid_card_ge_le
 
 end Cslib.Probability.PMF

@@ -37,6 +37,7 @@ Boolean functions, are combined with `^^`.
 ## Main results
 
 * `Cslib.BitString.card`: the number of strings of `n` bits.
+* `Cslib.BitString.val_equivFin_cons`: a new first bit is the least significant binary digit.
 * `Cslib.BitString.indexBits_injective`: distinct finite indices have distinct encodings.
 * `Cslib.BitString.add_self`, `Cslib.BitString.add_cancel_left`,
   `Cslib.BitString.add_cancel_right`: every bit string is its own negative.
@@ -61,6 +62,18 @@ variable (n) in
 the least significant bit first. -/
 def equivFin : BitString n ≃ Fin (2 ^ n) :=
   (Equiv.arrowCongr (Equiv.refl (Fin n)) finTwoEquiv.symm).trans finFunctionFinEquiv
+
+/-- A new first bit is the least significant digit of the number of a bit string. -/
+theorem val_equivFin_cons (b : Bool) (z : BitString n) :
+    (equivFin (n + 1) (Fin.cons b z : BitString (n + 1)) : ℕ) = b.toNat + 2 * equivFin n z := by
+  have hbit (b : Bool) : ((finTwoEquiv.symm b : Fin 2) : ℕ) = b.toNat := by cases b <;> rfl
+  simp only [equivFin, Equiv.trans_apply, finFunctionFinEquiv_apply, Fin.sum_univ_succ,
+    Equiv.arrowCongr_apply, Function.comp_apply, Equiv.refl_symm, Equiv.refl_apply, hbit,
+    Fin.val_zero, pow_zero, Nat.mul_one, Fin.val_succ, pow_succ, Fin.cons_zero, Fin.cons_succ,
+    Finset.mul_sum]
+  congr 1
+  exact Finset.sum_congr rfl fun i _ => by
+    rw [Nat.mul_comm (2 ^ (i : ℕ)) 2, Nat.mul_left_comm]
 
 /-- The binary numeral of `i : Fin n` in `⌈log₂ n⌉` bits. -/
 def indexBits (i : Fin n) : BitString (Nat.clog 2 n) :=

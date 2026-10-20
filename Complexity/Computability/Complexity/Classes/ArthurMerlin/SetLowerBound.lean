@@ -95,14 +95,6 @@ namespace SetLowerBound
 
 /-! ### Bit-string helpers -/
 
-/-- A bit string of `k + j` bits is its first `k` bits followed by its last `j` bits. -/
-private theorem ofFn_eq_append {k j : ℕ} (y : BitString (k + j)) :
-    List.ofFn y = List.ofFn ((Fin.appendEquiv k j).symm y).1 ++
-      List.ofFn ((Fin.appendEquiv k j).symm y).2 := by
-  rw [← List.ofFn_fin_append]
-  congr 1
-  exact ((Fin.appendEquiv k j).apply_symm_apply y).symm
-
 /-- A string has no bit `true` exactly when it is zero. -/
 private theorem not_any_ofFn_eq_true_iff {k : ℕ} (v : BitString k) :
     (!(List.ofFn v).any fun b => b) = true ↔ v = 0 := by
@@ -174,7 +166,7 @@ theorem computableTidilyInPolyTime_verifier {N c m T : Polynomial ℕ} {ℓ : α
     (hR : ComputableTidilyInPolyTime R (encPair enc encBits) encBool) :
     ComputableTidilyInPolyTime (verifier enc N c m T ℓ R) (encPair enc encBits) encBool := by
   unfold verifier
-  simp only []
+  dsimp only
   fun_prop
 
 /-- On a seed, an element and five certificates, the verifier accepts exactly when the blocks of
@@ -193,7 +185,7 @@ theorem verifier_ofFn_append {N c m T : Polynomial ℕ} {ℓ : α → ℕ} {R : 
       BitString.LinearHash.affineHash (seedEquiv _ _ r) e = 0 := by
   simp only [verifier, Bool.and_eq_true, List.all_eq_true, List.mem_range]
   generalize (enc a).length = n at r e z ⊢
-  have hr := ofFn_eq_append r
+  have hr := BitString.ofFn_eq_append r
   have hdrop : (List.ofFn r ++ (List.ofFn e ++ List.ofFn z)).drop
       (m.eval n * (5 * N.eval n + T.eval n) + m.eval n) = List.ofFn e ++ List.ofFn z :=
     List.drop_left' List.length_ofFn
@@ -236,7 +228,7 @@ theorem exists_verifier_iff {N c m T : Polynomial ℕ} {ℓ : α → ℕ} {R : �
   rw [mem_image]
   constructor
   · rintro ⟨y, hy⟩
-    rw [ofFn_eq_append y, verifier_ofFn_append] at hy
+    rw [BitString.ofFn_eq_append y, verifier_ofFn_append] at hy
     obtain ⟨hrows, hpad, hzero⟩ := hy
     refine ⟨_, mem_filter.2 ⟨mem_univ _, fun i => mem_filter.2 ⟨mem_univ _, _, hrows i⟩, hpad⟩,
       hzero⟩
@@ -294,14 +286,16 @@ theorem mem_AM_of_card_certifiedSet {N c : Polynomial ℕ} {R : α × List Bool 
   set n := (enc a).length
   have hTm : T.eval n = m.eval n + 2 := by simp [hT, hm]
   set S := certifiedSet enc N c R a
-  have hcard := card_amplifiedSet S (show ℓ a ≤ T.eval n by simp [hT]; linarith [hB a])
+  have hcard := card_amplifiedSet S (show ℓ a ≤ T.eval n by
+    simp only [hT, Polynomial.eval_add, Polynomial.eval_ofNat]; linarith [hB a])
   have hh := (BitString.LinearHash.isPairwiseIndependentHash_affineHash
-    (5 * N.eval n + T.eval n) (m.eval n)).comp_equiv (seedEquiv _ _)
+    (m.eval n) (5 * N.eval n + T.eval n)).comp_seedEquiv (seedEquiv _ _)
   have hY : Fintype.card (BitString (m.eval n)) = 2 ^ m.eval n := BitString.card
   have hKℓ : 2 ^ ℓ a ≤ K a ^ 5 := Nat.pow_log_le_self 2 (pow_ne_zero 5 (hKpos a).ne')
   have hKℓ' : K a ^ 5 < 2 ^ (ℓ a + 1) := Nat.lt_pow_succ_log_self (by norm_num) _
   have hsplit : 2 ^ T.eval n = 2 ^ ℓ a * 2 ^ (T.eval n - ℓ a) := by
-    rw [← pow_add, Nat.add_sub_cancel' (by simp [hT]; linarith [hB a])]
+    rw [← pow_add, Nat.add_sub_cancel' (by
+      simp only [hT, Polynomial.eval_add, Polynomial.eval_ofNat]; linarith [hB a])]
   have h4 : 2 ^ T.eval n = 4 * 2 ^ m.eval n := by rw [hTm, pow_add]; ring
   constructor
   · -- members: the amplified set has at least `4 ⬝ 2 ^ m(n)` elements
