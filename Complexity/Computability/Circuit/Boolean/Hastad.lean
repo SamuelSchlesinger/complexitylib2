@@ -57,6 +57,11 @@ every free bit. The counted form also bounds the Fourier tails of small circuits
   functions computes a narrow formula in disjunctive normal form, up to negation.
 * `Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_not_shallow_le`: the switching lemma
   for one operation applied to shallow functions.
+* `Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_not_shallow_le_of_ne_not`: the
+  switching lemma for a conjunction or disjunction of functions of decision tree depth at most
+  `k`, leaving a `1 / (16 k + 1)` fraction of the free bits.
+* `Cslib.BitString.PartialAssignment.mul_card_filter_withFree_le`: two stages of restrictions,
+  counted.
 * `Cslib.Circuits.Boolean.Unbounded.two_pow_mul_card_filter_exists_not_shallow_le`: random
   restrictions make small circuits of constant depth shallow.
 * `Cslib.Circuits.Boolean.Unbounded.two_pow_le_size_of_computes_parity`: Håstad's theorem for
@@ -76,6 +81,63 @@ every free bit. The counted form also bounds the Fourier tails of small circuits
 -/
 
 @[expose] public section
+
+namespace Cslib.BitString.PartialAssignment
+
+open Finset
+
+variable {n : ℕ}
+
+/-- **Two stages of restrictions, counted.** Drawing a restriction with `ℓ'` free bits by first
+drawing one with `ℓ ≥ ℓ'` free bits and then an extension of it: if at most a `G / c` fraction of
+the restrictions with `ℓ` free bits satisfy `B`, and for each other one at most an `H / c` fraction
+of its extensions with `ℓ'` free bits satisfy `B'`, then at most a `(G + H) / c` fraction of the
+restrictions with `ℓ'` free bits satisfy `B'`. -/
+theorem mul_card_filter_withFree_le {c G H G' ℓ ℓ' : ℕ} (hℓ'ℓ : ℓ' ≤ ℓ) (hℓn : ℓ ≤ n)
+    {B B' : PartialAssignment (Fin n) → Prop} [DecidablePred B] [DecidablePred B']
+    (h₁ : c * #{ρ ∈ withFree (Fin n) ℓ | B ρ} ≤ G * #(withFree (Fin n) ℓ))
+    (h₂ : ∀ ρ ∈ withFree (Fin n) ℓ, ¬ B ρ →
+      c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} ≤ H * #(ρ.extensions ℓ'))
+    (hG : G + H ≤ G') :
+    c * #{ρ ∈ withFree (Fin n) ℓ' | B' ρ} ≤ G' * #(withFree (Fin n) ℓ') := by
+  set W := withFree (Fin n) ℓ
+  set F := (n - ℓ').choose (ℓ - ℓ')
+  have hF : 0 < F := Nat.choose_pos (by omega)
+  set T := ℓ.choose ℓ' * 2 ^ (ℓ - ℓ')
+  have hT : ∀ ρ ∈ W, #(ρ.extensions ℓ') = T := fun ρ hρ => by
+    rw [card_extensions, mem_withFree.1 hρ]
+  -- each restriction with `ℓ` free bits has few bad extensions, unless it satisfies `B`
+  have hper : ∀ ρ ∈ W, c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} ≤
+      (if B ρ then c else 0) * T + H * T := fun ρ hρ => by
+    by_cases hb : B ρ
+    · simp only [hb, ↓reduceIte]
+      rw [← hT ρ hρ]
+      exact (Nat.mul_le_mul_left _ (card_filter_le _ _)).trans (Nat.le_add_right _ _)
+    · simp only [hb, ↓reduceIte, zero_mul, zero_add]
+      rw [← hT ρ hρ]
+      exact h₂ ρ hρ hb
+  -- double counting the extensions, with and without the condition
+  have hdc := sum_card_filter_extensions B' hℓ'ℓ
+  have hall := sum_card_filter_extensions (ι := Fin n) (fun _ => True) hℓ'ℓ
+  simp only [filter_true] at hall
+  rw [Fintype.card_fin] at hdc hall
+  rw [sum_congr rfl hT, sum_const, smul_eq_mul] at hall
+  refine Nat.le_of_mul_le_mul_right (?_ : _ * F ≤ _ * F) hF
+  calc c * #{ρ ∈ withFree (Fin n) ℓ' | B' ρ} * F
+      = ∑ ρ ∈ W, c * #{ρ' ∈ ρ.extensions ℓ' | B' ρ'} := by
+        rw [mul_assoc, ← hdc, mul_sum]
+    _ ≤ ∑ ρ ∈ W, ((if B ρ then c else 0) * T + H * T) := sum_le_sum hper
+    _ = c * #{ρ ∈ W | B ρ} * T + #W * H * T := by
+        rw [sum_add_distrib, ← sum_mul, sum_ite, sum_const_zero, add_zero, sum_const,
+          smul_eq_mul, sum_const, smul_eq_mul]
+        ring
+    _ ≤ G * #W * T + #W * H * T := by gcongr
+    _ = (G + H) * #(withFree (Fin n) ℓ') * F := by
+        rw [mul_assoc _ #(withFree (Fin n) ℓ'), ← hall]
+        ring
+    _ ≤ G' * #(withFree (Fin n) ℓ') * F := by gcongr
+
+end Cslib.BitString.PartialAssignment
 
 namespace Cslib.Circuits.Boolean
 
@@ -102,6 +164,11 @@ theorem Shallow.mono {f : BitString n → Bool} (hf : Shallow s ρ f) (h : ρ'.E
       DecisionTree.complexity fun y => f (ρ.fill y) :=
     complexity_comp_fill_le ρ' fun y => f (ρ.fill y)
   simpa only [PartialAssignment.fill_fill_of_extends h] using this
+
+/-- A function shallow for one bound is shallow for every larger bound. -/
+theorem Shallow.of_le {f : BitString n → Bool} {s' : ℕ} (h : Shallow s ρ f) (hs : s ≤ s') :
+    Shallow s' ρ f :=
+  lt_of_lt_of_le h hs
 
 /-- The input bits are shallow. -/
 theorem shallow_proj (hs : 2 ≤ s) (ρ : PartialAssignment (Fin n)) (i : Fin n) :
@@ -172,6 +239,27 @@ theorem exists_dnf_of_shallow {op : Op} (hop : op ≠ .not) {args : Fin op.arity
     obtain ⟨D, hD, heval⟩ := exists_dnf_of_trees false t hd
     exact ⟨D, false, hD, fun y => by simp [heval, ht]⟩
 
+/-- **The switching step for a conjunction or disjunction.** If the arguments of a conjunction or
+disjunction have decision tree depth at most `k` under `ρ`, at most `#E(ℓ - s) (4k)^s` of the
+extensions of `ρ` with `ℓ` free bits leave it `s`-deep, where `E(m)` are the extensions of `ρ` with
+`m` free bits. -/
+theorem card_filter_not_shallow_le_of_ne_not {op : Op} (hop : op ≠ .not) {k : ℕ}
+    {args : Fin op.arity → BitString n → Bool} (h : ∀ j, Shallow (k + 1) ρ (args j)) (ℓ s : ℕ) :
+    #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
+      #(ρ.extensions (ℓ - s)) * (4 * k) ^ s := by
+  obtain ⟨D, b, hD, heval⟩ := exists_dnf_of_shallow hop h
+  refine (card_le_card fun ρ' hρ' => ?_).trans (DNF.card_switching_le
+    (fun t ht => Nat.lt_succ_iff.1 (hD t ht).1) (fun t ht => (hD t ht).2) ρ ℓ s)
+  obtain ⟨hρ', hdeep⟩ := mem_filter.1 hρ'
+  refine mem_filter.2 ⟨hρ', ?_⟩
+  have hext := (PartialAssignment.mem_extensions.1 hρ').1
+  have : (fun x => DNF.eval (ρ'.fill x) D) =
+      (· != b) ∘ fun x => interpretation op (fun j => args j (ρ.fill (ρ'.fill x))) := by
+    funext x
+    rw [heval, Function.comp_apply]
+  rw [this, complexity_comp_of_injective (by cases b <;> decide)]
+  simpa only [PartialAssignment.fill_fill_of_extends hext] using not_lt.1 hdeep
+
 /-- **The switching step for one operation.** If the arguments of an operation are shallow under
 `ρ`, few extensions of `ρ` leave it deep. -/
 theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString n → Bool}
@@ -184,27 +272,15 @@ theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString 
     rw [filter_false_of_mem fun ρ' hρ' => not_not.2 (hG.mono
       (PartialAssignment.mem_extensions.1 hρ').1)]
     simp
-  obtain ⟨D, b, hD, heval⟩ := exists_dnf_of_shallow hop h
-  refine (card_le_card fun ρ' hρ' => ?_).trans (DNF.card_switching_le
-    (fun t ht => (hD t ht).1.le) (fun t ht => (hD t ht).2) ρ ℓ s)
-  obtain ⟨hρ', hdeep⟩ := mem_filter.1 hρ'
-  refine mem_filter.2 ⟨hρ', ?_⟩
-  have hext := (PartialAssignment.mem_extensions.1 hρ').1
-  have : (fun x => DNF.eval (ρ'.fill x) D) =
-      (· != b) ∘ fun x => interpretation op (fun j => args j (ρ.fill (ρ'.fill x))) := by
-    funext x
-    rw [heval, Function.comp_apply]
-  rw [this, complexity_comp_of_injective (by cases b <;> decide)]
-  simpa only [PartialAssignment.fill_fill_of_extends hext] using not_lt.1 hdeep
+  exact card_filter_not_shallow_le_of_ne_not hop (fun j => (h j).of_le s.le_succ) ℓ s
 
-/-- **The switching fraction for one operation**: if the arguments of an operation are shallow
-under `ρ`, at most a `2 ^ (-s)` fraction of the extensions of `ρ` with `ℓ` free bits leave it
-deep, when `s ≤ ℓ` and `ℓ` is at most a `1 / (16 s + 1)` fraction of the free bits of `ρ`. -/
-theorem two_pow_mul_card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString n → Bool}
-    (h : ∀ j, Shallow s ρ (args j)) {ℓ : ℕ} (hsℓ : s ≤ ℓ) (hℓ : (16 * s + 1) * ℓ ≤ #ρ.free) :
-    2 ^ s * #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
-      #(ρ.extensions ℓ) := by
-  refine (Nat.mul_le_mul_left _ (card_filter_not_shallow_le h ℓ)).trans ?_
+/-- At most `#E(ℓ - s) (4k)^s` extensions of `ρ` are at most a `2 ^ (-s)` fraction of those with
+`ℓ` free bits, when `s ≤ ℓ` and `ℓ` is at most a `1 / (16 k + 1)` fraction of the free bits of
+`ρ`. -/
+private theorem two_pow_mul_le_card_extensions {X k ℓ : ℕ}
+    (hX : X ≤ #(ρ.extensions (ℓ - s)) * (4 * k) ^ s) (hsℓ : s ≤ ℓ)
+    (hℓ : (16 * k + 1) * ℓ ≤ #ρ.free) : 2 ^ s * X ≤ #(ρ.extensions ℓ) := by
+  refine (Nat.mul_le_mul_left _ hX).trans ?_
   rw [PartialAssignment.card_extensions, PartialAssignment.card_extensions]
   set m := #ρ.free
   have hℓm : ℓ ≤ m := le_trans (Nat.le_mul_of_pos_left ℓ (by omega)) hℓ
@@ -212,13 +288,33 @@ theorem two_pow_mul_card_filter_not_shallow_le {op : Op} {args : Fin op.arity �
     rw [← pow_add]
     congr 1
     omega
-  calc 2 ^ s * (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * s) ^ s)
-      = (16 * s) ^ s * m.choose (ℓ - s) * 2 ^ (m - ℓ) := by
-        rw [h2, show (16 * s) ^ s = 2 ^ s * 2 ^ s * (4 * s) ^ s by
+  calc 2 ^ s * (m.choose (ℓ - s) * 2 ^ (m - (ℓ - s)) * (4 * k) ^ s)
+      = (16 * k) ^ s * m.choose (ℓ - s) * 2 ^ (m - ℓ) := by
+        rw [h2, show (16 * k) ^ s = 2 ^ s * 2 ^ s * (4 * k) ^ s by
           rw [← mul_pow, ← mul_pow]; ring_nf]
         ring
     _ ≤ m.choose ℓ * 2 ^ (m - ℓ) :=
         Nat.mul_le_mul_right _ (Nat.pow_mul_choose_sub_le_choose_of_mul_le hsℓ hℓ)
+
+/-- **The switching fraction for a conjunction or disjunction**: if its arguments have decision
+tree depth at most `k` under `ρ`, at most a `2 ^ (-s)` fraction of the extensions of `ρ` with `ℓ`
+free bits leave it `s`-deep, when `s ≤ ℓ` and `ℓ` is at most a `1 / (16 k + 1)` fraction of the
+free bits of `ρ`. For arguments that are literals, `k = 1` and the fraction is `1 / 17`. -/
+theorem two_pow_mul_card_filter_not_shallow_le_of_ne_not {op : Op} (hop : op ≠ .not) {k : ℕ}
+    {args : Fin op.arity → BitString n → Bool} (h : ∀ j, Shallow (k + 1) ρ (args j)) {ℓ : ℕ}
+    (hsℓ : s ≤ ℓ) (hℓ : (16 * k + 1) * ℓ ≤ #ρ.free) :
+    2 ^ s * #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
+      #(ρ.extensions ℓ) :=
+  two_pow_mul_le_card_extensions (card_filter_not_shallow_le_of_ne_not hop h ℓ s) hsℓ hℓ
+
+/-- **The switching fraction for one operation**: if the arguments of an operation are shallow
+under `ρ`, at most a `2 ^ (-s)` fraction of the extensions of `ρ` with `ℓ` free bits leave it
+deep, when `s ≤ ℓ` and `ℓ` is at most a `1 / (16 s + 1)` fraction of the free bits of `ρ`. -/
+theorem two_pow_mul_card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString n → Bool}
+    (h : ∀ j, Shallow s ρ (args j)) {ℓ : ℕ} (hsℓ : s ≤ ℓ) (hℓ : (16 * s + 1) * ℓ ≤ #ρ.free) :
+    2 ^ s * #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
+      #(ρ.extensions ℓ) :=
+  two_pow_mul_le_card_extensions (card_filter_not_shallow_le h ℓ) hsℓ hℓ
 
 /-! ### Programs -/
 
@@ -293,59 +389,22 @@ theorem two_pow_mul_card_filter_exists_not_shallow_le {p : Program signature n g
     have ih := ih (by omega)
     set ℓ := n / (16 * s + 1) ^ j
     set ℓ' := n / (16 * s + 1) ^ (j + 1)
-    set W := PartialAssignment.withFree (Fin n) ℓ
-    set B : ℕ → PartialAssignment (Fin n) → Prop := fun i ρ =>
-      ∃ k, p.depths k ≤ i ∧ ¬ Shallow s ρ fun x => p.eval interpretation x k
-    set H := #{k | p.depths k = j + 1}
     have hsℓ' : s ≤ ℓ' := Nat.le_div_pow_of_mul_pow_le (by omega) hj hn
     have hℓ : (16 * s + 1) * ℓ' ≤ ℓ := Nat.mul_div_pow_succ_le n _ j
-    have hℓn : ℓ ≤ n := Nat.div_le_self _ _
     have hℓ'ℓ : ℓ' ≤ ℓ := le_trans (Nat.le_mul_of_pos_left _ (by omega)) hℓ
-    set F := (n - ℓ').choose (ℓ - ℓ')
-    have hF : 0 < F := Nat.choose_pos (by omega)
-    set T := ℓ.choose ℓ' * 2 ^ (ℓ - ℓ')
-    have hT : ∀ ρ ∈ W, #(ρ.extensions ℓ') = T := fun ρ hρ => by
-      rw [PartialAssignment.card_extensions, PartialAssignment.mem_withFree.1 hρ]
-    -- each restriction with `ℓ` free bits has few bad extensions, unless it is bad itself
-    have hper : ∀ ρ ∈ W, 2 ^ s * #{ρ' ∈ ρ.extensions ℓ' | B (j + 1) ρ'} ≤
-        (if B j ρ then 2 ^ s else 0) * T + H * T := fun ρ hρ => by
-      by_cases hb : B j ρ
-      · simp only [hb, ↓reduceIte]
-        rw [← hT ρ hρ]
-        exact (Nat.mul_le_mul_left _ (card_filter_le _ _)).trans (Nat.le_add_right _ _)
-      · simp only [hb, ↓reduceIte, zero_mul, zero_add]
-        rw [← hT ρ hρ]
-        refine two_pow_mul_card_filter_extensions_le hs hsℓ'
-          ((PartialAssignment.mem_withFree.1 hρ).symm ▸ hℓ) fun k hk => ?_
-        by_contra h
-        exact hb ⟨k, hk, h⟩
     -- the gates of depth at most `j + 1`
-    have hG : #{k | p.depths k ≤ j + 1} = #{k | p.depths k ≤ j} + H := by
+    have hG : #{k | p.depths k ≤ j} + #{k | p.depths k = j + 1} ≤ #{k | p.depths k ≤ j + 1} := by
       rw [← card_union_of_disjoint (disjoint_filter.2 fun k _ h₁ h₂ => by omega)]
-      congr 1
-      ext k
-      simp only [mem_filter, mem_univ, true_and, mem_union]
+      refine card_le_card fun k hk => ?_
+      simp only [mem_filter, mem_univ, true_and, mem_union] at hk ⊢
       omega
-    -- double counting the extensions, with and without the condition
-    have hdc := PartialAssignment.sum_card_filter_extensions (B (j + 1)) hℓ'ℓ
-    have hall := PartialAssignment.sum_card_filter_extensions (ι := Fin n) (fun _ => True) hℓ'ℓ
-    simp only [filter_true] at hall
-    rw [Fintype.card_fin] at hdc hall
-    rw [sum_congr rfl hT, sum_const, smul_eq_mul] at hall
-    refine Nat.le_of_mul_le_mul_right (?_ : _ * F ≤ _ * F) hF
-    calc 2 ^ s * #{ρ ∈ PartialAssignment.withFree (Fin n) ℓ' | B (j + 1) ρ} * F
-        = ∑ ρ ∈ W, 2 ^ s * #{ρ' ∈ ρ.extensions ℓ' | B (j + 1) ρ'} := by
-          rw [mul_assoc, ← hdc, mul_sum]
-      _ ≤ ∑ ρ ∈ W, ((if B j ρ then 2 ^ s else 0) * T + H * T) := sum_le_sum hper
-      _ = 2 ^ s * #{ρ ∈ W | B j ρ} * T + #W * H * T := by
-          rw [sum_add_distrib, ← sum_mul, sum_ite, sum_const_zero, add_zero, sum_const,
-            smul_eq_mul, sum_const, smul_eq_mul]
-          ring
-      _ ≤ #{k | p.depths k ≤ j} * #W * T + #W * H * T := by
-          gcongr
-      _ = #{k | p.depths k ≤ j + 1} * #(PartialAssignment.withFree (Fin n) ℓ') * F := by
-          rw [mul_assoc _ #(PartialAssignment.withFree (Fin n) ℓ'), hG, ← hall]
-          ring
+    -- each restriction with `ℓ` free bits has few bad extensions, unless it is bad itself
+    refine PartialAssignment.mul_card_filter_withFree_le hℓ'ℓ (Nat.div_le_self _ _) ih
+      (fun ρ hρ hb => ?_) hG
+    refine two_pow_mul_card_filter_extensions_le hs hsℓ'
+      ((PartialAssignment.mem_withFree.1 hρ).symm ▸ hℓ) fun k hk => ?_
+    by_contra h
+    exact hb ⟨k, hk, h⟩
 
 /-! ### Circuits -/
 

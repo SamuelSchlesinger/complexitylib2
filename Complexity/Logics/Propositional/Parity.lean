@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Parity
+public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Logics.Propositional.DNF
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Fintype.BigOperators
@@ -24,6 +25,10 @@ as `g` has isolated true inputs (`DNF.card_isolatedInputs_le_length`), and duall
 conjunctive normal form has at least as many clauses as isolated false inputs. Every input is
 isolated for parity, so its normal forms on `n ≥ 1` bits have at least `2 ^ (n - 1)` terms or
 clauses (`DNF.two_pow_le_length_of_eval_eq_parity`, `CNF.two_pow_le_length_of_eval_eq_parity`).
+The same flip shows that a formula in disjunctive normal form whose terms have fewer literals than
+a partial assignment has free bits does not compute the parity of the bits it fills in, up to
+negation (`DNF.not_forall_eval_eq_parity_fill_bne`); this ends Håstad's argument for circuits of
+constant depth.
 
 ORs of formulas in conjunctive normal form for parity, of depth three, are in
 `Parity/DepthThree.lean`.
@@ -36,6 +41,8 @@ ORs of formulas in conjunctive normal form for parity, of depth three, are in
 * `Cslib.Logic.PL.DNF.two_pow_le_length_of_eval_eq_parity`,
   `Cslib.Logic.PL.CNF.two_pow_le_length_of_eval_eq_parity`: normal forms of parity have at least
   `2 ^ (n - 1)` terms or clauses.
+* `Cslib.Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne`: narrow formulas in disjunctive normal
+  form do not compute restricted parity.
 -/
 
 @[expose] public section
@@ -45,6 +52,12 @@ namespace Cslib.Logic.PL
 open Finset Function
 
 variable {n : ℕ}
+
+/-- Flipping a variable that a term does not mention does not change its value. -/
+theorem Term.eval_update_of_forall_ne {V : Type*} [DecidableEq V] {t : Term V} {i : V}
+    (hi : ∀ l ∈ t, l.1 ≠ i) (x : V → Bool) (b : Bool) : t.eval (update x i b) = t.eval x := by
+  rw [Bool.eq_iff_iff, Term.eval_eq_true_iff, Term.eval_eq_true_iff]
+  exact forall₂_congr fun l hl => by rw [update_of_ne (hi l hl)]
 
 /-- **A formula in disjunctive normal form has a term per isolated true input** of the function it
 computes. -/
@@ -60,12 +73,8 @@ theorem DNF.card_isolatedInputs_le_length {g : BitString n → Bool} {D : DNF (F
   have hall : ∀ x ∈ S, ∀ i : Fin n, ∃ b, (i, b) ∈ T x := fun x hx i => by
     by_contra h'
     have h := not_exists.1 h'
-    have hflip : (T x).eval (update x i !x i) = true := by
-      have hx' := (Term.eval_eq_true_iff x _).1 (hTx x hx)
-      refine (Term.eval_eq_true_iff _ _).2 fun l hl => ?_
-      have hli : l.1 ≠ i := fun hli => h l.2 (hli ▸ hl)
-      rw [update_of_ne hli]
-      exact hx' l hl
+    have hflip : (T x).eval (update x i !x i) = true :=
+      (Term.eval_update_of_forall_ne (fun l hl hli => h l.2 (hli ▸ hl)) x _).trans (hTx x hx)
     have h1 := (hD _).symm.trans ((DNF.eval_eq_true_iff _ D).2 ⟨T x, hT x hx, hflip⟩)
     rw [(BitString.mem_isolatedInputs.1 hx).2 i] at h1
     exact Bool.false_ne_true h1
@@ -112,5 +121,44 @@ theorem CNF.two_pow_le_length_of_eval_eq_parity (hn : 1 ≤ n) {φ : CNF (Fin n)
   congr 1
   ext x
   simp +contextual [parity_update_not]
+
+/-- **Narrow formulas in disjunctive normal form miss restricted parity.** If every term of `D` has
+fewer literals than `ρ` has free bits, and `ρ` has a free bit, then `D` does not compute the parity
+of the bits filled in by `ρ`, up to negation: a satisfied term misses a free bit, and flipping it
+keeps the term satisfied but flips the parity. -/
+theorem DNF.not_forall_eval_eq_parity_fill_bne {ρ : BitString.PartialAssignment (Fin n)}
+    {D : DNF (Fin n)} (hD : ∀ t ∈ D, t.length < #ρ.free) (hρ : ρ.free.Nonempty) (c : Bool) :
+    ¬ ∀ y, DNF.eval y D = (parity n (ρ.fill y) != c) := by
+  intro h
+  -- flipping a free bit flips restricted parity
+  have hflip : ∀ y i, i ∈ ρ.free → parity n (ρ.fill (update y i !y i)) = !parity n (ρ.fill y) :=
+    fun y i hi => by
+      have hρi := BitString.PartialAssignment.mem_free.1 hi
+      rw [BitString.PartialAssignment.fill_update_of_eq_none hρi,
+        ← BitString.PartialAssignment.fill_of_eq_none hρi y, parity_update_not]
+  -- some input makes the right side true
+  obtain ⟨i₀, hi₀⟩ := hρ
+  obtain ⟨y, hy⟩ : ∃ y, (parity n (ρ.fill y) != c) = true := by
+    by_cases h0 : (parity n (ρ.fill fun _ => false) != c) = true
+    · exact ⟨_, h0⟩
+    · refine ⟨update (fun _ => false) i₀ (!false), ?_⟩
+      rw [hflip _ i₀ hi₀]
+      revert h0
+      cases parity n (ρ.fill fun _ => false) <;> cases c <;> simp
+  obtain ⟨t, ht, hty⟩ := (DNF.eval_eq_true_iff y D).1 ((h y).trans hy)
+  -- the term misses a free bit, and stays true when it flips
+  obtain ⟨i, hi, hit⟩ : ∃ i ∈ ρ.free, i ∉ t.map Prod.fst := by
+    by_contra! hsub
+    have hle : #ρ.free ≤ t.length :=
+      (card_le_card fun i hi => List.mem_toFinset.2 (hsub i hi)).trans
+        ((List.toFinset_card_le _).trans_eq (by simp))
+    exact absurd (hD t ht) (by omega)
+  have hty' : t.eval (update y i !y i) = true :=
+    (Term.eval_update_of_forall_ne (fun l hl hli => hit (List.mem_map.2 ⟨l, hl, hli⟩)) y _).trans
+      hty
+  have h1 := (h _).symm.trans ((DNF.eval_eq_true_iff _ D).2 ⟨t, ht, hty'⟩)
+  rw [hflip y i hi] at h1
+  revert hy h1
+  cases parity n (ρ.fill y) <;> cases c <;> simp
 
 end Cslib.Logic.PL
