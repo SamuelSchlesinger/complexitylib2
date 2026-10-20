@@ -256,6 +256,36 @@ These uniform verifier closure results support the gap amplification below.
 \end{result}
 
 \begin{result}
+\subsection{Exact terminal branches and canonical certificates}
+Fix a shared-core multi-tape machine with lists of transition occurrences, an
+input and an initial configuration $c$. A branch records each chosen list index
+and stops at its first halted configuration. For every clock $T$, the finite
+branch set consists exactly of the terminal traces of length at most $T$;
+equal actions and distinct actions with the same successor retain their separate
+occurrences. Padding a trace with zeros to length $T$ is a bijection onto all
+length-$T$ index lists on which the explicit replay decoder succeeds.
+
+The bijection preserves the final configuration and hence both terminal counts:
+output $[\mathsf{true}]$ accepts, and every other terminal output rejects.
+Out-of-range choices, a running endpoint and nonzero post-halt padding are invalid
+for both classifiers. If every branch halts within $T$ and every running
+configuration on those branches has a nonempty choice list, increasing the clock
+preserves the branches and both counts. Finite control and a fixed finite alphabet
+also give one input-independent bound on local occurrence-list lengths.
+
+This is a combinatorial prerequisite for the classical counting-machine
+characterizations.\citep{Valiant1979,FennerFortnowKurtz1994}
+The certificates here contain natural-number indices. A certified polynomial-time
+binary checker, the reverse verifier-to-machine construction and the resulting
+$\#\cc{P}$ and $\cc{GapP}$ characterizations remain open.
+\declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting.lean}{187}{Turing.MultiTapeCTM.mem_branches_iff}
+\declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean}{184}{Turing.MultiTapeCTM.padCertificate_bijOn}
+\declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean}{236}{Turing.MultiTapeCTM.certificateCounts_eq}
+\declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting.lean}{233}{Turing.MultiTapeCTM.HaltsWithin.branches_eq}
+\declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting.lean}{308}{Turing.MultiTapeCTM.exists_branchBound}
+\end{result}
+
+\begin{result}
 \subsection{Relativized counting and majority verifiers}
 For every language oracle $A\subseteq\{0,1\}^*$ and fixed injective input encoding,
 $\#\cc{P}^A$ counts accepted Boolean witnesses of exactly $p(|x|)$ bits using a deterministic
