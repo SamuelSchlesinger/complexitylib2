@@ -55,6 +55,12 @@ theorem ofDigits_ofFn_lt {B d : ℕ} (hB : 1 < B) (x : Fin d → ℕ)
   simpa only [List.length_ofFn] using ofDigits_lt_base_pow_length hB
     (show ∀ a ∈ List.ofFn x, a < B by simpa using hx)
 
+theorem ofDigits_ofFn_inj {B d : ℕ} (hB : 1 < B) {x y : Fin d → ℕ}
+    (hx : ∀ i, x i < B) (hy : ∀ i, y i < B)
+    (h : ofDigits B (List.ofFn x) = ofDigits B (List.ofFn y)) : x = y := by
+  exact List.ofFn_injective (ofDigits_inj_of_len_eq hB (by simp)
+    (by simpa using hx) (by simpa using hy) h)
+
 /-- Fixed-length digits exist for every fitting value, including the empty tuple at zero. -/
 theorem exists_ofDigits_ofFn {B d v : ℕ} (hv : v < B ^ d) :
     ∃ x : Fin d → ℕ, (∀ i, x i < B) ∧ ofDigits B (List.ofFn x) = v := by
@@ -207,16 +213,6 @@ theorem radix_affine_carries_iff {B d b c₀ : ℕ} (hB : 1 < B) (hb : b ≤ B)
         · simpa only [Fin.cons_zero, Fin.castSucc_zero, Fin.succ_zero_eq_one,
             Fin.cons_one, hc0] using he0
         · simpa only [← Fin.succ_castSucc, Fin.cons_succ] using hstep j
-
-/-- A linear number of small digits still fits in the corresponding exponential capacity. -/
-theorem mul_pred_lt_pow {B d : ℕ} (hB : 1 < B) : d * (B - 1) < B ^ d := by
-  induction d with
-  | zero => simp
-  | succ d ih =>
-    rw [pow_succ]
-    have hp : 1 ≤ B ^ d := Nat.one_le_pow d B (by lia)
-    have hb : B - 1 + 1 = B := by lia
-    nlinarith
 
 /-- Every universe larger than eight admits binary digits whose products fit, while its
 cardinality itself fits in seven digits. The cardinality need not be a source element. -/

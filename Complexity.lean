@@ -1329,8 +1329,12 @@ public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Bounds
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Columns
 public import Complexity.Logics.FirstOrder.Ordered.Packing
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Arithmetic
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Bit
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Conversion
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Decode
+public import Complexity.Logics.FirstOrder.Ordered.Radix.Multiplication
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
+public import Complexity.Logics.FirstOrder.Ordered.TupleBit
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.TupleSuccessor
 public import Complexity.Logics.FirstOrder.Problems.CNF
