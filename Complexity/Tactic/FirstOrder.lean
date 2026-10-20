@@ -147,7 +147,7 @@ private meta def casesRelationSymbol : TacticM Unit := withMainContext do
 usual constructors is quantifier-free, and other side conditions of first-order reductions
 registered in the Aesop rule set `FirstOrder`, such as closure of a class under isomorphism. It
 fails if it cannot close the goal. -/
-macro "fo_qf" : tactic => `(tactic|
+macro (name := foQF) "fo_qf" : tactic => `(tactic|
   aesop (config := { terminal := true, enableSimp := false })
     (rule_sets := [-default, FirstOrder]))
 
