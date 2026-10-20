@@ -225,3 +225,30 @@ non-power-of-two arity.\citep{Khrapchenko1971b,Yablonskii1954,Jukna2012}
 \decl{Complexity/Computability/Circuit/Boolean/Yablonskii.lean}{194}{Cslib.Circuits.Boolean.formulaDepth_parity_le_two_mul_clog}
 \decl{Complexity/Computability/Circuit/Boolean/KhrapchenkoDepth.lean}{88}{Cslib.Circuits.Boolean.formulaDepth_parity_two_pow}
 \end{result}
+
+\begin{result}
+\subsection{Graph Fusion transfer and exact inequality complexity}
+Let $V=\{0,1\}^n$, let $G\subseteq V\times V$, and supply every row and column
+as a free source. A semifilter on $G^c$ accepts the full set, rejects the empty
+set, and is upward closed. It is above an edge when it accepts the restricted
+row and column containing that edge. A cover defeats every such witness with a
+pair of accepted sets whose intersection is rejected; $\rho(G)$ is the minimum
+number of pairs. Representing a Boolean input by two $n$-bit blocks gives
+\[
+\rho(G)\le \rho(f_G;\text{positive and negative literals}).
+\]
+The inequality also holds when both sides restrict to semi-ultrafilters (every
+set or its complement is accepted), and includes trivial graphs.
+For $G_{\ne}=\{(u,v):u\ne v\}$,
+\[
+\rho_{\mathrm{can}}(G_{\ne})=\rho(G_{\ne})=D_{\cap}(G_{\ne})=n.
+\]
+Canonical semifilters are the upward closures of a complementary row and
+column, both nonempty. Here $D_{\cap}$ counts only binary intersections in
+native acyclic circuits: unions, empty/full constants, rows, columns, wiring
+and fanout are free. The equality includes $n=0$, when the graph is empty and
+all three costs are zero. This is a graph intersection bound, not a total-gate
+count.\citep{CavalarOliveira2025}
+\declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph.lean}{98}{Cslib.Circuits.Fusion.Graph.pairCoverComplexity_le_literals}
+\declat{45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5}{Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean}{212}{Cslib.Circuits.Fusion.Graph.inequality_complexities}
+\end{result}

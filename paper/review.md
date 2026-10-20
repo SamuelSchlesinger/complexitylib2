@@ -967,3 +967,26 @@ which fixes docstring references naming no declaration. The final delta review o
 "the module", and `scripts/upstream.py` now also rewrites backticked references to existing local
 modules from `Complexity.` to `Cslib.`, so such docstrings stay correct when upstreamed. These are AI reviews, not human editorial approval or a
 machine-checked equivalence between prose and Lean. AI assistance: Jetski (Gemini).
+
+## 2026-10-20: Graph Fusion transfer and inequality complexity
+
+The new circuit-index entry describes graph-to-Boolean cover transfer (including the
+semi-ultrafilter subclass) and the exact canonical/full/intersection complexity of inequality
+on `2^n` vertices per side. It links to source revision
+`45d71952d39a80bf96fd8e6144d9fd9ec3ecf5c5`, at the exact theorem lines (98 and 212).
+The index now contains 116 entries.
+
+The coordinating Codex agent, independent of authoring worker `fusion-graph-20261020`, reviewed
+correctness/API and the changed prose against the final Lean statements. It approved the
+quantifiers, two-block Boolean representation, free-OR/constant AND-cost convention,
+semi-ultrafilter restriction, trivial-graph transfer, and zero-bit equality. The source review
+requested only the missing `Main definitions` module-doc section, which was added and re-reviewed
+at the source revision above; no remaining findings. The final PR records the reviewed document
+revision. These are AI reviews, not human editorial approval or a machine-checked prose equivalence.
+
+All six Lean gates pass; the named headline axiom guards use only `propext`, `Classical.choice`,
+and `Quot.sound`. The PDF builds without undefined citations/references. Page 30 was rendered
+and visually inspected; after pinning the links, the final rendered page is pixel-identical.
+Both new declaration links were checked against their pinned Git source and line numbers.
+Mathematical credit: Cavalar–Oliveira (2025), Lemmas 39/48 and Proposition 40. Canonical definitions
+also retain credit to Samuel Schlesinger's earlier formalization. AI assistance: OpenAI Codex.
