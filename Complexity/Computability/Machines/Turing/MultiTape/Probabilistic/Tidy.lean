@@ -46,7 +46,7 @@ boundaries.
 * `Turing.MultiTapePTM.RunsWords.extendTapes`, `Turing.MultiTapePTM.ComputesTidily.extendTapes`:
   tape-reindexing laws.
 * `Turing.MultiTapePTM.ComputesTidily.outputToWord`,
-  `Turing.MultiTapePTM.RunsWords.inputFromWord`, `Turing.MultiTapePTM.ComputesTidily.onWords`:
+  `Turing.MultiTapePTM.RunsWords.inputFromWord`, `Turing.MultiTapePTM.ComputesTidily.onWords_of_le`:
   word-redirection laws.
 * `Turing.MultiTapePTM.ComputesTidily.comp`: tidy sequential composition.
 * `Turing.MultiTapePTM.ComputesTidily.append`: tidy output concatenation.

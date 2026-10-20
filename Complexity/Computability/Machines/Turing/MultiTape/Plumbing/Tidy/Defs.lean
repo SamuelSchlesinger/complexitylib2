@@ -31,7 +31,7 @@ namespace Turing.MultiTapeTM
 
 variable {k : ℕ} {Symbol State : Type*} {tm : MultiTapeTM k Symbol State} {t s : ℕ}
 
-/-- A tidy computation is a single run between `Turing.MultiTapeTM.wordsCfg` configurations with
+/-- A tidy computation is a single run between `Turing.wordsCfg` configurations with
 blank work tapes, which emits the output, together with the space bound. -/
 theorem computesTidily_iff_runFrom {input output : List Symbol} :
     tm.ComputesTidilyInTimeAndSpace input output t s ↔

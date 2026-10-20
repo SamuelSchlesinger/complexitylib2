@@ -14,7 +14,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Transf
 # Branching on a work tape
 
 `branch i tm₁ tm₂` reads the cell under the head of work tape `i` and then runs `tm₁` if that cell
-is not blank and `tm₂` if it is. On a `Turing.MultiTapeTM.wordsCfg` configuration the head of tape
+is not blank and `tm₂` if it is. On a `Turing.wordsCfg` configuration the head of tape
 `i` is on the first cell of its word, so the machine runs `tm₂` exactly when the word on tape `i`
 is empty.
 

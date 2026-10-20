@@ -37,15 +37,17 @@ every leaf word that agrees with `f` (`walkSeq_eq_walk`).
 
 * `Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule`: a deterministic branching step.
 * `Cslib.Logic.PL.ClauseSet.Sparsification.chooseRule`: the canonical rule on clause sets.
-* `Cslib.Logic.PL.ClauseSet.Sparsification.walk`, `.IsNodeWord`, `.IsLeafWord`: the branching
-  tree of a rule.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.walk`, `.IsNodeWord`, `.IsLeafWord`:
+  the branching tree of a rule.
 
 ## Main results
 
-* `Cslib.Logic.PL.ClauseSet.Sparsification.exists_isLeafWord_sat`: every solution reaches a leaf.
-* `Cslib.Logic.PL.ClauseSet.Sparsification.exists_path_of_isLeafWord`: leaf words are branches.
-* `Cslib.Logic.PL.ClauseSet.Sparsification.IsLeafWord.eq_of_getD_eq`: leaf words are determined
-  by their petal steps.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.exists_isLeafWord_sat`: every solution
+  reaches a leaf.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.exists_path_of_isLeafWord`: leaf words are
+  branches.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.BranchingRule.IsLeafWord.eq_of_getD_eq`: leaf words are
+  determined by their petal steps.
 
 ## References
 

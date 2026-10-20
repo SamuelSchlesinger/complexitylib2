@@ -66,8 +66,9 @@ in-place fold, and its proof of computability adapts that of
 `Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace`, by Christian
 Reitwiessner. The events of the input, the extraction of the parts the initial state reads, the
 bounds on the countdown and the simplified time bound restate private lemmas and the extracting
-transducer of `Turing.MultiTapeTM.Universal.InPlace` for the encoding
-`Turing.MultiTapeTM.Universal.eInS`, whose input ends in a budget.
+transducer of the module
+`Complexity.Computability.Machines.Turing.MultiTape.Universal.InPlace` for the
+encoding `Turing.MultiTapeTM.Universal.eInS`, whose input ends in a budget.
 
 ## References
 
@@ -218,7 +219,7 @@ lemma streamState_foldNextS (s : SSt) (l : List Bool) (j : ℕ) :
     streamState s foldNextS l j = ((s.1.1, (s.1.2.1, (l.take j).foldl scan s.1.2.2)), s.2) :=
   List.foldl_hom (fun a => ((s.1.1, (s.1.2.1, a)), s.2)) (fun _ _ => rfl)
 
--- restated from `Turing.MultiTapeTM.Universal.InPlace`, where it is private
+-- restated from the module `Universal.InPlace`, where it is private
 lemma stepAt_scan' (c : SCfg) (r : ℕ) :
     stepAt ((d, c), (r, (events x).foldl scan (c.inputPos, 0))) =
       if r = 0 then (c, none) else step d x c := by
@@ -253,8 +254,9 @@ public theorem passState_foldS (t i : ℕ) :
 
 /-! ### The events of the input, and the parts of the input the initial state reads
 
-The lemmas of this section restate private lemmas of `Turing.MultiTapeTM.Universal.InPlace` for
-the encoding `Turing.MultiTapeTM.Universal.eInS`, whose input ends in a budget. -/
+The lemmas of this section restate private lemmas of the module
+`Complexity.Computability.Machines.Turing.MultiTape.Universal.InPlace` for the encoding
+`Turing.MultiTapeTM.Universal.eInS`, whose input ends in a budget. -/
 
 lemma inTr_run_frame (w v : List Bool) :
     inTr.run .descMarker (frame w ++ v) = inTr.run .marker v := by
@@ -296,7 +298,8 @@ public theorem events_eInS (t : ℕ) : inTr.events (eInS (d, x, t, b)) = events 
   rw [inTr_run_steps, List.append_nil]
 
 /-- Copies the framed description, drops the framed input and copies the rest: a copy of the
-private transducer `extractT` of `Turing.MultiTapeTM.Universal.InPlace`. -/
+private transducer `extractT` of the module
+`Complexity.Computability.Machines.Turing.MultiTape.Universal.InPlace`. -/
 def extractS : Transducer Bool ExState where
   q₀ := .descMarker
   step
@@ -331,7 +334,7 @@ lemma extractS_run (t : ℕ) :
 
 /-! ### The size of the states -/
 
--- restated from `Turing.MultiTapeTM.Universal.InPlace`, where it is private
+-- restated from the module `Universal.InPlace`, where it is private
 lemma foldl_scan_replicate' (k cur j : ℕ) :
     (List.replicate j true).foldl scan (k, cur) = (k, if k = 1 then cur + j else cur) := by
   induction j generalizing cur with
@@ -342,13 +345,13 @@ lemma foldl_scan_replicate' (k cur j : ℕ) :
     split_ifs <;> simp
     omega
 
--- restated from `Turing.MultiTapeTM.Universal.InPlace`, where it is private
+-- restated from the module `Universal.InPlace`, where it is private
 lemma scan_zero' (l : List Bool) (cur : ℕ) : l.foldl scan (0, cur) = (0, cur) := by
   induction l with
   | nil => rfl
   | cons b l ih => cases b <;> simp [scan, ih]
 
--- restated from `Turing.MultiTapeTM.Universal.InPlace`, where it is private
+-- restated from the module `Universal.InPlace`, where it is private
 lemma scan_take_tok' (n k cur j : ℕ) :
     (((tok n).take j).foldl scan (k, cur)).1 ≤ k ∧
       (((tok n).take j).foldl scan (k, cur)).2 ≤ cur + n ∧
@@ -360,7 +363,7 @@ lemma scan_take_tok' (n k cur j : ℕ) :
       Nat.min_eq_left h, foldl_scan_replicate']
     split_ifs <;> simp_all
 
--- restated from `Turing.MultiTapeTM.Universal.InPlace`, where it is private
+-- restated from the module `Universal.InPlace`, where it is private
 /-- Along the events of the input, the countdown does not go up and the symbol read stays within
 the largest symbol. -/
 lemma scan_take' (x : List ℕ) (k cur j : ℕ) :
@@ -643,7 +646,7 @@ lemma length_eSSt_le' (t i j : ℕ) :
   rw [events_eInS]
   exact length_eSSt_le d x b t i j
 
--- restated from `Turing.MultiTapeTM.Universal.InPlace`, where it is private
+-- restated from the module `Universal.InPlace`, where it is private
 /-- The time of the universal machine within a budget, simplified. -/
 lemma final_time' (c N t L P E : ℕ) (hP : P ≤ L) (hE : E ≤ L) :
     c * (N + (P + 1) ^ 2 + (E + 1) ^ 3 + (t - 1 + 1) * (N + (N + 1) * (9 * (L + 1) ^ 3 + L + 1)))

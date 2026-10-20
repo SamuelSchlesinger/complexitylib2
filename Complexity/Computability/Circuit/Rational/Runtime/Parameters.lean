@@ -39,8 +39,8 @@ input, and registered with `fun_prop`.
 
 ## Main results
 
-* `Cslib.Circuits.Rational.ambientDimension_eq`,
-  `Cslib.Circuits.Rational.degree_eq`: the ambient dimension and the cyclotomic degree in
+* `Cslib.Circuits.Rational.Parameters.ambientDimension_eq`,
+  `Cslib.Circuits.Rational.Parameters.degree_eq`: the ambient dimension and the cyclotomic degree in
   certifiable form.
 * `Cslib.Circuits.Rational.computableTidilyInPolyTime_exponent`,
   `Cslib.Circuits.Rational.computableTidilyInPolyTime_ambientDimension`,

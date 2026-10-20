@@ -29,7 +29,7 @@ A machine that never needs the input is run with its input head frozen (`freezeI
 
 ## Main definitions
 
-* `Turing.MultiTapeTM.wordsCfgAt`: `Turing.MultiTapeTM.wordsCfg` with the input head anywhere.
+* `Turing.MultiTapeTM.wordsCfgAt`: `Turing.wordsCfg` with the input head anywhere.
 * `Turing.MultiTapeTM.TransformsTapesAt`: the specification format.
 * `Turing.MultiTapeTM.freezeInput`: a machine run on a blank input, with its input head fixed.
 

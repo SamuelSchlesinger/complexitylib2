@@ -40,7 +40,7 @@ around it. It runs three machines in sequence:
   input tape, preserving it and emitting the output.
 
 * `Turing.MultiTapeTM.transformsTapes_inputFromWord`: a run path of `M` on the virtual input word,
-  from and to `Turing.MultiTapeTM.wordsCfg` configurations, gives a specification of
+  from and to `Turing.wordsCfg` configurations, gives a specification of
   `inputFromWord M mark`; `Turing.MultiTapeTM.transformsTapes_inputFromWord_of_runFrom` is the same
   for a run of `M`.
 -/

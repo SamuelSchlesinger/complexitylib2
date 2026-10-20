@@ -20,7 +20,7 @@ each vertex `v` its unit kernel row `x_v` in `H`
 `q ^ dist(v, z)`, truncated at radius `R`. Draw a sample `ω` of independent standard Gaussians,
 one per vertex, and score each vertex by `⟪x_v, ω⟫`
 (`Cslib.Circuits.Frontier.Gaussian.vertexScore`). Sorting the vertices by score gives the layouts
-of `Cslib.Circuits.Frontier.Layouts.MultiGaussian`.
+of `Complexity.Computability.Circuit.Frontier.Layouts.MultiGaussian`.
 
 **One edge.** A threshold `t` *crosses* an edge when it separates the scores of its ends
 (`Cslib.Circuits.Frontier.Gaussian.crossingEvent`). The rows of the ends have inner product at
