@@ -1559,6 +1559,38 @@ undefined citations or overfull boxes. Page 27 was rendered and inspected by the
 independent coordinator `fusion-quadratic`, who found no scope or layout issues. Final exact-head
 integration approval is recorded in PR #60. This refresh introduces no new theorem scope.
 
+## 2026-10-20: Truth-table closure of wide-gap classes
+
+Worker `truth-table-wide-gap-20261020` adds one curated entry for source revision
+`5df0e7da9798d62d5506dc90e4cb3c2f381b82d9`. It states closure of WPP and LWPP under the
+encoded polynomial-time truth-table reduction interface, together with the more general joint
+indexed-language endpoints. The unary polynomial-time count, total joint query generator,
+input-sensitive Boolean combiner and nonadaptive answer-word semantics are explicit. Query
+lengths and query counts may vary at fixed input length; LWPP uses many-one normalization and
+then polynomial-family prefix-target robustness. Empty batches are included. The entry credits
+Holger Spakowski, Mayur Thakur and Rahul Tripathi's Theorem 5.6(a), the counting algebra of
+Stephen Fenner, Lance Fortnow and Stuart Kurtz, and the robustness theorem of Edith Hemaspaandra,
+Lane A. Hemaspaandra, Holger Spakowski and Osamu Watanabe. Adaptive WPP closure, the source's
+separate UP-oracle containment and oracle lowness are not claimed.
+
+Independent coordinator `coordinator-ops-20261020` approved the exact source, tests and draft
+index in PR #69, comment 6297944865. The primary source's Theorems 5.6(a) and 5.9 were checked
+on rendered author-report pages 24 and 25. Tests include a nonconstant XOR reduction with
+signed length targets, differing query lengths in one batch, differing counts at equal input
+length, and zero-query combiners that accept, reject or depend on the original input. Four
+headline axiom guards admit only the standard allowed axioms. The five index links are pinned
+to the reviewed source revision and their declaration lines were checked.
+
+The local preparation incorporates reviewed PR #60 head
+`c46186f7ca68ae941c86b1d8b0a5f9d20bb5c135` and cslib pin
+`b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`, preserving the source and tests byte-for-byte.
+Fresh MCP diagnostics are clean and all six combined gates pass. The PDF builds without
+undefined citations or overfull boxes; page 28 was rendered and inspected. This preparation
+has 126 entries before the remaining dependency-stack entries are integrated. Final combined
+PDF/count reconciliation and exact-head independent review remain pending in PR #69.
+AI assistance: OpenAI Codex. AI review does not imply human editorial approval or a Lean proof
+of prose equivalence.
+
 ## Relativized counting and majority verifiers (PR #61, 20 October 2026)
 
 Worker `relativized-counting-20261020` adds #P^A, GapP^A and PP^A using the existing strict
@@ -1681,3 +1713,21 @@ rebuilt PDF has no undefined citations or overfull boxes; pages 18 (Tree Evaluat
 (MAJSAT) were rendered and inspected. Documentation configuration and whitespace checks pass.
 Only this validation record was appended after the gates; final exact-head review is recorded
 in PR #68.
+
+## 2026-10-20: Final truth-table closure integration (PR #69)
+
+Worker `truth-table-wide-gap-20261020` reconciled the prepared entry with independently reviewed
+PR #68 head `f5f986b4f5dd2bb4af2b1248d85dfddd23fa0b72` and main
+`9b14946fcf33415b4ad4fe7e48910a49c235a65c`. The five source/test files remain byte-identical
+to approved source `5df0e7da9798d62d5506dc90e4cb3c2f381b82d9`. Merge conflicts were confined
+to roadmap prose, appended bibliography/review records, the entry count, and the generated PDF;
+both sides' contributions and source credits are preserved. All other index sections are
+byte-identical to final PR #68; the combined index contains 128 entries.
+
+Fresh source/test MCP diagnostics are clean. All six combined gates pass (exit 0), recorded in
+`.worktrees/ops-truth-table-prepare/.lake/truth-table-final-check.log`. The PDF builds without
+undefined citations or overfull boxes; pages 31 (truth-table closure) and 18 (Tree Evaluation)
+were rendered and inspected. The five declaration anchors remain pinned to the approved source
+and were rechecked. Only this validation record was appended after the gates. Independent
+exact-revision integration and rendered-index review is recorded in PR #69; no human editorial
+approval or machine-checked prose equivalence is implied.

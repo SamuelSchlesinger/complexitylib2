@@ -43,20 +43,6 @@ open Turing.MultiTapeTM Finset
 
 variable {α : Type} {enc : α ↪ List Bool} {A : Set (α × ℕ)} {r : α → ℕ}
 
-private theorem polyTime_prod_range {f : α × ℕ → ℤ}
-    (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
-    (hr : ComputableTidilyInPolyTime r enc encUnary) :
-    ComputableTidilyInPolyTime (fun a => ∏ i ∈ range (r a), f (a, i)) enc encIntBin := by
-  have hl : ComputableTidilyInPolyTime
-      (fun a => (List.range (r a)).map fun i => f (a, i)) enc (encList encIntBin) :=
-    ComputableTidilyInPolyTime.mapWithInput (ComputableTidilyInPolyTime.range.comp hr) hf
-  have h := ComputableTidilyInPolyTime.intBin_prod.comp hl
-  convert h using 1
-  funext a
-  have he : (List.range (r a)).toFinset = range (r a) := by ext; simp
-  simpa only [he, Function.comp_apply] using
-    List.prod_toFinset (fun i => f (a, i)) (l := List.range (r a)) List.nodup_range
-
 private theorem prod_eq_zero_of_not_forall {g f : α × ℕ → ℤ}
     (hg : ∀ x, g x = 0 ∨ g x = f x) (hA : ∀ x, x ∈ A ↔ g x = f x)
     {a : α} (ha : ¬ ∀ i < r a, (a, i) ∈ A) :
@@ -79,7 +65,8 @@ theorem forall_lt_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
     prod_congr rfl fun i hi => (hA (a, i)).mp (ha i (mem_range.mp hi))
   have hno (a) (ha : ¬ ∀ i < r a, (a, i) ∈ A) : G a = 0 :=
     prod_eq_zero_of_not_forall hR hA ha
-  refine ⟨G, GapP.prod_range_mem hg hr, F, polyTime_prod_range hf hr, hF, ?_, ?_⟩
+  refine ⟨G, GapP.prod_range_mem hg hr, F,
+    ComputableTidilyInPolyTime.intBin_prod_range hf hr, hF, ?_, ?_⟩
   · intro a
     by_cases ha : ∀ i < r a, (a, i) ∈ A
     · exact Or.inr (hy a ha)
@@ -112,7 +99,8 @@ theorem forall_lt_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
   let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
   let T (x : ℕ × ℕ) := ∏ i ∈ range x.2, f (2 * x.1 + 1 + i)
   have hT : ComputableTidilyInPolyTime T (encPair encUnary encUnary) encIntBin := by
-    apply polyTime_prod_range (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2))
+    apply ComputableTidilyInPolyTime.intBin_prod_range
+      (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2))
       (r := fun x : ℕ × ℕ => x.2)
     · fun_prop
     · fun_prop

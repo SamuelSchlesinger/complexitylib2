@@ -508,6 +508,7 @@ public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collap
 public import Complexity.Computability.Complexity.Classes.WPP
 public import Complexity.Computability.Complexity.Classes.WPP.Bounded
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
+public import Complexity.Computability.Complexity.Classes.WPP.TruthTable
 public import Complexity.Computability.Complexity.Classes.WPP.TwoSided
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
@@ -576,6 +577,7 @@ public import Complexity.Computability.Complexity.Problems.USAT
 public import Complexity.Computability.Complexity.Problems.USTCON
 public import Complexity.Computability.Complexity.Problems.VertexCover
 public import Complexity.Computability.Complexity.Reduction
+public import Complexity.Computability.Complexity.Reduction.TruthTable
 public import Complexity.Computability.DecisionTree.Basic
 public import Complexity.Computability.DecisionTree.CanonicalTree
 public import Complexity.Computability.DecisionTree.Certificate
