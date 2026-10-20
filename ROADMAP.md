@@ -44,8 +44,10 @@ have actual certified binary verifiers. The actual reverse guess-and-verify cons
 [#P machine characterization](Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean)
 are now proved. The [signed GapP construction and characterization](Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean)
 are also proved, using balanced verdict routing and an actual selector between independent witness
-families. Machine characterizations of `UP` and polynomially bounded ambiguity remain open; they
-require preserving the appropriate ambiguity bound, beyond verifier definitions alone. SPP, FewP, fixed-modulus ModP, coUP and coC=P
+families. The [UP](Complexity/Computability/Complexity/Classes/UP/Machine.lean) and
+[FewP](Complexity/Computability/Complexity/Classes/FewP/Machine.lean) native characterizations
+are also proved: the exact #P bridge preserves the bound of one or a polynomial on accepting
+occurrence traces, independently of the all-branches clock. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
 PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
 Extend these with counting reductions and further oracle results, preserving exact
@@ -401,11 +403,14 @@ of the handover. The work below remains available for subsequent, independently 
      combining routed clocks `S₊, S₋` costs `S₊ + S₋ + 1`. Extra clock time uses first-halt stability,
      not extra choices. Zero, odd and negative gaps are included, with no oracle channels or
      input-dependent machine advice.
-     **Still open:** native machine characterizations with unambiguous or polynomially bounded
-     ambiguity (`UP`, `FewP`). Reuse the actual parsimonious #P pipeline and
-     [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
-     preserving exact path multiplicities and the promised ambiguity bounds. Existential
-     accepting-run equivalence alone is insufficient.
+     The [UP](Complexity/Computability/Complexity/Classes/UP/Machine.lean) and
+     [FewP](Complexity/Computability/Complexity/Classes/FewP/Machine.lean) native iff endpoints
+     now transport their accepting-count bounds through the actual parsimonious #P bridge (#131).
+     Fixed finite parameters and a polynomial all-branches clock precede every encoded input;
+     the ambiguity bound is one for UP and a separate polynomial in encoded input length for
+     FewP. Rejecting and total branch counts are not bounded by the ambiguity polynomial.
+     Duplicate accepting occurrences remain distinct, while first-halt clock padding preserves
+     their multiplicities. Native oracle-machine characterizations remain separate work.
 
 2. **Complete theorem ports using the existing certificate APIs.** Extend automation when a
    concrete port is blocked or several clients repeat the same proof burden. Constructor, projection,

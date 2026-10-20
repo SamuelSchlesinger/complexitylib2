@@ -553,6 +553,47 @@ It reuses the native calculus and verifier construction credited above.
 \end{result}
 
 \begin{result}
+\subsection{Native machine characterizations of UP and FewP}
+Fix an injective encoding $\mathrm{enc}:A\hookrightarrow\{0,1\}^*$ and a
+language $L\subseteq A$. Write $a_M(x,T(n))$ for the number of first-halting
+transition-occurrence traces of $M$ on $\mathrm{enc}(x)$ whose output is exactly
+$[\mathsf{true}]$, where $n=|\mathrm{enc}(x)|$.
+Then $L\in\cc{UP}$ if and only if there exist a fixed closed shared-core
+list-choice machine $M$, a fixed finite state type, a fixed number of Boolean
+work tapes and a polynomial clock $T\in\mathbb N[X]$ such that every running
+local view has a nonempty transition list and, for every $x$, every branch
+halts within $T(n)$ native transitions, with
+\[
+ a_M(x,T(n))\le 1,\qquad
+ x\in L\ \Longleftrightarrow\ a_M(x,T(n))=1.
+\]
+Similarly, $L\in\cc{FewP}$ if and only if there exist fixed parameters with the
+same finiteness, nonblocking and halting conditions, and a separate ambiguity
+polynomial $q\in\mathbb N[X]$, satisfying
+\[
+ a_M(x,T(n))\le q(n),\qquad
+ x\in L\ \Longleftrightarrow\ 0<a_M(x,T(n)).
+\]
+The clock bounds every branch; the ambiguity bound restricts only accepting
+branches. Rejecting and total branch counts need not obey it. Duplicate action
+occurrences count separately even when their final configurations coincide,
+and enlarging a sufficient clock does not multiply halted branches. The zero
+ambiguity polynomial is allowed; then the recognized language is empty.
+
+Both equivalences are direct consequences of the exact native $\#\cc{P}$
+characterization above, using its actual parsimonious construction and certified
+replay checker. The class conventions follow Papadimitriou and
+Allender--Rubinstein, with accepting-path ambiguity as stated by
+Borchert--Hemaspaandra--Rothe.\citep{Papadimitriou94,AllenderRubinstein1988}
+\citep[Section 1]{BorchertHemaspaandraRothe2000}
+All machine parameters precede the input. Halting is required on the encoding
+image; the raw-bit encoding covers every binary input. No oracle-machine or
+uniform compiler-runtime claim is made.
+\declat{72e6465f1f456ccc6080e3bd65a6fb322468ad84}{Complexity/Computability/Complexity/Classes/UP/Machine.lean}{50}{Cslib.Complexity.mem_UP_iff_exists_machine}
+\declat{72e6465f1f456ccc6080e3bd65a6fb322468ad84}{Complexity/Computability/Complexity/Classes/FewP/Machine.lean}{54}{Cslib.Complexity.mem_FewP_iff_exists_machine}
+\end{result}
+
+\begin{result}
 \subsection{Relativized counting and majority verifiers}
 For every language oracle $A\subseteq\{0,1\}^*$ and fixed injective input encoding,
 $\#\cc{P}^A$ counts accepted Boolean witnesses of exactly $p(|x|)$ bits using a deterministic
@@ -595,9 +636,9 @@ The verifier class $\cc{UP}$ satisfies
 Its verifier has at most one accepting certificate of the specified polynomial
 length on every input, and exactly one on members. Equivalently, a
 $\#\cc{P}$ function bounded by one is one precisely on the language.
-UP is closed under polynomial-time many-one reductions. This establishes the
-verifier formulation; an equivalence with unambiguous nondeterministic machines
-is not asserted.\citep{AroraBarak09,Papadimitriou94}
+UP is closed under polynomial-time many-one reductions. The native machine
+characterization above preserves this accepting-count bound through the
+parsimonious $\#\cc{P}$ construction.\citep{AroraBarak09,Papadimitriou94}
 The complement class $\cc{coUP}$ contains P and is contained in both coNP
 and $\oplus\cc{P}$; it also inherits polynomial-time reduction closure.
 These are elementary consequences of the complement convention and the
@@ -673,8 +714,8 @@ FewP is closed under union, intersection and polynomial-time many-one reductions
 SPP has these closures and complement closure. The elementary proofs reuse the
 count algebra: FewP union adds ambiguity bounds and intersection multiplies them;
 SPP complement subtracts its gap from one and intersection multiplies gaps.
-These are verifier-based results; neither a machine characterization nor the
-stronger FewP--SPP containment is established by this entry; it is the next entry.
+These closure proofs use the verifier definitions. The native FewP machine
+characterization is recorded above; the stronger FewP--SPP containment is the next entry.
 The FewP definition follows Allender--Rubinstein and the explicit acceptance-set
 formulation of Borchert--Hemaspaandra--Rothe; the SPP definition and UP inclusion
 follow Fenner--Fortnow--Kurtz and Fortnow's survey.
