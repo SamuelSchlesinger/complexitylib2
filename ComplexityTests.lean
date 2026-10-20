@@ -52,6 +52,7 @@ import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
 import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
+import ComplexityTests.CountingComposition
 import ComplexityTests.CountingExecution
 import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine

@@ -11,8 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.C
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.InputFromTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
-public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PrepareInput
+public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Composition
 
 /-!
 # Composing closed probabilistic machines through a buffered word
@@ -40,50 +39,21 @@ deterministic composition, `second.comp first mark` executes `first` and then `s
 
 namespace Turing.MultiTapePTM
 
-open Cslib MultiTapeMachine
+open Cslib MultiTapeMachine MultiTapeMachine.Composition
 
 namespace Composition
 
 variable {k₀ k₁ : ℕ} {Symbol State₀ State₁ : Type} {input : List Symbol}
 
-/-- Reserve blank continuation tapes before the source's work tapes. -/
-def reserve (k₁ : ℕ) (cfg : Config k₀ Symbol State₀ Empty input) :
-    Config (k₁ + k₀) Symbol State₀ Empty input :=
-  cfg.embed (Fin.natAddEmb k₁) (fun _ _ => none) (fun _ => 0)
-
-/-- Buffer the source result and reserve a blank boundary-marker tape. -/
-def buffer (k₁ : ℕ) (cfg : Config k₀ Symbol State₀ Empty input) :
-    Config (k₁ + k₀ + 2) Symbol State₀ Empty input :=
-  (OutputToTape.config (reserve k₁ cfg)).embed Fin.castSuccEmb (fun _ _ => none) (fun _ => 0)
-
-/-- Run the source on its own tapes, redirecting its output to the virtual input buffer. -/
-def source (machine : MultiTapePTM k₀ Symbol State₀) (k₁ : ℕ) :
+/-- The shared output-buffer compiler, specialized to fair-coin machines. -/
+abbrev source (machine : MultiTapePTM k₀ Symbol State₀) (k₁ : ℕ) :
     MultiTapePTM (k₁ + k₀ + 2) Symbol State₀ :=
-  ((machine.extendTapes (Fin.natAddEmb k₁)).outputToTape).extendTapes Fin.castSuccEmb
+  MultiTapeMachine.Composition.source machine k₁
 
-/-- Run the continuation on separate work tapes, reading the virtual input. -/
-def consumer (machine : MultiTapePTM k₁ Symbol State₁) (k₀ : ℕ) :
+/-- The shared virtual-input compiler, specialized to fair-coin machines. -/
+abbrev consumer (machine : MultiTapePTM k₁ Symbol State₁) (k₀ : ℕ) :
     MultiTapePTM (k₁ + k₀ + 2) Symbol State₁ :=
-  (machine.extendTapes (Fin.castAddEmb k₀)).inputFromTape
-
-/-- Retain the first machine's scratch tapes while the continuation runs on its output. -/
-def consumerConfig (mark : Symbol) (cfg₀ : Config k₀ Symbol State₀ Empty input)
-    (cfg₁ : Config k₁ Symbol State₁ Empty cfg₀.tapes.output) :
-    Config (k₁ + k₀ + 2) Symbol State₁ Empty input :=
-  InputFromTape.config mark
-    (cfg₁.embed (Fin.castAddEmb k₀)
-      (reserve k₁ cfg₀).tapes.workTapes (reserve k₁ cfg₀).tapes.workTapePos)
-    input cfg₀.tapes.inputPos
-
-/-- The prepared virtual input, with every source work tape retained. -/
-def ready (mark : Symbol) (k₁ : ℕ) (cfg : Config k₀ Symbol State₀ Empty input) :
-    Config (k₁ + k₀ + 2) Symbol (MultiTapeTM.MarkWorkState ⊕ MultiTapeTM.RewindWorkState)
-      Empty input where
-  tapes := ⟨none, cfg.tapes.inputPos,
-    Fin.append (reserve k₁ cfg).tapes.workTapes
-      ![tapeOfList cfg.tapes.output, Function.update (fun _ => none) (-1) (some mark)],
-    Fin.append (reserve k₁ cfg).tapes.workTapePos (fun _ => 0), []⟩
-  channels := cfg.channels
+  MultiTapeMachine.Composition.consumer machine k₀
 
 /-- Rewind and mark the intermediate word before starting the continuation. -/
 noncomputable def continuation (machine : MultiTapePTM k₁ Symbol State₁) (k₀ : ℕ)
@@ -96,7 +66,8 @@ theorem runClosedConfigFrom_source (machine : MultiTapePTM k₀ Symbol State₀)
     (input : List Symbol) :
     (source machine k₁).runClosedConfigFrom fuel ((source machine k₁).initialConfig input) =
       buffer k₁ <$> machine.runClosedConfigFrom fuel (machine.initialConfig input) := by
-  simp only [source, runClosedConfigFrom, MultiTapeMachine.initialConfig_extendTapes,
+  simp only [source, MultiTapeMachine.Composition.source, runClosedConfigFrom,
+    MultiTapeMachine.initialConfig_extendTapes,
     MultiTapeMachine.initialConfig_outputToTape, runConfigFrom_embed,
     runConfigFrom_outputToTape, Functor.map_map]
   rfl
@@ -107,54 +78,10 @@ theorem runClosedConfigFrom_consumer (machine : MultiTapePTM k₁ Symbol State�
     (cfg₁ : Config k₁ Symbol State₁ Empty cfg₀.tapes.output) (fuel : ℕ) :
     (consumer machine k₀).runClosedConfigFrom fuel (consumerConfig mark cfg₀ cfg₁) =
       consumerConfig mark cfg₀ <$> machine.runClosedConfigFrom fuel cfg₁ := by
-  simp only [consumer, consumerConfig, runClosedConfigFrom, runConfigFrom_inputFromTape,
+  simp only [consumer, MultiTapeMachine.Composition.consumer, consumerConfig, runClosedConfigFrom,
+    runConfigFrom_inputFromTape,
     runConfigFrom_embed, Functor.map_map]
   rfl
-
-/-- The two new tapes are the completed output buffer and a blank boundary tape. -/
-theorem buffer_tapes (k₁ : ℕ) (cfg : Config k₀ Symbol State₀ Empty input) :
-    (buffer k₁ cfg).tapes =
-      ⟨cfg.tapes.state, cfg.tapes.inputPos,
-        Fin.append (reserve k₁ cfg).tapes.workTapes ![tapeOfList cfg.tapes.output, fun _ => none],
-        Fin.append (reserve k₁ cfg).tapes.workTapePos ![(cfg.tapes.output.length : ℤ), 0], []⟩ := by
-  have happend {α : Type} (f : Fin (k₁ + k₀) → α) (a b : α) :
-      Fin.lastCases b (Fin.lastCases a f) = Fin.append f ![a, b] := by
-    have hsnoc {n : ℕ} (f : Fin n → α) (a : α) :
-        (Fin.lastCases a f : Fin (n + 1) → α) = Fin.snoc f a := by
-      funext i
-      induction i using Fin.lastCases <;> simp
-    change Fin.lastCases b (Fin.lastCases a f) = Fin.append f (Fin.cons a (Fin.cons b Fin.elim0))
-    rw [hsnoc, hsnoc, Fin.append_right_cons, Fin.append_right_eq_snoc]
-    rfl
-  simp only [buffer, Config.embed, OutputToTape.config, MultiTapeTM.embed_castSucc,
-    MultiTapeTM.outCfg, happend]
-  rfl
-
-/-- The handoff costs the buffered word length plus four, with no assumptions on source scratch. -/
-theorem runFrom_prepare (mark : Symbol) (k₁ : ℕ) (cfg : Config k₀ Symbol State₀ Empty input) :
-    (MultiTapeTM.prepareInput (k₁ + k₀) mark).runFrom
-        ((buffer k₁ cfg).tapes.withState
-          (some (MultiTapeTM.prepareInput (k₁ + k₀) mark).q₀)) (cfg.tapes.output.length + 4) =
-      (ready mark k₁ cfg).tapes := by
-  rw [MultiTapeTM.runFrom_prepareInput mark _ cfg.tapes.output
-    (by rw [buffer_tapes]; simp) (by rw [buffer_tapes]; simp) (by rw [buffer_tapes]; simp)]
-  rw [buffer_tapes]
-  refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext i <;> induction i using Fin.addCases with
-  | left i => simp [ready, Function.update_of_ne (Fin.castAdd_ne_natAdd i _)]
-  | right i => fin_cases i <;> simp [ready]
-
-/-- The prepared input starts the continuation with blank work tapes. -/
-theorem start_ready (machine : MultiTapePTM k₁ Symbol State₁) (mark : Symbol)
-    (cfg : Config k₀ Symbol State₀ Empty input) :
-    Sequential.start (consumer machine k₀) (ready mark k₁ cfg) =
-      consumerConfig mark cfg (machine.initialConfig cfg.tapes.output) := by
-  refine Config.ext ?_ (Subsingleton.elim _ _)
-  simp only [Sequential.start, ready, consumerConfig, InputFromTape.config, Config.embed,
-    MultiTapeTM.embed_castAdd, MultiTapeTM.inCfg, initialConfig, Cfg.init, reserve,
-    MultiTapeTM.embed_natAdd, Cfg.withState]
-  refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext i <;> induction i using Fin.addCases with
-  | left i => induction i using Fin.addCases <;> simp
-  | right i => fin_cases i <;> simp
 
 /-- Virtual-input redirection preserves a halting bound. -/
 theorem consumer_halted (machine : MultiTapePTM k₁ Symbol State₁) (mark : Symbol)
@@ -220,17 +147,6 @@ theorem continuation_halted (machine : MultiTapePTM k₁ Symbol State₁) (mark 
   rw [hrun result hresult]
   rfl
 
-/-- The control-state embeddings of a completed composition. -/
-def finalConfig (mark : Symbol) (cfg₀ : Config k₀ Symbol State₀ Empty input)
-    (cfg₁ : Config k₁ Symbol State₁ Empty cfg₀.tapes.output) :
-    Config (k₁ + k₀ + 2) Symbol
-      (State₀ ⊕ ((MultiTapeTM.MarkWorkState ⊕ MultiTapeTM.RewindWorkState) ⊕ State₁)) Empty input :=
-  Sequential.right (Sequential.right (consumerConfig mark cfg₀ cfg₁))
-
-@[simp] theorem finalConfig_output (mark : Symbol) (cfg₀ : Config k₀ Symbol State₀ Empty input)
-    (cfg₁ : Config k₁ Symbol State₁ Empty cfg₀.tapes.output) :
-    (finalConfig mark cfg₀ cfg₁).tapes.output = cfg₁.tapes.output := rfl
-
 /-- A supported final configuration supplies a supported output word. -/
 theorem output_mem (machine : MultiTapePTM k₀ Symbol State₀) (fuel : ℕ) (input : List Symbol)
     (final : Config k₀ Symbol State₀ Empty input)
@@ -271,7 +187,7 @@ theorem eval_runClosedConfigFrom_comp :
       (ProbComp.eval (first.runClosedConfigFrom firstTime (first.initialConfig input))).bind
         (fun sourceFinal => (ProbComp.eval (second.runClosedConfigFrom secondTime
           (second.initialConfig sourceFinal.tapes.output))).map
-          (Composition.finalConfig mark sourceFinal)) := by
+          (MultiTapeMachine.Composition.finalConfig mark sourceFinal)) := by
   have hlength (final : Config k₀ Symbol State₀ Empty input)
       (hfinal : final ∈ (ProbComp.eval
         (first.runClosedConfigFrom firstTime (first.initialConfig input))).support) :
@@ -314,7 +230,7 @@ theorem eval_comp :
   have h := congrArg (PMF.map (fun final => final.tapes.output))
     (eval_runClosedConfigFrom_comp first second mark input firstTime secondTime hfirst hsecond)
   simpa only [runClosed_eq_map, ProbComp.eval_map, PMF.map_bind, PMF.map_comp, PMF.bind_map,
-    Function.comp_def, Composition.finalConfig_output] using h
+    Function.comp_def, MultiTapeMachine.Composition.finalConfig_output] using h
 
 /-- Every supported execution of the composed machine has halted within the combined bound. -/
 theorem comp_halted :
@@ -332,5 +248,36 @@ theorem comp_halted :
   change (target.tapes.state.map Sum.inr).map Sum.inr = none
   rw [hhalt]
   rfl
+
+namespace Composition
+
+@[deprecated (since := "2026-10-20")] alias reserve :=
+  MultiTapeMachine.Composition.reserve
+
+@[deprecated (since := "2026-10-20")] alias buffer :=
+  MultiTapeMachine.Composition.buffer
+
+@[deprecated (since := "2026-10-20")] alias consumerConfig :=
+  MultiTapeMachine.Composition.consumerConfig
+
+@[deprecated (since := "2026-10-20")] alias ready :=
+  MultiTapeMachine.Composition.ready
+
+@[deprecated (since := "2026-10-20")] alias buffer_tapes :=
+  MultiTapeMachine.Composition.buffer_tapes
+
+@[deprecated (since := "2026-10-20")] alias runFrom_prepare :=
+  MultiTapeMachine.Composition.runFrom_prepare
+
+@[deprecated (since := "2026-10-20")] alias start_ready :=
+  MultiTapeMachine.Composition.start_ready
+
+@[deprecated (since := "2026-10-20")] alias finalConfig :=
+  MultiTapeMachine.Composition.finalConfig
+
+@[deprecated (since := "2026-10-20")] alias finalConfig_output :=
+  MultiTapeMachine.Composition.finalConfig_output
+
+end Composition
 
 end Turing.MultiTapePTM
