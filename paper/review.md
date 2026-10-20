@@ -1039,3 +1039,32 @@ The sampling source and tests are unchanged; declaration links remain pinned to 
 The PDF was regenerated without undefined references or overfull boxes, and combined pages
 30 and 31 were rendered and visually inspected. The sampling entry now appears on page 31.
 Final integration review is recorded in PR #22.
+
+## Random graph cover complexity (PR #23, 20 October 2026)
+
+OpenAI Codex worker `fusion-random-20261020` implemented finite cover descriptions and the
+quantitative random-graph theorem. The independent coordinator reviewed exact core revision
+`5eb6d9a109234ce5579765b93bb24b7cfaca6e60`: description cardinality, decoding through bounded
+closure, padding, finite-budget attainment, the row cover, the uniform probability bound, and
+nonvacuous tests. An earlier API request moved padding and finite-budget attainment into
+`Semifilter.lean` and generalized both to every admissibility predicate. Fresh review of the
+updated revision found no outstanding correctness or API findings.
+
+Independent review also checked the new index entry against those definitions and statements:
+finite encoding cardinality; uniform distribution over all labelled bipartite graphs; the strict
+lower event `floor(N/16) < rho(G)`; the upper bound `rho(G) <= N`; the `N >= 16` hypothesis and
+`1 - 2^(-N)` probability; and the absence of an explicit hard-graph construction. No findings.
+All four declaration links were checked against the pinned source revision. The PDF builds
+without undefined references or overfull boxes, and the new entry on page 31 was rendered and
+visually inspected. All six project validation gates passed again after rebasing onto the merged
+prerequisites. Final documentation review is requested on PR #23. These are AI reviews, not human
+editorial approval or a machine-checked equivalence between the prose and Lean.
+
+Integration reconciliation: PR #23 merges main at
+`fb8bcf29945ea529fd2dc5a41e302d519961ff8e`, retaining both the sampling and random-graph
+entries and both test imports. The index contains 119 entries. Neither development
+changed its Lean statements, proofs, or tests during reconciliation. All seven declaration
+links were rechecked against their pinned source revisions. The rebuilt PDF has no undefined
+references or overfull boxes; both entries appear on page 31, which was rendered and visually
+inspected. All six validation gates pass on the combined tree. Fresh coordinator review of
+this integration revision is requested in PR #23.
