@@ -28,6 +28,7 @@ the head position in their state.
 ## Main results
 
 * `Turing.ReadMachine.run_add`: runs compose.
+* `Turing.ReadMachine.runFrom_loop`: a loop of a read machine, emitting a word in each round.
 -/
 
 @[expose] public section
@@ -105,6 +106,20 @@ theorem runFrom_of_halt {c : Cfg σ} (h : m.halt c.state = true) (n : ℕ) : m.r
 theorem run_eq_of_halt {n n' : ℕ} (h : m.halt (m.run x n).state = true) (hn : n ≤ n') :
     m.run x n' = m.run x n := by
   rw [show n' = n + (n' - n) by omega, run_add, runFrom_of_halt _ _ h]
+
+/-- **A loop of a read machine**: if from the state `s i` the machine steps to `s (i + 1)` and
+emits `e i`, for `i < M`, then after `j ≤ M` steps from `s 0` it is in `s j`, having emitted
+`e 0, …, e (j - 1)`. -/
+theorem runFrom_loop (s : ℕ → σ) (e : ℕ → List Bool) {M : ℕ}
+    (h : ∀ i < M, m.halt (s i) = false ∧ m.step (s i) (m.readBit x (s i)) = (s (i + 1), e i))
+    (out : List Bool) {j : ℕ} (hj : j ≤ M) :
+    m.runFrom x ⟨s 0, out⟩ j = ⟨s j, out ++ ((List.range j).map e).flatten⟩ := by
+  induction j with
+  | zero => simp [runFrom]
+  | succ j ih =>
+    rw [runFrom, Function.iterate_succ_apply', ← runFrom, ih (by omega),
+      next_of_not_halt _ _ (h j (by omega)).1, (h j (by omega)).2]
+    simp [List.range_succ]
 
 end ReadMachine
 

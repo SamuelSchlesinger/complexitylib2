@@ -44,7 +44,6 @@ copies the input.
 
 ## Main results
 
-* `Turing.ReadMachine.runFrom_loop`: a loop of a read machine.
 * `Cslib.Complexity.CircuitValue.run_writer`: the writer writes the encoded instance.
 * `Cslib.Complexity.CircuitValue.computableInLogSpace_tableauInstance`: the instances are
   computable in logarithmic space.
@@ -64,26 +63,6 @@ copies the input.
 -/
 
 @[expose] public section
-
-namespace Turing.ReadMachine
-
-variable {σ : Type*} (m : ReadMachine σ) (x : List Bool)
-
-/-- **A loop of a read machine**: if from the state `s i` the machine steps to `s (i + 1)` and
-emits `e i`, for `i < M`, then after `j ≤ M` steps from `s 0` it is in `s j`, having emitted
-`e 0, …, e (j - 1)`. -/
-theorem runFrom_loop (s : ℕ → σ) (e : ℕ → List Bool) {M : ℕ}
-    (h : ∀ i < M, m.halt (s i) = false ∧ m.step (s i) (m.readBit x (s i)) = (s (i + 1), e i))
-    (out : List Bool) {j : ℕ} (hj : j ≤ M) :
-    m.runFrom x ⟨s 0, out⟩ j = ⟨s j, out ++ ((List.range j).map e).flatten⟩ := by
-  induction j with
-  | zero => simp [runFrom]
-  | succ j ih =>
-    rw [runFrom, Function.iterate_succ_apply', ← runFrom, ih (by omega),
-      next_of_not_halt _ _ (h j (by omega)).1, (h j (by omega)).2]
-    simp [List.range_succ]
-
-end Turing.ReadMachine
 
 namespace Cslib.Complexity
 
@@ -429,7 +408,11 @@ theorem writerStep_inSpace :
     ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => writerStep tm C d p.1 p.2)
       (encPair encWState encBool) (encPair encWState encBits) fun p => wBudget p.1 := by
   have hin : (fun p => (encPair encWState encBool p).length) ≼ fun p => wBudget p.1 :=
-    .of_le_linear 2 0 fun p => by simp only [length_encPair, encBool_apply, wBudget]; simp; omega
+    .of_le_linear 2 0 fun p => by
+      simp only [length_encPair, encBool_apply, wBudget]
+      simp only [encNat_apply, List.length_cons, List.length_nil, zero_add, add_zero,
+        Order.add_one_le_iff]
+      omega
   have hs := (ComputableTidilyInSpace.fst encWState encBool).weaken hin
   have hb := (ComputableTidilyInSpace.snd encWState encBool).weaken hin
   have hph := fst' hs
@@ -485,7 +468,8 @@ theorem wInv_run (w : List Bool) (j : ℕ) :
       · simp only [decide_eq_true h]
         exact Or.inl ⟨rfl, rfl, h⟩
       · simp only [decide_eq_false (Nat.not_lt.2 h)]
-        exact Or.inr (Or.inl ⟨rfl, by simp only [writer, writerStep]; simp; omega, Nat.zero_le _⟩)
+        exact Or.inr (Or.inl ⟨rfl, by
+          simp only [writer, writerStep, ↓reduceIte, Bool.false_eq_true]; omega, Nat.zero_le _⟩)
     · rw [ReadMachine.next_of_not_halt _ _ rfl]
       change WInv _ _ (writerStep tm C d (1, w.length, i) _).1
       rcases Nat.lt_or_ge i (numGates k State (timeBound C d w.length)) with h | h

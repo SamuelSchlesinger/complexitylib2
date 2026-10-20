@@ -127,7 +127,8 @@ theorem val_add {g : ℕ} (hg : g < numGates k State T) :
 
 /-- The input wires carry the input. -/
 theorem val_input {i : ℕ} (hi : i < x.length) : val tm T x i = x[i] := by
-  rw [val, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (by simp; omega)]
+  rw [val, List.getD_eq_getElem?_getD,
+    List.getElem?_eq_getElem (by simp only [length_evalCode]; omega)]
   have hpre := prefix_evalCode interpretation false x (gates tm x.length T)
   rw [Option.getD_some, hpre.getElem hi]
 
@@ -560,11 +561,11 @@ theorem val_gf_or (htT : t + 1 ≤ T) (f : GFeat State) (j : Fin 8) :
     constructor
     · rintro (⟨j', hj', h⟩ | h)
       · exact ⟨j', by omega, h⟩
-      · exact ⟨j.succ, by simp, h⟩
+      · exact ⟨j.succ, by simp only [Fin.val_succ, le_refl], h⟩
     · rintro ⟨j', hj', h⟩
       rcases Nat.lt_or_ge j'.val (j.val + 1) with h' | h'
       · exact Or.inl ⟨j', by omega, h⟩
-      · obtain rfl : j' = j.succ := Fin.ext (by simp; omega)
+      · obtain rfl : j' = j.succ := Fin.ext (by simp only [Fin.val_succ]; omega)
         exact Or.inr h
 
 omit hinv in
@@ -598,11 +599,11 @@ theorem val_col_or (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFe
     constructor
     · rintro (⟨j', hj', h⟩ | h)
       · exact ⟨j', by omega, h⟩
-      · exact ⟨j.succ, by simp, h⟩
+      · exact ⟨j.succ, by simp only [Fin.val_succ, le_refl], h⟩
     · rintro ⟨j', hj', h⟩
       rcases Nat.lt_or_ge j'.val (j.val + 1) with h' | h'
       · exact Or.inl ⟨j', by omega, h⟩
-      · obtain rfl : j' = j.succ := Fin.ext (by simp; omega)
+      · obtain rfl : j' = j.succ := Fin.ext (by simp only [Fin.val_succ]; omega)
         exact Or.inr h
 
 end Step
@@ -630,7 +631,8 @@ theorem exists_getD_iff {L : List (Ref k State × Ref k State)} (hL : L.length �
       exact absurd h Bool.false_ne_true
   · rintro ⟨p, hp, h⟩
     obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.1 hp
-    exact ⟨⟨i, by omega⟩, by simp [Fin.le_iff_val_le_val]; omega,
+    exact ⟨⟨i, by omega⟩, by
+      simp only [Fin.isValue, Fin.le_iff_val_le_val, Fin.coe_ofNat_eq_mod, Nat.mod_succ]; omega,
       by rw [List.getD_eq_getElem _ _ hi]; exact h⟩
 
 omit [Fintype State] in
@@ -710,7 +712,12 @@ theorem val_col_step {c : ℕ} (hc : c < numCols T) (f : ColFeat k) :
     simp only [ha, hq, Attr.test, Action.apply_inputPos, Guard.test]
     have hmv := val_moveInputPos_eq cfg.inputPos (tm.actionOf (cfg.situation q')).inputTape
     generalize (tm.actionOf (cfg.situation q')).inputTape = m at hmv ⊢
-    rcases m with _ | _ | _ <;> simp (config := { decide := true }) [numCols] at hmv ⊢ <;> omega
+    rcases m with _ | _ | _ <;> simp +decide only [SignType.zero_eq_zero, moveInputPos_zero,
+      SignType.coe_zero, add_zero, Nat.cast_nonneg, sup_of_le_right, right_eq_inf, reduceCtorEq,
+      true_and, false_and, Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq, numCols,
+      Order.lt_add_one_iff, Order.add_one_le_iff, or_self, or_false, false_or,
+      SignType.neg_eq_neg_one, SignType.coe_neg, SignType.coe_one, Int.reduceNeg,
+      SignType.pos_eq_one] at hmv ⊢ <;> omega
   · simp [ha, h0, colSem, gfSem, Guard.test]
   · rw [hs]
     simp only [colSem, gfSem, decide_eq_true_iff]
@@ -719,9 +726,18 @@ theorem val_col_step {c : ℕ} (hc : c < numCols T) (f : ColFeat k) :
     rw [abs_le] at hbi
     generalize ((tm.actionOf (cfg.situation q')).workTapes i).2 = m
     rcases Nat.eq_zero_or_pos c with rfl | hc1
-    · rcases m with _ | _ | _ <;> simp (config := { decide := true }) [numCols] <;> omega
+    · rcases m with _ | _ | _ <;> simp +decide only [reduceCtorEq, Nat.cast_zero,
+        zero_sub, true_and, false_and, zero_tsub, and_self, zero_add, numCols, lt_add_iff_pos_left,
+        Order.lt_two_iff, mul_pos_iff_of_pos_left, decide_eq_true_eq, Nat.cast_one, or_self,
+        or_false, false_or, SignType.zero_eq_zero, SignType.coe_zero, add_zero,
+        SignType.neg_eq_neg_one, SignType.coe_neg, SignType.coe_one, Int.reduceNeg, and_false,
+        SignType.pos_eq_one, false_iff, ne_eq] <;> omega
     · have hcast : ((c - 1 : ℕ) : ℤ) = (c : ℤ) - 1 := by rw [Nat.cast_sub hc1, Nat.cast_one]
-      rcases m with _ | _ | _ <;> simp (config := { decide := true }) [numCols, hcast] <;> omega
+      rcases m with _ | _ | _ <;> simp +decide only [reduceCtorEq, true_and,
+        false_and, decide_eq_true_eq, hcast, numCols, Order.lt_add_one_iff, Order.add_one_le_iff,
+        Nat.cast_add, Nat.cast_one, or_self, or_false, false_or, SignType.zero_eq_zero,
+        SignType.coe_zero, add_zero, SignType.neg_eq_neg_one, SignType.coe_neg, SignType.coe_one,
+        Int.reduceNeg, SignType.pos_eq_one] <;> omega
   · simp [ha, h0, colSem, gfSem, Guard.test]
   · rw [hs]
     simp only [colSem, gfSem, decide_eq_true_iff]

@@ -563,20 +563,28 @@ theorem ColFeat.ofIdx_idx (f : ColFeat k) : ColFeat.ofIdx f.idx = f := by
 
 theorem gadgetIdx_lt (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b j < 16 * (fi + 1) := by
   have := j.isLt
-  cases b <;> simp [gadgetIdx] <;> omega
+  cases b <;>
+    simp only [gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero,
+      gt_iff_lt] <;> omega
 
 theorem gadgetIdx_div (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetIdx fi b j / 16 = fi := by
   have := j.isLt
-  cases b <;> simp [gadgetIdx] <;> omega
+  cases b <;>
+    simp only [gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero] <;> omega
 
 theorem gadgetB_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetB (gadgetIdx fi b j) = b := by
   have := j.isLt
-  cases b <;> simp [gadgetIdx, gadgetB] <;> omega
+  cases b <;>
+    simp only [gadgetB, gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one, add_zero,
+      Nat.mul_add_mod_self_left, decide_eq_false_iff_not, decide_eq_true_eq, not_le, ge_iff_le,
+      gt_iff_lt] <;> omega
 
 theorem gadgetJ_gadgetIdx (fi : ℕ) (b : Bool) (j : Fin 8) : gadgetJ (gadgetIdx fi b j) = j := by
   have := j.isLt
   ext
-  cases b <;> simp [gadgetIdx, gadgetJ] <;> omega
+  cases b <;>
+    simp only [gadgetJ, gadgetIdx, Bool.toNat_false, Bool.toNat_true, mul_zero, mul_one,
+      add_zero] <;> omega
 
 /-! ### The gates -/
 
@@ -1175,7 +1183,9 @@ theorem ColFeat.idx_ofIdx {m : ℕ} (hm : m < 1 + 4 * k) : (ColFeat.ofIdx m : Co
 omit [DecidableEq State] in
 theorem gadgetIdx_decode (m : ℕ) : gadgetIdx (m / 16) (gadgetB m) (gadgetJ m) = m := by
   simp only [gadgetIdx, gadgetB, gadgetJ]
-  by_cases h : 8 ≤ m % 16 <;> simp [h] <;> omega
+  by_cases h : 8 ≤ m % 16 <;>
+    simp only [h, decide_true, decide_false, Bool.toNat_true, Bool.toNat_false, mul_one, mul_zero,
+    add_zero] <;> omega
 
 omit [DecidableEq State] in
 /-- **Every gate after the constants sits at a position** of a block. -/
