@@ -497,9 +497,10 @@ Polynomial efficiency is sufficient for many reductions, but does not establish 
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
 * Tree Evaluation: the [Cook–Mertz machine](Complexity/Computability/TreeEval/Space.lean)
-  has a proved parameterized space bound on valid encoded instances; a separate
-  `O(log n · log log n)` corollary, malformed-input handling and the refined
-  `O(ℓ + H log(ℓ + 2))` parameter bound remain outstanding;
+  has a proved parameterized space bound on valid encoded instances and an
+  `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and
+  `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
+  remain outstanding;
 * the space hierarchy, which needs a space-budgeted universal simulation; the
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a

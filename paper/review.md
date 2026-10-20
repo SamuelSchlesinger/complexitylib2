@@ -1651,3 +1651,33 @@ The source and tests have clean fresh MCP diagnostics. The rebuilt PDF has no un
 citations or overfull boxes; pages 2 (counting completeness) and 4 (Boolean hierarchy) were
 rendered and inspected. Documentation configuration and whitespace checks pass. Only this
 validation record was appended after the gates; final exact-head review is recorded in PR #67.
+
+## 2026-10-20: Tree Evaluation input-size corollary integration
+
+The corollary development is by `worker-agy-treeeval-20261020`, assisted by Claude Opus 4.6
+in Antigravity. Christian Reitwiessner's earlier formalization credit is preserved; mathematical
+sources remain Cook--Mertz and Goldreich's exposition. Source revision
+`3a10a7a7c55bc0b5ec4588e369ab19daf66418f7` and document revision
+`b110fbb558d07b1d5597a62b5828bbe568e8a998` received independent API, correctness,
+nonvacuity and theorem-index review. Coordinator `fusion_quadratic` verified the repaired
+PR-body notation and recorded final approval in PR #68, comment 6298114614.
+
+Coordinator `fusion_quadratic`, assisted by OpenAI Codex, integrates the validated MAJSAT
+revision `45fd65f150b9daaccc09c3b8dbea88ebbeac6aea` and its reviewed predecessor stack.
+The original author branch and all new bounds and clients are preserved. The only additional
+TreeEval source difference from the author's revision is the existing main-branch refactor of
+unary-block decoding to the shared list helper; its public statement is unchanged. The six new
+source anchors and entry text remain pinned to the reviewed source. The input-size result
+still restricts to positive value length and height, one fixed evaluator and valid encoded
+instances, without an asserted asymptotic running time. The sharp Cook--Mertz parameter bound,
+malformed-input recognition and Williams's simulation remain unproved here. This extends an
+existing entry, retaining all predecessor entries and the total of 127. Final validation,
+rendered-page inspection and independent exact integration review are recorded in PR #68;
+AI review is not human editorial approval or machine-checked prose equivalence.
+
+All six combined gates pass in `.worktrees/ops-coordinator-logs/treeeval-final-check.log`.
+Fresh MCP diagnostics for Encoding, Instance, Space and the TreeEval tests are clean. The
+rebuilt PDF has no undefined citations or overfull boxes; pages 18 (Tree Evaluation) and 2
+(MAJSAT) were rendered and inspected. Documentation configuration and whitespace checks pass.
+Only this validation record was appended after the gates; final exact-head review is recorded
+in PR #68.
