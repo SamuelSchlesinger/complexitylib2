@@ -46,7 +46,9 @@ PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit o
 Extend these with counting reductions and further oracle results, preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
-hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
+hierarchy (`BH` and `coBH`, base-class Boolean operations on `BH`, and the finite-hierarchy
+level-collapse equivalences `BH_{k+1} = BH_k ↔ BH_k = coBH_k ⇒ BH = BH_k`), WPP and LWPP now have
+definitions, elementary containments/closures, LWPP many-one
 reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
 multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
 (Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
@@ -61,9 +63,9 @@ WPP and LWPP, using an arbitrary polynomial-time Boolean combiner on a uniform b
 queries ([WPP.TruthTable](Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean)).
 Query lengths and unary query counts may vary at fixed input length; LWPP normalizes both.
 Adaptive WPP closure, UP-oracle containment, and oracle lowness are not claimed by this result.
-The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
-MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
-and WPP/LWPP oracle lowness.
+The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (both threshold #SAT and MAJSAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
+permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
+collapse, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
@@ -79,8 +81,10 @@ with a #P count and positive binary-output polynomial-time threshold. Intersecti
 language with a BPP language stays in SBP. MA ⊆ SBP is proved with the Arthur–Merlin classes.
 The [set lower bound protocol](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean)
 already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
-provide a counting-algebra foundation for future oracle simulations; AWPP PP-lowness
-remains an approximate-counting milestone.
+provide a counting-algebra foundation for future oracle simulations.
+[Relativized counting and majority verifiers](Complexity/Computability/Complexity/Classes/PP/Oracle.lean)
+now provide the positive-GapP characterization and elimination of P-decidable oracles;
+AWPP PP-lowness remains an approximate-counting milestone.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
@@ -205,6 +209,13 @@ of the handover. The work below remains available for subsequent, independently 
      preserves quantifier-freeness when the supplied source successor is quantifier-free.
      The canonical `≤`/BIT instance uses a universal adjacency formula; no unconditional
      quantifier-free successor claim is made for this basis.
+     **Canonical addition prerequisite completed (#64):**
+     [Ordered/Addition](Complexity/Logics/FirstOrder/Ordered/Addition.lean) defines one native
+     formula over `≤` and BIT whose semantics on every `Fin n`, `n ≥ 2`, is exact natural-number
+     addition `x + y = z`. Out-of-range sums have no satisfying result; this is not modular
+     addition. It formalizes the PLUS part of Immerman's Theorem 1.17(1), using the carry
+     characterization of Proposition 1.9. TIMES and the Bit Sum Lemma remain open, as do
+     arbitrary-base tuple BIT lifting and numeric-preserving composition.
      **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the ordered logspace encoding bridge; then projections and NL/P completeness.
      Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
@@ -490,9 +501,10 @@ Polynomial efficiency is sufficient for many reductions, but does not establish 
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
 * Tree Evaluation: the [Cook–Mertz machine](Complexity/Computability/TreeEval/Space.lean)
-  has a proved parameterized space bound on valid encoded instances; a separate
-  `O(log n · log log n)` corollary, malformed-input handling and the refined
-  `O(ℓ + H log(ℓ + 2))` parameter bound remain outstanding;
+  has a proved parameterized space bound on valid encoded instances and an
+  `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and
+  `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
+  remain outstanding;
 * the space hierarchy, which needs a space-budgeted universal simulation; the
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a

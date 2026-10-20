@@ -161,6 +161,7 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTuples
@@ -240,6 +241,7 @@ import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
+import ComplexityTests.RelativizedCounting
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
 import ComplexityTests.ResourceClasses3
