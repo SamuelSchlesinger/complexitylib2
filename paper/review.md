@@ -1127,6 +1127,30 @@ prose equivalence. AI assistance: OpenAI Codex. Mathematical credit remains Cava
 presentation of Karchmer's characterization; the explicit factor five is the checked certificate
 deduction described above.
 
+
+## 2026-10-20: Canonical numeric structures for ordered first-order logic
+
+Worker `ordered-fo-20261020` added native numeric vocabulary/structures and the relational
+forgetting bridge at source revision `223f5289aa5809f50251aba7aced4d7e98478a78`. One new
+curated prerequisite entry brings the index to 121 entries. The source credit includes
+Immerman's Section 1.2 conventions and Proposition 3.5, and Samuel Schlesinger's earlier
+canonical-expansion interface at its pinned revision. No earlier custom syntax was ported.
+
+The independent parent coordinator's preliminary API/correctness review found no substantive
+issues: native language sums retain input functions/constants, canonical structures require
+`n ≥ 2`, BIT indices start at zero, and the existing interpretation target remains relational.
+Final exact-source and index review verdicts are tracked in PR #37. The prose distinguishes this
+semantic prerequisite from target constants, arbitrary-base tuple BIT lifting, numeric-preserving
+composition and ordered complexity/capture results, all of which remain open in the roadmap.
+
+All six validation gates pass. Concrete clients cover two- and three-element universes,
+constant separation, bit orientation, quantified formulas containing input constants, and a
+nontrivial BIT-defined interpreted relation; named axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`. The three declaration links are pinned to the source
+revision above, lines 142 and 149 of `Ordered/Basic.lean` and line 68 of
+`Ordered/Interpretation.lean`, and checked against `git show`. The PDF builds, and page 8
+was rendered and visually inspected. These are AI reviews, not human editorial approval
+or machine-checked prose equivalence. AI assistance: OpenAI Codex.
 ## Uniform counting aggregation (PR #36, 20 October 2026)
 
 OpenAI Codex worker `awpp-amplification-20261020` extends the counting-algebra entry with
@@ -1177,3 +1201,12 @@ PR #36 integration: merged current main after PR #35, preserving both counting e
 the unchanged index count of 120. No Lean source or test changed in this reconciliation.
 Independent exact-head approval of source and index at `35bf8a1f` is recorded in PR #36;
 the combined document and validation gates are rechecked before integration.
+
+
+PR #37 integration reconciliation incorporates reviewed PR #29 head
+`ac5b1e70` (including PRs #35 and #36). Both sets of review notes, all generated imports,
+and the counting and ordered-FO index changes are retained. No ordered-FO source or test
+changed. The combined index contains 121 entries; all six validation gates pass. The PDF
+was rebuilt. Ordered-FO page 8 is pixel-identical to its reviewed rendering; the combined
+counting pages 19, 23 and 25 were rendered and inspected. Exact integration-head review
+is tracked in PR #37.

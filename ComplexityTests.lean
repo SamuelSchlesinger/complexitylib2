@@ -159,6 +159,7 @@ import ComplexityTests.OneWayNormalization
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.PCPAmplification
 import ComplexityTests.PCPAmplifierIteration
 import ComplexityTests.PCPApproximation
