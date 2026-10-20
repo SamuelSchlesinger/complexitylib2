@@ -147,8 +147,10 @@ theorem mem_dualTableauInstance_iff (w : List Bool) :
 
 /-- The two translated gates of gate `j` of the tableau, as the writer emits them. -/
 noncomputable def dualChunk (n j : ℕ) : List Bool :=
-  dbl (dbl (frame (encGate (dualGateDM true (Tableau.gateCode tm n (timeBound C d n) j))))) ++
-    dbl (dbl (frame (encGate (dualGateDM false (Tableau.gateCode tm n (timeBound C d n) j)))))
+  doubled (doubled (frame
+    (encGate (dualGateDM true (Tableau.gateCode tm n (timeBound C d n) j))))) ++
+    doubled (doubled (frame
+      (encGate (dualGateDM false (Tableau.gateCode tm n (timeBound C d n) j)))))
 
 /-- **The writer of the dual-rail instances.** -/
 noncomputable def dualSpec : WriterSpec where
@@ -157,7 +159,8 @@ noncomputable def dualSpec : WriterSpec where
   numChunks n := Tableau.numGates k State (timeBound C d n)
   chunk := dualChunk tm C d
   trailer n := [true, false] ++
-    dbl (frame (encNat (Monotone.railWire true (Tableau.outWire k State n (timeBound C d n))))) ++
+    doubled (frame (encNat (Monotone.railWire true
+      (Tableau.outWire k State n (timeBound C d n))))) ++
       [false, true]
   copyBit b := [b, !b]
 
@@ -178,21 +181,21 @@ theorem encMonotoneCircuitValue_dualTableauInstance (w : List Bool) :
   simp only [toDeMorgan, dualTableauInstance, Circuit.code_mapOp, Monotone.code_dualRail,
     Tableau.code_circuit, Tableau.gates, encPair_apply, encUnary_apply, encBits_apply,
     Monotone.ofFn_railBitString, List.map_cons, List.map_nil, encList_cons, encList_nil,
-    List.append_nil, frame_eq_dbl, dbl_append]
+    List.append_nil, frame_eq_doubled, doubled_append]
   have hw : List.ofFn (fun i : Fin w.length => w[i]) = w := List.ofFn_getElem
   rw [hw]
-  rw [dbl_dbl_replicate, flatten_replicate_two_mul_add_one]
+  rw [doubled_doubled_replicate, flatten_replicate_two_mul_add_one]
   have hcode (gs : List (Boolean.Op × List ℕ)) :
-      dbl (dbl (encList encGate
+      doubled (doubled (encList encGate
         ((Monotone.dualCode gs).map fun g => (Monotone.toDeMorgan g.1, g.2)))) =
-        (gs.map fun g => dbl (dbl (frame (encGate (dualGateDM true g)))) ++
-          dbl (dbl (frame (encGate (dualGateDM false g))))).flatten := by
+        (gs.map fun g => doubled (doubled (frame (encGate (dualGateDM true g)))) ++
+          doubled (doubled (frame (encGate (dualGateDM false g))))).flatten := by
     induction gs with
     | nil => rfl
     | cons g gs ih =>
       simp only [Monotone.dualCode, List.flatMap_cons, List.map_append]
       rw [map_dualGates g]
-      simp only [List.cons_append, List.nil_append, encList_cons, dbl_append,
+      simp only [List.cons_append, List.nil_append, encList_cons, doubled_append,
         List.map_cons, List.flatten_cons]
       simp only [Monotone.dualCode] at ih
       rw [ih]
@@ -203,10 +206,10 @@ theorem encMonotoneCircuitValue_dualTableauInstance (w : List Bool) :
     [true, true, true, true, true, false] ++
     ((List.range (Tableau.numGates k State (timeBound C d w.length))).map
       fun i => dualChunk tm C d w.length i).flatten ++
-    ([true, false] ++ dbl (frame (encNat (Monotone.railWire true
+    ([true, false] ++ doubled (frame (encNat (Monotone.railWire true
       (Tableau.outWire k State w.length (timeBound C d w.length))))) ++ [false, true]) ++
     w.flatMap (fun b => [b, !b])
-  simp [dualChunk, frame_eq_dbl, dbl_append, Monotone.railBits, List.append_assoc, dbl_false]
+  simp [dualChunk, frame_eq_doubled, doubled_append, Monotone.railBits, List.append_assoc]
 
 section Space
 
@@ -222,8 +225,8 @@ private theorem dualChunk_inSpace {n j : α → ℕ}
   have hframe : ComputableTidilyInSpace (fun g => frame (encGate g)) encGate encBits
       fun g => (encGate g).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))
-  have hrail (b : Bool) := budget_comp_linear dbl_inSpace
-    (budget_comp_linear dbl_inSpace
+  have hrail (b : Bool) := budget_comp_linear doubled_inSpace
+    (budget_comp_linear doubled_inSpace
       (budget_comp_linear (g := fun g => frame (encGate g)) hframe (dualGateDM_inSpace b hg hin)))
   exact ((hrail true).append (hrail false) (g := fun x => dualChunk tm C d (n x) (j x))
     (encD := encBits) fun _ => rfl).weaken (.add (.refl _) (.refl _))
@@ -243,10 +246,10 @@ private theorem dualTrailer_inSpace {n : α → ℕ}
     budget_natAdd (budget_natMul (budget_const 2 hin) ho) (budget_const 1 hin)
   have hframe : ComputableTidilyInSpace (fun m => frame (encNat m)) encNat encBits
       fun m => (encNat m).length := of_inO (.of_linear (.of_frame fun _ => rfl))
-  have hmid := budget_comp_linear dbl_inSpace
+  have hmid := budget_comp_linear doubled_inSpace
     (budget_comp_linear (g := fun m => frame (encNat m)) hframe hr)
   have h₁ := (budget_const (encB := encBits) [true, false] hin).append hmid
-    (g := fun x => [true, false] ++ dbl (frame (encNat (Monotone.railWire true
+    (g := fun x => [true, false] ++ doubled (frame (encNat (Monotone.railWire true
       (Tableau.outWire k State (n x) (timeBound C d (n x)))))))
     (encD := encBits) fun _ => rfl
   exact ((h₁.weaken (.add (.refl _) (.refl _))).append

@@ -18,6 +18,7 @@ import Mathlib.Data.List.GetD
 
 * `List.foldr_ite_eq_of_mem`: a chain of equality tests selects the branch of a contained tag.
   Used by deterministic and probabilistic finite-control certificates.
+* `List.getD_mem_or`: a defaulted lookup returns a list member or the default value.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
 * `List.decide_mem_eq_any`: membership as a scan of the list.
 * `List.getD_set_self`, `List.getD_set_ne`, `List.forall_mem_set_of_forall_mem`,
@@ -91,3 +92,11 @@ theorem List.getD_le_of_forall_le {l : List ℕ} {B : ℕ} (h : ∀ a ∈ l, a �
   rcases hj : l[j]? with _ | a
   · exact Nat.zero_le _
   · exact h a (List.mem_of_getElem? hj)
+
+/-- A defaulted lookup returns a member of the list or the default value. -/
+theorem List.getD_mem_or {α : Type*} (l : List α) (j : ℕ) (d : α) :
+    l.getD j d ∈ l ∨ l.getD j d = d := by
+  rw [List.getD_eq_getElem?_getD]
+  rcases h : l[j]? with _ | a
+  · exact Or.inr rfl
+  · exact Or.inl (List.mem_of_getElem? h)

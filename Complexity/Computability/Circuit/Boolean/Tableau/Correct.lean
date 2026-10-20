@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Tableau.Basic
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
@@ -26,10 +27,15 @@ across the columns, the global gates compute the situation and the attributes of
 the gadget of each feature computes the disjunction of its terms, which is the step equation of
 the feature.
 
+## Main definitions
+
+* `Cslib.Circuits.Boolean.Tableau.val`: the value of a numbered tableau wire.
+* `Cslib.Circuits.Boolean.Tableau.colSem`, `Cslib.Circuits.Boolean.Tableau.gfSem`: the column and
+  global features of a machine configuration.
+* `Cslib.Circuits.Boolean.Tableau.Invariant`: the agreement of feature wires with the run.
+
 ## Main results
 
-* `Cslib.Circuits.getD_evalCode`: the value of a gate of a well-formed gate list, from the values
-  of its arguments.
 * `Cslib.Circuits.Boolean.Tableau.invariant_le`: the features at every time `t ≤ T`.
 * `Cslib.Circuits.Boolean.Tableau.evalOutput_gates`: the output wire carries the answer.
 * `Cslib.Circuits.Boolean.Tableau.eval_circuit`: the tableau circuit outputs the answer.
@@ -43,55 +49,6 @@ the feature.
 @[expose] public section
 
 namespace Cslib.Circuits
-
-universe u v
-
-variable {σ : Signature.{v}} {U : Type u}
-
-/-- Evaluating a gate list only appends values. -/
-theorem prefix_evalCode (I : Interpretation σ U) (d : U) (x : List U)
-    (gates : List (σ.Op × List ℕ)) : x <+: evalCode I d x gates := by
-  induction gates using List.reverseRecOn with
-  | nil => exact List.prefix_refl _
-  | append_singleton gates g ih =>
-    rw [evalCode_append_singleton]
-    exact ih.trans (List.prefix_append _ _)
-
-/-- **The value of a gate** of a well-formed gate list is its operation applied to the values of
-its arguments. -/
-theorem getD_evalCode (I : Interpretation σ U) (d : U) (x : List U)
-    {gates : List (σ.Op × List ℕ)} (h : Program.IsCodeFrom σ x.length 0 gates) {j : ℕ}
-    {gate : σ.Op × List ℕ} (hg : gates[j]? = some gate) :
-    (evalCode I d x gates).getD (x.length + j) d =
-      I gate.1 fun a => gate.2[a.val]?.elim d ((evalCode I d x gates).getD · d) := by
-  obtain ⟨hj, rfl⟩ := List.getElem?_eq_some_iff.1 hg
-  have hsplit : gates = gates.take j ++ [gates[j]] ++ gates.drop (j + 1) := by
-    rw [List.append_assoc, List.singleton_append, ← List.drop_eq_getElem_cons hj,
-      List.take_append_drop]
-  have hlen : (evalCode I d x (gates.take j)).length = x.length + j := by
-    rw [length_evalCode, List.length_take, Nat.min_eq_left hj.le]
-  have hpre := prefix_evalCode I d (evalCode I d x (gates.take j ++ [gates[j]]))
-    (gates.drop (j + 1))
-  rw [← evalCode_append, ← hsplit, evalCode_append_singleton] at hpre
-  obtain ⟨rest, hrest⟩ := hpre
-  -- the arguments read wires computed before gate `j`
-  have hargs : ∀ i ∈ gates[j].2, i < x.length + j := by
-    intro i hi
-    have := (h.getElem j hj).2 i hi
-    omega
-  have hread (i : ℕ) (hi : i < x.length + j) :
-      (evalCode I d x gates).getD i d = (evalCode I d x (gates.take j)).getD i d := by
-    rw [← hrest, List.append_assoc, List.getD_append _ _ _ _ (by omega)]
-  have hv : (evalCode I d x gates).getD (x.length + j) d = I gates[j].1 fun a =>
-      gates[j].2[a.val]?.elim d ((evalCode I d x (gates.take j)).getD · d) := by
-    rw [← hrest, List.getD_append _ _ _ _ (by simp [hlen]), List.getD_append_right _ _ _ _
-      (by omega), hlen, Nat.sub_self, List.getD_cons_zero]
-  rw [hv]
-  congr 1
-  funext a
-  rcases ha : gates[j].2[a.val]? with _ | i
-  · rfl
-  · exact (hread i (hargs i (List.mem_of_getElem? ha))).symm
 
 namespace Boolean.Tableau
 
@@ -119,6 +76,7 @@ noncomputable def val (T : ℕ) (x : List Bool) (w : ℕ) : Bool :=
 
 variable {T : ℕ} {x : List Bool}
 
+/-- The value of a numbered gate is its operation applied to the values of its arguments. -/
 theorem val_add {g : ℕ} (hg : g < numGates k State T) :
     val tm T x (x.length + g) = interpretation (gateCode tm x.length T g).1
       fun a => (gateCode tm x.length T g).2[a.val]?.elim false (val tm T x) := by
@@ -214,23 +172,24 @@ theorem invariant_zero : Invariant tm T x 0 := by
   · rw [val_wire tm (l := .gf f true 7) rfl (Nat.zero_le _)]
     rcases f with q | o <;> simp [initBit, gfInit, gfSem, runFrom, Cfg.init, eq_comm]
   · rw [val_wire tm (l := .col f true 7) hc (Nat.zero_le _)]
-    rcases f with _ | i | ⟨i, s⟩ <;> simp [initBit, colInit, colSem, runFrom, Cfg.init, eq_comm]
+    rcases f with _ | i | ⟨i, s⟩ <;>
+      simp only [↓reduceIte, initBit, Fin.isValue, decide_true, colInit, Bool.true_and, colSem,
+        runFrom, MultiTapeNTM.initCfg, Cfg.init, Function.iterate_zero, id_eq,
+        Fin.coe_ofNat_eq_mod, Nat.one_mod, eq_comm, decide_eq_decide]
     omega
 
 /-! ### Values of references -/
 
-private theorem val_resolve_fls {t c : ℕ} : val tm T x ((Ref.fls : Ref k State).resolve x.length T t
-    c) =
-    false := val_fls tm
+private theorem val_resolve_fls {t c : ℕ} :
+    val tm T x ((Ref.fls : Ref k State).resolve x.length T t c) = false := val_fls tm
 
-private theorem val_resolve_tru {t c : ℕ} : val tm T x ((Ref.tru : Ref k State).resolve x.length T t
-    c) =
-    true := val_tru tm
+private theorem val_resolve_tru {t c : ℕ} :
+    val tm T x ((Ref.tru : Ref k State).resolve x.length T t c) = true := val_tru tm
 
 /-- The input bit of column `c`, `false` at the columns holding no input bit. -/
-private theorem val_resolve_inp {t c : ℕ} : val tm T x ((Ref.inp : Ref k State).resolve x.length T t
-    c) =
-    (inputAt x c).getD false := by
+private theorem val_resolve_inp {t c : ℕ} :
+    val tm T x ((Ref.inp : Ref k State).resolve x.length T t c) =
+      (inputAt x c).getD false := by
   simp only [Ref.resolve]
   split_ifs with h
   · rw [val_input tm (by omega)]
@@ -572,16 +531,16 @@ private theorem val_gf_or (htT : t + 1 ≤ T) (f : GFeat State) (j : Fin 8) :
         exact Or.inr h
 
 omit hinv in
-private theorem val_col_and (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (j : Fin
-    8) :
+private theorem val_col_and (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T)
+    (f : ColFeat k) (j : Fin 8) :
     val tm T x (wire (State := State) x.length T (t + 1) (.col f false j) c) =
       termVal tm T x (t + 1) c ((colTerms f).getD j (.fls, .fls)) := by
   rw [val_wire tm (l := .col f false j) hc htT]
   simp only [Nat.add_one_ne_zero, ↓reduceIte, table, opVal, termVal]
 
 omit hinv in
-private theorem val_col_or (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T) (f : ColFeat k) (j : Fin
-    8) :
+private theorem val_col_or (htT : t + 1 ≤ T) {c : ℕ} (hc : c < numCols T)
+    (f : ColFeat k) (j : Fin 8) :
     val tm T x (wire (State := State) x.length T (t + 1) (.col f true j) c) = true ↔
       ∃ j' : Fin 8, j' ≤ j ∧
         termVal tm T x (t + 1) c ((colTerms f).getD j' (.fls, .fls)) = true := by
@@ -630,7 +589,7 @@ private theorem exists_getD_iff {L : List (Ref k State × Ref k State)} (hL : L.
     (∃ j' : Fin 8, j' ≤ 7 ∧ P (L.getD j' (.fls, .fls)) = true) ↔ ∃ p ∈ L, P p = true := by
   constructor
   · rintro ⟨j', -, h⟩
-    rcases getD_mem_or L j' (.fls, .fls) with hm | hm
+    rcases List.getD_mem_or L j' (.fls, .fls) with hm | hm
     · exact ⟨_, hm, h⟩
     · rw [hm, hd] at h
       exact absurd h Bool.false_ne_true

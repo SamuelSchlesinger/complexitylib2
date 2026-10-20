@@ -9,7 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Machines.ReadMachine.Tidy
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 import Mathlib.Data.List.GetD
 
 /-!
@@ -80,30 +82,6 @@ private def WInv (n N : ℕ) (s : ℕ × ℕ × ℕ) : Prop :=
 private theorem le_of_wInv {n N : ℕ} {s : ℕ × ℕ × ℕ} (h : WInv n N s) :
     s.1 ≤ 3 ∧ s.2.1 ≤ n ∧ s.2.2 ≤ n + N := by
   rcases h with ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ | ⟨h₁, h₂, h₃⟩ <;> omega
-
-/-- A number below a polynomial in `L` has a binary length logarithmic in `L`. -/
-theorem length_encNat_le_log {M A D L : ℕ} (h : M ≤ A * (L + 1) ^ D) :
-    (encNat M).length ≤ (Nat.size A + 2 * D + 1) * (Nat.log2 L + 1) := by
-  have hpow (a D : ℕ) : (encNat (a ^ D)).length ≤ D * (encNat a).length + 1 := by
-    induction D with
-    | zero => simp
-    | succ D ih =>
-      rw [pow_succ]
-      have := length_encNat_mul_le (a ^ D) a
-      rw [Nat.succ_mul]
-      omega
-  have hL : (encNat (L + 1)).length ≤ Nat.log2 L + 2 := by
-    rw [length_encNat_eq_size, Nat.size_le]
-    have := Nat.lt_log2_self (n := L)
-    rw [pow_succ]
-    omega
-  have h₁ := (ComputableTidilyInO.length_encNat_mono h).trans (length_encNat_mul_le _ _)
-  have h₂ := hpow (L + 1) D
-  rw [← length_encNat_eq_size]
-  have : D * (encNat (L + 1)).length ≤ D * (Nat.log2 L + 2) := Nat.mul_le_mul_left _ hL
-  nlinarith
-
-
 
 /-- **What a writer emits**: a word for each bit of the input and a word at the end while it
 counts the input, then `numChunks n` chunks and a trailer, then a word for each bit of the input
@@ -407,7 +385,7 @@ theorem computableInLogSpace {β : Type} {encOut : β ↪ List Bool} {g : List B
       A * ((encFramed encBits w).length + 1) ^ D :=
     (hAD w.length).trans (Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by
       simp only [encFramed_apply, encBits_apply, length_frame]; omega) D))
-  have hl := length_encNat_le_log hM
+  have hl := length_encNat_le_of_le_mul_pow hM
   have hX : 1 ≤ Nat.log2 (encFramed encBits w).length + 1 := by omega
   beta_reduce
   generalize Nat.log2 (encFramed encBits w).length + 1 = X at hl hX ⊢

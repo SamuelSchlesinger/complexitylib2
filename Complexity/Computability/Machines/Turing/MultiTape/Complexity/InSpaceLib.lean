@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 
 /-!
 # Basic functions within linear work space
@@ -634,7 +633,7 @@ theorem budget_natPow {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn enc
 theorem budget_finMod {w : ℕ} (hw : 0 < w) {m : α → ℕ}
     (hm : ComputableTidilyInSpace m encIn encNat Bs) (hin : (fun x => (encIn x).length) ≼ Bs) :
     ComputableTidilyInSpace (fun x => (⟨m x % w, Nat.mod_lt _ hw⟩ : Fin w)) encIn
-      (encFinBin w) Bs :=
+      (Fin.valEmbedding.trans encNat) Bs :=
   (budget_natMod hm (budget_const (encB := encNat) w hin)).of_enc_eq fun _ => rfl
 
 /-- `some` of a number, within the budget. -/

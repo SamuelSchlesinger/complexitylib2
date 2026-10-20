@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Cslib.Computability.Machines.Turing.MultiTape.ConfigBound
@@ -69,6 +69,9 @@ tapes and counters of logarithmic length [Sipser, Section 8.5][Sipser2013].
 * `Turing.MultiTapeTM.ComputableInLogSpace.computableTidilyInPolyTime`: logspace functions are
   computable in polynomial time.
 * `Turing.MultiTapeTM.polyBounded_log`: logarithmic bounds are polynomially bounded.
+* `Turing.MultiTapeTM.doubled_inSpace`: doubling bits uses linear work space.
+* `Turing.MultiTapeTM.doubled_flatten`, `Turing.MultiTapeTM.doubled_doubled_replicate`:
+  doubling a concatenation or a replicated word.
 * `Turing.MultiTapeTM.computableInLogSpace_frame`: framing an encoded input uses zero work space.
 
 ## References
@@ -273,11 +276,39 @@ theorem ComputableInLogSpace.of_finite [Finite α] (f : α → β) :
   let ⟨_, h⟩ := computableInTimeAndSpace_of_finite (encIn := encIn) (encOut := encMid) f
   ⟨_, 0, h.mono (fun _ => le_rfl) fun _ => Nat.zero_le _⟩
 
+/-- Doubling one false bit gives its marker followed by `false`. -/
+@[simp] theorem doubled_false : doubled [false] = [true, false] := rfl
+
+/-- Doubling commutes with concatenating a list of words. -/
+theorem doubled_flatten (L : List (List Bool)) :
+    doubled L.flatten = (L.map doubled).flatten := by
+  induction L with
+  | nil => rfl
+  | cons l L ih => simp [ih]
+
+/-- Two layers of doubling turn each true bit into four true bits. -/
+theorem doubled_doubled_replicate (n : ℕ) :
+    doubled (doubled (List.replicate n true)) =
+      (List.replicate n [true, true, true, true]).flatten := by
+  induction n with
+  | zero => rfl
+  | succ n ih => simp [List.replicate_succ, doubled, ← ih]
+
+private def doubledTransducer : Transducer Bool Unit :=
+  { Encodings.frameT with final := fun _ => [], length_final_le := fun _ => by simp }
+
+private theorem doubledTransducer_run (l : List Bool) :
+    doubledTransducer.run () l = doubled l := by
+  induction l with
+  | nil => rfl
+  | cons b l ih => exact congrArg (true :: b :: ·) ih
+
 /-- Doubling the bits with framing markers uses linear work space. -/
-theorem dbl_inSpace :
-    ComputableTidilyInSpace dbl encBits encBits fun l => (encBits l).length :=
+theorem doubled_inSpace :
+    ComputableTidilyInSpace doubled encBits encBits fun l => (encBits l).length :=
   ComputableTidilyInSpace.of_inO (.of_linear
-    (dblT.computableTidilyInLinearTimeAndSpace fun l => (dblT_run l).symm))
+    (doubledTransducer.computableTidilyInLinearTimeAndSpace fun l =>
+      (doubledTransducer_run l).symm))
 
 /-- **Framing an encoded instance** takes no work space. -/
 theorem computableInLogSpace_frame {α : Type} (enc : α ↪ List Bool) :

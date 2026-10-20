@@ -20,7 +20,6 @@ are independent of the runtime input; this does not give a uniform algorithm for
 ## Main definitions
 
 * `Turing.MultiTapeTM.encFinite`: unary ranks for a fixed finite type.
-* `Turing.MultiTapeTM.encFinBin`: binary encoding of a bounded natural number.
 
 ## Main results
 
@@ -47,9 +46,5 @@ theorem length_encFinite_lt {α : Type} [Finite α] (a : α) :
     (encFinite α a).length < Nat.card α := by
   let _ := Fintype.ofFinite α
   simp [encFinite, Nat.card_eq_fintype_card]
-
-/-- Numbers below `w`, encoded in binary. -/
-def encFinBin (w : ℕ) : Fin w ↪ List Bool :=
-  ⟨fun i => encNat i.val, fun _ _ h => Fin.ext (encNat.injective h)⟩
 
 end Turing.MultiTapeTM

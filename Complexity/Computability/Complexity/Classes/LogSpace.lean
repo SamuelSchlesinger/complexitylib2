@@ -74,6 +74,9 @@ storing intermediate values (`Turing.MultiTapeTM.ComputableInLogSpace.comp`).
 * `Cslib.Complexity.LogSpaceReducible.compl`: reductions between complements.
 * `Cslib.Complexity.LogSpaceReducible.polyTimeReducible`: logspace reductions are polynomial-time
   reductions.
+* `Cslib.Complexity.LogSpaceHard.trans`: hardness transfers along logspace reductions.
+* `Cslib.Complexity.LogSpaceHard.subset_L`: a hard problem in `L` places its source class in `L`.
+* `Cslib.Complexity.LogSpaceHard.polyTimeHard`: logspace hardness implies polynomial-time hardness.
 * `Cslib.Complexity.LogSpaceComplete.polyTimeComplete`: completeness under logspace reductions
   implies completeness under polynomial-time reductions.
 
@@ -213,14 +216,14 @@ theorem LogSpaceHard.subset_L {D : ∀ {α : Type}, (α ↪ List Bool) → Set (
   fun _ hA => (hB enc _ hA).mem_L hL
 
 /-- Hardness under logspace reductions implies hardness under polynomial-time reductions. -/
-theorem LogSpaceHard.polyTimeHard {C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
-    (h : LogSpaceHard C encB B) : PolyTimeHard C encB B :=
+theorem LogSpaceHard.polyTimeHard {D : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+    (h : LogSpaceHard D encB B) : PolyTimeHard D encB B :=
   fun enc A hA => (h enc A hA).polyTimeReducible
 
 /-- Completeness under logspace reductions implies completeness under polynomial-time
 reductions. -/
-theorem LogSpaceComplete.polyTimeComplete {C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
-    (h : LogSpaceComplete C encB B) : PolyTimeComplete C encB B :=
+theorem LogSpaceComplete.polyTimeComplete {D : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+    (h : LogSpaceComplete D encB B) : PolyTimeComplete D encB B :=
   ⟨h.1, LogSpaceHard.polyTimeHard h.2⟩
 
 end Cslib.Complexity

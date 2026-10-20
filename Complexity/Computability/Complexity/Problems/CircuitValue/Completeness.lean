@@ -87,12 +87,12 @@ noncomputable def tableauInstance (w : List Bool) : Σ n, Circuit signature n 1 
 
 /-- Gate `i` of the tableau, as the writer emits it. -/
 noncomputable def gateChunk (n i : ℕ) : List Bool :=
-  dbl (dbl (frame (encGate (Tableau.gateCode tm n (timeBound C d n) i))))
+  doubled (doubled (frame (encGate (Tableau.gateCode tm n (timeBound C d n) i))))
 
 variable (k State) in
 /-- What the writer emits after the gates: the end of the gate list and the output wire. -/
 noncomputable def trailer (n : ℕ) : List Bool :=
-  [true, false] ++ dbl (frame (encNat (Tableau.outWire k State n (timeBound C d n)))) ++ [false]
+  [true, false] ++ doubled (frame (encNat (Tableau.outWire k State n (timeBound C d n)))) ++ [false]
 
 /-- **The encoded instance**: the length in unary, the gates and the output wire, framed twice,
 and the input. -/
@@ -103,10 +103,10 @@ theorem encCircuitValue_tableauInstance (w : List Bool) :
           (gateChunk tm C d w.length)).flatten ++ trailer k State C d w.length ++ w := by
   rw [encCircuitValue_apply]
   simp only [tableauInstance, Tableau.code_circuit, encPair_apply, encUnary_apply, encList_cons,
-    encList_nil, List.append_nil, encBits_apply, frame_eq_dbl, dbl_append, Tableau.gates,
+    encList_nil, List.append_nil, encBits_apply, frame_eq_doubled, doubled_append, Tableau.gates,
     trailer]
   have hw : List.ofFn (fun i : Fin w.length => w[i]) = w := List.ofFn_getElem
-  rw [hw, dbl_dbl_replicate]
+  rw [hw, doubled_doubled_replicate]
   have hl : encList encGate ((List.range (Tableau.numGates k State (timeBound C d w.length))).map
       (Tableau.gateCode tm w.length (timeBound C d w.length))) =
       ((List.range (Tableau.numGates k State (timeBound C d w.length))).map fun i =>
@@ -116,12 +116,13 @@ theorem encCircuitValue_tableauInstance (w : List Bool) :
     | nil => rfl
     | cons i L ih => simp [ih]
   have hc : gateChunk tm C d w.length = fun i =>
-      dbl (dbl (dbl (encGate (Tableau.gateCode tm w.length (timeBound C d w.length) i)))) ++
-        dbl (dbl [false]) := by
+      doubled (doubled (doubled
+        (encGate (Tableau.gateCode tm w.length (timeBound C d w.length) i)))) ++
+        doubled (doubled [false]) := by
     funext i
-    simp only [gateChunk, frame_eq_dbl, dbl_append]
-  rw [hl, dbl_flatten, dbl_flatten, List.map_map, List.map_map, hc]
-  simp only [frame_eq_dbl, Function.comp_def, dbl_append, List.append_assoc, dbl_false]
+    simp only [gateChunk, frame_eq_doubled, doubled_append]
+  rw [hl, doubled_flatten, doubled_flatten, List.map_map, List.map_map, hc]
+  simp only [frame_eq_doubled, Function.comp_def, doubled_append, List.append_assoc, doubled_false]
 
 /-- The uniform writer specification for tableau circuit instances. -/
 noncomputable def tableauSpec : WriterSpec where
@@ -188,7 +189,7 @@ private theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpa
   have hframe : ComputableTidilyInSpace (fun g => frame (encGate g)) encGate encBits
       fun g => (encGate g).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))
-  exact budget_comp_linear dbl_inSpace (budget_comp_linear dbl_inSpace
+  exact budget_comp_linear doubled_inSpace (budget_comp_linear doubled_inSpace
     (budget_comp_linear (g := fun g => frame (encGate g)) hframe
       (gateCode_inSpace tm hn (timeBound_inSpace C d hin hn) hin hi)))
 
@@ -204,10 +205,10 @@ private theorem trailer_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n
   have hframe : ComputableTidilyInSpace (fun m => frame (encNat m)) encNat encBits
       fun m => (encNat m).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))
-  have hmid := budget_comp_linear dbl_inSpace
+  have hmid := budget_comp_linear doubled_inSpace
     (budget_comp_linear (g := fun m => frame (encNat m)) hframe ho)
   have h₁ := (budget_const (encB := encBits) [true, false] hin).append hmid
-    (g := fun x => [true, false] ++ dbl (frame (encNat (outWire k State (n x)
+    (g := fun x => [true, false] ++ doubled (frame (encNat (outWire k State (n x)
       (timeBound C d (n x)))))) (encD := encBits) fun _ => rfl
   have h₂ := (h₁.weaken (.add (.refl _) (.refl _))).append
     (budget_const (encB := encBits) [false] hin) (encD := encBits)
