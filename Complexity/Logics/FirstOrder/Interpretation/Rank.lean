@@ -33,6 +33,10 @@ transducer for the interpretation does.
 * `Cslib.Logic.FO.Interpretation.domainRank_succ`: ranks count the indices of the domain.
 * `Cslib.Logic.FO.Interpretation.rankEquiv_symm_val`: the element of a given rank is the tuple
   whose index has that rank.
+
+## References
+
+* [N. Immerman, *Descriptive Complexity*][Immerman1999]
 -/
 
 @[expose] public section

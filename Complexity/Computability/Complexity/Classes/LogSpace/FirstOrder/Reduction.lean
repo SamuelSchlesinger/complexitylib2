@@ -15,7 +15,38 @@ import Complexity.Foundations.Data.List.Basic
 /-!
 # First-order reductions are logarithmic-space reductions
 
-Draft.
+For finite relational vocabularies, an order-free first-order interpretation induces a
+logarithmic-space transducer on structure encodings. It checks the input shape, counts domain
+tuples to emit the unary output cardinality, and emits each relation table by repeatedly
+reconstructing the tuples of the requested ranks. Each loop counter is polynomially bounded in
+the input length; the existing counter-program simulation therefore supplies a total
+`ComputableInLogSpace` machine. Neither the output structure nor its tables are stored.
+
+Malformed inputs map to a fixed malformed target encoding. Empty structures, empty domains,
+nullary relations, and zero-dimensional interpretations are included. Isomorphism closure of
+the target query makes the choice of numbering immaterial.
+
+These are order-free interpretations, without built-in order or `BIT`. The standard ordered
+notion of first-order reduction in [Immerman1999] is a separate specialization.
+
+## Main definitions
+
+* `Cslib.Logic.FO.Interpretation.encodedMap`: the encoded interpreted structure, with malformed
+  inputs sent to a malformed target encoding.
+
+## Main results
+
+* `Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap`: the encoded map has a total
+  logarithmic-space transducer.
+* `Cslib.Logic.FO.Reduces.logSpaceReducible`: order-free interpretation reductions induce
+  logspace many-one reductions between query languages.
+* `Cslib.Logic.FO.Reduces.queryLanguage_mem_L` and
+  `Cslib.Logic.FO.Reduces.queryLanguage_mem_P`: closure of encoded queries in `L` and `P`.
+
+## References
+
+* [N. Immerman, *Descriptive Complexity*][Immerman1999]
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.5][Sipser2013]
 -/
 
 @[expose] public section
@@ -33,15 +64,15 @@ namespace Transducer
 /-! ### Registers and code -/
 
 /-- The register of the coordinate `i` of the tuple in block `m`, for tuples of `d` coordinates. -/
-def blk (d m i : ℕ) : ℕ := 8 + d * m + i
+private def blk (d m i : ℕ) : ℕ := 8 + d * m + i
 
 /-- The code writing the coordinates of the tuple whose index is in register `4` into block `m`,
 placed at the label `b`; it continues at `b + d`. -/
-def coordsCode (d m b : ℕ) : List Instr :=
+private def coordsCode (d m b : ℕ) : List Instr :=
   List.ofFn fun i : Fin d =>
     .assign (blk d m i) (mod (div (reg 4) (pow (reg 0) i)) (reg 0)) (b + i + 1)
 
-theorem length_coordsCode (d m b : ℕ) : (coordsCode d m b).length = d := by
+private theorem length_coordsCode (d m b : ℕ) : (coordsCode d m b).length = d := by
   simp [coordsCode]
 
 variable {P : CounterProgram} {w : List Bool} {B : ℕ}
@@ -49,7 +80,7 @@ variable {P : CounterProgram} {w : List Bool} {B : ℕ}
 /-- **Writing the coordinates of a tuple**: from the code at `b`, with the index `u < n ^ d` of a
 tuple in register `4` and `n` in register `0`, the program writes the coordinates `u / n ^ i % n`
 of the tuple into block `m`, changing no other register. -/
-theorem reaches_coordsCode {d m b n u : ℕ} (hP : P.CodeAt b (coordsCode d m b))
+private theorem reaches_coordsCode {d m b n u : ℕ} (hP : P.CodeAt b (coordsCode d m b))
     (hu : u < n ^ d) (hnB : n ≤ B) (regs : List ℕ) (h0 : regs.getD 0 0 = n)
     (h4 : regs.getD 4 0 = u) (hlen : blk d m d ≤ regs.length) (hB : ∀ r ∈ regs, r ≤ B) :
     ∃ regs', P.Reaches w (P.Running B) (b, regs) (b + d, regs') ∧
@@ -71,8 +102,8 @@ theorem reaches_coordsCode {d m b n u : ℕ} (hP : P.CodeAt b (coordsCode d m b)
           .assign (blk d m k) (mod (div (reg 4) (pow (reg 0) k)) (reg 0)) (b + k + 1) := by
         rw [hP k (by rw [length_coordsCode]; omega)]
         simp [coordsCode]
-      have h0₁ : regs₁.getD 0 0 = n := by rw [hkeep 0 (fun i _ => by simp [blk]; omega), h0]
-      have h4₁ : regs₁.getD 4 0 = u := by rw [hkeep 4 (fun i _ => by simp [blk]; omega), h4]
+      have h0₁ : regs₁.getD 0 0 = n := by rw [hkeep 0 (fun i _ => by unfold blk; omega), h0]
+      have h4₁ : regs₁.getD 4 0 = u := by rw [hkeep 4 (fun i _ => by unfold blk; omega), h4]
       have hn : 0 < n := by
         rcases Nat.eq_zero_or_pos n with rfl | h
         · rw [zero_pow (by omega)] at hu
@@ -84,8 +115,8 @@ theorem reaches_coordsCode {d m b n u : ℕ} (hP : P.CodeAt b (coordsCode d m b)
       · simp only [eval_mod, eval_div, eval_pow, eval_reg, h4₁, h0₁]
         exact Reaches.refl _
       · rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp hi) with hi | rfl
-        · rw [List.getD_set_ne (by simp [blk]; omega), hset i hi]
-        · exact List.getD_set_self (by rw [hlen₁]; simp [blk] at hlen ⊢; omega)
+        · rw [List.getD_set_ne (by unfold blk; omega), hset i hi]
+        · exact List.getD_set_self (by rw [hlen₁]; simp only [blk] at hlen ⊢; omega)
       · rw [List.getD_set_ne (Ne.symm (hr k (by omega))), hkeep r fun i hi => hr i (by omega)]
   exact key d le_rfl
 
@@ -94,7 +125,7 @@ theorem reaches_coordsCode {d m b n u : ℕ} (hP : P.CodeAt b (coordsCode d m b)
 open scoped Classical in
 /-- Emitting `true, true` for every number below `N` passing a test, then `false`, frames as many
 copies of `true`. -/
-theorem flatMap_pair_append_false (p : ℕ → Prop) (N : ℕ) :
+private theorem flatMap_pair_append_false (p : ℕ → Prop) (N : ℕ) :
     ((List.range N).flatMap fun k => if p k then [true, true] else []) ++ [false] =
       MultiTapeTM.frame (List.replicate ((Finset.range N).filter p).card true) := by
   rw [MultiTapeTM.frame]
@@ -114,21 +145,21 @@ variable {L : Language.{u, v}} {L' : Language.{u', v'}} [L.IsRelational] [L'.IsR
   (I : Interpretation L L' ι)
 
 /-- The largest arity of a symbol of the vocabulary `v'`. -/
-def maxArity : ℕ := Finset.univ.sup v'.arity
+private def maxArity : ℕ := Finset.univ.sup v'.arity
 
 /-- The first register of the bound variables of the compiled formulas: after the blocks `0` to
 `maxArity v'` of `d` coordinates. -/
-def base (d : ℕ) : ℕ := 8 + d * (maxArity v' + 1)
+private def base (d : ℕ) : ℕ := 8 + d * (maxArity v' + 1)
 
 /-- The code of the domain formula, on the tuple in block `m`. -/
-noncomputable def domCode (m b T F : ℕ) : List Instr :=
+private noncomputable def domCode (m b T F : ℕ) : List Instr :=
   formulaCode v (fun i => blk d m (e i)) (base v' d) I.domain b T F
 
 /-- The code counting and framing the elements of the interpreted structure, placed at the label
 `b`: register `4` runs over the indices of the tuples, register `3` counts those of the domain, and
 `true, true` is emitted for each of them; then `false` ends the frame. It continues at
 `b + d + codeLength I.domain + 8`. -/
-noncomputable def scanCode (b : ℕ) : List Instr :=
+private noncomputable def scanCode (b : ℕ) : List Instr :=
   [.assign 3 (const 0) (b + 1)] ++
   forCode (b + 1) 4 (pow (reg 0) d) (b + 4) (b + d + codeLength I.domain + 7) ++
   coordsCode d 0 (b + 4) ++
@@ -138,31 +169,39 @@ noncomputable def scanCode (b : ℕ) : List Instr :=
    .assign 3 (add (reg 3) (const 1)) (b + 3),
    .emit false (b + d + codeLength I.domain + 8)]
 
-theorem length_domCode (m b T F : ℕ) : (domCode v v' e I m b T F).length = codeLength I.domain :=
+omit [L'.IsRelational] in
+private theorem length_domCode (m b T F : ℕ) :
+    (domCode v v' e I m b T F).length = codeLength I.domain :=
   length_formulaCode v _ _ _ _ _ _
 
-theorem blk_lt_base {m i : ℕ} (hm : m ≤ maxArity v') (hi : i < d) : blk d m i < base v' d := by
+omit [L'.IsRelational] in
+private theorem blk_lt_base {m i : ℕ} (hm : m ≤ maxArity v') (hi : i < d) :
+    blk d m i < base v' d := by
   unfold blk base
   have : d * m + d ≤ d * (maxArity v' + 1) := by
     rw [Nat.mul_add, Nat.mul_one]
     exact Nat.add_le_add_right (Nat.mul_le_mul_left d hm) d
   omega
 
-theorem le_base : 8 ≤ base v' d := Nat.le_add_right _ _
+omit [L'.IsRelational] in
+private theorem le_base : 8 ≤ base v' d := Nat.le_add_right _ _
 
 variable {v v' e I} {P : CounterProgram} {a : EncodedStructure} {B : ℕ}
 
+omit [L.IsRelational] [L'.IsRelational] in
 /-- The domain formula holds of the tuple with index `k < n ^ d` exactly when `k` is an index of
 the domain. -/
-theorem inDomain_iff {n k : ℕ} [L.Structure (Fin n)] (hk : k < n ^ d) :
+private theorem inDomain_iff {n k : ℕ} [L.Structure (Fin n)] (hk : k < n ^ d) :
     I.InDomain e n k ↔ I.domain.Realize (tupleAt e ⟨k, hk⟩) :=
   ⟨fun ⟨_, h⟩ => h, fun h => ⟨hk, h⟩⟩
 
+omit [L'.IsRelational] in
 /-- **Counting and framing the elements of the interpreted structure**: from the scan code, with
 the cardinality of a well-formed input in register `0`, the program emits the frame of as many
 copies of `true` as the interpreted structure has elements, and puts that number in register
 `3`. -/
-theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ} (hP : P.CodeAt b (scanCode v v' e I b))
+private theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ}
+    (hP : P.CodeAt b (scanCode v v' e I b))
     (hnB : a.1 ≤ B) (hNB : a.1 ^ d ≤ B) (regs : List ℕ) (h0 : regs.getD 0 0 = a.1)
     (hlen : base v' d + boundDepth I.domain ≤ regs.length) (hB : ∀ r ∈ regs, r ≤ B) :
     ∃ regs', P.ReachesOut (encStructure a) (P.Active B) (b, regs)
@@ -245,7 +284,7 @@ theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ} (hP : P.CodeAt b (sc
         · have hreach := hreach₁.reachesOut.trans (hreach₂.reachesOut.trans
             (ReachesOut.emit hy₀ hB₂ (ReachesOut.emit hy₁ hB₂ (ReachesOut.assign hy₂ hB₂
               (ReachesOut.refl _)))))
-          simp only [eval_add, eval_reg, eval_const, hk₂ 3 (by omega), h3, ↓reduceIte,
+          simp only [eval_add, eval_reg, eval_const, hk₂ 3 (by omega), h3,
             List.nil_append] at hreach
           simpa only [o, hin, ↓reduceIte] using hreach
         · rw [List.getD_set_ne (by omega), hk₂ 4 (by omega), h4]
@@ -292,7 +331,7 @@ structure, for `t` in register `6` and its number `n'` of elements in register `
 coordinates into block `m`; placed at `A`, it continues at `A + d + codeLength I.domain + 6`.
 Register `7` holds the rank sought, register `4` runs over the indices of the tuples and register
 `5` counts those of the domain. -/
-noncomputable def unrankCode (m A : ℕ) : List Instr :=
+private noncomputable def unrankCode (m A : ℕ) : List Instr :=
   [.assign 7 (mod (div (reg 6) (pow (reg 3) m)) (reg 3)) (A + 1),
    .assign 4 (const 0) (A + 2),
    .assign 5 (const 0) (A + 3)] ++
@@ -304,18 +343,20 @@ noncomputable def unrankCode (m A : ℕ) : List Instr :=
    .assign 5 (add (reg 5) (const 1)) (A + 3 + d + codeLength I.domain + 2),
    .assign 4 (add (reg 4) (const 1)) (A + 3)]
 
-theorem length_unrankCode (m A : ℕ) :
+omit [L'.IsRelational] in
+private theorem length_unrankCode (m A : ℕ) :
     (unrankCode v v' e I m A).length = d + codeLength I.domain + 6 := by
   simp only [unrankCode, List.length_append, length_coordsCode, length_domCode, List.length_cons,
     List.length_nil]
   omega
 
+omit [L'.IsRelational] in
 /-- **Finding the element of a given rank**: from the unranking code for block `m`, with the
 cardinality of a well-formed input in register `0`, the number `n' > 0` of elements of the
 interpreted structure in register `3` and `t` in register `6`, the program writes into block `m`
 the coordinates of the element of rank `t / n' ^ m % n'`, and changes no register below the base
 other than `4`, `5`, `7` and those of block `m`. -/
-theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m ≤ maxArity v')
+private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m ≤ maxArity v')
     (hP : P.CodeAt A (unrankCode v v' e I m A)) (hnB : a.1 ≤ B) (hNB : a.1 ^ d ≤ B)
     (regs : List ℕ) (h0 : regs.getD 0 0 = a.1)
     (h3 : regs.getD 3 0 = (letI := v.decode a; modelCard I e a.1)) (h6 : regs.getD 6 0 = t)
@@ -481,7 +522,8 @@ theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m ≤ maxAr
   -- the initialization
   have hrB : r ≤ B := by omega
   have hB₇ : ∀ x ∈ regs.set 7 r, x ≤ B := List.forall_mem_set_of_forall_mem hB hrB
-  have hB₄ : ∀ x ∈ (regs.set 7 r).set 4 0, x ≤ B := List.forall_mem_set_of_forall_mem hB₇ (Nat.zero_le _)
+  have hB₄ : ∀ x ∈ (regs.set 7 r).set 4 0, x ≤ B :=
+    List.forall_mem_set_of_forall_mem hB₇ (Nat.zero_le _)
   have hB₅ : ∀ x ∈ ((regs.set 7 r).set 4 0).set 5 0, x ≤ B :=
     List.forall_mem_set_of_forall_mem hB₄ (Nat.zero_le _)
   have hl₄ : 4 < (regs.set 7 r).length := by simp only [List.length_set]; omega
@@ -508,7 +550,7 @@ theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m ≤ maxAr
   · rw [hset' i, rankEquiv_symm_val (r := ⟨r, hrn⟩) hu₀ hru₀]
 
 /-- Emitting `true` and a bit for every number below `N`, then `false`, frames the bits. -/
-theorem flatMap_range_pair_append_false (N : ℕ) (f : Fin N → Bool) :
+private theorem flatMap_range_pair_append_false (N : ℕ) (f : Fin N → Bool) :
     ((List.range N).flatMap fun t => [true, if h : t < N then f ⟨t, h⟩ else false]) ++ [false] =
       MultiTapeTM.frame (List.ofFn f) := by
   rw [MultiTapeTM.frame, ← List.map_coe_finRange_eq_range, List.flatMap_map, List.ofFn_eq_map,
@@ -519,11 +561,11 @@ theorem flatMap_range_pair_append_false (N : ℕ) (f : Fin N → Bool) :
 
 variable (v' I) in
 /-- The number of instructions of the code of the defining formula of the symbol `j`. -/
-noncomputable def relLength (j : Fin v'.count) : ℕ := codeLength (I.rel (v'.symbol j).2)
+private noncomputable def relLength (j : Fin v'.count) : ℕ := codeLength (I.rel (v'.symbol j).2)
 
 variable (v' I d) in
 /-- The number of instructions of the code of the table of the symbol `j`. -/
-noncomputable def tableLength (j : Fin v'.count) : ℕ :=
+private noncomputable def tableLength (j : Fin v'.count) : ℕ :=
   3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 5
 
 variable (v v' e I) in
@@ -532,7 +574,7 @@ placed at `b`: register `6` runs over the indices `t` of the tuples of elements,
 the tuple are found by their ranks (`Cslib.Logic.FO.Interpretation.Transducer.unrankCode`), and
 `true` followed by the truth value of the defining formula is emitted for each; then `false` ends
 the frame. It continues at `b + tableLength v' d I j`. -/
-noncomputable def tableCode (j : Fin v'.count) (b : ℕ) : List Instr :=
+private noncomputable def tableCode (j : Fin v'.count) (b : ℕ) : List Instr :=
   forCode b 6 (pow (reg 3) (v'.symbol j).1) (b + 3)
     (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 4) ++
   (List.range (v'.symbol j).1).flatMap
@@ -547,7 +589,7 @@ noncomputable def tableCode (j : Fin v'.count) (b : ℕ) : List Instr :=
    .emit false (b + 2),
    .emit false (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 5)]
 
-theorem blk_ne {m m' i i' : ℕ} (h : m ≠ m') (hi : i < d) (hi' : i' < d) :
+private theorem blk_ne {m m' i i' : ℕ} (h : m ≠ m') (hi : i < d) (hi' : i' < d) :
     blk d m i ≠ blk d m' i' := by
   unfold blk
   rcases lt_or_gt_of_ne h with hlt | hgt
@@ -558,11 +600,14 @@ theorem blk_ne {m m' i i' : ℕ} (h : m ≠ m') (hi : i < d) (hi' : i' < d) :
     rw [Nat.mul_succ] at this
     omega
 
-theorem arity_le_maxArity (j : Fin v'.count) : (v'.symbol j).1 ≤ maxArity v' :=
+omit [L'.IsRelational] in
+private theorem arity_le_maxArity (j : Fin v'.count) : (v'.symbol j).1 ≤ maxArity v' :=
   Finset.le_sup (f := v'.arity) (Finset.mem_univ j)
 
-theorem length_unranks (b k : ℕ) :
-    ((List.range k).flatMap fun m => unrankCode v v' e I m (b + 3 + (d + codeLength I.domain + 6) * m)).length =
+omit [L'.IsRelational] in
+private theorem length_unranks (b k : ℕ) :
+    ((List.range k).flatMap fun m =>
+      unrankCode v v' e I m (b + 3 + (d + codeLength I.domain + 6) * m)).length =
       (d + codeLength I.domain + 6) * k := by
   rw [List.length_flatMap]
   simp only [length_unrankCode, List.map_const', List.length_range, List.sum_replicate,
@@ -572,7 +617,7 @@ theorem length_unranks (b k : ℕ) :
 for the symbol `j`, with the cardinality of a well-formed input in register `0` and the number `n'`
 of elements of the interpreted structure in register `3`, the program emits the framed truth table
 of the symbol in the interpreted structure, numbered by ranks. -/
-theorem reachesOut_tableCode (ha : v.WellFormed a) (j : Fin v'.count) {b : ℕ}
+private theorem reachesOut_tableCode (ha : v.WellFormed a) (j : Fin v'.count) {b : ℕ}
     (hP : P.CodeAt b (tableCode v v' e I j b)) (hnB : a.1 ≤ B) (hNB : a.1 ^ d ≤ B)
     (hTB : (letI := v.decode a; modelCard I e a.1) ^ (v'.symbol j).1 ≤ B)
     (regs : List ℕ) (h0 : regs.getD 0 0 = a.1)
@@ -708,11 +753,12 @@ theorem reachesOut_tableCode (ha : v.WellFormed a) (j : Fin v'.count) {b : ℕ}
 
 variable (v v' e I) in
 /-- The codes of the tables of some symbols, one after the other from the label `b`. -/
-noncomputable def tablesCode : ℕ → List (Fin v'.count) → List Instr
+private noncomputable def tablesCode : ℕ → List (Fin v'.count) → List Instr
   | _, [] => []
   | b, j :: js => tableCode v v' e I j b ++ tablesCode (b + tableLength v' d I j) js
 
-theorem length_tablesCode : ∀ (b : ℕ) (js : List (Fin v'.count)),
+omit [L'.IsRelational] in
+private theorem length_tablesCode : ∀ (b : ℕ) (js : List (Fin v'.count)),
     (tablesCode v v' e I b js).length = (js.map (tableLength v' d I)).sum
   | _, [] => rfl
   | b, j :: js => by
@@ -723,7 +769,7 @@ theorem length_tablesCode : ∀ (b : ℕ) (js : List (Fin v'.count)),
     rfl
 
 /-- **Emitting the truth tables of some symbols**, one after the other. -/
-theorem reachesOut_tablesCode (ha : v.WellFormed a) (hnB : a.1 ≤ B) (hNB : a.1 ^ d ≤ B) :
+private theorem reachesOut_tablesCode (ha : v.WellFormed a) (hnB : a.1 ≤ B) (hNB : a.1 ^ d ≤ B) :
     ∀ (js : List (Fin v'.count)) (b : ℕ) (regs : List ℕ),
       P.CodeAt b (tablesCode v v' e I b js) →
       (∀ j ∈ js, (letI := v.decode a; modelCard I e a.1) ^ (v'.symbol j).1 ≤ B) →
@@ -758,15 +804,16 @@ theorem reachesOut_tablesCode (ha : v.WellFormed a) (hnB : a.1 ≤ B) (hNB : a.1
 variable (v') in
 /-- The code emitting `encStructure (0, [[], …, []])`, a malformed input with one table too many,
 then halting; placed at `b`. -/
-def rejectCode (b : ℕ) : List Instr :=
+private def rejectCode (b : ℕ) : List Instr :=
   List.ofFn (fun i : Fin (v'.count + 2) => .emit false (b + i + 1)) ++ [.halt List.nil]
 
-theorem reachesOut_rejectCode {b : ℕ} (hP : P.CodeAt b (rejectCode v' b)) (regs : List ℕ)
+omit [L'.IsRelational] in
+private theorem reachesOut_rejectCode {b : ℕ} (hP : P.CodeAt b (rejectCode v' b)) (regs : List ℕ)
     (hB : ∀ r ∈ regs, r ≤ B) :
     P.ReachesOut (encStructure a) (P.Active B) (b, regs) (b + (v'.count + 2), regs)
       (List.replicate (v'.count + 2) false) ∧ P.instr (b + (v'.count + 2)) = .halt [] := by
   rw [rejectCode, codeAt_append, List.length_ofFn] at hP
-  refine ⟨?_, by simpa using hP.2⟩
+  refine ⟨?_, (codeAt_cons.mp hP.2).1⟩
   have key : ∀ k ≤ v'.count + 2, P.ReachesOut (encStructure a) (P.Active B)
       (b + (v'.count + 2 - k), regs) (b + (v'.count + 2), regs) (List.replicate k false) := by
     intro k
@@ -776,19 +823,206 @@ theorem reachesOut_rejectCode {b : ℕ} (hP : P.CodeAt b (rejectCode v' b)) (reg
       intro hk
       have hc : P.instr (b + (v'.count + 2 - (k + 1))) =
           .emit false (b + (v'.count + 2 - (k + 1)) + 1) := by
-        rw [hP.1 (v'.count + 2 - (k + 1)) (by simp; omega)]
-        simp
+        rw [hP.1 (v'.count + 2 - (k + 1)) (by rw [List.length_ofFn]; omega)]
+        simp only [List.getElem_ofFn]
       refine ReachesOut.emit hc hB ?_
       rw [show b + (v'.count + 2 - (k + 1)) + 1 = b + (v'.count + 2 - k) by omega]
       exact ih (by omega)
   simpa using key (v'.count + 2) le_rfl
 
-theorem encStructure_reject :
+omit [L'.IsRelational] in
+private theorem encStructure_reject :
     encStructure ((0, List.replicate (v'.count + 1) []) : EncodedStructure) =
       List.replicate (v'.count + 2) false := by
-  rw [encStructure_eq]
-  simp [MultiTapeTM.frame, List.replicate_succ]
+  have h (n : ℕ) : (List.replicate n ([] : List Bool)).flatMap MultiTapeTM.frame =
+      List.replicate n false := by
+    induction n with
+    | zero => rfl
+    | succ n ih => simp only [List.replicate_succ, List.flatMap_cons,
+        MultiTapeTM.frame, List.flatMap_nil, List.nil_append, List.singleton_append, ih]
+  rw [encStructure_eq, h]
+  simp only [List.replicate_zero, MultiTapeTM.frame, List.flatMap_nil, List.nil_append,
+    List.singleton_append]
+  rfl
+
+/-! ### The complete transducer -/
+
+variable (v v' e I d)
+
+/-- The starting label of the domain scan, immediately after the shape check. -/
+private def scanStart : ℕ := 4 + 6 * v.count
+
+/-- The starting label of the relation tables, immediately after the domain scan. -/
+private def tablesStart : ℕ := scanStart v + d + codeLength I.domain + 8
+
+/-- The accepting halt label, immediately after the relation tables. -/
+private noncomputable def haltLabel : ℕ := tablesStart v d I +
+  ((List.finRange v'.count).map (tableLength v' d I)).sum
+
+/-- Enough registers for each relation formula and the domain formula. -/
+private def registerCount : ℕ := base v' d +
+  max (boundDepth I.domain) (Finset.univ.sup fun j => boundDepth (I.rel (v'.symbol j).2))
+
+/-- The counter program checking shape, enumerating the interpreted domain, and emitting its
+relation tables. A malformed input produces a fixed malformed output. -/
+private noncomputable def program : CounterProgram where
+  code := shapeCode v 0 (scanStart v) (haltLabel v v' d I + 1) ++
+    scanCode v v' e I (scanStart v) ++
+    tablesCode v v' e I (tablesStart v d I) (List.finRange v'.count) ++
+    [.halt List.nil] ++ rejectCode v' (haltLabel v v' d I + 1)
+  registers := registerCount v' d I
+
+/-- A polynomial exponent bounding every register of the transducer. -/
+private def exponent : ℕ := regExponent v + d * (maxArity v' + 1) + 1
 
 end Transducer
 
+variable {L : Language.{u, v}} {L' : Language.{u', v'}} [L.IsRelational] [L'.IsRelational]
+  {ι : Type} {d : ℕ} (I : Interpretation L L' ι) (v : Vocabulary L) (v' : Vocabulary L')
+  (e : ι ≃ Fin d)
+
+/-- Encode the structure interpreted in a well-formed input, numbering its elements by ranks.
+Malformed inputs map to a fixed malformed structure encoding. This includes empty structures,
+empty interpreted domains, nullary relations, and interpretations of dimension zero. -/
+noncomputable def encodedMap (a : EncodedStructure) : EncodedStructure :=
+  if v.WellFormed a then
+    letI := v.decode a
+    v'.encode (I.Model (Fin a.1)) (rankEquiv I e a.1)
+  else (0, List.replicate (v'.count + 1) [])
+
+open Transducer in
+/-- Computing an order-free first-order interpretation on encoded finite relational structures
+uses logarithmic work space. The output is streamed, including its unary cardinality frame;
+malformed inputs map to malformed outputs. -/
+theorem computableInLogSpace_encodedMap :
+    MultiTapeTM.ComputableInLogSpace (I.encodedMap v v' e) encStructure encStructure := by
+  classical
+  let P := program v v' d e I
+  refine P.computableInLogSpace_of_reachesOut (exponent v v' d) fun a => ?_
+  let B := ((encStructure a).length + 1) ^ exponent v v' d
+  have hpow (k : ℕ) (hk : k ≤ exponent v v' d) :
+      a.1 ^ k ≤ B :=
+    (Nat.pow_le_pow_left ((card_le_length_encStructure a).trans (Nat.le_succ _)) k).trans
+      (Nat.pow_le_pow_right (Nat.succ_pos _) hk)
+  have hE : regExponent v ≤ exponent v v' d := by unfold exponent; omega
+  have hwB : (encStructure a).length ≤ B :=
+    (length_le_pow_regExponent v a).trans (Nat.pow_le_pow_right (Nat.succ_pos _) hE)
+  have hnB : a.1 ≤ B := (card_le_length_encStructure a).trans hwB
+  have hdE : d ≤ exponent v v' d := by
+    have := Nat.mul_le_mul_left d (show 1 ≤ maxArity v' + 1 by omega)
+    simp only [Nat.mul_one] at this
+    unfold exponent
+    omega
+  have hNB : a.1 ^ d ≤ B := hpow d hdE
+  have hcode : P.CodeAt 0 P.code := by
+    exact codeAt_of_code_eq (pre := []) (post := []) (by simp)
+  change P.CodeAt 0 (_ ++ _ ++ _ ++ _ ++ _) at hcode
+  rw [codeAt_append, codeAt_append, codeAt_append, codeAt_append] at hcode
+  obtain ⟨⟨⟨⟨hshape, hscan⟩, htables⟩, hhalt⟩, hreject⟩ := hcode
+  have hscanLen : (scanCode v v' e I (scanStart v)).length = d + codeLength I.domain + 8 := by
+    simp only [scanCode, List.length_append, List.length_cons, List.length_nil,
+      length_coordsCode, length_domCode, forCode]
+    omega
+  simp only [List.length_append, length_shapeCode, hscanLen, length_tablesCode,
+    List.length_cons, List.length_nil, Nat.zero_add] at hscan htables hhalt hreject
+  change P.CodeAt (scanStart v) _ at hscan
+  have htabStart : 4 + 6 * v.count + (d + codeLength I.domain + 8) = tablesStart v d I := by
+    unfold tablesStart scanStart
+    omega
+  rw [htabStart] at htables hhalt hreject
+  change P.CodeAt (haltLabel v v' d I) [.halt List.nil] at hhalt
+  change P.CodeAt (haltLabel v v' d I + 1) _ at hreject
+  have hhalt' := (codeAt_cons.mp hhalt).1
+  have hlenD : base v' d + boundDepth I.domain ≤ P.registers := by
+    exact Nat.add_le_add_left (le_max_left _ _) _
+  have hlenR (j : Fin v'.count) : base v' d + boundDepth (I.rel (v'.symbol j).2) ≤
+      P.registers :=
+    Nat.add_le_add_left ((Finset.le_sup (f := fun j => boundDepth (I.rel (v'.symbol j).2))
+      (Finset.mem_univ j)).trans (le_max_right _ _)) _
+  have hbase := le_base v' (d := d)
+  obtain ⟨rs, hshapeRun, hlen, h0, hB⟩ := reaches_shapeCode (B := B) (a := a) hshape
+    (fun i => (pow_arityAt_le v a i).trans (Nat.pow_le_pow_right (Nat.succ_pos _) hE))
+    hwB (List.replicate P.registers 0) (by simp) (by simp only [List.length_replicate]; omega)
+    (by simp)
+  by_cases ha : v.WellFormed a
+  · rw [ite_eq_left ha] at hshapeRun
+    obtain ⟨rs₁, hscanRun, hlen₁, h0₁, h3₁, hB₁⟩ := reachesOut_scanCode ha hscan hnB hNB rs
+      (h0 ha) (by rw [hlen, List.length_replicate]; exact hlenD) hB
+    change P.ReachesOut _ _ _ (tablesStart v d I, rs₁) _ at hscanRun
+    have hTB (j : Fin v'.count) :
+        (letI := v.decode a; modelCard I e a.1) ^ (v'.symbol j).1 ≤ B := by
+      let _ := v.decode a
+      calc
+        modelCard I e a.1 ^ (v'.symbol j).1 ≤ (a.1 ^ d) ^ (v'.symbol j).1 :=
+          Nat.pow_le_pow_left modelCard_le_pow _
+        _ = a.1 ^ (d * (v'.symbol j).1) := (pow_mul _ _ _).symm
+        _ ≤ B := hpow _ (by
+          have hmul : d * (v'.symbol j).1 ≤ d * (maxArity v' + 1) :=
+            Nat.mul_le_mul_left d ((arity_le_maxArity j).trans (Nat.le_succ _))
+          unfold exponent
+          omega)
+    obtain ⟨rs₂, htablesRun, _, _, _, hB₂⟩ := reachesOut_tablesCode ha hnB hNB
+      (List.finRange v'.count) _ rs₁ htables (fun j _ => hTB j) h0₁ h3₁
+      (by rw [hlen₁, hlen, List.length_replicate]; exact hlenD)
+      (fun j _ => by rw [hlen₁, hlen, List.length_replicate]; exact hlenR j) hB₁
+    refine ⟨(haltLabel v v' d I, rs₂), _, [],
+      hshapeRun.reachesOut.trans (hscanRun.trans htablesRun), hhalt', ?_, hB₂⟩
+    simp only [List.nil_append, List.append_nil, encodedMap, ha, ↓reduceIte,
+      encStructure_eq, Vocabulary.encode]
+    congr 1
+    rw [List.ofFn_eq_map, List.flatMap_map]
+  · rw [ite_eq_right ha] at hshapeRun
+    obtain ⟨hrun, hhalt⟩ := reachesOut_rejectCode hreject rs hB
+    refine ⟨(_, rs), _, [], hshapeRun.reachesOut.trans hrun, hhalt, ?_, hB⟩
+    simp only [List.nil_append, List.append_nil, encodedMap, ha, ↓reduceIte]
+    exact encStructure_reject
+
 end Cslib.Logic.FO.Interpretation
+
+namespace Cslib.Logic.FO
+
+variable {L : Language.{u, v}} {L' : Language.{u', v'}} [L.IsRelational] [L'.IsRelational]
+  (v : Vocabulary L) (v' : Vocabulary L')
+  {K : Set (Bundled.{0} L.Structure)} {K' : Set (Bundled.{0} L'.Structure)}
+
+/-- An order-free first-order interpretation reduction induces a logspace many-one reduction
+between the query languages, provided the target class is closed under isomorphism. The
+transducer rejects malformed instances and includes empty structures and empty domains. -/
+theorem Reduces.logSpaceReducible (h : Reduces K K') (hK' : IsoClosed K') :
+    Complexity.LogSpaceReducible encStructure encStructure (v.queryLanguage K)
+      (v'.queryLanguage K') := by
+  classical
+  obtain ⟨ι, hι, I, hI⟩ := h
+  let _ := Fintype.ofFinite ι
+  let e := Fintype.equivFin ι
+  refine ⟨I.encodedMap v v' e, I.computableInLogSpace_encodedMap v v' e, fun a => ?_⟩
+  by_cases ha : v.WellFormed a
+  · rw [Interpretation.encodedMap, ite_eq_left ha,
+      ha.mem_queryLanguage_iff]
+    let _ := v.decode a
+    rw [v'.mem_queryLanguage_encode hK']
+    have : Finite (v.decoded a) := inferInstanceAs (Finite (Fin a.1))
+    exact hI (v.decoded a)
+  · have hbad : ¬ v'.WellFormed (0, List.replicate (v'.count + 1) []) := by
+      intro hbad
+      have := hbad.1
+      simp only [List.length_replicate] at this
+      omega
+    simp only [Interpretation.encodedMap, ha, ↓reduceIte, Vocabulary.mem_queryLanguage,
+      hbad, false_and]
+
+/-- Query languages in `L` are closed under order-free first-order interpretation reductions
+with an isomorphism-closed target class. -/
+theorem Reduces.queryLanguage_mem_L (h : Reduces K K') (hK' : IsoClosed K')
+    (hL : v'.queryLanguage K' ∈ Complexity.L encStructure) :
+    v.queryLanguage K ∈ Complexity.L encStructure :=
+  (h.logSpaceReducible v v' hK').mem_L hL
+
+/-- Query languages in `P` are closed under order-free first-order interpretation reductions
+with an isomorphism-closed target class. -/
+theorem Reduces.queryLanguage_mem_P (h : Reduces K K') (hK' : IsoClosed K')
+    (hP : v'.queryLanguage K' ∈ Complexity.P encStructure) :
+    v.queryLanguage K ∈ Complexity.P encStructure :=
+  (h.logSpaceReducible v v' hK').polyTimeReducible.mem_P hP
+
+end Cslib.Logic.FO
