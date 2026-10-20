@@ -328,6 +328,12 @@ of the handover. The work below remains available for subsequent, independently 
      halted by the clock. `HaltsWithin` additionally supplies full termination without stuck
      branches. Runtime is polynomial in the input/certificate pair, with the machine fixed,
      not uniform in a supplied machine description.
+     The [binary-guess scanner](Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean)
+     supplies one terminal branch per Boolean word of the input length, with an exact `n + 1`
+     clock and singleton halt. Its shared FreeM/List execution preserves each word's multiplicity.
+     Witness-length preparation from the encoded instance and singleton deterministic verifier
+     composition still need actual constructions and charged bounds; the scanner alone does not
+     establish the reverse direction.
      The reverse parsimonious verifier-to-machine construction, count-preserving deterministic
      composition and the resulting bidirectional characterizations remain open. Reuse the
      [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),

@@ -324,6 +324,39 @@ construction and the full bidirectional characterizations remain open.
 \end{result}
 
 \begin{result}
+\subsection{Parsimonious binary guessing}
+One fixed shared-core machine has Boolean alphabet, one control state, no work
+tapes and no oracle channels. On every input of length $n$, each branch emits one
+chosen bit per input symbol and then takes a singleton halting instruction.
+Every live configuration reached along a branch has a nonempty choice list,
+and every terminal branch has exactly $n+1$ transitions. The map
+\[
+  w\longmapsto [w_0,\ldots,w_{n-1},0]
+\]
+is a bijection from $n$-bit words to first-halting occurrence traces, and its
+terminal output is exactly $w$. Thus there are $2^n$ branches, including one
+branch for the empty word when $n=0$. For every Boolean predicate $V$ on output
+words, the number of terminal branches satisfying $V$ equals the number of
+$n$-bit witnesses satisfying $V$.
+
+The same machine runs in the shared FreeM calculus by querying finite occurrence
+indices. List interpretation preserves each occurrence and generates every
+length-$n$ word with multiplicity one; its enumeration order need not equal the
+library's bit-string order. This formalizes the guessing part of the standard
+counting-machine construction.\citep{Valiant1979}
+The scanner invariant adapts the library's uniform-word sampler and the cslib
+source credited there. Preparing a witness length from an encoded instance,
+composing a singleton deterministic verifier, and the reverse $\#\cc{P}$ and
+$\cc{GapP}$ characterizations remain open. No efficiency claim about an arbitrary
+predicate $V$ or the external List interpreter is used.
+\declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{206}{Turing.MultiTapeCTM.GuessMachine.haltsWithin}
+\declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{272}{Turing.MultiTapeCTM.GuessMachine.length_of_terminal}
+\declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{293}{Turing.MultiTapeCTM.GuessMachine.trace_bijOn}
+\declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{328}{Turing.MultiTapeCTM.GuessMachine.branchCount_eq}
+\declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{382}{Turing.MultiTapeCTM.GuessMachine.count_interpret_output}
+\end{result}
+
+\begin{result}
 \subsection{Relativized counting and majority verifiers}
 For every language oracle $A\subseteq\{0,1\}^*$ and fixed injective input encoding,
 $\#\cc{P}^A$ counts accepted Boolean witnesses of exactly $p(|x|)$ bits using a deterministic
