@@ -285,3 +285,85 @@ uniform circuit-construction runtime.\citep{Schlesinger2026IteratedFunctions}
 \declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{357}{Cslib.Circuits.Boolean.Iteration.affine_controller_polynomial}
 \declat{c4870e5ed91116a968cfbd2b4bf33eb8f9538cb5}{Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean}{375}{Cslib.Circuits.Boolean.Iteration.affine_controller_variable_time}
 \end{result}
+
+\begin{result}
+\subsection{Ordered circuit counting and modular-counter lower bounds}
+For any finite signature $\sigma$, at most
+$\mathrm{orderedBudget}(\sigma,n,m,G)=\sum_{s=0}^G((n+s)^m\prod_{j=0}^{s-1}\mathrm{lineCount}(\sigma,n+j))$
+functions are computed by $n$-input, $m$-output circuits of size at most $G$. Over the De Morgan
+basis, $\mathrm{lineCount}(w)\le 5(w+1)^2$, $\mathrm{orderedBudget}(n,m,q)\le(q+1)5^q(n+q+1)^{2q+m}$,
+and $\mathrm{orderedBudget}(n,m,q)\le 2^{3q+h(2q+m+1)}$ whenever $n+q+1\le 2^h$. For any
+$g:\{0,1\}^n\to\{0,1\}^n$ with maximum transient depth $\mu$ and cycle period $\lambda$, if the
+budget for $q$ gates is strictly below $\mu+\lambda$, some $T<\mu+\lambda$ requires more than $q$
+gates for $g^T$.
+
+On $2k$ bits split into a $k$-bit modulus $a$ and $k$-bit state $b$, the permutation
+$\mathrm{counterStep}_k(a,b)=(a,(b+1)\bmod a)$ for $0<a$ and $b<a$ (fixing states with $a=0$ or
+$b\ge a$) has a native circuit of size at most $50k+20\le 50(k+1)$ and period
+$P_k=\mathrm{lcm}(1,\dots,2^k-1)$, with all $P_k$ powers $0\le T<P_k$ distinct. For every $k\ge 64$,
+put $q_k=\lfloor 2^k/(1024(k+1))\rfloor$; then some $T<P_k$ requires strictly more than $q_k$ gates
+to compute $\mathrm{counterStep}_k^T$, and the set $E_k$ of exponents $T<P_k$ admitting circuits of
+size at most $q_k$ satisfies $|E_k|\cdot 2^{2^{k-1}}\le P_k$ (so hard exponents exceed $P_k/2$).
+Computing $\mathrm{counterStep}_k^T$ and computing the remainder table $a\mapsto T\bmod a$ (zero at
+$a=0$) reduce to one another within $+1$ gate and $+100(k+1)$ gates, respectively, and likewise for
+an $m$-bit input time. Finally, any $T<2^m$ has a circuit for $\mathrm{counterStep}_k^T$ of size at
+most $110(m+1)(k+1)$, so any hard exponent with size above $q_k$ satisfies
+$2^k<112640(m+1)(k+1)^2$. All lower bounds are nonuniform counting results over ordered circuit
+descriptions and do not explicitly construct a single hard exponent.\citep{Schlesinger2026IteratedFunctions}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{91}{Cslib.Circuits.Signature.orderedBudget}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{118}{Cslib.Circuits.Circuit.card_functionsAtMost_le}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{133}{Cslib.Circuits.Circuit.exists_hard_in_family}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{165}{Cslib.Circuits.Boolean.Iteration.boolean_orderedBudget_le}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{194}{Cslib.Circuits.Boolean.Iteration.boolean_orderedBudget_le_pow}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{219}{Cslib.Circuits.Boolean.Iteration.lowerBudget}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{249}{Cslib.Circuits.Boolean.Iteration.exists_hard_power_of_budget_lt}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean}{267}{Cslib.Circuits.Boolean.Iteration.exists_hard_power}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{161}{Cslib.Circuits.Boolean.Iteration.ModulusCounter.period}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{188}{Cslib.Circuits.Boolean.Iteration.ModulusCounter.powers_injective}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{354}{Cslib.Circuits.Boolean.Iteration.ModulusCounter.remainder_of_power}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{391}{Cslib.Circuits.Boolean.Iteration.ModulusCounter.power_of_remainder}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{507}{Cslib.Circuits.Boolean.Iteration.ModulusCounter.short_power_circuit}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{527}{Cslib.Circuits.Boolean.Iteration.ModulusCounter.hard_power_exponent_capacity}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{549}{Cslib.Circuits.Boolean.Iteration.counterStep}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{601}{Cslib.Circuits.Boolean.Iteration.counterStep_circuit}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{627}{Cslib.Circuits.Boolean.Iteration.exists_hard_counter_power}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{646}{Cslib.Circuits.Boolean.Iteration.counter_power_lower_bound}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{727}{Cslib.Circuits.Boolean.Iteration.almost_all_counter_powers_hard}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean}{831}{Cslib.Circuits.Boolean.Iteration.variable_time_counter_iff_remainder}
+\end{result}
+
+\begin{result}
+\subsection{Prime-cycle permutations and near-Landau order lower bounds}
+For every $n\ge 1$, $\mathrm{lcm}(1,\dots,n)<4^n$ (with $2\,\mathrm{lcm}(1,\dots,n)\le 4^n$).
+On $(m+K)$-bit states split into an $m$-bit class $r$ and $K$-bit position $b$, given class lengths
+$\ell(r)<2^K$, the permutation $\mathrm{PrimeCycles.step}(\ell)$ advances $b$ to $(b+1)\bmod\ell(r)$
+when $b<\ell(r)$ and fixes $b\ge\ell(r)$, so its $T$-th power adds $T\bmod\ell(r)$ on active
+positions. When the nontrivial lengths ($\ell(r)>1$) are pairwise coprime, two iterates agree if and
+only if their exponents are congruent modulo the order $\Omega(\ell)=\prod_{\ell(r)>1}\ell(r)$, which
+equals the exact number of distinct powers.
+
+For hash-class candidates $\mathrm{candidate}(g,f,r,z)=2^{m+g}+(r\oplus f(z))2^g+z$ with $z<2^g$
+and $f(z)<2^m$, letting $\mathrm{classPrime}(m,g,f,r)$ select the prime candidate with least $z$ (or
+$1$ if none exists), all nontrivial class lengths are distinct primes in $[2^{m+g},2^{m+g+1})$ and
+hence pairwise coprime, giving order at least $2^{(m+g)c}$ for $c$ active classes; if
+$3q+h(2q+(m+K)+1)<(m+g)c$ with $(m+K)+q+1\le 2^h$, some power $T<\Omega$ requires more than $q$
+gates. Bundling any pairwise-coprime length family in $\mathrm{PrimeCycleData}(m,K)$ bounds the moved
+support by $2^{m+K}$ and yields a step circuit of size at most $|C_{\mathrm{len}}|+50K+20$ and a
+$T$-th power circuit of size at most $|C_{\mathrm{len}}|+|C_{\mathrm{rem}}|+100(K+1)$ from circuits
+for $r\mapsto\ell(r)$ and $r\mapsto T\bmod\ell(r)$. Prime density and hash selection are not
+formalized.\citep{Schlesinger2026IteratedFunctions}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{195}{Cslib.Circuits.Boolean.Iteration.lcmBelow_lt_four_pow}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{237}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.step}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{321}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.order}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{369}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.iterate_eq_iterate_iff}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{390}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.card_range_iterate}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{411}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.exists_hard_power_of_budget_lt}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{434}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.classPrime}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{491}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.classPrime_coprime}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{510}{Cslib.Circuits.Boolean.Iteration.PrimeCycles.near_landau_lower_bound}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{535}{Cslib.Circuits.Boolean.Iteration.PrimeCycleData}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{579}{Cslib.Circuits.Boolean.Iteration.PrimeCycleData.exists_hard_power}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{614}{Cslib.Circuits.Boolean.Iteration.PrimeCycleData.step_circuit}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{677}{Cslib.Circuits.Boolean.Iteration.PrimeCycleData.power_circuit}
+\declat{609773bf7d9f3181da3f7661cb41d5613450b7a0}{Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean}{762}{Cslib.Circuits.Boolean.Iteration.PrimeCycleData.ofHash}
+\end{result}
