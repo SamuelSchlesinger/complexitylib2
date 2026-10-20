@@ -1625,3 +1625,29 @@ revision approval are recorded in PR #66; this AI review does not imply human ed
 All six combined validation gates passed in
 `.worktrees/ops-coordinator-logs/ordered-addition-final-check.log`; the only subsequent edit
 records this validation evidence.
+
+## 2026-10-20: MAJSAT integration
+
+The MAJSAT development is by `worker-agy-majsat-20261020`, assisted by Claude Opus 4.6
+in Antigravity; mathematical credit is to Simon (`Simon1975`). Source revision
+`3f273bbfa63b964c32474cd341e253ddcf466fb0` and final test revision
+`f8c10c461983134f053687a529bdf4489afbcfda` received independent API, correctness and
+index review. Final bounded fixes restored the literal PR description and genuine majority-tie
+and zero-padding tests. Coordinator `fusion_quadratic` verified these fixes and approved the
+unchanged author revision in PR #67, comment 6298385907. Completeness is for general CNF;
+restricted clause-width completeness is not asserted.
+
+Coordinator `fusion_quadratic`, assisted by OpenAI Codex, integrates independently reviewed
+PR #66 revision `49b13382a079632ef215a4d23692c9cdd1170311`, preserving the original author
+branch and byte-identical MAJSAT source and tests. The roadmap union retains both MAJSAT
+completeness and the predecessor's Boolean-hierarchy milestones. This extends the existing
+counting-completeness entry, preserving all other entries and the total of 127. Its 12 source
+anchors remain pinned to the reviewed declarations. Final combined validation, rendered-page
+inspection and independent exact integration review are recorded in PR #67. AI review does not
+imply human editorial approval or machine-checked equivalence of prose and Lean.
+
+All six combined gates pass in `.worktrees/ops-coordinator-logs/majsat-final-check.log`.
+The source and tests have clean fresh MCP diagnostics. The rebuilt PDF has no undefined
+citations or overfull boxes; pages 2 (counting completeness) and 4 (Boolean hierarchy) were
+rendered and inspected. Documentation configuration and whitespace checks pass. Only this
+validation record was appended after the gates; final exact-head review is recorded in PR #67.
