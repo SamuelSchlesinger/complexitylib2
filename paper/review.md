@@ -723,3 +723,20 @@ reviewer suggested. Non-blocking findings were returned to the author.
 
 Validation: all six gates passed on the integration revision; the PDF builds without errors. These
 are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
+
+## Coverage batch 10: class collapses and counting containments (2026-10-19)
+
+Integrated `38bfe757` (`class-corollaries`), adding "SAT in BPP collapses the hierarchy"
+(`structure.tex`) and "Toda's theorem with a PP oracle", "Easy oracles and the Valiant--Vazirani
+collapse" and "FewP is in SPP" (`randomness.tex`), and pointing the bounded-ambiguity entry to the
+FewP containment.
+
+Independent correctness and API reviews of `f91c5eda`: the Lean was approved (P^PP is the standard
+class; the binary search, oracle lowness, PromiseP hypothesis and FewP gap function were checked);
+two blocking documentation findings: FewP ⊆ SPP was credited to the wrong papers and a docstring
+claimed an equality where an inclusion was proved. The delta review of `f91c5eda..38bfe757`
+approved both fixes (Köbler–Schöning–Toda–Torán 1992 verified against Crossref; the equality is now
+proved) and the non-blocking follow-ups.
+
+Validation: all six gates passed on the integration revision; the PDF builds without errors. These
+are AI reviews, not human editorial approval or machine-checked equivalence of prose and Lean.
