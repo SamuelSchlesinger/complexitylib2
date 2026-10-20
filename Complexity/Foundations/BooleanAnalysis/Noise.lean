@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.Influence
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.Ring.Pow
 import Mathlib.Tactic.Linarith
 
@@ -202,6 +203,18 @@ noncomputable def noiseStability (ρ : ℝ) (f : (ι → Bool) → ℝ) : ℝ :=
 theorem noiseStability_eq_sum (ρ : ℝ) (f : (ι → Bool) → ℝ) :
     noiseStability ρ f = ∑ S, ρ ^ #S * fourierCoeff f S ^ 2 := by
   simp only [noiseStability, expect_mul_noiseOp_eq_sum, sq]
+
+/-- **The noise stability of a derivative**: `ρ Stab_ρ[Dᵢ f]` weighs the squared coefficient of
+`f` on each set containing `i` by `ρ` to the size of the set. -/
+theorem mul_noiseStability_derivative (ρ : ℝ) (i : ι) (f : (ι → Bool) → ℝ) :
+    ρ * noiseStability ρ (derivative i f) = ∑ S with i ∈ S, ρ ^ #S * fourierCoeff f S ^ 2 := by
+  rw [noiseStability_eq_sum, sum_filter_mem_eq_sum_filter_notMem i, sum_filter, mul_sum]
+  refine sum_congr rfl fun T _ => ?_
+  rw [fourierCoeff_derivative]
+  split_ifs with hT
+  · simp
+  · rw [card_insert_of_notMem hT, pow_succ]
+    ring
 
 /-- At `ρ = 1` the noise stability is the second moment. -/
 theorem noiseStability_one (f : (ι → Bool) → ℝ) : noiseStability 1 f = 𝔼 x, f x ^ 2 := by

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.IntegralLift
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.Nat.Digits.Lemmas
 import Mathlib.LinearAlgebra.Matrix.AbsoluteValue
 
@@ -149,29 +150,18 @@ lemma normalization_bit_bound {d b : ℕ} (A B : Matrix (Fin d) (Fin d) ℤ) (hA
     rw [← Int.natCast_natAbs] at h
     exact_mod_cast h
 
-lemma flatMap_length_le {α β : Type*} (l : List α) (f : α → List β) (B : ℕ)
-    (h : ∀ a ∈ l, (f a).length ≤ B) : (l.flatMap f).length ≤ l.length * B := by
-  induction l with
-  | nil => simp
-  | cons a l ih =>
-    simp only [List.flatMap_cons, List.length_append, List.length_cons]
-    have ha := h a (by simp)
-    have hl := ih (fun b hb => h b (by simp [hb]))
-    simp only [Nat.add_mul, Nat.one_mul]
-    omega
-
 lemma tuple_length_le {n d B : ℕ} (X : Tuple n d)
     (h : ∀ a i j, (encodeRat (X a i j)).length ≤ B) :
     (encodeTuple X).length ≤ n * d * d * B := by
   unfold encodeTuple
   calc _ ≤ (List.finRange n).length * (d * (d * B)) := by
-          apply flatMap_length_le
+          apply List.length_flatMap_le
           intro a _
           calc _ ≤ (List.finRange d).length * (d * B) := by
-                   apply flatMap_length_le
+                   apply List.length_flatMap_le
                    intro i _
                    calc _ ≤ (List.finRange d).length * B :=
-                          flatMap_length_le _ _ B (fun j _ => h a i j)
+                          List.length_flatMap_le (fun j _ => h a i j)
                         _ = _ := by simp
                _ = _ := by simp
        _ = _ := by simp [Nat.mul_assoc]
@@ -189,8 +179,8 @@ lemma output_length_le {n B : ℕ} (H : Output n)
       H.tuples.length * n * H.dimension * H.dimension * B := by
   have hd := encodeNat_linear H.dimension
   have hc := encodeNat_linear H.tuples.length
-  have ht := flatMap_length_le H.tuples encodeTuple (n * H.dimension * H.dimension * B)
-    (fun X hX => tuple_length_le X (hb X hX))
+  have ht := List.length_flatMap_le (l := H.tuples) (f := encodeTuple)
+    (k := n * H.dimension * H.dimension * B) (fun X hX => tuple_length_le X (hb X hX))
   simp only [encodeOutput, List.length_append] at *
   rw [← Nat.mul_assoc, ← Nat.mul_assoc, ← Nat.mul_assoc] at ht
   omega

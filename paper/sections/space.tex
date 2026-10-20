@@ -33,6 +33,31 @@ theorem.\citep[Section 8.5]{Sipser2013}
 \end{result}
 
 \begin{result}
+\subsection{Undirected connectivity by short walks in Reingold's graph}
+For every simple graph $G$ on $\{0,\dots,n-1\}$ and all vertices $s,t$, $t$ is reachable from $s$
+if and only if some walk of length $T(n)=4(2\lceil\log_2 n\rceil+65\,\ell(n))$ in the
+$257^8$-regular graph $G_{\ell(n)}$, starting at a fixed vertex over the slot $(s,s)$, ends over a
+slot of $t$, where $\ell(n)=16\lceil\log_2 n\rceil+524$. Here $G_0$ is the slot graph of $G$ (each
+vertex replaced by a cycle of $n$ slots, slot $(v,w)$ joined to $(w,v)$ when $v\sim w$), padded
+with self-loops to $257^8$ labels, and $G_{i+1}=((G_i\mathbin{\textcircled{\scriptsize z}}H)^2)$ with labels renamed, for
+the arithmetic zig-zag base $H$ over $\mathbb{Z}/257$ with $\lambda(H)\le 1/5$. The generic
+statement assumes $\lambda(H)\le1/5$, at least half self-loops at each vertex,
+$2|V|^2|B|^2 5^\ell\le 5\cdot 6^\ell$ and $|V||B|^\ell 4^T\le 5^T$. Each step turns a spectral gap
+$\gamma$ into at least $\min(6\gamma/5,1/5)$ (Reingold takes the eighth power of $G\mathbin{\textcircled{\scriptsize z}}H$
+and obtains $\lambda\mapsto\max(\lambda^2,1/2)$; the constant differs, the $O(\log n)$ depth does
+not), a connected component with half self-loops has gap at least $1/(2N^2|B|^2)$, and walks of
+length $t$ connect every pair once $\lambda^t(N-1)<1$. This is the combinatorial part of the proof
+of $\mathrm{USTCON}\in\cc{L}$; log-space evaluation of the rotation map and the class-level theorem
+are not yet formalized.\citep[Definition 3.1, Lemmas 3.2--3.3, Theorem 4.1]{Reingold2008}\citep[Section 21.4]{AroraBarak09}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Algorithms/Reachability/Reingold.lean}{223}{Cslib.Reachability.reachable_iff_exists_reingoldGraph}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Reingold.lean}{428}{Cslib.RotationMap.reachable_iff_exists_root_neighbor_pow_reingold}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Reingold.lean}{318}{Cslib.RotationMap.min_pow_le_one_sub_spectralExpansion_reingold}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Connected.lean}{135}{Cslib.RotationMap.spectralExpansion_le_of_preconnected}
+\declat{cb631cc99441574d663dc693899a59a5b1e906f3}{Complexity/Foundations/Combinatorics/Expander/Connected.lean}{182}{Cslib.RotationMap.exists_neighbor_pow_eq}
+\end{result}
+
+
+\begin{result}
 \subsection{Savitch's theorem for polynomial space}
 \[
 \cc{NPSPACE}=\cc{PSPACE}.
@@ -80,12 +105,42 @@ most $1/3$. The converse $\cc{PSPACE}\subseteq\cc{IP}$ is not yet formalized her
 \end{result}
 
 \begin{result}
+\subsection{The algebraic protocol for quantified Boolean formulas}
+Let $\varphi$ be a closed quantified Boolean formula with $|\varphi|$ syntax nodes, and let
+$E$ be its arithmetization over a commutative ring, with Shen's linearization operator
+applied to every variable of a list $xs$ after every quantifier. Then $E(0)=1$ if $\varphi$
+is true and $E(0)=0$ if it is false. If $xs$ contains the variables of $\varphi$, every
+syntactic degree bound of $E$ is at most $|\varphi|$, and the round degree (the sum of these
+bounds over the operator nodes) is at most $(2|xs|+1)|\varphi|^2$. A Shamir--Shen-style
+verifier checks the claim $E(0)=1$ by recursion on $E$: at a binary connective the prover
+sends the two values, and at $\exists x$, $\forall x$ or $L_x$ it sends the univariate
+restriction, truncated to the degree bound, and the verifier draws a random point. The
+honest prover is accepted with probability $1$ on every true claim. Over an integral
+domain, if the sampler gives each element probability at most $\varepsilon$, every
+stateful, adaptive, randomized prover is accepted on a false claim with probability at
+most (round degree)$\cdot\varepsilon$. For TQBF with uniform samples from a finite field
+$F$, false closed formulas are accepted with probability at most $3|\varphi|^3/|F|$. The
+verifier is an abstract typed oracle program with exact sampling. Its realization in the
+IP machine model, and hence $\cc{PSPACE}\subseteq\cc{IP}$, is not yet formalized.
+\citep{LundFortnowKarloffNisan1992,Shamir1992,Shen1992}\citep[Chapter 8]{AroraBarak09}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{485}{Cslib.Logic.PL.QBF.eval_arithmetize}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{491}{Cslib.Logic.PL.QBF.eval_arithmetize_zero}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{523}{Cslib.Logic.PL.QBF.deg_arithmetize_le}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Logics/Propositional/QBF/Arithmetization.lean}{590}{Cslib.Logic.PL.QBF.roundDegree_arithmetize_le}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{338}{Cslib.Complexity.QBFProtocol.acceptProb_honest_verify}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{347}{Cslib.Complexity.QBFProtocol.acceptProb_verify_le}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{464}{Cslib.Complexity.QBFProtocol.acceptProb_honest_of_mem_TQBF}
+\declat{b18f43891513f65a64c5417d388abaaee4548ef1}{Complexity/Computability/Complexity/Classes/IP/TQBF/Protocol.lean}{471}{Cslib.Complexity.QBFProtocol.acceptProb_le_of_notMem_TQBF}
+\end{result}
+
+
+\begin{result}
 \subsection{Graph non-isomorphism has a private-coin interactive proof}
 Graph non-isomorphism belongs to IP. The strict polynomial-time fair-coin verifier
 has perfect completeness and soundness at most $(17/32)^2<1/3$ after two rounds.
 It samples relabelings by sorting random vertex keys; this avoids assuming exact
 uniform sampling of a permutation from a fixed number of fair bits. The result is
-for private coins and does not establish the public-coin AM protocol.
+for private coins; the public-coin AM protocol is in the Arthur--Merlin entry.
 \citep{GoldreichMicaliWigderson1991}
 \decl{Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean}{563}{Cslib.Complexity.GraphNonIsomorphism.isInteractiveProof_verifier}
 \decl{Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean}{603}{Cslib.Complexity.GraphNonIsomorphism.mem_IP}

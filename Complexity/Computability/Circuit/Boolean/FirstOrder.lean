@@ -48,6 +48,8 @@ are about structures rather than an encoding of structures as bit strings.
 * `Cslib.Circuits.Boolean.ModelChecking.exists_formula_realize_structure`: every first-order
   sentence is decided on the structures with `n` elements by unbounded fan-in formulas of constant
   depth and polynomial size.
+* `Cslib.Circuits.Boolean.ModelChecking.leafSize_toUnbounded_le`: the formulas have polynomially
+  many leaves.
 
 ## References
 
@@ -207,6 +209,35 @@ theorem size_toUnbounded_le (e : Atom L n ≃ Fin N) {k : ℕ} (φ : L.BoundedFo
         rw [pow_succ]
         nlinarith
 
+/-- **The number of leaves is polynomial in the universe.** -/
+theorem leafSize_toUnbounded_le (e : Atom L n ≃ Fin N) {k : ℕ} (φ : L.BoundedFormula Empty k)
+    (xs : Fin k → Fin n) : (toUnbounded e φ xs).leafSize ≤ (n + 2) ^ foSize φ := by
+  induction φ with
+  | falsum => simp [toUnbounded, constUnbounded]
+  | equal t₁ t₂ =>
+    simp only [toUnbounded, constUnbounded]
+    split_ifs <;> simp
+  | rel R ts => simp [toUnbounded, foSize]
+  | imp φ ψ ihφ ihψ =>
+    have h₁ := ihφ xs
+    have h₂ := ihψ xs
+    simp only [toUnbounded, Formula.leafSize_gate, Fin.sum_univ_two, Matrix.cons_val_zero,
+      Matrix.cons_val_one, Fin.sum_univ_one, foSize]
+    have hφ : (n + 2) ^ foSize φ ≤ (n + 2) ^ (foSize φ + foSize ψ) :=
+      Nat.pow_le_pow_right (by omega) (by omega)
+    have hψ : (n + 2) ^ foSize ψ ≤ (n + 2) ^ (foSize φ + foSize ψ) :=
+      Nat.pow_le_pow_right (by omega) (by omega)
+    rw [pow_succ]
+    nlinarith
+  | all φ ih =>
+    simp only [toUnbounded, Formula.leafSize_gate, foSize]
+    have hsum : ∑ a : Fin n, (toUnbounded e φ (Fin.snoc xs a)).leafSize ≤
+        n * (n + 2) ^ foSize φ :=
+      (Finset.sum_le_card_nsmul _ _ _ fun a _ => ih _).trans_eq (by simp)
+    refine hsum.trans ?_
+    rw [pow_succ, mul_comm]
+    exact Nat.mul_le_mul_left _ (by omega)
+
 /-! ### Arbitrary finite structures -/
 
 section Structures
@@ -230,6 +261,16 @@ noncomputable def equivModel (e : M ≃ Fin n) : M ≃[L] Model (atomsOf (L := L
 theorem realize_iff_atomsOf (e : M ≃ Fin n) (φ : L.Sentence) :
     M ⊨ φ ↔ Model (atomsOf (L := L) e) ⊨ φ :=
   StrongHomClass.realize_sentence (equivModel e) φ
+
+/-- The translation of a sentence decides it on every structure, through its atomic facts. -/
+theorem eval_toUnbounded_atomsOf (e : Atom L n ≃ Fin N) (eM : M ≃ Fin n) (φ : L.Sentence) :
+    (toUnbounded e φ Fin.elim0).eval Unbounded.interpretation (atomsOf (L := L) eM ∘ e.symm) =
+      true ↔ M ⊨ φ :=
+  ((eval_toUnbounded e _ φ Fin.elim0).trans (by
+      rw [Sentence.Realize, Formula.Realize,
+        Subsingleton.elim (Empty.elim : Empty → Model (atomsOf (L := L) eM)) default,
+        Subsingleton.elim (Fin.elim0 : Fin 0 → Model (atomsOf (L := L) eM)) default])).trans
+    (realize_iff_atomsOf eM φ).symm
 
 end Structures
 

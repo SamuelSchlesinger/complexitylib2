@@ -380,20 +380,9 @@ theorem eval_hashCNF_extend {vars : List ℕ} {k : ℕ} {w : List Bool} {σ : �
 
 /-! ### Variables of the reduced formula -/
 
-/-- A variable of a formula is the variable of a literal of one of its clauses. -/
-theorem mem_vars_iff {V : Type*} {φ : CNF V} {u : V} :
-    u ∈ φ.vars ↔ ∃ c ∈ φ, ∃ b, (u, b) ∈ c := by
-  simp only [CNF.vars, List.mem_map, List.mem_flatten, Prod.exists]
-  constructor
-  · rintro ⟨_, b, ⟨c, hc, hl⟩, rfl⟩
-    exact ⟨c, hc, b, hl⟩
-  · rintro ⟨c, hc, b, hl⟩
-    exact ⟨u, b, ⟨c, hc, hl⟩, rfl⟩
+@[deprecated (since := "2026-10-19")] alias mem_vars_iff := CNF.mem_vars
 
-/-- Relabelling renames the variables, occurrence by occurrence. -/
-theorem vars_relabel {V W : Type*} (f : V → W) (φ : CNF V) :
-    (φ.relabel f).vars = φ.vars.map f := by
-  simp [CNF.vars, CNF.relabel, Clause.relabel, List.map_flatten, Function.comp_def]
+@[deprecated (since := "2026-10-19")] alias vars_relabel := CNF.vars_relabel
 
 /-- The clauses of a step only mention its three variables. -/
 theorem mem_vars_stepClauses {bit : Bool} {next prev x u : Var}
@@ -407,7 +396,7 @@ variable `inr (i, j)` with `j ≤ vars.length`. -/
 theorem mem_vars_rowClauses {vars : List ℕ} {i : ℕ} {row : List Bool} {c : Bool} {u : Var}
     (h : u ∈ (rowClauses vars i row c).vars) :
     (∃ v ∈ vars, u = .inl v) ∨ ∃ j ≤ vars.length, u = .inr (i, j) := by
-  simp only [rowClauses, mem_vars_iff, List.mem_cons, List.mem_flatMap] at h
+  simp only [rowClauses, CNF.mem_vars, List.mem_cons, List.mem_flatMap] at h
   obtain ⟨cl, hcl, b, hb⟩ := h
   rcases hcl with rfl | rfl | ⟨⟨v, j⟩, hp, hcl⟩
   · simp only [List.mem_cons, Prod.mk.injEq, List.not_mem_nil, or_false] at hb
@@ -416,7 +405,7 @@ theorem mem_vars_rowClauses {vars : List ℕ} {i : ℕ} {row : List Bool} {c : B
     exact .inr ⟨_, le_rfl, hb.1⟩
   · obtain ⟨hj, hvj⟩ := List.mem_zipIdx' hp
     have hv : v ∈ vars := hvj ▸ List.getElem_mem hj
-    rcases mem_vars_stepClauses (mem_vars_iff.2 ⟨cl, hcl, b, hb⟩) with rfl | rfl | rfl
+    rcases mem_vars_stepClauses (CNF.mem_vars.2 ⟨cl, hcl, b, hb⟩) with rfl | rfl | rfl
     · exact .inr ⟨j + 1, hj, rfl⟩
     · exact .inr ⟨j, hj.le, rfl⟩
     · exact .inl ⟨_, hv, rfl⟩
@@ -426,10 +415,10 @@ variable `inr (i, j)` with `i < k` and `j ≤ vars.length`. -/
 theorem mem_vars_hashCNF {vars : List ℕ} {k : ℕ} {w : List Bool} {u : Var}
     (h : u ∈ (hashCNF vars k w).vars) :
     (∃ v ∈ vars, u = .inl v) ∨ ∃ i < k, ∃ j ≤ vars.length, u = .inr (i, j) := by
-  simp only [hashCNF, mem_vars_iff, List.mem_flatMap] at h
+  simp only [hashCNF, CNF.mem_vars, List.mem_flatMap] at h
   obtain ⟨cl, ⟨⟨row, i⟩, hp, hcl⟩, b, hb⟩ := h
   obtain ⟨hi, -⟩ := mem_zipIdx_listRows.1 hp
-  rcases mem_vars_rowClauses (mem_vars_iff.2 ⟨cl, hcl, b, hb⟩) with h | ⟨j, hj, rfl⟩
+  rcases mem_vars_rowClauses (CNF.mem_vars.2 ⟨cl, hcl, b, hb⟩) with h | ⟨j, hj, rfl⟩
   · exact .inl h
   · exact .inr ⟨i, hi, j, hj, rfl⟩
 
@@ -508,12 +497,12 @@ theorem reduceWith_mem_USAT {φ : CNF ℕ} {k : ℕ} {w : List Bool}
       Finset.mem_filter.2 ⟨mem_solutions.2 ⟨_, hφ, rfl⟩, hash_point_eq_zero_of_eval hH⟩
     rw [hx₀] at this
     exact Finset.mem_singleton.1 this
-  obtain ⟨u, hu, rfl⟩ := List.mem_map.1 ((vars_relabel _ _) ▸ hvψ)
+  obtain ⟨u, hu, rfl⟩ := List.mem_map.1 ((CNF.vars_relabel _ _) ▸ hvψ)
   rw [splitVarToNat_injective.extend_apply]
   change (τ ∘ splitVarToNat) u = σ' u
   rw [CNF.vars, List.flatten_append, List.map_append, List.mem_append] at hu
   rcases hu with hu | hu
-  · rw [← CNF.vars, vars_relabel] at hu
+  · rw [← CNF.vars, CNF.vars_relabel] at hu
     obtain ⟨v, hv, rfl⟩ := List.mem_map.1 hu
     obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hv
     exact congrFun hpoint ⟨j, hj⟩

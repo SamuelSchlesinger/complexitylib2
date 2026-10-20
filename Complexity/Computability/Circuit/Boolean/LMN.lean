@@ -45,6 +45,8 @@ and at most one otherwise (Parseval), and the restriction is deep with probabili
 
 * `Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes`: the
   Linial–Mansour–Nisan theorem.
+* `Cslib.Circuits.Boolean.Unbounded.sum_fourierCoeff_sq_le_of_computes_of_depth_le`: the bound
+  above the explicit degree `2 max 8 (2 s) (16 s + 1) ^ d - 1`, for every number of inputs.
 
 ## References
 
@@ -215,6 +217,38 @@ theorem sum_fourierCoeff_sq_le_of_computes {f : BooleanFunction n} {C : Circuit 
         _ = C.size * N * 2 ^ n := by rw [h2n]
     exact le_of_mul_le_mul_right h4 hpown
   nlinarith
+
+/-- **The Linial–Mansour–Nisan theorem above an explicit degree.** Let `f` be computed by a
+circuit of negations and unbounded fan-in conjunctions and disjunctions of depth at most `d`, and
+let `s ≥ 2`. Then the Fourier weight of `f`, read as signs, on the sets of more than `t`
+coordinates is at most `2 g / 2 ^ s`, where `g` is the number of gates, whenever
+`2 max 8 (2 s) (16 s + 1) ^ d ≤ t + 1`. -/
+theorem sum_fourierCoeff_sq_le_of_computes_of_depth_le {f : BooleanFunction n}
+    {C : Circuit signature n 1} (hC : C.Computes interpretation (single f)) {s d t : ℕ}
+    (hs : 2 ≤ s) (hd : C.depth ≤ d) (ht : 2 * max 8 (2 * s) * (16 * s + 1) ^ d ≤ t + 1) :
+    ∑ U with t < #U, fourierCoeff (fun x => signVal (f x)) U ^ 2 ≤ 2 * C.size / 2 ^ s := by
+  set q := (16 * s + 1) ^ C.depth
+  set M := max 8 (2 * s)
+  have hq : 0 < q := by positivity
+  have hqd : q ≤ (16 * s + 1) ^ d := Nat.pow_le_pow_right (by omega) hd
+  have hMq : 2 * M * q ≤ t + 1 := (Nat.mul_le_mul_left _ hqd).trans ht
+  have hM : 8 ≤ M := le_max_left _ _
+  rcases Nat.lt_or_ge n q with hnq | hqn
+  · -- every set has at most `n ≤ t` coordinates
+    have htn : n ≤ t := by nlinarith
+    rw [sum_eq_zero fun U hU => absurd ((mem_filter.1 hU).2.trans_le
+      ((card_le_univ U).trans (by simpa using htn))) (lt_irrefl t)]
+    positivity
+  · have hr : 1 ≤ n / q := Nat.div_pos hqn hq
+    have hk : M * n ≤ (t + 1) * (n / q) :=
+      calc M * n ≤ M * (q * (n / q + 1)) :=
+            Nat.mul_le_mul_left _ (Nat.lt_mul_div_succ n hq).le
+        _ ≤ M * (q * (2 * (n / q))) :=
+            Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ (by omega))
+        _ = 2 * M * q * (n / q) := by ring
+        _ ≤ (t + 1) * (n / q) := Nat.mul_le_mul_right _ hMq
+    simpa only [Nat.add_one_le_iff] using
+      sum_fourierCoeff_sq_le_of_computes hC hs (hq.trans_le hqn) hk
 
 end Unbounded
 
