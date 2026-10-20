@@ -153,9 +153,16 @@ of the handover. The work below remains available for subsequent, independently 
      The ordered query layer allows dependence on the canonical order; it does not impose
      invariance under arbitrary permutations of the input relations. Numeric predicates are
      computed from the universe size, not supplied as unverified input tables.
-     Implementation milestones are canonical numeric structures and constants-aware formulas;
-     lexicographic tuple numbering and numeric lifting; the ordered logspace encoding bridge;
-     then the projection and NL/P completeness results. Numeric interpretations must preserve
+     **Canonical-structure prerequisite completed (#33):**
+     [Ordered/Basic](Complexity/Logics/FirstOrder/Ordered/Basic.lean) supplies canonical
+     `≤`/`BIT` and numeric `0`/`1`/`max` on `Fin n`, `n ≥ 2`, using native Mathlib
+     terms/formulas and language sums. Input formulas, including constants and quantifiers,
+     preserve truth. [Ordered/Interpretation](Complexity/Logics/FirstOrder/Ordered/Interpretation.lean)
+     realizes forgetting the numeric expansion through the existing relational interpretation
+     API, with an isomorphism to the input. Interpreting target constants remains open.
+     **Next milestones:** lexicographic tuple numbering and numeric lifting; the ordered
+     logspace encoding bridge; then the projection and NL/P completeness results.
+     Numeric interpretations must preserve
      canonical BIT for arbitrary base `n`, and composition must preserve that certificate
      (Immerman, Remark 1.32). A general constructor supplying numeric definitions for every
      tuple dimension still needs the lifting theorem of Exercise 1.33; base-`n` tuples cannot

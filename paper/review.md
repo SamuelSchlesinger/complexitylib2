@@ -1126,3 +1126,28 @@ are recorded in PR #28. These are AI reviews, not human editorial approval or ma
 prose equivalence. AI assistance: OpenAI Codex. Mathematical credit remains Cavalar–Oliveira's
 presentation of Karchmer's characterization; the explicit factor five is the checked certificate
 deduction described above.
+
+
+## 2026-10-20: Canonical numeric structures for ordered first-order logic
+
+Worker `ordered-fo-20261020` added native numeric vocabulary/structures and the relational
+forgetting bridge at source revision `223f5289aa5809f50251aba7aced4d7e98478a78`. One new
+curated prerequisite entry brings the index to 121 entries. The source credit includes
+Immerman's Section 1.2 conventions and Proposition 3.5, and Samuel Schlesinger's earlier
+canonical-expansion interface at its pinned revision. No earlier custom syntax was ported.
+
+The independent parent coordinator's preliminary API/correctness review found no substantive
+issues: native language sums retain input functions/constants, canonical structures require
+`n ≥ 2`, BIT indices start at zero, and the existing interpretation target remains relational.
+Final exact-source and index review verdicts are tracked in PR #37. The prose distinguishes this
+semantic prerequisite from target constants, arbitrary-base tuple BIT lifting, numeric-preserving
+composition and ordered complexity/capture results, all of which remain open in the roadmap.
+
+All six validation gates pass. Concrete clients cover two- and three-element universes,
+constant separation, bit orientation, quantified formulas containing input constants, and a
+nontrivial BIT-defined interpreted relation; named axiom guards use only `propext`,
+`Classical.choice` and `Quot.sound`. The three declaration links are pinned to the source
+revision above, lines 142 and 149 of `Ordered/Basic.lean` and line 68 of
+`Ordered/Interpretation.lean`, and checked against `git show`. The PDF builds, and page 8
+was rendered and visually inspected. These are AI reviews, not human editorial approval
+or machine-checked prose equivalence. AI assistance: OpenAI Codex.
