@@ -17,8 +17,7 @@ for bipartite perfect matching on `2 ^ 20 + 2 ^ 20` vertices have depth at least
 
 namespace ComplexityTests.BipartiteMatching
 
-open Cslib Cslib.Circuits Cslib.Circuits.BipartiteMatching
-  Cslib.Circuits.BipartiteMatching.RazWigderson Cslib.Communication
+open Cslib Cslib.Circuits Cslib.Circuits.BipartiteMatching Cslib.Communication
 
 /-! ### The function -/
 
@@ -48,19 +47,26 @@ example : HasPerfectMatching (fun e : Fin 2 × Fin 2 => decide (e ≠ (0, 0))) :
 
 /-! ### The graphs of the reduction -/
 
-example : HasPerfectMatching (aliceGraph (e := 1) (![true, false, true] : BitString 3)) :=
-  hasPerfectMatching_aliceGraph _
+example :
+    HasPerfectMatching (RazWigderson.aliceGraph (e := 1) (![true, false, true] : BitString 3)) :=
+  RazWigderson.hasPerfectMatching_aliceGraph _
 
-example : ¬HasPerfectMatching (bobGraph (e := 1) (1 : Fin 3) ![false, true, true]) :=
-  not_hasPerfectMatching_bobGraph _ _
+example : ¬HasPerfectMatching (RazWigderson.bobGraph (e := 1) (1 : Fin 3) ![false, true, true]) :=
+  RazWigderson.not_hasPerfectMatching_bobGraph _ _
 
 -- With `x = y = {1, 2}` and `i₀ = 0`, the matching edges at `b₀` and `b₂` are both missing from
 -- Bob's graph.
-example : aliceGraph (e := 0) (![false, true, true] : BitString 3)
-    (.inl (.inl 2), aliceMatching ![false, true, true] (.inl (.inl 2))) = true ∧
-      bobGraph (e := 0) (0 : Fin 3) ![false, true, true]
-        (.inl (.inl 2), aliceMatching ![false, true, true] (.inl (.inl 2))) = false := by
+example : RazWigderson.aliceGraph (e := 0) (![false, true, true] : BitString 3)
+    (.inl (.inl 2), RazWigderson.aliceMatching ![false, true, true] (.inl (.inl 2))) = true ∧
+      RazWigderson.bobGraph (e := 0) (0 : Fin 3) ![false, true, true]
+        (.inl (.inl 2), RazWigderson.aliceMatching ![false, true, true] (.inl (.inl 2))) =
+          false := by
   decide
+
+-- The deprecated names of the vertex and relabelling types still carry their instances.
+set_option linter.deprecated false in
+example : Fintype (RWVertex 2 3) × DecidableEq (RWVertex 2 3) × Fintype (Relabeling 2 3) :=
+  ⟨inferInstance, inferInstance, inferInstance⟩
 
 /-! ### Lower bounds -/
 
