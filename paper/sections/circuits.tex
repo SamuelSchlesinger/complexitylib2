@@ -339,22 +339,35 @@ construction.\citep{CavalarOliveira2025}
 \end{result}
 
 \begin{result}
-\subsection{Semi-ultrafilter bounds for universal verifiers}
-Let $g:\{0,1\}^{n+a}\to\{0,1\}$ and define
-$f(x)=1$ exactly when $g(x,y)=1$ for every $a$-bit auxiliary assignment $y$.
-Suppose a native monotone circuit computes $g$ from the positive and negative
-literals of all $n+a$ inputs, with $t$ binary AND gates. There is a pair cover
-of length exactly $t$ defeating every semi-ultrafilter above a true input of
-$f$, with respect to its primary literals. Hence
+\subsection{Semi-ultrafilter characterization of universal verifiers}
+Let $f:\{0,1\}^n\to\{0,1\}$ and write
+$\rho_{\mathrm{ultra}}(f)$ for pair-cover complexity with respect to its
+positive and negative literals, restricting witnesses to semi-ultrafilters.
+A semi-ultrafilter accepts every set or its complement, possibly both.
+Let $C_{\forall,\wedge}(f)\in\mathbb N\cup\{\infty\}$ be the infimum of the
+native AND cost over all finite auxiliary counts $a$, all verifiers
+$g:\{0,1\}^{n+a}\to\{0,1\}$ with $f(x)=\forall y\,g(x,y)$, and all native
+circuits implementing $g$ from the positive and negative literals of all
+$n+a$ inputs. Then, in the extended natural numbers,
 \[
-\rho_{\mathrm{ultra}}(f;\text{primary literals})\le t.
+\rho_{\mathrm{ultra}}(f)\le C_{\forall,\wedge}(f)
+\le 5\rho_{\mathrm{ultra}}(f).
 \]
-A semi-ultrafilter accepts every set or its complement, possibly both. The bound
-also holds for the minimum AND cost of implementing this fixed verifier.
-OR gates, constants, supplied literals, wiring and fanout are free; arbitrary
-numbers of auxiliary bits are allowed, including zero. This proves the lower-bound
-direction of the conondeterministic characterization credited to Karchmer;
-it does not construct a universal verifier from a cover or prove the converse.
+More concretely, every universal verifier with $t$ binary AND gates yields a
+pair cover of length exactly $t$. Conversely, every semi-ultrafilter pair cover
+of length $t$ yields a universal verifier with exactly $3t$ auxiliary bits and
+$5t$ AND gates. Its bits label the two components and intersection of every
+pair; consistent labels extend to a semi-ultrafilter, while every false input
+supplies a consistent, pair-preserving certificate.
+
+Constants, OR gates, supplied literals, wiring and fanout are free. Both
+constructions include zero auxiliary bits, empty covers, constant functions
+and $n=0$. The measure concerns circuit cost, not verifier runtime or the cost
+of finding a cover or constructing the circuit. This proves the linear
+conondeterministic characterization credited to Karchmer; the explicit factor
+five comes from the grouped certificate construction formalized here.
 \citep{CavalarOliveira2025}
-\declat{fc111b65726f9b5bc721b9c63bef8a218fcf4b35}{Complexity/Computability/Circuit/Fusion/Conondeterministic.lean}{137}{Cslib.Circuits.Fusion.pairCoverComplexity_forallGuess_le_cost}
+\declat{fc111b65726f9b5bc721b9c63bef8a218fcf4b35}{Complexity/Computability/Circuit/Fusion/Conondeterministic.lean}{123}{Cslib.Circuits.Fusion.exists_pairCover_forallGuess}
+\declat{f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd}{Complexity/Computability/Circuit/Fusion/Converse.lean}{66}{Cslib.Circuits.Fusion.PairCover.exists_forallGuess}
+\declat{f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd}{Complexity/Computability/Circuit/Fusion/Converse.lean}{131}{Cslib.Circuits.Fusion.conondeterministicAndComplexity_bounds}
 \end{result}

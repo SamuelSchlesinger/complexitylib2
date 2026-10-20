@@ -1094,3 +1094,35 @@ statement, proof or test changed in reconciliation; declaration links retain the
 source revisions. All six validation gates pass on the combined tree. All eight sampling,
 random-graph and universal-verifier links were rechecked against pinned source lines. The
 combined PDF was rebuilt and pages 31 and 32 were rendered and visually inspected.
+
+## 2026-10-20: Universal verifiers from semi-ultrafilter covers
+
+Worker `fusion-graph-20261020` formalized the converse and extended the existing universal-verifier
+entry; the index count remains 120. Source revision
+`f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd` adds the maximal extension, finite certificate,
+native formula compiler, Boolean verifier specialization, and minimum over all finite auxiliary
+counts and all verifiers. The coordinating agent proposed the substantive factor-five
+construction and is therefore not counted as an independent reviewer of this work.
+
+Independent reviewer `fusion-barrier-20261020`, who did not author the source, reviewed all five
+new modules and the tests for correctness and API design. The review checked the fixed empty
+rejection, equal rejected pairs, empty carrier, exact three-bit/five-AND accounting, both
+quantifier directions, extended-natural minimization and nonconstant examples. No source or
+test findings remained. Supplementary exhaustive small-carrier checks supported the certificate
+semantics but do not replace Lean proofs.
+
+The same independent reviewer checked the extended index against the final Lean statements:
+quantifiers, free literals/constants/OR, exact auxiliary and AND counts, zero cases,
+extended-natural infimum, construction/runtime limitations and source attribution. One link
+correction was requested and applied: the lower-direction link now points to the exact-length
+extraction theorem at `fc111b65726f9b5bc721b9c63bef8a218fcf4b35`, line 123. The new verifier
+and headline-bound links point to lines 66 and 131 of the source revision above. All three
+links were checked against `git show`.
+
+All six validation gates pass on the source revision; named axiom guards contain only
+`propext`, `Classical.choice` and `Quot.sound`. The PDF was rebuilt and the extended entry on
+page 32 was rendered and visually inspected. Exact-head approval and integration evidence
+are recorded in PR #28. These are AI reviews, not human editorial approval or machine-checked
+prose equivalence. AI assistance: OpenAI Codex. Mathematical credit remains Cavalar–Oliveira's
+presentation of Karchmer's characterization; the explicit factor five is the checked certificate
+deduction described above.
