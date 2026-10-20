@@ -100,16 +100,17 @@ instance : Finite FrameState :=
   Finite.of_surjective (fun b : Option Bool => b.elim .done fun b => if b then .marker else .bit)
     fun q => by cases q; exacts [⟨some true, rfl⟩, ⟨some false, rfl⟩, ⟨none, rfl⟩]
 
+-- vendored: expose `frameT` and `frameT_run` for `computableInLogSpace_frame`; private upstream.
 /-- Frames its input. -/
-@[simps q₀ step final]
-def frameT : Transducer Bool Unit where
+@[expose, simps q₀ step final]
+public def frameT : Transducer Bool Unit where
   q₀ := ()
   step _ b := ((), [true, b])
   final _ := [false]
   length_step_le _ _ := by simp
   length_final_le _ := by simp
 
-lemma frameT_run (v : List Bool) : frameT.run () v = frame v := by
+public lemma frameT_run (v : List Bool) : frameT.run () v = frame v := by
   induction v <;> simp [*]
 
 /-- Emits the word framed at the start of its input (`keep = true`), or what follows the frame

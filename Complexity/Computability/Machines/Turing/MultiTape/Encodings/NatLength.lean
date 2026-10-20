@@ -28,6 +28,9 @@ bounded by a polynomial in the length of the input are stored in logarithmic spa
 * `Turing.MultiTapeTM.length_encNat_le_of_le_pow`: numbers at most `(N + 1) ^ d` have at most
   `(d + 1) * (log₂ N + 1)` digits.
 
+* `Turing.MultiTapeTM.length_encNat_le_of_le_mul_pow`: the corresponding bound with a
+  constant coefficient.
+
 ## References
 
 * [M. Sipser, *Introduction to the Theory of Computation*, Section 8.4][Sipser2013]
@@ -60,5 +63,18 @@ theorem length_encNat_le_of_le_pow {r N d : ℕ} (h : r ≤ (N + 1) ^ d) :
     _ = 2 ^ (d * (Nat.log2 N + 1)) := by rw [← pow_mul, Nat.mul_comm]
     _ < 2 ^ ((d + 1) * (Nat.log2 N + 1)) :=
       Nat.pow_lt_pow_right (by norm_num) (by nlinarith)
+
+/-- A number bounded by a constant times a fixed power has logarithmic binary length. -/
+theorem length_encNat_le_of_le_mul_pow {M A D L : ℕ} (h : M ≤ A * (L + 1) ^ D) :
+    (encNat M).length ≤ (Nat.size A + 2 * D + 1) * (Nat.log2 L + 1) := by
+  have hp := length_encNat_le_of_le_pow (r := (L + 1) ^ D) (N := L) (d := D) le_rfl
+  rw [encNat_apply, Nat.size_eq_bits_len] at hp ⊢
+  have hM : M < 2 ^ (Nat.size A + (D + 1) * (Nat.log2 L + 1)) := by
+    calc
+      M ≤ A * (L + 1) ^ D := h
+      _ < 2 ^ Nat.size A * 2 ^ ((D + 1) * (Nat.log2 L + 1)) :=
+        Nat.mul_lt_mul'' (Nat.lt_size_self A) (Nat.size_le.mp hp)
+      _ = _ := (pow_add ..).symm
+  exact (Nat.size_le.mpr hM).trans (by nlinarith)
 
 end Turing.MultiTapeTM

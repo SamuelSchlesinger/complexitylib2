@@ -8,6 +8,7 @@ module
 -- upstream: candidate (additions to crei/tidy-universal `Encodings/Basic.lean`)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
+import Mathlib.Data.List.GetD
 
 /-!
 # The bits of a framed word
@@ -26,6 +27,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
   `base` iff it agrees with the markers, the bits of `w`, and the terminator.
 * `Turing.MultiTapeTM.forall_getElem?_append_iff`: a predicate agrees with the bits of `u ++ w` iff
   it agrees with `u` and with `w` shifted by `u.length`.
+* `Turing.MultiTapeTM.getD_frame_two_mul`, `Turing.MultiTapeTM.getD_frame_two_mul_add_one`:
+  indexed access to markers and input bits with default `false`.
 * `Turing.MultiTapeTM.length_flatMap_frame`: the length of a list of framed words.
 -/
 
@@ -166,5 +169,28 @@ theorem length_flatMap_frame (l : List (List Bool)) :
   | nil => rfl
   | cons t l ih => simp only [List.flatMap_cons, List.length_append, length_frame, ih,
       List.map_cons, List.sum_cons]
+
+/-- With default `false`, the even marker bit tests whether the input index is in bounds. -/
+theorem getD_frame_two_mul (w : List Bool) (i : ℕ) :
+    (frame w).getD (2 * i) false = decide (i < w.length) := by
+  induction w generalizing i with
+  | nil => rcases i with _ | i <;> simp [frame_nil, List.getD_eq_getElem?_getD]
+  | cons b w ih =>
+    rcases i with _ | i
+    · simp [frame_cons]
+    · rw [frame_cons, show 2 * (i + 1) = 2 * i + 1 + 1 by omega, List.getD_cons_succ,
+        List.getD_cons_succ, ih]
+      simp
+
+/-- With default `false`, the odd frame positions contain exactly the input bits. -/
+theorem getD_frame_two_mul_add_one (w : List Bool) (i : ℕ) :
+    (frame w).getD (2 * i + 1) false = w.getD i false := by
+  induction w generalizing i with
+  | nil => rcases i with _ | i <;> simp [frame_nil, List.getD_eq_getElem?_getD]
+  | cons b w ih =>
+    rcases i with _ | i
+    · simp [frame_cons]
+    · rw [frame_cons, show 2 * (i + 1) + 1 = 2 * i + 1 + 1 + 1 by omega, List.getD_cons_succ,
+        List.getD_cons_succ, ih, List.getD_cons_succ]
 
 end Turing.MultiTapeTM

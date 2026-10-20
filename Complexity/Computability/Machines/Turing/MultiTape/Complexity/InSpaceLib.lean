@@ -603,6 +603,39 @@ theorem budget_natDiv {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn e
     ComputableTidilyInSpace (fun x => a x / b x) encIn encNat Bs :=
   budget_comp_lin natDiv (linear_mul 16) (budget_prod ha hb)
 
+/-- Truncated subtraction, within the budget. -/
+theorem budget_natSub {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x - b x) encIn encNat Bs :=
+  budget_comp_lin natSub linear_succ (budget_prod hb ha)
+
+/-- The remainder, within the budget. -/
+theorem budget_natMod {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => a x % b x) encIn encNat Bs :=
+  budget_comp_lin natMod (linear_mul 16) (budget_prod ha hb)
+
+/-- The strict comparison, within the budget. -/
+theorem budget_natLt {a b : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hb : ComputableTidilyInSpace b encIn encNat Bs) :
+    ComputableTidilyInSpace (fun x => decide (a x < b x)) encIn encBool Bs :=
+  budget_comp_lin natLt linear_succ (budget_prod ha hb)
+
+/-- A fixed natural power, within the budget. -/
+theorem budget_natPow {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs)
+    (hin : (fun x => (encIn x).length) ≼ Bs) (d : ℕ) :
+    ComputableTidilyInSpace (fun x => a x ^ d) encIn encNat Bs := by
+  induction d with
+  | zero => simpa using budget_const (encB := encNat) 1 hin
+  | succ d ih => simpa [pow_succ] using budget_natMul ih ha
+
+/-- The remainder modulo a positive constant, as an element of `Fin w`. -/
+theorem budget_finMod {w : ℕ} (hw : 0 < w) {m : α → ℕ}
+    (hm : ComputableTidilyInSpace m encIn encNat Bs) (hin : (fun x => (encIn x).length) ≼ Bs) :
+    ComputableTidilyInSpace (fun x => (⟨m x % w, Nat.mod_lt _ hw⟩ : Fin w)) encIn
+      (Fin.valEmbedding.trans encNat) Bs :=
+  (budget_natMod hm (budget_const (encB := encNat) w hin)).of_enc_eq fun _ => rfl
+
 /-- `some` of a number, within the budget. -/
 theorem budget_optionSome {a : α → ℕ} (ha : ComputableTidilyInSpace a encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => some (a x)) encIn (encOption encNat) Bs :=

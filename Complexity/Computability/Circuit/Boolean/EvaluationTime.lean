@@ -40,6 +40,9 @@ length.
 
 ## Main results
 
+* `Cslib.Circuits.prefix_evalCode`: evaluating a gate list preserves its input prefix.
+* `Cslib.Circuits.getD_evalCode`: the value of a well-formed gate from its arguments.
+
 * `Cslib.Circuits.Program.evalCode_code`: on the code of a program, `evalCode` lists the inputs and
   the gate values.
 * `Cslib.Circuits.Circuit.eval_eq_getD`: circuit evaluation through the code.
@@ -91,6 +94,51 @@ theorem evalCode_append (I : Interpretation σ U) (d : U) (x : List U)
   induction gates using List.reverseRecOn with
   | nil => rfl
   | append_singleton gates g ih => simp [evalCode_append_singleton, ih, Nat.add_assoc]
+
+/-- Evaluating a gate list only appends values. -/
+theorem prefix_evalCode (I : Interpretation σ U) (d : U) (x : List U)
+    (gates : List (σ.Op × List ℕ)) : x <+: evalCode I d x gates := by
+  induction gates using List.reverseRecOn with
+  | nil => exact List.prefix_refl _
+  | append_singleton gates g ih =>
+    rw [evalCode_append_singleton]
+    exact ih.trans (List.prefix_append _ _)
+
+/-- **The value of a gate** of a well-formed gate list is its operation applied to the values of
+its arguments. -/
+theorem getD_evalCode (I : Interpretation σ U) (d : U) (x : List U)
+    {gates : List (σ.Op × List ℕ)} (h : Program.IsCodeFrom σ x.length 0 gates) {j : ℕ}
+    {gate : σ.Op × List ℕ} (hg : gates[j]? = some gate) :
+    (evalCode I d x gates).getD (x.length + j) d =
+      I gate.1 fun a => gate.2[a.val]?.elim d ((evalCode I d x gates).getD · d) := by
+  obtain ⟨hj, rfl⟩ := List.getElem?_eq_some_iff.1 hg
+  have hsplit : gates = gates.take j ++ [gates[j]] ++ gates.drop (j + 1) := by
+    rw [List.append_assoc, List.singleton_append, ← List.drop_eq_getElem_cons hj,
+      List.take_append_drop]
+  have hlen : (evalCode I d x (gates.take j)).length = x.length + j := by
+    rw [length_evalCode, List.length_take, Nat.min_eq_left hj.le]
+  have hpre := prefix_evalCode I d (evalCode I d x (gates.take j ++ [gates[j]]))
+    (gates.drop (j + 1))
+  rw [← evalCode_append, ← hsplit, evalCode_append_singleton] at hpre
+  obtain ⟨rest, hrest⟩ := hpre
+  -- the arguments read wires computed before gate `j`
+  have hargs : ∀ i ∈ gates[j].2, i < x.length + j := by
+    intro i hi
+    have := (h.getElem j hj).2 i hi
+    omega
+  have hread (i : ℕ) (hi : i < x.length + j) :
+      (evalCode I d x gates).getD i d = (evalCode I d x (gates.take j)).getD i d := by
+    rw [← hrest, List.append_assoc, List.getD_append _ _ _ _ (by omega)]
+  have hv : (evalCode I d x gates).getD (x.length + j) d = I gates[j].1 fun a =>
+      gates[j].2[a.val]?.elim d ((evalCode I d x (gates.take j)).getD · d) := by
+    rw [← hrest, List.getD_append _ _ _ _ (by simp [hlen]), List.getD_append_right _ _ _ _
+      (by omega), hlen, Nat.sub_self, List.getD_cons_zero]
+  rw [hv]
+  congr 1
+  funext a
+  rcases ha : gates[j].2[a.val]? with _ | i
+  · rfl
+  · exact (hread i (hargs i (List.mem_of_getElem? ha))).symm
 
 /-- Wire `w` is at position `w.toNat` of the inputs followed by the gates. -/
 theorem Wire.getD_append_toNat (x : Fin n → U) (y : Fin k → U) (d : U) (w : Wire n k) :
