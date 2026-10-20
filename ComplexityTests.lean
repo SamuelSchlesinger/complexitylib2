@@ -76,6 +76,7 @@ import ComplexityTests.FiniteFieldUnitSum
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
 import ComplexityTests.FirstOrderAutomation
+import ComplexityTests.FirstOrderConstants
 import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
@@ -275,6 +276,7 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
+import ComplexityTests.WPPRobustness
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WorstCaseHardness

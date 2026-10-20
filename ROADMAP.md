@@ -47,10 +47,13 @@ Extend these with counting reductions and further oracle results, preserving exa
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
 implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
 hierarchy, WPP and LWPP now have definitions, elementary containments/closures, LWPP many-one
-reduction closure, unary-indexed target normalization, and finite multiple-target robustness.
+reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
+multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, with a uniformly computed
+list of nonzero binary targets and no computability assumption on the accepting index
+([WPP.Robustness](Complexity/Computability/Complexity/Classes/WPP/Robustness.lean)).
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (threshold #SAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
 MAJSAT and permanent completeness, stronger Boolean-hierarchy closure and collapse results,
-polynomial-family multiple-target robustness, and WPP/LWPP oracle lowness.
+two-sided acceptance/rejection-target robustness, and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
@@ -169,7 +172,13 @@ of the handover. The work below remains available for subsequent, independently 
      terms/formulas and language sums. Input formulas, including constants and quantifiers,
      preserve truth. [Ordered/Interpretation](Complexity/Logics/FirstOrder/Ordered/Interpretation.lean)
      realizes forgetting the numeric expansion through the existing relational interpretation
-     API, with an isomorphism to the input. Interpreting target constants remains open.
+     API, with an isomorphism to the input.
+     **Target-constant prerequisite completed (#38):**
+     [Interpretation/Constants](Complexity/Logics/FirstOrder/Interpretation/Constants.lean)
+     adds finitely many formula-defined target constants, with explicit existence and uniqueness
+     inside the interpreted domain, and native formula/sentence truth-preserving pullback.
+     [Ordered/Constants](Complexity/Logics/FirstOrder/Ordered/Constants.lean) supplies valid
+     target `0`/`1`/`max` for every canonical structure with `n ≥ 2`.
      **Next milestones:** lexicographic tuple numbering and numeric lifting; the ordered
      logspace encoding bridge; then the projection and NL/P completeness results.
      Numeric interpretations must preserve

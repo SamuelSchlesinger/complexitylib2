@@ -502,6 +502,7 @@ public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
 public import Complexity.Computability.Complexity.Classes.WPP
+public import Complexity.Computability.Complexity.Classes.WPP.Robustness
 public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.Complexity.CookLevin.Clauses
 public import Complexity.Computability.Complexity.CookLevin.Completeness
@@ -1279,11 +1280,13 @@ public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.FirstOrder.Encoding.Layout
 public import Complexity.Logics.FirstOrder.Interpretation
+public import Complexity.Logics.FirstOrder.Interpretation.Constants
 public import Complexity.Logics.FirstOrder.Interpretation.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation.Rank
 public import Complexity.Logics.FirstOrder.Interpretation.Tagged
 public import Complexity.Logics.FirstOrder.Interpretation.Unit
 public import Complexity.Logics.FirstOrder.Ordered.Basic
+public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring

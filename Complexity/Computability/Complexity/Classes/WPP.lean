@@ -40,9 +40,9 @@ symmetric difference), we prove two robustness properties from
   many-one reduction), multiplying the gap by the product of `f i` over all `i ≤ p(|a|)` with
   `i ≠ k a` normalizes the target to `∏_{i ≤ p(|a|)} f i`, which depends only on the input length.
 
-Oracle lowness of `WPP` and `LWPP` and polynomial-family multiple-target robustness
-(`Poly-LWPP = LWPP` and `Poly-WPP = WPP`, where the accepting target index is not polynomial-time
-computable from the input) are not proved here.
+Full polynomial-family multiple-target robustness (`Poly-LWPP = LWPP` and `Poly-WPP = WPP`),
+with no computability assumption on the accepting index, is proved in `WPP.Robustness`.
+Oracle lowness of `WPP` and `LWPP` is separate.
 
 ## Main definitions
 
