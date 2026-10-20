@@ -246,10 +246,24 @@ of the handover. The work below remains available for subsequent, independently 
      certificate is assumed. A fixed finite disjunction covers sizes two through eight.
      This proves the full-domain BIT endpoint of Immerman's Exercise 1.33(3), with no
      formula-size efficiency claim.
-     **Next milestones:** numeric-preserving composition; the ordered logspace encoding bridge;
-     then projections and NL/P completeness. These remain open. Compose the explicit native
-     full-tuple numeric definitions while preserving their canonical semantics (Immerman,
-     Remark 1.32); base-`n` tuples cannot simply be identified with concatenated binary strings.
+     **Numeric-preserving full-tuple composition completed (#121):**
+     [Ordered/FullTuple](Complexity/Logics/FirstOrder/Ordered/FullTuple.lean) constructs the
+     actual canonical numeric interpretation from the proved native order, BIT and constant
+     formulas; clients supply only the target input-relation definitions. For `n ≥ 2` and
+     positive dimension `k`, ranking is an isomorphism of the entire ordered language to
+     `Fin (n^k)`, including genuine numeric constants, and native pullback preserves every
+     formula and sentence. Source input vocabularies may have functions; target input
+     vocabularies are relational.
+     [Ordered/FullTuple/Composition](Complexity/Logics/FirstOrder/Ordered/FullTuple/Composition.lean)
+     composes positive dimensions `k` and `l` with coordinate `(j,i)` mapped to `j*k+i`.
+     The proved rank identity compares the flattened base-`n` tuple with the outer base-`n^k`
+     tuple of inner ranks. The composite is isomorphic to the successive canonical targets,
+     and all formula/sentence pullbacks agree. No full-tuple numeric certificate is assumed.
+     This is the full-domain case of Immerman's Proposition 1.28 for relational intermediate
+     and output input vocabularies, with Remark 1.32's canonical numerics. It does not identify
+     base-`n` digits with binary strings.
+     **Next milestones:** the ordered logspace encoding bridge, then projections and NL/P
+     completeness. These remain open.
      The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical
      BIT on an arbitrary definable restricted domain need not be first-order definable.
      Restricted-domain numeric preservation therefore requires its own explicit definitions
