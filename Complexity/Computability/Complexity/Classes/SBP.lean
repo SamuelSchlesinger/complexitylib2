@@ -26,18 +26,22 @@ members and strictly less than half the threshold on nonmembers. The threshold m
 be zero; `mem_SBP_iff_exists_pos_threshold` shows that requiring positivity is equivalent.
 These are verifier counts, without a proved nondeterministic counting-machine equivalence.
 The containments and union closure below are elementary counting-algebra consequences;
-the stronger MA and AM containments are not proved here.
+`MA ⊆ SBP` (`Cslib.Complexity.MA_subset_SBP`) and `SBP ⊆ AM` (`Cslib.Complexity.SBP_subset_AM`)
+are proved in `Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplification` and
+`Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound`.
 
 ## Main definitions
 
-* `SBP`: small bounded-error polynomial time with an input-dependent FP threshold.
+* `Cslib.Complexity.SBP`: small bounded-error polynomial time with an input-dependent FP threshold.
 
 ## Main results
 
-* `NP_subset_SBP`, `BPP_subset_SBP`, `SBP_subset_PP`.
-* `union_mem_SBP`, `PolyTimeReducible.mem_SBP`: union and many-one reduction closure.
-* `exists_SBP_gap_pow`: arbitrary fixed multiplicative gap strengthening.
-* `inter_mem_SBP_of_mem_BPP`: intersection with a BPP language.
+* `Cslib.Complexity.NP_subset_SBP`, `Cslib.Complexity.BPP_subset_SBP`,
+  `Cslib.Complexity.SBP_subset_PP`.
+* `Cslib.Complexity.union_mem_SBP`, `Cslib.Complexity.PolyTimeReducible.mem_SBP`: union and
+  many-one reduction closure.
+* `Cslib.Complexity.exists_SBP_gap_pow`: arbitrary fixed multiplicative gap strengthening.
+* `Cslib.Complexity.inter_mem_SBP_of_mem_BPP`: intersection with a BPP language.
 
 ## References
 

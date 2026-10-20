@@ -1035,7 +1035,9 @@ equivalence.
 
 Integration reconciliation: PR #22 preserves the quadratic, graph, and sampling entries after
 rebasing onto main at `2fb260fffdce0fe5eeb019b202192243d74863f4`. The index count is 118.
-The sampling source and tests are unchanged; declaration links remain pinned to `503ce2b0`.
+The sampling source and tests are unchanged; declaration links are pinned to the rebased core
+commit `fc0d4439550559e2773786234f13648021fa0ce0` (originally reviewed at pre-rebase
+`503ce2b0d3d0b5cc3dd3fa793aab840d07e448fa` with identical line numbers).
 The PDF was regenerated without undefined references or overfull boxes, and combined pages
 30 and 31 were rendered and visually inspected. The sampling entry now appears on page 31.
 Final integration review is recorded in PR #22.
@@ -1116,7 +1118,9 @@ quantifiers, free literals/constants/OR, exact auxiliary and AND counts, zero ca
 extended-natural infimum, construction/runtime limitations and source attribution. One link
 correction was requested and applied: the lower-direction link now points to the exact-length
 extraction theorem at `fc111b65726f9b5bc721b9c63bef8a218fcf4b35`, line 123. The new verifier
-and headline-bound links point to lines 66 and 131 of the source revision above. All three
+and headline-bound links point to lines 66 and 131 of the squash-merged main revision
+`fddf011fc21ee2b3d148dea54d07822c13d817f0` (reviewed on the branch at
+`f23523de46ed56aef9aaa7cd5c9cd7abcff6b8dd` with identical line numbers). All three
 links were checked against `git show`.
 
 All six validation gates pass on the source revision; named axiom guards contain only
@@ -1415,3 +1419,22 @@ counting-algebra entry is extended, preserving the 124-entry count and the tuple
 robustness entries. The PDF was rebuilt without undefined citations or overfull boxes;
 rendered pages 20 (products), 9 (tuples) and 25 (two-sided robustness) were inspected.
 The two new source anchors retain the independently checked source revision above.
+
+### Integration with the updated cslib pin
+
+Coordinator `coordinator-ops-20261020` merges main revision
+`cf03096b8b61b89417f7a3fb4552bc1b9c47cc16` into PR #53, preserving its source and tests.
+The dependency pin is now `b5f3b77d9f045ed8f2dfec05505b159c2417e1c6`. The text merge
+preserves main's corrected Fusion links, Unique-SAT cross-reference, zig-zag typography,
+module documentation and README changes, as well as the indexed-product entry. The PDF
+was rebuilt, its final log has no undefined citations or overfull boxes, the result count
+remains 124, and all seven affected product/Fusion declaration anchors were checked.
+Final validation and independent exact-revision integration review are recorded in PR #53.
+
+The upstream audit confirms that the public cslib pin and submitted copies are current.
+Independent reviewer `relativized-counting-20261020` inspected all 16 reported `@9cce4cc7`
+marker differences: they are the unpublished rewrite already documented in `UPSTREAM.md`,
+with additions absent from the older published `7f7c0696` tree. The local code and provenance
+markers are preserved. The unpublished commit object was unavailable for a byte-for-byte
+source comparison; this audit does not certify that missing comparison or relabel the
+rewrite as the older published source. AI assistance: OpenAI Codex.
