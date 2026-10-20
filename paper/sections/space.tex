@@ -25,11 +25,13 @@ the separate $\cc{P}\subsetneq\cc{EXP}$ theorem appears in the preceding section
 \cc{NL}\subseteq\cc{P}.
 \]
 NL is defined by native nondeterministic machines with logarithmic space bounded
-on every computation prefix and acceptance by an accepting path. A polynomial-time
-decider exists even though the nondeterministic machine's other branches need not
-halt. This entry does not assert the still-outstanding native $\cc{NL}=\cc{coNL}$
-theorem.\citep[Section 8.5]{Sipser2013}
-\decl{Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean}{44}{Cslib.Complexity.NL_subset_P}
+on every computation prefix, every branch halting, and acceptance by an accepting
+path, as in Sipser's Definition~8.1. The polynomial-time decider does not use
+halting: every problem recognized in logarithmic space by such a machine whose
+branches may run forever is also in $\cc{P}$. This entry does not assert the
+still-outstanding native $\cc{NL}=\cc{coNL}$ theorem.\citep[Section 8.5]{Sipser2013}
+\declat{495e5ea6e5f3f377eae712d95b5fc67295bf3b51}{Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean}{57}{Cslib.Complexity.NL_subset_P}
+\declat{495e5ea6e5f3f377eae712d95b5fc67295bf3b51}{Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean}{47}{Cslib.Complexity.mem_P_of_recognizesInSpace}
 \end{result}
 
 \begin{result}
@@ -87,11 +89,14 @@ Lemma 3.4]{Reingold2008}\citep[Section 21.4]{AroraBarak09}
 \cc{NPSPACE}=\cc{PSPACE}.
 \]
 Both classes are machine-defined. Nondeterministic acceptance is by an accepting
-path, with every path respecting the space bound; the deterministic decider is
-total. This is the equality of polynomial-space classes, not a statement of the
+path, with every path respecting the space bound and every branch halting; the
+deterministic decider is total. Halting is not used: Savitch's decider also places
+in $\cc{PSPACE}$ every problem recognized in polynomial space by a machine whose
+branches may run forever. This is the equality of polynomial-space classes, not a statement of the
 fully parameterized $\cc{NSPACE}(s)\subseteq\cc{DSPACE}(s^2)$ theorem.
 \citep[Corollary 8.6]{Sipser2013}
-\decl{Complexity/Computability/Complexity/Classes/Space/Savitch.lean}{54}{Cslib.Complexity.NPSPACE_eq_PSPACE}
+\declat{495e5ea6e5f3f377eae712d95b5fc67295bf3b51}{Complexity/Computability/Complexity/Classes/Space/Savitch.lean}{66}{Cslib.Complexity.NPSPACE_eq_PSPACE}
+\declat{495e5ea6e5f3f377eae712d95b5fc67295bf3b51}{Complexity/Computability/Complexity/Classes/Space/Savitch.lean}{49}{Cslib.Complexity.mem_PSPACE_of_recognizesInSpace}
 \end{result}
 
 \begin{result}
