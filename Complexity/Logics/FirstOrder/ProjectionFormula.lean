@@ -71,12 +71,26 @@ def Realize : InputLiteral L α → (α → M) → Prop
   | .const b, _ => b = true
   | .rel R args neg, x => if neg then ¬ RelMap R (x ∘ args) else RelMap R (x ∘ args)
 
+@[fo_realize]
+theorem realize_const (b : Bool) (x : α → M) : (const b : InputLiteral L α).Realize x ↔ b = true :=
+  Iff.rfl
+
+@[fo_realize]
+theorem realize_rel_false {n : ℕ} (R : L.Relations n) (args : Fin n → α) (x : α → M) :
+    (rel R args false).Realize x ↔ RelMap R fun i => x (args i) :=
+  Iff.rfl
+
+@[fo_realize]
+theorem realize_rel_true {n : ℕ} (R : L.Relations n) (args : Fin n → α) (x : α → M) :
+    (rel R args true).Realize x ↔ ¬ RelMap R fun i => x (args i) :=
+  Iff.rfl
+
 /-- Negate a literal, keeping its input address unchanged. -/
 def not : InputLiteral L α → InputLiteral L α
   | .const b => .const (!b)
   | .rel R args neg => .rel R args (!neg)
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_not (l : InputLiteral L α) (x : α → M) :
     l.not.Realize x ↔ ¬ l.Realize x := by
   cases l with
@@ -88,7 +102,7 @@ def relabel (f : α → β) : InputLiteral L α → InputLiteral L β
   | .const b => .const b
   | .rel R args neg => .rel R (f ∘ args) neg
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_relabel (f : α → β) (l : InputLiteral L α) (x : β → M) :
     (l.relabel f).Realize x ↔ l.Realize (x ∘ f) := by
   cases l <;> rfl
@@ -99,7 +113,7 @@ def toFormula : InputLiteral L α → L.Formula α
   | .rel R args neg =>
     if neg then (R.formula fun i => .var (args i)).not else R.formula fun i => .var (args i)
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_toFormula (l : InputLiteral L α) (x : α → M) :
     l.toFormula.Realize x ↔ l.Realize x := by
   cases l with
@@ -107,6 +121,7 @@ theorem realize_toFormula (l : InputLiteral L α) (x : α → M) :
   | rel R args neg => cases neg <;> simp [toFormula, Realize, Function.comp_def]
 
 /-- Every input literal is quantifier-free. -/
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isQF_toFormula (l : InputLiteral L α) : l.toFormula.IsQF := by
   cases l with
   | const b =>
@@ -158,6 +173,21 @@ theorem realize_toFormula [N.Structure M] [L.Structure M] (p : ProjectionFormula
       LHom.realize_onFormula, ihy, ihn, select]
     split_ifs <;> tauto
 
+/-- A leaf is realized as its literal. -/
+@[fo_realize]
+theorem realize_toFormula_leaf [N.Structure M] [L.Structure M] (l : InputLiteral L α)
+    (x : α → M) : (leaf l : ProjectionFormula N L α).toFormula.Realize x ↔ l.Realize x := by
+  simp [toFormula]
+
+/-- A branch is realized as its first or second subtree, as its numeric guard holds or not. -/
+@[fo_realize]
+theorem realize_toFormula_branch [N.Structure M] [L.Structure M] (guard : N.Formula α)
+    (yes no : ProjectionFormula N L α) (x : α → M) :
+    (branch guard yes no).toFormula.Realize x ↔
+      guard.Realize x ∧ yes.toFormula.Realize x ∨ ¬ guard.Realize x ∧ no.toFormula.Realize x := by
+  simp only [toFormula, Formula.realize_sup, Formula.realize_inf, Formula.realize_not,
+    LHom.realize_onFormula]
+
 /-- A single literal works for every interpretation of the input relations. The existential
 choice precedes the input structure: the selected literal cannot depend on input bits. -/
 theorem exists_literal [N.Structure M] (p : ProjectionFormula N L α) (x : α → M) :
@@ -192,12 +222,13 @@ theorem select_relabel [N.Structure M] (f : α → β) (p : ProjectionFormula N 
     simp only [relabel, select, Formula.realize_relabel, ihy, ihn]
     split_ifs <;> rfl
 
+@[fo_realize]
 theorem realize_relabel [N.Structure M] [L.Structure M]
     (f : α → β) (p : ProjectionFormula N L α) (x : β → M) :
     (p.relabel f).toFormula.Realize x ↔ p.toFormula.Realize (x ∘ f) := by
   simp only [realize_toFormula, select_relabel, InputLiteral.realize_relabel]
 
-@[simp]
+@[simp, fo_realize]
 theorem realize_not [N.Structure M] [L.Structure M] (p : ProjectionFormula N L α)
     (x : α → M) : p.not.toFormula.Realize x ↔ ¬ p.toFormula.Realize x := by
   simp only [realize_toFormula, select_not, InputLiteral.realize_not]
@@ -233,8 +264,18 @@ def IsQF : ProjectionFormula N L α → Prop
   | .leaf _ => True
   | .branch guard yes no => guard.IsQF ∧ yes.IsQF ∧ no.IsQF
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
+theorem isQF_leaf (l : InputLiteral L α) : (leaf l : ProjectionFormula N L α).IsQF :=
+  trivial
+
+@[aesop safe apply (rule_sets := [FirstOrder])]
+theorem IsQF.branch {guard : N.Formula α} {yes no : ProjectionFormula N L α} (hguard : guard.IsQF)
+    (hyes : yes.IsQF) (hno : no.IsQF) : (branch guard yes no).IsQF :=
+  ⟨hguard, hyes, hno⟩
+
 /-- Quantifier-free numeric tests give a quantifier-free ordinary formula. Quantifier-freeness
 of an arbitrary ordinary formula does not ensure it is a projection: it can mix input bits. -/
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.toFormula {p : ProjectionFormula N L α} (h : p.IsQF) : p.toFormula.IsQF := by
   induction p with
   | leaf l => exact l.isQF_toFormula.onBoundedFormula _
@@ -242,11 +283,13 @@ theorem IsQF.toFormula {p : ProjectionFormula N L α} (h : p.IsQF) : p.toFormula
     have hg := h.1.onBoundedFormula (LHom.sumInl (L' := L))
     exact (hg.inf (ihy h.2.1)).sup (hg.not.inf (ihn h.2.2))
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.not {p : ProjectionFormula N L α} (h : p.IsQF) : p.not.IsQF := by
   induction p with
   | leaf => trivial
   | branch _ _ _ ihy ihn => exact ⟨h.1, ihy h.2.1, ihn h.2.2⟩
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem IsQF.relabel {p : ProjectionFormula N L α} (h : p.IsQF) (f : α → β) :
     (p.relabel f).IsQF := by
   induction p with

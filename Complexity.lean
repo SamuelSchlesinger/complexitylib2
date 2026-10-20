@@ -1189,13 +1189,16 @@ public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation
+public import Complexity.Logics.FirstOrder.Interpretation.Unit
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
+public import Complexity.Logics.FirstOrder.Problems.SizedGraph
 public import Complexity.Logics.FirstOrder.Projection
 public import Complexity.Logics.FirstOrder.Projection.Graph
 public import Complexity.Logics.FirstOrder.ProjectionFormula
 public import Complexity.Logics.FirstOrder.QuantifierFree
 public import Complexity.Logics.FirstOrder.Reduction
+public import Complexity.Logics.FirstOrder.Reduction.QuantifierFree
 public import Complexity.Logics.FirstOrder.TaggedInterpretation
 public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding
@@ -1287,6 +1290,8 @@ public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
 public import Complexity.Probability.UniversalHash
+public import Complexity.Tactic.FirstOrder
+public import Complexity.Tactic.FirstOrder.Init
 public import Complexity.Tactic.PPT
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init

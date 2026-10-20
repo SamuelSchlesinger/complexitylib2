@@ -33,6 +33,12 @@ list at first occurrences so duplicate vertex entries cannot inflate the selecte
 the selected count in binary without unary expansion of `m`. The verifier is an instance of the
 subset-witness verifier `Cslib.Complexity.subsetVerifier`, which handles the certificate length.
 
+The same problem as a class of finite structures, closed under isomorphism and without an
+encoding, with the target size given by a unary relation, is
+`Cslib.Logic.FO.sizedGraph.IndependentSet`. There loops are ignored, edges need not be symmetric,
+and the reductions between independent set, clique and vertex cover are quantifier-free
+first-order interpretations.
+
 ## Main definitions
 
 * `Cslib.Complexity.Graph.toSimpleGraph`, `Cslib.Complexity.encGraph`,
