@@ -14,7 +14,10 @@ import Mathlib.SetTheory.Cardinal.NatCard
 import Mathlib.Tactic.FinCases
 
 /-!
-# The first-order reduction from SAT to independent set
+# The order-free first-order interpretation from SAT to independent set
+
+The reductions in this module use order-free first-order interpretations. Input structures have
+no built-in order or numeric predicates; these are variants of the standard ordered setting.
 
 Karp's reduction from satisfiability to clique, in its independent-set form
 [Karp1972], [Garey and Johnson][GareyJohnson1979], is first-order on CNF structures
@@ -32,8 +35,9 @@ one element has an independent set of its target size, and an interpretation map
 one element to a structure with at most one element, while the empty clause on one element is an
 unsatisfiable CNF structure. So SAT is not first-order reducible to independent set in the sense of
 `Cslib.Logic.FO.Reduces`; the reduction is one on nontrivial structures
-(`Cslib.Logic.FO.ReducesNontrivial`). Its consequences for existential second-order definable
-classes are in `Complexity.Logics.SecondOrder.Hardness`.
+(`Cslib.Logic.FO.ReducesNontrivial`). Hardness consequences for existential second-order definable
+classes remain a separate development; definability of the target classes is proved in
+`Complexity.Logics.SecondOrder.IndependentSet`.
 
 ## Main definitions
 
@@ -46,7 +50,7 @@ classes are in `Complexity.Logics.SecondOrder.Hardness`.
   copies.
 * `Cslib.Logic.FO.sizedGraph.mem_IndependentSet_of_subsingleton`: structures with at most one
   element are instances with a solution.
-* `Cslib.Logic.FO.cnf.mem_independentSet_iff_satisfiable`: on a CNF structure with two elements,
+* `Cslib.Logic.FO.cnf.mem_independentSet_iff_satisfiable`: on a CNF structure with at least two elements,
   the occurrence graph has an independent set of the target size exactly when the structure is
   satisfiable.
 * `Cslib.Logic.FO.cnf.reducesNontrivial_SAT_IndependentSet`: SAT reduces to independent set on
@@ -381,8 +385,8 @@ theorem mem_independentSet_iff_satisfiable [Finite M] [Nontrivial M] :
         rw [hx, hb] at h₂
         cases (l c).1 <;> simp_all
 
-/-- **SAT is first-order reducible to independent set on nontrivial structures**, by Karp's
-occurrence graph [Karp1972]. -/
+/-- **SAT reduces to independent set by an order-free interpretation on nontrivial structures**,
+using Karp's occurrence graph [Karp1972]. -/
 theorem reducesNontrivial_SAT_IndependentSet :
     ReducesNontrivial SAT.{w} sizedGraph.IndependentSet.{w} :=
   .of_tagged sizedGraph.isoClosed_IndependentSet sizedGraph.copyInvariant_IndependentSet

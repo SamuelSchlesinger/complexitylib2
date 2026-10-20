@@ -12,7 +12,10 @@ public import Complexity.Logics.FirstOrder.Problems.Coloring
 import Mathlib.Tactic.FinCases
 
 /-!
-# The first-order reduction from 3SAT to 3COL
+# The order-free first-order interpretation from 3SAT to 3COL
+
+The reductions in this module use order-free first-order interpretations. Input structures have
+no built-in order or numeric predicates; these are variants of the standard ordered setting.
 
 The palette, variable and clause gadget reduction from 3SAT to three-colorability, a standard
 exercise [Sipser, Chapter 7][Sipser2013] (three-colorability is NP-complete

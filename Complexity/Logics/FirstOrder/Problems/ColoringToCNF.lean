@@ -12,7 +12,10 @@ public import Complexity.Logics.FirstOrder.Problems.Coloring
 import Mathlib.Tactic.FinCases
 
 /-!
-# The first-order reduction from 3COL to 3SAT
+# The order-free first-order interpretation from 3COL to 3SAT
+
+The reductions in this module use order-free first-order interpretations. Input structures have
+no built-in order or numeric predicates; these are variants of the standard ordered setting.
 
 Three-colorability is a constraint satisfaction problem, and its constraints are clauses of at
 most three literals: a graph is three-colorable exactly when the 3-CNF formula with a variable
@@ -296,7 +299,7 @@ theorem threeSat_cnfSubsingleton_iff [Finite M] [Subsingleton M] [Nonempty M] :
     have hv : ¬RelMap adj ![v, v] := fun h => hf v v h rfl
     exact ⟨fun _ => True, fun e => ⟨e, .inl ⟨(hpos _ _).2 hv, trivial⟩⟩⟩
 
-/-- **3COL is first-order reducible to 3SAT.** -/
+/-- **3COL reduces to 3SAT by an order-free first-order interpretation.** -/
 theorem reduces_ThreeColorable_ThreeSAT : Reduces ThreeColorable.{w} ThreeSAT.{w} := by
   refine Reduces.of_tagged isoClosed_ThreeSAT copyInvariant_ThreeSAT cnfInterpretation
     cnfSubsingleton (fun M _ _ => ⟨fun h => ⟨isThreeCNF_cnfInterpretation,

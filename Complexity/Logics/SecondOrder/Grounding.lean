@@ -13,7 +13,10 @@ public import Complexity.Logics.SecondOrder.Reduction
 import Mathlib.Tactic.FinCases
 
 /-!
-# Existential second-order definable classes reduce to SAT
+# Existential second-order definable classes reduce to SAT by order-free interpretations
+
+The reductions in this module use order-free first-order interpretations. Input structures have
+no built-in order or numeric predicates; these are variants of the standard ordered setting.
 
 Every existential second-order definable class of finite structures that contains the empty
 structure is first-order reducible to the class `cnf.SAT` of satisfiable CNF structures

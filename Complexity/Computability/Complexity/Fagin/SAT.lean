@@ -11,7 +11,10 @@ public import Complexity.Computability.Complexity.Fagin.Converse
 public import Complexity.Logics.SecondOrder.Grounding
 
 /-!
-# SAT is NP-complete under first-order reductions, for classes containing the empty structure
+# SAT completeness under order-free first-order interpretations
+
+The reductions in this module use order-free first-order interpretations. Input structures have
+no built-in order or numeric predicates; these are variants of the standard ordered setting.
 
 The class `cnf.SAT` of satisfiable CNF structures has its query language in `NP`
 (`Cslib.Logic.FO.cnf.queryLanguage_SAT_mem_NP`). Every isomorphism-closed class of finite
@@ -84,7 +87,8 @@ theorem reduces_SAT_of_queryLanguage_mem_NP {K : Set (Bundled.{0} L.Structure)} 
 /-- **SAT is NP-hard under first-order reductions correct on the nonempty structures**: for every
 isomorphism-closed class of finite structures whose query language is in `NP`, some first-order
 interpretation maps every nonempty finite structure inside SAT exactly when it is in the class.
-This is the form of [Immerman, Chapter 7][Immerman1999], whose structures are nonempty. -/
+This is an order-free variant of [Immerman, Chapter 7][Immerman1999]; the structures here have
+no built-in order, unlike Immerman's ordered nonempty structures. -/
 theorem exists_interpretation_SAT_of_queryLanguage_mem_NP {K : Set (Bundled.{0} L.Structure)}
     (hK : IsoClosed K) (hNP : v.queryLanguage K ∈ NP encStructure) :
     ∃ (ι : Type) (_ : Finite ι) (I : Interpretation L cnf ι),

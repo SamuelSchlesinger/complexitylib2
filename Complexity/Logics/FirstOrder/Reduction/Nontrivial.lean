@@ -10,7 +10,10 @@ module
 public import Complexity.Logics.FirstOrder.Interpretation.Tagged
 
 /-!
-# First-order reductions on structures with two elements
+# Order-free interpretations on structures with at least two elements
+
+The reductions in this module use order-free first-order interpretations. Input structures have
+no built-in order or numeric predicates; these are variants of the standard ordered setting.
 
 First-order reductions (`Cslib.Logic.FO.Reduces`) are asked to be correct on every finite
 structure, including the empty one and those with one element. On these, an interpretation of the
@@ -64,9 +67,10 @@ namespace Cslib.Logic.FO
 variable {L : Language.{u, v}} {L' : Language.{u', v'}} {L'' : Language.{u'', v''}}
   [L'.IsRelational] [L''.IsRelational]
 
-/-- A class `K` of `L`-structures is **first-order reducible on nontrivial structures** to a class
-`K'` of `L'`-structures when some first-order interpretation of `L'` in `L` maps every finite
-`L`-structure with two distinct elements inside `K'` exactly when it is in `K`. -/
+/-- A class `K` of `L`-structures is **reducible by an order-free interpretation on nontrivial
+structures** to a class `K'` of `L'`-structures when some first-order interpretation of `L'` in
+`L` maps every finite `L`-structure with two distinct elements inside `K'` exactly when it is in
+`K`. -/
 def ReducesNontrivial (K : Set (Bundled.{w} L.Structure)) (K' : Set (Bundled.{w} L'.Structure)) :
     Prop :=
   ∃ (ι : Type) (_ : Finite ι) (I : Interpretation L L' ι),
