@@ -7,9 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Communication.Amplification
 public import Complexity.Computability.Communication.Corruption
 public import Complexity.Computability.Communication.Functions
+import Complexity.Computability.Communication.Amplification
 import Complexity.Foundations.Combinatorics.PowersetTail
 import Complexity.Probability.PMF
 import Mathlib.Tactic.Linarith
@@ -24,9 +24,10 @@ even with randomness and bounded error
 We follow Razborov's corruption argument [Razborov1992],
 [Kushilevitz and Nisan, Chapter 4][KushilevitzNisan1997], with a variant of his distribution.
 
-The hard distribution `disjointnessDist` lives on pairs of subsets of `2 m + 1` points. It draws a
-uniformly random partition `(i, Tx, Ty)` of the points into a point and two sets of `m` points
-(`disjointnessParts`) and uniformly random subsets `x ⊆ Tx` and `y ⊆ Ty`, and outputs the disjoint
+The hard distribution `Disjointness.hardDist` lives on pairs of subsets of `2 m + 1` points. It
+draws a uniformly random partition `(i, Tx, Ty)` of the points into a point and two sets of `m`
+points (`Disjointness.parts`) and uniformly random subsets `x ⊆ Tx` and `y ⊆ Ty`, and outputs the
+disjoint
 pair `(x, y)` or, with probability `1 / 2`, the pair `(x ∪ {i}, y ∪ {i})`, which meets in exactly
 `i`. Razborov's distribution instead draws sets of size about `n / 4` and gives the disjoint pairs
 probability `3 / 4`. Given the partition, the two sets are independent, so on a rectangle `A × B`
@@ -36,34 +37,33 @@ mass the average of `a₁ b₁`, where `a₁` and `b₁` are the fractions of th
 containing `i` in `A` and of `Ty ∪ {i}` in `B`. Call the partition bad for `A` if
 `a₁ < a₀ / 3`. Once `Ty` is fixed, `i` is a uniformly random point outside `Ty` and `b₀` is fixed,
 and a family of subsets of the complement of `Ty` for which many points are bad is small
-(`four_mul_sum_card_filter_le`, proved by Markov's inequality and counting subsets of a cube). So
-the partitions bad for `A` or, symmetrically, for `B` carry at most half of the mass of the disjoint
-pairs, up to an exponentially small error, while on the others `a₁ b₁ ≥ a₀ b₀ / 9`. This is
-*Razborov's corruption lemma* (`corrupted_disjointnessDist`): on every rectangle the intersecting
-pairs carry at least `1 / 18` of the mass of the disjoint pairs, up to `(27 / 32) ^ r / 2` when
-`48 r ≤ m + 1`.
+(`Finset.four_mul_sum_card_filter_notMem_le`, proved by Markov's inequality and counting subsets
+of a cube). So the partitions bad for `A` or, symmetrically, for `B` carry at most half of the
+mass of the disjoint pairs, up to an exponentially small error, while on the others
+`a₁ b₁ ≥ a₀ b₀ / 9`. This is *Razborov's corruption lemma* (`Disjointness.corrupted_hardDist`): on
+every rectangle the intersecting pairs carry at least `1 / 18` of the mass of the disjoint pairs, up
+to `(27 / 32) ^ r / 2` when `48 r ≤ m + 1`.
 
 By the corruption bound (`Corrupted.mul_sub_le_of_ecomplexityFun_le`), public-coin protocols with
 error `1 / 64` send at least `((m + 1) / 48 - 29) / 5` bits
-(`PublicCoin.div_le_ecomplexityFun_disjoint`). Embedding the points into the positions of `n`-bit
-strings gives `n ≤ 2 ^ 9 R + 2 ^ 12` for the public-coin complexity `R` of `disjointness` with
-error `ε ≤ 1 / 64` (`PublicCoin.le_mul_ecomplexityFun_disjointness_add_of_le`), and majority votes
-of `72` runs (`PublicCoin.ecomplexityFun_le_two_mul_mul_one_third`) give
+(`PublicCoin.div_le_mul_ecomplexityFun_disjoint_add`). Embedding the points into the positions of
+`n`-bit strings gives `n ≤ 2 ^ 9 R + 2 ^ 12` for the public-coin complexity `R` of
+`disjointness` with error `ε ≤ 1 / 64` (`PublicCoin.le_mul_ecomplexityFun_disjointness_add_of_le`),
+and majority votes of `72` runs (`PublicCoin.ecomplexityFun_le_two_mul_mul_one_third`) give
 `n ≤ 2 ^ 16 R + 2 ^ 12` with error `1 / 3`, for public coins
 (`PublicCoin.le_mul_ecomplexityFun_disjointness_add`) and private coins
 (`PrivateCoin.le_mul_ecomplexityFun_disjointness_add`). The constants are not optimized.
 
 ## Main definitions
 
-* `Cslib.Communication.disjointnessParts`: the partitions of the points.
-* `Cslib.Communication.disjointnessDist`: the hard distribution.
+* `Cslib.Communication.Disjointness.parts`: the partitions of the points.
+* `Cslib.Communication.Disjointness.hardDist`: the hard distribution.
 
 ## Main results
 
-* `Cslib.Communication.four_mul_sum_card_filter_le`: families avoiding many points are small.
-* `Cslib.Communication.corrupted_disjointnessDist`: Razborov's corruption lemma.
-* `Cslib.Communication.PublicCoin.div_le_ecomplexityFun_disjoint`: the public-coin lower bound
-  for subsets of `2 m + 1` points.
+* `Cslib.Communication.Disjointness.corrupted_hardDist`: Razborov's corruption lemma.
+* `Cslib.Communication.PublicCoin.div_le_mul_ecomplexityFun_disjoint_add`: the public-coin lower
+  bound for subsets of `2 m + 1` points.
 * `Cslib.Communication.PublicCoin.le_mul_ecomplexityFun_disjointness_add_of_le`,
   `Cslib.Communication.PublicCoin.le_mul_ecomplexityFun_disjointness_add`,
   `Cslib.Communication.PrivateCoin.le_mul_ecomplexityFun_disjointness_add`: disjointness of `n`
@@ -85,185 +85,7 @@ open Finset
 
 variable {U : Type*} [DecidableEq U]
 
-/-! ### Families of sets that avoid many points -/
-
-omit [DecidableEq U] in
-/-- Double counting incidences between points of `T` and members of `A`. -/
-private theorem sum_card_filter_comm (A : Finset (Finset U)) (T : Finset U)
-    (P : U → Finset U → Prop) [∀ i x, Decidable (P i x)] :
-    ∑ i ∈ T, #{x ∈ A | P i x} = ∑ x ∈ A, #{i ∈ T | P i x} := by
-  simp only [card_filter]
-  exact sum_comm
-
-/-- **A family of sets that avoid many points is small.** Let `A` be a family of sets and `S` a
-finite set, and call a point `i ∈ S` *bad* if the members of `A` inside `S` containing `i` are
-fewer than a third of those avoiding it. Then the pairs of a member of `A` inside `S` and a bad
-point it avoids are at most a quarter of the pairs of a member inside `S` and a point of `S` it
-avoids, up to `2 ^ #S (8 #S (27 / 32) ^ r + (j + 1) 2 ^ j (3 / 4) ^ #S)`, a small fraction of
-`2 ^ #S` when `#S ≥ 48 r` and `j = 12 r`. If at least `3 r` points are bad, at least a quarter
-of the members of `A` inside `S` meet a set `K` of `3 r` bad points in fewer than `r` points, by
-Markov's inequality, and few subsets of `S` do (`Finset.two_pow_mul_card_filter_card_inter_le`).
-Otherwise, the bad points are fewer than `(j + 1) / 4` and most members inside `S` avoid more than
-`j` points, unless few subsets of `S` miss at most `j` points
-(`Finset.two_pow_mul_card_filter_card_sdiff_le`). This is the key step of Razborov's corruption
-lemma for `disjointnessDist` [Razborov1992]. -/
-theorem four_mul_sum_card_filter_le (A : Finset (Finset U)) (S : Finset U) {r j : ℕ}
-    (hrj : 12 * r ≤ j + 1) :
-    4 * ∑ i ∈ S with 3 * #{x ∈ A | i ∈ x ∧ x ⊆ S} < #{x ∈ A | x ⊆ S ∧ i ∉ x},
-        (#{x ∈ A | x ⊆ S ∧ i ∉ x} : ℝ) ≤
-      ∑ i ∈ S, (#{x ∈ A | x ⊆ S ∧ i ∉ x} : ℝ) +
-        2 ^ #S * (8 * #S * (27 / 32) ^ r + (j + 1) * 2 ^ j * (3 / 4) ^ #S) := by
-  set AS := A.filter (· ⊆ S) with hAS
-  set N := #AS with hNdef
-  have hASsub : AS ⊆ S.powerset := fun x hx => mem_powerset.mpr (mem_filter.mp hx).2
-  have hN : N ≤ 2 ^ #S := (card_le_card hASsub).trans (card_powerset S).le
-  have havoid (i : U) : #{x ∈ A | x ⊆ S ∧ i ∉ x} = #{x ∈ AS | i ∉ x} := by
-    rw [hAS, filter_filter]
-  have hcontain (i : U) : #{x ∈ A | i ∈ x ∧ x ⊆ S} = #{x ∈ AS | i ∈ x} := by
-    rw [hAS, filter_filter]
-    congr 1
-    exact filter_congr fun x _ => and_comm
-  have hsplit (i : U) : #{x ∈ AS | i ∈ x} + #{x ∈ AS | i ∉ x} = N :=
-    card_filter_add_card_filter_not _
-  have havoid_le (i : U) : #{x ∈ A | x ⊆ S ∧ i ∉ x} ≤ N := by
-    have := hsplit i
-    rw [havoid]
-    omega
-  set bad := S.filter fun i => 3 * #{x ∈ A | i ∈ x ∧ x ⊆ S} < #{x ∈ A | x ⊆ S ∧ i ∉ x}
-    with hbaddef
-  have hsum_bad : ∑ i ∈ bad, #{x ∈ A | x ⊆ S ∧ i ∉ x} ≤ #bad * N :=
-    (sum_le_sum fun i _ => havoid_le i).trans_eq (by rw [sum_const, smul_eq_mul])
-  have hpos : (0 : ℝ) ≤ ∑ i ∈ S, (#{x ∈ A | x ⊆ S ∧ i ∉ x} : ℝ) :=
-    sum_nonneg fun _ _ => Nat.cast_nonneg _
-  by_cases hbad : 3 * r ≤ #bad
-  · -- Many bad points: the family is small.
-    have hsmall : N * 32 ^ r ≤ 2 * 27 ^ r * 2 ^ #S := by
-      rcases Nat.eq_zero_or_pos r with rfl | hr
-      · simp only [pow_zero, mul_one]
-        omega
-      obtain ⟨K, hKbad, hKcard⟩ := exists_subset_card_eq hbad
-      have hKS : K ⊆ S := hKbad.trans (filter_subset _ _)
-      have hK4 (i : U) (hi : i ∈ K) : 4 * #{x ∈ AS | i ∈ x} ≤ N := by
-        have := (mem_filter.mp (hKbad hi)).2
-        have := hsplit i
-        rw [hcontain, havoid] at *
-        omega
-      have hsumK : ∑ i ∈ K, #{x ∈ AS | i ∈ x} = ∑ x ∈ AS, #(K ∩ x) := by
-        rw [sum_card_filter_comm]
-        exact sum_congr rfl fun x _ => by rw [filter_mem_eq_inter]
-      have h4sum : 4 * ∑ x ∈ AS, #(K ∩ x) ≤ 3 * r * N := by
-        rw [← hsumK, mul_sum]
-        calc ∑ i ∈ K, 4 * #{x ∈ AS | i ∈ x} ≤ ∑ _i ∈ K, N := sum_le_sum hK4
-          _ = 3 * r * N := by rw [sum_const, hKcard, smul_eq_mul]
-      -- Markov's inequality: few members meet `K` in at least `r` points.
-      set G := AS.filter fun x => r ≤ #(K ∩ x)
-      have hG : r * #G ≤ ∑ x ∈ AS, #(K ∩ x) := by
-        rw [mul_comm, ← smul_eq_mul]
-        exact (card_nsmul_le_sum _ _ _ fun x hx => (mem_filter.mp hx).2).trans
-          (sum_le_sum_of_subset_of_nonneg (filter_subset _ _) fun _ _ _ => Nat.zero_le _)
-      have h4G : 4 * #G ≤ 3 * N :=
-        Nat.le_of_mul_le_mul_left (by nlinarith) hr
-      have hGL : #G + #{x ∈ AS | ¬r ≤ #(K ∩ x)} = N := card_filter_add_card_filter_not _
-      have hL : #{x ∈ AS | ¬r ≤ #(K ∩ x)} ≤ #{x ∈ S.powerset | #(K ∩ x) ≤ r - 1} := by
-        refine card_le_card fun x hx => ?_
-        obtain ⟨hx, hxr⟩ := mem_filter.mp hx
-        exact mem_filter.mpr ⟨hASsub hx, by omega⟩
-      have hcount := two_pow_mul_card_filter_card_inter_le hKS (r - 1)
-      rw [hKcard, show 3 * r - (r - 1) = 2 * r + 1 by omega] at hcount
-      have h3r : 3 * r ≤ #S := hKcard ▸ card_le_card hKS
-      have key : 2 ^ (2 * r + 1) * N ≤ 4 * (3 ^ (3 * r) * 2 ^ (#S - 3 * r)) := by
-        calc 2 ^ (2 * r + 1) * N ≤ 2 ^ (2 * r + 1) * (4 * #{x ∈ S.powerset | #(K ∩ x) ≤ r - 1}) :=
-              Nat.mul_le_mul_left _ (by omega)
-          _ ≤ 4 * (3 ^ (3 * r) * 2 ^ (#S - 3 * r)) := by
-              rw [mul_left_comm]
-              exact Nat.mul_le_mul_left _ hcount
-      have h2S : 2 ^ (#S - 3 * r) * 2 ^ (3 * r) = 2 ^ #S := by
-        rw [← pow_add, Nat.sub_add_cancel h3r]
-      have h32 : (32 : ℕ) ^ r = 2 ^ (2 * r) * 2 ^ (3 * r) := by
-        rw [← pow_add, show 2 * r + 3 * r = 5 * r by ring, pow_mul]
-        norm_num
-      have h27 : (27 : ℕ) ^ r = 3 ^ (3 * r) := by
-        rw [pow_mul]
-        norm_num
-      have h := Nat.mul_le_mul_right (2 ^ (3 * r)) key
-      rw [h32, h27]
-      refine Nat.le_of_mul_le_mul_left ?_ (two_pos : 0 < 2)
-      calc 2 * (N * (2 ^ (2 * r) * 2 ^ (3 * r))) = 2 ^ (2 * r + 1) * N * 2 ^ (3 * r) := by ring
-        _ ≤ 4 * (3 ^ (3 * r) * 2 ^ (#S - 3 * r)) * 2 ^ (3 * r) := h
-        _ = 2 * (2 * 3 ^ (3 * r) * (2 ^ (#S - 3 * r) * 2 ^ (3 * r))) := by ring
-        _ = 2 * (2 * 3 ^ (3 * r) * 2 ^ #S) := by rw [h2S]
-    have hNr : (N : ℝ) ≤ 2 * (27 / 32) ^ r * 2 ^ #S := by
-      have h : (N : ℝ) * 32 ^ r ≤ 2 * 27 ^ r * 2 ^ #S := by exact_mod_cast hsmall
-      rw [div_pow, mul_div_assoc', div_mul_eq_mul_div, le_div_iff₀ (by positivity)]
-      linarith
-    have hbadS : #bad ≤ #S := card_le_card (filter_subset _ _)
-    have h1 : (∑ i ∈ bad, (#{x ∈ A | x ⊆ S ∧ i ∉ x} : ℝ)) ≤ #S * N := by
-      have : (∑ i ∈ bad, (#{x ∈ A | x ⊆ S ∧ i ∉ x} : ℝ)) ≤ #bad * N := by
-        exact_mod_cast hsum_bad
-      exact this.trans (mul_le_mul_of_nonneg_right (by exact_mod_cast hbadS) (by positivity))
-    have h2 : (0 : ℝ) ≤ 2 ^ #S * ((j + 1) * 2 ^ j * (3 / 4) ^ #S) := by positivity
-    have h3 : (#S : ℝ) * N ≤ #S * (2 * (27 / 32) ^ r * 2 ^ #S) :=
-      mul_le_mul_of_nonneg_left hNr (by positivity)
-    nlinarith
-  · -- Few bad points: most members of the family avoid many points.
-    push Not at hbad
-    have hS : ∑ i ∈ S, #{x ∈ A | x ⊆ S ∧ i ∉ x} = ∑ x ∈ AS, #(S \ x) := by
-      simp only [havoid]
-      rw [sum_card_filter_comm]
-      exact sum_congr rfl fun x _ => by rw [sdiff_eq_filter]
-    set H := AS.filter fun x => j < #(S \ x)
-    have hH : (j + 1) * #H ≤ ∑ x ∈ AS, #(S \ x) := by
-      rw [mul_comm, ← smul_eq_mul]
-      exact (card_nsmul_le_sum _ _ _ fun x hx => (mem_filter.mp hx).2).trans
-        (sum_le_sum_of_subset_of_nonneg (filter_subset _ _) fun _ _ _ => Nat.zero_le _)
-    have hHH : #H + #{x ∈ AS | ¬j < #(S \ x)} = N := card_filter_add_card_filter_not _
-    have hH' : #{x ∈ AS | ¬j < #(S \ x)} ≤ #{x ∈ S.powerset | #(S \ x) ≤ j} := by
-      refine card_le_card fun x hx => ?_
-      obtain ⟨hx, hxj⟩ := mem_filter.mp hx
-      exact mem_filter.mpr ⟨hASsub hx, by omega⟩
-    have hcount := two_pow_mul_card_filter_card_sdiff_le S j
-    have hcount' : 2 ^ #S * #{x ∈ S.powerset | #(S \ x) ≤ j} ≤ 2 ^ j * 3 ^ #S := by
-      calc 2 ^ #S * #{x ∈ S.powerset | #(S \ x) ≤ j}
-          ≤ 2 ^ j * 2 ^ (#S - j) * #{x ∈ S.powerset | #(S \ x) ≤ j} :=
-            Nat.mul_le_mul_right _ (by
-              rw [← pow_add]
-              exact Nat.pow_le_pow_right two_pos (by omega))
-        _ ≤ 2 ^ j * 3 ^ #S := by rw [mul_assoc]; exact Nat.mul_le_mul_left _ hcount
-    -- The bad points carry at most `3 r N ≤ (j + 1) N / 4` incidences.
-    have hmain : 4 * ∑ i ∈ bad, #{x ∈ A | x ⊆ S ∧ i ∉ x} ≤
-        ∑ i ∈ S, #{x ∈ A | x ⊆ S ∧ i ∉ x} + (j + 1) * #{x ∈ S.powerset | #(S \ x) ≤ j} := by
-      rw [hS]
-      have h12 : 4 * (#bad * N) ≤ (j + 1) * N := by
-        rw [← mul_assoc]
-        exact Nat.mul_le_mul_right _ (by omega)
-      calc 4 * ∑ i ∈ bad, #{x ∈ A | x ⊆ S ∧ i ∉ x} ≤ 4 * (#bad * N) :=
-            Nat.mul_le_mul_left _ hsum_bad
-        _ ≤ (j + 1) * N := h12
-        _ = (j + 1) * #H + (j + 1) * #{x ∈ AS | ¬j < #(S \ x)} := by rw [← hHH, mul_add]
-        _ ≤ ∑ x ∈ AS, #(S \ x) + (j + 1) * #{x ∈ S.powerset | #(S \ x) ≤ j} :=
-            Nat.add_le_add hH (Nat.mul_le_mul_left _ hH')
-    have hmainR : 4 * ∑ i ∈ bad, (#{x ∈ A | x ⊆ S ∧ i ∉ x} : ℝ) ≤
-        ∑ i ∈ S, (#{x ∈ A | x ⊆ S ∧ i ∉ x} : ℝ) +
-          (j + 1) * #{x ∈ S.powerset | #(S \ x) ≤ j} := by
-      exact_mod_cast hmain
-    have hcountR : (2 : ℝ) ^ #S * #{x ∈ S.powerset | #(S \ x) ≤ j} ≤ 2 ^ j * 3 ^ #S := by
-      exact_mod_cast hcount'
-    have h34 : (2 : ℝ) ^ #S * (2 ^ #S * (3 / 4) ^ #S) = 3 ^ #S := by
-      rw [← mul_assoc, ← mul_pow, ← mul_pow]
-      norm_num
-    have hQ : ((j : ℝ) + 1) * #{x ∈ S.powerset | #(S \ x) ≤ j} ≤
-        2 ^ #S * ((j + 1) * 2 ^ j * (3 / 4) ^ #S) := by
-      have h2pos : (0 : ℝ) < 2 ^ #S := by positivity
-      rw [← mul_le_mul_iff_of_pos_left h2pos]
-      calc (2 : ℝ) ^ #S * (((j : ℝ) + 1) * #{x ∈ S.powerset | #(S \ x) ≤ j})
-          = ((j : ℝ) + 1) * (2 ^ #S * #{x ∈ S.powerset | #(S \ x) ≤ j}) := by ring
-        _ ≤ ((j : ℝ) + 1) * (2 ^ j * 3 ^ #S) :=
-            mul_le_mul_of_nonneg_left hcountR (by positivity)
-        _ = 2 ^ #S * (2 ^ #S * ((j + 1) * 2 ^ j * (3 / 4) ^ #S)) := by
-            rw [← h34]
-            ring
-    have h8 : (0 : ℝ) ≤ 2 ^ #S * (8 * #S * (27 / 32) ^ r) := by positivity
-    nlinarith
+namespace Disjointness
 
 /-! ### Partitions of the points -/
 
@@ -275,19 +97,19 @@ variable (U) in
 /-- The triples `(i, Tx, Ty)` of a point `i` and two disjoint sets `Tx`, `Ty` of `m` points that
 avoid it. When there are `2 m + 1` points, these are the ordered partitions of the points into
 parts of sizes `1`, `m` and `m`. -/
-def disjointnessParts (m : ℕ) : Finset (U × Finset U × Finset U) :=
+def parts (m : ℕ) : Finset (U × Finset U × Finset U) :=
   {T | T.1 ∉ T.2.1 ∧ T.1 ∉ T.2.2 ∧ Disjoint T.2.1 T.2.2 ∧ #T.2.1 = m ∧ #T.2.2 = m}
 
-theorem mem_disjointnessParts {T : U × Finset U × Finset U} :
-    T ∈ disjointnessParts U m ↔
+theorem mem_parts {T : U × Finset U × Finset U} :
+    T ∈ parts U m ↔
       T.1 ∉ T.2.1 ∧ T.1 ∉ T.2.2 ∧ Disjoint T.2.1 T.2.2 ∧ #T.2.1 = m ∧ #T.2.2 = m := by
-  simp only [disjointnessParts, mem_filter, mem_univ, true_and]
+  simp only [parts, mem_filter, mem_univ, true_and]
 
 /-- In a partition `(i, Tx, Ty)` of `2 m + 1` points, `Tx` is the complement of `Ty` and `i`. -/
-theorem compl_insert_eq_of_mem_disjointnessParts (hU : Fintype.card U = 2 * m + 1)
-    {T : U × Finset U × Finset U} (hT : T ∈ disjointnessParts U m) :
+theorem compl_insert_eq_of_mem_parts (hU : Fintype.card U = 2 * m + 1)
+    {T : U × Finset U × Finset U} (hT : T ∈ parts U m) :
     (insert T.1 T.2.2)ᶜ = T.2.1 := by
-  obtain ⟨h1, h2, h3, h4, h5⟩ := mem_disjointnessParts.mp hT
+  obtain ⟨h1, h2, h3, h4, h5⟩ := mem_parts.mp hT
   symm
   refine eq_of_subset_of_card_le (fun a ha => ?_) ?_
   · rw [mem_compl, mem_insert, not_or]
@@ -295,48 +117,48 @@ theorem compl_insert_eq_of_mem_disjointnessParts (hU : Fintype.card U = 2 * m + 
   · rw [card_compl, card_insert_of_notMem h2, hU, h4, h5]
     omega
 
-private theorem mem_disjointnessParts_of_mem_compl (hU : Fintype.card U = 2 * m + 1)
+private theorem mem_parts_of_mem_compl (hU : Fintype.card U = 2 * m + 1)
     {Ty : Finset U} (hTy : #Ty = m) {i : U} (hi : i ∈ Tyᶜ) :
-    (i, (insert i Ty)ᶜ, Ty) ∈ disjointnessParts U m := by
+    (i, (insert i Ty)ᶜ, Ty) ∈ parts U m := by
   rw [mem_compl] at hi
-  refine mem_disjointnessParts.mpr ⟨by simp, hi, ?_, ?_, hTy⟩
+  refine mem_parts.mpr ⟨by simp, hi, ?_, ?_, hTy⟩
   · exact disjoint_left.mpr fun a ha haTy => mem_compl.mp ha (mem_insert_of_mem haTy)
   · rw [card_compl, card_insert_of_notMem hi, hU, hTy]
     omega
 
 /-- Summing over the partitions `(i, Tx, Ty)` of `2 m + 1` points is summing over the sets `Ty`
 of `m` points and the points `i` outside them. -/
-theorem sum_disjointnessParts (hU : Fintype.card U = 2 * m + 1) {M : Type*} [AddCommMonoid M]
+theorem sum_parts (hU : Fintype.card U = 2 * m + 1) {M : Type*} [AddCommMonoid M]
     (F : U × Finset U × Finset U → M) :
-    ∑ T ∈ disjointnessParts U m, F T =
+    ∑ T ∈ parts U m, F T =
       ∑ Ty ∈ powersetCard m univ, ∑ i ∈ Tyᶜ, F (i, (insert i Ty)ᶜ, Ty) := by
   rw [sum_sigma']
   refine sum_nbij' (fun T => ⟨T.2.2, T.1⟩) (fun x => (x.2, (insert x.2 x.1)ᶜ, x.1)) ?_ ?_ ?_
     (fun _ _ => rfl) ?_
   · intro T hT
-    obtain ⟨-, h2, -, -, h5⟩ := mem_disjointnessParts.mp hT
+    obtain ⟨-, h2, -, -, h5⟩ := mem_parts.mp hT
     exact mem_sigma.mpr ⟨mem_powersetCard.mpr ⟨subset_univ _, h5⟩, mem_compl.mpr h2⟩
   · rintro ⟨Ty, i⟩ hx
     obtain ⟨hTy, hi⟩ := mem_sigma.mp hx
-    exact mem_disjointnessParts_of_mem_compl hU (mem_powersetCard.mp hTy).2 hi
+    exact mem_parts_of_mem_compl hU (mem_powersetCard.mp hTy).2 hi
   · intro T hT
-    simp only [compl_insert_eq_of_mem_disjointnessParts hU hT]
+    simp only [compl_insert_eq_of_mem_parts hU hT]
   · intro T hT
-    simp only [compl_insert_eq_of_mem_disjointnessParts hU hT]
+    simp only [compl_insert_eq_of_mem_parts hU hT]
 
 /-- Exchanging the two sets of a partition. -/
-theorem sum_disjointnessParts_swap {M : Type*} [AddCommMonoid M]
+theorem sum_parts_swap {M : Type*} [AddCommMonoid M]
     (F : U × Finset U × Finset U → M) :
-    ∑ T ∈ disjointnessParts U m, F T = ∑ T ∈ disjointnessParts U m, F (T.1, T.2.2, T.2.1) := by
+    ∑ T ∈ parts U m, F T = ∑ T ∈ parts U m, F (T.1, T.2.2, T.2.1) := by
   refine sum_nbij' (fun T => (T.1, T.2.2, T.2.1)) (fun T => (T.1, T.2.2, T.2.1)) ?_ ?_
     (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) <;>
   · intro T hT
-    obtain ⟨h1, h2, h3, h4, h5⟩ := mem_disjointnessParts.mp hT
-    exact mem_disjointnessParts.mpr ⟨h2, h1, h3.symm, h5, h4⟩
+    obtain ⟨h1, h2, h3, h4, h5⟩ := mem_parts.mp hT
+    exact mem_parts.mpr ⟨h2, h1, h3.symm, h5, h4⟩
 
-theorem card_disjointnessParts (hU : Fintype.card U = 2 * m + 1) :
-    #(disjointnessParts U m) = #(powersetCard m (univ : Finset U)) * (m + 1) := by
-  rw [card_eq_sum_ones, sum_disjointnessParts hU]
+theorem card_parts (hU : Fintype.card U = 2 * m + 1) :
+    #(parts U m) = #(powersetCard m (univ : Finset U)) * (m + 1) := by
+  rw [card_eq_sum_ones, sum_parts hU]
   simp only [sum_const, smul_eq_mul, mul_one]
   rw [sum_congr rfl fun Ty hTy => by
     rw [card_compl, hU, (mem_powersetCard.mp hTy).2]]
@@ -344,9 +166,9 @@ theorem card_disjointnessParts (hU : Fintype.card U = 2 * m + 1) :
   congr 1
   omega
 
-theorem card_disjointnessParts_pos (hU : Fintype.card U = 2 * m + 1) :
-    0 < #(disjointnessParts U m) := by
-  rw [card_disjointnessParts hU, card_powersetCard, card_univ, hU]
+theorem card_parts_pos (hU : Fintype.card U = 2 * m + 1) :
+    0 < #(parts U m) := by
+  rw [card_parts hU, card_powersetCard, card_univ, hU]
   exact Nat.mul_pos (Nat.choose_pos (by omega)) (Nat.succ_pos m)
 
 end Partitions
@@ -379,7 +201,8 @@ private theorem low_le_two_pow (A : Finset (Finset U)) (s : Finset U) : low A s 
   rw [← card_powerset]
   exact card_le_card fun x hx => mem_powerset.mpr (mem_filter.mp hx).2
 
-/-- The error terms of `four_mul_sum_card_filter_le` for `j = 12 r` and `#S ≥ 48 r`. -/
+/-- The error terms of `Finset.four_mul_sum_card_filter_notMem_le` for `j = 12 r` and
+`#S ≥ 48 r`. -/
 private theorem slack_le {r s : ℕ} (hs : 48 * r ≤ s) (hs1 : 1 ≤ s) :
     8 * s * (27 / 32 : ℝ) ^ r + (((12 * r : ℕ) : ℝ) + 1) * 2 ^ (12 * r) * (3 / 4) ^ s ≤
       9 * s * (27 / 32) ^ r := by
@@ -403,11 +226,11 @@ points, the products `low A Tx * low B Ty` with `i` bad for `A` relative to `Ty`
 a quarter of all of them, up to an exponentially small error. -/
 private theorem four_mul_sum_filter_le (hU : Fintype.card U = 2 * m + 1)
     (A B : Finset (Finset U)) {r : ℕ} (hr : 48 * r ≤ m + 1) :
-    4 * ∑ T ∈ disjointnessParts U m with 3 * high A T.1 T.2.2 < low A T.2.1,
+    4 * ∑ T ∈ parts U m with 3 * high A T.1 T.2.2 < low A T.2.1,
         ((low A T.2.1 : ℝ) * low B T.2.2) ≤
-      ∑ T ∈ disjointnessParts U m, ((low A T.2.1 : ℝ) * low B T.2.2) +
-        18 * #(disjointnessParts U m) * 4 ^ m * (27 / 32) ^ r := by
-  rw [sum_filter, sum_disjointnessParts hU, sum_disjointnessParts hU, card_disjointnessParts hU,
+      ∑ T ∈ parts U m, ((low A T.2.1 : ℝ) * low B T.2.2) +
+        18 * #(parts U m) * 4 ^ m * (27 / 32) ^ r := by
+  rw [sum_filter, sum_parts hU, sum_parts hU, card_parts hU,
     mul_sum]
   have hconst : (18 : ℝ) * ((#(powersetCard m (univ : Finset U)) * (m + 1) : ℕ) : ℝ) * 4 ^ m *
       (27 / 32) ^ r = ∑ _Ty ∈ powersetCard m (univ : Finset U),
@@ -425,7 +248,7 @@ private theorem four_mul_sum_filter_le (hU : Fintype.card U = 2 * m + 1)
     have := low_le_two_pow B Ty
     rw [hTy] at this
     exact_mod_cast this
-  have hKL := four_mul_sum_card_filter_le A Tyᶜ (r := r) (j := 12 * r) (by omega)
+  have hKL := four_mul_sum_card_filter_notMem_le A Tyᶜ (r := r) (j := 12 * r) (by omega)
   rw [hS] at hKL
   have hsl := slack_le (r := r) (s := m + 1) hr (by omega)
   push_cast at hsl
@@ -460,15 +283,15 @@ times the members of `A` containing `i` inside `Tx ∪ {i}` times the members of
 inside `Ty ∪ {i}`, up to an exponentially small error. -/
 private theorem sum_low_mul_low_le (hU : Fintype.card U = 2 * m + 1) (A B : Finset (Finset U))
     {r : ℕ} (hr : 48 * r ≤ m + 1) :
-    ∑ T ∈ disjointnessParts U m, ((low A T.2.1 : ℝ) * low B T.2.2) ≤
-      18 * ∑ T ∈ disjointnessParts U m, ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1) +
-        18 * #(disjointnessParts U m) * 4 ^ m * (27 / 32) ^ r := by
+    ∑ T ∈ parts U m, ((low A T.2.1 : ℝ) * low B T.2.2) ≤
+      18 * ∑ T ∈ parts U m, ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1) +
+        18 * #(parts U m) * 4 ^ m * (27 / 32) ^ r := by
   have hX := four_mul_sum_filter_le hU A B hr
   have hY := four_mul_sum_filter_le hU B A hr
   rw [sum_filter] at hX hY
-  rw [sum_disjointnessParts_swap, sum_disjointnessParts_swap (fun T => (low B T.2.1 : ℝ) *
+  rw [sum_parts_swap, sum_parts_swap (fun T => (low B T.2.1 : ℝ) *
     low A T.2.2)] at hY
-  have hpt : ∀ T ∈ disjointnessParts U m, (low A T.2.1 : ℝ) * low B T.2.2 ≤
+  have hpt : ∀ T ∈ parts U m, (low A T.2.1 : ℝ) * low B T.2.2 ≤
       9 * ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1) +
         ((if 3 * high A T.1 T.2.2 < low A T.2.1 then (low A T.2.1 : ℝ) * low B T.2.2 else 0) +
           (if 3 * high B T.1 T.2.1 < low B T.2.2 then (low B T.2.2 : ℝ) * low A T.2.1
@@ -493,43 +316,42 @@ private theorem sum_low_mul_low_le (hU : Fintype.card U = 2 * m + 1) (A B : Fins
         linarith
   have h := sum_le_sum hpt
   rw [sum_add_distrib, sum_add_distrib, ← mul_sum] at h
-  have hcomm : ∑ T ∈ disjointnessParts U m, (low B T.2.2 : ℝ) * low A T.2.1 =
-      ∑ T ∈ disjointnessParts U m, (low A T.2.1 : ℝ) * low B T.2.2 :=
+  have hcomm : ∑ T ∈ parts U m, (low B T.2.2 : ℝ) * low A T.2.1 =
+      ∑ T ∈ parts U m, (low A T.2.1 : ℝ) * low B T.2.2 :=
     sum_congr rfl fun _ _ => mul_comm _ _
-  simp only at hY
   rw [hcomm] at hY
   linarith
 
 /-! ### The hard distribution -/
 
 variable (m) in
-/-- The mass of a pair of sets under `disjointnessDist`: the probability that a uniformly random
-partition `(i, Tx, Ty)` from `disjointnessParts` and a fair coin produce it, where on heads the
+/-- The mass of a pair of sets under `hardDist`: the probability that a uniformly random
+partition `(i, Tx, Ty)` from `parts` and a fair coin produce it, where on heads the
 pair is a uniformly random pair of subsets of `Tx` and `Ty`, and on tails it is such a pair with
 `i` added to both sets. -/
-noncomputable def disjointnessWeight (q : Finset U × Finset U) : ℝ :=
-  (∑ T ∈ disjointnessParts U m,
+noncomputable def weight (q : Finset U × Finset U) : ℝ :=
+  (∑ T ∈ parts U m,
     ((if q.1 ⊆ T.2.1 then 1 else 0) * (if q.2 ⊆ T.2.2 then 1 else 0) +
       (if T.1 ∈ q.1 ∧ q.1 ⊆ T.2.2ᶜ then 1 else 0) * (if T.1 ∈ q.2 ∧ q.2 ⊆ T.2.1ᶜ then 1 else 0))) /
-    (2 * #(disjointnessParts U m) * 4 ^ m)
+    (2 * #(parts U m) * 4 ^ m)
 
-theorem disjointnessWeight_nonneg (q : Finset U × Finset U) : 0 ≤ disjointnessWeight m q := by
-  unfold disjointnessWeight
+theorem weight_nonneg (q : Finset U × Finset U) : 0 ≤ weight m q := by
+  unfold weight
   refine div_nonneg (sum_nonneg fun T _ => ?_) (by positivity)
   split_ifs <;> norm_num
 
 /-- On disjoint pairs the weight counts the partitions placing the sets inside `Tx` and `Ty`;
 on intersecting pairs, those placing them inside `Tx ∪ {i}` and `Ty ∪ {i}` with `i` common. -/
-private theorem ite_disjointnessWeight (x y : Finset U) :
-    (if decide (Disjoint x y) = true then disjointnessWeight m (x, y) else 0) =
-        (∑ T ∈ disjointnessParts U m,
+private theorem ite_weight (x y : Finset U) :
+    (if decide (Disjoint x y) = true then weight m (x, y) else 0) =
+        (∑ T ∈ parts U m,
           (if x ⊆ T.2.1 then 1 else 0) * (if y ⊆ T.2.2 then 1 else 0)) /
-          (2 * #(disjointnessParts U m) * 4 ^ m) ∧
-      (if decide (Disjoint x y) = true then 0 else disjointnessWeight m (x, y)) =
-        (∑ T ∈ disjointnessParts U m,
+          (2 * #(parts U m) * 4 ^ m) ∧
+      (if decide (Disjoint x y) = true then 0 else weight m (x, y)) =
+        (∑ T ∈ parts U m,
           (if T.1 ∈ x ∧ x ⊆ T.2.2ᶜ then 1 else 0) * (if T.1 ∈ y ∧ y ⊆ T.2.1ᶜ then 1 else 0)) /
-          (2 * #(disjointnessParts U m) * 4 ^ m) := by
-  unfold disjointnessWeight
+          (2 * #(parts U m) * 4 ^ m) := by
+  unfold weight
   by_cases h : Disjoint x y
   · simp only [h, decide_true, ↓reduceIte]
     refine ⟨?_, ?_⟩
@@ -551,14 +373,14 @@ private theorem ite_disjointnessWeight (x y : Finset U) :
     refine ⟨?_, ?_⟩
     · symm
       refine div_eq_zero_iff.mpr (Or.inl (sum_eq_zero fun T hT => ?_))
-      have hT := (mem_disjointnessParts.mp hT).2.2.1
+      have hT := (mem_parts.mp hT).2.2.1
       by_cases h1 : x ⊆ T.2.1
       · have h2 : ¬y ⊆ T.2.2 := fun h2 => h (hT.mono h1 h2)
         simp only [h2, ↓reduceIte, mul_zero]
       · simp only [h1, ↓reduceIte, zero_mul]
     · congr 1
       refine sum_congr rfl fun T hT => ?_
-      have hT := (mem_disjointnessParts.mp hT).2.2.1
+      have hT := (mem_parts.mp hT).2.2.1
       by_cases h1 : x ⊆ T.2.1
       · have h2 : ¬y ⊆ T.2.2 := fun h2 => h (hT.mono h1 h2)
         simp only [h2, ↓reduceIte, mul_zero, zero_add]
@@ -568,41 +390,40 @@ private theorem ite_disjointnessWeight (x y : Finset U) :
 private theorem sum_sum_ite_mul_ite (A B : Finset (Finset U)) (p : U × Finset U × Finset U →
     Finset U → Prop) (q : U × Finset U × Finset U → Finset U → Prop) [∀ T x, Decidable (p T x)]
     [∀ T y, Decidable (q T y)] (D : ℝ) :
-    ∑ x ∈ A, ∑ y ∈ B, (∑ T ∈ disjointnessParts U m,
+    ∑ x ∈ A, ∑ y ∈ B, (∑ T ∈ parts U m,
         (if p T x then (1 : ℝ) else 0) * (if q T y then 1 else 0)) / D =
-      (∑ T ∈ disjointnessParts U m, (#{x ∈ A | p T x} : ℝ) * #{y ∈ B | q T y}) / D := by
+      (∑ T ∈ parts U m, (#{x ∈ A | p T x} : ℝ) * #{y ∈ B | q T y}) / D := by
   simp only [← sum_div]
   congr 1
-  calc ∑ x ∈ A, ∑ y ∈ B, ∑ T ∈ disjointnessParts U m,
+  calc ∑ x ∈ A, ∑ y ∈ B, ∑ T ∈ parts U m,
         (if p T x then (1 : ℝ) else 0) * (if q T y then 1 else 0)
-      = ∑ x ∈ A, ∑ T ∈ disjointnessParts U m, ∑ y ∈ B,
+      = ∑ x ∈ A, ∑ T ∈ parts U m, ∑ y ∈ B,
           (if p T x then (1 : ℝ) else 0) * (if q T y then 1 else 0) :=
         sum_congr rfl fun _ _ => sum_comm
-    _ = ∑ T ∈ disjointnessParts U m, ∑ x ∈ A, ∑ y ∈ B,
+    _ = ∑ T ∈ parts U m, ∑ x ∈ A, ∑ y ∈ B,
           (if p T x then (1 : ℝ) else 0) * (if q T y then 1 else 0) := sum_comm
     _ = _ := by
         refine sum_congr rfl fun T _ => ?_
         rw [← sum_mul_sum, sum_boole, sum_boole]
 
 /-- The weight of the disjoint pairs in a rectangle. -/
-private theorem sum_sum_ite_disjointnessWeight (A B : Finset (Finset U)) :
-    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then disjointnessWeight m (x, y) else 0) =
-      (∑ T ∈ disjointnessParts U m, ((low A T.2.1 : ℝ) * low B T.2.2)) /
-        (2 * #(disjointnessParts U m) * 4 ^ m) := by
-  simp only [fun x y => (ite_disjointnessWeight (m := m) x y).1]
+private theorem sum_sum_ite_weight (A B : Finset (Finset U)) :
+    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then weight m (x, y) else 0) =
+      (∑ T ∈ parts U m, ((low A T.2.1 : ℝ) * low B T.2.2)) /
+        (2 * #(parts U m) * 4 ^ m) := by
+  simp only [fun x y => (ite_weight (m := m) x y).1]
   exact sum_sum_ite_mul_ite A B (fun T x => x ⊆ T.2.1) (fun T y => y ⊆ T.2.2) _
 
 /-- The weight of the intersecting pairs in a rectangle. -/
-private theorem sum_sum_ite_disjointnessWeight' (A B : Finset (Finset U)) :
-    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then 0 else disjointnessWeight m (x, y)) =
-      (∑ T ∈ disjointnessParts U m, ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1)) /
-        (2 * #(disjointnessParts U m) * 4 ^ m) := by
-  simp only [fun x y => (ite_disjointnessWeight (m := m) x y).2]
+private theorem sum_sum_ite_weight' (A B : Finset (Finset U)) :
+    ∑ x ∈ A, ∑ y ∈ B, (if decide (Disjoint x y) = true then 0 else weight m (x, y)) =
+      (∑ T ∈ parts U m, ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1)) /
+        (2 * #(parts U m) * 4 ^ m) := by
+  simp only [fun x y => (ite_weight (m := m) x y).2]
   exact sum_sum_ite_mul_ite A B (fun T x => T.1 ∈ x ∧ x ⊆ T.2.2ᶜ)
     (fun T y => T.1 ∈ y ∧ y ⊆ T.2.1ᶜ) _
 
-omit [Fintype U] in
-private theorem low_univ (s : Finset U) [Fintype U] : low univ s = 2 ^ #s := by
+private theorem low_univ (s : Finset U) : low univ s = 2 ^ #s := by
   unfold low
   rw [← card_powerset]
   congr 1
@@ -632,29 +453,29 @@ private theorem high_univ {i : U} {s : Finset U} (hi : i ∉ s) :
   omega
 
 /-- Half of the weight lies on disjoint pairs. -/
-private theorem sum_sum_ite_disjointnessWeight_univ (hU : Fintype.card U = 2 * m + 1) :
+private theorem sum_sum_ite_weight_univ (hU : Fintype.card U = 2 * m + 1) :
     ∑ x : Finset U, ∑ y : Finset U,
-        (if decide (Disjoint x y) = true then disjointnessWeight m (x, y) else 0) = 1 / 2 ∧
+        (if decide (Disjoint x y) = true then weight m (x, y) else 0) = 1 / 2 ∧
       ∑ x : Finset U, ∑ y : Finset U,
-        (if decide (Disjoint x y) = true then 0 else disjointnessWeight m (x, y)) = 1 / 2 := by
-  have hP : (0 : ℝ) < #(disjointnessParts U m) := by
-    exact_mod_cast card_disjointnessParts_pos hU
+        (if decide (Disjoint x y) = true then 0 else weight m (x, y)) = 1 / 2 := by
+  have hP : (0 : ℝ) < #(parts U m) := by
+    exact_mod_cast card_parts_pos hU
   have hcompl {s : Finset U} (hs : #s = m) : #sᶜ - 1 = m := by
     rw [card_compl, hU, hs]
     omega
   refine ⟨?_, ?_⟩
-  · rw [sum_sum_ite_disjointnessWeight]
+  · rw [sum_sum_ite_weight]
     rw [sum_congr rfl fun T hT => by
-      rw [low_univ, low_univ, (mem_disjointnessParts.mp hT).2.2.2.1,
-        (mem_disjointnessParts.mp hT).2.2.2.2]]
+      rw [low_univ, low_univ, (mem_parts.mp hT).2.2.2.1,
+        (mem_parts.mp hT).2.2.2.2]]
     rw [sum_const, nsmul_eq_mul]
     field_simp
     push_cast
     rw [show (4 : ℝ) ^ m = 2 ^ m * 2 ^ m by rw [← mul_pow]; norm_num]
     ring
-  · rw [sum_sum_ite_disjointnessWeight']
+  · rw [sum_sum_ite_weight']
     rw [sum_congr rfl fun T hT => by
-      obtain ⟨h1, h2, -, h4, h5⟩ := mem_disjointnessParts.mp hT
+      obtain ⟨h1, h2, -, h4, h5⟩ := mem_parts.mp hT
       rw [high_univ h2, high_univ h1, hcompl h4, hcompl h5]]
     rw [sum_const, nsmul_eq_mul]
     field_simp
@@ -662,14 +483,14 @@ private theorem sum_sum_ite_disjointnessWeight_univ (hU : Fintype.card U = 2 * m
     rw [show (4 : ℝ) ^ m = 2 ^ m * 2 ^ m by rw [← mul_pow]; norm_num]
     ring
 
-theorem sum_disjointnessWeight (hU : Fintype.card U = 2 * m + 1) :
-    ∑ q : Finset U × Finset U, disjointnessWeight m q = 1 := by
-  obtain ⟨h1, h2⟩ := sum_sum_ite_disjointnessWeight_univ hU
+theorem sum_weight (hU : Fintype.card U = 2 * m + 1) :
+    ∑ q : Finset U × Finset U, weight m q = 1 := by
+  obtain ⟨h1, h2⟩ := sum_sum_ite_weight_univ hU
   rw [Fintype.sum_prod_type]
-  calc ∑ x : Finset U, ∑ y : Finset U, disjointnessWeight m (x, y)
+  calc ∑ x : Finset U, ∑ y : Finset U, weight m (x, y)
       = ∑ x : Finset U, ∑ y : Finset U,
-          ((if decide (Disjoint x y) = true then disjointnessWeight m (x, y) else 0) +
-            (if decide (Disjoint x y) = true then 0 else disjointnessWeight m (x, y))) := by
+          ((if decide (Disjoint x y) = true then weight m (x, y) else 0) +
+            (if decide (Disjoint x y) = true then 0 else weight m (x, y))) := by
         refine sum_congr rfl fun x _ => sum_congr rfl fun y _ => ?_
         split_ifs <;> simp
     _ = 1 := by
@@ -683,53 +504,55 @@ variable (m) in
 `x ⊆ Tx` and `y ⊆ Ty`; with probability `1 / 2` output the disjoint pair `(x, y)`, and otherwise
 the pair `(x ∪ {i}, y ∪ {i})`, which meets in exactly `i`. Razborov draws subsets of fixed size
 `m / 2` instead; drawing all subsets lets the corruption bound be proved by counting subsets of
-a cube (`four_mul_sum_card_filter_le`) instead of with entropy. -/
-noncomputable def disjointnessDist (hU : Fintype.card U = 2 * m + 1) :
+a cube (`Finset.four_mul_sum_card_filter_notMem_le`). -/
+noncomputable def hardDist (hU : Fintype.card U = 2 * m + 1) :
     PMF (Finset U × Finset U) :=
-  PMF.ofFintype (fun q => ENNReal.ofReal (disjointnessWeight m q)) (by
-    rw [← ENNReal.ofReal_sum_of_nonneg fun q _ => disjointnessWeight_nonneg q,
-      sum_disjointnessWeight hU, ENNReal.ofReal_one])
+  PMF.ofFintype (fun q => ENNReal.ofReal (weight m q)) (by
+    rw [← ENNReal.ofReal_sum_of_nonneg fun q _ => weight_nonneg q,
+      sum_weight hU, ENNReal.ofReal_one])
 
-theorem disjointnessDist_apply_toReal (hU : Fintype.card U = 2 * m + 1)
-    (q : Finset U × Finset U) : (disjointnessDist m hU q).toReal = disjointnessWeight m q := by
-  rw [disjointnessDist, PMF.ofFintype_apply, ENNReal.toReal_ofReal (disjointnessWeight_nonneg q)]
+theorem hardDist_apply_toReal (hU : Fintype.card U = 2 * m + 1)
+    (q : Finset U × Finset U) : (hardDist m hU q).toReal = weight m q := by
+  rw [hardDist, PMF.ofFintype_apply, ENNReal.toReal_ofReal (weight_nonneg q)]
 
-/-- Under `disjointnessDist`, the sets are disjoint with probability `1 / 2`. -/
-theorem disjointnessDist_toOuterMeasure_disjoint (hU : Fintype.card U = 2 * m + 1) :
-    ((disjointnessDist m hU).toOuterMeasure
+/-- Under `hardDist`, the sets are disjoint with probability `1 / 2`. -/
+theorem hardDist_toOuterMeasure_disjoint (hU : Fintype.card U = 2 * m + 1) :
+    ((hardDist m hU).toOuterMeasure
       {q | decide (Disjoint q.1 q.2) = true}).toReal = 1 / 2 := by
   rw [Probability.PMF.toOuterMeasure_apply_toReal, Fintype.sum_prod_type]
-  simp only [Set.mem_ofPred_eq, disjointnessDist_apply_toReal]
-  exact (sum_sum_ite_disjointnessWeight_univ hU).1
+  simp only [Set.mem_ofPred_eq, hardDist_apply_toReal]
+  exact (sum_sum_ite_weight_univ hU).1
 
-/-- **Razborov's corruption lemma** for `disjointnessDist` [Razborov1992]: on every rectangle
+/-- **Razborov's corruption lemma** for `hardDist` [Razborov1992]: on every rectangle
 `A × B` of pairs of subsets of `2 m + 1` points, the intersecting pairs carry at least `1 / 18`
 of the mass of the disjoint pairs, up to `(27 / 32) ^ r / 2` whenever `48 r ≤ m + 1`. -/
-theorem corrupted_disjointnessDist (hU : Fintype.card U = 2 * m + 1) {r : ℕ}
+theorem corrupted_hardDist (hU : Fintype.card U = 2 * m + 1) {r : ℕ}
     (hr : 48 * r ≤ m + 1) :
-    Corrupted (disjointnessDist m hU) (fun x y => decide (Disjoint x y)) true (1 / 18)
+    Corrupted (hardDist m hU) (fun x y => decide (Disjoint x y)) true (1 / 18)
       ((27 / 32) ^ r / 2) := by
   intro A B
-  simp only [disjointnessDist_apply_toReal]
-  rw [sum_sum_ite_disjointnessWeight, sum_sum_ite_disjointnessWeight']
+  simp only [hardDist_apply_toReal]
+  rw [sum_sum_ite_weight, sum_sum_ite_weight']
   have h := sum_low_mul_low_le hU A B hr
-  have hP : (0 : ℝ) < #(disjointnessParts U m) := by
-    exact_mod_cast card_disjointnessParts_pos hU
-  have hD : (0 : ℝ) < 2 * #(disjointnessParts U m) * 4 ^ m := by positivity
-  set P := ∑ T ∈ disjointnessParts U m, ((low A T.2.1 : ℝ) * low B T.2.2)
-  set Q := ∑ T ∈ disjointnessParts U m, ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1)
-  have key : P / (2 * #(disjointnessParts U m) * 4 ^ m) ≤
-      18 * (Q / (2 * #(disjointnessParts U m) * 4 ^ m)) + 9 * (27 / 32) ^ r := by
+  have hP : (0 : ℝ) < #(parts U m) := by
+    exact_mod_cast card_parts_pos hU
+  have hD : (0 : ℝ) < 2 * #(parts U m) * 4 ^ m := by positivity
+  set P := ∑ T ∈ parts U m, ((low A T.2.1 : ℝ) * low B T.2.2)
+  set Q := ∑ T ∈ parts U m, ((high A T.1 T.2.2 : ℝ) * high B T.1 T.2.1)
+  have key : P / (2 * #(parts U m) * 4 ^ m) ≤
+      18 * (Q / (2 * #(parts U m) * 4 ^ m)) + 9 * (27 / 32) ^ r := by
     rw [div_le_iff₀ hD]
-    have : (18 * (Q / (2 * #(disjointnessParts U m) * 4 ^ m)) + 9 * (27 / 32) ^ r) *
-        (2 * #(disjointnessParts U m) * 4 ^ m) =
-          18 * Q + 18 * #(disjointnessParts U m) * 4 ^ m * (27 / 32) ^ r := by
+    have : (18 * (Q / (2 * #(parts U m) * 4 ^ m)) + 9 * (27 / 32) ^ r) *
+        (2 * #(parts U m) * 4 ^ m) =
+          18 * Q + 18 * #(parts U m) * 4 ^ m * (27 / 32) ^ r := by
       field_simp
       ring
     linarith
   linarith
 
 end Corruption
+
+end Disjointness
 
 /-! ### Randomized lower bounds -/
 
@@ -770,7 +593,7 @@ private theorem le_of_mul_pow_le {r c : ℕ} (h : 13 * 32 ^ r ≤ 576 * 2 ^ c * 
 /-- **Disjointness needs `Ω(m)` bits with public coins**, for subsets of `2 m + 1` points: a
 public-coin protocol deciding whether two such subsets are disjoint with error `1 / 64` sends at
 least `((m + 1) / 48 - 29) / 5` bits. -/
-theorem PublicCoin.div_le_ecomplexityFun_disjoint (hU : Fintype.card U = 2 * m + 1) :
+theorem PublicCoin.div_le_mul_ecomplexityFun_disjoint_add (hU : Fintype.card U = 2 * m + 1) :
     (((m + 1) / 48 : ℕ) : ℕ∞) ≤
       5 * PublicCoin.ecomplexityFun (1 / 64) (fun x y : Finset U => decide (Disjoint x y)) +
         29 := by
@@ -780,9 +603,9 @@ theorem PublicCoin.div_le_ecomplexityFun_disjoint (hU : Fintype.card U = 2 * m +
   | coe c =>
     set r := (m + 1) / 48
     have hr : 48 * r ≤ m + 1 := Nat.mul_div_le (m + 1) 48
-    have hbound := (corrupted_disjointnessDist hU hr).mul_sub_le_of_ecomplexityFun_le
+    have hbound := (Disjointness.corrupted_hardDist hU hr).mul_sub_le_of_ecomplexityFun_le
       (by norm_num) h.le
-    rw [disjointnessDist_toOuterMeasure_disjoint] at hbound
+    rw [Disjointness.hardDist_toOuterMeasure_disjoint] at hbound
     have hreal : (13 : ℝ) * 32 ^ r ≤ 576 * 2 ^ c * 27 ^ r := by
       have h32 : (0 : ℝ) < 32 ^ r := by positivity
       have hdiv : (2 : ℝ) ^ c * ((27 / 32) ^ r / 2) = 2 ^ c * 27 ^ r / (2 * 32 ^ r) := by
@@ -826,7 +649,7 @@ theorem PublicCoin.le_mul_ecomplexityFun_disjointness_add_of_le {ε : ℝ} (hε 
   · simp
   set m := (n - 1) / 2
   have hmn : 2 * m + 1 ≤ n := by omega
-  have h1 := PublicCoin.div_le_ecomplexityFun_disjoint (Fintype.card_fin (2 * m + 1))
+  have h1 := PublicCoin.div_le_mul_ecomplexityFun_disjoint_add (Fintype.card_fin (2 * m + 1))
   have h2 : PublicCoin.ecomplexityFun (1 / 64)
       (fun x y : Finset (Fin (2 * m + 1)) => decide (Disjoint x y)) ≤
         PublicCoin.ecomplexityFun (1 / 64) (disjointness : BitString n → BitString n → Bool) := by

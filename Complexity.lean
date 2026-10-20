@@ -24,6 +24,7 @@ public import Complexity.Computability.Circuit.Arithmetic.VP
 public import Complexity.Computability.Circuit.Arithmetic.Waring
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Basic
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Compilation
+public import Complexity.Computability.Circuit.BipartiteMatching
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
@@ -260,6 +261,7 @@ public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.MapOp
 public import Complexity.Computability.Circuit.Metric
 public import Complexity.Computability.Circuit.Monotone.Basic
+public import Complexity.Computability.Circuit.Monotone.BipartiteMatching
 public import Complexity.Computability.Circuit.Monotone.Clique.Approximator
 public import Complexity.Computability.Circuit.Monotone.Clique.Asymptotic
 public import Complexity.Computability.Circuit.Monotone.Clique.Essential

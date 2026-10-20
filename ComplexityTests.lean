@@ -14,6 +14,7 @@ import ComplexityTests.Axioms
 import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
+import ComplexityTests.BipartiteMatching
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
