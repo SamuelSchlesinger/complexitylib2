@@ -263,8 +263,17 @@ of the handover. The work below remains available for subsequent, independently 
      This is the full-domain case of Immerman's Proposition 1.28 for relational intermediate
      and output input vocabularies, with Remark 1.32's canonical numerics. It does not identify
      base-`n` digits with binary strings.
-     **Next milestones:** the ordered logspace encoding bridge, then projections and NL/P
-     completeness. These remain open.
+     **Native ordered model checking completed (#128):**
+     [FirstOrder/Ordered](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean)
+     proves that every fixed sentence over a finite relational input vocabulary expanded by
+     canonical `0`, `1`, `max`, order and BIT has its actual encoded query language in L.
+     Numeric atoms, including quantified ones, use proved native expressions; the input retains
+     unary cardinality and the existing framed input tables in `tupleIndex` order. Invalid table
+     shapes and sizes zero/one reject. Work space is logarithmic in the full encoded input length,
+     with no combined-complexity or arbitrary-raw-word claim. This is the relational-input case
+     of Immerman's Theorem 3.1. The original order-free empty-universe behavior is preserved.
+     **Next milestones:** actual ordered interpretation-to-logspace transducers and reduction
+     closure, then projections and NL/P completeness. These remain open.
      The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical
      BIT on an arbitrary definable restricted domain need not be first-order definable.
      Restricted-domain numeric preservation therefore requires its own explicit definitions
@@ -302,16 +311,18 @@ of the handover. The work below remains available for subsequent, independently 
      excludes BIT ([Immerman–Landau, Definition 3.6](https://people.cs.umass.edu/~immerman/pub/mult.pdf)).
      Arbitrary quantifier-free Boolean combinations of input relations are not projections.
      [First-order model checking in L](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean)
-     is proved for relational FO without order or BIT.
+     is proved for relational FO without order or BIT, and
+     [canonical ordered model checking](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean)
+     now includes genuine numeric constants, order and BIT for source sizes at least two.
 
    - [x] **Order-free interpretations as logspace reductions.** The
      [machine-certified transducer](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean)
      streams interpreted relation tables using tuple ranks. Every order-free interpretation
      reduction to an isomorphism-closed target induces a logspace many-one reduction of encoded
      query languages, with L/P closure. Empty universes and domains, nullary relations,
-     dimension zero, and invalid parsed table shapes are handled. Numeric predicates computed
-     from the universe and canonical lexicographic ordered outputs remain part of the ordered
-     milestone; they are not supplied by this theorem.
+     dimension zero, and invalid parsed table shapes are handled. Extending this transducer to
+     computed numeric predicates and canonical lexicographic ordered outputs remains open;
+     the separate ordered model-checking theorem does not supply that transducer.
 
    - [x] **Circuit Value logspace completeness.** [Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean)
      under logarithmic-space many-one reductions, via a machine-certified tableau writer.
