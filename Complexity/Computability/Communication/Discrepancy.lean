@@ -108,9 +108,6 @@ end Finite
 
 /-! ### The discrepancy bound -/
 
-private theorem abs_signVal (b : Bool) : |signVal b| = 1 := by
-  cases b <;> simp
-
 namespace Protocol
 
 /-- **Correlation with a protocol is bounded by discrepancy**: the correlation under `ν` of `f`

@@ -7,8 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.LMN
+public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.MachineLearning.UniformLearning.LowDegree
+import Complexity.Computability.Circuit.Boolean.LMN
 import Mathlib.Data.Nat.Log
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -22,13 +23,13 @@ by a circuit of negations and unbounded fan-in conjunctions and disjunctions of 
 with at most `g` gates (`UniformLearning.circuitClass`) has Fourier weight at most `2 g / 2 ^ s`
 above degree `t`, for every `s ≥ 2` and `t + 1 ≥ 2 max 8 (2 s) (16 s + 1) ^ d`. Taking
 `2 ^ s ≥ 4 g / ε`, the weight is at most `ε / 2`, so the low-degree algorithm learns these circuits
-from uniform random examples [LinialMansourNisan1993] [O'Donnell, Theorem 4.31][ODonnell2014]
-(`UniformLearning.lowDegreeLearner_learns_circuitClass`). With `s = max 2 ⌈log₂ ⌈4 g / ε⌉⌉` the
-degree is `t = UniformLearning.lmnDegree d g ε = O (log (g / ε)) ^ (d + 1)` for fixed `d`
-(`UniformLearning.lowDegreeLearner_learns_lmnDegree`), and the algorithm uses
-`m ≥ (4 N / ε) log (2 N / δ)` examples, where `N ≤ (n + 1) ^ t` is the number of sets of at most
-`t` coordinates (`BitString.card_filter_card_le_le_pow`). Read asymptotically (this reading is not
-itself formalized), for `g` polynomial in `n` and constant `d`, `ε` and `δ` this is
+from uniform random examples (`UniformLearning.lowDegreeLearner_learns_circuitClass`): a form of
+[O'Donnell, Theorem 4.31][ODonnell2014] [LinialMansourNisan1993] with exponent `d + 1`. With
+`s = max 2 ⌈log₂ ⌈4 g / ε⌉⌉` the degree is `t = UniformLearning.lmnDegree d g ε`, which is
+`O (log (g / ε)) ^ (d + 1)` for fixed `d` (`UniformLearning.lowDegreeLearner_learns_lmnDegree`), and
+the algorithm uses `m ≥ (4 N / ε) log (2 N / δ)` examples, where `N ≤ (n + 1) ^ t` is the number of
+sets of at most `t` coordinates (`BitString.card_filter_card_le_le_pow`). Read asymptotically (this
+reading is not itself formalized), for `g` polynomial in `n` and constant `d`, `ε` and `δ` this is
 `n ^ O (log n) ^ (d + 1)` examples: quasi-polynomially many.
 
 Depth counts every gate on a path, negations included (`Circuit.depth`). For a circuit whose
@@ -77,13 +78,13 @@ def circuitClass (n d g : ℕ) : ConceptClass (BitString n) Bool :=
   {f | ∃ C : Circuit Unbounded.signature n 1,
     C.Computes Unbounded.interpretation (single f) ∧ C.depth ≤ d ∧ C.size ≤ g}
 
-/-- **The low-degree algorithm learns constant-depth circuits** [LinialMansourNisan1993]
-[O'Donnell, Theorem 4.31][ODonnell2014]. Let `s ≥ 2` with `4 g ≤ ε 2 ^ s`, let
-`t + 1 ≥ 2 max 8 (2 s) (16 s + 1) ^ d`, and let `N` be the number of sets of at most `t` of the `n`
-coordinates. Then the low-degree algorithm of degree `t` from `m ≥ (4 N / ε) log (2 N / δ)`
-uniform random examples learns the functions computed by circuits of negations and unbounded
-fan-in conjunctions and disjunctions of depth at most `d` with at most `g` gates, with error `ε`
-and confidence `1 - δ`. -/
+/-- **The low-degree algorithm learns constant-depth circuits**, a form of
+[O'Donnell, Theorem 4.31][ODonnell2014] [LinialMansourNisan1993] with exponent `d + 1`. Let `s ≥ 2`
+with `4 g ≤ ε 2 ^ s`, let `t + 1 ≥ 2 max 8 (2 s) (16 s + 1) ^ d`, and let `N` be the number of sets
+of at most `t` of the `n` coordinates. Then the low-degree algorithm of degree `t` from
+`m ≥ (4 N / ε) log (2 N / δ)` uniform random examples learns the functions computed by circuits of
+negations and unbounded fan-in conjunctions and disjunctions of depth at most `d` with at most `g`
+gates, with error `ε` and confidence `1 - δ`. -/
 theorem lowDegreeLearner_learns_circuitClass {d g s t m : ℕ} {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ)
     (hs : 2 ≤ s) (hsg : 4 * (g : ℝ) ≤ ε * 2 ^ s)
     (ht : 2 * max 8 (2 * s) * (16 * s + 1) ^ d ≤ t + 1)

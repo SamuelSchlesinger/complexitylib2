@@ -80,6 +80,24 @@ example (m : ℕ) {ε δ : ℝ} (hε : ε < 1 / 2) (hδ : δ < 1) :
   rw [huniv, (PMF.toOuterMeasure_apply_eq_one_iff _ _).2 (Set.subset_univ _)] at h1
   exact absurd (ENNReal.one_le_ofReal.1 h1) (not_le.2 hδ)
 
+/-- The uniform distribution labelled by a concept is in the uniform realizable family, in the
+pushforward form of `PACLearning`. -/
+example : ((PMF.uniformOfFintype (Fin 1 → Bool)).toMeasure.map fun x => (x, x 0)) ∈
+    uniformRealizable {fun x : Fin 1 → Bool => x 0} :=
+  mem_uniformRealizable_iff.2 ⟨_, rfl, rfl⟩
+
+/-- Membership queries subsume random examples: querying `m` uniform points simulates the
+low-degree algorithm, with `m` queries. -/
+example {n t : ℕ} {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ) :
+    let m := ⌈4 * #{S : Finset (Fin n) | #S ≤ t} / ε *
+      Real.log (2 * #{S : Finset (Fin n) | #S ≤ t} / δ)⌉₊
+    (QueryLearner.ofLearner (lowDegreeLearner (Fin n) t m)).Learns (PMF.uniformOfFintype _)
+      {f | ∃ U : Finset (Fin n), #U ≤ t ∧ f = parityOn U} ε δ ∧
+      (QueryLearner.ofLearner (lowDegreeLearner (Fin n) t m)).QueriesAtMost m :=
+  ⟨QueryLearner.learns_ofLearner_iff.2
+    (lowDegreeLearner_learns hε hδ (Nat.le_ceil _) (parities_weight hε)),
+    QueryLearner.queriesAtMost_ofLearner _⟩
+
 /-- The circuits of depth at most one with one gate compute the constant functions. -/
 example (n : ℕ) (b : Bool) : (fun _ : BitString n => b) ∈ circuitClass n 1 1 :=
   ⟨Unbounded.constCircuit (Circuits.Signature.Hom.id _) b, fun x => by
@@ -113,7 +131,8 @@ example (n t m : ℕ) :
         (lowDegreeHypothesis t (examples (fun _ => true) x))} ≤
         ENNReal.ofReal (2 * #{S : Finset (Fin n) | #S ≤ t} *
           Real.exp (-(m * (1 / 2)) / (4 * #{S : Finset (Fin n) | #S ≤ t}))) := by
-  refine uniform_error_lowDegreeHypothesis_gt_le (ι := Fin n) (ε := 1 / 2) _ t m (by norm_num) ?_
+  refine uniform_lt_uniformError_lowDegreeHypothesis_le (ι := Fin n) (ε := 1 / 2) _ t m
+    (by norm_num) ?_
   refine le_of_eq_of_le (sum_eq_zero fun S hS => ?_) (by norm_num)
   have hS : S ≠ ∅ := by
     rintro rfl
@@ -144,16 +163,44 @@ example (n : ℕ) {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ) :
   rintro f ⟨U, rfl⟩
   simp [spectralNormClass, fourierCoeff_signVal_parityOn, apply_ite]
 
+/-- A negative client: the membership-query learner that makes no query and outputs the constant
+`false` does not learn the parity of one bit with error below `1 / 2` and confidence above `0`. -/
+example {ε δ : ℝ} (hε : ε < 1 / 2) (hδ : δ < 1) :
+    ¬ QueryLearner.Learns (fun _ : Unit => DecisionTree.leaf fun _ : Fin 1 → Bool => false)
+      (PMF.pure ()) {fun x : Fin 1 → Bool => x 0} ε δ := by
+  intro h
+  have herr : uniformError (fun x : Fin 1 → Bool => x 0) (fun _ => false) = 1 / 2 := by
+    have : hammingDist (fun _ : Fin 1 → Bool => false) (fun x : Fin 1 → Bool => x 0) = 1 := by
+      decide
+    simp [uniformError, this]
+  have h1 := QueryLearner.learns_iff.1 h _ rfl
+  have huniv : {ω : Unit | ε < uniformError (fun x : Fin 1 → Bool => x 0)
+      ((DecisionTree.leaf fun _ : Fin 1 → Bool => false).eval fun x : Fin 1 → Bool => x 0)} =
+      Set.univ :=
+    Set.eq_univ_of_forall fun _ => by
+      rw [Set.mem_ofPred_eq, DecisionTree.eval_leaf, herr]
+      exact hε
+  rw [huniv, (PMF.toOuterMeasure_apply_eq_one_iff _ _).2 (Set.subset_univ _)] at h1
+  exact absurd (ENNReal.one_le_ofReal.1 h1) (not_le.2 hδ)
+
+/-- A decision tree with two leaves computes the first bit. -/
+example : (fun x : Fin 1 → Bool => x 0) ∈ decisionTreeClass (Fin 1) 2 :=
+  ⟨.node 0 (.leaf false) (.leaf true), fun x => by cases h : x 0 <;> simp [h], le_of_eq rfl⟩
+
 /-- The decision trees with one leaf compute the constant functions. -/
 example (n : ℕ) (b : Bool) : (fun _ : BitString n => b) ∈ decisionTreeClass (Fin n) 1 :=
   ⟨.leaf b, fun _ => rfl, le_rfl⟩
 
 /-- **Decision trees are learnable with membership queries**: for every number of inputs, size,
-error and confidence, from the number of samples the algorithm requires. -/
+error and confidence, from the number of samples the algorithm requires, with `m (2 n + 3)`
+queries. -/
 example (n L : ℕ) {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 < δ) :
-    (kmLearner (Fin n) ⌈512 * (L : ℝ) ^ 4 / ε ^ 4 * Real.log (2 * (n + 2) * 2 ^ n / δ)⌉₊
-      (ε / (2 * L))).Learns (PMF.uniformOfFintype _) (decisionTreeClass (Fin n) L) ε δ :=
-  kmLearner_learns_decisionTree hε hδ (by simpa using Nat.le_ceil _)
+    let m := ⌈512 * (L : ℝ) ^ 4 / ε ^ 4 * Real.log (2 * (n + 2) * 2 ^ n / δ)⌉₊
+    (kmLearner (Fin n) m (ε / (2 * L))).Learns (PMF.uniformOfFintype _)
+      (decisionTreeClass (Fin n) L) ε δ ∧
+      (kmLearner (Fin n) m (ε / (2 * L))).QueriesAtMost (m * (2 * n + 3)) := by
+  simpa using kmLearner_learns_decisionTree_and_queriesAtMost (ι := Fin n) hε hδ
+    (by simpa using Nat.le_ceil _)
 
 /--
 info: 'Cslib.BitString.signRound' depends on axioms:
@@ -191,11 +238,11 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #print axioms uniform_abs_empiricalCoeff_sub_ge_le
 
 /--
-info: 'Cslib.MachineLearning.UniformLearning.uniform_error_lowDegreeHypothesis_gt_le'
+info: 'Cslib.MachineLearning.UniformLearning.uniform_lt_uniformError_lowDegreeHypothesis_le'
 depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms uniform_error_lowDegreeHypothesis_gt_le
+#print axioms uniform_lt_uniformError_lowDegreeHypothesis_le
 
 /--
 info: 'Cslib.MachineLearning.UniformLearning.lowDegreeLearner_learns' depends on axioms:
@@ -226,11 +273,11 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #print axioms lowDegreeLearner_learns_lmnDegree
 
 /--
-info: 'Cslib.BitString.expect_bucketWeight_sample'
+info: 'Cslib.BitString.bucketWeight_eq_expect_sample'
 depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms BitString.expect_bucketWeight_sample
+#print axioms BitString.bucketWeight_eq_expect_sample
 
 /--
 info: 'Cslib.MachineLearning.UniformLearning.inter_mem_bucketSearch'
@@ -240,11 +287,11 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #print axioms inter_mem_bucketSearch
 
 /--
-info: 'Cslib.MachineLearning.UniformLearning.card_bucketSearch_le'
+info: 'Cslib.MachineLearning.UniformLearning.mul_card_bucketSearch_le_one'
 depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms card_bucketSearch_le
+#print axioms mul_card_bucketSearch_le_one
 
 /--
 info: 'Cslib.MachineLearning.UniformLearning.uniformError_kmHypothesis_le'
@@ -280,5 +327,33 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms kmLearner_learns_decisionTree
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.QueryLearner.learns_ofLearner_iff'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms QueryLearner.learns_ofLearner_iff
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.mem_uniformRealizable_iff'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms mem_uniformRealizable_iff
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.kmLearner_learns_and_queriesAtMost'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms kmLearner_learns_and_queriesAtMost
+
+/--
+info: 'Cslib.MachineLearning.UniformLearning.kmLearner_learns_decisionTree_and_queriesAtMost'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms kmLearner_learns_decisionTree_and_queriesAtMost
 
 end ComplexityTests.FourierLearning
