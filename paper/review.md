@@ -1126,3 +1126,31 @@ are recorded in PR #28. These are AI reviews, not human editorial approval or ma
 prose equivalence. AI assistance: OpenAI Codex. Mathematical credit remains Cavalar–Oliveira's
 presentation of Karchmer's characterization; the explicit factor five is the checked certificate
 deduction described above.
+## 2026-10-20: Equality of PP and counting oracle classes
+
+Worker `counting-oracle-20261020` proved the reverse inclusion and oracle-class equality in
+source `39c2e0198d7f0db5555e7f478933789d7d772631`. The existing Toda/PP-oracle entry is
+extended; the curated result count is unchanged. The result uses the existing encoded classes,
+with one fixed deterministic program correct for every admissible oracle and arbitrary answers
+outside valid codes.
+
+Independent coordinator `/root` performed an early source/API review and checked the revised
+prose against the exact source revision. The review
+checked the shifted count `2c + (2^p - 1)`, zero random bits, strict-majority ties, the polynomial
+bit index, bounded reply consumption in open substitution, and the preimage language that
+preserves malformed-word freedom. The new claims and quantifiers matched the exact source.
+One wording correction was requested in the existing oracle description: replace “queries are
+not counted” by “no fixed query-count bound is imposed”, to avoid suggesting free query cost.
+That correction is applied.
+
+All six validation gates pass on the source revision. Tests include a nonconstant PP oracle
+client, boundary arithmetic, and admissible counting oracles disagreeing on the empty non-code
+word. Named guards for the bit representation, reverse inclusion and equality use only
+`propext`, `Classical.choice` and `Quot.sound`. All six links in the affected entry were checked
+against pinned source declarations. The PDF was rebuilt and page 16 rendered and inspected.
+
+Source credit distinguishes Gill's PP definition and Fortnow's Theorem 4.14 and Corollary 3.7
+from the direct shifted-count implementation used here. Existing source authors and references
+are preserved. Final exact-head approval and integration are recorded in PR #35. This is an AI
+review, not human editorial approval or a machine-checked equivalence between prose and Lean.
+AI assistance: OpenAI Codex at Samuel Schlesinger's request.

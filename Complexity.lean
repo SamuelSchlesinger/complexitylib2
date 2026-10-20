@@ -437,6 +437,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.BakerGillSolova
 public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 public import Complexity.Computability.Complexity.Classes.Oracle.Collapse
 public import Complexity.Computability.Complexity.Classes.Oracle.Counting
+public import Complexity.Computability.Complexity.Classes.Oracle.CountingEquivalence
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
@@ -457,6 +458,7 @@ public import Complexity.Computability.Complexity.Classes.PH.Kannan
 public import Complexity.Computability.Complexity.Classes.PH.KarpLipton
 public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
+public import Complexity.Computability.Complexity.Classes.PP.Bit
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Complexity.Classes.ParityP
