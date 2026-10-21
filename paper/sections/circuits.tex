@@ -318,6 +318,60 @@ than algorithmically certified.\citep{Schlesinger2026Algebraic}
 \end{result}
 
 \begin{result}
+For a real-weight threshold program $p$ with $g$ gates, let
+$\mathrm{biasMenu}(p,j)=\{\sum_{r}\alpha_{j,r}u_r:u\in\{0,1\}^g\}\subseteq\mathbb R$
+be the syntactic menu of internal gate biases at gate $j$, where $\alpha_{j,r}$
+is the aggregated weight from gate $r$ to gate $j$ (zero for $r\ge j$), and let
+$G_j=\{r: \alpha_{j,r}\ne 0\}\subseteq\{0,\dots,j-1\}$ be its internal gate
+support. Then $1\le|\mathrm{biasMenu}(p,j)|\le 2^{|G_j|}$; if $\alpha_{j,r}=w_r\in\mathbb Z$
+for all $r$, then $|\mathrm{biasMenu}(p,j)|\le 1+\sum_r|w_r|$, and if $|w_r|\le W$
+for all $r<j$, then $|\mathrm{biasMenu}(p,j)|\le 1+jW\le 1+(g-1)W$.
+Suppose the input-reading gates $I(p)$ are partitioned into $d$ directions via
+$\mathrm{dir}:[g]\to[d]$ so that every $j\in I(p)$ has aggregated input weight
+vector $c_j w_{\mathrm{dir}(j)}$ for scalars $c_j\in\mathbb R$ and directions
+$w_a\in\mathbb R^n$. Write $I_a=\{j\in I(p):\mathrm{dir}(j)=a\}$, $q_a=|I_a|$,
+and $T_a=\sum_{j\in I_a}|\mathrm{biasMenu}(p,j)|$. Because a tuple of maps on a
+preorder with at most $T_i$ changes has at most $\sum_i T_i$ changes, for each
+direction $a\in[d]$ the joint table of threshold comparisons
+$\mathbf 1[\theta_j\le c_j\langle w_a,x\rangle+\beta]$ over all $j\in I_a$ and
+$\beta\in\mathrm{biasMenu}(p,j)$ changes at most $T_a$ times as
+$\langle w_a,x\rangle$ varies; precomputing this table for directions in any
+subset $S\subseteq[d]$ and evaluating the remaining directions gate by gate
+gives, for every Boolean readout computing a two-sided $K$-rectangle-free
+function $f$ on $n$ bits,
+\[
+2^n < 4K^2\prod_{a=0}^{d-1}\min\!\big(4^{q_a},\,\max(1,4T_a)\big).
+\]
+In particular, if $|G_j|\le k$ for all $j\in I(p)$, then $T_a\le q_a 2^k$; if
+every $j\in I(p)$ has integer internal weights of magnitude at most $W$ on
+earlier gates, then $T_a\le q_a(1+(g-1)W)$, and for a single direction ($d=1$)
+this gives $2^n<4K^2\max(1,4|I(p)|(1+(g-1)W))$. Single-output circuit
+corollaries hold whenever the output wire selects a gate. As above, the
+two-sided rectangle-freeness hypothesis is required, menus are syntactic over
+$\{0,1\}^g$ rather than restricted to reachable internal states, and real
+comparisons are semantic rather than algorithmically certified.\citep{ThresholdCircuitRepresentations2026}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Foundations/Order/Changes.lean}{77}{Cslib.ChangesAtMost.comp_antitone}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Foundations/Order/Changes.lean}{118}{Cslib.ChangesAtMost.pi}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Foundations/Order/Changes.lean}{141}{Cslib.ChangesAtMost.finset_pi}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{87}{Cslib.Circuits.Boolean.WeightedThreshold.gateSupport}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{105}{Cslib.Circuits.Boolean.WeightedThreshold.biasMenu}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{121}{Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{143}{Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{177}{Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_mul}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{206}{Cslib.Circuits.Boolean.WeightedThreshold.directionGates}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{217}{Cslib.Circuits.Boolean.WeightedThreshold.directionMenuSum}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{433}{Cslib.Circuits.Boolean.WeightedThreshold.menuBlockDecomposition}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{467}{Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{538}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{565}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{583}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_fanIn}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{607}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_fanIn}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{628}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_intWeight}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{656}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_intWeight}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{679}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction_intWeight}
+\end{result}
+
+\begin{result}
 \subsection{Exact parity formula depth at powers of two}
 Let $d(f)$ be minimum De Morgan formula depth, counting binary AND/OR gates
 and making negations free. For $n\ge1$,
