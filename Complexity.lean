@@ -671,6 +671,8 @@ public import Complexity.Computability.DecisionTree.Symmetric
 public import Complexity.Computability.GenericRAM.Algebraic
 public import Complexity.Computability.GenericRAM.Defs
 public import Complexity.Computability.GenericRAM.Signed
+public import Complexity.Computability.GenericRAM.SparseMemory.Basic
+public import Complexity.Computability.GenericRAM.SparseMemory.Turing
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
 public import Complexity.Computability.Kolmogorov.Depth
