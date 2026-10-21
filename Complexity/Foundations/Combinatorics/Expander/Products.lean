@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.Combinatorics.Expander.Loops
 import Complexity.Foundations.Combinatorics.Expander.Power
 import Complexity.Foundations.Data.Finset.Expect
+import Mathlib.Algebra.BigOperators.Balance
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Analysis.Real.Sqrt
 
@@ -94,10 +95,8 @@ variable {ι α β : Type*}
 /-- Subtracting from a function its averages over the fibers `{a} × β` leaves averages zero over
 the fibers. -/
 private theorem expect_sub_expect_fiber [Fintype β] (f : α × β → ℝ) (a : α) :
-    𝔼 b, (f (a, b) - 𝔼 b', f (a, b')) = 0 := by
-  rcases isEmpty_or_nonempty β with hβ | hβ
-  · simp
-  · rw [expect_sub_distrib, Fintype.expect_const, sub_self]
+    𝔼 b, (f (a, b) - 𝔼 b', f (a, b')) = 0 :=
+  Fintype.expect_balance fun b ↦ f (a, b)
 
 /-- **Pythagoras' theorem** for the splitting of a function on `α × β` into a function of the first
 coordinate and a function of average zero over every fiber `{a} × β`. -/

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Walk
 import Complexity.Foundations.Data.Finset.Expect
+import Mathlib.Algebra.BigOperators.Balance
 import Mathlib.Algebra.Order.BigOperators.Expect
 
 /-!
@@ -153,8 +154,7 @@ theorem expect_ite_mem_walk_sq_le [Nonempty D] {B C : Finset V} {μ : ℝ} (hB :
   set y : V → ℝ := fun v => G.walk x v - (1 - ℓ) * α
   have hy : 𝔼 v, y v ^ 2 ≤ ℓ ^ 2 * 𝔼 v, x v ^ 2 := by
     set w : V → ℝ := G.walk (fun v => x v - α)
-    have hw₀ : 𝔼 v, (x v - α) = 0 := by
-      rw [expect_sub_distrib, Fintype.expect_const, sub_self]
+    have hw₀ : 𝔼 v, (x v - α) = 0 := Fintype.expect_balance x
     have hw : 𝔼 v, w v = 0 := G.expect_walk_eq_zero hw₀
     have hw₂ : 𝔼 v, w v ^ 2 ≤ ℓ ^ 2 * 𝔼 v, (x v - α) ^ 2 :=
       expect_walk_sq_le_spectralExpansion_sq_mul hw₀

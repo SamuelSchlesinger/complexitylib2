@@ -11,6 +11,7 @@ public import Complexity.Probability.PairwiseIndependentHash
 public import Mathlib.Basic.Real.Basic
 import Complexity.Foundations.Data.Finset.Expect
 import Complexity.Probability.Uniform
+import Mathlib.Algebra.BigOperators.Balance
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.Order.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.Pi
@@ -335,9 +336,7 @@ theorem dens_filter_le_abs_sum_sub_expect {m : ℕ}
     (dens {i | a ≤ |∑ x ∈ S, (g x (h i x) - 𝔼 y, g x y)|} : ℝ) ≤ (m ^ 2 * #S / a ^ 2) ^ m := by
   refine hh.dens_filter_le_abs_sum S (fun x y => g x y - 𝔼 y, g x y) (fun x _ => ?_)
     (fun x hx y => ?_) ha
-  · rcases isEmpty_or_nonempty Y with hY | hY
-    · simp [univ_eq_empty]
-    · rw [expect_sub_distrib, Fintype.expect_const, sub_self]
+  · exact Fintype.expect_balance (g x)
   · have : Nonempty Y := ⟨y⟩
     have h0 : 0 ≤ 𝔼 y, g x y := expect_nonneg fun y _ => (hg x hx y).1
     have h1 : 𝔼 y, g x y ≤ 1 := expect_le univ_nonempty fun y _ => (hg x hx y).2
