@@ -6,6 +6,36 @@ with wiring and fanout free. Formula leaf count and formula depth are separate
 measures; unbounded fan-in bases are identified in their entries.
 
 \begin{result}
+\subsection{Comparison and least-key tournaments}
+For unsigned words read with the least significant bit first, a De Morgan
+comparator on two $w$-bit words decides $x\le y$ with exactly $5w+1$ gates
+and depth at most $4w+1$. A multiplexer uses $3w+1$ gates and depth at most
+$3$, with one shared negation of its control bit. Comparing and selecting
+two records with a $k$-bit key followed by a $p$-bit payload uses
+$8k+3p+2$ gates and depth at most $4k+4$, preserving the first record on ties.
+Widths may be zero; the empty-word comparison is true.
+A balanced tournament on $m+1$ packed records returns an input record whose
+key is no larger than any other key, with exactly $m(8k+3p+2)$ gates and depth
+at most $(4k+4)\lceil\log_2(m+1)\rceil$. This requires at least one record;
+$m=0$ is a zero-gate wiring circuit. The theorem does not specify the winner
+among tied minimum keys. For records produced by circuits on shared inputs,
+the size additionally sums their gate counts and the depth adds their maximum
+depth bound; the construction duplicates those leaf programs.
+These are circuit costs, not constructor-runtime bounds. The formalization
+recovers Samuel Schlesinger's earlier Complexitylib comparison and keyed-minimum
+constructions, using the current generic circuit composition and balanced folds.
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Comparison.lean}{162}{Cslib.Circuits.Boolean.eval_leCircuit}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Comparison.lean}{179}{Cslib.Circuits.Boolean.size_leCircuit}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Comparison.lean}{187}{Cslib.Circuits.Boolean.depth_leCircuit_le}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Comparison.lean}{269}{Cslib.Circuits.Boolean.eval_keyedMinCircuit}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Comparison.lean}{276}{Cslib.Circuits.Boolean.size_keyedMinCircuit}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Tournament.lean}{145}{Cslib.Circuits.Boolean.exists_eval_packedTournamentCircuit}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Tournament.lean}{154}{Cslib.Circuits.Boolean.size_packedTournamentCircuit}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Boolean/Tournament.lean}{159}{Cslib.Circuits.Boolean.depth_packedTournamentCircuit_le}
+\declat{7d3ca766dce1d30203b798cfabc4e3ec4e8c93db}{Complexity/Computability/Circuit/Balanced.lean}{86}{Cslib.Circuits.Circuit.depth_balanced_le}
+\end{result}
+
+\begin{result}
 \subsection{Inlining polynomial-size circuit oracles}
 Extend De Morgan circuits with an oracle gate of each arity $q$, answering membership
 of its $q$ input bits in a fixed language $A$. Queries may depend on earlier answers,
