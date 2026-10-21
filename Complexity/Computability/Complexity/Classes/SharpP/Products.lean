@@ -146,18 +146,8 @@ theorem GapP.prod_range_mem {g : α × ℕ → ℤ} {r : α → ℕ}
   have hreindex : ComputableTidilyInPolyTime
       (fun x : (α × List Bool) × ℕ => (x.1.1, x.2))
       (encPair (encPair enc encBits) encUnary) (encPair enc encUnary) := by fun_prop
-  have hi : ComputableTidilyInPolyTime
-      (fun x : (α × List Bool) × ℕ => if x.1.2.getD x.2 false then (1 : ℕ) else 0)
-      (encPair (encPair enc encBits) encUnary) encNat := by fun_prop
-  have hj : ComputableTidilyInPolyTime
-      (fun x : (α × List Bool) × ℕ => if x.1.2.getD x.2 false then (0 : ℕ) else 1)
-      (encPair (encPair enc encBits) encUnary) encNat := by fun_prop
-  have hselect : select ∈ SharpP (encPair (encPair enc encBits) encUnary) := by
-    convert SharpP.add_mem (SharpP.mul_mem (SharpP.comp_mem h₁ hreindex) (SharpP.of_polyTime hj))
-      (SharpP.mul_mem (SharpP.comp_mem h₂ hreindex) (SharpP.of_polyTime hi)) using 1
-    ext x
-    simp only [select, Pi.add_apply, Pi.mul_apply, Function.comp_apply]
-    split_ifs <;> simp
+  have hselect : select ∈ SharpP (encPair (encPair enc encBits) encUnary) :=
+    SharpP.ite_mem (by fun_prop) (SharpP.comp_mem h₂ hreindex) (SharpP.comp_mem h₁ hreindex)
   have hprod := SharpP.prod_range_mem hselect (hr.comp (.fst enc encBits))
   have hsign : ComputableTidilyInPolyTime
       (fun x : α × List Bool => (-1 : ℤ) ^ x.2.countP id)
