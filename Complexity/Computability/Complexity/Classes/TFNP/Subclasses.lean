@@ -13,6 +13,7 @@ public import Complexity.Foundations.Data.BitString.List.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Mathlib.Algebra.Polynomial.BigOperators
 import Mathlib.Data.List.GetD
 
@@ -168,138 +169,21 @@ theorem computableTidilyInPolyTime_binaryValue_comp {encIn : α ↪ List Bool} {
     ComputableTidilyInPolyTime (fun a => binaryValue (w a)) encIn encNat :=
   computableTidilyInPolyTime_binaryValue.comp hw
 
-/-- One step of comparing two equal-length most-significant-first bit strings `(u, v)`. -/
-private def cmpBitsStep (s : List Bool × Bool × Bool) (b : Bool) : List Bool × Bool × Bool :=
-  let c := s.1.headD false
-  (s.1.tail, s.2.1 && (b == c), s.2.2 && (!s.2.1 || !b || c))
-
-private theorem foldl_cmpBitsStep_fst (u v : List Bool) :
-    (u.foldl cmpBitsStep (v, true, true)).1 = v.drop u.length := by
-  induction u using List.reverseRecOn with
-  | nil => rfl
-  | append_singleton u b ih =>
-    rw [List.foldl_append, List.foldl_cons, List.foldl_nil, cmpBitsStep, ih,
-      List.length_append, List.length_singleton, List.tail_drop]
-
-private theorem decide_two_mul_add_eq (a b : ℕ) (x y : Bool) :
-    (decide (a = b) && (x == y)) = decide (2 * a + x.toNat = 2 * b + y.toNat) := by
-  cases x <;> cases y <;>
-    simp [Bool.toNat, show (2 * a = 2 * b) ↔ a = b by omega,
-      show ¬(2 * a = 2 * b + 1) by omega, show ¬(2 * a + 1 = 2 * b) by omega]
-
-private theorem decide_two_mul_add_le (a b : ℕ) (x y : Bool) :
-    (decide (a ≤ b) && (!decide (a = b) || !x || y)) =
-      decide (2 * a + x.toNat ≤ 2 * b + y.toNat) := by
-  by_cases heq : a = b
-  · subst heq
-    cases x <;> cases y <;> simp
-  · by_cases hle : a ≤ b
-    · cases x <;> cases y <;>
-        simp [Bool.toNat, heq, hle, show 2 * a ≤ 2 * b by omega,
-          show 2 * a ≤ 2 * b + 1 by omega, show 2 * a + 1 ≤ 2 * b by omega,
-          show 2 * a + 1 ≤ 2 * b + 1 by omega]
-    · cases x <;> cases y <;>
-        simp [Bool.toNat, heq, hle, show ¬(2 * a ≤ 2 * b) by omega,
-          show ¬(2 * a ≤ 2 * b + 1) by omega, show ¬(2 * a + 1 ≤ 2 * b) by omega,
-          show ¬(2 * a + 1 ≤ 2 * b + 1) by omega]
-
-private theorem take_add_one_eq_snoc_headD_drop (v : List Bool) {i : ℕ} (hi : i < v.length) :
-    v.take (i + 1) = v.take i ++ [(v.drop i).headD false] := by
-  rw [List.take_add_one, List.getElem?_eq_getElem hi, Option.toList_some]
-  congr 2
-  rw [List.headD_eq_head?_getD, List.head?_drop, List.getElem?_eq_getElem hi, Option.getD_some]
-
-private theorem foldl_cmpBitsStep_snd (u v : List Bool) (huv : u.length ≤ v.length) :
-    (u.foldl cmpBitsStep (v, true, true)).2 =
-      (decide (binaryValue u = binaryValue (v.take u.length)),
-        decide (binaryValue u ≤ binaryValue (v.take u.length))) := by
-  induction u using List.reverseRecOn with
-  | nil => simp [binaryValue]
-  | append_singleton u b ih =>
-    simp only [List.length_append, List.length_singleton] at huv
-    obtain ⟨ih₁, ih₂⟩ := Prod.ext_iff.1 (ih (by omega))
-    dsimp only at ih₁ ih₂
-    rw [List.foldl_append, List.foldl_cons, List.foldl_nil, cmpBitsStep,
-      foldl_cmpBitsStep_fst, ih₁, ih₂, decide_two_mul_add_eq, decide_two_mul_add_le,
-      ← binaryValue_snoc, List.length_append, List.length_singleton,
-      take_add_one_eq_snoc_headD_drop v (by omega)]
-    simp only [binaryValue_snoc]
-
-private abbrev encCmpAcc : (List Bool × Bool × Bool) ↪ List Bool :=
-  encPair encBits (encPair encBool encBool)
-
 /-- Comparing the binary values of two bit strings is polynomial-time. -/
 theorem computableTidilyInPolyTime_binaryValue_le :
     ComputableTidilyInPolyTime
       (fun p : List Bool × List Bool => decide (binaryValue p.1 ≤ binaryValue p.2))
-      (encPair encBits encBits) encBool := by
-  have hpad1 : ComputableTidilyInPolyTime
-      (fun p : List Bool × List Bool => zeroVertex (p.2.length - p.1.length) ++ p.1)
-      (encPair encBits encBits) encBits := by fun_prop
-  have hpad2 : ComputableTidilyInPolyTime
-      (fun p : List Bool × List Bool => zeroVertex (p.1.length - p.2.length) ++ p.2)
-      (encPair encBits encBits) encBits := by fun_prop
-  have hstep : ComputableTidilyInPolyTime
-      (fun q : (List Bool × Bool × Bool) × Bool => cmpBitsStep q.1 q.2)
-      (encPair encCmpAcc encBool) encCmpAcc := by
-    have hq := fst encCmpAcc encBool
-    have hrest := hq.fst'
-    have hflags := hq.snd'
-    have hb := snd encCmpAcc encBool
-    have hc : ComputableTidilyInPolyTime
-        (fun q : (List Bool × Bool × Bool) × Bool => q.1.1.headD false)
-        (encPair encCmpAcc encBool) encBool :=
-      (headD (encA := encBool) false).comp hrest
-    have hbool : ComputableTidilyInPolyTime
-        (fun t : (Bool × Bool) × (Bool × Bool) =>
-          (t.1.1 && (t.2.1 == t.2.2), t.1.2 && (!t.1.1 || !t.2.1 || t.2.2)))
-        (encPair (encPair encBool encBool) (encPair encBool encBool))
-        (encPair encBool encBool) := of_finite _
-    exact (bitsTail.comp hrest).prod (hbool.comp (hflags.prod (hb.prod hc)))
-  have hfold := foldl' (encA := encBool) (encL := encBits) (encB := encCmpAcc)
-    hpad1 (hpad2.prod (const (true, true))) hstep
-    (B := fun p =>
-      (encCmpAcc (zeroVertex (p.1.length - p.2.length) ++ p.2, true, true)).length)
-    (hpad2.prod (const (true, true))).polyBounded_length
-    (fun p i _ => by
-      let pad1 := zeroVertex (p.2.length - p.1.length) ++ p.1
-      let pad2 := zeroVertex (p.1.length - p.2.length) ++ p.2
-      have hfst := foldl_cmpBitsStep_fst (pad1.take i) pad2
-      let s := (pad1.take i).foldl cmpBitsStep (pad2, true, true)
-      have hs : s = (pad2.drop (pad1.take i).length, s.2.1, s.2.2) :=
-        Prod.ext hfst rfl
-      change (encCmpAcc s).length ≤ _
-      rw [hs]
-      simp only [pad2, encCmpAcc, encPair_apply, encBits_apply, encBool_apply, List.length_append,
-        length_frame, List.length_drop, List.length_singleton]
-      omega)
-  have hres : ComputableTidilyInPolyTime
-      (fun p : List Bool × List Bool =>
-        ((((zeroVertex (p.2.length - p.1.length) ++ p.1).foldl cmpBitsStep
-          (zeroVertex (p.1.length - p.2.length) ++ p.2, true, true)).2).2))
-      (encPair encBits encBits) encBool := hfold.snd'.snd'
-  refine hres.of_enc_eq fun p => ?_
-  let pad1 := zeroVertex (p.2.length - p.1.length) ++ p.1
-  let pad2 := zeroVertex (p.1.length - p.2.length) ++ p.2
-  have hlen : pad1.length = pad2.length := by
-    simp only [pad1, pad2, List.length_append, length_zeroVertex]
-    omega
-  have hsnd := congrArg Prod.snd (foldl_cmpBitsStep_snd pad1 pad2 hlen.le)
-  rw [hlen, List.take_length] at hsnd
-  simp only [pad1, pad2, zeroVertex, binaryValue_replicate_false_append] at hsnd
-  rw [← hsnd]
-  rfl
+      (encPair encBits encBits) encBool :=
+  binary_le.comp
+    ((computableTidilyInPolyTime_binaryValue.comp (fst encBits encBits)).prod
+      (computableTidilyInPolyTime_binaryValue.comp (snd encBits encBits)))
 
 /-- Comparing two binary natural numbers (`encNat`) is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_nat_le :
     ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))
-      (encPair encNat encNat) encBool := by
-  have hrev : ComputableTidilyInPolyTime
-      (fun p : ℕ × ℕ => ((encNat p.1).reverse, (encNat p.2).reverse))
-      (encPair encNat encNat) (encPair encBits encBits) := by fun_prop
-  simpa only [Function.comp_def, encNat_apply, binaryValue_reverse_bits] using
-    computableTidilyInPolyTime_binaryValue_le.comp hrev
+      (encPair encNat encNat) encBool :=
+  binary_le
 
 @[fun_prop]
 theorem computableTidilyInPolyTime_nat_le' {encIn : α ↪ List Bool} {left right : α → ℕ}
