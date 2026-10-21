@@ -369,11 +369,8 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec {σ : Typ
 /-- A fold whose step ignores its token iterates the state map, `j` times after `j` tokens. -/
 theorem streamState_replicate {σ α : Type*} (f : σ → σ) (s : σ) (a : α) {k j : ℕ} (hj : j ≤ k) :
     streamState s (fun p : σ × α => f p.1) (List.replicate k a) j = f^[j] s := by
-  rw [streamState, List.take_replicate, Nat.min_eq_left hj]
-  induction j generalizing s with
-  | zero => rfl
-  | succ j ih =>
-    rw [List.replicate_succ, List.foldl_cons, ih _ (by omega), Function.iterate_succ_apply]
+  simp only [streamState, List.take_replicate, Nat.min_eq_left hj, List.foldl_const,
+    List.length_replicate]
 
 /-- Stream `k` rounds of a state map `f` from `(s, k)` on `encPair enc encUnary`. Round `i` emits
 `emit (f^[i] s)` directly to the output, and the final state is finished by `finish`. The unary

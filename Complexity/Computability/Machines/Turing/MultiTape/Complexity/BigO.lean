@@ -6,6 +6,7 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: use core's fold homomorphism law for the captured-parameter identity.
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
@@ -411,8 +412,8 @@ public theorem foldlWith [ListEncoding encA encL] [hS : SizedListEncoding encA e
       fun x => Sp x + Sl x + Si x + Q x + B x + (encP (par x)).length + (encL (list x)).length := by
   -- fold over the state `(par x, acc)`, keeping the parameter unchanged
   have heq (l : List α) (s : π × β) :
-      l.foldl (fun s a => (s.1, step s.1 s.2 a)) s = (s.1, l.foldl (step s.1) s.2) := by
-    induction l generalizing s <;> simp [*]
+      l.foldl (fun s a => (s.1, step s.1 s.2 a)) s = (s.1, l.foldl (step s.1) s.2) :=
+    List.foldl_hom (fun acc => (s.1, acc)) (fun _ _ => rfl)
   have hkeep := (fst encP encB).comp_linear (fst (encPair encP encB) encA)
   have hfold := foldl (encB := encPair encP encB) hlist (hpar.prod hinit)
     (step := fun s a => (s.1, step s.1 s.2 a)) (hkeep.prod hstep)

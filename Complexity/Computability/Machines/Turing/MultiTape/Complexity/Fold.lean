@@ -145,9 +145,10 @@ public theorem ComputableTidilyInDegree.foldlWith {γ α β π : Type} {encIn : 
     ComputableTidilyInDegree (fun x => (list x).foldl (step (par x)) (init x)) encIn encB
       (max (max dL (max dP dI)) (eL + max 1 dS * max (max eP b) eL)) b := by
   -- fold over the state `(par x, acc)`, keeping the parameter unchanged
+  -- vendored: use core's fold homomorphism law for the captured-parameter identity.
   have heq (l : List α) (s : π × β) :
-      l.foldl (fun s a => (s.1, step s.1 s.2 a)) s = (s.1, l.foldl (step s.1) s.2) := by
-    induction l generalizing s <;> simp [*]
+      l.foldl (fun s a => (s.1, step s.1 s.2 a)) s = (s.1, l.foldl (step s.1) s.2) :=
+    List.foldl_hom (fun acc => (s.1, acc)) (fun _ _ => rfl)
   have hfold := ComputableTidilyInDegree.foldl' (encB := encPair encP encB) hlist
     (hpar.prod hinit) (step := fun s a => (s.1, step s.1 s.2 a))
     (((ComputableTidilyInDegree.fst encP encB).comp
