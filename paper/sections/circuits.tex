@@ -239,6 +239,40 @@ The prime and depth are fixed in the class separation.\citep{Razborov1987,Smolen
 \end{result}
 
 \begin{result}
+\subsection{Simulating \texorpdfstring{MOD$_q$}{MOD\_q} gates with majority gates}
+Over any Boolean basis containing the unbounded fan-in basis, an $n$-input
+$\mathrm{MOD}_q$ gate ($\mathbf 1[\operatorname{weight}(x)\bmod q\ne0]$) is
+computed from a circuit $M$ for $(2n+2)$-input majority using at most
+$1+(n+1)(2(2+|M|)+2)$ gates and depth at most $\operatorname{depth}(M)+4$.
+For a circuit $C$ over the unbounded fan-in basis extended by a family of
+symmetric gates $f_m(x)=G(m,\operatorname{weight}(x))$, aggregating repeated
+wires into multiplicities (\lean{multCircuit}) preserves the computed function
+and size, does not increase depth, and bounds every gate's distinct-wire arity
+by $n+|C|$. Reducing each $\mathrm{MOD}_q$ wire multiplicity modulo $q$ (or to
+$\min(k,1)$ when $q=0$) and replacing each gate gives, for every $q$ and every
+$n$-input, $m$-output circuit $C$ with $\mathrm{MOD}_q$ gates, an equivalent
+circuit $D$ over the majority basis with
+\[
+|D|\le |C|\bigl(9+8\max(q,1)(n+|C|)\bigr),\qquad
+\operatorname{depth}(D)\le 5\operatorname{depth}(C).
+\]
+Consequently $\mathrm{AC}^i[q]\subseteq\mathrm{TC}^i$ for all $q,i\in\mathbb N$,
+$\mathrm{AC}^0[q]\subseteq\mathrm{TC}^0$, and for every odd prime $p$,
+$\mathrm{AC}^0[p]\subsetneq\mathrm{TC}^0$. These are nonuniform circuit
+inclusions; no uniformity condition is imposed.\citep{ChandraStockmeyerVishkin1984,Vollmer1999,Razborov1987,Smolensky1987}
+\decl{Complexity/Computability/Circuit/Boolean/Multiplicity.lean}{197}{Cslib.Circuits.Boolean.Unbounded.eval_multCircuit}
+\decl{Complexity/Computability/Circuit/Boolean/Multiplicity.lean}{203}{Cslib.Circuits.Boolean.Unbounded.depth_multCircuit_le}
+\decl{Complexity/Computability/Circuit/Boolean/Multiplicity.lean}{213}{Cslib.Circuits.Boolean.Unbounded.fanInAtMost_multCircuit}
+\decl{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{99}{Cslib.Circuits.Boolean.computes_modCircuitOfMajority}
+\decl{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{74}{Cslib.Circuits.Boolean.size_modCircuitOfMajority_le}
+\decl{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{86}{Cslib.Circuits.Boolean.depth_modCircuitOfMajority_le}
+\decl{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{239}{Cslib.Circuits.Boolean.Unbounded.exists_majority_simulation_modGate}
+\decl{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{261}{Cslib.Circuits.Boolean.ACMod_subset_TC}
+\decl{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{275}{Cslib.Circuits.Boolean.AC0Mod_subset_TC0}
+\decl{Complexity/Computability/Circuit/Boolean/Smolensky/Majority.lean}{52}{Cslib.Circuits.Boolean.Smolensky.AC0Mod_ssubset_TC0}
+\end{result}
+
+\begin{result}
 \subsection{Razborov's monotone clique bound}
 Let $p,w\ge2$, $w+1\le k\le n$, $p\le n$, and $2w^2\le k-1$, and put
 \[
