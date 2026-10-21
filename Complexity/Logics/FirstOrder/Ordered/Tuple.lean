@@ -22,8 +22,8 @@ is used. The standard canonical constants use `n ≥ 2`, and the tuple for one n
 dimension. The zero-dimensional universe still has one element.
 
 This numbers the full tuple universe; native tuple BIT is constructed in `Ordered.TupleBit`.
-Numeric-preserving interpretation composition and numeric predicates on restricted domains
-require separate constructions.
+Numeric-preserving full-tuple composition is supplied in `Ordered.FullTuple.Composition`.
+Numeric predicates on restricted domains require separate constructions.
 
 ## Main definitions
 

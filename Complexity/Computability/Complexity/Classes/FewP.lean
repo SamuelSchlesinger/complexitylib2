@@ -18,8 +18,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 condition of `UP`; see [Allender and Rubinstein][AllenderRubinstein1988] and the explicit
 acceptance-set definition in
 [Borchert, Hemaspaandra and Rothe, Section 1][BorchertHemaspaandraRothe2000].
-This file uses exact-length verifier counts. It does not prove equivalence with a nondeterministic
-machine whose number of accepting paths is polynomially bounded.
+This file uses exact-length verifier counts. `Classes.FewP.Machine` proves the equivalent native
+finite-machine characterization, with a polynomial bound on accepting occurrence traces.
 
 The containments and closures below are elementary consequences of the definition and the
 existing `SharpP` algebra: addition adds the ambiguity bounds, multiplication multiplies them,

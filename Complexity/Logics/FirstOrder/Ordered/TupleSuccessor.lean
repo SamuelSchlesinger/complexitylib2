@@ -21,7 +21,8 @@ quantifier-free, as in Immerman's Exercise 1.33(2) with source SUC available. In
 `≤`/BIT basis, the canonical source successor instead uses a universal adjacency formula. Its
 compiled tuple formula is first-order, with one element quantifier in each carry alternative;
 no unconditional quantifier-free claim is made for this basis. Native full-tuple BIT is supplied
-in `Ordered.TupleBit`; numeric-preserving interpretation composition remains open.
+in `Ordered.TupleBit`; numeric-preserving full-tuple composition is in
+`Ordered.FullTuple.Composition`.
 
 ## Main definitions
 

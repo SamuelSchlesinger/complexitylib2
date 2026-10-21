@@ -20,7 +20,8 @@ The result is nonmodular: an out-of-range sum has no satisfying result in the un
 
 This is the PLUS portion of the arithmetic-definability foundation. The Bit Sum Lemma is proved
 in `Ordered.BitSum`; native TIMES and full-tuple BIT are constructed in
-`Ordered.Multiplication` and `Ordered.TupleBit`. Numeric-preserving composition remains open.
+`Ordered.Multiplication` and `Ordered.TupleBit`. Numeric-preserving full-tuple composition is
+supplied in `Ordered.FullTuple.Composition`.
 
 ## Main definitions
 
