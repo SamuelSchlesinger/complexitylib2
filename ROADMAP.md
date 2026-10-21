@@ -116,8 +116,8 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Proof complexity | Build on [Cook–Reckhow systems and simulations](Complexity/Logics/Propositional/ProofSystem.lean), including the polynomially bounded-system characterization of NP = coNP, the [resolution size–width tradeoff](Complexity/Logics/Propositional/Resolution/SizeWidth.lean) and [tree-like resolution/DPLL search-tree certificates](Complexity/Logics/Propositional/Resolution/TreeLike.lean). Extend proof-space and pigeonhole lower bounds (Tseitin formulas on expanders are [proved](Complexity/Logics/Propositional/Resolution/TseitinExpander.lean) hard for resolution), Frege, cutting planes, polynomial calculus and sum-of-squares. The certificate correspondence does not certify a DPLL solver's runtime. |
 | Average-case complexity and learning | Uniform-distribution learning on CSLib's PAC API, the LMN low-degree algorithm and Kushilevitz–Mansour with membership queries are [proved](Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean); running times are not machine-certified. Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |
 | Property and distribution testing | Distance and access models, one/two-sided and tolerant testing, query/sample bounds, canonical graph/algebraic/distribution testers and lower bounds. |
-| Fine-grained and parameterized complexity | Under ETH, 3-coloring, independent set, vertex cover and Hamiltonian cycle and path have no 2^{o(\|V\|+\|E\|)} algorithms and clique none in 2^{o(\|V\|)} ([GraphProblems](Complexity/Computability/Complexity/FineGrained/GraphProblems.lean)); the Hamiltonian bounds (directed and undirected) use linear-size diamond reductions. Further fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; FPT/XP, W/A hierarchies, kernelization, parameter-preserving reductions and lower bounds. |
-| Total search and computational games | Build on [FNP, FP and TFNP with search reductions](Complexity/Computability/Complexity/Classes/TFNP.lean), including `FP = FNP` exactly when `P = NP` ([search to decision](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean)) and `TFNP ⊆ FP → NP ∩ coNP = P`. Develop the canonical subclasses PLS, PPAD, PPA, PPP and CLS with their circuit-presented complete problems, local search, fixed-point and equilibrium problems, keeping totality and solution-preserving reductions explicit. |
+| Fine-grained and parameterized complexity | Under ETH, 3-coloring, independent set, vertex cover and Hamiltonian cycle and path have no 2^{o(\|V\|+\|E\|)} algorithms and clique none in 2^{o(\|V\|)} ([GraphProblems](Complexity/Computability/Complexity/FineGrained/GraphProblems.lean)); the Hamiltonian bounds (directed and undirected) use linear-size diamond reductions. [FPT and XP](Complexity/Computability/Complexity/Parameterized.lean) are defined with arbitrary (not necessarily computable) `f`; `P ⊆ FPT ⊆ XP`, Boolean closure of FPT (complement for XP), closure under fpt-reductions and `FPT = XP = P` for bounded parameters are proved, and SAT is in FPT for the number of variables. Further fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; strongly uniform (computable `f`) variants, kernelization, bounded search trees, W/A hierarchies and parameterized lower bounds. |
+| Total search and computational games | Build on [FNP, FP and TFNP with search reductions](Complexity/Computability/Complexity/Classes/TFNP.lean), including `FP = FNP` exactly when `P = NP` ([search to decision](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean)) and `TFNP ⊆ FP → NP ∩ coNP ⊆ P`. Develop the canonical subclasses PLS, PPAD, PPA, PPP and CLS with their circuit-presented complete problems, local search, fixed-point and equilibrium problems, keeping totality and solution-preserving reductions explicit. |
 | Logic and descriptive complexity | Building on [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): logical characterizations of additional resource classes, fixed-point and order-invariant queries, and uniform translations between syntax, structures and algorithms. |
 | Kolmogorov complexity and metacomplexity | Machine-backed descriptions/decoders and invariance, resource-bounded descriptions, MCSP variants and connections to learning, cryptography and lower bounds. Revisit deferred results through independently reviewed developments. |
 | Quantum complexity | Reusable circuit/channel/measurement semantics, uniformity and approximation costs, BQP/QMA and related query, communication and interactive classes, amplification, containments and complete problems. Reuse suitable quantum foundations rather than create incompatible models. |
@@ -276,8 +276,23 @@ of the handover. The work below remains available for subsequent, independently 
      shapes and sizes zero/one reject. Work space is logarithmic in the full encoded input length,
      with no combined-complexity or arbitrary-raw-word claim. This is the relational-input case
      of Immerman's Theorem 3.1. The original order-free empty-universe behavior is preserved.
-     **Next milestones:** actual ordered interpretation-to-logspace transducers and reduction
-     closure, then projections and NL/P completeness. These remain open.
+     **Canonical full-tuple interpretation transducer completed (#137):**
+     [Ordered/FullTuple/Encoding](Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean)
+     and
+     [FirstOrder/Ordered/Reduction](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean)
+     prove that every fixed canonical full-tuple interpretation between finite relational
+     input vocabularies computes its encoded target structure in logarithmic space. Admissible
+     sources of size `n ≥ 2` map to the canonical rank universe `Fin (n^k)` numbered by
+     `lexRank`, serializing only the target input relations in `tupleIndex` order; invalid
+     shapes and sizes zero and one map to a fixed malformed target outside every target query
+     language. For positive dimension `k > 0`, the decoded target with its own canonical
+     numerics is isomorphic to the interpreted full ordered structure preserving every
+     natural rank, and `encodedMap` is a logspace many-one reduction from the pulled-back
+     ordered query language to the target ordered query language. This is the full-domain
+     canonical transducer of Immerman's Proposition 3.5; isomorphism-closed class-level
+     reduction closure, restricted domains, projections and NL/P completeness remain open.
+     **Next milestones:** ordered reduction closure for structure classes, then projections and
+     NL/P completeness. These remain open.
      The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical
      BIT on an arbitrary definable restricted domain need not be first-order definable.
      Restricted-domain numeric preservation therefore requires its own explicit definitions
@@ -324,9 +339,11 @@ of the handover. The work below remains available for subsequent, independently 
      streams interpreted relation tables using tuple ranks. Every order-free interpretation
      reduction to an isomorphism-closed target induces a logspace many-one reduction of encoded
      query languages, with L/P closure. Empty universes and domains, nullary relations,
-     dimension zero, and invalid parsed table shapes are handled. Extending this transducer to
-     computed numeric predicates and canonical lexicographic ordered outputs remains open;
-     the separate ordered model-checking theorem does not supply that transducer.
+     dimension zero, and invalid parsed table shapes are handled. Canonical full-tuple ordered
+     interpretations now have their own logspace transducer in
+     [FirstOrder/Ordered/Reduction](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean);
+     restricted-domain ordered transducers and isomorphism-closed class-level ordered reduction
+     closure remain open.
 
    - [x] **Circuit Value logspace completeness.** [Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean)
      under logarithmic-space many-one reductions, via a machine-certified tableau writer.
@@ -421,7 +438,21 @@ of the handover. The work below remains available for subsequent, independently 
      the ambiguity bound is one for UP and a separate polynomial in encoded input length for
      FewP. Rejecting and total branch counts are not bounded by the ambiguity polynomial.
      Duplicate accepting occurrences remain distinct, while first-halt clock padding preserves
-     their multiplicities. Native oracle-machine characterizations remain separate work.
+     their multiplicities.
+     [Native oracle occurrence replay](Complexity/Computability/Machines/Turing/MultiTape/Counting/Oracle/Replay.lean)
+     now gives exact ordered equality between the shared FreeM run and canonical fixed-clock
+     index certificates (#136), under an explicit positive uniform local-list length bound.
+     It retains consumed indices, complete configurations and branch-local private oracle state;
+     live cutoffs are retained, with terminal filtering and both verdict counts proved separately.
+     Trace erasure recovers the ordinary shared interpretation, and the Empty-channel cases
+     recover raw closed List execution and the existing terminal certificate decoder.
+     This is semantic replay, without a nonblocking or halting hypothesis. A later oracle clock
+     contract must be nonvacuous and uniform over admissible handlers; the generic total-PMF
+     predicate cannot be instantiated blindly at an occurrence interface containing `Fin 0`.
+     Closed counting clocks and characterizations are unaffected. Efficient encoded oracle
+     checking, response-access costs, and native oracle-machine characterizations remain open;
+     resource bounds must be uniform over admissible oracles, while correctness may specialize
+     to one fixed language oracle.
 
 2. **Complete theorem ports using the existing certificate APIs.** Extend automation when a
    concrete port is blocked or several clients repeat the same proof burden. Constructor, projection,
@@ -549,9 +580,12 @@ Jukna coverage below is an additional target beyond the V1 port:
 * **Search and parameterized complexity.** [FNP, FP and TFNP](Complexity/Computability/Complexity/Classes/TFNP.lean)
   are defined with polynomial-time search reductions, `FP = FNP` exactly when `P = NP` is
   [proved](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean), and `TFNP ⊆ FP`
-  implies `NP ∩ coNP = P`. Develop the TFNP subclasses (PLS, PPAD, PPA, PPP, CLS) with their
-  complete problems, and FPT/XP, parameterized reductions and kernelization. The long-term
-  coverage table identifies the broader class families.
+  implies `NP ∩ coNP ⊆ P`. Develop the TFNP subclasses (PLS, PPAD, PPA, PPP, CLS) with their
+  complete problems (#151). Building on
+  [FPT, XP and fpt-reductions](Complexity/Computability/Complexity/Parameterized.lean), prove the
+  kernelization characterization of FPT and a bounded-search-tree algorithm for vertex cover
+  (#152), then strongly uniform variants and the W hierarchy.
+  The long-term coverage table identifies the broader class families.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should

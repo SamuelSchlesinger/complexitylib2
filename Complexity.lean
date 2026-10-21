@@ -452,6 +452,8 @@ public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Formula
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered.Reduction
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Output
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Reduction
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
@@ -574,6 +576,7 @@ public import Complexity.Computability.Complexity.FineGrained.Reduction
 public import Complexity.Computability.Complexity.FineGrained.Sparsification
 public import Complexity.Computability.Complexity.HardnessEncoding.PolyTime
 public import Complexity.Computability.Complexity.HardnessEncoding.Program
+public import Complexity.Computability.Complexity.Parameterized
 public import Complexity.Computability.Complexity.Problems.CircuitSAT
 public import Complexity.Computability.Complexity.Problems.CircuitValue
 public import Complexity.Computability.Complexity.Problems.CircuitValue.Completeness
@@ -731,6 +734,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Determ
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Execution
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Guess
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Oracle.Program
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Oracle.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.OutputPrefix
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Sequential
@@ -1374,6 +1379,7 @@ public import Complexity.Logics.FirstOrder.Ordered.BitSum.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Composition
+public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
