@@ -6,6 +6,7 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: use the local `DegreeBounded.add_max` rule; the fold contracts are unchanged.
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 
@@ -80,7 +81,7 @@ public theorem ComputableTidilyInDegree.foldl' {γ α β : Type} {encIn : γ ↪
   -- the arguments of a round and the states with the rest of the list
   have haMax : DegreeBounded (fun x => (encIn x).length)
       (fun x => 2 * B x + 1 + (encL (list x)).length) a :=
-    ((hB.mono_deg (le_max_left _ _)).smul 2 |>.add_const 1).add (hl.mono_deg (le_max_right _ _))
+    ((hB.smul 2).add_const 1).add_max hl
   have hlMax : DegreeBounded (fun x => (encIn x).length)
       (fun x => 2 * (encL (list x)).length + 1 + B x) a :=
     ((hl.mono_deg (le_max_right _ _)).smul 2 |>.add_const 1).add (hB.mono_deg (le_max_left _ _))
@@ -120,8 +121,8 @@ public theorem ComputableTidilyInDegree.foldl' {γ α β : Type} {encIn : γ ↪
     have hd₁ : eL + D ≤ max (max dL dI) (eL + D) := le_max_right _ _
     have hlen : DegreeBounded (fun x => (encIn x).length) (fun x => (list x).length + 1) eL :=
       (hl.add_const 1).mono fun x => Nat.add_le_add_right (hS.length_le _) 1
-    have ht := (ht₁.mono_deg (le_max_left _ _)).add (ht₂.mono_deg (le_max_right _ _))
-    have hs := (hs₁.mono_deg (le_max_left _ _)).add (hs₂.mono_deg (le_max_right _ _))
+    have ht := ht₁.add_max ht₂
+    have hs := hs₁.add_max hs₂
     refine ⟨⟨_, _, ((ht.mono_deg hd₀).add ((hlen.mul ((hround.add (hlMax.mono_deg haD)).add_const
       1)).mono_deg hd₁)).smul c, ((((hs.mono_deg hd₀).add (hround.mono_deg (by omega))).add
         (hlMax.mono_deg (by omega))).add_const 1).smul c, h⟩, hB.mono fun x => ?_⟩
