@@ -153,8 +153,9 @@ This library is **Complexitylib**: computational complexity theory built on CSLi
 name `complexitylib2` distinguished the CSLib-based rewrite while both implementations were active;
 it is not a lasting project identity. The canonical repository is
 [`cslib-community/complexitylib`](https://github.com/cslib-community/complexitylib). The original,
-pre-CSLib implementation remains available as the read-only
-[`complexitylib-v1`](https://github.com/SamuelSchlesinger/complexitylib-v1) archive.
+pre-CSLib implementation remains available at the renamed historical repository
+[`complexitylib-v1`](https://github.com/SamuelSchlesinger/complexitylib-v1), with archival pending
+disposition of remaining work there.
 
 Moving the repository to CSLib Community is an owner and name change for continuing development,
 not a handover of Samuel's editorial direction and not acceptance into upstream CSLib. AI

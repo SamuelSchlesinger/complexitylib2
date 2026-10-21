@@ -109,9 +109,9 @@ Open `http://localhost:8000` to browse and search. The on-demand **API documenta
 also produces an `api-docs` artifact; serve it by replacing the directory argument above with
 the extracted artifact directory.
 
-This is the canonical CSLib-based Complexitylib. The
-[pre-CSLib implementation](https://github.com/SamuelSchlesinger/complexitylib-v1) is preserved as
-an archive; it has a different API, and some developments remain to be ported. The temporary
+This is the canonical CSLib-based Complexitylib. The renamed historical
+[pre-CSLib implementation](https://github.com/SamuelSchlesinger/complexitylib-v1) remains available
+with archival pending; it has a different API, and some developments remain to be ported. The temporary
 repository and package name `complexitylib2` was retired when this repository moved to CSLib
 Community. Downstream projects using that package name should change it to `complexitylib`; Lean
 imports remain unchanged. APIs are still evolving, so downstream projects should pin a commit.
