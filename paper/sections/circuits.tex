@@ -28,6 +28,30 @@ by Samuel Schlesinger.
 \end{result}
 
 \begin{result}
+\subsection{Fixing a seed for multiple circuit outputs}
+Let $C$ have $n+p$ Boolean inputs and $m$ Boolean outputs, and let
+$R(x,y)$ be a decidable relation between $n$ input bits and $m$ output bits.
+Suppose that for every $x$ the number of seeds $r\in\{0,1\}^p$ with
+$\neg R(x,C(x,r))$ satisfies
+\[
+  2^n\,\bigl|\{r:\neg R(x,C(x,r))\}\bigr|<2^p.
+\]
+Then a single seed makes $R(x,C(x,r))$ hold for every input $x$.
+For De Morgan circuits there is a deterministic $n$-input, $m$-output circuit
+$D$ with $R(x,D(x))$ for all $x$, at most $|C|+2$ gates, and depth at most
+$\operatorname{depth}(C)+1$. Taking $R(x,y)$ to mean $y=f(x)$ gives the
+functional version. The union-bound argument allows arbitrary circuit bases;
+the stated gate and depth overhead uses the shared Boolean constants. This is
+Adleman's nonuniform seed-fixing step without amplification, and does not bound
+the time needed to find the seed.\citep{Adleman1978,AroraBarak09}
+The formalization recovers Samuel Schlesinger's earlier Complexitylib
+multi-output circuit-hardwiring development.
+\declat{83b75eb85da18834b26a97596eace7d1ecc1d494}{Complexity/Computability/Circuit/Boolean/SeedFixing.lean}{57}{Cslib.Circuits.Circuit.exists_seed_forall}
+\declat{83b75eb85da18834b26a97596eace7d1ecc1d494}{Complexity/Computability/Circuit/Boolean/SeedFixing.lean}{83}{Cslib.Circuits.Boolean.exists_circuit_of_card_bad_lt}
+\declat{83b75eb85da18834b26a97596eace7d1ecc1d494}{Complexity/Computability/Circuit/Boolean/SeedFixing.lean}{101}{Cslib.Circuits.Boolean.exists_computes_of_card_bad_lt}
+\end{result}
+
+\begin{result}
 \subsection{Shannon--Lupanov bounds and the MCSP window}
 Count all NOT, AND, OR and constant gates. For every $\varepsilon>0$, all
 sufficiently large $n$, and every $n$-input truth table, MCSP answers yes at

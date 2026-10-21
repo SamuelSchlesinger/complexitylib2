@@ -167,6 +167,7 @@ public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.Circuit.Boolean.Propagation
 public import Complexity.Computability.Circuit.Boolean.Routing
 public import Complexity.Computability.Circuit.Boolean.RoutingValues
+public import Complexity.Computability.Circuit.Boolean.SeedFixing
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Equation
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Gate
