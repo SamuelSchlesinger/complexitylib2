@@ -9,11 +9,10 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Formula.Subbotovskaya
 public import Complexity.Foundations.Data.BitString.Basic
-public import Cslib.Computability.Circuit.Boolean.Shannon
+import Cslib.Computability.Circuit.Boolean.Shannon
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
-import Mathlib.Tactic.Zify
 
 /-!
 # Andreev's formula lower bound
@@ -256,230 +255,6 @@ theorem formulaSize_le_of_andreevBlock_nonempty {h : BooleanFunction b}
     omega
   exact (formulaSize_le hbind_computes).trans hleaf_le
 
-/-! ### Counting extensions that preserve every parity block -/
-
-/-- For a fixed subset `S ∈ powersetCard ℓ ρ₀.free`, there are `2 ^ (|ρ₀.free| - ℓ)` extensions in
-`ρ₀.extensions ℓ` whose free set is `S`. -/
-theorem card_filter_extensions_free_eq (ρ₀ : PartialAssignment (Fin n)) (ℓ : ℕ)
-    {S : Finset (Fin n)} (hS : S ∈ powersetCard ℓ ρ₀.free) :
-    #{ρ ∈ ρ₀.extensions ℓ | ρ.free = S} = 2 ^ (#ρ₀.free - ℓ) := by
-  obtain ⟨hSsub, hScard⟩ := mem_powersetCard.1 hS
-  have : {ρ ∈ ρ₀.extensions ℓ | ρ.free = S} = Fintype.piFinset fun i =>
-      if i ∈ S then {none} else if i ∈ ρ₀.free then {some false, some true} else {ρ₀ i} := by
-    ext ρ
-    simp only [mem_filter, PartialAssignment.mem_extensions, Fintype.mem_piFinset]
-    constructor
-    · rintro ⟨⟨hext, -⟩, rfl⟩ i
-      by_cases hi : i ∈ ρ.free
-      · simp [hi, PartialAssignment.mem_free.1 hi]
-      · obtain ⟨b, hb⟩ := Option.ne_none_iff_exists'.1 fun h => hi (PartialAssignment.mem_free.2 h)
-        by_cases hi₀ : i ∈ ρ₀.free
-        · cases b <;> simp [hi, hi₀, hb]
-        · obtain ⟨c, hc⟩ :=
-            Option.ne_none_iff_exists'.1 fun h => hi₀ (PartialAssignment.mem_free.2 h)
-          simp only [hi, ↓reduceIte, hi₀, mem_singleton]
-          rw [hext i c hc, hc]
-    · intro h
-      have hfree : ρ.free = S := by
-        ext i
-        have := h i
-        by_cases hi : i ∈ S
-        · simp_all
-        · by_cases hi₀ : i ∈ ρ₀.free
-          · cases hρ : ρ i <;> simp_all
-          · simp only [hi, ↓reduceIte, hi₀, mem_singleton] at this
-            simp only [PartialAssignment.mem_free, this, hi, iff_false]
-            exact fun h' => hi₀ (PartialAssignment.mem_free.2 h')
-      refine ⟨⟨fun i b hb => ?_, hfree ▸ hScard⟩, hfree⟩
-      have hi₀ : i ∉ ρ₀.free := by simp [PartialAssignment.mem_free, hb]
-      have hi : i ∉ S := fun hi => hi₀ (hSsub hi)
-      simpa [hi, hi₀, hb] using h i
-  rw [this, Fintype.card_piFinset]
-  simp only [apply_ite card, card_singleton,
-    card_pair (show some false ≠ some true by simp)]
-  rw [prod_ite, prod_const_one, one_mul, prod_ite, prod_const,
-    prod_const_one, mul_one, filter_filter,
-    show ({a | a ∉ S ∧ a ∈ ρ₀.free} : Finset (Fin n)) = ρ₀.free \ S by
-      ext a
-      simp [and_comm], card_sdiff_of_subset hSsub, hScard]
-
-/-- The number of extensions in `ρ₀.extensions ℓ` whose free variables lie inside `U ⊆ ρ₀.free` is
-`C(|U|, ℓ) * 2 ^ (|ρ₀.free| - ℓ)`. -/
-theorem card_filter_extensions_free_subset (ρ₀ : PartialAssignment (Fin n)) (ℓ : ℕ)
-    {U : Finset (Fin n)} (hU : U ⊆ ρ₀.free) :
-    #{ρ ∈ ρ₀.extensions ℓ | ρ.free ⊆ U} = (#U).choose ℓ * 2 ^ (#ρ₀.free - ℓ) := by
-  rw [card_eq_sum_card_fiberwise (f := PartialAssignment.free) (t := powersetCard ℓ U)
-    fun ρ hρ => by
-      obtain ⟨hρ_ext, hρ_sub⟩ := mem_filter.1 hρ
-      exact mem_powersetCard.2 ⟨hρ_sub, (PartialAssignment.mem_extensions.1 hρ_ext).2⟩]
-  rw [sum_congr rfl (g := fun _ => 2 ^ (#ρ₀.free - ℓ)), sum_const, card_powersetCard, smul_eq_mul]
-  intro S hS
-  obtain ⟨hSsub, hScard⟩ := mem_powersetCard.1 hS
-  have hfilter :
-      {ρ ∈ {ρ ∈ ρ₀.extensions ℓ | ρ.free ⊆ U} | ρ.free = S} =
-        {ρ ∈ ρ₀.extensions ℓ | ρ.free = S} := by
-    ext ρ
-    simp only [mem_filter]
-    exact ⟨fun ⟨⟨h1, _⟩, h2⟩ => ⟨h1, h2⟩, fun ⟨h1, h2⟩ => ⟨⟨h1, h2 ▸ hSsub⟩, h2⟩⟩
-  rw [hfilter]
-  exact card_filter_extensions_free_eq ρ₀ ℓ (mem_powersetCard.2 ⟨hSsub.trans hU, hScard⟩)
-
-/-- The number of extensions in `ρ₀.extensions ℓ` that fix every variable of `B ⊆ ρ₀.free` is
-`C(|ρ₀.free| - |B|, ℓ) * 2 ^ (|ρ₀.free| - ℓ)`. -/
-theorem card_filter_extensions_not_nonempty_inter (ρ₀ : PartialAssignment (Fin n)) (ℓ : ℕ)
-    {B : Finset (Fin n)} (hB : B ⊆ ρ₀.free) :
-    #{ρ ∈ ρ₀.extensions ℓ | ¬(ρ.free ∩ B).Nonempty} =
-      (#ρ₀.free - #B).choose ℓ * 2 ^ (#ρ₀.free - ℓ) := by
-  have heq :
-      {ρ ∈ ρ₀.extensions ℓ | ¬(ρ.free ∩ B).Nonempty} =
-        {ρ ∈ ρ₀.extensions ℓ | ρ.free ⊆ ρ₀.free \ B} := by
-    ext ρ
-    simp only [mem_filter, not_nonempty_iff_eq_empty]
-    refine and_congr_right fun hρ => ?_
-    have hsub := (PartialAssignment.mem_extensions.1 hρ).1.free_subset
-    constructor
-    · intro hemp i hi
-      refine mem_sdiff.2 ⟨hsub hi, fun hiB => ?_⟩
-      have : i ∈ (∅ : Finset (Fin n)) := hemp ▸ mem_inter.2 ⟨hi, hiB⟩
-      exact notMem_empty i this
-    · intro hsub'
-      ext i
-      simp only [mem_inter, notMem_empty, iff_false, not_and]
-      intro hi
-      exact (mem_sdiff.1 (hsub' hi)).2
-  rw [heq, card_filter_extensions_free_subset ρ₀ ℓ sdiff_subset, card_sdiff_of_subset hB]
-
-/-- For `a ≤ s`, `C(a, k) * s ^ k ≤ C(s, k) * a ^ k`. -/
-theorem choose_mul_pow_le {a s : ℕ} (has : a ≤ s) (k : ℕ) :
-    a.choose k * s ^ k ≤ s.choose k * a ^ k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    by_cases hk : a < k + 1
-    · rw [Nat.choose_eq_zero_of_lt hk, zero_mul]
-      exact Nat.zero_le _
-    · have hka : k ≤ a := by omega
-      have hks : k ≤ s := hka.trans has
-      have hstep : (a - k) * s ≤ (s - k) * a := by
-        zify [hka, hks]
-        nlinarith
-      have hpos : 0 < k + 1 := by positivity
-      refine Nat.le_of_mul_le_mul_right ?_ hpos
-      calc a.choose (k + 1) * s ^ (k + 1) * (k + 1)
-          = a.choose (k + 1) * (k + 1) * s ^ k * s := by ring
-        _ = a.choose k * (a - k) * s ^ k * s := by rw [Nat.choose_succ_right_eq]
-        _ = a.choose k * s ^ k * ((a - k) * s) := by ring
-        _ ≤ s.choose k * a ^ k * ((s - k) * a) := Nat.mul_le_mul ih hstep
-        _ = s.choose k * (s - k) * a ^ k * a := by ring
-        _ = s.choose (k + 1) * (k + 1) * a ^ k * a := by rw [← Nat.choose_succ_right_eq]
-        _ = s.choose (k + 1) * a ^ (k + 1) * (k + 1) := by ring
-
-/-- `C(b * m - m, k) * b ^ k ≤ C(b * m, k) * (b - 1) ^ k`. -/
-theorem choose_sub_mul_pow_le (b m k : ℕ) :
-    (b * m - m).choose k * b ^ k ≤ (b * m).choose k * (b - 1) ^ k := by
-  rcases Nat.eq_zero_or_pos m with rfl | hm
-  · rcases k with _ | k <;> simp
-  · have hbm : b * m - m = (b - 1) * m := by
-      rw [Nat.sub_mul, one_mul]
-    rw [hbm]
-    have hle : (b - 1) * m ≤ b * m := Nat.mul_le_mul_right m (Nat.sub_le b 1)
-    have h := choose_mul_pow_le hle k
-    rw [Nat.mul_pow, Nat.mul_pow] at h
-    have hpos : 0 < m ^ k := by positivity
-    refine Nat.le_of_mul_le_mul_right ?_ hpos
-    calc ((b - 1) * m).choose k * b ^ k * m ^ k
-        = ((b - 1) * m).choose k * (b ^ k * m ^ k) := by ring
-      _ ≤ (b * m).choose k * ((b - 1) ^ k * m ^ k) := h
-      _ = (b * m).choose k * (b - 1) ^ k * m ^ k := by ring
-
-/-- Bernoulli's inequality in `ℕ`: for `1 ≤ n`, `d ^ n + n * d ^ (n - 1) ≤ (d + 1) ^ n`. -/
-private theorem pow_add_mul_pow_sub_one_le (d : ℕ) {n : ℕ} (hn : 1 ≤ n) :
-    d ^ n + n * d ^ (n - 1) ≤ (d + 1) ^ n := by
-  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
-  clear hn
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    simp only [Nat.add_sub_cancel] at ih ⊢
-    calc d ^ (k + 2) + (k + 2) * d ^ (k + 1)
-        = (d ^ (k + 1) + (k + 1) * d ^ k) * d + d ^ (k + 1) := by ring
-      _ ≤ (d ^ (k + 1) + (k + 1) * d ^ k) * d + d ^ (k + 1) + (k + 1) * d ^ k :=
-          Nat.le_add_right _ _
-      _ = (d ^ (k + 1) + (k + 1) * d ^ k) * (d + 1) := by ring
-      _ ≤ (d + 1) ^ (k + 1) * (d + 1) := Nat.mul_le_mul_right (d + 1) ih
-      _ = (d + 1) ^ (k + 2) := by ring
-
-/-- For `1 ≤ b`, `2 * (b - 1) ^ b ≤ b ^ b`. -/
-theorem two_mul_pred_pow_le {b : ℕ} (hb : 1 ≤ b) :
-    2 * (b - 1) ^ b ≤ b ^ b := by
-  obtain ⟨d, rfl⟩ : ∃ d, b = d + 1 := ⟨b - 1, by omega⟩
-  have h := pow_add_mul_pow_sub_one_le d (Nat.succ_pos d)
-  calc 2 * d ^ (d + 1)
-      = d ^ (d + 1) + d * d ^ d := by ring
-    _ ≤ d ^ (d + 1) + (d + 1) * d ^ d :=
-        Nat.add_le_add_left (Nat.mul_le_mul_right (d ^ d) (Nat.le_succ d)) _
-    _ ≤ (d + 1) ^ (d + 1) := h
-
-/-- For `1 ≤ b`, `2 ^ r * C(b * m - m, b * r) ≤ C(b * m, b * r)`. -/
-theorem two_pow_mul_choose_sub_le {b m : ℕ} (hb : 1 ≤ b) (r : ℕ) :
-    2 ^ r * (b * m - m).choose (b * r) ≤ (b * m).choose (b * r) := by
-  have hpow : 2 ^ r * (b - 1) ^ (b * r) ≤ b ^ (b * r) := by
-    calc 2 ^ r * (b - 1) ^ (b * r)
-        = (2 * (b - 1) ^ b) ^ r := by rw [Nat.mul_pow, ← pow_mul]
-      _ ≤ (b ^ b) ^ r := Nat.pow_le_pow_left (two_mul_pred_pow_le hb) r
-      _ = b ^ (b * r) := by rw [← pow_mul]
-  have hchoose := choose_sub_mul_pow_le b m (b * r)
-  have hpos : 0 < b ^ (b * r) := by positivity
-  refine Nat.le_of_mul_le_mul_right ?_ hpos
-  calc 2 ^ r * (b * m - m).choose (b * r) * b ^ (b * r)
-      = 2 ^ r * ((b * m - m).choose (b * r) * b ^ (b * r)) := by ring
-    _ ≤ 2 ^ r * ((b * m).choose (b * r) * (b - 1) ^ (b * r)) :=
-        Nat.mul_le_mul_left (2 ^ r) hchoose
-    _ = (b * m).choose (b * r) * (2 ^ r * (b - 1) ^ (b * r)) := by ring
-    _ ≤ (b * m).choose (b * r) * b ^ (b * r) :=
-        Nat.mul_le_mul_left _ hpow
-
-/-- **Union bound for block survival**: if `ρ₀` has `b * m` free variables and `B 0, …, B (b - 1)`
-are `b` subsets of `ρ₀.free` of size `m`, then for `1 ≤ b` and `2 * b ≤ 2 ^ r`, at least half of
-all extensions in `ρ₀.extensions (b * r)` leave at least one free variable in every block `B j`. -/
-theorem card_extensions_le_two_mul_card_filter_forall_nonempty
-    (ρ₀ : PartialAssignment (Fin n)) (hb : 1 ≤ b) (hfree : #ρ₀.free = b * m)
-    {B : Fin b → Finset (Fin n)} (hBsub : ∀ j, B j ⊆ ρ₀.free) (hBcard : ∀ j, #(B j) = m)
-    {r : ℕ} (hbr : 2 * b ≤ 2 ^ r) :
-    #(ρ₀.extensions (b * r)) ≤
-      2 * #{ρ ∈ ρ₀.extensions (b * r) | ∀ j : Fin b, (ρ.free ∩ B j).Nonempty} := by
-  set k := b * r
-  set E := ρ₀.extensions k
-  set A := {ρ ∈ E | ∀ j : Fin b, (ρ.free ∩ B j).Nonempty}
-  set Bad : Fin b → Finset (PartialAssignment (Fin n)) :=
-    fun j => {ρ ∈ E | ¬(ρ.free ∩ B j).Nonempty}
-  have hcompl_sub : E \ A ⊆ univ.biUnion Bad := by
-    intro ρ hρ
-    obtain ⟨hρE, hρA⟩ := mem_sdiff.1 hρ
-    rw [mem_filter, not_and] at hρA
-    obtain ⟨j, hj⟩ := not_forall.1 (hρA hρE)
-    exact mem_biUnion.2 ⟨j, mem_univ j, mem_filter.2 ⟨hρE, hj⟩⟩
-  have hBad_card (j : Fin b) : #(Bad j) = (b * m - m).choose k * 2 ^ (b * m - k) := by
-    rw [card_filter_extensions_not_nonempty_inter ρ₀ k (hBsub j), hfree, hBcard j]
-  have hE_card : #E = (b * m).choose k * 2 ^ (b * m - k) := by
-    rw [PartialAssignment.card_extensions, hfree]
-  have h2sdiff : 2 * #(E \ A) ≤ #E := by
-    calc 2 * #(E \ A)
-        ≤ 2 * #(univ.biUnion Bad) := Nat.mul_le_mul_left 2 (card_le_card hcompl_sub)
-      _ ≤ 2 * ∑ j : Fin b, #(Bad j) := Nat.mul_le_mul_left 2 card_biUnion_le
-      _ = 2 * (b * ((b * m - m).choose k * 2 ^ (b * m - k))) := by
-          rw [sum_congr rfl fun j _ => hBad_card j, sum_const, card_univ, Fintype.card_fin,
-            smul_eq_mul]
-      _ = 2 * b * (b * m - m).choose k * 2 ^ (b * m - k) := by ring
-      _ ≤ 2 ^ r * (b * m - m).choose k * 2 ^ (b * m - k) :=
-          Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _ hbr)
-      _ ≤ (b * m).choose k * 2 ^ (b * m - k) :=
-          Nat.mul_le_mul_right _ (two_pow_mul_choose_sub_le hb r)
-      _ = #E := hE_card.symm
-  have hAsub : A ⊆ E := filter_subset _ _
-  have hpart : #(E \ A) + #A = #E := card_sdiff_add_card_eq_card hAsub
-  omega
-
 /-! ### Andreev's reduction and explicit formula lower bound -/
 
 /-- **Andreev's reduction theorem**: for every `b`-bit Boolean function `h`, `1 ≤ b`, `1 ≤ r ≤ m`,
@@ -499,16 +274,15 @@ theorem formulaSize_sub_sq_mul_pow_three_le_andreev (h : BooleanFunction b) (hb 
     exact Nat.mul_le_mul_left b hrm
   set A := {ρ ∈ ρ₀.extensions k | ∀ j : Fin b, (ρ.free ∩ andreevBlock b m j).Nonempty}
   have hAcard : #(ρ₀.extensions k) ≤ 2 * #A :=
-    card_extensions_le_two_mul_card_filter_forall_nonempty ρ₀ hb hfree₀
+    PartialAssignment.card_extensions_le_two_mul_card_filter_forall_nonempty ρ₀ hb hfree₀
       (andreevBlock_subset_free_andreevFixTable b m h) (card_andreevBlock b m) hbr
   obtain ⟨ρ, hρA, hshrink⟩ := exists_mem_formulaSize_sub_sq_le (andreev b m) ρ₀ hk1 hk
     (filter_subset _ _) hAcard
   obtain ⟨hρ_ext, hblocks⟩ := mem_filter.1 hρA
   have hproj : formulaSize h ≤ formulaSize (andreev b m ∘ ρ.fill) :=
     formulaSize_le_of_andreevBlock_nonempty (PartialAssignment.mem_extensions.1 hρ_ext).1 hblocks
-  have hle₀ : formulaSize (andreev b m ∘ ρ₀.fill) ≤ formulaSize (andreev b m) := by
-    obtain ⟨F, hF, hFL⟩ := exists_computes_leafSize_eq (andreev b m)
-    exact (formulaSize_comp_fill_le hF ρ₀).trans ((leafSizeIn_le_leafSize ρ₀.free F).trans hFL.le)
+  have hle₀ : formulaSize (andreev b m ∘ ρ₀.fill) ≤ formulaSize (andreev b m) :=
+    formulaSize_comp_fill_le (andreev b m) ρ₀
   have hsub_le :
       (formulaSize h - 2 * b * r) ^ 2 ≤ (formulaSize (andreev b m ∘ ρ.fill) - 2 * k) ^ 2 := by
     have : 2 * b * r = 2 * k := by ring

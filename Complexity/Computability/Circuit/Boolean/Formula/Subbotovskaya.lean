@@ -81,15 +81,10 @@ namespace Formula
 def restrictAt (i : Fin n) (b : Bool) (F : Formula signature n) : Formula signature n :=
   F.restrict (update PartialAssignment.empty i (some b))
 
-@[simp] theorem fill_update_empty (i : Fin n) (b : Bool) (x : BitString n) :
-    PartialAssignment.fill (update PartialAssignment.empty i (some b)) x = update x i b := by
-  funext j
-  by_cases hj : j = i <;> simp [PartialAssignment.fill, hj]
-
 @[simp] theorem eval_restrictAt (i : Fin n) (b : Bool) (F : Formula signature n)
     (x : BitString n) :
     (F.restrictAt i b).eval interpretation x = F.eval interpretation (update x i b) := by
-  rw [restrictAt, eval_restrict, fill_update_empty]
+  simp [restrictAt]
 
 theorem leafSize_restrictAt_add_leafSizeIn_le (F : Formula signature n) (i : Fin n) (b : Bool) :
     (F.restrictAt i b).leafSize + F.leafSizeIn {i} ≤ F.leafSize :=
@@ -113,11 +108,11 @@ theorem leafSize_restrictAt_add_leafSizeIn_le (F : Formula signature n) (i : Fin
 
 theorem restrictAt_input_self (i : Fin n) (b : Bool) :
     (input i : Formula signature n).restrictAt i b = const b := by
-  simp [restrictAt, restrict]
+  simp [restrictAt]
 
 theorem restrictAt_input_of_ne {i j : Fin n} (h : j ≠ i) (b : Bool) :
     (input j : Formula signature n).restrictAt i b = input j := by
-  simp [restrictAt, restrict, h]
+  simp [restrictAt, h]
 
 /-! ### Leaf-minimal formulas -/
 
@@ -253,6 +248,11 @@ private theorem leafSize_restrictAt_binary_of_unit (F G H : Formula signature n)
     cases b₀ <;> simp [Nat.add_comm]
   omega
 
+private theorem update_not_eq_self_of_ne {i : Fin n} {b₀ : Bool} {x : BitString n}
+    (hx : x i ≠ b₀) : update x i (!b₀) = x := by
+  have hxb : x i = !b₀ := by cases hxi : x i <;> cases b₀ <;> simp [hxi] at hx ⊢
+  rw [← hxb, update_eq_self]
+
 /-- **Subbotovskaya's single-variable shrinkage** on a leaf-minimal formula: for every input `i`,
 unless `F` has a single leaf and that leaf is at `i`, the restrictions of `F` fixing `i` to `false`
 and `true` satisfy `L(F↾(i = 0)) + L(F↾(i = 1)) + 3 ℓ_i(F) ≤ 2 L(F)`. -/
@@ -271,11 +271,11 @@ theorem IsLeafMinimal.leafSize_restrictAt_false_add_true_le {F : Formula signatu
     | const c => simp [restrictAt, restrict]
     | not =>
       rw [gate_not_eq] at hF hnu ⊢
-      have hnu' : ¬ ((args 0).leafSize = 1 ∧ (args 0).leafSizeIn {i} = 1) := by
-        simpa [Formula.not, Fin.sum_univ_one] using hnu
+      have hnu' : ¬ ((args 0).leafSize = 1 ∧ (args 0).leafSizeIn {i} = 1) := by simpa using hnu
       have h0 := ih 0 hF.of_not hnu'
-      rw [restrictAt_not, restrictAt_not, leafSize_mkNot, leafSize_mkNot, leafSize_not]
-      simpa [Formula.not, Fin.sum_univ_one] using h0
+      rw [restrictAt_not, restrictAt_not, leafSize_mkNot, leafSize_mkNot, leafSize_not,
+        leafSizeIn_not]
+      exact h0
     | and =>
       rw [gate_and_eq] at hF hnu ⊢
       have hG : (args 0).IsLeafMinimal := hF.left_of_and
@@ -284,19 +284,14 @@ theorem IsLeafMinimal.leafSize_restrictAt_false_add_true_le {F : Formula signatu
         leafSize_and _ _
       have hFi : ((args 0).and (args 1)).leafSizeIn {i} =
           (args 0).leafSizeIn {i} + (args 1).leafSizeIn {i} :=
-        Fin.sum_univ_two _
+        leafSizeIn_and _ _ _
       by_cases hGu : (args 0).leafSize = 1 ∧ (args 0).leafSizeIn {i} = 1
       · refine leafSize_restrictAt_binary_of_unit ((args 0).and (args 1)) (args 0) (args 1)
           hF hG hGu.1 hGu.2 hFL hFi hnu false
           (fun b hb => by simp [restrictAt_and, hb])
           (fun b hb => by simp [restrictAt_and, hb])
           (fun b₀ hb => ⟨(args 0).and ((args 1).restrictAt i (!b₀)), fun x => ?_, leafSize_and _ _⟩)
-        rw [eval_and, eval_and, eval_restrictAt, hb x]
-        by_cases hx : x i = b₀
-        · simp [hx]
-        · have hxb : x i = !b₀ := by cases hxi : x i <;> cases b₀ <;> simp [hxi] at hx ⊢
-          have hup : update x i (!b₀) = x := by rw [← hxb, update_eq_self]
-          rw [hup, hxb]
+        by_cases hx : x i = b₀ <;> simp [hb x, hx, update_not_eq_self_of_ne]
       · by_cases hHu : (args 1).leafSize = 1 ∧ (args 1).leafSizeIn {i} = 1
         · refine leafSize_restrictAt_binary_of_unit ((args 0).and (args 1)) (args 1) (args 0)
             hF hH hHu.1 hHu.2 (by omega) (by omega) hnu false
@@ -304,12 +299,7 @@ theorem IsLeafMinimal.leafSize_restrictAt_false_add_true_le {F : Formula signatu
             (fun b hb => by simp [restrictAt_and, hb])
             (fun b₀ hb => ⟨((args 0).restrictAt i (!b₀)).and (args 1),
               fun x => ?_, by rw [leafSize_and]; omega⟩)
-          rw [eval_and, eval_and, eval_restrictAt, hb x]
-          by_cases hx : x i = b₀
-          · simp [hx]
-          · have hxb : x i = !b₀ := by cases hxi : x i <;> cases b₀ <;> simp [hxi] at hx ⊢
-            have hup : update x i (!b₀) = x := by rw [← hxb, update_eq_self]
-            rw [hup, hxb]
+          by_cases hx : x i = b₀ <;> simp [hb x, hx, update_not_eq_self_of_ne]
         · have ihG := ih 0 hG hGu
           have ihH := ih 1 hH hHu
           have hm0 := leafSize_mkAnd_le ((args 0).restrictAt i false) ((args 1).restrictAt i false)
@@ -324,19 +314,14 @@ theorem IsLeafMinimal.leafSize_restrictAt_false_add_true_le {F : Formula signatu
         leafSize_or _ _
       have hFi : ((args 0).or (args 1)).leafSizeIn {i} =
           (args 0).leafSizeIn {i} + (args 1).leafSizeIn {i} :=
-        Fin.sum_univ_two _
+        leafSizeIn_or _ _ _
       by_cases hGu : (args 0).leafSize = 1 ∧ (args 0).leafSizeIn {i} = 1
       · refine leafSize_restrictAt_binary_of_unit ((args 0).or (args 1)) (args 0) (args 1)
           hF hG hGu.1 hGu.2 hFL hFi hnu true
           (fun b hb => by simp [restrictAt_or, hb])
           (fun b hb => by simp [restrictAt_or, hb])
           (fun b₀ hb => ⟨(args 0).or ((args 1).restrictAt i (!b₀)), fun x => ?_, leafSize_or _ _⟩)
-        rw [eval_or, eval_or, eval_restrictAt, hb x]
-        by_cases hx : x i = b₀
-        · simp [hx]
-        · have hxb : x i = !b₀ := by cases hxi : x i <;> cases b₀ <;> simp [hxi] at hx ⊢
-          have hup : update x i (!b₀) = x := by rw [← hxb, update_eq_self]
-          rw [hup, hxb]
+        by_cases hx : x i = b₀ <;> simp [hb x, hx, update_not_eq_self_of_ne]
       · by_cases hHu : (args 1).leafSize = 1 ∧ (args 1).leafSizeIn {i} = 1
         · refine leafSize_restrictAt_binary_of_unit ((args 0).or (args 1)) (args 1) (args 0)
             hF hH hHu.1 hHu.2 (by omega) (by omega) hnu true
@@ -344,12 +329,7 @@ theorem IsLeafMinimal.leafSize_restrictAt_false_add_true_le {F : Formula signatu
             (fun b hb => by simp [restrictAt_or, hb])
             (fun b₀ hb => ⟨((args 0).restrictAt i (!b₀)).or (args 1),
               fun x => ?_, by rw [leafSize_or]; omega⟩)
-          rw [eval_or, eval_or, eval_restrictAt, hb x]
-          by_cases hx : x i = b₀
-          · simp [hx]
-          · have hxb : x i = !b₀ := by cases hxi : x i <;> cases b₀ <;> simp [hxi] at hx ⊢
-            have hup : update x i (!b₀) = x := by rw [← hxb, update_eq_self]
-            rw [hup, hxb]
+          by_cases hx : x i = b₀ <;> simp [hb x, hx, update_not_eq_self_of_ne]
         · have ihG := ih 0 hG hGu
           have ihH := ih 1 hH hHu
           have hm0 := leafSize_mkOr_le ((args 0).restrictAt i false) ((args 1).restrictAt i false)
@@ -364,35 +344,6 @@ namespace Boolean
 open Formula
 
 variable {f : BooleanFunction n}
-
-/-- Restricting `f ∘ ρ.fill` by fixing a free input `i` of `ρ` to `b` is restricting `f` by
-`update ρ i (some b)`. -/
-theorem comp_fill_update_empty_of_mem_free {ρ : PartialAssignment (Fin n)} {i : Fin n}
-    (hi : i ∈ ρ.free) (b : Bool) (f : BooleanFunction n) :
-    (f ∘ ρ.fill) ∘ PartialAssignment.fill (update PartialAssignment.empty i (some b)) =
-      f ∘ PartialAssignment.fill (update ρ i (some b)) := by
-  funext x
-  simp only [comp_apply, fill_update_empty,
-    PartialAssignment.fill_update_of_eq_none (PartialAssignment.mem_free.1 hi)]
-  congr 1
-  funext j
-  by_cases hj : j = i
-  · subst hj
-    simp [PartialAssignment.fill]
-  · simp [PartialAssignment.fill, hj]
-
-/-- A restricted function `f ∘ ρ.fill` depends only on the free inputs of `ρ`. -/
-theorem dependsOn_comp_fill_free (f : BooleanFunction n) (ρ : PartialAssignment (Fin n)) :
-    DependsOn (f ∘ ρ.fill) ρ.free := by
-  intro x y h
-  simp only [comp_apply]
-  congr 1
-  funext i
-  by_cases hi : i ∈ ρ.free
-  · rw [PartialAssignment.fill_of_eq_none (PartialAssignment.mem_free.1 hi),
-      PartialAssignment.fill_of_eq_none (PartialAssignment.mem_free.1 hi), h i hi]
-  · obtain ⟨b, hb⟩ := Option.ne_none_iff_exists'.1 fun h' => hi (PartialAssignment.mem_free.2 h')
-    rw [PartialAssignment.fill_of_eq_some hb, PartialAssignment.fill_of_eq_some hb]
 
 /-- Summed over the free inputs of `ρ`, the formula sizes after fixing one free input of `ρ`
 satisfy Subbotovskaya's single-step shrinkage inequality:
@@ -410,14 +361,14 @@ theorem sum_formulaSize_restrict_update_le (f : BooleanFunction n)
   obtain ⟨F, hF, hL⟩ := exists_computes_leafSize_eq g
   have hFg : F.eval interpretation = g := funext hF
   have hmin : F.IsLeafMinimal := isLeafMinimal_iff_leafSize_eq_formulaSize.2 (hFg ▸ hL)
-  have hdep : DependsOn g ρ.free := dependsOn_comp_fill_free f ρ
+  have hdep : DependsOn g ρ.free := PartialAssignment.dependsOn_comp_fill_free f ρ
   have hS : F.leafSizeIn ρ.free = F.leafSize := leafSizeIn_eq_leafSize_of_dependsOn hdep hF hL
   have hle_i (i : Fin n) (hi : i ∈ ρ.free) (b : Bool) :
       formulaSize (f ∘ PartialAssignment.fill (update ρ i (some b))) ≤
         (F.restrictAt i b).leafSize := by
-    rw [← comp_fill_update_empty_of_mem_free hi]
+    rw [← PartialAssignment.comp_fill_update_empty_of_mem_free hi]
     exact formulaSize_le fun x => by
-      rw [eval_restrictAt, hF, comp_apply, fill_update_empty]
+      rw [eval_restrictAt, hF, comp_apply, PartialAssignment.fill_update_empty]
   by_cases hL1 : formulaSize g = 1
   · simp only [hL1, ↓reduceIte, mul_one]
     have hsum1 : ∑ i ∈ ρ.free, F.leafSizeIn {i} = 1 := by
@@ -657,95 +608,6 @@ theorem pow_three_le_leafSize_sq_of_computes_parity {F : Formula signature n}
 
 /-! ### Average shrinkage over random restrictions -/
 
-/-- **Double counting one-step extensions.** Summing `g (update ρ i (some b))` over all extensions
-`ρ ∈ ρ₀.extensions t`, free coordinates `i ∈ ρ.free`, and constants `b : Bool` counts each
-extension `ρ' ∈ ρ₀.extensions (t - 1)` once for each of the `|ρ₀.free| - (t - 1)` coordinates of
-`ρ₀.free` fixed by `ρ'`. -/
-theorem sum_extensions_update (ρ₀ : PartialAssignment (Fin n)) {t : ℕ} (ht1 : 1 ≤ t)
-    (g : PartialAssignment (Fin n) → ℕ) :
-    ∑ ρ ∈ ρ₀.extensions t, ∑ i ∈ ρ.free,
-        (g (update ρ i (some false)) + g (update ρ i (some true))) =
-      (#ρ₀.free - (t - 1)) * ∑ ρ' ∈ ρ₀.extensions (t - 1), g ρ' := by
-  have h1 : ∑ ρ ∈ ρ₀.extensions t, ∑ i ∈ ρ.free,
-        (g (update ρ i (some false)) + g (update ρ i (some true))) =
-      ∑ x ∈ ((ρ₀.extensions t).sigma fun ρ => ρ.free) ×ˢ (univ : Finset Bool),
-        g (update x.1.1 x.1.2 (some x.2)) := by
-    rw [sum_product, sum_sigma]
-    refine sum_congr rfl fun ρ _ => sum_congr rfl fun i _ => ?_
-    have : (univ : Finset Bool) = {false, true} := by decide
-    rw [this, sum_pair (by decide)]
-  have h2 : (#ρ₀.free - (t - 1)) * ∑ ρ' ∈ ρ₀.extensions (t - 1), g ρ' =
-      ∑ p ∈ (ρ₀.extensions (t - 1)).sigma (fun ρ' => ρ₀.free \ ρ'.free), g p.1 := by
-    rw [sum_sigma, mul_sum]
-    refine sum_congr rfl fun ρ' hρ' => ?_
-    obtain ⟨hext, hfree⟩ := PartialAssignment.mem_extensions.1 hρ'
-    dsimp only
-    rw [sum_const, smul_eq_mul, card_sdiff_of_subset hext.free_subset, hfree]
-  rw [h1, h2]
-  refine sum_nbij' (fun x => ⟨update x.1.1 x.1.2 (some x.2), x.1.2⟩)
-    (fun y => ⟨⟨update y.1 y.2 none, y.2⟩, (y.1 y.2).getD false⟩)
-    (fun x hx => ?_) (fun y hy => ?_) (fun x hx => ?_) (fun y hy => ?_) (fun _ _ => rfl)
-  · obtain ⟨hx1, _⟩ := mem_product.1 hx
-    obtain ⟨hρ, hi⟩ := mem_sigma.1 hx1
-    obtain ⟨hext, hfree⟩ := PartialAssignment.mem_extensions.1 hρ
-    refine mem_sigma.2 ⟨PartialAssignment.mem_extensions.2 ⟨fun j c hj => ?_, ?_⟩, ?_⟩
-    · have hne : j ≠ x.1.2 := fun h => by
-        subst h
-        rw [PartialAssignment.mem_free.1 (hext.free_subset hi)] at hj
-        cases hj
-      simpa [hne] using hext j c hj
-    · rw [PartialAssignment.free_update, card_erase_of_mem hi, hfree]
-    · rw [mem_sdiff, PartialAssignment.free_update]
-      exact ⟨hext.free_subset hi, notMem_erase _ _⟩
-  · obtain ⟨hρ', hi⟩ := mem_sigma.1 hy
-    obtain ⟨hext, hfree⟩ := PartialAssignment.mem_extensions.1 hρ'
-    obtain ⟨hi₀, hi'⟩ := mem_sdiff.1 hi
-    refine mem_product.2 ⟨mem_sigma.2 ⟨PartialAssignment.mem_extensions.2 ⟨fun j c hj => ?_, ?_⟩,
-      ?_⟩, mem_univ _⟩
-    · have hne : j ≠ y.2 := fun h => by
-        subst h
-        rw [PartialAssignment.mem_free.1 hi₀] at hj
-        cases hj
-      simpa [hne] using hext j c hj
-    · have hfree_up : PartialAssignment.free (update y.1 y.2 none) = insert y.2 y.1.free := by
-        ext j
-        by_cases hj : j = y.2 <;> simp [hj]
-      rw [hfree_up, card_insert_of_notMem hi', hfree]
-      omega
-    · simp
-  · obtain ⟨hx1, _⟩ := mem_product.1 hx
-    obtain ⟨_, hi⟩ := mem_sigma.1 hx1
-    ext : 1
-    · refine Sigma.ext ?_ HEq.rfl
-      funext j
-      by_cases hj : j = x.1.2
-      · subst hj
-        simpa using (PartialAssignment.mem_free.1 hi).symm
-      · simp [hj]
-    · simp
-  · obtain ⟨_, hi⟩ := mem_sigma.1 hy
-    obtain ⟨_, hi'⟩ := mem_sdiff.1 hi
-    refine Sigma.ext ?_ HEq.rfl
-    funext j
-    by_cases hj : j = y.2
-    · subst hj
-      obtain ⟨c, hc⟩ := Option.ne_none_iff_exists'.1 fun h => hi' (PartialAssignment.mem_free.2 h)
-      simp [hc]
-    · simp [hj]
-
-/-- Relating the number of extensions with `t - 1` and `t` free inputs:
-`(|ρ₀.free| - (t - 1)) * |ρ₀.extensions (t - 1)| = 2 * t * |ρ₀.extensions t|`. -/
-theorem mul_card_extensions_sub_one (ρ₀ : PartialAssignment (Fin n)) {t : ℕ} (ht1 : 1 ≤ t) :
-    (#ρ₀.free - (t - 1)) * #(ρ₀.extensions (t - 1)) = 2 * t * #(ρ₀.extensions t) := by
-  have h := (sum_extensions_update ρ₀ ht1 (fun _ => 1)).symm
-  rw [sum_const, smul_eq_mul, mul_one] at h
-  have hinner (ρ : PartialAssignment (Fin n)) (hρ : ρ ∈ ρ₀.extensions t) :
-      ∑ i ∈ ρ.free, (1 + 1) = 2 * t := by
-    rw [sum_const, smul_eq_mul, (PartialAssignment.mem_extensions.1 hρ).2]
-    ring
-  rw [h, sum_congr rfl hinner, sum_const, smul_eq_mul]
-  ring
-
 /-- **Subbotovskaya's average shrinkage** over all extensions of `ρ₀` with `k` free inputs:
 for `1 ≤ k ≤ |ρ₀.free|`, the sum `S_k = ∑ ρ ∈ ρ₀.extensions k, L(f↾ρ)` and the count
 `N_k = |ρ₀.extensions k|` satisfy
@@ -790,7 +652,7 @@ theorem sum_extensions_formulaSize_sub_sq_le (f : BooleanFunction n)
     set S_k := ∑ ρ ∈ ρ₀.extensions k, formulaSize (f ∘ ρ.fill)
     set N_k := #(ρ₀.extensions k)
     have hstep_rec : (s - k) * S_k ≤ (2 * t - 3) * S_t + N_t := by
-      have hdc := (sum_extensions_update ρ₀ (by omega : 1 ≤ t)
+      have hdc := (PartialAssignment.sum_extensions_update ρ₀ (by omega : 1 ≤ t)
         (fun ρ => formulaSize (f ∘ ρ.fill))).symm
       have htk : t - 1 = k := by omega
       rw [htk] at hdc
@@ -806,7 +668,7 @@ theorem sum_extensions_formulaSize_sub_sq_le (f : BooleanFunction n)
         _ = (2 * t - 3) * S_t + N_t := by
             rw [sum_add_distrib, ← mul_sum, sum_const, smul_eq_mul, mul_one]
     have hcard_rec : (s - k) * N_k = 2 * t * N_t := by
-      simpa [t] using mul_card_extensions_sub_one ρ₀ (by omega : 1 ≤ t)
+      simpa [t] using PartialAssignment.mul_card_extensions_sub_one ρ₀ (by omega : 1 ≤ t)
     have hsub_rec : (s - k) * (S_k - k * N_k) ≤ (2 * t - 3) * (S_t - t * N_t) := by
       rw [Nat.mul_sub_left_distrib, Nat.mul_sub_left_distrib]
       have h1 : (s - k) * (k * N_k) = k * ((s - k) * N_k) := by ring

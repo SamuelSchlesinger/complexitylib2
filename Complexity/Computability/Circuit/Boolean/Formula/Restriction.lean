@@ -49,7 +49,8 @@ with at most `3 L(f) - 2` operation nodes, or a constant (`Boolean.exists_comput
   simplified.
 * `Cslib.Circuits.Boolean.formulaSize_le`, `Cslib.Circuits.Boolean.exists_computes_leafSize_eq`:
   the formula size is the least leaf size, and it is attained.
-* `Cslib.Circuits.Boolean.formulaSize_comp_fill_le`: restrictions do not increase the formula
+* `Cslib.Circuits.Boolean.formulaSize_comp_fill_le_leafSizeIn`,
+  `Cslib.Circuits.Boolean.formulaSize_comp_fill_le`: restrictions do not increase the formula
   size.
 * `Cslib.Circuits.Boolean.exists_computes_size_le`: a formula of least leaf size with few
   operation nodes.
@@ -64,34 +65,6 @@ with at most `3 L(f) - 2` operation nodes, or a constant (`Boolean.exists_comput
 namespace Cslib.Circuits
 
 namespace Formula
-
-section Generic
-
-universe v
-
-variable {σ : Signature.{v}} {n : ℕ}
-
-/-- The leaves in a set of inputs are the leaves at each of its inputs. -/
-theorem sum_leafSizeIn_singleton (S : Finset (Fin n)) (F : Formula σ n) :
-    ∑ i ∈ S, F.leafSizeIn {i} = F.leafSizeIn S := by
-  induction F with
-  | input j =>
-    simp only [leafSizeIn_input, Finset.mem_singleton]
-    rw [Finset.sum_ite_eq]
-  | gate op args ih =>
-    simp only [leafSizeIn_gate]
-    rw [Finset.sum_comm]
-    exact Finset.sum_congr rfl fun j _ => ih j
-
-/-- Every leaf reads an input in a set or in its complement. -/
-theorem leafSizeIn_add_leafSizeIn_compl (S : Finset (Fin n)) (F : Formula σ n) :
-    F.leafSizeIn S + F.leafSizeIn Sᶜ = F.leafSize := by
-  induction F with
-  | input j => by_cases h : j ∈ S <;> simp [h]
-  | gate op args ih =>
-    simp only [leafSizeIn_gate, leafSize_gate, ← Finset.sum_add_distrib, ih]
-
-end Generic
 
 open Boolean BitString
 
@@ -274,6 +247,10 @@ def restrict (ρ : PartialAssignment (Fin n)) : Formula signature n → Formula 
 
 variable (ρ : PartialAssignment (Fin n))
 
+@[simp] theorem restrict_input (i : Fin n) :
+    (input i : Formula signature n).restrict ρ = (ρ i).elim (input i) const :=
+  rfl
+
 @[simp] theorem restrict_const (b : Bool) : (const b : Formula signature n).restrict ρ = const b :=
   rfl
 
@@ -291,11 +268,11 @@ variable (ρ : PartialAssignment (Fin n))
 
 theorem restrict_input_of_eq_none {i : Fin n} (h : ρ i = none) :
     (input i : Formula signature n).restrict ρ = input i := by
-  simp [restrict, h]
+  simp [h]
 
 theorem restrict_input_of_eq_some {i : Fin n} {b : Bool} (h : ρ i = some b) :
     (input i : Formula signature n).restrict ρ = const b := by
-  simp [restrict, h]
+  simp [h]
 
 /-- A restriction computes the restricted function: it reads the fixed inputs from `ρ`. -/
 @[simp] theorem eval_restrict (F : Formula signature n) :
@@ -326,16 +303,14 @@ theorem leafSize_restrict_le (F : Formula signature n) :
     cases op with
     | const b => simp [restrict]
     | not =>
-      rw [gate_not_eq, restrict_not, leafSize_mkNot]
-      simpa [Formula.not] using ih 0
+      rw [gate_not_eq, restrict_not, leafSize_mkNot, leafSizeIn_not]
+      exact ih 0
     | and =>
-      rw [gate_and_eq, restrict_and]
-      refine (leafSize_mkAnd_le _ _).trans ?_
-      simpa [Formula.and, Fin.sum_univ_two] using Nat.add_le_add (ih 0) (ih 1)
+      rw [gate_and_eq, restrict_and, leafSizeIn_and]
+      exact (leafSize_mkAnd_le _ _).trans (Nat.add_le_add (ih 0) (ih 1))
     | or =>
-      rw [gate_or_eq, restrict_or]
-      refine (leafSize_mkOr_le _ _).trans ?_
-      simpa [Formula.or, Fin.sum_univ_two] using Nat.add_le_add (ih 0) (ih 1)
+      rw [gate_or_eq, restrict_or, leafSizeIn_or]
+      exact (leafSize_mkOr_le _ _).trans (Nat.add_le_add (ih 0) (ih 1))
 
 /-- Restricting by an assignment of a single input removes its leaves. -/
 theorem leafSize_restrict_update_le (F : Formula signature n) (i : Fin n) (b : Bool) :
@@ -503,11 +478,19 @@ theorem formulaSize_eq_zero_of_dependsOn_empty (hf : DependsOn f ∅) : formulaS
 
 /-- A restriction of a formula computing `f` computes the restriction of `f`, with only the leaves
 of the free inputs. -/
-theorem formulaSize_comp_fill_le {F : Formula signature n} (hF : F.Computes interpretation f)
-    (ρ : PartialAssignment (Fin n)) : formulaSize (f ∘ ρ.fill) ≤ F.leafSizeIn ρ.free :=
+theorem formulaSize_comp_fill_le_leafSizeIn {F : Formula signature n}
+    (hF : F.Computes interpretation f) (ρ : PartialAssignment (Fin n)) :
+    formulaSize (f ∘ ρ.fill) ≤ F.leafSizeIn ρ.free :=
   (formulaSize_le (F := F.restrict ρ) fun x => by
     rw [eval_restrict, hF]
     rfl).trans (leafSize_restrict_le ρ F)
+
+/-- Restricting a Boolean function by a partial assignment does not increase its formula size. -/
+theorem formulaSize_comp_fill_le (f : BooleanFunction n) (ρ : PartialAssignment (Fin n)) :
+    formulaSize (f ∘ ρ.fill) ≤ formulaSize f := by
+  obtain ⟨F, hF, hFL⟩ := exists_computes_leafSize_eq f
+  exact (formulaSize_comp_fill_le_leafSizeIn hF ρ).trans
+    ((leafSizeIn_le_leafSize ρ.free F).trans hFL.le)
 
 /-- A formula of least leaf size for a function depending only on the inputs in `S` has all its
 leaves in `S`. -/
@@ -519,7 +502,7 @@ theorem leafSizeIn_eq_leafSize_of_dependsOn {S : Finset (Fin n)} (hf : DependsOn
     funext fun x => hf fun i hi => by
       simp only [PartialAssignment.fill_outside]
       exact Finset.piecewise_eq_of_mem _ _ _ hi
-  have := formulaSize_comp_fill_le hF (PartialAssignment.outside S fun _ => false)
+  have := formulaSize_comp_fill_le_leafSizeIn hF (PartialAssignment.outside S fun _ => false)
   rw [hρ, PartialAssignment.free_outside] at this
   omega
 

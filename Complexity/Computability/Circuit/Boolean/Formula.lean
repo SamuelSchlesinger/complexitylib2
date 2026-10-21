@@ -113,6 +113,22 @@ def xor : Formula signature n :=
 @[simp] theorem leafSize_const (c : Bool) : (const c : Formula signature n).leafSize = 0 :=
   rfl
 
+@[simp] theorem leafSizeIn_const (Y : Finset (Fin n)) (c : Bool) :
+    (const c : Formula signature n).leafSizeIn Y = 0 :=
+  rfl
+
+@[simp] theorem leafSizeIn_not (Y : Finset (Fin n)) :
+    F.not.leafSizeIn Y = F.leafSizeIn Y :=
+  Fin.sum_univ_one _
+
+@[simp] theorem leafSizeIn_and (Y : Finset (Fin n)) :
+    (F.and G).leafSizeIn Y = F.leafSizeIn Y + G.leafSizeIn Y :=
+  Fin.sum_univ_two _
+
+@[simp] theorem leafSizeIn_or (Y : Finset (Fin n)) :
+    (F.or G).leafSizeIn Y = F.leafSizeIn Y + G.leafSizeIn Y :=
+  Fin.sum_univ_two _
+
 /-- A constant is one operation node. -/
 @[simp] theorem size_const (c : Bool) : (const c : Formula signature n).size = 1 :=
   rfl
