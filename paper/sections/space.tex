@@ -20,6 +20,40 @@ the separate $\cc{P}\subsetneq\cc{EXP}$ theorem appears in the preceding section
 \end{result}
 
 \begin{result}
+\subsection{Exact counting and counting oracles in polynomial space}
+Every $\#\cc{P}$ function, and every GapP function, is computable in polynomial
+space with binary output (signed binary output for GapP). More generally, the
+exact accepting count of a polynomial-time verifier over certificates of
+unary polynomial-time length $r(x)$ is computable in polynomial space.
+The implementation enumerates $2^{r(x)}$ certificates, retaining a width-$r(x)$
+certificate and an accumulator of at most $r(x)+1$ bits; it reuses workspace
+between iterations. Zero-width certificates and empty instance types are covered.
+The result does not give a polynomial-time counting algorithm. It yields
+\[
+\cc{PP}\subseteq\cc{PSPACE},\qquad
+\cc{Mod}_k\cc{P}\cup\cc{coMod}_k\cc{P}\subseteq\cc{PSPACE},\qquad
+\cc{P}^{\cc{PP}}=\cc{P}^{\#\cc{P}}\subseteq\cc{PSPACE}.
+\]
+The modular containments hold for every fixed natural $k$, including zero and one.
+The oracle containment uses the existing bit-by-bit $\#\cc{P}$ convention and
+permits arbitrary injective encodings: a polynomially clocked native counting
+machine supplies a total $\#\cc{P}$ extension on all words, which gives a total PP
+extension by thresholding. No test for membership in the encoding image is
+assumed. The oracle equality is the previously proved simulation result;
+the polynomial-space upper bound is the new consequence.\citep{AroraBarak09,Fortnow1997}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/SharpP/Space.lean}{115}{Cslib.Complexity.computableTidilyInPolySpace_acceptCount}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/SharpP/Space.lean}{159}{Cslib.Complexity.SharpP.computableTidilyInPolySpace}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/SharpP/Space.lean}{165}{Cslib.Complexity.GapP.computableTidilyInPolySpace}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/Counting/Space.lean}{52}{Cslib.Complexity.PP_subset_PSPACE}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/Counting/Space.lean}{119}{Cslib.Complexity.ModP_subset_PSPACE}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/Counting/Space.lean}{76}{Cslib.Complexity.coModP_subset_PSPACE}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/Counting/OracleSpace.lean}{49}{Cslib.Complexity.SharpP.exists_extension}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/Counting/OracleSpace.lean}{66}{Cslib.Complexity.PWithPPOracle_subset_PSPACE}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/Counting/OracleSpace.lean}{74}{Cslib.Complexity.PWithSharpPOracle_subset_PSPACE}
+\end{result}
+
+
+\begin{result}
 \subsection{Nondeterministic logspace lies in polynomial time}
 \[
 \cc{NL}\subseteq\cc{P}.

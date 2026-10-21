@@ -50,12 +50,23 @@ are also proved: the exact #P bridge preserves the bound of one or a polynomial 
 occurrence traces, independently of the all-branches clock. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
 PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
+Exact #P/GapP counts now have certified binary-output polynomial-space evaluators, yielding
+PP ⊆ PSPACE and P^PP = P^#P ⊆ PSPACE, including arbitrary injective oracle encodings via
+total clocked counting-machine extensions
+([counting space](Complexity/Computability/Complexity/Classes/Counting/OracleSpace.lean)).
 Extend these with counting reductions and further oracle results, preserving exact
 multiplicities when required. The current modular Boolean closures require a prime modulus. The complementary modular class is
-implemented, with equality to ModP for prime moduli. US, coDP, the finite Boolean
+implemented, with equality to ModP for prime moduli. Fixed positive moduli admit GapP
+zero/nonzero-residue characterizations; SPP (hence FewP) is in both modular classes for every
+modulus at least two, including composite moduli. Both modular classes lie in PSPACE for every
+fixed natural modulus. US, coDP, the finite Boolean
 hierarchy (`BH` and `coBH`, base-class Boolean operations on `BH`, and the finite-hierarchy
 level-collapse equivalences `BH_{k+1} = BH_k ↔ BH_k = coBH_k ⇒ BH = BH_k`), WPP and LWPP now have
-definitions, elementary containments/closures, LWPP many-one
+definitions and elementary containments/closures. Full Boolean-hierarchy Boolean closure is
+proved with explicit finite-level upper bounds, as is BH ⊆ Σ₂ ∩ Π₂ using same-level union and
+intersection closure of every Σₖ and Πₖ
+([hierarchy connection](Complexity/Computability/Complexity/Classes/BooleanHierarchy/PH.lean)).
+Further proved results include LWPP many-one
 reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
 multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
 (Poly,Poly)-WPP/WPP and (Poly,Poly)-LWPP/LWPP characterizations with disjoint uniformly computed
