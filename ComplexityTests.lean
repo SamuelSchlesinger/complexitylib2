@@ -51,10 +51,12 @@ import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
 import ComplexityTests.CookLevinPolyTime
 import ComplexityTests.CountingAggregation
+import ComplexityTests.CountingAmbiguity
 import ComplexityTests.CountingBranches
 import ComplexityTests.CountingCompleteness
 import ComplexityTests.CountingComposition
 import ComplexityTests.CountingExecution
+import ComplexityTests.CountingGapMachine
 import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine
 import ComplexityTests.CountingOracleEquivalence
@@ -91,6 +93,7 @@ import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
 import ComplexityTests.FunctionalGraph
+import ComplexityTests.FunctionalGraphSpectrum
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
@@ -172,7 +175,9 @@ import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
+import ComplexityTests.OrderedComposition
 import ComplexityTests.OrderedFirstOrder
+import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTupleBit

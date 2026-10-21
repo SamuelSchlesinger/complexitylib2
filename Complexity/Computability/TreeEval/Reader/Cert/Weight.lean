@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.TreeEval.Reader.Cert.Residue
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Bit
 public import Mathlib.Data.Nat.Bitwise
 public import Mathlib.Data.List.GetD
 
@@ -22,7 +23,6 @@ registers together.
 
 ## Main results
 
-* `Cslib.TreeEval.Reader.testBit_inSpace`: a bit of a binary natural.
 * `Cslib.TreeEval.Reader.weight_inSpace`: the weight.
 -/
 
@@ -34,36 +34,8 @@ namespace Reader
 
 open Turing MultiTapeTM ComputableTidilyInSpace
 
-/-- **A bit of a binary natural**, `k.testBit j` from `(k, j)`. -/
-theorem testBit_inSpace :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ => q.1.testBit q.2) (encPair encNat encNat) encBool
-      fun q => 32 * ((encPair encNat encNat q).length + 1) := by
-  have hl : (fun q => (encPair encNat encNat q).length) ≼
-      fun q => 8 * ((encPair encNat encNat q).length + 1) := .of_le fun _ => by omega
-  have hbits : ComputableTidilyInSpace (fun q : ℕ × ℕ => q.1.bits) (encPair encNat encNat) encBits
-      fun q => 8 * ((encPair encNat encNat q).length + 1) :=
-    ((fst encNat encNat).weaken hl).of_enc_eq fun _ => rfl
-  have htail : ComputableTidilyInSpace List.tail encBits encBits fun l => (encBits l).length :=
-    of_inO (.of_linear (ListEncoding.tail encBool))
-  have hlen (q : ℕ × ℕ) (i : ℕ) :
-      (encBits (List.tail^[i] q.1.bits)).length ≤ (encNat q.1).length := by
-    induction i with
-    | zero => rfl
-    | succ i ih =>
-      rw [Function.iterate_succ_apply']
-      simp only [encBits_apply, List.length_tail] at ih ⊢
-      omega
-  have h := iterate (n := fun q : ℕ × ℕ => q.2) ((snd encNat encNat).weaken hl) hbits htail
-    (Q := fun q => (encNat q.1).length) (B := fun q => (encNat q.1).length)
-    (fun q k _ => hlen q k) (fun q k _ => hlen q k)
-  have hhead : ComputableTidilyInSpace (fun l : List Bool => l.headD false) encBits encBool
-      fun l => (encBits l).length := of_inO (.of_linear (ListEncoding.headD false))
-  refine (budget_comp_linear hhead h).mono_le (fun q => ?_) |>.of_enc_eq fun q => ?_
-  · simp only [length_encPair]; omega
-  · rw [List.tail_iterate, Nat.testBit_eq_inth]
-    congr 1
-    rw [List.headD_eq_head?_getD, List.head?_drop, List.getI_eq_getElem?_getD]
-    rfl
+@[deprecated (since := "2026-10-20")] alias testBit_inSpace :=
+  Turing.MultiTapeTM.ComputableTidilyInSpace.natTestBit
 
 /-! ### Half of a weight, over a counter -/
 
@@ -167,7 +139,7 @@ theorem halfStep_inSpace :
   have ha := snd' hja
   have hsucc := budget_comp_lin natSucc linear_succ hj
   have hoj := budget_comp_lin natAdd linear_succ (budget_prod ho hj)
-  have hbit := budget_comp testBit_inSpace (budget_prod hk hoj) (.of_le_linear 64 64 fun s => by
+  have hbit := budget_comp natTestBit (budget_prod hk hoj) (.of_le_linear 64 64 fun s => by
     have := length_encNat_add_le_add s.1.1.2.2 s.2.1
     simp only [length_encPair] at this ⊢; omega)
   have hxj := budget_comp_lin getD (linear_mul _) (budget_prod hx hj)

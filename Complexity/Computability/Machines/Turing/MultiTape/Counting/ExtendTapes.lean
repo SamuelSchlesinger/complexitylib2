@@ -56,6 +56,18 @@ theorem runList_embed (machine : MultiTapeCTM k Symbol State) (e : Fin k ↪ Fin
   simpa [interpret_runConfigFrom_eq_map_runList, OracleComp.interpret_map,
     List.map_map, Function.comp_def, Config.emptyOracleEquiv] using hm
 
+/-- Tape extension preserves native terminal counts at every clock, including short clocks. -/
+theorem branchCount_embed (machine : MultiTapeCTM k Symbol State) (e : Fin k ↪ Fin k')
+    (cfg : Config k Symbol State Empty input)
+    (extraTapes : Fin k' → ℤ → Option Symbol) (extraPos : Fin k' → ℤ) (fuel : ℕ)
+    (verdict : List Symbol → Bool) :
+    branchCount (machine.extendTapes e) verdict fuel (cfg.embed e extraTapes extraPos).tapes =
+      machine.branchCount verdict fuel cfg.tapes := by
+  rw [← countP_runList, runList_embed]
+  simp only [List.countP_map, Function.comp_def, Config.embed, Config.emptyOracleEquiv,
+    MultiTapeTM.embed]
+  exact countP_runList machine verdict fuel cfg.tapes
+
 /-- Nonblocking tape extension preserves the native clock, even with dirty unused tapes. -/
 theorem HaltsWithin.embed {machine : MultiTapeCTM k Symbol State}
     (hnon : machine.Nonblocking) (e : Fin k ↪ Fin k')
@@ -69,5 +81,23 @@ theorem HaltsWithin.embed {machine : MultiTapeCTM k Symbol State}
   rw [runList_embed] at hfinal
   obtain ⟨original, horiginal, rfl⟩ := List.mem_map.mp hfinal
   exact h.halted_of_mem_runList horiginal
+
+/-- Initializing the extended machine reserves blank tapes without changing any terminal count. -/
+theorem branchCount_extendTapes (machine : MultiTapeCTM k Symbol State) (e : Fin k ↪ Fin k')
+    (input : List Symbol) (fuel : ℕ) (verdict : List Symbol → Bool) :
+    branchCount (machine.extendTapes e) verdict fuel
+        ((machine.extendTapes e).initialConfig input).tapes =
+      machine.branchCount verdict fuel (machine.initialConfig input).tapes := by
+  rw [initialConfig_extendTapes]
+  exact branchCount_embed machine e (machine.initialConfig input) _ _ fuel verdict
+
+/-- The initialized tape extension has the same native all-branches clock. -/
+theorem HaltsWithin.extendTapes {machine : MultiTapeCTM k Symbol State}
+    (hnon : machine.Nonblocking) (e : Fin k ↪ Fin k') (input : List Symbol) (fuel : ℕ)
+    (h : machine.HaltsWithin fuel (machine.initialConfig input).tapes) :
+    MultiTapeCTM.HaltsWithin (machine.extendTapes e) fuel
+      ((machine.extendTapes e).initialConfig input).tapes := by
+  rw [initialConfig_extendTapes]
+  exact HaltsWithin.embed hnon e (machine.initialConfig input) _ _ fuel h
 
 end Turing.MultiTapeCTM

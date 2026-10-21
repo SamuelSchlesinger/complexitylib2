@@ -83,6 +83,14 @@ theorem enumList_succ (count : ℕ) :
 @[simp] theorem length_enumList (count : ℕ) : (enumList count).length = 2 ^ count := by
   simp [enumList]
 
+/-- Counting an output predicate over the enumeration equals its finite witness cardinality. -/
+theorem countP_enumList (n : ℕ) (verdict : List Bool → Bool) :
+    (enumList n).countP verdict =
+      (Finset.univ.filter fun word : BitString n => verdict (List.ofFn word)).card := by
+  have hall : (enum n).toFinset = Finset.univ := by ext; simp
+  simpa [enumList, List.countP_map, Function.comp_def, hall] using
+    ((nodup_enum n).card_eq_countP (P := fun word => verdict (List.ofFn word))).symm
+
 /-- Every enumerated word has the requested width. -/
 theorem length_of_mem_enumList {count : ℕ} {word : List Bool}
     (hword : word ∈ enumList count) : word.length = count := by
