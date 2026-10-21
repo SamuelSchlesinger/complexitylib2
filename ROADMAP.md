@@ -505,7 +505,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),
   [decision-tree node-count, rank, decision-list, and energy bounds for inner product](Complexity/Computability/DecisionTree/InnerProduct.lean),
-  exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean),
+  exact [inner-product and rectangle-density activity bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
+  (including [shifted-baseline activity](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activity.lean)
+  and [decision-tree affine leaf scores](Complexity/Computability/DecisionTree/AffineScore.lean)),
   [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
   (including the single-direction, direction-run, and multilevel threshold capacity corollaries),
   [mixed-activation capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean),

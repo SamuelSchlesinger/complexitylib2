@@ -63,6 +63,7 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingVerifier
 import ComplexityTests.CyclicFeedback
+import ComplexityTests.DecisionTree
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags

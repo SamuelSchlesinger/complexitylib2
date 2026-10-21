@@ -13,31 +13,44 @@ public import Complexity.Foundations.BooleanAnalysis.Hadamard
 import Complexity.Computability.DecisionTree.InnerProduct
 
 /-!
-# Threshold gate activity for inner product
+# Threshold gate activity for inner product and rectangle-free functions
 
-If a weighted threshold program computes inner product modulo two through a readout of its
-gate values, its attainable input-reading transcripts have cardinality `A` with `2 ^ m ≤ A ^ 2`.
-Bounding those transcripts by a Hamming ball gives the exact size-activity inequality
-`2 ^ m ≤ (∑ j ≤ e, q.choose j) ^ 2`. Here `q` and `e` may count only input-reading gates and
-their maximum activity, or all gates and their maximum activity. The statements include
-zero-dimensional inputs and arbitrary real weights.
+For any coordinate split `Fin n ≃ L ⊕ R` and nonempty subsets `A ⊆ (L → Bool)` and
+`B ⊆ (R → Bool)`, if every monochromatic subrectangle `A' × B'` of a gate readout has area at most
+`M`, then `|A| |B| ≤ M A^2`, where `A` is the number of attainable input-reading transcripts
+(Corollary 3.3). Bounding `A` by a Hamming ball around zero or any fixed baseline pattern `v` gives
+general size-activity bounds for both input-reading gates and all gates.
+
+Specializing to inner product modulo two gives `2 ^ m ≤ A ^ 2` and the exact size-activity
+inequality `2 ^ m ≤ (∑ j ≤ e, q.choose j) ^ 2` around zero or any fixed baseline `v`. Here `q` and
+`e` may count only input-reading gates and their maximum activity, or all gates and their maximum
+activity. The statements include zero-dimensional inputs and arbitrary real weights.
 
 The circuit specializations require the designated output to be a gate.
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_card_attainableTranscripts_sq`:
+  the general rectangle-density pattern bound (Corollary 3.3).
+* `Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_sq`,
+  `Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_inputActivityFrom_sq`,
+  `Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_gateActivity_sq`,
+  `Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_gateActivityFrom_sq`:
+  general rectangle-density size-activity bounds around zero or a fixed baseline.
 * `two_pow_le_card_attainableTranscripts_sq_of_hadamardCode`: the attained-pattern lower bound.
-* `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_hadamardCode`:
-  the exact binomial-sum size-activity inequality.
+* `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_hadamardCode`,
+  `two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode`:
+  the exact binomial-sum size-activity inequalities on input-reading gates.
 * `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_sq_of_circuit_hadamardCode`:
   the same bound for a native single-output circuit.
-* `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivity_sq_of_hadamardCode`:
-  the exact bound using total gate count and total activity.
+* `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivity_sq_of_hadamardCode`,
+  `two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode`:
+  the exact bounds using total gate count and total activity.
 
 ## References
 
-* [*Threshold Circuits as Decision Trees and Finite-State Programs*, Theorem 3.2]
-  [ThresholdCircuitRepresentations2026]
+* [*Threshold Circuits as Decision Trees and Finite-State Programs*, Theorem 3.2, Corollary 3.3,
+  and Section 3.1] [ThresholdCircuitRepresentations2026]
 -/
 
 @[expose] public section
@@ -46,7 +59,85 @@ namespace Cslib.Circuits.Boolean.WeightedThreshold
 
 open Finset BitString
 
-variable {n g : ℕ} {ι : Type*} [Fintype ι]
+variable {n g : ℕ} {L R β ι : Type*} [Fintype ι]
+
+/-- **General rectangle-density pattern bound** (Corollary 3.3): if every monochromatic
+subrectangle of `A × B` under a fixed gate readout has area at most `M`, then
+`|A| |B| ≤ M A^2`, where `A` is the number of attainable input-reading transcripts. -/
+theorem card_mul_le_mul_card_attainableTranscripts_sq
+    (p : Program signature n g) (split : Fin n ≃ L ⊕ R)
+    (A : Finset (L → Bool)) (B : Finset (R → Bool)) (hA : A.Nonempty) (hB : B.Nonempty)
+    (readout : (Fin g → Bool) → β) {M : ℕ}
+    (hM : ∀ (A' : Finset (L → Bool)), A' ⊆ A → ∀ (B' : Finset (R → Bool)), B' ⊆ B → ∀ z,
+      (∀ x ∈ A', ∀ y ∈ B',
+        readout (p.eval interpretation (inputOfSplit split x y)) = z) →
+      A'.card * B'.card ≤ M) :
+    A.card * B.card ≤ M * (attainableTranscripts p).card ^ 2 := by
+  obtain ⟨t, ht, _, hl⟩ := exists_gate_readout_tree p split readout
+  have htree := t.card_mul_le_mul_leafCount_sq A B hA hB (R := M) fun A' hA' B' hB' z hz =>
+    hM A' hA' B' hB' z fun x hx y hy => (ht x y).symm.trans (hz x hx y hy)
+  exact htree.trans (Nat.mul_le_mul_left M (Nat.pow_le_pow_left hl 2))
+
+/-- **General rectangle-density activity bound** (Corollary 3.3) on input-reading gates. -/
+theorem card_mul_le_mul_sum_choose_sq
+    (p : Program signature n g) (split : Fin n ≃ L ⊕ R)
+    (A : Finset (L → Bool)) (B : Finset (R → Bool)) (hA : A.Nonempty) (hB : B.Nonempty)
+    (readout : (Fin g → Bool) → β) {M : ℕ}
+    (hM : ∀ (A' : Finset (L → Bool)), A' ⊆ A → ∀ (B' : Finset (R → Bool)), B' ⊆ B → ∀ z,
+      (∀ x ∈ A', ∀ y ∈ B',
+        readout (p.eval interpretation (inputOfSplit split x y)) = z) →
+      A'.card * B'.card ≤ M) :
+    A.card * B.card ≤
+      M * (∑ j ∈ range (inputActivity p + 1), (inputGates p).card.choose j) ^ 2 :=
+  (card_mul_le_mul_card_attainableTranscripts_sq p split A B hA hB readout hM).trans
+    (Nat.mul_le_mul_left M (Nat.pow_le_pow_left (card_attainableTranscripts_le_sum_choose p) 2))
+
+/-- **General rectangle-density activity bound** on input-reading gates relative to any fixed
+baseline `v`. -/
+theorem card_mul_le_mul_sum_choose_inputActivityFrom_sq
+    (p : Program signature n g) (split : Fin n ≃ L ⊕ R)
+    (v : inputGates p → Bool)
+    (A : Finset (L → Bool)) (B : Finset (R → Bool)) (hA : A.Nonempty) (hB : B.Nonempty)
+    (readout : (Fin g → Bool) → β) {M : ℕ}
+    (hM : ∀ (A' : Finset (L → Bool)), A' ⊆ A → ∀ (B' : Finset (R → Bool)), B' ⊆ B → ∀ z,
+      (∀ x ∈ A', ∀ y ∈ B',
+        readout (p.eval interpretation (inputOfSplit split x y)) = z) →
+      A'.card * B'.card ≤ M) :
+    A.card * B.card ≤
+      M * (∑ j ∈ range (inputActivityFrom p v + 1), (inputGates p).card.choose j) ^ 2 :=
+  (card_mul_le_mul_card_attainableTranscripts_sq p split A B hA hB readout hM).trans
+    (Nat.mul_le_mul_left M
+      (Nat.pow_le_pow_left (card_attainableTranscripts_le_sum_choose_inputActivityFrom p v) 2))
+
+/-- **General rectangle-density activity bound** (Corollary 3.3) across all gates. -/
+theorem card_mul_le_mul_sum_choose_gateActivity_sq
+    (p : Program signature n g) (split : Fin n ≃ L ⊕ R)
+    (A : Finset (L → Bool)) (B : Finset (R → Bool)) (hA : A.Nonempty) (hB : B.Nonempty)
+    (readout : (Fin g → Bool) → β) {M : ℕ}
+    (hM : ∀ (A' : Finset (L → Bool)), A' ⊆ A → ∀ (B' : Finset (R → Bool)), B' ⊆ B → ∀ z,
+      (∀ x ∈ A', ∀ y ∈ B',
+        readout (p.eval interpretation (inputOfSplit split x y)) = z) →
+      A'.card * B'.card ≤ M) :
+    A.card * B.card ≤ M * (∑ j ∈ range (gateActivity p + 1), g.choose j) ^ 2 :=
+  (card_mul_le_mul_card_attainableTranscripts_sq p split A B hA hB readout hM).trans
+    (Nat.mul_le_mul_left M
+      (Nat.pow_le_pow_left (card_attainableTranscripts_le_sum_choose_gateActivity p) 2))
+
+/-- **General rectangle-density activity bound** across all gates relative to any fixed baseline
+`v`. -/
+theorem card_mul_le_mul_sum_choose_gateActivityFrom_sq
+    (p : Program signature n g) (split : Fin n ≃ L ⊕ R)
+    (v : Fin g → Bool)
+    (A : Finset (L → Bool)) (B : Finset (R → Bool)) (hA : A.Nonempty) (hB : B.Nonempty)
+    (readout : (Fin g → Bool) → β) {M : ℕ}
+    (hM : ∀ (A' : Finset (L → Bool)), A' ⊆ A → ∀ (B' : Finset (R → Bool)), B' ⊆ B → ∀ z,
+      (∀ x ∈ A', ∀ y ∈ B',
+        readout (p.eval interpretation (inputOfSplit split x y)) = z) →
+      A'.card * B'.card ≤ M) :
+    A.card * B.card ≤ M * (∑ j ∈ range (gateActivityFrom p v + 1), g.choose j) ^ 2 :=
+  (card_mul_le_mul_card_attainableTranscripts_sq p split A B hA hB readout hM).trans
+    (Nat.mul_le_mul_left M
+      (Nat.pow_le_pow_left (card_attainableTranscripts_le_sum_choose_gateActivityFrom p v) 2))
 
 /-- The square of the number of attainable input-reading transcripts is at least the size of
 one side's Boolean cube whenever a fixed gate readout computes inner product. -/
@@ -107,5 +198,27 @@ theorem two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode
   intro x y
   simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace_gateWire,
     Program.gateFunction_apply] using h x y
+
+/-- Inner product forces the binomial sum at the program's shifted-baseline input-reading activity
+around any fixed baseline `v` to have square at least `2 ^ m`. -/
+theorem two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode
+    (p : Program signature n g) (split : Fin n ≃ ι ⊕ ι)
+    (v : inputGates p → Bool) (readout : (Fin g → Bool) → Bool)
+    (h : ∀ x y, readout (p.eval interpretation (inputOfSplit split x y)) = hadamardCode x y) :
+    2 ^ Fintype.card ι ≤
+      (∑ j ∈ range (inputActivityFrom p v + 1), (inputGates p).card.choose j) ^ 2 :=
+  (two_pow_le_card_attainableTranscripts_sq_of_hadamardCode p split readout h).trans
+    (Nat.pow_le_pow_left (card_attainableTranscripts_le_sum_choose_inputActivityFrom p v) 2)
+
+/-- Inner product forces the binomial sum at the program's shifted-baseline total gate activity
+around any fixed baseline `v` to have square at least `2 ^ m`. -/
+theorem two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode
+    (p : Program signature n g) (split : Fin n ≃ ι ⊕ ι)
+    (v : Fin g → Bool) (readout : (Fin g → Bool) → Bool)
+    (h : ∀ x y, readout (p.eval interpretation (inputOfSplit split x y)) = hadamardCode x y) :
+    2 ^ Fintype.card ι ≤
+      (∑ j ∈ range (gateActivityFrom p v + 1), g.choose j) ^ 2 :=
+  (two_pow_le_card_attainableTranscripts_sq_of_hadamardCode p split readout h).trans
+    (Nat.pow_le_pow_left (card_attainableTranscripts_le_sum_choose_gateActivityFrom p v) 2)
 
 end Cslib.Circuits.Boolean.WeightedThreshold
