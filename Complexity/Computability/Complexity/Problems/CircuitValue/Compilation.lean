@@ -110,34 +110,27 @@ private theorem exists_uniformOutputBits {α : Type} {enc : α ↪ List Bool}
     simp only [cs, size_prefixCircuit]
     rw [length_bitPrefix enc m a hj, length_bitPrefix enc m a (Nat.zero_le _)]
   · intro a j x
+    have hcorrectOfFn (p : α × (List Bool × List Bool)) (N : ℕ) (y : Fin N → Bool)
+        (hy : encPair enc (encPair encBits encBits) p = List.ofFn y) :
+        (circuits N).eval interpretation y 0 =
+          (F (p.1, p.2.2)).getD (p.2.1.count true) false := by
+      have hN := congrArg List.length hy
+      simp only [List.length_ofFn] at hN
+      subst N
+      have hw : (fun i : Fin (encPair enc (encPair encBits encBits) p).length =>
+          (encPair enc (encPair encBits encBits) p)[i]) = y :=
+        List.ofFn_injective (List.ofFn_getElem.trans hy)
+      simpa only [hw] using hcorrect p
     let r := bitPrefix enc m a j
     let u := List.ofFn x
     have hin : encPair enc (encPair encBits encBits) (a, (selector (m a) j, u)) = r ++ u := by
       simp [encPair_apply, encBits_apply, r, bitPrefix, List.append_assoc]
-    let codes := fun n => (circuits n).code
-    have hraw : ∀ p : α × (List Bool × List Bool),
-        evalOutput (encPair enc (encPair encBits encBits) p)
-          (codes (encPair enc (encPair encBits encBits) p).length).1
-          ((codes (encPair enc (encPair encBits encBits) p).length).2.headD 0) =
-            (F (p.1, p.2.2)).getD (p.2.1.count true) false := by
-      intro p
-      have hc := hcorrect p
-      rw [Circuit.eval_eq_evalOutput] at hc
-      have hw : List.ofFn (fun i : Fin (encPair enc (encPair encBits encBits) p).length =>
-          (encPair enc (encPair encBits encBits) p)[i]) =
-            encPair enc (encPair encBits encBits) p := List.ofFn_getElem
-      rw [hw] at hc
-      simpa only [codes, Circuit.code, List.ofFn_succ, List.ofFn_zero, List.headD_cons] using hc
-    have hsem := hraw (a, (selector (m a) j, u))
-    simp only [hin, List.length_append, u, List.length_ofFn, count_selector] at hsem
-    change (prefixCircuit r (circuits (r.length + n a))).eval interpretation x 0 = _
-    rw [eval_prefixCircuit, Circuit.eval_eq_evalOutput]
     have hw : List.ofFn (Fin.append (fun i : Fin r.length => r[i.val]) x) = r ++ u := by
-      rw [List.ofFn_fin_append]
-      have hr : List.ofFn (fun i : Fin r.length => r[i.val]) = r := List.ofFn_getElem
-      rw [hr]
-    rw [hw]
-    simpa only [codes, Circuit.code, List.ofFn_succ, List.ofFn_zero, List.headD_cons, u] using hsem
+      rw [List.ofFn_fin_append, List.ofFn_getElem]
+    change (prefixCircuit r (circuits (r.length + n a))).eval interpretation x 0 = _
+    rw [eval_prefixCircuit]
+    simpa only [count_selector, u] using
+      hcorrectOfFn (a, (selector (m a) j, u)) _ _ (hin.trans hw.symm)
 
 /-- Compile a polynomial-time function family into circuits with prescribed input and output
 widths. One polynomial-time constructor outputs the code for every instance. Output `j` is the
