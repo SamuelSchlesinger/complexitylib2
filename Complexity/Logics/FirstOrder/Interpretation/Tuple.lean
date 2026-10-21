@@ -89,7 +89,7 @@ theorem tupleModelEquiv_apply (hdom : ∀ x : ι → M, I.domain.Realize x) (x :
   rfl
 
 /-- Equality of functions on `Unit` is equality at `()`. -/
-@[simp, fo_realize]
+@[fo_realize]
 theorem fun_unit_eq_iff {α : Type*} {f g : Unit → α} : f = g ↔ f () = g () :=
   ⟨fun h => congrFun h (), fun h => funext fun () => h⟩
 

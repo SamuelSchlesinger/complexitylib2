@@ -35,8 +35,8 @@ latter, so that a new reduction costs only its semantic argument.
   `reduceProjectionNumeric` and `reduceProjectionRel`. Composites `J.comp I` are not unfolded
   into raw pullback formulas: the domains, relations and input relations of composite
   interpretations and projections are rewritten through the iterated interpretation or projection
-  (`Interpretation.realize_comp_domain`, `Interpretation.realize_comp_rel`,
-  `Interpretation.relMap_comp_model`, `Projection.comp_numeric_rel`,
+  (`Interpretation.realize_comp_domain`, `Interpretation.relMap_comp_model`,
+  `Projection.comp_numeric_domain`, `Projection.comp_numeric_rel`,
   `Projection.relMap_comp_inputStructure`), simplifying directly to the full tuple domain
   `ι → M` when `I.domain` holds of every tuple
   (`Interpretation.realize_comp_domain_tupleStructure`,

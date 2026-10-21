@@ -61,8 +61,9 @@ need no reindexing.
 * `Cslib.Logic.FO.Interpretation.mapEquiv`: isomorphic structures interpret isomorphic structures.
 * `Cslib.Logic.FO.Interpretation.idEquiv`, `Cslib.Logic.FO.Interpretation.compEquiv`: the identity
   and composite interpretations, up to isomorphism.
-* `Cslib.Logic.FO.Interpretation.relMap_comp_model`: the relations of a composite interpreted
-  structure are those of the iterated one.
+* `Cslib.Logic.FO.Interpretation.realize_comp_domain`,
+  `Cslib.Logic.FO.Interpretation.relMap_comp_model`: the domain and relations of a composite
+  interpreted structure are those of the iterated one.
 
 ## Implementation notes
 

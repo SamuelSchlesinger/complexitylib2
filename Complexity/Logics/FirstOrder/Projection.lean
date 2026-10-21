@@ -260,14 +260,20 @@ def tupleModelEquiv [N'.IsRelational] [L'.IsRelational] (I : Projection N N' L L
     letI := I.inputStructure M
     letI := I.numeric.tupleStructure M
     letI := I.tupleInputStructure M
-    I.numeric.Model M ≃[N'.sum L'] (ι → M) := by
+    I.numeric.Model M ≃[N'.sum L'] (ι → M) :=
   letI := I.inputStructure M
   letI := I.numeric.tupleStructure M
   letI := I.tupleInputStructure M
-  exact
-    { (I.numeric.tupleModelEquiv M hdom).toEquiv with
-      map_fun' f := isEmptyElim f
-      map_rel' R x := by cases R <;> rfl }
+  { (I.numeric.tupleModelEquiv M hdom).toEquiv with
+    map_fun' f := isEmptyElim f
+    map_rel' R x := by cases R <;> rfl }
+
+@[simp]
+theorem tupleModelEquiv_apply [N'.IsRelational] [L'.IsRelational]
+    (I : Projection N N' L L' ι) (M : Type*) [N.Structure M] [L.Structure M]
+    (hdom : ∀ x : ι → M, I.numeric.domain.Realize x) (x : I.numeric.Model M) :
+    I.tupleModelEquiv M hdom x = x.1 :=
+  rfl
 
 /-- The pullback of a projection formula along a projection whose numeric domain formula holds of
 every tuple is realized as the projection formula on tuples. -/

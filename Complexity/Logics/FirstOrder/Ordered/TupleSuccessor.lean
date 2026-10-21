@@ -199,6 +199,7 @@ noncomputable def successor (L : Language) : (language L).Formula (Fin 2) :=
 variable {L : Language} {n k : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)]
 
 /-- The canonical source formula defines ordinary, non-wrapping successor. -/
+@[simp, fo_realize]
 theorem realize_successor (v : Fin 2 → Fin n) :
     (successor L).Realize v ↔ (v 1).val = (v 0).val + 1 := by
   fo_simp [successor, not_le]
@@ -239,6 +240,7 @@ noncomputable def tupleSucc (L : Language) (k : ℕ) :
     (language L).Formula (Fin 2 × Fin k) := tupleSuccOf (successor L) k
 
 /-- The canonical tuple successor formula holds exactly at consecutive numerical ranks. -/
+@[simp, fo_realize]
 theorem realize_tupleSucc (v : Fin 2 × Fin k → Fin n) :
     (tupleSucc L k).Realize v ↔
       lexRank (fun i => v (1, i)) = lexRank (fun i => v (0, i)) + 1 :=
