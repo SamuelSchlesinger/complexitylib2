@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.TFNP
 public import Complexity.Computability.Complexity.Problems.SAT
-import Complexity.Computability.Complexity.Classes.Ladner
+import Complexity.Computability.Complexity.Reduction
 import Complexity.Computability.Complexity.Classes.NP.SelfReduction
 import Complexity.Computability.Complexity.Classes.P.Complement
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime

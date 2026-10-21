@@ -281,6 +281,7 @@ import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.Reingold
+import ComplexityTests.ReductionClasses
 import ComplexityTests.Relativization
 import ComplexityTests.RelativizedCounting
 import ComplexityTests.ResourceClasses

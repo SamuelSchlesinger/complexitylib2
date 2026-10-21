@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.Alternation
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.P
-import Complexity.Computability.Complexity.Classes.Ladner
+import Complexity.Computability.Complexity.Reduction
 
 /-!
 # `NP ⊆ AP`
