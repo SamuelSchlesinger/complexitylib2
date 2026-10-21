@@ -147,7 +147,7 @@ macro_rules
     `(Cslib.WordRAM.Code.loop (.eq $i $j) (ram_block% $b))
   | `(ram_stmt% while $i:ident < $j:ident do $b:wramBlock) =>
     `(Cslib.WordRAM.Code.loop (.lt $i $j) (ram_block% $b))
-  | `(ram_stmt% ⟪$c⟫) => `(($c : Cslib.WordRAM.Code _))
+  | `(ram_stmt% ⟪$c⟫) => `(($c : Cslib.WordRAM.Code _ _))
 
 /-- Symbolically execute structured code on a goal `ExecWithin w c x y T` or `Exec w c x y T`,
 allowing each loop the given number of iterations (default `0`), and deciding with the given simp
@@ -164,7 +164,9 @@ macro_rules
       | (apply Cslib.WordRAM.ExecWithin.of_eval (fuel := $n)
          · set_option linter.unusedSimpArgs false in
            simp +decide only [Cslib.WordRAM.Code.eval, Cslib.WordRAM.Code.evalLoop,
-            Cslib.WordRAM.Op.eval, Cslib.WordRAM.Data.put, Cslib.WordRAM.fits_zero,
+            Cslib.WordRAM.Op.eval_const, Cslib.WordRAM.Op.eval_copy,
+            Cslib.WordRAM.Op.eval_load, Cslib.WordRAM.Op.eval_store, Cslib.WordRAM.Op.eval_bin,
+            Cslib.WordRAM.Op.eval_width, Cslib.WordRAM.Data.put, Cslib.WordRAM.fits_zero,
             Cslib.WordRAM.BinOp.eval, Cslib.WordRAM.Cond.holds_eq, Cslib.WordRAM.Cond.holds_lt,
             Cslib.WordRAM.Data.set_regs, Cslib.WordRAM.Data.set_mem,
             Cslib.WordRAM.Data.write_regs, Cslib.WordRAM.Data.write_mem, Function.update_self,
@@ -178,7 +180,9 @@ macro_rules
       | (apply Cslib.WordRAM.Exec.of_eval (fuel := $n)
          set_option linter.unusedSimpArgs false in
          simp +decide only [Cslib.WordRAM.Code.eval, Cslib.WordRAM.Code.evalLoop,
-          Cslib.WordRAM.Op.eval, Cslib.WordRAM.Data.put, Cslib.WordRAM.fits_zero,
+          Cslib.WordRAM.Op.eval_const, Cslib.WordRAM.Op.eval_copy,
+            Cslib.WordRAM.Op.eval_load, Cslib.WordRAM.Op.eval_store, Cslib.WordRAM.Op.eval_bin,
+            Cslib.WordRAM.Op.eval_width, Cslib.WordRAM.Data.put, Cslib.WordRAM.fits_zero,
           Cslib.WordRAM.BinOp.eval, Cslib.WordRAM.Cond.holds_eq, Cslib.WordRAM.Cond.holds_lt,
           Cslib.WordRAM.Data.set_regs, Cslib.WordRAM.Data.set_mem,
           Cslib.WordRAM.Data.write_regs, Cslib.WordRAM.Data.write_mem, Function.update_self,

@@ -24,8 +24,8 @@ open Cslib.WordRAM
 
 /-- Writing `8` into a register faults at word size `3`, where words are below `8`, while `7`
 fits. -/
-example : run 3 [.op (.const (0 : Fin 1) 8), .halt 0] 5 (.init []) = none ∧
-    run 3 [.op (.const (0 : Fin 1) 7), .halt 0] 5 (.init []) = some (7, 2) := by
+example : run (B := .standard) 3 [.op (.const (0 : Fin 1) 8), .halt 0] 5 (.init []) = none ∧
+    run (B := .standard) 3 [.op (.const (0 : Fin 1) 7), .halt 0] 5 (.init []) = some (7, 2) := by
   decide
 
 /-- Adding past `2 ^ w` faults rather than wrapping around. -/
@@ -34,7 +34,7 @@ example :
   decide
 
 /-- Running off the end of a program faults: a run must halt. -/
-example : run 8 [.op (.const (0 : Fin 1) 5)] 5 (.init []) = none := by decide
+example : run (B := .standard) 8 [.op (.const (0 : Fin 1) 5)] 5 (.init []) = none := by decide
 
 /-- A program reading the word size tells word sizes apart. -/
 example : run 4 [.op (.width (0 : Fin 1)), .halt 0] 5 (.init []) = some (4, 2) ∧
@@ -43,10 +43,13 @@ example : run 4 [.op (.width (0 : Fin 1)), .halt 0] 5 (.init []) = some (4, 2) �
 
 /-- The input length is at address `0` and the words follow: this program halts with the length
 after reading it through a register holding the address `0`. -/
-example : run 8 [.op (.load (1 : Fin 2) 0), .halt 1] 5 (.init [5, 6, 7]) = some (3, 2) := by
+example :
+    run (B := .standard) 8 [.op (.load (1 : Fin 2) 0), .halt 1] 5 (.init [5, 6, 7]) =
+      some (3, 2) := by
   decide
 
-example : Executes 8 [.op (.load (1 : Fin 2) 0), .halt 1] (.init [5, 6, 7]) 3 2 :=
+example :
+    Executes (B := .standard) 8 [.op (.load (1 : Fin 2) 0), .halt 1] (.init [5, 6, 7]) 3 2 :=
   .of_run (fuel := 5) (by decide)
 
 /-- Truncated subtraction, division by zero and the bitwise operations. -/
@@ -66,7 +69,7 @@ abbrev b : Fin 3 := 1
 abbrev c : Fin 3 := 2
 
 /-- A straight-line program with a conditional and a store. -/
-def straight : Code 3 := ram[
+def straight : Code .standard 3 := ram[
   b ← #5;
   c ← #7;
   c ← b + c;
@@ -95,7 +98,7 @@ example (w : ℕ) (x : Data 3) (h5 : Fits w 5) (h7 : Fits w 7) (h12 : Fits w 12)
   case mem => simp
 
 /-- Counting to three in a loop. -/
-def count : Code 3 := ram[ a ← #0; b ← #3; c ← #1; while a < b do [ a ← a + c ] ]
+def count : Code .standard 3 := ram[ a ← #0; b ← #3; c ← #1; while a < b do [ a ← a + c ] ]
 
 /-- `ram_eval` with three loop iterations: three constants, three iterations of an addition, a
 branch and a jump, and a branch and a jump to leave the loop. -/
@@ -105,11 +108,12 @@ example (x : Data 3) : ∃ y, Exec 8 count x y 14 ∧ y.regs a = 3 := by
   case val => simp
 
 /-- A loop compiles to a branch, a jump out, the body and a jump back. -/
-example : (ram[ while a < b do [ a ← a + c ] ] : Code 3).assemble 0 =
+example : (ram[ while a < b do [ a ← a + c ] ] : Code .standard 3).assemble 0 =
     [.branch (.lt a b) 2, .jump 4, .op (.bin .add a a c), .jump 0] := rfl
 
 /-- Reading the word size. -/
-example : ((ram[ a ← width% ] : Code 3).eval 7 0 (.init [])).map (·.1.regs a) = some 7 := by
+example :
+    ((ram[ a ← width% ] : Code .standard 3).eval 7 0 (.init [])).map (·.1.regs a) = some 7 := by
   decide
 
 /-- Registers a program never writes keep their contents; `Code.Preserves` is decidable. -/
@@ -131,7 +135,7 @@ abbrev p : Fin 2 := 0
 abbrev q : Fin 2 := 1
 
 /-- A two-register program. -/
-def double : Code 2 := ram[ p ← #3; q ← p + p ]
+def double : Code .standard 2 := ram[ p ← #3; q ← p + p ]
 
 /-- `double` runs on registers `2` and `0` of a three-register machine and leaves register `1`
 alone, with the same instruction count. -/
@@ -157,12 +161,12 @@ can communicate information that the encoding does not contain.
 section Contracts
 
 /-- The word size itself supplies the answer on two identically encoded instances. -/
-private def widthAdvice : Program 2 :=
+private def widthAdvice : Program .standard 2 :=
   [.op (.width 0), .op (.const 1 1), .op (.bin .sub 0 0 1), .halt 0]
 
 example :
     (∀ b : Bool, InputFits (if b then 2 else 1) []) ∧
-    DecidableInTimeAt {b : Bool | b = true} (fun _ => [])
+    DecidableInTimeAt .standard {b : Bool | b = true} (fun _ => [])
       (fun _ => 4) (fun b => if b then 2 else 1) := by
   refine ⟨fun b => ⟨fits_zero _, by simp⟩, 2, widthAdvice, ?_⟩
   intro b _
@@ -173,7 +177,7 @@ example :
 /-- No uniform decider separates the same two instances: at a common fitting width its initial
 state is identical. Thus the unrestricted prescribed-width-to-uniform converse is false. -/
 example (time bits : Bool → ℕ) :
-    ¬DecidableInTime {b : Bool | b = true} (fun _ => []) time bits := by
+    ¬DecidableInTime .standard {b : Bool | b = true} (fun _ => []) time bits := by
   rintro ⟨r, p, hp⟩
   let w := max (bits false) (bits true)
   have hi : InputFits w [] := ⟨fits_zero w, by simp⟩
@@ -187,7 +191,7 @@ example (time bits : Bool → ℕ) :
 /-- If the prescribed width never fits the input, the conditional contract accepts any set
 without a successful run. -/
 example (A : Set Bool) :
-    DecidableInTimeAt A (fun _ => [1]) (fun _ => 0) (fun _ => 0) := by
+    DecidableInTimeAt .standard A (fun _ => [1]) (fun _ => 0) (fun _ => 0) := by
   refine ⟨0, [], ?_⟩
   intro b hi
   have h := hi.1
@@ -195,9 +199,9 @@ example (A : Set Bool) :
   exact False.elim (Nat.lt_irrefl 1 h)
 
 /-- A constant-answer program works at every fitting width for arbitrary singleton words. -/
-private def accept : Program 1 := [.op (.const 0 1), .halt 0]
+private def accept : Program .standard 1 := [.op (.const 0 1), .halt 0]
 
-example : LinearTime (Set.univ : Set ℕ) (fun n => [n]) (fun _ => 1) := by
+example : LinearTime .standard (Set.univ : Set ℕ) (fun n => [n]) (fun _ => 1) := by
   refine ⟨1, 0, 1, accept, ?_⟩
   intro n w _ hi
   have h1 : Fits w 1 := hi.1
@@ -254,7 +258,7 @@ example : logWidth 2 0 = 2 ∧ InputFits (logWidth 2 0) [] ∧
 distinctness for small entries is in polynomial time. -/
 example : (decider.program ans).DecidesInTimeAt (fun l : Input => l.1) {l | l.1.Nodup}
       (fun l => 16 * (l.1.length + 1)) (fun l => logWidth 2 l.1.length + 7) ∧
-    PolynomialTime {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
+    PolynomialTime .standard {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
   ⟨decidesInTime_nodup.decidesInTimeAt fun _ => Nat.le_add_right _ _,
     linearTime_nodup.polynomialTime⟩
 

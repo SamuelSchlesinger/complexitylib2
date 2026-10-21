@@ -1059,11 +1059,13 @@ public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Computability.USTCON.Space
 public import Complexity.Computability.WordRAM.Allocation
+public import Complexity.Computability.WordRAM.Basis
 public import Complexity.Computability.WordRAM.Compile
 public import Complexity.Computability.WordRAM.Copy
 public import Complexity.Computability.WordRAM.Defs
 public import Complexity.Computability.WordRAM.Dynamic
 public import Complexity.Computability.WordRAM.Heap
+public import Complexity.Computability.WordRAM.MapOp
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput

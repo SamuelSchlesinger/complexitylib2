@@ -7,7 +7,7 @@ Authors: Erik Demaine, Samuel Schlesinger
 module
 -- upstream: candidate (based on edemaine/lean-trominoes @6d5b36c1)
 
-public import Complexity.Init
+public import Complexity.Computability.WordRAM.Basis
 public import Cslib.Foundations.Relation.RelatesInSteps
 
 /-!
@@ -17,8 +17,10 @@ A *word RAM* is a random-access machine whose registers and memory cells hold `w
 whose every instruction costs one unit of time. The word size must accommodate the input and
 its addresses; it may exceed `O(log n)` when input words do
 [Cormen et al., Section 2.2][CLRS2009] [Fredman and Willard][FredmanWillard1993]
-[Hagerup][Hagerup1998]. This file chooses an instruction-count model, including unit-cost
-multiplication, division and shifts. It does not establish a bit-cost simulation.
+[Hagerup][Hagerup1998]. This file chooses an instruction-count model, parameterized by a basis of
+word operations (`Cslib.WordRAM.Basis`); the standard basis `Cslib.WordRAM.Basis.standard` has
+unit-cost multiplication, division, bitwise operations and shifts. It does not establish a bit-cost
+simulation.
 
 The existing `Cslib.RAM`, inspired by Cook and Reckhow [Cook and Reckhow][CookReckhow1973], has
 unbounded natural-number registers and supports both unit and logarithmic cost measures.
@@ -34,14 +36,15 @@ to the flat programs of this file with the same instruction counts.
 
 ## The model
 
-* A program (`Cslib.WordRAM.Program`) is a list of instructions over a finite register file
-  `Fin r`; besides the registers there is a memory indexed by natural numbers.
+* A program (`Cslib.WordRAM.Program B r`) over a basis `B` is a list of instructions over a
+  finite register file `Fin r`; besides the registers there is a memory indexed by natural numbers.
 * Registers and memory cells hold natural numbers below `2 ^ w` (`Cslib.WordRAM.Fits`).
-* The data instructions (`Cslib.WordRAM.Op`) load a constant, copy a register, apply an arithmetic
-  or bitwise operation (`Cslib.WordRAM.BinOp`), read or write the memory cell whose address is
-  held in a register, and read the word size `w`. The control instructions jump, branch on an
-  equality or unsigned comparison of two registers, and halt with the contents of a register as
-  output.
+* The data instructions (`Cslib.WordRAM.Op`) load a constant, copy a register, apply an operation
+  of the basis to registers, and read or write the memory cell whose address is held in a
+  register. The standard basis has the arithmetic, bitwise and shift operations
+  (`Cslib.WordRAM.BinOp`, applied by `Cslib.WordRAM.Op.bin`) and reads the word size `w`
+  (`Cslib.WordRAM.Op.width`). The control instructions jump, branch on an equality or unsigned
+  comparison of two registers, and halt with the contents of a register as output.
 * A run starts at instruction `0` with all registers `0`, the input length at address `0` and the
   input words at addresses `1, …, n` (`Cslib.WordRAM.State.init`); all other cells hold `0`.
   Installing this initial input and extracting the halting output are uncharged; executing the
@@ -64,13 +67,16 @@ The definitions are adapted from the Lean formalization accompanying
   succeeds identically at every larger word size (`Cslib.WordRAM.Executes.mono_width`).
   Algorithms that use arithmetic modulo `2 ^ w` [Hagerup][Hagerup1998] must reduce explicitly,
   for instance with the word size and half-word arithmetic; this is not formalized here.
-* Words are unsigned [Hagerup][Hagerup1998]. Subtraction is truncated, and division and remainder
-  by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. These are part of this machine's
-  semantics; transfer to a model with other conventions requires a separate simulation.
-* The instructions are the arithmetic, bitwise and shift operations of the standard word RAM
-  [Hagerup][Hagerup1998], with an instruction reading the word size, which word-RAM algorithms
-  may use [Fredman and Willard][FredmanWillard1993].
-* Only constants and binary operations check that the number they write fits a word. Copies,
+* Words are unsigned [Hagerup][Hagerup1998]. In the standard basis subtraction is truncated, and
+  division and remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. These are
+  part of this machine's semantics; transfer to a model with other conventions requires a separate
+  simulation.
+* The operations form a parameter, as the gates of a circuit do: word-RAM models differ in their
+  instruction sets [Hagerup][Hagerup1998]. The standard basis has the arithmetic, bitwise and shift
+  operations of the standard word RAM, with an operation reading the word size, which word-RAM
+  algorithms may use [Fredman and Willard][FredmanWillard1993]. Everything else about the machine
+  is the same for every basis.
+* Only constants and operations check that the number they write fits a word. Copies,
   loads and stores move words already held by the machine, and every address held in a register
   is a word, so on a run from an input that fits such checks could never fail
   (`Cslib.WordRAM.Runs.bounded_init`); omitting them spares every program proof their side
@@ -81,7 +87,8 @@ The definitions are adapted from the Lean formalization accompanying
   programs; runs are counted with cslib's `Relation.RelatesInSteps`.
 
 Compared with the source formalization, words are unsigned rather than two's-complement integers;
-the bitwise operations, shifts and the word-size instruction are added; copies, loads,
+the operations form a basis, whose standard instance adds bitwise operations, shifts and the word
+size to the source's arithmetic (`Cslib.WordRAM.Basis.arithmetic`); copies, loads,
 addresses and the halting output are not checked against the word size; the program counter is
 unbounded; and the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
 of binary digits of the size rather than by `log₂ (size + 2) + 2`, which defines the same classes.
@@ -89,8 +96,9 @@ of binary digits of the size rather than by `log₂ (size + 2) + 2`, which defin
 ## Main definitions
 
 * `Cslib.WordRAM.Fits`: a number fits a `w`-bit word.
-* `Cslib.WordRAM.BinOp`, `Cslib.WordRAM.Cond`, `Cslib.WordRAM.Op`, `Cslib.WordRAM.Instr`,
-  `Cslib.WordRAM.Program`: operations, conditions, data instructions, instructions and programs.
+* `Cslib.WordRAM.Cond`, `Cslib.WordRAM.Op`, `Cslib.WordRAM.Instr`, `Cslib.WordRAM.Program`:
+  conditions, data instructions, instructions and programs over a basis.
+* `Cslib.WordRAM.Op.bin`, `Cslib.WordRAM.Op.width`: the data instructions of the standard basis.
 * `Cslib.WordRAM.Data`, `Cslib.WordRAM.State`: registers with memory, and with a program counter.
 * `Cslib.WordRAM.Op.eval`: the effect of a data instruction, `none` on a fault.
 * `Cslib.WordRAM.step`: one step of a program, which continues, halts with an output, or faults.
@@ -125,7 +133,7 @@ of binary digits of the size rather than by `log₂ (size + 2) + 2`, which defin
 
 namespace Cslib.WordRAM
 
-variable {r : ℕ}
+variable {B : Basis} {r : ℕ}
 
 /-! ## Words -/
 
@@ -152,46 +160,6 @@ theorem fits_self (w : ℕ) : Fits w w := Nat.lt_two_pow_self
 
 /-! ## Instructions -/
 
-/-- The binary operations of the word RAM. -/
-inductive BinOp where
-  /-- Addition. -/
-  | add
-  /-- Truncated subtraction. -/
-  | sub
-  /-- Multiplication. -/
-  | mul
-  /-- Division, rounding down. -/
-  | div
-  /-- Remainder. -/
-  | mod
-  /-- Bitwise and. -/
-  | and
-  /-- Bitwise or. -/
-  | or
-  /-- Bitwise exclusive or. -/
-  | xor
-  /-- Shift left: `x <<< y = x * 2 ^ y`. -/
-  | shiftLeft
-  /-- Shift right: `x >>> y = x / 2 ^ y`. -/
-  | shiftRight
-  deriving DecidableEq, Repr
-
-/-- The value of a binary operation on natural numbers. Subtraction is truncated, and division
-and remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. Whether the value
-fits a word is checked by the instruction that writes it. -/
-@[simp]
-def BinOp.eval : BinOp → ℕ → ℕ → ℕ
-  | .add, x, y => x + y
-  | .sub, x, y => x - y
-  | .mul, x, y => x * y
-  | .div, x, y => x / y
-  | .mod, x, y => x % y
-  | .and, x, y => x &&& y
-  | .or, x, y => x ||| y
-  | .xor, x, y => x ^^^ y
-  | .shiftLeft, x, y => x <<< y
-  | .shiftRight, x, y => x >>> y
-
 /-- The conditions on which a program branches: equality and unsigned comparison of two
 registers. -/
 inductive Cond (r : ℕ) where
@@ -201,38 +169,45 @@ inductive Cond (r : ℕ) where
   | lt (i j : Fin r)
   deriving DecidableEq, Repr
 
-/-- The data instructions. Registers are named in the instruction; memory is addressed through
-the contents of a register. -/
-inductive Op (r : ℕ) where
+/-- The data instructions over the basis `B`. Registers are named in the instruction; memory is
+addressed through the contents of a register. -/
+inductive Op (B : Basis) (r : ℕ) where
   /-- `const d v` sets register `d` to the constant `v`. -/
   | const (d : Fin r) (v : ℕ)
   /-- `copy d s` sets register `d` to the contents of register `s`. -/
   | copy (d s : Fin r)
-  /-- `bin f d i j` sets register `d` to `f` applied to registers `i` and `j`. -/
-  | bin (f : BinOp) (d i j : Fin r)
+  /-- `alu f d args` sets register `d` to the operation `f` of the basis applied to the
+  registers `args`. -/
+  | alu (f : B.Op) (d : Fin r) (args : Fin (B.Arity f) → Fin r)
   /-- `load d a` sets register `d` to the memory cell whose address is in register `a`. -/
   | load (d a : Fin r)
   /-- `store a s` sets the memory cell whose address is in register `a` to register `s`. -/
   | store (a s : Fin r)
-  /-- `width d` sets register `d` to the word size. -/
-  | width (d : Fin r)
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
-/-- Instructions: data instructions, jumps, conditional branches and halting. Jump and branch
-targets are instruction indices. -/
-inductive Instr (r : ℕ) where
+/-- `bin f d i j` sets register `d` to the standard binary operation `f` applied to registers `i`
+and `j`. -/
+def Op.bin (f : BinOp) (d i j : Fin r) : Op .standard r := .alu (.bin f) d ![i, j]
+
+/-- `width d` sets register `d` to the word size. -/
+def Op.width (d : Fin r) : Op .standard r := .alu .width d ![]
+
+/-- Instructions over the basis `B`: data instructions, jumps, conditional branches and halting.
+Jump and branch targets are instruction indices. -/
+inductive Instr (B : Basis) (r : ℕ) where
   /-- Execute a data instruction and proceed to the next instruction. -/
-  | op (o : Op r)
+  | op (o : Op B r)
   /-- Proceed to instruction `t`. -/
   | jump (t : ℕ)
   /-- Proceed to instruction `t` if `c` holds, and to the next instruction otherwise. -/
   | branch (c : Cond r) (t : ℕ)
   /-- Halt with the contents of register `i` as output. -/
   | halt (i : Fin r)
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
-/-- A program over `r` registers is a list of instructions, indexed by the program counter. -/
-abbrev Program (r : ℕ) := List (Instr r)
+/-- A program over the basis `B` and `r` registers is a list of instructions, indexed by the
+program counter. -/
+abbrev Program (B : Basis) (r : ℕ) := List (Instr B r)
 
 /-! ## Data and states -/
 
@@ -310,17 +285,49 @@ theorem Cond.holds_lt {i j : Fin r} {x : Data r} : (Cond.lt i j).Holds x ↔ x.r
   Iff.rfl
 
 /-- The effect of a data instruction at word size `w`, or `none` if it faults. Only constants
-and binary operations can produce a number that does not fit a word, and they fault when they do.
+and operations can produce a number that does not fit a word, and they fault when they do.
 Copying, loading and storing need no check: throughout a run from an input that fits, registers
 and memory hold words (`Cslib.WordRAM.Runs.bounded_init`), so every address held in a register is
 a word too. -/
-def Op.eval (w : ℕ) : Op r → Data r → Option (Data r)
+def Op.eval (w : ℕ) : Op B r → Data r → Option (Data r)
   | .const d v, x => x.put w d v
   | .copy d s, x => some (x.set d (x.regs s))
-  | .bin f d i j, x => x.put w d (f.eval (x.regs i) (x.regs j))
+  | .alu f d args, x => x.put w d (B.interp w f (x.regs ∘ args))
   | .load d a, x => some (x.set d (x.mem (x.regs a)))
   | .store a s, x => some (x.write (x.regs a) (x.regs s))
-  | .width d, x => some (x.set d w)
+
+section Eval
+
+variable (w : ℕ) (x : Data r) {d s a : Fin r}
+
+@[simp]
+theorem Op.eval_const (v : ℕ) : (Op.const (B := B) d v).eval w x = x.put w d v := rfl
+
+@[simp]
+theorem Op.eval_copy : (Op.copy (B := B) d s).eval w x = some (x.set d (x.regs s)) := rfl
+
+@[simp]
+theorem Op.eval_alu (f : B.Op) (args : Fin (B.Arity f) → Fin r) :
+    (Op.alu f d args).eval w x = x.put w d (B.interp w f (x.regs ∘ args)) := rfl
+
+@[simp]
+theorem Op.eval_load : (Op.load (B := B) d a).eval w x = some (x.set d (x.mem (x.regs a))) := rfl
+
+@[simp]
+theorem Op.eval_store :
+    (Op.store (B := B) a s).eval w x = some (x.write (x.regs a) (x.regs s)) := rfl
+
+end Eval
+
+@[simp]
+theorem Op.eval_bin (w : ℕ) (f : BinOp) (d i j : Fin r) (x : Data r) :
+    (Op.bin f d i j).eval w x = x.put w d (f.eval (x.regs i) (x.regs j)) := rfl
+
+/-- The word size always fits a word, so reading it never faults. -/
+@[simp]
+theorem Op.eval_width (w : ℕ) (d : Fin r) (x : Data r) :
+    (Op.width d).eval w x = some (x.set d w) :=
+  Data.put_of_fits (fits_self w)
 
 /-- The outcome of a step: the next state, halting with an output, or a fault. -/
 inductive Outcome (r : ℕ) where
@@ -333,7 +340,7 @@ inductive Outcome (r : ℕ) where
 
 /-- One step of program `p` at word size `w`: execute the instruction at the program counter.
 Running off the end of the program faults. -/
-def step (w : ℕ) (p : Program r) (s : State r) : Outcome r :=
+def step (w : ℕ) (p : Program B r) (s : State r) : Outcome r :=
   match p[s.pc]? with
   | none => .fault
   | some (.op o) =>
@@ -346,14 +353,14 @@ def step (w : ℕ) (p : Program r) (s : State r) : Outcome r :=
 
 section Step
 
-variable {w : ℕ} {p : Program r} {s : State r}
+variable {w : ℕ} {p : Program B r} {s : State r}
 
-theorem step_op {o : Op r} {x : Data r} (hp : p[s.pc]? = some (.op o))
+theorem step_op {o : Op B r} {x : Data r} (hp : p[s.pc]? = some (.op o))
     (h : o.eval w s.data = some x) :
     step w p s = .next ⟨s.pc + 1, x⟩ := by
   simp only [step, hp, h]
 
-theorem step_op_fault {o : Op r} (hp : p[s.pc]? = some (.op o)) (h : o.eval w s.data = none) :
+theorem step_op_fault {o : Op B r} (hp : p[s.pc]? = some (.op o)) (h : o.eval w s.data = none) :
     step w p s = .fault := by
   simp only [step, hp, h]
 
@@ -374,21 +381,21 @@ end Step
 /-! ## Runs -/
 
 /-- One step of `p` at word size `w` leads from `s` to `t`. -/
-def Next (w : ℕ) (p : Program r) (s t : State r) : Prop := step w p s = .next t
+def Next (w : ℕ) (p : Program B r) (s t : State r) : Prop := step w p s = .next t
 
 /-- `Runs w p s t n`: running `p` at word size `w` leads from `s` to `t` in exactly `n` steps,
 none of which halts or faults. -/
-abbrev Runs (w : ℕ) (p : Program r) : State r → State r → ℕ → Prop :=
+abbrev Runs (w : ℕ) (p : Program B r) : State r → State r → ℕ → Prop :=
   Relation.RelatesInSteps (Next w p)
 
 /-- `Executes w p s v n`: running `p` at word size `w` from `s` halts with output `v` after
 exactly `n` instructions, the final `halt` included. A run that faults executes nothing. -/
-def Executes (w : ℕ) (p : Program r) (s : State r) (v n : ℕ) : Prop :=
+def Executes (w : ℕ) (p : Program B r) (s : State r) (v n : ℕ) : Prop :=
   ∃ t m, Runs w p s t m ∧ step w p t = .halt v ∧ n = m + 1
 
 /-- Run `p` at word size `w` from `s` for at most `fuel` steps: `some (v, n)` if it halts with
 output `v` after `n` instructions, and `none` if it faults or needs more steps. -/
-def run (w : ℕ) (p : Program r) : ℕ → State r → Option (ℕ × ℕ)
+def run (w : ℕ) (p : Program B r) : ℕ → State r → Option (ℕ × ℕ)
   | 0, _ => none
   | fuel + 1, s =>
     match step w p s with
@@ -398,7 +405,7 @@ def run (w : ℕ) (p : Program r) : ℕ → State r → Option (ℕ × ℕ)
 
 section Executes
 
-variable {w : ℕ} {p : Program r} {s t u : State r} {v v' m n n' : ℕ}
+variable {w : ℕ} {p : Program B r} {s t u : State r} {v v' m n n' : ℕ}
 
 theorem Executes.halt (h : step w p s = .halt v) : Executes w p s v 1 :=
   ⟨s, 0, .refl s, h, rfl⟩
@@ -554,19 +561,18 @@ theorem Data.Bounded.write {w : ℕ} {x : Data r} (hx : x.Bounded w) {a v : ℕ}
   · simpa using hv
   · simpa [Function.update_of_ne hb] using hx.2 b
 
-theorem Data.Bounded.op {w : ℕ} {x y : Data r} (hx : x.Bounded w) {o : Op r}
+theorem Data.Bounded.op {w : ℕ} {x y : Data r} (hx : x.Bounded w) {o : Op B r}
     (h : o.eval w x = some y) : y.Bounded w := by
   cases o with
-  | const | bin =>
+  | const | alu =>
     obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
     exact hx.set hv
   | copy d s => cases h; exact hx.set (hx.1 s)
   | load d a => cases h; exact hx.set (hx.2 _)
   | store a s => cases h; exact hx.write (hx.1 s)
-  | width d => cases h; exact hx.set (fits_self w)
 
 /-- A step preserves word bounds. -/
-theorem Next.bounded {w : ℕ} {p : Program r} {s t : State r} (h : Next w p s t)
+theorem Next.bounded {w : ℕ} {p : Program B r} {s t : State r} (h : Next w p s t)
     (hs : s.data.Bounded w) : t.data.Bounded w := by
   unfold Next WordRAM.step at h
   split at h
@@ -578,14 +584,14 @@ theorem Next.bounded {w : ℕ} {p : Program r} {s t : State r} (h : Next w p s t
   all_goals first | (cases h; exact hs) | cases h
 
 /-- A run preserves word bounds. -/
-theorem Runs.bounded {w : ℕ} {p : Program r} {s t : State r} {n : ℕ} (h : Runs w p s t n)
+theorem Runs.bounded {w : ℕ} {p : Program B r} {s t : State r} {n : ℕ} (h : Runs w p s t n)
     (hs : s.data.Bounded w) : t.data.Bounded w := by
   induction h with
   | refl => exact hs
   | tail _ _ _ _ hstep ih => exact hstep.bounded ih
 
 /-- Every state reachable from an input that fits holds only `w`-bit words. -/
-theorem Runs.bounded_init {w : ℕ} {p : Program r} {input : List ℕ} {t : State r} {n : ℕ}
+theorem Runs.bounded_init {w : ℕ} {p : Program B r} {input : List ℕ} {t : State r} {n : ℕ}
     (h : Runs w p (State.init input) t n) (hi : InputFits w input) : t.data.Bounded w :=
   h.bounded (Data.Bounded.init hi)
 
@@ -594,42 +600,54 @@ theorem Runs.bounded_init {w : ℕ} {p : Program r} {input : List ℕ} {t : Stat
 Overflow faults, so a program that does not read the word size cannot tell word sizes apart on
 a run that succeeds: the same run succeeds at every larger word size. -/
 
-/-- The data instruction reads the word size: it is an `Op.width` instruction. -/
-def Op.ReadsWidth : Op r → Prop
-  | .width _ => True
+/-- The data instruction reads the word size: it applies an operation of the basis that does,
+such as `Op.width` in the standard basis. -/
+def Op.ReadsWidth : Op B r → Prop
+  | .alu f _ _ => B.ReadsWidth f
   | _ => False
 
-instance : DecidablePred (Op.ReadsWidth (r := r)) := fun o =>
+instance : DecidablePred (Op.ReadsWidth (B := B) (r := r)) := fun o =>
   match o with
-  | .width _ => isTrue trivial
-  | .const .. | .copy .. | .bin .. | .load .. | .store .. => isFalse id
+  | .alu f _ _ => inferInstanceAs (Decidable (B.ReadsWidth f))
+  | .const .. | .copy .. | .load .. | .store .. => isFalse id
+
+@[simp]
+theorem Op.readsWidth_bin (f : BinOp) (d i j : Fin r) : ¬(Op.bin f d i j).ReadsWidth := by
+  simp [Op.bin, Op.ReadsWidth]
+
+@[simp]
+theorem Op.readsWidth_width (d : Fin r) : (Op.width d).ReadsWidth := by
+  simp [Op.width, Op.ReadsWidth]
 
 /-- The instruction reads the word size. -/
-def Instr.ReadsWidth : Instr r → Prop
+def Instr.ReadsWidth : Instr B r → Prop
   | .op o => o.ReadsWidth
   | _ => False
 
-instance : DecidablePred (Instr.ReadsWidth (r := r)) := fun i =>
+instance : DecidablePred (Instr.ReadsWidth (B := B) (r := r)) := fun i =>
   match i with
   | .op o => inferInstanceAs (Decidable o.ReadsWidth)
   | .jump .. | .branch .. | .halt .. => isFalse id
 
 /-- A program reads the word size if one of its instructions does. -/
-def Program.ReadsWidth (p : Program r) : Prop := ∃ i ∈ p, i.ReadsWidth
+def Program.ReadsWidth (p : Program B r) : Prop := ∃ i ∈ p, i.ReadsWidth
 
-instance (p : Program r) : Decidable p.ReadsWidth :=
+instance (p : Program B r) : Decidable p.ReadsWidth :=
   inferInstanceAs (Decidable (∃ i ∈ p, i.ReadsWidth))
 
-theorem Op.eval_mono_width {w w' : ℕ} {o : Op r} {x y : Data r} (ho : ¬o.ReadsWidth)
+theorem Op.eval_mono_width {w w' : ℕ} {o : Op B r} {x y : Data r} (ho : ¬o.ReadsWidth)
     (h : o.eval w x = some y) (hw : w ≤ w') : o.eval w' x = some y := by
   cases o with
-  | const | bin =>
+  | const =>
     obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
     exact Data.put_of_fits (hv.mono hw)
+  | alu f d args =>
+    obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
+    rw [Op.eval, ← B.interp_eq_of_not_readsWidth f ho w w']
+    exact Data.put_of_fits (hv.mono hw)
   | copy | load | store => exact h
-  | width => exact absurd trivial ho
 
-theorem Next.mono_width {w w' : ℕ} {p : Program r} {s t : State r} (hp : ¬p.ReadsWidth)
+theorem Next.mono_width {w w' : ℕ} {p : Program B r} {s t : State r} (hp : ¬p.ReadsWidth)
     (h : Next w p s t) (hw : w ≤ w') : Next w' p s t := by
   unfold Next at h ⊢
   cases hpc : p[s.pc]? with
@@ -645,7 +663,7 @@ theorem Next.mono_width {w w' : ℕ} {p : Program r} {s t : State r} (hp : ¬p.R
     | branch c t => rw [step_branch hpc] at h ⊢; exact h
     | halt i => simp [step_halt hpc] at h
 
-theorem step_halt_mono_width {w w' : ℕ} {p : Program r} {s : State r} {v : ℕ}
+theorem step_halt_mono_width {w w' : ℕ} {p : Program B r} {s : State r} {v : ℕ}
     (h : step w p s = .halt v) : step w' p s = .halt v := by
   cases hpc : p[s.pc]? with
   | none => simp [WordRAM.step, hpc] at h
@@ -658,16 +676,16 @@ theorem step_halt_mono_width {w w' : ℕ} {p : Program r} {s : State r} {v : ℕ
     | branch c t => simp [step_branch hpc] at h
     | halt i => rw [step_halt hpc] at h ⊢; exact h
 
-theorem Runs.mono_width {w w' : ℕ} {p : Program r} {s t : State r} {n : ℕ} (hp : ¬p.ReadsWidth)
-    (h : Runs w p s t n) (hw : w ≤ w') : Runs w' p s t n := by
+theorem Runs.mono_width {w w' : ℕ} {p : Program B r} {s t : State r} {n : ℕ}
+    (hp : ¬p.ReadsWidth) (h : Runs w p s t n) (hw : w ≤ w') : Runs w' p s t n := by
   induction h with
   | refl => exact .refl _
   | tail _ _ _ _ hstep ih => exact .tail _ _ _ _ ih (hstep.mono_width hp hw)
 
 /-- **Word-size monotonicity.** A program that does not read the word size halts in the same way
 at every larger word size. -/
-theorem Executes.mono_width {w w' : ℕ} {p : Program r} {s : State r} {v n : ℕ} (hp : ¬p.ReadsWidth)
-    (h : Executes w p s v n) (hw : w ≤ w') : Executes w' p s v n :=
+theorem Executes.mono_width {w w' : ℕ} {p : Program B r} {s : State r} {v n : ℕ}
+    (hp : ¬p.ReadsWidth) (h : Executes w p s v n) (hw : w ≤ w') : Executes w' p s v n :=
   let ⟨t, m, hr, ht, hn⟩ := h
   ⟨t, m, hr.mono_width hp hw, step_halt_mono_width ht, hn⟩
 
