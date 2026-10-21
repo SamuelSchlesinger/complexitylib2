@@ -760,16 +760,27 @@ supports bounded insertion, membership and strict successor for the universe
 [invariant preservation and exact insertion semantics](Complexity/Algorithms/Lean/VanEmdeBoas/Insert.lean),
 [least-successor and absence theorems](Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean),
 and a [finite-set abstraction](Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean).
-The [proposed contiguous layout](Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean)
+The [contiguous layout arithmetic](Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean)
 has nonoverlapping recursive records and an explicit bound of ten words per universe element;
-this is address arithmetic, not a proved machine representation or initialization procedure.
+this does not by itself supply an initialization or implemented-space certificate.
+The [recursive memory refinement](Complexity/Algorithms/WordRAM/VanEmdeBoas/Model.lean)
+now interprets actual memory, including stale empty extrema and arbitrary surrounding memory.
+[Fixed-program native membership](Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean)
+is proved for every supported depth in at most `28*(d+1)+18` instructions, equivalently
+`28*(log₂(log₂ U)+1)+18`, including setup, dispatch, loop control and halt, with an exact
+GenericRAM transfer. The 32-register code is independent of depth and word width. The caller
+state is bounded, the root record endpoint must fit a word, and even out-of-universe query
+arguments must fit. The whole memory and persistent root are preserved. Initial representation
+construction and external argument delivery/decoding are not charged. Executable insertion
+and successor branches are present but not yet certified on the RAM.
 The recursive minimum-excluded variant is credited to Demaine's exposition, separately from
 the original van Emde Boas--Kaas--Zijlstra stratified representation. Functional proof milestone
-[#291](https://github.com/SamuelSchlesinger/complexitylib2/issues/291) leaves the full
+[#291](https://github.com/SamuelSchlesinger/complexitylib2/issues/291) and native membership
+milestone [#302](https://github.com/cslib-community/complexitylib/issues/302) leave the full
 [#273](https://github.com/SamuelSchlesinger/complexitylib2/issues/273) endpoint open:
-actual fixed-code RAM execution, worst-case `O(log log U)` native instruction bounds,
-charged uniform initialization, implemented space and word/address-fit guarantees, and the
-adaptive stateful bridge. Deletion and predecessor are later work.
+native insertion and strict-successor correctness and worst-case `O(log log U)` instruction
+bounds, charged uniform initialization, implemented space/stack and complete word/address-fit
+guarantees, and the adaptive shared-stateful bridge. Deletion and predecessor are later work.
 
 Outstanding: controllers for larger adaptive and iterative clients;
 a concrete shared-heap queue
