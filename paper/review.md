@@ -1,5 +1,38 @@
 # Theorem-index review
 
+## Word-RAM operation bases, 21 October 2026
+
+Reviewed Lean revision: `72e92283` (code `291ff2f1`); review fixes in `2435c31e`, the revision named
+in the index links.
+
+Scope:
+- `Complexity/Computability/WordRAM/{Basis,MapOp}.lean` (new), `Complexity/Computability/Circuit/SignatureHom.lean`
+  (split from `Circuit/MapOp`), and the basis parameter throughout `Complexity/Computability/WordRAM`
+  and `Complexity/Algorithms/WordRAM`
+- `ComplexityTests/WordRAMBasis.lean`
+- `paper/sections/query.tex` (`Word-RAM decision grows with the basis of operations`, new; `Element
+  distinctness for entries below n on the word RAM` and the additive-simulation links, updated)
+
+Independent AI reviews (read-only subagents, not the authoring session):
+- cslib API review (`7689ca09-88e1-4103-914b-e663256fe8a9`) of `72e92283`: requested changes, none
+  blocking. Resolved in `2435c31e` and the accompanying documentation commit: unaliased breaking changes recorded in
+  `UPSTREAM.md`; `ram_eval` extended to `alu` instructions; `Op.rename_bin`, `Op.rename_width`,
+  `Op.dest_bin`, `Op.dest_width`; `Signature.Hom` split so `WordRAM/Basis` no longer imports the formula
+  library; docstring wording of `Basis.Hom`; dead variables and unused import removed; the
+  `Instr.IsAdditive`/`Basis.additive` overlap recorded in `ROADMAP.md`. Not adopted: a `FunLike`
+  instance and category lemmas for `Basis.Hom`, `mapOp` functoriality for `Instr`/`Code`, restoring
+  `Repr` (recorded as removed).
+- Correctness and theorem-index review (`3e173ba3-a738-46ac-9cd9-e421194913be`) of `72e92283`: approved
+  with should-fix items. Verified that `Basis.standard` reproduces the previous `bin`/`width`
+  semantics (width never faults), the `ReadsWidth` invariant and monotonicity, the named bases,
+  satisfiability of `Basis.Hom`, `MapOp` transfer statements, and every declaration link. Resolved:
+  the standard basis is described as Hagerup's operations together with division, remainder and the
+  word size; the arithmetic basis is described as the source's operation symbols with truncated
+  subtraction; `DecidableInTime.mapOp` linked; map-of-bases wording distinguishes the `ReadsWidth`
+  marker from semantic width-independence.
+
+Re-review of the fixes and inspection of the CI theorem-index PDF remain for the coordinator.
+
 ## Canonical full-tuple ordered interpretation transducers (#137), 20 October 2026
 
 Reviewed Lean revision: `bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60` (prerequisite shared output commit `97622143391f6777b14b832420787b5a79d7109d`).
