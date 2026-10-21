@@ -180,6 +180,7 @@ import ComplexityTests.OraclePPT
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
+import ComplexityTests.OrderedFagin
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
@@ -275,6 +276,7 @@ import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
+import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
@@ -287,6 +289,7 @@ import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
+import ComplexityTests.SparseLanguages
 import ComplexityTests.TFNP
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
