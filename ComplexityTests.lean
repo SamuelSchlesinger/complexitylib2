@@ -217,6 +217,7 @@ import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
 import ComplexityTests.PRGStretch
+import ComplexityTests.Parameterized
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimePlain
