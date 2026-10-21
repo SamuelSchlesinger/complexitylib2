@@ -433,6 +433,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Formula
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Output
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Reduction
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
