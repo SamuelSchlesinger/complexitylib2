@@ -59,6 +59,7 @@ import ComplexityTests.CountingExecution
 import ComplexityTests.CountingGapMachine
 import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine
+import ComplexityTests.CountingOracle
 import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingVerifier
