@@ -5,9 +5,9 @@ Complexitylib is a Lean 4 library of computational complexity theory built on **
 unchanged**, apart from rewriting the import prefix `Complexity.` → `Cslib.`. cslib's own rules
 therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `CODESTYLE.md`
 (pinned checkout: `.lake/packages/cslib`, or a local clone at `../cslib`) and follow them.
-`[ROADMAP.md](ROADMAP.md)` records outstanding work;
-`[UPSTREAM.md](UPSTREAM.md)` records coordination and exceptional integration decisions;
-`[CONTRIBUTING.md](CONTRIBUTING.md)` and `[paper/README.md](paper/README.md)` record contributor
+[ROADMAP.md](ROADMAP.md) records outstanding work;
+[UPSTREAM.md](UPSTREAM.md) records coordination and exceptional integration decisions;
+[CONTRIBUTING.md](CONTRIBUTING.md) and [paper/README.md](paper/README.md) record contributor
 and theorem-index workflows.
 
 ## Agent roles and task ownership
