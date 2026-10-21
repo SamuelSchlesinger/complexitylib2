@@ -40,8 +40,7 @@ variable {α : Type} {enc : α ↪ List Bool}
 /-- A polynomial-time function with binary natural output is a #P function. -/
 theorem SharpP.of_polyTime {f : α → ℕ} (hf : ComputableTidilyInPolyTime f enc encNat) :
     f ∈ SharpP enc := by
-  obtain ⟨c, d, hb⟩ := hf.polyBounded_length.exists_le
-  let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
+  obtain ⟨p, hb⟩ := hf.polyBounded_length.exists_polynomial
   refine ⟨p, fun x => decide (BitString.binaryValue x.2 < f x.1), ?_, fun a => ?_⟩
   · exact ComputableTidilyInPolyTime.binary_lt.comp
       ((ComputableTidilyInPolyTime.bitsBinaryValue.comp (.snd enc encBits)).prod
@@ -51,7 +50,7 @@ theorem SharpP.of_polyTime {f : α → ℕ} (hf : ComputableTidilyInPolyTime f e
     simp only [decide_eq_true_eq]
     apply BitString.card_filter_binaryValue_lt
     have hsize : (f a).size ≤ p.eval (enc a).length := by
-      simpa [p, encNat_apply, Nat.size_eq_bits_len] using hb a
+      simpa only [encNat_apply, Nat.size_eq_bits_len] using hb a
     exact (Nat.lt_size_self _).le.trans (Nat.pow_le_pow_right (by lia) hsize)
 
 /-- A polynomial-time function with binary integer output is a GapP function. -/

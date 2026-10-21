@@ -362,11 +362,8 @@ theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α �
     (hk : ComputableTidilyInPolyTime k enc encUnary)
     (hr : ∀ a, g a = 0 ∨ g a = f (k a))
     (hA : ∀ a, a ∈ A ↔ g a = f (k a)) : A ∈ LWPP enc := by
-  obtain ⟨c, d, hb⟩ := hk.polyBounded.exists_le
-  let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
-  have hlt (a : α) : k a < p.eval (enc a).length + 1 := by
-    have : k a ≤ p.eval (enc a).length := by simpa [p] using hb a
-    lia
+  obtain ⟨p, hp⟩ := hk.polyBounded.exists_polynomial
+  have hlt (a : α) : k a < p.eval (enc a).length + 1 := Nat.lt_succ_of_le (hp a)
   let bound (n : ℕ) : ℕ := p.eval n + 1
   have hbound : ComputableTidilyInPolyTime bound encUnary encUnary :=
     ComputableTidilyInPolyTime.unary_add.comp

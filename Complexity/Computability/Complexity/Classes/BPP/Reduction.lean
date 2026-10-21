@@ -52,16 +52,13 @@ theorem PolyTimeReducible.mem_BPP (h : PolyTimeReducible enc encB A B) (hB : B �
   have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (g a)).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval q).comp
       ((ComputableTidilyInPolyTime.encoding_length encB).comp hg)
-  obtain ⟨c, d, hle⟩ := hlen.polyBounded.exists_le
-  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d,
+  obtain ⟨p, hle⟩ := hlen.polyBounded.exists_polynomial
+  refine ⟨p,
     andVerifier (fun a => q.eval (encB (g a)).length) (fun x => W (g x.1, x.2)) fun _ => true,
     computableTidilyInPolyTime_andVerifier hlen
       (hW.comp ((hg.comp (.fst enc encBits)).prod (.snd enc encBits))) (.const true),
     fun a => ?_⟩
-  have hk : q.eval (encB (g a)).length ≤
-      (Polynomial.C c * (Polynomial.X + 1) ^ d).eval (enc a).length := by
-    simpa using hle a
-  obtain ⟨j, hj⟩ := Nat.exists_eq_add_of_le hk
+  obtain ⟨j, hj⟩ := Nat.exists_eq_add_of_le (hle a)
   rw [hj]
   set k := q.eval (encB (g a)).length
   set V := andVerifier (fun a => q.eval (encB (g a)).length) (fun x => W (g x.1, x.2))

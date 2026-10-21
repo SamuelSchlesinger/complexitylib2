@@ -118,9 +118,7 @@ theorem mem_AWPP_of_polyTime_exponent {g : α → ℤ} {r : α → ℕ}
     (hA : ∀ a, (0 ≤ g a ∧ g a ≤ (2 : ℤ) ^ r a) ∧
       (a ∈ A → 2 * (2 : ℤ) ^ r a ≤ 3 * g a) ∧
       (a ∉ A → 3 * g a ≤ (2 : ℤ) ^ r a)) : A ∈ AWPP enc := by
-  obtain ⟨c, d, hb⟩ := hr.polyBounded.exists_le
-  let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
-  have hle (a : α) : r a ≤ p.eval (enc a).length := by simpa [p] using hb a
+  obtain ⟨p, hle⟩ := hr.polyBounded.exists_polynomial
   have hs : ComputableTidilyInPolyTime
       (fun a => 2 ^ (p.eval (enc a).length - r a)) enc encNat := by fun_prop
   have hsG := SharpP.natCast_mem_GapP (SharpP.of_polyTime hs)

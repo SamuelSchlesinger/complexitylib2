@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+public import Mathlib.Algebra.Polynomial.Eval.Defs
 
 /-!
 # Basic polynomial-time rules
@@ -16,6 +17,8 @@ Polynomial-time counterparts of Christian Reitwiessner's degree-bounded operatio
 rules for `fun_prop`.
 
 ## Main results
+
+* `Turing.MultiTapeTM.PolyBounded.exists_polynomial`: express a resource bound by a polynomial.
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.exists_degree`: polynomial-time functions
   admit explicit time and output degrees.
@@ -33,6 +36,16 @@ rules for `fun_prop`.
 -/
 
 @[expose] public section
+
+namespace Turing.MultiTapeTM
+
+/-- A polynomially bounded resource admits a polynomial upper bound at every input size. -/
+theorem PolyBounded.exists_polynomial {α : Type*} {size u : α → ℕ}
+    (h : PolyBounded size u) : ∃ p : Polynomial ℕ, ∀ a, u a ≤ p.eval (size a) := by
+  obtain ⟨c, d, hle⟩ := h.exists_le
+  exact ⟨Polynomial.C c * (Polynomial.X + 1) ^ d, fun a => by simpa using hle a⟩
+
+end Turing.MultiTapeTM
 
 namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
