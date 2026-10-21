@@ -12,10 +12,11 @@ public import Mathlib.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
-# List selection identities
+# List identities and fold invariants
 
 ## Main results
 
+* `List.foldl_take_invariant`: an index-dependent invariant holds after every prefix of a fold.
 * `List.foldr_ite_eq_of_mem`: a chain of equality tests selects the branch of a contained tag.
   Used by deterministic and probabilistic finite-control certificates.
 * `List.getD_mem_or`: a defaulted lookup returns a list member or the default value.
@@ -34,6 +35,22 @@ Adapts the selection identity from `Computability/Probabilistic/Finite.lean` on 
 -/
 
 @[expose] public section
+
+/-- An invariant depending on the number of consumed elements holds after every bounded prefix
+fold if it holds initially and is preserved by the next list element. Unlike `List.foldlRecOn`,
+preservation may depend on the position. This is a semantic rule with no resource assumptions. -/
+theorem List.foldl_take_invariant {α β : Type*} (l : List α) (step : β → α → β) (init : β)
+    (P : ℕ → β → Prop) (hbase : P 0 init)
+    (hstep : ∀ i (hi : i < l.length) state, P i state → P (i + 1) (step state l[i])) :
+    ∀ i, i ≤ l.length → P i ((l.take i).foldl step init) := by
+  intro i
+  induction i with
+  | zero => intro _; simpa only [List.take_zero, List.foldl_nil] using hbase
+  | succ i ih =>
+    intro hi
+    have hlt : i < l.length := Nat.lt_of_succ_le hi
+    simpa only [List.take_succ_eq_append_getElem hlt, List.foldl_append,
+      List.foldl_cons, List.foldl_nil] using hstep i hlt _ (ih (Nat.le_of_lt hlt))
 
 /-- A chain of equality tests selects a contained tag, regardless of duplicates or fallback. -/
 theorem List.foldr_ite_eq_of_mem {Tag Value : Type*} [DecidableEq Tag]

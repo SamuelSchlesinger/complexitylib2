@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Reverse
+import Complexity.Foundations.Data.List.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 import Mathlib.Tactic.Linarith
 
@@ -19,6 +20,8 @@ Ordinary `List.foldl` expressions over raw bit strings use Christian Reitwiessne
 backend. A round holds the accumulator and one bit, and does not copy the input list. Time, work
 space and encoded accumulator size remain separate in the contract. Space counts visited work-tape
 cells, excluding the read-only input and write-only output; retained accumulators are charged.
+The invariant wrappers use the same pure prefix-fold rule, keeping their distinct resource
+contracts separate from invariant propagation.
 
 ## Main results
 
@@ -177,14 +180,8 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum_spec {σ : Type}
       (fun l => c * ((∑ i ∈ Finset.range l.length, R l i) + B l + 1))
       (fun l => c * (Q l + B l + 1))) ∧
       ∀ l, invariant l l.length (l.foldl step init) := by
-  have htrace (l : List Bool) (i : ℕ) (hi : i ≤ l.length) :
-      invariant l i ((l.take i).foldl step init) := by
-    induction i with
-    | zero => exact hbase l
-    | succ i ih =>
-      have hlt : i < l.length := by lia
-      simpa only [List.take_succ_eq_append_getElem hlt, List.foldl_append,
-        List.foldl_cons, List.foldl_nil] using hpreserve l i hlt _ (ih (by lia))
+  have htrace (l : List Bool) :=
+    List.foldl_take_invariant l step init (invariant l) (hbase l) (hpreserve l)
   exact ⟨hstep.foldl_bits_stream_sum init
     (fun l i hi => by
       simpa only [List.take_succ_eq_append_getElem hi, List.foldl_append,
@@ -350,14 +347,8 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum_spec {σ : Typ
       (fun p => c * ((∑ i ∈ Finset.range p.2.length, R p i) + B p + 1))
       (fun p => c * (Q p + B p + 1))) ∧
       ∀ p, invariant p p.2.length (p.2.foldl step p.1) := by
-  have htrace (p : σ × List Bool) (i : ℕ) (hi : i ≤ p.2.length) :
-      invariant p i ((p.2.take i).foldl step p.1) := by
-    induction i with
-    | zero => exact hbase p
-    | succ i ih =>
-      have hlt : i < p.2.length := by lia
-      simpa only [List.take_succ_eq_append_getElem hlt, List.foldl_append,
-        List.foldl_cons, List.foldl_nil] using hpreserve p i hlt _ (ih (by lia))
+  have htrace (p : σ × List Bool) :=
+    List.foldl_take_invariant p.2 step p.1 (invariant p) (hbase p) (hpreserve p)
   exact ⟨hstep.foldl_bits_pair_stream_sum
     (fun p i hi => by
       simpa only [List.take_succ_eq_append_getElem hi, List.foldl_append,
