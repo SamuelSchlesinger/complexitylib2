@@ -493,9 +493,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   (including the single-direction, direction-run, and multilevel threshold capacity corollaries),
   [mixed-activation capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean),
   [median-cut rectangle and cut bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean),
-  and [fan-in-two component and block-excess bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean)
+  [fan-in-two component and block-excess bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean),
+  and [scalar query-activity run capacity and Cover enumerative coding bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean)
   are proved. Port v1's explicit source-reduction family.
-  Further manuscript work includes scalar enumerative coding, pending-bias simulation,
+  Further manuscript work includes universal scalar circuit synthesis, pending-bias simulation,
   entropy and asymptotic activity bounds, geometric cutting, integer-summary counting,
   and quadratic-potential representations.
 
