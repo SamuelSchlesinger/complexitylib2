@@ -47,14 +47,16 @@ clauses of `ψ` (`Cslib.Logic.PL.CNF.IsProof.comp`).
 * `Cslib.Logic.PL.CNF.IsProof`: resolution proofs.
 * `Cslib.Logic.PL.CNF.RefutableInSize`, `Cslib.Logic.PL.CNF.RefutableInWidth`: refutability by a
   refutation with a bounded number of lines, or with lines of bounded width.
+* `Cslib.Logic.PL.CNF.restrictBy`: restricting a formula by a partial assignment.
 
 ## Main results
 
 * `Cslib.Logic.PL.CNF.derives_iff_exists_isProof`: derivable clauses are the lines of proofs.
 * `Cslib.Logic.PL.CNF.exists_refutableInSize_iff_not_satisfiable`: resolution refutes exactly the
   unsatisfiable formulas.
-* `Cslib.Logic.PL.CNF.IsProof.restrict`, `Cslib.Logic.PL.CNF.IsProof.lift`: restricting and lifting
-  proofs along a fixed variable.
+* `Cslib.Logic.PL.CNF.IsProof.restrict`, `Cslib.Logic.PL.CNF.IsProof.lift`,
+  `Cslib.Logic.PL.CNF.IsProof.restrictBy`: restricting and lifting proofs along a fixed variable or
+  a partial assignment.
 * `Cslib.Logic.PL.CNF.IsProof.comp`: composing proofs.
 
 ## References
@@ -384,6 +386,133 @@ theorem IsProof.comp (hψ : ψ.IsProof ls') (h : φ.IsProof ls) (hψφ : ∀ c �
       exacts [List.mem_cons_self, List.mem_cons_of_mem _ (hup e he)]
     · rcases List.mem_cons.1 he with rfl | he
       exacts [List.mem_cons_self, List.mem_cons_of_mem _ (hdown e he)]
+
+/-! ### Restricting proofs by partial assignments -/
+
+/-- `φ` restricted by the partial assignment `ρ`, which fixes every variable `v` with
+`ρ v = some b` to `b`: the clauses that `ρ` satisfies are dropped, and the literals of fixed
+variables are removed from the others. -/
+def restrictBy (φ : CNF V) (ρ : V → Option Bool) : CNF V :=
+  (φ.filter fun c => decide (∀ l ∈ c, ρ l.1 ≠ some l.2)).map
+    (List.filter fun l => decide (ρ l.1 = none))
+
+omit [DecidableEq V] in
+@[simp] theorem mem_restrictBy {ρ : V → Option Bool} :
+    c ∈ φ.restrictBy ρ ↔
+      ∃ d ∈ φ, (∀ l ∈ d, ρ l.1 ≠ some l.2) ∧ d.filter (fun l => decide (ρ l.1 = none)) = c := by
+  simp [restrictBy, and_assoc]
+
+omit [DecidableEq V] in
+/-- A formula restricted by `ρ` mentions only variables that `ρ` does not fix. -/
+theorem eq_none_of_mem_restrictBy {ρ : V → Option Bool} (hc : c ∈ φ.restrictBy ρ)
+    {l : Literal V} (hl : l ∈ c) : ρ l.1 = none := by
+  simp only [restrictBy, List.mem_map, List.mem_filter] at hc
+  obtain ⟨d, -, rfl⟩ := hc
+  simpa using (List.mem_filter.1 hl).2
+
+/-- The lines of a proof from a formula restricted by `ρ` mention only variables that `ρ` does not
+fix. -/
+theorem IsProof.eq_none_of_restrictBy {ρ : V → Option Bool} (h : (φ.restrictBy ρ).IsProof ls)
+    (hc : c ∈ ls) {l : Literal V} (hl : l ∈ c) : ρ l.1 = none := by
+  obtain ⟨d, hd, b, hb⟩ := mem_vars.1 (h.fst_mem_vars hc hl)
+  exact eq_none_of_mem_restrictBy (l := (l.1, b)) hd hb
+
+/-- **Restricting a proof by a partial assignment.** A proof from `φ` becomes a proof from `φ`
+restricted by `ρ`. Every line of the original proof that `ρ` does not satisfy is replaced by a line
+of the new proof with a subset of its literals, and the lines of the new proof have, in order,
+subsets of the literals of distinct lines of the original proof that `ρ` does not satisfy. In
+particular the new proof has at most as many lines with any property inherited by clauses with
+more literals as the original proof has unsatisfied lines with that property. -/
+theorem IsProof.restrictBy (h : φ.IsProof ls) (ρ : V → Option Bool) :
+    ∃ ls', (φ.restrictBy ρ).IsProof ls' ∧
+      (∀ c ∈ ls, (∀ l ∈ c, ρ l.1 ≠ some l.2) → ∃ c' ∈ ls', ∀ l ∈ c', l ∈ c) ∧
+      ∃ ks, ks.Sublist ls ∧ (∀ c ∈ ks, ∀ l ∈ c, ρ l.1 ≠ some l.2) ∧
+        List.Forall₂ (fun c' c => ∀ l ∈ c', l ∈ c) ls' ks := by
+  induction h with
+  | nil => exact ⟨[], .nil, by simp, [], .slnil, by simp, .nil⟩
+  | @mem ls c _ hc ih =>
+    obtain ⟨ls', h', hsub, ks, hks, hfree, hF⟩ := ih
+    by_cases hsat : ∀ l ∈ c, ρ l.1 ≠ some l.2
+    · refine ⟨c.filter (fun l => decide (ρ l.1 = none)) :: ls',
+        h'.mem (mem_restrictBy.2 ⟨c, hc, hsat, rfl⟩), fun e he hfe => ?_, c :: ks, hks.cons_cons c,
+        fun e he => ?_, .cons (fun l hl => (List.mem_filter.1 hl).1) hF⟩
+      · rcases List.mem_cons.1 he with rfl | he
+        · exact ⟨_, List.mem_cons_self, fun l hl => (List.mem_filter.1 hl).1⟩
+        · obtain ⟨c', hc', hsub'⟩ := hsub e he hfe
+          exact ⟨c', List.mem_cons_of_mem _ hc', hsub'⟩
+      · rcases List.mem_cons.1 he with rfl | he
+        exacts [hsat, hfree e he]
+    · refine ⟨ls', h', fun e he hfe => ?_, ks, hks.cons c, hfree, hF⟩
+      rcases List.mem_cons.1 he with rfl | he
+      exacts [absurd hfe hsat, hsub e he hfe]
+  | @resolvent ls c₁ c₂ u _ h₁ h₂ hu₁ hu₂ ih =>
+    obtain ⟨ls', h', hsub, ks, hks, hfree, hF⟩ := ih
+    by_cases hsat : ∀ l ∈ c₁.resolvent c₂ u, ρ l.1 ≠ some l.2
+    swap
+    · refine ⟨ls', h', fun e he hfe => ?_, ks, hks.cons _, hfree, hF⟩
+      rcases List.mem_cons.1 he with rfl | he
+      exacts [absurd hfe hsat, hsub e he hfe]
+    have hne (c' : Clause V) (hc' : c' ∈ ls') (l : Literal V) (hl : l ∈ c') : ρ l.1 = none :=
+      h'.eq_none_of_restrictBy hc' hl
+    -- the new line to add, if any: a subclause of the resolvent derivable from `ls'`
+    have key : ∃ c', (c' ∈ ls' ∨ ∃ c₁' c₂', c₁' ∈ ls' ∧ c₂' ∈ ls' ∧ (u, true) ∈ c₁' ∧
+        (u, false) ∈ c₂' ∧ c' = c₁'.resolvent c₂' u) ∧ ∀ l ∈ c', l ∈ c₁.resolvent c₂ u := by
+      by_cases hv₁ : ∀ l ∈ c₁, ρ l.1 ≠ some l.2
+      swap
+      · -- `ρ` satisfies the first premise only through `u = true`, so not the second premise
+        push Not at hv₁
+        obtain ⟨l, hl, hρl⟩ := hv₁
+        have hlu : l = (u, true) := by
+          by_contra hlu
+          exact hsat l (Clause.mem_resolvent.2 (Or.inl ⟨hl, hlu⟩)) hρl
+        subst hlu
+        obtain ⟨c₂', hc₂', hsub₂⟩ := hsub c₂ h₂ fun l hl hρ => by
+          by_cases hl' : l = (u, false)
+          · subst hl'
+            exact absurd (hρl.symm.trans hρ) (by simp)
+          · exact hsat l (Clause.mem_resolvent.2 (Or.inr ⟨hl, hl'⟩)) hρ
+        refine ⟨c₂', Or.inl hc₂', fun l hl => Clause.mem_resolvent.2 (Or.inr ⟨hsub₂ l hl, ?_⟩)⟩
+        rintro rfl
+        exact absurd (hρl.symm.trans (hne _ hc₂' (u, false) hl)) (by simp)
+      by_cases hv₂ : ∀ l ∈ c₂, ρ l.1 ≠ some l.2
+      swap
+      · -- `ρ` satisfies the second premise only through `u = false`
+        push Not at hv₂
+        obtain ⟨l, hl, hρl⟩ := hv₂
+        have hlu : l = (u, false) := by
+          by_contra hlu
+          exact hsat l (Clause.mem_resolvent.2 (Or.inr ⟨hl, hlu⟩)) hρl
+        subst hlu
+        obtain ⟨c₁', hc₁', hsub₁⟩ := hsub c₁ h₁ hv₁
+        refine ⟨c₁', Or.inl hc₁', fun l hl => Clause.mem_resolvent.2 (Or.inl ⟨hsub₁ l hl, ?_⟩)⟩
+        rintro rfl
+        exact absurd (hρl.symm.trans (hne _ hc₁' (u, true) hl)) (by simp)
+      obtain ⟨c₁', hc₁', hsub₁⟩ := hsub c₁ h₁ hv₁
+      obtain ⟨c₂', hc₂', hsub₂⟩ := hsub c₂ h₂ hv₂
+      by_cases hu₁' : (u, true) ∈ c₁'
+      · by_cases hu₂' : (u, false) ∈ c₂'
+        · refine ⟨_, Or.inr ⟨c₁', c₂', hc₁', hc₂', hu₁', hu₂', rfl⟩, fun l hl => ?_⟩
+          rcases Clause.mem_resolvent.1 hl with ⟨hl, hne'⟩ | ⟨hl, hne'⟩
+          · exact Clause.mem_resolvent.2 (Or.inl ⟨hsub₁ l hl, hne'⟩)
+          · exact Clause.mem_resolvent.2 (Or.inr ⟨hsub₂ l hl, hne'⟩)
+        · refine ⟨c₂', Or.inl hc₂', fun l hl => Clause.mem_resolvent.2 (Or.inr ⟨hsub₂ l hl, ?_⟩)⟩
+          rintro rfl
+          exact hu₂' hl
+      · refine ⟨c₁', Or.inl hc₁', fun l hl => Clause.mem_resolvent.2 (Or.inl ⟨hsub₁ l hl, ?_⟩)⟩
+        rintro rfl
+        exact hu₁' hl
+    obtain ⟨c', hc' | ⟨c₁', c₂', hc₁', hc₂', hu₁', hu₂', rfl⟩, hsub'⟩ := key
+    · refine ⟨ls', h', fun e he hfe => ?_, ks, hks.cons _, hfree, hF⟩
+      rcases List.mem_cons.1 he with rfl | he
+      exacts [⟨c', hc', hsub'⟩, hsub e he hfe]
+    · refine ⟨_ :: ls', h'.resolvent u hc₁' hc₂' hu₁' hu₂', fun e he hfe => ?_, _ :: ks,
+        hks.cons_cons _, fun e he => ?_, .cons hsub' hF⟩
+      · rcases List.mem_cons.1 he with rfl | he
+        · exact ⟨_, List.mem_cons_self, hsub'⟩
+        · obtain ⟨e', he', hsub''⟩ := hsub e he hfe
+          exact ⟨e', List.mem_cons_of_mem _ he', hsub''⟩
+      · rcases List.mem_cons.1 he with rfl | he
+        exacts [hsat, hfree e he]
 
 end CNF
 
