@@ -69,6 +69,18 @@ theorem differenceHierarchy_one (C : Set (Set α)) : differenceHierarchy C 1 = C
   ext A
   simp [differenceHierarchy]
 
+/-- Every level lies in a difference-closed class containing the base class and the empty set. -/
+theorem differenceHierarchy_subset {C D : Set (Set α)} (hC : C ⊆ D) (h0 : ∅ ∈ D)
+    (hD : ∀ A ∈ D, ∀ B ∈ D, A \ B ∈ D) (n : ℕ) :
+    differenceHierarchy C n ⊆ D := by
+  induction n with
+  | zero =>
+    rintro A (rfl : A = ∅)
+    exact h0
+  | succ n ih =>
+    rintro A ⟨B, hB, E, hE, rfl⟩
+    exact hD B (hC hB) E (ih hE)
+
 /-- Inverse images preserve every level whenever they preserve the base classes. -/
 theorem preimage_mem_differenceHierarchy {C : Set (Set α)} {D : Set (Set β)}
     {f : α → β} (hf : ∀ B ∈ D, f ⁻¹' B ∈ C) {n : ℕ} {A : Set β}
@@ -194,6 +206,26 @@ def coBH (enc : α ↪ List Bool) (n : ℕ) : Set (Set α) := {A | Aᶜ ∈ BH e
 
 /-- The union of all finite levels of the Boolean hierarchy over NP. -/
 def BooleanHierarchy (enc : α ↪ List Bool) : Set (Set α) := ⋃ n, BH enc n
+
+/-- Every finite level belongs to the full Boolean hierarchy. -/
+theorem BH_subset_BooleanHierarchy (n : ℕ) : BH enc n ⊆ BooleanHierarchy enc :=
+  Set.subset_iUnion (BH enc) n
+
+/-- NP is the first level of the Boolean hierarchy. -/
+theorem NP_subset_BooleanHierarchy : NP enc ⊆ BooleanHierarchy enc := by
+  simpa only [BH, differenceHierarchy_one] using BH_subset_BooleanHierarchy (enc := enc) 1
+
+/-- A difference-closed class containing NP contains its entire Boolean hierarchy. -/
+theorem BooleanHierarchy_subset {D : Set (Set α)} (hNP : NP enc ⊆ D)
+    (hD : ∀ A ∈ D, ∀ B ∈ D, A \ B ∈ D) : BooleanHierarchy enc ⊆ D :=
+  Set.iUnion_subset (differenceHierarchy_subset hNP (hNP empty_mem_NP) hD)
+
+/-- For a difference-closed target, containing NP is equivalent to containing the full
+Boolean hierarchy over NP. -/
+theorem BooleanHierarchy_subset_iff {D : Set (Set α)}
+    (hD : ∀ A ∈ D, ∀ B ∈ D, A \ B ∈ D) :
+    BooleanHierarchy enc ⊆ D ↔ NP enc ⊆ D :=
+  ⟨NP_subset_BooleanHierarchy.trans, fun h => BooleanHierarchy_subset h hD⟩
 
 @[simp]
 theorem mem_coBH_iff {n : ℕ} : A ∈ coBH enc n ↔ Aᶜ ∈ BH enc n := Iff.rfl

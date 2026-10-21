@@ -20,6 +20,8 @@ import ComplexityTests.BipartiteMatching
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
+import ComplexityTests.BooleanHierarchyClosure
+import ComplexityTests.BooleanHierarchyPH
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
@@ -62,6 +64,7 @@ import ComplexityTests.CountingMachine
 import ComplexityTests.CountingOracle
 import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
+import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DecisionTree
@@ -158,6 +161,7 @@ import ComplexityTests.MassProduction.Pipeline
 import ComplexityTests.MassProduction.Scheduler
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MemoizePPT
+import ComplexityTests.ModularGap
 import ComplexityTests.MonotoneCircuitValue
 import ComplexityTests.MultiTapePolyTime
 import ComplexityTests.NPCompleteGraphs
@@ -215,6 +219,7 @@ import ComplexityTests.PCPNumbering
 import ComplexityTests.PCPPreprocessPrograms
 import ComplexityTests.PCPSelectedAssignmentTester
 import ComplexityTests.PCPVerifierProbability
+import ComplexityTests.PHClosure
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
