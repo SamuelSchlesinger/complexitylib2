@@ -431,6 +431,8 @@ public import Complexity.Computability.Complexity.Classes.Ladner.Basic
 public import Complexity.Computability.Complexity.Classes.Ladner.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Formula
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Reduction
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
@@ -649,6 +651,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Bina
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Bit
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LinearSpaceArith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
