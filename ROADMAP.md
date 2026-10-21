@@ -472,7 +472,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   affine-controller bounds, and hard-power counting. It already uses CSLib
   circuits and some mass-production infrastructure. The
   [functional-graph foundations](Complexity/Foundations/Combinatorics/FunctionalGraph.lean)
-  (transient and cycle structure, checkpoint packing, exact distinct-power counts) and
+  (transient and cycle structure, checkpoint packing, exact distinct-power counts,
+  [cycle-spectrum reduction and canonical hitting-time identities](Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean),
+  [min-max duality for required paths in in-forests](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean),
+  and [semantic correctness of the six-step distinguished-point procedure](Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean)) and
   [native circuit iteration](Complexity/Computability/Circuit/Iteration.lean) with retained
   orbits are in place, as are the [fixed-power theorem](Complexity/Computability/Circuit/Boolean/Iteration.lean),
   its encoded and burn-in forms, the optimized square-root bounds and permutation inversion; the

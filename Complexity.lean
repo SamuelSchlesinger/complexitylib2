@@ -1190,9 +1190,12 @@ public import Complexity.Foundations.Combinatorics.FunctionalGraph.Active
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Checkpoints
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Commutation
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Cycle
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.DistinguishedPoints
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.ForestDuality
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.HittingTime
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Powers
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Projection
+public import Complexity.Foundations.Combinatorics.FunctionalGraph.Spectrum
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
