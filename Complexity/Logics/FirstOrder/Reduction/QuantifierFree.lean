@@ -31,7 +31,9 @@ A reduction through a given interpretation is proved by two kinds of arguments: 
 conditions, such as quantifier-freeness, and the semantic statement that `M ∈ K` exactly when the
 interpreted structure belongs to `K'`. For a one-dimensional interpretation whose domain formula
 always holds, `QFReduces.of_unitStructure` states the semantic part on the input universe itself,
-as `Reduces.of_unitStructure` does for first-order reductions. The tactic `fo_reduction` applies
+as `Reduces.of_unitStructure` does for first-order reductions; for an interpretation of any
+dimension whose domain formula always holds, `QFReduces.of_tupleStructure` states it on tuples of
+the input universe. The tactic `fo_reduction` applies
 these lemmas and proves the side conditions.
 
 ## Main definitions
@@ -45,6 +47,8 @@ these lemmas and proves the side conditions.
   reducibility is a preorder on classes closed under isomorphism.
 * `Cslib.Logic.FO.QFReduces.of_unitStructure`: quantifier-free reductions through
   one-dimensional interpretations, stated on the input universe.
+* `Cslib.Logic.FO.QFReduces.of_tupleStructure`: quantifier-free reductions through
+  interpretations whose domain formula always holds, stated on tuples of the input universe.
 
 ## References
 
@@ -116,6 +120,17 @@ theorem of_unitStructure (I : Interpretation L L' Unit)
       I.domain.Realize fun _ => x) :
     QFReduces K K' :=
   .of_interpretation I (fun M _ => (h M).trans (I.mem_iff_unitStructure hK' M (hdom M)).symm) hI
+
+/-- A quantifier-free reduction through an interpretation whose domain formula holds of every
+tuple of every finite structure, to a class closed under isomorphism, stated on the tuples of the
+input universe. -/
+theorem of_tupleStructure {ι : Type} [Finite ι] (I : Interpretation L L' ι)
+    (h : ∀ (M : Bundled.{w} L.Structure) [Finite M],
+      M ∈ K ↔ (⟨ι → M, I.tupleStructure M⟩ : Bundled.{w} L'.Structure) ∈ K')
+    (hI : I.IsQF) (hK' : IsoClosed K') (hdom : ∀ (M : Type w) [L.Structure M] [Finite M]
+      (x : ι → M), I.domain.Realize x) :
+    QFReduces K K' :=
+  .of_interpretation I (fun M _ => (h M).trans (I.mem_iff_tupleStructure hK' M (hdom M)).symm) hI
 
 end QFReduces
 

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.FirstOrder.Ordered.TupleInterpretation
+import Complexity.Tactic.FirstOrder
 
 /-!
 # Successor on full tuple universes
@@ -183,18 +184,10 @@ noncomputable def tupleSuccOf {L : Language} (σ : (language L).Formula (Fin 2))
       else ⊤
 
 /-- The carry compiler introduces no quantifiers beyond those of the supplied successor. -/
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isQF_tupleSuccOf {L : Language} {σ : (language L).Formula (Fin 2)}
     (hσ : σ.IsQF) (k : ℕ) : (tupleSuccOf σ k).IsQF := by
-  apply Formula.isQF_iSup
-  intro i
-  apply BoundedFormula.IsQF.inf (hσ.relabel _)
-  apply Formula.isQF_iInf
-  intro j
-  split_ifs
-  · exact (BoundedFormula.IsAtomic.equal _ _).isQF
-  · exact (BoundedFormula.IsAtomic.equal _ _).isQF.inf
-      (BoundedFormula.IsAtomic.equal _ _).isQF
-  · exact BoundedFormula.IsQF.top
+  unfold tupleSuccOf; fo_qf
 
 /-- Source successor in the canonical `≤` language: strict order with no intermediate point.
 The formula universally quantifies one element; it is not asserted quantifier-free. -/
@@ -208,9 +201,7 @@ variable {L : Language} {n k : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)]
 /-- The canonical source formula defines ordinary, non-wrapping successor. -/
 theorem realize_successor (v : Fin 2 → Fin n) :
     (successor L).Realize v ↔ (v 1).val = (v 0).val + 1 := by
-  simp only [successor, Formula.realize_inf, Formula.realize_not, realize_le,
-    Term.realize_var, Formula.realize_iAlls, Formula.realize_imp, Sum.elim_inl, Sum.elim_inr,
-    not_le]
+  fo_simp [successor, not_le]
   constructor
   · rintro ⟨h, hi⟩
     have h' : (v 0).val < (v 1).val := h
@@ -219,13 +210,10 @@ theorem realize_successor (v : Fin 2 → Fin n) :
     change (v 1).val ≤ (v 0).val + 1 at hc
     lia
   · intro h
-    constructor
-    · change (v 0).val < (v 1).val
-      lia
-    · intro z hz
-      change (v 0).val < (z ()).val at hz
-      change (v 1).val ≤ (z ()).val
-      lia
+    refine ⟨by change (v 0).val < (v 1).val; lia, fun z hz => ?_⟩
+    change (v 0).val < (z ()).val at hz
+    change (v 1).val ≤ (z ()).val
+    lia
 
 /-- Any correct source successor formula compiles to exact successor of lexicographic ranks. -/
 theorem realize_tupleSuccOf {σ : (language L).Formula (Fin 2)}
@@ -234,25 +222,15 @@ theorem realize_tupleSuccOf {σ : (language L).Formula (Fin 2)}
     (tupleSuccOf σ k).Realize v ↔
       lexRank (fun i => v (1, i)) = lexRank (fun i => v (0, i)) + 1 := by
   rw [← isCarrySuccessor_iff]
-  simp only [tupleSuccOf, Formula.realize_iSup, Formula.realize_inf, Formula.realize_relabel,
-    hσ, Function.comp_apply, Formula.realize_iInf, IsCarrySuccessor]
-  apply exists_congr
-  intro i
-  apply and_congr_right
-  intro _
-  constructor
-  · intro h
-    refine ⟨fun j hj => ?_, fun j hj => ?_⟩
-    · simpa [hj] using h j
-    · have hj' : ¬j < i := not_lt.mpr (le_of_lt hj)
-      have hh := h j
-      simp only [hj', hj, ite_false, ite_true, Formula.realize_inf, Formula.realize_equal,
-        Term.realize_var] at hh
-      exact ⟨congrArg Fin.val hh.1, congrArg Fin.val hh.2⟩
-  · rintro ⟨hpre, hpost⟩ j
-    split_ifs with hji hij
+  fo_simp [tupleSuccOf, hσ, IsCarrySuccessor]
+  refine exists_congr fun i => and_congr_right fun _ =>
+    ⟨fun h => ⟨fun j hj => by simpa [hj] using h j, fun j hj => ?_⟩, fun ⟨hpre, hpost⟩ j => ?_⟩
+  · have hh := h j
+    fo_simp [not_lt.mpr (le_of_lt hj), hj] at hh
+    exact ⟨congrArg Fin.val hh.1, congrArg Fin.val hh.2⟩
+  · split_ifs with hji hij
     · exact hpre j hji
-    · simp only [Formula.realize_inf, Formula.realize_equal, Term.realize_var]
+    · fo_simp
       exact ⟨Fin.ext (hpost j hij).1, Fin.ext (hpost j hij).2⟩
     · exact Formula.realize_top.mpr trivial
 

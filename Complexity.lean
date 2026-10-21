@@ -1416,6 +1416,7 @@ public import Complexity.Logics.FirstOrder.Interpretation.Constants
 public import Complexity.Logics.FirstOrder.Interpretation.Encoding
 public import Complexity.Logics.FirstOrder.Interpretation.Rank
 public import Complexity.Logics.FirstOrder.Interpretation.Tagged
+public import Complexity.Logics.FirstOrder.Interpretation.Tuple
 public import Complexity.Logics.FirstOrder.Interpretation.Unit
 public import Complexity.Logics.FirstOrder.Ordered.Addition
 public import Complexity.Logics.FirstOrder.Ordered.Basic

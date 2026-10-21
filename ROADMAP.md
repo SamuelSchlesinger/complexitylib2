@@ -334,12 +334,13 @@ of the handover. The work below remains available for subsequent, independently 
      [graph-complement client](Complexity/Logics/FirstOrder/Projection/Graph.lean) and tests cover
      nonvacuity, empty universes, nullary relations and the failure of two-bit conjunction to be
      a projection. Quantifier-free reducibility
-     ([QFReduces](Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean)) and the tactics
-     `fo_qf`, `fo_iso_closed`, `fo_simp` and `fo_reduction`
-     ([Tactic/FirstOrder](Complexity/Tactic/FirstOrder.lean)) are implemented, with independent
+     ([QFReduces](Complexity/Logics/FirstOrder/Reduction/QuantifierFree.lean)), full-domain tuple
+     interpretations ([Interpretation/Tuple](Complexity/Logics/FirstOrder/Interpretation/Tuple.lean))
+     and the tactics `fo_qf`, `fo_iso_closed`, `fo_simp` and `fo_reduction`
+     ([Tactic/FirstOrder](Complexity/Tactic/FirstOrder.lean)) are implemented, simplifying
+     composite and higher-dimensional interpretations and composite projections, with independent
      set, clique and vertex cover as quantifier-free reducible
-     [structure classes](Complexity/Logics/FirstOrder/Problems/SizedGraph.lean); `fo_reduction`
-     does not yet simplify the relations of composite or higher-dimensional interpretations.
+     [structure classes](Complexity/Logics/FirstOrder/Problems/SizedGraph.lean).
      **Still outstanding:** the classical positive-dimensional full-universe
      specialization and canonical numeric preservation, projection reducibility on finite
      structure classes, and the standard ordered machine encoding bridge. Reuse

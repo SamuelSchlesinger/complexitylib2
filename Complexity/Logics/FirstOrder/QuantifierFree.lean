@@ -72,6 +72,12 @@ theorem iSup [Finite β] (f : β → L.BoundedFormula α n) (h : ∀ b, (f b).Is
 theorem iff {φ ψ : L.BoundedFormula α n} (hφ : φ.IsQF) (hψ : ψ.IsQF) : (φ.iff ψ).IsQF :=
   (hφ.imp hψ).inf (hψ.imp hφ)
 
+/-- A conditional between quantifier-free formulas is quantifier-free. -/
+@[aesop safe apply (rule_sets := [FirstOrder])]
+theorem ite {P : Prop} [Decidable P] {φ ψ : L.BoundedFormula α n}
+    (hφ : φ.IsQF) (hψ : ψ.IsQF) : (if P then φ else ψ).IsQF := by
+  split_ifs <;> assumption
+
 /-- Mapping relation and function symbols preserves quantifier-freeness. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem onBoundedFormula {φ : L.BoundedFormula α n} (h : φ.IsQF) (f : L →ᴸ L') :
