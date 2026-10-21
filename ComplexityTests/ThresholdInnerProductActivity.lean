@@ -81,4 +81,22 @@ example : 1 ≤ (∑ j ∈ range (gateActivity (Program.empty : Program signatur
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
     (fun _ _ => by simp [hadamardCode_apply, dotProduct, Bool.zero_eq_false])
 
+-- Shifted-baseline inner-product bounds on `andCircuit.program` at positive dimension (`m = 1`).
+example (v : inputGates andCircuit.program → Bool) :
+    2 ≤ (∑ j ∈ range (inputActivityFrom andCircuit.program v + 1),
+      (inputGates andCircuit.program).card.choose j) ^ 2 := by
+  apply two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode andCircuit.program
+    (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm v (fun z => z 0)
+  intro x y
+  simpa only [andCircuit, Circuit.eval, Function.comp_apply, Program.trace_gateWire,
+    Program.gateFunction_apply] using andCircuit_computes x y
+
+example (v : Fin 1 → Bool) :
+    2 ≤ (∑ j ∈ range (gateActivityFrom andCircuit.program v + 1), Nat.choose 1 j) ^ 2 := by
+  apply two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode andCircuit.program
+    (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm v (fun z => z 0)
+  intro x y
+  simpa only [andCircuit, Circuit.eval, Function.comp_apply, Program.trace_gateWire,
+    Program.gateFunction_apply] using andCircuit_computes x y
+
 end ThresholdInnerProductActivity

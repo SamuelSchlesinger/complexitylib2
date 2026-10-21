@@ -64,6 +64,7 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingVerifier
 import ComplexityTests.CyclicFeedback
+import ComplexityTests.DecisionTree
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
@@ -93,6 +94,8 @@ import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
+import ComplexityTests.FunctionalGraph
+import ComplexityTests.FunctionalGraphSpectrum
 import ComplexityTests.Fusion
 import ComplexityTests.FusionBoolean
 import ComplexityTests.FusionClosure
