@@ -219,8 +219,9 @@ public theorem computableTidilyInPolyTime {f : α → β} (h : ComputableTidilyI
 /-- A function whose encoded values are those of a function computable within the bounds. -/
 public theorem of_enc_eq {f : α → β} {g : α → γ} (hf : ComputableTidilyInO f encIn encMid T S)
     (h : ∀ x, encOut (g x) = encMid (f x)) : ComputableTidilyInO g encIn encOut T S :=
-  let ⟨c, ⟨k, S', hS', tm, htm⟩, hl⟩ := hf
-  ⟨c, ⟨k, S', hS', tm, fun a => h a ▸ htm a⟩, fun a => (h a).symm ▸ hl a⟩
+  -- vendored: reuse the exact-bound output transport rule.
+  let ⟨c, hf, hl⟩ := hf
+  ⟨c, hf.of_enc_eq h, fun a => (h a).symm ▸ hl a⟩
 
 -- upstream: vendored crei:crei/tidy-universal @9cce4cc7 (unsubmitted)
 -- vendored: `of_encIn_eq`, `of_equiv` and `to_equiv` below, from that revision's `Complexity/BigO`

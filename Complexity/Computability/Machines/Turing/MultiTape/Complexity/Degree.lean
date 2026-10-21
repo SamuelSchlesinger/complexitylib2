@@ -239,8 +239,9 @@ public theorem append {enc₂ : δ ↪ List Bool} {f₁ : α → β} {f₂ : α 
 public theorem of_enc_eq {f : α → β} {g : α → γ}
     (hf : ComputableTidilyInDegree f encIn encMid d e) (h : ∀ x, encOut (g x) = encMid (f x)) :
     ComputableTidilyInDegree g encIn encOut d e :=
-  let ⟨⟨t, s, ht, hs, ⟨k, S, hS, tm, htm⟩⟩, hl⟩ := hf
-  ⟨⟨t, s, ht, hs, ⟨k, S, hS, tm, fun a => h a ▸ htm a⟩⟩, hl.mono fun a => by rw [h]⟩
+  -- vendored: reuse the exact-bound output transport rule.
+  let ⟨⟨t, s, ht, hs, hf⟩, hl⟩ := hf
+  ⟨⟨t, s, ht, hs, hf.of_enc_eq h⟩, hl.mono fun a => by rw [h]⟩
 
 public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}

@@ -26,4 +26,16 @@ example : encList encBool [true, false] = [true, true, false, true, false, false
 
 example (w u : List Bool) : unframe (frame w ++ u) = w := unframe_frame_append w u
 
+-- Binary successor can expose its raw output word with precisely the same time/space bounds.
+example : ∃ c, ComputableTidilyInTimeAndSpace (fun n : ℕ => encNat (n + 1)) encNat encBits
+    (fun n => c * ((encNat n).length + 1) ^ 2)
+    (fun n => c * ((encNat n).length + 1)) :=
+  let ⟨c, h⟩ := computableTidilyInTimeAndSpace_succ
+  ⟨c, h.of_enc_eq fun _ => rfl⟩
+
+/-- info: 'Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.of_enc_eq'
+depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.of_enc_eq
+
 end ComplexityTests.Encodings
