@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 -- vendored: use the local `DegreeBounded.add_max` rule; the fold contracts are unchanged.
+-- vendored: derive the encoded suffix bound from Mathlib's `List.Sublist.flatMap`.
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 
@@ -47,8 +48,7 @@ public class SizedListEncoding {α : Type*} (encA : α ↪ List Bool) (encL : Li
 public instance {α : Type*} (enc : α ↪ List Bool) : SizedListEncoding enc (encList enc) where
   length_le l := by induction l <;> grind [encList_cons, length_frame]
   length_elem_le l a ha := by induction l <;> grind [encList_cons, length_frame]
-  length_drop_le l i := by
-    induction l generalizing i <;> cases i <;> grind [encList_cons, length_frame]
+  length_drop_le l i := ((List.drop_sublist i l).flatMap (frame ∘ enc)).length_le
 
 public instance : SizedListEncoding encBool encBits where
   length_le l := by simp

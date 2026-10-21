@@ -6,6 +6,7 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: derive encoded prefix/filter bounds from Mathlib's `List.Sublist.flatMap`.
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import Mathlib.Tactic.Linarith
@@ -39,10 +40,8 @@ public lemma encList_append (enc : α ↪ List Bool) (l₁ l₂ : List α) :
 
 /-- A prefix is no longer than the list. -/
 public lemma length_encList_take_le (enc : α ↪ List Bool) (l : List α) (i : ℕ) :
-    (encList enc (l.take i)).length ≤ (encList enc l).length := by
-  have := congrArg List.length (encList_append enc (l.take i) (l.drop i))
-  rw [List.take_append_drop, List.length_append] at this
-  omega
+    (encList enc (l.take i)).length ≤ (encList enc l).length :=
+  ((List.take_sublist i l).flatMap (frame ∘ enc)).length_le
 
 /-- An element is no longer than the encoded list. -/
 public lemma length_le_encList_of_mem (enc : α ↪ List Bool) {l : List α} {a : α} (h : a ∈ l) :
@@ -161,10 +160,8 @@ public lemma foldl_filterStep (t : π × α → Bool) (p : π) (l acc : List α)
   induction l generalizing acc <;> grind [filterStep]
 
 public lemma length_encList_filter_le (enc : α ↪ List Bool) (f : α → Bool) (l : List α) :
-    (encList enc (l.filter f)).length ≤ (encList enc l).length := by
-  induction l with
-  | nil => simp
-  | cons a l ih => by_cases h : f a <;> simp [h] <;> omega
+    (encList enc (l.filter f)).length ≤ (encList enc l).length :=
+  (List.filter_sublist.flatMap (frame ∘ enc)).length_le
 
 /-- The elements of `list x` passing the test `t` with the parameter `par x`, for a list of linear
 size. -/
