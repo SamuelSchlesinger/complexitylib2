@@ -119,45 +119,6 @@ theorem computesTidily_iff_nil_output {machine : MultiTapePTM k Bool State Opera
       machine.RunsWords x (fun _ => []) [] time program (fun _ _ => []) id :=
   ⟨fun h => h [], fun h _ => h.of_nil_output⟩
 
-/-- One step of `runOracleConfigFrom` appends at most one symbol to the output tape. -/
-private theorem length_output_le_of_mem_support_one
-    (machine : MultiTapePTM k Bool State Operation)
-    (oracle : Operation × List Bool → StateT OracleState PMF (List Bool))
-    (cfg : Config k Bool State Operation x) (s : OracleState)
-    {mid : Config k Bool State Operation x} {s₁ : OracleState}
-    (hmid : (mid, s₁) ∈ ((OracleComp.interpret
-      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-      (machine.runOracleConfigFrom 1 cfg)).run s).support) :
-    mid.tapes.output.length ≤ cfg.tapes.output.length + 1 := by
-  dsimp only [runOracleConfigFrom, runConfigFrom, MultiTapeMachine.runConfigFrom] at hmid
-  cases hstate : cfg.tapes.state with
-  | none =>
-    simp only [hstate, OracleComp.interpret_pure, StateT.run_pure,
-      Probability.PMF.monad_pure_eq_pure, PMF.mem_support_pure_iff] at hmid
-    rcases Prod.mk.inj hmid with ⟨rfl, rfl⟩
-    omega
-  | some q =>
-    simp only [hstate, bind_map_left, OracleComp.interpret_bind, StateT.run_bind,
-      run_interpret_sample_uniform_bool, Probability.PMF.monad_bind_eq_bind,
-      PMF.bind_map, Function.comp_def] at hmid
-    obtain ⟨bit, _, hstep⟩ := (PMF.mem_support_bind_iff _ _ _).mp hmid
-    cases htr : machine.tr q cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols
-        cfg.answerSymbols bit with
-    | step action symbol move =>
-      simp only [htr, OracleComp.interpret_pure, StateT.run_pure,
-        Probability.PMF.monad_pure_eq_pure, PMF.mem_support_pure_iff] at hstep
-      rcases Prod.mk.inj hstep with ⟨rfl, rfl⟩
-      simp only [Config.step, Turing.Action.apply, List.length_append]
-      cases action.output <;> simp
-    | query op next =>
-      simp only [htr, OracleComp.interpret_bind, StateT.run_bind, ProbOracleComp.interpret_query,
-        OracleComp.interpret_pure, StateT.run_pure, Probability.PMF.monad_bind_eq_bind,
-        Probability.PMF.monad_pure_eq_pure] at hstep
-      obtain ⟨⟨answer, s₂⟩, _, hpure⟩ := (PMF.mem_support_bind_iff _ _ _).mp hstep
-      rw [PMF.mem_support_pure_iff] at hpure
-      rcases Prod.mk.inj hpure with ⟨rfl, rfl⟩
-      simp [Config.receive]
-
 /-- Over `fuel` steps of `runOracleConfigFrom`, the output tape grows by at most `fuel` symbols. -/
 theorem length_output_le_of_mem_support_runOracleConfigFrom
     (machine : MultiTapePTM k Bool State Operation)
@@ -168,23 +129,12 @@ theorem length_output_le_of_mem_support_runOracleConfigFrom
       (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
       (machine.runOracleConfigFrom fuel cfg)).run s).support) :
     final.tapes.output.length ≤ cfg.tapes.output.length + fuel := by
-  induction fuel generalizing cfg s with
-  | zero =>
-    dsimp only [runOracleConfigFrom, runConfigFrom, MultiTapeMachine.runConfigFrom] at hfinal
-    simp only [OracleComp.interpret_pure, StateT.run_pure,
-      Probability.PMF.monad_pure_eq_pure, PMF.mem_support_pure_iff] at hfinal
-    rcases Prod.mk.inj hfinal with ⟨rfl, rfl⟩
-    omega
-  | succ fuel ih =>
-    have hsplit : fuel + 1 = 1 + fuel := by omega
-    rw [hsplit] at hfinal
-    dsimp only [runOracleConfigFrom, runConfigFrom] at hfinal
-    rw [MultiTapeMachine.runConfigFrom_add, OracleComp.interpret_bind, StateT.run_bind,
-      Probability.PMF.monad_bind_eq_bind] at hfinal
-    obtain ⟨⟨mid, s₁⟩, hmid, hrem⟩ := (PMF.mem_support_bind_iff _ _ _).mp hfinal
-    have h₁ := length_output_le_of_mem_support_one machine oracle cfg s hmid
-    have h₂ := ih mid s₁ hrem
-    omega
+  exact MultiTapeMachine.length_output_runConfigFrom_le machine
+    (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool))
+    (fun op word => ProbOracleComp.query
+      (spec := fun _ : Operation × List Bool => List Bool) (op, word))
+    (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
+    fuel cfg final s s' hfinal
 
 /-- Any word emitted by a `RunsWords` phase has length at most `time`. -/
 theorem RunsWords.length_emit_le {machine : MultiTapePTM k Bool State Operation}
