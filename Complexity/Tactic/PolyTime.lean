@@ -62,12 +62,11 @@ attribute [program_certificate]
 -- Each contract keeps the evidence that must agree on a bound or an encoding in one search.
 attribute [program_certificate hbound hcompute]
   ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
-
 attribute [program_certificate hbound]
   ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth
 
 open Lean Meta Elab Tactic in
-/-- Synthesize a list interface only after the computation evidence fixes its encodings. -/
+/-- Synthesize a list interface once the list and element encodings are determined. -/
 @[aesop safe tactic (rule_sets := [PolyTime])
   (index := [target ListEncoding _ _, target SizedListEncoding _ _])]
 private meta def polytimeListInstance : TacticM Unit := withMainContext do
@@ -90,23 +89,31 @@ private meta def polytimeKnownCall : Aesop.RuleTac :=
     ``ComputableTidilyInPolyTime.comp `g `hf
 
 open Lean Meta Elab Tactic in
+/-- Test whether any local routine certificate applies to the current goal. -/
+private meta def hasLocalCall (goal : MVarId) : MetaM Bool := do
+  try
+    discard <| (polytimeKnownCall { (default : Aesop.RuleTacInput) with goal }).run' {}
+    pure true
+  catch _ => pure false
+
+open Lean Meta Elab Tactic in
 /-- Commit to decomposition only when no local certificate supplies an alternative. The matcher
 restores the caller's state and leaves argument preparation open, so this tests applicability
 without choosing an intermediate encoding. -/
 private meta def withoutLocalCall (tactic : TacticM Unit) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
-  let hasCall ← try
-    discard <| (polytimeKnownCall { (default : Aesop.RuleTacInput) with goal }).run' {}
-    pure true
-  catch _ => pure false
-  if hasCall then throwError "a local certificate is an alternative to decomposition"
+  unless (← goal.getType).consumeMData.isAppOf ``ComputableTidilyInPolyTime do
+    throwError "expected a polynomial-time goal"
+  if ← hasLocalCall goal then throwError "a local certificate is an alternative to decomposition"
   tactic
 
 open Lean Meta Elab Tactic in
 /-- Retain decomposition as an alternative when a local certificate competes with it. -/
 private meta def withLocalCall (tactic : TacticM Unit) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
-  discard <| (polytimeKnownCall { (default : Aesop.RuleTacInput) with goal }).run' {}
+  unless (← goal.getType).consumeMData.isAppOf ``ComputableTidilyInPolyTime do
+    throwError "expected a polynomial-time goal"
+  unless ← hasLocalCall goal do throwError "no competing local certificate"
   tactic
 
 /-- Expose named deterministic certificates as search alternatives. -/
@@ -116,22 +123,23 @@ private meta def polytimeCertificate : Aesop.RuleTac :=
 
 open Lean Meta Elab Tactic in
 /-- Decompose constructors before generic composition can guess intermediate encodings. -/
-private meta def polytimeConstruct : TacticM Unit := withMainContext do
-  let target := (← instantiateMVars (← getMainTarget)).consumeMData
-  unless target.isAppOf ``ComputableTidilyInPolyTime do
-    throwError "expected a polynomial-time goal"
-  let rawBits := target.getAppArgs[4]!.isConstOf ``encBits
-  let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
-  let rule ← lambdaTelescope program fun _ body => do
-    if body.isAppOf ``HAppend.hAppend || body.isAppOf ``List.append then
-      return if rawBits then ``ComputableTidilyInPolyTime.bitsAppend
-        else ``ComputableTidilyInPolyTime.listAppend'
-    if body.isAppOf ``List.cons then
-      return if rawBits then ``ComputableTidilyInPolyTime.bitsCons
-        else ``ComputableTidilyInPolyTime.cons'
-    if body.isAppOf ``Prod.mk then return ``ComputableTidilyInPolyTime.prod
-    throwError "expected a constructor"
-  liftMetaTactic fun goal => goal.applyConst rule
+private meta def polytimeConstruct (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
+  withMainContext do
+    let target := (← instantiateMVars (← getMainTarget)).consumeMData
+    unless target.isAppOf ``ComputableTidilyInPolyTime do
+      throwError "expected a polynomial-time goal"
+    let rawBits := target.getAppArgs[4]!.isConstOf ``encBits
+    let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
+    let rule ← lambdaTelescope program fun _ body => do
+      if body.isAppOf ``HAppend.hAppend || body.isAppOf ``List.append then
+        return if rawBits then ``ComputableTidilyInPolyTime.bitsAppend
+          else ``ComputableTidilyInPolyTime.listAppend'
+      if body.isAppOf ``List.cons then
+        return if rawBits then ``ComputableTidilyInPolyTime.bitsCons
+          else ``ComputableTidilyInPolyTime.cons'
+      if body.isAppOf ``Prod.mk then return ``ComputableTidilyInPolyTime.prod
+      throwError "expected a constructor"
+    guard <| liftMetaTactic fun goal => goal.applyConst rule
 
 open Lean Meta Elab Tactic in
 /-- Let compositional certificates finish a goal before trying loop specifications. -/
@@ -177,7 +185,7 @@ theorem foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
 open Lean Meta Elab Tactic in
 /-- Resolve the traversed list's encoding before certifying the step. Try a nonincreasing state
 bound first, committing to it only after its growth obligation has been proved. -/
-private meta def polytimeFold : TacticM Unit :=
+private meta def polytimeFold (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
     unless target.isAppOf ``ComputableTidilyInPolyTime do
@@ -185,20 +193,36 @@ private meta def polytimeFold : TacticM Unit :=
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let isFold ← lambdaTelescope program fun _ body => pure (body.isAppOf ``List.foldl)
     unless isFold do throwError "expected a list fold"
-    for rule in [``foldl_bits_rule, ``foldl_list_rule] do
-      for zeroGrowth in [true, false] do
+    guard do
+      for rule in [``foldl_bits_rule, ``foldl_list_rule] do
         let saved ← saveState
         try
-          if zeroGrowth then
-            let rule := mkIdent rule
-            evalTactic (← `(tactic| apply $rule:ident (growth := 0)))
-          else liftMetaTactic fun goal => goal.applyConst rule
+          liftMetaTactic fun goal => goal.applyConst rule
           evalTactic (← `(tactic| case hlist => solve |
-            aesop (config := { assumptionTransparency := .reducible }) (rule_sets := [PolyTime])))
-          if zeroGrowth then Cslib.Tactic.solveTagged `hgrowth
+            aesop (config := { terminal := true, assumptionTransparency := .reducible })
+              (rule_sets := [PolyTime])))
+          let afterList ← saveState
+          try
+            evalTactic (← `(tactic| case growth => exact 0))
+            Cslib.Tactic.solveTagged `hgrowth
+          catch _ =>
+            afterList.restore
           return
         catch _ => saved.restore
-    throwError "no supported list encoding"
+      throwError "no supported list encoding"
+
+open Lean Meta Elab Tactic in
+/-- Apply the bounded-growth iteration rule once the goal is seen to be an iteration. -/
+private meta def polytimeIterate (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
+  withMainContext do
+    let target := (← instantiateMVars (← getMainTarget)).consumeMData
+    unless target.isAppOf ``ComputableTidilyInPolyTime do
+      throwError "expected a polynomial-time goal"
+    let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
+    let isIter ← lambdaTelescope program fun _ body => pure (body.isAppOf ``Nat.iterate)
+    unless isIter do throwError "expected an iteration"
+    guard <| liftMetaTactic fun goal =>
+      goal.applyConst ``ComputableTidilyInPolyTime.iterate_of_bounded_growth
 
 attribute [aesop safe apply (rule_sets := [PolyTime])] Nat.le_refl
 
@@ -214,7 +238,7 @@ attribute [aesop unsafe 80% apply (rule_sets := [PolyTime])]
 -- duplicating those alternatives while retaining decomposition if a local certificate fails.
 @[aesop safe -25 tactic (rule_sets := [PolyTime])]
 private meta def polytimeConstructFast : Lean.Elab.Tactic.TacticM Unit :=
-  withoutLocalCall polytimeConstruct
+  polytimeConstruct withoutLocalCall
 
 @[aesop safe -20 tactic (rule_sets := [PolyTime])]
 private meta def polytimeFunPropFast : Lean.Elab.Tactic.TacticM Unit :=
@@ -222,16 +246,15 @@ private meta def polytimeFunPropFast : Lean.Elab.Tactic.TacticM Unit :=
 
 @[aesop safe 50 tactic (rule_sets := [PolyTime])]
 private meta def polytimeFoldFast : Lean.Elab.Tactic.TacticM Unit :=
-  withoutLocalCall polytimeFold
+  polytimeFold withoutLocalCall
 
 @[aesop safe tactic (rule_sets := [PolyTime])]
 private meta def polytimeIterateFast : Lean.Elab.Tactic.TacticM Unit :=
-  withoutLocalCall <| Lean.Elab.Tactic.liftMetaTactic fun goal =>
-    goal.applyConst ``ComputableTidilyInPolyTime.iterate_of_bounded_growth
+  polytimeIterate withoutLocalCall
 
 @[aesop unsafe 95% tactic (rule_sets := [PolyTime])]
 private meta def polytimeConstructAlternative : Lean.Elab.Tactic.TacticM Unit :=
-  withLocalCall polytimeConstruct
+  polytimeConstruct withLocalCall
 
 @[aesop unsafe 90% tactic (rule_sets := [PolyTime])]
 private meta def polytimeFunPropAlternative : Lean.Elab.Tactic.TacticM Unit :=
@@ -239,17 +262,17 @@ private meta def polytimeFunPropAlternative : Lean.Elab.Tactic.TacticM Unit :=
 
 @[aesop unsafe 85% tactic (rule_sets := [PolyTime])]
 private meta def polytimeFoldAlternative : Lean.Elab.Tactic.TacticM Unit :=
-  withLocalCall polytimeFold
+  polytimeFold withLocalCall
 
 @[aesop unsafe 85% tactic (rule_sets := [PolyTime])]
 private meta def polytimeIterateAlternative : Lean.Elab.Tactic.TacticM Unit :=
-  withLocalCall <| Lean.Elab.Tactic.liftMetaTactic fun goal =>
-    goal.applyConst ``ComputableTidilyInPolyTime.iterate_of_bounded_growth
+  polytimeIterate withLocalCall
 
 /-- Prove a polynomial-time certificate from known routines and controlled loop rules. -/
 -- Unfold only reducible aliases when comparing assumptions. Ordinary program definitions may
 -- contain large fixed enumerations; their named certificates should be tried before unfolding.
 macro "polytime" : tactic => `(tactic| solve |
-  aesop (config := { assumptionTransparency := .reducible }) (rule_sets := [PolyTime]))
+  aesop (config := { terminal := true, assumptionTransparency := .reducible })
+    (rule_sets := [PolyTime]))
 
 end Cslib.Tactic.PolyTime

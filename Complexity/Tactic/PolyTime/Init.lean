@@ -164,10 +164,16 @@ def solveTagged (name : Name) : TacticM Unit := do
       goals.findM? fun goal => return name.isSuffixOf (← goal.getTag))
     | throwError "no goal named `{name}`"
   let target := (← instantiateMVars (← goal.getType)).consumeMData
-  let tactic ← if target.isAppOf `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
-    `(tactic| solve | aesop (rule_sets := [PolyTime]))
+  let isPPTGoal :=
+    target.isAppOf `Cslib.Probability.IsPPTOn || target.isAppOf `Cslib.Probability.IsPPT
+  let tactic ← if isPPTGoal then
+    `(tactic| solve |
+      aesop (config := { terminal := true, assumptionTransparency := .reducible })
+        (rule_sets := [PPT, PolyTime]))
   else
-    `(tactic| solve | aesop (rule_sets := [PPT, PolyTime]))
+    `(tactic| solve |
+      aesop (config := { terminal := true, assumptionTransparency := .reducible })
+        (rule_sets := [PolyTime]))
   let remaining ← evalTacticAt tactic goal
   unless remaining.isEmpty do throwError "proof search did not discharge `{name}`"
   -- Nested tactic elaboration can recover an error by admitting its goal. Reject that candidate
@@ -278,14 +284,22 @@ def applyKnownCall (predicate : Name) (programIndex : Nat) (rule : Name)
       try
         let goals ← (Lean.Elab.Tactic.run input.goal <|
             Term.withoutErrToSorry <| withoutRecover do
-          let argument ← prepareArgument target.getAppArgs[0]! decl.type.getAppArgs[0]!
-          let composed ← withLocalDeclD `input target.getAppArgs[0]! fun input =>
+          let domain := target.getAppArgs[0]!
+          let argument ← prepareArgument domain decl.type.getAppArgs[0]!
+          let composed ← withLocalDeclD `input domain fun input =>
             mkLambdaFVars #[input] (mkApp certified (mkApp argument input))
           unless ← isDefEq (← withReducible (reduce composed)) program do
             throwError "the certificate does not match this call"
-          applyWithArguments rule #[(argumentName, argument), (certificateName, decl.toExpr)]
-          if ← (← getGoals).anyM (fun goal => do isDefEq (← goal.getType) target) then
-            throwError "composition made no progress").run'
+          let idArg := mkLambda `x .default domain (mkBVar 0)
+          if ← withReducible (isDefEq argument idArg) then
+            unless ← withReducible (isDefEq decl.type target) do
+              throwError "the certificate encoding does not match this call"
+            input.goal.assign decl.toExpr
+            replaceMainGoal []
+          else
+            applyWithArguments rule #[(argumentName, argument), (certificateName, decl.toExpr)]
+            if ← (← getGoals).anyM (fun goal => do isDefEq (← goal.getType) target) then
+              throwError "composition made no progress").run'
         if ← Aesop.hasSorry (mkMVar input.goal) then
           throwError "routine application contains an admitted premise"
         let goals ← goals.toArray.mapM (Aesop.mvarIdToSubgoal input.goal)
