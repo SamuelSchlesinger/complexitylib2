@@ -93,11 +93,18 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Depth
 public import Complexity.Computability.Circuit.Boolean.Iteration.DepthSearch
 public import Complexity.Computability.Circuit.Boolean.Iteration.Encoded
 public import Complexity.Computability.Circuit.Boolean.Iteration.Eventual
+public import Complexity.Computability.Circuit.Boolean.Iteration.ForestCircuitRecords
+public import Complexity.Computability.Circuit.Boolean.Iteration.ForestCircuits
+public import Complexity.Computability.Circuit.Boolean.Iteration.ForestQuerySynthesis
+public import Complexity.Computability.Circuit.Boolean.Iteration.ForestRecordQueries
 public import Complexity.Computability.Circuit.Boolean.Iteration.InputTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Label
 public import Complexity.Computability.Circuit.Boolean.Iteration.LabelCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.LongTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
+public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationCircuits
+public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationFeatures
+public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationSynthesis
 public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationWord
 public import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 public import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
@@ -114,6 +121,7 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.SparseDisplacem
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseNavigation
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.Target
+public import Complexity.Computability.Circuit.Boolean.Iteration.VisitScheduleCircuits
 public import Complexity.Computability.Circuit.Boolean.KarchmerWigderson
 public import Complexity.Computability.Circuit.Boolean.KeyedSort
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko

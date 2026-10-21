@@ -10,6 +10,7 @@ import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
 import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
 import Complexity.Computability.Circuit.Boolean.Iteration.PrimeCycles
+import Complexity.Computability.Circuit.Boolean.Iteration.VisitScheduleCircuits
 
 /-!
 # Fixed-power circuit clients
@@ -136,6 +137,40 @@ example (c : Circuit signature 3 3) (T : ℕ) : ∃ out : Circuit signature 3 3,
     out.Computes interpretation (c.eval interpretation)^[T] ∧
       out.size ≤ 120000 * (c.size + 64) * 4 := by
   simpa using fixed_power_half_exponent c T
+
+/-! ### Compressed-forest reachability, hitting time, and visit schedules -/
+
+-- Nonvacuous forest tables for the one-bit negation circuit at `L = 1`.
+example : Nonempty (ForestCircuitTables (flip.eval interpretation) 1) :=
+  exists_forest_circuit_tables (flip.eval interpretation) 1 one_pos
+
+-- Reachability circuit for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 2 1,
+    (∀ z, out.eval interpretation z 0 = true ↔
+      ∃ t, (flip.eval interpretation)^[t] (inputLeft z) = inputRight z) ∧
+    out.size ≤ 4500000 * powerBudget 1 1 2 1 := by
+  simpa [flip] using forest_reachability_circuit flip 1 one_pos (by decide)
+
+-- Navigation circuit (reachability + first hitting time) for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 2 3,
+    out.Computes interpretation (fun z =>
+      navigationBits (flip.eval interpretation) (inputLeft z) (inputRight z)) ∧
+    out.size ≤ navigationBudget 1 1 1 := by
+  simpa [flip] using navigation_circuit flip 1 one_pos (by decide)
+
+-- Minimal period circuit for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 1 2,
+    (∀ x, (word (out.eval interpretation x)).toNat =
+      Function.minimalPeriod (flip.eval interpretation) x) ∧
+    out.size ≤ 110000 * powerBudget 1 1 2 1 := by
+  simpa [flip] using minimal_period_circuit flip 1 one_pos (by decide)
+
+-- Complete visit-schedule circuit for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 2 (visitScheduleWidth 1),
+    (∀ z t, (flip.eval interpretation)^[t] (inputLeft z) = inputRight z ↔
+      visitScheduleContains (out.eval interpretation z) t) ∧
+    out.size ≤ 5000000 * powerBudget 1 1 2 1 := by
+  simpa [flip] using visit_schedule_circuit flip 1 one_pos (by decide)
 
 /-! ### Hard-power counting, modular counters and prime-cycle permutations -/
 
@@ -325,6 +360,104 @@ info: 'Cslib.Circuits.Synthesis.word_sub' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Synthesis.word_sub
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_depthWord' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_depthWord
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_label_parts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_label_parts
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_navigation_given_flag' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_navigation_given_flag
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_navigation' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_navigation
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.exists_forest_circuit_tables' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_forest_circuit_tables
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_transient_forest_reachability' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_transient_forest_reachability
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.forest_transient_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms forest_transient_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.forest_reachability_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms forest_reachability_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.forest_reachability_optimized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms forest_reachability_optimized
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.navigation_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms navigation_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.reachability_hitting_time' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms reachability_hitting_time
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.minimal_period_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms minimal_period_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.visit_schedule_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms visit_schedule_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.visit_schedule_optimized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms visit_schedule_optimized
 
 /--
 info: 'Cslib.Circuits.Boolean.Iteration.exists_hard_power' depends on axioms:
