@@ -169,10 +169,20 @@ example : LocalOpt (1, idCode1, idCode1) [false] :=
 example : Pigeon (1, ([], [])) [false, true] :=
   ⟨rfl, .inl rfl⟩
 
-/-- `[true]` is the end of the line for `(1, idCode1, notCode1)`, where `0` points to `1` and `1`
-points back to `0`. -/
-example : EndOfLine (1, idCode1, notCode1) [true] :=
+/-- `[true]` is the end of the line for `(1, notCode1, notCode1)`, where `0` has active edge `0 → 1`
+and `1` is a sink. -/
+example : EndOfLine (1, notCode1, notCode1) [true] :=
   ⟨rfl, rfl⟩
+
+/-- The active source `[false]` in `(1, notCode1, notCode1)` has an outgoing edge `0 → 1` and is not
+a solution of `EndOfLine`. -/
+example : ¬EndOfLine (1, notCode1, notCode1) [false] := fun ⟨_, h⟩ =>
+  Bool.noConfusion h
+
+/-- An isolated vertex `[true] ≠ [false]` (encoded by a self-loop in `(1, idCode1, idCode1)`) is
+balanced (`in-degree = out-degree = 0`) and is not a solution of `EndOfLine`. -/
+example : ¬EndOfLine (1, idCode1, idCode1) [true] := fun ⟨_, h⟩ =>
+  Bool.noConfusion h
 
 /-- `[true]` is the matching leaf of `0` in `(1, notCode1, idCode1)`. -/
 example : Leaf (1, notCode1, idCode1) [true] :=

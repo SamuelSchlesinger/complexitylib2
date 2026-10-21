@@ -193,21 +193,35 @@ theorem hasIn_zeroVertex (n : α → ℕ) (P S : α × List Bool → List Bool) 
   simp [hasIn]
 
 /-- The search relation of a directed end-of-line family (`PPAD`): a vertex `u` of length `n a` is a
-solution if it has no active outgoing edge (`!hasOut`), or if `u ≠ 0 ^ (n a)` and `u` has no active
-incoming edge (`!hasIn`). -/
+solution if its incoming/outgoing parity is unbalanced relative to `0 ^ (n a)`: either
+`u = 0 ^ (n a)` and `u` has no active outgoing edge (`!hasOut`), or `u ≠ 0 ^ (n a)` and `u` is a
+sink (`hasIn ∧ !hasOut`) or proper source (`!hasIn ∧ hasOut`). -/
 def endOfLineRel (n : α → ℕ) (P S : α × List Bool → List Bool) (a : α) (u : List Bool) : Prop :=
-  u.length = n a ∧ (!hasOut n P S a u || (!hasIn n P S a u && decide (u ≠ zeroVertex (n a)))) = true
+  u.length = n a ∧
+    ((hasIn n P S a u != hasOut n P S a u) == decide (u ≠ zeroVertex (n a))) = true
 
-/-- Any vertex `u` of length `n a` without an active outgoing edge solves `endOfLineRel`. -/
-theorem endOfLineRel_of_hasOut_eq_false {n : α → ℕ} {P S : α × List Bool → List Bool}
-    {a : α} {u : List Bool} (hlen : u.length = n a) (h : hasOut n P S a u = false) :
+/-- The canonical source `0 ^ (n a)` solves `endOfLineRel` whenever it lacks an active outgoing
+edge. -/
+theorem endOfLineRel_zeroVertex_of_hasOut_eq_false {n : α → ℕ} {P S : α × List Bool → List Bool}
+    {a : α} (h : hasOut n P S a (zeroVertex (n a)) = false) :
+    endOfLineRel n P S a (zeroVertex (n a)) := by
+  simp [endOfLineRel, h]
+
+/-- Any vertex `u` of length `n a` with an active incoming edge and no active outgoing edge solves
+`endOfLineRel`. -/
+theorem endOfLineRel_of_hasIn_of_hasOut_eq_false {n : α → ℕ} {P S : α × List Bool → List Bool}
+    {a : α} {u : List Bool} (hlen : u.length = n a) (hin : hasIn n P S a u = true)
+    (hout : hasOut n P S a u = false) :
     endOfLineRel n P S a u := by
-  simp [endOfLineRel, hlen, h]
+  have hne : u ≠ zeroVertex (n a) := by
+    rintro rfl
+    simp [hasIn_zeroVertex] at hin
+  simp [endOfLineRel, hlen, hin, hout, hne]
 
 /-- The pigeonhole map used to reduce `endOfLineRel` to `pigeonRel`: follow active outgoing edges,
-and send every other vertex to `0 ^ (n a)`. -/
+and fix every vertex that lacks an active outgoing edge. -/
 def ppadToPppMap (n : α → ℕ) (P S : α × List Bool → List Bool) (p : α × List Bool) : List Bool :=
-  if hasOut n P S p.1 p.2 then S p else zeroVertex (n p.1)
+  if hasOut n P S p.1 p.2 then S p else p.2
 
 theorem length_ppadToPppMap {n : α → ℕ} {P S : α × List Bool → List Bool} {a : α} {u : List Bool}
     (hS : ∀ u, u.length = n a → (S (a, u)).length = n a) (hu : u.length = n a) :
@@ -215,7 +229,7 @@ theorem length_ppadToPppMap {n : α → ℕ} {P S : α × List Bool → List Boo
   unfold ppadToPppMap
   split_ifs
   · exact hS u hu
-  · exact length_zeroVertex (n a)
+  · exact hu
 
 /-- Any solution of `pigeonRel` for `ppadToPppMap n P S` yields a solution of `endOfLineRel n P S`
 by selecting whichever of the two `n a`-bit halves lacks an active outgoing edge. -/
@@ -226,23 +240,42 @@ theorem endOfLineRel_of_pigeonRel {n : α → ℕ} {P S : α × List Bool → Li
   obtain ⟨hwlen, hsol⟩ := h
   have hu_len : (w.take (n a)).length = n a := by simp only [List.length_take, hwlen]; omega
   have hv_len : (w.drop (n a)).length = n a := by simp only [List.length_drop, hwlen]; omega
-  by_cases hu : hasOut n P S a (w.take (n a)) = false
-  · simp only [hu, Bool.not_false, ↓reduceIte]
-    exact endOfLineRel_of_hasOut_eq_false hu_len hu
-  · simp only [Bool.not_eq_false] at hu
-    simp only [hu, Bool.not_true, Bool.false_eq_true, ↓reduceIte]
-    rcases hsol with hz | ⟨hne, hcoll⟩
-    · have hFz : S (a, w.take (n a)) = zeroVertex (n a) := by
-        simpa [ppadToPppMap, hu] using hz
-      simp only [hasOut, decide_eq_true_eq] at hu
-      exact (hu.2.2 hFz).elim
-    · refine endOfLineRel_of_hasOut_eq_false hv_len ?_
-      by_contra hv
-      simp only [Bool.not_eq_false] at hv
-      have hSuv : S (a, w.take (n a)) = S (a, w.drop (n a)) := by
+  rcases hsol with hz | ⟨hne, hcoll⟩
+  · have hu : hasOut n P S a (w.take (n a)) = false := by
+      by_contra hu'
+      simp only [Bool.not_eq_false] at hu'
+      have hFz : S (a, w.take (n a)) = zeroVertex (n a) := by
+        simpa [ppadToPppMap, hu'] using hz
+      simp only [hasOut, decide_eq_true_eq] at hu'
+      exact hu'.2.2 hFz
+    have huz : w.take (n a) = zeroVertex (n a) := by
+      simpa [ppadToPppMap, hu] using hz
+    simp only [hu, Bool.not_false, ↓reduceIte]
+    rw [huz]
+    exact endOfLineRel_zeroVertex_of_hasOut_eq_false (huz ▸ hu)
+  · by_cases hu : hasOut n P S a (w.take (n a)) = false
+    · simp only [hu, Bool.not_false, ↓reduceIte]
+      have hv : hasOut n P S a (w.drop (n a)) = true := by
+        by_contra hv'
+        simp only [Bool.not_eq_true] at hv'
+        have huv : w.take (n a) = w.drop (n a) := by
+          simpa [ppadToPppMap, hu, hv'] using hcoll
+        exact hne huv
+      have hSv : w.take (n a) = S (a, w.drop (n a)) := by
         simpa [ppadToPppMap, hu, hv] using hcoll
-      simp only [hasOut, decide_eq_true_eq] at hu hv
-      exact hne (by rw [← hu.1, hSuv, hv.1])
+      exact endOfLineRel_of_hasIn_of_hasOut_eq_false hu_len (hSv ▸ hasIn_of_hasOut hv) hu
+    · simp only [Bool.not_eq_false] at hu
+      simp only [hu, Bool.not_true, Bool.false_eq_true, ↓reduceIte]
+      have hv : hasOut n P S a (w.drop (n a)) = false := by
+        by_contra hv'
+        simp only [Bool.not_eq_false] at hv'
+        have hSuv : S (a, w.take (n a)) = S (a, w.drop (n a)) := by
+          simpa [ppadToPppMap, hu, hv'] using hcoll
+        simp only [hasOut, decide_eq_true_eq] at hu hv'
+        exact hne (by rw [← hu.1, hSuv, hv'.1])
+      have hSu : S (a, w.take (n a)) = w.drop (n a) := by
+        simpa [ppadToPppMap, hu, hv] using hcoll
+      exact endOfLineRel_of_hasIn_of_hasOut_eq_false hv_len (hSu ▸ hasIn_of_hasOut hu) hv
 
 /-- **Directed end-of-line principle**: if `S (a, ·)` preserves length `n a`, some vertex of length
 `n a` satisfies `endOfLineRel`. -/
@@ -414,12 +447,20 @@ def ppadToPpaN₁ (n : α → ℕ) (P S : α × List Bool → List Bool) (p : α
   else
     if hasIn n P S p.1 p.2.tail then false :: P (p.1, p.2.tail) else true :: p.2.tail
 
+/-- Whether a vertex `u` is a non-source vertex (`u ≠ 0 ^ (n a)`) participating in at least one
+active directed edge (`hasOut` or `hasIn`). -/
+def isActiveNonZero (n : α → ℕ) (P S : α × List Bool → List Bool) (a : α) (u : List Bool) : Bool :=
+  decide (u ≠ zeroVertex (n a)) && (hasOut n P S a u || hasIn n P S a u)
+
 /-- Second neighbor map on `{0, 1} ^ (n a + 1)` for reducing `endOfLineRel` to `leafRel`:
-internally pairs `false :: u` and `true :: u` for every vertex `u ≠ 0 ^ (n a)`, leaving the ports
-of `0 ^ (n a)` unpaired. -/
-def ppadToPpaN₂ (n : α → ℕ) (p : α × List Bool) : List Bool :=
-  if p.2.tail ≠ zeroVertex (n p.1) then (!p.2.headD false) :: p.2.tail
-  else p.2.headD false :: p.2.tail
+internally pairs `false :: u` and `true :: u` for every vertex `u ≠ 0 ^ (n a)` that participates in
+at least one active directed edge (`hasOut` or `hasIn`), leaving the ports of `0 ^ (n a)` and
+isolated vertices unpaired. -/
+def ppadToPpaN₂ (n : α → ℕ) (P S : α × List Bool → List Bool) (p : α × List Bool) : List Bool :=
+  if isActiveNonZero n P S p.1 p.2.tail then
+    (!p.2.headD false) :: p.2.tail
+  else
+    p.2.headD false :: p.2.tail
 
 @[simp]
 theorem ppadToPpaN₁_false_cons (n : α → ℕ) (P S : α × List Bool → List Bool) (a : α)
@@ -434,9 +475,10 @@ theorem ppadToPpaN₁_true_cons (n : α → ℕ) (P S : α × List Bool → List
       if hasIn n P S a u then false :: P (a, u) else true :: u := rfl
 
 @[simp]
-theorem ppadToPpaN₂_cons (n : α → ℕ) (a : α) (b : Bool) (u : List Bool) :
-    ppadToPpaN₂ n (a, b :: u) = if u ≠ zeroVertex (n a) then (!b) :: u else b :: u := by
-  simp [ppadToPpaN₂]
+theorem ppadToPpaN₂_cons (n : α → ℕ) (P S : α × List Bool → List Bool) (a : α) (b : Bool)
+    (u : List Bool) :
+    ppadToPpaN₂ n P S (a, b :: u) =
+      if isActiveNonZero n P S a u then (!b) :: u else b :: u := rfl
 
 theorem length_ppadToPpaN₁ {n : α → ℕ} {P S : α × List Bool → List Bool} {a : α} {w : List Bool}
     (hP : ∀ u, u.length = n a → (P (a, u)).length = n a)
@@ -446,8 +488,9 @@ theorem length_ppadToPpaN₁ {n : α → ℕ} {P S : α × List Bool → List Bo
   unfold ppadToPpaN₁
   split_ifs <;> simp [htail, hP _ htail, hS _ htail]
 
-theorem length_ppadToPpaN₂ {n : α → ℕ} {a : α} {w : List Bool} (hw : w.length = n a + 1) :
-    (ppadToPpaN₂ n (a, w)).length = n a + 1 := by
+theorem length_ppadToPpaN₂ {n : α → ℕ} {P S : α × List Bool → List Bool} {a : α} {w : List Bool}
+    (hw : w.length = n a + 1) :
+    (ppadToPpaN₂ n P S (a, w)).length = n a + 1 := by
   have htail : w.tail.length = n a := by simp [hw]
   unfold ppadToPpaN₂
   split_ifs <;> simp [htail]
@@ -469,10 +512,11 @@ private theorem ppadToPpaN₁_invol (n : α → ℕ) (P S : α × List Bool → 
       simp [hout, hin.1]
     · simp [hin]
 
-private theorem ppadToPpaN₂_invol (n : α → ℕ) (a : α) (b : Bool) (u : List Bool) :
-    ppadToPpaN₂ n (a, ppadToPpaN₂ n (a, b :: u)) = b :: u := by
+private theorem ppadToPpaN₂_invol (n : α → ℕ) (P S : α × List Bool → List Bool) (a : α)
+    (b : Bool) (u : List Bool) :
+    ppadToPpaN₂ n P S (a, ppadToPpaN₂ n P S (a, b :: u)) = b :: u := by
   rw [ppadToPpaN₂_cons]
-  split_ifs with hu <;> simp [hu]
+  split_ifs with hc <;> simp [hc]
 
 private theorem undirectedEdge_left_of_invol {N₁ N₂ : α × List Bool → List Bool} {a : α}
     {w : List Bool} (h : N₁ (a, N₁ (a, w)) = w) :
@@ -494,15 +538,16 @@ private theorem decide_ne_ppadToPpaN₁ (n : α → ℕ) (P S : α × List Bool 
   · rw [ppadToPpaN₁_true_cons]
     cases hin : hasIn n P S a u <;> simp
 
-private theorem decide_ne_ppadToPpaN₂ (n : α → ℕ) (a : α) (b : Bool) (u : List Bool) :
-    decide (b :: u ≠ ppadToPpaN₂ n (a, b :: u)) = decide (u ≠ zeroVertex (n a)) := by
+private theorem decide_ne_ppadToPpaN₂ (n : α → ℕ) (P S : α × List Bool → List Bool)
+    (a : α) (b : Bool) (u : List Bool) :
+    decide (b :: u ≠ ppadToPpaN₂ n P S (a, b :: u)) = isActiveNonZero n P S a u := by
   rw [ppadToPpaN₂_cons]
-  by_cases hu : u = zeroVertex (n a) <;> cases b <;> simp [hu]
+  cases hc : isActiveNonZero n P S a u <;> cases b <;> simp
 
 private theorem ppadToPpaN₂_ne_ppadToPpaN₁ (n : α → ℕ) (P S : α × List Bool → List Bool)
-    (a : α) (b : Bool) {u : List Bool} (hu : u ≠ zeroVertex (n a)) :
-    ppadToPpaN₂ n (a, b :: u) ≠ ppadToPpaN₁ n P S (a, b :: u) := by
-  rw [ppadToPpaN₂_cons, ite_eq_left hu]
+    (a : α) (b : Bool) {u : List Bool} (hc : isActiveNonZero n P S a u = true) :
+    ppadToPpaN₂ n P S (a, b :: u) ≠ ppadToPpaN₁ n P S (a, b :: u) := by
+  rw [ppadToPpaN₂_cons, ite_eq_left hc]
   cases b
   · rw [ppadToPpaN₁_false_cons]
     split_ifs with hout
@@ -517,36 +562,38 @@ private theorem ppadToPpaN₂_ne_ppadToPpaN₁ (n : α → ℕ) (P S : α × Lis
       exact hin.2.1 (List.cons.inj h).2.symm
     · simp
 
-/-- Any solution `w` of `leafRel` for `(ppadToPpaN₁ n P S, ppadToPpaN₂ n)` has `w.tail` as a
+/-- Any solution `w` of `leafRel` for `(ppadToPpaN₁ n P S, ppadToPpaN₂ n P S)` has `w.tail` as a
 solution of `endOfLineRel n P S`. -/
 theorem endOfLineRel_tail_of_leafRel {n : α → ℕ} {P S : α × List Bool → List Bool} {a : α}
     {w : List Bool}
-    (h : leafRel (fun a => n a + 1) (ppadToPpaN₁ n P S) (ppadToPpaN₂ n) a w) :
+    (h : leafRel (fun a => n a + 1) (ppadToPpaN₁ n P S) (ppadToPpaN₂ n P S) a w) :
     endOfLineRel n P S a w.tail := by
   obtain ⟨hwlen, hleaf⟩ := h
   rcases w with _ | ⟨b, u⟩
   · simp at hwlen
   have hu_len : u.length = n a := by simpa using hwlen
-  have he₁ := undirectedEdge_left_of_invol (N₂ := ppadToPpaN₂ n) (ppadToPpaN₁_invol n P S a b u)
-  have he₂ := undirectedEdge_right_of_invol (N₁ := ppadToPpaN₁ n P S) (ppadToPpaN₂_invol n a b u)
-  have hodd : hasOddDegree (ppadToPpaN₁ n P S) (ppadToPpaN₂ n) a (b :: u) =
-      ((if b then hasIn n P S a u else hasOut n P S a u) != decide (u ≠ zeroVertex (n a))) := by
+  have he₁ :=
+    undirectedEdge_left_of_invol (N₂ := ppadToPpaN₂ n P S) (ppadToPpaN₁_invol n P S a b u)
+  have he₂ :=
+    undirectedEdge_right_of_invol (N₁ := ppadToPpaN₁ n P S) (ppadToPpaN₂_invol n P S a b u)
+  have hodd : hasOddDegree (ppadToPpaN₁ n P S) (ppadToPpaN₂ n P S) a (b :: u) =
+      ((if b then hasIn n P S a u else hasOut n P S a u) != isActiveNonZero n P S a u) := by
     rw [hasOddDegree, he₁, he₂, decide_ne_ppadToPpaN₁, decide_ne_ppadToPpaN₂]
-    by_cases hu : u = zeroVertex (n a)
-    · simp [hu]
-    · have hne := ppadToPpaN₂_ne_ppadToPpaN₁ n P S a b hu
-      rw [ppadToPpaN₂_cons, ite_eq_left hu] at hne
-      simp [hu, hne]
+    by_cases hc : isActiveNonZero n P S a u = true
+    · have hne := ppadToPpaN₂_ne_ppadToPpaN₁ n P S a b hc
+      rw [ppadToPpaN₂_cons, ite_eq_left hc] at hne
+      simp [hc, hne]
+    · simp only [Bool.not_eq_true] at hc
+      simp [hc]
   rw [hodd] at hleaf
   have hz_succ : zeroVertex (n a + 1) = false :: zeroVertex (n a) := rfl
   rw [hz_succ] at hleaf
   refine ⟨hu_len, ?_⟩
-  cases b <;> by_cases hu : u = zeroVertex (n a)
+  unfold isActiveNonZero at hleaf
+  by_cases hu : u = zeroVertex (n a)
   · subst hu
-    simpa using hleaf
-  · cases hout : hasOut n P S a u <;> simp_all
-  · subst hu
-    simp at hleaf
-  · cases hin : hasIn n P S a u <;> simp_all
+    have hin : hasIn n P S a (zeroVertex (n a)) = false := hasIn_zeroVertex n P S a
+    cases b <;> cases hout : hasOut n P S a (zeroVertex (n a)) <;> simp_all
+  · cases b <;> cases hout : hasOut n P S a u <;> cases hin : hasIn n P S a u <;> simp_all
 
 end Cslib.Complexity

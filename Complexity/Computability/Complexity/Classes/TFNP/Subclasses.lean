@@ -351,17 +351,21 @@ theorem computableTidilyInPolyTime_undirectedEdge {enc : α ↪ List Bool}
   fun_prop
 
 @[fun_prop]
+private theorem computableTidilyInPolyTime_bool_bne {encIn : α ↪ List Bool} {f g : α → Bool}
+    (hf : ComputableTidilyInPolyTime f encIn encBool)
+    (hg : ComputableTidilyInPolyTime g encIn encBool) :
+    ComputableTidilyInPolyTime (fun a => f a != g a) encIn encBool :=
+  (of_finite (fun p : Bool × Bool => p.1 != p.2)).comp (hf.prod hg)
+
+@[fun_prop]
 theorem computableTidilyInPolyTime_hasOddDegree {enc : α ↪ List Bool}
     {N₁ N₂ : α × List Bool → List Bool}
     (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
     (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits) :
     ComputableTidilyInPolyTime (fun x : α × List Bool => hasOddDegree N₁ N₂ x.1 x.2)
       (encPair enc encBits) encBool := by
-  have hne : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 != p.2)
-      (encPair encBool encBool) encBool := of_finite _
   unfold hasOddDegree
-  exact hne.comp ((computableTidilyInPolyTime_undirectedEdge hN₁ hN₂ (snd _ _) hN₁).prod
-    (bool_and' (computableTidilyInPolyTime_undirectedEdge hN₁ hN₂ (snd _ _) hN₂) (by fun_prop)))
+  fun_prop
 
 /-- A polynomial-time local-search family defines an `FNP` relation. -/
 theorem localOptRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
@@ -425,7 +429,7 @@ theorem endOfLineRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
   obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
   refine ⟨⟨p, fun a u h => h.1 ▸ hp a⟩,
     fun x => decide (x.2.length = n x.1) &&
-      (!hasOut n P S x.1 x.2 || (!hasIn n P S x.1 x.2 && decide (x.2 ≠ zeroVertex (n x.1)))),
+      ((hasIn n P S x.1 x.2 != hasOut n P S x.1 x.2) == decide (x.2 ≠ zeroVertex (n x.1))),
     ?_, fun a u => ?_⟩
   · fun_prop
   · simp [endOfLineRel]
@@ -653,7 +657,7 @@ theorem endOfLineRel_searchReducible_leafRel {n : α → ℕ} {P S : α × List 
     (hP_len : ∀ a u, u.length = n a → (P (a, u)).length = n a)
     (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
     SearchReducible enc enc (endOfLineRel n P S)
-      (leafRel (fun a => n a + 1) (ppadToPpaN₁ n P S) (ppadToPpaN₂ n)) :=
+      (leafRel (fun a => n a + 1) (ppadToPpaN₁ n P S) (ppadToPpaN₂ n P S)) :=
   .of_isTotalSearch
     (isTotalSearch_leafRel
       (fun a _ hw => length_ppadToPpaN₁ (hP_len a) (hS_len a) hw)
@@ -668,10 +672,10 @@ theorem PPAD_subset_PPA : PPAD enc ⊆ PPA enc := by
   have hN₁ : ComputableTidilyInPolyTime (ppadToPpaN₁ n P S) (encPair enc encBits) encBits := by
     unfold ppadToPpaN₁
     fun_prop
-  have hN₂ : ComputableTidilyInPolyTime (ppadToPpaN₂ n) (encPair enc encBits) encBits := by
-    unfold ppadToPpaN₂
+  have hN₂ : ComputableTidilyInPolyTime (ppadToPpaN₂ n P S) (encPair enc encBits) encBits := by
+    unfold ppadToPpaN₂ isActiveNonZero
     fun_prop
-  exact ⟨hR, fun a => n a + 1, ppadToPpaN₁ n P S, ppadToPpaN₂ n, hn', hN₁, hN₂,
+  exact ⟨hR, fun a => n a + 1, ppadToPpaN₁ n P S, ppadToPpaN₂ n P S, hn', hN₁, hN₂,
     fun a _ hw => length_ppadToPpaN₁ (hP_len a) (hS_len a) hw,
     fun _ _ hw => length_ppadToPpaN₂ hw,
     hred.trans (endOfLineRel_searchReducible_leafRel hP_len hS_len)⟩
