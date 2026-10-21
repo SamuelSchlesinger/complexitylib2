@@ -794,6 +794,16 @@ space bounds. Further class-level work needs resource certificates for the actua
   nonzero field denominators; no field-to-word conversion is provided. Generalizing the structured
   program calculus and time-class APIs to arbitrary domains, weighted/bit costs, and simulations
   between these instances remain open. No real-RAM/Turing-machine equivalence is claimed;
+* Sparse RAM memory: [association-list semantics](Complexity/Computability/GenericRAM/SparseMemory/Basic.lean)
+  and [native multitape TM certificates](Complexity/Computability/GenericRAM/SparseMemory/Turing.lean)
+  implement default-valued reads and insert/replace writes using Mathlib's `AList` and the existing
+  encoded equality/search/filter calculus. Parameterized time/space bounds depend on stored-cell
+  count and encoded address/value lengths; cubic-time and linear-space corollaries use full binary
+  input length. Overwrites preserve cardinality, and writes retain distinct addresses. The read
+  default is supplied as input to one uniform machine. This is the memory component of #292/#293,
+  not a whole RAM simulation: effective primitive/fault implementations, finite control, charged
+  initialization/output, width selection and whole-run theorem transport remain open. No bridge
+  for arbitrary exact real arithmetic is claimed;
 * RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
   Lean formalization accompanying the tromino undecidability paper, is parameterized by a
   [basis of word operations](Complexity/Computability/WordRAM/Basis.lean) built on circuit

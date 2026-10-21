@@ -88,6 +88,11 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   memory and checked word arithmetic. These are explicit model choices, not a proved equivalence
   with their two-array model. Coordinate this common core with the algorithm-model work above;
   the existing Cook–Reckhow-inspired RAM and its logarithmic cost remain separate.
+* **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
+  with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
+  routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,
+  and polynomial-time corollaries. Coordinate this component with #292's effective RAM backend;
+  it does not yet simulate generic primitives, finite control or whole RAM executions.
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource
