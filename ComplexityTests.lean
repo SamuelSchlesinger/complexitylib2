@@ -299,6 +299,7 @@ import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
+import ComplexityTests.SearchTree
 import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation

@@ -2,6 +2,9 @@ module  -- shake: keep-all --deprecated_module: ignore
 
 public import Complexity.Algorithms.Lean.Queue
 public import Complexity.Algorithms.Lean.Retroactive
+public import Complexity.Algorithms.Lean.SearchTree.Basic
+public import Complexity.Algorithms.Lean.SearchTree.Cost
+public import Complexity.Algorithms.Lean.SearchTree.Stateful
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
