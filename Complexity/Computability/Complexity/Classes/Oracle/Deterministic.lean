@@ -32,8 +32,6 @@ certificates come from countably many machines with control `Fin m`
 
 ## Main definitions
 
-* `Turing.MultiTapeMachine.Action.mapState`, `Turing.MultiTapeMachine.Config.mapState`: rename
-  control states in instructions and configurations.
 * `Turing.MultiTapePTM.relabel`: rename the control states of a fair-coin table.
 
 ## Main results
@@ -64,38 +62,6 @@ open Cslib
 namespace MultiTapeMachine
 
 variable {k : ℕ} {Symbol State State' Oracle : Type} {input : List Symbol}
-
-/-- Rename the successor state of an instruction. -/
-def Action.mapState (e : State → State') :
-    Action k Symbol State Oracle → Action k Symbol State' Oracle
-  | .step action symbol move => .step { action with state := action.state.map e } symbol move
-  | .query oracle next => .query oracle (e next)
-
-/-- Rename the control state of a configuration, keeping its tapes and channels. -/
-def Config.mapState (e : State → State') (cfg : Config k Symbol State Oracle input) :
-    Config k Symbol State' Oracle input where
-  tapes := cfg.tapes.mapState (Option.map e)
-  channels := cfg.channels
-
-@[simp] theorem Config.mapState_tapes_state (e : State → State')
-    (cfg : Config k Symbol State Oracle input) :
-    (cfg.mapState e).tapes.state = cfg.tapes.state.map e := rfl
-
-@[simp] theorem Config.mapState_tapes_output (e : State → State')
-    (cfg : Config k Symbol State Oracle input) :
-    (cfg.mapState e).tapes.output = cfg.tapes.output := rfl
-
-theorem Config.mapState_step (e : State → State') (cfg : Config k Symbol State Oracle input)
-    (action : Turing.Action k Symbol State) (symbol : Oracle → Option Symbol)
-    (move : Oracle → SignType) :
-    (cfg.mapState e).step { action with state := action.state.map e } symbol move =
-      (cfg.step action symbol move).mapState e := rfl
-
-theorem Config.mapState_receive [DecidableEq Oracle] (e : State → State')
-    (cfg : Config k Symbol State Oracle input) (oracle : Oracle) (next : State)
-    (answer : List Symbol) :
-    (cfg.mapState e).receive oracle (e next) answer = (cfg.receive oracle next answer).mapState e :=
-  rfl
 
 /-- Finitely many symbols, states and channels give finitely many instructions. -/
 instance Action.instFinite [Finite Symbol] [Finite State] [Finite Oracle] :
@@ -158,38 +124,14 @@ theorem runConfigFrom_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query} (e
     (cfg : Config k Symbol State Oracle input) :
     (machine.relabel e).runConfigFrom coin query fuel (cfg.mapState e) =
       Config.mapState e <$> machine.runConfigFrom coin query fuel cfg := by
-  induction fuel generalizing cfg with
-  | zero => rfl
-  | succ fuel ih =>
-    cases hs : cfg.tapes.state with
-    | none =>
-      simp [runConfigFrom, MultiTapeMachine.runConfigFrom, hs]
-    | some state =>
-      simp only [runConfigFrom] at ih ⊢
-      simp only [MultiTapeMachine.runConfigFrom, Config.mapState_tapes_state, hs, Option.map_some,
-        map_bind, bind_map_left]
-      congr 1
-      funext bit
-      change (match (machine.tr (e.symm (e state)) cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols
-          cfg.answerSymbols bit).mapState e with
-        | .step action symbol move =>
-          MultiTapeMachine.runConfigFrom (machine.relabel e) (fun choices => choices <$> coin) query
-            fuel ((cfg.mapState e).step action symbol move)
-        | .query oracle next => do
-          let answer ← query oracle (cfg.channels oracle).queryBuffer
-          MultiTapeMachine.runConfigFrom (machine.relabel e) (fun choices => choices <$> coin) query
-            fuel ((cfg.mapState e).receive oracle next answer)) = _
-      rw [Equiv.symm_apply_apply]
-      cases machine.tr state cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols bit
-        with
-      | step action symbol move =>
-        simp only [Action.mapState]
-        rw [Config.mapState_step, ih]
-      | query oracle next =>
-        simp only [Action.mapState, map_bind]
-        congr 1
-        funext answer
-        rw [Config.mapState_receive, ih]
+  apply MultiTapeMachine.runConfigFrom_mapState machine (machine.relabel e)
+    (fun choices => choices <$> coin) ?_ query e ?_ fuel cfg
+  · intro α β f choices
+    exact (Functor.map_map choices f coin).symm
+  · intro state inp work answer
+    funext bit
+    simp only [relabel, Equiv.symm_apply_apply]
+    rfl
 
 /-- Relabelling preserves the output program of every run. -/
 theorem runFrom_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query} (e : State ≃ State')

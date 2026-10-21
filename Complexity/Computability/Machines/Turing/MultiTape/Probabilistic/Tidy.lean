@@ -933,26 +933,20 @@ theorem runOracleConfigFrom_mapState {S : Type} {tm : MultiTapePTM k Bool S Oper
     (fuel : ℕ) (cfg : Config k Bool S Operation x) :
     (branch i tm₁ tm₂).runOracleConfigFrom fuel (mapConfigState f cfg) =
       mapConfigState f <$> tm.runOracleConfigFrom fuel cfg := by
-  apply MultiTapeMachine.runConfigFrom_map tm (branch i tm₁ tm₂) _ _ _ _ (mapConfigState f)
-  intro c
-  cases hs : c.tapes.state with
-  | none => simp [MultiTapeMachine.runConfigFrom, mapConfigState, Cfg.mapState, hs]
-  | some q =>
-    have hstate : (mapConfigState f c).tapes.state = some (f q) := by
-      simp [mapConfigState, Cfg.mapState, hs]
-    have hinp : (mapConfigState f c).tapes.inputSymbol = c.tapes.inputSymbol := rfl
-    have hwork : (mapConfigState f c).tapes.workTapeSymbols = c.tapes.workTapeSymbols := rfl
-    have hans : (mapConfigState f c).answerSymbols = c.answerSymbols := rfl
-    dsimp only [MultiTapeMachine.runConfigFrom]
-    rw [hstate, hs, hinp, hwork, hans]
-    simp only [bind_map_left, map_bind, htr]
-    congr 1
+  apply MultiTapeMachine.runConfigFrom_mapState
+    (Choose := ReaderT Bool Id)
+    (spec := probOracleSpec (fun _ : Operation × List Bool => List Bool))
+    tm (branch i tm₁ tm₂)
+    (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) ?_
+    (fun op word => ProbOracleComp.query (op, word)) f ?_ fuel cfg
+  · intro α β g choices
+    simp only [Functor.map_map]
+    rfl
+  · intro q inp work answer
     funext bit
-    cases tm.tr q c.tapes.inputSymbol c.tapes.workTapeSymbols c.answerSymbols bit with
-    | step action symbol move =>
-      simp [mapActionState, mapConfigState, Config.step, Turing.Action.apply, Cfg.mapState]
-    | query op next =>
-      simp [mapActionState, mapConfigState, Config.receive, Cfg.mapState]
+    change _ = MultiTapeMachine.Action.mapState f (tm.tr q inp work answer bit)
+    rw [htr]
+    cases tm.tr q inp work answer bit <;> rfl
 
 end Branch
 

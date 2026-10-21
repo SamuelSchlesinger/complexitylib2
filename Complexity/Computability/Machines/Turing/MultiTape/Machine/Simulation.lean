@@ -25,6 +25,8 @@ correctly. The source need not halt before its external clock expires.
 
 * `Turing.MultiTapeMachine.runConfigFrom_map`: one-instruction simulation preserves the entire
   typed program, before interpretation.
+* `Turing.MultiTapeMachine.runConfigFrom_mapState`: commuting transition tables preserve clocked
+  execution under a possibly noninjective control-state relabelling.
 * `Turing.MultiTapeMachine.run_interpret_runConfigFrom_mul_indexed`: bounded block simulation
   with a changing configuration embedding.
 * `Turing.MultiTapeMachine.run_interpret_runConfigFrom_mul`: the fixed-embedding specialization.
@@ -72,6 +74,34 @@ theorem runConfigFrom_map
     congr 1
     funext next
     exact ih next
+
+/-- Relabelling control preserves the full clocked program when transition tables commute.
+The map need not be injective: the table equation must hold at every source state, including
+states identified by the map. Halting is preserved, and the fuel and query handler are unchanged. -/
+theorem runConfigFrom_mapState [Functor Choose]
+    (source : MultiTapeMachine k Symbol State Oracle Choose)
+    (target : MultiTapeMachine k Symbol State' Oracle Choose)
+    (choose : {α : Type} → Choose α → OracleComp spec α)
+    (hchoose : ∀ {α β : Type} (f : α → β) (choices : Choose α),
+      choose (f <$> choices) = f <$> choose choices)
+    (query : Oracle → List Symbol → OracleComp spec (List Symbol))
+    (f : State → State')
+    (htr : ∀ state inp work answer,
+      target.tr (f state) inp work answer = Action.mapState f <$> source.tr state inp work answer)
+    (fuel : ℕ) (cfg : Config k Symbol State Oracle input) :
+    target.runConfigFrom choose query fuel (Config.mapState f cfg) =
+      Config.mapState f <$> source.runConfigFrom choose query fuel cfg := by
+  apply runConfigFrom_map source target choose choose query query (Config.mapState f) ?_ fuel cfg
+  intro cfg
+  cases hs : cfg.tapes.state with
+  | none => simp [runConfigFrom, Config.mapState, Cfg.mapState, hs]
+  | some state =>
+    simp only [runConfigFrom, Config.mapState, Cfg.mapState, hs, Option.map_some,
+      Cfg.inputSymbol, htr, hchoose, bind_map_left, map_bind]
+    congr 1
+    funext action
+    cases action <;> simp [Action.mapState, Config.mapState, Config.step, Config.receive,
+      Turing.Action.apply, Cfg.mapState]
 
 /-- A bounded simulation may update its embedding after each source instruction.
 All private interpreter state is retained, including state shared by coin and oracle programs. -/

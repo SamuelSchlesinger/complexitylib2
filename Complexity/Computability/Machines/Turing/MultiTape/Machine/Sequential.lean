@@ -135,18 +135,9 @@ theorem runConfigFrom_one (cfg : Config k Symbol State₀ Oracle input)
 /-- After handoff, the continuation runs its unchanged program in right states. -/
 theorem runConfigFrom_right (fuel : ℕ) (cfg : Config k Symbol State₁ Oracle input) :
     (first.seq second).runConfigFrom choose query fuel (right cfg) =
-      right <$> second.runConfigFrom choose query fuel cfg := by
-  apply runConfigFrom_map second (first.seq second) choose choose query query right ?_ fuel cfg
-  intro cfg
-  cases hs : cfg.tapes.state with
-  | none => simp [runConfigFrom, right, Cfg.mapState, hs]
-  | some state =>
-    simp only [runConfigFrom, right, Cfg.mapState, hs, Option.map_some,
-      Cfg.inputSymbol, seq, hchoose, bind_map_left, map_bind]
-    congr 1
-    funext action
-    cases action <;>
-      simp [rightAction, right, Config.step, Config.receive, Turing.Action.apply, Cfg.mapState]
+      right <$> second.runConfigFrom choose query fuel cfg :=
+  runConfigFrom_mapState second (first.seq second) choose hchoose query
+    Sum.inr (fun _ _ _ _ => rfl) fuel cfg
 
 end Sequential
 
