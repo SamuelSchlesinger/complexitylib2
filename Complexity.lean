@@ -16,6 +16,7 @@ public import Complexity.Algorithms.WordRAM.PrefixSums.Query
 public import Complexity.Algorithms.WordRAM.PrefixSums.Tree
 public import Complexity.Algorithms.WordRAM.PrefixSums.Update
 public import Complexity.Algorithms.WordRAM.Stack
+public import Complexity.Algorithms.WordRAM.Stack.Controller
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
@@ -1066,9 +1067,11 @@ public import Complexity.Computability.USTCON.Space
 public import Complexity.Computability.WordRAM.Allocation
 public import Complexity.Computability.WordRAM.Basis
 public import Complexity.Computability.WordRAM.Compile
+public import Complexity.Computability.WordRAM.Controller
 public import Complexity.Computability.WordRAM.Copy
 public import Complexity.Computability.WordRAM.Defs
 public import Complexity.Computability.WordRAM.Dynamic
+public import Complexity.Computability.WordRAM.Function
 public import Complexity.Computability.WordRAM.Generic
 public import Complexity.Computability.WordRAM.Heap
 public import Complexity.Computability.WordRAM.MapOp
@@ -1567,3 +1570,4 @@ public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init
 public import Complexity.Tactic.Stateful
 public import Complexity.Tactic.Stateful.Init
+public import Complexity.Tactic.WordRAM
