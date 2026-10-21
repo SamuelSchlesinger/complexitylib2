@@ -137,6 +137,42 @@ different bases is claimed.
 \end{result}
 
 \begin{result}
+\subsection{RAMs over configurable value domains}
+A RAM model specifies its value, address, configuration and literal-symbol types, operation and
+test signatures, and their partial interpretations. Registers are finite and named; the program
+counter indexes a finite instruction list. Memory is indexed by the chosen address type.
+Loads and stores use an explicit partial conversion from a value to an address. Produced values,
+moved or returned values, and control labels have configurable validity checks. A failed test
+faults rather than taking its false branch. For every fixed model, configuration, program and
+initial state, a halting execution with output $v$ and cost $n$ exists exactly when the
+fuel-bounded interpreter returns $(v,n)$ for some fuel. Both the output and cost are unique;
+the final halt costs one instruction.
+
+Every existing word-RAM basis embeds into this core with identical steps, faults, outputs and
+instruction counts, even from arbitrary initial states. Its existing unchecked moves and
+unbounded program counter are preserved. A separate signed-integer instance uses the
+lean-trominoes range $-2^{w-1}\le v<2^{w-1}$ for $w>0$, checked moves and halts, and natural
+addresses and control labels below $2^w$.
+
+Algebraic instances store tagged natural words or exact field elements. Only the word tag can
+address memory. They support exact real arithmetic and comparison, or arithmetic and equality
+over prime fields; real interpretation is noncomputable mathematical semantics. Constants are
+natural-word or rational symbols, with a nonzero-denominator check in the field. These variants
+use checked word arithmetic and one tagged memory, rather than the two arrays and modular word
+arithmetic of the cited real-RAM model. No field-to-word conversion, bit-cost simulation or
+complexity-class equivalence is claimed. Input layout is an explicit caller convention.
+\citep{Tromino2025,EricksonVanDerHoogMiltzow2024}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Defs.lean}{63}{Cslib.GenericRAM.Model}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Defs.lean}{309}{Cslib.GenericRAM.executes_iff_exists_run_eq}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Defs.lean}{314}{Cslib.GenericRAM.Executes.unique}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/WordRAM/Generic.lean}{125}{Cslib.WordRAM.step_toGeneric}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/WordRAM/Generic.lean}{156}{Cslib.WordRAM.executes_toGeneric_iff}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Signed.lean}{91}{Cslib.GenericRAM.Signed.model}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Algebraic.lean}{190}{Cslib.GenericRAM.Algebraic.real}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Algebraic.lean}{194}{Cslib.GenericRAM.Algebraic.primeField}
+\end{result}
+
+\begin{result}
 \subsection{Additive word-RAM simulation with charged preparation}
 Let $p$ be a fixed word-RAM program with $r$ named registers, using only constants, copies,
 addition, truncated subtraction, indirect loads and stores, equality and unsigned comparison,
