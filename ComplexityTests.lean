@@ -130,6 +130,7 @@ import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
 import ComplexityTests.GenericRAM
 import ComplexityTests.GenericRAMAlgebraic
+import ComplexityTests.GenericRAMNative
 import ComplexityTests.GenericRAMSigned
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting

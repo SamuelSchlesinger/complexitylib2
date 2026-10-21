@@ -671,6 +671,8 @@ public import Complexity.Computability.DecisionTree.Switching
 public import Complexity.Computability.DecisionTree.Symmetric
 public import Complexity.Computability.GenericRAM.Algebraic
 public import Complexity.Computability.GenericRAM.Defs
+public import Complexity.Computability.GenericRAM.Native
+public import Complexity.Computability.GenericRAM.Native.Nat
 public import Complexity.Computability.GenericRAM.Signed
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
@@ -1078,6 +1080,7 @@ public import Complexity.Computability.WordRAM.Function
 public import Complexity.Computability.WordRAM.Generic
 public import Complexity.Computability.WordRAM.Heap
 public import Complexity.Computability.WordRAM.MapOp
+public import Complexity.Computability.WordRAM.Native
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput

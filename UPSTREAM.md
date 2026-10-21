@@ -88,6 +88,14 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   memory and checked word arithmetic. These are explicit model choices, not a proved equivalence
   with their two-array model. Coordinate this common core with the algorithm-model work above;
   the existing Cook–Reckhow-inspired RAM and its logarithmic cost remain separate.
+  `GenericRAM/Native` separately packages existing native TM `ComputableTidilyInO` witnesses for
+  encoded scalar primitives, with caller-selected configuration encoding and unrestricted
+  input-dependent bounds. Its forgetful bridge reuses `IsComputable`; polynomiality is a separate
+  bound property. `GenericRAM/Native/Nat` supplies a checked bounded-natural addition model;
+  `WordRAM/Native` certifies checked standard addition with unary width and binary operands.
+  Both reuse Christian Reitwiessner's native arithmetic/encoding calculus. These are per-symbol
+  certificates for fixed-program composition, not an arbitrary-program dispatcher or whole RAM
+  simulation. Sparse memory, finite control and charged configuration selection remain separate.
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource
