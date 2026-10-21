@@ -2039,3 +2039,34 @@ annotations were checked against published source lines 84, 155, 170, 182 and 21
 The source and rendered entry have no unresolved review findings. The CI theorem-index
 artifact/provenance inspection and coordinator integration approval remain separate gates;
 AI review does not imply human editorial approval. Generated artifacts remain unversioned.
+
+
+## 2026-10-21: Mathlib TM2 polynomial-time bridge
+
+Worker `/root`, assisted by OpenAI Codex, adds one entry pinned to source
+`670c5abcbfea59068c817ce0ba96c56ff7d09a1f` (tree
+`2693c452ed5f7e39b6d229cb1c4c10031bfe2274`). It transfers Mathlib's typed
+`TM2ComputableInPolyTime` certificate to the tidy binary multi-tape calculus.
+The statement requires injective typed word encoders and finite working alphabets;
+input and output alphabets may differ or be empty. It specifies the existing unary-rank,
+framed-word encodings and polynomial time and space in encoded input length. It does not
+claim quadratic overhead, preservation of a separate source space bound, or a converse
+class equivalence. The direct configuration proof is independent of Complexitylib PR #72;
+its regression examples informed the new tests.
+
+Independent nonauthor agents `/root/tm2_api_review` and `/root/tm2_correctness_review`
+approved the API, correctness, nonvacuous examples and semantic index statement. Optional
+requests for nonidentity alphabet conversions and concrete nonpalindromic outputs were
+implemented and re-reviewed. The final source and test contents are those in the pinned
+commit; no findings remain unresolved. `/root/tm2_design_review` contributed source code
+and is not counted as an independent reviewer. Existing entries and their pins are preserved.
+
+`python3 scripts/build_paper.py` built the local 115-page index. The author and independent
+reviewer `/root/tm2_api_review` inspected page 25 and checked its PDF annotation against the
+pinned source declaration at line 150. PDF SHA-256:
+`05b2da8072118e52a4f25d480337894635006693e8cc822f2647d3b27095e3b8`.
+Reviewed `paper/sections/space.tex` SHA-256:
+`40fc13984ce778b4e687a5e8fdee5e7c8167e20e7046c51fdd2c4ce8c934b8c8`.
+This is local rendering evidence; the CI theorem-index artifact/provenance review and
+maintainer integration approval remain pending. AI review does not imply human editorial
+approval or a Lean proof of prose equivalence. Generated artifacts remain unversioned.

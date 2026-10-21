@@ -759,6 +759,10 @@ for integration.
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
+* Mathlib TM2 compatibility: the [polynomial-time bridge](Complexity/Computability/Machines/Turing/TM2/PolyTime.lean)
+  transfers typed computations with finite working alphabets to the tidy multi-tape calculus
+  under standard binary word encodings. A space-preserving simulation and converse class
+  comparisons remain open;
 * Tree Evaluation: the [Cook–Mertz machine](Complexity/Computability/TreeEval/Space.lean)
   has a proved parameterized space bound on valid encoded instances and an
   `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and

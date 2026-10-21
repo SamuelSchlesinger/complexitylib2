@@ -1,6 +1,20 @@
 \section{Space, alternation and interaction}
 
 \begin{result}
+\subsection{Mathlib stack machines give polynomial-time multi-tape computations}
+Let $f:\alpha\to\beta$ have a Mathlib \lean{TM2ComputableInPolyTime} certificate with
+injective word encoders $e_\alpha,e_\beta$. The fixed source machine has finitely many stacks,
+labels and register states; assume also that every working alphabet is finite. Encode each
+input or output word using \lean{encList (encFinite \_)}: symbols are unary ranks in a fixed
+enumeration, with framing between symbols. Then an actual tidy binary multi-tape Turing machine
+computes $f$ under these encodings in polynomial time and space in the encoded input length.
+The input and output alphabets may differ or be empty. The proof certifies source statements
+through the list and finite-table calculus and bounds intermediate configurations; it does not
+assert preservation of a source space bound or a converse class equivalence.
+\declat{670c5abcbfea59068c817ce0ba96c56ff7d09a1f}{Complexity/Computability/Machines/Turing/TM2/PolyTime.lean}{150}{Turing.TM2ComputableInPolyTime.computableTidilyInPolyTime}
+\end{result}
+
+\begin{result}
 \textbf{Containment map.}
 The proved machine-class relationships include
 \[
