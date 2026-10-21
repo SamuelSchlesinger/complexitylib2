@@ -125,4 +125,119 @@ example {n : ℕ}
     2 ^ n ≤ t.leafCount ^ 2 := by
   simpa using t.two_pow_le_leafCount_sq_of_hadamardCode ht
 
+-- Decision-list, node-count, rank, and energy bounds on `andTree` and `twoBitTree`.
+private theorem andTree_isDecisionList : andTree.IsDecisionList :=
+  Or.inl ⟨rfl, trivial⟩
+
+example : 2 ≤ (andTree.nodeCount + 1) ^ 2 := by
+  simpa using andTree.two_pow_le_nodeCount_add_one_sq_of_hadamardCode andTree_computes
+
+example : 2 ≤ (andTree.depth + 1) ^ 2 := by
+  simpa using
+    andTree.two_pow_le_depth_add_one_sq_of_isDecisionList_hadamardCode
+      andTree_isDecisionList andTree_computes
+
+example : 4 ≤ (∑ j ∈ Finset.range (twoBitTree.rank + 1), twoBitTree.depth.choose j) ^ 2 := by
+  simpa using twoBitTree.two_pow_le_sum_choose_rank_sq_of_hadamardCode twoBitTree_computes
+
+example : (1 : ℝ) ≤
+    twoBitTree.rank * Real.logb 2 (Real.exp 1 * twoBitTree.depth / twoBitTree.rank) := by
+  simpa using twoBitTree.le_rank_mul_logb_depth_of_hadamardCode twoBitTree_computes
+
+example : twoBitTree.rank / Real.exp 1 * (2 : ℝ) ^ ((2 : ℝ) / (2 * twoBitTree.rank)) ≤
+    twoBitTree.depth := by
+  simpa using twoBitTree.rank_mul_rpow_le_depth_of_hadamardCode twoBitTree_computes
+
+example : 4 ≤ (∑ j ∈ Finset.range (twoBitTree.energy + 1), twoBitTree.depth.choose j) ^ 2 := by
+  simpa using twoBitTree.two_pow_le_sum_choose_energy_sq_of_hadamardCode twoBitTree_computes
+
+example : (1 : ℝ) ≤
+    twoBitTree.energy * Real.logb 2 (Real.exp 1 * twoBitTree.depth / twoBitTree.energy) := by
+  simpa using twoBitTree.le_energy_mul_logb_depth_of_hadamardCode twoBitTree_computes
+
+example : twoBitTree.energy / Real.exp 1 * (2 : ℝ) ^ ((2 : ℝ) / (2 * twoBitTree.energy)) ≤
+    twoBitTree.depth := by
+  simpa using twoBitTree.energy_mul_rpow_le_depth_of_hadamardCode twoBitTree_computes
+
+-- Bi-monotone comparison tree computing 1-bit inner product via `BiMonotoneComparison.ofMin`.
+private noncomputable def andBiQuery :
+    BiMonotoneComparison (Fin 1 → Bool) (Fin 1 → Bool) :=
+  BiMonotoneComparison.ofMin (fun x => (x 0).toNat) (fun y => (y 0).toNat) 1
+
+private noncomputable def andBiTree :
+    DecisionTree (BiMonotoneComparison (Fin 1 → Bool) (Fin 1 → Bool)) Bool :=
+  .node andBiQuery (.leaf false) (.leaf true)
+
+private theorem andBiTree_computes (x y : Fin 1 → Bool) :
+    andBiTree.eval (fun q => q.eval x y) = hadamardCode x y := by
+  cases hx : x 0 <;> cases hy : y 0 <;>
+    norm_num [andBiTree, andBiQuery, DecisionTree.eval, BiMonotoneComparison.eval_ofMin,
+      hadamardCode_apply, dotProduct, Bool.mul_eq_and, hx, hy]
+
+example : 2 ≤ andBiTree.leafCount ^ 2 := by
+  simpa using andBiTree.two_pow_le_leafCount_sq_of_biMonotone_hadamardCode andBiTree_computes
+
+/--
+info: 'Cslib.DecisionTree.two_pow_le_leafCount_sq_of_biMonotone_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.two_pow_le_leafCount_sq_of_biMonotone_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.two_pow_le_nodeCount_add_one_sq_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.two_pow_le_nodeCount_add_one_sq_of_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.two_pow_le_depth_add_one_sq_of_isDecisionList_hadamardCode' depends on
+axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.two_pow_le_depth_add_one_sq_of_isDecisionList_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.two_pow_le_sum_choose_rank_sq_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.two_pow_le_sum_choose_rank_sq_of_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.le_rank_mul_logb_depth_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.le_rank_mul_logb_depth_of_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.rank_mul_rpow_le_depth_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.rank_mul_rpow_le_depth_of_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.two_pow_le_sum_choose_energy_sq_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.two_pow_le_sum_choose_energy_sq_of_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.le_energy_mul_logb_depth_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.le_energy_mul_logb_depth_of_hadamardCode
+
+/--
+info: 'Cslib.DecisionTree.energy_mul_rpow_le_depth_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.energy_mul_rpow_le_depth_of_hadamardCode
+
 end ThresholdInnerProduct

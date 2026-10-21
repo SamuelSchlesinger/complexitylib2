@@ -6,10 +6,18 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Components
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.InnerProduct
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Menus
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.PendingBias
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Potential
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.ScalarActivity
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Tactic.FinCases
 
-/-! Tests and axiom guards for mixed-activation, cut, component, and block-excess bounds. -/
+/-! Tests and axiom guards for mixed-activation, cut, component, block-excess, direction-menu,
+pending-bias, shifted-baseline activity, scalar query-activity, Cover enumerative coding,
+unambiguous cell, and quadratic-potential unique-sink representations of weighted threshold
+circuits. -/
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
@@ -126,6 +134,239 @@ example : 1 < (∅ : Finset (Fin 1)).card + (inputGates negateCircuit.program).c
     rw [Finset.mem_singleton.mp hb, Finset.card_singleton]
     omega
 
+-- Shifted-baseline activity and Corollary 3.3 rectangle-density bounds.
+example : inputActivityFrom negateCircuit.program 0 = inputActivity negateCircuit.program :=
+  inputActivityFrom_zero negateCircuit.program
+
+example : gateActivityFrom negateCircuit.program 0 = gateActivity negateCircuit.program :=
+  gateActivityFrom_zero negateCircuit.program
+
+example (v : inputGates negateCircuit.program → Bool) :
+    (attainableTranscripts negateCircuit.program).card ≤
+      ∑ j ∈ Finset.range (inputActivityFrom negateCircuit.program v + 1),
+        (inputGates negateCircuit.program).card.choose j :=
+  card_attainableTranscripts_le_sum_choose_inputActivityFrom negateCircuit.program v
+
+example (v : Fin 2 → Bool) :
+    (attainableTranscripts negateCircuit.program).card ≤
+      ∑ j ∈ Finset.range (gateActivityFrom negateCircuit.program v + 1), Nat.choose 2 j :=
+  card_attainableTranscripts_le_sum_choose_gateActivityFrom negateCircuit.program v
+
+example (v : inputGates (Program.empty : Program signature 0 0) → Bool) :
+    (Finset.univ : Finset (Fin 0 → Bool)).card *
+      (Finset.univ : Finset (Fin 0 → Bool)).card ≤
+      1 * (∑ j ∈ Finset.range (inputActivityFrom (Program.empty : Program signature 0 0) v + 1),
+        (inputGates (Program.empty : Program signature 0 0)).card.choose j) ^ 2 := by
+  refine card_mul_le_mul_sum_choose_inputActivityFrom_sq Program.empty
+    (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v Finset.univ Finset.univ
+    Finset.univ_nonempty Finset.univ_nonempty (fun _ => false) (M := 1) ?_
+  intro A' hA' B' hB' _ _
+  have hA1 : A'.card ≤ (Finset.univ : Finset (Fin 0 → Bool)).card := Finset.card_le_card hA'
+  have hB1 : B'.card ≤ (Finset.univ : Finset (Fin 0 → Bool)).card := Finset.card_le_card hB'
+  simp only [Finset.card_univ, Fintype.card_fun, Fintype.card_fin, Nat.pow_zero] at hA1 hB1
+  exact Nat.mul_le_mul hA1 hB1
+
+example (v : inputGates (Program.empty : Program signature 0 0) → Bool) :
+    1 ≤ (∑ j ∈ Finset.range (inputActivityFrom (Program.empty : Program signature 0 0) v + 1),
+      (inputGates (Program.empty : Program signature 0 0)).card.choose j) ^ 2 :=
+  two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode Program.empty
+    (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
+    (fun _ _ => by simp [BitString.hadamardCode_apply, Bool.zero_eq_false])
+
+example (v : Fin 0 → Bool) :
+    1 ≤ (∑ j ∈ Finset.range (gateActivityFrom (Program.empty : Program signature 0 0) v + 1),
+      Nat.choose 0 j) ^ 2 :=
+  two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode Program.empty
+    (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
+    (fun _ _ => by simp [BitString.hadamardCode_apply, Bool.zero_eq_false])
+
+-- Concrete pending-bias simulation and state-space bounds on `negatePrior`.
+private theorem negatePrior_gateWeight_one_zero : gateWeight negatePrior 1 0 = -1 := by
+  change lineWeight (negatePrior.lines (Fin.last 1)) (.gate 0) = -1
+  rw [negatePrior, Program.lines_gate_last]
+  change (∑ a : Fin 1 with (Wire.gate 0 : Wire 1 2) = Wire.gate 0, (-1 : ℝ)) = -1
+  simp
+
+private theorem negatePrior_inputWeight_one (a : Fin 1) : inputWeight negatePrior 1 a = 0 := by
+  fin_cases a
+  change lineWeight (negatePrior.lines (Fin.last 1)) (.input 0) = 0
+  rw [negatePrior, Program.lines_gate_last]
+  simp [lineWeight, Wire.Renaming.castSucc]
+
+example (x : Fin 1 → Bool) :
+    negatePrior.eval interpretation x 1 =
+      decide (gateThreshold negatePrior 1 ≤
+        (∑ a : Fin 1, inputWeight negatePrior 1 a * (x a).toNat) +
+          pendingBiasTrace negatePrior x 1 ⟨0, by decide⟩) :=
+  eval_eq_decide_pendingBiasTrace negatePrior x 1
+
+example : (pendingBiasStates negatePrior 1).card ≤ 2 ^ 1 :=
+  card_pendingBiasStates_le_two_pow negatePrior 1
+
+example : (pendingBiasStates negatePrior 1).card ≤ 1 + 1 := by
+  refine card_pendingBiasStates_le_add_one_of_row_const negatePrior 1 (fun _ => -1) ?_
+  intro i j
+  fin_cases i
+  fin_cases j
+  exact negatePrior_gateWeight_one_zero
+
+example :
+    (pendingBiasStates negatePrior 1).card ≤
+      (1 + 1 * 1) ^ (Finset.univ : Finset (Fin 1)).card := by
+  refine card_pendingBiasStates_le_pow_intWeight negatePrior 1 1 Finset.univ
+    (fun _ _ h => funext fun i => h i (Finset.mem_univ i)) (fun _ _ => -1) ?_ (fun _ _ _ => le_rfl)
+  intro i _ j
+  fin_cases i
+  fin_cases j
+  simpa using negatePrior_gateWeight_one_zero
+
+example : (Finset.univ.image (intSummary (fun (_ : Fin 1) (_ : Fin 1) => (-1 : ℤ)))).card ≤
+    (1 + Fintype.card (Fin 1) * 1) ^ 1 :=
+  card_intSummary_le_pow (fun (_ : Fin 1) (_ : Fin 1) => (-1 : ℤ)) (fun _ _ => le_rfl)
+
+example :
+    (Finset.univ.image (fun (x : Fin 1 → Bool) (_ : Unit) => !x 0)).card ≤
+      (Finset.univ.image (fun x : Fin 1 → Bool => x 0)).card := by
+  refine card_rows_le_card_summaries (X := Fin 1 → Bool) (Y := Unit) (α := Bool)
+    negatePrior (fun x _ => x) (fun z => z 1) (fun x _ => !x 0)
+    (fun x : Fin 1 → Bool => x 0) (fun x _ => negatePrior_eval x) ?_
+  intro x₁ x₂ _ h
+  have hx : x₁ = x₂ := funext fun i => by fin_cases i; exact h
+  rw [hx]
+
+example :
+    (Finset.univ.image (fun (x : Fin 1 → Bool) (_ : Unit) => !x 0)).card ≤
+      (pendingBiasStates negatePrior 1).card := by
+  refine card_rows_le_card_pendingBiasStates_of_phased (X := Fin 1 → Bool) (Y := Unit)
+    negatePrior (fun x _ => x) (fun z => z 1)
+    (fun x _ => !x 0) 1 () (fun x _ => negatePrior_eval x) (fun _ _ _ _ => rfl) ?_ ?_
+  · intro i x₁ x₂ _
+    fin_cases i
+    change inputSummary negatePrior x₁ 1 = inputSummary negatePrior x₂ 1
+    simp [inputSummary, negatePrior_inputWeight_one]
+  · intro z₁ z₂ h
+    exact h ⟨0, by decide⟩
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasTrace_eq_pendingBias' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasTrace_eq_pendingBias
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_decide_pendingBiasTrace' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_decide_pendingBiasTrace
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_prod_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_prod_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_pow_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_pow_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_add_one_of_row_const' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_pendingBiasStates_le_add_one_of_row_const
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_inputSummary_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms eval_eq_of_inputSummary_eq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_summaries' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_rows_le_card_summaries
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_summaries_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_card_summaries_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_pow_intSummary_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_pow_intSummary_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_pendingBiasStates_of_phased' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_rows_le_card_pendingBiasStates_of_phased
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_pendingBiasStates_of_phased_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_card_pendingBiasStates_of_phased_hadamardCode
+
+-- Direction-menu bounds (Theorem 7.3 and Corollary 7.4) on `negateCircuit`.
+example :
+    2 ^ 1 < 4 * 2 ^ 2 * ∏ a : Fin negateCircuit.size,
+      min (4 ^ (directionGates negateCircuit.program id a).card)
+        (max 1 (4 * directionMenuSum negateCircuit.program id a)) :=
+  circuit_two_pow_lt_of_directionMenus negateCircuit ⟨(1 : Fin 2), rfl⟩ id
+    (inputWeight negateCircuit.program) (fun _ => 1)
+    (fun _ _ => (one_smul ℝ _).symm)
+    negateCircuit_eval (oneBit_rectangleFree _)
+
+example :
+    2 ^ 1 < 4 * 2 ^ 2 * ∏ a : Fin negateCircuit.size,
+      min (4 ^ (directionGates negateCircuit.program id a).card)
+        (max 1 (4 * ((directionGates negateCircuit.program id a).card * 2 ^ 2))) :=
+  circuit_two_pow_lt_of_directionMenus_fanIn negateCircuit ⟨(1 : Fin 2), rfl⟩ id
+    (inputWeight negateCircuit.program) (fun _ => 1)
+    (fun _ _ => (one_smul ℝ _).symm) 2
+    (fun _ _ => le_trans (Finset.card_le_univ _) (by decide))
+    negateCircuit_eval (oneBit_rectangleFree _)
+
+-- Single-direction bounded integer internal weights on `readInput`.
+private theorem readInput_eval (x : Fin 1 → Bool) :
+    readInput.eval interpretation x 0 = x 0 := by
+  change readInput.eval interpretation x (Fin.last 0) = x 0
+  rw [readInput, Program.eval_gate_last]
+  cases hx : x 0 <;> simp [Line.eval, interpretation, hx]
+
+example :
+    2 ^ 1 < 4 * 2 ^ 2 * max 1 (4 * ((inputGates readInput).card * (1 + (1 - 1) * 0))) := by
+  refine two_pow_lt_of_direction_intWeight readInput (fun z => z 0)
+    (inputWeight readInput 0) (fun _ => 1) ?_ 0 (fun _ _ => 0) ?_ ?_
+    readInput_eval (oneBit_rectangleFree _)
+  · intro gate _
+    fin_cases gate
+    exact (one_smul ℝ _).symm
+  · intro gate _ j
+    fin_cases gate
+    fin_cases j
+    simpa using gateWeight_eq_zero_of_le readInput 0 0 le_rfl
+  · intro gate _ j hj
+    fin_cases gate
+    exact False.elim (Nat.not_lt_zero _ hj)
+
 /--
 info: 'Cslib.Circuits.Boolean.WeightedThreshold.cost_activationBlockDecomposition' depends on axioms:
 [propext, Classical.choice, Quot.sound]
@@ -237,3 +478,467 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_blocks' depends on
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_blocks
+
+/-! ### Scalar query-activity run capacity and Cover enumerative coding -/
+
+private theorem negatePrior_along (j : Fin 2) :
+    ∃ c : ℝ, inputWeight negatePrior j = c • (fun _ : Fin 1 => (1 : ℝ)) :=
+  ⟨inputWeight negatePrior j 0, funext fun i => by fin_cases i; simp⟩
+
+example :
+    PiecesAtMost (scalarTranscript negatePrior (fun _ => 1))
+      (attainableTranscripts negatePrior).card :=
+  piecesAtMost_scalarTranscript negatePrior (fun _ => 1) negatePrior_along
+
+example :
+    ChangesAtMost (scalarReadout negatePrior (fun _ => 1) (fun z => z 1))
+      ((attainableTranscripts negatePrior).card - 1) :=
+  changesAtMost_scalarReadout negatePrior (fun _ => 1) negatePrior_along (fun z => z 1)
+
+example :
+    2 ^ 1 < 16 * 2 ^ 2 *
+      ∑ j ∈ Finset.range (inputActivity negateCircuit.program + 1),
+        (inputGates negateCircuit.program).card.choose j :=
+  circuit_two_pow_lt_mul_sum_choose_of_direction negateCircuit ⟨(1 : Fin 2), rfl⟩
+    (fun _ => 1) negatePrior_along negateCircuit_eval (oneBit_rectangleFree _)
+
+example :
+    2 ^ 1 < 16 * 2 ^ 2 *
+      ∑ j ∈ Finset.range (gateActivity negateCircuit.program + 1),
+        negateCircuit.size.choose j :=
+  circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction negateCircuit ⟨(1 : Fin 2), rfl⟩
+    (fun _ => 1) negatePrior_along negateCircuit_eval (oneBit_rectangleFree _)
+
+example (z : Fin 3 → Bool) :
+    coverDecode 3 3 (coverRank 3 z) = z :=
+  coverDecode_coverRank z (by simpa using BitString.weight_le z)
+
+example (t : ℕ) (ht : t < ballSize 3 2) :
+    coverRank 2 (coverDecode 3 2 t) = t ∧ BitString.weight (coverDecode 3 2 t) ≤ 2 :=
+  ⟨coverRank_coverDecode ht, weight_coverDecode_le 3 2 t⟩
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_scalarScore_between' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms eval_eq_of_scalarScore_between
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.transcript_eq_of_scalarScore_between' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms transcript_eq_of_scalarScore_between
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_scalarTranscript' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms piecesAtMost_scalarTranscript
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_scalarReadout' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms piecesAtMost_scalarReadout
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_scalarReadout' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms changesAtMost_scalarReadout
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.length_le_card_attainableTranscripts_of_isChain' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms length_le_card_attainableTranscripts_of_isChain
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_of_isChain' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms length_le_sum_choose_of_isChain
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_gateActivity_of_isChain' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms length_le_sum_choose_gateActivity_of_isChain
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_max_card_attainableTranscripts_of_direction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_lt_mul_max_card_attainableTranscripts_of_direction
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_card_attainableTranscripts_of_direction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_lt_mul_card_attainableTranscripts_of_direction
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_of_direction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_lt_mul_sum_choose_of_direction
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_gateActivity_of_direction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_lt_mul_sum_choose_gateActivity_of_direction
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_sum_choose_of_direction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms circuit_two_pow_lt_mul_sum_choose_of_direction
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.coverRank_lt_ballSize' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms coverRank_lt_ballSize
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.weight_coverDecode_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms weight_coverDecode_le
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.coverRank_coverDecode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms coverRank_coverDecode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.coverDecode_coverRank' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms coverDecode_coverRank
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_inputActivityFrom'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_attainableTranscripts_le_sum_choose_inputActivityFrom
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_gateActivityFrom'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_attainableTranscripts_le_sum_choose_gateActivityFrom
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_card_attainableTranscripts_sq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_mul_le_mul_card_attainableTranscripts_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_inputActivityFrom_sq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_mul_le_mul_sum_choose_inputActivityFrom_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_gateActivityFrom_sq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_mul_le_mul_sum_choose_gateActivityFrom_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode
+
+/-! ### Unambiguous transcript cells and quadratic-potential unique sinks -/
+
+-- Concrete 2-gate strict-margin program on 1 input: gate 0 copies `x 0` with score `2 x_0 - 1`,
+-- and gate 1 negates gate 0 with score `-2 z_0 + 1` (`|Q_0| = |Q_1| = 1`).
+private def sampleStrictMarginProgram : StrictMarginProgram 1 2 where
+  inputWeight i _ := if i = 0 then 2 else 0
+  gateWeight i j := if i = 1 ∧ j = 0 then -2 else 0
+  threshold i := if i = 0 then 1 else -1
+  gateWeight_eq_zero_of_le i j hij := by
+    fin_cases i <;> fin_cases j <;> simp at hij ⊢
+  one_le_abs_score x z i := by
+    fin_cases i <;> simp
+    · cases x 0 <;> norm_num
+    · cases z 0 <;> norm_num
+
+private theorem sampleStrictMarginProgram_abs_score_le_one (x : Fin 1 → Bool) (z : Fin 2 → Bool)
+    (i : Fin 2) :
+    |sampleStrictMarginProgram.score x z i| ≤ 1 := by
+  fin_cases i <;>
+    simp [StrictMarginProgram.score, StrictMarginProgram.inputSum, StrictMarginProgram.internalSum,
+      sampleStrictMarginProgram]
+  · cases x 0 <;> norm_num
+  · cases z 0 <;> norm_num
+
+example (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.inTranscriptCell x z ↔ z = sampleStrictMarginProgram.eval x :=
+  sampleStrictMarginProgram.inTranscriptCell_iff_eq_eval x z
+
+example (x : Fin 1 → Bool) :
+    ∃! z : Fin 2 → Bool, sampleStrictMarginProgram.inTranscriptCell x z :=
+  sampleStrictMarginProgram.existsUnique_inTranscriptCell x
+
+example (U : Finset (Fin 1)) (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.inTranscriptCell x z ↔
+      ∀ i : Fin 2,
+        sampleStrictMarginProgram.rightDemand U z x i ≤
+          sampleStrictMarginProgram.leftSupply U z x i :=
+  sampleStrictMarginProgram.inTranscriptCell_iff_dominance U x z
+
+example (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.ilpValid (fun _ => 1) x z ↔ z = sampleStrictMarginProgram.eval x :=
+  sampleStrictMarginProgram.ilpValid_iff_eq_eval (sampleStrictMarginProgram_abs_score_le_one x z)
+
+example (fixed : Finset (Fin 2)) (val : Fin 2 → Bool) (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.IsSinkOnFace fixed val x z ↔
+      z = sampleStrictMarginProgram.faceEval fixed val x :=
+  sampleStrictMarginProgram.isSinkOnFace_iff_eq_faceEval fixed val x z
+
+example (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.IsSinkOnFace ∅ (fun _ => false) x z ↔
+      z = sampleStrictMarginProgram.eval x :=
+  sampleStrictMarginProgram.isSink_iff_eq_eval x z
+
+example (fixed : Finset (Fin 2)) (val : Fin 2 → Bool) (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.sweep fixed val x z 2 =
+      sampleStrictMarginProgram.faceEval fixed val x :=
+  sampleStrictMarginProgram.sweep_eq_faceEval fixed val x z
+
+example (i : Fin 2) :
+    sampleStrictMarginProgram.priority i ≤ (2 + 1) ^ (2 - 1 - i.val) := by
+  refine sampleStrictMarginProgram.priority_le_pow (by norm_num) ?_ i
+  intro j k hkj
+  fin_cases j <;> fin_cases k <;> simp [sampleStrictMarginProgram]
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.inTranscriptCell_iff_eq_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.inTranscriptCell_iff_eq_eval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_inTranscriptCell' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.existsUnique_inTranscriptCell
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.sum_inTranscriptCell_ite' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.sum_inTranscriptCell_ite
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.inTranscriptCell_iff_dominance' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.inTranscriptCell_iff_dominance
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.ilpValid_iff_eq_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.ilpValid_iff_eq_eval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_ilpValid' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.existsUnique_ilpValid
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.priority_le_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.priority_le_pow
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.energy_update_true_sub_false' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.energy_update_true_sub_false
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.isSinkOnFace_iff_eq_faceEval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.isSinkOnFace_iff_eq_faceEval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_isSinkOnFace' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.existsUnique_isSinkOnFace
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.isSink_iff_eq_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.isSink_iff_eq_eval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.sweep_eq_faceEval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.sweep_eq_faceEval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.energy_sweep_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.energy_sweep_le
+
+/--
+info: 'Cslib.ChangesAtMost.comp_antitone' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ChangesAtMost.comp_antitone
+
+/--
+info: 'Cslib.ChangesAtMost.pi' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ChangesAtMost.pi
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_mul' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_mul
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_trueMenuTable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_trueMenuTable
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_fanIn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_fanIn
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_fanIn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_fanIn
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms circuit_two_pow_lt_of_directionMenus_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction_intWeight
