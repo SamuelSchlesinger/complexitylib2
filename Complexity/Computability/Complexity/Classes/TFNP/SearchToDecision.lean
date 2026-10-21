@@ -249,8 +249,8 @@ theorem FNP_subset_FPSearch_iff_SAT_mem_P :
 
 namespace SAT
 
-/-- The search problem of `SAT`: certificates for `SAT.verifier`, listing values of the literal
-occurrences, that are no longer than the encoded formula. -/
+/-- The search problem of `SAT`: certificates for `SAT.verifier`, listing the values of the
+variables in order of first occurrence, that are no longer than the encoded formula. -/
 def searchRel (φ : Logic.PL.CNF ℕ) (w : List Bool) : Prop :=
   w.length ≤ (encCNF φ).length ∧ verifier (φ, w) = true
 

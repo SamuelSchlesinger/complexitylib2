@@ -269,7 +269,7 @@ theorem searchDomain_mem_P (hR : R ∈ FPSearch enc) : searchDomain R ∈ P enc 
   let ⟨_, f, hf, hsolve⟩ := hR
   ⟨fun a => (f a).isSome, optionIsSome hf, fun _ => hsolve.isSome_iff.symm⟩
 
-/-- **If every `FNP` relation is in `FPSearch`, then `P = NP`** for the encoding `enc`. -/
+/-- **If every `FNP` relation is in `FPSearch`, then `NP ⊆ P`** for the encoding `enc`. -/
 theorem NP_subset_P_of_FNP_subset_FPSearch (h : FNP enc ⊆ FPSearch enc) : NP enc ⊆ P enc :=
   fun _ hA =>
     let ⟨_, hR, hRA⟩ := mem_NP_iff_exists_FNP.1 hA
@@ -373,7 +373,7 @@ theorem searchDomain_mem_P_of_searchSum_mem_FPSearch (hRS : searchSum R S ∈ FP
       · exact ⟨fun h => (Set.disjoint_left.1 hdisj h ⟨u, hw⟩).elim, fun h => by simp at h⟩
       · exact ⟨fun _ => rfl, fun _ => ⟨u, hw⟩⟩
 
-/-- **If every `TFNP` relation is in `FPSearch`, then `NP ∩ coNP = P`** for the encoding `enc`
+/-- **If every `TFNP` relation is in `FPSearch`, then `NP ∩ coNP ⊆ P`** for the encoding `enc`
 [MegiddoPapadimitriou1991]. -/
 theorem NP_inter_coNP_subset_P_of_TFNP_subset_FPSearch (h : TFNP enc ⊆ FPSearch enc) :
     NP enc ∩ coNP enc ⊆ P enc := fun A ⟨hA, hA'⟩ => by
