@@ -11,7 +11,7 @@ public import Complexity.Init
 public import Mathlib.Data.Finset.Card
 public import Mathlib.Order.Monotone.Basic
 import Mathlib.Combinatorics.Enumerative.DoubleCounting
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
+public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Data.List.Sort
 
@@ -32,6 +32,9 @@ family are constant. The key may have ties, and the size bound uses natural-numb
 
 ## Main results
 
+* `Cslib.ChangesAtMost.comp_antitone`: antitone precomposition preserves a change bound.
+* `Cslib.ChangesAtMost.pi`, `Cslib.ChangesAtMost.finset_pi`: a finite tuple of functions changes at
+  most the sum of the coordinate change bounds.
 * `Cslib.PiecesAtMost.changesAtMost`: a function with at most `M` pieces changes at most `M - 1`
   times.
 * `Cslib.ChangesAtMost.exists_sorted_group`: a group of at least `|P| / G` points,
@@ -59,11 +62,49 @@ theorem ChangesAtMost.mono [Preorder α] {f : α → β} {T T' : ℕ}
     (h : ChangesAtMost f T) (hT : T ≤ T') : ChangesAtMost f T' :=
   fun z hz S hS => (h z hz S hS).trans hT
 
+/-- Post-composition preserves a change bound. -/
+theorem ChangesAtMost.comp [Preorder α] {f : α → β} {T : ℕ}
+    (h : ChangesAtMost f T) (g : β → γ) : ChangesAtMost (g ∘ f) T :=
+  fun z hz S hS => h z hz S fun i hi heq => hS i hi (congrArg g heq)
+
 /-- Monotone precomposition preserves a change bound. -/
 theorem ChangesAtMost.comp_monotone [Preorder α] [Preorder γ] {f : α → β} {T : ℕ}
     (h : ChangesAtMost f T) {g : γ → α} (hg : Monotone g) :
     ChangesAtMost (f ∘ g) T :=
   fun z hz S hS => h (g ∘ z) (hg.comp hz) S hS
+
+/-- Antitone precomposition preserves a change bound. -/
+theorem ChangesAtMost.comp_antitone [Preorder α] [Preorder γ] {f : α → β} {T : ℕ}
+    (h : ChangesAtMost f T) {g : γ → α} (hg : Antitone g) :
+    ChangesAtMost (f ∘ g) T := by
+  intro z hz S hS
+  rcases S.eq_empty_or_nonempty with rfl | hne
+  · simp
+  · set M := S.max' hne + 1
+    let z' : ℕ → α := fun k => g (z (M - min k M))
+    have hz' : Monotone z' := by
+      intro a b hab
+      apply hg
+      apply hz
+      omega
+    have hlt : ∀ i ∈ S, i < M := fun i hi => Nat.lt_succ_of_le (S.le_max' i hi)
+    let rev : ℕ → ℕ := fun i => M - 1 - i
+    have hinj : Set.InjOn rev S := by
+      intro i hi j hj hij
+      have := hlt i hi
+      have := hlt j hj
+      dsimp only [rev] at hij
+      omega
+    rw [← Finset.card_image_of_injOn hinj]
+    refine h z' hz' (S.image rev) ?_
+    intro k hk
+    obtain ⟨i, hi, rfl⟩ := Finset.mem_image.mp hk
+    have hiM := hlt i hi
+    have h1 : M - min (rev i) M = i + 1 := by dsimp [rev]; omega
+    have h2 : M - min (rev i + 1) M = i := by dsimp [rev]; omega
+    dsimp only [z']
+    rw [h1, h2]
+    exact (hS i hi).symm
 
 /-- A constant function has no changes. -/
 theorem ChangesAtMost.const [Preorder α] (b : β) :
@@ -71,6 +112,37 @@ theorem ChangesAtMost.const [Preorder α] (b : β) :
   intro z hz S hS
   have : S = ∅ := Finset.eq_empty_iff_forall_notMem.mpr fun i hi => hS i hi rfl
   simp [this]
+
+/-- A tuple of functions indexed by a finite type changes at most the sum of the individual
+change bounds. -/
+theorem ChangesAtMost.pi [Preorder α] {ι : Type*} [Fintype ι] {β : ι → Type*}
+    {f : (i : ι) → α → β i} {T : ι → ℕ} (hf : ∀ i, ChangesAtMost (f i) (T i)) :
+    ChangesAtMost (fun a i => f i a) (∑ i, T i) := by
+  classical
+  intro z hz S hS
+  have hsub : S ⊆ Finset.univ.biUnion fun i => S.filter fun k => f i (z k) ≠ f i (z (k + 1)) := by
+    intro k hk
+    have hne := hS k hk
+    obtain ⟨i, hi⟩ : ∃ i, f i (z k) ≠ f i (z (k + 1)) := by
+      by_contra hno
+      push Not at hno
+      exact hne (funext hno)
+    exact Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, Finset.mem_filter.mpr ⟨hk, hi⟩⟩
+  calc S.card
+      ≤ (Finset.univ.biUnion fun i => S.filter fun k => f i (z k) ≠ f i (z (k + 1))).card :=
+        Finset.card_le_card hsub
+    _ ≤ ∑ i : ι, (S.filter fun k => f i (z k) ≠ f i (z (k + 1))).card :=
+        Finset.card_biUnion_le
+    _ ≤ ∑ i : ι, T i :=
+        Finset.sum_le_sum fun i _ => hf i z hz _ fun k hk => (Finset.mem_filter.mp hk).2
+
+/-- A tuple of functions indexed by a finite set changes at most the sum of the individual
+change bounds. -/
+theorem ChangesAtMost.finset_pi [Preorder α] {ι : Type*} {s : Finset ι} {β : ι → Type*}
+    {f : (i : ι) → α → β i} {T : ι → ℕ} (hf : ∀ i ∈ s, ChangesAtMost (f i) (T i)) :
+    ChangesAtMost (fun a (i : s) => f i.1 a) (∑ i ∈ s, T i) := by
+  rw [← s.sum_attach]
+  exact ChangesAtMost.pi fun i => hf i.1 i.2
 
 /-- `Φ` has at most `M` pieces when it is constant on the level sets of a monotone rank
 function `π : α → ℕ` with values below `M`. -/
