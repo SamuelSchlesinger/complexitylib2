@@ -1,0 +1,507 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Complexity.FineGrained.BruteForce
+public import Complexity.Computability.Complexity.Classes.P
+import Complexity.Computability.Complexity.Classes.Time
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+
+/-!
+# Fixed-parameter tractability
+
+A *parameterized problem* is a problem `A : Set α` with an encoding `enc : α ↪ List Bool` of its
+instances and a *parameter* `κ : α → ℕ` [DowneyFellows1999] [FlumGrohe2006] [CyganEtAl2015]. The
+parameter is any function of the instance: the number of variables of a formula, the size of a
+solution sought, a width. Running times are measured in the parameter `k = κ a` and in the length
+`L` of the encoded instance, on the multi-tape machines of `Cslib.Complexity.DecidableInTimeO`.
+
+* `Cslib.Complexity.FPT enc κ`, **fixed-parameter tractability**: decidability within time
+  `f k * (L + 1) ^ c` up to a constant factor, for some function `f : ℕ → ℕ` and constant `c`.
+  The exponent of `L` does not depend on `k`.
+* `Cslib.Complexity.XP enc κ`, **slicewise polynomial time**: decidability within time
+  `f k * (L + 1) ^ g k`, for functions `f` and `g`.
+
+The function `f` is arbitrary, as in the *uniform* fixed-parameter tractability of Downey and
+Fellows [DowneyFellows1999, Chapter 2]. Flum and Grohe [FlumGrohe2006, Chapter 1] and Cygan et
+al. [CyganEtAl2015, Chapter 1] require `f` to be computable (Downey and Fellows' *strongly
+uniform* tractability); that variant is not formalized here. The deciders built below
+are the same for both variants; only the bookkeeping of `f` would change. The function `f` may be
+taken monotone (`Cslib.Complexity.mem_FPT_iff_exists_monotone`).
+
+`Cslib.Complexity.FPTReducible encA encB κA κB A B`: `A` reduces to `B` by an *fpt-reduction*
+[FlumGrohe2006, Definition 2.1] [CyganEtAl2015, Definition 13.1]: a map `f` computable within
+time `F (κA a) * (L + 1) ^ c` (`Cslib.Complexity.ComputableTidilyInFPTTime`) with
+`a ∈ A ↔ f a ∈ B` and `κB (f a) ≤ h (κA a)` for a function `h`. Polynomial-time reductions
+with a parameter bound are fpt-reductions
+(`Cslib.Complexity.FPTReducible.of_computableTidilyInPolyTime`). `FPT` and `XP` are closed under
+fpt-reductions. As for `FPT`, the functions `F` and `h` are arbitrary, where the cited
+definitions require them to be computable.
+
+## Main definitions
+
+* `Cslib.Complexity.FPT`, `Cslib.Complexity.XP`: fixed-parameter tractable and slicewise
+  polynomial problems.
+* `Cslib.Complexity.ComputableTidilyInFPTTime`: functions computable in fpt time.
+* `Cslib.Complexity.FPTReducible`: fpt-reductions.
+
+## Main results
+
+* `Cslib.Complexity.P_subset_FPT`, `Cslib.Complexity.FPT_subset_XP`: `P ⊆ FPT ⊆ XP`, for every
+  parameter.
+* `Cslib.Complexity.FPT_eq_P_of_le`, `Cslib.Complexity.XP_eq_P_of_le`: for a bounded parameter,
+  both classes are `P`.
+* `Cslib.Complexity.FPT_subset_FPT_of_le_comp`, `Cslib.Complexity.XP_subset_XP_of_le_comp`: if
+  `κ a ≤ h (κ' a)` then tractability in `κ` gives tractability in `κ'`.
+* `Cslib.Complexity.mem_FPT_iff_exists_monotone`: the function `f` may be taken monotone.
+* `Cslib.Complexity.DecidableInExpTime.mem_FPT`: time `2 ^ (δ κ a)` times a polynomial is fpt
+  time; so `SAT` and `k`-SAT are fixed-parameter tractable in the number of variables
+  (`Cslib.Complexity.SAT_mem_FPT`, `Cslib.Complexity.KSAT_mem_FPT`).
+* `Cslib.Complexity.compl_mem_FPT`, `Cslib.Complexity.inter_mem_FPT`,
+  `Cslib.Complexity.union_mem_FPT`, `Cslib.Complexity.compl_mem_XP`: Boolean closure.
+* `Cslib.Complexity.FPTReducible.refl`, `Cslib.Complexity.FPTReducible.trans`: fpt-reducibility
+  is a preorder; `Cslib.Complexity.FPTReducible.compl` passes to complements.
+* `Cslib.Complexity.FPTReducible.mem_FPT`, `Cslib.Complexity.FPTReducible.mem_XP`: `FPT` and `XP`
+  are closed under fpt-reductions.
+
+## References
+
+* [R. G. Downey, M. R. Fellows, *Parameterized Complexity*][DowneyFellows1999]
+* [J. Flum, M. Grohe, *Parameterized Complexity Theory*][FlumGrohe2006]
+* [M. Cygan, F. V. Fomin, Ł. Kowalik, D. Lokshtanov, D. Marx, M. Pilipczuk, M. Pilipczuk,
+  S. Saurabh, *Parameterized Algorithms*][CyganEtAl2015]
+-/
+
+@[expose] public section
+
+namespace Cslib.Complexity
+
+open Cslib.Logic.PL Turing.MultiTapeTM
+
+/-! ### Monotone majorants -/
+
+/-- The partial sums of `f` bound `f` from above. -/
+private theorem le_sum_range_succ {f : ℕ → ℕ} {i k : ℕ} (h : i ≤ k) :
+    f i ≤ ∑ j ∈ Finset.range (k + 1), f j :=
+  Finset.single_le_sum (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr (Nat.lt_succ_of_le h))
+
+/-- The partial sums of `f` are monotone. -/
+private theorem monotone_sum_range_succ (f : ℕ → ℕ) :
+    Monotone fun k => ∑ j ∈ Finset.range (k + 1), f j :=
+  fun _ _ h => Finset.sum_le_sum_of_subset (Finset.range_subset_range.mpr (Nat.succ_le_succ h))
+
+/-! ### The classes -/
+
+section Classes
+
+variable {α : Type*}
+
+/-- **Fixed-parameter tractability.** `A ∈ FPT enc κ` when `A` is decidable within time
+`f (κ a) * (|enc a| + 1) ^ c` up to a constant factor, for some function `f : ℕ → ℕ` and some
+constant `c`, by a machine with a binary alphabet reading `enc a`
+(`Cslib.Complexity.DecidableInTimeO`). The function `f` is arbitrary, as in the uniform
+fixed-parameter tractability of [DowneyFellows1999]; [FlumGrohe2006] also requires it to be
+computable. -/
+def FPT (enc : α ↪ List Bool) (κ : α → ℕ) : Set (Set α) :=
+  {A | ∃ (f : ℕ → ℕ) (c : ℕ), DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ c}
+
+/-- **Slicewise polynomial time.** `A ∈ XP enc κ` when `A` is decidable within time
+`f (κ a) * (|enc a| + 1) ^ g (κ a)` up to a constant factor, for some functions `f` and `g`: each
+slice `{a | κ a = k}` is decidable in polynomial time, with a degree depending on `k`. -/
+def XP (enc : α ↪ List Bool) (κ : α → ℕ) : Set (Set α) :=
+  {A | ∃ f g : ℕ → ℕ,
+    DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ g (κ a)}
+
+variable {enc : α ↪ List Bool} {κ κ' : α → ℕ} {A : Set α}
+
+/-- Changing the parameter and the functions of a bound of the shape of `XP`. -/
+private theorem decidableInTimeO_mono_parameter {f f' g g' : ℕ → ℕ}
+    (hf : ∀ a, f (κ a) ≤ f' (κ' a)) (hg : ∀ a, g (κ a) ≤ g' (κ' a))
+    (h : DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ g (κ a)) :
+    DecidableInTimeO A enc fun a => f' (κ' a) * ((enc a).length + 1) ^ g' (κ' a) := by
+  refine h.mono 1 (fun a => ?_) fun a => by positivity
+  have hL : (1 : ℝ) ≤ (enc a).length + 1 := by
+    linarith [(Nat.cast_nonneg (enc a).length : (0 : ℝ) ≤ _)]
+  have h₁ : (f (κ a) : ℝ) ≤ f' (κ' a) := by exact_mod_cast hf a
+  have h₂ : (((enc a).length : ℝ) + 1) ^ g (κ a) ≤ ((enc a).length + 1) ^ g' (κ' a) :=
+    pow_le_pow_right₀ hL (hg a)
+  have := mul_le_mul h₁ h₂ (by positivity) (by positivity)
+  push_cast
+  linarith
+
+/-- **`FPT ⊆ XP`.** -/
+theorem FPT_subset_XP (enc : α ↪ List Bool) (κ : α → ℕ) : FPT enc κ ⊆ XP enc κ :=
+  fun _ ⟨f, c, h⟩ => ⟨f, fun _ => c, h⟩
+
+/-- **`P ⊆ FPT`**, for every parameter: a polynomial-time decider is an fpt-time decider with
+`f = 1`. -/
+theorem P_subset_FPT (enc : α ↪ List Bool) (κ : α → ℕ) : P enc ⊆ FPT enc κ := by
+  intro A hA
+  obtain ⟨k, hk⟩ := mem_P_iff_exists_mem_DTIME.mp hA
+  refine ⟨fun _ => 1, k,
+    (mem_DTIME_iff_decidableInTimeO.mp hk).mono 1 (fun a => ?_) fun a => by positivity⟩
+  have : ((enc a).length : ℝ) ^ k ≤ ((enc a).length + 1) ^ k :=
+    pow_le_pow_left₀ (by positivity) (by linarith) k
+  push_cast
+  linarith
+
+/-- **`P ⊆ XP`**, for every parameter. -/
+theorem P_subset_XP (enc : α ↪ List Bool) (κ : α → ℕ) : P enc ⊆ XP enc κ :=
+  (P_subset_FPT enc κ).trans (FPT_subset_XP enc κ)
+
+/-- **Changing the parameter.** If `κ a ≤ h (κ' a)` for a function `h`, then a problem that is
+fixed-parameter tractable in `κ` is fixed-parameter tractable in `κ'`. -/
+theorem FPT_subset_FPT_of_le_comp {h : ℕ → ℕ} (hκ : ∀ a, κ a ≤ h (κ' a)) :
+    FPT enc κ ⊆ FPT enc κ' := fun _ ⟨f, c, hA⟩ =>
+  ⟨fun k => ∑ j ∈ Finset.range (h k + 1), f j, c,
+    decidableInTimeO_mono_parameter (f := f) (f' := fun k => ∑ j ∈ Finset.range (h k + 1), f j)
+      (g := fun _ => c) (g' := fun _ => c) (fun a => le_sum_range_succ (hκ a)) (fun _ => le_rfl)
+      hA⟩
+
+/-- **Changing the parameter.** If `κ a ≤ h (κ' a)` for a function `h`, then a problem that is
+slicewise polynomial in `κ` is slicewise polynomial in `κ'`. -/
+theorem XP_subset_XP_of_le_comp {h : ℕ → ℕ} (hκ : ∀ a, κ a ≤ h (κ' a)) :
+    XP enc κ ⊆ XP enc κ' := fun _ ⟨f, g, hA⟩ =>
+  ⟨fun k => ∑ j ∈ Finset.range (h k + 1), f j, fun k => ∑ j ∈ Finset.range (h k + 1), g j,
+    decidableInTimeO_mono_parameter (f := f) (f' := fun k => ∑ j ∈ Finset.range (h k + 1), f j)
+      (g := g) (g' := fun k => ∑ j ∈ Finset.range (h k + 1), g j)
+      (fun a => le_sum_range_succ (hκ a)) (fun a => le_sum_range_succ (hκ a)) hA⟩
+
+/-- **The function of an fpt bound may be taken monotone**: replace `f` by its partial sums. -/
+theorem mem_FPT_iff_exists_monotone :
+    A ∈ FPT enc κ ↔ ∃ f : ℕ → ℕ, Monotone f ∧
+      ∃ c : ℕ, DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ c := by
+  refine ⟨fun ⟨f, c, hA⟩ => ⟨_, monotone_sum_range_succ f, c,
+    decidableInTimeO_mono_parameter (f := f) (f' := fun k => ∑ j ∈ Finset.range (k + 1), f j)
+      (g := fun _ => c) (g' := fun _ => c) (fun a => le_sum_range_succ le_rfl) (fun _ => le_rfl)
+      hA⟩,
+    fun ⟨f, _, c, hA⟩ => ⟨f, c, hA⟩⟩
+
+/-- **Exponential time in the parameter is fpt time.** A decider within time `2 ^ (δ κ a)` times
+a polynomial in the length of the encoded instance, for any real `δ`, is an fpt-time decider with
+`f k = ⌈2 ^ δ⌉ ^ k`. -/
+theorem DecidableInExpTime.mem_FPT {δ : ℝ} (h : DecidableInExpTime A enc κ δ) :
+    A ∈ FPT enc κ := by
+  obtain ⟨e, h⟩ := h
+  refine ⟨fun k => ⌈(2 : ℝ) ^ δ⌉₊ ^ k, e, h.mono 1 (fun a => ?_) fun a => by positivity⟩
+  have h₁ : (2 : ℝ) ^ (δ * κ a) = ((2 : ℝ) ^ δ) ^ (κ a) := by
+    rw [Real.rpow_mul (by norm_num), Real.rpow_natCast]
+  have h₂ : ((2 : ℝ) ^ δ) ^ (κ a) ≤ (⌈(2 : ℝ) ^ δ⌉₊ : ℝ) ^ (κ a) :=
+    pow_le_pow_left₀ (by positivity) (Nat.le_ceil _) _
+  have := mul_le_mul_of_nonneg_right (h₁ ▸ h₂)
+    (by positivity : (0 : ℝ) ≤ ((enc a).length + 1) ^ e)
+  push_cast
+  linarith
+
+/-- **`SAT` is fixed-parameter tractable in the number of variables**, by exhaustive search. -/
+theorem SAT_mem_FPT : SAT ∈ FPT encCNF CNF.numVars :=
+  SAT_decidableInExpTime_one.mem_FPT
+
+/-- **`k`-SAT is fixed-parameter tractable in the number of variables**, by exhaustive search. -/
+theorem KSAT_mem_FPT (k : ℕ) : KSAT k ∈ FPT encCNF CNF.numVars :=
+  (KSAT_decidableInExpTime_one k).mem_FPT
+
+end Classes
+
+/-! ### Fpt-time computability -/
+
+section Machines
+
+/-- `f` is tidily computable in fpt time with respect to the parameter `κ`: within time and space
+`F (κ a) * (|encA a| + 1) ^ c` up to a constant factor, for a function `F : ℕ → ℕ` and a constant
+`c`. -/
+def ComputableTidilyInFPTTime {α β : Type*} (f : α → β) (encA : α ↪ List Bool)
+    (encB : β ↪ List Bool) (κ : α → ℕ) : Prop :=
+  ∃ (F : ℕ → ℕ) (c : ℕ), ComputableTidilyInO f encA encB
+    (fun a => F (κ a) * ((encA a).length + 1) ^ c) fun a => F (κ a) * ((encA a).length + 1) ^ c
+
+variable {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
+  {κ κA : α → ℕ} {κB : β → ℕ} {κC : γ → ℕ}
+
+/-- A function computable in polynomial time is computable in fpt time, for every parameter. -/
+theorem _root_.Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableTidilyInFPTTime {f : α → β}
+    (hf : ComputableTidilyInPolyTime f encA encB) (κ : α → ℕ) :
+    ComputableTidilyInFPTTime f encA encB κ :=
+  let ⟨d, _, hf⟩ := hf.exists_degree
+  ⟨fun _ => 1, d, hf.inO.mono_le (fun _ => (one_mul _).ge) fun _ => (one_mul _).ge⟩
+
+/-- **Case distinction in fpt time.** -/
+theorem ComputableTidilyInFPTTime.ite {p : α → Bool} {f g : α → β}
+    (hp : ComputableTidilyInFPTTime p encA encBool κ)
+    (hf : ComputableTidilyInFPTTime f encA encB κ) (hg : ComputableTidilyInFPTTime g encA encB κ) :
+    ComputableTidilyInFPTTime (fun a => if p a then f a else g a) encA encB κ := by
+  obtain ⟨F₁, c₁, hp⟩ := hp
+  obtain ⟨F₂, c₂, hf⟩ := hf
+  obtain ⟨F₃, c₃, hg⟩ := hg
+  have key : ∀ a, (F₁ (κ a) * ((encA a).length + 1) ^ c₁ +
+      if p a then F₂ (κ a) * ((encA a).length + 1) ^ c₂
+      else F₃ (κ a) * ((encA a).length + 1) ^ c₃) ≤
+      (F₁ (κ a) + F₂ (κ a) + F₃ (κ a)) * ((encA a).length + 1) ^ (c₁ + c₂ + c₃) := by
+    intro a
+    have hle : ∀ c, c ≤ c₁ + c₂ + c₃ → ∀ F,
+        F * ((encA a).length + 1) ^ c ≤ F * ((encA a).length + 1) ^ (c₁ + c₂ + c₃) :=
+      fun c hc F => Nat.mul_le_mul_left F (Nat.pow_le_pow_right (Nat.succ_pos _) hc)
+    have h₁ := hle c₁ (by omega) (F₁ (κ a))
+    have h₂ := hle c₂ (by omega) (F₂ (κ a))
+    have h₃ := hle c₃ (by omega) (F₃ (κ a))
+    rw [Nat.add_mul, Nat.add_mul]
+    split_ifs <;> omega
+  exact ⟨fun k => F₁ k + F₂ k + F₃ k, c₁ + c₂ + c₃, (hp.ite hf hg).mono_le key key⟩
+
+/-- The arithmetic of composition: a bound `F₂ (n + 1) ^ e` on an output of length `n` within
+`l (F₁ (L + 1) ^ c₁ + 1)`, after a computation within `F₁ (L + 1) ^ c₁`. -/
+private theorem comp_time_le {L F₁ c₁ l n F₂ F₂' e E : ℕ}
+    (hn : n ≤ l * (F₁ * (L + 1) ^ c₁ + 1)) (hF : F₂ ≤ F₂') (he : e ≤ E) :
+    F₁ * (L + 1) ^ c₁ + F₂ * (n + 1) ^ e ≤
+      (F₁ + F₂' * ((l + 1) * (F₁ + 1)) ^ E) * (L + 1) ^ (c₁ + c₁ * E) := by
+  have hP : 1 ≤ (L + 1) ^ c₁ := Nat.one_le_pow _ _ (Nat.succ_pos L)
+  have hQ : 1 ≤ ((L + 1) ^ c₁) ^ E := Nat.one_le_pow _ _ hP
+  have hlP := Nat.mul_le_mul_left l hP
+  have hn' : n + 1 ≤ (l + 1) * (F₁ + 1) * (L + 1) ^ c₁ := by nlinarith
+  have h₁ : (n + 1) ^ e ≤ ((l + 1) * (F₁ + 1)) ^ E * ((L + 1) ^ c₁) ^ E := by
+    rw [← Nat.mul_pow]
+    exact (Nat.pow_le_pow_left hn' e).trans (Nat.pow_le_pow_right (by positivity) he)
+  have h₂ := Nat.mul_le_mul hF h₁
+  have h₃ := Nat.mul_le_mul_left (F₂' * ((l + 1) * (F₁ + 1)) ^ E * ((L + 1) ^ c₁) ^ E) hP
+  have h₄ := Nat.mul_le_mul_left (F₁ * (L + 1) ^ c₁) hQ
+  rw [Nat.pow_add, Nat.pow_mul]
+  calc F₁ * (L + 1) ^ c₁ + F₂ * (n + 1) ^ e
+      ≤ F₁ * (L + 1) ^ c₁ * ((L + 1) ^ c₁) ^ E +
+        F₂' * ((l + 1) * (F₁ + 1)) ^ E * ((L + 1) ^ c₁) ^ E * (L + 1) ^ c₁ := by
+        rw [Nat.mul_one] at h₃ h₄
+        rw [← Nat.mul_assoc] at h₂
+        omega
+    _ = _ := by ring
+
+/-- Composition of an fpt-time function with a function computable within time
+`F₂ (κB b) (|b| + 1) ^ e₂ (κB b)`, given bounds on `F₂` and `e₂` along the function. -/
+private theorem computableTidilyInO_comp {f : α → β} {g : β → γ} {F₁ : ℕ → ℕ} {c₁ : ℕ}
+    {F₂ e₂ F₂' E : ℕ → ℕ}
+    (hg : ComputableTidilyInO g encB encC (fun b => F₂ (κB b) * ((encB b).length + 1) ^ e₂ (κB b))
+      fun b => F₂ (κB b) * ((encB b).length + 1) ^ e₂ (κB b))
+    (hf : ComputableTidilyInO f encA encB (fun a => F₁ (κA a) * ((encA a).length + 1) ^ c₁)
+      fun a => F₁ (κA a) * ((encA a).length + 1) ^ c₁)
+    (hF : ∀ a, F₂ (κB (f a)) ≤ F₂' (κA a)) (he : ∀ a, e₂ (κB (f a)) ≤ E (κA a)) :
+    ∃ l, ComputableTidilyInO (g ∘ f) encA encC
+      (fun a => (F₁ (κA a) + F₂' (κA a) * ((l + 1) * (F₁ (κA a) + 1)) ^ E (κA a)) *
+        ((encA a).length + 1) ^ (c₁ + c₁ * E (κA a)))
+      fun a => (F₁ (κA a) + F₂' (κA a) * ((l + 1) * (F₁ (κA a) + 1)) ^ E (κA a)) *
+        ((encA a).length + 1) ^ (c₁ + c₁ * E (κA a)) := by
+  obtain ⟨l, hl⟩ := hf.length_le
+  have key := fun a => comp_time_le (hl a) (hF a) (he a)
+  exact ⟨l, (hg.comp hf).mono_le key key⟩
+
+/-- **Composition in fpt time**, along a function that bounds the parameter. -/
+theorem ComputableTidilyInFPTTime.comp {f : α → β} {g : β → γ}
+    (hg : ComputableTidilyInFPTTime g encB encC κB) (hf : ComputableTidilyInFPTTime f encA encB κA)
+    {h : ℕ → ℕ} (hκ : ∀ a, κB (f a) ≤ h (κA a)) :
+    ComputableTidilyInFPTTime (g ∘ f) encA encC κA := by
+  obtain ⟨F₂, c₂, hg⟩ := hg
+  obtain ⟨F₁, c₁, hf⟩ := hf
+  obtain ⟨l, hgf⟩ := computableTidilyInO_comp (e₂ := fun _ => c₂)
+    (F₂' := fun k => ∑ j ∈ Finset.range (h k + 1), F₂ j) (E := fun _ => c₂) hg hf
+    (fun a => le_sum_range_succ (hκ a)) fun _ => le_rfl
+  exact ⟨fun k => F₁ k + (∑ j ∈ Finset.range (h k + 1), F₂ j) * ((l + 1) * (F₁ k + 1)) ^ c₂,
+    c₁ + c₁ * c₂, hgf⟩
+
+/-- Bounds of the shape `T a`, cast to the reals, are tidy bounds. -/
+private theorem decidableInTimeO_natCast_iff {A : Set α} {T : α → ℕ} :
+    DecidableInTimeO A encA (fun a => (T a : ℝ)) ↔
+      ∃ g : α → Bool, ComputableTidilyInO g encA encBool T T ∧ ∀ a, a ∈ A ↔ g a = true := by
+  constructor
+  · intro h
+    obtain ⟨g, t, k, hg, hA, ht⟩ := h.exists_computableTidilyInO
+    have ht' : ∀ a, t a ≤ k * (T a + 1) := fun a => by
+      have : (t a : ℝ) ≤ ((k * (T a + 1) : ℕ) : ℝ) := by
+        push_cast
+        linarith [ht a]
+      exact_mod_cast this
+    exact ⟨g, hg.mono k ht' ht', hA⟩
+  · rintro ⟨g, hg, hA⟩
+    exact DecidableInTimeO.of_computableTidilyInO hg hA fun _ => le_rfl
+
+/-- **`FPT` in terms of fpt-time computability**: a problem is fixed-parameter tractable exactly
+when a Boolean function deciding it is tidily computable in fpt time. -/
+theorem mem_FPT_iff_computableTidilyInFPTTime {A : Set α} :
+    A ∈ FPT encA κ ↔
+      ∃ g : α → Bool, ComputableTidilyInFPTTime g encA encBool κ ∧ ∀ a, a ∈ A ↔ g a = true := by
+  have e : ∀ (f : ℕ → ℕ) (c : ℕ), (fun a => (f (κ a) : ℝ) * ((encA a).length + 1) ^ c) =
+      fun a => ((f (κ a) * ((encA a).length + 1) ^ c : ℕ) : ℝ) := fun f c => by
+    funext a
+    push_cast
+    rfl
+  constructor
+  · rintro ⟨f, c, h⟩
+    rw [e, decidableInTimeO_natCast_iff] at h
+    obtain ⟨g, hg, hA⟩ := h
+    exact ⟨g, ⟨f, c, hg⟩, hA⟩
+  · rintro ⟨g, ⟨f, c, hg⟩, hA⟩
+    refine ⟨f, c, ?_⟩
+    rw [e, decidableInTimeO_natCast_iff]
+    exact ⟨g, hg, hA⟩
+
+/-- **`XP` in terms of tidy computability.** -/
+theorem mem_XP_iff_exists_computableTidilyInO {A : Set α} :
+    A ∈ XP encA κ ↔ ∃ (g : α → Bool) (f e : ℕ → ℕ), ComputableTidilyInO g encA encBool
+      (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a))
+      (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) ∧ ∀ a, a ∈ A ↔ g a = true := by
+  have h : ∀ f e : ℕ → ℕ, (fun a => (f (κ a) : ℝ) * ((encA a).length + 1) ^ e (κ a)) =
+      fun a => ((f (κ a) * ((encA a).length + 1) ^ e (κ a) : ℕ) : ℝ) := fun f e => by
+    funext a
+    push_cast
+    rfl
+  constructor
+  · rintro ⟨f, e, hA⟩
+    rw [h, decidableInTimeO_natCast_iff] at hA
+    obtain ⟨g, hg, hA⟩ := hA
+    exact ⟨g, f, e, hg, hA⟩
+  · rintro ⟨g, f, e, hg, hA⟩
+    refine ⟨f, e, ?_⟩
+    rw [h, decidableInTimeO_natCast_iff]
+    exact ⟨g, hg, hA⟩
+
+/-- **Bounded parameters.** For a parameter bounded by a constant, `FPT` is `P`. -/
+theorem FPT_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : FPT encA κ = P encA := by
+  refine subset_antisymm (fun A hA => ?_) (P_subset_FPT encA κ)
+  obtain ⟨g, ⟨f, c, hg⟩, hA⟩ :=
+    mem_FPT_iff_computableTidilyInFPTTime.mp (FPT_subset_FPT_of_le_comp (κ' := fun _ => 0)
+      (h := fun _ => K) hκ hA)
+  exact ⟨g, hg.computableTidilyInPolyTime (.of_forall_le (f 0) c fun _ => le_rfl)
+    (.of_forall_le (f 0) c fun _ => le_rfl), hA⟩
+
+/-- **Bounded parameters.** For a parameter bounded by a constant, `XP` is `P`. -/
+theorem XP_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : XP encA κ = P encA := by
+  refine subset_antisymm (fun A hA => ?_) (P_subset_XP encA κ)
+  obtain ⟨g, f, e, hg, hA⟩ :=
+    mem_XP_iff_exists_computableTidilyInO.mp (XP_subset_XP_of_le_comp (κ' := fun _ => 0)
+      (h := fun _ => K) hκ hA)
+  exact ⟨g, hg.computableTidilyInPolyTime (.of_forall_le (f 0) (e 0) fun _ => le_rfl)
+    (.of_forall_le (f 0) (e 0) fun _ => le_rfl), hA⟩
+
+/-! ### Boolean closure -/
+
+/-- **`FPT` is closed under complement.** -/
+theorem compl_mem_FPT {A : Set α} (hA : A ∈ FPT encA κ) : Aᶜ ∈ FPT encA κ := by
+  obtain ⟨g, hg, hA⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hA
+  refine mem_FPT_iff_computableTidilyInFPTTime.mpr ⟨_, hg.ite
+    ((ComputableTidilyInPolyTime.const false).computableTidilyInFPTTime κ)
+    ((ComputableTidilyInPolyTime.const true).computableTidilyInFPTTime κ), fun a => ?_⟩
+  simp only [Set.mem_compl_iff, hA]
+  cases g a <;> simp
+
+/-- **`FPT` is closed under intersection.** -/
+theorem inter_mem_FPT {A B : Set α} (hA : A ∈ FPT encA κ) (hB : B ∈ FPT encA κ) :
+    A ∩ B ∈ FPT encA κ := by
+  obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hA
+  obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hB
+  refine mem_FPT_iff_computableTidilyInFPTTime.mpr ⟨_, hg₁.ite hg₂
+    ((ComputableTidilyInPolyTime.const false).computableTidilyInFPTTime κ), fun a => ?_⟩
+  simp only [Set.mem_inter_iff, hA, hB]
+  cases g₁ a <;> simp
+
+/-- **`FPT` is closed under union.** -/
+theorem union_mem_FPT {A B : Set α} (hA : A ∈ FPT encA κ) (hB : B ∈ FPT encA κ) :
+    A ∪ B ∈ FPT encA κ := by
+  obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hA
+  obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hB
+  refine mem_FPT_iff_computableTidilyInFPTTime.mpr ⟨_, hg₁.ite
+    ((ComputableTidilyInPolyTime.const true).computableTidilyInFPTTime κ) hg₂, fun a => ?_⟩
+  simp only [Set.mem_union, hA, hB]
+  cases g₁ a <;> simp
+
+/-- **`XP` is closed under complement.** -/
+theorem compl_mem_XP {A : Set α} (hA : A ∈ XP encA κ) : Aᶜ ∈ XP encA κ := by
+  obtain ⟨g, f, e, hg, hA⟩ := mem_XP_iff_exists_computableTidilyInO.mp hA
+  have h := hg.ite (ComputableTidilyInO.const (encMid := encBool) false)
+    (ComputableTidilyInO.const (encMid := encBool) true)
+  refine mem_XP_iff_exists_computableTidilyInO.mpr ⟨_, fun k => f k + 1, fun k => e k + 1,
+    h.mono_le (fun a => ?_) (fun a => ?_), fun a => ?_⟩
+  rotate_left 2
+  · simp only [Set.mem_compl_iff, hA]
+    cases g a <;> simp
+  all_goals
+    dsimp only
+    have h₁ : ((encA a).length + 1) ^ e (κ a) ≤ ((encA a).length + 1) ^ (e (κ a) + 1) :=
+      Nat.pow_le_pow_right (Nat.succ_pos _) (Nat.le_succ _)
+    have h₂ : (encA a).length ≤ ((encA a).length + 1) ^ (e (κ a) + 1) :=
+      (Nat.le_succ _).trans (Nat.le_self_pow (Nat.succ_ne_zero _) _)
+    have h₃ := Nat.mul_le_mul_left (f (κ a)) h₁
+    split_ifs <;> (rw [Nat.add_mul, Nat.one_mul]; omega)
+
+end Machines
+
+/-! ### Fpt-reductions -/
+
+section Reduction
+
+/-- **Fpt-reductions** [FlumGrohe2006, Definition 2.1] [CyganEtAl2015, Definition 13.1]: `A`
+reduces to `B` by a map `f`, computable in fpt time with respect to `κA`, with `a ∈ A ↔ f a ∈ B`,
+whose parameter `κB (f a)` is bounded by a function `h` of `κA a`. The function `h` and the
+function of the time bound are arbitrary; the cited definitions require them to be computable. -/
+def FPTReducible {α β : Type*} (encA : α ↪ List Bool) (encB : β ↪ List Bool) (κA : α → ℕ)
+    (κB : β → ℕ) (A : Set α) (B : Set β) : Prop :=
+  ∃ f : α → β, ComputableTidilyInFPTTime f encA encB κA ∧
+    (∃ h : ℕ → ℕ, ∀ a, κB (f a) ≤ h (κA a)) ∧ ∀ a, a ∈ A ↔ f a ∈ B
+
+variable {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
+  {κA : α → ℕ} {κB : β → ℕ} {κC : γ → ℕ} {A : Set α} {B : Set β} {C : Set γ}
+
+/-- **Polynomial-time reductions bounding the parameter are fpt-reductions.** -/
+theorem FPTReducible.of_computableTidilyInPolyTime {f : α → β}
+    (hf : ComputableTidilyInPolyTime f encA encB) {h : ℕ → ℕ} (hκ : ∀ a, κB (f a) ≤ h (κA a))
+    (hfA : ∀ a, a ∈ A ↔ f a ∈ B) : FPTReducible encA encB κA κB A B :=
+  ⟨f, hf.computableTidilyInFPTTime κA, ⟨h, hκ⟩, hfA⟩
+
+/-- Every parameterized problem reduces to itself by the identity. -/
+theorem FPTReducible.refl (encA : α ↪ List Bool) (κA : α → ℕ) (A : Set α) :
+    FPTReducible encA encA κA κA A A :=
+  .of_computableTidilyInPolyTime ComputableTidilyInPolyTime.id' (h := id) (fun _ => le_rfl)
+    fun _ => Iff.rfl
+
+/-- **Fpt-reductions compose.** -/
+theorem FPTReducible.trans (hAB : FPTReducible encA encB κA κB A B)
+    (hBC : FPTReducible encB encC κB κC B C) : FPTReducible encA encC κA κC A C := by
+  obtain ⟨f, hf, ⟨h₁, hκ₁⟩, hAB⟩ := hAB
+  obtain ⟨g, hg, ⟨h₂, hκ₂⟩, hBC⟩ := hBC
+  exact ⟨g ∘ f, hg.comp hf hκ₁,
+    ⟨fun k => ∑ j ∈ Finset.range (h₁ k + 1), h₂ j,
+      fun a => (hκ₂ (f a)).trans (le_sum_range_succ (hκ₁ a))⟩,
+    fun a => (hAB a).trans (hBC (f a))⟩
+
+/-- An fpt-reduction from `A` to `B` is one from `Aᶜ` to `Bᶜ`. -/
+theorem FPTReducible.compl (h : FPTReducible encA encB κA κB A B) :
+    FPTReducible encA encB κA κB Aᶜ Bᶜ :=
+  let ⟨f, hf, hκ, hAB⟩ := h
+  ⟨f, hf, hκ, fun a => not_congr (hAB a)⟩
+
+/-- **`FPT` is closed under fpt-reductions.** -/
+theorem FPTReducible.mem_FPT (hAB : FPTReducible encA encB κA κB A B) (hB : B ∈ FPT encB κB) :
+    A ∈ FPT encA κA := by
+  obtain ⟨f, hf, ⟨h, hκ⟩, hAB⟩ := hAB
+  obtain ⟨g, hg, hB⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hB
+  exact mem_FPT_iff_computableTidilyInFPTTime.mpr
+    ⟨g ∘ f, hg.comp hf hκ, fun a => (hAB a).trans (hB (f a))⟩
+
+/-- **`XP` is closed under fpt-reductions.** -/
+theorem FPTReducible.mem_XP (hAB : FPTReducible encA encB κA κB A B) (hB : B ∈ XP encB κB) :
+    A ∈ XP encA κA := by
+  obtain ⟨f, ⟨F₁, c₁, hf⟩, ⟨h, hκ⟩, hAB⟩ := hAB
+  obtain ⟨g, F₂, e₂, hg, hB⟩ := mem_XP_iff_exists_computableTidilyInO.mp hB
+  obtain ⟨l, hgf⟩ := computableTidilyInO_comp
+    (F₂' := fun k => ∑ j ∈ Finset.range (h k + 1), F₂ j)
+    (E := fun k => ∑ j ∈ Finset.range (h k + 1), e₂ j) hg hf
+    (fun a => le_sum_range_succ (hκ a)) fun a => le_sum_range_succ (hκ a)
+  exact mem_XP_iff_exists_computableTidilyInO.mpr ⟨g ∘ f,
+    fun k => F₁ k + (∑ j ∈ Finset.range (h k + 1), F₂ j) *
+      ((l + 1) * (F₁ k + 1)) ^ ∑ j ∈ Finset.range (h k + 1), e₂ j,
+    fun k => c₁ + c₁ * ∑ j ∈ Finset.range (h k + 1), e₂ j, hgf,
+    fun a => (hAB a).trans (hB (f a))⟩
+
+end Reduction
+
+end Cslib.Complexity
