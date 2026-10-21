@@ -117,7 +117,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Average-case complexity and learning | Uniform-distribution learning on CSLib's PAC API, the LMN low-degree algorithm and Kushilevitz–Mansour with membership queries are [proved](Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean); running times are not machine-certified. Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |
 | Property and distribution testing | Distance and access models, one/two-sided and tolerant testing, query/sample bounds, canonical graph/algebraic/distribution testers and lower bounds. |
 | Fine-grained and parameterized complexity | Under ETH, 3-coloring, independent set, vertex cover and Hamiltonian cycle and path have no 2^{o(\|V\|+\|E\|)} algorithms and clique none in 2^{o(\|V\|)} ([GraphProblems](Complexity/Computability/Complexity/FineGrained/GraphProblems.lean)); the Hamiltonian bounds (directed and undirected) use linear-size diamond reductions. Further fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; FPT/XP, W/A hierarchies, kernelization, parameter-preserving reductions and lower bounds. |
-| Total search and computational games | FNP/TFNP and canonical subclasses such as PLS, PPAD, PPA, PPP and CLS; local search, fixed-point and equilibrium problems, with explicit totality and solution-preserving reductions. |
+| Total search and computational games | Build on [FNP, FP and TFNP with search reductions](Complexity/Computability/Complexity/Classes/TFNP.lean), including `FP = FNP` exactly when `P = NP` ([search to decision](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean)) and `TFNP ⊆ FP → NP ∩ coNP = P`. Develop the canonical subclasses PLS, PPAD, PPA, PPP and CLS with their circuit-presented complete problems, local search, fixed-point and equilibrium problems, keeping totality and solution-preserving reductions explicit. |
 | Logic and descriptive complexity | Building on [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): logical characterizations of additional resource classes, fixed-point and order-invariant queries, and uniform translations between syntax, structures and algorithms. |
 | Kolmogorov complexity and metacomplexity | Machine-backed descriptions/decoders and invariance, resource-bounded descriptions, MCSP variants and connections to learning, cryptography and lower bounds. Revisit deferred results through independently reviewed developments. |
 | Quantum complexity | Reusable circuit/channel/measurement semantics, uniformity and approximation costs, BQP/QMA and related query, communication and interactive classes, amplification, containments and complete problems. Reuse suitable quantum foundations rather than create incompatible models. |
@@ -546,9 +546,12 @@ Jukna coverage below is an additional target beyond the V1 port:
   and their Boolean-analysis applications. Continue formula lower bounds beyond the existing
   [Khrapchenko bound](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), following the
   Jukna coverage below.
-* **Search and parameterized complexity.** Develop TFNP and its subclasses with explicit totality
-  and solution-preserving reductions, and FPT/XP, parameterized reductions and kernelization.
-  The long-term coverage table identifies the broader class families.
+* **Search and parameterized complexity.** [FNP, FP and TFNP](Complexity/Computability/Complexity/Classes/TFNP.lean)
+  are defined with polynomial-time search reductions, `FP = FNP` exactly when `P = NP` is
+  [proved](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean), and `TFNP ⊆ FP`
+  implies `NP ∩ coNP = P`. Develop the TFNP subclasses (PLS, PPAD, PPA, PPP, CLS) with their
+  complete problems, and FPT/XP, parameterized reductions and kernelization. The long-term
+  coverage table identifies the broader class families.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should

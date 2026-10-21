@@ -489,6 +489,49 @@ an intermediate problem as additional input.\citep[Theorem 3.3]{AroraBarak09}
 \end{result}
 
 \begin{result}
+\subsection{Search problems: FNP, FP and TFNP}
+A search problem is a relation $R(a,w)$ between instances and bit-string
+solutions. It is in FNP when it is polynomially balanced (every solution
+of $a$ has length at most $p(|a|)$ for a polynomial $p$, where $|a|$ is the
+encoded length) and decidable in polynomial time; it is in FP when it is
+moreover solved by a polynomial-time function that returns a solution of every
+instance that has one and reports the instances that have none. TFNP consists
+of the total relations in FNP. NP is exactly the class of domains of FNP
+relations, and if $\cc{NP}\subseteq\cc{P}$ for the encoding of pairs of an
+instance and a word, every FNP relation is in FP, by deciding which prefixes
+extend to solutions. Hence, quantifying over all encodings,
+\[
+\cc{FP}=\cc{FNP}\quad\Longleftrightarrow\quad\cc{P}=\cc{NP}\quad\Longleftrightarrow\quad
+\mathrm{SAT}\in\cc{P},
+\]
+the last step by the Cook--Levin theorem; for SAT itself, its assignment
+search problem is in FP exactly when $\mathrm{SAT}\in\cc{P}$, by the
+self-reduction. For an encoding fixed in advance, FNP $\subseteq$ FP implies
+NP $\subseteq$ P, and TFNP $\subseteq$ FP implies
+$\cc{NP}\cap\cc{coNP}\subseteq\cc{P}$: the tagged union of membership and
+non-membership witnesses of a problem in $\cc{NP}\cap\cc{coNP}$ is total, and
+solving it decides the problem. The converse of the last implication is not
+claimed.\citep[Section 10.3]{Papadimitriou94}\citep{MegiddoPapadimitriou1991}
+
+A search reduction from $R$ to $S$ is a pair of polynomial-time maps: $f$ sends
+instances with a solution to instances with a solution, and $g$ sends each
+solution $w$ of $f(a)$ to a solution $g(a,w)$ of $a$. For a total target the
+first condition is automatic, giving the reductions used for TFNP. Search
+reductions compose, preserve totality backwards, induce many-one reductions
+between the domains, and pull FP back to FNP relations; a problem hard for a
+subclass of FNP that lies in FP puts the whole subclass in FP. No TFNP subclass
+or complete problem is formalized in this entry.\citep{MegiddoPapadimitriou1991,JohnsonPapadimitriouYannakakis1988}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP.lean}{263}{Cslib.Complexity.mem_NP_iff_exists_FNP}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP.lean}{378}{Cslib.Complexity.NP_inter_coNP_subset_P_of_TFNP_subset_FPSearch}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP.lean}{455}{Cslib.Complexity.SearchReducible.mem_FPSearch}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP.lean}{482}{Cslib.Complexity.SearchHard.subset_FPSearch}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{213}{Cslib.Complexity.FNP_subset_FPSearch_of_NP_subset_P}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{236}{Cslib.Complexity.FNP_subset_FPSearch_iff}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{243}{Cslib.Complexity.FNP_subset_FPSearch_iff_SAT_mem_P}
+\declat{4408f53f575da6f9c375bae47f03fc230928988a}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{270}{Cslib.Complexity.SAT.searchRel_mem_FPSearch_iff}
+\end{result}
+
+\begin{result}
 \subsection{A Baker--Gill--Solovay oracle separation}
 There exists an oracle language $A$ such that
 \[
