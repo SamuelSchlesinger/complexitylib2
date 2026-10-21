@@ -83,8 +83,8 @@ uses a polynomial-time oracle program answering decision problems via bits of
 one such counting function. The program is fixed before the oracle is chosen
 and must work for every oracle language agreeing on valid encoded queries;
 off-code answers are arbitrary. The target class has no separate query-count
-parameter. The nondeterministic-machine characterization of $\#\cc{P}$
-remains separate unfinished work.\citep{Toda1991}
+parameter. The native counting-machine characterization of $\#\cc{P}$ is
+recorded below.\citep{Toda1991}
 \decl{Complexity/Computability/Complexity/Classes/Toda.lean}{121}{Cslib.Complexity.PH_subset_PWithSharpPOracle}
 \end{result}
 
@@ -203,8 +203,8 @@ A\in\cc{PP}\quad\Longleftrightarrow\quad
 \]
 Here $\#\cc{P}$ counts accepting certificates of a deterministic polynomial-time
 verifier of polynomial certificate length; $\cc{GapP}$ consists of differences
-of two such counts. These are verifier characterizations. The corresponding
-nondeterministic-machine characterizations remain unfinished.
+of two such counts. Native machine characterizations of both $\#\cc{P}$ and
+$\cc{GapP}$, with actual charged reverse constructions, are recorded below.
 \citep{Valiant1979,FennerFortnowKurtz1994}
 \decl{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{105}{Cslib.Complexity.SharpP.subsemiring}
 \decl{Complexity/Computability/Complexity/Classes/SharpP/Closure.lean}{201}{Cslib.Complexity.GapP.subring}
@@ -276,8 +276,8 @@ also give one input-independent bound on local occurrence-list lengths.
 This is a combinatorial prerequisite for the classical counting-machine
 characterizations.\citep{Valiant1979,FennerFortnowKurtz1994}
 The certificates here contain natural-number indices. The binary implementation
-and forward class-membership results are recorded next; the reverse
-verifier-to-machine construction and full characterizations remain open.
+and forward class-membership results are recorded next, followed by the reverse
+$\#\cc{P}$ construction and balanced signed $\cc{GapP}$ construction.
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting.lean}{187}{Turing.MultiTapeCTM.mem_branches_iff}
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean}{184}{Turing.MultiTapeCTM.padCertificate_bijOn}
 \declat{ce255f331c9afa39baabd6264da87baddd6c3040}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Certificate.lean}{236}{Turing.MultiTapeCTM.certificateCounts_eq}
@@ -314,8 +314,9 @@ its finite dispatch table and $b$ are fixed before the input; no runtime bound
 uniform in an input machine description is claimed. The counts include only
 branches halted by the chosen clock. The separate all-branches
 \texttt{HaltsWithin} condition rules out stuck branches and gives full
-termination and clock stability. The reverse parsimonious verifier-to-machine
-construction and the full bidirectional characterizations remain open.
+termination and clock stability. The reverse parsimonious $\#\cc{P}$ construction
+and its bidirectional characterization are recorded below, followed by the
+balanced signed construction and bidirectional $\cc{GapP}$ characterization.
 \declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Checker.lean}{380}{Turing.MultiTapeCTM.Checker.computableTidilyInPolyTime_checkBinary}
 \declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Complexity/Classes/SharpP/Machine.lean}{56}{Turing.MultiTapeCTM.Checker.acceptCount_checkBinary}
 \declat{0ddc9887889e6e753b7a79883c36032d4c820c5c}{Complexity/Computability/Complexity/Classes/SharpP/Machine.lean}{126}{Turing.MultiTapeCTM.acceptCount_mem_SharpP}
@@ -346,10 +347,10 @@ library's bit-string order. This formalizes the guessing part of the standard
 counting-machine construction.\citep{Valiant1979}
 The scanner invariant adapts the library's uniform-word sampler and the cslib
 source credited there. The charged buffered compiler below supplies the input
-handoff. Preparing witness lengths and frames from encoded instances, assembling
-the actual verifier pipeline, and the reverse $\#\cc{P}/\cc{GapP}$ characterizations
-remain open. No efficiency claim about an arbitrary
-predicate $V$ or the external List interpreter is used.
+handoff. The subsequent guess-and-verify construction prepares witness lengths
+and frames and gives the reverse $\#\cc{P}$ implication; balanced verdict routing
+then gives the signed $\cc{GapP}$ construction. No efficiency claim about an arbitrary predicate $V$
+or the external List interpreter is used.
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{206}{Turing.MultiTapeCTM.GuessMachine.haltsWithin}
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{272}{Turing.MultiTapeCTM.GuessMachine.length_of_terminal}
 \declat{819f834f13ac779f8e787b8edc042887267bea5e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Guess.lean}{293}{Turing.MultiTapeCTM.GuessMachine.trace_bijOn}
@@ -385,8 +386,8 @@ scanner and singleton deterministic lift satisfy it.
 These laws reuse the shared program calculus and native tape plumbing credited
 to Christian Reitwiessner and Samuel Schlesinger. List interpretation is a
 mathematical observation, not an efficient machine instruction. Charged buffered
-composition is recorded next. Preparing framed encoded inputs and assembling the
-polynomial-time reverse $\#\cc{P}/\cc{GapP}$ constructions remain open.
+composition is recorded next, followed by the actual framed guess-and-verify
+construction for $\#\cc{P}$ and balanced signed routing for $\cc{GapP}$.
 \declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Execution.lean}{210}{Turing.MultiTapeCTM.countP_runList}
 \declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Deterministic.lean}{80}{Turing.MultiTapeCTM.haltsWithin_ofDeterministic_iff}
 \declat{7ab520b28bf230f396e25cdc8fc032a6555bc1cb}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Deterministic.lean}{92}{Turing.MultiTapeCTM.branchCount_ofDeterministic}
@@ -425,15 +426,171 @@ $|w|\le T_0$ uses the source's initially empty output; the general growth bound
 retains the initial output length. Early halting introduces no extra choices.
 The compiler reuses the native plumbing credited to Christian Reitwiessner and
 Samuel Schlesinger and the library's probabilistic buffer construction. This
-result concerns closed machines, with no oracle channels. Witness-length/frame
-preparation, verifier instantiation, signed GapP routing and the full reverse
-counting-machine characterizations remain separate obligations.
+result concerns closed machines, with no oracle channels. The following result
+instantiates witness-length/frame preparation and the verifier for $\#\cc{P}$;
+the subsequent signed construction instantiates balanced $\cc{GapP}$ routing.
 \declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{191}{Turing.MultiTapeCTM.comp}
 \declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{218}{Turing.MultiTapeCTM.runList_comp}
 \declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{267}{Turing.MultiTapeCTM.HaltsWithin.comp}
 \declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{282}{Turing.MultiTapeCTM.branchCount_comp}
 \declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Composition.lean}{135}{Turing.MultiTapeCTM.Composition.runList_continuation}
 \declat{2b0c38f9243f09732d35104df352a89ebe185d0c}{Complexity/Computability/Machines/Turing/MultiTape/Machine/Composition.lean}{152}{Turing.MultiTapeMachine.Composition.runFrom_prepare}
+\end{result}
+
+\begin{result}
+\subsection{Native guess-and-verify and the machine characterization of \#P}
+Fix an injective instance encoding $\mathrm{enc}:A\hookrightarrow\{0,1\}^*$,
+a witness-length polynomial $p\in\mathbb N[X]$, and a Boolean verifier $V(a,w)$
+with a tidy polynomial-time certificate on
+$\mathrm{frame}(\mathrm{enc}(a))\mathbin{+\!+}w$.
+There exist a fixed closed shared-core list-choice machine $M$, a fixed finite
+state type, a fixed number of Boolean work tapes and a polynomial clock $T$
+such that, for every encoded instance $a$ of length $n$, every branch halts
+within $T(n)$ native transitions and
+\[
+ A_M(a,T(n))=\#\{w\in\{0,1\}^{p(n)}:V(a,w)=\mathsf{true}\},
+ \qquad
+ R_M(a,T(n))=2^{p(n)}-A_M(a,T(n)).
+\]
+The complete output list is a permutation of the list containing
+$[V(a,w)]$ once per witness. Equal Boolean outcomes retain their multiplicities;
+when $p(n)=0$ there is exactly one branch. All constructed transition tables
+have nonempty lists at every running local view.
+
+This is an actual native construction. A tidy unary routine computes $p(n)$;
+the scanner guesses exactly that many bits. A separate tidy frame writer
+prefixes the \emph{complete} length-preparation/scanner computation, retaining
+the original input without making the scanner guess frame bits. The final
+buffer presents exactly the certified verifier's input encoding. Singleton
+lifting preserves one preparation and verification path per witness, and all
+copying, framing, rewinding and workspace restoration are charged. If $U,F,H$
+are the polynomial clocks for unary preparation, frame writing and the verifier,
+one constructed bound is
+\[
+\begin{aligned}
+ G(n)&=U(n)+(U(n)+4+p(n)+1),\\
+ P(n)&=F(n)+G(n),\\
+ T(n)&=P(n)+(P(n)+4+H(2n+1+p(n))).
+\end{aligned}
+\]
+The native tape calculus is credited to Christian Reitwiessner and Samuel
+Schlesinger; the captured-input organization follows the library's probabilistic
+construction, with exact occurrence counts retained here. The counting
+construction is classical.\citep{Valiant1979,AroraBarak09}
+
+Together with the certified replay direction,
+$f\in\#\cc{P}$ if and only if $f$ is the accepting count of such a fixed
+finite, globally nonblocking machine with a polynomial all-branches clock.
+The contract is on the image of $\mathrm{enc}$; the raw-bit encoding covers
+all binary inputs. No uniform compiler runtime in a supplied machine description
+is asserted. The next result uses balanced verdict routing to realize an arbitrary
+difference of two \#P counts as one machine's signed gap.
+\declat{99bc854c6952abfb61183269e8003fb9a8d06341}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Verifier.lean}{50}{Turing.MultiTapeCTM.exists_guess_machine}
+\declat{99bc854c6952abfb61183269e8003fb9a8d06341}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Verifier.lean}{112}{Turing.MultiTapeCTM.exists_framedGuess_machine}
+\declat{99bc854c6952abfb61183269e8003fb9a8d06341}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Verifier.lean}{159}{Turing.MultiTapeCTM.exists_verifier_machine}
+\declat{99bc854c6952abfb61183269e8003fb9a8d06341}{Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean}{57}{Turing.MultiTapeCTM.exists_verifier_counting_machine}
+\declat{99bc854c6952abfb61183269e8003fb9a8d06341}{Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean}{109}{Cslib.Complexity.mem_SharpP_iff_exists_machine}
+\declat{99bc854c6952abfb61183269e8003fb9a8d06341}{Complexity/Computability/Machines/Turing/MultiTape/Counting/OutputPrefix.lean}{77}{Turing.MultiTapeCTM.runList_seq_prependOutput}
+\end{result}
+
+\begin{result}
+\subsection{Balanced signed routing and the machine characterization of GapP}
+Fix two tidy polynomial-time Boolean verifiers $V_+(a,w)$ and $V_-(a,w)$,
+with witness-length polynomials $p,q\in\mathbb N[X]$, on the same encoded
+instance $a$ of length $n$. Write $f_+(a),f_-(a)$ for their accepting witness
+counts, and $N_+=2^{p(n)}$, $N_-=2^{q(n)}$.
+There is one fixed closed shared-core list-choice machine $M$, with a finite
+state type, a fixed number of Boolean work tapes and a polynomial all-branches
+clock $C$, such that
+\[
+ A_M(a,C(n))-R_M(a,C(n))=f_+(a)-f_-(a).
+\]
+The subtraction is in the integers. The construction does not require equal
+witness lengths and includes zero, odd and negative gaps.
+
+The actual one-step router reads an encoded Boolean verifier result. A true
+result produces one halting branch of the chosen sign; a false result produces
+one accepting and one rejecting branch. Thus the positive component has exact
+counts $(N_+,N_+-f_+)$ and the negative component has
+$(N_--f_-,N_-)$. A native selector takes one instruction with two ordered
+occurrences, entering either component without changing the input or its head.
+The components have disjoint reserved work tapes. Their counts add, including
+repeated equal outputs, so the two unsuccessful-witness contributions cancel.
+
+If $T_+,T_-$ are the native guess-and-verify clocks from the preceding result,
+including length preparation, frames, buffers and tidy restoration, routed
+clocks and a combined clock are
+\[
+ S_\pm(n)=T_\pm(n)+(T_\pm(n)+4+1),\qquad
+ C(n)=S_+(n)+S_-(n)+1.
+\]
+The added buffer is charged, and the router has a genuine one-transition bound.
+Both components may use the common remaining clock $S_++S_-$ because a halted
+branch acquires no further transitions or choices. The selector's live control
+state is distinct from a halted configuration. Every constructed running local
+view has a nonempty occurrence list.
+
+Together with the certified replay direction, for any injective instance
+encoding,
+\[
+ g\in\cc{GapP}\quad\Longleftrightarrow\quad
+ g(a)=A_M(a,C(|\mathrm{enc}(a)|))-R_M(a,C(|\mathrm{enc}(a)|))
+ \quad\text{for every }a
+\]
+for some fixed finite, globally nonblocking native machine and polynomial
+all-branches clock. Machine parameters precede the input; termination is required
+on the encoding's image, hence on every binary input for the raw-bit encoding.
+This is a closed-machine result, with no oracle channels or uniform runtime
+claim in a supplied machine description. The balanced-cancellation construction
+is classical.\citep{FennerFortnowKurtz1994,AroraBarak09}
+It reuses the native calculus and verifier construction credited above.
+\declat{6457c0f3730a38a0d0866a440b51c04ef57caacd}{Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean}{51}{Turing.MultiTapeCTM.exists_signed_verifier_machine}
+\declat{6457c0f3730a38a0d0866a440b51c04ef57caacd}{Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean}{117}{Turing.MultiTapeCTM.exists_verifier_difference_machine}
+\declat{6457c0f3730a38a0d0866a440b51c04ef57caacd}{Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean}{190}{Cslib.Complexity.mem_GapP_iff_exists_machine}
+\declat{6457c0f3730a38a0d0866a440b51c04ef57caacd}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Verdict.lean}{52}{Turing.MultiTapeCTM.verdictMachine}
+\declat{6457c0f3730a38a0d0866a440b51c04ef57caacd}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Verdict.lean}{103}{Turing.MultiTapeCTM.VerdictMachine.branchCount_comp}
+\declat{6457c0f3730a38a0d0866a440b51c04ef57caacd}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Alternative.lean}{153}{Turing.MultiTapeCTM.branchCount_alternative}
+\end{result}
+
+\begin{result}
+\subsection{Native machine characterizations of UP and FewP}
+Fix an injective encoding $\mathrm{enc}:A\hookrightarrow\{0,1\}^*$ and a
+language $L\subseteq A$. Write $a_M(x,T(n))$ for the number of first-halting
+transition-occurrence traces of $M$ on $\mathrm{enc}(x)$ whose output is exactly
+$[\mathsf{true}]$, where $n=|\mathrm{enc}(x)|$.
+Then $L\in\cc{UP}$ if and only if there exist a fixed closed shared-core
+list-choice machine $M$, a fixed finite state type, a fixed number of Boolean
+work tapes and a polynomial clock $T\in\mathbb N[X]$ such that every running
+local view has a nonempty transition list and, for every $x$, every branch
+halts within $T(n)$ native transitions, with
+\[
+ a_M(x,T(n))\le 1,\qquad
+ x\in L\ \Longleftrightarrow\ a_M(x,T(n))=1.
+\]
+Similarly, $L\in\cc{FewP}$ if and only if there exist fixed parameters with the
+same finiteness, nonblocking and halting conditions, and a separate ambiguity
+polynomial $q\in\mathbb N[X]$, satisfying
+\[
+ a_M(x,T(n))\le q(n),\qquad
+ x\in L\ \Longleftrightarrow\ 0<a_M(x,T(n)).
+\]
+The clock bounds every branch; the ambiguity bound restricts only accepting
+branches. Rejecting and total branch counts need not obey it. Duplicate action
+occurrences count separately even when their final configurations coincide,
+and enlarging a sufficient clock does not multiply halted branches. The zero
+ambiguity polynomial is allowed; then the recognized language is empty.
+
+Both equivalences are direct consequences of the exact native $\#\cc{P}$
+characterization above, using its actual parsimonious construction and certified
+replay checker. The class conventions follow Papadimitriou and
+Allender--Rubinstein, with accepting-path ambiguity as stated by
+Borchert--Hemaspaandra--Rothe.\citep{Papadimitriou94,AllenderRubinstein1988}
+\citep[Section 1]{BorchertHemaspaandraRothe2000}
+All machine parameters precede the input. Halting is required on the encoding
+image; the raw-bit encoding covers every binary input. No oracle-machine or
+uniform compiler-runtime claim is made.
+\declat{72e6465f1f456ccc6080e3bd65a6fb322468ad84}{Complexity/Computability/Complexity/Classes/UP/Machine.lean}{50}{Cslib.Complexity.mem_UP_iff_exists_machine}
+\declat{72e6465f1f456ccc6080e3bd65a6fb322468ad84}{Complexity/Computability/Complexity/Classes/FewP/Machine.lean}{54}{Cslib.Complexity.mem_FewP_iff_exists_machine}
 \end{result}
 
 \begin{result}
@@ -479,9 +636,9 @@ The verifier class $\cc{UP}$ satisfies
 Its verifier has at most one accepting certificate of the specified polynomial
 length on every input, and exactly one on members. Equivalently, a
 $\#\cc{P}$ function bounded by one is one precisely on the language.
-UP is closed under polynomial-time many-one reductions. This establishes the
-verifier formulation; an equivalence with unambiguous nondeterministic machines
-is not asserted.\citep{AroraBarak09,Papadimitriou94}
+UP is closed under polynomial-time many-one reductions. The native machine
+characterization above preserves this accepting-count bound through the
+parsimonious $\#\cc{P}$ construction.\citep{AroraBarak09,Papadimitriou94}
 The complement class $\cc{coUP}$ contains P and is contained in both coNP
 and $\oplus\cc{P}$; it also inherits polynomial-time reduction closure.
 These are elementary consequences of the complement convention and the
@@ -557,8 +714,8 @@ FewP is closed under union, intersection and polynomial-time many-one reductions
 SPP has these closures and complement closure. The elementary proofs reuse the
 count algebra: FewP union adds ambiguity bounds and intersection multiplies them;
 SPP complement subtracts its gap from one and intersection multiplies gaps.
-These are verifier-based results; neither a machine characterization nor the
-stronger FewP--SPP containment is established by this entry; it is the next entry.
+These closure proofs use the verifier definitions. The native FewP machine
+characterization is recorded above; the stronger FewP--SPP containment is the next entry.
 The FewP definition follows Allender--Rubinstein and the explicit acceptance-set
 formulation of Borchert--Hemaspaandra--Rothe; the SPP definition and UP inclusion
 follow Fenner--Fortnow--Kurtz and Fortnow's survey.
@@ -884,8 +1041,8 @@ it is not a normalized additive error bound.\citep[Sections 1.1 and 3]{Watson201
 Also $A\in\cc{SBP}$ and $B\in\cc{BPP}$ imply $A\cap B\in\cc{SBP}$,
 using the existing input-dependent BPP error reduction and a dyadic bound on
 \#P counts. This does not establish intersection closure for two SBP languages.
-All statements use verifier-based \#P and GapP; their nondeterministic-machine
-characterizations remain open formalization work.
+All statements use verifier-based \#P and GapP. Their native machine
+characterizations are proved above.
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/WPP.lean}{42}{Cslib.Complexity.WPP_subset_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/WPP.lean}{105}{Cslib.Complexity.LWPP_subset_AWPP}
 \declat{c7feb301c4c55ecda7bc22ad1fc6ff1b6fe7d108}{Complexity/Computability/Complexity/Classes/AWPP/Closure.lean}{89}{Cslib.Complexity.exists_AWPP_gap_eighth}
@@ -917,8 +1074,9 @@ Zero exponents and a denominator of one are allowed. Uniform GapP word sums and
 unary powers construct the numerator; a finite counting identity transfers the
 majority tail bound without assuming an efficient sampler for the original GapP
 value. The constant-error characterization and error reduction are credited to
-Fenner; the factor $12$ comes from the formalized majority estimate used for BPP. Here GapP retains the verifier-based model;
-counting-machine characterizations and PP-lowness are not established.
+Fenner; the factor $12$ comes from the formalized majority estimate used for BPP.
+Here GapP retains the verifier-based model, whose native machine characterization
+is proved above. PP-lowness is not established.
 \citep{Fenner2003}\citep[Section 7.4.1]{AroraBarak09}
 \declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{118}{Cslib.Complexity.AWPPAmplification.majorityPolynomial_mem}
 \declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{231}{Cslib.Complexity.AWPPAmplification.amplify}

@@ -20,9 +20,10 @@ An input language is expanded by Mathlib's `Language.sum`; its existing function
 relations retain their interpretations. Formulas and terms are Mathlib's existing syntax, so
 numeric constants can occur directly in relation arguments, equalities and quantified formulas.
 
-This is the canonical-structure prerequisite for ordered descriptive complexity. It does not
-supply canonical BIT definitions on lexicographically ordered tuples over arbitrary bases,
-ordered interpretations preserving those definitions, or machine/circuit capture theorems.
+This is the canonical-structure prerequisite for ordered descriptive complexity. Native full-tuple
+BIT and canonical full-tuple interpretations are supplied in `Ordered.TupleBit` and
+`Ordered.FullTuple`; their composition is in `Ordered.FullTuple.Composition`.
+Machine and circuit capture theorems require separate developments.
 
 ## Main definitions
 

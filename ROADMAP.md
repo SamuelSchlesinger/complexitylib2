@@ -40,9 +40,14 @@ The verifier-based `UP` and `CeqP` developments, basic Boolean closures, exact-c
 polynomial-time precomposition, and generic DP/SAT–UNSAT completeness are implemented.
 The forward machine-to-verifier direction is proved for `#P` and `GapP`: accepting and
 rejecting terminal counts of fixed finite-control list-choice machines under polynomial clocks
-have actual certified binary verifiers. The reverse parsimonious machine construction remains
-open, as do machine characterizations of `UP` and polynomially bounded ambiguity; none follows
-from the verifier definitions alone. SPP, FewP, fixed-modulus ModP, coUP and coC=P
+have actual certified binary verifiers. The actual reverse guess-and-verify construction and
+[#P machine characterization](Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean)
+are now proved. The [signed GapP construction and characterization](Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean)
+are also proved, using balanced verdict routing and an actual selector between independent witness
+families. The [UP](Complexity/Computability/Complexity/Classes/UP/Machine.lean) and
+[FewP](Complexity/Computability/Complexity/Classes/FewP/Machine.lean) native characterizations
+are also proved: the exact #P bridge preserves the bound of one or a polynomial on accepting
+occurrence traces, independently of the all-branches clock. SPP, FewP, fixed-modulus ModP, coUP and coC=P
 now have verifier-based definitions and basic closure/containment developments. FewP ⊆ SPP and
 PH ⊆ P^#P = P^PP are proved, with uniform simulations under the function-bit oracle convention.
 Extend these with counting reductions and further oracle results, preserving exact
@@ -235,16 +240,48 @@ of the handover. The work below remains available for subsequent, independently 
      the global words, all decoders constrain high bits, and the final carry vanishes from the
      input-width bound. The witnesses fit for arbitrary universe sizes; a fixed finite branch
      handles small inputs. No multiplication relation or semantic certificate is assumed.
-     **Next milestones:** arbitrary-base BIT lifting; numeric-preserving composition; the
-     ordered logspace encoding bridge; then projections and NL/P completeness. These remain open.
-     Numeric interpretations must preserve
-     canonical BIT for arbitrary base `n`, and composition must preserve that certificate
-     (Immerman, Remark 1.32). A general constructor supplying numeric definitions on the full
-     tuple universe in every dimension still needs Exercise 1.33(3); base-`n` tuples
-     cannot simply be identified with concatenated binary strings. The full-domain hypothesis
-     matters: the paragraph after Exercise 1.33 warns that canonical BIT on an arbitrary
-     definable restricted domain need not be first-order definable. Restricted-domain numeric
-     preservation therefore requires its own explicit definitions and certificate.
+     **Full-tuple BIT lifting completed (#112):**
+     [Ordered/TupleBit](Complexity/Logics/FirstOrder/Ordered/TupleBit.lean) supplies an actual
+     native formula for every fixed dimension `k`, with exact `lexRank x`/`lexRank y` BIT
+     semantics on every canonical `Fin n`, `n ≥ 2`. It handles arbitrary bases, indices larger
+     than the source universe, high-index rejection and explicitly false dimension zero.
+     Native affine word arithmetic, multiplication and radix conversion represent the source
+     cardinality in seven digits and each tuple rank in `7k` digits. The formula witnesses a
+     positive binary radix with its cube below `n`; no out-of-domain scalar or supplied numeric
+     certificate is assumed. A fixed finite disjunction covers sizes two through eight.
+     This proves the full-domain BIT endpoint of Immerman's Exercise 1.33(3), with no
+     formula-size efficiency claim.
+     **Numeric-preserving full-tuple composition completed (#121):**
+     [Ordered/FullTuple](Complexity/Logics/FirstOrder/Ordered/FullTuple.lean) constructs the
+     actual canonical numeric interpretation from the proved native order, BIT and constant
+     formulas; clients supply only the target input-relation definitions. For `n ≥ 2` and
+     positive dimension `k`, ranking is an isomorphism of the entire ordered language to
+     `Fin (n^k)`, including genuine numeric constants, and native pullback preserves every
+     formula and sentence. Source input vocabularies may have functions; target input
+     vocabularies are relational.
+     [Ordered/FullTuple/Composition](Complexity/Logics/FirstOrder/Ordered/FullTuple/Composition.lean)
+     composes positive dimensions `k` and `l` with coordinate `(j,i)` mapped to `j*k+i`.
+     The proved rank identity compares the flattened base-`n` tuple with the outer base-`n^k`
+     tuple of inner ranks. The composite is isomorphic to the successive canonical targets,
+     and all formula/sentence pullbacks agree. No full-tuple numeric certificate is assumed.
+     This is the full-domain case of Immerman's Proposition 1.28 for relational intermediate
+     and output input vocabularies, with Remark 1.32's canonical numerics. It does not identify
+     base-`n` digits with binary strings.
+     **Native ordered model checking completed (#128):**
+     [FirstOrder/Ordered](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean)
+     proves that every fixed sentence over a finite relational input vocabulary expanded by
+     canonical `0`, `1`, `max`, order and BIT has its actual encoded query language in L.
+     Numeric atoms, including quantified ones, use proved native expressions; the input retains
+     unary cardinality and the existing framed input tables in `tupleIndex` order. Invalid table
+     shapes and sizes zero/one reject. Work space is logarithmic in the full encoded input length,
+     with no combined-complexity or arbitrary-raw-word claim. This is the relational-input case
+     of Immerman's Theorem 3.1. The original order-free empty-universe behavior is preserved.
+     **Next milestones:** actual ordered interpretation-to-logspace transducers and reduction
+     closure, then projections and NL/P completeness. These remain open.
+     The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical
+     BIT on an arbitrary definable restricted domain need not be first-order definable.
+     Restricted-domain numeric preservation therefore requires its own explicit definitions
+     and certificate.
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
@@ -278,16 +315,18 @@ of the handover. The work below remains available for subsequent, independently 
      excludes BIT ([Immerman–Landau, Definition 3.6](https://people.cs.umass.edu/~immerman/pub/mult.pdf)).
      Arbitrary quantifier-free Boolean combinations of input relations are not projections.
      [First-order model checking in L](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean)
-     is proved for relational FO without order or BIT.
+     is proved for relational FO without order or BIT, and
+     [canonical ordered model checking](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean)
+     now includes genuine numeric constants, order and BIT for source sizes at least two.
 
    - [x] **Order-free interpretations as logspace reductions.** The
      [machine-certified transducer](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean)
      streams interpreted relation tables using tuple ranks. Every order-free interpretation
      reduction to an isomorphism-closed target induces a logspace many-one reduction of encoded
      query languages, with L/P closure. Empty universes and domains, nullary relations,
-     dimension zero, and invalid parsed table shapes are handled. Numeric predicates computed
-     from the universe and canonical lexicographic ordered outputs remain part of the ordered
-     milestone; they are not supplied by this theorem.
+     dimension zero, and invalid parsed table shapes are handled. Extending this transducer to
+     computed numeric predicates and canonical lexicographic ordered outputs remains open;
+     the separate ordered model-checking theorem does not supply that transducer.
 
    - [x] **Circuit Value logspace completeness.** [Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean)
      under logarithmic-space many-one reductions, via a machine-certified tableau writer.
@@ -355,13 +394,34 @@ of the handover. The work below remains available for subsequent, independently 
      and native count laws preserve every List occurrence. From initialized empty output,
      nonblocking components with clocks `T₀` and `T₁` have native composite clock
      `T₀ + (T₀ + 4 + T₁)`; the consumer bound must hold for every produced word.
-     Witness-length and frame preparation from the encoded instance, instantiating the actual
-     guessing/verifier pipeline, the signed GapP routing and the resulting characterizations
-     remain open in [#106](https://github.com/SamuelSchlesinger/complexitylib2/issues/106).
-     Reuse the [NP machine/verifier bridge](Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean),
-     but preserve exact path multiplicities through choices, halting and padding. Do not collapse
-     distinct nondeterministic branches with the same successor; existential witness equivalence
-     is insufficient.
+     The [actual guess-and-verify pipeline](Complexity/Computability/Machines/Turing/MultiTape/Counting/Verifier.lean)
+     now computes the witness length in unary, generates each witness once, retains the framed
+     instance, and runs the singleton-lifted tidy verifier (#116). Its fixed finite machine has
+     a polynomial all-branches clock in the original encoded input length, including framing,
+     both buffers and workspace restoration. The output List retains one occurrence per witness,
+     even when Boolean outcomes coincide. The
+     [#P characterization](Complexity/Computability/Complexity/Classes/SharpP/Characterization.lean)
+     combines this construction with the forward checker and preserves accepting and rejecting
+     counts separately. All constructed transition tables are globally nonblocking; the halting
+     contract is on encoded instances, hence all binary inputs when the encoding is `encBits`.
+     The [signed construction and GapP characterization](Complexity/Computability/Complexity/Classes/SharpP/GapMachine.lean)
+     now realize every difference of two #P counts by one native machine (#120, completing the
+     endpoint of #106). The [one-step verdict router](Complexity/Computability/Machines/Turing/MultiTape/Counting/Verdict.lean)
+     gives a successful witness one chosen-sign leaf and an unsuccessful witness one accepting
+     plus one rejecting leaf. A [two-occurrence selector](Complexity/Computability/Machines/Turing/MultiTape/Counting/Alternative.lean)
+     adds independently prepared families, with disjoint reserved work tapes and their original,
+     possibly unequal witness lengths. Routing a verifier of clock `T` costs `T + (T + 4 + 1)`;
+     combining routed clocks `S₊, S₋` costs `S₊ + S₋ + 1`. Extra clock time uses first-halt stability,
+     not extra choices. Zero, odd and negative gaps are included, with no oracle channels or
+     input-dependent machine advice.
+     The [UP](Complexity/Computability/Complexity/Classes/UP/Machine.lean) and
+     [FewP](Complexity/Computability/Complexity/Classes/FewP/Machine.lean) native iff endpoints
+     now transport their accepting-count bounds through the actual parsimonious #P bridge (#131).
+     Fixed finite parameters and a polynomial all-branches clock precede every encoded input;
+     the ambiguity bound is one for UP and a separate polynomial in encoded input length for
+     FewP. Rejecting and total branch counts are not bounded by the ambiguity polynomial.
+     Duplicate accepting occurrences remain distinct, while first-halt clock padding preserves
+     their multiplicities. Native oracle-machine characterizations remain separate work.
 
 2. **Complete theorem ports using the existing certificate APIs.** Extend automation when a
    concrete port is blocked or several clients repeat the same proof burden. Constructor, projection,
@@ -423,8 +483,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   [batched iteration](Complexity/Computability/Circuit/Boolean/Iteration/Batch.lean), cycle labels,
   transient depths, additive long-time bounds,
   [sparse-counter navigation, visit schedules and hitting-time bounds](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean),
-  and [autonomous-controller / affine-payload iteration bounds](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean)
-  are also implemented. The later hard-power counting developments are listed below. Nonuniform circuit
+  [autonomous-controller / affine-payload iteration bounds](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean),
+  [hard-power counting, modular-counter lower bounds, and prime-cycle permutations](Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean),
+  and [batched modular-counter upper and lower bounds](Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean)
+  are also implemented. Nonuniform circuit
   existence does not certify the preprocessing algorithm's runtime.
 * **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
   are ported; certify the generator's polynomial runtime, charging all arithmetic and storage
@@ -489,7 +551,7 @@ following endpoints, rather than submitted as class definitions or conditional w
 
 | Development | First independently useful endpoint | Remaining endpoint and dependencies |
 | --- | --- | --- |
-| Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Sparse-counter navigation, visit schedules, hitting-time bounds and bounded visit counts are in [SparseNavigation](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean), [ResidueAdd](Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean) and [HittingTime](Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean). Autonomous controllers and affine-payload iteration bounds are in [AffineController](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean). All ports follow source `c4cfa198`. | General input-time and batch results already exist. Hard-power counting is a later milestone; these results do not close the whole M2b scope. |
+| Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Sparse-counter navigation, visit schedules, hitting-time bounds and bounded visit counts are in [SparseNavigation](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean), [ResidueAdd](Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean) and [HittingTime](Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean). Autonomous controllers and affine-payload iteration bounds are in [AffineController](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean). Ordered circuit-description counting, modular-counter $\tilde\Omega(2^{n/2})$ power lower bounds, remainder reductions, subexponential-horizon barriers, hash-class prime-cycle permutations, and batched modular-counter upper and lower bounds are in [CircuitCounting](Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean), [ModulusCounter](Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean), [PrimeCycles](Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean) and [CounterBatch](Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean). All ports follow source `c4cfa198`. | General input-time and batch results already exist. Universal-map simulation, in-place machine bounds, and general-map forest navigation remain separate items. |
 | NL = coNL | A streaming inductive-counting algorithm with soundness/completeness and logarithmic-size counters and state, reusing [InductiveCounting](Complexity/Foundations/Relation/InductiveCounting.lean). Its certificates must be checked without retaining a whole reachable set. | Compile the procedure to the native NTM model, certify every computation prefix's logspace bound, and prove complement closure. Explicitly handle configuration enumeration and input access. `NL` follows the textbook convention that every branch halts (`DecidesInSpace`), so the complement machine must halt on every branch, for instance by bounding its loops with logarithmic counters. Proving that logspace recognizers whose branches may loop (`RecognizesInSpace`) recognize only problems in `NL` is a separate clock-construction item; general space-constructible Savitch bounds are separate. |
 | Arthur–Merlin | Done: verifier-based MA and AM, error reduction, NP ∪ BPP ⊆ MA ⊆ AM ⊆ Π₂ᵖ, MA ⊆ Σ₂ᵖ ∩ Π₂ᵖ and MA ⊆ SBP ([ArthurMerlin](Complexity/Computability/Complexity/Classes/ArthurMerlin.lean)); the [set lower bound protocol and SBP ⊆ AM](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean), [public-coin GNI in AM](Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean), and [PH = Σ₂ᵖ from coNP ⊆ AM for every encoding](Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean). | Interactive-machine characterizations, AM[k] = AM and private-to-public-coin transformations remain separate endpoints. |
 | Worst-case-hardness derandomization | Done for eventual hardness: [P = BPP from 2^(γn) De Morgan circuit hardness of a language in E](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean), with the explicit field, the encoding in E and the parameter schedule certified. | The infinitely-often variant; the EXP-not-in-P/poly endpoint of Babai, Fortnow, Nisan and Wigderson. |

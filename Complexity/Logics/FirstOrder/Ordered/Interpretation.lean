@@ -18,9 +18,10 @@ constants, while its interpreted target remains relational. Forgetting the canon
 symbols is a one-dimensional interpretation whose interpreted structure is isomorphic to the
 input. Its pullback therefore preserves every input sentence, including quantified sentences.
 
-No new interpretation syntax is introduced. This bridge does not interpret target constants,
-prove canonical numeric preservation on tuples, or supply ordered reductions. Those require
-further definitions and, for arbitrary-base tuple BIT, the numeric lifting theorem.
+No new interpretation syntax is introduced. Target constants and canonical full-tuple numeric
+preservation are supplied separately in `Ordered.FullTuple`, using `Ordered.TupleBit`;
+numeric-preserving full-tuple composition is in `Ordered.FullTuple.Composition`.
+This forgetting bridge does not supply an ordered reduction or machine bound.
 
 ## Main definitions
 

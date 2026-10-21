@@ -92,8 +92,9 @@ the target language is relational with the specified additional constants.
 For every canonical expansion with $n\ge2$, equality to the source terms defines
 target $0$, $1$ and $\max$ with values $0$, $1$ and $n-1$.
 
-Canonical BIT lifting on base-$n$ tuples, numeric-preserving composition and
-the ordered logspace/capture results remain open.
+Native full-tuple BIT and numeric-preserving full-tuple composition are proved below.
+Ordered model checking is proved below; the ordered interpretation transducer and capture
+results remain open.
 \citep[Section 1.2, Provisos 1.14--1.15, Definition 1.26 and Proposition 3.5]{Immerman1999}
 The earlier canonical-expansion interface is credited separately.
 \citep{Schlesinger2026Numerical}
@@ -125,9 +126,8 @@ This formalizes the PLUS part of Immerman's arithmetic-definability theorem,
 using his generate/propagate carry characterization with the bit orientation
 reversed.\citep[Proposition 1.9 and Theorem 1.17(1)]{Immerman1999}
 The formal proof reuses the library's propagation characterization and Lean's
-bit-vector carry and addition theorems. Bit Sum and TIMES are proved below;
-unrestricted arbitrary-base tuple BIT lifting and numeric-preserving composition
-remain open.
+bit-vector carry and addition theorems. Bit Sum, TIMES and full-tuple BIT are
+proved below, followed by numeric-preserving full-tuple composition.
 \declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{142}{Cslib.Logic.FO.Ordered.realize_addition}
 \declat{49531f8754cc310d21216bc7e5a0da33499036b0}{Complexity/Logics/FirstOrder/Ordered/Addition.lean}{162}{Cslib.Logic.FO.Ordered.not_realize_addition_of_le}
 \end{result}
@@ -156,8 +156,8 @@ native decoder uses fixed chains of PLUS formulas and exact binary shifts;
 no multiplication relation or semantic certificate is assumed. The supporting
 shift formula has exact semantics $z=x\cdot2^e$ and rejects every candidate
 when the product is outside $[n]$. A fixed finite disjunction covers small
-inputs. The native TIMES formula below reuses this result; arbitrary-base tuple
-BIT lifting and numeric-preserving composition remain open.
+inputs. The native TIMES and full-tuple BIT formulas below reuse this result;
+numeric-preserving full-tuple composition is proved below.
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{328}{Cslib.Logic.FO.Ordered.bitSum}
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{335}{Cslib.Logic.FO.Ordered.realize_bitSum}
 \declat{eef9229da5388dd750c22ba07eaea612587a10ee}{Complexity/Logics/FirstOrder/Ordered/BitSum.lean}{348}{Cslib.Logic.FO.Ordered.existsUnique_bitSum}
@@ -188,7 +188,7 @@ each block, with both endpoints matched to the global words. Exact native PLUS,
 shifts and Bit Sum check the column equations. All witness bounds are proved for
 every $n\ge257$, and one fixed finite disjunction covers smaller inputs.
 The formula assumes no multiplication relation or semantic certificate.
-Arbitrary-base tuple BIT lifting and numeric-preserving composition remain open.
+Native full-tuple BIT and numeric-preserving full-tuple composition are proved below.
 \declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{282}{Cslib.Logic.FO.Ordered.multiplication}
 \declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{290}{Cslib.Logic.FO.Ordered.realize_multiplication}
 \declat{fe1f8e93222507fca50e5949ed25e73a41bdeb8f}{Complexity/Logics/FirstOrder/Ordered/Multiplication.lean}{310}{Cslib.Logic.FO.Ordered.not_realize_multiplication_of_le}
@@ -234,8 +234,9 @@ claim is made for this basis.
 
 This completes the full-domain order, constant and successor prerequisites of
 Immerman's Remark 1.32 and Exercise 1.33(1--2), with the stated source-basis convention.
-Canonical BIT lifting, numeric-preserving composition and the ordered complexity/capture
-endpoints remain open. No automatic BIT definition for a restricted tuple domain is claimed.
+Native full-tuple BIT and numeric-preserving full-tuple composition are proved next.
+Ordered model checking is proved below. Ordered interpretation transducers and capture remain
+open, and no automatic BIT definition for a restricted tuple domain is claimed.
 \citep[Remark 1.32 and Exercise 1.33]{Immerman1999}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{52}{Cslib.Logic.FO.Ordered.lexEquiv}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{93}{Cslib.Logic.FO.Ordered.lexRank_lt_iff_lex}
@@ -244,6 +245,86 @@ endpoints remain open. No automatic BIT definition for a restricted tuple domain
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/TupleInterpretation.lean}{142}{Cslib.Logic.FO.Ordered.lexRank_tupleConstants_value}
 \declat{72b80bbaccd792d6ee9e7858d0f23a40ed3f3f57}{Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean}{263}{Cslib.Logic.FO.Ordered.realize_tupleSucc}
 \declat{72b80bbaccd792d6ee9e7858d0f23a40ed3f3f57}{Complexity/Logics/FirstOrder/Ordered/TupleSuccessor.lean}{185}{Cslib.Logic.FO.Ordered.isQF_tupleSuccOf}
+\end{result}
+
+\begin{result}
+\subsection{Native BIT on arbitrary-base full tuple universes}
+For every fixed dimension $k\ge0$, there is a native first-order formula
+$\operatorname{TBIT}_k(x,y)$ over canonical $\le$ and BIT such that, for every
+source size $n\ge2$ and all $x,y\in[n]^k$,
+\[
+\operatorname{TBIT}_k(x,y)\quad\Longleftrightarrow\quad
+\text{bit }\operatorname{rank}(y)\text{ of }\operatorname{rank}(x)\text{ is }1.
+\]
+The ranks use the preceding first-coordinate-most-significant base-$n$
+numbering, and bit zero is least significant. The formula's syntax depends only
+on $k$, not on $n$ or the interpretation of the input vocabulary. There is no
+power-of-two restriction on $n$. Both ranks may exceed $n-1$: the index is
+compared as a whole word, never reduced modulo the source size. Every index
+with $2^{\operatorname{rank}(y)}>\operatorname{rank}(x)$ is rejected.
+For $k=0$ the formula is explicitly false, agreeing with both ranks being zero;
+no canonical numeric target structure on a singleton is asserted.
+
+For $n>8$, the construction witnesses a binary radix $B=2^e$, $e>0$, with
+$B^3<n$. Seven radix digits encode $n$ by decoding $\max$ and adding one;
+$7k$ digits encode each tuple rank. Exact native affine arithmetic and word
+multiplication perform radix conversion, with zero final carries and quotients
+rejecting overflow. All digit witnesses and intermediate scalar sums fit in
+$[n]$, including at non-power-of-two sizes. A fixed finite disjunction covers
+$2\le n\le8$; no formula-size efficiency bound is claimed.
+
+This proves the full-domain BIT lifting in
+\href{https://people.cs.umass.edu/~immerman/book/ch0_1_2.pdf\#page=37}{Remark~1.32
+and Exercise~1.33(3)}.\citep{Immerman1999}
+The explicit radix construction uses the proved native PLUS/TIMES formulas;
+it is an implementation of the exercise, not a claimed transcription of its
+hint. Numeric-preserving full-tuple composition is proved next. The source's
+full-tuple hypothesis is essential: no native BIT definition for arbitrary
+restricted tuple domains is asserted.
+\declat{92915665afb129fbdbe0051fcb4a56c4b994be96}{Complexity/Logics/FirstOrder/Ordered/TupleBit.lean}{218}{Cslib.Logic.FO.Ordered.tupleBit}
+\declat{92915665afb129fbdbe0051fcb4a56c4b994be96}{Complexity/Logics/FirstOrder/Ordered/TupleBit.lean}{226}{Cslib.Logic.FO.Ordered.realize_tupleBit}
+\declat{92915665afb129fbdbe0051fcb4a56c4b994be96}{Complexity/Logics/FirstOrder/Ordered/TupleBit.lean}{243}{Cslib.Logic.FO.Ordered.not_realize_tupleBit_of_lt}
+\end{result}
+
+\begin{result}
+\subsection{Canonical full-tuple interpretations and their composition}
+Let $n\ge2$ and let $k,\ell\ge1$ be fixed dimensions. A full-tuple interpretation
+of dimension $k$ supplies native formulas only for the output input relations.
+Its domain is all of $[n]^k$; the proved tuple formulas supply canonical order,
+BIT and the genuine constants $0$, $1$ and $\max$. The rank map is an isomorphism
+of the entire ordered language with the canonical expansion on $[n^k]$.
+Native formula and sentence pullback preserve truth under every assignment,
+including constants inside quantified formulas. The source input vocabulary may
+contain functions, while the output input vocabulary is relational.
+
+For interpretations $I$ and $J$ of dimensions $k$ and $\ell$, with relational
+intermediate and final input vocabularies, the native composite has dimension
+$\ell k$. It pulls back the output relation definitions and flattens coordinate
+$(j,i)$ to $jk+i$. For every nested tuple $x\in([n]^k)^\ell$,
+\[
+\operatorname{rank}_n(\operatorname{flatten}(x))
+=\operatorname{rank}_{n^k}\bigl(
+  \operatorname{rank}_n(x_0),\ldots,\operatorname{rank}_n(x_{\ell-1})\bigr).
+\]
+Thus the composite target on $[n^{\ell k}]$ is isomorphic, preserving every
+natural index, to the successive target on $[(n^k)^\ell]$. Its formula and
+sentence pullbacks agree semantically with the two successive pullbacks.
+The construction uses the existing relational interpretation and formula-defined
+constant APIs; it assumes no supplied full-tuple arithmetic certificate.
+
+This proves the full-domain case of
+\href{https://people.cs.umass.edu/~immerman/book/ch0_1_2.pdf\#page=36}{Proposition~1.28
+and Exercise~1.30} for relational intermediate and final input vocabularies, with
+\href{https://people.cs.umass.edu/~immerman/book/ch0_1_2.pdf\#page=37}{Remark~1.32}'s
+canonical numerics.\citep{Immerman1999}
+No canonical singleton target, automatic numeric preservation on restricted
+domains or quantifier-free BIT is asserted. Ordered model checking follows below; ordered
+interpretation transducers and capture remain separate.
+\declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/FullTuple.lean}{142}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.modelEquiv}
+\declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/FullTuple.lean}{184}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.realize_onFormula}
+\declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/Tuple/Flatten.lean}{45}{Cslib.Logic.FO.Ordered.lexRank_flattenTuple}
+\declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Composition.lean}{72}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.compEquiv}
+\declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Composition.lean}{125}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.realize_comp_onFormula}
 \end{result}
 
 \begin{result}
@@ -262,13 +343,46 @@ programs whose registers stay polynomially bounded, and more generally machines
 querying input bits with logarithmic states, run in logarithmic space by a
 multi-pass simulation.\citep[Theorem 3.1]{Immerman1999}
 
-Immerman's FO also has constant symbols and the built-in predicates $\le$ and
-BIT; these are not covered (a relational language has no constants). The next entry proves the order-free interpretation-to-logspace bridge.
+The next entry supplies canonical numeric constants, order and BIT. The later
+order-free interpretation entry proves the corresponding interpretation-to-logspace bridge.
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{829}{Cslib.Logic.Vocabulary.queryLanguage_mem_L}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{894}{Cslib.Logic.FO.Definable.queryLanguage_mem_L}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean}{341}{Turing.QueryMachine.computableInLogSpace}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram.lean}{607}{Turing.CounterProgram.computableInLogSpace}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram/Output.lean}{229}{Turing.CounterProgram.computableInLogSpace_of_reachesOut}
+\end{result}
+
+\begin{result}
+\subsection{Canonical ordered model checking in logarithmic space}
+Fix a finite relational input vocabulary and a first-order sentence $\varphi$
+over its expansion by $\le$, BIT and the genuine constants $0$, $1$ and $\max$.
+On every universe $[n]$ with $n\ge2$, these numeric symbols have their canonical
+meanings, including inside quantified formulas. The encoded query language of
+structures satisfying $\varphi$ belongs to L.
+
+The input encoding gives cardinality in unary and framed truth tables for the
+input relations, in the existing first-coordinate-least-significant tuple-index
+order. Numeric tables are not supplied. Incorrect table shapes and sizes zero
+and one are rejected. The native multi-tape decider uses $O(\log(N+1))$ work
+space, where $N$ is the full encoded input length and the vocabulary and sentence
+are fixed. Read-only input and write-only output are excluded from work space.
+The contract is at the structure encoding; it makes no claim about raw bit
+strings outside that encoding's image.
+
+This proves the relational-input case of
+\href{https://people.cs.umass.edu/~immerman/book/ch3.pdf\#page=1}{Immerman's
+Theorem~3.1}, with the library's explicit framing and tuple-order conventions.
+\citep{Immerman1999}
+The construction reuses the existing shape checker and quantified counter-program
+control, and Christian Reitwiessner's native binary arithmetic and digit-access
+certificate. Binary value and index storage, as well as arithmetic intermediates,
+are charged by the native simulation. No time bound for digit access is asserted.
+Ordered interpretation transducers, reduction closure, projections and capture
+remain open.
+\declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{65}{Cslib.Logic.FO.Ordered.queryLanguage}
+\declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{224}{Cslib.Logic.FO.Ordered.modelChecker}
+\declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{236}{Cslib.Logic.FO.Ordered.queryLanguage_mem_L}
+\declat{9bf2748ff4aca3a4740a707a972547f21022de4c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/InSpace/Bit.lean}{39}{Turing.MultiTapeTM.ComputableTidilyInSpace.natTestBit}
 \end{result}
 
 \begin{result}

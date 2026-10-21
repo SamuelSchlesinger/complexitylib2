@@ -33,8 +33,9 @@ Boolean words of the input length. The final instruction makes no discarded bina
 * `Turing.MultiTapeCTM.GuessMachine.count_interpret_output`: the shared FreeM/List program
   generates each length-`n` word once.
 
-The scanner is a prerequisite for a parsimonious guess/verify construction. Deterministic
-verifier composition and the reverse #P/GapP characterizations are not established here.
+The scanner is used by the parsimonious guess/verify construction in `MultiTape.Counting.Verifier`
+and the #P characterization in `Classes.SharpP.Characterization`. Balanced signed routing in
+`Classes.SharpP.GapMachine` gives the reverse GapP construction and characterization.
 
 ## References
 

@@ -1772,3 +1772,85 @@ entries against the source, requested wording that distinguishes a compiled prog
 runtime compilation, and that wording was corrected before publication. Final exact-document
 approval is recorded in the PR; AI review is not human editorial approval or a Lean proof of
 prose equivalence.
+
+## 2026-10-20: Native BIT on arbitrary-base full tuple universes (#112)
+
+Worker `ordered-times-20261020`, assisted by OpenAI Codex, adds a curated entry for
+`92915665afb129fbdbe0051fcb4a56c4b994be96`: one native formula for each fixed dimension
+realizes BIT of full lexicographic tuple ranks on every canonical `Fin n`, `n ≥ 2`.
+The entry records arbitrary-base semantics, full-word indices, high-index rejection, false
+zero dimension, exact witness arithmetic and the fixed small-universe branch. It makes no
+formula-size efficiency claim, no restricted-domain claim and no completed composition claim.
+The preceding numeric entries now point to the completed full-tuple BIT result; their existing
+statements and source anchors are preserved. Mathematical credit remains Immerman's Remark
+1.32 / Exercise 1.33(3), with a direct link to printed page 25 / PDF page 37.
+
+Independent design reviews and the arithmetic checkpoint review are recorded in issue #112;
+that checkpoint approval is not final-source or index approval. Exact full-source correctness,
+API and index review, six-gate validation and rendered CI-artifact review are tracked in the
+linked PR. This AI review workflow does not imply human editorial approval or machine-checked
+equivalence of prose and Lean. Generated PDFs are not committed.
+
+Author validation at source 92915665: all six repository gates passed; fresh focused MCP
+checks and the headline axiom guard are clean. The local index builds without undefined
+references or overfull boxes, contains 138 result environments at this pre-integration base,
+and its new rendered page 12 and three pinned declaration anchors have been checked.
+Independent final prose/artifact review is still required; the PR records its verdict.
+
+## 2026-10-20: Canonical full-tuple interpretation composition (#121)
+
+Worker `ordered-times-20261020`, assisted by OpenAI Codex, adds a curated entry pinned to
+source `9263445cb6115e5a9f14385cae4ab9fb3d07629d`. The actual native construction combines the
+proved full-tuple order, BIT and constant formulas with the existing relational interpretation
+and constant-aware pullback. Its canonical rank map preserves the entire ordered language.
+Composition flattens `(j,i)` to `j*k+i`, preserving arbitrary-base ranks and all formula and
+sentence pullbacks. The entry states positive dimensions, source size at least two and relational
+intermediate/output input vocabularies; source input functions are allowed. Restricted-domain
+numeric preservation and ordered logspace/capture endpoints remain separate.
+
+Mathematical credit is Immerman's Definition 1.26, Proposition 1.28 / Exercise 1.30 and
+Remark 1.32 / Exercise 1.33, with direct source links to the composition and canonical-numeric
+passages. Five declaration links point to the fixed Lean source. Preceding numeric entries now
+refer to the completed composition result; their statements and previous source pins are preserved.
+
+Fresh Lean MCP checks and all six repository gates passed at that source. Non-vacuous clients
+cover unequal dimensions and orientation, mixed input/numeric relations, a BIT index larger than
+the source universe, high-index rejection, constants under quantification, the smallest source
+size, and the excluded zero dimension. Independent design review is recorded in issue #121;
+exact-source/API/correctness, final index and rendered CI-artifact review are recorded in the PR.
+These AI reviews do not imply human editorial approval or a Lean proof of prose equivalence.
+Generated PDFs remain outside Git.
+
+
+## 2026-10-20: Native canonical ordered model checking in L (#128)
+
+Worker `ordered-times-20261020`, assisted by OpenAI Codex, adds a curated entry pinned to
+source `e7cab391135be9da1becec0fbfd62c63e37853b6`. For each fixed sentence over a finite relational input vocabulary
+with genuine canonical 0/1/max/order/BIT, the actual encoded query language belongs to L.
+The entry states the source-size restriction, the unchanged unary-cardinality/framed-input-table
+encoding and its first-coordinate-least-significant order, rejection of invalid shapes and
+sizes zero/one, full-input-length work space, fixed-sentence scope, and the encoding-image
+boundary. Ordered interpretation transducers, reduction closure, projections and capture remain
+open. The old order-free entry, including its empty-universe behavior and pinned declarations,
+is preserved; earlier numeric entries now point to the completed model-checking slice.
+
+Credit is given to Immerman's Theorem 3.1 (direct link to printed pages 57–59), the existing
+counter/query/native-machine model checker, and Christian Reitwiessner's native binary arithmetic
+and digit-access proof. Focused migration `9bf2748ff4aca3a4740a707a972547f21022de4c` keeps that
+proof and statement unchanged, with its authorship and a dated deprecated old full name.
+Coordinator review of that prerequisite is recorded in issue #128, comment 6304267267;
+it is not approval of the full new endpoint. The native BIT bound charges both binary operands;
+no time bound for its potentially long suffix iteration is asserted.
+
+Fresh MCP diagnostics, source gates, independent exact-source/API/correctness and changed-entry
+reviews, and the rendered CI PDF/provenance review are recorded in the linked PR. Boundary
+clients cover mixed quantified input/numeric atoms, constants in input predicates and equalities,
+nested quantifiers, size two and non-power-of-two inputs, high BIT indices, malformed tables,
+small-universe rejection and asymmetric binary table orientation. AI review does not imply
+human editorial approval or a Lean proof of prose equivalence. Generated PDFs stay outside Git.
+
+Author validation at source `e7cab391`: all six gates and the final boundary clients pass.
+The local pre-integration PDF builds without warnings, contains 145 result environments and
+77 pages, and changed pages 9, 11, 13 and 14 have been inspected. All 68 existing structure-section
+pins are preserved and the four new declaration links have been verified in source and PDF.
+Final independent review and the integrated CI artifact are recorded in the PR.

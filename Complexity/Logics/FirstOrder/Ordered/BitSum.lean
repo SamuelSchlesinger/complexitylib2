@@ -20,7 +20,8 @@ layout needs only exact shifts and fixed literal multiples, never a multiplicati
 
 The packed witnesses are constructed for every universe of size at least 257. A fixed finite
 formula handles all smaller input numerals, giving one formula for every canonical `Fin n`,
-`n ≥ 2`, including non-power-of-two sizes. TIMES and arbitrary-base tuple BIT remain separate.
+`n ≥ 2`, including non-power-of-two sizes. Native TIMES and full-tuple BIT build on this
+prerequisite in `Ordered.Multiplication` and `Ordered.TupleBit`.
 
 ## Main definitions
 

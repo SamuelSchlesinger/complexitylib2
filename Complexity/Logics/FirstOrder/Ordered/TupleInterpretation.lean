@@ -20,9 +20,10 @@ arbitrary-base ranks in `Ordered.lexEquiv`. For positive tuple dimension, coordi
 define canonical zero, one and maximum as target constants through the existing constant-aware
 interpretation API. Their ranks are exactly `0`, `1` and `n ^ k - 1`.
 
-The interpreted universe here consists of all tuples. No successor/BIT lifting or
-numeric-preserving composition is asserted. In particular, this does not infer numeric
-predicates for arbitrary definable restricted domains.
+The interpreted universe here consists of all tuples. Successor and BIT lifting are supplied
+separately in `Ordered.TupleSuccessor` and `Ordered.TupleBit`; canonical interpretations and their
+composition are in `Ordered.FullTuple` and `Ordered.FullTuple.Composition`. These results do not
+infer numeric predicates for arbitrary restricted domains.
 
 ## Main definitions
 
@@ -42,7 +43,7 @@ predicates for arbitrary definable restricted domains.
 ## References
 
 * [N. Immerman, *Descriptive Complexity*][Immerman1999], Remark 1.32 and Exercise 1.33(1).
-  The full-domain BIT lifting in Exercise 1.33(3) remains open.
+  `Ordered.TupleBit` supplies the full-domain BIT lifting in Exercise 1.33(3).
 -/
 
 @[expose] public section
