@@ -276,8 +276,23 @@ of the handover. The work below remains available for subsequent, independently 
      shapes and sizes zero/one reject. Work space is logarithmic in the full encoded input length,
      with no combined-complexity or arbitrary-raw-word claim. This is the relational-input case
      of Immerman's Theorem 3.1. The original order-free empty-universe behavior is preserved.
-     **Next milestones:** actual ordered interpretation-to-logspace transducers and reduction
-     closure, then projections and NL/P completeness. These remain open.
+     **Canonical full-tuple interpretation transducer completed (#137):**
+     [Ordered/FullTuple/Encoding](Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean)
+     and
+     [FirstOrder/Ordered/Reduction](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean)
+     prove that every fixed canonical full-tuple interpretation between finite relational
+     input vocabularies computes its encoded target structure in logarithmic space. Admissible
+     sources of size `n ≥ 2` map to the canonical rank universe `Fin (n^k)` numbered by
+     `lexRank`, serializing only the target input relations in `tupleIndex` order; invalid
+     shapes and sizes zero and one map to a fixed malformed target outside every target query
+     language. For positive dimension `k > 0`, the decoded target with its own canonical
+     numerics is isomorphic to the interpreted full ordered structure preserving every
+     natural rank, and `encodedMap` is a logspace many-one reduction from the pulled-back
+     ordered query language to the target ordered query language. This is the full-domain
+     canonical transducer of Immerman's Proposition 3.5; isomorphism-closed class-level
+     reduction closure, restricted domains, projections and NL/P completeness remain open.
+     **Next milestones:** ordered reduction closure for structure classes, then projections and
+     NL/P completeness. These remain open.
      The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical
      BIT on an arbitrary definable restricted domain need not be first-order definable.
      Restricted-domain numeric preservation therefore requires its own explicit definitions
@@ -324,9 +339,11 @@ of the handover. The work below remains available for subsequent, independently 
      streams interpreted relation tables using tuple ranks. Every order-free interpretation
      reduction to an isomorphism-closed target induces a logspace many-one reduction of encoded
      query languages, with L/P closure. Empty universes and domains, nullary relations,
-     dimension zero, and invalid parsed table shapes are handled. Extending this transducer to
-     computed numeric predicates and canonical lexicographic ordered outputs remains open;
-     the separate ordered model-checking theorem does not supply that transducer.
+     dimension zero, and invalid parsed table shapes are handled. Canonical full-tuple ordered
+     interpretations now have their own logspace transducer in
+     [FirstOrder/Ordered/Reduction](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean);
+     restricted-domain ordered transducers and isomorphism-closed class-level ordered reduction
+     closure remain open.
 
    - [x] **Circuit Value logspace completeness.** [Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean)
      under logarithmic-space many-one reductions, via a machine-certified tableau writer.
