@@ -24,6 +24,11 @@ degree-bounded operations and fold rules. Indices use `encUnary`: an index retur
 is at most the list length, irrespective of the encoding of its elements. In particular, looking
 up a variable with a large binary label does not require a certificate as long as that label.
 
+Predicate counts and Boolean scans use only `ListEncoding` and `SizedListEncoding`: reading the
+list and bounding traversal suffice because the state is a unary counter or a Boolean. Raw bit
+strings and framed lists are both instances. No output-list construction capability is needed;
+counting folds a counter directly instead of constructing the matching sublist.
+
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.cons`, `.listAppend`, `.map`, `.flatten`:
@@ -46,6 +51,8 @@ up a variable with a large binary label does not require a certificate as long a
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.zipIdx`: number list entries with unary indices.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.countPWith`, `.anyWithEncoding`,
+  `.allWithEncoding`: direct scans over readable, size-bounded list encodings.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.countPWithInput`, `.countWithInput`: count
   predicate matches or occurrences of a computed value.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.idxOf`: the first occurrence of an element.
@@ -416,15 +423,40 @@ theorem length_bits_comp {input : α ↪ List Bool} {word : α → List Bool}
     ComputableTidilyInPolyTime (fun a => (word a).length) input encUnary :=
   length_bits.comp hword
 
+/-- Count predicate matches directly over any readable, size-bounded list encoding.
+The accumulator is a unary counter; the certificate does not construct a list of matches. -/
+theorem countPWith {encL : List α ↪ List Bool} [ListEncoding encA encL]
+    [SizedListEncoding encA encL] {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableTidilyInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableTidilyInPolyTime par encIn encP)
+    (hlist : ComputableTidilyInPolyTime list encIn encL) :
+    ComputableTidilyInPolyTime (fun x => (list x).countP fun a => test (par x, a))
+      encIn encUnary := by
+  have heq (p : π) (l : List α) (n : ℕ) :
+      l.foldl (fun n a => n + (test (p, a)).toNat) n = n + l.countP fun a => test (p, a) := by
+    induction l generalizing n with
+    | nil => simp
+    | cons a l ih =>
+      cases h : test (p, a) <;> simp [h, ih, Nat.add_assoc, Nat.add_comm]
+  have hstep : ComputableTidilyInPolyTime
+      (fun q : (π × ℕ) × α => q.1.2 + (test (q.1.1, q.2)).toNat)
+      (encPair (encPair encP encUnary) encA) encUnary := by fun_prop
+  have h := foldlWith_of_bounded_growth (encA := encA) (encL := encL) (encB := encUnary)
+    (step := fun p n a => n + (test (p, a)).toNat) hpar hlist (const 0) hstep
+    (growth := fun _ => 1) (.const 1) (fun x n a _ => by
+      simp only [encUnary_apply, List.length_replicate]
+      have := Bool.toNat_le (test (par x, a))
+      omega)
+  simpa only [heq, Nat.zero_add] using h
+
 /-- Count matches of a predicate that captures the original input. The count is in unary. -/
 @[fun_prop]
 theorem countPWithInput {test : γ → α → Bool} {list : γ → List α}
     (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
     (htest : ComputableTidilyInPolyTime (fun p : γ × α => test p.1 p.2)
       (encPair encIn encA) encBool) :
-    ComputableTidilyInPolyTime (fun x => (list x).countP (test x)) encIn encUnary := by
-  simp only [List.countP_eq_length_filter]
-  exact (length_list encA).comp (filterWithInput hlist htest)
+    ComputableTidilyInPolyTime (fun x => (list x).countP (test x)) encIn encUnary :=
+  countPWith htest id' hlist
 
 /-- Count occurrences of a computed value using lawful Boolean equality. -/
 @[fun_prop]
@@ -472,11 +504,12 @@ theorem replicate {count : γ → ℕ} {value : γ → α}
     mapWithInput (f := fun x _ => value x) (range.comp hcount)
       (hvalue.comp (fst encIn encUnary))
 
-/-- Test whether any element satisfies a polynomial-time predicate with a fixed parameter. -/
-theorem anyWith {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+/-- Scan any readable, size-bounded list encoding for a predicate match. -/
+theorem anyWithEncoding {encL : List α ↪ List Bool} [ListEncoding encA encL]
+    [SizedListEncoding encA encL] {test : π × α → Bool} {par : γ → π} {list : γ → List α}
     (htest : ComputableTidilyInPolyTime test (encPair encP encA) encBool)
     (hpar : ComputableTidilyInPolyTime par encIn encP)
-    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    (hlist : ComputableTidilyInPolyTime list encIn encL) :
     ComputableTidilyInPolyTime (fun x => (list x).any fun a => test (par x, a)) encIn encBool := by
   have heq (p : π) (l : List α) (b : Bool) :
       l.foldl (fun b a => b || test (p, a)) b = (b || l.any fun a => test (p, a)) := by
@@ -490,14 +523,31 @@ theorem anyWith {test : π × α → Bool} {par : γ → π} {list : γ → List
     (fun _ _ _ => by simp)
   simpa only [heq, Bool.false_or] using h
 
+/-- Test every element of any readable, size-bounded list encoding. -/
+theorem allWithEncoding {encL : List α ↪ List Bool} [ListEncoding encA encL]
+    [SizedListEncoding encA encL] {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableTidilyInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableTidilyInPolyTime par encIn encP)
+    (hlist : ComputableTidilyInPolyTime list encIn encL) :
+    ComputableTidilyInPolyTime (fun x => (list x).all fun a => test (par x, a)) encIn encBool := by
+  have h := bool_not.comp (anyWithEncoding (bool_not.comp htest) hpar hlist)
+  simpa only [Function.comp_def, ← List.all_eq_not_any_not] using h
+
+/-- Test whether any element satisfies a polynomial-time predicate with a fixed parameter. -/
+theorem anyWith {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableTidilyInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableTidilyInPolyTime par encIn encP)
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
+    ComputableTidilyInPolyTime (fun x => (list x).any fun a => test (par x, a)) encIn encBool :=
+  anyWithEncoding htest hpar hlist
+
 /-- Test whether every element satisfies a polynomial-time predicate with a fixed parameter. -/
 theorem allWith {test : π × α → Bool} {par : γ → π} {list : γ → List α}
     (htest : ComputableTidilyInPolyTime test (encPair encP encA) encBool)
     (hpar : ComputableTidilyInPolyTime par encIn encP)
     (hlist : ComputableTidilyInPolyTime list encIn (encList encA)) :
-    ComputableTidilyInPolyTime (fun x => (list x).all fun a => test (par x, a)) encIn encBool := by
-  have h := bool_not.comp (anyWith (bool_not.comp htest) hpar hlist)
-  simpa only [Function.comp_def, ← List.all_eq_not_any_not] using h
+    ComputableTidilyInPolyTime (fun x => (list x).all fun a => test (par x, a)) encIn encBool :=
+  allWithEncoding htest hpar hlist
 
 /-- Test whether any list element satisfies a predicate that captures the original input. -/
 @[fun_prop]
