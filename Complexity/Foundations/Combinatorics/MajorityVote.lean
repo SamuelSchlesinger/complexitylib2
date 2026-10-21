@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 public import Mathlib.Data.Fintype.Pi
+import Complexity.Foundations.Combinatorics.FiniteCover.Basic
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
@@ -33,7 +34,8 @@ at most `r` good entries has weight at least `2 ^ r`.
 * `Cslib.exists_forall_lt_card_filter_mem`: for a family of at most `2 ^ n` tests, each passed by
   two thirds of `Ω`, some `12 (n + 1)` elements of `Ω` contain a majority passing each test.
 * `Cslib.exists_forall_exists_apply_mem`: for a family of at most `2 ^ n` tests, each passed by
-  half of `Ω`, some `n + 1` elements of `Ω` contain one passing each test.
+  half of `Ω`, some `n + 1` elements of `Ω` contain one passing each test; this is the exact
+  finite-cover union bound with failure ratio `1 / 2`.
 * `Cslib.two_pow_mul_eight_pow_lt`: the numeric bound `2 ^ n * 8 ^ (6 n + 6) < 9 ^ (6 n + 6)`
   behind the choice of `12 (n + 1)` repetitions.
 
@@ -140,32 +142,13 @@ theorem exists_forall_exists_apply_mem {X : Type*} [Fintype X] [Nonempty Ω] {n 
     (hgood : ∀ x, Fintype.card Ω ≤ 2 * (good x).card) :
     ∃ ω : Fin (n + 1) → Ω, ∀ x, ∃ i, ω i ∈ good x := by
   classical
-  by_contra! h
-  let bad : X → Finset (Fin (n + 1) → Ω) := fun x => univ.filter fun ω => ∀ i, ω i ∉ good x
-  have hbad : ∀ x, 2 ^ (n + 1) * (bad x).card ≤ Fintype.card Ω ^ (n + 1) := by
-    intro x
-    have e : bad x = Fintype.piFinset fun _ => (good x)ᶜ := by
-      ext ω
-      simp [bad, Fintype.mem_piFinset]
-    rw [e, Fintype.card_piFinset, prod_const, card_univ, Fintype.card_fin, card_compl, ← mul_pow]
-    exact Nat.pow_le_pow_left (by have := hgood x; have := card_le_univ (good x); omega) _
-  have hcover : (univ : Finset (Fin (n + 1) → Ω)) ⊆ univ.biUnion bad := fun ω _ => by
-    obtain ⟨x, hx⟩ := h ω
-    exact mem_biUnion.2 ⟨x, mem_univ _, mem_filter.2 ⟨mem_univ _, hx⟩⟩
-  have hcard := (card_le_card hcover).trans card_biUnion_le
-  rw [card_univ, Fintype.card_fun, Fintype.card_fin] at hcard
-  have hsum : 2 ^ (n + 1) * ∑ x, (bad x).card ≤ 2 ^ n * Fintype.card Ω ^ (n + 1) := by
-    rw [mul_sum]
-    calc ∑ x, 2 ^ (n + 1) * (bad x).card ≤ ∑ _x : X, Fintype.card Ω ^ (n + 1) :=
-          sum_le_sum fun x _ => hbad x
-      _ ≤ 2 ^ n * Fintype.card Ω ^ (n + 1) := by
-          rw [sum_const, card_univ, smul_eq_mul]
-          exact Nat.mul_le_mul_right _ hX
-  have hpos : 0 < 2 ^ n * Fintype.card Ω ^ (n + 1) := by
-    have := Fintype.card_pos (α := Ω)
-    positivity
-  have := (Nat.mul_le_mul_left (2 ^ (n + 1)) hcard).trans hsum
-  rw [pow_succ, mul_comm (2 ^ n) 2, mul_assoc] at this
-  omega
+  apply exists_cover_of_scaled_card_lt (fun ω x => ω ∈ good x) 1 2 (n + 1)
+  · intro x
+    rw [Fintype.card_subtype_compl, Fintype.card_coe]
+    have := hgood x
+    have := card_le_univ (good x)
+    lia
+  · simpa only [one_pow, mul_one] using
+      hX.trans_lt (Nat.pow_lt_pow_right (by decide) (by lia))
 
 end Cslib

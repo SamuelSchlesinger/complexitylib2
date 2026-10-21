@@ -11,7 +11,7 @@ public import Complexity.Init
 public import Cslib.Foundations.Data.BitString
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Data.Fintype.Pi
-import Complexity.Foundations.Combinatorics.FiniteCover
+import Complexity.Foundations.Combinatorics.FiniteCover.Basic
 import Complexity.Foundations.Data.BitString.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.BigOperators

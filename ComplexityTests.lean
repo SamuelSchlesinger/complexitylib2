@@ -95,6 +95,7 @@ import ComplexityTests.FineGrained
 import ComplexityTests.FineGrained.GraphProblems
 import ComplexityTests.FineGrained.Sparsification
 import ComplexityTests.FiniteControl
+import ComplexityTests.FiniteCover
 import ComplexityTests.FiniteFieldUnitSum
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
