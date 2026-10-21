@@ -243,29 +243,16 @@ theorem queryLanguage_mem_L (φ : (language L).Sentence) :
   let F := A + 1
   have hE : (shapeCode v 0 E F).length = E := length_shapeCode v 0 E F
   have hC := ModelChecker.length_formulaCode v (fun e : Empty => e.elim) 3 φ (E + 1) A F
-  have hshape : (modelChecker v φ).CodeAt 0 (shapeCode v 0 E F) :=
-    codeAt_of_code_eq (pre := [])
-      (post := [.lt (reg 0) (const 2) F (E + 1)] ++
-        ModelChecker.formulaCode v (fun e : Empty => e.elim) 3 φ (E + 1) A F ++ [.accept, .reject])
-      (by simp [modelChecker, E, A, F, List.append_assoc])
-  have hguard : (modelChecker v φ).CodeAt E [.lt (reg 0) (const 2) F (E + 1)] := by
-    have h := codeAt_of_code_eq (P := modelChecker v φ) (pre := shapeCode v 0 E F)
-      (l := [.lt (reg 0) (const 2) F (E + 1)])
-      (post := ModelChecker.formulaCode v (fun e : Empty => e.elim) 3 φ (E + 1) A F ++
-        [.accept, .reject]) (by simp [modelChecker, E, A, F, List.append_assoc])
-    rwa [hE] at h
-  have hcomp : (modelChecker v φ).CodeAt (E + 1)
-      (ModelChecker.formulaCode v (fun e : Empty => e.elim) 3 φ (E + 1) A F) := by
-    have h := codeAt_of_code_eq (P := modelChecker v φ)
-      (pre := shapeCode v 0 E F ++ [.lt (reg 0) (const 2) F (E + 1)])
-      (post := [.accept, .reject]) rfl
-    simpa only [List.length_append, hE, List.length_singleton] using h
-  have hhalt : (modelChecker v φ).CodeAt A [.accept, .reject] := by
-    have h := codeAt_of_code_eq (P := modelChecker v φ)
-      (pre := shapeCode v 0 E F ++ [.lt (reg 0) (const 2) F (E + 1)] ++
-        ModelChecker.formulaCode v (fun e : Empty => e.elim) 3 φ (E + 1) A F)
-      (post := []) (List.append_nil _).symm
-    simpa only [List.length_append, hE, hC, List.length_singleton] using h
+  have hcode : (modelChecker v φ).CodeAt 0 (modelChecker v φ).code :=
+    codeAt_of_code_eq (pre := []) (post := []) (by simp)
+  change (modelChecker v φ).CodeAt 0 (shapeCode v 0 E F ++
+    [.lt (reg 0) (const 2) F (E + 1)] ++
+    ModelChecker.formulaCode v (fun e : Empty => e.elim) 3 φ (E + 1) A F ++
+    [.accept, .reject]) at hcode
+  rw [codeAt_append, codeAt_append, codeAt_append] at hcode
+  obtain ⟨⟨⟨hshape, hguard⟩, hcomp⟩, hhalt⟩ := hcode
+  simp only [List.length_append, hE, hC, List.length_singleton, Nat.zero_add]
+    at hguard hcomp hhalt
   obtain ⟨hacc, hrest⟩ := codeAt_cons.mp hhalt
   have hrej := (codeAt_cons.mp hrest).1
   replace hguard := (codeAt_cons.mp hguard).1
