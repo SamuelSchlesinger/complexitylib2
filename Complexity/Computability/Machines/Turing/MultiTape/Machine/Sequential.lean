@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Halting
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 
+import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
+
 /-!
 # Sequencing effectful machines
 
@@ -134,23 +136,17 @@ theorem runConfigFrom_one (cfg : Config k Symbol State₀ Oracle input)
 theorem runConfigFrom_right (fuel : ℕ) (cfg : Config k Symbol State₁ Oracle input) :
     (first.seq second).runConfigFrom choose query fuel (right cfg) =
       right <$> second.runConfigFrom choose query fuel cfg := by
-  induction fuel generalizing cfg with
-  | zero => simp
-  | succ fuel ih =>
-    cases hs : cfg.tapes.state with
-    | none => simp [runConfigFrom, right, Cfg.mapState, hs]
-    | some state =>
-      simp only [runConfigFrom, right, Cfg.mapState, hs, Option.map_some,
-        Cfg.inputSymbol, seq, hchoose, bind_map_left, map_bind]
-      congr 1
-      funext action
-      cases action with
-      | step action symbol move => exact ih (cfg.step action symbol move)
-      | query oracle next =>
-        simp only [rightAction, map_bind]
-        congr 1
-        funext answer
-        exact ih (cfg.receive oracle next answer)
+  apply runConfigFrom_map second (first.seq second) choose choose query query right ?_ fuel cfg
+  intro cfg
+  cases hs : cfg.tapes.state with
+  | none => simp [runConfigFrom, right, Cfg.mapState, hs]
+  | some state =>
+    simp only [runConfigFrom, right, Cfg.mapState, hs, Option.map_some,
+      Cfg.inputSymbol, seq, hchoose, bind_map_left, map_bind]
+    congr 1
+    funext action
+    cases action <;>
+      simp [rightAction, right, Config.step, Config.receive, Turing.Action.apply, Cfg.mapState]
 
 end Sequential
 
