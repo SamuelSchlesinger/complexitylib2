@@ -92,7 +92,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource
   certificates. Its queue and reset-and-replay constructions deliberately count backend calls;
-  arbitrary pure continuations are not machine-compiled. `WordRAM/Dynamic` separately connects
+  arbitrary pure continuations do not have machine-time certificates. `CostHoare` adds client
+  operation-cost contracts and separate method-budget composition. The `stateful` Aesop rules
+  support these contracts; connecting them to `polytime` controller certificates remains open.
+  `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
   Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
   neither open framework is copied here. This is a prototype of composition and refinement,

@@ -1392,6 +1392,7 @@ public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Foundations.Semantics.Stateful.Amortized
 public import Complexity.Foundations.Semantics.Stateful.Basic
 public import Complexity.Foundations.Semantics.Stateful.Composition
+public import Complexity.Foundations.Semantics.Stateful.CostHoare
 public import Complexity.Foundations.Semantics.Stateful.Hoare
 public import Complexity.Foundations.Semantics.Stateful.Module
 public import Complexity.Foundations.Semantics.Stateful.Realization
@@ -1562,3 +1563,5 @@ public import Complexity.Tactic.FirstOrder.Init
 public import Complexity.Tactic.PPT
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init
+public import Complexity.Tactic.Stateful
+public import Complexity.Tactic.Stateful.Init
