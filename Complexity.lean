@@ -61,6 +61,7 @@ public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BitBlast
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.Broadcast
+public import Complexity.Computability.Circuit.Boolean.CarrySave
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.CodeSubstitution
 public import Complexity.Computability.Circuit.Boolean.CompareSwap
@@ -217,6 +218,7 @@ public import Complexity.Computability.Circuit.Boolean.Tableau.Correct
 public import Complexity.Computability.Circuit.Boolean.Tableau.Space
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
+public import Complexity.Computability.Circuit.Boolean.ThresholdNC1
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Tournament
 public import Complexity.Computability.Circuit.Boolean.Unbounded

@@ -384,8 +384,12 @@ of the handover. The work below remains available for subsequent, independently 
      supply this stronger reduction or the ordered relational-to-machine encoding bridge.
 
    - [ ] **Uniform circuit families.** The current
-     [NC/AC/TC hierarchies](Complexity/Computability/Circuit/Boolean/DepthClasses.lean) and
-     [ACⁱ[q] ⊆ TCⁱ](Complexity/Computability/Circuit/Boolean/ModMajority.lean) are
+     [NC/AC/TC hierarchies](Complexity/Computability/Circuit/Boolean/DepthClasses.lean),
+     [ACⁱ[q] ⊆ TCⁱ](Complexity/Computability/Circuit/Boolean/ModMajority.lean) and
+     [carry-save threshold/majority simulation in NC¹ and NCⁱ⁺¹](Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean)
+     (for polynomially fan-in-bounded threshold and majority circuits; eliminating unbounded
+     repeated-wire multiplicities in unrestricted `TCⁱ` requires Muroga's threshold
+     weight-bounding theorem) are
      nonuniform, and [FO model checking in AC⁰](Complexity/Computability/Circuit/Boolean/FirstOrder.lean)
      constructs nonuniform circuits over relational atomic inputs, without order/`BIT`.
      [Polynomial-time function-family compilation](Complexity/Computability/Complexity/Problems/CircuitValue/Compilation.lean)

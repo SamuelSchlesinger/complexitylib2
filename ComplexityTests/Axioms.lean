@@ -1699,6 +1699,76 @@ info: 'Cslib.Circuits.Boolean.AC0Mod_subset_TC0' depends on axioms: [propext, Cl
 #print axioms Cslib.Circuits.Boolean.AC0Mod_subset_TC0
 
 /--
+info: 'Cslib.Circuits.Boolean.val_eval_weightCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.val_eval_weightCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.computes_thresholdDeMorganCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computes_thresholdDeMorganCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.computes_majorityDeMorganCircuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computes_majorityDeMorganCircuit
+
+/--
+info: 'Cslib.Circuits.Boolean.threshold_mem_NC_one' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.threshold_mem_NC_one
+
+/--
+info: 'Cslib.Circuits.Boolean.majority_mem_NC_one' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.majority_mem_NC_one
+
+/--
+info: 'Cslib.Circuits.Boolean.strictMajority_mem_NC_one' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.strictMajority_mem_NC_one
+
+/--
+info: 'Cslib.Circuits.Boolean.Threshold.exists_deMorgan_simulation_of_fanInAtMost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Threshold.exists_deMorgan_simulation_of_fanInAtMost
+
+/--
+info: 'Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_majority_of_fanInAtMost'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_majority_of_fanInAtMost
+
+/--
+info: 'Cslib.Circuits.Boolean.mem_NC_succ_of_threshold_fanInAtMost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.mem_NC_succ_of_threshold_fanInAtMost
+
+/--
+info: 'Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost
+
+/--
 info: 'Cslib.DecisionTree.totalInfluence_le_depth' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

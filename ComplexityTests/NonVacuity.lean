@@ -10,6 +10,7 @@ import Complexity.Computability.Circuit.Boolean.Khrapchenko
 import Complexity.Computability.Circuit.Boolean.LMN
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
 import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
+import Complexity.Computability.Circuit.Boolean.ThresholdNC1
 import Mathlib.FieldTheory.Finite.GaloisField
 import Complexity.Computability.Circuit.Boolean.TC0
 import Complexity.Computability.Circuit.Boolean.TopDown
@@ -143,6 +144,14 @@ example : (⊥ : Language Bool) ∈ AC0Mod 3 :=
 example : AC0Mod 3 ⊂ TC0 :=
   have : Fact (Nat.Prime 3) := ⟨by decide⟩
   Smolensky.AC0Mod_ssubset_TC0 (by decide)
+
+example : Language.ofSlices majority ∈ NC 1 :=
+  majority_mem_NC_one
+
+example : (majorityDeMorganCircuit 3).eval interpretation ![true, false, true] 0 = true ∧
+    (majorityDeMorganCircuit 3).eval interpretation ![false, false, true] 0 = false := by
+  simp only [eval_majorityDeMorganCircuit]
+  decide
 
 /-- First-order model checking applies: over the empty language, the atomic facts of a structure
 on `Fin n` are enumerated by `Fin 0`. -/

@@ -273,6 +273,47 @@ inclusions; no uniformity condition is imposed.\citep{ChandraStockmeyerVishkin19
 \end{result}
 
 \begin{result}
+\subsection{Carry-save bit counting and threshold gates in \texorpdfstring{NC$^1$}{NC\^1}}
+Over the De Morgan basis of fan-in two, a $3$-to-$2$ carry-save adder on
+$w$-bit words (least significant bit first) preserves the unsigned sum modulo
+$2^w$ in depth at most $6$ and size at most $20w$, and two layers form a
+$4$-to-$2$ carry-save reducer of depth at most $12$ and size at most $40w$.
+Combining $k$ single-bit inputs along a balanced binary tree of $4$-to-$2$
+reducers and iterating carry-clearing $w=\lceil\log_2(k+1)\rceil$ times gives a
+De Morgan circuit \lean{weightCircuit} of depth at most $1+19w$ and size at most
+$\max(1,k)+40kw+w(20w+1)$ whose output is the exact $w$-bit binary numeral of
+$\operatorname{weight}(x)$. Composing with the $w$-bit comparator yields a
+De Morgan circuit \lean{thresholdDeMorganCircuit} for $\mathrm{Th}^k_j$ (and
+\lean{majorityDeMorganCircuit} for $k$-bit majority) of depth at most $2+23w$
+and size at most $4+k+40kw+w(20w+6)$. Consequently every threshold slice family
+$x\mapsto\mathrm{Th}^{|x|}_{t(|x|)}(x)$, including $\mathrm{MAJ}$ and strict
+majority, belongs to nonuniform $\mathrm{NC}^1$. Replacing each gate of a
+threshold or majority circuit $C$ whose gates have syntactic arity at most $F$
+(\lean{FanInAtMost}) gives an equivalent De Morgan circuit of depth at most
+$(2+23\lceil\log_2(F+1)\rceil)\operatorname{depth}(C)$ and size at most
+$|C|(4+F+40F\lceil\log_2(F+1)\rceil+\lceil\log_2(F+1)\rceil(20\lceil\log_2(F+1)\rceil+6))$,
+so polynomial-size, polynomially fan-in-bounded threshold or $\mathrm{TC}$
+circuit families of depth $O((\log n)^i)$ lie in $\mathrm{NC}^{i+1}$. Unbounded
+wire multiplicity in $\mathrm{TC}^i$ without a fan-in bound is not covered by
+this simulation.\citep{ChandraStockmeyerVishkin1984,AroraBarak09,Vollmer1999}
+\decl{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{145}{Cslib.Circuits.Boolean.val_csaSum_add_val_csaCarry_mod}
+\decl{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{561}{Cslib.Circuits.Boolean.val_eval_weightCircuit}
+\decl{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{575}{Cslib.Circuits.Boolean.size_weightCircuit_le}
+\decl{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{582}{Cslib.Circuits.Boolean.depth_weightCircuit_le}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{119}{Cslib.Circuits.Boolean.computes_thresholdDeMorganCircuit}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{135}{Cslib.Circuits.Boolean.size_thresholdDeMorganCircuit_le}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{149}{Cslib.Circuits.Boolean.depth_thresholdDeMorganCircuit_le}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{171}{Cslib.Circuits.Boolean.computes_majorityDeMorganCircuit}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{198}{Cslib.Circuits.Boolean.threshold_mem_NC_one}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{215}{Cslib.Circuits.Boolean.majority_mem_NC_one}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{219}{Cslib.Circuits.Boolean.strictMajority_mem_NC_one}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{269}{Cslib.Circuits.Boolean.Threshold.exists_deMorgan_simulation_of_fanInAtMost}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{346}{Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_majority_of_fanInAtMost}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{376}{Cslib.Circuits.Boolean.mem_NC_succ_of_threshold_fanInAtMost}
+\decl{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{404}{Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost}
+\end{result}
+
+\begin{result}
 \subsection{Razborov's monotone clique bound}
 Let $p,w\ge2$, $w+1\le k\le n$, $p\le n$, and $2w^2\le k-1$, and put
 \[
