@@ -49,6 +49,7 @@ import ComplexityTests.CommunicationComplexity2
 import ComplexityTests.CommunicationComplexity3
 import ComplexityTests.CommunicationComplexity4
 import ComplexityTests.CompareSwap
+import ComplexityTests.ComparisonCircuits
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime

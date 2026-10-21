@@ -26,6 +26,7 @@ public import Complexity.Computability.Circuit.Arithmetic.VP
 public import Complexity.Computability.Circuit.Arithmetic.Waring
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Basic
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Compilation
+public import Complexity.Computability.Circuit.Balanced
 public import Complexity.Computability.Circuit.BipartiteMatching
 public import Complexity.Computability.Circuit.Bird
 public import Complexity.Computability.Circuit.Boolean.AC0
@@ -55,6 +56,7 @@ public import Complexity.Computability.Circuit.Boolean.Broadcast
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.CodeSubstitution
 public import Complexity.Computability.Circuit.Boolean.CompareSwap
+public import Complexity.Computability.Circuit.Boolean.Comparison
 public import Complexity.Computability.Circuit.Boolean.Conondeterministic
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.Continuity
@@ -206,6 +208,7 @@ public import Complexity.Computability.Circuit.Boolean.Tableau.Space
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 public import Complexity.Computability.Circuit.Boolean.TopDown
+public import Complexity.Computability.Circuit.Boolean.Tournament
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
@@ -1287,6 +1290,7 @@ public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.Point
 public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
+public import Complexity.Foundations.Data.BitString.Selection
 public import Complexity.Foundations.Data.BitString.ShortWords
 public import Complexity.Foundations.Data.BitString.SumTree
 public import Complexity.Foundations.Data.BitString.Uhlig
