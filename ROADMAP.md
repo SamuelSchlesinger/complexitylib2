@@ -747,9 +747,20 @@ frame rules. Prefix sums use a balanced aggregation tree for a power-of-two numb
 not a Fenwick layout. Machine costs exclude initial representation construction and external argument
 encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
 
+The [shared-memory RAM queue](Complexity/Algorithms/WordRAM/Queue/Dynamic.lean) now realizes
+FIFO enqueue and dequeue with one fixed eleven-register dispatcher. Two reserved arrays hold
+at most `capacity` live values in `2 * capacity` reserved word cells. An empty-front dequeue
+executes a real rear-to-front transfer loop. Eight credits per rear element give at most
+fourteen amortized instructions per queue call, including halt, with initial and final credit
+retained. Six actual register instructions initialize the empty representation without clearing
+memory. The worked adaptive client reinserts an observed dequeued value and checks FIFO order,
+zero-valued observations, full/zero capacity and instruction-budget rejection. This direct
+implementation shares the FIFO specification with the abstract two-stack construction above;
+it is not a compilation of that construction's free-monad methods. Arbitrary external client
+computation and argument delivery remain outside the per-operation bound.
+
 Outstanding: controllers for larger adaptive and iterative clients;
-a concrete shared-heap queue
-using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
+reusable allocation and deallocation, live/peak space accounting,
 doubling-array amortization, richer ownership and recursive procedures; independent model
 realizations for cell probes, caches and randomness; and present/historical queries for the
 retroactive interface. Upstream API coordination and coordinator review remain prerequisites

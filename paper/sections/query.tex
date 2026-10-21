@@ -322,6 +322,37 @@ conditional backend-resource theorem, not a compiled Word-RAM queue-time theorem
 \end{result}
 
 \begin{result}
+\subsection{A shared-memory FIFO queue with amortized RAM instructions}
+A fixed eleven-register word-RAM dispatcher implements enqueue and dequeue using two disjoint
+array regions $[b,b+c)$ and $[b+c,b+2c)$, with at most $c$ live words in total. The represented
+FIFO sequence is the front stack followed by the reversed rear stack. Assume bounded registers
+and memory, $b+2c<2^w$, and $1<2^w$. Enqueue requires spare capacity and a fitting value;
+dequeue is total, with a presence flag distinguishing an empty result from the word zero.
+A dequeue transfers the rear only when the front is empty, using six data instructions and two
+loop-control instructions per moved word. Starting from a configuration satisfying the queue
+representation invariant, every admissible adaptive client selecting $m$ queue operations has
+a correct native execution, and every such execution satisfies
+\[
+  T + 8|\mathit{rear}_{\rm final}|
+  \le 14m + 8|\mathit{rear}_{\rm initial}|.
+\]
+Here $T$ counts actual operation instructions, including dispatch, all transfer work and one
+halt per call. Six register instructions initialize the empty representation from arbitrary
+bounded machine data without changing memory, giving an initialized bound $6+14m$.
+The reservation contains exactly $2c$ word cells; all memory outside it is preserved.
+
+This direct implementation shares the FIFO specification with the abstract queue above,
+without claiming to compile its free-monad methods. External argument delivery, result decoding,
+and arbitrary pure client-controller computation are excluded from the operation-history bound.
+The fixed capacity is reserved in advance; allocation, growth, and a Turing-machine simulation
+are not claimed.\citep[Exercise 10.1-6 and Chapter 17]{CLRS2009}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Basic.lean}{324}{Cslib.WordRAM.Queue.execute}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Basic.lean}{383}{Cslib.WordRAM.Queue.initialize_exec}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Dynamic.lean}{113}{Cslib.WordRAM.Queue.amortized}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Dynamic.lean}{143}{Cslib.WordRAM.Queue.run_initialized}
+\end{result}
+
+\begin{result}
 \subsection{Fixed-program dynamic stacks and prefix sums on the word RAM}
 Starting from a bounded represented configuration, a fixed nine-register stack program supports
 push, pop (including empty pop), and size in

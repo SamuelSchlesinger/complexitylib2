@@ -101,6 +101,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   synthesis, iterative clients and a Turing-machine simulation remain open.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
+  The direct shared-heap queue uses the existing FIFO operation signature and native operation
+  traces, with a hidden two-stack representation, a concrete-register potential, framed storage,
+  and separately charged initialization. Its `2 * capacity` reservation is explicit; external
+  client computation and argument delivery are not charged by the operation-history bound.
   Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
   neither open framework is copied here. This is a prototype of composition and refinement,
   not a replacement for their query models or a general cell-probe lower-bound semantics.
