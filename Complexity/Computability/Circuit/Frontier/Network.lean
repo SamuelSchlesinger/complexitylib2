@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Frontier.BranchingProgram
 public import Complexity.Computability.Circuit.Frontier.Multigraph
+import Complexity.Foundations.Data.Nat.IntermediateValue
 import Complexity.Foundations.Data.Set.Card
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.SetTheory.Cardinal.Finite
@@ -71,6 +72,11 @@ travels along a layout next to the values on the frontier.
 
 * `Cslib.Circuits.Frontier.Network.Satisfies.splice`: the separator lemma.
 * `Cslib.Circuits.Frontier.Network.dependsOn_read`: acceptance depends only on the inputs read.
+* `Cslib.Circuits.Frontier.Network.readIn_insert_subset`: inserting one vertex adds only its reads.
+* `Cslib.Circuits.Frontier.Network.exists_ncard_readIn_initial_eq`: read counts reach every
+  intermediate value when each vertex reads at most one input.
+* `Cslib.Circuits.Frontier.Network.ncard_image_path_le`: states at a layer are bounded by the
+  number of assignments on its frontier.
 * `Cslib.Circuits.Frontier.Network.accepted_branchingProgram`: the branching program of a layout
   accepts exactly the accepted inputs.
 * `Cslib.Circuits.Frontier.Network.unambiguous_branchingProgram`: it is unambiguous when
@@ -126,6 +132,14 @@ def read : Set ι :=
 
 @[simp] theorem readIn_empty : N.readIn ∅ = ∅ := by
   ext i; simp [readIn]
+
+/-- The inputs read by a set with one more vertex. -/
+theorem readIn_insert_subset (v : V) (L : Set V) :
+    N.readIn (insert v L) ⊆ N.readIn L ∪ N.readAt v := by
+  rintro i ⟨u, hu, hi⟩
+  rcases hu with rfl | hu
+  · exact Or.inr hi
+  · exact Or.inl ⟨u, hu, hi⟩
 
 /-- **The separator lemma.** Let `α` satisfy the network on the input `x` and `β` on the input
 `y`, and suppose that they agree on the edge cut of `L`. Then the network is satisfied on any
@@ -241,6 +255,22 @@ theorem revealedBy_card_succ_diff :
   simp [revealedBy, read, π.initial_of_card_le le_rfl, compl_eq_univ_sdiff]
 
 end Layout
+
+/-- **Reads grow one at a time.** If each vertex reads at most one input, then along every layout,
+for every `k` up to the number of inputs read, the first `t` vertices read exactly `k` inputs for
+some `t`, by the discrete intermediate value theorem. -/
+theorem exists_ncard_readIn_initial_eq [Finite ι] (π : Layout V)
+    (hm : ∀ v, (N.readAt v).ncard ≤ 1) {k : ℕ} (hk : k ≤ N.read.ncard) :
+    ∃ t ≤ Nat.card V, (N.readIn (π.initial t)).ncard = k := by
+  refine Nat.exists_eq_of_forall_le_add_one
+    (a := fun t => (N.readIn (π.initial t)).ncard) (by simp)
+    (by rwa [π.initial_of_card_le le_rfl]) fun t ht => ?_
+  rw [π.initial_succ ht]
+  calc (N.readIn (insert (π.symm ⟨t, ht⟩) (π.initial t))).ncard
+      ≤ (N.readIn (π.initial t) ∪ N.readAt (π.symm ⟨t, ht⟩)).ncard :=
+        ncard_le_ncard (N.readIn_insert_subset _ _) (toFinite _)
+    _ ≤ (N.readIn (π.initial t)).ncard + (N.readAt (π.symm ⟨t, ht⟩)).ncard := ncard_union_le _ _
+    _ ≤ (N.readIn (π.initial t)).ncard + 1 := Nat.add_le_add_left (hm _) _
 
 /-! ### The branching program of a layout -/
 
@@ -440,6 +470,32 @@ theorem ncard_edges_last_le [Finite ι] [Finite U] :
         exact (ncard_image_le (toFinite _)).trans (ncard_univ _).le
     _ = Nat.card U ^ N.readᶜ.ncard := by
         rw [Nat.card_fun, Nat.card_coe_set_eq, N.newly_branchingProgram_card π]
+
+/-- **The states of the branching program of a layout.** At a layer `t ≤ |V|`, the chosen
+accepting paths of the accepted inputs pass through at most `|U| ^ |frontier t|` states: each is
+the list of the values of a satisfying assignment on the frontier. -/
+theorem ncard_image_path_le [Finite U] [Finite E] (π : Layout V) {t : ℕ}
+    (ht : t ≤ Nat.card V) :
+    ((fun x => (N.branchingProgram π).path x t) '' N.accepted).ncard ≤
+      Nat.card U ^ (N.frontier π t).ncard := by
+  classical
+  set F := N.frontier π t
+  let φ : (F → U) → E → Option U := fun a e => if h : e ∈ F then some (a ⟨e, h⟩) else none
+  have hsub : (fun x => (N.branchingProgram π).path x t) '' N.accepted ⊆ range φ := by
+    rintro _ ⟨x, hx, rfl⟩
+    rw [← N.accepted_branchingProgram π] at hx
+    obtain ⟨α, -, hα⟩ :=
+      N.exists_satisfies_of_isAcceptingPath π ((N.branchingProgram π).isAcceptingPath_path hx)
+    refine ⟨F.domRestrict α, funext fun e => ?_⟩
+    dsimp only
+    rw [hα t (by omega)]
+    simp only [φ, frontierValues, Set.domRestrict_apply]
+    split_ifs <;> rfl
+  calc _ ≤ (range φ).ncard := ncard_le_ncard hsub (toFinite _)
+    _ ≤ Nat.card (F → U) := by
+        rw [← image_univ]
+        exact (ncard_image_le (toFinite _)).trans (ncard_univ _).le
+    _ = Nat.card U ^ F.ncard := by rw [Nat.card_fun, Nat.card_coe_set_eq]
 
 /-- **The size of the program.** If a layout has width at most `w`, and every vertex has degree
 at most `d` and reads at most `m` inputs, then the branching program has at most
