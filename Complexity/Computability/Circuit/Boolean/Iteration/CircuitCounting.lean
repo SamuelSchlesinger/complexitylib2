@@ -187,7 +187,7 @@ theorem boolean_orderedBudget_le (n m q : ℕ) :
   unfold Signature.orderedBudget
   calc
     _ ≤ ∑ _g ∈ Finset.range (q + 1), 5 ^ q * W ^ (2 * q + m) := Finset.sum_le_sum ht
-    _ = _ := by simp [W]; ring
+    _ = _ := by simp [W, Nat.mul_assoc]
 
 /-- Binary logarithmic bound on the De Morgan syntax budget when the wire budget is at most
 `2 ^ h`. -/
