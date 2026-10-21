@@ -195,6 +195,48 @@ The transfer lemma and the diamond theorem hold for arbitrary measures and row l
 \declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/IndependentSet/Sparse.lean}{414}{Cslib.Complexity.SAT.length_toSparseIndependentSet_le}
 \end{result}
 
+\begin{result}
+\subsection{Fixed-parameter tractability}
+A parameterized problem is a problem with an encoding of its instances and a parameter
+$\kappa$ from instances to $\mathbb{N}$. Write $k=\kappa(a)$ and $L$ for the length of the encoded
+instance. The problem is in $\cc{FPT}$ when a multi-tape machine over $\{0,1\}$ decides it within
+time $O(f(k)\,(L+1)^c)$, and in $\cc{XP}$ within time $O(f(k)\,(L+1)^{g(k)})$, for a constant $c$
+and functions $f,g\colon\mathbb{N}\to\mathbb{N}$. The functions are arbitrary, as in Downey and
+Fellows' uniform tractability; the variant requiring computable $f$ (Flum--Grohe, Cygan et al.)
+is not formalized. For every parameter, $\cc{P}\subseteq\cc{FPT}\subseteq\cc{XP}$, and both classes
+equal $\cc{P}$ when the parameter is bounded by a constant. $\cc{FPT}$ is closed under complement,
+intersection and union, and $\cc{XP}$ under complement. If $\kappa\le h\circ\kappa'$ for a
+function $h$, tractability in $\kappa$ gives tractability in $\kappa'$, and $f$ may be taken
+monotone. A decider within time $2^{\delta k}$ times a polynomial in $L$, for any real $\delta$, is
+an fpt decider, so SAT and $k$-SAT are in $\cc{FPT}$ parameterized by the number of distinct
+variables. An fpt-reduction is a membership-preserving map, tidily computable within time
+$O(F(k)\,(L+1)^c)$, whose output parameter is at most $h(k)$, with $F$ and $h$ arbitrary rather
+than computable; polynomial-time reductions with such a parameter bound are fpt-reductions.
+Fpt-reducibility is a preorder, and $\cc{FPT}$ and $\cc{XP}$ are closed under it. Kernelization,
+bounded search trees and the W hierarchy are not covered.
+\citep{DowneyFellows1999,FlumGrohe2006,CyganEtAl2015}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{110}{Cslib.Complexity.FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{116}{Cslib.Complexity.XP}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{143}{Cslib.Complexity.P_subset_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{138}{Cslib.Complexity.FPT_subset_XP}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{369}{Cslib.Complexity.FPT_eq_P_of_le}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{378}{Cslib.Complexity.XP_eq_P_of_le}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{159}{Cslib.Complexity.FPT_subset_FPT_of_le_comp}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{176}{Cslib.Complexity.mem_FPT_iff_exists_monotone}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{188}{Cslib.Complexity.DecidableInExpTime.mem_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{202}{Cslib.Complexity.SAT_mem_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{206}{Cslib.Complexity.KSAT_mem_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{389}{Cslib.Complexity.compl_mem_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{398}{Cslib.Complexity.inter_mem_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{408}{Cslib.Complexity.union_mem_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{418}{Cslib.Complexity.compl_mem_XP}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{446}{Cslib.Complexity.FPTReducible}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{455}{Cslib.Complexity.FPTReducible.of_computableTidilyInPolyTime}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{467}{Cslib.Complexity.FPTReducible.trans}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{483}{Cslib.Complexity.FPTReducible.mem_FPT}
+\declat{8f02565f55540eca35ed76ba30b7c61850f9ee27}{Complexity/Computability/Complexity/Parameterized.lean}{491}{Cslib.Complexity.FPTReducible.mem_XP}
+\end{result}
+
 
 \begin{result}
 \textbf{Circuit evaluation is P-complete.}
