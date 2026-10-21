@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.LogSpace
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Formula
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram
 public import Complexity.Logics.FirstOrder.Encoding.Layout
 import Complexity.Foundations.Data.List.Basic
@@ -74,28 +75,6 @@ open FirstOrder Language Structure CategoryTheory Turing Turing.CounterProgram
 
 namespace Cslib.Logic
 
-namespace FO
-
-variable {L : Language.{u, v}}
-
-/-- The number of bound variables in scope at the deepest point of a formula: the nesting depth of
-its quantifiers, plus the number of bound variables in scope at the formula itself. -/
-def boundDepth {α : Type*} : ∀ {k : ℕ}, L.BoundedFormula α k → ℕ
-  | k, .falsum => k
-  | k, .equal _ _ => k
-  | k, .rel _ _ => k
-  | _, .imp φ ψ => max (boundDepth φ) (boundDepth ψ)
-  | _, .all φ => boundDepth φ
-
-theorem le_boundDepth {α : Type*} : ∀ {k : ℕ} (φ : L.BoundedFormula α k), k ≤ boundDepth φ
-  | _, .falsum => le_rfl
-  | _, .equal _ _ => le_rfl
-  | _, .rel _ _ => le_rfl
-  | _, .imp φ _ => (le_boundDepth φ).trans (le_max_left _ _)
-  | _, .all φ => (Nat.le_succ _).trans (le_boundDepth φ)
-
-end FO
-
 namespace Vocabulary
 
 open FO Expr
@@ -118,22 +97,36 @@ def startExpr (i : ℕ) : Expr :=
   add (add (mul (const 2) (reg 0)) (const 1))
     (sum (List.ofFn fun j : Fin i => add (mul (const 2) (lenExpr v j)) (const 1)))
 
+/-- The table index of a tuple of computed values. -/
+def tupleExprWith {l : ℕ} (values : Fin l → Expr) : Expr :=
+  sum (List.ofFn fun m : Fin l => mul (values m) (pow (reg 0) m))
+
 /-- The index of the tuple of values of some registers. -/
 def tupleExpr {l : ℕ} (vars : Fin l → ℕ) : Expr :=
-  sum (List.ofFn fun m : Fin l => mul (reg (vars m)) (pow (reg 0) m))
+  tupleExprWith fun m => reg (vars m)
+
+/-- The position of a relation-table bit for a tuple of computed values. -/
+def bitExprWith (i : ℕ) {l : ℕ} (values : Fin l → Expr) : Expr :=
+  add (add (startExpr v i) (mul (const 2) (tupleExprWith values))) (const 1)
 
 /-- The position of the bit of the table at position `i` at the tuple of values of some
 registers, in a well-formed input. -/
 def bitExpr (i : ℕ) {l : ℕ} (vars : Fin l → ℕ) : Expr :=
-  add (add (startExpr v i) (mul (const 2) (tupleExpr vars))) (const 1)
+  bitExprWith v i fun m => reg (vars m)
 
 variable {v}
 
+theorem eval_tupleExprWith {l n : ℕ} (values : Fin l → Expr) {regs : List ℕ}
+    (h0 : regs.getD 0 0 = n) (x : Fin l → Fin n)
+    (hx : ∀ m, (values m).eval regs = x m) :
+    (tupleExprWith values).eval regs = tupleIndex x := by
+  simp only [tupleExprWith, eval_sum, List.map_ofFn, List.sum_ofFn, Function.comp_def, eval_mul,
+    eval_reg, eval_pow, hx, h0, tupleIndex_apply]
+
 theorem eval_tupleExpr {l n : ℕ} (vars : Fin l → ℕ) {regs : List ℕ} (h0 : regs.getD 0 0 = n)
     (x : Fin l → Fin n) (hx : ∀ m, regs.getD (vars m) 0 = x m) :
-    (tupleExpr vars).eval regs = tupleIndex x := by
-  simp only [tupleExpr, eval_sum, List.map_ofFn, List.sum_ofFn, Function.comp_def, eval_mul,
-    eval_reg, eval_pow, hx, h0, tupleIndex_apply]
+    (tupleExpr vars).eval regs = tupleIndex x :=
+  eval_tupleExprWith _ h0 x hx
 
 theorem eval_startExpr {a : EncodedStructure} (ha : v.WellFormed a) {regs : List ℕ}
     (h0 : regs.getD 0 0 = a.1) {i : ℕ} (hi : i ≤ v.count) :
@@ -155,12 +148,19 @@ theorem eval_startExpr {a : EncodedStructure} (ha : v.WellFormed a) {regs : List
   rw [hl, List.sum_ofFn, List.sum_ofFn]
   simp only [Function.comp_def, lenExpr, eval_add, eval_mul, eval_const, eval_pow, eval_reg, h0]
 
+theorem eval_bitExprWith {a : EncodedStructure} (ha : v.WellFormed a) {regs : List ℕ}
+    (h0 : regs.getD 0 0 = a.1) {i : ℕ} (hi : i ≤ v.count) {l : ℕ}
+    (values : Fin l → Expr) (x : Fin l → Fin a.1)
+    (hx : ∀ m, (values m).eval regs = x m) :
+    (bitExprWith v i values).eval regs = tableStart a i + 2 * tupleIndex x + 1 := by
+  simp only [bitExprWith, eval_add, eval_mul, eval_const, eval_startExpr ha h0 hi,
+    eval_tupleExprWith values h0 x hx]
+
 theorem eval_bitExpr {a : EncodedStructure} (ha : v.WellFormed a) {regs : List ℕ}
     (h0 : regs.getD 0 0 = a.1) {i : ℕ} (hi : i ≤ v.count) {l : ℕ} (vars : Fin l → ℕ)
     (x : Fin l → Fin a.1) (hx : ∀ m, regs.getD (vars m) 0 = x m) :
-    (bitExpr v i vars).eval regs = tableStart a i + 2 * tupleIndex x + 1 := by
-  simp only [bitExpr, eval_add, eval_mul, eval_const, eval_startExpr ha h0 hi,
-    eval_tupleExpr vars h0 x hx]
+    (bitExpr v i vars).eval regs = tableStart a i + 2 * tupleIndex x + 1 :=
+  eval_bitExprWith ha h0 hi _ x hx
 
 /-! ### Checking the shape of the input -/
 
@@ -560,54 +560,53 @@ theorem getD_termReg {α : Type*} {n : ℕ} [L.Structure (Fin n)] {fv : α → �
   · exact hv x
   · exact hxs i
 
-/-- The number of instructions compiled from a formula
-(`Cslib.Logic.Vocabulary.ModelChecker.formulaCode`). -/
-def codeLength {α : Type*} : ∀ {k : ℕ}, L.BoundedFormula α k → ℕ
-  | _, .falsum => 1
-  | _, .equal _ _ => 2
-  | _, .rel _ _ => 1
-  | _, .imp φ ψ => codeLength φ + codeLength ψ
-  | _, .all φ => codeLength φ + 4
-
 variable (v)
 
-/-- The code evaluating a formula with free variables `α` and `k` bound variables, placed at the
-label `b`: with the cardinality in register `0`, the value of the free variable `x` in register
-`fv x` and that of the bound variable `i` in register `base + i`, it goes to `T` if the formula
-holds and to `F` otherwise. A quantifier over the bound variable `k` loops over the values of
-register `base + k` below the cardinality; an atomic formula compares two registers, or reads a
-bit of a table. -/
-def formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) :
-    ∀ {k : ℕ}, L.BoundedFormula α k → ℕ → ℕ → ℕ → List Instr
-  | _, .falsum, _, _, F => [.lt (const 0) (const 0) F F]
-  | _, .equal t₁ t₂, b, T, F =>
-    [.lt (reg (termReg fv base t₁)) (reg (termReg fv base t₂)) F (b + 1),
-     .lt (reg (termReg fv base t₂)) (reg (termReg fv base t₁)) F T]
-  | _, .rel R ts, _, T, F =>
-    [.read (bitExpr v (v.index ⟨_, R⟩) fun m => termReg fv base (ts m)) T F F]
-  | _, .imp φ ψ, b, T, F =>
-    formulaCode fv base φ b (b + codeLength φ) T ++ formulaCode fv base ψ (b + codeLength φ) T F
-  | k, .all φ, b, T, F =>
-    [.lt (const 0) (reg 0) (b + 1) T,
-     .assign (base + k) (const 0) (b + 3),
-     .lt (add (reg (base + k)) (const 1)) (reg 0) (b + 3 + codeLength φ) T] ++
-    formulaCode fv base φ (b + 3) (b + 2) F ++
-    [.assign (base + k) (add (reg (base + k)) (const 1)) (b + 3)]
+/-- The original order-free atomic handlers: variables are stored in registers, and input
+relations are read from their encoded truth tables. -/
+def atomicCompiler {α : Type*} (fv : α → ℕ) (base : ℕ) : AtomicCompiler L α where
+  term t := reg (termReg fv base t)
+  rel R ts T F :=
+    .read (bitExpr v (v.index ⟨_, R⟩) fun m => termReg fv base (ts m)) T F F
 
-theorem length_formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) :
-    ∀ {k : ℕ} (φ : L.BoundedFormula α k) (b T F : ℕ),
-      (formulaCode v fv base φ b T F).length = codeLength φ
-  | _, .falsum, _, _, _ => rfl
-  | _, .equal _ _, _, _, _ => rfl
-  | _, .rel _ _, _, _, _ => rfl
-  | _, .imp φ ψ, _, _, _ => by
-    simp only [formulaCode, List.length_append, length_formulaCode, codeLength]
-  | _, .all φ, _, _, _ => by
-    simp only [formulaCode, List.length_append, length_formulaCode, codeLength, List.length_cons,
-      List.length_nil]
-    omega
+/-- The code evaluating an order-free formula, with the cardinality in register `0`, free
+variables in registers `fv` and bound variables starting at `base`. -/
+def formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
+    (φ : L.BoundedFormula α k) (b T F : ℕ) : List Instr :=
+  formulaCodeWith (atomicCompiler v fv base) base φ b T F
+
+theorem length_formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
+    (φ : L.BoundedFormula α k) (b T F : ℕ) :
+    (formulaCode v fv base φ b T F).length = codeLength φ :=
+  length_formulaCodeWith _ _ _ _ _ _
 
 variable {v}
+
+/-- The order-free handlers implement their actual table/variable semantics. -/
+theorem atomicCompiler_correct {a : EncodedStructure} (ha : v.WellFormed a)
+    {α : Type*} (fv : α → ℕ) (base : ℕ) (val : α → Fin a.1) :
+    let _ := v.decode a
+    (atomicCompiler v fv base).Correct (encStructure a) fv base val := by
+  let _ := v.decode a
+  constructor
+  · intro k regs xs _ hv hxs t
+    exact getD_termReg hv hxs t
+  · intro k r R ts P b T F B regs xs h0 hv hxs hB hinstr
+    set x : Fin r → Fin a.1 := fun m => (ts m).realize (Sum.elim val xs)
+    have hi : v.index ⟨_, R⟩ < a.2.length := ha.1 ▸ v.index_lt _
+    have htab : v.table a ⟨_, R⟩ = a.2[v.index ⟨_, R⟩] := List.getD_eq_getElem _ _ hi
+    have hj : tupleIndex x < a.2[v.index ⟨_, R⟩].length := by
+      rw [← htab, ha.length_table]
+      exact tupleIndex_lt x
+    have hpos := eval_bitExpr ha h0 (v.index_lt ⟨_, R⟩).le
+      (fun m => termReg fv base (ts m)) x (fun m => getD_termReg hv hxs (ts m))
+    refine ⟨a.2[v.index ⟨_, R⟩][tupleIndex x], ?_, ?_⟩
+    · change _ ↔ RelMap R x
+      simp only [relMap_decode, htab]
+      rw [List.getD_eq_getElem _ _ hj]
+    · refine Reaches.read hinstr hB ?_
+      rw [hpos, getElem?_encStructure_tableStart_two_mul_add_one hi hj]
+      cases a.2[v.index ⟨_, R⟩][tupleIndex x] <;> exact Reaches.refl _
 
 /-- **The compiled code of a formula decides its truth** in the decoded structure of a well-formed
 input: from the code of `φ` at `b`, with the cardinality in register `0`, the values `val` of the
@@ -625,180 +624,11 @@ theorem reaches_formulaCode {P : CounterProgram} {a : EncodedStructure} (ha : v.
         (res = true ↔ (letI := v.decode a; φ.Realize val xs)) ∧
         P.Reaches (encStructure a) (P.Running B) (b, regs) (if res then T else F, regs') ∧
         regs'.length = regs.length ∧ (∀ i < base + k, regs'.getD i 0 = regs.getD i 0) ∧
-        ∀ r ∈ regs', r ≤ B
-  | _, .falsum, b, T, F, regs, xs, hP, _, _, hB, _, _ => by
-    simp only [formulaCode, codeAt_cons] at hP
-    refine ⟨false, regs, by simp [BoundedFormula.Realize], ?_, rfl, fun _ _ => rfl, hB⟩
-    exact Reaches.lt hP.1 hB (by simpa using Reaches.refl _)
-  | _, .equal t₁ t₂, b, T, F, regs, xs, hP, _, _, hB, hv, hxs => by
-    simp only [formulaCode, codeAt_cons] at hP
-    obtain ⟨h₀, h₁, -⟩ := hP
-    let _ := v.decode a
-    have e₁ := getD_termReg hv hxs t₁
-    have e₂ := getD_termReg hv hxs t₂
-    refine ⟨decide (t₁.realize (Sum.elim val xs) = t₂.realize (Sum.elim val xs)), regs, ?_, ?_,
-      rfl, fun _ _ => rfl, hB⟩
-    · simp only [decide_eq_true_eq]
-      rfl
-    · refine Reaches.lt h₀ hB ?_
-      simp only [eval_reg, e₁, e₂]
-      rcases lt_trichotomy (t₁.realize (Sum.elim val xs)) (t₂.realize (Sum.elim val xs)) with
-        hlt | heq | hgt
-      · simpa [hlt, hlt.ne] using Reaches.refl _
-      · simp only [heq, lt_irrefl, ↓reduceIte, decide_true]
-        refine Reaches.lt h₁ hB ?_
-        simp only [eval_reg, e₁, e₂, heq, lt_irrefl, ↓reduceIte]
-        exact Reaches.refl _
-      · simp only [show ¬ (((t₁.realize (Sum.elim val xs) : Fin a.1) : ℕ) <
-            (t₂.realize (Sum.elim val xs) : Fin a.1)) from
-          not_lt.mpr (Fin.le_iff_val_le_val.mp hgt.le), ↓reduceIte, hgt.ne', decide_false]
-        refine Reaches.lt h₁ hB ?_
-        simp only [eval_reg, e₁, e₂, Fin.lt_def.mp hgt, ↓reduceIte, Bool.false_eq_true]
-        exact Reaches.refl _
-  | l', .rel R ts, b, T, F, regs, xs, hP, _, h0, hB, hv, hxs => by
-    simp only [formulaCode, codeAt_cons] at hP
-    let _ := v.decode a
-    set x : Fin _ → Fin a.1 := fun m => (ts m).realize (Sum.elim val xs) with hxdef
-    have hi : v.index ⟨_, R⟩ < a.2.length := ha.1 ▸ v.index_lt _
-    have htab : v.table a ⟨_, R⟩ = a.2[v.index ⟨_, R⟩] := List.getD_eq_getElem _ _ hi
-    have hj : tupleIndex x < a.2[v.index ⟨_, R⟩].length := by
-      rw [← htab, ha.length_table]
-      exact tupleIndex_lt x
-    have hpos := eval_bitExpr ha h0 (v.index_lt ⟨_, R⟩).le (fun m => termReg fv base (ts m)) x
-      (fun m => getD_termReg hv hxs (ts m))
-    refine ⟨a.2[v.index ⟨_, R⟩][tupleIndex x], regs, ?_, ?_, rfl, fun _ _ => rfl, hB⟩
-    · change _ ↔ RelMap R x
-      simp only [relMap_decode, htab]
-      rw [List.getD_eq_getElem _ _ hj]
-    · refine Reaches.read hP.1 hB ?_
-      rw [hpos, getElem?_encStructure_tableStart_two_mul_add_one hi hj]
-      cases a.2[v.index ⟨_, R⟩][tupleIndex x] <;> exact Reaches.refl _
-  | _, .imp φ ψ, b, T, F, regs, xs, hP, hd, h0, hB, hv, hxs => by
-    simp only [formulaCode, codeAt_append, length_formulaCode] at hP
-    have hd₁ : base + boundDepth φ ≤ regs.length :=
-      (Nat.add_le_add_left (le_max_left _ _) base).trans hd
-    have hd₂ : base + boundDepth ψ ≤ regs.length :=
-      (Nat.add_le_add_left (le_max_right _ _) base).trans hd
-    obtain ⟨r₁, regs₁, hr₁, hreach₁, hlen₁, hkeep₁, hB₁⟩ :=
-      reaches_formulaCode ha hnB fv base hbase hfv val φ b (b + codeLength φ) T regs xs hP.1 hd₁ h0
-        hB hv hxs
-    cases r₁ with
-    | false =>
-      refine ⟨true, regs₁, ?_, by simpa using hreach₁, hlen₁, hkeep₁, hB₁⟩
-      let _ := v.decode a
-      simp only [BoundedFormula.realize_imp, true_iff]
-      exact fun h => absurd (hr₁.mpr h) (by simp)
-    | true =>
-      obtain ⟨r₂, regs₂, hr₂, hreach₂, hlen₂, hkeep₂, hB₂⟩ :=
-        reaches_formulaCode ha hnB fv base hbase hfv val ψ (b + codeLength φ) T F regs₁ xs hP.2
-          (hlen₁ ▸ hd₂) (by rw [hkeep₁ 0 (by omega), h0]) hB₁
-          (fun x => by rw [hkeep₁ _ (by have := hfv x; omega), hv])
-          (fun i => by rw [hkeep₁ _ (by omega), hxs])
-      refine ⟨r₂, regs₂, ?_,
-        (show P.Reaches _ _ _ (b + codeLength φ, regs₁) by simpa using hreach₁).trans hreach₂,
-        hlen₂.trans hlen₁,
-        fun i hi => (hkeep₂ i hi).trans (hkeep₁ i hi), hB₂⟩
-      let _ := v.decode a
-      rw [BoundedFormula.realize_imp, hr₂]
-      exact ⟨fun h _ => h, fun h => h (hr₁.mp rfl)⟩
-  | k, .all φ, b, T, F, regs, xs, hP, hd, h0, hB, hv, hxs => by
-    simp only [formulaCode, codeAt_append, codeAt_cons, List.length_cons, List.length_nil] at hP
-    obtain ⟨⟨⟨hc₀, hc₁, hc₂, -⟩, hcφ⟩, hc₃, -⟩ := hP
-    rw [show b + 1 + 1 = b + 2 by omega] at hc₂
-    rw [show b + (0 + 1 + 1 + 1) = b + 3 by omega] at hcφ
-    rw [List.length_append, length_formulaCode] at hc₃
-    simp only [List.length_cons, List.length_nil] at hc₃
-    rw [show b + (0 + 1 + 1 + 1 + codeLength φ) = b + 3 + codeLength φ by omega] at hc₃
-    have hk : base + k < regs.length := by
-      have := le_boundDepth φ
-      simp only [boundDepth] at hd
-      omega
-    let _ := v.decode a
-    -- the loop over the values of the bound variable `k`
-    have loop : ∀ e m (hm : m < a.1) (regsm : List ℕ), a.1 - m = e →
-        regsm.length = regs.length → (∀ i < base + k, regsm.getD i 0 = regs.getD i 0) →
-        regsm.getD (base + k) 0 = m → (∀ r ∈ regsm, r ≤ B) →
-        (∀ m' (hm' : m' < m), φ.Realize val (Fin.snoc xs ⟨m', hm'.trans hm⟩)) →
-        ∃ (res : Bool) (regs' : List ℕ),
-          (res = true ↔ ∀ y : Fin a.1, φ.Realize val (Fin.snoc xs y)) ∧
-          P.Reaches (encStructure a) (P.Running B) (b + 3, regsm)
-            (if res then T else F, regs') ∧
-          regs'.length = regs.length ∧ (∀ i < base + k, regs'.getD i 0 = regs.getD i 0) ∧
-          ∀ r ∈ regs', r ≤ B := by
-      intro e
-      induction e with
-      | zero => intro m hm _ he; omega
-      | succ e ih =>
-        intro m hm regsm he hlenm hkeepm hvm hBm hprev
-        have hxs' : ∀ i : Fin (k + 1), regsm.getD (base + i) 0 =
-            (Fin.snoc xs ⟨m, hm⟩ : Fin (k + 1) → Fin a.1) i := by
-          intro i
-          induction i using Fin.lastCases with
-          | last => simpa using hvm
-          | cast i => rw [Fin.snoc_castSucc, Fin.val_castSucc, hkeepm _ (by omega), hxs]
-        obtain ⟨r₁, regs₁, hr₁, hreach₁, hlen₁, hkeep₁, hB₁⟩ :=
-          reaches_formulaCode ha hnB fv base hbase hfv val φ (b + 3) (b + 2) F regsm
-            (Fin.snoc xs ⟨m, hm⟩) hcφ (by simp only [boundDepth] at hd; omega)
-            (by rw [hkeepm 0 (by omega), h0]) hBm
-            (fun x => by rw [hkeepm _ (by have := hfv x; omega), hv]) hxs'
-        cases r₁ with
-        | false =>
-          refine ⟨false, regs₁, ?_, by simpa using hreach₁, hlen₁.trans hlenm,
-            fun i hi => (hkeep₁ i (by omega)).trans (hkeepm i hi), hB₁⟩
-          simp only [Bool.false_eq_true, false_iff, not_forall]
-          exact ⟨⟨m, hm⟩, fun h => absurd (hr₁.mpr h) (by simp)⟩
-        | true =>
-          have hv₁ : regs₁.getD (base + k) 0 = m := by rw [hkeep₁ _ (by omega), hvm]
-          have h0₁ : regs₁.getD 0 0 = a.1 := by rw [hkeep₁ 0 (by omega), hkeepm 0 (by omega), h0]
-          have hall (hlast : ¬ m + 1 < a.1) : ∀ y : Fin a.1, φ.Realize val (Fin.snoc xs y) := by
-            intro y
-            rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp (show (y : ℕ) < m + 1 by omega)) with hy | hy
-            · exact hprev y hy
-            · have : y = ⟨m, hm⟩ := Fin.ext hy
-              exact this ▸ hr₁.mp rfl
-          by_cases hnext : m + 1 < a.1
-          · obtain ⟨r, regs', hr, hreach, hlen, hkeep, hB'⟩ :=
-              ih (m + 1) hnext (regs₁.set (base + k) (m + 1)) (by omega)
-                (by rw [List.length_set, hlen₁, hlenm])
-                (fun i hi => by
-                  rw [List.getD_set_ne (by omega), hkeep₁ i (by omega), hkeepm i hi])
-                (List.getD_set_self (by rw [hlen₁, hlenm]; exact hk))
-                (List.forall_mem_set_of_forall_mem hB₁ (by omega))
-                (fun m' hm' => by
-                  rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp hm') with h | h
-                  · exact hprev m' h
-                  · subst h; exact hr₁.mp rfl)
-            refine ⟨r, regs', hr, ?_, hlen, hkeep, hB'⟩
-            refine (by simpa using hreach₁ : P.Reaches _ _ _ (b + 2, regs₁)).trans ?_
-            refine Reaches.lt hc₂ hB₁ ?_
-            simp only [eval_add, eval_reg, eval_const, hv₁, h0₁, hnext, ↓reduceIte]
-            refine Reaches.assign hc₃ hB₁ ?_
-            simp only [eval_add, eval_reg, eval_const, hv₁]
-            exact hreach
-          · refine ⟨true, regs₁, by simpa using hall hnext, ?_, hlen₁.trans hlenm,
-              fun i hi => (hkeep₁ i (by omega)).trans (hkeepm i hi), hB₁⟩
-            refine (by simpa using hreach₁ : P.Reaches _ _ _ (b + 2, regs₁)).trans ?_
-            refine Reaches.lt hc₂ hB₁ ?_
-            simp only [eval_add, eval_reg, eval_const, hv₁, h0₁, hnext, ↓reduceIte]
-            exact Reaches.refl _
-    -- the quantifier
-    by_cases hn : 0 < a.1
-    · obtain ⟨res, regs', hres, hreach, hlen, hkeep, hB'⟩ :=
-        loop (a.1 - 0) 0 hn (regs.set (base + k) 0) rfl (by rw [List.length_set])
-          (fun i hi => List.getD_set_ne (by omega)) (List.getD_set_self hk)
-          (List.forall_mem_set_of_forall_mem hB (Nat.zero_le _))
-          (fun m' hm' => absurd hm' (Nat.not_lt_zero _))
-      refine ⟨res, regs', by rw [hres, BoundedFormula.realize_all], ?_, hlen, hkeep, hB'⟩
-      refine Reaches.lt hc₀ hB ?_
-      simp only [eval_const, eval_reg, h0, hn, ↓reduceIte]
-      exact Reaches.assign hc₁ hB (by simpa using hreach)
-    · refine ⟨true, regs, ?_, ?_, rfl, fun _ _ => rfl, hB⟩
-      · simp only [true_iff, BoundedFormula.realize_all]
-        intro y
-        exact absurd y.2 (by omega)
-      · refine Reaches.lt hc₀ hB ?_
-        simp only [eval_const, eval_reg, h0, hn, ↓reduceIte]
-        exact Reaches.refl _
+        ∀ r ∈ regs', r ≤ B := by
+  let _ := v.decode a
+  intro k
+  exact reaches_formulaCodeWith (P := P) hnB fv base hbase hfv val (atomicCompiler v fv base)
+    (atomicCompiler_correct ha fv base val)
 
 end Eval
 
