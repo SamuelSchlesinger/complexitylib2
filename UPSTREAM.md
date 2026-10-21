@@ -208,5 +208,5 @@ grandfathered without an alias; this list records them for downstream users.
   opened; use dot notation (`G.toSimpleGraph_adj`) or full names. Upstreaming the frontier
   multigraph therefore follows `Foundations/Combinatorics/Multigraph.lean`.
 
-The [historical ledger](https://github.com/SamuelSchlesinger/complexitylib2/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
+The [historical ledger](https://github.com/cslib-community/complexitylib/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
 preserves earlier integration notes and per-module follow-up ideas.

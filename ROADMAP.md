@@ -147,32 +147,39 @@ less repeated foundational work per paper while preserving readable proofs and e
 statements. Novel arguments will still require novel proofs. Keep this catalogue and evidence
 linked to declarations and reviewed revisions, rather than adding parallel narrative inventories.
 
-## Community handover
+## Repository identity and home
 
-Prepare the existing library as a usable successor to the original Complexitylib. Keep the
-public identity **Complexitylib**: computational complexity theory built on CSLib. AI assistance
-is a development method, and community participation includes mathematical review, API design,
-documentation and maintenance as well as proving new theorems.
+This library is **Complexitylib**: computational complexity theory built on CSLib. The temporary
+name `complexitylib2` distinguished the CSLib-based rewrite while both implementations were active;
+it is not a lasting project identity. The canonical repository is
+[`cslib-community/complexitylib`](https://github.com/cslib-community/complexitylib). The original,
+pre-CSLib implementation remains available as the read-only
+[`complexitylib-v1`](https://github.com/SamuelSchlesinger/complexitylib-v1) archive.
 
-The handover covers the existing documented developments, with these acceptance criteria:
+Moving the repository to CSLib Community is an owner and name change for continuing development,
+not a handover of Samuel's editorial direction and not acceptance into upstream CSLib. AI
+assistance is a development method, and community participation includes mathematical review, API
+design, documentation and maintenance as well as proving new theorems.
+
+The repository consolidation has these maintenance requirements:
 
 * **Auditable claims.** Check each README result against its public statement, definitions,
   assumptions, encodings and resource model. Preserve nonconstructive and conditional boundaries;
   passing Lean does not establish that a statement matches its prose or literature source.
-* **Reproducible validation and review.** Run all six checks on the handover revision, retain the
+* **Reproducible validation and review.** Run all six checks on the migration revision, retain the
   full-library axiom audit and representative clients, and record independent review with that
   revision in the PR or commit description, following
   [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
 * **A usable contribution path.** A new contributor can find a bounded task, the relevant APIs,
   source references, validation commands and review expectations without private conversation
   history or a maintainer's agent installation.
-* **An agreed handover.** Before announcing community hosting, agree the repository name,
-  maintainers and merge responsibilities with CSLib Community. Verify CI and repository links
-  after transfer, then point the original repository to its successor. Organizational hosting
-  does not imply acceptance into upstream CSLib.
+* **One active project.** Preserve this repository's issues, pull requests, releases and history
+  through a repository transfer; archive V1 rather than maintaining two active libraries. Verify
+  redirects, CI, release assets and repository links after the move.
 
 Completing every V1 port, Jukna chapter, or future resource-bound improvement is not a condition
-of the handover. The work below remains available for subsequent, independently reviewed batches.
+of the repository move. The work below remains available for subsequent, independently reviewed
+batches.
 
 ## Continuing priorities
 
@@ -693,11 +700,11 @@ constants and binary unions; the theorem index records the precise scope of each
 
 | Milestone | Proved result and scope |
 | --- | --- |
-| [Quadratic completeness #12](https://github.com/SamuelSchlesinger/complexitylib2/issues/12) | **Proved:** [quadratic compiler](Complexity/Computability/Circuit/Fusion/Quadratic.lean) uses exactly `t²` AND gates for a `t`-pair cover and gives the minimum source-cost bound, including arbitrary carriers, empty input families and trivial targets (TR25-033, Theorem 24; PR #19). |
-| [Approximation bridge and counting barrier #13](https://github.com/SamuelSchlesinger/complexitylib2/issues/13) | **Proved:** [exact consistency and local observation errors](Complexity/Computability/Circuit/Fusion/Consistency.lean), the [fixed pair sampler, weighted averaging and `8n + 8` certificate barrier](Complexity/Computability/Circuit/Fusion/Sampling.lean) (Oliveira, Lemma 3 and Theorem 6; PRs #20 and #22). This is a local observation bridge, not a formal equivalence of all approximation models. |
-| [Graph transfer and inequality #14](https://github.com/SamuelSchlesinger/complexitylib2/issues/14) | **Proved:** [row/column-to-literal transfer](Complexity/Computability/Circuit/Fusion/Graph.lean) for any admissible witness subclass, including semi-ultrafilters, and [exact canonical/full cover and intersection cost `n`](Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean) for inequality on `2^n` vertices per side (TR25-033, Lemmas 39/48 and Proposition 40; PR #21). |
-| [Random graph covers #15](https://github.com/SamuelSchlesinger/complexitylib2/issues/15) | **Proved:** [finite inclusion-pattern counting](Complexity/Computability/Circuit/Fusion/Encoding.lean) and [random graph hardness](Complexity/Computability/Circuit/Fusion/Graph/Random.lean): for `N ≥ 16`, probability at least `1 - 2⁻ᴺ` of `⌊N/16⌋ < ρ(G) ≤ N` under the uniform distribution on all labelled bipartite graphs (TR25-033, Theorem 37; PR #23). |
-| [Conondeterministic complexity #16](https://github.com/SamuelSchlesinger/complexitylib2/issues/16) | **Proved:** [universal-verifier cover extraction](Complexity/Computability/Circuit/Fusion/Conondeterministic.lean) and the [converse compiler](Complexity/Computability/Circuit/Fusion/Converse.lean) give `ρ_ultra(f) ≤ C_forall,AND(f) ≤ 5ρ_ultra(f)`. The [extended-natural circuit measure](Complexity/Computability/Circuit/Boolean/Conondeterministic.lean) minimizes over all finite auxiliary counts and verifiers; a `t`-pair cover gives exactly `3t` auxiliary bits and `5t` AND gates, including zero and constant cases (TR25-033, Theorem 45, credited there to Karchmer; PRs #25 and #28). The explicit factor five comes from the formalized certificate construction. The graph transfer above specializes to semi-ultrafilters (Lemma 48). |
+| [Quadratic completeness #12](https://github.com/cslib-community/complexitylib/issues/12) | **Proved:** [quadratic compiler](Complexity/Computability/Circuit/Fusion/Quadratic.lean) uses exactly `t²` AND gates for a `t`-pair cover and gives the minimum source-cost bound, including arbitrary carriers, empty input families and trivial targets (TR25-033, Theorem 24; PR #19). |
+| [Approximation bridge and counting barrier #13](https://github.com/cslib-community/complexitylib/issues/13) | **Proved:** [exact consistency and local observation errors](Complexity/Computability/Circuit/Fusion/Consistency.lean), the [fixed pair sampler, weighted averaging and `8n + 8` certificate barrier](Complexity/Computability/Circuit/Fusion/Sampling.lean) (Oliveira, Lemma 3 and Theorem 6; PRs #20 and #22). This is a local observation bridge, not a formal equivalence of all approximation models. |
+| [Graph transfer and inequality #14](https://github.com/cslib-community/complexitylib/issues/14) | **Proved:** [row/column-to-literal transfer](Complexity/Computability/Circuit/Fusion/Graph.lean) for any admissible witness subclass, including semi-ultrafilters, and [exact canonical/full cover and intersection cost `n`](Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean) for inequality on `2^n` vertices per side (TR25-033, Lemmas 39/48 and Proposition 40; PR #21). |
+| [Random graph covers #15](https://github.com/cslib-community/complexitylib/issues/15) | **Proved:** [finite inclusion-pattern counting](Complexity/Computability/Circuit/Fusion/Encoding.lean) and [random graph hardness](Complexity/Computability/Circuit/Fusion/Graph/Random.lean): for `N ≥ 16`, probability at least `1 - 2⁻ᴺ` of `⌊N/16⌋ < ρ(G) ≤ N` under the uniform distribution on all labelled bipartite graphs (TR25-033, Theorem 37; PR #23). |
+| [Conondeterministic complexity #16](https://github.com/cslib-community/complexitylib/issues/16) | **Proved:** [universal-verifier cover extraction](Complexity/Computability/Circuit/Fusion/Conondeterministic.lean) and the [converse compiler](Complexity/Computability/Circuit/Fusion/Converse.lean) give `ρ_ultra(f) ≤ C_forall,AND(f) ≤ 5ρ_ultra(f)`. The [extended-natural circuit measure](Complexity/Computability/Circuit/Boolean/Conondeterministic.lean) minimizes over all finite auxiliary counts and verifiers; a `t`-pair cover gives exactly `3t` auxiliary bits and `5t` AND gates, including zero and constant cases (TR25-033, Theorem 45, credited there to Karchmer; PRs #25 and #28). The explicit factor five comes from the formalized certificate construction. The graph transfer above specializes to semi-ultrafilters (Lemma 48). |
 
 Keep the source models explicit: constants, zero-gate constructions, exact versus one-sided
 literal consistency, and AND versus total gate costs. The counting barrier requires a capacity
@@ -854,4 +861,4 @@ and helper APIs, and distinguish source-line counts from runtime or proof-term s
 [scripts/proof_lengths.py](scripts/proof_lengths.py) supports comparison against a Git revision.
 
 Past measurements, reviews and proposals remain in the
-[historical roadmap](https://github.com/SamuelSchlesinger/complexitylib2/blob/c88395234575284c2fe1e9e3619ead1c2f6fd7f3/ROADMAP.md).
+[historical roadmap](https://github.com/cslib-community/complexitylib/blob/c88395234575284c2fe1e9e3619ead1c2f6fd7f3/ROADMAP.md).
