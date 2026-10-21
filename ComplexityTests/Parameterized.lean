@@ -25,7 +25,7 @@ example : SAT ∈ FPT encCNF CNF.numVars := SAT_mem_FPT
 
 example : KSAT 3 ∈ FPT encCNF CNF.numVars := KSAT_mem_FPT 3
 
-example : SAT ∈ XP encCNF CNF.numVars := FPT_subset_XP _ _ SAT_mem_FPT
+example : SAT ∈ XP encCNF CNF.numVars := FPT_subset_XP SAT_mem_FPT
 
 /-- A larger parameter: the number of occurrences of variables bounds the number of distinct
 variables. -/
@@ -47,10 +47,10 @@ private def Narrow : Set (CNF ℕ) := {φ | ∀ c ∈ φ, c.length ≤ 3}
 private theorem narrow_mem_P : Narrow ∈ P encCNF :=
   ⟨_, computableTidilyInPolyTime_all_length_le 3, fun φ => by simp [Narrow]⟩
 
-example : Narrow ∈ FPT encCNF CNF.numVars := P_subset_FPT _ _ narrow_mem_P
+example : Narrow ∈ FPT encCNF CNF.numVars := P_subset_FPT narrow_mem_P
 
 /-- Every parameter works for a problem in `P`, even the length of the formula. -/
-example : Narrow ∈ FPT encCNF List.length := P_subset_FPT _ _ narrow_mem_P
+example : Narrow ∈ FPT encCNF List.length := P_subset_FPT narrow_mem_P
 
 example : KSAT 3 = Narrow ∩ SAT := by
   ext φ
@@ -60,10 +60,10 @@ example : KSAT 3 = Narrow ∩ SAT := by
 example : KSAT 3 ∈ FPT encCNF CNF.numVars := by
   have : KSAT 3 = Narrow ∩ SAT := Set.ext fun _ => Iff.rfl
   rw [this]
-  exact inter_mem_FPT (P_subset_FPT _ _ narrow_mem_P) SAT_mem_FPT
+  exact inter_mem_FPT (P_subset_FPT narrow_mem_P) SAT_mem_FPT
 
 example : Narrow ∪ SAT ∈ FPT encCNF CNF.numVars :=
-  union_mem_FPT (P_subset_FPT _ _ narrow_mem_P) SAT_mem_FPT
+  union_mem_FPT (P_subset_FPT narrow_mem_P) SAT_mem_FPT
 
 /-! ### Bounded parameters -/
 
@@ -116,7 +116,7 @@ example : ThreeSAT ∈ FPT encCNF CNF.numVars :=
   threeSAT_fptReducible_SAT.mem_FPT SAT_mem_FPT
 
 example : ThreeSATᶜ ∈ XP encCNF CNF.numVars :=
-  threeSAT_fptReducible_SAT.compl.mem_XP (FPT_subset_XP _ _ (compl_mem_FPT SAT_mem_FPT))
+  threeSAT_fptReducible_SAT.compl.mem_XP (FPT_subset_XP (compl_mem_FPT SAT_mem_FPT))
 
 example : FPTReducible encCNF encCNF CNF.numVars CNF.numVars ThreeSAT ThreeSAT :=
   .refl _ _ _

@@ -30,9 +30,8 @@ solution sought, a width. Running times are measured in the parameter `k = κ a`
 The function `f` is arbitrary, as in the *uniform* fixed-parameter tractability of Downey and
 Fellows [DowneyFellows1999, Chapter 2]. Flum and Grohe [FlumGrohe2006, Chapter 1] and Cygan et
 al. [CyganEtAl2015, Chapter 1] require `f` to be computable (Downey and Fellows' *strongly
-uniform* tractability); that variant is not formalized here. The deciders built below
-are the same for both variants; only the bookkeeping of `f` would change. The function `f` may be
-taken monotone (`Cslib.Complexity.mem_FPT_iff_exists_monotone`).
+uniform* tractability); that variant is not formalized here. The function `f` may be taken
+monotone (`Cslib.Complexity.mem_FPT_iff_exists_monotone`).
 
 `Cslib.Complexity.FPTReducible encA encB κA κB A B`: `A` reduces to `B` by an *fpt-reduction*
 [FlumGrohe2006, Definition 2.1] [CyganEtAl2015, Definition 13.1]: a map `f` computable within
@@ -52,6 +51,7 @@ definitions require them to be computable.
 
 ## Main results
 
+* `Cslib.Complexity.mem_FPT`, `Cslib.Complexity.mem_XP`: unfolding the classes.
 * `Cslib.Complexity.P_subset_FPT`, `Cslib.Complexity.FPT_subset_XP`: `P ⊆ FPT ⊆ XP`, for every
   parameter.
 * `Cslib.Complexity.FPT_eq_P_of_le`, `Cslib.Complexity.XP_eq_P_of_le`: for a bounded parameter,
@@ -110,14 +110,24 @@ computable. -/
 def FPT (enc : α ↪ List Bool) (κ : α → ℕ) : Set (Set α) :=
   {A | ∃ (f : ℕ → ℕ) (c : ℕ), DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ c}
 
-/-- **Slicewise polynomial time.** `A ∈ XP enc κ` when `A` is decidable within time
-`f (κ a) * (|enc a| + 1) ^ g (κ a)` up to a constant factor, for some functions `f` and `g`: each
-slice `{a | κ a = k}` is decidable in polynomial time, with a degree depending on `k`. -/
+/-- **Slicewise polynomial time.** `A ∈ XP enc κ` when a single machine decides `A` within time
+`f (κ a) * (|enc a| + 1) ^ g (κ a)` up to a constant factor, for some functions `f` and `g`
+[DowneyFellows1999] [FlumGrohe2006]: in particular each slice `{a | κ a = k}` is decidable in
+polynomial time, with a degree depending on `k`. The functions `f` and `g` are arbitrary, where
+[FlumGrohe2006] and [CyganEtAl2015] require them to be computable. -/
 def XP (enc : α ↪ List Bool) (κ : α → ℕ) : Set (Set α) :=
   {A | ∃ f g : ℕ → ℕ,
     DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ g (κ a)}
 
 variable {enc : α ↪ List Bool} {κ κ' : α → ℕ} {A : Set α}
+
+theorem mem_FPT : A ∈ FPT enc κ ↔
+    ∃ (f : ℕ → ℕ) (c : ℕ), DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ c :=
+  Iff.rfl
+
+theorem mem_XP : A ∈ XP enc κ ↔ ∃ f g : ℕ → ℕ,
+    DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ g (κ a) :=
+  Iff.rfl
 
 /-- Changing the parameter and the functions of a bound of the shape of `XP`. -/
 private theorem decidableInTimeO_mono_parameter {f f' g g' : ℕ → ℕ}
@@ -135,12 +145,12 @@ private theorem decidableInTimeO_mono_parameter {f f' g g' : ℕ → ℕ}
   linarith
 
 /-- **`FPT ⊆ XP`.** -/
-theorem FPT_subset_XP (enc : α ↪ List Bool) (κ : α → ℕ) : FPT enc κ ⊆ XP enc κ :=
+theorem FPT_subset_XP : FPT enc κ ⊆ XP enc κ :=
   fun _ ⟨f, c, h⟩ => ⟨f, fun _ => c, h⟩
 
 /-- **`P ⊆ FPT`**, for every parameter: a polynomial-time decider is an fpt-time decider with
 `f = 1`. -/
-theorem P_subset_FPT (enc : α ↪ List Bool) (κ : α → ℕ) : P enc ⊆ FPT enc κ := by
+theorem P_subset_FPT : P enc ⊆ FPT enc κ := by
   intro A hA
   obtain ⟨k, hk⟩ := mem_P_iff_exists_mem_DTIME.mp hA
   refine ⟨fun _ => 1, k,
@@ -151,8 +161,8 @@ theorem P_subset_FPT (enc : α ↪ List Bool) (κ : α → ℕ) : P enc ⊆ FPT 
   linarith
 
 /-- **`P ⊆ XP`**, for every parameter. -/
-theorem P_subset_XP (enc : α ↪ List Bool) (κ : α → ℕ) : P enc ⊆ XP enc κ :=
-  (P_subset_FPT enc κ).trans (FPT_subset_XP enc κ)
+theorem P_subset_XP : P enc ⊆ XP enc κ :=
+  P_subset_FPT.trans FPT_subset_XP
 
 /-- **Changing the parameter.** If `κ a ≤ h (κ' a)` for a function `h`, then a problem that is
 fixed-parameter tractable in `κ` is fixed-parameter tractable in `κ'`. -/
@@ -367,7 +377,7 @@ theorem mem_XP_iff_exists_computableTidilyInO {A : Set α} :
 
 /-- **Bounded parameters.** For a parameter bounded by a constant, `FPT` is `P`. -/
 theorem FPT_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : FPT encA κ = P encA := by
-  refine subset_antisymm (fun A hA => ?_) (P_subset_FPT encA κ)
+  refine subset_antisymm (fun A hA => ?_) P_subset_FPT
   obtain ⟨g, ⟨f, c, hg⟩, hA⟩ :=
     mem_FPT_iff_computableTidilyInFPTTime.mp (FPT_subset_FPT_of_le_comp (κ' := fun _ => 0)
       (h := fun _ => K) hκ hA)
@@ -376,7 +386,7 @@ theorem FPT_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : FPT encA κ = P enc
 
 /-- **Bounded parameters.** For a parameter bounded by a constant, `XP` is `P`. -/
 theorem XP_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : XP encA κ = P encA := by
-  refine subset_antisymm (fun A hA => ?_) (P_subset_XP encA κ)
+  refine subset_antisymm (fun A hA => ?_) P_subset_XP
   obtain ⟨g, f, e, hg, hA⟩ :=
     mem_XP_iff_exists_computableTidilyInO.mp (XP_subset_XP_of_le_comp (κ' := fun _ => 0)
       (h := fun _ => K) hκ hA)
@@ -458,12 +468,14 @@ theorem FPTReducible.of_computableTidilyInPolyTime {f : α → β}
   ⟨f, hf.computableTidilyInFPTTime κA, ⟨h, hκ⟩, hfA⟩
 
 /-- Every parameterized problem reduces to itself by the identity. -/
+@[refl]
 theorem FPTReducible.refl (encA : α ↪ List Bool) (κA : α → ℕ) (A : Set α) :
     FPTReducible encA encA κA κA A A :=
   .of_computableTidilyInPolyTime ComputableTidilyInPolyTime.id' (h := id) (fun _ => le_rfl)
     fun _ => Iff.rfl
 
 /-- **Fpt-reductions compose.** -/
+@[trans]
 theorem FPTReducible.trans (hAB : FPTReducible encA encB κA κB A B)
     (hBC : FPTReducible encB encC κB κC B C) : FPTReducible encA encC κA κC A C := by
   obtain ⟨f, hf, ⟨h₁, hκ₁⟩, hAB⟩ := hAB
