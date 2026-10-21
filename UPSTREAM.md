@@ -99,7 +99,6 @@ agreement during upstream review.
 | `Computability/Circuit/{Unfolding,MapOp}` | Consider integrating into `Circuit/Formula` and `Circuit/Program`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
 | `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
-| `Foundations/Data/BitString/QuadraticForm` | Move the general bit-polynomial lemmas to `Foundations/BooleanAnalysis/LowDegree`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
 | `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}` | Consider Mathlib probability APIs; evaluate a shared coordinate-gluing operation and splitting `HarmonicMean`. |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
