@@ -333,6 +333,7 @@ import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.UniversalResourceBound
+import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
