@@ -141,6 +141,40 @@ formalized.\citep{CaiEtAl1988,Kadin1988}
 \end{result}
 
 \begin{result}
+\subsection{Boolean closure and the second level of PH}
+For a fixed injective encoding and natural levels $n,m$, if
+$A\in\cc{BH}_n$ and $B\in\cc{BH}_m$, then
+\[
+A\cap B\in\cc{BH}_{nm},\qquad
+A\setminus B\in\cc{BH}_{n(m+1)},\qquad
+A\cup B\in\cc{BH}_{(n+1)(m+1)+1}.
+\]
+These are upper bounds, not optimality claims. Consequently the full Boolean
+hierarchy is closed under union, intersection, difference, symmetric difference
+and complement, and is the least difference-closed class containing NP.
+The finite intersection/difference bounds hold over any base class closed under
+union and intersection; the union bound additionally assumes that it contains
+the universe. Independently, every $\Sigma_k^p$ and $\Pi_k^p$ is closed under
+union and intersection, including $k=0$: certificates are paired within each
+quantifier block, and a polynomial-time splitter recovers the two original
+verifiers' exact-length certificates. Thus
+\[
+\cc{BH}\subseteq\Sigma_2^p\cap\Pi_2^p,
+\]
+including DP and coDP. No PH-collapse or strictness statement follows here.
+These are checked closure and containment deductions using the classical
+hierarchy presentations.\citep{CaiEtAl1988,Stockmeyer1976,AroraBarak09}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/BooleanHierarchy/Closure.lean}{125}{Cslib.Complexity.inter_mem_BH}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/BooleanHierarchy/Closure.lean}{131}{Cslib.Complexity.diff_mem_BH}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/BooleanHierarchy/Closure.lean}{137}{Cslib.Complexity.union_mem_BH}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/BooleanHierarchy.lean}{225}{Cslib.Complexity.BooleanHierarchy_subset_iff}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/PH/Closure.lean}{172}{Cslib.Complexity.inter_mem_SigmaP}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/PH/Closure.lean}{186}{Cslib.Complexity.union_mem_PiP}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/BooleanHierarchy/PH.lean}{52}{Cslib.Complexity.BooleanHierarchy_subset_SigmaP_two_inter_PiP_two}
+\end{result}
+
+
+\begin{result}
 \subsection{Graph and number problems are NP-complete}
 Three-colorability, undirected Hamiltonian cycle, binary subset sum, and the
 budget decision version of traveling salesman are NP-complete under certified

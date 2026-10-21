@@ -827,6 +827,32 @@ for every modulus, and equals $\cc{Mod}_{k}\cc{P}$ for prime $k$.
 \end{result}
 
 \begin{result}
+\subsection{Small gaps and modular counting}
+For every fixed positive modulus $k$, every GapP function $g=f_1-f_2$ has a
+$\#\cc{P}$ representative $f_1+(k-1)f_2$ with the same residue modulo $k$.
+Consequently both the nonzero-residue class $\cc{Mod}_k\cc{P}$ and the
+zero-residue class $\cc{coMod}_k\cc{P}$ admit GapP characterizations.
+For every fixed $k\ge2$ this gives
+\[
+\cc{FewP}\subseteq\cc{SPP}\subseteq
+\cc{Mod}_k\cc{P}\cap\cc{coMod}_k\cc{P},
+\qquad \cc{SPP}\subseteq\oplus\cc{P}.
+\]
+The zero-one GapP characteristic function witnesses the nonzero-residue
+containment; its complement witnesses the zero-residue containment.
+Composite moduli are included. This does not prove complement closure of the
+whole modular class. The signed characterization allows $k=1$ but excludes
+$k=0$. These are algebraic deductions from the counting-class definitions and
+the proved FewP--SPP inclusion.\citep{Fortnow1997,FennerFortnowKurtz1994}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/ModP/GapP.lean}{44}{Cslib.Complexity.GapP.exists_SharpP_emod}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/ModP/GapP.lean}{58}{Cslib.Complexity.mem_ModP_iff_exists_GapP}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/ModP/GapP.lean}{71}{Cslib.Complexity.mem_coModP_iff_exists_GapP}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/ModP/GapP.lean}{79}{Cslib.Complexity.SPP_subset_ModP}
+\declat{d2e8de29585740532ce997f5c7ced895988cb11a}{Complexity/Computability/Complexity/Classes/ModP/GapP.lean}{87}{Cslib.Complexity.SPP_subset_coModP}
+\end{result}
+
+
+\begin{result}
 \subsection{Wide counting gaps}
 For every fixed injective encoding,
 \[
