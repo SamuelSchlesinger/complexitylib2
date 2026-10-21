@@ -717,8 +717,19 @@ rules retain answer-dependent costs; separate method budgets transport contracts
 successive semantic modules and then to additive native execution measures. The `stateful`
 tactic uses local contracts and structural rules, with intermediate assertions and implementation
 choices supplied explicitly. A two-layer adaptive counter example checks both execution branches
-and rejects an insufficient budget. This is the first #274 milestone: integration with `polytime`
-certificates for client controllers, pure computations and calling conventions remains open.
+and rejects an insufficient budget.
+
+[RAM controller certificates](Complexity/Computability/WordRAM/Controller.lean) now connect a
+fixed machine fragment to an admissible client, charging its control flow and register preparation.
+Sequencing uses one fixed continuation fragment for all represented answers; pure semantic results
+require actual execution evidence. Named certificates are reused by `stateful`, while `polytime`
+can retrieve the distinct uniform RAM function-time predicate. The
+[adaptive stack controller](Complexity/Algorithms/WordRAM/Stack/Controller.lean) starts from the
+standard singleton input, installs an empty stack at address two, pushes and pops the input, and
+uses the observed answer to replace zero through another pair of stack calls. It returns
+`max n 1` in exactly 49 instructions for zero and 29 otherwise, including setup, argument writes,
+control flow and halt. All inputs fit its logarithmic numerical-magnitude width threshold.
+This does not certify arbitrary Lean continuations or a conversion to Turing-machine time.
 
 The [fixed-program bridge](Complexity/Computability/WordRAM/Dynamic.lean) has concrete bounded
 [stack](Complexity/Algorithms/WordRAM/Stack.lean) and
@@ -729,7 +740,7 @@ frame rules. Prefix sums use a balanced aggregation tree for a power-of-two numb
 not a Fenwick layout. Machine costs exclude initial representation construction and external argument
 encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
 
-Outstanding: charged initialization and compositional machine-resource certificates for callers;
+Outstanding: controllers for larger adaptive and iterative clients;
 a concrete shared-heap queue
 using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
 doubling-array amortization, richer ownership and recursive procedures; independent model

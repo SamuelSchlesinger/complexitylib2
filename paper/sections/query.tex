@@ -264,8 +264,8 @@ From a native initial state representing an abstract state satisfying the precon
 a native realization and per-operation native-weight bounds give a finite native execution
 satisfying the postcondition and budget, and bound every supplied finite execution from that
 initial state. The \texttt{stateful} tactic searches local contracts and pure/call rules;
-sequencing assertions and implementation choices are explicit proof inputs. This does not yet
-certify total controller time via \texttt{polytime}, argument delivery or result decoding.
+sequencing assertions and implementation choices are explicit proof inputs. These operation-cost
+contracts alone do not certify total controller time, argument delivery or result decoding.
 \citep[Chapter 17]{CLRS2009}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Composition.lean}{66}{Cslib.Stateful.Module.comp}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Module.lean}{62}{Cslib.Stateful.Module.realize}
@@ -274,6 +274,34 @@ certify total controller time via \texttt{polytime}, argument delivery or result
 \declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{147}{Cslib.Stateful.Module.ChargeBound.comp}
 \declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{164}{Cslib.Stateful.Spec.CostHoare.link}
 \declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{108}{Cslib.Stateful.Spec.CostHoare.run}
+\end{result}
+
+\begin{result}
+\subsection{Certified adaptive controllers on the word RAM}
+A relational certificate connects an admissible free-monad client to one fixed structured
+word-RAM fragment and an instruction budget depending on the initial abstract and machine
+states. Entry assertions supply any required word bounds. Sequential composition uses one fixed
+continuation fragment for every represented intermediate answer, charging its execution at the
+reached state. Branches must test the same condition as the client. Pure results, argument
+preparation and initialization require machine execution certificates; the final halt adds one
+instruction. Named refinement proofs are reusable by \texttt{stateful}, and named uniform
+RAM function-time proofs by \texttt{polytime}, with distinct predicates for RAM and Turing machines.
+
+A concrete nine-register controller starts with the standard singleton input $[n]$, installs an
+empty one-cell stack at address two, pushes and pops $n$, and, if the observed answer is zero,
+pushes and pops one. For every width $w$ with $3<2^w$ at which $[n]$ fits, the same flat program
+returns $\max(n,1)$, leaves its stack empty, and takes exactly $49$ instructions if $n=0$ and
+$29$ otherwise. These counts include setup, argument writes, dispatch, branching and halt.
+The standard input memory is supplied by the machine convention; the empty reserved stack
+needs no zeroing. Every input fits at width $2(\lfloor\log_2 n\rfloor+1)$, taking the logarithm
+as zero at $n=0$. This yields a constant, hence polynomial, RAM-time function certificate with
+numerical magnitude $n$ as size parameter. No arbitrary-continuation synthesis, general
+allocation algorithm, or conversion to Turing-machine polynomial time is claimed.
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Computability/WordRAM/Controller.lean}{84}{Cslib.WordRAM.Refines.bind}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Computability/WordRAM/Controller.lean}{155}{Cslib.WordRAM.Refines.call}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{170}{Cslib.WordRAM.Stack.Controller.refines}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{182}{Cslib.WordRAM.Stack.Controller.executes}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{211}{Cslib.WordRAM.Stack.Controller.positive_polytime}
 \end{result}
 
 \begin{result}
