@@ -355,10 +355,13 @@ $f^T(x)$ directly when $T<K$, and for $T\ge K$ executes:
 \begin{enumerate}
 \item a $(K+1)$-stage prefix scan from $x$ recording the first index $d\le K$ and state $c=f^d(x)$
 satisfying $H(c)$ if any, and ending at $u=f^K(x)$;
-\item a $K$-stage forward correction applying $f$ for $K-d$ steps to $z(c)$ (so that
+\item a $K$-stage forward correction applying $f$ for $K-d$ steps to $z(c)$ (so that on the
+selected hit branch, where $H(c)$ holds and the payload hypothesis $z(c)=f^{T-K}(c)$ applies,
 $f^{K-d}(f^{T-K}(f^d(x)))=f^T(x)$);
-\item a $K$-stage period walk from $u$ in a separate register recording the least positive return
-time $1\le\lambda\le K$ with $f^\lambda(u)=u$;
+\item a $K$-stage period walk from $u$ in a separate register searching for a positive return time
+$1\le\lambda\le K$ with $f^\lambda(u)=u$ (which need not find a return on the hit branch, whereas
+on the no-hit branch the headline hitting hypothesis guarantees a repeat within the $(K+1)$-state
+prefix and hence a least positive return $1\le\lambda\le K$ with $f^\lambda(u)=u$);
 \item a $K$-stage cycle walk advancing $u$ by $\min(R(\lambda),K)$ steps; and
 \item selection of the corrected checkpoint value when the scan hit $H$ and the cycle-walk value
 otherwise.
