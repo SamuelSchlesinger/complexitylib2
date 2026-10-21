@@ -99,6 +99,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   representation from the standard input. `WordRAM/Function` gives a separate uniform RAM
   function-time predicate, with named-certificate reuse by `polytime`. Arbitrary continuation
   synthesis, iterative clients and a Turing-machine simulation remain open.
+  `Algorithms/Lean/SearchTree/*` reuses Mathlib's `BinaryTree`, height and node count for an
+  unbalanced ordered-set realization. Finite-set behavior, strict invariants and height-bounded
+  node visits are proved; allocation, comparison implementation and client computation are
+  excluded from that cost model. It is not a balanced tree or machine-time certificate.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
   Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;

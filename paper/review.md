@@ -2039,3 +2039,36 @@ annotations were checked against published source lines 84, 155, 170, 182 and 21
 The source and rendered entry have no unresolved review findings. The CI theorem-index
 artifact/provenance inspection and coordinator integration approval remain separate gates;
 AI review does not imply human editorial approval. Generated artifacts remain unversioned.
+
+## 2026-10-21: Stateful unbalanced binary search trees (#290)
+
+Worker `worker-search-tree-20261021`, using OpenAI Codex, adds the finite ordered-set realization,
+its executable adaptive client interpreter and shape-dependent node-visit bounds. Source revision
+`11744afb1a743008b73935dfd8e11f156f79565b` has tree
+`cab7acda3a81e519e5f4816d6d79a22ba5624691`, exactly matching the validated source over main
+`7ebefd57bbcfcaa138b3f094d63ae763bd17dd41`. All six strict gates passed (session 40889, exit 0),
+including the global axiom audit and five named guards. Actual-file Lean MCP diagnostics,
+documentation configuration and whitespace checks passed.
+
+Independent nonauthor `/root/controller_review` approved API, correctness, tests and index
+semantics, then checked the exact published source tree, declaration pins and rendered page.
+One documentation nit was fixed: only `firstTwo`, not the construction client `insertAll`,
+chooses its second query from the first answer. Tests include satisfiable strict ordering,
+a malformed-tree counterexample, duplicate tree identity, empty/equal/absent/exhausted queries,
+height-three and height-seven shapes, and exact adaptive node-visit traces.
+
+The entry quantifies arbitrary linearly ordered key types, states the strict invariant and
+finite-set semantics, and bounds each operation by the initial height and set cardinality.
+It explicitly excludes empty-child tests, allocation/reconstruction, comparison implementation
+and pure continuation computation; it makes no balancing, logarithmic or RAM-time claim.
+The source credits CLRS Chapter 12 and reuses Mathlib's binary trees and the existing Stateful
+calculus. The final index SHA256 is
+`3ad381d93708f507cbf5bf8d1c1f54aaf652e40c7baee120d26fd20b9c0e7d7d`.
+
+The locally generated PDF has 115 pages; new page 86 was independently visually inspected.
+All four PDF URI annotations point to the named declarations in source `11744afb` at
+Basic lines 128/260 and Stateful lines 116/161. PDF SHA256:
+`7c9195b965aeafb12ce23d55c2940ced8afd40d6133afd3fc9ad6d523b7d730a`.
+There are no unresolved source or local-render review findings. Actual CI artifact/provenance
+inspection and coordinator integration approval remain separate gates. AI review is neither
+human editorial approval nor a Lean proof of prose equivalence. Generated artifacts are unversioned.

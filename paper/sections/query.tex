@@ -322,6 +322,31 @@ conditional backend-resource theorem, not a compiled Word-RAM queue-time theorem
 \end{result}
 
 \begin{result}
+\subsection{An unbalanced search tree as a stateful ordered set}
+For keys in any linear order, an ordinary binary tree satisfying the strict search-tree
+invariant represents a finite set. Membership agrees with set membership; insertion adds the
+requested key and preserves the invariant, and reinserting a present key preserves the entire
+tree. Minimum and strict-successor queries return the least eligible key, or \texttt{none} exactly
+when no eligible key exists. A successor query does not require its argument to be stored.
+The algorithms follow Chapter 12 of \citet{CLRS2009}; the representation reuses Mathlib's binary
+tree and height definitions.
+
+In the explicit internal-node-visit model, every operation costs at most the initial tree height
+$h$, and $h\le |S|$ for a represented set $S$. Empty-child tests, allocation, reconstruction,
+comparison implementation and pure client computation are excluded. Inserting into the empty
+tree therefore has zero node visits. The native realization supplies correct executions for
+every terminating adaptive client, and its executable interpreter agrees with the finite-set
+semantics. Summed node visits are bounded by the sum of the current set cardinalities along the
+selected operation history. No balancing, logarithmic worst-case bound or RAM-time result is
+claimed. Checked examples contrast insertion orders producing heights three and seven on the
+same seven keys, and a client asks for the minimum before choosing its strict-successor argument.
+\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{128}{Cslib.Algorithms.Lean.SearchTree.ordered_insert}
+\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{260}{Cslib.Algorithms.Lean.SearchTree.successor_spec}
+\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{116}{Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height}
+\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{161}{Cslib.Algorithms.Lean.SearchTree.run_correct}
+\end{result}
+
+\begin{result}
 \subsection{Fixed-program dynamic stacks and prefix sums on the word RAM}
 Starting from a bounded represented configuration, a fixed nine-register stack program supports
 push, pop (including empty pop), and size in

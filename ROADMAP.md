@@ -718,6 +718,16 @@ a backend. The [two-stack queue](Complexity/Algorithms/Lean/Queue.lean) and
 checked constructions, with explicit primitive-cost assumptions; their pure client controllers
 do not yet have total Word-RAM time certificates.
 
+The [unbalanced binary search tree](Complexity/Algorithms/Lean/SearchTree/Basic.lean) implements
+membership, insertion, minimum and strict successor over any linear order, preserving a strict
+BST invariant and finite-set semantics. Duplicate insertion preserves the tree; missing successors
+and empty queries return `none`. Its [native realization](Complexity/Algorithms/Lean/SearchTree/Stateful.lean)
+transfers correctness and additive node-visit bounds to adaptive clients. Each operation visits
+at most the initial height, bounded by set cardinality; this is not a logarithmic or RAM-time
+claim. [Checked examples](ComplexityTests/SearchTree.lean) contrast height-three and height-seven
+representations of the same seven keys and execute an answer-dependent two-minimum query.
+Deletion, balancing, and concrete heap/RAM representations remain open.
+
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
 rules retain answer-dependent costs; separate method budgets transport contracts through
