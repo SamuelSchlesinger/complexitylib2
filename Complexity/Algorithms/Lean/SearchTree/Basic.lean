@@ -9,7 +9,7 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.Tree.Basic
-public import Mathlib.Data.Finset.Max
+public import Complexity.Foundations.Data.OrderedSet
 
 /-!
 # Unbalanced binary search trees
@@ -41,6 +41,8 @@ Trees are not balanced. Cost bounds in the companion module depend on their actu
 @[expose] public section
 
 namespace Cslib.Algorithms.Lean.SearchTree
+
+open Cslib.OrderedSet
 
 variable {α : Type*} [LinearOrder α]
 
@@ -190,43 +192,6 @@ theorem card_elements {t : BinaryTree α} (ht : Ordered t) :
       · exact lt_irrefl a (har a h)
     simp only [elements, Finset.card_insert_of_notMem ha,
       Finset.card_union_of_disjoint hdis, il hl, ir hr, BinaryTree.numNodes]
-
-/-- A complete optional-minimum contract: `none` means no eligible key exists. -/
-def LeastResult (s : Finset α) : Option α → Prop
-  | none => s = ∅
-  | some a => a ∈ s ∧ ∀ b ∈ s, a ≤ b
-
-/-- The mathematical minimum, independent of any search-tree shape. -/
-def least (s : Finset α) : Option α :=
-  if h : s.Nonempty then some (s.min' h) else none
-
-theorem least_spec (s : Finset α) : LeastResult s (least s) := by
-  unfold least
-  split <;> rename_i h
-  · exact ⟨Finset.min'_mem s h, fun b hb => Finset.min'_le s b hb⟩
-  · exact Finset.not_nonempty_iff_eq_empty.mp h
-
-theorem LeastResult.eq_least {s : Finset α} {a : Option α} (h : LeastResult s a) :
-    a = least s := by
-  have hs := least_spec s
-  cases a with
-  | none =>
-    cases he : least s with
-    | none => rfl
-    | some b =>
-      simp only [he, LeastResult] at hs
-      simp only [LeastResult] at h
-      simp [h] at hs
-  | some a =>
-    cases he : least s with
-    | none =>
-      simp only [he, LeastResult] at hs
-      simp only [LeastResult] at h
-      simp [hs] at h
-    | some b =>
-      simp only [he, LeastResult] at hs
-      simp only [LeastResult] at h
-      exact congrArg some (le_antisymm (h.2 b hs.1) (hs.2 _ h.1))
 
 /-- Left descent returns the least element, with the empty case accounted for. -/
 theorem minimum_spec {t : BinaryTree α} (ht : Ordered t) :

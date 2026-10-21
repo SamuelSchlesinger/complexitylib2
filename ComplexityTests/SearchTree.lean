@@ -25,7 +25,7 @@ the kernel, with no `native_decide`.
 
 namespace ComplexityTests.SearchTree
 
-open Cslib.Algorithms.Lean.SearchTree Cslib.Stateful
+open Cslib.Algorithms.Lean.SearchTree Cslib.OrderedSet Cslib.Stateful
 
 def build (xs : List Nat) : BinaryTree Nat := (run .nil (insertAll xs)).2.1
 
@@ -88,15 +88,15 @@ example : (run (build [5]) firstTwo).1 = (some 5, none) := rfl
 
 -- Native computation and finite-set semantics agree through the shared realization theorem.
 example : (run medianFirst firstTwo).1 =
-    ((orderedSet Nat).runClient (elements medianFirst) firstTwo).1 :=
+    ((spec Nat).runClient (elements medianFirst) firstTwo).1 :=
   (run_correct firstTwo ⟨ordered_build _, rfl⟩).1
 
 example (xs : List Nat) :
     ∃ t ns, Executes Exec ((insertAll xs).bind fun _ => firstTwo) .nil
-        ((orderedSet Nat).runClient ∅ ((insertAll xs).bind fun _ => firstTwo)).1 t ns ∧
-      Rep ((orderedSet Nat).runClient ∅ ((insertAll xs).bind fun _ => firstTwo)).2.1 t ∧
-      total id ns ≤ (orderedSet Nat).totalCost (fun s _ => s.card) ∅
-        ((orderedSet Nat).runClient ∅ ((insertAll xs).bind fun _ => firstTwo)).2.2 :=
+        ((spec Nat).runClient ∅ ((insertAll xs).bind fun _ => firstTwo)).1 t ns ∧
+      Rep ((spec Nat).runClient ∅ ((insertAll xs).bind fun _ => firstTwo)).2.1 t ∧
+      total id ns ≤ (spec Nat).totalCost (fun s _ => s.card) ∅
+        ((spec Nat).runClient ∅ ((insertAll xs).bind fun _ => firstTwo)).2.2 :=
   realized_client _ rep_empty
 
 -- A malformed tree demonstrates why query correctness requires Ordered.

@@ -204,6 +204,7 @@ import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedReduction
+import ComplexityTests.OrderedSet
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTupleBit
 import ComplexityTests.OrderedTuples
