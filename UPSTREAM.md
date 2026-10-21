@@ -72,9 +72,22 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
   deviations from the source. The operations form a basis (`WordRAM/Basis`) over
   `Cslib.Circuits.Signature`, and translation between bases (`WordRAM/MapOp`) uses the local
-  `Circuit/MapOp` maps of signatures, so these files depend on that candidate. The
+  `Circuit/SignatureHom` maps of signatures, so these files depend on that candidate. The
   unbounded-register `Computability/RAM`, inspired by
   Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
+* **Generic RAM values.** `Computability/GenericRAM/*` supplies a shared finite-register RAM
+  interpreter with configurable value, address, configuration and literal types, operation/test
+  signatures, and fault policies. `WordRAM/Generic` embeds every existing word-operation basis
+  with exact step, fault, output and instruction-count preservation, including arbitrary initial
+  states; no existing public WordRAM definition changes. The signed instance follows the
+  lean-trominoes signed range and its address, move, halt and program-counter checks, retaining
+  its source credit. The algebraic instances use tagged natural words and exact field values:
+  only natural words can address memory. Real comparison is mathematical, noncomputable
+  semantics; prime-field interpretation is executable. The real variant follows the separation
+  of words and reals in Erickson–van der Hoog–Miltzow, but uses finite named registers, a tagged
+  memory and checked word arithmetic. These are explicit model choices, not a proved equivalence
+  with their two-array model. Coordinate this common core with the algorithm-model work above;
+  the existing Cook–Reckhow-inspired RAM and its logarithmic cost remain separate.
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource

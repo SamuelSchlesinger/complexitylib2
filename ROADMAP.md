@@ -754,6 +754,17 @@ space bounds. Further class-level work needs resource certificates for the actua
 * the ordered logarithmic-space FO encoding bridge and first-order Circuit Value completeness in the
   [first continuing priority](#continuing-priorities), together with uniform circuit-family and
   counting-machine characterizations;
+* RAM value domains: the [generic core](Complexity/Computability/GenericRAM/Defs.lean) now permits
+  arbitrary value, address, configuration and constant-symbol types, partial operations/tests,
+  and model-specific fault policies. The [WordRAM adapter](Complexity/Computability/WordRAM/Generic.lean)
+  preserves every step, fault, output and instruction count for every basis and arbitrary state.
+  Instances cover the [signed bounded integer model](Complexity/Computability/GenericRAM/Signed.lean)
+  of lean-trominoes and [exact reals and prime fields](Complexity/Computability/GenericRAM/Algebraic.lean)
+  with separate tagged natural address words. Real semantics is noncomputable; prime fields are
+  executable. The algebraic variant has checked word arithmetic and rational constants with
+  nonzero field denominators; no field-to-word conversion is provided. Generalizing the structured
+  program calculus and time-class APIs to arbitrary domains, weighted/bit costs, and simulations
+  between these instances remain open. No real-RAM/Turing-machine equivalence is claimed;
 * RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
   Lean formalization accompanying the tromino undecidability paper, is parameterized by a
   [basis of word operations](Complexity/Computability/WordRAM/Basis.lean) built on circuit

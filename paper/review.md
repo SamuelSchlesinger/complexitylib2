@@ -1,5 +1,43 @@
 # Theorem-index review
 
+## Configurable RAM value domains (#266), 21 October 2026
+
+Reviewed Lean source: `8fc64c86ce21bb6876b08b50f4f14e21799be217`, tree
+`51f961e802172cfc20346923cbfb3ae57a8be064`, on operation-basis prerequisite
+`6532753dc17bd27793511246f4f12346c291ab61`. Bibliography is isolated in
+`696eab2bae32f662ebe1be33df7cf7ddfb31dc83`.
+
+Scope: `GenericRAM/{Defs,Signed,Algebraic}`, `WordRAM/Generic`, four focused test modules,
+and the index entry “RAMs over configurable value domains” in `paper/sections/query.tex`.
+The entry distinguishes configurable fault policies, exact execution/halting cost, the
+WordRAM adapter on arbitrary states, and signed and tagged algebraic instance boundaries.
+ROADMAP and UPSTREAM retain the open structured-calculus, cost-model and simulation work.
+
+Independent AI reviews (OpenAI Codex, separate author/reviewer scopes):
+
+- `recovery_integration` approved the core and WordRAM adapter API/correctness and their
+  index prose; it did not approve its own signed-instance source. Its final local rendered
+  review independently approved page 80 and all eight pinned annotations, with no findings,
+  at the same PDF hash recorded below.
+- `ordered_fagin_recovery` approved the signed/algebraic source and tests, and their index
+  prose, without findings. It independently checked the root-authored Boolean test at
+  SHA256 `24646e028af681540ea4d4d65fc951d773b301849cce64071a7a27b0796261aa`:
+  nonnumeric values/addresses and configuration, observable memory use, exact six-step cost,
+  and a failed-test fault. It did not approve its own core/adapter source.
+- Final local rendered instance review by `ordered_fagin_recovery` approved page 80 of
+  PDF SHA256 `fb04e36ac9483d95e1510fd128369fd18ec1fb0309630385a10f48366f4a5f7e`.
+  The eight annotations all target the reviewed source commit and exact declaration lines
+  (Defs 63/309/314, WordRAM/Generic 125/156, Signed 91, Algebraic 190/194).
+  Signed/algebraic claims, ranges, formulas and citations are readable without clipping or
+  overlap. The reviewer checked all eight link targets against committed local blobs.
+
+This is local source/render review, not human editorial approval. At this checkpoint the
+source commit is unpublished: remote link availability, final remote commit/tree parity,
+CI, and independent inspection of the CI theorem-index artifact/provenance remain required
+before integration. The original canonical six-gate run continues separately; no duplicate
+validation run was started. Source credit remains in the modules and bibliography, including
+lean-trominoes contributors / Erik Demaine and Erickson–van der Hoog–Miltzow.
+
 ## Word-RAM operation bases, 21 October 2026
 
 Reviewed Lean revision: `72e92283` (code `291ff2f1`); review fixes in `2435c31e`, the revision named
