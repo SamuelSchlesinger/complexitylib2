@@ -594,6 +594,55 @@ uniform compiler-runtime claim is made.
 \end{result}
 
 \begin{result}
+\subsection{Exact replay of native oracle occurrences}
+Let $M$ be an existing shared-core list-choice machine, with decidable equality
+on its oracle operations. Fix $B\ge 1$ bounding the length of every local
+transition list, including repeated actions. For any clock $T$, initial full
+configuration $c$, private state type $S$, deterministic word handler
+$H:(\mathrm{Op}\times\Sigma^*)\times S\to\Sigma^*\times S$ and initial state $s$,
+enumerate the words in $\{0,\ldots,B-1\}^T$ in chronological lexicographic order.
+Replaying a word selects its indexed live instruction and performs that
+instruction's actual buffered query, if any. After the first halt, only zero
+padding is valid; padding is omitted from the consumed-index trace. Then
+\[
+ \operatorname{filterMap}(\operatorname{replay}_{M,H,c,s},\{0,\ldots,B-1\}^T)
+ =\operatorname{runTrace}_{M,H}(T,c,s)
+\]
+as \emph{ordered lists} of consumed traces, full configurations and final private
+states. Every replay starts at $s$. Sibling occurrences inherit separate copies
+of their parent's private state, while successive queries within one branch
+share its updated state. Equal successor configurations remain distinct
+occurrences. Erasing the trace gives the ordinary interpretation of the shared
+native FreeM run.
+
+Exhausting the clock at a live configuration retains that endpoint. An empty
+local list disappears only when positive fuel attempts its choice; at zero fuel,
+the live configuration remains. Separately filtering terminal endpoints gives
+exactly the successful terminal replays. Thus terminal verdict counts agree for
+any output predicate, including its negation; invalid certificates and live
+cutoffs count for neither verdict. With no oracle operations, raw trace erasure
+is the existing closed List run, and terminal replay is the existing canonical
+certificate decoder.
+
+A query instruction costs one native transition; constructing its request and
+accessing reply cells use ordinary transitions. Oracle computation is external.
+The full configuration retains the entire reply, including unused suffixes;
+this semantic theorem does not certify copying an arbitrary reply at unit cost.
+It assumes no nonblocking or halting contract, and does not provide an efficient
+encoded binary checker, uniform oracle resource bound, or native
+$\#\cc{P}^A/\cc{GapP}^A$ characterization. Those endpoints remain open.
+The replay equality is proved for the existing shared program and occurrence
+semantics. Fortnow supplies the language-oracle and counting-path conventions;
+arbitrary stateful word handlers are an explicit generalization of that
+interface.\citep[Section 2 and Definition 3.1]{Fortnow1997}
+\declat{431701e98547ad45e3b2445a17e35d8231e4ac8e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Oracle/Replay.lean}{256}{Turing.MultiTapeMachine.filterMap_replayResult}
+\declat{431701e98547ad45e3b2445a17e35d8231e4ac8e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Oracle/Program.lean}{186}{Turing.MultiTapeMachine.runOccurrenceTrace_erase}
+\declat{431701e98547ad45e3b2445a17e35d8231e4ac8e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Oracle/Replay.lean}{301}{Turing.MultiTapeMachine.countP_replayResult_terminal}
+\declat{431701e98547ad45e3b2445a17e35d8231e4ac8e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Oracle/Replay.lean}{351}{Turing.MultiTapeMachine.runOccurrenceTrace_empty}
+\declat{431701e98547ad45e3b2445a17e35d8231e4ac8e}{Complexity/Computability/Machines/Turing/MultiTape/Counting/Oracle/Replay.lean}{405}{Turing.MultiTapeMachine.replayTerminal_empty}
+\end{result}
+
+\begin{result}
 \subsection{Relativized counting and majority verifiers}
 For every language oracle $A\subseteq\{0,1\}^*$ and fixed injective input encoding,
 $\#\cc{P}^A$ counts accepted Boolean witnesses of exactly $p(|x|)$ bits using a deterministic

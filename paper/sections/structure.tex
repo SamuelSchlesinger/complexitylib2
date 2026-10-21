@@ -235,8 +235,9 @@ claim is made for this basis.
 This completes the full-domain order, constant and successor prerequisites of
 Immerman's Remark 1.32 and Exercise 1.33(1--2), with the stated source-basis convention.
 Native full-tuple BIT and numeric-preserving full-tuple composition are proved next.
-Ordered model checking is proved below. Ordered interpretation transducers and capture remain
-open, and no automatic BIT definition for a restricted tuple domain is claimed.
+Ordered model checking and canonical full-tuple interpretation transducers are proved below.
+Ordered capture remains open, and no automatic BIT definition for a restricted tuple domain is
+claimed.
 \citep[Remark 1.32 and Exercise 1.33]{Immerman1999}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{52}{Cslib.Logic.FO.Ordered.lexEquiv}
 \declat{51e253c1e9d3b0ea81512eb7ff0fe830a00435bc}{Complexity/Logics/FirstOrder/Ordered/Tuple.lean}{93}{Cslib.Logic.FO.Ordered.lexRank_lt_iff_lex}
@@ -318,8 +319,8 @@ and Exercise~1.30} for relational intermediate and final input vocabularies, wit
 \href{https://people.cs.umass.edu/~immerman/book/ch0_1_2.pdf\#page=37}{Remark~1.32}'s
 canonical numerics.\citep{Immerman1999}
 No canonical singleton target, automatic numeric preservation on restricted
-domains or quantifier-free BIT is asserted. Ordered model checking follows below; ordered
-interpretation transducers and capture remain separate.
+domains or quantifier-free BIT is asserted. Ordered model checking and canonical full-tuple
+interpretation transducers follow below; ordered capture remains separate.
 \declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/FullTuple.lean}{142}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.modelEquiv}
 \declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/FullTuple.lean}{184}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.realize_onFormula}
 \declat{9263445cb6115e5a9f14385cae4ab9fb3d07629d}{Complexity/Logics/FirstOrder/Ordered/Tuple/Flatten.lean}{45}{Cslib.Logic.FO.Ordered.lexRank_flattenTuple}
@@ -377,12 +378,69 @@ The construction reuses the existing shape checker and quantified counter-progra
 control, and Christian Reitwiessner's native binary arithmetic and digit-access
 certificate. Binary value and index storage, as well as arithmetic intermediates,
 are charged by the native simulation. No time bound for digit access is asserted.
-Ordered interpretation transducers, reduction closure, projections and capture
-remain open.
+The next entry supplies the canonical full-tuple interpretation transducer;
+restricted-domain ordered reductions, projections and capture remain open.
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{65}{Cslib.Logic.FO.Ordered.queryLanguage}
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{224}{Cslib.Logic.FO.Ordered.modelChecker}
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{236}{Cslib.Logic.FO.Ordered.queryLanguage_mem_L}
 \declat{9bf2748ff4aca3a4740a707a972547f21022de4c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/InSpace/Bit.lean}{39}{Turing.MultiTapeTM.ComputableTidilyInSpace.natTestBit}
+\end{result}
+
+\begin{result}
+\subsection{Canonical full-tuple ordered interpretations as logspace transducers}
+Fix finite relational source and target input vocabularies, a tuple dimension
+$k\in\mathbb N$, and a canonical full-tuple interpretation $I$ of dimension $k$
+defining each $r$-ary target input relation by a first-order formula over the
+source vocabulary expanded by canonical $\le$, BIT and the constants $0$, $1$
+and $\max$. The total transducer \lean{encodedMap} maps every well-formed
+encoded source structure of cardinality $n\ge2$ to the encoded target structure
+on the canonical rank universe $[n^k]$ numbered by the
+first-coordinate-most-significant lexicographic bijection \lean{lexEquiv},
+serializing only the target input relations in the existing
+first-coordinate-least-significant \lean{tupleIndex} table order. The output
+has cardinality $n^k$ and encoded bit length
+\[
+  2n^k+1+\sum_{j}(2(n^k)^{r_j}+1);
+\]
+target numeric predicates are not serialized as additional tables. Sources with
+invalid table shapes or cardinality $0$ or $1$ map to the fixed malformed
+sentinel $(0,[\,],\dots,[\,])$ with one empty table too many, outside every
+target query language. One fixed multi-tape Turing machine computes
+\lean{encodedMap} in logarithmic work space relative to \lean{encStructure}.
+
+When $k>0$, a well-formed source with $n\ge2$ produces a well-formed target
+with $n^k\ge2$. Equipped with its own canonical order, BIT and constants on
+$[n^k]$, the decoded target is isomorphic to the interpreted full ordered
+structure via \lean{encodedModelEquiv}, with every tuple retaining its exact
+natural-number rank \lean{lexRank}. Consequently, for every sentence $\varphi$
+over the expanded target language and every $k>0$, \lean{encodedMap} is a
+logarithmic-space many-one reduction from the pulled-back ordered query
+language of $I.\text{\lean{onSentence}}(\varphi)$ to the target ordered query
+language of $\varphi$.
+
+This proves the full-domain canonical transducer case of
+\href{https://people.cs.umass.edu/~immerman/book/ch3.pdf\#page=4}{Immerman's
+Proposition~3.5}, using the numeric lifting of Remark~1.32 and
+Exercise~1.33.\citep{Immerman1999}
+The counter-program transducer checks source shape and $n\ge2$, writes the
+unary header of length $n^k$, and streams each target relation table by
+converting each target argument's rank to its reversed base-$n$ coordinates
+under the source evaluator. It shares the header, table-framing and rejection
+output routines with the order-free interpretation transducer below. The bound
+is for a fixed vocabulary, dimension and interpretation relative to the
+structure encoding; it does not claim a canonical numeric target for $k=0$,
+automatic numeric preservation on restricted domains, isomorphism-closed
+class-level ordered reduction closure, or first-order projection completeness.
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{49}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedMap}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{72}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.card_encodedMap}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{79}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.wellFormed_encodedMap_iff}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{101}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.table_encodedMap}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{115}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.length_encStructure_encodedMap}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{125}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{174}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv_apply_val}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{409}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{492}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.mem_queryLanguage_encodedMap_iff}
+\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{525}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence}
 \end{result}
 
 \begin{result}
@@ -401,8 +459,8 @@ from the target query language to the source. Parsed structure data with invalid
 table sizes map to fixed invalid target data; this is the shape check within
 the encoding-relative contract. Empty universes, empty interpreted domains,
 nullary relations, and dimension-zero interpretations are included.
-These statements concern the order-free general layer; the standard
-ordered FO($\le$, BIT) results are not covered here.
+These statements concern the order-free general layer; the canonical full-tuple
+ordered transducer is covered in the preceding entry.
 \citep{Immerman1999,Sipser2013}
 \declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{892}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap}
 \declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{987}{Cslib.Logic.FO.Reduces.logSpaceReducible}
@@ -486,6 +544,55 @@ The witness is a padded satisfiability language with a polynomial-time padding
 exponent. This is a conditional intermediate-degree theorem; it does not assume
 an intermediate problem as additional input.\citep[Theorem 3.3]{AroraBarak09}
 \decl{Complexity/Computability/Complexity/Classes/Ladner.lean}{445}{Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete}
+\end{result}
+
+\begin{result}
+\subsection{Search problems: FNP, FP and TFNP}
+A search problem is a relation $R(a,w)$ between instances and bit-string
+solutions. It is in FNP when it is polynomially balanced (every solution
+of $a$ has length at most $p(|a|)$ for a polynomial $p$, where $|a|$ is the
+encoded length) and decidable in polynomial time; it is in FP when it is
+moreover solved by a polynomial-time function that returns a solution of every
+instance that has one and reports the instances that have none. TFNP consists
+of the total relations in FNP. NP is exactly the class of domains of FNP
+relations, and if $\cc{NP}\subseteq\cc{P}$ for the encoding of pairs of an
+instance and a word, every FNP relation is in FP, by deciding which prefixes
+extend to solutions. Hence, quantifying over all encodings,
+\[
+\cc{FNP}\subseteq\cc{FP}\quad\Longleftrightarrow\quad\cc{NP}\subseteq\cc{P}\quad\Longleftrightarrow\quad
+\mathrm{SAT}\in\cc{P},
+\]
+the last step by the Cook--Levin theorem; since FP $\subseteq$ FNP and
+P $\subseteq$ NP, these say FP $=$ FNP and P $=$ NP. For SAT itself, the search
+problem of its verifier's assignment certificates (values of the variables in
+order of first occurrence, no longer than the encoded formula) is in FP exactly
+when $\mathrm{SAT}\in\cc{P}$, by the self-reduction. For an encoding fixed in advance, FNP $\subseteq$ FP implies
+NP $\subseteq$ P, and TFNP $\subseteq$ FP implies
+$\cc{NP}\cap\cc{coNP}\subseteq\cc{P}$: the tagged union of membership and
+non-membership witnesses of a problem in $\cc{NP}\cap\cc{coNP}$ is total, and
+solving it decides the problem. The converse of the last implication is not
+claimed.\citep[Section 10.3]{Papadimitriou94}\citep{MegiddoPapadimitriou1991}
+
+A search reduction from $R$ to $S$ is a pair of polynomial-time maps: $f$ sends
+instances with a solution to instances with a solution, and $g$ sends each
+solution $w$ of $f(a)$ to a solution $g(a,w)$ of $a$. For a total target the
+first condition is automatic, giving the reductions used for TFNP. Search
+reductions compose, preserve totality backwards, induce many-one reductions
+between the domains, and pull FP back to FNP relations; a problem hard for a
+subclass of FNP that lies in FP puts the whole subclass in FP. No TFNP subclass
+or complete problem is formalized in this entry.\citep{MegiddoPapadimitriou1991,JohnsonPapadimitriouYannakakis1988}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{263}{Cslib.Complexity.mem_NP_iff_exists_FNP}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{273}{Cslib.Complexity.NP_subset_P_of_FNP_subset_FPSearch}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{378}{Cslib.Complexity.NP_inter_coNP_subset_P_of_TFNP_subset_FPSearch}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{437}{Cslib.Complexity.SearchReducible.polyTimeReducible}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{443}{Cslib.Complexity.SearchReducible.isTotalSearch}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{455}{Cslib.Complexity.SearchReducible.mem_FPSearch}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{482}{Cslib.Complexity.SearchHard.subset_FPSearch}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{213}{Cslib.Complexity.FNP_subset_FPSearch_of_NP_subset_P}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{236}{Cslib.Complexity.FNP_subset_FPSearch_iff}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{243}{Cslib.Complexity.FNP_subset_FPSearch_iff_SAT_mem_P}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/P/Complement.lean}{44}{Cslib.Complexity.SAT_mem_P_iff}
+\declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{270}{Cslib.Complexity.SAT.searchRel_mem_FPSearch_iff}
 \end{result}
 
 \begin{result}

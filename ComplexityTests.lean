@@ -59,6 +59,7 @@ import ComplexityTests.CountingExecution
 import ComplexityTests.CountingGapMachine
 import ComplexityTests.CountingGuess
 import ComplexityTests.CountingMachine
+import ComplexityTests.CountingOracle
 import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingVerifier
@@ -180,6 +181,7 @@ import ComplexityTests.OrderedComposition
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
+import ComplexityTests.OrderedReduction
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTupleBit
 import ComplexityTests.OrderedTuples
@@ -283,6 +285,7 @@ import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
+import ComplexityTests.TFNP
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF

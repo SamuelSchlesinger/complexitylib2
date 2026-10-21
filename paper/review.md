@@ -1,5 +1,21 @@
 # Theorem-index review
 
+## Canonical full-tuple ordered interpretation transducers (#137), 20 October 2026
+
+Reviewed Lean revision: `bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60` (prerequisite shared output commit `97622143391f6777b14b832420787b5a79d7109d`).
+
+Scope:
+- `Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Output.lean`
+- `Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean`
+- `Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean`
+- `ComplexityTests/OrderedReduction.lean`
+- `paper/sections/structure.tex` (`Canonical full-tuple ordered interpretations as logspace transducers`) and `ROADMAP.md`
+
+Independent reviews:
+- cslib API review (`14919544-d52b-40a4-aa1f-d7fa16f654b7` and `coordinator-ops-20261020`): **APPROVED**. Verified module paths, `Cslib.Logic.FO.Ordered.FullTupleInterpretation` namespace, naming conventions, shared `FirstOrder/Output.lean` factoring, docstrings, citations (`[Immerman1999]`), and proof hygiene.
+- Mathematical correctness review (`0cdeb10e-3db3-44c3-81d1-6ef4f4507c85` and `coordinator-ops-20261020`): **APPROVED**. Verified `encodedMap`, `card_encodedMap`, `wellFormed_encodedMap_iff`, `two_le_card_encodedMap`, `table_encodedMap`, `length_encStructure_encodedMap`, `encodedModelEquiv`, `encodedModelEquiv_apply_val`, `computableInLogSpace_encodedMap`, `mem_queryLanguage_encodedMap_iff`, `logSpaceReducible_onSentence`, counter-program unpacking of `Fin (a.1 ^ k)` ranks into reversed base-`a.1` coordinates (`lexEquiv.symm`) while streaming tables in `tupleIndex` order, register/polynomial bounds, and non-vacuity/orientation tests in `ComplexityTests/OrderedReduction.lean`.
+- Theorem-index review (`bbf779fa-0ff8-44cc-9a13-d5cbbbf120ba`): **APPROVED**. Verified all 10 `\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}` declaration links, mathematical statements, quantifiers, resource bounds, and scope limitations (`k > 0` for canonical target numerics, full-domain hypothesis, encoding-relative contract, and open class-level ordered reduction closure and projection completeness).
+
 ## Cook-Mertz Tree Evaluation, 19 October 2026
 
 Integrated Lean revision: `aa72232abd8858a2c4103eb6aebc039e3b02f52d`.
@@ -1854,3 +1870,28 @@ The local pre-integration PDF builds without warnings, contains 145 result envir
 77 pages, and changed pages 9, 11, 13 and 14 have been inspected. All 68 existing structure-section
 pins are preserved and the four new declaration links have been verified in source and PDF.
 Final independent review and the integrated CI artifact are recorded in the PR.
+
+
+## 2026-10-21: Exact replay of native oracle occurrences (#136)
+
+Worker `counting-machine-scope-20261020`, assisted by OpenAI Codex, adds one curated entry
+pinned to source `431701e98547ad45e3b2445a17e35d8231e4ac8e`. It states the explicit positive
+uniform local-list length bound and quantifies arbitrary full configurations, clocks,
+private state types and deterministic stateful word handlers. The proved equality is of ordered
+Lists retaining consumed occurrence indices, complete final configurations and branch-local
+private state. Singleton/query instructions are recorded; replies and terminal padding add no
+extra occurrence. Raw cutoff retention, separate terminal filtering, both verdict counts,
+observer erasure and the two closed-machine compatibility statements are kept distinct.
+
+The entry records the native query/write/access convention, arbitrary stored reply suffixes,
+and the absence of an encoded copying or checker-time theorem. Uniform nonvacuous oracle clock
+contracts and native #P/GapP oracle characterizations remain open. Fortnow's Section 2 and
+Definition 3.1 supply language-oracle/path-counting conventions; the stateful word interface
+is explicitly more general. Existing shared-machine, FreeM and occurrence-certificate work is
+reused, with its author credits retained in the source modules. Five links target exact
+source declarations; prior entries and pins are preserved.
+
+The design-only independent review is issue #136 comment 6304677099. Exact-source/API/correctness,
+final semantic-index review, six-gate validation and rendered PDF/provenance evidence are recorded
+in the linked PR. AI review does not imply human editorial approval or a Lean proof of prose
+equivalence. Generated PDFs remain outside Git.

@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Output
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Output
 public import Complexity.Logics.FirstOrder.Interpretation.Encoding
 import Complexity.Foundations.Data.List.Basic
@@ -60,68 +60,13 @@ open FirstOrder Language Structure CategoryTheory Turing Turing.CounterProgram
 
 namespace Cslib.Logic.FO.Interpretation
 
-open Vocabulary.ModelChecker Expr
+open Vocabulary.ModelChecker Vocabulary.ModelChecker.Writer Expr
 
 namespace Transducer
 
 /-! ### Registers and code -/
 
-/-- The register of the coordinate `i` of the tuple in block `m`, for tuples of `d` coordinates. -/
-private def blk (d m i : ℕ) : ℕ := 8 + d * m + i
-
-/-- The code writing the coordinates of the tuple whose index is in register `4` into block `m`,
-placed at the label `b`; it continues at `b + d`. -/
-private def coordsCode (d m b : ℕ) : List Instr :=
-  List.ofFn fun i : Fin d =>
-    .assign (blk d m i) (mod (div (reg 4) (pow (reg 0) i)) (reg 0)) (b + i + 1)
-
-private theorem length_coordsCode (d m b : ℕ) : (coordsCode d m b).length = d := by
-  simp [coordsCode]
-
 variable {P : CounterProgram} {w : List Bool} {B : ℕ}
-
-/-- **Writing the coordinates of a tuple**: from the code at `b`, with the index `u < n ^ d` of a
-tuple in register `4` and `n` in register `0`, the program writes the coordinates `u / n ^ i % n`
-of the tuple into block `m`, changing no other register. -/
-private theorem reaches_coordsCode {d m b n u : ℕ} (hP : P.CodeAt b (coordsCode d m b))
-    (hu : u < n ^ d) (hnB : n ≤ B) (regs : List ℕ) (h0 : regs.getD 0 0 = n)
-    (h4 : regs.getD 4 0 = u) (hlen : blk d m d ≤ regs.length) (hB : ∀ r ∈ regs, r ≤ B) :
-    ∃ regs', P.Reaches w (P.Running B) (b, regs) (b + d, regs') ∧
-      regs'.length = regs.length ∧ (∀ i < d, regs'.getD (blk d m i) 0 = u / n ^ i % n) ∧
-      (∀ r, (∀ i < d, r ≠ blk d m i) → regs'.getD r 0 = regs.getD r 0) ∧
-      ∀ r ∈ regs', r ≤ B := by
-  have key : ∀ k ≤ d, ∃ regs', P.Reaches w (P.Running B) (b, regs) (b + k, regs') ∧
-      regs'.length = regs.length ∧ (∀ i < k, regs'.getD (blk d m i) 0 = u / n ^ i % n) ∧
-      (∀ r, (∀ i < k, r ≠ blk d m i) → regs'.getD r 0 = regs.getD r 0) ∧
-      ∀ r ∈ regs', r ≤ B := by
-    intro k
-    induction k with
-    | zero => exact fun _ => ⟨regs, Reaches.refl _, rfl, fun _ h => absurd h (by omega),
-        fun _ _ => rfl, hB⟩
-    | succ k ih =>
-      intro hk
-      obtain ⟨regs₁, hreach, hlen₁, hset, hkeep, hB₁⟩ := ih (by omega)
-      have hc : P.instr (b + k) =
-          .assign (blk d m k) (mod (div (reg 4) (pow (reg 0) k)) (reg 0)) (b + k + 1) := by
-        rw [hP k (by rw [length_coordsCode]; omega)]
-        simp [coordsCode]
-      have h0₁ : regs₁.getD 0 0 = n := by rw [hkeep 0 (fun i _ => by unfold blk; omega), h0]
-      have h4₁ : regs₁.getD 4 0 = u := by rw [hkeep 4 (fun i _ => by unfold blk; omega), h4]
-      have hn : 0 < n := by
-        rcases Nat.eq_zero_or_pos n with rfl | h
-        · rw [zero_pow (by omega)] at hu
-          omega
-        · exact h
-      refine ⟨regs₁.set (blk d m k) (u / n ^ k % n), hreach.trans (Reaches.assign hc hB₁ ?_),
-        by rw [List.length_set, hlen₁], fun i hi => ?_, fun r hr => ?_,
-        List.forall_mem_set_of_forall_mem hB₁ ((Nat.mod_lt _ hn).le.trans hnB)⟩
-      · simp only [eval_mod, eval_div, eval_pow, eval_reg, h4₁, h0₁]
-        exact Reaches.refl _
-      · rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp hi) with hi | rfl
-        · rw [List.getD_set_ne (by unfold blk; omega), hset i hi]
-        · exact List.getD_set_self (by rw [hlen₁]; simp only [blk] at hlen ⊢; omega)
-      · rw [List.getD_set_ne (Ne.symm (hr k (by omega))), hkeep r fun i hi => hr i (by omega)]
-  exact key d le_rfl
 
 /-! ### Frames of counted bits -/
 
@@ -156,7 +101,7 @@ private def base (d : ℕ) : ℕ := 8 + d * (maxArity v' + 1)
 
 /-- The code of the domain formula, on the tuple in block `m`. -/
 private noncomputable def domCode (m b T F : ℕ) : List Instr :=
-  formulaCode v (fun i => blk d m (e i)) (base v' d) I.domain b T F
+  formulaCode v (fun i => tupleReg d m (e i)) (base v' d) I.domain b T F
 
 /-- The code counting and framing the elements of the interpreted structure, placed at the label
 `b`: register `4` runs over the indices of the tuples, register `3` counts those of the domain, and
@@ -165,7 +110,7 @@ private noncomputable def domCode (m b T F : ℕ) : List Instr :=
 private noncomputable def scanCode (b : ℕ) : List Instr :=
   [.assign 3 (const 0) (b + 1)] ++
   forCode (b + 1) 4 (pow (reg 0) d) (b + 4) (b + d + codeLength I.domain + 7) ++
-  coordsCode d 0 (b + 4) ++
+  coordinatesCode d 0 (b + 4) ++
   domCode v v' e I 0 (b + 4 + d) (b + 4 + d + codeLength I.domain) (b + 3) ++
   [.emit true (b + 4 + d + codeLength I.domain + 1),
    .emit true (b + 4 + d + codeLength I.domain + 2),
@@ -178,17 +123,17 @@ private theorem length_domCode (m b T F : ℕ) :
   length_formulaCode v _ _ _ _ _ _
 
 omit [L'.IsRelational] in
-private theorem blk_le_base {m : ℕ} (hm : m ≤ maxArity v') : blk d m d ≤ base v' d := by
-  unfold blk base
+private theorem tupleReg_le_base {m : ℕ} (hm : m ≤ maxArity v') : tupleReg d m d ≤ base v' d := by
+  unfold tupleReg base
   have : d * m + d ≤ d * (maxArity v' + 1) := by
     rw [Nat.mul_add, Nat.mul_one]
     exact Nat.add_le_add_right (Nat.mul_le_mul_left d hm) d
   omega
 
 omit [L'.IsRelational] in
-private theorem blk_lt_base {m i : ℕ} (hm : m ≤ maxArity v') (hi : i < d) :
-    blk d m i < base v' d := by
-  unfold blk base
+private theorem tupleReg_lt_base {m i : ℕ} (hm : m ≤ maxArity v') (hi : i < d) :
+    tupleReg d m i < base v' d := by
+  unfold tupleReg base
   have : d * m + d ≤ d * (maxArity v' + 1) := by
     rw [Nat.mul_add, Nat.mul_one]
     exact Nat.add_le_add_right (Nat.mul_le_mul_left d hm) d
@@ -228,11 +173,11 @@ private theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ}
       forCode (b + 1) 4 (pow (reg 0) d) (b + 4) (b + d + cs + 7)).length = 4 := rfl
   have hl2 : ([Instr.assign 3 (const 0) (b + 1)] ++
       forCode (b + 1) 4 (pow (reg 0) d) (b + 4) (b + d + cs + 7) ++
-      coordsCode d 0 (b + 4)).length = 4 + d := by
-    rw [List.length_append, hl1, length_coordsCode]
+      coordinatesCode d 0 (b + 4)).length = 4 + d := by
+    rw [List.length_append, hl1, length_coordinatesCode]
   have hl3 : ([Instr.assign 3 (const 0) (b + 1)] ++
       forCode (b + 1) 4 (pow (reg 0) d) (b + 4) (b + d + cs + 7) ++
-      coordsCode d 0 (b + 4) ++
+      coordinatesCode d 0 (b + 4) ++
       domCode v v' e I 0 (b + 4 + d) (b + 4 + d + cs) (b + 3)).length = 4 + d + cs := by
     rw [List.length_append, hl2, length_domCode, hcs]
   rw [codeAt_append, codeAt_append, codeAt_append, codeAt_append] at hP
@@ -255,7 +200,7 @@ private theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ}
     convert hx using 2; omega
   rw [show b + (4 + d) = b + 4 + d by omega] at hdom
   have hbase := le_base v' (d := d)
-  have hblk0 := blk_le_base v' (d := d) (Nat.zero_le _)
+  have htupleReg0 := tupleReg_le_base v' (d := d) (Nat.zero_le _)
   -- the invariant of the loop over the indices
   let Inv : ℕ → List ℕ → Prop := fun k r => r.getD 4 0 = k ∧ r.getD 0 0 = a.1 ∧
     r.getD 3 0 = I.domainRank e a.1 k ∧ r.length = regs.length ∧ ∀ x ∈ r, x ≤ B
@@ -269,12 +214,14 @@ private theorem reachesOut_scanCode (ha : v.WellFormed a) {b : ℕ}
       by rw [hl]; omega, hB'⟩)
     (fun k hk r ⟨h4, h0', h3, hl, hB'⟩ => by
       obtain ⟨regs₁, hreach₁, hlen₁, hset₁, hkeep₁, hB₁⟩ :=
-        reaches_coordsCode (w := encStructure a) hcoords hk hnB r h0' h4 (by rw [hl]; omega) hB'
+        reaches_coordinatesCode (w := encStructure a) hcoords hk hnB r h0' h4
+          (by rw [hl]; omega) hB'
       have hreg (x : ℕ) (hx : x < 8) : regs₁.getD x 0 = r.getD x 0 :=
-        hkeep₁ x fun i _ => by unfold blk; omega
+        hkeep₁ x fun i _ => by unfold tupleReg; omega
       obtain ⟨res, regs₂, hres, hreach₂, hlen₂, hkeep₂, hB₂⟩ :=
-        reaches_formulaCode ha hnB (fun i => blk d 0 (e i)) (base v' d) (by omega)
-          (fun i => blk_lt_base v' (Nat.zero_le _) (e i).2) ((tupleEquiv e).symm ⟨k, hk⟩) I.domain
+        reaches_formulaCode ha hnB (fun i => tupleReg d 0 (e i)) (base v' d) (by omega)
+          (fun i => tupleReg_lt_base v' (Nat.zero_le _) (e i).2)
+          ((tupleEquiv e).symm ⟨k, hk⟩) I.domain
           (b + 4 + d) (b + 4 + d + cs) (b + 3) regs₁ default hdom
           (by rw [hlen₁, hl]; exact hlen)
           (by rw [hreg 0 (by omega), h0']) hB₁
@@ -343,7 +290,7 @@ private noncomputable def unrankCode (m A : ℕ) : List Instr :=
   [.assign 7 (mod (div (reg 6) (pow (reg 3) m)) (reg 3)) (A + 1),
    .assign 4 (const 0) (A + 2),
    .assign 5 (const 0) (A + 3)] ++
-  coordsCode d m (A + 3) ++
+  coordinatesCode d m (A + 3) ++
   domCode v v' e I m (A + 3 + d) (A + 3 + d + codeLength I.domain)
     (A + 3 + d + codeLength I.domain + 2) ++
   [.lt (reg 5) (reg 7) (A + 3 + d + codeLength I.domain + 1)
@@ -354,7 +301,8 @@ private noncomputable def unrankCode (m A : ℕ) : List Instr :=
 omit [L'.IsRelational] in
 private theorem length_unrankCode (m A : ℕ) :
     (unrankCode v v' e I m A).length = d + codeLength I.domain + 6 := by
-  simp only [unrankCode, List.length_append, length_coordsCode, length_domCode, List.length_cons,
+  simp only [unrankCode, List.length_append, length_coordinatesCode, length_domCode,
+    List.length_cons,
     List.length_nil]
   omega
 
@@ -372,11 +320,11 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
     (hlen : base v' d + boundDepth I.domain ≤ regs.length) (hB : ∀ r ∈ regs, r ≤ B) :
     ∃ regs', P.Reaches (encStructure a) (P.Running B) (A, regs)
       (A + d + codeLength I.domain + 6, regs') ∧ regs'.length = regs.length ∧
-      (∀ i : ι, regs'.getD (blk d m (e i)) 0 =
+      (∀ i : ι, regs'.getD (tupleReg d m (e i)) 0 =
         ((letI := v.decode a; ((rankEquiv I e a.1).symm
           ⟨t / modelCard I e a.1 ^ m % modelCard I e a.1, Nat.mod_lt _ hpos⟩).1 i : Fin a.1) :
           ℕ)) ∧
-      (∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ blk d m i) →
+      (∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ tupleReg d m i) →
         regs'.getD x 0 = regs.getD x 0) ∧ ∀ r ∈ regs', r ≤ B := by
   classical
   let _ := v.decode a
@@ -388,12 +336,12 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
   have hn'N : n' ≤ a.1 ^ d := modelCard_le_pow (I := I) (e := e) (n := a.1)
   have hl2 : ([Instr.assign 7 (mod (div (reg 6) (pow (reg 3) m)) (reg 3)) (A + 1),
       .assign 4 (const 0) (A + 2), .assign 5 (const 0) (A + 3)] ++
-      coordsCode d m (A + 3)).length = 3 + d := by
-    rw [List.length_append, length_coordsCode]
+      coordinatesCode d m (A + 3)).length = 3 + d := by
+    rw [List.length_append, length_coordinatesCode]
     rfl
   have hl3 : ([Instr.assign 7 (mod (div (reg 6) (pow (reg 3) m)) (reg 3)) (A + 1),
       .assign 4 (const 0) (A + 2), .assign 5 (const 0) (A + 3)] ++
-      coordsCode d m (A + 3) ++
+      coordinatesCode d m (A + 3) ++
       domCode v v' e I m (A + 3 + d) (A + 3 + d + cs) (A + 3 + d + cs + 2)).length =
       3 + d + cs := by
     rw [List.length_append, hl2, length_domCode, hcs]
@@ -416,19 +364,19 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
   replace hc₂ : P.instr (A + 3 + d + cs + 2) = .assign 4 (add (reg 4) (const 1)) (A + 3) := by
     convert hc₂ using 2; omega
   have hbase := le_base v' (d := d)
-  have hblkm := blk_le_base v' (d := d) hm
+  have htupleRegm := tupleReg_le_base v' (d := d) hm
   -- the target
   obtain ⟨u₀, hu₀, hru₀⟩ := exists_inDomain_of_lt (I := I) (e := e) (n := a.1) hrn
   have hu₀N : u₀ < a.1 ^ d := hu₀.1
   -- the search
   have search : ∀ e' u (rs : List ℕ), u₀ - u = e' → u ≤ u₀ → rs.getD 4 0 = u →
       rs.getD 5 0 = I.domainRank e a.1 u → rs.getD 7 0 = r → rs.length = regs.length →
-      (∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ blk d m i) →
+      (∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ tupleReg d m i) →
         rs.getD x 0 = regs.getD x 0) → (∀ x ∈ rs, x ≤ B) →
       ∃ regs', P.Reaches (encStructure a) (P.Running B) (A + 3, rs) (A + 3 + d + cs + 3, regs') ∧
         regs'.length = regs.length ∧
-        (∀ i : ι, regs'.getD (blk d m (e i)) 0 = ((tupleEquiv e).symm ⟨u₀, hu₀N⟩ i : ℕ)) ∧
-        (∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ blk d m i) →
+        (∀ i : ι, regs'.getD (tupleReg d m (e i)) 0 = ((tupleEquiv e).symm ⟨u₀, hu₀N⟩ i : ℕ)) ∧
+        (∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ tupleReg d m i) →
           regs'.getD x 0 = regs.getD x 0) ∧ ∀ x ∈ regs', x ≤ B := by
     intro e'
     induction e' using Nat.strong_induction_on with
@@ -436,21 +384,23 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
       intro u rs he hu h4 h5 h7 hl hkeep hB'
       have huN : u < a.1 ^ d := by omega
       have h0s : rs.getD 0 0 = a.1 := by
-        rw [hkeep 0 (by omega) (by omega) (by omega) (by omega) (fun i _ => by unfold blk; omega),
+        rw [hkeep 0 (by omega) (by omega) (by omega) (by omega)
+          (fun i _ => by unfold tupleReg; omega),
           h0]
       have h3s : rs.getD 3 0 = n' := by
-        rw [hkeep 3 (by omega) (by omega) (by omega) (by omega) (fun i _ => by unfold blk; omega),
+        rw [hkeep 3 (by omega) (by omega) (by omega) (by omega)
+          (fun i _ => by unfold tupleReg; omega),
           h3]
       obtain ⟨regs₁, hreach₁, hlen₁, hset₁, hkeep₁, hB₁⟩ :=
-        reaches_coordsCode (w := encStructure a) hcoords huN hnB rs h0s h4 (by omega) hB'
+        reaches_coordinatesCode (w := encStructure a) hcoords huN hnB rs h0s h4 (by omega) hB'
       obtain ⟨res, regs₂, hres, hreach₂, hlen₂, hkeep₂, hB₂⟩ :=
-        reaches_formulaCode ha hnB (fun i => blk d m (e i)) (base v' d) (by omega)
-          (fun i => blk_lt_base v' hm (e i).2) ((tupleEquiv e).symm ⟨u, huN⟩) I.domain
+        reaches_formulaCode ha hnB (fun i => tupleReg d m (e i)) (base v' d) (by omega)
+          (fun i => tupleReg_lt_base v' hm (e i).2) ((tupleEquiv e).symm ⟨u, huN⟩) I.domain
           (A + 3 + d) (A + 3 + d + cs) (A + 3 + d + cs + 2) regs₁ default hdom
           (by rw [hlen₁, hl]; exact hlen)
-          (by rw [hkeep₁ 0 (fun i _ => by unfold blk; omega), h0s]) hB₁
+          (by rw [hkeep₁ 0 (fun i _ => by unfold tupleReg; omega), h0s]) hB₁
           (fun i => by rw [hset₁ _ (e i).2, tupleEquiv_symm_apply_val]) (fun i => i.elim0)
-      have hk₂ (x : ℕ) (hx : x < base v' d) (hxm : ∀ i < d, x ≠ blk d m i) :
+      have hk₂ (x : ℕ) (hx : x < base v' d) (hxm : ∀ i < d, x ≠ tupleReg d m i) :
           regs₂.getD x 0 = rs.getD x 0 := by
         rw [hkeep₂ x (by omega), hkeep₁ x hxm]
       have hres' : res = true ↔ I.InDomain e a.1 u := by
@@ -458,14 +408,14 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
         rfl
       have hlen₂' : regs₂.length = regs.length := by rw [hlen₂, hlen₁, hl]
       have h4₂ : regs₂.getD 4 0 = u := by
-        rw [hk₂ 4 (by omega) (fun i _ => by unfold blk; omega), h4]
+        rw [hk₂ 4 (by omega) (fun i _ => by unfold tupleReg; omega), h4]
       have h5₂ : regs₂.getD 5 0 = I.domainRank e a.1 u := by
-        rw [hk₂ 5 (by omega) (fun i _ => by unfold blk; omega), h5]
+        rw [hk₂ 5 (by omega) (fun i _ => by unfold tupleReg; omega), h5]
       have h7₂ : regs₂.getD 7 0 = r := by
-        rw [hk₂ 7 (by omega) (fun i _ => by unfold blk; omega), h7]
-      have hkeepr (rs' : List ℕ) (hrs' : ∀ x < base v' d, (∀ i < d, x ≠ blk d m i) →
+        rw [hk₂ 7 (by omega) (fun i _ => by unfold tupleReg; omega), h7]
+      have hkeepr (rs' : List ℕ) (hrs' : ∀ x < base v' d, (∀ i < d, x ≠ tupleReg d m i) →
           x ≠ 4 → x ≠ 5 → rs'.getD x 0 = regs₂.getD x 0) :
-          ∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ blk d m i) →
+          ∀ x < base v' d, x ≠ 4 → x ≠ 5 → x ≠ 7 → (∀ i < d, x ≠ tupleReg d m i) →
             rs'.getD x 0 = regs.getD x 0 := fun x hx h4' h5' h7' hxm => by
         rw [hrs' x hx hxm h4' h5', hk₂ x hx hxm, hkeep x hx h4' h5' h7' hxm]
       have hle : I.domainRank e a.1 u ≤ r := hru₀ ▸ domainRank_mono hu
@@ -516,7 +466,7 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
             have := domainRank_lt_of_inDomain hin (show u < u₀ by omega)
             omega
           subst heq
-          refine ⟨regs₂, ?_, hlen₂', fun i => by rw [hkeep₂ _ (blk_lt_base v' hm (e i).2),
+          refine ⟨regs₂, ?_, hlen₂', fun i => by rw [hkeep₂ _ (tupleReg_lt_base v' hm (e i).2),
             hset₁ _ (e i).2, tupleEquiv_symm_apply_val], hkeepr _ fun _ _ _ _ _ => rfl, hB₂⟩
           refine hreach₁.trans (hreach₂.trans ?_)
           refine Reaches.lt hc₀ hB₂ ?_
@@ -552,16 +502,6 @@ private theorem reaches_unrankCode (ha : v.WellFormed a) {m A t : ℕ} (hm : m �
     simpa only [eval_const] using hreach'
   · rw [hset' i, rankEquiv_symm_val (r := ⟨r, hrn⟩) hu₀ hru₀]
 
-/-- Emitting `true` and a bit for every number below `N`, then `false`, frames the bits. -/
-private theorem flatMap_range_pair_append_false (N : ℕ) (f : Fin N → Bool) :
-    ((List.range N).flatMap fun t => [true, if h : t < N then f ⟨t, h⟩ else false]) ++ [false] =
-      MultiTapeTM.frame (List.ofFn f) := by
-  rw [MultiTapeTM.frame, ← List.map_coe_finRange_eq_range, List.flatMap_map, List.ofFn_eq_map,
-    List.flatMap_map]
-  congr 1
-  refine List.flatMap_congr fun i _ => ?_
-  simp [i.2]
-
 variable (v' I) in
 /-- The number of instructions of the code of the defining formula of the symbol `j`. -/
 private noncomputable def relLength (j : Fin v'.count) : ℕ := codeLength (I.rel (v'.symbol j).2)
@@ -582,7 +522,7 @@ private noncomputable def relTableCode (j : Fin v'.count) (b : ℕ) : List Instr
     (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 4) ++
   (List.range (v'.symbol j).1).flatMap
     (fun m => unrankCode v v' e I m (b + 3 + (d + codeLength I.domain + 6) * m)) ++
-  formulaCode v (fun p : Fin (v'.symbol j).1 × ι => blk d p.1 (e p.2)) (base v' d)
+  formulaCode v (fun p : Fin (v'.symbol j).1 × ι => tupleReg d p.1 (e p.2)) (base v' d)
     (I.rel (v'.symbol j).2) (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1)
     (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j)
     (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 2) ++
@@ -591,17 +531,6 @@ private noncomputable def relTableCode (j : Fin v'.count) (b : ℕ) : List Instr
    .emit true (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 3),
    .emit false (b + 2),
    .emit false (b + 3 + (d + codeLength I.domain + 6) * (v'.symbol j).1 + relLength v' I j + 5)]
-
-private theorem blk_ne {m m' i i' : ℕ} (h : m ≠ m') (hi : i < d) (hi' : i' < d) :
-    blk d m i ≠ blk d m' i' := by
-  unfold blk
-  rcases lt_or_gt_of_ne h with hlt | hgt
-  · have : d * (m + 1) ≤ d * m' := Nat.mul_le_mul_left d hlt
-    rw [Nat.mul_succ] at this
-    omega
-  · have : d * (m' + 1) ≤ d * m := Nat.mul_le_mul_left d hgt
-    rw [Nat.mul_succ] at this
-    omega
 
 omit [L'.IsRelational] in
 private theorem arity_le_maxArity (j : Fin v'.count) : (v'.symbol j).1 ≤ maxArity v' :=
@@ -669,7 +598,7 @@ private theorem reachesOut_relTableCode (ha : v.WellFormed a) (j : Fin v'.count)
       ∀ m (hmk : m ≤ (v'.symbol j).1), ∃ rs', P.Reaches (encStructure a) (P.Running B)
         (b + 3, rs) (b + 3 + (d + cs + 6) * m, rs') ∧ rs'.length = regs.length ∧
         rs'.getD 0 0 = a.1 ∧ rs'.getD 3 0 = n' ∧ rs'.getD 6 0 = t ∧ (∀ x ∈ rs', x ≤ B) ∧
-        ∀ m' (hm' : m' < m) (i : ι), rs'.getD (blk d m' (e i)) 0 =
+        ∀ m' (hm' : m' < m) (i : ι), rs'.getD (tupleReg d m' (e i)) 0 =
           (((rankEquiv I e a.1).symm
             (finFunctionFinEquiv.symm ⟨t, ht⟩ ⟨m', lt_of_lt_of_le hm' hmk⟩)).1 i : ℕ) := by
     intro t ht rs h6 h0' h3' hl hB' m
@@ -678,7 +607,7 @@ private theorem reachesOut_relTableCode (ha : v.WellFormed a) (j : Fin v'.count)
         fun _ h => absurd h (by omega)⟩
     | succ m ih =>
       intro hm
-      obtain ⟨rs₁, hreach₁, hl₁, h0₁, h3₁, h6₁, hB₁, hblk₁⟩ := ih (by omega)
+      obtain ⟨rs₁, hreach₁, hl₁, h0₁, h3₁, h6₁, hB₁, htupleReg₁⟩ := ih (by omega)
       have hpos : 0 < n' := by
         rcases Nat.eq_zero_or_pos n' with h | h
         · rw [h, zero_pow (by omega)] at ht
@@ -687,24 +616,27 @@ private theorem reachesOut_relTableCode (ha : v.WellFormed a) (j : Fin v'.count)
       have hcode := CodeAt.flatMap_range
         (f := fun m => unrankCode v v' e I m (b + 3 + (d + cs + 6) * m))
         (fun i => by rw [length_unrankCode, hcs]) hunr m (by omega)
-      obtain ⟨rs₂, hreach₂, hl₂, hblk₂, hkeep₂, hB₂⟩ :=
+      obtain ⟨rs₂, hreach₂, hl₂, htupleReg₂, hkeep₂, hB₂⟩ :=
         reaches_unrankCode (v := v) ha (show m ≤ maxArity v' by omega) hcode hnB hNB rs₁ h0₁ h3₁
           h6₁ hpos (by rw [hl₁]; exact hlenD) hB₁
       refine ⟨rs₂, hreach₁.trans ?_, hl₂.trans hl₁, ?_, ?_, ?_, hB₂, fun m' hm' i => ?_⟩
       · rw [hcs, show b + 3 + (d + cs + 6) * m + d + cs + 6 = b + 3 + (d + cs + 6) * (m + 1) by
           rw [Nat.mul_succ]; omega] at hreach₂
         exact hreach₂
-      · rw [hkeep₂ 0 (by omega) (by omega) (by omega) (by omega) (fun i _ => by unfold blk; omega),
+      · rw [hkeep₂ 0 (by omega) (by omega) (by omega) (by omega)
+          (fun i _ => by unfold tupleReg; omega),
           h0₁]
-      · rw [hkeep₂ 3 (by omega) (by omega) (by omega) (by omega) (fun i _ => by unfold blk; omega),
+      · rw [hkeep₂ 3 (by omega) (by omega) (by omega) (by omega)
+          (fun i _ => by unfold tupleReg; omega),
           h3₁]
-      · rw [hkeep₂ 6 (by omega) (by omega) (by omega) (by omega) (fun i _ => by unfold blk; omega),
+      · rw [hkeep₂ 6 (by omega) (by omega) (by omega) (by omega)
+          (fun i _ => by unfold tupleReg; omega),
           h6₁]
       · rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp hm') with hlt | rfl
-        · rw [hkeep₂ _ (blk_lt_base v' (by omega) (e i).2) (by unfold blk; omega)
-            (by unfold blk; omega) (by unfold blk; omega)
-            (fun i' hi' => blk_ne (by omega) (e i).2 hi'), hblk₁ m' hlt i]
-        · rw [hblk₂ i]
+        · rw [hkeep₂ _ (tupleReg_lt_base v' (by omega) (e i).2) (by unfold tupleReg; omega)
+            (by unfold tupleReg; omega) (by unfold tupleReg; omega)
+            (fun i' hi' => tupleReg_ne (by omega) (e i).2 hi'), htupleReg₁ m' hlt i]
+        · rw [htupleReg₂ i]
           congr 3
   -- the loop over the tuples of elements
   let bit : ℕ → Bool := fun t => if h : t < n' ^ (v'.symbol j).1 then
@@ -717,15 +649,15 @@ private theorem reachesOut_relTableCode (ha : v.WellFormed a) (j : Fin v'.count)
     (fun t rs ⟨h6, _, h3', hl, hB'⟩ => ⟨h6, by simp only [eval_pow, eval_reg, h3'],
       by rw [hl]; omega, hB'⟩)
     (fun t ht rs ⟨h6, h0', h3', hl, hB'⟩ => by
-      obtain ⟨rs₁, hreach₁, hl₁, h0₁, h3₁, h6₁, hB₁, hblk₁⟩ :=
+      obtain ⟨rs₁, hreach₁, hl₁, h0₁, h3₁, h6₁, hB₁, htupleReg₁⟩ :=
         chain t ht rs h6 h0' h3' hl hB' _ le_rfl
       obtain ⟨res, rs₂, hres, hreach₂, hl₂, hkeep₂, hB₂⟩ :=
-        reaches_formulaCode ha hnB (fun p : Fin (v'.symbol j).1 × ι => blk d p.1 (e p.2))
+        reaches_formulaCode ha hnB (fun p : Fin (v'.symbol j).1 × ι => tupleReg d p.1 (e p.2))
           (base v' d) (by omega)
-          (fun p => blk_lt_base v' (show (p.1 : ℕ) ≤ maxArity v' by omega) (e p.2).2)
+          (fun p => tupleReg_lt_base v' (show (p.1 : ℕ) ≤ maxArity v' by omega) (e p.2).2)
           (fun p => ((rankEquiv I e a.1).symm (finFunctionFinEquiv.symm ⟨t, ht⟩ p.1)).1 p.2)
           (I.rel (v'.symbol j).2) Rl (Rl + cr) (Rl + cr + 2) rs₁ default hrel
-          (by rw [hl₁]; exact hlenR) h0₁ hB₁ (fun p => hblk₁ p.1 p.1.2 p.2) (fun i => i.elim0)
+          (by rw [hl₁]; exact hlenR) h0₁ hB₁ (fun p => htupleReg₁ p.1 p.1.2 p.2) (fun i => i.elim0)
       have hbit : bit t = res := by
         have hiff : RelMap (v'.symbol j).2
             ((rankEquiv I e a.1).symm ∘ finFunctionFinEquiv.symm ⟨t, ht⟩) ↔ res = true :=
@@ -804,50 +736,6 @@ private theorem reachesOut_tablesCode (ha : v.WellFormed a) (hnB : a.1 ≤ B) (h
     rw [List.map_cons, List.sum_cons, ← Nat.add_assoc, List.flatMap_cons]
     exact hreach₁.trans hreach₂
 
-variable (v') in
-/-- The code emitting `encStructure (0, [[], …, []])`, a malformed input with one table too many,
-then halting; placed at `b`. -/
-private def rejectCode (b : ℕ) : List Instr :=
-  List.ofFn (fun i : Fin (v'.count + 2) => .emit false (b + i + 1)) ++ [.halt List.nil]
-
-omit [L'.IsRelational] in
-private theorem reachesOut_rejectCode {b : ℕ} (hP : P.CodeAt b (rejectCode v' b)) (regs : List ℕ)
-    (hB : ∀ r ∈ regs, r ≤ B) :
-    P.ReachesOut (encStructure a) (P.Active B) (b, regs) (b + (v'.count + 2), regs)
-      (List.replicate (v'.count + 2) false) ∧ P.instr (b + (v'.count + 2)) = .halt [] := by
-  rw [rejectCode, codeAt_append, List.length_ofFn] at hP
-  refine ⟨?_, (codeAt_cons.mp hP.2).1⟩
-  have key : ∀ k ≤ v'.count + 2, P.ReachesOut (encStructure a) (P.Active B)
-      (b + (v'.count + 2 - k), regs) (b + (v'.count + 2), regs) (List.replicate k false) := by
-    intro k
-    induction k with
-    | zero => exact fun _ => by simpa using ReachesOut.refl _
-    | succ k ih =>
-      intro hk
-      have hc : P.instr (b + (v'.count + 2 - (k + 1))) =
-          .emit false (b + (v'.count + 2 - (k + 1)) + 1) := by
-        rw [hP.1 (v'.count + 2 - (k + 1)) (by rw [List.length_ofFn]; omega)]
-        simp only [List.getElem_ofFn]
-      refine ReachesOut.emit hc hB ?_
-      rw [show b + (v'.count + 2 - (k + 1)) + 1 = b + (v'.count + 2 - k) by omega]
-      exact ih (by omega)
-  simpa using key (v'.count + 2) le_rfl
-
-omit [L'.IsRelational] in
-private theorem encStructure_reject :
-    encStructure ((0, List.replicate (v'.count + 1) []) : EncodedStructure) =
-      List.replicate (v'.count + 2) false := by
-  have h (n : ℕ) : (List.replicate n ([] : List Bool)).flatMap MultiTapeTM.frame =
-      List.replicate n false := by
-    induction n with
-    | zero => rfl
-    | succ n ih => simp only [List.replicate_succ, List.flatMap_cons,
-        MultiTapeTM.frame, List.flatMap_nil, List.nil_append, List.singleton_append, ih]
-  rw [encStructure_eq, h]
-  simp only [List.replicate_zero, MultiTapeTM.frame, List.flatMap_nil, List.nil_append,
-    List.singleton_append]
-  rfl
-
 /-! ### The complete transducer -/
 
 variable (v v' e I d)
@@ -916,7 +804,7 @@ theorem computableInLogSpace_encodedMap :
   obtain ⟨⟨⟨⟨hshape, hscan⟩, htables⟩, hhalt⟩, hreject⟩ := hcode
   have hscanLen : (scanCode v v' e I (scanStart v)).length = d + codeLength I.domain + 8 := by
     simp only [scanCode, List.length_append, List.length_cons, List.length_nil,
-      length_coordsCode, length_domCode, forCode]
+      length_coordinatesCode, length_domCode, forCode]
     omega
   simp only [List.length_append, length_shapeCode, hscanLen, length_tablesCode,
     List.length_cons, List.length_nil, Nat.zero_add] at hscan htables hhalt hreject
