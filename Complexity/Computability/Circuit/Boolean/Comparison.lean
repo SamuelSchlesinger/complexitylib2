@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Formula
-public import Complexity.Foundations.Data.BitString.Basic
+public import Complexity.Foundations.Data.BitString.Selection
 import Complexity.Computability.Circuit.CompositionDepth
 import Mathlib.Tactic.FinCases
 
@@ -41,7 +41,7 @@ A balanced tree of keyed minimums selects a record with the least key among many
 
 * `Cslib.Circuits.Boolean.muxCircuit`, `Cslib.Circuits.Boolean.leCircuit`,
   `Cslib.Circuits.Boolean.minCircuit`, `Cslib.Circuits.Boolean.keyedMinCircuit`: the circuits.
-* `Cslib.Circuits.Boolean.recordKey`, `Cslib.Circuits.Boolean.keyedMinFn`: the key of a record, and
+* `Cslib.BitString.recordKey`, `Cslib.BitString.keyedMinFn`: the key of a record, and
   the record with the smaller key.
 
 ## Main results
@@ -61,6 +61,8 @@ Adapted from Samuel Schlesinger's earlier Complexitylib modules
 @[expose] public section
 
 namespace Cslib.Circuits.Boolean
+
+open BitString
 
 variable {w k p : ℕ}
 
@@ -219,33 +221,6 @@ theorem depth_minCircuit_le (w : ℕ) : (minCircuit w).depth ≤ 4 * w + 4 :=
   (Circuit.depth_comp_le _ _).trans <| (Nat.add_le_add (depth_muxCircuit_le w)
     ((Circuit.depth_append_le _ _).trans (max_le (depth_leCircuit_le w) (by simp)))).trans_eq
       (by ring)
-
-/-- The key of a record: its first `k` bits. -/
-def recordKey (r : BitString (k + p)) : BitString k :=
-  fun i => r (Fin.castAdd p i)
-
-/-- Of two records, the one with the smaller key, the first on ties. -/
-def keyedMinFn (r s : BitString (k + p)) : BitString (k + p) :=
-  if BitString.equivFin k (recordKey r) ≤ BitString.equivFin k (recordKey s) then r else s
-
-theorem keyedMinFn_eq_or_eq (r s : BitString (k + p)) :
-    keyedMinFn r s = r ∨ keyedMinFn r s = s := by
-  unfold keyedMinFn
-  split_ifs <;> simp
-
-theorem equivFin_recordKey_keyedMinFn_le_left (r s : BitString (k + p)) :
-    BitString.equivFin k (recordKey (keyedMinFn r s)) ≤ BitString.equivFin k (recordKey r) := by
-  unfold keyedMinFn
-  split_ifs with h
-  · exact le_rfl
-  · exact (not_le.1 h).le
-
-theorem equivFin_recordKey_keyedMinFn_le_right (r s : BitString (k + p)) :
-    BitString.equivFin k (recordKey (keyedMinFn r s)) ≤ BitString.equivFin k (recordKey s) := by
-  unfold keyedMinFn
-  split_ifs with h
-  · exact h
-  · exact le_rfl
 
 /-- The keys of two records. -/
 def keyBits (k p : ℕ) : Fin (k + k) → Fin (k + p + (k + p)) :=

@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.Circuit.Balanced
 public import Complexity.Computability.Circuit.Boolean.Comparison
-public import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # Tournaments: selecting a record with the least key
@@ -20,18 +19,18 @@ payload of `p` bits are compared by their keys. A *tournament* plays keyed minim
 the record with the smaller key, meets the winner of the neighbouring match. On `m + 1` records it
 outputs one of them whose key is the least (`exists_eval_tournamentCircuit`), with `m` keyed
 minimums, that is `m (8 k + 3 p + 2)` gates beyond those computing the records
-(`size_tournamentCircuit`), and depth `(4 k + 4) ⌈log₂ (m + 1)⌉` above them
+(`size_tournamentCircuit`), and depth at most `(4 k + 4) ⌈log₂ (m + 1)⌉` above them
 (`depth_tournamentCircuit_le`).
 
 The records may be computed by any circuits on shared inputs, or read from the inputs, packed one
 after the other (`packedTournamentCircuit`). There is always at least one record; `m = 0`
-selects the only
-record using wiring alone. The least-key theorem does not specify which tied record wins.
+returns the sole leaf circuit, and the packed version uses wiring alone. The least-key theorem
+does not specify which tied record wins.
 
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.tournamentCircuit`: the tournament among records computed by circuits.
-* `Cslib.Circuits.Boolean.packRecords`, `Cslib.Circuits.Boolean.packedTournamentCircuit`: the
+* `Cslib.BitString.packRecords`, `Cslib.Circuits.Boolean.packedTournamentCircuit`: the
   tournament among records given as inputs.
 
 ## Main results
@@ -54,7 +53,7 @@ Adapted from Samuel Schlesinger's earlier Complexitylib module
 
 namespace Cslib.Circuits.Boolean
 
-open Finset
+open Finset BitString
 
 variable {k p n m : ℕ}
 
@@ -126,16 +125,6 @@ theorem depth_tournamentCircuit_le (leaves : Fin (m + 1) → Circuit signature n
     exact Nat.add_le_add_left (Nat.mul_le_mul_right _ (depth_keyedMinCircuit_le k p)) D
 
 /-! ### Records given as inputs -/
-
-/-- `m` records of `r` bits packed one after the other: bit `j` of record `i` is input
-`finProdFinEquiv (i, j)`, that is `i r + j`. -/
-def packRecords {r : ℕ} (records : Fin m → BitString r) : BitString (m * r) :=
-  fun t => records (finProdFinEquiv.symm t).1 (finProdFinEquiv.symm t).2
-
-theorem packRecords_comp {r : ℕ} (records : Fin m → BitString r) (i : Fin m) :
-    packRecords records ∘ (fun j => finProdFinEquiv (i, j)) = records i := by
-  funext j
-  simp [packRecords]
 
 /-- The tournament among `m + 1` records given as inputs, packed one after the other. -/
 def packedTournamentCircuit (k p m : ℕ) : Circuit signature ((m + 1) * (k + p)) (k + p) :=

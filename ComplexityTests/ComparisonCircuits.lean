@@ -16,7 +16,7 @@ also has an explicit empty-list client.
 
 namespace ComplexityTests.ComparisonCircuits
 
-open Cslib Cslib.Circuits Cslib.Circuits.Boolean
+open Cslib Cslib.Circuits Cslib.Circuits.Boolean Cslib.BitString
 
 -- Binary 01 is one and binary 10 is two when the first coordinate is least significant.
 example : (leCircuit 2).eval interpretation
