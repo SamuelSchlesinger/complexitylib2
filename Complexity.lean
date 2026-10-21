@@ -30,6 +30,7 @@ public import Complexity.Computability.Circuit.Balanced
 public import Complexity.Computability.Circuit.BipartiteMatching
 public import Complexity.Computability.Circuit.Bird
 public import Complexity.Computability.Circuit.Boolean.AC0
+public import Complexity.Computability.Circuit.Boolean.Advice
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Elimination
