@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.Combinatorics.Expander.Hitting
+import Complexity.Foundations.Combinatorics.Expander.Mixing
 
 /-!
 # Expander-walk hitting tests
@@ -73,6 +74,20 @@ example (t : ℕ) :
     (B := fun _ => ∅) (μ := 0) (fun _ => by simp) t
   convert h using 1
   norm_num
+
+-- Centering in the mixing bound does not need an inhabitant of the vertex type.
+example (t : ℕ) (f g : Fin 0 → ℝ) :
+    (𝔼 v, f v * (emptyVertices.walk ^ t) g v - (𝔼 v, f v) * 𝔼 v, g v) ^ 2 ≤ 0 := by
+  convert emptyVertices.sq_expect_mul_walk_pow_sub_le t f g using 1
+  simp
+
+-- A nonconstant score has zero centered correlation after a positive complete-graph walk.
+example (t : ℕ) :
+    let f : Fin 2 → ℝ := fun v => if v = 0 then 1 else 0
+    (𝔼 v, f v * (completeTwo.walk ^ (t + 1)) f v - (𝔼 v, f v) * 𝔼 v, f v) ^ 2 ≤ 0 := by
+  dsimp only
+  simpa [spectralExpansion_completeTwo] using completeTwo.sq_expect_mul_walk_pow_sub_le
+    (t + 1) (fun v => if v = 0 then 1 else 0) (fun v => if v = 0 then 1 else 0)
 
 /--
 info: 'Cslib.RotationMap.expect_prod_walkAt' depends on axioms:
