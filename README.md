@@ -19,6 +19,7 @@ mathematics. See [Contributing](CONTRIBUTING.md) to propose, implement, or revie
 | I want to… | Start with… |
 | --- | --- |
 | Certify functional programs and loops | [PolyTime examples](ComplexityTests/PolyTimeTactic.lean) |
+| Construct circuits for polynomial-time function families | [Uniform circuit examples](ComplexityTests/UniformCircuits.lean) |
 | Write probabilistic programs or oracle reductions | [PPT examples](ComplexityTests/PPTTactic.lean), [oracle examples](ComplexityTests/OraclePPT.lean) |
 | Find a computational model or mathematical tool | [Module index](Complexity.lean); each module documents its definitions, results, and references |
 | Contribute a result or improve an API | [Contributing](CONTRIBUTING.md) |
@@ -60,6 +61,9 @@ are maintained alongside the library; it is a curated catalogue, not an exhausti
   [TSP](Complexity/Computability/Complexity/Problems/TSP.lean),
   [subset sum](Complexity/Computability/Complexity/Problems/SubsetSum.lean) and further graph and number problems,
   by polynomial-time reductions.
+* [Total search](Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean):
+  `LocalOpt`, `Pigeon`, `EndOfLine` and `Leaf` are complete for PLS, PPP, PPAD and PPA,
+  using polynomial-time construction of their circuit codes.
 * [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): a class of finite relational
   structures is definable in existential second-order logic exactly when it is closed under
   isomorphism and in NP.

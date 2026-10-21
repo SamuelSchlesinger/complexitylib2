@@ -37,6 +37,8 @@ import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
 import ComplexityTests.Code.M3
+import ComplexityTests.CodeComposition
+import ComplexityTests.CodeSubstitution
 import ComplexityTests.CoinTape
 import ComplexityTests.CombinatorialBounds
 import ComplexityTests.CommunicationComplexity
@@ -286,6 +288,7 @@ import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.TFNP
+import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
@@ -301,6 +304,7 @@ import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
+import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP

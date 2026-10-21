@@ -13,6 +13,7 @@ public import Complexity.Computability.Circuit.Boolean.Tableau.Correct
 public import Complexity.Computability.Circuit.Boolean.Tableau.Space
 public import Complexity.Computability.Complexity.Problems.CircuitValue.Writer
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Mathlib.Data.List.GetD
 
 /-!
@@ -41,12 +42,17 @@ copies the input.
 * `Cslib.Complexity.CircuitValue.tableauInstance`: the instance of the circuit value problem for
   an input of a machine.
 * `Cslib.Complexity.CircuitValue.writer`: the read machine writing the instance.
+* `Cslib.Complexity.CircuitValue.tableauCode`: the circuit code, with all input wires free.
 
 ## Main results
 
 * `Cslib.Complexity.CircuitValue.run_writer`: the writer writes the encoded instance.
 * `Cslib.Complexity.CircuitValue.computableInLogSpace_tableauInstance`: the instances are
   computable in logarithmic space.
+* `Cslib.Complexity.CircuitValue.computableTidilyInPolyTime_tableauCode`: the whole code is
+  constructed in polynomial time from the unary input length.
+* `Cslib.Complexity.CircuitValue.exists_uniformCircuits`: polynomial-time Boolean functions
+  admit polynomial-time circuit constructors, correct on the encoding's image.
 * `Cslib.Complexity.CircuitValue.logSpaceHard`: the circuit value problem is `P`-hard under
   logarithmic-space reductions.
 * `Cslib.Complexity.CircuitValue.logSpaceComplete`: the circuit value problem is `P`-complete
@@ -238,6 +244,60 @@ theorem computableInLogSpace_tableauInstance :
   fun_prop
 
 end Space
+
+/-! ### Constructing circuit codes -/
+
+section Construction
+
+variable {k : ℕ} {State : Type} [Fintype State] [DecidableEq State]
+  (tm : MultiTapeTM k Bool State) (C d : ℕ)
+
+/-- The tableau code for inputs of length `n`. The input wires remain free; the constructor
+receives only the length, in unary, rather than any assignment to those wires. -/
+noncomputable def tableauCode (n : ℕ) : List (Op × List ℕ) × List ℕ :=
+  (Tableau.circuit tm n (timeBound C d n)).code
+
+/-- Writing the tableau code takes polynomial time in the unary input length. This reuses the
+certified logarithmic-space writer and discards its dummy input assignment. -/
+theorem computableTidilyInPolyTime_tableauCode :
+    ComputableTidilyInPolyTime (tableauCode tm C d) encUnary encCode := by
+  have hwriter := (computableInLogSpace_tableauInstance tm C d).computableTidilyInPolyTime
+  have hcode := ComputableTidilyInPolyTime.dropFrame.comp
+    (ComputableTidilyInPolyTime.unframe.comp hwriter.encoded)
+  have hframe : ComputableTidilyInPolyTime (fun w : List Bool => w)
+      encBits (encFramed encBits) :=
+    .of_linear (.of_frame fun _ => rfl)
+  refine (hcode.comp (hframe.comp (ComputableTidilyInPolyTime.bitsReplicate false))).of_enc_eq
+    fun n => ?_
+  simp [tableauCode, tableauInstance, encCircuitValue_apply, encPair_apply,
+    unframe_frame_append, dropFrame_frame_append, Tableau.code_circuit, List.length_replicate]
+
+/-- Every polynomial-time Boolean function has circuits whose codes are constructed in
+polynomial time from the unary encoded input length. Correctness is required on the encoding's
+image; no decoder or efficient membership test for that image is assumed. -/
+theorem exists_uniformCircuits {α : Type} {enc : α ↪ List Bool} {f : α → Bool}
+    (hf : ComputableTidilyInPolyTime f enc encBool) :
+    ∃ circuits : (n : ℕ) → Circuit signature n 1,
+      ComputableTidilyInPolyTime (fun n => (circuits n).code) encUnary encCode ∧
+      ∀ a, (circuits (enc a).length).eval interpretation (fun i => (enc a)[i]) 0 = f a := by
+  obtain ⟨t, s, ht, -, tapes, Control, hfin, machine, hmachine⟩ := hf
+  have := Fintype.ofFinite Control
+  classical
+  obtain ⟨C, d, hbound⟩ := ht.exists_le
+  refine ⟨fun n => Tableau.circuit machine n (timeBound C d n),
+    computableTidilyInPolyTime_tableauCode machine C d, fun a => ?_⟩
+  rw [Tableau.eval_circuit machine (by simp only [timeBound]; omega)]
+  have hw : List.ofFn (fun i : Fin (enc a).length => (enc a)[i]) = enc a := List.ofFn_getElem
+  rw [hw]
+  obtain ⟨hhalt, hout⟩ := ComputesTidilyInTimeAndSpace.runFrom_initCfg (hmachine a)
+  have hle : t a ≤ timeBound C d (enc a).length := by
+    have h := hbound a
+    dsimp only [timeBound]
+    omega
+  rw [MultiTapeTM.runFrom_eq_of_halt machine _ hle hhalt, hout, encBool_apply]
+  cases f a <;> simp [OutView.ofList]
+
+end Construction
 
 /-! ### `P`-completeness -/
 
