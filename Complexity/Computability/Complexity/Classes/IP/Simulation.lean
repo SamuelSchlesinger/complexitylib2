@@ -415,6 +415,9 @@ theorem countAccepts_eq_accepted (q : α × History) :
 
 /-- **The count of accepting coins within polynomial space**, in the input and the history, for a
 number of coins computed in polynomial time. -/
+-- Retain the original `Inhabited α` argument for API compatibility; the generic counter does
+-- not need it.
+@[nolint unusedArguments]
 theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
     (hfuel : ComputableTidilyInPolyTime fuel enc encUnary) :
     ComputableTidilyInPolySpace (countAccepts M enc fuel) (encPair enc encHistory) encNat := by
