@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
+import Complexity.Tactic.FirstOrder
 import Mathlib.Tactic.FinCases
 
 /-!
@@ -269,11 +270,7 @@ theorem threeSat_cnfSubsingleton_iff [Subsingleton M] [Nonempty M] :
   obtain ⟨v⟩ := ‹Nonempty M›
   have hpos (e e' : cnfSubsingleton.Model M) :
       RelMap cnf.pos ![e, e'] ↔ ¬RelMap adj ![v, v] := by
-    rw [Interpretation.relMap_model]
-    change ¬(adj.formula₂ (.var (0, ())) (.var (0, ()))).Realize _ ↔ _
-    rw [Formula.realize_rel₂]
-    simp only [Term.realize_var]
-    rw [Subsingleton.elim ((![e, e'] 0).1 ()) v]
+    fo_simp [Subsingleton.elim (e.1 ()) v]
   have hneg (e e' : cnfSubsingleton.Model M) : ¬RelMap cnf.neg ![e, e'] := id
   have : Subsingleton (cnfSubsingleton.Model M) :=
     ⟨fun x y => Interpretation.Model.ext (Subsingleton.elim _ _)⟩

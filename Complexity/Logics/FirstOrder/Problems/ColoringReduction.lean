@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.FirstOrder.Problems.CNF
 public import Complexity.Logics.FirstOrder.Problems.Coloring
+import Complexity.Tactic.FirstOrder
 import Mathlib.Tactic.FinCases
 
 /-!
@@ -596,9 +597,7 @@ theorem colorable_coloringSubsingleton_iff [Subsingleton M] [Nonempty M] :
   have hv (v : coloringSubsingleton.Model M) : v.1 () = e := Subsingleton.elim _ _
   have hadj (v w : coloringSubsingleton.Model M) :
       RelMap adj ![v, w] ↔ ¬(RelMap cnf.pos ![e, e] ∨ RelMap cnf.neg ![e, e]) := by
-    rw [Interpretation.relMap_model, coloringSubsingleton_rel_adj]
-    simp only [Formula.realize_not, Formula.realize_sup, Formula.realize_rel₂, Term.realize_var,
-      hv]
+    fo_simp [hv]
   have hsat : Satisfiable M ↔ RelMap cnf.pos ![e, e] ∨ RelMap cnf.neg ![e, e] := by
     constructor
     · rintro ⟨A, hA⟩
@@ -622,17 +621,11 @@ theorem simpleGraph_coloringSubsingleton [Subsingleton M] [Nonempty M] (h : Sati
     coloringSubsingleton.Model M ⊨ Theory.simpleGraph := by
   obtain ⟨e⟩ := ‹Nonempty M›
   have hno (v w : coloringSubsingleton.Model M) : ¬RelMap adj ![v, w] := by
-    rw [Interpretation.relMap_model, coloringSubsingleton_rel_adj]
-    simp only [Formula.realize_not, Formula.realize_sup, Formula.realize_rel₂, Term.realize_var,
-      not_not]
+    fo_simp [Subsingleton.elim (v.1 ()) e]
     obtain ⟨A, hA⟩ := h
-    have hv : (![v, w] 0).1 () = e := Subsingleton.elim _ _
-    rw [hv]
     obtain ⟨x, ⟨hx, -⟩ | ⟨hx, -⟩⟩ := hA e
-    · rw [Subsingleton.elim x e] at hx
-      exact .inl hx
-    · rw [Subsingleton.elim x e] at hx
-      exact .inr hx
+    · exact .inl (Subsingleton.elim x e ▸ hx)
+    · exact .inr (Subsingleton.elim x e ▸ hx)
   rw [Theory.simpleGraph_model_iff]
   exact ⟨⟨fun a h => hno a a h⟩, ⟨fun a c h => (hno a c h).elim⟩⟩
 

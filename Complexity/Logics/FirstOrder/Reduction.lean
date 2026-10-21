@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Logics.FirstOrder.Interpretation.Tuple
 public import Complexity.Logics.FirstOrder.Interpretation.Unit
 public import Mathlib.ModelTheory.Bundled
 
@@ -57,6 +58,8 @@ structure is not set apart.
 * `Cslib.Logic.IsoClosed.of_forall_imp`: closure under isomorphism from one direction.
 * `Cslib.Logic.FO.Reduces.of_unitStructure`: a reduction through a one-dimensional interpretation
   whose domain formula always holds, stated on the input universe.
+* `Cslib.Logic.FO.Reduces.of_tupleStructure`: a reduction through an interpretation whose domain
+  formula always holds, stated on the tuples of the input universe.
 * `Cslib.Logic.FO.Definable.of_reduces`: definability is closed under first-order reductions.
 
 ## References
@@ -142,6 +145,13 @@ end Definable
 
 /-! ### First-order reductions -/
 
+/-- The universe of a bundled structure `Bundled.of M` is `M`. The simp set `fo_realize` uses this
+to see the interpreted structure in the semantic statement of a reduction. -/
+@[fo_realize]
+theorem coe_bundledOf (M : Type w) [L.Structure M] :
+    (Bundled.of (c := L.Structure) M : Type w) = M :=
+  rfl
+
 variable [L'.IsRelational]
 
 /-- The structure interpreted in a finite structure is finite, also when bundled. -/
@@ -221,6 +231,31 @@ theorem Reduces.of_unitStructure {K : Set (Bundled.{w} L.Structure)}
       I.domain.Realize fun _ => x) :
     Reduces K K' :=
   .of_interpretation I fun M _ => (h M).trans (I.mem_iff_unitStructure hK' M (hdom M)).symm
+
+/-! ### Reductions on tuples -/
+
+/-- For an interpretation whose domain formula holds of every tuple, the interpreted structure
+belongs to a class closed under isomorphism exactly when the structure defined on the tuples of the
+input universe does. -/
+theorem Interpretation.mem_iff_tupleStructure {K' : Set (Bundled.{w} L'.Structure)}
+    (hK' : IsoClosed K') {ι : Type} [Finite ι] (I : Interpretation L L' ι) (M : Type w)
+    [L.Structure M] [Finite M] (hdom : ∀ x : ι → M, I.domain.Realize x) :
+    Bundled.of (c := L'.Structure) (I.Model M) ∈ K' ↔
+      (⟨ι → M, I.tupleStructure M⟩ : Bundled.{w} L'.Structure) ∈ K' :=
+  hK' (I.tupleModelEquiv M hdom)
+
+/-- A first-order reduction through an interpretation whose domain formula holds of every tuple
+of every finite structure, to a class closed under isomorphism, stated on the tuples of the input
+universe: `M ∈ K` exactly when the tuples `ι → M`, with the relations defined by the
+interpretation, belong to `K'`. -/
+theorem Reduces.of_tupleStructure {K : Set (Bundled.{w} L.Structure)}
+    {K' : Set (Bundled.{w} L'.Structure)} {ι : Type} [Finite ι] (I : Interpretation L L' ι)
+    (h : ∀ (M : Bundled.{w} L.Structure) [Finite M],
+      M ∈ K ↔ (⟨ι → M, I.tupleStructure M⟩ : Bundled.{w} L'.Structure) ∈ K')
+    (hK' : IsoClosed K') (hdom : ∀ (M : Type w) [L.Structure M] [Finite M] (x : ι → M),
+      I.domain.Realize x) :
+    Reduces K K' :=
+  .of_interpretation I fun M _ => (h M).trans (I.mem_iff_tupleStructure hK' M (hdom M)).symm
 
 /-- **First-order definability is closed under first-order reductions**: if `K` reduces to a
 class `K'` defined by `φ`, then `K` is defined by the pullback of `φ`
