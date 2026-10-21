@@ -698,6 +698,34 @@ pairs and is not an upper bound on unrestricted cover complexity. The sampling a
 lemmas are proved, not assumed. These are
 formalizations of established results, not claims of new explicit superlinear circuit lower bounds.
 
+## Stateful algorithms and data structures prototype
+
+The [stateful interface calculus](Complexity/Foundations/Semantics/Stateful/Basic.lean) separates
+mathematical operations, [semantic modules](Complexity/Foundations/Semantics/Stateful/Composition.lean),
+[native realizations](Complexity/Foundations/Semantics/Stateful/Realization.lean), and
+[resource certificates](Complexity/Foundations/Semantics/Stateful/Resource.lean). Adaptive client proofs,
+semantic Hoare rules, module substitution and hidden-state potentials compose without choosing
+a backend. The [two-stack queue](Complexity/Algorithms/Lean/Queue.lean) and
+[reset-and-replay timeline editing](Complexity/Algorithms/Lean/Retroactive.lean) are
+checked constructions, with explicit primitive-cost assumptions; their pure client controllers
+are not compiled into Word-RAM programs.
+
+The [fixed-program bridge](Complexity/Computability/WordRAM/Dynamic.lean) has concrete bounded
+[stack](Complexity/Algorithms/WordRAM/Stack.lean) and
+[prefix-sum](Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean) clients. These certify persistent
+operation execution, word-fit conditions, instruction costs including halt, and arbitrary
+admissible adaptive histories. Finite-footprint assertions and faithful probe transcripts supply
+frame rules. Prefix sums use a balanced aggregation tree for a power-of-two number of entries,
+not a Fenwick layout. Machine costs exclude initial representation construction and external argument
+encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
+
+Outstanding: charged initialization and caller/linking compilation; a concrete shared-heap queue
+using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
+doubling-array amortization, richer ownership and recursive procedures; independent model
+realizations for cell probes, caches and randomness; and present/historical queries for the
+retroactive interface. Upstream API coordination and coordinator review remain prerequisites
+for integration.
+
 ## Machine-class milestones
 
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
