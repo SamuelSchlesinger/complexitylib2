@@ -185,6 +185,7 @@ import ComplexityTests.OracleCircuits
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OracleRepresentation
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition

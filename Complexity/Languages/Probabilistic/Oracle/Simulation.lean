@@ -24,6 +24,8 @@ the distribution relating two state representations. These are specializations o
 * `Cslib.ProbOracleComp.run_interpret_simulation`: local joint-state simulation suffices.
 * `Cslib.ProbOracleComp.run_interpret_map_state_of_invariant`: state representation on an invariant.
 * `Cslib.ProbOracleComp.run_interpret_map_state`: deterministic representation of oracle state.
+* `Cslib.ProbOracleComp.run_interpret_map_response_state`: represent replies and oracle state,
+  leaving private samples unchanged.
 * `Cslib.ProbOracleComp.run_interpret_readOnly`: preserve a fixed external environment.
 * `Cslib.ProbOracleComp.run_interpret_run_interpret`: a handler with private coins and external
   calls, followed by the external oracle, is one stateful handler on the joint state.
@@ -142,6 +144,41 @@ theorem run_interpret_map_state (oracle : (q : Query) → StateT State PMF (spec
           (represent s) := by
   exact run_interpret_map_state_of_invariant oracle oracle' represent (fun _ => True)
     (by simp) (fun q state _ => step q state) program s trivial
+
+/-- Reply and state representations preserve randomized adaptive execution. Private samples
+are forwarded unchanged; only external replies and the oracle's state are represented. -/
+theorem run_interpret_map_response_state {spec' : Query → Type}
+    (response : (q : Query) → spec q → spec' q)
+    (oracle : (q : Query) → StateT State PMF (spec q))
+    (oracle' : (q : Query) → StateT State' PMF (spec' q)) (represent : State → State')
+    (step : ∀ q s, (oracle q s).map (fun (a, s') => (response q a, represent s')) =
+      oracle' q (represent s)) (program : ProbOracleComp spec' α) (s : State) :
+    ((OracleComp.interpret
+      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
+      (OracleComp.interpret (handler (fun n => sample (ProbComp.unifFin n))
+        (fun q => response q <$> query q)) program)).run s).map
+        (fun (a, s') => (a, represent s')) =
+      (OracleComp.interpret
+        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle') program).run
+          (represent s) := by
+  let response' : (q : ℕ ⊕ Query) → probOracleSpec spec q → probOracleSpec spec' q
+    | .inl _ => id
+    | .inr q => response q
+  have hadapter : (fun q => response' q <$> OracleComp.query q) =
+      handler (fun n => sample (ProbComp.unifFin n)) (fun q => response q <$> query q) := by
+    funext q
+    cases q with
+    | inl n => simp [response', handler, sample, ProbComp.unifFin]
+    | inr q => rfl
+  rw [← hadapter]
+  apply OracleComp.run_interpret_map_response_state
+  intro q state
+  cases q with
+  | inl n =>
+    change ((ProbComp.unifOracle n).map (·, state)).map
+      (fun (a, next) => (a, represent next)) = (ProbComp.unifOracle n).map (·, represent state)
+    simp only [PMF.map_comp, Function.comp_def]
+  | inr q => exact step q state
 
 /-- A stateful handler that draws private coins and calls an external oracle, followed by that
 oracle, is one stateful handler on the joint state. Private draws stay fresh, and the result, the
