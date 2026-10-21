@@ -747,6 +747,23 @@ frame rules. Prefix sums use a balanced aggregation tree for a power-of-two numb
 not a Fenwick layout. Machine costs exclude initial representation construction and external argument
 encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
 
+The [recursive van Emde Boas set](Complexity/Algorithms/Lean/VanEmdeBoas/Basic.lean)
+supports bounded insertion, membership and strict successor for the universe
+`U(d) = 2^(2^d)`. Its minimum-excluded cluster representation has checked
+[invariant preservation and exact insertion semantics](Complexity/Algorithms/Lean/VanEmdeBoas/Insert.lean),
+[least-successor and absence theorems](Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean),
+and a [finite-set abstraction](Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean).
+The [proposed contiguous layout](Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean)
+has nonoverlapping recursive records and an explicit bound of ten words per universe element;
+this is address arithmetic, not a proved machine representation or initialization procedure.
+The recursive minimum-excluded variant is credited to Demaine's exposition, separately from
+the original van Emde Boas--Kaas--Zijlstra stratified representation. Functional proof milestone
+[#291](https://github.com/SamuelSchlesinger/complexitylib2/issues/291) leaves the full
+[#273](https://github.com/SamuelSchlesinger/complexitylib2/issues/273) endpoint open:
+actual fixed-code RAM execution, worst-case `O(log log U)` native instruction bounds,
+charged uniform initialization, implemented space and word/address-fit guarantees, and the
+adaptive stateful bridge. Deletion and predecessor are later work.
+
 Outstanding: controllers for larger adaptive and iterative clients;
 a concrete shared-heap queue
 using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
