@@ -1632,7 +1632,7 @@ overflow candidate and native free-variable relabeling. Named headline axiom gua
 Independent coordinator `fusion_quadratic` approved the exact source/API/correctness/tests and
 draft index with no findings, checked both files with fresh MCP diagnostics, and verified the
 primary-source references. The exact-revision review is recorded in
-[PR #66](https://github.com/SamuelSchlesinger/complexitylib2/pull/66#issuecomment-6297706327).
+[PR #66](https://github.com/cslib-community/complexitylib/pull/66#issuecomment-6297706327).
 Final combined ancestry, dependency validation and rendered PDF review remain pending in the PR.
 AI assistance: OpenAI Codex. This review is not human editorial approval or a machine-checked
 prose-to-Lean equivalence.

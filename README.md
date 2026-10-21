@@ -28,7 +28,7 @@ The checked examples show `fun_prop`, `polytime`, and `ppt` with explicit encodi
 client-supplied invariants. The deterministic backend builds on Christian Reitwiessner's tidy
 machine calculus.
 
-The [theorem index](https://github.com/SamuelSchlesinger/complexitylib2/releases/download/theorem-index/main.pdf)
+The [theorem index](https://github.com/cslib-community/complexitylib/releases/download/theorem-index/main.pdf)
 gives selected proved statements with their assumptions,
 formalization scope and links to Lean declarations. Its [LaTeX source and editing guide](paper/README.md)
 are maintained alongside the library; it is a curated catalogue, not an exhaustive API reference.
@@ -84,7 +84,7 @@ are maintained alongside the library; it is a curated catalogue, not an exhausti
 
 ## Build and use
 
-The package is named `complexitylib2`; imports begin with `Complexity.`. Most declaration
+The package is named `complexitylib`; imports begin with `Complexity.`. Most declaration
 namespaces begin with `Cslib`, and Turing-machine declarations use `Turing`. Use the version in
 [lean-toolchain](lean-toolchain) and the pinned dependencies in [lakefile.toml](lakefile.toml).
 From a checkout:
@@ -109,11 +109,12 @@ Open `http://localhost:8000` to browse and search. The on-demand **API documenta
 also produces an `api-docs` artifact; serve it by replacing the directory argument above with
 the extracted artifact directory.
 
-This is the CSLib-based successor to
-[the original Complexitylib](https://github.com/SamuelSchlesinger/complexitylib). The two libraries
-have different APIs, and some original developments remain to be ported. APIs are still evolving;
-downstream projects should pin a commit. [ROADMAP.md](ROADMAP.md) separates the community handover
-from longer-term mathematical work.
+This is the canonical CSLib-based Complexitylib. The renamed historical
+[pre-CSLib implementation](https://github.com/SamuelSchlesinger/complexitylib-v1) remains available
+with archival pending; it has a different API, and some developments remain to be ported. The temporary
+repository and package name `complexitylib2` was retired when this repository moved to CSLib
+Community. Downstream projects using that package name should change it to `complexitylib`; Lean
+imports remain unchanged. APIs are still evolving, so downstream projects should pin a commit.
 
 ## Project information
 
