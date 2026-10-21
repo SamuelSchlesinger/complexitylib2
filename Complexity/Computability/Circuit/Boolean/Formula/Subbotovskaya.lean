@@ -46,8 +46,8 @@ to be combined with a union bound in Andreev's theorem
 * `Cslib.Circuits.Formula.IsLeafMinimal.leafSize_restrictAt_false_add_true_le`: fixing input `i` to
   `false` and `true` in a leaf-minimal formula that is not a single `i`-leaf gives
   `L(F↾(i = 0)) + L(F↾(i = 1)) + 3 ℓ_i(F) ≤ 2 L(F)`.
-* `Cslib.Circuits.Boolean.sum_formulaSize_restrict_update_le`: summing over the `s` free inputs of
-  a partial assignment bounds the sum of restricted formula sizes by `(2 s - 3) L(f↾ρ)`.
+* `Cslib.Circuits.Boolean.sum_formulaSize_restrict_update_le`: summing over `s` free inputs bounds
+  restricted formula sizes by `(2 s - 3) L(f↾ρ)` when `L(f↾ρ) ≠ 1` (and `2 s - 2` when `L = 1`).
 * `Cslib.Circuits.Boolean.exists_extensions_formulaSize_sq_mul_pow_three_le`,
   `Cslib.Circuits.Boolean.exists_withFree_formulaSize_sq_mul_pow_three_le`: Subbotovskaya's
   shrinkage lemma for `k` surviving free inputs.
