@@ -6,6 +6,7 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: add `DegreeBounded.add_max` and reuse it in resource proofs, preserving their bounds.
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import Mathlib.Data.Fintype.Lattice
@@ -24,6 +25,8 @@ to the degree of a round.
 Results are stated with the degrees the closure properties produce; `mono` moves to larger degrees,
 proving the inequalities by `decide` or `omega`. Left folds are in
 `Cslib.Computability.Machines.Turing.MultiTape.Complexity.Fold`.
+For sums, `DegreeBounded.add_max` combines different degrees directly; `DegreeBounded.add` keeps
+an already shared degree.
 
 ## Main definitions
 
@@ -72,6 +75,11 @@ public theorem add (hu : DegreeBounded size u d) (hv : DegreeBounded size v d) :
   let ⟨c₁, h₁⟩ := hu
   let ⟨c₂, h₂⟩ := hv
   ⟨c₁ + c₂, fun a => (add_le_add (h₁ a) (h₂ a)).trans_eq (Nat.add_mul _ _ _).symm⟩
+
+/-- Adding bounds of different degrees gives a bound of their maximum degree. -/
+public theorem add_max (hu : DegreeBounded size u d₁) (hv : DegreeBounded size v d₂) :
+    DegreeBounded size (fun a => u a + v a) (max d₁ d₂) :=
+  (hu.mono_deg (le_max_left _ _)).add (hv.mono_deg (le_max_right _ _))
 
 public theorem smul (k : ℕ) (hu : DegreeBounded size u d) :
     DegreeBounded size (fun a => k * u a) d :=
@@ -164,9 +172,8 @@ public theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInDegr
   have hm := (ht₁.add_const 1).smul c |>.mono fun a =>
     Nat.mul_le_mul_left c (Nat.add_le_add_right (h₁.length_le a) 1)
   have hd₁ : d₁ ≤ max d₁ (e₁ * d₂) := le_max_left _ _
-  have hd₂ : e₁ * d₂ ≤ max d₁ (e₁ * d₂) := le_max_right _ _
-  exact ⟨⟨_, _, ((ht₁.mono_deg hd₁).add ((ht₂.comp hl₁).mono_deg hd₂)).add (hm.mono_deg hd₁),
-    ((hs₁.mono_deg hd₁).add ((hs₂.comp hl₁).mono_deg hd₂)).add (hm.mono_deg hd₁), h⟩,
+  exact ⟨⟨_, _, (ht₁.add_max (ht₂.comp hl₁)).add (hm.mono_deg hd₁),
+    (hs₁.add_max (hs₂.comp hl₁)).add (hm.mono_deg hd₁), h⟩,
     hl₂.comp hl₁⟩
 
 public theorem restrict {f : α → β} (h : ComputableTidilyInDegree f encIn encMid d e)
@@ -224,9 +231,8 @@ public theorem append {enc₂ : δ ↪ List Bool} {f₁ : α → β} {f₂ : α 
   obtain ⟨⟨t₁, s₁, ht₁, hs₁, h₁⟩, hl₁⟩ := h₁
   obtain ⟨⟨t₂, s₂, ht₂, hs₂, h₂⟩, hl₂⟩ := h₂
   obtain ⟨k, h⟩ := h₁.append h₂ hg
-  exact ⟨⟨_, _, (ht₁.mono_deg (le_max_left _ _)).add (ht₂.mono_deg (le_max_right _ _)),
-    ((hs₁.mono_deg (le_max_left _ _)).add (hs₂.mono_deg (le_max_right _ _))).add_const k, h⟩,
-    ((hl₁.mono_deg (le_max_left _ _)).add (hl₂.mono_deg (le_max_right _ _))).mono fun x => by
+  exact ⟨⟨_, _, ht₁.add_max ht₂, (hs₁.add_max hs₂).add_const k, h⟩,
+    (hl₁.add_max hl₂).mono fun x => by
       simp [hg]⟩
 
 /-- A function whose encoded values are those of a function computable with given degrees. -/
@@ -245,10 +251,8 @@ public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
   obtain ⟨⟨t₁, s₁, ht₁, hs₁, h₁⟩, -⟩ := hf
   obtain ⟨⟨t₂, s₂, ht₂, hs₂, h₂⟩, -⟩ := hg
   obtain ⟨c, h⟩ := hP.pair_mono h₁ h₂
-  have ht := (((ht₁.mono_deg (le_max_left _ _)).add (ht₂.mono_deg (le_max_right _ _))).add_const
-    1).smul c
-  refine of_bounds ht (((((hs₁.mono_deg (le_max_left _ _)).add
-    (hs₂.mono_deg (le_max_right _ _))).add ht).add_const 1).smul c)
+  have ht := ((ht₁.add_max ht₂).add_const 1).smul c
+  refine of_bounds ht ((((hs₁.add_max hs₂).add ht).add_const 1).smul c)
     (h.mono (fun _ => le_rfl) (fun x => Nat.mul_le_mul_left c ?_))
   have := h.length_le x
   omega
@@ -260,8 +264,7 @@ public theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     (hg : ComputableTidilyInDegree g encIn enc₂ d₂ e₂) :
     ComputableTidilyInDegree (fun x => (f x, g x)) encIn (encPair enc₁ enc₂) (max d₁ d₂)
       (max e₁ e₂) :=
-  ⟨(hf.pair hg).1, ((((hf.2.mono_deg (le_max_left _ _)).smul 2).add_const 1).add
-    (hg.2.mono_deg (le_max_right _ _))).mono fun x => by simp⟩
+  ⟨(hf.pair hg).1, (((hf.2.smul 2).add_const 1).add_max hg.2).mono fun x => by simp⟩
 
 /-- The first projection of the framed encoding of pairs. -/
 public theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
