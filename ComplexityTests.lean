@@ -326,6 +326,7 @@ import ComplexityTests.TreeEval
 import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
+import ComplexityTests.UniversalResourceBound
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness

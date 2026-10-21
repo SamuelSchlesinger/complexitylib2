@@ -7,11 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate (local addition beside the vendored `Turing.MultiTapeTM.Universal` files)
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machine
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
--- `Cslib.Complexity.Diagonal.universal_bounds_le` belongs beside `runBound`; it is proved with
--- the time hierarchy for now
-import Complexity.Computability.Complexity.Classes.Hierarchy
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -28,7 +25,6 @@ number of steps would be exponential in its length.
 
 ## Main results
 
-* `Turing.MultiTapeTM.Universal.runBound_mono`: the space bound grows with the number of steps.
 * `Turing.MultiTapeTM.Universal.universal_bounds_unary`: the time and space of the universal
   function, polynomially in the length of its input with the number of steps in unary.
 * `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`: the universal function,
@@ -44,10 +40,6 @@ number of steps would be exponential in its length.
 namespace Turing.MultiTapeTM.Universal
 
 open ComputableTidilyInPolyTime
-
-theorem runBound_mono {D N t t' : ℕ} (h : t ≤ t') : runBound D N t ≤ runBound D N t' := by
-  unfold runBound ctxBound cfgBound tapeBound
-  gcongr
 
 /-- The time and space of the universal function, polynomially in the length of its input with
 the number of steps in unary. -/
@@ -67,7 +59,7 @@ theorem universal_bounds_unary (i : Desc × List ℕ × ℕ) :
     simp only [eIn, length_encPair]
     simp only [descLen] at hlen
     omega
-  obtain ⟨h₁, h₂⟩ := Cslib.Complexity.Diagonal.universal_bounds_le (D := descLen d)
+  obtain ⟨h₁, h₂⟩ := universal_bounds_le (D := descLen d)
     (N := (encList encUnary x).length) (J := t + 1) (B := n) (L := (encNat t).length)
     (by omega) (by omega) (by omega) (by omega)
   have hstep := stepBound_mono (D := descLen d) (N := (encList encUnary x).length) le_rfl le_rfl
