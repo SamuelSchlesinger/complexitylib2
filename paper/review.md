@@ -1854,3 +1854,28 @@ The local pre-integration PDF builds without warnings, contains 145 result envir
 77 pages, and changed pages 9, 11, 13 and 14 have been inspected. All 68 existing structure-section
 pins are preserved and the four new declaration links have been verified in source and PDF.
 Final independent review and the integrated CI artifact are recorded in the PR.
+
+
+## 2026-10-21: Exact replay of native oracle occurrences (#136)
+
+Worker `counting-machine-scope-20261020`, assisted by OpenAI Codex, adds one curated entry
+pinned to source `431701e98547ad45e3b2445a17e35d8231e4ac8e`. It states the explicit positive
+uniform local-list length bound and quantifies arbitrary full configurations, clocks,
+private state types and deterministic stateful word handlers. The proved equality is of ordered
+Lists retaining consumed occurrence indices, complete final configurations and branch-local
+private state. Singleton/query instructions are recorded; replies and terminal padding add no
+extra occurrence. Raw cutoff retention, separate terminal filtering, both verdict counts,
+observer erasure and the two closed-machine compatibility statements are kept distinct.
+
+The entry records the native query/write/access convention, arbitrary stored reply suffixes,
+and the absence of an encoded copying or checker-time theorem. Uniform nonvacuous oracle clock
+contracts and native #P/GapP oracle characterizations remain open. Fortnow's Section 2 and
+Definition 3.1 supply language-oracle/path-counting conventions; the stateful word interface
+is explicitly more general. Existing shared-machine, FreeM and occurrence-certificate work is
+reused, with its author credits retained in the source modules. Five links target exact
+source declarations; prior entries and pins are preserved.
+
+The design-only independent review is issue #136 comment 6304677099. Exact-source/API/correctness,
+final semantic-index review, six-gate validation and rendered PDF/provenance evidence are recorded
+in the linked PR. AI review does not imply human editorial approval or a Lean proof of prose
+equivalence. Generated PDFs remain outside Git.

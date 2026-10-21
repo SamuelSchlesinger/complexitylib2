@@ -421,7 +421,21 @@ of the handover. The work below remains available for subsequent, independently 
      the ambiguity bound is one for UP and a separate polynomial in encoded input length for
      FewP. Rejecting and total branch counts are not bounded by the ambiguity polynomial.
      Duplicate accepting occurrences remain distinct, while first-halt clock padding preserves
-     their multiplicities. Native oracle-machine characterizations remain separate work.
+     their multiplicities.
+     [Native oracle occurrence replay](Complexity/Computability/Machines/Turing/MultiTape/Counting/Oracle/Replay.lean)
+     now gives exact ordered equality between the shared FreeM run and canonical fixed-clock
+     index certificates (#136), under an explicit positive uniform local-list length bound.
+     It retains consumed indices, complete configurations and branch-local private oracle state;
+     live cutoffs are retained, with terminal filtering and both verdict counts proved separately.
+     Trace erasure recovers the ordinary shared interpretation, and the Empty-channel cases
+     recover raw closed List execution and the existing terminal certificate decoder.
+     This is semantic replay, without a nonblocking or halting hypothesis. A later oracle clock
+     contract must be nonvacuous and uniform over admissible handlers; the generic total-PMF
+     predicate cannot be instantiated blindly at an occurrence interface containing `Fin 0`.
+     Closed counting clocks and characterizations are unaffected. Efficient encoded oracle
+     checking, response-access costs, and native oracle-machine characterizations remain open;
+     resource bounds must be uniform over admissible oracles, while correctness may specialize
+     to one fixed language oracle.
 
 2. **Complete theorem ports using the existing certificate APIs.** Extend automation when a
    concrete port is blocked or several clients repeat the same proof burden. Constructor, projection,
