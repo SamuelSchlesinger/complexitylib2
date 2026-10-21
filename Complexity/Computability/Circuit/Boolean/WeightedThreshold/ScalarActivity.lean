@@ -540,9 +540,7 @@ theorem circuit_two_pow_lt_mul_sum_choose_of_direction (c : Circuit signature n 
       ∑ j ∈ range (inputActivity c.program + 1), (inputGates c.program).card.choose j := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_mul_sum_choose_of_direction c.program (fun z => z gate) w hw ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- Single-output circuit form of `two_pow_lt_mul_sum_choose_gateActivity_of_direction`. -/
 theorem circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction (c : Circuit signature n 1)
@@ -554,9 +552,7 @@ theorem circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction (c : Circuit
     2 ^ n < 16 * K ^ 2 * ∑ j ∈ range (gateActivity c.program + 1), c.size.choose j := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_mul_sum_choose_gateActivity_of_direction c.program (fun z => z gate) w hw ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-! ### Section 4.3: Cover's enumerative coding for weight-bounded words -/
 

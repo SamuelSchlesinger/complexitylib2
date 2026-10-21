@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Cslib.Computability.Circuit.Basic
+public import Complexity.Computability.Circuit.Basic
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Program
 public import Mathlib.Basic.Real.Basic
@@ -220,7 +220,7 @@ theorem circuit_eval_eq_of_transcript_eq {m : ℕ} (c : Circuit signature n m)
     c.eval interpretation x = c.eval interpretation y := by
   funext output
   obtain ⟨gate, hgate⟩ := houtputs output
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate] using
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using
     congrFun (eval_eq_of_transcript_eq c.program h) gate
 
 end Cslib.Circuits.Boolean.WeightedThreshold

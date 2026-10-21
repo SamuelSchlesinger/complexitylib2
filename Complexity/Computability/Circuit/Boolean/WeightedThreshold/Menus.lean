@@ -574,9 +574,7 @@ theorem circuit_two_pow_lt_of_directionMenus (c : Circuit signature n 1)
         (max 1 (4 * directionMenuSum c.program dir a)) := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_of_directionMenus c.program (fun z => z gate) dir w scale hdir ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- **Corollary 7.4 (Bounded predecessor fan-in).** If each input-reading gate reads at most `k`
 earlier gate outputs with nonzero coefficients, then `T_a ≤ q_a * 2 ^ k` in every direction. -/
@@ -618,9 +616,7 @@ theorem circuit_two_pow_lt_of_directionMenus_fanIn (c : Circuit signature n 1)
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_of_directionMenus_fanIn c.program (fun z => z gate) dir w scale hdir k hfanIn
     ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- **Bounded integer internal weights.** If every input-reading gate has integer internal weights
 of magnitude at most `W`, then `|biasMenu p gate| ≤ 1 + (g - 1) * W`, yielding
@@ -669,9 +665,7 @@ theorem circuit_two_pow_lt_of_directionMenus_intWeight (c : Circuit signature n 
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_of_directionMenus_intWeight c.program (fun z => z gate) dir w scale hdir
     W w_int hw_int hW ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- **Single-direction bounded integer internal weights.** When all input-reading gates share one
 direction `w` and have integer internal weights of magnitude at most `W`,
