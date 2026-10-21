@@ -327,6 +327,7 @@ import ComplexityTests.ThresholdCapacity
 import ComplexityTests.ThresholdCapacityCircuit
 import ComplexityTests.ThresholdInnerProduct
 import ComplexityTests.ThresholdInnerProductActivity
+import ComplexityTests.ThresholdNC1
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy

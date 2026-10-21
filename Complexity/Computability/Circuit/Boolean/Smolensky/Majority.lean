@@ -7,8 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Boolean.ModMajority
+public import Complexity.Computability.Circuit.Boolean.TC0
 public import Complexity.Computability.Circuit.Boolean.Smolensky
+import Complexity.Computability.Circuit.Boolean.ModMajority
 
 /-!
 # Majority is not in AC⁰[p], and AC⁰[p] is strictly contained in TC⁰

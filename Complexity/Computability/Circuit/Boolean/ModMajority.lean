@@ -9,8 +9,6 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Multiplicity
 import Complexity.Computability.Circuit.Simulation
-import Complexity.Foundations.Data.Fin.Append
-import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # `MOD_q` gates from majority gates: ACⁱ[q] ⊆ TCⁱ

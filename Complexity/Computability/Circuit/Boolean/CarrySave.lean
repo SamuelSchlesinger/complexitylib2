@@ -69,40 +69,6 @@ variable {n w k : ℕ}
 
 /-! ### Unsigned word values and carry-save arithmetic -/
 
-/-- The unsigned value of a `w`-bit word (least significant bit first) as an explicit sum. -/
-theorem val_equivFin_eq_sum (x : BitString w) :
-    (BitString.equivFin w x : ℕ) = ∑ i : Fin w, (x i).toNat * 2 ^ (i : ℕ) := by
-  induction w with
-  | zero =>
-    have h := (BitString.equivFin 0 x).isLt
-    simp only [pow_zero, Nat.lt_one_iff] at h
-    simp
-  | succ w ih =>
-    rw [BitString.val_equivFin_succ, ih, Fin.sum_univ_castSucc, Fin.val_last]
-    rfl
-
-/-- The zero word of `w` bits has unsigned value zero. -/
-@[simp] theorem val_equivFin_false (w : ℕ) :
-    (BitString.equivFin w (fun _ => false) : ℕ) = 0 := by
-  rw [val_equivFin_eq_sum]
-  simp
-
-/-- The first `a` bits of an `(a + b)`-bit word. -/
-def fstBits {a b : ℕ} (x : BitString (a + b)) : BitString a :=
-  x ∘ Fin.castAdd b
-
-/-- The last `b` bits of an `(a + b)`-bit word. -/
-def sndBits {a b : ℕ} (x : BitString (a + b)) : BitString b :=
-  x ∘ Fin.natAdd a
-
-@[simp] theorem fstBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
-    fstBits (Fin.append u v) = u :=
-  Fin.append_comp_castAdd u v
-
-@[simp] theorem sndBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
-    sndBits (Fin.append u v) = v :=
-  Fin.append_comp_natAdd u v
-
 /-- The sum of the unsigned values of a carry-save pair of `w`-bit words. -/
 def pairVal (p : BitString (w + w)) : ℕ :=
   (BitString.equivFin w (fstBits p) : ℕ) + (BitString.equivFin w (sndBits p) : ℕ)
@@ -182,30 +148,10 @@ theorem csaCarry_eq_false_of_lt {t : ℕ} (x y : BitString w)
 
 /-! ### 3-to-2 and 4-to-2 carry-save circuits -/
 
-/-- Exclusive-or of two De Morgan formulas. -/
-def xorFormula (f g : Formula signature n) : Formula signature n :=
-  (f.and g.not).or (f.not.and g)
-
-@[simp] theorem eval_xorFormula (f g : Formula signature n) (x : BitString n) :
-    (xorFormula f g).eval interpretation x =
-      (f.eval interpretation x ^^ g.eval interpretation x) := by
-  simp only [xorFormula, Formula.eval_or, Formula.eval_and, Formula.eval_not]
-  cases f.eval interpretation x <;> cases g.eval interpretation x <;> rfl
-
-theorem size_xorFormula (f g : Formula signature n) :
-    (xorFormula f g).size = 2 * f.size + 2 * g.size + 5 := by
-  simp only [xorFormula, Formula.size_or, Formula.size_and, Formula.size_not]
-  ring
-
-theorem depth_xorFormula_le (f g : Formula signature n) :
-    (xorFormula f g).depth ≤ max f.depth g.depth + 3 := by
-  simp only [xorFormula, Formula.depth_or, Formula.depth_and, Formula.depth_not]
-  omega
-
 /-- Formula for bit `i` of `csaSum` on three `w`-bit words. -/
 def csaSumFormula (w : ℕ) (i : Fin w) : Formula signature (w + (w + w)) :=
-  xorFormula
-    (xorFormula (.input (Fin.castAdd (w + w) i)) (.input (Fin.natAdd w (Fin.castAdd w i))))
+  Formula.xor
+    (Formula.xor (.input (Fin.castAdd (w + w) i)) (.input (Fin.natAdd w (Fin.castAdd w i))))
     (.input (Fin.natAdd w (Fin.natAdd w i)))
 
 @[simp] theorem eval_csaSumFormula (i : Fin w) (u : BitString (w + (w + w))) :
@@ -214,14 +160,14 @@ def csaSumFormula (w : ℕ) (i : Fin w) : Formula signature (w + (w + w)) :=
   simp [csaSumFormula, csaSum, fstBits, sndBits]
 
 @[simp] theorem size_csaSumFormula (i : Fin w) : (csaSumFormula w i).size = 15 := by
-  simp [csaSumFormula, size_xorFormula]
+  simp [csaSumFormula, Formula.size_xor]
 
 theorem depth_csaSumFormula_le (i : Fin w) : (csaSumFormula w i).depth ≤ 6 := by
-  have h1 := depth_xorFormula_le
+  have h1 := Formula.depth_xor_le
     (Formula.input (σ := signature) (Fin.castAdd (w + w) i))
     (Formula.input (σ := signature) (Fin.natAdd w (Fin.castAdd w i)))
-  have h2 := depth_xorFormula_le
-    (xorFormula (.input (Fin.castAdd (w + w) i)) (.input (Fin.natAdd w (Fin.castAdd w i))))
+  have h2 := Formula.depth_xor_le
+    (Formula.xor (.input (Fin.castAdd (w + w) i)) (.input (Fin.natAdd w (Fin.castAdd w i))))
     (Formula.input (σ := signature) (Fin.natAdd w (Fin.natAdd w i)))
   simp only [Formula.depth_input] at h1 h2
   rw [csaSumFormula]

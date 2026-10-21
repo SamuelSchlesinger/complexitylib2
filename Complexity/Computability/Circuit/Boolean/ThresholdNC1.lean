@@ -188,12 +188,6 @@ theorem depth_majorityDeMorganCircuit_le (k : ℕ) :
     (majorityDeMorganCircuit k).depth ≤ 2 + 23 * Nat.clog 2 (k + 1) :=
   depth_thresholdDeMorganCircuit_le k ((k + 1) / 2)
 
-@[fun_prop]
-private theorem polynomiallyBounded_clog_two {f : ℕ → ℕ} (hf : PolynomiallyBounded f) :
-    PolynomiallyBounded fun n => Nat.clog 2 (f n) :=
-  hf.mono (Filter.Eventually.of_forall fun _ =>
-    (Nat.clog_le_iff_le_pow one_lt_two).2 Nat.lt_two_pow_self.le)
-
 /-- Every family of threshold functions `fun n => threshold n (t n)` belongs to **NC¹**. -/
 theorem threshold_mem_NC_one (t : ℕ → ℕ) :
     Language.ofSlices (fun n => threshold n (t n)) ∈ NC 1 := by
@@ -350,24 +344,10 @@ theorem exists_deMorgan_simulation_majority_of_fanInAtMost {F : ℕ}
       D.size ≤ C.size * (4 + F + 40 * F * Nat.clog 2 (F + 1) +
         Nat.clog 2 (F + 1) * (20 * Nat.clog 2 (F + 1) + 6)) ∧
       D.depth ≤ (2 + 23 * Nat.clog 2 (F + 1)) * C.depth := by
-  have hlines := Program.fanInAtMost_iff.1 hF
-  refine ⟨C.simulate ExtOp.majorityDeMorganCircuit, ?_, ?_, ?_⟩
-  · exact Circuit.eval_simulate _ _ ExtOp.computes_majorityDeMorganCircuit
-  · rw [Circuit.size_simulate, Program.cost_eq_sum]
-    refine (Finset.sum_le_sum (g := fun _ =>
-        4 + F + 40 * F * Nat.clog 2 (F + 1) +
-          Nat.clog 2 (F + 1) * (20 * Nat.clog 2 (F + 1) + 6)) fun k _ => ?_).trans_eq
-      (by rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul, Circuit.size])
-    have hk : (C.program.lines k).op.arity ≤ F := hlines k
-    have hclog : Nat.clog 2 ((C.program.lines k).op.arity + 1) ≤ Nat.clog 2 (F + 1) :=
-      Nat.clog_mono_right 2 (Nat.add_le_add_right hk 1)
-    refine (ExtOp.size_majorityDeMorganCircuit_le _).trans ?_
-    gcongr
-  · refine (Circuit.depth_simulate_le _ _).trans
-      (C.depthWith_le_mul_depth fun k => (ExtOp.depth_majorityDeMorganCircuit_le _).trans ?_)
-    have hk : (C.program.lines k).op.arity ≤ F := hlines k
-    exact Nat.add_le_add_left
-      (Nat.mul_le_mul_left 23 (Nat.clog_mono_right 2 (Nat.add_le_add_right hk 1))) 2
+  obtain ⟨D, he, hs, hd⟩ := Threshold.exists_deMorgan_simulation_of_fanInAtMost
+    (C.mapOp Threshold.ofMajority) (by simpa using hF)
+  exact ⟨D, he.trans (funext fun x => Circuit.eval_mapOp C x),
+    by simpa using hs, by simpa using hd⟩
 
 end Unbounded
 
@@ -407,25 +387,10 @@ theorem mem_NC_succ_of_majority_fanInAtMost {L : Language Bool} {i c : ℕ} {s F
       C.Computes (Unbounded.extInterpretation majority) (single (L.slice n)) ∧
       C.depth ≤ c * (Nat.log 2 n + 1) ^ i ∧ C.size ≤ s n ∧ C.FanInAtMost (F n)) :
     L ∈ NC (i + 1) := by
-  obtain ⟨e, he⟩ := PolynomiallyBounded.exists_clog_le_mul_log
-    (s := fun n => F n + 1) (by fun_prop)
-  refine ⟨c * (23 * e + 2), fun n =>
-      s n * (4 + F n + 40 * F n * Nat.clog 2 (F n + 1) +
-        Nat.clog 2 (F n + 1) * (20 * Nat.clog 2 (F n + 1) + 6)),
-    by fun_prop, fun n => ?_⟩
-  obtain ⟨C, hCc, hCd, hCs, hCf⟩ := hC n
-  obtain ⟨D, hDe, hDs, hDd⟩ :=
-    Unbounded.exists_deMorgan_simulation_majority_of_fanInAtMost C hCf
-  refine ⟨D, fun x => (congrFun hDe x).trans (hCc x), ?_, ?_⟩
-  · have hlog : 2 + 23 * Nat.clog 2 (F n + 1) ≤ (23 * e + 2) * (Nat.log 2 n + 1) := by
-      have h1 := he n
-      nlinarith
-    calc D.depth ≤ (2 + 23 * Nat.clog 2 (F n + 1)) * C.depth := hDd
-      _ ≤ ((23 * e + 2) * (Nat.log 2 n + 1)) * (c * (Nat.log 2 n + 1) ^ i) :=
-        Nat.mul_le_mul hlog hCd
-      _ = c * (23 * e + 2) * (Nat.log 2 n + 1) ^ (i + 1) := by ring
-  · refine hDs.trans ?_
-    beta_reduce
-    gcongr
+  apply mem_NC_succ_of_threshold_fanInAtMost (c := c) (s := s) (F := F) hs hF
+  intro n
+  obtain ⟨C, hc, hd, hs, hf⟩ := hC n
+  exact ⟨C.mapOp Threshold.ofMajority, hc.mapOp,
+    by simpa using hd, by simpa using hs, by simpa using hf⟩
 
 end Cslib.Circuits.Boolean

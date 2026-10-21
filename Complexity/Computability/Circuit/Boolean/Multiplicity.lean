@@ -42,6 +42,10 @@ larger depth, and every gate reading at most `n + s` wires (`Unbounded.arity_lin
   `Cslib.Circuits.Boolean.Unbounded.arity_lines_multCircuit_le`: aggregating multiplicities keeps
   the function and the size, makes no gate deeper, and bounds the fan-in by the number of inputs
   and gates.
+
+## References
+
+* [H. Vollmer, *Introduction to Circuit Complexity*][Vollmer1999]
 -/
 
 @[expose] public section
