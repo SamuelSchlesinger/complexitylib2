@@ -291,6 +291,14 @@ of the handover. The work below remains available for subsequent, independently 
      ordered query language to the target ordered query language. This is the full-domain
      canonical transducer of Immerman's Proposition 3.5; isomorphism-closed class-level
      reduction closure, restricted domains, projections and NL/P completeness remain open.
+     **Ordered NP-to-ESO converse recovered (#173):**
+     [Fagin/Ordered](Complexity/Computability/Complexity/Fagin/Ordered.lean) defines every
+     arbitrary ordered query whose source-only encoding language is in NP by one ESO sentence
+     over the current canonical language. It retains the fixed `Fin n` order, requires `n ≥ 2`,
+     rejects malformed source tables, and imposes no permutation-invariance hypothesis.
+     The existing strict-verifier/tableau construction is reused through a shared power-sentence
+     lemma; the order-free characterization is unchanged. The ordered ESO-to-NP direction
+     remains open.
      **Next milestones:** ordered reduction closure for structure classes, then projections and
      NL/P completeness. These remain open.
      The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical

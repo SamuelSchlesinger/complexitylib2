@@ -563,6 +563,7 @@ public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Converse
 public import Complexity.Computability.Complexity.Fagin.Layout
+public import Complexity.Computability.Complexity.Fagin.Ordered
 public import Complexity.Computability.Complexity.Fagin.Power
 public import Complexity.Computability.Complexity.Fagin.SAT
 public import Complexity.Computability.Complexity.Fagin.Small
@@ -1391,6 +1392,7 @@ public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Bounds
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Columns
 public import Complexity.Logics.FirstOrder.Ordered.Packing
+public import Complexity.Logics.FirstOrder.Ordered.Query
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Arithmetic
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Bit
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Conversion

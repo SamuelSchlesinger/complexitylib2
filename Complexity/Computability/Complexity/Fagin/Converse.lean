@@ -56,6 +56,9 @@ sentence over `L`.
 * `Cslib.Logic.Vocabulary.exists_pow_bound`: existence of a tuple width `k ≥ 1` such that `n ^ k`
   bounds both the verifier's input-plus-certificate length and its running time for all well-formed
   inputs of cardinality `n ≥ 2`.
+* `Cslib.Logic.Vocabulary.exists_powerSentence_of_mem_NP`: an NP language has an ESO
+  definition on sufficiently large canonical power structures, without assuming invariance
+  under renumbering.
 * `Cslib.Logic.Vocabulary.realize_npPowerSentence`: on `Fin B`, `v.npPowerSentence tm` holds
   iff `CookLevin.tableau tm (frame (encStructure a)) L (B - 1)` is satisfiable for some certificate
   length `L` with `|frame (encStructure a)| + L + 1 < B`.
@@ -240,19 +243,14 @@ theorem realize_npPowerSentence {a : EncodedStructure} (ha : v.WellFormed a) {B 
     have htab := (v.realize_tableauESOSentence tm a B I_in hB huLen huBit).2 hsat
     exact ⟨I_in, (ESO.Sentence.realize_inf (M := Fin B)).2 ⟨hlay, htab⟩⟩
 
-end Vocabulary
-
-namespace ESO
-
-/-- **NP classes of finite structures are existential second-order definable** (the converse
-direction of Fagin's theorem): for an isomorphism-closed class `K` of finite relational structures
-over a language `L` with a finite vocabulary `v`, if `v.queryLanguage K ∈ NP encStructure`, then
-`K` is existential second-order definable [Fagin, Theorem 6][Fagin1974],
-[Immerman, Theorem 7.8][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]. -/
-theorem Definable.of_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
-    (v : Vocabulary L) {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K)
-    (hNP : v.queryLanguage K ∈ NP encStructure) :
-    Definable K := by
+/-- An NP language of encoded structures has a single ESO definition on canonical power
+structures of sufficiently large fixed dimension. Only well-formed inputs of size at least two
+are considered; no invariance under renumbering is assumed. -/
+theorem exists_powerSentence_of_mem_NP {K : Set EncodedStructure} (hNP : K ∈ NP encStructure) :
+    ∃ k : ℕ, 1 ≤ k ∧ (∀ i : Fin v.count, v.arity i ≤ k) ∧
+      ∃ Ψ : ESO.Sentence v.powerLanguage, ∀ a : EncodedStructure,
+        v.WellFormed a → 2 ≤ a.1 →
+        (a ∈ K ↔ letI := v.powerStructure a (a.1 ^ k); Ψ.Realize (Fin (a.1 ^ k))) := by
   rcases hNP with ⟨p, V, hVpoly, hV⟩
   obtain ⟨t, s, ht, -, m, State, hfin, tm, htm⟩ :=
     computableTidilyInPolyTime_strictVerifier encStructure p hVpoly
@@ -260,7 +258,7 @@ theorem Definable.of_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
   let _ := Fintype.ofFinite State
   classical
   obtain ⟨k, hk, har, hpow⟩ := v.exists_pow_bound p c d
-  refine Definable.of_powerLanguage v hK k hk har (v.npPowerSentence tm) fun a ha h2 => ?_
+  refine ⟨k, hk, har, v.npPowerSentence tm, fun a ha h2 => ?_⟩
   obtain ⟨hB1, hB2⟩ := hpow a ha h2
   rw [v.realize_npPowerSentence tm ha (by omega)]
   have hsat := CookLevin.exists_tableau_satisfiable_iff_of_strictVerifier hV htm
@@ -275,6 +273,22 @@ theorem Definable.of_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
       rw [encPair_apply, List.length_append, encBits_apply, hw]
     rw [hlen_pair] at htw
     omega
+
+end Vocabulary
+
+namespace ESO
+
+/-- **NP classes of finite structures are existential second-order definable** (the converse
+direction of Fagin's theorem): for an isomorphism-closed class `K` of finite relational structures
+over a language `L` with a finite vocabulary `v`, if `v.queryLanguage K ∈ NP encStructure`, then
+`K` is existential second-order definable [Fagin, Theorem 6][Fagin1974],
+[Immerman, Theorem 7.8][Immerman1999], [Papadimitriou, Theorem 8.3][Papadimitriou94]. -/
+theorem Definable.of_queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational]
+    (v : Vocabulary L) {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K)
+    (hNP : v.queryLanguage K ∈ NP encStructure) :
+    Definable K := by
+  obtain ⟨k, hk, har, Ψ, hΨ⟩ := v.exists_powerSentence_of_mem_NP hNP
+  exact Definable.of_powerLanguage v hK k hk har Ψ hΨ
 
 /-- **Fagin's theorem**: an isomorphism-closed class `K` of finite relational structures over a
 language `L` with a finite vocabulary `v` is existential second-order definable if and only if its
