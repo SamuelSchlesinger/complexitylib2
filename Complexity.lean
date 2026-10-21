@@ -729,6 +729,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Determ
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Execution
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.ExtendTapes
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Guess
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Oracle.Program
+public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Oracle.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.OutputPrefix
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Program
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Sequential
