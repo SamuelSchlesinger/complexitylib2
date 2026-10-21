@@ -40,6 +40,61 @@ private theorem randomized_queryBounds :
   intro repeated
   exact .pure (answer, second, repeated) _ _
 
+-- Both public predicates remain definitionally equal to their original expanded contracts.
+example (program : OracleComp (fun _ : Bool => Bool) Unit) (size : Bool → ℕ) (calls maxSize : ℕ) :
+    program.HasQueryBounds size calls maxSize ↔
+      ∀ (State : Type) (oracle : Bool → StateT State PMF Bool)
+        (s s' : State) (result : Unit) (transcript : OracleComp.Transcript (fun _ : Bool => Bool)),
+        (result, s', transcript) ∈
+          ((OracleComp.interpret (OracleComp.withTranscript oracle) program).run (s, [])).support →
+            transcript.length ≤ calls ∧ ∀ entry ∈ transcript, size entry.1 ≤ maxSize := Iff.rfl
+
+example (program : ProbOracleComp (fun _ : Bool => Bool) Unit)
+    (size : Bool → ℕ) (calls maxSize : ℕ) :
+    ProbOracleComp.HasQueryBounds program size calls maxSize ↔
+      ∀ (State : Type) (oracle : Bool → StateT State PMF Bool)
+        (s s' : State) (result : Unit) (transcript : OracleComp.Transcript (fun _ : Bool => Bool)),
+        (result, s', transcript) ∈ ((OracleComp.interpret
+          (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
+            (OracleComp.withTranscript oracle)) program).run (s, [])).support →
+              transcript.length ≤ calls ∧ ∀ entry ∈ transcript, size entry.1 ≤ maxSize := Iff.rfl
+
+-- Forgetting outputs cannot hide external calls; weakening their bounds uses the same contract.
+example : ProbOracleComp.HasQueryBounds ((fun _ => ()) <$> randomized) (fun _ => 1) 3 2 :=
+  ((ProbOracleComp.hasQueryBounds_map_iff _ _ _ _ _).mpr randomized_queryBounds).mono
+    (by decide) (by decide)
+
+private noncomputable def duplicatedRequests :
+    ProbOracleComp (fun _ : Bool => Bool) (Bool × Bool) := do
+  let _ ← ProbOracleComp.sample (ProbComp.unifFin 1)
+  let first ← ProbOracleComp.query false
+  let _ ← ProbOracleComp.sample (ProbComp.unifFin 1)
+  let second ← ProbOracleComp.query false
+  return (first, second)
+
+private noncomputable def flipOracle (_ : Bool) : StateT Bool PMF Bool :=
+  fun state => PMF.pure (state, !state)
+
+-- Private samples do not enter the log; repeated requests retain their two different replies
+-- in reverse chronological order, and both state transitions are retained jointly.
+private theorem run_duplicatedRequests :
+    (OracleComp.interpret
+      (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
+        (OracleComp.withTranscript flipOracle)) duplicatedRequests).run (false, []) =
+      PMF.pure ((false, true), false,
+        ([⟨false, true⟩, ⟨false, false⟩] : OracleComp.Transcript (fun _ : Bool => Bool))) := by
+  simp only [duplicatedRequests, OracleComp.interpret_bind, ProbOracleComp.interpret_sample,
+    ProbOracleComp.interpret_query, OracleComp.interpret_pure, StateT.run_bind,
+    StateT.run_pure, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  simp [ProbComp.unifFin, OracleComp.interpret_query, StateT.lift,
+    OracleComp.withTranscript, flipOracle, StateT.run]
+
+example : ¬ProbOracleComp.HasQueryBounds duplicatedRequests (fun _ => 1) 1 1 := by
+  intro h
+  have hbound := h Bool flipOracle false false (false, true)
+    [⟨false, true⟩, ⟨false, false⟩] (by rw [run_duplicatedRequests]; simp)
+  norm_num at hbound
+
 -- Private sampling remains fresh while an external query is answered consistently.
 example :
     (PMF.uniformOfFintype (Bool → Bool)).bind (fun table =>

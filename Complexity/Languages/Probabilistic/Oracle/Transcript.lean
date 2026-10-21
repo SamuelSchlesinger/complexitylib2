@@ -19,6 +19,8 @@ The existing typed transcript records only external requests; private samples us
 component of `ProbOracleComp.handler` and do not enter the log. This distinction lets an oracle
 machine certificate supply call and request-size budgets while leaving private sampling unchanged.
 The budgets are semantic bounds, not runtime bounds or restrictions on oracle reply sizes.
+Their bind, map and monotonicity rules use the shared `OracleComp.HasTranscriptBounds` laws;
+the private-sampling interpreter and the external-only logger supply the execution semantics.
 
 ## Main definitions
 
@@ -77,17 +79,15 @@ theorem run_interpret_withTranscript_append
 ordinary computation or the oracle's reply sizes is asserted. -/
 def HasQueryBounds (program : ProbOracleComp Response α) (size : Query → ℕ)
     (calls maxSize : ℕ) : Prop :=
-  ∀ (State : Type) (oracle : (q : Query) → StateT State PMF (Response q))
-    (s s' : State) (result : α) (transcript : Transcript Response),
-    (result, s', transcript) ∈ ((interpret
+  ∀ (State : Type) (oracle : (q : Query) → StateT State PMF (Response q)),
+    HasTranscriptBounds (interpret
       (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript oracle))
-        program).run (s, [])).support →
-      transcript.length ≤ calls ∧ ∀ entry ∈ transcript, size entry.1 ≤ maxSize
+        program) size calls maxSize
 
 /-- Returning a value makes no external call. -/
 theorem HasQueryBounds.pure (a : α) (size : Query → ℕ) (maxSize : ℕ) :
     HasQueryBounds (pure a : ProbOracleComp Response α) size 0 maxSize := by
-  simp +contextual [HasQueryBounds]
+  simp +contextual [HasQueryBounds, HasTranscriptBounds]
 
 /-- A closed sampler does not call the external oracle, independently of its own runtime. -/
 theorem HasQueryBounds.sample (program : ProbComp α) (size : Query → ℕ) (maxSize : ℕ) :
@@ -115,41 +115,24 @@ theorem HasQueryBounds.bind {β : Type} {program : ProbOracleComp Response α}
     (hfirst : HasQueryBounds program size firstCalls maxSize)
     (hnext : ∀ a, HasQueryBounds (next a) size nextCalls maxSize) :
     HasQueryBounds (program >>= next) size (firstCalls + nextCalls) maxSize := by
-  intro State oracle s s' result transcript h
-  simp only [interpret_bind, StateT.run_bind, Probability.PMF.monad_bind_eq_bind,
-    PMF.mem_support_bind_iff] at h
-  obtain ⟨⟨a, middle, seen⟩, hbefore, hafter⟩ := h
-  obtain ⟨hcount, hsize⟩ := hfirst State oracle s middle a seen hbefore
-  rw [run_interpret_withTranscript_append oracle (next a) middle seen,
-    PMF.mem_support_map_iff] at hafter
-  obtain ⟨⟨result', finish, fresh⟩, hfresh, heq⟩ := hafter
-  cases heq
-  obtain ⟨hcount', hsize'⟩ := hnext a State oracle middle _ _ fresh hfresh
-  refine ⟨by simp only [List.length_append]; lia, ?_⟩
-  intro entry hentry
-  exact (List.mem_append.mp hentry).elim (hsize' entry) (hsize entry)
+  intro State oracle
+  rw [interpret_bind]
+  exact HasTranscriptBounds.bind (hfirst State oracle) (fun a => hnext a State oracle)
+    (fun a => run_interpret_withTranscript_append oracle (next a))
 
 /-- Increasing either external query bound preserves the contract. -/
 theorem HasQueryBounds.mono {program : ProbOracleComp Response α} {size : Query → ℕ}
     {calls maxSize calls' maxSize' : ℕ} (h : HasQueryBounds program size calls maxSize)
     (hcalls : calls ≤ calls') (hsize : maxSize ≤ maxSize') :
     HasQueryBounds program size calls' maxSize' := by
-  intro State oracle s s' result transcript hresult
-  obtain ⟨hcount, hlength⟩ := h State oracle s s' result transcript hresult
-  exact ⟨hcount.trans hcalls, fun entry hentry => (hlength entry hentry).trans hsize⟩
+  intro State oracle
+  exact HasTranscriptBounds.mono (h State oracle) hcalls hsize
 
 /-- Deterministic result postprocessing leaves the external transcript unchanged. -/
 @[simp] theorem hasQueryBounds_map_iff {β : Type} (f : α → β)
     (program : ProbOracleComp Response α) (size : Query → ℕ) (calls maxSize : ℕ) :
     HasQueryBounds (f <$> program) size calls maxSize ↔
       HasQueryBounds program size calls maxSize := by
-  simp only [HasQueryBounds, interpret_map, StateT.run_map, PMF.monad_map_eq_map,
-    PMF.mem_support_map_iff]
-  constructor
-  · exact fun h S oracle s s' a transcript ha =>
-      h S oracle s s' (f a) transcript ⟨(a, s', transcript), ha, rfl⟩
-  · rintro h S oracle s s' b transcript ⟨⟨a, t, seen⟩, ha, heq⟩
-    cases heq
-    exact h S oracle s _ a _ ha
+  simp only [HasQueryBounds, interpret_map, hasTranscriptBounds_map_iff]
 
 end Cslib.ProbOracleComp
