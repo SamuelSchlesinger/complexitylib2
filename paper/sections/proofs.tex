@@ -54,3 +54,33 @@ statement concerns proof size, not solver runtime.
 \declat{38abf7bfec8c9ade711a841faafff4326bb87320}{Complexity/Logics/Propositional/Resolution/TseitinExpander.lean}{114}{Cslib.Logic.PL.CNF.exists_forall_refutableInSize_exp_le}
 \end{result}
 
+\begin{result}
+\subsection{Haken's pigeonhole lower bound for resolution}
+For $m$ pigeons and $n$ holes, the propositional pigeonhole formula $\mathrm{PHP}^m_n$
+on variables $\mathrm{Fin}\,m\times\mathrm{Fin}\,n$ has $m$ pigeon clauses
+$\bigvee_{j<n} x_{i,j}$ of length $n$ and, for each hole $j<n$ and distinct pigeons
+$i\ne i'$, a hole clause $\neg x_{i,j}\vee\neg x_{i',j}$ of length $2$ (at most
+$m+nm^2$ clauses on at most $mn$ variables). It is satisfiable if and only if
+$m\le n$; in particular, $\mathrm{PHP}^{n+1}_n$ is unsatisfiable for every $n$.
+Every resolution refutation of $\mathrm{PHP}^{n+1}_n$ contains a clause $c$ whose
+set of critical-assignment satisfaction witnesses $(i,j)$ satisfies
+$2n^2\le 9\,|\mathrm{satPairs}(c)|$. Eliminating such clauses by $\lfloor n/3\rfloor$
+greedy matching restrictions shows that if $\mathrm{PHP}^{n+1}_n$ has a resolution
+refutation with at most $s$ lines then $12^{\lfloor n/3\rfloor}\le 11^{\lfloor n/3\rfloor}s$
+for all $n\ge 8$, and $2^{\lfloor n/24\rfloor}\le s$ for all $n\in\mathbb{N}$ (and
+hence $2^{\lfloor n/24\rfloor}\le |d|$ for every tree-like resolution refutation $d$).
+The formalization uses the Beame--Pitassi simplification of Haken's bottleneck
+counting argument rather than the size--width tradeoff, whose hypothesis on initial
+clause width is uninformative for the width-$n$ pigeon clauses of $\mathrm{PHP}^{n+1}_n$;
+it covers the non-onto formulation without hole-surjectivity clauses, and bounds
+proof size rather than solver runtime.
+\citep{Haken1985,BeamePitassi1996,Jukna2012}
+\declat{c9fdac891ad75dfbf23952ced1a54b2c62a68401}{Complexity/Logics/Propositional/Pigeonhole.lean}{114}{Cslib.Logic.PL.CNF.satisfiable_pigeonhole_iff}
+\declat{c9fdac891ad75dfbf23952ced1a54b2c62a68401}{Complexity/Logics/Propositional/Pigeonhole.lean}{129}{Cslib.Logic.PL.CNF.not_satisfiable_pigeonhole}
+\declat{c9fdac891ad75dfbf23952ced1a54b2c62a68401}{Complexity/Logics/Propositional/Resolution/Pigeonhole.lean}{662}{Cslib.Logic.PL.CNF.exists_le_card_satPairs_pigeonhole}
+\declat{c9fdac891ad75dfbf23952ced1a54b2c62a68401}{Complexity/Logics/Propositional/Resolution/Pigeonhole.lean}{683}{Cslib.Logic.PL.CNF.pow_le_mul_of_refutableInSize_pigeonhole}
+\declat{c9fdac891ad75dfbf23952ced1a54b2c62a68401}{Complexity/Logics/Propositional/Resolution/Pigeonhole.lean}{700}{Cslib.Logic.PL.CNF.two_pow_le_of_refutableInSize_pigeonhole}
+\declat{c9fdac891ad75dfbf23952ced1a54b2c62a68401}{Complexity/Logics/Propositional/Resolution/Pigeonhole.lean}{736}{Cslib.Logic.PL.CNF.Derivation.two_pow_le_size_pigeonhole}
+\end{result}
+
+
