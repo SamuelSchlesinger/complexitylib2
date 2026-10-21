@@ -171,9 +171,7 @@ theorem two_pow_le_sum_choose_sq_of_circuit_hadamardCode
       (∑ j ∈ range (inputActivity c.program + 1), (inputGates c.program).card.choose j) ^ 2 := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_le_sum_choose_sq_of_hadamardCode c.program split (fun z => z gate)
-  intro x y
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace_gateWire,
-    Program.gateFunction_apply] using h x y
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using h
 
 /-- Inner product forces the binomial sum at total gate activity to have square at least
 `2 ^ m`. All gates are counted, including unused gates and gates without direct inputs. -/
@@ -195,9 +193,7 @@ theorem two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode
       (∑ j ∈ range (gateActivity c.program + 1), c.size.choose j) ^ 2 := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_le_sum_choose_gateActivity_sq_of_hadamardCode c.program split (fun z => z gate)
-  intro x y
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace_gateWire,
-    Program.gateFunction_apply] using h x y
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using h
 
 /-- Inner product forces the binomial sum at the program's shifted-baseline input-reading activity
 around any fixed baseline `v` to have square at least `2 ^ m`. -/

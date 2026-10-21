@@ -28,7 +28,6 @@ each block. This gives variable powers of GapP functions, not just fixed subring
 
 ## Main results
 
-* `SharpP.of_polyTime_length`: polynomial-time unary certificate lengths suffice.
 * `SharpP.sum_bits_mem`, `GapP.sum_bits_mem`: sum over all words of a computed unary length.
 * `GapP.pow_mem_polyTime`: an input-dependent unary exponent preserves GapP.
 
@@ -44,18 +43,6 @@ namespace Cslib.Complexity
 open Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool}
-
-/-- A polynomial-time unary certificate length can be padded without changing the count. -/
-theorem SharpP.of_polyTime_length {V : α × List Bool → Bool} {r : α → ℕ}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
-    (hr : ComputableTidilyInPolyTime r enc encUnary) :
-    (fun a => acceptCount V a (r a)) ∈ SharpP enc := by
-  obtain ⟨c, d, hb⟩ := hr.polyBounded.exists_le
-  let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
-  refine ⟨p, andVerifier r V allFalseVerifier, by fun_prop, fun a => ?_⟩
-  have hle : r a ≤ p.eval (enc a).length := by simpa [p] using hb a
-  obtain ⟨k, hk⟩ := Nat.exists_eq_add_of_le hle
-  rw [hk, acceptCount_andVerifier_allFalseVerifier]
 
 /-- Summing a uniform #P family over all words of a polynomial-time unary length preserves #P. -/
 theorem SharpP.sum_bits_mem {f : α × List Bool → ℕ} {r : α → ℕ}

@@ -124,16 +124,13 @@ theorem PolyTimeReducible.mem_PP {β : Type} {encB : β ↪ List Bool} {A : Set 
   have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval q).comp
       ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
-  obtain ⟨c, d, hle⟩ := hlen.polyBounded.exists_le
-  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d,
+  obtain ⟨p, hle⟩ := hlen.polyBounded.exists_polynomial
+  refine ⟨p,
     andVerifier (fun a => q.eval (encB (f a)).length) (fun x => W (f x.1, x.2)) fun _ => true,
     computableTidilyInPolyTime_andVerifier hlen
       (hW.comp ((hf.comp (.fst enc encBits)).prod (.snd enc encBits))) (.const true),
     fun a => ?_⟩
-  have hk : q.eval (encB (f a)).length ≤
-      (Polynomial.C c * (Polynomial.X + 1) ^ d).eval (enc a).length := by
-    simpa using hle a
-  obtain ⟨j, hj⟩ := Nat.exists_eq_add_of_le hk
+  obtain ⟨j, hj⟩ := Nat.exists_eq_add_of_le (hle a)
   rw [hAB a, hWB (f a), hj, acceptCount_andVerifier_true, pow_add, ← mul_assoc]
   exact (Nat.mul_lt_mul_right (by positivity)).symm
 

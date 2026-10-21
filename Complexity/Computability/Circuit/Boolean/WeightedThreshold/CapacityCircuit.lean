@@ -192,9 +192,7 @@ theorem circuit_two_pow_lt_mul_four_pow_inputGates (c : Circuit signature n 1)
     2 ^ n < 4 * K ^ 2 * 4 ^ (inputGates c.program).card := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_mul_four_pow_inputGates c.program (fun z => z gate) ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-! ### Parametric gate evaluation and piece bounds (Lemma 2) -/
 
@@ -718,9 +716,7 @@ theorem circuit_two_pow_lt_of_direction (c : Circuit signature n 1)
     2 ^ n < 16 * K ^ 2 * 2 ^ (inputGates c.program).card := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_of_direction c.program (fun z => z gate) w along ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- The logarithmic C2 single-direction bound for a single-output circuit whose output selects a
 gate. -/
@@ -733,9 +729,7 @@ theorem circuit_lt_of_direction (c : Circuit signature n 1)
     n < 2 * k + 4 + (inputGates c.program).card := by
   obtain ⟨gate, hgate⟩ := houtput
   apply lt_of_direction c.program (fun z => z gate) w along hK ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- **C3: direction runs.** If the gates of a threshold program computing `f` split into `B`
 consecutive runs along single directions, then `2 ^ n < 4 * K ^ 2 * 4 ^ B * 2 ^ |inputGates p|`. -/
@@ -773,9 +767,7 @@ theorem circuit_two_pow_lt_of_runs (c : Circuit signature n 1)
     2 ^ n < 4 * K ^ 2 * 4 ^ B * 2 ^ (inputGates c.program).card := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_of_runs c.program (fun z => z gate) R ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- The logarithmic C3 direction-run bound for a single-output circuit whose output selects a
 gate. -/
@@ -787,9 +779,7 @@ theorem circuit_lt_of_runs (c : Circuit signature n 1)
     n < 2 * k + 2 + 2 * B + (inputGates c.program).card := by
   obtain ⟨gate, hgate⟩ := houtput
   apply lt_of_runs c.program (fun z => z gate) R hK ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- The one-block decomposition of a multilevel threshold function `F (∑ i, w i * (x i).toNat)`. -/
 def multilevelDecomposition {f : Cslib.BooleanFunction n} (w : Fin n → ℝ) (F : ℝ → Bool) {T : ℕ}

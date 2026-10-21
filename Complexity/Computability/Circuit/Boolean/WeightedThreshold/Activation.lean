@@ -286,8 +286,6 @@ theorem circuit_two_pow_lt_of_activations (c : Circuit activationSignature n 1)
     2 ^ n < 4 * K ^ 2 * ∏ j ∈ activationInputGates c.program, max 1 (4 * T j) := by
   obtain ⟨gate, hgate⟩ := houtput
   apply two_pow_lt_of_activations c.program (fun z => z gate) T hT ?_ hf
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 end Cslib.Circuits.Boolean.WeightedThreshold

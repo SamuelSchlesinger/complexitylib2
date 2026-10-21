@@ -605,29 +605,13 @@ theorem card_filter_take_drop {m a : ℕ} (h : a ≤ m) (P Q : List Bool → Pro
       P ((List.ofFn r).take a) ∧ Q ((List.ofFn r).drop a)).card =
       (Finset.univ.filter fun u : Fin a → Bool => P (List.ofFn u)).card *
         (Finset.univ.filter fun v : Fin (m - a) → Bool => Q (List.ofFn v)).card := by
-  rw [← Finset.card_product, ← Finset.filter_product, Finset.univ_product_univ]
-  refine Finset.card_nbij'
-    (fun r => (fun i => r (Fin.castLE h i), fun j => r ⟨a + j, by omega⟩))
-    (fun p x => if hx : x.val < a then p.1 ⟨x, hx⟩ else p.2 ⟨x - a, by omega⟩)
-    (fun r hr => ?_) (fun p hp => ?_) (fun r _ => ?_) (fun p _ => ?_)
-  · simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_ofPred_eq] at hr ⊢
-    rwa [← take_ofFn h, ← drop_ofFn h]
-  · simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_ofPred_eq] at hp ⊢
-    rw [take_ofFn h, drop_ofFn h]
-    convert hp using 3
-    · funext i; simp [i.2]
-    · funext j; simp
-  · funext x
-    by_cases hx : x.val < a
-    · simp [hx]
-    · simp only [hx, dite_false]
-      congr 1
-      ext
-      simp only
-      omega
-  · ext x
-    · simp
-    · simp
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le h
+  rw [BitString.card_filter_ofFn_add a k (fun u v => P u ∧ Q v), Nat.add_sub_cancel_left]
+  simp_rw [Finset.card_filter]
+  rw [Finset.sum_mul]
+  apply Finset.sum_congr rfl
+  intro u _
+  by_cases hu : P (List.ofFn u) <;> simp [hu]
 
 /-- The coefficients only read the first `k * width + k` bits. -/
 theorem matrix_take (k width : ℕ) (w : List Bool) :

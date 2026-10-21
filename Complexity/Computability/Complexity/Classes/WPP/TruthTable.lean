@@ -148,8 +148,7 @@ theorem truthTable_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
   have hF : ComputableTidilyInPolyTime F (encPair enc encUnary) encIntBin :=
     hf.comp (.encoding_length _)
   have he := answerGap_eq (f := F) (r := r) (d := d) hR hA
-  obtain ⟨c, d', hb⟩ := hr.polyBounded.exists_le
-  let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d'
+  obtain ⟨p, hb⟩ := hr.polyBounded.exists_polynomial
   let T (x : ℕ × ℕ) := ∏ i ∈ range x.2, f (2 * x.1 + 1 + i)
   have hT : ComputableTidilyInPolyTime T (encPair encUnary encUnary) encIntBin := by
     apply ComputableTidilyInPolyTime.intBin_prod_range
@@ -161,8 +160,7 @@ theorem truthTable_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
   · intro a ha
     change d (a, truthTableAnswers A r a) = true at ha
     refine ⟨r a, ?_, ?_⟩
-    · have h : r a ≤ p.eval (enc a).length := by simpa [p] using hb a
-      lia
+    · exact Nat.lt_succ_of_le (hb a)
     · rw [he, ite_eq_left ha]
       simp [F, T]
   · intro a ha

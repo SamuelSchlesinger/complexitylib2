@@ -571,9 +571,7 @@ theorem circuit_lt_of_split (c : Circuit signature n 1)
     Uᶜ.card < (univ.filter fun j => (inputSupport c.program j ∩ Uᶜ).Nonempty).card + k := by
   obtain ⟨gate, hgate⟩ := houtput
   apply lt_of_split c.program (fun z => z gate) ?_ hf U hK
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-- **The balanced cut bound.** If `p` computes a two-sided `K`-rectangle-free function `f`
 through `readout` with `K ≤ 2 ^ k`, then `n ≤ 2 * ((inputGates p).card + k)`. -/
@@ -602,8 +600,6 @@ theorem circuit_le_two_mul_add (c : Circuit signature n 1)
     n ≤ 2 * ((inputGates c.program).card + k) := by
   obtain ⟨gate, hgate⟩ := houtput
   apply le_two_mul_add c.program (fun z => z gate) ?_ hf hK
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 end Cslib.Circuits.Boolean.WeightedThreshold

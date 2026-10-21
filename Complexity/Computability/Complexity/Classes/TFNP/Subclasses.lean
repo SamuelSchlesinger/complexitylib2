@@ -194,14 +194,6 @@ theorem computableTidilyInPolyTime_nat_le' {encIn : α ↪ List Bool} {left righ
 
 /-! ### `FNP` and `TFNP` membership of the family relations -/
 
-/-- Every unary polynomial-time function is bounded by a polynomial in the encoded input length. -/
-private theorem exists_polynomial_le_of_unary {enc : α ↪ List Bool} {n : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n enc encUnary) :
-    ∃ p : Polynomial ℕ, ∀ a, n a ≤ p.eval (enc a).length := by
-  obtain ⟨c, d, hle⟩ := hn.polyBounded.exists_le
-  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d, fun a => ?_⟩
-  simpa using hle a
-
 @[fun_prop]
 theorem computableTidilyInPolyTime_hasOut {enc : α ↪ List Bool} {n : α → ℕ}
     {P S : α × List Bool → List Bool} (hn : ComputableTidilyInPolyTime n enc encUnary)
@@ -259,7 +251,7 @@ theorem localOptRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
     (hN : ComputableTidilyInPolyTime N (encPair enc encBits) encBits)
     (hC : ComputableTidilyInPolyTime C (encPair enc encBits) encNat) :
     localOptRel n N C ∈ FNP enc := by
-  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  obtain ⟨p, hp⟩ := hn.polyBounded.exists_polynomial
   refine ⟨⟨p, fun a u h => h.1 ▸ hp a⟩,
     fun x => decide (x.2.length = n x.1) && decide (C x ≤ C (x.1, N x)), ?_, fun a u => ?_⟩
   · fun_prop
@@ -280,7 +272,7 @@ theorem pigeonRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ} {F : α × L
     (hn : ComputableTidilyInPolyTime n enc encUnary)
     (hF : ComputableTidilyInPolyTime F (encPair enc encBits) encBits) :
     pigeonRel n F ∈ FNP enc := by
-  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  obtain ⟨p, hp⟩ := hn.polyBounded.exists_polynomial
   refine ⟨⟨2 * p, fun a w h => by
       simp only [Polynomial.eval_mul, Polynomial.eval_ofNat]
       have := hp a; have := h.1; omega⟩,
@@ -311,7 +303,7 @@ theorem endOfLineRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
     (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
     (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits) :
     endOfLineRel n P S ∈ FNP enc := by
-  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  obtain ⟨p, hp⟩ := hn.polyBounded.exists_polynomial
   refine ⟨⟨p, fun a u h => h.1 ▸ hp a⟩,
     fun x => decide (x.2.length = n x.1) &&
       ((hasIn n P S x.1 x.2 != hasOut n P S x.1 x.2) == decide (x.2 ≠ zeroVertex (n x.1))),
@@ -336,7 +328,7 @@ theorem leafRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
     (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
     (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits) :
     leafRel n N₁ N₂ ∈ FNP enc := by
-  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  obtain ⟨p, hp⟩ := hn.polyBounded.exists_polynomial
   refine ⟨⟨p, fun a u h => h.1 ▸ hp a⟩,
     fun x => decide (x.2.length = n x.1) &&
       (hasOddDegree N₁ N₂ x.1 x.2 == decide (x.2 ≠ zeroVertex (n x.1))),

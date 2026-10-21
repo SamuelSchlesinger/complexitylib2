@@ -149,12 +149,12 @@ theorem PolyTimeReducible.mem_NPWithOracle {encA : α ↪ List Bool} {encB : β 
     (hL' : L' ∈ NPWithOracle A encB) : L ∈ NPWithOracle A encA := by
   obtain ⟨g, hg, hL⟩ := h
   obtain ⟨p, V, hV, hL'⟩ := hL'
-  obtain ⟨c, d, hlen⟩ := hg.polyBounded_length.exists_le
+  obtain ⟨r, hlen⟩ := hg.polyBounded_length.exists_polynomial
   -- the certificate length of the reduced instance, as a polynomial of the instance length
-  set q : Polynomial ℕ := p.comp (Polynomial.C c * (Polynomial.X + 1) ^ d) with hq
+  set q : Polynomial ℕ := p.comp r with hq
   have hpq (a : α) : p.eval (encB (g a)).length ≤ q.eval (encA a).length := by
     rw [hq, Polynomial.eval_comp]
-    exact p.eval_mono (by simpa using hlen a)
+    exact p.eval_mono (hlen a)
   refine ⟨q, fun aw => V (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length)),
     hV.preprocess (f := V) (g := fun aw : α × List Bool =>
       (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length))) (by fun_prop), fun a => ?_⟩

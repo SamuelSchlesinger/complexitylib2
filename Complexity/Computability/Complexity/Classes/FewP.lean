@@ -102,8 +102,8 @@ theorem PolyTimeReducible.mem_FewP {β : Type} {encB : β ↪ List Bool} {B : Se
   have hlen : ComputableTidilyInPolyTime (fun a => p.eval (encB (g a)).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval p).comp
       ((ComputableTidilyInPolyTime.encoding_length encB).comp hg)
-  obtain ⟨c, d, hle⟩ := hlen.polyBounded.exists_le
-  exact ⟨f ∘ g, SharpP.comp_mem hf hg, Polynomial.C c * (Polynomial.X + 1) ^ d,
-    fun a => (hp (g a)).trans (by simpa using hle a), fun a => (hAB a).trans (hB (g a))⟩
+  obtain ⟨q, hle⟩ := hlen.polyBounded.exists_polynomial
+  exact ⟨f ∘ g, SharpP.comp_mem hf hg, q,
+    fun a => (hp (g a)).trans (hle a), fun a => (hAB a).trans (hB (g a))⟩
 
 end Cslib.Complexity

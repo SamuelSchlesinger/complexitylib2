@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.SharpP
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Mathlib.Algebra.Ring.Subring.Defs
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -40,6 +41,7 @@ verifiers read disjoint parts of the certificate (`Cslib.Complexity.acceptCount_
 * `Cslib.Complexity.SharpP.comp_mem`, `Cslib.Complexity.GapP.comp_mem`: polynomial-time
   precomposition, preserving counts exactly.
 
+* `Cslib.Complexity.SharpP.of_polyTime_length`: polynomial-time unary certificate lengths suffice.
 * `Cslib.Complexity.SharpP.add_mem`, `Cslib.Complexity.SharpP.mul_mem`: `#P` is closed under
   addition and multiplication.
 * `Cslib.Complexity.SharpP.one_mem`, `Cslib.Complexity.SharpP.add_one_mem`,
@@ -231,27 +233,27 @@ theorem sub_mem' {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g�
 
 end GapP
 
+/-- A polynomial-time unary certificate length can be padded without changing the count. -/
+theorem SharpP.of_polyTime_length {V : α × List Bool → Bool} {r : α → ℕ}
+    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
+    (hr : ComputableTidilyInPolyTime r enc encUnary) :
+    (fun a => acceptCount V a (r a)) ∈ SharpP enc := by
+  obtain ⟨p, hle⟩ := hr.polyBounded.exists_polynomial
+  refine ⟨p, andVerifier r V allFalseVerifier, by fun_prop, fun a => ?_⟩
+  obtain ⟨k, hk⟩ := Nat.exists_eq_add_of_le (hle a)
+  rw [hk, acceptCount_andVerifier_allFalseVerifier]
+
 /-- Polynomial-time precomposition preserves the exact accepting count. Padding bits are
 required to be false, so they do not multiply the number of witnesses. -/
 theorem SharpP.comp_mem {β : Type} {encB : β ↪ List Bool} {f : β → ℕ} {g : α → β}
     (hf : f ∈ SharpP encB) (hg : ComputableTidilyInPolyTime g enc encB) :
     f ∘ g ∈ SharpP enc := by
   obtain ⟨q, W, hW, hWB⟩ := hf
-  have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (g a)).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval q).comp
-      ((ComputableTidilyInPolyTime.encoding_length encB).comp hg)
-  obtain ⟨c, d, hle⟩ := hlen.polyBounded.exists_le
-  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d,
-    andVerifier (fun a => q.eval (encB (g a)).length) (fun x => W (g x.1, x.2)) allFalseVerifier,
-    computableTidilyInPolyTime_andVerifier hlen
-      (hW.comp ((hg.comp (.fst enc encBits)).prod (.snd enc encBits)))
-      computableTidilyInPolyTime_allFalseVerifier, fun a => ?_⟩
-  have hk : q.eval (encB (g a)).length ≤
-      (Polynomial.C c * (Polynomial.X + 1) ^ d).eval (enc a).length := by
-    simpa using hle a
-  obtain ⟨j, hj⟩ := Nat.exists_eq_add_of_le hk
-  rw [hj, acceptCount_andVerifier_allFalseVerifier]
-  exact hWB (g a)
+  have h := SharpP.of_polyTime_length
+    (V := fun x => W (g x.1, x.2))
+    (r := fun a => q.eval (encB (g a)).length) (by fun_prop) (by fun_prop)
+  change (fun a => acceptCount W (g a) (q.eval (encB (g a)).length)) ∈ SharpP enc at h
+  simpa only [← hWB, Function.comp_def] using h
 
 /-- `GapP` is closed under polynomial-time precomposition. -/
 theorem GapP.comp_mem {β : Type} {encB : β ↪ List Bool} {f : β → ℤ} {g : α → β}

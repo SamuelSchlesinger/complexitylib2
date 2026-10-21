@@ -355,17 +355,12 @@ theorem exists_isGameVerifier_of_mem_PSPACE (h : A ∈ PSPACE enc) :
     have := MultiTapeNTM.computableTidilyInPolyTime_codeWidth (ntm := ntm) (enc := enc) c d
     unfold savitchWidth
     fun_prop
-  obtain ⟨cr, dr, hr⟩ := hrounds.polyBounded.exists_le
-  refine ⟨Polynomial.C cr * (Polynomial.X + 1) ^ dr, savitchVerifier (enc := enc) ntm c d,
+  obtain ⟨p, hr⟩ := hrounds.polyBounded.exists_polynomial
+  refine ⟨p, savitchVerifier (enc := enc) ntm c d,
     computableTidilyInPolyTime_savitchVerifier ntm c d, fun a => ?_⟩
   set w := savitchWidth (enc := enc) ntm c d a
-  have heval : (Polynomial.C cr * (Polynomial.X + 1) ^ dr : Polynomial ℕ).eval (enc a).length =
-      cr * ((enc a).length + 1) ^ dr := by
-    simp
-  have hle : 2 * ((w + 1) * w) ≤ 2 * (Polynomial.C cr * (Polynomial.X + 1) ^ dr).eval
-      (enc a).length := by
-    rw [heval]
-    exact Nat.mul_le_mul_left 2 (hr a)
+  have hle : 2 * ((w + 1) * w) ≤ 2 * p.eval (enc a).length :=
+    Nat.mul_le_mul_left 2 (hr a)
   rw [(hA.recognizesInSpace a).2,
     ← MultiTapeNTM.savitchDecide_eq_true_iff (hA.recognizesInSpace a).1 (hcd a),
     MultiTapeNTM.savitchDecide,

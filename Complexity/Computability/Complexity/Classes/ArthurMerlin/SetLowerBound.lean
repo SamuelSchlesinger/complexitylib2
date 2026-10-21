@@ -261,9 +261,7 @@ theorem mem_AM_of_card_certifiedSet {N c : Polynomial ℕ} {R : α × List Bool 
   have hℓ : ComputableTidilyInPolyTime ℓ enc encUnary :=
     ComputableTidilyInPolyTime.binary_log_two.comp
       (hK.binary_pow' (ComputableTidilyInPolyTime.const 5))
-  obtain ⟨b₀, d₀, hle⟩ := hℓ.polyBounded.exists_le
-  set B : Polynomial ℕ := Polynomial.C b₀ * (Polynomial.X + 1) ^ d₀ with hBdef
-  have hB (a : α) : ℓ a ≤ B.eval (enc a).length := by simpa [hBdef] using hle a
+  obtain ⟨B, hB⟩ := hℓ.polyBounded.exists_polynomial
   set m : Polynomial ℕ := B + 2 with hm
   set T : Polynomial ℕ := B + 4 with hT
   refine ⟨m * (5 * N + T) + m, 5 * N + T + 5 * c, verifier enc N c m T ℓ R,

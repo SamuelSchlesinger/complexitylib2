@@ -179,14 +179,8 @@ theorem PolyTimeReducible.mem_MA {encB : β ↪ List Bool} {B : Set β}
   have hp : ComputableTidilyInPolyTime (fun a => p.eval (encB (f a)).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval p).comp
       ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
-  obtain ⟨c, d, hqle⟩ := hq.polyBounded.exists_le
-  obtain ⟨c', d', hple⟩ := hp.polyBounded.exists_le
-  set Q : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d with hQ
-  set P : Polynomial ℕ := Polynomial.C c' * (Polynomial.X + 1) ^ d' with hP
-  have hQe (a : α) : q.eval (encB (f a)).length ≤ Q.eval (enc a).length := by
-    simpa [hQ] using hqle a
-  have hPe (a : α) : p.eval (encB (f a)).length ≤ P.eval (enc a).length := by
-    simpa [hP] using hple a
+  obtain ⟨Q, hQe⟩ := hq.polyBounded.exists_polynomial
+  obtain ⟨P, hPe⟩ := hp.polyBounded.exists_polynomial
   have hQu : ComputableTidilyInPolyTime (fun a => Q.eval (enc a).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval Q).comp (ComputableTidilyInPolyTime.encoding_length enc)
   refine ⟨Q, P, fun x => V (f x.1, x.2.take (q.eval (encB (f x.1)).length) ++
@@ -249,14 +243,8 @@ theorem PolyTimeReducible.mem_AM {encB : β ↪ List Bool} {B : Set β}
   have hp : ComputableTidilyInPolyTime (fun a => p.eval (encB (f a)).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval p).comp
       ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
-  obtain ⟨c, d, hqle⟩ := hq.polyBounded.exists_le
-  obtain ⟨c', d', hple⟩ := hp.polyBounded.exists_le
-  set Q : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d with hQ
-  set P : Polynomial ℕ := Polynomial.C c' * (Polynomial.X + 1) ^ d' with hP
-  have hQe (a : α) : q.eval (encB (f a)).length ≤ Q.eval (enc a).length := by
-    simpa [hQ] using hqle a
-  have hPe (a : α) : p.eval (encB (f a)).length ≤ P.eval (enc a).length := by
-    simpa [hP] using hple a
+  obtain ⟨Q, hQe⟩ := hq.polyBounded.exists_polynomial
+  obtain ⟨P, hPe⟩ := hp.polyBounded.exists_polynomial
   have hPu : ComputableTidilyInPolyTime (fun a => P.eval (enc a).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval P).comp (ComputableTidilyInPolyTime.encoding_length enc)
   refine ⟨P, Q, fun x => V (f x.1, x.2.take (p.eval (encB (f x.1)).length) ++

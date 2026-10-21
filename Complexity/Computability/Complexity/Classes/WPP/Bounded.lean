@@ -93,8 +93,7 @@ theorem forall_lt_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     {a | ∀ i < r a, (a, i) ∈ A} ∈ LWPP enc := by
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
-  obtain ⟨c, d, hb⟩ := hr.polyBounded.exists_le
-  let p : Polynomial ℕ := Polynomial.C c * (Polynomial.X + 1) ^ d
+  obtain ⟨p, hb⟩ := hr.polyBounded.exists_polynomial
   let T (x : ℕ × ℕ) := ∏ i ∈ range x.2, f (2 * x.1 + 1 + i)
   have hT : ComputableTidilyInPolyTime T (encPair encUnary encUnary) encIntBin := by
     apply ComputableTidilyInPolyTime.intBin_prod_range
@@ -105,8 +104,7 @@ theorem forall_lt_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     exact prod_ne_zero_iff.mpr fun i _ => hn _
   · intro a ha
     refine ⟨r a, ?_, ?_⟩
-    · have h : r a ≤ p.eval (enc a).length := by simpa [p] using hb a
-      lia
+    · exact Nat.lt_succ_of_le (hb a)
     · apply prod_congr rfl
       intro i hi
       have h := (hA (a, i)).mp (ha i (mem_range.mp hi))

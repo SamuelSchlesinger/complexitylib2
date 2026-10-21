@@ -277,11 +277,11 @@ theorem mem_NP_of_subsetWitness {encγ : γ ↪ List Bool} {vs : α → List γ}
     {P : α → Finset γ → Prop}
     (hP : ∀ a l, l.Nodup → (∀ v ∈ l, v ∈ vs a) → (check (a, l) = true ↔ P a l.toFinset)) :
     {a | ∃ S : Finset γ, (∀ v ∈ S, v ∈ vs a) ∧ P a S} ∈ NP enc := by
-  obtain ⟨c, d, hle⟩ := hvs.polyBounded_length.exists_le
-  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d, _,
+  obtain ⟨p, hle⟩ := hvs.polyBounded_length.exists_polynomial
+  refine ⟨p, _,
     computableTidilyInPolyTime_subsetVerifier hvs hcheck,
     isVerifier_subsetVerifier (fun a => ?_) hP⟩
-  simpa using (length_le_length_encList encγ (vs a)).trans (hle a)
+  exact (length_le_length_encList encγ (vs a)).trans (hle a)
 
 end Subset
 
@@ -296,17 +296,17 @@ theorem PolyTimeReducible.mem_NP {encB : β ↪ List Bool} {B : Set β}
   obtain ⟨q, W, hW, hWB⟩ := hB
   have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
     (unary_eval q).comp ((encoding_length encB).comp hf)
-  obtain ⟨c, d, hle⟩ := hlen.polyBounded.exists_le
-  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d,
+  obtain ⟨p, hle⟩ := hlen.polyBounded.exists_polynomial
+  refine ⟨p,
     fun x => W (f x.1, x.2.take (q.eval (encB (f x.1)).length)), ?_,
     IsVerifier.of_padding (fun a w hw h => ?_) fun a ha => ?_⟩
   · exact hW.comp ((hf.comp (fst enc encBits)).prod
       (bitsTakeWithInput (snd enc encBits) (hlen.comp (fst enc encBits))))
   · refine (hAB a).2 ((hWB (f a)).2 ⟨_, List.length_take_of_le ?_, h⟩)
     rw [hw]
-    simpa using hle a
+    exact hle a
   · obtain ⟨u, hu, hWu⟩ := (hWB (f a)).1 ((hAB a).1 ha)
-    refine ⟨u, by rw [hu]; simpa using hle a, fun k => ?_⟩
+    refine ⟨u, by rw [hu]; exact hle a, fun k => ?_⟩
     simpa only [List.take_left' hu] using hWu
 
 /-- `coNP` is closed under polynomial-time reductions. -/

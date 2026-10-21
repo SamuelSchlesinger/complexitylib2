@@ -354,9 +354,7 @@ theorem circuit_lt_of_inputSupport_card_le_two (c : Circuit signature n 1)
     n < (inputGates c.program).card + 2 * L := by
   obtain ⟨gate, hgate⟩ := houtput
   apply lt_of_inputSupport_card_le_two c.program (fun z => z gate) ?_ hf h2 hK
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 /-! ### C6: Block-excess restriction and lower bound -/
 
@@ -595,8 +593,6 @@ theorem circuit_lt_of_blocks (c : Circuit signature n 1)
     n < F.card + (inputGates c.program).card + M + 2 * k := by
   obtain ⟨gate, hgate⟩ := houtput
   apply lt_of_blocks c.program (fun z => z gate) ?_ hf F 𝓑 hdisj hcover hF hblocks M hM hK
-  intro x
-  simpa only [Circuit.eval, Function.comp_apply, hgate, Program.trace, Wire.elim_gate]
-    using hcomputes x
+  simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
 end Cslib.Circuits.Boolean.WeightedThreshold
