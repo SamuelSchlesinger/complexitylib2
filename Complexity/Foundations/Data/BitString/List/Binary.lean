@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.Nat.Bits
+import Complexity.Foundations.Data.Nat.Bits
 import Mathlib.Data.List.Induction
 import Mathlib.Data.Nat.Size
 
@@ -60,13 +61,9 @@ private theorem min_binary_step (bound value : ℕ) (bit : Bool) :
 /-- Saturating at each step agrees with capping the final mathematical value. -/
 theorem boundedBinaryValue_eq (bound : ℕ) (word : List Bool) :
     boundedBinaryValue bound word = min bound (binaryValue word) := by
-  have h (word : List Bool) (value : ℕ) :
-      word.foldl (fun value bit => min bound (2 * value + bit.toNat)) (min bound value) =
-        min bound (word.foldl (fun value bit => 2 * value + bit.toNat) value) := by
-    induction word generalizing value with
-    | nil => rfl
-    | cons bit word ih => simp only [List.foldl_cons, min_binary_step, ih]
-  simpa only [boundedBinaryValue, binaryValue, Nat.min_zero] using h word 0
+  simpa only [boundedBinaryValue, binaryValue, Nat.min_zero] using
+    (List.foldl_hom (min bound) (l := word) (init := 0)
+      (min_binary_step bound))
 
 /-- The unary result never exceeds the declared bound. -/
 theorem boundedBinaryValue_le (bound : ℕ) (word : List Bool) :
@@ -81,11 +78,7 @@ theorem binaryValue_snoc (word : List Bool) (bit : Bool) :
 
 /-- Reversing the little-endian digits gives the corresponding most-significant-first value. -/
 theorem binaryValue_reverse_bits (n : ℕ) : binaryValue n.bits.reverse = n := by
-  induction n using Nat.binaryRec' with
-  | zero => rfl
-  | bit b n hn ih =>
-    rw [Nat.bits_append_bit n b hn, List.reverse_cons, binaryValue_snoc, ih]
-    cases b <;> simp [Nat.bit_val]
+  simpa only [binaryValue, List.foldl_reverse, ← Nat.bit_val] using Nat.foldr_bit_bits n
 
 /-- An all-one binary word represents one less than the corresponding power of two. -/
 theorem binaryValue_replicate_true (k : ℕ) :
