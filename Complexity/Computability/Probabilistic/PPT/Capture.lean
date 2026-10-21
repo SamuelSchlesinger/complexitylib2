@@ -9,16 +9,17 @@ module
 
 public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputPrefix
-import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Probabilistic.Oracle.Composition
 
 /-!
 # Captured inputs in efficient probabilistic programs
 
 Ordinary monadic continuations and callbacks may use both the caller's input and a sampled
-result. A tidy deterministic routine writes the retained data before the sampler runs; the
-existing pair encoding makes this a typed value for the next computation. The machine proof
-charges all copying, framing and preparation, without exposing those details to clients.
+result. These operations specialize the strict oracle calculus to empty external channels. Its
+clean-realization compiler charges copying, framing and preparation; the existing pair encoding
+makes the retained data a typed value for the next computation. Prefixing is pairing followed by
+efficient deterministic concatenation.
 
 ## Main results
 
@@ -38,42 +39,19 @@ and framed pair encoding.
 
 namespace Cslib.Probability
 
-open Turing Turing.MultiTapeTM Turing.MultiTapePTM Turing.MultiTapeMachine
+open Turing.MultiTapeTM
 
 /-- Write efficiently computed input data before a probabilistic output, charging preparation. -/
 theorem IsPPTOn.prefix {α : Type} {input : α ↪ List Bool} {pre : α → List Bool}
     {program : α → ProbComp (List Bool)} (hprogram : IsPPTOn input encBits program)
     (hprefix : ComputableTidilyInPolyTime pre input encBits) :
     IsPPTOn input encBits (fun a => (pre a ++ ·) <$> program a) := by
-  obtain ⟨t, s, ht, _, ki, InitState, hfinite, initializer, hi⟩ := hprefix
-  obtain ⟨ci, di, ht⟩ := ht.exists_le
-  obtain ⟨ks, State, hfinite', source, cs, ds, hsource, hhalt⟩ := hprogram.exists_halting_machine
-  let prep := initializer.extendTapes (Fin.castAddEmb ks)
-  let runner := source.extendTapes (Fin.natAddEmb ki)
-  let compiled := (ofDeterministic prep).seq runner
-  let prepareTime := fun length => ci * (length + 1) ^ di
-  let runTime := fun length => cs * (length + 1) ^ ds
-  have hpoly : PolynomiallyBounded (fun length => prepareTime length + runTime length) := by
-    fun_prop
-  obtain ⟨coefficient, degree, htime⟩ := polynomiallyBounded_iff_le.mp hpoly
-  have hprep (a : α) : prep.runFrom (prep.initCfg (input a)) (prepareTime (input a).length) =
-      wordsCfg (input a) none (fun _ => []) (pre a) :=
-    (((hi a).mono (ht a) le_rfl).extendTapes (Fin.castAddEmb ks)).runFrom_initCfg_eq
-  have hrunner (a : α) : ∀ final ∈ (ProbComp.eval
-      (runner.runClosedConfigFrom (runTime (input a).length)
-        (runner.initialConfig (input a)))).support,
-      final.tapes.state = none := by
-    intro final hfinal
-    simp only [runner, runClosedConfigFrom, initialConfig_extendTapes,
-      MultiTapePTM.runConfigFrom_embed, ProbComp.eval_map] at hfinal
-    obtain ⟨original, horiginal, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hfinal
-    exact hhalt (input a) original horiginal
-  refine ⟨ki + ks, InitState ⊕ State, inferInstance, compiled, coefficient, degree, fun a => ?_⟩
-  rw [eval_runClosed_eq_of_halted compiled _ (htime (input a).length)
-    (seq_prependOutput_halted prep runner (input a) (pre a) _ _ (hprep a) (hrunner a)),
-    eval_seq_prependOutput prep runner (input a) (pre a) _ _ (hprep a) (hrunner a),
-    runClosed_extendTapes, ← hsource a]
-  simp only [ProbComp.eval_map, encBits, Function.Embedding.coe_refl, PMF.map_id]
+  apply IsOraclePPTOn.isPPTOn
+  have happend := ComputableTidilyInPolyTime.bitsAppend
+    (ComputableTidilyInPolyTime.fst encBits encBits)
+    (ComputableTidilyInPolyTime.snd encBits encBits)
+  simpa only [ProbOracleComp.sample_map, Functor.map_map, Function.comp_def] using
+    ((hprogram.isOraclePPTOn (Operation := Empty)).pair hprefix).map happend
 
 variable {α β γ : Type} {input : α ↪ List Bool} {left : β ↪ List Bool}
   {right : γ ↪ List Bool}
@@ -83,13 +61,9 @@ variable {α β γ : Type} {input : α ↪ List Bool} {left : β ↪ List Bool}
 theorem IsPPTOn.pair {program : α → ProbComp γ} {f : α → β}
     (hprogram : IsPPTOn input right program) (hf : ComputableTidilyInPolyTime f input left) :
     IsPPTOn input (encPair left right) (fun a => (fun b => (f a, b)) <$> program a) := by
-  apply isPPTOn_iff_encoded.mpr
-  have hframe : ComputableTidilyInPolyTime (fun b => frame (left b)) left encBits :=
-    .of_linear (.of_frame fun _ => rfl)
-  refine ((isPPTOn_iff_encoded.mp hprogram).prefix (hframe.comp hf)).congr ?_
-  intro a
-  simp only [ProbComp.eval_map, PMF.map_comp]
-  rfl
+  apply IsOraclePPTOn.isPPTOn
+  simpa only [ProbOracleComp.sample_map] using
+    (hprogram.isOraclePPTOn (Operation := Empty)).pair hf
 
 /-- Keep the original argument available to a later computation, charging its encoded copy. -/
 theorem IsPPTOn.keep_input {program : α → ProbComp β}
@@ -116,21 +90,16 @@ theorem IsPPTOn.map_with {program : α → ProbComp β} {f : α → β → γ}
   simpa only [bind_pure_comp] using
     hprogram.bind_with (right := right) (second := fun a b => pure (f a b)) hf.isPPTOn
 
-/-- Select a closed probabilistic branch with an efficient Boolean condition. A witness may
-run both total branches and discard one result; the sum of their clocks is still polynomial. -/
+/-- Select a closed probabilistic branch with an efficient Boolean condition, using the
+empty-channel specialization of oracle branch selection. -/
 @[fun_prop]
 theorem IsPPTOn.cond {condition : α → Bool} {yes no : α → ProbComp β}
     (hcondition : ComputableTidilyInPolyTime condition input encBool)
     (hyes : IsPPTOn input left yes) (hno : IsPPTOn input left no) :
     IsPPTOn input left (fun a => if condition a then yes a else no a) := by
-  have hcombined : IsPPTOn input left (fun a => do
-      let b ← yes a
-      let c ← no a
-      pure (if condition a then b else c)) := by
-    fun_prop
-  apply hcombined.congr
-  intro a
-  cases condition a <;> simp [ProbComp.eval_bind, PMF.map, Function.comp_def]
+  apply IsOraclePPTOn.isPPTOn
+  simpa only [apply_ite] using IsOraclePPTOn.cond hcondition
+    (hyes.isOraclePPTOn (Operation := Empty)) (hno.isOraclePPTOn (Operation := Empty))
 
 /-- Select a closed probabilistic branch with an efficiently decidable condition. -/
 @[fun_prop]
