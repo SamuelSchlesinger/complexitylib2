@@ -21,6 +21,8 @@ and guarded headline axiom reports cover the carry-save and modular-to-majority 
 
 @[expose] public section
 
+namespace ComplexityTests.ThresholdNC1
+
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean
 
 example : AC0Mod 3 ⊂ TC0 :=
@@ -50,7 +52,7 @@ example : (thresholdDeMorganCircuit 3 4).eval interpretation ![true, true, true]
 
 example : PolynomiallyBounded (fun n => Nat.clog 2 (n ^ 3 + 1)) := by fun_prop
 
-private theorem majority_family (n : ℕ) :
+theorem majority_family (n : ℕ) :
     ∃ C : Circuit Unbounded.extSignature n 1,
       C.Computes (Unbounded.extInterpretation majority)
         (single ((Language.ofSlices majority).slice n)) ∧
@@ -175,4 +177,6 @@ info: 'Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost' depends on ax
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost
+
+end ComplexityTests.ThresholdNC1
 
