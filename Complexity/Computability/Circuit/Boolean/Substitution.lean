@@ -25,7 +25,8 @@ the remaining inputs free. A substitution does not make a function harder to com
 `f` with its inputs rewired, and two gates for the constants, computes `f ∘ ρ`.
 
 The substitution `appendInputs r` fixes the last `p` inputs of a function of `n + p` variables to
-the bits `r`: substituting it computes `x ↦ f (Fin.append x r)`. A restriction (partial
+the bits `r`: substituting it computes `x ↦ f (Fin.append x r)`; `prependInputs r` fixes the first
+`p` inputs instead. A restriction (partial
 assignment) is the substitution that replaces each bit by itself or by a constant
 (`BitString.PartialAssignment.substitute_toSubstitution`).
 
@@ -36,7 +37,8 @@ inputs the resulting function, two gates larger, agrees with it on a `δ` fracti
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.substitute`, `Cslib.Circuits.Boolean.appendInputs`.
+* `Cslib.Circuits.Boolean.substitute`, `Cslib.Circuits.Boolean.appendInputs`,
+  `Cslib.Circuits.Boolean.prependInputs`.
 * `Cslib.Circuits.Boolean.substituteCircuit`: executable substitution with two shared constants.
 * `Cslib.BitString.PartialAssignment.toSubstitution`: a partial assignment as a substitution.
 
@@ -122,6 +124,15 @@ def appendInputs {p : ℕ} (r : Fin p → Bool) : Fin (n + p) → Fin n ⊕ Bool
   funext j
   refine Fin.addCases (fun i => ?_) (fun i => ?_) j <;> simp [substitute, appendInputs]
 
+/-- The substitution fixing the first `p` inputs of a function of `p + n` variables to `r`. -/
+def prependInputs {p : ℕ} (r : Fin p → Bool) : Fin (p + n) → Fin n ⊕ Bool :=
+  Fin.append (Sum.inr ∘ r) Sum.inl
+
+@[simp] theorem substitute_prependInputs {p : ℕ} (r : Fin p → Bool) (x : Fin n → Bool) :
+    substitute (prependInputs r) x = Fin.append r x := by
+  funext j
+  refine Fin.addCases (fun i => ?_) (fun i => ?_) j <;> simp [substitute, prependInputs]
+
 open Finset in
 /-- **Fixing ignored inputs.** If `g` on `N` inputs agrees with a function `E` of its first `n`
 inputs on more than `δ * 2 ^ N` inputs, then fixing the other `N - n` inputs suitably
@@ -192,6 +203,7 @@ theorem exists_complexity_le_of_agree_prefix (hle : n ≤ N) (E : BooleanFunctio
     linarith
   obtain ⟨z, hz⟩ := hex
   exact ⟨fun x => g (substitute (ρ z) x), complexity_substitute_le (ρ z) g, hz⟩
+
 
 end Cslib.Circuits.Boolean
 
