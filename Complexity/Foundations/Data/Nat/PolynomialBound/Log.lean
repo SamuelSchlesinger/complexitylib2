@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate (addition to `Cslib/Foundations/Data/Nat/PolynomialBound.lean`)
 
-public import Cslib.Foundations.Data.Nat.PolynomialBound
+public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Mathlib.Data.Nat.Log
 
 /-!
@@ -29,12 +29,21 @@ written as one digit, that is `max n.size 1`, which unlike `Nat.size n` is posit
 * `Cslib.PolynomiallyBounded.exists_clog_le_mul_log`: the logarithm of a polynomially bounded
   function is `O(log n)`.
 * `Cslib.polynomiallyBounded_two_pow_mul_log`: `2 ^ O(log n)` is polynomially bounded.
+* `Cslib.polynomiallyBounded_clog_two`: binary ceiling logarithms preserve polynomial bounds.
 * `Cslib.polynomiallyBounded_mul_log2_add_one`: `O(log n)` is polynomially bounded.
 -/
 
 @[expose] public section
 
 namespace Cslib
+
+/-- The binary ceiling logarithm of a polynomially bounded function is polynomially bounded. -/
+@[fun_prop]
+theorem polynomiallyBounded_clog_two {f : ℕ → ℕ} (hf : PolynomiallyBounded f) :
+    PolynomiallyBounded fun n => Nat.clog 2 (f n) :=
+  hf.mono (Filter.Eventually.of_forall fun _ =>
+    (Nat.clog_le_iff_le_pow one_lt_two).2 Nat.lt_two_pow_self.le)
+
 
 /-- `2 ^ (c (⌊log₂ n⌋ + 1))` is polynomially bounded: it is at most `2 ^ c (n + 1) ^ c`. -/
 theorem polynomiallyBounded_two_pow_mul_log (c : ℕ) :

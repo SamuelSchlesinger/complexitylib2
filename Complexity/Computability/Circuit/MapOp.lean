@@ -86,6 +86,21 @@ variable {φ}
 @[simp] theorem Circuit.mapOp_outputs (c : Circuit σ n m) : (c.mapOp φ).outputs = c.outputs :=
   rfl
 
+/-- Translating operation symbols preserves every fan-in bound. -/
+@[simp] theorem Program.fanInAtMost_mapOp (p : Program σ n g) (r : ℕ) :
+    (p.mapOp φ).FanInAtMost r ↔ p.FanInAtMost r := by
+  induction p with
+  | empty => rfl
+  | gate p line ih =>
+    simp only [Program.mapOp_gate, Program.FanInAtMost, Line.mapOp_op, ih]
+    have h : τ.Arity (φ line.op) = σ.Arity line.op := φ.arity_eq line.op
+    rw [h]
+
+/-- Translating operation symbols preserves every circuit fan-in bound. -/
+@[simp] theorem Circuit.fanInAtMost_mapOp (c : Circuit σ n m) (r : ℕ) :
+    (c.mapOp φ).FanInAtMost r ↔ c.FanInAtMost r :=
+  Program.fanInAtMost_mapOp c.program r
+
 @[simp] theorem Line.mapOp_id (line : Line σ n g) : line.mapOp (Signature.Hom.id σ) = line :=
   rfl
 
