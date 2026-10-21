@@ -113,4 +113,90 @@ example : ∃ t : DecisionTree (SeparableComparison Bool Bool) Bool,
   intro x y
   cases x <;> cases y <;> norm_num [xorTree, DecisionTree.eval, SeparableComparison.eval]
 
+-- Structural node count, rank, decision-list predicate, and energy on `unbalanced` and `xorTree`.
+example : unbalanced.nodeCount = 2 := rfl
+example : unbalanced.leafCount = unbalanced.nodeCount + 1 :=
+  unbalanced.leafCount_eq_nodeCount_add_one
+example : unbalanced.rank = 1 := rfl
+example : unbalanced.energy = 2 := rfl
+example : unbalanced.IsDecisionList := Or.inl ⟨rfl, Or.inl ⟨rfl, trivial⟩⟩
+example : unbalanced.leafCount ≤
+    ∑ j ∈ Finset.range (unbalanced.rank + 1), unbalanced.depth.choose j :=
+  unbalanced.leafCount_le_sum_choose_rank
+example : unbalanced.leafCount ≤
+    ∑ j ∈ Finset.range (unbalanced.energy + 1), unbalanced.depth.choose j :=
+  unbalanced.leafCount_le_sum_choose_energy
+
+-- Concrete `BiMonotoneComparison` queries using `ofMax` and `ofMin`.
+private noncomputable def maxCompare : BiMonotoneComparison (Fin 5) (Fin 7) :=
+  BiMonotoneComparison.ofMax (fun x => x.val) (fun y => y.val) 2
+
+private noncomputable def minCompare : BiMonotoneComparison (Fin 5) (Fin 7) :=
+  BiMonotoneComparison.ofMin (fun x => x.val) (fun y => y.val) 1
+
+example : maxCompare.eval 0 1 = false := by
+  norm_num [maxCompare, BiMonotoneComparison.eval_ofMax]
+
+example : maxCompare.eval 0 2 = true := by
+  norm_num [maxCompare, BiMonotoneComparison.eval_ofMax]
+
+example : minCompare.eval 1 0 = false := by
+  norm_num [minCompare, BiMonotoneComparison.eval_ofMin]
+
+example : minCompare.eval 1 2 = true := by
+  norm_num [minCompare, BiMonotoneComparison.eval_ofMin]
+
+private noncomputable def biTree : DecisionTree (BiMonotoneComparison (Fin 5) (Fin 7)) ℕ :=
+  .node maxCompare (.leaf 0) (.node minCompare (.leaf 1) (.leaf 2))
+
+example : ∃ (A : Finset (Fin 5)) (B : Finset (Fin 7)) (p : List Bool),
+    A.Nonempty ∧ B.Nonempty ∧ 5 ≤ A.card * 3 ∧ 7 ≤ B.card * 3 ∧
+      ∀ x ∈ A, ∀ y ∈ B, biTree.path (fun q => q.eval x y) = p := by
+  obtain ⟨A, B, p, _, _, hA, hB, hAc, hBc, hp⟩ :=
+    biTree.exists_leaf_rectangle_biMonotone Finset.univ Finset.univ (by simp) (by simp)
+  exact ⟨A, B, p, hA, hB, by simpa [biTree, DecisionTree.leafCount] using hAc,
+    by simpa [biTree, DecisionTree.leafCount] using hBc, hp⟩
+
+/--
+info: 'Cslib.DecisionTree.leafCount_le_sum_choose_rank' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.leafCount_le_sum_choose_rank
+
+/--
+info: 'Cslib.DecisionTree.IsDecisionList.rank_le_one' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.IsDecisionList.rank_le_one
+
+/--
+info: 'Cslib.DecisionTree.leafCount_le_sum_choose_energy' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.leafCount_le_sum_choose_energy
+
+/--
+info: 'Cslib.BiMonotoneComparison.exists_rectangle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms BiMonotoneComparison.exists_rectangle
+
+/--
+info: 'Cslib.DecisionTree.exists_leaf_rectangle_biMonotone' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.exists_leaf_rectangle_biMonotone
+
+/--
+info: 'Cslib.DecisionTree.card_mul_le_mul_leafCount_sq_biMonotone' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms DecisionTree.card_mul_le_mul_leafCount_sq_biMonotone
+
 end ThresholdRectangles
