@@ -612,14 +612,16 @@ of $u,v\in\{0,1\}^{n(a)}$ satisfies $F(a,u)=0^{n(a)}$ or
 (3)~\emph{directed end-of-line} (\texttt{endOfLineRel}): for any predecessor
 and successor maps $P(a,\cdot),S(a,\cdot):\{0,1\}^{n(a)}\to\{0,1\}^{n(a)}$,
 where a directed edge $u\to v$ is active when $v\ne u$, $v\ne 0^{n(a)}$,
-$S(a,u)=v$ and $P(a,v)=u$, some $u\in\{0,1\}^{n(a)}$ either lacks an active
-outgoing edge or has $u\ne 0^{n(a)}$ without an active incoming edge; and
+$S(a,u)=v$ and $P(a,v)=u$, either $0^{n(a)}$ lacks an active outgoing edge or
+some $u\ne 0^{n(a)}$ is unbalanced ($\mathrm{hasIn}(u)\ne\mathrm{hasOut}(u)$,
+i.e.\ a sink or a proper source, excluding isolated vertices); and
 (4)~\emph{undirected parity} (\texttt{leafRel}): for any length-preserving
 neighbor maps $N_1(a,\cdot),N_2(a,\cdot):\{0,1\}^{n(a)}\to\{0,1\}^{n(a)}$,
 where an undirected edge $\{u,v\}$ ($u\ne v$) is present when
 $v\in\{N_1(a,u),N_2(a,u)\}$ and $u\in\{N_1(a,v),N_2(a,v)\}$, every vertex has
-degree at most $2$ and the sum of degrees is even, so some
-$u\in\{0,1\}^{n(a)}$ has odd-degree status different from $[u\ne 0^{n(a)}]$.
+degree at most $2$ and the sum of degrees is even, so either $0^{n(a)}$ has
+even degree or some $u\ne 0^{n(a)}$ has odd degree (odd-degree status agrees
+with $[u\ne 0^{n(a)}]$).
 
 For an input encoding $\mathrm{enc}:\alpha\hookrightarrow\{0,1\}^*$, the
 classes $\cc{PLS}(\mathrm{enc})$, $\cc{PPP}(\mathrm{enc})$,
@@ -637,10 +639,11 @@ and satisfies
 \cc{PPAD}\subseteq\cc{PPA}.
 \]
 Here $\cc{PPAD}\subseteq\cc{PPP}$ sends vertices with an active outgoing edge
-to their successor and all other vertices to $0^{n(a)}$, while
+to their successor and fixes all other vertices, while
 $\cc{PPAD}\subseteq\cc{PPA}$ doubles the vertex space to $\{0,1\}^{n(a)+1}$
-into out-ports and in-ports paired by involutions so that directed $2$-cycles
-do not collapse. When the maps are presented by De Morgan Boolean circuit codes
+into out-ports and in-ports paired by involutions on active non-source vertices
+so that directed $2$-cycles do not collapse. When the maps are presented by De
+Morgan Boolean circuit codes
 evaluated in polynomial time (\texttt{evalCircuitCode}, padded or truncated to
 $n$ bits) and costs are interpreted in binary (\texttt{binaryValue}), the
 canonical circuit problems $\mathrm{LocalOpt}$, $\mathrm{Pigeon}$,
@@ -651,20 +654,20 @@ lie in $\cc{TFNP}$, and $\mathrm{EndOfLine}\in\cc{PPP}\cap\cc{PPA}$).
 Completeness (\texttt{SearchComplete}) of these circuit problems via compiling
 arbitrary polynomial-time families into circuits, and the subclass $\cc{CLS}$,
 are not formalized in this entry.\citep{JohnsonPapadimitriouYannakakis1988,MegiddoPapadimitriou1991,Papadimitriou1994PPAD,BeameEtAl1998}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{118}{Cslib.Complexity.isTotalSearch_localOptRel}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{154}{Cslib.Complexity.isTotalSearch_pigeonRel}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{257}{Cslib.Complexity.isTotalSearch_endOfLineRel}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{399}{Cslib.Complexity.isTotalSearch_leafRel}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{609}{Cslib.Complexity.PLS_subset_TFNP}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{614}{Cslib.Complexity.PPP_subset_TFNP}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{619}{Cslib.Complexity.PPAD_subset_TFNP}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{624}{Cslib.Complexity.PPA_subset_TFNP}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{642}{Cslib.Complexity.PPAD_subset_PPP}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{665}{Cslib.Complexity.PPAD_subset_PPA}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{834}{Cslib.Complexity.LocalOpt_mem_PLS}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{839}{Cslib.Complexity.Pigeon_mem_PPP}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{844}{Cslib.Complexity.EndOfLine_mem_PPAD}
-\declat{ee7e89498cf0e4634eb2c9c8d8e2cda2a9413ee8}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{849}{Cslib.Complexity.Leaf_mem_PPA}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{118}{Cslib.Complexity.isTotalSearch_localOptRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{154}{Cslib.Complexity.isTotalSearch_pigeonRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{290}{Cslib.Complexity.isTotalSearch_endOfLineRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{432}{Cslib.Complexity.isTotalSearch_leafRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{613}{Cslib.Complexity.PLS_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{618}{Cslib.Complexity.PPP_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{623}{Cslib.Complexity.PPAD_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{628}{Cslib.Complexity.PPA_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{646}{Cslib.Complexity.PPAD_subset_PPP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{669}{Cslib.Complexity.PPAD_subset_PPA}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{838}{Cslib.Complexity.LocalOpt_mem_PLS}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{843}{Cslib.Complexity.Pigeon_mem_PPP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{848}{Cslib.Complexity.EndOfLine_mem_PPAD}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{853}{Cslib.Complexity.Leaf_mem_PPA}
 \end{result}
 
 \begin{result}
