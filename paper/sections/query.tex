@@ -173,6 +173,39 @@ complexity-class equivalence is claimed. Input layout is an explicit caller conv
 \end{result}
 
 \begin{result}
+\subsection{Native certificates for encoded RAM primitives}
+For fixed injective binary encodings of input and output, a native certificate for $f$
+records arbitrary functions $T,S$ and a finite native multi-tape machine computing $f$ on
+\emph{every} encoded input $a$, in time at most $c(T(a)+1)$ and work space at most
+$c(S(a)+1)$, with output length also at most $c(S(a)+1)$, for some constant $c$.
+Such a certificate exists exactly when $f$ is natively computable. Polynomial bounds on
+$T,S$ in encoded input length yield native polynomial time. Certificates for $f$ followed
+by $g$ compose with bounds $T_f(a)+T_g(f(a))$ and $S_f(a)+S_g(f(a))$, up to constants.
+
+For a RAM model with chosen value, address and configuration encodings, a scalar bundle
+certifies checked literals and operation results, optional Boolean tests, address conversion,
+move validity and control-label validity. Admissibility rejection is included in the
+literal/operation result, with a proved connection to instruction evaluation. Each symbol
+is fixed; configuration and all operands are runtime inputs. A machine and its constants may
+depend on the symbol and a later fixed finite program; no arbitrary-program dispatcher is claimed.
+
+A complete addition/order model checks values, addresses and labels against an exclusive
+runtime bound, with binary encodings throughout; every scalar primitive has polynomial native
+bounds. Separately, checked standard word addition returns $x+y$ if $x+y<2^w$ and faults otherwise,
+in polynomial time with \emph{unary} width $w$ and binary operands. These instances select
+polynomial bounds from native proofs; no explicit degree or sharper numerical rate is claimed.
+They reuse Christian Reitwiessner's native arithmetic and encoding calculus. Memory access,
+control dispatch, initialization/output, whole-run simulation and charged width selection with
+input fit remain additional obligations. No exact-real bit encoding or certification of the
+whole standard word-operation basis is asserted. \citep{Sipser2013,Tromino2025}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{116}{Cslib.GenericRAM.NativeCertificate.nonempty_iff_isComputable}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{88}{Cslib.GenericRAM.NativeCertificate.comp}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{185}{Cslib.GenericRAM.Model.NativePrimitives}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native/Nat.lean}{131}{Cslib.GenericRAM.BoundedNat.nativePrimitives}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/WordRAM/Native.lean}{48}{Cslib.WordRAM.checkedAdd_polyTime}
+\end{result}
+
+\begin{result}
 \subsection{Additive word-RAM simulation with charged preparation}
 Let $p$ be a fixed word-RAM program with $r$ named registers, using only constants, copies,
 addition, truncated subtraction, indirect loads and stores, equality and unsigned comparison,
