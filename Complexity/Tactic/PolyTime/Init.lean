@@ -155,7 +155,7 @@ initialize registerBuiltinAttribute {
 }
 
 /-- Solve the goal tagged `name`, or else one whose tag ends in `name` as for `case`, by proof
-search: `PolyTime` rules for a polynomial-time goal, and both rule sets otherwise. -/
+search: `PPT` and `PolyTime` rules for a PPT goal, and `PolyTime` rules otherwise. -/
 def solveTagged (name : Name) : TacticM Unit := do
   let goals ← getGoals
   let some goal ← (do
@@ -290,8 +290,9 @@ def applyKnownCall (predicate : Name) (programIndex : Nat) (rule : Name)
             mkLambdaFVars #[input] (mkApp certified (mkApp argument input))
           unless ← isDefEq (← withReducible (reduce composed)) program do
             throwError "the certificate does not match this call"
+          let argument ← instantiateMVars argument
           let idArg := mkLambda `x .default domain (mkBVar 0)
-          if ← withReducible (isDefEq argument idArg) then
+          if !argument.hasExprMVar && (← withReducible (isDefEq argument idArg)) then
             unless ← withReducible (isDefEq decl.type target) do
               throwError "the certificate encoding does not match this call"
             input.goal.assign decl.toExpr
