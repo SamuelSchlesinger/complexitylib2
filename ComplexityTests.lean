@@ -309,6 +309,7 @@ import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
+import ComplexityTests.SubbotovskayaAndreev
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
