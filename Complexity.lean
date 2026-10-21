@@ -1,5 +1,7 @@
 module  -- shake: keep-all --deprecated_module: ignore
 
+public import Complexity.Algorithms.Lean.Queue
+public import Complexity.Algorithms.Lean.Retroactive
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
@@ -9,6 +11,11 @@ public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
 public import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
+public import Complexity.Algorithms.WordRAM.PrefixSums.Dynamic
+public import Complexity.Algorithms.WordRAM.PrefixSums.Query
+public import Complexity.Algorithms.WordRAM.PrefixSums.Tree
+public import Complexity.Algorithms.WordRAM.PrefixSums.Update
+public import Complexity.Algorithms.WordRAM.Stack
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
@@ -1048,12 +1055,16 @@ public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Computability.USTCON.Space
 public import Complexity.Computability.WordRAM.Allocation
 public import Complexity.Computability.WordRAM.Compile
+public import Complexity.Computability.WordRAM.Copy
 public import Complexity.Computability.WordRAM.Defs
+public import Complexity.Computability.WordRAM.Dynamic
+public import Complexity.Computability.WordRAM.Heap
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput
 public import Complexity.Computability.WordRAM.Structured
 public import Complexity.Computability.WordRAM.Time
+public import Complexity.Computability.WordRAM.Trace
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
@@ -1362,6 +1373,13 @@ public import Complexity.Foundations.Probability.Gaussian.Sheppard
 public import Complexity.Foundations.Probability.SecondMoment
 public import Complexity.Foundations.Relation.InductiveCounting
 public import Complexity.Foundations.Relation.RelatesWithinSteps
+public import Complexity.Foundations.Semantics.Stateful.Amortized
+public import Complexity.Foundations.Semantics.Stateful.Basic
+public import Complexity.Foundations.Semantics.Stateful.Composition
+public import Complexity.Foundations.Semantics.Stateful.Hoare
+public import Complexity.Foundations.Semantics.Stateful.Module
+public import Complexity.Foundations.Semantics.Stateful.Realization
+public import Complexity.Foundations.Semantics.Stateful.Resource
 public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
