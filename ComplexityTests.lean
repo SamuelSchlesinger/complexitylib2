@@ -71,6 +71,9 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.CyclicFeedback
+import ComplexityTests.DataStructure
+import ComplexityTests.DataStructureQueue
+import ComplexityTests.DataStructureRetroactive
 import ComplexityTests.DecisionTree
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
@@ -332,6 +335,8 @@ import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
+import ComplexityTests.WordRAMDynamic
+import ComplexityTests.WordRAMPrefixSums
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

@@ -168,3 +168,93 @@ RAM, and the lean-trominoes word-RAM formalization.
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean}{111}{Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup}
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean}{99}{Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded}
 \end{result}
+
+
+\begin{result}
+\subsection{Stateful semantic composition and independent resource certificates}
+A deterministic stateful specification assigns each admissible operation a new state and a typed
+answer. A semantic module implements such operations by terminating adaptive programs over a
+second interface, with a representation relation between the two abstract states. Modules
+compose by substitution, hiding their intermediate representations. Any realization of the lower
+interface transports correctness to the composed implementation. Every supplied terminating
+execution has the specified result; existence is also proved for admissible clients, without a
+claim of demonic termination for arbitrary nondeterministic backends.
+Separately, natural-number additive weights on native execution evidence and natural-valued
+potential inequalities
+telescope along answer-dependent clients. Potentials may depend on hidden representation states;
+bounds retain both initial and final credit. These results reuse Quang Dao's upstream
+\lean{PFunctor.FreeM}; arbitrary pure Lean controller computation is uncharged. They do not
+constitute a compiler or a general peak-space or randomized-cost calculus.
+\citep[Chapter 17]{CLRS2009}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Composition.lean}{66}{Cslib.Stateful.Module.comp}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Module.lean}{62}{Cslib.Stateful.Module.realize}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Resource.lean}{86}{Cslib.Stateful.Module.amortized_client}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Hoare.lean}{87}{Cslib.Stateful.Spec.Hoare.link}
+\end{result}
+
+\begin{result}
+\subsection{A queue construction with backend-independent amortization}
+A polymorphic FIFO queue is implemented using two abstract stacks supporting push, pop and size.
+The same queue proof applies to every realization of these stack operations, including distinct
+storage representations and native trace types. If every stack call has additive resource weight
+at most $K$, every supplied linked execution of an admissible adaptive queue client satisfies
+\[
+ C+2K|\mathit{rear}_{\mathrm{final}}|
+ \le 3Km+2K|\mathit{rear}_{\mathrm{initial}}|,
+\]
+where $m$ is the number of queue operations selected by the mathematical client and $C$ is the
+total native weight. The explicit size call and empty-queue cases are included. This is a
+conditional backend-resource theorem, not a compiled Word-RAM queue-time theorem.
+\citep[Exercise 10.1-6 and Chapter 17]{CLRS2009}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/Lean/Queue.lean}{212}{Cslib.Algorithms.Lean.Queue.realized_client_bound}
+\end{result}
+
+\begin{result}
+\subsection{Fixed-program dynamic stacks and prefix sums on the word RAM}
+Starting from a bounded represented configuration, a fixed nine-register stack program supports
+push, pop (including empty pop), and size in
+at most $12$ instructions per operation, including the final halt. Push requires available
+capacity and a fitting argument. The reserved base-plus-capacity endpoint and the operation tags
+must fit the selected word width. Disjoint finite-footprint memory assertions are preserved.
+Starting from a bounded represented configuration whose total sum fits a word, a separate fixed
+fourteen-register program maintains $n=2^h$ nonnegative array entries in a
+complete binary aggregation tree occupying $2n-1$ words. It supports point increments and prefix
+sums in at most
+\[
+ 13(h+1)+12=13(\log_2 n+1)+12
+\]
+instructions per operation, including dispatch, register setup and halt. Indices must be in range;
+increments require the new total sum to fit a word; the region endpoint $b+2n$ must fit.
+Both programs preserve their representations over arbitrary admissible adaptive clients, with
+instruction bounds summed across calls. Memory outside the reserved regions is unchanged.
+The programs are independent of the operation history; prefix-sum code is also independent of
+$h$ and $w$. Initial represented configurations exist, but their construction and external
+argument encoding/delivery and result decoding are not charged. The client controller is not
+compiled. The tree is a segment-tree representation, not a Fenwick layout; no memory-reclamation
+claim is made. The backend extends the existing bounded-word machine and compiler credited to
+\texttt{lean-trominoes}.\citep{CLRS2009,Tromino2025,Reynolds2002}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/Stack.lean}{311}{Cslib.WordRAM.Stack.instruction_bound}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/Stack.lean}{363}{Cslib.WordRAM.Stack.run_client}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{220}{Cslib.Algorithms.WordRAM.PrefixSums.instruction_bound_log}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{242}{Cslib.Algorithms.WordRAM.PrefixSums.client_spec}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{229}{Cslib.Algorithms.WordRAM.PrefixSums.execOp_frame}
+\end{result}
+
+\begin{result}
+\subsection{Timeline editing by explicit reset and replay}
+For any deterministic stateful specification with an initial state, a semantic construction edits
+its stored operation timeline, resets the underlying structure, and replays the edited timeline.
+An edit is admissible only when its position is valid and the entire resulting ordinary history is
+admissible. Realizations must supply and charge timeline editing (including storage and exposure
+of the edited list), reset, and ordinary operations. With respective bounds $E(H,e)$, $R$, and
+$T$ per admissible ordinary operation, the transformed operation has weight at most
+\[
+ E(H,e)+R+|e(H)|T.
+\]
+Its representation preserves the underlying current state obtained by interpreting $e(H)$ from
+the initial state, and these contracts compose across subsequent timeline edits. This elementary
+rebuilding construction is motivated by retroactive data structures; it supplies neither historical
+query operations, efficient rollback, nor a compiled RAM controller.\citep{DIL2007}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/Lean/Retroactive.lean}{151}{Cslib.Algorithms.Lean.Retroactive.implementation}
+\declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/Lean/Retroactive.lean}{229}{Cslib.Algorithms.Lean.Retroactive.realized_linear_bound}
+\end{result}

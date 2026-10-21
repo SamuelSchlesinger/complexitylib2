@@ -72,6 +72,15 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
   deviations from the source. The unbounded-register `Computability/RAM`, inspired by
   Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
+* **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
+  `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
+  simulation, interface composition, semantic Hoare rules and separate native-resource
+  certificates. Its queue and reset-and-replay constructions deliberately count backend calls;
+  arbitrary pure continuations are not machine-compiled. `WordRAM/Dynamic` separately connects
+  fixed bounded-word operation programs and faithful memory transcripts to those contracts.
+  Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
+  neither open framework is copied here. This is a prototype of composition and refinement,
+  not a replacement for their query models or a general cell-probe lower-bound semantics.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
   #871–#875 requested composition above configuration level; use `TransformsTapes`-style specs.
