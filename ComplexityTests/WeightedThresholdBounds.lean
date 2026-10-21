@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Components
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.InnerProduct
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Tactic.FinCases
 
@@ -126,6 +127,52 @@ example : 1 < (∅ : Finset (Fin 1)).card + (inputGates negateCircuit.program).c
     rw [Finset.mem_singleton.mp hb, Finset.card_singleton]
     omega
 
+-- Shifted-baseline activity and Corollary 3.3 rectangle-density bounds.
+example : inputActivityFrom negateCircuit.program 0 = inputActivity negateCircuit.program :=
+  inputActivityFrom_zero negateCircuit.program
+
+example : gateActivityFrom negateCircuit.program 0 = gateActivity negateCircuit.program :=
+  gateActivityFrom_zero negateCircuit.program
+
+example (v : inputGates negateCircuit.program → Bool) :
+    (attainableTranscripts negateCircuit.program).card ≤
+      ∑ j ∈ Finset.range (inputActivityFrom negateCircuit.program v + 1),
+        (inputGates negateCircuit.program).card.choose j :=
+  card_attainableTranscripts_le_sum_choose_inputActivityFrom negateCircuit.program v
+
+example (v : Fin 2 → Bool) :
+    (attainableTranscripts negateCircuit.program).card ≤
+      ∑ j ∈ Finset.range (gateActivityFrom negateCircuit.program v + 1), Nat.choose 2 j :=
+  card_attainableTranscripts_le_sum_choose_gateActivityFrom negateCircuit.program v
+
+example (v : inputGates (Program.empty : Program signature 0 0) → Bool) :
+    (Finset.univ : Finset (Fin 0 → Bool)).card *
+      (Finset.univ : Finset (Fin 0 → Bool)).card ≤
+      1 * (∑ j ∈ Finset.range (inputActivityFrom (Program.empty : Program signature 0 0) v + 1),
+        (inputGates (Program.empty : Program signature 0 0)).card.choose j) ^ 2 := by
+  refine card_mul_le_mul_sum_choose_inputActivityFrom_sq Program.empty
+    (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v Finset.univ Finset.univ
+    Finset.univ_nonempty Finset.univ_nonempty (fun _ => false) (M := 1) ?_
+  intro A' hA' B' hB' _ _
+  have hA1 : A'.card ≤ (Finset.univ : Finset (Fin 0 → Bool)).card := Finset.card_le_card hA'
+  have hB1 : B'.card ≤ (Finset.univ : Finset (Fin 0 → Bool)).card := Finset.card_le_card hB'
+  simp only [Finset.card_univ, Fintype.card_fun, Fintype.card_fin, Nat.pow_zero] at hA1 hB1
+  exact Nat.mul_le_mul hA1 hB1
+
+example (v : inputGates (Program.empty : Program signature 0 0) → Bool) :
+    1 ≤ (∑ j ∈ Finset.range (inputActivityFrom (Program.empty : Program signature 0 0) v + 1),
+      (inputGates (Program.empty : Program signature 0 0)).card.choose j) ^ 2 :=
+  two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode Program.empty
+    (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
+    (fun _ _ => by simp [BitString.hadamardCode_apply, Bool.zero_eq_false])
+
+example (v : Fin 0 → Bool) :
+    1 ≤ (∑ j ∈ Finset.range (gateActivityFrom (Program.empty : Program signature 0 0) v + 1),
+      Nat.choose 0 j) ^ 2 :=
+  two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode Program.empty
+    (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
+    (fun _ _ => by simp [BitString.hadamardCode_apply, Bool.zero_eq_false])
+
 /--
 info: 'Cslib.Circuits.Boolean.WeightedThreshold.cost_activationBlockDecomposition' depends on axioms:
 [propext, Classical.choice, Quot.sound]
@@ -237,3 +284,52 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_blocks' depends on
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_blocks
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_inputActivityFrom'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_attainableTranscripts_le_sum_choose_inputActivityFrom
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_gateActivityFrom'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_attainableTranscripts_le_sum_choose_gateActivityFrom
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_card_attainableTranscripts_sq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_mul_le_mul_card_attainableTranscripts_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_inputActivityFrom_sq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_mul_le_mul_sum_choose_inputActivityFrom_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_mul_le_mul_sum_choose_gateActivityFrom_sq'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_mul_le_mul_sum_choose_gateActivityFrom_sq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode
