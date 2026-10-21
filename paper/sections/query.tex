@@ -206,6 +206,38 @@ whole standard word-operation basis is asserted. \citep{Sipser2013,Tromino2025}
 \end{result}
 
 \begin{result}
+\subsection{Encoded sparse memory on native multitape machines}
+For arbitrary address and value types with injective binary encodings and decidable address
+equality, finite memory is represented by Mathlib's association list with distinct keys.
+Reading returns the stored value or an explicit default; writing denotes functional update.
+A write adds at most one stored address, and replacing an existing address preserves the count.
+A default-valued write still retains a binding: the count measures stored cells, not nondefault
+support. If there are $m$ bindings with maximum encoded key length $K$ and value length $V$,
+the store's framed encoding has length at most $m(4K+2V+3)$.
+
+Actual native binary multitape machines implement reads and writes. The primary certificates
+retain parameterized scan and argument-preparation bounds in entry count and encoded lengths.
+For each operation and fixed pair of encodings, one finite machine and a constant factor handle
+all inputs;
+these are asymptotic bounds, not exact TM step counts. In particular, both operations take
+$O((E+1)^3)$ time and $O(E+1)$ workspace, where $E$ is the length of the full encoded operation
+input, including the store and, for reads, the input-supplied default. Polynomial-time
+computability follows. These conservative bounds come from composing Christian Reitwiessner's
+certified equality, list-search and filtering routines. Numeric addresses are represented by
+encoded words; the construction does not allocate an array up to the largest address.
+This proves a finite-memory backend component, not a simulation of whole RAM programs or
+arbitrary exact real arithmetic. Primitive implementations, control, initialization and output
+transport remain separate obligations.
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{82}{Cslib.GenericRAM.SparseMemory.read_insert}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{98}{Cslib.GenericRAM.SparseMemory.length_insert_of_mem}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{96}{Cslib.GenericRAM.SparseMemory.length_encoding_le}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{323}{Cslib.GenericRAM.SparseMemory.read_inO}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{266}{Cslib.GenericRAM.SparseMemory.insert_inO}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{359}{Cslib.GenericRAM.SparseMemory.read_inO_cube}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{335}{Cslib.GenericRAM.SparseMemory.insert_inO_cube}
+\end{result}
+
+\begin{result}
 \subsection{Additive word-RAM simulation with charged preparation}
 Let $p$ be a fixed word-RAM program with $r$ named registers, using only constants, copies,
 addition, truncated subtraction, indirect loads and stores, equality and unsigned comparison,

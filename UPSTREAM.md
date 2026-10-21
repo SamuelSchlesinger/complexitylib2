@@ -96,6 +96,11 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   Both reuse Christian Reitwiessner's native arithmetic/encoding calculus. These are per-symbol
   certificates for fixed-program composition, not an arbitrary-program dispatcher or whole RAM
   simulation. Sparse memory, finite control and charged configuration selection remain separate.
+* **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
+  with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
+  routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,
+  and polynomial-time corollaries. Coordinate this component with #292's effective RAM backend;
+  it does not yet simulate generic primitives, finite control or whole RAM executions.
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource

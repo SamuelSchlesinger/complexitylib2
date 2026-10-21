@@ -315,6 +315,7 @@ import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
+import ComplexityTests.SparseMemory
 import ComplexityTests.StatefulRefinement
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
