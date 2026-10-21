@@ -1015,3 +1015,57 @@ five comes from the grouped certificate construction formalized here.
 \declat{fddf011fc21ee2b3d148dea54d07822c13d817f0}{Complexity/Computability/Circuit/Fusion/Converse.lean}{66}{Cslib.Circuits.Fusion.PairCover.exists_forallGuess}
 \declat{fddf011fc21ee2b3d148dea54d07822c13d817f0}{Complexity/Computability/Circuit/Fusion/Converse.lean}{131}{Cslib.Circuits.Fusion.conondeterministicAndComplexity_bounds}
 \end{result}
+
+\begin{result}
+\subsection{Subbotovskaya shrinkage and Andreev's formula lower bound}
+Let $L(f)$ be the minimum input-leaf count among De Morgan formulas computing
+$f:\{0,1\}^n\to\{0,1\}$, with constants contributing zero leaves. For any
+partial assignment $\rho$ leaving $s=|\rho.\mathrm{free}|$ coordinates free,
+summing over all $2s$ single-coordinate extensions $\rho[i\mapsto b]$ gives
+\[
+\sum_{i\in\rho.\mathrm{free}}
+  \bigl(L(f\upharpoonright\rho[i\mapsto0])+L(f\upharpoonright\rho[i\mapsto1])\bigr)
+\le
+\begin{cases}
+2s-2, & \text{if } L(f\upharpoonright\rho)=1,\\
+(2s-3)\,L(f\upharpoonright\rho), & \text{otherwise.}
+\end{cases}
+\]
+Consequently, for every $1\le k\le n$, some partial assignment $\rho$ leaving
+$k$ coordinates free satisfies $L(f\upharpoonright\rho)^2 n^3 \le L(f)^2 k^3$,
+and taking $k=1$ yields Subbotovskaya's lower bound
+$n^3\le L(\mathrm{PARITY}_n)^2$. Over all $N_k=\binom{s}{k}2^{s-k}$ extensions
+of $\rho_0$ with $1\le k\le s$ free coordinates, the sum
+$S_k=\sum_{\rho}L(f\upharpoonright\rho)$ satisfies
+$(S_k-k N_k)^2 s^3\le L(f\upharpoonright\rho_0)^2 k^3 N_k^2$
+($S_k-k N_k$ truncated at $0$).
+
+Andreev's function $\mathrm{Andreev}_{b,m}:\{0,1\}^{2^b+bm}\to\{0,1\}$ treats
+its first $2^b$ inputs as the truth table of a $b$-bit function $h$ and feeds
+the parities of $b$ disjoint $m$-bit blocks into that table. For every
+$h:\{0,1\}^b\to\{0,1\}$, $b\ge1$, $1\le r\le m$, and $2b\le 2^r$,
+\[
+(L(h)-2br)^2 m^3 \le 4\,L(\mathrm{Andreev}_{b,m})^2 r^3
+\]
+($L(h)-2br$ truncated at $0$).
+Combining this reduction at $r=\lfloor\log_2 b\rfloor+2$ with Shannon's
+counting bound on $b$ bits yields a threshold $B$ such that for all $b\ge B$
+and all $m\ge\lfloor\log_2 b\rfloor+2$,
+\[
+2^{2b} m^3
+\le 144\,b^2(\lfloor\log_2 b\rfloor+2)^3\,L(\mathrm{Andreev}_{b,m})^2,
+\]
+and at $m=2^b$ (on $n=(b+1)2^b$ inputs),
+$2^{5b}\le 144\,b^2(\lfloor\log_2 b\rfloor+2)^3\,L(\mathrm{Andreev}_{b,2^b})^2$.
+These bounds count De Morgan formula leaves rather than general circuit gates
+with fanout; $\mathrm{Andreev}_{b,m}$ is explicit because the $2^b$-bit truth
+table is part of its input, while the hard $b$-bit table used inside the proof
+comes existentially from Shannon counting.\citep{Subbotovskaya1961,Andreev1987,Jukna2012,AroraBarak09}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{353}{Cslib.Circuits.Boolean.sum_formulaSize_restrict_update_le}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{560}{Cslib.Circuits.Boolean.exists_withFree_formulaSize_sq_mul_pow_three_le}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{573}{Cslib.Circuits.Boolean.pow_three_le_formulaSize_parity_sq}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{615}{Cslib.Circuits.Boolean.sum_extensions_formulaSize_sub_sq_le}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean}{264}{Cslib.Circuits.Boolean.formulaSize_sub_sq_mul_pow_three_le_andreev}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean}{364}{Cslib.Circuits.Boolean.pow_two_mul_pow_three_le_formulaSize_andreev_sq}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean}{399}{Cslib.Circuits.Boolean.two_pow_five_mul_le_formulaSize_andreev_sq}
+\end{result}
