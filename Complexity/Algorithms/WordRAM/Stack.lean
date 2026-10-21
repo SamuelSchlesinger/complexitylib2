@@ -76,7 +76,7 @@ abbrev one : Fin 9 := 7
 abbrev present : Fin 9 := 8
 
 /-- Fixed operation dispatch. No code is generated from an operation or its payload. -/
-def program : Code 9 := ram[
+def program : Code .standard 9 := ram[
   zero ← #0; one ← #1;
   if tag = zero then [
     ⟪writeAt addr ptr len arg⟫; len ← len + one; out ← zero

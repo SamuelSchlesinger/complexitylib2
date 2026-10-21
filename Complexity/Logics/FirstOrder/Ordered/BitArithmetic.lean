@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.FirstOrder.Ordered.Addition
+import Complexity.Tactic.FirstOrder
 
 /-!
 # Native numeral and shift formulas
@@ -106,15 +107,9 @@ theorem realize_natEq (k : ℕ) (x : (language L).Term α) (v : α → Fin n) :
   | zero =>
     simp only [natEq, Formula.realize_equal, ← Fin.val_inj, realize_zero_val]
   | succ k ih =>
-    simp only [natEq, Formula.realize_iExs, Formula.realize_inf, ih, realize_addEq,
-      Term.realize_var, Term.realize_relabel, realize_one_val, Function.comp_def,
-      Sum.elim_inl, Sum.elim_inr]
-    constructor
-    · rintro ⟨a, ha, he⟩
-      lia
-    · intro hx
-      have hk : k < n := by have := (x.realize v).isLt; lia
-      exact ⟨fun _ => ⟨k, hk⟩, rfl, hx.symm⟩
+    fo_simp [natEq, ih, realize_one_val, Function.comp_def]
+    exact ⟨fun ⟨a, ha, he⟩ => by lia,
+      fun hx => ⟨fun _ => ⟨k, by have := (x.realize v).isLt; lia⟩, rfl, hx.symm⟩⟩
 
 @[simp, fo_realize]
 theorem realize_scaleEq (k : ℕ) (x z : (language L).Term α) (v : α → Fin n) :
@@ -122,18 +117,11 @@ theorem realize_scaleEq (k : ℕ) (x z : (language L).Term α) (v : α → Fin n
   induction k generalizing α with
   | zero => simp [scaleEq, ← Fin.val_inj, eq_comm]
   | succ k ih =>
-    simp only [scaleEq, Formula.realize_iExs, Formula.realize_inf, ih, realize_addEq,
-      Term.realize_var, Term.realize_relabel, Function.comp_def, Sum.elim_inl, Sum.elim_inr]
-    constructor
-    · rintro ⟨a, ha, he⟩
-      rw [Nat.succ_mul]
-      lia
-    · intro hz
-      have hk : k * (x.realize v).val < n := by
-        have := (z.realize v).isLt
-        rw [Nat.succ_mul] at hz
-        lia
-      exact ⟨fun _ => ⟨k * (x.realize v).val, hk⟩, rfl, by simpa only [Nat.succ_mul] using hz⟩
+    fo_simp [scaleEq, ih, Function.comp_def]
+    refine ⟨fun ⟨a, ha, he⟩ => by rw [Nat.succ_mul]; lia, fun hz => ?_⟩
+    exact ⟨fun _ => ⟨k * (x.realize v).val,
+      by have := (z.realize v).isLt; rw [Nat.succ_mul] at hz; lia⟩,
+      rfl, by simpa only [Nat.succ_mul] using hz⟩
 
 omit [Fact (2 ≤ n)] in
 private theorem bitIndex_lt {x : Fin n} {i : ℕ} (hi : x.val.testBit i = true) : i < n :=
@@ -144,9 +132,7 @@ theorem realize_highestBit (x h : (language L).Term α) (v : α → Fin n) :
     (highestBit L x h).Realize v ↔
       2 ^ (h.realize v).val ≤ (x.realize v).val ∧
         (x.realize v).val < 2 ^ ((h.realize v).val + 1) := by
-  simp only [highestBit, Formula.realize_inf, realize_bit, Formula.realize_iAlls,
-    Formula.realize_imp, realize_le, Term.realize_var, Term.realize_relabel, Function.comp_def,
-    Sum.elim_inl, Sum.elim_inr]
+  fo_simp [highestBit, Function.comp_def]
   constructor
   · rintro ⟨hx, ht⟩
     refine ⟨Nat.ge_two_pow_of_testBit hx, Nat.lt_pow_two_of_testBit _ ?_⟩
@@ -157,8 +143,7 @@ theorem realize_highestBit (x h : (language L).Term α) (v : α → Fin n) :
     change i ≤ (h.realize v).val at hh
     lia
   · rintro ⟨hx, ht⟩
-    refine ⟨Nat.testBit_of_two_pow_le_and_two_pow_add_one_gt hx ht, ?_⟩
-    intro i hi
+    refine ⟨Nat.testBit_of_two_pow_le_and_two_pow_add_one_gt hx ht, fun i hi => ?_⟩
     have hp := Nat.ge_two_pow_of_testBit hi
     have hh := (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp (lt_of_le_of_lt hp ht)
     change (i ()).val ≤ (h.realize v).val
@@ -167,9 +152,7 @@ theorem realize_highestBit (x h : (language L).Term α) (v : α → Fin n) :
 @[simp, fo_realize]
 theorem realize_powerOfTwo (p e : (language L).Term α) (v : α → Fin n) :
     (powerOfTwo L p e).Realize v ↔ (p.realize v).val = 2 ^ (e.realize v).val := by
-  simp only [powerOfTwo, Formula.realize_iAlls, Formula.realize_iff, realize_bit,
-    Formula.realize_equal, Term.realize_var, Term.realize_relabel, Function.comp_def,
-    Sum.elim_inl, Sum.elim_inr]
+  fo_simp [powerOfTwo, Function.comp_def]
   constructor
   · intro h
     apply Nat.eq_of_testBit_eq
@@ -179,11 +162,8 @@ theorem realize_powerOfTwo (p e : (language L).Term α) (v : α → Fin n) :
     simp only [decide_eq_true_eq]
     by_cases hi : i < n
     · simpa only [← Fin.val_inj, eq_comm] using h (fun _ => ⟨i, hi⟩)
-    · constructor
-      · intro hp
-        exact (hi (bitIndex_lt hp)).elim
-      · intro he
-        exact (hi (he ▸ (e.realize v).isLt)).elim
+    · exact ⟨fun hp => (hi (bitIndex_lt hp)).elim,
+        fun he => (hi (he ▸ (e.realize v).isLt)).elim⟩
   · intro hp i
     rw [hp, Nat.testBit_two_pow]
     simp [← Fin.val_inj, eq_comm]
@@ -235,33 +215,14 @@ theorem realize_shiftLeft (x e z : (language L).Term α) (v : α → Fin n) :
     (shiftLeft L x e z).Realize v ↔
       (x.realize v).val * 2 ^ (e.realize v).val = (z.realize v).val := by
   rw [← shift_iff]
-  simp only [shiftLeft, Formula.realize_inf, Formula.realize_iAlls, Formula.realize_iff,
-    Formula.realize_iExs, Formula.realize_imp, realize_bit, realize_addEq, Term.realize_var,
-    Term.realize_relabel, Sum.elim_inl, Sum.elim_inr]
-  constructor
-  · rintro ⟨hbits, hkeep⟩
-    constructor
-    · intro i
-      constructor
-      · intro hz
-        obtain ⟨j, hj⟩ := (hbits (fun _ => i)).mp hz
-        exact ⟨j (), hj⟩
-      · rintro ⟨j, hj⟩
-        exact (hbits (fun _ => i)).mpr ⟨fun _ => j, hj⟩
-    · intro j hj
-      obtain ⟨i, hi⟩ := hkeep (fun _ => j) hj
-      exact ⟨i (), hi⟩
-  · rintro ⟨hbits, hkeep⟩
-    constructor
-    · intro i
-      constructor
-      · intro hz
-        obtain ⟨j, hj⟩ := (hbits (i ())).mp hz
-        exact ⟨fun _ => j, hj⟩
-      · rintro ⟨j, hj⟩
-        exact (hbits (i ())).mpr ⟨j (), hj⟩
-    · intro j hj
-      obtain ⟨i, hi⟩ := hkeep (j ()) hj
-      exact ⟨fun _ => i, hi⟩
+  fo_simp [shiftLeft]
+  exact ⟨fun ⟨hbits, hkeep⟩ =>
+    ⟨fun i => ⟨fun hz => let ⟨j, hj⟩ := (hbits (fun _ => i)).mp hz; ⟨j (), hj⟩,
+      fun ⟨j, hj⟩ => (hbits (fun _ => i)).mpr ⟨fun _ => j, hj⟩⟩,
+    fun j hj => let ⟨i, hi⟩ := hkeep (fun _ => j) hj; ⟨i (), hi⟩⟩,
+    fun ⟨hbits, hkeep⟩ =>
+    ⟨fun i => ⟨fun hz => let ⟨j, hj⟩ := (hbits (i ())).mp hz; ⟨fun _ => j, hj⟩,
+      fun ⟨j, hj⟩ => (hbits (i ())).mpr ⟨j (), hj⟩⟩,
+    fun j hj => let ⟨i, hi⟩ := hkeep (j ()) hj; ⟨fun _ => i, hi⟩⟩⟩
 
 end Cslib.Logic.FO.Ordered

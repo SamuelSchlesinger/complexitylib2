@@ -128,6 +128,9 @@ import ComplexityTests.GapGraphsGeography
 import ComplexityTests.GeneratorPadding
 import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
+import ComplexityTests.GenericRAM
+import ComplexityTests.GenericRAMAlgebraic
+import ComplexityTests.GenericRAMSigned
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
@@ -255,6 +258,7 @@ import ComplexityTests.ProbabilityToolkit2
 import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.ProofComplexity
+import ComplexityTests.ProofComplexity.Pigeonhole
 import ComplexityTests.ProofComplexity.Resolution
 import ComplexityTests.ProofComplexity.Tseitin
 import ComplexityTests.Propagation
@@ -279,6 +283,7 @@ import ComplexityTests.RandomOracle
 import ComplexityTests.RandomizedDisjointness
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
+import ComplexityTests.RationalHitting.Encode
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
@@ -309,6 +314,7 @@ import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
+import ComplexityTests.StatefulRefinement
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
@@ -330,6 +336,8 @@ import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.UniversalResourceBound
+import ComplexityTests.VanEmdeBoas
+import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
@@ -339,7 +347,10 @@ import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
+import ComplexityTests.WordRAMBasis
+import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
+import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness

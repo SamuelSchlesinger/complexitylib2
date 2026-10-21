@@ -38,7 +38,7 @@ namespace Cslib.Algorithms.WordRAM.PrefixSums
 open Cslib.WordRAM Reg
 
 /-- One prefix-query iteration. -/
-def queryBody : Code 14 := ram[
+def queryBody : Code .standard 14 := ram[
   if idx = len then [val ← *ptr; ans ← ans + val; idx ← #0]
   else [len ← len / two;
     if idx < len then [ptr ← ptr + one]
@@ -46,7 +46,7 @@ def queryBody : Code 14 := ram[
       ptr ← ptr + len; ptr ← ptr + len; idx ← idx - len]] ]
 
 /-- Fixed prefix-query loop. Its answer is added to the initial accumulator. -/
-def queryLoop : Code 14 := ram[while zero < idx do [⟪queryBody⟫]]
+def queryLoop : Code .standard 14 := ram[while zero < idx do [⟪queryBody⟫]]
 
 /-- Mathematical description of one query iteration, used only in the proof. -/
 def queryNext (x : Data 14) (b n i a : ℕ) : Data 14 :=

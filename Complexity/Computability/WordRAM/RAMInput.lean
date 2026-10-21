@@ -52,13 +52,13 @@ variable {r : ℕ}
 /-- A fixed target program that prepares the length-bearing input and then simulates `p`.
 Its external input convention is `RAM.Input.encode 5`; the installed scratch prefix is
 independent of the source program, register count, input and word width. -/
-def preparedProgram (p : Program r) : RAM.Program :=
+def preparedProgram (p : Program .standard r) : RAM.Program :=
   let pre := RAM.Input.prepare (memoryBase r)
   (pre ++ prologue r) ++ compile (pre.length + 2) p
 
 /-- The charged preparation and simulation bound with a separate input bit-length bound.
 The fixed external layout is supplied; all subsequent target instructions are charged. -/
-theorem haltsWithResultInTime_prepared_of_bitLength_le {p : Program r} (hp : p.IsAdditive)
+theorem haltsWithResultInTime_prepared_of_bitLength_le {p : Program .standard r} (hp : p.IsAdditive)
     {input : List ℕ} {w v n b : ℕ} (hi : InputFits w input)
     (h : Executes w p (State.init input) v n)
     (hlen : RAM.bitLength input.length ≤ b)
@@ -90,7 +90,7 @@ theorem haltsWithResultInTime_prepared_of_bitLength_le {p : Program r} (hp : p.I
 `C_r (t + input.length + 1) (w + 1)`, including input relocation and workspace clearing.
 The displayed constant depends only on the fixed source register count. The supplied external
 input is five zero words followed by its length header and words; installing it is uncharged. -/
-theorem haltsWithResultInTime_prepared {p : Program r} (hp : p.IsAdditive)
+theorem haltsWithResultInTime_prepared {p : Program .standard r} (hp : p.IsAdditive)
     {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
     (h : Executes w p (State.init input) v n) :
     let R := memoryBase r

@@ -82,9 +82,9 @@ complexitylib development and connects it to the library's public measures.
 
 \begin{result}
 \subsection{Element distinctness for entries below \texorpdfstring{$n$}{n} on the word RAM}
-On the bounded-word RAM, whose registers and memory cells hold $w$-bit words, whose every
-instruction costs one unit, and on which writing a constant or an arithmetic result of more than
-$w$ bits faults, a single fixed program decides whether a list of $n$ naturals, each smaller than
+On the bounded-word RAM with the standard basis of operations, whose registers and memory cells
+hold $w$-bit words, whose every instruction costs one unit, and on which writing a constant or an
+operation result of more than $w$ bits faults, a single fixed program decides whether a list of $n$ naturals, each smaller than
 $n$, has no duplicates: at every word size
 $w\ge 2(\lfloor\log_2\max(1,n)\rfloor+1)$ it halts within
 $16(n+1)$ instructions, the final halt included, with output $1$ exactly when the entries are
@@ -97,11 +97,79 @@ threshold, as in the transdichotomous model. The machine, its time classes and i
 programs, which compile with identical instruction counts, are adapted from the Lean
 formalization accompanying the tromino undecidability paper.
 \citep[Sections 2.2 and 11.1]{CLRS2009}\citep{FredmanWillard1993,Hagerup1998}\citep{Tromino2025}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{287}{Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{296}{Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{148}{Cslib.Algorithms.WordRAM.ElementDistinctness.inputFits}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Computability/WordRAM/Time.lean}{132}{Cslib.WordRAM.Program.DecidesInTime}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Computability/WordRAM/Compile.lean}{135}{Cslib.WordRAM.Exec.runs}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{287}{Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{296}{Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{148}{Cslib.Algorithms.WordRAM.ElementDistinctness.inputFits}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/Time.lean}{133}{Cslib.WordRAM.Program.DecidesInTime}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/Compile.lean}{135}{Cslib.WordRAM.Exec.runs}
+\end{result}
+
+\begin{result}
+\subsection{Word-RAM decision grows with the basis of operations}
+The word RAM is parameterized by a basis: operation symbols with arities (a circuit signature),
+the value of every operation at each word size $w$, and the operations whose value may depend on
+$w$. Registers, memory, control flow and overflow faults are the same for every basis; an
+operation whose value is at least $2^w$ faults. The standard basis has addition, truncated
+subtraction, multiplication, division, remainder, bitwise and, or and exclusive or, both shifts,
+and the word size. The arithmetic basis has the first five, the operation symbols of the
+lean-trominoes RAM, here on unsigned words with truncated rather than signed subtraction, and the
+additive basis the first two. A map of bases sends each operation to one of the same arity that,
+at each word size, has the operation's value, and an operation not marked as reading the word size
+to one not so marked.
+
+Translating a program along such a map replaces only its operation symbols, and the translated
+program takes exactly the same step from every state: the same successor, output or fault. Hence
+it halts with the same output after the same number of instructions, and uniform time-bounded
+decision, linear time and polynomial time over a basis imply the same statements, with the same
+time bounds and word-size thresholds, over every basis it maps into; for linear and polynomial
+time the same constants witness both statements. Simulating an operation by a
+program over a smaller basis is not established, and no separation between the classes over
+different bases is claimed.
+\citep{Hagerup1998,AnderssonMiltersenThorup1999,Tromino2025}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/Basis.lean}{73}{Cslib.WordRAM.Basis}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/Basis.lean}{183}{Cslib.WordRAM.Basis.Hom}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/Basis.lean}{250}{Cslib.WordRAM.Basis.arithmetic}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/MapOp.lean}{132}{Cslib.WordRAM.step_mapOp}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/MapOp.lean}{153}{Cslib.WordRAM.executes_mapOp_iff}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/MapOp.lean}{220}{Cslib.WordRAM.DecidableInTime.mapOp}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/MapOp.lean}{233}{Cslib.WordRAM.LinearTime.mapOp}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/MapOp.lean}{239}{Cslib.WordRAM.PolynomialTime.mapOp}
+\end{result}
+
+\begin{result}
+\subsection{RAMs over configurable value domains}
+A RAM model specifies its value, address, configuration and literal-symbol types, operation and
+test signatures, and their partial interpretations. Registers are finite and named; the program
+counter indexes a finite instruction list. Memory is indexed by the chosen address type.
+Loads and stores use an explicit partial conversion from a value to an address. Produced values,
+moved or returned values, and control labels have configurable validity checks. A failed test
+faults rather than taking its false branch. For every fixed model, configuration, program and
+initial state, a halting execution with output $v$ and cost $n$ exists exactly when the
+fuel-bounded interpreter returns $(v,n)$ for some fuel. Both the output and cost are unique;
+the final halt costs one instruction.
+
+Every existing word-RAM basis embeds into this core with identical steps, faults, outputs and
+instruction counts, even from arbitrary initial states. Its existing unchecked moves and
+unbounded program counter are preserved. A separate signed-integer instance uses the
+lean-trominoes range $-2^{w-1}\le v<2^{w-1}$ for $w>0$, checked moves and halts, and natural
+addresses and control labels below $2^w$.
+
+Algebraic instances store tagged natural words or exact field elements. Only the word tag can
+address memory. They support exact real arithmetic and comparison, or arithmetic and equality
+over prime fields; real interpretation is noncomputable mathematical semantics. Constants are
+natural-word or rational symbols, with a nonzero-denominator check in the field. These variants
+use checked word arithmetic and one tagged memory, rather than the two arrays and modular word
+arithmetic of the cited real-RAM model. No field-to-word conversion, bit-cost simulation or
+complexity-class equivalence is claimed. Input layout is an explicit caller convention.
+\citep{Tromino2025,EricksonVanDerHoogMiltzow2024}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Defs.lean}{63}{Cslib.GenericRAM.Model}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Defs.lean}{309}{Cslib.GenericRAM.executes_iff_exists_run_eq}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Defs.lean}{314}{Cslib.GenericRAM.Executes.unique}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/WordRAM/Generic.lean}{125}{Cslib.WordRAM.step_toGeneric}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/WordRAM/Generic.lean}{156}{Cslib.WordRAM.executes_toGeneric_iff}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Signed.lean}{91}{Cslib.GenericRAM.Signed.model}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Algebraic.lean}{190}{Cslib.GenericRAM.Algebraic.real}
+\declat{8fc64c86ce21bb6876b08b50f4f14e21799be217}{Complexity/Computability/GenericRAM/Algebraic.lean}{194}{Cslib.GenericRAM.Algebraic.primeField}
 \end{result}
 
 \begin{result}
@@ -135,7 +203,7 @@ outside the supported fragment. The source model adapts the lean-trominoes forma
 the target is the library's documented natural-number adaptation of Cook--Reckhow RAM.
 No Turing-machine simulation or complexity-class equivalence is asserted.
 \citep{CookReckhow1973,Tromino2025}
-\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{61}{Cslib.WordRAM.Instr.IsAdditive}
+\declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/RAM.lean}{61}{Cslib.WordRAM.Instr.IsAdditive}
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{55}{Cslib.WordRAM.ToRAM.preparedProgram}
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{93}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared}
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{61}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_of_bitLength_le}
@@ -183,13 +251,57 @@ Separately, natural-number additive weights on native execution evidence and nat
 potential inequalities
 telescope along answer-dependent clients. Potentials may depend on hidden representation states;
 bounds retain both initial and final credit. These results reuse Quang Dao's upstream
-\lean{PFunctor.FreeM}; arbitrary pure Lean controller computation is uncharged. They do not
-constitute a compiler or a general peak-space or randomized-cost calculus.
+\lean{PFunctor.FreeM}; arbitrary pure Lean controller computation is uncharged. General
+peak-space and randomized-cost contracts remain outside this calculus.
+Client resource contracts additionally combine admissibility, a final-state postcondition and
+an initial-state-dependent budget $B(s)$ on the sum of operation charges. Sequential composition
+evaluates the continuation budget at the observed answer and reached state. If every lower method
+cost is bounded by the corresponding upper operation charge in every related admissible state,
+the entire linked adaptive client's cost is bounded by the upper client's cost. These method
+certificates compose through existentially hidden intermediate states. Transport to a lower
+initial-state budget requires that it dominate $B(s)$ for every represented upper prestate.
+From a native initial state representing an abstract state satisfying the precondition,
+a native realization and per-operation native-weight bounds give a finite native execution
+satisfying the postcondition and budget, and bound every supplied finite execution from that
+initial state. The \texttt{stateful} tactic searches local contracts and pure/call rules;
+sequencing assertions and implementation choices are explicit proof inputs. These operation-cost
+contracts alone do not certify total controller time, argument delivery or result decoding.
 \citep[Chapter 17]{CLRS2009}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Composition.lean}{66}{Cslib.Stateful.Module.comp}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Module.lean}{62}{Cslib.Stateful.Module.realize}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Resource.lean}{86}{Cslib.Stateful.Module.amortized_client}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Hoare.lean}{87}{Cslib.Stateful.Spec.Hoare.link}
+\declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{147}{Cslib.Stateful.Module.ChargeBound.comp}
+\declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{164}{Cslib.Stateful.Spec.CostHoare.link}
+\declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{108}{Cslib.Stateful.Spec.CostHoare.run}
+\end{result}
+
+\begin{result}
+\subsection{Certified adaptive controllers on the word RAM}
+A relational certificate connects an admissible free-monad client to one fixed structured
+word-RAM fragment and an instruction budget depending on the initial abstract and machine
+states. Entry assertions supply any required word bounds. Sequential composition uses one fixed
+continuation fragment for every represented intermediate answer, charging its execution at the
+reached state. Branches must test the same condition as the client. Pure results, argument
+preparation and initialization require machine execution certificates; the final halt adds one
+instruction. Named refinement proofs are reusable by \texttt{stateful}, and named uniform
+RAM function-time proofs by \texttt{polytime}, with distinct predicates for RAM and Turing machines.
+
+A concrete nine-register controller starts with the standard singleton input $[n]$, installs an
+empty one-cell stack at address two, pushes and pops $n$, and, if the observed answer is zero,
+pushes and pops one. For every width $w$ with $3<2^w$ at which $[n]$ fits, the same flat program
+returns $\max(n,1)$, leaves its stack empty, and takes exactly $49$ instructions if $n=0$ and
+$29$ otherwise. These counts include setup, argument writes, dispatch, branching and halt.
+The standard input memory is supplied by the machine convention; the empty reserved stack
+needs no zeroing. Every input fits at width $2(\lfloor\log_2 n\rfloor+1)$, taking the logarithm
+as zero at $n=0$. This yields a constant, hence polynomial, RAM-time function certificate with
+numerical magnitude $n$ as size parameter. No arbitrary-continuation synthesis, general
+allocation algorithm, or conversion to Turing-machine polynomial time is claimed.
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Computability/WordRAM/Controller.lean}{84}{Cslib.WordRAM.Refines.bind}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Computability/WordRAM/Controller.lean}{155}{Cslib.WordRAM.Refines.call}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{170}{Cslib.WordRAM.Stack.Controller.refines}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{182}{Cslib.WordRAM.Stack.Controller.executes}
+\declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{211}{Cslib.WordRAM.Stack.Controller.positive_polytime}
 \end{result}
 
 \begin{result}
@@ -238,6 +350,35 @@ claim is made. The backend extends the existing bounded-word machine and compile
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{220}{Cslib.Algorithms.WordRAM.PrefixSums.instruction_bound_log}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{242}{Cslib.Algorithms.WordRAM.PrefixSums.client_spec}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{229}{Cslib.Algorithms.WordRAM.PrefixSums.execOp_frame}
+\end{result}
+
+\begin{result}
+\subsection{Recursive van Emde Boas sets: functional correctness}
+For every depth $d\geq 0$, let $U_d=2^{2^d}$. A valid recursive van Emde Boas tree
+represents a finite subset of $\{0,\ldots,U_d-1\}$. Inserting any $x<U_d$ preserves
+the invariant and changes the represented set $S$ to $S\cup\{x\}$, including duplicate
+insertions. Membership agrees with $S$. For every natural query $x$, including queries
+outside the universe, successor returns $y$ exactly when $y\in S$, $x<y$, and every
+$z\in S$ with $x<z$ satisfies $y\leq z$; it returns no key exactly when every element
+of $S$ is at most $x$. The representation stores the minimum outside recursive clusters,
+caches the maximum, and maintains a recursive summary of nonempty clusters.
+
+A proposed contiguous layout uses a five-word header, one summary and $U_d$ cluster
+records at depth $d+1$. Its record-size recurrence
+$S_0=5$, $S_{d+1}=5+(U_d+1)S_d$ satisfies $S_d\leq10U_d$; the recursive address
+intervals do not overlap. This is layout arithmetic, not a proved memory representation.
+The operations are Lean functions: no native RAM instruction bound, charged initializer,
+implemented machine-space bound or compiled adaptive controller is established here.
+Deletion and predecessor are outside this result. The recursive minimum-excluded variant
+follows Demaine's exposition, whose notes credit Michael Bender; it is distinguished from
+the original stratified-tree implementation with $O(U\log\log U)$
+storage.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Basic.lean}{235}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.member_iff_contains}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Insert.lean}{283}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.valid_insert}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean}{60}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.elements_insert}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{221}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_some_iff}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{245}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_none_iff}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean}{110}{Cslib.Algorithms.Lean.VanEmdeBoas.span_le}
 \end{result}
 
 \begin{result}
