@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.Circuit.Frontier.Rectangle
 public import Mathlib.Analysis.Asymptotics.Defs
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Complexity.Computability.Circuit.Frontier.Correlation.Rectangle
 import Complexity.Foundations.Data.BitString.Agree
 import Complexity.Foundations.Data.BitString.Hoeffding
 import Mathlib.Analysis.SpecificLimits.Basic

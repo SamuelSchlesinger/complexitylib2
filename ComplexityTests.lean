@@ -100,6 +100,8 @@ import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
+import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
 import ComplexityTests.Fusion

@@ -57,6 +57,8 @@ and those outside `S` differ in number by at most a `2 b` fraction (`signedCount
 
 ## Main results
 
+* `Cslib.Circuits.Frontier.ncard_rectangle`: a rectangle has `|A| |B|` inputs.
+* `Cslib.Circuits.Frontier.signedCount_eq_sum`: the signed count as a sum over the counted set.
 * `Cslib.Circuits.Frontier.exists_thick_or_ncard_lt`: thick or small.
 * `Cslib.Circuits.Frontier.RectangleFree.pow_ncard_compl_lt`: the support lemma.
 * `Cslib.Circuits.Frontier.RectangleBias.abs_signedCount_le_of_dependsOn`: bias on a set that
@@ -73,6 +75,7 @@ and those outside `S` differ in number by at most a `2 b` fraction (`signedCount
 namespace Cslib.Circuits.Frontier
 
 open Set
+open scoped Finset
 
 variable {ι U : Type*}
 
@@ -85,6 +88,15 @@ def rectangle (X : Set ι) (A : Set (X → U)) (B : Set (↥Xᶜ → U)) : Set (
 theorem mem_rectangle {X : Set ι} {A : Set (X → U)} {B : Set (↥Xᶜ → U)} {x : ι → U} :
     x ∈ rectangle X A B ↔ X.domRestrict x ∈ A ∧ Xᶜ.domRestrict x ∈ B :=
   Iff.rfl
+
+/-- A rectangle has as many inputs as pairs of its sides. -/
+theorem ncard_rectangle (X : Set ι) (A : Set (X → U)) (B : Set (↥Xᶜ → U)) :
+    (rectangle X A B).ncard = A.ncard * B.ncard := by
+  classical
+  let e := Equiv.piEquivPiSubtypeProd (· ∈ X) fun _ => U
+  have hpre : rectangle X A B = e ⁻¹' (A ×ˢ B) := rfl
+  rw [hpre, ncard_preimage_of_injective_subset_range e.injective (by simp [e.surjective.range_eq]),
+    ncard_prod]
 
 /-- An input is determined by its two parts: cutting along `X` is injective. -/
 theorem domRestrict_prodMk_injective (X : Set ι) :
@@ -231,6 +243,21 @@ theorem rectangleFree_iff [Finite ι] [Finite U] {S : Set (ι → U)} {K : ℕ} 
 inputs of `R` outside `S`. -/
 noncomputable def signedCount (S R : Set (ι → U)) : ℝ :=
   ((R ∩ S).ncard : ℝ) - (R \ S).ncard
+
+/-- The signed count of `S` on `R` is the sum of `±1` over `R`: `+1` on the inputs in `S` and `-1`
+on the others. -/
+theorem signedCount_eq_sum [Fintype ι] [Fintype U] [DecidableEq ι] (S R : Set (ι → U))
+    [DecidablePred (· ∈ S)] [DecidablePred (· ∈ R)] :
+    signedCount S R = ∑ x with x ∈ R, if x ∈ S then (1 : ℝ) else -1 := by
+  have h₁ : (R ∩ S).toFinset = Finset.univ.filter fun x => x ∈ R ∧ x ∈ S := by
+    ext x
+    simp
+  have h₂ : (R \ S).toFinset = Finset.univ.filter fun x => x ∈ R ∧ x ∉ S := by
+    ext x
+    simp
+  rw [Finset.sum_ite, Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul, mul_one,
+    mul_neg_one, signedCount, ncard_eq_toFinset_card', ncard_eq_toFinset_card', h₁, h₂,
+    Finset.filter_filter, Finset.filter_filter, sub_eq_add_neg]
 
 section Finite
 
