@@ -46,7 +46,9 @@ def link (methods : Methods D E) (p : D.Client α) : E.Client α := p.liftM meth
 
 /-- Purely semantic module correctness; neither an execution model nor a cost appears. -/
 structure Module (D E : Spec.{u, v, w}) where
+  /-- Bodies implementing the upper interface using lower-interface calls. -/
   methods : Methods D E
+  /-- The relation between upper and lower mathematical states. -/
   rep : D.State → E.State → Prop
   valid : ∀ {s e} o, rep s e → D.valid s o →
     E.ValidHistory e (E.runClient e (methods o)).2.2

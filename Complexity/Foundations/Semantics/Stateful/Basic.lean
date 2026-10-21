@@ -40,10 +40,15 @@ universe u v w x y
 /-- A deterministic abstract state machine with operation-dependent observations.
 Only admissible operations are constrained by refinement certificates. -/
 structure Spec where
+  /-- Mathematical states, independent of a storage representation. -/
   State : Type u
+  /-- Operations available to clients. -/
   Op : Type v
+  /-- The observation type returned by each operation. -/
   Result : Op → Type w
+  /-- The specified state transition and observation. -/
   step : (s : State) → (o : Op) → State × Result o
+  /-- Preconditions under which an operation's implementation must satisfy its contract. -/
   valid : State → Op → Prop := fun _ _ => True
 
 namespace Spec

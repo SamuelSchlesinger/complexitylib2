@@ -148,14 +148,59 @@ example : ¬(Stack.spec 4 2).valid [4, 7] (.push 2) := by decide
 /-- The largest fitting word remains a valid value; `none` uses a separate presence register. -/
 example : (Stack.spec 4 2).valid [] (.push 15) := by decide
 
+/--
+info: 'Cslib.WordRAM.DynamicCertificate.realization' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms DynamicCertificate.realization
+/--
+info: 'Cslib.WordRAM.TraceExec.exec' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms TraceExec.exec
+/--
+info: 'Cslib.WordRAM.TraceExec.frame' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms TraceExec.frame
+/--
+info: 'WordRAMDynamicTests.exchangeCertificate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms exchangeCertificate
+/--
+info: 'WordRAMDynamicTests.lookupCertificate' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms lookupCertificate
+/--
+info: 'Cslib.WordRAM.Stack.execute' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Stack.execute
+/--
+info: 'Cslib.WordRAM.Stack.instruction_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Stack.instruction_bound
+/--
+info: 'Cslib.WordRAM.Stack.run_client' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Stack.run_client
+/--
+info: 'Cslib.WordRAM.Stack.frame' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Stack.frame
 
 end WordRAMDynamicTests

@@ -96,11 +96,41 @@ example {w : Nat} (x : Cslib.WordRAM.Data 7) (h1 : Cslib.WordRAM.Fits w 1)
     (hsep : x.regs 0 + x.regs 2 ≤ x.regs 1) :=
   Cslib.WordRAM.ArrayCopy.exec x h1 hs hd hsep
 
+/--
+info: 'Cslib.Stateful.Module.comp' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Module.comp
+/--
+info: 'Cslib.Stateful.Module.simulates_client' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Module.simulates_client
+/--
+info: 'Cslib.Stateful.Spec.Hoare.bind' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Spec.Hoare.bind
+/--
+info: 'Cslib.Stateful.Spec.Hoare.link' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Spec.Hoare.link
+/--
+info: 'Cslib.Stateful.Amortized.client' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Amortized.client
+/--
+info: 'Cslib.WordRAM.ArrayCopy.exec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.WordRAM.ArrayCopy.exec
 
 end ComplexityTests.DataStructure

@@ -110,10 +110,35 @@ theorem edits_bound {c' : lower.State} {traces : List lower.Op}
   rw [ht]
   simpa only [← total_flatten, total_one] using hb
 
+/--
+info: 'Cslib.Algorithms.Lean.Retroactive.implementation' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.Lean.Retroactive.implementation
+/--
+info: 'Cslib.Algorithms.Lean.Retroactive.operation_charge' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.Lean.Retroactive.operation_charge
+/--
+info: 'Cslib.Algorithms.Lean.Retroactive.realized_bound' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.Lean.Retroactive.realized_bound
+/--
+info: 'ComplexityTests.DataStructureRetroactive.edits_execute' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms ComplexityTests.DataStructureRetroactive.edits_execute
+/--
+info: 'ComplexityTests.DataStructureRetroactive.edits_bound' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms ComplexityTests.DataStructureRetroactive.edits_bound
 
 end ComplexityTests.DataStructureRetroactive

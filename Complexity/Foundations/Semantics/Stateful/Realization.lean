@@ -51,6 +51,7 @@ inductive Executes (exec : Execution D C τ) : D.Client α → C → α → C �
 /-- Functional correctness and existence of executions, without a resource claim.
 For nondeterministic backends this is not a demonic termination assertion. -/
 structure Realization (D : Spec.{u, v, w}) {C τ : Type x} (exec : Execution D C τ) where
+  /-- The relation between mathematical states and concrete backend states. -/
   rep : D.State → C → Prop
   total : ∀ {s c} o, rep s c → D.valid s o → ∃ a c' trace, exec c o a c' trace
   correct : ∀ {s c o a c' trace}, rep s c → D.valid s o → exec c o a c' trace →

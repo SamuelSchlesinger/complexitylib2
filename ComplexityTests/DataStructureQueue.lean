@@ -146,9 +146,29 @@ example : (reverseStep ⟨[3, 7], []⟩ (.inl (.push 9))).1 = ⟨[3, 7, 9], []�
 
 example : (reverseStep ⟨[3, 7], []⟩ (.inl .pop)).2 = some 7 := rfl
 
+/--
+info: 'ComplexityTests.DataStructureQueue.reverseStep_correct' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms ComplexityTests.DataStructureQueue.reverseStep_correct
+/--
+info: 'ComplexityTests.DataStructureQueue.adaptiveClient_backend' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms ComplexityTests.DataStructureQueue.adaptiveClient_backend
+/--
+info: 'ComplexityTests.DataStructureQueue.adaptiveClient_direct' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms ComplexityTests.DataStructureQueue.adaptiveClient_direct
+/--
+info: 'ComplexityTests.DataStructureQueue.adaptiveClient_reversed' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms ComplexityTests.DataStructureQueue.adaptiveClient_reversed
 
 /-- Every adaptive client starting from empty direct stacks has the claimed call bound. -/
@@ -204,15 +224,62 @@ example : ((queue String).runClient []
     (.liftBind (.enqueue "first") fun _ => .liftBind .dequeue fun answer => .pure answer)).1 =
       some "first" := rfl
 
+/--
+info: 'Cslib.Stateful.Realization.run' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Realization.run
+/--
+info: 'Cslib.Stateful.Realization.correct_client' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Realization.correct_client
+/--
+info: 'Cslib.Stateful.Module.realize' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Module.realize
+/--
+info: 'Cslib.Stateful.Module.amortized_client' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.Module.amortized_client
+/--
+info: 'Cslib.Stateful.link_exec' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.link_exec
+/--
+info: 'Cslib.Stateful.link_exec_decompose' depends on axioms:
+[propext]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Stateful.link_exec_decompose
+/--
+info: 'Cslib.Algorithms.Lean.Queue.implementation' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.Lean.Queue.implementation
+/--
+info: 'Cslib.Algorithms.Lean.Queue.potential_step' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.Lean.Queue.potential_step
+/--
+info: 'Cslib.Algorithms.Lean.Queue.realized_client' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.Lean.Queue.realized_client
+/--
+info: 'Cslib.Algorithms.Lean.Queue.realized_client_bound' depends on axioms:
+[propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Algorithms.Lean.Queue.realized_client_bound
 
 end ComplexityTests.DataStructureQueue
