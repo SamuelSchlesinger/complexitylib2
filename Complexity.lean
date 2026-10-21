@@ -1243,6 +1243,7 @@ public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
 public import Complexity.Foundations.Combinatorics.Expander.Walk
 public import Complexity.Foundations.Combinatorics.Expander.Walk.WithInput
 public import Complexity.Foundations.Combinatorics.FiniteCover
+public import Complexity.Foundations.Combinatorics.FiniteCover.Basic
 public import Complexity.Foundations.Combinatorics.FunctionalGraph
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Active
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.CheckpointForest
