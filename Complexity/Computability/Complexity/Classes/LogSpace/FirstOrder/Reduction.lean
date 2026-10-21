@@ -688,19 +688,15 @@ private theorem reachesOut_relTableCode (ha : v.WellFormed a) (j : Fin v'.count)
 
 variable (v v' e I) in
 /-- The codes of the tables of some symbols, one after the other from the label `b`. -/
-private noncomputable def tablesCode : ℕ → List (Fin v'.count) → List Instr
-  | _, [] => []
-  | b, j :: js => relTableCode v v' e I j b ++ tablesCode (b + tableLength v' d I j) js
+private noncomputable def tablesCode : ℕ → List (Fin v'.count) → List Instr :=
+  blocksCode (relTableCode v v' e I) (tableLength v' d I)
 
 omit [L'.IsRelational] in
 private theorem length_tablesCode : ∀ (b : ℕ) (js : List (Fin v'.count)),
-    (tablesCode v v' e I b js).length = (js.map (tableLength v' d I)).sum
-  | _, [] => rfl
-  | b, j :: js => by
-    rw [tablesCode, List.length_append, length_tablesCode, List.map_cons, List.sum_cons,
-      relTableCode]
-    simp only [List.length_append, length_unranks, length_formulaCode, List.length_cons,
-      List.length_nil, tableLength, relLength]
+    (tablesCode v v' e I b js).length = (js.map (tableLength v' d I)).sum :=
+  length_blocksCode _ _ fun j b => by
+    simp only [relTableCode, List.length_append, length_unranks, length_formulaCode,
+      List.length_cons, List.length_nil, tableLength, relLength]
     rfl
 
 /-- **Emitting the truth tables of some symbols**, one after the other. -/
@@ -717,24 +713,19 @@ private theorem reachesOut_tablesCode (ha : v.WellFormed a) (hnB : a.1 ≤ B) (h
         (js.flatMap fun j => MultiTapeTM.frame (letI := v.decode a;
           Vocabulary.relTable (I.Model (Fin a.1)) (rankEquiv I e a.1) (v'.symbol j))) ∧
         regs'.length = regs.length ∧ regs'.getD 0 0 = a.1 ∧
-        regs'.getD 3 0 = (letI := v.decode a; modelCard I e a.1) ∧ ∀ r ∈ regs', r ≤ B
-  | [], b, regs, _, _, h0, h3, _, _, hB => ⟨regs, by simpa using ReachesOut.refl _, rfl, h0, h3, hB⟩
-  | j :: js, b, regs, hP, hTB, h0, h3, hlenD, hlenR, hB => by
-    rw [tablesCode, codeAt_append] at hP
-    have hl : (relTableCode v v' e I j b).length = tableLength v' d I j := by
+        regs'.getD 3 0 = (letI := v.decode a; modelCard I e a.1) ∧ ∀ r ∈ regs', r ≤ B := by
+  intro js b regs hP hTB h0 h3 hlenD hlenR hB
+  let Inv := fun rs : List ℕ => rs.length = regs.length ∧ rs.getD 0 0 = a.1 ∧
+    rs.getD 3 0 = (letI := v.decode a; modelCard I e a.1) ∧ ∀ r ∈ rs, r ≤ B
+  apply reachesOut_blocksCode (relTableCode v v' e I) (tableLength v' d I)
+    (fun j b => by
       have := length_tablesCode (v := v) (v' := v') (e := e) (I := I) b [j]
-      simpa [tablesCode] using this
-    rw [hl] at hP
-    obtain ⟨regs₁, hreach₁, hl₁, h0₁, h3₁, hB₁⟩ :=
-      reachesOut_relTableCode ha j hP.1 hnB hNB (hTB j List.mem_cons_self) regs h0 h3 hlenD
-        (hlenR j List.mem_cons_self) hB
-    obtain ⟨regs₂, hreach₂, hl₂, h0₂, h3₂, hB₂⟩ :=
-      reachesOut_tablesCode ha hnB hNB js _ regs₁ hP.2
-        (fun j' hj' => hTB j' (List.mem_cons_of_mem _ hj')) h0₁ h3₁ (hl₁ ▸ hlenD)
-        (fun j' hj' => hl₁ ▸ hlenR j' (List.mem_cons_of_mem _ hj')) hB₁
-    refine ⟨regs₂, ?_, hl₂.trans hl₁, h0₂, h3₂, hB₂⟩
-    rw [List.map_cons, List.sum_cons, ← Nat.add_assoc, List.flatMap_cons]
-    exact hreach₁.trans hreach₂
+      simpa [tablesCode, blocksCode] using this) _ Inv ?_ b regs hP ⟨rfl, h0, h3, hB⟩
+  intro j hj c rs hc ⟨hl, h0', h3', hB'⟩
+  obtain ⟨rs', hr, hl', h0'', h3'', hB''⟩ :=
+    reachesOut_relTableCode ha j hc hnB hNB (hTB j hj) rs h0' h3'
+      (hl ▸ hlenD) (hl ▸ hlenR j hj) hB'
+  exact ⟨rs', hr, hl'.trans hl, h0'', h3'', hB''⟩
 
 /-! ### The complete transducer -/
 

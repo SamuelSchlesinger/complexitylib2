@@ -29,9 +29,11 @@ form of a logarithmic-space transducer.
   bounded registers.
 * `Turing.CounterProgram.ReachesOut`: reachability, with the bits emitted on the way.
 * `Turing.CounterProgram.forCode`: the code of a counting loop.
+* `Turing.CounterProgram.blocksCode`: a fixed list of blocks at successive labels.
 
 ## Main results
 
+* `Turing.CounterProgram.reachesOut_blocksCode`: sequence block outputs and preserve an invariant.
 * `Turing.CounterProgram.reachesOut_forCode`: a counting loop emits what its body emits for each
   value of the counter.
 * `Turing.CounterProgram.computableInLogSpace_of_reachesOut`: counter programs with output and
@@ -99,6 +101,45 @@ theorem of_eq (h : P.ReachesOut w Q s s' out) (h' : out = out') : P.ReachesOut w
   h' ▸ h
 
 end ReachesOut
+
+/-- Concatenate fixed blocks, placing each after the declared lengths of its predecessors. -/
+def blocksCode {α : Type*} (code : α → ℕ → List Instr) (len : α → ℕ) :
+    ℕ → List α → List Instr
+  | _, [] => []
+  | b, x :: xs => code x b ++ blocksCode code len (b + len x) xs
+
+/-- The length of a sequence of blocks is the sum of their declared lengths. -/
+theorem length_blocksCode {α : Type*} (code : α → ℕ → List Instr) (len : α → ℕ)
+    (hlen : ∀ x b, (code x b).length = len x) :
+    ∀ b xs, (blocksCode code len b xs).length = (xs.map len).sum
+  | _, [] => rfl
+  | b, x :: xs => by
+    rw [blocksCode, List.length_append, hlen, length_blocksCode code len hlen,
+      List.map_cons, List.sum_cons]
+
+/-- A fixed list of blocks emits their words in order and preserves a register invariant.
+Each block's actual length must agree with its declared length at every starting label.
+Sequencing inserts no transitions between the supplied block runs. The empty list has a
+zero-step run; a zero-length block still requires its own reachability proof. -/
+theorem reachesOut_blocksCode {α : Type*} (code : α → ℕ → List Instr) (len : α → ℕ)
+    (hlen : ∀ x b, (code x b).length = len x) (out : α → List Bool)
+    (Inv : List ℕ → Prop) {xs : List α}
+    (hblock : ∀ x ∈ xs, ∀ b regs, P.CodeAt b (code x b) → Inv regs →
+      ∃ regs', P.ReachesOut w Q (b, regs) (b + len x, regs') (out x) ∧ Inv regs')
+    (b : ℕ) (regs : List ℕ) (hcode : P.CodeAt b (blocksCode code len b xs))
+    (hInv : Inv regs) :
+    ∃ regs', P.ReachesOut w Q (b, regs) (b + (xs.map len).sum, regs')
+      (xs.flatMap out) ∧ Inv regs' := by
+  induction xs generalizing b regs with
+  | nil => exact ⟨regs, by simpa using ReachesOut.refl _, hInv⟩
+  | cons x xs ih =>
+    rw [blocksCode, codeAt_append, hlen] at hcode
+    obtain ⟨regs₁, hr₁, hI₁⟩ := hblock x List.mem_cons_self b regs hcode.1 hInv
+    obtain ⟨regs₂, hr₂, hI₂⟩ := ih
+      (fun y hy => hblock y (List.mem_cons_of_mem _ hy)) _ regs₁ hcode.2 hI₁
+    refine ⟨regs₂, ?_, hI₂⟩
+    rw [List.map_cons, List.sum_cons, ← Nat.add_assoc, List.flatMap_cons]
+    exact hr₁.trans hr₂
 
 /-- Reachability through assignments, comparisons and reads emits nothing. -/
 theorem Reaches.reachesOut {B : ℕ} (h : P.Reaches w (P.Running B) s s') :

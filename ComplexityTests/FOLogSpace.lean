@@ -36,6 +36,64 @@ def allLoops : Language.graph.Sentence :=
 /-- The nullary relation holds. -/
 def nullaryHolds : nullaryLanguage.Sentence := Relations.boundedFormula nullarySymbol ![]
 
+/-! ### Fixed-list output sequencing -/
+
+open Turing CounterProgram in
+private def sampleBlock (long : Bool) (b : ℕ) : List Instr :=
+  if long then [.emit true (b + 1), .emit false (b + 2)] else [.emit false (b + 1)]
+
+private def sampleLength (long : Bool) : ℕ := if long then 2 else 1
+
+open Turing CounterProgram in
+private def sampleProgram : CounterProgram :=
+  ⟨blocksCode sampleBlock sampleLength 0 [false, true, false] ++ [.halt List.nil], 0⟩
+
+open Turing CounterProgram in
+/-- Unequal block lengths and a repeated block preserve offsets and emitted word order. -/
+example : sampleProgram.ReachesOut [] (sampleProgram.Active 0) (0, []) (4, [])
+    [false, true, false, false] := by
+  have hlen (x : Bool) (b : ℕ) : (sampleBlock x b).length = sampleLength x := by
+    cases x <;> rfl
+  have hcode : sampleProgram.CodeAt 0
+      (blocksCode sampleBlock sampleLength 0 [false, true, false]) := by
+    intro i hi
+    have : i < 4 := hi
+    interval_cases i <;> rfl
+  obtain ⟨rs, hr, rfl⟩ := reachesOut_blocksCode (w := []) (Q := sampleProgram.Active 0)
+    sampleBlock sampleLength hlen
+    (fun x => if x then [true, false] else [false]) (fun rs => rs = [])
+    (xs := [false, true, false]) (fun x _ b rs hc hI => by
+      subst rs
+      cases x
+      · obtain ⟨hc, _⟩ := codeAt_cons.mp hc
+        exact ⟨[], ReachesOut.emit hc (by simp) (ReachesOut.refl _), rfl⟩
+      · obtain ⟨hc₀, hc₁⟩ := codeAt_cons.mp hc
+        obtain ⟨hc₁, _⟩ := codeAt_cons.mp hc₁
+        exact ⟨[], ReachesOut.emit hc₀ (by simp)
+          (ReachesOut.emit hc₁ (by simp) (ReachesOut.refl _)), rfl⟩)
+    0 [] hcode rfl
+  exact hr
+
+open Turing CounterProgram in
+/-- Neither an empty sequence nor repeated zero-length blocks demand an active final state. -/
+example (P : CounterProgram) (b : ℕ) (xs : List Unit) :
+    P.ReachesOut [] (fun _ => False) (b, []) (b, []) [] := by
+  obtain ⟨rs, hr, rfl⟩ := reachesOut_blocksCode (P := P) (w := []) (Q := fun _ => False)
+    (fun (_ : Unit) _ => []) (fun _ => 0)
+    (fun _ _ => rfl) (fun _ => []) (fun rs => rs = []) (xs := xs)
+    (fun _ _ _ rs _ h => ⟨rs, by simpa using ReachesOut.refl _, h⟩)
+    b [] (by
+      have hnil : ∀ b xs, blocksCode (fun (_ : Unit) _ => []) (fun _ => 0) b xs = [] := by
+        intro b xs
+        induction xs generalizing b with
+        | nil => rfl
+        | cons x xs ih => simpa [blocksCode] using ih b
+      rw [hnil]
+      exact codeAt_nil) rfl
+  have hout : xs.flatMap (fun _ => ([] : List Bool)) = [] :=
+    List.flatMap_eq_nil_iff.mpr fun _ _ => rfl
+  simpa [hout] using hr
+
 /-! ### Membership in `L` -/
 
 example : graphVocabulary.queryLanguage {M | M ⊨ hasLoop} ∈ L encStructure :=
@@ -292,5 +350,12 @@ info: 'Turing.CounterProgram.computableInLogSpace_of_reachesOut' depends on axio
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.CounterProgram.computableInLogSpace_of_reachesOut
+
+/--
+info: 'Turing.CounterProgram.reachesOut_blocksCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.CounterProgram.reachesOut_blocksCode
 
 end ComplexityTests.FOLogSpace
