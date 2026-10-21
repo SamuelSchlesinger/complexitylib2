@@ -2,6 +2,9 @@ module  -- shake: keep-all --deprecated_module: ignore
 
 public import Complexity.Algorithms.Lean.Queue
 public import Complexity.Algorithms.Lean.Retroactive
+public import Complexity.Algorithms.Lean.SearchTree.Basic
+public import Complexity.Algorithms.Lean.SearchTree.Cost
+public import Complexity.Algorithms.Lean.SearchTree.Stateful
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
@@ -1387,6 +1390,7 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 public import Complexity.Foundations.Data.Nat.Radix
+public import Complexity.Foundations.Data.OrderedSet
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
@@ -1416,6 +1420,7 @@ public import Complexity.Foundations.Semantics.Stateful.Composition
 public import Complexity.Foundations.Semantics.Stateful.CostHoare
 public import Complexity.Foundations.Semantics.Stateful.Hoare
 public import Complexity.Foundations.Semantics.Stateful.Module
+public import Complexity.Foundations.Semantics.Stateful.OrderedSet
 public import Complexity.Foundations.Semantics.Stateful.Realization
 public import Complexity.Foundations.Semantics.Stateful.Resource
 public import Complexity.Init

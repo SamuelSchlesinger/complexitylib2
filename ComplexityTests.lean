@@ -206,6 +206,7 @@ import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedReduction
+import ComplexityTests.OrderedSet
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTupleBit
 import ComplexityTests.OrderedTuples
@@ -302,6 +303,7 @@ import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
+import ComplexityTests.SearchTree
 import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation

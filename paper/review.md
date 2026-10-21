@@ -2077,3 +2077,66 @@ final potential, using `2*capacity` reserved words and at most `capacity` live v
 client computation, argument delivery and result decoding are outside this native-call sum.
 This is a direct FIFO implementation, not a compilation of the older abstract queue methods.
 Allocation/growth, complete client compilation and TM simulation are separate work.
+
+## 2026-10-21: Stateful unbalanced binary search trees (#290)
+
+Worker `worker-search-tree-20261021`, using OpenAI Codex, adds the finite ordered-set realization,
+its executable adaptive client interpreter and shape-dependent node-visit bounds. Source revision
+`11744afb1a743008b73935dfd8e11f156f79565b` has tree
+`cab7acda3a81e519e5f4816d6d79a22ba5624691`, exactly matching the validated source over main
+`7ebefd57bbcfcaa138b3f094d63ae763bd17dd41`. All six strict gates passed (session 40889, exit 0),
+including the global axiom audit and five named guards. Actual-file Lean MCP diagnostics,
+documentation configuration and whitespace checks passed.
+
+Independent nonauthor `/root/controller_review` approved API, correctness, tests and index
+semantics, then checked the exact published source tree, declaration pins and rendered page.
+One documentation nit was fixed: only `firstTwo`, not the construction client `insertAll`,
+chooses its second query from the first answer. Tests include satisfiable strict ordering,
+a malformed-tree counterexample, duplicate tree identity, empty/equal/absent/exhausted queries,
+height-three and height-seven shapes, and exact adaptive node-visit traces.
+
+The entry quantifies arbitrary linearly ordered key types, states the strict invariant and
+finite-set semantics, and bounds each operation by the initial height and set cardinality.
+It explicitly excludes empty-child tests, allocation/reconstruction, comparison implementation
+and pure continuation computation; it makes no balancing, logarithmic or RAM-time claim.
+The source credits CLRS Chapter 12 and reuses Mathlib's binary trees and the existing Stateful
+calculus. The final index SHA256 is
+`3ad381d93708f507cbf5bf8d1c1f54aaf652e40c7baee120d26fd20b9c0e7d7d`.
+
+The locally generated PDF has 115 pages; new page 86 was independently visually inspected.
+All four PDF URI annotations point to the named declarations in source `11744afb` at
+Basic lines 128/260 and Stateful lines 116/161. PDF SHA256:
+`7c9195b965aeafb12ce23d55c2940ced8afd40d6133afd3fc9ad6d523b7d730a`.
+There are no unresolved source or local-render review findings. Actual CI artifact/provenance
+inspection and coordinator integration approval remain separate gates. AI review is neither
+human editorial approval nor a Lean proof of prose equivalence. Generated artifacts are unversioned.
+
+### Ordered-set interface factoring revision (#290 / PR #294)
+
+Worker `worker-search-tree-20261021`, delegated by `codex-coordinator-20261021-2200`, addresses
+coordinator review 6326622668. The earlier tree-owned interface is now factored into
+`Foundations/Data/OrderedSet.lean` and `Foundations/Semantics/Stateful/OrderedSet.lean`, both under
+`Cslib.OrderedSet`. These neutral modules import no tree representation or cost module. They
+contain the complete optional-minimum contract, total typed finite-set specification and generic
+construction/adaptive clients. The BST realization, interpreter and node-visit bounds stay in
+SearchTree. No bounded-key vEB realization or machine-time result is added.
+
+Reviewed source `b3aac7104315ae4004236afd3b01df17ddd59220`, tree
+`e2943b28dbbe8ebe8930da27c39cc2f2ba04abdb`, is a focused descendant of the prior PR head
+`13b5a0fd44b4c0a11a8e8a5bb4a2cc31500895a0`. All six strict gates passed on the final source
+(session 36758, exit 0). An initial doc-line-length warning was corrected before that successful
+full rerun. The new neutral test driver imports only the shared interface and checks finite keys,
+strict/absent/exhausted queries, adaptive traces and a separate bounded insertion-admissibility
+specialization. Both test drivers have clean final MCP diagnostics, including the unchanged
+BST correctness/height examples and named axiom guards. Documentation configuration and
+whitespace checks also pass.
+
+Independent nonauthor `/root/controller_review` approved the exact source, tests and index
+semantics and confirmed the prior must-fix is addressed. It independently verified the published
+source tree, all six declaration pins and local rendered page 86. The theorem-index source hash is
+`9331ac755b303379e8130cebab69c881f07028aab4c1f7a13d58a756a92e13ca`;
+the 115-page PDF hash is `39bfb9ca2668638581df674b4d1beea022d6d7e1020092c1a929972c15a903e6`.
+The links target neutral declarations at lines 49/56, SearchTree Basic at 130/225 and Stateful
+at 91/136. No clipping or overlap was found. The final documentation commit changes no Lean
+bytes. Actual final-head CI PDF artifact/provenance inspection and coordinator integration
+approval remain separate gates. This records AI review, not human editorial approval.
