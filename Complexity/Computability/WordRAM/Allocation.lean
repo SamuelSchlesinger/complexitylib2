@@ -134,7 +134,7 @@ theorem Block.realizes_clear (m : ℕ → ℕ) (base k : ℕ) :
 
 /-- Zero the cells from the address in register `cur` up to the address in register `stop`,
 counting `cur` up to `stop`; registers `zero` and `one` hold `0` and `1`. -/
-def zeroFill (cur stop zero one : Fin r) : Code r :=
+def zeroFill (cur stop zero one : Fin r) : Code .standard r :=
   ram[ while cur < stop do [ *cur ← zero; cur ← cur + one ] ]
 
 /-- Zeroing `k` cells takes `4 k + 2` instructions: a store, an addition, a branch and a jump per
@@ -182,7 +182,7 @@ theorem zeroFill_exec {w : ℕ} {cur stop zero one : Fin r} {x : Data r} (hcs : 
 /-- Allocate a zeroed block of as many cells as register `count` holds, at the address in
 register `frontier`: the address of the block is left in register `result`, and `frontier`
 advances past the block. Registers `cur`, `zero` and `one` are scratch. -/
-def alloc (frontier count result cur zero one : Fin r) : Code r := ram[
+def alloc (frontier count result cur zero one : Fin r) : Code .standard r := ram[
   zero ← #0; one ← #1; result ← frontier; cur ← frontier; frontier ← frontier + count;
   ⟪zeroFill cur frontier zero one⟫ ]
 
@@ -222,10 +222,10 @@ theorem alloc_exec {w : ℕ} {frontier count result cur zero one : Fin r} {x : D
     simp [x₅, x₄, x₃, x₂, Ne.symm hfo, Ne.symm huo, Ne.symm hro]
   have h₅u : x₅.regs cur = f := by simp [x₅, x₄, Ne.symm hfu]
   have h₅f : x₅.regs frontier = f + k := by simp [x₅]
-  have e₃ : Exec w (.op (.copy result frontier)) x₂ x₃ 1 := by
+  have e₃ : Exec (B := .standard) w (.op (.copy result frontier)) x₂ x₃ 1 := by
     rw [show x₃ = x₂.set result (x₂.regs frontier) by rw [h₂f]]
     exact Exec.copy
-  have e₄ : Exec w (.op (.copy cur frontier)) x₃ x₄ 1 := by
+  have e₄ : Exec (B := .standard) w (.op (.copy cur frontier)) x₃ x₄ 1 := by
     rw [show x₄ = x₃.set cur (x₃.regs frontier) by rw [h₃f]]
     exact Exec.copy
   have e₅ : Exec w (.op (.bin .add frontier frontier count)) x₄ x₅ 1 := by
@@ -249,11 +249,11 @@ theorem alloc_exec {w : ℕ} {frontier count result cur zero one : Fin r} {x : D
 
 /-- `dst ← (ptr)[idx]`: load the cell at the address in `ptr` plus the index in `idx`, through the
 scratch register `tmp`. -/
-def readAt (tmp dst ptr idx : Fin r) : Code r := ram[ tmp ← ptr + idx; dst ← *tmp ]
+def readAt (tmp dst ptr idx : Fin r) : Code .standard r := ram[ tmp ← ptr + idx; dst ← *tmp ]
 
 /-- `(ptr)[idx] ← src`: store register `src` to the cell at the address in `ptr` plus the index in
 `idx`, through the scratch register `tmp`. -/
-def writeAt (tmp ptr idx src : Fin r) : Code r := ram[ tmp ← ptr + idx; *tmp ← src ]
+def writeAt (tmp ptr idx src : Fin r) : Code .standard r := ram[ tmp ← ptr + idx; *tmp ← src ]
 
 /-- An indexed read takes two instructions. -/
 theorem readAt_exec {w : ℕ} {tmp dst ptr idx : Fin r} {x : Data r}

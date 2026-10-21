@@ -52,7 +52,7 @@ variable {r : ℕ} {D : Stateful.Spec.{u, v, z}}
 /-- A single program serving all operations through a fixed register calling convention. -/
 structure DynamicProgram (D : Stateful.Spec.{u, v, z}) (r : ℕ) where
   /-- The same code is executed for every operation. -/
-  code : Code r
+  code : Code .standard r
   /-- Register returned by the final halt instruction. -/
   output : Fin r
   /-- Registers overwritten by externally supplied operation arguments. -/

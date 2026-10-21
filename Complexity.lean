@@ -373,6 +373,7 @@ public import Complexity.Computability.Circuit.Rational.SmallExpansion
 public import Complexity.Computability.Circuit.Rational.Wronskian
 public import Complexity.Computability.Circuit.ReedMullerDecoding
 public import Complexity.Computability.Circuit.Replication
+public import Complexity.Computability.Circuit.SignatureHom
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.SimulationContext
 public import Complexity.Computability.Circuit.SimulationDepth
@@ -665,6 +666,9 @@ public import Complexity.Computability.DecisionTree.Separable
 public import Complexity.Computability.DecisionTree.SpectralNorm
 public import Complexity.Computability.DecisionTree.Switching
 public import Complexity.Computability.DecisionTree.Symmetric
+public import Complexity.Computability.GenericRAM.Algebraic
+public import Complexity.Computability.GenericRAM.Defs
+public import Complexity.Computability.GenericRAM.Signed
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
 public import Complexity.Computability.Kolmogorov.Depth
@@ -1059,11 +1063,14 @@ public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Computability.USTCON.Space
 public import Complexity.Computability.WordRAM.Allocation
+public import Complexity.Computability.WordRAM.Basis
 public import Complexity.Computability.WordRAM.Compile
 public import Complexity.Computability.WordRAM.Copy
 public import Complexity.Computability.WordRAM.Defs
 public import Complexity.Computability.WordRAM.Dynamic
+public import Complexity.Computability.WordRAM.Generic
 public import Complexity.Computability.WordRAM.Heap
+public import Complexity.Computability.WordRAM.MapOp
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput

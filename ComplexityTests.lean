@@ -128,6 +128,9 @@ import ComplexityTests.GapGraphsGeography
 import ComplexityTests.GeneratorPadding
 import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
+import ComplexityTests.GenericRAM
+import ComplexityTests.GenericRAMAlgebraic
+import ComplexityTests.GenericRAMSigned
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
@@ -340,7 +343,9 @@ import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
+import ComplexityTests.WordRAMBasis
 import ComplexityTests.WordRAMDynamic
+import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness

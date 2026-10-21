@@ -70,8 +70,24 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
-  deviations from the source. The unbounded-register `Computability/RAM`, inspired by
+  deviations from the source. The operations form a basis (`WordRAM/Basis`) over
+  `Cslib.Circuits.Signature`, and translation between bases (`WordRAM/MapOp`) uses the local
+  `Circuit/SignatureHom` maps of signatures, so these files depend on that candidate. The
+  unbounded-register `Computability/RAM`, inspired by
   Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
+* **Generic RAM values.** `Computability/GenericRAM/*` supplies a shared finite-register RAM
+  interpreter with configurable value, address, configuration and literal types, operation/test
+  signatures, and fault policies. `WordRAM/Generic` embeds every existing word-operation basis
+  with exact step, fault, output and instruction-count preservation, including arbitrary initial
+  states; no existing public WordRAM definition changes. The signed instance follows the
+  lean-trominoes signed range and its address, move, halt and program-counter checks, retaining
+  its source credit. The algebraic instances use tagged natural words and exact field values:
+  only natural words can address memory. Real comparison is mathematical, noncomputable
+  semantics; prime-field interpretation is executable. The real variant follows the separation
+  of words and reals in Erickson–van der Hoog–Miltzow, but uses finite named registers, a tagged
+  memory and checked word arithmetic. These are explicit model choices, not a proved equivalence
+  with their two-array model. Coordinate this common core with the algorithm-model work above;
+  the existing Cook–Reckhow-inspired RAM and its logarithmic cost remain separate.
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource
@@ -161,6 +177,17 @@ grandfathered without an alias; this list records them for downstream users.
   (`DecidesInSpace.recognizesInSpace`); membership proofs now also need a per-instance halting
   bound, the second component of `DecidesInSpace` (read back with
   `DecidesInSpace.exists_runsInTime`).
+* **Word-RAM operation bases.** On 2026-10-21 the word RAM became parametric in a basis of
+  operations. `Cslib.WordRAM.Op`, `Instr`, `Program` and `Code` take a basis `B` before the register
+  count, and `DecidableInTime`, `DecidableInTimeAt`, `LinearTime` and `PolynomialTime` take it as
+  their first explicit argument; the previous instruction set is `Cslib.WordRAM.Basis.standard`.
+  The constructors `Op.bin` and `Op.width` became definitions of the same names over the standard
+  basis, so construction is unchanged but pattern matching, `Op.bin.injEq` and `Op.width.injEq`
+  are gone (match on `Op.alu`). `Op`, `Instr` and `Code` no longer derive `Repr`. The binder `B` of
+  `Exec.loop`, `ExecWithin.loop` and `ExecWithin.loop_invariant` is now `T`, and the `B : Set β`
+  binder of the `recode` lemmas in `WordRAM/Time` is now `A'`; named-argument callers must follow.
+  On the same date `Cslib.Circuits.Signature.Hom` and `Signature.Hom.Preserves` moved, with their
+  names unchanged, from `Circuit/MapOp` to `Circuit/SignatureHom`, which `Circuit/MapOp` imports.
 * **Renamed modules.** On 2026-10-20 `Circuit/Boolean/MassProduction/{Sharp,SharpParameters,
   SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
   deprecated alias, but imports of the old module paths must be updated: a module stub would have
