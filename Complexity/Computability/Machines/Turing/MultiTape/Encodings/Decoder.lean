@@ -11,7 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Mathlib.Data.List.DropRight
-import Complexity.Computability.Kolmogorov.SelfDelimiting
+import Complexity.Foundations.Data.Nat.Bits
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Mathlib.Data.Nat.Size
@@ -242,7 +242,7 @@ def unary : Decoder encUnary where
 /-- Binary numbers are decoded from their digits up to the last `true`. -/
 def nat : Decoder encNat where
   decode := ofBits
-  -- a tactic proof keeps `Kolmogorov.SelfDelimiting` a proof-only import
+  -- A tactic proof keeps the foundational binary-digit lemma a proof-only dependency.
   decode_enc n := by exact Nat.foldr_bit_bits n
   computable := by
     have hd : ComputableTidilyInPolyTime (fun w : List Bool => w.dropWhile (!·)) encBits encBits :=

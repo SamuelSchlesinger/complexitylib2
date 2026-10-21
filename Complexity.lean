@@ -1333,6 +1333,7 @@ public import Complexity.Foundations.Data.MvPolynomial.Catalecticant
 public import Complexity.Foundations.Data.MvPolynomial.DualNumber
 public import Complexity.Foundations.Data.MvPolynomial.Hessian
 public import Complexity.Foundations.Data.MvPolynomial.HessianRank
+public import Complexity.Foundations.Data.Nat.Bits
 public import Complexity.Foundations.Data.Nat.Card
 public import Complexity.Foundations.Data.Nat.Choose
 public import Complexity.Foundations.Data.Nat.Choose.Real
