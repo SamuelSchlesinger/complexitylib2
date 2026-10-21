@@ -51,7 +51,8 @@ advances `b` by `1` modulo `ℓ r` when `b < ℓ r` and fixes every other state.
 * `Cslib.Circuits.Boolean.Iteration.PrimeCycles.power`: `T`-step map advancing each class `r`
   modulo `ℓ r`.
 * `Cslib.Circuits.Boolean.Iteration.PrimeCycles.step`: single-step permutation `power ℓ 1`.
-* `Cslib.Circuits.Boolean.Iteration.PrimeCycles.order`: product of nontrivial cycle lengths.
+* `Cslib.Circuits.Boolean.Iteration.PrimeCycles.order`: common-period product of the nontrivial
+  cycle lengths (which equals the exact permutation order under `LengthsCoprime`).
 * `Cslib.Circuits.Boolean.Iteration.PrimeCycles.classPrime`: least-index prime candidate in each
   hash class, or `1` if none exists.
 * `Cslib.Circuits.Boolean.Iteration.lcmBelow`: least common multiple of `{1, …, n}`.
@@ -318,7 +319,8 @@ theorem power_eq_power_iff (hℓ : ∀ r, ℓ r < 2 ^ K) (S T : ℕ) :
 /-- The nontrivial classes (`1 < ℓ r`). -/
 noncomputable def active : Finset (BitVec m) := Finset.univ.filter fun r => 1 < ℓ r
 
-/-- The order of the permutation: the product of the nontrivial cycle lengths. -/
+/-- The common-period product of the nontrivial cycle lengths (which equals the exact permutation
+order under `LengthsCoprime`). -/
 noncomputable def order : ℕ := ∏ r ∈ active ℓ, ℓ r
 
 theorem order_pos : 0 < order ℓ :=
@@ -329,21 +331,6 @@ theorem order_pos : 0 < order ℓ :=
 theorem dvd_order {r : BitVec m} (hr : 1 < ℓ r) : ℓ r ∣ order ℓ :=
   Finset.dvd_prod_of_mem _ (Finset.mem_filter.mpr ⟨Finset.mem_univ _, hr⟩)
 
-/-- A product of pairwise coprime divisors of `d` divides `d`. -/
-theorem prod_dvd_of_pairwise_coprime {ι : Type*} (s : Finset ι) (f : ι → ℕ)
-    (hc : (s : Set ι).Pairwise fun i j => (f i).Coprime (f j)) {d : ℕ}
-    (hd : ∀ i ∈ s, f i ∣ d) : ∏ i ∈ s, f i ∣ d := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | @insert i s hi ih =>
-    rw [Finset.prod_insert hi]
-    apply Nat.Coprime.mul_dvd_of_dvd_of_dvd
-    · exact Nat.coprime_prod_right_iff.mpr fun j hj =>
-        hc (by simp) (by simp [hj]) (by rintro rfl; exact hi hj)
-    · exact hd i (by simp)
-    · exact ih (hc.mono (by simp)) fun j hj => hd j (by simp [hj])
-
 /-- Pairwise coprimality of the nontrivial cycle lengths. -/
 def LengthsCoprime : Prop := ((active ℓ : Finset (BitVec m)) : Set (BitVec m)).Pairwise
   fun r s => (ℓ r).Coprime (ℓ s)
@@ -352,16 +339,19 @@ variable {ℓ}
 
 theorem modEq_order_iff (hc : LengthsCoprime ℓ) (S T : ℕ) :
     S ≡ T [MOD order ℓ] ↔ ∀ r, 1 < ℓ r → S ≡ T [MOD ℓ r] := by
+  have hrel : ((active ℓ : Finset (BitVec m)) : Set (BitVec m)).Pairwise
+      (Function.onFun IsRelPrime ℓ) :=
+    fun r hr s hs hrs => Nat.coprime_iff_isRelPrime.mp (hc hr hs hrs)
   constructor
   · exact fun h r hr => Nat.ModEq.of_dvd (dvd_order ℓ hr) h
   · intro h
     rcases le_total S T with hST | hST
     · rw [Nat.modEq_iff_dvd' hST]
-      exact prod_dvd_of_pairwise_coprime _ _ hc fun r hr =>
+      exact Finset.prod_dvd_of_isRelPrime hrel fun r hr =>
         (Nat.modEq_iff_dvd' hST).mp (h r (Finset.mem_filter.mp hr).2)
     · refine Nat.ModEq.symm ?_
       rw [Nat.modEq_iff_dvd' hST]
-      exact prod_dvd_of_pairwise_coprime _ _ hc fun r hr =>
+      exact Finset.prod_dvd_of_isRelPrime hrel fun r hr =>
         (Nat.modEq_iff_dvd' hST).mp (h r (Finset.mem_filter.mp hr).2).symm
 
 /-- With pairwise coprime nontrivial lengths, `(step ℓ)^[S] = (step ℓ)^[T]` iff
