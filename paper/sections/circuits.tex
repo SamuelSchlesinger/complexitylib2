@@ -196,6 +196,67 @@ simultaneous activity.\citep{ThresholdCircuitRepresentations2026}
 \end{result}
 
 \begin{result}
+At the underlying decision-tree level, a bi-monotone comparison
+$q(x,y)=\kappa(\ell(x),r(y))$ on $X\times Y$ applies a Boolean kernel
+$\kappa:\mathbb R\times\mathbb R\to\{0,1\}$ monotone in each real score
+separately (including separable threshold comparisons
+$\mathbf 1[\theta\le\ell(x)+r(y)]$, $\mathbf 1[\theta\le\max(\ell(x),r(y))]$,
+and $\mathbf 1[\theta\le\min(\ell(x),r(y))]$). On any nonempty finite product
+$A\times B$ and $0\le a\le 1$, either the false branch retains at least $a|A|$
+and $a|B|$ elements or the true branch retains at least $(1-a)|A|$ and
+$(1-a)|B|$; hence any decision tree $t$ of bi-monotone comparisons with $L$
+structural leaves (and $N=L-1$ internal query nodes) admits a nonempty
+rectangle $A'\times B'\subseteq A\times B$ following a single root-to-leaf path
+with $|A|\le |A'|L$ and $|B|\le |B'|L$, and $|A||B|\le R L^2$ whenever every
+monochromatic rectangle has area at most $R$. For a binary decision tree $t$ of
+depth $d$, Ehrenfeucht--Haussler rank $r\le d$, and tree energy $E\le d$ (the
+maximum number of true branches on a root-to-leaf path),
+$L\le\sum_{j=0}^r\binom dj$ and $L\le\sum_{j=0}^E\binom dj$, while decision
+lists (where every internal node has a leaf child) have $r\le 1$, $L\le d+1$,
+and $N\le d$. Consequently, for any bi-monotone or separable comparison tree $t$
+computing inner product modulo two on two $m$-bit blocks ($|\iota|=m$),
+\[
+2^m\le L^2=(N+1)^2,\qquad
+2^m\le\left(\sum_{j=0}^{r}\binom dj\right)^2,\qquad
+2^m\le\left(\sum_{j=0}^{E}\binom dj\right)^2,
+\]
+giving $2^m\le(d+1)^2$ for rank at most $1$ or decision lists, and over $\mathbb R$
+both $m/2\le r\log_2(ed/r)$, $(r/e)2^{m/(2r)}\le d$ and
+$m/2\le E\log_2(ed/E)$, $(E/e)2^{m/(2E)}\le d$ (with real division by zero at
+$r=0$ or $E=0$ forcing $m=0$). These bounds apply to semantic real-score query
+trees without certifying comparison precision.\citep{ThresholdCircuitRepresentations2026}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{112}{Cslib.DecisionTree.nodeCount}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{126}{Cslib.DecisionTree.leafCount_eq_nodeCount_add_one}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{153}{Cslib.DecisionTree.rank}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{215}{Cslib.DecisionTree.leafCount_le_sum_choose_rank}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{236}{Cslib.DecisionTree.IsDecisionList}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{253}{Cslib.DecisionTree.IsDecisionList.rank_le_one}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{268}{Cslib.DecisionTree.IsDecisionList.leafCount_le_depth_add_one}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{289}{Cslib.DecisionTree.energy}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{342}{Cslib.DecisionTree.leafCount_le_sum_choose_energy}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{58}{Cslib.BiMonotoneComparison}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{80}{Cslib.BiMonotoneComparison.ofMax}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{99}{Cslib.BiMonotoneComparison.ofMin}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{118}{Cslib.BiMonotoneComparison.exists_rectangle}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{168}{Cslib.SeparableComparison.toBiMonotone}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{204}{Cslib.DecisionTree.exists_leaf_rectangle_biMonotone}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{256}{Cslib.DecisionTree.card_mul_le_mul_leafCount_sq_biMonotone}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{58}{Cslib.DecisionTree.two_pow_le_leafCount_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{83}{Cslib.DecisionTree.two_pow_le_nodeCount_add_one_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{92}{Cslib.DecisionTree.two_pow_le_nodeCount_add_one_sq_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{101}{Cslib.DecisionTree.two_pow_le_depth_add_one_sq_of_rank_le_one_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{111}{Cslib.DecisionTree.two_pow_le_depth_add_one_sq_of_isDecisionList_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{129}{Cslib.DecisionTree.two_pow_le_sum_choose_rank_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{138}{Cslib.DecisionTree.two_pow_le_sum_choose_rank_sq_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{147}{Cslib.DecisionTree.le_rank_mul_logb_depth_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{157}{Cslib.DecisionTree.rank_mul_rpow_le_depth_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{166}{Cslib.DecisionTree.two_pow_le_sum_choose_energy_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{175}{Cslib.DecisionTree.two_pow_le_sum_choose_energy_sq_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{184}{Cslib.DecisionTree.le_energy_mul_logb_depth_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{194}{Cslib.DecisionTree.energy_mul_rpow_le_depth_of_hadamardCode}
+\end{result}
+
+\begin{result}
 A separate capacity bound applies to any fixed Boolean readout of a threshold
 program's gate values computing $f$ on $n$ bits. Suppose that, across every
 partition of the input coordinates, every rectangle contained in either fiber
