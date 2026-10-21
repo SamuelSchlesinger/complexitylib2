@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.WordRAM.Basis
 public import Cslib.Foundations.Relation.RelatesInSteps
+public import Mathlib.Data.Fin.VecNotation
 
 /-!
 # Word RAMs
@@ -72,10 +73,11 @@ The definitions are adapted from the Lean formalization accompanying
   part of this machine's semantics; transfer to a model with other conventions requires a separate
   simulation.
 * The operations form a parameter, as the gates of a circuit do: word-RAM models differ in their
-  instruction sets [Hagerup][Hagerup1998]. The standard basis has the arithmetic, bitwise and shift
-  operations of the standard word RAM, with an operation reading the word size, which word-RAM
-  algorithms may use [Fredman and Willard][FredmanWillard1993]. Everything else about the machine
-  is the same for every basis.
+  instruction sets [Hagerup][Hagerup1998]. The standard basis has addition, subtraction,
+  multiplication, bitwise operations and shifts as in Hagerup's multiplication RAM, together with
+  division, remainder and an operation reading the word size, which word-RAM algorithms may use
+  [Fredman and Willard][FredmanWillard1993]. Everything else about the machine is the same for
+  every basis.
 * Only constants and operations check that the number they write fits a word. Copies,
   loads and stores move words already held by the machine, and every address held in a register
   is a word, so on a run from an input that fits such checks could never fail

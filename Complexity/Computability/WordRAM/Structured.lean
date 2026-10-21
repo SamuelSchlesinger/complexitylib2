@@ -193,7 +193,7 @@ operations need the written number to fit a word. -/
 
 section Ops
 
-variable {d i j a s : Fin r}
+variable {d a s : Fin r}
 
 theorem const {v : ℕ} (h : Fits w v) :
     Exec (B := B) w (.op (.const d v)) x (x.set d v) 1 :=
@@ -215,7 +215,7 @@ end Ops
 
 section Standard
 
-variable {x : Data r} {d i j : Fin r}
+variable {d i j : Fin r}
 
 theorem bin {f : BinOp} (h : Fits w (f.eval (x.regs i) (x.regs j))) :
     Exec w (.op (.bin f d i j)) x (x.set d (f.eval (x.regs i) (x.regs j))) 1 :=
@@ -345,11 +345,11 @@ theorem store :
     ExecWithin (B := B) w (.op (.store a s)) x (x.write (x.regs a) (x.regs s)) 1 :=
   Exec.store.within
 
-theorem bin {x : Data r} {d i j : Fin r} {f : BinOp} (h : Fits w (f.eval (x.regs i) (x.regs j))) :
+theorem bin {f : BinOp} (h : Fits w (f.eval (x.regs i) (x.regs j))) :
     ExecWithin w (.op (.bin f d i j)) x (x.set d (f.eval (x.regs i) (x.regs j))) 1 :=
   (Exec.bin h).within
 
-theorem width {x : Data r} {d : Fin r} : ExecWithin w (.op (.width d)) x (x.set d w) 1 :=
+theorem width : ExecWithin w (.op (.width d)) x (x.set d w) 1 :=
   Exec.width.within
 
 end ExecWithin
@@ -439,6 +439,12 @@ def Op.dest : Op B r → Option (Fin r)
   | .const d _ | .copy d _ | .alu _ d _ | .load d _ => some d
   | .store _ _ => none
 
+@[simp]
+theorem Op.dest_bin (f : BinOp) (d i j : Fin r) : (Op.bin f d i j).dest = some d := rfl
+
+@[simp]
+theorem Op.dest_width (d : Fin r) : (Op.width d).dest = some d := rfl
+
 /-- No instruction of the program writes register `i`. -/
 def Code.Preserves (i : Fin r) : Code B r → Prop
   | .op o => o.dest ≠ some i
@@ -505,6 +511,24 @@ def Op.rename (f : Fin r → Fin r') : Op B r → Op B r'
   | .alu g d args => .alu g (f d) (f ∘ args)
   | .load d a => .load (f d) (f a)
   | .store a s => .store (f a) (f s)
+
+@[simp]
+theorem Op.rename_bin (f : Fin r → Fin r') (g : BinOp) (d i j : Fin r) :
+    (Op.bin g d i j).rename f = Op.bin g (f d) (f i) (f j) := by
+  simp only [Op.bin, Op.rename]
+  congr 1
+  funext k
+  match k with
+  | ⟨0, _⟩ => rfl
+  | ⟨1, _⟩ => rfl
+
+@[simp]
+theorem Op.rename_width (f : Fin r → Fin r') (d : Fin r) :
+    (Op.width d).rename f = Op.width (f d) := by
+  simp only [Op.width, Op.rename]
+  congr 1
+  funext k
+  exact k.elim0
 
 /-- Test the condition on the registers chosen by `f`. -/
 def Cond.rename (f : Fin r → Fin r') : Cond r → Cond r'

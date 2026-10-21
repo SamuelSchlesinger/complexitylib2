@@ -27,8 +27,10 @@ for instance local abbreviations of elements of `Fin r`. The statements are:
 * `⟪c⟫`: the structured program `c`, for instance a subroutine.
 
 The notation unfolds to the constructors of `Cslib.WordRAM.Code`, so it adds nothing to the
-semantics. It is scoped: `open Cslib.WordRAM` enables it. Its statement forms follow the
-word-RAM notation of [Algolean][Algolean2026]. Its only new tokens are `ram[`, `width%` and the
+semantics. The binary operations and `width%` are instructions of the standard basis
+(`Cslib.WordRAM.Op.bin`, `Cslib.WordRAM.Op.width`); the other statements work over every basis.
+It is scoped: `open Cslib.WordRAM` enables it. Its statement forms follow the word-RAM notation of
+[Algolean][Algolean2026]. Its only new tokens are `ram[`, `width%` and the
 internal `ram_stmt%` and `ram_block%`, so it reserves no identifiers: `ram` and `width` remain
 ordinary names.
 
@@ -164,9 +166,11 @@ macro_rules
       | (apply Cslib.WordRAM.ExecWithin.of_eval (fuel := $n)
          · set_option linter.unusedSimpArgs false in
            simp +decide only [Cslib.WordRAM.Code.eval, Cslib.WordRAM.Code.evalLoop,
-            Cslib.WordRAM.Op.eval_const, Cslib.WordRAM.Op.eval_copy,
+            Cslib.WordRAM.Op.eval_const, Cslib.WordRAM.Op.eval_copy, Cslib.WordRAM.Op.eval_alu,
             Cslib.WordRAM.Op.eval_load, Cslib.WordRAM.Op.eval_store, Cslib.WordRAM.Op.eval_bin,
-            Cslib.WordRAM.Op.eval_width, Cslib.WordRAM.Data.put, Cslib.WordRAM.fits_zero,
+            Cslib.WordRAM.Op.eval_width, Cslib.WordRAM.Basis.standard_interp_bin,
+            Cslib.WordRAM.Basis.standard_interp_width, Cslib.WordRAM.Data.put,
+            Cslib.WordRAM.fits_zero,
             Cslib.WordRAM.BinOp.eval, Cslib.WordRAM.Cond.holds_eq, Cslib.WordRAM.Cond.holds_lt,
             Cslib.WordRAM.Data.set_regs, Cslib.WordRAM.Data.set_mem,
             Cslib.WordRAM.Data.write_regs, Cslib.WordRAM.Data.write_mem, Function.update_self,
@@ -180,9 +184,11 @@ macro_rules
       | (apply Cslib.WordRAM.Exec.of_eval (fuel := $n)
          set_option linter.unusedSimpArgs false in
          simp +decide only [Cslib.WordRAM.Code.eval, Cslib.WordRAM.Code.evalLoop,
-          Cslib.WordRAM.Op.eval_const, Cslib.WordRAM.Op.eval_copy,
-            Cslib.WordRAM.Op.eval_load, Cslib.WordRAM.Op.eval_store, Cslib.WordRAM.Op.eval_bin,
-            Cslib.WordRAM.Op.eval_width, Cslib.WordRAM.Data.put, Cslib.WordRAM.fits_zero,
+          Cslib.WordRAM.Op.eval_const, Cslib.WordRAM.Op.eval_copy, Cslib.WordRAM.Op.eval_alu,
+          Cslib.WordRAM.Op.eval_load, Cslib.WordRAM.Op.eval_store, Cslib.WordRAM.Op.eval_bin,
+          Cslib.WordRAM.Op.eval_width, Cslib.WordRAM.Basis.standard_interp_bin,
+          Cslib.WordRAM.Basis.standard_interp_width, Cslib.WordRAM.Data.put,
+          Cslib.WordRAM.fits_zero,
           Cslib.WordRAM.BinOp.eval, Cslib.WordRAM.Cond.holds_eq, Cslib.WordRAM.Cond.holds_lt,
           Cslib.WordRAM.Data.set_regs, Cslib.WordRAM.Data.set_mem,
           Cslib.WordRAM.Data.write_regs, Cslib.WordRAM.Data.write_mem, Function.update_self,

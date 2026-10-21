@@ -42,6 +42,10 @@ instruction budget, is not formalized here.
 * `Cslib.WordRAM.DecidableInTime.mapOp`, `Cslib.WordRAM.LinearTime.mapOp`,
   `Cslib.WordRAM.PolynomialTime.mapOp`: decision transfers to a larger basis with the same time
   bound and word-size threshold.
+
+## References
+
+* [T. Hagerup, *Sorting and searching on the word RAM*][Hagerup1998]
 -/
 
 @[expose] public section
@@ -210,8 +214,6 @@ theorem Program.DecidesInTimeAt.mapOp {p : Program B r} {encode : α → List �
     {time width : α → ℕ} (h : p.DecidesInTimeAt encode A time width) :
     (p.mapOp φ).DecidesInTimeAt encode A time width :=
   fun a hi => (answers_mapOp_iff φ).2 (h a hi)
-
-variable {φ}
 
 /-- **Decision grows with the basis.** What a program over `B` decides, its translation over `B'`
 decides within the same time bound and word-size threshold. -/

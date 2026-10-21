@@ -5,10 +5,10 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate
+-- upstream: candidate (after Circuit/SignatureHom)
 
 public import Complexity.Init
-public import Complexity.Computability.Circuit.MapOp
+public import Complexity.Computability.Circuit.SignatureHom
 
 /-!
 # Operation bases for word RAMs
@@ -26,27 +26,36 @@ and overflow faults are the same for every basis; an operation whose value does 
 faults like any other. A basis also marks the operations that may depend on the word size, so that
 programs avoiding them run in the same way at every larger word size.
 
-Bases are compared by meaning-preserving maps of their operations (`Cslib.WordRAM.Basis.Hom`), built
-on `Cslib.Circuits.Signature.Hom`. A program over a basis runs instruction for instruction over a
-larger one; `Cslib.WordRAM.Basis.restrict` gives the sub-bases of a basis.
+Bases are compared by meaning-preserving maps of their operations (`Cslib.WordRAM.Basis.Hom`),
+built on `Cslib.Circuits.Signature.Hom`. A program over a basis runs instruction for instruction
+over a larger one; `Cslib.WordRAM.Basis.restrict` gives the sub-bases of a basis.
 
 ## Main definitions
 
 * `Cslib.WordRAM.Basis`: operation symbols, their meaning at each word size, and the symbols whose
   meaning depends on the word size.
 * `Cslib.WordRAM.BinOp`, `Cslib.WordRAM.StandardOp`, `Cslib.WordRAM.Basis.standard`: the standard
-  word-RAM operations, namely the arithmetic, bitwise and shift operations of [Hagerup][Hagerup1998]
-  and the word size.
+  word-RAM operations: addition, subtraction, multiplication, bitwise operations and shifts as in
+  [Hagerup][Hagerup1998], together with division, remainder and the word size.
 * `Cslib.WordRAM.Basis.Hom`: a map of bases that keeps the meaning of every operation.
 * `Cslib.WordRAM.Basis.restrict`: the sub-basis of the operations satisfying a predicate.
 * `Cslib.WordRAM.Basis.additive`, `Cslib.WordRAM.Basis.arithmetic`: addition and subtraction; and
-  these with multiplication, division and remainder, the arithmetic of the bounded-word RAM of
-  [MIT–ULB CompGeom Group][Tromino2025] on unsigned words.
+  these with multiplication, division and remainder, the operation symbols of the bounded-word RAM
+  of [MIT–ULB CompGeom Group][Tromino2025], on unsigned words with truncated subtraction.
+
+## Main results
+
+* `Cslib.WordRAM.Basis.Hom.interp_map`: the image of an operation under a map of bases has the
+  operation's value.
+* `Cslib.WordRAM.Basis.arithmeticHomStandard_comp_additiveHomArithmetic`: the inclusions of the
+  named bases commute.
 
 ## References
 
 * [A. Andersson, P. B. Miltersen and M. Thorup, *Fusion trees can be implemented with AC⁰
   instructions only*][AnderssonMiltersenThorup1999]
+* [M. L. Fredman and D. E. Willard, *Surpassing the information theoretic bound with fusion
+  trees*][FredmanWillard1993]
 * [T. Hagerup, *Sorting and searching on the word RAM*][Hagerup1998]
 * [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]
 -/
@@ -137,9 +146,10 @@ def StandardOp.eval (w : ℕ) : (f : StandardOp) → (Fin f.arity → ℕ) → �
   | .bin f, x => f.eval (x (0 : Fin 2)) (x (1 : Fin 2))
   | .width, _ => w
 
-/-- The standard word-RAM basis: the arithmetic, bitwise and shift operations of
-[Hagerup][Hagerup1998], and the word size, which word-RAM algorithms may read
-[Fredman and Willard][FredmanWillard1993]. Only the word size reads the word size. -/
+/-- The standard word-RAM basis: addition, subtraction, multiplication, bitwise operations and
+shifts as in [Hagerup][Hagerup1998], together with division and remainder, and the word size, which
+word-RAM algorithms may read [Fredman and Willard][FredmanWillard1993]. Only the word size reads
+the word size. -/
 abbrev Basis.standard : Basis where
   Op := StandardOp
   Arity := StandardOp.arity
@@ -150,7 +160,6 @@ abbrev Basis.standard : Basis where
     | bin => rfl
     | width => exact absurd rfl hf
 
-@[simp]
 theorem Basis.standard_op : Basis.standard.Op = StandardOp := rfl
 
 @[simp]
@@ -167,11 +176,12 @@ theorem Basis.standard_readsWidth (f : StandardOp) :
 
 /-! ## Maps of bases -/
 
-/-- A map of bases: a map of signatures (`Cslib.Circuits.Signature.Hom`) that keeps the meaning of
-every operation at every word size, and sends an operation that does not read the word size to
-one that does not either. Programs over `B` then run instruction for instruction over `B'`. -/
+/-- A map of bases: a map of signatures (`Cslib.Circuits.Signature.Hom`) such that at each word
+size the image of every operation has the operation's value, and that sends an operation not
+marked as reading the word size to one not so marked. Programs over `B` then run instruction for
+instruction over `B'`. -/
 structure Basis.Hom (B B' : Basis) extends B.toSignature.Hom B'.toSignature where
-  /-- The image of each operation has the same value at every word size. -/
+  /-- At each word size, the image of each operation has the operation's value. -/
   preserves (w : ℕ) : toHom.Preserves (B.interp w) (B'.interp w)
   /-- An operation whose image reads the word size reads it itself. -/
   readsWidth_of_map (f : B.Op) : B'.ReadsWidth (toHom f) → B.ReadsWidth f
@@ -233,9 +243,10 @@ def Basis.restrictHom (B : Basis) (P : B.Op → Prop) : (B.restrict P).Hom B whe
 def Basis.additive : Basis :=
   Basis.standard.restrict (· ∈ [StandardOp.bin .add, .bin .sub])
 
-/-- Addition, truncated subtraction, multiplication, division and remainder: the arithmetic of the
-bounded-word RAM of [MIT–ULB CompGeom Group][Tromino2025], on unsigned words, without bitwise
-operations, shifts or the word size. -/
+/-- Addition, truncated subtraction, multiplication, division and remainder: the operation symbols
+of the bounded-word RAM of [MIT–ULB CompGeom Group][Tromino2025], without bitwise operations, shifts
+or the word size. Words here are unsigned and subtraction is truncated, whereas the source subtracts
+signed words; on the other operations and nonnegative arguments the two agree. -/
 def Basis.arithmetic : Basis :=
   Basis.standard.restrict (· ∈ [StandardOp.bin .add, .bin .sub, .bin .mul, .bin .div, .bin .mod])
 

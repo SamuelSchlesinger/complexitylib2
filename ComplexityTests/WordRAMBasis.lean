@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Algorithms.WordRAM.ElementDistinctness
 import Complexity.Computability.WordRAM.MapOp
 
 /-!
