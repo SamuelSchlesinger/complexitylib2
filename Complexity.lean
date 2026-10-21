@@ -452,6 +452,8 @@ public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Formula
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered.Reduction
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Output
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Reduction
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
@@ -1374,6 +1376,7 @@ public import Complexity.Logics.FirstOrder.Ordered.BitSum.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Composition
+public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks

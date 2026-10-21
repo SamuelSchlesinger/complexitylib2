@@ -1,5 +1,21 @@
 # Theorem-index review
 
+## Canonical full-tuple ordered interpretation transducers (#137), 20 October 2026
+
+Reviewed Lean revision: `bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60` (prerequisite shared output commit `97622143391f6777b14b832420787b5a79d7109d`).
+
+Scope:
+- `Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Output.lean`
+- `Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean`
+- `Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean`
+- `ComplexityTests/OrderedReduction.lean`
+- `paper/sections/structure.tex` (`Canonical full-tuple ordered interpretations as logspace transducers`) and `ROADMAP.md`
+
+Independent reviews:
+- cslib API review (`14919544-d52b-40a4-aa1f-d7fa16f654b7` and `coordinator-ops-20261020`): **APPROVED**. Verified module paths, `Cslib.Logic.FO.Ordered.FullTupleInterpretation` namespace, naming conventions, shared `FirstOrder/Output.lean` factoring, docstrings, citations (`[Immerman1999]`), and proof hygiene.
+- Mathematical correctness review (`0cdeb10e-3db3-44c3-81d1-6ef4f4507c85` and `coordinator-ops-20261020`): **APPROVED**. Verified `encodedMap`, `card_encodedMap`, `wellFormed_encodedMap_iff`, `two_le_card_encodedMap`, `table_encodedMap`, `length_encStructure_encodedMap`, `encodedModelEquiv`, `encodedModelEquiv_apply_val`, `computableInLogSpace_encodedMap`, `mem_queryLanguage_encodedMap_iff`, `logSpaceReducible_onSentence`, counter-program unpacking of `Fin (a.1 ^ k)` ranks into reversed base-`a.1` coordinates (`lexEquiv.symm`) while streaming tables in `tupleIndex` order, register/polynomial bounds, and non-vacuity/orientation tests in `ComplexityTests/OrderedReduction.lean`.
+- Theorem-index review (`bbf779fa-0ff8-44cc-9a13-d5cbbbf120ba`): **APPROVED**. Verified all 10 `\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}` declaration links, mathematical statements, quantifiers, resource bounds, and scope limitations (`k > 0` for canonical target numerics, full-domain hypothesis, encoding-relative contract, and open class-level ordered reduction closure and projection completeness).
+
 ## Cook-Mertz Tree Evaluation, 19 October 2026
 
 Integrated Lean revision: `aa72232abd8858a2c4103eb6aebc039e3b02f52d`.
