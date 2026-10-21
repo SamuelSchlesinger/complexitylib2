@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
+import Complexity.Computability.Complexity.Classes.SharpP.Space
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
@@ -329,10 +330,8 @@ theorem computableTidilyInPolyTime_accepts :
     ComputableTidilyInPolyTime (fun p : List Bool × List Bool × History =>
       accepts M p.1 p.2.1 p.2.2) (encPair encBits (encPair encBits encHistory)) encBool := by
   have h := computableTidilyInPolyTime_aliveRun M
-  have hpost : ComputableTidilyInPolyTime (fun s : AliveState k Control =>
-      s.2.2 && s.2.1.isEmpty && decide (s.1.tapes.output = [true])) encAliveState encBool := by
-    fun_prop
-  exact hpost.comp h
+  unfold accepts
+  fun_prop
 
 end PolyTime
 
@@ -421,47 +420,17 @@ theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
     ComputableTidilyInPolySpace (countAccepts M enc fuel) (encPair enc encHistory) encNat := by
   have hfuel' : ComputableTidilyInPolyTime (fun q : α × History => fuel q.1)
       (encPair enc encHistory) encUnary := hfuel.comp (ComputableTidilyInPolyTime.fst _ _)
-  have hn : ComputableTidilyInPolyTime (fun q : α × History => 2 ^ fuel q.1)
-      (encPair enc encHistory) encNat :=
-    ComputableTidilyInPolyTime.binary_two_pow.comp hfuel'
-  have hinit : ComputableTidilyInPolyTime
-      (fun q : α × History => (q, List.replicate (fuel q.1) false, 0))
-      (encPair enc encHistory) (encPair (encPair enc encHistory) (encPair encBits encNat)) :=
-    ComputableTidilyInPolyTime.id'.prod
-      (((ComputableTidilyInPolyTime.bitsReplicate false).comp hfuel').prod
-        (ComputableTidilyInPolyTime.const 0))
   have hacc := computableTidilyInPolyTime_accepts M
-  have hinc := ComputableTidilyInPolyTime.increment
-  have hstep : ComputableTidilyInPolyTime (countStep M enc)
-      (encPair (encPair enc encHistory) (encPair encBits encNat))
-      (encPair (encPair enc encHistory) (encPair encBits encNat)) := by
-    unfold countStep
-    fun_prop
-  have hlen := hfuel.polyBounded_length
-  simp only [encUnary_apply, List.length_replicate] at hlen
-  have hit := ComputableTidilyInPolySpace.iterate hn (.of_polyTime hinit) (.of_polyTime hstep)
-    (B := fun q => 2 * (encPair enc encHistory q).length + 3 * fuel q.1 + 5)
-    ((((PolyBounded.const 2).mul .self).add ((PolyBounded.const 3).mul
-      (hlen.comp (g := Prod.fst) (size' := fun a => (enc a).length)
-        (PolyBounded.of_forall_le 1 1 fun q => by
-          simp only [encPair_apply, List.length_append, length_frame, pow_one, one_mul]
-          lia)))).add (.const 5))
-    (fun q j hj => ?_)
-  · exact (ComputableTidilyInPolySpace.of_polyTime
-      ((ComputableTidilyInPolyTime.snd _ _).snd')).comp hit
-  · rw [iterate_countStep]
-    have hcard : ((Finset.range j).filter fun i =>
-        accepts M (enc q.1) (increment^[i] (List.replicate (fuel q.1) false)) q.2).card ≤
-          2 ^ fuel q.1 :=
-      (Finset.card_filter_le _ _).trans (by simpa using hj)
-    have hsize : (encNat ((Finset.range j).filter fun i =>
-        accepts M (enc q.1) (increment^[i] (List.replicate (fuel q.1) false)) q.2).card).length
-          ≤ fuel q.1 + 1 := by
-      rw [encNat_apply, Nat.size_eq_bits_len]
-      exact Nat.size_le.mpr (hcard.trans_lt (Nat.pow_lt_pow_right (by norm_num) (by lia)))
-    simp only [length_encPair, encBits_apply, BitString.length_iterate_increment,
-      List.length_replicate] at hsize ⊢
-    lia
+  have hverify : ComputableTidilyInPolyTime
+      (fun p : (α × History) × List Bool => accepts M (enc p.1.1) p.2 p.1.2)
+      (encPair (encPair enc encHistory) encBits) encBool := by fun_prop
+  refine (computableTidilyInPolySpace_acceptCount hverify hfuel').congr fun q => ?_
+  rw [countAccepts_eq_accepted]
+  unfold acceptCount accepted
+  apply congrArg Finset.card
+  apply Finset.filter_congr
+  intro r _
+  exact accepts_eq_true_iff_of_length M (List.length_ofFn (f := r)) q.2
 
 end Count
 

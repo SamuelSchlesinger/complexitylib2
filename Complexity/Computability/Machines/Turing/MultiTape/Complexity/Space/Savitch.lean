@@ -105,22 +105,11 @@ theorem savitchDecide_eq_true_iff {c d s : ℕ} {input : List Bool} (hs : ntm.Ru
 /-- The width of the codes is polynomial-time, in unary. -/
 theorem computableTidilyInPolyTime_codeWidth {α : Type} {enc : α ↪ List Bool} (c d : ℕ) :
     ComputableTidilyInPolyTime (fun a => ntm.codeWidth c d (enc a)) enc encUnary := by
-  have hlength : ComputableTidilyInPolyTime (fun a => (enc a).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.length encBool (encL := encBits)).comp (.encode enc)
+  have hlength := ComputableTidilyInPolyTime.encoding_length enc
   have hinit := ComputableTidilyInPolyTime.finiteCfg_init (k := k) (.encode enc) ntm.q₀
-  have hpow : ComputableTidilyInPolyTime (fun a => ((enc a).length + 1) ^ d) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_pow d).comp
-      (ComputableTidilyInPolyTime.unary_add.comp (hlength.prod (.const 1)))
-  have hsum : ComputableTidilyInPolyTime
-      (fun a => (enc a).length + c * ((enc a).length + 1) ^ d + 1) enc encUnary :=
-    ComputableTidilyInPolyTime.unary_add.comp ((ComputableTidilyInPolyTime.unary_add.comp
-      (hlength.prod (ComputableTidilyInPolyTime.unary_mul.comp
-        ((ComputableTidilyInPolyTime.const c).prod hpow)))).prod
-        (ComputableTidilyInPolyTime.const 1))
-  simp only [codeWidth, viewLengthBound]
-  exact ComputableTidilyInPolyTime.unary_add.comp
-    (((ComputableTidilyInPolyTime.length encBool (encL := encBits)).comp hinit.encoded).prod
-      (ComputableTidilyInPolyTime.unary_mul.comp ((ComputableTidilyInPolyTime.const _).prod hsum)))
+  have hsize := (ComputableTidilyInPolyTime.encoding_length encFiniteCfg).comp hinit
+  simp only [codeWidth, viewLengthBound, initView]
+  fun_prop
 
 variable (ntm) in
 /-- **Savitch's decider runs in polynomial space**, tidily: within some time and within space
@@ -131,8 +120,7 @@ theorem exists_polyBounded_space_savitchDecide {α : Type} (enc : α ↪ List Bo
   have hwidth := computableTidilyInPolyTime_codeWidth (ntm := ntm) (enc := enc) c d
   have hcodes : ComputableTidilyInPolyTime
       (fun a => 2 * ntm.codeWidth c d (enc a) + 2) enc encUnary :=
-    ComputableTidilyInPolyTime.unary_add.comp ((ComputableTidilyInPolyTime.unary_mul.comp
-      ((ComputableTidilyInPolyTime.const 2).prod hwidth)).prod (ComputableTidilyInPolyTime.const 2))
+    by fun_prop
   have hedge : ComputableTidilyInPolyTime
       (fun q : Unit × List Bool × List Bool => (fun _ => ntm.codeEdge) q.1 q.2.1 q.2.2)
       (encPair (encFinite Unit) (encPair encBits encBits)) encBool :=
