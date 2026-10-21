@@ -258,6 +258,7 @@ import ComplexityTests.ProbabilityToolkit2
 import ComplexityTests.ProbabilityToolkit3
 import ComplexityTests.Programs
 import ComplexityTests.ProofComplexity
+import ComplexityTests.ProofComplexity.Pigeonhole
 import ComplexityTests.ProofComplexity.Resolution
 import ComplexityTests.ProofComplexity.Tseitin
 import ComplexityTests.Propagation
