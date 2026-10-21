@@ -209,34 +209,17 @@ theorem interpret_prob_eq_memoize_map {Value Key' Value' : Type} [Finite Value]
         (fun key => memoize sample' (keyMap key))) program).run []).map Prod.fst := by
   let represent := fun cache : List (Query × Value) =>
     cache.map (fun entry => (keyMap entry.1, valueMap entry.2))
-  have hstep : ∀ key cache,
-      ((memoize distribution key cache).map (fun (value, next) => (valueMap value, next))).map
-        (fun (value, next) => (value, represent next)) =
-      memoize sample' (keyMap key) (represent cache) := by
-    intro key cache
-    simpa only [PMF.map_comp, Function.comp_def, represent, PMF.monad_map_eq_map] using
-      memoize_map keyMap valueMap distribution sample' hsample key cache
-  have hrun := ProbOracleComp.run_interpret_map_state
-    (fun key cache => (memoize distribution key cache).map
-      (fun (value, next) => (valueMap value, next)))
-    (fun key => memoize sample' (keyMap key)) represent hstep program []
+  have hrun := ProbOracleComp.run_interpret_map_response_state (fun _ => valueMap)
+    (memoize distribution) (fun key => memoize sample' (keyMap key)) represent
+    (fun key cache => by
+      simpa only [represent, PMF.monad_map_eq_map] using
+        memoize_map keyMap valueMap distribution sample' hsample key cache) program []
   have houtput := congrArg (PMF.map Prod.fst) hrun
   simp only [PMF.map_comp, Function.comp_def, represent, List.map_nil] at houtput
   rw [← houtput]
-  have hquery (key : Query) : OracleComp.interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (memoize distribution))
-        (valueMap <$> ProbOracleComp.query key) =
-      fun cache => (memoize distribution key cache).map
-        (fun (value, next) => (valueMap value, next)) := by
-    funext cache
-    change (OracleComp.interpret (m := StateT (List (Query × Value)) PMF) _
-      (valueMap <$> ProbOracleComp.query (spec := fun _ : Query => Value) key)).run cache = _
-    simp only [OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query,
-      PMF.monad_map_eq_map]
-    rfl
   simpa only [OracleComp.interpret_interpret, interpret_handler, interpret_sample,
     ProbComp.unifFin, OracleComp.interpret_query, OracleComp.interpret_map, interpret_query,
-    PMF.monad_map_eq_map, PMF.pure_map, hquery] using interpret_prob_eq_memoize distribution
+    PMF.monad_map_eq_map, PMF.pure_map] using interpret_prob_eq_memoize distribution
       (OracleComp.interpret (handler (fun n => sample (ProbComp.unifFin n))
         (fun key => valueMap <$> ProbOracleComp.query key)) program)
 

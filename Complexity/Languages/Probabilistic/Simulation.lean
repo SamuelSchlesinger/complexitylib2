@@ -27,6 +27,7 @@ There is one oracle specification and one interpreter; stateful execution uses `
 * `Cslib.OracleComp.run_interpret_invariant`: invariants of each call hold after execution.
 * `Cslib.OracleComp.run_interpret_simulation_of_invariant`: probabilistic state simulation.
 * `Cslib.OracleComp.run_interpret_map_state_of_invariant`: deterministic state representation.
+* `Cslib.OracleComp.run_interpret_map_response_state`: represent both replies and private state.
 * `Cslib.OracleComp.map_run_interpret`: a monad morphism commutes with stateful interpretation.
 * `Cslib.OracleComp.run_interpret_lift`: lifted effects preserve the complete private state.
 * `Cslib.OracleComp.run_interpret_run_interpret`: a stateful handler whose effects are oracle
@@ -144,6 +145,25 @@ theorem run_interpret_map_state
       (interpret oracle' program).run (represent s) :=
   run_interpret_map_state_of_invariant oracle oracle' represent (fun _ => True)
     (by simp) (fun q s _ => step q s) program s trivial
+
+/-- Representing replies and private state commutes with adaptive execution. Oracle substitution
+supplies each target reply by mapping a source reply, including to adaptive continuations.
+This corollary of state simulation retains the joint result and represented final state. -/
+theorem run_interpret_map_response_state {spec' : OracleSpec.{u, v} ι}
+    (response : (q : ι) → spec q → spec' q)
+    (oracle : (q : ι) → StateT State PMF (spec q))
+    (oracle' : (q : ι) → StateT State' PMF (spec' q)) (represent : State → State')
+    (step : ∀ q s, (oracle q s).map (fun (a, s') => (response q a, represent s')) =
+      oracle' q (represent s)) (program : OracleComp spec' α) (s : State) :
+    ((interpret oracle (interpret (fun q => response q <$> query q) program)).run s).map
+        (fun (a, s') => (a, represent s')) =
+      (interpret oracle' program).run (represent s) := by
+  rw [interpret_interpret]
+  apply run_interpret_map_state
+  intro q state
+  change ((oracle q state).map (fun (a, next) => (response q a, next))).map
+    (fun (a, next) => (a, represent next)) = oracle' q (represent state)
+  simpa only [PMF.map_comp, Function.comp_def] using step q state
 
 /-- Transforming the underlying monad commutes with stateful program interpretation, retaining
 the joint result and private state. -/

@@ -327,32 +327,16 @@ theorem interpret_eq_memoize_map {Key' Value' : Type u} [BEq Key'] [LawfulBEq Ke
         Prod.fst := by
   let represent := fun cache : List (Query × Value) =>
     cache.map (fun entry => (keyMap entry.1, valueMap entry.2))
-  have hstep : ∀ key cache,
-      ((memoize distribution key cache).map (fun (value, next) => (valueMap value, next))).map
-        (fun (value, next) => (value, represent next)) =
-      memoize sample' (keyMap key) (represent cache) := by
-    intro key cache
-    simpa only [PMF.map_comp, Function.comp_def, represent, PMF.monad_map_eq_map] using
-      memoize_map keyMap valueMap distribution sample' hsample key cache
-  have hrun := OracleComp.run_interpret_map_state
-    (fun key cache => (memoize distribution key cache).map
-      (fun (value, next) => (valueMap value, next)))
-    (fun key => memoize sample' (keyMap key)) represent hstep program []
+  have hrun := OracleComp.run_interpret_map_response_state (fun _ => valueMap)
+    (memoize distribution) (fun key => memoize sample' (keyMap key)) represent
+    (fun key cache => by
+      simpa only [represent, PMF.monad_map_eq_map] using
+        memoize_map keyMap valueMap distribution sample' hsample key cache) program []
   have houtput := congrArg (PMF.map Prod.fst) hrun
   simp only [PMF.map_comp, Function.comp_def, represent, List.map_nil] at houtput
   rw [← houtput]
-  have hquery (key : Query) :
-      OracleComp.interpret (memoize distribution) (valueMap <$> OracleComp.query key) =
-        fun cache => (memoize distribution key cache).map
-          (fun (value, next) => (valueMap value, next)) := by
-    funext cache
-    change (OracleComp.interpret (memoize distribution)
-      (valueMap <$> OracleComp.query key)).run cache = _
-    simp only [OracleComp.interpret_map, StateT.run_map, OracleComp.interpret_query,
-      PMF.monad_map_eq_map]
-    rfl
   simpa only [OracleComp.interpret_interpret, OracleComp.interpret_map, OracleComp.interpret_query,
-    PMF.monad_map_eq_map, PMF.pure_map, hquery] using interpret_eq_memoize distribution
+    PMF.monad_map_eq_map, PMF.pure_map] using interpret_eq_memoize distribution
       (OracleComp.interpret (fun key => valueMap <$> OracleComp.query key) program)
 
 end ListFinite
