@@ -353,6 +353,35 @@ claim is made. The backend extends the existing bounded-word machine and compile
 \end{result}
 
 \begin{result}
+\subsection{Recursive van Emde Boas sets: functional correctness}
+For every depth $d\geq 0$, let $U_d=2^{2^d}$. A valid recursive van Emde Boas tree
+represents a finite subset of $\{0,\ldots,U_d-1\}$. Inserting any $x<U_d$ preserves
+the invariant and changes the represented set $S$ to $S\cup\{x\}$, including duplicate
+insertions. Membership agrees with $S$. For every natural query $x$, including queries
+outside the universe, successor returns $y$ exactly when $y\in S$, $x<y$, and every
+$z\in S$ with $x<z$ satisfies $y\leq z$; it returns no key exactly when every element
+of $S$ is at most $x$. The representation stores the minimum outside recursive clusters,
+caches the maximum, and maintains a recursive summary of nonempty clusters.
+
+A proposed contiguous layout uses a five-word header, one summary and $U_d$ cluster
+records at depth $d+1$. Its record-size recurrence
+$S_0=5$, $S_{d+1}=5+(U_d+1)S_d$ satisfies $S_d\leq10U_d$; the recursive address
+intervals do not overlap. This is layout arithmetic, not a proved memory representation.
+The operations are Lean functions: no native RAM instruction bound, charged initializer,
+implemented machine-space bound or compiled adaptive controller is established here.
+Deletion and predecessor are outside this result. The recursive minimum-excluded variant
+follows Demaine's exposition, whose notes credit Michael Bender; it is distinguished from
+the original stratified-tree implementation with $O(U\log\log U)$
+storage.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Basic.lean}{235}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.member_iff_contains}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Insert.lean}{283}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.valid_insert}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean}{60}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.elements_insert}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{221}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_some_iff}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{245}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_none_iff}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean}{110}{Cslib.Algorithms.Lean.VanEmdeBoas.span_le}
+\end{result}
+
+\begin{result}
 \subsection{Timeline editing by explicit reset and replay}
 For any deterministic stateful specification with an initial state, a semantic construction edits
 its stored operation timeline, resets the underlying structure, and replays the edited timeline.

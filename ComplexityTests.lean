@@ -336,6 +336,7 @@ import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.UniversalResourceBound
+import ComplexityTests.VanEmdeBoas
 import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
