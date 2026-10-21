@@ -12,7 +12,8 @@ import Mathlib.Data.Fintype.Powerset
 import Mathlib.Tactic.FinCases
 
 /-! Tests and axiom guards for mixed-activation, cut, component, block-excess, direction-menu,
-unambiguous cell, and quadratic-potential unique-sink representations of weighted threshold circuits. -/
+unambiguous cell, and quadratic-potential unique-sink representations of weighted threshold
+circuits. -/
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
