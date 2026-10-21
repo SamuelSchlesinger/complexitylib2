@@ -36,7 +36,8 @@ polynomial bound on the complete encoded output. The operations are total on emp
   framing and bounded padding, including arbitrary encoded inputs and overlong words.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsGetElem?`: optional lookup in raw bits.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapToBitsWithInput`, `.bitsFilterWithInput`,
-  `.bitsAnyWithInput`, `.bitsFoldlWithInput`, `.bitsZipWithInput`: compositional bit operations.
+  `.bitsAnyWithInput`, `.bitsAllWithInput`, `.bitsFoldlWithInput`, `.bitsZipWithInput`:
+  compositional bit operations.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajority`, `.bitsSingle`, `.bitsSingles`,
   `.bitsXorSelected`, `.bitsXorWithInput`: finite-mask algorithms.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsCountPWithInput`, `.bitsCountWithInput`:
@@ -221,15 +222,18 @@ theorem bitsCountPWithInput {list : α → List Bool} {test : α → Bool → Bo
     (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
       (encPair input encBool) encBool) :
     ComputableTidilyInPolyTime (fun x => (list x).countP (test x)) input encUnary :=
-  countPWithInput (bitsToList.comp hlist) htest
+  countPWith htest id' hlist
 
 /-- Count occurrences of a computed bit in a raw bit string. -/
 @[fun_prop]
 theorem bitsCountWithInput {list : α → List Bool} {value : α → Bool}
     (hlist : ComputableTidilyInPolyTime list input encBits)
     (hvalue : ComputableTidilyInPolyTime value input encBool) :
-    ComputableTidilyInPolyTime (fun x => (list x).count (value x)) input encUnary :=
-  countWithInput (bitsToList.comp hlist) hvalue
+    ComputableTidilyInPolyTime (fun x => (list x).count (value x)) input encUnary := by
+  simp only [List.count_eq_countP]
+  apply countPWith (encA := encBool) (test := fun p : α × Bool => p.2 == value p.1)
+    (hpar := id') (hlist := hlist)
+  fun_prop
 
 /-- Test whether any bit satisfies a captured predicate. -/
 @[fun_prop]
@@ -238,7 +242,16 @@ theorem bitsAnyWithInput {list : α → List Bool} {test : α → Bool → Bool}
     (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
       (encPair input encBool) encBool) :
     ComputableTidilyInPolyTime (fun a => (list a).any (test a)) input encBool :=
-  anyWithInput (bitsToList.comp hlist) htest
+  anyWithEncoding htest id' hlist
+
+/-- Test whether every bit satisfies a captured predicate. -/
+@[fun_prop]
+theorem bitsAllWithInput {list : α → List Bool} {test : α → Bool → Bool}
+    (hlist : ComputableTidilyInPolyTime list input encBits)
+    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
+      (encPair input encBool) encBool) :
+    ComputableTidilyInPolyTime (fun a => (list a).all (test a)) input encBool :=
+  allWithEncoding htest id' hlist
 
 /-- A Boolean fold has constant-sized state, so no separate state bound is needed. -/
 @[fun_prop]

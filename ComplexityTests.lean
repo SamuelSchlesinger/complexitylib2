@@ -234,6 +234,7 @@ import ComplexityTests.Parameterized
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimePlain
+import ComplexityTests.PolyTimeScans
 import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeSum
 import ComplexityTests.PolyTimeTactic
