@@ -6,6 +6,11 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Basic
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Elements
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Insert
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Layout
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Successor
 public import Complexity.Algorithms.Reachability.BreadthFirst
 public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
