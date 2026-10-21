@@ -239,6 +239,44 @@ RAM, and the lean-trominoes word-RAM formalization.
 
 
 \begin{result}
+\subsection{Native bounds for fixed tuples and retained-input option branches}
+For arbitrary injective binary encodings, fixed finite tuple selection, gathering, and
+fixed-index update have tidy native multitape Turing-machine time and space $O(E+1)$,
+where $E$ is the full encoded input length. Update receives the stored tuple and replacement
+value; gathering may repeat indices. The tuple dimensions and index map are fixed independently
+of the input, and machine constants may depend on them.
+
+If component $i$ has arbitrary native time and space bound expressions $T_i(x),S_i(x)$,
+tuple construction has respective bounds
+\[
+E(x)+\sum_i T_i(x),\qquad E(x)+\sum_i S_i(x).
+\]
+The native resource predicate also bounds the complete encoded output by a constant times the
+space expression plus one. Empty tuples and empty value types are covered.
+
+For an option computation $v(x)$ with bounds $T_v,S_v$, a fallback handler on $x$ with bounds
+$T_0,S_0$, and a payload handler on the framed pair $(x,b)$ with bounds $T_1,S_1$, elimination
+retaining $x$ has bounds
+\[
+2T_v(x)+E(x)+
+\begin{cases}T_0(x)&v(x)=\mathrm{none},\\T_1(x,b)&v(x)=\mathrm{some}(b),\end{cases}
+\]
+and the analogous expression with $S$ in place of $T$. This conservative construction charges
+the repeated option computation used for payload extraction, tag testing, input retention,
+and the selected handler. No inhabited-payload assumption is required. All displayed expressions
+are asymptotic bounds with existential machine constants, not exact transition counts.
+The proofs reuse Christian Reitwiessner's native tidy calculus and the existing finite-table
+encoding. These are compositional native-machine rules; an encoded RAM step simulator and
+whole-run theorem transport remain separate work.
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{43}{Turing.MultiTapeTM.ComputableTidilyInO.ofFn}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{58}{Turing.MultiTapeTM.ComputableTidilyInO.pi}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{82}{Turing.MultiTapeTM.ComputableTidilyInO.pi_apply}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{99}{Turing.MultiTapeTM.ComputableTidilyInO.pi_gather}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{110}{Turing.MultiTapeTM.ComputableTidilyInO.pi_update}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean}{39}{Turing.MultiTapeTM.ComputableTidilyInO.optionElimWithInput}
+\end{result}
+
+\begin{result}
 \subsection{Stateful semantic composition and independent resource certificates}
 A deterministic stateful specification assigns each admissible operation a new state and a typed
 answer. A semantic module implements such operations by terminating adaptive programs over a

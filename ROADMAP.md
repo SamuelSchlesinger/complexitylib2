@@ -800,7 +800,14 @@ space bounds. Further class-level work needs resource certificates for the actua
   executable. The algebraic variant has checked word arithmetic and rational constants with
   nonzero field denominators; no field-to-word conversion is provided. Generalizing the structured
   program calculus and time-class APIs to arbitrary domains, weighted/bit costs, and simulations
-  between these instances remain open. No real-RAM/Turing-machine equivalence is claimed;
+  between these instances remain open. The native tidy calculus now has
+  [fixed finite tuple rules](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean)
+  with linear access/gather/update and arbitrary summed construction bounds, and
+  [retained-input option elimination](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean)
+  charging extraction, repeated option computation, input retention, and the selected handler
+  (#301). These compositional prerequisites do not implement the encoded generic-RAM step or
+  its iteration/initialization/output transport (#298/#292). No real-RAM/Turing-machine
+  equivalence is claimed;
 * RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
   Lean formalization accompanying the tromino undecidability paper, is parameterized by a
   [basis of word operations](Complexity/Computability/WordRAM/Basis.lean) built on circuit
