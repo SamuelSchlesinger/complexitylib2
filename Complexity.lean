@@ -213,6 +213,7 @@ public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.InnerPr
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Menus
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.PendingBias
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Potential
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.ScalarActivity
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
 public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Computability.Circuit.Boolean.XorLemma

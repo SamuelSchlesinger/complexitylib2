@@ -439,6 +439,64 @@ than algorithmically certified.\citep{Schlesinger2026Algebraic}
 \end{result}
 
 \begin{result}
+When every gate of a real-weight threshold program $p$ has its effective input
+weight vector proportional to a single direction $w\in\mathbb R^n$
+($\mathrm{inputWeight}(p,j)=c_j w$), both the full gate evaluation and the
+input-reading transcript are order-convex along the scalar score
+$s_w(x)=\sum_{i=0}^{n-1}w_i x_i$. Extending the evaluation to $\mathbb R$ via
+the realized score $\le t$ closest to $t$ (or a global score minimizer when no
+realized score is $\le t$) yields one-dimensional maps with at most
+$P(p)=|\mathrm{attainableTranscripts}(p)|$ interval pieces and at most $P(p)-1$
+changes. Consequently, any list of inputs $x_1,\dots,x_L$ with nondecreasing
+scores $s_w(x_1)\le\dots\le s_w(x_L)$ and alternating readout values satisfies
+\[
+L \le P(p) \le \sum_{j=0}^{e(p)}\binom{q}{j},\qquad
+L \le \sum_{j=0}^{E(p)}\binom{g}{j},
+\]
+where $q=|\mathrm{inputGates}(p)|$, $e(p)=\mathrm{inputActivity}(p)$, and
+$E(p)=\mathrm{gateActivity}(p)$. If a Boolean readout of $p$ computes a
+two-sided $K$-rectangle-free function $f$ on $n$ bits, then
+\[
+2^n < 4K^2\max\!\big(1,4(P(p)-1)\big) \le 16K^2 P(p)
+\le 16K^2\sum_{j=0}^{e(p)}\binom{q}{j},
+\]
+and likewise with $\sum_{j=0}^{E(p)}\binom{g}{j}$ (with single-output circuit
+corollaries when the output wire selects a gate). For the Hamming-ball size
+$B(q,e)=\sum_{j=0}^e\binom qj$, Cover's lexicographic rank $\mathrm{coverRank}$
+and greedy threshold decoder $\mathrm{coverDecode}$ establish an explicit
+bijection between $\{z\in\{0,1\}^q:\mathrm{weight}(z)\le e\}$ and
+$\{0,\dots,B(q,e)-1\}$. The converse one-direction threshold-circuit synthesis
+for Theorem~4.1 and the $S+O(qe+n)$ circuit compilation of Theorem~4.3 are not
+included in this entry.\citep{ThresholdCircuitRepresentations2026}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{91}{Cslib.Circuits.Boolean.WeightedThreshold.scalarScore}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{106}{Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_scalarScore_between}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{153}{Cslib.Circuits.Boolean.WeightedThreshold.transcript_eq_of_scalarScore_between}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{242}{Cslib.Circuits.Boolean.WeightedThreshold.scalarEval}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{252}{Cslib.Circuits.Boolean.WeightedThreshold.scalarReadout}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{351}{Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_scalarEval}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{370}{Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_scalarTranscript}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{377}{Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_scalarReadout}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{385}{Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_scalarReadout}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{433}{Cslib.Circuits.Boolean.WeightedThreshold.length_le_card_attainableTranscripts_of_isChain}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{452}{Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_of_isChain}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{463}{Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_gateActivity_of_isChain}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{477}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_max_card_attainableTranscripts_of_direction}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{491}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_card_attainableTranscripts_of_direction}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{509}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_of_direction}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{522}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_gateActivity_of_direction}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{533}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_sum_choose_of_direction}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{548}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{565}{Cslib.Circuits.Boolean.WeightedThreshold.ballSize}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{585}{Cslib.Circuits.Boolean.WeightedThreshold.ballSize_succ_succ}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{600}{Cslib.Circuits.Boolean.WeightedThreshold.coverRank}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{611}{Cslib.Circuits.Boolean.WeightedThreshold.coverDecode}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{625}{Cslib.Circuits.Boolean.WeightedThreshold.coverRank_lt_ballSize}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{650}{Cslib.Circuits.Boolean.WeightedThreshold.weight_coverDecode_le}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{686}{Cslib.Circuits.Boolean.WeightedThreshold.coverRank_coverDecode}
+\declat{a5b50b6c8570a17410bc7a5394a805c1e7ffbcac}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean}{725}{Cslib.Circuits.Boolean.WeightedThreshold.coverDecode_coverRank}
+\end{result}
+
+\begin{result}
 For a real-weight threshold program $p$ with $g$ gates and any cut $k$, write
 $p_k(u)_i=\sum_{j<k}b_{k+i,j}u_j$ ($0\le i<g-k$) for the pending internal bias
 accumulated at future gate $k+i$ from a prefix valuation $u\in\{0,1\}^k$. The
