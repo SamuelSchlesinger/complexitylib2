@@ -22,6 +22,10 @@ public import Complexity.Algorithms.WordRAM.PrefixSums.Tree
 public import Complexity.Algorithms.WordRAM.PrefixSums.Update
 public import Complexity.Algorithms.WordRAM.Stack
 public import Complexity.Algorithms.WordRAM.Stack.Controller
+public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Call
+public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Member
+public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Model
+public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Program
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength

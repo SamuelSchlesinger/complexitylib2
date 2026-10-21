@@ -337,6 +337,7 @@ import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.UniversalResourceBound
 import ComplexityTests.VanEmdeBoas
+import ComplexityTests.VanEmdeBoasRAM
 import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
