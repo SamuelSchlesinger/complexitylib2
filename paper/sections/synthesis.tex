@@ -17,6 +17,41 @@ uniform circuit-generation bound.\citep{Bird2011,Valiant1979Algebra}
 \end{result}
 
 \begin{result}
+\subsection{Polynomial-time division-free integer determinant}
+Represent an integer matrix as a list of rows $A\in\mathrm{List}(\mathrm{List}\,\mathbb Z)$ encoded by
+$\texttt{encList}\;(\texttt{encList}\;\texttt{encIntBin})$, where $\texttt{encIntBin}$ encodes each
+$z\in\mathbb Z$ in sign-magnitude binary using $\texttt{intBits}(z)=\mathrm{size}(|z|)+1$ bits.
+Writing $d=|A|$ for the number of rows, missing entries at $(i,j)$ read as $0$ and extra entries outside
+$d\times d$ are ignored, denoting $\texttt{ofRows}(A)\in\mathbb Z^{d\times d}$. The staged Bird recurrence
+$\texttt{detRows}(A)$ iterates $d-1$ stages $\texttt{stepRows}(A)$ from the squared $d\times d$ table
+$\texttt{squareRows}(A)$, returning $1$ when $d=0$ and
+$(-1)^{d-1}\texttt{rowEntry}(\texttt{stagesRows}(A,d-1),0,0)$ when $d\ge 1$. On every list of rows $A$,
+\[
+\texttt{detRows}(A)=\det(\texttt{ofRows}(A)),
+\]
+and in particular $\texttt{detRows}(\texttt{rowsOf}(M))=\det(M)$ for every $M\in\mathbb Z^{d\times d}$.
+If every entry of $A$ satisfies $|A_{i,j}|<2^b$ (equivalently $\texttt{intBits}(A_{i,j})\le b+1$), every
+entry of stage $k$ has absolute value strictly below $2^{b+k(1+d+b)}$ and bit length at most
+$b+k(1+d+b)+1$. For encoded input length $L=|\texttt{encList}(\texttt{encList}\;\texttt{encIntBin})\,A|$ and every
+$i\le k$, the encoded stage table $\texttt{stagesRows}(A,i)$ has length at most
+$\texttt{stageTableBound}(L,k)=L(2L(2(L+k(2L+1)+1)+1)+1)$, and $\texttt{detRows}$ is tidily computable in
+polynomial time and space on a multi-tape Turing machine:
+\[
+\texttt{ComputableTidilyInPolyTime}\;\texttt{detRows}\;(\texttt{encList}\;(\texttt{encList}\;\texttt{encIntBin}))\;\texttt{encIntBin}.
+\]
+This certifies the integer determinant stage of the rational matrix hitting-list runtime; the remaining
+generator runtime milestones (canonical rational serialization, certified integer lift tables, per-point
+Cramer words, and grid enumeration) remain open.\citep{Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
+\declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{184}{Cslib.Circuits.Rational.detRows}
+\declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{265}{Cslib.Circuits.Rational.detRows_eq_det_ofRows}
+\declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{286}{Cslib.Circuits.Rational.detRows_eq}
+\declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{432}{Cslib.Circuits.Rational.natAbs_rowEntry_stagesRows_lt}
+\declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{474}{Cslib.Circuits.Rational.intBits_le_of_mem_stagesRows}
+\declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{537}{Cslib.Circuits.Rational.length_encList_stagesRows_le}
+\declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{670}{Cslib.Circuits.Rational.detRows_polytime}
+\end{result}
+
+\begin{result}
 \subsection{Circuit mass production with leading coefficient $1/(1-\gamma)$}
 Fix real $0\le\gamma<1$ and $\varepsilon>0$. For every sufficiently large $n$,
 every Boolean function $f$ on $n$ bits, and every integer $1\le k\le2^{\gamma n}$,

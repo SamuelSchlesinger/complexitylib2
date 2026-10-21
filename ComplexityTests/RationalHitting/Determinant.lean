@@ -12,11 +12,13 @@ import Complexity.Computability.Circuit.Rational.Runtime.Determinant
 Concrete values of `detRows`, checked by the kernel and compiled: nonsingular and singular inputs,
 dimension zero and a ragged input. The correctness theorem is instantiated, and used to compute a
 `Matrix.det`; the stage bounds are instantiated on a concrete input, so their hypotheses are
-satisfiable. Axiom guards cover the headline theorems.
+satisfiable; and the polynomial-time certificate `detRows_polytime` is checked directly and under
+`fun_prop` composition. Axiom guards cover the headline theorems.
 -/
 
 namespace ComplexityTests.RationalHitting.Determinant
 
+open Turing MultiTapeTM
 open Cslib.Circuits.Rational
 
 /-! ### Concrete values -/
@@ -42,6 +44,9 @@ example : detRows [[1, 2, 99], [3]] = -6 := by decide +kernel
 
 example : detRows (rowsOf !![2, 1; 1, 3]) = (!![2, 1; 1, 3] : Matrix (Fin 2) (Fin 2) ℤ).det :=
   detRows_eq _
+
+example (A : List (List ℤ)) : detRows A = (ofRows A).det :=
+  detRows_eq_det_ofRows A
 
 -- The list program computes a `Matrix.det` in the kernel.
 example : (!![2, -1, 0; 1, 3, 2; 0, 1, 4] : Matrix (Fin 3) (Fin 3) ℤ).det = 24 := by
@@ -71,7 +76,42 @@ example (k : ℕ) {row : List ℤ} (hrow : row ∈ stagesRows [[2, -1, 0], [1, 3
 
 example : intBits 0 = 1 ∧ intBits 1 = 2 ∧ intBits (-5) = 4 := by decide +kernel
 
+/-! ### Polynomial-time certificate -/
+
+example : ComputableTidilyInPolyTime detRows (encList (encList encIntBin)) encIntBin :=
+  detRows_polytime
+
+-- The registered certificate composes under `fun_prop`.
+example : ComputableTidilyInPolyTime
+    (fun p : List (List ℤ) × List (List ℤ) => detRows p.1 * detRows p.2)
+    (encPair (encList (encList encIntBin)) (encList (encList encIntBin))) encIntBin := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (List.map detRows)
+    (encList (encList (encList encIntBin))) (encList encIntBin) := by
+  fun_prop
+
+example {i k : ℕ} (hik : i ≤ k) :
+    (encList (encList encIntBin) (stagesRows [[2, -1, 0], [1, 3, 2], [0, 1, 4]] i)).length ≤
+      stageTableBound
+        (encList (encList encIntBin) [[2, -1, 0], [1, 3, 2], [0, 1, 4]]).length k :=
+  length_encList_stagesRows_le _ hik
+
 /-! ### Axioms -/
+
+/--
+info: 'Cslib.Circuits.Rational.detRows_polytime' depends on axioms: [propext, Classical.choice,
+Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms detRows_polytime
+
+/--
+info: 'Cslib.Circuits.Rational.length_encList_stagesRows_le' depends on axioms: [propext,
+Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms length_encList_stagesRows_le
 
 /--
 info: 'Cslib.Circuits.Rational.detRows_eq' depends on axioms: [propext, Classical.choice,
