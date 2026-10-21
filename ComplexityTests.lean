@@ -132,6 +132,7 @@ import ComplexityTests.GenericRAM
 import ComplexityTests.GenericRAMAlgebraic
 import ComplexityTests.GenericRAMNative
 import ComplexityTests.GenericRAMSigned
+import ComplexityTests.GenericRAMSimulation
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
