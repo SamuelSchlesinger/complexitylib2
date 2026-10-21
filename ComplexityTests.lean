@@ -350,6 +350,7 @@ import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
 import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums
+import ComplexityTests.WordRAMQueue
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

@@ -15,6 +15,9 @@ public import Complexity.Algorithms.WordRAM.PrefixSums.Dynamic
 public import Complexity.Algorithms.WordRAM.PrefixSums.Query
 public import Complexity.Algorithms.WordRAM.PrefixSums.Tree
 public import Complexity.Algorithms.WordRAM.PrefixSums.Update
+public import Complexity.Algorithms.WordRAM.Queue.Basic
+public import Complexity.Algorithms.WordRAM.Queue.Dynamic
+public import Complexity.Algorithms.WordRAM.Queue.Model
 public import Complexity.Algorithms.WordRAM.Stack
 public import Complexity.Algorithms.WordRAM.Stack.Controller
 public import Complexity.Computability.BitString.Padding
