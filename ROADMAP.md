@@ -598,8 +598,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   theorem are [proved](Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean). Extend the existing
   [hypercontractivity results for p ≤ 2 ≤ q](Complexity/Foundations/BooleanAnalysis/Hypercontractivity.lean)
   and their Boolean-analysis applications. Continue formula lower bounds beyond the existing
-  [Khrapchenko bound](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), following the
-  Jukna coverage below.
+  [Khrapchenko bound](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean),
+  [Subbotovskaya shrinkage](Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean) and
+  [Andreev's `n^(5/2 - o(1))` lower bound](Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean),
+  following the Jukna coverage below.
 * **Search and parameterized complexity.** [FNP, FP and TFNP](Complexity/Computability/Complexity/Classes/TFNP.lean)
   are defined with polynomial-time search reductions, `FP = FNP` exactly when `P = NP` is
   [proved](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean), and `TFNP ⊆ FP`
@@ -666,7 +668,7 @@ uniformity, explicitness and quantitative strength; a citation or related theore
 | --- | --- | --- |
 | 1–2: foundations and Boolean analysis | [Circuit hierarchy](Complexity/Computability/Circuit/Boolean/Hierarchy.lean), [Shannon synthesis](Complexity/Computability/Circuit/Boolean/ShannonSynthesis.lean), [Fourier analysis](Complexity/Foundations/BooleanAnalysis/Fourier.lean) | Audit counting, graph complexity, degree and approximation results. |
 | 3–5: communication | [Protocols](Complexity/Computability/Communication/Protocol.lean), [Karchmer–Wigderson](Complexity/Computability/Communication/KarchmerWigderson.lean) | Complete matrix, randomized and multiparty results. |
-| 6–10: formulas and circuits | [Spira](Complexity/Computability/Circuit/Boolean/Spira.lean), [Khrapchenko](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), [monotone clique](Complexity/Computability/Circuit/Monotone/Clique/LowerBound.lean) | Audit remaining formula and monotone bounds; develop span programs and negation complexity. |
+| 6–10: formulas and circuits | [Spira](Complexity/Computability/Circuit/Boolean/Spira.lean), [Khrapchenko](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), [Subbotovskaya](Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean), [Andreev](Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean), [monotone clique](Complexity/Computability/Circuit/Monotone/Clique/LowerBound.lean) | Audit remaining formula and monotone bounds; develop span programs and negation complexity. |
 | 11–13: depth restrictions and general gates | [Håstad](Complexity/Computability/Circuit/Boolean/Hastad.lean), [Smolensky](Complexity/Computability/Circuit/Boolean/Smolensky.lean), [symmetric gates](Complexity/Computability/Circuit/Boolean/ShallowSymmetric.lean) | Audit depth-three, threshold, entropy, wire and linear-operator bounds. |
 | 14–17: trees and branching programs | [Decision-tree certificates](Complexity/Computability/DecisionTree/Certificate.lean), [Barrington](Complexity/Computability/Circuit/Boolean/BarringtonClass.lean) | Complete bounded-read and bounded-time lower bounds and remaining tree results. |
 | 18–19: proof complexity | [Resolution size–width](Complexity/Logics/Propositional/Resolution/SizeWidth.lean), [tree-like resolution](Complexity/Logics/Propositional/Resolution/TreeLike.lean), [Cook–Reckhow systems](Complexity/Logics/Propositional/ProofSystem.lean) | Develop pigeonhole/Tseitin lower bounds, proof space and cutting-plane proofs. |
