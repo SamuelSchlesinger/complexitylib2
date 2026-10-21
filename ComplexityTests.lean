@@ -283,6 +283,7 @@ import ComplexityTests.RandomOracle
 import ComplexityTests.RandomizedDisjointness
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
+import ComplexityTests.RationalHitting.Encode
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
@@ -335,6 +336,7 @@ import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.UniversalResourceBound
+import ComplexityTests.VanEmdeBoas
 import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded

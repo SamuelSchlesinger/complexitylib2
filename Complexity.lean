@@ -6,6 +6,11 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Basic
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Elements
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Insert
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Layout
+public import Complexity.Algorithms.Lean.VanEmdeBoas.Successor
 public import Complexity.Algorithms.Reachability.BreadthFirst
 public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
@@ -371,6 +376,7 @@ public import Complexity.Computability.Circuit.Rational.QuantumMatrices
 public import Complexity.Computability.Circuit.Rational.QuantumSeries
 public import Complexity.Computability.Circuit.Rational.Rectangular
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
+public import Complexity.Computability.Circuit.Rational.Runtime.Encode
 public import Complexity.Computability.Circuit.Rational.Runtime.Lift
 public import Complexity.Computability.Circuit.Rational.Runtime.Parameters
 public import Complexity.Computability.Circuit.Rational.SmallExpansion
@@ -740,9 +746,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Factorial
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Gcd
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Prime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search

@@ -40,7 +40,7 @@ polynomial time and space on a multi-tape Turing machine:
 \texttt{ComputableTidilyInPolyTime}\;\texttt{detRows}\;(\texttt{encList}\;(\texttt{encList}\;\texttt{encIntBin}))\;\texttt{encIntBin}.
 \]
 This certifies the integer determinant stage of the rational matrix hitting-list runtime; the remaining
-generator runtime milestones (canonical rational serialization, certified integer lift tables, per-point
+generator runtime milestones (certified integer lift tables, per-point
 Cramer words, and grid enumeration) remain open.\citep{Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{184}{Cslib.Circuits.Rational.detRows}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{265}{Cslib.Circuits.Rational.detRows_eq_det_ofRows}
@@ -67,4 +67,49 @@ most functions already needs $(1-o(1))2^n/n$ nonconstant gates\citep{Shannon1949
 no matching lower bound is claimed for $\gamma>0$. The construction is nonuniform and supplies no
 certified runtime for choosing its tables.\citep{Schlesinger2026MassProduction}
 \declat{2357cdd84d08ece1f218530f7c587d3c0f87467e}{Complexity/Computability/Circuit/Boolean/MassProduction/Fine.lean}{364}{Cslib.Circuits.Boolean.MassProduction.realFineMassProduction}
+\end{result}
+
+\begin{result}
+\subsection{Polynomial-time binary division, Euclidean GCD, and reduced-rational encoding}
+Over the unsigned little-endian binary natural encoding \texttt{encNat} and sign-magnitude
+binary integer encoding \texttt{encIntBin}, the following operations are computable tidily in
+polynomial time on multi-tape Turing machines
+(\texttt{Turing.MultiTapeTM.ComputableTidilyInPolyTime}):
+\begin{itemize}
+\item \textbf{Binary division and remainder.} Folding the shift-and-subtract step
+\texttt{BinaryDiv.divModStep} over any most-significant-bit-first word $w\in\{0,1\}^*$ from
+$(0,0)$ produces $(\mathrm{val}(w)/b,\mathrm{val}(w)\bmod b)$, with encoded pair length at most
+$3|w|+1$. On the reversed digit list of $a\in\mathbb N$ this yields $(a/b,a\bmod b)$ (including
+$a/0=0$ and $a\bmod 0=a$), certifying $(a,b)\mapsto a/b$ and $(a,b)\mapsto a\bmod b$.
+\item \textbf{Euclidean greatest common divisor.} For $0<a\le b$, the remainder step satisfies
+$2a(b\bmod a)\le ab$. Iterating \texttt{BinaryGcd.gcdStep} for
+$\ell(a)+\ell(b)+1$ steps from $(a,b)$, where $\ell(n)=|\texttt{Nat.bits}\ n|$, reaches
+$(\gcd(a,b),0)$ while keeping every intermediate encoded pair within three times the input pair
+length, certifying $(a,b)\mapsto\gcd(a,b)$.
+\item \textbf{Canonical natural and reduced-rational encodings.} The self-delimiting natural code
+$\texttt{encodeNat}(a)=\texttt{true}^{\ell(a)}\mathbin{+\!+}[\texttt{false}]\mathbin{+\!+}\texttt{Nat.bits}(a)$
+is computable in polynomial time from \texttt{encNat}. For $a,b\in\mathbb Z$ with $b\ne 0$ and
+$g=\gcd(|a|,|b|)$, the reduced rational $q=\texttt{Rat.divInt}(a,b)$ has numerator magnitude
+$|q.\texttt{num}|=|a|/g$, denominator $q.\texttt{den}=|b|/g$, and negativity bit
+$(a\ne 0)\wedge((a<0)\oplus(b<0))$ (and $\texttt{Rat.divInt}(a,0)=0$), certifying the canonical
+reduced-rational encoding $(a,b)\mapsto\texttt{encodeRat}(\texttt{Rat.divInt}(a,b))$ from
+$\texttt{encPair}\ \texttt{encIntBin}\ \texttt{encIntBin}$ to \texttt{encBits}.
+\end{itemize}
+These certificates cover individual natural and reduced-rational encodings; polynomial-time
+generation of the full rational matrix hitting list remains separate.
+\citep{AroraBarak09,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{99}{Turing.MultiTapeTM.BinaryDiv.foldl_divModStep}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{110}{Turing.MultiTapeTM.BinaryDiv.divMod_eq}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{160}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_div}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{166}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mod}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean}{53}{Turing.MultiTapeTM.BinaryGcd.gcd_product_halving}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean}{160}{Turing.MultiTapeTM.BinaryGcd.iterate_gcdStep_eq}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean}{189}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_gcd}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{68}{Cslib.Circuits.Rational.encodeNat_eq}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{74}{Cslib.Circuits.Rational.encodeNat_polytime}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{89}{Cslib.Circuits.Rational.divInt_num_abs}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{97}{Cslib.Circuits.Rational.divInt_den}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{102}{Cslib.Circuits.Rational.divInt_sign}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{151}{Cslib.Circuits.Rational.encodeRat_divInt}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{164}{Cslib.Circuits.Rational.encodeDivInt_polytime}
 \end{result}
