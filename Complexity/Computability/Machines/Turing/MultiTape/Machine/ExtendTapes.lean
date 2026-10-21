@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Halting
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 
+import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
+
 /-!
 # Reserving work tapes for effectful machines
 
@@ -141,19 +143,18 @@ theorem runConfigFrom_embed (cfg : Config k Symbol State Oracle input)
     (machine.extendTapes e).runConfigFrom choose query fuel (cfg.embed e extraTapes extraPos) =
       (fun final => final.embed e extraTapes extraPos) <$>
         machine.runConfigFrom choose query fuel cfg := by
-  induction fuel generalizing cfg with
-  | zero => simp
-  | succ fuel ih =>
-    cases hs : cfg.tapes.state with
-    | none => simp [runConfigFrom, hs]
-    | some state =>
-      simp only [runConfigFrom, Config.embed_state, hs, Config.embed_inputSymbol,
-        Config.embed_workTapeSymbols, Config.embed_answerSymbols, extendTapes_tr, hchoose,
-        bind_map_left, map_bind]
-      congr 1
-      funext action
-      cases action <;> simp [Action.extendTapes, Config.step_embed, Config.receive_embed, ih,
-        map_bind]
+  apply runConfigFrom_map machine (machine.extendTapes e) choose choose query query
+    (fun final => final.embed e extraTapes extraPos) ?_ fuel cfg
+  intro cfg
+  cases hs : cfg.tapes.state with
+  | none => simp [runConfigFrom, hs]
+  | some state =>
+    simp only [runConfigFrom, Config.embed_state, hs, Config.embed_inputSymbol,
+      Config.embed_workTapeSymbols, Config.embed_answerSymbols, extendTapes_tr, hchoose,
+      bind_map_left, map_bind]
+    congr 1
+    funext action
+    cases action <;> simp [Action.extendTapes, Config.step_embed, Config.receive_embed]
 
 /-- The additional work tapes do not affect the observable output program. -/
 theorem runFrom_embed (cfg : Config k Symbol State Oracle input)
