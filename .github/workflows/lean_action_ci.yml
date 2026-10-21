@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: leanprover/lean-action@v1
         with:
-          build-args: "--wfail --iofail @complexitylib2 @mathlib/mk_all @/checkInitImports"
+          build-args: "--wfail --iofail @complexitylib2 @mathlib/mk_all @/checkInitImports @mathlib/lint-style"
           test-args: "--wfail --iofail"
       - name: "lake exe mk_all --check"
         run: |
