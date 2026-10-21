@@ -1,19 +1,19 @@
 # Index of proved statements
 
-`main.tex` presents a curated, human-readable index covering significant
+[main.tex](main.tex) presents a curated, human-readable index covering significant
 results, grouped by subject. Each entry states the result, its assumptions
 and model, important limitations, and links to exact Lean declarations. It is not
 an exhaustive API reference. Standalone entries emphasize substantial endpoints;
 coordinate-transfer corollaries and supporting constructions stay with the results
 they support, and basic membership facts may appear as short contextual notes. Samuel controls selection, organization and wording.
 
-`sections/statements.tex` lists the subject files in reading order. Edit the relevant
-subject file in `sections/` to revise or extend the index. Declaration links point to reviewed library revisions: base revision
+[sections/statements.tex](sections/statements.tex) lists the subject files in reading order. Edit the relevant
+subject file in [sections/](sections/) to revise or extend the index. Declaration links point to reviewed library revisions: base revision
 `8d38f7753b6c651c3363a157c806d05794d6ea11`, and for entries added later the full revision named
 in each `\declat` link; review evidence is
-recorded in `review.md`.
+recorded in [review.md](review.md).
 Earlier proof translations remain available in Git history at `d2c5e581`.
-Outstanding development priorities belong in `../ROADMAP.md`, not as speculative
+Outstanding development priorities belong in [ROADMAP.md](../ROADMAP.md), not as speculative
 chapters in the index.
 The displayed entry total is counted automatically from the `result` environments by LaTeX;
 adding an entry does not require a separate count edit in `main.tex`.
@@ -31,7 +31,7 @@ record these with the review. Artifacts are retained for 30 days; rerun the work
 expired. The main release asset remains available independently of artifact retention.
 
 Local generation is optional. With Python 3, `latexmk`, and a LaTeX installation containing the
-packages used by `main.tex`, run from the repository root:
+packages used by `main.tex`, run [scripts/build_paper.py](../scripts/build_paper.py) from the repository root:
 
 ```sh
 python3 scripts/build_paper.py
@@ -40,14 +40,14 @@ python3 scripts/build_paper.py
 The PDF and source provenance appear in `paper/build/`. Generated PDFs and auxiliary files are
 ignored and must not be committed; CI never writes them back to source branches.
 
-The bibliography is shared with the library (`../references.bib`). Every AI-authored
-PR must check the index and update affected statements, assumptions, limitations
-and links; new headline results need entries. Proof-only changes with unchanged
-statements and scope may record a no-impact assessment instead. See AGENTS.md and
-CONTRIBUTING.md for the policy. Changed entries require independent AI review
-against the final Lean definitions and statements, plus inspection of the built PDF and its
-declaration links. The CI artifact satisfies the build/render requirement; it does not replace
-the independent semantic review or imply human editorial approval.
+The bibliography is shared with the library ([references.bib](../references.bib)). Every AI-authored
+PR must check the index, update affected entries or record a no-impact assessment, and obtain an
+independent semantic and rendered-PDF review following
+[AGENTS.md](../AGENTS.md#human-readable-theorem-index) and
+[CONTRIBUTING.md](../CONTRIBUTING.md#maintaining-the-theorem-index). The CI artifact satisfies the
+build/render requirement; it does not replace the independent semantic review or imply human
+editorial approval.
 
-Prepared with Codex assistance. Review evidence is in `review.md`; an AI review is
+Prepared with Codex assistance. Review evidence is in [review.md](review.md); an AI review is
 neither a machine-checked equivalence proof nor human editorial approval.
+

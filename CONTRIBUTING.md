@@ -8,7 +8,8 @@ The pinned copies are in `.lake/packages/cslib/` after fetching dependencies.
 ## Proposing and contributing work
 
 Use this repository's Issues or pull requests to agree on a substantial development
-before implementing it.
+before implementing it. Follow [AGENTS.md](AGENTS.md#agent-roles-and-task-ownership) for
+issue claiming, status reporting, and multi-agent coordination.
 State the mathematical endpoint, cite its source, identify existing APIs and missing dependencies,
 and propose a first independently useful milestone. [ROADMAP.md](ROADMAP.md) lists open directions;
 an item there is not an assignment or a claim that its prerequisites are complete.
@@ -24,7 +25,8 @@ mathematical behavior, and resource or security claim. Test automation on ordina
 alternative encodings, and important failure cases. Distinguish correctness, executability,
 certified efficiency, and security in declaration docstrings.
 
-For documentation-only changes, check links, claims against source, and Lean examples with the
+For documentation-only changes, check links, heading anchors, module paths
+(`python3 scripts/check_docs.py --config-only`), claims against source, and Lean examples with the
 imports shown. Record the scope of validation and review accurately.
 
 ## AI assistance and review
@@ -32,11 +34,13 @@ imports shown. Record the scope of validation and review accurately.
 AI-assisted and human-written contributions follow the same standards. Disclose which AI tools
 you used and for what in the PR description. The contributor is responsible for the result and
 for resolving review findings; a generated proof or review is not evidence of human approval.
-Maintainers decide scope and acceptance, and arrange the independent API and correctness reviews
-required by [AGENTS.md](AGENTS.md#review-cycle). Contributors need not install a maintainer's
-agent tooling to submit a change.
+Maintainers decide scope and acceptance, and arrange the independent API, correctness, and
+theorem-index reviews required by [AGENTS.md](AGENTS.md#review-cycle). Contributors need not
+install a maintainer's agent tooling to submit a change.
 
-Run `scripts/check.sh` for the six project checks. The test suite audits the axiom dependencies
+Run [scripts/check.sh](scripts/check.sh) for the six project checks defined in
+[AGENTS.md](AGENTS.md#validation-sequence). Per [AGENTS.md](AGENTS.md#proof-hygiene), the test
+suite ([ComplexityTests/Axioms.lean](ComplexityTests/Axioms.lean)) audits the axiom dependencies
 of every declaration stored in imported `Complexity` modules; the named headline checks remain
 readable regression tests. This trusts the compiled Lean artifacts and permits `Classical.choice`;
 it does not certify efficient computation or agreement with a textbook statement.
@@ -45,7 +49,8 @@ For concurrent local validation, choose a thread budget for the shared host, for
 `LEAN_NUM_THREADS=2 scripts/check.sh`. Lean's
 [thread-pool setting](https://lean-lang.org/doc/reference/latest/IO/Tasks-and-Threads/)
 defaults to the number of logical processors and is not a hard process or memory cap; check the
-observed concurrency and memory use. Keep mutable build outputs separate between worktrees.
+observed concurrency and memory use. Keep mutable build outputs (`.lake/build`, `paper/build`)
+separate between worktrees.
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
 an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.
 
@@ -57,13 +62,18 @@ a durable review record. Recheck changes made after review and identify the fina
 
 ## Documentation
 
-Keep each fact in one maintained location. The README explains the purpose and points to useful
-entry points; module docstrings explain the mathematics and API; checked Lean examples show
-usage. ROADMAP records outstanding work; UPSTREAM records coordination and exceptional integration
-decisions, while source markers record module status. Batch measurements and validation/review
-evidence belong in commit or PR descriptions.
-Link to these sources instead of repeating them in new guides. Add a separate document only when
-it provides useful explanation that does not already have a suitable home.
+Keep each fact in one maintained location. [README.md](README.md) explains the purpose and points
+to useful entry points; module docstrings (indexed in [Complexity.lean](Complexity.lean)) explain
+the mathematics and API; checked Lean examples show usage; `paper/main.tex`
+([paper/README.md](paper/README.md)) is the curated human-readable index of proved statements.
+[ROADMAP.md](ROADMAP.md) records open work only; [UPSTREAM.md](UPSTREAM.md) records upstream
+coordination and exceptional integration decisions, while source `-- upstream:` markers record
+per-module status; [AGENTS.md](AGENTS.md) records agent roles, file/proof rules, and review gates.
+When a PR completes a roadmap item or upstream-ledger obligation, graduate or retire that entry per
+[AGENTS.md](AGENTS.md#working-on-changes) rather than accumulating completed PR histories in
+[ROADMAP.md](ROADMAP.md). Batch measurements and validation/review evidence belong in commit or PR
+descriptions. Link to these sources instead of repeating them in new guides. Add a separate
+document only when it provides useful explanation that does not already have a suitable home.
 
 The [README](README.md#build-and-use) explains how to generate API documentation using
 [doc-gen4](https://github.com/leanprover/doc-gen4). Its separate `docbuild` project shares the
@@ -71,30 +81,25 @@ library's toolchain, bibliography and dependency checkouts. After changing libra
 run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update complexitylib2`. When changing Lean,
 also update the doc-gen4 tag in `docbuild/lakefile.toml` and run
 `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update doc-gen4`.
-Commit the refreshed documentation lockfile and run the documentation checks and build.
+Commit the refreshed documentation lockfile and run `python3 scripts/check_docs.py --config-only`
+(which also verifies local Markdown links, heading anchors, and module references) and the
+documentation build.
 
 ## Maintaining the theorem index
 
-The LaTeX manuscript at `paper/main.tex` is a curated, human-readable index of proved
-statements. Give each result's assumptions, precise model, quantitative bounds, scope limitations,
-and links to Lean declarations, with appropriate source credit. It is not a proof translation
-or an exhaustive API reference. Keep outstanding work in `ROADMAP.md`.
+The LaTeX manuscript at `paper/main.tex` ([editing and build guide](paper/README.md)) is a
+curated, human-readable index of proved statements—giving each result's assumptions, precise
+model, quantitative bounds, scope limitations, source credit, and links to Lean declarations—not a
+proof translation or an exhaustive API reference. Keep outstanding work in
+[ROADMAP.md](ROADMAP.md).
 
-Every AI-authored PR must check the index against its final Lean changes. Update affected
-entries and links, and add entries for new headline results. Internal helper lemmas need no
-separate entry. Proof-only changes preserving statements and scope may record a no-impact
-assessment instead of changing the prose. Explain any no-impact assessment in the PR.
-
-An independent AI reviewer must compare changed entries with the final formal definitions and
-statements, checking hypotheses, quantifiers, models and resource bounds. Record the exact
-revisions and findings, visually inspect the PDF, and verify declaration links. The **Theorem
-index PDF** workflow builds paper-related PR changes and uploads the PDF with checked-out and
-PR-head revision provenance. Reviewing that artifact satisfies the rendered-PDF requirement;
-record its workflow run/artifact and reviewed revisions. Local generation with
-`python3 scripts/build_paper.py` is optional. Keep LaTeX sources versioned and leave generated
-PDFs and auxiliary files untracked; the workflow publishes the latest main PDF as a release asset.
-This supplements the library's API and correctness reviews. It is not a formal equivalence
-check or human editorial approval. Keep the author's control over selection and wording.
+Follow [AGENTS.md](AGENTS.md#human-readable-theorem-index) and [paper/README.md](paper/README.md)
+for the mandatory PR check, no-impact assessment rule, independent AI semantic review against final
+Lean definitions and statements, and rendered-PDF / link / provenance verification via the
+**Theorem index PDF** workflow (or `python3 scripts/build_paper.py` locally, leaving `paper/build/`
+untracked). This supplements the library's API and correctness reviews; it is not a formal
+equivalence check or human editorial approval. Keep the author's control over selection,
+organization, and wording.
 
 ## Upstreaming
 

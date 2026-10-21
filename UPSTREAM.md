@@ -24,18 +24,39 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   adaptations. The branch's `IterateWhile` supersedes the version from #1112. Coordinate the
   shared encodings and calculus through CSLib issue #611, including the `TapeEncodable`
   interface proposed in #590. Check #767 and its split #768 before adding space-to-time
-  inclusions or overlapping class definitions; reconcile the local encoded, tidy-machine
-  definitions of `P`/`NP` with its `DTIME`-based language classes. The local `L`, `DTIME` and
-  `EXP` (`Classes/LogSpace`, `Classes/Hierarchy/Time`, `Classes/EXP`) use #767's shapes over
-  encoded instances; once #767 lands, derive them from its language-indexed classes rather than
-  keeping parallel definitions. The local `PSPACE` uses a different space bound and is not yet
-  compared with #767's. Selected-tape specifications
-  formerly in `Combinators/StreamFold` and `Encodings/MultiPass` now live beside the plumbing
-  operations; preserve their exact space bounds when resynchronizing the copied files.
-  The step-machine layer (`StepMachine/*`, `Encodings/StepMachine*`, `Combinators/StepMachine`
-  and their helpers) and the blocks marked `@9cce4cc7` in older copies come from a later local
+  inclusions or overlapping class definitions. The local `DTIME`, `NTIME`, and `BPTIME`
+  (`Computability/Complexity/Classes/Time`), `DSPACE`
+  (`Computability/Complexity/Classes/Hierarchy/Space`), `L`
+  (`Computability/Complexity/Classes/LogSpace`), and `EXP`
+  (`Computability/Complexity/Classes/EXP`) use #767's shapes over encoded instances, with
+  time-hierarchy endpoints in `Computability/Complexity/Classes/Hierarchy/Time`. Their
+  equivalences with the local definitions of `P`, `NP`, `BPP`, `L`, and `PSPACE`
+  (`Computability/Complexity/Classes/Space`)—namely `mem_P_iff_exists_mem_DTIME`,
+  `mem_NP_iff_exists_mem_NTIME`, `mem_BPP_iff_exists_mem_BPTIME`, `mem_L_iff_mem_DSPACE`, and
+  `mem_PSPACE_iff_exists_mem_DSPACE`—together with `DTIME_subset_DSPACE` and
+  `exists_mem_DTIME_of_mem_DSPACE` are proved in `Computability/Complexity/Classes/Time` and
+  `Computability/Complexity/Classes/Hierarchy/Space`; once #767 and #768 land, derive the encoded
+  classes from upstream's language-indexed classes rather than keeping parallel definitions.
+  Selected-tape specifications formerly in
+  `Computability/Machines/Turing/MultiTape/Combinators/StreamFold` and
+  `Computability/Machines/Turing/MultiTape/Encodings/MultiPass` now live beside the plumbing
+  operations in
+  `Computability/Machines/Turing/MultiTape/Plumbing/{ExtendTapes,InputFromTape,OnWords,OutputToTape}`;
+  preserve their exact space bounds when resynchronizing the copied files.
+  The step-machine layer
+  (`Computability/Machines/Turing/MultiTape/StepMachine/{Basic,Comp}`,
+  `Computability/Machines/Turing/MultiTape/Encodings/{StepMachine,StepMachineComp}`,
+  `Computability/Machines/Turing/MultiTape/Combinators/StepMachine`,
+  `Computability/Machines/Turing/MultiTape/Complexity/BigOLe`, and
+  `Computability/Machines/Turing/MultiTape/Plumbing/{InputHead,TransformsWords,WhileCond}`) and
+  the blocks marked `@9cce4cc7` in older copies
+  (`Computability/Machines/Turing/MultiTape/Complexity/{BigO,Binary}`,
+  `Computability/Machines/Turing/MultiTape/Encodings/Basic`, and
+  `Computability/Machines/Turing/MultiTape/Plumbing/{Cursor,WhileInput}`) come from a later local
   rewrite of the branch that is not yet published; `scripts/upstream_sync.py` reports them
-  against the published head until it is. The rest of the branch is still copied at `@7f7c0696`.
+  against the published head until it is. The rest of the branch is still copied at `@7f7c0696`
+  (with `tidyCopy` noted in `Computability/Machines/Turing/MultiTape/Combinators/TidyZeroSpace`
+  under #1138).
 * **Polynomial bounds.** The tidy calculus's size-parameterized `PolyBounded` adapts CSLib's
   `PolynomiallyBounded` and shares its closure API. Coordinate this adaptation with the tidy
   branch; preserve it when resynchronizing the vendored files.
@@ -57,30 +78,39 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   `Computability/QueryComplexity` API directly, on `Fin n`/`Bool`. Generic decision trees,
   restrictions and Fourier analysis retain arbitrary coordinate/output types; sensitivity
   lower bounds there use explicit coordinate sets. The restriction representations agree
-  definitionally, with `QueryComplexity/Restriction` connecting filling to `Forces`.
-  Align the remaining tree representation in `Computability/DecisionTree` with #925 and
-  coordinate its certificate follow-up `D ≤ C₀ C₁`; no second numerical measure API is retained.
-* **Word RAM.** `Computability/WordRAM/*` adapt the bounded-word RAM of the Lean formalization
-  accompanying the tromino undecidability paper,
-  [`edemaine/lean-trominoes`](https://github.com/edemaine/lean-trominoes) @6d5b36c1 (Apache-2.0),
-  which is not a CSLib branch. The adapted files retain the source's copyright notice
-  (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in their
-  `Authors:` lines; confirm the attribution with him and submit the files with him,
-  and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
+  definitionally, with `Computability/QueryComplexity/Restriction` connecting filling to `Forces`.
+  `Computability/DecisionTree/Certificate` proves `D ≤ C₀ C₁`
+  (`Cslib.DecisionTree.complexity_le_certificateComplexityFor_mul`) and `D ≤ C²` on top of the
+  local tree representation in `Computability/DecisionTree/Basic` (extended to block sensitivity
+  in `Computability/QueryComplexity/Relations`); align `Computability/DecisionTree/Basic` and
+  `Computability/DecisionTree/Certificate` with #925 upon upstreaming. No second numerical
+  measure API is retained.
+* **Word RAM.** `Computability/WordRAM/{Allocation,Compile,Defs,Structured,Time}` (5 modules)
+  adapt the bounded-word RAM of the Lean formalization accompanying the tromino undecidability
+  paper, [`edemaine/lean-trominoes`](https://github.com/edemaine/lean-trominoes) @6d5b36c1
+  (Apache-2.0), which is not a CSLib branch. Those 5 adapted files retain the source's copyright
+  notice (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in
+  their `Authors:` lines; confirm the attribution with him and submit the files with him, and
+  first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
   programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
-  deviations from the source. The unbounded-register `Computability/RAM`, inspired by
-  Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
-* **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
-  `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
-  simulation, interface composition, semantic Hoare rules and separate native-resource
-  certificates. Its queue and reset-and-replay constructions deliberately count backend calls;
-  arbitrary pure continuations are not machine-compiled. `WordRAM/Dynamic` separately connects
-  fixed bounded-word operation programs and faithful memory transcripts to those contracts.
-  Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
-  neither open framework is copied here. This is a prototype of composition and refinement,
-  not a replacement for their query models or a general cell-probe lower-bound semantics.
+  deviations from the source. The remaining 7 modules in that directory
+  (`Computability/WordRAM/{Copy,Dynamic,Heap,Notation,RAM,RAMInput,Trace}`) are original local
+  `-- upstream: candidate` extensions, and the unbounded-register
+  `Computability/RAM/{Cost,Defs,Input,Squaring}`, inspired by Cook–Reckhow and supporting both
+  unit and logarithmic costs, remains a separate candidate.
+* **Stateful algorithms prototype.**
+  `Foundations/Semantics/Stateful/{Amortized,Basic,Composition,Hoare,Module,Realization,Resource}`
+  reuses Quang Dao's merged `PFunctor.FreeM` for adaptive clients and substitution, adding
+  persistent representation simulation, interface composition, semantic Hoare rules and separate
+  native-resource certificates. Its queue and reset-and-replay constructions deliberately count
+  backend calls; arbitrary pure continuations are not machine-compiled.
+  `Computability/WordRAM/Dynamic` separately connects fixed bounded-word operation programs and
+  faithful memory transcripts to those contracts. Coordinate placement and overlap with Srinivas's
+  #685 and #401 before upstream submission; neither open framework is copied here. This is a
+  prototype of composition and refinement, not a replacement for their query models or a general
+  cell-probe lower-bound semantics.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
   #871–#875 requested composition above configuration level; use `TransformsTapes`-style specs.
@@ -97,15 +127,15 @@ agreement during upstream review.
 | Local module or declarations | Integration note |
 | --- | --- |
 | `Computability/Machines/Turing/MultiTape/Encodings/StreamFold` | The candidate `streamFold_sum` generalizes the vendored proof; `streamFold` is its compatibility corollary. When resynchronizing or removing the copy, preserve the summed contract and shared proof until upstream includes them. |
-| `Computability/Machines/Turing/MultiTape/Encodings/Length` | Add to the tidy branch's `Encodings/List`. |
+| `Computability/Machines/Turing/MultiTape/Encodings/Length` | Add to the tidy branch's `Computability/Machines/Turing/MultiTape/Encodings/List`. |
 | `Computability/Machines/Turing/MultiTape/Plumbing/Shadow` | Put general run lemmas in `TapeLemmas`. |
-| `Turing.Action.instFinite` in `Computability/Machines/Turing/MultiTape/Machine/ChoiceTable` | Place beside `Action` in `Computability/Machines/Turing/MultiTape/Configuration`. |
+| `Turing.Action.instFinite` in `Computability/Machines/Turing/MultiTape/Machine/ChoiceTable` | Place beside `Action` in `Cslib/Computability/Machines/Turing/MultiTape/Configuration`. |
 | `Computability/Machines/Turing/MultiTape/Plumbing/ExtendTapesView` | Derive the old `tapeEmb`/`noTapes` lemmas from `viewCfg`; `oneTapeCfg i = viewCfg (tapeEmb i)` by `rfl`. |
-| `Computability/Machines/Turing/MultiTape/Probabilistic/IterateWhile` | Its private tape helpers parallel the vendored deterministic `Combinators/IterateWhile`; share them once the tidy branch exposes them. |
+| `Computability/Machines/Turing/MultiTape/Probabilistic/IterateWhile` | Its private tape helpers parallel the vendored deterministic `Computability/Machines/Turing/MultiTape/Combinators/IterateWhile`; share them once the tidy branch exposes them. |
 | `Computability/Machines/Turing/MultiTape/Combinators/TidyNormalForm` | Place `runFrom_nop_withState` beside `runFrom_nop_one`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Decoder` | Total decoders with tidy certificates; add to the tidy branch's `Encodings` beside `Option`/`Pair`/`List`. |
-| `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
-| `Computability/Circuit/{Unfolding,MapOp}` | Consider integrating into `Circuit/Formula` and `Circuit/Program`, respectively. |
+| `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Computability/Machines/Turing/MultiTape/Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
+| `Computability/Circuit/{Unfolding,MapOp}` | Consider integrating into `Computability/Circuit/Formula` and `Computability/Circuit/Program`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
 | `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
@@ -114,7 +144,7 @@ agreement during upstream review.
 | `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Combinatorics/Expander/Products` | Extract the private expectation helpers on product types to Mathlib if useful. |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |
-| `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
+| `Probability/PairwiseIndependentHash/Shift` | Consider integration into `Probability/PairwiseIndependentHash`. |
 | `Probability/PairwiseIndependentHash/Toeplitz` | Move `Matrix.toeplitz` to Mathlib beside `LinearAlgebra/Matrix/Circulant`. |
 | `Probability/ApproximateCounting/Relative` | Extract the natural-number root lemmas to Mathlib. |
 | `Foundations/Data/Nat/Bits` | `Nat.foldr_bit_bits` is a candidate for Mathlib's `Data/Nat/Bits`; its local relocation is complete, but upstream integration is still pending. |
@@ -122,7 +152,7 @@ agreement during upstream review.
 ## Deprecation policy and grandfathered changes
 
 Since `2110aa5a` (2026-10-19), renaming, moving or removing a public declaration already on `main`
-leaves a deprecated alias or theorem at the old full name (`AGENTS.md`, Proof hygiene). The sweep
+leaves a deprecated alias or theorem at the old full name ([AGENTS.md](AGENTS.md#proof-hygiene)). The sweep
 integrated at `7738dcea` added aliases for the names that changed before the rule existed and
 restored old binder orders where they had changed. Changes that have no mechanical successor are
 grandfathered without an alias; this list records them for downstream users.
@@ -158,8 +188,7 @@ grandfathered without an alias; this list records them for downstream users.
   (`DecidesInSpace.recognizesInSpace`); membership proofs now also need a per-instance halting
   bound, the second component of `DecidesInSpace` (read back with
   `DecidesInSpace.exists_runsInTime`).
-* **Renamed modules.** On 2026-10-20 `Circuit/Boolean/MassProduction/{Sharp,SharpParameters,
-  SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
+* **Renamed modules (historical).** On 2026-10-20 `Computability/Circuit/Boolean/MassProduction/{Sharp,SharpParameters,SharpStatement}` became `Computability/Circuit/Boolean/MassProduction/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
   deprecated alias, but imports of the old module paths must be updated: a module stub would have
   no upstream counterpart, so none is kept.
 * **Side effects of keeping aliases.** An alias that shares its base name with its successor makes

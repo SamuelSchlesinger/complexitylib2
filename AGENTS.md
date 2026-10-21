@@ -5,8 +5,10 @@ Complexitylib is a Lean 4 library of computational complexity theory built on **
 unchanged**, apart from rewriting the import prefix `Complexity.` → `Cslib.`. cslib's own rules
 therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `CODESTYLE.md`
 (pinned checkout: `.lake/packages/cslib`, or a local clone at `../cslib`) and follow them.
-`ROADMAP.md` records outstanding work;
-`UPSTREAM.md` records coordination and exceptional integration decisions.
+`[ROADMAP.md](ROADMAP.md)` records outstanding work;
+`[UPSTREAM.md](UPSTREAM.md)` records coordination and exceptional integration decisions;
+`[CONTRIBUTING.md](CONTRIBUTING.md)` and `[paper/README.md](paper/README.md)` record contributor
+and theorem-index workflows.
 
 ## Agent roles and task ownership
 
@@ -47,7 +49,10 @@ completion criteria, and relevant dependencies.
    A returning worker must check ownership before resuming. Explicitly released work is
    available immediately.
 4. Implement, self-review, and validate according to the requirements below. Include documentation
-   changes caused by your work and assess the theorem index before submitting the PR.
+   changes caused by your work—graduating completed milestones or prerequisites out of
+   [ROADMAP.md](ROADMAP.md) and retiring completed placement/refactoring notes from
+   [UPSTREAM.md](UPSTREAM.md) per [Working on changes](#working-on-changes)—and assess the
+   [theorem index](#human-readable-theorem-index) before submitting the PR.
 5. When ready, open a PR linked to the issue, record validation and remaining limitations, and
    request coordinator review. Post an `awaiting review` status with the PR link in the issue.
    Keep the issue open until the work is merged or explicitly dispositioned by a coordinator.
@@ -84,13 +89,17 @@ parallel. Use review subagents when helpful; do not make unrelated work wait for
 - Review existing tasks, resolve ownership or dependency conflicts, and create or split issues
   when useful. Human-created issues belong to the same queue. Check stale active tasks and
   unattended review requests; help workers reach a clear next step.
-- Own the consistency of `ROADMAP.md`, `paper/main.tex`, `UPSTREAM.md`, and the other project
-  documentation. Ensure completed results, open work, limitations, and upstream coordination
-  remain accurate. Workers still supply updates affected by their PRs; coordinators check their
-  integration and arrange the theorem-index review described below.
+- Own the consistency of [ROADMAP.md](ROADMAP.md), `paper/main.tex` ([guide](paper/README.md)),
+  [UPSTREAM.md](UPSTREAM.md), and the other project documentation. Ensure completed results
+  graduate out of [ROADMAP.md](ROADMAP.md), open work and limitations remain accurate, and
+  completed local obligations are retired from [UPSTREAM.md](UPSTREAM.md) per
+  [Working on changes](#working-on-changes). Workers still supply updates affected by their PRs;
+  coordinators check their integration and arrange the
+  [theorem-index review](#human-readable-theorem-index) described below.
 - Keep approval distinct from integration: merge only within the authority granted by maintainers
-  and after required checks and reviews. Close completed issues on merge, and record remaining
-  work in follow-up issues and the roadmap where appropriate.
+  and after required checks and reviews (including roadmap graduation and documentation checks).
+  Close completed issues on merge, and record remaining work in follow-up issues and the roadmap
+  where appropriate.
 - If implementing a task yourself, follow the worker ownership and reporting rules and obtain
   review from another coordinator. Self-review never substitutes for independent approval.
   Review subagents must be independent of authoring the changes they review; an authoring
@@ -99,14 +108,25 @@ parallel. Use review subagents when helpful; do not make unrelated work wait for
 ## Working on changes
 
 Use ordinary Git branches or isolated worktrees for substantial changes. Preserve other
-contributors' work and keep mutable build outputs separate between worktrees. Agree substantial
-scope through Issues or pull requests, and split large developments into independently useful,
-reviewable milestones. Record unfinished work in `ROADMAP.md` without claiming it complete.
+contributors' work, keep mutable build outputs (`.lake/build`, `paper/build`) separate between
+worktrees, and set an appropriate `LEAN_NUM_THREADS` budget on shared hosts as described in
+[CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review). Agree substantial scope through
+Issues or pull requests, and split large developments into independently useful, reviewable
+milestones. Record unfinished work in [ROADMAP.md](ROADMAP.md) without claiming it complete.
 
-Contributors self-review and validate their changes. Maintainers arrange independent API and
-correctness reviews of the exact revision before integration; reviewers report findings, and
-fixes receive a fresh review. Preserve source credit and record all contributors and review
-results in the pull request or commit description.
+**Roadmap and upstream-ledger graduation rule.** [ROADMAP.md](ROADMAP.md) tracks **open** work
+only; proved results live in module docstrings, `paper/main.tex` (for curated headline theorems),
+and [README.md](README.md) (for selected flagship developments). When a PR completes a roadmap
+milestone or prerequisite, remove the completed task from [ROADMAP.md](ROADMAP.md) (or condense it
+into a brief link in the completed-foundation line of remaining open dependents) instead of
+accumulating inline chronicles of completed issues and PRs. Likewise, when a local refactoring or
+placement action in [UPSTREAM.md](UPSTREAM.md) is completed or recorded in a module's
+`-- upstream:` marker, retire that entry from [UPSTREAM.md](UPSTREAM.md) in the same change.
+
+Contributors self-review and validate their changes; maintainers arrange the independent reviews
+required under [Review cycle](#review-cycle), and contributors record all authors, AI tools, and
+review evidence in the PR or commit description following
+[CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
 
 ## Lean development: use the Lean MCP server first
 
@@ -124,16 +144,21 @@ lake exe lint-style
 lake exe checkInitImports
 ```
 
-`scripts/check.sh` runs this sequence. CI runs the same checks.
+[scripts/check.sh](scripts/check.sh) runs this sequence. CI runs the same checks. For changes
+touching documentation, links, or helper scripts, also run
+`python3 scripts/check_docs.py --config-only` and
+`python3 -m unittest discover -s scripts -p 'test_*.py'`.
 
 `lake exe mk_all` regenerates `Complexity.lean` after adding a file. New test files go in
 `ComplexityTests/` and must be imported from `ComplexityTests.lean`.
 
 ## File rules
 
-1. **Path and namespace mirror cslib.** `Complexity/Foundations/Data/Encoding.lean` is destined
-   for `Cslib/Foundations/Data/Encoding.lean`; multi-tape machine files use the upstream root
-   namespace `Turing`, everything else `Cslib.*` as upstream does.
+1. **Path and namespace mirror cslib.** `Complexity/Foundations/Data/Hamming.lean` (or a
+   hypothetical `Complexity/Foundations/Data/Encoding.lean`) is destined for
+   `Cslib/Foundations/Data/Hamming.lean` (`Cslib/Foundations/Data/Encoding.lean`); multi-tape
+   machine files use the upstream root namespace `Turing`, everything else `Cslib.*` as upstream
+   does.
 2. **Template** (cslib's): Apache header with the exact wording below, `module`, an
    `-- upstream:` marker line, `public import` of API dependencies (plain `import` for proof-only
    ones), a module docstring with `## Main definitions` / `## Main results` / `## References`,
@@ -150,10 +175,12 @@ lake exe checkInitImports
 
    public import Complexity.Init
    ```
-3. **Upstream marker** values: `candidate`, `submitted #N @SHA` (a copy of an open cslib pull
+3. **Upstream marker** values: `candidate` (optionally with a parenthetical destination or
+   dependency note, `candidate (<note>)`), `submitted #N @SHA` (a copy of an open cslib pull
    request at its head `SHA`), `vendored <owner>:<branch> @SHA (unsubmitted)` (a copy of a branch
    of a contributor's cslib fork that has no pull request yet), `merged @SHA` (delete the file and
-   bump the pin in the same commit), `local-only (reason)`. Nothing is `local-only` without a
+   bump the pin in the same commit), `local-only (reason)`. Markers may also delimit copied blocks
+   inside a module. Nothing is `local-only` without a
    reason; valid reasons are project scaffolding and tests of local-only files.
    A port keeps the authors of the files it is ported from: v1's PCP internals, Sipser–Lautemann
    and containment internals are by Bolton Bailey, so their ports carry
@@ -164,29 +191,32 @@ lake exe checkInitImports
    runs `checkInitImports`.
 5. **Reuse upstream first.** Before defining anything, search cslib (`.lake/packages/cslib/Cslib`,
    or the local `../cslib/Cslib` checkout) and the
-   in-flight PRs recorded in source markers, and consult `UPSTREAM.md`. A thin local copy of an
-   unmerged upstream PR (or an unsubmitted branch of an upstream contributor) is allowed at the
-   mirrored path, keeping the
+   in-flight PRs recorded in source markers, and consult [UPSTREAM.md](UPSTREAM.md). A thin local
+   copy of an unmerged upstream PR (or an unsubmitted branch of an upstream contributor) is allowed
+   at the mirrored path, keeping the
    original authors and declaration names, marked `-- upstream: submitted #N @SHA` (or
    `vendored …`). A copy holds only what the pinned cslib lacks: when a PR modifies an existing
    cslib file, the copy contains just its additions. Copies are deleted when the work merges.
-
-## Staying current with upstream
-
-- `lakefile.toml` pins cslib `main`; move the pin forward whenever `main` moves, fixing breakage
-  in the same commit.
-- `scripts/upstream_sync.py` reports, for every copied module, whether its pull request has
-  merged (bump the pin past it and delete the copy), whether its head has moved (re-sync the
-  copy) or whether it was closed. Run it whenever upstream is checked, and act on every line that
-  is not `CURRENT`.
 6. **Bit strings.** Declarations about bit strings and the cube `ι → Bool` (operations, sampling,
    Fourier analysis, sensitivity, influence, codes) live in `Cslib.BitString`; only the named
    Boolean functions `parityOn`, `parity`, `threshold`, `majority`, `strictMajority` sit in `Cslib`
    beside cslib's `BooleanFunction`. Bit strings add with `+` (Mathlib's `BooleanRing Bool`),
    single bits with `^^`.
-7. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
-   (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …). Add new entries in cslib's
-   format, keeping bibliography and project-documentation changes in focused commits.
+7. **Citations.** Cite textbook sources in docstrings via [references.bib](references.bib) keys
+   (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …). Add new entries in
+   cslib's format, keeping bibliography and project-documentation changes in focused commits.
+
+## Staying current with upstream
+
+- [lakefile.toml](lakefile.toml) pins cslib `main`; move the pin forward whenever `main` moves,
+  fixing breakage and refreshing the `docbuild` lockfile
+  ([CONTRIBUTING.md](CONTRIBUTING.md#documentation)) in the same commit.
+- `scripts/upstream_sync.py` (`python3 scripts/upstream_sync.py --offline` for local marker
+  inventory without network access) reports, for every copied module or block, whether its pull
+  request has merged (bump the pin past it and delete the copy), whether its head has moved
+  (re-sync the copy) or whether it was closed. Run it whenever upstream is checked, and act on
+  every line that is not `CURRENT`. See [UPSTREAM.md](UPSTREAM.md) for coordination notes and
+  [CONTRIBUTING.md](CONTRIBUTING.md#upstreaming) for exporting modules to cslib.
 
 ## Proof hygiene
 
@@ -217,14 +247,17 @@ following [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
   are the statements true and as the docstrings claim, are hypotheses satisfiable and
   non-vacuous, do definitions match the cited literature. Reviewers report findings; fixes are
   made separately.
+- Every AI-authored PR also checks the [human-readable theorem index](#human-readable-theorem-index)
+  and obtains an independent semantic and rendered-PDF review when index entries change.
 
 ## Human-readable theorem index
 
-`paper/main.tex` is a curated index of proved statements, not a translation of proof bodies.
+`paper/main.tex` ([guide](paper/README.md)) is a curated index of proved statements, not a
+translation of proof bodies.
 Each entry states the result, its hypotheses, model and quantitative bounds, important scope
 limitations, and links to exact Lean declarations. Credit mathematical sources and earlier
 formalizations. Do not describe an unproved endpoint as complete; keep outstanding work in
-`ROADMAP.md`. Preserve Samuel's editorial choices.
+[ROADMAP.md](ROADMAP.md). Preserve Samuel's editorial choices.
 
 Before opening or updating **every AI-authored PR**, check the index against the final Lean
 changes. Update affected statements, assumptions, limitations and links, and add entries for

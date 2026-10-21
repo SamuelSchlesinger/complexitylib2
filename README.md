@@ -44,6 +44,8 @@ are maintained alongside the library; it is a curated catalogue, not an exhausti
   a [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean)
   with a polynomial gap for bit-string problems and
   [`P ⊊ EXP`](Complexity/Computability/Complexity/Classes/EXP.lean),
+  the [space hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Space.lean)
+  (`DSPACE f ⊊ DSPACE g` for space-constructible `g ≥ n` and `L ⊊ PSPACE`),
   [`NPSPACE = PSPACE`](Complexity/Computability/Complexity/Classes/Space/Savitch.lean),
   [TQBF PSPACE-completeness](Complexity/Computability/Complexity/Classes/Space/TQBF.lean),
   [`NL ⊆ P`](Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean),
@@ -61,19 +63,27 @@ are maintained alongside the library; it is a curated catalogue, not an exhausti
   [TSP](Complexity/Computability/Complexity/Problems/TSP.lean),
   [subset sum](Complexity/Computability/Complexity/Problems/SubsetSum.lean) and further graph and number problems,
   by polynomial-time reductions.
-* [Total search](Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean):
+* [Total search](Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean)
+  and [parameterized complexity](Complexity/Computability/Complexity/Parameterized/Kernelization.lean):
   `LocalOpt`, `Pigeon`, `EndOfLine` and `Leaf` are complete for PLS, PPP, PPAD and PPA,
-  using polynomial-time construction of their circuit codes.
+  using polynomial-time construction of their circuit codes; decidable problems lie in `FPT`
+  exactly when they admit a kernelization, with
+  [Vertex Cover in `FPT`](Complexity/Computability/Complexity/Parameterized/VertexCover.lean) by a
+  bounded search tree.
 * [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): a class of finite relational
   structures is definable in existential second-order logic exactly when it is closed under
-  isomorphism and in NP.
+  isomorphism and in NP, alongside [ordered `FO(≤, BIT) ⊆ L`](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean)
+  and [logspace interpretation transducers](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean).
 * [One-way functions to PRGs](Complexity/Crypto/Computational/OneWayToPRG.lean) and
   [adaptive PRFs](Complexity/Crypto/Computational/OneWayToPRF.lean), including
   [Goldreich–Levin](Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean),
   [polynomial stretch](Complexity/Crypto/Computational/Stretch.lean), and
   [GGM](Complexity/Crypto/Computational/GGM/Security.lean), with efficient security reductions.
 * [Circuit APIs](Complexity/Computability/Circuit/SourceComplexity.lean): Boolean, monotone,
-  and arithmetic developments share CSLib's circuit definitions, costs, and simulations.
+  and arithmetic developments share CSLib's circuit definitions, costs, and simulations,
+  including an explicit language in `P` requiring [`3.5N - O(N / log N)` gates over `B₂`](Complexity/Computability/Complexity/AffineDisperser.lean),
+  [iterated-function circuits](Complexity/Computability/Circuit/Boolean/Iteration.lean),
+  and [approximation/fusion method characterizations and barriers](Complexity/Computability/Circuit/Fusion/Conondeterministic.lean).
   The [quadratic-form correlation bound](Complexity/Computability/Circuit/Frontier/Correlation.lean)
   uses a nonconstructively chosen family; it supplies no efficient construction.
 * [The PCP theorem](Complexity/Computability/PCP/Completeness.lean): `NP = PCP(log n, 1)`, with
