@@ -37,10 +37,14 @@ with both sides of size at least `K_n` and `log K_n = o(n)`.
 
 * `Cslib.Circuits.Frontier.agreement S T`: the fraction of inputs on which membership in `S` and
   in `T` agree.
+* `Cslib.Circuits.Frontier.correlation S T`: agreement minus disagreement.
 * `Cslib.Circuits.Frontier.AverageCaseBound L`: the average-case claim with coefficient `L`.
 
 ## Main results
 
+* `Cslib.Circuits.Frontier.correlation_eq_two_mul_agreement_sub_one`: on finite inputs over a
+  nonempty alphabet, correlation is twice agreement minus one.
+* `Cslib.Circuits.Frontier.correlation_mul_card_eq_sum`: correlation as a signed sum.
 * `Cslib.Circuits.Frontier.agreement_le`: agreement from the bias on a set and its complement.
 * `Cslib.Circuits.Frontier.agreement_le_of_layout`,
   `Cslib.Circuits.Frontier.agreement_le_of_unread`: the agreement of one circuit.
@@ -53,6 +57,7 @@ with both sides of size at least `K_n` and `log K_n = o(n)`.
 namespace Cslib.Circuits.Frontier
 
 open Set Filter Asymptotics
+open scoped Finset
 
 universe u v
 
@@ -60,6 +65,81 @@ universe u v
 membership in `T` agree. -/
 noncomputable def agreement {ι U : Type*} (S T : Set (ι → U)) : ℝ :=
   ({x | x ∈ S ↔ x ∈ T}.ncard : ℝ) / Nat.card (ι → U)
+
+section Correlation
+
+variable {ι U : Type*}
+
+/-! ### Correlation -/
+
+/-- The *correlation* of two sets of inputs: the fraction of inputs on which membership in `S` and
+membership in `T` agree, minus the fraction on which it differs. -/
+noncomputable def correlation (S T : Set (ι → U)) : ℝ :=
+  agreement S T - agreement S Tᶜ
+
+/-- Complementing the second set negates the correlation. -/
+@[simp]
+theorem correlation_compl_right (S T : Set (ι → U)) : correlation S Tᶜ = -correlation S T := by
+  rw [correlation, correlation, compl_compl, neg_sub]
+
+section Finite
+
+variable [Finite ι] [Finite U]
+
+/-- Membership in `S` agrees with membership in `T` or with membership in `Tᶜ`. -/
+theorem agreement_add_agreement_compl [Nonempty U] (S T : Set (ι → U)) :
+    agreement S T + agreement S Tᶜ = 1 := by
+  have hN : (0 : ℝ) < Nat.card (ι → U) := by exact_mod_cast Nat.card_pos
+  have hcompl : {x : ι → U | x ∈ S ↔ x ∈ Tᶜ} = {x | x ∈ S ↔ x ∈ T}ᶜ := by
+    ext x
+    simp only [mem_compl_iff, mem_ofPred_eq]
+    tauto
+  rw [agreement, agreement, hcompl, ← add_div, div_eq_one_iff_eq hN.ne']
+  exact_mod_cast ncard_add_ncard_compl _
+
+/-- **Correlation and agreement.** The correlation of `S` and `T` is `2 · agreement S T - 1`. -/
+theorem correlation_eq_two_mul_agreement_sub_one [Nonempty U] (S T : Set (ι → U)) :
+    correlation S T = 2 * agreement S T - 1 := by
+  rw [correlation]
+  linarith [agreement_add_agreement_compl S T]
+
+/-- The correlation is at most one in absolute value. -/
+theorem abs_correlation_le_one [Nonempty U] (S T : Set (ι → U)) : |correlation S T| ≤ 1 := by
+  have h₁ : 0 ≤ agreement S T := by unfold agreement; positivity
+  have h₂ : 0 ≤ agreement S Tᶜ := by unfold agreement; positivity
+  rw [correlation, abs_le]
+  constructor <;> linarith [agreement_add_agreement_compl S T]
+
+/-- A correlation of absolute value at most `ε` is an agreement of at most `(1 + ε) / 2`. -/
+theorem agreement_le_of_abs_correlation_le [Nonempty U] {S T : Set (ι → U)} {ε : ℝ}
+    (h : |correlation S T| ≤ ε) : agreement S T ≤ 1 / 2 + ε / 2 := by
+  rw [correlation_eq_two_mul_agreement_sub_one] at h
+  linarith [le_abs_self (2 * agreement S T - 1)]
+
+end Finite
+
+/-- The correlation, scaled by the number of inputs, is the sum of `±1` over the inputs: `+1` where
+membership in `S` and in `T` agree and `-1` where it differs. -/
+theorem correlation_mul_card_eq_sum [Fintype ι] [Fintype U] [DecidableEq ι] [Nonempty U]
+    (S T : Set (ι → U)) [DecidablePred (· ∈ S)] [DecidablePred (· ∈ T)] :
+    correlation S T * Fintype.card (ι → U) =
+      ∑ x, if (x ∈ S ↔ x ∈ T) then (1 : ℝ) else -1 := by
+  have hN : (0 : ℝ) < Fintype.card (ι → U) := by exact_mod_cast Fintype.card_pos
+  have hsplit := Finset.card_filter_add_card_filter_not (s := Finset.univ)
+    (fun x : ι → U => x ∈ S ↔ x ∈ T)
+  rw [Finset.card_univ] at hsplit
+  have hagree : agreement S T * Fintype.card (ι → U) =
+      (Finset.univ.filter fun x : ι → U => x ∈ S ↔ x ∈ T).card := by
+    rw [agreement, Nat.card_eq_fintype_card, div_mul_cancel₀ _ hN.ne', ncard_eq_toFinset_card',
+      Set.toFinset_ofPred]
+  rw [Finset.sum_ite, Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul, mul_one,
+    mul_neg_one, correlation_eq_two_mul_agreement_sub_one, sub_mul, mul_assoc, hagree]
+  have : ((Finset.univ.filter fun x : ι → U => x ∈ S ↔ x ∈ T).card : ℝ) +
+      (Finset.univ.filter fun x : ι → U => ¬(x ∈ S ↔ x ∈ T)).card = Fintype.card (ι → U) := by
+    exact_mod_cast hsplit
+  linarith
+
+end Correlation
 
 /-- **Agreement from bias.** If `S` has bias at most `β` on `T` and on its complement, up to the
 residuals `R₁` and `R₂`, then membership in `S` and in `T` agree on at most a
