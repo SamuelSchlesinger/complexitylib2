@@ -2039,3 +2039,41 @@ annotations were checked against published source lines 84, 155, 170, 182 and 21
 The source and rendered entry have no unresolved review findings. The CI theorem-index
 artifact/provenance inspection and coordinator integration approval remain separate gates;
 AI review does not imply human editorial approval. Generated artifacts remain unversioned.
+
+## 2026-10-21: Shared-memory FIFO queue (#289)
+
+Source revision: `f21c5d6ea700bfaa2dc3281065c68ff0092738f9`, tree
+`8721d18c4395220d3c4b14b22b47607fa8f06114`, identical to tested local commit `ab1df1a1`.
+OpenAI Codex worker `worker-stateful-classics-20261021` authored the FIFO model, dynamic
+realization, resource packaging and tests; delegated worker `/root/controller_scout` authored
+the eleven-register machine and its proofs. CLRS and the existing word-RAM substrate retain credit.
+
+All six strict project gates passed (session 3425): library build, generated import check,
+full tests and axiom audit, environment lint, style lint and Init-import check. All affected
+files also passed complete Lean MCP diagnostics. Documentation configuration passed; a full API-documentation build was not run.
+
+Independent nonauthor `/root/controller_review` approved final source and tests: Model hash
+`d818e6c5fd48c897a69f628dceb442f4899f0548575634020f6b4568c9c61c86`, Basic
+`c3e156100280149f4f092efb8145f7cc2e9fc1df7a91e35b466e0127030b2722`, Dynamic
+`b17c236f801d2bd75538140aece439096af76c3a5e470eee188084799c5c7c11`, tests
+`12491f3dfc086cf65c28acc4392f36fae66e73527aa31ca0e710024ec3ff4cc2`.
+Review covered transfer orientation, disjoint live prefixes, bounded addresses and lengths,
+framing, empty-versus-zero observations, exact operation costs, arbitrary bounded initial
+memory and adaptive execution. No blocking source findings. The index review required an
+explicit initial representation hypothesis for the adaptive bound; that correction was made
+and re-reviewed. All other model, capacity, reservation and cost boundaries match the source.
+
+Local theorem-index PDF: 115 pages, changed page 86, SHA256
+`f7714c6dfc793190b4c33e9e32b2f828858aa3dd52826b75b526299126721e40`.
+The worker inspected the rendered page and verified the four declaration annotations at
+source lines 324/383 in Basic and 113/143 in Dynamic. Independent reviewer `/root/controller_review` also verified the exact published source,
+rendered page and all four links, approving with no remaining findings; index SHA256
+`7f99a6773db39936b10568b022be573ce3313ea19b8001997d11a7ce5b5f8433`. Actual CI artifact/provenance inspection remains a separate
+coordinator integration obligation. AI review is not human editorial approval; the worker
+neither approves nor merges their own PR. Generated artifacts are unversioned.
+
+Scope: initialized operation histories cost at most `6 + 14*m` instructions with retained
+final potential, using `2*capacity` reserved words and at most `capacity` live values. External
+client computation, argument delivery and result decoding are outside this native-call sum.
+This is a direct FIFO implementation, not a compilation of the older abstract queue methods.
+Allocation/growth, complete client compilation and TM simulation are separate work.
