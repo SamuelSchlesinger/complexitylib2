@@ -6,6 +6,21 @@ with wiring and fanout free. Formula leaf count and formula depth are separate
 measures; unbounded fan-in bases are identified in their entries.
 
 \begin{result}
+\subsection{Sparse and unary languages have small circuits}
+If a language $L\subseteq\{0,1\}^*$ contains at most $k$ words of length $n$,
+its length-$n$ slice has a De Morgan circuit with at most $k(2n+2)+1$ gates.
+Thus a polynomial bound on the number of words at each length implies
+$L\in\mathrm{P/poly}$. If every word of $L$ contains only the symbol $1$,
+the sharper bound is $n+1$ gates at every length, including $n=0$.
+No decidability assumption is placed on $L$ or on the set of admitted lengths:
+these are nonuniform existence statements.\citep{AroraBarak09}
+The formalization recovers Samuel Schlesinger's earlier Complexitylib circuit-family work.
+\declat{dcdb711103c2dd41d85a57cdac5a781b667e611e}{Complexity/Computability/Circuit/Boolean/Sparse.lean}{47}{Cslib.Circuits.Boolean.complexity_slice_le_of_card_le}
+\declat{dcdb711103c2dd41d85a57cdac5a781b667e611e}{Complexity/Computability/Circuit/Boolean/Sparse.lean}{63}{Cslib.Circuits.Boolean.PPoly.of_sparse}
+\declat{dcdb711103c2dd41d85a57cdac5a781b667e611e}{Complexity/Computability/Circuit/Boolean/Sparse.lean}{76}{Cslib.Circuits.Boolean.mem_SIZE_of_unary}
+\end{result}
+
+\begin{result}
 \subsection{Inlining polynomial-size circuit oracles}
 Extend De Morgan circuits with an oracle gate of each arity $q$, answering membership
 of its $q$ input bits in a fixed language $A$. Queries may depend on earlier answers,
