@@ -552,9 +552,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   and [batched modular-counter upper and lower bounds](Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean)
   are also implemented. Nonuniform circuit
   existence does not certify the preprocessing algorithm's runtime.
-* **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
-  are ported; certify the generator's polynomial runtime, charging all arithmetic and storage
-  growth. Carry over the remaining extractor developments, recording each endpoint's hypotheses.
+* **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean),
+  [binary integer arithmetic](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Int/Binary.lean),
+  [binary division and remainder](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean),
+  [Euclidean GCD](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean), and
+  [canonical natural and reduced-rational encoding certificates](Complexity/Computability/Circuit/Rational/Runtime/Encode.lean)
+  are ported; certify the remaining tuple-list generator's polynomial runtime, charging all
+  intermediate arithmetic and storage growth. Carry over the remaining extractor developments,
+  recording each endpoint's hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),
