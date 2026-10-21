@@ -100,6 +100,17 @@ theorem cost_program_substituteCircuit {n N : ℕ} (ρ : Fin N → Fin n ⊕ Boo
     cost_program_substituteCircuit ρ (fun _ => 1)
 
 
+/-- The shared-constant substitution circuit has depth at most one. -/
+theorem depth_substituteCircuit_le {n N : ℕ} (ρ : Fin N → Fin n ⊕ Bool) :
+    (substituteCircuit ρ).depth ≤ 1 := by
+  unfold substituteCircuit
+  refine (Circuit.depth_comp_le _ _).trans ?_
+  rw [Circuit.depth_wiring, Nat.zero_add]
+  refine (Circuit.depth_append_le _ _).trans (max_le ?_ ?_)
+  · simp [Circuit.id]
+  · exact Circuit.depth_pi_le _ fun i =>
+      (Formula.depth_toCircuit_le _).trans (by simp [Formula.const])
+
 /-- A substitution costs at most two gates, one for each constant. -/
 theorem complexity_substitute_le_two (ρ : Fin N → Fin n ⊕ Bool) :
     complexity interpretation (substitute ρ) ≤ 2 := by

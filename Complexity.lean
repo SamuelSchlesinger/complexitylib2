@@ -168,6 +168,7 @@ public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.Circuit.Boolean.Propagation
 public import Complexity.Computability.Circuit.Boolean.Routing
 public import Complexity.Computability.Circuit.Boolean.RoutingValues
+public import Complexity.Computability.Circuit.Boolean.SeedFixing
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Equation
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit.Gate
@@ -190,6 +191,7 @@ public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
 public import Complexity.Computability.Circuit.Boolean.Sorting
 public import Complexity.Computability.Circuit.Boolean.SortingTrace
+public import Complexity.Computability.Circuit.Boolean.Sparse
 public import Complexity.Computability.Circuit.Boolean.SparseSynthesis
 public import Complexity.Computability.Circuit.Boolean.SparseSynthesisConstruction
 public import Complexity.Computability.Circuit.Boolean.Spira
@@ -564,6 +566,7 @@ public import Complexity.Computability.Complexity.CookLevin.Reduction
 public import Complexity.Computability.Complexity.CookLevin.Tableau
 public import Complexity.Computability.Complexity.Fagin.Converse
 public import Complexity.Computability.Complexity.Fagin.Layout
+public import Complexity.Computability.Complexity.Fagin.Ordered
 public import Complexity.Computability.Complexity.Fagin.Power
 public import Complexity.Computability.Complexity.Fagin.SAT
 public import Complexity.Computability.Complexity.Fagin.Small
@@ -1392,6 +1395,7 @@ public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Blocks
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Bounds
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication.Columns
 public import Complexity.Logics.FirstOrder.Ordered.Packing
+public import Complexity.Logics.FirstOrder.Ordered.Query
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Arithmetic
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Bit
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Conversion

@@ -26,6 +26,21 @@ The formalization recovers Samuel Schlesinger's earlier Complexitylib advice dev
 \end{result}
 
 \begin{result}
+\subsection{Sparse and unary languages have small circuits}
+If a language $L\subseteq\{0,1\}^*$ contains at most $k$ words of length $n$,
+its length-$n$ slice has a De Morgan circuit with at most $k(2n+2)+1$ gates.
+Thus a polynomial bound on the number of words at each length implies
+$L\in\mathrm{P/poly}$. If every word of $L$ contains only the symbol $1$,
+the sharper bound is $n+1$ gates at every length, including $n=0$.
+No decidability assumption is placed on $L$ or on the set of admitted lengths:
+these are nonuniform existence statements.\citep{AroraBarak09}
+The formalization recovers Samuel Schlesinger's earlier Complexitylib circuit-family work.
+\declat{dcdb711103c2dd41d85a57cdac5a781b667e611e}{Complexity/Computability/Circuit/Boolean/Sparse.lean}{47}{Cslib.Circuits.Boolean.complexity_slice_le_of_card_le}
+\declat{dcdb711103c2dd41d85a57cdac5a781b667e611e}{Complexity/Computability/Circuit/Boolean/Sparse.lean}{63}{Cslib.Circuits.Boolean.PPoly.of_sparse}
+\declat{dcdb711103c2dd41d85a57cdac5a781b667e611e}{Complexity/Computability/Circuit/Boolean/Sparse.lean}{76}{Cslib.Circuits.Boolean.mem_SIZE_of_unary}
+\end{result}
+
+\begin{result}
 \subsection{Inlining polynomial-size circuit oracles}
 Extend De Morgan circuits with an oracle gate of each arity $q$, answering membership
 of its $q$ input bits in a fixed language $A$. Queries may depend on earlier answers,
@@ -45,6 +60,30 @@ by Samuel Schlesinger.
 \declat{0ecfd99c13a056ed74f3666c9931861187468935}{Complexity/Computability/Circuit/Boolean/Oracle.lean}{165}{Cslib.Circuits.Boolean.size_inlineOracle_le}
 \declat{0ecfd99c13a056ed74f3666c9931861187468935}{Complexity/Computability/Circuit/Boolean/Oracle.lean}{154}{Cslib.Circuits.Boolean.depth_inlineOracle_le}
 \declat{0ecfd99c13a056ed74f3666c9931861187468935}{Complexity/Computability/Circuit/Boolean/Oracle.lean}{226}{Cslib.Circuits.Boolean.PPolyOracle_eq_PPoly}
+\end{result}
+
+\begin{result}
+\subsection{Fixing a seed for multiple circuit outputs}
+Let $C$ have $n+p$ Boolean inputs and $m$ Boolean outputs, and let
+$R(x,y)$ be a decidable relation between $n$ input bits and $m$ output bits.
+Suppose that for every $x$ the number of seeds $r\in\{0,1\}^p$ with
+$\neg R(x,C(x,r))$ satisfies
+\[
+  2^n\,\bigl|\{r:\neg R(x,C(x,r))\}\bigr|<2^p.
+\]
+Then a single seed makes $R(x,C(x,r))$ hold for every input $x$.
+For De Morgan circuits there is a deterministic $n$-input, $m$-output circuit
+$D$ with $R(x,D(x))$ for all $x$, at most $|C|+2$ gates, and depth at most
+$\operatorname{depth}(C)+1$. Taking $R(x,y)$ to mean $y=f(x)$ gives the
+functional version. The union-bound argument allows arbitrary circuit bases;
+the stated gate and depth overhead uses the shared Boolean constants. This is
+Adleman's nonuniform seed-fixing step without amplification, and does not bound
+the time needed to find the seed.\citep{Adleman1978,AroraBarak09}
+The formalization recovers Samuel Schlesinger's earlier Complexitylib
+multi-output circuit-hardwiring development.
+\declat{83b75eb85da18834b26a97596eace7d1ecc1d494}{Complexity/Computability/Circuit/Boolean/SeedFixing.lean}{57}{Cslib.Circuits.Circuit.exists_seed_forall}
+\declat{83b75eb85da18834b26a97596eace7d1ecc1d494}{Complexity/Computability/Circuit/Boolean/SeedFixing.lean}{83}{Cslib.Circuits.Boolean.exists_circuit_of_card_bad_lt}
+\declat{83b75eb85da18834b26a97596eace7d1ecc1d494}{Complexity/Computability/Circuit/Boolean/SeedFixing.lean}{101}{Cslib.Circuits.Boolean.exists_computes_of_card_bad_lt}
 \end{result}
 
 \begin{result}
