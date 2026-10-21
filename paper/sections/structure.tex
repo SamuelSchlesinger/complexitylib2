@@ -651,9 +651,8 @@ $\mathrm{EndOfLine}$ and $\mathrm{Leaf}$ are total and satisfy
 $\mathrm{LocalOpt}\in\cc{PLS}$, $\mathrm{Pigeon}\in\cc{PPP}$,
 $\mathrm{EndOfLine}\in\cc{PPAD}$ and $\mathrm{Leaf}\in\cc{PPA}$ (hence all four
 lie in $\cc{TFNP}$, and $\mathrm{EndOfLine}\in\cc{PPP}\cap\cc{PPA}$).
-Completeness (\texttt{SearchComplete}) of these circuit problems via compiling
-arbitrary polynomial-time families into circuits, and the subclass $\cc{CLS}$,
-are not formalized in this entry.\citep{JohnsonPapadimitriouYannakakis1988,MegiddoPapadimitriou1991,Papadimitriou1994PPAD,BeameEtAl1998}
+Completeness of these circuit problems is stated in the next entry; the subclass
+$\cc{CLS}$ is not formalized here.\citep{JohnsonPapadimitriouYannakakis1988,MegiddoPapadimitriou1991,Papadimitriou1994PPAD,BeameEtAl1998}
 \declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{118}{Cslib.Complexity.isTotalSearch_localOptRel}
 \declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{154}{Cslib.Complexity.isTotalSearch_pigeonRel}
 \declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{290}{Cslib.Complexity.isTotalSearch_endOfLineRel}
@@ -668,6 +667,26 @@ are not formalized in this entry.\citep{JohnsonPapadimitriouYannakakis1988,Megid
 \declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{843}{Cslib.Complexity.Pigeon_mem_PPP}
 \declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{848}{Cslib.Complexity.EndOfLine_mem_PPAD}
 \declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{853}{Cslib.Complexity.Leaf_mem_PPA}
+\end{result}
+
+\begin{result}
+\textbf{Canonical TFNP circuit problems are complete.}
+The circuit problems $\mathrm{LocalOpt}$, $\mathrm{Pigeon}$,
+$\mathrm{EndOfLine}$ and $\mathrm{Leaf}$ are complete for $\cc{PLS}$,
+$\cc{PPP}$, $\cc{PPAD}$ and $\cc{PPA}$, respectively, under the
+polynomial-time search reductions \lean{SearchReducible}, over arbitrary
+injectively encoded source instance types. The vertex width is supplied in unary;
+the instance maps construct the De Morgan circuit codes in polynomial time.
+The intermediate family-to-circuit reductions preserve the family's vertex
+witnesses; completeness follows by composing with each source problem's
+class-defining reduction. Local-search cost circuits have a separate polynomial
+output width and use leading-zero binary padding, preserving exact numerical
+costs even when their bit-length exceeds the vertex width.
+\citep{JohnsonPapadimitriouYannakakis1988,Papadimitriou1994PPAD,BeameEtAl1998}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean}{204}{Cslib.Complexity.Pigeon_searchComplete}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean}{210}{Cslib.Complexity.EndOfLine_searchComplete}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean}{216}{Cslib.Complexity.Leaf_searchComplete}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean}{222}{Cslib.Complexity.LocalOpt_searchComplete}
 \end{result}
 
 \begin{result}
