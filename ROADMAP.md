@@ -554,14 +554,21 @@ Jukna coverage below is an additional target beyond the V1 port:
   are also implemented. Nonuniform circuit
   existence does not certify the preprocessing algorithm's runtime.
 * **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
-  are ported, and the [generator parameter certificates](Complexity/Computability/Circuit/Rational/Runtime/Parameters.lean)
-  and polynomial-time staged division-free integer determinant `detRows_polytime`
-  ([Runtime/Determinant](Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean)) are
-  proved. Remaining runtime milestones: binary `divMod`/`gcd` and canonical rational serialization,
-  polynomial-time certificates for the [integer lift tables](Complexity/Computability/Circuit/Rational/Runtime/Lift.lean),
-  per-point Cramer output words, and grid enumeration for the full generator endpoint, charging all
-  arithmetic and storage growth. Carry over the remaining extractor developments, recording each
-  endpoint's hypotheses.
+  are ported, and the [generator parameter certificates](Complexity/Computability/Circuit/Rational/Runtime/Parameters.lean),
+  [binary integer arithmetic](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Int/Binary.lean),
+  polynomial-time staged division-free integer determinant `detRows_polytime`
+  ([Runtime/Determinant](Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean)),
+  [binary division and remainder](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean)
+  (`binary_divMod`, `binary_div`, `binary_mod`),
+  [Euclidean GCD](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean)
+  (`binary_gcd`), and
+  [canonical natural and reduced-rational encoding certificates](Complexity/Computability/Circuit/Rational/Runtime/Encode.lean)
+  (`encodeNat_polytime`, `encodeDivInt_polytime`) are proved. Remaining runtime milestones:
+  polynomial-time certificates for the [integer lift tables](Complexity/Computability/Circuit/Rational/Runtime/Lift.lean)
+  (`liftRows_polytime`), per-point Cramer output words (`matrixEntry_polytime`), and grid
+  enumeration for the full generator endpoint (`hittingList_polytime`), charging all arithmetic and
+  storage growth. Carry over the remaining extractor developments, recording each endpoint's
+  hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),
