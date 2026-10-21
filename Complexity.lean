@@ -674,6 +674,7 @@ public import Complexity.Computability.GenericRAM.Defs
 public import Complexity.Computability.GenericRAM.Native
 public import Complexity.Computability.GenericRAM.Native.Nat
 public import Complexity.Computability.GenericRAM.Signed
+public import Complexity.Computability.GenericRAM.Simulation.Finite
 public import Complexity.Computability.GenericRAM.SparseMemory.Basic
 public import Complexity.Computability.GenericRAM.SparseMemory.Turing
 public import Complexity.Computability.Kolmogorov.Basic

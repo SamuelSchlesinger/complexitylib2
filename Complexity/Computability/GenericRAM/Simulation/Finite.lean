@@ -141,7 +141,7 @@ def denoteResult : Result M r → Outcome M r
 def resume (k : M.Config) (pc : ℕ) (s : FiniteState M r) : Result M r :=
   if M.validPC k pc then some (.inl { s with pc := pc }) else none
 
-@[simp] theorem denote_continue (k : M.Config) (pc : ℕ) (s : FiniteState M r) :
+@[simp] theorem denote_resume (k : M.Config) (pc : ℕ) (s : FiniteState M r) :
     denoteResult (resume k pc s) = Outcome.continue k ⟨pc, s.denote.data⟩ := by
   unfold resume Outcome.continue
   split <;> rfl
@@ -200,8 +200,8 @@ theorem denote_step (k : M.Config) (p : Program M r) (s : FiniteState M r) :
           simp only [evalInstr, he, Option.bind_none, denoteResult, ← h]
         | some t =>
           simp only [he, Option.map_some] at h
-          simp only [evalInstr, he, Option.bind_some, denote_continue, ← h]
-      | jump t => exact denote_continue k t s
+          simp only [evalInstr, he, Option.bind_some, denote_resume, ← h]
+      | jump t => exact denote_resume k t s
       | branch c t =>
         cases c with
         | test f args =>
@@ -211,7 +211,7 @@ theorem denote_step (k : M.Config) (p : Program M r) (s : FiniteState M r) :
             | none => Outcome.fault
           cases hb : M.evalTest k f (s.regs ∘ args) with
           | none => rfl
-          | some b => exact denote_continue k (if b then t else s.pc + 1) s
+          | some b => exact denote_resume k (if b then t else s.pc + 1) s
       | halt i =>
         by_cases hm : M.validMove k (s.regs i) = true <;>
           simp [evalInstr, denoteResult, denote, hm]
