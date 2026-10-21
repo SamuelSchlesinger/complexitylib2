@@ -472,28 +472,47 @@ Jukna coverage below is an additional target beyond the V1 port:
   affine-controller bounds, and hard-power counting. It already uses CSLib
   circuits and some mass-production infrastructure. The
   [functional-graph foundations](Complexity/Foundations/Combinatorics/FunctionalGraph.lean)
-  (transient and cycle structure, checkpoint packing, exact distinct-power counts) and
+  (transient and cycle structure, checkpoint packing, exact distinct-power counts,
+  [cycle-spectrum reduction and canonical hitting-time identities](Complexity/Foundations/Combinatorics/FunctionalGraph/Spectrum.lean),
+  [min-max duality for required paths in in-forests](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestDuality.lean),
+  [semantic correctness of the six-step distinguished-point procedure](Complexity/Foundations/Combinatorics/FunctionalGraph/DistinguishedPoints.lean),
+  [checkpoint forests](Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean),
+  [interval labels](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean),
+  [compressed segments](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean)
+  and [compressed-forest navigation](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean)) and
   [native circuit iteration](Complexity/Computability/Circuit/Iteration.lean) with retained
   orbits are in place, as are the [fixed-power theorem](Complexity/Computability/Circuit/Boolean/Iteration.lean),
   its encoded and burn-in forms, the optimized square-root bounds and permutation inversion; the
   [input-time](Complexity/Computability/Circuit/Boolean/Iteration/InputTime.lean) and
   [batched iteration](Complexity/Computability/Circuit/Boolean/Iteration/Batch.lean), cycle labels,
   transient depths, additive long-time bounds,
+  [compressed-forest reachability](Complexity/Computability/Circuit/Boolean/Iteration/ForestCircuits.lean),
+  [hitting-time navigation](Complexity/Computability/Circuit/Boolean/Iteration/NavigationCircuits.lean),
+  [complete visit-schedule circuits](Complexity/Computability/Circuit/Boolean/Iteration/VisitScheduleCircuits.lean),
   [sparse-counter navigation, visit schedules and hitting-time bounds](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean),
-  and [autonomous-controller / affine-payload iteration bounds](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean)
-  are also implemented. The later hard-power counting developments are listed below. Nonuniform circuit
+  [autonomous-controller / affine-payload iteration bounds](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean),
+  [universal-map simulation and hardwiring](Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean),
+  [in-place multi-head machine bounds](Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean),
+  [sequential-squaring exponent reduction](Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean),
+  [hard-power counting, modular-counter lower bounds, and prime-cycle permutations](Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean),
+  and [batched modular-counter upper and lower bounds](Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean)
+  are also implemented. Nonuniform circuit
   existence does not certify the preprocessing algorithm's runtime.
 * **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
   are ported; certify the generator's polynomial runtime, charging all arithmetic and storage
   growth. Carry over the remaining extractor developments, recording each endpoint's hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
-  The exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean),
+  The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),
+  [decision-tree node-count, rank, decision-list, and energy bounds for inner product](Complexity/Computability/DecisionTree/InnerProduct.lean),
+  exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean),
   [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
   (including the single-direction, direction-run, and multilevel threshold capacity corollaries),
   [mixed-activation capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean),
   [median-cut rectangle and cut bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Cut.lean),
   [fan-in-two component and block-excess bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean),
+  [direction-menu capacity bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean)
+  (including bounded internal fan-in and bounded integer internal-weight corollaries),
   and [unambiguous transcript cells and quadratic-potential unique-sink representations](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Potential.lean)
   are proved. Port v1's explicit source-reduction family.
   Further manuscript work includes scalar enumerative coding, pending-bias simulation,
@@ -546,7 +565,7 @@ following endpoints, rather than submitted as class definitions or conditional w
 
 | Development | First independently useful endpoint | Remaining endpoint and dependencies |
 | --- | --- | --- |
-| Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. Sparse-counter navigation, visit schedules, hitting-time bounds and bounded visit counts are in [SparseNavigation](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean), [ResidueAdd](Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean) and [HittingTime](Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean). Autonomous controllers and affine-payload iteration bounds are in [AffineController](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean). All ports follow source `c4cfa198`. | General input-time and batch results already exist. Hard-power counting is a later milestone; these results do not close the whole M2b scope. |
+| Iterated functions M2b | Sparse-counter centralizers and signed fixed powers are in [SparseDisplacement](Complexity/Computability/Circuit/Boolean/Iteration/SparseDisplacement.lean). Interval charts, encoding/decoding, canonical labels and additive variable-time circuits are in [SparseTime](Complexity/Computability/Circuit/Boolean/Iteration/SparseTime.lean), including both charged coordinate conversions. General compressed-forest reachability, first-hitting-time navigation, and complete visit-schedule circuits are in [ForestCircuits](Complexity/Computability/Circuit/Boolean/Iteration/ForestCircuits.lean), [NavigationCircuits](Complexity/Computability/Circuit/Boolean/Iteration/NavigationCircuits.lean), and [VisitScheduleCircuits](Complexity/Computability/Circuit/Boolean/Iteration/VisitScheduleCircuits.lean), with combinatorial checkpoint forests, interval labels, nonmerging segments, and compressed-forest navigation in [CheckpointForest](Complexity/Foundations/Combinatorics/FunctionalGraph/CheckpointForest.lean), [ForestIntervals](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestIntervals.lean), [ForestSegments](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestSegments.lean) and [ForestNavigation](Complexity/Foundations/Combinatorics/FunctionalGraph/ForestNavigation.lean), and sparse-counter specializations in [SparseNavigation](Complexity/Computability/Circuit/Boolean/Iteration/SparseNavigation.lean), [ResidueAdd](Complexity/Computability/Circuit/Boolean/Iteration/ResidueAdd.lean) and [HittingTime](Complexity/Foundations/Combinatorics/FunctionalGraph/HittingTime.lean). Autonomous controllers and affine-payload iteration bounds are in [AffineController](Complexity/Computability/Circuit/Boolean/Iteration/AffineController.lean). Universal-map simulation, product/group-action hardwiring, in-place multi-head machine bounds, and sequential-squaring reduction are in [UniversalMap](Complexity/Computability/Circuit/Boolean/Iteration/UniversalMap.lean), [InPlace](Complexity/Computability/Circuit/Boolean/Iteration/InPlace.lean) and [SequentialSquaring](Complexity/Computability/Circuit/Boolean/Iteration/SequentialSquaring.lean). Ordered circuit-description counting, modular-counter $\tilde\Omega(2^{n/2})$ power lower bounds, remainder reductions, subexponential-horizon barriers, hash-class prime-cycle permutations, and batched modular-counter upper and lower bounds are in [CircuitCounting](Complexity/Computability/Circuit/Boolean/Iteration/CircuitCounting.lean), [ModulusCounter](Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter.lean), [PrimeCycles](Complexity/Computability/Circuit/Boolean/Iteration/PrimeCycles.lean) and [CounterBatch](Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean). All ports follow source `c4cfa198`. | Done: all M2b iteration endpoints are proved. Nonuniform circuit existence does not certify preprocessing runtime. |
 | NL = coNL | A streaming inductive-counting algorithm with soundness/completeness and logarithmic-size counters and state, reusing [InductiveCounting](Complexity/Foundations/Relation/InductiveCounting.lean). Its certificates must be checked without retaining a whole reachable set. | Compile the procedure to the native NTM model, certify every computation prefix's logspace bound, and prove complement closure. Explicitly handle configuration enumeration and input access. `NL` follows the textbook convention that every branch halts (`DecidesInSpace`), so the complement machine must halt on every branch, for instance by bounding its loops with logarithmic counters. Proving that logspace recognizers whose branches may loop (`RecognizesInSpace`) recognize only problems in `NL` is a separate clock-construction item; general space-constructible Savitch bounds are separate. |
 | Arthur–Merlin | Done: verifier-based MA and AM, error reduction, NP ∪ BPP ⊆ MA ⊆ AM ⊆ Π₂ᵖ, MA ⊆ Σ₂ᵖ ∩ Π₂ᵖ and MA ⊆ SBP ([ArthurMerlin](Complexity/Computability/Complexity/Classes/ArthurMerlin.lean)); the [set lower bound protocol and SBP ⊆ AM](Complexity/Computability/Complexity/Classes/ArthurMerlin/SetLowerBound.lean), [public-coin GNI in AM](Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean), and [PH = Σ₂ᵖ from coNP ⊆ AM for every encoding](Complexity/Computability/Complexity/Classes/ArthurMerlin/Collapse.lean). | Interactive-machine characterizations, AM[k] = AM and private-to-public-coin transformations remain separate endpoints. |
 | Worst-case-hardness derandomization | Done for eventual hardness: [P = BPP from 2^(γn) De Morgan circuit hardness of a language in E](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean), with the explicit field, the encoding in E and the parameter schedule certified. | The infinitely-often variant; the EXP-not-in-P/poly endpoint of Babai, Fortnow, Nisan and Wigderson. |

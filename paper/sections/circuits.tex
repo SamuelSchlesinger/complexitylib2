@@ -196,6 +196,67 @@ simultaneous activity.\citep{ThresholdCircuitRepresentations2026}
 \end{result}
 
 \begin{result}
+At the underlying decision-tree level, a bi-monotone comparison
+$q(x,y)=\kappa(\ell(x),r(y))$ on $X\times Y$ applies a Boolean kernel
+$\kappa:\mathbb R\times\mathbb R\to\{0,1\}$ monotone in each real score
+separately (including separable threshold comparisons
+$\mathbf 1[\theta\le\ell(x)+r(y)]$, $\mathbf 1[\theta\le\max(\ell(x),r(y))]$,
+and $\mathbf 1[\theta\le\min(\ell(x),r(y))]$). On any nonempty finite product
+$A\times B$ and $0\le a\le 1$, either the false branch retains at least $a|A|$
+and $a|B|$ elements or the true branch retains at least $(1-a)|A|$ and
+$(1-a)|B|$; hence any decision tree $t$ of bi-monotone comparisons with $L$
+structural leaves (and $N=L-1$ internal query nodes) admits a nonempty
+rectangle $A'\times B'\subseteq A\times B$ following a single root-to-leaf path
+with $|A|\le |A'|L$ and $|B|\le |B'|L$, and $|A||B|\le R L^2$ whenever every
+monochromatic rectangle has area at most $R$. For a binary decision tree $t$ of
+depth $d$, Ehrenfeucht--Haussler rank $r\le d$, and tree energy $E\le d$ (the
+maximum number of true branches on a root-to-leaf path),
+$L\le\sum_{j=0}^r\binom dj$ and $L\le\sum_{j=0}^E\binom dj$, while decision
+lists (where every internal node has a leaf child) have $r\le 1$, $L\le d+1$,
+and $N\le d$. Consequently, for any bi-monotone or separable comparison tree $t$
+computing inner product modulo two on two $m$-bit blocks ($|\iota|=m$),
+\[
+2^m\le L^2=(N+1)^2,\qquad
+2^m\le\left(\sum_{j=0}^{r}\binom dj\right)^2,\qquad
+2^m\le\left(\sum_{j=0}^{E}\binom dj\right)^2,
+\]
+giving $2^m\le(d+1)^2$ for rank at most $1$ or decision lists, and over $\mathbb R$
+both $m/2\le r\log_2(ed/r)$, $(r/e)2^{m/(2r)}\le d$ and
+$m/2\le E\log_2(ed/E)$, $(E/e)2^{m/(2E)}\le d$ (with real division by zero at
+$r=0$ or $E=0$ forcing $m=0$). These bounds apply to semantic real-score query
+trees without certifying comparison precision.\citep{ThresholdCircuitRepresentations2026}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{112}{Cslib.DecisionTree.nodeCount}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{126}{Cslib.DecisionTree.leafCount_eq_nodeCount_add_one}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{153}{Cslib.DecisionTree.rank}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{215}{Cslib.DecisionTree.leafCount_le_sum_choose_rank}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{236}{Cslib.DecisionTree.IsDecisionList}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{253}{Cslib.DecisionTree.IsDecisionList.rank_le_one}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{268}{Cslib.DecisionTree.IsDecisionList.leafCount_le_depth_add_one}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{289}{Cslib.DecisionTree.energy}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Leaves.lean}{342}{Cslib.DecisionTree.leafCount_le_sum_choose_energy}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{58}{Cslib.BiMonotoneComparison}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{80}{Cslib.BiMonotoneComparison.ofMax}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{99}{Cslib.BiMonotoneComparison.ofMin}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{118}{Cslib.BiMonotoneComparison.exists_rectangle}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{168}{Cslib.SeparableComparison.toBiMonotone}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{204}{Cslib.DecisionTree.exists_leaf_rectangle_biMonotone}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/Separable.lean}{256}{Cslib.DecisionTree.card_mul_le_mul_leafCount_sq_biMonotone}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{58}{Cslib.DecisionTree.two_pow_le_leafCount_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{83}{Cslib.DecisionTree.two_pow_le_nodeCount_add_one_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{92}{Cslib.DecisionTree.two_pow_le_nodeCount_add_one_sq_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{101}{Cslib.DecisionTree.two_pow_le_depth_add_one_sq_of_rank_le_one_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{111}{Cslib.DecisionTree.two_pow_le_depth_add_one_sq_of_isDecisionList_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{129}{Cslib.DecisionTree.two_pow_le_sum_choose_rank_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{138}{Cslib.DecisionTree.two_pow_le_sum_choose_rank_sq_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{147}{Cslib.DecisionTree.le_rank_mul_logb_depth_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{157}{Cslib.DecisionTree.rank_mul_rpow_le_depth_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{166}{Cslib.DecisionTree.two_pow_le_sum_choose_energy_sq_of_biMonotone_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{175}{Cslib.DecisionTree.two_pow_le_sum_choose_energy_sq_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{184}{Cslib.DecisionTree.le_energy_mul_logb_depth_of_hadamardCode}
+\declat{2800b18ddd845b1ae351ee7e172214872c1b0af3}{Complexity/Computability/DecisionTree/InnerProduct.lean}{194}{Cslib.DecisionTree.energy_mul_rpow_le_depth_of_hadamardCode}
+\end{result}
+
+\begin{result}
 A separate capacity bound applies to any fixed Boolean readout of a threshold
 program's gate values computing $f$ on $n$ bits. Suppose that, across every
 partition of the input coordinates, every rectangle contained in either fiber
@@ -376,6 +437,60 @@ rescaling of arbitrary real-weight gates is not formalized.\citep{ThresholdCircu
 \declat{fc9a056e3d23bf0f830b6ceda343ce5152574129}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Potential.lean}{739}{Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_isSinkOnFace}
 \declat{fc9a056e3d23bf0f830b6ceda343ce5152574129}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Potential.lean}{748}{Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.isSink_iff_eq_eval}
 \declat{fc9a056e3d23bf0f830b6ceda343ce5152574129}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Potential.lean}{796}{Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.energy_sweep_le}
+\end{result}
+
+\begin{result}
+For a real-weight threshold program $p$ with $g$ gates, let
+$\mathrm{biasMenu}(p,j)=\{\sum_{r}\alpha_{j,r}u_r:u\in\{0,1\}^g\}\subseteq\mathbb R$
+be the syntactic menu of internal gate biases at gate $j$, where $\alpha_{j,r}$
+is the aggregated weight from gate $r$ to gate $j$ (zero for $r\ge j$), and let
+$G_j=\{r: \alpha_{j,r}\ne 0\}\subseteq\{0,\dots,j-1\}$ be its internal gate
+support. Then $1\le|\mathrm{biasMenu}(p,j)|\le 2^{|G_j|}$; if $\alpha_{j,r}=w_r\in\mathbb Z$
+for all $r$, then $|\mathrm{biasMenu}(p,j)|\le 1+\sum_r|w_r|$, and if $|w_r|\le W$
+for all $r<j$, then $|\mathrm{biasMenu}(p,j)|\le 1+jW\le 1+(g-1)W$.
+Suppose the input-reading gates $I(p)$ are partitioned into $d$ directions via
+$\mathrm{dir}:[g]\to[d]$ so that every $j\in I(p)$ has aggregated input weight
+vector $c_j w_{\mathrm{dir}(j)}$ for scalars $c_j\in\mathbb R$ and directions
+$w_a\in\mathbb R^n$. Write $I_a=\{j\in I(p):\mathrm{dir}(j)=a\}$, $q_a=|I_a|$,
+and $T_a=\sum_{j\in I_a}|\mathrm{biasMenu}(p,j)|$. Because a tuple of maps on a
+preorder with at most $T_i$ changes has at most $\sum_i T_i$ changes, for each
+direction $a\in[d]$ the joint table of threshold comparisons
+$\mathbf 1[\theta_j\le c_j\langle w_a,x\rangle+\beta]$ over all $j\in I_a$ and
+$\beta\in\mathrm{biasMenu}(p,j)$ changes at most $T_a$ times as
+$\langle w_a,x\rangle$ varies; precomputing this table for directions in any
+subset $S\subseteq[d]$ and evaluating the remaining directions gate by gate
+gives, for every Boolean readout computing a two-sided $K$-rectangle-free
+function $f$ on $n$ bits,
+\[
+2^n < 4K^2\prod_{a=0}^{d-1}\min\!\big(4^{q_a},\,\max(1,4T_a)\big).
+\]
+In particular, if $|G_j|\le k$ for all $j\in I(p)$, then $T_a\le q_a 2^k$; if
+every $j\in I(p)$ has integer internal weights of magnitude at most $W$ on
+earlier gates, then $T_a\le q_a(1+(g-1)W)$, and for a single direction ($d=1$)
+this gives $2^n<4K^2\max(1,4|I(p)|(1+(g-1)W))$. Single-output circuit
+corollaries hold whenever the output wire selects a gate. As above, the
+two-sided rectangle-freeness hypothesis is required, menus are syntactic over
+$\{0,1\}^g$ rather than restricted to reachable internal states, and real
+comparisons are semantic rather than algorithmically certified.\citep{ThresholdCircuitRepresentations2026}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Foundations/Order/Changes.lean}{77}{Cslib.ChangesAtMost.comp_antitone}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Foundations/Order/Changes.lean}{118}{Cslib.ChangesAtMost.pi}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Foundations/Order/Changes.lean}{141}{Cslib.ChangesAtMost.finset_pi}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{87}{Cslib.Circuits.Boolean.WeightedThreshold.gateSupport}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{105}{Cslib.Circuits.Boolean.WeightedThreshold.biasMenu}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{121}{Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{143}{Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{177}{Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_mul}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{206}{Cslib.Circuits.Boolean.WeightedThreshold.directionGates}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{217}{Cslib.Circuits.Boolean.WeightedThreshold.directionMenuSum}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{433}{Cslib.Circuits.Boolean.WeightedThreshold.menuBlockDecomposition}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{467}{Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{538}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{565}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{583}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_fanIn}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{607}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_fanIn}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{628}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_intWeight}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{656}{Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_intWeight}
+\declat{e383a8b8890803b4817965c632e44cf37826d6e1}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean}{679}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction_intWeight}
 \end{result}
 
 \begin{result}

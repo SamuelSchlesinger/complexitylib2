@@ -6,12 +6,13 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Components
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Menus
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Potential
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Tactic.FinCases
 
-/-! Tests and axiom guards for mixed-activation, cut, component, block-excess, unambiguous cell, and
-quadratic-potential unique-sink representations of weighted threshold circuits. -/
+/-! Tests and axiom guards for mixed-activation, cut, component, block-excess, direction-menu,
+unambiguous cell, and quadratic-potential unique-sink representations of weighted threshold circuits. -/
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
@@ -127,6 +128,49 @@ example : 1 < (∅ : Finset (Fin 1)).card + (inputGates negateCircuit.program).c
   · intro b hb
     rw [Finset.mem_singleton.mp hb, Finset.card_singleton]
     omega
+
+-- Direction-menu bounds (Theorem 7.3 and Corollary 7.4) on `negateCircuit`.
+example :
+    2 ^ 1 < 4 * 2 ^ 2 * ∏ a : Fin negateCircuit.size,
+      min (4 ^ (directionGates negateCircuit.program id a).card)
+        (max 1 (4 * directionMenuSum negateCircuit.program id a)) :=
+  circuit_two_pow_lt_of_directionMenus negateCircuit ⟨(1 : Fin 2), rfl⟩ id
+    (inputWeight negateCircuit.program) (fun _ => 1)
+    (fun _ _ => (one_smul ℝ _).symm)
+    negateCircuit_eval (oneBit_rectangleFree _)
+
+example :
+    2 ^ 1 < 4 * 2 ^ 2 * ∏ a : Fin negateCircuit.size,
+      min (4 ^ (directionGates negateCircuit.program id a).card)
+        (max 1 (4 * ((directionGates negateCircuit.program id a).card * 2 ^ 2))) :=
+  circuit_two_pow_lt_of_directionMenus_fanIn negateCircuit ⟨(1 : Fin 2), rfl⟩ id
+    (inputWeight negateCircuit.program) (fun _ => 1)
+    (fun _ _ => (one_smul ℝ _).symm) 2
+    (fun _ _ => le_trans (Finset.card_le_univ _) (by decide))
+    negateCircuit_eval (oneBit_rectangleFree _)
+
+-- Single-direction bounded integer internal weights on `readInput`.
+private theorem readInput_eval (x : Fin 1 → Bool) :
+    readInput.eval interpretation x 0 = x 0 := by
+  change readInput.eval interpretation x (Fin.last 0) = x 0
+  rw [readInput, Program.eval_gate_last]
+  cases hx : x 0 <;> simp [Line.eval, interpretation, hx]
+
+example :
+    2 ^ 1 < 4 * 2 ^ 2 * max 1 (4 * ((inputGates readInput).card * (1 + (1 - 1) * 0))) := by
+  refine two_pow_lt_of_direction_intWeight readInput (fun z => z 0)
+    (inputWeight readInput 0) (fun _ => 1) ?_ 0 (fun _ _ => 0) ?_ ?_
+    readInput_eval (oneBit_rectangleFree _)
+  · intro gate _
+    fin_cases gate
+    exact (one_smul ℝ _).symm
+  · intro gate _ j
+    fin_cases gate
+    fin_cases j
+    simpa using gateWeight_eq_zero_of_le readInput 0 0 le_rfl
+  · intro gate _ j hj
+    fin_cases gate
+    exact False.elim (Nat.not_lt_zero _ hj)
 
 /--
 info: 'Cslib.Circuits.Boolean.WeightedThreshold.cost_activationBlockDecomposition' depends on axioms:
@@ -394,3 +438,99 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.energy_sweep
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms StrictMarginProgram.energy_sweep_le
+
+/--
+info: 'Cslib.ChangesAtMost.comp_antitone' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ChangesAtMost.comp_antitone
+
+/--
+info: 'Cslib.ChangesAtMost.pi' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.ChangesAtMost.pi
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_mul' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_mul
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_trueMenuTable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_trueMenuTable
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_fanIn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_fanIn
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_fanIn' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_fanIn
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_directionMenus_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_of_directionMenus_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms circuit_two_pow_lt_of_directionMenus_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_of_direction_intWeight
