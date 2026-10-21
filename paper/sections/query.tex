@@ -329,7 +329,10 @@ requested key and preserves the invariant, and reinserting a present key preserv
 tree. Minimum and strict-successor queries return the least eligible key, or \texttt{none} exactly
 when no eligible key exists. A successor query does not require its argument to be stored.
 The algorithms follow Chapter 12 of \citet{CLRS2009}; the representation reuses Mathlib's binary
-tree and height definitions.
+tree and height definitions. The typed finite-set interface and complete optional-minimum
+contract are representation-independent: they do not import trees or a cost model. The shared
+interface admits all operations; a bounded-key implementation can separately restrict insertion
+admissibility while retaining arbitrary membership and successor queries.
 
 In the explicit internal-node-visit model, every operation costs at most the initial tree height
 $h$, and $h\le |S|$ for a represented set $S$. Empty-child tests, allocation, reconstruction,
@@ -340,10 +343,12 @@ semantics. Summed node visits are bounded by the sum of the current set cardinal
 selected operation history. No balancing, logarithmic worst-case bound or RAM-time result is
 claimed. Checked examples contrast insertion orders producing heights three and seven on the
 same seven keys, and a client asks for the minimum before choosing its strict-successor argument.
-\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{128}{Cslib.Algorithms.Lean.SearchTree.ordered_insert}
-\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{260}{Cslib.Algorithms.Lean.SearchTree.successor_spec}
-\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{116}{Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height}
-\declat{11744afb1a743008b73935dfd8e11f156f79565b}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{161}{Cslib.Algorithms.Lean.SearchTree.run_correct}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Data/OrderedSet.lean}{49}{Cslib.OrderedSet.least_spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Semantics/Stateful/OrderedSet.lean}{56}{Cslib.OrderedSet.spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{130}{Cslib.Algorithms.Lean.SearchTree.ordered_insert}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{225}{Cslib.Algorithms.Lean.SearchTree.successor_spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{91}{Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{136}{Cslib.Algorithms.Lean.SearchTree.run_correct}
 \end{result}
 
 \begin{result}

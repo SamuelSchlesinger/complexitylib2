@@ -718,7 +718,11 @@ a backend. The [two-stack queue](Complexity/Algorithms/Lean/Queue.lean) and
 checked constructions, with explicit primitive-cost assumptions; their pure client controllers
 do not yet have total Word-RAM time certificates.
 
-The [unbalanced binary search tree](Complexity/Algorithms/Lean/SearchTree/Basic.lean) implements
+The shared [ordered-set interface](Complexity/Foundations/Semantics/Stateful/OrderedSet.lean)
+and [optional-minimum contract](Complexity/Foundations/Data/OrderedSet.lean) are independent of
+representations and costs. The interface admits arbitrary linearly ordered keys and is total;
+a bounded-key implementation may restrict insertion admissibility separately. The
+[unbalanced binary search tree](Complexity/Algorithms/Lean/SearchTree/Basic.lean) implements
 membership, insertion, minimum and strict successor over any linear order, preserving a strict
 BST invariant and finite-set semantics. Duplicate insertion preserves the tree; missing successors
 and empty queries return `none`. Its [native realization](Complexity/Algorithms/Lean/SearchTree/Stateful.lean)

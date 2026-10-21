@@ -2072,3 +2072,33 @@ Basic lines 128/260 and Stateful lines 116/161. PDF SHA256:
 There are no unresolved source or local-render review findings. Actual CI artifact/provenance
 inspection and coordinator integration approval remain separate gates. AI review is neither
 human editorial approval nor a Lean proof of prose equivalence. Generated artifacts are unversioned.
+
+### Ordered-set interface factoring revision (#290 / PR #294)
+
+Worker `worker-search-tree-20261021`, delegated by `codex-coordinator-20261021-2200`, addresses
+coordinator review 6326622668. The earlier tree-owned interface is now factored into
+`Foundations/Data/OrderedSet.lean` and `Foundations/Semantics/Stateful/OrderedSet.lean`, both under
+`Cslib.OrderedSet`. These neutral modules import no tree representation or cost module. They
+contain the complete optional-minimum contract, total typed finite-set specification and generic
+construction/adaptive clients. The BST realization, interpreter and node-visit bounds stay in
+SearchTree. No bounded-key vEB realization or machine-time result is added.
+
+Reviewed source `b3aac7104315ae4004236afd3b01df17ddd59220`, tree
+`e2943b28dbbe8ebe8930da27c39cc2f2ba04abdb`, is a focused descendant of the prior PR head
+`13b5a0fd44b4c0a11a8e8a5bb4a2cc31500895a0`. All six strict gates passed on the final source
+(session 36758, exit 0). An initial doc-line-length warning was corrected before that successful
+full rerun. The new neutral test driver imports only the shared interface and checks finite keys,
+strict/absent/exhausted queries, adaptive traces and a separate bounded insertion-admissibility
+specialization. Both test drivers have clean final MCP diagnostics, including the unchanged
+BST correctness/height examples and named axiom guards. Documentation configuration and
+whitespace checks also pass.
+
+Independent nonauthor `/root/controller_review` approved the exact source, tests and index
+semantics and confirmed the prior must-fix is addressed. It independently verified the published
+source tree, all six declaration pins and local rendered page 86. The theorem-index source hash is
+`9331ac755b303379e8130cebab69c881f07028aab4c1f7a13d58a756a92e13ca`;
+the 115-page PDF hash is `39bfb9ca2668638581df674b4d1beea022d6d7e1020092c1a929972c15a903e6`.
+The links target neutral declarations at lines 49/56, SearchTree Basic at 130/225 and Stateful
+at 91/136. No clipping or overlap was found. The final documentation commit changes no Lean
+bytes. Actual final-head CI PDF artifact/provenance inspection and coordinator integration
+approval remain separate gates. This records AI review, not human editorial approval.
