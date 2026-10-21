@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
 public import Complexity.Computability.Complexity.Classes.SharpP.Products
 public import Complexity.Computability.Complexity.Reduction.TruthTable
+import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -64,22 +65,12 @@ private theorem answerGap_mem {α : Type} {enc : α ↪ List Bool}
   let q : (α × List Bool) × ℕ → α × ℕ := fun x => (x.1.1, x.2)
   have hq : ComputableTidilyInPolyTime q
       (encPair (encPair enc encBits) encUnary) (encPair enc encUnary) := by dsimp [q]; fun_prop
-  have hi : ComputableTidilyInPolyTime
-      (fun x : (α × List Bool) × ℕ => if x.1.2.getD x.2 false then (1 : ℤ) else 0)
-      (encPair (encPair enc encBits) encUnary) encIntBin := by fun_prop
-  have hj : ComputableTidilyInPolyTime
-      (fun x : (α × List Bool) × ℕ => if x.1.2.getD x.2 false then (0 : ℤ) else 1)
-      (encPair (encPair enc encBits) encUnary) encIntBin := by fun_prop
   have hs : (fun x : (α × List Bool) × ℕ =>
       if x.1.2.getD x.2 false then g (x.1.1, x.2) else
         f (x.1.1, x.2) - g (x.1.1, x.2)) ∈
-      GapP (encPair (encPair enc encBits) encUnary) := by
-    convert GapP.add_mem
-      (GapP.mul_mem (GapP.of_polyTime hi) (GapP.comp_mem hg hq))
-      (GapP.mul_mem (GapP.of_polyTime hj) (GapP.comp_mem (GapP.sub_mem' hf hg) hq)) using 1
-    funext x
-    simp only [Pi.add_apply, Pi.mul_apply, Function.comp_apply, Pi.sub_apply, q]
-    split_ifs <;> simp
+      GapP (encPair (encPair enc encBits) encUnary) :=
+    GapP.ite_mem (by fun_prop) (GapP.comp_mem hg hq)
+      (GapP.comp_mem (GapP.sub_mem' hf hg) hq)
   have hp := GapP.prod_range_mem hs (hr.comp (.fst enc encBits))
   have hw : ComputableTidilyInPolyTime
       (fun x => if d x then (1 : ℤ) else 0) (encPair enc encBits) encIntBin := by fun_prop
