@@ -161,6 +161,17 @@ grandfathered without an alias; this list records them for downstream users.
   (`DecidesInSpace.recognizesInSpace`); membership proofs now also need a per-instance halting
   bound, the second component of `DecidesInSpace` (read back with
   `DecidesInSpace.exists_runsInTime`).
+* **Word-RAM operation bases.** On 2026-10-21 the word RAM became parametric in a basis of
+  operations. `Cslib.WordRAM.Op`, `Instr`, `Program` and `Code` take a basis `B` before the register
+  count, and `DecidableInTime`, `DecidableInTimeAt`, `LinearTime` and `PolynomialTime` take it as
+  their first explicit argument; the previous instruction set is `Cslib.WordRAM.Basis.standard`.
+  The constructors `Op.bin` and `Op.width` became definitions of the same names over the standard
+  basis, so construction is unchanged but pattern matching, `Op.bin.injEq` and `Op.width.injEq`
+  are gone (match on `Op.alu`). `Op`, `Instr` and `Code` no longer derive `Repr`. The binder `B` of
+  `Exec.loop`, `ExecWithin.loop` and `ExecWithin.loop_invariant` is now `T`, and the `B : Set β`
+  binder of the `recode` lemmas in `WordRAM/Time` is now `A'`; named-argument callers must follow.
+  On the same date `Cslib.Circuits.Signature.Hom` and `Signature.Hom.Preserves` moved, with their
+  names unchanged, from `Circuit/MapOp` to `Circuit/SignatureHom`, which `Circuit/MapOp` imports.
 * **Renamed modules.** On 2026-10-20 `Circuit/Boolean/MassProduction/{Sharp,SharpParameters,
   SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
   deprecated alias, but imports of the old module paths must be updated: a module stub would have

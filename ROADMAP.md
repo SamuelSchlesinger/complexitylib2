@@ -762,7 +762,8 @@ space bounds. Further class-level work needs resource certificates for the actua
   [transfer along meaning-preserving maps of bases](Complexity/Computability/WordRAM/MapOp.lean)
   with identical runs. Simulating an operation by a program over a smaller basis with an
   instruction budget (the analogue of circuit `SimulatesWithCost`), restating the clients at the
-  smallest basis they need, and an AC⁰ basis remain open. The machine has [linear and polynomial
+  smallest basis they need (in particular compiling `Program .additive r` to `Cslib.RAM` in place of
+  the `Instr.IsAdditive` fragment of the standard basis), and an AC⁰ basis remain open. The machine has [linear and polynomial
   instruction bounds](Complexity/Computability/WordRAM/Time.lean) uniform over all fitting widths
   above a logarithmic lower threshold,
   [structured programs](Complexity/Computability/WordRAM/Structured.lean) compiling with exact
