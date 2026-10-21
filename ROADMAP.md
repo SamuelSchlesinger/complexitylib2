@@ -809,7 +809,14 @@ space bounds. Further class-level work needs resource certificates for the actua
   dispatch, initialization/output or a whole-run simulation; uniform arbitrary-program dispatch and
   charged width selection/input fit remain separate obligations (#292, #293, #298). Generalizing the structured
   program calculus and time-class APIs to arbitrary domains, weighted/bit costs, and simulations
-  between these instances remain open. No real-RAM/Turing-machine equivalence is claimed;
+  between these instances remain open. The native tidy calculus now has
+  [fixed finite tuple rules](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean)
+  with linear access/gather/update and arbitrary summed construction bounds, and
+  [retained-input option elimination](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean)
+  charging extraction, repeated option computation, input retention, and the selected handler
+  (#301). These compositional prerequisites do not implement the encoded generic-RAM step or
+  its iteration/initialization/output transport (#298/#292). No real-RAM/Turing-machine
+  equivalence is claimed;
 * Sparse RAM memory: [association-list semantics](Complexity/Computability/GenericRAM/SparseMemory/Basic.lean)
   and [native multitape TM certificates](Complexity/Computability/GenericRAM/SparseMemory/Turing.lean)
   implement default-valued reads and insert/replace writes using Mathlib's `AList` and the existing
