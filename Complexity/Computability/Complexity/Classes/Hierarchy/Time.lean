@@ -454,7 +454,8 @@ theorem clockedBounds_aux (cA cD cO C₂ : ℕ) : ∃ K, ∀ {n A D N J L I E : 
     hD.trans ((Nat.mul_le_mul_left cD (show n + A + 1 ≤ (cA + 1) * (n + 1) by
       have : (cA + 1) * (n + 1) = cA * (n + 1) + (n + 1) := by ring
       omega)).trans (le_of_eq (by ring)))
-  obtain ⟨hU₁, hU₂⟩ := Turing.MultiTapeTM.Universal.universal_bounds_le (D := D) (N := N) (J := J + 1)
+  obtain ⟨hU₁, hU₂⟩ := Turing.MultiTapeTM.Universal.universal_bounds_le
+    (D := D) (N := N) (J := J + 1)
     (B := P * (n + 1) - 1) (L := 0) (by omega) (by omega) (Nat.zero_le _) (by omega)
   have hPX1 : 1 ≤ P * (n + 1) := by omega
   rw [Nat.sub_add_cancel hPX1] at hU₁ hU₂
