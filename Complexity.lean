@@ -189,6 +189,7 @@ public import Complexity.Computability.Circuit.Boolean.Smolensky.Gates
 public import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
 public import Complexity.Computability.Circuit.Boolean.Sorting
 public import Complexity.Computability.Circuit.Boolean.SortingTrace
+public import Complexity.Computability.Circuit.Boolean.Sparse
 public import Complexity.Computability.Circuit.Boolean.SparseSynthesis
 public import Complexity.Computability.Circuit.Boolean.SparseSynthesisConstruction
 public import Complexity.Computability.Circuit.Boolean.Spira
