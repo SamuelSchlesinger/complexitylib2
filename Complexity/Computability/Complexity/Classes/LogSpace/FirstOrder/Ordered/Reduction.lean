@@ -323,18 +323,14 @@ private theorem reachesOut_relTableCode (ha : v.WellFormed a) [Fact (2 ≤ a.1)]
 
 variable (v v' I) in
 /-- Concatenate the writers for a fixed list of target relation symbols. -/
-private def tablesCode : ℕ → List (Fin v'.count) → List Instr
-  | _, [] => []
-  | b, j :: js => relTableCode v v' I j b ++ tablesCode (b + tableLength v' I j) js
+private def tablesCode : ℕ → List (Fin v'.count) → List Instr :=
+  blocksCode (relTableCode v v' I) (tableLength v' I)
 
 omit [L'.IsRelational] in
 private theorem length_tablesCode : ∀ (b : ℕ) (js : List (Fin v'.count)),
-    (tablesCode v v' I b js).length = (js.map (tableLength v' I)).sum
-  | _, [] => rfl
-  | b, j :: js => by
-    rw [tablesCode, List.length_append, length_tablesCode, List.map_cons, List.sum_cons,
-      relTableCode]
-    simp only [List.length_append, length_arguments, ModelChecker.length_formulaCode,
+    (tablesCode v v' I b js).length = (js.map (tableLength v' I)).sum :=
+  length_blocksCode _ _ fun j b => by
+    simp only [relTableCode, List.length_append, length_arguments, ModelChecker.length_formulaCode,
       List.length_cons, List.length_nil, tableLength, relLength]
     rfl
 
@@ -352,24 +348,19 @@ private theorem reachesOut_tablesCode (ha : v.WellFormed a) [Fact (2 ≤ a.1)]
           letI := I.inputStructure (n := a.1);
           Vocabulary.relTable (Fin (a.1 ^ k)) (Equiv.refl _) (v'.symbol j))) ∧
         regs'.length = regs.length ∧ regs'.getD 0 0 = a.1 ∧
-        regs'.getD 3 0 = a.1 ^ k ∧ ∀ r ∈ regs', r ≤ B
-  | [], b, regs, _, _, h0, h3, _, hB => ⟨regs, by simpa using ReachesOut.refl _, rfl, h0, h3, hB⟩
-  | j :: js, b, regs, hP, hTB, h0, h3, hlenR, hB => by
-    rw [tablesCode, codeAt_append] at hP
-    have hl : (relTableCode v v' I j b).length = tableLength v' I j := by
+        regs'.getD 3 0 = a.1 ^ k ∧ ∀ r ∈ regs', r ≤ B := by
+  intro js b regs hP hTB h0 h3 hlenR hB
+  let Inv := fun rs : List ℕ => rs.length = regs.length ∧ rs.getD 0 0 = a.1 ∧
+    rs.getD 3 0 = a.1 ^ k ∧ ∀ r ∈ rs, r ≤ B
+  apply reachesOut_blocksCode (relTableCode v v' I) (tableLength v' I)
+    (fun j b => by
       have := length_tablesCode (v := v) (v' := v') (I := I) b [j]
-      simpa [tablesCode] using this
-    rw [hl] at hP
-    obtain ⟨regs₁, hreach₁, hl₁, h0₁, h3₁, hB₁⟩ :=
-      reachesOut_relTableCode ha j hP.1 hnB hNB (hTB j List.mem_cons_self) regs h0 h3
-        (hlenR j List.mem_cons_self) hB
-    obtain ⟨regs₂, hreach₂, hl₂, h0₂, h3₂, hB₂⟩ :=
-      reachesOut_tablesCode ha hnB hNB js _ regs₁ hP.2
-        (fun j' hj' => hTB j' (List.mem_cons_of_mem _ hj')) h0₁ h3₁
-        (fun j' hj' => hl₁ ▸ hlenR j' (List.mem_cons_of_mem _ hj')) hB₁
-    refine ⟨regs₂, ?_, hl₂.trans hl₁, h0₂, h3₂, hB₂⟩
-    rw [List.map_cons, List.sum_cons, ← Nat.add_assoc, List.flatMap_cons]
-    exact hreach₁.trans hreach₂
+      simpa [tablesCode, blocksCode] using this) _ Inv ?_ b regs hP ⟨rfl, h0, h3, hB⟩
+  intro j hj c rs hc ⟨hl, h0', h3', hB'⟩
+  obtain ⟨rs', hr, hl', h0'', h3'', hB''⟩ :=
+    reachesOut_relTableCode ha j hc hnB hNB (hTB j hj) rs h0' h3'
+      (hl ▸ hlenR j hj) hB'
+  exact ⟨rs', hr, hl'.trans hl, h0'', h3'', hB''⟩
 
 variable (v v' I)
 
