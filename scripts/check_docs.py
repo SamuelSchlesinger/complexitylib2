@@ -2,10 +2,14 @@
 """Check documentation pins and generated module/search coverage (Python 3.11+)."""
 
 import argparse
+from contextlib import closing
 import html
 import json
 from pathlib import Path
 import re
+import shutil
+import sqlite3
+import tempfile
 import tomllib
 from urllib.parse import unquote, urlsplit
 
@@ -52,6 +56,41 @@ def check_bibliography_keys(bibliography):
     require(not duplicates, f"Duplicate bibliography keys: {', '.join(duplicates)}")
 
 
+def local_modules(names):
+    return {name for name in names if name == "Complexity" or name.startswith("Complexity.")}
+
+
+def check_module_inventory(names, expected, label):
+    actual = local_modules(names)
+    obsolete = sorted(actual - expected)
+    missing = sorted(expected - actual)
+    require(not obsolete, f"Obsolete modules in {label}: {', '.join(obsolete)}")
+    require(not missing, f"Missing modules in {label}: {', '.join(missing)}")
+
+
+def check_intermediate_modules(build, expected):
+    # Pinned doc-gen4's htmlOutputIndex/headerDataOutput merge these files on
+    # incremental builds, even when the assembled index currently looks clean.
+    prefix = "declaration-data-"
+    names = (path.name[len(prefix):-len(".bmp")]
+             for path in (build / "doc-data").glob(f"{prefix}*.bmp") if path.is_file())
+    check_module_inventory(names, expected, "per-module declaration data")
+    # DocGen4/DB/Schema.lean defines modules(name PRIMARY KEY, source_url).
+    # Even mode=ro can create WAL/SHM files. Inspect a private snapshot of completed
+    # output, including committed WAL rows; immutable=1 on the main file loses those.
+    database = build / "api-docs.db"
+    require(database.is_file(), "Missing documentation database: api-docs.db")
+    with tempfile.TemporaryDirectory(prefix="check-docs-") as temporary:
+        snapshot = Path(temporary) / database.name
+        shutil.copyfile(database, snapshot)
+        wal = database.with_name(database.name + "-wal")
+        if wal.is_file():
+            shutil.copyfile(wal, snapshot.with_name(snapshot.name + "-wal"))
+        with closing(sqlite3.connect(snapshot.as_uri() + "?mode=ro", uri=True)) as db:
+            names = (row[0] for row in db.execute("SELECT name FROM modules"))
+            check_module_inventory(names, expected, "documentation database")
+
+
 def check_output():
     docs = ROOT / "docbuild/.lake/build/doc"
     for name in ("index.html", "search.html", "search.js", "declaration-data.js",
@@ -64,11 +103,7 @@ def check_output():
         ".".join(source.relative_to(ROOT).with_suffix("").parts) for source in sources
     }
     # Reused doc-gen4 caches can retain removed modules. Dependency docs are allowed.
-    local_modules = {
-        name for name in index["modules"]
-        if name == "Complexity" or name.startswith("Complexity.")
-    }
-    stale_modules = sorted(local_modules - expected_modules)
+    stale_modules = sorted(local_modules(index["modules"]) - expected_modules)
     require(not stale_modules,
             f"Obsolete modules in search index: {', '.join(stale_modules)}")
     local_pages = {
@@ -82,6 +117,7 @@ def check_output():
         require(module in index["modules"], f"Missing module in search index: {module}")
         page = docs / source.relative_to(ROOT).with_suffix(".html")
         require(page.is_file(), f"Missing module page: {module}")
+    check_intermediate_modules(docs.parent, expected_modules)
     for name in ("Cslib.Complexity.CookLevin.SAT_npComplete",
                  "Cslib.Complexity.NP_eq_PCP_log",
                  "Cslib.Crypto.OneWay.exists_pseudorandomFunction"):
@@ -104,7 +140,7 @@ def main():
             print("Documentation configuration is consistent.")
         else:
             check_output()
-    except (OSError, ValueError, KeyError, StopIteration) as error:
+    except (OSError, ValueError, KeyError, StopIteration, sqlite3.Error) as error:
         parser.exit(1, f"Documentation check failed: {error}\n")
 
 
