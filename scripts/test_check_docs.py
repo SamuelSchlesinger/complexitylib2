@@ -120,6 +120,37 @@ class CheckOutputTests(unittest.TestCase):
         with self.assertRaises(sqlite3.DatabaseError):
             self.check()
 
+    def artifact_bytes(self):
+        return {str(path.relative_to(self.docs.parent)): path.read_bytes()
+                for path in self.docs.parent.rglob("*") if path.is_file()}
+
+    def test_wal_database_does_not_create_sidecars(self):
+        with closing(sqlite3.connect(self.database)) as db:
+            db.execute("PRAGMA journal_mode=WAL")
+        self.check()  # Also writes the fixture's assembled index before the snapshot.
+        self.assertFalse(self.database.with_name("api-docs.db-wal").exists())
+        self.assertFalse(self.database.with_name("api-docs.db-shm").exists())
+        before = self.artifact_bytes()
+        self.check()
+        self.assertEqual(self.artifact_bytes(), before)
+
+    def test_committed_wal_rows_are_checked_without_mutation(self):
+        # Keep a connection open so committed changes remain solely in the WAL.
+        with closing(sqlite3.connect(self.database)) as db:
+            db.execute("PRAGMA journal_mode=WAL")
+            db.execute("PRAGMA wal_autocheckpoint=0")
+            self.check()
+            db.execute("INSERT INTO modules (name) VALUES ('Complexity.Removed')")
+            db.commit()
+            before = self.artifact_bytes()
+            self.assert_failure("Obsolete modules in documentation database: Complexity.Removed")
+            self.assertEqual(self.artifact_bytes(), before)
+            db.execute("DELETE FROM modules WHERE name IN ('Complexity.Removed', 'Complexity')")
+            db.commit()
+            before = self.artifact_bytes()
+            self.assert_failure("Missing modules in documentation database: Complexity")
+            self.assertEqual(self.artifact_bytes(), before)
+
     def test_config_only_does_not_inspect_output(self):
         with patch.object(check_docs, "check_config") as config, \
                 patch.object(check_docs, "check_output") as output, \

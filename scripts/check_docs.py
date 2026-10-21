@@ -7,7 +7,9 @@ import html
 import json
 from pathlib import Path
 import re
+import shutil
 import sqlite3
+import tempfile
 import tomllib
 from urllib.parse import unquote, urlsplit
 
@@ -74,12 +76,19 @@ def check_intermediate_modules(build, expected):
              for path in (build / "doc-data").glob(f"{prefix}*.bmp") if path.is_file())
     check_module_inventory(names, expected, "per-module declaration data")
     # DocGen4/DB/Schema.lean defines modules(name PRIMARY KEY, source_url).
-    # Read-only mode also prevents a missing database from being silently created.
+    # Even mode=ro can create WAL/SHM files. Inspect a private snapshot of completed
+    # output, including committed WAL rows; immutable=1 on the main file loses those.
     database = build / "api-docs.db"
     require(database.is_file(), "Missing documentation database: api-docs.db")
-    with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as db:
-        names = (row[0] for row in db.execute("SELECT name FROM modules"))
-        check_module_inventory(names, expected, "documentation database")
+    with tempfile.TemporaryDirectory(prefix="check-docs-") as temporary:
+        snapshot = Path(temporary) / database.name
+        shutil.copyfile(database, snapshot)
+        wal = database.with_name(database.name + "-wal")
+        if wal.is_file():
+            shutil.copyfile(wal, snapshot.with_name(snapshot.name + "-wal"))
+        with closing(sqlite3.connect(snapshot.as_uri() + "?mode=ro", uri=True)) as db:
+            names = (row[0] for row in db.execute("SELECT name FROM modules"))
+            check_module_inventory(names, expected, "documentation database")
 
 
 def check_output():
