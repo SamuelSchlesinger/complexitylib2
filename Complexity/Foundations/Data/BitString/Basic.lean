@@ -38,6 +38,8 @@ Boolean functions, are combined with `^^`.
 
 * `Cslib.BitString.card`: the number of strings of `n` bits.
 * `Cslib.BitString.val_equivFin_cons`: a new first bit is the least significant binary digit.
+* `Cslib.BitString.val_equivFin_succ`, `Cslib.BitString.decide_equivFin_le_succ`: numbering and
+  comparing words by their highest bit.
 * `Cslib.BitString.indexBits_injective`: distinct finite indices have distinct encodings.
 * `Cslib.BitString.add_self`, `Cslib.BitString.add_cancel_left`,
   `Cslib.BitString.add_cancel_right`: every bit string is its own negative.
@@ -74,6 +76,40 @@ theorem val_equivFin_cons (b : Bool) (z : BitString n) :
   congr 1
   exact Finset.sum_congr rfl fun i _ => by
     rw [Nat.mul_comm (2 ^ (i : ℕ)) 2, Nat.mul_left_comm]
+
+/-- The number of a word of `n + 1` bits is the number of its first `n` bits plus its last bit
+times `2 ^ n`. -/
+theorem val_equivFin_succ (x : BitString (n + 1)) :
+    (BitString.equivFin (n + 1) x : ℕ) =
+      BitString.equivFin n (Fin.init x) + (x (Fin.last n)).toNat * 2 ^ n := by
+  simp only [BitString.equivFin, Equiv.trans_apply, finFunctionFinEquiv_apply,
+    Fin.sum_univ_castSucc, Equiv.arrowCongr_apply, Function.comp_apply, Equiv.refl_symm,
+    Equiv.refl_apply, Fin.init, Fin.val_last]
+  congr 1
+  cases x (Fin.last n) <;> rfl
+
+/-- Comparing words of `n + 1` bits: `x ≤ y` when the last bit of `x` is below that of `y`, or when
+they are equal and `x ≤ y` on the first `n` bits. -/
+theorem decide_equivFin_le_succ (x y : BitString (n + 1)) :
+    decide (BitString.equivFin (n + 1) x ≤ BitString.equivFin (n + 1) y) =
+      ((!x (Fin.last n) && y (Fin.last n)) || ((!x (Fin.last n) || y (Fin.last n)) &&
+        decide (BitString.equivFin n (Fin.init x) ≤ BitString.equivFin n (Fin.init y)))) := by
+  have hx := (BitString.equivFin n (Fin.init x)).isLt
+  have hy := (BitString.equivFin n (Fin.init y)).isLt
+  have e : BitString.equivFin (n + 1) x ≤ BitString.equivFin (n + 1) y ↔
+      (BitString.equivFin n (Fin.init x) : ℕ) + (x (Fin.last n)).toNat * 2 ^ n ≤
+        BitString.equivFin n (Fin.init y) + (y (Fin.last n)).toNat * 2 ^ n := by
+    rw [Fin.le_iff_val_le_val, BitString.val_equivFin_succ, BitString.val_equivFin_succ]
+  rw [Bool.eq_iff_iff, decide_eq_true_iff, e]
+  simp only [Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_iff, Fin.le_iff_val_le_val]
+  generalize (BitString.equivFin n (Fin.init x) : ℕ) = a at hx ⊢
+  generalize (BitString.equivFin n (Fin.init y) : ℕ) = b at hy ⊢
+  generalize 2 ^ n = P at hx hy ⊢
+  cases x (Fin.last n) <;> cases y (Fin.last n) <;>
+    simp only [Bool.toNat_false, Bool.toNat_true, zero_mul, one_mul, add_zero,
+      Bool.not_false, Bool.not_true, Bool.false_eq_true, and_false, or_false, true_and,
+      false_or, and_self, or_self, true_or, iff_true, false_and, iff_false, not_le,
+      add_le_add_iff_right, and_true, or_true] <;> omega
 
 /-- The binary numeral of `i : Fin n` in `⌈log₂ n⌉` bits. -/
 def indexBits (i : Fin n) : BitString (Nat.clog 2 n) :=

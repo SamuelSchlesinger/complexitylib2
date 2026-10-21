@@ -13,9 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test documentation checker
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - uses: leanprover/lean-action@v1
         with:
-          build-args: "--wfail --iofail"
+          build-args: "--wfail --iofail @complexitylib2 @mathlib/mk_all @/checkInitImports @mathlib/lint-style"
           test-args: "--wfail --iofail"
       - name: "lake exe mk_all --check"
         run: |

@@ -41,6 +41,14 @@ of every declaration stored in imported `Complexity` modules; the named headline
 readable regression tests. This trusts the compiled Lean artifacts and permits `Classical.choice`;
 it does not certify efficient computation or agreement with a textbook statement.
 
+For concurrent local validation, choose a thread budget for the shared host, for example
+`LEAN_NUM_THREADS=2 scripts/check.sh`. Lean's
+[thread-pool setting](https://lean-lang.org/doc/reference/latest/IO/Tasks-and-Threads/)
+defaults to the number of logical processors and is not a hard process or memory cap; check the
+observed concurrency and memory use. Keep mutable build outputs separate between worktrees.
+Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
+an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.
+
 Record validation and review in the PR, or in the commit description for work without a PR:
 the tested revision (or base revision and exact diff), commands and outcomes, reviewer/tool and
 scope, findings and their resolution, and any remaining limitations. Preserve enough evidence

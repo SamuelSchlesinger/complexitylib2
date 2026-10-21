@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Init
+public import Complexity.Foundations.Data.Nat.Bits
 public import Mathlib.Data.Nat.Size
 import Mathlib.Data.List.Basic
 
@@ -37,7 +37,6 @@ function, and it only uses operations that are primitive recursive in Mathlib's 
   determines both.
 * `Cslib.Kolmogorov.length_selfDelimitingCode`: the code of `p` has length
   `|p| + 2 size |p| + 1`.
-* `Nat.foldr_bit_bits`: folding `Nat.bit` over the binary representation of `n` gives `n`.
 
 ## References
 
@@ -46,13 +45,6 @@ function, and it only uses operations that are primitive recursive in Mathlib's 
 -/
 
 @[expose] public section
-
-/-- Folding `Nat.bit` over the binary representation of `n` gives back `n`. -/
-@[simp]
-theorem Nat.foldr_bit_bits (n : ℕ) : n.bits.foldr Nat.bit 0 = n := by
-  induction n using Nat.binaryRec' with
-  | zero => simp
-  | bit b n h ih => rw [Nat.bits_append_bit n b h, List.foldr_cons, ih]
 
 namespace Cslib.Kolmogorov
 

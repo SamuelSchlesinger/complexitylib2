@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 public import Complexity.Computability.Complexity.Classes.TFNP.Subclasses.Principles
 public import Complexity.Foundations.Data.BitString.List.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Mathlib.Algebra.Polynomial.BigOperators
@@ -50,10 +51,10 @@ instances supply `n` in unary together with raw De Morgan circuit codes
 (`Cslib.Circuits.Boolean.encCode`) evaluated via `evalCode`
 (`Complexity.Computability.Circuit.Boolean.EvaluationTime`), are instances of these uniform
 families (`LocalOpt_mem_PLS`, `Pigeon_mem_PPP`, `EndOfLine_mem_PPAD`, `Leaf_mem_PPA`) and
-therefore belong to `TFNP`. Conversely, showing that every uniform polynomial-time family reduces
-to its circuit-presented problem (establishing `SearchComplete` for `LocalOpt`, `Pigeon`,
-`EndOfLine` and `Leaf`) requires compiling polynomial-time family evaluations into circuit codes
-and is recorded as outstanding work in `ROADMAP.md`.
+therefore belong to `TFNP`. The companion module `TFNP/Subclasses/Completeness.lean` compiles
+uniform polynomial-time family evaluations into circuit codes, proving `SearchComplete` for
+`LocalOpt`, `Pigeon`, `EndOfLine` and `Leaf`. These reductions preserve vertex witnesses and, for
+local search, the numerical cost values through fixed-width binary words with leading zeros.
 
 ## Main definitions
 
@@ -701,20 +702,12 @@ abbrev CircuitCode : Type := List (Op × List ℕ) × List ℕ
 /-- Evaluate all output wires listed in `code.2` after running the gate list `code.1` on `u`. -/
 def evalCircuitOutputs (code : CircuitCode) (u : List Bool) : List Bool :=
   let vals := evalCode interpretation false u code.1
-  code.2.foldl (fun acc o => acc ++ [vals.getD o false]) []
-
-private theorem foldl_append_getD (vals : List Bool) (outs : List ℕ) (acc : List Bool) :
-    outs.foldl (fun acc o => acc ++ [vals.getD o false]) acc =
-      acc ++ outs.map (fun o => vals.getD o false) := by
-  induction outs generalizing acc with
-  | nil => simp
-  | cons o outs ih =>
-    rw [List.foldl_cons, ih, List.append_assoc, List.singleton_append, List.map_cons]
+  code.2.map (fun o => vals.getD o false)
 
 theorem evalCircuitOutputs_eq_map (code : CircuitCode) (u : List Bool) :
     evalCircuitOutputs code u =
-      code.2.map fun o => (evalCode interpretation false u code.1).getD o false := by
-  rw [evalCircuitOutputs, foldl_append_getD, List.nil_append]
+      code.2.map fun o => (evalCode interpretation false u code.1).getD o false :=
+  rfl
 
 /-- On the code of a De Morgan circuit, `evalCircuitOutputs` computes the list of output bits. -/
 theorem evalCircuitOutputs_code {n m : ℕ} (c : Circuit signature n m) (x : Fin n → Bool) :
@@ -733,15 +726,8 @@ theorem computableTidilyInPolyTime_evalCircuitOutputs {encIn : α ↪ List Bool}
   have hvals : ComputableTidilyInPolyTime
       (fun a => evalCode interpretation false (u a) (code a).1) encIn encBits :=
     computableTidilyInPolyTime_evalCode hu hcode.fst'
-  have hstep : ComputableTidilyInPolyTime
-      (fun q : (List Bool × List Bool) × ℕ => q.1.2 ++ [q.1.1.getD q.2 false])
-      (encPair (encPair encBits encBits) encNat) encBits :=
-    bitsAppend (fst _ _).snd'
-      (bitsCons (listGetD_binary false (fst _ _).fst' (snd _ _)) (const []))
-  exact foldlWith_of_bounded_growth (encA := encNat) (encL := encList encNat)
-    (encP := encBits) (encB := encBits)
-    (step := fun vals acc o => acc ++ [vals.getD o false])
-    hvals hcode.snd' (const []) hstep (.const 1) fun _ acc _ _ => by simp
+  exact listToBits.comp (mapWith
+    (listGetD_binary false (fst encBits encNat) (snd encBits encNat)) hvals hcode.snd')
 
 /-- Evaluate a circuit code on `u` and normalize the output to `n` bits. -/
 def evalCircuitCode (n : ℕ) (code : CircuitCode) (u : List Bool) : List Bool :=

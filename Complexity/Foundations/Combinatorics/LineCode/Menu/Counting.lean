@@ -10,7 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Combinatorics.SimpleGraph.Basic
 public import Mathlib.Data.Fintype.Pi
-import Complexity.Foundations.Combinatorics.FiniteCover
+import Complexity.Foundations.Combinatorics.FiniteCover.Basic
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Combinatorics.SimpleGraph.Acyclic
 import Mathlib.Data.Fintype.BigOperators

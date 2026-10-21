@@ -8,13 +8,15 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Polynomial-time folds
 
 The polynomial-time counterparts of Christian Reitwiessner's degree-bounded fold rules. A
 `SizedListEncoding` accounts for list lengths, elements and suffixes, leaving only a polynomial
-bound on the intermediate accumulator. The step may carry a fixed parameter.
+bound on the intermediate accumulator. The step may carry a fixed parameter. Prefix invariants
+propagate by a pure list rule, independently of the resource certificates.
 
 ## Main results
 
@@ -102,15 +104,13 @@ theorem foldlWith_spec {par : γ → π} {list : γ → List α} {init : γ → 
       ∀ x, invariant x (list x) ((list x).foldl (step (par x)) (init x)) := by
   have htrace (x : γ) (i : ℕ) (hi : i ≤ (list x).length) :
       invariant x ((list x).take i) (((list x).take i).foldl (step (par x)) (init x)) := by
-    induction i with
-    | zero => simpa using hbase x
-    | succ i ih =>
-      have hlt : i < (list x).length := by lia
-      simpa only [List.take_add_one, List.getElem?_eq_getElem hlt, Option.toList_some,
-        List.foldl_append, List.foldl_cons, List.foldl_nil] using
-        hpreserve x ((list x).take i) _ (list x)[i]
-          (by simpa only [List.take_add_one, List.getElem?_eq_getElem hlt, Option.toList_some]
-            using List.take_prefix (i + 1) (list x)) (ih (by lia))
+    apply List.foldl_take_invariant (list x) (step (par x)) (init x)
+      (fun i state => invariant x ((list x).take i) state) (by simpa using hbase x) ?_ i hi
+    intro j hj state hstate
+    simpa only [List.take_succ_eq_append_getElem hj] using
+      hpreserve x ((list x).take j) state (list x)[j]
+        (by simpa only [List.take_succ_eq_append_getElem hj] using
+          List.take_prefix (j + 1) (list x)) hstate
   exact ⟨foldlWith hpar hlist hinit hstep hsize
     (fun x i hi => hbound x ((list x).take i) _ (List.take_prefix ..) (htrace x i hi)),
     fun x => by simpa using htrace x (list x).length le_rfl⟩

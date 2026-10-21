@@ -72,6 +72,15 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
   deviations from the source. The unbounded-register `Computability/RAM`, inspired by
   Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
+* **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
+  `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
+  simulation, interface composition, semantic Hoare rules and separate native-resource
+  certificates. Its queue and reset-and-replay constructions deliberately count backend calls;
+  arbitrary pure continuations are not machine-compiled. `WordRAM/Dynamic` separately connects
+  fixed bounded-word operation programs and faithful memory transcripts to those contracts.
+  Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
+  neither open framework is copied here. This is a prototype of composition and refinement,
+  not a replacement for their query models or a general cell-probe lower-bound semantics.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
   #871–#875 requested composition above configuration level; use `TransformsTapes`-style specs.
@@ -96,13 +105,11 @@ agreement during upstream review.
 | `Computability/Machines/Turing/MultiTape/Combinators/TidyNormalForm` | Place `runFrom_nop_withState` beside `runFrom_nop_one`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Decoder` | Total decoders with tidy certificates; add to the tidy branch's `Encodings` beside `Option`/`Pair`/`List`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
-| `Computability/Circuit/Frontier/Correlation/{Rectangle,Circuit}` | Put `correlation` beside `agreement` in `AverageCase`, rectangle lemmas in `Rectangle`, and general network lemmas in `Network`. |
 | `Computability/Circuit/{Unfolding,MapOp}` | Consider integrating into `Circuit/Formula` and `Circuit/Program`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
 | `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
-| `Foundations/Data/BitString/QuadraticForm` | Move the general bit-polynomial lemmas to `Foundations/BooleanAnalysis/LowDegree`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
-| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}` | Consider Mathlib probability APIs; evaluate a shared coordinate-gluing operation and splitting `HarmonicMean`. |
+| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}` | Consider Mathlib probability APIs and evaluate splitting `HarmonicMean`. |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
 | `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Combinatorics/Expander/Products` | Extract the private expectation helpers on product types to Mathlib if useful. |
@@ -110,7 +117,7 @@ agreement during upstream review.
 | `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
 | `Probability/PairwiseIndependentHash/Toeplitz` | Move `Matrix.toeplitz` to Mathlib beside `LinearAlgebra/Matrix/Circulant`. |
 | `Probability/ApproximateCounting/Relative` | Extract the natural-number root lemmas to Mathlib. |
-| `Computability/Kolmogorov/SelfDelimiting` | Move `Nat.foldr_bit_bits` to Mathlib's `Data/Nat/Bits`. |
+| `Foundations/Data/Nat/Bits` | `Nat.foldr_bit_bits` is a candidate for Mathlib's `Data/Nat/Bits`; its local relocation is complete, but upstream integration is still pending. |
 
 ## Deprecation policy and grandfathered changes
 

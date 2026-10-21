@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.Combinatorics.Expander.Basic
 public import Mathlib.Analysis.Real.Sqrt
 import Complexity.Foundations.Data.Finset.Expect
+import Mathlib.Algebra.BigOperators.Balance
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Positivity
@@ -75,10 +76,8 @@ open scoped BigOperators
 variable {V D : Type*} [Fintype V] [Fintype D] (G : RotationMap V D)
 
 /-- Centering a function leaves an expectation of zero. -/
-private theorem expect_sub_expect (f : V → ℝ) : 𝔼 v, (f v - 𝔼 w, f w) = 0 := by
-  rcases isEmpty_or_nonempty V with hV | hV
-  · simp
-  · rw [expect_sub_distrib, Fintype.expect_const, sub_self]
+private theorem expect_sub_expect (f : V → ℝ) : 𝔼 v, (f v - 𝔼 w, f w) = 0 :=
+  Fintype.expect_balance f
 
 /-- The second moment of the centered function is the variance. -/
 private theorem expect_sub_expect_sq (f : V → ℝ) :

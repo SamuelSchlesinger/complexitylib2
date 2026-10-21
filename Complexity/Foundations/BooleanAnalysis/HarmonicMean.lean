@@ -340,9 +340,7 @@ theorem harmonicTransform_eq_harmonicMean_coordinateMarginal
   have he (z : ({i // selected i = true} → Bool) × ({i // selected i ≠ true} → Bool)) :
       projectionAverage f selected (e.symm z) = coordinateMarginal f selected z.1 := by
     rw [projectionAverage_eq_coordinateMarginal]
-    congr 1
-    funext i
-    simp [e, Equiv.piEquivPiSubtypeProd, i.property]
+    exact congrArg (coordinateMarginal f selected) (congrArg Prod.fst (e.apply_symm_apply z))
   rw [harmonicTransform, ← harmonicMean_equiv e.symm]
   simp_rw [he]
   simp [harmonicMean, expect_univ_prod]

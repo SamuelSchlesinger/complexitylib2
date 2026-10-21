@@ -218,13 +218,11 @@ theorem bernoulliAverage_restrict (p : ℝ) (s : ι → Bool) (f : ({i // s i = 
   rw [← e.symm.sum_comp (fun x => bernoulliWeight p x * f (fun i => x i))]
   simp_rw [bernoulliWeight_split p s]
   have hleft (z : ({i // s i = true} → Bool) × ({i // s i ≠ true} → Bool)) :
-      (fun i : {i // s i = true} => e.symm z i) = z.1 := by
-    funext i
-    simp [e, Equiv.piEquivPiSubtypeProd, i.property]
+      (fun i : {i // s i = true} => e.symm z i) = z.1 :=
+    congrArg Prod.fst (e.apply_symm_apply z)
   have hright (z : ({i // s i = true} → Bool) × ({i // s i ≠ true} → Bool)) :
-      (fun i : {i // s i ≠ true} => e.symm z i) = z.2 := by
-    funext i
-    simp [e, Equiv.piEquivPiSubtypeProd, i.property]
+      (fun i : {i // s i ≠ true} => e.symm z i) = z.2 :=
+    congrArg Prod.snd (e.apply_symm_apply z)
   simp_rw [hleft, hright]
   rw [Fintype.sum_prod_type]
   have htotal : (∑ y : {i // s i ≠ true} → Bool, bernoulliWeight p y) = 1 := by

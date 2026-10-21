@@ -112,9 +112,9 @@ theorem exists_degree {f : α → β} (hf : ComputableTidilyInPolyTime f encA en
 /-- Reuse a computation when the new function emits the same encoded output word. -/
 theorem of_enc_eq {δ : Type} {encD : δ ↪ List Bool} {f : α → β} {g : α → δ}
     (hf : ComputableTidilyInPolyTime f encA encB)
-    (h : ∀ a, encD (g a) = encB (f a)) : ComputableTidilyInPolyTime g encA encD := by
-  obtain ⟨d, e, hf⟩ := hf.exists_degree
-  exact (hf.of_enc_eq h).computableTidilyInPolyTime
+    (h : ∀ a, encD (g a) = encB (f a)) : ComputableTidilyInPolyTime g encA encD :=
+  let ⟨t, s, ht, hs, hf⟩ := hf
+  ⟨t, s, ht, hs, hf.of_enc_eq h⟩
 
 /-- Expose an already encoded value as a raw word. No inverse for the encoding is required. -/
 @[fun_prop]

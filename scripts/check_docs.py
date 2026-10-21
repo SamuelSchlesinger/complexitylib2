@@ -60,6 +60,23 @@ def check_output():
     # doc-gen4 uses a .bmp extension for its JSON search index.
     index = json.loads((docs / "declarations/declaration-data.bmp").read_text())
     sources = [ROOT / "Complexity.lean", *sorted((ROOT / "Complexity").rglob("*.lean"))]
+    expected_modules = {
+        ".".join(source.relative_to(ROOT).with_suffix("").parts) for source in sources
+    }
+    # Reused doc-gen4 caches can retain removed modules. Dependency docs are allowed.
+    local_modules = {
+        name for name in index["modules"]
+        if name == "Complexity" or name.startswith("Complexity.")
+    }
+    stale_modules = sorted(local_modules - expected_modules)
+    require(not stale_modules,
+            f"Obsolete modules in search index: {', '.join(stale_modules)}")
+    local_pages = {
+        ".".join(page.relative_to(docs).with_suffix("").parts)
+        for page in (docs / "Complexity").rglob("*.html") if page.is_file()
+    }
+    stale_pages = sorted(local_pages - expected_modules)
+    require(not stale_pages, f"Obsolete module pages: {', '.join(stale_pages)}")
     for source in sources:
         module = ".".join(source.relative_to(ROOT).with_suffix("").parts)
         require(module in index["modules"], f"Missing module in search index: {module}")

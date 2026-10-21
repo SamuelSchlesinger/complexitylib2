@@ -1,5 +1,6 @@
 import ComplexityTests.AWPPAmplification
 import ComplexityTests.AdaptivePPT
+import ComplexityTests.Advice
 import ComplexityTests.AffineController
 import ComplexityTests.AffineDisperser
 import ComplexityTests.AffineDisperserCorollary
@@ -39,6 +40,8 @@ import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
 import ComplexityTests.Code.M3
+import ComplexityTests.CodeComposition
+import ComplexityTests.CodeSubstitution
 import ComplexityTests.CoinTape
 import ComplexityTests.CombinatorialBounds
 import ComplexityTests.CommunicationComplexity
@@ -46,6 +49,7 @@ import ComplexityTests.CommunicationComplexity2
 import ComplexityTests.CommunicationComplexity3
 import ComplexityTests.CommunicationComplexity4
 import ComplexityTests.CompareSwap
+import ComplexityTests.ComparisonCircuits
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
@@ -67,6 +71,9 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.CyclicFeedback
+import ComplexityTests.DataStructure
+import ComplexityTests.DataStructureQueue
+import ComplexityTests.DataStructureRetroactive
 import ComplexityTests.DecisionTree
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
@@ -88,6 +95,7 @@ import ComplexityTests.FineGrained
 import ComplexityTests.FineGrained.GraphProblems
 import ComplexityTests.FineGrained.Sparsification
 import ComplexityTests.FiniteControl
+import ComplexityTests.FiniteCover
 import ComplexityTests.FiniteFieldUnitSum
 import ComplexityTests.FiniteMachine
 import ComplexityTests.FiniteTables
@@ -97,6 +105,8 @@ import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
+import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
 import ComplexityTests.Fusion
@@ -170,6 +180,7 @@ import ComplexityTests.NPCompleteGraphs.TSP
 import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NPWitness
+import ComplexityTests.NatBits
 import ComplexityTests.NaturalProofs
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
@@ -180,6 +191,7 @@ import ComplexityTests.OracleCircuits
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OracleRepresentation
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
@@ -228,6 +240,7 @@ import ComplexityTests.Parameterized
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimePlain
+import ComplexityTests.PolyTimeScans
 import ComplexityTests.PolyTimeSearch
 import ComplexityTests.PolyTimeSum
 import ComplexityTests.PolyTimeTactic
@@ -268,6 +281,7 @@ import ComplexityTests.RationalHitting.Determinant
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
+import ComplexityTests.ReductionClasses
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
 import ComplexityTests.RelativizedCounting
@@ -295,6 +309,7 @@ import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
 import ComplexityTests.TFNP
+import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
@@ -310,8 +325,10 @@ import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
+import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
+import ComplexityTests.UniversalResourceBound
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
@@ -321,6 +338,8 @@ import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
+import ComplexityTests.WordRAMDynamic
+import ComplexityTests.WordRAMPrefixSums
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

@@ -6,6 +6,8 @@ Authors: Christian Reitwiessner
 
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
+-- vendored: use the local `DegreeBounded.add_max` rule; the fold contracts are unchanged.
+-- vendored: derive the encoded suffix bound from Mathlib's `List.Sublist.flatMap`.
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 
@@ -46,8 +48,7 @@ public class SizedListEncoding {α : Type*} (encA : α ↪ List Bool) (encL : Li
 public instance {α : Type*} (enc : α ↪ List Bool) : SizedListEncoding enc (encList enc) where
   length_le l := by induction l <;> grind [encList_cons, length_frame]
   length_elem_le l a ha := by induction l <;> grind [encList_cons, length_frame]
-  length_drop_le l i := by
-    induction l generalizing i <;> cases i <;> grind [encList_cons, length_frame]
+  length_drop_le l i := ((List.drop_sublist i l).flatMap (frame ∘ enc)).length_le
 
 public instance : SizedListEncoding encBool encBits where
   length_le l := by simp
@@ -80,7 +81,7 @@ public theorem ComputableTidilyInDegree.foldl' {γ α β : Type} {encIn : γ ↪
   -- the arguments of a round and the states with the rest of the list
   have haMax : DegreeBounded (fun x => (encIn x).length)
       (fun x => 2 * B x + 1 + (encL (list x)).length) a :=
-    ((hB.mono_deg (le_max_left _ _)).smul 2 |>.add_const 1).add (hl.mono_deg (le_max_right _ _))
+    ((hB.smul 2).add_const 1).add_max hl
   have hlMax : DegreeBounded (fun x => (encIn x).length)
       (fun x => 2 * (encL (list x)).length + 1 + B x) a :=
     ((hl.mono_deg (le_max_right _ _)).smul 2 |>.add_const 1).add (hB.mono_deg (le_max_left _ _))
@@ -120,8 +121,8 @@ public theorem ComputableTidilyInDegree.foldl' {γ α β : Type} {encIn : γ ↪
     have hd₁ : eL + D ≤ max (max dL dI) (eL + D) := le_max_right _ _
     have hlen : DegreeBounded (fun x => (encIn x).length) (fun x => (list x).length + 1) eL :=
       (hl.add_const 1).mono fun x => Nat.add_le_add_right (hS.length_le _) 1
-    have ht := (ht₁.mono_deg (le_max_left _ _)).add (ht₂.mono_deg (le_max_right _ _))
-    have hs := (hs₁.mono_deg (le_max_left _ _)).add (hs₂.mono_deg (le_max_right _ _))
+    have ht := ht₁.add_max ht₂
+    have hs := hs₁.add_max hs₂
     refine ⟨⟨_, _, ((ht.mono_deg hd₀).add ((hlen.mul ((hround.add (hlMax.mono_deg haD)).add_const
       1)).mono_deg hd₁)).smul c, ((((hs.mono_deg hd₀).add (hround.mono_deg (by omega))).add
         (hlMax.mono_deg (by omega))).add_const 1).smul c, h⟩, hB.mono fun x => ?_⟩
@@ -145,9 +146,10 @@ public theorem ComputableTidilyInDegree.foldlWith {γ α β π : Type} {encIn : 
     ComputableTidilyInDegree (fun x => (list x).foldl (step (par x)) (init x)) encIn encB
       (max (max dL (max dP dI)) (eL + max 1 dS * max (max eP b) eL)) b := by
   -- fold over the state `(par x, acc)`, keeping the parameter unchanged
+  -- vendored: use core's fold homomorphism law for the captured-parameter identity.
   have heq (l : List α) (s : π × β) :
-      l.foldl (fun s a => (s.1, step s.1 s.2 a)) s = (s.1, l.foldl (step s.1) s.2) := by
-    induction l generalizing s <;> simp [*]
+      l.foldl (fun s a => (s.1, step s.1 s.2 a)) s = (s.1, l.foldl (step s.1) s.2) :=
+    List.foldl_hom (fun acc => (s.1, acc)) (fun _ _ => rfl)
   have hfold := ComputableTidilyInDegree.foldl' (encB := encPair encP encB) hlist
     (hpar.prod hinit) (step := fun s a => (s.1, step s.1 s.2 a))
     (((ComputableTidilyInDegree.fst encP encB).comp
