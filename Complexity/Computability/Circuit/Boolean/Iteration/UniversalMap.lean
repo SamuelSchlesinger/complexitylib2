@@ -13,6 +13,8 @@ public import Cslib.Computability.Circuit.Composition
 public import Mathlib.Algebra.Group.Action.Basic
 public import Mathlib.GroupTheory.Perm.ViaEmbedding
 
+import Complexity.Computability.Circuit.Boolean.Substitution
+
 /-!
 # Simulation, hardwiring, and a universal step map
 
@@ -96,24 +98,11 @@ theorem exists_hardwired_comp {n m p : ℕ} (u : Circuit signature m p)
     ∃ d : Circuit signature n p,
       (∀ x, d.eval interpretation x = u.eval interpretation (hardwired place x)) ∧
       d.size ≤ u.size + 2 := by
-  let constants : Set (BooleanFunction n) := {fun _ => false, fun _ => true}
-  have hconst : Synthesis interpretation (inputs n) constants 2 :=
-    (Synthesis.const false).union (Synthesis.const true)
-  have hrange : Set.range (fun j (x : BitString n) => hardwired place x j) ⊆
-      inputs n ∪ constants := by
-    rintro _ ⟨j, rfl⟩
-    rcases hp : place j with i | b
-    · exact Or.inl ⟨i, funext fun x => by simp [hardwired, hp]⟩
-    · right
-      cases b
-      · exact Or.inl (funext fun x => by simp [hardwired, hp])
-      · exact Or.inr (funext fun x => by simp [hardwired, hp])
-  have hsyn := hconst.trans (Synthesis.of_subset hrange)
-  obtain ⟨h, hh, hs⟩ := hsyn.exists_circuit_outputs
-  refine ⟨u.comp h, fun x => ?_, ?_⟩
-  · rw [Circuit.eval_comp, hh x]
-  · rw [Circuit.size_comp]
-    omega
+  refine ⟨u.comp (substituteCircuit place), fun x => ?_, ?_⟩
+  · rw [Circuit.eval_comp, eval_substituteCircuit]
+    rfl
+  · simp only [Circuit.size_comp, size_substituteCircuit, Nat.add_comm]
+    exact le_rfl
 
 /-- Hardwire constants, run `u`, and read selected output wires. -/
 theorem exists_hardwired_projection {n m p k : ℕ} (u : Circuit signature m p)
