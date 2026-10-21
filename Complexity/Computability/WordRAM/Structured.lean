@@ -26,8 +26,9 @@ Proofs about structured programs mostly need upper bounds on time rather than ex
 and `Cslib.WordRAM.ExecWithin` packages these. Its rules compose like Hoare logic, with time
 bounds added along sequences:
 
-* `Cslib.WordRAM.ExecWithin.const`, `….bin`, `….copy`, `….load`, `….store`, `….width`: forward
-  rules for the data instructions, with the resulting data in closed form;
+* `Cslib.WordRAM.ExecWithin.const`, `….alu`, `….copy`, `….load`, `….store`: forward rules for
+  the data instructions, with the resulting data in closed form, and `….bin`, `….width` for the
+  operations of the standard basis;
 * `Cslib.WordRAM.ExecWithin.seq`, `….branch_pos`, `….branch_neg`: sequencing and conditionals;
 * `Cslib.WordRAM.ExecWithin.loop`: a loop through an explicit family of states, and
   `Cslib.WordRAM.ExecWithin.loop_invariant`: a loop with an invariant and a decreasing measure,
@@ -43,8 +44,8 @@ injectively chosen registers of a larger register file and leaves the others unt
 
 ## Main definitions
 
-* `Cslib.WordRAM.Code`: structured programs, and `Cslib.WordRAM.Code.size`, the length of the
-  flat program they compile to.
+* `Cslib.WordRAM.Code`: structured programs over a basis, and `Cslib.WordRAM.Code.size`, the
+  length of the flat program they compile to.
 * `Cslib.WordRAM.Exec`, `Cslib.WordRAM.ExecWithin`: executions with an exact instruction count,
   and within a time bound.
 * `Cslib.WordRAM.Code.eval`: an interpreter with a budget of loop iterations.
@@ -71,40 +72,40 @@ injectively chosen registers of a larger register file and leaves the others unt
 
 namespace Cslib.WordRAM
 
-variable {r r' : ℕ}
+variable {B : Basis} {r r' : ℕ}
 
 /-! ## Structured programs -/
 
 /-- Structured programs: data instructions combined by sequencing, conditionals and loops. -/
-inductive Code (r : ℕ) where
+inductive Code (B : Basis) (r : ℕ) where
   /-- A data instruction. -/
-  | op (o : Op r)
+  | op (o : Op B r)
   /-- Run `c₁`, then `c₂`. -/
-  | seq (c₁ c₂ : Code r)
+  | seq (c₁ c₂ : Code B r)
   /-- Run `pos` if `c` holds, and `neg` otherwise. -/
-  | branch (c : Cond r) (pos neg : Code r)
+  | branch (c : Cond r) (pos neg : Code B r)
   /-- Run `body` while `c` holds. -/
-  | loop (c : Cond r) (body : Code r)
-  deriving DecidableEq, Repr
+  | loop (c : Cond r) (body : Code B r)
+  deriving DecidableEq
 
 namespace Code
 
 /-- The length of the flat program a structured program compiles to. -/
 @[simp]
-def size : Code r → ℕ
+def size : Code B r → ℕ
   | .op _ => 1
   | .seq c₁ c₂ => c₁.size + c₂.size
   | .branch _ pos neg => neg.size + pos.size + 2
   | .loop _ body => body.size + 3
 
 /-- A structured program reads the word size if one of its instructions does. -/
-def ReadsWidth : Code r → Prop
+def ReadsWidth : Code B r → Prop
   | .op o => o.ReadsWidth
   | .seq c₁ c₂ => c₁.ReadsWidth ∨ c₂.ReadsWidth
   | .branch _ pos neg => pos.ReadsWidth ∨ neg.ReadsWidth
   | .loop _ body => body.ReadsWidth
 
-instance decidableReadsWidth : (c : Code r) → Decidable c.ReadsWidth
+instance decidableReadsWidth : (c : Code B r) → Decidable c.ReadsWidth
   | .op o => inferInstanceAs (Decidable o.ReadsWidth)
   | .seq c₁ c₂ =>
     have := c₁.decidableReadsWidth
@@ -122,34 +123,34 @@ end Code
 
 /-- `Exec w c x y n`: at word size `w`, the structured program `c` leads from data `x` to data `y`
 executing exactly `n` instructions of the flat program it compiles to. -/
-inductive Exec (w : ℕ) : Code r → Data r → Data r → ℕ → Prop where
+inductive Exec (w : ℕ) : Code B r → Data r → Data r → ℕ → Prop where
   /-- A data instruction is one instruction. -/
-  | op {o : Op r} {x y : Data r} : o.eval w x = some y → Exec w (.op o) x y 1
+  | op {o : Op B r} {x y : Data r} : o.eval w x = some y → Exec w (.op o) x y 1
   /-- Sequencing adds the instruction counts. -/
-  | seq {c₁ c₂ : Code r} {x y z : Data r} {m n : ℕ} :
+  | seq {c₁ c₂ : Code B r} {x y z : Data r} {m n : ℕ} :
       Exec w c₁ x y m → Exec w c₂ y z n → Exec w (.seq c₁ c₂) x z (m + n)
   /-- The first alternative of a conditional costs one branch instruction. -/
-  | branch_pos {c : Cond r} {pos neg : Code r} {x y : Data r} {n : ℕ} :
+  | branch_pos {c : Cond r} {pos neg : Code B r} {x y : Data r} {n : ℕ} :
       c.Holds x → Exec w pos x y n → Exec w (.branch c pos neg) x y (n + 1)
   /-- The second alternative of a conditional costs a branch and a jump. -/
-  | branch_neg {c : Cond r} {pos neg : Code r} {x y : Data r} {n : ℕ} :
+  | branch_neg {c : Cond r} {pos neg : Code B r} {x y : Data r} {n : ℕ} :
       ¬c.Holds x → Exec w neg x y n → Exec w (.branch c pos neg) x y (n + 2)
   /-- Leaving a loop costs a branch and a jump. -/
-  | loop_exit {c : Cond r} {body : Code r} {x : Data r} :
+  | loop_exit {c : Cond r} {body : Code B r} {x : Data r} :
       ¬c.Holds x → Exec w (.loop c body) x x 2
   /-- An iteration of a loop costs its body, a branch and a jump back. -/
-  | loop_iter {c : Cond r} {body : Code r} {x y z : Data r} {m n : ℕ} :
+  | loop_iter {c : Cond r} {body : Code B r} {x y z : Data r} {m n : ℕ} :
       c.Holds x → Exec w body x y m → Exec w (.loop c body) y z n →
       Exec w (.loop c body) x z (m + n + 2)
 
 /-- `ExecWithin w c x y T`: at word size `w`, the structured program `c` leads from data `x` to
 data `y` within `T` instructions. -/
-def ExecWithin (w : ℕ) (c : Code r) (x y : Data r) (T : ℕ) : Prop :=
+def ExecWithin (w : ℕ) (c : Code B r) (x y : Data r) (T : ℕ) : Prop :=
   ∃ n ≤ T, Exec w c x y n
 
 namespace Exec
 
-variable {w : ℕ} {c c₁ c₂ : Code r} {x y y' z : Data r} {n n' : ℕ}
+variable {w : ℕ} {c c₁ c₂ : Code B r} {x y y' z : Data r} {n n' : ℕ}
 
 /-- Executions are deterministic. -/
 theorem unique (h : Exec w c x y n) (h' : Exec w c x y' n') : y = y' ∧ n = n' := by
@@ -188,35 +189,48 @@ theorem within (h : Exec w c x y n) : ExecWithin w c x y n := ⟨n, le_rfl, h⟩
 /-! ### Data instructions
 
 Each data instruction leads to explicitly given data in one instruction. Only constants and
-binary operations need the written number to fit a word. -/
+operations need the written number to fit a word. -/
 
 section Ops
 
-variable {d i j a s : Fin r}
+variable {d a s : Fin r}
 
-theorem const {v : ℕ} (h : Fits w v) : Exec w (.op (.const d v)) x (x.set d v) 1 :=
+theorem const {v : ℕ} (h : Fits w v) :
+    Exec (B := B) w (.op (.const d v)) x (x.set d v) 1 :=
   .op (Data.put_of_fits h)
+
+theorem alu {f : B.Op} {args : Fin (B.Arity f) → Fin r}
+    (h : Fits w (B.interp w f (x.regs ∘ args))) :
+    Exec w (.op (.alu f d args)) x (x.set d (B.interp w f (x.regs ∘ args))) 1 :=
+  .op (Data.put_of_fits h)
+
+theorem copy : Exec (B := B) w (.op (.copy d s)) x (x.set d (x.regs s)) 1 := .op rfl
+
+theorem load : Exec (B := B) w (.op (.load d a)) x (x.set d (x.mem (x.regs a))) 1 := .op rfl
+
+theorem store : Exec (B := B) w (.op (.store a s)) x (x.write (x.regs a) (x.regs s)) 1 :=
+  .op rfl
+
+end Ops
+
+section Standard
+
+variable {d i j : Fin r}
 
 theorem bin {f : BinOp} (h : Fits w (f.eval (x.regs i) (x.regs j))) :
     Exec w (.op (.bin f d i j)) x (x.set d (f.eval (x.regs i) (x.regs j))) 1 :=
   .op (Data.put_of_fits h)
 
-theorem copy : Exec w (.op (.copy d s)) x (x.set d (x.regs s)) 1 := .op rfl
+theorem width : Exec w (.op (.width d)) x (x.set d w) 1 := .op (Op.eval_width w d x)
 
-theorem load : Exec w (.op (.load d a)) x (x.set d (x.mem (x.regs a))) 1 := .op rfl
-
-theorem store : Exec w (.op (.store a s)) x (x.write (x.regs a) (x.regs s)) 1 := .op rfl
-
-theorem width : Exec w (.op (.width d)) x (x.set d w) 1 := .op rfl
-
-end Ops
+end Standard
 
 /-- A loop through the states `xs 0, …, xs k`: the condition holds at the first `k` of them and
-fails at the last, and the body leads from each to the next in `B` instructions. -/
-theorem loop {cond : Cond r} {body : Code r} (xs : ℕ → Data r) (k B : ℕ)
+fails at the last, and the body leads from each to the next in `T` instructions. -/
+theorem loop {cond : Cond r} {body : Code B r} (xs : ℕ → Data r) (k T : ℕ)
     (hc : ∀ i < k, cond.Holds (xs i)) (hk : ¬cond.Holds (xs k))
-    (hbody : ∀ i < k, Exec w body (xs i) (xs (i + 1)) B) :
-    Exec w (.loop cond body) (xs 0) (xs k) (k * (B + 2) + 2) := by
+    (hbody : ∀ i < k, Exec w body (xs i) (xs (i + 1)) T) :
+    Exec w (.loop cond body) (xs 0) (xs k) (k * (T + 2) + 2) := by
   induction k generalizing xs with
   | zero => simpa using loop_exit hk
   | succ k ih =>
@@ -233,14 +247,14 @@ end Exec
 
 namespace ExecWithin
 
-variable {w : ℕ} {c c₁ c₂ pos neg body : Code r} {cond : Cond r} {x y z : Data r}
+variable {w : ℕ} {c c₁ c₂ pos neg body : Code B r} {cond : Cond r} {x y z : Data r}
   {d i j a s : Fin r} {T T₁ T₂ : ℕ}
 
 theorem mono (h : ExecWithin w c x y T) (hT : T ≤ T₂) : ExecWithin w c x y T₂ :=
   let ⟨n, hn, he⟩ := h
   ⟨n, hn.trans hT, he⟩
 
-theorem op {o : Op r} (h : o.eval w x = some y) : ExecWithin w (.op o) x y 1 := (Exec.op h).within
+theorem op {o : Op B r} (h : o.eval w x = some y) : ExecWithin w (.op o) x y 1 := (Exec.op h).within
 
 theorem seq (h₁ : ExecWithin w c₁ x y T₁) (h₂ : ExecWithin w c₂ y z T₂) :
     ExecWithin w (.seq c₁ c₂) x z (T₁ + T₂) :=
@@ -277,11 +291,11 @@ theorem loop_iter (hc : cond.Holds x) (h₁ : ExecWithin w body x y T₁)
   ⟨m + n + 2, by omega, .loop_iter hc he₁ he₂⟩
 
 /-- **Loop rule, explicit states.** If the condition holds at `xs 0, …, xs (k - 1)` and fails at
-`xs k`, and the body leads from each state to the next within `B` instructions, the loop leads
-from `xs 0` to `xs k` within `k (B + 2) + 2` instructions. -/
-theorem loop (xs : ℕ → Data r) (k B : ℕ) (hc : ∀ i < k, cond.Holds (xs i))
-    (hk : ¬cond.Holds (xs k)) (hbody : ∀ i < k, ExecWithin w body (xs i) (xs (i + 1)) B) :
-    ExecWithin w (.loop cond body) (xs 0) (xs k) (k * (B + 2) + 2) := by
+`xs k`, and the body leads from each state to the next within `T` instructions, the loop leads
+from `xs 0` to `xs k` within `k (T + 2) + 2` instructions. -/
+theorem loop (xs : ℕ → Data r) (k T : ℕ) (hc : ∀ i < k, cond.Holds (xs i))
+    (hk : ¬cond.Holds (xs k)) (hbody : ∀ i < k, ExecWithin w body (xs i) (xs (i + 1)) T) :
+    ExecWithin w (.loop cond body) (xs 0) (xs k) (k * (T + 2) + 2) := by
   induction k generalizing xs with
   | zero => simpa using loop_exit hk
   | succ k ih =>
@@ -291,13 +305,13 @@ theorem loop (xs : ℕ → Data r) (k B : ℕ) (hc : ∀ i < k, cond.Holds (xs i
     exact this.mono (by rw [Nat.succ_mul]; omega)
 
 /-- **Loop rule, invariant and measure.** If every state satisfying the invariant `I` and the
-condition is led by the body, within `B` instructions, to a state satisfying `I` with a smaller
-measure `μ`, then from a state satisfying `I` the loop terminates within `μ x (B + 2) + 2`
+condition is led by the body, within `T` instructions, to a state satisfying `I` with a smaller
+measure `μ`, then from a state satisfying `I` the loop terminates within `μ x (T + 2) + 2`
 instructions, in a state satisfying `I` where the condition fails. -/
-theorem loop_invariant (I : Data r → Prop) (μ : Data r → ℕ) {B : ℕ}
-    (hbody : ∀ x, I x → cond.Holds x → ∃ y, ExecWithin w body x y B ∧ I y ∧ μ y < μ x)
+theorem loop_invariant (I : Data r → Prop) (μ : Data r → ℕ) {T : ℕ}
+    (hbody : ∀ x, I x → cond.Holds x → ∃ y, ExecWithin w body x y T ∧ I y ∧ μ y < μ x)
     (hx : I x) :
-    ∃ y, ExecWithin w (.loop cond body) x y (μ x * (B + 2) + 2) ∧ I y ∧ ¬cond.Holds y := by
+    ∃ y, ExecWithin w (.loop cond body) x y (μ x * (T + 2) + 2) ∧ I y ∧ ¬cond.Holds y := by
   induction hm : μ x using Nat.strong_induction_on generalizing x with
   | _ m ih =>
     subst hm
@@ -305,28 +319,38 @@ theorem loop_invariant (I : Data r → Prop) (μ : Data r → ℕ) {B : ℕ}
     · obtain ⟨y, hy, hIy, hμ⟩ := hbody x hx hc
       obtain ⟨z, hz, hIz, hcz⟩ := ih (μ y) hμ hIy rfl
       refine ⟨z, (loop_iter hc hy hz).mono ?_, hIz, hcz⟩
-      have := Nat.mul_le_mul_right (B + 2) (Nat.succ_le_of_lt hμ)
+      have := Nat.mul_le_mul_right (T + 2) (Nat.succ_le_of_lt hμ)
       rw [Nat.succ_mul] at this
       omega
     · exact ⟨x, (loop_exit hc).mono (by omega), hx, hc⟩
 
 /-! ### Data instructions -/
 
-theorem const {v : ℕ} (h : Fits w v) : ExecWithin w (.op (.const d v)) x (x.set d v) 1 :=
+theorem const {v : ℕ} (h : Fits w v) :
+    ExecWithin (B := B) w (.op (.const d v)) x (x.set d v) 1 :=
   (Exec.const h).within
+
+theorem alu {f : B.Op} {args : Fin (B.Arity f) → Fin r}
+    (h : Fits w (B.interp w f (x.regs ∘ args))) :
+    ExecWithin w (.op (.alu f d args)) x (x.set d (B.interp w f (x.regs ∘ args))) 1 :=
+  (Exec.alu h).within
+
+theorem copy : ExecWithin (B := B) w (.op (.copy d s)) x (x.set d (x.regs s)) 1 :=
+  Exec.copy.within
+
+theorem load : ExecWithin (B := B) w (.op (.load d a)) x (x.set d (x.mem (x.regs a))) 1 :=
+  Exec.load.within
+
+theorem store :
+    ExecWithin (B := B) w (.op (.store a s)) x (x.write (x.regs a) (x.regs s)) 1 :=
+  Exec.store.within
 
 theorem bin {f : BinOp} (h : Fits w (f.eval (x.regs i) (x.regs j))) :
     ExecWithin w (.op (.bin f d i j)) x (x.set d (f.eval (x.regs i) (x.regs j))) 1 :=
   (Exec.bin h).within
 
-theorem copy : ExecWithin w (.op (.copy d s)) x (x.set d (x.regs s)) 1 := Exec.copy.within
-
-theorem load : ExecWithin w (.op (.load d a)) x (x.set d (x.mem (x.regs a))) 1 := Exec.load.within
-
-theorem store : ExecWithin w (.op (.store a s)) x (x.write (x.regs a) (x.regs s)) 1 :=
-  Exec.store.within
-
-theorem width : ExecWithin w (.op (.width d)) x (x.set d w) 1 := Exec.width.within
+theorem width : ExecWithin w (.op (.width d)) x (x.set d w) 1 :=
+  Exec.width.within
 
 end ExecWithin
 
@@ -345,7 +369,7 @@ def Code.evalLoop (c : Cond r) (body : Data r → Option (Data r × ℕ)) :
 entry: `some (y, n)` if it leads to `y` executing `n` instructions, and `none` if it faults or
 runs out of iterations. The definition is structurally recursive, so `simp` and `decide`
 evaluate it. -/
-def Code.eval (w fuel : ℕ) : Code r → Data r → Option (Data r × ℕ)
+def Code.eval (w fuel : ℕ) : Code B r → Data r → Option (Data r × ℕ)
   | .op o, x => (o.eval w x).map fun y => (y, 1)
   | .seq c₁ c₂, x =>
     (c₁.eval w fuel x).bind fun ym => (c₂.eval w fuel ym.1).map fun zn => (zn.1, ym.2 + zn.2)
@@ -354,7 +378,7 @@ def Code.eval (w fuel : ℕ) : Code r → Data r → Option (Data r × ℕ)
     else (neg.eval w fuel x).map fun yn => (yn.1, yn.2 + 2)
   | .loop c body, x => evalLoop c (fun y => body.eval w fuel y) fuel x
 
-theorem Exec.of_evalLoop {w : ℕ} {c : Cond r} {body : Code r} {f : Data r → Option (Data r × ℕ)}
+theorem Exec.of_evalLoop {w : ℕ} {c : Cond r} {body : Code B r} {f : Data r → Option (Data r × ℕ)}
     (hf : ∀ {x y : Data r} {n : ℕ}, f x = some (y, n) → Exec w body x y n) {fuel : ℕ}
     {x y : Data r} {n : ℕ} (h : Code.evalLoop c f fuel x = some (y, n)) :
     Exec w (.loop c body) x y n := by
@@ -376,7 +400,7 @@ theorem Exec.of_evalLoop {w : ℕ} {c : Cond r} {body : Code r} {f : Data r → 
     · next hc => cases h; exact .loop_exit hc
 
 /-- The interpreter only finds executions. -/
-theorem Exec.of_eval {w fuel : ℕ} {c : Code r} {x y : Data r} {n : ℕ}
+theorem Exec.of_eval {w fuel : ℕ} {c : Code B r} {x y : Data r} {n : ℕ}
     (h : c.eval w fuel x = some (y, n)) : Exec w c x y n := by
   induction c generalizing x y n with
   | op o =>
@@ -404,25 +428,31 @@ theorem Exec.of_eval {w fuel : ℕ} {c : Code r} {x y : Data r} {n : ℕ}
       exact .branch_neg hc (ihn h₁)
   | loop c body ih => exact Exec.of_evalLoop ih h
 
-theorem ExecWithin.of_eval {w fuel : ℕ} {c : Code r} {x y : Data r} {n T : ℕ}
+theorem ExecWithin.of_eval {w fuel : ℕ} {c : Code B r} {x y : Data r} {n T : ℕ}
     (h : c.eval w fuel x = some (y, n)) (hn : n ≤ T) : ExecWithin w c x y T :=
   ⟨n, hn, .of_eval h⟩
 
 /-! ## Registers a program does not write -/
 
 /-- The register a data instruction writes, if any. -/
-def Op.dest : Op r → Option (Fin r)
-  | .const d _ | .copy d _ | .bin _ d _ _ | .load d _ | .width d => some d
+def Op.dest : Op B r → Option (Fin r)
+  | .const d _ | .copy d _ | .alu _ d _ | .load d _ => some d
   | .store _ _ => none
 
+@[simp]
+theorem Op.dest_bin (f : BinOp) (d i j : Fin r) : (Op.bin f d i j).dest = some d := rfl
+
+@[simp]
+theorem Op.dest_width (d : Fin r) : (Op.width d).dest = some d := rfl
+
 /-- No instruction of the program writes register `i`. -/
-def Code.Preserves (i : Fin r) : Code r → Prop
+def Code.Preserves (i : Fin r) : Code B r → Prop
   | .op o => o.dest ≠ some i
   | .seq c₁ c₂ => c₁.Preserves i ∧ c₂.Preserves i
   | .branch _ pos neg => pos.Preserves i ∧ neg.Preserves i
   | .loop _ body => body.Preserves i
 
-instance Code.decidablePreserves (i : Fin r) : (c : Code r) → Decidable (c.Preserves i)
+instance Code.decidablePreserves (i : Fin r) : (c : Code B r) → Decidable (c.Preserves i)
   | .op o => inferInstanceAs (Decidable (o.dest ≠ some i))
   | .seq c₁ c₂ =>
     have := c₁.decidablePreserves i
@@ -434,19 +464,19 @@ instance Code.decidablePreserves (i : Fin r) : (c : Code r) → Decidable (c.Pre
     inferInstanceAs (Decidable (_ ∧ _))
   | .loop _ body => body.decidablePreserves i
 
-theorem Op.regs_eq {w : ℕ} {o : Op r} {x y : Data r} {i : Fin r} (hi : o.dest ≠ some i)
+theorem Op.regs_eq {w : ℕ} {o : Op B r} {x y : Data r} {i : Fin r} (hi : o.dest ≠ some i)
     (h : o.eval w x = some y) : y.regs i = x.regs i := by
   have hne {d : Fin r} (hd : o.dest = some d) : i ≠ d := fun hid => hi (hid ▸ hd)
   cases o with
-  | const d | bin _ d =>
+  | const d | alu _ d =>
     obtain ⟨-, rfl⟩ := Data.put_eq_some.1 h
     simp [Function.update_of_ne (hne rfl)]
-  | copy d | load d | width d => cases h; simp [Function.update_of_ne (hne rfl)]
+  | copy d | load d => cases h; simp [Function.update_of_ne (hne rfl)]
   | store => cases h; rfl
 
 /-- **Register preservation.** A register that no instruction of a program writes keeps its
 contents. -/
-theorem Exec.regs_eq {w : ℕ} {c : Code r} {x y : Data r} {n : ℕ} {i : Fin r}
+theorem Exec.regs_eq {w : ℕ} {c : Code B r} {x y : Data r} {n : ℕ} {i : Fin r}
     (h : Exec w c x y n) (hi : c.Preserves i) : y.regs i = x.regs i := by
   induction h with
   | op ho => exact Op.regs_eq hi ho
@@ -456,7 +486,7 @@ theorem Exec.regs_eq {w : ℕ} {c : Code r} {x y : Data r} {n : ℕ} {i : Fin r}
   | loop_exit _ => rfl
   | loop_iter _ _ _ ihb ihl => exact (ihl hi).trans (ihb hi)
 
-theorem ExecWithin.regs_eq {w T : ℕ} {c : Code r} {x y : Data r} {i : Fin r}
+theorem ExecWithin.regs_eq {w T : ℕ} {c : Code B r} {x y : Data r} {i : Fin r}
     (h : ExecWithin w c x y T) (hi : c.Preserves i) : y.regs i = x.regs i :=
   let ⟨_, _, he⟩ := h
   he.regs_eq hi
@@ -475,13 +505,30 @@ noncomputable def Data.extend (f : Fin r → Fin r') (y : Data r) (x : Data r') 
   ⟨Function.extend f y.regs x.regs, y.mem⟩
 
 /-- Run the data instruction on the registers chosen by `f`. -/
-def Op.rename (f : Fin r → Fin r') : Op r → Op r'
+def Op.rename (f : Fin r → Fin r') : Op B r → Op B r'
   | .const d v => .const (f d) v
   | .copy d s => .copy (f d) (f s)
-  | .bin g d i j => .bin g (f d) (f i) (f j)
+  | .alu g d args => .alu g (f d) (f ∘ args)
   | .load d a => .load (f d) (f a)
   | .store a s => .store (f a) (f s)
-  | .width d => .width (f d)
+
+@[simp]
+theorem Op.rename_bin (f : Fin r → Fin r') (g : BinOp) (d i j : Fin r) :
+    (Op.bin g d i j).rename f = Op.bin g (f d) (f i) (f j) := by
+  simp only [Op.bin, Op.rename]
+  congr 1
+  funext k
+  match k with
+  | ⟨0, _⟩ => rfl
+  | ⟨1, _⟩ => rfl
+
+@[simp]
+theorem Op.rename_width (f : Fin r → Fin r') (d : Fin r) :
+    (Op.width d).rename f = Op.width (f d) := by
+  simp only [Op.width, Op.rename]
+  congr 1
+  funext k
+  exact k.elim0
 
 /-- Test the condition on the registers chosen by `f`. -/
 def Cond.rename (f : Fin r → Fin r') : Cond r → Cond r'
@@ -489,14 +536,14 @@ def Cond.rename (f : Fin r → Fin r') : Cond r → Cond r'
   | .lt i j => .lt (f i) (f j)
 
 /-- Run the structured program on the registers chosen by `f`. -/
-def Code.rename (f : Fin r → Fin r') : Code r → Code r'
+def Code.rename (f : Fin r → Fin r') : Code B r → Code B r'
   | .op o => .op (o.rename f)
   | .seq c₁ c₂ => .seq (c₁.rename f) (c₂.rename f)
   | .branch c pos neg => .branch (c.rename f) (pos.rename f) (neg.rename f)
   | .loop c body => .loop (c.rename f) (body.rename f)
 
 @[simp]
-theorem Code.size_rename (f : Fin r → Fin r') (c : Code r) : (c.rename f).size = c.size := by
+theorem Code.size_rename (f : Fin r → Fin r') (c : Code B r) : (c.rename f).size = c.size := by
   induction c <;> simp_all [Code.rename]
 
 section Rename
@@ -544,22 +591,22 @@ theorem Data.extend_write (y : Data r) (x : Data r') (a v : ℕ) :
 theorem Cond.holds_rename (c : Cond r) (x : Data r') : (c.rename f).Holds x ↔ c.Holds (x.comap f) :=
   by cases c <;> rfl
 
-theorem Op.eval_rename (hf : f.Injective) (o : Op r) (w : ℕ) (x : Data r') :
+theorem Op.eval_rename (hf : f.Injective) (o : Op B r) (w : ℕ) (x : Data r') :
     (o.rename f).eval w x = ((o.eval w (x.comap f)).map fun y => y.extend f x) := by
   have hput {d : Fin r} {v : ℕ} :
       x.put w (f d) v = ((x.comap f).put w d v).map fun y => y.extend f x := by
     unfold Data.put
     split <;> simp [Data.extend_set hf, Data.extend_comap hf]
   cases o with
-  | const | bin => exact hput
-  | copy | load | width =>
+  | const | alu => exact hput
+  | copy | load =>
     simp [Op.rename, Op.eval, Data.extend_set hf, Data.extend_comap hf]
   | store a s =>
     simp [Op.rename, Op.eval, Data.extend_write, Data.extend_comap hf]
 
 /-- **Renaming.** A program run on the registers chosen by an injective `f` does what it does on
 its own registers, with the same instruction count, and leaves the other registers unchanged. -/
-theorem Exec.rename (hf : f.Injective) {w : ℕ} {c : Code r} {x : Data r'} {y : Data r} {n : ℕ}
+theorem Exec.rename (hf : f.Injective) {w : ℕ} {c : Code B r} {x : Data r'} {y : Data r} {n : ℕ}
     (h : Exec w c (x.comap f) y n) : Exec w (c.rename f) x (y.extend f x) n := by
   generalize hx : x.comap f = x₀ at h
   induction h generalizing x with
@@ -588,7 +635,7 @@ theorem Exec.rename (hf : f.Injective) {w : ℕ} {c : Code r} {x : Data r'} {y :
     rw [Data.extend_extend hf] at h₂
     exact .loop_iter ((Cond.holds_rename _ _).2 hc) h₁ h₂
 
-theorem ExecWithin.rename (hf : f.Injective) {w T : ℕ} {c : Code r} {x : Data r'} {y : Data r}
+theorem ExecWithin.rename (hf : f.Injective) {w T : ℕ} {c : Code B r} {x : Data r'} {y : Data r}
     (h : ExecWithin w c (x.comap f) y T) : ExecWithin w (c.rename f) x (y.extend f x) T :=
   let ⟨n, hn, he⟩ := h
   ⟨n, hn, he.rename hf⟩
@@ -599,7 +646,7 @@ end Rename
 
 /-- **Word-size monotonicity.** A program that does not read the word size runs in the same way
 at every larger word size. -/
-theorem Exec.mono_width {w w' : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (hc : ¬c.ReadsWidth)
+theorem Exec.mono_width {w w' : ℕ} {c : Code B r} {x y : Data r} {n : ℕ} (hc : ¬c.ReadsWidth)
     (h : Exec w c x y n) (hw : w ≤ w') : Exec w' c x y n := by
   induction h with
   | op ho => exact .op (Op.eval_mono_width hc ho hw)
@@ -609,13 +656,13 @@ theorem Exec.mono_width {w w' : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (hc :
   | loop_exit hn => exact .loop_exit hn
   | loop_iter hp _ _ ihb ihl => exact .loop_iter hp (ihb hc) (ihl hc)
 
-theorem ExecWithin.mono_width {w w' T : ℕ} {c : Code r} {x y : Data r} (hc : ¬c.ReadsWidth)
+theorem ExecWithin.mono_width {w w' T : ℕ} {c : Code B r} {x y : Data r} (hc : ¬c.ReadsWidth)
     (h : ExecWithin w c x y T) (hw : w ≤ w') : ExecWithin w' c x y T :=
   let ⟨n, hn, he⟩ := h
   ⟨n, hn, he.mono_width hc hw⟩
 
 /-- Executions keep data word-sized. -/
-theorem Exec.bounded {w : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (h : Exec w c x y n)
+theorem Exec.bounded {w : ℕ} {c : Code B r} {x y : Data r} {n : ℕ} (h : Exec w c x y n)
     (hx : x.Bounded w) : y.Bounded w := by
   induction h with
   | op ho => exact hx.op ho
@@ -624,7 +671,7 @@ theorem Exec.bounded {w : ℕ} {c : Code r} {x y : Data r} {n : ℕ} (h : Exec w
   | loop_exit _ => exact hx
   | loop_iter _ _ _ ihb ihl => exact ihl (ihb hx)
 
-theorem ExecWithin.bounded {w T : ℕ} {c : Code r} {x y : Data r} (h : ExecWithin w c x y T)
+theorem ExecWithin.bounded {w T : ℕ} {c : Code B r} {x y : Data r} (h : ExecWithin w c x y T)
     (hx : x.Bounded w) : y.Bounded w :=
   let ⟨_, _, he⟩ := h
   he.bounded hx

@@ -373,6 +373,7 @@ public import Complexity.Computability.Circuit.Rational.SmallExpansion
 public import Complexity.Computability.Circuit.Rational.Wronskian
 public import Complexity.Computability.Circuit.ReedMullerDecoding
 public import Complexity.Computability.Circuit.Replication
+public import Complexity.Computability.Circuit.SignatureHom
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.SimulationContext
 public import Complexity.Computability.Circuit.SimulationDepth
@@ -607,6 +608,7 @@ public import Complexity.Computability.Complexity.HardnessEncoding.Program
 public import Complexity.Computability.Complexity.Parameterized
 public import Complexity.Computability.Complexity.Parameterized.Kernelization
 public import Complexity.Computability.Complexity.Parameterized.VertexCover
+public import Complexity.Computability.Complexity.Parameterized.VertexCover.BussKernel
 public import Complexity.Computability.Complexity.Problems.CircuitSAT
 public import Complexity.Computability.Complexity.Problems.CircuitValue
 public import Complexity.Computability.Complexity.Problems.CircuitValue.Compilation
@@ -665,6 +667,9 @@ public import Complexity.Computability.DecisionTree.Separable
 public import Complexity.Computability.DecisionTree.SpectralNorm
 public import Complexity.Computability.DecisionTree.Switching
 public import Complexity.Computability.DecisionTree.Symmetric
+public import Complexity.Computability.GenericRAM.Algebraic
+public import Complexity.Computability.GenericRAM.Defs
+public import Complexity.Computability.GenericRAM.Signed
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
 public import Complexity.Computability.Kolmogorov.Depth
@@ -1059,11 +1064,14 @@ public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.USTCON.Reader.Invariant
 public import Complexity.Computability.USTCON.Space
 public import Complexity.Computability.WordRAM.Allocation
+public import Complexity.Computability.WordRAM.Basis
 public import Complexity.Computability.WordRAM.Compile
 public import Complexity.Computability.WordRAM.Copy
 public import Complexity.Computability.WordRAM.Defs
 public import Complexity.Computability.WordRAM.Dynamic
+public import Complexity.Computability.WordRAM.Generic
 public import Complexity.Computability.WordRAM.Heap
+public import Complexity.Computability.WordRAM.MapOp
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput
@@ -1384,6 +1392,7 @@ public import Complexity.Foundations.Relation.RelatesWithinSteps
 public import Complexity.Foundations.Semantics.Stateful.Amortized
 public import Complexity.Foundations.Semantics.Stateful.Basic
 public import Complexity.Foundations.Semantics.Stateful.Composition
+public import Complexity.Foundations.Semantics.Stateful.CostHoare
 public import Complexity.Foundations.Semantics.Stateful.Hoare
 public import Complexity.Foundations.Semantics.Stateful.Module
 public import Complexity.Foundations.Semantics.Stateful.Realization
@@ -1480,10 +1489,12 @@ public import Complexity.Logics.Propositional.ClauseSet.SubcubeFree
 public import Complexity.Logics.Propositional.DNF
 public import Complexity.Logics.Propositional.Parity
 public import Complexity.Logics.Propositional.Parity.DepthThree
+public import Complexity.Logics.Propositional.Pigeonhole
 public import Complexity.Logics.Propositional.ProofSystem
 public import Complexity.Logics.Propositional.QBF
 public import Complexity.Logics.Propositional.QBF.Arithmetization
 public import Complexity.Logics.Propositional.Resolution
+public import Complexity.Logics.Propositional.Resolution.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Complexity.Logics.Propositional.Resolution.SizeWidth
 public import Complexity.Logics.Propositional.Resolution.TreeLike
@@ -1554,3 +1565,5 @@ public import Complexity.Tactic.FirstOrder.Init
 public import Complexity.Tactic.PPT
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init
+public import Complexity.Tactic.Stateful
+public import Complexity.Tactic.Stateful.Init

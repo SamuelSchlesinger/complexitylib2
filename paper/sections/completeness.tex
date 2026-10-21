@@ -289,8 +289,7 @@ Vertex Cover (encoded graphs with binary target $k$, requiring a cover of size $
 most the number $n$ of distinct declared vertices), a bounded search tree of depth $\min(n,k)$
 branches on the endpoints of the first uncovered edge over $2^{\min(n,k)}$ root-to-leaf paths and
 decides the problem within time $O(2^k\,(L+1)^e)$, placing Vertex Cover in $\cc{FPT}$
-parameterized by $k$. The computable-$g$ variant and explicit polynomial kernels for Vertex Cover
-(such as Buss's $O(k^2)$ kernel) are not covered.
+parameterized by $k$. The computable-$g$ variant is not covered.
 \citep{CaiChenDowneyFellows1997,DowneyFellows1999,FlumGrohe2006,CyganEtAl2015}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/Kernelization.lean}{85}{Cslib.Complexity.IsKernelization}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/Kernelization.lean}{97}{Cslib.Complexity.HasKernel}
@@ -306,6 +305,34 @@ parameterized by $k$. The computable-$g$ variant and explicit polynomial kernels
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/VertexCover.lean}{584}{Cslib.Complexity.VertexCover_decidableInExpTime_one}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/VertexCover.lean}{594}{Cslib.Complexity.VertexCover_mem_FPT}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/VertexCover.lean}{598}{Cslib.Complexity.VertexCover_hasKernel}
+\end{result}
+
+\begin{result}
+\subsection{Buss's polynomial kernel for vertex cover}
+For Vertex Cover parameterized by the target cover size $k$ (encoded graphs with binary target
+$k$, requiring a cover of exactly $k$ distinct declared vertices), Buss's kernel counts degrees
+among the $n$ distinct declared vertices and caps the target at $\min(n,k)$. Every declared vertex
+of degree greater than $k$ belongs to every vertex cover of at most $k$ vertices; if there are
+$h\le k$ such high vertices and at most $k(k+1)$ remaining non-isolated low vertices ($m$ active
+vertices), the kernel relabels the active vertices to $0,\dots,m-1$, retains the edges between
+them, pads with isolated vertices up to $\min(\ell,m+(k-h))$ (where $\ell$ is the number of low
+vertices) to preserve exact-size covers, and sets the reduced target to $k-h$. Instances with
+$k>n$, $h>k$, or $m>k(k+1)$ are mapped to the fixed rejecting instance $(([],[]),1)$. The output
+is tidily computable in polynomial time, preserves membership in Vertex Cover, has at most
+$k(k+2)$ vertices and $(k(k+1))^2$ listed edges, and has encoded length and output parameter at
+most $40(k+1)^6$, giving an explicit polynomial kernel for Vertex Cover. Crown and linear-program
+$O(k)$-vertex kernels are not covered.
+\citep{BussGoldsmith1993,DowneyFellows1999,FlumGrohe2006,CyganEtAl2015}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{191}{Cslib.Complexity.VertexCover.Buss.mem_of_isHigh}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{215}{Cslib.Complexity.VertexCover.Buss.length_active_le}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{453}{Cslib.Complexity.VertexCover.bussKernel}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{572}{Cslib.Complexity.VertexCover.bussKernel_mem_iff}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{584}{Cslib.Complexity.VertexCover.length_bussKernel_vertices_le}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{592}{Cslib.Complexity.VertexCover.length_bussKernel_edges_le}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{600}{Cslib.Complexity.VertexCover.length_encode_bussKernel_le}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{612}{Cslib.Complexity.VertexCover.computableTidilyInPolyTime_bussKernel}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{629}{Cslib.Complexity.VertexCover.isKernelization_bussKernel}
+\declat{29c6c5e0ed7b97de51a4cb18276f3a2b72b07036}{Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean}{646}{Cslib.Complexity.VertexCover_hasPolyKernel}
 \end{result}
 
 

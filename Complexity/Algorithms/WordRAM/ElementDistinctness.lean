@@ -95,7 +95,7 @@ open Reg
 
 /-- Read the length, allocate a zeroed table of `n` flags just past the input, and start at the
 first entry with answer `1`. -/
-def setup : Code 12 := ram[
+def setup : Code .standard 12 := ram[
   len ← *zero;
   one ← #1;
   front ← len + one;
@@ -106,13 +106,13 @@ def setup : Code 12 := ram[
 
 /-- Process one entry: if its flag is set, answer `0` and stop; otherwise set its flag and
 advance. -/
-def body : Code 12 := ram[
+def body : Code .standard 12 := ram[
   val ← *idx;
   ⟪readAt tmp seen base val⟫;
   if seen = one then [ ans ← #0; idx ← base ] else [ ⟪writeAt tmp base val one⟫; idx ← idx + one ] ]
 
 /-- The decision procedure for element distinctness: the answer is left in register `ans`. -/
-def decider : Code 12 := ram[ ⟪setup⟫; while idx < base do [ ⟪body⟫ ] ]
+def decider : Code .standard 12 := ram[ ⟪setup⟫; while idx < base do [ ⟪body⟫ ] ]
 
 /-- The instances: lists of naturals whose entries are below their length. -/
 abbrev Input := {l : List ℕ // ∀ v ∈ l, v < l.length}
@@ -200,12 +200,12 @@ theorem body_spec (hl : ∀ v ∈ l, v < l.length) (hw : Fits w (2 * l.length + 
   have hfit : Fits w (l.length + 1 + l[t]) := hw.of_le (by omega)
   set y₁ := y.set val (y.mem (y.regs idx))
   set y₂ := (y₁.set tmp (y₁.regs base + y₁.regs val)).set seen (y₁.mem (y₁.regs base + y₁.regs val))
-  have e₁ : Exec w (.op (.load val idx)) y y₁ 1 := Exec.load
+  have e₁ : Exec (B := .standard) w (.op (.load val idx)) y y₁ 1 := Exec.load
   have e₂ : Exec w (readAt tmp seen base val) y₁ y₂ 2 :=
     readAt_exec (by simpa +decide [y₁, hbase, hyv] using hfit)
   by_cases hfound : l[t] ∈ l.take t
   · -- A duplicate: answer `0` and move the index past the end.
-    have e₃ := (Exec.const (w := w) (d := ans) (x := y₂) (fits_zero w)).seq
+    have e₃ := (Exec.const (B := .standard) (w := w) (d := ans) (x := y₂) (fits_zero w)).seq
       (Exec.copy (d := idx) (s := base))
     have e := e₁.seq <| e₂.seq <| Exec.branch_pos (c := .eq seen one)
       (neg := ram[⟪writeAt tmp base val one⟫; idx ← idx + one])
@@ -274,7 +274,7 @@ theorem answers (hl : ∀ v ∈ l, v < l.length) (hw : Fits w (2 * l.length + 1)
     decider.Answers ans w l l.Nodup (14 * l.length + 15) := by
   obtain ⟨y, hy, hI⟩ := setup_spec hw
   obtain ⟨z, hz, hIz, hcz⟩ := ExecWithin.loop_invariant (cond := .lt idx base) (body := body)
-    (Invariant l) (fun y => l.length + 1 - y.regs idx) (B := 8)
+    (Invariant l) (fun y => l.length + 1 - y.regs idx) (T := 8)
     (fun x hx hc => body_spec hl hw hx hc) hI
   refine ⟨z, (hy.seq hz).mono ?_, exit_spec hIz hcz⟩
   have := hI.idx_pos
@@ -294,7 +294,7 @@ theorem decidesInTime_nodup :
 /-- **Element distinctness is in linear time** on the word RAM, for lists whose entries are below
 their length. -/
 theorem linearTime_nodup :
-    LinearTime {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
+    LinearTime .standard {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
   ⟨16, 2, _, _, decidesInTime_nodup⟩
 
 end Cslib.Algorithms.WordRAM.ElementDistinctness

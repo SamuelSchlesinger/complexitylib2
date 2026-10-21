@@ -107,7 +107,7 @@ example (w n : ℕ) (hn : Fits w n) :
 /-- Framing protects a second cell during a concrete store to the first. -/
 example (w : ℕ) (x : Data 2) (h0 : x.regs 0 = 0) (h1 : x.mem 1 = 7) :
     (HeapAssertion.pointsto 1 7).holds (x.write 0 (x.regs 1)).mem := by
-  have he : TraceExec w (.op (.store 0 1)) x (x.write 0 (x.regs 1)) 1
+  have he : TraceExec (B := .standard) w (.op (.store 0 1)) x (x.write 0 (x.regs 1)) 1
       [.write 0 (x.regs 1)] := by
     simpa [Op.probes, h0] using
       (TraceExec.op (o := .store 0 1) (w := w) (x := x) rfl)

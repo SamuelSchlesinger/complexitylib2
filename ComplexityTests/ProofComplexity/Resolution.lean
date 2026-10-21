@@ -67,6 +67,19 @@ example : ∃ ls, (φ.restrict 1 false).IsProof ls ∧ [] ∈ ls ∧ ls.length �
   obtain rfl : c = [] := List.eq_nil_iff_forall_not_mem.2 fun l hl => by simpa using hsub' l hl
   exact ⟨ls, h, hc, hlen.trans (by decide)⟩
 
+/-- Restricting `φ` by the partial assignment fixing `x₁ ↦ false` gives the same two clauses. -/
+example : φ.restrictBy (fun v => if v = 1 then some false else none) =
+    [[(0, true)], [(0, false)]] := by
+  decide
+
+example : ∃ ls, (φ.restrictBy (fun v => if v = 1 then some false else none)).IsProof ls ∧
+    [] ∈ ls ∧ ls.length ≤ 5 := by
+  obtain ⟨ls, h, hsub, ks, hks, -, hF⟩ :=
+    isProof.restrictBy (fun v => if v = 1 then some false else none)
+  obtain ⟨c, hc, hsub'⟩ := hsub [] (by decide) (by decide)
+  obtain rfl : c = [] := List.eq_nil_iff_forall_not_mem.2 fun l hl => by simpa using hsub' l hl
+  exact ⟨ls, h, hc, hF.length_eq.trans_le (hks.length_le.trans (by decide))⟩
+
 /-! ### Tree-like refutations and decision trees -/
 
 /-- `x₀ ∧ ¬x₀`. -/
@@ -142,6 +155,13 @@ info: 'Cslib.Logic.PL.CNF.IsProof.lift' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.PL.CNF.IsProof.lift
+
+/--
+info: 'Cslib.Logic.PL.CNF.IsProof.restrictBy' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.IsProof.restrictBy
 
 /--
 info: 'Cslib.Logic.PL.CNF.RefutableInWidth.of_restrict' depends on axioms:
