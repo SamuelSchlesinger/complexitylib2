@@ -211,6 +211,7 @@ public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Compone
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Cut
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.InnerProduct
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Menus
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Potential
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
 public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Computability.Circuit.Boolean.XorLemma

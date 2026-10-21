@@ -7,11 +7,13 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Components
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Menus
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Potential
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Tactic.FinCases
 
-/-! Tests and axiom guards for mixed-activation, cut, component, block-excess, and direction-menu
-bounds. -/
+/-! Tests and axiom guards for mixed-activation, cut, component, block-excess, direction-menu,
+unambiguous cell, and quadratic-potential unique-sink representations of weighted threshold
+circuits. -/
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
@@ -282,6 +284,161 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_blocks' depends on
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.WeightedThreshold.circuit_lt_of_blocks
+
+/-! ### Unambiguous transcript cells and quadratic-potential unique sinks -/
+
+-- Concrete 2-gate strict-margin program on 1 input: gate 0 copies `x 0` with score `2 x_0 - 1`,
+-- and gate 1 negates gate 0 with score `-2 z_0 + 1` (`|Q_0| = |Q_1| = 1`).
+private def sampleStrictMarginProgram : StrictMarginProgram 1 2 where
+  inputWeight i _ := if i = 0 then 2 else 0
+  gateWeight i j := if i = 1 ∧ j = 0 then -2 else 0
+  threshold i := if i = 0 then 1 else -1
+  gateWeight_eq_zero_of_le i j hij := by
+    fin_cases i <;> fin_cases j <;> simp at hij ⊢
+  one_le_abs_score x z i := by
+    fin_cases i <;> simp
+    · cases x 0 <;> norm_num
+    · cases z 0 <;> norm_num
+
+private theorem sampleStrictMarginProgram_abs_score_le_one (x : Fin 1 → Bool) (z : Fin 2 → Bool)
+    (i : Fin 2) :
+    |sampleStrictMarginProgram.score x z i| ≤ 1 := by
+  fin_cases i <;>
+    simp [StrictMarginProgram.score, StrictMarginProgram.inputSum, StrictMarginProgram.internalSum,
+      sampleStrictMarginProgram]
+  · cases x 0 <;> norm_num
+  · cases z 0 <;> norm_num
+
+example (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.inTranscriptCell x z ↔ z = sampleStrictMarginProgram.eval x :=
+  sampleStrictMarginProgram.inTranscriptCell_iff_eq_eval x z
+
+example (x : Fin 1 → Bool) :
+    ∃! z : Fin 2 → Bool, sampleStrictMarginProgram.inTranscriptCell x z :=
+  sampleStrictMarginProgram.existsUnique_inTranscriptCell x
+
+example (U : Finset (Fin 1)) (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.inTranscriptCell x z ↔
+      ∀ i : Fin 2,
+        sampleStrictMarginProgram.rightDemand U z x i ≤
+          sampleStrictMarginProgram.leftSupply U z x i :=
+  sampleStrictMarginProgram.inTranscriptCell_iff_dominance U x z
+
+example (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.ilpValid (fun _ => 1) x z ↔ z = sampleStrictMarginProgram.eval x :=
+  sampleStrictMarginProgram.ilpValid_iff_eq_eval (sampleStrictMarginProgram_abs_score_le_one x z)
+
+example (fixed : Finset (Fin 2)) (val : Fin 2 → Bool) (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.IsSinkOnFace fixed val x z ↔
+      z = sampleStrictMarginProgram.faceEval fixed val x :=
+  sampleStrictMarginProgram.isSinkOnFace_iff_eq_faceEval fixed val x z
+
+example (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.IsSinkOnFace ∅ (fun _ => false) x z ↔
+      z = sampleStrictMarginProgram.eval x :=
+  sampleStrictMarginProgram.isSink_iff_eq_eval x z
+
+example (fixed : Finset (Fin 2)) (val : Fin 2 → Bool) (x : Fin 1 → Bool) (z : Fin 2 → Bool) :
+    sampleStrictMarginProgram.sweep fixed val x z 2 =
+      sampleStrictMarginProgram.faceEval fixed val x :=
+  sampleStrictMarginProgram.sweep_eq_faceEval fixed val x z
+
+example (i : Fin 2) :
+    sampleStrictMarginProgram.priority i ≤ (2 + 1) ^ (2 - 1 - i.val) := by
+  refine sampleStrictMarginProgram.priority_le_pow (by norm_num) ?_ i
+  intro j k hkj
+  fin_cases j <;> fin_cases k <;> simp [sampleStrictMarginProgram]
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.inTranscriptCell_iff_eq_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.inTranscriptCell_iff_eq_eval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_inTranscriptCell' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.existsUnique_inTranscriptCell
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.sum_inTranscriptCell_ite' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.sum_inTranscriptCell_ite
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.inTranscriptCell_iff_dominance' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.inTranscriptCell_iff_dominance
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.ilpValid_iff_eq_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.ilpValid_iff_eq_eval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_ilpValid' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.existsUnique_ilpValid
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.priority_le_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.priority_le_pow
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.energy_update_true_sub_false' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.energy_update_true_sub_false
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.isSinkOnFace_iff_eq_faceEval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.isSinkOnFace_iff_eq_faceEval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.existsUnique_isSinkOnFace' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.existsUnique_isSinkOnFace
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.isSink_iff_eq_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.isSink_iff_eq_eval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.sweep_eq_faceEval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.sweep_eq_faceEval
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.StrictMarginProgram.energy_sweep_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms StrictMarginProgram.energy_sweep_le
 
 /--
 info: 'Cslib.ChangesAtMost.comp_antitone' depends on axioms: [propext, Classical.choice, Quot.sound]
