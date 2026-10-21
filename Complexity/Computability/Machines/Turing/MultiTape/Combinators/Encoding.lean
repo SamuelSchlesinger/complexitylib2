@@ -42,6 +42,9 @@ capabilities.
 
 ## Main results
 
+* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.of_enc_eq`: reuse identical encoded outputs
+  with the same machine and exact time and space bounds.
+
 * `Turing.MultiTapeTM.ComputableTidilyInLinearTimeAndSpace.comp`, `.ite`, `.append`, `.pair`:
   closure properties of linear time and space.
 * `Turing.MultiTapeTM.ComputableTidilyInLinearTimeAndSpace.const`: constant functions.
@@ -68,6 +71,21 @@ in time and in space. -/
     (encIn : α ↪ List Bool) (encOut : β ↪ List Bool) : Prop :=
   ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut (fun a => c * ((encIn a).length + 1))
     (fun a => c * ((encIn a).length + 1))
+
+-- upstream: candidate
+-- vendored: local output-word transport rule; not part of the copied revision.
+/-- Reuse the same machine when the new function emits the same encoded output word.
+The time and space bounds are unchanged; no encoding conversion is performed. -/
+public theorem ComputableTidilyInTimeAndSpace.of_enc_eq
+    {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+    {encOut : γ ↪ List Bool} {f : α → β} {g : α → γ} {t s : α → ℕ}
+    (hf : ComputableTidilyInTimeAndSpace f encIn encMid t s)
+    (h : ∀ a, encOut (g a) = encMid (f a)) :
+    ComputableTidilyInTimeAndSpace g encIn encOut t s :=
+  let ⟨k, State, hfinite, tm, htm⟩ := hf
+  ⟨k, State, hfinite, tm, fun a => h a ▸ htm a⟩
+
+-- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
 /-! ### Closure properties of linear time and space -/
 
