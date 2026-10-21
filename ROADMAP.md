@@ -708,7 +708,16 @@ semantic Hoare rules, module substitution and hidden-state potentials compose wi
 a backend. The [two-stack queue](Complexity/Algorithms/Lean/Queue.lean) and
 [reset-and-replay timeline editing](Complexity/Algorithms/Lean/Retroactive.lean) are
 checked constructions, with explicit primitive-cost assumptions; their pure client controllers
-are not compiled into Word-RAM programs.
+do not yet have total Word-RAM time certificates.
+
+[Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
+admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
+rules retain answer-dependent costs; separate method budgets transport contracts through
+successive semantic modules and then to additive native execution measures. The `stateful`
+tactic uses local contracts and structural rules, with intermediate assertions and implementation
+choices supplied explicitly. A two-layer adaptive counter example checks both execution branches
+and rejects an insufficient budget. This is the first #274 milestone: integration with `polytime`
+certificates for client controllers, pure computations and calling conventions remains open.
 
 The [fixed-program bridge](Complexity/Computability/WordRAM/Dynamic.lean) has concrete bounded
 [stack](Complexity/Algorithms/WordRAM/Stack.lean) and
@@ -719,7 +728,8 @@ frame rules. Prefix sums use a balanced aggregation tree for a power-of-two numb
 not a Fenwick layout. Machine costs exclude initial representation construction and external argument
 encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
 
-Outstanding: charged initialization and caller/linking compilation; a concrete shared-heap queue
+Outstanding: charged initialization and compositional machine-resource certificates for callers;
+a concrete shared-heap queue
 using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
 doubling-array amortization, richer ownership and recursive procedures; independent model
 realizations for cell probes, caches and randomness; and present/historical queries for the

@@ -1,5 +1,40 @@
 # Theorem-index review
 
+## 2026-10-21: Client resource contracts through interface refinements (#274)
+
+Published source revision: `5d9eefc4f20726054a71df3539c2471f1c18712c`.
+Its tree `61377bf7b2d7e0210250df65a78d50b604b8079b` exactly matches the locally validated
+source `e4539513d61a349a849792061f2ef0fcf397aad2`; only commit metadata changed during publication.
+Worker `worker-refinement-20261021`, assisted by OpenAI Codex, extends the existing Stateful
+entry with client operation-cost contracts, initial-state-dependent budgets, adaptive sequencing,
+method-budget composition, and transport to native execution evidence. The prose explicitly
+requires a represented initial state satisfying the precondition. Existence of a finite execution
+and bounds on every supplied finite execution remain distinct from demonic termination.
+Pure controller computation, argument delivery, decoding and integration with `polytime`
+machine certificates remain outside this milestone. No whole-machine runtime claim is added.
+
+Independent source correctness review by `/root/ordered_fagin_recovery` approved the core and
+adaptive example without findings. Independent API/tactic review by `/root/recovery_integration`
+approved the core, four structural Aesop rules, final named axiom guards and a parametric
+state-dependent cost example. The latter review also approved the changed index, roadmap and
+upstream prose after making the represented-initial-state premise explicit. Reviewed core hash:
+`5cc1a1b0bfd222877227dbf7d38fd403c332540b78f999ab03c2af7608866833`;
+final test hash: `c18a26b2fb3f1fc1a6f9c5cec97284e2996b20cd3e4ac6016d4a4c4e0ceccc9a`.
+The source commit matches these reviewed files. No author reviewed their own change.
+
+Validation: complete actual-file MCP diagnostics and all six strict local gates passed in
+session 38388 before the source commit. Tests exercise costs seven and two on distinct adaptive
+branches, reject budget six, transport through two implementation layers, preserve hidden spare
+storage in concrete executions, and charge the second operation at its updated state. Named
+axiom guards and the global audit pass. Three new declaration links pin exact source lines.
+Independent reviewer `/root/recovery_integration` approved the final local page 81 rendering
+and all three PDF URI annotations against the committed declarations at lines 147, 164 and 108.
+Final repinned PDF SHA256: `a3965808f84ed5b5f42d98f4a55f0c00b0fc898f8c7d6127db8c8f3d7ef6dafc`.
+The reviewer repeated page/annotation checks after publication and verified the remote source
+blob and all declaration lines against the local source. CI artifact provenance and coordinator
+review remain required before integration. AI reviews do not imply human editorial approval or a formal proof of prose equivalence.
+
+
 ## Canonical full-tuple ordered interpretation transducers (#137), 20 October 2026
 
 Reviewed Lean revision: `bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60` (prerequisite shared output commit `97622143391f6777b14b832420787b5a79d7109d`).

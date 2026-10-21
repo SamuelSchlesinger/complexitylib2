@@ -183,13 +183,29 @@ Separately, natural-number additive weights on native execution evidence and nat
 potential inequalities
 telescope along answer-dependent clients. Potentials may depend on hidden representation states;
 bounds retain both initial and final credit. These results reuse Quang Dao's upstream
-\lean{PFunctor.FreeM}; arbitrary pure Lean controller computation is uncharged. They do not
-constitute a compiler or a general peak-space or randomized-cost calculus.
+\lean{PFunctor.FreeM}; arbitrary pure Lean controller computation is uncharged. General
+peak-space and randomized-cost contracts remain outside this calculus.
+Client resource contracts additionally combine admissibility, a final-state postcondition and
+an initial-state-dependent budget $B(s)$ on the sum of operation charges. Sequential composition
+evaluates the continuation budget at the observed answer and reached state. If every lower method
+cost is bounded by the corresponding upper operation charge in every related admissible state,
+the entire linked adaptive client's cost is bounded by the upper client's cost. These method
+certificates compose through existentially hidden intermediate states. Transport to a lower
+initial-state budget requires that it dominate $B(s)$ for every represented upper prestate.
+From a native initial state representing an abstract state satisfying the precondition,
+a native realization and per-operation native-weight bounds give a finite native execution
+satisfying the postcondition and budget, and bound every supplied finite execution from that
+initial state. The \texttt{stateful} tactic searches local contracts and pure/call rules;
+sequencing assertions and implementation choices are explicit proof inputs. This does not yet
+certify total controller time via \texttt{polytime}, argument delivery or result decoding.
 \citep[Chapter 17]{CLRS2009}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Composition.lean}{66}{Cslib.Stateful.Module.comp}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Module.lean}{62}{Cslib.Stateful.Module.realize}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Resource.lean}{86}{Cslib.Stateful.Module.amortized_client}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Foundations/Semantics/Stateful/Hoare.lean}{87}{Cslib.Stateful.Spec.Hoare.link}
+\declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{147}{Cslib.Stateful.Module.ChargeBound.comp}
+\declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{164}{Cslib.Stateful.Spec.CostHoare.link}
+\declat{5d9eefc4f20726054a71df3539c2471f1c18712c}{Complexity/Foundations/Semantics/Stateful/CostHoare.lean}{108}{Cslib.Stateful.Spec.CostHoare.run}
 \end{result}
 
 \begin{result}
