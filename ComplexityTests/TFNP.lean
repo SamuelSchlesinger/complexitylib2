@@ -5,10 +5,12 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.TFNP.SearchToDecision
+import Complexity.Computability.Complexity.Classes.TFNP.Subclasses
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
-/-! Concrete clients for `FNP`, `FPSearch`, `TFNP`, disjoint sums and search reductions. -/
+/-! Concrete clients for `FNP`, `FPSearch`, `TFNP`, `PLS`, `PPP`, `PPAD`, `PPA`, disjoint sums,
+and search reductions. -/
 
 namespace ComplexityTests.TFNP
 
@@ -140,6 +142,59 @@ example : SAT.searchRel ∈ FPSearch encCNF ↔ SAT ∈ P encCNF := SAT.searchRe
 example : (∀ {α : Type} (enc : α ↪ List Bool), FNP enc ⊆ FPSearch enc) ↔ SAT ∈ P encCNF :=
   FNP_subset_FPSearch_iff_SAT_mem_P
 
+/-! ### `TFNP` subclasses (`PLS`, `PPP`, `PPAD`, `PPA`) and circuit problems -/
+
+example : LocalOpt ∈ PLS encLocalOpt := LocalOpt_mem_PLS
+example : Pigeon ∈ PPP encPigeon := Pigeon_mem_PPP
+example : EndOfLine ∈ PPAD encEndOfLine := EndOfLine_mem_PPAD
+example : Leaf ∈ PPA encLeaf := Leaf_mem_PPA
+
+example : LocalOpt ∈ TFNP encLocalOpt := LocalOpt_mem_TFNP
+example : Pigeon ∈ TFNP encPigeon := Pigeon_mem_TFNP
+example : EndOfLine ∈ TFNP encEndOfLine := EndOfLine_mem_TFNP
+example : Leaf ∈ TFNP encLeaf := Leaf_mem_TFNP
+
+example : EndOfLine ∈ PPP encEndOfLine := EndOfLine_mem_PPP
+example : EndOfLine ∈ PPA encEndOfLine := EndOfLine_mem_PPA
+
+/-- Concrete 1-bit wire circuit code `x ↦ x` and negation circuit code `x ↦ ¬x`. -/
+private def idCode1 : CircuitCode := ([], [0])
+private def notCode1 : CircuitCode := ([(.not, [0])], [1])
+
+/-- `[false]` is a local optimum of `(1, idCode1, idCode1)`. -/
+example : LocalOpt (1, idCode1, idCode1) [false] :=
+  ⟨rfl, le_rfl⟩
+
+/-- `[false, true]` is a `Pigeon` solution for the constant-zero circuit `(1, ([], []))`. -/
+example : Pigeon (1, ([], [])) [false, true] :=
+  ⟨rfl, .inl rfl⟩
+
+/-- `[true]` is the end of the line for `(1, idCode1, notCode1)`, where `0` points to `1` and `1`
+points back to `0`. -/
+example : EndOfLine (1, idCode1, notCode1) [true] :=
+  ⟨rfl, rfl⟩
+
+/-- `[true]` is the matching leaf of `0` in `(1, notCode1, idCode1)`. -/
+example : Leaf (1, notCode1, idCode1) [true] :=
+  ⟨rfl, rfl⟩
+
+/-- Every total polynomial-time search problem reduces to `EndOfLine` and therefore belongs to
+`PLS`, `PPP`, `PPAD`, and `PPA`. -/
+private theorem emptyRel_searchReducible_EndOfLine :
+    SearchReducible encBits encEndOfLine emptyRel EndOfLine :=
+  .of_isTotalSearch isTotalSearch_EndOfLine
+    (ComputableTidilyInPolyTime.const (0, ([], []), ([], [])))
+    (ComputableTidilyInPolyTime.const []) fun _ _ _ => rfl
+
+example : emptyRel ∈ PPAD encBits :=
+  emptyRel_searchReducible_EndOfLine.mem_PPAD emptyRel_mem_FNP EndOfLine_mem_PPAD
+
+example : emptyRel ∈ PPP encBits :=
+  PPAD_subset_PPP (emptyRel_searchReducible_EndOfLine.mem_PPAD emptyRel_mem_FNP EndOfLine_mem_PPAD)
+
+example : emptyRel ∈ PPA encBits :=
+  PPAD_subset_PPA (emptyRel_searchReducible_EndOfLine.mem_PPAD emptyRel_mem_FNP EndOfLine_mem_PPAD)
+
 /-! ### Axiom guards -/
 
 /--
@@ -183,5 +238,75 @@ info: 'Cslib.Complexity.SAT.searchRel_mem_FPSearch_iff' depends on axioms: [prop
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.SAT.searchRel_mem_FPSearch_iff
+
+/--
+info: 'Cslib.Complexity.PLS_subset_TFNP' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PLS_subset_TFNP
+
+/--
+info: 'Cslib.Complexity.PPP_subset_TFNP' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PPP_subset_TFNP
+
+/--
+info: 'Cslib.Complexity.PPAD_subset_TFNP' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PPAD_subset_TFNP
+
+/--
+info: 'Cslib.Complexity.PPA_subset_TFNP' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PPA_subset_TFNP
+
+/--
+info: 'Cslib.Complexity.PPAD_subset_PPP' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PPAD_subset_PPP
+
+/--
+info: 'Cslib.Complexity.PPAD_subset_PPA' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.PPAD_subset_PPA
+
+/--
+info: 'Cslib.Complexity.LocalOpt_mem_PLS' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.LocalOpt_mem_PLS
+
+/--
+info: 'Cslib.Complexity.Pigeon_mem_PPP' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Pigeon_mem_PPP
+
+/--
+info: 'Cslib.Complexity.EndOfLine_mem_PPAD' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.EndOfLine_mem_PPAD
+
+/--
+info: 'Cslib.Complexity.Leaf_mem_PPA' depends on axioms: [propext, Classical.choice,
+  Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.Leaf_mem_PPA
 
 end ComplexityTests.TFNP

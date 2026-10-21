@@ -1,0 +1,877 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Circuit.Boolean.EvaluationTime
+public import Complexity.Computability.Complexity.Classes.TFNP.Subclasses.Principles
+public import Complexity.Foundations.Data.BitString.List.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Algebra.Polynomial.BigOperators
+import Mathlib.Data.List.GetD
+
+/-!
+# Total search subclasses: `PLS`, `PPP`, `PPAD` and `PPA`
+
+The subclasses `PLS` [Johnson, Papadimitriou and Yannakakis][JohnsonPapadimitriouYannakakis1988]
+and `PPP`, `PPAD`, `PPA` [Papadimitriou][Papadimitriou1994PPAD], [Beame, Cook, Edmonds,
+Impagliazzo and Pitassi][BeameEtAl1998] classify total `FNP` search problems by the finite
+combinatorial principle that witnesses totality on the hypercube `{0, 1} ^ (n a)`:
+
+* `Cslib.Complexity.PLS`: problems search-reducible to finding a local minimum of a polynomial-time
+  cost function `C : α × List Bool → ℕ` with respect to a polynomial-time neighbor function
+  `N : α × List Bool → List Bool` (`localOptRel`).
+* `Cslib.Complexity.PPP`: problems search-reducible to finding a preimage of `0 ^ (n a)` or a
+  collision of a polynomial-time map `F : α × List Bool → List Bool` (`pigeonRel`).
+* `Cslib.Complexity.PPAD`: problems search-reducible to finding an unbalanced vertex other than
+  the source `0 ^ (n a)` (or showing `0 ^ (n a)` itself lacks an active outgoing edge) in a
+  directed graph of in-degree and out-degree at most `1` given by polynomial-time predecessor and
+  successor maps `P, S : α × List Bool → List Bool` (`endOfLineRel`).
+* `Cslib.Complexity.PPA`: problems search-reducible to finding an odd-degree vertex other than
+  `0 ^ (n a)` (or showing `0 ^ (n a)` has even degree) in an undirected graph of maximum degree `2`
+  given by two polynomial-time neighbor maps `N₁, N₂ : α × List Bool → List Bool` (`leafRel`).
+
+## Uniform polynomial-time families and canonical circuit problems
+
+Each class is defined via *uniform polynomial-time families* on the instance type `α`: the vertex
+bit-length `n : α → ℕ` is computable tidily in polynomial time in unary (`encUnary`), and the
+neighbor, successor, predecessor or cost maps are computable tidily in polynomial time on pairs
+`encPair enc encBits` (with costs in binary `encNat`). By pulling a family back along the instance
+map of a search reduction, each class is closed under `SearchReducible` across arbitrary encoded
+instance types (`SearchReducible.mem_PLS`, `.mem_PPP`, `.mem_PPAD`, `.mem_PPA`).
+
+The canonical circuit-presented problems `LocalOpt`, `Pigeon`, `EndOfLine` and `Leaf`, whose
+instances supply `n` in unary together with raw De Morgan circuit codes
+(`Cslib.Circuits.Boolean.encCode`) evaluated via `evalCode`
+(`Complexity.Computability.Circuit.Boolean.EvaluationTime`), are instances of these uniform
+families (`LocalOpt_mem_PLS`, `Pigeon_mem_PPP`, `EndOfLine_mem_PPAD`, `Leaf_mem_PPA`) and
+therefore belong to `TFNP`. Conversely, showing that every uniform polynomial-time family reduces
+to its circuit-presented problem (establishing `SearchComplete` for `LocalOpt`, `Pigeon`,
+`EndOfLine` and `Leaf`) requires compiling polynomial-time family evaluations into circuit codes
+and is recorded as outstanding work in `ROADMAP.md`.
+
+## Main definitions
+
+* `Cslib.Complexity.PLS`, `Cslib.Complexity.PPP`, `Cslib.Complexity.PPAD`, `Cslib.Complexity.PPA`.
+* `Cslib.Complexity.padBits`, `Cslib.Complexity.evalCircuitOutputs`,
+  `Cslib.Complexity.evalCircuitCode`: circuit-code evaluation normalized to `n`-bit strings.
+* `Cslib.Complexity.CircuitCode`, `Cslib.Complexity.encPigeon`, `Cslib.Complexity.encLocalOpt`,
+  `Cslib.Complexity.encEndOfLine`, `Cslib.Complexity.encLeaf`.
+* `Cslib.Complexity.LocalOpt`, `Cslib.Complexity.Pigeon`, `Cslib.Complexity.EndOfLine`,
+  `Cslib.Complexity.Leaf`: the canonical circuit-presented total search problems.
+
+## Main results
+
+* `Cslib.Complexity.PLS_subset_TFNP`, `Cslib.Complexity.PPP_subset_TFNP`,
+  `Cslib.Complexity.PPAD_subset_TFNP`, `Cslib.Complexity.PPA_subset_TFNP`.
+* `Cslib.Complexity.PPAD_subset_PPP`, `Cslib.Complexity.PPAD_subset_PPA`: `PPAD` is contained in
+  both `PPP` and `PPA` [Papadimitriou1994PPAD], [BeameEtAl1998].
+* `Cslib.Complexity.LocalOpt_mem_PLS`, `Cslib.Complexity.Pigeon_mem_PPP`,
+  `Cslib.Complexity.EndOfLine_mem_PPAD`, `Cslib.Complexity.Leaf_mem_PPA`.
+* `Cslib.Complexity.LocalOpt_mem_TFNP`, `Cslib.Complexity.Pigeon_mem_TFNP`,
+  `Cslib.Complexity.EndOfLine_mem_TFNP`, `Cslib.Complexity.Leaf_mem_TFNP`.
+
+## References
+
+* [D. S. Johnson, C. H. Papadimitriou, M. Yannakakis, *How easy is local
+  search?*][JohnsonPapadimitriouYannakakis1988]
+* [C. H. Papadimitriou, *On the complexity of the parity argument and other inefficient proofs of
+  existence*][Papadimitriou1994PPAD]
+* [P. Beame, S. Cook, J. Edmonds, R. Impagliazzo, T. Pitassi, *The relative complexity of NP
+  search problems*][BeameEtAl1998]
+-/
+
+@[expose] public section
+
+namespace Cslib.Complexity
+
+open Cslib.BitString Cslib.Circuits Cslib.Circuits.Boolean
+open Turing.MultiTapeTM ComputableTidilyInPolyTime
+
+variable {α β : Type}
+
+/-! ### Polynomial-time bit-string and binary-number primitives -/
+
+/-- `zeroVertex n = List.replicate n false` is computable in polynomial time from `n` in unary. -/
+theorem computableTidilyInPolyTime_zeroVertex :
+    ComputableTidilyInPolyTime zeroVertex encUnary encBits := by
+  have heq (n : ℕ) : (List.replicate n true).foldl (fun acc _ => false :: acc) [] =
+      zeroVertex n := by
+    induction n with
+    | zero => rfl
+    | succ n ih =>
+      rw [List.replicate_succ', List.foldl_append, List.foldl_cons, List.foldl_nil, ih]
+      rfl
+  have h := foldl_of_bounded_growth (encA := encBool) (encL := encBits) (encB := encBits)
+    (list := fun n => List.replicate n true) (init := fun _ => [])
+    (step := fun acc _ => false :: acc)
+    (of_eq (encIn := encUnary) (encMid := encBits) fun _ => rfl) (const [])
+    (bitsCons (const false) (fst encBits encBool)) (growth := 1) (fun _ _ => by simp)
+  simpa only [heq] using h
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_zeroVertex_comp {encIn : α ↪ List Bool} {n : α → ℕ}
+    (hn : ComputableTidilyInPolyTime n encIn encUnary) :
+    ComputableTidilyInPolyTime (fun a => zeroVertex (n a)) encIn encBits :=
+  computableTidilyInPolyTime_zeroVertex.comp hn
+
+/-- One step of converting a most-significant-first bit string to `Nat.bits` (`encNat`): strip
+leading `false` bits and prepend significant bits. -/
+private def binaryBitsStep (acc : List Bool) (bit : Bool) : List Bool :=
+  if acc.isEmpty && !bit then [] else bit :: acc
+
+private theorem foldl_binaryBitsStep (w : List Bool) :
+    w.foldl binaryBitsStep [] = (binaryValue w).bits := by
+  induction w using List.reverseRecOn with
+  | nil => rfl
+  | append_singleton w b ih =>
+    rw [List.foldl_append, List.foldl_cons, List.foldl_nil, ih, binaryValue_snoc]
+    rcases Nat.eq_zero_or_pos (binaryValue w) with h0 | hpos
+    · rw [h0]
+      cases b <;> rfl
+    · have hne : (binaryValue w).bits ≠ [] := by
+        intro h
+        have hbv := binaryValue_reverse_bits (binaryValue w)
+        rw [h] at hbv
+        change 0 = binaryValue w at hbv
+        omega
+      have hemp : (binaryValue w).bits.isEmpty = false := List.isEmpty_eq_false_iff.2 hne
+      have hbit : 2 * binaryValue w + b.toNat = Nat.bit b (binaryValue w) := by
+        cases b <;> simp [Nat.bit_val]
+      rw [hbit, Nat.bits_append_bit _ _ (by omega)]
+      simp [binaryBitsStep, hemp]
+
+/-- Decoding a most-significant-first bit string to its binary natural number (`encNat`) is
+polynomial-time. -/
+theorem computableTidilyInPolyTime_binaryValue :
+    ComputableTidilyInPolyTime binaryValue encBits encNat := by
+  have hstep : ComputableTidilyInPolyTime
+      (fun p : List Bool × Bool => binaryBitsStep p.1 p.2)
+      (encPair encBits encBool) encBits := by
+    unfold binaryBitsStep
+    fun_prop
+  have hfold := foldl_of_bounded_growth (encA := encBool) (encL := encBits) (encB := encBits)
+    id' (const []) hstep (growth := 1) fun acc bit => by
+      unfold binaryBitsStep
+      split_ifs <;> simp
+  exact hfold.of_enc_eq fun w => (foldl_binaryBitsStep w).symm
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_binaryValue_comp {encIn : α ↪ List Bool} {w : α → List Bool}
+    (hw : ComputableTidilyInPolyTime w encIn encBits) :
+    ComputableTidilyInPolyTime (fun a => binaryValue (w a)) encIn encNat :=
+  computableTidilyInPolyTime_binaryValue.comp hw
+
+/-- One step of comparing two equal-length most-significant-first bit strings `(u, v)`. -/
+private def cmpBitsStep (s : List Bool × Bool × Bool) (b : Bool) : List Bool × Bool × Bool :=
+  let c := s.1.headD false
+  (s.1.tail, s.2.1 && (b == c), s.2.2 && (!s.2.1 || !b || c))
+
+private theorem foldl_cmpBitsStep_fst (u v : List Bool) :
+    (u.foldl cmpBitsStep (v, true, true)).1 = v.drop u.length := by
+  induction u using List.reverseRecOn with
+  | nil => rfl
+  | append_singleton u b ih =>
+    rw [List.foldl_append, List.foldl_cons, List.foldl_nil, cmpBitsStep, ih,
+      List.length_append, List.length_singleton, List.tail_drop]
+
+private theorem decide_two_mul_add_eq (a b : ℕ) (x y : Bool) :
+    (decide (a = b) && (x == y)) = decide (2 * a + x.toNat = 2 * b + y.toNat) := by
+  cases x <;> cases y <;>
+    simp [Bool.toNat, show (2 * a = 2 * b) ↔ a = b by omega,
+      show ¬(2 * a = 2 * b + 1) by omega, show ¬(2 * a + 1 = 2 * b) by omega]
+
+private theorem decide_two_mul_add_le (a b : ℕ) (x y : Bool) :
+    (decide (a ≤ b) && (!decide (a = b) || !x || y)) =
+      decide (2 * a + x.toNat ≤ 2 * b + y.toNat) := by
+  by_cases heq : a = b
+  · subst heq
+    cases x <;> cases y <;> simp
+  · by_cases hle : a ≤ b
+    · cases x <;> cases y <;>
+        simp [Bool.toNat, heq, hle, show 2 * a ≤ 2 * b by omega,
+          show 2 * a ≤ 2 * b + 1 by omega, show 2 * a + 1 ≤ 2 * b by omega,
+          show 2 * a + 1 ≤ 2 * b + 1 by omega]
+    · cases x <;> cases y <;>
+        simp [Bool.toNat, heq, hle, show ¬(2 * a ≤ 2 * b) by omega,
+          show ¬(2 * a ≤ 2 * b + 1) by omega, show ¬(2 * a + 1 ≤ 2 * b) by omega,
+          show ¬(2 * a + 1 ≤ 2 * b + 1) by omega]
+
+private theorem take_add_one_eq_snoc_headD_drop (v : List Bool) {i : ℕ} (hi : i < v.length) :
+    v.take (i + 1) = v.take i ++ [(v.drop i).headD false] := by
+  rw [List.take_add_one, List.getElem?_eq_getElem hi, Option.toList_some]
+  congr 2
+  rw [List.headD_eq_head?_getD, List.head?_drop, List.getElem?_eq_getElem hi, Option.getD_some]
+
+private theorem foldl_cmpBitsStep_snd (u v : List Bool) (huv : u.length ≤ v.length) :
+    (u.foldl cmpBitsStep (v, true, true)).2 =
+      (decide (binaryValue u = binaryValue (v.take u.length)),
+        decide (binaryValue u ≤ binaryValue (v.take u.length))) := by
+  induction u using List.reverseRecOn with
+  | nil => simp [binaryValue]
+  | append_singleton u b ih =>
+    simp only [List.length_append, List.length_singleton] at huv
+    obtain ⟨ih₁, ih₂⟩ := Prod.ext_iff.1 (ih (by omega))
+    dsimp only at ih₁ ih₂
+    rw [List.foldl_append, List.foldl_cons, List.foldl_nil, cmpBitsStep,
+      foldl_cmpBitsStep_fst, ih₁, ih₂, decide_two_mul_add_eq, decide_two_mul_add_le,
+      ← binaryValue_snoc, List.length_append, List.length_singleton,
+      take_add_one_eq_snoc_headD_drop v (by omega)]
+    simp only [binaryValue_snoc]
+
+private abbrev encCmpAcc : (List Bool × Bool × Bool) ↪ List Bool :=
+  encPair encBits (encPair encBool encBool)
+
+/-- Comparing the binary values of two bit strings is polynomial-time. -/
+theorem computableTidilyInPolyTime_binaryValue_le :
+    ComputableTidilyInPolyTime
+      (fun p : List Bool × List Bool => decide (binaryValue p.1 ≤ binaryValue p.2))
+      (encPair encBits encBits) encBool := by
+  have hpad1 : ComputableTidilyInPolyTime
+      (fun p : List Bool × List Bool => zeroVertex (p.2.length - p.1.length) ++ p.1)
+      (encPair encBits encBits) encBits := by fun_prop
+  have hpad2 : ComputableTidilyInPolyTime
+      (fun p : List Bool × List Bool => zeroVertex (p.1.length - p.2.length) ++ p.2)
+      (encPair encBits encBits) encBits := by fun_prop
+  have hstep : ComputableTidilyInPolyTime
+      (fun q : (List Bool × Bool × Bool) × Bool => cmpBitsStep q.1 q.2)
+      (encPair encCmpAcc encBool) encCmpAcc := by
+    have hq := fst encCmpAcc encBool
+    have hrest := hq.fst'
+    have hflags := hq.snd'
+    have hb := snd encCmpAcc encBool
+    have hc : ComputableTidilyInPolyTime
+        (fun q : (List Bool × Bool × Bool) × Bool => q.1.1.headD false)
+        (encPair encCmpAcc encBool) encBool :=
+      (headD (encA := encBool) false).comp hrest
+    have hbool : ComputableTidilyInPolyTime
+        (fun t : (Bool × Bool) × (Bool × Bool) =>
+          (t.1.1 && (t.2.1 == t.2.2), t.1.2 && (!t.1.1 || !t.2.1 || t.2.2)))
+        (encPair (encPair encBool encBool) (encPair encBool encBool))
+        (encPair encBool encBool) := of_finite _
+    exact (bitsTail.comp hrest).prod (hbool.comp (hflags.prod (hb.prod hc)))
+  have hfold := foldl' (encA := encBool) (encL := encBits) (encB := encCmpAcc)
+    hpad1 (hpad2.prod (const (true, true))) hstep
+    (B := fun p =>
+      (encCmpAcc (zeroVertex (p.1.length - p.2.length) ++ p.2, true, true)).length)
+    (hpad2.prod (const (true, true))).polyBounded_length
+    (fun p i _ => by
+      let pad1 := zeroVertex (p.2.length - p.1.length) ++ p.1
+      let pad2 := zeroVertex (p.1.length - p.2.length) ++ p.2
+      have hfst := foldl_cmpBitsStep_fst (pad1.take i) pad2
+      let s := (pad1.take i).foldl cmpBitsStep (pad2, true, true)
+      have hs : s = (pad2.drop (pad1.take i).length, s.2.1, s.2.2) :=
+        Prod.ext hfst rfl
+      change (encCmpAcc s).length ≤ _
+      rw [hs]
+      simp only [pad2, encCmpAcc, encPair_apply, encBits_apply, encBool_apply, List.length_append,
+        length_frame, List.length_drop, List.length_singleton]
+      omega)
+  have hres : ComputableTidilyInPolyTime
+      (fun p : List Bool × List Bool =>
+        ((((zeroVertex (p.2.length - p.1.length) ++ p.1).foldl cmpBitsStep
+          (zeroVertex (p.1.length - p.2.length) ++ p.2, true, true)).2).2))
+      (encPair encBits encBits) encBool := hfold.snd'.snd'
+  refine hres.of_enc_eq fun p => ?_
+  let pad1 := zeroVertex (p.2.length - p.1.length) ++ p.1
+  let pad2 := zeroVertex (p.1.length - p.2.length) ++ p.2
+  have hlen : pad1.length = pad2.length := by
+    simp only [pad1, pad2, List.length_append, length_zeroVertex]
+    omega
+  have hsnd := congrArg Prod.snd (foldl_cmpBitsStep_snd pad1 pad2 hlen.le)
+  rw [hlen, List.take_length] at hsnd
+  simp only [pad1, pad2, zeroVertex, binaryValue_replicate_false_append] at hsnd
+  rw [← hsnd]
+  rfl
+
+/-- Comparing two binary natural numbers (`encNat`) is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_nat_le :
+    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))
+      (encPair encNat encNat) encBool := by
+  have hrev : ComputableTidilyInPolyTime
+      (fun p : ℕ × ℕ => ((encNat p.1).reverse, (encNat p.2).reverse))
+      (encPair encNat encNat) (encPair encBits encBits) := by fun_prop
+  simpa only [Function.comp_def, encNat_apply, binaryValue_reverse_bits] using
+    computableTidilyInPolyTime_binaryValue_le.comp hrev
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_nat_le' {encIn : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableTidilyInPolyTime left encIn encNat)
+    (hright : ComputableTidilyInPolyTime right encIn encNat) :
+    ComputableTidilyInPolyTime (fun a => decide (left a ≤ right a)) encIn encBool :=
+  computableTidilyInPolyTime_nat_le.comp (hleft.prod hright)
+
+/-! ### `FNP` and `TFNP` membership of the family relations -/
+
+/-- Every unary polynomial-time function is bounded by a polynomial in the encoded input length. -/
+private theorem exists_polynomial_le_of_unary {enc : α ↪ List Bool} {n : α → ℕ}
+    (hn : ComputableTidilyInPolyTime n enc encUnary) :
+    ∃ p : Polynomial ℕ, ∀ a, n a ≤ p.eval (enc a).length := by
+  obtain ⟨c, d, hle⟩ := hn.polyBounded.exists_le
+  refine ⟨Polynomial.C c * (Polynomial.X + 1) ^ d, fun a => ?_⟩
+  simpa using hle a
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_hasOut {enc : α ↪ List Bool} {n : α → ℕ}
+    {P S : α × List Bool → List Bool} (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
+    (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits) :
+    ComputableTidilyInPolyTime (fun x : α × List Bool => hasOut n P S x.1 x.2)
+      (encPair enc encBits) encBool := by
+  unfold hasOut
+  fun_prop
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_hasIn {enc : α ↪ List Bool} {n : α → ℕ}
+    {P S : α × List Bool → List Bool} (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
+    (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits) :
+    ComputableTidilyInPolyTime (fun x : α × List Bool => hasIn n P S x.1 x.2)
+      (encPair enc encBits) encBool := by
+  unfold hasIn
+  fun_prop
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_undirectedEdge {enc : α ↪ List Bool}
+    {N₁ N₂ : α × List Bool → List Bool}
+    (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
+    (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits)
+    {u v : α × List Bool → List Bool}
+    (hu : ComputableTidilyInPolyTime u (encPair enc encBits) encBits)
+    (hv : ComputableTidilyInPolyTime v (encPair enc encBits) encBits) :
+    ComputableTidilyInPolyTime (fun x : α × List Bool => undirectedEdge N₁ N₂ x.1 (u x) (v x))
+      (encPair enc encBits) encBool := by
+  unfold undirectedEdge
+  fun_prop
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_hasOddDegree {enc : α ↪ List Bool}
+    {N₁ N₂ : α × List Bool → List Bool}
+    (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
+    (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits) :
+    ComputableTidilyInPolyTime (fun x : α × List Bool => hasOddDegree N₁ N₂ x.1 x.2)
+      (encPair enc encBits) encBool := by
+  have hne : ComputableTidilyInPolyTime (fun p : Bool × Bool => p.1 != p.2)
+      (encPair encBool encBool) encBool := of_finite _
+  unfold hasOddDegree
+  exact hne.comp ((computableTidilyInPolyTime_undirectedEdge hN₁ hN₂ (snd _ _) hN₁).prod
+    (bool_and' (computableTidilyInPolyTime_undirectedEdge hN₁ hN₂ (snd _ _) hN₂) (by fun_prop)))
+
+/-- A polynomial-time local-search family defines an `FNP` relation. -/
+theorem localOptRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
+    {N : α × List Bool → List Bool} {C : α × List Bool → ℕ}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hN : ComputableTidilyInPolyTime N (encPair enc encBits) encBits)
+    (hC : ComputableTidilyInPolyTime C (encPair enc encBits) encNat) :
+    localOptRel n N C ∈ FNP enc := by
+  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  refine ⟨⟨p, fun a u h => h.1 ▸ hp a⟩,
+    fun x => decide (x.2.length = n x.1) && decide (C x ≤ C (x.1, N x)), ?_, fun a u => ?_⟩
+  · fun_prop
+  · simp [localOptRel]
+
+/-- A polynomial-time length-preserving local-search family defines a `TFNP` relation. -/
+theorem localOptRel_mem_TFNP {enc : α ↪ List Bool} {n : α → ℕ}
+    {N : α × List Bool → List Bool} {C : α × List Bool → ℕ}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hN : ComputableTidilyInPolyTime N (encPair enc encBits) encBits)
+    (hC : ComputableTidilyInPolyTime C (encPair enc encBits) encNat)
+    (hlen : ∀ a u, u.length = n a → (N (a, u)).length = n a) :
+    localOptRel n N C ∈ TFNP enc :=
+  ⟨localOptRel_mem_FNP hn hN hC, isTotalSearch_localOptRel hlen⟩
+
+/-- A polynomial-time pigeonhole family defines an `FNP` relation. -/
+theorem pigeonRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ} {F : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hF : ComputableTidilyInPolyTime F (encPair enc encBits) encBits) :
+    pigeonRel n F ∈ FNP enc := by
+  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  refine ⟨⟨2 * p, fun a w h => by
+      simp only [Polynomial.eval_mul, Polynomial.eval_ofNat]
+      have := hp a; have := h.1; omega⟩,
+    fun x => decide (x.2.length = 2 * n x.1) &&
+      (decide (F (x.1, x.2.take (n x.1)) = zeroVertex (n x.1)) ||
+        (decide (x.2.take (n x.1) ≠ x.2.drop (n x.1)) &&
+          decide (F (x.1, x.2.take (n x.1)) = F (x.1, x.2.drop (n x.1))))),
+    ?_, fun a w => ?_⟩
+  · have h2 : ComputableTidilyInPolyTime (fun x : α × List Bool => 2 * n x.1)
+        (encPair enc encBits) encUnary :=
+      unary_mul.comp ((const 2).prod (hn.comp (fst enc encBits)))
+    refine bool_and' (decide_eq' (length_bits.comp (snd enc encBits)) h2) ?_
+    fun_prop
+  · simp [pigeonRel]
+
+/-- A polynomial-time length-preserving pigeonhole family defines a `TFNP` relation. -/
+theorem pigeonRel_mem_TFNP {enc : α ↪ List Bool} {n : α → ℕ} {F : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hF : ComputableTidilyInPolyTime F (encPair enc encBits) encBits)
+    (hlen : ∀ a u, u.length = n a → (F (a, u)).length = n a) :
+    pigeonRel n F ∈ TFNP enc :=
+  ⟨pigeonRel_mem_FNP hn hF, isTotalSearch_pigeonRel hlen⟩
+
+/-- A polynomial-time directed end-of-line family defines an `FNP` relation. -/
+theorem endOfLineRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
+    {P S : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
+    (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits) :
+    endOfLineRel n P S ∈ FNP enc := by
+  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  refine ⟨⟨p, fun a u h => h.1 ▸ hp a⟩,
+    fun x => decide (x.2.length = n x.1) &&
+      (!hasOut n P S x.1 x.2 || (!hasIn n P S x.1 x.2 && decide (x.2 ≠ zeroVertex (n x.1)))),
+    ?_, fun a u => ?_⟩
+  · fun_prop
+  · simp [endOfLineRel]
+
+/-- A polynomial-time length-preserving directed end-of-line family defines a `TFNP` relation. -/
+theorem endOfLineRel_mem_TFNP {enc : α ↪ List Bool} {n : α → ℕ}
+    {P S : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
+    (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits)
+    (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
+    endOfLineRel n P S ∈ TFNP enc :=
+  ⟨endOfLineRel_mem_FNP hn hP hS, isTotalSearch_endOfLineRel hS_len⟩
+
+/-- A polynomial-time undirected parity family defines an `FNP` relation. -/
+theorem leafRel_mem_FNP {enc : α ↪ List Bool} {n : α → ℕ}
+    {N₁ N₂ : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
+    (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits) :
+    leafRel n N₁ N₂ ∈ FNP enc := by
+  obtain ⟨p, hp⟩ := exists_polynomial_le_of_unary hn
+  refine ⟨⟨p, fun a u h => h.1 ▸ hp a⟩,
+    fun x => decide (x.2.length = n x.1) &&
+      (hasOddDegree N₁ N₂ x.1 x.2 == decide (x.2 ≠ zeroVertex (n x.1))),
+    ?_, fun a u => ?_⟩
+  · fun_prop
+  · simp [leafRel]
+
+/-- A polynomial-time length-preserving undirected parity family defines a `TFNP` relation. -/
+theorem leafRel_mem_TFNP {enc : α ↪ List Bool} {n : α → ℕ}
+    {N₁ N₂ : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
+    (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits)
+    (hN₁_len : ∀ a u, u.length = n a → (N₁ (a, u)).length = n a)
+    (hN₂_len : ∀ a u, u.length = n a → (N₂ (a, u)).length = n a) :
+    leafRel n N₁ N₂ ∈ TFNP enc :=
+  ⟨leafRel_mem_FNP hn hN₁ hN₂, isTotalSearch_leafRel hN₁_len hN₂_len⟩
+
+/-! ### The subclasses `PLS`, `PPP`, `PPAD` and `PPA` -/
+
+/-- **Polynomial Local Search (`PLS`)** [Johnson, Papadimitriou and
+Yannakakis][JohnsonPapadimitriouYannakakis1988]: `FNP` search problems search-reducible to finding
+a local minimum of a uniform polynomial-time local-search family `localOptRel n N C`. -/
+def PLS (enc : α ↪ List Bool) : Set (α → List Bool → Prop) :=
+  {R | R ∈ FNP enc ∧ ∃ (n : α → ℕ) (N : α × List Bool → List Bool) (C : α × List Bool → ℕ),
+    ComputableTidilyInPolyTime n enc encUnary ∧
+    ComputableTidilyInPolyTime N (encPair enc encBits) encBits ∧
+    ComputableTidilyInPolyTime C (encPair enc encBits) encNat ∧
+    (∀ a u, u.length = n a → (N (a, u)).length = n a) ∧
+    SearchReducible enc enc R (localOptRel n N C)}
+
+/-- **Polynomial Pigeonhole Principle (`PPP`)** [Papadimitriou][Papadimitriou1994PPAD]: `FNP`
+search problems search-reducible to finding a preimage of `0 ^ (n a)` or a collision of a uniform
+polynomial-time pigeonhole family `pigeonRel n F`. -/
+def PPP (enc : α ↪ List Bool) : Set (α → List Bool → Prop) :=
+  {R | R ∈ FNP enc ∧ ∃ (n : α → ℕ) (F : α × List Bool → List Bool),
+    ComputableTidilyInPolyTime n enc encUnary ∧
+    ComputableTidilyInPolyTime F (encPair enc encBits) encBits ∧
+    (∀ a u, u.length = n a → (F (a, u)).length = n a) ∧
+    SearchReducible enc enc R (pigeonRel n F)}
+
+/-- **Polynomial Parity Argument on Directed graphs (`PPAD`)**
+[Papadimitriou][Papadimitriou1994PPAD]: `FNP` search problems search-reducible to finding an
+end-of-line vertex of a uniform polynomial-time directed path family `endOfLineRel n P S`. -/
+def PPAD (enc : α ↪ List Bool) : Set (α → List Bool → Prop) :=
+  {R | R ∈ FNP enc ∧ ∃ (n : α → ℕ) (P S : α × List Bool → List Bool),
+    ComputableTidilyInPolyTime n enc encUnary ∧
+    ComputableTidilyInPolyTime P (encPair enc encBits) encBits ∧
+    ComputableTidilyInPolyTime S (encPair enc encBits) encBits ∧
+    (∀ a u, u.length = n a → (P (a, u)).length = n a) ∧
+    (∀ a u, u.length = n a → (S (a, u)).length = n a) ∧
+    SearchReducible enc enc R (endOfLineRel n P S)}
+
+/-- **Polynomial Parity Argument (`PPA`)** [Papadimitriou][Papadimitriou1994PPAD]: `FNP` search
+problems search-reducible to finding a leaf of a uniform polynomial-time degree-`≤ 2` undirected
+graph family `leafRel n N₁ N₂`. -/
+def PPA (enc : α ↪ List Bool) : Set (α → List Bool → Prop) :=
+  {R | R ∈ FNP enc ∧ ∃ (n : α → ℕ) (N₁ N₂ : α × List Bool → List Bool),
+    ComputableTidilyInPolyTime n enc encUnary ∧
+    ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits ∧
+    ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits ∧
+    (∀ a u, u.length = n a → (N₁ (a, u)).length = n a) ∧
+    (∀ a u, u.length = n a → (N₂ (a, u)).length = n a) ∧
+    SearchReducible enc enc R (leafRel n N₁ N₂)}
+
+variable {enc : α ↪ List Bool} {encB : β ↪ List Bool} {R : α → List Bool → Prop}
+  {T : β → List Bool → Prop}
+
+/-- Every uniform polynomial-time local-search family is in `PLS`. -/
+theorem localOptRel_mem_PLS {n : α → ℕ} {N : α × List Bool → List Bool} {C : α × List Bool → ℕ}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hN : ComputableTidilyInPolyTime N (encPair enc encBits) encBits)
+    (hC : ComputableTidilyInPolyTime C (encPair enc encBits) encNat)
+    (hlen : ∀ a u, u.length = n a → (N (a, u)).length = n a) :
+    localOptRel n N C ∈ PLS enc :=
+  ⟨localOptRel_mem_FNP hn hN hC, n, N, C, hn, hN, hC, hlen, .refl _ _⟩
+
+/-- Every uniform polynomial-time pigeonhole family is in `PPP`. -/
+theorem pigeonRel_mem_PPP {n : α → ℕ} {F : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hF : ComputableTidilyInPolyTime F (encPair enc encBits) encBits)
+    (hlen : ∀ a u, u.length = n a → (F (a, u)).length = n a) :
+    pigeonRel n F ∈ PPP enc :=
+  ⟨pigeonRel_mem_FNP hn hF, n, F, hn, hF, hlen, .refl _ _⟩
+
+/-- Every uniform polynomial-time directed end-of-line family is in `PPAD`. -/
+theorem endOfLineRel_mem_PPAD {n : α → ℕ} {P S : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
+    (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits)
+    (hP_len : ∀ a u, u.length = n a → (P (a, u)).length = n a)
+    (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
+    endOfLineRel n P S ∈ PPAD enc :=
+  ⟨endOfLineRel_mem_FNP hn hP hS, n, P, S, hn, hP, hS, hP_len, hS_len, .refl _ _⟩
+
+/-- Every uniform polynomial-time undirected parity family is in `PPA`. -/
+theorem leafRel_mem_PPA {n : α → ℕ} {N₁ N₂ : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
+    (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits)
+    (hN₁_len : ∀ a u, u.length = n a → (N₁ (a, u)).length = n a)
+    (hN₂_len : ∀ a u, u.length = n a → (N₂ (a, u)).length = n a) :
+    leafRel n N₁ N₂ ∈ PPA enc :=
+  ⟨leafRel_mem_FNP hn hN₁ hN₂, n, N₁, N₂, hn, hN₁, hN₂, hN₁_len, hN₂_len, .refl _ _⟩
+
+/-! ### Closure under search reductions -/
+
+/-- `PLS` is closed under polynomial-time search reductions across arbitrary instance types. -/
+theorem SearchReducible.mem_PLS (h : SearchReducible enc encB R T) (hR : R ∈ FNP enc)
+    (hT : T ∈ PLS encB) : R ∈ PLS enc := by
+  obtain ⟨-, n, N, C, hn, hN, hC, hlen, hT_red⟩ := hT
+  obtain ⟨f, g, hf, hg, -, hsol⟩ := h.trans hT_red
+  refine ⟨hR, n ∘ f, fun p => N (f p.1, p.2), fun p => C (f p.1, p.2),
+    hn.comp hf, hN.comp ((hf.comp (fst enc encBits)).prod (snd enc encBits)),
+    hC.comp ((hf.comp (fst enc encBits)).prod (snd enc encBits)),
+    fun a u hu => hlen (f a) u hu,
+    .of_isTotalSearch (isTotalSearch_localOptRel fun a u hu => hlen (f a) u hu)
+      id' hg fun a w hw => hsol a w hw⟩
+
+/-- `PPP` is closed under polynomial-time search reductions across arbitrary instance types. -/
+theorem SearchReducible.mem_PPP (h : SearchReducible enc encB R T) (hR : R ∈ FNP enc)
+    (hT : T ∈ PPP encB) : R ∈ PPP enc := by
+  obtain ⟨-, n, F, hn, hF, hlen, hT_red⟩ := hT
+  obtain ⟨f, g, hf, hg, -, hsol⟩ := h.trans hT_red
+  refine ⟨hR, n ∘ f, fun p => F (f p.1, p.2),
+    hn.comp hf, hF.comp ((hf.comp (fst enc encBits)).prod (snd enc encBits)),
+    fun a u hu => hlen (f a) u hu,
+    .of_isTotalSearch (isTotalSearch_pigeonRel fun a u hu => hlen (f a) u hu)
+      id' hg fun a w hw => hsol a w hw⟩
+
+/-- `PPAD` is closed under polynomial-time search reductions across arbitrary instance types. -/
+theorem SearchReducible.mem_PPAD (h : SearchReducible enc encB R T) (hR : R ∈ FNP enc)
+    (hT : T ∈ PPAD encB) : R ∈ PPAD enc := by
+  obtain ⟨-, n, P, S, hn, hP, hS, hP_len, hS_len, hT_red⟩ := hT
+  obtain ⟨f, g, hf, hg, -, hsol⟩ := h.trans hT_red
+  refine ⟨hR, n ∘ f, fun p => P (f p.1, p.2), fun p => S (f p.1, p.2),
+    hn.comp hf, hP.comp ((hf.comp (fst enc encBits)).prod (snd enc encBits)),
+    hS.comp ((hf.comp (fst enc encBits)).prod (snd enc encBits)),
+    fun a u hu => hP_len (f a) u hu, fun a u hu => hS_len (f a) u hu,
+    .of_isTotalSearch (isTotalSearch_endOfLineRel fun a u hu => hS_len (f a) u hu)
+      id' hg fun a w hw => hsol a w hw⟩
+
+/-- `PPA` is closed under polynomial-time search reductions across arbitrary instance types. -/
+theorem SearchReducible.mem_PPA (h : SearchReducible enc encB R T) (hR : R ∈ FNP enc)
+    (hT : T ∈ PPA encB) : R ∈ PPA enc := by
+  obtain ⟨-, n, N₁, N₂, hn, hN₁, hN₂, hN₁_len, hN₂_len, hT_red⟩ := hT
+  obtain ⟨f, g, hf, hg, -, hsol⟩ := h.trans hT_red
+  refine ⟨hR, n ∘ f, fun p => N₁ (f p.1, p.2), fun p => N₂ (f p.1, p.2),
+    hn.comp hf, hN₁.comp ((hf.comp (fst enc encBits)).prod (snd enc encBits)),
+    hN₂.comp ((hf.comp (fst enc encBits)).prod (snd enc encBits)),
+    fun a u hu => hN₁_len (f a) u hu, fun a u hu => hN₂_len (f a) u hu,
+    .of_isTotalSearch
+      (isTotalSearch_leafRel (fun a u hu => hN₁_len (f a) u hu) (fun a u hu => hN₂_len (f a) u hu))
+      id' hg fun a w hw => hsol a w hw⟩
+
+/-! ### Inclusions in `TFNP` and between subclasses -/
+
+/-- **`PLS ⊆ TFNP`**: every problem in `PLS` is total and in `FNP`. -/
+theorem PLS_subset_TFNP : PLS enc ⊆ TFNP enc := by
+  rintro R ⟨hR, n, N, C, -, -, -, hlen, hred⟩
+  exact ⟨hR, hred.isTotalSearch (isTotalSearch_localOptRel hlen)⟩
+
+/-- **`PPP ⊆ TFNP`**: every problem in `PPP` is total and in `FNP`. -/
+theorem PPP_subset_TFNP : PPP enc ⊆ TFNP enc := by
+  rintro R ⟨hR, n, F, -, -, hlen, hred⟩
+  exact ⟨hR, hred.isTotalSearch (isTotalSearch_pigeonRel hlen)⟩
+
+/-- **`PPAD ⊆ TFNP`**: every problem in `PPAD` is total and in `FNP`. -/
+theorem PPAD_subset_TFNP : PPAD enc ⊆ TFNP enc := by
+  rintro R ⟨hR, n, P, S, -, -, -, -, hS_len, hred⟩
+  exact ⟨hR, hred.isTotalSearch (isTotalSearch_endOfLineRel hS_len)⟩
+
+/-- **`PPA ⊆ TFNP`**: every problem in `PPA` is total and in `FNP`. -/
+theorem PPA_subset_TFNP : PPA enc ⊆ TFNP enc := by
+  rintro R ⟨hR, n, N₁, N₂, -, -, -, hN₁_len, hN₂_len, hred⟩
+  exact ⟨hR, hred.isTotalSearch (isTotalSearch_leafRel hN₁_len hN₂_len)⟩
+
+/-- Every directed end-of-line family search-reduces to its associated pigeonhole family. -/
+theorem endOfLineRel_searchReducible_pigeonRel {n : α → ℕ} {P S : α × List Bool → List Bool}
+    (hn : ComputableTidilyInPolyTime n enc encUnary)
+    (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
+    (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits)
+    (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
+    SearchReducible enc enc (endOfLineRel n P S) (pigeonRel n (ppadToPppMap n P S)) := by
+  refine .of_isTotalSearch (isTotalSearch_pigeonRel fun a u hu => length_ppadToPppMap (hS_len a) hu)
+    id' (g := fun p => if !hasOut n P S p.1 (p.2.take (n p.1)) then p.2.take (n p.1)
+      else p.2.drop (n p.1)) ?_ fun a w hw => endOfLineRel_of_pigeonRel hw
+  fun_prop
+
+/-- **`PPAD ⊆ PPP`** [Papadimitriou][Papadimitriou1994PPAD], [Beame et al.][BeameEtAl1998]: every
+problem in `PPAD` is in `PPP`. -/
+theorem PPAD_subset_PPP : PPAD enc ⊆ PPP enc := by
+  rintro R ⟨hR, n, P, S, hn, hP, hS, -, hS_len, hred⟩
+  have hF : ComputableTidilyInPolyTime (ppadToPppMap n P S) (encPair enc encBits) encBits := by
+    unfold ppadToPppMap
+    fun_prop
+  exact ⟨hR, n, ppadToPppMap n P S, hn, hF, fun a u hu => length_ppadToPppMap (hS_len a) hu,
+    hred.trans (endOfLineRel_searchReducible_pigeonRel hn hP hS hS_len)⟩
+
+/-- Every directed end-of-line family search-reduces to its associated bipartite undirected parity
+family. -/
+theorem endOfLineRel_searchReducible_leafRel {n : α → ℕ} {P S : α × List Bool → List Bool}
+    (hP_len : ∀ a u, u.length = n a → (P (a, u)).length = n a)
+    (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
+    SearchReducible enc enc (endOfLineRel n P S)
+      (leafRel (fun a => n a + 1) (ppadToPpaN₁ n P S) (ppadToPpaN₂ n)) :=
+  .of_isTotalSearch
+    (isTotalSearch_leafRel
+      (fun a _ hw => length_ppadToPpaN₁ (hP_len a) (hS_len a) hw)
+      (fun _ _ hw => length_ppadToPpaN₂ hw))
+    id' (g := fun p => p.2.tail) (bitsTail.comp (snd enc encBits))
+    fun _ _ hw => endOfLineRel_tail_of_leafRel hw
+
+/-- **`PPAD ⊆ PPA`** [Papadimitriou][Papadimitriou1994PPAD]: every problem in `PPAD` is in `PPA`. -/
+theorem PPAD_subset_PPA : PPAD enc ⊆ PPA enc := by
+  rintro R ⟨hR, n, P, S, hn, hP, hS, hP_len, hS_len, hred⟩
+  have hn' : ComputableTidilyInPolyTime (fun a => n a + 1) enc encUnary := by fun_prop
+  have hN₁ : ComputableTidilyInPolyTime (ppadToPpaN₁ n P S) (encPair enc encBits) encBits := by
+    unfold ppadToPpaN₁
+    fun_prop
+  have hN₂ : ComputableTidilyInPolyTime (ppadToPpaN₂ n) (encPair enc encBits) encBits := by
+    unfold ppadToPpaN₂
+    fun_prop
+  exact ⟨hR, fun a => n a + 1, ppadToPpaN₁ n P S, ppadToPpaN₂ n, hn', hN₁, hN₂,
+    fun a _ hw => length_ppadToPpaN₁ (hP_len a) (hS_len a) hw,
+    fun _ _ hw => length_ppadToPpaN₂ hw,
+    hred.trans (endOfLineRel_searchReducible_leafRel hP_len hS_len)⟩
+
+/-! ### Evaluating circuit codes into fixed-length bit strings -/
+
+/-- Normalize a bit string `w` to length `n` by truncating or padding with `false`. -/
+def padBits (n : ℕ) (w : List Bool) : List Bool :=
+  w.take n ++ zeroVertex (n - w.length)
+
+@[simp]
+theorem length_padBits (n : ℕ) (w : List Bool) : (padBits n w).length = n := by
+  simp only [padBits, List.length_append, List.length_take, length_zeroVertex]
+  omega
+
+@[simp]
+theorem padBits_of_length_eq {n : ℕ} {w : List Bool} (h : w.length = n) : padBits n w = w := by
+  simp [padBits, h, zeroVertex]
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_padBits {encIn : α ↪ List Bool} {n : α → ℕ}
+    {w : α → List Bool} (hn : ComputableTidilyInPolyTime n encIn encUnary)
+    (hw : ComputableTidilyInPolyTime w encIn encBits) :
+    ComputableTidilyInPolyTime (fun a => padBits (n a) (w a)) encIn encBits := by
+  unfold padBits
+  fun_prop
+
+/-- The raw code of a De Morgan circuit: its gate list and output wire numbers. -/
+abbrev CircuitCode : Type := List (Op × List ℕ) × List ℕ
+
+/-- Evaluate all output wires listed in `code.2` after running the gate list `code.1` on `u`. -/
+def evalCircuitOutputs (code : CircuitCode) (u : List Bool) : List Bool :=
+  let vals := evalCode interpretation false u code.1
+  code.2.foldl (fun acc o => acc ++ [vals.getD o false]) []
+
+private theorem foldl_append_getD (vals : List Bool) (outs : List ℕ) (acc : List Bool) :
+    outs.foldl (fun acc o => acc ++ [vals.getD o false]) acc =
+      acc ++ outs.map (fun o => vals.getD o false) := by
+  induction outs generalizing acc with
+  | nil => simp
+  | cons o outs ih =>
+    rw [List.foldl_cons, ih, List.append_assoc, List.singleton_append, List.map_cons]
+
+theorem evalCircuitOutputs_eq_map (code : CircuitCode) (u : List Bool) :
+    evalCircuitOutputs code u =
+      code.2.map fun o => (evalCode interpretation false u code.1).getD o false := by
+  rw [evalCircuitOutputs, foldl_append_getD, List.nil_append]
+
+/-- On the code of a De Morgan circuit, `evalCircuitOutputs` computes the list of output bits. -/
+theorem evalCircuitOutputs_code {n m : ℕ} (c : Circuit signature n m) (x : Fin n → Bool) :
+    evalCircuitOutputs c.code (List.ofFn x) = List.ofFn (c.eval interpretation x) := by
+  rw [evalCircuitOutputs_eq_map]
+  refine List.ext_getElem (by simp [Circuit.code]) fun j hj₁ hj₂ => ?_
+  simp only [List.getElem_map, Circuit.code, List.getElem_ofFn]
+  exact (c.eval_eq_getD interpretation false x ⟨j, by simpa using hj₂⟩).symm
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_evalCircuitOutputs {encIn : α ↪ List Bool}
+    {code : α → CircuitCode} {u : α → List Bool}
+    (hcode : ComputableTidilyInPolyTime code encIn encCode)
+    (hu : ComputableTidilyInPolyTime u encIn encBits) :
+    ComputableTidilyInPolyTime (fun a => evalCircuitOutputs (code a) (u a)) encIn encBits := by
+  have hvals : ComputableTidilyInPolyTime
+      (fun a => evalCode interpretation false (u a) (code a).1) encIn encBits :=
+    computableTidilyInPolyTime_evalCode hu hcode.fst'
+  have hstep : ComputableTidilyInPolyTime
+      (fun q : (List Bool × List Bool) × ℕ => q.1.2 ++ [q.1.1.getD q.2 false])
+      (encPair (encPair encBits encBits) encNat) encBits :=
+    bitsAppend (fst _ _).snd'
+      (bitsCons (listGetD_binary false (fst _ _).fst' (snd _ _)) (const []))
+  exact foldlWith_of_bounded_growth (encA := encNat) (encL := encList encNat)
+    (encP := encBits) (encB := encBits)
+    (step := fun vals acc o => acc ++ [vals.getD o false])
+    hvals hcode.snd' (const []) hstep (.const 1) fun _ acc _ _ => by simp
+
+/-- Evaluate a circuit code on `u` and normalize the output to `n` bits. -/
+def evalCircuitCode (n : ℕ) (code : CircuitCode) (u : List Bool) : List Bool :=
+  padBits n (evalCircuitOutputs code u)
+
+@[simp]
+theorem length_evalCircuitCode (n : ℕ) (code : CircuitCode) (u : List Bool) :
+    (evalCircuitCode n code u).length = n :=
+  length_padBits n _
+
+/-- On the code of a De Morgan circuit with `n` inputs and `n` outputs, `evalCircuitCode` computes
+the `n`-bit output of the circuit. -/
+theorem evalCircuitCode_code {n : ℕ} (c : Circuit signature n n) (x : Fin n → Bool) :
+    evalCircuitCode n c.code (List.ofFn x) = List.ofFn (c.eval interpretation x) := by
+  rw [evalCircuitCode, evalCircuitOutputs_code, padBits_of_length_eq (List.length_ofFn)]
+
+@[fun_prop]
+theorem computableTidilyInPolyTime_evalCircuitCode {encIn : α ↪ List Bool}
+    {n : α → ℕ} {code : α → CircuitCode} {u : α → List Bool}
+    (hn : ComputableTidilyInPolyTime n encIn encUnary)
+    (hcode : ComputableTidilyInPolyTime code encIn encCode)
+    (hu : ComputableTidilyInPolyTime u encIn encBits) :
+    ComputableTidilyInPolyTime (fun a => evalCircuitCode (n a) (code a) (u a)) encIn encBits := by
+  unfold evalCircuitCode
+  fun_prop
+
+/-! ### Canonical circuit-presented problems -/
+
+/-- Encoding of `Pigeon` instances `(n, cF)`: the bit-length `n` in unary and the circuit code
+`cF`. -/
+abbrev encPigeon : (ℕ × CircuitCode) ↪ List Bool := encPair encUnary encCode
+
+/-- Encoding of `LocalOpt` instances `(n, cN, cC)`: `n` in unary, neighbor circuit `cN`, and cost
+circuit `cC`. -/
+abbrev encLocalOpt : (ℕ × CircuitCode × CircuitCode) ↪ List Bool :=
+  encPair encUnary (encPair encCode encCode)
+
+/-- Encoding of `EndOfLine` instances `(n, cP, cS)`: `n` in unary, predecessor circuit `cP`, and
+successor circuit `cS`. -/
+abbrev encEndOfLine : (ℕ × CircuitCode × CircuitCode) ↪ List Bool :=
+  encPair encUnary (encPair encCode encCode)
+
+/-- Encoding of `Leaf` instances `(n, cN₁, cN₂)`: `n` in unary and the two neighbor circuits
+`cN₁, cN₂`. -/
+abbrev encLeaf : (ℕ × CircuitCode × CircuitCode) ↪ List Bool :=
+  encPair encUnary (encPair encCode encCode)
+
+/-- **Circuit `LocalOpt` (`PLS`)**: given `(n, cN, cC)`, find an `n`-bit string `u` whose neighbor
+`evalCircuitCode n cN u` does not have strictly smaller cost
+`binaryValue (evalCircuitOutputs cC ·)`. -/
+def LocalOpt : (ℕ × CircuitCode × CircuitCode) → List Bool → Prop :=
+  localOptRel Prod.fst (fun p => evalCircuitCode p.1.1 p.1.2.1 p.2)
+    (fun p => binaryValue (evalCircuitOutputs p.1.2.2 p.2))
+
+/-- **Circuit `Pigeon` (`PPP`)**: given `(n, cF)`, find a `2n`-bit string encoding a preimage of
+`0 ^ n` or a collision of `evalCircuitCode n cF`. -/
+def Pigeon : (ℕ × CircuitCode) → List Bool → Prop :=
+  pigeonRel Prod.fst (fun p => evalCircuitCode p.1.1 p.1.2 p.2)
+
+/-- **Circuit `EndOfLine` (`PPAD`)**: given `(n, cP, cS)`, find an `n`-bit end-of-line vertex of
+the directed graph presented by `evalCircuitCode n cP` and `evalCircuitCode n cS`. -/
+def EndOfLine : (ℕ × CircuitCode × CircuitCode) → List Bool → Prop :=
+  endOfLineRel Prod.fst (fun p => evalCircuitCode p.1.1 p.1.2.1 p.2)
+    (fun p => evalCircuitCode p.1.1 p.1.2.2 p.2)
+
+/-- **Circuit `Leaf` (`PPA`)**: given `(n, cN₁, cN₂)`, find an `n`-bit leaf vertex of the
+degree-`≤ 2` undirected graph presented by `evalCircuitCode n cN₁` and `evalCircuitCode n cN₂`. -/
+def Leaf : (ℕ × CircuitCode × CircuitCode) → List Bool → Prop :=
+  leafRel Prod.fst (fun p => evalCircuitCode p.1.1 p.1.2.1 p.2)
+    (fun p => evalCircuitCode p.1.1 p.1.2.2 p.2)
+
+theorem isTotalSearch_LocalOpt : IsTotalSearch LocalOpt :=
+  isTotalSearch_localOptRel fun _ _ _ => length_evalCircuitCode _ _ _
+
+theorem isTotalSearch_Pigeon : IsTotalSearch Pigeon :=
+  isTotalSearch_pigeonRel fun _ _ _ => length_evalCircuitCode _ _ _
+
+theorem isTotalSearch_EndOfLine : IsTotalSearch EndOfLine :=
+  isTotalSearch_endOfLineRel fun _ _ _ => length_evalCircuitCode _ _ _
+
+theorem isTotalSearch_Leaf : IsTotalSearch Leaf :=
+  isTotalSearch_leafRel (fun _ _ _ => length_evalCircuitCode _ _ _)
+    (fun _ _ _ => length_evalCircuitCode _ _ _)
+
+/-- `LocalOpt` is in `PLS`. -/
+theorem LocalOpt_mem_PLS : LocalOpt ∈ PLS encLocalOpt :=
+  localOptRel_mem_PLS (by fun_prop) (by fun_prop) (by fun_prop)
+    fun _ _ _ => length_evalCircuitCode _ _ _
+
+/-- `Pigeon` is in `PPP`. -/
+theorem Pigeon_mem_PPP : Pigeon ∈ PPP encPigeon :=
+  pigeonRel_mem_PPP (by fun_prop) (by fun_prop)
+    fun _ _ _ => length_evalCircuitCode _ _ _
+
+/-- `EndOfLine` is in `PPAD`. -/
+theorem EndOfLine_mem_PPAD : EndOfLine ∈ PPAD encEndOfLine :=
+  endOfLineRel_mem_PPAD (by fun_prop) (by fun_prop) (by fun_prop)
+    (fun _ _ _ => length_evalCircuitCode _ _ _) (fun _ _ _ => length_evalCircuitCode _ _ _)
+
+/-- `Leaf` is in `PPA`. -/
+theorem Leaf_mem_PPA : Leaf ∈ PPA encLeaf :=
+  leafRel_mem_PPA (by fun_prop) (by fun_prop) (by fun_prop)
+    (fun _ _ _ => length_evalCircuitCode _ _ _) (fun _ _ _ => length_evalCircuitCode _ _ _)
+
+/-- `LocalOpt` is in `TFNP`. -/
+theorem LocalOpt_mem_TFNP : LocalOpt ∈ TFNP encLocalOpt :=
+  PLS_subset_TFNP LocalOpt_mem_PLS
+
+/-- `Pigeon` is in `TFNP`. -/
+theorem Pigeon_mem_TFNP : Pigeon ∈ TFNP encPigeon :=
+  PPP_subset_TFNP Pigeon_mem_PPP
+
+/-- `EndOfLine` is in `TFNP`. -/
+theorem EndOfLine_mem_TFNP : EndOfLine ∈ TFNP encEndOfLine :=
+  PPAD_subset_TFNP EndOfLine_mem_PPAD
+
+/-- `Leaf` is in `TFNP`. -/
+theorem Leaf_mem_TFNP : Leaf ∈ TFNP encLeaf :=
+  PPA_subset_TFNP Leaf_mem_PPA
+
+/-- `EndOfLine` is in `PPP`. -/
+theorem EndOfLine_mem_PPP : EndOfLine ∈ PPP encEndOfLine :=
+  PPAD_subset_PPP EndOfLine_mem_PPAD
+
+/-- `EndOfLine` is in `PPA`. -/
+theorem EndOfLine_mem_PPA : EndOfLine ∈ PPA encEndOfLine :=
+  PPAD_subset_PPA EndOfLine_mem_PPAD
+
+end Cslib.Complexity
