@@ -796,7 +796,6 @@ machine-relative cores do not by themselves establish the missing uniform resour
 
 These are experiments to validate, not claimed savings:
 
-* Share simultaneous-good-event and union-bound arguments between Gaussian layout clients.
 * Simplify `PairReady` and `clearedCfg` composition/preservation in tidy normal form without
   unfolding machine transitions globally.
 * Factor indicator-expectation identities from PCP's second-moment calculation and recurring
