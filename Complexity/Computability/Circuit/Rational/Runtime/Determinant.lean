@@ -10,7 +10,6 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Determinant
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
-public import Complexity.Tactic.PolyTime.Init
 public import Mathlib.Data.Nat.Size
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -39,6 +38,8 @@ encoding, and, following the original development, for the stages of the dense t
 * `Rational.stepRows`, `Rational.stagesRows`: one Bird stage, and the iterated stages.
 * `Rational.detRows`: the staged determinant of a list of rows.
 * `Rational.intBits`: the bit length of a sign-magnitude binary integer.
+* `Rational.stageTableBound`: upper bound on the encoded length of any stage table in the first `k`
+  Bird stages.
 
 ## Main results
 
@@ -50,8 +51,9 @@ encoding, and, following the original development, for the stages of the dense t
   bounds on stage entries and on the partial sums inside one stage.
 * `Rational.intBits_rowEntry_stagesRows_le`: the stage bound in bit length.
 * `Rational.DeterminantAlgorithm.stages_power_bound`: the stage bound for dense tables.
-* `Rational.detRows_polytime`: `detRows` is computable tidily in polynomial time over
-  `encList (encList encIntBin)`.
+* `Rational.length_encList_stagesRows_le`: encoded length bound on intermediate stage tables.
+* `Rational.computableTidilyInPolyTime_stagesRows`, `Rational.detRows_polytime`: `stagesRows` and
+  `detRows` are computable tidily in polynomial time over `encList (encList encIntBin)`.
 
 ## References
 
@@ -565,7 +567,7 @@ private lemma polyBounded_stageTableBound {α : Type} {size L k : α → ℕ}
 variable {α : Type} {encIn : α ↪ List Bool}
 
 /-- Matrix entry lookup on a list of rows is polynomial-time. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_rowEntry {rows : α → List (List ℤ)} {i j : α → ℕ}
     (hrows : ComputableTidilyInPolyTime rows encIn (encList (encList encIntBin)))
     (hi : ComputableTidilyInPolyTime i encIn encUnary)
@@ -575,7 +577,7 @@ theorem computableTidilyInPolyTime_rowEntry {rows : α → List (List ℤ)} {i j
     (((listGetD (encA := encList encIntBin) []).comp (hrows.prod hi)).prod hj)
 
 /-- Tabulating a `d × d` matrix of binary integers from a unary dimension is polynomial-time. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_tabulateRows {d : α → ℕ} {g : α → ℕ → ℕ → ℤ}
     (hd : ComputableTidilyInPolyTime d encIn encUnary)
     (hg : ComputableTidilyInPolyTime (fun p : (α × ℕ) × ℕ => g p.1.1 p.1.2 p.2)
@@ -585,37 +587,42 @@ theorem computableTidilyInPolyTime_tabulateRows {d : α → ℕ} {g : α → ℕ
   mapWithInput (range.comp hd) (mapWithInput (range.comp (hd.comp (fst encIn encUnary))) hg)
 
 /-- Padding or truncating a list of rows to a square table is polynomial-time. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_squareRows :
     ComputableTidilyInPolyTime squareRows
       (encList (encList encIntBin)) (encList (encList encIntBin)) :=
   computableTidilyInPolyTime_tabulateRows (length_list _) (by fun_prop)
 
+@[fun_prop]
+private theorem dropUnary_list {β : Type} {encB : β ↪ List Bool} {l : α → List β} {n : α → ℕ}
+    (hl : ComputableTidilyInPolyTime l encIn (encList encB))
+    (hn : ComputableTidilyInPolyTime n encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => (l x).drop (n x)) encIn (encList encB) :=
+  (dropUnary (encA := encB)).comp (hl.prod hn)
+
 /-- Computing the diagonal terms summed in one Bird stage is polynomial-time. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_traceTerms {A F : α → List (List ℤ)} {i : α → ℕ}
     (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
     (hF : ComputableTidilyInPolyTime F encIn (encList (encList encIntBin)))
     (hi : ComputableTidilyInPolyTime i encIn encUnary) :
     ComputableTidilyInPolyTime (fun x => traceTerms (A x) (F x) (i x))
-      encIn (encList encIntBin) :=
-  mapWithInput ((dropUnary (encA := encUnary)).comp
-    ((range.comp ((length_list _).comp hA)).prod (by fun_prop))) (by fun_prop)
+      encIn (encList encIntBin) := by
+  unfold traceTerms; fun_prop
 
 /-- Computing the product terms summed in one Bird stage is polynomial-time. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_productTerms {A F : α → List (List ℤ)} {i j : α → ℕ}
     (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
     (hF : ComputableTidilyInPolyTime F encIn (encList (encList encIntBin)))
     (hi : ComputableTidilyInPolyTime i encIn encUnary)
     (hj : ComputableTidilyInPolyTime j encIn encUnary) :
     ComputableTidilyInPolyTime (fun x => productTerms (A x) (F x) (i x) (j x))
-      encIn (encList encIntBin) :=
-  mapWithInput ((dropUnary (encA := encUnary)).comp
-    ((range.comp ((length_list _).comp hA)).prod (by fun_prop))) (by fun_prop)
+      encIn (encList encIntBin) := by
+  unfold productTerms; fun_prop
 
 /-- Computing one entry of a Bird stage is polynomial-time. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_stepEntryRows {A F : α → List (List ℤ)} {i j : α → ℕ}
     (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
     (hF : ComputableTidilyInPolyTime F encIn (encList (encList encIntBin)))
@@ -626,7 +633,7 @@ theorem computableTidilyInPolyTime_stepEntryRows {A F : α → List (List ℤ)} 
   unfold stepEntryRows; fun_prop
 
 /-- One Bird stage on lists of rows is polynomial-time. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_stepRows :
     ComputableTidilyInPolyTime (fun p : List (List ℤ) × List (List ℤ) => stepRows p.1 p.2)
       (encPair (encList (encList encIntBin)) (encList (encList encIntBin)))
@@ -634,7 +641,7 @@ theorem computableTidilyInPolyTime_stepRows :
   computableTidilyInPolyTime_tabulateRows (by fun_prop) (by fun_prop)
 
 /-- Iterating `k` Bird stages on a list of rows is polynomial-time for a unary stage count `k`. -/
-@[program_certificate]
+@[fun_prop]
 theorem computableTidilyInPolyTime_stagesRows {A : α → List (List ℤ)} {k : α → ℕ}
     (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
     (hk : ComputableTidilyInPolyTime k encIn encUnary) :
@@ -659,7 +666,7 @@ lemma detRows_eq_ite (A : List (List ℤ)) :
 
 /-- The staged division-free integer determinant `detRows` is computable tidily in polynomial
 time on lists of rows of binary sign-magnitude integers. -/
-@[program_certificate]
+@[fun_prop]
 theorem detRows_polytime :
     ComputableTidilyInPolyTime detRows (encList (encList encIntBin)) encIntBin := by
   have h : ComputableTidilyInPolyTime
