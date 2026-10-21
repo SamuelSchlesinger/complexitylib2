@@ -6,6 +6,26 @@ with wiring and fanout free. Formula leaf count and formula depth are separate
 measures; unbounded fan-in bases are identified in their entries.
 
 \begin{result}
+\subsection{Polynomial advice gives polynomial-size circuits}
+Let $\alpha(n)$ be a Boolean advice string of polynomially bounded length.
+If a language $L$ satisfies
+$x\in L\iff\operatorname{frame}(\alpha(|x|))\mathbin{+\!+}x\in M$
+for some $M\in\mathrm{P/poly}$, then $L\in\mathrm{P/poly}$.
+At length $n$, hardwiring the first $2|\alpha(n)|+1$ inputs costs at most two
+additional gates for shared Boolean constants.
+In particular $\mathrm{P/advice}\subseteq\mathrm{P/poly}$: the advice class
+uses a tidy polynomial-time decider for pairs $(\alpha(|x|),x)$ encoded by
+$\operatorname{frame}(\alpha(|x|))\mathbin{+\!+}x$.
+Advice need not be computable. This entry proves only the displayed inclusion,
+without a converse or a runtime bound for constructing the circuit family.
+\citep{AroraBarak09,KarpLipton1980}
+The formalization recovers Samuel Schlesinger's earlier Complexitylib advice development.
+\declat{4f7aa6bfb792dfdaefc5c7668fd97a653ba0ef4b}{Complexity/Computability/Circuit/Boolean/Advice.lean}{57}{Cslib.Circuits.Boolean.PPoly.of_advice}
+\declat{4f7aa6bfb792dfdaefc5c7668fd97a653ba0ef4b}{Complexity/Computability/Circuit/Boolean/Advice.lean}{78}{Cslib.Circuits.Boolean.PAdvice}
+\declat{4f7aa6bfb792dfdaefc5c7668fd97a653ba0ef4b}{Complexity/Computability/Circuit/Boolean/Advice.lean}{84}{Cslib.Circuits.Boolean.PAdvice_subset_PPoly}
+\end{result}
+
+\begin{result}
 \subsection{Sparse and unary languages have small circuits}
 If a language $L\subseteq\{0,1\}^*$ contains at most $k$ words of length $n$,
 its length-$n$ slice has a De Morgan circuit with at most $k(2n+2)+1$ gates.
