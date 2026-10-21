@@ -286,9 +286,7 @@ variable {ι : Type*}
 
 /-- Resampling is `Set.piecewise` on the selected coordinates. -/
 theorem resample_eq_piecewise (s x y : ι → Bool) :
-    resample s x y = Set.piecewise {i | s i = true} y x := by
-  funext i
-  by_cases hi : s i = true <;> simp [resample, Set.piecewise, hi]
+    resample s x y = Set.piecewise {i | s i = true} y x := rfl
 
 /-- Resampling completes the restriction of the sampled point. -/
 theorem resample_eq_completePattern (s x y : ι → Bool) :
@@ -321,9 +319,8 @@ theorem expect_restrict_coordinates {p : ι → Prop} [DecidablePred p]
   rw [← Fintype.expect_equiv e.symm (fun z => f (fun i => e.symm z i)) _ (fun _ => rfl)]
   rw [← univ_product_univ, expect_product]
   have he (a : {i // p i} → Bool) (b : {i // ¬ p i} → Bool) :
-      (fun i : {i // p i} => e.symm (a, b) i) = a := by
-    funext i
-    simp [e, Equiv.piEquivPiSubtypeProd, i.property]
+      (fun i : {i // p i} => e.symm (a, b) i) = a :=
+    congrArg Prod.fst (e.apply_symm_apply (a, b))
   simp_rw [he, Fintype.expect_const]
 
 /-- The free-coordinate fiber counts exactly the full assignments in `X`
