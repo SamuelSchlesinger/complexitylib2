@@ -216,11 +216,8 @@ theorem exists_injective_frontier (hM : M.IsTotallyRegular) (hc : c.Computes I f
     set v := π.symm ⟨t, ht⟩
     have hsucc := π.initial_succ ht
     have hread : G.readIn (π.initial (t + 1)) ⊆ G.readIn (π.initial t) ∪ G.readAt v := by
-      rintro i ⟨u, hu, hiu⟩
-      rw [hsucc] at hu
-      rcases hu with rfl | hu
-      · exact Or.inr hiu
-      · exact Or.inl ⟨u, hu, hiu⟩
+      rw [hsucc]
+      exact G.readIn_insert_subset _ _
     have houts : outs (π.initial (t + 1)) ⊆ outs (π.initial t) ∪ {o | .output o = v} := by
       intro o ho
       simp only [outs, mem_ofPred_eq, hsucc, mem_insert_iff] at ho

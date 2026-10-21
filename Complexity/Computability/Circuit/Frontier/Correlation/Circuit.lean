@@ -41,9 +41,6 @@ time along a layout (`Network.exists_ncard_readIn_initial_eq`), some layer has r
 
 ## Main results
 
-* `Cslib.Circuits.Frontier.Network.exists_ncard_readIn_initial_eq`: reads grow one at a time.
-* `Cslib.Circuits.Frontier.Network.ncard_image_path_le`: the states of the branching program of a
-  layout at a layer, counted by the frontier.
 * `Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le_of_unread`,
   `Cslib.Circuits.Frontier.sq_correlation_quadForm_mul_le_of_layout`: rectangle classes of a
   circuit.
@@ -57,84 +54,6 @@ time along a layout (`Network.exists_ncard_readIn_initial_eq`), some layer has r
 namespace Cslib.Circuits.Frontier
 
 open Set Matrix
-
-/-! ### Networks -/
-
-namespace Network
-
-variable {U ι V E : Type*} (N : Network U ι V E)
-
-/-- The inputs read by a set with one more vertex. -/
-theorem readIn_insert_subset (v : V) (L : Set V) :
-    N.readIn (insert v L) ⊆ N.readIn L ∪ N.readAt v := by
-  rintro i ⟨u, hu, hi⟩
-  rcases hu with rfl | hu
-  · exact Or.inr hi
-  · exact Or.inl ⟨u, hu, hi⟩
-
-/-- **Reads grow one at a time.** If each vertex reads at most one input, then along every layout,
-for every `k` up to the number of inputs read, the first `t` vertices read exactly `k` inputs for
-some `t`. -/
-theorem exists_ncard_readIn_initial_eq [Finite ι] (π : Layout V)
-    (hm : ∀ v, (N.readAt v).ncard ≤ 1) {k : ℕ} (hk : k ≤ N.read.ncard) :
-    ∃ t ≤ Nat.card V, (N.readIn (π.initial t)).ncard = k := by
-  set f : ℕ → ℕ := fun t => (N.readIn (π.initial t)).ncard with hf
-  have hstep (t : ℕ) : f (t + 1) ≤ f t + 1 := by
-    by_cases ht : t < Nat.card V
-    · simp only [hf, π.initial_succ ht]
-      calc (N.readIn (insert (π.symm ⟨t, ht⟩) (π.initial t))).ncard
-          ≤ (N.readIn (π.initial t) ∪ N.readAt (π.symm ⟨t, ht⟩)).ncard :=
-            ncard_le_ncard (N.readIn_insert_subset _ _) (toFinite _)
-        _ ≤ (N.readIn (π.initial t)).ncard + (N.readAt (π.symm ⟨t, ht⟩)).ncard :=
-            ncard_union_le _ _
-        _ ≤ _ := Nat.add_le_add_left (hm _) _
-    · simp only [hf, π.initial_of_card_le (show Nat.card V ≤ t by omega),
-        π.initial_of_card_le (show Nat.card V ≤ t + 1 by omega)]
-      omega
-  have hzero : f 0 = 0 := by simp [hf]
-  have hlast : f (Nat.card V) = N.read.ncard := by
-    simp only [hf, π.initial_of_card_le le_rfl]
-    rfl
-  have hex : ∃ t, k ≤ f t := ⟨Nat.card V, hlast ▸ hk⟩
-  refine ⟨Nat.find hex, Nat.find_min' hex (hlast ▸ hk), ?_⟩
-  have hspec := Nat.find_spec hex
-  rcases hfind : Nat.find hex with _ | s
-  · rw [hfind, hzero] at hspec
-    change f 0 = k
-    omega
-  · have hmin := Nat.find_min hex (show s < Nat.find hex by omega)
-    rw [hfind] at hspec
-    have := hstep s
-    change f (s + 1) = k
-    omega
-
-/-- **The states of the branching program of a layout.** At a layer `t ≤ |V|`, the chosen
-accepting paths of the accepted inputs pass through at most `|U| ^ |frontier t|` states: each is
-the list of the values of a satisfying assignment on the frontier. -/
-theorem ncard_image_path_le [Finite U] [Finite E] (π : Layout V) {t : ℕ}
-    (ht : t ≤ Nat.card V) :
-    ((fun x => (N.branchingProgram π).path x t) '' N.accepted).ncard ≤
-      Nat.card U ^ (N.frontier π t).ncard := by
-  classical
-  set F := N.frontier π t
-  let φ : (F → U) → E → Option U := fun a e => if h : e ∈ F then some (a ⟨e, h⟩) else none
-  have hsub : (fun x => (N.branchingProgram π).path x t) '' N.accepted ⊆ range φ := by
-    rintro _ ⟨x, hx, rfl⟩
-    rw [← N.accepted_branchingProgram π] at hx
-    obtain ⟨α, -, hα⟩ :=
-      N.exists_satisfies_of_isAcceptingPath π ((N.branchingProgram π).isAcceptingPath_path hx)
-    refine ⟨F.domRestrict α, funext fun e => ?_⟩
-    dsimp only
-    rw [hα t (by omega)]
-    simp only [φ, frontierValues, Set.domRestrict_apply]
-    split_ifs <;> rfl
-  calc _ ≤ (range φ).ncard := ncard_le_ncard hsub (toFinite _)
-    _ ≤ Nat.card (F → U) := by
-        rw [← image_univ]
-        exact (ncard_image_le (toFinite _)).trans (ncard_univ _).le
-    _ = Nat.card U ^ F.ncard := by rw [Nat.card_fun, Nat.card_coe_set_eq]
-
-end Network
 
 /-! ### Rectangle classes of a circuit -/
 
