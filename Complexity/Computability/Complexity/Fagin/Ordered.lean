@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Fagin.Converse
 public import Complexity.Logics.FirstOrder.Ordered.Query
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered
-import Complexity.Computability.Complexity.Classes.Ladner
+import Complexity.Computability.Complexity.Reduction
 
 /-!
 # Ordered existential second-order definability

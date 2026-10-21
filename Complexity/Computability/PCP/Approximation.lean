@@ -11,7 +11,6 @@ public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Mathlib.Basic.Real.Basic
-import Complexity.Computability.Complexity.Classes.Ladner
 import Complexity.Computability.Complexity.CookLevin.Completeness
 
 /-!

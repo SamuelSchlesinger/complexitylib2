@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
-import Complexity.Computability.Complexity.Classes.Ladner
+import Complexity.Computability.Complexity.Reduction
 import Complexity.Computability.Complexity.CookLevin.Completeness
 
 /-!
