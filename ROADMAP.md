@@ -791,7 +791,16 @@ space bounds. Further class-level work needs resource certificates for the actua
   of lean-trominoes and [exact reals and prime fields](Complexity/Computability/GenericRAM/Algebraic.lean)
   with separate tagged natural address words. Real semantics is noncomputable; prime fields are
   executable. The algebraic variant has checked word arithmetic and rational constants with
-  nonzero field denominators; no field-to-word conversion is provided. Generalizing the structured
+  nonzero field denominators; no field-to-word conversion is provided. The
+  [native scalar interface](Complexity/Computability/GenericRAM/Native.lean) separately certifies
+  checked literals/operations, tests, address extraction and move/control validation with arbitrary
+  native TM time/space bounds; it is equivalent to native computability when bounds are unrestricted.
+  Polynomial bounds yield native polynomial time. A
+  [bounded-natural addition model](Complexity/Computability/GenericRAM/Native/Nat.lean) supplies every
+  scalar certificate, and [checked word addition](Complexity/Computability/WordRAM/Native.lean)
+  handles all unary-encoded widths with binary operands. These certificates do not supply memory,
+  dispatch, initialization/output or a whole-run simulation; uniform arbitrary-program dispatch and
+  charged width selection/input fit remain separate obligations (#292, #293, #298). Generalizing the structured
   program calculus and time-class APIs to arbitrary domains, weighted/bit costs, and simulations
   between these instances remain open. No real-RAM/Turing-machine equivalence is claimed;
 * RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
