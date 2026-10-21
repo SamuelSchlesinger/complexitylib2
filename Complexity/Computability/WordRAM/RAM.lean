@@ -58,20 +58,22 @@ namespace Cslib.WordRAM
 variable {r : ℕ}
 
 /-- The fragment compiled to the logarithmic-cost natural-number RAM. -/
-def Instr.IsAdditive : Instr r → Prop
-  | .op (.bin f ..) => f = .add ∨ f = .sub
-  | .op (.width _) => False
+def Instr.IsAdditive : Instr .standard r → Prop
+  | .op (.alu (.bin f) ..) => f = .add ∨ f = .sub
+  | .op (.alu .width ..) => False
   | _ => True
 
-instance (i : Instr r) : Decidable i.IsAdditive := by
-  cases i with
-  | op o => cases o <;> simp only [Instr.IsAdditive] <;> infer_instance
-  | _ => simp only [Instr.IsAdditive]; infer_instance
+instance (i : Instr .standard r) : Decidable i.IsAdditive :=
+  match i with
+  | .op (.alu (.bin f) ..) => inferInstanceAs (Decidable (f = .add ∨ f = .sub))
+  | .op (.alu .width ..) => isFalse id
+  | .op (.const ..) | .op (.copy ..) | .op (.load ..) | .op (.store ..) | .jump .. | .branch ..
+  | .halt .. => isTrue trivial
 
 /-- Every instruction belongs to the additive-memory fragment. -/
-def Program.IsAdditive (p : Program r) : Prop := ∀ i ∈ p, i.IsAdditive
+def Program.IsAdditive (p : Program .standard r) : Prop := ∀ i ∈ p, i.IsAdditive
 
-instance (p : Program r) : Decidable p.IsAdditive :=
+instance (p : Program .standard r) : Decidable p.IsAdditive :=
   inferInstanceAs (Decidable (∀ i ∈ p, i.IsAdditive))
 
 namespace ToRAM
@@ -92,14 +94,14 @@ def test (r : ℕ) : ℕ := r + 4
 def entry (base pc : ℕ) : ℕ := base + 8 * pc
 
 /-- One slot in the eight-instruction block for a source instruction. -/
-def compileInstr (base length pc : ℕ) (i : Instr r) (k : ℕ) : RAM.Instr :=
+def compileInstr (base length pc : ℕ) (i : Instr .standard r) (k : ℕ) : RAM.Instr :=
   let next := entry base (pc + 1)
   let jump := fun q => RAM.Instr.jpos (one r) q
   match i, k with
   | .op (.const d v), 0 => .const (d + 1) v
   | .op (.copy d s), 0 => .add (d + 1) (s + 1) 0
-  | .op (.bin .add d i j), 0 => .add (d + 1) (i + 1) (j + 1)
-  | .op (.bin .sub d i j), 0 => .sub (d + 1) (i + 1) (j + 1)
+  | .op (.alu (.bin .add) d a), 0 => .add (d + 1) (a (0 : Fin 2) + 1) (a (1 : Fin 2) + 1)
+  | .op (.alu (.bin .sub) d a), 0 => .sub (d + 1) (a (0 : Fin 2) + 1) (a (1 : Fin 2) + 1)
   | .op (.load _ a), 0 | .op (.store a _), 0 => .add (address r) (a + 1) (offset r)
   | .op (.load d _), 1 => .load (d + 1) (address r)
   | .op (.store _ s), 1 => .store (address r) (s + 1)
@@ -118,17 +120,18 @@ def compileInstr (base length pc : ℕ) (i : Instr r) (k : ℕ) : RAM.Instr :=
 /-- Compile into blocks of eight instructions. `base` is the position where the result will
 be inserted in the target program; jump targets are absolute. The unsupported instructions
 have no correctness specification. The compiler is independent of word size and input. -/
-def compile (base : ℕ) (p : Program r) : RAM.Program :=
+def compile (base : ℕ) (p : Program .standard r) : RAM.Program :=
   List.ofFn fun k : Fin (8 * p.length) =>
     match p[k.1 / 8]? with
     | some i => compileInstr base p.length (k.1 / 8) i (k.1 % 8)
     | none => .jpos (one r) (entry base p.length)
 
 @[simp]
-theorem length_compile (base : ℕ) (p : Program r) : (compile base p).length = 8 * p.length :=
+theorem length_compile (base : ℕ) (p : Program .standard r) :
+    (compile base p).length = 8 * p.length :=
   List.length_ofFn
 
-private theorem getElem?_compile {base pc k : ℕ} {p : Program r} {i : Instr r}
+private theorem getElem?_compile {base pc k : ℕ} {p : Program .standard r} {i : Instr .standard r}
     (hi : p[pc]? = some i) (hk : k < 8) :
     (compile base p)[8 * pc + k]? = some (compileInstr base p.length pc i k) := by
   have hp : pc < p.length := List.getElem?_eq_some_iff.1 hi |>.1
@@ -230,10 +233,10 @@ private theorem reaches_jump {p : RAM.Program} {pc target : ℕ} {σ : URM.Regs}
   have h := Reaches.step (s := ⟨pc, σ⟩) hi
   simpa [RAM.Instr.exec, RAM.logCost, hσ, RAM.bitLength] using h
 
-private def BlockAt (q : RAM.Program) (base length pc : ℕ) (i : Instr r) : Prop :=
+private def BlockAt (q : RAM.Program) (base length pc : ℕ) (i : Instr .standard r) : Prop :=
   ∀ k < 8, q[entry base pc + k]? = some (compileInstr base length pc i k)
 
-private theorem BlockAt.first {q : RAM.Program} {base length pc : ℕ} {i : Instr r}
+private theorem BlockAt.first {q : RAM.Program} {base length pc : ℕ} {i : Instr .standard r}
     (h : BlockAt q base length pc i) :
     q[entry base pc]? = some (compileInstr base length pc i 0) := by
   simpa only [Nat.add_zero] using h 0 (by decide)
@@ -248,7 +251,7 @@ private theorem reaches_set_jump {q : RAM.Program} {pc target : ℕ} {x : Data r
   rw [he] at hfirst
   exact hfirst.trans (reaches_jump h1 (hσ.set d v).one)
 
-private theorem op_simulation {q : RAM.Program} {base length pc w : ℕ} {o : Op r}
+private theorem op_simulation {q : RAM.Program} {base length pc w : ℕ} {o : Op .standard r}
     {x y : Data r} {σ : URM.Regs} (hcode : BlockAt q base length pc (.op o))
     (ho : (Instr.op o).IsAdditive) (hσ : Represents x σ) (hx : x.Bounded w)
     (he : o.eval w x = some y) :
@@ -271,23 +274,26 @@ private theorem op_simulation {q : RAM.Program} {base length pc w : ℕ} {o : Op
     · simp only [compileInstr, RAM.logCost, hσ.regs, hσ.zero, RAM.bitLength_zero]
       have := hr i
       lia
-  | bin f d i j =>
-    rcases ho with rfl | rfl
-    all_goals obtain ⟨_, rfl⟩ := Data.put_eq_some.1 he
-    · refine ⟨_, (reaches_set_jump hσ hcode.first ?_ (hcode 1 (by decide))).mono ?_,
-        hσ.set d (x.regs i + x.regs j)⟩
-      · simp [compileInstr, RAM.Instr.exec, hσ.regs]
-      · simp only [compileInstr, RAM.logCost, hσ.regs]
-        have := hr i
-        have := hr j
-        lia
-    · refine ⟨_, (reaches_set_jump hσ hcode.first ?_ (hcode 1 (by decide))).mono ?_,
-        hσ.set d (x.regs i - x.regs j)⟩
-      · simp [compileInstr, RAM.Instr.exec, hσ.regs]
-      · simp only [compileInstr, RAM.logCost, hσ.regs]
-        have := hr i
-        have := hr j
-        lia
+  | alu f d args =>
+    cases f with
+    | width => cases ho
+    | bin f =>
+      rcases ho with rfl | rfl
+      all_goals obtain ⟨_, rfl⟩ := Data.put_eq_some.1 he
+      · refine ⟨_, (reaches_set_jump hσ hcode.first ?_ (hcode 1 (by decide))).mono ?_,
+          hσ.set d (x.regs (args (0 : Fin 2)) + x.regs (args (1 : Fin 2)))⟩
+        · simp [compileInstr, RAM.Instr.exec, hσ.regs]
+        · simp only [compileInstr, RAM.logCost, hσ.regs]
+          have := hr (args (0 : Fin 2))
+          have := hr (args (1 : Fin 2))
+          lia
+      · refine ⟨_, (reaches_set_jump hσ hcode.first ?_ (hcode 1 (by decide))).mono ?_,
+          hσ.set d (x.regs (args (0 : Fin 2)) - x.regs (args (1 : Fin 2)))⟩
+        · simp [compileInstr, RAM.Instr.exec, hσ.regs]
+        · simp only [compileInstr, RAM.logCost, hσ.regs]
+          have := hr (args (0 : Fin 2))
+          have := hr (args (1 : Fin 2))
+          lia
   | load d a =>
     cases he
     let σ₁ := σ.write (address r) (memoryBase r + x.regs a)
@@ -328,7 +334,6 @@ private theorem op_simulation {q : RAM.Program} {base length pc w : ℕ} {o : Op
     have := hr a
     have := hr i
     lia
-  | width => cases ho
 
 private theorem branch_simulation {q : RAM.Program} {base length pc target w : ℕ}
     {c : Cond r} {x : Data r} {σ : URM.Regs}
@@ -427,7 +432,7 @@ private theorem halt_simulation {q : RAM.Program} {base length pc w : ℕ} {i : 
     lia
   · exact URM.Regs.write_read_self _ _ _
 
-private theorem next_simulation {p : Program r} {q : RAM.Program} {base w : ℕ}
+private theorem next_simulation {p : Program .standard r} {q : RAM.Program} {base w : ℕ}
     {s t : State r} {σ : URM.Regs}
     (hcode : ∀ pc i, p[pc]? = some i → BlockAt q base p.length pc i)
     (hp : p.IsAdditive) (hσ : Represents s.data σ) (hs : s.data.Bounded w)
@@ -458,7 +463,7 @@ private theorem next_simulation {p : Program r} {q : RAM.Program} {base w : ℕ}
       exact branch_simulation hc hσ hs
     | halt i => simp [Next, WordRAM.step, hi] at h
 
-private theorem runs_simulation {p : Program r} {q : RAM.Program} {base w n : ℕ}
+private theorem runs_simulation {p : Program .standard r} {q : RAM.Program} {base w n : ℕ}
     {s t : State r} {σ : URM.Regs}
     (hcode : ∀ pc i, p[pc]? = some i → BlockAt q base p.length pc i)
     (hp : p.IsAdditive) (hσ : Represents s.data σ) (hs : s.data.Bounded w)
@@ -472,8 +477,8 @@ private theorem runs_simulation {p : Program r} {q : RAM.Program} {base w n : �
     obtain ⟨υ, hr', hυ⟩ := next_simulation hcode hp hτ (Runs.bounded hst hs) htu
     exact ⟨υ, by simpa only [Nat.add_mul, Nat.one_mul] using hr.trans hr', hυ⟩
 
-private theorem blockAt_append (pre : RAM.Program) {p : Program r} {pc : ℕ} {i : Instr r}
-    (hi : p[pc]? = some i) :
+private theorem blockAt_append (pre : RAM.Program) {p : Program .standard r} {pc : ℕ}
+    {i : Instr .standard r} (hi : p[pc]? = some i) :
     BlockAt (pre ++ compile pre.length p) pre.length p.length pc i := by
   intro k hk
   rw [List.getElem?_append_right (by dsimp [entry]; lia)]
@@ -484,7 +489,7 @@ private theorem blockAt_append (pre : RAM.Program) {p : Program r} {pc : ℕ} {i
 placed after `pre`. The initial target state represents the source state and starts at its
 compiled instruction; execution of `pre` is not included in this statement. The final
 output copy and jump past the end of the target program are included in the cost. -/
-theorem executes_compile {p : Program r} (hp : p.IsAdditive) (pre : RAM.Program)
+theorem executes_compile {p : Program .standard r} (hp : p.IsAdditive) (pre : RAM.Program)
     {w v n : ℕ} {s : State r} {σ : URM.Regs} (hσ : Represents s.data σ)
     (hs : s.data.Bounded w) (h : Executes w p s v n) :
     ∃ k, (RAM.run (pre ++ compile pre.length p) k ⟨entry pre.length s.pc, σ⟩).isHalted
@@ -523,7 +528,7 @@ def paddedInput (r : ℕ) (input : List ℕ) : List ℕ :=
 def prologue (r : ℕ) : RAM.Program := [.const (one r) 1, .const (offset r) (memoryBase r)]
 
 /-- A complete compiled program using `paddedInput`. -/
-def paddedProgram (p : Program r) : RAM.Program := prologue r ++ compile 2 p
+def paddedProgram (p : Program .standard r) : RAM.Program := prologue r ++ compile 2 p
 
 private theorem paddedInput_read_workspace (input : List ℕ) {a : ℕ} (ha : a < memoryBase r) :
     (URM.Regs.ofInputs (paddedInput r input)).read a = 0 := by
@@ -566,8 +571,8 @@ private theorem represents_prologued (input : List ℕ) :
 supplied padded register layout. The prefix itself is not charged by this theorem; the
 two-instruction prologue, compiled source execution and final output are charged. This is
 the composition interface for a separately certified input-preparation program. -/
-theorem executes_compile_from_paddedInput {p : Program r} (hp : p.IsAdditive) (pre : RAM.Program)
-    {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
+theorem executes_compile_from_paddedInput {p : Program .standard r} (hp : p.IsAdditive)
+    (pre : RAM.Program) {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
     (h : Executes w p (State.init input) v n) :
     let q := (pre ++ prologue r) ++ compile (pre.length + 2) p
     let s := RAM.State.mk pre.length (URM.Regs.ofInputs (paddedInput r input))
@@ -618,7 +623,7 @@ theorem executes_compile_from_paddedInput {p : Program r} (hp : p.IsAdditive) (p
 the source program (in fact, the constant depends only on its number of named registers).
 The input convention explicitly supplies the length and zero workspace; construction of
 that convention is not a reduction certified by this theorem. -/
-theorem haltsWithResultInTime_padded {p : Program r} (hp : p.IsAdditive)
+theorem haltsWithResultInTime_padded {p : Program .standard r} (hp : p.IsAdditive)
     {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
     (h : Executes w p (State.init input) v n) :
     RAM.HaltsWithResultInTime RAM.logCost (paddedProgram p) (paddedInput r input) v

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Logics.FirstOrder.Interpretation.Tuple
 public import Complexity.Logics.FirstOrder.ProjectionFormula
 
 /-!
@@ -28,6 +29,7 @@ as required by `Interpretation`; numeric constants can instead be represented by
 * `Projection`: a numeric interpretation and a projection formula for each output relation.
 * `Projection.toInterpretation`: the ordinary interpretation on the sum vocabularies.
 * `Projection.inputStructure`: the output input-relation structure on the numeric model.
+* `Projection.tupleInputStructure`: the output input-relation structure on the full tuple domain.
 * `Projection.onFormula`: pull back a projection formula to a projection formula.
 * `Projection.comp`: composition, with product coordinates.
 
@@ -35,7 +37,11 @@ as required by `Interpretation`; numeric constants can instead be represented by
 
 * `Projection.realize_onFormula`: projection pullback preserves truth.
 * `Projection.modelEquiv`: agreement with the ordinary interpretation of sum vocabularies.
+* `Projection.tupleModelEquiv`: isomorphism of the numeric model with the full tuple domain when
+  the numeric domain formula always holds.
 * `Projection.compEquiv`: composition agrees with successive interpretations of both vocabularies.
+* `Projection.relMap_comp_inputStructure`, `Projection.realize_comp_rel_tupleStructure`: the input
+  relations of a composite projection are those of the iterated projection.
 * `Projection.IsQF.comp`: quantifier-free relativized projections compose.
 
 ## References
@@ -187,6 +193,117 @@ noncomputable def compEquiv [Finite ι] [Finite κ]
             (J.rel R).toFormula.Realize (fun p => (x p.1).1 p.2)
           rw [ProjectionFormula.realize_relabel]
           exact I.realize_onFormula (J.rel R) (fun p => (x p.1).1 p.2) }
+
+/-- The numeric interpretation of a composite projection is the composite of the numeric
+interpretations. -/
+theorem comp_numeric [Finite ι] [Finite κ] [N'.IsRelational]
+    (J : Projection N' N'' L' L'' κ) (I : Projection N N' L L' ι) :
+    (J.comp I).numeric = J.numeric.comp I.numeric :=
+  rfl
+
+@[fo_realize]
+theorem comp_numeric_domain [Finite ι] [Finite κ] [N'.IsRelational]
+    (J : Projection N' N'' L' L'' κ) (I : Projection N N' L L' ι) :
+    (J.comp I).numeric.domain = (J.numeric.comp I.numeric).domain :=
+  rfl
+
+@[fo_realize]
+theorem comp_numeric_rel [Finite ι] [Finite κ] [N'.IsRelational]
+    (J : Projection N' N'' L' L'' κ) (I : Projection N N' L L' ι) {n : ℕ}
+    (R : N''.Relations n) :
+    (J.comp I).numeric.rel R = (J.numeric.comp I.numeric).rel R :=
+  rfl
+
+@[simp, fo_realize]
+theorem compEquiv_numeric_symm_apply_val_val [Finite ι] [Finite κ] [N'.IsRelational]
+    [N''.IsRelational] (J : Projection N' N'' L' L'' κ) (I : Projection N N' L L' ι)
+    {M : Type*} [N.Structure M] (z : (J.comp I).numeric.Model M) (j : κ) (i : ι) :
+    (((Interpretation.compEquiv J.numeric I.numeric).symm z).1 j).1 i = z.1 (j, i) :=
+  rfl
+
+/-- An input relation of a composite projection holds exactly when it holds after successive
+interpretation. -/
+@[fo_realize high]
+theorem relMap_comp_inputStructure [Finite ι] [Finite κ] [N'.IsRelational] [N''.IsRelational]
+    [L'.IsRelational] [L''.IsRelational] (J : Projection N' N'' L' L'' κ)
+    (I : Projection N N' L L' ι) {M : Type*} [N.Structure M] [L.Structure M] {n : ℕ}
+    (R : L''.Relations n) (x : Fin n → (J.comp I).numeric.Model M) :
+    ((J.comp I).inputStructure M).RelMap R x ↔
+      (@inputStructure _ _ _ _ _ J (I.numeric.Model M) _ (I.inputStructure M) _).RelMap R
+        fun i => (Interpretation.compEquiv J.numeric I.numeric).symm (x i) := by
+  let := I.inputStructure M
+  change ((I.onFormula (J.rel R)).relabel (Equiv.prodAssoc _ _ _)).toFormula.Realize _ ↔ _
+  rw [ProjectionFormula.realize_relabel]
+  exact I.realize_onFormula (J.rel R)
+    fun p => ((Interpretation.compEquiv J.numeric I.numeric).symm (x p.1)).1 p.2
+
+/-! ### Projections on all tuples -/
+
+/-- The input relations defined by a projection on all tuples `ι → M`, beside the numeric
+relations `Interpretation.tupleStructure` of its numeric interpretation. -/
+@[instance_reducible]
+def tupleInputStructure (I : Projection N N' L L' ι) (M : Type*) [N.Structure M] [L.Structure M]
+    [L'.IsRelational] : L'.Structure (ι → M) where
+  RelMap R x := (I.rel R).toFormula.Realize fun p => x p.1 p.2
+
+@[fo_realize]
+theorem relMap_tupleInputStructure [L'.IsRelational] (I : Projection N N' L L' ι) {M : Type*}
+    [N.Structure M] [L.Structure M] {n : ℕ} (R : L'.Relations n) (x : Fin n → ι → M) :
+    (I.tupleInputStructure M).RelMap R x ↔ (I.rel R).toFormula.Realize fun p => x p.1 p.2 :=
+  Iff.rfl
+
+/-- When the numeric domain formula of a projection holds of every tuple, the numeric model with
+projected input relations is isomorphic to the tuples with the numeric and input relations
+defined by the projection. -/
+def tupleModelEquiv [N'.IsRelational] [L'.IsRelational] (I : Projection N N' L L' ι) (M : Type*)
+    [N.Structure M] [L.Structure M] (hdom : ∀ x : ι → M, I.numeric.domain.Realize x) :
+    letI := I.inputStructure M
+    letI := I.numeric.tupleStructure M
+    letI := I.tupleInputStructure M
+    I.numeric.Model M ≃[N'.sum L'] (ι → M) :=
+  letI := I.inputStructure M
+  letI := I.numeric.tupleStructure M
+  letI := I.tupleInputStructure M
+  { (I.numeric.tupleModelEquiv M hdom).toEquiv with
+    map_fun' f := isEmptyElim f
+    map_rel' R x := by cases R <;> rfl }
+
+@[simp]
+theorem tupleModelEquiv_apply [N'.IsRelational] [L'.IsRelational]
+    (I : Projection N N' L L' ι) (M : Type*) [N.Structure M] [L.Structure M]
+    (hdom : ∀ x : ι → M, I.numeric.domain.Realize x) (x : I.numeric.Model M) :
+    I.tupleModelEquiv M hdom x = x.1 :=
+  rfl
+
+/-- The pullback of a projection formula along a projection whose numeric domain formula holds of
+every tuple is realized as the projection formula on tuples. -/
+theorem realize_onFormula_tupleStructure [Finite ι] [N'.IsRelational] [L'.IsRelational]
+    (I : Projection N N' L L' ι) {M : Type*} [N.Structure M] [L.Structure M]
+    (hdom : ∀ x : ι → M, I.numeric.domain.Realize x) (p : ProjectionFormula N' L' α)
+    (v : α → ι → M) :
+    letI := I.numeric.tupleStructure M
+    letI := I.tupleInputStructure M
+    (I.onFormula p).toFormula.Realize (fun q => v q.1 q.2) ↔ p.toFormula.Realize v := by
+  let := I.inputStructure M
+  let := I.numeric.tupleStructure M
+  let := I.tupleInputStructure M
+  let w : α → I.numeric.Model M := fun a => ⟨v a, hdom (v a)⟩
+  exact (I.realize_onFormula p w).trans
+    (StrongHomClass.realize_formula (I.tupleModelEquiv M hdom) p.toFormula (v := w)).symm
+
+/-- An input relation formula of a composite projection `J.comp I`, when the numeric domain
+formula of `I` holds of every tuple, is realized as that of `J` on the tuples of `I`. -/
+@[fo_realize high]
+theorem realize_comp_rel_tupleStructure [Finite ι] [Finite κ] [N'.IsRelational]
+    [L'.IsRelational] (J : Projection N' N'' L' L'' κ) (I : Projection N N' L L' ι) {M : Type*}
+    [N.Structure M] [L.Structure M] (hdom : ∀ x : ι → M, I.numeric.domain.Realize x) {n : ℕ}
+    (R : L''.Relations n) (v : Fin n × (κ × ι) → M) :
+    ((J.comp I).rel R).toFormula.Realize v ↔
+      letI := I.numeric.tupleStructure M
+      letI := I.tupleInputStructure M
+      (J.rel R).toFormula.Realize fun p i => v (p.1, p.2, i) :=
+  (ProjectionFormula.realize_relabel _ _ _).trans
+    (I.realize_onFormula_tupleStructure hdom (J.rel R) fun p i => v (p.1, p.2, i))
 
 /-- A quantifier-free relativized projection has a quantifier-free numeric interpretation and
 quantifier-free numeric guards in every input-relation definition. A classical qfp further

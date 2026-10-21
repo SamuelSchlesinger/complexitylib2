@@ -83,6 +83,20 @@ example : ((Projection.offDiagonalComplement Language.empty).comp
 /-- Closure under isomorphism is registered in the same rule set. -/
 example : IsoClosed Clique.{0} := by fo_iso_closed
 
+/-- Restrict a structure to the elements of its size relation. -/
+def restrictToSize : Interpretation sizedGraph sizedGraph Unit where
+  domain := rel₁ sizedGraph.size ()
+  rel
+    | .adj => rel₂ sizedGraph.adj (0, ()) (1, ())
+    | .size => rel₁ sizedGraph.size (0, ())
+
+/-- A two-dimensional interpretation on ordered pairs of vertices. -/
+def pairs : Interpretation sizedGraph sizedGraph (Fin 2) where
+  domain := ⊤
+  rel
+    | .adj => rel₂ sizedGraph.adj (0, 0) (1, 0) ⊓ rel₂ sizedGraph.adj (0, 1) (1, 1)
+    | .size => rel₁ sizedGraph.size (0, 0) ⊓ rel₁ sizedGraph.size (0, 1)
+
 /-! ### `fo_simp` -/
 
 section Simp
@@ -115,6 +129,75 @@ example (x y : (complementEdges.comp complementSize).Model M) :
       ¬ RelMap sizedGraph.adj ![x.1 ((), ()), y.1 ((), ())] ∧ x.1 ((), ()) ≠ y.1 ((), ()) := by
   fo_simp
 
+/-- The domain and relation formulas of a composite interpretation simplify directly. -/
+example (x : Unit × Unit → M) :
+    (complementEdges.comp complementSize).domain.Realize x := by
+  fo_simp
+
+example (x : Fin 2 × (Unit × Unit) → M) :
+    ((complementEdges.comp complementSize).rel sizedGraph.adj).Realize x ↔
+      ¬ RelMap sizedGraph.adj ![x (0, ((), ())), x (1, ((), ()))] ∧
+        x (0, ((), ())) ≠ x (1, ((), ())) := by
+  fo_simp
+
+example (x y : Unit × Unit → M) :
+    ((complementEdges.comp complementSize).tupleStructure M).RelMap sizedGraph.adj ![x, y] ↔
+      ¬ RelMap sizedGraph.adj ![x ((), ()), y ((), ())] ∧ x ((), ()) ≠ y ((), ()) := by
+  fo_simp
+
+/-- A composite with a restricted inner domain simplifies to the inner domain and relation
+propositions. -/
+example (x : Unit × Unit → M) :
+    (complementEdges.comp restrictToSize).domain.Realize x ↔
+      RelMap sizedGraph.size ![x ((), ())] := by
+  fo_simp
+
+example (x y : (complementEdges.comp restrictToSize).Model M) :
+    RelMap sizedGraph.adj ![x, y] ↔
+      ¬ RelMap sizedGraph.adj ![x.1 ((), ()), y.1 ((), ())] ∧ x.1 ((), ()) ≠ y.1 ((), ()) := by
+  fo_simp
+
+/-- Higher-dimensional interpretations simplify on the full tuple domain. -/
+example (x y : Fin 2 → M) :
+    (pairs.tupleStructure M).RelMap sizedGraph.adj ![x, y] ↔
+      RelMap sizedGraph.adj ![x 0, y 0] ∧ RelMap sizedGraph.adj ![x 1, y 1] := by
+  fo_simp
+
+example (x : Fin 2 → M) :
+    (pairs.tupleStructure M).RelMap sizedGraph.size ![x] ↔
+      RelMap sizedGraph.size ![x 0] ∧ RelMap sizedGraph.size ![x 1] := by
+  fo_simp
+
+/-- The input relations of a composite projection simplify on formulas, numeric models and full
+tuple domains. -/
+example (N : Language) [N.IsRelational] {G : Type*} [N.Structure G] [Language.graph.Structure G]
+    (x : Fin 2 × (Unit × Unit) → G) :
+    (((Projection.offDiagonalComplement N).comp (Projection.offDiagonalComplement N)).rel
+      Language.adj).toFormula.Realize x ↔
+      x (0, ((), ())) ≠ x (1, ((), ())) ∧
+        ¬(x (0, ((), ())) ≠ x (1, ((), ())) ∧
+          ¬RelMap Language.adj (fun i => x (i, ((), ())))) := by
+  fo_simp
+
+example (N : Language) [N.IsRelational] {G : Type*} [N.Structure G] [Language.graph.Structure G]
+    (x y : ((Projection.offDiagonalComplement N).comp
+      (Projection.offDiagonalComplement N)).numeric.Model G) :
+    (((Projection.offDiagonalComplement N).comp
+      (Projection.offDiagonalComplement N)).inputStructure G).RelMap Language.adj ![x, y] ↔
+      x.1 ((), ()) ≠ y.1 ((), ()) ∧
+        ¬(x.1 ((), ()) ≠ y.1 ((), ()) ∧
+          ¬RelMap Language.adj (fun i => (![x, y] i).1 ((), ()))) := by
+  fo_simp
+
+example (N : Language) [N.IsRelational] {G : Type*} [N.Structure G] [Language.graph.Structure G]
+    (x y : Unit × Unit → G) :
+    (((Projection.offDiagonalComplement N).comp
+      (Projection.offDiagonalComplement N)).tupleInputStructure G).RelMap Language.adj ![x, y] ↔
+      x ((), ()) ≠ y ((), ()) ∧
+        ¬(x ((), ()) ≠ y ((), ()) ∧
+          ¬RelMap Language.adj (fun i => (![x, y] i) ((), ()))) := by
+  fo_simp
+
 /-- A bare constructor inside a formula is well typed only after unfolding the language, and
 `fo_simp` makes no progress on it; the abbreviation `sizedGraph.adj` is rewritten. -/
 example (x : Fin 2 → M) :
@@ -133,12 +216,44 @@ example : Reduces IndependentSet.{0} Clique.{0} := by
   exact fun _ _ => exists_congr fun _ => and_congr_right fun _ =>
     ⟨fun h _ hx _ hy hxy => ⟨h hx hy hxy, hxy⟩, fun h _ hx _ hy hxy => (h hx hy hxy).1⟩
 
-/-- Restrict a structure to the elements of its size relation. -/
-def restrictToSize : Interpretation sizedGraph sizedGraph Unit where
-  domain := rel₁ sizedGraph.size ()
-  rel
-    | .adj => rel₂ sizedGraph.adj (0, ()) (1, ())
-    | .size => rel₁ sizedGraph.size (0, ())
+/-- A reduction through a composite of two concrete interpretations, proved directly by
+`fo_reduction` via `QFReduces.of_tupleStructure`. -/
+example : QFReduces Clique.{0} VertexCover.{0} := by
+  fo_reduction (complementSize.comp complementEdges) [mem_Clique, mem_VertexCover]
+  intro M _
+  let e : (Unit × Unit → M) ≃ M :=
+    { toFun := fun f => f ((), ())
+      invFun := fun x _ => x
+      left_inv := fun f => funext fun ⟨(), ()⟩ => rfl
+      right_inv := fun _ => rfl }
+  have hcard (s : Set (Unit × Unit → M)) : s.ncard = (e '' s).ncard :=
+    (Set.ncard_image_of_injective s e.injective).symm
+  have hsize : {x : Unit × Unit → M | ¬RelMap sizedGraph.size ![x ((), ())]}.ncard =
+      ({x : M | RelMap sizedGraph.size ![x]}ᶜ : Set M).ncard := by
+    rw [hcard]
+    congr 1
+    ext x
+    exact ⟨fun ⟨f, hf, hfx⟩ => hfx ▸ hf, fun hx => ⟨e.symm x, hx, rfl⟩⟩
+  refine ⟨fun ⟨s, hs, hcl⟩ => ?_, fun ⟨t, ht, hcov⟩ => ?_⟩
+  · refine ⟨e.symm '' sᶜ, ?_, fun x y hxy ⟨hnadj, _⟩ => ?_⟩
+    · rw [Set.ncard_image_of_injective _ e.symm.injective, hsize]
+      have := Set.ncard_add_ncard_compl s
+      have := Set.ncard_add_ncard_compl {x : M | RelMap sizedGraph.size ![x]}
+      omega
+    · by_contra hc
+      simp only [Set.mem_image, Equiv.symm_apply_eq, exists_eq_right, Set.mem_compl_iff,
+        not_or, not_not] at hc
+      exact hnadj (hcl hc.1 hc.2 (e.injective.ne hxy))
+  · refine ⟨(e '' t)ᶜ, ?_, fun x hx y hy hxy => ?_⟩
+    · have ht' : (e '' t).ncard = ({x : M | RelMap sizedGraph.size ![x]}ᶜ : Set M).ncard := by
+        rw [← hcard, ht, hsize]
+      have := Set.ncard_add_ncard_compl (e '' t)
+      have := Set.ncard_add_ncard_compl {x : M | RelMap sizedGraph.size ![x]}
+      omega
+    · by_contra hnadj
+      rcases hcov (e.symm x) (e.symm y) (e.symm.injective.ne hxy) ⟨hnadj, hxy⟩ with h | h
+      · exact hx ⟨e.symm x, h, rfl⟩
+      · exact hy ⟨e.symm y, h, rfl⟩
 
 /-- All structures of the vocabulary `sizedGraph`. -/
 abbrev allStructures : Set (Bundled.{0} sizedGraph.Structure) := Set.univ
@@ -151,6 +266,22 @@ example (_hK : IsoClosed allStructures) : QFReduces allStructures allStructures 
     Bundled.of (c := sizedGraph.Structure) (restrictToSize.Model M) ∈ allStructures
   exact fun _ _ => Iff.rfl
 
+/-- A composite with a restricted inner domain likewise leaves the semantic goal on `Model`. -/
+example (_hK : IsoClosed allStructures) : QFReduces allStructures allStructures := by
+  fo_reduction (complementEdges.comp restrictToSize)
+  guard_target =ₛ ∀ (M : Bundled.{0} sizedGraph.Structure) [Finite M], M ∈ allStructures ↔
+    Bundled.of (c := sizedGraph.Structure)
+      ((complementEdges.comp restrictToSize).Model M) ∈ allStructures
+  exact fun _ _ => Iff.rfl
+
+/-- A two-dimensional interpretation whose domain formula always holds reduces the semantic goal to
+the full tuple domain `Fin 2 → M`. -/
+example (_hK : IsoClosed allStructures) : QFReduces allStructures allStructures := by
+  fo_reduction pairs
+  guard_target =ₛ ∀ (M : Bundled.{0} sizedGraph.Structure) [Finite M], M ∈ allStructures ↔
+    (⟨Fin 2 → M, pairs.tupleStructure M⟩ : Bundled.{0} sizedGraph.Structure) ∈ allStructures
+  exact fun _ _ => Iff.rfl
+
 /-- An interpretation with a quantified relation: the edges of the complete graph on the
 vertices with a neighbour. -/
 noncomputable def hasNeighbour : Interpretation sizedGraph sizedGraph Unit where
@@ -160,12 +291,15 @@ noncomputable def hasNeighbour : Interpretation sizedGraph sizedGraph Unit where
     | .size => rel₁ sizedGraph.size (0, ())
 
 /-- A quantified interpretation gives a first-order reduction; for a quantifier-free reduction
-its quantifier-freeness is left open. -/
+its quantifier-freeness is left open, both alone and in a composite. -/
 example (_hK : IsoClosed allStructures) : Reduces allStructures allStructures := by
   fail_if_success
     have : QFReduces allStructures allStructures := by
       fo_reduction hasNeighbour [allStructures, Set.mem_univ]
-  fo_reduction hasNeighbour [allStructures, Set.mem_univ]
+  fail_if_success
+    have : QFReduces allStructures allStructures := by
+      fo_reduction (hasNeighbour.comp complementEdges) [allStructures, Set.mem_univ]
+  fo_reduction (hasNeighbour.comp complementEdges) [allStructures, Set.mem_univ]
 
 /-- Errors in the simp lemmas passed to `fo_reduction` are reported. -/
 example : QFReduces IndependentSet.{0} Clique.{0} := by
@@ -281,6 +415,32 @@ info: 'Cslib.Logic.FO.QFReduces.of_unitStructure' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms QFReduces.of_unitStructure
+
+/--
+info: 'Cslib.Logic.FO.QFReduces.of_tupleStructure' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms QFReduces.of_tupleStructure
+
+/--
+info: 'Cslib.Logic.FO.Reduces.of_tupleStructure' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Reduces.of_tupleStructure
+
+/--
+info: 'Cslib.Logic.FO.Interpretation.tupleModelEquiv' depends on axioms: [Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Interpretation.tupleModelEquiv
+
+/--
+info: 'Cslib.Logic.FO.Projection.tupleModelEquiv' depends on axioms: [Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Projection.tupleModelEquiv
 
 
 end ComplexityTests.FirstOrderAutomation

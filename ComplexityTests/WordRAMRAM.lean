@@ -18,14 +18,14 @@ namespace ComplexityTests.WordRAMRAM
 
 open Cslib Cslib.WordRAM
 
-private def targetResult {r : ℕ} (p : Program r) (input : List ℕ) : ℕ × Bool :=
+private def targetResult {r : ℕ} (p : Program .standard r) (input : List ℕ) : ℕ × Bool :=
   let q := ToRAM.paddedProgram p
   let s := RAM.run q 40 (RAM.State.init (ToRAM.paddedInput r input))
   (s.regs.output, decide (s.isHalted q))
 
-private def selfLoad : Program 1 := [.op (.const 0 1), .op (.load 0 0), .halt 0]
+private def selfLoad : Program .standard 1 := [.op (.const 0 1), .op (.load 0 0), .halt 0]
 
-private def selfStore : Program 1 :=
+private def selfStore : Program .standard 1 :=
   [.op (.const 0 1), .op (.store 0 0), .op (.load 0 0), .halt 0]
 
 /-- The destination of a load may also hold its address. -/
@@ -40,7 +40,7 @@ example : RAM.HaltsWithResultInTime RAM.logCost (ToRAM.paddedProgram selfLoad)
   ToRAM.haltsWithResultInTime_padded (by decide) (w := 3) (by decide)
     (Executes.of_run (fuel := 5) (by decide))
 
-private def compare (c : Cond 2) (a b : ℕ) : Program 2 :=
+private def compare (c : Cond 2) (a b : ℕ) : Program .standard 2 :=
   [.op (.const 0 a), .op (.const 1 b), .branch c 5, .op (.const 0 0), .halt 0,
     .op (.const 0 1), .halt 0]
 
@@ -79,12 +79,12 @@ example : RAM.HaltsWithResultInTime RAM.logCost (ToRAM.preparedProgram selfLoad)
     (Executes.of_run (fuel := 5) (by decide))
 
 /-- The forward theorem intentionally does not reflect source faults. -/
-example : run 1 [.op (.const (0 : Fin 1) 2), .halt 0] 4 (.init []) = none ∧
+example : run (B := .standard) 1 [.op (.const (0 : Fin 1) 2), .halt 0] 4 (.init []) = none ∧
     targetResult [.op (.const (0 : Fin 1) 2), .halt 0] [] = (2, true) := by decide
 
 /-- Falling off an empty source program faults; running off the target program halts. -/
-example : run 0 ([] : Program 1) 1 (.init []) = none ∧
-    targetResult ([] : Program 1) [] = (0, true) := by decide
+example : run 0 ([] : Program .standard 1) 1 (.init []) = none ∧
+    targetResult ([] : Program .standard 1) [] = (0, true) := by decide
 
 /-- Bare RAM input lists do not retain their length when they end in zero. -/
 example : RAM.State.init [] = RAM.State.init [0] := by

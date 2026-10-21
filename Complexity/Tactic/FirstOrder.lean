@@ -32,15 +32,23 @@ latter, so that a new reduction costs only its semantic argument.
   projection formulas and the relations of interpreted structures to propositions about the
   input structure. The relation and domain formulas of concrete interpretations and projections
   are unfolded by the simprocs `reduceInterpretationDomain`, `reduceInterpretationRel`,
-  `reduceProjectionNumeric` and `reduceProjectionRel`. Composites `J.comp I` are not unfolded:
-  the relations of their interpreted structures are rewritten to those of the iterated
-  interpretation (`Interpretation.relMap_comp_model`), and the input relations of composite
-  projections are not simplified.
+  `reduceProjectionNumeric` and `reduceProjectionRel`. Composites `J.comp I` are not unfolded
+  into raw pullback formulas: the domains, relations and input relations of composite
+  interpretations and projections are rewritten through the iterated interpretation or projection
+  (`Interpretation.realize_comp_domain`, `Interpretation.relMap_comp_model`,
+  `Projection.comp_numeric_domain`, `Projection.comp_numeric_rel`,
+  `Projection.relMap_comp_inputStructure`), simplifying directly to the full tuple domain
+  `ι → M` when `I.domain` holds of every tuple
+  (`Interpretation.realize_comp_domain_tupleStructure`,
+  `Interpretation.realize_comp_rel_tupleStructure`,
+  `Projection.realize_comp_rel_tupleStructure`).
 * `fo_reduction I` reduces a goal `FO.QFReduces K K'` or `FO.Reduces K K'` to the semantic
-  statement about the interpretation `I`, proving the side conditions it can. For a
-  one-dimensional `I` whose domain formula always holds and a class `K'` closed under isomorphism,
-  the semantic statement is about the input universe itself
-  (`FO.QFReduces.of_unitStructure`).
+  statement about the interpretation `I`, proving the side conditions it can. When `K'` is
+  closed under isomorphism and the domain formula of `I` always holds, the semantic statement is
+  about the input universe itself (`FO.QFReduces.of_unitStructure`,
+  `FO.Reduces.of_unitStructure`) for one-dimensional `I`, or about the full tuple domain `ι → M`
+  (`FO.QFReduces.of_tupleStructure`, `FO.Reduces.of_tupleStructure`) for higher-dimensional or
+  composite `I`.
 
 Relation symbols inside the formulas of an interpretation should be written as terms of their
 declared type `L.Relations n`, such as Mathlib's `Language.adj`, rather than as bare constructors
@@ -116,31 +124,30 @@ private meta def isUnfoldedProjection (e : Expr) : Bool :=
     e.isAppOf ``Cslib.Logic.FO.Interpretation.rel ||
     e.isAppOf ``Cslib.Logic.FO.Projection.numeric || e.isAppOf ``Cslib.Logic.FO.Projection.rel
 
+/-- Unfold a projection of a concrete structure instance, other than a composite, with an explicit
+equality proof so that `simp` can use the result when discharging side conditions at reducible
+transparency. -/
+private meta def reduceConcreteProjection (e : Expr) : SimpM Simp.Step := do
+  let some e' ← reduceProjOfInstance? true e | return .continue
+  return .visit { expr := e', proof? := some (← mkExpectedTypeHint (← mkEqRefl e') (← mkEq e e')) }
+
 /-- Unfold the domain formula of a concrete interpretation, other than a composite. -/
-dsimproc [fo_realize] reduceInterpretationDomain (Cslib.Logic.FO.Interpretation.domain _) :=
-  fun e => do
-    let some e ← reduceProjOfInstance? true e | return .continue
-    return .visit e
+simproc [fo_realize] reduceInterpretationDomain (Cslib.Logic.FO.Interpretation.domain _) :=
+  reduceConcreteProjection
 
 /-- Unfold a relation definition of a concrete interpretation at a relation symbol, other than a
 composite. -/
-dsimproc [fo_realize] reduceInterpretationRel (Cslib.Logic.FO.Interpretation.rel _ _) :=
-  fun e => do
-    let some e ← reduceProjOfInstance? true e | return .continue
-    return .visit e
+simproc [fo_realize] reduceInterpretationRel (Cslib.Logic.FO.Interpretation.rel _ _) :=
+  reduceConcreteProjection
 
 /-- Unfold the numeric interpretation of a concrete projection, other than a composite. -/
-dsimproc [fo_realize] reduceProjectionNumeric (Cslib.Logic.FO.Projection.numeric _) :=
-  fun e => do
-    let some e ← reduceProjOfInstance? true e | return .continue
-    return .visit e
+simproc [fo_realize] reduceProjectionNumeric (Cslib.Logic.FO.Projection.numeric _) :=
+  reduceConcreteProjection
 
 /-- Unfold a relation definition of a concrete projection at a relation symbol, other than a
 composite. -/
-dsimproc [fo_realize] reduceProjectionRel (Cslib.Logic.FO.Projection.rel _ _) :=
-  fun e => do
-    let some e ← reduceProjOfInstance? true e | return .continue
-    return .visit e
+simproc [fo_realize] reduceProjectionRel (Cslib.Logic.FO.Projection.rel _ _) :=
+  reduceConcreteProjection
 
 /-! ### Quantifier-freeness -/
 
@@ -218,7 +225,8 @@ attribute [fo_realize]
   Set.mem_ofPred_eq
   true_and and_true false_and and_false true_or or_true false_or or_false not_true_eq_false
   not_false_eq_true not_not ne_eq iff_self eq_self_iff_true implies_true true_implies
-  false_implies imp_false forall_const Bool.false_eq_true
+  false_implies imp_false forall_const Bool.false_eq_true exists_prop
+  ite_true ite_false
 
 /-- `fo_simp` simplifies with the simp set `fo_realize`, unfolding the realization of first-order
 formulas, projection formulas and the relations of interpreted structures, and the definitions of
@@ -239,6 +247,9 @@ interpretation `I`, leaving the semantic statement, simplified by `fo_simp`:
 * `∀ M [Finite M], M ∈ K ↔ ⟨M, I.unitStructure M⟩ ∈ K'`, about the input universe itself, when
   `I` is one-dimensional, `fo_simp` proves that its domain formula holds of every element of every
   finite structure, and `fo_iso_closed` proves that `K'` is closed under isomorphism;
+* `∀ M [Finite M], M ∈ K ↔ ⟨ι → M, I.tupleStructure M⟩ ∈ K'`, about the full tuple domain, when
+  `I` has coordinate type `ι`, `fo_simp` proves that its domain formula holds of every tuple of
+  every finite structure, and `fo_iso_closed` proves that `K'` is closed under isomorphism;
 * `∀ M [Finite M], M ∈ K ↔ Bundled.of (I.Model M) ∈ K'` otherwise.
 
 For `FO.QFReduces`, quantifier-freeness of `I` is proved by `fo_qf`, or left as a goal after the
@@ -256,8 +267,14 @@ macro_rules
         | (refine Cslib.Logic.FO.QFReduces.of_unitStructure $I ?sem ?qf ?iso ?dom
            case' iso => fo_iso_closed
            case' dom => (intro _ _ _ _; fo_simp; done))
+        | (refine Cslib.Logic.FO.QFReduces.of_tupleStructure $I ?sem ?qf ?iso ?dom
+           case' iso => fo_iso_closed
+           case' dom => (intro _ _ _ _; fo_simp; done))
         | refine Cslib.Logic.FO.QFReduces.of_interpretation $I ?sem ?qf
         | (refine Cslib.Logic.FO.Reduces.of_unitStructure $I ?sem ?iso ?dom
+           case' iso => fo_iso_closed
+           case' dom => (intro _ _ _ _; fo_simp; done))
+        | (refine Cslib.Logic.FO.Reduces.of_tupleStructure $I ?sem ?iso ?dom
            case' iso => fo_iso_closed
            case' dom => (intro _ _ _ _; fo_simp; done))
         | refine Cslib.Logic.FO.Reduces.of_interpretation $I ?sem

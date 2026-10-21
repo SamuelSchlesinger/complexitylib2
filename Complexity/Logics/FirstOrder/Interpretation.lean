@@ -61,8 +61,9 @@ need no reindexing.
 * `Cslib.Logic.FO.Interpretation.mapEquiv`: isomorphic structures interpret isomorphic structures.
 * `Cslib.Logic.FO.Interpretation.idEquiv`, `Cslib.Logic.FO.Interpretation.compEquiv`: the identity
   and composite interpretations, up to isomorphism.
-* `Cslib.Logic.FO.Interpretation.relMap_comp_model`: the relations of a composite interpreted
-  structure are those of the iterated one.
+* `Cslib.Logic.FO.Interpretation.realize_comp_domain`,
+  `Cslib.Logic.FO.Interpretation.relMap_comp_model`: the domain and relations of a composite
+  interpreted structure are those of the iterated one.
 
 ## Implementation notes
 
@@ -130,6 +131,16 @@ def Model : Type _ :=
   {x : ι → M // I.domain.Realize x}
 
 variable {I M}
+
+/-- Construct an element of the interpreted structure from a tuple satisfying the domain formula.
+Using this constructor rather than `Subtype.mk` keeps the syntactic type `I.Model M` at reducible
+transparency. -/
+def Model.mk (x : ι → M) (hx : I.domain.Realize x) : I.Model M :=
+  ⟨x, hx⟩
+
+@[simp, fo_realize]
+theorem Model.val_mk (x : ι → M) (hx : I.domain.Realize x) : (Model.mk x hx).1 = x :=
+  rfl
 
 theorem Model.ext {x y : I.Model M} (h : x.1 = y.1) : x = y :=
   Subtype.ext h
@@ -339,6 +350,19 @@ theorem compEquiv_symm_apply_val_val [Finite κ] (J : Interpretation L' L'' κ)
     (I : Interpretation L L' ι) (z : (J.comp I).Model M) (j : κ) (i : ι) :
     (((compEquiv J I).symm z).1 j).1 i = z.1 (j, i) :=
   rfl
+
+omit [L''.IsRelational] in
+/-- The domain formula of a composite holds of a tuple exactly when each of its blocks is in the
+domain of `I` and the blocks, as elements of the structure interpreted by `I`, satisfy the domain
+formula of `J`. -/
+@[fo_realize]
+theorem realize_comp_domain [Finite κ] (J : Interpretation L' L'' κ) (I : Interpretation L L' ι)
+    (v : κ × ι → M) :
+    (J.comp I).domain.Realize v ↔ ∃ h : ∀ j, I.domain.Realize fun i => v (j, i),
+      @Formula.Realize L' (I.Model M) _ κ J.domain fun j => Model.mk (fun i => v (j, i)) (h j) := by
+  simp only [comp, Formula.realize_inf, Formula.realize_iInf, Formula.realize_relabel]
+  exact ⟨fun h => ⟨h.1, (realize_onFormula J.domain _).1 h.2⟩,
+    fun ⟨h, h'⟩ => ⟨h, (realize_onFormula J.domain _).2 h'⟩⟩
 
 /-- A relation of a composite interpreted structure holds exactly when it holds in the iterated
 interpreted structure. -/

@@ -68,12 +68,12 @@ def spec (h w : ℕ) : Stateful.Spec where
     | .sum i => i ≤ 2 ^ h
 
 /-- Initialize constants and traversal registers, charging all seven instructions. -/
-def setup : Code 14 := ram[
+def setup : Code .standard 14 := ram[
   zero ← #0; one ← #1; two ← #2;
   ptr ← root; len ← capacity; idx ← position; ans ← #0 ]
 
 /-- One dispatcher for both operations, independent of size and word width. -/
-def dispatch : Code 14 := ram[
+def dispatch : Code .standard 14 := ram[
   ⟪setup⟫; if tag = zero then [⟪updateLoop⟫] else [⟪queryLoop⟫] ]
 
 /-- Fixed code and external argument registers. Decoding reads only the answer register. -/

@@ -86,14 +86,14 @@ structure Entry (b n i δ : ℕ) (x : Data 14) : Prop where
 
 /-- Increment one node and move to the selected child. A leaf has half-length zero;
 the resulting length stops the loop before another access. -/
-def updateBody : Code 14 := ram[
+def updateBody : Code .standard 14 := ram[
   val ← *ptr; val ← val + delta; *ptr ← val;
   len ← len / two;
   if idx < len then [ptr ← ptr + one]
   else [ptr ← ptr + len; ptr ← ptr + len; idx ← idx - len] ]
 
 /-- Fixed update code, independent of array size, position and increment. -/
-def updateLoop : Code 14 := ram[while zero < len do [⟪updateBody⟫]]
+def updateLoop : Code .standard 14 := ram[while zero < len do [⟪updateBody⟫]]
 
 /-- The data after one update iteration; this is a mathematical description, not an
 additional instruction in the machine. -/
