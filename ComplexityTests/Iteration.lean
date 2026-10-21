@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
+import Complexity.Computability.Circuit.Boolean.Iteration.CounterBatch
 import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
 import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
@@ -167,6 +168,77 @@ noncomputable def samplePrimeCycleData : PrimeCycleData 1 3 :=
 
 example : Function.Bijective samplePrimeCycleData.step :=
   samplePrimeCycleData.step_bijective
+
+-- Batched modular-counter power for r = 2 blocks of width 2 * 2 = 4.
+example (T : ℕ) :
+    ∃ out : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)),
+      out.Computes interpretation (counterBatchPower T) ∧
+        out.size ≤ 40000 * (2 + 1) ^ 3 * (2 ^ 2 + 2) :=
+  batched_counter_power T 2 (by decide)
+
+-- Empty batch (r = 0) and zero-width (k = 0) boundary cases of batched_counter_power.
+example (T k : ℕ) :
+    ∃ out : Circuit signature (0 * (k + k)) (0 * (k + k)),
+      out.Computes interpretation (counterBatchPower (r := 0) (k := k) T) ∧
+        out.size ≤ 40000 * (k + 1) ^ 3 * (2 ^ k + 0) :=
+  batched_counter_power T 0 (Nat.zero_le _)
+
+example (T : ℕ) :
+    ∃ out : Circuit signature (1 * (0 + 0)) (1 * (0 + 0)),
+      out.Computes interpretation (counterBatchPower (r := 1) (k := 0) T) ∧
+        out.size ≤ 40000 * (0 + 1) ^ 3 * (2 ^ 0 + 1) :=
+  batched_counter_power T 1 (by decide)
+
+/-- Two-block `2 * (2 + 2)`-bit state with active block 0 `(modulus = 3, residue = 2)` and
+inactive zero-modulus block 1 `(modulus = 0, residue = 1)`. -/
+def sampleTwoBlockState : BitString (2 * (2 + 2)) :=
+  fun i =>
+    if (finProdFinEquiv.symm i).1 = 0 then
+      ModulusCounter.pack (3 : BitVec 2) (2 : BitVec 2) (finProdFinEquiv.symm i).2
+    else
+      ModulusCounter.pack (0 : BitVec 2) (1 : BitVec 2) (finProdFinEquiv.symm i).2
+
+-- Block 0 advances from residue 2 by T = 2 modulo 3 to residue 1, while block 1 (modulus 0)
+-- stays fixed at residue 1.
+example :
+    counterBlock (counterBatchPower (r := 2) (k := 2) 2 sampleTwoBlockState) 0 =
+      ModulusCounter.pack (3 : BitVec 2) (1 : BitVec 2) ∧
+    counterBlock (counterBatchPower (r := 2) (k := 2) 2 sampleTwoBlockState) 1 =
+      ModulusCounter.pack (0 : BitVec 2) (1 : BitVec 2) := by
+  constructor <;> funext b <;> revert b <;> decide
+
+-- Concrete nonidentity proof for `ModulusCounter.power (k := 2) 1` and instantiation of the
+-- `r ≤ c.size` bound (`counterBatch_size_ge_of_ne_id` and `counterBatch_lower_bounds`).
+theorem power_one_two_ne_id : ModulusCounter.power (k := 2) 1 ≠ id := by
+  intro h
+  have hbit := congrFun (congrFun h (ModulusCounter.pack (2 : BitVec 2) (0 : BitVec 2)))
+    (Fin.natAdd 2 ⟨0, by decide⟩)
+  revert hbit
+  decide
+
+example (c : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)))
+    (hc : c.Computes interpretation (counterBatchPower (r := 2) (k := 2) 1)) :
+    2 ≤ c.size :=
+  counterBatch_size_ge_of_ne_id 1 power_one_two_ne_id c hc
+
+example (c : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)))
+    (hc : c.Computes interpretation (counterBatchPower (r := 2) (k := 2) 1)) :
+    (∃ out : Circuit signature (2 + 2) (2 + 2),
+      out.Computes interpretation (ModulusCounter.power 1) ∧ out.size ≤ c.size) ∧
+    2 ≤ c.size := by
+  obtain ⟨hsingle, hbatch⟩ := counterBatch_lower_bounds 1 (by decide : 0 < 2) c hc
+  exact ⟨hsingle, hbatch power_one_two_ne_id⟩
+
+-- Combined upper and lower bounds for batched hard counter powers at k = 64.
+example :
+    ∃ T < ModulusCounter.period 64, ∀ r, 0 < r → r ≤ 2 ^ (64 + 64) →
+      (∃ out : Circuit signature (r * (64 + 64)) (r * (64 + 64)),
+        out.Computes interpretation (counterBatchPower T) ∧
+          out.size ≤ 40000 * (64 + 1) ^ 3 * (2 ^ 64 + r)) ∧
+      ∀ c : Circuit signature (r * (64 + 64)) (r * (64 + 64)),
+        c.Computes interpretation (counterBatchPower T) →
+          lowerBudget 64 < c.size ∧ r ≤ c.size :=
+  batched_hard_counter_power 64 (by decide)
 
 /-! ### Axioms -/
 
@@ -344,5 +416,54 @@ info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycles.near_landau_lower_bound' dep
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms PrimeCycles.near_landau_lower_bound
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterRemainder_of_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterRemainder_of_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterPower_of_remainder' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterPower_of_remainder
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.batched_counter_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms batched_counter_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterPower_of_batched' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterPower_of_batched
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterBatch_size_ge_of_ne_id' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterBatch_size_ge_of_ne_id
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterBatch_lower_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterBatch_lower_bounds
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.batched_hard_counter_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms batched_hard_counter_power
 
 end ComplexityTests.Iteration
