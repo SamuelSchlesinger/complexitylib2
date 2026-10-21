@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.Parameterized
+import Complexity.Computability.Complexity.Parameterized.VertexCover
 
 /-!
 # Tests: fixed-parameter tractability
@@ -12,7 +12,9 @@ import Complexity.Computability.Complexity.Parameterized
 `SAT` and `k`-SAT in `FPT` and `XP` for the number of variables, and for a larger parameter; a
 problem in `P` in `FPT` for every parameter; the classes for a bounded parameter; a concrete
 fpt-reduction from 3SAT to SAT, its composition with itself, and the closure of `FPT` under it;
-Boolean closure on concrete problems; and the axioms of the headline theorems.
+Boolean closure on concrete problems; kernelizations (`IsKernelization`, `HasKernel`,
+`HasPolyKernel`) and the Cai–Chen–Downey–Fellows equivalence; `VertexCover` by bounded search tree;
+and the axioms of the headline theorems.
 -/
 
 namespace ComplexityTests.Parameterized
@@ -125,6 +127,81 @@ example : FPTReducible encCNF encCNF CNF.numVars CNF.numVars ThreeSAT ThreeSAT :
 example : FPTReducible encCNF encCNF CNF.numVars CNF.numVars ThreeSAT SAT :=
   threeSAT_fptReducible_SAT.trans (.refl _ _ _)
 
+/-! ### Kernelization -/
+
+example : HasKernel encCNF CNF.numVars SAT := hasKernel_of_mem_FPT SAT_mem_FPT
+
+example : HasPolyKernel encCNF CNF.numVars Narrow := hasPolyKernel_of_mem_P narrow_mem_P
+
+example : HasKernel encCNF CNF.numVars Narrow := (hasPolyKernel_of_mem_P narrow_mem_P).hasKernel
+
+/-- A concrete kernelization for `Narrow`: map every narrow formula to `[]` and every other formula
+to a single four-literal clause. -/
+private def narrowNo : CNF ℕ := [[(0, true), (0, true), (0, true), (0, true)]]
+
+private def narrowKernel (φ : CNF ℕ) : CNF ℕ :=
+  if φ.all (fun c => decide (c.length ≤ 3)) then [] else narrowNo
+
+private theorem isKernelization_narrowKernel :
+    IsKernelization encCNF CNF.numVars Narrow narrowKernel
+      fun _ => (encCNF ([] : CNF ℕ)).length + (encCNF narrowNo).length + 1 := by
+  refine ⟨ComputableTidilyInPolyTime.ite' (computableTidilyInPolyTime_all_length_le 3)
+    (ComputableTidilyInPolyTime.const []) (ComputableTidilyInPolyTime.const narrowNo),
+    fun φ => ?_, fun φ => ?_, fun φ => ?_⟩
+  · unfold narrowKernel
+    by_cases hφ : ∀ c ∈ φ, c.length ≤ 3
+    · have hw : (φ.all fun c => decide (c.length ≤ 3)) = true := by simpa using hφ
+      simp only [hw, ↓reduceIte]
+      exact ⟨fun _ => hφ, fun _ _ hc => by simp at hc⟩
+    · have hw : (φ.all fun c => decide (c.length ≤ 3)) = false := by simpa using hφ
+      simp only [hw, Bool.false_eq_true, ↓reduceIte]
+      refine ⟨fun h => ?_, fun h => (hφ h).elim⟩
+      have := h [(0, true), (0, true), (0, true), (0, true)] (by simp [narrowNo])
+      simp at this
+  · unfold narrowKernel
+    split_ifs <;> omega
+  · unfold narrowKernel
+    split_ifs
+    · have : CNF.numVars ([] : CNF ℕ) = 0 := by decide
+      omega
+    · have : CNF.numVars narrowNo = 1 := by decide
+      omega
+
+example : FPTReducible encCNF encCNF CNF.numVars CNF.numVars Narrow Narrow :=
+  isKernelization_narrowKernel.fptReducible
+
+example : Narrow ∈ FPT encCNF CNF.numVars ↔ HasKernel encCNF CNF.numVars Narrow := by
+  obtain ⟨k, hk⟩ := mem_P_iff_exists_mem_DTIME.mp narrow_mem_P
+  exact mem_FPT_iff_hasKernel hk
+
+/-! ### Vertex cover parameterized by target size -/
+
+/-- The triangle on `{0, 1, 2}`. -/
+private def triangle : Graph := ([0, 1, 2], [(0, 1), (1, 2), (0, 2)])
+
+example : VertexCover.search (triangle, 1) = false := by decide
+
+example : VertexCover.search (triangle, 2) = true := by decide
+
+example : VertexCover.search (triangle, 3) = true := by decide
+
+/-- Targets exceeding the number of distinct declared vertices are rejected. -/
+example : VertexCover.search (triangle, 4) = false := by decide
+
+example : (triangle, 2) ∈ VertexCover :=
+  (VertexCover.search_eq_true_iff (triangle, 2)).mp (by decide)
+
+example : (triangle, 1) ∉ VertexCover := by
+  rw [← VertexCover.search_eq_true_iff]
+  decide
+
+example : DecidableInExpTime VertexCover (encPair encGraph encNat) Prod.snd 1 :=
+  VertexCover_decidableInExpTime_one
+
+example : VertexCover ∈ FPT (encPair encGraph encNat) Prod.snd := VertexCover_mem_FPT
+
+example : HasKernel (encPair encGraph encNat) Prod.snd VertexCover := VertexCover_hasKernel
+
 /-! ### Axioms -/
 
 /--
@@ -190,5 +267,68 @@ info: 'Cslib.Complexity.FPTReducible.mem_XP' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.FPTReducible.mem_XP
+
+/--
+info: 'Cslib.Complexity.IsKernelization.mem_FPT' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.IsKernelization.mem_FPT
+
+/--
+info: 'Cslib.Complexity.HasKernel.mem_FPT' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.HasKernel.mem_FPT
+
+/--
+info: 'Cslib.Complexity.hasKernel_of_mem_FPT' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.hasKernel_of_mem_FPT
+
+/--
+info: 'Cslib.Complexity.mem_FPT_iff_hasKernel' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.mem_FPT_iff_hasKernel
+
+/--
+info: 'Cslib.Complexity.hasPolyKernel_of_mem_P' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.hasPolyKernel_of_mem_P
+
+/--
+info: 'Cslib.Complexity.VertexCover.search_eq_true_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.VertexCover.search_eq_true_iff
+
+/--
+info: 'Cslib.Complexity.VertexCover_decidableInExpTime_one' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.VertexCover_decidableInExpTime_one
+
+/--
+info: 'Cslib.Complexity.VertexCover_mem_FPT' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.VertexCover_mem_FPT
+
+/--
+info: 'Cslib.Complexity.VertexCover_hasKernel' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.VertexCover_hasKernel
 
 end ComplexityTests.Parameterized
