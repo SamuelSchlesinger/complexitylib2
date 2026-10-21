@@ -342,6 +342,36 @@ consequences and first-order-reduction formulation remain outstanding.
 \end{result}
 
 \begin{result}
+\textbf{Uniform compilation of polynomial-time function families.}
+Let $\mathrm{enc}:\alpha\hookrightarrow\{0,1\}^*$ be any injective instance encoding.
+Suppose $n,m:\alpha\to\mathbb N$ are polynomial-time computable in unary, and
+$F:\alpha\times\{0,1\}^*\to\{0,1\}^*$ is polynomial-time computable under
+\texttt{encPair enc encBits} and \lean{encBits}, using the tidy deterministic
+multi-tape machine model. There is a family of De Morgan circuits $C_a$ with
+$n(a)$ inputs and $m(a)$ designated outputs whose codes are polynomial-time
+computable from $\mathrm{enc}(a)$, such that on every input $x\in\{0,1\}^{n(a)}$,
+output $j<m(a)$ is the $j$th bit of $F(a,x)$, or false if that bit is absent.
+In particular, if $|F(a,x)|=m(a)$ on the input cube, the whole output is exactly
+$F(a,x)$. No decoder or efficient recognition test for the instance encoding's
+image is assumed.
+
+The compiler reuses the uniform tableau writer and existing circuit composition.
+Its raw-code adapters hardwire an input prefix with exactly two shared constant
+gates, combine circuits on shared inputs, and bundle equal-sized blocks.
+Their construction times are certified with binary wire numbers and layout
+parameters. The resulting family construction is polynomial-time; no depth bound,
+optimized gate bound, or runtime claim about Lean's compiled implementation is made.
+The machine simulation follows Ladner's construction and the standard
+polynomial-time-to-circuit argument; machine certification builds on
+Reitwiessner's tidy calculus.\citep{Ladner1975,AroraBarak09,Papadimitriou94}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean}{262}{Cslib.Complexity.CircuitValue.computableTidilyInPolyTime_tableauCode}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean}{278}{Cslib.Complexity.CircuitValue.exists_uniformCircuits}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Complexity/Problems/CircuitValue/Compilation.lean}{145}{Cslib.Complexity.CircuitValue.exists_uniformCircuitFamily}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Circuit/Boolean/CodeSubstitution.lean}{196}{Cslib.Circuits.Boolean.computableTidilyInPolyTime_prefixCode}
+\declat{6a876b763741dca919a10269bda361b5ce184522}{Complexity/Computability/Circuit/Boolean/CodeComposition.lean}{223}{Cslib.Circuits.Boolean.computableTidilyInPolyTime_bundleCode}
+\end{result}
+
+\begin{result}
 \subsection{Monotone Circuit Value}
 Monotone Circuit Value is $\cc{P}$-complete under logarithmic-space many-one
 reductions. Instances are well-formed circuits over constants and binary AND/OR,
