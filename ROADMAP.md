@@ -488,7 +488,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   growth. Carry over the remaining extractor developments, recording each endpoint's hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
-  The exact [inner-product activity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean),
+  The exact [inner-product and rectangle-density activity bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/InnerProduct.lean)
+  (including [shifted-baseline activity](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activity.lean)
+  and [decision-tree affine leaf scores](Complexity/Computability/DecisionTree/AffineScore.lean)),
   [native scalar-capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/CapacityCircuit.lean)
   (including the single-direction, direction-run, and multilevel threshold capacity corollaries),
   [mixed-activation capacity bound](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Activation.lean),
