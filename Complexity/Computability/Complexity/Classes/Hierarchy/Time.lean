@@ -38,7 +38,7 @@ Decoding a description of `L` bits takes time polynomial in `L`, of a degree fix
 hence `O(2 ^ L)`, which is `O(n)` on short descriptions; padded descriptions are short.
 
 The native universal machine simulates `J` steps of a description of length `B` within time
-`O(B ^ 5 * J ^ 3)` (`Cslib.Complexity.Diagonal.universal_bounds_le`), so the problem decided by
+`O(B ^ 5 * J ^ 3)` (`Turing.MultiTapeTM.Universal.universal_bounds_le`), so the problem decided by
 `timeDiagonal J` is in `DTIME ((n + 1) ^ 5 * (J n + 1) ^ 3)` for a time-constructible clock `J`
 (`Cslib.Complexity.setOf_timeDiagonal_mem_DTIME`). It is not in `DTIME f` when every `c * f n + c`
 is eventually below `J n`, by the diagonal argument
@@ -454,7 +454,7 @@ theorem clockedBounds_aux (cA cD cO C₂ : ℕ) : ∃ K, ∀ {n A D N J L I E : 
     hD.trans ((Nat.mul_le_mul_left cD (show n + A + 1 ≤ (cA + 1) * (n + 1) by
       have : (cA + 1) * (n + 1) = cA * (n + 1) + (n + 1) := by ring
       omega)).trans (le_of_eq (by ring)))
-  obtain ⟨hU₁, hU₂⟩ := universal_bounds_le (D := D) (N := N) (J := J + 1)
+  obtain ⟨hU₁, hU₂⟩ := Turing.MultiTapeTM.Universal.universal_bounds_le (D := D) (N := N) (J := J + 1)
     (B := P * (n + 1) - 1) (L := 0) (by omega) (by omega) (Nat.zero_le _) (by omega)
   have hPX1 : 1 ≤ P * (n + 1) := by omega
   rw [Nat.sub_add_cancel hPX1] at hU₁ hU₂
