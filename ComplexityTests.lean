@@ -40,6 +40,8 @@ import ComplexityTests.Code
 import ComplexityTests.Code.Concatenation
 import ComplexityTests.Code.Johnson
 import ComplexityTests.Code.M3
+import ComplexityTests.CodeComposition
+import ComplexityTests.CodeSubstitution
 import ComplexityTests.CoinTape
 import ComplexityTests.CombinatorialBounds
 import ComplexityTests.CommunicationComplexity
@@ -99,6 +101,8 @@ import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
+import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
 import ComplexityTests.Fusion
@@ -297,6 +301,7 @@ import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
 import ComplexityTests.TFNP
+import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
 import ComplexityTests.TapePolyTime
 import ComplexityTests.ThreeCNF
@@ -312,6 +317,7 @@ import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
+import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.WPP
