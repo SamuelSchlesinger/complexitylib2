@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
+public import Complexity.Computability.Circuit.Replication
 
 /-!
 # Iterating for a number of steps given as input
@@ -24,6 +25,10 @@ of size `40000 * powerBudget n s (2 ^ n) L`, an `m`-bit time costs at most
 (`variable_time_optimized`). The cost is linear in `m`; a bound additive in `m`, which first
 reduces the time modulo the cycle length, is `variable_time_additive` in `Iteration.LongTime`.
 
+The general synthesis rule allows a batch of states with separate time bits, charging one shared
+power circuit and four gates per state bit at each stage. Scalar binary powering is its
+one-member specialization, using one copy of each supplied scalar power circuit.
+
 The circuits are native De Morgan circuits: every NOT, AND and OR gate and every constant is
 charged, while wiring and fanout are free. They exist for each `m`, because the fixed-power
 circuits do; nothing here bounds the time to construct them.
@@ -35,15 +40,16 @@ circuits do; nothing here bounds the time to construct them.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.Iteration.synthesis_binary_powering`: binary powering from circuits for
-  the powers `f^[2 ^ j]`.
+* `Cslib.Circuits.Boolean.Iteration.synthesis_batched_binary_powering`: binary powering with
+  one shared power circuit per stage and a separate time for each batch member.
+* `Cslib.Circuits.Boolean.Iteration.synthesis_binary_powering`: its scalar specialization.
 * `Cslib.Circuits.Boolean.Iteration.binary_powering`: its circuit form.
 * `Cslib.Circuits.Boolean.Iteration.variable_time`,
   `Cslib.Circuits.Boolean.Iteration.variable_time_optimized`: input times through fixed powers.
 
 ## References
 
-* Adapted from `lean/Proofs/{VariableTime,BinaryNumbers}.lean` in
+* Adapted from `lean/Proofs/{VariableTime,BinaryNumbers,BatchVariableTime}.lean` in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/
@@ -94,6 +100,70 @@ theorem iterate_toNat_word_mod_two_pow_succ {α : Type*} (f : α → α) (bits :
   · rw [← Function.iterate_add_apply, Nat.add_comm]
   · rfl
 
+section
+
+variable {r a : ℕ}
+
+/-- **Batched binary powering.** If every batched power `f^[2 ^ j]` with `j < m` has a circuit of
+size at most `C`, then `r` available states, each with its own time given by `m` available bits,
+cost at most `m * (C + 4 * r * n)` gates. -/
+theorem synthesis_batched_binary_powering (f : BitString n → BitString n) (C : ℕ)
+    (hpowers : ∀ j < m, ∃ c : Circuit signature (r * n) (r * n),
+      c.Computes interpretation (blockMap f^[2 ^ j] r) ∧ c.size ≤ C)
+    (s : Set (BooleanFunction a)) (init : BitString a → Fin r → BitString n)
+    (bits : BitString a → Fin r → BitString m)
+    (hi : ∀ member bit, (fun x => init x member bit) ∈ s)
+    (hb : ∀ member j, (fun x => bits x member j) ∈ s) :
+    Synthesis interpretation s
+      (⋃ member, wires fun x => f^[(word (bits x member)).toNat] (init x member))
+      (m * (C + 4 * (r * n))) := by
+  let state := fun j x member => f^[(word (bits x member)).toNat % 2 ^ j] (init x member)
+  let q := fun j => ⋃ member, wires fun x => state j x member
+  have hz : q 0 ⊆ s := by
+    intro g hg
+    obtain ⟨member, bit, rfl⟩ := Set.mem_iUnion.mp hg
+    simpa only [state, pow_zero, Nat.mod_one, Function.iterate_zero, id_eq] using hi member bit
+  have hstep (j : ℕ) (hj : j < m) :
+      Synthesis interpretation (s ∪ Synthesis.stages q j) (q (j + 1)) (C + 4 * (r * n)) := by
+    obtain ⟨pow, hp, hs⟩ := hpowers j hj
+    let src := s ∪ Synthesis.stages q j
+    have hav (member : Fin r) (bit : Fin n) : (fun x => state j x member bit) ∈ src :=
+      Or.inr (Synthesis.subset_stages q le_rfl (Set.mem_iUnion.mpr ⟨member, bit, rfl⟩))
+    let packed := fun x i => state j x (finProdFinEquiv.symm i).1 (finProdFinEquiv.symm i).2
+    have hpow := Synthesis.circuit (I := interpretation) (s := src) pow (fun i x => packed x i)
+      fun i => hav _ _
+    let src' := src ∪ Set.range fun o x => pow.eval interpretation (packed x) o
+    have hout (member : Fin r) : wires (fun x => f^[2 ^ j] (state j x member)) ⊆ src' := by
+      rintro _ ⟨bit, rfl⟩
+      refine Or.inr ⟨finProdFinEquiv (member, bit), funext fun x => ?_⟩
+      have hd : directProductInput (packed x) member = state j x member := by
+        funext i
+        simp only [directProductInput, packed, Equiv.symm_apply_apply]
+      change pow.eval interpretation (packed x) _ = _
+      rw [hp (packed x), blockMap_apply, hd]
+    have hmux := Synthesis.iUnion (I := interpretation) (s := src')
+      (fun member => wires fun x => if bits x member ⟨j, hj⟩ then f^[2 ^ j] (state j x member)
+        else state j x member) (fun _ => 4 * n) fun member =>
+      synthesis_bits_mux src' _ _ _ (hout member)
+        (by rintro _ ⟨bit, rfl⟩; exact Or.inl (hav member bit))
+        (Or.inl (Or.inl (hb member ⟨j, hj⟩)))
+    have he : (⋃ member, wires fun x => if bits x member ⟨j, hj⟩ then
+        f^[2 ^ j] (state j x member) else state j x member) = q (j + 1) := by
+      congr 1
+      funext member
+      congr 1
+      funext x
+      exact (iterate_toNat_word_mod_two_pow_succ f (bits x member) hj (init x member)).symm
+    rw [he] at hmux
+    refine (hpow.trans hmux).mono Set.Subset.rfl Set.Subset.rfl ?_
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+    nlinarith
+  have h := (Synthesis.steps q _ m hz hstep).mono Set.Subset.rfl
+    (Synthesis.subset_stages q le_rfl) le_rfl
+  simpa only [q, state, Nat.mod_eq_of_lt (word _).isLt] using h
+
+end
+
 /-- **Binary powering.** If every power `f^[2 ^ j]` with `j < m` has a circuit of size at most
 `C`, then `T` steps of `f` from an available state, with `T` given by `m` available bits, cost at
 most `m * (C + 4 * n)` gates: one power circuit and one multiplexer per bit. -/
@@ -104,30 +174,18 @@ theorem synthesis_binary_powering {a : ℕ} (f : BitString n → BitString n) (C
     (bits : BitString a → BitString m) (hi : wires init ⊆ s) (hb : wires bits ⊆ s) :
     Synthesis interpretation s (wires fun x => f^[(word (bits x)).toNat] (init x))
       (m * (C + 4 * n)) := by
-  let state := fun j x => f^[(word (bits x)).toNat % 2 ^ j] (init x)
-  let q := fun j => wires (state j)
-  have hz : q 0 ⊆ s := by simpa only [q, state, pow_zero, Nat.mod_one,
-    Function.iterate_zero, id_eq] using hi
-  have hstep (j : ℕ) (hj : j < m) :
-      Synthesis interpretation (s ∪ Synthesis.stages q j) (q (j + 1)) (C + 4 * n) := by
-    obtain ⟨pow, hp, hs⟩ := hpowers j hj
-    let src := s ∪ Synthesis.stages q j
-    have hav : wires (state j) ⊆ src := fun _ h => Or.inr (Synthesis.subset_stages q le_rfl h)
-    have hpow := Synthesis.circuit (I := interpretation) (s := src) pow (fun i x => state j x i)
-      (fun i => hav ⟨i, rfl⟩)
-    have hmux := synthesis_bits_mux (src ∪ wires fun x => pow.eval interpretation (state j x))
-      (fun x => pow.eval interpretation (state j x)) (state j) (fun x => bits x ⟨j, hj⟩)
-      (fun _ h => Or.inr h) (fun _ h => Or.inl (hav h)) (Or.inl (Or.inl (hb ⟨⟨j, hj⟩, rfl⟩)))
-    have he : (fun x => if bits x ⟨j, hj⟩ then pow.eval interpretation (state j x)
-        else state j x) = state (j + 1) := by
-      funext x
-      rw [hp]
-      exact (iterate_toNat_word_mod_two_pow_succ f (bits x) hj (init x)).symm
-    rw [he] at hmux
-    exact (hpow.trans hmux).mono Set.Subset.rfl Set.Subset.rfl (Nat.add_le_add_right hs _)
-  have h := (Synthesis.steps q _ m hz hstep).mono Set.Subset.rfl
-    (Synthesis.subset_stages q le_rfl) le_rfl
-  simpa only [q, state, Nat.mod_eq_of_lt (word _).isLt] using h
+  have hpowers' : ∀ j < m, ∃ c : Circuit signature (1 * n) (1 * n),
+      c.Computes interpretation (blockMap f^[2 ^ j] 1) ∧ c.size ≤ C := by
+    intro j hj
+    obtain ⟨c, hc, hs⟩ := hpowers j hj
+    refine ⟨c.replicate 1, ?_, by simpa using hs⟩
+    intro x
+    rw [Circuit.eval_replicate,
+      show c.eval interpretation = f^[2 ^ j] from funext hc]
+  simpa only [Set.iUnion_const, Nat.one_mul] using
+    synthesis_batched_binary_powering (r := 1) f C hpowers' s
+      (fun x _ => init x) (fun x _ => bits x)
+      (fun _ bit => hi ⟨bit, rfl⟩) (fun _ j => hb ⟨j, rfl⟩)
 
 /-- **Binary powering**, as a circuit on `n + m` inputs. -/
 theorem binary_powering (f : BitString n → BitString n) (m C : ℕ)
