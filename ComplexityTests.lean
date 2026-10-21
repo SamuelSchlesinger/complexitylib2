@@ -76,6 +76,7 @@ import ComplexityTests.DataStructureQueue
 import ComplexityTests.DataStructureRetroactive
 import ComplexityTests.DecisionTree
 import ComplexityTests.DenseMask
+import ComplexityTests.DependentTable
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
 import ComplexityTests.ElementDistinctnessRAM
@@ -174,6 +175,7 @@ import ComplexityTests.MassProduction.Menu
 import ComplexityTests.MassProduction.Pipeline
 import ComplexityTests.MassProduction.Scheduler
 import ComplexityTests.MassProduction.Uhlig
+import ComplexityTests.MathlibTM2
 import ComplexityTests.MemoizePPT
 import ComplexityTests.ModularGap
 import ComplexityTests.MonotoneCircuitValue
