@@ -347,6 +347,7 @@ import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMBasis
+import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
 import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums

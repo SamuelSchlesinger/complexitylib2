@@ -94,7 +94,11 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   certificates. Its queue and reset-and-replay constructions deliberately count backend calls;
   arbitrary pure continuations do not have machine-time certificates. `CostHoare` adds client
   operation-cost contracts and separate method-budget composition. The `stateful` Aesop rules
-  support these contracts; connecting them to `polytime` controller certificates remains open.
+  support these contracts. `WordRAM/Controller` adds fixed-code client refinements with charged
+  preparation, control flow and final halt; the adaptive stack example constructs its empty
+  representation from the standard input. `WordRAM/Function` gives a separate uniform RAM
+  function-time predicate, with named-certificate reuse by `polytime`. Arbitrary continuation
+  synthesis, iterative clients and a Turing-machine simulation remain open.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
   Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;

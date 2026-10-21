@@ -61,8 +61,11 @@ private meta def pptCertificate : Aesop.RuleTac :=
 @[aesop safe -20 tactic (rule_sets := [PPT])]
 private meta def pptFunProp : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
-    unless (← getMainTarget).isAppOf ``IsPPTOn do
+    let target := (← instantiateMVars (← getMainTarget)).consumeMData
+    unless target.isAppOf ``IsPPTOn do
       throwError "expected an encoded-input PPT goal"
+    if target.getAppArgs[2]!.hasExprMVar then
+      throwError "input encoding is not yet determined"
     evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
 
 attribute [program_certificate]
@@ -91,6 +94,8 @@ attribute [aesop unsafe 80% apply (rule_sets := [PPT])]
   IsPPTOn.iterateWith_of_bounded_growth
 
 /-- Certify a probabilistic program using proved sampling, composition and deterministic rules. -/
-macro "ppt" : tactic => `(tactic| solve | aesop (rule_sets := [PPT, PolyTime]))
+macro "ppt" : tactic => `(tactic| solve |
+  aesop (config := { terminal := true, assumptionTransparency := .reducible })
+    (rule_sets := [PPT, PolyTime]))
 
 end Cslib.Tactic.PPT

@@ -2009,3 +2009,33 @@ The design-only independent review is issue #136 comment 6304677099. Exact-sourc
 final semantic-index review, six-gate validation and rendered PDF/provenance evidence are recorded
 in the linked PR. AI review does not imply human editorial approval or a Lean proof of prose
 equivalence. Generated PDFs remain outside Git.
+
+## 2026-10-21: Charged adaptive RAM controllers (#280)
+
+Worker `worker-controller-20261021` and authoring subagent `/root/controller_scout`, using
+OpenAI Codex, add the fixed-code controller refinement and uniform word-valued RAM-time
+certificates. The source revision is `73b30ec4371e6bd75592ed6f98d89900f486bcb9`, tree
+`3c3baf8d008eb5569abe8584f7577d18f6adeb1d`; it exactly matches the tested local source
+`3e4cb7cc8dd4213ba0cdbf38745cad6d84b86157` apart from publication commit metadata.
+All six strict gates passed on this source over main `9e161a05` (session 50678, exit 0).
+The global axiom audit and four named guards pass. Tests instantiate charged calls, adaptive
+argument passing, bind, branches and initialization; reject an insufficient budget; and check
+named certificate reuse and separation between RAM and Turing-machine predicates.
+
+Independent nonauthor reviewer `/root/controller_review` approved the final API, correctness,
+tests and index against the exact published source. Two documentation nits were resolved:
+standard input memory placement is the machine convention, while register loading is charged;
+arbitrary refinement entry data requires word-boundedness through its entry assertion.
+A representation-preserving source link was added alongside the halting execution link.
+The review confirms the fixed continuation code, real argument-preparation executions,
+49/29 exact total instructions, empty final stack, numerical-magnitude size parameter,
+logarithmic threshold and universal input-fit witness. No arbitrary host-continuation or
+Turing-machine simulation theorem is asserted. Quang Dao's FreeM and the existing credited
+stack/word-RAM execution substrate are reused; this example is a composition test.
+
+The changed local rendering was inspected independently on pages 84–85, and all five new PDF
+annotations were checked against published source lines 84, 155, 170, 182 and 211. PDF SHA256:
+`583aaca3cfffc9693bed4b9bf796de9f52695403bca272c05abcdb83436dafe2` (112 pages).
+The source and rendered entry have no unresolved review findings. The CI theorem-index
+artifact/provenance inspection and coordinator integration approval remain separate gates;
+AI review does not imply human editorial approval. Generated artifacts remain unversioned.

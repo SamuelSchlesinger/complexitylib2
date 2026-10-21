@@ -552,14 +552,22 @@ Jukna coverage below is an additional target beyond the V1 port:
   and [batched modular-counter upper and lower bounds](Complexity/Computability/Circuit/Boolean/Iteration/CounterBatch.lean)
   are also implemented. Nonuniform circuit
   existence does not certify the preprocessing algorithm's runtime.
-* **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean),
+* **Rational hitting-list runtime.** The [rational-matrix hitting lists](Complexity/Computability/Circuit/Rational.lean)
+  are ported, and the [generator parameter certificates](Complexity/Computability/Circuit/Rational/Runtime/Parameters.lean),
   [binary integer arithmetic](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Int/Binary.lean),
-  [binary division and remainder](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean),
-  [Euclidean GCD](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean), and
+  polynomial-time staged division-free integer determinant `detRows_polytime`
+  ([Runtime/Determinant](Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean)),
+  [binary division and remainder](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean)
+  (`binary_divMod`, `binary_div`, `binary_mod`),
+  [Euclidean GCD](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean)
+  (`binary_gcd`), and
   [canonical natural and reduced-rational encoding certificates](Complexity/Computability/Circuit/Rational/Runtime/Encode.lean)
-  are ported; certify the remaining tuple-list generator's polynomial runtime, charging all
-  intermediate arithmetic and storage growth. Carry over the remaining extractor developments,
-  recording each endpoint's hypotheses.
+  (`encodeNat_polytime`, `encodeDivInt_polytime`) are proved. Remaining runtime milestones:
+  polynomial-time certificates for the [integer lift tables](Complexity/Computability/Circuit/Rational/Runtime/Lift.lean)
+  (`liftRows_polytime`), per-point Cramer output words (`matrixEntry_polytime`), and grid
+  enumeration for the full generator endpoint (`hittingList_polytime`), charging all arithmetic and
+  storage growth. Carry over the remaining extractor developments, recording each endpoint's
+  hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),
@@ -722,8 +730,19 @@ rules retain answer-dependent costs; separate method budgets transport contracts
 successive semantic modules and then to additive native execution measures. The `stateful`
 tactic uses local contracts and structural rules, with intermediate assertions and implementation
 choices supplied explicitly. A two-layer adaptive counter example checks both execution branches
-and rejects an insufficient budget. This is the first #274 milestone: integration with `polytime`
-certificates for client controllers, pure computations and calling conventions remains open.
+and rejects an insufficient budget.
+
+[RAM controller certificates](Complexity/Computability/WordRAM/Controller.lean) now connect a
+fixed machine fragment to an admissible client, charging its control flow and register preparation.
+Sequencing uses one fixed continuation fragment for all represented answers; pure semantic results
+require actual execution evidence. Named certificates are reused by `stateful`, while `polytime`
+can retrieve the distinct uniform RAM function-time predicate. The
+[adaptive stack controller](Complexity/Algorithms/WordRAM/Stack/Controller.lean) starts from the
+standard singleton input, installs an empty stack at address two, pushes and pops the input, and
+uses the observed answer to replace zero through another pair of stack calls. It returns
+`max n 1` in exactly 49 instructions for zero and 29 otherwise, including setup, argument writes,
+control flow and halt. All inputs fit its logarithmic numerical-magnitude width threshold.
+This does not certify arbitrary Lean continuations or a conversion to Turing-machine time.
 
 The [fixed-program bridge](Complexity/Computability/WordRAM/Dynamic.lean) has concrete bounded
 [stack](Complexity/Algorithms/WordRAM/Stack.lean) and
@@ -734,7 +753,7 @@ frame rules. Prefix sums use a balanced aggregation tree for a power-of-two numb
 not a Fenwick layout. Machine costs exclude initial representation construction and external argument
 encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
 
-Outstanding: charged initialization and compositional machine-resource certificates for callers;
+Outstanding: controllers for larger adaptive and iterative clients;
 a concrete shared-heap queue
 using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
 doubling-array amortization, richer ownership and recursive procedures; independent model
