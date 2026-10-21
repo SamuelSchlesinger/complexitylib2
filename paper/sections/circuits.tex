@@ -379,6 +379,62 @@ than algorithmically certified.\citep{Schlesinger2026Algebraic}
 \end{result}
 
 \begin{result}
+For a real-weight threshold program $p$ with $g$ gates and any cut $k$, write
+$p_k(u)_i=\sum_{j<k}b_{k+i,j}u_j$ ($0\le i<g-k$) for the pending internal bias
+accumulated at future gate $k+i$ from a prefix valuation $u\in\{0,1\}^k$. The
+layered evolution $p_0(x)=0$,
+\[
+z_k(x)=\mathbf 1\!\big[\theta_k\le\langle a_k,x\rangle+p_k(x)_0\big],\qquad
+p_{k+1}(x)_i=p_k(x)_{i+1}+b_{k+1+i,k}z_k(x)
+\]
+agrees with $p_k(z_{<k}(x))$ at every cut and evaluates every gate of $p$. The
+syntactic pending-bias state set $\mathcal S_k=\{p_k(u):u\in\{0,1\}^k\}$
+satisfies $|\mathcal S_k|\le 2^k$; if a subset $R\subseteq[g-k]$ of future rows
+determines $p_k(u)$ and has integer internal weights $w_{i,j}$ ($j<k$) of
+magnitude at most $W$, then
+$|\mathcal S_k|\le\prod_{i\in R}(1+\sum_{j<k}|w_{i,j}|)\le(1+kW)^{|R|}$; and if
+$b_{k+i,j}=\beta_i$ is constant across $j<k$ for each $i$, then
+$|\mathcal S_k|\le k+1$.
+On the input side, equal direct input-weight summary vectors
+$(\langle a_j,x\rangle)_{j<g}$ force identical gate transcripts. If a bipartite
+function $f:X\times Y\to\{0,1\}$ is computed by $p$ via an encoding
+$\mathrm{enc}:X\times Y\to\{0,1\}^n$ and readout, any summary
+$\sigma:X\to\alpha$ that determines the direct input summary of
+$\mathrm{enc}(x,y)$ for every $y\in Y$ satisfies
+$|\{f(x,\cdot):x\in X\}|\le|\{\sigma(x):x\in X\}|$. For inner product modulo
+two on $m$-bit blocks ($|\iota|=m$), $2^m\le|\{\sigma(x):x\in\{0,1\}^\iota\}|$,
+and an integer linear summary $R\in\mathbb Z^{r\times\iota}$ with entries of
+magnitude at most $W$ satisfies
+$2^m\le\prod_{a=0}^{r-1}(1+\sum_{i\in\iota}|R_{a,i}|)\le(1+mW)^r$. Under phased
+input access across cut $k$ (gates $<k$ reading only $X$, gates $\ge k$ reading
+only $Y$, and the readout depending only on gates $\ge k$), the reachable
+pending-bias state at cut $k$ determines $f(x,\cdot)$, so
+$|\{f(x,\cdot):x\in X\}|\le|\mathcal S_k|$ and $2^m\le|\mathcal S_k|$ for inner
+product. State-set bounds concern syntactic prefixes $\{0,1\}^k$, and the
+cut-message lower bound requires the phased-access hypothesis.\citep{ThresholdCircuitRepresentations2026}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{148}{Cslib.Circuits.Boolean.WeightedThreshold.pendingBias}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{161}{Cslib.Circuits.Boolean.WeightedThreshold.pendingBias_succ}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{182}{Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_decide_pendingBias}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{216}{Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasTrace}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{231}{Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasTrace_eq_pendingBias}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{266}{Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_decide_pendingBiasTrace}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{279}{Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasStates}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{299}{Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_two_pow}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{308}{Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_prod_intWeight}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{339}{Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_pow_intWeight}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{363}{Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_add_one_of_row_const}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{392}{Cslib.Circuits.Boolean.WeightedThreshold.inputSummary}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{419}{Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_inputSummary_eq}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{442}{Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_summaries}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{455}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_summaries_of_hadamardCode}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{472}{Cslib.Circuits.Boolean.WeightedThreshold.intSummary}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{506}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_prod_intSummary_of_hadamardCode}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{521}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_pow_intSummary_of_hadamardCode}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{600}{Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_pendingBiasStates_of_phased}
+\declat{3f9e4f10b9b8a9a0d0188219995b18b3382e1849}{Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean}{628}{Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_pendingBiasStates_of_phased_hadamardCode}
+\end{result}
+
+\begin{result}
 For a threshold program $P$ on $n$ Boolean inputs and $g$ gates in strict
 unit-margin normal form (each gate $i$ has score
 $Q_i(x,z)=\langle a_i,x\rangle+\sum_{j<i}b_{i,j}z_j-\theta_i$ satisfying

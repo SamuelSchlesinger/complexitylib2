@@ -513,10 +513,11 @@ Jukna coverage below is an additional target beyond the V1 port:
   [fan-in-two component and block-excess bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Components.lean),
   [direction-menu capacity bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Menus.lean)
   (including bounded internal fan-in and bounded integer internal-weight corollaries),
+  [pending-bias state simulation and input-summary / phased-cut lower bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean),
   and [unambiguous transcript cells and quadratic-potential unique-sink representations](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Potential.lean)
   are proved. Port v1's explicit source-reduction family.
-  Further manuscript work includes scalar enumerative coding, pending-bias simulation,
-  entropy and asymptotic activity bounds, geometric cutting, and integer-summary counting.
+  Further manuscript work includes scalar enumerative coding,
+  entropy and asymptotic activity bounds, and geometric cutting.
 
 * **Worst-case hardness and derandomization.** The
   [worst-case-hardness implication P = BPP](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean)

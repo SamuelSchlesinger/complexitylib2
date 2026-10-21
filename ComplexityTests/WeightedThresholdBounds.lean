@@ -7,13 +7,14 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activation
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Components
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Menus
+import Complexity.Computability.Circuit.Boolean.WeightedThreshold.PendingBias
 import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Potential
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Tactic.FinCases
 
 /-! Tests and axiom guards for mixed-activation, cut, component, block-excess, direction-menu,
-unambiguous cell, and quadratic-potential unique-sink representations of weighted threshold
-circuits. -/
+pending-bias, unambiguous cell, and quadratic-potential unique-sink representations of weighted
+threshold circuits. -/
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
@@ -129,6 +130,150 @@ example : 1 < (∅ : Finset (Fin 1)).card + (inputGates negateCircuit.program).c
   · intro b hb
     rw [Finset.mem_singleton.mp hb, Finset.card_singleton]
     omega
+
+-- Concrete pending-bias simulation and state-space bounds on `negatePrior`.
+private theorem negatePrior_gateWeight_one_zero : gateWeight negatePrior 1 0 = -1 := by
+  change lineWeight (negatePrior.lines (Fin.last 1)) (.gate 0) = -1
+  rw [negatePrior, Program.lines_gate_last]
+  change (∑ a : Fin 1 with (Wire.gate 0 : Wire 1 2) = Wire.gate 0, (-1 : ℝ)) = -1
+  simp
+
+private theorem negatePrior_inputWeight_one (a : Fin 1) : inputWeight negatePrior 1 a = 0 := by
+  fin_cases a
+  change lineWeight (negatePrior.lines (Fin.last 1)) (.input 0) = 0
+  rw [negatePrior, Program.lines_gate_last]
+  simp [lineWeight, Wire.Renaming.castSucc]
+
+example (x : Fin 1 → Bool) :
+    negatePrior.eval interpretation x 1 =
+      decide (gateThreshold negatePrior 1 ≤
+        (∑ a : Fin 1, inputWeight negatePrior 1 a * (x a).toNat) +
+          pendingBiasTrace negatePrior x 1 ⟨0, by decide⟩) :=
+  eval_eq_decide_pendingBiasTrace negatePrior x 1
+
+example : (pendingBiasStates negatePrior 1).card ≤ 2 ^ 1 :=
+  card_pendingBiasStates_le_two_pow negatePrior 1
+
+example : (pendingBiasStates negatePrior 1).card ≤ 1 + 1 := by
+  refine card_pendingBiasStates_le_add_one_of_row_const negatePrior 1 (fun _ => -1) ?_
+  intro i j
+  fin_cases i
+  fin_cases j
+  exact negatePrior_gateWeight_one_zero
+
+example :
+    (pendingBiasStates negatePrior 1).card ≤
+      (1 + 1 * 1) ^ (Finset.univ : Finset (Fin 1)).card := by
+  refine card_pendingBiasStates_le_pow_intWeight negatePrior 1 1 Finset.univ
+    (fun _ _ h => funext fun i => h i (Finset.mem_univ i)) (fun _ _ => -1) ?_ (fun _ _ _ => le_rfl)
+  intro i _ j
+  fin_cases i
+  fin_cases j
+  simpa using negatePrior_gateWeight_one_zero
+
+example : (Finset.univ.image (intSummary (fun (_ : Fin 1) (_ : Fin 1) => (-1 : ℤ)))).card ≤
+    (1 + Fintype.card (Fin 1) * 1) ^ 1 :=
+  card_intSummary_le_pow (fun (_ : Fin 1) (_ : Fin 1) => (-1 : ℤ)) (fun _ _ => le_rfl)
+
+example :
+    (Finset.univ.image (fun (x : Fin 1 → Bool) (_ : Unit) => !x 0)).card ≤
+      (Finset.univ.image (fun x : Fin 1 → Bool => x 0)).card := by
+  refine card_rows_le_card_summaries (X := Fin 1 → Bool) (Y := Unit) (α := Bool)
+    negatePrior (fun x _ => x) (fun z => z 1) (fun x _ => !x 0)
+    (fun x : Fin 1 → Bool => x 0) (fun x _ => negatePrior_eval x) ?_
+  intro x₁ x₂ _ h
+  have hx : x₁ = x₂ := funext fun i => by fin_cases i; exact h
+  rw [hx]
+
+example :
+    (Finset.univ.image (fun (x : Fin 1 → Bool) (_ : Unit) => !x 0)).card ≤
+      (pendingBiasStates negatePrior 1).card := by
+  refine card_rows_le_card_pendingBiasStates_of_phased (X := Fin 1 → Bool) (Y := Unit)
+    negatePrior (fun x _ => x) (fun z => z 1)
+    (fun x _ => !x 0) 1 () (fun x _ => negatePrior_eval x) (fun _ _ _ _ => rfl) ?_ ?_
+  · intro i x₁ x₂ _
+    fin_cases i
+    change inputSummary negatePrior x₁ 1 = inputSummary negatePrior x₂ 1
+    simp [inputSummary, negatePrior_inputWeight_one]
+  · intro z₁ z₂ h
+    exact h ⟨0, by decide⟩
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasTrace_eq_pendingBias' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.pendingBiasTrace_eq_pendingBias
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_decide_pendingBiasTrace' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_decide_pendingBiasTrace
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_prod_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_prod_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_pow_intWeight' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_pow_intWeight
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_add_one_of_row_const' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_pendingBiasStates_le_add_one_of_row_const
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_inputSummary_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms eval_eq_of_inputSummary_eq
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_summaries' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_rows_le_card_summaries
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_summaries_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_card_summaries_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_pow_intSummary_of_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_pow_intSummary_of_hadamardCode
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_pendingBiasStates_of_phased' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms card_rows_le_card_pendingBiasStates_of_phased
+
+/--
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_pendingBiasStates_of_phased_hadamardCode' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms two_pow_le_card_pendingBiasStates_of_phased_hadamardCode
 
 -- Direction-menu bounds (Theorem 7.3 and Corollary 7.4) on `negateCircuit`.
 example :
