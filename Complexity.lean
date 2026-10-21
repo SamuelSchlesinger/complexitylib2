@@ -419,7 +419,11 @@ public import Complexity.Computability.Complexity.Classes.BPP.KarpLipton
 public import Complexity.Computability.Complexity.Classes.BPP.Reduction
 public import Complexity.Computability.Complexity.Classes.BPP.WorstCaseHardness
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy
+public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Closure
+public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.PH
 public import Complexity.Computability.Complexity.Classes.CeqP
+public import Complexity.Computability.Complexity.Classes.Counting.OracleSpace
+public import Complexity.Computability.Complexity.Classes.Counting.Space
 public import Complexity.Computability.Complexity.Classes.DP
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.FewP
@@ -458,6 +462,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Re
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 public import Complexity.Computability.Complexity.Classes.ModP
+public import Complexity.Computability.Complexity.Classes.ModP.GapP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.NP.Closure
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
@@ -486,6 +491,7 @@ public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
 public import Complexity.Computability.Complexity.Classes.PCP.ZeroRandomness
 public import Complexity.Computability.Complexity.Classes.PH
+public import Complexity.Computability.Complexity.Classes.PH.Closure
 public import Complexity.Computability.Complexity.Classes.PH.Collapse
 public import Complexity.Computability.Complexity.Classes.PH.Kannan
 public import Complexity.Computability.Complexity.Classes.PH.KarpLipton
@@ -518,6 +524,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 public import Complexity.Computability.Complexity.Classes.SharpP.Power
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.Classes.SharpP.Products
+public import Complexity.Computability.Complexity.Classes.SharpP.Space
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Membership

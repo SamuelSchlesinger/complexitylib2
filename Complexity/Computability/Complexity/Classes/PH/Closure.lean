@@ -13,7 +13,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
-# Boolean closure at each level of the polynomial hierarchy
+# Union and intersection closure at each level of the polynomial hierarchy
 
 Pair the two certificates at each quantifier block and split them before running the two
 verifiers. This preserves the number and polarity of the quantifiers, including at level zero.
@@ -27,6 +27,7 @@ The construction uses exact certificate lengths and polynomial-time bit-string s
 
 * `inter_mem_SigmaP`, `union_mem_SigmaP`: closure of each existential level.
 * `inter_mem_PiP`, `union_mem_PiP`: closure of each universal level.
+* `compl_mem_PH`, `inter_mem_PH`, `union_mem_PH`, `diff_mem_PH`: Boolean closure of the hierarchy.
 
 ## References
 
@@ -186,5 +187,28 @@ theorem union_mem_PiP (hA : A ∈ PiP k enc) (hB : B ∈ PiP k enc) :
     A ∪ B ∈ PiP k enc := by
   simpa only [Set.compl_inter, compl_compl] using compl_mem_PiP_of_mem_SigmaP (inter_mem_SigmaP
     (compl_mem_SigmaP_of_mem_PiP hA) (compl_mem_SigmaP_of_mem_PiP hB))
+
+/-- Complementation swaps quantifier polarities, remaining within the polynomial hierarchy. -/
+theorem compl_mem_PH (hA : A ∈ PH enc) : Aᶜ ∈ PH enc := by
+  obtain ⟨k, hk⟩ := mem_PH.mp hA
+  exact PiP_subset_PH k (compl_mem_PiP_of_mem_SigmaP hk)
+
+/-- Two PH languages can be intersected at the larger of their two existential levels. -/
+theorem inter_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A ∩ B ∈ PH enc := by
+  obtain ⟨k, hk⟩ := mem_PH.mp hA
+  obtain ⟨l, hl⟩ := mem_PH.mp hB
+  exact SigmaP_subset_PH (max k l)
+    (inter_mem_SigmaP (SigmaP_mono (le_max_left k l) hk) (SigmaP_mono (le_max_right k l) hl))
+
+/-- Two PH languages can be united at the larger of their two existential levels. -/
+theorem union_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A ∪ B ∈ PH enc := by
+  obtain ⟨k, hk⟩ := mem_PH.mp hA
+  obtain ⟨l, hl⟩ := mem_PH.mp hB
+  exact SigmaP_subset_PH (max k l)
+    (union_mem_SigmaP (SigmaP_mono (le_max_left k l) hk) (SigmaP_mono (le_max_right k l) hl))
+
+/-- The polynomial hierarchy is closed under set difference. -/
+theorem diff_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A \ B ∈ PH enc :=
+  inter_mem_PH hA (compl_mem_PH hB)
 
 end Cslib.Complexity
