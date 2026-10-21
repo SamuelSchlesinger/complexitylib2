@@ -6,6 +6,28 @@ with wiring and fanout free. Formula leaf count and formula depth are separate
 measures; unbounded fan-in bases are identified in their entries.
 
 \begin{result}
+\subsection{Inlining polynomial-size circuit oracles}
+Extend De Morgan circuits with an oracle gate of each arity $q$, answering membership
+of its $q$ input bits in a fixed language $A$. Queries may depend on earlier answers,
+following the relativized circuit model.\citep{Wilson1985}
+Replacing every oracle gate by a circuit $D_q$ for the length-$q$ slice of $A$
+preserves the computed function. If every gate has arity at most $r$ and
+$|D_q|\le t$ for every $q\le r$, the resulting circuit has at most
+$|C|\max(1,t)$ gates. Its depth is bounded by the weighted depth of $C$, charging
+ordinary gates one and oracle gates the depth of their replacement.
+Consequently, if $A\in\mathrm{P/poly}$, then
+$\mathrm{P/poly}^{A}=\mathrm{P/poly}$, where relativized families have both
+polynomial gate count and polynomial maximum gate arity. This is a nonuniform
+circuit statement; it does not certify a machine simulation or compiler runtime.
+The formalization recovers the earlier Complexitylib oracle-inlining development
+by Samuel Schlesinger.
+\declat{0ecfd99c13a056ed74f3666c9931861187468935}{Complexity/Computability/Circuit/Boolean/Oracle.lean}{135}{Cslib.Circuits.Boolean.eval_inlineOracle}
+\declat{0ecfd99c13a056ed74f3666c9931861187468935}{Complexity/Computability/Circuit/Boolean/Oracle.lean}{165}{Cslib.Circuits.Boolean.size_inlineOracle_le}
+\declat{0ecfd99c13a056ed74f3666c9931861187468935}{Complexity/Computability/Circuit/Boolean/Oracle.lean}{154}{Cslib.Circuits.Boolean.depth_inlineOracle_le}
+\declat{0ecfd99c13a056ed74f3666c9931861187468935}{Complexity/Computability/Circuit/Boolean/Oracle.lean}{226}{Cslib.Circuits.Boolean.PPolyOracle_eq_PPoly}
+\end{result}
+
+\begin{result}
 \subsection{Shannon--Lupanov bounds and the MCSP window}
 Count all NOT, AND, OR and constant gates. For every $\varepsilon>0$, all
 sufficiently large $n$, and every $n$-input truth table, MCSP answers yes at

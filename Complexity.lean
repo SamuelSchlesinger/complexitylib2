@@ -159,6 +159,7 @@ public import Complexity.Computability.Circuit.Boolean.Nechiporuk
 public import Complexity.Computability.Circuit.Boolean.NegationNormalForm
 public import Complexity.Computability.Circuit.Boolean.NonconstantCost
 public import Complexity.Computability.Circuit.Boolean.Nondeterminism
+public import Complexity.Computability.Circuit.Boolean.Oracle
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.PPolyHard
 public import Complexity.Computability.Circuit.Boolean.Parity

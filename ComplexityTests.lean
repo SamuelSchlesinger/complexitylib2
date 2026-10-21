@@ -172,6 +172,7 @@ import ComplexityTests.NonVacuity
 import ComplexityTests.NondeterministicVerifiers
 import ComplexityTests.OneWayMetacomplexity
 import ComplexityTests.OneWayNormalization
+import ComplexityTests.OracleCircuits
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
