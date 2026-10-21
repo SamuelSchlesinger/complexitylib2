@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.CheckpointForest
 public import Mathlib.Data.Finset.Sort
+public import Mathlib.Data.List.Iterate
 public import Mathlib.Data.List.Lex
 public import Mathlib.SetTheory.Cardinal.Finite
 
@@ -62,31 +63,17 @@ namespace Cslib.FunctionalGraph
 universe u
 variable {α : Type u}
 
-/-- The first `k` states of an orbit. -/
-def forestTrace (f : α → α) (x : α) : ℕ → List α
-  | 0 => []
-  | k + 1 => x :: forestTrace f (f x) k
+/-- The first `k` states of an orbit (`List.iterate f x k`). -/
+def forestTrace (f : α → α) (x : α) (k : ℕ) : List α :=
+  List.iterate f x k
 
 @[simp] theorem length_forestTrace (f : α → α) (x : α) (k : ℕ) :
-    (forestTrace f x k).length = k := by
-  induction k generalizing x with
-  | zero => rfl
-  | succ k ih => simp [forestTrace, ih]
+    (forestTrace f x k).length = k :=
+  List.length_iterate f x k
 
 theorem mem_forestTrace (f : α → α) (x y : α) (k : ℕ) :
     y ∈ forestTrace f x k ↔ ∃ i < k, f^[i] x = y := by
-  induction k generalizing x with
-  | zero => simp [forestTrace]
-  | succ k ih =>
-    simp only [forestTrace, List.mem_cons, ih]
-    constructor
-    · rintro (rfl | ⟨i, hi, he⟩)
-      · exact ⟨0, by lia, rfl⟩
-      · exact ⟨i + 1, by lia, (Function.iterate_succ_apply f i x).trans he⟩
-    · rintro ⟨i, hi, he⟩
-      cases i with
-      | zero => exact Or.inl he.symm
-      | succ i => exact Or.inr ⟨i, by lia, (Function.iterate_succ_apply f i x).symm.trans he⟩
+  simpa only [forestTrace, eq_comm] using List.mem_iterate (f := f) (a := x) (n := k) (b := y)
 
 variable [Finite α] (f : α → α)
 
@@ -119,7 +106,7 @@ theorem forestPath_step (x : α) (hx : 0 < transientDepth f x) :
     have hh := transientDepth_iterate f x 1
     simp only [Function.iterate_one] at hh
     lia
-  rw [forestPath, forestTrace, List.reverse_cons]
+  rw [forestPath, forestTrace, List.iterate, List.reverse_cons]
   change (forestTrace f (f x) (transientDepth f x)).reverse ++ [x] =
     (forestTrace f (f x) (transientDepth f (f x) + 1)).reverse ++ [x]
   rw [hd]

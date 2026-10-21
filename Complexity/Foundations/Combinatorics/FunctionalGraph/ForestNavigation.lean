@@ -20,10 +20,11 @@ steps while `transientDepth f y ≤ transientDepth f a`. On `checkpointHull f H`
 unique anchor (`exists_forest_anchor`, `forestAnchor_unique`), and any mark reaching `y` must pass
 through `a` (`forest_anchor_contains`).
 
-Combining a short `2 * L`-step prefix check from `x`, a first-hit mark `h ∈ forestMarks f H` on
-that prefix, an anchor `a` for `y` with a short `2 * L`-step verification prefix from `a` to `y`,
-and subtree interval containment `low a ≤ low h ∧ low h ≤ high a` yields an exact characterization
-of reachability `∃ t, f^[t] x = y` (`forest_navigation_spec`).
+Combining a short `2 * L`-step prefix check from `x`, a selected prefix mark `h ∈ forestMarks f H`
+(sound and complete for hitting `H` within `< 2 * L` steps), an anchor `a` for `y` with a short
+`2 * L`-step verification prefix from `a` to `y`, and subtree interval containment
+`low a ≤ low h ∧ low h ≤ high a` yields an exact characterization of reachability `∃ t, f^[t] x = y`
+(`forest_navigation_spec`).
 
 `ForestEdgeTable` packages the compressed edges of all non-root marks into a finite table of at
 most `(forestMarks f H).card` entries with injective last-predecessor keys (`key_injective`),
