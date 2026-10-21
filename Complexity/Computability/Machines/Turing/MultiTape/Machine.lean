@@ -39,6 +39,8 @@ upstream machines in `MultiTape.Machine.Equivalence`.
 
 * `Turing.MultiTapeMachine`: a transition table parameterized by its choice mechanism.
 * `Turing.MultiTapeMachine.Config`: upstream tapes and control, plus oracle communication channels.
+* `Turing.MultiTapeMachine.Action.mapState`, `Turing.MultiTapeMachine.Config.mapState`: relabel
+  control states, preserving halting, tape data and communication channels.
 
 No finiteness or complexity assumptions are imposed here. A complexity predicate must require
 fixed finite control, a finite alphabet and finitely many oracle channels. With these assumptions
@@ -54,7 +56,7 @@ universe u v w x
 
 namespace MultiTapeMachine
 
-variable {k : ℕ} {Symbol : Type u} {State : Type v} {Oracle : Type w}
+variable {k : ℕ} {Symbol : Type u} {State : Type v} {State' : Type x} {Oracle : Type w}
   {input : List Symbol}
 
 /-- The local tape action and communication updates, or a call to a named oracle. -/
@@ -64,6 +66,12 @@ inductive Action (k : ℕ) (Symbol : Type u) (State : Type v) (Oracle : Type w) 
       (querySymbol : Oracle → Option Symbol) (answerMove : Oracle → SignType)
   /-- Submit one buffer, install its reply, and resume in the specified state. -/
   | query (oracle : Oracle) (next : State)
+
+/-- Rename the successor state of an instruction. -/
+def Action.mapState (e : State → State') :
+    Action k Symbol State Oracle → Action k Symbol State' Oracle
+  | .step action symbol move => .step { action with state := action.state.map e } symbol move
+  | .query oracle next => .query oracle (e next)
 
 /-- The communication state for one oracle. It is separate from the oracle's private state. -/
 @[ext] structure Channel (Symbol : Type u) where
@@ -81,6 +89,20 @@ inductive Action (k : ℕ) (Symbol : Type u) (State : Type v) (Oracle : Type w) 
   tapes : Cfg k Symbol State input
   /-- Each oracle has its own query buffer and answer head. -/
   channels : Oracle → Channel Symbol := fun _ => {}
+
+/-- Rename the control state of a configuration, keeping its tapes and channels. -/
+def Config.mapState (e : State → State') (cfg : Config k Symbol State Oracle input) :
+    Config k Symbol State' Oracle input where
+  tapes := cfg.tapes.mapState (Option.map e)
+  channels := cfg.channels
+
+@[simp] theorem Config.mapState_tapes_state (e : State → State')
+    (cfg : Config k Symbol State Oracle input) :
+    (cfg.mapState e).tapes.state = cfg.tapes.state.map e := rfl
+
+@[simp] theorem Config.mapState_tapes_output (e : State → State')
+    (cfg : Config k Symbol State Oracle input) :
+    (cfg.mapState e).tapes.output = cfg.tapes.output := rfl
 
 /-- Read the cell under a channel's answer head; positions outside the reply are blank. -/
 def Channel.answerSymbol (channel : Channel Symbol) : Option Symbol :=
@@ -107,6 +129,18 @@ def Config.receive [DecidableEq Oracle] (cfg : Config k Symbol State Oracle inpu
     Config k Symbol State Oracle input where
   tapes := { cfg.tapes with state := some next }
   channels := Function.update cfg.channels oracle ⟨[], answer, 0⟩
+
+theorem Config.mapState_step (e : State → State') (cfg : Config k Symbol State Oracle input)
+    (action : Turing.Action k Symbol State) (symbol : Oracle → Option Symbol)
+    (move : Oracle → SignType) :
+    (cfg.mapState e).step { action with state := action.state.map e } symbol move =
+      (cfg.step action symbol move).mapState e := rfl
+
+theorem Config.mapState_receive [DecidableEq Oracle] (e : State → State')
+    (cfg : Config k Symbol State Oracle input) (oracle : Oracle) (next : State)
+    (answer : List Symbol) :
+    (cfg.mapState e).receive oracle (e next) answer = (cfg.receive oracle next answer).mapState e :=
+  rfl
 
 end MultiTapeMachine
 
