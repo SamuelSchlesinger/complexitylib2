@@ -579,8 +579,9 @@ solution $w$ of $f(a)$ to a solution $g(a,w)$ of $a$. For a total target the
 first condition is automatic, giving the reductions used for TFNP. Search
 reductions compose, preserve totality backwards, induce many-one reductions
 between the domains, and pull FP back to FNP relations; a problem hard for a
-subclass of FNP that lies in FP puts the whole subclass in FP. No TFNP subclass
-or complete problem is formalized in this entry.\citep{MegiddoPapadimitriou1991,JohnsonPapadimitriouYannakakis1988}
+subclass of FNP that lies in FP puts the whole subclass in FP. The syntactic
+subclasses $\cc{PLS}$, $\cc{PPP}$, $\cc{PPAD}$ and $\cc{PPA}$ are treated in the
+next entry.\citep{MegiddoPapadimitriou1991,JohnsonPapadimitriouYannakakis1988}
 \declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{263}{Cslib.Complexity.mem_NP_iff_exists_FNP}
 \declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{273}{Cslib.Complexity.NP_subset_P_of_FNP_subset_FPSearch}
 \declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP.lean}{378}{Cslib.Complexity.NP_inter_coNP_subset_P_of_TFNP_subset_FPSearch}
@@ -593,6 +594,80 @@ or complete problem is formalized in this entry.\citep{MegiddoPapadimitriou1991,
 \declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{243}{Cslib.Complexity.FNP_subset_FPSearch_iff_SAT_mem_P}
 \declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/P/Complement.lean}{44}{Cslib.Complexity.SAT_mem_P_iff}
 \declat{0e146a6b68972fcb9230258ef452a7d4bc1bb05b}{Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean}{270}{Cslib.Complexity.SAT.searchRel_mem_FPSearch_iff}
+\end{result}
+
+\begin{result}
+\subsection{TFNP subclasses: PLS, PPP, PPAD and PPA}
+Let $\{0,1\}^n$ be the finite set of $n$-bit lists with distinguished source
+$0^n=\mathtt{false}^n$. Four finite combinatorial principles guarantee a
+witness for every instance $a$ with dimension $n(a)\in\mathbb N$:
+(1)~\emph{local optimality} (\texttt{localOptRel}): for any length-preserving
+neighbor map $N(a,\cdot):\{0,1\}^{n(a)}\to\{0,1\}^{n(a)}$ and cost
+$C(a,\cdot):\{0,1\}^{n(a)}\to\mathbb N$, some $u\in\{0,1\}^{n(a)}$ satisfies
+$C(a,u)\le C(a,N(a,u))$;
+(2)~\emph{pigeonhole} (\texttt{pigeonRel}): for any length-preserving map
+$F(a,\cdot):\{0,1\}^{n(a)}\to\{0,1\}^{n(a)}$, some $2n(a)$-bit concatenation
+of $u,v\in\{0,1\}^{n(a)}$ satisfies $F(a,u)=0^{n(a)}$ or
+($u\ne v$ and $F(a,u)=F(a,v)$);
+(3)~\emph{directed end-of-line} (\texttt{endOfLineRel}): for any predecessor
+and successor maps $P(a,\cdot),S(a,\cdot):\{0,1\}^{n(a)}\to\{0,1\}^{n(a)}$,
+where a directed edge $u\to v$ is active when $v\ne u$, $v\ne 0^{n(a)}$,
+$S(a,u)=v$ and $P(a,v)=u$, either $0^{n(a)}$ lacks an active outgoing edge or
+some $u\ne 0^{n(a)}$ is unbalanced ($\mathrm{hasIn}(u)\ne\mathrm{hasOut}(u)$,
+i.e.\ a sink or a proper source, excluding isolated vertices); and
+(4)~\emph{undirected parity} (\texttt{leafRel}): for any length-preserving
+neighbor maps $N_1(a,\cdot),N_2(a,\cdot):\{0,1\}^{n(a)}\to\{0,1\}^{n(a)}$,
+where an undirected edge $\{u,v\}$ ($u\ne v$) is present when
+$v\in\{N_1(a,u),N_2(a,u)\}$ and $u\in\{N_1(a,v),N_2(a,v)\}$, every vertex has
+degree at most $2$ and the sum of degrees is even, so either $0^{n(a)}$ has
+even degree or some $u\ne 0^{n(a)}$ has odd degree (odd-degree status agrees
+with $[u\ne 0^{n(a)}]$).
+
+For an input encoding $\mathrm{enc}:\alpha\hookrightarrow\{0,1\}^*$, the
+classes $\cc{PLS}(\mathrm{enc})$, $\cc{PPP}(\mathrm{enc})$,
+$\cc{PPAD}(\mathrm{enc})$ and $\cc{PPA}(\mathrm{enc})$ consist of the
+$\cc{FNP}(\mathrm{enc})$ search relations that polynomial-time search-reduce to
+an instance of the corresponding relation defined by polynomial-time families
+($n$ computable tidily in polynomial time into unary \texttt{encUnary},
+length-preserving neighbor or successor maps into \texttt{encBits}, and for
+$\cc{PLS}$ a cost function into binary \texttt{encNat}). Each class is closed
+under polynomial-time search reductions across arbitrary encoded input types,
+and satisfies
+\[
+\cc{PLS},\cc{PPP},\cc{PPAD},\cc{PPA}\subseteq\cc{TFNP},\qquad
+\cc{PPAD}\subseteq\cc{PPP},\qquad
+\cc{PPAD}\subseteq\cc{PPA}.
+\]
+Here $\cc{PPAD}\subseteq\cc{PPP}$ sends vertices with an active outgoing edge
+to their successor and fixes all other vertices, while
+$\cc{PPAD}\subseteq\cc{PPA}$ doubles the vertex space to $\{0,1\}^{n(a)+1}$
+into out-ports and in-ports paired by involutions on active non-source vertices
+so that directed $2$-cycles do not collapse. When the maps are presented by De
+Morgan Boolean circuit codes
+evaluated in polynomial time (\texttt{evalCircuitCode}, padded or truncated to
+$n$ bits) and costs are interpreted in binary (\texttt{binaryValue}), the
+canonical circuit problems $\mathrm{LocalOpt}$, $\mathrm{Pigeon}$,
+$\mathrm{EndOfLine}$ and $\mathrm{Leaf}$ are total and satisfy
+$\mathrm{LocalOpt}\in\cc{PLS}$, $\mathrm{Pigeon}\in\cc{PPP}$,
+$\mathrm{EndOfLine}\in\cc{PPAD}$ and $\mathrm{Leaf}\in\cc{PPA}$ (hence all four
+lie in $\cc{TFNP}$, and $\mathrm{EndOfLine}\in\cc{PPP}\cap\cc{PPA}$).
+Completeness (\texttt{SearchComplete}) of these circuit problems via compiling
+arbitrary polynomial-time families into circuits, and the subclass $\cc{CLS}$,
+are not formalized in this entry.\citep{JohnsonPapadimitriouYannakakis1988,MegiddoPapadimitriou1991,Papadimitriou1994PPAD,BeameEtAl1998}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{118}{Cslib.Complexity.isTotalSearch_localOptRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{154}{Cslib.Complexity.isTotalSearch_pigeonRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{290}{Cslib.Complexity.isTotalSearch_endOfLineRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean}{432}{Cslib.Complexity.isTotalSearch_leafRel}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{613}{Cslib.Complexity.PLS_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{618}{Cslib.Complexity.PPP_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{623}{Cslib.Complexity.PPAD_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{628}{Cslib.Complexity.PPA_subset_TFNP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{646}{Cslib.Complexity.PPAD_subset_PPP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{669}{Cslib.Complexity.PPAD_subset_PPA}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{838}{Cslib.Complexity.LocalOpt_mem_PLS}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{843}{Cslib.Complexity.Pigeon_mem_PPP}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{848}{Cslib.Complexity.EndOfLine_mem_PPAD}
+\declat{7cca458dfb2da2122c5308cfd1e2de80ef3bc4bd}{Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean}{853}{Cslib.Complexity.Leaf_mem_PPA}
 \end{result}
 
 \begin{result}

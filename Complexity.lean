@@ -532,6 +532,8 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Prenex
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.Classes.TFNP
 public import Complexity.Computability.Complexity.Classes.TFNP.SearchToDecision
+public import Complexity.Computability.Complexity.Classes.TFNP.Subclasses
+public import Complexity.Computability.Complexity.Classes.TFNP.Subclasses.Principles
 public import Complexity.Computability.Complexity.Classes.Time
 public import Complexity.Computability.Complexity.Classes.Toda
 public import Complexity.Computability.Complexity.Classes.Toda.Counting
