@@ -196,7 +196,7 @@ The transfer lemma and the diamond theorem hold for arbitrary measures and row l
 \end{result}
 
 \begin{result}
-\subsection{Fixed-parameter tractability, kernelization and vertex cover}
+\subsection{Fixed-parameter tractability}
 A parameterized problem is a problem with an encoding of its instances and a parameter
 $\kappa$ from instances to $\mathbb{N}$. Write $k=\kappa(a)$ and $L$ for the length of the encoded
 instance. The problem is in $\cc{FPT}$ when a multi-tape machine over $\{0,1\}$ decides it within
@@ -212,23 +212,9 @@ an fpt decider, so SAT and $k$-SAT are in $\cc{FPT}$ parameterized by the number
 variables. An fpt-reduction is a membership-preserving map, tidily computable within time
 $O(F(k)\,(L+1)^c)$, whose output parameter is at most $h(k)$, with $F$ and $h$ arbitrary rather
 than computable; polynomial-time reductions with such a parameter bound are fpt-reductions.
-Fpt-reducibility is a preorder, and $\cc{FPT}$ and $\cc{XP}$ are closed under it.
-
-A kernelization is a membership-preserving map $K$, tidily computable in polynomial time, whose
-output has both encoded length and parameter at most $g(k)$ for an arbitrary size bound
-$g\colon\mathbb{N}\to\mathbb{N}$ (or a polynomially bounded $g$ for a polynomial kernel). Over a
-nonempty type of instances, every problem in $\cc{FPT}$ has a kernel (running the fpt decider for
-$(c+1)(L+1)^{e+1}$ steps on the universal multi-tape machine outputs a fixed yes or no instance on
-halting and leaves the instance unchanged on timeout, when $L<f(k)$), and a problem decidable in
-$\cc{DTIME}(\mathrm{enc},t)$ for some $t\colon\mathbb{N}\to\mathbb{N}$ is in $\cc{FPT}$ if and only
-if it has a kernel (Cai--Chen--Downey--Fellows); problems in $\cc{P}$ have constant-size polynomial
-kernels. For Vertex Cover (encoded graphs with binary target $k$, requiring a cover of size $k$
-when $k$ is at most the number $n$ of distinct declared vertices), a bounded search tree of depth
-$\min(n,k)$ branches on the endpoints of the first uncovered edge over $2^{\min(n,k)}$ root-to-leaf
-paths and decides the problem within time $O(2^k\,(L+1)^e)$, placing Vertex Cover in $\cc{FPT}$
-parameterized by $k$. Explicit polynomial kernels for Vertex Cover (such as Buss's $O(k^2)$ kernel)
-and the $\cc{W}$ hierarchy are not covered.
-\citep{CaiChenDowneyFellows1997,DowneyFellows1999,FlumGrohe2006,CyganEtAl2015}
+Fpt-reducibility is a preorder, and $\cc{FPT}$ and $\cc{XP}$ are closed under it. The $\cc{W}$
+hierarchy is not covered.
+\citep{DowneyFellows1999,FlumGrohe2006,CyganEtAl2015}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized.lean}{110}{Cslib.Complexity.FPT}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized.lean}{118}{Cslib.Complexity.XP}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized.lean}{153}{Cslib.Complexity.P_subset_FPT}
@@ -251,6 +237,27 @@ and the $\cc{W}$ hierarchy are not covered.
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized.lean}{479}{Cslib.Complexity.FPTReducible.trans}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized.lean}{495}{Cslib.Complexity.FPTReducible.mem_FPT}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized.lean}{503}{Cslib.Complexity.FPTReducible.mem_XP}
+\end{result}
+
+\begin{result}
+\subsection{Kernelization and parameterized vertex cover}
+A kernelization of a parameterized problem $(A,\kappa)$ is a membership-preserving map $K$, tidily
+computable in polynomial time, whose output has both encoded length and parameter at most $g(k)$
+for an arbitrary size bound $g\colon\mathbb{N}\to\mathbb{N}$ (or a polynomially bounded $g$ for a
+polynomial kernel), where $k=\kappa(a)$ and $L=|\mathrm{enc}(a)|$; every kernelization is an
+fpt-reduction from the problem to itself. Over a nonempty type of instances, every problem in
+$\cc{FPT}$ has a kernel (running the fpt decider for $(c+1)(L+1)^{e+1}$ steps on the universal
+multi-tape machine outputs a fixed yes or no instance on halting and leaves the instance unchanged
+on timeout, when $L<f(k)$), and a problem decidable in $\cc{DTIME}(\mathrm{enc},t)$ for some
+$t\colon\mathbb{N}\to\mathbb{N}$ is in $\cc{FPT}$ if and only if it has a kernel
+(Cai--Chen--Downey--Fellows); problems in $\cc{P}$ have constant-size polynomial kernels. For
+Vertex Cover (encoded graphs with binary target $k$, requiring a cover of size $k$ when $k$ is at
+most the number $n$ of distinct declared vertices), a bounded search tree of depth $\min(n,k)$
+branches on the endpoints of the first uncovered edge over $2^{\min(n,k)}$ root-to-leaf paths and
+decides the problem within time $O(2^k\,(L+1)^e)$, placing Vertex Cover in $\cc{FPT}$
+parameterized by $k$. The computable-$g$ variant and explicit polynomial kernels for Vertex Cover
+(such as Buss's $O(k^2)$ kernel) are not covered.
+\citep{CaiChenDowneyFellows1997,DowneyFellows1999,FlumGrohe2006,CyganEtAl2015}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/Kernelization.lean}{85}{Cslib.Complexity.IsKernelization}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/Kernelization.lean}{97}{Cslib.Complexity.HasKernel}
 \declat{e8bde8e1c552c52a8a5aaf647c9b86307a19350c}{Complexity/Computability/Complexity/Parameterized/Kernelization.lean}{102}{Cslib.Complexity.HasPolyKernel}
