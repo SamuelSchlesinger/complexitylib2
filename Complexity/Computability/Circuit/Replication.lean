@@ -152,6 +152,7 @@ theorem eval_replicate_apply (c : Circuit σ n m) (k : ℕ) (I : Interpretation 
 /-- Replication multiplies arbitrary weighted cost exactly. -/
 theorem cost_program_replicate (c : Circuit σ n m) (k : ℕ) (cost : σ.Op → ℕ) :
     (c.replicate k).program.cost cost = k * c.program.cost cost := by
+  -- This induction avoids the `Classical.choice` dependency of the general family cost law.
   induction k with
   | zero => simp only [replicate, parallelFamily, cost_program_wiring, Nat.zero_mul]
   | succ k ih =>

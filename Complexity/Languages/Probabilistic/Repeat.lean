@@ -177,18 +177,10 @@ theorem eval_replicate_of_uniform [Fintype Seed] [Nonempty Seed]
     eval (OracleComp.replicate count program) =
       (PMF.uniformOfFintype (Fin count → Seed)).map
         (fun seeds => List.ofFn (fun i => evaluate (seeds i))) := by
-  induction count with
-  | zero =>
-    rw [OracleComp.replicate_zero, eval_pure]
-    simp only [List.ofFn_zero, Function.const_def, PMF.map_const]
-  | succ count ih =>
-    rw [OracleComp.replicate_succ, eval_bind, hlaw]
-    simp only [eval_map, ih]
-    rw [← Probability.PMF.uniformOfFintype_map_equiv
-      (Fin.consEquiv (fun _ : Fin (count + 1) => Seed)), PMF.map_comp,
-      ← Probability.PMF.uniformOfFintype_prod]
-    simp [PMF.map_bind, PMF.bind_map, PMF.map_comp, Function.comp_def, Fin.consEquiv,
-      List.ofFn_succ]
+  have h := eval_replicate_map (source := uniform Seed)
+    (by simpa only [eval_uniform] using hlaw) count
+  simpa only [eval_replicate, eval_uniform, Probability.PMF.pi_uniformOfFintype,
+    PMF.map_comp, Function.comp_def, List.map_ofFn] using h
 
 /-- One flat uniform bit list supplies independent seeds for every repeated run, including
 zero repetitions and zero-width seeds. -/
