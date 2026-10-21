@@ -20,8 +20,9 @@ asserts their definitions and domain membership, and uses Mathlib's native const
 equivalence followed by the existing relational pullback. Free variables and selected constants
 occupy disjoint summands, so bound variables cannot capture either.
 
-This semantic extension does not supply canonical numeric lifting on arbitrary-base tuples or
-numeric-preserving composition of ordered interpretations.
+The canonical full-tuple instance and its numeric-preserving composition are supplied separately
+in `Ordered.FullTuple` and `Ordered.FullTuple.Composition`. This generic extension retains explicit
+validity hypotheses for arbitrary interpreted domains.
 
 ## Main definitions
 

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Bit
 import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
@@ -17,10 +18,10 @@ import Mathlib.Data.List.GetD
 
 A **counter program** (`Turing.CounterProgram`) is a finite list of instructions over a fixed
 number of registers holding natural numbers. An instruction assigns to a register the value of an
-arithmetic expression (`Turing.CounterProgram.Expr`: constants, registers, sums, products,
-quotients and remainders),
-branches on a comparison of two expressions, branches on the input bit at the position given by
-an expression (or on its absence past the end of the input), emits an output bit, or halts with a
+arithmetic expression (`Turing.CounterProgram.Expr`: constants, registers, sums, truncated
+differences, products, quotients, remainders and binary digit tests), branches on a comparison of
+two expressions, branches on the input bit at the position given by an expression (or on its
+absence past the end of the input), emits an output bit, or halts with a
 final output word. Labels are natural numbers; a label outside the program halts.
 
 Counter programs are the classical description of logarithmic-space algorithms: a constant number
@@ -75,6 +76,10 @@ inductive Expr : Type where
   | reg (i : ℕ)
   /-- A sum. -/
   | add (a b : Expr)
+  /-- Truncated subtraction. -/
+  | sub (a b : Expr)
+  /-- A binary digit, with value zero or one. -/
+  | bit (a i : Expr)
   /-- A product. -/
   | mul (a b : Expr)
   /-- A quotient, `0` for the divisor `0`. -/
@@ -90,6 +95,8 @@ def eval (regs : List ℕ) : Expr → ℕ
   | const k => k
   | reg i => regs.getD i 0
   | add a b => a.eval regs + b.eval regs
+  | sub a b => a.eval regs - b.eval regs
+  | bit a i => ((a.eval regs).testBit (i.eval regs)).toNat
   | mul a b => a.eval regs * b.eval regs
   | div a b => a.eval regs / b.eval regs
   | mod a b => a.eval regs % b.eval regs
@@ -98,6 +105,10 @@ def eval (regs : List ℕ) : Expr → ℕ
 @[simp] theorem eval_reg (regs : List ℕ) (i : ℕ) : (reg i).eval regs = regs.getD i 0 := rfl
 @[simp] theorem eval_add (regs : List ℕ) (a b : Expr) :
     (add a b).eval regs = a.eval regs + b.eval regs := rfl
+@[simp] theorem eval_sub (regs : List ℕ) (a b : Expr) :
+    (sub a b).eval regs = a.eval regs - b.eval regs := rfl
+@[simp] theorem eval_bit (regs : List ℕ) (a i : Expr) :
+    (bit a i).eval regs = ((a.eval regs).testBit (i.eval regs)).toNat := rfl
 @[simp] theorem eval_mul (regs : List ℕ) (a b : Expr) :
     (mul a b).eval regs = a.eval regs * b.eval regs := rfl
 @[simp] theorem eval_div (regs : List ℕ) (a b : Expr) :
@@ -433,6 +444,15 @@ theorem Expr.eval_inSpace : ∀ e : Expr,
   | .add a b =>
     have h := budget_prod (Expr.eval_inSpace a) (Expr.eval_inSpace b)
     budget_comp natAdd h (.add h.length_le (.const 1 _))
+  | .sub a b => budget_natSub (Expr.eval_inSpace a) (Expr.eval_inSpace b)
+  | .bit a i =>
+    have h : ComputableTidilyInSpace
+        (fun regs => (a.eval regs).testBit (i.eval regs)) (encList encNat) encBool
+        (fun regs => (encList encNat regs).length) :=
+      budget_comp_lin (g := fun p : ℕ × ℕ => p.1.testBit p.2)
+        (f := fun regs => (a.eval regs, i.eval regs)) natTestBit (linear_mul 32)
+        (budget_prod (Expr.eval_inSpace a) (Expr.eval_inSpace i))
+    budget_finite Bool.toNat h
   | .mul a b =>
     have h := budget_prod (Expr.eval_inSpace a) (Expr.eval_inSpace b)
     budget_comp natMul h (.const_mul 32 (.add h.length_le (.const 1 _)))

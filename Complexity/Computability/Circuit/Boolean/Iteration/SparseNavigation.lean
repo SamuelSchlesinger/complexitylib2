@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Iteration.SparseTime
+public import Complexity.Computability.Circuit.Boolean.Iteration.VisitScheduleCircuits
 
 import Mathlib.Tactic.Linarith
 
@@ -21,14 +22,10 @@ counter permutations have circuits of size `O((n + 1) * (r + 1))`.
 
 ## Main definitions
 
-* `inputLeft`, `inputRight`: the two `n`-bit halves of a `2n`-bit pair input.
-* `visitScheduleWidth`, `visitScheduleFirst`, `visitSchedulePeriod`,
-  `visitScheduleContains`, `visitScheduleCount`: bit-string format for a complete visit schedule.
 * `cycleLabelDistance`, `cycleLabelVisits`: phase distance and visit schedule from two cycle labels.
 
 ## Main results
 
-* `visitScheduleCount_spec`: bounded visit count from a schedule record.
 * `cycleLabelVisits_spec`, `synthesis_cycleLabelVisits`: correctness and linear gate bound for
   combining two cycle labels into a visit schedule.
 * `cycle_label_visit_circuit`: visit-schedule circuit from any cycle-label circuit.
@@ -38,7 +35,7 @@ counter permutations have circuits of size `O((n + 1) * (r + 1))`.
 
 ## References
 
-* Adapted from `lean/Proofs/{VisitScheduleCircuits,SparseNavigation}.lean` at revision `c4cfa198`
+* Adapted from `lean/Proofs/SparseNavigation.lean` at revision `c4cfa198`
   of [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/
@@ -52,48 +49,6 @@ attribute [local instance] counterChartWordOrder
 open Cslib.FunctionalGraph
 
 variable {n a : ℕ}
-
-/-- The first `n` bits of a `2n`-bit pair input. -/
-def inputLeft (z : BitString (n + n)) : BitString n := fun i => z (Fin.castAdd n i)
-
-/-- The second `n` bits of a `2n`-bit pair input. -/
-def inputRight (z : BitString (n + n)) : BitString n := fun i => z (Fin.natAdd n i)
-
-/-- One success bit, an `(n+1)`-bit first time, and an `(n+1)`-bit return period. -/
-abbrev visitScheduleWidth (n : ℕ) := (1 + (n + 1)) + (n + 1)
-
-/-- The `(n+1)`-bit first hitting time field of a visit schedule record. -/
-def visitScheduleFirst (v : BitString (visitScheduleWidth n)) : BitVec (n + 1) :=
-  word fun i => v (Fin.castAdd (n + 1) (Fin.natAdd 1 i))
-
-/-- The `(n+1)`-bit return period field of a visit schedule record. -/
-def visitSchedulePeriod (v : BitString (visitScheduleWidth n)) : BitVec (n + 1) :=
-  word fun i => v (Fin.natAdd (1 + (n + 1)) i)
-
-/-- Whether time `t` belongs to the arithmetic progression encoded by `v`. -/
-def visitScheduleContains (v : BitString (visitScheduleWidth n)) (t : ℕ) : Prop :=
-  v (Fin.castAdd (n + 1) (0 : Fin (1 + (n + 1)))) = true ∧
-    ∃ k, t = (visitScheduleFirst v).toNat + k * (visitSchedulePeriod v).toNat
-
-/-- An arithmetic interpretation of a schedule; no additional-input gate bound is asserted. -/
-def visitScheduleCount (v : BitString (visitScheduleWidth n)) (T : ℕ) : ℕ :=
-  if v (Fin.castAdd (n + 1) (0 : Fin (1 + (n + 1)))) then
-    arithmeticProgressionCount (visitScheduleFirst v).toNat (visitSchedulePeriod v).toNat T
-  else 0
-
-theorem visitScheduleCount_spec (v : BitString (visitScheduleWidth n)) (T : ℕ) :
-    Set.ncard {t : ℕ | t ≤ T ∧ visitScheduleContains v t} = visitScheduleCount v T := by
-  unfold visitScheduleCount visitScheduleContains
-  split_ifs with hflag
-  · simp only [hflag, true_and]
-    exact arithmeticProgressionCount_spec _ _ _
-  · have he : {t : ℕ | t ≤ T ∧
-          v (Fin.castAdd (n + 1) (0 : Fin (1 + (n + 1)))) = true ∧
-          ∃ k, t = (visitScheduleFirst v).toNat + k * (visitSchedulePeriod v).toNat} = ∅ := by
-      ext t
-      simp only [Set.mem_ofPred_eq, hflag, Bool.false_eq_true, false_and, and_false,
-        Set.mem_empty_iff_false]
-    rw [he, Set.ncard_empty]
 
 /-- Phase difference from label `x` to label `y` modulo the cycle length of `x`. -/
 def cycleLabelDistance (x y : BitString (n + (chartWidth n + chartWidth n))) :

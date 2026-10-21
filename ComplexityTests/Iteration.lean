@@ -4,11 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
+import Complexity.Computability.Circuit.Boolean.Iteration.CounterBatch
 import Complexity.Computability.Circuit.Boolean.Iteration.InPlace
+import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
 import Complexity.Computability.Circuit.Boolean.Iteration.Optimization
 import Complexity.Computability.Circuit.Boolean.Iteration.Permutation
+import Complexity.Computability.Circuit.Boolean.Iteration.PrimeCycles
 import Complexity.Computability.Circuit.Boolean.Iteration.SequentialSquaring
 import Complexity.Computability.Circuit.Boolean.Iteration.UniversalMap
+import Complexity.Computability.Circuit.Boolean.Iteration.VisitScheduleCircuits
 
 /-!
 # Fixed-power circuit clients
@@ -301,6 +306,143 @@ example : (2 : ZMod 4) ^ (SequentialSquaring.carmichael 4 + 1) ≠ (2 : ZMod 4) 
   rw [hk, pow_add, show (2 : ZMod 4) ^ 2 = 0 by decide, mul_zero]
   decide
 
+/-! ### Compressed-forest reachability, hitting time, and visit schedules -/
+
+-- Nonvacuous forest tables for the one-bit negation circuit at `L = 1`.
+example : Nonempty (ForestCircuitTables (flip.eval interpretation) 1) :=
+  exists_forest_circuit_tables (flip.eval interpretation) 1 one_pos
+
+-- Reachability circuit for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 2 1,
+    (∀ z, out.eval interpretation z 0 = true ↔
+      ∃ t, (flip.eval interpretation)^[t] (inputLeft z) = inputRight z) ∧
+    out.size ≤ 4500000 * powerBudget 1 1 2 1 := by
+  simpa [flip] using forest_reachability_circuit flip 1 one_pos (by decide)
+
+-- Navigation circuit (reachability + first hitting time) for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 2 3,
+    out.Computes interpretation (fun z =>
+      navigationBits (flip.eval interpretation) (inputLeft z) (inputRight z)) ∧
+    out.size ≤ navigationBudget 1 1 1 := by
+  simpa [flip] using navigation_circuit flip 1 one_pos (by decide)
+
+-- Minimal period circuit for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 1 2,
+    (∀ x, (word (out.eval interpretation x)).toNat =
+      Function.minimalPeriod (flip.eval interpretation) x) ∧
+    out.size ≤ 110000 * powerBudget 1 1 2 1 := by
+  simpa [flip] using minimal_period_circuit flip 1 one_pos (by decide)
+
+-- Complete visit-schedule circuit for `flip` at `L = 1`.
+example : ∃ out : Circuit signature 2 (visitScheduleWidth 1),
+    (∀ z t, (flip.eval interpretation)^[t] (inputLeft z) = inputRight z ↔
+      visitScheduleContains (out.eval interpretation z) t) ∧
+    out.size ≤ 5000000 * powerBudget 1 1 2 1 := by
+  simpa [flip] using visit_schedule_circuit flip 1 one_pos (by decide)
+
+/-! ### Hard-power counting, modular counters and prime-cycle permutations -/
+
+-- Linear-size circuit for the 2-bit modular-counter step.
+example : ∃ c : Circuit signature (2 + 2) (2 + 2),
+    c.Computes interpretation (counterStep 2) ∧ c.size ≤ 50 * 2 + 20 :=
+  counterStep_circuit 2
+
+-- Exponential lower bound for some power of the 64-bit modular counter.
+example : ∃ c : Circuit signature (64 + 64) (64 + 64),
+    c.size ≤ 50 * (64 + 1) ∧ Function.Bijective (c.eval interpretation) ∧
+    ∃ T < ModulusCounter.period 64,
+      ∀ out : Circuit signature (64 + 64) (64 + 64),
+        out.Computes interpretation (c.eval interpretation)^[T] →
+          2 ^ 64 / (1024 * (64 + 1)) < out.size :=
+  counter_power_lower_bound 64 (by decide)
+
+-- Almost all counter powers at width k = 64 are hard.
+example : (easyCounterPowers 64 (lowerBudget 64)).card * 2 ^ (2 ^ (64 - 1)) ≤
+    ModulusCounter.period 64 :=
+  almost_all_counter_powers_hard 64 (by decide)
+
+-- Least common multiple below 5 is strictly less than 4 ^ 5.
+example : lcmBelow 5 < 4 ^ 5 :=
+  lcmBelow_lt_four_pow 5 (by decide)
+
+/-- Non-vacuous concrete `PrimeCycleData` instance from the hash-class construction. -/
+noncomputable def samplePrimeCycleData : PrimeCycleData 1 3 :=
+  PrimeCycleData.ofHash 1 1 (fun _ => 0) (fun _ => by decide)
+
+example : Function.Bijective samplePrimeCycleData.step :=
+  samplePrimeCycleData.step_bijective
+
+-- Batched modular-counter power for r = 2 blocks of width 2 * 2 = 4.
+example (T : ℕ) :
+    ∃ out : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)),
+      out.Computes interpretation (counterBatchPower T) ∧
+        out.size ≤ 40000 * (2 + 1) ^ 3 * (2 ^ 2 + 2) :=
+  batched_counter_power T 2 (by decide)
+
+-- Empty batch (r = 0) and zero-width (k = 0) boundary cases of batched_counter_power.
+example (T k : ℕ) :
+    ∃ out : Circuit signature (0 * (k + k)) (0 * (k + k)),
+      out.Computes interpretation (counterBatchPower (r := 0) (k := k) T) ∧
+        out.size ≤ 40000 * (k + 1) ^ 3 * (2 ^ k + 0) :=
+  batched_counter_power T 0 (Nat.zero_le _)
+
+example (T : ℕ) :
+    ∃ out : Circuit signature (1 * (0 + 0)) (1 * (0 + 0)),
+      out.Computes interpretation (counterBatchPower (r := 1) (k := 0) T) ∧
+        out.size ≤ 40000 * (0 + 1) ^ 3 * (2 ^ 0 + 1) :=
+  batched_counter_power T 1 (by decide)
+
+/-- Two-block `2 * (2 + 2)`-bit state with active block 0 `(modulus = 3, residue = 2)` and
+inactive zero-modulus block 1 `(modulus = 0, residue = 1)`. -/
+def sampleTwoBlockState : BitString (2 * (2 + 2)) :=
+  fun i =>
+    if (finProdFinEquiv.symm i).1 = 0 then
+      ModulusCounter.pack (3 : BitVec 2) (2 : BitVec 2) (finProdFinEquiv.symm i).2
+    else
+      ModulusCounter.pack (0 : BitVec 2) (1 : BitVec 2) (finProdFinEquiv.symm i).2
+
+-- Block 0 advances from residue 2 by T = 2 modulo 3 to residue 1, while block 1 (modulus 0)
+-- stays fixed at residue 1.
+example :
+    counterBlock (counterBatchPower (r := 2) (k := 2) 2 sampleTwoBlockState) 0 =
+      ModulusCounter.pack (3 : BitVec 2) (1 : BitVec 2) ∧
+    counterBlock (counterBatchPower (r := 2) (k := 2) 2 sampleTwoBlockState) 1 =
+      ModulusCounter.pack (0 : BitVec 2) (1 : BitVec 2) := by
+  constructor <;> funext b <;> revert b <;> decide
+
+-- Concrete nonidentity proof for `ModulusCounter.power (k := 2) 1` and instantiation of the
+-- `r ≤ c.size` bound (`counterBatch_size_ge_of_ne_id` and `counterBatch_lower_bounds`).
+theorem power_one_two_ne_id : ModulusCounter.power (k := 2) 1 ≠ id := by
+  intro h
+  have hbit := congrFun (congrFun h (ModulusCounter.pack (2 : BitVec 2) (0 : BitVec 2)))
+    (Fin.natAdd 2 ⟨0, by decide⟩)
+  revert hbit
+  decide
+
+example (c : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)))
+    (hc : c.Computes interpretation (counterBatchPower (r := 2) (k := 2) 1)) :
+    2 ≤ c.size :=
+  counterBatch_size_ge_of_ne_id 1 power_one_two_ne_id c hc
+
+example (c : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)))
+    (hc : c.Computes interpretation (counterBatchPower (r := 2) (k := 2) 1)) :
+    (∃ out : Circuit signature (2 + 2) (2 + 2),
+      out.Computes interpretation (ModulusCounter.power 1) ∧ out.size ≤ c.size) ∧
+    2 ≤ c.size := by
+  obtain ⟨hsingle, hbatch⟩ := counterBatch_lower_bounds 1 (by decide : 0 < 2) c hc
+  exact ⟨hsingle, hbatch power_one_two_ne_id⟩
+
+-- Combined upper and lower bounds for batched hard counter powers at k = 64.
+example :
+    ∃ T < ModulusCounter.period 64, ∀ r, 0 < r → r ≤ 2 ^ (64 + 64) →
+      (∃ out : Circuit signature (r * (64 + 64)) (r * (64 + 64)),
+        out.Computes interpretation (counterBatchPower T) ∧
+          out.size ≤ 40000 * (64 + 1) ^ 3 * (2 ^ 64 + r)) ∧
+      ∀ c : Circuit signature (r * (64 + 64)) (r * (64 + 64)),
+        c.Computes interpretation (counterBatchPower T) →
+          lowerBudget 64 < c.size ∧ r ≤ c.size :=
+  batched_hard_counter_power 64 (by decide)
+
 /-! ### Axioms -/
 
 /--
@@ -540,5 +682,243 @@ info: 'Cslib.Circuits.Boolean.Iteration.SequentialSquaring.crypto_table_entries'
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms SequentialSquaring.crypto_table_entries
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_depthWord' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_depthWord
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_label_parts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_label_parts
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_navigation_given_flag' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_navigation_given_flag
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_navigation' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_navigation
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.exists_forest_circuit_tables' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_forest_circuit_tables
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.synthesis_transient_forest_reachability' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms synthesis_transient_forest_reachability
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.forest_transient_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms forest_transient_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.forest_reachability_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms forest_reachability_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.forest_reachability_optimized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms forest_reachability_optimized
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.navigation_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms navigation_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.reachability_hitting_time' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms reachability_hitting_time
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.minimal_period_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms minimal_period_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.visit_schedule_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms visit_schedule_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.visit_schedule_optimized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms visit_schedule_optimized
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.exists_hard_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms exists_hard_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterStep_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterStep_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counter_power_lower_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counter_power_lower_bound
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.almost_all_counter_powers_hard' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms almost_all_counter_powers_hard
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counter_powers_compute_remainders' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counter_powers_compute_remainders
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.variable_time_counter_iff_remainder' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms variable_time_counter_iff_remainder
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.ModulusCounter.hard_power_exponent_capacity' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ModulusCounter.hard_power_exponent_capacity
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.lcmBelow_lt_four_pow' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms lcmBelow_lt_four_pow
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.period' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.period
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.exists_hard_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.exists_hard_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.step_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.step_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycleData.power_circuit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycleData.power_circuit
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.PrimeCycles.near_landau_lower_bound' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PrimeCycles.near_landau_lower_bound
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterRemainder_of_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterRemainder_of_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterPower_of_remainder' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterPower_of_remainder
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.batched_counter_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms batched_counter_power
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterPower_of_batched' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterPower_of_batched
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterBatch_size_ge_of_ne_id' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterBatch_size_ge_of_ne_id
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.counterBatch_lower_bounds' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms counterBatch_lower_bounds
+
+/--
+info: 'Cslib.Circuits.Boolean.Iteration.batched_hard_counter_power' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms batched_hard_counter_power
 
 end ComplexityTests.Iteration

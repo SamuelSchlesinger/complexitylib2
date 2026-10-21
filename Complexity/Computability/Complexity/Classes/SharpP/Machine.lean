@@ -24,8 +24,8 @@ The clock counts native transitions. Only branches halted by that clock are coun
 and makes both counts stable at larger clocks. No all-branch halting assumption is needed merely
 to count bounded terminal branches. The machine, finite control, number of tapes and block width
 are fixed before the input is supplied. `Classes.SharpP.Characterization` supplies the reverse
-verifier construction and the bidirectional #P characterization. The signed reverse GapP
-construction remains separate work.
+verifier construction and the bidirectional #P characterization. `Classes.SharpP.GapMachine`
+supplies balanced signed routing and the bidirectional GapP characterization.
 
 ## Main results
 
@@ -139,7 +139,7 @@ theorem rejectCount_mem_SharpP [Finite State] (machine : MultiTapeCTM k Bool Sta
   simpa [rejectCount] using verdictCount_mem_SharpP machine enc clock false
 
 /-- The difference of accepting and rejecting polynomial-clock terminal counts is in GapP.
-This is the forward implication, without a reverse machine construction. -/
+This is the forward implication; the reverse construction is in `Classes.SharpP.GapMachine`. -/
 theorem gapCount_mem_GapP [Finite State] (machine : MultiTapeCTM k Bool State)
     (enc : α ↪ List Bool) (clock : Polynomial ℕ) :
     (fun a => (machine.acceptCount (clock.eval (enc a).length)

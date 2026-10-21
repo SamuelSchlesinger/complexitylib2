@@ -30,7 +30,8 @@ machines, and show that this gives the differences of functions in `#P`
 definition. `Classes.SharpP.Machine` proves that both polynomial-clock terminal counts of a
 fixed finite-control list-choice machine are in `#P`, and their difference is in `GapP`.
 `Classes.SharpP.Characterization` supplies the actual reverse verifier construction and the
-bidirectional `#P` machine characterization. The signed reverse `GapP` construction remains open.
+bidirectional `#P` machine characterization. `Classes.SharpP.GapMachine` supplies balanced
+signed routing and the corresponding bidirectional `GapP` characterization.
 
 ## Main definitions
 
