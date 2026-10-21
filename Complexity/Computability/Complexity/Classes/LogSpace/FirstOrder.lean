@@ -664,27 +664,12 @@ theorem queryLanguage_mem_L (φ : L.Sentence) :
   have hE := length_shapeCode v 0 (4 + 6 * v.count) (4 + 6 * v.count + codeLength φ + 1)
   have hC := length_formulaCode v (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count)
     (4 + 6 * v.count + codeLength φ) (4 + 6 * v.count + codeLength φ + 1)
-  have hshape : (v.modelChecker φ).CodeAt 0
-      (shapeCode v 0 (4 + 6 * v.count) (4 + 6 * v.count + codeLength φ + 1)) :=
-    codeAt_of_code_eq (pre := [])
-      (post := formulaCode v (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count)
-        (4 + 6 * v.count + codeLength φ) (4 + 6 * v.count + codeLength φ + 1) ++ [.accept, .reject])
-      (by simp [modelChecker])
-  have hcomp : (v.modelChecker φ).CodeAt (4 + 6 * v.count)
-      (formulaCode v (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count)
-        (4 + 6 * v.count + codeLength φ) (4 + 6 * v.count + codeLength φ + 1)) := by
-    have := codeAt_of_code_eq (P := v.modelChecker φ)
-      (pre := shapeCode v 0 (4 + 6 * v.count) (4 + 6 * v.count + codeLength φ + 1))
-      (post := [.accept, .reject]) rfl
-    rwa [hE] at this
-  have hhalt : (v.modelChecker φ).CodeAt (4 + 6 * v.count + codeLength φ)
-      [.accept, .reject] := by
-    have := codeAt_of_code_eq (P := v.modelChecker φ)
-      (pre := shapeCode v 0 (4 + 6 * v.count) (4 + 6 * v.count + codeLength φ + 1) ++
-        formulaCode v (fun e : Empty => e.elim) 3 φ (4 + 6 * v.count)
-          (4 + 6 * v.count + codeLength φ) (4 + 6 * v.count + codeLength φ + 1))
-      (post := []) (List.append_nil _).symm
-    rwa [List.length_append, hE, hC] at this
+  have hcode : (v.modelChecker φ).CodeAt 0 (v.modelChecker φ).code :=
+    codeAt_of_code_eq (pre := []) (post := []) (by simp)
+  change (v.modelChecker φ).CodeAt 0 (_ ++ _ ++ _) at hcode
+  rw [codeAt_append, codeAt_append] at hcode
+  obtain ⟨⟨hshape, hcomp⟩, hhalt⟩ := hcode
+  simp only [List.length_append, hE, hC, Nat.zero_add] at hcomp hhalt
   simp only [codeAt_cons] at hhalt
   obtain ⟨hacc, hrej, -⟩ := hhalt
   have hwB := length_le_pow_regExponent v a
