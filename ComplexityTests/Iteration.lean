@@ -138,12 +138,35 @@ example (c : Circuit signature 3 3) (T : ℕ) : ∃ out : Circuit signature 3 3,
 
 /-! ### Universal step map, in-place machines, and sequential squaring -/
 
+-- Zero-gate (`G = 0`) round of the universal map on the identity circuit.
+example (x : BitString 1) :
+    (Universal.step interpretation)^[0 + 1]
+      (Universal.start (Universal.describe 0 (Circuit.id signature 1) .not) x) =
+    Universal.start (Universal.describe 0 (Circuit.id signature 1) .not)
+      ((Circuit.id signature 1).eval interpretation x) :=
+  Universal.step_round interpretation (Circuit.id signature 1) .not le_rfl x
+
 -- One round of `1 + 1` steps of the universal map simulates `flip`.
 example (x : BitString 1) :
     (Universal.step interpretation)^[1 + 1]
       (Universal.start (Universal.describe 1 flip .not) x) =
     Universal.start (Universal.describe 1 flip .not) (flip.eval interpretation x) :=
   Universal.step_round interpretation flip .not le_rfl x
+
+-- Padded (`G = 3 > flip.size`) round of the universal map simulates `flip`.
+example (x : BitString 1) :
+    (Universal.step interpretation)^[3 + 1]
+      (Universal.start (Universal.describe 3 flip .not) x) =
+    Universal.start (Universal.describe 3 flip .not) (flip.eval interpretation x) :=
+  Universal.step_round interpretation flip .not (by decide) x
+
+-- Concrete instantiation of `Universal.universal_power_circuit` for `T = 1` on `flip`.
+example : ∃ d : Circuit signature 1 1,
+    d.Computes interpretation (flip.eval interpretation)^[1] ∧ d.size ≤ flip.size + 2 :=
+  Universal.universal_power_circuit flip .not le_rfl (fun s => s.x) Sum.inl id (fun _ => rfl)
+    (fun _ => rfl) 1 flip (fun x =>
+      (congrArg Universal.Config.x
+        (Universal.step_iterate interpretation flip .not le_rfl 1 x)).symm)
 
 /-- A 1-head halting in-place machine on `Bool` tape with one absorbing state `Unit`. -/
 private def idleMachine : InPlace.Machine Unit Bool 1 where
@@ -162,7 +185,76 @@ example (z : InPlace.Config Unit Bool 2 1) :
     idleMachine.step^[Fintype.card (InPlace.Config Unit Bool 2 1)] z = z :=
   ((InPlace.iterate_card_halting idleMachine idleMachine_absorbing z).2 0 trivial)
 
--- Sequential squaring modulo the squarefree composite `M = 15`.
+private theorem injOn_config_one {h : ℕ} (M : InPlace.Machine Unit Bool h) :
+    Set.InjOn (fun z : InPlace.Config Unit Bool 1 h => z.1) (InPlace.reach M 1) := by
+  intro z₁ _ z₂ _ h1
+  exact Prod.ext h1 (Prod.ext (Subsingleton.elim _ _) (Subsingleton.elim _ _))
+
+-- Concrete instantiation of `InPlace.inplace_halting` on `idleMachine`.
+example : ∃ (out : Circuit signature 1 1) (final : BitString 1 → InPlace.Config Unit Bool 1 1),
+    (∀ x, out.eval interpretation x = (final x).1 ∧
+      (idleMachine.halting (final x).2.2 ↔
+        ∃ t, idleMachine.halting (idleMachine.step^[t] (idleMachine.init x)).2.2) ∧
+      ∀ t, idleMachine.halting (idleMachine.step^[t] (idleMachine.init x)).2.2 →
+        final x = idleMachine.step^[t] (idleMachine.init x)) ∧
+    (out.size : ℝ) ≤ (Circuit.id signature 1).size + 120000 * optimizedBudget 1 0 2 := by
+  simpa using InPlace.inplace_halting idleMachine idleMachine_absorbing (fun z => z.1)
+    (injOn_config_one idleMachine) (Circuit.id signature 1)
+    (fun z _ => by rw [InPlace.Machine.step_of_halting idleMachine_absorbing z trivial]; rfl)
+    (Circuit.id signature 1) (fun _ => rfl)
+
+/-- A 2-head 1-cell machine where head 0 writes `false` and moves `.left`, while head 1 writes
+`!r 1` and moves `.right`. On a 1-cell tape both moves clamp to `0`, and head 1's write wins. -/
+private def collideMachine : InPlace.Machine Unit Bool 2 where
+  δ q r _ _ := (q, ![false, !r 1], ![.left, .right])
+  start := ()
+  halting _ := False
+  embed := id
+
+private theorem collideMachine_step (z : InPlace.Config Unit Bool 1 2) :
+    collideMachine.step z = (fun _ => !z.1 0, fun _ => 0, ()) := by
+  refine Prod.ext ?_ (Prod.ext (Subsingleton.elim _ _) (Subsingleton.elim _ _))
+  funext i
+  fin_cases i
+  have hp0 : z.2.1 0 = 0 := Subsingleton.elim _ _
+  have hp1 : z.2.1 1 = 0 := Subsingleton.elim _ _
+  simp [collideMachine, InPlace.Machine.step, InPlace.writeHeads, Fin.foldl_succ_last,
+    Fin.foldl_zero, hp1]
+
+private theorem collideMachine_round (x : BitString 1) :
+    collideMachine.step^[1] (collideMachine.init x) =
+      collideMachine.init (flip.eval interpretation x) := by
+  rw [Function.iterate_one, collideMachine_step]
+  simp [InPlace.Machine.init, collideMachine, eval_flip]
+
+-- Concrete instantiation of `InPlace.inplace_configs_optimized` and `InPlace.round_bounds_of_hard`
+-- on the 2-head colliding/clamping machine `collideMachine`.
+example (T : ℕ) : ∃ out : Circuit signature 1 1,
+    (∀ x, out.eval interpretation x = (collideMachine.step^[T] (collideMachine.init x)).1) ∧
+    (out.size : ℝ) ≤ (Circuit.id signature 1).size + 120000 * optimizedBudget 1 flip.size 2 := by
+  simpa using InPlace.inplace_configs_optimized collideMachine (fun z => z.1)
+    (injOn_config_one collideMachine) flip
+    (fun z _ => by rw [collideMachine_step, eval_flip])
+    (Circuit.id signature 1) (fun _ => rfl) T
+
+example (q : ℕ)
+    (hhard : ∀ d : Circuit signature 1 1,
+      d.Computes interpretation (flip.eval interpretation)^[1] → q < d.size) :
+    (∀ out : Circuit signature 1 1,
+      (∀ x, out.eval interpretation x = (collideMachine.step^[1 * 1] (collideMachine.init x)).1) →
+      q < out.size) ∧
+    ∀ T', ∃ out : Circuit signature 1 1,
+      (∀ x, out.eval interpretation x = (collideMachine.step^[T'] (collideMachine.init x)).1) ∧
+      (out.size : ℝ) ≤ (Circuit.id signature 1).size + 120000 * optimizedBudget 1 flip.size 2 := by
+  simpa using InPlace.round_bounds_of_hard collideMachine 1 1 q one_pos (flip.eval interpretation)
+    collideMachine_round (fun z => z.1) (injOn_config_one collideMachine) id (fun _ => rfl) hhard
+    flip (fun z _ => by rw [collideMachine_step, eval_flip]) (Circuit.id signature 1) (fun _ => rfl)
+
+-- Sequential squaring modulo `M = 1`, at `T = 0`, and on a non-unit residue modulo `M = 15`.
+example (T : ℕ) (x : ZMod 1) :
+    (fun y : ZMod 1 => y ^ 2)^[T] x = x ^ SequentialSquaring.reducedExponent 1 T :=
+  SequentialSquaring.iterate_square_reduced squarefree_one T x
+
 private theorem squarefree_15 : Squarefree (15 : ℕ) := by
   rintro (_ | _ | _ | _ | d) ⟨k, hk⟩
   · omega
@@ -173,9 +265,41 @@ private theorem squarefree_15 : Squarefree (15 : ℕ) := by
     · omega
     · nlinarith
 
+-- `3 : ZMod 15` is a non-unit, yet satisfies `pow_carmichael_succ` and `iterate_square_reduced`
+-- (including at `T = 0`).
+example : ¬ IsUnit (3 : ZMod 15) := by
+  rintro ⟨u, hu⟩
+  have h := congrArg (fun z : ZMod 15 => (5 : ZMod 15) * z) hu
+  have h0 : (5 : ZMod 15) * 3 = 0 := by decide
+  have h5 : (5 : ZMod 15) ≠ 0 := by decide
+  have hu0 : (5 : ZMod 15) * (u : ZMod 15) = 0 := h.trans h0
+  have := (Units.mul_left_eq_zero u).mp hu0
+  exact h5 this
+
+example : (3 : ZMod 15) ^ (SequentialSquaring.carmichael 15 + 1) = (3 : ZMod 15) :=
+  SequentialSquaring.pow_carmichael_succ squarefree_15 3
+
+example : (fun y : ZMod 15 => y ^ 2)^[0] (3 : ZMod 15) =
+    (3 : ZMod 15) ^ SequentialSquaring.reducedExponent 15 0 :=
+  SequentialSquaring.iterate_square_reduced squarefree_15 0 3
+
 example (T : ℕ) (x : ZMod 15) :
     (fun y : ZMod 15 => y ^ 2)^[T] x = x ^ SequentialSquaring.reducedExponent 15 T :=
   SequentialSquaring.iterate_square_reduced squarefree_15 T x
+
+-- Non-squarefree boundary (`M = 4`): `x ^ (λ(4) + 1) = x` fails at the nilpotent residue `2`.
+example : ¬ Squarefree (4 : ℕ) := by
+  intro h
+  have h2 := Nat.isUnit_iff.mp (h 2 ⟨1, by ring⟩)
+  omega
+
+example : (2 : ZMod 4) ^ (SequentialSquaring.carmichael 4 + 1) ≠ (2 : ZMod 4) := by
+  obtain ⟨k, hk⟩ : ∃ k, SequentialSquaring.carmichael 4 + 1 = k + 2 :=
+    ⟨SequentialSquaring.carmichael 4 - 1, by
+      have := SequentialSquaring.carmichael_pos 4
+      omega⟩
+  rw [hk, pow_add, show (2 : ZMod 4) ^ 2 = 0 by decide, mul_zero]
+  decide
 
 /-! ### Axioms -/
 

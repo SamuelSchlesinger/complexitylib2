@@ -18,23 +18,36 @@ import Mathlib.Tactic.Linarith
 /-!
 # In-place multi-head machines
 
-An in-place machine has one tape whose cells are exactly the `n` input cells, a finite tape
-alphabet `Γ`, `h` heads, and a finite control `Q`. This module defines its configurations
-`(w, p, q)` with `w : Fin n → Γ`, `p : Fin h → Fin n`, and `q : Q`, its one-step map, and the
-finite set of configurations reachable from the initial configurations `M.init x`
-(`x : BitString n`).
+An in-place machine has one writable tape whose cells are exactly the `n` input cells, a finite
+tape alphabet `Γ`, `h` heads sharing those `n` cells, and a finite control `Q`. Moves past `0` or
+`n - 1` clamp at the boundary (`Move.apply`), and when multiple heads write to the same cell in one
+step, the highest head index wins (`writeHeads`). Because native `Turing.Cfg` has a read-only
+input, separate unbounded work tapes, and a write-only output, this fixed-length shared-tape
+configuration map is formalized as a standalone finite dynamical system rather than an instance of
+`Turing.Cfg`/`Turing.Action`.
 
-It checks the configuration count `|Γ|^n * n^h * |Q|` (`card_config`), the bounds on the number of
-reachable configurations (`reach_card_le_configs`, `reach_card_le_time` under a halting-time bound,
-and `reach_card_le_round` for a machine that returns to an initial configuration every `τ` steps),
-and the stabilization of a run after as many steps as there are configurations
-(`iterate_card_halting`). The circuit bounds apply `fixed_power_encoded` to the forward-invariant
-reachable set, given a Boolean encoding of configurations, a circuit for the step map on that
-encoding, and a circuit for the initial encoding (`inplace_fixed_power`,
-`inplace_fixed_power_optimized`, `inplace_configs_optimized`, `inplace_time_optimized`,
-`inplace_halting`). Finally, a machine whose rounds of `τ` steps realize a transition map `P`
-transfers any circuit lower bound for `P^[T]` to its `(τ * T)`-th power
-(`round_lower_bound_of_hard`, `round_bounds_of_hard`).
+This module defines configurations `(w, p, q)` with `w : Fin n → Γ`, `p : Fin h → Fin n`, and
+`q : Q`, the one-step map `Machine.step`, and the finite set `reach M n` of configurations
+reachable from initial configurations `M.init x` (`x : BitString n`). It proves the configuration
+count `|Γ|^n * n^h * |Q|` (`card_config`), the bounds on `(reach M n).card`
+(`reach_card_le_configs`, `reach_card_le_time` under a halting-time bound, and
+`reach_card_le_round` for a machine that returns to an initial configuration every `τ` steps), and
+the conditional halting characterization after `|Γ|^n * n^h * |Q|` steps under absorbing halting
+states (`iterate_card_halting`): the configuration at step `|Γ|^n * n^h * |Q|` is halting if and
+only if the run ever halts, and equals the halting configuration whenever one is reached
+(non-halting runs may continue cycling).
+
+The circuit theorems (`inplace_fixed_power`, `inplace_fixed_power_optimized`,
+`inplace_configs_optimized`, `inplace_time_optimized`, `inplace_halting`) apply
+`fixed_power_encoded` to the forward-invariant reachable set `reach M n`, assuming an encoding
+`e : Config Q Γ n h → BitString w` injective on `reach M n`, a circuit `c` computing `M.step` on
+`e '' reach M n`, and a circuit `ι` computing `x ↦ e (M.init x)` (charging `c.size` and `ι.size`
+rather than compiling `M.δ` into gates). In `inplace_halting`, the circuit outputs the encoded
+configuration after `|Γ|^n * n^h * |Q|` steps together with the semantic halting equivalence, not a
+separately costed single-bit halting test. Finally, for a machine whose rounds of `τ` steps realize
+`P : BitString m → BitString m`, `round_lower_bound_of_hard` and `round_bounds_of_hard` transfer
+any circuit lower bound for `P^[T]` to the `(τ * T)`-th step of `M` via an explicit output-wire
+projection `tape : Fin m → Fin w` satisfying `∀ x, e (M.init x) ∘ tape = x`.
 
 ## Main definitions
 
@@ -48,8 +61,9 @@ transfers any circuit lower bound for `P^[T]` to its `(τ * T)`-th power
 * `Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_configs`,
   `Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_time`,
   `Cslib.Circuits.Boolean.Iteration.InPlace.reach_card_le_round`: reachable configuration bounds.
-* `Cslib.Circuits.Boolean.Iteration.InPlace.iterate_card_halting`: stabilization after
-  `Fintype.card (Config Q Γ n h)` steps under absorbing halting states.
+* `Cslib.Circuits.Boolean.Iteration.InPlace.iterate_card_halting`: after
+  `Fintype.card (Config Q Γ n h)` steps under absorbing halting states, the configuration is
+  halting iff the run ever halts, and equals the halting configuration when it does.
 * `Cslib.Circuits.Boolean.Iteration.InPlace.inplace_fixed_power_optimized`,
   `Cslib.Circuits.Boolean.Iteration.InPlace.inplace_configs_optimized`,
   `Cslib.Circuits.Boolean.Iteration.InPlace.inplace_time_optimized`,
@@ -99,7 +113,7 @@ structure Machine (Q : Type u) (Γ : Type v) (h : ℕ) where
   start : Q
   /-- The halting predicate on control states. -/
   halting : Q → Prop
-  /-- The inclusion of the input alphabet `{0, 1}` into `Γ`. -/
+  /-- The input map from `{0, 1}` into `Γ`. -/
   embed : Bool → Γ
 
 /-- Configurations: tape contents, head positions, and control state. -/
@@ -151,7 +165,7 @@ theorem Machine.step_of_halting {M : Machine Q Γ h} (hM : M.HaltingAbsorbing)
   obtain ⟨w, p, q⟩ := z
   simp only [Machine.step, hM q hz, writeHeads_read, Move.apply]
 
-/-- The number of configurations, which is the number of valid encodings. -/
+/-- The number of configurations `|Γ|^n * n^h * |Q|`. -/
 theorem card_config [Fintype Q] [Fintype Γ] :
     Fintype.card (Config Q Γ n h) = Fintype.card Γ ^ n * n ^ h * Fintype.card Q := by
   simp only [Config, Fintype.card_prod, Fintype.card_fun, Fintype.card_fin, Nat.mul_assoc]
@@ -239,8 +253,8 @@ theorem reach_card_le_round (τ : ℕ) (hτ : 0 < τ) (P : BitString n → BitSt
 
 end Reach
 
-/-- A run stabilizes after as many steps as there are configurations: the configuration then
-halts exactly when the run ever halts, and it is then the halting configuration. -/
+/-- Under absorbing halting states, the configuration after `|Γ|^n * n^h * |Q|` steps is halting
+if and only if the run ever halts, and equals any halting configuration reached along the run. -/
 theorem iterate_card_halting [Fintype Q] [Fintype Γ] (M : Machine Q Γ h)
     (hM : M.HaltingAbsorbing) (z : Config Q Γ n h) :
     (M.halting (M.step^[Fintype.card (Config Q Γ n h)] z).2.2 ↔

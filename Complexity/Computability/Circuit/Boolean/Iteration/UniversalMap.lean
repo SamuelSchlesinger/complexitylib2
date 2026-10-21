@@ -23,7 +23,16 @@ the two constants of the De Morgan basis (`simulation_circuit`).
 
 The universal step map executes a straight-line program, held in its state, one gate per step, and
 after the last gate copies the output wires back into the input registers (`Universal.step`). One
-round of `G + 1` steps runs any circuit with at most `G` gates (`Universal.step_round`). A group
+round of `G + 1` steps runs any circuit with at most `G` gates (`Universal.step_round`): each gate
+evaluation and the simultaneous output copy/reset each count as one semantic step. Because
+`Universal.Description` and `Universal.Config` carry natural-number wire indices and a
+natural-number program counter (`pc : ℕ`), `Universal.Config` is an unbounded mathematical
+configuration space rather than a finite Boolean state space or the native certified universal
+Turing machine; the generic value carrier `V` uses `[Inhabited V]` as the default for out-of-range
+wire reads and cleared work registers. The circuit reduction `Universal.universal_power_circuit`
+is conditional: it assumes a finite bit encoding `e`, the start-state hardwiring equation `he`, and
+a circuit `u` computing `(Universal.step interpretation)^[(G + 1) * T]` on start states, without
+constructing a global finite state encoding or a circuit for one universal step. A group
 action by a hardwired element (`smul_zpow_circuit`, `smul_iterate_circuit`, `smul_inverse_circuit`),
 and either factor of a product map (`prodMap_power_circuit`, `prodMap_power_circuit_left`), are
 handled by the same hardwiring argument.
@@ -209,11 +218,6 @@ theorem prodMap_power_circuit_left {m k : ℕ} (U : BitString m → BitString m)
 
 /-! ### Group actions by a hardwired element -/
 
-/-- The `T`th power of `x ↦ g • x` is one application of the element `g ^ T`. -/
-theorem smul_iterate_eq {G α : Type*} [Monoid G] [MulAction G α] (g : G) (T : ℕ) :
-    (fun x : α => g • x)^[T] = fun x => g ^ T • x :=
-  smul_iterate g T
-
 /-- The permutation `x ↦ g • x` of a group action has inverse `x ↦ g⁻¹ • x`. -/
 theorem smul_perm_symm {G α : Type*} [Group G] [MulAction G α] (g : G) :
     ⇑(MulAction.toPerm g : Equiv.Perm α).symm = fun x => g⁻¹ • x := by
@@ -254,7 +258,7 @@ theorem smul_iterate_circuit {G α : Type*} [Group G] [MulAction G α] {k n : �
       (∀ x, d.eval interpretation (enc x) = enc ((fun y : α => g • y)^[T] x)) ∧
       d.size ≤ act.size + 2 := by
   obtain ⟨d, hd, hs⟩ := smul_zpow_circuit encG enc act hact g T
-  exact ⟨d, fun x => by rw [hd, smul_iterate_eq, zpow_natCast], hs⟩
+  exact ⟨d, fun x => by rw [hd, smul_iterate, zpow_natCast], hs⟩
 
 /-- The inverse of the action of a fixed element. -/
 theorem smul_inverse_circuit {G α : Type*} [Group G] [MulAction G α] {k n : ℕ}
@@ -293,8 +297,10 @@ structure Description (σ : Signature.{v}) (n G : ℕ) where
   /-- The indices of the wires copied back into the `n` input registers after a round. -/
   outputs : Fin n → ℕ
 
-/-- A state of the universal map: the program, the input registers, the work registers, and a
-program counter. -/
+/-- A state of the universal map: the program, the input registers, the work registers, and an
+unbounded natural-number program counter. Because `desc` carries natural-number wire indices and
+`pc : ℕ`, this is an infinite mathematical configuration space rather than a finite Boolean state
+space. -/
 structure Config (σ : Signature.{v}) (V : Type w) (n G : ℕ) where
   /-- The straight-line program description held in the state. -/
   desc : Description σ n G
@@ -305,12 +311,13 @@ structure Config (σ : Signature.{v}) (V : Type w) (n G : ℕ) where
   /-- The program counter. -/
   pc : ℕ
 
-/-- Read the register with a given index. Indices out of range read the default value. -/
+/-- Read the register with a given index. Indices out of range read the default value of `V`. -/
 def read (x : Fin n → V) (w : Fin G → V) (i : ℕ) : V :=
   if h : i < n then x ⟨i, h⟩ else if h' : i - n < G then w ⟨i - n, h'⟩ else default
 
-/-- One step: evaluate entry `pc` into work register `pc`, or, when `pc ≥ G`, copy the outputs into
-the input registers, clear the work registers, and reset the counter. -/
+/-- One semantic step: evaluate entry `pc` into work register `pc`, or, when `pc ≥ G`,
+simultaneously copy the outputs into the input registers, clear the work registers to `default`,
+and reset the counter. -/
 def step (I : Interpretation σ V) (s : Config σ V n G) : Config σ V n G :=
   if h : s.pc < G then
     { s with
@@ -456,10 +463,12 @@ theorem step_iterate (I : Interpretation σ V) (c : Circuit σ n n) (pad : σ.Op
   iterate_simulation (start (describe G c pad)) (c.eval I) (step I) (G + 1)
     (step_round I c pad hG) T x
 
-/-- The circuit consequence: under any bit encoding of the universal map's states that writes the
-input registers of a start state directly and fixes its other bits to constants determined by the
-description, a circuit for the `(G + 1) * T`th power of the universal map gives a circuit for the
-`T`th power of every circuit with at most `G` gates, with at most two more gates. -/
+/-- The conditional circuit consequence: assuming a bit encoding `e` of universal-map states that
+writes the input registers of a start state directly and fixes its other bits to constants
+determined by the description (`he`), together with a circuit `u` for the `(G + 1) * T`-th power of
+`Universal.step` on those start states (`hu`), one obtains a circuit for the `T`th power of `c`
+with at most two more gates. Neither `e` nor a circuit for one universal step is constructed
+here. -/
 theorem universal_power_circuit {m : ℕ} (c : Circuit signature n n)
     (pad : signature.Op) (hG : c.size ≤ G)
     (e : Config signature Bool n G → BitString m) (place : Fin m → Fin n ⊕ Bool)

@@ -116,13 +116,6 @@ theorem pow_eq_pow_of_modEq {M : ℕ} (hM : Squarefree M) (x : ZMod M) {a b : �
   · obtain ⟨k, hk⟩ := (Nat.modEq_iff_dvd' hab).mp h.symm
     rw [show a = b + carmichael M * k by omega, pow_add_mul_carmichael hM x hb]
 
-/-- `T` squarings form the power `x ↦ x ^ (2 ^ T)`, in any monoid. -/
-theorem iterate_square {R : Type*} [Monoid R] (T : ℕ) (x : R) :
-    (fun y : R => y ^ 2)^[T] x = x ^ (2 ^ T) := by
-  induction T with
-  | zero => simp
-  | succ T ih => rw [Function.iterate_succ_apply', ih, ← pow_mul, ← pow_succ]
-
 /-- The reduced exponent `1 + (2 ^ T - 1) % λ(M)` of `T` squarings. -/
 noncomputable def reducedExponent (M T : ℕ) : ℕ := 1 + (2 ^ T - 1) % carmichael M
 
@@ -137,7 +130,7 @@ theorem reducedExponent_le (M T : ℕ) :
 including non-units, `T` squarings equal the single power `x ^ (1 + (2 ^ T - 1) % λ(M))`. -/
 theorem iterate_square_reduced {M : ℕ} (hM : Squarefree M) (T : ℕ)
     (x : ZMod M) : (fun y : ZMod M => y ^ 2)^[T] x = x ^ reducedExponent M T := by
-  rw [iterate_square]
+  rw [pow_iterate]
   have h1 : 1 ≤ 2 ^ T := Nat.one_le_two_pow
   refine pow_eq_pow_of_modEq hM x h1 (by unfold reducedExponent; omega) ?_
   have h := (Nat.mod_modEq (2 ^ T - 1) (carmichael M)).symm.add_left 1
