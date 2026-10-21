@@ -110,7 +110,7 @@ agreement during upstream review.
 | `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
 | `Probability/PairwiseIndependentHash/Toeplitz` | Move `Matrix.toeplitz` to Mathlib beside `LinearAlgebra/Matrix/Circulant`. |
 | `Probability/ApproximateCounting/Relative` | Extract the natural-number root lemmas to Mathlib. |
-| `Computability/Kolmogorov/SelfDelimiting` | Move `Nat.foldr_bit_bits` to Mathlib's `Data/Nat/Bits`. |
+| `Foundations/Data/Nat/Bits` | `Nat.foldr_bit_bits` is a candidate for Mathlib's `Data/Nat/Bits`; its local relocation is complete, but upstream integration is still pending. |
 
 ## Deprecation policy and grandfathered changes
 
