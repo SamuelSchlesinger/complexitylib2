@@ -32,7 +32,8 @@ the storage term `M / L` is paid once rather than `r` times. Balancing `L` gives
 With a separate `m`-bit time for each member, binary powering with the batched powers costs
 `m * (100000 * batchBudget n s (2 ^ n) r L + 4 * r * n)` (`batched_variable_time`), and
 `m * (300000 * optimizedBatchBudget n s (2 ^ n) r + 4 * r * n)` balanced
-(`batched_variable_time_optimized`).
+(`batched_variable_time_optimized`). These input-time circuits specialize the shared
+binary-powering rule in `Iteration.InputTime` to the batched fixed-power circuits proved here.
 
 The circuits are native De Morgan circuits: every NOT, AND and OR gate and every constant is
 charged, while wiring and fanout are free. The checkpoints are chosen nonconstructively, so the
@@ -330,64 +331,6 @@ theorem batched_fixed_power_optimized (c : Circuit signature n n) (r T : ℕ) (h
   linarith
 
 /-! ### Batched input times -/
-
-/-- **Batched binary powering.** If every batched power `f^[2 ^ j]` with `j < m` has a circuit of
-size at most `C`, then `r` available states, each with its own time given by `m` available bits,
-cost at most `m * (C + 4 * r * n)` gates. -/
-theorem synthesis_batched_binary_powering (f : BitString n → BitString n) (C : ℕ)
-    (hpowers : ∀ j < m, ∃ c : Circuit signature (r * n) (r * n),
-      c.Computes interpretation (blockMap f^[2 ^ j] r) ∧ c.size ≤ C)
-    (s : Set (BooleanFunction a)) (init : BitString a → Fin r → BitString n)
-    (bits : BitString a → Fin r → BitString m)
-    (hi : ∀ member bit, (fun x => init x member bit) ∈ s)
-    (hb : ∀ member j, (fun x => bits x member j) ∈ s) :
-    Synthesis interpretation s
-      (⋃ member, wires fun x => f^[(word (bits x member)).toNat] (init x member))
-      (m * (C + 4 * (r * n))) := by
-  let state := fun j x member => f^[(word (bits x member)).toNat % 2 ^ j] (init x member)
-  let q := fun j => ⋃ member, wires fun x => state j x member
-  have hz : q 0 ⊆ s := by
-    intro g hg
-    obtain ⟨member, bit, rfl⟩ := Set.mem_iUnion.mp hg
-    simpa only [state, pow_zero, Nat.mod_one, Function.iterate_zero, id_eq] using hi member bit
-  have hstep (j : ℕ) (hj : j < m) :
-      Synthesis interpretation (s ∪ Synthesis.stages q j) (q (j + 1)) (C + 4 * (r * n)) := by
-    obtain ⟨pow, hp, hs⟩ := hpowers j hj
-    let src := s ∪ Synthesis.stages q j
-    have hav (member : Fin r) (bit : Fin n) : (fun x => state j x member bit) ∈ src :=
-      Or.inr (Synthesis.subset_stages q le_rfl (Set.mem_iUnion.mpr ⟨member, bit, rfl⟩))
-    let packed := fun x i => state j x (finProdFinEquiv.symm i).1 (finProdFinEquiv.symm i).2
-    have hpow := Synthesis.circuit (I := interpretation) (s := src) pow (fun i x => packed x i)
-      fun i => hav _ _
-    let src' := src ∪ Set.range fun o x => pow.eval interpretation (packed x) o
-    have hout (member : Fin r) : wires (fun x => f^[2 ^ j] (state j x member)) ⊆ src' := by
-      rintro _ ⟨bit, rfl⟩
-      refine Or.inr ⟨finProdFinEquiv (member, bit), funext fun x => ?_⟩
-      have hd : directProductInput (packed x) member = state j x member := by
-        funext i
-        simp only [directProductInput, packed, Equiv.symm_apply_apply]
-      change pow.eval interpretation (packed x) _ = _
-      rw [hp (packed x), blockMap_apply, hd]
-    have hmux := Synthesis.iUnion (I := interpretation) (s := src')
-      (fun member => wires fun x => if bits x member ⟨j, hj⟩ then f^[2 ^ j] (state j x member)
-        else state j x member) (fun _ => 4 * n) fun member =>
-      synthesis_bits_mux src' _ _ _ (hout member)
-        (by rintro _ ⟨bit, rfl⟩; exact Or.inl (hav member bit))
-        (Or.inl (Or.inl (hb member ⟨j, hj⟩)))
-    have he : (⋃ member, wires fun x => if bits x member ⟨j, hj⟩ then
-        f^[2 ^ j] (state j x member) else state j x member) = q (j + 1) := by
-      congr 1
-      funext member
-      congr 1
-      funext x
-      exact (iterate_toNat_word_mod_two_pow_succ f (bits x member) hj (init x member)).symm
-    rw [he] at hmux
-    refine (hpow.trans hmux).mono Set.Subset.rfl Set.Subset.rfl ?_
-    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
-    nlinarith
-  have h := (Synthesis.steps q _ m hz hstep).mono Set.Subset.rfl
-    (Synthesis.subset_stages q le_rfl) le_rfl
-  simpa only [q, state, Nat.mod_eq_of_lt (word _).isLt] using h
 
 /-- **Batched input times.** For `r ≤ 2 ^ n` and `0 < L ≤ 2 ^ n`, some circuit of size at most
 `m * (100000 * batchBudget n c.size (2 ^ n) r L + 4 * (r * n))` iterates `c` on each of `r`
