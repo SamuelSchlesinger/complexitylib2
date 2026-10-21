@@ -55,12 +55,12 @@ instructions (`Cslib.WordRAM.Exec.runs`). A complete program ends with a `halt`
 
 namespace Cslib.WordRAM
 
-variable {r : ℕ}
+variable {B : Basis} {r : ℕ}
 
 /-! ## Assembly -/
 
 /-- Assemble a structured program to be placed at instruction index `pc`. -/
-def Code.assemble : Code r → ℕ → Program r
+def Code.assemble : Code B r → ℕ → Program B r
   | .op o, _ => [.op o]
   | .seq c₁ c₂, pc => c₁.assemble pc ++ c₂.assemble (pc + c₁.size)
   | .branch c pos neg, pc =>
@@ -70,7 +70,7 @@ def Code.assemble : Code r → ℕ → Program r
     .branch c (pc + 2) :: .jump (pc + body.size + 3) :: body.assemble (pc + 2) ++ [.jump pc]
 
 @[simp]
-theorem Code.length_assemble (c : Code r) (pc : ℕ) : (c.assemble pc).length = c.size := by
+theorem Code.length_assemble (c : Code B r) (pc : ℕ) : (c.assemble pc).length = c.size := by
   induction c generalizing pc with
   | branch _ _ _ ihp ihn =>
     simp only [Code.assemble, List.length_append, List.length_cons, ihp, ihn, Code.size]
@@ -78,17 +78,17 @@ theorem Code.length_assemble (c : Code r) (pc : ℕ) : (c.assemble pc).length = 
   | _ => simp_all [Code.assemble]
 
 /-- The complete program: the assembled structured program followed by `halt out`. -/
-def Code.program (c : Code r) (out : Fin r) : Program r := c.assemble 0 ++ [.halt out]
+def Code.program (c : Code B r) (out : Fin r) : Program B r := c.assemble 0 ++ [.halt out]
 
 /-- `p` contains the program `q` starting at instruction index `base`. -/
-def Program.Contains (p : Program r) (base : ℕ) (q : Program r) : Prop :=
+def Program.Contains (p : Program B r) (base : ℕ) (q : Program B r) : Prop :=
   ∃ pre post, p = pre ++ q ++ post ∧ pre.length = base
 
 namespace Program.Contains
 
-variable {p q q₁ q₂ : Program r} {base : ℕ}
+variable {p q q₁ q₂ : Program B r} {base : ℕ}
 
-theorem self (p : Program r) : p.Contains 0 p := ⟨[], [], by simp, rfl⟩
+theorem self (p : Program B r) : p.Contains 0 p := ⟨[], [], by simp, rfl⟩
 
 theorem append_left (h : p.Contains base (q₁ ++ q₂)) : p.Contains base q₁ :=
   let ⟨pre, post, hp, hl⟩ := h
@@ -98,7 +98,7 @@ theorem append_right (h : p.Contains base (q₁ ++ q₂)) : p.Contains (base + q
   let ⟨pre, post, hp, hl⟩ := h
   ⟨pre ++ q₁, post, by simp [hp], by simp [hl]⟩
 
-theorem cons_tail {i : Instr r} (h : p.Contains base (i :: q)) : p.Contains (base + 1) q :=
+theorem cons_tail {i : Instr B r} (h : p.Contains base (i :: q)) : p.Contains (base + 1) q :=
   append_right (q₁ := [i]) h
 
 theorem getElem? (h : p.Contains base q) {k : ℕ} (hk : k < q.length) :
@@ -107,7 +107,7 @@ theorem getElem? (h : p.Contains base q) {k : ℕ} (hk : k < q.length) :
   rw [List.append_assoc, List.getElem?_append_right (by omega), Nat.add_sub_cancel_left,
     List.getElem?_append_left hk]
 
-theorem head {i : Instr r} (h : p.Contains base (i :: q)) : p[base]? = some i := by
+theorem head {i : Instr B r} (h : p.Contains base (i :: q)) : p[base]? = some i := by
   simpa using h.getElem? (k := 0) (by simp)
 
 end Program.Contains
@@ -116,7 +116,7 @@ end Program.Contains
 
 section Runs
 
-variable {w : ℕ} {p : Program r} {x : Data r} {pc : ℕ}
+variable {w : ℕ} {p : Program B r} {x : Data r} {pc : ℕ}
 
 private theorem next_jump {t : ℕ} (h : p[pc]? = some (.jump t)) :
     Next w p ⟨pc, x⟩ ⟨t, x⟩ := step_jump h
@@ -132,7 +132,7 @@ private theorem next_branch_neg {c : Cond r} {t : ℕ} (h : p[pc]? = some (.bran
 /-- **Assembly is correct.** A structured execution is a run of any program containing the
 assembled structured program, from its first instruction to the instruction after it, with
 exactly the same number of instructions. -/
-theorem Exec.runs {c : Code r} {y : Data r} {n : ℕ} (h : Exec w c x y n)
+theorem Exec.runs {c : Code B r} {y : Data r} {n : ℕ} (h : Exec w c x y n)
     (hp : p.Contains pc (c.assemble pc)) : Runs w p ⟨pc, x⟩ ⟨pc + c.size, y⟩ n := by
   induction h generalizing pc with
   | op ho =>
@@ -171,7 +171,7 @@ theorem Exec.runs {c : Code r} {y : Data r} {n : ℕ} (h : Exec w c x y n)
 
 /-- A structured execution followed by `halt out` is a halting run of the complete program, with
 one more instruction. -/
-theorem Exec.executes {c : Code r} {y : Data r} {n : ℕ} (h : Exec w c x y n) (out : Fin r) :
+theorem Exec.executes {c : Code B r} {y : Data r} {n : ℕ} (h : Exec w c x y n) (out : Fin r) :
     Executes w (c.program out) ⟨0, x⟩ (y.regs out) (n + 1) := by
   have hr := h.runs (pc := 0) (p := c.program out) (Program.Contains.self _).append_left
   have hh : step w (c.program out) ⟨0 + c.size, y⟩ = .halt (y.regs out) :=
@@ -185,13 +185,13 @@ end Runs
 /-- The structured program `c`, run at word size `w` from the initial data on `input`, leaves
 the answer to `b` in register `out` within `time` instructions: `1` if `b` holds and `0`
 otherwise. -/
-def Code.Answers (c : Code r) (out : Fin r) (w : ℕ) (input : List ℕ) (b : Prop) (time : ℕ) :
+def Code.Answers (c : Code B r) (out : Fin r) (w : ℕ) (input : List ℕ) (b : Prop) (time : ℕ) :
     Prop :=
   ∃ y, ExecWithin w c (.init input) y time ∧ y.regs out ≤ 1 ∧ (y.regs out = 1 ↔ b)
 
 /-- A structured program that answers a question gives a flat program that answers it, with one
 more instruction for the final `halt`. -/
-theorem Code.Answers.program {c : Code r} {out : Fin r} {w : ℕ} {input : List ℕ} {b : Prop}
+theorem Code.Answers.program {c : Code B r} {out : Fin r} {w : ℕ} {input : List ℕ} {b : Prop}
     {time : ℕ} (h : c.Answers out w input b time) : (c.program out).Answers w input b (time + 1) :=
   let ⟨y, ⟨n, hn, he⟩, hv⟩ := h
   ⟨y.regs out, n + 1, he.executes out, Nat.add_le_add_right hn 1, hv⟩
@@ -201,7 +201,7 @@ whether `a ∈ A` in register `out` within `time a` instructions at every word s
 that accommodates the input words, then the compiled program decides `A` uniformly within
 `time a + 1` instructions. -/
 theorem Code.decidesInTime_program {α : Type*} {encode : α → List ℕ} {A : Set α}
-    {time bits : α → ℕ} (c : Code r) (out : Fin r)
+    {time bits : α → ℕ} (c : Code B r) (out : Fin r)
     (h : ∀ a w, bits a ≤ w → InputFits w (encode a) →
       c.Answers out w (encode a) (a ∈ A) (time a)) :
     (c.program out).DecidesInTime encode A (fun a => time a + 1) bits :=
@@ -209,16 +209,16 @@ theorem Code.decidesInTime_program {α : Type*} {encode : α → List ℕ} {A : 
 
 /-- **Structured decision procedures are uniform deciders.** -/
 theorem DecidableInTime.of_code {α : Type*} {encode : α → List ℕ} {A : Set α}
-    {time bits : α → ℕ} (c : Code r) (out : Fin r)
+    {time bits : α → ℕ} (c : Code B r) (out : Fin r)
     (h : ∀ a w, bits a ≤ w → InputFits w (encode a) →
       c.Answers out w (encode a) (a ∈ A) (time a)) :
-    DecidableInTime A encode (fun a => time a + 1) bits :=
+    DecidableInTime B A encode (fun a => time a + 1) bits :=
   ⟨r, c.program out, c.decidesInTime_program out h⟩
 
 /-! ## Reading the word size -/
 
 /-- An assembled program reads the word size only if the structured program does. -/
-theorem Code.readsWidth_of_assemble {c : Code r} {pc : ℕ} (h : (c.assemble pc).ReadsWidth) :
+theorem Code.readsWidth_of_assemble {c : Code B r} {pc : ℕ} (h : (c.assemble pc).ReadsWidth) :
     c.ReadsWidth := by
   obtain ⟨i, hi, hr⟩ := h
   induction c generalizing pc with
@@ -245,7 +245,7 @@ theorem Code.readsWidth_of_assemble {c : Code r} {pc : ℕ} (h : (c.assemble pc)
     · exact (hr : False).elim
 
 /-- A compiled program reads the word size only if the structured program does. -/
-theorem Code.not_readsWidth_program {c : Code r} (hc : ¬c.ReadsWidth) (out : Fin r) :
+theorem Code.not_readsWidth_program {c : Code B r} (hc : ¬c.ReadsWidth) (out : Fin r) :
     ¬(c.program out).ReadsWidth := by
   rintro ⟨i, hi, hr⟩
   rcases List.mem_append.1 hi with hi | hi

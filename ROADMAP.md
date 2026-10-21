@@ -127,7 +127,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Proof complexity | Build on [Cook–Reckhow systems and simulations](Complexity/Logics/Propositional/ProofSystem.lean), including the polynomially bounded-system characterization of NP = coNP, the [resolution size–width tradeoff](Complexity/Logics/Propositional/Resolution/SizeWidth.lean), [tree-like resolution/DPLL search-tree certificates](Complexity/Logics/Propositional/Resolution/TreeLike.lean), [Tseitin formulas on expanders](Complexity/Logics/Propositional/Resolution/TseitinExpander.lean) and [Haken's pigeonhole lower bound](Complexity/Logics/Propositional/Resolution/Pigeonhole.lean). Extend proof-space lower bounds, Frege, cutting planes, polynomial calculus and sum-of-squares. The certificate correspondence does not certify a DPLL solver's runtime. |
 | Average-case complexity and learning | Uniform-distribution learning on CSLib's PAC API, the LMN low-degree algorithm and Kushilevitz–Mansour with membership queries are [proved](Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean); running times are not machine-certified. Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |
 | Property and distribution testing | Distance and access models, one/two-sided and tolerant testing, query/sample bounds, canonical graph/algebraic/distribution testers and lower bounds. |
-| Fine-grained and parameterized complexity | Under ETH, 3-coloring, independent set, vertex cover and Hamiltonian cycle and path have no 2^{o(\|V\|+\|E\|)} algorithms and clique none in 2^{o(\|V\|)} ([GraphProblems](Complexity/Computability/Complexity/FineGrained/GraphProblems.lean)); the Hamiltonian bounds (directed and undirected) use linear-size diamond reductions. [FPT and XP](Complexity/Computability/Complexity/Parameterized.lean) are defined with arbitrary (not necessarily computable) `f`; `P ⊆ FPT ⊆ XP`, Boolean closure of FPT (complement for XP), closure under fpt-reductions and `FPT = XP = P` for bounded parameters are proved, and SAT is in FPT for the number of variables. [Kernelization](Complexity/Computability/Complexity/Parameterized/Kernelization.lean) (`IsKernelization`, `HasKernel`, `HasPolyKernel`) and the Cai–Chen–Downey–Fellows equivalence (`A ∈ FPT enc κ ↔ HasKernel enc κ A` for `A ∈ DTIME enc t` over a nonempty instance type) are proved, and [VertexCover](Complexity/Computability/Complexity/Parameterized/VertexCover.lean) is in FPT parameterized by target size `k` in time `O(2^k (|x|+1)^e)` by a bounded search tree. Further fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; strongly uniform (computable `f`) variants, explicit polynomial kernels (e.g. Buss's kernel for Vertex Cover), W/A hierarchies and parameterized lower bounds. |
+| Fine-grained and parameterized complexity | Under ETH, 3-coloring, independent set, vertex cover and Hamiltonian cycle and path have no 2^{o(\|V\|+\|E\|)} algorithms and clique none in 2^{o(\|V\|)} ([GraphProblems](Complexity/Computability/Complexity/FineGrained/GraphProblems.lean)); the Hamiltonian bounds (directed and undirected) use linear-size diamond reductions. [FPT and XP](Complexity/Computability/Complexity/Parameterized.lean) are defined with arbitrary (not necessarily computable) `f`; `P ⊆ FPT ⊆ XP`, Boolean closure of FPT (complement for XP), closure under fpt-reductions and `FPT = XP = P` for bounded parameters are proved, and SAT is in FPT for the number of variables. [Kernelization](Complexity/Computability/Complexity/Parameterized/Kernelization.lean) (`IsKernelization`, `HasKernel`, `HasPolyKernel`) and the Cai–Chen–Downey–Fellows equivalence (`A ∈ FPT enc κ ↔ HasKernel enc κ A` for `A ∈ DTIME enc t` over a nonempty instance type) are proved, and [VertexCover](Complexity/Computability/Complexity/Parameterized/VertexCover.lean) is in FPT parameterized by target size `k` in time `O(2^k (|x|+1)^e)` by a bounded search tree and has [Buss's polynomial kernel](Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean) with at most `k(k+2)` vertices and encoded length at most `40(k+1)^6` (`VertexCover_hasPolyKernel`). Further fine-grained reductions and consequences conditional on ETH/SETH and other named hypotheses; strongly uniform (computable `f`) variants, further explicit polynomial kernels, W/A hierarchies and parameterized lower bounds. |
 | Total search and computational games | Build on [FNP, FP and TFNP with search reductions](Complexity/Computability/Complexity/Classes/TFNP.lean), including `FP = FNP` exactly when `P = NP` ([search to decision](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean)), `TFNP ⊆ FP → NP ∩ coNP ⊆ P`, and the canonical subclasses [PLS, PPP, PPAD and PPA](Complexity/Computability/Complexity/Classes/TFNP/Subclasses.lean) with their combinatorial totality principles ([Principles](Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Principles.lean)), inclusions `PLS, PPP, PPAD, PPA ⊆ TFNP`, `PPAD ⊆ PPP`, and `PPAD ⊆ PPA`, and De Morgan circuit problems (`LocalOpt ∈ PLS`, `Pigeon ∈ PPP`, `EndOfLine ∈ PPAD`, `Leaf ∈ PPA`). Their [completeness](Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean) now follows from polynomial-time construction of function-family circuit codes, preserving binary local-search costs. Develop CLS, further local search, fixed-point and equilibrium problems. |
 | Logic and descriptive complexity | Building on [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): logical characterizations of additional resource classes, fixed-point and order-invariant queries, and uniform translations between syntax, structures and algorithms. |
 | Kolmogorov complexity and metacomplexity | Machine-backed descriptions/decoders and invariance, resource-bounded descriptions, MCSP variants and connections to learning, cryptography and lower bounds. Revisit deferred results through independently reviewed developments. |
@@ -606,9 +606,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   implies `NP ∩ coNP ⊆ P`. PLS, PPP, PPAD and PPA and their
   [canonical complete circuit problems](Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean)
   are proved (#151, #168). Develop CLS and further complete search problems. Building on
-  [FPT, XP and fpt-reductions](Complexity/Computability/Complexity/Parameterized.lean), prove the
-  kernelization characterization of FPT and a bounded-search-tree algorithm for vertex cover
-  (#152), then strongly uniform variants and the W hierarchy.
+  [FPT, XP and fpt-reductions](Complexity/Computability/Complexity/Parameterized.lean), the
+  kernelization characterization of FPT, a bounded-search-tree algorithm for vertex cover (#152),
+  and [Buss's polynomial kernel for vertex cover](Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean)
+  (#270) are proved; develop strongly uniform variants and the W hierarchy.
   The long-term coverage table identifies the broader class families.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
@@ -708,7 +709,16 @@ semantic Hoare rules, module substitution and hidden-state potentials compose wi
 a backend. The [two-stack queue](Complexity/Algorithms/Lean/Queue.lean) and
 [reset-and-replay timeline editing](Complexity/Algorithms/Lean/Retroactive.lean) are
 checked constructions, with explicit primitive-cost assumptions; their pure client controllers
-are not compiled into Word-RAM programs.
+do not yet have total Word-RAM time certificates.
+
+[Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
+admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
+rules retain answer-dependent costs; separate method budgets transport contracts through
+successive semantic modules and then to additive native execution measures. The `stateful`
+tactic uses local contracts and structural rules, with intermediate assertions and implementation
+choices supplied explicitly. A two-layer adaptive counter example checks both execution branches
+and rejects an insufficient budget. This is the first #274 milestone: integration with `polytime`
+certificates for client controllers, pure computations and calling conventions remains open.
 
 The [fixed-program bridge](Complexity/Computability/WordRAM/Dynamic.lean) has concrete bounded
 [stack](Complexity/Algorithms/WordRAM/Stack.lean) and
@@ -719,7 +729,8 @@ frame rules. Prefix sums use a balanced aggregation tree for a power-of-two numb
 not a Fenwick layout. Machine costs exclude initial representation construction and external argument
 encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
 
-Outstanding: charged initialization and caller/linking compilation; a concrete shared-heap queue
+Outstanding: charged initialization and compositional machine-resource certificates for callers;
+a concrete shared-heap queue
 using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
 doubling-array amortization, richer ownership and recursive procedures; independent model
 realizations for cell probes, caches and randomness; and present/historical queries for the
@@ -754,8 +765,27 @@ space bounds. Further class-level work needs resource certificates for the actua
 * the ordered logarithmic-space FO encoding bridge and first-order Circuit Value completeness in the
   [first continuing priority](#continuing-priorities), together with uniform circuit-family and
   counting-machine characterizations;
+* RAM value domains: the [generic core](Complexity/Computability/GenericRAM/Defs.lean) now permits
+  arbitrary value, address, configuration and constant-symbol types, partial operations/tests,
+  and model-specific fault policies. The [WordRAM adapter](Complexity/Computability/WordRAM/Generic.lean)
+  preserves every step, fault, output and instruction count for every basis and arbitrary state.
+  Instances cover the [signed bounded integer model](Complexity/Computability/GenericRAM/Signed.lean)
+  of lean-trominoes and [exact reals and prime fields](Complexity/Computability/GenericRAM/Algebraic.lean)
+  with separate tagged natural address words. Real semantics is noncomputable; prime fields are
+  executable. The algebraic variant has checked word arithmetic and rational constants with
+  nonzero field denominators; no field-to-word conversion is provided. Generalizing the structured
+  program calculus and time-class APIs to arbitrary domains, weighted/bit costs, and simulations
+  between these instances remain open. No real-RAM/Turing-machine equivalence is claimed;
 * RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
-  Lean formalization accompanying the tromino undecidability paper, has [linear and polynomial
+  Lean formalization accompanying the tromino undecidability paper, is parameterized by a
+  [basis of word operations](Complexity/Computability/WordRAM/Basis.lean) built on circuit
+  signatures, with the standard, arithmetic (the source's operations on unsigned words) and
+  additive bases; programs and decision procedures
+  [transfer along meaning-preserving maps of bases](Complexity/Computability/WordRAM/MapOp.lean)
+  with identical runs. Simulating an operation by a program over a smaller basis with an
+  instruction budget (the analogue of circuit `SimulatesWithCost`), restating the clients at the
+  smallest basis they need (in particular compiling `Program .additive r` to `Cslib.RAM` in place of
+  the `Instr.IsAdditive` fragment of the standard basis), and an AC⁰ basis remain open. The machine has [linear and polynomial
   instruction bounds](Complexity/Computability/WordRAM/Time.lean) uniform over all fitting widths
   above a logarithmic lower threshold,
   [structured programs](Complexity/Computability/WordRAM/Structured.lean) compiling with exact

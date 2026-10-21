@@ -78,11 +78,11 @@ abbrev value : Fin 7 := 5
 abbrev one : Fin 7 := 6
 
 /-- Five data instructions per copied word. -/
-def body : Code 7 := ram[
+def body : Code .standard 7 := ram[
   addr ← src + idx; value ← *addr; addr ← dst + idx; *addr ← value; idx ← idx + one ]
 
 /-- A fixed copying program with all three parameters in registers. -/
-def program : Code 7 := ram[ idx ← #0; one ← #1; while idx < len do [ ⟪body⟫ ] ]
+def program : Code .standard 7 := ram[ idx ← #0; one ← #1; while idx < len do [ ⟪body⟫ ] ]
 
 /-- Low-level structured copying charges register setup and all loop instructions, excluding
 the final halt. The one-past-end addresses must fit a word. Boundedness of the input memory and

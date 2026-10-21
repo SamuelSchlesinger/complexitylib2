@@ -38,7 +38,7 @@ The machine and its exact compilation costs are those of `WordRAM.Structured`.
 
 namespace Cslib.WordRAM
 
-variable {r : ℕ}
+variable {B : Basis} {r : ℕ}
 
 /-- An observed memory access, with the value read or written. -/
 inductive Probe where
@@ -49,37 +49,37 @@ inductive Probe where
   deriving DecidableEq, Repr
 
 /-- The memory accesses made by a data instruction in its initial state. -/
-def Op.probes (o : Op r) (x : Data r) : List Probe :=
+def Op.probes (o : Op B r) (x : Data r) : List Probe :=
   match o with
   | .load _ a => [.read (x.regs a) (x.mem (x.regs a))]
   | .store a s => [.write (x.regs a) (x.regs s)]
   | _ => []
 
 /-- An exact structured execution decorated with its successful memory probes. -/
-inductive TraceExec (w : ℕ) : Code r → Data r → Data r → ℕ → List Probe → Prop where
+inductive TraceExec (w : ℕ) : Code B r → Data r → Data r → ℕ → List Probe → Prop where
   /-- A successful data instruction. -/
-  | op {o : Op r} {x y : Data r} :
+  | op {o : Op B r} {x y : Data r} :
       o.eval w x = some y → TraceExec w (.op o) x y 1 (o.probes x)
   /-- Sequential traces concatenate. -/
-  | seq {c₁ c₂ : Code r} {x y z : Data r} {m n : ℕ} {ts us : List Probe} :
+  | seq {c₁ c₂ : Code B r} {x y z : Data r} {m n : ℕ} {ts us : List Probe} :
       TraceExec w c₁ x y m ts → TraceExec w c₂ y z n us →
       TraceExec w (.seq c₁ c₂) x z (m + n) (ts ++ us)
   /-- The positive branch pays one control instruction. -/
-  | branch_pos {c : Cond r} {pos neg : Code r} {x y : Data r} {n : ℕ} {ts : List Probe} :
+  | branch_pos {c : Cond r} {pos neg : Code B r} {x y : Data r} {n : ℕ} {ts : List Probe} :
       c.Holds x → TraceExec w pos x y n ts → TraceExec w (.branch c pos neg) x y (n + 1) ts
   /-- The negative branch pays two control instructions. -/
-  | branch_neg {c : Cond r} {pos neg : Code r} {x y : Data r} {n : ℕ} {ts : List Probe} :
+  | branch_neg {c : Cond r} {pos neg : Code B r} {x y : Data r} {n : ℕ} {ts : List Probe} :
       ¬c.Holds x → TraceExec w neg x y n ts → TraceExec w (.branch c pos neg) x y (n + 2) ts
   /-- Loop termination pays two control instructions and has no probes. -/
-  | loop_exit {c : Cond r} {body : Code r} {x : Data r} :
+  | loop_exit {c : Cond r} {body : Code B r} {x : Data r} :
       ¬c.Holds x → TraceExec w (.loop c body) x x 2 []
   /-- A loop iteration concatenates its body's trace and the remaining trace. -/
-  | loop_iter {c : Cond r} {body : Code r} {x y z : Data r} {m n : ℕ} {ts us : List Probe} :
+  | loop_iter {c : Cond r} {body : Code B r} {x y z : Data r} {m n : ℕ} {ts us : List Probe} :
       c.Holds x → TraceExec w body x y m ts → TraceExec w (.loop c body) y z n us →
       TraceExec w (.loop c body) x z (m + n + 2) (ts ++ us)
 
 /-- Erasing probes leaves the original exact instruction-count theorem. -/
-theorem TraceExec.exec {w n : ℕ} {c : Code r} {x y : Data r} {ts : List Probe}
+theorem TraceExec.exec {w n : ℕ} {c : Code B r} {x y : Data r} {ts : List Probe}
     (h : TraceExec w c x y n ts) : Exec w c x y n := by
   induction h with
   | op h => exact .op h
@@ -90,7 +90,7 @@ theorem TraceExec.exec {w n : ℕ} {c : Code r} {x y : Data r} {ts : List Probe}
   | loop_iter h _ _ ih₁ ih₂ => exact .loop_iter h ih₁ ih₂
 
 /-- Every successful structured execution admits its exact memory transcript. -/
-theorem Exec.exists_trace {w n : ℕ} {c : Code r} {x y : Data r} (h : Exec w c x y n) :
+theorem Exec.exists_trace {w n : ℕ} {c : Code B r} {x y : Data r} (h : Exec w c x y n) :
     ∃ ts, TraceExec w c x y n ts := by
   induction h with
   | op h => exact ⟨_, .op h⟩
@@ -160,19 +160,19 @@ theorem writes_append (ts us : List Probe) : writes (ts ++ us) = writes ts ∪ w
 end Probe
 
 /-- A successful primitive instruction preserves every cell absent from its write transcript. -/
-theorem Op.eval_modifies {w : ℕ} {o : Op r} {x y : Data r} (h : o.eval w x = some y) :
+theorem Op.eval_modifies {w : ℕ} {o : Op B r} {x y : Data r} (h : o.eval w x = some y) :
     Modifies (Probe.writes (o.probes x)) x.mem y.mem := by
   cases o with
-  | const | bin =>
+  | const | alu =>
     obtain ⟨_, rfl⟩ := Data.put_eq_some.mp h
     exact Modifies.refl _ _
-  | copy | load | width => cases h; exact Modifies.refl _ _
+  | copy | load => cases h; exact Modifies.refl _ _
   | store a s =>
     cases h
     simpa [Op.probes, Probe.writes] using Modifies.update x.mem (x.regs a) (x.regs s)
 
 /-- An execution changes memory only at addresses appearing as writes in its transcript. -/
-theorem TraceExec.modifies {w n : ℕ} {c : Code r} {x y : Data r} {ts : List Probe}
+theorem TraceExec.modifies {w n : ℕ} {c : Code B r} {x y : Data r} {ts : List Probe}
     (h : TraceExec w c x y n ts) : Modifies (Probe.writes ts) x.mem y.mem := by
   induction h with
   | op h => exact Op.eval_modifies h
@@ -183,13 +183,13 @@ theorem TraceExec.modifies {w n : ℕ} {c : Code r} {x y : Data r} {ts : List Pr
   | loop_iter _ _ _ ih₁ ih₂ => simpa only [Probe.writes_append] using ih₁.trans ih₂
 
 /-- A concrete execution preserves any assertion disjoint from its write transcript. -/
-theorem TraceExec.frame {w n : ℕ} {c : Code r} {x y : Data r} {ts : List Probe}
+theorem TraceExec.frame {w n : ℕ} {c : Code B r} {x y : Data r} {ts : List Probe}
     (h : TraceExec w c x y n ts) {P : HeapAssertion} (hP : P.holds x.mem)
     (hdisj : Disjoint P.footprint (Probe.writes ts)) : P.holds y.mem :=
   HeapAssertion.frame hP hdisj h.modifies
 
 /-- No instruction makes more than one memory access. -/
-theorem TraceExec.length_le {w n : ℕ} {c : Code r} {x y : Data r} {ts : List Probe}
+theorem TraceExec.length_le {w n : ℕ} {c : Code B r} {x y : Data r} {ts : List Probe}
     (h : TraceExec w c x y n ts) : ts.length ≤ n := by
   induction h with
   | @op o x y ho => cases o <;> simp [Op.probes]

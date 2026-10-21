@@ -128,6 +128,9 @@ import ComplexityTests.GapGraphsGeography
 import ComplexityTests.GeneratorPadding
 import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
+import ComplexityTests.GenericRAM
+import ComplexityTests.GenericRAMAlgebraic
+import ComplexityTests.GenericRAMSigned
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
@@ -310,6 +313,7 @@ import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
+import ComplexityTests.StatefulRefinement
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
@@ -331,6 +335,7 @@ import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.UniversalResourceBound
+import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
 import ComplexityTests.WPPRobustness
@@ -340,7 +345,9 @@ import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
 import ComplexityTests.WordRAM
+import ComplexityTests.WordRAMBasis
 import ComplexityTests.WordRAMDynamic
+import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness

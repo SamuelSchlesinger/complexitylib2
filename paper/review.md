@@ -1,5 +1,119 @@
 # Theorem-index review
 
+## 2026-10-21: Client resource contracts through interface refinements (#274)
+
+Published source revision: `5d9eefc4f20726054a71df3539c2471f1c18712c`.
+Its tree `61377bf7b2d7e0210250df65a78d50b604b8079b` exactly matches the locally validated
+source `e4539513d61a349a849792061f2ef0fcf397aad2`; only commit metadata changed during publication.
+Worker `worker-refinement-20261021`, assisted by OpenAI Codex, extends the existing Stateful
+entry with client operation-cost contracts, initial-state-dependent budgets, adaptive sequencing,
+method-budget composition, and transport to native execution evidence. The prose explicitly
+requires a represented initial state satisfying the precondition. Existence of a finite execution
+and bounds on every supplied finite execution remain distinct from demonic termination.
+Pure controller computation, argument delivery, decoding and integration with `polytime`
+machine certificates remain outside this milestone. No whole-machine runtime claim is added.
+
+Independent source correctness review by `/root/ordered_fagin_recovery` approved the core and
+adaptive example without findings. Independent API/tactic review by `/root/recovery_integration`
+approved the core, four structural Aesop rules, final named axiom guards and a parametric
+state-dependent cost example. The latter review also approved the changed index, roadmap and
+upstream prose after making the represented-initial-state premise explicit. Reviewed core hash:
+`5cc1a1b0bfd222877227dbf7d38fd403c332540b78f999ab03c2af7608866833`;
+final test hash: `c18a26b2fb3f1fc1a6f9c5cec97284e2996b20cd3e4ac6016d4a4c4e0ceccc9a`.
+The source commit matches these reviewed files. No author reviewed their own change.
+
+Validation: complete actual-file MCP diagnostics and all six strict local gates passed in
+session 38388 before the source commit. Tests exercise costs seven and two on distinct adaptive
+branches, reject budget six, transport through two implementation layers, preserve hidden spare
+storage in concrete executions, and charge the second operation at its updated state. Named
+axiom guards and the global audit pass. Three new declaration links pin exact source lines.
+Independent reviewer `/root/recovery_integration` approved the final local page 81 rendering
+and all three PDF URI annotations against the committed declarations at lines 147, 164 and 108.
+Final repinned PDF SHA256: `a3965808f84ed5b5f42d98f4a55f0c00b0fc898f8c7d6127db8c8f3d7ef6dafc`.
+The reviewer repeated page/annotation checks after publication and verified the remote source
+blob and all declaration lines against the local source. CI artifact provenance and coordinator
+review remain required before integration. AI reviews do not imply human editorial approval or a formal proof of prose equivalence.
+
+
+After main integrated the operation-basis and generic-RAM work at `c7d0d1da`, the owned PR
+branch was refreshed. The only textual conflict joined these independent review records;
+all four implementation/test files and the Stateful result prose remained byte-identical.
+Independent reviewer `/root/recovery_integration` approved preservation of both parent records,
+the combined PDF pages 82--83 and all three source pins on page 83. Combined PDF SHA256:
+`73a514399409c9bb08145918945d9eb961645da3f1df373e8fc94b4d514f87fd`.
+The refreshed tree's full validation and exact published head are recorded in PR #278.
+
+## Configurable RAM value domains (#266), 21 October 2026
+
+Reviewed Lean source: `8fc64c86ce21bb6876b08b50f4f14e21799be217`, tree
+`51f961e802172cfc20346923cbfb3ae57a8be064`, on operation-basis prerequisite
+`6532753dc17bd27793511246f4f12346c291ab61`. Bibliography is isolated in
+`696eab2bae32f662ebe1be33df7cf7ddfb31dc83`.
+
+Scope: `GenericRAM/{Defs,Signed,Algebraic}`, `WordRAM/Generic`, four focused test modules,
+and the index entry “RAMs over configurable value domains” in `paper/sections/query.tex`.
+The entry distinguishes configurable fault policies, exact execution/halting cost, the
+WordRAM adapter on arbitrary states, and signed and tagged algebraic instance boundaries.
+ROADMAP and UPSTREAM retain the open structured-calculus, cost-model and simulation work.
+
+Independent AI reviews (OpenAI Codex, separate author/reviewer scopes):
+
+- `recovery_integration` approved the core and WordRAM adapter API/correctness and their
+  index prose; it did not approve its own signed-instance source. Its final local rendered
+  review independently approved page 80 and all eight pinned annotations, with no findings,
+  at the same PDF hash recorded below.
+- `ordered_fagin_recovery` approved the signed/algebraic source and tests, and their index
+  prose, without findings. It independently checked the root-authored Boolean test at
+  SHA256 `24646e028af681540ea4d4d65fc951d773b301849cce64071a7a27b0796261aa`:
+  nonnumeric values/addresses and configuration, observable memory use, exact six-step cost,
+  and a failed-test fault. It did not approve its own core/adapter source.
+- Final local rendered instance review by `ordered_fagin_recovery` approved page 80 of
+  PDF SHA256 `fb04e36ac9483d95e1510fd128369fd18ec1fb0309630385a10f48366f4a5f7e`.
+  The eight annotations all target the reviewed source commit and exact declaration lines
+  (Defs 63/309/314, WordRAM/Generic 125/156, Signed 91, Algebraic 190/194).
+  Signed/algebraic claims, ranges, formulas and citations are readable without clipping or
+  overlap. The reviewer checked all eight link targets against committed local blobs.
+
+This is local source/render review, not human editorial approval. At this checkpoint the
+source commit is unpublished: remote link availability, final remote commit/tree parity,
+CI, and independent inspection of the CI theorem-index artifact/provenance remain required
+before integration. The original canonical six-gate run continues separately; no duplicate
+validation run was started. Source credit remains in the modules and bibliography, including
+lean-trominoes contributors / Erik Demaine and Erickson–van der Hoog–Miltzow.
+
+## Word-RAM operation bases, 21 October 2026
+
+Reviewed Lean revision: `72e92283` (code `291ff2f1`); review fixes in `2435c31e`, the revision named
+in the index links.
+
+Scope:
+- `Complexity/Computability/WordRAM/{Basis,MapOp}.lean` (new), `Complexity/Computability/Circuit/SignatureHom.lean`
+  (split from `Circuit/MapOp`), and the basis parameter throughout `Complexity/Computability/WordRAM`
+  and `Complexity/Algorithms/WordRAM`
+- `ComplexityTests/WordRAMBasis.lean`
+- `paper/sections/query.tex` (`Word-RAM decision grows with the basis of operations`, new; `Element
+  distinctness for entries below n on the word RAM` and the additive-simulation links, updated)
+
+Independent AI reviews (read-only subagents, not the authoring session):
+- cslib API review (`7689ca09-88e1-4103-914b-e663256fe8a9`) of `72e92283`: requested changes, none
+  blocking. Resolved in `2435c31e` and the accompanying documentation commit: unaliased breaking changes recorded in
+  `UPSTREAM.md`; `ram_eval` extended to `alu` instructions; `Op.rename_bin`, `Op.rename_width`,
+  `Op.dest_bin`, `Op.dest_width`; `Signature.Hom` split so `WordRAM/Basis` no longer imports the formula
+  library; docstring wording of `Basis.Hom`; dead variables and unused import removed; the
+  `Instr.IsAdditive`/`Basis.additive` overlap recorded in `ROADMAP.md`. Not adopted: a `FunLike`
+  instance and category lemmas for `Basis.Hom`, `mapOp` functoriality for `Instr`/`Code`, restoring
+  `Repr` (recorded as removed).
+- Correctness and theorem-index review (`3e173ba3-a738-46ac-9cd9-e421194913be`) of `72e92283`: approved
+  with should-fix items. Verified that `Basis.standard` reproduces the previous `bin`/`width`
+  semantics (width never faults), the `ReadsWidth` invariant and monotonicity, the named bases,
+  satisfiability of `Basis.Hom`, `MapOp` transfer statements, and every declaration link. Resolved:
+  the standard basis is described as Hagerup's operations together with division, remainder and the
+  word size; the arithmetic basis is described as the source's operation symbols with truncated
+  subtraction; `DecidableInTime.mapOp` linked; map-of-bases wording distinguishes the `ReadsWidth`
+  marker from semantic width-independence.
+
+Re-review of the fixes and inspection of the CI theorem-index PDF remain for the coordinator.
+
 ## Canonical full-tuple ordered interpretation transducers (#137), 20 October 2026
 
 Reviewed Lean revision: `bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60` (prerequisite shared output commit `97622143391f6777b14b832420787b5a79d7109d`).
