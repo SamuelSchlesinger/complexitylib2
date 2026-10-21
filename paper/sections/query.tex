@@ -82,9 +82,9 @@ complexitylib development and connects it to the library's public measures.
 
 \begin{result}
 \subsection{Element distinctness for entries below \texorpdfstring{$n$}{n} on the word RAM}
-On the bounded-word RAM, whose registers and memory cells hold $w$-bit words, whose every
-instruction costs one unit, and on which writing a constant or an arithmetic result of more than
-$w$ bits faults, a single fixed program decides whether a list of $n$ naturals, each smaller than
+On the bounded-word RAM with the standard basis of operations, whose registers and memory cells
+hold $w$-bit words, whose every instruction costs one unit, and on which writing a constant or an
+operation result of more than $w$ bits faults, a single fixed program decides whether a list of $n$ naturals, each smaller than
 $n$, has no duplicates: at every word size
 $w\ge 2(\lfloor\log_2\max(1,n)\rfloor+1)$ it halts within
 $16(n+1)$ instructions, the final halt included, with output $1$ exactly when the entries are
@@ -97,11 +97,40 @@ threshold, as in the transdichotomous model. The machine, its time classes and i
 programs, which compile with identical instruction counts, are adapted from the Lean
 formalization accompanying the tromino undecidability paper.
 \citep[Sections 2.2 and 11.1]{CLRS2009}\citep{FredmanWillard1993,Hagerup1998}\citep{Tromino2025}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{287}{Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{296}{Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{148}{Cslib.Algorithms.WordRAM.ElementDistinctness.inputFits}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Computability/WordRAM/Time.lean}{132}{Cslib.WordRAM.Program.DecidesInTime}
-\declat{4d59a90c037f3ae099131540a2da2d981e97a003}{Complexity/Computability/WordRAM/Compile.lean}{135}{Cslib.WordRAM.Exec.runs}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{287}{Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{296}{Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{148}{Cslib.Algorithms.WordRAM.ElementDistinctness.inputFits}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/Time.lean}{133}{Cslib.WordRAM.Program.DecidesInTime}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/Compile.lean}{135}{Cslib.WordRAM.Exec.runs}
+\end{result}
+
+\begin{result}
+\subsection{Word-RAM decision grows with the basis of operations}
+The word RAM is parameterized by a basis: operation symbols with arities (a circuit signature),
+the value of every operation at each word size $w$, and the operations whose value may depend on
+$w$. Registers, memory, control flow and overflow faults are the same for every basis; an
+operation whose value is at least $2^w$ faults. The standard basis has addition, truncated
+subtraction, multiplication, division, remainder, bitwise and, or and exclusive or, both shifts,
+and the word size. The arithmetic basis has the first five, the operations of the lean-trominoes
+RAM on unsigned rather than signed words, and the additive basis the first two. A map of bases
+sends each operation to one of the same arity with the same value at every word size, and an
+operation independent of the word size to one that is also independent of it.
+
+Translating a program along such a map replaces only its operation symbols, and the translated
+program takes exactly the same step from every state: the same successor, output or fault. Hence
+it halts with the same output after the same number of instructions, and uniform time-bounded
+decision, linear time and polynomial time over a basis imply the same statements, with the same
+time bounds and word-size thresholds, over every basis it maps into. Simulating an operation by a
+program over a smaller basis is not established, and no separation between the classes over
+different bases is claimed.
+\citep{Hagerup1998,AnderssonMiltersenThorup1999,Tromino2025}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/Basis.lean}{64}{Cslib.WordRAM.Basis}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/Basis.lean}{173}{Cslib.WordRAM.Basis.Hom}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/Basis.lean}{239}{Cslib.WordRAM.Basis.arithmetic}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/MapOp.lean}{128}{Cslib.WordRAM.step_mapOp}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/MapOp.lean}{149}{Cslib.WordRAM.executes_mapOp_iff}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/MapOp.lean}{231}{Cslib.WordRAM.LinearTime.mapOp}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/MapOp.lean}{237}{Cslib.WordRAM.PolynomialTime.mapOp}
 \end{result}
 
 \begin{result}
@@ -135,7 +164,7 @@ outside the supported fragment. The source model adapts the lean-trominoes forma
 the target is the library's documented natural-number adaptation of Cook--Reckhow RAM.
 No Turing-machine simulation or complexity-class equivalence is asserted.
 \citep{CookReckhow1973,Tromino2025}
-\declat{80a79abcb959601b9a3d570d9c6d3ad347e9f0fe}{Complexity/Computability/WordRAM/RAM.lean}{61}{Cslib.WordRAM.Instr.IsAdditive}
+\declat{291ff2f14934fe96597632d3bd6c03259318d459}{Complexity/Computability/WordRAM/RAM.lean}{61}{Cslib.WordRAM.Instr.IsAdditive}
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{55}{Cslib.WordRAM.ToRAM.preparedProgram}
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{93}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared}
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Computability/WordRAM/RAMInput.lean}{61}{Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_of_bitLength_le}

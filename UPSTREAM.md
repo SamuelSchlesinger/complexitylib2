@@ -70,7 +70,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
-  deviations from the source. The unbounded-register `Computability/RAM`, inspired by
+  deviations from the source. The operations form a basis (`WordRAM/Basis`) over
+  `Cslib.Circuits.Signature`, and translation between bases (`WordRAM/MapOp`) uses the local
+  `Circuit/MapOp` maps of signatures, so these files depend on that candidate. The
+  unbounded-register `Computability/RAM`, inspired by
   Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
