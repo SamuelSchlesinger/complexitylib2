@@ -225,9 +225,9 @@ input, including the store and, for reads, the input-supplied default. Polynomia
 computability follows. These conservative bounds come from composing Christian Reitwiessner's
 certified equality, list-search and filtering routines. Numeric addresses are represented by
 encoded words; the construction does not allocate an array up to the largest address.
-This proves a finite-memory backend component, not a simulation of whole RAM programs or
-arbitrary exact real arithmetic. Primitive implementations, control, initialization and output
-transport remain separate obligations.
+This entry is a finite-memory backend component, not arbitrary exact real arithmetic. The
+fixed-program step and whole-run simulation results below use it for loads and stores; scalar
+primitive certificates and configuration selection remain hypotheses there.
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{82}{Cslib.GenericRAM.SparseMemory.read_insert}
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{98}{Cslib.GenericRAM.SparseMemory.length_insert_of_mem}
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{96}{Cslib.GenericRAM.SparseMemory.length_encoding_le}
@@ -331,8 +331,8 @@ the repeated option computation used for payload extraction, tag testing, input 
 and the selected handler. No inhabited-payload assumption is required. All displayed expressions
 are asymptotic bounds with existential machine constants, not exact transition counts.
 The proofs reuse Christian Reitwiessner's native tidy calculus and the existing finite-table
-encoding. These are compositional native-machine rules; an encoded RAM step simulator and
-whole-run theorem transport remain separate work.
+encoding. These are compositional native-machine rules; the encoded fixed-program RAM step
+simulator and whole-run transport of the next two results are built from them.
 \declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{43}{Turing.MultiTapeTM.ComputableTidilyInO.ofFn}
 \declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{58}{Turing.MultiTapeTM.ComputableTidilyInO.pi}
 \declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{82}{Turing.MultiTapeTM.ComputableTidilyInO.pi_apply}
