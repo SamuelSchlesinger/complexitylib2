@@ -94,7 +94,7 @@ example : SumsetDisperser {z : Fin 2 → Bool | balancePad (fun x : Fin 1 → Bo
 example :
     (Language.ofSlices (balancePadFamily fun N (_ : BitString N) => false) : Set (List Bool)) ∈
       P encBits :=
-  ofSlices_balancePadFamily_mem_P (ofSlices_mem_P (const false))
+  ofSlices_balancePadFamily_mem_P (Complexity.ofSlices_mem_P (const false))
 
 /-! ### Axiom checks -/
 

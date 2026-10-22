@@ -16,8 +16,6 @@ public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
-public import Complexity.Foundations.Data.BitString.List
-import Mathlib.Data.List.GetD
 
 /-!
 # P ⊆ P/poly and BPP ⊆ P/poly
@@ -42,9 +40,6 @@ of `x ++ r` of the same size up to two gates.
   and `RP`, with any encoding.
 * `Cslib.Circuits.Boolean.PPoly.of_mem_BPP`, `PPoly.of_mem_RP`, `PPoly.of_mem_coRP`:
   `BPP, RP, coRP ⊆ P/poly` for languages over `Bool`.
-* `Cslib.Complexity.mem_ofSlices_iff`,
-  `Cslib.Complexity.ofSlices_mem_P_of_computableInPolyTime`: membership in `Language.ofSlices f`
-  via `BitString.ofList` and sufficient condition for `Language.ofSlices f ∈ P encBits`.
 
 ## References
 
@@ -237,25 +232,3 @@ theorem PPoly.of_mem_coRP {A : Language Bool}
   rwa [compl_compl] at h
 
 end Cslib.Circuits.Boolean
-
-namespace Cslib.Complexity
-
-open Turing.MultiTapeTM
-
-/-- Membership of a bit list `x` in `Language.ofSlices f` in terms of `BitString.ofList`. -/
-theorem mem_ofSlices_iff (f : ∀ n, BitString n → Bool) (x : List Bool) :
-    x ∈ Language.ofSlices f ↔ f x.length (BitString.ofList x.length x) = true := by
-  change f x.length (fun i => x[i]) = true ↔ f x.length (BitString.ofList x.length x) = true
-  congr! 2
-  funext i
-  rw [BitString.ofList, List.getD_eq_getElem _ _ i.2, Fin.getElem_fin]
-
-/-- If `fun x => f x.length (BitString.ofList x.length x)` is tidily computable in polynomial time,
-then `Language.ofSlices f` belongs to `P encBits`. -/
-theorem ofSlices_mem_P_of_computableInPolyTime {f : ∀ n, BitString n → Bool}
-    (hf : ComputableTidilyInPolyTime
-      (fun x : List Bool => f x.length (BitString.ofList x.length x)) encBits encBool) :
-    (Language.ofSlices f : Set (List Bool)) ∈ P encBits :=
-  ⟨_, hf, mem_ofSlices_iff f⟩
-
-end Cslib.Complexity

@@ -9,9 +9,9 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
-public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.Circuit.Frontier.Extractor
 public import Complexity.Computability.Complexity.Classes.P
+public import Complexity.Computability.Complexity.Classes.P.Slices
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 public import Cslib.Computability.Languages.Slice
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
@@ -30,11 +30,12 @@ This module connects the frontier sumset-extractor lower bounds of
 `Complexity.Computability.Complexity.AffineDisperser`
 (`Cslib.AffineDisperser.exists_mem_P_eventually_le_size`):
 
-1. **Uniformity bridge (`ofSlices_mem_P_iff`, `ofSlices_balancePadFamily_mem_P`):**
+1. **Uniformity bridge (`ofSlices_mem_P_of_headD`, `ofSlices_balancePadFamily_mem_P`):**
    For any Boolean family `f : ∀ N, BitString N → Bool`, the language `Language.ofSlices f` belongs
    to `Complexity.P encBits` if and only if the list evaluator
    `fun x : List Bool => f x.length (BitString.ofList x.length x)` is tidily computable in
-   polynomial time (`ComputableTidilyInPolyTime`). Multi-bit polynomial-time evaluators projected to
+   polynomial time (`Cslib.Complexity.ofSlices_mem_P_iff`, in
+   `Complexity.Computability.Complexity.Classes.P.Slices`). Multi-bit polynomial-time evaluators projected to
    their first output bit (`ofSlices_mem_P_of_headD`) and one-bit balanced padding
    (`ofSlices_balancePadFamily_mem_P`) preserve membership in `Complexity.P encBits`.
 2. **Polylogarithmic min-entropy thresholds (`isLittleO_rpow_log_id`):**
@@ -69,8 +70,8 @@ This module connects the frontier sumset-extractor lower bounds of
 
 ## Main results
 
-* `Cslib.Circuits.Frontier.ofSlices_mem_P_iff`: characterization of
-  `Language.ofSlices f ∈ P encBits`.
+* `Cslib.Circuits.Frontier.ofSlices_mem_P_of_headD`: `Language.ofSlices f ∈ P encBits` from a
+  polynomial-time multi-bit evaluator whose first output bit is `f`.
 * `Cslib.Circuits.Frontier.ofSlices_balancePadFamily_mem_P`: closure of `P encBits` under
   `balancePadFamily`.
 * `Cslib.Circuits.Frontier.isLittleO_rpow_log_id`: `(log N)^C = o(N)`.
@@ -107,34 +108,12 @@ open Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 /-! ### Uniformity bridge for `Language.ofSlices` and `balancePadFamily` -/
 
-/-- For any Boolean family `f : ∀ N, BitString N → Bool`, `Language.ofSlices f` as a set of bit
-lists is `{x | f x.length (BitString.ofList x.length x) = true}`. -/
-theorem ofSlices_eq_setOf_ofList (f : ∀ N, BitString N → Bool) :
-    (Language.ofSlices f : Set (List Bool)) =
-      {x : List Bool | f x.length (BitString.ofList x.length x) = true} :=
-  Set.ext fun x => mem_ofSlices_iff f x
+@[deprecated (since := "2026-10-22")]
+alias ofSlices_eq_setOf_ofList := Complexity.ofSlices_eq_setOf_ofList
 
-/-- **`Language.ofSlices f` is in `P`** if and only if its list evaluator
-`fun x => f x.length (BitString.ofList x.length x)` is tidily computable in polynomial time. -/
-theorem ofSlices_mem_P_iff {f : ∀ N, BitString N → Bool} :
-    (Language.ofSlices f : Set (List Bool)) ∈ P encBits ↔
-      ComputableTidilyInPolyTime
-        (fun x : List Bool => f x.length (BitString.ofList x.length x)) encBits encBool := by
-  constructor
-  · rintro ⟨g, hg, hiff⟩
-    have heq : (fun x : List Bool => f x.length (BitString.ofList x.length x)) = g := by
-      funext x
-      exact Bool.eq_iff_iff.mpr ((mem_ofSlices_iff f x).symm.trans (hiff x))
-    exact heq ▸ hg
-  · exact ofSlices_mem_P_of_computableInPolyTime
+@[deprecated (since := "2026-10-22")] alias ofSlices_mem_P_iff := Complexity.ofSlices_mem_P_iff
 
-/-- If `fun x => f x.length (BitString.ofList x.length x)` is tidily computable in polynomial time,
-then `Language.ofSlices f` belongs to `P encBits`. -/
-theorem ofSlices_mem_P {f : ∀ N, BitString N → Bool}
-    (hf : ComputableTidilyInPolyTime
-      (fun x : List Bool => f x.length (BitString.ofList x.length x)) encBits encBool) :
-    (Language.ofSlices f : Set (List Bool)) ∈ P encBits :=
-  ofSlices_mem_P_of_computableInPolyTime hf
+@[deprecated (since := "2026-10-22")] alias ofSlices_mem_P := Complexity.ofSlices_mem_P
 
 /-- **Projection of a multi-bit polynomial-time evaluator to its first output bit.** If a multi-bit
 extractor is computed on bit lists by `eval : List Bool → List Bool` in polynomial time and `f N`
@@ -143,7 +122,7 @@ theorem ofSlices_mem_P_of_headD {f : ∀ N, BitString N → Bool} {eval : List B
     (heval : ComputableTidilyInPolyTime eval encBits encBits)
     (hbit : ∀ x : List Bool, f x.length (BitString.ofList x.length x) = (eval x).headD false) :
     (Language.ofSlices f : Set (List Bool)) ∈ P encBits := by
-  refine ofSlices_mem_P ?_
+  refine Complexity.ofSlices_mem_P ?_
   have hcomp : ComputableTidilyInPolyTime (fun x : List Bool => (eval x).headD false)
       encBits encBool :=
     (headD (encA := encBool) (encL := encBits) false).comp heval
@@ -185,7 +164,8 @@ theorem computableTidilyInPolyTime_balancePadFamily {f : ∀ N, BitString N → 
 theorem ofSlices_balancePadFamily_mem_P {f : ∀ N, BitString N → Bool}
     (hf : (Language.ofSlices f : Set (List Bool)) ∈ P encBits) :
     (Language.ofSlices (balancePadFamily f) : Set (List Bool)) ∈ P encBits :=
-  ofSlices_mem_P (computableTidilyInPolyTime_balancePadFamily (ofSlices_mem_P_iff.mp hf))
+  Complexity.ofSlices_mem_P
+    (computableTidilyInPolyTime_balancePadFamily (Complexity.ofSlices_mem_P_iff.mp hf))
 
 /-! ### Polylogarithmic min-entropy thresholds -/
 
@@ -278,7 +258,7 @@ theorem exists_mem_P_eventually_agreement_le_of_isSumsetExtractor
         (C.size : ℝ) ≤ (456249 / 100000 - ε) * N →
           agreement {z | L.slice N z = true} {x | C.eval fullInterpretation x 0 = true} ≤
             1 / 2 + δ N + Real.exp (-(γ * N)) :=
-  ⟨Language.ofSlices E, ofSlices_mem_P hP, fun hε =>
+  ⟨Language.ofSlices E, Complexity.ofSlices_mem_P hP, fun hε =>
     eventually_agreement_le_ofSlices_of_isSumsetExtractor hE hk hε⟩
 
 /-- **Conditional: a language in `P` with `(4.56249 - ε) N` average-case circuit hardness and
@@ -299,7 +279,7 @@ theorem exists_mem_P_eventually_agreement_le_of_polylog_sumsetExtractor
         (Cir.size : ℝ) ≤ (456249 / 100000 - ε) * N →
           agreement {z | L.slice N z = true} {x | Cir.eval fullInterpretation x 0 = true} ≤
             1 / 2 + (N : ℝ) ^ (-c) + Real.exp (-(γ * N)) := by
-  refine ⟨Language.ofSlices E, ofSlices_mem_P hP, fun hε => ?_⟩
+  refine ⟨Language.ofSlices E, Complexity.ofSlices_mem_P hP, fun hε => ?_⟩
   obtain ⟨γ, hγ, hbound⟩ := eventually_agreement_le_ofSlices_of_isSumsetExtractor hE
     (isLittleO_of_eventually_le_mul_rpow_log hk0 hk) hε
   refine ⟨γ, hγ, ?_⟩
@@ -337,7 +317,7 @@ theorem exists_mem_P_eventually_lt_size_of_isSumsetExtractor
       ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N in atTop, ∀ C : Circuit (fullSignature 2 Bool) N 1,
         C.Computes fullInterpretation (single (L.slice N)) →
           (456249 / 100000 - ε) * (N : ℝ) < C.size :=
-  ⟨Language.ofSlices E, ofSlices_mem_P hP, fun hε =>
+  ⟨Language.ofSlices E, Complexity.ofSlices_mem_P hP, fun hε =>
     eventually_lt_size_of_computes_ofSlices_of_isSumsetExtractor hE hk hδ hδ₀ hε⟩
 
 /-- **Conditional: a language in `P` with `B₂` circuit complexity `> 4.56 N`, assuming a
