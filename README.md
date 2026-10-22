@@ -73,7 +73,8 @@ are maintained alongside the library; it is a curated catalogue, not an exhausti
   [polynomial stretch](Complexity/Crypto/Computational/Stretch.lean),
   [GGM](Complexity/Crypto/Computational/GGM/Security.lean),
   [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean), and
-  [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean),
+  [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean)
+  (uniform, over polynomial-time-generable instance, witness and auxiliary-input families),
   with efficient security reductions.
 * [Circuit APIs](Complexity/Computability/Circuit/SourceComplexity.lean): Boolean, monotone,
   and arithmetic developments share CSLib's circuit definitions, costs, and simulations.

@@ -196,8 +196,8 @@ $\mathsf{isWitness}(a,w)=\mathrm{ThreeSAT.verifier}(f(a),w)$ in which:
   PPT in $(1^n,a,w,z)$;
 \item for every valid witness $w$ ($\mathsf{isWitness}(a,w)=\mathsf{true}$), the honest prover is
   accepted with probability $1$, and for every $a\notin A$ and every computationally
-  unbounded stateful prover $P$, the verifier accepts with probability at most
-  $2^{-(n+8)}+1/8\le 1/3$;
+  unbounded stateful prover $P$, the verifier accepts with probability at most $1/3$ (the
+  proof bounds it by $1/8+2^{-(n+8)}$);
 \item (\textbf{uniform zero-knowledge with poly-time-generable auxiliary input}) for every uniform
   strict oracle PPT malicious verifier $V^*$ receiving $(1^n,a,z)$, there is a uniform strict PPT
   simulator $S(1^n,a,z)$ (receiving no witness) whose output ensemble is computationally
@@ -207,7 +207,7 @@ $\mathsf{isWitness}(a,w)=\mathrm{ThreeSAT.verifier}(f(a),w)$ in which:
   separate explicit witness-length bound on $w$), and auxiliary inputs $z:\mathbb N\to\{0,1\}^*$
   (giving fixed-instance security via \texttt{zero\_knowledge\_const} for every fixed $a\in A$ and
   valid witness $w$). Since $z$ is a deterministic polynomial-time function of $1^n$, a uniform
-  $V^*$ could compute it itself, so the auxiliary input adds no power here.
+  $V^*$ could compute it itself, so the auxiliary input supplies no non-uniform advice here.
 \end{itemize}
 Consequently, if a uniform one-way function exists, every language in $\cc{NP}$ has a computational
 zero-knowledge interactive proof system in this uniform polynomial-time-family model. Soundness is
@@ -217,6 +217,8 @@ arbitrary-auxiliary-input quantification, stateful-receiver hiding, sequential r
 negligible soundness error, and witness-level Levin reductions from arbitrary $\cc{NP}$ verifiers are
 not bundled.\citep{Naor1991,GoldreichMicaliWigderson1991,Goldreich2001,AroraBarak09}
 \declat{856a91a18409e5c4a98f0555e54c6ab1cf2c2bdf}{Complexity/Crypto/Computational/Commitment.lean}{169}{Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding}
+\declat{90d22436758386601c1ac18c9e3f447085724635}{Complexity/Crypto/Computational/Commitment.lean}{281}{Cslib.Crypto.naorBindingProb_le}
+\declat{90d22436758386601c1ac18c9e3f447085724635}{Complexity/Crypto/Computational/Commitment.lean}{309}{Cslib.Crypto.naorBindingProb_le_of_three_mul_add_one}
 \declat{856a91a18409e5c4a98f0555e54c6ab1cf2c2bdf}{Complexity/Crypto/Computational/Commitment.lean}{326}{Cslib.Crypto.negligible_naorBindingError}
 \declat{856a91a18409e5c4a98f0555e54c6ab1cf2c2bdf}{Complexity/Crypto/Computational/Commitment.lean}{884}{Cslib.Crypto.PseudorandomGenerator.naorBitCommitment}
 \declat{856a91a18409e5c4a98f0555e54c6ab1cf2c2bdf}{Complexity/Crypto/Computational/Commitment.lean}{909}{Cslib.Crypto.OneWay.exists_bitCommitmentScheme}
