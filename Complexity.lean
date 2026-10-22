@@ -719,6 +719,7 @@ public import Complexity.Computability.Kolmogorov.MultiTape
 public import Complexity.Computability.Kolmogorov.NisanWigderson
 public import Complexity.Computability.Kolmogorov.Partrec
 public import Complexity.Computability.Kolmogorov.SelfDelimiting
+public import Complexity.Computability.Kolmogorov.SingleTape
 public import Complexity.Computability.Kolmogorov.Uncomputability
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.AntiChecker
@@ -851,6 +852,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Computable
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Hardwire
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Partialize
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Partrec
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
@@ -920,6 +922,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.S
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
+public import Complexity.Computability.Machines.Turing.MultiTape.SingleTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Comp
@@ -935,6 +938,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machi
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space
+public import Complexity.Computability.Machines.Turing.SingleTape.Partrec
+public import Complexity.Computability.Machines.Turing.SingleTape.PostTuringMachine
 public import Complexity.Computability.PCP.Amplification
 public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family

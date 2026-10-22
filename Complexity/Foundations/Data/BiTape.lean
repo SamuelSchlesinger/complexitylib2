@@ -14,22 +14,27 @@ public import Mathlib.Basic.Sign.Defs
 public import Mathlib.Algebra.Ring.Int.Defs
 
 /-!
-# Indexed observations and native actions on bidirectional tapes
+# Indexed observations, native actions, and Mathlib `Tape` equivalence on bidirectional tapes
 
 Bolton Bailey's upstream `BiTape` stores finite data relative to the current head. Its integer
 view includes blank gaps and negative displacements. The representation relation allows a native
-integer-indexed tape to have any absolute head position.
+integer-indexed tape to have any absolute head position. We also provide the canonical equivalence
+`BiTape.equivTape` between `BiTape Symbol` and Mathlib's `_root_.Turing.Tape (Option Symbol)`.
 
 ## Main definitions
 
 * `Cslib.Turing.BiTape.read`: observe the tape at an integer displacement.
 * `Cslib.Turing.BiTape.step`: an optional write followed by a signed move.
 * `Cslib.Turing.BiTape.Represents`: agreement with a native tape and its head position.
+* `Cslib.Turing.BiTape.equivTape`: equivalence between `BiTape Symbol` and
+  `_root_.Turing.Tape (Option Symbol)`.
 
 ## Main results
 
 * `Cslib.Turing.BiTape.Represents.step`: native actions preserve the represented tape.
 * `Cslib.Turing.BiTape.spaceUsed_step_le`: each action adds at most one stored cell.
+* `Cslib.Turing.BiTape.equivTape_mk₁`, `equivTape_write`, `equivTape_move`, `nth_equivTape`:
+  `equivTape` commutes with tape initialization, writes, head movement, and indexed reads.
 
 ## References
 
@@ -159,5 +164,103 @@ theorem spaceUsed_step_le (tape : BiTape Symbol) (action : Option (Option Symbol
     | exact spaceUsed_move _ .left
     | exact spaceUsed_move _ .right
     | simp
+
+@[simp] lemma write_head_self (tape : BiTape Symbol) : tape.write tape.head = tape := rfl
+
+@[simp] lemma head_mk₁ (l : List Symbol) : (mk₁ l).head = l.head? := by
+  cases l <;> rfl
+
+@[simp] lemma left_mk₁ (l : List Symbol) : (mk₁ l).left = ∅ := by
+  cases l <;> rfl
+
+@[simp] lemma right_mk₁ (l : List Symbol) : (mk₁ l).right = StackTape.mapSome l.tail := by
+  cases l <;> rfl
+
+@[simp] lemma write_moveLeft_mk₁ (a : Symbol) (l : List Symbol) :
+    (mk₁ l).moveLeft.write (some a) = mk₁ (a :: l) := by
+  cases l with
+  | nil => rfl
+  | cons b tl =>
+    ext <;> simp [mk₁, moveLeft, write, StackTape.mapSome, StackTape.cons]
+
+/-- Canonical equivalence between `BiTape Symbol` and Mathlib's
+`_root_.Turing.Tape (Option Symbol)`. -/
+def equivTape : BiTape Symbol ≃ _root_.Turing.Tape (Option Symbol) where
+  toFun tape := ⟨tape.head, StackTape.equivListBlank tape.left, StackTape.equivListBlank tape.right⟩
+  invFun tape :=
+    ⟨tape.head, StackTape.equivListBlank.symm tape.left, StackTape.equivListBlank.symm tape.right⟩
+  left_inv tape := by cases tape; simp
+  right_inv tape := by cases tape; simp
+
+@[simp] lemma head_equivTape (tape : BiTape Symbol) : (equivTape tape).head = tape.head := rfl
+
+@[simp] lemma left_equivTape (tape : BiTape Symbol) :
+    (equivTape tape).left = StackTape.equivListBlank tape.left := rfl
+
+@[simp] lemma right_equivTape (tape : BiTape Symbol) :
+    (equivTape tape).right = StackTape.equivListBlank tape.right := rfl
+
+@[simp] lemma head_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) :
+    (equivTape.symm tape).head = tape.head := rfl
+
+@[simp] lemma left_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) :
+    (equivTape.symm tape).left = StackTape.equivListBlank.symm tape.left := rfl
+
+@[simp] lemma right_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) :
+    (equivTape.symm tape).right = StackTape.equivListBlank.symm tape.right := rfl
+
+@[simp] lemma equivTape_nil : equivTape (nil : BiTape Symbol) = default := rfl
+
+@[simp] lemma equivTape_symm_default :
+    equivTape.symm (default : _root_.Turing.Tape (Option Symbol)) = nil := rfl
+
+@[simp] lemma equivTape_mk₁ (l : List Symbol) :
+    equivTape (mk₁ l) = _root_.Turing.Tape.mk₁ (l.map some) := by
+  cases l <;> rfl
+
+@[simp] lemma equivTape_symm_mk₁ (l : List Symbol) :
+    equivTape.symm (_root_.Turing.Tape.mk₁ (l.map some)) = mk₁ l := by
+  apply equivTape.injective
+  simp
+
+@[simp] lemma equivTape_write (tape : BiTape Symbol) (a : Option Symbol) :
+    equivTape (tape.write a) = (equivTape tape).write a := rfl
+
+@[simp] lemma equivTape_symm_write (tape : _root_.Turing.Tape (Option Symbol)) (a : Option Symbol) :
+    equivTape.symm (tape.write a) = (equivTape.symm tape).write a := rfl
+
+@[simp] lemma equivTape_moveLeft (tape : BiTape Symbol) :
+    equivTape tape.moveLeft = (equivTape tape).move .left := by
+  simp [equivTape, moveLeft, _root_.Turing.Tape.move]
+
+@[simp] lemma equivTape_moveRight (tape : BiTape Symbol) :
+    equivTape tape.moveRight = (equivTape tape).move .right := by
+  simp [equivTape, moveRight, _root_.Turing.Tape.move]
+
+@[simp] lemma equivTape_move (tape : BiTape Symbol) (d : _root_.Turing.Dir) :
+    equivTape (tape.move d) = (equivTape tape).move d := by
+  cases d <;> simp [move]
+
+@[simp] lemma equivTape_symm_move (tape : _root_.Turing.Tape (Option Symbol))
+    (d : _root_.Turing.Dir) :
+    equivTape.symm (tape.move d) = (equivTape.symm tape).move d := by
+  apply equivTape.injective
+  simp
+
+@[simp] lemma equivTape_optionMove (tape : BiTape Symbol) (d : Option _root_.Turing.Dir) :
+    equivTape (tape.optionMove d) = d.elim (equivTape tape) (fun d => (equivTape tape).move d) := by
+  cases d <;> simp [optionMove]
+
+@[simp] lemma nth_equivTape (tape : BiTape Symbol) (i : ℤ) :
+    (equivTape tape).nth i = tape.read i := by
+  cases i with
+  | ofNat n =>
+    cases n <;> simp [read, _root_.Turing.Tape.nth]
+  | negSucc n =>
+    simp [read, _root_.Turing.Tape.nth]
+
+@[simp] lemma read_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) (i : ℤ) :
+    (equivTape.symm tape).read i = tape.nth i := by
+  rw [← nth_equivTape (equivTape.symm tape) i, equivTape.apply_symm_apply]
 
 end Cslib.Turing.BiTape

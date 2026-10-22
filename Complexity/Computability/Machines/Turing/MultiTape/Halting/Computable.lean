@@ -34,7 +34,9 @@ decidable sets are closed under complement.
 
 These are the decidable sets of [Sipser, Definition 3.6][Sipser2013], for the library's native
 multi-tape machines. Mathlib's `ComputablePred` is the analogous notion for its partial recursive
-functions; relating the two models is not attempted here.
+functions; `Turing.MultiTapeTM.IsComputable.computable` and
+`Turing.MultiTapeTM.IsDecidable.computablePred` in `MultiTape.Halting.Partrec` connect the two
+models.
 
 ## Main definitions
 
