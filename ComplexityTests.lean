@@ -372,6 +372,7 @@ import ComplexityTests.TimeReductions
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
 import ComplexityTests.TreeEvalAry
+import ComplexityTests.UnaryLength
 import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash

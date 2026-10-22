@@ -25,6 +25,8 @@ Framed-list and option rules infer the payload encoding from the representation 
 
 * `Turing.MultiTapeTM.ComputableTidilyInO.comp_enc`: reuse a bit-word computation on encoded
   instances, with bounds evaluated on their encodings.
+* `Turing.MultiTapeTM.ComputableTidilyInO.lengthUnary`: compute bit-word length in unary within
+  linear time and space.
 * `Turing.MultiTapeTM.ComputableTidilyInO.unary_two_pow`: compute `2 ^ n` from unary `n` within
   time `O((n + 1) * 2 ^ n)` and space `O(2 ^ n)`.
 * `Turing.MultiTapeTM.ComputableTidilyInDegree.comp_le`: composition at requested degrees.
@@ -201,6 +203,13 @@ theorem comp_enc {f : List Bool → β} {T S : List Bool → ℕ}
     ComputableTidilyInO (fun a => f (enc a)) enc encOut (fun a => T (enc a)) fun a => S (enc a) :=
   let ⟨c, ⟨k, State, hfinite, tm, htm⟩, hl⟩ := h
   ⟨c, ⟨k, State, hfinite, tm, fun a => htm (enc a)⟩, fun a => hl (enc a)⟩
+
+/-- The length of a bit word in unary, within linear time and space, by the streaming machine of
+`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits`. -/
+theorem lengthUnary : ComputableTidilyInO (fun l : List Bool => l.length) encBits encUnary
+    (fun l => l.length) fun l => l.length :=
+  .of_bounds ComputableTidilyInTimeAndSpace.length_bits 8 (fun l => by omega)
+    (fun _ => Nat.zero_le _) fun l => by simp only [encUnary_apply, List.length_replicate]; omega
 
 /-- Doubling `m` once for each element of a list of length `n` multiplies it by `2 ^ n`. -/
 private theorem foldl_double (n m : ℕ) :
