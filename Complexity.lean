@@ -58,6 +58,7 @@ public import Complexity.Computability.Circuit.Basic
 public import Complexity.Computability.Circuit.BipartiteMatching
 public import Complexity.Computability.Circuit.Bird
 public import Complexity.Computability.Circuit.Boolean.AC0
+public import Complexity.Computability.Circuit.Boolean.ACC0
 public import Complexity.Computability.Circuit.Boolean.Advice
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
