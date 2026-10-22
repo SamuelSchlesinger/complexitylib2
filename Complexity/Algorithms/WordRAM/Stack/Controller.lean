@@ -200,7 +200,7 @@ def positive (n : ℕ) : ℕ := max n 1
 /-- Uniform computation at every fitting word size of at least two bits. -/
 theorem computesInTime :
     (code.program out).ComputesInTime (fun _ n => [n]) (fun _ _ => 49)
-      (.atLeast (fun _ => 2)) positive := by
+      (fun _ w => 2 ≤ w) positive := by
   intro n w hw hn
   have h3 : Fits w 3 := (show Fits 2 3 by decide).mono hw
   obtain ⟨t, ht, he⟩ := executes_le h3 hn
@@ -215,7 +215,6 @@ theorem positive_polytime :
   apply computesInTime.mono (fun _ _ => le_rfl)
   intro n w hw
   change 2 * (Nat.log 2 n + 1) ≤ w at hw
-  change 2 ≤ w
   omega
 
 /-- The logarithmic threshold used by the function certificate fits every input, so the

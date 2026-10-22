@@ -254,12 +254,14 @@ The [historical ledger](https://github.com/cslib-community/complexitylib/blob/d0
 preserves earlier integration notes and per-module follow-up ideas.
 
 * **Word-RAM word-size contracts (2026-10-22).** Time and encoding arguments now depend on
-  word size, and a `WidthCondition` admits arbitrary input/width pairs. `ProgramFamily` selects
-  code only by width; the primary decision and function classes require a fixed register count
-  and uniformly bounded instruction-list length. `Uniform` variants retain one fixed program,
+  word size, and an ordinary predicate `allowed : α → ℕ → Prop` admits input/width pairs.
+  `WordSizeDependentProgram` selects code only by width; the primary decision and function classes
+  require a fixed register count and uniformly bounded instruction-list length.
+  `Uniform` variants retain one fixed program,
   which may read the width. Existing fixed-code clients prove the uniform variants and can
-  forget uniformity. The logarithmic-threshold wrappers require a positive constant and remain
-  conditional on input fitting. Asymptotic time keeps correctness at every admitted fitting input
+  forget uniformity. The `LogWord` wrappers express the transdichotomous assumption, require a
+  positive constant, and remain conditional on input fitting. Asymptotic time keeps correctness
+  at every admitted fitting input
   and makes only the runtime estimate eventual, with constants shared by all widths. Width
   schedules connect to Mathlib's real-valued big-O after casting. No effective selection of code,
   width or encoding, or Turing-machine complexity identification, follows. These breaking local

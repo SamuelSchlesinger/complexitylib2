@@ -206,31 +206,33 @@ theorem Program.answers_mapOp_iff {p : Program B r} {w : ℕ} {input : List ℕ}
   simp only [Program.Answers, executes_mapOp_iff]
 
 theorem Program.DecidesInTime.mapOp {p : Program B r} {encode : ℕ → α → List ℕ} {A : Set α}
-    {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+    {time : α → ℕ → ℕ} {allowed : α → ℕ → Prop}
     (h : p.DecidesInTime encode A time allowed) :
     (p.mapOp φ).DecidesInTime encode A time allowed :=
   fun a w hw hi => (answers_mapOp_iff φ).2 (h a w hw hi)
 
 /-- Translate each member of a width-indexed family. -/
-def ProgramFamily.mapOp (P : ProgramFamily B r) : ProgramFamily B' r :=
+def WordSizeDependentProgram.mapOp (P : WordSizeDependentProgram B r) :
+    WordSizeDependentProgram B' r :=
   fun w => (P w).mapOp φ
 
 /-- Translation preserves the code-length bound. -/
-theorem ProgramFamily.BoundedCode.mapOp {P : ProgramFamily B r} (h : P.BoundedCode) :
-    (P.mapOp φ).BoundedCode :=
+theorem WordSizeDependentProgram.BoundedCode.mapOp {P : WordSizeDependentProgram B r}
+    (h : P.BoundedCode) : (P.mapOp φ).BoundedCode :=
   let ⟨L, hL⟩ := h
-  ⟨L, fun w => by simpa only [ProgramFamily.mapOp, Program.mapOp, List.length_map] using hL w⟩
+  ⟨L, fun w => by
+    simpa only [WordSizeDependentProgram.mapOp, Program.mapOp, List.length_map] using hL w⟩
 
 /-- Translation preserves family decision at the same width and instruction count. -/
-theorem ProgramFamily.DecidesInTime.mapOp {P : ProgramFamily B r}
-    {encode : ℕ → α → List ℕ} {A : Set α} {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+theorem WordSizeDependentProgram.DecidesInTime.mapOp {P : WordSizeDependentProgram B r}
+    {encode : ℕ → α → List ℕ} {A : Set α} {time : α → ℕ → ℕ} {allowed : α → ℕ → Prop}
     (h : P.DecidesInTime encode A time allowed) :
     (P.mapOp φ).DecidesInTime encode A time allowed :=
   fun a w hw hi => (Program.answers_mapOp_iff φ).2 (h a w hw hi)
 
 /-- Nonuniform decision grows with the operation basis, preserving code length. -/
 theorem DecidableInTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α}
-    {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+    {time : α → ℕ → ℕ} {allowed : α → ℕ → Prop}
     (φ : B.Hom B') (h : DecidableInTime B A encode time allowed) :
     DecidableInTime B' A encode time allowed :=
   let ⟨r, P, hP, hp⟩ := h
@@ -238,7 +240,7 @@ theorem DecidableInTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α}
 
 /-- Uniform decision grows with the operation basis. -/
 theorem UniformDecidableInTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α}
-    {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+    {time : α → ℕ → ℕ} {allowed : α → ℕ → Prop}
     (φ : B.Hom B') (h : UniformDecidableInTime B A encode time allowed) :
     UniformDecidableInTime B' A encode time allowed :=
   let ⟨r, p, hp⟩ := h

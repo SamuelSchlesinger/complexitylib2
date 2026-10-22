@@ -199,7 +199,7 @@ theorem Code.Answers.program {c : Code B r} {out : Fin r} {w : ℕ} {input : Lis
 
 /-- Structured answers give a fixed-program decision certificate, charging the final halt. -/
 theorem Code.decidesInTime_program {α : Type*} {encode : ℕ → α → List ℕ} {A : Set α}
-    {time : α → ℕ → ℕ} {allowed : WidthCondition α} (c : Code B r) (out : Fin r)
+    {time : α → ℕ → ℕ} {allowed : α → ℕ → Prop} (c : Code B r) (out : Fin r)
     (h : ∀ a w, allowed a w → InputFits w (encode w a) →
       c.Answers out w (encode w a) (a ∈ A) (time a w)) :
     (c.program out).DecidesInTime encode A (fun a w => time a w + 1) allowed :=
@@ -207,7 +207,7 @@ theorem Code.decidesInTime_program {α : Type*} {encode : ℕ → α → List �
 
 /-- Structured decision procedures are uniform deciders. -/
 theorem UniformDecidableInTime.of_code {α : Type*} {encode : ℕ → α → List ℕ} {A : Set α}
-    {time : α → ℕ → ℕ} {allowed : WidthCondition α} (c : Code B r) (out : Fin r)
+    {time : α → ℕ → ℕ} {allowed : α → ℕ → Prop} (c : Code B r) (out : Fin r)
     (h : ∀ a w, allowed a w → InputFits w (encode w a) →
       c.Answers out w (encode w a) (a ∈ A) (time a w)) :
     UniformDecidableInTime B A encode (fun a w => time a w + 1) allowed :=
@@ -215,7 +215,7 @@ theorem UniformDecidableInTime.of_code {α : Type*} {encode : ℕ → α → Lis
 
 /-- Structured families with bounded compiled code give nonuniform deciders. -/
 theorem DecidableInTime.of_code {α : Type*} {encode : ℕ → α → List ℕ} {A : Set α}
-    {time : α → ℕ → ℕ} {allowed : WidthCondition α} (c : ℕ → Code B r) (out : Fin r)
+    {time : α → ℕ → ℕ} {allowed : α → ℕ → Prop} (c : ℕ → Code B r) (out : Fin r)
     (hc : ∃ L, ∀ w, (c w).size ≤ L)
     (h : ∀ a w, allowed a w → InputFits w (encode w a) →
       (c w).Answers out w (encode w a) (a ∈ A) (time a w)) :

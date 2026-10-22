@@ -167,10 +167,9 @@ private def widthAdvice : Program .standard 2 :=
 example :
     (∀ b : Bool, InputFits (if b then 2 else 1) []) ∧
     UniformDecidableInTime .standard {b : Bool | b = true} (fun _ _ => [])
-      (fun _ _ => 4) (.atWidth fun b => if b then 2 else 1) := by
+      (fun _ _ => 4) (fun b w => w = if b then 2 else 1) := by
   refine ⟨fun b => ⟨fits_zero _, by simp⟩, 2, widthAdvice, ?_⟩
   intro b w hw _
-  change w = (if b then 2 else 1) at hw
   subst w
   cases b
   · exact ⟨0, 4, .of_run (fuel := 4) (by decide), le_rfl, by decide, by decide⟩
@@ -180,7 +179,7 @@ example :
 width: selecting code by width gives both instances the same initial state and program. -/
 example (time : Bool → ℕ → ℕ) (bits : Bool → ℕ) :
     ¬DecidableInTime .standard {b : Bool | b = true} (fun _ _ => []) time
-      (.atLeast bits) := by
+      (fun b w => bits b ≤ w) := by
   rintro ⟨r, p, _, hp⟩
   let w := max (bits false) (bits true)
   have hi : InputFits w [] := ⟨fits_zero w, by simp⟩
@@ -195,10 +194,9 @@ example (time : Bool → ℕ → ℕ) (bits : Bool → ℕ) :
 without a successful run. -/
 example (A : Set Bool) :
     UniformDecidableInTime .standard A (fun _ _ => [1]) (fun _ _ => 0)
-      (.atWidth fun _ => 0) := by
+      (fun _ w => w = 0) := by
   refine ⟨0, [], ?_⟩
   intro b w hw hi
-  change w = 0 at hw
   subst w
   have h := hi.1
   change 1 < 1 at h
@@ -212,7 +210,8 @@ example : UniformLinearTime .standard (Set.univ : Set ℕ) (fun _ n => [n]) (fun
   intro n w _ hi
   have h1 : Fits w 1 := hi.1
   refine ⟨1, 2, .of_run (fuel := 2) ?_, le_rfl, le_rfl, by simp⟩
-  simp [ProgramFamily.const, run, step, accept, Op.eval, Data.put, h1, Data.set, State.init]
+  simp [WordSizeDependentProgram.const, run, step, accept, Op.eval, Data.put, h1, Data.set,
+    State.init]
 
 /-- The encoding above is injective and has constant word-count size, but no width depending
 only on that size can fit all its instances. -/
@@ -263,14 +262,12 @@ example : logWidth 2 0 = 2 ∧ InputFits (logWidth 2 0) [] ∧
 /-- The decider also decides at a prescribed width above its threshold, and element distinctness
 for small entries is uniformly in polynomial time. -/
 example : (decider.program ans).DecidesInTime (fun _ (l : Input) => l.1) {l | l.1.Nodup}
-      (fun l _ => 16 * (l.1.length + 1)) (.atWidth fun l => logWidth 2 l.1.length + 7) ∧
+      (fun l _ => 16 * (l.1.length + 1)) (fun l w => w = logWidth 2 l.1.length + 7) ∧
     UniformPolynomialTime .standard {l : Input | l.1.Nodup} (fun _ l => l.1)
       (fun l => l.1.length) := by
   refine ⟨decidesInTime_nodup.mono (fun _ _ => le_rfl) ?_,
     uniformLinearTime_nodup.polynomialTime⟩
   intro a w hw
-  change w = logWidth 2 a.1.length + 7 at hw
-  change logWidth 2 a.1.length ≤ w
   omega
 
 end ElementDistinctness

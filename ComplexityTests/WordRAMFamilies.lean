@@ -18,7 +18,7 @@ namespace ComplexityTests.WordRAMFamilies
 open Cslib.WordRAM
 
 /-- Width chooses a literal, without a width instruction in the selected program. -/
-private def advice : ProgramFamily .arithmetic 1 := fun w =>
+private def advice : WordSizeDependentProgram .arithmetic 1 := fun w =>
   [.op (.const 0 (if w = 2 then 1 else 0)), .halt 0]
 
 example : advice.BoundedCode ∧ advice 1 ≠ advice 2 := by
@@ -27,10 +27,9 @@ example : advice.BoundedCode ∧ advice 1 ≠ advice 2 := by
 
 /-- Both schedule values fit; the family uses its width-specific literal as the answer. -/
 example : DecidableInTime .arithmetic {b : Bool | b = true} (fun _ _ => [])
-    (fun _ w => w + 2) (.atWidth fun b => if b then 2 else 1) := by
+    (fun _ w => w + 2) (fun b w => w = if b then 2 else 1) := by
   refine ⟨1, advice, ⟨2, fun w => by simp [advice]⟩, ?_⟩
   intro b w hw _
-  change w = (if b then 2 else 1) at hw
   subst w
   cases b
   · exact ⟨0, 2, .of_run (fuel := 2) (by decide), by decide, by decide, by decide⟩
@@ -43,24 +42,23 @@ private theorem accepts : accept.DecidesInTime (fun _ n => [n]) Set.univ
   intro n w _ hi
   have h1 : Fits w 1 := hi.1
   refine ⟨1, 2, .of_run (fuel := 2) ?_, by change 2 ≤ w + 2; omega, le_rfl, by simp⟩
-  simp [ProgramFamily.const, run, step, accept, Op.eval, Data.put, h1, Data.set, State.init]
+  simp [WordSizeDependentProgram.const, run, step, accept, Op.eval, Data.put, h1, Data.set,
+    State.init]
 
 /-- A logarithmic upper bound can be combined with the addressing lower bound. -/
 example : UniformDecidableInTime .standard Set.univ (fun _ n => [n]) (fun _ w => w + 2)
-    (.between (logWidth 1) (logWidth 3)) :=
+    (fun n w => logWidth 1 n ≤ w ∧ w ≤ logWidth 3 n) :=
   ⟨1, accept, accepts.mono (fun _ _ => le_rfl) (fun _ _ _ => trivial)⟩
 
-example : WidthCondition.between (logWidth 1) (logWidth 3) 5 3 ∧ InputFits 3 [5] := by
-  dsimp only [WidthCondition.between, WidthCondition.atLeast]
+example : (logWidth 1 5 ≤ 3 ∧ 3 ≤ logWidth 3 5) ∧ InputFits 3 [5] := by
   decide
 
 /-- A squared-logarithmic lower bound is just another width condition. -/
 example : UniformDecidableInTime .standard Set.univ (fun _ n => [n]) (fun _ w => w + 2)
-    (.atLeast fun n => logWidth 1 n ^ 2) :=
+    (fun n w => logWidth 1 n ^ 2 ≤ w) :=
   ⟨1, accept, accepts.mono (fun _ _ => le_rfl) (fun _ _ _ => trivial)⟩
 
-example : WidthCondition.atLeast (fun n => logWidth 1 n ^ 2) 3 4 ∧ InputFits 4 [3] := by
-  dsimp only [WidthCondition.between, WidthCondition.atLeast]
+example : logWidth 1 3 ^ 2 ≤ 4 ∧ InputFits 4 [3] := by
   decide
 
 /-- Runtime constants are shared by all widths. -/
@@ -77,16 +75,16 @@ example (W : ℕ → ℕ)
     (h : Asymptotics.IsBigO Filter.atTop (fun n => (W n : ℝ))
       (fun n => (logWidth 1 n : ℝ))) :
     ∃ k : ℕ, 0 < k ∧ ∀ᶠ n in Filter.atTop,
-      WidthCondition.atMost (logWidth k) n (W n) := by
-  simpa only [WidthCondition.atMost, logWidth, Nat.one_mul] using
-    (WidthCondition.isBigO_iff_eventually_atMost W (logWidth 1)).mp h
+      W n ≤ logWidth k n := by
+  simpa only [logWidth, Nat.one_mul] using
+    (isBigO_natCast_iff_eventually_le_mul W (logWidth 1)).mp h
 
 /-- A squared-logarithmic Omega assumption on a schedule allows a fractional lower constant. -/
 example (W : ℕ → ℕ)
     (h : Asymptotics.IsBigO Filter.atTop (fun n => ((logWidth 1 n ^ 2 : ℕ) : ℝ))
       (fun n => (W n : ℝ))) :
     ∃ k : ℕ, 0 < k ∧ ∀ᶠ n in Filter.atTop, logWidth 1 n ^ 2 ≤ k * W n :=
-  (WidthCondition.isBigO_iff_eventually_atMost (fun n => logWidth 1 n ^ 2) W).mp h
+  (isBigO_natCast_iff_eventually_le_mul (fun n => logWidth 1 n ^ 2) W).mp h
 
 /-- Bounded size does not erase correctness in an asymptotic certificate. -/
 example (T : ℕ → ℕ → ℕ) :

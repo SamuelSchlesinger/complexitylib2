@@ -317,9 +317,9 @@ length `n`, the compiled decider decides whether there are no duplicates within 
 instructions, the final `halt` included, at every word size of at least `2 (⌊log₂ n⌋ + 1)`. -/
 theorem decidesInTime_nodup :
     (decider.program ans).DecidesInTime (fun _ (l : Input) => l.1) {l | l.1.Nodup}
-      (fun l _ => 16 * (l.1.length + 1)) (.logAtLeast (fun l => l.1.length) 2) :=
+      (fun l _ => 16 * (l.1.length + 1)) (fun l w => logWidth 2 l.1.length ≤ w) :=
   (decider.decidesInTime_program (encode := fun _ (l : Input) => l.1)
-    (allowed := .logAtLeast (fun l => l.1.length) 2)
+    (allowed := fun l w => logWidth 2 l.1.length ≤ w)
     (time := fun (l : Input) _ => 14 * l.1.length + 15)
     (A := {l | l.1.Nodup}) ans fun a _ hw _ => answers a.2 (fits_two_mul_add_one hw)).mono
     (fun a _ => by omega) fun _ _ h => h
@@ -338,7 +338,7 @@ theorem linearTime_nodup :
 /-- **Element distinctness in linear time over `Basis.additive`.** -/
 theorem decidesInTime_nodup_additive :
     (deciderAdditive.program ans).DecidesInTime (fun _ (l : Input) => l.1) {l | l.1.Nodup}
-      (fun l _ => 16 * (l.1.length + 1)) (.logAtLeast (fun l => l.1.length) 2) := by
+      (fun l _ => 16 * (l.1.length + 1)) (fun l w => logWidth 2 l.1.length ≤ w) := by
   intro a w hw hi
   have h := decidesInTime_nodup a w hw hi
   change (decider.program ans).Answers w a.1 a.1.Nodup (16 * (a.1.length + 1)) at h

@@ -246,12 +246,12 @@ private theorem countdown_exec {w : ℕ} {x : Data 3}
 /-- The encoded second word varies with width; both countdowns are charged in the budget. -/
 private theorem widthCountdown_computes :
     ComputableInTime .standard (fun _ => 0) (fun w n => [n, w])
-      (fun n w => 3 * w + 3 * n + 8) (.atLeast (fun _ => 1)) := by
+      (fun n w => 3 * w + 3 * n + 8) (fun _ w => 1 ≤ w) := by
   apply ComputableInTime.of_code widthCountdown 0
       (time := fun n w => 3 * w + 3 * n + 7)
   · exact ⟨12, fun _ => by simp [widthCountdown]⟩
   · intro n w hw hi
-    have h1 : Fits w 1 := fits_one (by change 1 ≤ w at hw; omega)
+    have h1 : Fits w 1 := fits_one (by omega)
     let x : Data 3 := ((Data.init [n, w]).set 0 w).set 1 1
     have hx0 : x.regs 0 = w := by simp +decide [x, Data.set]
     obtain ⟨y, hy, hy0, hy1, hy2, hym⟩ := countdown_exec (x := x)
@@ -273,7 +273,7 @@ private theorem widthCountdown_computes :
 -- A concrete fitting instance demonstrates that the family contract is not vacuous.
 example : InputFits 3 [5, 3] := by decide
 
-example : ∃ r, ∃ P : ProgramFamily .standard r, P.BoundedCode ∧
+example : ∃ r, ∃ P : WordSizeDependentProgram .standard r, P.BoundedCode ∧
     ∃ t, Executes 3 (P 3) (State.init [5, 3]) 0 t ∧ t ≤ 32 := by
   obtain ⟨r, P, hP, hp⟩ := widthCountdown_computes
   exact ⟨r, P, hP, hp 5 3 (show 1 ≤ 3 by decide) (by decide)⟩
