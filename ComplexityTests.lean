@@ -372,6 +372,7 @@ import ComplexityTests.TreeEvalAry
 import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
+import ComplexityTests.UniversalPolyTime
 import ComplexityTests.UniversalResourceBound
 import ComplexityTests.VanEmdeBoas
 import ComplexityTests.VanEmdeBoasRAM

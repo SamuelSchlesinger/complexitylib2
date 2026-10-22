@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Hardwire
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -21,7 +22,8 @@ The description `Turing.MultiTapeTM.Universal.hardwire d p`, which behaves on ev
 this is the s-m-n theorem for native descriptions, the counterpart of
 [Sipser, Lemma 6.1][Sipser2013]. The transitions of `hardwire d p` are lists built from those of
 `d` and from the symbols of `p` by the list operations of the polynomial-time calculus, which
-`fun_prop` assembles from the fields of keys, actions and descriptions.
+`fun_prop` assembles from the fields of keys, actions and descriptions, using the shared bit
+coding rules in `Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime`.
 
 ## Main results
 
@@ -137,11 +139,6 @@ theorem computableTidilyInPolyTime_desc_mk {tapes q₀ : γ → ℕ} {table : γ
     (encMid := eDesc) fun _ => rfl).comp (htapes.prod (hq₀.prod htable))
 
 /-! ### Helpers -/
-
-@[fun_prop]
-theorem computableTidilyInPolyTime_eBit :
-    ComputableTidilyInPolyTime (fun b : Bool => eBit b) encBool encUnary :=
-  of_finite _
 
 /-- Mapping a computed option. -/
 @[fun_prop]

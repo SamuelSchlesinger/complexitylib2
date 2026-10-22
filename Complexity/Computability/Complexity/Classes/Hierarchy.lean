@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
-public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
@@ -28,8 +28,9 @@ hierarchy theorem in `Complexity.Computability.Complexity.Classes.Hierarchy.Time
 
 The diagonal is itself computed, by one fixed machine, within time `O(2 ^ (4 * n))` and space
 `O(2 ^ (2 * n))` on inputs of length `n` (`Cslib.Complexity.computableTidilyInO_diagonal`). The
-bound charges decoding, converting the input to symbols, writing the clock `2 ^ n` in binary, the
-universal run and the final test; the universal run dominates, within time polynomial in `n` times
+bound charges decoding, converting the input to symbols through the universal input-coding API,
+writing the clock `2 ^ n` in binary, the universal run and the final test. The universal run
+dominates, within time polynomial in `n` times
 `2 ^ (3 * n)` and space polynomial in `n` times `2 ^ n`, and one more factor `2 ^ n` absorbs the
 polynomials. The exponents are deliberately loose.
 
@@ -99,71 +100,29 @@ theorem clockedDiagonal_two_pow : clockedDiagonal (2 ^ ·) = diagonal := rfl
 
 namespace Diagonal
 
-/-! ### The symbols of the input -/
+/-! ### Compatibility names for universal input coding -/
 
-/-- The code of a bit list with every `true` doubled: `false ↦ [false]`, `true ↦ [true, true]`. -/
-def trueDoubled (b : Bool) : List Bool := if b then [true, true] else [false]
+@[deprecated (since := "2026-10-22")]
+alias trueDoubled := Turing.MultiTapeTM.Universal.trueDoubled
 
-/-- Bit lists with every `true` doubled. -/
-def encTrueDoubled : List Bool ↪ List Bool :=
-  ⟨fun x => x.flatMap trueDoubled, fun x y h => by
-    induction x generalizing y with
-    | nil => cases y with
-      | nil => rfl
-      | cons b y => cases b <;> simp [trueDoubled] at h
-    | cons a x ih => cases y with
-      | nil => cases a <;> simp [trueDoubled] at h
-      | cons b y =>
-        cases a <;> cases b <;> simp only [trueDoubled, List.flatMap_cons, Bool.false_eq_true,
-          ↓reduceIte, List.cons_append, List.nil_append, List.cons.injEq, true_and,
-          reduceCtorEq, false_and] at h ⊢ <;> exact ih _ h⟩
+@[deprecated (since := "2026-10-22")]
+alias encTrueDoubled := Turing.MultiTapeTM.Universal.encTrueDoubled
 
-/-- Doubles every `true`. -/
-def trueDoubleT : Transducer Bool Unit where
-  q₀ := ()
-  step _ b := ((), trueDoubled b)
-  final _ := []
-  length_step_le _ b := by cases b <;> simp [trueDoubled]
-  length_final_le _ := by simp
+@[deprecated (since := "2026-10-22")]
+alias trueDoubleT := Turing.MultiTapeTM.Universal.trueDoubleT
 
-/-- Reads a doubled word as the framed unary symbols `0` for `false` and `1` for `true`. -/
-def symbolsT : Transducer Bool Bool where
-  q₀ := false
-  step
-    | false, false => (false, [false])
-    | false, true => (true, [true, true])
-    | true, _ => (false, [false])
-  final _ := []
-  length_step_le q b := by cases q <;> cases b <;> simp
-  length_final_le _ := by simp
+@[deprecated (since := "2026-10-22")]
+alias symbolsT := Turing.MultiTapeTM.Universal.symbolsT
 
-theorem trueDoubleT_run (x : List Bool) : trueDoubleT.run () x = encTrueDoubled x := by
-  induction x with
-  | nil => rfl
-  | cons b x ih =>
-    rw [Transducer.run_cons, ih]
-    rfl
+@[deprecated (since := "2026-10-22")]
+alias trueDoubleT_run := Turing.MultiTapeTM.Universal.trueDoubleT_run
 
-theorem symbolsT_run (x : List Bool) :
-    symbolsT.run false (encTrueDoubled x) = encList encUnary (x.map eBit) := by
-  induction x with
-  | nil => rfl
-  | cons b x ih =>
-    cases b
-    · change (false :: symbolsT.run false (encTrueDoubled x)) = _
-      rw [ih]
-      rfl
-    · change (true :: true :: false :: symbolsT.run false (encTrueDoubled x)) = _
-      rw [ih]
-      rfl
+@[deprecated (since := "2026-10-22")]
+alias symbolsT_run := Turing.MultiTapeTM.Universal.symbolsT_run
 
-/-- The input as symbols, in linear time and space. -/
-theorem computableTidilyInDegree_map_eBit :
-    ComputableTidilyInDegree (fun x : List Bool => x.map eBit) encBits (encList encUnary) 1 1 :=
-  (ComputableTidilyInDegree.of_linear (encIn := encTrueDoubled)
-    (symbolsT.computableTidilyInLinearTimeAndSpace fun x => (symbolsT_run x).symm)).comp
-    (ComputableTidilyInDegree.of_linear (encIn := encBits) (encMid := encTrueDoubled) (f := id)
-      (trueDoubleT.computableTidilyInLinearTimeAndSpace fun x => (trueDoubleT_run x).symm))
+@[deprecated (since := "2026-10-22")]
+alias computableTidilyInDegree_map_eBit :=
+  Turing.MultiTapeTM.Universal.computableTidilyInDegree_map_eBit
 
 end Diagonal
 
@@ -346,7 +305,7 @@ theorem computableTidilyInO_diagonal :
   have hu : ComputableTidilyInDegree unframe encBits encBits 1 1 :=
     .of_linear (.of_unframe fun _ => rfl)
   have hdesc := (hdec.comp hu).inO
-  have hsym := computableTidilyInDegree_map_eBit.inO_one
+  have hsym := Universal.computableTidilyInDegree_map_eBit.inO_one
   have hclock := (ComputableTidilyInDegree.two_pow_length encBits).inO_one
   have hpre := hdesc.prod (hsym.prod hclock)
   have hU := computableTidilyInO_universal.comp hpre
