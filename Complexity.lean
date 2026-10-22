@@ -2,6 +2,9 @@ module  -- shake: keep-all --deprecated_module: ignore
 
 public import Complexity.Algorithms.Lean.Queue
 public import Complexity.Algorithms.Lean.Retroactive
+public import Complexity.Algorithms.Lean.SearchTree.Basic
+public import Complexity.Algorithms.Lean.SearchTree.Cost
+public import Complexity.Algorithms.Lean.SearchTree.Stateful
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
@@ -20,6 +23,9 @@ public import Complexity.Algorithms.WordRAM.PrefixSums.Dynamic
 public import Complexity.Algorithms.WordRAM.PrefixSums.Query
 public import Complexity.Algorithms.WordRAM.PrefixSums.Tree
 public import Complexity.Algorithms.WordRAM.PrefixSums.Update
+public import Complexity.Algorithms.WordRAM.Queue.Basic
+public import Complexity.Algorithms.WordRAM.Queue.Dynamic
+public import Complexity.Algorithms.WordRAM.Queue.Model
 public import Complexity.Algorithms.WordRAM.Stack
 public import Complexity.Algorithms.WordRAM.Stack.Controller
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Call
@@ -71,6 +77,7 @@ public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BitBlast
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.Broadcast
+public import Complexity.Computability.Circuit.Boolean.CarrySave
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.CodeSubstitution
 public import Complexity.Computability.Circuit.Boolean.CompareSwap
@@ -90,6 +97,9 @@ public import Complexity.Computability.Circuit.Boolean.FanInTwo
 public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.FirstOrder.Parity
 public import Complexity.Computability.Circuit.Boolean.Formula
+public import Complexity.Computability.Circuit.Boolean.Formula.Andreev
+public import Complexity.Computability.Circuit.Boolean.Formula.Restriction
+public import Complexity.Computability.Circuit.Boolean.Formula.Subbotovskaya
 public import Complexity.Computability.Circuit.Boolean.GateElimination
 public import Complexity.Computability.Circuit.Boolean.Hamming
 public import Complexity.Computability.Circuit.Boolean.HardCore
@@ -176,6 +186,8 @@ public import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig.Laye
 public import Complexity.Computability.Circuit.Boolean.Metric
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
+public import Complexity.Computability.Circuit.Boolean.ModMajority
+public import Complexity.Computability.Circuit.Boolean.Multiplicity
 public import Complexity.Computability.Circuit.Boolean.NaturalProof
 public import Complexity.Computability.Circuit.Boolean.NaturalProof.Generator
 public import Complexity.Computability.Circuit.Boolean.Nechiporuk
@@ -225,6 +237,7 @@ public import Complexity.Computability.Circuit.Boolean.Tableau.Correct
 public import Complexity.Computability.Circuit.Boolean.Tableau.Space
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
+public import Complexity.Computability.Circuit.Boolean.ThresholdNC1
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Tournament
 public import Complexity.Computability.Circuit.Boolean.Unbounded
@@ -680,7 +693,11 @@ public import Complexity.Computability.DecisionTree.Switching
 public import Complexity.Computability.DecisionTree.Symmetric
 public import Complexity.Computability.GenericRAM.Algebraic
 public import Complexity.Computability.GenericRAM.Defs
+public import Complexity.Computability.GenericRAM.Native
+public import Complexity.Computability.GenericRAM.Native.Nat
 public import Complexity.Computability.GenericRAM.Signed
+public import Complexity.Computability.GenericRAM.SparseMemory.Basic
+public import Complexity.Computability.GenericRAM.SparseMemory.Turing
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
 public import Complexity.Computability.Kolmogorov.Depth
@@ -717,6 +734,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Tid
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BinaryCompare
@@ -1087,6 +1106,7 @@ public import Complexity.Computability.WordRAM.Function
 public import Complexity.Computability.WordRAM.Generic
 public import Complexity.Computability.WordRAM.Heap
 public import Complexity.Computability.WordRAM.MapOp
+public import Complexity.Computability.WordRAM.Native
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.RAM
 public import Complexity.Computability.WordRAM.RAMInput
@@ -1381,6 +1401,7 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 public import Complexity.Foundations.Data.Nat.Radix
+public import Complexity.Foundations.Data.OrderedSet
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
@@ -1410,6 +1431,7 @@ public import Complexity.Foundations.Semantics.Stateful.Composition
 public import Complexity.Foundations.Semantics.Stateful.CostHoare
 public import Complexity.Foundations.Semantics.Stateful.Hoare
 public import Complexity.Foundations.Semantics.Stateful.Module
+public import Complexity.Foundations.Semantics.Stateful.OrderedSet
 public import Complexity.Foundations.Semantics.Stateful.Realization
 public import Complexity.Foundations.Semantics.Stateful.Resource
 public import Complexity.Init

@@ -239,6 +239,81 @@ The prime and depth are fixed in the class separation.\citep{Razborov1987,Smolen
 \end{result}
 
 \begin{result}
+\subsection{Simulating \texorpdfstring{MOD$_q$}{MOD\_q} gates with majority gates}
+Over any Boolean basis containing the unbounded fan-in basis, an $n$-input
+$\mathrm{MOD}_q$ gate ($\mathbf 1[\operatorname{weight}(x)\bmod q\ne0]$) is
+computed from a circuit $M$ for $(2n+2)$-input majority using at most
+$1+(n+1)(2(2+|M|)+2)$ gates and depth at most $\operatorname{depth}(M)+4$.
+For a circuit $C$ over the unbounded fan-in basis extended by a family of
+symmetric gates $f_m(x)=G(m,\operatorname{weight}(x))$, aggregating repeated
+wires into multiplicities (\lean{multCircuit}) preserves the computed function
+and size, does not increase depth, and bounds every gate's distinct-wire arity
+by $n+|C|$. Reducing each $\mathrm{MOD}_q$ wire multiplicity modulo $q$ (or to
+$\min(k,1)$ when $q=0$) and replacing each gate gives, for every $q$ and every
+$n$-input, $m$-output circuit $C$ with $\mathrm{MOD}_q$ gates, an equivalent
+circuit $D$ over the majority basis with
+\[
+|D|\le |C|\bigl(9+8\max(q,1)(n+|C|)\bigr),\qquad
+\operatorname{depth}(D)\le 5\operatorname{depth}(C).
+\]
+Consequently $\mathrm{AC}^i[q]\subseteq\mathrm{TC}^i$ for all $q,i\in\mathbb N$,
+$\mathrm{AC}^0[q]\subseteq\mathrm{TC}^0$, and for every odd prime $p$,
+$\mathrm{AC}^0[p]\subsetneq\mathrm{TC}^0$. These are nonuniform circuit
+inclusions; no uniformity condition is imposed.\citep{ChandraStockmeyerVishkin1984,Vollmer1999,Razborov1987,Smolensky1987}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/Multiplicity.lean}{201}{Cslib.Circuits.Boolean.Unbounded.eval_multCircuit}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/Multiplicity.lean}{207}{Cslib.Circuits.Boolean.Unbounded.depth_multCircuit_le}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/Multiplicity.lean}{217}{Cslib.Circuits.Boolean.Unbounded.fanInAtMost_multCircuit}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{97}{Cslib.Circuits.Boolean.computes_modCircuitOfMajority}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{72}{Cslib.Circuits.Boolean.size_modCircuitOfMajority_le}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{84}{Cslib.Circuits.Boolean.depth_modCircuitOfMajority_le}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{237}{Cslib.Circuits.Boolean.Unbounded.exists_majority_simulation_modGate}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{259}{Cslib.Circuits.Boolean.ACMod_subset_TC}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ModMajority.lean}{273}{Cslib.Circuits.Boolean.AC0Mod_subset_TC0}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/Smolensky/Majority.lean}{53}{Cslib.Circuits.Boolean.Smolensky.AC0Mod_ssubset_TC0}
+\end{result}
+
+\begin{result}
+\subsection{Carry-save bit counting and threshold gates in \texorpdfstring{NC$^1$}{NC\^1}}
+Over the De Morgan basis of fan-in two, a $3$-to-$2$ carry-save adder on
+$w$-bit words (least significant bit first) preserves the unsigned sum modulo
+$2^w$ in depth at most $6$ and size at most $20w$, and two layers form a
+$4$-to-$2$ carry-save reducer of depth at most $12$ and size at most $40w$.
+Combining $k$ single-bit inputs along a balanced binary tree of $4$-to-$2$
+reducers and iterating carry-clearing $w=\lceil\log_2(k+1)\rceil$ times gives a
+De Morgan circuit \lean{weightCircuit} of depth at most $1+19w$ and size at most
+$\max(1,k)+40kw+w(20w+1)$ whose output is the exact $w$-bit binary numeral of
+$\operatorname{weight}(x)$. Composing with the $w$-bit comparator yields a
+De Morgan circuit \lean{thresholdDeMorganCircuit} for $\mathrm{Th}^k_j$ (and
+\lean{majorityDeMorganCircuit} for $k$-bit majority) of depth at most $2+23w$
+and size at most $4+k+40kw+w(20w+6)$. Consequently every threshold slice family
+$x\mapsto\mathrm{Th}^{|x|}_{t(|x|)}(x)$, including $\mathrm{MAJ}$ and strict
+majority, belongs to nonuniform $\mathrm{NC}^1$. Replacing each gate of a
+threshold or majority circuit $C$ whose gates have syntactic arity at most $F$
+(\lean{FanInAtMost}) gives an equivalent De Morgan circuit of depth at most
+$(2+23\lceil\log_2(F+1)\rceil)\operatorname{depth}(C)$ and size at most
+$|C|(4+F+40F\lceil\log_2(F+1)\rceil+\lceil\log_2(F+1)\rceil(20\lceil\log_2(F+1)\rceil+6))$,
+so polynomial-size, polynomially fan-in-bounded threshold or $\mathrm{TC}$
+circuit families of depth $O((\log n)^i)$ lie in $\mathrm{NC}^{i+1}$. Unbounded
+wire multiplicity in $\mathrm{TC}^i$ without a fan-in bound is not covered by
+this simulation.\citep{ChandraStockmeyerVishkin1984,AroraBarak09,Vollmer1999}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{111}{Cslib.Circuits.Boolean.val_csaSum_add_val_csaCarry_mod}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{507}{Cslib.Circuits.Boolean.val_eval_weightCircuit}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{521}{Cslib.Circuits.Boolean.size_weightCircuit_le}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/CarrySave.lean}{528}{Cslib.Circuits.Boolean.depth_weightCircuit_le}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{119}{Cslib.Circuits.Boolean.computes_thresholdDeMorganCircuit}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{135}{Cslib.Circuits.Boolean.size_thresholdDeMorganCircuit_le}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{149}{Cslib.Circuits.Boolean.depth_thresholdDeMorganCircuit_le}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{171}{Cslib.Circuits.Boolean.computes_majorityDeMorganCircuit}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{192}{Cslib.Circuits.Boolean.threshold_mem_NC_one}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{209}{Cslib.Circuits.Boolean.majority_mem_NC_one}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{213}{Cslib.Circuits.Boolean.strictMajority_mem_NC_one}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{263}{Cslib.Circuits.Boolean.Threshold.exists_deMorgan_simulation_of_fanInAtMost}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{340}{Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_majority_of_fanInAtMost}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{356}{Cslib.Circuits.Boolean.mem_NC_succ_of_threshold_fanInAtMost}
+\declat{5c7a99902d4be2e340cec4c55da603af50932e81}{Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean}{384}{Cslib.Circuits.Boolean.mem_NC_succ_of_majority_fanInAtMost}
+\end{result}
+
+\begin{result}
 \subsection{Razborov's monotone clique bound}
 Let $p,w\ge2$, $w+1\le k\le n$, $p\le n$, and $2w^2\le k-1$, and put
 \[
@@ -939,4 +1014,58 @@ five comes from the grouped certificate construction formalized here.
 \declat{fc111b65726f9b5bc721b9c63bef8a218fcf4b35}{Complexity/Computability/Circuit/Fusion/Conondeterministic.lean}{123}{Cslib.Circuits.Fusion.exists_pairCover_forallGuess}
 \declat{fddf011fc21ee2b3d148dea54d07822c13d817f0}{Complexity/Computability/Circuit/Fusion/Converse.lean}{66}{Cslib.Circuits.Fusion.PairCover.exists_forallGuess}
 \declat{fddf011fc21ee2b3d148dea54d07822c13d817f0}{Complexity/Computability/Circuit/Fusion/Converse.lean}{131}{Cslib.Circuits.Fusion.conondeterministicAndComplexity_bounds}
+\end{result}
+
+\begin{result}
+\subsection{Subbotovskaya shrinkage and Andreev's formula lower bound}
+Let $L(f)$ be the minimum input-leaf count among De Morgan formulas computing
+$f:\{0,1\}^n\to\{0,1\}$, with constants contributing zero leaves. For any
+partial assignment $\rho$ leaving $s=|\rho.\mathrm{free}|$ coordinates free,
+summing over all $2s$ single-coordinate extensions $\rho[i\mapsto b]$ gives
+\[
+\sum_{i\in\rho.\mathrm{free}}
+  \bigl(L(f\upharpoonright\rho[i\mapsto0])+L(f\upharpoonright\rho[i\mapsto1])\bigr)
+\le
+\begin{cases}
+2s-2, & \text{if } L(f\upharpoonright\rho)=1,\\
+(2s-3)\,L(f\upharpoonright\rho), & \text{otherwise.}
+\end{cases}
+\]
+Consequently, for every $1\le k\le n$, some partial assignment $\rho$ leaving
+$k$ coordinates free satisfies $L(f\upharpoonright\rho)^2 n^3 \le L(f)^2 k^3$,
+and taking $k=1$ yields Subbotovskaya's lower bound
+$n^3\le L(\mathrm{PARITY}_n)^2$. Over all $N_k=\binom{s}{k}2^{s-k}$ extensions
+of $\rho_0$ with $1\le k\le s$ free coordinates, the sum
+$S_k=\sum_{\rho}L(f\upharpoonright\rho)$ satisfies
+$(S_k-k N_k)^2 s^3\le L(f\upharpoonright\rho_0)^2 k^3 N_k^2$
+($S_k-k N_k$ truncated at $0$).
+
+Andreev's function $\mathrm{Andreev}_{b,m}:\{0,1\}^{2^b+bm}\to\{0,1\}$ treats
+its first $2^b$ inputs as the truth table of a $b$-bit function $h$ and feeds
+the parities of $b$ disjoint $m$-bit blocks into that table. For every
+$h:\{0,1\}^b\to\{0,1\}$, $b\ge1$, $1\le r\le m$, and $2b\le 2^r$,
+\[
+(L(h)-2br)^2 m^3 \le 4\,L(\mathrm{Andreev}_{b,m})^2 r^3
+\]
+($L(h)-2br$ truncated at $0$).
+Combining this reduction at $r=\lfloor\log_2 b\rfloor+2$ with Shannon's
+counting bound on $b$ bits yields a threshold $B$ such that for all $b\ge B$
+and all $m\ge\lfloor\log_2 b\rfloor+2$,
+\[
+2^{2b} m^3
+\le 144\,b^2(\lfloor\log_2 b\rfloor+2)^3\,L(\mathrm{Andreev}_{b,m})^2,
+\]
+and at $m=2^b$ (on $n=(b+1)2^b$ inputs),
+$2^{5b}\le 144\,b^2(\lfloor\log_2 b\rfloor+2)^3\,L(\mathrm{Andreev}_{b,2^b})^2$.
+These bounds count De Morgan formula leaves rather than general circuit gates
+with fanout; $\mathrm{Andreev}_{b,m}$ is explicit because the $2^b$-bit truth
+table is part of its input, while the hard $b$-bit table used inside the proof
+comes existentially from Shannon counting.\citep{Subbotovskaya1961,Andreev1987,Jukna2012,AroraBarak09}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{353}{Cslib.Circuits.Boolean.sum_formulaSize_restrict_update_le}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{560}{Cslib.Circuits.Boolean.exists_withFree_formulaSize_sq_mul_pow_three_le}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{573}{Cslib.Circuits.Boolean.pow_three_le_formulaSize_parity_sq}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean}{615}{Cslib.Circuits.Boolean.sum_extensions_formulaSize_sub_sq_le}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean}{264}{Cslib.Circuits.Boolean.formulaSize_sub_sq_mul_pow_three_le_andreev}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean}{364}{Cslib.Circuits.Boolean.pow_two_mul_pow_three_le_formulaSize_andreev_sq}
+\declat{41d3ef2c6a66a0e8b548aa7ca9209aa38218a0d9}{Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean}{399}{Cslib.Circuits.Boolean.two_pow_five_mul_le_formulaSize_andreev_sq}
 \end{result}

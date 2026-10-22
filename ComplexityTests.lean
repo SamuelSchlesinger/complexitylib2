@@ -130,6 +130,7 @@ import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
 import ComplexityTests.GenericRAM
 import ComplexityTests.GenericRAMAlgebraic
+import ComplexityTests.GenericRAMNative
 import ComplexityTests.GenericRAMSigned
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
@@ -185,6 +186,7 @@ import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NPWitness
 import ComplexityTests.NatBits
+import ComplexityTests.NativeProducts
 import ComplexityTests.NaturalProofs
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
@@ -204,6 +206,7 @@ import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedReduction
+import ComplexityTests.OrderedSet
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTupleBit
 import ComplexityTests.OrderedTuples
@@ -300,6 +303,7 @@ import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
+import ComplexityTests.SearchTree
 import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
@@ -314,7 +318,9 @@ import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
+import ComplexityTests.SparseMemory
 import ComplexityTests.StatefulRefinement
+import ComplexityTests.SubbotovskayaAndreev
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
@@ -327,6 +333,7 @@ import ComplexityTests.ThresholdCapacity
 import ComplexityTests.ThresholdCapacityCircuit
 import ComplexityTests.ThresholdInnerProduct
 import ComplexityTests.ThresholdInnerProductActivity
+import ComplexityTests.ThresholdNC1
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
@@ -353,6 +360,7 @@ import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
 import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums
+import ComplexityTests.WordRAMQueue
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

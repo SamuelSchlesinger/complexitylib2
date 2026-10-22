@@ -173,6 +173,71 @@ complexity-class equivalence is claimed. Input layout is an explicit caller conv
 \end{result}
 
 \begin{result}
+\subsection{Native certificates for encoded RAM primitives}
+For fixed injective binary encodings of input and output, a native certificate for $f$
+records arbitrary functions $T,S$ and a finite native multi-tape machine computing $f$ on
+\emph{every} encoded input $a$, in time at most $c(T(a)+1)$ and work space at most
+$c(S(a)+1)$, with output length also at most $c(S(a)+1)$, for some constant $c$.
+Such a certificate exists exactly when $f$ is natively computable. Polynomial bounds on
+$T,S$ in encoded input length yield native polynomial time. Certificates for $f$ followed
+by $g$ compose with bounds $T_f(a)+T_g(f(a))$ and $S_f(a)+S_g(f(a))$, up to constants.
+
+For a RAM model with chosen value, address and configuration encodings, a scalar bundle
+certifies checked literals and operation results, optional Boolean tests, address conversion,
+move validity and control-label validity. Admissibility rejection is included in the
+literal/operation result, with a proved connection to instruction evaluation. Each symbol
+is fixed; configuration and all operands are runtime inputs. A machine and its constants may
+depend on the symbol and a later fixed finite program; no arbitrary-program dispatcher is claimed.
+
+A complete addition/order model checks values, addresses and labels against an exclusive
+runtime bound, with binary encodings throughout; every scalar primitive has polynomial native
+bounds. Separately, checked standard word addition returns $x+y$ if $x+y<2^w$ and faults otherwise,
+in polynomial time with \emph{unary} width $w$ and binary operands. These instances select
+polynomial bounds from native proofs; no explicit degree or sharper numerical rate is claimed.
+They reuse Christian Reitwiessner's native arithmetic and encoding calculus. Memory access,
+control dispatch, initialization/output, whole-run simulation and charged width selection with
+input fit remain additional obligations. No exact-real bit encoding or certification of the
+whole standard word-operation basis is asserted. \citep{Sipser2013,Tromino2025}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{116}{Cslib.GenericRAM.NativeCertificate.nonempty_iff_isComputable}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{88}{Cslib.GenericRAM.NativeCertificate.comp}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{185}{Cslib.GenericRAM.Model.NativePrimitives}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native/Nat.lean}{131}{Cslib.GenericRAM.BoundedNat.nativePrimitives}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/WordRAM/Native.lean}{48}{Cslib.WordRAM.checkedAdd_polyTime}
+\end{result}
+
+\begin{result}
+\subsection{Encoded sparse memory on native multitape machines}
+For arbitrary address and value types with injective binary encodings and decidable address
+equality, finite memory is represented by Mathlib's association list with distinct keys.
+Reading returns the stored value or an explicit default; writing denotes functional update.
+A write adds at most one stored address, and replacing an existing address preserves the count.
+A default-valued write still retains a binding: the count measures stored cells, not nondefault
+support. If there are $m$ bindings with maximum encoded key length $K$ and value length $V$,
+the store's framed encoding has length at most $m(4K+2V+3)$.
+
+Actual native binary multitape machines implement reads and writes. The primary certificates
+retain parameterized scan and argument-preparation bounds in entry count and encoded lengths.
+For each operation and fixed pair of encodings, one finite machine and a constant factor handle
+all inputs;
+these are asymptotic bounds, not exact TM step counts. In particular, both operations take
+$O((E+1)^3)$ time and $O(E+1)$ workspace, where $E$ is the length of the full encoded operation
+input, including the store and, for reads, the input-supplied default. Polynomial-time
+computability follows. These conservative bounds come from composing Christian Reitwiessner's
+certified equality, list-search and filtering routines. Numeric addresses are represented by
+encoded words; the construction does not allocate an array up to the largest address.
+This proves a finite-memory backend component, not a simulation of whole RAM programs or
+arbitrary exact real arithmetic. Primitive implementations, control, initialization and output
+transport remain separate obligations.
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{82}{Cslib.GenericRAM.SparseMemory.read_insert}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{98}{Cslib.GenericRAM.SparseMemory.length_insert_of_mem}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{96}{Cslib.GenericRAM.SparseMemory.length_encoding_le}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{323}{Cslib.GenericRAM.SparseMemory.read_inO}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{266}{Cslib.GenericRAM.SparseMemory.insert_inO}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{359}{Cslib.GenericRAM.SparseMemory.read_inO_cube}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{335}{Cslib.GenericRAM.SparseMemory.insert_inO_cube}
+\end{result}
+
+\begin{result}
 \subsection{Additive word-RAM simulation with charged preparation}
 Let $p$ be a fixed word-RAM program with $r$ named registers, using only constants, copies,
 addition, truncated subtraction, indirect loads and stores, equality and unsigned comparison,
@@ -237,6 +302,44 @@ RAM, and the lean-trominoes word-RAM formalization.
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean}{99}{Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded}
 \end{result}
 
+
+\begin{result}
+\subsection{Native bounds for fixed tuples and retained-input option branches}
+For arbitrary injective binary encodings, fixed finite tuple selection, gathering, and
+fixed-index update have tidy native multitape Turing-machine time and space $O(E+1)$,
+where $E$ is the full encoded input length. Update receives the stored tuple and replacement
+value; gathering may repeat indices. The tuple dimensions and index map are fixed independently
+of the input, and machine constants may depend on them.
+
+If component $i$ has arbitrary native time and space bound expressions $T_i(x),S_i(x)$,
+tuple construction has respective bounds
+\[
+E(x)+\sum_i T_i(x),\qquad E(x)+\sum_i S_i(x).
+\]
+The native resource predicate also bounds the complete encoded output by a constant times the
+space expression plus one. Empty tuples and empty value types are covered.
+
+For an option computation $v(x)$ with bounds $T_v,S_v$, a fallback handler on $x$ with bounds
+$T_0,S_0$, and a payload handler on the framed pair $(x,b)$ with bounds $T_1,S_1$, elimination
+retaining $x$ has bounds
+\[
+2T_v(x)+E(x)+
+\begin{cases}T_0(x)&v(x)=\mathrm{none},\\T_1(x,b)&v(x)=\mathrm{some}(b),\end{cases}
+\]
+and the analogous expression with $S$ in place of $T$. This conservative construction charges
+the repeated option computation used for payload extraction, tag testing, input retention,
+and the selected handler. No inhabited-payload assumption is required. All displayed expressions
+are asymptotic bounds with existential machine constants, not exact transition counts.
+The proofs reuse Christian Reitwiessner's native tidy calculus and the existing finite-table
+encoding. These are compositional native-machine rules; an encoded RAM step simulator and
+whole-run theorem transport remain separate work.
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{43}{Turing.MultiTapeTM.ComputableTidilyInO.ofFn}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{58}{Turing.MultiTapeTM.ComputableTidilyInO.pi}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{82}{Turing.MultiTapeTM.ComputableTidilyInO.pi_apply}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{99}{Turing.MultiTapeTM.ComputableTidilyInO.pi_gather}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{110}{Turing.MultiTapeTM.ComputableTidilyInO.pi_update}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean}{39}{Turing.MultiTapeTM.ComputableTidilyInO.optionElimWithInput}
+\end{result}
 
 \begin{result}
 \subsection{Stateful semantic composition and independent resource certificates}
@@ -319,6 +422,67 @@ total native weight. The explicit size call and empty-queue cases are included. 
 conditional backend-resource theorem, not a compiled Word-RAM queue-time theorem.
 \citep[Exercise 10.1-6 and Chapter 17]{CLRS2009}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/Lean/Queue.lean}{212}{Cslib.Algorithms.Lean.Queue.realized_client_bound}
+\end{result}
+
+\begin{result}
+\subsection{A shared-memory FIFO queue with amortized RAM instructions}
+A fixed eleven-register word-RAM dispatcher implements enqueue and dequeue using two disjoint
+array regions $[b,b+c)$ and $[b+c,b+2c)$, with at most $c$ live words in total. The represented
+FIFO sequence is the front stack followed by the reversed rear stack. Assume bounded registers
+and memory, $b+2c<2^w$, and $1<2^w$. Enqueue requires spare capacity and a fitting value;
+dequeue is total, with a presence flag distinguishing an empty result from the word zero.
+A dequeue transfers the rear only when the front is empty, using six data instructions and two
+loop-control instructions per moved word. Starting from a configuration satisfying the queue
+representation invariant, every admissible adaptive client selecting $m$ queue operations has
+a correct native execution, and every such execution satisfies
+\[
+  T + 8|\mathit{rear}_{\rm final}|
+  \le 14m + 8|\mathit{rear}_{\rm initial}|.
+\]
+Here $T$ counts actual operation instructions, including dispatch, all transfer work and one
+halt per call. Six register instructions initialize the empty representation from arbitrary
+bounded machine data without changing memory, giving an initialized bound $6+14m$.
+The reservation contains exactly $2c$ word cells; all memory outside it is preserved.
+
+This direct implementation shares the FIFO specification with the abstract queue above,
+without claiming to compile its free-monad methods. External argument delivery, result decoding,
+and arbitrary pure client-controller computation are excluded from the operation-history bound.
+The fixed capacity is reserved in advance; allocation, growth, and a Turing-machine simulation
+are not claimed.\citep[Exercise 10.1-6 and Chapter 17]{CLRS2009}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Basic.lean}{324}{Cslib.WordRAM.Queue.execute}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Basic.lean}{383}{Cslib.WordRAM.Queue.initialize_exec}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Dynamic.lean}{113}{Cslib.WordRAM.Queue.amortized}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Dynamic.lean}{143}{Cslib.WordRAM.Queue.run_initialized}
+\end{result}
+
+\begin{result}
+\subsection{An unbalanced search tree as a stateful ordered set}
+For keys in any linear order, an ordinary binary tree satisfying the strict search-tree
+invariant represents a finite set. Membership agrees with set membership; insertion adds the
+requested key and preserves the invariant, and reinserting a present key preserves the entire
+tree. Minimum and strict-successor queries return the least eligible key, or \texttt{none} exactly
+when no eligible key exists. A successor query does not require its argument to be stored.
+The algorithms follow Chapter 12 of \citet{CLRS2009}; the representation reuses Mathlib's binary
+tree and height definitions. The typed finite-set interface and complete optional-minimum
+contract are representation-independent: they do not import trees or a cost model. The shared
+interface admits all operations; a bounded-key implementation can separately restrict insertion
+admissibility while retaining arbitrary membership and successor queries.
+
+In the explicit internal-node-visit model, every operation costs at most the initial tree height
+$h$, and $h\le |S|$ for a represented set $S$. Empty-child tests, allocation, reconstruction,
+comparison implementation and pure client computation are excluded. Inserting into the empty
+tree therefore has zero node visits. The native realization supplies correct executions for
+every terminating adaptive client, and its executable interpreter agrees with the finite-set
+semantics. Summed node visits are bounded by the sum of the current set cardinalities along the
+selected operation history. No balancing, logarithmic worst-case bound or RAM-time result is
+claimed. Checked examples contrast insertion orders producing heights three and seven on the
+same seven keys, and a client asks for the minimum before choosing its strict-successor argument.
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Data/OrderedSet.lean}{49}{Cslib.OrderedSet.least_spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Semantics/Stateful/OrderedSet.lean}{56}{Cslib.OrderedSet.spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{130}{Cslib.Algorithms.Lean.SearchTree.ordered_insert}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{225}{Cslib.Algorithms.Lean.SearchTree.successor_spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{91}{Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{136}{Cslib.Algorithms.Lean.SearchTree.run_correct}
 \end{result}
 
 \begin{result}

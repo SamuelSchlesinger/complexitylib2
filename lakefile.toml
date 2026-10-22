@@ -1,4 +1,4 @@
-name = "complexitylib2"
+name = "complexitylib"
 version = "0.2.0"
 defaultTargets = ["Complexity"]
 testDriver = "ComplexityTests"
