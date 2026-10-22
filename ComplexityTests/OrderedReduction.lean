@@ -394,4 +394,38 @@ info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSenten
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence
 
+/-- One-dimensional restriction to the marked elements, keeping `mark`. On `input3P` its domain
+has a single tuple, below the ordered size proviso; the encoded map is still defined and well
+formed. -/
+def markedInterp : DomainInterpretation L L 1 where
+  domain := Relations.formula₁ (L := language L) (.inl Relation.mark) (.var 0)
+  rel
+    | .mark => Relations.boundedFormula₁ (L := language L) (.inl Relation.mark) (.var (.inl (0, 0)))
+
+example : ComputableInLogSpace (markedInterp.encodedMap vocabulary vocabulary)
+    encStructure encStructure :=
+  markedInterp.computableInLogSpace_encodedMap vocabulary vocabulary
+
+example : vocabulary.WellFormed (markedInterp.encodedMap vocabulary vocabulary input3P) :=
+  (markedInterp.wellFormed_encodedMap_iff vocabulary vocabulary).mpr ⟨by decide, by decide⟩
+
+example :
+    ¬vocabulary.WellFormed (markedInterp.encodedMap vocabulary vocabulary (1, [ [true] ])) := by
+  rw [markedInterp.wellFormed_encodedMap_iff]
+  decide
+
+/--
+info: 'Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap
+
+/--
+info: 'Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith
+
 end Cslib.Tests.OrderedReduction
