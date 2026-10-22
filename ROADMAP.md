@@ -661,8 +661,17 @@ Jukna coverage below is an additional target beyond the V1 port:
   [grid enumeration, unary input parsing, and the standalone generator](Complexity/Computability/Circuit/Rational/Runtime.lean)
   (`hittingList_polytime`, `hittingGenerator_polytime`, `hittingGenerator_spec`), charging all
   arithmetic and storage growth. Polynomial bit complexity of formula evaluation on the emitted
-  matrices remains separate. Carry over the remaining extractor developments, recording each
-  endpoint's hypotheses.
+  matrices remains separate. The [sumset-extractor frontier lower-bound bridge](Complexity/Computability/Circuit/Frontier/Extractor.lean)
+  and the sharpened `4.56249 = 456249 / 100000` Gaussian frontier constant
+  ([Coefficient](Complexity/Computability/Circuit/Frontier/Layouts/Gaussian/Coefficient.lean),
+  [FanInTwo](Complexity/Computability/Circuit/Frontier/FanInTwo.lean)) are proved: coordinate
+  zero-extension (`zeroPad`), combinatorial `SumsetDisperser` and `SumsetBias` to `RectangleFree`
+  and `RectangleBias`, the distributional `IsSumsetExtractor` bridge and its Chor–Goldreich
+  flat-source equivalence (`isSumsetExtractor_iff_sumsetBias_two_pow`), automatic global density
+  when bias is strictly below `1 / 2`, and conditional `(4.56249 - ε) n` average-case and
+  worst-case fan-in-two (`fullSignature 2 Bool`) and `(2 / (r - 1) - ε) n` fan-in-`r` circuit
+  lower bounds (#320). Remaining: carry over the explicit sumset-extractor construction and its
+  uniform polynomial-time certificate, recording each endpoint's hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),

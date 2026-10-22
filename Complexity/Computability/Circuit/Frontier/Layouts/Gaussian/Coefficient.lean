@@ -30,8 +30,10 @@ rational bounds on `√2`, `cos` and `π`.
 * `Cslib.Circuits.Frontier.Gaussian.gaussianCoefficient_pos`: `p > 0`.
 * `Cslib.Circuits.Frontier.Gaussian.one_add_inv_two_mul_gaussianCoefficient`: the circuit
   coefficient `1 + 1 / (2p)`.
+* `Cslib.Circuits.Frontier.Gaussian.circuitCoefficient_ge_456249`: the circuit coefficient is at
+  least `456249/100000 = 4.56249`.
 * `Cslib.Circuits.Frontier.Gaussian.circuitCoefficient_ge_456`: the circuit coefficient is at
-  least `114/25`.
+  least `114/25 = 4.56`.
 -/
 
 @[expose] public section
@@ -78,34 +80,53 @@ theorem one_add_inv_two_mul_gaussianCoefficient :
   congr 1
   field_simp
 
-/-- **The numerical bound.** The circuit coefficient `1 + π / (3 arccos ((1 + 2√2)/4))` is at
-least `114/25 = 4.56`.
+private theorem cos_two_mul_le {x u v : ℝ} (hlo : x ^ 2 ≤ 2) (hu : cos x ≤ u)
+    (hv : 2 * u ^ 2 - 1 ≤ v) : cos (2 * x) ≤ v := by
+  have hnonneg : 0 ≤ cos x := by linarith [one_sub_sq_div_two_le_cos (x := x)]
+  have hsq := pow_le_pow_left₀ hnonneg hu 2
+  rw [cos_two_mul]
+  linarith [hsq]
 
-With `θ = arccos ((1 + 2√2)/4) = 0.293950…`, the bound `θ ≤ 0.2941` has a margin of
-`1.5 · 10⁻⁴`, and `π / (3 · 0.2941) = 3.5607…` exceeds `89/25 = 3.56` by `6 · 10⁻⁴`. The cosine
-is bounded at the half angle `0.14705` by its Taylor polynomial and doubled:
-`2 cos² (0.14705) - 1 ≤ 0.957083…`, against `(1 + 2√2)/4 = 0.957107…`. -/
-theorem circuitCoefficient_ge_456 :
-    (114 / 25 : ℝ) ≤ 1 + π / (3 * arccos ((1 + 2 * √2) / 4)) := by
-  have hsqrt : (141421 : ℝ) / 100000 < √2 := (lt_sqrt (by norm_num)).mpr (by norm_num)
+/-- **The sharpened numerical bound.** The circuit coefficient
+`1 + π / (3 arccos ((1 + 2√2)/4))` is at least `456249/100000 = 4.56249`.
+
+With `θ = arccos ((1 + 2√2)/4) = 0.29395036…`, the bound `θ ≤ 0.2939509` holds by bounding the
+cosine at `θ / 32` via `cos_bound` and doubling five times:
+`cos (0.2939509) ≤ 0.95710670… < 0.95710678 ≤ (1 + 2√2)/4`. Then
+`π / (3 · 0.2939509) > 3.1415926 / 0.8818527 > 3.56249`. -/
+theorem circuitCoefficient_ge_456249 :
+    (456249 / 100000 : ℝ) ≤ 1 + π / (3 * arccos ((1 + 2 * √2) / 4)) := by
+  have hsqrt : (141421356 : ℝ) / 100000000 < √2 := (lt_sqrt (by norm_num)).mpr (by norm_num)
   have hsqrt' : √2 < 3 / 2 := (sqrt_lt' (by norm_num)).mpr (by norm_num)
   have ha : 0 < arccos ((1 + 2 * √2) / 4) := arccos_pos.mpr (by linarith)
-  have hcos : cos (2941 / 10000) ≤ (1 + 2 * √2) / 4 := by
-    have hb := cos_bound (x := 2941 / 20000) (by norm_num)
-    norm_num only [abs_of_pos (by norm_num : (0 : ℝ) < 2941 / 20000)] at hb
-    have hlo := one_sub_sq_div_two_le_cos (x := 2941 / 20000)
-    have hnonneg : 0 ≤ cos (2941 / 20000) := by linarith
-    have hupper : cos (2941 / 20000) ≤
-        1 - (2941 / 20000 : ℝ) ^ 2 / 2 + (2941 / 20000 : ℝ) ^ 4 * (5 / 96) := by
+  have hcos : cos (2939509 / 10000000) ≤ (1 + 2 * √2) / 4 := by
+    have hb := cos_bound (x := 2939509 / 320000000) (by norm_num)
+    norm_num only [abs_of_pos (by norm_num : (0 : ℝ) < 2939509 / 320000000)] at hb
+    have h0 : cos (2939509 / 320000000) ≤ 999957809389 / 1000000000000 := by
       linarith [(abs_le.mp hb).2]
-    have hsq := pow_le_pow_left₀ hnonneg hupper 2
-    rw [show (2941 / 10000 : ℝ) = 2 * (2941 / 20000) by ring, cos_two_mul]
-    nlinarith [hsq, hsqrt]
-  have hangle : arccos ((1 + 2 * √2) / 4) ≤ 2941 / 10000 :=
-    (arccos_le_arccos hcos).trans_eq (arccos_cos (by norm_num) (by linarith [pi_gt_d6]))
-  have hdiv : (89 / 25 : ℝ) ≤ π / (3 * arccos ((1 + 2 * √2) / 4)) := by
+    have h1 := cos_two_mul_le (by norm_num) h0
+      (v := 999831241117 / 1000000000000) (by norm_num)
+    have h2 := cos_two_mul_le (by norm_num) h1
+      (v := 249831255357 / 250000000000) (by norm_num)
+    have h3 := cos_two_mul_le (by norm_num) h2
+      (v := 199460199381 / 200000000000) (by norm_num)
+    have h4 := cos_two_mul_le (by norm_num) h3
+      (v := 123652319607 / 125000000000) (by norm_num)
+    have h5 := cos_two_mul_le (by norm_num) h4
+      (v := 957106706457 / 1000000000000) (by norm_num)
+    norm_num only at h5
+    linarith [h5, hsqrt]
+  have hangle : arccos ((1 + 2 * √2) / 4) ≤ 2939509 / 10000000 :=
+    (arccos_le_arccos hcos).trans_eq (arccos_cos (by norm_num) (by linarith [pi_gt_d20]))
+  have hdiv : (356249 / 100000 : ℝ) ≤ π / (3 * arccos ((1 + 2 * √2) / 4)) := by
     rw [le_div_iff₀ (by positivity)]
-    linarith [pi_gt_d6, hangle]
+    linarith [pi_gt_d20, hangle]
   linarith
+
+/-- **The numerical bound.** The circuit coefficient `1 + π / (3 arccos ((1 + 2√2)/4))` is at
+least `114/25 = 4.56`. -/
+theorem circuitCoefficient_ge_456 :
+    (114 / 25 : ℝ) ≤ 1 + π / (3 * arccos ((1 + 2 * √2) / 4)) :=
+  le_trans (by norm_num) circuitCoefficient_ge_456249
 
 end Cslib.Circuits.Frontier.Gaussian
