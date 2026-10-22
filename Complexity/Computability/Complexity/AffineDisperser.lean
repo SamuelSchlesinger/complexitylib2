@@ -9,10 +9,10 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
+public import Complexity.Computability.Circuit.Boolean.PolynomialTime
 public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
 public import Cslib.Computability.Languages.Slice
-import Mathlib.Data.List.GetD
 
 /-!
 # A function in `P` with `B₂` circuit complexity `3.5 N - O(N / log N)`
@@ -117,16 +117,8 @@ theorem slice_explicitDisperserLanguage (N : ℕ) :
 
 /-- **The language of the explicit disperser is in `P`**, with words encoded as themselves. -/
 theorem explicitDisperserLanguage_mem_P :
-    (explicitDisperserLanguage : Set (List Bool)) ∈ Complexity.P encBits := by
-  have h : (explicitDisperserLanguage : Set (List Bool)) =
-      {x | explicitDisperser x.length (BitString.ofList x.length x) = true} := by
-    refine Set.ext fun x => ?_
-    change explicitDisperser x.length (fun i => x[i]) = true ↔
-      explicitDisperser x.length (BitString.ofList x.length x) = true
-    congr! 2
-    funext i
-    rw [BitString.ofList, List.getD_eq_getElem _ _ i.2, Fin.getElem_fin]
-  exact h ▸ setOf_explicitDisperser_mem_P
+    (explicitDisperserLanguage : Set (List Bool)) ∈ Complexity.P encBits :=
+  Complexity.ofSlices_mem_P_of_computableInPolyTime computableTidilyInPolyTime_explicitDisperser
 
 /-- **An explicit function in `P` with `B₂` circuit complexity `3.5 N - O(N / log N)`**, after
 [MishraSanthanam2026]: some language over `Bool` in `P` (the language of the explicit disperser)

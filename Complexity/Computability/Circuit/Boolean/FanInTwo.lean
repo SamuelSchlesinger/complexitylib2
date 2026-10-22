@@ -294,6 +294,10 @@ theorem iUnion_NC_eq_iUnion_AC : ⋃ i, NC i = ⋃ i, AC i :=
   (Set.iUnion_mono NC_subset_AC).antisymm <| Set.iUnion_subset fun i =>
     (AC_subset_NC_succ i).trans (Set.subset_iUnion NC (i + 1))
 
+/-- **`ACⁱ ⊆ P/poly`** for every `i`. -/
+theorem AC_subset_PPoly (i : ℕ) : AC i ⊆ PPoly :=
+  (AC_subset_NC_succ i).trans (NC_subset_PPoly (i + 1))
+
 end Boolean
 
 end Cslib.Circuits

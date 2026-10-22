@@ -48,6 +48,7 @@ public import Complexity.Computability.Circuit.Arithmetic.Formula
 public import Complexity.Computability.Circuit.Arithmetic.Hessian
 public import Complexity.Computability.Circuit.Arithmetic.Hessian.SourceComplexity
 public import Complexity.Computability.Circuit.Arithmetic.IdentityTesting
+public import Complexity.Computability.Circuit.Arithmetic.PIT
 public import Complexity.Computability.Circuit.Arithmetic.Pairing
 public import Complexity.Computability.Circuit.Arithmetic.Power
 public import Complexity.Computability.Circuit.Arithmetic.VNP
@@ -61,6 +62,10 @@ public import Complexity.Computability.Circuit.BipartiteMatching
 public import Complexity.Computability.Circuit.Bird
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Computability.Circuit.Boolean.ACC0
+public import Complexity.Computability.Circuit.Boolean.ACC0.Basic
+public import Complexity.Computability.Circuit.Boolean.ACC0.Separations
+public import Complexity.Computability.Circuit.Boolean.ACC0.Simulation
+public import Complexity.Computability.Circuit.Boolean.ACC0.SymPlus
 public import Complexity.Computability.Circuit.Boolean.Advice
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
@@ -292,6 +297,10 @@ public import Complexity.Computability.Circuit.Frontier.Correlation.Circuit
 public import Complexity.Computability.Circuit.Frontier.Correlation.Rectangle
 public import Complexity.Computability.Circuit.Frontier.Demand
 public import Complexity.Computability.Circuit.Frontier.Extractor
+public import Complexity.Computability.Circuit.Frontier.Extractor.BalancePad
+public import Complexity.Computability.Circuit.Frontier.Extractor.Distributional
+public import Complexity.Computability.Circuit.Frontier.Extractor.LowerBounds
+public import Complexity.Computability.Circuit.Frontier.Extractor.Sumset
 public import Complexity.Computability.Circuit.Frontier.FanInTwo
 public import Complexity.Computability.Circuit.Frontier.Layouts.Basic
 public import Complexity.Computability.Circuit.Frontier.Layouts.BoundedDegree
@@ -1406,6 +1415,7 @@ public import Complexity.Foundations.Data.BitString.SumTree
 public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.BitString.WordCount
+public import Complexity.Foundations.Data.BitString.Zeta
 public import Complexity.Foundations.Data.Code.Basic
 public import Complexity.Foundations.Data.Code.BerlekampWelch
 public import Complexity.Foundations.Data.Code.Concatenation

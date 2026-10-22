@@ -51,10 +51,12 @@ completed reference developments.
    for arithmetic circuits over the integers has a deterministic polynomial-time algorithm, then
    either NEXP ⊄ P/poly or the permanent family has no polynomial-size arithmetic circuits over the
    integers. *Partial:*
-   [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean) defines
-   `PITInt`, restates Mathlib's Schwartz–Zippel lemma for circuits, proves Laplace expansion of the
-   permanent and the polynomial-identity form of Kabanets–Impagliazzo Lemma 4.2
-   (`forall_polynomial_eq_permanent_iff_mem_PITInt`). The easy-witness collapse
+   [`PIT`](Complexity/Computability/Circuit/Arithmetic/PIT.lean) (re-exported by
+   [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean)) defines
+   `PITInt` and restates Mathlib's Schwartz–Zippel lemma for circuits;
+   [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean) proves
+   Laplace expansion of the permanent and the polynomial-identity form of Kabanets–Impagliazzo
+   Lemma 4.2 (`forall_polynomial_eq_permanent_iff_mem_PITInt`). The easy-witness collapse
    `NEXP ⊆ P/poly ⇒ NEXP = MA`, `#P`-completeness of the permanent and Toda's theorem remain open.
 9. **Babai–Fortnow–Lund multiprover theorem.** MIP = NEXP: a language has a classical multiprover
    interactive proof with a probabilistic polynomial-time verifier and constant
