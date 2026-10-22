@@ -33,7 +33,17 @@ completed reference developments.
 8. **Kabanets–Impagliazzo derandomization-to-lower-bounds theorem.** If polynomial identity testing
    for arithmetic circuits over the integers has a deterministic polynomial-time algorithm, then
    either NEXP ⊄ P/poly or the permanent family has no polynomial-size arithmetic circuits over the
-   integers.
+   integers. [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean)
+   encodes single-output integer arithmetic circuits (`encArithCircuitℤ`) and `PITℤ`, proves the
+   multivariate Schwartz–Zippel lemma (`MvPolynomial.card_roots_le`,
+   `exists_eval_ne_zero_of_notMem_PITℤ`), Laplace cofactor expansion of the permanent
+   (`Matrix.permanent_succ_row_zero`), downward self-reducibility of permanent circuits up to
+   dimension `n` to `n + 1` instances of `PITℤ` (`forall_polynomial_eq_permanent_iff_mem_PITℤ`,
+   `exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP`), the unconditional fixed-degree circuit
+   lower bound in `NEXP` (`exists_mem_NEXP_notMem_SIZE`), and the conditional Kabanets–Impagliazzo
+   theorem (`kabanets_impagliazzo`, `kabanets_impagliazzo_of_EXP_subset_P`); discharging the
+   easy-witness / Valiant–Toda collapse hypothesis from `NEXP ⊆ P/poly` and `PermPITCertified`
+   remains open.
 9. **Babai–Fortnow–Lund multiprover theorem.** MIP = NEXP: a language has a classical multiprover
    interactive proof with a probabilistic polynomial-time verifier and constant
    completeness–soundness gap if and only if it belongs to nondeterministic exponential time. The
@@ -160,7 +170,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Counting and modular classes | Build on `#P`, `GapP`, `PP`, [parity-P](Complexity/Computability/Complexity/Classes/ParityP.lean) and [Toda's PH ⊆ P^#P theorem](Complexity/Computability/Complexity/Classes/Toda.lean), with a fixed polynomial-time program correct against every oracle answering the counting function's bits. Extend counting reductions and machine characterizations, permanent completeness, modular/counting hierarchies and the oracle-algorithm form of Stockmeyer approximate counting. |
 | Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. [IP = PSPACE](Complexity/Computability/Complexity/Classes/IP/Shamir.lean) is proved, with a machine-certified Shamir–Shen-style verifier for TQBF; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
-| Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), and [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings. Prove permanent VNP-completeness with its characteristic assumptions, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
+| Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings, and [polynomial identity testing, Schwartz–Zippel, and Kabanets–Impagliazzo](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean). Prove permanent VNP-completeness with its characteristic assumptions, discharge the easy-witness / Valiant–Toda collapse hypothesis in Kabanets–Impagliazzo, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | Gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
 | Pseudorandomness and coding | Hardness versus randomness, space-bounded generators, extractors/condensers, limited independence, explicit expanders, and list/local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
 | Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). Extend the existing OWF/PRG/PRF results with reusable adaptive reductions, commitments, zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |

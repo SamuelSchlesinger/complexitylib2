@@ -46,6 +46,7 @@ public import Complexity.Computability.Circuit.Arithmetic.Determinant
 public import Complexity.Computability.Circuit.Arithmetic.Formula
 public import Complexity.Computability.Circuit.Arithmetic.Hessian
 public import Complexity.Computability.Circuit.Arithmetic.Hessian.SourceComplexity
+public import Complexity.Computability.Circuit.Arithmetic.IdentityTesting
 public import Complexity.Computability.Circuit.Arithmetic.Pairing
 public import Complexity.Computability.Circuit.Arithmetic.Power
 public import Complexity.Computability.Circuit.Arithmetic.VNP

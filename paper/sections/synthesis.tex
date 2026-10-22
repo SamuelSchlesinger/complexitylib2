@@ -187,3 +187,92 @@ evaluating a rational formula on the emitted matrices is not asserted here.
 \declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{344}{Cslib.Circuits.Rational.hittingGenerator_polytime}
 \declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{355}{Cslib.Circuits.Rational.hittingGenerator_spec}
 \end{result}
+
+\begin{result}
+\subsection{Polynomial identity testing, Schwartz--Zippel, and Kabanets--Impagliazzo}
+A single-output integer arithmetic circuit bundled with its input arity
+$\langle n,c\rangle\in\Sigma n,\;\texttt{Circuit}\;(\texttt{arithSignature}\;\mathbb Z)\;n\;1$ is
+encoded injectively as a bit word by $\texttt{encArithCircuit}\mathbb Z$ (input arity $n$ in unary via
+$\texttt{encUnary}$, gate operations with sign-magnitude binary integer constants via $\texttt{encIntBin}$,
+and wire indices in binary via $\texttt{encNat}$), with $n\le|\texttt{encArithCircuit}\mathbb Z\langle n,c\rangle|$
+(\texttt{le\_length\_encArithCircuit$\mathbb Z$}). The polynomial identity testing language over $\mathbb Z$ is
+\[
+\texttt{PIT}\mathbb Z
+=
+\bigl\{\langle n,c\rangle \;\big|\; c.\texttt{polynomial}\;0 = 0 \in \texttt{MvPolynomial}\;(\mathrm{Fin}\;n)\;\mathbb Z\bigr\}.
+\]
+Three components connect $\texttt{PIT}\mathbb Z$ to randomized zero testing and circuit lower bounds:
+\begin{itemize}
+\item \textbf{Multivariate Schwartz--Zippel root bound and hitting property.} Over any integral domain $R$,
+every nonzero polynomial $P\in\texttt{MvPolynomial}\;(\mathrm{Fin}\;n)\;R$ and finite subset $S\subseteq R$
+satisfy
+\[
+|S|\cdot\bigl|\{x\in S^n \mid P(x)=0\}\bigr| \le \deg(P)\cdot |S|^n
+\quad\text{and}\quad
+\bigl|\{x\in S^n \mid P(x)=0\}\bigr| \le \deg(P)\cdot |S|^{n-1},
+\]
+so if $\deg(P)<|S|$ there exists $x\in S^n$ with $P(x)\ne 0$. Specializing to $c.\texttt{polynomial}\;0$
+shows that any integer circuit $\langle n,c\rangle\notin\texttt{PIT}\mathbb Z$ vanishes at at most
+$\deg(c.\texttt{polynomial}\;0)\cdot |S|^{n-1}$ points of $S^n$ and evaluates under
+$\texttt{arithInterpretation}\;\mathbb Z$ to a nonzero integer at some point of $S^n$ whenever
+$\deg(c.\texttt{polynomial}\;0)<|S|$.
+\item \textbf{Laplace cofactor self-reducibility of the permanent to $\texttt{PIT}\mathbb Z$.} Over any
+commutative semiring $R$, the permanent of $A\in R^{(n+1)\times(n+1)}$ expands along column~$0$ or row~$0$:
+\[
+\mathrm{perm}(A) = \sum_{j=0}^{n} A_{0,j}\,\mathrm{perm}(A_{\mathrm{succ},\,j.\mathrm{succAbove}}).
+\]
+On the generic matrix $\texttt{genericMatrix}\;R\;(m+1)$, the $(0,j)$-minor permanent equals
+$\texttt{rename}\;(\texttt{minorVar}\;j)\;\mathrm{perm}(\texttt{genericMatrix}\;R\;m)$. From candidate
+circuits $c_0$ on $0$ variables, $c_m$ on $m^2$ variables, and $c_{m+1}$ on $(m+1)^2$ variables, the
+constructive difference circuits $\texttt{permBaseDiff}(c_0)$ (of gate size $|c_0|+4$, computing
+$c_0.\texttt{polynomial}\;0 - 1$) and $\texttt{permStepDiff}(m,c_m,c_{m+1})$ (of gate size
+$|c_{m+1}|+(m+1)(|c_m|+2)+4$, computing
+$c_{m+1}.\texttt{polynomial}\;0 - \sum_{j=0}^{m} X_{(0,j)}\,\texttt{rename}(\texttt{minorVar}\;j)(c_m.\texttt{polynomial}\;0)$)
+satisfy the downward self-reducibility equivalence of Kabanets and Impagliazzo\citep[Lemma 4.2]{KabanetsImpagliazzo2004}:
+for every family $C : \forall m,\;\texttt{Circuit}\;(\texttt{arithSignature}\;\mathbb Z)\;(m^2)\;1$ and $n\in\mathbb N$,
+\[
+\bigl(\forall m\le n,\; (C\;m).\texttt{polynomial}\;0 = \mathrm{perm}(\texttt{genericMatrix}\;\mathbb Z\;m)\bigr)
+\iff
+\langle 0,\texttt{permBaseDiff}(C\;0)\rangle\in\texttt{PIT}\mathbb Z
+\;\wedge\;
+\forall m<n,\;\langle (m+1)^2,\texttt{permStepDiff}(m,C\;m,C(m+1))\rangle\in\texttt{PIT}\mathbb Z.
+\]
+The explicit recursive family $\texttt{laplacePermCircuit}$ unconditionally satisfies these identities at
+every dimension $n$ (\texttt{isLaplacePermChain\_laplacePermCircuit}), and if
+$\texttt{PIT}\mathbb Z\in\cc{P}\;\texttt{encArithCircuit}\mathbb Z$ and the integer permanent p-family
+$\texttt{intPermFamily}$ belongs to $\cc{VP}\;\mathbb Z$, there exist a polynomial-time decider for
+$\texttt{PIT}\mathbb Z$ and a polynomially bounded permanent circuit family with polynomially bounded
+step-test sizes certified by it (\texttt{PermPITCertified},
+\texttt{exists\_certified\_perm\_family\_of\_PIT$\mathbb Z$\_mem\_P\_of\_mem\_VP}). The gate-size bounds on
+$\texttt{permBaseDiff}$ and $\texttt{permStepDiff}$ are combinatorial circuit sizes; uniform Turing-machine
+construction of $\texttt{permStepDiff}$ from encoded circuits is not separately certified here.
+\item \textbf{Unconditional $\cc{NEXP}$ lower bound and conditional Kabanets--Impagliazzo consequence.}
+Combining $\cc{\Sigma}_k^{\cc{P}}\subseteq\cc{PSPACE}\subseteq\cc{EXP}\subseteq\cc{NEXP}$ with Kannan's
+theorem shows unconditionally that for every $k\in\mathbb N$ there is a language $L\in\cc{NEXP}$ outside
+$\cc{SIZE}(c(n+1)^k)$ for all $c\in\mathbb N$ (\texttt{exists\_mem\_NEXP\_notMem\_SIZE}). If
+$\texttt{PIT}\mathbb Z\in\cc{P}\;\texttt{encArithCircuit}\mathbb Z$, then under the explicit collapse
+hypothesis from $\cc{NEXP}\subseteq\cc{P/poly}$ and $\texttt{PermPITCertified}$ (either to a fixed degree
+$k$ such that every $L\in\cc{\Sigma}_2^{\cc{P}}$ lies in $\bigcup_c\cc{SIZE}(c(n+1)^k)$, refuted by Kannan's
+theorem, or to $\cc{EXP}\subseteq\cc{P}$, refuted by $\cc{P}\subsetneq\cc{EXP}$), either
+$\cc{NEXP}\not\subseteq\cc{P/poly}$ or $\texttt{intPermFamily}\notin\cc{VP}\;\mathbb Z$. The easy-witness
+and Valiant--Toda collapse step from $\cc{NEXP}\subseteq\cc{P/poly}$ and $\texttt{PermPITCertified}$ is
+taken as an explicit hypothesis.\citep{DeMilloLipton1978,Zippel1979,Schwartz1980,Kannan1982,KabanetsImpagliazzo2004,AroraBarak09}
+\end{itemize}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{145}{MvPolynomial.card_mul_card_roots_le}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{161}{MvPolynomial.card_roots_le}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{180}{MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{212}{Matrix.permanent_succ_column_zero}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{223}{Matrix.permanent_succ_row_zero}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{282}{Cslib.Circuits.Arithmetic.encArithCircuitℤ}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{300}{Cslib.Circuits.Arithmetic.PITℤ}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{308}{Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITℤ}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{318}{Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITℤ}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{468}{Cslib.Circuits.Arithmetic.intPermFamily}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{508}{Cslib.Circuits.Arithmetic.permanent_genericMatrix_succ}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{578}{Cslib.Circuits.Arithmetic.forall_polynomial_eq_permanent_iff_mem_PITℤ}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{652}{Cslib.Circuits.Arithmetic.isLaplacePermChain_laplacePermCircuit}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{683}{Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{739}{Cslib.Complexity.exists_mem_NEXP_notMem_SIZE}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{764}{Cslib.Circuits.Arithmetic.kabanets_impagliazzo}
+\decl{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{789}{Cslib.Circuits.Arithmetic.kabanets_impagliazzo_of_EXP_subset_P}
+\end{result}
