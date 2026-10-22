@@ -23,7 +23,8 @@ reducibility is a preorder, and decidability transfers backwards along reduction
 A polynomial-time reduction (`Cslib.Complexity.PolyTimeReducible`) is a mapping reduction, its
 function being computable (`Turing.MultiTapeTM.ComputableTidilyInPolyTime.isComputable`).
 Mathlib's `ManyOneReducible` is the analogous notion for Mathlib's partial recursive functions on
-`Primcodable` types.
+`Primcodable` types; `Turing.MultiTapeTM.MappingReducible.manyOneReducible` in
+`MultiTape.Halting.Partrec` connects the two notions.
 
 ## Main definitions
 

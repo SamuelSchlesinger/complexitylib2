@@ -9,21 +9,28 @@ module
 
 public import Complexity.Init
 public import Cslib.Foundations.Data.StackTape
+public import Mathlib.Computability.TuringMachine.Tape
 
 /-!
-# Indexed observations of finite stack tapes
+# Indexed observations and Mathlib `ListBlank` equivalence for finite stack tapes
 
 These additions give Bolton Bailey's upstream `StackTape` an indexed view that reads blank
-outside its stored list. The existing representation and operations are unchanged.
+outside its stored list, together with the canonical equivalence with Mathlib's quotient
+one-sided tape `_root_.Turing.ListBlank (Option Symbol)`.
 
 ## Main definitions
 
 * `Cslib.Turing.StackTape.read`: observe the tape at a natural-number displacement.
+* `Cslib.Turing.StackTape.ofList`: fold a list of optional symbols onto an empty stack tape.
+* `Cslib.Turing.StackTape.equivListBlank`: equivalence between `StackTape Symbol` and
+  `_root_.Turing.ListBlank (Option Symbol)`.
 
 ## Main results
 
 * `Cslib.Turing.StackTape.read_eq_getElem?`: agreement with padded list lookup.
 * `Cslib.Turing.StackTape.read_mapSome`: loading a word preserves its indexed symbols.
+* `Cslib.Turing.StackTape.equivListBlank_cons`, `head_equivListBlank`, `tail_equivListBlank`,
+  `nth_equivListBlank`: `equivListBlank` commutes with stack-tape operations and indexed reads.
 
 ## References
 
@@ -34,6 +41,8 @@ Ports the additions to `Foundations/Data/StackTape.lean` on the cslib `crypto` b
 @[expose] public section
 
 namespace Cslib.Turing.StackTape
+
+open scoped _root_.Turing
 
 variable {Symbol : Type*}
 
@@ -80,5 +89,145 @@ lemma read_eq_getElem? (tape : StackTape Symbol) (position : ℕ) :
     (mapSome values).read position = values[position]? := by
   simp only [read_eq_getElem?, mapSome, List.getElem?_map]
   cases values[position]? <;> rfl
+
+@[simp] lemma cons_none_nil : cons none (nil : StackTape Symbol) = nil := by
+  ext
+  simp
+
+/-- Construct a `StackTape` from an arbitrary list of optional symbols by folding `cons`. -/
+def ofList (values : List (Option Symbol)) : StackTape Symbol :=
+  values.foldr cons nil
+
+@[simp] lemma ofList_nil : (ofList [] : StackTape Symbol) = nil := rfl
+
+@[simp] lemma ofList_cons (a : Option Symbol) (l : List (Option Symbol)) :
+    ofList (a :: l) = cons a (ofList l) := rfl
+
+@[simp] lemma ofList_replicate_none (n : ℕ) :
+    (ofList (List.replicate n none) : StackTape Symbol) = nil := by
+  induction n with
+  | zero => rfl
+  | succ n ih => simp [List.replicate_succ, ih]
+
+lemma ofList_append_replicate_none (l : List (Option Symbol)) (n : ℕ) :
+    ofList (l ++ List.replicate n none) = ofList l := by
+  induction l with
+  | nil => simp
+  | cons a l ih => simp [ih]
+
+@[simp] lemma ofList_toList (tape : StackTape Symbol) : ofList tape.toList = tape := by
+  rcases tape with ⟨values, h⟩
+  induction values with
+  | nil => rfl
+  | cons a tl ih =>
+    cases tl with
+    | nil =>
+      cases a with
+      | none => exact False.elim (h rfl)
+      | some s => rfl
+    | cons b tl' =>
+      have h' : (b :: tl').getLast? ≠ some none := by simpa using h
+      have iht : ofList (b :: tl') = ⟨b :: tl', h'⟩ := ih h'
+      change cons a (ofList (b :: tl')) = _
+      rw [iht]
+      cases a <;> rfl
+
+@[simp] lemma ofList_map_some (l : List Symbol) :
+    ofList (l.map some) = mapSome l := by
+  exact ofList_toList (mapSome l)
+
+lemma listBlank_mk_cons_toList (a : Option Symbol) (tape : StackTape Symbol) :
+    _root_.Turing.ListBlank.mk (cons a tape).toList =
+      _root_.Turing.ListBlank.cons a (_root_.Turing.ListBlank.mk tape.toList) := by
+  cases a with
+  | some s => simp [cons_some_toList]
+  | none =>
+    rcases tape with ⟨values, h⟩
+    cases values with
+    | nil =>
+      exact Quotient.sound (Or.inl ⟨1, rfl⟩)
+    | cons hd tl => rfl
+
+@[simp] lemma listBlank_mk_toList_ofList (l : List (Option Symbol)) :
+    _root_.Turing.ListBlank.mk (ofList l).toList = _root_.Turing.ListBlank.mk l := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    rw [ofList_cons, listBlank_mk_cons_toList, ih, _root_.Turing.ListBlank.cons_mk]
+
+/-- Canonical equivalence between `StackTape Symbol` and Mathlib's
+`_root_.Turing.ListBlank (Option Symbol)`. -/
+def equivListBlank : StackTape Symbol ≃ _root_.Turing.ListBlank (Option Symbol) where
+  toFun tape := _root_.Turing.ListBlank.mk tape.toList
+  invFun lb := lb.liftOn ofList (by
+    intro l₁ l₂ h
+    rcases h with ⟨n, rfl⟩
+    exact (ofList_append_replicate_none l₁ n).symm)
+  left_inv tape := ofList_toList tape
+  right_inv lb := Quotient.inductionOn lb fun l => listBlank_mk_toList_ofList l
+
+@[simp] lemma equivListBlank_nil :
+    equivListBlank (nil : StackTape Symbol) = default := rfl
+
+@[simp] lemma equivListBlank_symm_default :
+    equivListBlank.symm (default : _root_.Turing.ListBlank (Option Symbol)) = nil := rfl
+
+@[simp] lemma equivListBlank_symm_mk (l : List (Option Symbol)) :
+    equivListBlank.symm (_root_.Turing.ListBlank.mk l) = ofList l := rfl
+
+@[simp] lemma equivListBlank_ofList (l : List (Option Symbol)) :
+    equivListBlank (ofList l) = _root_.Turing.ListBlank.mk l :=
+  listBlank_mk_toList_ofList l
+
+@[simp] lemma equivListBlank_cons (a : Option Symbol) (tape : StackTape Symbol) :
+    equivListBlank (cons a tape) = _root_.Turing.ListBlank.cons a (equivListBlank tape) :=
+  listBlank_mk_cons_toList a tape
+
+@[simp] lemma equivListBlank_symm_cons (a : Option Symbol)
+    (lb : _root_.Turing.ListBlank (Option Symbol)) :
+    equivListBlank.symm (_root_.Turing.ListBlank.cons a lb) = cons a (equivListBlank.symm lb) := by
+  apply equivListBlank.injective
+  simp
+
+@[simp] lemma head_equivListBlank (tape : StackTape Symbol) :
+    (equivListBlank tape).head = tape.head := by
+  rcases tape with ⟨values, h⟩
+  cases values <;> rfl
+
+@[simp] lemma head_equivListBlank_symm (lb : _root_.Turing.ListBlank (Option Symbol)) :
+    (equivListBlank.symm lb).head = lb.head := by
+  rw [← head_equivListBlank (equivListBlank.symm lb), equivListBlank.apply_symm_apply]
+
+@[simp] lemma tail_equivListBlank (tape : StackTape Symbol) :
+    (equivListBlank tape).tail = equivListBlank tape.tail := by
+  rcases tape with ⟨values, h⟩
+  cases values <;> rfl
+
+@[simp] lemma tail_equivListBlank_symm (lb : _root_.Turing.ListBlank (Option Symbol)) :
+    (equivListBlank.symm lb).tail = equivListBlank.symm lb.tail := by
+  apply equivListBlank.injective
+  rw [← tail_equivListBlank, equivListBlank.apply_symm_apply, equivListBlank.apply_symm_apply]
+
+@[simp] lemma equivListBlank_mapSome (l : List Symbol) :
+    equivListBlank (mapSome l) = _root_.Turing.ListBlank.mk (l.map some) := rfl
+
+lemma read_cons_zero (a : Option Symbol) (tape : StackTape Symbol) :
+    (cons a tape).read 0 = a := by
+  simp [read]
+
+lemma read_cons_succ (a : Option Symbol) (tape : StackTape Symbol) (n : ℕ) :
+    (cons a tape).read (n + 1) = tape.read n := by
+  simp [read]
+
+@[simp] lemma nth_equivListBlank (tape : StackTape Symbol) (n : ℕ) :
+    (equivListBlank tape).nth n = tape.read n := by
+  induction n generalizing tape with
+  | zero => simp
+  | succ n ih =>
+    rw [_root_.Turing.ListBlank.nth_succ, tail_equivListBlank, ih, read_succ]
+
+@[simp] lemma read_equivListBlank_symm (lb : _root_.Turing.ListBlank (Option Symbol)) (n : ℕ) :
+    (equivListBlank.symm lb).read n = lb.nth n := by
+  rw [← nth_equivListBlank (equivListBlank.symm lb) n, equivListBlank.apply_symm_apply]
 
 end Cslib.Turing.StackTape

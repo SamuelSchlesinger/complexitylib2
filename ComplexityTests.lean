@@ -265,6 +265,7 @@ import ComplexityTests.PolyTimeSum
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock
+import ComplexityTests.PostTuringMachine
 import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling

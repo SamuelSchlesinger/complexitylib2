@@ -825,3 +825,153 @@ $C$ in the literature, not prefix-free complexity.\citep{LiVitanyi2019}
 \decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{184}{Cslib.Kolmogorov.DescriptionMethod.frequently_complexity_universal_lt_of_computable}
 \decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{208}{Cslib.Kolmogorov.DescriptionMethod.not_computable_complexity_universal}
 \end{result}
+
+\begin{result}
+\subsection{Single-tape, Post--Turing (\texttt{TM0}/\texttt{TM1}) and multi-tape machine simulations}
+Over any alphabet $\Sigma$, the library's trailing-blank stack tapes and bi-infinite
+tapes are isomorphic to Mathlib's \lean{Turing.ListBlank} and \lean{Turing.Tape} on
+$\operatorname{Option}\Sigma$ (\lean{StackTape.equivListBlank},
+\lean{BiTape.equivTape}), commuting with initialization, reads, writes and head
+moves. For a finite inhabited alphabet $\Sigma$, every single-tape Turing machine
+$M$ (\lean{SingleTapeTM}) embeds step-for-step into Mathlib's Wang B-machine model
+\lean{Turing.TM1} (\lean{toTM1}) preserving \lean{StateTransition.eval} and
+\lean{EvalsToInTime}, and compiles via \lean{TM1to0.tr} into a finitely
+supported Post--Turing machine \lean{Turing.TM0} (\lean{toTM0}) preserving
+\lean{TM0.eval}. Conversely, every Post--Turing machine $M_0$ on
+$\operatorname{Option}\Sigma$ over an inhabited state type $\Lambda$ (with decidable
+equality) supported on a finite state set $S$ compiles to a single-tape machine
+\lean{ofTM0} whose non-halting transitions match $M_0$ one-for-one and whose
+terminal states transition to \lean{none} in one final step, so halting in at most
+$t$ steps of $M_0$ with standard output tape $\operatorname{mk}_1(y)$ is equivalent
+to \lean{OutputsWithinTime} in $t+1$ steps; composing with \lean{TM1to0.tr}
+compiles any finitely supported \lean{TM1} machine with inhabited state type
+$\Lambda$ and finite inhabited local variable type $\sigma$ (\lean{ofTM1}).
+
+For a finite inhabited alphabet $\Sigma$, every single-tape machine $M$ is simulated
+by a deterministic one-work-tape multi-tape machine \lean{MultiTapeTM.ofSingleTapeTM}
+in three sequential phases (copying the read-only input $x$ to work tape~$0$ and
+rewinding in $2|x|+4$ steps, executing $t$ single-tape steps on work tape~$0$, and
+emitting $y$ to the output tape until the first blank cell in $|y|+1$ steps; the
+copy and emit phases themselves require no alphabet assumptions): if $M$ outputs
+$y$ on $x$ within $t$ steps, \lean{ofSingleTapeTM} computes $y$ on $x$ in
+output-sensitive time $T=2|x|+4+(t+(|y|+1))$ and work-tape space $T+1$, and in
+input-only time $T_{\mathrm{in}}=3|x|+2t+6$ and space $T_{\mathrm{in}}+1$ (since
+$|y|\le\max(1,|x|)+t$). Consequently, single-tape time-bounded computability lifts
+to \lean{ComputesFunInTimeAndSpace} over $\Sigma$ and to
+\lean{ComputableInTimeAndSpace} over $\mathrm{Bool}$ with time bound
+$3|x|+2t(|x|)+6$ and space bound $3|x|+2t(|x|)+7$, and single-tape polynomial-time
+computability over $\mathrm{Bool}$ lifts to tidy multi-tape polynomial-time
+computability (\lean{PolyTimeComputable.computableTidilyInPolyTime}). Reverse
+multi-tape-to-single-tape simulation is not formalized here.\citep{AroraBarak09,Sipser2013}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Foundations/Data/StackTape.lean}{160}{Cslib.Turing.StackTape.equivListBlank}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Foundations/Data/BiTape.lean}{188}{Cslib.Turing.BiTape.equivTape}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{106}{Cslib.Turing.SingleTapeTM.outputs_iff_mem_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{114}{Cslib.Turing.SingleTapeTM.outputsWithinTime_iff_evalsToInTime}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{229}{Cslib.Turing.SingleTapeTM.eval_toTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{275}{Cslib.Turing.SingleTapeTM.outputsWithinTime_iff_evalsToInTime_toTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{319}{Cslib.Turing.SingleTapeTM.outputs_imp_mem_eval_toTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{507}{Cslib.Turing.SingleTapeTM.outputsWithinTime_ofTM0_iff}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{525}{Cslib.Turing.SingleTapeTM.outputs_ofTM0_iff}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{545}{Cslib.Turing.SingleTapeTM.eval_ofTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{597}{Cslib.Turing.SingleTapeTM.eval_ofTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{353}{Turing.MultiTapeTM.computesInTimeAndSpace_ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{366}{Turing.MultiTapeTM.computesInTimeAndSpace_ofSingleTapeTM_of_input}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{378}{Turing.MultiTapeTM.computes_ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{386}{Turing.MultiTapeTM.computesInTimeAndSpace_ofTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{419}{Cslib.Turing.SingleTapeTM.TimeComputable.computesFunInTimeAndSpace}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{432}{Cslib.Turing.SingleTapeTM.TimeComputable.computableInTimeAndSpace}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{443}{Cslib.Turing.SingleTapeTM.PolyTimeComputable.computableTidilyInPolyTime}
+\end{result}
+
+\begin{result}
+\subsection{Partial recursiveness of single-tape, \texttt{TM0}/\texttt{TM1} and multi-tape machines}
+For any \lean{Primcodable} state space with a computable step function,
+\lean{StateTransition.eval} is partial recursive (\lean{Computable.stateTransition_eval}).
+Over any finite inhabited \lean{Primcodable} alphabet, the step function and
+clocked run of every \lean{SingleTapeTM} are primitive recursive and its partial
+evaluation is \lean{Partrec}, as are the evaluations of finitely supported
+\lean{TM0} and \lean{TM1} machines (over inhabited state and finite inhabited local
+store types). Likewise, the universal multi-tape simulator
+\lean{Universal.simulate} is primitive recursive, so \lean{Desc.eval} and the
+partial evaluation \lean{tm.eval} of every finite-state binary \lean{MultiTapeTM}
+are \lean{Partrec}. It follows that on \lean{Primcodable} types, every multi-tape
+\lean{IsComputable} function (with computable input encoding and computable left
+inverse for the output encoding) is Mathlib-\lean{Computable}, every
+\lean{IsDecidable} set with computable encoding satisfies \lean{ComputablePred},
+and every \lean{MappingReducible} reduction (with computable input encoding and
+left-invertible target encoding) induces a Mathlib \lean{ManyOneReducible}
+reduction.\citep{AroraBarak09,Sipser2013}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{58}{Computable.stateTransition_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{553}{Cslib.Turing.SingleTapeTM.partrec_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{563}{Cslib.Turing.SingleTapeTM.partrec_tm0_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{579}{Cslib.Turing.SingleTapeTM.partrec_tm1_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{448}{Turing.MultiTapeTM.Universal.primrec_simulate}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{531}{Turing.MultiTapeTM.Universal.Desc.partrec_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{632}{Turing.MultiTapeTM.partrec_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{653}{Turing.MultiTapeTM.IsComputable.computable}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{679}{Turing.MultiTapeTM.IsDecidable.computablePred}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{696}{Turing.MultiTapeTM.MappingReducible.manyOneReducible}
+\end{result}
+
+\begin{result}
+\subsection{Machine-backed Kolmogorov complexity and additive optimality of the universal method}
+Every binary single-tape machine $M$ (\texttt{SingleTapeTM Bool}), finitely
+supported Post--Turing machine (\lean{TM0}) or Wang B-machine (\lean{TM1}) over
+an inhabited state type (with decidable state equality and, for \lean{TM1}, finite
+inhabited local variable type), and deterministic binary $k$-work-tape machine
+(\lean{MultiTapeTM}) defines a clocked description method on binary words
+(\lean{ofSingleTapeTM}, \lean{ofTM0}, \lean{ofTM1}, \lean{ofMultiTapeTM}): for
+single-tape machines, program $p\in\{0,1\}^*$ outputs $x$ within $t$ steps when
+$M$ reaches state \lean{none} with standard output tape $\operatorname{mk}_1(x)$
+within $t$ steps. The identity program compilation gives a simulation
+\lean{singleTapeSimulation} (and \lean{tm0Simulation}) of \lean{ofSingleTapeTM} $M$
+inside \lean{ofMultiTapeTM} $(\operatorname{ofSingleTapeTM} M)$ with zero program
+overhead ($c=0$) and linear time overhead $3|p|+2t+6$, so for all $x,t,k$,
+\[
+\begin{aligned}
+C_{\operatorname{ofMultiTapeTM}(\operatorname{ofSingleTapeTM} M)}(x)
+  &\le C_{\operatorname{ofSingleTapeTM} M}(x),\\
+C_{\operatorname{ofSingleTapeTM} M}^{t}(x)\le k
+  &\implies
+C_{\operatorname{ofMultiTapeTM}(\operatorname{ofSingleTapeTM} M)}^{3k+2t+6}(x)
+  \le k.
+\end{aligned}
+\]
+
+For any finite-state binary \lean{MultiTapeTM} or \lean{SingleTapeTM} (or finitely
+supported \lean{TM0}/\lean{TM1}) and any Mathlib-\lean{Computable} decoder
+$\operatorname{dec}:\{0,1\}^*\to\mathbb N$, the pushed-forward description method
+on $\mathbb N$ is partial recursive (\lean{IsPartrec}). By the invariance theorem
+for the universal partial-recursive description method \lean{universal}, there is a
+constant $c\in\mathbb N$ (depending on the machine and $\operatorname{dec}$) such
+that for every $x\in\{0,1\}^*$,
+\[
+C_{\mathrm{universal}}(\operatorname{dec}(x))
+  \le C_{\operatorname{map}(\operatorname{dec},M)}(\operatorname{dec}(x))+c
+  \le C_M(x)+c,
+\]
+and in particular for $\operatorname{dec}(w)=\operatorname{foldr}\operatorname{Nat.bit}0\,w$
+and every $n\in\mathbb N$,
+\[
+C_{\mathrm{universal}}(n)\le C_M(\operatorname{bits}(n))+c.
+\]
+This is plain (and step-count time-bounded) Kolmogorov complexity; prefix-free
+machine complexity and multi-tape-to-single-tape time-bounded complexity transfer
+are not formalized here.\citep{LiVitanyi2019}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{69}{Cslib.Kolmogorov.DescriptionMethod.ofMultiTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{81}{Cslib.Kolmogorov.DescriptionMethod.ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{111}{Cslib.Kolmogorov.DescriptionMethod.ofTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{133}{Cslib.Kolmogorov.DescriptionMethod.ofTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{143}{Cslib.Kolmogorov.DescriptionMethod.singleTapeSimulation}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{154}{Cslib.Kolmogorov.DescriptionMethod.ecomplexity_ofMultiTapeTM_ofSingleTapeTM_le}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{162}{Cslib.Kolmogorov.DescriptionMethod.etimeBoundedComplexity_ofMultiTapeTM_ofSingleTapeTM_le}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{172}{Cslib.Kolmogorov.DescriptionMethod.tm0Simulation}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{138}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofMultiTapeTM_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{148}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofMultiTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{159}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofMultiTapeTM_bits}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{183}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofSingleTapeTM_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{193}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofTM0_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{202}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofTM1_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{211}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{222}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofSingleTapeTM_bits}
+\end{result}

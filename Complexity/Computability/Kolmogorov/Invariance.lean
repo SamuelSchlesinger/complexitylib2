@@ -103,6 +103,15 @@ def trans (S : Simulation M N c τ) (T : Simulation N P d σ) (hσ : ∀ t, Mono
   mem_runFor_compile h := Computation.mem_runFor_of_le (hσ _ (S.length_compile_le _))
     (T.mem_runFor_compile (S.mem_runFor_compile h))
 
+/-- Mapping a function over the outputs of a simulation. -/
+def map {β : Type*} (f : α → β) (S : Simulation M N c τ) :
+    Simulation (M.map f) (N.map f) c τ where
+  compile := S.compile
+  length_compile_le := S.length_compile_le
+  mem_runFor_compile h := by
+    obtain ⟨x, hx, rfl⟩ := mem_map_runFor_iff.mp h
+    exact mem_map_runFor_iff.mpr ⟨x, S.mem_runFor_compile hx, rfl⟩
+
 theorem produces_compile (S : Simulation M N c τ) {p : List Bool} {x : α} (h : M.Produces p x) :
     N.Produces (S.compile p) x :=
   let ⟨_, ht⟩ := produces_iff_exists_mem_runFor.mp h

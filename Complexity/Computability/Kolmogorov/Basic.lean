@@ -42,6 +42,7 @@ such a method.
 * `Cslib.Kolmogorov.DescriptionMethod.complexity`: the plain complexity as a natural number, for
   objects with a description.
 * `Cslib.Kolmogorov.DescriptionMethod.literal`: the method in which every program prints itself.
+* `Cslib.Kolmogorov.DescriptionMethod.map`: pushforward of a description method along `f : α → β`.
 
 ## Main results
 
@@ -58,6 +59,9 @@ such a method.
 * `Cslib.Kolmogorov.DescriptionMethod.iInf_etimeBoundedComplexity`,
   `Cslib.Kolmogorov.DescriptionMethod.exists_etimeBoundedComplexity_eq_ecomplexity`: the plain
   complexity is the time-bounded complexity for a large enough time bound.
+* `Cslib.Kolmogorov.DescriptionMethod.ecomplexity_map_le`,
+  `Cslib.Kolmogorov.DescriptionMethod.ecomplexity_map_eq_of_injective`: pushing forward a
+  description method cannot increase complexity and preserves it under injective maps.
 
 ## References
 
@@ -264,6 +268,56 @@ theorem etimeBoundedComplexity_literal_eq_top {x : List Bool} (h : t < x.length)
     literal.etimeBoundedComplexity t x = ⊤ :=
   etimeBoundedComplexity_eq_top_iff.mpr fun _ hp =>
     absurd ((mem_literal_runFor.mp hp).2 ▸ (mem_literal_runFor.mp hp).1) h.not_ge
+
+/-! ### Mapping outputs -/
+
+section Map
+
+variable {β : Type*}
+
+/-- Mapping a function over the outputs of a description method, taking no steps of its own. -/
+def map (f : α → β) (M : DescriptionMethod α) : DescriptionMethod β where
+  run p := (M.run p).map f
+
+@[simp]
+theorem runFor_map (f : α → β) (M : DescriptionMethod α) (p : List Bool) (t : ℕ) :
+    ((M.map f).run p).runFor t = ((M.run p).runFor t).map f :=
+  Computation.runFor_map f (M.run p) t
+
+theorem mem_map_runFor_iff {f : α → β} {M : DescriptionMethod α} {p : List Bool} {t : ℕ} {y : β} :
+    y ∈ ((M.map f).run p).runFor t ↔ ∃ x ∈ (M.run p).runFor t, f x = y := by
+  rw [runFor_map, Option.mem_def, Option.map_eq_some_iff]
+  rfl
+
+@[simp]
+theorem map_produces_iff {f : α → β} {M : DescriptionMethod α} {p : List Bool} {y : β} :
+    (M.map f).Produces p y ↔ ∃ x, M.Produces p x ∧ f x = y := by
+  simp only [produces_iff_exists_mem_runFor, mem_map_runFor_iff]
+  exact ⟨fun ⟨t, x, hx, hy⟩ => ⟨x, ⟨t, hx⟩, hy⟩, fun ⟨x, ⟨t, hx⟩, hy⟩ => ⟨t, x, hx, hy⟩⟩
+
+theorem ecomplexity_map_le (f : α → β) (M : DescriptionMethod α) (x : α) :
+    (M.map f).ecomplexity (f x) ≤ M.ecomplexity x :=
+  le_iInf₂ fun _ hp => ecomplexity_le_length (map_produces_iff.mpr ⟨x, hp, rfl⟩)
+
+theorem etimeBoundedComplexity_map_le (f : α → β) (M : DescriptionMethod α) (t : ℕ) (x : α) :
+    (M.map f).etimeBoundedComplexity t (f x) ≤ M.etimeBoundedComplexity t x :=
+  le_iInf₂ fun _ hp => etimeBoundedComplexity_le_length (mem_map_runFor_iff.mpr ⟨x, hp, rfl⟩)
+
+theorem ecomplexity_map_eq_of_injective {f : α → β} (hf : Function.Injective f)
+    (M : DescriptionMethod α) (x : α) :
+    (M.map f).ecomplexity (f x) = M.ecomplexity x :=
+  le_antisymm (M.ecomplexity_map_le f x) <| le_iInf₂ fun _ hp => by
+    obtain ⟨x', hx', hfx⟩ := map_produces_iff.mp hp
+    exact hf hfx ▸ ecomplexity_le_length hx'
+
+theorem etimeBoundedComplexity_map_eq_of_injective {f : α → β} (hf : Function.Injective f)
+    (M : DescriptionMethod α) (t : ℕ) (x : α) :
+    (M.map f).etimeBoundedComplexity t (f x) = M.etimeBoundedComplexity t x :=
+  le_antisymm (M.etimeBoundedComplexity_map_le f t x) <| le_iInf₂ fun _ hp => by
+    obtain ⟨x', hx', hfx⟩ := mem_map_runFor_iff.mp hp
+    exact hf hfx ▸ etimeBoundedComplexity_le_length hx'
+
+end Map
 
 end DescriptionMethod
 
