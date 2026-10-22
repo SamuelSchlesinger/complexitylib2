@@ -873,27 +873,33 @@ space bounds. Further class-level work needs resource certificates for the actua
   Polynomial bounds yield native polynomial time. A
   [bounded-natural addition model](Complexity/Computability/GenericRAM/Native/Nat.lean) supplies every
   scalar certificate, and [checked word addition](Complexity/Computability/WordRAM/Native.lean)
-  handles all unary-encoded widths with binary operands. These certificates do not supply memory,
-  dispatch, initialization/output or a whole-run simulation; uniform arbitrary-program dispatch and
-  charged width selection/input fit remain separate obligations (#292, #293, #298). Generalizing the structured
-  program calculus and time-class APIs to arbitrary domains, weighted/bit costs, and simulations
-  between these instances remain open. The native tidy calculus now has
+  handles all unary-encoded widths with binary operands. The native tidy calculus has
   [fixed finite tuple rules](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean)
-  with linear access/gather/update and arbitrary summed construction bounds, and
+  with linear access/gather/update and arbitrary summed construction bounds,
   [retained-input option elimination](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean)
   charging extraction, repeated option computation, input retention, and the selected handler
-  (#301). These compositional prerequisites do not implement the encoded generic-RAM step or
-  its iteration/initialization/output transport (#298/#292). No real-RAM/Turing-machine
-  equivalence is claimed;
+  (#301), [sum injections](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean),
+  and [native certificate combinators](Complexity/Computability/GenericRAM/Native/Combinators.lean).
+  The [finite-state step representation](Complexity/Computability/GenericRAM/Simulation/Finite.lean)
+  and [certified native step simulator](Complexity/Computability/GenericRAM/Simulation/Turing.lean)
+  implement one step of any fixed generic-RAM program over sparse memory and arbitrary
+  `NativePrimitives`, preserving all successor states, halts and faults (`denote_step`) and
+  retaining parameterized primitive and sparse-memory time/space bounds (#298). Uniform
+  arbitrary-program dispatch, charged initialization and output decoding, clocked multi-step
+  iteration, width selection/input fit, and whole-run theorem transport remain open (#292, #293).
+  Generalizing the structured program calculus and time-class APIs to arbitrary domains,
+  weighted/bit costs, and simulations between these instances also remain open. No
+  real-RAM/Turing-machine equivalence is claimed;
 * Sparse RAM memory: [association-list semantics](Complexity/Computability/GenericRAM/SparseMemory/Basic.lean)
   and [native multitape TM certificates](Complexity/Computability/GenericRAM/SparseMemory/Turing.lean)
   implement default-valued reads and insert/replace writes using Mathlib's `AList` and the existing
   encoded equality/search/filter calculus. Parameterized time/space bounds depend on stored-cell
   count and encoded address/value lengths; cubic-time and linear-space corollaries use full binary
   input length. Overwrites preserve cardinality, and writes retain distinct addresses. The read
-  default is supplied as input to one uniform machine. This is the memory component of #292/#293,
-  not a whole RAM simulation: effective primitive/fault implementations, finite control, charged
-  initialization/output, width selection and whole-run theorem transport remain open. No bridge
+  default is supplied as input to one uniform machine. Combined with the certified single-step
+  simulator above (#298), this provides the memory and single-step components of #292/#293,
+  not a whole RAM simulation: charged initialization/output, clocked multi-step iteration, width
+  selection and whole-run theorem transport remain open. No bridge
   for arbitrary exact real arithmetic is claimed;
 * RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
   Lean formalization accompanying the tromino undecidability paper, is parameterized by a
