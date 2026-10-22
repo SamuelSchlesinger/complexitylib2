@@ -84,7 +84,8 @@ example : ∀ x : BitString 2, (Monotone.literalsRailCircuit 2).eval Monotone.in
     (AltFormula.literals x) = Monotone.railBitString x :=
   Monotone.eval_literalsRailCircuit
 
-example : (Monotone.literalsRailCircuit 3).program.cost Monotone.andCost = 0 := Monotone.cost_literalsRailCircuit
+example : (Monotone.literalsRailCircuit 3).program.cost Monotone.andCost = 0 :=
+  Monotone.cost_literalsRailCircuit
 
 /--
 info: 'Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]
