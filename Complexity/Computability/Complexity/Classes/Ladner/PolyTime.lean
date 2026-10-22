@@ -10,12 +10,11 @@ module
 public import Complexity.Computability.Complexity.Classes.Ladner.Basic
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import Complexity.Computability.Complexity.Classes.Hierarchy
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
-import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 
 /-!
 # Ladner's language in polynomial time and in NP
@@ -39,7 +38,9 @@ The certificate rests on general tools: a total decoder for formulas
 `Turing.MultiTapeTM.Decoder.bool`), capped powers on unary numbers
 (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`), the universal function with its
 number of steps in unary (`Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`), and
-the words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`).
+the words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`). Decoding machine
+descriptions and coding their input bits use the shared polynomial-time rules in
+`Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime`.
 
 ## Main definitions
 
@@ -334,24 +335,17 @@ theorem hstepB_eq (T : List ℕ) : hstepB T = Hstep T := by
   simp only [Set.mem_ofPred_eq, List.all_eq_true, List.mem_range]
   exact or_congr_right (forall₂_congr fun j hj => agreesB_iff hj)
 
-/-- The description of the machine with a given index is polynomial-time in the index. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_decodeDesc :
-    ComputableTidilyInPolyTime decodeDesc encBits eDesc :=
-  let ⟨_, _, h⟩ := exists_computableTidilyInDegree_decodeDesc
-  h.computableTidilyInPolyTime
+@[deprecated (since := "2026-10-22")]
+alias computableTidilyInPolyTime_decodeDesc :=
+  Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_decodeDesc
 
-/-- The input of a machine as symbols is linear. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_map_eBit :
-    ComputableTidilyInPolyTime (fun w : List Bool => w.map eBit) encBits (encList encUnary) :=
-  Diagonal.computableTidilyInDegree_map_eBit.computableTidilyInPolyTime
+@[deprecated (since := "2026-10-22")]
+alias computableTidilyInPolyTime_map_eBit :=
+  Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_map_eBit
 
-/-- The coding of bits as symbols is a finite computation. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_eBit :
-    ComputableTidilyInPolyTime (fun b => eBit b) encBool encUnary :=
-  of_finite _
+@[deprecated (since := "2026-10-22")]
+alias computableTidilyInPolyTime_eBit :=
+  Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_eBit
 
 /-- The run of an indexed machine, with the number of steps in unary, is polynomial-time. -/
 @[fun_prop]

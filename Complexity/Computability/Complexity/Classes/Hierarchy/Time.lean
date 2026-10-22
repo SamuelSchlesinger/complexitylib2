@@ -290,7 +290,7 @@ theorem computableTidilyInO_timeDiagonal {J : ℕ → ℕ} (hJ : TimeConstructib
   have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
     ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
   have hdesc := hdec.inO.comp hu
-  have hsym := computableTidilyInDegree_map_eBit.inO_one
+  have hsym := Universal.computableTidilyInDegree_map_eBit.inO_one
   have hclock := hJ.computableTidilyInO
   have hU := computableTidilyInO_universal.comp (hdesc.prod (hsym.prod hclock))
   have h := computableTidilyInO_shortDesc.ite (computableTidilyInO_verdict.comp hU)
