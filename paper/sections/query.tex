@@ -617,7 +617,7 @@ Deletion on the same trees is proved separately from the stateful interface, whi
 include it. On an ordered tree, deleting a key removes exactly that key from the represented set
 and preserves the strict invariant; deleting an absent key leaves the tree unchanged, ordered or
 not. A matching node is replaced by its left subtree when its right subtree is empty and otherwise
-by the least key of its right subtree, which is detached there. Unlike Chapter 12 of
+by the leftmost (least) key of its right subtree, which is detached there. Unlike Chapter 12 of
 \citet{CLRS2009}, a node with only a right subtree is also rebuilt around its successor. Deletion
 visits at most the initial height $h$ in the same model, charging the search path and the
 successor descent, and never increases the height.
