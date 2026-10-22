@@ -254,6 +254,17 @@ grandfathered without an alias; this list records them for downstream users.
     `hastadGraphSATProb_eq_add_hastadGraphLinearCorr`. The SAT conjuncts were dropped from
     `hastadGraphProb_longCode_of_satisfies` and `hastad_gapLabelCover_dichotomy`, keeping their
     names.
+  - #392 withdrew Gentry's bootstrapping (`Crypto/Computational/Bootstrapping.lean` and
+    `Bootstrapping/{HomomorphicEval,KeyChain,KeyEncryption}.lean`, whole modules), whose
+    `Bootstrappable` interface assumed the content of the theorem. From the Håstad modules it
+    deleted `GapExactThreeDistinctSAT`, `no_GapExactThreeDistinctSAT_eq_empty`, `xorThreeCNF` and
+    its five lemmas, `hastadLinearProb_le_of_hastadLinearCorr_le` and the same-day alias
+    `Cslib.PCP.Hastad.fourierCoeff_sq_signVal_le_one`. The kept long-code, folding and projection
+    lemmas moved to `Cslib.BitString` in `Foundations/BooleanAnalysis/LongCode` (`IsFolded`
+    became `IsOdd`; deprecated aliases remain), and `Hastad/ExactThreeDistinct` merged into
+    `PCP/Approximation/MaxExactThreeSAT`, keeping its declaration names; imports of the deleted
+    module path must be updated. `hastad_gapLabelCover_dichotomy` now chooses `η` before the label
+    sets, keeping its name.
 * **Two multigraph namespaces.** Since 2026-10-20 the frontier multigraph
   (`Cslib.Circuits.Frontier.Multigraph`) defines its simple graph as that of the multigraph given by
   its ends (`Cslib.Multigraph`), and its module publicly imports the latter. Their shared base names
