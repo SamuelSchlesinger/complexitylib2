@@ -169,3 +169,49 @@ ideal-lattice or LWE-based somewhat homomorphic encryption scheme.\citep{Gentry2
 \declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1384}{Cslib.Crypto.EncryptionScheme.decrypt_evalHomOutput_circuit}
 \end{result}
 
+\begin{result}
+\subsection{Digital signatures, Lamport's one-time scheme, and one-way functions}
+A uniform digital signature scheme (\texttt{SignatureScheme}) consists of strict PPT algorithms
+$\mathsf{keyGen}(1^n)\to(\mathsf{pk},\mathsf{sk})$ and $\mathsf{sign}(\mathsf{sk},m)\to\sigma$ and a
+deterministic polynomial-time verifier $\mathsf{verify}(\mathsf{pk},m,\sigma)\in\{\mathsf{true},\mathsf{false}\}$
+that accepts every signature in the support of $\mathsf{sign}(\mathsf{sk},m)$ for every $n$-bit
+message $m$ and $(\mathsf{pk},\mathsf{sk})$ in the support of $\mathsf{keyGen}(1^n)$.
+In the adaptive chosen-message experiment (\texttt{eufCmaGame}, \texttt{EUFCMA}), a uniform strict
+oracle-PPT forger (\texttt{IsOraclePPT}) receives $(1^n,\mathsf{pk})$ and adaptive oracle access to
+$\mathsf{sign}(\mathsf{sk},\cdot)$ (which logs each queried message) and wins by outputting a pair
+$(m^\star,\sigma^\star)$ with $|m^\star|=n$, $m^\star$ not in the query log, and
+$\mathsf{verify}(\mathsf{pk},m^\star,\sigma^\star)=\mathsf{true}$. In the one-time experiment
+(\texttt{eufOneTimeGame}, \texttt{OneTimeEUFCMA}), the signing oracle answers at most the first
+query and returns the empty word without logging on any subsequent query; full \texttt{EUFCMA}
+implies \texttt{OneTimeEUFCMA} via a stateful query-limiting wrapper (\texttt{limitToOneQuery}).
+\begin{itemize}
+\item \textbf{Secure signatures imply one-way functions:} If $S$ is \texttt{OneTimeEUFCMA} (or
+  \texttt{EUFCMA}), reindexing a total polynomial-time seeded evaluator
+  $\mathsf{seed}\mapsto(n,\mathsf{pk}_n(\mathsf{seed}))$ for $S.\mathsf{keyGen}$ across all input
+  lengths via \texttt{GeneratorReindex.parameter} yields a uniform one-way function: any PPT
+  inverter induces a zero-query PPT forger that samples a dyadic seed length, recovers a candidate
+  seed with the same public key $\mathsf{pk}$, and signs $0^n$ under the corresponding secret key.
+\item \textbf{Lamport's one-time signature scheme from any one-way function:} Given any
+  polynomial-time function $f:\{0,1\}^*\to\{0,1\}^*$, $\mathsf{lamportScheme}(f)$ samples $2n$
+  independent $n$-bit words $(w_0,\dots,w_{2n-1})$, publishes the framed images
+  $(f(w_0),\dots,f(w_{2n-1}))$ as $\mathsf{pk}$, and signs $m\in\{0,1\}^n$ by revealing the $n$ words
+  $w_{2i+m_i}$ ($0\le i<n$). If $f$ is one-way (\texttt{OneWay}\,$f$), then
+  $\mathsf{lamportScheme}(f)$ is \texttt{OneTimeEUFCMA} secure: any successful one-time forgery
+  $m^\star\in\{0,1\}^n$ differs from the single queried message (if any) at some bit position
+  $i<n$, so the reduction that embeds its challenge $y=f(x^\star)$ at a uniformly chosen dyadic slot
+  $j<2n$ and simulates the one-time signing oracle using a dummy word at slot $j$ inverts $f$ with
+  probability at least $\mathsf{Adv}(n)/\mathsf{dyadicSize}(2n)$.
+\end{itemize}
+Consequently, a uniform one-way function exists if and only if a uniform \texttt{OneTimeEUFCMA}
+signature scheme exists, and a uniform \texttt{EUFCMA} signature scheme implies a uniform one-way
+function. Upgrading one-time signatures to stateless many-time \texttt{EUFCMA} signatures from
+arbitrary one-way functions (Rompel's construction of universal one-way hash functions and
+GMR/Merkle authentication trees) is not formalized here.\citep{Lamport1979,GoldwasserMicaliRivest1988,Rompel1990}
+\decl{Complexity/Crypto/Computational/Signature.lean}{677}{Cslib.Crypto.SignatureScheme.EUFCMA.oneTimeEUFCMA}
+\decl{Complexity/Crypto/Computational/OneWayToSignature.lean}{128}{Cslib.Crypto.SignatureScheme.OneTimeEUFCMA.exists_oneWay}
+\decl{Complexity/Crypto/Computational/OneWayToSignature.lean}{289}{Cslib.Crypto.SignatureScheme.EUFCMA.exists_oneWay}
+\decl{Complexity/Crypto/Computational/OneWayToSignature.lean}{716}{Cslib.Crypto.OneWay.oneTimeEUFCMA_lamport}
+\decl{Complexity/Crypto/Computational/OneWayToSignature.lean}{921}{Cslib.Crypto.OneWay.exists_oneTimeSignature}
+\decl{Complexity/Crypto/Computational/OneWayToSignature.lean}{927}{Cslib.Crypto.exists_oneWay_iff_exists_oneTimeSignature}
+\end{result}
+

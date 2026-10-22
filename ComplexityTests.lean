@@ -72,6 +72,7 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
+import ComplexityTests.Crypto.Signature
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
 import ComplexityTests.DataStructureQueue

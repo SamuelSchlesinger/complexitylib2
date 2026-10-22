@@ -10,7 +10,16 @@ completed reference developments.
    polynomial-time verifiers with auxiliary input.
 2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
    exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
-   polynomial-time adversaries.
+   polynomial-time adversaries. *Partial:*
+   [Signature](Complexity/Crypto/Computational/Signature.lean) and
+   [OneWayToSignature](Complexity/Crypto/Computational/OneWayToSignature.lean) define uniform
+   `SignatureScheme`, `OneTimeEUFCMA` and `EUFCMA` against strict oracle-PPT adversaries, prove the
+   monotonicity implication `SignatureScheme.EUFCMA.oneTimeEUFCMA`, the necessity direction
+   `SignatureScheme.OneTimeEUFCMA.exists_oneWay` and `SignatureScheme.EUFCMA.exists_oneWay`, and
+   Lamport's one-time signature construction (`lamportScheme`, `OneWay.oneTimeEUFCMA_lamport`,
+   `exists_oneWay_iff_exists_oneTimeSignature`). Constructing universal one-way hash functions and
+   stateless many-time EUF-CMA signatures (via GMR/Merkle authentication trees) from arbitrary
+   one-way functions remains open.
 3. **Gentry’s bootstrapping theorem.** A semantically secure, bootstrappable encryption scheme
    yields compact leveled fully homomorphic encryption for every polynomially bounded circuit
    depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption

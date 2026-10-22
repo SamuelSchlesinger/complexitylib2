@@ -1166,6 +1166,7 @@ public import Complexity.Crypto.Computational.OneWay.NP
 public import Complexity.Crypto.Computational.OneWay.Normalize
 public import Complexity.Crypto.Computational.OneWayToPRF
 public import Complexity.Crypto.Computational.OneWayToPRG
+public import Complexity.Crypto.Computational.OneWayToSignature
 public import Complexity.Crypto.Computational.PRGToOneWay
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
@@ -1210,6 +1211,7 @@ public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle
 public import Complexity.Crypto.Computational.PseudorandomFunction.TruthTable
 public import Complexity.Crypto.Computational.PseudorandomGenerator
+public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.UniformChoice
