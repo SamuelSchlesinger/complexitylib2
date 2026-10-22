@@ -50,6 +50,7 @@ import ComplexityTests.CommunicationComplexity3
 import ComplexityTests.CommunicationComplexity4
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComparisonCircuits
+import ComplexityTests.Computability.Circuit.Arithmetic.Permanent
 import ComplexityTests.Computability.Circuit.Boolean.ACC0
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision

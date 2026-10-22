@@ -7,14 +7,13 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.Arithmetic.Determinant
+public import Complexity.Computability.Circuit.Arithmetic.Permanent
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary
 public import Mathlib.Algebra.MvPolynomial.SchwartzZippel
-public import Mathlib.LinearAlgebra.Matrix.Permanent
 import Complexity.Computability.Complexity.Classes.Inclusions
 import Complexity.Computability.Complexity.Classes.PH.Kannan
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
@@ -189,35 +188,6 @@ theorem exists_eval_ne_zero_of_totalDegree_lt_card {n : ℕ} {P : MvPolynomial (
 
 end MvPolynomial
 
-/-! ### Laplace expansion of the permanent -/
-
-namespace Matrix
-
-open Equiv Finset Fintype
-
-variable {R : Type*} [CommSemiring R]
-
-/-- **Laplace expansion of the permanent along column 0.** -/
-theorem permanent_succ_column_zero {n : ℕ} (A : Matrix (Fin (n + 1)) (Fin (n + 1)) R) :
-    A.permanent = ∑ i : Fin (n + 1), A i 0 * (A.submatrix i.succAbove Fin.succ).permanent := by
-  rw [Matrix.permanent, Finset.univ_perm_fin_succ, ← Finset.univ_product_univ]
-  simp only [Finset.sum_map, Equiv.toEmbedding_apply, Finset.sum_product, Matrix.submatrix]
-  refine Finset.sum_congr rfl fun i _ => Fin.cases ?_ (fun i => ?_) i
-  · simp [Fin.prod_univ_succ, Matrix.permanent, Finset.mul_sum]
-  · rw [← permanent_permute_cols i.cycleRange, Matrix.permanent, Finset.mul_sum]
-    refine Finset.sum_congr rfl fun σ _ => ?_
-    simp [Fin.prod_univ_succ, Fin.succAbove_cycleRange]
-
-/-- **Laplace expansion of the permanent along row 0.** -/
-theorem permanent_succ_row_zero {n : ℕ} (A : Matrix (Fin (n + 1)) (Fin (n + 1)) R) :
-    A.permanent = ∑ j : Fin (n + 1), A 0 j * (A.submatrix Fin.succ j.succAbove).permanent := by
-  rw [← permanent_transpose A, permanent_succ_column_zero]
-  refine Finset.sum_congr rfl fun j _ => ?_
-  rw [← permanent_transpose]
-  simp only [transpose_apply, transpose_submatrix, transpose_transpose]
-
-end Matrix
-
 /-! ### Arithmetic circuits, `PITℤ` and permanent self-reducibility -/
 
 namespace Cslib.Circuits
@@ -311,124 +281,6 @@ theorem exists_eval_ne_zero_of_notMem_PITInt {n : ℕ} {c : Circuit (arithSignat
   obtain ⟨x, hxS, hx0⟩ := MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card hc hdeg
   exact ⟨x, hxS, by rwa [← c.eval_polynomial x 0]⟩
 
-/-! #### Constructive arithmetic circuit combinators -/
-
-section Combinators
-
-variable {R : Type u} [CommRing R]
-
-/-- The 1-gate arithmetic circuit computing the constant `a`. -/
-def constCircuit (a : R) : Circuit (arithSignature R) n 1 :=
-  Circuit.oneGate (.const a) Fin.elim0
-
-omit [CommRing R] in
-@[simp] theorem size_constCircuit (a : R) : (constCircuit (n := n) a).size = 1 := rfl
-
-@[simp] theorem polynomial_constCircuit (a : R) :
-    (constCircuit (n := n) a).polynomial 0 = C a := rfl
-
-/-- The 0-gate arithmetic circuit reading input variable `i`. -/
-def varCircuit (i : Fin n) : Circuit (arithSignature R) n 1 :=
-  Circuit.wiring (arithSignature R) fun _ => i
-
-omit [CommRing R] in
-@[simp] theorem size_varCircuit (i : Fin n) : (varCircuit (R := R) i).size = 0 := rfl
-
-@[simp] theorem polynomial_varCircuit (i : Fin n) :
-    (varCircuit (R := R) i).polynomial 0 = X i := rfl
-
-/-- The arithmetic circuit adding the outputs of `c₁` and `c₂`. -/
-def addCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) : Circuit (arithSignature R) n 1 :=
-  (Circuit.oneGate (σ := arithSignature R) .add ![0, 1]).comp (c₁.append c₂)
-
-omit [CommRing R] in
-@[simp] theorem size_addCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) :
-    (addCircuit c₁ c₂).size = c₁.size + c₂.size + 1 := rfl
-
-@[simp] theorem polynomial_addCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) :
-    (addCircuit c₁ c₂).polynomial 0 = c₁.polynomial 0 + c₂.polynomial 0 := by
-  simp only [addCircuit, Circuit.polynomial, Circuit.eval_comp, Circuit.eval_append,
-    Circuit.eval_oneGate, arithInterpretationWith, Matrix.cons_val_zero, Matrix.cons_val_one]
-  rfl
-
-/-- The arithmetic circuit multiplying the outputs of `c₁` and `c₂`. -/
-def mulCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) : Circuit (arithSignature R) n 1 :=
-  (Circuit.oneGate (σ := arithSignature R) .mul ![0, 1]).comp (c₁.append c₂)
-
-omit [CommRing R] in
-@[simp] theorem size_mulCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) :
-    (mulCircuit c₁ c₂).size = c₁.size + c₂.size + 1 := rfl
-
-@[simp] theorem polynomial_mulCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) :
-    (mulCircuit c₁ c₂).polynomial 0 = c₁.polynomial 0 * c₂.polynomial 0 := by
-  simp only [mulCircuit, Circuit.polynomial, Circuit.eval_comp, Circuit.eval_append,
-    Circuit.eval_oneGate, arithInterpretationWith, Matrix.cons_val_zero, Matrix.cons_val_one]
-  rfl
-
-/-- The arithmetic circuit negating `c` by multiplying by `-1`. -/
-def negCircuit (c : Circuit (arithSignature R) n 1) : Circuit (arithSignature R) n 1 :=
-  mulCircuit (constCircuit (-1)) c
-
-@[simp] theorem size_negCircuit (c : Circuit (arithSignature R) n 1) :
-    (negCircuit c).size = 1 + c.size + 1 := rfl
-
-@[simp] theorem polynomial_negCircuit (c : Circuit (arithSignature R) n 1) :
-    (negCircuit c).polynomial 0 = -c.polynomial 0 := by
-  simp [negCircuit]
-
-/-- The arithmetic circuit subtracting `c₂` from `c₁`. -/
-def subCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) : Circuit (arithSignature R) n 1 :=
-  addCircuit c₁ (negCircuit c₂)
-
-@[simp] theorem size_subCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) :
-    (subCircuit c₁ c₂).size = c₁.size + (1 + c₂.size + 1) + 1 := rfl
-
-@[simp] theorem polynomial_subCircuit (c₁ c₂ : Circuit (arithSignature R) n 1) :
-    (subCircuit c₁ c₂).polynomial 0 = c₁.polynomial 0 - c₂.polynomial 0 := by
-  simp [subCircuit, sub_eq_add_neg]
-
-/-- Reindex the input variables of an arithmetic circuit along `ρ : Fin m → Fin n` with zero
-additional gates. -/
-def reindexCircuit (ρ : Fin m → Fin n) (c : Circuit (arithSignature R) m 1) :
-    Circuit (arithSignature R) n 1 :=
-  c.comp (Circuit.wiring (arithSignature R) ρ)
-
-omit [CommRing R] in
-@[simp] theorem size_reindexCircuit (ρ : Fin m → Fin n) (c : Circuit (arithSignature R) m 1) :
-    (reindexCircuit ρ c).size = c.size :=
-  Nat.zero_add c.size
-
-@[simp] theorem polynomial_reindexCircuit (ρ : Fin m → Fin n)
-    (c : Circuit (arithSignature R) m 1) :
-    (reindexCircuit ρ c).polynomial 0 = MvPolynomial.rename ρ (c.polynomial 0) := by
-  have hrename : MvPolynomial.rename ρ = aeval (X ∘ ρ : Fin m → MvPolynomial (Fin n) R) :=
-    MvPolynomial.algHom_ext fun i => by simp
-  rw [hrename, c.aeval_polynomial_mvPolynomial (X ∘ ρ) 0,
-    reindexCircuit, Circuit.polynomial, Circuit.eval_comp, Circuit.eval_wiring]
-
-/-- Sum a finite family of single-output arithmetic circuits. -/
-def finSumCircuit : {k : ℕ} → (Fin k → Circuit (arithSignature R) n 1) →
-    Circuit (arithSignature R) n 1
-  | 0, _ => constCircuit 0
-  | k + 1, cs => addCircuit (finSumCircuit fun j => cs j.castSucc) (cs (Fin.last k))
-
-@[simp] theorem size_finSumCircuit :
-    {k : ℕ} → (cs : Fin k → Circuit (arithSignature R) n 1) →
-      (finSumCircuit cs).size = 1 + ∑ j : Fin k, ((cs j).size + 1)
-  | 0, _ => by simp [finSumCircuit]
-  | k + 1, cs => by
-    rw [finSumCircuit, size_addCircuit, size_finSumCircuit, Fin.sum_univ_castSucc]
-    omega
-
-@[simp] theorem polynomial_finSumCircuit :
-    {k : ℕ} → (cs : Fin k → Circuit (arithSignature R) n 1) →
-      (finSumCircuit cs).polynomial 0 = ∑ j : Fin k, (cs j).polynomial 0
-  | 0, _ => by simp [finSumCircuit]
-  | k + 1, cs => by
-    rw [finSumCircuit, polynomial_addCircuit, polynomial_finSumCircuit, Fin.sum_univ_castSucc]
-
-end Combinators
-
 /-- Two integer arithmetic circuits compute the same formal polynomial if and only if their
 difference circuit `subCircuit c₁ c₂` belongs to `PITInt`. -/
 theorem mem_PITInt_subCircuit_iff {n : ℕ} (c₁ c₂ : Circuit (arithSignature ℤ) n 1) :
@@ -441,27 +293,6 @@ theorem mem_PITInt_subCircuit_iff {n : ℕ} (c₁ c₂ : Circuit (arithSignature
 section Permanent
 
 variable {R : Type u} [CommRing R]
-
-/-- The generic permanent has total degree at most `n`. -/
-theorem totalDegree_permanent_genericMatrix_le (n : ℕ) :
-    (genericMatrix R n).permanent.totalDegree ≤ n := by
-  rw [Matrix.permanent]
-  refine totalDegree_finsetSum_le fun σ _ => ?_
-  refine (totalDegree_finsetProd _ _).trans ?_
-  calc _ ≤ ∑ _i : Fin n, 1 :=
-        Finset.sum_le_sum fun i _ => (totalDegree_monomial_le _ _).trans (by simp)
-    _ = n := by simp
-
-/-- The permanent family over `R`: its `n`-th member is the permanent of `genericMatrix R n`, a
-polynomial in `n * n` variables. -/
-noncomputable def permFamily (R : Type u) [CommSemiring R] : PolynomialFamily R where
-  vars n := n * n
-  poly n := (genericMatrix R n).permanent
-
-/-- The permanent family over `R` is a p-family (`vars n = n ^ 2` and `totalDegree ≤ n`). -/
-theorem isPFamily_permFamily : (permFamily R).IsPFamily :=
-  ⟨PolynomiallyBounded.id.mul PolynomiallyBounded.id,
-    PolynomiallyBounded.id.mono_of_le (totalDegree_permanent_genericMatrix_le (R := R))⟩
 
 /-- The permanent family over `ℤ`: its `n`-th member is the permanent of `genericMatrix ℤ n`, a
 polynomial in `n * n` variables. -/

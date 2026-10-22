@@ -46,7 +46,16 @@ completed reference developments.
 7. **Valiant’s algebraic completeness theorem.** Over every field of characteristic different from
    two, the permanent polynomial family is VNP-complete under polynomially bounded projections:
    every VNP family is obtained from a polynomially larger permanent by substituting variables and
-   field constants.
+   field constants. *Partial:*
+   [`Permanent`](Complexity/Computability/Circuit/Arithmetic/Permanent.lean) defines `permFamily K`,
+   proves Ryser's inclusion-exclusion formula (`Matrix.permanent_eq_ryser`) and
+   `permFamily K ∈ VNP K` (`permFamily_mem_VNP`) over every commutative ring `K`, and proves
+   block-triangular permanent factorization, multiplicative and rooted projection closure
+   (`IsProjection.permanent_mul`, `IsRootedPermProjection.add`, `IsRootedPermProjection.mul`), and
+   formula universality (`Formula.isProjection_permanent`: every arithmetic formula `F` of size `s`
+   computes a projection of the `(s + 1) × (s + 1)` generic permanent). The `VNP`-hardness
+   reduction (`∀ g ∈ VNP K, g.IsPProjection (permFamily K)` over fields with `ringChar K ≠ 2`,
+   via Valiant's iff-gadget and rosette construction) remains open.
 8. **Kabanets–Impagliazzo derandomization-to-lower-bounds theorem.** If polynomial identity testing
    for arithmetic circuits over the integers has a deterministic polynomial-time algorithm, then
    either NEXP ⊄ P/poly or the permanent family has no polynomial-size arithmetic circuits over the

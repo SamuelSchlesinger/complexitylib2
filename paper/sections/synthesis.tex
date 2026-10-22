@@ -269,3 +269,49 @@ formalized.\citep{Kannan1982,KabanetsImpagliazzo2004,AroraBarak09}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{663}{Cslib.Circuits.Arithmetic.isLaplacePermChain_laplacePermCircuit}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{752}{Cslib.Complexity.exists_mem_NEXP_notMem_SIZE}
 \end{result}
+
+\begin{result}
+\subsection{The permanent family, Ryser's formula, \cc{VNP} membership and formula projections}
+Over any commutative semiring $K$, the permanent family $\texttt{permFamily}\;K$ has $n$-th member
+$(\texttt{genericMatrix}\;K\;n).\texttt{permanent}$ in $n^2$ variables of total degree at most $n$,
+forming a p-family (\lean{isPFamily_permFamily}). Over any commutative ring $R$, the permanent of
+$A\in R^{n\times n}$ satisfies Ryser's inclusion-exclusion formula\citep[Proposition 2.12]{Burgisser2000}:
+\[
+\mathrm{perm}(A) = \sum_{S\subseteq n} (-1)^{|n|-|S|} \prod_{i\in n} \sum_{j\in S} A_{i,j}.
+\]
+Encoding column subsets by $\{0,1\}$-valued indicator variables defines the inner polynomial family
+$\texttt{ryserFamily}\;R\in\cc{VP}\;R$ (with explicit circuits $\texttt{ryserCircuit}\;R\;n$ of size
+$2n^2+9n+3$ and degree at most $3n$) whose Boolean sum is $(\texttt{genericMatrix}\;R\;n).\texttt{permanent}$
+(\lean{booleanSum_ryserPoly}), establishing $\texttt{permFamily}\;R\in\cc{VNP}\;R$ over every
+commutative ring $R$ (\lean{permFamily_mem_VNP}).
+
+Over any commutative semiring $K$, the permanent of a $2\times 2$ block-triangular matrix with
+zero lower-left or upper-right block equals the product of the permanents of its diagonal blocks
+(\lean{Matrix.permanent_fromBlocks_zero₂₁}, \lean{Matrix.permanent_fromBlocks_zero₁₂},
+\lean{Matrix.permanent_fromBlocks_zero}). Consequently, projections of generic permanents are
+closed under multiplication (\lean{IsProjection.permanent_mul}), finite products
+(\lean{isProjection_permanent_finset_prod}) and dimension increase (\lean{isProjection_permanent_mono}).
+Rooted permanent representations $\texttt{IsRootedPermProjection}\;m\;P$ (representing $P$ as the
+permanent of a $(1+m)\times(1+m)$ variable-or-constant matrix on $\mathrm{Unit}\oplus\mathrm{Fin}\;m$
+whose internal $m\times m$ block has permanent $1$) are closed under constants, variables, addition
+(\lean{IsRootedPermProjection.add}) and multiplication (\lean{IsRootedPermProjection.mul}), each
+binary operation increasing the internal dimension to $m_1+1+m_2$. By structural induction, every
+arithmetic formula $F : \texttt{Formula}\;(\texttt{arithSignature}\;K)\;n$ of gate size $s=F.\texttt{size}$
+computes a polynomial that is a projection of the $(s+1)\times(s+1)$ generic permanent
+$(\texttt{genericMatrix}\;K\;(s+1)).\texttt{permanent}$
+(\lean{Cslib.Circuits.Formula.isProjection_permanent})\citep{Valiant1979Algebra,Burgisser2000}.
+Valiant's full $\cc{VNP}$-completeness reduction from arbitrary $\cc{VNP}$ families to
+$\texttt{permFamily}\;K$ over fields of characteristic different from two is not proved here.
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{186}{Matrix.permanent_fromBlocks_zero₂₁}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{227}{Matrix.permanent_fromBlocks_zero₁₂}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{371}{Matrix.permanent_eq_ryser_bool}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{483}{Matrix.permanent_eq_ryser}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{686}{Cslib.Circuits.Arithmetic.permFamily}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{696}{Cslib.Circuits.Arithmetic.isPFamily_permFamily}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{802}{Cslib.Circuits.Arithmetic.ryserFamily_mem_VP}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{835}{Cslib.Circuits.Arithmetic.permFamily_mem_VNP}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{977}{Cslib.Circuits.Arithmetic.IsProjection.permanent_mul}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{1064}{Cslib.Circuits.Arithmetic.IsRootedPermProjection.add}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{1080}{Cslib.Circuits.Arithmetic.IsRootedPermProjection.mul}
+\declat{fbf95767f17a9c1d97e78e9bf639a9266daa7ed1}{Complexity/Computability/Circuit/Arithmetic/Permanent.lean}{1127}{Cslib.Circuits.Formula.isProjection_permanent}
+\end{result}
