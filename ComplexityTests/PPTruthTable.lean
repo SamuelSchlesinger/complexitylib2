@@ -110,7 +110,7 @@ example : [true, false] ∈ language := by
 example : [true, true] ∉ language := by
   simp [language, truthTableAnswers, count, query, headTrue, combine]
 
-example : newmanPoly 1 2 = 6 := by decide
+example : newmanPoly 1 2 = 12 := by decide
 
 example : 2 * |newmanPoly 1 (-2)| ≤ newmanPoly 1 2 :=
   two_mul_abs_newmanPoly_neg_le (by omega) (by omega)
