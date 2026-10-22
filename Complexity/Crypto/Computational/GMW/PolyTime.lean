@@ -60,21 +60,6 @@ open Probability Complexity Logic.PL Turing.MultiTapeTM ComputableTidilyInPolyTi
 
 /-! ### Polynomial-time certificates for protocol gadgets -/
 
-@[fun_prop]
-theorem computableTidilyInPolyTime_clauseLength {α : Type} {input : α ↪ List Bool}
-    {c : α → Clause ℕ}
-    (hc : ComputableTidilyInPolyTime c input (encList (encPair encNat encBool))) :
-    ComputableTidilyInPolyTime (fun a => (c a).length) input encUnary :=
-  (length (encPair encNat encBool)).comp hc
-
-@[fun_prop]
-theorem computableTidilyInPolyTime_cnfLength {α : Type} {input : α ↪ List Bool}
-    {φ : α → CNF ℕ}
-    (hφ : ComputableTidilyInPolyTime φ input encCNF) :
-    ComputableTidilyInPolyTime (fun a => (φ a).length) input encUnary := by
-  rw [encCNF] at hφ
-  exact (length (encList (encPair encNat encBool))).comp hφ
-
 private theorem computableTidilyInPolyTime_clauseLitVar (i : ℕ) {α : Type} {input : α ↪ List Bool}
     {c : α → Clause ℕ}
     (hc : ComputableTidilyInPolyTime c input (encList (encPair encNat encBool))) :
@@ -92,13 +77,6 @@ private theorem computableTidilyInPolyTime_clauseLitPol (i : ℕ) {α : Type} {i
       input (encPair encNat encBool) :=
     (listGetD (0, false)).comp (hc.prod (const i))
   exact (snd encNat encBool).comp hget
-
-@[fun_prop]
-theorem computableTidilyInPolyTime_varsLength {α : Type} {input : α ↪ List Bool}
-    {φ : α → CNF ℕ}
-    (hφ : ComputableTidilyInPolyTime φ input encCNF) :
-    ComputableTidilyInPolyTime (fun a => (φ a).vars.length) input encUnary :=
-  (length encNat).comp (SAT.computableTidilyInPolyTime_vars.comp hφ)
 
 @[fun_prop]
 theorem computableTidilyInPolyTime_gmwBit0Of8 {α : Type} {input : α ↪ List Bool} {t : α → ℕ}
