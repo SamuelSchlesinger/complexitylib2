@@ -807,26 +807,28 @@ supports bounded insertion, membership and strict successor for the universe
 [least-successor and absence theorems](Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean),
 and a [finite-set abstraction](Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean).
 The [contiguous layout arithmetic](Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean)
-has nonoverlapping recursive records and an explicit bound of ten words per universe element;
-this does not by itself supply an initialization or implemented-space certificate.
+has nonoverlapping recursive records and an explicit bound of ten words per universe element.
 The [recursive memory refinement](Complexity/Algorithms/WordRAM/VanEmdeBoas/Model.lean)
-now interprets actual memory, including stale empty extrema and arbitrary surrounding memory.
-[Fixed-program native membership](Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean)
-is proved for every supported depth in at most `28*(d+1)+18` instructions, equivalently
-`28*(log₂(log₂ U)+1)+18`, including setup, dispatch, loop control and halt, with an exact
-GenericRAM transfer. The 32-register code is independent of depth and word width. The caller
-state is bounded, the root record endpoint must fit a word, and even out-of-universe query
-arguments must fit. The whole memory and persistent root are preserved. Initial representation
-construction and external argument delivery/decoding are not charged. Executable insertion
-and successor branches are present but not yet certified on the RAM.
-The recursive minimum-excluded variant is credited to Demaine's exposition, separately from
-the original van Emde Boas--Kaas--Zijlstra stratified representation. Functional proof milestone
-[#291](https://github.com/cslib-community/complexitylib/issues/291) and native membership
-milestone [#302](https://github.com/cslib-community/complexitylib/issues/302) leave the full
-[#273](https://github.com/cslib-community/complexitylib/issues/273) endpoint open:
-native insertion and strict-successor correctness and worst-case `O(log log U)` instruction
-bounds, charged uniform initialization, implemented space/stack and complete word/address-fit
-guarantees, and the adaptive shared-stateful bridge. Deletion and predecessor are later work.
+interprets actual memory, including stale empty extrema and arbitrary surrounding memory.
+[Fixed-program native calls](Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean)
+certify insertion (`39*(d+1)+16`), membership (`28*(d+1)+18`), and strict successor
+(`65*(d+1)+22`, using a `4*d`-word scratch stack) on one 213-instruction 32-register dispatcher
+independent of depth and word width, charging setup, dispatch, loop control, and halt, with
+exact GenericRAM transfers and logarithmic `log₂(log₂ U)` bounds
+([Insert](Complexity/Algorithms/WordRAM/VanEmdeBoas/Insert.lean),
+[Member](Complexity/Algorithms/WordRAM/VanEmdeBoas/Member.lean),
+[Successor](Complexity/Algorithms/WordRAM/VanEmdeBoas/Successor.lean)).
+A separate [uniform 32-register initializer](Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean)
+constructs the empty represented tree and scratch stack pointer from arbitrary bounded memory
+in at most `8 * span d + 20 * d + 25 ≤ 80 * U + 20 * d` instructions within a total footprint
+of `span d + 4 * (d + 1) ≤ 10 * U + 4 * (d + 1)` words. The operations are packaged as a
+`DynamicCertificate` for the finite-set `Stateful.Spec` on `[0, U)`, with combined
+initialization-and-adaptive-client execution (`run_initialized`) charging at most
+`65*(d+1)+22` instructions per operation while preserving all memory outside
+`[base, base + span d + 4 * (d + 1))`. External client computation and argument register writes
+between calls are not charged to individual operations; deletion and predecessor remain future
+work. The recursive minimum-excluded variant is credited to Demaine's exposition, separately
+from the original van Emde Boas--Kaas--Zijlstra stratified representation.
 
 The [doubling array](Complexity/Algorithms/WordRAM/DynamicArray.lean) implements dynamic append
 and indexed read with one fixed twelve-register dispatcher using the bump allocator and array-copy

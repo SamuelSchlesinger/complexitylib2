@@ -681,35 +681,63 @@ storage.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
 \end{result}
 
 \begin{result}
-\subsection{Fixed-program van Emde Boas membership on the word RAM}
+\subsection{Fixed-program van Emde Boas sets on the word RAM}
 For every $d\geq0$ and $U=2^{2^d}$, a valid recursive van Emde Boas tree has a
-five-word-header interpretation in actual memory, with recursive summary and cluster
-regions. Given such represented memory, one fixed 32-register program answers membership
-queries on the standard unsigned word RAM, whose basis includes multiplication, division
-and remainder. Its compiled code has 213 instructions including halt, independently of
-$d$, $U$, the query and the word width $w$. Each call executes at most
-\[
- 28(d+1)+18 = 28(\log_2\log_2 U+1)+18
-\]
-instructions, charging constant setup, dispatch, loop tests and jumps, and the final halt.
-The abstract tree is valid, all initial registers and memory words fit $w$, and the
-root address plus the full record span must also fit. Queries outside $U$ are permitted
-provided they fit a word. Cached-maximum rejection precedes recursive child addressing;
-surrounding memory may be arbitrary bounded words, and empty extrema may be stale.
-The answer agrees with functional membership; the complete memory and persistent root
-are unchanged, and the final data remains bounded. The same actual execution transfers
-with its exact count to the shared generic RAM model.
+five-word-header interpretation in actual memory at $[b,b+S_d)$, with recursive summary and
+cluster regions, arbitrary surrounding bounded memory, and possibly stale empty extrema. One
+fixed 32-register dispatcher program implements bounded insertion ($\mathrm{tag}=0$),
+membership ($\mathrm{tag}=1$), and strict successor ($\mathrm{tag}=2$) on the standard
+unsigned word RAM, whose basis includes multiplication, division and remainder. Its compiled
+code has 213 instructions including halt, independently of $d$, $U$, the arguments and the
+word width $w$. All initial registers and memory words must fit $w$. Including constant
+setup, dispatch, loop tests and jumps, and the final halt:
+\begin{itemize}
+\item For any key $k<U$ with $b+S_d<2^w$, insertion executes at most
+  $39(d+1)+16=39(\log_2\log_2 U+1)+16$ instructions, updates the represented tree to
+  $\mathrm{insert}(T,k)$, preserves persistent registers, and modifies no memory outside
+  $[b,b+S_d)$.
+\item For any fitting query word (including queries $\geq U$) with $b+S_d<2^w$, membership
+  executes at most $28(d+1)+18=28(\log_2\log_2 U+1)+18$ instructions, cached-maximum
+  rejection precedes recursive child addressing, and the complete memory is unchanged.
+\item For any fitting query word and scratch stack base $s_0\geq b+S_d$ with
+  $s_0+4d<2^w$, strict successor executes at most
+  $65(d+1)+22=65(\log_2\log_2 U+1)+22$ instructions, returns the exact optional successor
+  encoded by $(\mathrm{found},\mathrm{out})$, preserves the represented tree at $[b,b+S_d)$,
+  restores the stack pointer to $s_0$, and modifies no memory outside the $4d$-word scratch
+  region $[s_0,s_0+4d)$.
+\end{itemize}
+A separate fixed 32-register initializer constructs the empty representation at $[b,b+S_d)$
+and sets $s_0=b+S_d$ from any bounded state with $\mathrm{root}=b$, $\mathrm{depth}=d$, and
+$b+S_d+4(d+1)<2^w$ on arbitrary initial memory in at most
+$8S_d+20d+25 \leq 80U+20d$ instructions including halt, modifying no memory outside the
+combined footprint of $S_d+4(d+1)\leq 10U+4(d+1)$ words. All four flat executions transfer
+with exact instruction counts to the shared generic RAM model. Packaged as a dynamic
+realization of the finite-set specification on $2^{\{0,\ldots,U-1\}}$, every admissible
+adaptive client executes from an initialized state with at most $65(d+1)+22$ instructions per
+operation while preserving all memory outside $[b,b+S_d+4(d+1))$.
 
-Initial represented-memory construction and external argument delivery/result decoding
-are not charged. This result supplies neither a charged initializer nor an implemented
-space/stack bound or compiled adaptive client. The dispatcher exposes insertion and
-strict-successor code, but their native correctness and resource proofs remain open.
-The minimum-excluded variant follows Demaine's exposition, whose notes credit Michael
-Bender; the contiguous records and register program are engineering choices, distinct
-from the original stratified representation.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
-\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{98}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_call}
-\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{123}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_generic}
-\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{138}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_log}
+External client control between calls, argument register writes, and result decoding are not
+charged to individual operations, and deletion and predecessor are not implemented. The
+minimum-excluded variant follows Demaine's exposition, whose notes credit Michael Bender;
+the contiguous records, scratch stack, and register programs are engineering choices,
+distinct from the original stratified
+representation.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{86}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_space_le}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1024}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1047}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1057}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_universe}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{138}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{166}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{177}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{209}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{234}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{245}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{289}{Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{322}{Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{338}{Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_executes_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{558}{Cslib.Algorithms.WordRAM.VanEmdeBoas.instruction_bound_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{602}{Cslib.Algorithms.WordRAM.VanEmdeBoas.client_spec}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{627}{Cslib.Algorithms.WordRAM.VanEmdeBoas.run_initialized}
 \declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Model.lean}{125}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_descendant_read_safe}
 \end{result}
 

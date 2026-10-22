@@ -22,6 +22,7 @@ comes from the execution theorems, not these finite evaluations.
 
 namespace ComplexityTests.VanEmdeBoasRAM
 
+open Cslib
 open Cslib.WordRAM
 open Cslib.Algorithms.Lean.VanEmdeBoas
 open Cslib.Algorithms.WordRAM.VanEmdeBoas
@@ -145,6 +146,127 @@ example : Rep (Tree.empty 1) 8 staleEmptyMemory := by
 example : ((program.eval 8 3 ⟨(caller 255).regs, staleEmptyMemory⟩).map
     (fun yn => yn.1.regs out)) = some 0 := by decide
 
+/-- Initial state for depth-1 initialization at base 8 on hostile nonzero memory (`173`). -/
+def initStart : Data 32 where
+  regs i := if i = root then 8 else if i = depth then 1 else 173
+  mem _ := 173
+
+theorem initStart_bounded : initStart.Bounded 8 := by
+  refine ⟨fun i => ?_, fun a => ?_⟩
+  · simp only [initStart]
+    split_ifs <;> decide
+  · change Fits 8 173
+    decide
+
+/-- Non-vacuous instantiation of `init_executes` on hostile nonzero memory. -/
+theorem fixture_init_executes :
+    ∃ n ≤ 205, Executes 8 (initProgram.program out) ⟨0, initStart⟩ 28 n :=
+  init_executes (base := 8) (d := 1) initStart_bounded (by decide) rfl rfl
+
+private theorem bounded_set {x : Data 32} (hx : x.Bounded 8) (r : Fin 32) {v : ℕ}
+    (hv : Fits 8 v) : (x.set r v).Bounded 8 := by
+  refine ⟨fun i => ?_, hx.2⟩
+  simp only [Data.set_regs, Function.update_apply]
+  split_ifs
+  · exact hv
+  · exact hx.1 i
+
+/-- Non-vacuous instantiation of `insert_executes` on the fixture tree. -/
+theorem fixture_insert_executes :
+    ∃ n ≤ 94, Executes 8 (program.program out)
+      ⟨0, ((caller 2).set tag 0)⟩ 0 n :=
+  insert_executes (key := 2)
+    (bounded_set (caller_bounded 2 (by decide)) tag (by decide))
+    fixture_valid fixture_represented (by decide) (by decide) rfl rfl rfl
+
+/-- Non-vacuous instantiation of `successor_executes` on the fixture tree. -/
+theorem fixture_successor_executes (query : ℕ) (hq : Fits 8 query) :
+    ∃ (z : Data 32) (n : ℕ), n ≤ 152 ∧
+      Executes 8 (program.program out)
+        ⟨0, ((caller query).set stackBase 28).set tag 2⟩ (z.regs out) n ∧
+      (if z.regs found = 0 then none else some (z.regs out)) =
+        fixtureTree.successor query ∧
+      Rep fixtureTree 8 z.mem ∧
+      (∀ a, a < 28 ∨ 32 ≤ a → z.mem a = poisonedMemory a) :=
+  successor_executes (d := 1) (w := 8) (base := 8) (stackBase₀ := 28) (query := query)
+    (bounded_set (bounded_set (caller_bounded query hq) stackBase (by decide)) tag (by decide))
+    fixture_valid fixture_represented (by decide) (by decide) rfl rfl rfl rfl
+
+/-- Initial state for depth-0 initialization at base 8 on hostile nonzero memory (`173`). -/
+private def initStart0 : Data 32 where
+  regs i := if i = root then 8 else if i = depth then 0 else 173
+  mem _ := 173
+
+/-- Concrete evaluation of `initProgram` from nonzero memory (`173`) at depth `0`, checking that
+`out = 13` (`base + span 0`), stale extrema (`mem 9`, `mem 10`) remain `173`, and memory outside
+`[8, 17)` (`mem 7`, `mem 17`) remains `173`. -/
+private def initZeroCheck : Option (ℕ × Bool) := do
+  let (s0, _) ← initProgram.eval 8 10 initStart0
+  let ok := s0.mem 8 == 0 && s0.mem 9 == 173 && s0.mem 10 == 173 &&
+    s0.mem 11 == 0 && s0.mem 12 == 0 && s0.mem 7 == 173 && s0.mem 17 == 173
+  pure (s0.regs out, ok)
+
+example : initZeroCheck = some (13, true) := by decide
+
+/-- Concrete evaluation of native `insert 3` at depth `1` on `staleEmptyMemory` (with nonzero stale
+extrema and `173` outside), checking that the root header becomes `(1, 3, 3)` and outside memory
+remains `173`. -/
+private def insertStaleCheck : Option Bool := do
+  let s0 : Data 32 := ⟨(caller 0).regs, staleEmptyMemory⟩
+  let (s1, _) ← program.eval 8 3 ((s0.set tag 0).set arg 3)
+  pure (s1.mem 8 == 1 && s1.mem 9 == 3 && s1.mem 10 == 3 && s1.mem 7 == 173 && s1.mem 28 == 173)
+
+example : insertStaleCheck = some true := by decide
+
+/-- Native strict-successor query on the represented `fixtureTree` (`{0, 1, 3}`), covering
+in-cluster successor (`0 ↦ some 1`), summary-backed cross-cluster successor (`1 ↦ some 3`),
+gap successor (`2 ↦ some 3`), maximum (`3 ↦ none`), and out-of-universe query (`255 ↦ none`). -/
+private def askFixtureSuccessor (q : ℕ) : Option (Option ℕ × Bool) := do
+  let (r, _) ← program.eval 8 3 (((caller q).set stackBase 28).set tag 2)
+  let ans := if r.regs found = 0 then none else some (r.regs out)
+  pure (ans, r.mem 7 == 173 && r.mem 32 == 0)
+
+example : askFixtureSuccessor 0 = some (some 1, true) := by decide
+example : askFixtureSuccessor 1 = some (some 3, true) := by decide
+example : askFixtureSuccessor 2 = some (some 3, true) := by decide
+example : askFixtureSuccessor 3 = some (none, true) := by decide
+example : askFixtureSuccessor 255 = some (none, true) := by decide
+
+/-- Adaptive client that inserts `1` and `3`, queries `successor 0`, and branches on the answer
+before inserting a third key and querying `successor 1`. -/
+def sampleAdaptiveClient : (spec 1 8).Client (Option ℕ) :=
+  .liftBind (.insert 1) fun _ =>
+    .liftBind (.insert 3) fun _ =>
+      .liftBind (.successor 0) fun s0 =>
+        let nextKey := match s0 with
+          | some 1 => 2
+          | _ => 0
+        .liftBind (.insert nextKey) fun _ =>
+          .liftBind (.successor 1) fun s1 =>
+            .pure s1
+
+/-- Non-vacuous instantiation of `run_initialized` combining `initProgram` with the adaptive
+client `sampleAdaptiveClient` on hostile initial memory. -/
+theorem sampleAdaptiveClient_run_initialized :
+    ∃ x₀ n_init y traces,
+      n_init + 1 ≤ 205 ∧
+      Exec 8 initProgram initStart x₀ n_init ∧
+      SetRep 1 8 28 8 (∅ : Finset ℕ) x₀ ∧
+      Stateful.Executes ((dynamicProgram 1 8).ExecOp 8) sampleAdaptiveClient x₀
+        ((spec 1 8).runClient (∅ : Finset ℕ) sampleAdaptiveClient).1 y traces ∧
+      SetRep 1 8 28 8 ((spec 1 8).runClient (∅ : Finset ℕ) sampleAdaptiveClient).2.1 y ∧
+      Stateful.total DynamicProgram.OperationTrace.instructions traces ≤
+        ((spec 1 8).runClient (∅ : Finset ℕ) sampleAdaptiveClient).2.2.length * 152 ∧
+      (∀ j, j < 8 ∨ 36 ≤ j → y.mem j = initStart.mem j) :=
+  run_initialized (d := 1) (w := 8) (base := 8)
+    initStart_bounded (by decide) rfl rfl sampleAdaptiveClient
+    (by
+      dsimp only [spec, Stateful.Spec.runClient, Stateful.Spec.ValidHistory,
+        sampleAdaptiveClient, OrderedSet.least]
+      refine ⟨by decide, by decide, ?_, by decide, ?_, trivial⟩
+      · change 0 < 2 ^ 8; decide
+      · change 1 < 2 ^ 8; decide)
+
 /--
 info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.member_descent_safe' depends on axioms:
 [propext, Classical.choice, Quot.sound]
@@ -170,5 +292,67 @@ info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_generic' depends on 
 -/
 #guard_msgs in
 #print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_generic
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.insertLoop_spec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.insertLoop_spec
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_call' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_call
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_generic' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_generic
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_loop_spec' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_loop_spec
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_call' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_call
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_executes_generic' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_executes_generic
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.init_call' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.init_call
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_generic' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_generic
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.instruction_bound_log' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.instruction_bound_log
+/--
+info: 'Cslib.Algorithms.WordRAM.VanEmdeBoas.run_initialized' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Algorithms.WordRAM.VanEmdeBoas.run_initialized
 
 end ComplexityTests.VanEmdeBoasRAM
