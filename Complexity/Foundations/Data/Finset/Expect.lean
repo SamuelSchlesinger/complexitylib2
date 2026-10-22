@@ -14,8 +14,10 @@ public import Mathlib.Algebra.Order.Module.Defs
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Data.Finset.Density
 public import Mathlib.Data.Fintype.Powerset
+import Mathlib.Algebra.BigOperators.Balance
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Expect
+import Mathlib.Data.Fintype.Fin
 
 /-!
 # Uniform averages of indicators and second moments
@@ -37,8 +39,11 @@ form with square roots (`Real.expect_mul_le_sqrt_mul_sqrt`, the form for `𝔼` 
 
 The uniform average over a product is the iterated average (`Fintype.expect_prod_type`), so a
 function of some of the coordinates has the same average on the product
-(`Fintype.expect_comp_fst`, `Fintype.expect_comp_snd`), and the uniform average on a finite group
-is translation invariant (`Fintype.expect_add_left`).
+(`Fintype.expect_comp_fst`, `Fintype.expect_comp_snd`), and a function on a product splits
+orthogonally into its fiber averages and a part of average zero on every fiber
+(`Fintype.exists_eq_add_expect_fiber_eq_zero`). The uniform average on a finite group is
+translation invariant (`Fintype.expect_add_left`), and resampling one coordinate of a uniformly
+random tuple leaves its average unchanged (`Fintype.expect_expect_update`).
 
 ## Main results
 
@@ -46,14 +51,21 @@ is translation invariant (`Fintype.expect_add_left`).
 * `Finset.prod_filter_mem_eq_prod_filter_notMem`: the sets containing an element are the sets
   avoiding it, with the element inserted.
 * `Real.expect_mul_le_sqrt_mul_sqrt`: the Cauchy–Schwarz inequality for averages.
-* `Fintype.expect_prod_type`: the average over a product is the iterated average.
+* `Fintype.expect_prod_type`, `Fin.expect_univ_cons`: the average over a product or non-empty tuple
+  type is the iterated average.
 * `Fintype.expect_comp_fst`, `Fintype.expect_comp_snd`, `Fintype.expect_comp_fst_snd_fst`: a
   function of some of the coordinates has the same average on the product.
-* `Fintype.expect_add_left`: the uniform average on a finite group is translation invariant.
+* `Fintype.expect_unique`, `Fintype.expect_bool`: averages on `Unique` types and `Bool`.
+* `Fintype.expect_add_left`, `Fintype.expect_expect_update`: translation and coordinate-resampling
+  invariance of uniform averages.
+* `Fintype.expect_sub_expect_fiber`, `Fintype.expect_add_sq_of_expect_fiber_eq_zero`,
+  `Fintype.exists_eq_add_expect_fiber_eq_zero`: orthogonal fiber decomposition of second moments on
+  product types.
 * `Fintype.expect_boole`: the average of an indicator is a density.
 * `Fintype.mul_dens_filter_le_expect`: Markov's inequality for a uniform average.
 * `Fintype.sq_expect_le_dens_mul_expect_sq`: the second moment method for a uniform average.
-* `Fintype.expect_add_sq_le`: the triangle inequality for `√(𝔼 f²)`, squared.
+* `Fintype.expect_add_sq_le`, `Fintype.expect_sq_le_of_expect_mul_le`: second-moment bounds from
+  triangle and Cauchy–Schwarz inequalities.
 -/
 
 @[expose] public section
@@ -129,7 +141,77 @@ theorem expect_add_left {G : Type*} [AddGroup G] [Fintype G] (f : G → M) (x : 
     𝔼 y, f (x + y) = 𝔼 y, f y :=
   Fintype.expect_equiv (Equiv.addLeft x) _ _ fun _ ↦ rfl
 
+/-- The uniform average over a type with a unique element is the value at `default`. -/
+theorem expect_unique [Unique α] (f : α → M) : 𝔼 a, f a = f default := by
+  rw [univ_unique, expect_singleton]
+
+/-- Resampling one coordinate of a uniformly random function keeps it uniformly random. -/
+theorem expect_expect_update [DecidableEq ι] [Nonempty α] (F : (ι → α) → M) (i : ι) :
+    𝔼 s, 𝔼 a, F (Function.update s i a) = 𝔼 s, F s := by
+  let e : Equiv.Perm ((ι → α) × α) :=
+    Function.Involutive.toPerm (fun p ↦ (Function.update p.1 i p.2, p.1 i)) fun p ↦ by simp
+  calc 𝔼 s, 𝔼 a, F (Function.update s i a) = 𝔼 p : (ι → α) × α, F (e p).1 :=
+        (Fintype.expect_prod_type (fun p : (ι → α) × α ↦ F (e p).1)).symm
+    _ = 𝔼 p : (ι → α) × α, F p.1 := Fintype.expect_equiv e _ _ fun _ ↦ rfl
+    _ = 𝔼 s, F s := Fintype.expect_comp_fst F
+
 end Module
+
+/-- The uniform average on `Bool` is the midpoint of the two values. -/
+theorem expect_bool [Semifield 𝕜] [CharZero 𝕜] (f : Bool → 𝕜) :
+    𝔼 b, f b = (f false + f true) / 2 := by
+  rw [Fintype.expect_eq_sum_div_card, Fintype.sum_bool, Fintype.card_bool, Nat.cast_ofNat,
+    add_comm]
+
+/-- Subtracting from a function its averages over the fibers `{a} × β` leaves averages zero over
+the fibers. -/
+theorem expect_sub_expect_fiber {α β M : Type*} [Fintype β] [AddCommGroup M] [Module ℚ≥0 M]
+    (f : α × β → M) (a : α) :
+    𝔼 b, (f (a, b) - 𝔼 b', f (a, b')) = 0 :=
+  Fintype.expect_balance fun b ↦ f (a, b)
+
+/-- **Pythagoras' theorem** for the splitting of a function on `α × β` into a function of the first
+coordinate and a function of average zero over every fiber `{a} × β`. -/
+theorem expect_add_sq_of_expect_fiber_eq_zero {α β : Type*} [Fintype α] [Fintype β] (φ : α → ℝ)
+    {g : α × β → ℝ} (hg : ∀ a, 𝔼 b, g (a, b) = 0) :
+    𝔼 p, (φ p.1 + g p) ^ 2 = 𝔼 p : α × β, φ p.1 ^ 2 + 𝔼 p, g p ^ 2 := by
+  have h : 𝔼 p, φ p.1 * g p = 0 := by
+    simp only [Fintype.expect_prod_type, ← mul_expect, hg, mul_zero, expect_const_zero]
+  simp only [add_sq, expect_add_distrib, mul_assoc, ← mul_expect, h, mul_zero, add_zero]
+
+/-- Every function on `α × β` is a function of the first coordinate, its averages over the fibers
+`{a} × β`, plus a function of average zero over every fiber, and the second moments add up. -/
+theorem exists_eq_add_expect_fiber_eq_zero {α β : Type*} [Fintype α] [Fintype β] [Nonempty β]
+    (f : α × β → ℝ) :
+    ∃ (f₁ : α → ℝ) (f₂ : α × β → ℝ), f = (fun p ↦ f₁ p.1 + f₂ p) ∧
+      (∀ a, 𝔼 b, f₂ (a, b) = 0) ∧ 𝔼 a, f₁ a = 𝔼 p, f p ∧
+      𝔼 p, f p ^ 2 = 𝔼 a, f₁ a ^ 2 + 𝔼 p, f₂ p ^ 2 := by
+  have hf : f = fun p ↦ 𝔼 b, f (p.1, b) + (f p - 𝔼 b, f (p.1, b)) :=
+    funext fun p ↦ (add_sub_cancel _ _).symm
+  refine ⟨fun a ↦ 𝔼 b, f (a, b), fun p ↦ f p - 𝔼 b, f (p.1, b), hf, expect_sub_expect_fiber f,
+    (Fintype.expect_prod_type f).symm, ?_⟩
+  calc 𝔼 p, f p ^ 2 = 𝔼 p, (𝔼 b, f (p.1, b) + (f p - 𝔼 b, f (p.1, b))) ^ 2 := by
+        simp only [add_sub_cancel]
+    _ = 𝔼 p : α × β, (𝔼 b, f (p.1, b)) ^ 2 + 𝔼 p, (f p - 𝔼 b, f (p.1, b)) ^ 2 :=
+        expect_add_sq_of_expect_fiber_eq_zero (fun a ↦ 𝔼 b, f (a, b)) (expect_sub_expect_fiber f)
+    _ = _ := by rw [expect_comp_fst (fun a ↦ (𝔼 b, f (a, b)) ^ 2)]
+
+/-- If `𝔼 u² ≤ c √(𝔼 u²) √(𝔼 w²)` then `𝔼 u² ≤ c² 𝔼 w²`. -/
+theorem expect_sq_le_of_expect_mul_le {u w : ι → ℝ} {c : ℝ}
+    (h : 𝔼 i, u i * u i ≤ c * (√(𝔼 i, u i ^ 2) * √(𝔼 i, w i ^ 2))) :
+    𝔼 i, u i ^ 2 ≤ c ^ 2 * 𝔼 i, w i ^ 2 := by
+  have hu : 0 ≤ 𝔼 i, u i ^ 2 := expect_nonneg fun i _ ↦ sq_nonneg (u i)
+  have hw : 0 ≤ 𝔼 i, w i ^ 2 := expect_nonneg fun i _ ↦ sq_nonneg (w i)
+  simp only [← sq] at h
+  rw [← Real.sq_sqrt hu, ← Real.sq_sqrt hw, ← mul_pow]
+  rcases (Real.sqrt_nonneg (𝔼 i, u i ^ 2)).eq_or_lt with h0 | hpos
+  · rw [← h0, zero_pow two_ne_zero]
+    positivity
+  · refine pow_le_pow_left₀ hpos.le ?_ 2
+    refine le_of_mul_le_mul_left ?_ hpos
+    calc √(𝔼 i, u i ^ 2) * √(𝔼 i, u i ^ 2) = 𝔼 i, u i ^ 2 := Real.mul_self_sqrt hu
+      _ ≤ _ := h
+      _ = _ := by ring
 
 /-- The uniform average of the indicator of `p` is the density of the set where `p` holds. -/
 theorem expect_boole [Semifield 𝕜] [CharZero 𝕜] (p : ι → Prop) [DecidablePred p] :
@@ -194,3 +276,17 @@ theorem expect_add_sq_le {X Y : ι → 𝕜} {a b α β A : 𝕜} (ha : 0 ≤ a)
 end LinearOrderedField
 
 end Fintype
+
+namespace Fin
+
+open Finset
+
+/-- Splitting off the first coordinate of a tuple on `Fin (n + 1)`: the uniform average over
+`(i : Fin (n + 1)) → α i` is the iterated average over the head `α 0` and the tail. -/
+theorem expect_univ_cons {n : ℕ} {α : Fin (n + 1) → Type*} [∀ i, Fintype (α i)]
+    {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (f : ((i : Fin (n + 1)) → α i) → M) :
+    𝔼 x, f x = 𝔼 a, 𝔼 y, f (Fin.cons a y) := by
+  rw [← Fintype.expect_equiv (Fin.consEquiv α) (fun p ↦ f (Fin.cons p.1 p.2)) f (fun _ ↦ rfl),
+    Fintype.expect_prod_type]
+
+end Fin

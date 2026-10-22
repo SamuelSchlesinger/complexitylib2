@@ -50,10 +50,6 @@ open Probability Turing.MultiTapeTM
 
 local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
 
-private theorem probability_not (p : ProbComp Bool) : Pr[Bool.not <$> p] = 1 - Pr[p] := by
-  rw [ProbComp.eval_map, Game.succProbability_not, Game.failProbability_eq,
-    NNReal.coe_sub (Game.succProbability_le_one _), NNReal.coe_one]
-
 /-- Predict a trial bit on acceptance and its complement on rejection. -/
 def trialPredictor (test : Bool → ProbComp Bool) (trial : Bool) : ProbComp Bool :=
   (fun accept => if accept then trial else !trial) <$> test trial
@@ -72,13 +68,15 @@ theorem trialPredictor_gap (test : Bool → ProbComp Bool) (truth : Bool) :
   | false =>
     simp only [trialPredictor, Bool.not_false, Bool.not_true, beq_false,
       Functor.map_map, Bool.ite_true_right, Bool.ite_false_right, Bool.decide_eq_true,
-      Bool.or_false, Bool.and_true, Bool.not_not, id_map', probability_not]
+      Bool.or_false, Bool.and_true, Bool.not_not, id_map',
+      Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, ProbComp.probability_not]
     ring
   | true =>
     simp only [beq_true, trialPredictor, Bool.not_false, Bool.ite_true_right,
       Bool.decide_eq_true, Bool.or_false, Functor.map_map, Bool.not_true, Bool.ite_false_right,
-      Bool.and_true, id_map']
-    rw [probability_not]
+      Bool.and_true, id_map',
+      Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
+    rw [show (fun accept => !accept) = Bool.not from rfl, ProbComp.probability_not]
     ring
 
 /-- Randomizing the trial averages the two fixed predictors' correctness probabilities. -/
@@ -133,14 +131,13 @@ theorem probability_calibratedTest (real ideal challenge : ProbComp Bool) :
   have htotal := PMF.sum_toReal (ProbComp.eval direction)
   have hbias := bitPredictor_bias (fun trial => if trial then real else ideal) true
   simp only [Fintype.sum_bool] at htotal
-  simp only [beq_true, id_map', ite_true, Bool.false_eq_true, ite_false] at hbias
+  simp only [beq_true, id_map', ite_true, Bool.false_eq_true, ite_false,
+    Game.succProbability, ENNReal.coe_toNNReal_eq_toReal] at hbias
   simp only [calibratedTest, Game.coe_succProbability_eval_bind, Fintype.sum_bool, beq_false,
-    beq_true, id_map', probability_not]
-  change (ProbComp.eval direction true).toReal * Pr[challenge] +
-    (ProbComp.eval direction false).toReal * (1 - Pr[challenge]) = _
-  change (ProbComp.eval direction true).toReal - 1 / 2 = _ at hbias
-  linear_combination (1 - Pr[challenge]) * htotal +
-    (2 * Pr[challenge] - 1) * hbias
+    beq_true, id_map']
+  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, ProbComp.probability_not]
+  linear_combination (1 - (ProbComp.eval challenge true).toReal) * htotal +
+    (2 * (ProbComp.eval challenge true).toReal - 1) * hbias
 
 /-- The same calibration on both sides turns a possibly negative gap into its square. -/
 theorem calibratedTest_gap (real ideal : ProbComp Bool) :

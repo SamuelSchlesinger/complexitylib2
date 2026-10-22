@@ -223,13 +223,6 @@ private theorem bitsFlatMapWithInput {β : Type} {encB : β ↪ List Bool}
     bitsFlatten (mapWithInput hlist hf)
 
 @[local fun_prop]
-private theorem unary_decide_eq {a b : α → ℕ}
-    (ha : ComputableTidilyInPolyTime a encIn encUnary)
-    (hb : ComputableTidilyInPolyTime b encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => decide (a x = b x)) encIn encBool :=
-  (decide_eq encUnary).comp (ha.prod hb)
-
-@[local fun_prop]
 private theorem intBin_isZero' {z : α → ℤ}
     (hz : ComputableTidilyInPolyTime z encIn encIntBin) :
     ComputableTidilyInPolyTime (fun x => decide (z x = 0)) encIn encBool :=

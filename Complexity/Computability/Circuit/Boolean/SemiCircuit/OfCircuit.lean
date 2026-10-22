@@ -117,7 +117,7 @@ theorem wireName_mem_live (C : Circuit (fullSignature 2 Bool) n 1) (w : Wire n C
 theorem exists_eq_add_of_mem_gates {C : Circuit (fullSignature 2 Bool) n 1} {J : ℕ}
     (hJ : J ∈ (ofCircuit C).gates) : ∃ k : Fin C.size, J = n + k := by
   simp only [ofCircuit, Finset.mem_Ico] at hJ
-  exact ⟨⟨J - n, by omega⟩, by simp; omega⟩
+  exact ⟨⟨J - n, by omega⟩, by dsimp only; omega⟩
 
 /-- The semi-circuit of a circuit is well formed. -/
 theorem wellFormed_ofCircuit (C : Circuit (fullSignature 2 Bool) n 1) :

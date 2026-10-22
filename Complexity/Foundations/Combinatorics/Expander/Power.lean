@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.Expander.Basic
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
@@ -135,9 +136,8 @@ theorem walk_pow (t : ℕ) : (G.pow t).walk = G.walk ^ t := by
     rw [pow_succ', Module.End.mul_apply, ← ih, walk_apply, walk_apply]
     simp only [neighbor_pow_succ, walk_apply]
     -- a tuple of `t + 1` labels is a first label and a tuple of `t` labels
-    refine (Fintype.expect_equiv (Fin.consEquiv fun _ ↦ D).symm _
-      (fun p ↦ f ((G.pow t).neighbor (G.neighbor v p.1) p.2)) fun _ ↦ rfl).trans ?_
-    rw [← univ_product_univ, expect_product]
+    rw [Fin.expect_univ_cons]
+    rfl
 
 variable [Fintype V]
 

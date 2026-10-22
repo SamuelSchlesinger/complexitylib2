@@ -147,7 +147,8 @@ theorem accepted_or_pending (m : Fin (2 ^ D)) :
     (∃ m', m = accepted hk m') ∨ ∃ i, m = pending hk i := by
   rcases Nat.lt_or_ge m.val a with h | h
   · exact Or.inl ⟨⟨m.val, h⟩, Fin.ext rfl⟩
-  · exact Or.inr ⟨⟨m.val - a, by have := m.isLt; lia⟩, Fin.ext (by simp [pending]; lia)⟩
+  · exact Or.inr ⟨⟨m.val - a, by have := m.isLt; lia⟩,
+      Fin.ext (by rw [val_pending]; dsimp only; lia)⟩
 
 /-- A phase keeps the accepted records. -/
 theorem next_accepted (bits : K ≃+ BitString b) (scalar : Fin s ≃ {c : K // c ≠ 0})

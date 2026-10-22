@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Existence
 public import Complexity.Foundations.Combinatorics.Expander.Tower
+import Complexity.Foundations.BooleanAnalysis.Bernoulli
 
 /-!
 # A base graph for the zig-zag tower
@@ -61,17 +62,6 @@ without choices, while the base is `expander`, chosen by a counting argument.
 
 namespace Cslib.RotationMap
 
-/-- `(1 - x) ^ n (1 + n x) ≤ 1` for `0 ≤ x ≤ 1`: by Bernoulli's inequality `1 + n x ≤ (1 + x) ^ n`,
-the product is at most `(1 - x) ^ n (1 + x) ^ n = (1 - x ^ 2) ^ n ≤ 1`. -/
-private theorem one_sub_pow_mul_one_add_mul_le_one {x : ℝ} (hx₀ : 0 ≤ x) (hx₁ : x ≤ 1) (n : ℕ) :
-    (1 - x) ^ n * (1 + n * x) ≤ 1 :=
-  calc (1 - x) ^ n * (1 + n * x) ≤ (1 - x) ^ n * (1 + x) ^ n := by
-        have := sub_nonneg.2 hx₁
-        gcongr
-        exact one_add_mul_le_pow (by linarith) n
-    _ = (1 - x ^ 2) ^ n := by rw [← mul_pow]; ring
-    _ ≤ 1 := pow_le_one₀ (by nlinarith) (by nlinarith)
-
 variable (t : ℕ)
 
 /-- A base graph for the zig-zag tower: the `t`-th power of the `120`-regular multigraph
@@ -94,7 +84,7 @@ variable {t}
 theorem spectralExpansion_zigzagTowerBase_le_one_div_five (ht : 1440000 ≤ t) :
     (zigzagTowerBase t).spectralExpansion ≤ 1 / 5 := by
   refine (spectralExpansion_zigzagTowerBase_le t).trans ?_
-  have h := one_sub_pow_mul_one_add_mul_le_one (x := 1 / 360000) (by norm_num) (by norm_num) t
+  have h := Cslib.BitString.one_sub_pow_mul_one_add_mul_le_one (p := 1 / 360000) (by norm_num) t
   have ht' : (1440000 : ℝ) ≤ t := by exact_mod_cast ht
   have h₀ : 0 ≤ (1 - 1 / 360000 : ℝ) ^ t := pow_nonneg (by norm_num) t
   nlinarith

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
+import Complexity.Foundations.Data.Finset.Quantile
 
 /-!
 # Median-cut and coordinate-split restrictions for weighted threshold programs
@@ -124,10 +125,7 @@ theorem card_lt_or_card_lt_of_rectangleFree {f : Cslib.BooleanFunction n} {K : �
 
 /-! ### Weighted sums and gluing -/
 
-private def weightedSum (w : Fin n → ℝ) (x : Fin n → Bool) : ℝ :=
-  ∑ i, w i * (x i).toNat
-
-private theorem weightedSum_glue (U : Finset (Fin n)) (w : Fin n → ℝ)
+theorem weightedSum_glue (U : Finset (Fin n)) (w : Fin n → ℝ)
     (p : U → Bool) (q : ↥Uᶜ → Bool) :
     weightedSum w (glue U p q) =
       weightedSum w (glue U p fun _ => false) +
@@ -167,30 +165,10 @@ at least half of `P` satisfies `f x ≤ μ` and at least half satisfies `μ ≤ 
 theorem exists_median {α : Type*} (P : Finset α) (f : α → ℝ) :
     ∃ μ : ℝ, P.card ≤ 2 * (P.filter fun p => f p ≤ μ).card ∧
       P.card ≤ 2 * (P.filter fun p => μ ≤ f p).card := by
-  classical
-  rcases P.eq_empty_or_nonempty with hP | hP
-  · exact ⟨0, by simp [hP]⟩
-  let L := P.filter fun p => P.card ≤ 2 * (P.filter fun p' => f p' ≤ f p).card
-  have hL : L.Nonempty := by
-    obtain ⟨pm, hpm, hmax⟩ := P.exists_max_image f hP
-    refine ⟨pm, mem_filter.mpr ⟨hpm, ?_⟩⟩
-    rw [filter_true_of_mem hmax]
-    omega
-  obtain ⟨p₀, hp₀, hmin⟩ := L.exists_min_image f hL
-  obtain ⟨hp₀P, hp₀c⟩ := mem_filter.mp hp₀
-  refine ⟨f p₀, hp₀c, ?_⟩
-  by_contra hlt
-  push Not at hlt
-  have hsplit := card_filter_add_card_filter_not (s := P) fun p => f p₀ ≤ f p
-  have hne : (P.filter fun p => ¬ f p₀ ≤ f p).Nonempty := by
-    rw [← card_pos]
-    omega
-  obtain ⟨p₁, hp₁, hmax₁⟩ := (P.filter fun p => ¬ f p₀ ≤ f p).exists_max_image f hne
-  obtain ⟨hp₁P, hp₁lt⟩ := mem_filter.mp hp₁
-  have hsub : (P.filter fun p => ¬ f p₀ ≤ f p) ⊆ P.filter fun p' => f p' ≤ f p₁ := fun p hp =>
-    mem_filter.mpr ⟨(mem_filter.mp hp).1, hmax₁ p hp⟩
-  have hcard := card_le_card hsub
-  exact hp₁lt (hmin p₁ (mem_filter.mpr ⟨hp₁P, by omega⟩))
+  rcases P.eq_empty_or_nonempty with rfl | hP
+  · exact ⟨0, by simp⟩
+  · obtain ⟨p, _, hlo, hhi⟩ := P.exists_median hP f
+    exact ⟨f p, hlo, hhi⟩
 
 private theorem exists_half {α : Type*} (P : Finset α) (f : α → Bool) :
     ∃ b : Bool, P.card ≤ 2 * (P.filter fun p => f p = b).card := by

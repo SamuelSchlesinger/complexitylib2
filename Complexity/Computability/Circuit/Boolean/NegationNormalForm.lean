@@ -138,10 +138,13 @@ theorem Formula.depth_nnf_le (F : Formula signature n) (b : Bool) :
     | const c => simp [nnf, Formula.const]
     | not => simpa [nnf] using ih 0 !b
     | and | or =>
-      have h₀ := ih 0 b
-      have h₁ := ih 1 b
+      have h₀ := (ih 0 b).trans (Nat.add_le_add_right
+        (Finset.le_sup (f := fun j => (args j).depthWith binaryCost) (Finset.mem_univ 0)) 1)
+      have h₁ := (ih 1 b).trans (Nat.add_le_add_right
+        (Finset.le_sup (f := fun j => (args j).depthWith binaryCost) (Finset.mem_univ 1)) 1)
       cases b <;> simp only [nnf, ← depthWith_one, depthWith_and, depthWith_or] <;>
-        simp [Fin.univ_succ] at h₀ h₁ ⊢ <;> omega
+        simp only [depthWith_one, depthWith_gate, binaryCost_and, binaryCost_or, Pi.one_apply] <;>
+        exact Nat.add_le_add_right (max_le h₀ h₁) 1
 
 /-- Every Boolean function has a De Morgan formula whose depth, counting every gate, is at most
 its formula depth plus one. -/

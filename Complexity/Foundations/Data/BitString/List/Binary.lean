@@ -98,7 +98,7 @@ theorem binaryValue_lt_two_pow (word : List Bool) : binaryValue word < 2 ^ word.
   | nil => simp [binaryValue]
   | append_singleton word bit ih =>
     rw [binaryValue_snoc, List.length_append, List.length_singleton, Nat.pow_succ]
-    cases bit <;> simp <;> omega
+    cases bit <;> simp only [Bool.toNat_false, Bool.toNat_true] <;> omega
 
 /-- Leading zeros do not change the represented number. -/
 theorem binaryValue_replicate_false_append (n : ℕ) (word : List Bool) :

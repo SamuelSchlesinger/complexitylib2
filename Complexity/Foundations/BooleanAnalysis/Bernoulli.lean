@@ -378,7 +378,8 @@ theorem bernoulliAverage_union (p q : ℝ) (f : (ι → Bool) → ℝ) :
   simp only [bernoulliAverage_const] at h
   rw [bernoulliAverage_bernoulliAverage_eq_sum p q (fun a b => a || b) f, h]
   refine sum_congr rfl fun a _ => congrArg _ (prod_congr rfl fun i _ => ?_)
-  cases a i <;> simp <;> ring
+  cases a i <;> simp only [Bool.or_true, Bool.or_false, Bool.false_eq_true, ↓reduceIte,
+    mul_zero, add_zero, zero_add] <;> ring
 
 /-- Increasing the sampling rate decreases the expectation of an antitone function. -/
 theorem bernoulliAverage_bias_antitone {f : (ι → Bool) → ℝ} (hf : Antitone f)

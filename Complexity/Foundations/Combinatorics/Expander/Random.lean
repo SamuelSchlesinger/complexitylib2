@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.Fintype.Perm
+import Complexity.Foundations.Data.Nat.Choose
 import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.Data.Fintype.CardEmbedding
@@ -137,24 +138,6 @@ private theorem choose_mul_two_pow_le (s k : ℕ) : s.choose k * 2 ^ k ≤ 3 ^ s
   · rw [Nat.choose_eq_zero_of_lt hk, zero_mul]
     exact Nat.zero_le _
 
-/-- Descending factorials compare like powers: `s^{(k)} / n^{(k)} ≤ (s / n)^k` for `s ≤ n`. -/
-private theorem descFactorial_mul_pow_le {s n : ℕ} (h : s ≤ n) (k : ℕ) :
-    s.descFactorial k * n ^ k ≤ s ^ k * n.descFactorial k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    have hk : (s - k) * n ≤ s * (n - k) := by
-      rcases le_or_gt k s with hks | hks
-      · zify [hks, hks.trans h]
-        nlinarith
-      · rw [Nat.sub_eq_zero_of_le hks.le, zero_mul]
-        exact Nat.zero_le _
-    rw [Nat.descFactorial_succ, Nat.descFactorial_succ, pow_succ, pow_succ]
-    calc (s - k) * s.descFactorial k * (n ^ k * n)
-        = s.descFactorial k * n ^ k * ((s - k) * n) := by ring
-      _ ≤ s ^ k * n.descFactorial k * (s * (n - k)) := Nat.mul_le_mul ih hk
-      _ = s ^ k * s * ((n - k) * n.descFactorial k) := by ring
-
 /-- A uniformly random permutation of an `n`-element type keeps at least `k` points of an
 `s`-element set `S` inside `S` with probability at most `3^s (s / 2n)^k`. -/
 private theorem card_filter_mul_pow_le (S : Finset V) {k : ℕ} (hk : k ≤ Fintype.card V) :
@@ -169,7 +152,7 @@ private theorem card_filter_mul_pow_le (S : Finset V) {k : ℕ} (hk : k ≤ Fint
         ring
     _ ≤ 3 ^ #S * (#S ^ k * n.descFactorial k) * (n - k)! :=
         Nat.mul_le_mul_right _ (Nat.mul_le_mul (choose_mul_two_pow_le _ _)
-          (descFactorial_mul_pow_le (card_le_univ S) k))
+          (Nat.descFactorial_mul_pow_le (card_le_univ S) k))
     _ = 3 ^ #S * #S ^ k * ((n - k)! * n.descFactorial k) := by ring
     _ = 3 ^ #S * #S ^ k * n ! := by rw [Nat.factorial_mul_descFactorial hk]
 

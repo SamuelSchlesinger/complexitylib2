@@ -362,7 +362,8 @@ private theorem glue_take_drop (p : V × (Fin t → D)) (i : Fin t) :
       Fin.append_left, Fin.snoc_last, Fin.ext h]
   · have := j.isLt
     rw [show j.cast (Nat.add_sub_of_le i.isLt).symm =
-        Fin.natAdd (i + 1) ⟨j - (i + 1), by omega⟩ from Fin.ext (by simp; omega),
+        Fin.natAdd (i + 1) ⟨j - (i + 1), by omega⟩ from
+        Fin.ext (by simp only [Fin.val_cast, Fin.val_natAdd]; omega),
       Fin.append_right, walkDrop_snd_apply]
     exact congrArg p.2 (Fin.ext (by simp only; omega))
 
@@ -498,8 +499,7 @@ theorem expect_walkDart_mk (v : V) (i : Fin t) (f : V × D → ℝ) :
   | zero => exact i.elim0
   | succ t ih =>
     -- a tuple of `t + 1` labels is a first label and a tuple of `t` labels
-    rw [← Fintype.expect_equiv (Fin.consEquiv fun _ ↦ D)
-      (fun x ↦ f (G.walkDart (v, Fin.cons x.1 x.2) i)) _ fun _ ↦ rfl, Fintype.expect_prod_type]
+    rw [Fin.expect_univ_cons]
     induction i using Fin.cases with
     | zero =>
       simp only [walkDart, Fin.val_zero, walkAt_zero, Fin.cons_zero, Fintype.expect_const,

@@ -29,11 +29,14 @@ branch at `5ff69ca`.
 
 ## Main results
 
-* `card_mul_card_filter_eq_of_shift`, `dens_filter_eq_of_shift`: translations force equal fibers.
-* `PMF.uniformOfFintype_map_of_shift`, `PMF.uniformOfFintype_map_addHom`: uniformity from
-  translations, in particular for surjective additive homomorphisms.
-* `PMF.uniformOfFintype_map_sum`, `PMF.uniformOfFintype_map_sum_pair`: subset sums are uniform
-  and pairwise independent.
+* `Cslib.Probability.card_mul_card_filter_eq_of_shift`,
+  `Cslib.Probability.dens_filter_eq_of_shift`: translations force equal fibers.
+* `Cslib.Probability.PMF.uniformOfFintype_map_of_shift`,
+  `Cslib.Probability.PMF.uniformOfFintype_map_addHom`: uniformity from translations, in particular
+  for surjective additive homomorphisms.
+* `Cslib.Probability.PMF.uniformOfFintype_map_sum`,
+  `Cslib.Probability.PMF.uniformOfFintype_map_sum_pair`: subset sums are uniform and pairwise
+  independent.
 
 ## References
 

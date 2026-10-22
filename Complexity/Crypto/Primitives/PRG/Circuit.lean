@@ -153,17 +153,6 @@ section Independent
 variable {ι α β : Type*} [Fintype ι] [DecidableEq ι] [Fintype α] [Nonempty α] [Fintype β]
   [Nonempty β]
 
-omit [Fintype β] [Nonempty β] in
-/-- Resampling one coordinate of a uniformly random function keeps it uniformly random. -/
-private theorem expect_expect_update (F : (ι → α) → ℝ) (i : ι) :
-    𝔼 s, 𝔼 a, F (update s i a) = 𝔼 s, F s := by
-  let e : Equiv.Perm ((ι → α) × α) :=
-    Function.Involutive.toPerm (fun p => (update p.1 i p.2, p.1 i)) fun p => by simp
-  calc 𝔼 s, 𝔼 a, F (update s i a) = 𝔼 p : (ι → α) × α, F (e p).1 :=
-        (Fintype.expect_prod_type (fun p : (ι → α) × α => F (e p).1)).symm
-    _ = 𝔼 p : (ι → α) × α, F p.1 := Fintype.expect_equiv e _ _ fun _ => rfl
-    _ = 𝔼 s, F s := Fintype.expect_comp_fst F
-
 /-- **The hybrid argument for independent samples.** Let `T` be a statistic of `ι`-indexed tuples
 in `β`. If, with all other coordinates fixed, replacing `g a` for a uniform `a` by a uniform `b` at
 one coordinate changes the average of `T` by at most `ε`, then replacing every coordinate changes
@@ -178,7 +167,7 @@ theorem abs_expect_comp_sub_expect_le (g : α → β) (T : (ι → β) → ℝ) 
   have hstep (i : ι) (S : Finset ι) (hi : i ∉ S) : |H S - H (insert i S)| ≤ ε := by
     have hS : H S = 𝔼 s, 𝔼 y, 𝔼 a, T (update (v S s y) i (g a)) := by
       change 𝔼 s, 𝔼 y, T (v S s y) = _
-      rw [← expect_expect_update (fun s => 𝔼 y, T (v S s y)) i]
+      rw [← Fintype.expect_expect_update (fun s => 𝔼 y, T (v S s y)) i]
       refine expect_congr rfl fun s _ => ?_
       rw [expect_comm]
       refine expect_congr rfl fun y _ => expect_congr rfl fun a _ => congrArg T ?_
@@ -189,7 +178,7 @@ theorem abs_expect_comp_sub_expect_le (g : α → β) (T : (ι → β) → ℝ) 
     have hS' : H (insert i S) = 𝔼 s, 𝔼 y, 𝔼 b, T (update (v S s y) i b) := by
       change 𝔼 s, 𝔼 y, T (v (insert i S) s y) = _
       refine expect_congr rfl fun s _ => ?_
-      rw [← expect_expect_update (fun y => T (v (insert i S) s y)) i]
+      rw [← Fintype.expect_expect_update (fun y => T (v (insert i S) s y)) i]
       refine expect_congr rfl fun y _ => expect_congr rfl fun b _ => congrArg T ?_
       funext j
       by_cases hj : j = i

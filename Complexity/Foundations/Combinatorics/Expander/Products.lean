@@ -10,7 +10,6 @@ module
 public import Complexity.Foundations.Combinatorics.Expander.Loops
 import Complexity.Foundations.Combinatorics.Expander.Power
 import Complexity.Foundations.Data.Finset.Expect
-import Mathlib.Algebra.BigOperators.Balance
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Analysis.Real.Sqrt
 
@@ -84,70 +83,17 @@ product is `(B̃ + Ã) / 2`, and the zig-zag walk `B̃ Ã B̃` is one of the eig
 namespace Cslib.RotationMap
 
 open Finset
-open Fintype (expect_comp_fst expect_comp_snd)
+open Fintype (expect_comp_fst expect_comp_snd expect_sub_expect_fiber
+  expect_add_sq_of_expect_fiber_eq_zero exists_eq_add_expect_fiber_eq_zero
+  expect_sq_le_of_expect_mul_le)
 open Real (expect_mul_le_sqrt_mul_sqrt)
 open scoped BigOperators
-
-section Expect
-
-variable {ι α β : Type*}
-
-/-- Subtracting from a function its averages over the fibers `{a} × β` leaves averages zero over
-the fibers. -/
-private theorem expect_sub_expect_fiber [Fintype β] (f : α × β → ℝ) (a : α) :
-    𝔼 b, (f (a, b) - 𝔼 b', f (a, b')) = 0 :=
-  Fintype.expect_balance fun b ↦ f (a, b)
-
-/-- **Pythagoras' theorem** for the splitting of a function on `α × β` into a function of the first
-coordinate and a function of average zero over every fiber `{a} × β`. -/
-private theorem expect_add_sq_of_expect_fiber_eq_zero [Fintype α] [Fintype β] (φ : α → ℝ)
-    {g : α × β → ℝ} (hg : ∀ a, 𝔼 b, g (a, b) = 0) :
-    𝔼 p, (φ p.1 + g p) ^ 2 = 𝔼 p : α × β, φ p.1 ^ 2 + 𝔼 p, g p ^ 2 := by
-  have h : 𝔼 p, φ p.1 * g p = 0 := by
-    simp only [Fintype.expect_prod_type, ← mul_expect, hg, mul_zero, expect_const_zero]
-  simp only [add_sq, expect_add_distrib, mul_assoc, ← mul_expect, h, mul_zero, add_zero]
-
-/-- Every function on `α × β` is a function of the first coordinate, its averages over the fibers
-`{a} × β`, plus a function of average zero over every fiber, and the second moments add up. -/
-private theorem exists_eq_add_expect_fiber_eq_zero [Fintype α] [Fintype β] [Nonempty β]
-    (f : α × β → ℝ) :
-    ∃ (f₁ : α → ℝ) (f₂ : α × β → ℝ), f = (fun p ↦ f₁ p.1 + f₂ p) ∧
-      (∀ a, 𝔼 b, f₂ (a, b) = 0) ∧ 𝔼 a, f₁ a = 𝔼 p, f p ∧
-      𝔼 p, f p ^ 2 = 𝔼 a, f₁ a ^ 2 + 𝔼 p, f₂ p ^ 2 := by
-  have hf : f = fun p ↦ 𝔼 b, f (p.1, b) + (f p - 𝔼 b, f (p.1, b)) :=
-    funext fun p ↦ (add_sub_cancel _ _).symm
-  refine ⟨fun a ↦ 𝔼 b, f (a, b), fun p ↦ f p - 𝔼 b, f (p.1, b), hf, expect_sub_expect_fiber f,
-    (Fintype.expect_prod_type f).symm, ?_⟩
-  calc 𝔼 p, f p ^ 2 = 𝔼 p, (𝔼 b, f (p.1, b) + (f p - 𝔼 b, f (p.1, b))) ^ 2 := by
-        simp only [add_sub_cancel]
-    _ = 𝔼 p : α × β, (𝔼 b, f (p.1, b)) ^ 2 + 𝔼 p, (f p - 𝔼 b, f (p.1, b)) ^ 2 :=
-        expect_add_sq_of_expect_fiber_eq_zero (fun a ↦ 𝔼 b, f (a, b)) (expect_sub_expect_fiber f)
-    _ = _ := by rw [expect_comp_fst (fun a ↦ (𝔼 b, f (a, b)) ^ 2)]
 
 /-- A bound on a square root from a bound on its argument. -/
 private theorem sqrt_le_mul_sqrt {x y c : ℝ} (hc : 0 ≤ c) (h : x ≤ c ^ 2 * y) :
     √x ≤ c * √y := by
   rw [← Real.sqrt_sq hc, ← Real.sqrt_mul (sq_nonneg c)]
   exact Real.sqrt_le_sqrt h
-
-/-- If `𝔼 u² ≤ c √(𝔼 u²) √(𝔼 w²)` then `𝔼 u² ≤ c² 𝔼 w²`. -/
-private theorem expect_sq_le_of_expect_mul_le [Fintype ι] {u w : ι → ℝ} {c : ℝ}
-    (h : 𝔼 i, u i * u i ≤ c * (√(𝔼 i, u i ^ 2) * √(𝔼 i, w i ^ 2))) :
-    𝔼 i, u i ^ 2 ≤ c ^ 2 * 𝔼 i, w i ^ 2 := by
-  have hu : 0 ≤ 𝔼 i, u i ^ 2 := expect_nonneg fun i _ ↦ sq_nonneg (u i)
-  have hw : 0 ≤ 𝔼 i, w i ^ 2 := expect_nonneg fun i _ ↦ sq_nonneg (w i)
-  simp only [← sq] at h
-  rw [← Real.sq_sqrt hu, ← Real.sq_sqrt hw, ← mul_pow]
-  rcases (Real.sqrt_nonneg (𝔼 i, u i ^ 2)).eq_or_lt with h0 | hpos
-  · rw [← h0, zero_pow two_ne_zero]
-    positivity
-  · refine pow_le_pow_left₀ hpos.le ?_ 2
-    refine le_of_mul_le_mul_left ?_ hpos
-    calc √(𝔼 i, u i ^ 2) * √(𝔼 i, u i ^ 2) = 𝔼 i, u i ^ 2 := Real.mul_self_sqrt hu
-      _ ≤ _ := h
-      _ = _ := by ring
-
-end Expect
 
 section Tensor
 

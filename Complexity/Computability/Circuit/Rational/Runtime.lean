@@ -137,7 +137,7 @@ def inputWord (n s : ℕ) : List Bool :=
 
 /-- The length of `inputWord n s` is `n + s + 1`. -/
 @[simp] theorem length_inputWord (n s : ℕ) : (inputWord n s).length = n + s + 1 := by
-  simp [inputWord]
+  simp only [inputWord, List.length_append, List.length_replicate, List.length_cons]
   omega
 
 /-- The first `false` bit of `inputWord n s` occurs at index `n`. -/
