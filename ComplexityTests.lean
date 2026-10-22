@@ -354,6 +354,7 @@ import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
+import ComplexityTests.TreeEvalAry
 import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
