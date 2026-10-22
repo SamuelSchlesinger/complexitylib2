@@ -30,6 +30,8 @@ import Mathlib.Data.List.GetD
 * `Turing.MultiTapeTM.getD_frame_two_mul`, `Turing.MultiTapeTM.getD_frame_two_mul_add_one`:
   indexed access to markers and input bits with default `false`.
 * `Turing.MultiTapeTM.length_flatMap_frame`: the length of a list of framed words.
+* `Turing.MultiTapeTM.length_unframe_le`: the word framed at the start of a word is no longer than
+  the word.
 -/
 
 @[expose] public section
@@ -192,5 +194,13 @@ theorem getD_frame_two_mul_add_one (w : List Bool) (i : ℕ) :
     · simp [frame_cons]
     · rw [frame_cons, show 2 * (i + 1) + 1 = 2 * i + 1 + 1 + 1 by omega, List.getD_cons_succ,
         List.getD_cons_succ, ih, List.getD_cons_succ]
+
+/-- The word framed at the start of a word is no longer than the word. -/
+theorem length_unframe_le : ∀ w : List Bool, (unframe w).length ≤ w.length
+  | true :: _ :: v => by
+    simp only [unframe, List.length_cons]
+    have := length_unframe_le v
+    omega
+  | [] | [true] | false :: _ => by simp [unframe]
 
 end Turing.MultiTapeTM

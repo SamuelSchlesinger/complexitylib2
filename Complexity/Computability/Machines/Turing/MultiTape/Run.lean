@@ -33,6 +33,8 @@ travel, and the initial configuration as a configuration of words.
 * `Turing.MultiTapeTM.runFrom_eq_of_runPath`: a path to a halted configuration, read as a run.
 * `Turing.MultiTapeTM.runsInSpace_iff`: the shared space bound, read on the run of a deterministic
   machine.
+* `Turing.MultiTapeTM.ComputesInTimeAndSpace.runFrom_of_le`: a machine that computes within time
+  `t` has halted with its output after any number of steps from `t` on.
 -/
 
 @[expose] public section
@@ -136,6 +138,19 @@ theorem runsInSpace_iff {input : List Symbol} {s : ℕ} :
   refine ⟨space_le_of_runsInSpace, fun h p => ?_⟩
   rw [p.eq_ofDeterministic]
   exact h _
+
+/-- A machine that computes `out` within time `t` has halted with output `out` after any number of
+steps from `t` on. -/
+theorem ComputesInTimeAndSpace.runFrom_of_le {x out : List Symbol} {t s J : ℕ}
+    (h : tm.ComputesInTimeAndSpace x out t s) (hJ : t ≤ J) :
+    (tm.runFrom (tm.initCfg x) J).Halted ∧ (tm.runFrom (tm.initCfg x) J).output = out := by
+  obtain ⟨⟨u, hu, hout⟩, htime, -⟩ := h
+  have hhalt := MultiTapeTM.runsInTime_iff_halted.mp htime
+  rw [MultiTapeTM.runFrom_eq_of_halt tm _ hJ hhalt]
+  refine ⟨hhalt, ?_⟩
+  rcases le_total u t with hut | htu
+  · exact (congrArg Cfg.output (MultiTapeTM.runFrom_eq_of_halt tm _ hut hu)).trans hout
+  · exact (congrArg Cfg.output (MultiTapeTM.runFrom_eq_of_halt tm _ htu hhalt)).symm.trans hout
 
 end MultiTapeTM
 
