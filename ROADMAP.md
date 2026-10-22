@@ -146,6 +146,12 @@ WPP and LWPP, using an arbitrary polynomial-time Boolean combiner on a uniform b
 queries ([WPP.TruthTable](Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean)).
 Query lengths and unary query counts may vary at fixed input length; LWPP normalizes both.
 Adaptive WPP closure, UP-oracle containment, and oracle lowness are not claimed by this result.
+PP is closed under polynomial-time truth-table reductions (Fortnow–Reingold), hence under
+intersection, union, difference, symmetric difference (Beigel–Reingold–Spielman) and
+polynomial-time bounded quantifiers ([PP.TruthTable](Complexity/Computability/Complexity/Classes/PP/TruthTable.lean)).
+The proof uses Newman's sign-approximating polynomial on GapP. P is closed under the same
+reductions. Closure of PP under adaptive polynomial-time Turing reductions (`P^PP = PP`) would
+give `PH ⊆ PP` by Toda's theorem; it is open and not claimed.
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (both threshold #SAT and MAJSAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
 permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
 collapse, and WPP/LWPP oracle lowness.
