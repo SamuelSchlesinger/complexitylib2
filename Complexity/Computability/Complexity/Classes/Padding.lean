@@ -42,8 +42,11 @@ the padding arguments below apply this API to their padded instances.
 A nondeterministic machine `ntm` decides `A` within time `t`. The padded problem
 `Turing.MultiTapeNTM.padded ntm c` consists of the bit words `x` such that some `c * |x|` coins
 encode an accepting computation of `ntm` on the word `unframe x` framed at the start of `x`, read
-as coins of the choice table (`Turing.MultiTapeNTM.checkChoices`). It is in `NP` with respect to
-`encBits` by definition: checking the coins is polynomial-time. If every computation path on
+as coins of the choice table (`Turing.MultiTapeNTM.checkChoices`). The general certificate
+characterization `Turing.MultiTapeNTM.DecidesInTime.mem_iff_exists_checkChoices` lives with
+`checkChoices` in `Complexity.Computability.Complexity.Classes.NP.Nondeterministic`. The padded
+problem is in `NP` with respect to `encBits` by definition: checking the coins is polynomial-time.
+If every computation path on
 `enc a` with at least `t a` steps has halted, and `c * |x|` is at least `M * t a` for the number
 `M` of actions, the padded word `x = frame (enc a) ++ u` is in the padded problem exactly when
 `a ∈ A` (`Turing.MultiTapeNTM.DecidesInTime.frame_append_mem_padded_iff`).
@@ -101,26 +104,6 @@ namespace Turing.MultiTapeNTM
 open MultiTapeTM
 
 variable {k : ℕ} {State : Type} [Finite State] {α : Type} {enc : α ↪ List Bool}
-
-/-- **Accepting computations as certificates of any sufficient length.** If `ntm` decides `A`
-within `t`, then `a ∈ A` exactly when some certificate of length `L` encodes an accepting
-computation on `enc a`, for every `L` of at least `M * t a`, for the number `M` of actions. -/
-theorem DecidesInTime.mem_iff_exists_checkChoices {ntm : MultiTapeNTM k Bool State} {A : Set α}
-    {t : α → ℕ} (h : ntm.DecidesInTime enc A t) {a : α} {L : ℕ}
-    (hL : Nat.card (Turing.Action k Bool State) * t a ≤ L) :
-    a ∈ A ↔ ∃ w : List Bool, w.length = L ∧ ntm.checkChoices enc (a, w) = true := by
-  rw [(h a).2]
-  constructor
-  · intro hacc
-    obtain ⟨p, hp, hout⟩ := (accepts_iff_exists_time_eq (h a).1).mp hacc
-    obtain ⟨coins, hlen, hcoins⟩ :=
-      exists_runClosedCoins_choiceTable p ((h a).1 p hp.ge) hout
-    rw [hp] at hlen
-    refine ⟨coins ++ List.replicate (L - coins.length) false, by
-      simp only [List.length_append, List.length_replicate]; omega, ?_⟩
-    simp [checkChoices, hcoins]
-  · rintro ⟨w, -, hw⟩
-    exact accepts_of_runClosedCoins_choiceTable (coins := w) (by simpa [checkChoices] using hw)
 
 /-- **The verifier of padded instances.** It accepts when the certificate, read as coins of the
 choice table, replays a computation path of `ntm` on the word framed at the start of the instance

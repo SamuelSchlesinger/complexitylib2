@@ -5,11 +5,11 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
-import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 
 /-! Nondeterministic acceptance and time bounds on concrete stuck and fair-coin machines,
 guess-and-verify deciders for verifier `NP`, and verifiers checking encoded accepting
-computations, including empty instances and padded certificates. -/
+computations, including empty instances and padded certificates. Only the nondeterministic
+verifier API is imported. -/
 
 namespace ComplexityTests.NondeterministicVerifiers
 
@@ -223,11 +223,6 @@ example (input : List Bool) : ¬twice.toMultiTapeNTM.Accepts input := by
 
 /-! ### Guess and verify -/
 
-/-- `SAT`, whose certificates are genuine assignments, has a polynomial-time nondeterministic
-decider. -/
-example : MultiTapeNTM.DecidableInPolyTime SAT encCNF :=
-  decidableInPolyTime_of_mem_NP SAT.mem_NP
-
 /-- The verifier reading the first certificate bit. -/
 private theorem polyTime_headD :
     ComputableTidilyInPolyTime (fun x : List Bool × List Bool => x.2.headD false)
@@ -301,6 +296,16 @@ private theorem decides_coin : coin.toNTM.DecidesInTime encBits Set.univ fun _ =
     simp only [Set.mem_univ, true_iff]
     obtain ⟨p, -, hhalt, hout⟩ := exists_path_coin true a
     exact ⟨p, hhalt, hout⟩⟩
+
+/-- The universal problem has accepting certificates at the exact sufficient-length threshold. -/
+example : ∃ w : List Bool, w.length = Nat.card (Action 0 Bool Unit) ∧
+    coin.toNTM.checkChoices encBits ([], w) = true :=
+  (decides_coin.mem_iff_exists_checkChoices (a := []) (by simp)).mp (Set.mem_univ _)
+
+/-- Certificates can be padded beyond the threshold, including on the empty instance. -/
+example (extra : ℕ) : ∃ w : List Bool, w.length = Nat.card (Action 0 Bool Unit) + extra ∧
+    coin.toNTM.checkChoices encBits ([], w) = true :=
+  (decides_coin.mem_iff_exists_checkChoices (a := []) (by simp)).mp (Set.mem_univ _)
 
 example : (Set.univ : Set (List Bool)) ∈ NP encBits :=
   mem_NP_of_decidableInPolyTime ⟨_, .const 1, 0, Unit, inferInstance, coin.toNTM, decides_coin⟩
@@ -405,6 +410,13 @@ example (w : List Bool) : twice.toMultiTapeNTM.checkChoices encBits ([], w) = fa
   simp [hlast] at hout
 
 /-! ### Axioms -/
+
+/--
+info: 'Turing.MultiTapeNTM.DecidesInTime.mem_iff_exists_checkChoices' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeNTM.DecidesInTime.mem_iff_exists_checkChoices
 
 /--
 info: 'Turing.MultiTapePTM.exists_runPath_toNTM_iff' depends on axioms:
