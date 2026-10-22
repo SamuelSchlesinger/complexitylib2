@@ -736,17 +736,25 @@ Jukna coverage below is an additional target beyond the V1 port:
   [grid enumeration, unary input parsing, and the standalone generator](Complexity/Computability/Circuit/Rational/Runtime.lean)
   (`hittingList_polytime`, `hittingGenerator_polytime`, `hittingGenerator_spec`), charging all
   arithmetic and storage growth. Polynomial bit complexity of formula evaluation on the emitted
-  matrices remains separate. The [sumset-extractor frontier lower-bound bridge](Complexity/Computability/Circuit/Frontier/Extractor.lean)
+  matrices remains separate. The [sumset-extractor frontier lower-bound bridge](Complexity/Computability/Circuit/Frontier/Extractor.lean),
+  the [uniform `P` sumset-extractor lower bounds](Complexity/Computability/Complexity/FrontierExtractor.lean),
   and the sharpened `4.56249 = 456249 / 100000` Gaussian frontier constant
   ([Coefficient](Complexity/Computability/Circuit/Frontier/Layouts/Gaussian/Coefficient.lean),
-  [FanInTwo](Complexity/Computability/Circuit/Frontier/FanInTwo.lean)) are proved: coordinate
-  zero-extension (`zeroPad`), combinatorial `SumsetDisperser` and `SumsetBias` to `RectangleFree`
-  and `RectangleBias`, the distributional `IsSumsetExtractor` bridge and its Chor–Goldreich
-  flat-source equivalence (`isSumsetExtractor_iff_sumsetBias_two_pow`), automatic global density
-  when bias is strictly below `1 / 2`, and conditional `(4.56249 - ε) n` average-case and
-  worst-case fan-in-two (`fullSignature 2 Bool`) and `(2 / (r - 1) - ε) n` fan-in-`r` circuit
-  lower bounds (#320). Remaining: carry over the explicit sumset-extractor construction and its
-  uniform polynomial-time certificate, recording each endpoint's hypotheses.
+  [FanInTwo](Complexity/Computability/Circuit/Frontier/FanInTwo.lean),
+  [Nondeterministic](Complexity/Computability/Circuit/Frontier/Nondeterministic.lean),
+  [Ledger/Unconditional](Complexity/Computability/Circuit/Frontier/Ledger/Unconditional.lean)) are
+  proved: coordinate zero-extension (`zeroPad`), combinatorial `SumsetDisperser` and `SumsetBias`
+  to `RectangleFree`, `RectangleBias`, and `IsAffineDisperser`
+  (`SumsetDisperser.isAffineDisperser`, unifying the frontier bound with Mishra–Santhanam's finite
+  `7 N ≤ 2 |C| + 14 d` bound via `IsSumsetExtractor.seven_mul_le_two_mul_size_add`), one-bit
+  balanced padding (`balancePad`, `balancePadFamily`, `ofSlices_balancePadFamily_mem_P`), the
+  distributional `IsSumsetExtractor` bridge and its Chor–Goldreich flat-source equivalence
+  (`isSumsetExtractor_iff_sumsetBias_two_pow`), polylogarithmic entropy asymptotics
+  (`isLittleO_rpow_log_id`), and conditional `(4.56249 - ε) N` (and `4.56 N`) average-case and
+  worst-case lower bounds in `Complexity.P encBits` over `fullSignature 2 Bool`, as well as bounded
+  fan-in, nondeterministic verifier, and monoid-aggregate frontier corollaries (#320, #342).
+  Remaining: carry over the explicit sumset-extractor construction and its uniform polynomial-time
+  certificate, recording each endpoint's hypotheses.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),

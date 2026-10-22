@@ -5,18 +5,23 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Frontier.Extractor
+import Complexity.Computability.Complexity.FrontierExtractor
 
 /-!
 # Tests for the sumset-extractor frontier lower-bound bridge
 
 Non-vacuity and axiom checks for `Complexity.Computability.Circuit.Frontier.Extractor`,
-`Complexity.Computability.Circuit.Frontier.FanInTwo`, and
+`Complexity.Computability.Complexity.FrontierExtractor`,
+`Complexity.Computability.Circuit.Frontier.FanInTwo`,
+`Complexity.Computability.Circuit.Frontier.Nondeterministic`,
+`Complexity.Computability.Circuit.Frontier.Ledger.Unconditional`, and
 `Complexity.Computability.Circuit.Frontier.Layouts.Gaussian.Coefficient`.
 -/
 
 namespace ComplexityTests.FrontierExtractor
 
-open Cslib Cslib.Circuits Cslib.Circuits.Frontier Set
+open Cslib Cslib.BitString Cslib.Circuits Cslib.Circuits.Frontier Cslib.Complexity Filter Set
+open Turing.MultiTapeTM Turing.MultiTapeTM.ComputableTidilyInPolyTime
 open scoped ProbabilityTheory ENNReal
 
 /-! ### Non-vacuity of `SumsetBias`, `SumsetDisperser`, and `IsSumsetExtractor` -/
@@ -72,6 +77,24 @@ total gate count. -/
 example {n m : ℕ} (c : Circuit (fullSignature 2 Bool) n m) :
     c.FanInAtMost 2 ∧ c.innerSize ≤ c.size :=
   ⟨c.fanInAtMost_fullSignature, c.innerSize_le_size⟩
+
+/-- The `(1, 0)`-sumset extractor `x ↦ x 0` is an affine disperser for dimension `1`, and its
+balanced padding on `Fin 2 → Bool` is a `4`-sumset disperser of cardinality `2`. -/
+example : IsAffineDisperser (fun x : Fin 1 → Bool => x 0) 1 :=
+  isSumsetExtractor_bit0.isAffineDisperser (by norm_num) (by norm_num)
+
+example : SumsetDisperser {z : Fin 2 → Bool | balancePad (fun x : Fin 1 → Bool => x 0) z = true} 4 ∧
+    RectangleFree {z : Fin 2 → Bool | balancePad (fun x : Fin 1 → Bool => x 0) z = true} 4 ∧
+    {z : Fin 2 → Bool | balancePad (fun x : Fin 1 → Bool => x 0) z = true}.ncard = 2 :=
+  ⟨by simpa using isSumsetExtractor_bit0.balancePad_sumsetDisperser (by norm_num),
+    by simpa using isSumsetExtractor_bit0.balancePad_rectangleFree (by norm_num),
+    ncard_setOf_balancePad _⟩
+
+/-- `Language.ofSlices` and `balancePadFamily` preserve membership in `Complexity.P encBits`. -/
+example :
+    (Language.ofSlices (balancePadFamily fun N (_ : BitString N) => false) : Set (List Bool)) ∈
+      P encBits :=
+  ofSlices_balancePadFamily_mem_P (ofSlices_mem_P (const false))
 
 /-! ### Axiom checks -/
 
@@ -131,5 +154,85 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_innerSize_of_isSumsetExtractor
+
+/--
+info: 'Cslib.Circuits.Frontier.SumsetDisperser.isAffineDisperser' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.SumsetDisperser.isAffineDisperser
+
+/--
+info: 'Cslib.Circuits.Frontier.IsSumsetExtractor.seven_mul_le_two_mul_size_add' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.IsSumsetExtractor.seven_mul_le_two_mul_size_add
+
+/--
+info: 'Cslib.Circuits.Frontier.SumsetDisperser.balancePad' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.SumsetDisperser.balancePad
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_456249_div_100000_sub_mul_lt_innerSize_of_nondeterministicDecides'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  eventually_456249_div_100000_sub_mul_lt_innerSize_of_nondeterministicDecides
+
+/--
+info: 'Cslib.Circuits.Frontier.eventually_456249_div_100000_sub_mul_lt_card_of_aggregates'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.eventually_456249_div_100000_sub_mul_lt_card_of_aggregates
+
+/--
+info: 'Cslib.Circuits.Frontier.ofSlices_balancePadFamily_mem_P' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.ofSlices_balancePadFamily_mem_P
+
+/--
+info: 'Cslib.Circuits.Frontier.isLittleO_rpow_log_id' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.isLittleO_rpow_log_id
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_mem_P_eventually_agreement_le_of_polylog_sumsetExtractor'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Frontier.exists_mem_P_eventually_agreement_le_of_polylog_sumsetExtractor
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_isSumsetExtractor'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_isSumsetExtractor
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms
+  Cslib.Circuits.Frontier.exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor
+
+/--
+info: 'Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_sumsetDisperser'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_sumsetDisperser
 
 end ComplexityTests.FrontierExtractor
