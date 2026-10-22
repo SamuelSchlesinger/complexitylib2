@@ -112,8 +112,19 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   representation from the standard input. `WordRAM/Function` gives a separate uniform RAM
   function-time predicate, with named-certificate reuse by `polytime`. Arbitrary continuation
   synthesis, iterative clients and a Turing-machine simulation remain open.
+  `Foundations/Data/OrderedSet` and `Foundations/Semantics/Stateful/OrderedSet` provide neutral
+  optional-minimum contracts, a typed finite-set interface and adaptive clients, with no tree or
+  cost dependency. Bounded-key implementations may specialize insertion admissibility.
+  `Algorithms/Lean/SearchTree/*` reuses Mathlib's `BinaryTree`, height and node count for an
+  unbalanced ordered-set realization. Finite-set behavior, strict invariants and height-bounded
+  node visits are proved; allocation, comparison implementation and client computation are
+  excluded from that cost model. It is not a balanced tree or machine-time certificate.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
+  The direct shared-heap queue uses the existing FIFO operation signature and native operation
+  traces, with a hidden two-stack representation, a concrete-register potential, framed storage,
+  and separately charged initialization. Its `2 * capacity` reservation is explicit; external
+  client computation and argument delivery are not charged by the operation-history bound.
   Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
   neither open framework is copied here. This is a prototype of composition and refinement,
   not a replacement for their query models or a general cell-probe lower-bound semantics.
@@ -221,5 +232,5 @@ grandfathered without an alias; this list records them for downstream users.
   opened; use dot notation (`G.toSimpleGraph_adj`) or full names. Upstreaming the frontier
   multigraph therefore follows `Foundations/Combinatorics/Multigraph.lean`.
 
-The [historical ledger](https://github.com/SamuelSchlesinger/complexitylib2/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
+The [historical ledger](https://github.com/cslib-community/complexitylib/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
 preserves earlier integration notes and per-module follow-up ideas.

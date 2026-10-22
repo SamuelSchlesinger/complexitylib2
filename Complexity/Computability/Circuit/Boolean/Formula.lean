@@ -113,6 +113,22 @@ def xor : Formula signature n :=
 @[simp] theorem leafSize_const (c : Bool) : (const c : Formula signature n).leafSize = 0 :=
   rfl
 
+@[simp] theorem leafSizeIn_const (Y : Finset (Fin n)) (c : Bool) :
+    (const c : Formula signature n).leafSizeIn Y = 0 :=
+  rfl
+
+@[simp] theorem leafSizeIn_not (Y : Finset (Fin n)) :
+    F.not.leafSizeIn Y = F.leafSizeIn Y :=
+  Fin.sum_univ_one _
+
+@[simp] theorem leafSizeIn_and (Y : Finset (Fin n)) :
+    (F.and G).leafSizeIn Y = F.leafSizeIn Y + G.leafSizeIn Y :=
+  Fin.sum_univ_two _
+
+@[simp] theorem leafSizeIn_or (Y : Finset (Fin n)) :
+    (F.or G).leafSizeIn Y = F.leafSizeIn Y + G.leafSizeIn Y :=
+  Fin.sum_univ_two _
+
 /-- A constant is one operation node. -/
 @[simp] theorem size_const (c : Bool) : (const c : Formula signature n).size = 1 :=
   rfl
@@ -129,6 +145,11 @@ def xor : Formula signature n :=
 @[simp] theorem size_or : (F.or G).size = F.size + G.size + 1 := by
   simp [or, Fin.sum_univ_two]
 
+/-- Exclusive or uses two copies of each argument and five operation nodes. -/
+@[simp] theorem size_xor : (F.xor G).size = 2 * F.size + 2 * G.size + 5 := by
+  simp only [xor, size_or, size_and, size_not]
+  omega
+
 /-- A constant has depth one. -/
 @[simp] theorem depth_const (c : Bool) : (const c : Formula signature n).depth = 1 :=
   rfl
@@ -144,6 +165,11 @@ def xor : Formula signature n :=
 /-- A disjunction is one deeper than the deeper disjunct. -/
 @[simp] theorem depth_or : (F.or G).depth = max F.depth G.depth + 1 := by
   simp [or, Fin.univ_succ]
+
+/-- Exclusive or adds at most three levels beyond its deeper argument. -/
+theorem depth_xor_le : (F.xor G).depth ≤ max F.depth G.depth + 3 := by
+  simp only [xor, depth_or, depth_and, depth_not]
+  omega
 
 @[simp] theorem depthWith_const (cost : Op → ℕ) (c : Bool) :
     (const c : Formula signature n).depthWith cost = cost (.const c) := by

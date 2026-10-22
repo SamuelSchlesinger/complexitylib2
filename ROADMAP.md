@@ -147,32 +147,40 @@ less repeated foundational work per paper while preserving readable proofs and e
 statements. Novel arguments will still require novel proofs. Keep this catalogue and evidence
 linked to declarations and reviewed revisions, rather than adding parallel narrative inventories.
 
-## Community handover
+## Repository identity and home
 
-Prepare the existing library as a usable successor to the original Complexitylib. Keep the
-public identity **Complexitylib**: computational complexity theory built on CSLib. AI assistance
-is a development method, and community participation includes mathematical review, API design,
-documentation and maintenance as well as proving new theorems.
+This library is **Complexitylib**: computational complexity theory built on CSLib. The temporary
+name `complexitylib2` distinguished the CSLib-based rewrite while both implementations were active;
+it is not a lasting project identity. The canonical repository is
+[`cslib-community/complexitylib`](https://github.com/cslib-community/complexitylib). The original,
+pre-CSLib implementation remains available at the renamed historical repository
+[`complexitylib-v1`](https://github.com/SamuelSchlesinger/complexitylib-v1), with archival pending
+disposition of remaining work there.
 
-The handover covers the existing documented developments, with these acceptance criteria:
+Moving the repository to CSLib Community is an owner and name change for continuing development,
+not a handover of Samuel's editorial direction and not acceptance into upstream CSLib. AI
+assistance is a development method, and community participation includes mathematical review, API
+design, documentation and maintenance as well as proving new theorems.
+
+The repository consolidation has these maintenance requirements:
 
 * **Auditable claims.** Check each README result against its public statement, definitions,
   assumptions, encodings and resource model. Preserve nonconstructive and conditional boundaries;
   passing Lean does not establish that a statement matches its prose or literature source.
-* **Reproducible validation and review.** Run all six checks on the handover revision, retain the
+* **Reproducible validation and review.** Run all six checks on the migration revision, retain the
   full-library axiom audit and representative clients, and record independent review with that
   revision in the PR or commit description, following
   [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
 * **A usable contribution path.** A new contributor can find a bounded task, the relevant APIs,
   source references, validation commands and review expectations without private conversation
   history or a maintainer's agent installation.
-* **An agreed handover.** Before announcing community hosting, agree the repository name,
-  maintainers and merge responsibilities with CSLib Community. Verify CI and repository links
-  after transfer, then point the original repository to its successor. Organizational hosting
-  does not imply acceptance into upstream CSLib.
+* **One active project.** Preserve this repository's issues, pull requests, releases and history
+  through a repository transfer; archive V1 rather than maintaining two active libraries. Verify
+  redirects, CI, release assets and repository links after the move.
 
 Completing every V1 port, Jukna chapter, or future resource-bound improvement is not a condition
-of the handover. The work below remains available for subsequent, independently reviewed batches.
+of the repository move. The work below remains available for subsequent, independently reviewed
+batches.
 
 ## Continuing priorities
 
@@ -385,7 +393,12 @@ of the handover. The work below remains available for subsequent, independently 
      supply this stronger reduction or the ordered relational-to-machine encoding bridge.
 
    - [ ] **Uniform circuit families.** The current
-     [NC/AC/TC hierarchies](Complexity/Computability/Circuit/Boolean/DepthClasses.lean) are
+     [NC/AC/TC hierarchies](Complexity/Computability/Circuit/Boolean/DepthClasses.lean),
+     [ACⁱ[q] ⊆ TCⁱ](Complexity/Computability/Circuit/Boolean/ModMajority.lean) and
+     [carry-save threshold/majority simulation in NC¹ and NCⁱ⁺¹](Complexity/Computability/Circuit/Boolean/ThresholdNC1.lean)
+     (for polynomially fan-in-bounded threshold and majority circuits; eliminating unbounded
+     repeated-wire multiplicities in unrestricted `TCⁱ` requires Muroga's threshold
+     weight-bounding theorem) are
      nonuniform, and [FO model checking in AC⁰](Complexity/Computability/Circuit/Boolean/FirstOrder.lean)
      constructs nonuniform circuits over relational atomic inputs, without order/`BIT`.
      [Polynomial-time function-family compilation](Complexity/Computability/Complexity/Problems/CircuitValue/Compilation.lean)
@@ -612,8 +625,10 @@ Jukna coverage below is an additional target beyond the V1 port:
   theorem are [proved](Complexity/Foundations/BooleanAnalysis/KahnKalaiLinial.lean). Extend the existing
   [hypercontractivity results for p ≤ 2 ≤ q](Complexity/Foundations/BooleanAnalysis/Hypercontractivity.lean)
   and their Boolean-analysis applications. Continue formula lower bounds beyond the existing
-  [Khrapchenko bound](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), following the
-  Jukna coverage below.
+  [Khrapchenko bound](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean),
+  [Subbotovskaya shrinkage](Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean) and
+  [Andreev's `n^(5/2 - o(1))` lower bound](Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean),
+  following the Jukna coverage below.
 * **Search and parameterized complexity.** [FNP, FP and TFNP](Complexity/Computability/Complexity/Classes/TFNP.lean)
   are defined with polynomial-time search reductions, `FP = FNP` exactly when `P = NP` is
   [proved](Complexity/Computability/Complexity/Classes/TFNP/SearchToDecision.lean), and `TFNP ⊆ FP`
@@ -681,7 +696,7 @@ uniformity, explicitness and quantitative strength; a citation or related theore
 | --- | --- | --- |
 | 1–2: foundations and Boolean analysis | [Circuit hierarchy](Complexity/Computability/Circuit/Boolean/Hierarchy.lean), [Shannon synthesis](Complexity/Computability/Circuit/Boolean/ShannonSynthesis.lean), [Fourier analysis](Complexity/Foundations/BooleanAnalysis/Fourier.lean) | Audit counting, graph complexity, degree and approximation results. |
 | 3–5: communication | [Protocols](Complexity/Computability/Communication/Protocol.lean), [Karchmer–Wigderson](Complexity/Computability/Communication/KarchmerWigderson.lean) | Complete matrix, randomized and multiparty results. |
-| 6–10: formulas and circuits | [Spira](Complexity/Computability/Circuit/Boolean/Spira.lean), [Khrapchenko](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), [monotone clique](Complexity/Computability/Circuit/Monotone/Clique/LowerBound.lean) | Audit remaining formula and monotone bounds; develop span programs and negation complexity. |
+| 6–10: formulas and circuits | [Spira](Complexity/Computability/Circuit/Boolean/Spira.lean), [Khrapchenko](Complexity/Computability/Circuit/Boolean/Khrapchenko.lean), [Subbotovskaya](Complexity/Computability/Circuit/Boolean/Formula/Subbotovskaya.lean), [Andreev](Complexity/Computability/Circuit/Boolean/Formula/Andreev.lean), [monotone clique](Complexity/Computability/Circuit/Monotone/Clique/LowerBound.lean) | Audit remaining formula and monotone bounds; develop span programs and negation complexity. |
 | 11–13: depth restrictions and general gates | [Håstad](Complexity/Computability/Circuit/Boolean/Hastad.lean), [Smolensky](Complexity/Computability/Circuit/Boolean/Smolensky.lean), [symmetric gates](Complexity/Computability/Circuit/Boolean/ShallowSymmetric.lean) | Audit depth-three, threshold, entropy, wire and linear-operator bounds. |
 | 14–17: trees and branching programs | [Decision-tree certificates](Complexity/Computability/DecisionTree/Certificate.lean), [Barrington](Complexity/Computability/Circuit/Boolean/BarringtonClass.lean) | Complete bounded-read and bounded-time lower bounds and remaining tree results. |
 | 18–19: proof complexity | [Resolution size–width](Complexity/Logics/Propositional/Resolution/SizeWidth.lean), [tree-like resolution](Complexity/Logics/Propositional/Resolution/TreeLike.lean), [Tseitin](Complexity/Logics/Propositional/Resolution/TseitinExpander.lean), [pigeonhole](Complexity/Logics/Propositional/Resolution/Pigeonhole.lean), [Cook–Reckhow systems](Complexity/Logics/Propositional/ProofSystem.lean) | Develop proof-space and cutting-plane lower bounds. |
@@ -700,11 +715,11 @@ constants and binary unions; the theorem index records the precise scope of each
 
 | Milestone | Proved result and scope |
 | --- | --- |
-| [Quadratic completeness #12](https://github.com/SamuelSchlesinger/complexitylib2/issues/12) | **Proved:** [quadratic compiler](Complexity/Computability/Circuit/Fusion/Quadratic.lean) uses exactly `t²` AND gates for a `t`-pair cover and gives the minimum source-cost bound, including arbitrary carriers, empty input families and trivial targets (TR25-033, Theorem 24; PR #19). |
-| [Approximation bridge and counting barrier #13](https://github.com/SamuelSchlesinger/complexitylib2/issues/13) | **Proved:** [exact consistency and local observation errors](Complexity/Computability/Circuit/Fusion/Consistency.lean), the [fixed pair sampler, weighted averaging and `8n + 8` certificate barrier](Complexity/Computability/Circuit/Fusion/Sampling.lean) (Oliveira, Lemma 3 and Theorem 6; PRs #20 and #22). This is a local observation bridge, not a formal equivalence of all approximation models. |
-| [Graph transfer and inequality #14](https://github.com/SamuelSchlesinger/complexitylib2/issues/14) | **Proved:** [row/column-to-literal transfer](Complexity/Computability/Circuit/Fusion/Graph.lean) for any admissible witness subclass, including semi-ultrafilters, and [exact canonical/full cover and intersection cost `n`](Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean) for inequality on `2^n` vertices per side (TR25-033, Lemmas 39/48 and Proposition 40; PR #21). |
-| [Random graph covers #15](https://github.com/SamuelSchlesinger/complexitylib2/issues/15) | **Proved:** [finite inclusion-pattern counting](Complexity/Computability/Circuit/Fusion/Encoding.lean) and [random graph hardness](Complexity/Computability/Circuit/Fusion/Graph/Random.lean): for `N ≥ 16`, probability at least `1 - 2⁻ᴺ` of `⌊N/16⌋ < ρ(G) ≤ N` under the uniform distribution on all labelled bipartite graphs (TR25-033, Theorem 37; PR #23). |
-| [Conondeterministic complexity #16](https://github.com/SamuelSchlesinger/complexitylib2/issues/16) | **Proved:** [universal-verifier cover extraction](Complexity/Computability/Circuit/Fusion/Conondeterministic.lean) and the [converse compiler](Complexity/Computability/Circuit/Fusion/Converse.lean) give `ρ_ultra(f) ≤ C_forall,AND(f) ≤ 5ρ_ultra(f)`. The [extended-natural circuit measure](Complexity/Computability/Circuit/Boolean/Conondeterministic.lean) minimizes over all finite auxiliary counts and verifiers; a `t`-pair cover gives exactly `3t` auxiliary bits and `5t` AND gates, including zero and constant cases (TR25-033, Theorem 45, credited there to Karchmer; PRs #25 and #28). The explicit factor five comes from the formalized certificate construction. The graph transfer above specializes to semi-ultrafilters (Lemma 48). |
+| [Quadratic completeness #12](https://github.com/cslib-community/complexitylib/issues/12) | **Proved:** [quadratic compiler](Complexity/Computability/Circuit/Fusion/Quadratic.lean) uses exactly `t²` AND gates for a `t`-pair cover and gives the minimum source-cost bound, including arbitrary carriers, empty input families and trivial targets (TR25-033, Theorem 24; PR #19). |
+| [Approximation bridge and counting barrier #13](https://github.com/cslib-community/complexitylib/issues/13) | **Proved:** [exact consistency and local observation errors](Complexity/Computability/Circuit/Fusion/Consistency.lean), the [fixed pair sampler, weighted averaging and `8n + 8` certificate barrier](Complexity/Computability/Circuit/Fusion/Sampling.lean) (Oliveira, Lemma 3 and Theorem 6; PRs #20 and #22). This is a local observation bridge, not a formal equivalence of all approximation models. |
+| [Graph transfer and inequality #14](https://github.com/cslib-community/complexitylib/issues/14) | **Proved:** [row/column-to-literal transfer](Complexity/Computability/Circuit/Fusion/Graph.lean) for any admissible witness subclass, including semi-ultrafilters, and [exact canonical/full cover and intersection cost `n`](Complexity/Computability/Circuit/Fusion/Graph/Inequality.lean) for inequality on `2^n` vertices per side (TR25-033, Lemmas 39/48 and Proposition 40; PR #21). |
+| [Random graph covers #15](https://github.com/cslib-community/complexitylib/issues/15) | **Proved:** [finite inclusion-pattern counting](Complexity/Computability/Circuit/Fusion/Encoding.lean) and [random graph hardness](Complexity/Computability/Circuit/Fusion/Graph/Random.lean): for `N ≥ 16`, probability at least `1 - 2⁻ᴺ` of `⌊N/16⌋ < ρ(G) ≤ N` under the uniform distribution on all labelled bipartite graphs (TR25-033, Theorem 37; PR #23). |
+| [Conondeterministic complexity #16](https://github.com/cslib-community/complexitylib/issues/16) | **Proved:** [universal-verifier cover extraction](Complexity/Computability/Circuit/Fusion/Conondeterministic.lean) and the [converse compiler](Complexity/Computability/Circuit/Fusion/Converse.lean) give `ρ_ultra(f) ≤ C_forall,AND(f) ≤ 5ρ_ultra(f)`. The [extended-natural circuit measure](Complexity/Computability/Circuit/Boolean/Conondeterministic.lean) minimizes over all finite auxiliary counts and verifiers; a `t`-pair cover gives exactly `3t` auxiliary bits and `5t` AND gates, including zero and constant cases (TR25-033, Theorem 45, credited there to Karchmer; PRs #25 and #28). The explicit factor five comes from the formalized certificate construction. The graph transfer above specializes to semi-ultrafilters (Lemma 48). |
 
 Keep the source models explicit: constants, zero-gate constructions, exact versus one-sided
 literal consistency, and AND versus total gate costs. The counting barrier requires a capacity
@@ -724,6 +739,20 @@ a backend. The [two-stack queue](Complexity/Algorithms/Lean/Queue.lean) and
 [reset-and-replay timeline editing](Complexity/Algorithms/Lean/Retroactive.lean) are
 checked constructions, with explicit primitive-cost assumptions; their pure client controllers
 do not yet have total Word-RAM time certificates.
+
+The shared [ordered-set interface](Complexity/Foundations/Semantics/Stateful/OrderedSet.lean)
+and [optional-minimum contract](Complexity/Foundations/Data/OrderedSet.lean) are independent of
+representations and costs. The interface admits arbitrary linearly ordered keys and is total;
+a bounded-key implementation may restrict insertion admissibility separately. The
+[unbalanced binary search tree](Complexity/Algorithms/Lean/SearchTree/Basic.lean) implements
+membership, insertion, minimum and strict successor over any linear order, preserving a strict
+BST invariant and finite-set semantics. Duplicate insertion preserves the tree; missing successors
+and empty queries return `none`. Its [native realization](Complexity/Algorithms/Lean/SearchTree/Stateful.lean)
+transfers correctness and additive node-visit bounds to adaptive clients. Each operation visits
+at most the initial height, bounded by set cardinality; this is not a logarithmic or RAM-time
+claim. [Checked examples](ComplexityTests/SearchTree.lean) contrast height-three and height-seven
+representations of the same seven keys and execute an answer-dependent two-minimum query.
+Deletion, balancing, and concrete heap/RAM representations remain open.
 
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
@@ -754,9 +783,37 @@ frame rules. Prefix sums use a balanced aggregation tree for a power-of-two numb
 not a Fenwick layout. Machine costs exclude initial representation construction and external argument
 encoding/delivery and result decoding; the stated storage bounds concern reserved representation regions.
 
+The [shared-memory RAM queue](Complexity/Algorithms/WordRAM/Queue/Dynamic.lean) now realizes
+FIFO enqueue and dequeue with one fixed eleven-register dispatcher. Two reserved arrays hold
+at most `capacity` live values in `2 * capacity` reserved word cells. An empty-front dequeue
+executes a real rear-to-front transfer loop. Eight credits per rear element give at most
+fourteen amortized instructions per queue call, including halt, with initial and final credit
+retained. Six actual register instructions initialize the empty representation without clearing
+memory. The worked adaptive client reinserts an observed dequeued value and checks FIFO order,
+zero-valued observations, full/zero capacity and instruction-budget rejection. This direct
+implementation shares the FIFO specification with the abstract two-stack construction above;
+it is not a compilation of that construction's free-monad methods. Arbitrary external client
+computation and argument delivery remain outside the per-operation bound.
+
+The [recursive van Emde Boas set](Complexity/Algorithms/Lean/VanEmdeBoas/Basic.lean)
+supports bounded insertion, membership and strict successor for the universe
+`U(d) = 2^(2^d)`. Its minimum-excluded cluster representation has checked
+[invariant preservation and exact insertion semantics](Complexity/Algorithms/Lean/VanEmdeBoas/Insert.lean),
+[least-successor and absence theorems](Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean),
+and a [finite-set abstraction](Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean).
+The [proposed contiguous layout](Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean)
+has nonoverlapping recursive records and an explicit bound of ten words per universe element;
+this is address arithmetic, not a proved machine representation or initialization procedure.
+The recursive minimum-excluded variant is credited to Demaine's exposition, separately from
+the original van Emde Boas--Kaas--Zijlstra stratified representation. Functional proof milestone
+[#291](https://github.com/SamuelSchlesinger/complexitylib2/issues/291) leaves the full
+[#273](https://github.com/SamuelSchlesinger/complexitylib2/issues/273) endpoint open:
+actual fixed-code RAM execution, worst-case `O(log log U)` native instruction bounds,
+charged uniform initialization, implemented space and word/address-fit guarantees, and the
+adaptive stateful bridge. Deletion and predecessor are later work.
+
 Outstanding: controllers for larger adaptive and iterative clients;
-a concrete shared-heap queue
-using two bounded stacks; reusable allocation and deallocation, live/peak space accounting,
+reusable allocation and deallocation, live/peak space accounting,
 doubling-array amortization, richer ownership and recursive procedures; independent model
 realizations for cell probes, caches and randomness; and present/historical queries for the
 retroactive interface. Upstream API coordination and coordinator review remain prerequisites
@@ -887,4 +944,4 @@ and helper APIs, and distinguish source-line counts from runtime or proof-term s
 [scripts/proof_lengths.py](scripts/proof_lengths.py) supports comparison against a Git revision.
 
 Past measurements, reviews and proposals remain in the
-[historical roadmap](https://github.com/SamuelSchlesinger/complexitylib2/blob/c88395234575284c2fe1e9e3619ead1c2f6fd7f3/ROADMAP.md).
+[historical roadmap](https://github.com/cslib-community/complexitylib/blob/c88395234575284c2fe1e9e3619ead1c2f6fd7f3/ROADMAP.md).
