@@ -1,5 +1,22 @@
 # Theorem-index review
 
+## 2026-10-22: Search-tree deletion (#359)
+
+Worker `worker-crei-dc679113` (Claude Code, for Christian Reitwiessner) extends the existing
+unbalanced search-tree entry with a paragraph on the pure deletion operation and five
+declaration links pinned at `490f03d7092b12bd9b6d62cebc066f632c865da8`
+(`Complexity/Algorithms/Lean/SearchTree/Erase.lean`, lines 141/182/201/232/244). The prose states
+that deletion is not part of the stateful interface, which hypotheses need the ordering invariant,
+and the deviation from Chapter 12 of CLRS for nodes with only a right subtree.
+
+An independent AI subagent reviewed source revision `f4b5694a` (style/API, correctness,
+documentation) and found the original no-impact assessment for this entry wrong; the entry was
+added in response, and `erase_eq_self` was renamed `erase_eq_of_notMem`. A second independent
+subagent reviewed the delta at `9ee31b1d`, verified every link against the exact source line,
+checked quantifiers, hypotheses, cost model and height claims, and approved; its wording nit
+("leftmost (least)") was applied. LaTeX was unavailable locally, so the rendered PDF must be
+inspected from the CI artifact. This records AI review, not human editorial approval.
+
 ## 2026-10-21: Client resource contracts through interface refinements (#274)
 
 Published source revision: `5d9eefc4f20726054a71df3539c2471f1c18712c`.
