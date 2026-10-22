@@ -8,6 +8,8 @@ on:
       - "paper/**"
       - "references.bib"
       - "scripts/build_paper.py"
+      - "scripts/pin_paper_links.py"
+      - "scripts/proof_lengths.py"
       - ".github/workflows/paper.yml"
   workflow_dispatch:
 
@@ -26,6 +28,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          # Full history: pinned \declat links are verified against the commits they name.
+          fetch-depth: 0
+      - name: Check declaration links
+        run: python3 scripts/pin_paper_links.py --check
       - name: Install PDF tooling
         run: |
           sudo apt-get update

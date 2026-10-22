@@ -47,7 +47,8 @@ For concurrent local validation, choose a thread budget for the shared host, for
 defaults to the number of logical processors and is not a hard process or memory cap; check the
 observed concurrency and memory use. Keep mutable build outputs separate between worktrees
 (for example with `scripts/worktree.sh create <branch> [dir_name]`, which seeds `.lake/build` from
-the root checkout). Run `python3 scripts/check_hygiene.py` to audit `-- upstream:` markers,
+the root checkout and, when `<branch>` exists only on `origin`, checks it out tracking
+`origin/<branch>`). Run `python3 scripts/check_hygiene.py` to audit `-- upstream:` markers,
 forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
 heuristic check for non-terminal bare `simp` calls in candidate modules).
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
@@ -88,7 +89,9 @@ Every AI-authored PR must check the index against its final Lean changes. Update
 entries and links, and add entries for new headline results. Run
 `python3 scripts/pin_paper_links.py --check` (or `--pin <SHA>` to re-pin `\declat{<SHA>}{<path>}{<line>}{<decl>}`
 and matching `\decl` links)
-to verify that every declaration link in `paper/` resolves to the exact 1-based declaration line.
+to verify that every declaration link in `paper/` resolves to the exact 1-based declaration line
+and names its full declaration name. `--pin` takes a full 40-character SHA of a commit on the
+current branch. The **Theorem index PDF** workflow runs `--check`.
 Internal helper lemmas need no
 separate entry. Proof-only changes preserving statements and scope may record a no-impact
 assessment instead of changing the prose. Explain any no-impact assessment in the PR.
