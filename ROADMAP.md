@@ -44,10 +44,23 @@ existing developments, source credit and saved branches remain available for a f
      `zero_knowledge_const`) at soundness error `1 / 3` (the proof bounds it by `1 / 8 + 2^{-(n+8)}`). Because the
      auxiliary input is a deterministic polynomial-time function of `1^n`, this does not reach the
      auxiliary-input statement above.
+   - *Pointwise reduction milestone (#427):*
+     `GMW.gmwView_advantage_le` bounds every valid instance/witness/auxiliary tuple by
+     `(7/8)^(n+1)` plus `dyadicSize(n+1) * dyadicSize(totalLen(f a))` times one concrete
+     PRG-challenge advantage at seed size `n+7`. The final test receives `(n,a,z,view)`;
+     `isPPTOn_gmwViewReduction` charges the complete encoded tuple and challenge, including
+     adaptive queries and retained verifier randomness/state. The old uniform-family security
+     theorem is a corollary. `gmwView_negligible_of_advice_prg` covers arbitrary families with
+     separate polynomial length bounds only under an explicit stronger advice-PRG premise.
+     No implication from current uniform one-wayness/HILL to that premise is proved. The direct
+     pad-replacement proof does not require the separate Naor commitment-hiding theorem.
    - *Open (this priority):* zero knowledge in Goldreich's sense (Def. 4.3.10), for every
      `x ∈ L` with arbitrary auxiliary input `z` against probabilistic polynomial-time verifiers;
      hiding against randomized receivers whose state is passed to the distinguisher; witness-level
      Levin reductions; and sequential soundness amplification to negligible error.
+     The full auxiliary-input convention still needs a formal security-premise/clock bridge:
+     polynomial time in total encoded input, used in #427, differs from a clock independent
+     of an unbounded auxiliary word. The pointwise milestone does not complete this objective.
 2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
    exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
    polynomial-time adversaries.
