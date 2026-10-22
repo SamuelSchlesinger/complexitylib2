@@ -546,6 +546,39 @@ storage.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
 \end{result}
 
 \begin{result}
+\subsection{Fixed-program van Emde Boas membership on the word RAM}
+For every $d\geq0$ and $U=2^{2^d}$, a valid recursive van Emde Boas tree has a
+five-word-header interpretation in actual memory, with recursive summary and cluster
+regions. Given such represented memory, one fixed 32-register program answers membership
+queries on the standard unsigned word RAM, whose basis includes multiplication, division
+and remainder. Its compiled code has 213 instructions including halt, independently of
+$d$, $U$, the query and the word width $w$. Each call executes at most
+\[
+ 28(d+1)+18 = 28(\log_2\log_2 U+1)+18
+\]
+instructions, charging constant setup, dispatch, loop tests and jumps, and the final halt.
+The abstract tree is valid, all initial registers and memory words fit $w$, and the
+root address plus the full record span must also fit. Queries outside $U$ are permitted
+provided they fit a word. Cached-maximum rejection precedes recursive child addressing;
+surrounding memory may be arbitrary bounded words, and empty extrema may be stale.
+The answer agrees with functional membership; the complete memory and persistent root
+are unchanged, and the final data remains bounded. The same actual execution transfers
+with its exact count to the shared generic RAM model.
+
+Initial represented-memory construction and external argument delivery/result decoding
+are not charged. This result supplies neither a charged initializer nor an implemented
+space/stack bound or compiled adaptive client. The dispatcher exposes insertion and
+strict-successor code, but their native correctness and resource proofs remain open.
+The minimum-excluded variant follows Demaine's exposition, whose notes credit Michael
+Bender; the contiguous records and register program are engineering choices, distinct
+from the original stratified representation.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
+\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{98}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_call}
+\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{123}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_generic}
+\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{138}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_log}
+\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Model.lean}{125}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_descendant_read_safe}
+\end{result}
+
+\begin{result}
 \subsection{Timeline editing by explicit reset and replay}
 For any deterministic stateful specification with an initial state, a semantic construction edits
 its stored operation timeline, resets the underlying structure, and replays the edited timeline.
