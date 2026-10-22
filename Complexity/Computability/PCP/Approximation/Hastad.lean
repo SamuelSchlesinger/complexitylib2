@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.PCP.Approximation.LabelCover
 public import Complexity.Computability.PCP.Approximation.MaxExactThreeSAT
 public import Complexity.Foundations.BooleanAnalysis.Convolution
+public import Complexity.Foundations.BooleanAnalysis.Hadamard
 public import Complexity.Foundations.BooleanAnalysis.Noise
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.Chebyshev
@@ -17,19 +18,23 @@ import Mathlib.Algebra.Order.Chebyshev
 /-!
 # Håstad's 3-bit test and optimal MAX-E3SAT inapproximability
 
-For a clause of three literals on three distinct variables (`Cslib.Logic.PL.Clause.IsExactThree`),
-a uniform random assignment falsifies the clause with probability `1 / 8` and satisfies it with
-probability `7 / 8` (`Cslib.Logic.PL.Clause.IsExactThree.expect_eval_eq_false`,
-`Cslib.Logic.PL.Clause.IsExactThree.expect_eval_eq_true`). By linearity of expectation, every
-formula whose clauses each have three distinct variables (`Cslib.Logic.PL.CNF.IsExactThree`) has
-an assignment falsifying at most `1 / 8` of its clauses
-(`Cslib.Logic.PL.CNF.IsExactThree.unsatVal_le_one_eighth`).
+For a clause of three literals on three distinct variables
+(`Cslib.Logic.PL.Clause.IsExactThreeDistinct`), a uniform random assignment falsifies the clause
+with probability `1 / 8` and satisfies it with probability `7 / 8`
+(`Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_false`,
+`Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_true`). By linearity of expectation,
+every formula whose clauses each have three distinct variables
+(`Cslib.Logic.PL.CNF.IsExactThreeDistinct`) has an assignment falsifying at most `1 / 8` of its
+clauses (`Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth`). Note that
+`Cslib.Logic.PL.CNF.IsExactThreeDistinct` requires three distinct variables per clause, unlike
+`Cslib.Complexity.ExactThreeSAT` and `Cslib.Complexity.GapExactThreeSAT`, which only require each
+clause to have length `3` and allow repeated literals.
 
 Håstad [Hastad2001] proved that this `7 / 8` threshold is optimal: for every `ε > 0`, no
 polynomial-time algorithm can beat `7 / 8 + ε` unless `P = NP`. The core of the proof is Håstad's
 noisy 3-bit linear test on folded Long Code tables over a Label Cover projection `π : β → γ`:
 
-1. The **Long Code** of `x : α` (`Cslib.PCP.Hastad.longCode`) evaluates each Boolean function
+1. The **Long Code** of `x : α` (`Cslib.BitString.longCode`) evaluates each Boolean function
    `g : α → Bool` at `x`. A table `B : (γ → Bool) → Bool` is **folded**
    (`Cslib.PCP.Hastad.IsFolded`) when `B (f + fun _ => true) = !B f`, which forces its empty
    Fourier coefficient to vanish (`Cslib.PCP.Hastad.IsFolded.fourierCoeff_empty`).
@@ -53,10 +58,10 @@ noisy 3-bit linear test on folded Long Code tables over a Label Cover projection
 
 ## Main definitions
 
-* `Cslib.Logic.PL.Clause.IsExactThree`, `Cslib.Logic.PL.CNF.IsExactThree`: clauses and CNF formulas
-  with three distinct variables per clause.
-* `Cslib.PCP.Hastad.longCode`, `Cslib.PCP.Hastad.IsFolded`, `Cslib.PCP.Hastad.foldTable`: the Long
-  Code and table folding over `(α → Bool) → Bool`.
+* `Cslib.Logic.PL.Clause.IsExactThreeDistinct`, `Cslib.Logic.PL.CNF.IsExactThreeDistinct`: clauses
+  and CNF formulas with three distinct variables per clause.
+* `Cslib.PCP.Hastad.IsFolded`, `Cslib.PCP.Hastad.foldTable`: table folding over `(α → Bool) → Bool`
+  (reusing `Cslib.BitString.longCode` for the Long Code).
 * `Cslib.PCP.Hastad.projectSet`: mod-2 projection of a subset `T : Finset β` along `π : β → γ`.
 * `Cslib.PCP.Hastad.hastadLinearCorr`, `Cslib.PCP.Hastad.hastadLinearProb`: correlation and
   acceptance probability of Håstad's 3-bit linear test on an edge `π : β → γ`.
@@ -65,19 +70,20 @@ noisy 3-bit linear test on folded Long Code tables over a Label Cover projection
   a 3-bit XOR equation and its expected clause satisfaction probability.
 * `Cslib.PCP.Hastad.hastadGraphLinearCorr`, `Cslib.PCP.Hastad.hastadGraphLinearProb`,
   `Cslib.PCP.Hastad.hastadGraphSATProb`: multi-edge test averages over a Label Cover instance.
-* `Cslib.Complexity.GapExactThreeSATWithCompleteness`: the two-sided promise problem of MAX-E3SAT
-  with completeness `c` and soundness `s` on formulas with three distinct variables per clause.
+* `Cslib.Complexity.GapExactThreeDistinctSAT`: the two-sided promise problem of MAX-E3SAT with
+  completeness `c` and soundness `s` on formulas with three distinct variables per clause.
 
 ## Main results
 
-* `Cslib.Logic.PL.Clause.IsExactThree.expect_eval_eq_false`,
-  `Cslib.Logic.PL.Clause.IsExactThree.expect_eval_eq_true`: a uniform random assignment falsifies
-  an exact 3-clause with probability `1 / 8` and satisfies it with probability `7 / 8`.
-* `Cslib.Logic.PL.CNF.IsExactThree.unsatVal_le_one_eighth`,
-  `Cslib.Logic.PL.CNF.IsExactThree.exists_countUnsat_le_div_eight`: every E3-CNF formula with
-  three distinct variables per clause has `unsatVal ≤ 1 / 8`, and thus `no` is empty for
-  `GapExactThreeSATWithCompleteness c s` whenever `s < 7 / 8`
-  (`Cslib.Complexity.no_GapExactThreeSATWithCompleteness_eq_empty`).
+* `Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_false`,
+  `Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_true`: a uniform random assignment
+  falsifies an exact 3-clause on distinct variables with probability `1 / 8` and satisfies it with
+  probability `7 / 8`.
+* `Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth`,
+  `Cslib.Logic.PL.CNF.IsExactThreeDistinct.exists_countUnsat_le_div_eight`: every E3-CNF formula
+  with three distinct variables per clause has `unsatVal ≤ 1 / 8`, and thus `no` is empty for
+  `GapExactThreeDistinctSAT c s` whenever `s < 7 / 8`
+  (`Cslib.Complexity.no_GapExactThreeDistinctSAT_eq_empty`).
 * `Cslib.PCP.Hastad.IsFolded.fourierCoeff_empty`,
   `Cslib.PCP.Hastad.IsFolded.fourierCoeff_of_even`: every even-degree Fourier coefficient of a
   folded table (and in particular at `∅`) vanishes.
@@ -115,30 +121,32 @@ variable {V ι : Type*}
 
 /-- A clause has **three distinct variables** when it has length `3` and its variables have no
 duplicates. -/
-def Clause.IsExactThree (c : Clause V) : Prop :=
+def Clause.IsExactThreeDistinct (c : Clause V) : Prop :=
   c.length = 3 ∧ (c.map Prod.fst).Nodup
 
 /-- A formula is an **exact 3-CNF with distinct variables per clause** when every clause has three
 distinct variables. -/
-def CNF.IsExactThree (φ : CNF V) : Prop :=
-  ∀ c ∈ φ, c.IsExactThree
+def CNF.IsExactThreeDistinct (φ : CNF V) : Prop :=
+  ∀ c ∈ φ, c.IsExactThreeDistinct
 
-instance [DecidableEq V] {c : Clause V} : Decidable c.IsExactThree :=
+instance [DecidableEq V] {c : Clause V} : Decidable c.IsExactThreeDistinct :=
   inferInstanceAs (Decidable (c.length = 3 ∧ (c.map Prod.fst).Nodup))
 
-instance [DecidableEq V] {φ : CNF V} : Decidable φ.IsExactThree :=
-  inferInstanceAs (Decidable (∀ c ∈ φ, c.IsExactThree))
+instance [DecidableEq V] {φ : CNF V} : Decidable φ.IsExactThreeDistinct :=
+  inferInstanceAs (Decidable (∀ c ∈ φ, c.IsExactThreeDistinct))
 
-theorem Clause.IsExactThree.length_eq {c : Clause V} (hc : c.IsExactThree) : c.length = 3 :=
+theorem Clause.IsExactThreeDistinct.length_eq {c : Clause V} (hc : c.IsExactThreeDistinct) :
+    c.length = 3 :=
   hc.1
 
-theorem Clause.IsExactThree.nodup_map_fst {c : Clause V} (hc : c.IsExactThree) :
+theorem Clause.IsExactThreeDistinct.nodup_map_fst {c : Clause V} (hc : c.IsExactThreeDistinct) :
     (c.map Prod.fst).Nodup :=
   hc.2
 
-/-- Every exact 3-clause is a list of three literals on pairwise distinct variables. -/
-theorem Clause.isExactThree_iff {c : Clause V} :
-    c.IsExactThree ↔
+/-- Every exact 3-clause with distinct variables is a list of three literals on pairwise distinct
+variables. -/
+theorem Clause.isExactThreeDistinct_iff {c : Clause V} :
+    c.IsExactThreeDistinct ↔
       ∃ l₁ l₂ l₃ : Literal V,
         c = [l₁, l₂, l₃] ∧ l₁.1 ≠ l₂.1 ∧ l₁.1 ≠ l₃.1 ∧ l₂.1 ≠ l₃.1 := by
   constructor
@@ -159,7 +167,7 @@ theorem Literal.if_eval_eq_zero_one (l : Literal V) (σ : V → Bool) :
   rcases l with ⟨v, b⟩
   cases b <;> cases h : σ v <;> simp [Literal.eval, signVal, h]
 
-/-- A clause `l :: c` is falsified_iff both `l` and `c` are falsified. -/
+/-- A clause `l :: c` is falsified iff both `l` and `c` are falsified. -/
 theorem Clause.if_eval_cons_eq_mul (l : Literal V) (c : Clause V) (σ : V → Bool) :
     (if Clause.eval σ (l :: c) then (0 : ℝ) else 1) =
       (if l.eval σ then (0 : ℝ) else 1) * (if c.eval σ then (0 : ℝ) else 1) := by
@@ -171,7 +179,7 @@ section FintypeCube
 variable [Fintype ι] [DecidableEq ι]
 
 /-- Over a uniform random assignment `σ : ι → Bool`, a single variable has mean sign `0`. -/
-theorem expect_signVal_eval (v : ι) : (𝔼 σ : ι → Bool, signVal (σ v)) = 0 := by
+private theorem expect_signVal_eval (v : ι) : (𝔼 σ : ι → Bool, signVal (σ v)) = 0 := by
   have h : (fun σ : ι → Bool => signVal (σ v)) = chi ℝ {v} := by
     funext σ
     exact (chi_singleton v σ).symm
@@ -179,7 +187,7 @@ theorem expect_signVal_eval (v : ι) : (𝔼 σ : ι → Bool, signVal (σ v)) =
 
 /-- Over a uniform random assignment `σ : ι → Bool`, two distinct variables have uncorrelated
 signs. -/
-theorem expect_signVal_mul_of_ne {v₁ v₂ : ι} (h12 : v₁ ≠ v₂) :
+private theorem expect_signVal_mul_of_ne {v₁ v₂ : ι} (h12 : v₁ ≠ v₂) :
     (𝔼 σ : ι → Bool, signVal (σ v₁) * signVal (σ v₂)) = 0 := by
   have h : (fun σ : ι → Bool => signVal (σ v₁) * signVal (σ v₂)) =
       fun σ => chi ℝ {v₁} σ * chi ℝ {v₂} σ := by
@@ -189,7 +197,7 @@ theorem expect_signVal_mul_of_ne {v₁ v₂ : ι} (h12 : v₁ ≠ v₂) :
 
 /-- Over a uniform random assignment `σ : ι → Bool`, three pairwise distinct variables have zero
 triple sign correlation. -/
-theorem expect_signVal_mul_three_of_ne {v₁ v₂ v₃ : ι} (h12 : v₁ ≠ v₂) (h13 : v₁ ≠ v₃)
+private theorem expect_signVal_mul_three_of_ne {v₁ v₂ v₃ : ι} (h12 : v₁ ≠ v₂) (h13 : v₁ ≠ v₃)
     (h23 : v₂ ≠ v₃) :
     (𝔼 σ : ι → Bool, signVal (σ v₁) * signVal (σ v₂) * signVal (σ v₃)) = 0 := by
   have h : (fun σ : ι → Bool => signVal (σ v₁) * signVal (σ v₂) * signVal (σ v₃)) =
@@ -202,9 +210,10 @@ theorem expect_signVal_mul_three_of_ne {v₁ v₂ v₃ : ι} (h12 : v₁ ≠ v�
 
 /-- **A uniform random assignment falsifies any 3-clause on three distinct variables with
 probability `1 / 8`.** -/
-theorem Clause.IsExactThree.expect_eval_eq_false {c : Clause ι} (hc : c.IsExactThree) :
+theorem Clause.IsExactThreeDistinct.expect_eval_eq_false {c : Clause ι}
+    (hc : c.IsExactThreeDistinct) :
     (𝔼 σ : ι → Bool, if c.eval σ then (0 : ℝ) else 1) = 1 / 8 := by
-  obtain ⟨l₁, l₂, l₃, rfl, h12, h13, h23⟩ := Clause.isExactThree_iff.1 hc
+  obtain ⟨l₁, l₂, l₃, rfl, h12, h13, h23⟩ := Clause.isExactThreeDistinct_iff.1 hc
   have hexp (σ : ι → Bool) :
       (if Clause.eval σ [l₁, l₂, l₃] then (0 : ℝ) else 1) =
         1 / 8 -
@@ -227,7 +236,8 @@ theorem Clause.IsExactThree.expect_eval_eq_false {c : Clause ι} (hc : c.IsExact
 
 /-- **A uniform random assignment satisfies any 3-clause on three distinct variables with
 probability `7 / 8`.** -/
-theorem Clause.IsExactThree.expect_eval_eq_true {c : Clause ι} (hc : c.IsExactThree) :
+theorem Clause.IsExactThreeDistinct.expect_eval_eq_true {c : Clause ι}
+    (hc : c.IsExactThreeDistinct) :
     (𝔼 σ : ι → Bool, if c.eval σ then (1 : ℝ) else 0) = 7 / 8 := by
   have h1 (σ : ι → Bool) :
       (if c.eval σ then (1 : ℝ) else 0) = 1 - (if c.eval σ then (0 : ℝ) else 1) := by
@@ -237,7 +247,8 @@ theorem Clause.IsExactThree.expect_eval_eq_true {c : Clause ι} (hc : c.IsExactT
 
 /-- Over the 3-bit cube `Fin 3 → Bool`, any 3-clause on three distinct variables is satisfied by
 exactly `7` of the `8` truth assignments. -/
-theorem Clause.IsExactThree.card_eval_eq_true {c : Clause (Fin 3)} (hc : c.IsExactThree) :
+theorem Clause.IsExactThreeDistinct.card_eval_eq_true {c : Clause (Fin 3)}
+    (hc : c.IsExactThreeDistinct) :
     #{σ : Fin 3 → Bool | c.eval σ = true} = 7 := by
   have h := hc.expect_eval_eq_true
   rw [Fintype.expect_eq_sum_div_card, sum_boole] at h
@@ -248,13 +259,13 @@ theorem Clause.IsExactThree.card_eval_eq_true {c : Clause (Fin 3)} (hc : c.IsExa
 
 /-- The expected number of falsified clauses in an exact 3-CNF formula with distinct variables per
 clause under a uniform random assignment is `φ.length / 8`. -/
-theorem CNF.IsExactThree.expect_countUnsat {φ : CNF ι} (hφ : φ.IsExactThree) :
+theorem CNF.IsExactThreeDistinct.expect_countUnsat {φ : CNF ι} (hφ : φ.IsExactThreeDistinct) :
     (𝔼 σ : ι → Bool, (φ.countUnsat σ : ℝ)) = (φ.length : ℝ) / 8 := by
   induction φ with
   | nil => simp [CNF.countUnsat]
   | cons c φ ih =>
-    have hc : c.IsExactThree := hφ c List.mem_cons_self
-    have hφ' : CNF.IsExactThree φ := fun d hd => hφ d (List.mem_cons_of_mem _ hd)
+    have hc : c.IsExactThreeDistinct := hφ c List.mem_cons_self
+    have hφ' : CNF.IsExactThreeDistinct φ := fun d hd => hφ d (List.mem_cons_of_mem _ hd)
     have hcons (σ : ι → Bool) :
         ((CNF.countUnsat σ (c :: φ) : ℕ) : ℝ) =
           (if c.eval σ then (0 : ℝ) else 1) + (CNF.countUnsat σ φ : ℝ) := by
@@ -267,10 +278,10 @@ theorem CNF.IsExactThree.expect_countUnsat {φ : CNF ι} (hφ : φ.IsExactThree)
 end FintypeCube
 
 /-- Relabelling a clause along a map that is injective on its variables preserves
-`Clause.IsExactThree`. -/
-theorem Clause.IsExactThree.relabel_of_injOn {f : V → ι} {c : Clause V}
+`Clause.IsExactThreeDistinct`. -/
+theorem Clause.IsExactThreeDistinct.relabel_of_injOn {f : V → ι} {c : Clause V}
     (hf : ∀ x ∈ c.map Prod.fst, ∀ y ∈ c.map Prod.fst, f x = f y → x = y)
-    (hc : c.IsExactThree) : (c.relabel f).IsExactThree := by
+    (hc : c.IsExactThreeDistinct) : (c.relabel f).IsExactThreeDistinct := by
   refine ⟨by rw [Clause.length_relabel, hc.1], ?_⟩
   have hmap : (c.relabel f).map Prod.fst = (c.map Prod.fst).map f := by
     simp [Clause.relabel, List.map_map, Function.comp_def]
@@ -280,12 +291,12 @@ theorem Clause.IsExactThree.relabel_of_injOn {f : V → ι} {c : Clause V}
 /-- **Tightness of the `7 / 8` threshold**: in every exact 3-CNF formula `φ` with three distinct
 variables per clause, some assignment falsifies at most `1 / 8` of the clauses
 (`φ.unsatVal ≤ 1 / 8`), hence satisfies at least `7 / 8` of the clauses. -/
-theorem CNF.IsExactThree.unsatVal_le_one_eighth {φ : CNF V} (hφ : φ.IsExactThree) :
-    φ.unsatVal ≤ 1 / 8 := by
+theorem CNF.IsExactThreeDistinct.unsatVal_le_one_eighth {φ : CNF V}
+    (hφ : φ.IsExactThreeDistinct) : φ.unsatVal ≤ 1 / 8 := by
   classical
   let S : Finset V := φ.vars.toFinset
   let toVar (v : V) : Option S := if h : v ∈ S then some ⟨v, h⟩ else none
-  have hφ' : (φ.relabel toVar).IsExactThree := by
+  have hφ' : (φ.relabel toVar).IsExactThreeDistinct := by
     intro c' hc'
     obtain ⟨c, hc, rfl⟩ := List.mem_map.1 hc'
     refine (hφ c hc).relabel_of_injOn fun x hx y hy hxy => ?_
@@ -316,7 +327,8 @@ theorem CNF.IsExactThree.unsatVal_le_one_eighth {φ : CNF V} (hφ : φ.IsExactTh
 /-- In every exact 3-CNF formula `φ` with three distinct variables per clause, there exists an
 assignment falsifying at most `φ.length / 8` clauses (equivalently satisfying at least
 `7 / 8 * φ.length` clauses). -/
-theorem CNF.IsExactThree.exists_countUnsat_le_div_eight {φ : CNF V} (hφ : φ.IsExactThree) :
+theorem CNF.IsExactThreeDistinct.exists_countUnsat_le_div_eight {φ : CNF V}
+    (hφ : φ.IsExactThreeDistinct) :
     ∃ σ : V → Bool, (φ.countUnsat σ : ℝ) ≤ (φ.length : ℝ) / 8 := by
   obtain ⟨σ, hσ⟩ := φ.exists_countUnsat_div_eq_unsatVal
   refine ⟨σ, ?_⟩
@@ -338,16 +350,8 @@ variable {α β γ : Type*}
 
 /-! ### The Long Code and table folding -/
 
-/-- The **Long Code** of `x : α` [Håstad][Hastad2001]: the truth table mapping each Boolean
-function `f : α → Bool` to its value `f x` at `x` (the dictatorship function at coordinate `x`). -/
-def longCode (x : α) (f : α → Bool) : Bool :=
-  f x
-
-/-- Evaluating a second-order table `A : (α → Bool) → Bool` at the singleton indicator of `x`. -/
-def longCodeAt [DecidableEq α] (x : α) (A : (α → Bool) → Bool) : Bool :=
-  A fun y => decide (y = x)
-
-/-- In `±1` notation, the Long Code of `x` is the singleton Walsh character `chi ℝ {x}`. -/
+/-- In `±1` notation, the Long Code `Cslib.BitString.longCode x` is the singleton Walsh character
+`chi ℝ {x}`. -/
 theorem signVal_longCode (x : α) (f : α → Bool) :
     signVal (longCode x f) = chi ℝ {x} f :=
   (chi_singleton x f).symm
@@ -520,7 +524,7 @@ theorem hastadLinearProb_eq_add_hastadLinearCorr (π : β → γ) (δ : ℝ)
   have h (b₁ b₂ b₃ : Bool) :
       (if (b₁ ^^ b₂ ^^ b₃) = false then (1 : ℝ) else 0) =
         1 / 2 + 1 / 2 * (signVal b₁ * signVal b₂ * signVal b₃) := by
-    cases b₁ <;> cases b₂ <;> cases b₃ <;> simp [signVal] <;> norm_num
+    cases b₁ <;> cases b₂ <;> cases b₃ <;> simp only [signVal] <;> norm_num
   simp only [hastadLinearProb, hastadLinearCorr, h, bernoulliAverage_add, bernoulliAverage_const,
     bernoulliAverage_const_mul, expect_add_distrib, Fintype.expect_const, mul_expect]
 
@@ -851,10 +855,10 @@ theorem length_xorThreeCNF (v₁ v₂ v₃ : V) (b : Bool) :
     (xorThreeCNF v₁ v₂ v₃ b).length = 4 := rfl
 
 /-- When `v₁, v₂, v₃` are distinct variables, every clause of `xorThreeCNF v₁ v₂ v₃ b` has
-3 literals on 3 distinct variables (`CNF.IsExactThree`). -/
-theorem isExactThree_xorThreeCNF {v₁ v₂ v₃ : V} (h12 : v₁ ≠ v₂) (h13 : v₁ ≠ v₃)
+3 literals on 3 distinct variables (`CNF.IsExactThreeDistinct`). -/
+theorem isExactThreeDistinct_xorThreeCNF {v₁ v₂ v₃ : V} (h12 : v₁ ≠ v₂) (h13 : v₁ ≠ v₃)
     (h23 : v₂ ≠ v₃) (b : Bool) :
-    (xorThreeCNF v₁ v₂ v₃ b).IsExactThree := by
+    (xorThreeCNF v₁ v₂ v₃ b).IsExactThreeDistinct := by
   intro C hC
   simp only [xorThreeCNF, List.mem_cons, List.not_mem_nil, or_false] at hC
   rcases hC with rfl | rfl | rfl | rfl <;>
@@ -895,7 +899,7 @@ theorem one_sub_countUnsat_xorThreeCNF_div_four (v₁ v₂ v₃ : V) (σ : V →
 variable {β γ : Type*} [Fintype β] [DecidableEq β] [Fintype γ] [DecidableEq γ]
 
 /-- The **expected fraction of satisfied clauses in Håstad's 4-clause E3-CNF test** on edge
-`π : β → γ` with noise rate `δ`: each 3-bit linear test `(B f ^^ A g₁) == A ((f ∘ π) + g₁ + η)` is
+`π : β → γ` with noise rate `δ`: each 3-bit linear test `(B f ^^ A g) == A ((f ∘ π) + g + μ)` is
 encoded by the 4-clause E3-CNF gadget `xorThreeCNF`, which satisfies all `4/4` clauses when the
 linear test accepts and `3/4` clauses when the linear test rejects. -/
 noncomputable def hastadSATProb (π : β → γ) (δ : ℝ)
@@ -1248,9 +1252,8 @@ theorem exists_hastad_params {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 
 
 /-- **Håstad's two-sided Label Cover to MAX-E3LIN `(1 - δ, 1 / 2 + 4 * ε)` and MAX-E3SAT
 `(1 - δ / 4, 7 / 8 + ε)` gap reduction theorem** [Håstad, Theorems 5.6 and 6.5][Hastad2001]:
-for every `ε > 0` and `0 < δ < 1 / 2`, there exist a degree cutoff `k : ℕ` and a Label Cover
-soundness parameter `η > 0` such that for every Label Cover instance `g : Graph (β → γ)` with
-`g.edges ≠ []`:
+for every `ε > 0` and `0 < δ < 1 / 2`, there exists a Label Cover soundness parameter `η > 0`
+such that for every Label Cover instance `g : Graph (β → γ)` with `g.edges ≠ []`:
 1. (**Completeness**) If `g ∈ (GapLabelCover β γ 1 η).yes`, there exist folded tables `B` and `A`
    achieving `hastadGraphLinearProb g δ B A = 1 - δ` and
    `hastadGraphSATProb g δ B A = 1 - δ / 4`.
@@ -1295,22 +1298,23 @@ namespace Cslib.Complexity
 
 open Cslib.Logic.PL
 
-/-- The two-sided gap problem of **MAX-E3SAT** with completeness `c` and soundness `s`, restricted
-to formulas all of whose clauses have three literals on three distinct variables
-(`CNF.IsExactThree`). Yes-instances have maximum satisfied clause fraction `1 - φ.unsatVal ≥ c`;
-no-instances have `1 - φ.unsatVal ≤ s`. -/
-noncomputable def GapExactThreeSATWithCompleteness (c s : ℝ) : PromiseProblem (CNF ℕ) :=
+/-- The two-sided gap problem of **MAX-E3SAT on clauses with three distinct variables** with
+completeness `c` and soundness `s`, restricted to formulas satisfying `CNF.IsExactThreeDistinct`
+(unlike `GapExactThreeSAT`, which allows repeated variables in a clause). Yes-instances have
+maximum satisfied clause fraction `1 - φ.unsatVal ≥ c`; no-instances have
+`1 - φ.unsatVal ≤ s`. -/
+noncomputable def GapExactThreeDistinctSAT (c s : ℝ) : PromiseProblem (CNF ℕ) :=
   (PromiseProblem.gapMax (fun φ : CNF ℕ => 1 - φ.unsatVal) (fun _ => c) (fun _ => s)).restrict
-    {φ | φ.IsExactThree}
+    {φ | φ.IsExactThreeDistinct}
 
 /-- **Tightness of the `7 / 8` random-assignment threshold for MAX-E3SAT**: for every `s < 7 / 8`,
 every E3-CNF formula with three distinct variables per clause has an assignment satisfying at least
-`7 / 8 > s` of its clauses (`CNF.IsExactThree.unsatVal_le_one_eighth`), so the no-instance set of
-`GapExactThreeSATWithCompleteness c s` is empty. -/
-theorem no_GapExactThreeSATWithCompleteness_eq_empty {c s : ℝ} (hs : s < 7 / 8) :
-    (GapExactThreeSATWithCompleteness c s).no = ∅ := by
+`7 / 8 > s` of its clauses (`CNF.IsExactThreeDistinct.unsatVal_le_one_eighth`), so the no-instance
+set of `GapExactThreeDistinctSAT c s` is empty. -/
+theorem no_GapExactThreeDistinctSAT_eq_empty {c s : ℝ} (hs : s < 7 / 8) :
+    (GapExactThreeDistinctSAT c s).no = ∅ := by
   ext φ
-  simp only [GapExactThreeSATWithCompleteness, PromiseProblem.no_restrict,
+  simp only [GapExactThreeDistinctSAT, PromiseProblem.no_restrict,
     PromiseProblem.mem_no_gapMax, Set.mem_inter_iff, Set.mem_ofPred_eq, Set.mem_empty_iff_false,
     iff_false, not_and]
   intro ⟨h1, _⟩ h3
