@@ -43,7 +43,20 @@ completed reference developments.
    open.
 5. **Håstad’s optimal MAX-E3SAT hardness.** For every fixed ε with 0 < ε < 1/8, it is NP-hard to
    distinguish satisfiable E3-CNF formulas from E3-CNF formulas for which every assignment
-   satisfies at most a 7/8 + ε fraction of clauses.
+   satisfies at most a 7/8 + ε fraction of clauses. The tight `7 / 8` random-assignment bound on
+   E3-CNF formulas with three distinct variables per clause (`CNF.IsExactThreeDistinct`, so
+   `GapExactThreeDistinctSAT c s` has empty `no` set for `s < 7 / 8`), table folding on the Long
+   Code, Håstad's noisy 3-bit linear test and its exact Walsh–Fourier expansion, the
+   Cauchy–Schwarz + Parseval single-edge and multi-edge soundness bounds, the 4-clause E3-CNF
+   gadget, and the two-sided `GapLabelCover β γ 1 η` dichotomy (`hastad_gapLabelCover_dichotomy`,
+   for nonempty finite label sets `β, γ`, `0 < δ < 1 / 2`, and non-empty edge lists `g.edges ≠ []`,
+   separating expected linear test acceptance `1 - δ` vs `1 / 2 + 4 * ε` and expected 4-clause
+   gadget satisfaction `1 - δ / 4` vs `7 / 8 + ε` over folded right tables `B` and arbitrary left
+   tables `A`) are proved in [Hastad](Complexity/Computability/PCP/Approximation/Hastad.lean).
+   Compiling the test distribution into a global `CNF ℕ` polynomial-time promise reduction to
+   `GapExactThreeDistinctSAT`, Raz's parallel repetition theorem (for unconditional NP-hardness of
+   `GapLabelCover β γ 1 η` for arbitrary `η > 0`), and Håstad's adaptive perfect-completeness
+   `(1, 7 / 8 + ε)` test remain open.
 6. **Williams’s ACC lower bound.** NEXP ⊄ ACC⁰: some language in nondeterministic exponential time
    has no polynomial-size, constant-depth nonuniform circuit family over unbounded-fan-in AND, OR,
    NOT and modular-counting gates with fixed moduli. Nonuniform `ACC0 = ⋃ q ≥ 2, AC0Mod q`
@@ -211,7 +224,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. [IP = PSPACE](Complexity/Computability/Complexity/Classes/IP/Shamir.lean) is proved, with a machine-certified Shamir–Shen-style verifier for TQBF; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
 | Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), and [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings. Prove permanent VNP-completeness with its characteristic assumptions, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
-| Approximation and constraint satisfaction | Gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
+| Approximation and constraint satisfaction | [Håstad's 3-bit test and the `7 / 8` MAX-E3SAT threshold](Complexity/Computability/PCP/Approximation/Hastad.lean) proves the `7 / 8` random-assignment upper bound for exact 3-CNF with three distinct variables per clause (`CNF.IsExactThreeDistinct`) and the Fourier soundness and two-sided `GapLabelCover` dichotomy for expected MAX-E3LIN (`1 - δ` vs `1 / 2 + 4 * ε`) and 4-clause E3-CNF gadget satisfaction (`1 - δ / 4` vs `7 / 8 + ε`). Complete the global `CNF ℕ` promise reduction to `GapExactThreeDistinctSAT`, Raz's parallel repetition theorem, and the perfect-completeness `(1, 7 / 8 + ε)` reduction; develop further gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
 | Pseudorandomness and coding | Hardness versus randomness, space-bounded generators, extractors/condensers, limited independence, explicit expanders, and list/local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
 | Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). Ideal OT-hybrid multiparty completeness with abort against static malicious corruptions is proved in [ObliviousTransfer](Complexity/Crypto/Multiparty/ObliviousTransfer.lean). Extend the existing OWF/PRG/PRF/OT results with reusable adaptive reductions, commitments, zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
 | Communication, queries and data structures | Randomized and multiparty protocols, discrepancy and information complexity, direct-sum/product results, lifting theorems, and reductions to streaming, sketching and cell-probe lower bounds. Reuse upstream query models. |
