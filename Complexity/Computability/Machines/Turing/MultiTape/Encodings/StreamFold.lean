@@ -95,6 +95,15 @@ public lemma sum_length_getD (toks : List (List Bool)) :
   | cons t toks ih => rw [List.length_cons, Finset.sum_range_succ']; simp [ih, Nat.add_comm]
 
 -- upstream: candidate
+/-- A streaming fold whose per-element callback emits nothing emits the empty word. -/
+@[simp]
+public lemma streamEmit_const_nil (next : σ × α → σ) (s : σ) (l : List α) :
+    streamEmit next (fun _ => []) s l = [] := by
+  induction l generalizing s with
+  | nil => rfl
+  | cons a l ih => exact ih _
+
+-- upstream: candidate
 /-- An input reader that reads one framed word `[true, b₁, …, true, bₖ, false]` from the input
 tape while keeping its framing, stopping immediately after the closing `false` (including on the
 empty frame `[false]`). -/

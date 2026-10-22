@@ -8,38 +8,31 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.GenericRAM.Simulation.Turing
-public import Complexity.Computability.GenericRAM.Native.Nat
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
-public import Complexity.Computability.WordRAM.Generic
 
 /-!
 # Clocked multi-step execution and whole-run native transport for generic RAMs
 
 Iterating `FiniteState.step` yields a clocked multi-step finite-state semantics `FiniteState.run`
-whose halting outputs agree with `GenericRAM.run`, `GenericRAM.Executes`, and (via
-`WordRAM.Program.toGeneric`) `WordRAM.Executes`. Each continuing step adds at most one distinct
-address to the sparse store.
+whose halting outputs agree with `GenericRAM.run` and `GenericRAM.Executes`. Each continuing step
+adds at most one distinct address to the sparse store.
 
-On the native multitape Turing-machine side, `NativeCertificate.iterate` packages binary-counter
-iteration (`Turing.MultiTapeTM.ComputableTidilyInO.iterate`) with trajectory-maximum resource
-accounting over `List.range (n + 1)`. Applying this combinator to `FiniteState.stepCertificate`
-yields `FiniteState.runCertificate` and `FiniteState.evalCertificate`, together with automatic
-whole-run algorithm transport (`FiniteState.transportCertificate`, `FiniteState.transport_inO`,
-`FiniteState.transport_polyTime`, and their `WordRAM` specializations).
+On the native multitape Turing-machine side, applying `NativeCertificate.iterate` to
+`FiniteState.stepCertificate` yields `FiniteState.runCertificate` and `FiniteState.evalCertificate`,
+together with automatic whole-run algorithm transport (`FiniteState.transportCertificate`,
+`FiniteState.transport_inO`, `FiniteState.transport_polyTime`, and
+`FiniteState.transport_polyTime_of_le_const`).
 
 ## Main definitions
 
 * `FiniteState.init`, `FiniteState.initConst`: finite initial configurations at instruction `0`.
 * `FiniteState.stepResult`, `FiniteState.run`, `FiniteState.eval`: clocked multi-step execution
   and halting output extraction.
-* `NativeCertificate.iterate`: clocked iteration certificate with trajectory-maximum bounds.
 * `FiniteState.initCertificate`, `FiniteState.initConstCertificate`: native initialization
   certificates.
 * `FiniteState.runCertificate`, `FiniteState.evalCertificate`, `FiniteState.runTime`,
   `FiniteState.runSpace`: native clocked whole-run certificates and parameterized resource bounds.
-* `FiniteState.transportCertificate`, `WordRAM.transportCertificate`: automatic whole-run
-  transport of `Executes` certificates to native multitape Turing machines.
-* `Model.NativePrimitives.IsPolynomial`: polynomiality predicate for scalar primitive bundles.
+* `FiniteState.transportCertificate`: automatic whole-run transport of `GenericRAM.Executes`
+  certificates to native multitape Turing machines.
 
 ## Main results
 
@@ -50,8 +43,8 @@ whole-run algorithm transport (`FiniteState.transportCertificate`, `FiniteState.
 * `FiniteState.le_runTime_of_run_eq_inl`, `FiniteState.le_runSpace_of_run_eq_inl`: retention of
   per-step primitive and sparse-memory bounds along the run.
 * `FiniteState.step_polyTime`, `FiniteState.transport_inO`, `FiniteState.transport_polyTime`,
-  `WordRAM.transport_inO`, `WordRAM.transport_polyTime`: parameterized and polynomial-time
-  whole-run transport theorems.
+  `FiniteState.transport_polyTime_of_le_const`: parameterized and polynomial-time whole-run
+  transport theorems.
 
 ## References
 
@@ -511,292 +504,14 @@ theorem executes_iff_exists_run (k : M.Config) (p : Program M r) (s : FiniteStat
 
 end Cslib.GenericRAM.FiniteState
 
-/-! ## Clocked iteration and polynomiality combinators for `NativeCertificate` -/
+/-! ## Native certificates for initialization, clocked execution, and transport -/
 
 noncomputable section
-
-namespace Cslib.GenericRAM.NativeCertificate
-
-open Turing.MultiTapeTM
-
-variable {α β γ δ : Type} {ei : α ↪ List Bool} {eb : β ↪ List Bool}
-  {eo : γ ↪ List Bool} {ed : δ ↪ List Bool}
-
-/-- Maximum single-round time along the first `m + 1` iterates from `b`. -/
-def maxRoundTime {step : β → β} (cstep : NativeCertificate step eb eb) (m : ℕ) (b : β) : ℕ :=
-  listMax (fun j => cstep.time (step^[j] b)) (List.range (m + 1))
-
-/-- Maximum single-round space along the first `m + 1` iterates from `b`. -/
-def maxRoundSpace {step : β → β} (cstep : NativeCertificate step eb eb) (m : ℕ) (b : β) : ℕ :=
-  listMax (fun j => cstep.space (step^[j] b)) (List.range (m + 1))
-
-/-- Maximum encoded state length along the first `m + 1` iterates from `b`. -/
-def maxStateLength (eb : β ↪ List Bool) (step : β → β) (m : ℕ) (b : β) : ℕ :=
-  listMax (fun j => (eb (step^[j] b)).length) (List.range (m + 1))
-
-theorem le_maxRoundTime {step : β → β} (cstep : NativeCertificate step eb eb)
-    {m j : ℕ} (hj : j ≤ m) (b : β) :
-    cstep.time (step^[j] b) ≤ maxRoundTime cstep m b :=
-  le_listMax (f := fun i => cstep.time (step^[i] b)) (List.mem_range.mpr (by omega))
-
-theorem le_maxRoundSpace {step : β → β} (cstep : NativeCertificate step eb eb)
-    {m j : ℕ} (hj : j ≤ m) (b : β) :
-    cstep.space (step^[j] b) ≤ maxRoundSpace cstep m b :=
-  le_listMax (f := fun i => cstep.space (step^[i] b)) (List.mem_range.mpr (by omega))
-
-theorem le_maxStateLength (eb : β ↪ List Bool) (step : β → β)
-    {m j : ℕ} (hj : j ≤ m) (b : β) :
-    (eb (step^[j] b)).length ≤ maxStateLength eb step m b :=
-  le_listMax (f := fun i => (eb (step^[i] b)).length) (List.mem_range.mpr (by omega))
-
-theorem maxRoundTime_le {step : β → β} (cstep : NativeCertificate step eb eb)
-    (m : ℕ) (b : β) {R : ℕ} (h : ∀ j ≤ m, cstep.time (step^[j] b) ≤ R) :
-    maxRoundTime cstep m b ≤ R :=
-  listMax_le fun j hj => h j (by have := List.mem_range.mp hj; omega)
-
-theorem maxRoundSpace_le {step : β → β} (cstep : NativeCertificate step eb eb)
-    (m : ℕ) (b : β) {Q : ℕ} (h : ∀ j ≤ m, cstep.space (step^[j] b) ≤ Q) :
-    maxRoundSpace cstep m b ≤ Q :=
-  listMax_le fun j hj => h j (by have := List.mem_range.mp hj; omega)
-
-theorem maxStateLength_le (eb : β ↪ List Bool) (step : β → β)
-    (m : ℕ) (b : β) {B : ℕ} (h : ∀ j ≤ m, (eb (step^[j] b)).length ≤ B) :
-    maxStateLength eb step m b ≤ B :=
-  listMax_le fun j hj => h j (by have := List.mem_range.mp hj; omega)
-
-/-- Iterate `step` for `n a` rounds using a binary counter, charging the trajectory maxima over
-`0 ≤ j ≤ n a` without requiring `[Inhabited β]` or pre-supplied polynomial bounds. -/
-def iterate {n : α → ℕ} {init : α → β} {step : β → β}
-    (cn : NativeCertificate n ei encNat)
-    (cinit : NativeCertificate init ei eb)
-    (cstep : NativeCertificate step eb eb) :
-    NativeCertificate (fun a => step^[n a] (init a)) ei eb where
-  time a := cn.time a + cinit.time a +
-    (n a + 1) * (maxRoundTime cstep (n a) (init a) +
-      maxStateLength eb step (n a) (init a) + ((encNat (n a)).length + 1) ^ 2)
-  space a := cn.space a + cinit.space a +
-    maxRoundSpace cstep (n a) (init a) +
-    maxStateLength eb step (n a) (init a) + (encNat (n a)).length
-  computes := by
-    rcases isEmpty_or_nonempty β with h | ⟨⟨b₀⟩⟩
-    · exact (cinit.computes.mono_le (fun _ => by omega)
-        (fun _ => by omega)).of_enc_eq fun a => isEmptyElim (init a)
-    · let : Inhabited β := ⟨b₀⟩
-      exact ComputableTidilyInO.iterate cn.computes cinit.computes cstep.computes
-        (fun a j hj => le_maxRoundTime cstep hj (init a))
-        (fun a j hj => le_maxRoundSpace cstep hj (init a))
-        (fun a j hj => le_maxStateLength eb step hj (init a))
-
-@[simp] theorem iterate_time {n : α → ℕ} {init : α → β} {step : β → β}
-    (cn : NativeCertificate n ei encNat)
-    (cinit : NativeCertificate init ei eb)
-    (cstep : NativeCertificate step eb eb) (a : α) :
-    (iterate cn cinit cstep).time a = cn.time a + cinit.time a +
-      (n a + 1) * (maxRoundTime cstep (n a) (init a) +
-        maxStateLength eb step (n a) (init a) + ((encNat (n a)).length + 1) ^ 2) := rfl
-
-@[simp] theorem iterate_space {n : α → ℕ} {init : α → β} {step : β → β}
-    (cn : NativeCertificate n ei encNat)
-    (cinit : NativeCertificate init ei eb)
-    (cstep : NativeCertificate step eb eb) (a : α) :
-    (iterate cn cinit cstep).space a = cn.space a + cinit.space a +
-      maxRoundSpace cstep (n a) (init a) +
-      maxStateLength eb step (n a) (init a) + (encNat (n a)).length := rfl
-
-/-! ### Polynomiality preservation across certificate combinators -/
-
-theorem polyBounded_pow_of_polyBounded {size u : α → ℕ} (hu : PolyBounded size u) (c d : ℕ) :
-    PolyBounded size (fun a => c * (u a + 1) ^ d) :=
-  (PolyBounded.of_forall_le (size := id) (u := fun x => c * (x + 1) ^ d)
-    c d fun _ => le_rfl).comp hu
-
-theorem linear_isPolynomial {f : α → β}
-    (h : ComputableTidilyInO f ei eb (fun a => (ei a).length) (fun a => (ei a).length)) :
-    (linear h).IsPolynomial :=
-  ⟨.self, .self⟩
-
-theorem const_isPolynomial (b : β) : (const (ei := ei) (em := eb) b).IsPolynomial :=
-  ⟨.self, .self⟩
-
-theorem prod_isPolynomial {f : α → β} {g : α → γ}
-    (c : NativeCertificate f ei eb) (d : NativeCertificate g ei eo)
-    (hc : c.IsPolynomial) (hd : d.IsPolynomial) :
-    (prod c d).IsPolynomial :=
-  ⟨hc.1.add hd.1, hc.2.add hd.2⟩
-
-theorem post_isPolynomial {f : α → β} {g : β → γ}
-    (c : NativeCertificate f ei eb)
-    (h : ComputableTidilyInO g eb eo (fun b => (eb b).length) (fun b => (eb b).length))
-    (hc : c.IsPolynomial) :
-    (post c h).IsPolynomial := hc
-
-theorem fst_isPolynomial {f : α → β × γ}
-    (c : NativeCertificate f ei (encPair eb eo)) (hc : c.IsPolynomial) :
-    (fst c).IsPolynomial := hc
-
-theorem snd_isPolynomial {f : α → β × γ}
-    (c : NativeCertificate f ei (encPair eb eo)) (hc : c.IsPolynomial) :
-    (snd c).IsPolynomial := hc
-
-theorem some_isPolynomial {f : α → β}
-    (c : NativeCertificate f ei eb) (hc : c.IsPolynomial) :
-    (some c).IsPolynomial := hc
-
-theorem inl_isPolynomial {f : α → β}
-    (c : NativeCertificate f ei eb) (right : γ ↪ List Bool) (hc : c.IsPolynomial) :
-    (inl c right).IsPolynomial := hc
-
-theorem inr_isPolynomial {f : α → β}
-    (left : γ ↪ List Bool) (c : NativeCertificate f ei eb) (hc : c.IsPolynomial) :
-    (inr left c).IsPolynomial := hc
-
-theorem congr_isPolynomial {f g : α → β}
-    (c : NativeCertificate f ei eb) (h : ∀ a, f a = g a) (hc : c.IsPolynomial) :
-    (congr c h).IsPolynomial := hc
-
-theorem pull_isPolynomial {f : α → β}
-    (c : NativeCertificate f ei eb) (other : δ ↪ List Bool) (hc : c.IsPolynomial) :
-    (pull c other).IsPolynomial :=
-  comp_isPolynomial c (linear (ComputableTidilyInO.fst ei other)) hc ⟨.self, .self⟩
-
-theorem payload_isPolynomial (input : α ↪ List Bool) (out : β ↪ List Bool) :
-    (payload input out).IsPolynomial :=
-  ⟨.self, .self⟩
-
-theorem branch_isPolynomial {condition : α → Bool} {f g : α → β}
-    (test : NativeCertificate condition ei encBool)
-    (yes : NativeCertificate f ei eb) (no : NativeCertificate g ei eb)
-    (ht : test.IsPolynomial) (hy : yes.IsPolynomial) (hn : no.IsPolynomial) :
-    (branch test yes no).IsPolynomial := by
-  refine ⟨(ht.1.add (hy.1.add hn.1)).mono fun a => ?_,
-    (ht.2.add (hy.2.add hn.2)).mono fun a => ?_⟩ <;>
-    (simp only [branch_time, branch_space]; split <;> omega)
-
-theorem option_isPolynomial {value : α → Option β} {fallback : α → γ} {body : α × β → γ}
-    (c : NativeCertificate value ei (encOption eb))
-    (no : NativeCertificate fallback ei eo)
-    (yes : NativeCertificate body (encPair ei eb) eo)
-    (hc : c.IsPolynomial) (hno : no.IsPolynomial) (hyes : yes.IsPolynomial) :
-    (option c no yes).IsPolynomial := by
-  obtain ⟨ct, dt, hyt⟩ := hyes.1.exists_le
-  obtain ⟨cs, ds, hys⟩ := hyes.2.exists_le
-  have hlen : PolyBounded (fun a => (ei a).length)
-      (fun a => 2 * (ei a).length + (encOption eb (value a)).length) :=
-    ((PolyBounded.const 2).mul .self).add (c.polyTime hc).polyBounded_length
-  have hbodyT : PolyBounded (fun a => (ei a).length)
-      (fun a => ct * (2 * (ei a).length + (encOption eb (value a)).length + 1) ^ dt) :=
-    polyBounded_pow_of_polyBounded hlen ct dt
-  have hbodyS : PolyBounded (fun a => (ei a).length)
-      (fun a => cs * (2 * (ei a).length + (encOption eb (value a)).length + 1) ^ ds) :=
-    polyBounded_pow_of_polyBounded hlen cs ds
-  refine ⟨((((PolyBounded.const 2).mul hc.1).add .self).add (hno.1.add hbodyT)).mono fun a => ?_,
-    ((((PolyBounded.const 2).mul hc.2).add .self).add (hno.2.add hbodyS)).mono fun a => ?_⟩
-  · simp only [option_time]
-    cases hv : value a with
-    | none => simp
-    | some b =>
-      have hb := hyt (a, b)
-      have hpair : (encPair ei eb (a, b)).length =
-          2 * (ei a).length + (encOption eb (Option.some b)).length := by
-        simp; omega
-      rw [hpair] at hb
-      simp only [Option.elim_some]
-      omega
-  · simp only [option_space]
-    cases hv : value a with
-    | none => simp
-    | some b =>
-      have hb := hys (a, b)
-      have hpair : (encPair ei eb (a, b)).length =
-          2 * (ei a).length + (encOption eb (Option.some b)).length := by
-        simp; omega
-      rw [hpair] at hb
-      simp only [Option.elim_some]
-      omega
-
-/-- Clocked iteration preserves polynomiality when the step count and reachable state lengths are
-polynomially bounded in the encoded input length. -/
-theorem iterate_isPolynomial {n : α → ℕ} {init : α → β} {step : β → β}
-    (cn : NativeCertificate n ei encNat)
-    (cinit : NativeCertificate init ei eb)
-    (cstep : NativeCertificate step eb eb)
-    (hcn : cn.IsPolynomial) (hcinit : cinit.IsPolynomial) (hcstep : cstep.IsPolynomial)
-    (hn : PolyBounded (fun a => (ei a).length) n)
-    {B : α → ℕ} (hB : PolyBounded (fun a => (ei a).length) B)
-    (hstate : ∀ a, ∀ j ≤ n a, (eb (step^[j] (init a))).length ≤ B a) :
-    (iterate cn cinit cstep).IsPolynomial := by
-  obtain ⟨ct, dt, hst⟩ := hcstep.1.exists_le
-  obtain ⟨cs, ds, hss⟩ := hcstep.2.exists_le
-  have hlenN : PolyBounded (fun a => (ei a).length) (fun a => (encNat (n a)).length) :=
-    (cn.polyTime hcn).polyBounded_length
-  have hlenN2 : PolyBounded (fun a => (ei a).length)
-      (fun a => 1 * ((encNat (n a)).length + 1) ^ 2) :=
-    polyBounded_pow_of_polyBounded hlenN 1 2
-  have hRT : PolyBounded (fun a => (ei a).length) (fun a => ct * (B a + 1) ^ dt) :=
-    polyBounded_pow_of_polyBounded hB ct dt
-  have hRS : PolyBounded (fun a => (ei a).length) (fun a => cs * (B a + 1) ^ ds) :=
-    polyBounded_pow_of_polyBounded hB cs ds
-  have hmaxB : ∀ a, maxStateLength eb step (n a) (init a) ≤ B a :=
-    fun a => maxStateLength_le eb step (n a) (init a) (hstate a)
-  have hmaxT : ∀ a, maxRoundTime cstep (n a) (init a) ≤ ct * (B a + 1) ^ dt :=
-    fun a => maxRoundTime_le cstep (n a) (init a) fun j hj =>
-      (hst _).trans (Nat.mul_le_mul_left ct
-        (Nat.pow_le_pow_left (Nat.add_le_add_right (hstate a j hj) 1) dt))
-  have hmaxS : ∀ a, maxRoundSpace cstep (n a) (init a) ≤ cs * (B a + 1) ^ ds :=
-    fun a => maxRoundSpace_le cstep (n a) (init a) fun j hj =>
-      (hss _).trans (Nat.mul_le_mul_left cs
-        (Nat.pow_le_pow_left (Nat.add_le_add_right (hstate a j hj) 1) ds))
-  refine ⟨((hcn.1.add hcinit.1).add
-      ((hn.add (.const 1)).mul ((hRT.add hB).add hlenN2))).mono fun a => ?_,
-    ((((hcn.2.add hcinit.2).add hRS).add hB).add hlenN).mono fun a => ?_⟩
-  · simp only [iterate_time, one_mul]
-    have h1 := hmaxT a
-    have h2 := hmaxB a
-    have h3 : maxRoundTime cstep (n a) (init a) + maxStateLength eb step (n a) (init a) +
-        ((encNat (n a)).length + 1) ^ 2 ≤
-        ct * (B a + 1) ^ dt + B a + ((encNat (n a)).length + 1) ^ 2 := by omega
-    have h4 := Nat.mul_le_mul_left (n a + 1) h3
-    omega
-  · simp only [iterate_space]
-    have h1 := hmaxS a
-    have h2 := hmaxB a
-    omega
-
-end Cslib.GenericRAM.NativeCertificate
-
-/-! ## Native certificates for initialization, clocked execution, and transport -/
 
 namespace Cslib.GenericRAM
 
 open Turing.MultiTapeTM
 open NativeCertificate
-
-namespace Model
-
-/-- All six primitive certificates in a bundle have polynomial time and space bounds. -/
-structure NativePrimitives.IsPolynomial {M : Model.{0, 0, 0, 0}} {enc : M.Encoding}
-    (N : M.NativePrimitives enc) : Prop where
-  constant : ∀ c, (N.constant c).IsPolynomial
-  operation : ∀ op, (N.operation op).IsPolynomial
-  test : ∀ t, (N.test t).IsPolynomial
-  address : N.address.IsPolynomial
-  validMove : N.validMove.IsPolynomial
-  validPC : N.validPC.IsPolynomial
-
-end Model
-
-namespace BoundedNat
-
-/-- The bounded-natural primitive bundle has polynomial resource bounds in all fields. -/
-theorem nativePrimitives_isPolynomial : nativePrimitives.IsPolynomial where
-  constant c := ofPolyTime_isPolynomial (constant_polyTime c)
-  operation op := ofPolyTime_isPolynomial (operation_polyTime op)
-  test t := ofPolyTime_isPolynomial (test_polyTime t)
-  address := ofPolyTime_isPolynomial address_polyTime
-  validMove := ofPolyTime_isPolynomial validMove_polyTime
-  validPC := ofPolyTime_isPolynomial validPC_polyTime
-
-end BoundedNat
 
 namespace FiniteState
 
@@ -1435,82 +1150,30 @@ theorem transportCertificate_isPolynomial (enc : M.Encoding) (N : M.NativePrimit
     (hOutLen : ∀ a, ∀ j ≤ steps a,
       (resultEncoding enc (run (cfg a) p j (initState a))).length ≤ B a) :
     (transportCertificate enc N p cSteps cCfg cInit hExec).IsPolynomial := by
-  have hround := roundCertificate_isPolynomial enc N p hN
-  obtain ⟨ct, dt, hst⟩ := hround.1.exists_le
-  obtain ⟨cs, ds, hss⟩ := hround.2.exists_le
-  have hlenSteps : PolyBounded (fun a => (ei a).length) (fun a => (encNat (steps a)).length) :=
-    (cSteps.polyTime hSteps).polyBounded_length
-  have hlenCfg : PolyBounded (fun a => (ei a).length) (fun a => (enc.config (cfg a)).length) :=
-    (cCfg.polyTime hCfg).polyBounded_length
-  have hlenInit : PolyBounded (fun a => (ei a).length)
-      (fun a => (encoding enc (initState a)).length) :=
-    (cInit.polyTime hInit).polyBounded_length
-  have hLoopB : PolyBounded (fun a => (ei a).length)
-      (fun a => 2 * (enc.config (cfg a)).length + 1 + B a) :=
-    (((PolyBounded.const 2).mul hlenCfg).add (.const 1)).add hB
-  have hLoopLen : ∀ a, ∀ j ≤ steps a,
-      (loopEncoding enc ((round p)^[j] (cfg a, Option.some (.inl (initState a))))).length ≤
-        2 * (enc.config (cfg a)).length + 1 + B a := by
-    intro a j hj
-    rw [iterate_round_inl]
-    have := hOutLen a j hj
-    simp only [loopEncoding, length_encPair]
-    omega
-  have hmaxB : ∀ a, maxStateLength (encPair enc.config (resultEncoding enc)) (round p)
-      (steps a) (cfg a, Option.some (.inl (initState a))) ≤
-      2 * (enc.config (cfg a)).length + 1 + B a :=
-    fun a => maxStateLength_le (loopEncoding enc) (round p) (steps a) _ (hLoopLen a)
-  have hmaxT : ∀ a, maxRoundTime (roundCertificate enc N p)
-      (steps a) (cfg a, Option.some (.inl (initState a))) ≤
-      ct * (2 * (enc.config (cfg a)).length + 1 + B a + 1) ^ dt :=
-    fun a => maxRoundTime_le (roundCertificate enc N p) (steps a) _ fun j hj =>
-      (hst _).trans (Nat.mul_le_mul_left ct
-        (Nat.pow_le_pow_left (Nat.add_le_add_right (hLoopLen a j hj) 1) dt))
-  have hmaxS : ∀ a, maxRoundSpace (roundCertificate enc N p)
-      (steps a) (cfg a, Option.some (.inl (initState a))) ≤
-      cs * (2 * (enc.config (cfg a)).length + 1 + B a + 1) ^ ds :=
-    fun a => maxRoundSpace_le (roundCertificate enc N p) (steps a) _ fun j hj =>
-      (hss _).trans (Nat.mul_le_mul_left cs
-        (Nat.pow_le_pow_left (Nat.add_le_add_right (hLoopLen a j hj) 1) ds))
+  have hIter : (iterate cSteps (prod cCfg (some (inl cInit enc.value)))
+      (roundCertificate enc N p)).IsPolynomial :=
+    iterate_isPolynomial cSteps _ (roundCertificate enc N p)
+      hSteps (prod_isPolynomial _ _ hCfg (some_isPolynomial _ (inl_isPolynomial _ _ hInit)))
+      (roundCertificate_isPolynomial enc N p hN) hStepsBound
+      ((((PolyBounded.const 2).mul (cCfg.polyTime hCfg).polyBounded_length).add (.const 1)).add hB)
+      fun a j hj => by
+        rw [iterate_round_inl]
+        have := hOutLen a j hj
+        simp only [loopEncoding, length_encPair]
+        omega
   have hInLen : PolyBounded (fun a => (ei a).length)
-      (fun a => (runInputEncoding enc (steps a, (cfg a, initState a))).length) := by
-    refine ((((PolyBounded.const 2).mul hlenSteps).add (.const 1)).add
-      ((((PolyBounded.const 2).mul hlenCfg).add (.const 1)).add hlenInit)).mono fun a => ?_
-    simp [runInputEncoding, inputEncoding]
-  have hRT : PolyBounded (fun a => (ei a).length)
-      (fun a => ct * (2 * (enc.config (cfg a)).length + 1 + B a + 1) ^ dt) :=
-    polyBounded_pow_of_polyBounded hLoopB ct dt
-  have hRS : PolyBounded (fun a => (ei a).length)
-      (fun a => cs * (2 * (enc.config (cfg a)).length + 1 + B a + 1) ^ ds) :=
-    polyBounded_pow_of_polyBounded hLoopB cs ds
-  have hlenSteps2 : PolyBounded (fun a => (ei a).length)
-      (fun a => 1 * ((encNat (steps a)).length + 1) ^ 2) :=
-    polyBounded_pow_of_polyBounded hlenSteps 1 2
-  refine ⟨(((hSteps.1.add (hCfg.1.add hInit.1)).add
-      ((PolyBounded.const 3).mul hInLen)).add
-      ((hStepsBound.add (.const 1)).mul ((hRT.add hLoopB).add hlenSteps2))).mono fun a => ?_,
-    (((((hSteps.2.add (hCfg.2.add hInit.2)).add
-      ((PolyBounded.const 3).mul hInLen)).add hRS).add hLoopB).add hlenSteps).mono fun a => ?_⟩
+      (fun a => (runInputEncoding enc (steps a, (cfg a, initState a))).length) :=
+    ((prod cSteps (prod cCfg cInit)).polyTime
+      (prod_isPolynomial _ _ hSteps (prod_isPolynomial _ _ hCfg hInit))).polyBounded_length
+  refine ⟨(hIter.1.add ((PolyBounded.const 3).mul hInLen)).mono fun a => ?_,
+    (hIter.2.add ((PolyBounded.const 3).mul hInLen)).mono fun a => ?_⟩
   · simp only [transportCertificate_time, runTime, runCertificate, congr_time, snd_time,
       iterate_time, initLoopCertificate, prod_time, fst_time, snd_time, some_time, inl_time,
-      linear_time, one_mul]
-    have h1 := hmaxT a
-    have h2 := hmaxB a
-    have h3 : maxRoundTime (roundCertificate enc N p) (steps a)
-          (cfg a, Option.some (.inl (initState a))) +
-        maxStateLength (encPair enc.config (resultEncoding enc)) (round p) (steps a)
-          (cfg a, Option.some (.inl (initState a))) +
-        ((encNat (steps a)).length + 1) ^ 2 ≤
-        ct * (2 * (enc.config (cfg a)).length + 1 + B a + 1) ^ dt +
-          (2 * (enc.config (cfg a)).length + 1 + B a) +
-          ((encNat (steps a)).length + 1) ^ 2 := by omega
-    have h4 := Nat.mul_le_mul_left (steps a + 1) h3
+      linear_time, resultEncoding]
     omega
   · simp only [transportCertificate_space, runSpace, runCertificate, congr_space, snd_space,
       iterate_space, initLoopCertificate, prod_space, fst_space, snd_space, some_space, inl_space,
-      linear_space]
-    have h1 := hmaxS a
-    have h2 := hmaxB a
+      linear_space, resultEncoding]
     omega
 
 /-- Automatic `ComputableTidilyInPolyTime` transport corollary from `GenericRAM.Executes`. -/
@@ -1533,84 +1196,79 @@ theorem transport_polyTime (enc : M.Encoding) (N : M.NativePrimitives enc)
     (transportCertificate_isPolynomial enc N p cSteps cCfg cInit hExec
       hN hSteps hCfg hInit hStepsBound hB hOutLen)
 
-end FiniteState
-end Cslib.GenericRAM
+/-- Iterating `roundCertificate` a fixed number of rounds `j` yields a certificate for the `j`-th
+loop state. -/
+def roundIterCertificate (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r)
+    {cfg : α → M.Config} {initState : α → FiniteState M r}
+    (cCfg : NativeCertificate cfg ei enc.config)
+    (cInit : NativeCertificate initState ei (encoding enc)) : (j : ℕ) →
+    NativeCertificate
+      (fun a => (round p)^[j] (cfg a, Option.some (.inl (initState a))))
+      ei (loopEncoding enc)
+  | 0 => prod cCfg (some (inl cInit enc.value))
+  | j + 1 =>
+    ((roundCertificate enc N p).comp
+      (roundIterCertificate enc N p cCfg cInit j)).congr fun _ =>
+        (Function.iterate_succ_apply' _ _ _).symm
 
-/-! ## WordRAM whole-run transport adapter -/
+theorem roundIterCertificate_isPolynomial (enc : M.Encoding) (N : M.NativePrimitives enc)
+    (p : Program M r) {cfg : α → M.Config} {initState : α → FiniteState M r}
+    (cCfg : NativeCertificate cfg ei enc.config)
+    (cInit : NativeCertificate initState ei (encoding enc))
+    (hN : N.IsPolynomial) (hCfg : cCfg.IsPolynomial) (hInit : cInit.IsPolynomial) :
+    ∀ j : ℕ, (roundIterCertificate enc N p cCfg cInit j).IsPolynomial
+  | 0 => prod_isPolynomial _ _ hCfg (some_isPolynomial _ (inl_isPolynomial _ _ hInit))
+  | j + 1 =>
+    congr_isPolynomial _ _
+      (comp_isPolynomial _ _ (roundCertificate_isPolynomial enc N p hN)
+        (roundIterCertificate_isPolynomial enc N p cCfg cInit hN hCfg hInit j))
 
-namespace Cslib.WordRAM
+theorem polyBounded_length_run (enc : M.Encoding) (N : M.NativePrimitives enc)
+    (p : Program M r) {cfg : α → M.Config} {initState : α → FiniteState M r}
+    (cCfg : NativeCertificate cfg ei enc.config)
+    (cInit : NativeCertificate initState ei (encoding enc))
+    (hN : N.IsPolynomial) (hCfg : cCfg.IsPolynomial) (hInit : cInit.IsPolynomial) (j : ℕ) :
+    PolyBounded (fun a => (ei a).length)
+      (fun a => (resultEncoding enc (run (cfg a) p j (initState a))).length) := by
+  have hloop := ((roundIterCertificate enc N p cCfg cInit j).polyTime
+    (roundIterCertificate_isPolynomial enc N p cCfg cInit hN hCfg hInit j)).polyBounded_length
+  refine hloop.mono fun a => ?_
+  rw [iterate_round_inl]
+  simp only [loopEncoding, length_encPair]
+  omega
 
-open Cslib.GenericRAM Turing.MultiTapeTM
-
-variable {B : Basis} {r : ℕ} {α : Type} {ei : α ↪ List Bool}
-
-/-- Halting `WordRAM.Executes` runs correspond to halting `FiniteState.run` executions of
-`p.toGeneric`. -/
-theorem executes_iff_exists_finiteRun (w : ℕ) (p : Program B r)
-    (s : FiniteState B.genericModel r) (u : State r) (hden : s.denote = u.toGeneric B)
-    (v : ℕ) :
-    (∃ m, Executes w p u v m) ↔ ∃ n, FiniteState.run w p.toGeneric n s = some (.inr v) := by
-  rw [← FiniteState.executes_iff_exists_run, hden]
-  exact ⟨fun ⟨m, h⟩ => ⟨m, executes_toGeneric_iff.mpr h⟩,
-    fun ⟨m, h⟩ => ⟨m, executes_toGeneric_iff.mp h⟩⟩
-
-/-- Transport a halting `WordRAM.Executes` certificate within `steps a` instructions to a native
-multitape Turing-machine certificate for `f : α → ℕ`. -/
-def transportCertificate (enc : B.genericModel.Encoding) (N : B.genericModel.NativePrimitives enc)
-    (p : Program B r) {f : α → ℕ} {cfg : α → ℕ}
-    {initState : α → FiniteState B.genericModel r} {u : α → State r} {steps : α → ℕ}
+/-- Automatic `ComputableTidilyInPolyTime` transport for a constant step-budget bound
+`∀ a, steps a ≤ K`: the intermediate outcome lengths along `0 ≤ j ≤ K` are bounded by induction on
+`K` using `roundCertificate_isPolynomial`. -/
+theorem transport_polyTime_of_le_const (enc : M.Encoding) (N : M.NativePrimitives enc)
+    (p : Program M r) {f : α → M.Value} {cfg : α → M.Config}
+    {initState : α → FiniteState M r} {steps : α → ℕ}
     (cSteps : NativeCertificate steps ei encNat)
     (cCfg : NativeCertificate cfg ei enc.config)
-    (cInit : NativeCertificate initState ei (FiniteState.encoding enc))
-    (hden : ∀ a, (initState a).denote = (u a).toGeneric B)
-    (hExec : ∀ a, ∃ m ≤ steps a, Executes (cfg a) p (u a) (f a) m) :
-    NativeCertificate f ei enc.value :=
-  FiniteState.transportCertificate enc N p.toGeneric cSteps cCfg cInit fun a => by
-    obtain ⟨m, hm, hex⟩ := hExec a
-    rw [hden a]
-    exact ⟨m, hm, executes_toGeneric_iff.mpr hex⟩
-
-/-- Parameterized `ComputableTidilyInO` transport theorem from `WordRAM.Executes`. -/
-theorem transport_inO (enc : B.genericModel.Encoding) (N : B.genericModel.NativePrimitives enc)
-    (p : Program B r) {f : α → ℕ} {cfg : α → ℕ}
-    {initState : α → FiniteState B.genericModel r} {u : α → State r} {steps : α → ℕ}
-    (cSteps : NativeCertificate steps ei encNat)
-    (cCfg : NativeCertificate cfg ei enc.config)
-    (cInit : NativeCertificate initState ei (FiniteState.encoding enc))
-    (hden : ∀ a, (initState a).denote = (u a).toGeneric B)
-    (hExec : ∀ a, ∃ m ≤ steps a, Executes (cfg a) p (u a) (f a) m) :
-    ComputableTidilyInO f ei enc.value
-      (fun a => cSteps.time a + (cCfg.time a + cInit.time a) +
-        FiniteState.runTime enc N p.toGeneric (steps a, (cfg a, initState a)))
-      (fun a => cSteps.space a + (cCfg.space a + cInit.space a) +
-        FiniteState.runSpace enc N p.toGeneric (steps a, (cfg a, initState a))) :=
-  (transportCertificate enc N p cSteps cCfg cInit hden hExec).computes
-
-/-- Automatic `ComputableTidilyInPolyTime` transport corollary from `WordRAM.Executes`. -/
-theorem transport_polyTime (enc : B.genericModel.Encoding)
-    (N : B.genericModel.NativePrimitives enc)
-    (p : Program B r) {f : α → ℕ} {cfg : α → ℕ}
-    {initState : α → FiniteState B.genericModel r} {u : α → State r} {steps : α → ℕ}
-    (cSteps : NativeCertificate steps ei encNat)
-    (cCfg : NativeCertificate cfg ei enc.config)
-    (cInit : NativeCertificate initState ei (FiniteState.encoding enc))
-    (hden : ∀ a, (initState a).denote = (u a).toGeneric B)
-    (hExec : ∀ a, ∃ m ≤ steps a, Executes (cfg a) p (u a) (f a) m)
+    (cInit : NativeCertificate initState ei (encoding enc))
+    (hExec : ∀ a, ∃ m ≤ steps a,
+      GenericRAM.Executes (cfg a) p (initState a).denote (f a) m)
     (hN : N.IsPolynomial)
     (hSteps : cSteps.IsPolynomial) (hCfg : cCfg.IsPolynomial) (hInit : cInit.IsPolynomial)
-    (hStepsBound : PolyBounded (fun a => (ei a).length) steps)
-    {bound : α → ℕ} (hB : PolyBounded (fun a => (ei a).length) bound)
-    (hOutLen : ∀ a, ∀ j ≤ steps a,
-      (FiniteState.resultEncoding enc
-        (FiniteState.run (cfg a) p.toGeneric j (initState a))).length ≤ bound a) :
-    ComputableTidilyInPolyTime f ei enc.value :=
-  FiniteState.transport_polyTime enc N p.toGeneric cSteps cCfg cInit
-    (fun a => by
-      obtain ⟨m, hm, hex⟩ := hExec a
-      rw [hden a]
-      exact ⟨m, hm, executes_toGeneric_iff.mpr hex⟩)
-    hN hSteps hCfg hInit hStepsBound hB hOutLen
+    (K : ℕ) (hStepsLe : ∀ a, steps a ≤ K) :
+    ComputableTidilyInPolyTime f ei enc.value := by
+  have hSum : ∀ n : ℕ, PolyBounded (fun a => (ei a).length)
+      (fun a => ∑ j ∈ Finset.range n,
+        (resultEncoding enc (run (cfg a) p j (initState a))).length) := by
+    intro n
+    induction n with
+    | zero =>
+      simpa only [Finset.range_zero, Finset.sum_empty] using PolyBounded.const 0
+    | succ n ih =>
+      simpa only [Finset.sum_range_succ] using
+        ih.add (polyBounded_length_run enc N p cCfg cInit hN hCfg hInit n)
+  exact transport_polyTime enc N p cSteps cCfg cInit hExec hN hSteps hCfg hInit
+    ((PolyBounded.const K).mono hStepsLe) (hSum (K + 1)) fun a j hj =>
+      Finset.single_le_sum
+        (f := fun i => (resultEncoding enc (run (cfg a) p i (initState a))).length)
+        (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr (by have := hStepsLe a; omega))
 
-end Cslib.WordRAM
+end FiniteState
+end Cslib.GenericRAM
 
 end
