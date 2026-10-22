@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.EXP
+import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 
 /-! Time-constructible bounds, the clocked diagonal on concrete machines and on a word without a
 short description, the time hierarchy theorem for polynomial and exponential bounds, and the

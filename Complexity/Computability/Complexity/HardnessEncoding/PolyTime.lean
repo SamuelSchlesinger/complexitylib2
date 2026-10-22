@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.HardnessEncoding.Program
 public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
-public import Complexity.Computability.Complexity.Classes.Padding
+public import Complexity.Computability.Complexity.Classes.EXP
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Tactic.PolyTime

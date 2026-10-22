@@ -8,10 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.SpaceInTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
@@ -26,7 +26,8 @@ The input tape is read-only and the output tape write-only. Neither definition i
 bound on the resource function; hierarchy theorems state the lower bounds they need separately.
 
 The shared length and arithmetic routines give concrete constructible bounds, without importing
-any hierarchy theorem.
+any hierarchy theorem. Unary word length is supplied by the quantitative API
+(`Turing.MultiTapeTM.ComputableTidilyInO.lengthUnary`).
 
 ## Main definitions
 
@@ -78,13 +79,6 @@ theorem exists_pow_length_encNat_le (d : ℕ) :
 /-! ### Lengths and comparisons, computed -/
 
 namespace ComputableTidilyInO
-
-/-- The length of a bit word in unary, within linear time and space, by the streaming machine of
-`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits`. -/
-theorem lengthUnary : ComputableTidilyInO (fun l : List Bool => l.length) encBits encUnary
-    (fun l => l.length) fun l => l.length :=
-  .of_bounds ComputableTidilyInTimeAndSpace.length_bits 8 (fun l => by omega)
-    (fun _ => Nat.zero_le _) fun l => by simp only [encUnary_apply, List.length_replicate]; omega
 
 /-- The length of a bit word in binary, by a binary counter, within quadratic time and linear
 space. -/
