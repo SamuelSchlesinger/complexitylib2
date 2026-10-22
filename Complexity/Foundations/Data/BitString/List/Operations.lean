@@ -9,7 +9,6 @@ module
 
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.Weight
-public import Complexity.Probability.BitString
 public import Mathlib.Data.Matrix.Mul
 
 /-!
@@ -201,16 +200,5 @@ theorem getD_listRow_zero (m : ℕ) (u : List Bool) (i : ℕ) (hi : i < m) :
   simp only [listRow, Nat.zero_mul, List.drop_zero, ← ofFn_ofList_eq_take]
   change ofList m (List.ofFn (ofList m u)) ⟨i, hi⟩ = _
   simp [ofList, hi]
-
-/-- XORing a uniform `m`-bit word with any word `r` preserves the uniform distribution. -/
-theorem uniformList_map_listXor (m : ℕ) (r : List Bool) :
-    (uniformList m).map (fun y => listXor m [y, r]) = uniformList m := by
-  unfold uniformList
-  rw [PMF.map_comp]
-  have hfun : (fun y => listXor m [y, r]) ∘ List.ofFn =
-      List.ofFn ∘ Equiv.addRight (ofList m r) := by
-    funext x
-    simp [listXor_pair]
-  rw [hfun, ← PMF.map_comp, Probability.PMF.uniformOfFintype_map_equiv]
 
 end Cslib.BitString

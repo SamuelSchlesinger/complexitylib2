@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.GMW.PolyTime
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Probabilistic.Sampling
+import Complexity.Probability.BitString.List
 import Complexity.Tactic.PPT
 
 /-!
