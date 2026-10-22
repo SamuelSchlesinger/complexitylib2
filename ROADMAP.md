@@ -301,8 +301,8 @@ batches.
 
 1. **First-order reductions and projections, with machine and uniformity bridges.** Complete
    these milestones in order of their dependencies. Each requires public Lean results, a
-   nonvacuous client, a theorem-index entry, and independent mathematical, API and
-   statement-index reviews of the completed revision.
+   nonvacuous client, a headline-abstract assessment, and independent mathematical, API and
+   formal-abstract reviews of the completed revision.
 
    - [ ] **Ordered first-order complexity, in standard terminology.** Decided 2026-10-19: the
      library's first-order complexity follows the usual convention of descriptive complexity
@@ -674,15 +674,14 @@ batches.
    narrowly oriented and machine transitions out of global simp. Share mathematical bookkeeping
    only with demonstrated reuse, counting helper proofs as part of the total cost.
 
-5. **Formal abstracts for headline theorems.** `#check_abstract` and the `lean-abstract` skill
-   audit self-contained statements of
-   [Cook–Levin](ComplexityTests/Abstracts/CookLevinAbstract.lean),
-   [TQBF](ComplexityTests/Abstracts/TQBFAbstract.lean) and
-   [Subset Sum](ComplexityTests/Abstracts/SubsetSumAbstract.lean). Remaining work: render the
-   abstracts into `paper/` with `scripts/abstract_to_tex.py` (the CI build does not include them
-   yet), and add abstracts for further headline results in the theorem index. The audit inspects
-   elaborated declarations only; notation, macros and local instances are excluded by the skill's
-   rules, not mechanically.
+5. **Curated formal abstracts and PDFs.** The selection in
+   [abstracts/catalogue.json](abstracts/catalogue.json) replaces the former paper/TeX index.
+   Each promoted group has a checked Abstract/Bridge pair, explicit model and scope notes, and
+   a generated individual PDF. Selection requires a substantial full endpoint rather than broad
+   coverage of every library theorem. Continue to improve readability and independently compare
+   changed abstracts with their final source statements. `#check_abstract` inspects elaborated
+   dependencies; notation, macros and local instances are excluded by the skill's rules rather
+   than mechanically. Generated PDFs are review and dissemination artifacts, not additional proofs.
 
 ## Remaining theorem developments
 
@@ -825,7 +824,7 @@ These do not include an efficient anti-checker generator or a hardness-magnifica
 ## Finishing the recovered developments
 
 Complete bounded endpoints on ordinary branches, with the six checks and independent API,
-correctness and statement-index reviews before closing a milestone. Retain the FO-reduction
+correctness and formal-abstract reviews before closing a milestone. Retain the FO-reduction
 and machine-characterization priorities above. Continue with the native NL complement theorem. The Arthur–Merlin
 and hardness-amplification developments have their own prerequisites and should be split at the
 following endpoints, rather than submitted as class definitions or conditional wrappers alone.
@@ -839,7 +838,7 @@ following endpoints, rather than submitted as class definitions or conditional w
 
 Do not mark the last three rows complete from an abstract algorithm, a class definition, or an
 assumed reconstruction theorem: their machine/resource and quantitative conclusions are part of
-acceptance. The theorem index records completed statements with their assumptions and scope.
+acceptance. The curated formal abstracts record selected completed statements with their assumptions and scope.
 
 ## Jukna coverage
 
@@ -883,7 +882,7 @@ using [Oliveira's approximation-method notes (2018)](https://www.dcs.warwick.ac.
 and [Cavalar–Oliveira, ECCC TR25-033 (2025)](https://eccc.weizmann.ac.il/report/2025/033/).
 Credit the earlier results of Razborov, Karchmer, Wigderson, and Nakayama–Maruoka where used.
 The issues carry ownership and review history. Circuit bounds use the native basis with free
-constants and binary unions; the theorem index records the precise scope of each result.
+constants and binary unions; the source docstrings record the precise scope of each result.
 
 | Milestone | Proved result and scope |
 | --- | --- |

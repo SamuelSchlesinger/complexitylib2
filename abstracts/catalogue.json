@@ -1,0 +1,132 @@
+{
+  "title": "Complexitylib: selected formal abstracts",
+  "entries": [
+    {
+      "id": "cook-levin",
+      "title": "Cook–Levin: SAT is NP-complete",
+      "module": "ComplexityTests.Abstracts.CookLevinAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.CookLevinAbstract.sat_npComplete",
+        "ComplexityTests.Abstracts.CookLevinAbstract.unsat_coNPComplete"
+      ],
+      "summary": "Every efficiently checkable bit-string problem reduces in polynomial time to satisfiability.",
+      "scope": "Explicit CNF encoding, total native-machine reductions, and UNSAT coNP-completeness."
+    },
+    {
+      "id": "pcp",
+      "title": "The PCP theorem",
+      "module": "ComplexityTests.Abstracts.PCPAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.PCPAbstract.pcp_theorem"
+      ],
+      "summary": "NP proofs can be checked with logarithmic randomness and constantly many nonadaptive queries.",
+      "scope": "Perfect completeness, soundness at most one half, and explicit native efficiency; construction constants are large."
+    },
+    {
+      "id": "fagin",
+      "title": "Fagin: logic captures NP",
+      "module": "ComplexityTests.Abstracts.FaginAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.FaginAbstract.fagin"
+      ],
+      "summary": "Existential second-order logic captures precisely the isomorphism-invariant NP properties of finite relational structures.",
+      "scope": "Finite relational signatures, explicit encodings, empty universes and nullary relations."
+    },
+    {
+      "id": "savitch",
+      "title": "Savitch: NPSPACE equals PSPACE",
+      "module": "ComplexityTests.Abstracts.SavitchAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.SavitchAbstract.savitch"
+      ],
+      "summary": "Nondeterminism does not enlarge polynomial space.",
+      "scope": "Native machines and polynomial space; this abstract states class equality rather than a parameterized quadratic-space bound."
+    },
+    {
+      "id": "reingold",
+      "title": "Reingold: undirected reachability is in L",
+      "module": "ComplexityTests.Abstracts.USTCONAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.USTCONAbstract.ustcon_mem_l"
+      ],
+      "summary": "Undirected graph connectivity can be decided with logarithmic work space.",
+      "scope": "Explicit unary-size header and adjacency-matrix encoding; native logspace, without a reduction-defined SL corollary."
+    },
+    {
+      "id": "shamir",
+      "title": "Shamir: IP equals PSPACE",
+      "module": "ComplexityTests.Abstracts.ShamirAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.ShamirAbstract.ip_eq_pspace"
+      ],
+      "summary": "Interaction and randomness give a polynomial-time verifier the power of polynomial space.",
+      "scope": "All prover strategies are quantified explicitly, with a uniform native clock and specified completeness and soundness."
+    },
+    {
+      "id": "toda",
+      "title": "Toda: a counting oracle decides the polynomial hierarchy",
+      "module": "ComplexityTests.Abstracts.TodaAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.TodaAbstract.toda"
+      ],
+      "summary": "Every problem in the polynomial hierarchy is decidable in polynomial time with an exact counting oracle.",
+      "scope": "Witness counts and oracle bit answers are explicit; correctness holds for every extension of valid oracle answers."
+    },
+    {
+      "id": "barrington",
+      "title": "Barrington: five states capture NC¹",
+      "module": "ComplexityTests.Abstracts.BarringtonAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.BarringtonAbstract.barrington"
+      ],
+      "summary": "Polynomial-length permutation programs on five states capture logarithmic-depth polynomial-size Boolean circuits.",
+      "scope": "Nonuniform circuits and permutation programs; no uniform generator or compiler runtime is asserted."
+    },
+    {
+      "id": "constant-depth",
+      "title": "Håstad and Razborov–Smolensky: parity resists shallow circuits",
+      "module": "ComplexityTests.Abstracts.ConstantDepthAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.ConstantDepthAbstract.hastad",
+        "ComplexityTests.Abstracts.ConstantDepthAbstract.razborov_smolensky"
+      ],
+      "summary": "At fixed depth, parity requires more than polynomially many gates, including over an odd-prime modular basis.",
+      "scope": "Explicit finite bounds, gate semantics and depth conventions; nonuniform lower bounds."
+    },
+    {
+      "id": "formula-bounds",
+      "title": "Formula lower bounds: parity and Andreev",
+      "module": "ComplexityTests.Abstracts.FormulaBoundsAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.FormulaBoundsAbstract.parity_lower_bound",
+        "ComplexityTests.Abstracts.FormulaBoundsAbstract.andreev_lower_bound"
+      ],
+      "summary": "Tree-shaped computation pays for repeated work: parity requires quadratic leaf size, and Andreev gives a stronger explicit bound.",
+      "scope": "De Morgan formulas, literal leaves, explicit block indexing and finite quantitative bounds; no general-circuit lower bound."
+    },
+    {
+      "id": "cryptography",
+      "title": "One-way functions yield pseudorandom generators and adaptive functions",
+      "module": "ComplexityTests.Abstracts.CryptographyAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.CryptographyAbstract.hill",
+        "ComplexityTests.Abstracts.CryptographyAbstract.adaptive_functions"
+      ],
+      "summary": "One-wayness yields pseudorandomness, from an extra output bit to functions secure against adaptive oracle queries.",
+      "scope": "Uniform probabilistic polynomial time with explicit native evaluators, negligible advantage and full stateful oracle semantics; asymptotic security, not a concrete implementation audit."
+    },
+    {
+      "id": "resolution",
+      "title": "Haken: pigeonhole formulas require long resolution proofs",
+      "module": "ComplexityTests.Abstracts.ResolutionAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.ResolutionAbstract.haken"
+      ],
+      "summary": "The pigeonhole principle has short CNF statements but requires exponentially many resolution lines.",
+      "scope": "The non-onto pigeonhole formula and a line-based resolution rule, with bound 2^(floor(n/24)); proof size is not solver runtime.",
+      "supporting_theorems": [
+        "ComplexityTests.Abstracts.ResolutionAbstract.pigeonhole_satisfiable"
+      ]
+    }
+  ]
+}

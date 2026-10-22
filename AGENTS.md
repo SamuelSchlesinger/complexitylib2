@@ -80,7 +80,7 @@ reusable by future contributors.
    A returning worker must check ownership before resuming. Explicitly released work is
    available immediately.
 4. Implement, self-review, and validate according to the requirements below. Include documentation
-   changes caused by your work and assess the theorem index before submitting the PR.
+   changes caused by your work and assess the headline abstract catalogue before submitting the PR.
 5. When ready, open a PR linked to the issue, record validation and remaining limitations, and
    request coordinator review. Post an `awaiting review` status with the PR link in the issue.
    Keep the issue open until the work is merged or explicitly dispositioned by a coordinator.
@@ -117,10 +117,10 @@ parallel. Use review subagents when helpful; do not make unrelated work wait for
 - Review existing tasks, resolve ownership or dependency conflicts, and create or split issues
   when useful. Human-created issues belong to the same queue. Check stale active tasks and
   unattended review requests; help workers reach a clear next step.
-- Own the consistency of `ROADMAP.md`, `paper/main.tex`, `UPSTREAM.md`, and the other project
+- Own the consistency of `ROADMAP.md`, `abstracts/catalogue.json`, `UPSTREAM.md`, and the other project
   documentation. Ensure completed results, open work, limitations, and upstream coordination
   remain accurate. Workers still supply updates affected by their PRs; coordinators check their
-  integration and arrange the theorem-index review described below.
+  integration and arrange the formal-abstract review described below.
 - Keep approval distinct from integration: merge only within the authority granted by maintainers
   and after required checks and reviews. Close completed issues on merge, and record remaining
   work in follow-up issues and the roadmap where appropriate.
@@ -295,30 +295,37 @@ Record findings and the evidence needed for the verdict. Reuse existing review r
 reviewed content is unchanged, explicitly verify that identity on the final revision, and review
 subsequent deltas. This does not replace the exact-revision approval and validation requirements.
 
-## Human-readable theorem index
+## Curated formal abstracts
 
-`paper/main.tex` is a curated index of proved statements, not a translation of proof bodies.
-Each entry states the result, its hypotheses, model and quantitative bounds, important scope
-limitations, and links to exact Lean declarations. Credit mathematical sources and earlier
-formalizations. Do not describe an unproved endpoint as complete; keep outstanding work in
-`ROADMAP.md`. Preserve Samuel's editorial choices.
+`abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
+`*Abstract.lean` and `*Bridge.lean` under `ComplexityTests/Abstracts/`, imported by
+`ComplexityTests.lean`. The Lean definitions and statements are the source of truth; PDFs are
+generated from them, with proof bodies omitted. There is no separately maintained paper/TeX index.
 
-Before opening or updating **every AI-authored PR**, check the index against the final Lean
-changes. Update affected statements, assumptions, limitations and links, and add entries for
-new headline results. Proof-only refactors with unchanged statements and scope need no prose
-rewrite; explicitly record the no-impact assessment in the PR, as for other unaffected changes.
-The index is curated, so internal helper lemmas do not each need an entry.
+Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
+endpoint with conventional, inspectable semantics, satisfiable hypotheses, explicit models and
+encodings, and honest quantitative bounds. Partial constructions, conditional substitutes for a
+standard theorem, bounded experiments and helper APIs do not become headlines by acquiring an
+abstract. Prefer a small coherent selection. Preserve Samuel's editorial choices and source credit;
+keep outstanding endpoints in `ROADMAP.md`.
 
-Obtain an independent AI review of changed entries against the final Lean definitions and
-statements, checking quantifiers, models and resource bounds. Record the reviewed revisions,
-scope, findings and resolutions in the PR. This supplements the API and correctness reviews;
-it is not a Lean proof that the prose is equivalent. The **Theorem index PDF** workflow builds
-changed paper sources and uploads a PDF with checked-out and PR-head revision provenance.
-Inspect that CI artifact's rendered pages and verify declaration links before integration;
-record the artifact/run and reviewed revisions. Local generation with
-`python3 scripts/build_paper.py` is optional. Generated PDFs and auxiliary files are not versioned;
-do not commit them. Main builds publish the latest PDF as the `theorem-index` release asset.
-Do not imply human editorial approval from an AI review.
+Before opening or updating **every AI-authored PR**, assess the selected abstracts against the
+final Lean changes. Update affected statements, definitions, scope notes and catalogue entries.
+New library theorems need not become headlines. Record a no-impact assessment when appropriate,
+including proof-only refactors with unchanged statements and scope.
+
+Follow the local `lean-abstract` skill and run `#check_abstract`. An allowlist may expose narrowly
+identified foundational models with their meaning explained; it must not hide the result or its
+complexity-class semantics. The audit checks elaborated dependencies, not human interpretation.
+Obtain independent reviews of API quality, correctness, and each changed abstract against the final
+Lean sources, including quantifiers, encoding, resource bounds, nonvacuity and readability. Record
+exact revisions, findings and resolutions in the PR. Do not imply human editorial approval.
+
+`scripts/build_abstracts.py` generates individual PDFs, a combined catalogue and provenance with
+source digests and exact declaration links. The **Formal abstract PDFs** workflow uploads review
+artifacts and publishes main builds as `formal-abstracts` release assets. Inspect the rendered
+pages and declaration links before integration; record the artifact/run and reviewed revisions.
+Local generation is supported. Generated TeX, PDFs and auxiliary products are not versioned.
 
 ## Design commitments (do not re-litigate casually)
 
