@@ -101,16 +101,6 @@ theorem mem_LWPP_of_disjoint_targets {α : Type} {enc : α ↪ List Bool} {A : S
     apply List.prod_eq_zero_iff.mpr
     exact List.mem_map.mpr ⟨g a, hno a ha, sub_self _⟩
 
-private def indexedTargets {α : Type} (f : α × ℕ → ℤ) (r : α → ℕ) (a : α) : List ℤ :=
-  (List.range (r a)).map fun i => f (a, i)
-
-private theorem polyTime_indexedTargets {α : Type} {enc : α ↪ List Bool}
-    {f : α × ℕ → ℤ} {r : α → ℕ}
-    (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
-    (hr : ComputableTidilyInPolyTime r enc encUnary) :
-    ComputableTidilyInPolyTime (indexedTargets f r) enc (encList encIntBin) :=
-  ComputableTidilyInPolyTime.mapWithInput (ComputableTidilyInPolyTime.range.comp hr) hf
-
 private theorem indexedTargets_disjoint {α : Type} {yes no : α × ℕ → ℤ}
     {ry rn : α → ℕ} (a : α)
     (hd : ∀ i < ry a, ∀ j < rn a, yes (a, i) ≠ no (a, j)) :
@@ -120,11 +110,6 @@ private theorem indexedTargets_disjoint {α : Type} {yes no : α × ℕ → ℤ}
   obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hz
   obtain ⟨j, hj, he⟩ := List.mem_map.mp hn
   exact hd i (List.mem_range.mp hi) j (List.mem_range.mp hj) he.symm
-
-private theorem mem_indexedTargets {α : Type} {f : α × ℕ → ℤ} {r : α → ℕ}
-    {a : α} {z : ℤ} (h : ∃ i < r a, z = f (a, i)) : z ∈ indexedTargets f r a := by
-  obtain ⟨i, hi, he⟩ := h
-  exact List.mem_map.mpr ⟨i, List.mem_range.mpr hi, he.symm⟩
 
 /-- Two-sided WPP robustness for uniform indexed families, with each count computed in polynomial
  time with unary output. Disjointness concerns used indices; zero targets are allowed. -/

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.WPP
 public import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
+import Complexity.Computability.Complexity.Classes.SharpP.Products
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Foundations.Data.List.OfFn
@@ -55,27 +56,6 @@ open Finset Turing.MultiTapeTM
 private def selectedProduct (xs : List ℤ) (w : List Bool) : ℤ :=
   (xs.zipIdx.map fun zi => if w.getD zi.2 false then 1 else zi.1).prod
 
-private theorem expansion_fin {n : ℕ} (f : Fin n → ℤ) (g : ℤ) :
-    (∏ i, (f i - g)) = ∑ w : Fin n → Bool,
-      (∏ i, if w i then 1 else f i) * (-g) ^ #{i | w i = true} := by
-  have h (w : Fin n → Bool) :
-      (∏ i, if w i then -g else f i) =
-        (∏ i, if w i then 1 else f i) * (-g) ^ #{i | w i = true} := by
-    calc
-      _ = ∏ i, (if w i then 1 else f i) * (if w i then -g else 1) := by
-        apply prod_congr rfl
-        intro i _
-        cases w i <;> simp
-      _ = _ := by
-        rw [prod_mul_distrib]
-        congr 1
-        rw [prod_ite]
-        simp
-  simp_rw [← h]
-  rw [← Fintype.prod_sum (fun (i : Fin n) (b : Bool) => if b then -g else f i)]
-  simp only [Fintype.sum_bool, Bool.false_eq_true, ite_false, ite_true, sub_eq_add_neg]
-  simp [add_comm]
-
 private theorem selectedProduct_ofFn (xs : List ℤ) (w : Fin xs.length → Bool) :
     selectedProduct xs (List.ofFn w) = ∏ i, if w i then 1 else xs.get i := by
   have he : (xs.zipIdx.map fun zi => if (List.ofFn w).getD zi.2 false then 1 else zi.1) =
@@ -92,15 +72,13 @@ private theorem selectedProduct_ofFn (xs : List ℤ) (w : Fin xs.length → Bool
 private theorem expansion_list (xs : List ℤ) (g : ℤ) :
     (xs.map (fun z => z - g)).prod = ∑ w : Fin xs.length → Bool,
       selectedProduct xs (List.ofFn w) * (-g) ^ (List.ofFn w).countP id := by
-  have he : (xs.map (fun z => z - g)).prod = ∏ i, (xs.get i - g) := by
-    rw [← List.ofFn_getElem_eq_map xs (fun z => z - g), List.prod_ofFn]
+  have he : (xs.map (fun z => z - g)).prod = ∏ i, (xs.get i - g * 1) := by
+    rw [mul_one, ← List.ofFn_getElem_eq_map xs (fun z => z - g), List.prod_ofFn]
     rfl
-  rw [he, expansion_fin]
+  rw [he, prod_sub_mul_eq_sum]
   apply sum_congr rfl
   intro w _
-  rw [selectedProduct_ofFn]
-  congr 1
-  simp only [List.countP_ofFn, card_filter, id_eq]
+  rw [selectedProduct_ofFn, mul_comm]
 
 private theorem polyTime_selectedProduct {α : Type} {enc : α ↪ List Bool} {f : α → List ℤ}
     (hf : ComputableTidilyInPolyTime f enc (encList encIntBin)) :
@@ -187,12 +165,23 @@ theorem mem_LWPP_of_polyTime_targets {α : Type} {enc : α ↪ List Bool} {A : S
   exact ⟨G, hG, fun n => (f n).prod, ComputableTidilyInPolyTime.intBin_prod.comp hf,
     fun n => List.prod_ne_zero (hn n), hR, hA⟩
 
-private theorem polyTime_targetList {α : Type} {enc : α ↪ List Bool} {f : α × ℕ → ℤ}
+/-- The list of targets `f (a, 0), ..., f (a, r a - 1)` for an indexed target family. -/
+def indexedTargets {α : Type} (f : α × ℕ → ℤ) (r : α → ℕ) (a : α) : List ℤ :=
+  (List.range (r a)).map fun i => f (a, i)
+
+/-- Uniformly indexed binary integer targets over a unary-computable range form a polynomial-time
+target list. -/
+theorem polyTime_indexedTargets {α : Type} {enc : α ↪ List Bool} {f : α × ℕ → ℤ}
     {r : α → ℕ} (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
-    ComputableTidilyInPolyTime (fun a => (List.range (r a)).map fun i => f (a, i))
-      enc (encList encIntBin) :=
+    ComputableTidilyInPolyTime (indexedTargets f r) enc (encList encIntBin) :=
   ComputableTidilyInPolyTime.mapWithInput (ComputableTidilyInPolyTime.range.comp hr) hf
+
+/-- A value matching `f (a, i)` for some `i < r a` belongs to `indexedTargets f r a`. -/
+theorem mem_indexedTargets {α : Type} {f : α × ℕ → ℤ} {r : α → ℕ}
+    {a : α} {z : ℤ} (h : ∃ i < r a, z = f (a, i)) : z ∈ indexedTargets f r a := by
+  obtain ⟨i, hi, he⟩ := h
+  exact List.mem_map.mpr ⟨i, List.mem_range.mpr hi, he.symm⟩
 
 /-- Indexed polynomial-family WPP robustness, with a uniform binary-integer target function and
 a unary-computable number of targets. Indices run from zero to `r a - 1`; no procedure for
@@ -205,13 +194,11 @@ theorem mem_WPP_of_indexed_targets {α : Type} {enc : α ↪ List Bool} {A : Set
     (hn : ∀ a i, i < r a → f (a, i) ≠ 0)
     (hy : ∀ a, a ∈ A → ∃ i < r a, g a = f (a, i))
     (hno : ∀ a, a ∉ A → g a = 0) : A ∈ WPP enc := by
-  apply mem_WPP_of_polyTime_targets hg (polyTime_targetList hf hr)
+  apply mem_WPP_of_polyTime_targets hg (polyTime_indexedTargets hf hr)
   · intro a hz
     obtain ⟨i, hi, he⟩ := List.mem_map.mp hz
     exact hn a i (List.mem_range.mp hi) he
-  · intro a ha
-    obtain ⟨i, hi, he⟩ := hy a ha
-    exact List.mem_map.mpr ⟨i, List.mem_range.mpr hi, he.symm⟩
+  · exact fun a ha => mem_indexedTargets (hy a ha)
   · exact hno
 
 /-- Indexed polynomial-family LWPP robustness: both the target family and its size depend only
@@ -224,13 +211,11 @@ theorem mem_LWPP_of_indexed_targets {α : Type} {enc : α ↪ List Bool} {A : Se
     (hn : ∀ n i, i < r n → f (n, i) ≠ 0)
     (hy : ∀ a, a ∈ A → ∃ i < r (enc a).length, g a = f ((enc a).length, i))
     (hno : ∀ a, a ∉ A → g a = 0) : A ∈ LWPP enc := by
-  apply mem_LWPP_of_polyTime_targets hg (polyTime_targetList hf hr)
+  apply mem_LWPP_of_polyTime_targets hg (polyTime_indexedTargets hf hr)
   · intro n hz
     obtain ⟨i, hi, he⟩ := List.mem_map.mp hz
     exact hn n i (List.mem_range.mp hi) he
-  · intro a ha
-    obtain ⟨i, hi, he⟩ := hy a ha
-    exact List.mem_map.mpr ⟨i, List.mem_range.mpr hi, he.symm⟩
+  · exact fun a ha => mem_indexedTargets (hy a ha)
   · exact hno
 
 /-- **Poly-WPP = WPP**, stated through uniformly computed lists of nonzero binary integer targets.

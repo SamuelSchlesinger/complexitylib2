@@ -78,6 +78,26 @@ theorem eq_value (h : D.Valid M) (c : γ) (x : I.Model M)
     (hx : (D.constant c).Realize x.val) : x = D.value h c :=
   (h c).unique hx (D.value_spec h c)
 
+/-- Validity depends only on the domain formula and the constant definitions. -/
+theorem Valid.of_eq {L'' : Language} {I' : Interpretation L L'' ι} {D' : I'.WithConstants γ}
+    {D : I.WithConstants γ} (h : D.Valid M) (hdom : I'.domain = I.domain)
+    (hcon : D'.constant = D.constant) : D'.Valid M := by
+  intro c
+  obtain ⟨x, hx, huniq⟩ := h c
+  refine ⟨⟨x.val, by rw [hdom]; exact x.property⟩, by rw [hcon]; exact hx, fun y hy => ?_⟩
+  exact Model.ext (congrArg (fun z => z.val)
+    (huniq ⟨y.val, by rw [← hdom]; exact y.property⟩ (by rw [← hcon]; exact hy)))
+
+/-- Two constant extensions with the same domain and constant formulas select the same underlying
+tuples. -/
+theorem val_value_eq {L'' : Language} {I' : Interpretation L L'' ι} {D' : I'.WithConstants γ}
+    {D : I.WithConstants γ} (hdom : I'.domain = I.domain) (hcon : D'.constant = D.constant)
+    (h : D.Valid M) (h' : D'.Valid M) (c : γ) :
+    (D'.value h' c).val = (D.value h c).val :=
+  congrArg (fun z => z.val)
+    (D.eq_value h c ⟨(D'.value h' c).val, by rw [← hdom]; exact (D'.value h' c).property⟩
+      (by rw [← hcon]; exact D'.value_spec h' c))
+
 variable [L'.IsRelational]
 
 /-- The interpreted relational structure expanded by its uniquely defined constants. -/

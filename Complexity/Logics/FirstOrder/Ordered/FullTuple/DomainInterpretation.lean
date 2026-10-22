@@ -83,11 +83,8 @@ theorem admissible_toDomainInterpretation (hk : 0 < k) : I.toDomainInterpretatio
   fun M => (card_toDomainInterpretation M).symm ▸ two_le_pow (n := M.size) hk
 
 theorem lexRank_constantTuple {n : ℕ} [Fact (2 ≤ n)] (c : NumericFunction 0) :
-    lexRank (constantTuple (n := n) (k := k) c) = c.index (n ^ (k + 1)) := by
-  cases c
-  · exact lexRank_tupleZero
-  · exact lexRank_tupleOne
-  · exact lexRank_tupleMax
+    lexRank (constantTuple (n := n) (k := k) c) = c.index (n ^ (k + 1)) :=
+  Ordered.lexRank_constantTuple c
 
 variable (I) in
 /-- The native tuple formulas for order, `BIT` and constants certify a positive-dimensional
@@ -110,12 +107,7 @@ noncomputable def certificate (hk : 0 < k) : I.toDomainInterpretation.Certificat
       change ((tupleConstants L k).constant c).Realize _ ↔ _
       rw [realize_tupleConstants, ← lexRank_injective.eq_iff,
         lexRank_unrank_toDomainInterpretation, lexRank_constantTuple]
-      have := card_toDomainInterpretation (I := I) M
-      cases c
-      · exact Iff.rfl
-      · exact Iff.rfl
-      · simp only [NumericFunction.index]
-        constructor <;> intro h <;> lia
+      simp only [card_toDomainInterpretation]
 
 variable [L'.IsRelational]
 

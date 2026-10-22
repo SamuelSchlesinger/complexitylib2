@@ -5,7 +5,11 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
+import Complexity.Computability.Complexity.Classes.SharpP.Completeness
+import Complexity.Computability.Complexity.Classes.TFNP
+import Complexity.Computability.Complexity.Parameterized
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.PCP.Approximation
 
 /-! Many-one reductions by a class of maps: polynomial-time and logspace reducibility, hardness and
 completeness still unfold to their `∃` and `∀` forms, uses of the generic hardness lemmas, and axiom
@@ -127,6 +131,65 @@ example : PolyTimeReducible encA encA A A :=
 example (h : LogSpaceComplete 𝒞 encB B) :
     CompleteUnder (fun enc => LogSpaceReducible enc encB) 𝒞 encB B :=
   logSpaceComplete_iff_completeUnder.mp h
+
+/-! ### Mapping reductions and fpt-reductions -/
+
+example : MappingReducible encA encB A B ↔
+    ∃ f : α → β, IsComputable f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B :=
+  Iff.rfl
+
+example : MappingReducible encA encB A B ↔
+    ManyOneReducibleBy (IsComputable · encA encB) A B :=
+  mappingReducible_iff_manyOneReducibleBy
+
+example {κA : α → ℕ} {κB : β → ℕ} : FPTReducible encA encB κA κB A B ↔
+    ∃ f : α → β, (ComputableTidilyInFPTTime f encA encB κA ∧
+      ∃ h : ℕ → ℕ, ∀ a, κB (f a) ≤ h (κA a)) ∧ ∀ a, a ∈ A ↔ f a ∈ B :=
+  Iff.rfl
+
+example {κA : α → ℕ} {κB : β → ℕ} : FPTReducible encA encB κA κB A B ↔
+    ManyOneReducibleBy (ComputableInFPTWithParam encA encB κA κB) A B :=
+  fptReducible_iff_manyOneReducibleBy
+
+/-! ### Non-`Set` hardness and completeness instances -/
+
+example {g : β → ℕ} : SharpPHard encB g ↔
+    ∀ {α : Type} (enc : α ↪ List Bool) (f : α → ℕ), f ∈ SharpP enc →
+      ParsimoniousReducible enc encB f g :=
+  Iff.rfl
+
+example {g : β → ℕ} : SharpPHard encB g ↔
+    HardUnder (fun enc => ParsimoniousReducible enc encB) @SharpP g :=
+  sharpPHard_iff_hardUnder
+
+example {g : β → ℕ} : SharpPComplete encB g ↔
+    CompleteUnder (fun enc => ParsimoniousReducible enc encB) @SharpP encB g :=
+  sharpPComplete_iff_completeUnder
+
+example {𝒮 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool → Prop)}
+    {S : β → List Bool → Prop} : SearchHard 𝒮 encB S ↔
+    ∀ {α : Type} (enc : α ↪ List Bool) (R : α → List Bool → Prop), R ∈ 𝒮 enc →
+      SearchReducible enc encB R S :=
+  Iff.rfl
+
+example {𝒮 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool → Prop)}
+    {S : β → List Bool → Prop} : SearchHard 𝒮 encB S ↔
+    HardUnder (fun enc => SearchReducible enc encB) @𝒮 S :=
+  searchHard_iff_hardUnder
+
+example {𝒮 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool → Prop)}
+    {S : β → List Bool → Prop} : SearchComplete 𝒮 encB S ↔
+    CompleteUnder (fun enc => SearchReducible enc encB) @𝒮 encB S :=
+  searchComplete_iff_completeUnder
+
+example {Y : PromiseProblem β} : PromiseProblem.NPHard encB Y ↔
+    ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ NP enc →
+      PromiseProblem.PolyTimeReducible enc encB (.ofSet A) Y :=
+  Iff.rfl
+
+example {Y : PromiseProblem β} : PromiseProblem.NPHard encB Y ↔
+    HardUnder (fun enc A Y => PromiseProblem.PolyTimeReducible enc encB (.ofSet A) Y) @NP Y :=
+  PromiseProblem.npHard_iff_hardUnder
 
 /-! ### The generic hardness lemmas -/
 

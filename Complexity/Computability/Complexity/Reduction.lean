@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Reduction.ManyOne
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
 
 /-!
 # Polynomial-time many-one reductions
@@ -178,6 +179,11 @@ theorem PolyTimeReducible.mem_P (hAB : PolyTimeReducible encA encB A B) (hB : B 
 theorem PolyTimeReducible.compl (h : PolyTimeReducible encA encB A B) :
     PolyTimeReducible encA encB Aᶜ Bᶜ :=
   ManyOneReducibleBy.compl h
+
+/-- A polynomial-time reduction is a mapping reduction. -/
+theorem PolyTimeReducible.mappingReducible (h : PolyTimeReducible encA encB A B) :
+    MappingReducible encA encB A B :=
+  ManyOneReducibleBy.mono (fun _ hf => hf.isComputable) h
 
 section Hardness
 

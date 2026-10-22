@@ -38,6 +38,8 @@ finite disjunction covers source sizes two through eight.
   obligations. Dimension zero is explicitly false, without claiming a canonical size-one target.
 -/
 
+@[expose] public section
+
 namespace Cslib.Logic.FO.Ordered
 
 open FirstOrder Language Structure
@@ -49,13 +51,15 @@ private theorem ofDigits_rev {n k : ℕ} (x : Fin k → Fin n) :
   rw [Nat.ofDigits_ofFn_eq_sum, lexRank_eq_tupleIndex, tupleIndex_apply]
   rfl
 
-private noncomputable def parameters (L : Language) {α : Type*}
+/-- Parameter conditions for the binary radix `B = 2 ^ e` with `e ≥ 1` and `B ^ 3 < n`. -/
+noncomputable def parameters (L : Language) {α : Type*}
     (e B : (language L).Term α) : (language L).Formula α :=
   le L (one L) e ⊓ powerOfTwo L B e ⊓ Formula.iExs (Fin 2)
     (mulEq L (B.relabel Sum.inl) (B.relabel Sum.inl) (.var (.inr 0)) ⊓
      mulEq L (.var (.inr 0)) (B.relabel Sum.inl) (.var (.inr 1)))
 
-private noncomputable def radixFormula (L : Language) (k : ℕ) :
+/-- Radix-word BIT formula for source sizes `n > 8`. -/
+noncomputable def radixFormula (L : Language) (k : ℕ) :
     (language L).Formula (Fin 2 × Fin k) :=
   Formula.iExs (Fin 2 ⊕ (Fin 7 ⊕ (Fin 2 × Fin (7 * k)))) (
     let e : (language L).Term ((Fin 2 × Fin k) ⊕ _) := .var (.inr (.inl 0))
@@ -168,7 +172,8 @@ private theorem radixFormula_complete {k : ℕ} (v : Fin 2 × Fin k → Fin n) (
       (Nat.ofDigits B (List.ofFn fun i => (Y i).val)) = true
     simpa only [hXv, hYv] using hb
 
-private noncomputable def smallFormula (L : Language) (k : ℕ) :
+/-- Finite disjunction BIT formula for small source sizes `2 ≤ n ≤ 8`. -/
+noncomputable def smallFormula (L : Language) (k : ℕ) :
     (language L).Formula (Fin 2 × Fin k) :=
   Formula.iSup fun a : Fin 7 => Formula.iSup fun x : Fin k → Fin (a.val + 2) =>
     Formula.iSup fun y : Fin k → Fin (a.val + 2) =>
@@ -215,7 +220,7 @@ end TupleBit
 
 /-- Native BIT of full-tuple lexicographic ranks, uniformly over every canonical `Fin n`, `n ≥ 2`.
 The zero-dimensional formula is false; no canonical numeric structure on a singleton is claimed. -/
-public noncomputable def tupleBit (L : Language) (k : ℕ) :
+noncomputable def tupleBit (L : Language) (k : ℕ) :
     (language L).Formula (Fin 2 × Fin k) :=
   if k = 0 then ⊥ else TupleBit.smallFormula L k ⊔ TupleBit.radixFormula L k
 
@@ -223,7 +228,7 @@ variable {L : Language} {n k : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)]
 
 /-- Exact rank semantics for all source sizes, including non-powers of two and high indices. -/
 @[simp, fo_realize]
-public theorem realize_tupleBit (v : Fin 2 × Fin k → Fin n) :
+theorem realize_tupleBit (v : Fin 2 × Fin k → Fin n) :
     (tupleBit L k).Realize v ↔
       (lexRank (fun i => v (0, i))).testBit (lexRank (fun i => v (1, i))) = true := by
   by_cases hk : k = 0
@@ -240,7 +245,7 @@ public theorem realize_tupleBit (v : Fin 2 × Fin k → Fin n) :
       · exact Or.inr (TupleBit.radixFormula_complete v (by lia) hb)
 
 /-- A bit index beyond the represented number's binary extent is rejected. -/
-public theorem not_realize_tupleBit_of_lt (v : Fin 2 × Fin k → Fin n)
+theorem not_realize_tupleBit_of_lt (v : Fin 2 × Fin k → Fin n)
     (h : lexRank (fun i => v (0, i)) < 2 ^ lexRank (fun i => v (1, i))) :
     ¬(tupleBit L k).Realize v := by
   intro hb
