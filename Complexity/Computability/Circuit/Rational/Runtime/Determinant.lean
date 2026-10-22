@@ -310,6 +310,12 @@ lemma natAbs_take_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤
   (natAbs_sum_le fun x hx => h x (List.mem_of_mem_take hx)).trans
     (Nat.mul_le_mul_right _ (List.length_take_le' _ _))
 
+/-- Every prefix sum and the sum of a list of terms bounded by `C` are bounded by
+`m * C`, where `m` bounds the length. -/
+lemma natAbs_take_sum_le_of_length {l : List ℤ} {C m : ℕ} (hl : l.length ≤ m)
+    (h : ∀ x ∈ l, x.natAbs ≤ C) (k : ℕ) : (l.take k).sum.natAbs ≤ m * C :=
+  (natAbs_take_sum_le h k).trans (Nat.mul_le_mul_right C hl)
+
 /-- Entry bounds hold for every entry index once they hold for every stored entry. -/
 lemma natAbs_rowEntry_lt {rows : List (List ℤ)} {b : ℕ}
     (h : ∀ row ∈ rows, ∀ z ∈ row, z.natAbs < 2 ^ b) (i j : ℕ) :

@@ -142,6 +142,8 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.Label
 public import Complexity.Computability.Circuit.Boolean.Iteration.LabelCircuit
 public import Complexity.Computability.Circuit.Boolean.Iteration.LongTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter
+public import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter.Basic
+public import Complexity.Computability.Circuit.Boolean.Iteration.ModulusCounter.Remainders
 public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationCircuits
 public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationFeatures
 public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationSynthesis
@@ -240,6 +242,7 @@ public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Boolean.TC0
 public import Complexity.Computability.Circuit.Boolean.Tableau.Basic
 public import Complexity.Computability.Circuit.Boolean.Tableau.Correct
+public import Complexity.Computability.Circuit.Boolean.Tableau.Layout
 public import Complexity.Computability.Circuit.Boolean.Tableau.Space
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
@@ -281,6 +284,7 @@ public import Complexity.Computability.Circuit.Frontier.AverageCase
 public import Complexity.Computability.Circuit.Frontier.BoundedFanIn
 public import Complexity.Computability.Circuit.Frontier.BranchingProgram
 public import Complexity.Computability.Circuit.Frontier.Compiler
+public import Complexity.Computability.Circuit.Frontier.Compiler.Network
 public import Complexity.Computability.Circuit.Frontier.Correlation
 public import Complexity.Computability.Circuit.Frontier.Correlation.Asymptotics
 public import Complexity.Computability.Circuit.Frontier.Correlation.Circuit
@@ -401,6 +405,7 @@ public import Complexity.Computability.Circuit.Rational.Runtime
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
 public import Complexity.Computability.Circuit.Rational.Runtime.Encode
 public import Complexity.Computability.Circuit.Rational.Runtime.Lift
+public import Complexity.Computability.Circuit.Rational.Runtime.Lift.Defs
 public import Complexity.Computability.Circuit.Rational.Runtime.Parameters
 public import Complexity.Computability.Circuit.Rational.Runtime.Point
 public import Complexity.Computability.Circuit.Rational.SmallExpansion

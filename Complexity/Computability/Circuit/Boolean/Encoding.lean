@@ -59,6 +59,8 @@ logarithmically many bits.
   an accepted list is the code of the decoded circuit.
 * `Cslib.Circuits.Program.isSome_ofCode_iff`, `Cslib.Circuits.Circuit.isSome_ofCode_iff`: the
   lists that decode.
+* `Cslib.Circuits.Program.IsCodeFrom.getElem`, `Cslib.Circuits.Program.isCodeFrom_of_getElem`:
+  elementwise characterization of `Program.IsCodeFrom`.
 * `Cslib.Circuits.Circuit.code_injective`: coding is injective.
 * `Cslib.Circuits.Boolean.le_length_encCircuit`: the encoding is at least as long as the number of
   inputs.
@@ -113,6 +115,9 @@ def ofNat (i : ℕ) (h : i < n + k) : Wire n k := (equivFin n k).symm ⟨i, h⟩
 theorem toNat_injective : Function.Injective (toNat : Wire n k → ℕ) :=
   fun _ _ h => (equivFin n k).injective (Fin.ext h)
 
+theorem toNat_castSucc (w : Wire n k) : w.castSucc.toNat = w.toNat := by
+  cases w <;> rfl
+
 end Wire
 
 /-! ### Lines -/
@@ -127,6 +132,10 @@ def code (line : Line σ n k) : σ.Op × List ℕ :=
 
 @[simp] theorem length_code_snd (line : Line σ n k) : line.code.2.length = σ.Arity line.op := by
   simp [code]
+
+theorem code_mapWires_castSucc (line : Line σ n k) :
+    (line.mapWires Wire.Renaming.castSucc).code = line.code := by
+  simp [code, Wire.toNat_castSucc]
 
 /-- The line performing `g.1` on the wires numbered `g.2`, when `g.2` has as many entries as the
 arity of `g.1` and numbers only inputs and the `k` earlier gates. -/
@@ -185,6 +194,15 @@ def code : {k : ℕ} → Program σ n k → List (σ.Op × List ℕ)
   | empty => rfl
   | gate p line ih => simp [ih]
 
+/-- The code of a program is the list of codes of its widened lines. -/
+theorem code_eq_ofFn_lines (p : Program σ n k) :
+    p.code = List.ofFn fun j : Fin k => (p.lines j).code := by
+  induction p with
+  | empty => simp
+  | gate q line ih =>
+    rw [code_gate, ih, List.ofFn_succ' fun j => ((q.gate line).lines j).code]
+    simp [Line.code_mapWires_castSucc, List.concat_eq_append]
+
 /-- `IsCodeFrom σ n k gates`: every entry of `gates` has the arity of its operation and reads only
 the `n` inputs and the gates before it, the first entry being gate `k`. Such lists, with `k = 0`,
 are exactly the codes of programs (`Program.isSome_ofCode_iff`). -/
@@ -225,6 +243,22 @@ theorem IsCodeFrom.getElem {k : ℕ} {gates : List (σ.Op × List ℕ)} (h : IsC
     | succ j =>
       obtain ⟨h₁, h₂⟩ := ih h.2 j (by simpa using hj)
       exact ⟨h₁, fun i hi => (h₂ i hi).trans_eq (by omega)⟩
+
+/-- A list of gates satisfies `IsCodeFrom σ n k` when every entry `j` has the arity of its
+operation and reads only the first `n + k + j` wires. -/
+theorem isCodeFrom_of_getElem {k : ℕ} {gates : List (σ.Op × List ℕ)}
+    (h : ∀ j (hj : j < gates.length), gates[j].2.length = σ.Arity gates[j].1 ∧
+      ∀ i ∈ gates[j].2, i < n + k + j) :
+    IsCodeFrom σ n k gates := by
+  induction gates generalizing k with
+  | nil => trivial
+  | cons g gates ih =>
+    have h₀ := h 0 (by simp)
+    simp only [List.getElem_cons_zero, Nat.add_zero] at h₀
+    refine ⟨h₀, ih fun j hj => ?_⟩
+    obtain ⟨h₁, h₂⟩ := h (j + 1) (by simpa using hj)
+    simp only [List.getElem_cons_succ] at h₁ h₂
+    exact ⟨h₁, fun i hi => by have := h₂ i hi; omega⟩
 
 /-- Extend a decoded program by the line with code `g`, when `g` reads only earlier wires. -/
 def pushCode (n : ℕ) (p : Option (Σ k, Program σ n k)) (g : σ.Op × List ℕ) :
