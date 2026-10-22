@@ -48,19 +48,28 @@ guarantee fairness or delivery of outputs [Cleve1986].
 3. **Real/Ideal Simulation Security with Abort (`MaliciousOTAdversary`, `IdealSimulator`,
    `realOTHybridExecution`, `idealExecutionWithAbort`, `StatisticallySecureFamilyWithAbort`,
    `ComputationallySecureWithAbort`)**:
-   A static malicious adversary controlling `C : Finset (Fin k)` may substitute effective inputs for
-   `i ∈ C`, abort during the input-commitment or OT gate-evaluation phase (detected by the
-   OT-hybrid consistency check before output reconstruction), or wait to receive the honest
-   parties' output reconstruction shares for the corrupted parties' outputs (learning the
-   corrupted parties' outputs) and then decide whether to deliver outputs to the honest parties
-   (`some y`) or abort (`none`).
+   `MaliciousOTAdversary` models static malicious behavior controlling `C : Finset (Fin k)` in the
+   OT-hybrid protocol via effective input substitution (`chooseInputs`), boolean input-validity and
+   gate-consistency predicates (`corruptedInputValid`, `gatePhaseConsistent`) on the corrupted view
+   that trigger early abort (`finalizeEarlyAbort`) when violated, and a rushing output-delivery bit
+   (`deliver`). Wire shares during circuit evaluation are computed by `evalCircuitOT` on the
+   effective inputs (leaving compilation of commitments, zero-knowledge proofs, or IPS watch-lists
+   against arbitrary per-gate share tampering from raw OT to future work). During output
+   reconstruction for corrupted parties' output wires, the adversary receives the combined honest
+   share parity `honestOutputReconstructionShares` (`parityOn (Finset.univ \ C)`), and honest
+   parties' delivered outputs are the reconstructed circuit outputs on the effective inputs.
    We construct the canonical black-box simulator `kilianSimulator` and prove via the triangular
    self-inverse OT mask bijection `programMaskToCorruptedOT` that the real OT-hybrid execution and
    the ideal execution with abort have the **exact same probability distribution**
-   (`realOTHybridExecution_eq_idealExecutionWithAbort`), yielding both statistical security with
-   zero error (`ot_complete_statisticallySecureWithAbort`) and uniform computational security
-   against strict PPT distinguishers (`ot_complete_computationallySecureWithAbort`) for every
-   polynomial-time multiparty functionality family.
+   (`realOTHybridExecution_eq_idealExecutionWithAbort`). `PolyTimeFunctionality` packages a
+   De Morgan circuit family with polynomially bounded input width, output width, and gate count
+   (whose semantics agrees with the certified uniform polynomial-time evaluator
+   `Boolean.evalOutput`, without a separate uniform circuit-generation machine field), and
+   `MaliciousOTAdversary` and `kilianSimulator` are defined at the distribution (`PMF`) level, so
+   both statistical security with zero error (`ot_complete_statisticallySecureWithAbort`) and
+   uniform computational security against strict-PPT distinguishers
+   (`ot_complete_computationallySecureWithAbort`) follow from the exact zero-error distributional
+   identity `realOTHybridExecution_eq_idealExecutionWithAbort`.
 
 4. **Impossibility of Output Delivery and Fairness (`not_guaranteedOutputDelivery_of_abort`,
    `unfair_twoPartyXor_execution`, `cleve_unfair_fallback`)**:

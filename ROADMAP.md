@@ -24,9 +24,23 @@ completed reference developments.
    `idealOT`), exact real/ideal distributional simulation with abort under `kilianSimulator`,
    zero-error statistical security and uniform strict-PPT computational security for
    `PolyTimeFunctionality` families, and explicit non-delivery/unfairness results are proved in
-   [ObliviousTransfer](Complexity/Crypto/Multiparty/ObliviousTransfer.lean); compiling the
-   OT-hybrid input/gate consistency checks from raw OT via cut-and-choose commitments,
-   zero-knowledge proofs, or IPS watch-lists and extending to adaptive corruptions remain open.
+   [ObliviousTransfer](Complexity/Crypto/Multiparty/ObliviousTransfer.lean). In this model,
+   `MaliciousOTAdversary` captures static malicious behavior via effective input substitution
+   (`chooseInputs`), boolean input-validity and gate-consistency predicates (`corruptedInputValid`,
+   `gatePhaseConsistent`) on the corrupted view that trigger early abort when violated, combined
+   honest output-share parity `honestOutputReconstructionShares` (`parityOn (Finset.univ \ C)`)
+   for corrupted output wires, and a rushing output-delivery flag (`deliver`), while wire shares
+   during circuit evaluation are computed by `evalCircuitOT` on the effective inputs and honest
+   parties receive the reconstructed circuit outputs on delivery. `PolyTimeFunctionality` packages
+   polynomially bounded De Morgan circuit families (evaluated by the certified polynomial-time
+   evaluator `Boolean.evalOutput`, without a separate uniform circuit-generation machine field),
+   and `MaliciousOTAdversary`/`kilianSimulator` operate at the `PMF` level so computational
+   security follows from the exact zero-error distributional identity
+   `realOTHybridExecution_eq_idealExecutionWithAbort`. Compiling the OT-hybrid input/gate
+   consistency checks against arbitrary per-gate share tampering from raw OT via cut-and-choose
+   commitments, zero-knowledge proofs, or IPS watch-lists, adding machine-level uniform circuit
+   generation and simulator runtime certificates, and extending to adaptive corruptions remain
+   open.
 5. **Håstad’s optimal MAX-E3SAT hardness.** For every fixed ε with 0 < ε < 1/8, it is NP-hard to
    distinguish satisfiable E3-CNF formulas from E3-CNF formulas for which every assignment
    satisfies at most a 7/8 + ε fraction of clauses.
