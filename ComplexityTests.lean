@@ -301,6 +301,7 @@ import ComplexityTests.PseudorandomFunction
 import ComplexityTests.PseudorandomObjects
 import ComplexityTests.QBFProtocol
 import ComplexityTests.Quantitative
+import ComplexityTests.QuantitativeEncoding
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
