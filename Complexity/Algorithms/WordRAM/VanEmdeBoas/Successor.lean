@@ -385,7 +385,7 @@ theorem successor_some_spec {d w stackBase₀ sp₀ base query ans : ℕ} {tree 
           split_ifs <;> exact hs.sp_eq
         refine ⟨s₁, s₁, ?_, ?_, ⟨hconst.1, hconst.2.1, hconst.2.2.2.2.2.1, hconst.2.2.2.2.2.2,
           hsp₁, hfound₁.1, hfound₁.2, rfl⟩, ?_⟩
-        · refine (he.loop_iter (cond := .lt zero runFlag) ?_ (ExecWithin.loop_exit ?_)).mono
+        · refine (he.loop_once (cond := .lt zero runFlag) ?_ ?_).mono
             (by omega)
           · simp only [Cond.holds_lt, hs.zero_eq, hs.runFlag_eq]
             decide
@@ -423,7 +423,7 @@ theorem successor_some_spec {d w stackBase₀ sp₀ base query ans : ℕ} {tree 
             simp +decide [next, successorDescentNext, hpres, hm, hlt_m, hs.sp_eq]
           refine ⟨next, next, ?_, ?_, ⟨hconst.1, hconst.2.1, hconst.2.2.2.2.2.1,
             hconst.2.2.2.2.2.2, hsp₁, hfound₁.1, hfound₁.2, rfl⟩, ?_⟩
-          · refine (he.loop_iter (cond := .lt zero runFlag) ?_ (ExecWithin.loop_exit ?_)).mono
+          · refine (he.loop_once (cond := .lt zero runFlag) ?_ ?_).mono
               (by omega)
             · simp only [Cond.holds_lt, hs.zero_eq, hs.runFlag_eq]
               decide
@@ -766,7 +766,7 @@ theorem successor_none_spec {d w stackBase₀ sp₀ base query : ℕ} {tree : Tr
           omega
         simp +decide [s₁, successorDescentNext, hpres, hm, hM, hnot_m, hnot_M, hs.sp_eq]
   refine ⟨s₁, ?_, hconst.2.2.2.2.2.2, hprops.2.1, hprops.2.2.1, hprops.2.2.2.1, hprops.2.2.2.2⟩
-  refine he.loop_iter (cond := .lt zero runFlag) ?_ (ExecWithin.loop_exit ?_)
+  refine he.loop_once (cond := .lt zero runFlag) ?_ ?_
   · simp only [Cond.holds_lt, hs.zero_eq, hs.runFlag_eq]
     decide
   · simp only [Cond.holds_lt, hconst.1, hprops.1, lt_self_iff_false, not_false_eq_true]

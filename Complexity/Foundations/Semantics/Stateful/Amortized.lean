@@ -80,6 +80,26 @@ theorem run (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
   obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
   exact ⟨c', traces, he, hr', A.client hr hv he⟩
 
+/-- Adaptive client potential bound for a uniform constant per-operation amortized charge. -/
+theorem client_const {K : Nat} (A : Amortized R weight potential (fun _ _ => K))
+    {p : D.Client α} {s : D.State} {c c' : C} {a : α} {traces : List Trace}
+    (hr : R.rep s c) (hv : D.ValidHistory s (D.runClient s p).2.2)
+    (he : Executes exec p c a c' traces) :
+    total weight traces + potential (D.runClient s p).2.1 c' ≤
+      (D.runClient s p).2.2.length * K + potential s c := by
+  simpa only [spec_total_const] using A.client hr hv he
+
+/-- Existence, correctness, and potential bound for a uniform constant amortized charge. -/
+theorem run_const {K : Nat} (A : Amortized R weight potential (fun _ _ => K))
+    (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
+    (hv : D.ValidHistory s (D.runClient s p).2.2) :
+    ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
+      R.rep (D.runClient s p).2.1 c' ∧
+      total weight traces + potential (D.runClient s p).2.1 c' ≤
+        (D.runClient s p).2.2.length * K + potential s c := by
+  obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
+  exact ⟨c', traces, he, hr', A.client_const hr hv he⟩
+
 /-- Worst-case certificates give potential certificates whenever their charges satisfy the
 abstract potential inequality. -/
 theorem of_bound {cost : D.State → D.Op → Nat} (B : Bound R weight cost)

@@ -271,6 +271,35 @@ theorem writeAt_exec {w : ℕ} {tmp ptr idx src : Fin r} {x : Data r} (hs : src 
   simpa [writeAt, Function.update_of_ne hs] using
     (Exec.bin (f := .add) (d := tmp) h).seq (Exec.store (a := tmp) (s := src))
 
+/-! ## Additive-basis primitives -/
+
+/-- `addAdditive d i j` sets register `d` to register `i` plus register `j` over
+`Basis.additive`. -/
+def Op.addAdditive (d i j : Fin r) : Op .additive r :=
+  .alu ⟨.bin .add, by decide⟩ d ![i, j]
+
+/-- Zero the cells from the address in register `cur` up to the address in register `stop` over
+`Basis.additive`. -/
+def zeroFillAdditive (cur stop zero one : Fin r) : Code .additive r :=
+  .loop (.lt cur stop) (.seq (.op (.store cur zero)) (.op (.addAdditive cur cur one)))
+
+/-- Allocate a zeroed block of `count` cells at `frontier` over `Basis.additive`. -/
+def allocAdditive (frontier count result cur zero one : Fin r) : Code .additive r :=
+  .seq (.op (.const zero 0)) <|
+  .seq (.op (.const one 1)) <|
+  .seq (.op (.copy result frontier)) <|
+  .seq (.op (.copy cur frontier)) <|
+  .seq (.op (.addAdditive frontier frontier count)) <|
+  zeroFillAdditive cur frontier zero one
+
+/-- `dst ← (ptr)[idx]` over `Basis.additive`. -/
+def readAtAdditive (tmp dst ptr idx : Fin r) : Code .additive r :=
+  .seq (.op (.addAdditive tmp ptr idx)) (.op (.load dst tmp))
+
+/-- `(ptr)[idx] ← src` over `Basis.additive`. -/
+def writeAtAdditive (tmp ptr idx src : Fin r) : Code .additive r :=
+  .seq (.op (.addAdditive tmp ptr idx)) (.op (.store tmp src))
+
 end Cslib.WordRAM
 
 end

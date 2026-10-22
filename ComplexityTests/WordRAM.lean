@@ -281,6 +281,20 @@ info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup' depends on
 #print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup
 
 /--
+info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive
+
+/--
+info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup_additive' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup_additive
+
+/--
 info: 'Cslib.WordRAM.Exec.runs' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

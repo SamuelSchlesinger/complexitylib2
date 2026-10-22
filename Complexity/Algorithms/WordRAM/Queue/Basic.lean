@@ -80,7 +80,7 @@ structure Rep (w base capacity : ℕ) (front back : List ℕ) (x : Data 11) : Pr
 
 /-- The fixed reserved region, including currently unused cells. -/
 def footprint (base capacity : ℕ) : Finset ℕ :=
-  (Finset.range (2 * capacity)).image (base + ·)
+  (Block.mk base (2 * capacity)).footprint
 
 /-- Enqueue writes the next rear cell and advances the rear length. -/
 def enqueue : Code .standard 11 := ram[
@@ -119,17 +119,6 @@ def implementation (w capacity : ℕ) : DynamicProgram (spec w capacity) 11 wher
     | .enqueue _ => some ()
     | .dequeue => some (if regs present = 0 then none else some (regs out))
 
-private theorem frame_write {base capacity a v : ℕ} {x : Data 11}
-    (ha : base ≤ a ∧ a < base + 2 * capacity) :
-    Modifies (footprint base capacity) x.mem (x.write a v).mem := by
-  intro j hj
-  have hne : j ≠ a := by
-    intro h
-    apply hj
-    subst j
-    exact Finset.mem_image.mpr ⟨a - base, Finset.mem_range.mpr (by omega), by omega⟩
-  exact Function.update_of_ne hne _ _
-
 /-- Enqueue body correctness with an exact four-instruction execution. -/
 theorem enqueue_exec {w base capacity v : ℕ} {front back : List ℕ} {x : Data 11}
     (hc : Fits w (base + 2 * capacity)) (hr : Rep w base capacity front back x)
@@ -163,7 +152,7 @@ theorem enqueue_exec {w base capacity v : ℕ} {front back : List ℕ} {x : Data
         simp only [List.length_cons] at this
         omega
       simp [y, Data.set, Data.write, List.reverse_cons, hi']
-  · exact frame_write ⟨by omega, by omega⟩
+  · exact Modifies.write_of_owns ⟨by omega, by omega⟩ v
 
 /-- A rear-to-front move performs six instructions and preserves the reserved-region frame. -/
 theorem move_exec {w base capacity v : ℕ} {front back : List ℕ} {x : Data 11}
@@ -208,7 +197,7 @@ theorem move_exec {w base capacity v : ℕ} {front back : List ℕ} {x : Data 11
     have hr' := hr.back_contents ⟨i.val, by simp⟩
     simpa [y, Data.set, Data.write, List.reverse_cons, List.getElem_append, i.isLt,
       Function.update_of_ne hne] using hr'
-  · exact frame_write ⟨by omega, by omega⟩
+  · exact Modifies.write_of_owns ⟨by omega, by omega⟩ v
 
 /-- Transfer costs eight instructions per moved word and two instructions to exit the loop. -/
 theorem transfer_exec {w base capacity : ℕ} {front back : List ℕ} {x : Data 11}
@@ -292,24 +281,28 @@ def bodyCost (front back : List ℕ) : QueueOp ℕ → ℕ
   | .enqueue _ => 5
   | .dequeue => if front = [] then 8 * back.length + (if back = [] then 8 else 11) else 10
 
+theorem arguments_fit {w capacity : ℕ} (h1 : Fits w 1) {q : List ℕ} (o : QueueOp ℕ)
+    (hv : (spec w capacity).valid q o) (i : Fin 11) :
+    Fits w ((implementation w capacity).encode o i) := by
+  cases o with
+  | enqueue v =>
+    change Fits w (if i = tag then 0 else v)
+    split
+    · exact fits_zero w
+    · exact hv.2
+  | dequeue =>
+    change Fits w (if i = tag then 1 else 0)
+    split
+    · exact h1
+    · exact fits_zero w
+
 private theorem prepare_rep {w base capacity : ℕ} {front back : List ℕ} {x : Data 11}
     (hr : Rep w base capacity front back x) (o : QueueOp ℕ)
     (hv : (spec w capacity).valid (contents (front, back)) o) :
     Rep w base capacity front back ((implementation w capacity).prepare o x) := by
-  have hb : ((implementation w capacity).prepare o x).Bounded w := by
-    apply DynamicProgram.prepare_bounded _ hr.bounded
-    intro i _
-    cases o with
-    | enqueue v =>
-      change Fits w (if i = tag then 0 else v)
-      split
-      · exact fits_zero w
-      · exact hv.2
-    | dequeue =>
-      change Fits w (if i = tag then 1 else 0)
-      split
-      · exact hr.one_eq ▸ hr.bounded.1 one
-      · exact fits_zero w
+  have hb : ((implementation w capacity).prepare o x).Bounded w :=
+    (implementation w capacity).prepare_bounded hr.bounded
+      (fun i _ => arguments_fit (hr.one_eq ▸ hr.bounded.1 one) o hv i)
   refine ⟨hb, ?_, ?_, ?_, ?_, ?_, ?_, hr.size_le, hr.front_contents, hr.back_contents⟩
   all_goals first
     | simpa +decide [implementation, DynamicProgram.prepare] using hr.frontBase_eq
