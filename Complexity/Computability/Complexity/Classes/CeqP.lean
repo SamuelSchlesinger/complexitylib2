@@ -115,12 +115,8 @@ theorem compl_mem_coCeqP : Aᶜ ∈ coCeqP enc ↔ A ∈ CeqP enc := by simp [co
 /-- coC=P consists of the nonzero sets of GapP functions. This is the complement of the
 zero-set characterization [Fortnow, Classifications 4.5 and 4.9][Fortnow1997]. -/
 theorem mem_coCeqP_iff_exists_GapP :
-    A ∈ coCeqP enc ↔ ∃ g ∈ GapP enc, ∀ a, a ∈ A ↔ g a ≠ 0 := by
-  constructor
-  · rintro ⟨g, hg, h⟩
-    exact ⟨g, hg, fun a => by simpa using not_congr (h a)⟩
-  · rintro ⟨g, hg, h⟩
-    exact ⟨g, hg, fun a => by simpa using not_congr (h a)⟩
+    A ∈ coCeqP enc ↔ ∃ g ∈ GapP enc, ∀ a, a ∈ A ↔ g a ≠ 0 :=
+  exists_forall_mem_compl_iff fun _ _ => Iff.rfl
 
 /-- NP is contained in coC=P [Fortnow, Corollary 4.11][Fortnow1997]. -/
 theorem NP_subset_coCeqP : NP enc ⊆ coCeqP enc := by
@@ -136,17 +132,17 @@ theorem coCeqP_subset_PP : coCeqP enc ⊆ PP enc := by
 
 /-- Union closure is dual to intersection closure of C=P. -/
 theorem union_mem_coCeqP (hA : A ∈ coCeqP enc) (hB : B ∈ coCeqP enc) :
-    A ∪ B ∈ coCeqP enc := by
-  simpa [coCeqP] using inter_mem_CeqP hA hB
+    A ∪ B ∈ coCeqP enc :=
+  compl_union_mem inter_mem_CeqP hA hB
 
 /-- Intersection closure is dual to union closure of C=P. -/
 theorem inter_mem_coCeqP (hA : A ∈ coCeqP enc) (hB : B ∈ coCeqP enc) :
-    A ∩ B ∈ coCeqP enc := by
-  simpa [coCeqP, Set.compl_inter] using union_mem_CeqP hA hB
+    A ∩ B ∈ coCeqP enc :=
+  compl_inter_mem union_mem_CeqP hA hB
 
 /-- Polynomial-time reductions preserve coC=P. -/
 theorem PolyTimeReducible.mem_coCeqP {β : Type} {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ coCeqP encB) : A ∈ coCeqP enc :=
-  h.compl.mem_CeqP hB
+  h.mem_compl PolyTimeReducible.mem_CeqP hB
 
 end Cslib.Complexity

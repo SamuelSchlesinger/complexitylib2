@@ -139,17 +139,13 @@ def coModP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ Mo
 
 /-- Zero residues characterize the complementary modular class. -/
 theorem mem_coModP_iff_exists_SharpP :
-    A ∈ coModP k enc ↔ ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ f a % k = 0 := by
-  constructor
-  · rintro ⟨f, hf, h⟩
-    exact ⟨f, hf, fun a => by simpa using not_congr (h a)⟩
-  · rintro ⟨f, hf, h⟩
-    exact ⟨f, hf, fun a => by simpa using not_congr (h a)⟩
+    A ∈ coModP k enc ↔ ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ f a % k = 0 :=
+  exists_forall_mem_compl_iff fun _ _ => not_not
 
 /-- Complementary modular counting is closed under polynomial-time reductions. -/
 theorem PolyTimeReducible.mem_coModP {β : Type} {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ coModP k encB) : A ∈ coModP k enc :=
-  h.compl.mem_ModP hB
+  h.mem_compl PolyTimeReducible.mem_ModP hB
 
 /-- For prime moduli, complement closure identifies the two modular classes. -/
 theorem coModP_eq_ModP (hk : k.Prime) : coModP k enc = ModP k enc := by

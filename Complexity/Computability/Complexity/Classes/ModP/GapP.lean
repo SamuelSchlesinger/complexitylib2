@@ -69,11 +69,8 @@ theorem mem_ModP_iff_exists_GapP (hk : 0 < k) :
 
 /-- For a positive fixed modulus, zero residues of GapP functions define `coModP`. -/
 theorem mem_coModP_iff_exists_GapP (hk : 0 < k) :
-    A ∈ coModP k enc ↔ ∃ g ∈ GapP enc, ∀ a, a ∈ A ↔ g a % k = 0 := by
-  change Aᶜ ∈ ModP k enc ↔ _
-  rw [mem_ModP_iff_exists_GapP hk]
-  constructor <;> rintro ⟨g, hg, hA⟩ <;>
-    exact ⟨g, hg, fun a => by simpa using not_congr (hA a)⟩
+    A ∈ coModP k enc ↔ ∃ g ∈ GapP enc, ∀ a, a ∈ A ↔ g a % k = 0 :=
+  (mem_ModP_iff_exists_GapP hk).trans (exists_forall_mem_compl_iff fun _ _ => not_not)
 
 /-- Zero-one gaps are recognized modulo every fixed `k ≥ 2`; primality is unnecessary. -/
 theorem SPP_subset_ModP (hk : 2 ≤ k) : SPP enc ⊆ ModP k enc := by

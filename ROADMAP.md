@@ -390,13 +390,16 @@ batches.
      `DomainInterpretation.logSpaceReducible` needs no certificate, and
      `Ordered.Reduces.logSpaceReducible` gives `≤_fo ⇒ ≤_log` with L/P closure (Immerman's
      Proposition 3.10). Open: certificates for further restricted-domain families.
-     **Many-one core (#309), deferred migrations:** `PolyTimeReducible`, `LogSpaceReducible` and
-     `Ordered.Reduces` are instances of
-     [ManyOneReducibleBy](Complexity/Computability/Complexity/Reduction/ManyOne.lean);
-     `MappingReducible`, `FPTReducible`, promise `PolyTimeReducible`,
-     `FO.Reduces`/`QFReduces`/`ReducesNontrivial`, and the parsimonious and #P/search hardness
-     families are not yet migrated onto it. A witness-carrying reduction structure is deferred
-     until a client needs one (e.g. size bounds for Cook–Levin).
+     **Many-one core (#309, #314):** `PolyTimeReducible`, `LogSpaceReducible`,
+     `Ordered.Reduces`, `MappingReducible` and `FPTReducible` are instances of
+     [ManyOneReducibleBy](Complexity/Computability/Complexity/Reduction/ManyOne.lean), and
+     polynomial-time, logspace, `#P` (`SharpPHard`/`SharpPComplete`), search
+     (`SearchHard`/`SearchComplete`) and promise (`PromiseProblem.NPHard`) hardness/completeness
+     are instances of polymorphic `HardUnder` and `CompleteUnder`; only structurally distinct
+     reductions (`FO.Reduces`/`QFReduces`/`ReducesNontrivial`, two-condition promise
+     `PolyTimeReducible`, and `ParsimoniousReducible` on `α → ℕ`) remain outside
+     `ManyOneReducibleBy`. A witness-carrying reduction structure is deferred until a client
+     needs one (e.g. size bounds for Cook–Levin).
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
@@ -1005,16 +1008,16 @@ space bounds. Further class-level work needs resource certificates for the actua
   signatures, with the standard, arithmetic (the source's operations on unsigned words) and
   additive bases; programs and decision procedures
   [transfer along meaning-preserving maps of bases](Complexity/Computability/WordRAM/MapOp.lean)
-  with identical runs. Simulating an operation by a program over a smaller basis with an
-  instruction budget (the analogue of circuit `SimulatesWithCost`), restating the clients at the
-  smallest basis they need (in particular compiling `Program .additive r` to `Cslib.RAM` in place of
-  the `Instr.IsAdditive` fragment of the standard basis), and an AC⁰ basis remain open. The machine has [linear and polynomial
+  with identical runs, and `Program .additive r` compiles directly to `Cslib.RAM` via
+  `ToRAM.compileAdditive` and `Basis.additiveHomStandard` (#315). Simulating an operation by a
+  program over a smaller basis with an instruction budget (the analogue of circuit
+  `SimulatesWithCost`) and an AC⁰ basis remain open. The machine has [linear and polynomial
   instruction bounds](Complexity/Computability/WordRAM/Time.lean) uniform over all fitting widths
   above a logarithmic lower threshold,
   [structured programs](Complexity/Computability/WordRAM/Structured.lean) compiling with exact
   instruction counts, [allocation and arrays](Complexity/Computability/WordRAM/Allocation.lean) and
   a [linear-time element-distinctness client](Complexity/Algorithms/WordRAM/ElementDistinctness.lean)
-  whose promised inputs provably fit at that threshold. The generic classes alone do not supply
+  over `.additive` whose promised inputs provably fit at that threshold. The generic classes alone do not supply
   this input-fit guarantee. The [additive-memory compiler](Complexity/Computability/WordRAM/RAM.lean)
   now forward-simulates successful fitting runs in the existing
   [`Cslib.RAM`](Complexity/Computability/RAM/Defs.lean) with logarithmic cost
@@ -1049,8 +1052,6 @@ machine-relative cores do not by themselves establish the missing uniform resour
 
 These are experiments to validate, not claimed savings:
 
-* Simplify `PairReady` and `clearedCfg` composition/preservation in tidy normal form without
-  unfolding machine transitions globally.
 * Factor indicator-expectation identities from PCP's second-moment calculation and recurring
   cardinality/logarithm conversions only when a second client benefits.
 
