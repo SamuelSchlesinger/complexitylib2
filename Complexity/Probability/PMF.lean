@@ -50,6 +50,9 @@ of the whole experiment (`exists_bind_apply_le`).
   adapted from the same branch.
 * `Cslib.Probability.PMF.bind_apply_toReal`, `sum_toReal`: real-valued finite averages,
   copied from cslib PR #1062.
+* `Cslib.Probability.PMF.toReal_true_add_toReal_false`,
+  `Cslib.Probability.PMF.toReal_false_eq_one_sub`,
+  `Cslib.Probability.PMF.toReal_true_eq_one_sub`: real-valued Boolean outcome masses sum to one.
 -/
 
 @[expose] public section
@@ -228,6 +231,25 @@ theorem bind_apply_toReal [Fintype α] (p : PMF α)
     (p.bind kernel b).toReal =
       ∑ a, (p a).toReal * (kernel a b).toReal := by
   simpa using bind_apply_toReal_tsum p kernel b
+
+/-! ### Boolean distributions -/
+
+/-- The real-valued probabilities of `true` and `false` under a Boolean distribution sum to one. -/
+theorem toReal_true_add_toReal_false (p : PMF Bool) :
+    (p true).toReal + (p false).toReal = 1 := by
+  simpa only [Fintype.sum_bool] using sum_toReal p
+
+/-- The real-valued probability of `false` under a Boolean distribution is one minus the
+probability of `true`. -/
+theorem toReal_false_eq_one_sub (p : PMF Bool) :
+    (p false).toReal = 1 - (p true).toReal :=
+  eq_sub_of_add_eq' (toReal_true_add_toReal_false p)
+
+/-- The real-valued probability of `true` under a Boolean distribution is one minus the
+probability of `false`. -/
+theorem toReal_true_eq_one_sub (p : PMF Bool) :
+    (p true).toReal = 1 - (p false).toReal :=
+  eq_sub_of_add_eq (toReal_true_add_toReal_false p)
 
 /-! ### Injective representations -/
 

@@ -56,9 +56,8 @@ complement. -/
 theorem _root_.Cslib.ProbComp.probability_not (program : ProbComp Bool) :
     (ProbComp.eval (Bool.not <$> program) true).toReal =
       1 - (ProbComp.eval program true).toReal := by
-  have h := PMF.sum_toReal (ProbComp.eval program)
-  simp only [Fintype.sum_bool] at h
-  simpa [ProbComp.eval_map, PMF.map_apply] using eq_sub_of_add_eq' h
+  simpa [ProbComp.eval_map, PMF.map_apply] using
+    PMF.toReal_false_eq_one_sub (ProbComp.eval program)
 
 variable {α β : Type} {input : α ↪ List Bool} {output : β ↪ List Bool}
   {program program' : α → ProbComp β}

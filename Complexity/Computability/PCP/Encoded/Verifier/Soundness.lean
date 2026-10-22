@@ -137,9 +137,9 @@ theorem acceptProb_edgeVerifier_le (width : ℕ) (decode : (Fin width → Bool) 
       (fun random => (edgeVerifier width decode eval).Accepts g proof random)) true).toReal ≤
         1 - (g.toGraph eval).unsatVal / 2 := by
   have h := unsatVal_div_two_le_rejectProb width decode eval g proof
-  have hsum := PMF.sum_toReal ((BitString.uniformList (Nat.clog 2 g.edges.length)).map
-    (fun random => (edgeVerifier width decode eval).Accepts g proof random))
-  simp only [Fintype.sum_bool] at hsum
+  have hsum := PMF.toReal_true_add_toReal_false
+    ((BitString.uniformList (Nat.clog 2 g.edges.length)).map
+      (fun random => (edgeVerifier width decode eval).Accepts g proof random))
   linarith
 
 end Cslib.PCP.Encoded.Graph

@@ -135,8 +135,7 @@ theorem invertFixed_success_ge_half {n k : ℕ} (f : BitString n → Image)
   have hfalseReal : (p false).toReal ≤ 1 / 2 := by
     have := ENNReal.toReal_mono (by simp : (1 / 2 : ℝ≥0∞) ≠ ⊤) hfalse
     simpa using this
-  have hsum := PMF.sum_toReal p
-  simp only [Fintype.sum_bool] at hsum
+  have hsum := PMF.toReal_true_add_toReal_false p
   change 1 / 2 ≤ (p true).toReal
   linarith
 
