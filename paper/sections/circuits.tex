@@ -1206,7 +1206,7 @@ comes existentially from Shannon counting.\citep{Subbotovskaya1961,Andreev1987,J
 \end{result}
 
 \begin{result}
-\subsection{\texorpdfstring{ACC$^0$, Sym$^+$}{ACC\^0, Sym\^+} Fast Zeta evaluation, and modular circuit lower bounds}
+\subsection{\texorpdfstring{ACC$^0$}{ACC\^0} and modular circuit lower bounds}
 Define nonuniform $\mathrm{ACC}^0=\bigcup_{q\ge 2}\mathrm{AC}^0[q]$. Because
 $\mathrm{MOD}_0$ is unbounded disjunction and $\mathrm{MOD}_1$ is the constant
 $\mathrm{false}$, $\mathrm{AC}^0[0]=\mathrm{AC}^0[1]=\mathrm{AC}^0$ and
@@ -1228,34 +1228,14 @@ while H\aa stad's and Razborov--Smolensky's parity bounds give
 $\mathrm{AC}^0\subsetneq\mathrm{AC}^0[2]\subseteq\mathrm{ACC}^0$ and
 $\mathrm{AC}^0[p]\subsetneq\mathrm{ACC}^0$ for every odd prime $p$.
 
-A depth-two $\mathrm{Sym}^+$ ($\mathrm{Sym}\circ\mathrm{AND}$) circuit
-\lean{SymPlusCircuit} on $n=n_1+n_2$ inputs applies a symmetric function to the
-number of satisfied positive conjunction masks among $s$ gates. Splitting each
-mask into left and right sub-masks expresses the active gate count on
-$(x_1,x_2)\in\{0,1\}^{n_1}\times\{0,1\}^{n_2}$ as the Boolean-lattice Zeta
-transform $\sum_{p\le x_1}T_{x_2}(p)$ of a $2^{n_1}$-entry coefficient table
-$T_{x_2}$ accumulated from $x_2$, and the divide-and-conquer Fast Zeta
-Transform \lean{fastZeta} evaluates this sum, so \lean{fastSymPlusEval} agrees
-with direct evaluation on all $2^{n_1+n_2}$ inputs and characterizes
-satisfiability.
-
-Unconditionally, parity lies in $\mathrm{P}\subseteq\mathrm{EXP}\subseteq\mathrm{NEXP}$,
-separating $\mathrm{P}$ and $\mathrm{NEXP}$ from $\mathrm{AC}^0$ and from
-$\mathrm{AC}^0[p]$ for every odd prime $p$. For every modulus $q\in\mathbb N$
-(prime or composite) and every degree $k$, simulating size-$c(n+1)^k$
-$\mathrm{MOD}_q$ circuits in De Morgan $\mathrm{SIZE}$ shows that Kannan's
-$\Sigma_3^{\mathrm P}$ language $\mathrm{Kannan.language}(8(k+1))$ lies outside
-$\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$ (even at unbounded
-depth), and gives a language in $\Sigma_2^{\mathrm P}\subseteq\mathrm{NEXP}$
-outside $\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$.
-Unconditionally, $\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ implies
-$\mathrm{NEXP}\subseteq\mathrm{P/poly}$ and collapses $\mathrm{PH}$ to
-$\Sigma_2^{\mathrm P}$, placing $\mathrm{Kannan.language}(k)$ into
-$\Sigma_2^{\mathrm P}$ for every $k$. Williams's theorem
-$\mathrm{NEXP}\not\subseteq\mathrm{ACC}^0$ is not proved: the
-Yao--Beigel--Tarui compilation of $\mathrm{ACC}^0$ circuits into
-$\mathrm{Sym}^+$ circuits, the resulting fast $\mathrm{ACC}^0$ satisfiability
-algorithm and the easy-witness argument are not formalized.\citep{Williams2014,Yao1990,BeigelTarui1994,Barrington1989,Vollmer1999,Kannan1982,KarpLipton1980}
+Unconditionally, parity lies in $\mathrm{P}$, separating $\mathrm{P}$ from
+$\mathrm{AC}^0$ and from $\mathrm{AC}^0[p]$ for every odd prime $p$. For every
+modulus $q\in\mathbb N$ (prime or composite) and every degree $k$, simulating
+size-$c(n+1)^k$ $\mathrm{MOD}_q$ circuits in De Morgan $\mathrm{SIZE}$ shows that
+Kannan's $\Sigma_3^{\mathrm P}$ language $\mathrm{Kannan.language}(8(k+1))$ lies
+outside $\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$ (even at unbounded
+depth), and gives a language in $\Sigma_2^{\mathrm P}$ outside
+$\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$.\citep{Barrington1989,Vollmer1999,Razborov1987,Smolensky1987,Kannan1982}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{247}{Cslib.Circuits.Boolean.AC0Mod_subset_AC0Mod_of_dvd}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{259}{Cslib.Circuits.Boolean.ACC0}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{282}{Cslib.Circuits.Boolean.ACC0_eq_iUnion_AC0Mod}
@@ -1265,13 +1245,7 @@ algorithm and the easy-witness argument are not formalized.\citep{Williams2014,Y
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{547}{Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_modGate}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{599}{Cslib.Circuits.Boolean.ACMod_subset_AC_succ}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{656}{Cslib.Circuits.Boolean.ACC0_subset_PPoly}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{736}{Cslib.Circuits.Boolean.fastZeta_eq_zetaTransform}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{956}{Cslib.Circuits.Boolean.SymPlusCircuit.zetaTransform_coeffTable_eq_activeCount}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{993}{Cslib.Circuits.Boolean.SymPlusCircuit.fastSymPlusEval_eq_eval}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1152}{Cslib.Circuits.Boolean.SIZEMod_subset_SIZE}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1193}{Cslib.Circuits.Boolean.Kannan.language_notMem_SIZEMod}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1202}{Cslib.Circuits.Boolean.exists_mem_SigmaP_two_notMem_SIZEMod}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1212}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_SIZEMod}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1227}{Cslib.Circuits.Boolean.PH_eq_SigmaP_two_of_NEXP_subset_ACC0}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1239}{Cslib.Circuits.Boolean.Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0}
 \end{result}

@@ -172,6 +172,7 @@ agreement during upstream review.
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
 | `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
+| `Foundations/Data/Matrix/Permanent` | Mathlib candidate: Laplace expansion of the permanent along row and column 0, beside `LinearAlgebra/Matrix/Permanent` (mirroring `Matrix.det_succ_row_zero`). |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |
 | `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
 | `Probability/PairwiseIndependentHash/Toeplitz` | Move `Matrix.toeplitz` to Mathlib beside `LinearAlgebra/Matrix/Circulant`. |
@@ -254,6 +255,23 @@ grandfathered without an alias; this list records them for downstream users.
     `hastadGraphSATProb_eq_add_hastadGraphLinearCorr`. The SAT conjuncts were dropped from
     `hastadGraphProb_longCode_of_satisfies` and `hastad_gapLabelCover_dichotomy`, keeping their
     names.
+  - Follow-up #390 (same date and policy): the rest of the `ACC0.lean` Williams scaffolding,
+    `SymPlusCircuit` and its API, `evalMask`, `zetaTransform`, `fastZeta`,
+    `fastZeta_eq_zetaTransform`, `parity_mem_EXP`, `parity_mem_NEXP`,
+    `exists_mem_NEXP_notMem_{AC0,AC0Mod,SIZEMod}`, `exists_mem_SIZEMod_of_mem_AC0Mod`,
+    `NEXP_subset_PPoly_of_NEXP_subset_ACC0`, `PH_eq_SigmaP_two_of_NEXP_subset_ACC0` and
+    `Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0`; the remaining `ACC0` development is
+    split into `ACC0/Basic` and `ACC0/Simulation`, with names unchanged. The module
+    `Circuit/Arithmetic/IdentityTesting` is deleted. Its Schwartz–Zippel restatements
+    (`MvPolynomial.card_mul_card_roots_le`, `card_roots_le`,
+    `exists_eval_ne_zero_of_totalDegree_lt_card`; use Mathlib's
+    `MvPolynomial.schwartz_zippel_totalDegree`), `encArith*`, `PITInt` and its lemmas, the
+    arithmetic circuit combinators, the permanent chain (`minorVar` through
+    `isLaplacePermChain_laplacePermCircuit`), `intPermFamily` and `exists_mem_NEXP_notMem_SIZE`
+    are deleted. `Matrix.permanent_succ_{column,row}_zero` moved to
+    `Foundations/Data/Matrix/Permanent`, `Cslib.Circuits.Circuit.eval_polynomial` to
+    `Arithmetic/VP`, and `permFamily`, `isPFamily_permFamily` and
+    `totalDegree_permanent_genericMatrix_le` to `Arithmetic/Determinant`, with names unchanged.
 * **Two multigraph namespaces.** Since 2026-10-20 the frontier multigraph
   (`Cslib.Circuits.Frontier.Multigraph`) defines its simple graph as that of the multigraph given by
   its ends (`Cslib.Multigraph`), and its module publicly imports the latter. Their shared base names

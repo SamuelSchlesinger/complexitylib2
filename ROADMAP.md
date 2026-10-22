@@ -37,12 +37,9 @@ completed reference developments.
    Label Cover (PCP theorem with parallel repetition) remain open.
 6. **Williams’s ACC lower bound.** NEXP ⊄ ACC⁰: some language in nondeterministic exponential time
    has no polynomial-size, constant-depth nonuniform circuit family over unbounded-fan-in AND, OR,
-   NOT and modular-counting gates with fixed moduli. *Partial:*
-   [`ACC0`](Complexity/Computability/Circuit/Boolean/ACC0.lean) defines `ACC0` and proves its
-   closure properties, `ACC0 ⊆ TC0` and `ACC0 ⊆ AC 1 ⊆ NC 2 ⊆ PPoly`, fast Zeta evaluation of
-   depth-two `Sym⁺` circuits, fixed-degree `Σ₂` lower bounds against `SIZEMod q`, and the collapse
-   `NEXP ⊆ ACC0 → PH = Σ₂`. The Yao–Beigel–Tarui compilation, the fast `ACC⁰` satisfiability
-   algorithm and the easy-witness argument remain open.
+   NOT and modular-counting gates with fixed moduli.
+   [`ACC0`](Complexity/Computability/Circuit/Boolean/ACC0.lean) defines `ACC0` and proves
+   `ACC0 ⊆ AC 1 ⊆ NC 2 ⊆ PPoly`; no part of Williams's argument is formalized.
 7. **Valiant’s algebraic completeness theorem.** Over every field of characteristic different from
    two, the permanent polynomial family is VNP-complete under polynomially bounded projections:
    every VNP family is obtained from a polynomially larger permanent by substituting variables and
@@ -50,12 +47,7 @@ completed reference developments.
 8. **Kabanets–Impagliazzo derandomization-to-lower-bounds theorem.** If polynomial identity testing
    for arithmetic circuits over the integers has a deterministic polynomial-time algorithm, then
    either NEXP ⊄ P/poly or the permanent family has no polynomial-size arithmetic circuits over the
-   integers. *Partial:*
-   [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean) defines
-   `PITInt`, restates Mathlib's Schwartz–Zippel lemma for circuits, proves Laplace expansion of the
-   permanent and the polynomial-identity form of Kabanets–Impagliazzo Lemma 4.2
-   (`forall_polynomial_eq_permanent_iff_mem_PITInt`). The easy-witness collapse
-   `NEXP ⊆ P/poly ⇒ NEXP = MA`, `#P`-completeness of the permanent and Toda's theorem remain open.
+   integers.
 9. **Babai–Fortnow–Lund multiprover theorem.** MIP = NEXP: a language has a classical multiprover
    interactive proof with a probabilistic polynomial-time verifier and constant
    completeness–soundness gap if and only if it belongs to nondeterministic exponential time. The
@@ -186,7 +178,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Counting and modular classes | Build on `#P`, `GapP`, `PP`, [parity-P](Complexity/Computability/Complexity/Classes/ParityP.lean) and [Toda's PH ⊆ P^#P theorem](Complexity/Computability/Complexity/Classes/Toda.lean), with a fixed polynomial-time program correct against every oracle answering the counting function's bits. Extend counting reductions and machine characterizations, permanent completeness, modular/counting hierarchies and the oracle-algorithm form of Stockmeyer approximate counting. |
 | Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. [IP = PSPACE](Complexity/Computability/Complexity/Classes/IP/Shamir.lean) is proved, with a machine-certified Shamir–Shen-style verifier for TQBF; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, zero knowledge and simulation. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
-| Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings, and [polynomial identity testing, Schwartz–Zippel, and permanent self-reducibility](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean). Prove permanent VNP-completeness with its characteristic assumptions, prove the Kabanets–Impagliazzo theorem, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
+| Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings, and [Laplace expansion of the permanent](Complexity/Foundations/Data/Matrix/Permanent.lean). Prove permanent VNP-completeness with its characteristic assumptions, prove the Kabanets–Impagliazzo theorem, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | [Håstad's 3-bit test](Complexity/Computability/PCP/Approximation/Hastad.lean) proves the `7 / 8` random-assignment bound for exact 3-CNF with three distinct variables per clause (`CNF.IsExactThreeDistinct`) and completeness and soundness of Håstad's 3-bit linear test against `GapLabelCover` (`1 - δ` vs `1 / 2 + 4 * ε`). Build the reduction to MAX-E3LIN and, via the 4-clause gadget, to `GapExactThreeDistinctSAT`, Raz's parallel repetition theorem, and the perfect-completeness `(1, 7 / 8 + ε)` reduction; develop further gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
 | Pseudorandomness and coding | Hardness versus randomness, space-bounded generators, extractors/condensers, limited independence, explicit expanders, and list/local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
 | Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). Extend the existing OWF/PRG/PRF results with reusable adaptive reductions, commitments, zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
