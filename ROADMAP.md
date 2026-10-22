@@ -3,6 +3,47 @@
 Outstanding work and the rationale needed to guide it. See the [README](README.md) for
 completed reference developments.
 
+## Highest priorities
+
+1. **Goldreich–Micali–Wigderson zero knowledge.** If one-way functions exist, every language in NP
+   has an interactive computational zero-knowledge proof system, secure against probabilistic
+   polynomial-time verifiers with auxiliary input.
+2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
+   exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
+   polynomial-time adversaries.
+3. **Gentry’s bootstrapping theorem.** A semantically secure, bootstrappable encryption scheme
+   yields compact leveled fully homomorphic encryption for every polynomially bounded circuit
+   depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
+   circuits. With an appropriate additional circular-security assumption, the construction yields a
+   fixed-key fully homomorphic scheme without a predetermined depth bound.
+4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
+   polynomial-time multiparty functionality admits a protocol secure against static malicious
+   corruptions, with security defined by real/ideal simulation and allowing abort, under the
+   standard communication assumptions. This does not guarantee fairness or delivery of outputs.
+5. **Håstad’s optimal MAX-E3SAT hardness.** For every fixed ε with 0 < ε < 1/8, it is NP-hard to
+   distinguish satisfiable E3-CNF formulas from E3-CNF formulas for which every assignment
+   satisfies at most a 7/8 + ε fraction of clauses.
+6. **Williams’s ACC lower bound.** NEXP ⊄ ACC⁰: some language in nondeterministic exponential time
+   has no polynomial-size, constant-depth nonuniform circuit family over unbounded-fan-in AND, OR,
+   NOT and modular-counting gates with fixed moduli.
+7. **Valiant’s algebraic completeness theorem.** Over every field of characteristic different from
+   two, the permanent polynomial family is VNP-complete under polynomially bounded projections:
+   every VNP family is obtained from a polynomially larger permanent by substituting variables and
+   field constants.
+8. **Kabanets–Impagliazzo derandomization-to-lower-bounds theorem.** If polynomial identity testing
+   for arithmetic circuits over the integers has a deterministic polynomial-time algorithm, then
+   either NEXP ⊄ P/poly or the permanent family has no polynomial-size arithmetic circuits over the
+   integers.
+9. **Babai–Fortnow–Lund multiprover theorem.** MIP = NEXP: a language has a classical multiprover
+   interactive proof with a probabilistic polynomial-time verifier and constant
+   completeness–soundness gap if and only if it belongs to nondeterministic exponential time. The
+   provers cannot communicate during the protocol.
+10. **Regev’s worst-case-to-average-case reduction.** For suitable modulus q and Gaussian noise
+    rate α satisfying αq > 2√n, an efficient algorithm for search-LWE in dimension n yields a
+    quantum polynomial-time algorithm for worst-case GapSVP and SIVP with approximation factor
+    Õ(n/α). The noise distribution, modulus restrictions and quantum reduction are part of the
+    theorem.
+
 ## Long-term coverage and reuse
 
 The long-term bar is to support formalizing every paper appearing in the
