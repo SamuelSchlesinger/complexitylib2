@@ -1574,23 +1574,6 @@ theorem fixedKeyFHE_of_circularSecure (hcir : S.CircularSecure) :
 
 /-! ### Leveled homomorphic evaluation and Gentry's leveled bootstrapping theorem -/
 
-@[simp]
-private theorem toNat_castSucc_wire {m k : ℕ} (w : Wire m k) :
-    w.castSucc.toNat = w.toNat := by
-  cases w <;> rfl
-
-private theorem code_mapWires_castSucc {σ : Signature} {m k : ℕ} (line : Line σ m k) :
-    (line.mapWires Wire.Renaming.castSucc).code = line.code := by
-  simp [Line.code]
-
-private theorem code_eq_ofFn_lines {σ : Signature} {m g : ℕ} (p : Program σ m g) :
-    p.code = List.ofFn (fun j : Fin g => (p.lines j).code) := by
-  induction p with
-  | empty => simp
-  | gate q line ih =>
-    rw [Program.code_gate, ih, List.ofFn_succ' (fun j => ((q.gate line).lines j).code)]
-    simp [code_mapWires_castSucc, List.concat_eq_append]
-
 /-- One synchronous level step of leveled homomorphic evaluation: given `(m, gates)`, the previous
 level's wire ciphertexts `values`, and the current level's evaluation key `(pk, ek)`, refresh the
 first `m` input wire ciphertexts using `.and` self-recryption and evaluate each gate in `gates` on
@@ -1808,7 +1791,7 @@ theorem getD_evalLevelStep_program {m g : ℕ} (p : Program Boolean.signature m 
         S.homInterpretation levelKey.1 levelKey.2 (p.lines j).op
           (fun a => values.getD ((p.lines j).wires a).toNat [])) := by
     unfold evalLevelStep
-    rw [hrange, code_eq_ofFn_lines p, List.map_ofFn]
+    rw [hrange, Program.code_eq_ofFn_lines p, List.map_ofFn]
     congr 2
     funext j
     simp only [Function.comp_apply, Line.code]

@@ -23,11 +23,14 @@ simulations track acceptance with a bounded amount of information per time step.
 ## Main definitions
 
 * `Turing.OutView`, `Turing.OutView.ofList`, `Turing.OutView.push`.
+* `Turing.OutView.index`, `Turing.OutView.ofIndex`: numbering output views as `0, 1, 2, 3`.
 
 ## Main results
 
 * `Turing.OutView.ofList_append_toList`: summarising commutes with emitting a symbol.
 * `Turing.OutView.ofList_eq_one_iff`: the summary is `one b` exactly for the output `[b]`.
+* `Turing.OutView.ofIndex_index`, `Turing.OutView.index_ofIndex`: round-trip between output views
+  and indices below `4`.
 -/
 
 @[expose] public section
@@ -91,6 +94,25 @@ def index : OutView → ℕ
 
 theorem index_injective : Function.Injective index := by
   rintro (_ | (_ | _) | _) (_ | (_ | _) | _) h <;> simp_all [index]
+
+@[simp] theorem index_lt (o : OutView) : o.index < 4 := by
+  rcases o with _ | (_ | _) | _ <;> decide
+
+/-- The output view with a given index (`0` for `empty`, `1` for `one false`, `2` for `one true`,
+and `many` otherwise). -/
+def ofIndex (m : ℕ) : OutView :=
+  if m = 0 then .empty else if m = 1 then .one false else if m = 2 then .one true else .many
+
+@[simp] theorem ofIndex_index (o : OutView) : ofIndex o.index = o := by
+  rcases o with _ | (_ | _) | _ <;> rfl
+
+theorem index_ofIndex {m : ℕ} (hm : m < 4) : (ofIndex m).index = m := by
+  rcases m with _ | _ | _ | _ | m
+  · rfl
+  · rfl
+  · rfl
+  · rfl
+  · omega
 
 end OutView
 
