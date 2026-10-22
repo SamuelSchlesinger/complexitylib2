@@ -13,6 +13,7 @@ public import Mathlib.Data.Finset.Card
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Cslib.Foundations.Data.Polynomial.Monotone
 import Mathlib.Data.List.GetD
 
 /-!
@@ -49,6 +50,10 @@ Certificates for the original instance have a length polynomial in its own lengt
 verifier of the target expects a length determined by the reduced instance, so the verifier reads
 only that prefix of the certificate, and `IsVerifier.of_padding` handles the rest.
 
+For verifiers on concatenated strings, `Cslib.Complexity.mem_NP_setOf_exists_append` places the
+pairs `(a, u)` admitting an accepted suffix of length `q (enc a).length` in `NP`. This is the
+inner existential quantifier used in the Karp–Lipton argument.
+
 ## Main definitions
 
 * `Cslib.Complexity.witnessVerifier`: the verifier of a witness relation, parsing certificates
@@ -65,6 +70,8 @@ only that prefix of the certificate, and `IsVerifier.of_padding` handles the res
 * `Cslib.Complexity.isVerifier_subsetVerifier`, `Cslib.Complexity.mem_NP_of_subsetWitness`:
   subset problems over polynomial-time candidate lists with polynomial-time checks are in `NP`.
 * `Cslib.Complexity.PolyTimeReducible.mem_NP`: `NP` is closed under polynomial-time reductions.
+* `Cslib.Complexity.mem_NP_setOf_exists_append`: a polynomially bounded suffix accepted by a
+  polynomial-time verifier defines a problem in `NP` on pairs.
 
 ## References
 
@@ -313,5 +320,28 @@ theorem PolyTimeReducible.mem_NP {encB : β ↪ List Bool} {B : Set β}
 theorem PolyTimeReducible.mem_coNP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ coNP encB) : A ∈ coNP enc :=
   h.mem_compl PolyTimeReducible.mem_NP hB
+
+/-! ### The inner quantifier -/
+
+/-- **The inner quantifier of a `Π₂` verifier is in `NP`.** For a polynomial-time `V`, the pairs
+`(a, u)` for which `V` accepts `(a, u ++ v)` for some `v` of length `q (enc a).length` form a
+problem in `NP`, for the encoding of pairs. -/
+theorem mem_NP_setOf_exists_append {V : α × List Bool → Bool}
+    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (q : Polynomial ℕ) :
+    {y : α × List Bool | ∃ v : List Bool, v.length = q.eval (enc y.1).length ∧
+      V (y.1, y.2 ++ v) = true} ∈ NP (encPair enc encBits) := by
+  refine ⟨q, fun z => V (z.1.1, z.1.2 ++ z.2.take (q.eval (enc z.1.1).length)), ?_, fun y => ?_⟩
+  · exact hV.comp ((fst _ _).fst'.prod (bitsAppend (fst _ _).snd' (bitsTakeWithInput (snd _ _)
+      ((unary_eval q).comp ((encoding_length enc).comp (fst _ _).fst')))))
+  · have hle : q.eval (enc y.1).length ≤ q.eval (encPair enc encBits y).length :=
+      q.eval_mono (length_le_encPair_left _ _ _)
+    constructor
+    · rintro ⟨v, hv, hV⟩
+      refine ⟨v ++ List.replicate (q.eval (encPair enc encBits y).length - v.length) false,
+        by simp only [List.length_append, List.length_replicate, hv]; omega, ?_⟩
+      dsimp only
+      rwa [← hv, List.take_left]
+    · rintro ⟨w, hw, hV⟩
+      exact ⟨_, by rw [List.length_take, hw, Nat.min_eq_left hle], hV⟩
 
 end Cslib.Complexity

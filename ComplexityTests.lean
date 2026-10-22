@@ -35,6 +35,7 @@ import ComplexityTests.BooleanHierarchyPH
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
+import ComplexityTests.CircuitCertificate
 import ComplexityTests.CircuitEvaluation
 import ComplexityTests.CircuitHamming.Approximation
 import ComplexityTests.CircuitHamming.Continuity
@@ -205,6 +206,7 @@ import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NPCompleteGraphs.TSP
 import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
+import ComplexityTests.NPExistsAppend
 import ComplexityTests.NPWitness
 import ComplexityTests.NatBits
 import ComplexityTests.NativeProducts
