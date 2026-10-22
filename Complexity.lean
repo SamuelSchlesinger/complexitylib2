@@ -449,6 +449,8 @@ public import Complexity.Computability.Complexity.AffineDisperser.Program
 public import Complexity.Computability.Complexity.Classes.AWPP
 public import Complexity.Computability.Complexity.Classes.AWPP.Amplification
 public import Complexity.Computability.Complexity.Classes.AWPP.Closure
+public import Complexity.Computability.Complexity.Classes.AWPP.Lowness
+public import Complexity.Computability.Complexity.Classes.AWPP.OracleWeights
 public import Complexity.Computability.Complexity.Classes.AWPP.WPP
 public import Complexity.Computability.Complexity.Classes.Alternation
 public import Complexity.Computability.Complexity.Classes.Alternation.Game
@@ -534,6 +536,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
 public import Complexity.Computability.Complexity.Classes.Oracle.PP
 public import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
+public import Complexity.Computability.Complexity.Classes.Oracle.Replay
 public import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 public import Complexity.Computability.Complexity.Classes.Oracle.Space
 public import Complexity.Computability.Complexity.Classes.Oracle.TQBF
@@ -578,6 +581,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Power
 public import Complexity.Computability.Complexity.Classes.SharpP.Probability
 public import Complexity.Computability.Complexity.Classes.SharpP.Products
 public import Complexity.Computability.Complexity.Classes.SharpP.Space
+public import Complexity.Computability.Complexity.Classes.SharpP.WeightedReplay
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Membership
@@ -1587,6 +1591,7 @@ public import Complexity.MachineLearning.UniformLearning.Basic
 public import Complexity.MachineLearning.UniformLearning.KushilevitzMansour
 public import Complexity.MachineLearning.UniformLearning.LowDegree
 public import Complexity.MachineLearning.UniformLearning.MembershipQuery
+public import Complexity.Probability.AdaptiveWeights
 public import Complexity.Probability.ApproximateCounting
 public import Complexity.Probability.ApproximateCounting.Relative
 public import Complexity.Probability.BitString

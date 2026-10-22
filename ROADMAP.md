@@ -227,8 +227,10 @@ The [set lower bound protocol](Complexity/Computability/Complexity/Classes/Arthu
 already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
 provide a counting-algebra foundation for future oracle simulations.
 [Relativized counting and majority verifiers](Complexity/Computability/Complexity/Classes/PP/Oracle.lean)
-now provide the positive-GapP characterization and elimination of P-decidable oracles;
-AWPP PP-lowness remains an approximate-counting milestone.
+provide the positive-GapP characterization and elimination of P-decidable oracles.
+[AWPP PP-lowness](Complexity/Computability/Complexity/Classes/AWPP/Lowness.lean) is proved for
+the strict adaptive oracle-verifier model: every AWPP word oracle satisfies
+`PPWithOracle A enc = PP enc`, with arbitrary injective input encodings and exact ties rejecting.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon

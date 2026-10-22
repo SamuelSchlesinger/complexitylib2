@@ -1,4 +1,5 @@
 import ComplexityTests.AWPPAmplification
+import ComplexityTests.AWPPLowness
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController
@@ -208,6 +209,7 @@ import ComplexityTests.OracleCircuits
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OracleReplay
 import ComplexityTests.OracleRepresentation
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum

@@ -21,9 +21,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 We use the constant-error, power-of-two characterization of AWPP from
 [Fenner][Fenner2003]: a GapP function divided by `2 ^ p(n)` lies in `[2/3, 1]` on
 members and `[0, 1/3]` on nonmembers. Integer inequalities avoid division and rounding.
-The counting functions are verifier-based; a nondeterministic counting-machine
-characterization and PP-lowness are not proved here. Uniform error reduction is proved in
-`AWPP/Amplification.lean`.
+The counting functions are verifier-based. Uniform error reduction is proved in
+`AWPP/Amplification.lean`, and PP-lowness for the strict adaptive oracle-verifier model in
+`AWPP/Lowness.lean`.
 
 ## Main definitions
 
