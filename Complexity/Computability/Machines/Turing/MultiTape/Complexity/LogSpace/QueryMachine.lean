@@ -27,10 +27,10 @@ Such a machine runs within logarithmic space when its states have logarithmic en
 parts are tidily computable within space linear in the encoded state
 (`Turing.QueryMachine.computableInLogSpace`), and more generally within the space of its states,
 once that is at least logarithmic (`Turing.QueryMachine.computableInSpace`). The proof is a
-multi-pass fold over the input
-(`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.multiPassFold`): each pass simulates one step,
-scanning the whole input with a binary position counter to fetch the queried bit, so that only
-the state, the counter and the fetched bit are ever stored [Sipser, Section 8.4][Sipser2013].
+multi-pass fold over the input (`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.multiPassFold`):
+each pass simulates one step, scanning the whole input with a binary position counter to fetch the
+queried bit, so that only the state, the counter and the fetched bit are ever stored
+[Sipser, Section 8.4][Sipser2013].
 
 ## Implementation notes
 
@@ -337,7 +337,7 @@ input `enc a`, first after `time a` steps, with output `encOut (f a)`. If its st
 runs have encodings of length `O(S a)`, where `S a` is at least logarithmic in the length of the
 input, and its query, transition, emission, halting test and final word are tidily computable
 within space linear in the encoded state, then `f` is computable within space `O(S a)`. The input
-is not charged, so `S` may be much smaller than the input. -/
+is not charged, so `S` may be much smaller than the length of the input. -/
 theorem computableInSpace {α β : Type} {enc : α ↪ List Bool} {encOut : β ↪ List Bool}
     {σ : Type} {encS : σ ↪ List Bool} (M : QueryMachine σ)
     (hquery : ComputableTidilyInSpace M.query encS encNat fun s => (encS s).length)

@@ -362,7 +362,8 @@ querying input bits with logarithmic states, run in logarithmic space by a
 multi-pass simulation.\citep[Theorem 3.1]{Immerman1999}
 The simulation stores only the state, a position counter and the fetched bit,
 so a query machine whose states have length $O(S)$, for a bound $S$ at least
-logarithmic in the input length, runs in space $O(S)$.
+logarithmic in the input length, and whose parts are computable in space linear
+in the state, runs in space $O(S)$.
 
 The next entry supplies canonical numeric constants, order and BIT. The later
 order-free interpretation entry proves the corresponding interpretation-to-logspace bridge.
