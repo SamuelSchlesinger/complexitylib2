@@ -15,18 +15,11 @@ completed reference developments.
    yields compact leveled fully homomorphic encryption for every polynomially bounded circuit
    depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
    circuits. With an appropriate additional circular-security assumption, the construction yields a
-   fixed-key fully homomorphic scheme without a predetermined depth bound. *Partial:*
-   [Bootstrapping](Complexity/Crypto/Computational/Bootstrapping.lean) proves the composition step
-   (`leveledFHE_of_bootstrappable`, `fixedKeyFHE_of_circularSecure`, with leveled semantic security
-   from base semantic security) from an *assumed* `Bootstrappable` interface whose gate-plus-refresh
-   operation `evalAugDecrypt` and its correctness are taken as fields. Deriving that interface from
-   homomorphic evaluation of the scheme's decryption circuit remains open.
+   fixed-key fully homomorphic scheme without a predetermined depth bound.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
    standard communication assumptions. This does not guarantee fairness or delivery of outputs.
-   A withdrawn attempt (#340, removed in #372) contains a reusable semi-honest GMW evaluation and
-   simulation argument; see `Complexity/Crypto/Multiparty/ObliviousTransfer.lean` at `62bbf525`.
 5. **Håstad’s optimal MAX-E3SAT hardness.** For every fixed ε with 0 < ε < 1/8, it is NP-hard to
    distinguish satisfiable E3-CNF formulas from E3-CNF formulas for which every assignment
    satisfies at most a 7/8 + ε fraction of clauses. *Partial:*
@@ -64,9 +57,7 @@ completed reference developments.
     rate α satisfying αq > 2√n, an efficient algorithm for search-LWE in dimension n yields a
     quantum polynomial-time algorithm for worst-case GapSVP and SIVP with approximation factor
     Õ(n/α). The noise distribution, modulus restrictions and quantum reduction are part of the
-    theorem. A withdrawn attempt (#343, removed in #372) contains reusable lattice basics
-    (successive minima, the lower transference bound, the discrete Gaussian on `ZMod q`); see
-    `Complexity/Crypto/Lattice/LWE.lean` at `62bbf525`.
+    theorem.
 
 ## Long-term coverage and reuse
 
