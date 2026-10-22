@@ -291,6 +291,8 @@ import ComplexityTests.RationalHitting.Encode
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
+import ComplexityTests.RationalHitting.Point
+import ComplexityTests.RationalHitting.Runtime
 import ComplexityTests.ReductionClasses
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
