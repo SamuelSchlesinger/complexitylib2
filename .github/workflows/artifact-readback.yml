@@ -1,0 +1,56 @@
+name: Temporary abstract artifact readback
+
+on:
+  push:
+    branches: [work/abstracts-artifact-readback-20261022]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      max-parallel: 2
+      matrix:
+        part: [0, 1, 2, 3]
+    steps:
+      - name: Retrieve the existing CI archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail --location --silent --show-error \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --output "$RUNNER_TEMP/abstracts-ci.zip" \
+            "https://api.github.com/repos/cslib-community/complexitylib/actions/artifacts/12465445254/zip"
+      - name: Verify and return one archive part
+        env:
+          PART_INDEX: ${{ matrix.part }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          expected = "b9bc60d7ffb524e300af8bcbf451edc1cc96351acc92c34cb20a976a29bd88f8"
+          data = (Path(os.environ["RUNNER_TEMP"]) / "abstracts-ci.zip").read_bytes()
+          actual = hashlib.sha256(data).hexdigest()
+          assert actual == expected, "The retrieved archive is not the reviewed CI artifact"
+          index = int(os.environ["PART_INDEX"])
+          width = (len(data) + 3) // 4
+          part = data[index * width:(index + 1) * width]
+          print("CI_ARCHIVE_META " + json.dumps({
+              "artifact_id": 12465445254, "sha256": actual, "bytes": len(data),
+              "part": index, "parts": 4, "part_bytes": len(part),
+              "part_sha256": hashlib.sha256(part).hexdigest()
+          }))
+          encoded = base64.b64encode(part).decode("ascii")
+          for number, offset in enumerate(range(0, len(encoded), 16384)):
+              print(f"CI_ARCHIVE_DATA {index} {number} {encoded[offset:offset + 16384]}")
+          print(f"CI_ARCHIVE_END {index}")
+          PY
