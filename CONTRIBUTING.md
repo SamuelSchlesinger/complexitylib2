@@ -45,7 +45,10 @@ For concurrent local validation, choose a thread budget for the shared host, for
 `LEAN_NUM_THREADS=2 scripts/check.sh`. Lean's
 [thread-pool setting](https://lean-lang.org/doc/reference/latest/IO/Tasks-and-Threads/)
 defaults to the number of logical processors and is not a hard process or memory cap; check the
-observed concurrency and memory use. Keep mutable build outputs separate between worktrees.
+observed concurrency and memory use. Keep mutable build outputs separate between worktrees
+(for example with `scripts/worktree.sh create <branch> [dir_name]`, which seeds `.lake/build` from
+the root checkout). Run `python3 scripts/check_hygiene.py` to audit `-- upstream:` markers,
+forbidden proof tokens, `set_option` justifications, and non-terminal `simp` calls.
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
 an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.
 
@@ -81,7 +84,10 @@ and links to Lean declarations, with appropriate source credit. It is not a proo
 or an exhaustive API reference. Keep outstanding work in `ROADMAP.md`.
 
 Every AI-authored PR must check the index against its final Lean changes. Update affected
-entries and links, and add entries for new headline results. Internal helper lemmas need no
+entries and links, and add entries for new headline results. Run
+`python3 scripts/pin_paper_links.py --check` (or `--pin` to rewrite `\decl` into `\declat{line}`)
+to verify that every declaration link in `paper/` resolves to the exact 1-based declaration line.
+Internal helper lemmas need no
 separate entry. Proof-only changes preserving statements and scope may record a no-impact
 assessment instead of changing the prose. Explain any no-impact assessment in the PR.
 
