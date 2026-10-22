@@ -34,8 +34,8 @@ complexity from literals lies between `ρ(f)` and `ρ(f)²`.
 
 The formalized upper bound is `O((t + 1)² (n + t))`, cubic in the cover size when `t ≥ n`
 rather than quadratic, because unions, free in the AND cost, are charged in size; this is a
-property of the construction, not a proven lower bound. The size bound is polynomial in `ρ(f)`
-and `n` together, not in `ρ(f)` alone. These formalize known correspondences, not new bounds.
+property of the construction, not a proven lower bound. The formalized size bound depends on
+`n` as well as on `ρ(f)`. These formalize known correspondences, not new bounds.
 
 ## Main definitions
 
@@ -44,7 +44,8 @@ and `n` together, not in `ρ(f)` alone. These formalize known correspondences, n
 
 ## Main results
 
-* `Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds`: `ρ(f) ≤ C_∧(f) ≤ ρ(f)²` for monotone
+* `Cslib.Circuits.Fusion.ecomplexityFrom_literals_le_pairCoverComplexity_sq`,
+  `Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds`: `ρ(f) ≤ C_∧(f) ≤ ρ(f)²` for monotone
   AND complexity from literals.
 * `Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_size`,
   `Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_complexity`: every De Morgan circuit
@@ -225,9 +226,8 @@ theorem PairCover.exists_computes_size_le {f : BooleanFunction n}
 
 open Boolean in
 /-- **Cover complexity and De Morgan circuit size are polynomially related, up to the input
-length.** The cover
-complexity `t = ρ(f)` of `f` from its literals over unrestricted semifilters is finite, at most
-twice the circuit complexity `C(f)` over the De Morgan basis, and
+length.** The cover complexity `t = ρ(f)` of `f` from its literals over unrestricted semifilters
+is finite, at most twice the circuit complexity `C(f)` over the De Morgan basis, and
 `C(f) ≤ 4 (t + 1)² (2 n + t + 1) + n`. -/
 theorem pairCoverComplexity_complexity_bounds (f : BooleanFunction n) :
     ∃ t : ℕ, pairCoverComplexity {x | f x = true}

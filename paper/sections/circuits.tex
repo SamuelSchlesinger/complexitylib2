@@ -1034,8 +1034,8 @@ included, charged. Then
 \qquad
 C(f)\le 4(\rho(f)+1)^2(2n+\rho(f)+1)+n .
 \]
-In particular $\rho(f)$ is finite, and $C(f)$ is bounded by a polynomial in
-$\rho(f)$ and $n$ together, not in $\rho(f)$ alone. The lower bound $\rho(f)\le 2C(f)$ holds for
+In particular $\rho(f)$ is finite, and the formalized bound on $C(f)$ depends on
+$n$ as well as on $\rho(f)$. The lower bound $\rho(f)\le 2C(f)$ holds for
 every admissible class of witnesses, including semi-ultrafilters: the
 dual-rail translation doubles the size of a De Morgan circuit and removes its
 negations, and the dual-rail inputs are wired from the literals and one free
@@ -1050,6 +1050,7 @@ formalizations of known correspondences, not new circuit lower bounds.
 \declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{322}{Cslib.Circuits.Fusion.PairCover.size_toCircuit_le}
 \declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{164}{Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds}
 \declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{178}{Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_size}
+\declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{201}{Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_complexity}
 \declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{213}{Cslib.Circuits.Fusion.PairCover.exists_computes_size_le}
 \declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{233}{Cslib.Circuits.Fusion.pairCoverComplexity_complexity_bounds}
 \end{result}

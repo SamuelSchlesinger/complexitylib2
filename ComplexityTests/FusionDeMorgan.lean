@@ -12,7 +12,7 @@ import Complexity.Computability.Circuit.Fusion.DeMorgan
 A two-gate De Morgan circuit computes NAND by negating an internal AND gate, so the lower bound
 gives cover complexity at most four. A projection has an empty cover, so the upper bound gives a
 De Morgan circuit within the stated budget. The headline bounds are instantiated for an arbitrary
-function, and the dual-rail selection theorem is instantiated at `n = 2`.
+function, and the dual-rail input circuit's evaluation theorem is instantiated at `n = 2`.
 -/
 
 namespace ComplexityTests.FusionDeMorgan
@@ -79,7 +79,7 @@ example : ecomplexityFrom Monotone.interpretation Monotone.andCost
     _ ≤ 4 ^ 2 := pow_le_pow_left₀ zero_le h 2
     _ = 16 := by norm_num
 
-/-- The dual-rail selection theorem, instantiated at `n = 2`. -/
+/-- The evaluation theorem of the dual-rail input circuit, instantiated at `n = 2`. -/
 example : ∀ x : BitString 2, (Monotone.literalsRailCircuit 2).eval Monotone.interpretation
     (AltFormula.literals x) = Monotone.railBitString x :=
   Monotone.eval_literalsRailCircuit
