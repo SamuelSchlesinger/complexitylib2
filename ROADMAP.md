@@ -761,8 +761,10 @@ space bounds. Further class-level work needs resource certificates for the actua
 
 * Mathlib TM2 compatibility: the [polynomial-time bridge](Complexity/Computability/Machines/Turing/TM2/PolyTime.lean)
   transfers typed computations with finite working alphabets to the tidy multi-tape calculus
-  under standard binary word encodings. A space-preserving simulation and converse class
-  comparisons remain open;
+  under standard binary word encodings. The [polynomial-space bridge](Complexity/Computability/Machines/Turing/TM2/PolySpace.lean)
+  transfers terminating computations with polynomially bounded stacks without a runtime bound.
+  Linear space overhead, sublinear work-space conventions and converse class comparisons remain
+  open;
 * Tree Evaluation: the [Cook–Mertz machine](Complexity/Computability/TreeEval/Space.lean)
   has a proved parameterized space bound on valid encoded instances and an
   `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and

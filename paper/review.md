@@ -2070,3 +2070,52 @@ Reviewed `paper/sections/space.tex` SHA-256:
 This is local rendering evidence; the CI theorem-index artifact/provenance review and
 maintainer integration approval remain pending. AI review does not imply human editorial
 approval or a Lean proof of prose equivalence. Generated artifacts remain unversioned.
+
+
+## 2026-10-22: Terminating Mathlib TM2 computations within polynomial space
+
+Worker `/root`, assisted by OpenAI Codex, adds the polynomial-space entry pinned to source
+`d519401281aca7ebe881ae9ea21b08991d4b9acf`, tree
+`77cc631dfb1c518c2d90e5e4b07d915a1a49bb7f`, on base `126a59b7`. It starts from a
+`TM2Computable` termination/correctness certificate with finite working alphabets and
+injective typed encoders. A polynomial bound on each stack over every source configuration,
+including initialization and padded halting, suffices. Input and output stacks both count.
+No source runtime bound or computability certificate for the space-bound function is required:
+a polynomial majorant gives an exponential clock, stored in binary, through a finite
+configuration-counting argument. The conclusion is tidy polynomial-space computation under
+standard binary word encodings; the Boolean adapter gives native `PSPACE` membership.
+Polynomial overhead is asserted, without linear overhead, a sublinear work-space simulation,
+or a converse class equivalence.
+
+Authoring subagent `/root/tm2_design_review` contributed configuration counting and regression
+proofs and is not an independent reviewer. Independent nonauthor agents `/root/tm2_api_review`
+and `/root/tm2_correctness_review` approved the source, exact tests and semantic index entry.
+A missing References section and a declaration-line pin were fixed and re-reviewed. No findings
+remain unresolved. Test SHA-256 is
+`39c36614b820cf596728038c52595faabe5ffa3bc42ff91d147052f581dbca0b`; examples include
+termination-only certificates on infinite input domains, an explicit exponential binary clock
+with early-halting padding, empty alphabets, distinct Boolean-input/empty-output stacks and
+Boolean answer recoding. Three named axiom guards permit only the standard three axioms.
+
+On this source, the full strict library build (11241 jobs), all 358 test modules and their
+aggregate driver (11962 jobs), global axiom audit, environment/style lint and public Init-import
+audit passed. Import generation checks passed for both explicit library roots. Windows default
+`mk_all` and `lint-style` commands hit duplicate `Lake.packageAttr` workspace registration;
+the equivalent explicit-root and exact-option checks passed. The first global axiom audit
+failed with resource exhaustion/no space left on device; a retry alone passed without code
+changes once disk space was available. Failed attempts are not counted as successful checks.
+Python maintenance tests (18), documentation configuration and offline upstream synchronization
+passed. API documentation generation retains the previously identified missing native `cc`
+prerequisite; generated API coverage was not checked. Full command evidence is in the code
+commit description.
+
+The local theorem index builds as 115 pages. The author and independent nonauthor reviewer
+`/root/tm2_api_review` inspected page 25 and verified its three PDF annotations against the
+pinned source declarations at lines 118, 75 and 39; no rendering or link findings remain. PDF SHA-256:
+`c1de2cccbf55e0682222256d4099c0b69355dbe9af044b2e2134cad3f0bbf99b`.
+Final `paper/sections/space.tex` SHA-256:
+`00efb4d2ae8bd0d89476f341918624a92f268737c7a6f7adf2de49528f4093b8`.
+Local provenance records the source commit and a dirty documentation tree. Independent final
+pin/render review is recorded in the companion documentation commit. CI artifact/provenance
+review and maintainer integration approval remain separate gates; AI review is not human
+editorial approval or a Lean proof of prose equivalence. Generated artifacts remain unversioned.
