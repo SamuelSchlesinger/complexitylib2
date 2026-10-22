@@ -687,6 +687,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   arithmetic and storage growth. Polynomial bit complexity of formula evaluation on the emitted
   matrices remains separate. The [sumset-extractor frontier lower-bound bridge](Complexity/Computability/Circuit/Frontier/Extractor.lean),
   the [conditional uniform `P` sumset-extractor lower bounds](Complexity/Computability/Complexity/FrontierExtractor.lean),
+  the Chattopadhyay–Liao XOR source reduction and fourth-moment majority certificate
+  ([Conditioning](Complexity/Computability/Circuit/Frontier/SourceReduction/Conditioning.lean),
+  [FourthMoment](Complexity/Computability/Circuit/Frontier/SourceReduction/FourthMoment.lean),
+  [Moments](Complexity/Computability/Circuit/Frontier/SourceReduction/Moments.lean),
+  [Majority](Complexity/Computability/Circuit/Frontier/SourceReduction/Majority.lean),
+  [Sampler](Complexity/Computability/Circuit/Frontier/SourceReduction/Sampler.lean),
+  [SourceReduction](Complexity/Computability/Circuit/Frontier/SourceReduction.lean),
+  [Complexity/SourceReduction](Complexity/Computability/Complexity/SourceReduction.lean)),
   and the sharpened `4.56249 = 456249 / 100000` Gaussian frontier constant
   ([Coefficient](Complexity/Computability/Circuit/Frontier/Layouts/Gaussian/Coefficient.lean),
   [FanInTwo](Complexity/Computability/Circuit/Frontier/FanInTwo.lean),
@@ -698,12 +706,22 @@ Jukna coverage below is an additional target beyond the V1 port:
   `7 N ≤ 2 |C| + 14 d` bound via `IsSumsetExtractor.seven_mul_le_two_mul_size_add`), one-bit
   balanced padding (`balancePad`, `balancePadFamily`, `ofSlices_balancePadFamily_mem_P`), the
   distributional `IsSumsetExtractor` bridge and its Chor–Goldreich flat-source equivalence
-  (`isSumsetExtractor_iff_sumsetBias_two_pow`), polylogarithmic entropy asymptotics
+  (`isSumsetExtractor_iff_sumsetBias_two_pow`), flat sumset conditioning
+  (`flatSumsetExtractor_iff_sumsetBias`, `SumsetBias.of_many_good_fibers`), the fourth-moment
+  polynomial certificate (`fourthMoment_positive_tail_of_approx`) and small-parity-bias majority
+  tails (`strictMajority_mass_ge_of_parityBias`), seeded-extractor-to-sampler conversion and
+  somewhere-sampler amplification (`FlatSeededExtractor.sampler`, `Sampler.amplify`), the affine
+  XOR source reduction (`affineSourceReduction`, `SomewhereSampler.parity_fibers`,
+  `sumsetBias_strictMajority_affineSourceReduction`), uniform polynomial-time evaluation of
+  `Cslib.strictMajority`, `Cslib.parity`, and `strictMajority ∘ g_N`
+  (`computableTidilyInPolyTime_strictMajority_comp`,
+  `exists_mem_P_eventually_lt_size_of_affineSourceReduction`), polylogarithmic entropy asymptotics
   (`isLittleO_rpow_log_id`), and conditional `(4.56249 - ε) N` (and `4.56 N`) average-case and
   worst-case lower bounds in `Complexity.P encBits` over `fullSignature 2 Bool`, as well as bounded
-  fan-in, nondeterministic verifier, and monoid-aggregate frontier corollaries (#320, #342).
-  Remaining: carry over the explicit sumset-extractor construction and its uniform polynomial-time
-  certificate, recording each endpoint's hypotheses.
+  fan-in, nondeterministic verifier, and monoid-aggregate frontier corollaries (#320, #342, #383).
+  Remaining: instantiate the explicit base seeded extractor, neighbor generator, and non-malleable
+  affine extractor family to discharge the hypotheses of
+  `exists_mem_P_eventually_lt_size_of_affineSourceReduction`.
 * **Weighted threshold representations.** Complete the remaining results in
   [Threshold Circuits as Decision Trees and Finite-State Programs](https://github.com/SamuelSchlesinger/threshold-circuits).
   The [separable and bi-monotone comparison tree rectangle bounds](Complexity/Computability/DecisionTree/Separable.lean),
@@ -721,7 +739,7 @@ Jukna coverage below is an additional target beyond the V1 port:
   [pending-bias state simulation and input-summary / phased-cut lower bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/PendingBias.lean),
   [scalar query-activity run capacity and Cover enumerative coding bounds](Complexity/Computability/Circuit/Boolean/WeightedThreshold/ScalarActivity.lean),
   and [unambiguous transcript cells and quadratic-potential unique-sink representations](Complexity/Computability/Circuit/Boolean/WeightedThreshold/Potential.lean)
-  are proved. Port v1's explicit source-reduction family.
+  are proved.
   Further manuscript work includes universal scalar circuit synthesis,
   entropy and asymptotic activity bounds, and geometric cutting.
 
