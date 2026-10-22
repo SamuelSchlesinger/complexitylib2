@@ -40,6 +40,8 @@ The initializer executes in three phases:
   `[base, base + span d + 4 * (d + 1))`.
 * `init_call`, `init_executes`, `init_executes_generic`: bounded-state, flat, and generic RAM
   initialization certificates.
+* `init_space_le`: the total tree-plus-scratch footprint is at most
+  `10 * universeSize d + 4 * (d + 1)` words.
 
 ## References
 
@@ -686,7 +688,10 @@ alias universeSize_mono := Cslib.Algorithms.Lean.VanEmdeBoas.universeSize_mono
 @[deprecated (since := "2026-10-22")]
 alias span_mono := Cslib.Algorithms.Lean.VanEmdeBoas.span_mono
 
-@[deprecated (since := "2026-10-22")]
-alias init_space_le := Cslib.Algorithms.Lean.VanEmdeBoas.init_space_le
+/-- The combined tree and scratch region of `span d + 4 * (d + 1)` words is bounded by
+`10 * universeSize d + 4 * (d + 1)`. -/
+theorem init_space_le (d : ℕ) :
+    span d + 4 * (d + 1) ≤ 10 * universeSize d + 4 * (d + 1) :=
+  Nat.add_le_add_right (span_le d) (4 * (d + 1))
 
 end Cslib.Algorithms.WordRAM.VanEmdeBoas

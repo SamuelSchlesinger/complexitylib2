@@ -35,8 +35,7 @@ paper's construction. No memory representation or RAM running-time theorem is es
 
 * `universeSize_eq_two_pow`: the closed form `2 ^ (2 ^ d)`.
 * `universeSize_mono`, `span_mono`: monotonicity of `universeSize` and `span` in the depth.
-* `span_le`, `init_space_le`: explicit linear bounds `span d ≤ 10 * universeSize d` and
-  `span d + 4 * (d + 1) ≤ 10 * universeSize d + 4 * (d + 1)`.
+* `span_le`: the explicit linear bound `span d ≤ 10 * universeSize d`.
 * `summary_word_lt_span`, `cluster_word_lt_span`: all recursive words lie within their parent.
 * `summary_end_le_clusterOffset`, `cluster_end_le_clusterOffset`: recursive records do not overlap.
 
@@ -195,11 +194,5 @@ theorem span_mono {a b : ℕ} (hab : a ≤ b) : span a ≤ span b := by
       have h := summary_end_le_span m
       dsimp only [summaryOffset] at h
       omega)
-
-/-- The combined tree and scratch region of `span d + 4 * (d + 1)` words is bounded by
-`10 * universeSize d + 4 * (d + 1)`. -/
-theorem init_space_le (d : ℕ) :
-    span d + 4 * (d + 1) ≤ 10 * universeSize d + 4 * (d + 1) :=
-  Nat.add_le_add_right (span_le d) (4 * (d + 1))
 
 end Cslib.Algorithms.Lean.VanEmdeBoas

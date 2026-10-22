@@ -32,8 +32,8 @@ The relation-symbol bundle `FO.TableauRels` and component first-order formulas a
 
 ## Main definitions
 
-* `Cslib.Logic.FO.TableauRels`: bundle of the 12 relation-symbol families used by the first-order
-  tableau formulas.
+* `Cslib.Logic.FO.tableauRels`, `Cslib.Logic.FO.tableauMatrix`: the canonical relation-symbol
+  bundle in the matrix language and the first-order matrix of the sentence.
 * `Cslib.Logic.FO.tableauESOSentence`: the existential second-order sentence encoding an accepting
   computation of `tm` on `u ++ w` within `B - 1` steps.
 * `Cslib.Logic.Vocabulary.tableauESOSentence`: specialization to

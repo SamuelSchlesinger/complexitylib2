@@ -48,11 +48,8 @@ polynomial-time computability.
 
 ## Main definitions
 
-* `Cslib.Complexity.Diamond.graph`, `Cslib.Complexity.Diamond.cycleGraph`: diamond graphs and
-  closed diamond graphs, with the node labels `Cslib.Complexity.Diamond.topNode`,
-  `Cslib.Complexity.Diamond.rowNode` and `Cslib.Complexity.Diamond.clauseNode`, and the detours
-  `Cslib.Complexity.Diamond.Detour`.
-* `Cslib.Complexity.Diamond.WellFormed`, `Cslib.Complexity.Diamond.Satisfiable`.
+* `Cslib.Complexity.Diamond.encDetour`: the encoding of detours used for polynomial-time
+  computability.
 
 ## Main results
 
@@ -60,8 +57,6 @@ polynomial-time computability.
   directions of its rows satisfying every clause.
 * `Cslib.Complexity.Diamond.mem_DirHamCycle_iff`: Hamiltonian cycles of a closed diamond graph
   likewise.
-* `Cslib.Complexity.Diamond.length_vertices`, `Cslib.Complexity.Diamond.length_arcs`: the size of a
-  diamond graph.
 * `Cslib.Complexity.Diamond.computableTidilyInPolyTime_graph`,
   `Cslib.Complexity.Diamond.computableTidilyInPolyTime_cycleGraph`: diamond graphs are computable
   in polynomial time from layouts computable in polynomial time.
