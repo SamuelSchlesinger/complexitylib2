@@ -5,7 +5,7 @@
 Worker `worker-jetski-54e3dbd2` (Jetski, for Samuel Schlesinger, continuing the work of
 `worker-jetski-92802680`) adds the entry "PP is closed under truth-table reductions" to
 `paper/sections/randomness.tex`. It has twelve declaration links pinned at
-`8f8fcea3d96ef44fb0556b021662d407ab1ec5c1` (`Classes/PP/TruthTable.lean`,
+`186effd8a94ec88b9d8bb4b6b1f9f5bf0667f94e` (`Classes/PP/TruthTable.lean`,
 `Reduction/TruthTable.lean`). The entry states the Fortnow–Reingold theorem for arbitrary
 injective encodings, the indexed form with a polynomial-time unary query count and Boolean
 combiner, the Beigel–Reingold–Spielman Boolean corollaries, bounded quantifiers and `P` closure.
@@ -23,6 +23,11 @@ all twelve links against the exact source lines, the quantifiers, encodings, una
 conditions and gap bounds, and the nonadaptive scope. LaTeX was unavailable locally, so the
 rendered PDF must be inspected from the CI artifact. This records AI review, not human editorial
 approval.
+
+Coordinator reviewer `c4bd95db` approved `7f51726e` and asked for a follow-up delta before merge.
+It credits Newman [Newman1964] in the module docstring and the entry, and makes the unindexed
+amplification helpers (`newmanAmp` and its lemmas, `one_le_newmanPoly`) private. The links were
+re-pinned to `186effd8`, where only line numbers moved. The coordinator arranges review of this delta.
 
 ## 2026-10-22: Search-tree deletion (#359)
 
