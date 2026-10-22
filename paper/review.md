@@ -17,6 +17,22 @@ checked quantifiers, hypotheses, cost model and height claims, and approved; its
 ("leftmost (least)") was applied. LaTeX was unavailable locally, so the rendered PDF must be
 inspected from the CI artifact. This records AI review, not human editorial approval.
 
+## 2026-10-22: Fan-in-`d` Cook–Mertz procedure (#363)
+
+Worker `worker-crei-dc679113` (Claude Code, for Christian Reitwiessner) extends the Cook–Mertz
+Tree Evaluation entry with a paragraph on the fan-in-`d` procedure and three declaration links
+pinned at `4e9da5a9b9fe8c45d08d85b23c776b9cf04937b9` (`Ary/CookMertz.lean` lines 211/240,
+`Ary/Basic.lean` line 127). The prose states that only correctness is proved for the
+fan-in-`d` procedure and that the machine and space bounds concern the binary procedure.
+
+An independent AI subagent reviewed `8ae8219c` (style/API, correctness, index) and approved.
+It verified the register layout coincides with the binary one at `d = 2`, the degree bound
+`d * ℓ < |K| - 1`, non-vacuous test instances, and every link. Its findings (a gate declared in
+the wrong namespace, and wording implying a fan-in-`2` machine exists for the new procedure)
+were fixed in `4e9da5a9` and `11fee324`; the links were re-pinned and re-checked against the
+exact source lines. LaTeX was unavailable locally, so the rendered PDF must be inspected from the
+CI artifact. This records AI review, not human editorial approval.
+
 ## 2026-10-21: Client resource contracts through interface refinements (#274)
 
 Published source revision: `5d9eefc4f20726054a71df3539c2471f1c18712c`.
