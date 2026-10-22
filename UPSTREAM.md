@@ -254,6 +254,14 @@ grandfathered without an alias; this list records them for downstream users.
     `hastadGraphSATProb_eq_add_hastadGraphLinearCorr`. The SAT conjuncts were dropped from
     `hastadGraphProb_longCode_of_satisfies` and `hastad_gapLabelCover_dichotomy`, keeping their
     names.
+  - The conditional sumset-extractor frontier layer (#391), whose extractor-family hypothesis was
+    never discharged: `Circuit/Frontier/Extractor.lean` and `Complexity/FrontierExtractor.lean`
+    (whole modules), and the decimal restatements
+    `eventually_456249_div_100000_sub_mul_lt_innerSize`,
+    `circuitLowerBound_456249_div_100000`, `averageCaseBound_456249_div_100000`,
+    `eventually_456249_div_100000_sub_mul_lt_innerSize_of_nondeterministicDecides` and
+    `eventually_456249_div_100000_sub_mul_lt_card_of_aggregates`. Combine the exact-`L` theorems
+    with `Gaussian.circuitCoefficient_ge_456249` instead.
 * **Two multigraph namespaces.** Since 2026-10-20 the frontier multigraph
   (`Cslib.Circuits.Frontier.Multigraph`) defines its simple graph as that of the multigraph given by
   its ends (`Cslib.Multigraph`), and its module publicly imports the latter. Their shared base names
