@@ -32,7 +32,9 @@ above the cached maximum before computing a descendant address.
 
 * `program`: one fixed dispatch over native instructions.
 * `memberBody`, `memberLoop`: membership descent with a cached-maximum rejection.
-* `insertLoop`, `successorDescent`, `successorUnwind`: native operation code.
+* `insertBody`, `insertLoop`: native insertion descent.
+* `successorDescentBody`, `successorDescent`, `successorUnwindBody`, `successorUnwind`:
+  native strict-successor descent and return-stack unwinding.
 
 ## Main results
 
@@ -139,29 +141,32 @@ def finishMax : Code .standard 32 := ram[
 def finishNone : Code .standard 32 := ram[
   out ← zero; found ← zero; runFlag ← zero ]
 
-/-- Native insertion descent. Generic insertion correctness is a separate parent obligation. -/
-def insertLoop : Code .standard 32 := ram[
-  while zero < runFlag do [
-    present ← *p;
-    if present = zero then [
-      *p ← one; ⟪writeAt addr p one x⟫; ⟪writeAt addr p two x⟫; runFlag ← zero
-    ] else [
-      ⟪readAt addr mn p one⟫;
-      if x = mn then [ runFlag ← zero ] else [
-        if x < mn then [ ⟪writeAt addr p one x⟫; x ← mn ] else [ x ← x ];
-        ⟪readAt addr mx p two⟫;
-        if mx < x then [ ⟪writeAt addr p two x⟫ ] else [ mx ← mx ];
-        ⟪readAt addr q p three⟫;
-        if q = zero then [ runFlag ← zero ] else [
-          ⟪readAt addr t p four⟫; ⟪coordinates⟫; present ← *child;
-          if present = zero then [
-            *child ← one; ⟪writeAt addr child one low⟫; ⟪writeAt addr child two low⟫;
-            p ← p + five; x ← high
-          ] else [ p ← child; x ← low ]
-        ]
+/-- One native insertion iteration. Empty records and empty destination clusters install their
+first key directly in the three-word bounds area. -/
+def insertBody : Code .standard 32 := ram[
+  present ← *p;
+  if present = zero then [
+    *p ← one; ⟪writeAt addr p one x⟫; ⟪writeAt addr p two x⟫; runFlag ← zero
+  ] else [
+    ⟪readAt addr mn p one⟫;
+    if x = mn then [ runFlag ← zero ] else [
+      if x < mn then [ ⟪writeAt addr p one x⟫; x ← mn ] else [ x ← x ];
+      ⟪readAt addr mx p two⟫;
+      if mx < x then [ ⟪writeAt addr p two x⟫ ] else [ mx ← mx ];
+      ⟪readAt addr q p three⟫;
+      if q = zero then [ runFlag ← zero ] else [
+        ⟪readAt addr t p four⟫; ⟪coordinates⟫; present ← *child;
+        if present = zero then [
+          *child ← one; ⟪writeAt addr child one low⟫; ⟪writeAt addr child two low⟫;
+          p ← p + five; x ← high
+        ] else [ p ← child; x ← low ]
       ]
     ]
   ] ]
+
+/-- Native insertion descent. -/
+def insertLoop : Code .standard 32 := ram[
+  while zero < runFlag do [ ⟪insertBody⟫ ] ]
 
 /-- One native membership iteration. The maximum check rejects large queries before descent. -/
 def memberBody : Code .standard 32 := ram[
@@ -198,43 +203,48 @@ def descendCluster : Code .standard 32 := ram[
 def descendSummary : Code .standard 32 := ram[
   kind ← one; payload ← p; ⟪pushFrame⟫; p ← p + five; x ← high ]
 
-/-- Native successor descent. Generic successor correctness is a separate parent obligation. -/
-def successorDescent : Code .standard 32 := ram[
-  while zero < runFlag do [
-    present ← *p;
-    if present = zero then [ ⟪finishNone⟫ ] else [
-      ⟪readAt addr mn p one⟫;
-      if x < mn then [ ⟪finishMin⟫ ] else [
-        ⟪readAt addr mx p two⟫;
-        if x < mx then [
-          ⟪readAt addr q p three⟫;
-          if q = zero then [ ⟪finishMax⟫ ] else [
-            ⟪readAt addr t p four⟫; ⟪coordinates⟫; present ← *child;
-            if present = zero then [ ⟪descendSummary⟫ ] else [
-              ⟪readAt addr mx child two⟫;
-              if low < mx then [ ⟪descendCluster⟫ ] else [ ⟪descendSummary⟫ ]
-            ]
+/-- One native successor-descent iteration. The cached maximum chooses between early termination,
+cluster descent and summary descent. -/
+def successorDescentBody : Code .standard 32 := ram[
+  present ← *p;
+  if present = zero then [ ⟪finishNone⟫ ] else [
+    ⟪readAt addr mn p one⟫;
+    if x < mn then [ ⟪finishMin⟫ ] else [
+      ⟪readAt addr mx p two⟫;
+      if x < mx then [
+        ⟪readAt addr q p three⟫;
+        if q = zero then [ ⟪finishMax⟫ ] else [
+          ⟪readAt addr t p four⟫; ⟪coordinates⟫; present ← *child;
+          if present = zero then [ ⟪descendSummary⟫ ] else [
+            ⟪readAt addr mx child two⟫;
+            if low < mx then [ ⟪descendCluster⟫ ] else [ ⟪descendSummary⟫ ]
           ]
-        ] else [ ⟪finishNone⟫ ]
-      ]
+        ]
+      ] else [ ⟪finishNone⟫ ]
     ]
   ] ]
+
+/-- Native successor descent. -/
+def successorDescent : Code .standard 32 := ram[
+  while zero < runFlag do [ ⟪successorDescentBody⟫ ] ]
 
 /-- Pop the four-word return frame. -/
 def popFrame : Code .standard 32 := ram[
   sp ← sp - one; frameT ← *sp; sp ← sp - one; frameQ ← *sp;
   sp ← sp - one; payload ← *sp; sp ← sp - one; kind ← *sp ]
 
+/-- One native successor-unwind iteration. -/
+def successorUnwindBody : Code .standard 32 := ram[
+  ⟪popFrame⟫;
+  if kind = zero then [ out ← payload + out ] else [
+    high ← out; tmp ← high + one; tmp ← tmp * frameT;
+    child ← payload + five; child ← child + tmp;
+    ⟪readAt addr low child one⟫; out ← high * frameQ; out ← out + low
+  ] ]
+
 /-- Reconstruct the answer through cluster and summary return frames. -/
 def successorUnwind : Code .standard 32 := ram[
-  while stackBase < sp do [
-    ⟪popFrame⟫;
-    if kind = zero then [ out ← payload + out ] else [
-      high ← out; tmp ← high + one; tmp ← tmp * frameT;
-      child ← payload + five; child ← child + tmp;
-      ⟪readAt addr low child one⟫; out ← high * frameQ; out ← out + low
-    ]
-  ] ]
+  while stackBase < sp do [ ⟪successorUnwindBody⟫ ] ]
 
 /-- One fixed dispatch program, independent of the universe, query, state and word width. -/
 def program : Code .standard 32 := ram[
