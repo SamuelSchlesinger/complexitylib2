@@ -31,7 +31,8 @@ jobs:
           # Full history: pinned \declat links are verified against the commits they name.
           fetch-depth: 0
       - name: Check declaration links
-        run: python3 scripts/pin_paper_links.py --check
+        # -B: no __pycache__, so build_paper.py still records a clean source tree.
+        run: python3 -B scripts/pin_paper_links.py --check
       - name: Install PDF tooling
         run: |
           sudo apt-get update

@@ -300,7 +300,7 @@ def pin_links(
                 return m.group(0)
             if from_sha and not old_sha.startswith(from_sha):
                 return m.group(0)
-            if in_macro_definition(content, m.start()):
+            if in_macro_definition(m.string, m.start()):
                 return m.group(0)
             new_line = locate(path, decl)
             if old_sha != target_sha or old_line != new_line:
@@ -316,7 +316,7 @@ def pin_links(
                 return m.group(0)
             if not path_prefix and not from_sha:
                 return m.group(0)
-            if in_macro_definition(content, m.start()):
+            if in_macro_definition(m.string, m.start()):
                 return m.group(0)
             new_line = locate(path, decl)
             if target_sha == base_sha:

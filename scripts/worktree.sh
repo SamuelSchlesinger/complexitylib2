@@ -47,7 +47,7 @@ seed_lake() {
   if [ -d "$ROOT/.lake/packages" ] && [ ! -d "$wt_path/.lake/packages" ]; then
     case "$copy_mode" in
       all)
-        cp -r "$ROOT/.lake/packages" "$wt_path/.lake/packages"
+        cp -a "$ROOT/.lake/packages" "$wt_path/.lake/packages"
         ;;
       cslib)
         mkdir -p "$wt_path/.lake/packages"
@@ -55,7 +55,7 @@ seed_lake() {
           local name
           name="$(basename "$pkg")"
           if [ "$name" = "cslib" ]; then
-            cp -r "$pkg" "$wt_path/.lake/packages/cslib"
+            cp -a "$pkg" "$wt_path/.lake/packages/cslib"
           else
             cp -al "$pkg" "$wt_path/.lake/packages/$name"
           fi

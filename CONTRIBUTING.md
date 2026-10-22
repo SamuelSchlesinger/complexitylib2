@@ -91,7 +91,9 @@ entries and links, and add entries for new headline results. Run
 and matching `\decl` links)
 to verify that every declaration link in `paper/` resolves to the exact 1-based declaration line
 and names its full declaration name. `--pin` takes a full 40-character SHA of a commit on the
-current branch. The **Theorem index PDF** workflow runs `--check`.
+current branch. The **Theorem index PDF** workflow runs `--check`, which needs every pinned SHA
+to stay reachable: pin to commits that will land on `main` unchanged (merge commits preserve
+them), and re-pin to the merged commit after a squash or rebase merge.
 Internal helper lemmas need no
 separate entry. Proof-only changes preserving statements and scope may record a no-impact
 assessment instead of changing the prose. Explain any no-impact assessment in the PR.
