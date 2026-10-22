@@ -197,3 +197,45 @@ not bundled.\citep{Naor1991,GoldreichMicaliWigderson1991,Goldreich2001,AroraBara
 \declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{287}{Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP}
 \end{result}
 
+
+\begin{result}
+\subsection{Digital signatures and one-way necessity}
+At security parameter $n$, \texttt{SignatureScheme} has exactly the $n$-bit messages as its message
+space. Key generation and signing are uniform strict PPT; verification is deterministic
+polynomial time, with perfect completeness on supported keys and signatures. In \texttt{EUFCMA},
+a uniform strict oracle-PPT forger receives $(1^n,\mathsf{pk})$ and adaptive signing access on
+arbitrary messages. It wins with an accepted $n$-bit message absent from the signing-query log.
+The one-time game answers and records only the first query; all later queries return the empty
+word without changing the log. Full \texttt{EUFCMA} security implies \texttt{OneTimeEUFCMA} security.
+
+Any \texttt{OneTimeEUFCMA}-secure scheme, and hence any \texttt{EUFCMA}-secure scheme, implies a
+uniform one-way function. The construction reindexes a total polynomial-time seeded key generator
+across all input lengths; an inverter gives a zero-query forger. These statements concern the
+specified $n$-bit message space, without a reduction from arbitrary polynomial-length messages.
+\citep{GoldwasserMicaliRivest1988,Rompel1990}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Crypto/Computational/Signature.lean}{85}{Cslib.Crypto.SignatureScheme}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Crypto/Computational/Signature.lean}{669}{Cslib.Crypto.SignatureScheme.EUFCMA.oneTimeEUFCMA}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Crypto/Computational/OneWayToSignature.lean}{129}{Cslib.Crypto.SignatureScheme.OneTimeEUFCMA.exists_oneWay}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Crypto/Computational/OneWayToSignature.lean}{290}{Cslib.Crypto.SignatureScheme.EUFCMA.exists_oneWay}
+\end{result}
+
+\begin{result}
+\subsection{Lamport one-time signatures}
+Every uniform one-way function $f:\{0,1\}^*\to\{0,1\}^*$ yields a \texttt{OneTimeEUFCMA}-secure
+signature scheme for $n$-bit messages. Lamport's construction samples $2n$ independent $n$-bit
+secret words, publishes their $f$-images, and reveals word $w_{2i+m_i}$ for each message bit $m_i$.
+The verifier checks these images and the block counts. A wrong-length signing query returns no
+secret words and still consumes the single query.\citep{Lamport1979}
+
+For $n\ge1$, each uniform strict oracle-PPT forger of success probability $\mathsf{Adv}(n)$
+gives a uniform strict PPT inverter with success probability at least $\mathsf{Adv}(n)/\mathsf{dyadicSize}(2n)$. The reduction samples
+$j$ uniformly below $\mathsf{dyadicSize}(2n)$ and returns the empty word when $j\ge2n$; otherwise it
+embeds the challenge image in slot $j$. A successful forgery uses an unrevealed slot, whether the
+first query has length $n$, has another length, or is absent. Consequently, uniform one-way
+functions exist if and only if uniform one-time secure signature schemes exist. Many-time
+EUF-CMA sufficiency from arbitrary one-way functions, via universal one-way hash functions and
+authentication trees, remains unformalized.\citep{Rompel1990}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Crypto/Computational/OneWayToSignature.lean}{675}{Cslib.Crypto.OneWay.oneTimeEUFCMA_lamport}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Crypto/Computational/OneWayToSignature.lean}{882}{Cslib.Crypto.OneWay.exists_oneTimeSignature}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Crypto/Computational/OneWayToSignature.lean}{888}{Cslib.Crypto.exists_oneWay_iff_exists_oneTimeSignature}
+\end{result}

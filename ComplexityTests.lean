@@ -80,6 +80,7 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
+import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
@@ -178,6 +179,7 @@ import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
 import ComplexityTests.LogSpace
 import ComplexityTests.Logarithms
+import ComplexityTests.MIP
 import ComplexityTests.MachineClock
 import ComplexityTests.MachineExtendTapes
 import ComplexityTests.MachineIOBuffer
@@ -342,6 +344,7 @@ import ComplexityTests.SourceComplexity
 import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
+import ComplexityTests.SpaceClasses
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
 import ComplexityTests.SparseMemory

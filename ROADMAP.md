@@ -3,6 +3,25 @@
 Outstanding work and the rationale needed to guide it. See the [README](README.md) for
 completed reference developments.
 
+## Deferred issue scopes
+
+The following broad projects remain mathematical coverage targets, but are deferred from the
+active implementation queue. Their issues were closed as not planned, not as proved results;
+existing developments, source credit and saved branches remain available for a future bounded task.
+
+* [Valiant permanent completeness (#321)](https://github.com/cslib-community/complexitylib/issues/321):
+  the full VNP-completeness reduction remains open.
+* [General auxiliary-input zero knowledge (#324)](https://github.com/cslib-community/complexitylib/issues/324):
+  the uniform polynomial-time-family milestone is proved; the stronger endpoint below remains open.
+* [Williams's square-root-space simulation (#361)](https://github.com/cslib-community/complexitylib/issues/361)
+  and [implicit Tree Evaluation (#367)](https://github.com/cslib-community/complexitylib/issues/367):
+  existing algebraic and query-machine results remain proved, while the implicit evaluator and
+  full simulation are deferred.
+* [Vollmer's generalized-quantifier survey (#399)](https://github.com/cslib-community/complexitylib/issues/399):
+  source and dependency mapping is available, but the paper has not been formalized as a whole.
+  Faithful treatment requires ordered leaf words, explicit uniformity and input-access models,
+  finite-monoid classification and generalized logical quantifiers.
+
 ## Highest priorities
 
 1. **Goldreich–Micali–Wigderson zero knowledge.** If one-way functions exist, every language in NP
@@ -32,6 +51,15 @@ completed reference developments.
 2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
    exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
    polynomial-time adversaries.
+   - *Partial:* [Signature](Complexity/Crypto/Computational/Signature.lean) defines uniform strict
+     PPT signature schemes for exactly `n`-bit messages at security parameter `n`, adaptive EUF-CMA
+     and one-time EUF-CMA, and proves full security implies one-time security.
+     [OneWayToSignature](Complexity/Crypto/Computational/OneWayToSignature.lean) proves secure
+     signatures imply one-way functions and constructs Lamport one-time signatures from any
+     one-way function, giving `exists_oneWay_iff_exists_oneTimeSignature`.
+   - *Open:* the many-time sufficiency direction from arbitrary one-way functions, including
+     universal one-way hash functions and authentication trees. The one-time equivalence does not
+     establish Rompel's full theorem or security for arbitrary polynomial-length messages.
 3. **Gentry’s bootstrapping theorem.** A semantically secure, bootstrappable encryption scheme
    yields compact leveled fully homomorphic encryption for every polynomially bounded circuit
    depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
@@ -64,7 +92,13 @@ completed reference developments.
 9. **Babai–Fortnow–Lund multiprover theorem.** MIP = NEXP: a language has a classical multiprover
    interactive proof with a probabilistic polynomial-time verifier and constant
    completeness–soundness gap if and only if it belongs to nondeterministic exponential time. The
-   provers cannot communicate during the protocol.
+   provers cannot communicate during the protocol. *Partial:*
+   [MIP](Complexity/Computability/Complexity/Classes/MIP.lean) defines classical multiprover
+   proofs with a constant number of provers per language and a strict polynomial-time fair-coin
+   verifier. It proves `IP ⊆ MIP₂ ⊆ MIP`, closure under Karp reductions, deterministic prover
+   optimality, and the unconditional upper bound `MIP ⊆ NEXP`. The reverse direction
+   `NEXP ⊆ MIP₂`, requiring the BFL multilinearity test and arithmetization of exponential-time
+   tableaux, is deferred; the full characterization is not claimed.
 10. **Regev’s worst-case-to-average-case reduction.** For suitable modulus q and Gaussian noise
     rate α satisfying αq > 2√n, an efficient algorithm for search-LWE in dimension n yields a
     quantum polynomial-time algorithm for worst-case GapSVP and SIVP with approximation factor
@@ -80,6 +114,11 @@ standard models, representation changes, reductions, resource certificates and p
 should come from the library. This is an amortized goal. A new method may require substantial
 infrastructure once; later developments should reuse it instead of rebuilding it. Count that
 infrastructure's implementation and maintenance cost when assessing the improvement.
+
+The reusable-API placement audit [#404](https://github.com/cslib-community/complexitylib/issues/404)
+follows the space/constructibility extraction in #402. It tracks generic time-class, encoding,
+bit-string and NP helpers still located in specialized theorem modules; each proposed extraction
+needs an import-boundary review and preserves existing public interfaces and resource conventions.
 
 ### Catalogue the classes and theorems
 
@@ -193,12 +232,12 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Structural complexity | Time/space and exponential hierarchies; oracle and advice classes; unambiguous and promise classes; completeness, padding, self-reducibility, Ladner's theorem, relativization and oracle separations. Preserve each reduction's resource bound. |
 | Space and alternation | Build on native `NPSPACE = PSPACE`, TQBF completeness, `NL ⊆ P`, [PH ⊆ PSPACE](Complexity/Computability/Complexity/Classes/Inclusions.lean) and [AP = PSPACE](Complexity/Computability/Complexity/Classes/Alternation/Savitch.lean). Extend the [machine-class milestones](#machine-class-milestones), alternating time/space classes and bounded-alternation characterizations of PH. Distinguish polynomial-space simulation from sharp bounds for sublinear space. |
 | Counting and modular classes | Build on `#P`, `GapP`, `PP`, [parity-P](Complexity/Computability/Complexity/Classes/ParityP.lean) and [Toda's PH ⊆ P^#P theorem](Complexity/Computability/Complexity/Classes/Toda.lean), with a fixed polynomial-time program correct against every oracle answering the counting function's bits. Extend counting reductions and machine characterizations, permanent completeness, modular/counting hierarchies and the oracle-algorithm form of Stockmeyer approximate counting. |
-| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. [IP = PSPACE](Complexity/Computability/Complexity/Classes/IP/Shamir.lean) is proved, with a machine-certified Shamir–Shen-style verifier for TQBF, and [computational zero-knowledge proofs for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (via a 3-copy masked-3SAT truth-table commitment protocol following Goldreich–Micali–Wigderson) are proved from one-way functions for uniform polynomial-time-generable instance/witness/auxiliary-input families at soundness error `1 / 3`; develop Arthur–Merlin classes, public/private-coin transformations, multiprover systems, universal-instance and arbitrary-auxiliary-input zero knowledge, witness-level Levin reductions, statistical/perfect zero knowledge and sequential soundness amplification. Reuse the existing PCP and probabilistic foundations. |
+| Interactive and probabilistic proofs | [IP ⊆ PSPACE](Complexity/Computability/Complexity/Classes/IP/PSPACE.lean) is proved for the strict polynomial-time, private-coin verifier model. [IP = PSPACE](Complexity/Computability/Complexity/Classes/IP/Shamir.lean) is proved, with a machine-certified Shamir–Shen-style verifier for TQBF, and [computational zero-knowledge proofs for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (via a 3-copy masked-3SAT truth-table commitment protocol following Goldreich–Micali–Wigderson) are proved from one-way functions for uniform polynomial-time-generable instance/witness/auxiliary-input families at soundness error `1 / 3`; develop Arthur–Merlin classes, public/private-coin transformations, the deferred BFL reverse inclusion, universal-instance and arbitrary-auxiliary-input zero knowledge, witness-level Levin reductions, statistical/perfect zero knowledge and sequential soundness amplification. [Classical MIP](Complexity/Computability/Complexity/Classes/MIP.lean) with a constant number of provers satisfies `IP ⊆ MIP₂ ⊆ MIP ⊆ NEXP`, with deterministic prover optimality and Karp-reduction closure. Reuse the existing PCP and probabilistic foundations. |
 | Boolean circuits and parallel computation | Build on the `3.5n - o(n)` general-circuit lower bound for affine dispersers of dimension `o(n)` ([AffineDisperser](Complexity/Computability/Circuit/Boolean/AffineDisperser.lean)) and the De Morgan cover-complexity transfer ([Fusion/DeMorgan](Complexity/Computability/Circuit/Fusion/DeMorgan.lean)). Complete the [Jukna coverage](#jukna-coverage), uniform/nonuniform NC/AC/TC and related classes, circuit-to-machine bridges, algorithm-to-lower-bound arguments and barriers such as natural proofs and algebrization. |
 | Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings, and [Laplace expansion of the permanent](Complexity/Foundations/Data/Matrix/Permanent.lean). Prove permanent VNP-completeness with its characteristic assumptions, prove the Kabanets–Impagliazzo theorem, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | [Random assignment](Complexity/Computability/PCP/Approximation/MaxExactThreeSAT.lean) proves the `7 / 8` random-assignment bound for exact 3-CNF with three distinct variables per clause (`CNF.IsExactThreeDistinct`), and [Håstad's 3-bit test](Complexity/Computability/PCP/Approximation/Hastad.lean) proves completeness and soundness of Håstad's 3-bit linear test against `GapLabelCover` (`1 - δ` vs `1 / 2 + 4 * ε`). Build the reduction to MAX-E3LIN and, via the 4-clause XOR gadget, to MAX-E3SAT on clauses with three distinct variables, Raz's parallel repetition theorem, and the perfect-completeness `(1, 7 / 8 + ε)` reduction; develop further gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
 | Pseudorandomness and coding | Build on [conditional `P = BPP` from exponential worst-case hardness in `E` (Impagliazzo–Wigderson)](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean) via Nisan–Wigderson and Sudan–Trevisan–Vadhan, [Sudan's Reed–Solomon list decoding](Complexity/Foundations/Data/Code/Sudan.lean), and [expander-walk hitting bounds](Complexity/Foundations/Combinatorics/Expander/Hitting.lean). Extend space-bounded generators, extractors/condensers, limited independence, explicit expanders, and Guruswami–Sudan / local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
-| Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean) (with hiding against deterministic polynomial-time receiver-string and bit families) and [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (uniform zero knowledge over deterministic polynomial-time instance/witness/auxiliary-input families via a 3-copy masked-3SAT truth-table commitment protocol) are proved from one-way functions. Extend the existing OWF/PRG/PRF/commitment/ZK results with reusable adaptive reductions, digital signatures, encryption, stateful-receiver hiding, universal-instance zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
+| Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean) (with hiding against deterministic polynomial-time receiver-string and bit families) and [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (uniform zero knowledge over deterministic polynomial-time instance/witness/auxiliary-input families via a 3-copy masked-3SAT truth-table commitment protocol) are proved from one-way functions. Uniform one-way functions are also equivalent to one-time secure digital signatures for `n`-bit messages, via [Lamport's construction](Complexity/Crypto/Computational/OneWayToSignature.lean); full EUF-CMA security implies one-way functions. Extend the existing OWF/PRG/PRF/commitment/ZK results with reusable adaptive reductions, many-time digital signatures, encryption, stateful-receiver hiding, universal-instance zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
 | Communication, queries and data structures | Build on the `Ω(n)` bounded-error randomized disjointness lower bound ([Disjointness](Complexity/Computability/Communication/Disjointness.lean)), Karchmer–Wigderson ([Boolean](Complexity/Computability/Circuit/Boolean/KarchmerWigderson.lean), [monotone](Complexity/Computability/Circuit/Monotone/KarchmerWigderson.lean)), and Raz–Wigderson's monotone depth bound for bipartite matching ([BipartiteMatching](Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean)). Extend multiparty protocols, discrepancy and information complexity, direct-sum/product results, lifting theorems, and reductions to streaming, sketching and cell-probe lower bounds. Reuse upstream query models. |
 | Proof complexity | Build on [Cook–Reckhow systems and simulations](Complexity/Logics/Propositional/ProofSystem.lean), including the polynomially bounded-system characterization of NP = coNP, the [resolution size–width tradeoff](Complexity/Logics/Propositional/Resolution/SizeWidth.lean), [tree-like resolution/DPLL search-tree certificates](Complexity/Logics/Propositional/Resolution/TreeLike.lean), [Tseitin formulas on expanders](Complexity/Logics/Propositional/Resolution/TseitinExpander.lean) and [Haken's pigeonhole lower bound](Complexity/Logics/Propositional/Resolution/Pigeonhole.lean). Extend proof-space lower bounds, Frege, cutting planes, polynomial calculus and sum-of-squares. The certificate correspondence does not certify a DPLL solver's runtime. |
 | Average-case complexity and learning | Uniform-distribution learning on CSLib's PAC API, the LMN low-degree algorithm and Kushilevitz–Mansour with membership queries are [proved](Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean); running times are not machine-certified. Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |

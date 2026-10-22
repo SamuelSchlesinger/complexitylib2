@@ -25,11 +25,15 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   shared encodings and calculus through CSLib issue #611, including the `TapeEncodable`
   interface proposed in #590. Check #767 and its split #768 before adding space-to-time
   inclusions or overlapping class definitions; reconcile the local encoded, tidy-machine
-  definitions of `P`/`NP` with its `DTIME`-based language classes. The local `L`, `DTIME` and
-  `EXP` (`Classes/LogSpace`, `Classes/Hierarchy/Time`, `Classes/EXP`) use #767's shapes over
-  encoded instances; once #767 lands, derive them from its language-indexed classes rather than
-  keeping parallel definitions. The local `PSPACE` uses a different space bound and is not yet
-  compared with #767's. Selected-tape specifications
+  definitions of `P`/`NP` with its `DTIME`-based language classes. The local `DSPACE`, `L`,
+  `DTIME` and `EXP` (`Classes/Space/Basic`, `Classes/LogSpace`, `Classes/Time`, `Classes/EXP`)
+  use #767's shapes over encoded instances; once #767 lands, derive them from its
+  language-indexed classes rather than keeping parallel definitions. The local `PSPACE`
+  retains its instance-dependent polynomial space bound;
+  `mem_PSPACE_iff_exists_mem_DSPACE` in `Classes/Space` proves its equivalence to the local
+  union of `DSPACE (n ^ k)`. A bridge to #767's language-indexed classes is still separate.
+  Time and space constructibility are in `Classes/Constructible`, independent of hierarchy
+  theorems. Selected-tape specifications
   formerly in `Combinators/StreamFold` and `Encodings/MultiPass` now live beside the plumbing
   operations; preserve their exact space bounds when resynchronizing the copied files.
   The step-machine layer (`StepMachine/*`, `Encodings/StepMachine*`, `Combinators/StepMachine`

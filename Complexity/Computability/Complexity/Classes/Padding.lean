@@ -9,6 +9,11 @@ module
 
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
+import Complexity.Computability.Complexity.Classes.NP.GuessVerify
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Composition
+import Complexity.Computability.Probabilistic.PPT.Capture
+import Complexity.Computability.Probabilistic.PPT.Clock
+import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -60,6 +65,10 @@ and `f n = n ^ (k + 1)` this gives `NE ⊆ E` and `NEXP ⊆ EXP`.
 The hypothesis is `NP ⊆ P` for problems on bit words, under `encBits`; the conclusions hold for
 problems on any type, under any encoding.
 
+The unconditional pullback lemmas `Cslib.Complexity.preimage_mem_NTIME_of_mem_NP` and
+`Cslib.Complexity.preimage_pad_mem_NEXP` compose a timed deterministic map with an `NP` verifier;
+exponential padding yields an `NEXP` decider without a collapse hypothesis.
+
 ## Main definitions
 
 * `Turing.MultiTapeNTM.checkPadded`: the verifier of padded instances.
@@ -68,6 +77,8 @@ problems on any type, under any encoding.
 ## Main results
 
 * `Cslib.Complexity.preimage_mem_DTIME`: `DTIME` under timed reductions.
+* `Cslib.Complexity.preimage_mem_NTIME_of_mem_NP`, `Cslib.Complexity.preimage_pad_mem_NEXP`:
+  unconditional timed pullback of `NP`, including exponentially padded inputs.
 * `Turing.MultiTapeNTM.padded_mem_NP`,
   `Turing.MultiTapeNTM.DecidesInTime.frame_append_mem_padded_iff`: the padded problem is in `NP`,
   and decides the original problem on padded instances.
@@ -470,5 +481,179 @@ theorem EXP_eq_NEXP_of_P_eq_NP (h : P encBits = NP encBits) : EXP enc = NEXP enc
 /-- **If `EXP ≠ NEXP`, then `P ≠ NP`.** -/
 theorem P_ne_NP_of_EXP_ne_NEXP (h : EXP enc ≠ NEXP enc) : P encBits ≠ NP encBits :=
   fun hP => h (EXP_eq_NEXP_of_P_eq_NP hP)
+
+/-! ### Upward translation from `NP` to `NTIME` and `NEXP` -/
+
+section Translation
+
+open Cslib.Probability
+open _root_.Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+variable {α : Type} {enc : α ↪ List Bool}
+
+/-- Pulling back a problem `B ∈ NP encBits` along a function `g : α → List Bool` computable tidily
+within time `O(T₀ (enc a).length)` places `g ⁻¹' B` in `NTIME enc (fun n => (T₀ n + 1) ^ d)` for
+some `d`: a deterministic machine writes `g a` to a buffer tape and hands off to the halting
+fair-coin certificate verifier for `B`. -/
+theorem preimage_mem_NTIME_of_mem_NP {B : Set (List Bool)} {g : α → List Bool} {T₀ : ℕ → ℕ}
+    {S : α → ℕ} (hB : B ∈ NP encBits)
+    (hg : ComputableTidilyInO g enc encBits (fun a => T₀ (enc a).length) S) :
+    ∃ d, g ⁻¹' B ∈ NTIME enc fun n => (T₀ n + 1) ^ d := by
+  obtain ⟨c₀, ⟨k₀, State₀, hfinite₀, tm, htm⟩, -⟩ := hg
+  set t₁ : α → ℕ := fun a => c₀ * (T₀ (enc a).length + 1)
+  have htm_run (a : α) :
+      tm.runFrom (tm.initCfg (enc a)) (t₁ a) = wordsCfg (enc a) none (fun _ => []) (g a) := by
+    obtain ⟨p, hh, hl, ht, -⟩ := computesTidily_iff.mp (htm a)
+    have hhead : p.head = tm.initCfg (enc a) := hh.trans (Cfg.init_eq_wordsCfg tm.q₀ (enc a)).symm
+    have hrun : tm.runFrom (tm.initCfg (enc a)) p.time =
+        wordsCfg (enc a) none (fun _ => []) (g a) :=
+      hhead ▸ (MultiTapeTM.runPath_apply_eq_runFrom p (.last _)).symm.trans hl
+    have hhalt : (tm.runFrom (tm.initCfg (enc a)) p.time).state = none := by rw [hrun]; rfl
+    exact (tm.runFrom_eq_of_halt (tm.initCfg (enc a)) ht hhalt).trans hrun
+  have hg_len (a : α) : (g a).length ≤ t₁ a := (htm a).length_output_le
+  let M_pad : MultiTapePTM k₀ Bool State₀ := MultiTapePTM.ofDeterministic tm
+  have hfirst (a : α) :
+      ∀ final ∈ (ProbComp.eval
+        (M_pad.runClosedConfigFrom (t₁ a) (M_pad.initialConfig (enc a)))).support,
+        final.tapes.state = none := by
+    intro final hfinal
+    rw [MultiTapePTM.eval_runClosedConfigFrom_ofDeterministic, PMF.mem_support_pure_iff] at hfinal
+    subst hfinal
+    change (tm.runFrom (tm.initCfg (enc a)) (t₁ a)).state = none
+    rw [htm_run a]
+    rfl
+  have hout₁ (a : α) :
+      ProbComp.eval (M_pad.runClosed (t₁ a) (enc a)) = PMF.pure (g a) := by
+    rw [MultiTapePTM.eval_runClosed_ofDeterministic, htm_run a]
+    rfl
+  -- Unpack `B ∈ NP encBits` into a halting fair-coin machine `M_NP`
+  obtain ⟨p, V, hV, hVer⟩ := hB
+  let program (x : List Bool) : ProbComp Bool :=
+    (fun w => V (x, w)) <$> BitString.sampleList (p.eval x.length)
+  have hcount : ComputableTidilyInPolyTime (fun x : List Bool => p.eval x.length)
+      encBits encUnary :=
+    (unary_eval p).comp (encoding_length encBits)
+  have hprogram : IsPPTOn encBits encBool program := hcount.sampleList.map_with hV
+  obtain ⟨k₁, State₁, hfinite₁, M_NP, c₁, d₁, heval₂, hhalt₂⟩ := hprogram.exists_halting_machine
+  set t₂ : α → ℕ := fun a => c₁ * (t₁ a + 1) ^ d₁
+  have ht₂_le (a : α) : c₁ * ((g a).length + 1) ^ d₁ ≤ t₂ a :=
+    Nat.mul_le_mul_left c₁ (Nat.pow_le_pow_left (Nat.add_le_add_right (hg_len a) 1) d₁)
+  have hsecond (a : α) :
+      ∀ word ∈ (ProbComp.eval (M_pad.runClosed (t₁ a) (enc a))).support,
+        ∀ final ∈ (ProbComp.eval
+          (M_NP.runClosedConfigFrom (t₂ a) (M_NP.initialConfig word))).support,
+          final.tapes.state = none := by
+    intro word hword final hfinal
+    rw [hout₁ a, PMF.mem_support_pure_iff] at hword
+    subst hword
+    rw [M_NP.eval_runClosedConfigFrom_eq_of_halted _ (ht₂_le a) (hhalt₂ (g a))] at hfinal
+    exact hhalt₂ (g a) final hfinal
+  let M_comp := M_NP.comp M_pad false
+  set totalTime : α → ℕ := fun a => t₁ a + (t₁ a + 4 + t₂ a)
+  have hdecides : M_comp.toNTM.DecidesInTime enc (g ⁻¹' B) totalTime := by
+    intro a
+    have htime : M_comp.toNTM.RunsInTime (enc a) (totalTime a) :=
+      M_comp.runsInTime_toNTM (M_pad.comp_halted M_NP false (enc a) (t₁ a) (t₂ a)
+        (hfirst a) (hsecond a))
+    refine ⟨htime, ?_⟩
+    rw [Set.mem_preimage, hVer (g a), MultiTapeNTM.accepts_iff_exists_time_eq htime,
+      M_comp.exists_computationPath_toNTM_iff (P := fun cfg => cfg.output = [true])]
+    have hcomp_eval :
+        ProbComp.eval (M_comp.runClosed (totalTime a) (enc a)) =
+          ProbComp.eval (M_NP.runClosed (c₁ * ((g a).length + 1) ^ d₁) (g a)) := by
+      rw [M_pad.eval_comp M_NP false (enc a) (t₁ a) (t₂ a) (hfirst a) (hsecond a),
+        hout₁ a, PMF.pure_bind,
+        M_NP.eval_runClosed_eq_of_halted (g a) (ht₂_le a) (hhalt₂ (g a))]
+    have hsupport := congrArg (fun μ => [true] ∈ μ.support)
+      ((heval₂ (g a)).trans hcomp_eval.symm)
+    simp only [MultiTapePTM.runClosed_eq_map, ProbComp.eval_map, PMF.mem_support_map_iff,
+      program, BitString.eval_sampleList, BitString.mem_support_uniformList_iff, encBool_apply,
+      List.cons.injEq, and_true] at hsupport
+    rw [← hsupport]
+    exact ⟨fun ⟨w, hw, hV⟩ => ⟨true, ⟨w, hw, hV⟩, rfl⟩,
+      fun ⟨_, ⟨w, hw, hV⟩, rfl⟩ => ⟨w, hw, hV⟩⟩
+  refine ⟨d₁ + 1, (2 * c₀ + 4 + c₁ * (c₀ + 1) ^ d₁), 0, k₁ + k₀ + 2, _, inferInstance,
+    M_comp.toNTM, hdecides.mono fun a => ?_⟩
+  set X := T₀ (enc a).length + 1
+  have hX : 1 ≤ X := Nat.succ_pos _
+  have ht₁_bound : t₁ a + 1 ≤ (c₀ + 1) * X := by simp only [t₁, X]; nlinarith
+  have ht₂_bound : t₂ a ≤ c₁ * (c₀ + 1) ^ d₁ * X ^ (d₁ + 1) := by
+    calc t₂ a = c₁ * (t₁ a + 1) ^ d₁ := rfl
+      _ ≤ c₁ * ((c₀ + 1) * X) ^ d₁ := Nat.mul_le_mul_left c₁ (Nat.pow_le_pow_left ht₁_bound d₁)
+      _ = c₁ * (c₀ + 1) ^ d₁ * X ^ d₁ := by rw [Nat.mul_pow, Nat.mul_assoc]
+      _ ≤ c₁ * (c₀ + 1) ^ d₁ * X ^ (d₁ + 1) :=
+          Nat.mul_le_mul_left _ (Nat.pow_le_pow_right hX (Nat.le_succ d₁))
+  have hX_pow : X ≤ X ^ (d₁ + 1) := Nat.le_self_pow (by lia) X
+  calc totalTime a
+      = 2 * c₀ * X + 4 + t₂ a := by simp only [totalTime, t₁, X]; ring
+    _ ≤ 2 * c₀ * X ^ (d₁ + 1) + 4 * X ^ (d₁ + 1) + c₁ * (c₀ + 1) ^ d₁ * X ^ (d₁ + 1) := by
+        have : 4 ≤ 4 * X ^ (d₁ + 1) := Nat.le_mul_of_pos_right 4 (Nat.pow_pos hX)
+        nlinarith
+    _ = (2 * c₀ + 4 + c₁ * (c₀ + 1) ^ d₁) * X ^ (d₁ + 1) + 0 := by ring
+
+/-- Pulling back `B ∈ NP encBits` along the exponential-padding map
+`a ↦ frame (enc a) ++ List.replicate (2 ^ f (enc a).length) true`, where `f` is polynomial-time in
+unary with `n ≤ f n`, gives a problem in `NEXP enc`. -/
+theorem preimage_pad_mem_NEXP {B : Set (List Bool)} (hB : B ∈ NP encBits) {f : ℕ → ℕ}
+    (hf : ComputableTidilyInPolyTime f encUnary encUnary) (hn : ∀ n, n ≤ f n) :
+    (fun a : α => frame (enc a) ++ List.replicate (2 ^ f (enc a).length) true) ⁻¹' B ∈
+      NEXP enc := by
+  obtain ⟨d₀, e₀, hd₀⟩ := hf.exists_degree
+  have hpad := ComputableTidilyInO.unary_two_pow.comp (hd₀.inO.comp ComputableTidilyInO.lengthUnary)
+  have hpad' : ComputableTidilyInO (fun x : List Bool => 2 ^ f x.length) encBits encUnary
+      (fun x => x.length + (x.length + 1) ^ d₀ + (f x.length + 1) * 2 ^ f x.length)
+      (fun x => x.length + (x.length + 1) ^ d₀ + 2 ^ f x.length) :=
+    hpad.mono_le (fun x => by simp [encUnary_apply]) fun x => by simp [encUnary_apply]
+  let g (a : α) : List Bool := frame (enc a) ++ List.replicate (2 ^ f (enc a).length) true
+  let T₀ (n : ℕ) : ℕ := n + (n + (n + 1) ^ d₀ + (f n + 1) * 2 ^ f n)
+  have hg : ComputableTidilyInO g enc encBits (fun a => T₀ (enc a).length)
+      (fun a => (enc a).length + ((enc a).length + ((enc a).length + 1) ^ d₀ +
+        2 ^ f (enc a).length)) :=
+    (ComputableTidilyInO.of_linear (.of_frame (f := id) (encOut := encFramed enc)
+      fun _ => rfl)).append (hpad'.comp_enc enc) fun _ => rfl
+  obtain ⟨D, hD⟩ := preimage_mem_NTIME_of_mem_NP hB hg
+  obtain ⟨C₀, hC₀⟩ := (PolynomiallyBounded.of_forall_le 1 d₀ fun n => by
+    simp only [one_mul]; exact le_rfl).exists_le_mul_two_pow (p := fun n => (n + 1) ^ d₀)
+  obtain ⟨c_f, d_f, hf_le⟩ := hf.polyBounded_length.exists_le
+  simp only [encUnary_apply, List.length_replicate] at hf_le
+  have hNTIME : g ⁻¹' B ∈ NTIME enc fun n => 2 ^ (2 * D * f n) := by
+    obtain ⟨c₁, c₂, k, State, hfinite, ntm, hdec⟩ := hD
+    refine ⟨c₁ * (C₀ + 3) ^ D, c₂, k, State, hfinite, ntm, hdec.mono fun a => ?_⟩
+    set n := (enc a).length
+    have h₁ : 2 ^ n ≤ 2 ^ f n := Nat.pow_le_pow_right (by norm_num) (hn n)
+    have h₂ : 2 * n + 1 ≤ 2 * 2 ^ n := by have := @Nat.lt_two_pow_self n; lia
+    have h₃ : f n + 1 ≤ 2 ^ f n := Nat.lt_two_pow_self
+    have h₄ : 2 ^ f n ≤ 2 ^ (2 * f n) := Nat.pow_le_pow_right (by norm_num) (by lia)
+    have h₅ : (f n + 1) * 2 ^ f n ≤ 2 ^ (2 * f n) := by
+      rw [two_mul, pow_add]
+      exact Nat.mul_le_mul_right _ h₃
+    have hle : T₀ n + 1 ≤ (C₀ + 3) * 2 ^ (2 * f n) := by
+      have := hC₀ n
+      have : C₀ * 2 ^ n ≤ C₀ * 2 ^ (2 * f n) := Nat.mul_le_mul_left _ (h₁.trans h₄)
+      simp only [T₀]
+      nlinarith
+    have hpow : (T₀ n + 1) ^ D ≤ (C₀ + 3) ^ D * 2 ^ (2 * D * f n) := by
+      calc (T₀ n + 1) ^ D
+          ≤ ((C₀ + 3) * 2 ^ (2 * f n)) ^ D := Nat.pow_le_pow_left hle D
+        _ = (C₀ + 3) ^ D * 2 ^ (2 * D * f n) := by rw [Nat.mul_pow, ← Nat.pow_mul]; ring_nf
+    calc c₁ * (T₀ n + 1) ^ D + c₂
+        ≤ c₁ * ((C₀ + 3) ^ D * 2 ^ (2 * D * f n)) + c₂ :=
+          Nat.add_le_add_right (Nat.mul_le_mul_left c₁ hpow) c₂
+      _ = c₁ * (C₀ + 3) ^ D * 2 ^ (2 * D * f n) + c₂ := by ring
+  refine mem_NEXP_iff.mpr ⟨d_f + 1, NTIME_mono_of_eventually_le (Filter.eventually_atTop.mpr
+    ⟨2 * D * c_f * 2 ^ d_f + 2, fun n hn' => Nat.pow_le_pow_right (by norm_num) ?_⟩) hNTIME⟩
+  have hn1 : n + 1 ≤ 2 * n := by lia
+  have hpow_n1 : (n + 1) ^ d_f ≤ 2 ^ d_f * n ^ d_f := by
+    calc (n + 1) ^ d_f ≤ (2 * n) ^ d_f := Nat.pow_le_pow_left hn1 d_f
+      _ = 2 ^ d_f * n ^ d_f := Nat.mul_pow 2 n d_f
+  have hfn : f n ≤ c_f * (2 ^ d_f * n ^ d_f) :=
+    (hf_le n).trans (Nat.mul_le_mul_left c_f hpow_n1)
+  calc 2 * D * f n
+      ≤ 2 * D * (c_f * (2 ^ d_f * n ^ d_f)) := Nat.mul_le_mul_left (2 * D) hfn
+    _ = (2 * D * c_f * 2 ^ d_f) * n ^ d_f := by ring
+    _ ≤ n * n ^ d_f := Nat.mul_le_mul_right (n ^ d_f) (by lia)
+    _ = n ^ (d_f + 1) := (pow_succ' n d_f).symm
+
+end Translation
 
 end Cslib.Complexity

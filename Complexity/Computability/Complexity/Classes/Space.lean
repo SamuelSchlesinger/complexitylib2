@@ -8,8 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.P
+public import Complexity.Computability.Complexity.Classes.Space.Basic
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
+import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
 # Polynomial space
@@ -23,7 +25,10 @@ requirement). No bound on the time is imposed beyond halting. Equivalently
 space bound in the sense of upstream `Turing.MultiTapeTM.DecidableInTimeAndSpace`. The proposed
 upstream complexity classes (cslib pull request #767, open) build `DSPACE` on the same notion of
 decidability and define `PSPACE` as the union of the classes of space `O(n ^ k)`; their bounds
-are functions of the input length, and that comparison is not formalized here.
+are functions of the input length. For the local encoded-instance classes,
+`Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE` proves this union characterization
+without changing the instance-dependent space-bound definition below. A bridge to the
+upstream language-indexed classes is not formalized here.
 
 `Cslib.Complexity.NPSPACE enc` consists of the problems decided by one nondeterministic machine
 with a binary alphabet and finitely many states within space `s`
@@ -57,6 +62,8 @@ tape write-only [Sipser, Section 8.0][Sipser2013].
 ## Main results
 
 * `Cslib.Complexity.mem_PSPACE_iff`: `PSPACE` in terms of upstream `DecidableInTimeAndSpace`.
+* `Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE`: the union of `DSPACE (n ^ k)`.
+* `Cslib.Complexity.DSPACE_subset_PSPACE`: polynomially bounded space is within `PSPACE`.
 * `Cslib.Complexity.P_subset_PSPACE`: polynomial time is within polynomial space.
 * `Cslib.Complexity.PSPACE_subset_NPSPACE`: a deterministic machine is a nondeterministic machine
   with one computation path.
@@ -96,6 +103,23 @@ theorem mem_PSPACE_iff : A ∈ PSPACE enc ↔
     exact ⟨t, s, hs, hf⟩
   · rintro ⟨t, s, hs, hA⟩
     exact ⟨indicator A, ⟨t, s, hs, hA⟩, fun a => by by_cases ha : a ∈ A <;> simp [indicator, ha]⟩
+
+/-- A space class of a polynomially bounded bound is within `PSPACE`. -/
+theorem DSPACE_subset_PSPACE {α : Type} {enc : α ↪ List Bool} {s : ℕ → ℕ}
+    (hs : PolynomiallyBounded s) : DSPACE enc s ⊆ PSPACE enc := by
+  rintro A ⟨c₁, c₂, t, hA⟩
+  have : PolynomiallyBounded fun n => c₁ * s n + c₂ := by fun_prop
+  exact mem_PSPACE_iff.mpr ⟨_, _, .of_polynomiallyBounded (fun a => (enc a).length) this, hA⟩
+
+/-- **`PSPACE` is the union of the classes `DSPACE (n ^ k)`**, the definition of `PSPACE` in cslib
+pull request #767. -/
+theorem mem_PSPACE_iff_exists_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ PSPACE enc ↔ ∃ k, A ∈ DSPACE enc (· ^ k) := by
+  refine ⟨fun h => ?_, fun ⟨k, h⟩ => DSPACE_subset_PSPACE (by fun_prop) h⟩
+  obtain ⟨t, s, hs, hA⟩ := mem_PSPACE_iff.mp h
+  obtain ⟨C, d, hC⟩ := hs.exists_le
+  exact ⟨d, mem_DSPACE_iff.mpr ⟨C * 2 ^ d, C, t, ComputableInTimeAndSpace.mono hA
+    (fun _ => le_rfl) fun a => (hC a).trans (Nat.mul_add_one_pow_le_two_pow C d (enc a).length)⟩⟩
 
 /-- The problems decided by one nondeterministic machine within polynomial space, with respect to
 the encoding `enc` (`Turing.MultiTapeNTM.DecidesInSpace`): every computation path on `enc a`

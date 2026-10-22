@@ -306,6 +306,55 @@ for private coins; the public-coin AM protocol is in the Arthur--Merlin entry.
 
 
 \begin{result}
+\subsection{Classical multiprover proofs and deterministic strategies}
+A verifier has one fixed polynomial clock, private fair coins, and a constant number $k$ of
+provers chosen once per language. It pays for writing queries and reading reply bits. Each
+classical prover has its own state and private randomness; a query updates only the addressed
+prover's state. Completeness is at least $2/3$ and soundness against every such prover family is
+at most $1/3$. The classes $\cc{MIP}_2$ and $\cc{MIP}$ use two and an arbitrary constant number
+of provers, respectively. Both are closed under polynomial-time many-one reductions, and
+$\cc{IP}\subseteq\cc{MIP}_2\subseteq\cc{MIP}$.
+
+For any finite family of query programs with bounded depth and query/reply lengths, a
+deterministic prover family matches or exceeds a randomized family's weighted acceptance sum.
+A finite collection of local histories is realizable by one deterministic prover exactly when
+replies agree whenever the preceding local histories and next queries agree; after a differing
+query no further agreement is required.
+\citep{BenOrGoldwasserKilianWigderson1988,BabaiFortnowLund1991}\citep[Section 8.5]{AroraBarak09}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{86}{Cslib.Complexity.Prover.independent}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{166}{Cslib.Complexity.IsMultiproverProof}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{215}{Cslib.Complexity.MIP₂}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{226}{Cslib.Complexity.MIP}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{251}{Cslib.Complexity.IP_subset_MIP₂}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{234}{Cslib.Complexity.PolyTimeReducible.mem_MIP₂}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{242}{Cslib.Complexity.PolyTimeReducible.mem_MIP}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/OptimalProver.lean}{759}{Cslib.Complexity.MIP.exists_deterministic_prover_family}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/OptimalProver.lean}{853}{Cslib.Complexity.MIP.DetProver.ValidFrom.consistentHist}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/OptimalProver.lean}{894}{Cslib.Complexity.MIP.validFrom_candidateProver}
+\end{result}
+
+\begin{result}
+\subsection{Multiprover interactive proofs lie in nondeterministic exponential time}
+For every injective encoding of instances,
+\[
+\cc{MIP}_2\subseteq\cc{MIP}\subseteq\cc{NEXP}.
+\]
+For a verifier with clock $T=c(n+1)^d$ on an $n$-bit instance and $k$ provers, if some deterministic
+family accepts on more than half of the $2^T$ coin strings, there is a consistent certificate of
+accepting transcripts with encoded length at most $32(k+n+T+1)^2 2^T$. Transcript checking is
+polynomial-time in the encoded instance and certificate. Exponential padding places this
+certificate language in NP, and a timed pullback gives the unconditional NEXP upper bound.
+The reverse inclusion $\cc{NEXP}\subseteq\cc{MIP}_2$ of Babai, Fortnow, and Lund is deferred;
+neither the multilinearity test nor the full equality is proved here.
+\citep{BabaiFortnowLund1991}\citep[Section 8.5]{AroraBarak09}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/NEXP.lean}{949}{Cslib.Complexity.MIP.exists_checkCert_of_detProver}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/NEXP.lean}{834}{Cslib.Complexity.MIP.paddedMIP_mem_NP}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/Padding.lean}{597}{Cslib.Complexity.preimage_pad_mem_NEXP}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/NEXP.lean}{1065}{Cslib.Complexity.MIP_subset_NEXP}
+\declat{b5e3ac3fbf141cf8be2389dd00e4d9f2f0160cd2}{Complexity/Computability/Complexity/Classes/MIP/NEXP.lean}{1186}{Cslib.Complexity.MIP₂_subset_NEXP}
+\end{result}
+
+\begin{result}
 \subsection{Cook--Mertz Tree Evaluation in small space}
 A valid instance is a perfect binary tree with every leaf at depth $H$, with $\ell$-bit values at
 its leaves and a gate

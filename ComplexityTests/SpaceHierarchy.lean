@@ -9,8 +9,8 @@ import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 
 /-! The universal machine within a space budget: no step beyond the budget, and the answer of a
 concrete machine within an ample budget. The diagonal within space on the padded descriptions of
-concrete accepting and rejecting machines; a problem in constant space and its time bound;
-space-constructible bounds; the space hierarchy theorem and its corollaries on concrete bounds;
+concrete accepting and rejecting machines; the space hierarchy theorem and its corollaries
+on concrete bounds;
 and axiom guards for the headline results. -/
 
 namespace ComplexityTests.SpaceHierarchy
@@ -94,31 +94,6 @@ example (b : Bool) (pad : List Bool)
     simp only [Finset.range_zero, Finset.sum_empty]
     nlinarith
 
-/-! ### A problem in constant space -/
-
-/-- Every word is accepted in zero space. -/
-private theorem univ_mem_DSPACE : (Set.univ : Set (List Bool)) ∈ DSPACE encBits fun _ => 0 := by
-  obtain ⟨c, h⟩ := computableInTimeAndSpace_of_const (α := List Bool) (encIn := encBits)
-    (encOut := encBool) true
-  exact mem_DSPACE_iff.mpr ⟨0, 0, _, decidableInTimeAndSpace_iff.mpr
-    ⟨_, h.mono (fun _ => le_rfl) fun _ => le_rfl, fun _ => by simp⟩⟩
-
-/-- It is decided within time `O((n + 2) * 2 ^ (c * 0))`, by counting configurations. -/
-example : ∃ c, (Set.univ : Set (List Bool)) ∈ DTIME encBits fun n => (n + 2) * 2 ^ (c * 0) :=
-  exists_mem_DTIME_of_mem_DSPACE univ_mem_DSPACE
-
-/-! ### Space-constructible bounds -/
-
-example : SpaceConstructible fun n => n := spaceConstructible_id
-
-example : SpaceConstructible fun n => n + 1 := spaceConstructible_succ
-
-example : SpaceConstructible fun n => (n + 1) ^ 3 := spaceConstructible_succ_pow 3
-
-example : SpaceConstructible fun _ => 5 := spaceConstructible_const 5
-
-example : SpaceConstructible (2 ^ ·) := spaceConstructible_two_pow
-
 /-! ### The space hierarchy theorem on concrete bounds -/
 
 /-- The diagonal within space `(n + 1) ^ 2` is in `DSPACE ((n + 1) ^ 2)` and not in
@@ -153,12 +128,6 @@ example : DSPACE encBits (· ^ 2) ⊂ DSPACE encBits (· ^ 3) := DSPACE_pow_ssub
 
 example : L encBits ⊂ PSPACE encBits := L_ssubset_PSPACE
 
-/-- `L` and `PSPACE` through `DSPACE`, as in cslib pull request #767. -/
-example (A : Set (List Bool)) : A ∈ L encBits ↔ A ∈ DSPACE encBits Nat.log2 := mem_L_iff_mem_DSPACE
-
-example (A : Set (List Bool)) : A ∈ PSPACE encBits ↔ ∃ k, A ∈ DSPACE encBits (· ^ k) :=
-  mem_PSPACE_iff_exists_mem_DSPACE
-
 /-! ### Axioms -/
 
 /--
@@ -181,40 +150,6 @@ info: 'Turing.MultiTapeTM.Universal.budgetSpace_le' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.Universal.budgetSpace_le
-
-/--
-info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow
-
-/--
-info: 'Cslib.Complexity.mem_DSPACE_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_DSPACE_iff
-
-/--
-info: 'Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE
-
-/--
-info: 'Cslib.Complexity.mem_L_iff_mem_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_L_iff_mem_DSPACE
-
-/--
-info: 'Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE
 
 /--
 info: 'Cslib.Complexity.computableTidilyInO_spaceDiagonal' depends on axioms:

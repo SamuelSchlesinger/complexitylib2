@@ -29,8 +29,10 @@ work tape give the same class, since work tapes can be interleaved on one at a c
 space (not formalized here). No time bound is imposed beyond halting; a polynomial one follows
 (`Cslib.Complexity.L_subset_P`). Equivalently (`Cslib.Complexity.mem_L_iff`), the problem is
 decidable within some time and space `c₁ * Nat.log2 n + c₂` in the sense of upstream
-`Turing.MultiTapeTM.DecidableInTimeAndSpace`, the shape of the class `L = DSPACE(log₂)` of cslib
-pull request #767 (open), whose classes are indexed by languages rather than encoded instances.
+`Turing.MultiTapeTM.DecidableInTimeAndSpace`. The local characterization
+`Cslib.Complexity.mem_L_iff_mem_DSPACE` gives exactly `DSPACE enc Nat.log2`, the shape of the class
+`L = DSPACE(log₂)` of cslib pull request #767 (open), whose classes are indexed by languages
+rather than encoded instances.
 
 `Cslib.Complexity.NL enc` consists of the problems decided by one nondeterministic machine with a
 binary alphabet and finitely many states within logarithmic space
@@ -69,6 +71,7 @@ second conjunct of `LogSpaceComplete` is stated as `LogSpaceHard`.
 ## Main results
 
 * `Cslib.Complexity.mem_L_iff`: `L` in terms of upstream `DecidableInTimeAndSpace`.
+* `Cslib.Complexity.mem_L_iff_mem_DSPACE`: the specialization `DSPACE Nat.log2`.
 * `Cslib.Complexity.L_subset_NL`: a deterministic machine is a nondeterministic machine.
 * `Cslib.Complexity.compl_mem_L`: `L` is closed under complement.
 * `Cslib.Complexity.L_subset_P`: logarithmic space is within polynomial time.
@@ -126,6 +129,11 @@ theorem mem_L_iff : A ∈ L enc ↔ ∃ c₁ c₂ t,
     obtain ⟨f, hf, hA⟩ := decidableInTimeAndSpace_iff.mp h
     refine ⟨f, ⟨t, c₁ + c₂, hf.mono (fun _ => le_rfl) fun a => ?_⟩, hA⟩
     nlinarith [Nat.zero_le (Nat.log2 (enc a).length)]
+
+/-- **`L` is `DSPACE (log₂)`**, the definition of `L` in cslib pull request #767. -/
+theorem mem_L_iff_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ L enc ↔ A ∈ DSPACE enc Nat.log2 :=
+  mem_L_iff.trans mem_DSPACE_iff.symm
 
 /-- **Deterministic logarithmic space is within nondeterministic logarithmic space**: a
 deterministic machine is a nondeterministic one with one computation path
