@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Or
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Transducer
 public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.DomainInterpretation
+public import Complexity.Logics.FirstOrder.Ordered.Reduction
 import Complexity.Computability.Complexity.Reduction.ManyOne
 
 /-!
@@ -39,6 +40,9 @@ A full-tuple interpretation is the instance with domain `⊤`, through
   interpretations with a domain formula are computed in logarithmic space.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible`: admissible interpretations
   reducing one ordered query to another induce logspace reductions of their encodings.
+* `Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible`: **first-order reductions are logspace
+  reductions**; `Reduces.encodedLanguage_mem_L` and `Reduces.encodedLanguage_mem_P` give closure of
+  `L` and `P`.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap`: the full-domain
   instance.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence`: the exact map
@@ -172,6 +176,35 @@ theorem logSpaceReducible (hI : I.Admissible) {K : Query L} {K' : Query L'}
   exact ⟨F, hF, hiff⟩
 
 end DomainInterpretation
+
+namespace Reduces
+
+variable {L L' : Language} [L.IsRelational] [L'.IsRelational] (v : Vocabulary L)
+  (v' : Vocabulary L') {K : Query L} {K' : Query L'}
+
+/-- **First-order reductions are logspace reductions** [Immerman1999, Proposition 3.10 and the
+remark after Definition 2.14]: a first-order reduction of the ordered query `K` to `K'` induces a
+logspace many-one reduction between their encoded query languages. The numeric certificate of the
+reduction is not used; the transducer computes ranks by counting. -/
+theorem logSpaceReducible (h : Reduces K K') :
+    Complexity.LogSpaceReducible encStructure encStructure (K.encodedLanguage v)
+      (K'.encodedLanguage v') := by
+  obtain ⟨_, ⟨_, I, hI, _, rfl⟩, hK⟩ := h
+  exact I.logSpaceReducible v v' hI hK
+
+/-- Encoded ordered queries in `L` are closed under first-order reductions. -/
+theorem encodedLanguage_mem_L (h : Reduces K K')
+    (hL : K'.encodedLanguage v' ∈ Complexity.L encStructure) :
+    K.encodedLanguage v ∈ Complexity.L encStructure :=
+  (h.logSpaceReducible v v').mem_L hL
+
+/-- Encoded ordered queries in `P` are closed under first-order reductions. -/
+theorem encodedLanguage_mem_P (h : Reduces K K')
+    (hP : K'.encodedLanguage v' ∈ Complexity.P encStructure) :
+    K.encodedLanguage v ∈ Complexity.P encStructure :=
+  (h.logSpaceReducible v v').polyTimeReducible.mem_P hP
+
+end Reduces
 
 end Cslib.Logic.FO.Ordered
 

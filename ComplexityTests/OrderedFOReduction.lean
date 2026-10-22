@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Logics.FirstOrder.Ordered.FullTuple.DomainInterpretation
+import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered.Reduction
 import Mathlib.ModelTheory.Graph
 
 /-!
@@ -223,7 +224,19 @@ example : pairs.toDomainInterpretation.encodedMap graphVocabulary graphVocabular
     pairs.encodedMap graphVocabulary graphVocabulary :=
   pairs.encodedMap_toDomainInterpretation graphVocabulary graphVocabulary
 
+/-! ### First-order reductions are logspace reductions -/
+
+/-- The restricted-domain reduction gives a logspace reduction of the encoded queries. -/
+example : Cslib.Complexity.LogSpaceReducible encStructure encStructure
+    (edgeMaxZero.encodedLanguage graphVocabulary) (edgeZeroMax.encodedLanguage graphVocabulary) :=
+  reduces_edgeMaxZero_edgeZeroMax.logSpaceReducible graphVocabulary graphVocabulary
+
 /-! ### Axioms -/
+
+/-- info: 'Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible
 
 /-- info: 'Cslib.Logic.FO.Ordered.DomainInterpretation.decode?_encodedMap' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
