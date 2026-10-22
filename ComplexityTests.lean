@@ -203,6 +203,7 @@ import ComplexityTests.OracleRepresentation
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
+import ComplexityTests.OrderedFOReduction
 import ComplexityTests.OrderedFagin
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking

@@ -324,6 +324,25 @@ batches.
      BIT on an arbitrary definable restricted domain need not be first-order definable.
      Restricted-domain numeric preservation therefore requires its own explicit definitions
      and certificate.
+     **Ordered `≤_fo` with domain formulas (#309, semantic layer):**
+     [Ordered/DomainInterpretation](Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean)
+     maps a source to the tuples satisfying a domain formula, renumbered by lexicographic rank
+     (admissible when every source has at least two such tuples, the library's convention after
+     Proviso 1.15); its
+     [Encoding](Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Encoding.lean) gives
+     `encodedMap`, partial decoding `decode?` and the commutation lemma consumed by
+     `ManyOneReducibleBy.lift`. A numeric
+     [Certificate](Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Certificate.lean)
+     defines the target order, BIT and constants on domain tuples (Immerman's Remark 1.32
+     requirement), yielding sentence pullback;
+     [Composition](Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Composition.lean)
+     pulls outer certificates back through inner ones, and
+     [Ordered/Reduction](Complexity/Logics/FirstOrder/Ordered/Reduction.lean) defines
+     `Ordered.Reduces` with `refl`, `trans`, `compl` and `Definable.of_reduces`.
+     [FullTuple/DomainInterpretation](Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean)
+     embeds full-tuple interpretations with their native certificate and proves the encoded maps
+     agree. Open: the restricted-domain logspace transducer and `Ordered.Reduces ⇒ ≤_log`,
+     certificates for further restricted-domain families, and theorem-index entries.
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
