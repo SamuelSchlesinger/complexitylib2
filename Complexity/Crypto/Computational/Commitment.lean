@@ -596,7 +596,8 @@ theorem naorCommitSplit_append (generator : List Bool → List Bool) (r : List B
         naorCommitSplit generator r flags₂ bits₂ seeds₂ pads₂ := by
   induction bits₁ generalizing flags₁ seeds₁ pads₁ with
   | nil =>
-    cases flags₁ <;> cases seeds₁ <;> cases pads₁ <;> try simp at hflags hseeds hpads
+    cases flags₁ <;> cases seeds₁ <;> cases pads₁ <;>
+      try simp only [List.length_nil, List.length_cons, Nat.succ_ne_zero] at hflags hseeds hpads
     rfl
   | cons b bits₁ ih =>
     cases flags₁ with
@@ -985,20 +986,8 @@ noncomputable def PseudorandomGenerator.naorBitCommitment
   commitLength := length
   commit := naorCommit generator
   verify := naorVerify generator
-  polyTime_challengeLength := by
-    have hg := hG.polyTime
-    have h : length = fun n => (generator (List.replicate n true)).length := by
-      funext n
-      rw [hG.length_eq, List.length_replicate]
-    rw [h]
-    fun_prop
-  polyTime_commitLength := by
-    have hg := hG.polyTime
-    have h : length = fun n => (generator (List.replicate n true)).length := by
-      funext n
-      rw [hG.length_eq, List.length_replicate]
-    rw [h]
-    fun_prop
+  polyTime_challengeLength := PRG.polyTime_length hG.polyTime hG.length_eq
+  polyTime_commitLength := PRG.polyTime_length hG.polyTime hG.length_eq
   polyTime_commit := by
     have hg := hG.polyTime
     fun_prop

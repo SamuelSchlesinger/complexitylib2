@@ -18,7 +18,7 @@ private def tripleGen (s : List Bool) : List Bool :=
 
 private theorem length_tripleGen (s : List Bool) :
     (tripleGen s).length = 3 * s.length + 1 := by
-  simp [tripleGen]
+  simp only [tripleGen, List.length_append, List.length_cons, List.length_nil]
   omega
 
 -- Concrete completeness check for Naor's commitment scheme on a 2-bit seed.

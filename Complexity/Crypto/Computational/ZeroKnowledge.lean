@@ -219,7 +219,7 @@ theorem naorMaskBits_clauseActiveRow {φ : CNF ℕ} {w m : List Bool} {c : Claus
     simp only [varBit_listXor, Bool.xor_assoc, Bool.xor_self, Bool.xor_false]
     rw [clauseEvalBits_eq_eval hc_len (varBit φ w), hc_eval]
   · have hge : (clauseActiveRow φ (BitString.listXor φ.vars.length [w, m]) c).length ≤ t := by
-      simp; omega
+      simp only [length_clauseActiveRow]; omega
     simp [List.getD_eq_getElem?_getD, List.getElem?_eq_none hge] at ht
 
 /-- The `8 * φ.length`-bit concatenation of all clause truth tables of `φ` under mask `m`. -/
@@ -484,7 +484,7 @@ theorem getD_append_right {u v : List Bool} {d i : ℕ} (hu : u.length = d) :
 theorem getD_listRow_of_lt {width row t : ℕ} {word : List Bool} (ht : t < width)
     (hlen : row * width + t < word.length) :
     (BitString.listRow width row word).getD t false = word.getD (row * width + t) false := by
-  have hdrop : t < (word.drop (row * width)).length := by simp; omega
+  have hdrop : t < (word.drop (row * width)).length := by simp only [List.length_drop]; omega
   simp [BitString.listRow, List.getD_eq_getElem?_getD, List.getElem?_take_of_lt ht,
     List.getElem?_append_left hdrop, List.getElem?_drop]
 
@@ -589,17 +589,17 @@ def allOpenFlags (φ : CNF ℕ) (ch bits : List Bool) : List Bool :=
 
 @[simp] theorem length_realBits (φ : CNF ℕ) (w m₀ m₁ m₂ : List Bool) :
     (realBits φ w m₀ m₁ m₂).length = totalLen φ := by
-  simp [realBits, totalLen]
+  simp only [realBits, totalLen, List.length_append, length_realCopyBits]
   omega
 
 @[simp] theorem length_simBits (φ : CNF ℕ) (ch r₀ r₁ r₂ : List Bool) :
     (simBits φ ch r₀ r₁ r₂).length = totalLen φ := by
-  simp [simBits, totalLen]
+  simp only [simBits, totalLen, List.length_append, length_simCopyBits]
   omega
 
 @[simp] theorem length_allOpenFlags (φ : CNF ℕ) (ch bits : List Bool) :
     (allOpenFlags φ ch bits).length = totalLen φ := by
-  simp [allOpenFlags, totalLen]
+  simp only [allOpenFlags, totalLen, List.length_append, length_copyOpenFlags]
   omega
 
 @[simp] theorem copy0_realBits (φ : CNF ℕ) (w m₀ m₁ m₂ : List Bool) :
@@ -877,10 +877,6 @@ theorem getD_append_left {u v : List Bool} {i : ℕ} (hi : i < u.length) :
     (u ++ v).getD i false = u.getD i false := by
   simp [List.getD_eq_getElem?_getD, List.getElem?_append_left hi]
 
-theorem getD_drop_take {xs : List Bool} {d L i : ℕ} (hi : i < L) :
-    ((xs.drop d).take L).getD i false = xs.getD (d + i) false := by
-  simp [List.getD_eq_getElem?_getD, List.getElem?_take_of_lt hi, List.getElem?_drop]
-
 theorem getD_allOpenFlags_copy0 (φ : CNF ℕ) (ch bits : List Bool) {i : ℕ} (hi : i < copyLen φ) :
     (allOpenFlags φ ch bits).getD i false =
       (copyOpenFlags φ (ch.getD 0 false) (copy0 φ bits)).getD i false := by
@@ -899,7 +895,7 @@ theorem getD_allOpenFlags_copy2 (φ : CNF ℕ) (ch bits : List Bool) (i : ℕ) :
   have hlen :
       (copyOpenFlags φ (ch.getD 0 false) (copy0 φ bits) ++
         copyOpenFlags φ (ch.getD 1 false) (copy1 φ bits)).length = 2 * copyLen φ := by
-    simp; omega
+    simp only [List.length_append, length_copyOpenFlags]; omega
   simp only [allOpenFlags]
   exact getD_append_right hlen
 
@@ -940,7 +936,7 @@ theorem mem_ThreeSAT_of_verifyTranscript_false_true
   · rw [hb₀] at hv₀_0
     rw [hb₁] at hv₁_0
     refine satisfiable_of_verifyCopyBits hwidth hv₀_0 hv₁_0 fun i hi hf₀ hf₁ => ?_
-    have hidx : i < totalLen φ := by simp [totalLen]; omega
+    have hidx : i < totalLen φ := by simp only [totalLen]; omega
     have hf₀' : (allOpenFlags φ ch₀ opened₀).getD i false = true := by
       rw [getD_allOpenFlags_copy0 φ ch₀ opened₀ hi, hb₀]
       exact hf₀
@@ -952,7 +948,7 @@ theorem mem_ThreeSAT_of_verifyTranscript_false_true
   · rw [hb₀] at hv₀_1
     rw [hb₁] at hv₁_1
     refine satisfiable_of_verifyCopyBits hwidth hv₀_1 hv₁_1 fun i hi hf₀ hf₁ => ?_
-    have hidx : copyLen φ + i < totalLen φ := by simp [totalLen]; omega
+    have hidx : copyLen φ + i < totalLen φ := by simp only [totalLen]; omega
     have hf₀' : (allOpenFlags φ ch₀ opened₀).getD (copyLen φ + i) false = true := by
       rw [getD_allOpenFlags_copy1 φ ch₀ opened₀ hi, hb₀]
       exact hf₀
@@ -960,12 +956,12 @@ theorem mem_ThreeSAT_of_verifyTranscript_false_true
       rw [getD_allOpenFlags_copy1 φ ch₁ opened₁ hi, hb₁]
       exact hf₁
     have heq := verifyCommitments_eq_of_true hbind hc₀ hc₁ hidx hf₀' hf₁'
-    simp only [copy1, getD_drop_take hi]
+    simp only [copy1, getD_take_drop _ _ _ _ hi]
     exact heq
   · rw [hb₀] at hv₀_2
     rw [hb₁] at hv₁_2
     refine satisfiable_of_verifyCopyBits hwidth hv₀_2 hv₁_2 fun i hi hf₀ hf₁ => ?_
-    have hidx : 2 * copyLen φ + i < totalLen φ := by simp [totalLen]; omega
+    have hidx : 2 * copyLen φ + i < totalLen φ := by simp only [totalLen]; omega
     have hf₀' : (allOpenFlags φ ch₀ opened₀).getD (2 * copyLen φ + i) false = true := by
       rw [getD_allOpenFlags_copy2 φ ch₀ opened₀ i, hb₀]
       exact hf₀
@@ -973,7 +969,7 @@ theorem mem_ThreeSAT_of_verifyTranscript_false_true
       rw [getD_allOpenFlags_copy2 φ ch₁ opened₁ i, hb₁]
       exact hf₁
     have heq := verifyCommitments_eq_of_true hbind hc₀ hc₁ hidx hf₀' hf₁'
-    simp only [copy2, getD_drop_take hi]
+    simp only [copy2, getD_take_drop _ _ _ _ hi]
     exact heq
 
 theorem mem_ThreeSAT_of_verifyTranscript_ne
@@ -1804,12 +1800,7 @@ theorem isOraclePPTOn_gmwVerifier {α : Type} {enc : α ↪ List Bool}
     (hf : ComputableTidilyInPolyTime f enc encCNF) :
     IsOraclePPTOn (encPair encUnary enc) encBool
       (fun p : ℕ × α => gmwVerifier generator length f p.1 p.2) := by
-  have hlength : ComputableTidilyInPolyTime length encUnary encUnary := by
-    have h : length = fun n => (generator (List.replicate n true)).length := by
-      funext n
-      rw [hlen, List.length_replicate]
-    rw [h]
-    fun_prop
+  have hlength := PRG.polyTime_length hg hlen
   dsimp only [gmwVerifier]
   fun_prop
 
@@ -2950,12 +2941,7 @@ theorem isPPTOn_gmwInteract {α : Type} {enc : α ↪ List Bool}
       (fun p : ℕ × α × List Bool × List Bool =>
         gmwInteract generator (p.1 + 7) (length (p.1 + 7)) (f p.2.1) p.2.2.1
           (Vstar p.1 p.2.1 p.2.2.2)) := by
-  have hlength : ComputableTidilyInPolyTime length encUnary encUnary := by
-    have h : length = fun n => (generator (List.replicate n true)).length := by
-      funext n
-      rw [hlen, List.length_replicate]
-    rw [h]
-    fun_prop
+  have hlength := PRG.polyTime_length hg hlen
   dsimp only [gmwInteract, sampleHonestCoins]
   ppt
 
