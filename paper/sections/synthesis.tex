@@ -224,7 +224,7 @@ $\deg(c.\texttt{polynomial}\;0)<|S|$.\citep{DeMilloLipton1978,Zippel1979,Schwart
 \end{result}
 
 \begin{result}
-\subsection{Permanent self-reducibility to \texttt{PITInt} and Kabanets--Impagliazzo}
+\subsection{Permanent self-reducibility to \texttt{PITInt}}
 Over any commutative semiring $R$, the permanent of $A\in R^{(n+1)\times(n+1)}$ expands along
 column~$0$ or row~$0$:
 \[
@@ -249,33 +249,23 @@ for every family $C : \forall m,\;\texttt{Circuit}\;(\texttt{arithSignature}\;\m
 \end{aligned}
 \]
 The explicit recursive family \lean{laplacePermCircuit} unconditionally satisfies these identities at
-every dimension $n$ (\lean{isLaplacePermChain_laplacePermCircuit}), and if
-$\texttt{PITInt}\in\cc{P}\;\texttt{encArithCircuitInt}$ and the integer permanent p-family
-$\texttt{intPermFamily}=\texttt{permFamily}\;\mathbb Z$ belongs to $\cc{VP}\;\mathbb Z$, there exist a
-polynomial-time decider for $\texttt{PITInt}$ and a polynomially bounded permanent circuit family with
-polynomially bounded step-test sizes certified by it (\lean{PermPITCertified},
-\lean{exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP}; gate-size bounds on
-\lean{permBaseDiff} and \lean{permStepDiff} are combinatorial circuit sizes, without a separate
-uniform constructor certificate).
+every dimension $n$ (\lean{isLaplacePermChain_laplacePermCircuit}). This is the
+polynomial-identity form of the lemma: gate-size bounds on \lean{permBaseDiff} and
+\lean{permStepDiff} are combinatorial circuit sizes, and no polynomial-time constructor for the test
+circuits is formalized.
 
 Combining $\cc{\Sigma}_k^{\cc{P}}\subseteq\cc{PSPACE}\subseteq\cc{EXP}\subseteq\cc{NEXP}$ with Kannan's
 theorem shows unconditionally that for every $k\in\mathbb N$ there is a language $L\in\cc{NEXP}$ outside
-$\cc{SIZE}(c(n+1)^k)$ for all $c\in\mathbb N$ (\lean{exists_mem_NEXP_notMem_SIZE}). If
-$\texttt{PITInt}\in\cc{P}\;\texttt{encArithCircuitInt}$, then under the explicit collapse
-hypothesis from $\cc{NEXP}\subseteq\cc{P/poly}$ and \lean{PermPITCertified} (either to a fixed degree
-$k$ such that every $L\in\cc{\Sigma}_2^{\cc{P}}$ lies in $\bigcup_c\cc{SIZE}(c(n+1)^k)$, refuted by Kannan's
-theorem, or to $\cc{EXP}\subseteq\cc{P}$, refuted by $\cc{P}\subsetneq\cc{EXP}$), either
-$\cc{NEXP}\not\subseteq\cc{P/poly}$ or $\texttt{intPermFamily}\notin\cc{VP}\;\mathbb Z$. The easy-witness
-and Valiant--Toda collapse step from $\cc{NEXP}\subseteq\cc{P/poly}$ and \lean{PermPITCertified} is
-taken as an explicit hypothesis.\citep{Kannan1982,KabanetsImpagliazzo2004,AroraBarak09}
+$\cc{SIZE}(c(n+1)^k)$ for all $c\in\mathbb N$ (\lean{exists_mem_NEXP_notMem_SIZE}). The
+Kabanets--Impagliazzo theorem itself (deterministic polynomial-time PIT implies
+$\cc{NEXP}\not\subseteq\cc{P/poly}$ or the permanent is not in $\cc{VP}$) is not proved: the
+easy-witness collapse, $\#\cc{P}$-completeness of the permanent and Toda's theorem are not
+formalized.\citep{Kannan1982,KabanetsImpagliazzo2004,AroraBarak09}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{213}{Matrix.permanent_succ_column_zero}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{224}{Matrix.permanent_succ_row_zero}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{480}{Cslib.Circuits.Arithmetic.intPermFamily}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{518}{Cslib.Circuits.Arithmetic.permanent_genericMatrix_succ}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{589}{Cslib.Circuits.Arithmetic.forall_polynomial_eq_permanent_iff_mem_PITInt}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{663}{Cslib.Circuits.Arithmetic.isLaplacePermChain_laplacePermCircuit}
-\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{696}{Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP}
 \declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{752}{Cslib.Complexity.exists_mem_NEXP_notMem_SIZE}
-\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{777}{Cslib.Circuits.Arithmetic.kabanets_impagliazzo}
-\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{802}{Cslib.Circuits.Arithmetic.kabanets_impagliazzo_of_EXP_subset_P}
 \end{result}

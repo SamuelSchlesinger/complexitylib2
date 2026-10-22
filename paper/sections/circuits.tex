@@ -423,7 +423,7 @@ is an explicit hypothesis of the theorems.\citep{ChorGoldreich1988,Chattopadhyay
 \end{result}
 
 \begin{result}
-\subsection{Uniform $\cc{P}$ frontier lower bounds, affine dispersers, and balanced padding}
+\subsection{Conditional uniform $\cc{P}$ frontier lower bounds, affine dispersers, and balanced padding}
 Under the same sumset-extractor hypotheses ($k_n=o(n)$ and eventually $\delta_n\le\delta_0<1/2$ on
 a finite nontrivial additive group $U$), the $(L_*-\varepsilon)n$ and $(4.56249-\varepsilon)n$
 lower bounds also hold for nondeterministic verifier circuits uniformly in the witness length and
@@ -1206,7 +1206,7 @@ comes existentially from Shannon counting.\citep{Subbotovskaya1961,Andreev1987,J
 \end{result}
 
 \begin{result}
-\subsection{\texorpdfstring{ACC$^0$, Sym$^+$}{ACC\^0, Sym\^+} Fast Zeta evaluation, and Williams's \texorpdfstring{NEXP $\not\subseteq$ ACC$^0$}{NEXP not in ACC\^0} method}
+\subsection{\texorpdfstring{ACC$^0$, Sym$^+$}{ACC\^0, Sym\^+} Fast Zeta evaluation, and modular circuit lower bounds}
 Define nonuniform $\mathrm{ACC}^0=\bigcup_{q\ge 2}\mathrm{AC}^0[q]$. Because
 $\mathrm{MOD}_0$ is unbounded disjunction and $\mathrm{MOD}_1$ is the constant
 $\mathrm{false}$, $\mathrm{AC}^0[0]=\mathrm{AC}^0[1]=\mathrm{AC}^0$ and
@@ -1251,16 +1251,11 @@ outside $\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$.
 Unconditionally, $\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ implies
 $\mathrm{NEXP}\subseteq\mathrm{P/poly}$ and collapses $\mathrm{PH}$ to
 $\Sigma_2^{\mathrm P}$, placing $\mathrm{Kannan.language}(k)$ into
-$\Sigma_2^{\mathrm P}$ for every $k$. Combining this collapse with the
-easy-witness and $\mathrm{Sym}^+$ satisfiability collapse hypothesis (that
-$\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ places $\Sigma_2^{\mathrm P}$ into
-$\bigcup_{c}\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for some $q,k$) gives
-Williams's theorem $\mathrm{NEXP}\not\subseteq\mathrm{ACC}^0$. Depth-$0$
-$\mathrm{Sym}^+$ compilation is proved (\lean{symPlusCompilation_zero}), while
-multi-layer Yao--Beigel--Tarui compilation (\lean{SymPlusCompilation}) and the
-easy-witness collapse from $\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ to a
-fixed-degree $\mathrm{MOD}_q$ bound on $\Sigma_2^{\mathrm P}$ are explicit
-hypotheses of the final implication theorems.\citep{Williams2014,Yao1990,BeigelTarui1994,Barrington1989,Vollmer1999,Kannan1982,KarpLipton1980}
+$\Sigma_2^{\mathrm P}$ for every $k$. Williams's theorem
+$\mathrm{NEXP}\not\subseteq\mathrm{ACC}^0$ is not proved: the
+Yao--Beigel--Tarui compilation of $\mathrm{ACC}^0$ circuits into
+$\mathrm{Sym}^+$ circuits, the resulting fast $\mathrm{ACC}^0$ satisfiability
+algorithm and the easy-witness argument are not formalized.\citep{Williams2014,Yao1990,BeigelTarui1994,Barrington1989,Vollmer1999,Kannan1982,KarpLipton1980}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{247}{Cslib.Circuits.Boolean.AC0Mod_subset_AC0Mod_of_dvd}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{259}{Cslib.Circuits.Boolean.ACC0}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{282}{Cslib.Circuits.Boolean.ACC0_eq_iUnion_AC0Mod}
@@ -1273,14 +1268,10 @@ hypotheses of the final implication theorems.\citep{Williams2014,Yao1990,BeigelT
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{736}{Cslib.Circuits.Boolean.fastZeta_eq_zetaTransform}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{956}{Cslib.Circuits.Boolean.SymPlusCircuit.zetaTransform_coeffTable_eq_activeCount}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{993}{Cslib.Circuits.Boolean.SymPlusCircuit.fastSymPlusEval_eq_eval}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1026}{Cslib.Circuits.Boolean.symPlusCompilation_zero}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1044}{Cslib.Circuits.Boolean.exists_fastSymPlusEval_of_symPlusCompilation}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1152}{Cslib.Circuits.Boolean.SIZEMod_subset_SIZE}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1193}{Cslib.Circuits.Boolean.Kannan.language_notMem_SIZEMod}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1202}{Cslib.Circuits.Boolean.exists_mem_SigmaP_two_notMem_SIZEMod}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1212}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_SIZEMod}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1227}{Cslib.Circuits.Boolean.PH_eq_SigmaP_two_of_NEXP_subset_ACC0}
 \declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1239}{Cslib.Circuits.Boolean.Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1250}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_ACC0}
-\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1266}{Cslib.Circuits.Boolean.not_NEXP_subset_ACC0}
 \end{result}

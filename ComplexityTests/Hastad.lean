@@ -7,13 +7,13 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.PCP.Approximation.Hastad
 
 /-!
-# Tests: Håstad's 3-bit test and optimal MAX-E3SAT inapproximability
+# Tests: Håstad's 3-bit linear test and its soundness against Label Cover
 
 Concrete evaluations and non-vacuity checks for exact 3-clauses (`Clause.IsExactThreeDistinct`,
 `CNF.IsExactThreeDistinct`), the `7 / 8` random-assignment bound (`unsatVal_le_one_eighth`), the
 4-clause XOR gadget (`xorThreeCNF`), the Long Code and table folding (`longCode`, `foldTable`),
-mod-2 subset projection (`projectSet`), Håstad's 3-bit linear and E3-CNF tests on a concrete Label
-Cover graph, and `#print axioms` guards for the headline theorems.
+mod-2 subset projection (`projectSet`), Håstad's 3-bit linear test on a concrete Label Cover
+graph, and `#print axioms` guards for the headline theorems.
 -/
 
 namespace ComplexityTests.Hastad
@@ -100,13 +100,11 @@ private def oneEdgeGraph : Graph (Bool → Bool) :=
   ⟨1, [⟨0, 0, id⟩]⟩
 
 /-- On `oneEdgeGraph`, the constant `false` labelling satisfies the single edge and yields Long Code
-tables achieving linear acceptance `1 - δ` and E3-CNF clause satisfaction `1 - δ / 4`. -/
+tables achieving linear acceptance `1 - δ`. -/
 example (δ : ℝ) :
     (∀ w, IsFolded (longCode ((fun _ : ℕ => false) w))) ∧
       hastadGraphLinearProb oneEdgeGraph δ
-        (fun _ => longCode false) (fun _ => longCode false) = 1 - δ ∧
-      hastadGraphSATProb oneEdgeGraph δ
-        (fun _ => longCode false) (fun _ => longCode false) = 1 - δ / 4 :=
+        (fun _ => longCode false) (fun _ => longCode false) = 1 - δ :=
   hastadGraphProb_longCode_of_satisfies (by decide : oneEdgeGraph.edges ≠ []) δ
     (fun d hd => by
       simp only [oneEdgeGraph, List.mem_singleton] at hd

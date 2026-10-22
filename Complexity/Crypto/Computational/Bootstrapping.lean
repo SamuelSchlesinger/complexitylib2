@@ -24,18 +24,28 @@ import Complexity.Tactic.PPT
 /-!
 # Gentry's bootstrapping theorem
 
-A public-key bit encryption scheme is **bootstrappable** when it can homomorphically evaluate its
-own augmented decryption circuits `Dec(·, c₁) op Dec(·, c₂)` (for each De Morgan gate `op`) on an
-encrypted secret key, producing refreshed ciphertexts whose length is bounded by a polynomial in the
-security parameter independently of the evaluated circuit's size and depth [Gentry2009].
+In Gentry's work, a public-key bit encryption scheme is **bootstrappable** when its homomorphic
+evaluation algorithm can evaluate the scheme's own augmented decryption circuits
+`Dec(·, c₁) op Dec(·, c₂)` (for each De Morgan gate `op`) on an encrypted secret key, producing
+refreshed ciphertexts whose length is bounded by a polynomial in the security parameter
+independently of the evaluated circuit's size and depth [Gentry2009].
+
+This module does **not** construct such a homomorphic evaluation of the decryption circuit, nor
+does it prove that any concrete scheme is bootstrappable. Instead, `Bootstrappable` is an
+**assumed interface**: an opaque deterministic polynomial-time gate-plus-key-switch operation
+`evalAugDecrypt op pk₂ ek c₁ c₂`, whose recryption/gate correctness and compactness are taken as
+fields of the class. From this interface (together with semantic or circular security, also
+assumed as hypotheses) the module proves Gentry's bootstrapping *composition*: chaining the
+assumed gate operations yields leveled, respectively fixed-key, fully homomorphic encryption.
 
 We formalize two main theorems:
 
-1. **Leveled bootstrapping (`leveledFHE_of_bootstrappable`)**: Any semantically secure,
-   bootstrappable encryption scheme `S` and any unary polynomial-time depth bound `D : ℕ → ℕ` yield
-   a compact leveled fully homomorphic encryption scheme evaluating all De Morgan circuits (and
-   formulas) of depth at most `D n`. Key generation samples an acyclic chain of `D n + 1` key pairs
-   `(pk_0, sk_0), …, (pk_{D n}, sk_{D n})` and publishes the evaluation keys
+1. **Leveled bootstrapping (`leveledFHE_of_bootstrappable`)**: Any semantically secure encryption
+   scheme `S` equipped with the `Bootstrappable` interface and any unary polynomial-time depth
+   bound `D : ℕ → ℕ` yield a compact leveled fully homomorphic encryption scheme evaluating all
+   De Morgan circuits (and formulas) of depth at most `D n`. Key generation samples an acyclic
+   chain of `D n + 1` key pairs `(pk_0, sk_0), …, (pk_{D n}, sk_{D n})` and publishes the
+   evaluation keys
    `ek_ℓ ← S.encryptKey pk_{ℓ+1} sk_ℓ` for `0 ≤ ℓ < D n`. Semantic security follows by a uniform
    two-level hybrid reduction (across the `D n` levels from top to bottom and across the
    `S.skLength n` secret-key bits within each level) replacing each `ek_ℓ` with encryptions of
@@ -54,8 +64,9 @@ We formalize two main theorems:
 * `Cslib.Crypto.EncryptionScheme.SemanticSecure`: semantic security against uniform strict PPT
   distinguishers (`IsPKPPT`).
 * `Cslib.Crypto.EncryptionScheme.encryptKey`: bit-by-bit encryption of a secret key word.
-* `Cslib.Crypto.Bootstrappable`: homomorphic evaluation of augmented De Morgan decryption gates
-  with compactness bound `cipherBound`.
+* `Cslib.Crypto.Bootstrappable`: assumed interface for an augmented De Morgan decryption gate
+  with key switching (`evalAugDecrypt`), whose correctness and compactness bound `cipherBound`
+  are fields rather than consequences of a homomorphic evaluation of the decryption circuit.
 * `Cslib.Crypto.EncryptionScheme.leveledKeyGen`, `evalLeveledCode`, `evalLeveledOutput`:
   leveled key-chain generation and synchronous level-by-level homomorphic circuit evaluation.
 * `Cslib.Crypto.EncryptionScheme.fixedKeyGen`, `evalHomCode`, `evalHomOutput`:
@@ -72,9 +83,11 @@ We formalize two main theorems:
 * `Cslib.Crypto.EncryptionScheme.leveledSemanticSecure_of_semanticSecure`: semantic security of the
   acyclic key chain of length `D n`.
 * `Cslib.Crypto.EncryptionScheme.leveledFHE_of_bootstrappable`: Gentry's leveled bootstrapping
-  theorem (efficiency, correctness up to depth `D n`, compactness, and semantic security).
+  composition (efficiency, correctness up to depth `D n`, compactness, and semantic security),
+  assuming the `Bootstrappable` interface and semantic security.
 * `Cslib.Crypto.EncryptionScheme.fixedKeyFHE_of_circularSecure`: Gentry's pure/fixed-key FHE
-  theorem under circular security for circuits of arbitrary depth.
+  composition for circuits of arbitrary depth, assuming the `Bootstrappable` interface and
+  circular security.
 
 ## References
 
@@ -1102,17 +1115,21 @@ theorem computableTidilyInPolyTime_evalOp2 {γ : Type} {encIn : γ ↪ List Bool
     (fun p : Boolean.Op × Bool × Bool => evalOp2 p.1 p.2.1 p.2.2)).comp
     (hop.prod (hb₁.prod hb₂))
 
-/-- A public-key bit encryption scheme `S` is **bootstrappable** (in Gentry's sense [Gentry2009]) if
-it admits a deterministic polynomial-time homomorphic evaluation algorithm `evalAugDecrypt` for its
-augmented De Morgan decryption gates `Dec(·, c₁) op Dec(·, c₂)`: given an operation `op`, a target
+/-- The **bootstrappability interface** for a public-key bit encryption scheme `S`, modelled on
+Gentry's notion [Gentry2009]. This class is an *assumption*, not a theorem: it does not require
+`evalAugDecrypt` to arise from homomorphically evaluating the decryption circuit of `S`, and its
+correctness and compactness are taken as fields. It asks for a deterministic polynomial-time
+gate-plus-key-switch operation `evalAugDecrypt` playing the role of Gentry's augmented De Morgan
+decryption gates `Dec(·, c₁) op Dec(·, c₂)`: given an operation `op`, a target
 public key `pk₂`, an evaluation key `ek ← S.encryptKey pk₂ sk₁` encrypting `sk₁` bit-by-bit under
 `pk₂`, and two ciphertexts `c₁, c₂` under `sk₁`, `evalAugDecrypt op pk₂ ek c₁ c₂` outputs a
 refreshed ciphertext under `sk₂` that decrypts to `evalOp2 op (S.decrypt sk₁ c₁) (S.decrypt sk₁ c₂)`
 and whose bit-length is bounded by a polynomial `cipherBound` independent of `c₁`, `c₂`, and the
 evaluated circuit's size or depth. -/
 class Bootstrappable (S : EncryptionScheme) where
-  /-- Homomorphically evaluate the augmented decryption circuit `Dec(·, c₁) op Dec(·, c₂)` on the
-  encrypted secret key `ek` under target public key `pk₂`. -/
+  /-- The assumed gate-plus-key-switch operation, standing in for the homomorphic evaluation of
+  the augmented decryption circuit `Dec(·, c₁) op Dec(·, c₂)` on the encrypted secret key `ek`
+  under target public key `pk₂`. -/
   evalAugDecrypt : Boolean.Op → List Bool → List (List Bool) → List Bool → List Bool → List Bool
   /-- Compactness bound on the bit-length of fresh and refreshed ciphertexts. -/
   cipherBound : ℕ → ℕ
@@ -1496,10 +1513,10 @@ def CircularSecure (S : EncryptionScheme) : Prop :=
     IsFixedPKPPT
 
 /-- **Gentry's fixed-key bootstrapping theorem (`fixedKeyFHE_of_circularSecure`)**:
-any bootstrappable encryption scheme `S` that is circularly secure yields a compact, pure fully
-homomorphic encryption scheme (`fixedKeyGen`, `encrypt`, `evalHomOutput`, `decrypt`) that
-homomorphically evaluates De Morgan Boolean circuits and formulas of arbitrary depth and size in
-deterministic polynomial time [Gentry2009]. -/
+any encryption scheme `S` equipped with the assumed `Bootstrappable` interface that is circularly
+secure yields a compact, pure fully homomorphic encryption scheme (`fixedKeyGen`, `encrypt`,
+`evalHomOutput`, `decrypt`) that homomorphically evaluates De Morgan Boolean circuits and formulas
+of arbitrary depth and size in deterministic polynomial time [Gentry2009]. -/
 theorem fixedKeyFHE_of_circularSecure (hcir : S.CircularSecure) :
     IsPPTOn encUnary (encPair encFixedPK encBits) S.fixedKeyGen ∧
     ComputableTidilyInPolyTime
@@ -1929,9 +1946,9 @@ theorem length_evalLeveledOutput_le {n L : ℕ} {lpk : LeveledPK} {skL : List Bo
   · exact S.length_mem_evalLeveledCode_le hres cs₀ hcs₀ gates c (List.mem_of_getElem? h)
 
 /-- **Gentry's leveled bootstrapping theorem (`leveledFHE_of_bootstrappable`)**:
-for any semantically secure, bootstrappable encryption scheme `S` and any unary polynomial-time
-depth bound `D : ℕ → ℕ`, the leveled scheme (`leveledKeyGen (D n) n`, `encrypt`,
-`evalLeveledOutput`, `decrypt`) is:
+for any semantically secure encryption scheme `S` equipped with the assumed `Bootstrappable`
+interface and any unary polynomial-time depth bound `D : ℕ → ℕ`, the leveled scheme
+(`leveledKeyGen (D n) n`, `encrypt`, `evalLeveledOutput`, `decrypt`) is:
 1. **Efficient**: key generation is uniform strict PPT and homomorphic evaluation is computable
    tidily in deterministic polynomial time.
 2. **Semantically secure (`LeveledSemanticSecure`)**: encryptions of `false` and `true` remain
