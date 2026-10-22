@@ -87,7 +87,7 @@ def parse_abstract(text: str):
         flags=re.DOTALL,
     )
     body = re.sub(
-        r"^\s*#check_abstract\b[^\n]*(?:\[\s*(?:[^\]]*\n)*[^\]]*\])?\n?",
+        r"^\s*#check_abstract\b[^\[\n]*(?:\[[^\]]*\])?[^\n]*\n?",
         "",
         body,
         flags=re.MULTILINE,

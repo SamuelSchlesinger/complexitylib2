@@ -97,6 +97,27 @@ class AbstractToTexTests(unittest.TestCase):
         self.assertEqual(len(sections), 1)
         self.assertEqual(sections[0]["code"], "def x : Nat := 0")
 
+    def test_guarded_multiline_allowlist_is_stripped(self):
+        sample = (
+            "/-! # Title\n\nIntro.\n-/\n\n"
+            "namespace Foo\n\n"
+            "/-- A definition. -/\ndef x : Nat := 0\n\n"
+            "/-- info: audit passed -/\n#guard_msgs in\n"
+            "#check_abstract Foo allowing [\n"
+            "  Complexity.First,\n  Complexity.Second\n]\n\n"
+            "end Foo\n"
+        )
+        title, intro, sections = abstract_to_tex.parse_abstract(sample)
+        self.assertEqual(len(sections), 1)
+        self.assertEqual(sections[0]["code"], "def x : Nat := 0")
+        for rendered in (
+            abstract_to_tex.render_markdown(title, intro, sections),
+            abstract_to_tex.render_tex(title, intro, sections),
+        ):
+            self.assertNotIn("Complexity.First", rendered)
+            self.assertNotIn("Complexity.Second", rendered)
+            self.assertNotIn("audit passed", rendered)
+
     @unittest.skipUnless(shutil.which("pdflatex"), "pdflatex not installed")
     def test_pdflatex_compiles_rendered_abstracts(self):
         tex_bodies = []
