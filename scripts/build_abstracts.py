@@ -54,7 +54,6 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\textsc{Complexitylib / Formal abstracts}}
-\fancyfoot[C]{\small\thepage}
 \renewcommand{\headrulewidth}{0.3pt}
 \setlength{\headheight}{14pt}
 \begin{document}
@@ -203,17 +202,16 @@ def render_entry(entry, repository, sha, dirty, root=ROOT):
 
 
 def style_credit():
-    return (r"\par\medskip{\footnotesize\color{black!60} Theorem proofs and injectivity-helper "
-            "proofs are omitted. Proof-field underscores mark omitted checked proof terms. "
-            "The linked Lean sources contain the complete definitions and proofs. "
-            "Typography, code boxes and colors adapted "
-            "from Erik Demaine's " + link(STYLE_SOURCE, "translation-tiling-paper") +
-            "; statement extraction follows his " + link(EXTRACTION_SOURCE, "Lean snippet workflow") +
-            ". Mathematical sources are credited in each abstract.}\n")
+    return (r"\fancyfoot[C]{\parbox[b]{\textwidth}{\centering\fontsize{8}{9.5}\selectfont"
+            r"\color{black!60} Theorem and helper proofs are omitted. "
+            "Proof-field underscores mark omitted checked terms. Linked sources contain complete "
+            "definitions and proofs. Layout adapted from Erik Demaine's " +
+            link(STYLE_SOURCE, "paper style") + "; extraction follows his " +
+            link(EXTRACTION_SOURCE, "Lean snippet workflow") + r".\par\thepage}}" + "\n")
 
 
 def document(body):
-    return PREAMBLE + body + "\n\\end{document}\n"
+    return PREAMBLE + style_credit() + body + "\n\\end{document}\n"
 
 
 def build_pdf(tex_path):
@@ -273,7 +271,7 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
         body = render_entry(entry, repository, sha, dirty, root)
         bodies.append(body)
         tex = output / (entry["id"] + ".tex")
-        tex.write_text(document(body + style_credit()))
+        tex.write_text(document(body))
         pdf = build_pdf(tex)
         source = root.joinpath(*entry["module"].split(".")).with_suffix(".lean")
         text = source.read_text()
@@ -301,7 +299,7 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
         index.append(r"\item{} \hyperlink{" + entry["id"] + "}{" +
                      render.escape_tex_prose(entry["title"]) + "}. " +
                      render.escape_tex_prose(entry["summary"]))
-    index.extend([r"\end{itemize}", style_credit(), r"\clearpage"])
+    index.extend([r"\end{itemize}", r"\clearpage"])
     catalogue = output / "catalogue.tex"
     catalogue.write_text(document("\n\n".join(index) + "\n\\clearpage\n".join(bodies)))
     catalogue_pdf = build_pdf(catalogue)
