@@ -12,7 +12,10 @@
 #   * an existing local branch is checked out as is (`--force-reset` resets it to base_ref);
 #   * a branch that exists only on `origin` (the usual takeover case) is created locally tracking
 #     `origin/<branch>`, after fetching it; passing base_ref for such a branch is refused, because
-#     it would silently discard the pushed work;
+#     it would silently discard the pushed work (`--force-reset` overrides the refusal; without a
+#     base_ref, `--force-reset` still tracks `origin/<branch>` rather than discarding it). If the
+#     fetch fails (offline, or the branch was deleted on origin), the local `origin/<branch>` ref,
+#     possibly stale, is used when present;
 #   * otherwise a new branch is created from base_ref (default `origin/main`) without upstream
 #     tracking, so a plain `git push` cannot target the base branch.
 #

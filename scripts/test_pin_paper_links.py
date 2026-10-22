@@ -171,7 +171,7 @@ class PinPaperLinksTests(unittest.TestCase):
                 "Demo.alpha_eq",
             )
 
-    def test_main_tex_links_are_checked_but_macro_definitions_skipped(self) -> None:
+    def test_main_tex_links_and_user_macros_are_checked(self) -> None:
         (self.root / "Complexity/Demo/Basic.lean").write_text(
             "namespace Cslib.Demo\ntheorem alpha_eq : 1 = 1 := rfl\nend Cslib.Demo\n",
             encoding="utf-8",
@@ -180,15 +180,18 @@ class PinPaperLinksTests(unittest.TestCase):
         main_tex.write_text(
             main_tex.read_text(encoding="utf-8")
             + "\\newcommand{\\demo}{\\declat{1111111111111111111111111111111111111111}"
-            "{Complexity/Demo/Basic.lean}{9}{Cslib.Demo.missing}}\n"
+            "{Complexity/Demo/Basic.lean}{2}{Cslib.Demo.alpha\\_eq}}\n"
             "\\declat{1111111111111111111111111111111111111111}"
             "{Complexity/Demo/Basic.lean}{1}{Cslib.Demo.alpha\\_eq}\n",
             encoding="utf-8",
         )
+        # The `\\decl` macro definition is skipped; the `\\demo` macro's link and the body link
+        # are both checked, and only the body link (line 1) is wrong.
         checked, errors = pin_paper_links.check_links(self.root, worktree_only=True)
-        self.assertEqual(checked, 1)
+        self.assertEqual(checked, 2)
         self.assertEqual(len(errors), 1)
         self.assertIn("paper/main.tex", errors[0])
+        self.assertIn("Basic.lean:1", errors[0])
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required")

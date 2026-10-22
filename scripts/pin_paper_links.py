@@ -40,6 +40,7 @@ PIN_HINT = (
 class PinError(ValueError):
     """A link that cannot be re-pinned, with the .tex file and Lean path in the message."""
 
+
 ATTR_PREFIX = r"(?:@\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\s*)*"
 MODIFIERS = r"(?:(?:public|private|protected|noncomputable|unsafe|partial|nonrec|scoped|local)\s+)*"
 DECL_LINE_RE = re.compile(
@@ -142,9 +143,9 @@ def find_declaration_line(decls: dict[int, tuple[str, str]], expected: str) -> i
 
 
 def in_macro_definition(content: str, pos: int) -> bool:
-    """Whether `pos` lies on a `\\newcommand` line (the `\\decl`/`\\declat` macro definitions)."""
+    """Whether `pos` lies on the line defining the `\\decl` or `\\declat` macro."""
     line_start = content.rfind("\n", 0, pos) + 1
-    return content.startswith("\\newcommand", line_start)
+    return content.startswith(("\\newcommand{\\decl}", "\\newcommand{\\declat}"), line_start)
 
 
 def validate_pin_sha(sha: str, root: pathlib.Path = ROOT) -> None:
