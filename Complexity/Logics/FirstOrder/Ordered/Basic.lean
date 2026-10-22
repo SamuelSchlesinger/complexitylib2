@@ -68,6 +68,17 @@ inductive NumericFunction : ℕ → Type
 instance : Fintype (NumericFunction 0) :=
   ⟨{.zero, .one, .max}, by intro c; cases c <;> simp⟩
 
+/-- The natural index of a canonical numeric constant in a universe of size `m`. -/
+abbrev NumericFunction.index {k : ℕ} (c : NumericFunction k) (m : ℕ) : ℕ :=
+  match c with
+  | .zero => 0
+  | .one => 1
+  | .max => m - 1
+
+theorem NumericFunction.index_lt {k m : ℕ} (hm : 2 ≤ m) (c : NumericFunction k) :
+    c.index m < m := by
+  cases c <;> simp only [NumericFunction.index] <;> lia
+
 /-- Canonical order and zero-indexed binary digits. -/
 inductive NumericRelation : ℕ → Type
   /-- Weak natural order. -/
@@ -87,10 +98,7 @@ abbrev language (L : Language) : Language := L.sum numericLanguage
 /-- Canonical numeric semantics; the lower bound makes zero and one distinct elements. -/
 @[instance_reducible]
 def numericStructure {n : ℕ} (hn : 2 ≤ n) : numericLanguage.Structure (Fin n) where
-  funMap f _ := match f with
-    | .zero => ⟨0, by lia⟩
-    | .one => ⟨1, by lia⟩
-    | .max => ⟨n - 1, by lia⟩
+  funMap f _ := ⟨f.index n, f.index_lt hn⟩
   RelMap r x := match r with
     | .le => x 0 ≤ x 1
     | .bit => (x 0).val.testBit (x 1).val = true

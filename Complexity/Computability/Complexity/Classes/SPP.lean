@@ -27,7 +27,8 @@ ring operations: complement uses `1 - f`, intersection `f * g`, and union De Mor
 
 * `Cslib.Complexity.UP_subset_SPP`, `Cslib.Complexity.SPP_subset_CeqP`.
 * `Cslib.Complexity.compl_mem_SPP`, `Cslib.Complexity.inter_mem_SPP`,
-  `Cslib.Complexity.union_mem_SPP`, `Cslib.Complexity.PolyTimeReducible.mem_SPP`.
+  `Cslib.Complexity.union_mem_SPP`, `Cslib.Complexity.diff_mem_SPP`,
+  `Cslib.Complexity.symmDiff_mem_SPP`, `Cslib.Complexity.PolyTimeReducible.mem_SPP`.
 
 ## References
 
@@ -38,6 +39,8 @@ ring operations: complement uses `1 - f`, intersection `f * g`, and union De Mor
 @[expose] public section
 
 namespace Cslib.Complexity
+
+open scoped symmDiff
 
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α}
 
@@ -72,6 +75,15 @@ theorem inter_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∩ B ∈ SP
 theorem union_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∪ B ∈ SPP enc := by
   simpa [Set.compl_inter] using
     compl_mem_SPP (inter_mem_SPP (compl_mem_SPP hA) (compl_mem_SPP hB))
+
+/-- `SPP` is closed under set difference. -/
+theorem diff_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A \ B ∈ SPP enc :=
+  inter_mem_SPP hA (compl_mem_SPP hB)
+
+/-- `SPP` is closed under symmetric difference. -/
+theorem symmDiff_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∆ B ∈ SPP enc := by
+  rw [Set.symmDiff_def]
+  exact union_mem_SPP (diff_mem_SPP hA hB) (diff_mem_SPP hB hA)
 
 /-- Subtracting one turns the characteristic function into an exact-zero test. -/
 theorem SPP_subset_CeqP : SPP enc ⊆ CeqP enc := by

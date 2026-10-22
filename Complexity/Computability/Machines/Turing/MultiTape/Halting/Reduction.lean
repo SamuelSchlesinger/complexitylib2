@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Complexity.Reduction.ManyOne
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Computable
 
 /-!
@@ -46,10 +47,13 @@ Mathlib's `ManyOneReducible` is the analogous notion for Mathlib's partial recur
 
 namespace Turing.MultiTapeTM
 
+open Cslib.Complexity
+
 variable {α β γ : Type*}
 
 /-- `A` is mapping reducible to `B`: some function `f`, computable with respect to `encA` and
-`encB`, satisfies `a ∈ A ↔ f a ∈ B`. -/
+`encB`, satisfies `a ∈ A ↔ f a ∈ B`. This is `ManyOneReducibleBy` for the computable maps
+(`mappingReducible_iff_manyOneReducibleBy`). -/
 def MappingReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (A : Set α) (B : Set β) :
     Prop :=
   ∃ f : α → β, IsComputable f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
@@ -57,32 +61,33 @@ def MappingReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (A : Se
 variable {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
   {A : Set α} {B : Set β} {C : Set γ}
 
+/-- Mapping reducibility is many-one reducibility by computable maps. -/
+theorem mappingReducible_iff_manyOneReducibleBy :
+    MappingReducible encA encB A B ↔ ManyOneReducibleBy (IsComputable · encA encB) A B :=
+  Iff.rfl
+
 /-- Every set reduces to itself by the identity. -/
 @[refl]
 theorem MappingReducible.refl (encA : α ↪ List Bool) (A : Set α) :
     MappingReducible encA encA A A :=
-  ⟨id, isComputable_id encA, fun _ => Iff.rfl⟩
+  ManyOneReducibleBy.refl (isComputable_id encA) A
 
 /-- **Mapping reductions compose.** -/
 @[trans]
 theorem MappingReducible.trans (hAB : MappingReducible encA encB A B)
     (hBC : MappingReducible encB encC B C) : MappingReducible encA encC A C :=
-  let ⟨f, hf, hAB⟩ := hAB
-  let ⟨g, hg, hBC⟩ := hBC
-  ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hBC (f a))⟩
+  ManyOneReducibleBy.trans (fun _ _ hf hg => hg.comp hf) hAB hBC
 
 /-- A reduction from `A` to `B` is also a reduction from `Aᶜ` to `Bᶜ`. -/
 theorem MappingReducible.compl (h : MappingReducible encA encB A B) :
     MappingReducible encA encB Aᶜ Bᶜ :=
-  let ⟨f, hf, hAB⟩ := h
-  ⟨f, hf, fun a => not_congr (hAB a)⟩
+  ManyOneReducibleBy.compl h
 
 /-- **Decidability transfers backwards along mapping reductions.** -/
 theorem IsDecidable.of_mappingReducible (hB : IsDecidable B encB)
     (h : MappingReducible encA encB A B) : IsDecidable A encA :=
-  let ⟨f, hf, hAB⟩ := h
-  let ⟨g, hg, hB⟩ := hB.exists_isComputable
-  isDecidable_iff.mpr ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hB (f a))⟩
+  isDecidable_iff.mpr
+    (ManyOneReducibleBy.trans (C := {true}) (fun _ _ hf hg => hg.comp hf) h hB.exists_isComputable)
 
 /-- **Undecidability transfers forwards along mapping reductions.** -/
 theorem MappingReducible.not_isDecidable (h : MappingReducible encA encB A B)

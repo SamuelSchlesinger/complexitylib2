@@ -56,16 +56,6 @@ namespace Cslib.Logic.FO.Ordered
 
 open FirstOrder Language Structure
 
-/-- The natural index of a canonical numeric constant in a universe of size `m`. -/
-def NumericFunction.index : NumericFunction 0 → ℕ → ℕ
-  | .zero, _ => 0
-  | .one, _ => 1
-  | .max, m => m - 1
-
-theorem NumericFunction.index_lt {m : ℕ} (hm : 2 ≤ m) (c : NumericFunction 0) :
-    c.index m < m := by
-  cases c <;> simp only [NumericFunction.index] <;> lia
-
 namespace DomainInterpretation
 
 variable {L L' : Language} {k : ℕ}

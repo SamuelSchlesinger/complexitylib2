@@ -110,6 +110,11 @@ isomorphism. -/
 theorem isoClosed (h : QFReduces K K') (hK' : IsoClosed K') : IsoClosed K :=
   h.reduces.isoClosed hK'
 
+/-- A quantifier-free reduction from `K` to `K'` is also a reduction from `Kᶜ` to `K'ᶜ`. -/
+theorem compl (h : QFReduces K K') : QFReduces Kᶜ K'ᶜ :=
+  let ⟨ι, hι, I, hIqf, hI⟩ := h
+  ⟨ι, hι, I, hIqf, fun M _ => not_congr (hI M)⟩
+
 /-- A quantifier-free reduction through a one-dimensional interpretation whose domain formula
 holds of every element of every finite structure, to a class closed under isomorphism, stated on
 the input universe. -/

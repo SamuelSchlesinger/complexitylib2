@@ -130,35 +130,48 @@ end ManyOneReducibleBy
 
 section Hardness
 
-variable {R R' : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop}
-  {𝒞 𝒟 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+variable {P : Type → Type u} {Q : Type v} {Q' : Type w}
 
 /-- `B` is hard for the class `𝒞` under the reducibility `R`: every problem in `𝒞`, with any
 encoding `enc` of its instances, reduces to `B`, in that `R enc A B`. -/
-def HardUnder (R : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop)
-    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (B : Set β) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒞 enc → R enc A B
+def HardUnder (R : ∀ {α : Type}, (α ↪ List Bool) → P α → Q → Prop)
+    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)) (B : Q) : Prop :=
+  ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), A ∈ 𝒞 enc → R enc A B
 
 /-- `B` is complete for the class `𝒞` under the reducibility `R`: it is in `𝒞`, with the encoding
 `encB`, and is `𝒞`-hard under `R`. -/
-def CompleteUnder {β : Type} (R : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop)
-    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (encB : β ↪ List Bool) (B : Set β) :
+def CompleteUnder {β : Type} (R : ∀ {α : Type}, (α ↪ List Bool) → P α → P β → Prop)
+    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)) (encB : β ↪ List Bool) (B : P β) :
     Prop :=
   B ∈ 𝒞 encB ∧ HardUnder @R @𝒞 B
 
 /-- A weaker reducibility preserves hardness. -/
-theorem HardUnder.mono
-    (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), R enc A B → R' enc A B)
+theorem HardUnder.mono {R R' : ∀ {α : Type}, (α ↪ List Bool) → P α → Q → Prop}
+    {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)} {B : Q}
+    (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → R' enc A B)
     (hB : HardUnder @R @𝒞 B) : HardUnder @R' @𝒞 B :=
   fun enc A hA => hR enc A (hB enc A hA)
 
 /-- **Hardness transfers along a reduction** `S B C` that composes with `R`-reductions to `B` into
 `R'`-reductions to `C`. -/
-theorem HardUnder.trans {R' : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set γ → Prop}
-    {S : Set β → Set γ → Prop} {C : Set γ}
-    (hRS : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), R enc A B → S B C → R' enc A C)
+theorem HardUnder.trans {R : ∀ {α : Type}, (α ↪ List Bool) → P α → Q → Prop}
+    {R' : ∀ {α : Type}, (α ↪ List Bool) → P α → Q' → Prop}
+    {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)}
+    {S : Q → Q' → Prop} {B : Q} {C : Q'}
+    (hRS : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → S B C → R' enc A C)
     (hB : HardUnder @R @𝒞 B) (hBC : S B C) : HardUnder @R' @𝒞 C :=
   fun enc A hA => hRS enc A (hB enc A hA) hBC
+
+/-- A weaker reducibility preserves completeness. -/
+theorem CompleteUnder.mono {β : Type}
+    {R R' : ∀ {α : Type}, (α ↪ List Bool) → P α → P β → Prop}
+    {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)} {encB : β ↪ List Bool}
+    {B : P β} (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → R' enc A B)
+    (hB : CompleteUnder @R @𝒞 encB B) : CompleteUnder @R' @𝒞 encB B :=
+  ⟨hB.1, HardUnder.mono hR hB.2⟩
+
+variable {R : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop}
+  {𝒞 𝒟 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
 
 /-- If `R` relates complements and the complement of every problem in `𝒟` is in `𝒞`, the
 complement of a `𝒞`-hard problem is `𝒟`-hard. -/
@@ -166,13 +179,6 @@ theorem HardUnder.compl (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set 
     R enc Aᶜ Bᶜ) (h𝒟𝒞 : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒟 enc → Aᶜ ∈ 𝒞 enc)
     (hB : HardUnder @R @𝒞 B) : HardUnder @R @𝒟 Bᶜ :=
   fun enc A hA => compl_compl A ▸ hR enc Aᶜ (hB enc Aᶜ (h𝒟𝒞 enc A hA))
-
-/-- A weaker reducibility preserves completeness. -/
-theorem CompleteUnder.mono {β : Type}
-    {R R' : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop} {encB : β ↪ List Bool}
-    {B : Set β} (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), R enc A B → R' enc A B)
-    (hB : CompleteUnder @R @𝒞 encB B) : CompleteUnder @R' @𝒞 encB B :=
-  ⟨hB.1, HardUnder.mono hR hB.2⟩
 
 /-- If `R` relates complements and the problems in `𝒟` are exactly the complements of the
 problems in `𝒞`, the complement of a `𝒞`-complete problem is `𝒟`-complete. -/

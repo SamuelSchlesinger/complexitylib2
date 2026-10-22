@@ -239,16 +239,14 @@ private theorem finset_prod_mem_GapP {ι : Type*} (s : Finset ι) {f : ι → α
     ext a
     exact Finset.prod_insert hi
 
-/-- **Finite multiple-target robustness for `WPP`:** a `GapP` function that takes `0` outside `A`
-and one of a fixed finite family of nonzero polynomial-time targets on `A` witnesses `A ∈ WPP`
-(the fixed-`Finset` case of the product interpolation in
-[Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018]). -/
-theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} {f : ι → α → ℤ}
+private theorem finsetTargetWitness {ι : Type*} (s : Finset ι) {g : α → ℤ} {f : ι → α → ℤ}
     (hg : g ∈ GapP enc)
     (hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin)
     (hn : ∀ i ∈ s, ∀ a, f i a ≠ 0)
     (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i a)
-    (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i a) : A ∈ WPP enc := by
+    (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i a) :
+    ∃ G ∈ GapP enc, (∀ a, G a = 0 ∨ G a = ∏ i ∈ s, f i a) ∧
+      ∀ a, a ∈ A ↔ G a = ∏ i ∈ s, f i a := by
   let F : α → ℤ := fun a => ∏ i ∈ s, f i a
   let P : α → ℤ := fun a => ∏ i ∈ s, (f i a - g a)
   have hF : ComputableTidilyInPolyTime F enc encIntBin := finset_prod_intBin s hf
@@ -260,14 +258,14 @@ theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} 
   have hP_mem {a : α} (hmem : ∃ i ∈ s, g a = f i a) : P a = 0 := by
     obtain ⟨i, hi, hgi⟩ := hmem
     exact Finset.prod_eq_zero hi (by lia)
-  refine ⟨F - P, GapP.sub_mem' (GapP.of_polyTime hF) hP, F, hF, hFn, fun a => ?_, fun a => ?_⟩
+  refine ⟨F - P, GapP.sub_mem' (GapP.of_polyTime hF) hP, fun a => ?_, fun a => ?_⟩
   · rcases hr a with hz | hmem
-    · exact Or.inl (by simp [hP_zero hz])
-    · exact Or.inr (by simp [hP_mem hmem])
+    · exact Or.inl (by simp [F, hP_zero hz])
+    · exact Or.inr (by simp [F, hP_mem hmem])
   · rw [hA a]
     constructor
     · intro hmem
-      simp [hP_mem hmem]
+      simp [F, hP_mem hmem]
     · intro hFP
       rcases hr a with hz | hmem
       · exfalso
@@ -276,6 +274,20 @@ theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} 
         have hEq : F a - P a = F a := hFP
         lia
       · exact hmem
+
+/-- **Finite multiple-target robustness for `WPP`:** a `GapP` function that takes `0` outside `A`
+and one of a fixed finite family of nonzero polynomial-time targets on `A` witnesses `A ∈ WPP`
+(the fixed-`Finset` case of the product interpolation in
+[Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018]). -/
+theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} {f : ι → α → ℤ}
+    (hg : g ∈ GapP enc)
+    (hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin)
+    (hn : ∀ i ∈ s, ∀ a, f i a ≠ 0)
+    (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i a)
+    (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i a) : A ∈ WPP enc := by
+  obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg hf hn hr hA
+  exact ⟨G, hG, _, finset_prod_intBin s hf,
+    fun a => Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi a, hR, hGA⟩
 
 /-- **Finite multiple-target robustness for `LWPP`:** a `GapP` function that takes `0` outside `A`
 and one of a fixed finite family of nonzero length-dependent polynomial-time targets on `A`
@@ -287,36 +299,11 @@ theorem mem_LWPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ}
     (hn : ∀ i ∈ s, ∀ n, f i n ≠ 0)
     (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i (enc a).length)
     (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i (enc a).length) : A ∈ LWPP enc := by
-  let F : ℕ → ℤ := fun n => ∏ i ∈ s, f i n
-  let P : α → ℤ := fun a => ∏ i ∈ s, (f i (enc a).length - g a)
-  have hF : ComputableTidilyInPolyTime F encUnary encIntBin := finset_prod_intBin s hf
-  have hFn (n : ℕ) : F n ≠ 0 := Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi n
-  have hP : P ∈ GapP enc :=
-    finset_prod_mem_GapP s fun i hi =>
-      GapP.sub_mem' (GapP.of_polyTime ((hf i hi).comp (.encoding_length enc))) hg
-  have hP_zero {a : α} (hz : g a = 0) : P a = F (enc a).length := by
-    simp [P, F, hz]
-  have hP_mem {a : α} (hmem : ∃ i ∈ s, g a = f i (enc a).length) : P a = 0 := by
-    obtain ⟨i, hi, hgi⟩ := hmem
-    exact Finset.prod_eq_zero hi (by lia)
-  refine ⟨(fun a => F (enc a).length) - P,
-    GapP.sub_mem' (GapP.of_polyTime (hF.comp (.encoding_length enc))) hP,
-    F, hF, hFn, fun a => ?_, fun a => ?_⟩
-  · rcases hr a with hz | hmem
-    · exact Or.inl (by simp [hP_zero hz])
-    · exact Or.inr (by simp [hP_mem hmem])
-  · rw [hA a]
-    constructor
-    · intro hmem
-      simp [hP_mem hmem]
-    · intro hFP
-      rcases hr a with hz | hmem
-      · exfalso
-        apply hFn (enc a).length
-        have : F (enc a).length - P a = 0 := by simp [hP_zero hz]
-        have hEq : F (enc a).length - P a = F (enc a).length := hFP
-        lia
-      · exact hmem
+  obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg
+    (fun i hi => (hf i hi).comp (.encoding_length enc))
+    (fun i hi a => hn i hi (enc a).length) hr hA
+  exact ⟨G, hG, fun n => ∏ i ∈ s, f i n, finset_prod_intBin s hf,
+    fun n => Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi n, hR, hGA⟩
 
 /-! ### Unary-indexed target normalization and `LWPP` reduction closure -/
 
