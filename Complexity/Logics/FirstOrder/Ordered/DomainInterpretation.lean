@@ -25,10 +25,11 @@ The canonical numerics of the image are those of `Fin m`; nothing about their de
 assumed at this level. A first-order query on ordered structures must include first-order
 definitions of the target numerics [Immerman1999, Remark 1.32], and without the assumption that
 the domain formula is `true`, target `BIT` need not be first-order definable in the image
-[Immerman1999, the paragraph after Exercise 1.33]. These semantic maps are therefore strictly more
-general than Immerman's first-order queries. His numeric definitions are the certificates of
-`Ordered.DomainInterpretation.Certificate`, which first-order reductions (`Ordered.Reduction`)
-require.
+[Immerman1999, the paragraph after Exercise 1.33]. These semantic maps are therefore more general
+than Immerman's first-order queries: his parity example shows that an image whose numerics are
+not certified need not be a first-order query. The example is cited, not formalized. His numeric
+definitions are the certificates of `Ordered.DomainInterpretation.Certificate`, which first-order
+reductions (`Ordered.Reduces`) require.
 
 An ordered target structure needs at least two elements [Immerman1999, Proviso 1.15]. An
 interpretation is *admissible* when its domain has at least two tuples in every source. This is the
@@ -44,10 +45,12 @@ domains.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.inputStructure`: the target relations on ranks.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.Admissible`: at least two domain tuples everywhere.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.map`: the image of a source structure.
+* `Cslib.Logic.FO.Ordered.DomainInterpretation.toFOInterpretation`: the same formulas as an
+  order-free interpretation.
+* `Cslib.Logic.FO.Ordered.IsDomainMap`: the images of admissible interpretations.
 
 ## Main results
 
-* `Cslib.Logic.FO.Ordered.Structure.ext`: equality of ordered structures through a size cast.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.lexRank_unrank_lt_lexRank_unrank_iff`: ranks
   number domain tuples in lexicographic order.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.card_filter_lt_unrank`: the rank of a domain
@@ -70,27 +73,6 @@ namespace Cslib.Logic.FO.Ordered
 
 open FirstOrder Language Structure
 
-/-- Applying an increasing map to every coordinate preserves lexicographic order. -/
-theorem lexRank_comp_lt_lexRank_comp_iff {n n' k : ℕ} {f : Fin n → Fin n'} (hf : StrictMono f)
-    (x y : Fin k → Fin n) : lexRank (f ∘ x) < lexRank (f ∘ y) ↔ lexRank x < lexRank y := by
-  simp only [lexRank_lt_iff, Function.comp_apply, hf.lt_iff_lt, hf.injective.eq_iff]
-
-/-- Ordered structures over a relational language are equal when their sizes are and the size
-cast preserves every relation. -/
-theorem Structure.ext {L : Language} [L.IsRelational] {M N : Structure L} (h : M.size = N.size)
-    (hrel : ∀ {r} (R : L.Relations r) (x : Fin r → Fin M.size),
-      RelMap R x ↔ RelMap R (Fin.cast h ∘ x)) : M = N := by
-  obtain ⟨m, hm, s⟩ := M
-  obtain ⟨n, hn, t⟩ := N
-  change m = n at h
-  subst h
-  congr 1
-  apply FirstOrder.Language.Structure.ext
-  · funext r f
-    exact isEmptyElim f
-  · funext r R x
-    exact propext (hrel R x)
-
 /-- An ordered interpretation of dimension `k` of `L'` in `L`: a domain formula on `k`-tuples, and
 for each relation symbol of `L'` a formula with a block of `k` variables per argument. All formulas
 are over the canonically ordered source language. -/
@@ -103,6 +85,12 @@ structure DomainInterpretation (L L' : Language) (k : ℕ) where
 namespace DomainInterpretation
 
 variable {L L' : Language} {k : ℕ} (I : DomainInterpretation L L' k) (M : Structure L)
+
+/-- The same formulas, as an order-free interpretation of `L'` in the canonically ordered source
+language, with tuples of `Fin k` as domain elements. -/
+def toFOInterpretation : Interpretation (language L) L' (Fin k) where
+  domain := I.domain
+  rel := I.rel
 
 open scoped Classical in
 /-- The lexicographic ranks, among all `k`-tuples, of the domain tuples. -/
@@ -297,5 +285,15 @@ theorem relMap_map (hI : I.Admissible) {r : ℕ} (R : L'.Relations r) (x : Fin r
   Iff.rfl
 
 end DomainInterpretation
+
+/-- The maps between ordered structures given by admissible ordered interpretations with a domain
+formula, with no numeric certificate. -/
+def IsDomainMap {L L' : Language} [L'.IsRelational] (f : Structure L → Structure L') : Prop :=
+  ∃ (k : ℕ) (I : DomainInterpretation L L' k) (hI : I.Admissible), f = I.map hI
+
+/-- The image of an admissible interpretation is a domain map. -/
+theorem DomainInterpretation.isDomainMap {L L' : Language} [L'.IsRelational] {k : ℕ}
+    {I : DomainInterpretation L L' k} (hI : I.Admissible) : IsDomainMap (I.map hI) :=
+  ⟨k, I, hI, rfl⟩
 
 end Cslib.Logic.FO.Ordered

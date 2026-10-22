@@ -36,6 +36,8 @@ dimension therefore give first-order reductions.
   maps agree.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.isFirstOrderMap_map_toDomainInterpretation`:
   full-tuple images are first-order maps.
+* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.reduces`: full-tuple interpretations of positive
+  dimension give first-order reductions.
 
 ## References
 
@@ -48,23 +50,6 @@ dimension therefore give first-order reductions.
 namespace Cslib.Logic.FO.Ordered
 
 open FirstOrder Language Structure
-
-/-- Encodings along the identity numbering agree when a size cast preserves every relation. -/
-private theorem encode_congr {L' : Language} [L'.IsRelational] (v' : Vocabulary L') {m₁ m₂ : ℕ}
-    (h : m₁ = m₂) (S₁ : L'.Structure (Fin m₁)) (S₂ : L'.Structure (Fin m₂))
-    (hrel : ∀ {r} (R : L'.Relations r) (x : Fin r → Fin m₁),
-      S₁.RelMap R x ↔ S₂.RelMap R (Fin.cast h ∘ x)) :
-    @Vocabulary.encode L' v' (Fin m₁) S₁ m₁ (Equiv.refl _) =
-      @Vocabulary.encode L' v' (Fin m₂) S₂ m₂ (Equiv.refl _) := by
-  subst h
-  have hS : S₁ = S₂ := by
-    apply FirstOrder.Language.Structure.ext
-    · funext r f
-      exact isEmptyElim f
-    · funext r R x
-      exact propext (hrel R x)
-  subst hS
-  rfl
 
 namespace FullTupleInterpretation
 
@@ -149,6 +134,14 @@ theorem isFirstOrderMap_map_toDomainInterpretation (hk : 0 < k) :
     IsFirstOrderMap (I.toDomainInterpretation.map (admissible_toDomainInterpretation hk)) :=
   DomainInterpretation.isFirstOrderMap _ (I.certificate hk)
 
+/-- **Full-tuple interpretations give first-order reductions.** A full-tuple interpretation of
+positive dimension that maps exactly the members of `K` into `K'` reduces `K` to `K'`. -/
+theorem reduces (hk : 0 < k) {K : Query L} {K' : Query L'}
+    (h : ∀ M, M ∈ K ↔
+      I.toDomainInterpretation.map (I.admissible_toDomainInterpretation hk) M ∈ K') :
+    Reduces K K' :=
+  Reduces.of_interpretation _ (I.certificate hk) h
+
 /-- **The encoded maps agree**: the full-tuple encoded map is that of the embedded interpretation,
 for every dimension and every input. -/
 theorem encodedMap_toDomainInterpretation [L.IsRelational] (v : Vocabulary L)
@@ -157,7 +150,11 @@ theorem encodedMap_toDomainInterpretation [L.IsRelational] (v : Vocabulary L)
   by_cases h : v.WellFormed a ∧ 2 ≤ a.1
   · rw [DomainInterpretation.encodedMap_of_admissible _ v v' h.1 h.2,
       I.encodedMap_of_admissible v v' h.1 h.2]
-    refine encode_congr v' (card_toDomainInterpretation (decoded v a h.2)) _ _ fun R x => ?_
+    let _ : Fact (2 ≤ a.1) := ⟨h.2⟩
+    let _ := v.decode a
+    let _ := I.toDomainInterpretation.inputStructure (decoded v a h.2)
+    let _ := I.inputStructure (n := a.1)
+    refine v'.encode_congr _ _ (card_toDomainInterpretation (decoded v a h.2)) fun R x => ?_
     change (I.rel R).Realize
       (fun p => I.toDomainInterpretation.unrank (decoded v a h.2) (x p.1) p.2) ↔ _
     simp only [unrank_toDomainInterpretation]

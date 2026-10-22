@@ -15,6 +15,9 @@ The client is a two-dimensional interpretation of directed graphs whose domain i
 pairs `(0, y)`. Its rank is `y`, so the target order, `BIT` and constants are defined from the
 source numerics on the second coordinate: a genuine numeric certificate for a restricted domain.
 It reverses every edge, and so reduces "an edge from `max` to `0`" to "an edge from `0` to `max`".
+Its ranks equal a coordinate, so the domain does not depend on the input relations;
+`ComplexityTests/OrderedReduction.lean` covers an input-dependent domain for the logspace
+computation of the encoded map, which needs no certificate.
 
 An interpretation whose domain has a single tuple is not admissible, and its encoded image does not
 decode.
@@ -153,6 +156,9 @@ example : Reduces edgeMaxZero edgeMaxZero :=
 
 example : Reduces edgeZeroMax edgeZeroMax := Reduces.refl _
 
+/-- `Reduces.refl` is a `@[refl]` lemma. -/
+example : Reduces edgeZeroMax edgeZeroMax := by rfl
+
 example : Reduces edgeMaxZeroᶜ edgeZeroMaxᶜ := reduces_edgeMaxZero_edgeZeroMax.compl
 
 /-- A concrete vocabulary for graphs. -/
@@ -224,6 +230,12 @@ example : pairs.toDomainInterpretation.encodedMap graphVocabulary graphVocabular
     pairs.encodedMap graphVocabulary graphVocabulary :=
   pairs.encodedMap_toDomainInterpretation graphVocabulary graphVocabulary
 
+/-- A positive-dimensional full-tuple interpretation reduces the pullback of any query. -/
+example (K' : Query Language.graph) :
+    Reduces {M | pairs.toDomainInterpretation.map
+      (FullTupleInterpretation.admissible_toDomainInterpretation (by decide)) M ∈ K'} K' :=
+  pairs.reduces (by decide) fun _ => Iff.rfl
+
 /-! ### First-order reductions are logspace reductions -/
 
 /-- The restricted-domain reduction gives a logspace reduction of the encoded queries. -/
@@ -237,6 +249,16 @@ example : Cslib.Complexity.LogSpaceReducible encStructure encStructure
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible
+
+/-- info: 'Cslib.Logic.FO.Ordered.IsDomainMap.exists_computableInLogSpace' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Ordered.IsDomainMap.exists_computableInLogSpace
+
+/-- info: 'Cslib.Logic.FO.Ordered.FullTupleInterpretation.reduces' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Ordered.FullTupleInterpretation.reduces
 
 /-- info: 'Cslib.Logic.FO.Ordered.DomainInterpretation.decode?_encodedMap' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

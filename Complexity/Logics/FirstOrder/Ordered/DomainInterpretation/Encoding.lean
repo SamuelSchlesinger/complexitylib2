@@ -65,8 +65,8 @@ theorem decode?_of_not_admissible (v : Vocabulary L) {a : EncodedStructure}
 
 /-- Canonical encodings decode to their structures. -/
 @[simp] theorem decode?_encode (v : Vocabulary L) (M : Structure L) :
-    decode? v (encode v M) = some M := by
-  exact (decode?_of_admissible v (v.wellFormed_encode M (Equiv.refl _)) M.size_ge_two).trans
+    decode? v (encode v M) = some M :=
+  (decode?_of_admissible v (v.wellFormed_encode M (Equiv.refl _)) M.size_ge_two).trans
     (congrArg some (decoded_encode v M))
 
 theorem decode?_eq_some_iff (v : Vocabulary L) {a : EncodedStructure} {M : Structure L} :

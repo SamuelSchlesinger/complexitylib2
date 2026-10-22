@@ -49,16 +49,6 @@ namespace Cslib.Logic.FO.Ordered
 
 open FirstOrder Language Structure
 
-/-- Flattening the blocks of a tuple recovers it. -/
-theorem flattenTuple_finProdFinEquiv {α : Type*} {k l : ℕ} (x : Fin (l * k) → α) :
-    (flattenTuple fun j i => x (finProdFinEquiv (j, i))) = x := by
-  funext a
-  simp only [flattenTuple, Prod.mk.eta, Equiv.apply_symm_apply]
-
-theorem flattenTuple_finProdFinEquiv_apply {α : Type*} {k l : ℕ} (x : Fin l → Fin k → α)
-    (p : Fin l × Fin k) : flattenTuple x (finProdFinEquiv p) = x p.1 p.2 :=
-  flattenTuple_apply x p.1 p.2
-
 namespace DomainInterpretation
 
 variable {L L' L'' : Language} {k l : ℕ} [L'.IsRelational]

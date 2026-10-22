@@ -12,7 +12,6 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Tr
 public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.DomainInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.Reduction
-import Complexity.Computability.Complexity.Reduction.ManyOne
 
 /-!
 # Ordered interpretations in logarithmic space
@@ -38,6 +37,8 @@ A full-tuple interpretation is the instance with domain `⊤`, through
   the output of the domain-counting transducer.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap`: ordered
   interpretations with a domain formula are computed in logarithmic space.
+* `Cslib.Logic.FO.Ordered.IsDomainMap.exists_computableInLogSpace`: domain maps are simulated by
+  logspace maps of encodings, the hypothesis of `Cslib.Complexity.ManyOneReducibleBy.lift`.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible`: admissible interpretations
   reducing one ordered query to another induce logspace reductions of their encodings.
 * `Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible`: **first-order reductions are logspace
@@ -65,21 +66,6 @@ namespace Cslib.Logic.FO.Ordered
 open Vocabulary.ModelChecker
 open FO.Interpretation (modelCard rankEquiv rankEquiv_apply_val domainRank_mono)
 
-/-- Encodings agree when the numberings have equal sizes and the size cast preserves every
-relation. -/
-private theorem encode_congr {L : Language} (v : Vocabulary L) {M N : Type} [L.Structure M]
-    [L.Structure N] {m n : ℕ} (e₁ : M ≃ Fin m) (e₂ : N ≃ Fin n) (h : m = n)
-    (hrel : ∀ {r} (R : L.Relations r) (x : Fin r → Fin m),
-      RelMap R (e₁.symm ∘ x) ↔ RelMap R (e₂.symm ∘ Fin.cast h ∘ x)) :
-    v.encode M e₁ = v.encode N e₂ := by
-  subst h
-  simp only [Vocabulary.encode, Vocabulary.relTable]
-  congr 2
-  funext i
-  congr 1
-  funext j
-  exact decide_eq_decide.mpr (hrel _ _)
-
 namespace ModelChecker
 
 variable {L : Language} [L.IsRelational] (v : Vocabulary L)
@@ -93,7 +79,7 @@ def formulaCompiler : FormulaCompiler v (language L) where
     letI : Fact (2 ≤ _) := ⟨hn⟩
     inferInstance
   atomic := atomicCompiler v
-  correct {a} ha hn _ fv base val :=
+  atomic_correct {a} ha hn _ fv base val :=
     letI : Fact (2 ≤ a.1) := ⟨hn⟩
     atomicCompiler_correct ha fv base val
 
@@ -103,12 +89,6 @@ namespace DomainInterpretation
 
 variable {L L' : Language} [L.IsRelational] [L'.IsRelational] {k : ℕ}
   (I : DomainInterpretation L L' k) (v : Vocabulary L) (v' : Vocabulary L')
-
-/-- The same formulas, as a first-order interpretation from the canonically ordered source
-language. -/
-def toFOInterpretation : Interpretation (language L) L' (Fin k) where
-  domain := I.domain
-  rel := I.rel
 
 /-- The encoded image is the output of the domain-counting transducer with the ordered formula
 compiler, numbering coordinates in reverse so that tuple indices are lexicographic ranks. -/
@@ -142,7 +122,7 @@ theorem encodedMap_eq_encodedMapWith :
         have := Fin.lt_def.mp hij
         omega)
     let _ := I.inputStructure M
-    refine encode_congr v' _ _ hc fun R x => ?_
+    refine v'.encode_congr _ _ hc fun R x => ?_
     change (I.rel R).Realize (fun p => I.unrank M (x p.1) p.2) ↔
       (I.rel R).Realize (fun p => g (Fin.cast hc (x p.1)) p.2)
     simp only [hu]
@@ -158,39 +138,50 @@ theorem computableInLogSpace_encodedMap :
   rw [encodedMap_eq_encodedMapWith]
   exact I.toFOInterpretation.computableInLogSpace_encodedMapWith _ v' _
 
+end DomainInterpretation
+
+variable {L L' : Language} [L.IsRelational] [L'.IsRelational] (v : Vocabulary L)
+  (v' : Vocabulary L')
+
+/-- **Domain maps are simulated in logarithmic space.** Every image map of an admissible ordered
+interpretation with a domain formula is simulated, through partial decoding, by a map of encodings
+computable in logarithmic space: its encoded map. -/
+theorem IsDomainMap.exists_computableInLogSpace {f : Structure L → Structure L'}
+    (hf : IsDomainMap f) :
+    ∃ F, MultiTapeTM.ComputableInLogSpace F encStructure encStructure ∧
+      ∀ a, decode? v' (F a) = (decode? v a).map f :=
+  let ⟨_, I, hI, hf⟩ := hf
+  ⟨I.encodedMap v v', I.computableInLogSpace_encodedMap v v', hf ▸ I.decode?_encodedMap v v' hI⟩
+
 /-- **Ordered interpretations are logspace reductions.** An admissible ordered interpretation with
 a domain formula whose image map reduces the query `K` to `K'` induces a logspace many-one
 reduction between their encoded query languages. -/
-theorem logSpaceReducible (hI : I.Admissible) {K : Query L} {K' : Query L'}
-    (hK : ∀ M, M ∈ K ↔ I.map hI M ∈ K') :
+theorem DomainInterpretation.logSpaceReducible {k : ℕ} (I : DomainInterpretation L L' k)
+    (hI : I.Admissible) {K : Query L} {K' : Query L'} (hK : ∀ M, M ∈ K ↔ I.map hI M ∈ K') :
     Complexity.LogSpaceReducible encStructure encStructure (K.encodedLanguage v)
       (K'.encodedLanguage v') := by
-  have hmap : Complexity.ManyOneReducibleBy (fun f => f = I.map hI) K K' := ⟨I.map hI, rfl, hK⟩
-  have h := hmap.lift
-    (Good' := fun F => MultiTapeTM.ComputableInLogSpace F encStructure encStructure)
-    (decode? v) (decode? v')
-    (fun f (hf : f = I.map hI) => ⟨I.encodedMap v v', I.computableInLogSpace_encodedMap v v',
-      fun a => hf ▸ I.decode?_encodedMap v v' hI a⟩)
-  rw [Query.encodedLanguage_eq, Query.encodedLanguage_eq]
-  obtain ⟨F, hF, hiff⟩ := h
-  exact ⟨F, hF, hiff⟩
-
-end DomainInterpretation
+  rw [K.encodedLanguage_eq, K'.encodedLanguage_eq]
+  exact Complexity.logSpaceReducible_iff_manyOneReducibleBy.mpr <|
+    Complexity.ManyOneReducibleBy.lift (decode? v) (decode? v')
+      (fun _ hf => IsDomainMap.exists_computableInLogSpace v v' hf) ⟨_, I.isDomainMap hI, hK⟩
 
 namespace Reduces
 
-variable {L L' : Language} [L.IsRelational] [L'.IsRelational] (v : Vocabulary L)
-  (v' : Vocabulary L') {K : Query L} {K' : Query L'}
+variable {K : Query L} {K' : Query L'}
 
-/-- **First-order reductions are logspace reductions** [Immerman1999, Proposition 3.10 and the
-remark after Definition 2.14]: a first-order reduction of the ordered query `K` to `K'` induces a
+/-- **First-order reductions are logspace reductions** [Immerman1999, Theorem 3.1 and the remark
+after Definition 2.14]: a first-order reduction of the ordered query `K` to `K'` induces a
 logspace many-one reduction between their encoded query languages. The numeric certificate of the
-reduction is not used; the transducer computes ranks by counting. -/
+reduction is not used; the transducer computes ranks by counting. The closure of `L` and `P` under
+first-order reductions, `encodedLanguage_mem_L` and `encodedLanguage_mem_P`, are the corollaries of
+[Immerman1999, Proposition 3.10]. -/
 theorem logSpaceReducible (h : Reduces K K') :
     Complexity.LogSpaceReducible encStructure encStructure (K.encodedLanguage v)
       (K'.encodedLanguage v') := by
-  obtain ⟨_, ⟨_, I, hI, _, rfl⟩, hK⟩ := h
-  exact I.logSpaceReducible v v' hI hK
+  rw [K.encodedLanguage_eq, K'.encodedLanguage_eq]
+  exact Complexity.logSpaceReducible_iff_manyOneReducibleBy.mpr <|
+    (Complexity.ManyOneReducibleBy.mono (fun _ hf => IsFirstOrderMap.isDomainMap hf) h).lift
+      (decode? v) (decode? v') fun _ hf => IsDomainMap.exists_computableInLogSpace v v' hf
 
 /-- Encoded ordered queries in `L` are closed under first-order reductions. -/
 theorem encodedLanguage_mem_L (h : Reduces K K')
@@ -209,8 +200,6 @@ end Reduces
 end Cslib.Logic.FO.Ordered
 
 namespace Cslib.Logic.FO.Ordered.FullTupleInterpretation
-
-
 
 variable {L L' : Language} [L.IsRelational] [L'.IsRelational] {k : ℕ}
   (I : FullTupleInterpretation L L' k) (v : Vocabulary L) (v' : Vocabulary L')

@@ -75,7 +75,7 @@ structure FormulaCompiler {L : Language.{u, v}} [L.IsRelational] (v : Vocabulary
   /-- The atomic handlers, for free variables in registers `fv` and bound variables from `base`. -/
   atomic : ∀ {α : Type}, (α → ℕ) → ℕ → AtomicCompiler Ls α
   /-- The handlers realize the expanded structure on well-formed admissible inputs. -/
-  correct : ∀ {a : EncodedStructure}, v.WellFormed a → ∀ (hn : minCard ≤ a.1) {α : Type}
+  atomic_correct : ∀ {a : EncodedStructure}, v.WellFormed a → ∀ (hn : minCard ≤ a.1) {α : Type}
     (fv : α → ℕ) (base : ℕ) (val : α → Fin a.1),
     letI := expand hn (v.decode a)
     (atomic fv base).Correct (encStructure a) fv base val
@@ -911,7 +911,7 @@ theorem computableInLogSpace_encodedMapWith :
         refine Reaches.lt hguard' hB ?_
         simp only [eval_reg, eval_const, h0 ha, Nat.not_lt.mpr hn, ↓reduceIte]
         exact Reaches.refl _
-      obtain ⟨rs₁, hscanRun, hlen₁, h0₁, h3₁, hB₁⟩ := reachesOut_scanCode (C.correct ha hn)
+      obtain ⟨rs₁, hscanRun, hlen₁, h0₁, h3₁, hB₁⟩ := reachesOut_scanCode (C.atomic_correct ha hn)
         hscan hnB hNB rs (h0 ha) (by rw [hlen, List.length_replicate]; exact hlenD) hB
       change P.ReachesOut _ _ _ (tablesStart v d I, rs₁) _ at hscanRun
       have hTB (j : Fin v'.count) : modelCard I e a.1 ^ (v'.symbol j).1 ≤ B := by
@@ -924,8 +924,8 @@ theorem computableInLogSpace_encodedMapWith :
               Nat.mul_le_mul_left d ((arity_le_maxArity j).trans (Nat.le_succ _))
             unfold exponent
             omega)
-      obtain ⟨rs₂, htablesRun, _, _, _, hB₂⟩ := reachesOut_tablesCode (C.correct ha hn) hnB hNB
-        (List.finRange v'.count) _ rs₁ htables (fun j _ => hTB j) h0₁ h3₁
+      obtain ⟨rs₂, htablesRun, _, _, _, hB₂⟩ := reachesOut_tablesCode (C.atomic_correct ha hn) hnB
+        hNB (List.finRange v'.count) _ rs₁ htables (fun j _ => hTB j) h0₁ h3₁
         (by rw [hlen₁, hlen, List.length_replicate]; exact hlenD)
         (fun j _ => by rw [hlen₁, hlen, List.length_replicate]; exact hlenR j) hB₁
       refine ⟨(haltLabel v v' d I, rs₂), _, [], hshapeRun.reachesOut.trans

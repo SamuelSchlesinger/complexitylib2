@@ -28,8 +28,8 @@ nullary relations, and zero-dimensional interpretations are included. Isomorphis
 the target query makes the choice of numbering immaterial.
 
 These are order-free interpretations, without built-in order or `BIT`. The ordered instance of
-the same transducer, which computes the canonical numeric atoms, is in
-`Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered.Reduction`.
+the same transducer, which computes the canonical numeric atoms, is
+`Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap`.
 
 ## Main definitions
 
@@ -67,7 +67,7 @@ def Vocabulary.ModelChecker.formulaCompiler {L : Language.{u, v}} [L.IsRelationa
   minCard := 0
   expand _ s := s
   atomic := Vocabulary.ModelChecker.atomicCompiler v
-  correct ha _ _ fv base val := Vocabulary.ModelChecker.atomicCompiler_correct ha fv base val
+  atomic_correct ha _ _ fv base val := Vocabulary.ModelChecker.atomicCompiler_correct ha fv base val
 
 namespace FO.Interpretation
 

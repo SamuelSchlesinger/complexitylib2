@@ -31,12 +31,14 @@ interpretations, substituting the inner numeric definitions into the outer formu
 * `Cslib.Logic.FO.Ordered.IsFirstOrderMap`: the images of certified admissible interpretations.
 * `Cslib.Logic.FO.Ordered.Reduces`: first-order reducibility of ordered queries.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.id`: the identity interpretation.
+* `Cslib.Logic.FO.Ordered.DomainInterpretation.Certificate.id`: its numeric certificate.
 
 ## Main results
 
 * `Cslib.Logic.FO.Ordered.Reduces.refl`, `Cslib.Logic.FO.Ordered.Reduces.trans`: `≤_fo` is a
   preorder.
 * `Cslib.Logic.FO.Ordered.Reduces.compl`: reductions between complements.
+* `Cslib.Logic.FO.Ordered.IsFirstOrderMap.isDomainMap`: first-order maps are domain maps.
 * `Cslib.Logic.FO.Ordered.Definable.of_reduces`: first-order definability pulls back.
 
 ## References
@@ -81,23 +83,24 @@ theorem unrank_id (i : Fin ((id L).card M)) : (id L).unrank M i = fun _ => Fin.c
 theorem admissible_id : (id L).Admissible :=
   fun M => (card_id M).symm ▸ M.size_ge_two
 
+variable (L) in
 /-- The identity interpretation defines the canonical numerics directly. -/
-noncomputable def idCertificate : (id L).Certificate where
-  le := le L (.var (0, 0)) (.var (1, 0))
-  bit := bit L (.var (0, 0)) (.var (1, 0))
+noncomputable def Certificate.id : (DomainInterpretation.id L).Certificate where
+  le := Ordered.le L (.var (0, 0)) (.var (1, 0))
+  bit := Ordered.bit L (.var (0, 0)) (.var (1, 0))
   const c := Term.equal (.var 0)
-    (match c with | .zero => zero L | .one => one L | .max => max L)
+    (match c with | .zero => Ordered.zero L | .one => Ordered.one L | .max => Ordered.max L)
   realize_le M v := by
-    simp only [realize_le, Term.realize_var, unrank_id]
+    simp only [Ordered.realize_le, Term.realize_var, unrank_id]
     exact Fin.cast_le_cast _
   realize_bit M v := by
-    simp only [realize_bit, Term.realize_var, unrank_id, Fin.val_cast]
+    simp only [Ordered.realize_bit, Term.realize_var, unrank_id, Fin.val_cast]
   realize_const M c i := by
     simp only [Formula.realize_equal, Term.realize_var, unrank_id, Fin.ext_iff, Fin.val_cast]
     cases c
     · exact Iff.rfl
     · exact Iff.rfl
-    · change i.val = M.size - 1 ↔ i.val = (id L).card M - 1
+    · change i.val = M.size - 1 ↔ i.val = (DomainInterpretation.id L).card M - 1
       have := card_id M
       constructor <;> intro h <;> lia
 
@@ -122,6 +125,12 @@ def IsFirstOrderMap [L'.IsRelational] (f : Structure L → Structure L') : Prop 
   ∃ (k : ℕ) (I : DomainInterpretation L L' k) (hI : I.Admissible),
     Nonempty I.Certificate ∧ f = I.map hI
 
+/-- First-order maps are domain maps, forgetting the certificate. -/
+theorem IsFirstOrderMap.isDomainMap [L'.IsRelational] {f : Structure L → Structure L'}
+    (hf : IsFirstOrderMap f) : IsDomainMap f :=
+  let ⟨k, I, hI, _, hf⟩ := hf
+  ⟨k, I, hI, hf⟩
+
 /-- The image of a certified admissible interpretation is a first-order map. -/
 theorem DomainInterpretation.isFirstOrderMap [L'.IsRelational] {k : ℕ}
     {I : DomainInterpretation L L' k} (hI : I.Admissible) (C : I.Certificate) :
@@ -130,7 +139,7 @@ theorem DomainInterpretation.isFirstOrderMap [L'.IsRelational] {k : ℕ}
 
 /-- The identity is a first-order map. -/
 theorem IsFirstOrderMap.id [L.IsRelational] : IsFirstOrderMap (_root_.id : Structure L → _) :=
-  ⟨1, .id L, DomainInterpretation.admissible_id, ⟨DomainInterpretation.idCertificate⟩,
+  ⟨1, .id L, DomainInterpretation.admissible_id, ⟨DomainInterpretation.Certificate.id L⟩,
     funext fun M => (DomainInterpretation.map_id M).symm⟩
 
 /-- First-order maps compose. -/
@@ -143,14 +152,21 @@ theorem IsFirstOrderMap.comp [L'.IsRelational] [L''.IsRelational] {f : Structure
     funext fun M => (J.map_comp C hI hJ M).symm⟩
 
 /-- **First-order reducibility** of ordered queries, `K ≤_fo K'`: many-one reducibility by
-first-order maps [Immerman1999, Definition 2.11 and Remark 1.32]. -/
+first-order maps [Immerman1999, Definition 2.11 and Remark 1.32]. This is the ordered counterpart
+of the order-free `Cslib.Logic.FO.Reduces`.
+
+The target language is relational: the image carries only the canonical numeric constants, and
+Immerman's formulas for target constant symbols are not handled. The image is always ordered
+lexicographically, Remark 1.32's default ("unless we state otherwise"), so this is the
+lexicographic case of `≤_fo`; reductions whose image order is another definable order are not
+covered. -/
 def Reduces [L'.IsRelational] (K : Query L) (K' : Query L') : Prop :=
   ManyOneReducibleBy IsFirstOrderMap K K'
 
 namespace Reduces
 
 /-- **First-order reducibility is reflexive.** -/
-theorem refl [L.IsRelational] (K : Query L) : Reduces K K :=
+@[refl] theorem refl [L.IsRelational] (K : Query L) : Reduces K K :=
   ManyOneReducibleBy.refl IsFirstOrderMap.id K
 
 /-- **First-order reducibility is transitive** [Immerman1999, Exercise 2.15(1)]. -/
