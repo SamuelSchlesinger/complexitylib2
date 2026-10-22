@@ -349,6 +349,13 @@ batches.
      `DomainInterpretation.logSpaceReducible` needs no certificate, and
      `Ordered.Reduces.logSpaceReducible` gives `≤_fo ⇒ ≤_log` with L/P closure (Immerman's
      Proposition 3.10). Open: certificates for further restricted-domain families.
+     **Many-one core (#309), deferred migrations:** `PolyTimeReducible`, `LogSpaceReducible` and
+     `Ordered.Reduces` are instances of
+     [ManyOneReducibleBy](Complexity/Computability/Complexity/Reduction/ManyOne.lean);
+     `MappingReducible`, `FPTReducible`, promise `PolyTimeReducible`,
+     `FO.Reduces`/`QFReduces`/`ReducesNontrivial`, and the parsimonious and #P/search hardness
+     families are not yet migrated onto it. A witness-carrying reduction structure is deferred
+     until a client needs one (e.g. size bounds for Cook–Levin).
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
