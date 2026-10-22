@@ -18,12 +18,16 @@ completed reference developments.
    `leveledFHE_of_bootstrappable`) for every unary polynomial-time depth bound `D`, with leveled
    semantic security (`leveledSemanticSecure_of_semanticSecure`) proved from base semantic security
    alone via a hybrid over the evaluation key chain and secret-key bits (`encryptKeyTest_gap`).
-   Bootstrappability is formulated via two-ciphertext augmented decryption (`evalAugDecrypt`) for
-   binary Boolean operations `.and`, `.or` and `.nand`. Under circular security (`CircularSecure`),
-   the fixed-key construction (`fixedKeyGen`, `evalHomOutput`, `fixedKeyFHE_of_circularSecure`)
-   evaluates De Morgan circuits and formulas of arbitrary depth and size with output ciphertext
-   length bounded by `cipherBound n`. Concrete lattice/LWE-based instantiations of a bootstrappable
-   somewhat homomorphic scheme remain future work.
+   Here `Bootstrappable` axiomatizes polynomial-time augmented-decryption gate evaluation
+   (`evalAugDecrypt`) and its compactness bound (`cipherBound`) directly as a primitive interface on
+   `S` for the De Morgan operations (`Boolean.Op`: Boolean constants `.const b`, unary negation
+   `.not`, and binary `.and` and `.or`) composed with decryption, rather than compiling `S.decrypt`
+   to a circuit and evaluating that circuit inside a bounded-depth somewhat homomorphic scheme.
+   Under circular security (`CircularSecure`), the fixed-key construction (`fixedKeyGen`,
+   `evalHomOutput`, `fixedKeyFHE_of_circularSecure`) evaluates De Morgan circuits and formulas of
+   arbitrary depth and size with output ciphertext length bounded by `cipherBound n`. Concrete
+   lattice/LWE-based instantiations and circuit-level decryption-depth compilation remain future
+   work.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the

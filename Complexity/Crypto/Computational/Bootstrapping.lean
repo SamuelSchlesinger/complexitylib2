@@ -8,13 +8,13 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
+public import Complexity.Computability.Circuit.Depth
 public import Complexity.Computability.Circuit.Formula
 public import Complexity.Computability.Probabilistic.Adaptive
 public import Complexity.Computability.Probabilistic.Repeat
 public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Game.Hybrid
-public import Cslib.Computability.Circuit.Depth
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
@@ -1574,23 +1574,6 @@ private theorem code_eq_ofFn_lines {σ : Signature} {m g : ℕ} (p : Program σ 
     rw [Program.code_gate, ih, List.ofFn_succ' (fun j => ((q.gate line).lines j).code)]
     simp [code_mapWires_castSucc, List.concat_eq_append]
 
-private theorem depth_mapWires_castSucc {σ : Signature} {m k : ℕ}
-    (q : Program σ m k) (line l : Line σ m k) :
-    (l.mapWires Wire.Renaming.castSucc).depth (q.gate line).wireDepths =
-      l.depth q.wireDepths := by
-  simp only [Line.depth, Line.mapWires_op, Line.mapWires_wires,
-    Wire.Renaming.castSucc_apply, Program.wireDepths_gate_castSucc]
-
-private theorem depths_eq_lines_depth {σ : Signature} {m g : ℕ}
-    (p : Program σ m g) (j : Fin g) :
-    p.depths j = (p.lines j).depth p.wireDepths := by
-  induction p with
-  | empty => exact Fin.elim0 j
-  | gate q line ih =>
-    refine Fin.lastCases ?_ (fun i => ?_) j
-    · simp [depth_mapWires_castSucc]
-    · simp [ih i, depth_mapWires_castSucc]
-
 /-- One synchronous level step of leveled homomorphic evaluation: given `(m, gates)`, the previous
 level's wire ciphertexts `values`, and the current level's evaluation key `(pk, ek)`, refresh the
 first `m` input wire ciphertexts using `.and` self-recryption and evaluate each gate in `gates` on
@@ -1844,8 +1827,8 @@ theorem decrypt_evalLeveledCode_wire {n m g : ℕ} {keys₀ : List Bool × List 
         List.getElem?_ofFn, Fin.is_lt, dite_true, Option.getD_some, Program.trace_input]
       exact S.decrypt_encrypt n keys₀ hkeys₀ (x i) (cs₀ i) (hcs₀ i)
     | gate j =>
-      rw [Program.wireDepths_gateWire, depths_eq_lines_depth] at hw
-      exact absurd hw (not_le_of_gt ((p.lines j).depth_pos p.wireDepths))
+      rw [Program.wireDepths_gateWire] at hw
+      exact absurd hw (not_le_of_gt (p.depths_pos j))
   | succ r ih =>
     intro res hres w hw
     simp only [genRealChain_succ, genRealStep, ProbComp.eval_bind, ProbComp.eval_pure,
@@ -1862,7 +1845,7 @@ theorem decrypt_evalLeveledCode_wire {n m g : ℕ} {keys₀ : List Bool × List 
       have hih := ih hprev (.input i) (by simp)
       simpa using hih
     | gate j =>
-      rw [Program.wireDepths_gateWire, depths_eq_lines_depth, Line.depth_le_add_one_iff] at hw
+      rw [Program.wireDepths_gateWire, p.depths_eq_depth_lines, Line.depth_le_add_one_iff] at hw
       rw [S.decrypt_homInterpretation hkeys₁ hkeys hek]
       have hargs :
           (S.decrypt prev.2 ∘ fun a =>
