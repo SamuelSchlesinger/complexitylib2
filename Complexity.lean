@@ -1203,6 +1203,7 @@ public import Complexity.Crypto.Computational.UniformChoice
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
+public import Complexity.Crypto.Multiparty.ObliviousTransfer
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
 public import Complexity.Crypto.Primitives.PRG.Circuit

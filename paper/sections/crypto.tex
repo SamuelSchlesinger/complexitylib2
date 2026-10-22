@@ -130,3 +130,56 @@ advantage is at least $1/4$ for all large $n$.\citep{KabanetsCai2000,GGM1986}
 \declat{73cf7ce29398479e7b7fef5c8921b67ae6b7f269}{Complexity/Crypto/Computational/PseudorandomFunction/TruthTable.lean}{173}{Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le}
 \end{result}
 
+\begin{result}
+\subsection{Completeness of oblivious transfer with abort}
+In the ideal $1$-out-of-$2$ oblivious-transfer hybrid model, every $k$-party
+($k\ge1$) functionality computed by a De Morgan Boolean circuit $c$ with
+$k\cdot w_{\mathrm{in}}$ input wires, $k\cdot w_{\mathrm{out}}$ output wires,
+and $|c|$ gates is evaluated on $k$-party additive secret shares by
+$\mathrm{evalCircuitOT}$ using $k^2|c|$ pairwise calls to $\mathrm{idealOT}$
+($\mathrm{otCallBudget}$), reconstructing $c$'s exact output on the shared
+inputs ($\mathrm{parity\_evalCircuitOT}$). Against any static malicious
+corruption set $C\subseteq\mathrm{Fin}\,k$, the real OT-hybrid execution
+$\mathrm{realOTHybridExecution}$ and the ideal execution with abort
+$\mathrm{idealExecutionWithAbort}$ under the black-box simulator
+$\mathrm{kilianSimulator}$ have the exact same probability distribution
+($\mathrm{realOTHybridExecution\_eq\_idealExecutionWithAbort}$, statistical
+distance $0$), where the trusted party reveals only the corrupted parties'
+outputs $\mathrm{maskOutputsToCorrupted}$ to the simulator and honest parties
+outside $C$ receive $\mathrm{some}(y_i)$ on delivery or $\mathrm{none}$ on
+abort. Consequently, every circuit family is statistically secure with abort
+at error $0$ ($\mathrm{ot\_complete\_statisticallySecureWithAbort}$), and
+every $\mathrm{PolyTimeFunctionality}$ family (with polynomially bounded input
+width, output width, and gate count, evaluated by the certified polynomial-time
+circuit evaluator $\mathrm{Boolean.evalOutput}$ and using a polynomially bounded
+OT call budget) is computationally secure with abort against uniform strict-PPT
+distinguishers ($\mathrm{ot\_complete\_computationallySecureWithAbort}$).
+Input-validity and gate-phase consistency checks in the OT-hybrid model are
+abstracted as boolean predicates on the corrupted view rather than compiled from
+raw OT via cut-and-choose commitments or watch-lists, and corruptions are
+static. Security with abort guarantees neither output delivery
+($\mathrm{not\_guaranteedOutputDelivery\_of\_abort}$) nor fairness: in two-party
+XOR, a rushing adversary controlling party $0$ learns honest party $1$'s input
+bit with probability $1$ while forcing party $1$ to output $\mathrm{none}$
+($\mathrm{unfair\_twoPartyXor\_execution}$), and any constant fallback rule on
+abort disagrees with a uniform output bit with probability $1/2$
+($\mathrm{cleve\_unfair\_fallback}$).\citep{Kilian1988,IPS2008,Goldreich2004Vol2,Cleve1986}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{127}{Cslib.Crypto.Multiparty.idealOT}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{176}{Cslib.Crypto.Multiparty.otAndShare_uniform}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{227}{Cslib.Crypto.Multiparty.parity_shareAnd}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{316}{Cslib.Crypto.Multiparty.parity_evalCircuitOT}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{582}{Cslib.Crypto.Multiparty.programMaskToCorruptedOT}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{847}{Cslib.Crypto.Multiparty.idealExecutionWithAbort}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{886}{Cslib.Crypto.Multiparty.realOTHybridExecution}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{922}{Cslib.Crypto.Multiparty.kilianSimulator}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1004}{Cslib.Crypto.Multiparty.realOTHybridExecution_eq_idealExecutionWithAbort}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1037}{Cslib.Crypto.Multiparty.dist_realOTHybridExecution_idealExecutionWithAbort}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1071}{Cslib.Crypto.Multiparty.ot_complete_statisticallySecureWithAbort}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1105}{Cslib.Crypto.Multiparty.PolyTimeFunctionality.polynomiallyBounded_otCallBudget}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1115}{Cslib.Crypto.Multiparty.PolyTimeFunctionality.circuitFunctionality_apply_eq_evalOutput}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1155}{Cslib.Crypto.Multiparty.ot_complete_computationallySecureWithAbort}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1214}{Cslib.Crypto.Multiparty.not_guaranteedOutputDelivery_of_abort}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1279}{Cslib.Crypto.Multiparty.unfair_twoPartyXor_execution}
+\decl{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1331}{Cslib.Crypto.Multiparty.cleve_unfair_fallback}
+\end{result}
+

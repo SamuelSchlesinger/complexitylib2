@@ -10248,3 +10248,52 @@ info: 'Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase' depends
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase
+
+/--
+info: 'Cslib.Crypto.Multiparty.parity_evalCircuitOT' depends on axioms: [propext, Classical.choice,
+Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Multiparty.parity_evalCircuitOT
+
+/--
+info: 'Cslib.Crypto.Multiparty.realOTHybridExecution_eq_idealExecutionWithAbort' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Multiparty.realOTHybridExecution_eq_idealExecutionWithAbort
+
+/--
+info: 'Cslib.Crypto.Multiparty.ot_complete_statisticallySecureWithAbort' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Multiparty.ot_complete_statisticallySecureWithAbort
+
+/--
+info: 'Cslib.Crypto.Multiparty.ot_complete_computationallySecureWithAbort' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Multiparty.ot_complete_computationallySecureWithAbort
+
+/--
+info: 'Cslib.Crypto.Multiparty.not_guaranteedOutputDelivery_of_abort' depends on axioms: [propext,
+Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Multiparty.not_guaranteedOutputDelivery_of_abort
+
+/--
+info: 'Cslib.Crypto.Multiparty.unfair_twoPartyXor_execution' depends on axioms: [propext,
+Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Multiparty.unfair_twoPartyXor_execution
+
+/--
+info: 'Cslib.Crypto.Multiparty.cleve_unfair_fallback' depends on axioms: [propext, Classical.choice,
+Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.Multiparty.cleve_unfair_fallback
