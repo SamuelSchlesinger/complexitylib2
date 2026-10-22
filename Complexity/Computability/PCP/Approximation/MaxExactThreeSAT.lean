@@ -16,8 +16,11 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 
 `GapExactThreeSAT s` is the gap problem of MAX-3SAT (`Cslib.Complexity.GapThreeSAT`) restricted
 to formulas all of whose clauses have exactly three, not necessarily distinct, literals. Here
-"MAX-E3SAT" always allows repeated literals in a clause, as `Cslib.Complexity.ExactThreeSAT` does;
-the version with three distinct literals per clause is not treated. Its
+"MAX-E3SAT" (`Cslib.Complexity.GapExactThreeSAT`) allows repeated literals in a clause, as
+`Cslib.Complexity.ExactThreeSAT` does (for the variant requiring three distinct variables per
+clause, see `Cslib.Logic.PL.CNF.IsExactThreeDistinct` and
+`Cslib.Complexity.GapExactThreeDistinctSAT` in
+`Complexity.Computability.PCP.Approximation.Hastad.ExactThreeDistinct`). Its
 yes-instances are the members of `Cslib.Complexity.ExactThreeSAT`.
 
 The gap of MAX-3SAT transfers unchanged: repeating a literal of every clause with one or two

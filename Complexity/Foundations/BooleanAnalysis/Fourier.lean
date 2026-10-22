@@ -66,8 +66,9 @@ coefficient on the circle, so the name is meant to be used qualified.
   uniqueness of the Fourier coefficients.
 * `Cslib.BitString.expect_mul_eq_sum_fourierCoeff_mul`: Plancherel's identity.
 * `Cslib.BitString.sum_fourierCoeff_sq_signVal`: Parseval's identity for functions with values
-  `±1`; so their coefficients have absolute value at most one
-  (`Cslib.BitString.abs_fourierCoeff_signVal_le_one`) and their spectral norm is at least one
+  `±1`; so their coefficients have square and absolute value at most one
+  (`Cslib.BitString.fourierCoeff_sq_signVal_le_one`,
+  `Cslib.BitString.abs_fourierCoeff_signVal_le_one`) and their spectral norm is at least one
   (`Cslib.BitString.one_le_sum_abs_fourierCoeff_signVal`).
 * `Cslib.BitString.expect_signVal_mul_signVal`, `Cslib.BitString.fourierCoeff_signVal`: the
   correlation of two Boolean functions is one minus twice their relative Hamming distance.
@@ -404,12 +405,18 @@ theorem sum_fourierCoeff_sq_signVal (f : (ι → Bool) → Bool) :
   simp only [sq, signVal_mul_self]
   exact expect_const univ_nonempty 1
 
+/-- A Fourier coefficient of a Boolean function, read as signs, has square at most one. -/
+theorem fourierCoeff_sq_signVal_le_one (f : (ι → Bool) → Bool) (S : Finset ι) :
+    fourierCoeff (fun x => signVal (f x)) S ^ 2 ≤ 1 := by
+  rw [← sum_fourierCoeff_sq_signVal f]
+  exact single_le_sum (f := fun S => fourierCoeff (fun x => signVal (f x)) S ^ 2)
+    (fun _ _ => sq_nonneg _) (mem_univ S)
+
 /-- A Fourier coefficient of a Boolean function, read as signs, has absolute value at most one. -/
 theorem abs_fourierCoeff_signVal_le_one (f : (ι → Bool) → Bool) (S : Finset ι) :
     |fourierCoeff (fun x => signVal (f x)) S| ≤ 1 := by
-  rw [← sq_le_one_iff_abs_le_one, ← sum_fourierCoeff_sq_signVal f]
-  exact single_le_sum (f := fun S => fourierCoeff (fun x => signVal (f x)) S ^ 2)
-    (fun _ _ => sq_nonneg _) (mem_univ S)
+  rw [← sq_le_one_iff_abs_le_one]
+  exact fourierCoeff_sq_signVal_le_one f S
 
 /-- A Boolean function, read as signs, has spectral norm `∑_S |f̂(S)|` at least one. -/
 theorem one_le_sum_abs_fourierCoeff_signVal (f : (ι → Bool) → Bool) :
