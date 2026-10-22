@@ -22,11 +22,13 @@ the image of [Immerman1999, Definition 1.26]: here the domain tuples are renumbe
 `Fin m`, where `m` is their number, and the target relations are evaluated at the unranked tuples.
 
 The canonical numerics of the image are those of `Fin m`; nothing about their definability is
-assumed at this level. Without the assumption that the domain formula is `true`, target `BIT` need
-not be first-order definable in the image [Immerman1999, the paragraph after Exercise 1.33], so
-these semantic maps are more general than Immerman's first-order queries on ordered structures,
-which define the target numerics [Immerman1999, Remark 1.32]. Those definitions are the numeric
-certificates of `Ordered.Reduction`.
+assumed at this level. A first-order query on ordered structures must include first-order
+definitions of the target numerics [Immerman1999, Remark 1.32], and without the assumption that
+the domain formula is `true`, target `BIT` need not be first-order definable in the image
+[Immerman1999, the paragraph after Exercise 1.33]. These semantic maps are therefore strictly more
+general than Immerman's first-order queries. His numeric definitions are the certificates of
+`Ordered.DomainInterpretation.Certificate`, which first-order reductions (`Ordered.Reduction`)
+require.
 
 An ordered target structure needs at least two elements [Immerman1999, Proviso 1.15]. An
 interpretation is *admissible* when its domain has at least two tuples in every source. This is the
@@ -52,6 +54,8 @@ domains.
   tuple counts the domain tuples before it.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.unrank_eq_of_strictMono`: any increasing
   enumeration of the domain is `unrank`.
+* `Cslib.Logic.FO.Ordered.DomainInterpretation.unrank_of_forall`: on the full tuple domain,
+  ranks are lexicographic ranks.
 * `Cslib.Logic.FO.Ordered.DomainInterpretation.relMap_map`: target relations in the image.
 
 ## References
@@ -65,6 +69,11 @@ domains.
 namespace Cslib.Logic.FO.Ordered
 
 open FirstOrder Language Structure
+
+/-- Applying an increasing map to every coordinate preserves lexicographic order. -/
+theorem lexRank_comp_lt_lexRank_comp_iff {n n' k : ℕ} {f : Fin n → Fin n'} (hf : StrictMono f)
+    (x y : Fin k → Fin n) : lexRank (f ∘ x) < lexRank (f ∘ y) ↔ lexRank x < lexRank y := by
+  simp only [lexRank_lt_iff, Function.comp_apply, hf.lt_iff_lt, hf.injective.eq_iff]
 
 /-- Ordered structures over a relational language are equal when their sizes are and the size
 cast preserves every relation. -/
@@ -235,6 +244,26 @@ theorem unrank_eq_of_strictMono {m : ℕ} (g : Fin m → Fin k → Fin M.size)
     (fun i => by rw [hs]; exact Finset.mem_image_of_mem _ (Finset.mem_univ _))
     (hf.comp (Fin.cast_strictMono hcard))
   exact lexEquiv.injective ((lexEquiv_unrank i).trans (congrFun hu i).symm)
+
+private theorem unrank_eq_of_forall (h : ∀ x : Fin k → Fin M.size, I.domain.Realize x) :
+    ∃ hc : I.card M = M.size ^ k, ∀ i, I.unrank M i = lexEquiv.symm (Fin.cast hc i) :=
+  unrank_eq_of_strictMono (fun r : Fin (M.size ^ k) => lexEquiv.symm r) (fun _ => h _)
+    (fun x _ => ⟨lexEquiv x, lexEquiv.symm_apply_apply x⟩)
+    (fun _ _ hrs => by simp only [lexRank, Equiv.apply_symm_apply]; exact hrs)
+
+/-- When every tuple is in the domain, there are `M.size ^ k` of them. -/
+theorem card_of_forall (h : ∀ x : Fin k → Fin M.size, I.domain.Realize x) :
+    I.card M = M.size ^ k :=
+  (unrank_eq_of_forall h).1
+
+/-- When every tuple is in the domain, ranks are lexicographic ranks among all tuples. -/
+theorem unrank_of_forall (h : ∀ x : Fin k → Fin M.size, I.domain.Realize x)
+    (i : Fin (I.card M)) : I.unrank M i = lexEquiv.symm (Fin.cast (card_of_forall h) i) :=
+  (unrank_eq_of_forall h).2 i
+
+theorem lexRank_unrank_of_forall (h : ∀ x : Fin k → Fin M.size, I.domain.Realize x)
+    (i : Fin (I.card M)) : lexRank (I.unrank M i) = i := by
+  rw [unrank_of_forall h, lexRank, Equiv.apply_symm_apply, Fin.val_cast]
 
 /-! ### The image -/
 

@@ -1479,9 +1479,12 @@ public import Complexity.Logics.FirstOrder.Ordered.BitSum
 public import Complexity.Logics.FirstOrder.Ordered.BitSum.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation
+public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation.Certificate
+public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation.Composition
 public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Composition
+public import Complexity.Logics.FirstOrder.Ordered.FullTuple.DomainInterpretation
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Interpretation
 public import Complexity.Logics.FirstOrder.Ordered.Multiplication
@@ -1495,6 +1498,7 @@ public import Complexity.Logics.FirstOrder.Ordered.Radix.Bit
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Conversion
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Decode
 public import Complexity.Logics.FirstOrder.Ordered.Radix.Multiplication
+public import Complexity.Logics.FirstOrder.Ordered.Reduction
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.Tuple.Flatten
 public import Complexity.Logics.FirstOrder.Ordered.TupleBit
