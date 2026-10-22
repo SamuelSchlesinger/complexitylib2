@@ -9,6 +9,9 @@ module
 
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Foundations.Combinatorics.Expander.KilledWalk
+import Complexity.Foundations.Data.Finset.Expect
+import Mathlib.Algebra.Order.BigOperators.Expect
+import Mathlib.Combinatorics.Pigeonhole
 
 /-!
 # Powering a constraint graph
@@ -55,6 +58,11 @@ soundness analysis of `Cslib.PCP.RegularConstraintGraph.le_unsatVal_power` start
 * `Cslib.PCP.RegularConstraintGraph.truthful`: the truthful opinions of a labelling.
 * `Cslib.PCP.RegularConstraintGraph.Hit`: a killed walk is hit at a step when the dart crossed
   there is violated and both ends hold the truthful opinions at the indices read at that step.
+* `Cslib.PCP.RegularConstraintGraph.report`: the opinion of the far end of a walk about its start.
+* `Cslib.PCP.RegularConstraintGraph.decode`: the plurality decoding of a labelling of the powered
+  constraint graph.
+* `Cslib.PCP.RegularConstraintGraph.truthProb`: the proportion of the walks of a given length from
+  a vertex whose far end reports a given label.
 
 ## Main results
 
@@ -66,6 +74,8 @@ soundness analysis of `Cslib.PCP.RegularConstraintGraph.le_unsatVal_power` start
   satisfiability.
 * `Cslib.PCP.RegularConstraintGraph.not_satisfies_of_hit`: a killed walk hit at some step is
   violated.
+* `Cslib.PCP.RegularConstraintGraph.inv_card_sub_le_sum_truthProb`: plurality decoding, in terms of
+  walks.
 * `Cslib.PCP.RegularConstraintGraph.card_label_power`,
   `Cslib.PCP.RegularConstraintGraph.card_alphabet_power`: the degree and the alphabet size.
 
@@ -82,6 +92,7 @@ soundness analysis of `Cslib.PCP.RegularConstraintGraph.le_unsatVal_power` start
 namespace Cslib
 
 open Finset
+open scoped BigOperators
 
 namespace RotationMap
 
@@ -323,6 +334,128 @@ theorem card_alphabet_power [Fintype D] [DecidableEq D] [Fintype α] :
     Fintype.card (WalkLabels D T → α) =
       Fintype.card α ^ ∑ ℓ ∈ range (T + 1), Fintype.card D ^ ℓ := by
   rw [Fintype.card_fun, WalkLabels.card_eq]
+
+/-! ### The plurality decoding -/
+
+/-- The **report** about the start of a walk `p` of length `m ≤ T`, under a labelling `A` of the
+powered constraint graph: the opinion that the far end of `p` holds about the start of `p`, read
+along the reverse walk. -/
+def report (A : V → WalkLabels D T → α) {m : ℕ} (hm : m ≤ T) (p : V × (Fin m → D)) : α :=
+  A ((R.graph.pow m).rot p).1 (.mk hm ((R.graph.pow m).rot p).2)
+
+/-- The report about the start of the reverse of a walk `p` is the opinion of the start of `p` about
+the end of `p`. -/
+theorem report_rot_pow (A : V → WalkLabels D T → α) {m : ℕ} (hm : m ≤ T)
+    (p : V × (Fin m → D)) : R.report T A hm ((R.graph.pow m).rot p) = A p.1 (.mk hm p.2) := by
+  simp only [report, rot_rot]
+
+section Decode
+
+variable [Fintype D]
+
+open Classical in
+/-- The proportion of the walks of length `m ≤ T` from `v` whose far end reports `σ v` about `v`
+under the labelling `A` of the powered constraint graph; zero for `m > T`. -/
+noncomputable def truthProb (A : V → WalkLabels D T → α) (σ : V → α) (v : V) (m : ℕ) : ℝ :=
+  if hm : m ≤ T then 𝔼 r : Fin m → D, if R.report T A hm (v, r) = σ v then 1 else 0 else 0
+
+open Classical in
+/-- **Killed at a given step, a killed walk reports like a uniformly random walk**: a killed walk
+from `v` is killed at its step `ℓ < T` and reports `σ v` about `v` with probability
+`(1 - 1 / q) ^ ℓ / q` times the proportion of the walks of length `ℓ` from `v` that do. -/
+theorem expect_killTime_eq_and_report_eq [Nonempty D] (A : V → WalkLabels D T → α)
+    (σ : V → α) (v : V) {ℓ : ℕ} (hℓ : ℓ < T) :
+    𝔼 x : (Fin T → D) × (Fin T → Fin q),
+        (if killTime x.2 = ℓ ∧
+          R.report T A (killTime_le x.2) (v, Fin.take _ (killTime_le x.2) x.1) = σ v
+        then 1 else 0) =
+      (1 - (q : ℝ)⁻¹) ^ ℓ / q * R.truthProb T A σ v ℓ := by
+  rw [truthProb, dite_eq_left hℓ.le, ← expect_ite_killTime_eq hℓ]
+  refine expect_congr rfl fun x _ ↦ ?_
+  by_cases h : killTime x.2 = ℓ
+  · subst h
+    simp
+  · simp [h]
+
+variable [Fintype α] [Nonempty α]
+
+open Classical in
+/-- **The plurality decoding** [Dinur, Section 5][Dinur2005] of a labelling `A` of the powered
+constraint graph: the label of `v` most often reported about `v` by the far ends of the killed walks
+from `v`. -/
+noncomputable def decode (A : V → WalkLabels D T → α) (v : V) : α :=
+  (univ.exists_max_image (fun a ↦ #{x : (Fin T → D) × (Fin T → Fin q) |
+    R.report T A (killTime_le x.2) (v, Fin.take _ (killTime_le x.2) x.1) = a})
+    univ_nonempty).choose
+
+open Classical in
+/-- **Plurality**: the decoded label of `v` is reported about `v` by the far ends of a proportion
+at least `1 / |α|` of the killed walks from `v`. -/
+theorem inv_card_le_expect_report_eq_decode [Nonempty D] (A : V → WalkLabels D T → α) (v : V) :
+    (Fintype.card α : ℝ)⁻¹ ≤ 𝔼 x : (Fin T → D) × (Fin T → Fin q),
+      if R.report T A (killTime_le x.2) (v, Fin.take _ (killTime_le x.2) x.1) =
+        R.decode T q A v then 1 else 0 := by
+  set f := fun x : (Fin T → D) × (Fin T → Fin q) ↦
+    R.report T A (killTime_le x.2) (v, Fin.take _ (killTime_le x.2) x.1)
+  have hα : (0 : ℝ) < Fintype.card α := Nat.cast_pos.2 Fintype.card_pos
+  have hX : (0 : ℝ) < Fintype.card ((Fin T → D) × (Fin T → Fin q)) :=
+    Nat.cast_pos.2 Fintype.card_pos
+  obtain ⟨a, ha⟩ := Fintype.exists_le_card_fiber_of_nsmul_le_card (M := ℝ) f
+    (b := Fintype.card ((Fin T → D) × (Fin T → Fin q)) / Fintype.card α)
+    (by rw [nsmul_eq_mul, mul_div_cancel₀ _ hα.ne'])
+  have hmax : #{x | f x = a} ≤ #{x | f x = R.decode T q A v} :=
+    (univ.exists_max_image (fun a ↦ #{x | f x = a}) univ_nonempty).choose_spec.2 a (mem_univ a)
+  rw [Fintype.expect_eq_sum_div_card, sum_boole, inv_eq_one_div, div_le_div_iff₀ hα hX, one_mul]
+  rw [div_le_iff₀ hα] at ha
+  refine ha.trans ?_
+  gcongr
+
+open Classical in
+/-- **Plurality, in terms of walks** [Dinur, Section 5][Dinur2005]: for `H < T`, the walks of length
+at most `H` from `v` whose far end reports the decoded label of `v`, weighted by the probability
+`(1 - 1 / q) ^ ℓ / q` that a killed walk is killed at step `ℓ`, have total weight at least
+`1 / |α| - (1 - 1 / q) ^ (H + 1)`, for a killed walk survives its first `H + 1` steps with
+probability `(1 - 1 / q) ^ (H + 1)` only. -/
+theorem inv_card_sub_le_sum_truthProb [Nonempty D] (A : V → WalkLabels D T → α) (v : V) {H : ℕ}
+    (hH : H < T) :
+    (Fintype.card α : ℝ)⁻¹ - (1 - (q : ℝ)⁻¹) ^ (H + 1) ≤
+      ∑ ℓ ∈ range (H + 1), (1 - (q : ℝ)⁻¹) ^ ℓ / q * R.truthProb T A (R.decode T q A) v ℓ := by
+  set f := fun x : (Fin T → D) × (Fin T → Fin q) ↦
+    R.report T A (killTime_le x.2) (v, Fin.take _ (killTime_le x.2) x.1)
+  -- a killed walk is killed by step `H` or survives its first `H + 1` steps
+  have hpt (x : (Fin T → D) × (Fin T → Fin q)) :
+      (if f x = R.decode T q A v then 1 else 0 : ℝ) ≤
+        ∑ ℓ ∈ range (H + 1), (if killTime x.2 = ℓ ∧ f x = R.decode T q A v then 1 else 0 : ℝ) +
+          if H + 1 ≤ killTime x.2 then 1 else 0 := by
+    by_cases hk : killTime x.2 ≤ H
+    · have h := single_le_sum (f := fun ℓ ↦
+        (if killTime x.2 = ℓ ∧ f x = R.decode T q A v then 1 else 0 : ℝ))
+        (fun ℓ _ ↦ by positivity) (mem_range.2 (Nat.lt_succ_of_le hk))
+      simp only [true_and] at h
+      rw [ite_eq_right (show ¬ H + 1 ≤ killTime x.2 by omega), add_zero]
+      exact h
+    · rw [ite_eq_left (show H + 1 ≤ killTime x.2 by omega)]
+      have : 0 ≤ ∑ ℓ ∈ range (H + 1),
+          (if killTime x.2 = ℓ ∧ f x = R.decode T q A v then 1 else 0 : ℝ) :=
+        sum_nonneg fun ℓ _ ↦ by positivity
+      split_ifs <;> linarith
+  have hsurv : 𝔼 x : (Fin T → D) × (Fin T → Fin q),
+      (if H + 1 ≤ killTime x.2 then 1 else 0 : ℝ) = (1 - (q : ℝ)⁻¹) ^ (H + 1) := by
+    rw [Fintype.expect_prod_type]
+    simp only [expect_le_killTime (q := q) (Nat.succ_le_of_lt hH), Fintype.expect_const]
+  have h := R.inv_card_le_expect_report_eq_decode T q A v
+  calc (Fintype.card α : ℝ)⁻¹ - (1 - (q : ℝ)⁻¹) ^ (H + 1)
+      ≤ 𝔼 x, (∑ ℓ ∈ range (H + 1),
+          (if killTime x.2 = ℓ ∧ f x = R.decode T q A v then 1 else 0 : ℝ) +
+            if H + 1 ≤ killTime x.2 then 1 else 0) - (1 - (q : ℝ)⁻¹) ^ (H + 1) := by
+        gcongr
+        exact h.trans (expect_le_expect fun x _ ↦ hpt x)
+    _ = ∑ ℓ ∈ range (H + 1), (1 - (q : ℝ)⁻¹) ^ ℓ / q * R.truthProb T A (R.decode T q A) v ℓ := by
+        rw [expect_add_distrib, hsurv, add_sub_cancel_right, expect_sum_comm]
+        exact sum_congr rfl fun ℓ hℓ ↦ R.expect_killTime_eq_and_report_eq T q A _ v
+          ((mem_range.1 hℓ).trans_le (Nat.succ_le_of_lt hH))
+
+end Decode
 
 end RegularConstraintGraph
 

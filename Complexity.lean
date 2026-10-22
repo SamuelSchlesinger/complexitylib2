@@ -956,6 +956,8 @@ public import Complexity.Computability.PCP.Amplification.Family
 public import Complexity.Computability.PCP.Amplifier
 public import Complexity.Computability.PCP.Approximation
 public import Complexity.Computability.PCP.Approximation.Hastad
+public import Complexity.Computability.PCP.Approximation.Hastad.ExactThreeDistinct
+public import Complexity.Computability.PCP.Approximation.Hastad.LinearTest
 public import Complexity.Computability.PCP.Approximation.IndependentSet
 public import Complexity.Computability.PCP.Approximation.LabelCover
 public import Complexity.Computability.PCP.Approximation.MaxCSP
@@ -1144,6 +1146,9 @@ public import Complexity.Computability.WordRAM.Time
 public import Complexity.Computability.WordRAM.Trace
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.Bootstrapping
+public import Complexity.Crypto.Computational.Bootstrapping.HomomorphicEval
+public import Complexity.Crypto.Computational.Bootstrapping.KeyChain
+public import Complexity.Crypto.Computational.Bootstrapping.KeyEncryption
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
