@@ -236,3 +236,42 @@ on $B$) with approximation factor $\gamma=2n/\alpha\le 2n(\ln n+1)/\alpha
 \declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1496}{Cslib.Crypto.regev_lwe_to_sivp_gapsvp}
 \end{result}
 
+\begin{result}
+\subsection{Gentry's bootstrapping theorem}
+Let $S$ be a public-key bit-encryption scheme (\texttt{EncryptionScheme}) equipped with a
+bootstrappable augmented-decryption evaluator (\texttt{Bootstrappable}) that homomorphically
+evaluates the De Morgan operations (\texttt{Boolean.Op}: Boolean constants \texttt{.const}\,$b$,
+unary negation \texttt{.not}, and binary \texttt{.and} and \texttt{.or}) composed with decryption on
+pairs of ciphertexts under $\mathsf{sk}_1$ using an encrypted evaluation key
+$\mathsf{ek}\leftarrow\mathsf{encryptKey}(\mathsf{pk}_2,\mathsf{sk}_1)$ under a target public key
+$\mathsf{pk}_2$, producing ciphertexts under $\mathsf{pk}_2$ of length at most a polynomial bound
+$\mathsf{cipherBound}(n)$.
+\begin{itemize}
+\item \textbf{Leveled FHE without circular security:} For every unary polynomial-time depth bound
+  $D:\mathbb N\to\mathbb N$, the acyclic key-chain construction $\mathsf{leveledKeyGen}(D(n),n)$ and
+  synchronous level-by-level evaluator $\mathsf{evalLeveledOutput}$ form a compact leveled FHE
+  scheme that evaluates every De Morgan circuit $c$ (or formula $F$) of depth at most $D(n)$ in
+  deterministic polynomial time, with output ciphertext bit-length at most $\mathsf{cipherBound}(n)$
+  independent of $|c|$ and $D(n)$. If $S$ is semantically secure against uniform strict PPT
+  distinguishers (\texttt{SemanticSecure}), then the leveled scheme is semantically secure
+  (\texttt{LeveledSemanticSecure}) given the full evaluation key chain, proved via a two-tier hybrid
+  reduction over the $D(n)$ levels and the $\mathsf{skLength}(n)$ secret-key bits at each level.
+\item \textbf{Fixed-key FHE under circular security:} Under circular security
+  (\texttt{CircularSecure}, semantic security given a self-encrypted evaluation key
+  $\mathsf{ek}\leftarrow\mathsf{encryptKey}(\mathsf{pk},\mathsf{sk})$), the fixed-key scheme
+  $(\mathsf{fixedKeyGen},\mathsf{encrypt},\mathsf{evalHomOutput},\mathsf{decrypt})$ homomorphically
+  evaluates De Morgan circuits and formulas of arbitrary depth and size in deterministic polynomial
+  time with output ciphertext bit-length at most $\mathsf{cipherBound}(n)$.
+\end{itemize}
+Here \texttt{Bootstrappable} axiomatizes polynomial-time augmented-decryption gate evaluation
+(\texttt{evalAugDecrypt}) and its compactness bound (\texttt{cipherBound}) directly as a primitive
+interface on $S$, rather than compiling \texttt{S.decrypt} to a circuit and evaluating that circuit
+inside a bounded-depth somewhat homomorphic scheme; the theorem also does not construct a concrete
+ideal-lattice or LWE-based somewhat homomorphic encryption scheme.\citep{Gentry2009}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1946}{Cslib.Crypto.EncryptionScheme.leveledFHE_of_bootstrappable}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1038}{Cslib.Crypto.EncryptionScheme.leveledSemanticSecure_of_semanticSecure}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1503}{Cslib.Crypto.EncryptionScheme.fixedKeyFHE_of_circularSecure}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1865}{Cslib.Crypto.EncryptionScheme.decrypt_evalLeveledOutput_circuit}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1384}{Cslib.Crypto.EncryptionScheme.decrypt_evalHomOutput_circuit}
+\end{result}
+

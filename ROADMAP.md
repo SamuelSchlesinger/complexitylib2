@@ -11,11 +11,23 @@ completed reference developments.
 2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
    exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
    polynomial-time adversaries.
-3. **Gentry’s bootstrapping theorem.** A semantically secure, bootstrappable encryption scheme
-   yields compact leveled fully homomorphic encryption for every polynomially bounded circuit
-   depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
-   circuits. With an appropriate additional circular-security assumption, the construction yields a
-   fixed-key fully homomorphic scheme without a predetermined depth bound.
+3. **Gentry’s bootstrapping theorem (proved:
+   [Bootstrapping](Complexity/Crypto/Computational/Bootstrapping.lean)).** A semantically secure,
+   bootstrappable encryption scheme (`EncryptionScheme`, `Bootstrappable`, `SemanticSecure`) yields
+   compact leveled fully homomorphic encryption (`leveledKeyGen`, `evalLeveledOutput`,
+   `leveledFHE_of_bootstrappable`) for every unary polynomial-time depth bound `D`, with leveled
+   semantic security (`leveledSemanticSecure_of_semanticSecure`) proved from base semantic security
+   alone via a hybrid over the evaluation key chain and secret-key bits (`encryptKeyTest_gap`).
+   Here `Bootstrappable` axiomatizes polynomial-time augmented-decryption gate evaluation
+   (`evalAugDecrypt`) and its compactness bound (`cipherBound`) directly as a primitive interface on
+   `S` for the De Morgan operations (`Boolean.Op`: Boolean constants `.const b`, unary negation
+   `.not`, and binary `.and` and `.or`) composed with decryption, rather than compiling `S.decrypt`
+   to a circuit and evaluating that circuit inside a bounded-depth somewhat homomorphic scheme.
+   Under circular security (`CircularSecure`), the fixed-key construction (`fixedKeyGen`,
+   `evalHomOutput`, `fixedKeyFHE_of_circularSecure`) evaluates De Morgan circuits and formulas of
+   arbitrary depth and size with output ciphertext length bounded by `cipherBound n`. Concrete
+   lattice/LWE-based instantiations and circuit-level decryption-depth compilation remain future
+   work.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
