@@ -66,8 +66,7 @@ noncomputable def weightedTrial (source : ProbComp α) (mask test : α → ProbC
 private theorem gate_probability (mask test : ProbComp Bool) :
     Pr[mask >>= fun active => if active then test else ProbComp.uniform Bool] =
       1 / 2 + Pr[mask] * (Pr[test] - 1 / 2) := by
-  have htotal := PMF.sum_toReal (ProbComp.eval mask)
-  simp only [Fintype.sum_bool] at htotal
+  have htotal := PMF.toReal_true_add_toReal_false (ProbComp.eval mask)
   simp only [ProbComp.eval_bind, PMF.bind_apply_toReal, Fintype.sum_bool,
     Bool.false_eq_true, ite_false, ite_true]
   have hfair : Pr[ProbComp.uniform Bool] = 1 / 2 := by

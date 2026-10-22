@@ -128,9 +128,8 @@ theorem probability_calibratedTest (real ideal challenge : ProbComp Bool) :
       1 / 2 + (Pr[real] - Pr[ideal]) *
         (Pr[challenge] - 1 / 2) := by
   let direction := bitPredictor (fun trial => if trial then real else ideal)
-  have htotal := PMF.sum_toReal (ProbComp.eval direction)
+  have htotal := PMF.toReal_true_add_toReal_false (ProbComp.eval direction)
   have hbias := bitPredictor_bias (fun trial => if trial then real else ideal) true
-  simp only [Fintype.sum_bool] at htotal
   simp only [beq_true, id_map', ite_true, Bool.false_eq_true, ite_false,
     Game.succProbability, ENNReal.coe_toNNReal_eq_toReal] at hbias
   simp only [calibratedTest, Game.coe_succProbability_eval_bind, Fintype.sum_bool, beq_false,

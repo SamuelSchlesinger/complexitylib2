@@ -85,8 +85,7 @@ theorem eval_maskBit_apply (mask : ProbComp Bool) (truth bit : Bool) :
     (ProbComp.eval (maskBit mask truth) bit).toReal =
       if bit = truth then 1 - (ProbComp.eval mask true).toReal / 2
       else (ProbComp.eval mask true).toReal / 2 := by
-  have hmass := sum_toReal (ProbComp.eval mask)
-  simp only [Fintype.sum_bool] at hmass
+  have hmass := toReal_true_add_toReal_false (ProbComp.eval mask)
   rw [eval_maskBit, bind_apply_toReal]
   cases truth <;> cases bit <;>
     norm_num [Fintype.sum_bool, PMF.uniformOfFintype_apply, PMF.pure_apply] <;> linarith

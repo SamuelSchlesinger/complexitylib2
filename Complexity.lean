@@ -1204,6 +1204,7 @@ public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle
 public import Complexity.Crypto.Computational.PseudorandomFunction.TruthTable
 public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Computational.Stretch
+public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.UniformChoice
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid

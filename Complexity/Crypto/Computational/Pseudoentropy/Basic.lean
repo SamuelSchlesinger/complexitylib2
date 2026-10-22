@@ -127,8 +127,8 @@ theorem HasGap.eventually_error_ge {pair : SamplablePair} {gap : ℕ → ℝ}
     ∀ᶠ n in atTop, (PMF.conditionalEntropy (pair.joint n) + gap n) / 2 ≤
       (ProbComp.eval (predictionGame pair.sample adversary n) false).toReal := by
   filter_upwards [hgap adversary hefficient] with n hn
-  have hsum := PMF.sum_toReal (ProbComp.eval (predictionGame pair.sample adversary n))
-  simp only [Fintype.sum_bool] at hsum
+  have hsum := PMF.toReal_true_add_toReal_false
+    (ProbComp.eval (predictionGame pair.sample adversary n))
   simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal] at hn
   linarith
 
