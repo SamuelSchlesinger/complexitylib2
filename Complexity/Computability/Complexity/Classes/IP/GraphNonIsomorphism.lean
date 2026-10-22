@@ -283,10 +283,6 @@ theorem computableTidilyInPolyTime_relabel {γ : Type} {input : γ ↪ List Bool
 
 /-! ### Relabeling by random keys -/
 
-private theorem binaryValue_injective {word word' : List Bool} (hlen : word.length = word'.length)
-    (h : BitString.binaryValue word = BitString.binaryValue word') : word = word' :=
-  BitString.binaryValue_injective_of_length_eq hlen h
-
 /-- The value of a key of `w` bits, read most significant bit first. -/
 def keyValue {w : ℕ} (row : BitString w) : ℕ :=
   BitString.boundedBinaryValue (2 ^ w) (List.ofFn row)
@@ -296,7 +292,7 @@ theorem keyValue_injective (w : ℕ) : Function.Injective (keyValue (w := w)) :=
   have hlt (r : BitString w) : BitString.binaryValue (List.ofFn r) ≤ 2 ^ w := by
     simpa using (BitString.binaryValue_lt_two_pow (List.ofFn r)).le
   simp only [keyValue, BitString.boundedBinaryValue_eq, Nat.min_eq_right (hlt _)] at h
-  exact List.ofFn_injective (binaryValue_injective (by simp) h)
+  exact List.ofFn_injective (BitString.binaryValue_injective_of_length_eq (by simp) h)
 
 /-- Keys of `keyWidth n` bits take at least `16 * n * n` values. -/
 def keyWidth (n : ℕ) : ℕ := Nat.clog 2 (16 * n * n)

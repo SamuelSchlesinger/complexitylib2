@@ -46,8 +46,6 @@ namespace Cslib.Complexity
 open Cslib.PCP Cslib.PCP.Encoded HadamardTester Turing.MultiTapeTM
 open ConstraintGraph.Amplification.Arithmetic
 
-private abbrev Alphabet := Bool × (Fin 6 → Bool)
-
 private def encodeLabel (label : Alphabet) : Fin (FinEnum.card (Fin 6) + 1) → Bool :=
   Fin.cases label.1 (fun i => label.2 (FinEnum.equiv.symm i))
 

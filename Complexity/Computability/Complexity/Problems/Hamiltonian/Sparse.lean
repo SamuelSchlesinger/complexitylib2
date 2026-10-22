@@ -16,6 +16,7 @@ import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
@@ -123,9 +124,6 @@ private theorem mem_vars_of_mem_occurrences {o : Occurrence} (ho : o ∈ occurre
   rw [← map_occurrences]
   exact List.mem_map_of_mem ho
 
-private theorem getD_idxOf {l : List ℕ} {x : ℕ} (hx : x ∈ l) : l.getD (l.idxOf x) 0 = x := by
-  rw [List.getD_eq_getElem _ _ (List.idxOf_lt_length_iff.2 hx), List.getElem_idxOf]
-
 private theorem mem_occurrencePositions {x q : ℕ} :
     q ∈ occurrencePositions φ x ↔ q < φ.vars.length ∧ φ.vars.getD q 0 = x := by
   simp [occurrencePositions]
@@ -165,8 +163,8 @@ theorem wellFormed_sparseDetours :
   slot_lt d hd := by
     obtain ⟨o, p, h, rfl⟩ := mem_sparseDetours.1 hd
     simp only [sparseSlots]
-    rw [getD_idxOf (ThreeSAT.mem_distinctVars.2
-      (mem_vars_of_mem_occurrences (List.mem_of_getElem? h)))]
+    rw [List.getD_idxOf (ThreeSAT.mem_distinctVars.2
+      (mem_vars_of_mem_occurrences (List.mem_of_getElem? h))) 0]
     exact List.idxOf_lt_length_iff.2 (mem_occurrencePositions_of_getElem? h)
   clause_eq d hd d' hd' hrow hslot := by
     obtain ⟨o, p, h, rfl⟩ := mem_sparseDetours.1 hd
@@ -202,7 +200,7 @@ theorem satisfiable_sparseDetours_iff :
     obtain ⟨p, hp⟩ := List.mem_iff_getElem?.1 ho
     refine ⟨_, mem_sparseDetours.2 ⟨_, p, hp, rfl⟩, rfl, ?_⟩
     simp only
-    rw [getD_idxOf (ThreeSAT.mem_distinctVars.2 (mem_vars_of_mem_occurrences ho))]
+    rw [List.getD_idxOf (ThreeSAT.mem_distinctVars.2 (mem_vars_of_mem_occurrences ho)) 0]
     exact hσl
 
 end Correctness

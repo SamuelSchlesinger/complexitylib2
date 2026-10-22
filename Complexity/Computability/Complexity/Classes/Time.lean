@@ -252,7 +252,7 @@ theorem BPTIME_mono_of_eventually_le {enc : α ↪ List Bool} {t₁ t₂ : ℕ �
 /-! ### The polynomial classes -/
 
 /-- An explicit polynomial bound `c * (n + 1) ^ d` is a bound `O(n ^ d)`. -/
-private theorem succ_pow_le (c d n : ℕ) : c * (n + 1) ^ d ≤ c * 2 ^ d * n ^ d + c := by
+theorem succ_pow_le (c d n : ℕ) : c * (n + 1) ^ d ≤ c * 2 ^ d * n ^ d + c := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · rcases Nat.eq_zero_or_pos d with rfl | hd
     · simp
@@ -305,15 +305,6 @@ theorem mem_NP_iff_exists_mem_NTIME {α : Type} {enc : α ↪ List Bool} {A : Se
 
 open Cslib.Probability
 open scoped ENNReal
-
-/-- The probability of a value of a function of a uniform word is the fraction of the words of
-that length giving it. -/
-private theorem uniformList_map_apply {β : Type} [DecidableEq β] (f : List Bool → β) (n : ℕ)
-    (b : β) : ((BitString.uniformList n).map f) b =
-      ((Finset.univ.filter fun r : Fin n → Bool => f (List.ofFn r) = b).card : ℝ≥0∞) / 2 ^ n := by
-  rw [BitString.uniformList, PMF.map_comp, Probability.PMF.uniformOfFintype_map_apply]
-  simp only [Nat.card_eq_fintype_card, Fintype.card_subtype, Fintype.card_fun, Fintype.card_bool,
-    Fintype.card_fin, Nat.cast_pow, Nat.cast_ofNat, Function.comp_def]
 
 /-- A probability of at least `2 / 3` is a fraction of at least two thirds. -/
 private theorem two_thirds_le_div_iff {c n : ℕ} :
@@ -372,7 +363,7 @@ theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : 
     rw [← heval a, show [MultiTapeTM.indicator A a] = encBool (MultiTapeTM.indicator A a) from rfl,
       map_apply_of_injective encBool.injective]
     simp only [program, ProbComp.eval_map, BitString.eval_sampleList]
-    rw [uniformList_map_apply]
+    rw [BitString.uniformList_map_apply]
     exact two_thirds_le_div_iff.mpr (hA.two_mul_le a)
   · rintro ⟨d, c₁, c₂, k, State, hfinite, machine, hA⟩
     -- replay the coins
@@ -388,7 +379,7 @@ theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : 
         c₁ * (enc a).length ^ d + c₂ := by
       simp
     have hprob := (hA a).2
-    rw [MultiTapePTM.eval_runClosed_eq_map_coins, uniformList_map_apply,
+    rw [MultiTapePTM.eval_runClosed_eq_map_coins, BitString.uniformList_map_apply,
       two_thirds_le_div_iff] at hprob
     rw [heval]
     constructor

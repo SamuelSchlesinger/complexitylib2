@@ -501,8 +501,7 @@ theorem computableTidilyInPolyTime_esymmCoords : ComputableTidilyInPolyTime
       · simp only [List.mem_map] at hx
         obtain ⟨e, he, rfl⟩ := hx
         have := h.2 e he
-        simp only [encBits]
-        simp
+        simp only [encBits_apply]
         omega
       · simp)).1
   unfold esymmCoords

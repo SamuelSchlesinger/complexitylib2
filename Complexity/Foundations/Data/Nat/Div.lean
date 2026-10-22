@@ -13,6 +13,11 @@ public import Complexity.Init
 # Dividing repeatedly by a power
 
 Facts about `n / b ^ j` for the stages of an argument that divides a quantity by `b` at each step.
+
+## Main results
+
+* `Nat.le_div_pow_of_mul_pow_le`: lower bound on `n / b ^ j` when `a * b ^ d ≤ n` and `j ≤ d`.
+* `Nat.mul_div_pow_succ_le`: `b * (n / b ^ (j + 1)) ≤ n / b ^ j`.
 -/
 
 @[expose] public section

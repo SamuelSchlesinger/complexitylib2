@@ -250,4 +250,16 @@ theorem derives_nil_iff_not_satisfiable : φ.Derives [] ↔ ¬ φ.Satisfiable :=
 
 end CNF
 
+/-- Partitioning the elements of a list satisfying `p` by whether they satisfy `q`. -/
+theorem countP_and_not_add_countP_and {α : Type*} (p q : α → Prop) [DecidablePred p]
+    [DecidablePred q] (l : List α) :
+    l.countP (fun a => ¬ q a ∧ p a) + l.countP (fun a => p a ∧ q a) = l.countP (fun a => p a) := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    rw [List.countP_cons, List.countP_cons, List.countP_cons]
+    by_cases hp : p a <;> by_cases hq : q a <;>
+      simp only [hp, hq, not_true_eq_false, not_false_eq_true, and_true, and_false,
+        decide_true, decide_false, Bool.false_eq_true, ↓reduceIte] <;> omega
+
 end Cslib.Logic.PL

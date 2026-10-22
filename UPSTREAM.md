@@ -104,14 +104,18 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   input-dependent bounds. Its forgetful bridge reuses `IsComputable`; polynomiality is a separate
   bound property. `GenericRAM/Native/Nat` supplies a checked bounded-natural addition model;
   `WordRAM/Native` certifies checked standard addition with unary width and binary operands.
-  Both reuse Christian Reitwiessner's native arithmetic/encoding calculus. These are per-symbol
-  certificates for fixed-program composition, not an arbitrary-program dispatcher or whole RAM
-  simulation. Sparse memory, finite control and charged configuration selection remain separate.
+  Both reuse Christian Reitwiessner's native arithmetic/encoding calculus.
+  `GenericRAM/Simulation/{Finite,Turing,Run}` combine these per-symbol certificates with sparse
+  memory and finite control to simulate single steps and clocked multi-step runs of any fixed
+  generic-RAM program on native multitape Turing machines (`Cslib.GenericRAM.FiniteState.transport_inO`,
+  `Cslib.GenericRAM.FiniteState.transport_polyTime`, and `transport_polyTime_of_le_const`, taking an
+  explicit step bound and a polynomial bound on intermediate configuration lengths `hStepsBound`,
+  `hOutLen`); uniform arbitrary-program dispatch remains separate.
 * **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
   with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
   routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,
-  and polynomial-time corollaries. Coordinate this component with #292's effective RAM backend;
-  it does not yet simulate generic primitives, finite control or whole RAM executions.
+  and polynomial-time corollaries, and feed the fixed-program step and whole-run simulators in
+  `GenericRAM/Simulation/{Turing,Run}` (#298, #292).
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource
@@ -164,9 +168,11 @@ agreement during upstream review.
 | `Computability/Machines/Turing/MultiTape/Combinators/TidyNormalForm` | Place `runFrom_nop_withState` beside `runFrom_nop_one`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Decoder` | Total decoders with tidy certificates; add to the tidy branch's `Encodings` beside `Option`/`Pair`/`List`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
-| `Computability/Circuit/{Unfolding,MapOp}` | Consider integrating into `Circuit/Formula` and `Circuit/Program`, respectively. |
+| `Computability/Circuit/{Unfolding,MapOp}`, `Computability/Circuit/Encoding/MapOp` | Consider integrating into `Circuit/Formula`, `Circuit/Program`, and `Circuit/Encoding`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
 | `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
+| `Foundations/Data/List/Basic` | `List.getD_idxOf` and register-file/unary-header helpers; consider Mathlib's `Data/List/GetD` and `Data/List/Basic`. |
+| `Foundations/Relation/RelatesWithinSteps` | `Function.iterate_trans` and bounded reachability helpers; consider Mathlib's `Logic/Function/Iterate` and `Logic/Relation`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
 | `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317, with deprecated aliases retained in `Cslib.BitString`). |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |

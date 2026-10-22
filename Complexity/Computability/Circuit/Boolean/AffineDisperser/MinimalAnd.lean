@@ -41,19 +41,17 @@ child.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.AffineDisperser.State.MinimalAnd`: the minimal AND.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.SharedSecondChild`,
-  `Cslib.Circuits.Boolean.AffineDisperser.State.Bottleneck`: the configurations of Section 4.3.
 * `Cslib.Circuits.Boolean.AffineDisperser.State.auxIn`,
   `Cslib.Circuits.Boolean.AffineDisperser.State.childIn`: the measures of the restructuring.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.MinimalAnd`: the minimal AND.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_preparation_auxIn_lt`,
   `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_preparation_childIn_lt`: the
   restructuring.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_of_minimalAnd`: eliminating the
-  minimal AND.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_minimalAnd`: the restructured minimal
+  gate is a minimal AND (`MinimalAnd`), eliminated in `Elimination.lean`.
 
 ## References
 

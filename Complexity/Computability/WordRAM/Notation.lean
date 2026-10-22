@@ -34,6 +34,12 @@ It is scoped: `open Cslib.WordRAM` enables it. Its statement forms follow the wo
 internal `ram_stmt%` and `ram_block%`, so it reserves no identifiers: `ram` and `width` remain
 ordinary names.
 
+## Main definitions
+
+* `ram[ s₁; s₂; … ]`: scoped notation for structured word-RAM programs (`Cslib.WordRAM.Code`).
+* `ram_eval`: symbolic execution tactic for `Cslib.WordRAM.ExecWithin` and `Cslib.WordRAM.Exec`
+  goals.
+
 ## Tactics
 
 * `ram_eval`, `ram_eval n`: symbolic execution. On a goal `Cslib.WordRAM.ExecWithin w c x y T`

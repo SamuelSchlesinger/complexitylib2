@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.ReadMachine.StepMachine
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BinaryCompare
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StepMachine
 
 /-!
@@ -21,6 +22,8 @@ in binary, and the time by a factor of the position, to compare it with the addr
 
 ## Main results
 
+* `Turing.ReadMachine.pairFalse_inSpace`, `Turing.ReadMachine.onTuple`: evaluating a function of a
+  state and a bit at the bit `false` within the space budget of the step.
 * `Turing.ReadMachine.tidy_toStepMachine`: the simulating step machine is tidy.
 -/
 
@@ -77,6 +80,28 @@ theorem budget_finite {f : γ → β} [Finite β] (g : β → δ)
     (hf : ComputableTidilyInO f encIn encB Bt Bs) (hst : Bs ≼ Bt) :
     ComputableTidilyInO (fun x => g (f x)) encIn encD Bt Bs :=
   budget_comp_linear (ComputableTidilyInDegree.of_finite g).inO_one hf hst
+
+/-- Pairing a state with the bit `false`, within any space budget at least the encoded pair
+length. -/
+theorem pairFalse_inSpace {α : Type} {enc : α ↪ List Bool} {B : α × Bool → ℕ}
+    (hB : ∀ x, (encPair enc encBool (x, false)).length ≤ B (x, false)) :
+    ComputableTidilyInSpace (fun x : α => (x, false)) enc (encPair enc encBool)
+      fun x => B (x, false) :=
+  (ComputableTidilyInSpace.budget_prod
+    (ComputableTidilyInSpace.of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
+    (ComputableTidilyInSpace.budget_const (encB := encBool) false (.refl _))).weaken
+      (.of_le fun x => by
+        have := hB x
+        simp only [length_encPair] at this ⊢
+        omega)
+
+/-- Evaluating a function of a state and a bit at the bit `false`, within the space budget of the
+step. -/
+theorem onTuple {α β : Type} {enc : α ↪ List Bool} {encB : β ↪ List Bool} {B : α × Bool → ℕ}
+    (hB : ∀ x, (encPair enc encBool (x, false)).length ≤ B (x, false)) {f : α × Bool → β}
+    (h : ComputableTidilyInSpace f (encPair enc encBool) encB B) :
+    ComputableTidilyInSpace (fun x : α => f (x, false)) enc encB fun x => B (x, false) :=
+  ComputableTidilyInSpace.budget_comp h (pairFalse_inSpace hB) (.refl _)
 
 end Budget
 

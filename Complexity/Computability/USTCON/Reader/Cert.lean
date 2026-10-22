@@ -156,21 +156,6 @@ end Build
 
 /-! ### The halting test and the address -/
 
-/-- The tuple with the bit `false`, as an input of a step. -/
-private theorem pairFalse_inSpace :
-    ComputableTidilyInSpace (fun x : Tuple => (x, false)) encTuple encStepIn
-      fun x => stepBudget (x, false) :=
-  (budget_prod (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
-    (budget_const (encB := encBool) false (.refl _))).weaken (.of_le fun x => by
-      simp only [stepBudget, length_encPair]; omega)
-
-/-- A function of the tuple with the bit `false`, within the budget of the step. -/
-private theorem onTuple {β : Type} {encB : β ↪ List Bool} {f : Tuple × Bool → β}
-    (h : ComputableTidilyInSpace f encStepIn encB stepBudget) :
-    ComputableTidilyInSpace (fun x : Tuple => f (x, false)) encTuple encB
-      fun x => stepBudget (x, false) :=
-  budget_comp h pairFalse_inSpace (.refl _)
-
 /-- A function of the control. -/
 private theorem hCtlFinite {β : Type} {encB : β ↪ List Bool} (g : Ctl → β) :
     ComputableTidilyInSpace (fun y : Tuple × Bool => g y.1.1.1) encStepIn encB stepBudget :=
@@ -180,7 +165,7 @@ private theorem hCtlFinite {β : Type} {encB : β ↪ List Bool} (g : Ctl → β
 private theorem haltT_inSpace :
     ComputableTidilyInSpace (fun x : Tuple => decide (x.1.1 = .done)) encTuple encBool
       fun x => stepBudget (x, false) :=
-  onTuple (hCtlFinite fun k ↦ decide (k = .done))
+  ReadMachine.onTuple (fun _ => le_rfl) (hCtlFinite fun k ↦ decide (k = .done))
 
 /-- Whether the next step of the evaluation is a step of the slot graph, from the labels and the
 frames. -/
@@ -224,7 +209,7 @@ private theorem addrT_inSpace :
           (budget_optionSome (budget_natAdd hhdr (budget_natAdd (budget_natMul hV₁ hN) hV₂)))
           none')
         none')))
-  refine (onTuple h).of_enc_eq fun x ↦ ?_
+  refine (ReadMachine.onTuple (fun _ => le_rfl) h).of_enc_eq fun x ↦ ?_
   obtain ⟨⟨ctl, cnt⟩, ⟨⟨n, s, t⟩, d, l⟩, ⟨c, w, j⟩, v, low, fr⟩ := x
   cases ctl
   case eval => simp only [addr, State.ofTuple, atRootT_eq v]; rfl

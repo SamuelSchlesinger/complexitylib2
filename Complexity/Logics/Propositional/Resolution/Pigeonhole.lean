@@ -535,17 +535,6 @@ private theorem countP_le_of_forall₂ {α β : Type*} {R : α → β → Prop} 
     · simp only [ha, Bool.false_eq_true, ↓reduceIte]
       split <;> omega
 
-private theorem countP_and_not_add_countP_and {α : Type*} (p q : α → Prop) [DecidablePred p]
-    [DecidablePred q] (l : List α) :
-    l.countP (fun a => ¬ q a ∧ p a) + l.countP (fun a => p a ∧ q a) = l.countP (fun a => p a) := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    rw [List.countP_cons, List.countP_cons, List.countP_cons]
-    by_cases hp : p a <;> by_cases hq : q a <;>
-      simp only [hp, hq, not_true_eq_false, not_false_eq_true, and_true, and_false,
-        decide_true, decide_false, Bool.false_eq_true, ↓reduceIte] <;> omega
-
 /-- **One step of greedy matching restriction.** If `#P · #H ≤ C d` and `0 < d`, some pair
 `(i₀, j₀) ∈ P ×ˢ H` restricts a refutation of `pigeonholeOn P H` to a refutation of
 `pigeonholeOn (P.erase i₀) (H.erase j₀)` whose number `f'` of lines with
