@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.TreeLike
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Finset.Sort
 import Mathlib.Tactic.Linarith
@@ -571,7 +572,7 @@ theorem exists_restrict_countP_satPairs {P : Finset (Fin m)} {H : Finset (Fin n)
       obtain ⟨_, l, hl, hmatch⟩ := mem_filter.1 hmem
       exact hfree c hc l hl hmatch
   have hle₂ := hle₁.trans hks.countP_le
-  have hsplit := countP_and_not_add_countP_and (fun c => d ≤ #(satPairs P H c))
+  have hsplit := List.countP_and_not_add_countP_and (fun c => d ≤ #(satPairs P H c))
     (fun c => (i₀, j₀) ∈ satPairs P H c) ls
   have hcnt : F.countP (fun c => (i₀, j₀) ∈ satPairs P H c) =
       ls.countP (fun c => d ≤ #(satPairs P H c) ∧ (i₀, j₀) ∈ satPairs P H c) := by

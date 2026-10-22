@@ -46,10 +46,10 @@ namespace Cslib.Complexity
 open Cslib.PCP Cslib.PCP.Encoded HadamardTester Turing.MultiTapeTM
 open ConstraintGraph.Amplification.Arithmetic
 
-private def encodeLabel (label : Alphabet) : Fin (FinEnum.card (Fin 6) + 1) → Bool :=
+private def encodeLabel (label : GapAlphabet) : Fin (FinEnum.card (Fin 6) + 1) → Bool :=
   Fin.cases label.1 (fun i => label.2 (FinEnum.equiv.symm i))
 
-private def decodeLabel (bits : Fin (FinEnum.card (Fin 6) + 1) → Bool) : Alphabet :=
+private def decodeLabel (bits : Fin (FinEnum.card (Fin 6) + 1) → Bool) : GapAlphabet :=
   (bits 0, fun query => bits (FinEnum.equiv query).succ)
 
 private theorem decode_encodeLabel : Function.LeftInverse decodeLabel encodeLabel := by
@@ -63,7 +63,7 @@ theorem NP_subset_PCP_log {Input : Type} (input : Input ↪ List Bool) :
   intro A hA
   obtain ⟨reduce, hreduce, hmem⟩ := CookLevin.SAT_npHard input A hA
   have heval : ComputableTidilyInPolyTime
-      (fun p : (Alphabet → Alphabet → Bool) × Alphabet × Alphabet => p.1 p.2.1 p.2.2)
+      (fun p : (GapAlphabet → GapAlphabet → Bool) × GapAlphabet × GapAlphabet => p.1 p.2.1 p.2.2)
       (encPair (encPi (encPi encBool))
         (encPair (encPair encBool (encPi encBool)) (encPair encBool (encPi encBool)))) encBool := by
     fun_prop

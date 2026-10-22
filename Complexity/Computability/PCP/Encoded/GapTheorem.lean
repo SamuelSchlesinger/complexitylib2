@@ -26,7 +26,7 @@ produce graphs above the fixed positive gap, with all endpoints in the declared 
 
 ## Main definitions
 
-* `Cslib.PCP.Encoded.Alphabet`: the fixed output alphabet `Bool × (Fin 6 → Bool)`.
+* `Cslib.PCP.Encoded.GapAlphabet`: the fixed output alphabet `Bool × (Fin 6 → Bool)`.
 * `Cslib.PCP.Encoded.gapGraph`: the complete functional SAT-to-gap-graph pipeline.
 
 ## Main results
@@ -52,11 +52,11 @@ open ConstraintGraph.Amplification.Arithmetic
 attribute [local instance] Cslib.PCP.HadamardTester.instFinEnumBool
 
 /-- The fixed output alphabet of the selected composition and arithmetic amplification pipeline. -/
-abbrev Alphabet : Type := Bool × (Fin 6 → Bool)
+abbrev GapAlphabet : Type := Bool × (Fin 6 → Bool)
 
 /-- Split, compact, normalize, and amplify a CNF formula using the concrete arithmetic family. -/
 def gapGraph {V : Type} [DecidableEq V] (φ : CNF V) :
-    Graph (Alphabet → Alphabet → Bool) :=
+    Graph (GapAlphabet → GapAlphabet → Bool) :=
   (Graph.ofCompactCNF φ.to3CNF).composeSelectedEnumerated.arithmeticAmplify
 
 /-- The whole reduction is polynomial-time in any efficiently computed input formula. Variable

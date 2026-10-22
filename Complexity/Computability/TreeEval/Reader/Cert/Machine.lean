@@ -45,7 +45,7 @@ theorem onTuple {β : Type} {encB : β ↪ List Bool} {f : Tuple × Bool → β}
     (h : ComputableTidilyInSpace f encStepInT encB stepBudget) :
     ComputableTidilyInSpace (fun x : Tuple => f (x, false)) encTuple encB
       fun x => stepBudget (x, false) :=
-  ReadMachine.onTuple (fun x => by simp only [stepBudget, encStepInT]; omega) h
+  ReadMachine.comp_pairFalse_inSpace (fun x => by simp only [stepBudget, encStepInT]; omega) h
 
 /-- **The halting test** on tuples. -/
 theorem haltT_inSpace :

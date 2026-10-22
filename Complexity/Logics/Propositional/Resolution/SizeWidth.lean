@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 /-!
@@ -259,7 +260,7 @@ private theorem refutableInWidth_of_countP_wide (N d k : ℕ) :
       exact ⟨ls', h', this ▸ hc', hcount' d⟩
     -- fixing the literal to be true removes the many wide lines containing it
     obtain ⟨ls₁, h₁, hnil₁, hcount₁⟩ := hres β
-    have hsplit := countP_and_not_add_countP_and (fun c => d < Clause.width c)
+    have hsplit := List.countP_and_not_add_countP_and (fun c => d < Clause.width c)
       (fun c => (v, β) ∈ c) ls
     have hcnt : F.countP (fun c => (v, β) ∈ c) = ls.countP (fun c => d < c.width ∧ (v, β) ∈ c) := by
       rw [List.countP_filter]

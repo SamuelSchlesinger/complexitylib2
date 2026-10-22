@@ -165,7 +165,7 @@ private theorem hCtlFinite {β : Type} {encB : β ↪ List Bool} (g : Ctl → β
 private theorem haltT_inSpace :
     ComputableTidilyInSpace (fun x : Tuple => decide (x.1.1 = .done)) encTuple encBool
       fun x => stepBudget (x, false) :=
-  ReadMachine.onTuple (fun _ => le_rfl) (hCtlFinite fun k ↦ decide (k = .done))
+  ReadMachine.comp_pairFalse_inSpace (fun _ => le_rfl) (hCtlFinite fun k ↦ decide (k = .done))
 
 /-- Whether the next step of the evaluation is a step of the slot graph, from the labels and the
 frames. -/
@@ -209,7 +209,7 @@ private theorem addrT_inSpace :
           (budget_optionSome (budget_natAdd hhdr (budget_natAdd (budget_natMul hV₁ hN) hV₂)))
           none')
         none')))
-  refine (ReadMachine.onTuple (fun _ => le_rfl) h).of_enc_eq fun x ↦ ?_
+  refine (ReadMachine.comp_pairFalse_inSpace (fun _ => le_rfl) h).of_enc_eq fun x ↦ ?_
   obtain ⟨⟨ctl, cnt⟩, ⟨⟨n, s, t⟩, d, l⟩, ⟨c, w, j⟩, v, low, fr⟩ := x
   cases ctl
   case eval => simp only [addr, State.ofTuple, atRootT_eq v]; rfl

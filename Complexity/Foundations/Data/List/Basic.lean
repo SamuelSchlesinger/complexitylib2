@@ -21,6 +21,8 @@ import Mathlib.Data.List.GetD
   Used by deterministic and probabilistic finite-control certificates.
 * `List.getD_mem_or`, `List.getD_idxOf`: a defaulted lookup returns a list member or the default
   value, and returns a member at its first index.
+* `List.countP_and_not_add_countP_and`: the members satisfying `p` split by whether they satisfy
+  `q`.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
 * `List.decide_mem_eq_any`: membership as a scan of the list.
 * `List.getD_set_self`, `List.getD_set_ne`, `List.forall_mem_set_of_forall_mem`,
@@ -125,6 +127,18 @@ theorem List.getD_mem_or {α : Type*} (l : List α) (j : ℕ) (d : α) :
 theorem List.getD_idxOf {α : Type*} [BEq α] [LawfulBEq α] {l : List α} {x : α} (hx : x ∈ l)
     (d : α) : l.getD (l.idxOf x) d = x := by
   rw [List.getD_eq_getElem _ _ (List.idxOf_lt_length_iff.2 hx), List.getElem_idxOf]
+
+/-- Partitioning the elements of a list satisfying `p` by whether they satisfy `q`. -/
+theorem List.countP_and_not_add_countP_and {α : Type*} (p q : α → Prop) [DecidablePred p]
+    [DecidablePred q] (l : List α) :
+    l.countP (fun a => ¬ q a ∧ p a) + l.countP (fun a => p a ∧ q a) = l.countP (fun a => p a) := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    rw [List.countP_cons, List.countP_cons, List.countP_cons]
+    by_cases hp : p a <;> by_cases hq : q a <;>
+      simp only [hp, hq, not_true_eq_false, not_false_eq_true, and_true, and_false,
+        decide_true, decide_false, Bool.false_eq_true, ↓reduceIte] <;> omega
 
 /-! ### Unary headers -/
 

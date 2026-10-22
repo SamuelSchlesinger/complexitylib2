@@ -269,7 +269,7 @@ theorem mem_PSPACE_iff_exists_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A
   obtain ⟨t, s, hs, hA⟩ := mem_PSPACE_iff.mp h
   obtain ⟨C, d, hC⟩ := hs.exists_le
   exact ⟨d, mem_DSPACE_iff.mpr ⟨C * 2 ^ d, C, t, ComputableInTimeAndSpace.mono hA
-    (fun _ => le_rfl) fun a => (hC a).trans (succ_pow_le C d (enc a).length)⟩⟩
+    (fun _ => le_rfl) fun a => (hC a).trans (Nat.mul_add_one_pow_le_two_pow C d (enc a).length)⟩⟩
 
 /-! ### Space-constructible bounds -/
 
@@ -603,7 +603,7 @@ theorem DSPACE_pow_ssubset_DSPACE_pow_succ (k : ℕ) :
       · have : n ^ k ≤ n ^ (k + 1) := Nat.pow_le_pow_right hpos (Nat.le_succ k)
         omega
   refine (Set.ssubset_iff_of_subset hsub).mpr ⟨_, DSPACE_subset_of_le_mul_add (2 ^ (k + 1)) 1
-    (fun n => by simpa using succ_pow_le 1 (k + 1) n)
+    (fun n => by simpa using Nat.mul_add_one_pow_le_two_pow 1 (k + 1) n)
     (setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow (k + 1)) hn),
     setOf_spaceDiagonal_notMem_DSPACE hn fun c => ?_⟩
   filter_upwards [eventually_ge_atTop (2 * c)] with n hc
