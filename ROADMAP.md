@@ -308,8 +308,9 @@ batches.
      numerics is isomorphic to the interpreted full ordered structure preserving every
      natural rank, and `encodedMap` is a logspace many-one reduction from the pulled-back
      ordered query language to the target ordered query language. This is the full-domain
-     canonical transducer of Immerman's Proposition 3.5; isomorphism-closed class-level
-     reduction closure, restricted domains, projections and NL/P completeness remain open.
+     canonical transducer of Immerman's Proposition 3.5; restricted domains and class-level
+     closure are now covered by the #309 entry below. Projections and NL/P completeness remain
+     open.
      **Ordered NP-to-ESO converse recovered (#173):**
      [Fagin/Ordered](Complexity/Computability/Complexity/Fagin/Ordered.lean) defines every
      arbitrary ordered query whose source-only encoding language is in NP by one ESO sentence
@@ -318,8 +319,7 @@ batches.
      The existing strict-verifier/tableau construction is reused through a shared power-sentence
      lemma; the order-free characterization is unchanged. The ordered ESO-to-NP direction
      remains open.
-     **Next milestones:** ordered reduction closure for structure classes, then projections and
-     NL/P completeness. These remain open.
+     **Next milestones:** projections and NL/P completeness. These remain open.
      The full-domain hypothesis matters: the paragraph after Exercise 1.33 warns that canonical
      BIT on an arbitrary definable restricted domain need not be first-order definable.
      Restricted-domain numeric preservation therefore requires its own explicit definitions
@@ -341,8 +341,14 @@ batches.
      `Ordered.Reduces` with `refl`, `trans`, `compl` and `Definable.of_reduces`.
      [FullTuple/DomainInterpretation](Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean)
      embeds full-tuple interpretations with their native certificate and proves the encoded maps
-     agree. Open: the restricted-domain logspace transducer and `Ordered.Reduces ⇒ ≤_log`,
-     certificates for further restricted-domain families, and theorem-index entries.
+     agree. **First-order reductions are logspace reductions (#309):** one domain-counting
+     [transducer](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Transducer.lean),
+     parametrized by the formula compiler, computes order-free interpretations and
+     [ordered interpretations with a domain formula](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean)
+     in logarithmic space; the full-tuple transducer is its `domain = ⊤` instance.
+     `DomainInterpretation.logSpaceReducible` needs no certificate, and
+     `Ordered.Reduces.logSpaceReducible` gives `≤_fo ⇒ ≤_log` with L/P closure (Immerman's
+     Proposition 3.10). Open: certificates for further restricted-domain families.
 
    - [x] **Order-free SAT reductions.** [SAT completeness](Complexity/Computability/Complexity/Fagin/SAT.lean)
      is proved for isomorphism-closed classes in NP containing every empty structure, with a
@@ -387,10 +393,10 @@ batches.
      reduction to an isomorphism-closed target induces a logspace many-one reduction of encoded
      query languages, with L/P closure. Empty universes and domains, nullary relations,
      dimension zero, and invalid parsed table shapes are handled. Canonical full-tuple ordered
-     interpretations now have their own logspace transducer in
-     [FirstOrder/Ordered/Reduction](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean);
-     restricted-domain ordered transducers and isomorphism-closed class-level ordered reduction
-     closure remain open.
+     interpretations, with or without a domain formula, are instances of the same
+     [transducer](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Transducer.lean),
+     and ordered first-order reductions are logspace reductions
+     ([FirstOrder/Ordered/Reduction](Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean), #309).
 
    - [x] **Circuit Value logspace completeness.** [Circuit Value is P-complete](Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean)
      under logarithmic-space many-one reductions, via a machine-certified tableau writer.
