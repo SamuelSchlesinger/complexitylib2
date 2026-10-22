@@ -39,9 +39,8 @@ polynomial time and space on a multi-tape Turing machine:
 \[
 \texttt{ComputableTidilyInPolyTime}\;\texttt{detRows}\;(\texttt{encList}\;(\texttt{encList}\;\texttt{encIntBin}))\;\texttt{encIntBin}.
 \]
-This certifies the integer determinant stage of the rational matrix hitting-list runtime; the remaining
-generator runtime milestones (certified integer lift tables, per-point
-Cramer words, and grid enumeration) remain open.\citep{Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
+This certifies the integer determinant stage of the rational matrix hitting-list runtime; the
+full generator runtime is assembled in the rational hitting-list entry below.\citep{Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{184}{Cslib.Circuits.Rational.detRows}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{265}{Cslib.Circuits.Rational.detRows_eq_det_ofRows}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{286}{Cslib.Circuits.Rational.detRows_eq}
@@ -95,8 +94,8 @@ $(a\ne 0)\wedge((a<0)\oplus(b<0))$ (and $\texttt{Rat.divInt}(a,0)=0$), certifyin
 reduced-rational encoding $(a,b)\mapsto\texttt{encodeRat}(\texttt{Rat.divInt}(a,b))$ from
 $\texttt{encPair}\ \texttt{encIntBin}\ \texttt{encIntBin}$ to \texttt{encBits}.
 \end{itemize}
-These certificates cover individual natural and reduced-rational encodings; polynomial-time
-generation of the full rational matrix hitting list remains separate.
+These certificates cover individual natural and reduced-rational encodings and feed the
+polynomial-time rational matrix hitting-list generator below.
 \citep{AroraBarak09,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
 \declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{99}{Turing.MultiTapeTM.BinaryDiv.foldl_divModStep}
 \declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{110}{Turing.MultiTapeTM.BinaryDiv.divMod_eq}
@@ -112,4 +111,100 @@ generation of the full rational matrix hitting list remains separate.
 \declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{102}{Cslib.Circuits.Rational.divInt_sign}
 \declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{151}{Cslib.Circuits.Rational.encodeRat_divInt}
 \declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{164}{Cslib.Circuits.Rational.encodeDivInt_polytime}
+\end{result}
+
+\begin{result}
+\subsection{Polynomial-time rational matrix hitting-list generator}
+Let $n,s\in\mathbb N$. A noncommutative rational formula $f\in\texttt{Formula}\ n$ is
+\emph{admissible} if it has a defined value at some substitution of $d\times d$ rational matrices
+with $d>0$, and \emph{nonzero} if it has a defined nonzero value at some such substitution. The
+executable hitting list $\texttt{hittingList}(n,s)\in\texttt{Output}\ n$ consists of substitutions
+of $d\times d$ rational matrices with common dimension
+\[
+0 < d = \texttt{matrixDimension}(e(n,s)) \le 256(n+s+1)^{10}
+\]
+and canonical reduced-rational binary encoding length
+\[
+|\texttt{encodeOutput}(\texttt{hittingList}(n,s))| \le
+\texttt{PolynomialBounds.outputConstant}\cdot(n+s+1)^{104}
+\]
+such that every admissible nonzero formula $f\in\texttt{Formula}\ n$ with
+$\texttt{nodeCount}(f)\le s$ evaluates to an invertible matrix at some tuple
+$X\in(\texttt{hittingList}(n,s)).\texttt{tuples}$ (\texttt{hittingList\_hits}).
+
+The runtime pipeline realizes this construction on lists of rows of binary sign-magnitude integers
+(\texttt{encIntBin}) and certifies every stage in
+\texttt{Turing.MultiTapeTM.ComputableTidilyInPolyTime}:
+\begin{itemize}
+\item \textbf{Parameter schedule and integer lift tables.} From $(n,s)$ in unary,
+\texttt{generatorParameters} computes the truncation $N$, exponent $e$, ambient dimension $M=2^{e+1}$,
+cyclotomic degree $D_g=2^e$, grid size $H$, and matrix dimension $d=MD_g$ in unary. At each grid
+point $(t,p,r)$, $\texttt{liftRows}(n,N,M,D_g,t,p,r)$ computes the $n+1$ integer lift tables
+$[U_0,U_1,\dots,U_n]$ by division-free shift-and-add binomial recurrences (\texttt{coeffRow}, with
+encoded intermediate length bounded by \texttt{coeffRowBound}), integer Taylor test tables
+(\texttt{testRows}), and double-sum cyclotomic regular-representation lifts (\texttt{liftTable}),
+agreeing with \texttt{ExecutableGenerator.inputTables} (\texttt{liftRows\_eq\_inputTables}). At the
+generator's parameters for $t,p,r\le H$, every entry $z$ of every table in \texttt{liftRows}
+satisfies $\texttt{intBits}(z)\le\texttt{logConstant}\cdot(n+s+1)^{22}+2$.
+\item \textbf{Per-point Cramer normalization and grid enumeration.} Given integer tables
+$\texttt{tables}=[U_0,U_1,\dots,U_n]$, \texttt{pointWordOfTables} and \texttt{pointWordsOfTables}
+compute $\mathrm{den}=\texttt{detRows}(U_0)$, emit $[]$ when $\mathrm{den}=0$, and otherwise emit
+the reduced-rational encoding of every entry $(U_0^{-1}U_a)_{i,j}$ as
+$\texttt{encodeRat}(\texttt{Rat.divInt}(\texttt{detRows}(\texttt{cramerRows}(U_0,U_a,i,j)),\mathrm{den}))$,
+agreeing with \texttt{ExecutableGenerator.atPoint} composed with \texttt{encodeTuple}
+(\texttt{pointWord\_eq}, \texttt{pointWords\_eq}). Enumerating $\{1,\dots,H\}^3$ in lexicographic
+order via \texttt{gridPointWords} and prepending $\texttt{encodeNat}(MD_g)$ and the encoded emitted
+tuple count produces $\texttt{hittingListWord}(n,s)=\texttt{encodeOutput}(\texttt{hittingList}(n,s))$
+(\texttt{hittingListWord\_eq}), certifying $(n,s)\mapsto\texttt{encodeOutput}(\texttt{hittingList}(n,s))$
+from $\texttt{encPair}\ \texttt{encUnary}\ \texttt{encUnary}$ to \texttt{encBits}
+(\texttt{hittingList\_polytime}).
+\item \textbf{Standalone bit-word generator.} Writing
+$\texttt{inputWord}(n,s)=\texttt{true}^n\mathbin{+\!+}[\texttt{false}]\mathbin{+\!+}\texttt{true}^s$
+of length $n+s+1$, the parser \texttt{parseInput} satisfies
+$\texttt{parseInput}(w)=\texttt{some}(n,s)\iff 1\le n\wedge 1\le s\wedge w=\texttt{inputWord}(n,s)$.
+The standalone generator
+\[
+\texttt{hittingGenerator} : \mathrm{List}\,\mathrm{Bool} \to \mathrm{List}\,\mathrm{Bool}
+\]
+satisfies $\texttt{hittingGenerator}(\texttt{inputWord}(n,s))=\texttt{encodeOutput}(\texttt{hittingList}(n,s))$
+for all $1\le n$ and $1\le s$, returns $[]$ on all other words, and is computable tidily in
+polynomial time on a multi-tape Turing machine (\texttt{hittingGenerator\_polytime},
+\texttt{hittingGenerator\_spec}).
+\end{itemize}
+This certifies polynomial-time generation of the hitting list; polynomial bit complexity of
+evaluating a rational formula on the emitted matrices is not asserted here.
+\citep{AroraBarak09,Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational.lean}{66}{Cslib.Circuits.Rational.hittingList}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational.lean}{74}{Cslib.Circuits.Rational.hittingList_hits}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational.lean}{81}{Cslib.Circuits.Rational.hittingList_dimension_le}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational.lean}{89}{Cslib.Circuits.Rational.hittingList_encoding_length_le}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Parameters.lean}{96}{Cslib.Circuits.Rational.generatorParameters}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Parameters.lean}{188}{Cslib.Circuits.Rational.computableTidilyInPolyTime_generatorParameters}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Lift.lean}{314}{Cslib.Circuits.Rational.liftRows}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Lift.lean}{384}{Cslib.Circuits.Rational.liftRows_eq_inputTables}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Lift.lean}{706}{Cslib.Circuits.Rational.intBits_le_of_mem_liftRows_parameters}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Lift.lean}{729}{Cslib.Circuits.Rational.length_encList_coeffRow_le}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Lift.lean}{1000}{Cslib.Circuits.Rational.liftRows_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{81}{Cslib.Circuits.Rational.cramerRows}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{114}{Cslib.Circuits.Rational.pointWord}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{119}{Cslib.Circuits.Rational.pointWords}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{125}{Cslib.Circuits.Rational.cramerRows_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{193}{Cslib.Circuits.Rational.pointWord_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{202}{Cslib.Circuits.Rational.pointWords_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{366}{Cslib.Circuits.Rational.pointWord_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{84}{Cslib.Circuits.Rational.gridPointWords}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{93}{Cslib.Circuits.Rational.outputWord}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{98}{Cslib.Circuits.Rational.hittingListWord}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{111}{Cslib.Circuits.Rational.gridPointWords_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{121}{Cslib.Circuits.Rational.outputWord_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{128}{Cslib.Circuits.Rational.hittingListWord_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{135}{Cslib.Circuits.Rational.inputWord}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{153}{Cslib.Circuits.Rational.parseInput}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{159}{Cslib.Circuits.Rational.parseInput_eq_some_iff}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{189}{Cslib.Circuits.Rational.hittingGenerator}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{194}{Cslib.Circuits.Rational.hittingGenerator_inputWord}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{205}{Cslib.Circuits.Rational.hittingGenerator_eq_nil}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{300}{Cslib.Circuits.Rational.hittingList_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{344}{Cslib.Circuits.Rational.hittingGenerator_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{355}{Cslib.Circuits.Rational.hittingGenerator_spec}
 \end{result}
