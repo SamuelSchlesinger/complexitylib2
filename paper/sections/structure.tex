@@ -360,12 +360,16 @@ register per bound variable, reading table bits by index arithmetic. Counter
 programs whose registers stay polynomially bounded, and more generally machines
 querying input bits with logarithmic states, run in logarithmic space by a
 multi-pass simulation.\citep[Theorem 3.1]{Immerman1999}
+The simulation stores only the state, a position counter and the fetched bit,
+so a query machine whose states have length $O(S)$, for a bound $S$ at least
+logarithmic in the input length, runs in space $O(S)$.
 
 The next entry supplies canonical numeric constants, order and BIT. The later
 order-free interpretation entry proves the corresponding interpretation-to-logspace bridge.
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{829}{Cslib.Logic.Vocabulary.queryLanguage_mem_L}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder.lean}{894}{Cslib.Logic.FO.Definable.queryLanguage_mem_L}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean}{341}{Turing.QueryMachine.computableInLogSpace}
+\declat{9ab11b36b32709fd85bebd07d00e106125fa904b}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean}{341}{Turing.QueryMachine.computableInSpace}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram.lean}{607}{Turing.CounterProgram.computableInLogSpace}
 \declat{a1c2cb1d8458135bdf01e0e760a58cd152fdc750}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/CounterProgram/Output.lean}{229}{Turing.CounterProgram.computableInLogSpace_of_reachesOut}
 \end{result}

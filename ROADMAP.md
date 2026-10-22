@@ -1036,7 +1036,11 @@ space bounds. Further class-level work needs resource certificates for the actua
   has a proved parameterized space bound on valid encoded instances and an
   `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and
   `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
-  remain outstanding;
+  remain outstanding. Toward Williams's `TIME[t] ⊆ SPACE[√(t log t)]` (#361), implicit Tree
+  Evaluation (#367) starts from
+  [query machines in the space of their states](Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean),
+  which charge neither the input nor the output; the iterative fan-in-`d` procedure and
+  subroutine calls for implicit gates and leaves remain;
 * the space hierarchy, which needs a space-budgeted universal simulation; the
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
