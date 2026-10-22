@@ -7,36 +7,29 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.PCP.Approximation.Hastad.ExactThreeDistinct
 public import Complexity.Foundations.BooleanAnalysis.Convolution
-public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.BooleanAnalysis.LongCode
 public import Complexity.Foundations.BooleanAnalysis.Noise
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.Chebyshev
 
 /-!
-# Håstad's 3-Bit Linear Test, Spectral Decoding Weights, and 4-Clause E3-CNF Gadget
+# Håstad's 3-Bit Linear Test and Spectral Decoding Weights
 
-This module formalizes Håstad's noisy 3-bit linear test on folded Long Code tables over a single
-projection `π : β → γ`, its exact Walsh–Fourier expansion, the Cauchy–Schwarz and Parseval
-soundness bound via low-degree spectral decoding weights, and the 4-clause E3-CNF gadget converting
-3-bit XOR tests into exact 3-CNF clauses on distinct variables [Hastad2001].
+This module formalizes Håstad's noisy 3-bit linear test on folded (odd, `Cslib.BitString.IsOdd`)
+Long Code tables over a single projection `π : β → γ`, its exact Walsh–Fourier expansion, and the
+Cauchy–Schwarz and Parseval soundness bound via low-degree spectral decoding weights [Hastad2001].
+The Long Code, folding and the mod-2 projection `Cslib.BitString.projectSet` live in
+`Complexity.Foundations.BooleanAnalysis.LongCode`.
 
 ## Main definitions
 
-* `Cslib.PCP.Hastad.IsFolded`, `Cslib.PCP.Hastad.foldTable`: table folding over `(α → Bool) → Bool`
-  (reusing `Cslib.BitString.longCode` for the Long Code).
-* `Cslib.PCP.Hastad.projectSet`: mod-2 projection of a subset `T : Finset β` along `π : β → γ`.
 * `Cslib.PCP.Hastad.hastadLinearCorr`, `Cslib.PCP.Hastad.hastadLinearProb`: correlation and
   acceptance probability of Håstad's 3-bit linear test on an edge `π : β → γ`.
 * `Cslib.PCP.Hastad.spectralWeight`: low-degree Fourier decoding weights on `α`.
-* `Cslib.PCP.Hastad.xorThreeCNF`: the 4-clause E3-CNF gadget for a 3-bit XOR equation.
 
 ## Main results
 
-* `Cslib.PCP.Hastad.IsFolded.fourierCoeff_empty`,
-  `Cslib.PCP.Hastad.IsFolded.fourierCoeff_of_even`: every even-degree Fourier coefficient of a
-  folded table (and in particular at `∅`) vanishes.
 * `Cslib.PCP.Hastad.hastadLinearCorr_longCode`, `Cslib.PCP.Hastad.hastadLinearProb_longCode`:
   completeness `1 - δ` for 3-bit linear tests on valid Long Code tables.
 * `Cslib.PCP.Hastad.hastadLinearCorr_eq_sum`: exact Walsh–Fourier expansion of Håstad's 3-bit test
@@ -55,157 +48,13 @@ soundness bound via low-degree spectral decoding weights, and the 4-clause E3-CN
 @[expose] public section
 
 open Finset
-open scoped BigOperators symmDiff
+open scoped BigOperators
 
 namespace Cslib.PCP.Hastad
 
-open Cslib.BitString Cslib.Logic.PL Cslib.Complexity
+open Cslib.BitString
 
 variable {α β γ : Type*}
-
-/-! ### The Long Code and table folding -/
-
-/-- In `±1` notation, the Long Code `Cslib.BitString.longCode x` is the singleton Walsh character
-`chi ℝ {x}`. -/
-theorem signVal_longCode (x : α) (f : α → Bool) :
-    signVal (longCode x f) = chi ℝ {x} f :=
-  (chi_singleton x f).symm
-
-/-- A Long Code table `B : (α → Bool) → Bool` is **folded** when negating the input function
-(`f + fun _ => true`) negates the output bit. -/
-def IsFolded (B : (α → Bool) → Bool) : Prop :=
-  ∀ f : α → Bool, B (f + fun _ => true) = !B f
-
-/-- Every honest Long Code table `longCode x` is folded. -/
-theorem isFolded_longCode (x : α) : IsFolded (longCode x) := fun f => by
-  change (f x + true) = !(f x)
-  cases f x <;> rfl
-
-/-- **Folding a table** around coordinate `x₀ : α`: accesses `B f` when `f x₀ = false` and
-`!B (f + fun _ => true)` when `f x₀ = true`. -/
-def foldTable (x₀ : α) (B : (α → Bool) → Bool) (f : α → Bool) : Bool :=
-  if f x₀ then !B (f + fun _ => true) else B f
-
-/-- Folding any table produces a folded table. -/
-theorem isFolded_foldTable (x₀ : α) (B : (α → Bool) → Bool) : IsFolded (foldTable x₀ B) := by
-  intro f
-  have h1 : (f + fun _ : α => true) x₀ = !f x₀ := by
-    change (f x₀ + true) = !f x₀
-    cases f x₀ <;> rfl
-  have h2 : (f + fun _ : α => true) + (fun _ : α => true) = f := by
-    funext x
-    change (f x + true) + true = f x
-    cases f x <;> rfl
-  simp only [foldTable, h1, h2]
-  cases f x₀ <;> simp
-
-/-- Folding an already-folded table leaves it unchanged. -/
-theorem IsFolded.foldTable_eq {B : (α → Bool) → Bool} (hB : IsFolded B) (x₀ : α) :
-    foldTable x₀ B = B := by
-  funext f
-  simp only [foldTable, hB f, Bool.not_not, ite_self]
-
-/-- **A folded table has zero empty Fourier coefficient**: its `±1` values cancel in pairs
-`f` and `f + fun _ => true`. -/
-theorem IsFolded.fourierCoeff_empty [Fintype α] [DecidableEq α] {B : (α → Bool) → Bool}
-    (hB : IsFolded B) : fourierCoeff (fun f => signVal (B f)) ∅ = 0 := by
-  rw [Cslib.BitString.fourierCoeff_empty]
-  have h1 : (𝔼 f : α → Bool, signVal (B f)) =
-      𝔼 f : α → Bool, signVal (B ((fun _ => true) + f)) :=
-    (Fintype.expect_add_left (fun f : α → Bool => signVal (B f)) (fun _ => true)).symm
-  have h2 (f : α → Bool) : signVal (B ((fun _ => true) + f)) = -signVal (B f) := by
-    rw [add_comm (fun _ => true) f, hB f, signVal_not]
-  simp only [h2, expect_neg_distrib] at h1
-  linarith
-
-/-- On a folded table, any character of even cardinality has Fourier coefficient `0`. -/
-theorem IsFolded.fourierCoeff_of_even [Fintype α] [DecidableEq α] {B : (α → Bool) → Bool}
-    (hB : IsFolded B) {S : Finset α} (hS : Even #S) :
-    fourierCoeff (fun f => signVal (B f)) S = 0 := by
-  rw [fourierCoeff]
-  have hchi : chi ℝ S (fun _ : α => true) = 1 := by
-    rw [chi_eq_prod_signVal, prod_const]
-    obtain ⟨m, hm⟩ := hS
-    rw [hm, pow_add, ← mul_pow]
-    norm_num
-  have h1 : (𝔼 f : α → Bool, signVal (B f) * chi ℝ S f) =
-      𝔼 f : α → Bool, signVal (B ((fun _ => true) + f)) * chi ℝ S ((fun _ => true) + f) :=
-    (Fintype.expect_add_left (fun f : α → Bool => signVal (B f) * chi ℝ S f)
-      (fun _ => true)).symm
-  have h2 (f : α → Bool) :
-      signVal (B ((fun _ => true) + f)) * chi ℝ S ((fun _ => true) + f) =
-        -(signVal (B f) * chi ℝ S f) := by
-    rw [add_comm (fun _ => true) f, hB f, signVal_not, chi_add, hchi]
-    ring
-  simp only [h2, expect_neg_distrib] at h1
-  linarith
-
-/-! ### Mod-2 projection of subsets and character pullback -/
-
-section Projection
-
-variable [Fintype γ] [DecidableEq γ]
-
-/-- The **mod-2 projection** `π₂(T)` of `T : Finset β` along `π : β → γ`: the set of `y : γ`
-whose fiber in `T` under `π` has odd cardinality [Håstad][Hastad2001]. -/
-def projectSet (π : β → γ) (T : Finset β) : Finset γ :=
-  univ.filter fun y => Odd #{x ∈ T | π x = y}
-
-@[simp]
-theorem mem_projectSet {π : β → γ} {T : Finset β} {y : γ} :
-    y ∈ projectSet π T ↔ Odd #{x ∈ T | π x = y} := by
-  simp [projectSet]
-
-@[simp]
-theorem projectSet_empty (π : β → γ) : projectSet π ∅ = ∅ := by
-  ext y
-  simp [projectSet]
-
-/-- Every element of `projectSet π T` lies in the image of `T` under `π`. -/
-theorem exists_mem_of_mem_projectSet {π : β → γ} {T : Finset β} {y : γ}
-    (hy : y ∈ projectSet π T) : ∃ x ∈ T, π x = y := by
-  rw [mem_projectSet] at hy
-  have hpos : 0 < #{x ∈ T | π x = y} := Nat.pos_of_ne_zero (by rintro h0; simp [h0] at hy)
-  obtain ⟨x, hx⟩ := card_pos.1 hpos
-  exact ⟨x, (mem_filter.1 hx).1, (mem_filter.1 hx).2⟩
-
-theorem projectSet_subset_image (π : β → γ) (T : Finset β) :
-    projectSet π T ⊆ T.image π := fun y hy => by
-  obtain ⟨x, hx, rfl⟩ := exists_mem_of_mem_projectSet hy
-  exact mem_image_of_mem π hx
-
-/-- The mod-2 projection never increases cardinality: `#(projectSet π T) ≤ #T`. -/
-theorem card_projectSet_le (π : β → γ) (T : Finset β) : #(projectSet π T) ≤ #T :=
-  (card_le_card (projectSet_subset_image π T)).trans card_image_le
-
-variable [DecidableEq β]
-
-/-- Inserting `x ∉ T` toggles `π x` in `projectSet π T`. -/
-theorem projectSet_insert (π : β → γ) {x : β} {T : Finset β} (hx : x ∉ T) :
-    projectSet π (insert x T) = symmDiff (projectSet π T) {π x} := by
-  ext y
-  rw [mem_projectSet, mem_symmDiff, mem_projectSet, mem_singleton, filter_insert]
-  by_cases hxy : π x = y
-  · subst hxy
-    have hx' : x ∉ {z ∈ T | π z = π x} := fun h => hx (mem_filter.1 h).1
-    simp only [↓reduceIte, card_insert_of_notMem hx', Nat.odd_add_one, not_true_eq_false,
-      and_false, true_and, false_or]
-  · have hyx : y ≠ π x := Ne.symm hxy
-    simp [hxy, hyx]
-
-omit [DecidableEq β] in
-/-- **Pulling a character back along `π` projects the frequency set by `projectSet π`**:
-`chi ℝ T (f ∘ π) = chi ℝ (projectSet π T) f`. -/
-theorem chi_comp_eq_chi_projectSet (π : β → γ) (T : Finset β) (f : γ → Bool) :
-    chi ℝ T (f ∘ π) = chi ℝ (projectSet π T) f := by
-  classical
-  induction T using Finset.induction_on with
-  | empty => simp
-  | insert x T hx ih =>
-    rw [projectSet_insert π hx, ← chi_mul_chi, chi_singleton, ← ih, chi_eq_prod_signVal,
-      prod_insert hx, ← chi_eq_prod_signVal, Function.comp_apply, mul_comm]
-
-end Projection
 
 /-! ### Håstad's 3-bit linear test and its Fourier expansion -/
 
@@ -316,9 +165,6 @@ end LinearTest
 section Soundness
 
 variable [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] [Fintype γ] [DecidableEq γ]
-
-@[deprecated (since := "2026-10-22")]
-alias fourierCoeff_sq_signVal_le_one := Cslib.BitString.fourierCoeff_sq_signVal_le_one
 
 /-- The **low-degree spectral decoding weight** of `x : α` for table `A : (α → Bool) → Bool` at
 degree cutoff `k`: `∑_{T : #T < k, x ∈ T} fourierCoeff F_A T ^ 2 / #T`
@@ -460,11 +306,11 @@ theorem sum_lowDegree_fourierCoeff_sq_le (π : β → γ) (k : ℕ)
       rw [spectralWeight, sum_filter]
 
 /-- **Cauchy–Schwarz and Parseval soundness bound for Håstad's 3-bit linear test**
-[Håstad, Lemma 5.2][Hastad2001]: for any folded table `B`, any table `A`, noise rate
+[Håstad, Lemma 5.2][Hastad2001]: for any folded (odd) table `B`, any table `A`, noise rate
 `0 ≤ δ ≤ 1 / 2`, and degree cutoff `k`, the squared correlation `hastadLinearCorr π δ B A ^ 2` is
 at most `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * ∑ x, spectralWeight k A x * spectralWeight k B (π x)`. -/
 theorem hastadLinearCorr_sq_le (π : β → γ) {δ : ℝ} (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1 / 2)
-    (k : ℕ) {B : (γ → Bool) → Bool} (hB : IsFolded B) (A : (β → Bool) → Bool) :
+    (k : ℕ) {B : (γ → Bool) → Bool} (hB : IsOdd B) (A : (β → Bool) → Bool) :
     hastadLinearCorr π δ B A ^ 2 ≤
       (1 - 2 * δ) ^ (2 * k) +
         (k : ℝ) ^ 2 * ∑ x : β, spectralWeight k A x * spectralWeight k B (π x) := by
@@ -546,79 +392,30 @@ theorem hastadLinearCorr_sq_le (π : β → γ) {δ : ℝ} (hδ0 : 0 ≤ δ) (h�
 
 end Soundness
 
-/-! ### Four-clause E3-CNF gadget for 3-bit XOR equations -/
+/-! ### Deprecated aliases -/
 
-section Gadget
-
-variable {V : Type*}
-
-/-- The **4-clause E3-CNF gadget** [Håstad, Section 2][Hastad2001] expressing the 3-bit linear
-equation `(σ v₁ ^^ σ v₂) ^^ σ v₃ = b`: each of the four assignments to `(v₁, v₂, v₃)` with
-`(σ v₁ ^^ σ v₂) ^^ σ v₃ = !b` is forbidden by a distinct 3-literal clause. -/
-def xorThreeCNF (v₁ v₂ v₃ : V) (b : Bool) : CNF V :=
-  [ [⟨v₁, true⟩, ⟨v₂, true⟩, ⟨v₃, b⟩],
-    [⟨v₁, true⟩, ⟨v₂, false⟩, ⟨v₃, !b⟩],
-    [⟨v₁, false⟩, ⟨v₂, true⟩, ⟨v₃, !b⟩],
-    [⟨v₁, false⟩, ⟨v₂, false⟩, ⟨v₃, b⟩] ]
-
-/-- The 4-clause XOR gadget has exactly 4 clauses. -/
-@[simp]
-theorem length_xorThreeCNF (v₁ v₂ v₃ : V) (b : Bool) :
-    (xorThreeCNF v₁ v₂ v₃ b).length = 4 := rfl
-
-/-- When `v₁, v₂, v₃` are distinct variables, every clause of `xorThreeCNF v₁ v₂ v₃ b` has
-3 literals on 3 distinct variables (`CNF.IsExactThreeDistinct`). -/
-theorem isExactThreeDistinct_xorThreeCNF {v₁ v₂ v₃ : V} (h12 : v₁ ≠ v₂) (h13 : v₁ ≠ v₃)
-    (h23 : v₂ ≠ v₃) (b : Bool) :
-    (xorThreeCNF v₁ v₂ v₃ b).IsExactThreeDistinct := by
-  intro C hC
-  simp only [xorThreeCNF, List.mem_cons, List.not_mem_nil, or_false] at hC
-  rcases hC with rfl | rfl | rfl | rfl <;>
-    exact ⟨rfl, by simp [List.nodup_cons, h12, h13, h23]⟩
-
-/-- The 4-clause XOR gadget evaluates to `true` under `σ` iff `(σ v₁ ^^ σ v₂) ^^ σ v₃ = b`. -/
-theorem eval_xorThreeCNF (v₁ v₂ v₃ : V) (b : Bool) (σ : V → Bool) :
-    (xorThreeCNF v₁ v₂ v₃ b).eval σ = (((σ v₁ ^^ σ v₂) ^^ σ v₃) == b) := by
-  simp only [xorThreeCNF, CNF.eval, List.all_cons, List.all_nil,
-    Clause.eval, List.any_cons, List.any_nil, Literal.eval]
-  cases σ v₁ <;> cases σ v₂ <;> cases σ v₃ <;> cases b <;> rfl
-
-/-- **Exact clause-violation count of the 4-clause XOR gadget**: an assignment `σ` violates `0`
-of the 4 clauses when `(σ v₁ ^^ σ v₂) ^^ σ v₃ = b` (all 4 clauses satisfied) and violates
-exactly `1` of the 4 clauses when `(σ v₁ ^^ σ v₂) ^^ σ v₃ ≠ b` (3 of the 4 clauses satisfied). -/
-theorem countUnsat_xorThreeCNF (v₁ v₂ v₃ : V) (b : Bool) (σ : V → Bool) :
-    (xorThreeCNF v₁ v₂ v₃ b).countUnsat σ =
-      if ((σ v₁ ^^ σ v₂) ^^ σ v₃) == b then 0 else 1 := by
-  simp only [xorThreeCNF, CNF.countUnsat, List.countP_cons, List.countP_nil,
-    Clause.eval, List.any_cons, List.any_nil, Literal.eval]
-  obtain h1 | h1 := Bool.eq_false_or_eq_true (σ v₁) <;>
-    obtain h2 | h2 := Bool.eq_false_or_eq_true (σ v₂) <;>
-    obtain h3 | h3 := Bool.eq_false_or_eq_true (σ v₃) <;>
-    cases b <;> simp [h1, h2, h3]
-
-/-- The fraction of satisfied clauses in `xorThreeCNF v₁ v₂ v₃ false` is `1` (`4 / 4`) when
-`(σ v₁ ^^ σ v₂) == σ v₃` and `3 / 4` otherwise:
-`1 - countUnsat / 4 = 3 / 4 + 1 / 4 * (if (σ v₁ ^^ σ v₂) == σ v₃ then 1 else 0)`. -/
-theorem one_sub_countUnsat_xorThreeCNF_div_four (v₁ v₂ v₃ : V) (σ : V → Bool) :
-    1 - ((xorThreeCNF v₁ v₂ v₃ false).countUnsat σ : ℝ) / 4 =
-      3 / 4 + 1 / 4 * (if (σ v₁ ^^ σ v₂) == σ v₃ then 1 else 0) := by
-  rw [countUnsat_xorThreeCNF]
-  obtain h1 | h1 := Bool.eq_false_or_eq_true (σ v₁) <;>
-    obtain h2 | h2 := Bool.eq_false_or_eq_true (σ v₂) <;>
-    obtain h3 | h3 := Bool.eq_false_or_eq_true (σ v₃) <;>
-    simp only [h1, h2, h3] <;> norm_num
-
-variable {β γ : Type*} [Fintype β] [DecidableEq β] [Fintype γ] [DecidableEq γ]
-
-/-- Bounding `hastadLinearCorr π δ B A ≤ 8 * ε` bounds the linear test acceptance by
-`1 / 2 + 4 * ε`. -/
-theorem hastadLinearProb_le_of_hastadLinearCorr_le (π : β → γ) (δ : ℝ)
-    (B : (γ → Bool) → Bool) (A : (β → Bool) → Bool) {ε : ℝ}
-    (h : hastadLinearCorr π δ B A ≤ 8 * ε) :
-    hastadLinearProb π δ B A ≤ 1 / 2 + 4 * ε := by
-  rw [hastadLinearProb_eq_add_hastadLinearCorr]
-  linarith
-
-end Gadget
+@[deprecated (since := "2026-10-22")] alias signVal_longCode := Cslib.BitString.signVal_longCode
+@[deprecated (since := "2026-10-22")] alias IsFolded := Cslib.BitString.IsOdd
+@[deprecated (since := "2026-10-22")] alias isFolded_longCode := Cslib.BitString.isOdd_longCode
+@[deprecated (since := "2026-10-22")] alias foldTable := Cslib.BitString.foldTable
+@[deprecated (since := "2026-10-22")] alias isFolded_foldTable := Cslib.BitString.isOdd_foldTable
+@[deprecated (since := "2026-10-22")]
+alias IsFolded.foldTable_eq := Cslib.BitString.IsOdd.foldTable_eq
+@[deprecated (since := "2026-10-22")]
+alias IsFolded.fourierCoeff_empty := Cslib.BitString.IsOdd.fourierCoeff_empty
+@[deprecated (since := "2026-10-22")]
+alias IsFolded.fourierCoeff_of_even := Cslib.BitString.IsOdd.fourierCoeff_of_even
+@[deprecated (since := "2026-10-22")] alias projectSet := Cslib.BitString.projectSet
+@[deprecated (since := "2026-10-22")] alias mem_projectSet := Cslib.BitString.mem_projectSet
+@[deprecated (since := "2026-10-22")] alias projectSet_empty := Cslib.BitString.projectSet_empty
+@[deprecated (since := "2026-10-22")]
+alias exists_mem_of_mem_projectSet := Cslib.BitString.exists_mem_of_mem_projectSet
+@[deprecated (since := "2026-10-22")]
+alias projectSet_subset_image := Cslib.BitString.projectSet_subset_image
+@[deprecated (since := "2026-10-22")]
+alias card_projectSet_le := Cslib.BitString.card_projectSet_le
+@[deprecated (since := "2026-10-22")] alias projectSet_insert := Cslib.BitString.projectSet_insert
+@[deprecated (since := "2026-10-22")]
+alias chi_comp_eq_chi_projectSet := Cslib.BitString.chi_comp_eq_chi_projectSet
 
 end Cslib.PCP.Hastad

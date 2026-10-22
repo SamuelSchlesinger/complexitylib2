@@ -9,6 +9,9 @@
 \setlength{\cftbeforesecskip}{2pt}
 \newtotcounter{resultcount}
 \newenvironment{result}{\stepcounter{resultcount}\par\noindent\begin{minipage}{\linewidth}}{\end{minipage}\par}
+% Preserve normal typography for entries that exceed one page.
+\newenvironment{longresult}{\stepcounter{resultcount}\par\begingroup
+  \emergencystretch=3em\Needspace{8\baselineskip}}{\par\endgroup}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black,
   citecolor=blue!45!black]{hyperref}

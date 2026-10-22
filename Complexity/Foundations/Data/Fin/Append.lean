@@ -16,6 +16,10 @@ import Mathlib.Algebra.BigOperators.Fin
 
 The number of entries of `Fin.append x y` satisfying a predicate is the number for `x` plus the
 number for `y`.
+
+## Main results
+
+* `Fin.card_filter_append`: counting entries satisfying a predicate across `Fin.append`.
 -/
 
 @[expose] public section

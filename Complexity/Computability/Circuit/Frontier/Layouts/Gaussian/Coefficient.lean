@@ -90,9 +90,9 @@ private theorem cos_two_mul_le {x u v : ℝ} (hlo : x ^ 2 ≤ 2) (hu : cos x ≤
 /-- **The sharpened numerical bound.** The circuit coefficient
 `1 + π / (3 arccos ((1 + 2√2)/4))` is at least `456249/100000 = 4.56249`.
 
-With `θ = arccos ((1 + 2√2)/4) = 0.29395036…`, the bound `θ ≤ 0.2939509` holds by bounding the
-cosine at `θ / 32` via `cos_bound` and doubling five times:
-`cos (0.2939509) ≤ 0.95710670… < 0.95710678 ≤ (1 + 2√2)/4`. Then
+With `θ = arccos ((1 + 2√2)/4) = 0.29395038…`, the bound `θ ≤ 0.2939509` holds by bounding the
+cosine at `0.2939509 / 32` via `cos_bound` and doubling five times:
+`cos (0.2939509) ≤ 0.9571067065 < 0.95710678 ≤ (1 + 2√2)/4`. Then
 `π / (3 · 0.2939509) > 3.1415926 / 0.8818527 > 3.56249`. -/
 theorem circuitCoefficient_ge_456249 :
     (456249 / 100000 : ℝ) ≤ 1 + π / (3 * arccos ((1 + 2 * √2) / 4)) := by

@@ -118,7 +118,8 @@ theorem exists_iterate_stepCfg_some {q : σ} {A : ℕ} (hA : m.addr q = some A)
             by_contra hc
             apply hend
             refine ⟨?_, by omega⟩
-            simp [MultiTapeTM.inputSymbolAt, show d.pos.val ≠ 0 by omega]
+            simp only [MultiTapeTM.inputSymbolAt, show d.pos.val ≠ 0 by omega, ↓reduceIte,
+              List.getElem?_eq_none_iff]
             omega
           omega
         have hstep : (m.toStepMachine).stepCfg d =
@@ -227,7 +228,8 @@ theorem Follows.stepCfg {d : StepMachine.Cfg (σ × ℕ) Bool x} (h : Follows (m
             by_contra hc
             apply h₃
             refine ⟨?_, by omega⟩
-            simp [MultiTapeTM.inputSymbolAt, show d.pos.val ≠ 0 by omega]
+            simp only [MultiTapeTM.inputSymbolAt, show d.pos.val ≠ 0 by omega, ↓reduceIte,
+              List.getElem?_eq_none_iff]
             omega
           omega
         refine ⟨?_, j, ?_, ?_⟩ <;>

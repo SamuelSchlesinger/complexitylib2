@@ -34,6 +34,7 @@ paper's construction. No memory representation or RAM running-time theorem is es
 ## Main results
 
 * `universeSize_eq_two_pow`: the closed form `2 ^ (2 ^ d)`.
+* `universeSize_mono`, `span_mono`: monotonicity of `universeSize` and `span` in the depth.
 * `span_le`: the explicit linear bound `span d ≤ 10 * universeSize d`.
 * `summary_word_lt_span`, `cluster_word_lt_span`: all recursive words lie within their parent.
 * `summary_end_le_clusterOffset`, `cluster_end_le_clusterOffset`: recursive records do not overlap.
@@ -174,5 +175,24 @@ theorem cluster_word_lt_cluster_word (d : ℕ) {i j a : ℕ} (hij : i < j)
     (ha : a < span d) (b : ℕ) : clusterOffset d i + a < clusterOffset d j + b := by
   have := cluster_end_le_clusterOffset d hij
   omega
+
+/-- Monotonicity of `universeSize` in the recursion depth. -/
+theorem universeSize_mono {a b : ℕ} (hab : a ≤ b) : universeSize a ≤ universeSize b := by
+  induction hab with
+  | refl => exact le_rfl
+  | @step m _ ih =>
+    rw [universeSize_succ]
+    have hpos := two_le_universeSize m
+    nlinarith
+
+/-- Monotonicity of `span` in the recursion depth. -/
+theorem span_mono {a b : ℕ} (hab : a ≤ b) : span a ≤ span b := by
+  induction hab with
+  | refl => exact le_rfl
+  | @step m _ ih =>
+    refine ih.trans (show span m ≤ span (m + 1) by
+      have h := summary_end_le_span m
+      dsimp only [summaryOffset] at h
+      omega)
 
 end Cslib.Algorithms.Lean.VanEmdeBoas

@@ -10,9 +10,9 @@ module
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Normal
 
 /-!
-# Restructuring and eliminating the minimal AND
+# Restructuring to a minimal AND
 
-Sections 4.2 and 4.3 of [Mishra and Santhanam][MishraSanthanam2026]. In a normal state with
+Section 4.2 of [Mishra and Santhanam][MishraSanthanam2026]. In a normal state with
 `d < a` (`State.Normal`), the minimal gate is an AND-type gate `G` on two distinct inputs among
 the parameters and auxiliary variables (`State.Valid.exists_minGate`).
 
@@ -25,35 +25,22 @@ child of `G` reading an input of `G` is relabelled to read both inputs instead
 `y` with `2 ≤ deg y ≤ deg x`, no child of `G` reads them, and `G` is not the output and has a
 child.
 
-*Elimination* (Section 4.3) is a step of gate elimination (`State.Valid.step_of_minimalAnd`):
-
-* Case 7, `State.SharedSecondChild`: `deg x = deg y = 2` and `x`, `y` share their second child
-  `B`; restricting to a line of `𝔽₂²` on which `G` and `B` are constant (`exists_line_const`)
-  deletes both (`State.Valid.step_of_sharedSecondChild`), `ΔW ≤ -18`, `Δa = -1`;
-* the bottleneck configuration, `State.Bottleneck`: `deg x = 2` and the unique child `D` of `G`
-  reads an unpaired isolated parameter `z`. If `D` is AND-type, fixing `x` and `y` makes `G` and
-  `D` constant (Case 9, `ΔW ≤ -28`, `Δa = -2`); otherwise `D` is XOR-type and the quadratic
-  reparameterisation deletes `G` and `D` (Case 10, `State.Valid.step_quad`, `ΔW ≤ -14`,
-  `Δa = -1`); both in `State.Valid.step_of_bottleneck`;
-* Case 8, otherwise: fixing `x` so that `G` becomes constant deletes all children of `x` and of
-  `G` (`State.Valid.step_fixInput`), `Δa = -1`; only the unpaired isolated parameters below `G`
-  can gain weight, at most `deg G` of them (`State.Valid.card_isolated_le`).
+*Elimination* of the minimal AND (Section 4.3, `State.Valid.step_of_minimalAnd`) is in
+`AffineDisperser/Elimination.lean`.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.AffineDisperser.State.MinimalAnd`: the minimal AND.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.SharedSecondChild`,
-  `Cslib.Circuits.Boolean.AffineDisperser.State.Bottleneck`: the configurations of Section 4.3.
 * `Cslib.Circuits.Boolean.AffineDisperser.State.auxIn`,
   `Cslib.Circuits.Boolean.AffineDisperser.State.childIn`: the measures of the restructuring.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.MinimalAnd`: the minimal AND.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_preparation_auxIn_lt`,
   `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_preparation_childIn_lt`: the
   restructuring.
-* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.step_of_minimalAnd`: eliminating the
-  minimal AND.
+* `Cslib.Circuits.Boolean.AffineDisperser.State.Valid.exists_minimalAnd`: the restructured minimal
+  gate is a minimal AND (`MinimalAnd`), eliminated in `Elimination.lean`.
 
 ## References
 

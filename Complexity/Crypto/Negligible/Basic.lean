@@ -114,4 +114,10 @@ theorem Negligible.sqrt {ε : ℕ → ℝ≥0} (hε : Negligible ε) :
   simpa only [Function.comp_def, pow_mul, NNReal.sqrt_mul, NNReal.sqrt_sq, NNReal.sqrt_zero]
     using hlimit
 
+/-- Shifting the security parameter by a fixed additive offset preserves negligibility. -/
+theorem Negligible.shift {ε : ℕ → ℝ≥0} (hε : Negligible ε) (c : ℕ) :
+    Negligible (fun n => ε (n + c)) :=
+  hε.comp_of_polynomial_bound (bound := id) (Filter.tendsto_add_atTop_nat c) (by fun_prop)
+    (Filter.Eventually.of_forall (fun n => Nat.le_add_right n c))
+
 end Cslib.Crypto

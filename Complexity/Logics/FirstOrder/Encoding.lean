@@ -46,8 +46,6 @@ spelled out.
 ## Main definitions
 
 * `Cslib.Logic.Vocabulary`: an enumeration of the relation symbols of a language.
-* `Cslib.Logic.tupleEquiv`: number tuples along an enumeration of their coordinates.
-* `Cslib.Logic.tupleIndex`: the index of a tuple of `Fin n` in the truth table of its relation.
 * `Cslib.Logic.EncodedStructure`, `Cslib.Logic.encStructure`: inputs and their binary encoding.
 * `Cslib.Logic.Vocabulary.decode`, `Cslib.Logic.Vocabulary.WellFormed`,
   `Cslib.Logic.Vocabulary.checkShape`, `Cslib.Logic.Vocabulary.encode`: decoding,
@@ -56,8 +54,6 @@ spelled out.
 
 ## Main results
 
-* `Cslib.Logic.tupleIndex_lt_pow_iff`, `Cslib.Logic.tupleIndex_lt_iff`: arithmetic characterizations
-  of `< n ^ a` and `<` on `tupleIndex`.
 * `Cslib.Logic.Vocabulary.encode_congr`: encodings agree when a size cast preserves every
   relation.
 * `Cslib.Logic.Vocabulary.decodeEncodeEquiv`: decoding an encoding of `M` gives a structure

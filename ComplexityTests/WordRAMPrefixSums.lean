@@ -59,11 +59,9 @@ def runCalls : List Operation → Data 14 → Option (Data 14 × List ℕ × ℕ
     let (z, answers, time) ← runCalls os y
     pure (z, y.regs Reg.ans :: answers, n + 1 + time)
 
--- Kernel reduction of six calls traverses nested register updates and requires a deeper stack.
-set_option maxRecDepth 4096 in
 /-- Boundary prefixes and both children are exercised on real machine execution. -/
 example : ((runCalls [.sum 0, .add 0 2, .add 2 3, .sum 1, .sum 3, .sum 4]
-    (zeroData 2 10)).map fun r => r.2.1) = some [0, 0, 0, 2, 5, 5] := by decide
+    (zeroData 2 10)).map fun r => r.2.1) = some [0, 0, 0, 2, 5, 5] := by decide +kernel
 
 /-- Out-of-range operations and overflowing updates are excluded by the specification. -/
 example : ¬(spec 2 8).valid [0, 0, 0, 0] (.add 4 1) := by simp [spec]

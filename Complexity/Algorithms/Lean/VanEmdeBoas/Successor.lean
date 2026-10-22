@@ -26,6 +26,8 @@ The algorithm and recursive invariant are `Tree.successor` and `Tree.Valid`, imp
 * `Tree.successor_spec`: the successful and unsuccessful result specifications.
 * `Tree.successor_eq_some_iff`: success is equivalent to being the least greater stored key.
 * `Tree.successor_eq_none_iff`: failure is equivalent to having no greater stored key.
+* `Tree.successor_isSome_of_lt_max`: a query strictly below the cached maximum always has a
+  strict successor in `[0, universeSize d)`.
 
 ## References
 
@@ -253,5 +255,18 @@ theorem successor_eq_none_iff {d : ℕ} {t : Tree d} (ht : t.Valid) (x : ℕ) :
     intro hn
     have := hn y hs.1
     omega
+
+/-- A valid node with a query strictly below its cached maximum always has a strict successor
+in `[0, universeSize d)`. -/
+theorem successor_isSome_of_lt_max {d m M query : ℕ} {tree : Tree d}
+    (ht : tree.Valid) (hb : tree.bounds = some (m, M)) (hq : query < M) :
+    ∃ ans < universeSize d, tree.successor query = some ans := by
+  cases hs : tree.successor query with
+  | none =>
+    have hle := (successor_eq_none_iff ht query).mp hs M (ht.contains_maximum hb)
+    omega
+  | some ans =>
+    have hspec := (successor_eq_some_iff ht query ans).mp hs
+    exact ⟨ans, ht.contains_lt hspec.1, rfl⟩
 
 end Cslib.Algorithms.Lean.VanEmdeBoas.Tree

@@ -223,7 +223,7 @@ instances.
 \declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/GraphProblems.lean}{180}{Cslib.Complexity.ETH.not_decidableInSubexpTime_DirHamPath}
 The transfer lemma and the diamond theorem hold for arbitrary measures and row layouts.
 \declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/FineGrained/Reduction.lean}{182}{Cslib.Complexity.ETH.not_decidableInSubexpTime_of_reduction}
-\declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/Hamiltonian/Diamond.lean}{1052}{Cslib.Complexity.Diamond.mem_DirHamPath_iff}
+\declat{00cb7f0995797cae5415ce332c9035fc8ae94735}{Complexity/Computability/Complexity/Problems/Hamiltonian/Diamond.lean}{531}{Cslib.Complexity.Diamond.mem_DirHamPath_iff}
 \declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/Hamiltonian/Sparse.lean}{278}{Cslib.Complexity.SAT.length_sparseDiamondGraph_le}
 \declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/Hamiltonian/Sparse.lean}{296}{Cslib.Complexity.SAT.length_toSparseHamCycle_le}
 \declat{bb828997b0c4fc2d3992cee34156304da8eace08}{Complexity/Computability/Complexity/Problems/IndependentSet/Sparse.lean}{414}{Cslib.Complexity.SAT.length_toSparseIndependentSet_le}
@@ -471,36 +471,33 @@ every constant is not proved.\citep{AroraLundMotwaniSudanSzegedy1998}\citep[Chap
 Every clause of three literals on three distinct variables is falsified by a
 uniformly random assignment with probability $1/8$ and satisfied with probability
 $7/8$; by linearity of expectation, every exact 3-CNF formula with three distinct
-variables per clause has an assignment falsifying at most $1/8$ of its clauses, so
-the two-sided MAX-E3SAT gap problem on clauses with three distinct variables
-($\mathrm{GapExactThreeDistinctSAT}\;c\;s$) has an empty no-instance set for every
-soundness $s<7/8$. Separately, over nonempty finite label sets $\beta$
+variables per clause has an assignment falsifying at most $1/8$ of its clauses.
+Separately, over nonempty finite label sets $\beta$
 and $\gamma$, H\r{a}stad's noisy 3-bit linear test on Long Code tables over a Label
 Cover projection $\pi\colon\beta\to\gamma$ at noise rate $0<\delta<1/2$ has the exact
 Walsh--Fourier correlation expansion
 $\sum_{T\subseteq\beta}(1-2\delta)^{|T|}\widehat{A}(T)^2\widehat{B}(\pi_2(T))$, and for
-any folded right table $B$ and arbitrary left table $A$ the Cauchy--Schwarz and
+any folded (odd) right table $B$ and arbitrary left table $A$ the Cauchy--Schwarz and
 Parseval inequalities bound the squared correlation by
 $(1-2\delta)^{2k}+k^2\sum_{x\in\beta}p_A(x)p_B(\pi(x))$ for low-degree spectral
 sub-probability weights $p_A,p_B$. Averaging over edges gives a two-sided
 statement about the test against Label Cover: for every $\varepsilon>0$ and
-$0<\delta<1/2$ there is $\eta>0$ such that on every Label Cover instance $g$ with
+$0<\delta<1/2$ there is $\eta>0$, the same for all label sets $\beta$ and $\gamma$, such
+that on every Label Cover instance $g$ with
 $g.\mathrm{edges}\neq[\,]$: if $g\in(\mathrm{GapLabelCover}\;\beta\;\gamma\;1\;\eta).\mathrm{yes}$,
 there exist tables, with every right table folded, achieving expected linear test acceptance
 $1-\delta$, while if $g\in(\mathrm{GapLabelCover}\;\beta\;\gamma\;1\;\eta).\mathrm{no}$,
 every assignment of folded right tables $B$ and arbitrary left tables $A$ has expected
 linear acceptance at most $1/2+4\varepsilon$. This is the analytic core of
 H\r{a}stad's theorem, not the hardness result: no reduction to MAX-E3LIN or
-MAX-E3SAT is constructed (the 4-clause XOR gadget is defined but not composed with
-the test), NP-hardness of $\mathrm{GapLabelCover}\;\beta\;\gamma\;1\;\eta$ for
+MAX-E3SAT is constructed, NP-hardness of $\mathrm{GapLabelCover}\;\beta\;\gamma\;1\;\eta$ for
 arbitrary $\eta>0$ (Raz's parallel repetition) is not formalized, and neither is the
 adaptive perfect-completeness $(1,7/8+\varepsilon)$ test.\citep{Hastad2001}\citep[Chapter 22]{AroraBarak09}
-\declat{efbff9df6e10d76cab6bf158d1a9cdd4c3bac1a9}{Complexity/Computability/PCP/Approximation/Hastad.lean}{294}{Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth}
-\declat{efbff9df6e10d76cab6bf158d1a9cdd4c3bac1a9}{Complexity/Computability/PCP/Approximation/Hastad.lean}{554}{Cslib.PCP.Hastad.hastadLinearCorr_eq_sum}
-\declat{efbff9df6e10d76cab6bf158d1a9cdd4c3bac1a9}{Complexity/Computability/PCP/Approximation/Hastad.lean}{754}{Cslib.PCP.Hastad.hastadLinearCorr_sq_le}
-\declat{efbff9df6e10d76cab6bf158d1a9cdd4c3bac1a9}{Complexity/Computability/PCP/Approximation/Hastad.lean}{1152}{Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le}
-\declat{cc3bf009d49ae247e743933b92eba645d36746bc}{Complexity/Computability/PCP/Approximation/Hastad.lean}{1207}{Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy}
-\declat{efbff9df6e10d76cab6bf158d1a9cdd4c3bac1a9}{Complexity/Computability/PCP/Approximation/Hastad.lean}{1314}{Cslib.Complexity.no_GapExactThreeDistinctSAT_eq_empty}
+\declat{cb7e4a5271e1f80e6560f0dbc096bfc87309cf54}{Complexity/Computability/PCP/Approximation/MaxExactThreeSAT.lean}{383}{Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth}
+\declat{cb7e4a5271e1f80e6560f0dbc096bfc87309cf54}{Complexity/Computability/PCP/Approximation/Hastad/LinearTest.lean}{118}{Cslib.PCP.Hastad.hastadLinearCorr_eq_sum}
+\declat{cb7e4a5271e1f80e6560f0dbc096bfc87309cf54}{Complexity/Computability/PCP/Approximation/Hastad/LinearTest.lean}{312}{Cslib.PCP.Hastad.hastadLinearCorr_sq_le}
+\declat{cb7e4a5271e1f80e6560f0dbc096bfc87309cf54}{Complexity/Computability/PCP/Approximation/Hastad.lean}{257}{Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le}
+\declat{cb7e4a5271e1f80e6560f0dbc096bfc87309cf54}{Complexity/Computability/PCP/Approximation/Hastad.lean}{354}{Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy}
 \end{result}
 
 

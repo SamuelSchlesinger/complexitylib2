@@ -65,7 +65,8 @@ reductions; `VP` is closed under them.
 ## Main results
 
 * `Cslib.Circuits.Circuit.aeval_polynomial`: evaluating the computed polynomial in a commutative
-  algebra is evaluating the circuit there.
+  algebra is evaluating the circuit there; `Cslib.Circuits.Circuit.eval_polynomial` is the case of
+  the base ring.
 * `Cslib.Circuits.Arithmetic.IsProjection.trans`,
   `Cslib.Circuits.Arithmetic.PolynomialFamily.IsPProjection.trans`: projections compose.
 * `Cslib.Circuits.Arithmetic.totalDegree_projection_le`: projections do not raise the degree.
@@ -124,6 +125,14 @@ theorem Circuit.aeval_polynomial_mvPolynomial {σ : Type*} (c : Circuit (arithSi
     (x : Fin n → MvPolynomial σ K) (j : Fin m) :
     aeval x (c.polynomial j) = c.eval (arithInterpretationWith K C) x j := by
   rw [c.aeval_polynomial, algebraMap_eq]
+
+/-- Evaluating the formal polynomial computed by an arithmetic circuit at `x : Fin n → K` agrees
+with evaluating the circuit under `arithInterpretation K`. -/
+@[simp] theorem Circuit.eval_polynomial (c : Circuit (arithSignature K) n m) (x : Fin n → K)
+    (j : Fin m) :
+    MvPolynomial.eval x (c.polynomial j) = c.eval (arithInterpretation K) x j := by
+  simpa [MvPolynomial.aeval_def, MvPolynomial.eval₂_id, arithInterpretation] using
+    c.aeval_polynomial x j
 
 /-! ### Synthesis of arithmetic circuits -/
 

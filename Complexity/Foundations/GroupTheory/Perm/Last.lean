@@ -21,6 +21,12 @@ exactly one element of a nonempty set `S` last, and composing with the transposi
 `j` exchanges the orders putting `i` last among `S` and those putting `j` last. So each `i ∈ S` is
 last among `S` for a `1 / #S` fraction of the orders
 (`Equiv.Perm.card_mul_card_filter_forall_le_eq_factorial`).
+
+## Main results
+
+* `Equiv.Perm.card_filter_forall_le_eq`: symmetry between elements of `S` being placed last.
+* `Equiv.Perm.card_mul_card_filter_forall_le_eq_factorial`: each element of `S` is placed last by a
+  `1 / #S` fraction of all permutations.
 -/
 
 @[expose] public section

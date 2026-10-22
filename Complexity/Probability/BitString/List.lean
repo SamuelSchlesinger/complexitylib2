@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.List
+public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Probability.BitString
 
 /-!
@@ -21,6 +21,7 @@ independent uniform bit strings. This includes zero-width rows and zero rows.
 * `Cslib.BitString.uniformList_ofList`: a uniform list gives a uniform finite bit string.
 * `Cslib.BitString.uniformList_blocks`: fixed-width blocks are jointly uniform.
 * `Cslib.BitString.uniformList_listRows`: the same law for the ordinary list-of-lists program.
+* `Cslib.BitString.uniformList_map_listXor`: XOR with a fixed word preserves uniformity.
 
 ## References
 
@@ -57,5 +58,16 @@ theorem uniformList_listRows (count width : ℕ) :
   congr 1
   funext word
   exact listRows_eq_ofFn count width word
+
+/-- XORing a uniform `m`-bit word with any word `r` preserves the uniform distribution. -/
+theorem uniformList_map_listXor (m : ℕ) (r : List Bool) :
+    (uniformList m).map (fun y => listXor m [y, r]) = uniformList m := by
+  unfold uniformList
+  rw [PMF.map_comp]
+  have hfun : (fun y => listXor m [y, r]) ∘ List.ofFn =
+      List.ofFn ∘ Equiv.addRight (ofList m r) := by
+    funext x
+    simp [listXor_pair]
+  rw [hfun, ← PMF.map_comp, Probability.PMF.uniformOfFintype_map_equiv]
 
 end Cslib.BitString

@@ -353,8 +353,8 @@ theorem exists_runFrom_call {p : ℕ} [Fact p.Prime] {d : ℕ} (U : Tree ℓ d) 
     have hg : T.nodeAt (path st') = .gate f := by rw [hpath]; simpa using hst []
     have hlen : st'.length ≠ H := by
       have := Tree.length_lt_of_nodeAt_gate hg
-      simp at this
-      omega
+      rw [length_path] at this
+      exact this.ne
     have hl : CallSpec T p (path st' ++ [false])
         (proc ((List.range (p - 1)).map (Iter.zmodUnit p)) l) := fun st'' neg t R out hR h =>
       ihl st'' (fun Q => by rw [h, hpath, List.append_assoc]; simpa using hst (false :: Q))

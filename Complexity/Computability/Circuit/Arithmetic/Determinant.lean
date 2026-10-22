@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Arithmetic.VP
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
+public import Mathlib.LinearAlgebra.Matrix.Permanent
 public import Complexity.Computability.Circuit.Bird
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
@@ -31,10 +32,15 @@ replaced by negated suffix sums and its lower triangle cleared, by the input mat
 entries, which a sharper count would exploit. Only the gate count is certified; the circuits are
 obtained from a synthesis bound, not constructed by a certified uniform procedure.
 
+The permanent family `permFamily K` of generic permanents is also a p-family
+(`isPFamily_permFamily`). Nothing here places it in `VP` or proves Valiant's `VNP`-completeness of
+the permanent.
+
 ## Main definitions
 
 * `Cslib.Circuits.Arithmetic.genericMatrix`: the matrix of variables.
 * `Cslib.Circuits.Arithmetic.detFamily`: the family of generic determinants.
+* `Cslib.Circuits.Arithmetic.permFamily`: the family of generic permanents.
 
 ## Main results
 
@@ -46,6 +52,7 @@ obtained from a synthesis bound, not constructed by a certified uniform procedur
   `exists_circuit_det_eval`: the same circuit evaluates the determinant over every commutative
   `K`-algebra.
 * `Cslib.Circuits.Arithmetic.detFamily_mem_VP`: the determinant family is in `VP`.
+* `Cslib.Circuits.Arithmetic.isPFamily_permFamily`: the permanent family is a p-family.
 
 ## References
 
@@ -104,6 +111,29 @@ theorem totalDegree_det_genericMatrix_le (n : ℕ) : (genericMatrix K n).det.tot
   calc _ ≤ ∑ _i : Fin n, 1 :=
         Finset.sum_le_sum fun i _ => (totalDegree_monomial_le _ _).trans (by simp)
     _ = n := by simp
+
+/-! ### The permanent family -/
+
+/-- The permanent family over `K`: its `n`-th member is the permanent of the generic `n × n`
+matrix, a polynomial in `n * n` variables. -/
+noncomputable def permFamily (K : Type u) [CommSemiring K] : PolynomialFamily K where
+  vars n := n * n
+  poly n := (genericMatrix K n).permanent
+
+/-- The generic permanent has total degree at most `n`. -/
+theorem totalDegree_permanent_genericMatrix_le (n : ℕ) :
+    (genericMatrix K n).permanent.totalDegree ≤ n := by
+  rw [Matrix.permanent]
+  refine totalDegree_finsetSum_le fun σ _ => ?_
+  refine (totalDegree_finsetProd _ _).trans ?_
+  calc _ ≤ ∑ _i : Fin n, 1 :=
+        Finset.sum_le_sum fun i _ => (totalDegree_monomial_le _ _).trans (by simp)
+    _ = n := by simp
+
+/-- The permanent family over `K` is a p-family (`vars n = n ^ 2` and `totalDegree ≤ n`). -/
+theorem isPFamily_permFamily : (permFamily K).IsPFamily :=
+  ⟨PolynomiallyBounded.id.mul PolynomiallyBounded.id,
+    PolynomiallyBounded.id.mono_of_le (totalDegree_permanent_genericMatrix_le (K := K))⟩
 
 /-! ### Bird's algorithm as an arithmetic circuit -/
 

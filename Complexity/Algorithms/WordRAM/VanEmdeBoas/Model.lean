@@ -92,6 +92,20 @@ theorem span_le_succ (d : ℕ) : span d ≤ span (d + 1) := by
   dsimp only [summaryOffset] at h
   omega
 
+/-- Every split size is bounded by its record span. -/
+theorem splitSize_le_span (d : ℕ) : splitSize d ≤ span d := by
+  cases d with
+  | zero => decide
+  | succ d =>
+    dsimp only [splitSize]
+    exact Nat.le_trans (universeSize_le_span d) (span_le_succ d)
+
+/-- Every child span is bounded by its parent record span. -/
+theorem childSpan_le_span (d : ℕ) : childSpan d ≤ span d := by
+  cases d with
+  | zero => decide
+  | succ d => exact span_le_succ d
+
 /-- A valid occupied header stores a maximum below its subtree universe. -/
 theorem maximum_lt_universe {d p m M : ℕ} {t : Tree d} {mem : ℕ → ℕ}
     (ht : t.Valid) (hr : Rep t p mem) (hb : t.bounds = some (m, M)) :
