@@ -467,7 +467,7 @@ every constant is not proved.\citep{AroraLundMotwaniSudanSzegedy1998}\citep[Chap
 \end{result}
 
 \begin{result}
-\subsection{The $7/8$ random-assignment bound and soundness of H\r{a}stad's 3-bit test}
+\subsection{The $7/8$ random-assignment bound and completeness and soundness of H\r{a}stad's 3-bit test}
 Every clause of three literals on three distinct variables is falsified by a
 uniformly random assignment with probability $1/8$ and satisfied with probability
 $7/8$; by linearity of expectation, every exact 3-CNF formula with three distinct
@@ -486,7 +486,7 @@ sub-probability weights $p_A,p_B$. Averaging over edges gives a two-sided
 statement about the test against Label Cover: for every $\varepsilon>0$ and
 $0<\delta<1/2$ there is $\eta>0$ such that on every Label Cover instance $g$ with
 $g.\mathrm{edges}\neq[\,]$: if $g\in(\mathrm{GapLabelCover}\;\beta\;\gamma\;1\;\eta).\mathrm{yes}$,
-there exist folded Long Code tables achieving expected linear test acceptance
+there exist tables, with every right table folded, achieving expected linear test acceptance
 $1-\delta$, while if $g\in(\mathrm{GapLabelCover}\;\beta\;\gamma\;1\;\eta).\mathrm{no}$,
 every assignment of folded right tables $B$ and arbitrary left tables $A$ has expected
 linear acceptance at most $1/2+4\varepsilon$. This is the analytic core of

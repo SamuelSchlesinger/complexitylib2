@@ -25,6 +25,8 @@ completed reference developments.
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
    standard communication assumptions. This does not guarantee fairness or delivery of outputs.
+   A withdrawn attempt (#340, removed in #372) contains a reusable semi-honest GMW evaluation and
+   simulation argument; see `Complexity/Crypto/Multiparty/ObliviousTransfer.lean` at `62bbf525`.
 5. **Håstad’s optimal MAX-E3SAT hardness.** For every fixed ε with 0 < ε < 1/8, it is NP-hard to
    distinguish satisfiable E3-CNF formulas from E3-CNF formulas for which every assignment
    satisfies at most a 7/8 + ε fraction of clauses. *Partial:*
@@ -62,7 +64,9 @@ completed reference developments.
     rate α satisfying αq > 2√n, an efficient algorithm for search-LWE in dimension n yields a
     quantum polynomial-time algorithm for worst-case GapSVP and SIVP with approximation factor
     Õ(n/α). The noise distribution, modulus restrictions and quantum reduction are part of the
-    theorem.
+    theorem. A withdrawn attempt (#343, removed in #372) contains reusable lattice basics
+    (successive minima, the lower transference bound, the discrete Gaussian on `ZMod q`); see
+    `Complexity/Crypto/Lattice/LWE.lean` at `62bbf525`.
 
 ## Long-term coverage and reuse
 
@@ -682,7 +686,7 @@ Jukna coverage below is an additional target beyond the V1 port:
   (`hittingList_polytime`, `hittingGenerator_polytime`, `hittingGenerator_spec`), charging all
   arithmetic and storage growth. Polynomial bit complexity of formula evaluation on the emitted
   matrices remains separate. The [sumset-extractor frontier lower-bound bridge](Complexity/Computability/Circuit/Frontier/Extractor.lean),
-  the [uniform `P` sumset-extractor lower bounds](Complexity/Computability/Complexity/FrontierExtractor.lean),
+  the [conditional uniform `P` sumset-extractor lower bounds](Complexity/Computability/Complexity/FrontierExtractor.lean),
   and the sharpened `4.56249 = 456249 / 100000` Gaussian frontier constant
   ([Coefficient](Complexity/Computability/Circuit/Frontier/Layouts/Gaussian/Coefficient.lean),
   [FanInTwo](Complexity/Computability/Circuit/Frontier/FanInTwo.lean),

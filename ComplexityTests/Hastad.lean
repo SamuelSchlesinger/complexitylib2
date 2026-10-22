@@ -12,8 +12,7 @@ import Complexity.Computability.PCP.Approximation.Hastad
 Concrete evaluations and non-vacuity checks for exact 3-clauses (`Clause.IsExactThreeDistinct`,
 `CNF.IsExactThreeDistinct`), the `7 / 8` random-assignment bound (`unsatVal_le_one_eighth`), the
 4-clause XOR gadget (`xorThreeCNF`), the Long Code and table folding (`longCode`, `foldTable`),
-mod-2 subset projection (`projectSet`), Håstad's 3-bit linear and E3-CNF tests on a concrete Label
-Cover graph, and `#print axioms` guards for the headline theorems.
+mod-2 subset projection (`projectSet`), Håstad's 3-bit linear test on a concrete Label Cover graph, and `#print axioms` guards for the headline theorems.
 -/
 
 namespace ComplexityTests.Hastad
