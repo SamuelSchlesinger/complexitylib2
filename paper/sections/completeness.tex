@@ -466,6 +466,37 @@ every constant is not proved.\citep{AroraLundMotwaniSudanSzegedy1998}\citep[Chap
 \declat{a385efa762026bdda244e8a3ec760ec1712a8fa4}{Complexity/Computability/PCP/Approximation/IndependentSet.lean}{269}{Cslib.Complexity.GapVertexCover_npHard}
 \end{result}
 
+\begin{result}
+\subsection{The $7/8$ threshold for MAX-E3SAT and H\r{a}stad's 3-bit test}
+Every clause of three literals on three distinct variables is falsified by a
+uniformly random assignment with probability $1/8$ and satisfied with probability
+$7/8$; by linearity of expectation, every exact 3-CNF formula with three distinct
+variables per clause has an assignment falsifying at most $1/8$ of its clauses, so
+the two-sided MAX-E3SAT gap problem has an empty no-instance set for every
+soundness $s<7/8$. In the converse direction, H\r{a}stad's noisy 3-bit linear test on
+folded Long Code tables over a Label Cover projection $\pi\colon\beta\to\gamma$ at noise
+rate $0<\delta<1/2$ has the exact Walsh--Fourier correlation expansion
+$\sum_{T\subseteq\beta}(1-2\delta)^{|T|}\widehat{A}(T)^2\widehat{B}(\pi_2(T))$, and the
+Cauchy--Schwarz and Parseval inequalities bound the squared correlation by
+$(1-2\delta)^{2k}+k^2\sum_{x\in\beta}p_A(x)p_B(\pi(x))$ for low-degree spectral
+sub-probability weights $p_A,p_B$. Encoding each 3-bit linear equation by a
+4-clause exact 3-CNF gadget yields a two-sided dichotomy from Label Cover: for
+every $\varepsilon>0$ and $0<\delta<1/2$ there is $\eta>0$ such that satisfiable Label Cover
+instances admit folded Long Code tables with linear test acceptance $1-\delta$ and
+E3-CNF clause satisfaction $1-\delta/4$, while on instances of value at most $\eta$
+every folded table assignment has linear acceptance at most $1/2+4\varepsilon$ and
+E3-CNF satisfaction at most $7/8+\varepsilon$. Raz's parallel repetition theorem (needed
+for unconditional NP-hardness of $\mathrm{GapLabelCover}\;\beta\;\gamma\;1\;\eta$ for
+arbitrary $\eta>0$) and the adaptive perfect-completeness $(1,7/8+\varepsilon)$ test are
+not yet formalized.\citep{Hastad2001}\citep[Chapter 22]{AroraBarak09}
+\decl{Complexity/Computability/PCP/Approximation/Hastad.lean}{283}{Cslib.Logic.PL.CNF.IsExactThree.unsatVal_le_one_eighth}
+\decl{Complexity/Computability/PCP/Approximation/Hastad.lean}{550}{Cslib.PCP.Hastad.hastadLinearCorr_eq_sum}
+\decl{Complexity/Computability/PCP/Approximation/Hastad.lean}{750}{Cslib.PCP.Hastad.hastadLinearCorr_sq_le}
+\decl{Complexity/Computability/PCP/Approximation/Hastad.lean}{1148}{Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le}
+\decl{Complexity/Computability/PCP/Approximation/Hastad.lean}{1260}{Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy}
+\decl{Complexity/Computability/PCP/Approximation/Hastad.lean}{1310}{Cslib.Complexity.no_GapExactThreeSATWithCompleteness_eq_empty}
+\end{result}
+
 
 \begin{result}
 \subsection{PCP without random bits}
