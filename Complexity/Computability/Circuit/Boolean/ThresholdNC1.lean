@@ -183,6 +183,14 @@ theorem size_majorityDeMorganCircuit_le (k : ℕ) :
         Nat.clog 2 (k + 1) * (20 * Nat.clog 2 (k + 1) + 6) :=
   size_thresholdDeMorganCircuit_le k ((k + 1) / 2)
 
+/-- Quadratic upper bound on the size of `majorityDeMorganCircuit k`. -/
+theorem size_majorityDeMorganCircuit_le_sq (k : ℕ) :
+    (majorityDeMorganCircuit k).size ≤ 65 * (k + 1) ^ 2 := by
+  have h := size_majorityDeMorganCircuit_le k
+  have hclog : Nat.clog 2 (k + 1) ≤ k + 1 :=
+    (Nat.clog_le_iff_le_pow one_lt_two).2 Nat.lt_two_pow_self.le
+  nlinarith
+
 /-- `majorityDeMorganCircuit k` has depth at most `2 + 23 ⌈log₂ (k + 1)⌉`. -/
 theorem depth_majorityDeMorganCircuit_le (k : ℕ) :
     (majorityDeMorganCircuit k).depth ≤ 2 + 23 * Nat.clog 2 (k + 1) :=
