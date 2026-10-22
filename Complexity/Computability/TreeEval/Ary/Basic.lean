@@ -48,6 +48,9 @@ namespace Cslib.TreeEval.Ary
 /-- A gate of fan-in `d` on `ℓ`-bit values: a function of the values of the `d` children. -/
 abbrev Gate (d ℓ : ℕ) : Type := (Fin d → Fin ℓ → Bool) → Fin ℓ → Bool
 
+/-- A binary gate as a gate of fan-in `2`, reading child `0` as the left one. -/
+def Gate.ofBinary {ℓ : ℕ} (f : TreeEval.Gate ℓ) : Gate 2 ℓ := fun v => f (v 0) (v 1)
+
 /-- A `d`-ary Tree Evaluation instance: a perfect `d`-ary tree with all leaves at depth `h`,
 carrying `ℓ`-bit values, and internal nodes carrying gates of fan-in `d`. -/
 inductive Tree (d ℓ : ℕ) : ℕ → Type
@@ -114,9 +117,6 @@ theorem length_lt_of_nodeAt_gate {U : Tree d ℓ h} {P : List (Fin d)} {f : Gate
     rcases P with _ | ⟨j, P⟩
     · simp
     · simpa using ih j hP
-
-/-- A binary gate as a gate of fan-in `2`, reading child `0` as the left one. -/
-def Gate.ofBinary (f : TreeEval.Gate ℓ) : Gate 2 ℓ := fun v => f (v 0) (v 1)
 
 /-- A binary instance as an instance of fan-in `2`, with child `0` on the left. -/
 def ofBinary : {h : ℕ} → TreeEval.Tree ℓ h → Tree 2 ℓ h
