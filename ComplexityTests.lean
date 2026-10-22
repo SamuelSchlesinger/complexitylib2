@@ -70,6 +70,7 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
+import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
 import ComplexityTests.DataStructureQueue
