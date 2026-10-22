@@ -35,7 +35,10 @@ the padding.
 The general timed-reduction API lives in
 `Complexity.Computability.Complexity.Classes.Time`. In particular,
 `Cslib.Complexity.preimage_mem_DTIME` computes a reduction and then tidily decides its output;
-the padding arguments below apply this API to their padded instances.
+the padding arguments below apply this API to their padded instances. The unconditional
+deterministic exponential-padding lemma
+`Cslib.Complexity.setOf_mem_E_of_computableTidilyInPolyTime_pad` lives in
+`Complexity.Computability.Complexity.Classes.EXP`.
 
 ## The padded problem
 
@@ -80,8 +83,6 @@ exponential padding yields an `NEXP` decider without a collapse hypothesis.
 * `Turing.MultiTapeNTM.padded_mem_NP`,
   `Turing.MultiTapeNTM.DecidesInTime.frame_append_mem_padded_iff`: the padded problem is in `NP`,
   and decides the original problem on padded instances.
-* `Cslib.Complexity.setOf_mem_E_of_computableTidilyInPolyTime_pad`: polynomial time on inputs
-  padded to length `2 ^ n` gives `E`.
 * `Cslib.Complexity.NTIME_subset_iUnion_DTIME_of_NP_subset_P`: the translation lemma.
 * `Cslib.Complexity.NEXP_subset_EXP_of_NP_subset_P`, `Cslib.Complexity.EXP_eq_NEXP_of_P_eq_NP`:
   if `P = NP`, then `EXP = NEXP`.
@@ -167,65 +168,6 @@ namespace Cslib.Complexity
 open _root_.Turing _root_.Turing.MultiTapeTM
 
 variable {α β : Type} {enc : α ↪ List Bool} {encB : β ↪ List Bool}
-
-/-- **Padding to exponential length.** If `Ψ` is polynomial-time on pairs of a bit word and a
-unary number, then the words `y` with `Ψ (y, 2 ^ |y|)` form a problem in `E`: the padding
-`y ↦ (y, 2 ^ |y|)` is written within time `O(4 ^ |y|)`, and the problem decided by `Ψ` is in
-`DTIME (n ↦ c (n + 1) ^ d)` (`preimage_mem_DTIME`). -/
-theorem setOf_mem_E_of_computableTidilyInPolyTime_pad {Ψ : List Bool × ℕ → Bool}
-    (hΨ : ComputableTidilyInPolyTime Ψ (encPair encBits encUnary) encBool) :
-    {y : List Bool | Ψ (y, 2 ^ y.length) = true} ∈ E encBits := by
-  obtain ⟨t, s, ht, hs, h⟩ := hΨ
-  obtain ⟨c, d, hcd⟩ := (ht.add hs).exists_le
-  -- the problem decided by `Ψ`, within polynomial time
-  have hB : {x | Ψ x = true} ∈ DTIME (encPair encBits encUnary) fun n => c * (n + 1) ^ d :=
-    setOf_mem_DTIME_of_computableTidilyInO (T := fun x => t x + s x) (S := fun x => t x + s x)
-      (.of_bounds h 1 (fun _ => by omega) (fun _ => by omega)
-        fun x => (h.length_le x).trans (by omega)) hcd
-  -- the padding `y ↦ (y, 2 ^ |y|)`
-  have hgO : ComputableTidilyInO (fun y : List Bool => (y, 2 ^ y.length)) encBits
-      (encPair encBits encUnary) (fun y => 3 * 4 ^ y.length) fun y => 3 * 4 ^ y.length := by
-    have h₁ := (ComputableTidilyInO.of_linear
-      (.of_eq (f := fun y : List Bool => y) (encMid := encBits) fun _ => rfl)).prod
-      (ComputableTidilyInO.unary_two_pow.comp ComputableTidilyInO.lengthUnary)
-    have hbound : ∀ y : List Bool, y.length + (y.length + (y.length + 1) * 2 ^ y.length) ≤
-        3 * 4 ^ y.length := fun y => by
-      have h2 : y.length + 1 ≤ 2 ^ y.length := Nat.lt_two_pow_self
-      have h4 : 4 ^ y.length = 2 ^ y.length * 2 ^ y.length := by
-        rw [← mul_pow]
-        norm_num
-      nlinarith
-    refine h₁.mono_le (fun y => ?_) fun y => ?_
-    · simpa only [encBits_apply, Function.comp_apply] using hbound y
-    · have h2 : y.length + 1 ≤ 2 ^ y.length := Nat.lt_two_pow_self
-      have := hbound y
-      simp only [encBits_apply]
-      nlinarith
-  refine mem_E_iff.2 ⟨d + 2, preimage_mem_DTIME (C := c * 4 ^ d + 3) hB hgO fun y => ?_⟩
-  -- the time bound is `2 ^ O(n)`
-  set n := (encBits y).length
-  have hn : n = y.length := by simp [n, encBits_apply]
-  have hlen : (encPair encBits encUnary (y, 2 ^ y.length)).length + 1 ≤ 2 ^ (n + 2) := by
-    simp only [length_encPair, encBits_apply, encUnary_apply, List.length_replicate, hn]
-    rw [pow_add]
-    have : y.length + 1 ≤ 2 ^ y.length := Nat.lt_two_pow_self
-    omega
-  have h4 : 4 ^ n ≤ 2 ^ ((d + 2) * n) := by
-    rw [show (4 : ℕ) = 2 ^ 2 by norm_num, ← pow_mul]
-    exact Nat.pow_le_pow_right (by norm_num) (by nlinarith)
-  have h2 : (2 ^ (n + 2)) ^ d ≤ 4 ^ d * 2 ^ ((d + 2) * n) := by
-    calc (2 ^ (n + 2)) ^ d = 4 ^ d * 2 ^ (d * n) := by
-          rw [← pow_mul, show (n + 2) * d = 2 * d + d * n by ring, pow_add, pow_mul]
-          norm_num
-      _ ≤ 4 ^ d * 2 ^ ((d + 2) * n) :=
-          Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) (by nlinarith))
-  rw [← hn]
-  calc 3 * 4 ^ n + c * ((encPair encBits encUnary (y, 2 ^ y.length)).length + 1) ^ d
-      ≤ 3 * 2 ^ ((d + 2) * n) + c * (4 ^ d * 2 ^ ((d + 2) * n)) := by
-        gcongr
-        exact (Nat.pow_le_pow_left hlen d).trans h2
-    _ = (c * 4 ^ d + 3) * 2 ^ ((d + 2) * n) := by ring
-    _ ≤ _ := Nat.le_add_right _ _
 
 /-! ### The translation lemma -/
 
