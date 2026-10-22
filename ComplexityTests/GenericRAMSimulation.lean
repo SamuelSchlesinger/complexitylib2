@@ -8,17 +8,18 @@ module
 -- upstream: local-only (test driver)
 
 public import Complexity.Computability.GenericRAM.Simulation.Turing
+public import Complexity.Computability.GenericRAM.Simulation.Run
 public import Complexity.Computability.GenericRAM.Native.Nat
 import Mathlib.Data.Fin.VecNotation
 
 /-!
-# Finite RAM simulation and native step certificate checks
+# Finite RAM simulation, multi-step execution, and native transport checks
 
-A fixed store/load/branch/halt client runs at several configurations. Separate examples exercise
-current and continuing labels, missing instructions, failed addresses, invalid moved values,
-failed tests versus false tests, the distinction between produced and moved values, uniform native
-step execution across runtime configurations, and retention of nonpolynomial primitive and
-sparse-memory resource bounds.
+A fixed store/load/branch/halt client runs across single steps and multi-step budgets. Separate
+examples exercise current and continuing labels, missing instructions, failed addresses, invalid
+moved values, failed tests versus false tests, the distinction between produced and moved values,
+uniform native step and run execution across runtime configurations, retention of nonpolynomial
+primitive and sparse-memory resource bounds, and end-to-end polynomial-time algorithm transport.
 -/
 
 @[expose] public section
@@ -210,6 +211,225 @@ theorem retained_sparse_write_bound (k : ℕ) (hk : 4 ≤ k) :
   simp only [hpc, ite_true]
   exact le_trans hto (le_trans hti (by omega))
 
+-- Multi-step execution across step budgets, early halting, and faulting.
+/-- State reached after storing 3 at address 0 and loading address 0 back into register 1. -/
+def clientLoaded : FiniteState model 2 := { stored.set 1 3 with pc := 2 }
+/-- State reached after taking the false branch to the halt instruction. -/
+def clientHalting : FiniteState model 2 := { clientLoaded with pc := 3 }
+
+example : FiniteState.run (M := model) 4 client 0 (initial 0 3 0) =
+    some (.inl (initial 0 3 0)) := rfl
+example : FiniteState.run (M := model) 4 client 1 (initial 0 3 0) =
+    some (.inl stored) := rfl
+example : FiniteState.run (M := model) 4 client 2 (initial 0 3 0) =
+    some (.inl clientLoaded) := rfl
+example : FiniteState.run (M := model) 4 client 3 (initial 0 3 0) =
+    some (.inl clientHalting) := rfl
+example : FiniteState.run (M := model) 4 client 4 (initial 0 3 0) =
+    some (.inr 3) := rfl
+example : FiniteState.run (M := model) 4 client 5 (initial 0 3 0) =
+    some (.inr 3) := rfl
+example : FiniteState.eval (M := model) 4 client 3 (initial 0 3 0) = none := rfl
+example : FiniteState.eval (M := model) 4 client 4 (initial 0 3 0) = some 3 := rfl
+example : FiniteState.eval (M := model) 4 client 5 (initial 0 3 0) = some 3 := rfl
+example : FiniteState.run (M := model) 2 client 1 (initial 0 3 0) = none := rfl
+
+-- Finite multi-step runs refine operational `Executes` and bound sparse-memory growth.
+example : ∃ m ≤ 4, Executes (M := model) 4 client (initial 0 3 0).denote 3 m :=
+  FiniteState.executes_of_run_eq_inr (M := model) (k := 4) (p := client) (n := 4)
+    (s := initial 0 3 0) rfl
+
+example {k t : ℕ} {s s' : FiniteState model 2}
+    (h : FiniteState.run k client t s = some (.inl s')) :
+    (SparseMemory.entries s'.memory).length ≤ (SparseMemory.entries s.memory).length + t :=
+  FiniteState.length_entries_run_le h
+
+/-- `runTime` and `runSpace` dominate every active intermediate step's `stepTime` and `stepSpace`,
+preserving nonpolynomial primitive bounds across multi-step runs. -/
+theorem retained_exponential_run_bound (k : ℕ) (hk : 1 ≤ k) :
+    2 ^ k ≤ FiniteState.runTime encoding expPrimitives [.op (.const 0 1)]
+      (1, (k, initial 0 0 0)) ∧
+    2 ^ k ≤ FiniteState.runSpace encoding expPrimitives [.op (.const 0 1)]
+      (1, (k, initial 0 0 0)) := by
+  have hrun : FiniteState.run (M := model) k [.op (.const 0 1)] 0 (initial 0 0 0) =
+      some (.inl (initial 0 0 0)) := rfl
+  have hstep := retained_exponential_primitive_bound k hk (initial 0 0 0) rfl
+  exact ⟨le_trans hstep.1
+      (FiniteState.le_runTime_of_run_eq_inl encoding expPrimitives
+        [.op (.const 0 1)] (Nat.zero_le 1) hrun),
+    le_trans hstep.2
+      (FiniteState.le_runSpace_of_run_eq_inl encoding expPrimitives
+        [.op (.const 0 1)] (Nat.zero_le 1) hrun)⟩
+
+open Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-- Six-instruction program that sets register `0` to `0`, stores its input `x` (initially in
+register `1`) at sparse address `0`, loads it back into register `0`, adds registers `0` and `1`
+via the model ALU, branches to the halt label, and returns `x + x`. -/
+def doubleProgram : Program model 2 :=
+  [.op (.const 0 0), .op (.store 0 1), .op (.load 0 0),
+   .op (.alu () 1 ![0, 1]), .branch (.test () ![0, 1]) 5, .halt 1]
+
+/-- Initial finite configuration with both registers set to `x`, default `0`, and empty memory. -/
+def doubleInit (x : ℕ) : FiniteState model 2 :=
+  FiniteState.initConst x 0 ∅
+
+/-- Native certificate for `doubleInit`. -/
+noncomputable def doubleInitCert :
+    NativeCertificate doubleInit encNat (FiniteState.encoding encoding) :=
+  FiniteState.initConstCertificate (r := 2) encoding
+    (NativeCertificate.linear ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.const 0)
+    (NativeCertificate.const ∅)
+
+theorem doubleInitCert_isPolynomial : doubleInitCert.IsPolynomial :=
+  FiniteState.initConstCertificate_isPolynomial (r := 2) encoding _ _ _
+    (NativeCertificate.linear_isPolynomial ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.const_isPolynomial 0)
+    (NativeCertificate.const_isPolynomial ∅)
+
+/-- Runtime configuration `(x + x) + 6` accommodates program labels `0..5` and intermediate value
+`x + x`. -/
+def doubleConfig (x : ℕ) : ℕ := (x + x) + 6
+
+theorem doubleConfig_polyTime :
+    ComputableTidilyInPolyTime doubleConfig encNat encNat := by
+  have hid := of_eq (encIn := encNat) fun _ => rfl
+  exact binary_add.comp ((binary_add.comp (hid.prod hid)).prod (const 6))
+
+/-- Native certificate for `doubleConfig`. -/
+noncomputable def doubleConfigCert : NativeCertificate doubleConfig encNat encNat :=
+  .ofPolyTime doubleConfig_polyTime
+
+theorem doubleConfigCert_isPolynomial : doubleConfigCert.IsPolynomial :=
+  NativeCertificate.ofPolyTime_isPolynomial doubleConfig_polyTime
+
+/-- Constant step budget `6` for `doubleProgram`. -/
+noncomputable def doubleStepsCert : NativeCertificate (fun _ : ℕ => 6) encNat encNat :=
+  NativeCertificate.const 6
+
+theorem doubleStepsCert_isPolynomial : doubleStepsCert.IsPolynomial :=
+  NativeCertificate.const_isPolynomial 6
+
+/-- `doubleProgram` halts in `6` steps with output `x + x` at configuration `doubleConfig x` from
+initial state `doubleInit x`. -/
+theorem doubleProgram_run (x : ℕ) :
+    FiniteState.run (doubleConfig x) doubleProgram 6 (doubleInit x) = some (.inr (x + x)) := by
+  have h0 : 0 < doubleConfig x := by simp [doubleConfig]
+  have h1 : 1 < doubleConfig x := by simp [doubleConfig]
+  have h2 : 2 < doubleConfig x := by simp [doubleConfig]
+  have h3 : 3 < doubleConfig x := by simp [doubleConfig]
+  have h4 : 4 < doubleConfig x := by simp [doubleConfig]
+  have h5 : 5 < doubleConfig x := by simp [doubleConfig]
+  have hx : x < doubleConfig x := by simp [doubleConfig]; omega
+  have hxx : x + x < doubleConfig x := by simp [doubleConfig]
+  have hmem : SparseMemory.read 0 (0 : ℕ) (AList.singleton 0 x) = x := by
+    simpa using congrFun (SparseMemory.read_insert 0 (0 : ℕ) x ∅) 0
+  simp [FiniteState.run, FiniteState.step, FiniteState.dispatch, FiniteState.evalInstr,
+    FiniteState.evalOp, FiniteState.resume, FiniteState.set, FiniteState.write, FiniteState.move,
+    Model.checkedConstant, Model.checkedOp, doubleInit, FiniteState.initConst,
+    FiniteState.init, doubleProgram, model, h0, h1, h2, h3, h4, h5, hx, hxx, hmem]
+
+/-- `doubleProgram` satisfies semantic `Executes` within `6` steps for all inputs `x`. -/
+theorem doubleProgram_executes (x : ℕ) :
+    ∃ m ≤ 6, Executes (M := model) (doubleConfig x) doubleProgram
+      (doubleInit x).denote (x + x) m :=
+  FiniteState.executes_of_run_eq_inr (doubleProgram_run x)
+
+/-- Iterating `roundCertificate` a fixed number of rounds `j` yields a polynomial certificate. -/
+noncomputable def doubleRoundIterCert : (j : ℕ) →
+    NativeCertificate
+      (fun x => (FiniteState.round doubleProgram)^[j]
+        (doubleConfig x, some (.inl (doubleInit x))))
+      encNat (FiniteState.loopEncoding encoding)
+  | 0 => NativeCertificate.prod doubleConfigCert
+      (NativeCertificate.some (NativeCertificate.inl doubleInitCert encoding.value))
+  | j + 1 =>
+    ((FiniteState.roundCertificate encoding nativePrimitives doubleProgram).comp
+      (doubleRoundIterCert j)).congr fun _ => (Function.iterate_succ_apply' _ _ _).symm
+
+theorem doubleRoundIterCert_isPolynomial : ∀ j : ℕ, (doubleRoundIterCert j).IsPolynomial
+  | 0 => NativeCertificate.prod_isPolynomial _ _ doubleConfigCert_isPolynomial
+      (NativeCertificate.some_isPolynomial _
+        (NativeCertificate.inl_isPolynomial _ _ doubleInitCert_isPolynomial))
+  | j + 1 =>
+    NativeCertificate.congr_isPolynomial _ _
+      (NativeCertificate.comp_isPolynomial _ _
+        (FiniteState.roundCertificate_isPolynomial encoding nativePrimitives
+          doubleProgram nativePrimitives_isPolynomial)
+        (doubleRoundIterCert_isPolynomial j))
+
+theorem doubleRun_length_polyBounded (j : ℕ) :
+    PolyBounded (fun x => (encNat x).length)
+      (fun x => (FiniteState.resultEncoding encoding
+        (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length) := by
+  have hloop :=
+    ((doubleRoundIterCert j).polyTime (doubleRoundIterCert_isPolynomial j)).polyBounded_length
+  refine hloop.mono fun x => ?_
+  rw [FiniteState.iterate_round_inl]
+  simp only [FiniteState.loopEncoding, length_encPair]
+  omega
+
+/-- Trajectory-sum upper bound on encoded outcomes of `doubleProgram` across `0 ≤ j ≤ 6`. -/
+noncomputable def doubleOutcomeBound (x : ℕ) : ℕ :=
+  ∑ j ∈ Finset.range 7,
+    (FiniteState.resultEncoding encoding
+      (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length
+
+theorem doubleOutcomeBound_polyBounded :
+    PolyBounded (fun x => (encNat x).length) doubleOutcomeBound := by
+  unfold doubleOutcomeBound
+  suffices ∀ n : ℕ, PolyBounded (fun x => (encNat x).length)
+      (fun x => ∑ j ∈ Finset.range n,
+        (FiniteState.resultEncoding encoding
+          (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length) from this 7
+  intro n
+  induction n with
+  | zero =>
+    simpa only [Finset.range_zero, Finset.sum_empty] using PolyBounded.const 0
+  | succ n ih =>
+    simpa only [Finset.sum_range_succ] using ih.add (doubleRun_length_polyBounded n)
+
+theorem doubleOutcome_length_le (x : ℕ) (j : ℕ) (hj : j ≤ 6) :
+    (FiniteState.resultEncoding encoding
+      (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length ≤
+      doubleOutcomeBound x :=
+  Finset.single_le_sum
+    (f := fun i => (FiniteState.resultEncoding encoding
+      (FiniteState.run (doubleConfig x) doubleProgram i (doubleInit x))).length)
+    (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr (by omega))
+
+/-- Explicit native multitape TM certificate transported from `doubleProgram`. -/
+noncomputable def doubleTransportCert :
+    NativeCertificate (fun x : ℕ => x + x) encNat encNat :=
+  FiniteState.transportCertificate encoding nativePrimitives doubleProgram
+    doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
+
+/-- Whole-run explicit `ComputableTidilyInO` bound transported from `doubleProgram`. -/
+theorem double_inO :
+    ComputableTidilyInO (fun x : ℕ => x + x) encNat encNat
+      doubleTransportCert.time doubleTransportCert.space :=
+  FiniteState.transport_inO encoding nativePrimitives doubleProgram
+    doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
+
+/-- Automatic `ComputableTidilyInPolyTime` transport for `doubleProgram` via
+`FiniteState.transport_polyTime`. -/
+theorem double_polyTime :
+    ComputableTidilyInPolyTime (fun x : ℕ => x + x) encNat encNat :=
+  FiniteState.transport_polyTime encoding nativePrimitives doubleProgram
+    doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
+    nativePrimitives_isPolynomial
+    doubleStepsCert_isPolynomial doubleConfigCert_isPolynomial doubleInitCert_isPolynomial
+    (PolyBounded.const 6) doubleOutcomeBound_polyBounded doubleOutcome_length_le
+
+/-- Automatic `ComputableTidilyInPolyTime` single-step simulation for `doubleProgram` via
+`FiniteState.step_polyTime`. -/
+theorem double_step_polyTime :
+    ComputableTidilyInPolyTime
+      (fun q : ℕ × FiniteState model 2 => FiniteState.step q.1 doubleProgram q.2)
+      (FiniteState.inputEncoding encoding) (FiniteState.resultEncoding encoding) :=
+  FiniteState.step_polyTime encoding nativePrimitives doubleProgram nativePrimitives_isPolynomial
+
 /--
 info: 'Turing.MultiTapeTM.ComputableTidilyInO.inl' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -247,6 +467,66 @@ info: 'Cslib.GenericRAM.FiniteState.step_inO' depends on axioms: [propext, Class
 #print axioms FiniteState.step_inO
 
 /--
+info: 'Cslib.GenericRAM.FiniteState.denote_run' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteState.denote_run
+
+/--
+info: 'Cslib.GenericRAM.FiniteState.executes_iff_exists_run' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteState.executes_iff_exists_run
+
+/--
+info: 'Cslib.GenericRAM.FiniteState.length_entries_run_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteState.length_entries_run_le
+
+/--
+info: 'Cslib.GenericRAM.FiniteState.run_inO' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteState.run_inO
+
+/--
+info: 'Cslib.GenericRAM.FiniteState.transport_inO' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteState.transport_inO
+
+/--
+info: 'Cslib.GenericRAM.FiniteState.step_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteState.step_polyTime
+
+/--
+info: 'Cslib.GenericRAM.FiniteState.transport_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms FiniteState.transport_polyTime
+
+/--
+info: 'Cslib.WordRAM.executes_iff_exists_finiteRun' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.executes_iff_exists_finiteRun
+
+/--
+info: 'Cslib.WordRAM.transport_inO' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.transport_inO
+
+/--
+info: 'Cslib.WordRAM.transport_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.transport_polyTime
+
+/--
 info: 'ComplexityTests.GenericRAMSimulation.uniform_machine_across_configs' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -257,5 +537,11 @@ info: 'ComplexityTests.GenericRAMSimulation.retained_exponential_primitive_bound
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms retained_exponential_primitive_bound
+
+/--
+info: 'ComplexityTests.GenericRAMSimulation.double_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms double_polyTime
 
 end ComplexityTests.GenericRAMSimulation
