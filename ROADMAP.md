@@ -11,79 +11,36 @@ completed reference developments.
 2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
    exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
    polynomial-time adversaries.
-3. **Gentry’s bootstrapping theorem (proved:
-   [Bootstrapping](Complexity/Crypto/Computational/Bootstrapping.lean)).** A semantically secure,
-   bootstrappable encryption scheme (`EncryptionScheme`, `Bootstrappable`, `SemanticSecure`) yields
-   compact leveled fully homomorphic encryption (`leveledKeyGen`, `evalLeveledOutput`,
-   `leveledFHE_of_bootstrappable`) for every unary polynomial-time depth bound `D`, with leveled
-   semantic security (`leveledSemanticSecure_of_semanticSecure`) proved from base semantic security
-   alone via a hybrid over the evaluation key chain and secret-key bits (`encryptKeyTest_gap`).
-   Here `Bootstrappable` axiomatizes polynomial-time augmented-decryption gate evaluation
-   (`evalAugDecrypt`) and its compactness bound (`cipherBound`) directly as a primitive interface on
-   `S` for the De Morgan operations (`Boolean.Op`: Boolean constants `.const b`, unary negation
-   `.not`, and binary `.and` and `.or`) composed with decryption, rather than compiling `S.decrypt`
-   to a circuit and evaluating that circuit inside a bounded-depth somewhat homomorphic scheme.
-   Under circular security (`CircularSecure`), the fixed-key construction (`fixedKeyGen`,
-   `evalHomOutput`, `fixedKeyFHE_of_circularSecure`) evaluates De Morgan circuits and formulas of
-   arbitrary depth and size with output ciphertext length bounded by `cipherBound n`. Concrete
-   lattice/LWE-based instantiations and circuit-level decryption-depth compilation remain future
-   work.
+3. **Gentry’s bootstrapping theorem.** A semantically secure, bootstrappable encryption scheme
+   yields compact leveled fully homomorphic encryption for every polynomially bounded circuit
+   depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
+   circuits. With an appropriate additional circular-security assumption, the construction yields a
+   fixed-key fully homomorphic scheme without a predetermined depth bound. *Partial:*
+   [Bootstrapping](Complexity/Crypto/Computational/Bootstrapping.lean) proves the composition step
+   (`leveledFHE_of_bootstrappable`, `fixedKeyFHE_of_circularSecure`, with leveled semantic security
+   from base semantic security) from an *assumed* `Bootstrappable` interface whose gate-plus-refresh
+   operation `evalAugDecrypt` and its correctness are taken as fields. Deriving that interface from
+   homomorphic evaluation of the scheme's decryption circuit remains open.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
    standard communication assumptions. This does not guarantee fairness or delivery of outputs.
-   Gate-by-gate OT-hybrid evaluation of $k$-party De Morgan circuits ($k^2|c|$ calls to
-   `idealOT`), exact real/ideal distributional simulation with abort under `kilianSimulator`,
-   zero-error statistical security and uniform strict-PPT computational security for
-   `PolyTimeFunctionality` families, and explicit non-delivery/unfairness results are proved in
-   [ObliviousTransfer](Complexity/Crypto/Multiparty/ObliviousTransfer.lean). In this model,
-   `MaliciousOTAdversary` captures static malicious behavior via effective input substitution
-   (`chooseInputs`), boolean input-validity and gate-consistency predicates (`corruptedInputValid`,
-   `gatePhaseConsistent`) on the corrupted view that trigger early abort when violated, combined
-   honest output-share parity `honestOutputReconstructionShares` (`parityOn (Finset.univ \ C)`)
-   for corrupted output wires, and a rushing output-delivery flag (`deliver`), while wire shares
-   during circuit evaluation are computed by `evalCircuitOT` on the effective inputs and honest
-   parties receive the reconstructed circuit outputs on delivery. `PolyTimeFunctionality` packages
-   polynomially bounded De Morgan circuit families (evaluated by the certified polynomial-time
-   evaluator `Boolean.evalOutput`, without a separate uniform circuit-generation machine field),
-   and `MaliciousOTAdversary`/`kilianSimulator` operate at the `PMF` level so computational
-   security follows from the exact zero-error distributional identity
-   `realOTHybridExecution_eq_idealExecutionWithAbort`. Compiling the OT-hybrid input/gate
-   consistency checks against arbitrary per-gate share tampering from raw OT via cut-and-choose
-   commitments, zero-knowledge proofs, or IPS watch-lists, adding machine-level uniform circuit
-   generation and simulator runtime certificates, and extending to adaptive corruptions remain
-   open.
 5. **Håstad’s optimal MAX-E3SAT hardness.** For every fixed ε with 0 < ε < 1/8, it is NP-hard to
    distinguish satisfiable E3-CNF formulas from E3-CNF formulas for which every assignment
-   satisfies at most a 7/8 + ε fraction of clauses. The tight `7 / 8` random-assignment bound on
-   E3-CNF formulas with three distinct variables per clause (`CNF.IsExactThreeDistinct`, so
-   `GapExactThreeDistinctSAT c s` has empty `no` set for `s < 7 / 8`), table folding on the Long
-   Code, Håstad's noisy 3-bit linear test and its exact Walsh–Fourier expansion, the
-   Cauchy–Schwarz + Parseval single-edge and multi-edge soundness bounds, the 4-clause E3-CNF
-   gadget, and the two-sided `GapLabelCover β γ 1 η` dichotomy (`hastad_gapLabelCover_dichotomy`,
-   for nonempty finite label sets `β, γ`, `0 < δ < 1 / 2`, and non-empty edge lists `g.edges ≠ []`,
-   separating expected linear test acceptance `1 - δ` vs `1 / 2 + 4 * ε` and expected 4-clause
-   gadget satisfaction `1 - δ / 4` vs `7 / 8 + ε` over folded right tables `B` and arbitrary left
-   tables `A`) are proved in [Hastad](Complexity/Computability/PCP/Approximation/Hastad.lean).
-   Compiling the test distribution into a global `CNF ℕ` polynomial-time promise reduction to
-   `GapExactThreeDistinctSAT`, Raz's parallel repetition theorem (for unconditional NP-hardness of
-   `GapLabelCover β γ 1 η` for arbitrary `η > 0`), and Håstad's adaptive perfect-completeness
-   `(1, 7 / 8 + ε)` test remain open.
+   satisfies at most a 7/8 + ε fraction of clauses. *Partial:*
+   [Hastad](Complexity/Computability/PCP/Approximation/Hastad.lean) proves the analytic core:
+   completeness and soundness of Håstad's noisy 3-bit linear test on folded Long Code tables
+   against `GapLabelCover` (`hastad_gapLabelCover_dichotomy`), the easy `7 / 8` random-assignment
+   bound, and the 4-clause XOR gadget. The reduction to MAX-E3LIN/MAX-E3SAT and NP-hardness of
+   Label Cover (PCP theorem with parallel repetition) remain open.
 6. **Williams’s ACC lower bound.** NEXP ⊄ ACC⁰: some language in nondeterministic exponential time
    has no polynomial-size, constant-depth nonuniform circuit family over unbounded-fan-in AND, OR,
-   NOT and modular-counting gates with fixed moduli. Nonuniform `ACC0 = ⋃ q ≥ 2, AC0Mod q`
-   (`ACC0_eq_iUnion_AC0Mod`), divisibility monotonicity (`AC0Mod_subset_AC0Mod_of_dvd`), Boolean
-   closure, the containments `ACC0 ⊆ TC0` and `ACC0 ⊆ AC 1 ⊆ NC 2 ⊆ PPoly`, strict separations
-   `AC0 ⊂ AC0Mod 2 ⊆ ACC0` and `AC0Mod p ⊂ ACC0` for odd prime `p`, depth-two `Sym⁺` circuits with
-   split-variable Fast Zeta multipoint evaluation (`SymPlusCircuit.fastSymPlusEval_eq_eval`) and
-   depth-`0` compilation (`symPlusCompilation_zero`), unconditional fixed-degree `Σ₂ ⊆ NEXP` lower
-   bounds against `SIZEMod q` for every modulus `q` (`Kannan.language_notMem_SIZEMod`,
-   `exists_mem_SigmaP_two_notMem_SIZEMod`, `exists_mem_NEXP_notMem_SIZEMod`), the Karp–Lipton
-   collapse `NEXP ⊆ ACC0 → PH = Σ₂` (`PH_eq_SigmaP_two_of_NEXP_subset_ACC0`,
-   `Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0`), and the final contradiction step
-   (`exists_mem_NEXP_notMem_ACC0`, `not_NEXP_subset_ACC0`) are in
-   [`ACC0`](Complexity/Computability/Circuit/Boolean/ACC0.lean); discharging the multi-layer
-   Yao–Beigel–Tarui `SymPlusCompilation` and easy-witness collapse hypotheses remains open.
+   NOT and modular-counting gates with fixed moduli. *Partial:*
+   [`ACC0`](Complexity/Computability/Circuit/Boolean/ACC0.lean) defines `ACC0` and proves its
+   closure properties, `ACC0 ⊆ TC0` and `ACC0 ⊆ AC 1 ⊆ NC 2 ⊆ PPoly`, fast Zeta evaluation of
+   depth-two `Sym⁺` circuits, fixed-degree `Σ₂` lower bounds against `SIZEMod q`, and the collapse
+   `NEXP ⊆ ACC0 → PH = Σ₂`. The Yao–Beigel–Tarui compilation, the fast `ACC⁰` satisfiability
+   algorithm and the easy-witness argument remain open.
 7. **Valiant’s algebraic completeness theorem.** Over every field of characteristic different from
    two, the permanent polynomial family is VNP-complete under polynomially bounded projections:
    every VNP family is obtained from a polynomially larger permanent by substituting variables and
@@ -91,17 +48,12 @@ completed reference developments.
 8. **Kabanets–Impagliazzo derandomization-to-lower-bounds theorem.** If polynomial identity testing
    for arithmetic circuits over the integers has a deterministic polynomial-time algorithm, then
    either NEXP ⊄ P/poly or the permanent family has no polynomial-size arithmetic circuits over the
-   integers. [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean)
-   encodes single-output integer arithmetic circuits (`encArithCircuitInt`) and `PITInt`, proves the
-   multivariate Schwartz–Zippel lemma (`MvPolynomial.card_roots_le`,
-   `exists_eval_ne_zero_of_notMem_PITInt`), Laplace cofactor expansion of the permanent
-   (`Matrix.permanent_succ_row_zero`), downward self-reducibility of permanent circuits up to
-   dimension `n` to `n + 1` instances of `PITInt` (`forall_polynomial_eq_permanent_iff_mem_PITInt`,
-   `exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP`), the unconditional fixed-degree circuit
-   lower bound in `NEXP` (`exists_mem_NEXP_notMem_SIZE`), and the conditional Kabanets–Impagliazzo
-   theorem (`kabanets_impagliazzo`, `kabanets_impagliazzo_of_EXP_subset_P`); discharging the
-   easy-witness / Valiant–Toda collapse hypothesis from `NEXP ⊆ P/poly` and `PermPITCertified`
-   remains open.
+   integers. *Partial:*
+   [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean) defines
+   `PITInt`, restates Mathlib's Schwartz–Zippel lemma for circuits, proves Laplace expansion of the
+   permanent and the polynomial-identity form of Kabanets–Impagliazzo Lemma 4.2
+   (`forall_polynomial_eq_permanent_iff_mem_PITInt`). The easy-witness collapse
+   `NEXP ⊆ P/poly ⇒ NEXP = MA`, `#P`-completeness of the permanent and Toda's theorem remain open.
 9. **Babai–Fortnow–Lund multiprover theorem.** MIP = NEXP: a language has a classical multiprover
    interactive proof with a probabilistic polynomial-time verifier and constant
    completeness–soundness gap if and only if it belongs to nondeterministic exponential time. The
@@ -110,24 +62,7 @@ completed reference developments.
     rate α satisfying αq > 2√n, an efficient algorithm for search-LWE in dimension n yields a
     quantum polynomial-time algorithm for worst-case GapSVP and SIVP with approximation factor
     Õ(n/α). The noise distribution, modulus restrictions and quantum reduction are part of the
-    theorem. **Implemented in [`Complexity/Crypto/Lattice/LWE.lean`](Complexity/Crypto/Lattice/LWE.lean):**
-    full-rank lattices `LatticeBasis n`, successive minima `lambda1` and `lambdaN` with `0 < lambda1 B`,
-    `lambda1 B ≤ lambdaN B`, and the primal–dual transference bound `1 ≤ lambda1 B * lambdaN (dualBasis B)`
-    (`banaszczyk_transference_bounds`), `GapSVP` and `SIVPWitness`/`SIVPSolver`, the 1D Gaussian density
-    `gaussianPdf` and normalized discrete Gaussian distribution `discreteGaussianPMF` on `ZMod q`,
-    `RegevParameters n q α` (`2 * √n < α * q`) with explicit polynomial instantiations
-    (`regevParameters_explicit`, `regevParameters_all_pos`), secret identifiability of `lweSamplePMF`
-    and non-vacuity of `SearchLWEOracle` (`lweSamplePMF_injective`, `nonempty_searchLWEOracle`),
-    the classical dual-lattice `BDD`-to-`SearchLWE` reduction at radius `α q / (√2 r)` from the
-    public target vector (`dualBDD_innerProduct_eq`, `bddSampleFromTarget_eq_lweSampleFromNoise`,
-    `dualBDD_noise_le`, `solveDualBDDModQ_eq_secretCoords`), non-vacuity of `RegevQuantumStepOracle`
-    and iterative quantum width shrinking by factor `2 √n / (α q) < 1`
-    (`nonempty_regevQuantumStepOracle`, `regevShrinkFactor_lt_one`,
-    `terminalGaussianState_width_le`), and the combined worst-case `SIVP` and `GapSVP` reduction
-    (`regev_lwe_to_sivp`, `regev_lwe_to_gapsvp`, `regev_lwe_to_sivp_gapsvp`). Unitary circuit
-    compilation of the Quantum Fourier Transform over `ℤ_q^n` and full harmonic-analysis proof of
-    Banaszczyk's upper bound `λ₁(B) λ_n(B*) ≤ n` for non-orthogonal lattices remain future
-    extensions.
+    theorem.
 
 ## Long-term coverage and reuse
 

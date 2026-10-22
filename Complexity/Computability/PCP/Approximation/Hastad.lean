@@ -16,7 +16,7 @@ import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.Chebyshev
 
 /-!
-# Håstad's 3-bit test and optimal MAX-E3SAT inapproximability
+# Håstad's 3-bit linear test: soundness against Label Cover
 
 For a clause of three literals on three distinct variables
 (`Cslib.Logic.PL.Clause.IsExactThreeDistinct`), a uniform random assignment falsifies the clause
@@ -31,8 +31,11 @@ clauses (`Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth`). Note
 clause to have length `3` and allow repeated literals.
 
 Håstad [Hastad2001] proved that this `7 / 8` threshold is optimal: for every `ε > 0`, no
-polynomial-time algorithm can beat `7 / 8 + ε` unless `P = NP`. The core of the proof is Håstad's
-noisy 3-bit linear test on folded Long Code tables over a Label Cover projection `π : β → γ`:
+polynomial-time algorithm can beat `7 / 8 + ε` unless `P = NP`. This file formalizes the analytic
+core of that proof, the completeness and soundness of Håstad's noisy 3-bit linear test on folded
+Long Code tables over a Label Cover projection `π : β → γ`. It does not prove the hardness result:
+no reduction to MAX-E3LIN or MAX-E3SAT is constructed, and NP-hardness of Label Cover (the PCP
+theorem with parallel repetition) is not formalized.
 
 1. The **Long Code** of `x : α` (`Cslib.BitString.longCode`) evaluates each Boolean function
    `g : α → Bool` at `x`. A table `B : (γ → Bool) → Bool` is **folded**
@@ -51,10 +54,9 @@ noisy 3-bit linear test on folded Long Code tables over a Label Cover projection
    `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * ∑ x, spectralWeight k A x * spectralWeight k B (π x)`
    (`Cslib.PCP.Hastad.hastadLinearCorr_sq_le`), where `spectralWeight k A` is a sub-probability
    distribution on `β`.
-5. Converting each 3-bit XOR equation into four E3-CNF clauses (`Cslib.PCP.Hastad.xorThreeCNF`)
-   satisfies all `4` clauses when the linear equation holds and `3` of the `4` clauses when it
-   fails, mapping linear acceptance probability `1 / 2 + 4 * ε` to E3-CNF clause satisfaction
-   `7 / 8 + ε`.
+5. The standard gadget converting a 3-bit XOR equation into four E3-CNF clauses
+   (`Cslib.PCP.Hastad.xorThreeCNF`) satisfies all `4` clauses when the equation holds and `3` of
+   the `4` clauses when it fails (`Cslib.PCP.Hastad.countUnsat_xorThreeCNF`).
 
 ## Main definitions
 
@@ -66,10 +68,9 @@ noisy 3-bit linear test on folded Long Code tables over a Label Cover projection
 * `Cslib.PCP.Hastad.hastadLinearCorr`, `Cslib.PCP.Hastad.hastadLinearProb`: correlation and
   acceptance probability of Håstad's 3-bit linear test on an edge `π : β → γ`.
 * `Cslib.PCP.Hastad.spectralWeight`: low-degree Fourier decoding weights on `α`.
-* `Cslib.PCP.Hastad.xorThreeCNF`, `Cslib.PCP.Hastad.hastadSATProb`: the 4-clause E3-CNF gadget for
-  a 3-bit XOR equation and its expected clause satisfaction probability.
-* `Cslib.PCP.Hastad.hastadGraphLinearCorr`, `Cslib.PCP.Hastad.hastadGraphLinearProb`,
-  `Cslib.PCP.Hastad.hastadGraphSATProb`: multi-edge test averages over a Label Cover instance.
+* `Cslib.PCP.Hastad.xorThreeCNF`: the 4-clause E3-CNF gadget for a 3-bit XOR equation.
+* `Cslib.PCP.Hastad.hastadGraphLinearCorr`, `Cslib.PCP.Hastad.hastadGraphLinearProb`: multi-edge
+  test averages over a Label Cover instance.
 * `Cslib.Complexity.GapExactThreeDistinctSAT`: the two-sided promise problem of MAX-E3SAT with
   completeness `c` and soundness `s` on formulas with three distinct variables per clause.
 
@@ -87,17 +88,17 @@ noisy 3-bit linear test on folded Long Code tables over a Label Cover projection
 * `Cslib.PCP.Hastad.IsFolded.fourierCoeff_empty`,
   `Cslib.PCP.Hastad.IsFolded.fourierCoeff_of_even`: every even-degree Fourier coefficient of a
   folded table (and in particular at `∅`) vanishes.
-* `Cslib.PCP.Hastad.hastadLinearCorr_longCode`, `Cslib.PCP.Hastad.hastadLinearProb_longCode`,
-  `Cslib.PCP.Hastad.hastadSATProb_longCode`: completeness `1 - δ` for 3-bit linear tests and
-  `1 - δ / 4` for 4-clause E3-CNF tests on valid Long Code tables.
+* `Cslib.PCP.Hastad.hastadLinearCorr_longCode`, `Cslib.PCP.Hastad.hastadLinearProb_longCode`:
+  completeness `1 - δ` for 3-bit linear tests on valid Long Code tables.
 * `Cslib.PCP.Hastad.hastadLinearCorr_eq_sum`: exact Walsh–Fourier expansion of Håstad's 3-bit test
   correlation.
 * `Cslib.PCP.Hastad.sum_spectralWeight_le_one`: Parseval bound showing that `spectralWeight k B` is
   a sub-probability distribution on `γ`.
 * `Cslib.PCP.Hastad.hastadLinearCorr_sq_le`, `Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le`:
   single-edge and multi-edge Cauchy–Schwarz + Parseval soundness bounds.
-* `Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy`: two-sided `GapLabelCover` to MAX-E3LIN
-  `(1 - δ, 1 / 2 + 4 * ε)` and MAX-E3SAT `(1 - δ / 4, 7 / 8 + ε)` gap reduction theorem.
+* `Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy`: on `GapLabelCover` yes-instances some folded
+  tables pass the 3-bit test with probability `1 - δ`; on no-instances every folded table passes
+  with probability at most `1 / 2 + 4 * ε`.
 
 ## References
 
@@ -288,7 +289,7 @@ theorem Clause.IsExactThreeDistinct.relabel_of_injOn {f : V → ι} {c : Clause 
   rw [hmap]
   exact hc.2.map_on hf
 
-/-- **Tightness of the `7 / 8` threshold**: in every exact 3-CNF formula `φ` with three distinct
+/-- **The `7 / 8` random-assignment bound**: in every exact 3-CNF formula `φ` with three distinct
 variables per clause, some assignment falsifies at most `1 / 8` of the clauses
 (`φ.unsatVal ≤ 1 / 8`), hence satisfies at least `7 / 8` of the clauses. -/
 theorem CNF.IsExactThreeDistinct.unsatVal_le_one_eighth {φ : CNF V}
@@ -898,30 +899,6 @@ theorem one_sub_countUnsat_xorThreeCNF_div_four (v₁ v₂ v₃ : V) (σ : V →
 
 variable {β γ : Type*} [Fintype β] [DecidableEq β] [Fintype γ] [DecidableEq γ]
 
-/-- The **expected fraction of satisfied clauses in Håstad's 4-clause E3-CNF test** on edge
-`π : β → γ` with noise rate `δ`: each 3-bit linear test `(B f ^^ A g) == A ((f ∘ π) + g + μ)` is
-encoded by the 4-clause E3-CNF gadget `xorThreeCNF`, which satisfies all `4/4` clauses when the
-linear test accepts and `3/4` clauses when the linear test rejects. -/
-noncomputable def hastadSATProb (π : β → γ) (δ : ℝ)
-    (B : (γ → Bool) → Bool) (A : (β → Bool) → Bool) : ℝ :=
-  3 / 4 + 1 / 4 * hastadLinearProb π δ B A
-
-/-- `hastadSATProb` expressed in terms of `hastadLinearCorr`:
-`hastadSATProb π δ B A = 7 / 8 + 1 / 8 * hastadLinearCorr π δ B A`. -/
-theorem hastadSATProb_eq_add_hastadLinearCorr (π : β → γ) (δ : ℝ)
-    (B : (γ → Bool) → Bool) (A : (β → Bool) → Bool) :
-    hastadSATProb π δ B A = 7 / 8 + 1 / 8 * hastadLinearCorr π δ B A := by
-  rw [hastadSATProb, hastadLinearProb_eq_add_hastadLinearCorr]
-  ring
-
-/-- **Completeness of Håstad's 4-clause E3-CNF test**: on valid Long Code tables
-`B = longCode (π x)` and `A = longCode x`, the expected fraction of satisfied clauses is
-`1 - δ / 4`. -/
-theorem hastadSATProb_longCode (π : β → γ) (δ : ℝ) (x : β) :
-    hastadSATProb π δ (longCode (π x)) (longCode x) = 1 - δ / 4 := by
-  rw [hastadSATProb, hastadLinearProb_longCode]
-  ring
-
 /-- Bounding `hastadLinearCorr π δ B A ≤ 8 * ε` bounds the linear test acceptance by
 `1 / 2 + 4 * ε`. -/
 theorem hastadLinearProb_le_of_hastadLinearCorr_le (π : β → γ) (δ : ℝ)
@@ -929,15 +906,6 @@ theorem hastadLinearProb_le_of_hastadLinearCorr_le (π : β → γ) (δ : ℝ)
     (h : hastadLinearCorr π δ B A ≤ 8 * ε) :
     hastadLinearProb π δ B A ≤ 1 / 2 + 4 * ε := by
   rw [hastadLinearProb_eq_add_hastadLinearCorr]
-  linarith
-
-/-- Bounding `hastadLinearCorr π δ B A ≤ 8 * ε` bounds the E3-CNF test clause satisfaction by
-`7 / 8 + ε`. -/
-theorem hastadSATProb_le_of_hastadLinearCorr_le (π : β → γ) (δ : ℝ)
-    (B : (γ → Bool) → Bool) (A : (β → Bool) → Bool) {ε : ℝ}
-    (h : hastadLinearCorr π δ B A ≤ 8 * ε) :
-    hastadSATProb π δ B A ≤ 7 / 8 + ε := by
-  rw [hastadSATProb_eq_add_hastadLinearCorr]
   linarith
 
 end Gadget
@@ -1089,13 +1057,6 @@ noncomputable def hastadGraphLinearProb (g : Graph (β → γ)) (δ : ℝ)
   𝔼 i : Fin g.edges.length,
     hastadLinearProb (g.edges.get i).constraint δ (B (g.edges.get i).dst) (A (g.edges.get i).src)
 
-/-- Average clause satisfaction probability of Håstad's 4-clause E3-CNF test across the edges of a
-Label Cover instance `g : Graph (β → γ)`. -/
-noncomputable def hastadGraphSATProb (g : Graph (β → γ)) (δ : ℝ)
-    (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool) : ℝ :=
-  𝔼 i : Fin g.edges.length,
-    hastadSATProb (g.edges.get i).constraint δ (B (g.edges.get i).dst) (A (g.edges.get i).src)
-
 omit [Nonempty β] [Nonempty γ] in
 /-- For a Label Cover instance with at least one edge,
 `hastadGraphLinearProb g δ B A = 1 / 2 + 1 / 2 * hastadGraphLinearCorr g δ B A`. -/
@@ -1108,41 +1069,22 @@ theorem hastadGraphLinearProb_eq_add_hastadGraphLinearCorr {g : Graph (β → γ
     expect_add_distrib, expect_const hne, ← mul_expect]
 
 omit [Nonempty β] [Nonempty γ] in
-/-- For a Label Cover instance with at least one edge,
-`hastadGraphSATProb g δ B A = 7 / 8 + 1 / 8 * hastadGraphLinearCorr g δ B A`. -/
-theorem hastadGraphSATProb_eq_add_hastadGraphLinearCorr {g : Graph (β → γ)}
-    (hg : g.edges ≠ []) (δ : ℝ) (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool) :
-    hastadGraphSATProb g δ B A = 7 / 8 + 1 / 8 * hastadGraphLinearCorr g δ B A := by
-  have hne : (univ : Finset (Fin g.edges.length)).Nonempty :=
-    univ_nonempty_iff.2 ⟨⟨0, List.length_pos_of_ne_nil hg⟩⟩
-  simp only [hastadGraphSATProb, hastadGraphLinearCorr, hastadSATProb_eq_add_hastadLinearCorr,
-    expect_add_distrib, expect_const hne, ← mul_expect]
-
-omit [Nonempty β] [Nonempty γ] in
 /-- **Multi-edge completeness of Håstad's tests**: if `(ℓ, r)` satisfies every edge of a non-empty
 Label Cover instance `g`, then the Long Code tables `B w = longCode (r w)` and
-`A u = longCode (ℓ u)` are folded and achieve linear acceptance `1 - δ` and E3-CNF clause
-satisfaction `1 - δ / 4`. -/
+`A u = longCode (ℓ u)` are folded and achieve linear acceptance `1 - δ`. -/
 theorem hastadGraphProb_longCode_of_satisfies {g : Graph (β → γ)} (hg : g.edges ≠ []) (δ : ℝ)
     {ℓ : ℕ → β} {r : ℕ → γ} (hℓr : ∀ d ∈ g.edges, d.constraint (ℓ d.src) = r d.dst) :
     (∀ w, IsFolded (longCode (r w))) ∧
-      hastadGraphLinearProb g δ (fun w => longCode (r w)) (fun u => longCode (ℓ u)) = 1 - δ ∧
-      hastadGraphSATProb g δ (fun w => longCode (r w)) (fun u => longCode (ℓ u)) = 1 - δ / 4 := by
+      hastadGraphLinearProb g δ (fun w => longCode (r w)) (fun u => longCode (ℓ u)) = 1 - δ := by
   have hne : (univ : Finset (Fin g.edges.length)).Nonempty :=
     univ_nonempty_iff.2 ⟨⟨0, List.length_pos_of_ne_nil hg⟩⟩
-  refine ⟨fun w => isFolded_longCode (r w), ?_, ?_⟩
-  · unfold hastadGraphLinearProb
-    have hterm (i : Fin g.edges.length) :
-        hastadLinearProb (g.edges.get i).constraint δ
-          (longCode (r (g.edges.get i).dst)) (longCode (ℓ (g.edges.get i).src)) = 1 - δ := by
-      rw [← hℓr (g.edges.get i) (List.get_mem _ _), hastadLinearProb_longCode]
-    simp only [hterm, expect_const hne]
-  · unfold hastadGraphSATProb
-    have hterm (i : Fin g.edges.length) :
-        hastadSATProb (g.edges.get i).constraint δ
-          (longCode (r (g.edges.get i).dst)) (longCode (ℓ (g.edges.get i).src)) = 1 - δ / 4 := by
-      rw [← hℓr (g.edges.get i) (List.get_mem _ _), hastadSATProb_longCode]
-    simp only [hterm, expect_const hne]
+  refine ⟨fun w => isFolded_longCode (r w), ?_⟩
+  unfold hastadGraphLinearProb
+  have hterm (i : Fin g.edges.length) :
+      hastadLinearProb (g.edges.get i).constraint δ
+        (longCode (r (g.edges.get i).dst)) (longCode (ℓ (g.edges.get i).src)) = 1 - δ := by
+    rw [← hℓr (g.edges.get i) (List.get_mem _ _), hastadLinearProb_longCode]
+  simp only [hterm, expect_const hne]
 
 /-- **Multi-edge soundness bound for Håstad's 3-bit test over Label Cover**
 [Håstad, Theorem 5.6][Hastad2001]: for any Label Cover instance `g : Graph (β → γ)`, noise rate
@@ -1250,28 +1192,28 @@ theorem exists_hastad_params {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 
     field_simp
   linarith
 
-/-- **Håstad's two-sided Label Cover to MAX-E3LIN `(1 - δ, 1 / 2 + 4 * ε)` and MAX-E3SAT
-`(1 - δ / 4, 7 / 8 + ε)` gap reduction theorem** [Håstad, Theorems 5.6 and 6.5][Hastad2001]:
+/-- **Completeness and soundness of Håstad's 3-bit linear test against Label Cover**
+[Håstad, Theorem 5.6][Hastad2001]:
 for every `ε > 0` and `0 < δ < 1 / 2`, there exists a Label Cover soundness parameter `η > 0`
 such that for every Label Cover instance `g : Graph (β → γ)` with `g.edges ≠ []`:
 1. (**Completeness**) If `g ∈ (GapLabelCover β γ 1 η).yes`, there exist folded tables `B` and `A`
-   achieving `hastadGraphLinearProb g δ B A = 1 - δ` and
-   `hastadGraphSATProb g δ B A = 1 - δ / 4`.
+   achieving `hastadGraphLinearProb g δ B A = 1 - δ`.
 2. (**Soundness**) If `g ∈ (GapLabelCover β γ 1 η).no`, then for all folded right tables `B` and
-   all left tables `A`, `hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε` and
-   `hastadGraphSATProb g δ B A ≤ 7 / 8 + ε`. -/
+   all left tables `A`, `hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε`.
+
+This is the analytic core of Håstad's MAX-E3LIN hardness proof. It is not a reduction: no
+instance of MAX-E3LIN or MAX-E3SAT is constructed, and NP-hardness of `GapLabelCover` is not
+proved here. -/
 theorem hastad_gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
     ∃ η : ℝ, 0 < η ∧ ∀ {g : Graph (β → γ)}, g.edges ≠ [] →
       (g ∈ (GapLabelCover β γ 1 η).yes →
         ∃ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
           (∀ w, IsFolded (B w)) ∧
-            hastadGraphLinearProb g δ B A = 1 - δ ∧
-            hastadGraphSATProb g δ B A = 1 - δ / 4) ∧
+            hastadGraphLinearProb g δ B A = 1 - δ) ∧
       (g ∈ (GapLabelCover β γ 1 η).no →
         ∀ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
           (∀ w, IsFolded (B w)) →
-            hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε ∧
-            hastadGraphSATProb g δ B A ≤ 7 / 8 + ε) := by
+            hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε) := by
   obtain ⟨k, η, hη, hparam⟩ := exists_hastad_params hε hδ0 hδ1
   refine ⟨η, hη, fun {g} hg => ⟨?_, ?_⟩⟩
   · intro hyes
@@ -1281,14 +1223,13 @@ theorem hastad_gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < 
     have hsat : (g.toGraph projectionEval).Satisfiable :=
       (g.toGraph projectionEval).unsatVal_eq_zero_iff.1 hunsat0
     obtain ⟨ℓ, r, hℓr⟩ := (satisfiable_toGraph_projectionEval_iff g).1 hsat
-    obtain ⟨hfold, hlin, hsatp⟩ := hastadGraphProb_longCode_of_satisfies hg δ hℓr
-    exact ⟨fun w => longCode (r w), fun u => longCode (ℓ u), hfold, hlin, hsatp⟩
+    obtain ⟨hfold, hlin⟩ := hastadGraphProb_longCode_of_satisfies hg δ hℓr
+    exact ⟨fun w => longCode (r w), fun u => longCode (ℓ u), hfold, hlin⟩
   · intro hno B A hB
     simp only [GapLabelCover, PromiseProblem.mem_no_gapMax] at hno
     have hcorr := hastadGraphLinearCorr_le_of_unsatVal g hδ0.le hδ1.le k hε.le hno.1 hparam hB A
     have hlin := hastadGraphLinearProb_eq_add_hastadGraphLinearCorr hg δ B A
-    have hsatp := hastadGraphSATProb_eq_add_hastadGraphLinearCorr hg δ B A
-    exact ⟨by linarith, by linarith⟩
+    linarith
 
 end LabelCoverSoundness
 
@@ -1307,7 +1248,7 @@ noncomputable def GapExactThreeDistinctSAT (c s : ℝ) : PromiseProblem (CNF ℕ
   (PromiseProblem.gapMax (fun φ : CNF ℕ => 1 - φ.unsatVal) (fun _ => c) (fun _ => s)).restrict
     {φ | φ.IsExactThreeDistinct}
 
-/-- **Tightness of the `7 / 8` random-assignment threshold for MAX-E3SAT**: for every `s < 7 / 8`,
+/-- **The `7 / 8` random-assignment bound for MAX-E3SAT**: for every `s < 7 / 8`,
 every E3-CNF formula with three distinct variables per clause has an assignment satisfying at least
 `7 / 8 > s` of its clauses (`CNF.IsExactThreeDistinct.unsatVal_le_one_eighth`), so the no-instance
 set of `GapExactThreeDistinctSAT c s` is empty. -/

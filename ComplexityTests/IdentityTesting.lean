@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Arithmetic.IdentityTesting
 
 /-!
-# Tests for polynomial identity testing, Schwartz–Zippel and Kabanets–Impagliazzo
+# Tests for polynomial identity testing, Schwartz–Zippel and the permanent
 
 Concrete membership and non-membership in `PITInt`, Schwartz–Zippel root bounds and non-vanishing
 witnesses on integer arithmetic circuits, Laplace permanent expansion and downward self-reducibility
@@ -143,31 +143,10 @@ info: 'Cslib.Circuits.Arithmetic.isLaplacePermChain_laplacePermCircuit' depends 
 #print axioms isLaplacePermChain_laplacePermCircuit
 
 /--
-info: 'Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP
-
-/--
 info: 'Cslib.Complexity.exists_mem_NEXP_notMem_SIZE' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms exists_mem_NEXP_notMem_SIZE
-
-/--
-info: 'Cslib.Circuits.Arithmetic.kabanets_impagliazzo' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms kabanets_impagliazzo
-
-/--
-info: 'Cslib.Circuits.Arithmetic.kabanets_impagliazzo_of_EXP_subset_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms kabanets_impagliazzo_of_EXP_subset_P
 
 end ComplexityTests.IdentityTesting

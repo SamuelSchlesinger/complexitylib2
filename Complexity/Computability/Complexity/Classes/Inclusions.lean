@@ -73,6 +73,7 @@ inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subs
 * `Cslib.Complexity.compl_mem_PSPACE`, `Cslib.Complexity.PolyTimeReducible.mem_PSPACE`,
   `Cslib.Complexity.setOf_exists_mem_PSPACE`: closure properties of `PSPACE`.
 * `Cslib.Complexity.SigmaP_subset_PSPACE`, `Cslib.Complexity.PH_subset_PSPACE`.
+* `Cslib.Complexity.SigmaP_subset_EXP`, `Cslib.Complexity.SigmaP_subset_NEXP`.
 
 ## References
 
@@ -581,5 +582,13 @@ theorem SigmaP_subset_PSPACE (k : ℕ) : SigmaP k enc ⊆ PSPACE enc := by
 time, reusing the space for every certificate. -/
 theorem PH_subset_PSPACE : PH enc ⊆ PSPACE enc :=
   Set.iUnion_subset SigmaP_subset_PSPACE
+
+/-- **Every level of the polynomial hierarchy lies in `EXP`**, via `Σₖ ⊆ PSPACE ⊆ EXP`. -/
+theorem SigmaP_subset_EXP (k : ℕ) : SigmaP k enc ⊆ EXP enc :=
+  (SigmaP_subset_PSPACE k).trans PSPACE_subset_EXP
+
+/-- **Every level of the polynomial hierarchy lies in `NEXP`**, via `Σₖ ⊆ EXP ⊆ NEXP`. -/
+theorem SigmaP_subset_NEXP (k : ℕ) : SigmaP k enc ⊆ NEXP enc :=
+  (SigmaP_subset_EXP k).trans EXP_subset_NEXP
 
 end Cslib.Complexity
