@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.TQBF
+import Complexity.Foundations.Relation.RelatesWithinSteps
 
 /-!
 # Evaluating quantified Boolean formulas with an explicit stack
@@ -243,11 +244,6 @@ theorem closedIn_nil (φ : QBF ℕ) : closedIn [] φ = decide φ.Closed := by
 
 /-! ### Every call returns its value -/
 
-/-- Runs compose. -/
-private theorem iterate_trans {α : Type*} {f : α → α} {a b c : α} {m n : ℕ}
-    (h₁ : f^[m] a = b) (h₂ : f^[n] b = c) : f^[n + m] a = c := by
-  rw [Function.iterate_add_apply, h₁, h₂]
-
 /-- **Every call returns its value.** From the tokens of `φ` followed by `input`, the machine
 returns to the same stack, having read the tokens of `φ`, the value of `φ` under the assignment of
 the stack, and the flag updated by the closedness of `φ` relative to the stack, within
@@ -263,7 +259,8 @@ theorem exists_iterate_step_call (φ : QBF ℕ) (input : List (QBF.Kind × ℕ))
     obtain ⟨T, hT, h⟩ := ih input (⟨(.not, 0), none, φ.tokens ++ input⟩ :: stack) ok
     rw [assignment_cons_of_binds_eq_false (fun _ => rfl),
       closedIn_cons_of_binds_eq_false (fun _ => rfl)] at h
-    exact ⟨1 + (T + 1), by simp only [callSteps]; omega, iterate_trans (iterate_trans rfl h) rfl⟩
+    exact ⟨1 + (T + 1), by simp only [callSteps]; omega,
+      Function.iterate_trans (Function.iterate_trans rfl h) rfl⟩
   | and φ ψ ihφ ihψ =>
     have e : (φ.and ψ).tokens ++ input = (.and, 0) :: (φ.tokens ++ (ψ.tokens ++ input)) := by
       simp [QBF.tokens]
@@ -276,7 +273,8 @@ theorem exists_iterate_step_call (φ : QBF ℕ) (input : List (QBF.Kind × ℕ))
       closedIn_cons_of_binds_eq_false (fun _ => rfl)] at h₁ h₂
     refine ⟨1 + (T₂ + (1 + (T₁ + 1))), by simp only [callSteps]; omega, ?_⟩
     rw [e]
-    refine iterate_trans (iterate_trans (iterate_trans (iterate_trans rfl h₁) rfl) h₂) ?_
+    refine Function.iterate_trans
+      (Function.iterate_trans (Function.iterate_trans (Function.iterate_trans rfl h₁) rfl) h₂) ?_
     simp only [Function.iterate_one, step, closedIn_and, Bool.and_assoc, QBF.eval_and]
   | or φ ψ ihφ ihψ =>
     have e : (φ.or ψ).tokens ++ input = (.or, 0) :: (φ.tokens ++ (ψ.tokens ++ input)) := by
@@ -290,7 +288,8 @@ theorem exists_iterate_step_call (φ : QBF ℕ) (input : List (QBF.Kind × ℕ))
       closedIn_cons_of_binds_eq_false (fun _ => rfl)] at h₁ h₂
     refine ⟨1 + (T₂ + (1 + (T₁ + 1))), by simp only [callSteps]; omega, ?_⟩
     rw [e]
-    refine iterate_trans (iterate_trans (iterate_trans (iterate_trans rfl h₁) rfl) h₂) ?_
+    refine Function.iterate_trans
+      (Function.iterate_trans (Function.iterate_trans (Function.iterate_trans rfl h₁) rfl) h₂) ?_
     simp only [Function.iterate_one, step, closedIn_or, Bool.and_assoc, QBF.eval_or]
   | ex x φ ih =>
     have hq : QBF.Kind.ex = .ex ∨ QBF.Kind.ex = .all := .inl rfl
@@ -300,7 +299,8 @@ theorem exists_iterate_step_call (φ : QBF ℕ) (input : List (QBF.Kind × ℕ))
         stack) (ok && closedIn stack (.ex x φ))
     rw [assignment_cons_quant hq rfl, closedIn_cons_quant hq rfl] at h₁ h₂
     refine ⟨1 + (T₂ + (1 + (T₁ + 1))), by simp only [callSteps]; omega, ?_⟩
-    refine iterate_trans (iterate_trans (iterate_trans (iterate_trans rfl h₁) rfl) h₂) ?_
+    refine Function.iterate_trans
+      (Function.iterate_trans (Function.iterate_trans (Function.iterate_trans rfl h₁) rfl) h₂) ?_
     simp [step]
   | all x φ ih =>
     have hq : QBF.Kind.all = .ex ∨ QBF.Kind.all = .all := .inr rfl
@@ -310,7 +310,8 @@ theorem exists_iterate_step_call (φ : QBF ℕ) (input : List (QBF.Kind × ℕ))
         stack) (ok && closedIn stack (.ex x φ))
     rw [assignment_cons_quant hq rfl, closedIn_cons_quant hq rfl] at h₁ h₂
     refine ⟨1 + (T₂ + (1 + (T₁ + 1))), by simp only [callSteps]; omega, ?_⟩
-    refine iterate_trans (iterate_trans (iterate_trans (iterate_trans rfl h₁) rfl) h₂) ?_
+    refine Function.iterate_trans
+      (Function.iterate_trans (Function.iterate_trans (Function.iterate_trans rfl h₁) rfl) h₂) ?_
     simp [step, closedIn_all]
 
 /-- An empty stack holding a value is a fixed point. -/

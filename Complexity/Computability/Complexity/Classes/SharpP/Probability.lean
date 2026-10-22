@@ -36,11 +36,8 @@ variable {α : Type} (V : α × List Bool → Bool) (a : α) (n : ℕ)
 /-- A counted verifier's uniform acceptance probability is its accepted fraction of all words. -/
 theorem uniformList_acceptCount :
     ((BitString.uniformList n).map (fun word => V (a, word))) true =
-      (acceptCount V a n : ℝ≥0∞) / 2 ^ n := by
-  classical
-  rw [BitString.uniformList, PMF.map_comp, Probability.PMF.uniformOfFintype_map_apply]
-  simp only [Nat.card_eq_fintype_card, Fintype.card_subtype, acceptCount, Fintype.card_fun,
-    Fintype.card_bool, Fintype.card_fin, Nat.cast_pow, Nat.cast_ofNat, Function.comp_def]
+      (acceptCount V a n : ℝ≥0∞) / 2 ^ n :=
+  BitString.uniformList_map_apply (fun word => V (a, word)) n true
 
 /-- The accepted fraction has the same ordinary real-valued interpretation. -/
 theorem uniformList_acceptCount_toReal :

@@ -33,6 +33,10 @@ needed separately when transferring satisfiability.
   `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel`: renaming variables.
 * `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne`: exactly-one constraints.
 * `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars`: listing variable occurrences.
+* `Cslib.Logic.PL.Clause.computableTidilyInPolyTime_length`,
+  `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_length`,
+  `Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars_length`: clause, formula and
+  variable-occurrence counts in unary.
 * `Cslib.Logic.PL.CNF.isPolyTime_compact`: compact unary indices for arbitrary variable names.
 
 ## References
@@ -95,6 +99,28 @@ theorem CNF.computableTidilyInPolyTime_vars (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (CNF.vars (V := V))
       (encList (encList (encPair enc encBool))) (encList enc) :=
   (map (fst enc encBool)).comp (flatten (encPair enc encBool))
+
+/-- The number of literals in a polynomial-time clause, in unary, is polynomial-time. -/
+theorem Clause.computableTidilyInPolyTime_length {α : Type} {input : α ↪ List Bool}
+    {c : α → Clause V}
+    (hc : ComputableTidilyInPolyTime c input (encList (encPair encV encBool))) :
+    ComputableTidilyInPolyTime (fun a => (c a).length) input encUnary :=
+  (length (encPair encV encBool)).comp hc
+
+/-- The number of clauses in a polynomial-time formula, in unary, is polynomial-time. -/
+theorem CNF.computableTidilyInPolyTime_length {α : Type} {input : α ↪ List Bool}
+    {φ : α → CNF V}
+    (hφ : ComputableTidilyInPolyTime φ input (encList (encList (encPair encV encBool)))) :
+    ComputableTidilyInPolyTime (fun a => (φ a).length) input encUnary :=
+  (length (encList (encPair encV encBool))).comp hφ
+
+/-- The number of variable occurrences in a polynomial-time formula, in unary, is
+polynomial-time. -/
+theorem CNF.computableTidilyInPolyTime_vars_length {α : Type} {input : α ↪ List Bool}
+    {φ : α → CNF V}
+    (hφ : ComputableTidilyInPolyTime φ input (encList (encList (encPair encV encBool)))) :
+    ComputableTidilyInPolyTime (fun a => (φ a).vars.length) input encUnary :=
+  (length encV).comp ((CNF.computableTidilyInPolyTime_vars encV).comp hφ)
 
 /-- Construct the clause requiring at least one listed variable to hold. -/
 @[fun_prop]

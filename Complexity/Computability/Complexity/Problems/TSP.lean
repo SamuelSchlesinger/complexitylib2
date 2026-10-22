@@ -127,28 +127,6 @@ theorem tourLength_eq_sum (D : List (List ℕ)) (p : List ℕ) :
 
 /-! ### Membership in `NP` -/
 
-/-- Lookup in a computed list at a computed binary index is polynomial-time: the index is first
-capped at the length of the list, beyond which every lookup returns the default. -/
-private theorem listGetD_binary {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
-    {encL : List α ↪ List Bool} [ListEncoding encA encL] [SizedListEncoding encA encL]
-    {l : γ → List α} {i : γ → ℕ} (d : α) (hl : ComputableTidilyInPolyTime l encIn encL)
-    (hi : ComputableTidilyInPolyTime i encIn encNat) :
-    ComputableTidilyInPolyTime (fun x => (l x).getD (i x) d) encIn encA := by
-  have hlen : ComputableTidilyInPolyTime (fun x => (l x).length) encIn encUnary :=
-    (length encA).comp hl
-  have hcap : ComputableTidilyInPolyTime (fun x => min (i x) (l x).length) encIn encUnary := by
-    refine binary_to_unary_bounded ?_ hlen fun _ => Nat.min_le_right _ _
-    have hlen' := unary_to_binary.comp hlen
-    simp only [Function.comp_def] at hlen'
-    simpa only [Nat.min_def] using ite_decide (binary_le' hi hlen') hi hlen'
-  have heq : (fun x => (l x).getD (i x) d) = fun x => (l x).getD (min (i x) (l x).length) d := by
-    funext x
-    rcases le_total (i x) (l x).length with h | h
-    · rw [Nat.min_eq_left h]
-    · rw [Nat.min_eq_right h, List.getD_eq_default _ _ h, List.getD_eq_default _ _ le_rfl]
-  rw [heq]
-  exact (listGetD d).comp (hl.prod hcap)
-
 /-- The length of a tour is polynomial-time in the distance matrix and the tour, both with binary
 entries: it is a binary sum over the positions of the tour, and a city beyond the matrix is looked
 up at an index capped by the number of rows. -/

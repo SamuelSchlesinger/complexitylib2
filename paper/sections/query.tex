@@ -225,9 +225,11 @@ input, including the store and, for reads, the input-supplied default. Polynomia
 computability follows. These conservative bounds come from composing Christian Reitwiessner's
 certified equality, list-search and filtering routines. Numeric addresses are represented by
 encoded words; the construction does not allocate an array up to the largest address.
-This proves a finite-memory backend component, not a simulation of whole RAM programs or
-arbitrary exact real arithmetic. Primitive implementations, control, initialization and output
-transport remain separate obligations.
+This entry is a finite-memory backend component, not arbitrary exact real arithmetic. The
+fixed-program step and whole-run simulation results below use it for loads and stores; scalar
+primitive certificates remain hypotheses there, and whole-run transport also takes configuration,
+initial-state and step-budget certificates (and, for the polynomial bound, trajectory bounds) as
+hypotheses.
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{82}{Cslib.GenericRAM.SparseMemory.read_insert}
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{98}{Cslib.GenericRAM.SparseMemory.length_insert_of_mem}
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{96}{Cslib.GenericRAM.SparseMemory.length_encoding_le}
@@ -331,8 +333,8 @@ the repeated option computation used for payload extraction, tag testing, input 
 and the selected handler. No inhabited-payload assumption is required. All displayed expressions
 are asymptotic bounds with existential machine constants, not exact transition counts.
 The proofs reuse Christian Reitwiessner's native tidy calculus and the existing finite-table
-encoding. These are compositional native-machine rules; an encoded RAM step simulator and
-whole-run theorem transport remain separate work.
+encoding. These are compositional native-machine rules; the encoded fixed-program RAM step
+simulator and whole-run transport of the next two results are built from them.
 \declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{43}{Turing.MultiTapeTM.ComputableTidilyInO.ofFn}
 \declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{58}{Turing.MultiTapeTM.ComputableTidilyInO.pi}
 \declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{82}{Turing.MultiTapeTM.ComputableTidilyInO.pi_apply}
@@ -689,9 +691,9 @@ storage.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
 \declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Basic.lean}{235}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.member_iff_contains}
 \declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Insert.lean}{283}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.valid_insert}
 \declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean}{60}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.elements_insert}
-\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{221}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_some_iff}
-\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{245}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_none_iff}
-\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean}{110}{Cslib.Algorithms.Lean.VanEmdeBoas.span_le}
+\declat{00cb7f0995797cae5415ce332c9035fc8ae94735}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{223}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_some_iff}
+\declat{00cb7f0995797cae5415ce332c9035fc8ae94735}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{247}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_none_iff}
+\declat{00cb7f0995797cae5415ce332c9035fc8ae94735}{Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean}{111}{Cslib.Algorithms.Lean.VanEmdeBoas.span_le}
 \end{result}
 
 \begin{result}
@@ -736,10 +738,10 @@ minimum-excluded variant follows Demaine's exposition, whose notes credit Michae
 the contiguous records, scratch stack, and register programs are engineering choices,
 distinct from the original stratified
 representation.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
-\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{86}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_space_le}
-\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1024}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_call}
-\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1047}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_generic}
-\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1057}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_universe}
+\declat{8fd4fbb37e79e6924662d22c604c0f8f988c9cdc}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{695}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_space_le}
+\declat{8fd4fbb37e79e6924662d22c604c0f8f988c9cdc}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{645}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_call}
+\declat{8fd4fbb37e79e6924662d22c604c0f8f988c9cdc}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{668}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_generic}
+\declat{8fd4fbb37e79e6924662d22c604c0f8f988c9cdc}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{678}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_universe}
 \declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{138}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_call}
 \declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{166}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_generic}
 \declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{177}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_log}
@@ -752,7 +754,7 @@ representation.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
 \declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{558}{Cslib.Algorithms.WordRAM.VanEmdeBoas.instruction_bound_log}
 \declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{602}{Cslib.Algorithms.WordRAM.VanEmdeBoas.client_spec}
 \declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{627}{Cslib.Algorithms.WordRAM.VanEmdeBoas.run_initialized}
-\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Model.lean}{125}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_descendant_read_safe}
+\declat{00cb7f0995797cae5415ce332c9035fc8ae94735}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Model.lean}{139}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_descendant_read_safe}
 \end{result}
 
 \begin{result}

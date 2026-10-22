@@ -261,15 +261,6 @@ theorem DSPACE_subset_PSPACE {α : Type} {enc : α ↪ List Bool} {s : ℕ → �
   have : PolynomiallyBounded fun n => c₁ * s n + c₂ := by fun_prop
   exact mem_PSPACE_iff.mpr ⟨_, _, .of_polynomiallyBounded (fun a => (enc a).length) this, hA⟩
 
-private theorem succ_pow_le (n d : ℕ) : (n + 1) ^ d ≤ 2 ^ d * n ^ d + 1 := by
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  · rcases Nat.eq_zero_or_pos d with rfl | hd
-    · simp
-    · simp [Nat.zero_pow hd]
-  · calc (n + 1) ^ d ≤ (2 * n) ^ d := Nat.pow_le_pow_left (by omega) d
-      _ = 2 ^ d * n ^ d := mul_pow ..
-      _ ≤ _ := Nat.le_succ _
-
 /-- **`PSPACE` is the union of the classes `DSPACE (n ^ k)`**, the definition of `PSPACE` in cslib
 pull request #767. -/
 theorem mem_PSPACE_iff_exists_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A : Set α} :
@@ -277,11 +268,8 @@ theorem mem_PSPACE_iff_exists_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A
   refine ⟨fun h => ?_, fun ⟨k, h⟩ => DSPACE_subset_PSPACE (by fun_prop) h⟩
   obtain ⟨t, s, hs, hA⟩ := mem_PSPACE_iff.mp h
   obtain ⟨C, d, hC⟩ := hs.exists_le
-  refine ⟨d, mem_DSPACE_iff.mpr ⟨C * 2 ^ d, C, t, ComputableInTimeAndSpace.mono hA
-    (fun _ => le_rfl) fun a => (hC a).trans ?_⟩⟩
-  have := Nat.mul_le_mul_left C (succ_pow_le (enc a).length d)
-  rw [Nat.mul_add, Nat.mul_one, ← Nat.mul_assoc] at this
-  exact this
+  exact ⟨d, mem_DSPACE_iff.mpr ⟨C * 2 ^ d, C, t, ComputableInTimeAndSpace.mono hA
+    (fun _ => le_rfl) fun a => (hC a).trans (Nat.mul_add_one_pow_le_two_pow C d (enc a).length)⟩⟩
 
 /-! ### Space-constructible bounds -/
 
@@ -615,7 +603,7 @@ theorem DSPACE_pow_ssubset_DSPACE_pow_succ (k : ℕ) :
       · have : n ^ k ≤ n ^ (k + 1) := Nat.pow_le_pow_right hpos (Nat.le_succ k)
         omega
   refine (Set.ssubset_iff_of_subset hsub).mpr ⟨_, DSPACE_subset_of_le_mul_add (2 ^ (k + 1)) 1
-    (fun n => succ_pow_le n (k + 1))
+    (fun n => by simpa using Nat.mul_add_one_pow_le_two_pow 1 (k + 1) n)
     (setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow (k + 1)) hn),
     setOf_spaceDiagonal_notMem_DSPACE hn fun c => ?_⟩
   filter_upwards [eventually_ge_atTop (2 * c)] with n hc

@@ -11,7 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ClearS
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapes
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.RewindInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
-public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Cslib.Foundations.Data.Fin.Tuple
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
@@ -187,20 +187,6 @@ noncomputable def clearList :
     (l : List (Fin k)) → MultiTapeTM (k + k) Symbol (ClearListState l.length)
   | [] => nop (k + k) Symbol
   | i :: l => ((clearShadowed m₀ m₁).extendTapes (pairEmb i)).seq (clearList l)
-
-omit [DecidableEq Symbol] in
-/-- `nop` halts in one step from any configuration and changes nothing else. -/
-theorem runFrom_nop_withState {k : ℕ} (C : Cfg k Symbol σ input) :
-    (nop k Symbol).runFrom (C.withState (some ())) 1 = C.withState none := by
-  rw [runFrom_one, step_of_state rfl]
-  refine Cfg.ext (by simp [nop]) ?_ ?_ ?_ ?_
-  · simp only [nop, tr_ofTr, Action.apply_inputPos, moveInputPos_zero, Cfg.withState]
-  · funext j
-    simp only [nop, tr_ofTr, Action.apply_workTapes, Cfg.withState]
-  · funext j
-    simp only [nop, tr_ofTr, Action.apply_workTapePos, SignType.coe_zero, add_zero, Cfg.withState]
-  · simp only [nop, tr_ofTr, Action.apply_output, Option.toList_none, List.append_nil,
-      Cfg.withState]
 
 /-- **Clearing a list of work tapes** with their shadows, each ready to be cleared: a run path of
 `clearList m₀ m₁ l` to the configuration with these tapes cleared. -/

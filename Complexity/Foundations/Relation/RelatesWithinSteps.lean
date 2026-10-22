@@ -31,6 +31,7 @@ algorithm relies on.
 
 ## Main results
 
+* `Function.iterate_trans`: iterated function applications compose across step counts.
 * `Relation.relatesWithinSteps_iff_relatesInSteps_reflGen`: a walk of at most `n` steps is a walk
   of exactly `n` steps that may stay put.
 * `Relation.RelatesWithinSteps.succ_iff`: one more step of breadth-first search.
@@ -99,6 +100,11 @@ theorem RelatesWithinSteps.one_iff : RelatesWithinSteps r a b 1 ↔ ReflGen r a 
   simp
 
 /-! ### Splitting walks -/
+
+/-- Iterated function applications compose across step counts. -/
+theorem _root_.Function.iterate_trans {f : α → α} {a b c : α} {m n : ℕ}
+    (h₁ : f^[m] a = b) (h₂ : f^[n] b = c) : f^[n + m] a = c := by
+  rw [Function.iterate_add_apply, h₁, h₂]
 
 /-- **Walks split at any point.** A walk of `m + n` steps passes through a midpoint after exactly
 `m` of them. -/

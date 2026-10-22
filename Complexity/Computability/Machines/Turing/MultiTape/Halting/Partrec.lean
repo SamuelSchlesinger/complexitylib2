@@ -538,7 +538,7 @@ end Universal
 
 section Machine
 
-variable {k : ℕ} {Symbol State : Type} (tm : MultiTapeTM k Symbol State)
+variable {k : ℕ} {Symbol State : Type*} (tm : MultiTapeTM k Symbol State)
 
 /-- Clocked run of a `MultiTapeTM`: returns `some output` if `tm` has halted after `t` steps on
 `x`, and `none` otherwise. -/

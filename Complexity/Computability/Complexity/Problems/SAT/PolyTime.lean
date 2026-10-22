@@ -31,6 +31,11 @@ Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
 ## Main results
 
 * `Cslib.Complexity.SAT.computableTidilyInPolyTime_verifier`: the verifier is polynomial-time.
+* `Cslib.Complexity.SAT.computableTidilyInPolyTime_clause_length`,
+  `Cslib.Complexity.SAT.computableTidilyInPolyTime_length`,
+  `Cslib.Complexity.SAT.computableTidilyInPolyTime_vars_length`: literal, clause and
+  variable-occurrence counts for natural-number variables, in unary (`fun_prop` versions of the
+  generic `Cslib.Logic.PL.CNF` lemmas).
 * `Cslib.Complexity.SAT.mem_NP`: satisfiability belongs to NP.
 * `Cslib.Complexity.UNSAT_mem_coNP`: unsatisfiability belongs to coNP.
 
@@ -57,6 +62,29 @@ open ComputableTidilyInPolyTime
 theorem computableTidilyInPolyTime_vars :
     ComputableTidilyInPolyTime (CNF.vars (V := ℕ)) encCNF (encList encNat) :=
   CNF.computableTidilyInPolyTime_vars encNat
+
+/-- The number of literals of a polynomial-time clause, in unary, is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_clause_length {α : Type} {input : α ↪ List Bool}
+    {c : α → Clause ℕ}
+    (hc : ComputableTidilyInPolyTime c input (encList (encPair encNat encBool))) :
+    ComputableTidilyInPolyTime (fun a => (c a).length) input encUnary :=
+  Clause.computableTidilyInPolyTime_length hc
+
+/-- The number of clauses of a polynomial-time formula, in unary, is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_length {α : Type} {input : α ↪ List Bool} {φ : α → CNF ℕ}
+    (hφ : ComputableTidilyInPolyTime φ input encCNF) :
+    ComputableTidilyInPolyTime (fun a => (φ a).length) input encUnary :=
+  CNF.computableTidilyInPolyTime_length (encV := encNat) hφ
+
+/-- The number of variable occurrences of a polynomial-time formula, in unary, is
+polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_vars_length {α : Type} {input : α ↪ List Bool}
+    {φ : α → CNF ℕ} (hφ : ComputableTidilyInPolyTime φ input encCNF) :
+    ComputableTidilyInPolyTime (fun a => (φ a).vars.length) input encUnary :=
+  CNF.computableTidilyInPolyTime_vars_length (encV := encNat) hφ
 
 /-- Reading the certificate at the first occurrence of a variable is polynomial-time. -/
 @[fun_prop]

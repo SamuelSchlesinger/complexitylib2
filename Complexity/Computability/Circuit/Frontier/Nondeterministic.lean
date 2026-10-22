@@ -54,10 +54,8 @@ fan-in two `s > (L - ε) n` with `L = 1 + π / (3 arccos ((1 + 2√2)/4)) ≈ 4.
   lower bound for nondeterministic circuits, conditional on the layout hypothesis.
 * `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_innerSize_of_nondeterministicDecides`:
   the unconditional frontier lower bound for nondeterministic circuits.
-* `Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_innerSize_of_nondeterministicDecides`,
-  `eventually_456249_div_100000_sub_mul_lt_innerSize_of_nondeterministicDecides`: the Gaussian
-  `(4.5625 - ε) n` and `(4.56249 - ε) n` frontier lower bounds for nondeterministic circuits of
-  fan-in two.
+* `Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_innerSize_of_nondeterministicDecides`:
+  the Gaussian `(L - ε) n` frontier lower bound for nondeterministic circuits of fan-in two.
 -/
 
 @[expose] public section
@@ -335,26 +333,5 @@ theorem eventually_gaussian_sub_mul_lt_innerSize_of_nondeterministicDecides
   have h := eventually_lt_innerSize_of_nondeterministicDecides
     (mul_pos two_pos Gaussian.gaussianCoefficient_pos) layoutBound_gaussian hfree hK hdense hε
   rwa [Gaussian.one_add_inv_two_mul_gaussianCoefficient] at h
-
-/-- **The `(4.56249 - ε) n` frontier lower bound for nondeterministic circuits of fan-in two.**
-Under the hypotheses of `eventually_gaussian_sub_mul_lt_innerSize_of_nondeterministicDecides`, for
-every `ε > 0` and all large `n`, every circuit of fan-in at most two with any number of witness
-inputs deciding `S_n` nondeterministically, over any basis and interpretation on `U`, has more than
-`(456249/100000 - ε) n` inner gates. -/
-theorem eventually_456249_div_100000_sub_mul_lt_innerSize_of_nondeterministicDecides
-    (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
-    (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
-    (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
-      fun n => (n : ℝ))
-    {ε : ℝ} (hε : 0 < ε) :
-    ∀ᶠ n in atTop, ∀ (k : ℕ) (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
-      (c : Circuit σ (n + k) 1), c.FanInAtMost 2 → c.NondeterministicDecides I Acc (S n) →
-        (456249 / 100000 - ε) * n < c.innerSize := by
-  filter_upwards
-    [eventually_gaussian_sub_mul_lt_innerSize_of_nondeterministicDecides.{u, v} hfree hK hdense hε]
-    with n hn k σ I Acc c hfan hS
-  refine lt_of_le_of_lt ?_ (hn k σ I Acc c hfan hS)
-  exact mul_le_mul_of_nonneg_right (by linarith [Gaussian.circuitCoefficient_ge_456249])
-    (Nat.cast_nonneg n)
 
 end Cslib.Circuits.Frontier

@@ -40,7 +40,8 @@ well as `StateTransition.eval` and `StateTransition.EvalsToInTime`.
 * `Cslib.Turing.SingleTapeTM.map_ofTM1Cfg_step`, `eval_toTM1`, `eval_toTM0_eq_eval_toTM1`: `toTM1`
   is a step-for-step simulation of `tm`, and `toTM0` preserves `eval`.
 * `Cslib.Turing.SingleTapeTM.outputsWithinTime_ofTM0_iff`, `outputs_ofTM0_iff`, `eval_ofTM0`,
-  `eval_ofTM1`: `ofTM0` and `ofTM1` preserve step counts and terminal tape evaluations.
+  `eval_ofTM1`: `ofTM0` preserves step counts, up to one final halting step, and terminal tape
+  evaluations; `ofTM1` preserves terminal tape evaluations.
 
 ## References
 

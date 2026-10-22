@@ -70,8 +70,12 @@ are maintained alongside the library; it is a curated catalogue, not an exhausti
 * [One-way functions to PRGs](Complexity/Crypto/Computational/OneWayToPRG.lean) and
   [adaptive PRFs](Complexity/Crypto/Computational/OneWayToPRF.lean), including
   [Goldreich–Levin](Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean),
-  [polynomial stretch](Complexity/Crypto/Computational/Stretch.lean), and
-  [GGM](Complexity/Crypto/Computational/GGM/Security.lean), with efficient security reductions.
+  [polynomial stretch](Complexity/Crypto/Computational/Stretch.lean),
+  [GGM](Complexity/Crypto/Computational/GGM/Security.lean),
+  [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean), and
+  [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean)
+  (uniform, over polynomial-time-generable instance, witness and auxiliary-input families),
+  with efficient security reductions.
 * [Circuit APIs](Complexity/Computability/Circuit/SourceComplexity.lean): Boolean, monotone,
   and arithmetic developments share CSLib's circuit definitions, costs, and simulations.
   The [quadratic-form correlation bound](Complexity/Computability/Circuit/Frontier/Correlation.lean)

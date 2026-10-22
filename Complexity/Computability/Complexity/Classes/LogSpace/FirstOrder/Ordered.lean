@@ -28,8 +28,10 @@ counter expressions; input relations read their actual table bits, order compare
 BIT uses Christian Reitwiessner's binary digit algorithm, certified in linear work space in the
 binary value and index. The counter-program simulation charges intermediate expression storage.
 
-This establishes ordered model checking, not the still separate interpretation-to-logspace
-transducer, reduction-closure or capture theorems.
+This establishes ordered model checking. Ordered interpretations are computed in logarithmic
+space, and `L` and `P` are closed under ordered first-order reductions, in
+`Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered.Reduction`; capture
+remains open.
 
 ## Main definitions
 

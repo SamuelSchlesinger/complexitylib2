@@ -31,8 +31,6 @@ on `U`, has more than
 
 * `(L - ε) n` inner gates, with `L = 1 + π / (3 arccos ((1 + 2√2)/4)) ≈ 4.5624977`
   (`Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_innerSize`);
-* `(456249/100000 - ε) n = (4.56249 - ε) n` inner gates, since `L ≥ 456249/100000`
-  (`Cslib.Circuits.Frontier.eventually_456249_div_100000_sub_mul_lt_innerSize`);
 * `(114/25 - ε) n = (4.56 - ε) n` inner gates, since `L ≥ 114/25`
   (`Cslib.Circuits.Frontier.eventually_114_div_25_sub_mul_lt_innerSize`);
 * `(4 - ε) n` inner gates (`Cslib.Circuits.Frontier.eventually_four_sub_mul_lt_innerSize`).
@@ -41,7 +39,7 @@ Gates of arity zero, the constants, are not counted. The hypotheses are those of
 `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_innerSize`: the bounds apply to every family
 of dense rectangle-free sets, and to a particular family once it is shown to be one.
 
-The same coefficients hold for the bundled worst-case claim `CircuitLowerBound` and for the
+The same three coefficients hold for the bundled worst-case claim `CircuitLowerBound` and for the
 average-case claim `AverageCaseBound`: circuits of fan-in two with at most `(L - ε) n` inner gates
 agree with a set of bias at most `b_n` on large rectangles on at most a
 `1/2 + b_n + exp (-γ n)` fraction of the inputs.
@@ -49,15 +47,11 @@ agree with a set of bias at most `b_n` on large rectangles on at most a
 ## Main results
 
 * `Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_innerSize`: `s > (L - ε) n`.
-* `Cslib.Circuits.Frontier.eventually_456249_div_100000_sub_mul_lt_innerSize`:
-  `s > (456249/100000 - ε) n`.
 * `Cslib.Circuits.Frontier.eventually_114_div_25_sub_mul_lt_innerSize`: `s > (114/25 - ε) n`.
 * `Cslib.Circuits.Frontier.eventually_four_sub_mul_lt_innerSize`: `s > (4 - ε) n`.
-* `Cslib.Circuits.Frontier.circuitLowerBound_gaussian`,
-  `circuitLowerBound_456249_div_100000`, `circuitLowerBound_114_div_25`,
+* `Cslib.Circuits.Frontier.circuitLowerBound_gaussian`, `circuitLowerBound_114_div_25`,
   `circuitLowerBound_four`: the bundled worst-case claims.
-* `Cslib.Circuits.Frontier.averageCaseBound_gaussian`,
-  `averageCaseBound_456249_div_100000`, `averageCaseBound_114_div_25`,
+* `Cslib.Circuits.Frontier.averageCaseBound_gaussian`, `averageCaseBound_114_div_25`,
   `averageCaseBound_four`: the average-case claims.
 -/
 
@@ -89,25 +83,6 @@ theorem eventually_gaussian_sub_mul_lt_innerSize
     layoutBound_gaussian hfree hK hdense hε
   rwa [Gaussian.one_add_inv_two_mul_gaussianCoefficient] at h
 
-/-- **The `(4.56249 - ε) n` frontier lower bound for fan-in two.** Under the hypotheses of
-`eventually_gaussian_sub_mul_lt_innerSize`, for every `ε > 0` and all large `n`, every circuit of
-fan-in at most two deciding `S_n`, over any basis and interpretation on `U`, has more than
-`(456249/100000 - ε) n` inner gates. -/
-theorem eventually_456249_div_100000_sub_mul_lt_innerSize
-    (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
-    (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
-    (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
-      fun n => (n : ℝ))
-    {ε : ℝ} (hε : 0 < ε) :
-    ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
-      (c : Circuit σ n 1), c.FanInAtMost 2 → c.Decides I Acc (S n) →
-        (456249 / 100000 - ε) * n < c.innerSize := by
-  filter_upwards [eventually_gaussian_sub_mul_lt_innerSize.{u, v} hfree hK hdense hε] with n hn
-  intro σ I Acc c hfan hS
-  refine lt_of_le_of_lt ?_ (hn σ I Acc c hfan hS)
-  exact mul_le_mul_of_nonneg_right (by linarith [Gaussian.circuitCoefficient_ge_456249])
-    (Nat.cast_nonneg n)
-
 /-- **The `(4.56 - ε) n` frontier lower bound for fan-in two.** Under the hypotheses of
 `eventually_gaussian_sub_mul_lt_innerSize`, for every `ε > 0` and all large `n`, every circuit of
 fan-in at most two deciding `S_n`, over any basis and interpretation on `U`, has more than
@@ -121,11 +96,11 @@ theorem eventually_114_div_25_sub_mul_lt_innerSize
     ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
       (c : Circuit σ n 1), c.FanInAtMost 2 → c.Decides I Acc (S n) →
         (114 / 25 - ε) * n < c.innerSize := by
-  filter_upwards [eventually_456249_div_100000_sub_mul_lt_innerSize.{u, v} hfree hK hdense hε] with
-    n hn
+  filter_upwards [eventually_gaussian_sub_mul_lt_innerSize.{u, v} hfree hK hdense hε] with n hn
   intro σ I Acc c hfan hS
   refine lt_of_le_of_lt ?_ (hn σ I Acc c hfan hS)
-  exact mul_le_mul_of_nonneg_right (by norm_num) (Nat.cast_nonneg n)
+  exact mul_le_mul_of_nonneg_right (by linarith [Gaussian.circuitCoefficient_ge_456])
+    (Nat.cast_nonneg n)
 
 /-- **The `(4 - ε) n` frontier lower bound for fan-in two.** Under the hypotheses of
 `eventually_gaussian_sub_mul_lt_innerSize`, for every `ε > 0` and all large `n`, every circuit of
@@ -153,11 +128,6 @@ theorem circuitLowerBound_gaussian :
     (mul_pos two_pos Gaussian.gaussianCoefficient_pos) layoutBound_gaussian
   rwa [Gaussian.one_add_inv_two_mul_gaussianCoefficient] at h
 
-/-- **Circuits of fan-in two need `(4.56249 - ε) n` gates**: the Gaussian coefficient is at least
-`456249/100000`. -/
-theorem circuitLowerBound_456249_div_100000 : CircuitLowerBound.{u, v} (456249 / 100000) :=
-  circuitLowerBound_gaussian.mono Gaussian.circuitCoefficient_ge_456249
-
 /-- **Circuits of fan-in two need `(4.56 - ε) n` gates**: the Gaussian coefficient is at least
 `114/25`. -/
 theorem circuitLowerBound_114_div_25 : CircuitLowerBound.{u, v} (114 / 25) :=
@@ -176,11 +146,6 @@ theorem averageCaseBound_gaussian :
   have h := averageCaseBound_of_layoutBound.{u, v}
     (mul_pos two_pos Gaussian.gaussianCoefficient_pos) layoutBound_gaussian
   rwa [Gaussian.one_add_inv_two_mul_gaussianCoefficient] at h
-
-/-- **Circuits of fan-in two below `(4.56249 - ε) n` gates barely beat guessing**: the Gaussian
-coefficient is at least `456249/100000`. -/
-theorem averageCaseBound_456249_div_100000 : AverageCaseBound.{u, v} (456249 / 100000) :=
-  averageCaseBound_gaussian.mono Gaussian.circuitCoefficient_ge_456249
 
 /-- **Circuits of fan-in two below `(4.56 - ε) n` gates barely beat guessing**: the Gaussian
 coefficient is at least `114/25`. -/

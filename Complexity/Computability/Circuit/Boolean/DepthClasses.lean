@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.ModGates
+public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Circuit.Boolean.TC0
 
 /-!
@@ -31,6 +32,7 @@ are the constant-depth classes (`polylogDepth_zero`). Every hierarchy is monoton
 
 * `Cslib.Circuits.Boolean.NC_subset_AC`, `AC_subset_TC`, `AC_subset_ACMod`: the inclusions.
 * `Cslib.Circuits.Boolean.AC_zero`, `TC_zero`, `ACMod_zero`: the constant-depth classes.
+* `Cslib.Circuits.Boolean.NC_subset_PPoly`: **NCⁱ ⊆ P/poly**.
 
 ## References
 
@@ -116,5 +118,13 @@ theorem TC_mono {i j : ℕ} (hij : i ≤ j) : TC i ⊆ TC j :=
 
 theorem ACMod_mono (q : ℕ) {i j : ℕ} (hij : i ≤ j) : ACMod q i ⊆ ACMod q j :=
   PolylogDepth.mono_exponent hij
+
+/-- **`NCⁱ ⊆ P/poly`** for every `i`: a language decided by polynomial-size De Morgan circuits of
+polylogarithmic depth has polynomially bounded circuit complexity. -/
+theorem NC_subset_PPoly (i : ℕ) : NC i ⊆ PPoly := by
+  rintro L ⟨c, s, hs, hC⟩
+  refine hs.mono_of_le fun n => ?_
+  obtain ⟨C, hCc, -, hCs⟩ := hC n
+  exact (complexity_le_of_computes C hCc).trans hCs
 
 end Cslib.Circuits.Boolean

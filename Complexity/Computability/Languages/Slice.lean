@@ -15,6 +15,13 @@ public import Cslib.Computability.Languages.Slice
 
 The slices of the empty and the full language (as `0` or `⊥`, and `⊤`), of complements, unions
 and intersections.
+
+## Main results
+
+* `Language.slice_zero`, `Language.slice_bot`, `Language.slice_top`: slices of the empty and full
+  languages.
+* `Language.slice_compl`, `Language.slice_sup`, `Language.slice_inf`: slices of complements,
+  unions, and intersections.
 -/
 
 @[expose] public section

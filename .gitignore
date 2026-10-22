@@ -1,4 +1,5 @@
 .lake/
+__pycache__/
 /.worktrees
 .DS_Store
 .claude

@@ -129,43 +129,67 @@ advantage is at least $1/4$ for all large $n$.\citep{KabanetsCai2000,GGM1986}
 \declat{73cf7ce29398479e7b7fef5c8921b67ae6b7f269}{Complexity/Crypto/Computational/OneWay/MCSP.lean}{296}{Cslib.Crypto.KabanetsCai.isOraclePPT_mcspDistinguisher}
 \declat{73cf7ce29398479e7b7fef5c8921b67ae6b7f269}{Complexity/Crypto/Computational/PseudorandomFunction/TruthTable.lean}{173}{Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le}
 \end{result}
-
 \begin{result}
-\subsection{Gentry's bootstrapping theorem}
-Let $S$ be a public-key bit-encryption scheme (\texttt{EncryptionScheme}) equipped with a
-bootstrappable augmented-decryption evaluator (\texttt{Bootstrappable}) that homomorphically
-evaluates the De Morgan operations (\texttt{Boolean.Op}: Boolean constants \texttt{.const}\,$b$,
-unary negation \texttt{.not}, and binary \texttt{.and} and \texttt{.or}) composed with decryption on
-pairs of ciphertexts under $\mathsf{sk}_1$ using an encrypted evaluation key
-$\mathsf{ek}\leftarrow\mathsf{encryptKey}(\mathsf{pk}_2,\mathsf{sk}_1)$ under a target public key
-$\mathsf{pk}_2$, producing ciphertexts under $\mathsf{pk}_2$ of length at most a polynomial bound
-$\mathsf{cipherBound}(n)$.
+\subsection{Naor bit commitment and Goldreich--Micali--Wigderson zero knowledge for NP}
+Given a pseudorandom generator $G$ expanding $n$-bit seeds to $\ell(n)\ge 3n$ bits,
+Naor's two-message bit commitment scheme sends a uniform receiver string $r\in\{0,1\}^{\ell(n)}$
+and commits to $b\in\{0,1\}$ under seed $s\in\{0,1\}^n$ as $G(s)\oplus b\cdot r$.
+Commitments to any two deterministic polynomial-time bit families $b_0,b_1:\mathbb N\to\mathrm{Bool}$
+under any deterministic polynomial-time receiver string family $r:\mathbb N\to\{0,1\}^*$ are
+computationally indistinguishable against uniform strict PPT distinguishers (formulated over
+deterministic polynomial-time families $r,b_0,b_1$, rather than a stateful randomized PPT malicious
+receiver whose internal state passes to the distinguisher), and the probability over uniform $r$ that
+any two $n$-bit seeds open to $0$ and $1$ with the same commitment is at most
+$2^{2n-\ell(n)}\le 2^{-n}$ (and at most $2^{-(n+1)}$ when $\ell(n)\ge 3n+1$). By HILL and polynomial
+stretch, any uniform one-way function yields a PRG with expansion $\ell(n)=3n+1$ and hence a
+statistically binding, computationally hiding bit commitment scheme (\texttt{BitCommitmentScheme}).
+
+Using Naor commitments with seed length $s=n+7$, a two-round 3-copy masked-3SAT truth-table
+commitment protocol (\texttt{Cslib.Crypto.GMW}), and the Cook--Levin plus clause-splitting
+reduction $f:\alpha\to\mathrm{CNF}\;\mathbb N$ from any language $A\in\cc{NP}$ to $\mathrm{ThreeSAT}$,
+every $A\in\cc{NP}$ admits a two-round interactive proof system (\texttt{ZeroKnowledgeProof}) indexed
+by security parameter $n$ with bundled polynomial-time witness predicate
+$\mathsf{isWitness}(a,w)=\mathrm{ThreeSAT.verifier}(f(a),w)$ in which:
 \begin{itemize}
-\item \textbf{Leveled FHE without circular security:} For every unary polynomial-time depth bound
-  $D:\mathbb N\to\mathbb N$, the acyclic key-chain construction $\mathsf{leveledKeyGen}(D(n),n)$ and
-  synchronous level-by-level evaluator $\mathsf{evalLeveledOutput}$ form a compact leveled FHE
-  scheme that evaluates every De Morgan circuit $c$ (or formula $F$) of depth at most $D(n)$ in
-  deterministic polynomial time, with output ciphertext bit-length at most $\mathsf{cipherBound}(n)$
-  independent of $|c|$ and $D(n)$. If $S$ is semantically secure against uniform strict PPT
-  distinguishers (\texttt{SemanticSecure}), then the leveled scheme is semantically secure
-  (\texttt{LeveledSemanticSecure}) given the full evaluation key chain, proved via a two-tier hybrid
-  reduction over the $D(n)$ levels and the $\mathsf{skLength}(n)$ secret-key bits at each level.
-\item \textbf{Fixed-key FHE under circular security:} Under circular security
-  (\texttt{CircularSecure}, semantic security given a self-encrypted evaluation key
-  $\mathsf{ek}\leftarrow\mathsf{encryptKey}(\mathsf{pk},\mathsf{sk})$), the fixed-key scheme
-  $(\mathsf{fixedKeyGen},\mathsf{encrypt},\mathsf{evalHomOutput},\mathsf{decrypt})$ homomorphically
-  evaluates De Morgan circuits and formulas of arbitrary depth and size in deterministic polynomial
-  time with output ciphertext bit-length at most $\mathsf{cipherBound}(n)$.
+\item the honest verifier is uniform strict oracle PPT in $(1^n,a)$ and the honest
+  prover's interaction with any uniform strict oracle PPT verifier is uniform strict
+  PPT in $(1^n,a,w,z)$;
+\item for every valid witness $w$ ($\mathsf{isWitness}(a,w)=\mathsf{true}$), the honest prover is
+  accepted with probability $1$, and for every $a\notin A$ and every computationally
+  unbounded stateful prover $P$, the verifier accepts with probability at most $1/3$ (the
+  proof bounds it by $1/8+2^{-(n+8)}$);
+\item (\textbf{uniform zero-knowledge with poly-time-generable auxiliary input}) for every uniform
+  strict oracle PPT malicious verifier $V^*$ receiving $(1^n,a,z)$, there is a uniform strict PPT
+  simulator $S(1^n,a,z)$ (receiving no witness) whose output ensemble is computationally
+  indistinguishable from the real interaction output across all deterministic
+  polynomial-time-generable families of instances $a:\mathbb N\to\alpha$, valid witnesses
+  $w:\mathbb N\to\{0,1\}^*$ ($\forall n,\;\mathsf{isWitness}(a(n),w(n))=\mathsf{true}$, with no
+  separate explicit witness-length bound on $w$), and auxiliary inputs $z:\mathbb N\to\{0,1\}^*$
+  (giving fixed-instance security via \texttt{zero\_knowledge\_const} for every fixed $a\in A$ and
+  valid witness $w$). Since $z$ is a deterministic polynomial-time function of $1^n$, a uniform
+  $V^*$ could compute it itself, so the auxiliary input supplies no non-uniform advice here.
 \end{itemize}
-Here \texttt{Bootstrappable} axiomatizes polynomial-time augmented-decryption gate evaluation
-(\texttt{evalAugDecrypt}) and its compactness bound (\texttt{cipherBound}) directly as a primitive
-interface on $S$, rather than compiling \texttt{S.decrypt} to a circuit and evaluating that circuit
-inside a bounded-depth somewhat homomorphic scheme; the theorem also does not construct a concrete
-ideal-lattice or LWE-based somewhat homomorphic encryption scheme.\citep{Gentry2009}
-\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1946}{Cslib.Crypto.EncryptionScheme.leveledFHE_of_bootstrappable}
-\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1038}{Cslib.Crypto.EncryptionScheme.leveledSemanticSecure_of_semanticSecure}
-\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1503}{Cslib.Crypto.EncryptionScheme.fixedKeyFHE_of_circularSecure}
-\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1865}{Cslib.Crypto.EncryptionScheme.decrypt_evalLeveledOutput_circuit}
-\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1384}{Cslib.Crypto.EncryptionScheme.decrypt_evalHomOutput_circuit}
+Consequently, if a uniform one-way function exists, every language in $\cc{NP}$ has a computational
+zero-knowledge interactive proof system in this uniform polynomial-time-family model. Soundness is
+proved directly at error $1/3$ for a single 3-copy masked-3SAT execution with $1/8$ combinatorial
+cheating probability plus $2^{-(n+8)}$ binding error; Goldreich's universal-instance and
+arbitrary-auxiliary-input quantification, stateful-receiver hiding, sequential repetition to
+negligible soundness error, and witness-level Levin reductions from arbitrary $\cc{NP}$ verifiers are
+not bundled.\citep{Naor1991,GoldreichMicaliWigderson1991,Goldreich2001,AroraBarak09}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/Commitment.lean}{170}{Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/Commitment.lean}{282}{Cslib.Crypto.naorBindingProb_le}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/Commitment.lean}{310}{Cslib.Crypto.naorBindingProb_le_of_three_mul_add_one}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/Commitment.lean}{327}{Cslib.Crypto.negligible_naorBindingError}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/Commitment.lean}{885}{Cslib.Crypto.PseudorandomGenerator.naorBitCommitment}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/Commitment.lean}{910}{Cslib.Crypto.OneWay.exists_bitCommitmentScheme}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/GMW/Protocol.lean}{661}{Cslib.Crypto.GMW.gmwProver}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/GMW/Protocol.lean}{733}{Cslib.Crypto.GMW.gmwVerifier}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/GMW/Soundness.lean}{503}{Cslib.Crypto.GMW.acceptProb_gmwVerifier_le}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/GMW/PolyTime.lean}{571}{Cslib.Crypto.GMW.gmwSimulator}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/GMW/Simulator.lean}{836}{Cslib.Crypto.GMW.gmwView_indistinguishable_gmwSimulator}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{121}{Cslib.Crypto.ZeroKnowledgeProof}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{263}{Cslib.Crypto.PseudorandomGenerator.zeroKnowledgeProofThreeSAT}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{274}{Cslib.Crypto.PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP}
+\declat{20a6b51859038b3d5451ffa2c6fe49daca8f8e40}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{287}{Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP}
 \end{result}
 

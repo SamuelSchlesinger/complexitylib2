@@ -1,5 +1,13 @@
 import ComplexityTests.AWPPAmplification
 import ComplexityTests.AWPPLowness
+import ComplexityTests.Abstracts.Check
+import ComplexityTests.Abstracts.CheckTests
+import ComplexityTests.Abstracts.CookLevinAbstract
+import ComplexityTests.Abstracts.CookLevinBridge
+import ComplexityTests.Abstracts.SubsetSumAbstract
+import ComplexityTests.Abstracts.SubsetSumBridge
+import ComplexityTests.Abstracts.TQBFAbstract
+import ComplexityTests.Abstracts.TQBFBridge
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController
@@ -72,7 +80,7 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
-import ComplexityTests.Crypto.Bootstrapping
+import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
 import ComplexityTests.DataStructureQueue
@@ -111,7 +119,6 @@ import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
-import ComplexityTests.FrontierExtractor
 import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
@@ -150,7 +157,6 @@ import ComplexityTests.HastadSharp
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
-import ComplexityTests.IdentityTesting
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
@@ -257,6 +263,7 @@ import ComplexityTests.PHClosure
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
 import ComplexityTests.PPTTactic
+import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PolyTimeContracts

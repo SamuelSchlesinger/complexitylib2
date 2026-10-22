@@ -59,6 +59,10 @@ of a machine; time-bounded complexity for a machine model needs a universal mach
 * `Cslib.Kolmogorov.DescriptionMethod.isPartrec_universal`: the universal method is partial
   recursive.
 * `Cslib.Kolmogorov.DescriptionMethod.isAdditivelyOptimal_universal`: the **invariance theorem**.
+* `Cslib.Kolmogorov.DescriptionMethod.IsPartrec.of_partrec_eval`,
+  `Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_of_partrec_eval`: generic
+  partial-recursiveness and additive-optimality bridges for description methods with a `Partrec`
+  evaluation function.
 * `Cslib.Kolmogorov.DescriptionMethod.ecomplexity_universal_le`,
   `Cslib.Kolmogorov.DescriptionMethod.etimeBoundedComplexity_universal_le`: the constant is the
   length of the header.
@@ -136,6 +140,16 @@ theorem IsPartrec.exists_produces_iff {M : DescriptionMethod ℕ} (h : M.IsPartr
   rw [hM, ofCode_produces_iff, hc]
   simp
 
+/-- If `M : DescriptionMethod α` has a partial recursive evaluation function `eval : List Bool →. α`
+characterizing `M.Produces`, then mapping any computable decoder `dec : α → ℕ` over `M` yields a
+partial recursive description method. -/
+theorem IsPartrec.of_partrec_eval {α : Type*} [Primcodable α] {M : DescriptionMethod α}
+    {eval : List Bool →. α} (heval : Partrec eval) (hprod : ∀ p x, M.Produces p x ↔ x ∈ eval p)
+    {dec : α → ℕ} (hdec : Computable dec) :
+    (M.map dec).IsPartrec := by
+  refine ⟨fun p => (eval p).map dec, heval.map (hdec.comp Computable.snd).to₂, fun p n => ?_⟩
+  simp [Part.mem_map_iff, hprod]
+
 /-! ### The universal description method -/
 
 /-- The header announcing the code `c` to the universal method: the self-delimiting code of the
@@ -203,6 +217,17 @@ theorem isAdditivelyOptimal_universal : universal.IsAdditivelyOptimal {M | M.IsP
       (codeHeader c ++ ·) (fun p => by rw [List.length_append, Nat.add_comm])
       fun hp => universal_produces_codeHeader_append.mpr ((hc _ _).mp hp)
     exact ⟨_, τ, hS⟩
+
+/-- If `M : DescriptionMethod α` has a partial recursive evaluation function `eval : List Bool →. α`
+characterizing `M.Produces`, then for every computable decoder `dec : α → ℕ`, `universal` is at most
+an additive constant worse than `M`. -/
+theorem exists_ecomplexity_universal_le_of_partrec_eval {α : Type*} [Primcodable α]
+    {M : DescriptionMethod α} {eval : List Bool →. α} (heval : Partrec eval)
+    (hprod : ∀ p x, M.Produces p x ↔ x ∈ eval p) {dec : α → ℕ} (hdec : Computable dec) :
+    ∃ c : ℕ, ∀ x : α, universal.ecomplexity (dec x) ≤ M.ecomplexity x + c := by
+  obtain ⟨c, hc⟩ := isAdditivelyOptimal_universal.exists_ecomplexity_le (M.map dec)
+    (IsPartrec.of_partrec_eval heval hprod hdec)
+  exact ⟨c, fun x => (hc (dec x)).trans (add_le_add_left (M.ecomplexity_map_le dec x) c)⟩
 
 /-- Every natural number has a description under the universal method. -/
 theorem ecomplexity_universal_ne_top (x : ℕ) : universal.ecomplexity x ≠ ⊤ :=
