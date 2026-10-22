@@ -342,6 +342,53 @@ whole-run theorem transport remain separate work.
 \end{result}
 
 \begin{result}
+\subsection{Certified encoded steps for fixed generic-RAM programs}
+For a generic RAM model $M$ and $r$ registers, a finite state $s=(\mathit{pc},\mathit{regs},\mathit{mem})$
+combines a natural program counter, an $r$-tuple of register values, and an association-list
+sparse memory. Relative to a default memory value $d$, its denotation reads $\mathit{mem}$ with
+default $d$. For every configuration $c$, default $d$, program $p$, and finite state $s$, the
+finite-state transition function matches one step of $M$ on the denoted state: it steps to the
+denoted successor state, halts with the same output, or faults under the exact same conditions
+(including program-counter falloff, undefined literals or operations, failed or faulting tests,
+invalid addresses, disallowed moves or halts, and invalid jump or branch targets). If $\mathit{pc}$
+has binary encoding length at most $P$, each of the $r$ registers has encoding length at most $R$,
+and $\mathit{mem}$ has $m$ stored bindings with encoded addresses of length at most $K$ and values
+of length at most $V$, the framed state encoding has length at most
+\[
+  2P + r(2R+3) + 2m(4K+2V+3) + 4.
+\]
+
+Given decidable address equality and a native scalar-primitive certificate bundle for $M$, every
+fixed program $p$ has a tidy native binary multitape Turing-machine certificate computing the
+encoded step function $(c,d,s)\mapsto\mathrm{step}(c,d,p,s)$ on all inputs. One finite machine and
+its implicit asymptotic constant handle all runtime configurations $c$, default values $d$, and
+finite states $s$, while depending on the fixed program $p$, register count $r$, and primitive
+certificates; no universal interpreter for variable programs is claimed. The exported time and
+space bound functions are defined by structural recursion along $p$, charging program-counter
+comparison and branch selection across the instruction list together with the supplied native
+primitive bounds (for constants, ALU operations, tests, address conversion, move/halt checks, and
+label validation), the parameterized sparse-memory read and insert bounds at the live state, and
+linear tuple-access, register-update, and sum-injection framing overhead. In particular, primitive
+and memory costs are retained as parameters rather than collapsed to unit or polynomial bounds.
+The proof adds tidy sum-injection rules and certificate combinators atop Christian Reitwiessner's
+native multitape Turing-machine calculus. Charged input initialization, output decoding, clocked
+multi-step iteration, word-width selection, and whole-run theorem transport remain separate
+obligations.\citep{CookReckhow1973,Sipser2013}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Finite.lean}{44}{Cslib.GenericRAM.FiniteState}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Finite.lean}{166}{Cslib.GenericRAM.FiniteState.step}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Finite.lean}{184}{Cslib.GenericRAM.FiniteState.denote_step}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{106}{Cslib.GenericRAM.FiniteState.length_encoding_le}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{423}{Cslib.GenericRAM.FiniteState.stepCertificate}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{474}{Cslib.GenericRAM.FiniteState.step_inO}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{505}{Cslib.GenericRAM.FiniteState.stepTime_eq}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{547}{Cslib.GenericRAM.FiniteState.stepTime_cons}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{603}{Cslib.GenericRAM.FiniteState.le_opTime_load}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{625}{Cslib.GenericRAM.FiniteState.le_opTime_store}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean}{37}{Turing.MultiTapeTM.ComputableTidilyInO.inl}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean}{48}{Turing.MultiTapeTM.ComputableTidilyInO.inr}
+\end{result}
+
+\begin{result}
 \subsection{Stateful semantic composition and independent resource certificates}
 A deterministic stateful specification assigns each admissible operation a new state and a typed
 answer. A semantic module implements such operations by terminating adaptive programs over a
