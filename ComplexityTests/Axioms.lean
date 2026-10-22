@@ -10248,3 +10248,31 @@ info: 'Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase' depends
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase
+
+/--
+info: 'Cslib.Crypto.one_le_lambda1_mul_lambdaN_dualBasis' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.one_le_lambda1_mul_lambdaN_dualBasis
+
+/--
+info: 'Cslib.Crypto.regevParameters_explicit' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.regevParameters_explicit
+
+/--
+info: 'Cslib.Crypto.solveDualBDDModQ_eq_secretCoords' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.solveDualBDDModQ_eq_secretCoords
+
+/--
+info: 'Cslib.Crypto.regev_lwe_to_sivp_gapsvp' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.regev_lwe_to_sivp_gapsvp

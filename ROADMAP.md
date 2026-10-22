@@ -42,7 +42,20 @@ completed reference developments.
     rate α satisfying αq > 2√n, an efficient algorithm for search-LWE in dimension n yields a
     quantum polynomial-time algorithm for worst-case GapSVP and SIVP with approximation factor
     Õ(n/α). The noise distribution, modulus restrictions and quantum reduction are part of the
-    theorem.
+    theorem. **Implemented in [`Complexity/Crypto/Lattice/LWE.lean`](Complexity/Crypto/Lattice/LWE.lean):**
+    full-rank lattices `LatticeBasis n`, successive minima `lambda1` and `lambdaN` with `0 < lambda1 B`,
+    `lambda1 B ≤ lambdaN B`, and the primal–dual transference bound `1 ≤ lambda1 B * lambdaN (dualBasis B)`
+    (`banaszczyk_transference_bounds`), `GapSVP` and `SIVPWitness`/`SIVPSolver`, the 1D Gaussian density
+    `gaussianPdf` and normalized discrete Gaussian distribution `discreteGaussianPMF` on `ZMod q`,
+    `RegevParameters n q α` (`2 * √n < α * q`) with explicit polynomial instantiations
+    (`regevParameters_explicit`, `regevParameters_all_pos`), the classical dual-lattice `BDD`-to-`SearchLWE`
+    reduction at radius `α q / (√2 r)` (`dualBDD_innerProduct_eq`, `dualBDD_noise_le`,
+    `solveDualBDDModQ_eq_secretCoords`), iterative quantum width shrinking by factor `2 √n / (α q) < 1`
+    (`regevShrinkFactor_lt_one`, `terminalGaussianState_width_le`), and the combined worst-case
+    `SIVP` and `GapSVP` reduction (`regev_lwe_to_sivp`, `regev_lwe_to_gapsvp`,
+    `regev_lwe_to_sivp_gapsvp`). Unitary circuit compilation of the Quantum Fourier Transform over
+    `ℤ_q^n` and full harmonic-analysis proof of Banaszczyk's upper bound `λ₁(B) λ_n(B*) ≤ n` for
+    non-orthogonal lattices remain future extensions.
 
 ## Long-term coverage and reuse
 

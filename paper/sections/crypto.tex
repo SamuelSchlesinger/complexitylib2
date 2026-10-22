@@ -130,3 +130,34 @@ advantage is at least $1/4$ for all large $n$.\citep{KabanetsCai2000,GGM1986}
 \declat{73cf7ce29398479e7b7fef5c8921b67ae6b7f269}{Complexity/Crypto/Computational/PseudorandomFunction/TruthTable.lean}{173}{Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le}
 \end{result}
 
+\begin{result}
+\subsection{Regev's worst-case-to-average-case reduction for LWE}
+For a full-rank $n$-dimensional lattice $L(B)\subseteq\mathbb R^n$ ($n>0$, $\det B\ne 0$) with dual
+basis $B^*=(B^{-1})^T$, the successive minima satisfy $0<\lambda_1(B)\le\lambda_n(B)$ and the
+unconditional lower transference bound $1\le\lambda_1(B)\lambda_n(B^*)$ (with Banaszczyk's upper
+bound $\lambda_1(B)\lambda_n(B^*)\le n$ recorded in \lean{HasBanaszczykBound} and proved for all
+scaled identity lattices $c I_n$). For modulus $q\ge 2$ and Gaussian noise rate $0<\alpha<1$
+satisfying Regev's smoothing condition $\alpha q > 2\sqrt{n}$ (\lean{RegevParameters}, instantiated
+explicitly by $q=n^2+5$ and $\alpha=3/\sqrt{n}$ for $n\ge 10$ or $\alpha=3/(\sqrt{n}+3)$ for all
+$n\ge 1$), the discrete Gaussian noise law $\Psi_\alpha$ on $\mathbb Z_q$ weights each residue $e$
+by $\exp(-\pi(|e|_q/(\alpha q))^2)$. In the classical step, taking the inner product of primal
+lattice vectors $B a$ of norm at most $r$ against a dual-lattice $\cc{BDD}$ target $x=B^* s+\delta$
+at distance $\|\delta\|_2\le \alpha q/(\sqrt{2}\,r)$ yields $\langle B a,x\rangle=\langle a,s\rangle
++\langle B a,\delta\rangle$ with error $|\langle B a,\delta\rangle|\le \alpha q/\sqrt{2}$, so a
+\lean{SearchLWEOracle} recovers $s\bmod q$. In the iterative quantum reduction, each step shrinks
+the discrete Gaussian width by factor $2\sqrt{n}/(\alpha q)<1$ until reaching the stopping width
+$2\sqrt{n}/(\alpha\lambda_1(B^*))$, producing $n$ linearly independent lattice vectors solving
+worst-case $\cc{SIVP}_\gamma$ and, on $B^*$, a promise decider solving worst-case
+$\cc{GapSVP}_{\gamma,d}$ with approximation factor $\gamma=2n/\alpha\le 2n(\ln n+1)/\alpha
+=\tilde O(n/\alpha)$. The quantum QFT uncomputation step is modeled by
+\lean{RegevQuantumStepOracle}.\citep{Regev2009,Banaszczyk1993}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{398}{Cslib.Crypto.one_le_lambda1_mul_lambdaN_dualBasis}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{652}{Cslib.Crypto.regevParameters_explicit}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{804}{Cslib.Crypto.solveDualBDDModQ_eq_secretCoords}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{1036}{Cslib.Crypto.terminalGaussianState_width_le}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{1105}{Cslib.Crypto.regevSIVPSolver}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{1127}{Cslib.Crypto.regev_lwe_to_sivp}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{1153}{Cslib.Crypto.regev_lwe_to_gapsvp}
+\decl{Complexity/Crypto/Lattice/LWE.lean}{1197}{Cslib.Crypto.regev_lwe_to_sivp_gapsvp}
+\end{result}
+
