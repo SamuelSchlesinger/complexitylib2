@@ -73,7 +73,7 @@ open scoped BigOperators
 
 namespace Cslib.PCP.Hastad
 
-open Cslib.BitString Cslib.Logic.PL Cslib.Complexity Cslib.PCP.Encoded
+open Cslib.BitString Cslib.Complexity Cslib.PCP.Encoded
 
 /-! ### Multi-edge Label Cover decoding and soundness -/
 

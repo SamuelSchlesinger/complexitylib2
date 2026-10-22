@@ -14,7 +14,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Foundations.Data.Finset.Expect
 
 /-!
-# MAX-E3SAT is NP-hard to approximate
+# MAX-E3SAT: NP-hardness of approximation and the `7 / 8` random-assignment bound
 
 `GapExactThreeSAT s` is the gap problem of MAX-3SAT (`Cslib.Complexity.GapThreeSAT`) restricted
 to formulas all of whose clauses have exactly three, not necessarily distinct, literals. Here

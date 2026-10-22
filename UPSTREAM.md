@@ -261,7 +261,8 @@ grandfathered without an alias; this list records them for downstream users.
     its five lemmas, `hastadLinearProb_le_of_hastadLinearCorr_le` and the same-day alias
     `Cslib.PCP.Hastad.fourierCoeff_sq_signVal_le_one`. The kept long-code, folding and projection
     lemmas moved to `Cslib.BitString` in `Foundations/BooleanAnalysis/LongCode` (`IsFolded`
-    became `IsOdd`; deprecated aliases remain), and `Hastad/ExactThreeDistinct` merged into
+    became `IsOdd`; deprecated aliases remain, but dot notation on an `IsFolded` hypothesis must
+    switch to `IsOdd`), and `Hastad/ExactThreeDistinct` merged into
     `PCP/Approximation/MaxExactThreeSAT`, keeping its declaration names; imports of the deleted
     module path must be updated. `hastad_gapLabelCover_dichotomy` now chooses `η` before the label
     sets, keeping its name.

@@ -84,7 +84,9 @@ example (δ : ℝ) :
       rfl)
 
 /-- The soundness threshold `η` of `hastad_gapLabelCover_dichotomy` does not depend on the label
-sets: one `η` serves instances over `Bool → Bool` and over `Fin 3 → Bool`. -/
+sets: one `η` serves instances over `Bool → Bool` and over `Fin 3 → Bool`. This checks the
+quantifier order only: with two right labels a random labelling satisfies at least half of the
+edges, so both no-instance sets are empty unless `η ≥ 1 / 2`. -/
 example : ∃ η : ℝ, 0 < η ∧
     (∀ g : Graph (Bool → Bool), g.edges ≠ [] → g ∈ (GapLabelCover Bool Bool 1 η).no →
       ∀ B A, (∀ w, IsOdd (B w)) →
