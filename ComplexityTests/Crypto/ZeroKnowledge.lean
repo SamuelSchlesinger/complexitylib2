@@ -67,6 +67,53 @@ noncomputable def emptyZeroKnowledgeProof : ZeroKnowledgeProof encBits (∅ : Se
   zero_knowledge {_} _ :=
     ⟨fun _ _ _ => pure [], by ppt, fun _ _ _ _ _ _ hw => Bool.noConfusion (hw 0)⟩
 
+/-- Unconditional instance of `ZeroKnowledgeProof` for the full language `Set.univ`, in which
+every witness is valid. The verifier always accepts, the prover sends empty replies, and the
+simulator runs `Vstar` against that same silent prover, so the zero-knowledge quantifiers range over
+satisfiable witness families. -/
+noncomputable def univZeroKnowledgeProof :
+    ZeroKnowledgeProof encBits (Set.univ : Set (List Bool)) where
+  verifier _ _ := pure true
+  prover _ _ _ :=
+    { State := ℕ × List Bool
+      init := (0, [false, false, false])
+      respond := fun q s => PMF.pure (GMW.twoRoundStep (fun _ => []) (fun _ => []) q.2 s) }
+  isWitness _ _ := true
+  polyTime_isWitness := by fun_prop
+  mem_iff_exists_witness a := by simp
+  isOraclePPT_verifier := by fun_prop
+  interact _ _ _ prog :=
+    Prod.fst <$> GMW.runTwoRound (fun _ => []) (fun _ => []) prog (0, [false, false, false])
+  eval_interact _ _ _ prog :=
+    (ProbComp.eval_map _ _).trans
+      (congrArg (PMF.map Prod.fst)
+        (GMW.eval_runTwoRound (fun _ => []) (fun _ => []) prog (0, [false, false, false])))
+  isPPT_interact {Vstar} hV := by
+    have hrun := GMW.isPPTOn_runTwoRound hV
+      (input := encPair encUnary (encPair encBits (encPair encBits encBits)))
+      (prepare := fun p : ℕ × List Bool × List Bool × List Bool => (p.1, p.2.1, p.2.2.2))
+      (reply1 := fun _ => []) (reply2 := fun _ => []) (bound := fun _ => 0)
+      (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+      (fun _ _ => le_rfl) (fun _ _ => le_rfl)
+    ppt
+  complete _ _ _ _ := by simp [acceptProb, Prover.run]
+  sound _ _ ha := absurd (Set.mem_univ _) ha
+  zero_knowledge {Vstar} hV := by
+    refine ⟨fun n a z => Prod.fst <$>
+      GMW.runTwoRound (fun _ => []) (fun _ => []) (Vstar n a z) (0, [false, false, false]),
+      ?_, fun _ _ _ _ _ _ _ => ?_⟩
+    · have hrun := GMW.isPPTOn_runTwoRound hV
+        (input := encPair encUnary (encPair encBits encBits))
+        (prepare := fun p : ℕ × List Bool × List Bool => p)
+        (reply1 := fun _ => []) (reply2 := fun _ => []) (bound := fun _ => 0)
+        (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+        (fun _ _ => le_rfl) (fun _ _ => le_rfl)
+      ppt
+    · convert ComputationallyIndistinguishable.refl _ using 2 with n
+      exact (ProbComp.eval_map _ _).trans
+        (congrArg (PMF.map Prod.fst)
+          (GMW.eval_runTwoRound (fun _ => []) (fun _ => []) _ (0, [false, false, false])))
+
 -- Concrete satisfiable 3CNF formula and witness check.
 private def satFormula : CNF ℕ := [[(0, true), (1, false)]]
 
