@@ -47,11 +47,11 @@ example (k : ℕ) (hk : 4 ≤ k) :
     FiniteState.resume, client, initial, model, h0, h1, h3]
 
 private def stored : FiniteState model 2 := { (initial 0 3 0).write 0 3 with pc := 1 }
-private def loaded : FiniteState model 2 := { stored.set 1 3 with pc := 2 }
+private def loaded : FiniteState model 2 := { (stored.set 1 0).set 1 3 with pc := 2 }
 private def halting : FiniteState model 2 := { loaded with pc := 3 }
 
-example : FiniteState.step (M := model) 4 client stored = some (.inl loaded) := rfl
-example : FiniteState.step (M := model) 8 client stored = some (.inl loaded) := rfl
+example : FiniteState.step (M := model) 4 client (stored.set 1 0) = some (.inl loaded) := rfl
+example : FiniteState.step (M := model) 8 client (stored.set 1 0) = some (.inl loaded) := rfl
 example : FiniteState.step (M := model) 4 client loaded = some (.inl halting) := rfl
 example : FiniteState.step (M := model) 8 client halting = some (.inr 3) := rfl
 
@@ -77,6 +77,8 @@ example : FiniteState.step (M := model) 4 [.op (.const 1 4)] (initial 0 0 0) = n
 example : FiniteState.step (M := model) 4 [.op (.alu () 1 ![0, 1])] (initial 2 2 0) = none := rfl
 
 -- False advances; a failed test faults. These cannot share a Boolean-only handler.
+example : FiniteState.step (M := model) 4 [.branch (.test () ![0, 1]) 0] (initial 0 1 0) =
+    some (.inl (initial 0 1 0)) := rfl
 example : FiniteState.step (M := model) 4 [.branch (.test () ![0, 1]) 0] (initial 2 1 0) =
     some (.inl { initial 2 1 0 with pc := 1 }) := rfl
 example : FiniteState.step (M := model) 4 [.branch (.test () ![0, 1]) 0]
