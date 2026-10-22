@@ -120,6 +120,6 @@ theorem coUP_subset_ParityP : coUP enc ⊆ ParityP enc := by
 /-- Polynomial-time reductions preserve coUP by complementing source and target. -/
 theorem PolyTimeReducible.mem_coUP {β : Type} {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ coUP encB) : A ∈ coUP enc :=
-  h.compl.mem_UP hB
+  h.mem_compl PolyTimeReducible.mem_UP hB
 
 end Cslib.Complexity

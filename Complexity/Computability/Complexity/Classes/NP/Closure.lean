@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.NP
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
+import Complexity.Computability.Complexity.Reduction.ManyOne
 
 /-!
 # Boolean closure of NP
@@ -43,12 +44,12 @@ theorem union_mem_NP (hA : A ∈ NP enc) (hB : B ∈ NP enc) : A ∪ B ∈ NP en
     ⟨f + g, SharpP.add_mem hf hg, fun a => by simp [hA a, hB a]⟩
 
 /-- `coNP` is closed under intersection. -/
-theorem inter_mem_coNP (hA : A ∈ coNP enc) (hB : B ∈ coNP enc) : A ∩ B ∈ coNP enc := by
-  simpa [coNP, Set.compl_inter] using union_mem_NP hA hB
+theorem inter_mem_coNP (hA : A ∈ coNP enc) (hB : B ∈ coNP enc) : A ∩ B ∈ coNP enc :=
+  compl_inter_mem union_mem_NP hA hB
 
 /-- `coNP` is closed under union. -/
-theorem union_mem_coNP (hA : A ∈ coNP enc) (hB : B ∈ coNP enc) : A ∪ B ∈ coNP enc := by
-  simpa [coNP] using inter_mem_NP hA hB
+theorem union_mem_coNP (hA : A ∈ coNP enc) (hB : B ∈ coNP enc) : A ∪ B ∈ coNP enc :=
+  compl_union_mem inter_mem_NP hA hB
 
 
 end Cslib.Complexity

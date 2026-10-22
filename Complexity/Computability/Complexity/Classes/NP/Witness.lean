@@ -312,6 +312,6 @@ theorem PolyTimeReducible.mem_NP {encB : β ↪ List Bool} {B : Set β}
 /-- `coNP` is closed under polynomial-time reductions. -/
 theorem PolyTimeReducible.mem_coNP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ coNP encB) : A ∈ coNP enc :=
-  h.compl.mem_NP hB
+  h.mem_compl PolyTimeReducible.mem_NP hB
 
 end Cslib.Complexity
