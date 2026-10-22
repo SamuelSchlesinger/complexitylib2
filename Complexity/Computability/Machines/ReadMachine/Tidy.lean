@@ -97,8 +97,7 @@ theorem pairFalse_inSpace {α : Type} {enc : α ↪ List Bool} {B : α × Bool �
 
 /-- Evaluating a function of a state and a bit at the bit `false`, within the space budget of the
 step. -/
-theorem comp_pairFalse_inSpace {α β : Type} {enc : α ↪ List Bool} {encB : β ↪ List Bool}
-    {B : α × Bool → ℕ}
+theorem comp_pairFalse_inSpace {α : Type} {enc : α ↪ List Bool} {B : α × Bool → ℕ}
     (hB : ∀ x, (encPair enc encBool (x, false)).length ≤ B (x, false)) {f : α × Bool → β}
     (h : ComputableTidilyInSpace f (encPair enc encBool) encB B) :
     ComputableTidilyInSpace (fun x : α => f (x, false)) enc encB fun x => B (x, false) :=

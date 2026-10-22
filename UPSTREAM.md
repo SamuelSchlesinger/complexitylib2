@@ -109,9 +109,11 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   memory and finite control to simulate single steps and clocked multi-step runs of any fixed
   generic-RAM program on native multitape Turing machines
   (`Cslib.GenericRAM.FiniteState.transport_inO`, `Cslib.GenericRAM.FiniteState.transport_polyTime`
-  and `Cslib.GenericRAM.FiniteState.transport_polyTime_of_le_const`). The whole-run theorems take
-  an explicit step bound and a polynomial bound on intermediate configuration lengths
-  (`hStepsBound`, `hOutLen`); uniform arbitrary-program dispatch remains separate.
+  and `Cslib.GenericRAM.FiniteState.transport_polyTime_of_le_const`). `transport_inO` is
+  parameterized by explicit time and space bounds; `transport_polyTime` needs a polynomial step
+  bound (`hStepsBound`) and a polynomial bound on the encoded intermediate run results
+  (`hOutLen`); `transport_polyTime_of_le_const` derives both from a constant step bound. Uniform
+  arbitrary-program dispatch remains separate.
 * **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
   with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
   routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,

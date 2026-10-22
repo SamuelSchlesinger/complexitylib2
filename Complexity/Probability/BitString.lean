@@ -144,7 +144,6 @@ theorem uniformList_map_apply {β : Type*} [DecidableEq β] (f : List Bool → �
     (b : β) : ((uniformList n).map f) b =
       ((Finset.univ.filter fun r : Fin n → Bool => f (List.ofFn r) = b).card : ENNReal) /
         2 ^ n := by
-  classical
   rw [uniformList, PMF.map_comp, PMF.map_apply, tsum_fintype]
   simp only [PMF.uniformOfFintype_apply, Function.comp_apply, Fintype.card_fun, Fintype.card_bool,
     Fintype.card_fin]
