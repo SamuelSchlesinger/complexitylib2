@@ -174,44 +174,59 @@ ideal-lattice or LWE-based somewhat homomorphic encryption scheme.\citep{Gentry2
 Given a pseudorandom generator $G$ expanding $n$-bit seeds to $\ell(n)\ge 3n$ bits,
 Naor's two-message bit commitment scheme sends a uniform receiver string $r\in\{0,1\}^{\ell(n)}$
 and commits to $b\in\{0,1\}$ under seed $s\in\{0,1\}^n$ as $G(s)\oplus b\cdot r$.
-Commitments to any two polynomial-time bit families under any polynomial-time receiver
-string family are computationally indistinguishable against uniform strict PPT
-distinguishers, and the probability over uniform $r$ that any two $n$-bit seeds open
-to $0$ and $1$ with the same commitment is at most $2^{2n-\ell(n)}\le 2^{-n}$ (and at
-most $2^{-(n+1)}$ when $\ell(n)\ge 3n+1$). By HILL and polynomial stretch, any uniform
-one-way function yields a PRG with expansion $\ell(n)=3n+1$ and hence a statistically
-binding, computationally hiding bit commitment scheme.
+Commitments to any two deterministic polynomial-time bit families $b_0,b_1:\mathbb N\to\mathrm{Bool}$
+under any deterministic polynomial-time receiver string family $r:\mathbb N\to\{0,1\}^*$ are
+computationally indistinguishable against uniform strict PPT distinguishers (formulated over
+deterministic polynomial-time families $r,b_0,b_1$, rather than a stateful randomized PPT malicious
+receiver whose internal state passes to the distinguisher), and the probability over uniform $r$ that
+any two $n$-bit seeds open to $0$ and $1$ with the same commitment is at most
+$2^{2n-\ell(n)}\le 2^{-n}$ (and at most $2^{-(n+1)}$ when $\ell(n)\ge 3n+1$). By HILL and polynomial
+stretch, any uniform one-way function yields a PRG with expansion $\ell(n)=3n+1$ and hence a
+statistically binding, computationally hiding bit commitment scheme (\texttt{BitCommitmentScheme}).
 
-Using Naor commitments with seed length $s=n+7$ and the Cook--Levin plus clause-splitting
-reduction from any language $A\in\cc{NP}$ to $\mathrm{ThreeSAT}$, every $A\in\cc{NP}$
-admits a two-round interactive proof system indexed by security parameter $n$ in which:
+Using Naor commitments with seed length $s=n+7$, a two-round 3-copy masked-3SAT truth-table
+commitment protocol (\texttt{Cslib.Crypto.GMW}), and the Cook--Levin plus clause-splitting
+reduction $f:\alpha\to\mathrm{CNF}\;\mathbb N$ from any language $A\in\cc{NP}$ to $\mathrm{ThreeSAT}$,
+every $A\in\cc{NP}$ admits a two-round interactive proof system (\texttt{ZeroKnowledgeProof}) indexed
+by security parameter $n$ with bundled polynomial-time witness predicate
+$\mathsf{isWitness}(a,w)=\mathrm{ThreeSAT.verifier}(f(a),w)$ in which:
 \begin{itemize}
 \item the honest verifier is uniform strict oracle PPT in $(1^n,a)$ and the honest
   prover's interaction with any uniform strict oracle PPT verifier is uniform strict
   PPT in $(1^n,a,w,z)$;
-\item for every valid witness $w$ of $f(a)\in\mathrm{ThreeSAT}$, the honest prover is
+\item for every valid witness $w$ ($\mathsf{isWitness}(a,w)=\mathsf{true}$), the honest prover is
   accepted with probability $1$, and for every $a\notin A$ and every computationally
   unbounded stateful prover $P$, the verifier accepts with probability at most
   $2^{-(n+8)}+1/8\le 1/3$;
-\item for every uniform strict oracle PPT malicious verifier $V^*$ receiving $(1^n,a,z)$,
-  there is a uniform strict PPT simulator $S(1^n,a,z)$ (receiving no witness) whose
-  output ensemble is computationally indistinguishable from the real interaction output
-  across all polynomial-time families of instances, valid witnesses and auxiliary inputs
-  (and in particular for every fixed $a\in A$ and valid witness $w$).
+\item (\textbf{uniform zero-knowledge with poly-time-generable auxiliary input}) for every uniform
+  strict oracle PPT malicious verifier $V^*$ receiving $(1^n,a,z)$, there is a uniform strict PPT
+  simulator $S(1^n,a,z)$ (receiving no witness) whose output ensemble is computationally
+  indistinguishable from the real interaction output across all deterministic
+  polynomial-time-generable families of instances $a:\mathbb N\to\alpha$, valid witnesses
+  $w:\mathbb N\to\{0,1\}^*$ ($\forall n,\;\mathsf{isWitness}(a(n),w(n))=\mathsf{true}$, with no
+  separate explicit witness-length bound on $w$), and auxiliary inputs $z:\mathbb N\to\{0,1\}^*$
+  (giving fixed-instance security via \texttt{zero\_knowledge\_const} for every fixed $a\in A$ and
+  valid witness $w$).
 \end{itemize}
-Consequently, if a uniform one-way function exists, every language in $\cc{NP}$ has an
-auxiliary-input computational zero-knowledge interactive proof system. Soundness is
-proved directly at error $1/3$ for a single masked-3SAT execution with $1/8$ combinatorial
-cheating probability plus $2^{-(n+8)}$ binding error; sequential repetition to negligible
-soundness error and witness-level Levin reductions from arbitrary $\cc{NP}$ verifiers are
-not bundled.\citep{Naor1991,GoldreichMicaliWigderson1991,Goldreich2001}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/Commitment.lean}{200}{Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/Commitment.lean}{357}{Cslib.Crypto.negligible_naorBindingError}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/Commitment.lean}{980}{Cslib.Crypto.PseudorandomGenerator.naorBitCommitment}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/Commitment.lean}{1005}{Cslib.Crypto.OneWay.exists_bitCommitmentScheme}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{2969}{Cslib.Crypto.ZeroKnowledgeProof}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{3107}{Cslib.Crypto.PseudorandomGenerator.zeroKnowledgeProofThreeSAT}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{3118}{Cslib.Crypto.PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP}
-\declat{f43d7ef76aeb9b4202d89582738987845d906cc1}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{3131}{Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP}
+Consequently, if a uniform one-way function exists, every language in $\cc{NP}$ has a computational
+zero-knowledge interactive proof system in this uniform polynomial-time-family model. Soundness is
+proved directly at error $1/3$ for a single 3-copy masked-3SAT execution with $1/8$ combinatorial
+cheating probability plus $2^{-(n+8)}$ binding error; Goldreich's universal-instance and
+arbitrary-auxiliary-input quantification, stateful-receiver hiding, sequential repetition to
+negligible soundness error, and witness-level Levin reductions from arbitrary $\cc{NP}$ verifiers are
+not bundled.\citep{Naor1991,GoldreichMicaliWigderson1991,Goldreich2001,AroraBarak09}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/Commitment.lean}{169}{Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/Commitment.lean}{326}{Cslib.Crypto.negligible_naorBindingError}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/Commitment.lean}{884}{Cslib.Crypto.PseudorandomGenerator.naorBitCommitment}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/Commitment.lean}{909}{Cslib.Crypto.OneWay.exists_bitCommitmentScheme}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/GMW/Protocol.lean}{661}{Cslib.Crypto.GMW.gmwProver}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/GMW/Protocol.lean}{733}{Cslib.Crypto.GMW.gmwVerifier}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/GMW/Soundness.lean}{503}{Cslib.Crypto.GMW.acceptProb_gmwVerifier_le}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/GMW/PolyTime.lean}{593}{Cslib.Crypto.GMW.gmwSimulator}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/GMW/Simulator.lean}{834}{Cslib.Crypto.GMW.gmwView_indistinguishable_gmwSimulator}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{119}{Cslib.Crypto.ZeroKnowledgeProof}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{261}{Cslib.Crypto.PseudorandomGenerator.zeroKnowledgeProofThreeSAT}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{272}{Cslib.Crypto.PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP}
+\declat{f417ce9e86c2c3eb4362b215c462cc500b8188c7}{Complexity/Crypto/Computational/ZeroKnowledge.lean}{285}{Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP}
 \end{result}
 
