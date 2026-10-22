@@ -34,7 +34,7 @@ Given an indexed language `A ∈ PP (encPair enc encUnary)`, a polynomial-time u
 and a polynomial-time Boolean combiner `d`, let `g₀ ∈ GapP (encPair enc encUnary)` witness `A` via
 `0 < g₀ x ↔ x ∈ A`, and set `g x = 2 * g₀ x - 1`. Then `g x` is never zero, has the sign of
 membership in `A`, and satisfies `|g (a, i)| ≤ 2 ^ M a` for all `i < r a` for a polynomial-time
-unary bound `M a`. Evaluating Newman's polynomial
+unary bound `M a`. Evaluating Newman's polynomial [Newman][Newman1964]
 $$\operatorname{newmanPoly}(M, z) = \prod_{j=0}^{M} (2^j + z)$$
 and raising to the even exponent `2 * (r a + 1)` yields nonnegative `GapP` weights
 `A⁺ (a, i)` and `A⁻ (a, i)` such that at each query `i < r a`, the weight matching the true
@@ -48,8 +48,8 @@ words. Summing `(if d (a, List.ofFn w) then 1 else -1)` times the word weight ov
 
 ## Main definitions
 
-* `Cslib.Complexity.newmanPoly`: Newman's integer polynomial `∏ j ∈ range (M + 1), (2 ^ j + z)`.
-* `Cslib.Complexity.newmanAmp`: the even-power amplified weight `newmanPoly M z ^ (2 * K)`.
+* `Cslib.Complexity.newmanPoly`: Newman's integer polynomial `∏ j ∈ range (M + 1), (2 ^ j + z)`
+  [Newman][Newman1964].
 
 ## Main results
 
@@ -70,6 +70,7 @@ words. Summing `(if d (a, List.ofFn w) then 1 else -1)` times the word weight ov
 * [R. Beigel, N. Reingold, D. Spielman,
   *PP is closed under intersection*][BeigelReingoldSpielman1995]
 * [L. Fortnow, N. Reingold, *PP is closed under truth-table reductions*][FortnowReingold1996]
+* [D. J. Newman, *Rational approximation to |x|*][Newman1964]
 -/
 
 @[expose] public section
@@ -100,14 +101,14 @@ theorem GapP.exists_abs_le_two_pow {g : α → ℤ} (hg : g ∈ GapP enc) :
 
 /-! ### Newman's polynomial and amplified weights -/
 
-/-- Newman's polynomial `∏ j ∈ range (M + 1), (2 ^ j + z)`, used to rationalize the sign of an
-integer `z` with `1 ≤ |z| ≤ 2 ^ M`. -/
+/-- Newman's polynomial `∏ j ∈ range (M + 1), (2 ^ j + z)` [Newman][Newman1964], used to
+rationalize the sign of an integer `z` with `1 ≤ |z| ≤ 2 ^ M`. -/
 def newmanPoly (M : ℕ) (z : ℤ) : ℤ :=
   ∏ j ∈ range (M + 1), ((2 : ℤ) ^ j + z)
 
 /-- Even-power amplification of `newmanPoly`, ensuring nonnegativity and a multiplicative dominance
 ratio of at least `2 ^ (2 * K)`. -/
-def newmanAmp (M K : ℕ) (z : ℤ) : ℤ :=
+private def newmanAmp (M K : ℕ) (z : ℤ) : ℤ :=
   newmanPoly M z ^ (2 * K)
 
 private theorem exists_two_pow_interval {M : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (hz₂ : z ≤ (2 : ℤ) ^ M) :
@@ -123,7 +124,7 @@ private theorem exists_two_pow_interval {M : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (h
       simpa [pow_succ'] using hz₂
 
 /-- Newman's polynomial is at least `1` at every positive integer. -/
-theorem one_le_newmanPoly {M : ℕ} {z : ℤ} (hz : 1 ≤ z) : 1 ≤ newmanPoly M z :=
+private theorem one_le_newmanPoly {M : ℕ} {z : ℤ} (hz : 1 ≤ z) : 1 ≤ newmanPoly M z :=
   one_le_prod₀ fun j _ => by
     have : (0 : ℤ) ≤ (2 : ℤ) ^ j := by positivity
     omega
@@ -148,16 +149,17 @@ theorem two_mul_abs_newmanPoly_neg_le {M : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (hz�
   exact mul_le_mul hhead htail (abs_nonneg _) (by omega)
 
 /-- The amplified weight is nonnegative, being an even power. -/
-theorem newmanAmp_nonneg (M K : ℕ) (z : ℤ) : 0 ≤ newmanAmp M K z :=
+private theorem newmanAmp_nonneg (M K : ℕ) (z : ℤ) : 0 ≤ newmanAmp M K z :=
   Even.pow_nonneg (even_two_mul K) _
 
 /-- The amplified weight is at least `1` at every positive integer. -/
-theorem one_le_newmanAmp {M K : ℕ} {z : ℤ} (hz : 1 ≤ z) : 1 ≤ newmanAmp M K z :=
+private theorem one_le_newmanAmp {M K : ℕ} {z : ℤ} (hz : 1 ≤ z) : 1 ≤ newmanAmp M K z :=
   one_le_pow₀ (one_le_newmanPoly hz)
 
 /-- For `1 ≤ z ≤ 2 ^ M`, the amplified weight at `z` exceeds the weight at `-z` by a factor of
 at least `2 ^ (2 * K)`. -/
-theorem two_pow_mul_newmanAmp_neg_le {M K : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (hz₂ : z ≤ (2 : ℤ) ^ M) :
+private theorem two_pow_mul_newmanAmp_neg_le {M K : ℕ} {z : ℤ} (hz₁ : 1 ≤ z)
+    (hz₂ : z ≤ (2 : ℤ) ^ M) :
     (2 : ℤ) ^ (2 * K) * newmanAmp M K (-z) ≤ newmanAmp M K z := by
   unfold newmanAmp
   rw [← Even.pow_abs (even_two_mul K) (newmanPoly M (-z)), ← mul_pow]
