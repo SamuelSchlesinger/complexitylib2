@@ -158,10 +158,10 @@ agreement during upstream review.
 | `Computability/Machines/Turing/MultiTape/Encodings/StreamFold` | The candidate `streamFold_sum` generalizes the vendored proof; `streamFold` is its compatibility corollary. When resynchronizing or removing the copy, preserve the summed contract and shared proof until upstream includes them. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Length` | Add to the tidy branch's `Encodings/List`. |
 | `Computability/Machines/Turing/MultiTape/TapeLemmas` | `exists_visitedByTapeHead_eq_Icc` and `workTapes_runFrom_eq_of_notMem_visitedByTapeHead` were relocated from `Plumbing/Shadow` (#316); upstream with `TapeLemmas`. |
-| `Turing.Action.instFinite` in `Computability/Machines/Turing/MultiTape/Machine/ChoiceTable` | Place beside `Action` in `Computability/Machines/Turing/MultiTape/Configuration`. |
+| `Computability/Machines/Turing/MultiTape/Configuration` | `Turing.Action.instFinite` was relocated from `Machine/ChoiceTable` (#354); place beside `Action` in upstream `Configuration`. |
 | `Computability/Machines/Turing/MultiTape/Plumbing/ExtendTapesView` | Derive the old `tapeEmb`/`noTapes` lemmas from `viewCfg`; `oneTapeCfg i = viewCfg (tapeEmb i)` by `rfl`. |
 | `Computability/Machines/Turing/MultiTape/Probabilistic/IterateWhile` | Its private tape helpers parallel the vendored deterministic `Combinators/IterateWhile`; share them once the tidy branch exposes them. |
-| `Computability/Machines/Turing/MultiTape/Combinators/TidyNormalForm` | Place `runFrom_nop_withState` beside `runFrom_nop_one`. |
+| `Computability/Machines/Turing/MultiTape/Plumbing/TransformsTapes` | `runFrom_nop_withState` was relocated from `Combinators/TidyNormalForm` (#354); place beside `runFrom_nop_one` in upstream `Plumbing/TransformsTapes`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Decoder` | Total decoders with tidy certificates; add to the tidy branch's `Encodings` beside `Option`/`Pair`/`List`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
 | `Computability/Circuit/{Unfolding,MapOp}` | Consider integrating into `Circuit/Formula` and `Circuit/Program`, respectively. |

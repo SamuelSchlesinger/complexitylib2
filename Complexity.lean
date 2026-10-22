@@ -823,6 +823,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Spac
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Translate
+public import Complexity.Computability.Machines.Turing.MultiTape.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Alternative
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Binary
@@ -936,9 +937,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Q
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryTake
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.RunsWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy.Redirect
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.SingleTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Space

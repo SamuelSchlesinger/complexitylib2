@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
 
@@ -47,17 +48,6 @@ the remaining coins, which allows padding.
 -/
 
 @[expose] public section
-
-/-- With finitely many states and symbols, there are finitely many actions. -/
-instance Turing.Action.instFinite {k : ℕ} {Symbol State : Type*} [Finite Symbol] [Finite State] :
-    Finite (Turing.Action k Symbol State) :=
-  Finite.of_injective
-    (fun a : Turing.Action k Symbol State => (a.inputTape, a.workTapes, a.output, a.state))
-    fun a b h => by
-      cases a; cases b
-      simp only [Prod.mk.injEq] at h
-      obtain ⟨rfl, rfl, rfl, rfl⟩ := h
-      rfl
 
 namespace Turing.MultiTapeNTM
 

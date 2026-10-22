@@ -34,11 +34,12 @@ and Mathlib's single-tape Turing machine stack.
 * `Computable.stateTransition_eval`: for any `Primcodable` state type `σ` and computable step
   function `f : σ → Option σ`, `StateTransition.eval f : σ →. σ` is `Partrec` (proved directly via
   `Partrec.fix`).
+* `Primrec.list_isEmpty`: `List.isEmpty` is primitive recursive on any `Primcodable` element type.
 * `Primcodable` and `Primrec` for `StackTape Symbol`, `BiTape Symbol`,
   `_root_.Turing.ListBlank (Option Symbol)`, and `_root_.Turing.Tape (Option Symbol)`.
-* `Cslib.Turing.SingleTapeTM.primrec_step`, `primrec_runFor`, `partrec_evalInit`, and
-  `partrec_eval`: every `SingleTapeTM Symbol` has primitive recursive step and clocked-run functions
-  and a partial recursive evaluation function.
+* `Cslib.Turing.SingleTapeTM.primrec_step`, `primrec_runFor`, `partrec_evalInit`,
+  `partrec_eval`, and `partrec_eval_right₀`: every `SingleTapeTM Symbol` has primitive recursive
+  step and clocked-run functions and partial recursive evaluation functions.
 * `Cslib.Turing.SingleTapeTM.partrec_tm0_eval` and `partrec_tm1_eval`: every finitely supported
   Mathlib `TM0` or `TM1` machine has a partial recursive evaluation function.
 
@@ -64,6 +65,12 @@ theorem _root_.Computable.stateTransition_eval {σ : Type*} [Primcodable σ]
       cases f s <;> rfl
 
 /-! ## `Primcodable` and `Primrec` for `StackTape` and `ListBlank` -/
+
+/-- `List.isEmpty` is primitive recursive on any `Primcodable` element type. -/
+theorem _root_.Primrec.list_isEmpty {α : Type*} [Primcodable α] :
+    Primrec (List.isEmpty : List α → Bool) :=
+  (Primrec.eq.comp Primrec.list_length (Primrec.const 0)).decide.of_eq fun l => by
+    cases l <;> rfl
 
 namespace Cslib.Turing.StackTape
 
@@ -116,11 +123,9 @@ theorem primrec_cons [Primcodable Symbol] :
     Primrec₂ (StackTape.cons : Option Symbol → StackTape Symbol → StackTape Symbol) := by
   refine Primrec₂.mk (primrec_toList_iff.mp ?_)
   have hcond : Primrec fun p : Option Symbol × StackTape Symbol =>
-      p.1.isSome || !p.2.toList.isEmpty := by
-    have hisEmpty : Primrec fun p : Option Symbol × StackTape Symbol => p.2.toList.isEmpty :=
-      (Primrec.eq.comp (Primrec.list_length.comp (primrec_toList.comp .snd))
-        (Primrec.const 0)).decide.of_eq fun p => by cases p.2.toList <;> rfl
-    exact Primrec.or.comp (Primrec.option_isSome.comp .fst) (Primrec.not.comp hisEmpty)
+      p.1.isSome || !p.2.toList.isEmpty :=
+    Primrec.or.comp (Primrec.option_isSome.comp .fst)
+      (Primrec.not.comp (Primrec.list_isEmpty.comp (primrec_toList.comp .snd)))
   exact (Primrec.cond hcond
     (Primrec.list_cons.comp .fst (primrec_toList.comp .snd))
     (Primrec.const [])).of_eq fun ⟨a, t⟩ => by
@@ -330,11 +335,8 @@ theorem extractWord_eq_some_iff {b : BiTape Symbol} {l : List Symbol} :
     exact extractWord_mk₁ l
 
 theorem primrec_extractWord :
-    Primrec (extractWord : BiTape Symbol → Option (List Symbol)) := by
-  have hisEmpty : Primrec fun b : BiTape Symbol => b.left.toList.isEmpty :=
-    (Primrec.eq.comp (Primrec.list_length.comp (StackTape.primrec_toList.comp primrec_left))
-      (Primrec.const 0)).decide.of_eq fun b => by cases b.left.toList <;> rfl
-  exact (Primrec.cond hisEmpty
+    Primrec (extractWord : BiTape Symbol → Option (List Symbol)) :=
+  (Primrec.cond (Primrec.list_isEmpty.comp (StackTape.primrec_toList.comp primrec_left))
     (primrec_unmapSome.comp (StackTape.primrec_toList.comp
       (StackTape.primrec_cons.comp primrec_head primrec_right)))
     (Primrec.const none)).of_eq fun b => by
@@ -554,6 +556,18 @@ theorem partrec_eval (tm : SingleTapeTM Symbol) :
     Partrec tm.eval :=
   Partrec.rfindOpt tm.primrec_runFor.to_comp
 
+/-- Evaluating `tm` from `tm.initCfg l` and reading the right half-tape `right₀` of its final
+configuration is partial recursive. -/
+theorem partrec_eval_right₀ (tm : SingleTapeTM Symbol) :
+    Partrec (fun l : List Symbol =>
+      (StateTransition.eval tm.step (tm.initCfg l)).map fun c =>
+        (BiTape.equivTape c.BiTape).right₀) := by
+  have hmap : Computable fun c : tm.Cfg => (BiTape.equivTape c.BiTape).right₀ :=
+    (BiTape.primrec_right₀.comp
+      (BiTape.primrec_equivTape.comp
+        (Primrec.snd.comp (Primrec.of_equiv (e := tm.cfgEquiv))))).to_comp
+  exact Partrec.map tm.partrec_evalInit (hmap.comp .snd).to₂
+
 end FintypeSymbol
 
 variable [Inhabited Symbol] [Finite Symbol] [Primcodable Symbol]
@@ -566,13 +580,7 @@ theorem partrec_tm0_eval {Λ : Type} [Inhabited Λ]
     Partrec (fun l : List Symbol => _root_.Turing.TM0.eval M (l.map some)) := by
   classical
   have := Fintype.ofFinite Symbol
-  let tm := ofTM0 M S hs
-  have hmap : Computable fun c : tm.Cfg => (BiTape.equivTape c.BiTape).right₀ :=
-    (BiTape.primrec_right₀.comp
-      (BiTape.primrec_equivTape.comp
-        (Primrec.snd.comp (Primrec.of_equiv (e := tm.cfgEquiv))))).to_comp
-  exact (Partrec.map tm.partrec_evalInit (hmap.comp .snd).to₂).of_eq fun l =>
-    eval_ofTM0 M S hs l
+  exact (ofTM0 M S hs).partrec_eval_right₀.of_eq (eval_ofTM0 M S hs)
 
 /-- For any finitely supported Mathlib `_root_.Turing.TM1` statement family, its partial evaluation
 `fun l => _root_.Turing.TM1.eval M (l.map some)` is `Partrec`. -/
@@ -583,12 +591,6 @@ theorem partrec_tm1_eval {Λ σ : Type} [Inhabited Λ] [Inhabited σ] [Finite σ
   classical
   have := Fintype.ofFinite Symbol
   have := Fintype.ofFinite σ
-  let tm := ofTM1 M S hs
-  have hmap : Computable fun c : tm.Cfg => (BiTape.equivTape c.BiTape).right₀ :=
-    (BiTape.primrec_right₀.comp
-      (BiTape.primrec_equivTape.comp
-        (Primrec.snd.comp (Primrec.of_equiv (e := tm.cfgEquiv))))).to_comp
-  exact (Partrec.map tm.partrec_evalInit (hmap.comp .snd).to₂).of_eq fun l =>
-    eval_ofTM1 M S hs l
+  exact (ofTM1 M S hs).partrec_eval_right₀.of_eq (eval_ofTM1 M S hs)
 
 end Cslib.Turing.SingleTapeTM
