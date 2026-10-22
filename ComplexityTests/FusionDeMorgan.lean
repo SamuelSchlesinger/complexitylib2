@@ -9,38 +9,38 @@ import Complexity.Computability.Circuit.Fusion.DeMorgan
 /-!
 # Fusion bounds for De Morgan circuits
 
-A two-gate De Morgan circuit with an internal negation computes `x₀ ∧ ¬x₁`, so the lower bound
+A two-gate De Morgan circuit computes NAND by negating an internal AND gate, so the lower bound
 gives cover complexity at most four. A projection has an empty cover, so the upper bound gives a
-De Morgan circuit within the stated budget. The headline bounds are instantiated for a function
-with no assumptions on it, and the dual-rail selection is checked on all small inputs.
+De Morgan circuit within the stated budget. The headline bounds are instantiated for an arbitrary
+function, and the dual-rail selection theorem is instantiated at `n = 2`.
 -/
 
 namespace ComplexityTests.FusionDeMorgan
 
 open Cslib Cslib.Circuits Cslib.Circuits.Fusion Cslib.Circuits.Boolean
 
-private def andNot : BooleanFunction 2 := fun x => x 0 && !x 1
+private def nand : BooleanFunction 2 := fun x => !(x 0 && x 1)
 
-private def andNotCircuit : Circuit Boolean.signature 2 1 :=
-  ⟨(((Program.empty : Program Boolean.signature 2 0).gate ⟨.not, ![.input 1]⟩).gate
-    ⟨.and, ![.input 0, .gate 0]⟩), fun _ => .gate 1⟩
+private def nandCircuit : Circuit Boolean.signature 2 1 :=
+  ⟨(((Program.empty : Program Boolean.signature 2 0).gate ⟨.and, ![.input 0, .input 1]⟩).gate
+    ⟨.not, ![.gate 0]⟩), fun _ => .gate 1⟩
 
-private theorem andNotCircuit_computes :
-    andNotCircuit.Computes Boolean.interpretation (single andNot) := by
+private theorem nandCircuit_computes :
+    nandCircuit.Computes Boolean.interpretation (single nand) := by
   unfold Circuit.Computes
   decide
 
-example : andNotCircuit.size = 2 := rfl
+example : nandCircuit.size = 2 := rfl
 
-/-- The internal negation is allowed by the De Morgan lower bound. -/
-example : pairCoverComplexity {x | andNot x = true}
+/-- A negation of an internal gate is allowed by the De Morgan lower bound. -/
+example : pairCoverComplexity {x | nand x = true}
     (fun i => {x | AltFormula.literals x i = true}) ≤ 4 :=
-  pairCoverComplexity_le_two_mul_size andNotCircuit andNotCircuit_computes
+  pairCoverComplexity_le_two_mul_size nandCircuit nandCircuit_computes
 
 /-- The lower bound also holds for semi-ultrafilters. -/
-example : pairCoverComplexity {x | andNot x = true}
+example : pairCoverComplexity {x | nand x = true}
     (fun i => {x | AltFormula.literals x i = true}) Semifilter.IsUltra ≤ 4 :=
-  pairCoverComplexity_le_two_mul_size andNotCircuit andNotCircuit_computes _
+  pairCoverComplexity_le_two_mul_size nandCircuit nandCircuit_computes _
 
 private def proj : BooleanFunction 1 := fun x => x 0
 
@@ -71,26 +71,26 @@ example (n : ℕ) (f : BooleanFunction n) :
 
 /-- Monotone AND complexity from literals is at most the square of the cover bound. -/
 example : ecomplexityFrom Monotone.interpretation Monotone.andCost
-    (fun x (_ : Fin 1) => andNot x) AltFormula.literals ≤ 16 := by
-  have h : pairCoverComplexity {x | andNot x = true}
+    (fun x (_ : Fin 1) => nand x) AltFormula.literals ≤ 16 := by
+  have h : pairCoverComplexity {x | nand x = true}
       (fun i => {x | AltFormula.literals x i = true}) ≤ 4 :=
-    pairCoverComplexity_le_two_mul_size andNotCircuit andNotCircuit_computes
-  calc _ ≤ _ := (andComplexity_bounds andNot).2
+    pairCoverComplexity_le_two_mul_size nandCircuit nandCircuit_computes
+  calc _ ≤ _ := (ecomplexityFrom_literals_bounds nand).2
     _ ≤ 4 ^ 2 := pow_le_pow_left₀ zero_le h 2
     _ = 16 := by norm_num
 
-/-- The dual-rail inputs are selected correctly from the literals on all inputs of length two. -/
-example : ∀ x : BitString 2, (railCircuit 2).eval Monotone.interpretation
+/-- The dual-rail selection theorem, instantiated at `n = 2`. -/
+example : ∀ x : BitString 2, (Monotone.literalsRailCircuit 2).eval Monotone.interpretation
     (AltFormula.literals x) = Monotone.railBitString x :=
-  eval_railCircuit
+  Monotone.eval_literalsRailCircuit
 
-example : (railCircuit 3).program.cost Monotone.andCost = 0 := cost_railCircuit
+example : (Monotone.literalsRailCircuit 3).program.cost Monotone.andCost = 0 := Monotone.cost_literalsRailCircuit
 
 /--
-info: 'Cslib.Circuits.Fusion.andComplexity_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Circuits.Fusion.andComplexity_bounds
+#print axioms Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds
 
 /--
 info: 'Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_size' depends on axioms: [propext, Classical.choice, Quot.sound]

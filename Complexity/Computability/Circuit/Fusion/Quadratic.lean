@@ -9,9 +9,9 @@ module
 
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Compiler
 public import Complexity.Computability.Circuit.Iteration
-import Mathlib.Data.Finset.Card
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Algebra.Order.BigOperators.Group.List
+import Mathlib.Data.Finset.Card
 import Mathlib.Tactic.Linarith
 
 /-!
