@@ -25,6 +25,15 @@ UNICODE_TO_TEX_MATH = {
     "∅": r"\emptyset",
     "∪": r"\cup",
     "∩": r"\cap",
+    "∏": r"\prod",
+    "∑": r"\sum",
+    "⋃": r"\bigcup",
+    "⊂": r"\subset",
+    "⊥": r"\bot",
+    "⊤": r"\top",
+    "∞": r"\infty",
+    "⨅": r"\inf",
+    "⨆": r"\sup",
     "¬": r"\neg",
     "∧": r"\land",
     "∨": r"\lor",
@@ -36,6 +45,14 @@ UNICODE_TO_TEX_MATH = {
     "ᶜ": r"^{\mathsf{c}}",
     "⟨": r"\langle",
     "⟩": r"\rangle",
+    "⦃": r"\{\!\{",
+    "⦄": r"\}\!\}",
+    "≃": r"\simeq",
+    "⌈": r"\lceil",
+    "⌉": r"\rceil",
+    "·": r"\cdot",
+    "ℓ": r"\ell",
+    "Σ": r"\Sigma",
     "α": r"\alpha",
     "β": r"\beta",
     "γ": r"\gamma",
@@ -45,6 +62,23 @@ UNICODE_TO_TEX_MATH = {
     "τ": r"\tau",
     "φ": r"\varphi",
     "ψ": r"\psi",
+    "χ": r"\chi",
+    "π": r"\pi",
+    "ρ": r"\rho",
+    "μ": r"\mu",
+    "ν": r"\nu",
+    "ι": r"\iota",
+    "⁻": r"^{-}",
+    "¹": r"^{1}",
+    "²": r"^{2}",
+    "³": r"^{3}",
+    "⁵": r"^{5}",
+    "⁹": r"^{9}",
+    "ˢ": r"^{\mathsf{s}}",
+    "₀": r"_{0}",
+    "₁": r"_{1}",
+    "₂": r"_{2}",
+    "₊": r"_{+}",
     "…": r"\dots",
 }
 
@@ -54,6 +88,10 @@ UNICODE_TO_TEX_TEXT = {
     "’": "'",
     "“": "``",
     "”": "''",
+    "é": r"\'{e}",
+    "É": r"\'{E}",
+    "ő": r"\H{o}",
+    "å": r"\r{a}",
     **{k: f"${v}$" for k, v in UNICODE_TO_TEX_MATH.items()},
 }
 
@@ -79,9 +117,10 @@ def parse_abstract(text: str):
     body_start = mod_match.end() if mod_match else 0
     body = text[body_start:]
     body = re.sub(r"^\s*namespace\s+[^\n]+\n", "", body, flags=re.MULTILINE)
-    # Drop the `#check_abstract` audit together with the `#guard_msgs` docstring pinning its report.
+    # Drop audit commands together with the `#guard_msgs` docstrings pinning their reports.
     body = re.sub(
-        r"/--(?:(?!-/).)*-/\s*#guard_msgs[^\n]*\n(?=\s*#check_abstract\b)",
+        r"/--(?:(?!-/).)*-/\s*#guard_msgs[^\n]*\n"
+        r"(?=\s*#(?:check_abstract\b|print\s+axioms\b))",
         "",
         body,
         flags=re.DOTALL,
@@ -92,6 +131,7 @@ def parse_abstract(text: str):
         body,
         flags=re.MULTILINE,
     )
+    body = re.sub(r"^\s*#print\s+axioms\b[^\n]*\n?", "", body, flags=re.MULTILINE)
     body = re.sub(r"^\s*end\s+[^\n]+\n?", "", body, flags=re.MULTILINE)
 
     sections = []
@@ -162,7 +202,9 @@ def escape_tex_code_line(line: str) -> str:
     leading = len(line) - len(line.lstrip(" "))
     rest = line[leading:]
     out = [r"\hspace*{" + f"{leading * 0.5:.1f}em" + "}"] if leading else []
-    for ch in rest:
+    for index, ch in enumerate(rest):
+        if index and rest[index - 1].islower() and ch.isupper():
+            out.append(r"\allowbreak{}")
         if ch in UNICODE_TO_TEX_MATH:
             out.append(f"${UNICODE_TO_TEX_MATH[ch]}$")
         elif ch in UNICODE_TO_TEX_TEXT:
@@ -171,16 +213,24 @@ def escape_tex_code_line(line: str) -> str:
             out.append(TEX_SPECIAL_CODE[ch])
         else:
             out.append(ch)
+        # Keep every visible character while allowing long identifiers to wrap at camel-case
+        # boundaries (above) and at qualified-name / snake_case separators.
+        if ch in (".", "_"):
+            out.append(r"\allowbreak{}")
     return "".join(out)
 
 
 def escape_tex_prose(text: str) -> str:
     """Convert docstring prose (with inline `...` code spans and **bold**) into pdflatex."""
     # Split by inline code spans `...` first so `**` inside code is untouched
-    parts = re.split(r"(`[^`]+`)", text)
+    parts = re.split(r"(`[^`]+`|\[[^\[\]]+\]\[[A-Za-z0-9_:.-]+\])", text)
     rendered = []
     for part in parts:
-        if part.startswith("`") and part.endswith("`"):
+        reference = re.fullmatch(r"\[([^\[\]]+)\]\[([A-Za-z0-9_:.-]+)\]", part)
+        if reference:
+            rendered.append(escape_tex_prose(reference.group(1)) +
+                            r" {\footnotesize (" + escape_tex_prose(reference.group(2)) + ")}")
+        elif part.startswith("`") and part.endswith("`"):
             inner = part[1:-1]
             escaped = escape_tex_code_line(inner)
             rendered.append(f"\\texttt{{{escaped}}}")
@@ -189,13 +239,14 @@ def escape_tex_prose(text: str) -> str:
             for ch in part:
                 if ch in UNICODE_TO_TEX_TEXT:
                     out.append(UNICODE_TO_TEX_TEXT[ch])
-                elif ch in ("_", "#", "&", "%"):
-                    out.append("\\" + ch)
+                elif ch in TEX_SPECIAL_CODE:
+                    out.append(TEX_SPECIAL_CODE[ch])
                 else:
                     out.append(ch)
             escaped_prose = "".join(out)
             escaped_prose = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", escaped_prose)
             escaped_prose = re.sub(r"\*([^*\s][^*]*)\*", r"\\emph{\1}", escaped_prose)
+            escaped_prose = escaped_prose.replace("][", r"]\allowbreak{}[")
             rendered.append(escaped_prose)
     return "".join(rendered)
 
@@ -205,23 +256,33 @@ def render_tex_intro(intro: str) -> list[str]:
     lines into an itemized list."""
     lines = []
     in_list = False
+    item_parts = []
     for raw in intro.splitlines():
         line = raw.strip()
         if line.startswith("* "):
             if not in_list:
-                lines.append("\\begin{itemize}")
+                lines.append("\\begin{itemize}\\raggedright")
                 in_list = True
-            lines.append("\\item " + escape_tex_prose(line[2:]))
+            else:
+                lines.append("\\item{} " + escape_tex_prose(" ".join(item_parts)))
+            item_parts = [line[2:]]
+            continue
+        if in_list and line and raw[:1].isspace():
+            item_parts.append(line)
             continue
         if in_list and line:
+            # The empty group prevents a reference's `[author/title]` from becoming the
+            # optional item label. Escape after joining continuations so emphasis survives.
+            lines.append("\\item{} " + escape_tex_prose(" ".join(item_parts)))
             lines.append("\\end{itemize}")
             in_list = False
         heading = re.match(r"^##\s*(.+)$", line)
         if heading:
-            lines.append(f"\\paragraph{{{escape_tex_prose(heading.group(1).strip())}.}}")
+            lines.append(f"\\subsubsection*{{{escape_tex_prose(heading.group(1).strip())}}}")
         else:
             lines.append(escape_tex_prose(line))
     if in_list:
+        lines.append("\\item{} " + escape_tex_prose(" ".join(item_parts)))
         lines.append("\\end{itemize}")
     return lines
 
@@ -235,7 +296,9 @@ def render_tex(title: str, intro: str, sections: list[dict]) -> str:
             if m:
                 heading = escape_tex_prose(m.group(1).strip())
                 rest = escape_tex_prose(m.group(2).strip())
-                lines.append(f"\\paragraph{{{heading}.}}" + (f" {rest}" if rest else ""))
+                lines.append(f"\\subsubsection*{{{heading}}}")
+                if rest:
+                    lines.extend(["", rest])
             else:
                 lines.append(escape_tex_prose(doc))
         else:
@@ -244,7 +307,11 @@ def render_tex(title: str, intro: str, sections: list[dict]) -> str:
         if code:
             code_lines = [escape_tex_code_line(l) for l in code.splitlines()]
             joined = " \\\\\n".join(l if l else "~" for l in code_lines)
-            lines.extend(["\\begin{quote}\\small\\ttfamily\\noindent", joined, "\\end{quote}"])
+            lines.extend([
+                "\\begin{quote}\\small\\ttfamily\\raggedright\\noindent",
+                joined,
+                "\\end{quote}",
+            ])
         lines.append("")
     return "\n".join(lines).strip() + "\n"
 

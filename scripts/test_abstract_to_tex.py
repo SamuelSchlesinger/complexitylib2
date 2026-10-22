@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 
 import abstract_to_tex
 
@@ -31,8 +32,9 @@ class AbstractToTexTests(unittest.TestCase):
                 "theorem subsetSum_npComplete : NPComplete encSubsetSum SubsetSum",
             ],
         }
-        for filename, snippets in expected_theorems.items():
-            path = ABSTRACTS_DIR / filename
+        for path in sorted(ABSTRACTS_DIR.glob("*Abstract.lean")):
+            filename = path.name
+            snippets = expected_theorems.get(filename, [])
             title, intro, sections = abstract_to_tex.parse_abstract(path.read_text())
             md = abstract_to_tex.render_markdown(title, intro, sections)
             tex = abstract_to_tex.render_tex(title, intro, sections)
@@ -83,6 +85,63 @@ class AbstractToTexTests(unittest.TestCase):
             "def encX : X → List Bool := f\n\ntheorem other_fact : P\n\n"
             "theorem misnamed_injective : Q",
         )
+
+    def test_reference_bullets_cannot_become_tex_item_labels(self):
+        rendered = "\n".join(abstract_to_tex.render_tex_intro(
+            "## References\n\n* [S. Arora, B. Barak, *Computational Complexity*][AroraBarak09]"
+        ))
+        self.assertIn(r"\item{} S. Arora, B. Barak,", rendered)
+        self.assertIn(r"\emph{Computational Complexity}", rendered)
+        self.assertIn(r"{\footnotesize (AroraBarak09)}", rendered)
+
+    def test_wrapped_reference_stays_in_its_list_item(self):
+        rendered = "\n".join(abstract_to_tex.render_tex_intro(
+            "## References\n\n* [S. A. Cook, R. A. Reckhow, *The relative efficiency of\n"
+            "  propositional proof systems*][CookReckhow1979]\n\n"
+            "* [A. Haken, *The intractability of resolution*][Haken1985]\n"
+        ))
+        self.assertIn(r"\emph{The relative efficiency of propositional proof systems}", rendered)
+        self.assertEqual(rendered.count(r"\begin{itemize}"), 1)
+        self.assertEqual(rendered.count(r"\item{}"), 2)
+
+    def test_section_heading_and_machine_name_can_wrap(self):
+        machine = "Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength"
+        rendered = abstract_to_tex.render_tex("Title", "", [{
+            "kind": "section",
+            "doc": f"## Polynomial-time computability, NP, coNP, and completeness\n\n"
+                   f"In upstream `Cslib`, `{machine}` means a halting machine.",
+            "code": "",
+        }])
+        self.assertIn("\\subsubsection*{Polynomial-time computability, NP, coNP, "
+                      "and completeness}\n\nIn upstream", rendered)
+        self.assertIn(r"Turing.\allowbreak{}Multi\allowbreak{}Tape\allowbreak{}TM.\allowbreak{}"
+                      r"Computable\allowbreak{}In\allowbreak{}Time", rendered)
+        self.assertNotIn(r"\paragraph{", rendered)
+
+    def test_catalogue_symbols_and_author_names_are_pdflatex_safe(self):
+        sample = "∏ ∑ ⊥ ⊤ χ π ρ μ ν ι ℓ ∞ ⨅ ⨆ ≃ Σ ⦃x⦄ ⌈x⌉₊ x₀ x₁ x₂ f⁻¹ x² x³ x⁵ x⁹ ∑ˢ ⋃ ⊂ ·"
+        rendered = abstract_to_tex.escape_tex_code_line(sample)
+        self.assertTrue(rendered.isascii())
+        for command in (r"\prod", r"\sum", r"\bot", r"\top", r"\chi", r"\infty"):
+            self.assertIn(command, rendered)
+        self.assertEqual(abstract_to_tex.escape_tex_prose("Håstad, Erdős, Bonami–Beckner"),
+                         r"H\r{a}stad, Erd\H{o}s, Bonami--Beckner")
+        self.assertEqual(abstract_to_tex.escape_tex_prose("2^(n/24), {0,1}, $5 and ~n"),
+                         r"2\textasciicircum{}(n/24), \{0,1\}, \$5 and \textasciitilde{}n")
+
+    def test_named_axiom_audits_are_stripped(self):
+        sample = (
+            "/-! # Title\n\nIntro.\n-/\n\nnamespace Foo\n\n"
+            "/-- A result. -/\ntheorem result : True := by trivial\n\n"
+            "/-- info: 'Foo.result' does not depend on any axioms -/\n"
+            "#guard_msgs in\n#print axioms result\n\nend Foo\n"
+        )
+        title, intro, sections = abstract_to_tex.parse_abstract(sample)
+        self.assertEqual(len(sections), 1)
+        rendered = abstract_to_tex.render_markdown(title, intro, sections)
+        self.assertIn("theorem result : True", rendered)
+        self.assertNotIn("axioms", rendered)
+        self.assertNotIn("guard_msgs", rendered)
 
     def test_guarded_audit_is_stripped(self):
         sample = (
@@ -148,6 +207,7 @@ class AbstractToTexTests(unittest.TestCase):
                 cwd=tmp,
                 capture_output=True,
                 text=True,
+                errors="replace",  # TeX may log accented author names in its legacy font encoding.
                 check=False,
             )
             self.assertEqual(
@@ -156,6 +216,24 @@ class AbstractToTexTests(unittest.TestCase):
                 f"pdflatex failed:\n{proc.stdout[-2000:]}\n{proc.stderr[-2000:]}",
             )
             self.assertTrue((tmp / "abstracts.pdf").is_file())
+            if shutil.which("pdftotext"):
+                # Compilation succeeds even when bibliography labels and long identifiers
+                # extend off the page. Check the actual glyph positions as well.
+                bbox_file = tmp / "abstracts.html"
+                subprocess.run(
+                    ["pdftotext", "-bbox", str(tmp / "abstracts.pdf"), str(bbox_file)],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                root = ET.parse(bbox_file).getroot()
+                for page in root.findall(".//{*}page"):
+                    page_width = float(page.attrib["width"])
+                    for word in page.findall(".//{*}word"):
+                        self.assertGreaterEqual(float(word.attrib["xMin"]), 36,
+                                                f"Text clips the left margin: {word.text!r}")
+                        self.assertLessEqual(float(word.attrib["xMax"]), page_width - 36,
+                                             f"Text clips the right margin: {word.text!r}")
 
 
 if __name__ == "__main__":
