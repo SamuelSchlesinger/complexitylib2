@@ -26,6 +26,11 @@ the alphabet may be a constant gate of the basis.
 ## Main results
 
 * `Cslib.Circuits.Circuit.innerSize_le_size`: constant gates are free.
+* `Cslib.Circuits.Circuit.innerSize_eq_size_of_forall_arity_ne_zero`: without constant symbols,
+  the inner size equals the size.
+* `Cslib.Circuits.Program.fanInAtMost_of_forall_arity_le`,
+  `Cslib.Circuits.Circuit.fanInAtMost_of_forall_arity_le`,
+  `Cslib.Circuits.Circuit.fanInAtMost_fullSignature`: fan-in bounds from signature arities.
 * `Cslib.Circuits.Circuit.innerSize_eq_zero_of_fanInAtMost_zero`: without arguments every gate is
   a constant.
 -/
@@ -65,5 +70,30 @@ theorem Circuit.innerSize_eq_zero_of_fanInAtMost_zero {c : Circuit σ n m}
 @[simp] theorem Circuit.innerSize_wiring (select : Fin m → Fin n) :
     (Circuit.wiring σ select).innerSize = 0 :=
   Nat.le_zero.mp ((Circuit.wiring σ select).innerSize_le_size)
+
+/-- In a signature without nullary operations, every gate has positive arity, so the inner size is
+the full gate count. -/
+theorem Circuit.innerSize_eq_size_of_forall_arity_ne_zero (c : Circuit σ n m)
+    (h : ∀ op, σ.Arity op ≠ 0) : c.innerSize = c.size := by
+  have huniv : c.program.innerGates = Finset.univ :=
+    Finset.eq_univ_iff_forall.mpr fun k => Program.mem_innerGates.mpr (h _)
+  rw [Circuit.innerSize, huniv, Finset.card_univ, Fintype.card_fin]
+
+/-- If every operation symbol has arity at most `r`, every program over the signature has fan-in at
+most `r`. -/
+theorem Program.fanInAtMost_of_forall_arity_le (p : Program σ n g) {r : ℕ}
+    (h : ∀ op, σ.Arity op ≤ r) : p.FanInAtMost r :=
+  Program.fanInAtMost_iff.mpr fun _ => h _
+
+/-- If every operation symbol has arity at most `r`, every circuit over the signature has fan-in at
+most `r`. -/
+theorem Circuit.fanInAtMost_of_forall_arity_le (c : Circuit σ n m) {r : ℕ}
+    (h : ∀ op, σ.Arity op ≤ r) : c.FanInAtMost r :=
+  c.program.fanInAtMost_of_forall_arity_le h
+
+/-- Every circuit over the full basis of arity `r` has fan-in at most `r`. -/
+theorem Circuit.fanInAtMost_fullSignature {U : Type*} {r : ℕ}
+    (c : Circuit (fullSignature r U) n m) : c.FanInAtMost r :=
+  c.fanInAtMost_of_forall_arity_le fun op => by rcases op with _ | _ <;> simp [fullSignature]
 
 end Cslib.Circuits
