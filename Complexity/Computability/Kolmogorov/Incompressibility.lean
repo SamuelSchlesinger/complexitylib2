@@ -8,8 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Kolmogorov.Basic
-public import Mathlib.Data.Set.Card
-import Mathlib.Data.Vector.Basic
+public import Complexity.Foundations.Data.BitString.ShortWords
 
 /-!
 # Incompressibility
@@ -23,8 +22,8 @@ of length `n` have complexity below `n - c` [Li and Vitányi, Chapter 2][LiVitan
 
 ## Main results
 
-* `Cslib.Kolmogorov.encard_setOf_length_eq`, `Cslib.Kolmogorov.encard_setOf_length_lt_add_one`:
-  there are `2 ^ n` binary strings of length `n` and `2 ^ n - 1` of length below `n`.
+* `Cslib.Kolmogorov.encard_setOf_length_lt_add_one`: there are `2 ^ n - 1` binary strings of
+  length below `n`, using `Cslib.BitString.encard_setOf_length_eq` for each exact length.
 * `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_ecomplexity_lt`,
   `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_etimeBoundedComplexity_lt`: fewer than `2 ^ r`
   objects have (time-bounded) complexity below `r`.
@@ -51,11 +50,8 @@ namespace Cslib.Kolmogorov
 
 /-! ### Counting binary strings -/
 
-/-- There are `2 ^ n` binary strings of length `n`. -/
-theorem encard_setOf_length_eq (n : ℕ) : {p : List Bool | p.length = n}.encard = 2 ^ n := by
-  change ENat.card (List.Vector Bool n) = _
-  rw [ENat.card_eq_coe_fintype_card, card_vector]
-  simp
+@[deprecated (since := "2026-10-22")]
+alias encard_setOf_length_eq := BitString.encard_setOf_length_eq
 
 /-- There are `2 ^ n - 1` binary strings of length below `n`. -/
 theorem encard_setOf_length_lt_add_one (n : ℕ) :
@@ -70,8 +66,8 @@ theorem encard_setOf_length_lt_add_one (n : ℕ) :
       omega
     have hdisj : Disjoint {p : List Bool | p.length < n} {p | p.length = n} :=
       Set.disjoint_left.mpr fun _ hlt heq => Nat.ne_of_lt hlt heq
-    rw [hunion, Set.encard_union_eq hdisj, add_right_comm, ih, encard_setOf_length_eq, pow_succ,
-      mul_two]
+    rw [hunion, Set.encard_union_eq hdisj, add_right_comm, ih, BitString.encard_setOf_length_eq,
+      pow_succ, mul_two]
 
 namespace DescriptionMethod
 
@@ -133,7 +129,7 @@ variable (M : DescriptionMethod (List Bool))
 least `n`. -/
 theorem exists_length_eq_le_ecomplexity (n : ℕ) :
     ∃ x : List Bool, x.length = n ∧ n ≤ M.ecomplexity x :=
-  M.exists_mem_le_ecomplexity (encard_setOf_length_eq n).ge
+  M.exists_mem_le_ecomplexity (BitString.encard_setOf_length_eq n).ge
 
 /-- For every `n`, some string of length `n` has complexity at least `n` under every time
 bound. -/
@@ -161,9 +157,9 @@ theorem encard_setOf_length_eq_etimeBoundedComplexity_lt (t n c : ℕ) :
 theorem two_pow_lt_ncard_setOf_length_eq_le_ecomplexity_add (n c : ℕ) :
     2 ^ n < {x : List Bool | x.length = n ∧ (n - c : ℕ) ≤ M.ecomplexity x}.ncard + 2 ^ (n - c) := by
   have hfin : {x : List Bool | x.length = n}.Finite :=
-    Set.finite_of_encard_eq_coe (encard_setOf_length_eq n)
+    Set.finite_of_encard_eq_coe (BitString.encard_setOf_length_eq n)
   have hcard : {x : List Bool | x.length = n}.ncard = 2 ^ n := by
-    rw [← ENat.natCast_inj, hfin.cast_ncard_eq, encard_setOf_length_eq, Nat.cast_pow,
+    rw [← ENat.natCast_inj, hfin.cast_ncard_eq, BitString.encard_setOf_length_eq, Nat.cast_pow,
       Nat.cast_ofNat]
   simpa only [hcard, Set.mem_ofPred_eq] using M.ncard_lt_ncard_setOf_le_ecomplexity_add hfin (n - c)
 

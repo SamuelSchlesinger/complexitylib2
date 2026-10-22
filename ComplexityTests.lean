@@ -303,6 +303,7 @@ import ComplexityTests.PseudorandomFunction
 import ComplexityTests.PseudorandomObjects
 import ComplexityTests.QBFProtocol
 import ComplexityTests.Quantitative
+import ComplexityTests.QuantitativeEncoding
 import ComplexityTests.QueryComplexity
 import ComplexityTests.QueryComplexity.Approximate
 import ComplexityTests.QueryComplexity.Measures
@@ -338,6 +339,7 @@ import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.ShortWords
 import ComplexityTests.SipserLautemann
 import ComplexityTests.SmallCountingClasses
 import ComplexityTests.Smoke
@@ -368,6 +370,7 @@ import ComplexityTests.ThresholdNC1
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
+import ComplexityTests.TimeReductions
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
 import ComplexityTests.TreeEvalAry
