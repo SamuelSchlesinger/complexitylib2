@@ -1,0 +1,121 @@
+/-
+Copyright (c) 2026 Erik Demaine. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Erik Demaine
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Machines.Turing.TM2.ConfigBound
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+
+/-!
+# Mathlib stack-machine computations within polynomial space
+
+The simulation stores one encoded source configuration and a binary clock. Its space bound
+depends on the sizes of the intermediate configurations, independently of the number of rounds.
+All source stacks count towards space, including the initial input and final output.
+The terminating-computation theorem derives an exponential clock from the polynomial stack
+bound; it does not require a runtime certificate. The simulation gives polynomial space overhead,
+rather than an assertion of a linear space bound.
+
+## Main results
+
+* `Turing.TM2.run_polySpace`: a polynomial-time binary clock and polynomially bounded source
+  stacks give a polynomial-space simulation.
+* `Turing.TM2Computable.computableTidilyInPolySpace`: transfer termination and a polynomial
+  source-stack bound to tidy polynomial-space computation.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.1][Sipser2013]
+-/
+
+@[expose] public section
+
+attribute [local instance] Turing.FinTM2.kFin Turing.FinTM2.ΛFin Turing.FinTM2.σFin
+  Turing.FinTM2.Γk₀Fin
+
+namespace Turing.TM2
+
+open MultiTapeTM
+
+/-- Iterate a source machine using a binary clock. The source input may be computed from a
+typed input; only its actual intermediate stacks need to obey the supplied space bound. -/
+theorem run_polySpace (tm : FinTM2) [∀ k, Finite (tm.Γ k)]
+    {α : Type} {encIn : α ↪ List Bool} {input : α → List (tm.Γ tm.k₀)}
+    {clock space : α → ℕ}
+    (hinput : ComputableTidilyInPolyTime input encIn (encList (encFinite (tm.Γ tm.k₀))))
+    (hclock : ComputableTidilyInPolyTime clock encIn encNat)
+    (hspace : PolyBounded (fun a => (encIn a).length) space)
+    (hstacks : ∀ a i, i ≤ clock a → ∀ k,
+      (((stepTotal tm.m)^[i] (initList tm (input a))).stk k).length ≤ space a) :
+    ComputableTidilyInPolySpace
+      (fun a => (stepTotal tm.m)^[clock a] (initList tm (input a))) encIn encCfg := by
+  obtain ⟨C, hC⟩ := length_encCfg_le (Γ := tm.Γ) (Λ := tm.Λ) (σ := tm.σ)
+  apply ComputableTidilyInPolySpace.iterate hclock
+    (.of_polyTime ((initList_polyTime tm).comp hinput))
+    (.of_polyTime (stepTotal_polyTime tm.m))
+    ((PolyBounded.const C).mul (hspace.add (.const 1)))
+  intro a i hi
+  exact hC _ _ (hstacks a i hi)
+
+end Turing.TM2
+
+namespace Turing.TM2Computable
+
+open MultiTapeTM MultiTapeTM.ComputableTidilyInPolyTime
+
+/-- A terminating Mathlib computation with polynomially bounded source stacks is tidily
+computable within polynomial space. No source runtime bound or computable space bound is needed.
+The bound includes the input and output stacks at initialization, during execution and at
+halting. -/
+theorem computableTidilyInPolySpace {α β αΓ βΓ : Type} [Finite αΓ] [Finite βΓ]
+    {ea : α → List αΓ} {eb : β → List βΓ} {f : α → β}
+    (h : TM2Computable ea eb f) [∀ k, Finite (h.tm.Γ k)]
+    (ha : Function.Injective ea) (hb : Function.Injective eb)
+    {space : α → ℕ} (hspace : PolyBounded (fun a => (ea a).length) space)
+    (hstacks : ∀ a i k,
+      (((TM2.stepTotal h.tm.m)^[i]
+        (initList h.tm (List.map h.inputAlphabet.symm (ea a)))).stk k).length ≤ space a) :
+    ComputableTidilyInPolySpace f
+      ((⟨ea, ha⟩ : α ↪ List αΓ).trans (encList (encFinite αΓ)))
+      ((⟨eb, hb⟩ : β ↪ List βΓ).trans (encList (encFinite βΓ))) := by
+  have hinput : ComputableTidilyInPolyTime ea
+      ((⟨ea, ha⟩ : α ↪ List αΓ).trans (encList (encFinite αΓ)))
+      (encList (encFinite αΓ)) := of_eq fun _ => rfl
+  have hmap := (map (of_finite h.inputAlphabet.symm
+    (encB := encFinite (h.tm.Γ h.tm.k₀)))).comp hinput
+  have hlength := (length_list (encFinite αΓ)).comp hinput
+  obtain ⟨p, hp⟩ := hspace.exists_polynomial
+  have hpBound := ((unary_eval p).comp hlength).polyBounded
+  obtain ⟨C, hC⟩ := TM2.exists_exponential_clock h.tm
+  let q : Polynomial ℕ := Polynomial.C C * (p + 1) + 1
+  have hclock : ComputableTidilyInPolyTime
+      (fun a => 2 ^ (C * (p.eval (ea a).length + 1) + 1))
+      ((⟨ea, ha⟩ : α ↪ List αΓ).trans (encList (encFinite αΓ))) encNat := by
+    simpa only [Function.comp_def, q, Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_C,
+      Polynomial.eval_one] using binary_two_pow.comp ((unary_eval q).comp hlength)
+  have hrun := TM2.run_polySpace h.tm hmap hclock hpBound
+    (fun a i _ k => (hstacks a i k).trans (hp a))
+  have hstacks' := (ComputableTidilyInPolySpace.of_polyTime TM2.cfg_stacks).comp hrun
+  have hout := (ComputableTidilyInPolySpace.of_polyTime
+    (dpi_apply (fun k => encList (encFinite (h.tm.Γ k))) h.tm.k₁)).comp hstacks'
+  have hword := (ComputableTidilyInPolySpace.of_polyTime
+    (map (of_finite h.outputAlphabet (encB := encFinite βΓ)))).comp hout
+  obtain ⟨T, S, hS, hword⟩ := hword
+  refine ⟨T, S, hS, hword.of_enc_eq ?_⟩
+  intro a
+  have heval := hC _ _ (p.eval (ea a).length) (h.outputsFun a)
+    (fun i k => (hstacks a i k).trans (hp a))
+  have houtput := congrArg (fun cfg : TM2.Cfg h.tm.Γ h.tm.Λ h.tm.σ =>
+    List.map h.outputAlphabet (cfg.stk h.tm.k₁)) heval
+  have hresult : List.map h.outputAlphabet
+      (((TM2.stepTotal h.tm.m)^[2 ^ (C * (p.eval (ea a).length + 1) + 1)]
+        (initList h.tm (List.map h.inputAlphabet.symm (ea a)))).stk h.tm.k₁) = eb (f a) := by
+    simpa [haltList] using houtput
+  exact congrArg (encList (encFinite βΓ)) hresult.symm
+
+end Turing.TM2Computable

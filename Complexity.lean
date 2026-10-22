@@ -549,6 +549,7 @@ public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeogr
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Membership
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
+public import Complexity.Computability.Complexity.Classes.Space.TM2
 public import Complexity.Computability.Complexity.Classes.Space.TQBF
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Evaluation
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Formula
@@ -893,7 +894,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machi
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space
+public import Complexity.Computability.Machines.Turing.TM2.ConfigBound
 public import Complexity.Computability.Machines.Turing.TM2.Encoding
+public import Complexity.Computability.Machines.Turing.TM2.PolySpace
 public import Complexity.Computability.Machines.Turing.TM2.PolyTime
 public import Complexity.Computability.Machines.Turing.TM2.Simulation
 public import Complexity.Computability.PCP.Amplification
