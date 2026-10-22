@@ -612,12 +612,26 @@ semantics. Summed node visits are bounded by the sum of the current set cardinal
 selected operation history. No balancing, logarithmic worst-case bound or RAM-time result is
 claimed. Checked examples contrast insertion orders producing heights three and seven on the
 same seven keys, and a client asks for the minimum before choosing its strict-successor argument.
+
+Deletion on the same trees is proved separately from the stateful interface, which does not yet
+include it. On an ordered tree, deleting a key removes exactly that key from the represented set
+and preserves the strict invariant; deleting an absent key leaves the tree unchanged, ordered or
+not. A matching node is replaced by its left subtree when its right subtree is empty and otherwise
+by the least key of its right subtree, which is detached there. Unlike Chapter 12 of
+\citet{CLRS2009}, a node with only a right subtree is also rebuilt around its successor. Deletion
+visits at most the initial height $h$ in the same model, charging the search path and the
+successor descent, and never increases the height.
 \declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Data/OrderedSet.lean}{49}{Cslib.OrderedSet.least_spec}
 \declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Semantics/Stateful/OrderedSet.lean}{56}{Cslib.OrderedSet.spec}
 \declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{130}{Cslib.Algorithms.Lean.SearchTree.ordered_insert}
 \declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{225}{Cslib.Algorithms.Lean.SearchTree.successor_spec}
 \declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{91}{Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height}
 \declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{136}{Cslib.Algorithms.Lean.SearchTree.run_correct}
+\declat{490f03d7092b12bd9b6d62cebc066f632c865da8}{Complexity/Algorithms/Lean/SearchTree/Erase.lean}{141}{Cslib.Algorithms.Lean.SearchTree.elements_erase}
+\declat{490f03d7092b12bd9b6d62cebc066f632c865da8}{Complexity/Algorithms/Lean/SearchTree/Erase.lean}{182}{Cslib.Algorithms.Lean.SearchTree.ordered_erase}
+\declat{490f03d7092b12bd9b6d62cebc066f632c865da8}{Complexity/Algorithms/Lean/SearchTree/Erase.lean}{201}{Cslib.Algorithms.Lean.SearchTree.erase_eq_of_notMem}
+\declat{490f03d7092b12bd9b6d62cebc066f632c865da8}{Complexity/Algorithms/Lean/SearchTree/Erase.lean}{232}{Cslib.Algorithms.Lean.SearchTree.eraseVisits_le_height}
+\declat{490f03d7092b12bd9b6d62cebc066f632c865da8}{Complexity/Algorithms/Lean/SearchTree/Erase.lean}{244}{Cslib.Algorithms.Lean.SearchTree.height_erase_le}
 \end{result}
 
 \begin{result}
