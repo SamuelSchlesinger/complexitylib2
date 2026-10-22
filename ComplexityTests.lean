@@ -116,6 +116,7 @@ import ComplexityTests.FusionClosure
 import ComplexityTests.FusionConondeterministic
 import ComplexityTests.FusionConsistency
 import ComplexityTests.FusionConverse
+import ComplexityTests.FusionDeMorgan
 import ComplexityTests.FusionCyclic
 import ComplexityTests.FusionGraph
 import ComplexityTests.FusionHomomorphism

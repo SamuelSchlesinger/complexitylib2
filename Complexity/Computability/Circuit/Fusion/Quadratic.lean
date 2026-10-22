@@ -10,6 +10,9 @@ module
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Compiler
 public import Complexity.Computability.Circuit.Iteration
 import Mathlib.Data.Finset.Card
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Algebra.Order.BigOperators.Group.List
+import Mathlib.Tactic.Linarith
 
 /-!
 # Quadratic completeness of semifilter covers
@@ -17,6 +20,10 @@ import Mathlib.Data.Finset.Card
 A cover of length `t` yields an acyclic set circuit with exactly `t²` charged AND gates.
 Unions and constants are free. The construction works on arbitrary carriers: at each point,
 only the `t` pair coordinates can become true, so `t` synchronous rounds suffice.
+
+Counting every gate instead, unions and constants included, the circuit over `n` supplied sets
+has at most `4 (t + 1)² (n + t + 1)` gates: each round reads at most `n + t` seeds per argument
+through a union tree.
 
 ## Main definitions
 
@@ -27,6 +34,7 @@ only the `t` pair coordinates can become true, so `t` synchronous rounds suffice
 
 * `Cslib.Circuits.Fusion.PairClosureCompiler.readState_stages`: `t` rounds recover the closure.
 * `Cslib.Circuits.Fusion.PairCover.cost_toCircuit`: exactly `t²` AND gates.
+* `Cslib.Circuits.Fusion.PairCover.size_toCircuit_le`: at most `4 (t + 1)² (n + t + 1)` gates.
 * `Cslib.Circuits.Fusion.PairCover.eval_toCircuit`: evaluation gives the target.
 * `Cslib.Circuits.Fusion.ecomplexityFrom_le_pairCoverComplexity_sq`: the minimum AND cost is at
   most the square of unrestricted cover complexity.
@@ -207,6 +215,71 @@ theorem eval_stageCircuit (k : ℕ) :
       Fin.append_comp_castAdd, eval_updateCircuit, hrestrict, stages]
     rfl
 
+/-- A union tree has one disjunction per argument and its seed constant. -/
+theorem size_joinFormula {r : ℕ} (seed : Bool) (fs : List (Formula Monotone.signature r)) :
+    (joinFormula seed fs).size = (fs.map (·.size)).sum + fs.length + 1 := by
+  induction fs with
+  | nil => simp [joinFormula, Monotone.const]
+  | cons f fs ih =>
+    simp only [joinFormula, Monotone.or, Formula.size_gate, Fin.sum_univ_two, Matrix.cons_val_zero,
+      Matrix.cons_val_one, Matrix.cons_val_fin_one, ih, List.map_cons, List.sum_cons,
+      List.length_cons]
+    lia
+
+private theorem size_ite_input_le {r : ℕ} (p : Prop) [Decidable p] (i : Fin r) :
+    (if p then Formula.input i else Monotone.const false :
+      Formula Monotone.signature r).size ≤ 1 := by
+  split <;> simp [Monotone.const]
+
+/-- Reading a closure coordinate uses at most two gates per input seed and pair value. -/
+theorem size_readFormula_le (s : Set ↥(targetᶜ)) :
+    (readFormula target input pairs s).size ≤ 2 * (n + pairs.length) + 1 := by
+  classical
+  rw [readFormula, size_joinFormula]
+  set L := List.ofFn (fun i : Fin n =>
+      if Subtype.val ⁻¹' input i ⊆ s then Formula.input (Fin.castAdd (pairs.length + 1) i)
+      else Monotone.const false) ++
+    List.ofFn (fun j : Fin pairs.length =>
+      if (pairs.get j).1 ∩ (pairs.get j).2 ⊆ s then Formula.input (Fin.natAdd n j.castSucc)
+      else Monotone.const false) with hL
+  have hsum := List.sum_le_length_nsmul (L.map (·.size)) 1 fun x hx => by
+    obtain ⟨F, hF, rfl⟩ := List.mem_map.1 hx
+    rcases List.mem_append.1 hF with h | h <;> obtain ⟨i, rfl⟩ := List.mem_ofFn.1 h <;>
+      exact size_ite_input_le _ _
+  have hlen : L.length = n + pairs.length := by simp [hL]
+  simp only [List.length_map, smul_eq_mul, mul_one, hlen] at hsum
+  rw [hlen]
+  lia
+
+/-- The update circuit has at most `(t + 1) (4 (n + t) + 3)` gates for `t` pairs. -/
+theorem size_updateCircuit_le :
+    (updateCircuit target input pairs).size ≤
+      (pairs.length + 1) * (4 * (n + pairs.length) + 3) := by
+  rw [updateCircuit, Circuit.size_pi]
+  calc ∑ j, (updateFormula target input pairs j).toCircuit.size
+      ≤ ∑ _j : Fin (pairs.length + 1), (4 * (n + pairs.length) + 3) := by
+        refine Finset.sum_le_sum fun j _ => ?_
+        rw [Formula.size_toCircuit]
+        induction j using Fin.lastCases with
+        | last =>
+          rw [updateFormula, Fin.lastCases_last]
+          exact (size_readFormula_le target input pairs ∅).trans (by lia)
+        | cast j =>
+          rw [updateFormula, Fin.lastCases_castSucc]
+          have h₁ := size_readFormula_le target input pairs (pairs.get j).1
+          have h₂ := size_readFormula_le target input pairs (pairs.get j).2
+          simp only [Monotone.and, Formula.size_gate, Fin.sum_univ_two, Matrix.cons_val_zero,
+            Matrix.cons_val_one, Matrix.cons_val_fin_one]
+          lia
+    _ = (pairs.length + 1) * (4 * (n + pairs.length) + 3) := by simp
+
+/-- Each propagation round charges the gates of one update circuit. -/
+theorem size_stageCircuit (k : ℕ) :
+    (stageCircuit target input pairs k).size =
+      (pairs.length + 1) + k * (updateCircuit target input pairs).size := by
+  simp [stageCircuit, roundCircuit, initialCircuit, Circuit.id, Formula.size_toCircuit,
+    Monotone.const]
+
 end Cslib.Circuits.Fusion.PairClosureCompiler
 
 namespace Cslib.Circuits.Fusion
@@ -243,6 +316,17 @@ noncomputable def PairCover.toCircuit (c : PairCover target input) :
   rw [PairCover.toCircuit, Circuit.eval_comp, houtput, Formula.eval_toCircuit,
     PairClosureCompiler.eval_readFormula, hrestrict, PairClosureCompiler.readState_stages,
     c.pairClosure_empty]
+
+/-- The compiled circuit of a `t`-pair cover over `n` inputs has at most `4 (t + 1)² (n + t + 1)`
+gates in total, counting unions and constants. -/
+theorem PairCover.size_toCircuit_le (c : PairCover target input) :
+    c.toCircuit.size ≤ 4 * (c.pairs.length + 1) ^ 2 * (n + c.pairs.length + 1) := by
+  have hr := PairClosureCompiler.size_readFormula_le target input c.pairs ∅
+  have hu := PairClosureCompiler.size_updateCircuit_le target input c.pairs
+  rw [PairCover.toCircuit, Circuit.size_comp, PairClosureCompiler.size_stageCircuit,
+    Formula.size_toCircuit]
+  have hk := Nat.mul_le_mul_left c.pairs.length hu
+  nlinarith
 
 /-- Every unrestricted pair cover yields a quadratic upper bound for native AND complexity. -/
 theorem PairCover.ecomplexityFrom_le_sq (c : PairCover target input) :
