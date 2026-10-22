@@ -180,7 +180,7 @@ noncomputable def modelEquiv (hI : I.Admissible) :
         rw [← hv]
         exact (C.realize_bit M fun a => I.rank M (x a).val (x a).property).symm
 
-@[simp] theorem modelEquiv_apply (hI : I.Admissible)
+theorem modelEquiv_apply (hI : I.Admissible)
     (x : C.toInterpretation.Model (Fin M.size)) :
     C.modelEquiv hI x = I.rank M x.val x.property :=
   rfl

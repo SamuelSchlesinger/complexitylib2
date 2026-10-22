@@ -55,7 +55,7 @@ theorem flattenTuple_finProdFinEquiv {α : Type*} {k l : ℕ} (x : Fin (l * k) �
   funext a
   simp only [flattenTuple, Prod.mk.eta, Equiv.apply_symm_apply]
 
-@[simp] theorem flattenTuple_finProdFinEquiv_apply {α : Type*} {k l : ℕ} (x : Fin l → Fin k → α)
+theorem flattenTuple_finProdFinEquiv_apply {α : Type*} {k l : ℕ} (x : Fin l → Fin k → α)
     (p : Fin l × Fin k) : flattenTuple x (finProdFinEquiv p) = x p.1 p.2 :=
   flattenTuple_apply x p.1 p.2
 

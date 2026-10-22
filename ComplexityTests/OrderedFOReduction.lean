@@ -110,7 +110,8 @@ noncomputable def reverseCertificate : reverse.Certificate where
       constructor <;> intro h <;> lia
 
 theorem relMap_map_reverse (x : Fin 2 → reverse.map admissible_reverse M) :
-    RelMap adj x ↔ RelMap adj ![Fin.cast (card_reverse M) (x 1), Fin.cast (card_reverse M) (x 0)] := by
+    RelMap adj x ↔
+      RelMap adj ![Fin.cast (card_reverse M) (x 1), Fin.cast (card_reverse M) (x 0)] := by
   change ((LHom.sumInl : Language.graph →ᴸ language Language.graph).onFormula
     (Relations.formula₂ adj (Term.var ((1 : Fin 2), (1 : Fin 2))) (Term.var (0, 1)))).Realize
     (fun p : Fin 2 × Fin 2 => reverse.unrank M (x p.1) p.2) ↔ _
