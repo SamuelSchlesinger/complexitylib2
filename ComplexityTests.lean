@@ -368,6 +368,7 @@ import ComplexityTests.ThresholdNC1
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
+import ComplexityTests.TimeReductions
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
 import ComplexityTests.TreeEvalAry

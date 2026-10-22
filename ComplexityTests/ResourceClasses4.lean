@@ -7,9 +7,8 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.Classes.Padding
 import Complexity.Computability.Complexity.Classes.RP
 
-/-! Padding: `DTIME` under timed reductions, the padded problem of a nondeterministic machine, the
-translation lemma and `P = NP → EXP = NEXP`; and error reduction for deciders of a nontrivial
-problem. -/
+/-! Padding: the padded problem of a nondeterministic machine, the translation lemma and
+`P = NP → EXP = NEXP`; and error reduction for deciders of a nontrivial problem. -/
 
 namespace ComplexityTests.ResourceClasses4
 
@@ -47,22 +46,6 @@ example {α : Type} {enc : α ↪ List Bool} {t : ℕ → ℕ} {A : Set α} (hA 
     fun a => hdec.frame_append_mem_padded_iff ?_⟩
   rw [List.length_append, List.length_replicate, length_frame, Nat.mul_assoc]
   exact Nat.mul_le_mul_left _ (by nlinarith)
-
-/-- **`DTIME` under timed reductions**, for a problem outside `P`: the diagonal problem pulled back
-along the linear-time map from unary numbers to words of ones stays in exponential time. -/
-example : (fun n : ℕ => List.replicate n true) ⁻¹' {x | diagonal x = true} ∈ EXP encUnary := by
-  obtain ⟨k, hk⟩ := mem_EXP_iff.mp setOf_diagonal_mem_EXP
-  refine mem_EXP_iff.mpr ⟨k + 1, preimage_mem_DTIME (C := 2) hk
-    (ComputableTidilyInO.of_linear (.of_eq fun _ => rfl)) fun n => ?_⟩
-  simp only [encUnary_apply, encBits_apply, List.length_replicate]
-  have h₁ : n < 2 ^ n ^ (k + 1) := Nat.lt_two_pow_self.trans_le
-    (Nat.pow_le_pow_right (by norm_num) (Nat.le_self_pow (by omega) n))
-  have h₂ : 2 ^ n ^ k ≤ 2 ^ n ^ (k + 1) + 2 := by
-    rcases Nat.eq_zero_or_pos n with rfl | hn
-    · rcases k with _ | k <;> simp
-    · exact (Nat.pow_le_pow_right (by norm_num) (Nat.pow_le_pow_right hn (Nat.le_succ k))).trans
-        (Nat.le_add_right _ _)
-  omega
 
 /-- `P = NP` would collapse exponential time, for problems on bit words and on natural numbers in
 binary. -/
@@ -139,12 +122,6 @@ example : startsTrue ∈ RP encBits :=
   ⟨1, andHead, by unfold andHead; fun_prop, decidesWithOneSidedError_andHead⟩
 
 /-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.preimage_mem_DTIME' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.preimage_mem_DTIME
 
 /--
 info: 'Turing.MultiTapeTM.ComputableTidilyInO.unary_two_pow' depends on axioms:
