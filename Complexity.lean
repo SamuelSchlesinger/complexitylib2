@@ -328,6 +328,12 @@ public import Complexity.Computability.Circuit.Frontier.Nondeterministic
 public import Complexity.Computability.Circuit.Frontier.Projection
 public import Complexity.Computability.Circuit.Frontier.Rectangle
 public import Complexity.Computability.Circuit.Frontier.Reduction
+public import Complexity.Computability.Circuit.Frontier.SourceReduction
+public import Complexity.Computability.Circuit.Frontier.SourceReduction.Conditioning
+public import Complexity.Computability.Circuit.Frontier.SourceReduction.FourthMoment
+public import Complexity.Computability.Circuit.Frontier.SourceReduction.Majority
+public import Complexity.Computability.Circuit.Frontier.SourceReduction.Moments
+public import Complexity.Computability.Circuit.Frontier.SourceReduction.Sampler
 public import Complexity.Computability.Circuit.Frontier.Sweep
 public import Complexity.Computability.Circuit.Frontier.Unconditional
 public import Complexity.Computability.Circuit.Frontier.Witness
@@ -697,6 +703,7 @@ public import Complexity.Computability.Complexity.Problems.VertexCover
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Complexity.Reduction.ManyOne
 public import Complexity.Computability.Complexity.Reduction.TruthTable
+public import Complexity.Computability.Complexity.SourceReduction
 public import Complexity.Computability.DecisionTree.AffineScore
 public import Complexity.Computability.DecisionTree.Basic
 public import Complexity.Computability.DecisionTree.CanonicalTree
