@@ -9,17 +9,26 @@ import Complexity.Crypto.Computational.Bootstrapping
 /-!
 # Tests for Gentry's bootstrapping theorem
 
-Provides a concrete non-vacuous instantiation of `EncryptionScheme` and `Bootstrappable`, tests
-fixed-key and leveled homomorphic evaluation on De Morgan formulas and circuits, and audits the
-axiom dependencies of the headline theorems in `Complexity.Crypto.Computational.Bootstrapping`.
+Provides a concrete instantiation of the `EncryptionScheme` structure and the `Bootstrappable`
+interface, tests fixed-key and leveled homomorphic evaluation on De Morgan formulas and circuits,
+and audits the axiom dependencies of the headline theorems in
+`Complexity.Crypto.Computational.Bootstrapping`.
+
+The instance `trivialScheme` only shows that the *structure and interface fields* are jointly
+satisfiable. It is deliberately insecure (a ciphertext is the plaintext bit itself, and its
+`evalAugDecrypt` ignores the evaluation key), so it satisfies neither `SemanticSecure` nor
+`CircularSecure`; this file does not witness that the security hypotheses of
+`leveledFHE_of_bootstrappable` or `fixedKeyFHE_of_circularSecure` are satisfiable.
 -/
 
 namespace ComplexityTests.Crypto.Bootstrapping
 
 open Cslib Cslib.Crypto Cslib.Circuits Cslib.Probability Turing.MultiTapeTM
 
-/-- Concrete noiseless bit-framing scheme instantiating `EncryptionScheme` and `Bootstrappable`
-to witness that all structure and typeclass hypotheses are non-vacuous and jointly satisfiable. -/
+/-- Concrete noiseless bit-framing scheme instantiating `EncryptionScheme` and `Bootstrappable`.
+It witnesses only that the structure and typeclass fields are jointly satisfiable: encryption is the
+identity on the plaintext bit, so the scheme is *not* `SemanticSecure` or `CircularSecure`, and the
+security hypotheses of the bootstrapping theorems are not instantiated here. -/
 noncomputable def trivialScheme : EncryptionScheme where
   keyGen _ := pure ([], [false])
   encrypt _ b := pure [b]

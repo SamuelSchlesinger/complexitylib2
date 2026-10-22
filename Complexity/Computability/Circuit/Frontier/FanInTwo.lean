@@ -29,7 +29,7 @@ symbols, with `log K_n = o(n)` and `n log |U| - log |S_n| = o(n)`. Then for ever
 large `n`, every circuit of fan-in at most two deciding `S_n`, over any basis and interpretation
 on `U`, has more than
 
-* `(L - ε) n` inner gates, with `L = 1 + π / (3 arccos ((1 + 2√2)/4)) = 4.5624982…`
+* `(L - ε) n` inner gates, with `L = 1 + π / (3 arccos ((1 + 2√2)/4)) = 4.5624977…`
   (`Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_innerSize`);
 * `(456249/100000 - ε) n = (4.56249 - ε) n` inner gates, since `L ≥ 456249/100000`
   (`Cslib.Circuits.Frontier.eventually_456249_div_100000_sub_mul_lt_innerSize`);

@@ -17,7 +17,12 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 import Mathlib.Data.List.GetD
 
 /-!
-# Explicit sumset extractors in `P` and `(4.56249 - ε) N` circuit lower bounds over `B₂`
+# Conditional `(4.56249 - ε) N` circuit lower bounds in `P` from sumset extractors
+
+This module does **not** construct any explicit sumset extractor or disperser. Its circuit lower
+bounds for languages in `P` are all **conditional**: each takes a polynomial-time sumset-extractor
+(or sumset-disperser) family with the stated parameters as a hypothesis, and no such family is
+constructed in this library.
 
 This module connects the frontier sumset-extractor lower bounds of
 `Complexity.Computability.Circuit.Frontier.Extractor` to uniform polynomial-time languages in
@@ -42,10 +47,10 @@ This module connects the frontier sumset-extractor lower bounds of
    computing it satisfies *both* Mishra–Santhanam's finite gate-elimination bound
    `7 N ≤ 2 |C| + 14 d` at every input length `N` *and* the asymptotic `(4.56249 - ε) N` Gaussian
    frontier bound.
-4. **Conditional explicit `(4.56249 - ε) N` average-case and worst-case lower bounds in `P`:**
-   Given a polynomial-time Boolean sumset-extractor family `E` with sublinear (e.g. polylogarithmic)
-   min-entropy `k_N = o(N)` and error `δ_N`, the language `L = Language.ofSlices E` lies in
-   `Complexity.P encBits` and satisfies:
+4. **Conditional `(4.56249 - ε) N` average-case and worst-case lower bounds in `P`:**
+   *Assuming* a polynomial-time Boolean sumset-extractor family `E` with sublinear (e.g.
+   polylogarithmic) min-entropy `k_N = o(N)` and error `δ_N`, the language
+   `L = Language.ofSlices E` lies in `Complexity.P encBits` and satisfies:
    * for every `ε > 0`, some `γ > 0` bounds the agreement of every `B₂` circuit of size at most
      `(456249 / 100000 - ε) N` with `L.slice N` by `1 / 2 + δ_N + exp (-γ N)`
      (`exists_mem_P_eventually_agreement_le_of_isSumsetExtractor`,
@@ -54,10 +59,11 @@ This module connects the frontier sumset-extractor lower bounds of
      strictly greater than `(456249 / 100000 - ε) N` for all large `N`
      (`exists_mem_P_eventually_lt_size_of_isSumsetExtractor`), and in particular strictly greater
      than `4.56 N`
-     (`exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor`), directly strengthening
-     the `3.5 N - o(N)` bound of `Cslib.AffineDisperser.exists_mem_P_eventually_le_size`;
-   * via `balancePadFamily`, even a polynomial-time qualitative `SumsetDisperser` family with
-     `log K_N = o(N)` yields a language in `Complexity.P encBits` requiring more than
+     (`exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor`). Given such a family,
+     this would strengthen the unconditional `3.5 N - o(N)` bound of
+     `Cslib.AffineDisperser.exists_mem_P_eventually_le_size`; no such family is constructed here;
+   * via `balancePadFamily`, a hypothesised polynomial-time qualitative `SumsetDisperser` family
+     with `log K_N = o(N)` yields a language in `Complexity.P encBits` requiring more than
      `(456249 / 100000 - ε) N` gates over `B₂`
      (`exists_mem_P_eventually_lt_size_of_sumsetDisperser`).
 
@@ -71,13 +77,16 @@ This module connects the frontier sumset-extractor lower bounds of
 * `Cslib.Circuits.Frontier.IsSumsetExtractor.seven_mul_le_two_mul_size_add`: Mishra–Santhanam's
   `7 N ≤ 2 |C| + 14 d` bound for sumset extractors.
 * `Cslib.Circuits.Frontier.exists_mem_P_eventually_agreement_le_of_isSumsetExtractor`,
-  `exists_mem_P_eventually_agreement_le_of_polylog_sumsetExtractor`: `(4.56249 - ε) N` average-case
-  circuit lower bounds in `P`.
+  `exists_mem_P_eventually_agreement_le_of_polylog_sumsetExtractor`: conditional
+  `(4.56249 - ε) N` average-case circuit lower bounds in `P`, assuming a polynomial-time
+  sumset-extractor family.
 * `Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_isSumsetExtractor`,
-  `exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor`: `(4.56249 - ε) N` and
-  `4.56 N` worst-case circuit lower bounds in `P` over `fullSignature 2 Bool`.
-* `Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_sumsetDisperser`: `(4.56249 - ε) N`
-  worst-case circuit lower bound in `P` from a qualitative sumset disperser via `balancePadFamily`.
+  `exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor`: conditional
+  `(4.56249 - ε) N` and `4.56 N` worst-case circuit lower bounds in `P` over `fullSignature 2 Bool`,
+  assuming a polynomial-time sumset-extractor family.
+* `Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_sumsetDisperser`: conditional
+  `(4.56249 - ε) N` worst-case circuit lower bound in `P`, assuming a polynomial-time qualitative
+  sumset-disperser family, via `balancePadFamily`.
 
 ## References
 
@@ -238,7 +247,7 @@ theorem IsSumsetExtractor.seven_mul_le_two_mul_size_add {N d : ℕ} {f : BitStri
     7 * N ≤ 2 * C.size + 14 * d :=
   Boolean.AffineDisperser.seven_mul_le_two_mul_size_add (h.isAffineDisperser hδ hk) C hC
 
-/-! ### Explicit `(4.56249 - ε) N` average-case and worst-case lower bounds in `P` -/
+/-! ### Conditional `(4.56249 - ε) N` average-case and worst-case lower bounds in `P` -/
 
 /-- **Average-case `(4.56249 - ε) N` lower bound for the slices of a sumset-extractor language.**
 If `E_N : BitString N → Bool` is a `(k_N, δ_N)`-sumset extractor with `k_N = o(N)`, then for every
@@ -260,8 +269,9 @@ theorem eventually_agreement_le_ofSlices_of_isSumsetExtractor
   simpa only [Language.slice_ofSlices, Set.mem_singleton_iff] using
     hN fullInterpretation {true} C hsize
 
-/-- **An explicit language in `P` with `(4.56249 - ε) N` average-case circuit hardness over `B₂`,
-from a polynomial-time sumset extractor.** If `E` is tidily computable in polynomial time and is a
+/-- **Conditional: a language in `P` with `(4.56249 - ε) N` average-case circuit hardness over
+`B₂`, assuming a polynomial-time sumset-extractor family.** The extractor family is a hypothesis;
+none is constructed here. If `E` is tidily computable in polynomial time and is a
 `(k_N, δ_N)`-sumset extractor with `k_N = o(N)`, then `L = Language.ofSlices E` is in `P encBits`
 and for every `ε > 0` there is `γ > 0` such that eventually every `B₂` circuit of size at most
 `(456249 / 100000 - ε) N` agrees with `L.slice N` on at most `1 / 2 + δ_N + exp (-γ N)` of the
@@ -280,9 +290,11 @@ theorem exists_mem_P_eventually_agreement_le_of_isSumsetExtractor
   ⟨Language.ofSlices E, ofSlices_mem_P hP, fun hε =>
     eventually_agreement_le_ofSlices_of_isSumsetExtractor hE hk hε⟩
 
-/-- **An explicit language in `P` with `(4.56249 - ε) N` average-case circuit hardness and
-`1 / 2 + N^{-c} + exp (-γ N)` correlation bound**, under the polylogarithmic min-entropy and
-polynomially small error regime of [Chattopadhyay and Liao][ChattopadhyayLiao2022]. -/
+/-- **Conditional: a language in `P` with `(4.56249 - ε) N` average-case circuit hardness and
+`1 / 2 + N^{-c} + exp (-γ N)` correlation bound**, assuming a polynomial-time sumset-extractor
+family `E` in the polylogarithmic min-entropy and polynomially small error regime of
+[Chattopadhyay and Liao][ChattopadhyayLiao2022]. The family `E` and its parameters are
+hypotheses; this module does not construct it. -/
 theorem exists_mem_P_eventually_agreement_le_of_polylog_sumsetExtractor
     {E : ∀ N, BitString N → Bool} {k δ : ℕ → ℝ} {A C c : ℝ}
     (hP : ComputableTidilyInPolyTime
@@ -318,10 +330,11 @@ theorem eventually_lt_size_of_computes_ofSlices_of_isSumsetExtractor
   rw [Language.slice_ofSlices] at hC
   exact hN fullInterpretation C hC
 
-/-- **An explicit language in `P` with `B₂` circuit complexity `> (4.56249 - ε) N`**, from a
-polynomial-time sumset extractor. Directly parallels
-`Cslib.AffineDisperser.exists_mem_P_eventually_le_size` while improving the leading coefficient from
-`7 / 2 = 3.5` to `456249 / 100000 = 4.56249`. -/
+/-- **Conditional: a language in `P` with `B₂` circuit complexity `> (4.56249 - ε) N`, assuming a
+polynomial-time sumset-extractor family `E`.** The family is a hypothesis; none is constructed here.
+The statement has the shape of the unconditional
+`Cslib.AffineDisperser.exists_mem_P_eventually_le_size` (leading coefficient `7 / 2 = 3.5`); given
+such a family it would improve that coefficient to `456249 / 100000 = 4.56249`. -/
 theorem exists_mem_P_eventually_lt_size_of_isSumsetExtractor
     {E : ∀ N, BitString N → Bool} {k δ : ℕ → ℝ} {δ₀ : ℝ}
     (hP : ComputableTidilyInPolyTime
@@ -336,9 +349,10 @@ theorem exists_mem_P_eventually_lt_size_of_isSumsetExtractor
   ⟨Language.ofSlices E, ofSlices_mem_P hP, fun hε =>
     eventually_lt_size_of_computes_ofSlices_of_isSumsetExtractor hE hk hδ hδ₀ hε⟩
 
-/-- **An explicit language in `P` with `B₂` circuit complexity `> 4.56 N`**, specializing
-`exists_mem_P_eventually_lt_size_of_isSumsetExtractor` to `ε = 249 / 100000`. Compare with
-`Cslib.AffineDisperser.exists_mem_P_eventually_le_size` (`3.5 N - O(N / log N)`). -/
+/-- **Conditional: a language in `P` with `B₂` circuit complexity `> 4.56 N`, assuming a
+polynomial-time sumset-extractor family**, specializing
+`exists_mem_P_eventually_lt_size_of_isSumsetExtractor` to `ε = 249 / 100000`. Compare with the
+unconditional `Cslib.AffineDisperser.exists_mem_P_eventually_le_size` (`3.5 N - O(N / log N)`). -/
 theorem exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor
     {E : ∀ N, BitString N → Bool} {k δ : ℕ → ℝ} {δ₀ : ℝ}
     (hP : ComputableTidilyInPolyTime
@@ -357,9 +371,10 @@ theorem exists_mem_P_eventually_456_div_100_lt_size_of_isSumsetExtractor
   have := hN C hC
   linarith
 
-/-- **An explicit language in `P` with `B₂` circuit complexity `> (4.56249 - ε) N` from a
-qualitative sumset disperser**, via one-bit balanced padding (`balancePadFamily`), requiring no
-quantitative bias bound. -/
+/-- **Conditional: a language in `P` with `B₂` circuit complexity `> (4.56249 - ε) N`, assuming a
+qualitative sumset-disperser family whose language is in `P`**, via one-bit balanced padding
+(`balancePadFamily`), requiring no quantitative bias bound. The disperser family is a hypothesis;
+none is constructed here. -/
 theorem exists_mem_P_eventually_lt_size_of_sumsetDisperser
     {D : ∀ N, BitString N → Bool} {K : ℕ → ℕ}
     (hP : (Language.ofSlices D : Set (List Bool)) ∈ P encBits)
