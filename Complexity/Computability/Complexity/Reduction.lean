@@ -99,13 +99,6 @@ theorem polyTimeReducible_iff_manyOneReducibleBy {encA : α ↪ List Bool} {encB
       ManyOneReducibleBy (ComputableTidilyInPolyTime · encA encB) A B :=
   Iff.rfl
 
-/-- A many-one reduction by a map computable tidily in polynomial time is a polynomial-time
-reduction. -/
-theorem ManyOneReducibleBy.polyTimeReducible {encA : α ↪ List Bool} {encB : β ↪ List Bool}
-    {A : Set α} {B : Set β} (h : ManyOneReducibleBy (ComputableTidilyInPolyTime · encA encB) A B) :
-    PolyTimeReducible encA encB A B :=
-  h
-
 /-- `B` is hard for the class `C` under polynomial-time many-one reductions: every problem in `C`,
 with any encoding of its instances, reduces to `B`. This is `HardUnder` for `PolyTimeReducible`. -/
 def PolyTimeHard (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (encB : β ↪ List Bool)

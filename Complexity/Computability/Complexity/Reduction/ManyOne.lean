@@ -8,8 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Mathlib.Data.Set.Basic
-public import Mathlib.Data.Option.Basic
+public import Mathlib.Data.Set.Operations
 public import Mathlib.Logic.Embedding.Basic
 import Mathlib.Order.BooleanAlgebra.Set
 
@@ -18,10 +17,9 @@ import Mathlib.Order.BooleanAlgebra.Set
 
 Most reductions of complexity theory have one shape: a map `f` of an admissible kind sends the
 instances of `A` to instances of `B`, preserving membership. Here the admissible maps are an
-arbitrary predicate `Good` on functions, so polynomial-time, logarithmic-space, computable and
-first-order reductions are all instances. A `ManyOneReduction Good A B` is such a map as data, to
-which constructions can attach further facts such as size bounds; `ManyOneReducibleBy Good A B`
-says that one exists.
+arbitrary predicate `Good` on functions, and `ManyOneReducibleBy Good A B` says that such a map
+exists. Polynomial-time and logarithmic-space reductions of encoded problems, and first-order
+reductions of ordered queries, are instances.
 
 Reflexivity and transitivity are not assumed: they follow from closure of the admissible maps
 under the identity and composition (`ManyOneReducibleBy.refl`, `ManyOneReducibleBy.trans`), which
@@ -43,7 +41,6 @@ on `Primcodable` types, the instance of this shape for computable maps; it is no
 
 ## Main definitions
 
-* `Cslib.Complexity.ManyOneReduction`: a many-one reduction by an admissible map, as data.
 * `Cslib.Complexity.ManyOneReducibleBy`: many-one reducibility by admissible maps.
 * `Cslib.Complexity.HardUnder`, `Cslib.Complexity.CompleteUnder`: hardness and completeness for a
   class under a reducibility.
@@ -75,37 +72,12 @@ universe u v w x
 
 variable {α : Type u} {β : Type v} {γ : Type w}
 
-/-- A many-one reduction of `A` to `B` by an admissible map: `toFun` satisfies `Good` and
-`a ∈ A ↔ toFun a ∈ B` for every `a`. -/
-structure ManyOneReduction (Good : (α → β) → Prop) (A : Set α) (B : Set β) where
-  /-- The reduction map. -/
-  toFun : α → β
-  /-- The map is admissible. -/
-  good : Good toFun
-  /-- The map preserves membership in both directions. -/
-  mem_iff : ∀ a, a ∈ A ↔ toFun a ∈ B
-
 /-- `A` many-one reduces to `B` by an admissible map: some `f` satisfying `Good` has
 `a ∈ A ↔ f a ∈ B` for every `a`. -/
 def ManyOneReducibleBy (Good : (α → β) → Prop) (A : Set α) (B : Set β) : Prop :=
   ∃ f : α → β, Good f ∧ ∀ a, a ∈ A ↔ f a ∈ B
 
 variable {Good : (α → β) → Prop} {A : Set α} {B : Set β}
-
-/-- A reduction witnesses reducibility. -/
-theorem ManyOneReduction.reducibleBy (r : ManyOneReduction Good A B) :
-    ManyOneReducibleBy Good A B :=
-  ⟨r.toFun, r.good, r.mem_iff⟩
-
-/-- Reducibility is the existence of a reduction. -/
-theorem manyOneReducibleBy_iff_nonempty :
-    ManyOneReducibleBy Good A B ↔ Nonempty (ManyOneReduction Good A B) :=
-  ⟨fun ⟨f, hf, h⟩ => ⟨⟨f, hf, h⟩⟩, fun ⟨r⟩ => r.reducibleBy⟩
-
-/-- A reduction chosen from reducibility. -/
-noncomputable def ManyOneReducibleBy.reduction (h : ManyOneReducibleBy Good A B) :
-    ManyOneReduction Good A B :=
-  (manyOneReducibleBy_iff_nonempty.mp h).some
 
 namespace ManyOneReducibleBy
 

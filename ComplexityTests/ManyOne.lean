@@ -113,9 +113,15 @@ example : LogSpaceReducible encA encB A B ↔
     ManyOneReducibleBy (ComputableInLogSpace · encA encB) A B :=
   logSpaceReducible_iff_manyOneReducibleBy
 
-/-- A core reduction by logspace maps, built from the core's `refl`, is a logspace reduction. -/
+/-- A core reduction by logspace maps, built from the core's `refl`, is a logspace reduction
+through the bridge. -/
 example : LogSpaceReducible encA encA A A :=
-  (ManyOneReducibleBy.refl ComputableInLogSpace.id A).logSpaceReducible
+  logSpaceReducible_iff_manyOneReducibleBy.mpr (ManyOneReducibleBy.refl ComputableInLogSpace.id A)
+
+/-- A core reduction by polynomial-time maps is a polynomial-time reduction through the bridge. -/
+example : PolyTimeReducible encA encA A A :=
+  polyTimeReducible_iff_manyOneReducibleBy.mpr
+    (ManyOneReducibleBy.refl ComputableTidilyInPolyTime.id' A)
 
 /-- Completeness under logspace reductions is `CompleteUnder` for `LogSpaceReducible`. -/
 example (h : LogSpaceComplete 𝒞 encB B) :
@@ -145,18 +151,6 @@ example : LogSpaceHard SL encUSTCON USTCON :=
     (LogSpaceReducible.refl encUSTCON USTCON)
 
 /-! ### Axiom guards -/
-
-/--
-info: 'Cslib.Complexity.ManyOneReduction.reducibleBy' does not depend on any axioms
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ManyOneReduction.reducibleBy
-
-/--
-info: 'Cslib.Complexity.manyOneReducibleBy_iff_nonempty' does not depend on any axioms
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.manyOneReducibleBy_iff_nonempty
 
 /--
 info: 'Cslib.Complexity.ManyOneReducibleBy.refl' does not depend on any axioms

@@ -173,12 +173,6 @@ theorem logSpaceReducible_iff_manyOneReducibleBy :
     LogSpaceReducible enc encB A B ↔ ManyOneReducibleBy (ComputableInLogSpace · enc encB) A B :=
   Iff.rfl
 
-/-- A many-one reduction by a map computable in logarithmic space is a logspace reduction. -/
-theorem ManyOneReducibleBy.logSpaceReducible
-    (h : ManyOneReducibleBy (ComputableInLogSpace · enc encB) A B) :
-    LogSpaceReducible enc encB A B :=
-  h
-
 /-- Every problem reduces to itself in logarithmic space. -/
 theorem LogSpaceReducible.refl (enc : α ↪ List Bool) (A : Set α) : LogSpaceReducible enc enc A A :=
   ManyOneReducibleBy.refl ComputableInLogSpace.id A
