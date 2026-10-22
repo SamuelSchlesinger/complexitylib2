@@ -9,19 +9,28 @@ module
 
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
+public import Complexity.Computability.Complexity.Reduction.ManyOne
 
 /-!
 # Polynomial-time many-one reductions
 
 `PolyTimeReducible encA encB A B`: a function computable in polynomial time with respect to the
 encodings `encA` and `encB` maps instances of `A` to instances of `B`, preserving membership [Arora
-and Barak, Definition 2.7][AroraBarak09].
+and Barak, Definition 2.7][AroraBarak09]. It is, by definition, the many-one reducibility
+`Cslib.Complexity.ManyOneReducibleBy` by maps computable tidily in polynomial time
+(`Cslib.Complexity.polyTimeReducible_iff_manyOneReducibleBy`), and its preorder and complement
+lemmas are instances of the core's. Its body is kept as the `∃` statement, so that the
+admissibility goal of an anonymous constructor is `ComputableTidilyInPolyTime f encA encB` itself,
+as `fun_prop` expects.
 
 A class of problems is given, as `NP` or `coNP`, by a set of problems for every type of instances
 and every encoding of them. A problem `B` is hard for such a class `C` when every problem in `C`,
 with any encoding of its instances, reduces to `B` (`PolyTimeHard C encB B`), and complete when it
-also belongs to `C` (`PolyTimeComplete C encB B`). `NPHard`, `NPComplete`, `coNPHard` and
-`coNPComplete` are the instances for `NP` and `coNP`. When the problems of a class `D` are the
+also belongs to `C` (`PolyTimeComplete C encB B`), the instances of `Cslib.Complexity.HardUnder`
+and `Cslib.Complexity.CompleteUnder` for `PolyTimeReducible`. The second conjunct of
+`PolyTimeComplete` is stated as `PolyTimeHard`, so that its projection keeps the `PolyTimeHard`
+API. `NPHard`, `NPComplete`, `coNPHard`
+and `coNPComplete` are the instances for `NP` and `coNP`. When the problems of a class `D` are the
 complements of those of `C`, the complement of a `C`-complete problem is `D`-complete
 (`PolyTimeComplete.compl`).
 
@@ -76,22 +85,51 @@ open Turing.MultiTapeTM
 variable {α β : Type*}
 
 /-- `A` reduces to `B` in polynomial time: some `f`, computable in polynomial time with respect to
-`encA` and `encB`, satisfies `a ∈ A ↔ f a ∈ B`. -/
+`encA` and `encB`, satisfies `a ∈ A ↔ f a ∈ B`. This is `ManyOneReducibleBy` for the maps computable
+tidily in polynomial time (`polyTimeReducible_iff_manyOneReducibleBy`). -/
 def PolyTimeReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (A : Set α) (B : Set β) :
     Prop :=
   ∃ f : α → β, ComputableTidilyInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
 
+/-- Polynomial-time reducibility is many-one reducibility by the maps computable tidily in
+polynomial time. -/
+theorem polyTimeReducible_iff_manyOneReducibleBy {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {A : Set α} {B : Set β} :
+    PolyTimeReducible encA encB A B ↔
+      ManyOneReducibleBy (ComputableTidilyInPolyTime · encA encB) A B :=
+  Iff.rfl
+
+/-- A many-one reduction by a map computable tidily in polynomial time is a polynomial-time
+reduction. -/
+theorem ManyOneReducibleBy.polyTimeReducible {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {A : Set α} {B : Set β} (h : ManyOneReducibleBy (ComputableTidilyInPolyTime · encA encB) A B) :
+    PolyTimeReducible encA encB A B :=
+  h
+
 /-- `B` is hard for the class `C` under polynomial-time many-one reductions: every problem in `C`,
-with any encoding of its instances, reduces to `B`. -/
+with any encoding of its instances, reduces to `B`. This is `HardUnder` for `PolyTimeReducible`. -/
 def PolyTimeHard (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (encB : β ↪ List Bool)
     (B : Set β) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ C enc → PolyTimeReducible enc encB A B
+  HardUnder (fun enc => PolyTimeReducible enc encB) @C B
 
 /-- `B` is complete for the class `C` under polynomial-time many-one reductions: it is in `C` and
-every problem in `C` reduces to it. -/
+every problem in `C` reduces to it. This is `CompleteUnder` for `PolyTimeReducible`
+(`polyTimeComplete_iff_completeUnder`), with its second conjunct stated as `PolyTimeHard`. -/
 def PolyTimeComplete {β : Type} (C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α))
     (encB : β ↪ List Bool) (B : Set β) : Prop :=
   B ∈ C encB ∧ PolyTimeHard C encB B
+
+/-- Polynomial-time hardness is hardness under `PolyTimeReducible`. -/
+theorem polyTimeHard_iff_hardUnder {C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+    {encB : β ↪ List Bool} {B : Set β} :
+    PolyTimeHard C encB B ↔ HardUnder (fun enc => PolyTimeReducible enc encB) @C B :=
+  Iff.rfl
+
+/-- Polynomial-time completeness is completeness under `PolyTimeReducible`. -/
+theorem polyTimeComplete_iff_completeUnder {β : Type}
+    {C : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)} {encB : β ↪ List Bool} {B : Set β} :
+    PolyTimeComplete C encB B ↔ CompleteUnder (fun enc => PolyTimeReducible enc encB) @C encB B :=
+  Iff.rfl
 
 /-- Every problem in `NP`, with any encoding of its instances, reduces to `B`. -/
 abbrev NPHard (encB : β ↪ List Bool) (B : Set β) : Prop := PolyTimeHard @NP encB B
@@ -130,28 +168,23 @@ variable {γ : Type*} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC 
 @[refl]
 theorem PolyTimeReducible.refl (encA : α ↪ List Bool) (A : Set α) :
     PolyTimeReducible encA encA A A :=
-  ⟨id, ComputableTidilyInPolyTime.id', fun _ => Iff.rfl⟩
+  ManyOneReducibleBy.refl ComputableTidilyInPolyTime.id' A
 
 /-- Polynomial-time many-one reductions compose. -/
 @[trans]
 theorem PolyTimeReducible.trans (hAB : PolyTimeReducible encA encB A B)
     (hBC : PolyTimeReducible encB encC B C) : PolyTimeReducible encA encC A C :=
-  let ⟨f, hf, hAB⟩ := hAB
-  let ⟨g, hg, hBC⟩ := hBC
-  ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hBC (f a))⟩
+  ManyOneReducibleBy.trans (fun _ _ hf hg => hg.comp hf) hAB hBC
 
 /-- **`P` is closed under polynomial-time reductions.** -/
 theorem PolyTimeReducible.mem_P (hAB : PolyTimeReducible encA encB A B) (hB : B ∈ P encB) :
     A ∈ P encA :=
-  let ⟨f, hf, hAB⟩ := hAB
-  let ⟨g, hg, hB⟩ := hB
-  ⟨g ∘ f, hg.comp hf, fun a => (hAB a).trans (hB (f a))⟩
+  ManyOneReducibleBy.trans (C := {true}) (fun _ _ hf hg => hg.comp hf) hAB hB
 
 /-- A reduction from `A` to `B` is also a reduction from `Aᶜ` to `Bᶜ`. -/
 theorem PolyTimeReducible.compl (h : PolyTimeReducible encA encB A B) :
     PolyTimeReducible encA encB Aᶜ Bᶜ :=
-  let ⟨f, hf, hAB⟩ := h
-  ⟨f, hf, fun a => not_congr (hAB a)⟩
+  ManyOneReducibleBy.compl h
 
 section Hardness
 
@@ -160,21 +193,20 @@ variable {𝒞 𝒟 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
 /-- Hardness transfers along a polynomial-time reduction. -/
 theorem PolyTimeHard.trans (hB : PolyTimeHard 𝒞 encB B) (hBC : PolyTimeReducible encB encC B C) :
     PolyTimeHard 𝒞 encC C :=
-  fun enc X hX => (hB enc X hX).trans hBC
+  HardUnder.trans (fun _ _ h h' => h.trans h') hB hBC
 
 /-- If the complement of every problem in `𝒟` is in `𝒞`, the complement of a `𝒞`-hard problem is
 `𝒟`-hard. -/
 theorem PolyTimeHard.compl (h𝒟𝒞 : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒟 enc →
     Aᶜ ∈ 𝒞 enc) (hB : PolyTimeHard 𝒞 encB B) : PolyTimeHard 𝒟 encB Bᶜ :=
-  fun enc X hX => by simpa using (hB enc Xᶜ (h𝒟𝒞 enc X hX)).compl
+  HardUnder.compl (fun _ _ h => h.compl) h𝒟𝒞 hB
 
 /-- If the problems in `𝒟` are exactly the complements of the problems in `𝒞`, the complement of
 a `𝒞`-complete problem is `𝒟`-complete. -/
 theorem PolyTimeComplete.compl {β : Type} {encB : β ↪ List Bool} {B : Set β}
     (h𝒟𝒞 : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒟 enc ↔ Aᶜ ∈ 𝒞 enc)
     (hB : PolyTimeComplete 𝒞 encB B) : PolyTimeComplete 𝒟 encB Bᶜ :=
-  ⟨(h𝒟𝒞 encB Bᶜ).2 (by simpa using hB.1),
-    PolyTimeHard.compl (fun enc A hA => (h𝒟𝒞 enc A).1 hA) hB.2⟩
+  CompleteUnder.compl (fun _ _ h => h.compl) h𝒟𝒞 hB
 
 end Hardness
 

@@ -170,6 +170,7 @@ import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MachineStateMap
+import ComplexityTests.ManyOne
 import ComplexityTests.MassProduction
 import ComplexityTests.MassProduction.Fine
 import ComplexityTests.MassProduction.HighRate
