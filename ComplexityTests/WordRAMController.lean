@@ -192,19 +192,100 @@ example {w n : ℕ} (h3 : Fits w 3) (hn : InputFits w [n]) :
       (fun _ _ => if n = 0 then 48 else 28) Stack.Controller.code := by
   stateful
 
-example : ComputableInPolyTime .standard (fun n => [n]) id Stack.Controller.positive := by
+example : UniformComputableInPolyTime .standard Stack.Controller.positive (fun _ n => [n]) id := by
   polytime
 
-example : ComputableInPolyTime .standard (fun n => [n]) id Stack.Controller.positive := by
+example : UniformComputableInPolyTime .standard Stack.Controller.positive (fun _ n => [n]) id := by
   fun_prop
+
+@[fun_prop, program_certificate]
+private theorem nonuniform_positive_polytime :
+    ComputableInPolyTime .standard Stack.Controller.positive (fun _ n => [n]) id :=
+  Stack.Controller.positive_polytime.computableInPolyTime
+
+example : ComputableInPolyTime .standard Stack.Controller.positive (fun _ n => [n]) id := by
+  polytime
+
+example : ComputableInPolyTime .standard Stack.Controller.positive (fun _ n => [n]) id := by
+  fun_prop
+
+/-- The family puts its width in the instruction's literal, rather than reading it at runtime. -/
+private def widthCountdown (w : ℕ) : Code .standard 3 :=
+  .seq (.op (.const 0 w)) (.seq (.op (.const 1 1))
+    (.seq (.loop (.lt 2 0) (.op (.bin .sub 0 0 1)))
+      (.seq (.op (.load 0 1)) (.loop (.lt 2 0) (.op (.bin .sub 0 0 1))))))
+
+/-- One subtraction per iteration, including the loop's branches and final exit. -/
+private theorem countdown_exec {w : ℕ} {x : Data 3}
+    (h1 : x.regs 1 = 1) (h2 : x.regs 2 = 0) (hf : Fits w (x.regs 0)) :
+    ∃ y, ExecWithin (B := .standard) w (.loop (.lt 2 0) (.op (.bin .sub 0 0 1)))
+      x y (x.regs 0 * 3 + 2) ∧
+      y.regs 0 = 0 ∧ y.regs 1 = 1 ∧ y.regs 2 = 0 ∧ y.mem = x.mem := by
+  let I : Data 3 → Prop := fun y =>
+    y.regs 1 = 1 ∧ y.regs 2 = 0 ∧ Fits w (y.regs 0) ∧ y.mem = x.mem
+  obtain ⟨y, he, hI, hc⟩ := ExecWithin.loop_invariant (B := Basis.standard)
+    (cond := .lt 2 0) (body := .op (.bin .sub 0 0 1)) I (fun y => y.regs 0)
+    (T := 1) (by
+      intro y hy hc
+      have hb : Fits w (BinOp.sub.eval (y.regs 0) (y.regs 1)) := by
+        exact hy.2.2.1.of_le (Nat.sub_le _ _)
+      refine ⟨y.set 0 (BinOp.sub.eval (y.regs 0) (y.regs 1)),
+        ExecWithin.bin hb, ?_, ?_⟩
+      · simpa +decide [I, Data.set] using And.intro hy.1
+          (And.intro hy.2.1 (And.intro hb hy.2.2.2))
+      · change y.regs 2 < y.regs 0 at hc
+        simp only [Data.set, Function.update_self, BinOp.eval, hy.1]
+        have := hy.2.1
+        omega)
+    (show I x from ⟨h1, h2, hf, rfl⟩)
+  refine ⟨y, he, ?_, hI.1, hI.2.1, hI.2.2.2⟩
+  change ¬y.regs 2 < y.regs 0 at hc
+  have := hI.2.1
+  omega
+
+/-- The encoded second word varies with width; both countdowns are charged in the budget. -/
+private theorem widthCountdown_computes :
+    ComputableInTime .standard (fun _ => 0) (fun w n => [n, w])
+      (fun n w => 3 * w + 3 * n + 8) (fun _ w => 1 ≤ w) := by
+  apply ComputableInTime.of_code widthCountdown 0
+      (time := fun n w => 3 * w + 3 * n + 7)
+  · exact ⟨12, fun _ => by simp [widthCountdown]⟩
+  · intro n w hw hi
+    have h1 : Fits w 1 := fits_one (by omega)
+    let x : Data 3 := ((Data.init [n, w]).set 0 w).set 1 1
+    have hx0 : x.regs 0 = w := by simp +decide [x, Data.set]
+    obtain ⟨y, hy, hy0, hy1, hy2, hym⟩ := countdown_exec (x := x)
+      (by simp [x, Data.set]) (by simp +decide [x, Data.set, Data.init])
+      (by simpa +decide [x, Data.set] using fits_self w)
+    have hn : Fits w n := hi.2 n (by simp)
+    let z := y.set 0 (y.mem (y.regs 1))
+    have hz0 : z.regs 0 = n := by simp [z, Data.set, hy1, hym, x, Data.init]
+    obtain ⟨v, hv, hv0, _, _, _⟩ := countdown_exec (x := z)
+      (by simpa +decide [z, Data.set] using hy1)
+      (by simpa +decide [z, Data.set] using hy2) (hz0 ▸ hn)
+    refine ⟨v, ?_, hv0⟩
+    have he := ExecWithin.seq
+      (ExecWithin.const (x := Data.init [n, w]) (d := 0) (fits_self w))
+      (ExecWithin.seq (ExecWithin.const h1)
+        (ExecWithin.seq hy (ExecWithin.seq (ExecWithin.load (d := 0) (a := 1)) hv)))
+    exact he.mono (by rw [hx0, hz0]; omega)
+
+-- A concrete fitting instance demonstrates that the family contract is not vacuous.
+example : InputFits 3 [5, 3] := by decide
+
+example : ∃ r, ∃ P : WordSizeDependentProgram .standard r, P.BoundedCode ∧
+    ∃ t, Executes 3 (P 3) (State.init [5, 3]) 0 t ∧ t ≤ 32 := by
+  obtain ⟨r, P, hP, hp⟩ := widthCountdown_computes
+  exact ⟨r, P, hP, hp 5 3 (show 1 ≤ 3 by decide) (by decide)⟩
 
 example (_f : ℕ → ℕ) : True := by
   fail_if_success
-    have : ComputableInPolyTime .standard (fun n => [n]) id _f := by polytime
+    have : UniformComputableInPolyTime .standard _f (fun _ n => [n]) id := by polytime
   trivial
 
 -- A RAM hypothesis is not a Turing-machine certificate.
-example (_f : ℕ → ℕ) (_h : ComputableInPolyTime .standard (fun n => [n]) id _f) : True := by
+example (_f : ℕ → ℕ)
+    (_h : UniformComputableInPolyTime .standard _f (fun _ n => [n]) id) : True := by
   fail_if_success
     have : Turing.MultiTapeTM.ComputableTidilyInPolyTime _f
         Turing.MultiTapeTM.encNat Turing.MultiTapeTM.encNat := by polytime

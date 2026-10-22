@@ -15,7 +15,8 @@ public import Complexity.Tactic.Stateful
 /-!
 # Reusing RAM controller certificates
 
-Named `Refines` and `ComputableInPolyTime` proofs can be registered with `program_certificate`.
+Named `Refines`, `ComputableInPolyTime` and `UniformComputableInPolyTime` proofs can be
+registered with `program_certificate`.
 The `stateful` and `polytime` tactics respectively retrieve them through the existing certificate
 index. Predicate and program heads are separate keys: a RAM certificate cannot discharge a
 Turing-machine polynomial-time goal. Local certificates remain ordinary hypotheses.
@@ -28,6 +29,7 @@ No rule evaluates arbitrary host-language continuations for free or guesses an i
 
 * `ramControllerCertificate`: named fixed-code refinement proofs for `stateful`.
 * `ramFunctionCertificate`: named polynomial RAM-time proofs for `polytime`.
+* `ramUniformFunctionCertificate`: named uniform polynomial RAM-time proofs for `polytime`.
 -/
 
 public meta section
@@ -61,5 +63,10 @@ def ramControllerAlternative : Aesop.RuleTac :=
 @[aesop unsafe 99% tactic (rule_sets := [PolyTime])]
 def ramFunctionCertificate : Aesop.RuleTac :=
   applyCertificates ``WordRAM.ComputableInPolyTime
+
+/-- Reuse a named uniform function certificate under its own predicate key. -/
+@[aesop unsafe 99% tactic (rule_sets := [PolyTime])]
+def ramUniformFunctionCertificate : Aesop.RuleTac :=
+  applyCertificates ``WordRAM.UniformComputableInPolyTime
 
 end Cslib.Tactic

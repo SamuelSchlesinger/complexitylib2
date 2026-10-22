@@ -419,6 +419,7 @@ import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMBasis
 import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
+import ComplexityTests.WordRAMFamilies
 import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums
 import ComplexityTests.WordRAMQueue

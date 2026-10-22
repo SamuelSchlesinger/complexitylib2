@@ -199,7 +199,8 @@ def positive (n : ℕ) : ℕ := max n 1
 
 /-- Uniform computation at every fitting word size of at least two bits. -/
 theorem computesInTime :
-    (code.program out).ComputesInTime (fun n => [n]) (fun _ => 49) (fun _ => 2) positive := by
+    (code.program out).ComputesInTime (fun _ n => [n]) (fun _ _ => 49)
+      (fun _ w => 2 ≤ w) positive := by
   intro n w hw hn
   have h3 : Fits w 3 := (show Fits 2 3 by decide).mono hw
   obtain ⟨t, ht, he⟩ := executes_le h3 hn
@@ -208,11 +209,12 @@ theorem computesInTime :
 /-- The same fixed controller has a constant, hence polynomial, RAM instruction bound.
 The size parameter is the numerical magnitude `n`; the admissible width is logarithmic in it. -/
 @[fun_prop, program_certificate]
-theorem positive_polytime : ComputableInPolyTime .standard (fun n => [n]) id positive := by
-  apply ComputableInPolyTime.of_program (code.program out) (.const 49) 2
-  apply computesInTime.mono (fun _ => le_rfl)
-  intro n
-  change 2 ≤ 2 * (Nat.log 2 n + 1)
+theorem positive_polytime :
+    UniformComputableInPolyTime .standard positive (fun _ n => [n]) id := by
+  apply UniformComputableInPolyTime.of_program (code.program out) (.const 49) 2 (by decide)
+  apply computesInTime.mono (fun _ _ => le_rfl)
+  intro n w hw
+  change 2 * (Nat.log 2 n + 1) ≤ w at hw
   omega
 
 /-- The logarithmic threshold used by the function certificate fits every input, so the
