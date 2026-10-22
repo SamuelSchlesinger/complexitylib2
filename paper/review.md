@@ -27,7 +27,8 @@ approval.
 Coordinator reviewer `c4bd95db` approved `7f51726e` and asked for a follow-up delta before merge.
 It credits Newman [Newman1964] in the module docstring and the entry, and makes the unindexed
 amplification helpers (`newmanAmp` and its lemmas, `one_le_newmanPoly`) private. The links were
-re-pinned to `186effd8`, where only line numbers moved. The coordinator arranges review of this delta.
+re-pinned to `186effd8`, where only line numbers moved. The coordinator arranges review of this
+delta.
 
 ## 2026-10-22: Search-tree deletion (#359)
 
