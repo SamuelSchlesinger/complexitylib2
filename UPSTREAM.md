@@ -224,6 +224,24 @@ grandfathered without an alias; this list records them for downstream users.
   the unqualified name ambiguous when both namespaces are open (for example `restrictTable`,
   `Ladner.cnfDecoder`); qualify the new name. A `def` alias does not unfold to the old body under
   `unfold` or `simp [old]`.
+* **Withdrawn results of 2026-10-22 (#372).** On 2026-10-22 the maintainer withdrew results merged
+  that morning without adequate correctness review, deleting them without aliases. An alias would
+  keep exactly the names being withdrawn, and none of them had been submitted to cslib or used
+  downstream.
+  - Regev's reduction (`Crypto/Lattice/LWE.lean`, whole module) and OT completeness
+    (`Crypto/Multiparty/ObliviousTransfer.lean`, whole module).
+  - `ACC0.lean`: `SymPlusCompilation`, `symPlusCompilation_zero`,
+    `exists_fastSymPlusEval_of_symPlusCompilation`, `exists_mem_NEXP_notMem_ACC0`,
+    `not_NEXP_subset_ACC0`. The duplicate `Cslib.Circuits.Boolean.SigmaP_subset_EXP` and
+    `SigmaP_subset_NEXP` were also deleted; use `Cslib.Complexity.SigmaP_subset_EXP` and
+    `SigmaP_subset_NEXP`, now in `Classes/Inclusions`.
+  - `IdentityTesting.lean`: `kabanets_impagliazzo`, `kabanets_impagliazzo_of_EXP_subset_P`,
+    `PermPITCertified`, `exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP`,
+    `NEXP_eq_EXP_of_NEXP_subset_SigmaP`.
+  - `Hastad.lean`: `hastadSATProb` and its three lemmas, `hastadGraphSATProb`, and
+    `hastadGraphSATProb_eq_add_hastadGraphLinearCorr`. The SAT conjuncts were dropped from
+    `hastadGraphProb_longCode_of_satisfies` and `hastad_gapLabelCover_dichotomy`, keeping their
+    names.
 * **Two multigraph namespaces.** Since 2026-10-20 the frontier multigraph
   (`Cslib.Circuits.Frontier.Multigraph`) defines its simple graph as that of the multigraph given by
   its ends (`Cslib.Multigraph`), and its module publicly imports the latter. Their shared base names
