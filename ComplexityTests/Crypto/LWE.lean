@@ -49,15 +49,17 @@ example :
 example : testBasis10 ∈ (GapSVP 10 4 2).yes := by
   rw [mem_yes_GapSVP]
   unfold testBasis10
-  rw [lambda1_scaledIdentityBasis]
+  exact ⟨hasBanaszczykBound_scaledIdentityBasis 2 zero_lt_two,
+    (lambda1_scaledIdentityBasis 2 zero_lt_two).le⟩
 
 /-- `scaledIdentityBasis 10 9` is a no-instance of `GapSVP 10 4 2`. -/
 example : scaledIdentityBasis 10 9 (by norm_num) ∈ (GapSVP 10 4 2).no := by
   rw [mem_no_GapSVP_of_one_le (by norm_num) (by norm_num)]
+  refine ⟨hasBanaszczykBound_scaledIdentityBasis 9 (by norm_num), ?_⟩
   rw [lambda1_scaledIdentityBasis]
   norm_num
 
-/-! ### Concrete Regev Parameter Regimes (`2 * √n < α * q`) -/
+/-! ### Concrete Regev Parameter Regimes (`2 * √n < α * q`) and Non-Vacuity of Oracles -/
 
 /-- Explicit parameter regime in dimension `n = 10`, modulus `q = 105`, noise rate `α = 3 / √10`. -/
 theorem testRegevParams10 : RegevParameters 10 105 (3 / Real.sqrt 10) :=
@@ -67,6 +69,17 @@ theorem testRegevParams10 : RegevParameters 10 105 (3 / Real.sqrt 10) :=
 `α = 3 / (√4 + 3)`. -/
 theorem testRegevParams4 : RegevParameters 4 21 (3 / (Real.sqrt 4 + 3)) :=
   regevParameters_all_pos (by decide : 1 ≤ 4)
+
+/-- Concrete `SearchLWEOracle` in dimension `n = 10`, modulus `q = 105`, and noise rate
+`α = 3 / √10`. -/
+def testSearchLWEOracle10 : SearchLWEOracle 10 105 (3 / Real.sqrt 10) :=
+  canonicalSearchLWEOracle 10 105 (ne_of_gt testRegevParams10.α_pos)
+
+example : Nonempty (SearchLWEOracle 10 105 (3 / Real.sqrt 10)) :=
+  nonempty_searchLWEOracle (ne_of_gt testRegevParams10.α_pos)
+
+example : Nonempty (RegevQuantumStepOracle 10 105 (3 / Real.sqrt 10)) :=
+  nonempty_regevQuantumStepOracle testRegevParams10
 
 example : regevShrinkFactor 10 105 (3 / Real.sqrt 10) < 1 :=
   regevShrinkFactor_lt_one testRegevParams10
@@ -89,6 +102,15 @@ def testDualBDD : DualBDDInstance testBasis10 (bddRadius 105 (3 / Real.sqrt 10) 
       simp
     rw [h0]
     exact (bddRadius_pos testRegevParams10 zero_lt_two).le
+
+example :
+    solveDualBDDModQ testSearchLWEOracle10 testBasis10 testDualBDD.target =
+      fun j => (testDualBDD.secretCoords j : ZMod 105) := by
+  apply solveDualBDDModQ_eq_secretCoords
+  intro i
+  change |(testBasis10.matrix.mulVec _) ⬝ᵥ (0 : Fin 10 → ℝ)| < 1 / 2
+  rw [dotProduct_zero, abs_zero]
+  norm_num
 
 example (a : Fin 10 → ℤ) :
     |(testBasis10.matrix.mulVec (fun j => (a j : ℝ))) ⬝ᵥ testDualBDD.offset| ≤
@@ -140,11 +162,39 @@ info: 'Cslib.Crypto.regevParameters_all_pos' depends on axioms:
 #print axioms Cslib.Crypto.regevParameters_all_pos
 
 /--
+info: 'Cslib.Crypto.lweSamplePMF_injective' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.lweSamplePMF_injective
+
+/--
+info: 'Cslib.Crypto.nonempty_searchLWEOracle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.nonempty_searchLWEOracle
+
+/--
+info: 'Cslib.Crypto.bddSampleFromTarget_eq_lweSampleFromNoise' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.bddSampleFromTarget_eq_lweSampleFromNoise
+
+/--
 info: 'Cslib.Crypto.solveDualBDDModQ_eq_secretCoords' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.solveDualBDDModQ_eq_secretCoords
+
+/--
+info: 'Cslib.Crypto.nonempty_regevQuantumStepOracle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.nonempty_regevQuantumStepOracle
 
 /--
 info: 'Cslib.Crypto.regev_lwe_to_sivp' depends on axioms: [propext, Classical.choice, Quot.sound]

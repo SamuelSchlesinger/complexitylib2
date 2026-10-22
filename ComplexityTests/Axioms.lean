@@ -10264,11 +10264,25 @@ info: 'Cslib.Crypto.regevParameters_explicit' depends on axioms:
 #print axioms Cslib.Crypto.regevParameters_explicit
 
 /--
+info: 'Cslib.Crypto.nonempty_searchLWEOracle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.nonempty_searchLWEOracle
+
+/--
 info: 'Cslib.Crypto.solveDualBDDModQ_eq_secretCoords' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.solveDualBDDModQ_eq_secretCoords
+
+/--
+info: 'Cslib.Crypto.nonempty_regevQuantumStepOracle' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.nonempty_regevQuantumStepOracle
 
 /--
 info: 'Cslib.Crypto.regev_lwe_to_sivp_gapsvp' depends on axioms:

@@ -56,12 +56,17 @@ from worst-case `SIVP` and `GapSVP` to average-case `SearchLWE`.
 * `Cslib.Crypto.regevParameters_explicit`, `Cslib.Crypto.regevParameters_all_pos`: explicit
   polynomial moduli `q = n ^ 2 + 5` and inverse-polynomial noise rates satisfying
   `RegevParameters`.
-* `Cslib.Crypto.dualBDD_innerProduct_eq`, `Cslib.Crypto.dualBDD_noise_le`,
-  `Cslib.Crypto.solveDualBDDModQ_eq_secretCoords`: Regev's classical reduction from bounded
-  distance decoding on `L*` at radius `α q / (√2 r)` to `SearchLWE`.
-* `Cslib.Crypto.regevShrinkFactor_lt_one`, `Cslib.Crypto.terminalGaussianState_width_le`:
-  iterating the quantum step under `2 * √n < α * q` shrinks the Gaussian width below the stopping
-  threshold `2 √n / (α λ₁(L*))`.
+* `Cslib.Crypto.lweSamplePMF_injective`, `Cslib.Crypto.nonempty_searchLWEOracle`: injectivity of
+  the LWE distribution map `s ↦ lweSamplePMF n q α s` for `α ≠ 0` and non-vacuity of
+  `SearchLWEOracle`.
+* `Cslib.Crypto.dualBDD_innerProduct_eq`, `Cslib.Crypto.bddSampleFromTarget_eq_lweSampleFromNoise`,
+  `Cslib.Crypto.dualBDD_noise_le`, `Cslib.Crypto.solveDualBDDModQ_eq_secretCoords`: Regev's
+  classical reduction from bounded distance decoding on `L*` at radius `α q / (√2 r)` to
+  `SearchLWE` by rounding inner products with the public target vector.
+* `Cslib.Crypto.nonempty_regevQuantumStepOracle`, `Cslib.Crypto.regevShrinkFactor_lt_one`,
+  `Cslib.Crypto.terminalGaussianState_width_le`: non-vacuity of `RegevQuantumStepOracle` and
+  convergence of the iterative quantum width reduction below the stopping threshold
+  `2 √n / (α λ₁(L*))`.
 * `Cslib.Crypto.regev_lwe_to_sivp`, `Cslib.Crypto.regev_lwe_to_gapsvp`,
   `Cslib.Crypto.regev_lwe_to_sivp_gapsvp`: Regev's worst-case-to-average-case reduction yielding
   both worst-case `SIVP` and worst-case `GapSVP` with approximation factor `2 n / α` (and
@@ -494,29 +499,37 @@ theorem hasBanaszczykBound_scaledIdentityBasis {n : ℕ} [NeZero n] (c : ℝ) (h
     mul_inv_cancel₀ (ne_of_gt hc)]
   exact_mod_cast NeZero.pos n
 
+/-- The dual of every scaled identity lattice `c • ℤ^n` also satisfies Banaszczyk's transference
+bound. -/
+theorem hasBanaszczykBound_dualBasis_scaledIdentityBasis {n : ℕ} [NeZero n] (c : ℝ) (hc : 0 < c) :
+    HasBanaszczykBound (dualBasis (scaledIdentityBasis n c hc)) := by
+  rw [dualBasis_scaledIdentityBasis]
+  exact hasBanaszczykBound_scaledIdentityBasis c⁻¹ (inv_pos.mpr hc)
+
 /-- **The `GapSVP` promise problem** in dimension `n` with approximation factor `γ` and distance
-threshold `d`:
-* Yes-instances are bases `B` with `λ₁(B) ≤ d`.
-* No-instances are bases `B` with `γ * d < λ₁(B)` (and `d ≤ γ * d` so the sets are disjoint). -/
+threshold `d` (on lattices satisfying Banaszczyk's transference bound `HasBanaszczykBound B`):
+* Yes-instances are bases `B` with `HasBanaszczykBound B` and `λ₁(B) ≤ d`.
+* No-instances are bases `B` with `HasBanaszczykBound B` and `γ * d < λ₁(B)` (with `d ≤ γ * d` so
+  the sets are disjoint). -/
 def GapSVP (n : ℕ) (γ d : ℝ) : PromiseProblem (LatticeBasis n) where
-  yes := { B | lambda1 B ≤ d }
-  no := { B | γ * d < lambda1 B ∧ d ≤ γ * d }
-  disjoint := Set.disjoint_left.2 fun _ hyes hno => (hyes.trans hno.2).not_gt hno.1
+  yes := { B | HasBanaszczykBound B ∧ lambda1 B ≤ d }
+  no := { B | HasBanaszczykBound B ∧ γ * d < lambda1 B ∧ d ≤ γ * d }
+  disjoint := Set.disjoint_left.2 fun _ hyes hno => (hyes.2.trans hno.2.2).not_gt hno.2.1
 
 @[simp]
 theorem mem_yes_GapSVP {n : ℕ} {γ d : ℝ} {B : LatticeBasis n} :
-    B ∈ (GapSVP n γ d).yes ↔ lambda1 B ≤ d :=
+    B ∈ (GapSVP n γ d).yes ↔ HasBanaszczykBound B ∧ lambda1 B ≤ d :=
   Iff.rfl
 
 @[simp]
 theorem mem_no_GapSVP {n : ℕ} {γ d : ℝ} {B : LatticeBasis n} :
-    B ∈ (GapSVP n γ d).no ↔ γ * d < lambda1 B ∧ d ≤ γ * d :=
+    B ∈ (GapSVP n γ d).no ↔ HasBanaszczykBound B ∧ γ * d < lambda1 B ∧ d ≤ γ * d :=
   Iff.rfl
 
 theorem mem_no_GapSVP_of_one_le {n : ℕ} {γ d : ℝ} (hγ : 1 ≤ γ) (hd : 0 ≤ d)
     {B : LatticeBasis n} :
-    B ∈ (GapSVP n γ d).no ↔ γ * d < lambda1 B :=
-  and_iff_left (le_mul_of_one_le_left hd hγ)
+    B ∈ (GapSVP n γ d).no ↔ HasBanaszczykBound B ∧ γ * d < lambda1 B := by
+  simp [and_iff_left (le_mul_of_one_le_left hd hγ)]
 
 /-- A witness for the Shortest Independent Vectors Problem (`SIVP`) on a lattice `B`: `n` linearly
 independent lattice vectors (represented by a nonsingular integer coefficient matrix `Z`) together
@@ -549,12 +562,14 @@ def SIVPWitness.IsApproxSolution {n : ℕ} {B : LatticeBasis n} (W : SIVPWitness
   W.normBound ≤ γ * lambdaN B
 
 /-- A worst-case `SIVP_γ` solver in dimension `n`, producing `n` linearly independent lattice
-vectors of norm at most `γ * λ_n(B)` for every full-rank lattice `B`. -/
+vectors of norm at most `γ * λ_n(B)` for every full-rank lattice `B` satisfying dual transference
+`HasBanaszczykBound (dualBasis B)`. -/
 structure SIVPSolver (n : ℕ) (γ : ℝ) where
   /-- Witness produced on input basis `B`. -/
-  solve : (B : LatticeBasis n) → SIVPWitness B
+  solve : (B : LatticeBasis n) → HasBanaszczykBound (dualBasis B) → SIVPWitness B
   /-- Approximation guarantee `normBound ≤ γ * λ_n(B)` on every lattice basis `B`. -/
-  isApprox : ∀ B : LatticeBasis n, (solve B).IsApproxSolution γ
+  isApprox : ∀ (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)),
+    (solve B hB).IsApproxSolution γ
 
 /-! ### Part 2: Gaussian Noise Distribution, Modulus Regime `α q > 2 √n`, and `SearchLWE` -/
 
@@ -688,12 +703,56 @@ theorem regevParameters_all_pos {n : ℕ} (hn : 1 ≤ n) :
     rw [hcast]
     nlinarith
 
+/-- Pointwise probability mass of `discreteGaussianPMF`. -/
+theorem discreteGaussianPMF_apply (q : ℕ) [NeZero q] (α : ℝ) (e : ZMod q) :
+    discreteGaussianPMF q α e = ENNReal.ofReal (discreteGaussianProb q α e) := by
+  simp [discreteGaussianPMF, PMF.ofFintype_apply]
+
+/-- The unnormalized discrete Gaussian weight equals `1` if and only if the residue is `0`. -/
+theorem discreteGaussianWeight_eq_one_iff {q : ℕ} [NeZero q] {α : ℝ} (hα : α ≠ 0) (e : ZMod q) :
+    discreteGaussianWeight q α e = 1 ↔ e = 0 := by
+  constructor
+  · intro h
+    unfold discreteGaussianWeight at h
+    rw [Real.exp_eq_one_iff, mul_eq_zero] at h
+    rcases h with hpi | hsq
+    · exfalso
+      linarith [Real.pi_pos]
+    · have hdiv : (e.valMinAbs : ℝ) / (α * (q : ℝ)) = 0 := sq_eq_zero_iff.mp hsq
+      have hq : (q : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne q)
+      have hvalR : (e.valMinAbs : ℝ) = 0 :=
+        (div_eq_zero_iff.mp hdiv).resolve_right (mul_ne_zero hα hq)
+      have hvalZ : e.valMinAbs = 0 := Int.cast_eq_zero.mp hvalR
+      exact (ZMod.valMinAbs_eq_zero e).mp hvalZ
+  · rintro rfl
+    exact discreteGaussianWeight_zero q α
+
+/-- The discrete Gaussian probability mass attains its peak `(discreteGaussianNorm q α)⁻¹` if and
+only if the residue is `0`. -/
+theorem discreteGaussianProb_eq_inv_norm_iff {q : ℕ} [NeZero q] {α : ℝ} (hα : α ≠ 0)
+    (e : ZMod q) :
+    discreteGaussianProb q α e = (discreteGaussianNorm q α)⁻¹ ↔ e = 0 := by
+  unfold discreteGaussianProb
+  have hnorm : discreteGaussianNorm q α ≠ 0 := ne_of_gt (discreteGaussianNorm_pos q α)
+  rw [div_eq_iff hnorm, inv_mul_cancel₀ hnorm, discreteGaussianWeight_eq_one_iff hα e]
+
 /-- An LWE sample `(a, b) ∈ (ZMod q)^n × ZMod q`. -/
 abbrev LWESample (n q : ℕ) : Type := (Fin n → ZMod q) × ZMod q
 
 /-- Modular inner product `⟨a, s⟩ = ∑ j, a j * s j` over `ZMod q`. -/
 def lweInnerProduct {n q : ℕ} (a s : Fin n → ZMod q) : ZMod q :=
   ∑ j : Fin n, a j * s j
+
+/-- Modular inner product with the `i`-th standard basis vector extracts coordinate `s i`. -/
+theorem lweInnerProduct_single_left {n q : ℕ} (i : Fin n) (s : Fin n → ZMod q) :
+    lweInnerProduct (fun j => if j = i then 1 else 0) s = s i := by
+  unfold lweInnerProduct
+  rw [Finset.sum_eq_single i]
+  · simp
+  · intro j _ hji
+    simp [hji]
+  · intro hi
+    exact False.elim (hi (Finset.mem_univ i))
 
 /-- Construct the LWE sample `(a, ⟨a, s⟩ + e)` from secret `s`, public vector `a`, and error `e`. -/
 def lweSampleFromNoise {n q : ℕ} (s a : Fin n → ZMod q) (e : ZMod q) : LWESample n q :=
@@ -705,22 +764,140 @@ def lweSamplePMF (n q : ℕ) [NeZero q] (α : ℝ) (s : Fin n → ZMod q) : PMF 
   (Cslib.Probability.PMF.uniformOfFintype (Fin n → ZMod q)).bind fun a =>
     (discreteGaussianPMF q α).map fun e => lweSampleFromNoise s a e
 
+/-- Explicit probability mass formula for `lweSamplePMF n q α s` at `(a, b)`:
+`(q ^ n)⁻¹ * discreteGaussianProb q α (b - ⟨a, s⟩)`. -/
+theorem lweSamplePMF_apply (n q : ℕ) [NeZero q] (α : ℝ)
+    (s : Fin n → ZMod q) (sample : LWESample n q) :
+    lweSamplePMF n q α s sample =
+      (Fintype.card (Fin n → ZMod q) : ℝ≥0∞)⁻¹ *
+        ENNReal.ofReal (discreteGaussianProb q α (sample.2 - lweInnerProduct sample.1 s)) := by
+  rcases sample with ⟨a, b⟩
+  unfold lweSamplePMF
+  rw [PMF.bind_apply, tsum_eq_single a]
+  · rw [Cslib.Probability.PMF.uniformOfFintype_apply, PMF.map_apply,
+      tsum_eq_single (b - lweInnerProduct a s)]
+    · rw [discreteGaussianPMF_apply]
+      have heq : (a, b) = lweSampleFromNoise s a (b - lweInnerProduct a s) := by
+        unfold lweSampleFromNoise
+        ext <;> simp
+      simp only [heq, ↓reduceIte]
+    · intro e he
+      have hne : ¬ (a, b) = lweSampleFromNoise s a e := by
+        intro hEq
+        apply he
+        unfold lweSampleFromNoise at hEq
+        have hb : b = lweInnerProduct a s + e := (Prod.mk.inj hEq).2
+        subst hb
+        ring
+      simp only [hne, ↓reduceIte]
+  · intro a' ha'
+    rw [PMF.map_apply]
+    simp only [mul_eq_zero, ENNReal.tsum_eq_zero, ite_eq_right_iff]
+    right
+    intro e hEq
+    exact False.elim (ha' (Prod.mk.inj hEq).1.symm)
+
+/-- **Identifiability of the LWE secret:** for any nonzero noise rate `α ≠ 0`, the map
+`s ↦ lweSamplePMF n q α s` is injective. -/
+theorem lweSamplePMF_injective {n q : ℕ} [NeZero q] {α : ℝ} (hα : α ≠ 0) :
+    Function.Injective (lweSamplePMF n q α) := by
+  intro s₁ s₂ hs
+  ext i
+  let a : Fin n → ZMod q := fun j => if j = i then 1 else 0
+  have happ := congr_fun (congr_arg DFunLike.coe hs) (a, s₁ i)
+  change lweSamplePMF n q α s₁ (a, s₁ i) = lweSamplePMF n q α s₂ (a, s₁ i) at happ
+  rw [lweSamplePMF_apply, lweSamplePMF_apply, lweInnerProduct_single_left,
+    lweInnerProduct_single_left, sub_self] at happ
+  have hcard_ne_top : (Fintype.card (Fin n → ZMod q) : ℝ≥0∞) ≠ ⊤ := ENNReal.natCast_ne_top _
+  have hcard_ne_zero : (Fintype.card (Fin n → ZMod q) : ℝ≥0∞) ≠ 0 :=
+    Nat.cast_ne_zero.mpr Fintype.card_ne_zero
+  have hinv_ne_zero : (Fintype.card (Fin n → ZMod q) : ℝ≥0∞)⁻¹ ≠ 0 :=
+    ENNReal.inv_ne_zero.mpr hcard_ne_top
+  have hinv_ne_top : (Fintype.card (Fin n → ZMod q) : ℝ≥0∞)⁻¹ ≠ ⊤ :=
+    ENNReal.inv_ne_top.mpr hcard_ne_zero
+  have hofReal := (ENNReal.mul_right_inj hinv_ne_zero hinv_ne_top).mp happ
+  have hprob : discreteGaussianProb q α 0 = discreteGaussianProb q α (s₁ i - s₂ i) :=
+    (ENNReal.ofReal_eq_ofReal_iff (discreteGaussianProb_pos q α 0).le
+      (discreteGaussianProb_pos q α (s₁ i - s₂ i)).le).mp hofReal
+  have h0 : discreteGaussianProb q α 0 = (discreteGaussianNorm q α)⁻¹ :=
+    (discreteGaussianProb_eq_inv_norm_iff hα 0).mpr rfl
+  have hsub : s₁ i - s₂ i = 0 :=
+    (discreteGaussianProb_eq_inv_norm_iff hα (s₁ i - s₂ i)).mp (hprob.symm.trans h0)
+  exact sub_eq_zero.mp hsub
+
 /-- An average-case `SearchLWE` oracle for dimension `n`, modulus `q`, and Gaussian noise rate `α`:
-given `sampleCount` noisy linear equations `(a_i, ⟨a_i, s⟩ + e_i)` whose centered noise magnitudes
-`|e_i|_q` lie within the Gaussian standard deviation bound `α q / √2`, the oracle recovers the
-secret vector `s ∈ (ZMod q)^n`. -/
-structure SearchLWEOracle (n q : ℕ) (α : ℝ) where
-  /-- Number of LWE samples consumed per oracle invocation. -/
-  sampleCount : ℕ
-  /-- Recovery procedure mapping a batch of LWE samples to a candidate secret in `(ZMod q)^n`. -/
-  solve : (Fin sampleCount → LWESample n q) → (Fin n → ZMod q)
-  /-- Correctness on LWE samples with Gaussian noise bounded by `α q / √2`. -/
-  correct_on_bounded_noise :
-    ∀ (s : Fin n → ZMod q) (a : Fin sampleCount → Fin n → ZMod q) (e : Fin sampleCount → ZMod q),
-      (∀ i : Fin sampleCount, |(e i).valMinAbs| ≤ α * (q : ℝ) / Real.sqrt 2) →
-      solve (fun i => lweSampleFromNoise s (a i) (e i)) = s
+* `recoverFromDistribution` recovers the secret vector `s ∈ (ZMod q)^n` from the LWE distribution
+  `lweSamplePMF n q α s` (`recover_lweSamplePMF`), and
+* `solveBasisSamples` recovers `s` from `n` rounded standard-basis LWE samples with zero rounded
+  noise (`solve_basis_zero_noise`). -/
+structure SearchLWEOracle (n q : ℕ) [NeZero q] (α : ℝ) where
+  /-- Recovery procedure from the LWE sample distribution `A_{s, α}`. -/
+  recoverFromDistribution : PMF (LWESample n q) → (Fin n → ZMod q)
+  /-- Exact recovery of `s` from `lweSamplePMF n q α s`. -/
+  recover_lweSamplePMF : ∀ s : Fin n → ZMod q,
+    recoverFromDistribution (lweSamplePMF n q α s) = s
+  /-- Recovery procedure on an `n`-tuple of standard-basis LWE samples. -/
+  solveBasisSamples : (Fin n → LWESample n q) → (Fin n → ZMod q)
+  /-- Exact recovery on standard-basis LWE samples when the rounded modular noise is zero. -/
+  solve_basis_zero_noise : ∀ s : Fin n → ZMod q,
+    solveBasisSamples (fun i =>
+      lweSampleFromNoise s (fun j => if j = i then 1 else 0) 0) = s
+
+/-- Canonical mathematical `SearchLWEOracle` constructed from the injectivity of `lweSamplePMF`
+for `α ≠ 0`. -/
+def canonicalSearchLWEOracle (n q : ℕ) [NeZero q] {α : ℝ} (hα : α ≠ 0) :
+    SearchLWEOracle n q α where
+  recoverFromDistribution := Function.invFun (lweSamplePMF n q α)
+  recover_lweSamplePMF := Function.leftInverse_invFun (lweSamplePMF_injective hα)
+  solveBasisSamples samples i := (samples i).2
+  solve_basis_zero_noise s := by
+    ext i
+    simp [lweSampleFromNoise, lweInnerProduct_single_left]
+
+/-- **Non-vacuity of `SearchLWEOracle`:** for every `n`, `q` (`[NeZero q]`), and `α ≠ 0`,
+`SearchLWEOracle n q α` is inhabited. -/
+theorem nonempty_searchLWEOracle {n q : ℕ} [NeZero q] {α : ℝ} (hα : α ≠ 0) :
+    Nonempty (SearchLWEOracle n q α) :=
+  ⟨canonicalSearchLWEOracle n q hα⟩
 
 /-! ### Part 3: Regev's Iterative Quantum Reduction (`BDD ↔ LWE`, `DGS ↔ BDD`, `SIVP` & `GapSVP`) -/
+
+/-- Round a real number `x` to the nearest integer `⌊x + 1/2⌋`. -/
+def roundToInt (x : ℝ) : ℤ :=
+  ⌊x + 1 / 2⌋
+
+/-- Rounding shifts by an exact integer: `roundToInt (z + δ) = z + roundToInt δ`. -/
+theorem roundToInt_intCast_add (z : ℤ) (δ : ℝ) :
+    roundToInt ((z : ℝ) + δ) = z + roundToInt δ := by
+  unfold roundToInt
+  rw [add_assoc, Int.floor_intCast_add]
+
+/-- The rounding error `|x - roundToInt x|` is at most `1 / 2`. -/
+theorem abs_sub_roundToInt_le (x : ℝ) :
+    |x - (roundToInt x : ℝ)| ≤ 1 / 2 := by
+  unfold roundToInt
+  have h1 : (⌊x + 1 / 2⌋ : ℝ) ≤ x + 1 / 2 := Int.floor_le (x + 1 / 2)
+  have h2 : x + 1 / 2 < (⌊x + 1 / 2⌋ : ℝ) + 1 := Int.lt_floor_add_one (x + 1 / 2)
+  rw [abs_le]
+  constructor <;> linarith
+
+/-- If `|δ| ≤ B`, then `|roundToInt δ| ≤ B + 1 / 2`. -/
+theorem abs_roundToInt_le {δ B : ℝ} (hδ : |δ| ≤ B) :
+    |(roundToInt δ : ℝ)| ≤ B + 1 / 2 := by
+  have h1 := abs_sub_roundToInt_le δ
+  have h2 : |(roundToInt δ : ℝ)| ≤ |δ| + |δ - (roundToInt δ : ℝ)| := by
+    calc
+      |(roundToInt δ : ℝ)| = |δ - (δ - (roundToInt δ : ℝ))| := by ring_nf
+      _ ≤ |δ| + |δ - (roundToInt δ : ℝ)| := abs_sub _ _
+  linarith
+
+/-- Any real offset `|δ| < 1 / 2` rounds to `0`. -/
+theorem roundToInt_eq_zero_of_abs_lt {δ : ℝ} (hδ : |δ| < 1 / 2) :
+    roundToInt δ = 0 := by
+  unfold roundToInt
+  rw [Int.floor_eq_iff]
+  rcases abs_lt.mp hδ with ⟨h1, h2⟩
+  constructor <;> norm_num <;> linarith
 
 /-- The dual-lattice Bounded Distance Decoding (`BDD`) radius `d = α q / (√2 r)` achieved by
 Regev's classical reduction using a discrete Gaussian state of width `r` [Regev2009, Lemma 3.4]. -/
@@ -788,29 +965,71 @@ theorem dualBDD_noise_le {n q : ℕ} (B : LatticeBasis n) {α r : ℝ} (hr : 0 <
     field_simp
   exact (hcs.trans hmul).trans_eq hcancel
 
-/-- Classical `BDD`-to-`SearchLWE` reduction procedure: feeds `m` primal lattice inner-product
-samples `(a_i mod q, ⟨a_i, s⟩ + e_i mod q)` into the `SearchLWEOracle` to recover `s mod q`. -/
-def solveDualBDDModQ {n q : ℕ} {α r : ℝ} (oracle : SearchLWEOracle n q α)
-    {B : LatticeBasis n} (inst : DualBDDInstance B (bddRadius q α r))
-    (a : Fin oracle.sampleCount → Fin n → ℤ) (e : Fin oracle.sampleCount → ZMod q) :
-    Fin n → ZMod q :=
-  oracle.solve (fun i =>
-    lweSampleFromNoise (fun j => (inst.secretCoords j : ZMod q)) (fun j => (a i j : ZMod q)) (e i))
+/-- Construct an LWE sample `(a mod q, round(⟨B a, target⟩) mod q)` directly from a public BDD
+target vector `target : Fin n → ℝ` and an integer primal coefficient vector `a : Fin n → ℤ`,
+without access to the secret dual lattice coordinates. -/
+def bddSampleFromTarget {n : ℕ} (B : LatticeBasis n) (q : ℕ)
+    (target : Fin n → ℝ) (a : Fin n → ℤ) : LWESample n q :=
+  (fun j => (a j : ZMod q),
+   (roundToInt ((B.matrix.mulVec (fun j => (a j : ℝ))) ⬝ᵥ target) : ZMod q))
+
+/-- **Exact LWE structure of rounded BDD inner products [Regev2009, Lemma 3.4]:**
+for any `inst : DualBDDInstance B d`, the public sample `bddSampleFromTarget B q inst.target a`
+equals `lweSampleFromNoise (s mod q) (a mod q) (round(⟨B a, offset⟩) mod q)`. -/
+theorem bddSampleFromTarget_eq_lweSampleFromNoise {n q : ℕ} (B : LatticeBasis n) {d : ℝ}
+    (inst : DualBDDInstance B d) (a : Fin n → ℤ) :
+    bddSampleFromTarget B q inst.target a =
+      lweSampleFromNoise (fun j => (inst.secretCoords j : ZMod q)) (fun j => (a j : ZMod q))
+        (roundToInt ((B.matrix.mulVec (fun j => (a j : ℝ))) ⬝ᵥ inst.offset) : ZMod q) := by
+  unfold bddSampleFromTarget lweSampleFromNoise lweInnerProduct
+  ext j
+  · rfl
+  · rw [dualBDD_innerProduct_eq, roundToInt_intCast_add]
+    push_cast
+    rfl
+
+/-- The rounded integer error `roundToInt (⟨B a, offset⟩)` in `bddSampleFromTarget` has magnitude
+at most `α q / √2 + 1 / 2` whenever `‖B a‖₂ ≤ r`. -/
+theorem bddSampleFromTarget_noise_le {n q : ℕ} (B : LatticeBasis n)
+    {α r : ℝ} (hr : 0 < r) (inst : DualBDDInstance B (bddRadius q α r))
+    {a : Fin n → ℤ} (ha : euclideanNorm (B.matrix.mulVec (fun j => (a j : ℝ))) ≤ r) :
+    |(roundToInt ((B.matrix.mulVec (fun j => (a j : ℝ))) ⬝ᵥ inst.offset) : ℝ)| ≤
+      α * (q : ℝ) / Real.sqrt 2 + 1 / 2 :=
+  abs_roundToInt_le (dualBDD_noise_le B hr inst ha)
+
+/-- Classical `BDD`-to-`SearchLWE` reduction procedure: given only the public basis `B` and the
+public target vector `target : Fin n → ℝ`, constructs the `n` rounded basis samples
+`bddSampleFromTarget B q target e_i` and feeds them to `oracle.solveBasisSamples`. -/
+def solveDualBDDModQ {n q : ℕ} [NeZero q] {α : ℝ} (oracle : SearchLWEOracle n q α)
+    (B : LatticeBasis n) (target : Fin n → ℝ) : Fin n → ZMod q :=
+  oracle.solveBasisSamples (fun i =>
+    bddSampleFromTarget B q target (fun j => if j = i then 1 else 0))
 
 /-- **Correctness of the classical `BDD`-to-`SearchLWE` reduction [Regev2009, Lemma 3.4]:**
-when each sampled primal lattice vector `B (a_i)` has norm at most `r` and the modular noise `e_i`
-is bounded in magnitude by the continuous inner-product error `|⟨B (a_i), δ⟩|`, the LWE oracle
-recovers the exact modular dual coordinates `s mod q`. -/
-theorem solveDualBDDModQ_eq_secretCoords {n q : ℕ} {α r : ℝ} (hr : 0 < r)
-    (oracle : SearchLWEOracle n q α) {B : LatticeBasis n}
-    (inst : DualBDDInstance B (bddRadius q α r))
-    (a : Fin oracle.sampleCount → Fin n → ℤ) (e : Fin oracle.sampleCount → ZMod q)
-    (ha : ∀ i, euclideanNorm (B.matrix.mulVec (fun j => (a i j : ℝ))) ≤ r)
-    (he : ∀ i, |(e i).valMinAbs| ≤ |(B.matrix.mulVec (fun j => (a i j : ℝ))) ⬝ᵥ inst.offset|) :
-    solveDualBDDModQ oracle inst a e = fun j => (inst.secretCoords j : ZMod q) := by
-  apply oracle.correct_on_bounded_noise
-  intro i
-  exact (he i).trans (dualBDD_noise_le B hr inst (ha i))
+when the basis-projected offsets `|⟨B e_i, δ⟩|` are smaller than the rounding threshold `1 / 2`
+(for example when `‖B e_i‖₂ ≤ r` and `α q / √2 < 1 / 2`, or after rescaling), `solveDualBDDModQ`
+recovers the exact modular dual coordinates `s mod q` purely from `inst.target`. -/
+theorem solveDualBDDModQ_eq_secretCoords {n q : ℕ} [NeZero q] {α d : ℝ}
+    (oracle : SearchLWEOracle n q α) (B : LatticeBasis n) (inst : DualBDDInstance B d)
+    (hoffset : ∀ i : Fin n,
+      |(B.matrix.mulVec (fun j => ((if j = i then (1 : ℤ) else 0 : ℤ) : ℝ))) ⬝ᵥ inst.offset| <
+        1 / 2) :
+    solveDualBDDModQ oracle B inst.target = fun j => (inst.secretCoords j : ZMod q) := by
+  unfold solveDualBDDModQ
+  have hsamples : (fun i : Fin n =>
+      bddSampleFromTarget B q inst.target (fun j => if j = i then 1 else 0)) =
+      fun i : Fin n =>
+        lweSampleFromNoise (fun j => (inst.secretCoords j : ZMod q))
+          (fun j => if j = i then 1 else 0) 0 := by
+    ext i j
+    · simp [bddSampleFromTarget, lweSampleFromNoise]
+    · rw [bddSampleFromTarget_eq_lweSampleFromNoise]
+      have h0 : roundToInt ((B.matrix.mulVec
+          (fun j => ((if j = i then (1 : ℤ) else 0 : ℤ) : ℝ))) ⬝ᵥ inst.offset) = 0 :=
+        roundToInt_eq_zero_of_abs_lt (hoffset i)
+      rw [h0]
+      simp [lweSampleFromNoise]
+  rw [hsamples, oracle.solve_basis_zero_noise]
 
 /-- A discrete Gaussian superposition state over `L(B)` at width `r > 0`, providing `n` linearly
 independent lattice vectors of Euclidean norm at most `√n * r` (by Banaszczyk's Gaussian tail
@@ -910,6 +1129,11 @@ def iteratedGaussianWidth (n q : ℕ) (α : ℝ) (k : ℕ) (r₀ : ℝ) : ℝ :=
 def stoppingWidth {n : ℕ} (B : LatticeBasis n) (α : ℝ) : ℝ :=
   2 * Real.sqrt (n : ℝ) / (α * lambda1 (dualBasis B))
 
+/-- Clamped Gaussian width `max (stoppingWidth B α) (nextGaussianWidth n q α r)` produced by a
+single quantum step above the stopping threshold. -/
+def stepGaussianWidth {n : ℕ} (B : LatticeBasis n) (q : ℕ) (α r : ℝ) : ℝ :=
+  max (stoppingWidth B α) (nextGaussianWidth n q α r)
+
 theorem regevShrinkFactor_pos {n q : ℕ} {α : ℝ} (h : RegevParameters n q α) :
     0 < regevShrinkFactor n q α := by
   unfold regevShrinkFactor
@@ -958,52 +1182,109 @@ theorem stoppingWidth_pos {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ} (h : RegevPa
   have hl1 : 0 < lambda1 (dualBasis B) := lambda1_pos (dualBasis B)
   positivity
 
+/-- Under `RegevParameters n q α` and `HasBanaszczykBound (dualBasis B)`, `λ_n(B)` is strictly
+bounded by `√n * stepGaussianWidth B q α r`. -/
+theorem lambdaN_lt_sqrt_mul_stepGaussianWidth {n : ℕ} [NeZero n] {q : ℕ} {α r : ℝ}
+    (h : RegevParameters n q α) (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
+    lambdaN B < Real.sqrt (n : ℝ) * stepGaussianWidth B q α r := by
+  have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast h.n_pos
+  have hl1 : 0 < lambda1 (dualBasis B) := lambda1_pos (dualBasis B)
+  have hα : 0 < α := h.α_pos
+  have hB' : lambda1 (dualBasis B) * lambdaN B ≤ (n : ℝ) := by
+    unfold HasBanaszczykBound at hB
+    simpa only [dualBasis_dualBasis] using hB
+  have hln_le : lambdaN B ≤ (n : ℝ) / lambda1 (dualBasis B) :=
+    (le_div_iff₀' hl1).mpr hB'
+  have hlt : (n : ℝ) / lambda1 (dualBasis B) <
+      (2 * (n : ℝ) / α) / lambda1 (dualBasis B) := by
+    refine div_lt_div_of_pos_right ?_ hl1
+    rw [lt_div_iff₀ hα]
+    have hα1 : α < 1 := h.α_lt_one
+    nlinarith
+  have heq : (2 * (n : ℝ) / α) / lambda1 (dualBasis B) =
+      Real.sqrt (n : ℝ) * stoppingWidth B α := by
+    unfold stoppingWidth
+    have hsq : Real.sqrt (n : ℝ) * (2 * Real.sqrt (n : ℝ)) = 2 * (n : ℝ) := by
+      calc
+        Real.sqrt (n : ℝ) * (2 * Real.sqrt (n : ℝ)) =
+            2 * (Real.sqrt (n : ℝ) * Real.sqrt (n : ℝ)) := by ring
+        _ = 2 * (n : ℝ) := by rw [Real.mul_self_sqrt hn_pos.le]
+    rw [mul_div_assoc', hsq, div_div]
+  have hle : Real.sqrt (n : ℝ) * stoppingWidth B α ≤
+      Real.sqrt (n : ℝ) * stepGaussianWidth B q α r :=
+    mul_le_mul_of_nonneg_left (le_max_left _ _) (Real.sqrt_nonneg _)
+  exact (hln_le.trans_lt (hlt.trans_eq heq)).trans_le hle
+
 /-- Regev's quantum step oracle [Regev2009, Lemma 3.14]: equipped with an average-case
 `SearchLWEOracle n q α` (which solves `DualBDDInstance` at radius `bddRadius q α r` by
 `solveDualBDDModQ_eq_secretCoords`), uncomputing the closest dual lattice vector in superposition
 and applying the Quantum Fourier Transform over `(ZMod q)^n` maps a discrete Gaussian state of
 width `r > stoppingWidth B α` to a narrower discrete Gaussian state of width
-`nextGaussianWidth n q α r = r * (2 √n / (α q))`. -/
-structure RegevQuantumStepOracle (n q : ℕ) (α : ℝ) where
+`stepGaussianWidth B q α r = max (stoppingWidth B α) (r * (2 √n / (α q)))`. -/
+structure RegevQuantumStepOracle (n q : ℕ) [NeZero q] (α : ℝ) where
   /-- The underlying average-case `SearchLWE` oracle used in the classical BDD step. -/
   lweOracle : SearchLWEOracle n q α
-  /-- Single quantum QFT + BDD width-shrinking step from `r` to `nextGaussianWidth n q α r`. -/
-  step : ∀ (B : LatticeBasis n) {r : ℝ}, stoppingWidth B α < r →
+  /-- Single quantum QFT + BDD width-shrinking step from `r` to `stepGaussianWidth B q α r`. -/
+  step : ∀ (B : LatticeBasis n), HasBanaszczykBound (dualBasis B) →
+    ∀ {r : ℝ}, stoppingWidth B α < r →
     DiscreteGaussianSuperposition B r →
-    DiscreteGaussianSuperposition B (nextGaussianWidth n q α r)
+    DiscreteGaussianSuperposition B (stepGaussianWidth B q α r)
+
+/-- **Non-vacuity of `RegevQuantumStepOracle`:** under `RegevParameters n q α`,
+`RegevQuantumStepOracle n q α` is inhabited. -/
+theorem nonempty_regevQuantumStepOracle {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
+    (h : RegevParameters n q α) :
+    Nonempty (RegevQuantumStepOracle n q α) := by
+  refine ⟨⟨canonicalSearchLWEOracle n q (ne_of_gt h.α_pos), ?_⟩⟩
+  intro B hB r _ _
+  exact Classical.choice
+    (nonempty_discreteGaussianSuperposition_of_lt B
+      (lambdaN_lt_sqrt_mul_stepGaussianWidth h B hB))
 
 /-- Iterate the quantum width-reduction step `k` times, stopping as soon as the Gaussian width
 reaches `stoppingWidth B α`. -/
-def iterateQuantumStep {n q : ℕ} {α : ℝ} (Q : RegevQuantumStepOracle n q α)
-    (B : LatticeBasis n) :
+def iterateQuantumStep {n q : ℕ} [NeZero q] {α : ℝ} (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
     ℕ → ∀ (r : ℝ), DiscreteGaussianSuperposition B r →
       Σ r' : ℝ, DiscreteGaussianSuperposition B r'
   | 0, r, state => ⟨r, state⟩
   | k + 1, r, state =>
     if h : stoppingWidth B α < r then
-      iterateQuantumStep Q B k (nextGaussianWidth n q α r) (Q.step B h state)
+      iterateQuantumStep Q B hB k (stepGaussianWidth B q α r) (Q.step B hB h state)
     else
       ⟨r, state⟩
 
 /-- After `k` iterations of `iterateQuantumStep`, the resulting Gaussian width is at most
 `max (stoppingWidth B α) (r * (regevShrinkFactor n q α) ^ k)`. -/
-theorem iterateQuantumStep_width_le {n q : ℕ} {α : ℝ} (Q : RegevQuantumStepOracle n q α)
-    (B : LatticeBasis n) :
+theorem iterateQuantumStep_width_le {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
+    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
     ∀ (k : ℕ) (r : ℝ) (state : DiscreteGaussianSuperposition B r),
-      (iterateQuantumStep Q B k r state).1 ≤
+      (iterateQuantumStep Q B hB k r state).1 ≤
         max (stoppingWidth B α) (r * (regevShrinkFactor n q α) ^ k)
   | 0, r, state => by
     simp [iterateQuantumStep]
   | k + 1, r, state => by
     unfold iterateQuantumStep
-    split_ifs with h
-    · have ih := iterateQuantumStep_width_le Q B k (nextGaussianWidth n q α r) (Q.step B h state)
-      have heq : nextGaussianWidth n q α r * (regevShrinkFactor n q α) ^ k =
-          r * (regevShrinkFactor n q α) ^ (k + 1) := by
-        unfold nextGaussianWidth
-        ring
-      rwa [heq] at ih
-    · exact le_max_of_le_left (not_lt.mp h)
+    split_ifs with hlt
+    · have ih := iterateQuantumStep_width_le h Q B hB k
+        (stepGaussianWidth B q α r) (Q.step B hB hlt state)
+      refine ih.trans (max_le (le_max_left _ _) ?_)
+      unfold stepGaussianWidth
+      rw [max_mul_of_nonneg _ _ (pow_nonneg (regevShrinkFactor_pos h).le k)]
+      refine max_le ?_ ?_
+      · have hpow : (regevShrinkFactor n q α) ^ k ≤ 1 :=
+          pow_le_one₀ (regevShrinkFactor_pos h).le (regevShrinkFactor_lt_one h).le
+        have hstop_le : stoppingWidth B α * (regevShrinkFactor n q α) ^ k ≤ stoppingWidth B α :=
+          mul_le_of_le_one_right (stoppingWidth_pos h B).le hpow
+        exact hstop_le.trans (le_max_left _ _)
+      · have heq : nextGaussianWidth n q α r * (regevShrinkFactor n q α) ^ k =
+            r * (regevShrinkFactor n q α) ^ (k + 1) := by
+          unfold nextGaussianWidth
+          ring
+        rw [heq]
+        exact le_max_right _ _
+    · exact le_max_of_le_left (not_lt.mp hlt)
 
 /-- Because `2 * √n < α * q` implies `regevShrinkFactor n q α < 1`, there exists an iteration
 count `k` after which `r₀ * (regevShrinkFactor n q α) ^ k ≤ stoppingWidth B α`. -/
@@ -1024,20 +1305,22 @@ def quantumIterationCount {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
 
 /-- The terminal discrete Gaussian state obtained after running `quantumIterationCount h B` steps
 of Regev's quantum reduction. -/
-def terminalGaussianState {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
-    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) (B : LatticeBasis n) :
+def terminalGaussianState {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
+    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
     Σ r' : ℝ, DiscreteGaussianSuperposition B r' :=
-  iterateQuantumStep Q B (quantumIterationCount h B) (initialGaussianWidth B)
+  iterateQuantumStep Q B hB (quantumIterationCount h B) (initialGaussianWidth B)
     (initialGaussianState B)
 
 /-- **Width guarantee for the terminal discrete Gaussian state:**
 iterating the quantum step under `RegevParameters n q α` reduces the Gaussian width to at most
 `stoppingWidth B α = 2 √n / (α λ₁(B*))`. -/
-theorem terminalGaussianState_width_le {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
-    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) (B : LatticeBasis n) :
-    (terminalGaussianState h Q B).1 ≤ stoppingWidth B α := by
+theorem terminalGaussianState_width_le {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
+    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
+    (terminalGaussianState h Q B hB).1 ≤ stoppingWidth B α := by
   unfold terminalGaussianState
-  have hle := iterateQuantumStep_width_le Q B (quantumIterationCount h B)
+  have hle := iterateQuantumStep_width_le h Q B hB (quantumIterationCount h B)
     (initialGaussianWidth B) (initialGaussianState B)
   have hk := Classical.choose_spec (exists_iteration_le_stoppingWidth h B)
   exact hle.trans (max_le le_rfl hk)
@@ -1071,21 +1354,23 @@ theorem regevApproxFactor_le_tilde {n : ℕ} (hn : 1 ≤ n) {α : ℝ} (hα : 0 
 
 /-- The `SIVPWitness` extracted from the terminal discrete Gaussian state of Regev's quantum
 reduction on basis `B`. -/
-def regevSIVPWitness {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
-    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) (B : LatticeBasis n) :
+def regevSIVPWitness {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
+    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
     SIVPWitness B :=
-  (terminalGaussianState h Q B).2.toSIVPWitness
+  (terminalGaussianState h Q B hB).2.toSIVPWitness
 
 /-- **Norm bound on `regevSIVPWitness` in terms of `λ₁(B*)`:**
 the `n` linearly independent vectors produced on `B` have Euclidean norm at most
 `regevApproxFactor n α / λ₁(B*) = (2 n / α) / λ₁(B*)`. -/
-theorem regevSIVPWitness_normBound_le_div_lambda1_dual {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
-    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) (B : LatticeBasis n) :
-    (regevSIVPWitness h Q B).normBound ≤ regevApproxFactor n α / lambda1 (dualBasis B) := by
-  change Real.sqrt (n : ℝ) * (terminalGaussianState h Q B).1 ≤
+theorem regevSIVPWitness_normBound_le_div_lambda1_dual {n : ℕ} [NeZero n] {q : ℕ} [NeZero q]
+    {α : ℝ} (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
+    (regevSIVPWitness h Q B hB).normBound ≤ regevApproxFactor n α / lambda1 (dualBasis B) := by
+  change Real.sqrt (n : ℝ) * (terminalGaussianState h Q B hB).1 ≤
     regevApproxFactor n α / lambda1 (dualBasis B)
   have hn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
-  have hle := mul_le_mul_of_nonneg_left (terminalGaussianState_width_le h Q B)
+  have hle := mul_le_mul_of_nonneg_left (terminalGaussianState_width_le h Q B hB)
     (Real.sqrt_nonneg (n : ℝ))
   have heq : Real.sqrt (n : ℝ) * stoppingWidth B α =
       regevApproxFactor n α / lambda1 (dualBasis B) := by
@@ -1101,86 +1386,99 @@ theorem regevSIVPWitness_normBound_le_div_lambda1_dual {n : ℕ} [NeZero n] {q :
 /-- **Regev's quantum `SIVP` solver [Regev2009, Theorem 1.1]:**
 under `RegevParameters n q α` (`2 * √n < α * q`), the iterative quantum reduction produces an
 `SIVPSolver` achieving approximation factor `regevApproxFactor n α = 2 n / α` on every full-rank
-`n`-dimensional lattice `B`. -/
-def regevSIVPSolver {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
+`n`-dimensional lattice `B` satisfying dual transference. -/
+def regevSIVPSolver {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
     (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) :
     SIVPSolver n (regevApproxFactor n α) where
-  solve B := regevSIVPWitness h Q B
-  isApprox B := by
+  solve B hB := regevSIVPWitness h Q B hB
+  isApprox B hB := by
     unfold SIVPWitness.IsApproxSolution
-    have h1 := regevSIVPWitness_normBound_le_div_lambda1_dual h Q B
+    have h1 := regevSIVPWitness_normBound_le_div_lambda1_dual h Q B hB
     have hl1 : 0 < lambda1 (dualBasis B) := lambda1_pos (dualBasis B)
     have htrans : (lambda1 (dualBasis B))⁻¹ ≤ lambdaN B :=
       (inv_le_iff_one_le_mul₀' hl1).mpr (one_le_lambda1_dualBasis_mul_lambdaN B)
     have hfac_pos : 0 ≤ regevApproxFactor n α :=
       le_trans zero_le_one (one_le_regevApproxFactor h)
     calc
-      (regevSIVPWitness h Q B).normBound ≤ regevApproxFactor n α * (lambda1 (dualBasis B))⁻¹ := by
+      (regevSIVPWitness h Q B hB).normBound ≤
+          regevApproxFactor n α * (lambda1 (dualBasis B))⁻¹ := by
         rwa [div_eq_mul_inv] at h1
       _ ≤ regevApproxFactor n α * lambdaN B :=
         mul_le_mul_of_nonneg_left htrans hfac_pos
 
 /-- **Regev's quantum reduction from worst-case `SIVP` to `SearchLWE` [Regev2009, Theorem 1.1]:**
-on every full-rank lattice `B`, `regevSIVPSolver h Q` produces `n` linearly independent lattice
-vectors of norm at most `regevApproxFactor n α * λ_n(B) = (2 n / α) * λ_n(B)`. -/
-theorem regev_lwe_to_sivp {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
-    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) (B : LatticeBasis n) :
-    ((regevSIVPSolver h Q).solve B).IsApproxSolution (regevApproxFactor n α) :=
-  (regevSIVPSolver h Q).isApprox B
+on every full-rank lattice `B` satisfying `HasBanaszczykBound (dualBasis B)`,
+`regevSIVPSolver h Q` produces `n` linearly independent lattice vectors of norm at most
+`regevApproxFactor n α * λ_n(B) = (2 n / α) * λ_n(B)`. -/
+theorem regev_lwe_to_sivp {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
+    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
+    ((regevSIVPSolver h Q).solve B hB).IsApproxSolution (regevApproxFactor n α) :=
+  (regevSIVPSolver h Q).isApprox B hB
 
 /-- Corollary: `regevSIVPSolver` also satisfies the `Õ(n / α) = 2 n (log n + 1) / α`
-approximation bound on every lattice `B`. -/
-theorem regev_lwe_to_sivp_tilde {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
-    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) (B : LatticeBasis n) :
-    ((regevSIVPSolver h Q).solve B).IsApproxSolution (regevTildeApproxFactor n α) := by
+approximation bound on every lattice `B` satisfying `HasBanaszczykBound (dualBasis B)`. -/
+theorem regev_lwe_to_sivp_tilde {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
+    (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α)
+    (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)) :
+    ((regevSIVPSolver h Q).solve B hB).IsApproxSolution (regevTildeApproxFactor n α) := by
   unfold SIVPWitness.IsApproxSolution
-  have hsol := regev_lwe_to_sivp h Q B
+  have hsol := regev_lwe_to_sivp h Q B hB
   unfold SIVPWitness.IsApproxSolution at hsol
   have hle := regevApproxFactor_le_tilde h.n_pos h.α_pos
   exact hsol.trans (mul_le_mul_of_nonneg_right hle (lambdaN_pos B).le)
 
 /-- Decision procedure for worst-case `GapSVP` obtained by running Regev's quantum `SIVP`
 procedure on `dualBasis B` and comparing the resulting norm bound against `1 / d`. -/
-def regevGapSVPDecider {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
+def regevGapSVPDecider {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
     (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) (d : ℝ)
     (B : LatticeBasis n) : Bool :=
-  decide (1 ≤ (regevSIVPWitness h Q (dualBasis B)).normBound * d)
+  letI := Classical.propDecidable
+  if hB : HasBanaszczykBound (dualBasis (dualBasis B)) then
+    decide (1 ≤ (regevSIVPWitness h Q (dualBasis B) hB).normBound * d)
+  else
+    true
 
 /-- **Regev's quantum reduction from worst-case `GapSVP` to `SearchLWE` [Regev2009, Theorem 1.1]:**
 under `RegevParameters n q α` (`2 * √n < α * q`), for every distance threshold `d > 0`,
 `regevGapSVPDecider h Q d` solves the worst-case promise problem
 `GapSVP n (regevApproxFactor n α) d` with approximation factor `2 n / α`. -/
-theorem regev_lwe_to_gapsvp {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
+theorem regev_lwe_to_gapsvp {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
     (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) {d : ℝ} (hd : 0 < d) :
     (GapSVP n (regevApproxFactor n α) d).SolvedBy (regevGapSVPDecider h Q d) := by
   constructor
   · intro B hByes
     rw [mem_yes_GapSVP] at hByes
+    rcases hByes with ⟨hB, hByes⟩
+    have hB' : HasBanaszczykBound (dualBasis (dualBasis B)) := by
+      simpa only [dualBasis_dualBasis] using hB
     unfold regevGapSVPDecider
-    rw [decide_eq_true_iff]
+    simp only [hB', ↓reduceDIte, decide_eq_true_iff]
     have htrans : 1 ≤ lambda1 B * lambdaN (dualBasis B) :=
       one_le_lambda1_mul_lambdaN_dualBasis B
-    have hln : lambdaN (dualBasis B) ≤ (regevSIVPWitness h Q (dualBasis B)).normBound :=
-      (regevSIVPWitness h Q (dualBasis B)).lambdaN_le_normBound
+    have hln : lambdaN (dualBasis B) ≤ (regevSIVPWitness h Q (dualBasis B) hB').normBound :=
+      (regevSIVPWitness h Q (dualBasis B) hB').lambdaN_le_normBound
     have hln_pos : 0 ≤ lambdaN (dualBasis B) := (lambdaN_pos (dualBasis B)).le
     calc
       (1 : ℝ) ≤ lambda1 B * lambdaN (dualBasis B) := htrans
       _ ≤ d * lambdaN (dualBasis B) := mul_le_mul_of_nonneg_right hByes hln_pos
-      _ ≤ d * (regevSIVPWitness h Q (dualBasis B)).normBound :=
+      _ ≤ d * (regevSIVPWitness h Q (dualBasis B) hB').normBound :=
         mul_le_mul_of_nonneg_left hln hd.le
-      _ = (regevSIVPWitness h Q (dualBasis B)).normBound * d := mul_comm _ _
+      _ = (regevSIVPWitness h Q (dualBasis B) hB').normBound * d := mul_comm _ _
   · intro B hBno
     rw [mem_no_GapSVP] at hBno
-    rcases hBno with ⟨hBno, _⟩
+    rcases hBno with ⟨hB, hBno, _⟩
+    have hB' : HasBanaszczykBound (dualBasis (dualBasis B)) := by
+      simpa only [dualBasis_dualBasis] using hB
     unfold regevGapSVPDecider
-    rw [decide_eq_false_iff_not, not_le]
-    have hdual := regevSIVPWitness_normBound_le_div_lambda1_dual h Q (dualBasis B)
+    simp only [hB', ↓reduceDIte, decide_eq_false_iff_not, not_le]
+    have hdual := regevSIVPWitness_normBound_le_div_lambda1_dual h Q (dualBasis B) hB'
     rw [dualBasis_dualBasis] at hdual
     have hl1 : 0 < lambda1 B := lambda1_pos B
-    have h1 : (regevSIVPWitness h Q (dualBasis B)).normBound * d ≤
+    have h1 : (regevSIVPWitness h Q (dualBasis B) hB').normBound * d ≤
         (regevApproxFactor n α * d) / lambda1 B := by
       calc
-        (regevSIVPWitness h Q (dualBasis B)).normBound * d ≤
+        (regevSIVPWitness h Q (dualBasis B) hB').normBound * d ≤
             (regevApproxFactor n α / lambda1 B) * d :=
           mul_le_mul_of_nonneg_right hdual hd.le
         _ = (regevApproxFactor n α * d) / lambda1 B := div_mul_eq_mul_div _ _ _
@@ -1192,14 +1490,15 @@ theorem regev_lwe_to_gapsvp {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
 for every dimension `n > 0`, modulus `q ≥ 2`, and Gaussian noise rate `0 < α < 1` satisfying
 `2 * √n < α * q`, a quantum step oracle powered by `SearchLWEOracle n q α` simultaneously yields:
 1. a worst-case `SIVP` solver with approximation factor `regevApproxFactor n α = 2 n / α` (and
-   `regevTildeApproxFactor n α = 2 n (log n + 1) / α`), and
+   `regevTildeApproxFactor n α = 2 n (log n + 1) / α`) on all lattices satisfying dual transference,
+   and
 2. a worst-case `GapSVP` decider solving `GapSVP n (regevApproxFactor n α) d` for every `d > 0`. -/
-theorem regev_lwe_to_sivp_gapsvp {n : ℕ} [NeZero n] {q : ℕ} {α : ℝ}
+theorem regev_lwe_to_sivp_gapsvp {n : ℕ} [NeZero n] {q : ℕ} [NeZero q] {α : ℝ}
     (h : RegevParameters n q α) (Q : RegevQuantumStepOracle n q α) {d : ℝ} (hd : 0 < d) :
-    (∀ B : LatticeBasis n, ((regevSIVPSolver h Q).solve B).IsApproxSolution
-      (regevApproxFactor n α)) ∧
-    (∀ B : LatticeBasis n, ((regevSIVPSolver h Q).solve B).IsApproxSolution
-      (regevTildeApproxFactor n α)) ∧
+    (∀ (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)),
+      ((regevSIVPSolver h Q).solve B hB).IsApproxSolution (regevApproxFactor n α)) ∧
+    (∀ (B : LatticeBasis n) (hB : HasBanaszczykBound (dualBasis B)),
+      ((regevSIVPSolver h Q).solve B hB).IsApproxSolution (regevTildeApproxFactor n α)) ∧
     (GapSVP n (regevApproxFactor n α) d).SolvedBy (regevGapSVPDecider h Q d) :=
   ⟨regev_lwe_to_sivp h Q, regev_lwe_to_sivp_tilde h Q, regev_lwe_to_gapsvp h Q hd⟩
 
