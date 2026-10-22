@@ -28,6 +28,8 @@ machine modules, with no complexity-class or headline-result allowance.
 
 ## References
 
+* [C. Lund, L. Fortnow, H. Karloff, N. Nisan, *Algebraic methods for interactive proof
+  systems*][LundFortnowKarloffNisan1992]
 * [A. Shamir, *IP = PSPACE*][Shamir1992]
 * [A. Shen, *IP = SPACE: simplified proof*][Shen1992]
 * [S. Goldwasser, S. Micali, C. Rackoff, *The knowledge complexity of interactive proof systems*]
