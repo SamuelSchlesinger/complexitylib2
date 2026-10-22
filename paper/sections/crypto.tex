@@ -197,3 +197,42 @@ abort disagrees with a uniform output bit with probability $1/2$
 \declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1340}{Cslib.Crypto.Multiparty.cleve_unfair_fallback}
 \end{result}
 
+\begin{result}
+\subsection{Regev's worst-case-to-average-case reduction for LWE}
+For a full-rank $n$-dimensional lattice $L(B)\subseteq\mathbb R^n$ ($n>0$, $\det B\ne 0$) with dual
+basis $B^*=(B^{-1})^T$, the successive minima satisfy $0<\lambda_1(B)\le\lambda_n(B)$ and the
+unconditional lower transference bound $1\le\lambda_1(B)\lambda_n(B^*)$ (with Banaszczyk's upper
+bound $\lambda_1(B)\lambda_n(B^*)\le n$ recorded in \lean{HasBanaszczykBound} and proved for all
+scaled identity lattices $c I_n$ and their duals). For modulus $q\ge 2$ and Gaussian noise rate
+$0<\alpha<1$ satisfying Regev's smoothing condition $\alpha q > 2\sqrt{n}$ (\lean{RegevParameters},
+instantiated explicitly by $q=n^2+5$ and $\alpha=3/\sqrt{n}$ for $n\ge 10$ or
+$\alpha=3/(\sqrt{n}+3)$ for all $n\ge 1$), the discrete Gaussian noise law $\Psi_\alpha$ on
+$\mathbb Z_q$ weights each residue $e$ by $\exp(-\pi(|e|_q/(\alpha q))^2)$, and the LWE sample
+distribution map $s\mapsto A_{s,\alpha}$ (\lean{lweSamplePMF}) is injective for every $\alpha\ne 0$,
+yielding a concrete non-vacuous \lean{SearchLWEOracle}. In the classical step, rounding the inner
+product of primal lattice vectors $B a$ of norm at most $r$ against a public dual-lattice
+$\cc{BDD}$ target $x=B^* s+\delta$ at distance $\|\delta\|_2\le \alpha q/(\sqrt{2}\,r)$
+(\lean{bddSampleFromTarget}) produces the LWE sample $(a\bmod q,\langle a,s\rangle+\operatorname{round}(\langle B a,\delta\rangle)\bmod q)$ with continuous error $|\langle B a,\delta\rangle|\le \alpha q/\sqrt{2}$,
+recovering $s\bmod q$ when the basis-projected offsets lie below $1/2$. In the iterative quantum
+reduction on lattices satisfying \lean{HasBanaszczykBound}, each step shrinks the discrete Gaussian
+width by factor $2\sqrt{n}/(\alpha q)<1$ (clamped at the stopping threshold
+$2\sqrt{n}/(\alpha\lambda_1(B^*))$ in \lean{stepGaussianWidth}, making
+\lean{RegevQuantumStepOracle} non-vacuous), producing $n$ linearly independent lattice vectors
+solving worst-case $\cc{SIVP}_\gamma$ on $B$ (under \lean{HasBanaszczykBound} on $B^*$) and a
+promise decider solving worst-case $\cc{GapSVP}_{\gamma,d}$ on $B$ (under \lean{HasBanaszczykBound}
+on $B$) with approximation factor $\gamma=2n/\alpha\le 2n(\ln n+1)/\alpha
+=\tilde O(n/\alpha)$.\citep{Regev2009,Banaszczyk1993}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{403}{Cslib.Crypto.one_le_lambda1_mul_lambdaN_dualBasis}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{667}{Cslib.Crypto.regevParameters_explicit}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{802}{Cslib.Crypto.lweSamplePMF_injective}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{859}{Cslib.Crypto.nonempty_searchLWEOracle}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{979}{Cslib.Crypto.bddSampleFromTarget_eq_lweSampleFromNoise}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1012}{Cslib.Crypto.solveDualBDDModQ_eq_secretCoords}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1235}{Cslib.Crypto.nonempty_regevQuantumStepOracle}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1318}{Cslib.Crypto.terminalGaussianState_width_le}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1390}{Cslib.Crypto.regevSIVPSolver}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1413}{Cslib.Crypto.regev_lwe_to_sivp}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1446}{Cslib.Crypto.regev_lwe_to_gapsvp}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1496}{Cslib.Crypto.regev_lwe_to_sivp_gapsvp}
+\end{result}
+
