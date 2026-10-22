@@ -828,9 +828,20 @@ native insertion and strict-successor correctness and worst-case `O(log log U)` 
 bounds, charged uniform initialization, implemented space/stack and complete word/address-fit
 guarantees, and the adaptive shared-stateful bridge. Deletion and predecessor are later work.
 
+The [doubling array](Complexity/Algorithms/WordRAM/DynamicArray.lean) implements dynamic append
+and indexed read with one fixed twelve-register dispatcher using the bump allocator and array-copy
+loop. Fifteen instructions initialize the empty array by allocating and zeroing a one-word block at
+address zero. Appending writes in place in seven instructions when spare capacity remains and
+doubles capacity in `15 * cap + 19` instructions when full. Potential `15 * (2 * |vs| - cap)`
+bounds every append by `49` amortized instructions before dispatch (`52` including dispatch and
+halt) and every indexed read by `6` instructions including dispatch and halt, retaining initial
+and final credit across arbitrary admissible adaptive clients. Old blocks remain allocated, so the
+space bound `frontier < 4 * |vs|` for nonempty arrays limits total words ever allocated rather than
+reclaimed live storage; deallocation, shrinking, and compiled client controllers remain open.
+
 Outstanding: controllers for larger adaptive and iterative clients;
-reusable allocation and deallocation, live/peak space accounting,
-doubling-array amortization, richer ownership and recursive procedures; independent model
+reusable allocation and deallocation, shrinking and live/peak space accounting,
+richer ownership and recursive procedures; independent model
 realizations for cell probes, caches and randomness; and present/historical queries for the
 retroactive interface. Upstream API coordination and coordinator review remain prerequisites
 for integration.

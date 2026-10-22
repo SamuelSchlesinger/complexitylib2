@@ -505,6 +505,41 @@ are not claimed.\citep[Exercise 10.1-6 and Chapter 17]{CLRS2009}
 \end{result}
 
 \begin{result}
+\subsection{Doubling arrays with charged allocation on the word RAM}
+On the standard unsigned word RAM, a fixed twelve-register program maintains a dynamic array
+$v_0,\ldots,v_{n-1}$ at a current block pointer $p$ with capacity $c>0$ and bump-allocator
+frontier $f$, satisfying $n\le c\le\max(1,2n)$, $p+1=c$, and $f+1=2c$. Fifteen instructions
+initialize the empty array from arbitrary bounded machine data by allocating and zeroing a
+one-word block at address zero ($p=0$, $n=0$, $c=1$, $f=1$). When $n<c$, appending a word writes
+in place in $7$ instructions; when $n=c$ and $f+2c<2^w$, growth allocates and zeroes $[f,f+2c)$,
+copies the $c$ live words, updates $p$ and $c$, and appends the new word within $15c+19$
+instructions. With the natural-valued potential $\Phi(v,x)=15(2n-c)$, every append satisfies
+\[
+  t+\Phi(v',y)\le 49+\Phi(v,x).
+\]
+A two-instruction indexed read loads $v_i$ for $i<n$ without modifying memory or $\Phi$. Through
+one fixed operation dispatcher, append has amortized charge $52$ and indexed read has charge $6$,
+counting dispatch and the final halt per call; append admissibility requires $v<2^w$ and
+$8n+4<2^w$, while read admissibility requires $i<n$ and $i<2^w$. From any bounded initial state
+with $1<2^w$, charged initialization followed by an admissible adaptive client issuing $m$
+operations halts with total instructions at most $15+52m$ (retaining final credit), and whenever
+the final array has $n>0$ elements the allocator frontier satisfies $f<4n$.
+
+Old blocks are retained in $[0,p)$ rather than reclaimed, so $f<4n$ bounds total words ever
+allocated over append/read histories rather than reclaimed live storage. Shrinking, deletion,
+external argument delivery, result decoding, and compiled client controllers are not claimed.
+\citep[Section 17.4]{CLRS2009}\citep{Tromino2025}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{121}{Cslib.Algorithms.WordRAM.DynamicArray.Rep.space}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{152}{Cslib.Algorithms.WordRAM.DynamicArray.grow_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{249}{Cslib.Algorithms.WordRAM.DynamicArray.append_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{387}{Cslib.Algorithms.WordRAM.DynamicArray.get_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{412}{Cslib.Algorithms.WordRAM.DynamicArray.init_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{616}{Cslib.Algorithms.WordRAM.DynamicArray.amortized}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{676}{Cslib.Algorithms.WordRAM.DynamicArray.run_initialized}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{724}{Cslib.Algorithms.WordRAM.DynamicArray.run_appendAll}
+\end{result}
+
+\begin{result}
 \subsection{An unbalanced search tree as a stateful ordered set}
 For keys in any linear order, an ordinary binary tree satisfying the strict search-tree
 invariant represents a finite set. Membership agrees with set membership; insertion adds the

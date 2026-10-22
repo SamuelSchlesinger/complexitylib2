@@ -78,6 +78,7 @@ import ComplexityTests.DecisionTree
 import ComplexityTests.DenseMask
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
+import ComplexityTests.DynamicArray
 import ComplexityTests.ElementDistinctnessRAM
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings

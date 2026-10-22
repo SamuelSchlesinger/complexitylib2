@@ -17,6 +17,7 @@ public import Complexity.Algorithms.Lean.VanEmdeBoas.Successor
 public import Complexity.Algorithms.Reachability.BreadthFirst
 public import Complexity.Algorithms.Reachability.Reingold
 public import Complexity.Algorithms.Reachability.Savitch
+public import Complexity.Algorithms.WordRAM.DynamicArray
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
 public import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
 public import Complexity.Algorithms.WordRAM.PrefixSums.Dynamic
