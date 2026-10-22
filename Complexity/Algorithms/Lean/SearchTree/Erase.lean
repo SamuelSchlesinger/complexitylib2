@@ -29,7 +29,9 @@ leaves the tree unchanged.
 ## Main results
 
 * `elements_erase`, `ordered_erase`: deletion has set semantics and preserves the invariant.
-* `erase_eq_self`: deleting an absent key preserves the entire tree.
+* `erase_eq_of_notMem`: deleting an absent key preserves the entire tree.
+* `searchVisits_le_eraseVisits`: deletion walks the search path of `contains` and `insert`, and
+  then at most the left spine of the matched node's right subtree (`minimumVisits`).
 * `eraseVisits_le_height`, `height_erase_le`: deletion visits at most the initial height and
   never increases the height.
 
@@ -196,7 +198,7 @@ theorem ordered_erase {t : BinaryTree α} (ht : Ordered t) (x : α) :
       · exact ordered_glue hn
 
 /-- Deleting an absent key preserves the entire tree, not just its represented set. -/
-theorem erase_eq_self {t : BinaryTree α} {x : α} (hx : x ∉ elements t) : erase x t = t := by
+theorem erase_eq_of_notMem {t : BinaryTree α} {x : α} (hx : x ∉ elements t) : erase x t = t := by
   induction t with
   | nil => rfl
   | node a l r il ir =>
@@ -215,6 +217,17 @@ def eraseVisits (x : α) : BinaryTree α → Nat
   | .nil => 0
   | .node a l r =>
       1 + if x < a then eraseVisits x l else if a < x then eraseVisits x r else minimumVisits r
+
+/-- Deletion pays for the full search path and possibly a successor descent on top. -/
+theorem searchVisits_le_eraseVisits (x : α) (t : BinaryTree α) :
+    searchVisits x t ≤ eraseVisits x t := by
+  induction t with
+  | nil => rfl
+  | node a l r il ir =>
+    simp only [searchVisits, eraseVisits]
+    split
+    · omega
+    · split <;> omega
 
 theorem eraseVisits_le_height (x : α) (t : BinaryTree α) :
     eraseVisits x t ≤ t.height := by

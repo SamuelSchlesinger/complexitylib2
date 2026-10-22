@@ -55,7 +55,7 @@ example : erase 5 (build [5, 3]) = .node 3 .nil .nil := rfl
 
 -- Deleting an absent key preserves shape as well as contents, including on the empty tree.
 example : erase 8 medianFirst = medianFirst := rfl
-example : erase 8 medianFirst = medianFirst := erase_eq_self (by decide)
+example : erase 8 medianFirst = medianFirst := erase_eq_of_notMem (by decide)
 example : erase 0 (.nil : BinaryTree Nat) = .nil := rfl
 example : eraseVisits 8 sortedFirst = 7 := rfl
 

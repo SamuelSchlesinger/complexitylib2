@@ -118,7 +118,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   `Algorithms/Lean/SearchTree/*` reuses Mathlib's `BinaryTree`, height and node count for an
   unbalanced ordered-set realization. Finite-set behavior, strict invariants and height-bounded
   node visits are proved, including for the pure deletion operation `erase`; allocation,
-  comparison implementation and client computation are excluded from that cost model. It is not a balanced tree or machine-time certificate.
+  comparison implementation and client computation are excluded from that cost model. It is not
+  a balanced tree or machine-time certificate.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
   The direct shared-heap queue uses the existing FIFO operation signature and native operation
