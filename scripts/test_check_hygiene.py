@@ -34,6 +34,8 @@ class CheckHygieneTests(unittest.TestCase):
             "set_option maxHeartbeats 400000 in\n"
             "theorem demo : True := by\n"
             "  simp only [and_self]\n"
+            "  simp +decide only [and_self]\n"
+            "  simp (config := { decide := true }) only [and_self]\n"
             "  simp\n",
         )
         self.assertEqual(check_hygiene.check_file(p, root=self.root, check_simp=True), [])

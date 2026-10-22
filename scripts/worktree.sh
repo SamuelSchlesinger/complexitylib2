@@ -2,10 +2,17 @@
 # Manage isolated git worktrees under .worktrees/ with pre-seeded .lake caches.
 #
 # Usage:
-#   scripts/worktree.sh create <branch> [dir_name] [base_ref] [--copy-cslib]
+#   scripts/worktree.sh create <branch> [dir_name] [base_ref] [--copy-cslib] [--force-reset]
 #   scripts/worktree.sh seed <worktree_path> [--copy-cslib]
 #   scripts/worktree.sh list
-#   scripts/worktree.sh prune-merged [base_ref]
+#   scripts/worktree.sh prune-merged [base_ref] [--dry-run]
+#
+# Cache seeding note:
+#   By default, `.lake/packages` is hard-linked (`cp -al`) from the root checkout for speed
+#   and disk efficiency, while `.lake/build` and `.lake/config` are copied (`cp -r`) so build
+#   outputs remain isolated. Because hard-linked files share inodes with the root checkout, do
+#   not mutate files inside `.lake/packages/` in a default worktree; pass `--copy-cslib` when
+#   testing upstream cslib edits or syncing the cslib pin.
 
 set -euo pipefail
 
@@ -51,27 +58,51 @@ shift || true
 
 case "$cmd" in
   create)
-    branch="${1:?Usage: scripts/worktree.sh create <branch> [dir_name] [base_ref] [--copy-cslib]}"
+    branch="${1:?Usage: scripts/worktree.sh create <branch> [dir_name] [base_ref] [--copy-cslib] [--force-reset]}"
     shift
     dir_name=""
-    base_ref="origin/main"
+    base_ref=""
     copy_cslib="false"
+    force_reset="false"
     for arg in "$@"; do
       if [ "$arg" = "--copy-cslib" ]; then
         copy_cslib="true"
+      elif [ "$arg" = "--force-reset" ]; then
+        force_reset="true"
       elif [ -z "$dir_name" ]; then
         dir_name="$arg"
-      else
+      elif [ -z "$base_ref" ]; then
         base_ref="$arg"
+      else
+        echo "Unexpected argument: $arg" >&2
+        exit 1
       fi
     done
     if [ -z "$dir_name" ]; then
       dir_name="${branch//\//-}"
     fi
     wt_path="$ROOT/.worktrees/$dir_name"
-    git worktree add -B "$branch" "$wt_path" "$base_ref"
-    seed_lake "$wt_path" "$copy_cslib"
-    echo "Ready: $wt_path (branch $branch from $base_ref)"
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+      if [ "$force_reset" = "true" ]; then
+        effective_base="${base_ref:-origin/main}"
+        git worktree add -B "$branch" "$wt_path" "$effective_base"
+        seed_lake "$wt_path" "$copy_cslib"
+        echo "Ready: $wt_path (branch $branch reset to $effective_base)"
+      else
+        if [ -n "$base_ref" ]; then
+          echo "Branch '$branch' already exists locally; refusing to reset it to '$base_ref' without --force-reset." >&2
+          exit 1
+        fi
+        git worktree add "$wt_path" "$branch"
+        seed_lake "$wt_path" "$copy_cslib"
+        echo "Ready: $wt_path (existing branch $branch)"
+      fi
+    else
+      effective_base="${base_ref:-origin/main}"
+      git worktree add -b "$branch" "$wt_path" "$effective_base"
+      seed_lake "$wt_path" "$copy_cslib"
+      echo "Ready: $wt_path (new branch $branch from $effective_base)"
+    fi
     ;;
   seed)
     wt_path="${1:?Usage: scripts/worktree.sh seed <worktree_path> [--copy-cslib]}"
@@ -86,7 +117,15 @@ case "$cmd" in
     git worktree list
     ;;
   prune-merged)
-    base_ref="${1:-origin/main}"
+    base_ref="origin/main"
+    dry_run="false"
+    for arg in "$@"; do
+      if [ "$arg" = "--dry-run" ]; then
+        dry_run="true"
+      else
+        base_ref="$arg"
+      fi
+    done
     if [ ! -d "$ROOT/.worktrees" ]; then
       exit 0
     fi
@@ -101,9 +140,13 @@ case "$cmd" in
         echo "Keeping $wt (has unmerged commits)"
         continue
       fi
-      echo "Removing merged worktree $wt"
-      rm -rf "$wt/.lake"
-      git worktree remove --force "$wt"
+      if [ "$dry_run" = "true" ]; then
+        echo "Would remove merged worktree $wt"
+      else
+        echo "Removing merged worktree $wt"
+        rm -rf "$wt/.lake"
+        git worktree remove --force "$wt"
+      fi
     done
     ;;
   *)

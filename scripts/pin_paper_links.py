@@ -26,11 +26,13 @@ DECLAT_RE = re.compile(
 )
 DECL_RE = re.compile(r"(\\decl\{)([^}]+)(\}\{)(\d+)(\}\{)([^}]+)(\})")
 
+ATTR_PREFIX = r"(?:@\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\s*)*"
 MODIFIERS = r"(?:(?:public|private|protected|noncomputable|unsafe|partial|nonrec|scoped|local)\s+)*"
 DECL_LINE_RE = re.compile(
-    r"^\s*(?:@\[[^\]\n]*\]\s*)*"
+    r"^\s*"
+    + ATTR_PREFIX
     + MODIFIERS
-    + r"(?:theorem|lemma|def|abbrev|structure|inductive|class|instance|alias|opaque)\s+([^\s({:\[]+)"
+    + r"(?:theorem|lemma|def|irreducible_def|abbrev|structure|inductive|class|instance|alias|opaque|axiom|example)\s+([^\s({:\[]+)"
 )
 
 
@@ -49,7 +51,7 @@ def parse_declarations(text: str) -> dict[int, tuple[str, str]]:
     scope: list[str] = []
     blocks: list[tuple[str, int]] = []
     decls: dict[int, tuple[str, str]] = {}
-    for idx, line in enumerate(code.splitlines(), 1):
+    for idx, line in enumerate(code.split("\n"), 1):
         s = line.strip()
         m_ns = re.match(r"^namespace\s+(\S+)", s)
         if m_ns:
@@ -58,7 +60,7 @@ def parse_declarations(text: str) -> dict[int, tuple[str, str]]:
             blocks.append(("ns", len(parts)))
             continue
         m_sec = re.match(
-            r"^(?:@\[[^\]\n]*\]\s*)*(?:(?:public|private|noncomputable)\s+)*section(?:\s+(\S+))?$",
+            r"^" + ATTR_PREFIX + r"(?:(?:public|private|noncomputable)\s+)*section(?:\s+(\S+))?$",
             s,
         )
         if m_sec:
@@ -224,6 +226,7 @@ def pin_links(
     base_sha = default_base_sha(root)
     rev = None if use_worktree else target_sha
     updated = 0
+    pending_writes: list[tuple[pathlib.Path, str]] = []
 
     for tex in tex_files(root, explicit_tex):
         content = tex.read_text(encoding="utf-8")
@@ -262,7 +265,10 @@ def pin_links(
         new_content = DECLAT_RE.sub(replace_declat, content)
         new_content = DECL_RE.sub(replace_decl, new_content)
         if new_content != content:
-            tex.write_text(new_content, encoding="utf-8")
+            pending_writes.append((tex, new_content))
+
+    for tex, new_content in pending_writes:
+        tex.write_text(new_content, encoding="utf-8")
 
     return updated
 
@@ -305,7 +311,7 @@ def main() -> int:
         from_sha=args.from_sha,
         use_worktree=args.worktree,
     )
-    print(f"Updated {count} \\declat link(s) to {args.pin}.")
+    print(f"Updated {count} declaration link(s) to {args.pin}.")
     return 0
 
 

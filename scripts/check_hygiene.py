@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Static proof-hygiene and module-template checks for Complexitylib Lean files.
 
-Checks enforced (see AGENTS.md):
+Checks enforced by default (see AGENTS.md):
 1. Every module under Complexity/ has a valid `-- upstream:` marker.
 2. No `sorry`, custom `axiom`, or `native_decide` in Complexity/ or ComplexityTests/.
 3. Every `set_option maxHeartbeats` or `set_option maxRecDepth` has an explanatory comment
    on the same line or within the preceding 3 lines.
-4. No non-terminal bare `simp` in `-- upstream: candidate` modules under Complexity/.
+
+Opt-in heuristic checks:
+4. (`--check-simp`) Flag non-terminal bare `simp` tactics in `-- upstream: candidate` modules
+   under Complexity/.
+5. (`--max-lines N`) Flag Lean files exceeding N lines.
 """
 
 from __future__ import annotations
@@ -33,7 +37,7 @@ UPSTREAM_MARKER_RE = re.compile(
 
 FORBIDDEN_TOKEN_RE = re.compile(r"\b(sorry|native_decide)\b")
 CUSTOM_AXIOM_RE = re.compile(
-    r"^\s*(?:@\[[^\]\n]*\]\s*)*(?:(?:public|private|protected|noncomputable|scoped|local)\s+)*axiom\b",
+    r"^\s*(?:@\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\s*)*(?:(?:public|private|protected|noncomputable|scoped|local)\s+)*axiom\b",
     re.M,
 )
 SET_OPTION_RE = re.compile(r"^\s*set_option\s+(maxHeartbeats|maxRecDepth)\b")
@@ -52,9 +56,14 @@ def has_nearby_comment(raw_lines: list[str], code_lines: list[str], idx_0based: 
     return False
 
 
+BARE_SIMP_RE = re.compile(
+    r"^simp(?!\s*(?:\?\s*)?(?:(?:\+\w+|\([^)]*\))\s*)*only\b|_all\b|_arith\b|_rw\b|a\b|\w)"
+)
+
+
 def find_nonterminal_bare_simps(code: str) -> list[int]:
     """Return 1-based line numbers of non-terminal bare `simp` tactics in masked code."""
-    lines = code.splitlines()
+    lines = code.split("\n")
     violations: list[int] = []
     for i, line in enumerate(lines):
         stripped = line.strip()
@@ -62,9 +71,9 @@ def find_nonterminal_bare_simps(code: str) -> list[int]:
             continue
         # Only inspect lines that start with a bare `simp` (or `· simp`).
         bullet_stripped = re.sub(r"^[·•*-]\s*", "", stripped)
-        if not re.match(r"^simp(?!\s+only\b|_all\b|_arith\b|_rw\b|a\b|\w)", bullet_stripped):
+        if not BARE_SIMP_RE.match(bullet_stripped):
             continue
-        if "<;>" in bullet_stripped or ";" in bullet_stripped:
+        if "<;>" in bullet_stripped or ";" in bullet_stripped or bullet_stripped.endswith(","):
             continue
         indent = len(line) - len(line.lstrip(" "))
         has_bullet = stripped.startswith(("·", "•"))
@@ -101,15 +110,15 @@ def check_file(
     rel = path.relative_to(root) if path.is_relative_to(root) else path
     raw = path.read_text(encoding="utf-8")
     code, syntax = masks(raw)
-    raw_lines = raw.splitlines()
-    code_lines = code.splitlines()
+    raw_lines = raw.split("\n")
+    code_lines = code.split("\n")
     errors: list[str] = []
 
     in_complexity = rel.parts and rel.parts[0] == "Complexity"
     if in_complexity and not UPSTREAM_MARKER_RE.search(raw):
         errors.append(f"{rel}: missing or invalid `-- upstream:` marker")
 
-    for idx, s_line in enumerate(syntax.splitlines(), 1):
+    for idx, s_line in enumerate(syntax.split("\n"), 1):
         for m in FORBIDDEN_TOKEN_RE.finditer(s_line):
             errors.append(f"{rel}:{idx}: forbidden `{m.group(1)}`")
 
@@ -128,8 +137,9 @@ def check_file(
         for line_no in find_nonterminal_bare_simps(syntax):
             errors.append(f"{rel}:{line_no}: non-terminal bare `simp` (use `simp only`)")
 
-    if max_lines is not None and len(raw_lines) > max_lines:
-        errors.append(f"{rel}: file has {len(raw_lines)} lines (exceeds limit of {max_lines})")
+    line_count = len(raw.splitlines())
+    if max_lines is not None and line_count > max_lines:
+        errors.append(f"{rel}: file has {line_count} lines (exceeds limit of {max_lines})")
 
     return errors
 

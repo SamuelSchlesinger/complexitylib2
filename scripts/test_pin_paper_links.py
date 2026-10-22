@@ -102,6 +102,38 @@ class PinPaperLinksTests(unittest.TestCase):
         self.assertIn(f"\\declat{{{new_sha}}}{{Complexity/Demo/Basic.lean}}{{5}}", tex_file.read_text())
         self.assertIn(f"\\declat{{{new_sha}}}{{Complexity/Demo/Basic.lean}}{{6}}", tex_file.read_text())
 
+    def test_nested_attributes_and_atomic_pin_links(self) -> None:
+        lean_file = self.root / "Complexity/Demo/Attr.lean"
+        lean_file.write_text(
+            "namespace Cslib.Demo\n"
+            "@[simp, deprecated old (since := \"2026-10-22\") [foo]] irreducible_def tagged_def : Nat := 1\n"
+            "end Cslib.Demo\n",
+            encoding="utf-8",
+        )
+        decls = pin_paper_links.parse_declarations(lean_file.read_text(encoding="utf-8"))
+        self.assertEqual(decls[2], ("tagged_def", "Cslib.Demo.tagged_def"))
+
+        tex_a = self.root / "paper/sections/a.tex"
+        tex_b = self.root / "paper/sections/b.tex"
+        original_a = (
+            "\\declat{1111111111111111111111111111111111111111}"
+            "{Complexity/Demo/Attr.lean}{1}{Cslib.Demo.tagged\\_def}\n"
+        )
+        tex_a.write_text(original_a, encoding="utf-8")
+        tex_b.write_text(
+            "\\declat{1111111111111111111111111111111111111111}"
+            "{Complexity/Demo/Attr.lean}{1}{Cslib.Demo.nonexistent}\n",
+            encoding="utf-8",
+        )
+        with self.assertRaises(ValueError):
+            pin_paper_links.pin_links(
+                "3333333333333333333333333333333333333333",
+                root=self.root,
+                use_worktree=True,
+            )
+        # Ensure tex_a was not partially written when tex_b failed.
+        self.assertEqual(tex_a.read_text(encoding="utf-8"), original_a)
+
 
 if __name__ == "__main__":
     unittest.main()

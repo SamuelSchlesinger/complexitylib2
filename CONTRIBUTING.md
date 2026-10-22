@@ -48,7 +48,8 @@ defaults to the number of logical processors and is not a hard process or memory
 observed concurrency and memory use. Keep mutable build outputs separate between worktrees
 (for example with `scripts/worktree.sh create <branch> [dir_name]`, which seeds `.lake/build` from
 the root checkout). Run `python3 scripts/check_hygiene.py` to audit `-- upstream:` markers,
-forbidden proof tokens, `set_option` justifications, and non-terminal `simp` calls.
+forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
+heuristic check for non-terminal bare `simp` calls in candidate modules).
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
 an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.
 
