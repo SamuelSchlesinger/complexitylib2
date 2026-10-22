@@ -41,6 +41,8 @@ the verifier needs no machine built by hand.
 ## Main results
 
 * `Turing.MultiTapeNTM.computableTidilyInPolyTime_checkChoices`: the verifier is polynomial-time.
+* `Turing.MultiTapeNTM.DecidesInTime.mem_iff_exists_checkChoices`: accepting computations
+  have certificates of every length at least the action count times the time bound.
 * `Turing.MultiTapeNTM.DecidesInTime.isVerifier`: a machine deciding a problem within
   `c * ((enc a).length + 1) ^ d` steps yields a verifier with certificates of length
   `M * c * ((enc a).length + 1) ^ d`.
@@ -81,6 +83,26 @@ theorem computableTidilyInPolyTime_checkChoices (ntm : MultiTapeNTM k Bool State
     ((MultiTapePTM.computableTidilyInPolyTime_runClosedCoins ntm.choiceTable).comp hswap)
     (ComputableTidilyInPolyTime.const [true])
 
+/-- **Accepting computations as certificates of any sufficient length.** If `ntm` decides `A`
+within `t`, then `a ∈ A` exactly when some certificate of length `L` encodes an accepting
+computation on `enc a`, for every `L` of at least `M * t a`, for the number `M` of actions. -/
+theorem DecidesInTime.mem_iff_exists_checkChoices {ntm : MultiTapeNTM k Bool State} {A : Set α}
+    {t : α → ℕ} (h : ntm.DecidesInTime enc A t) {a : α} {L : ℕ}
+    (hL : Nat.card (Turing.Action k Bool State) * t a ≤ L) :
+    a ∈ A ↔ ∃ w : List Bool, w.length = L ∧ ntm.checkChoices enc (a, w) = true := by
+  rw [(h a).2]
+  constructor
+  · intro hacc
+    obtain ⟨p, hp, hout⟩ := (accepts_iff_exists_time_eq (h a).1).mp hacc
+    obtain ⟨coins, hlen, hcoins⟩ :=
+      exists_runClosedCoins_choiceTable p ((h a).1 p hp.ge) hout
+    rw [hp] at hlen
+    refine ⟨coins ++ List.replicate (L - coins.length) false, by
+      simp only [List.length_append, List.length_replicate]; omega, ?_⟩
+    simp [checkChoices, hcoins]
+  · rintro ⟨w, -, hw⟩
+    exact accepts_of_runClosedCoins_choiceTable (coins := w) (by simpa [checkChoices] using hw)
+
 /-- **Accepting computations as certificates.** A machine deciding `A` within
 `c * ((enc a).length + 1) ^ d` steps (every computation path with at least that many steps has
 halted) yields a verifier whose certificates have length exactly
@@ -95,20 +117,8 @@ theorem DecidesInTime.isVerifier {ntm : MultiTapeNTM k Bool State} {A : Set α} 
       (Polynomial.X + 1) ^ d).eval (enc a).length =
       Nat.card (Turing.Action k Bool State) * (c * ((enc a).length + 1) ^ d) := by
     simp [mul_assoc]
-  rw [heval, (h a).2]
-  constructor
-  · intro hacc
-    obtain ⟨p, hp, hout⟩ := (accepts_iff_exists_time_eq (h a).1).mp hacc
-    obtain ⟨coins, hlen, hcoins⟩ :=
-      exists_runClosedCoins_choiceTable p ((h a).1 p hp.ge) hout
-    rw [hp] at hlen
-    beta_reduce at hlen
-    refine ⟨coins ++ List.replicate (Nat.card (Turing.Action k Bool State) *
-      (c * ((enc a).length + 1) ^ d) - coins.length) false, by
-        simp only [List.length_append, List.length_replicate]; omega, ?_⟩
-    simp [checkChoices, hcoins]
-  · rintro ⟨w, -, hw⟩
-    exact accepts_of_runClosedCoins_choiceTable (coins := w) (by simpa [checkChoices] using hw)
+  rw [heval]
+  exact h.mem_iff_exists_checkChoices le_rfl
 
 end Turing.MultiTapeNTM
 

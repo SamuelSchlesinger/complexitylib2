@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 
 /-!
@@ -18,6 +19,12 @@ namespace ComplexityTests.SATPolyTime
 open Cslib.Complexity Cslib.Logic.PL Turing.MultiTapeTM
 
 example : SAT ∈ NP encCNF := SAT.mem_NP
+
+/-- `SAT`, whose certificates are genuine assignments, has a polynomial-time nondeterministic
+decider. -/
+example : Turing.MultiTapeNTM.DecidableInPolyTime SAT encCNF :=
+  decidableInPolyTime_of_mem_NP SAT.mem_NP
+
 example : UNSAT ∈ coNP encCNF := UNSAT_mem_coNP
 
 example : ComputableTidilyInPolyTime SAT.verifier (encPair encCNF encBits) encBool := by
