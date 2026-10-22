@@ -26,6 +26,39 @@ and workers may create tasks. Search existing issues and PRs before creating a d
 an existing human-created issue when it describes the work. Give each task a concrete scope,
 completion criteria, and relevant dependencies.
 
+### Completion and scope
+
+Optimize for trustworthy, reusable results, not the number of closed issues or merged PRs.
+When narrowing a task, preserve its original objective and record the bounded deliverable and
+remaining gap prominently. A restricted model, conditional result, or partial theorem does not
+complete a broader objective. Do not silently retitle an ambitious issue into an easier completed
+task.
+
+Distinguish these dispositions in the issue:
+
+- **Completed:** the agreed acceptance criteria are satisfied.
+- **Milestone completed:** a bounded deliverable is finished; link the remaining objective.
+- **Deferred / not planned:** work is intentionally stopped; preserve its results and explain
+  what remains unproved.
+
+Close a milestone issue as completed when its own criteria are met. Keep the broader objective
+open, or, when authorized to defer it, close it as not planned and link the completed milestone.
+PR descriptions must distinguish mathematical progress from infrastructure, refactoring, and
+documentation progress.
+
+### Durable records
+
+The issue is authoritative for scope, ownership, current state, and remaining work. The PR is
+authoritative for the final change, validation, and review verdicts. Work without a PR records
+validation and review in its commit description, linked from the issue.
+
+Keep the reporting cadence below, but report changes since the previous update and link existing
+evidence instead of duplicating full validation reports across related issues. Local paths alone
+are insufficient for a durable handoff; publish the relevant branch, commit, or concise findings.
+
+At integration, summarize what was proved or improved, what remains deferred, and what became
+reusable by future contributors.
+
 ### Workers
 
 1. Before implementation, create or claim an issue and assign it to yourself. Post a claim
@@ -107,6 +140,30 @@ Contributors self-review and validate their changes. Maintainers arrange indepen
 correctness reviews of the exact revision before integration; reviewers report findings, and
 fixes receive a fresh review. Preserve source credit and record all contributors and review
 results in the pull request or commit description.
+
+### Repository isolation
+
+Treat the user's checkout and shared Git object database as protected infrastructure. Ordinary
+worktrees share their Git object database. Never import reconstructed Git objects, install shallow
+boundaries, or experiment with history repair in that shared database. Use an independent
+repository with its own Git object database for such operations.
+
+Before Git recovery or nonstandard object manipulation, verify the actual Git common directory,
+object alternates, and storage sharing. The experimental repository must not use the shared
+database through a gitfile, alternate object directory, or hard-linked object files. Never delete
+objects, refs, worktree registrations, or metadata belonging to another session.
+
+Keep mutable build outputs separate. Integration experiments must be contained so their failure
+cannot damage the user's checkout or another worker's repository.
+
+### Placement and reuse
+
+Place reusable definitions and general lemmas in the lowest suitable mathematical module.
+Specialized theorem modules should import their prerequisites. During review, look for general
+APIs buried in a particular application or proof. Extract them when the dependency improvement is
+concrete and the change is small; otherwise record a specific follow-up with declaration names,
+consumers, and a proposed home. Preserve public interfaces under the compatibility rules below.
+Do not expand a bounded PR into an unbounded architectural cleanup.
 
 ## Lean development: use the Lean MCP server first
 
@@ -217,6 +274,26 @@ following [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
   are the statements true and as the docstrings claim, are hypotheses satisfiable and
   non-vacuous, do definitions match the cited literature. Reviewers report findings; fixes are
   made separately.
+
+### Independent review method
+
+Reviewers must inspect the exact definitions and statements before relying on the author's
+summary. For substantive mathematical results, briefly record in the existing review:
+
+- what the formal theorem actually establishes;
+- which hypotheses, model choices, or resource conventions limit it;
+- which concrete instance or edge case was checked for non-vacuity or semantic mismatch.
+
+For extractions and refactors, check declaration preservation, import boundaries, and a client
+using the intended smaller imports.
+
+Separate reviewers can share blind spots. Lean compilation establishes kernel acceptance under
+the audited axioms; it does not establish that definitions express the intended mathematics or
+that prose accurately describes them. State which questions the review actually checked.
+
+Record findings and the evidence needed for the verdict. Reuse existing review records when the
+reviewed content is unchanged, explicitly verify that identity on the final revision, and review
+subsequent deltas. This does not replace the exact-revision approval and validation requirements.
 
 ## Human-readable theorem index
 
