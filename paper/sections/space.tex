@@ -305,6 +305,15 @@ rejection is not proved. The $O(\log n\log\log n)$ input-size bound restricts to
 nontrivial instances ($1\le\ell$ and $1\le H$, since for $H=0$ or $\ell=0$ the
 unary header or single leaf has length linear in $\ell+H$), and the refined
 $O(\ell+H\log(\ell+2))$ parameter bound is not asserted.
+
+The algebraic procedure is also proved for perfect trees of any fan-in $d$, with gates
+$(\{0,1\}^{\ell})^d\to\{0,1\}^{\ell}$: it uses $d+1$ registers, the $j$-th child of a target
+register $t$ using register $t+j+1$ modulo $d+1$, and is correct over any finite field with
+$d\ell<|K|-1$. Binary instances embed with fan-in $2$ preserving their value. Only correctness of
+the procedure is proved for $d>2$; no machine or space bound is asserted for it.
+\declat{47fca010542a5c7ea6f4911f913e0357160c7885}{Complexity/Computability/TreeEval/Ary/CookMertz.lean}{211}{Cslib.TreeEval.Ary.proc_eq}
+\declat{47fca010542a5c7ea6f4911f913e0357160c7885}{Complexity/Computability/TreeEval/Ary/CookMertz.lean}{240}{Cslib.TreeEval.Ary.embed_eval_eq_proc}
+\declat{47fca010542a5c7ea6f4911f913e0357160c7885}{Complexity/Computability/TreeEval/Ary/Basic.lean}{127}{Cslib.TreeEval.Ary.Tree.eval_ofBinary}
 \declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Space.lean}{66}{Cslib.TreeEval.computableTidilyInSpace_eval}
 \declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Space.lean}{104}{Cslib.TreeEval.spaceBound_add_length_le_log_mul_log_log}
 \declat{3a10a7a7c55bc0b5ec4588e369ab19daf66418f7}{Complexity/Computability/TreeEval/Space.lean}{138}{Cslib.TreeEval.computableTidilyInSpace_eval_log_mul_log_log}
