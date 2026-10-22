@@ -32,6 +32,7 @@ public import Complexity.Algorithms.WordRAM.Stack
 public import Complexity.Algorithms.WordRAM.Stack.Controller
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Call
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Init
+public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Init.Table
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Insert
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Member
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Model
@@ -616,6 +617,7 @@ public import Complexity.Computability.Complexity.Classes.UP.Machine
 public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collapse
+public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Reduction
 public import Complexity.Computability.Complexity.Classes.WPP
 public import Complexity.Computability.Complexity.Classes.WPP.Bounded
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
@@ -640,6 +642,8 @@ public import Complexity.Computability.Complexity.Fagin.SAT
 public import Complexity.Computability.Complexity.Fagin.Small
 public import Complexity.Computability.Complexity.Fagin.StrictVerifier
 public import Complexity.Computability.Complexity.Fagin.Tableau
+public import Complexity.Computability.Complexity.Fagin.Tableau.Defs
+public import Complexity.Computability.Complexity.Fagin.Tableau.Semantics
 public import Complexity.Computability.Complexity.Fagin.Verifier
 public import Complexity.Computability.Complexity.FineGrained
 public import Complexity.Computability.Complexity.FineGrained.Assignment
@@ -670,6 +674,8 @@ public import Complexity.Computability.Complexity.Problems.Graph
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond
+public import Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond.Defs
+public import Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond.Soundness
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Sparse
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
