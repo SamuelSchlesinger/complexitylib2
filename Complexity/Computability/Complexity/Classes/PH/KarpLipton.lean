@@ -10,12 +10,12 @@ module
 public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Complexity.Classes.NP.SelfReduction
+public import Complexity.Computability.Complexity.Classes.NP.Witness
 public import Complexity.Computability.Complexity.Classes.PH.Collapse
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Cslib.Foundations.Data.Polynomial.Monotone
 
 /-!
 # The Karp–Lipton theorem
@@ -27,9 +27,10 @@ formulas; it follows from `NP ⊆ P/poly`, for problems with any encoding of the
 
 The proof shows `Π₂ ⊆ Σ₂` (`Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT`). Let
 `a ∈ A ↔ ∀ u, ∃ v, V (a, u ++ v)`. The pairs `(a, u)` for which some `v` is accepted form a
-problem in `NP` (`Cslib.Complexity.mem_NP_setOf_exists_append`), which the Cook–Levin reduction
-`f` maps to `SAT`. A `Σ₂` verifier guesses circuits for `SAT` on all the lengths the
-self-reduction (`Cslib.Complexity.SAT.search`) of a formula `f (a, u)` asks about, and then checks,
+problem in `NP` by the witness API (`Cslib.Complexity.mem_NP_setOf_exists_append`), which the
+Cook–Levin reduction `f` maps to `SAT`. A `Σ₂` verifier guesses circuits for `SAT` on all the
+lengths the self-reduction (`Cslib.Complexity.SAT.search`) of a formula `f (a, u)` asks about, then
+checks,
 for every `u`, that the self-reduction answered by the guessed circuits finds a satisfying
 assignment of `f (a, u)`. A satisfying assignment proves `(a, u)` in the problem whatever circuits
 were guessed, and correct circuits always find one when there is one. Since `Π₂ ⊆ Σ₂` holds for
@@ -54,8 +55,6 @@ is read from the block at position `x.length` and evaluated on `x`
   is evaluation of its circuits.
 * `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalAdvice`: evaluation from advice strings is
   polynomial-time.
-* `Cslib.Complexity.mem_NP_setOf_exists_append`: the inner existential quantifier of a `Π₂`
-  verifier defines a problem in `NP`.
 * `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT`: if `SAT` has circuits of polynomial size,
   then `Π₂ ⊆ Σ₂`.
 * `Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT`: under the same hypothesis, `Π₂ = Σ₂`.
@@ -91,10 +90,6 @@ Every advice string gives a value. -/
 def evalAdvice (s width : ℕ) (w x : List Bool) : Bool :=
   evalOutput x (readCertificate x.length s (w.drop (x.length * width))).1
     (readCertificate x.length s (w.drop (x.length * width))).2
-
-theorem certLength_mono_left {m n : ℕ} (h : m ≤ n) (s : ℕ) : certLength m s ≤ certLength n s := by
-  unfold certLength
-  gcongr
 
 section Family
 
@@ -168,29 +163,6 @@ namespace Cslib.Complexity
 open Cslib.Logic.PL Circuits Circuits.Boolean Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 variable {α : Type} {enc : α ↪ List Bool}
-
-/-! ### The inner quantifier -/
-
-/-- **The inner quantifier of a `Π₂` verifier is in `NP`.** For a polynomial-time `V`, the pairs
-`(a, u)` for which `V` accepts `(a, u ++ v)` for some `v` of length `q (enc a).length` form a
-problem in `NP`, for the encoding of pairs. -/
-theorem mem_NP_setOf_exists_append {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (q : Polynomial ℕ) :
-    {y : α × List Bool | ∃ v : List Bool, v.length = q.eval (enc y.1).length ∧
-      V (y.1, y.2 ++ v) = true} ∈ NP (encPair enc encBits) := by
-  refine ⟨q, fun z => V (z.1.1, z.1.2 ++ z.2.take (q.eval (enc z.1.1).length)), ?_, fun y => ?_⟩
-  · exact hV.comp ((fst _ _).fst'.prod (bitsAppend (fst _ _).snd' (bitsTakeWithInput (snd _ _)
-      ((unary_eval q).comp ((encoding_length enc).comp (fst _ _).fst')))))
-  · have hle : q.eval (enc y.1).length ≤ q.eval (encPair enc encBits y).length :=
-      q.eval_mono (length_le_encPair_left _ _ _)
-    constructor
-    · rintro ⟨v, hv, hV⟩
-      refine ⟨v ++ List.replicate (q.eval (encPair enc encBits y).length - v.length) false,
-        by simp only [List.length_append, List.length_replicate, hv]; omega, ?_⟩
-      dsimp only
-      rwa [← hv, List.take_left]
-    · rintro ⟨w, hw, hV⟩
-      exact ⟨_, by rw [List.length_take, hw, Nat.min_eq_left hle], hV⟩
 
 /-! ### The Karp–Lipton verifier -/
 

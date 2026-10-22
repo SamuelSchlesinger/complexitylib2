@@ -37,7 +37,8 @@ reductions (`MonotoneCircuitValue/Completeness.lean`).
 
 ## Main results
 
-* `Cslib.Circuits.Circuit.code_mapOp`: the code of a translated circuit.
+* `Cslib.Complexity.MonotoneCircuitValue.mem_iff_toDeMorgan_mem`: a monotone instance is a
+  yes-instance iff its De Morgan reading is.
 * `Cslib.Complexity.MonotoneCircuitValue.logSpaceReducible_circuitValue`: the monotone problem
   reduces to the circuit value problem.
 * `Cslib.Complexity.MonotoneCircuitValue.mem_P`: the monotone circuit value problem is in `P`.

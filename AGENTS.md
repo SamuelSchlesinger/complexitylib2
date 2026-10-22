@@ -26,6 +26,39 @@ and workers may create tasks. Search existing issues and PRs before creating a d
 an existing human-created issue when it describes the work. Give each task a concrete scope,
 completion criteria, and relevant dependencies.
 
+### Completion and scope
+
+Optimize for trustworthy, reusable results, not the number of closed issues or merged PRs.
+When narrowing a task, preserve its original objective and record the bounded deliverable and
+remaining gap prominently. A restricted model, conditional result, or partial theorem does not
+complete a broader objective. Do not silently retitle an ambitious issue into an easier completed
+task.
+
+Distinguish these dispositions in the issue:
+
+- **Completed:** the agreed acceptance criteria are satisfied.
+- **Milestone completed:** a bounded deliverable is finished; link the remaining objective.
+- **Deferred / not planned:** work is intentionally stopped; preserve its results and explain
+  what remains unproved.
+
+Close a milestone issue as completed when its own criteria are met. Keep the broader objective
+open, or, when authorized to defer it, close it as not planned and link the completed milestone.
+PR descriptions must distinguish mathematical progress from infrastructure, refactoring, and
+documentation progress.
+
+### Durable records
+
+The issue is authoritative for scope, ownership, current state, and remaining work. The PR is
+authoritative for the final change, validation, and review verdicts. Work without a PR records
+validation and review in its commit description, linked from the issue.
+
+Keep the reporting cadence below, but report changes since the previous update and link existing
+evidence instead of duplicating full validation reports across related issues. Local paths alone
+are insufficient for a durable handoff; publish the relevant branch, commit, or concise findings.
+
+At integration, summarize what was proved or improved, what remains deferred, and what became
+reusable by future contributors.
+
 ### Workers
 
 1. Before implementation, create or claim an issue and assign it to yourself. Post a claim
@@ -47,7 +80,7 @@ completion criteria, and relevant dependencies.
    A returning worker must check ownership before resuming. Explicitly released work is
    available immediately.
 4. Implement, self-review, and validate according to the requirements below. Include documentation
-   changes caused by your work and assess the theorem index before submitting the PR.
+   changes caused by your work and assess the headline abstract catalogue before submitting the PR.
 5. When ready, open a PR linked to the issue, record validation and remaining limitations, and
    request coordinator review. Post an `awaiting review` status with the PR link in the issue.
    Keep the issue open until the work is merged or explicitly dispositioned by a coordinator.
@@ -84,10 +117,10 @@ parallel. Use review subagents when helpful; do not make unrelated work wait for
 - Review existing tasks, resolve ownership or dependency conflicts, and create or split issues
   when useful. Human-created issues belong to the same queue. Check stale active tasks and
   unattended review requests; help workers reach a clear next step.
-- Own the consistency of `ROADMAP.md`, `paper/main.tex`, `UPSTREAM.md`, and the other project
+- Own the consistency of `ROADMAP.md`, `abstracts/catalogue.json`, `UPSTREAM.md`, and the other project
   documentation. Ensure completed results, open work, limitations, and upstream coordination
   remain accurate. Workers still supply updates affected by their PRs; coordinators check their
-  integration and arrange the theorem-index review described below.
+  integration and arrange the formal-abstract review described below.
 - Keep approval distinct from integration: merge only within the authority granted by maintainers
   and after required checks and reviews. Close completed issues on merge, and record remaining
   work in follow-up issues and the roadmap where appropriate.
@@ -107,6 +140,30 @@ Contributors self-review and validate their changes. Maintainers arrange indepen
 correctness reviews of the exact revision before integration; reviewers report findings, and
 fixes receive a fresh review. Preserve source credit and record all contributors and review
 results in the pull request or commit description.
+
+### Repository isolation
+
+Treat the user's checkout and shared Git object database as protected infrastructure. Ordinary
+worktrees share their Git object database. Never import reconstructed Git objects, install shallow
+boundaries, or experiment with history repair in that shared database. Use an independent
+repository with its own Git object database for such operations.
+
+Before Git recovery or nonstandard object manipulation, verify the actual Git common directory,
+object alternates, and storage sharing. The experimental repository must not use the shared
+database through a gitfile, alternate object directory, or hard-linked object files. Never delete
+objects, refs, worktree registrations, or metadata belonging to another session.
+
+Keep mutable build outputs separate. Integration experiments must be contained so their failure
+cannot damage the user's checkout or another worker's repository.
+
+### Placement and reuse
+
+Place reusable definitions and general lemmas in the lowest suitable mathematical module.
+Specialized theorem modules should import their prerequisites. During review, look for general
+APIs buried in a particular application or proof. Extract them when the dependency improvement is
+concrete and the change is small; otherwise record a specific follow-up with declaration names,
+consumers, and a proposed home. Preserve public interfaces under the compatibility rules below.
+Do not expand a bounded PR into an unbounded architectural cleanup.
 
 ## Lean development: use the Lean MCP server first
 
@@ -218,30 +275,57 @@ following [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
   non-vacuous, do definitions match the cited literature. Reviewers report findings; fixes are
   made separately.
 
-## Human-readable theorem index
+### Independent review method
 
-`paper/main.tex` is a curated index of proved statements, not a translation of proof bodies.
-Each entry states the result, its hypotheses, model and quantitative bounds, important scope
-limitations, and links to exact Lean declarations. Credit mathematical sources and earlier
-formalizations. Do not describe an unproved endpoint as complete; keep outstanding work in
-`ROADMAP.md`. Preserve Samuel's editorial choices.
+Reviewers must inspect the exact definitions and statements before relying on the author's
+summary. For substantive mathematical results, briefly record in the existing review:
 
-Before opening or updating **every AI-authored PR**, check the index against the final Lean
-changes. Update affected statements, assumptions, limitations and links, and add entries for
-new headline results. Proof-only refactors with unchanged statements and scope need no prose
-rewrite; explicitly record the no-impact assessment in the PR, as for other unaffected changes.
-The index is curated, so internal helper lemmas do not each need an entry.
+- what the formal theorem actually establishes;
+- which hypotheses, model choices, or resource conventions limit it;
+- which concrete instance or edge case was checked for non-vacuity or semantic mismatch.
 
-Obtain an independent AI review of changed entries against the final Lean definitions and
-statements, checking quantifiers, models and resource bounds. Record the reviewed revisions,
-scope, findings and resolutions in the PR. This supplements the API and correctness reviews;
-it is not a Lean proof that the prose is equivalent. The **Theorem index PDF** workflow builds
-changed paper sources and uploads a PDF with checked-out and PR-head revision provenance.
-Inspect that CI artifact's rendered pages and verify declaration links before integration;
-record the artifact/run and reviewed revisions. Local generation with
-`python3 scripts/build_paper.py` is optional. Generated PDFs and auxiliary files are not versioned;
-do not commit them. Main builds publish the latest PDF as the `theorem-index` release asset.
-Do not imply human editorial approval from an AI review.
+For extractions and refactors, check declaration preservation, import boundaries, and a client
+using the intended smaller imports.
+
+Separate reviewers can share blind spots. Lean compilation establishes kernel acceptance under
+the audited axioms; it does not establish that definitions express the intended mathematics or
+that prose accurately describes them. State which questions the review actually checked.
+
+Record findings and the evidence needed for the verdict. Reuse existing review records when the
+reviewed content is unchanged, explicitly verify that identity on the final revision, and review
+subsequent deltas. This does not replace the exact-revision approval and validation requirements.
+
+## Curated formal abstracts
+
+`abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
+`*Abstract.lean` and `*Bridge.lean` under `ComplexityTests/Abstracts/`, imported by
+`ComplexityTests.lean`. The Lean definitions and statements are the source of truth; PDFs are
+generated from them, with proof bodies omitted. There is no separately maintained paper/TeX index.
+
+Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
+endpoint with conventional, inspectable semantics, satisfiable hypotheses, explicit models and
+encodings, and honest quantitative bounds. Partial constructions, conditional substitutes for a
+standard theorem, bounded experiments and helper APIs do not become headlines by acquiring an
+abstract. Prefer a small coherent selection. Preserve Samuel's editorial choices and source credit;
+keep outstanding endpoints in `ROADMAP.md`.
+
+Before opening or updating **every AI-authored PR**, assess the selected abstracts against the
+final Lean changes. Update affected statements, definitions, scope notes and catalogue entries.
+New library theorems need not become headlines. Record a no-impact assessment when appropriate,
+including proof-only refactors with unchanged statements and scope.
+
+Follow the local `lean-abstract` skill and run `#check_abstract`. An allowlist may expose narrowly
+identified foundational models with their meaning explained; it must not hide the result or its
+complexity-class semantics. The audit checks elaborated dependencies, not human interpretation.
+Obtain independent reviews of API quality, correctness, and each changed abstract against the final
+Lean sources, including quantifiers, encoding, resource bounds, nonvacuity and readability. Record
+exact revisions, findings and resolutions in the PR. Do not imply human editorial approval.
+
+`scripts/build_abstracts.py` generates individual PDFs, a combined catalogue and provenance with
+source digests and exact declaration links. The **Formal abstract PDFs** workflow uploads review
+artifacts and publishes main builds as `formal-abstracts` release assets. Inspect the rendered
+pages and declaration links before integration; record the artifact/run and reviewed revisions.
+Local generation is supported. Generated TeX, PDFs and auxiliary products are not versioned.
 
 ## Design commitments (do not re-litigate casually)
 

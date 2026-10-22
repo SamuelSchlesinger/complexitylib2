@@ -25,11 +25,15 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   shared encodings and calculus through CSLib issue #611, including the `TapeEncodable`
   interface proposed in #590. Check #767 and its split #768 before adding space-to-time
   inclusions or overlapping class definitions; reconcile the local encoded, tidy-machine
-  definitions of `P`/`NP` with its `DTIME`-based language classes. The local `L`, `DTIME` and
-  `EXP` (`Classes/LogSpace`, `Classes/Hierarchy/Time`, `Classes/EXP`) use #767's shapes over
-  encoded instances; once #767 lands, derive them from its language-indexed classes rather than
-  keeping parallel definitions. The local `PSPACE` uses a different space bound and is not yet
-  compared with #767's. Selected-tape specifications
+  definitions of `P`/`NP` with its `DTIME`-based language classes. The local `DSPACE`, `L`,
+  `DTIME` and `EXP` (`Classes/Space/Basic`, `Classes/LogSpace`, `Classes/Time`, `Classes/EXP`)
+  use #767's shapes over encoded instances; once #767 lands, derive them from its
+  language-indexed classes rather than keeping parallel definitions. The local `PSPACE`
+  retains its instance-dependent polynomial space bound;
+  `mem_PSPACE_iff_exists_mem_DSPACE` in `Classes/Space` proves its equivalence to the local
+  union of `DSPACE (n ^ k)`. A bridge to #767's language-indexed classes is still separate.
+  Time and space constructibility are in `Classes/Constructible`, independent of hierarchy
+  theorems. Selected-tape specifications
   formerly in `Combinators/StreamFold` and `Encodings/MultiPass` now live beside the plumbing
   operations; preserve their exact space bounds when resynchronizing the copied files.
   The step-machine layer (`StepMachine/*`, `Encodings/StepMachine*`, `Combinators/StepMachine`
@@ -41,6 +45,16 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   branch; preserve it when resynchronizing the vendored files.
   `Foundations/Data/Nat/PolynomialBound/Closure.lean` is the proposed next submission following
   #1067.
+* **Mathlib TM2.** `Computability/Machines/Turing/TM2/*` certifies Mathlib's stack-machine
+  statements directly through the tidy calculus; it does not depend on the TM0 simulator in
+  [Complexitylib PR #72](https://github.com/SamuelSchlesinger/complexitylib/pull/72).
+  Its dependent finite-table helpers (`Encodings/DPi` and `Complexity/PolyTime/DPi` under
+  `Machines/Turing/MultiTape`) extend the existing table API. Coordinate these helpers with
+  the machine-calculus work above before upstreaming. The bridges preserve polynomial-time
+  computability and transfer terminating polynomial-stack-space computations under explicit word
+  encodings. The latter uses configuration counting and the existing binary-clock iteration API;
+  it claims polynomial space overhead, with input and output stacks counted, rather than linear
+  overhead or a converse class equivalence.
 * **Probabilistic programs.** Coordinate the shared `PFunctor.FreeM` API with #1086–#1089 and
   typed oracles with #1129. The copied PMF blocks have their own markers and removal instructions
   in [Probability/PMF.lean](Complexity/Probability/PMF.lean); remove only the merged blocks.
@@ -67,7 +81,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in their
   `Authors:` lines; confirm the attribution with him and submit the files with him,
   and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
-  programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
+  programs (#685, and the register word-RAM models in his Algolean repository) and the merged
+  query framework (#401), which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
   deviations from the source. The operations form a basis (`WordRAM/Basis`) over
@@ -93,14 +108,21 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   input-dependent bounds. Its forgetful bridge reuses `IsComputable`; polynomiality is a separate
   bound property. `GenericRAM/Native/Nat` supplies a checked bounded-natural addition model;
   `WordRAM/Native` certifies checked standard addition with unary width and binary operands.
-  Both reuse Christian Reitwiessner's native arithmetic/encoding calculus. These are per-symbol
-  certificates for fixed-program composition, not an arbitrary-program dispatcher or whole RAM
-  simulation. Sparse memory, finite control and charged configuration selection remain separate.
+  Both reuse Christian Reitwiessner's native arithmetic/encoding calculus.
+  `GenericRAM/Simulation/{Finite,Turing,Run}` combine these per-symbol certificates with sparse
+  memory and finite control to simulate single steps and clocked multi-step runs of any fixed
+  generic-RAM program on native multitape Turing machines
+  (`Cslib.GenericRAM.FiniteState.transport_inO`, `Cslib.GenericRAM.FiniteState.transport_polyTime`
+  and `Cslib.GenericRAM.FiniteState.transport_polyTime_of_le_const`). `transport_inO` is
+  parameterized by explicit time and space bounds; `transport_polyTime` needs a polynomial step
+  bound (`hStepsBound`) and a polynomial bound on the encoded intermediate run results
+  (`hOutLen`); `transport_polyTime_of_le_const` derives both from a constant step bound. Uniform
+  arbitrary-program dispatch and charged configuration selection remain separate.
 * **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
   with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
   routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,
-  and polynomial-time corollaries. Coordinate this component with #292's effective RAM backend;
-  it does not yet simulate generic primitives, finite control or whole RAM executions.
+  and polynomial-time corollaries, and feed the fixed-program step and whole-run simulators in
+  `GenericRAM/Simulation/{Turing,Run}` (#298, #292).
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource
@@ -117,17 +139,18 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   cost dependency. Bounded-key implementations may specialize insertion admissibility.
   `Algorithms/Lean/SearchTree/*` reuses Mathlib's `BinaryTree`, height and node count for an
   unbalanced ordered-set realization. Finite-set behavior, strict invariants and height-bounded
-  node visits are proved; allocation, comparison implementation and client computation are
-  excluded from that cost model. It is not a balanced tree or machine-time certificate.
+  node visits are proved, including for the pure deletion operation `erase`; allocation,
+  comparison implementation and client computation are excluded from that cost model. It is not
+  a balanced tree or machine-time certificate.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
   The direct shared-heap queue uses the existing FIFO operation signature and native operation
   traces, with a hidden two-stack representation, a concrete-register potential, framed storage,
   and separately charged initialization. Its `2 * capacity` reservation is explicit; external
   client computation and argument delivery are not charged by the operation-history bound.
-  Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
-  neither open framework is copied here. This is a prototype of composition and refinement,
-  not a replacement for their query models or a general cell-probe lower-bound semantics.
+  Coordinate placement and overlap with Srinivas's #685 and the merged #401 (`Algorithms/Lean/Query`)
+  before upstream submission; #685 is not copied here. This is a prototype of composition and
+  refinement, not a replacement for their query models or a general cell-probe lower-bound semantics.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
   #871–#875 requested composition above configuration level; use `TransformsTapes`-style specs.
@@ -146,20 +169,23 @@ agreement during upstream review.
 | `Computability/Machines/Turing/MultiTape/Encodings/StreamFold` | The candidate `streamFold_sum` generalizes the vendored proof; `streamFold` is its compatibility corollary. When resynchronizing or removing the copy, preserve the summed contract and shared proof until upstream includes them. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Length` | Add to the tidy branch's `Encodings/List`. |
 | `Computability/Machines/Turing/MultiTape/TapeLemmas` | `exists_visitedByTapeHead_eq_Icc` and `workTapes_runFrom_eq_of_notMem_visitedByTapeHead` were relocated from `Plumbing/Shadow` (#316); upstream with `TapeLemmas`. |
-| `Turing.Action.instFinite` in `Computability/Machines/Turing/MultiTape/Machine/ChoiceTable` | Place beside `Action` in `Computability/Machines/Turing/MultiTape/Configuration`. |
+| `Computability/Machines/Turing/MultiTape/Configuration` | `Turing.Action.instFinite` was relocated from `Machine/ChoiceTable` (#354); place beside `Action` in upstream `Configuration`. |
 | `Computability/Machines/Turing/MultiTape/Plumbing/ExtendTapesView` | Derive the old `tapeEmb`/`noTapes` lemmas from `viewCfg`; `oneTapeCfg i = viewCfg (tapeEmb i)` by `rfl`. |
 | `Computability/Machines/Turing/MultiTape/Probabilistic/IterateWhile` | Its private tape helpers parallel the vendored deterministic `Combinators/IterateWhile`; share them once the tidy branch exposes them. |
-| `Computability/Machines/Turing/MultiTape/Combinators/TidyNormalForm` | Place `runFrom_nop_withState` beside `runFrom_nop_one`. |
+| `Computability/Machines/Turing/MultiTape/Plumbing/TransformsTapes` | `runFrom_nop_withState` was relocated from `Combinators/TidyNormalForm` (#354); place beside `runFrom_nop_one` in upstream `Plumbing/TransformsTapes`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Decoder` | Total decoders with tidy certificates; add to the tidy branch's `Encodings` beside `Option`/`Pair`/`List`. |
 | `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
-| `Computability/Circuit/{Unfolding,MapOp}` | Consider integrating into `Circuit/Formula` and `Circuit/Program`, respectively. |
+| `Computability/Circuit/{Unfolding,MapOp}`, `Computability/Circuit/Encoding/MapOp` | Consider integrating into `Circuit/Formula`, `Circuit/Program`, and `Circuit/Encoding`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
 | `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
+| `Foundations/Data/List/Basic` | `List.getD_idxOf`, `List.countP_and_not_add_countP_and` and register-file/unary-header helpers; consider Mathlib's `Data/List/GetD` and `Data/List/Basic`. |
+| `Foundations/Relation/RelatesWithinSteps` | `Function.iterate_trans` and bounded reachability helpers; consider Mathlib's `Logic/Function/Iterate` and `Logic/Relation`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
 | `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317, with deprecated aliases retained in `Cslib.BitString`). |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
 | `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
+| `Foundations/Data/Matrix/Permanent` | Mathlib candidate: Laplace expansion of the permanent along row and column 0, beside `LinearAlgebra/Matrix/Permanent` (mirroring `Matrix.det_succ_row_zero`). |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |
 | `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
 | `Probability/PairwiseIndependentHash/Toeplitz` | Move `Matrix.toeplitz` to Mathlib beside `LinearAlgebra/Matrix/Circulant`. |
@@ -242,6 +268,45 @@ grandfathered without an alias; this list records them for downstream users.
     `hastadGraphSATProb_eq_add_hastadGraphLinearCorr`. The SAT conjuncts were dropped from
     `hastadGraphProb_longCode_of_satisfies` and `hastad_gapLabelCover_dichotomy`, keeping their
     names.
+  - The conditional sumset-extractor frontier layer (#391), whose extractor-family hypothesis was
+    never discharged: `Circuit/Frontier/Extractor.lean` and `Complexity/FrontierExtractor.lean`
+    (whole modules), and the decimal restatements
+    `eventually_456249_div_100000_sub_mul_lt_innerSize`,
+    `circuitLowerBound_456249_div_100000`, `averageCaseBound_456249_div_100000`,
+    `eventually_456249_div_100000_sub_mul_lt_innerSize_of_nondeterministicDecides` and
+    `eventually_456249_div_100000_sub_mul_lt_card_of_aggregates`. Combine the exact-`L` theorems
+    with `Gaussian.circuitCoefficient_ge_456249` instead.
+  - #392 withdrew Gentry's bootstrapping (`Crypto/Computational/Bootstrapping.lean` and
+    `Bootstrapping/{HomomorphicEval,KeyChain,KeyEncryption}.lean`, whole modules), whose
+    `Bootstrappable` interface assumed the content of the theorem. From the Håstad modules it
+    deleted `GapExactThreeDistinctSAT`, `no_GapExactThreeDistinctSAT_eq_empty`, `xorThreeCNF` and
+    its five lemmas, `hastadLinearProb_le_of_hastadLinearCorr_le` and the same-day alias
+    `Cslib.PCP.Hastad.fourierCoeff_sq_signVal_le_one`. The kept long-code, folding and projection
+    lemmas moved to `Cslib.BitString` in `Foundations/BooleanAnalysis/LongCode` (`IsFolded`
+    became `IsOdd`; deprecated aliases remain, but dot notation on an `IsFolded` hypothesis must
+    switch to `IsOdd`), and `Hastad/ExactThreeDistinct` merged into
+    `PCP/Approximation/MaxExactThreeSAT`, keeping its declaration names; imports of the deleted
+    module path must be updated. `hastad_gapLabelCover_dichotomy` now chooses `η` before the label
+    sets, keeping its name.
+  - Follow-up #390 (same date and policy): the rest of the `ACC0.lean` Williams scaffolding,
+    `SymPlusCircuit` and its API, `evalMask` and its lemmas, `zetaTransform`, `fastZeta`,
+    `fastZeta_eq_zetaTransform`, `parity_mem_EXP`, `parity_mem_NEXP`,
+    `exists_mem_NEXP_notMem_{AC0,AC0Mod,SIZEMod}`, `exists_mem_SIZEMod_of_mem_AC0Mod`,
+    `NEXP_subset_PPoly_of_NEXP_subset_ACC0`, `PH_eq_SigmaP_two_of_NEXP_subset_ACC0` and
+    `Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0`; the remaining `ACC0` development is
+    split into `ACC0/Basic` and `ACC0/Simulation`, and `NC_subset_PPoly`, `AC_subset_PPoly` and
+    `size_majorityDeMorganCircuit_le_sq` moved to `DepthClasses`, `FanInTwo` and `ThresholdNC1`,
+    all with names unchanged. The module
+    `Circuit/Arithmetic/IdentityTesting` is deleted. Its Schwartz–Zippel restatements
+    (`MvPolynomial.card_mul_card_roots_le`, `card_roots_le`,
+    `exists_eval_ne_zero_of_totalDegree_lt_card`; use Mathlib's
+    `MvPolynomial.schwartz_zippel_totalDegree`), `encArith*`, `PITInt` and its lemmas, the
+    arithmetic circuit combinators, the permanent chain (`minorVar` through
+    `isLaplacePermChain_laplacePermCircuit`), `intPermFamily` and `exists_mem_NEXP_notMem_SIZE`
+    are deleted. `Matrix.permanent_succ_{column,row}_zero` moved to
+    `Foundations/Data/Matrix/Permanent`, `Cslib.Circuits.Circuit.eval_polynomial` to
+    `Arithmetic/VP`, and `permFamily`, `isPFamily_permFamily` and
+    `totalDegree_permanent_genericMatrix_le` to `Arithmetic/Determinant`, with names unchanged.
 * **Two multigraph namespaces.** Since 2026-10-20 the frontier multigraph
   (`Cslib.Circuits.Frontier.Multigraph`) defines its simple graph as that of the multigraph given by
   its ends (`Cslib.Multigraph`), and its module publicly imports the latter. Their shared base names

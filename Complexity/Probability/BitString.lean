@@ -28,6 +28,8 @@ this finite uniform distribution to a program drawing one independent fair bit a
 * `Cslib.BitString.mem_support_uniformList_iff`: support is exactly the requested length.
 * `Cslib.BitString.uniformList_map_of_bijective`: length-preserving permutations preserve
   uniformity.
+* `Cslib.BitString.uniformList_map_apply`: the probability of a value under a map of a uniform
+  word is the fraction of words of that length mapping to it.
 
 ## References
 
@@ -135,5 +137,18 @@ theorem uniformList_map_of_bijective (f : List Bool → List Bool) (hf : Functio
       funext word
       exact (hbits word).symm
     _ = uniformList n := by rw [PMF.uniformOfFintype_map_equiv]; rfl
+
+/-- The probability of a value of a function of a uniform word is the fraction of the words of
+that length giving it. -/
+theorem uniformList_map_apply {β : Type*} [DecidableEq β] (f : List Bool → β) (n : ℕ)
+    (b : β) : ((uniformList n).map f) b =
+      ((Finset.univ.filter fun r : Fin n → Bool => f (List.ofFn r) = b).card : ENNReal) /
+        2 ^ n := by
+  rw [uniformList, PMF.map_comp, PMF.map_apply, tsum_fintype]
+  simp only [PMF.uniformOfFintype_apply, Function.comp_apply, Fintype.card_fun, Fintype.card_bool,
+    Fintype.card_fin]
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, nsmul_eq_mul,
+    div_eq_mul_inv]
+  simp [eq_comm]
 
 end Cslib.BitString

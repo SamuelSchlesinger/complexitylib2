@@ -24,9 +24,11 @@ value somewhere (`hittingList_hits`). The construction is OpenAI's.
 The list yields executable tests for nonzeroness and admissibility, by exact rational matrix
 evaluation. The admissibility test needs a list for two extra syntax nodes: if `f` has a defined
 value, either `f` or `f + 1` has a nonzero value. The correctness theorems do not assert
-polynomial bit complexity of formula evaluation, and no running-time bound for the generator is
-proved here: a polynomial-time generator is future work. These are deductions from the source
-result, without a claim of new priority.
+polynomial bit complexity of formula evaluation. The tests are deductions from the source result,
+without a claim of new priority. The generator's running time is bounded in
+`Complexity.Computability.Circuit.Rational.Runtime`: `Cslib.Circuits.Rational.hittingList_polytime`
+computes the encoding `encodeOutput (hittingList n s)` tidily in polynomial time from unary
+`(n, s)`.
 
 ## Main definitions
 

@@ -7,34 +7,20 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Complexity.Classes.Constructible
 public import Complexity.Computability.Complexity.Classes.Hierarchy.SpaceUniversal
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Complexity.Classes.LogSpace
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
-import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
+public import Complexity.Computability.Complexity.Classes.Space.Time
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
-# Deterministic space classes and the space hierarchy theorem
+# The space hierarchy theorem
 
-`Cslib.Complexity.DSPACE enc s` consists of the problems that some machine with a binary alphabet
-and finitely many states decides within space `c₁ * s n + c₂`, for constants `c₁` and `c₂`, on
-instances whose encoding under `enc` has length `n`, within some time bound of `n` (upstream
-`Turing.MultiTapeTM.DecidableInTimeAndSpace`) [Sipser, Definition 8.2][Sipser2013]. This is the
-definition of the classes proposed upstream in cslib pull request #767, stated for encoded
-instances, beside `Cslib.Complexity.DTIME`. Space counts the visited work-tape cells: the input
-tape is read-only and the output tape write-only. The time bound is no restriction
-(`Cslib.Complexity.mem_DSPACE_iff`): a machine that halts within space `s n` halts within the
-number of its configurations, `(n + 2) * 2 ^ O(s n)`, a function of `n`
-(`Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow`). So
-`DSPACE s ⊆ DTIME ((n + 2) * 2 ^ (c * s n))` for a constant `c` of the decider
-(`Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE`), and `DTIME t ⊆ DSPACE t`. As in #767, `L` is
-`DSPACE (log₂)` and `PSPACE` the union of the classes `DSPACE (n ^ k)`.
-
-A bound `s` is *space-constructible* (`Cslib.Complexity.SpaceConstructible`) when such a machine
-computes `s n` in binary from any word of length `n` within space `O(s n)`; time-constructible
-bounds are, and so are the constants, `n`, `(n + 1) ^ k` and `2 ^ n`.
+`Cslib.Complexity.DSPACE` is defined in `Classes.Space.Basic`, and
+`Cslib.Complexity.SpaceConstructible` in `Classes.Constructible`. Their generic APIs and
+the concrete `L` and `PSPACE` characterizations do not depend on this hierarchy theorem.
 
 ## The space hierarchy theorem
 
@@ -69,20 +55,10 @@ are not claimed here.
 
 ## Main definitions
 
-* `Cslib.Complexity.DSPACE`: deterministic space classes.
-* `Cslib.Complexity.SpaceConstructible`: space-constructible bounds.
 * `Cslib.Complexity.spaceDiagonal`: the diagonal within a space budget.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_of_length`,
-  `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_two_pow`: the configuration-counting
-  bound on the time of a space-bounded computation.
-* `Cslib.Complexity.mem_DSPACE_iff`, `Cslib.Complexity.mem_L_iff_mem_DSPACE`,
-  `Cslib.Complexity.mem_PSPACE_iff_exists_mem_DSPACE`: `DSPACE` with any time bound, `L` and
-  `PSPACE` through `DSPACE`.
-* `Cslib.Complexity.exists_mem_DTIME_of_mem_DSPACE`, `Cslib.Complexity.DTIME_subset_DSPACE`:
-  space and time.
 * `Cslib.Complexity.spaceDiagonal_desc`: the diagonal negates the answer of a machine on its padded
   description, within the clock and the budget.
 * `Cslib.Complexity.setOf_spaceDiagonal_mem_DSPACE`,
@@ -106,252 +82,9 @@ in-place universal interpreter within a space budget.
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM
-
-variable {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
-
-/-- **A computation within space `s n` halts within a time bound of `n`.** A function computable
-within space `s n` on encoded inputs of length `n`, within any time bound, is computable within the
-same space and the time `(n + 2) * storageBound Bool State k (s n)` of the configuration count of
-its machine (`Turing.MultiTapeTM.haltsAt_le_card`), a function of `n` alone. -/
-theorem ComputableInTimeAndSpace.exists_time_of_length {f : α → β} {t : α → ℕ} {s : ℕ → ℕ}
-    (h : ComputableInTimeAndSpace f encIn encOut t fun a => s (encIn a).length) :
-    ∃ t' : ℕ → ℕ, ComputableInTimeAndSpaceOfLength f encIn encOut t' s := by
-  obtain ⟨k, State, hfin, tm, htm⟩ := h
-  let := Fintype.ofFinite State
-  exact ⟨fun n => (n + 2) * storageBound Bool State k (s n), k, State, hfin, tm,
-    fun a => (htm a).of_card⟩
-
-/-- **The configuration-counting bound**: a function computable within space `s n` on encoded
-inputs of length `n` is computable within the same space and time `(n + 2) * c * 2 ^ (c * s n)`,
-for a constant `c` of the machine. -/
-theorem ComputableInTimeAndSpace.exists_time_two_pow {f : α → β} {t : α → ℕ} {s : ℕ → ℕ}
-    (h : ComputableInTimeAndSpace f encIn encOut t fun a => s (encIn a).length) :
-    ∃ c, ComputableInTimeAndSpaceOfLength f encIn encOut (fun n => (n + 2) * c * 2 ^ (c * s n))
-      s := by
-  obtain ⟨k, State, hfin, tm, htm⟩ := h
-  let := Fintype.ofFinite State
-  set c := storageBoundBase Bool State k + storageBoundExp Bool k
-  have h' : tm.ComputesFunInTimeAndSpace encIn encOut f
-      (fun a => ((encIn a).length + 2) * storageBound Bool State k (s (encIn a).length))
-      fun a => s (encIn a).length := fun a => (htm a).of_card
-  refine ⟨c, k, State, hfin, tm, h'.mono (fun a => ?_) fun _ => le_rfl⟩
-  dsimp only
-  rw [mul_assoc]
-  refine Nat.mul_le_mul_left _ ((storageBound_le_base_mul_pow _).trans
-    (Nat.mul_le_mul (Nat.le_add_right _ _) (Nat.pow_le_pow_right (by norm_num)
-      (Nat.mul_le_mul_right _ (Nat.le_add_left _ _)))))
-
-/-- **From binary to unary**, by counting down: within time `O((n + 1) ^ 3)` and space `O(n)`. -/
-theorem ComputableTidilyInO.natToUnary : ComputableTidilyInO (fun n : ℕ => n) encNat encUnary
-    (fun n => (n + 1) ^ 3) fun n => n := by
-  have hiter (n : ℕ) : (· + 1)^[n] 0 = n := by
-    induction n with
-    | zero => rfl
-    | succ n ih => rw [Function.iterate_succ_apply', ih]
-  have h := ComputableTidilyInO.iterate (n := fun n : ℕ => n) (init := fun _ => 0)
-    (step := (· + 1)) (encIn := encNat) (encB := encUnary)
-    (ComputableTidilyInO.of_linear (.of_eq fun _ => rfl)) (ComputableTidilyInO.const 0)
-    ComputableTidilyInDegree.unary_succ.inO_one (R := fun n => n) (Q := fun n => n)
-    (B := fun n => n)
-    (fun n k hk => by simp only [hiter, encUnary_apply, List.length_replicate]; exact hk)
-    (fun n k hk => by simp only [hiter, encUnary_apply, List.length_replicate]; exact hk)
-    (fun n k hk => by simp only [hiter, encUnary_apply, List.length_replicate]; exact hk)
-  refine (h.of_enc_eq fun n => by rw [hiter]).mono 8 (fun n => ?_) fun n => ?_
-  all_goals
-    have := Universal.length_encNat_le n
-    have h₁ : (n + 1) ^ 2 ≤ (n + 1) ^ 3 := Nat.pow_le_pow_right (by omega) (by omega)
-    have h₂ : n + 1 ≤ (n + 1) ^ 2 := Nat.le_self_pow (by norm_num) _
-    have h₃ := Nat.pow_le_pow_left (show (encNat n).length + 1 ≤ n + 1 by omega) 2
-  · nlinarith
-  · omega
-
-end Turing.MultiTapeTM
-
 namespace Cslib.Complexity
 
 open Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal Filter
-
-variable {α : Type*} {enc : α ↪ List Bool} {A : Set α}
-
-/-! ### Space classes -/
-
-/-- The problems decidable within space `O(s n)`, that is `c₁ * s n + c₂` for constants `c₁` and
-`c₂`, on instances whose encoding under `enc` has length `n`, by a machine with a binary alphabet
-and finitely many states, within some time bound of `n`. -/
-def DSPACE (enc : α ↪ List Bool) (s : ℕ → ℕ) : Set (Set α) :=
-  {A | ∃ c₁ c₂ : ℕ, ∃ t : ℕ → ℕ,
-    DecidableInTimeAndSpace A enc (fun a => t (enc a).length) fun a => c₁ * s (enc a).length + c₂}
-
-/-- **Membership in `DSPACE`** asks for no particular time bound: a machine that halts within the
-space bound halts within the number of its configurations, a function of the length of the
-encoded instance (`Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_time_of_length`). -/
-theorem mem_DSPACE_iff {s : ℕ → ℕ} : A ∈ DSPACE enc s ↔
-    ∃ c₁ c₂ : ℕ, ∃ t : α → ℕ,
-      DecidableInTimeAndSpace A enc t fun a => c₁ * s (enc a).length + c₂ := by
-  refine ⟨fun ⟨c₁, c₂, t, h⟩ => ⟨c₁, c₂, _, h⟩, fun ⟨c₁, c₂, t, h⟩ => ?_⟩
-  obtain ⟨t', h'⟩ := ComputableInTimeAndSpace.exists_time_of_length (s := fun n => c₁ * s n + c₂) h
-  exact ⟨c₁, c₂, t', h'⟩
-
-/-- `DSPACE` is monotone in the space bound. -/
-theorem DSPACE_mono {s₁ s₂ : ℕ → ℕ} (h : ∀ n, s₁ n ≤ s₂ n) : DSPACE enc s₁ ⊆ DSPACE enc s₂ := by
-  rintro A ⟨c₁, c₂, t, hA⟩
-  exact ⟨c₁, c₂, t, ComputableInTimeAndSpace.mono hA (fun _ => le_rfl)
-    fun a => Nat.add_le_add_right (Nat.mul_le_mul_left _ (h _)) _⟩
-
-/-- `DSPACE` only depends on the space bound eventually: the finitely many other values are
-absorbed by the additive constant. -/
-theorem DSPACE_mono_of_eventually_le {s₁ s₂ : ℕ → ℕ} (h : ∀ᶠ n in atTop, s₁ n ≤ s₂ n) :
-    DSPACE enc s₁ ⊆ DSPACE enc s₂ := by
-  obtain ⟨N, hN⟩ := eventually_atTop.mp h
-  rintro A ⟨c₁, c₂, t, hA⟩
-  refine ⟨c₁, c₁ * ∑ n ∈ Finset.range N, s₁ n + c₂, t,
-    ComputableInTimeAndSpace.mono hA (fun _ => le_rfl) fun a => ?_⟩
-  have : s₁ (enc a).length ≤ s₂ (enc a).length + ∑ n ∈ Finset.range N, s₁ n := by
-    rcases le_or_gt N (enc a).length with h | h
-    · have := hN _ h
-      omega
-    · have := Finset.single_le_sum (f := s₁) (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr h)
-      omega
-  have := Nat.mul_le_mul_left c₁ this
-  rw [Nat.mul_add] at this
-  omega
-
-/-- `DSPACE` depends on the space bound only up to a constant factor and an additive constant. -/
-theorem DSPACE_subset_of_le_mul_add {s₁ s₂ : ℕ → ℕ} (c d : ℕ) (h : ∀ n, s₁ n ≤ c * s₂ n + d) :
-    DSPACE enc s₁ ⊆ DSPACE enc s₂ := by
-  rintro A ⟨c₁, c₂, t, hA⟩
-  refine ⟨c₁ * c, c₁ * d + c₂, t, ComputableInTimeAndSpace.mono hA (fun _ => le_rfl) fun a => ?_⟩
-  have := Nat.mul_le_mul_left c₁ (h (enc a).length)
-  rw [Nat.mul_add, ← Nat.mul_assoc] at this
-  omega
-
-/-- **Time bounds space**: a machine visits at most one new cell per work tape and step, so
-`DTIME t ⊆ DSPACE t`. -/
-theorem DTIME_subset_DSPACE {t : ℕ → ℕ} : DTIME enc t ⊆ DSPACE enc t := by
-  rintro A ⟨c₁, c₂, s, hA⟩
-  obtain ⟨c, h⟩ := ComputableInTimeAndSpace.exists_space_linear hA
-  refine mem_DSPACE_iff.mpr ⟨c * c₁, c * c₂ + c, _, ComputableInTimeAndSpace.mono h
-    (fun _ => le_rfl) fun a => ?_⟩
-  rw [Nat.mul_add, Nat.mul_assoc, Nat.add_assoc]
-
-/-- **Space bounds time exponentially** (the inclusion `DSPACE s ⊆ DTIME (2 ^ O(s))` of cslib pull
-request #767, for encoded instances): a decider within space `O(s n)` halts within its number of
-configurations, `O((n + 2) * 2 ^ (c * s n))` for a constant `c` of the decider. -/
-theorem exists_mem_DTIME_of_mem_DSPACE {s : ℕ → ℕ} (h : A ∈ DSPACE enc s) :
-    ∃ c, A ∈ DTIME enc fun n => (n + 2) * 2 ^ (c * s n) := by
-  obtain ⟨c₁, c₂, t, hA⟩ := h
-  obtain ⟨c, h⟩ := ComputableInTimeAndSpace.exists_time_two_pow (s := fun n => c₁ * s n + c₂) hA
-  refine ⟨c * c₁, c * 2 ^ (c * c₂), 0, fun n => c₁ * s n + c₂, ComputableInTimeAndSpace.mono h
-    (fun a => ?_) fun _ => le_rfl⟩
-  dsimp only
-  rw [Nat.mul_add, pow_add, ← Nat.mul_assoc c c₁]
-  apply le_of_eq
-  ring
-
-/-- **`L` is `DSPACE (log₂)`**, the definition of `L` in cslib pull request #767. -/
-theorem mem_L_iff_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A : Set α} :
-    A ∈ L enc ↔ A ∈ DSPACE enc Nat.log2 :=
-  mem_L_iff.trans mem_DSPACE_iff.symm
-
-/-- A space class of a polynomially bounded bound is within `PSPACE`. -/
-theorem DSPACE_subset_PSPACE {α : Type} {enc : α ↪ List Bool} {s : ℕ → ℕ}
-    (hs : PolynomiallyBounded s) : DSPACE enc s ⊆ PSPACE enc := by
-  rintro A ⟨c₁, c₂, t, hA⟩
-  have : PolynomiallyBounded fun n => c₁ * s n + c₂ := by fun_prop
-  exact mem_PSPACE_iff.mpr ⟨_, _, .of_polynomiallyBounded (fun a => (enc a).length) this, hA⟩
-
-private theorem succ_pow_le (n d : ℕ) : (n + 1) ^ d ≤ 2 ^ d * n ^ d + 1 := by
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  · rcases Nat.eq_zero_or_pos d with rfl | hd
-    · simp
-    · simp [Nat.zero_pow hd]
-  · calc (n + 1) ^ d ≤ (2 * n) ^ d := Nat.pow_le_pow_left (by omega) d
-      _ = 2 ^ d * n ^ d := mul_pow ..
-      _ ≤ _ := Nat.le_succ _
-
-/-- **`PSPACE` is the union of the classes `DSPACE (n ^ k)`**, the definition of `PSPACE` in cslib
-pull request #767. -/
-theorem mem_PSPACE_iff_exists_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A : Set α} :
-    A ∈ PSPACE enc ↔ ∃ k, A ∈ DSPACE enc (· ^ k) := by
-  refine ⟨fun h => ?_, fun ⟨k, h⟩ => DSPACE_subset_PSPACE (by fun_prop) h⟩
-  obtain ⟨t, s, hs, hA⟩ := mem_PSPACE_iff.mp h
-  obtain ⟨C, d, hC⟩ := hs.exists_le
-  refine ⟨d, mem_DSPACE_iff.mpr ⟨C * 2 ^ d, C, t, ComputableInTimeAndSpace.mono hA
-    (fun _ => le_rfl) fun a => (hC a).trans ?_⟩⟩
-  have := Nat.mul_le_mul_left C (succ_pow_le (enc a).length d)
-  rw [Nat.mul_add, Nat.mul_one, ← Nat.mul_assoc] at this
-  exact this
-
-/-! ### Space-constructible bounds -/
-
-/-- A bound `s` is space-constructible when some machine with a binary alphabet and finitely many
-states computes `s n` in binary from any word of length `n` within space `O(s n)`, halting
-[Sipser, Definition 9.1][Sipser2013]. Unlike [Sipser, Definition 9.1][Sipser2013], `s n ≥ log n`
-is not required here; the space hierarchy theorem below asks for `n ≤ s n`. -/
-def SpaceConstructible (s : ℕ → ℕ) : Prop :=
-  ∃ c : ℕ, ∃ t : ℕ → ℕ, ComputableInTimeAndSpaceOfLength (fun x : List Bool => s x.length) encBits
-    encNat t fun n => c * s n + c
-
-/-- A space-constructible bound is computed tidily within space `O(s n)`, within some time. -/
-theorem SpaceConstructible.computableTidilyInO {s : ℕ → ℕ} (hs : SpaceConstructible s) :
-    ∃ T, ComputableTidilyInO (fun x : List Bool => s x.length) encBits encNat T
-      fun x => s x.length := by
-  obtain ⟨c, t, h⟩ := hs
-  obtain ⟨d, h⟩ := ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace h
-  refine ⟨_, .of_bounds h (d * (c + 1) + 1) (T := fun x => 2 * t x.length +
-    3 * (c * s x.length + c) + d) (fun x => ?_) (fun x => ?_) fun x => ?_⟩
-  · exact (Nat.le_succ _).trans (Nat.le_mul_of_pos_left _ (by omega))
-  · dsimp only [encBits_apply]
-    nlinarith
-  · exact (Universal.length_encNat_le _).trans
-      ((Nat.le_succ _).trans (Nat.le_mul_of_pos_left _ (by omega)))
-
-/-- A time-constructible bound is space-constructible, since space is at most time. -/
-theorem TimeConstructible.spaceConstructible {t : ℕ → ℕ} (ht : TimeConstructible t) :
-    SpaceConstructible t := by
-  obtain ⟨c, s, h⟩ := ht
-  obtain ⟨k, h⟩ := ComputableInTimeAndSpace.exists_space_linear h
-  exact ⟨k * c + k, fun n => c * t n + c, ComputableInTimeAndSpace.mono h (fun _ => le_rfl)
-    fun x => by dsimp only; nlinarith⟩
-
-/-- A tidy computation of `s n` in binary within space `O(s n)` makes `s` space-constructible:
-it halts within a time bound of `n`, its number of configurations. -/
-theorem SpaceConstructible.of_computableTidilyInO {s : ℕ → ℕ} {T S : List Bool → ℕ} (c : ℕ)
-    (h : ComputableTidilyInO (fun x : List Bool => s x.length) encBits encNat T S)
-    (hS : ∀ x, S x ≤ c * s x.length + c) : SpaceConstructible s := by
-  obtain ⟨k, hk, -⟩ := h
-  obtain ⟨t, ht⟩ := ComputableInTimeAndSpace.exists_time_of_length
-    (s := fun n => k * (c * s n + c + 1)) (hk.computableInTimeAndSpace.mono (fun _ => le_rfl)
-      fun x => Nat.mul_le_mul_left k (by have := hS x; simp only [encBits_apply]; omega))
-  exact ⟨k * (c + 1), t, ComputableInTimeAndSpace.mono ht (fun _ => le_rfl) fun x => by
-    dsimp only; nlinarith⟩
-
-/-- `n` is space-constructible: count the length of the word in binary. -/
-theorem spaceConstructible_id : SpaceConstructible fun n => n :=
-  .of_computableTidilyInO 1 ComputableTidilyInO.lengthNat fun x => by omega
-
-/-- `n + 1` is space-constructible. -/
-theorem spaceConstructible_succ : SpaceConstructible fun n => n + 1 :=
-  .of_computableTidilyInO 2 (ComputableTidilyInO.natSucc.comp ComputableTidilyInO.lengthNat)
-    fun x => by have := Universal.length_encNat_le x.length; omega
-
-/-- Constant bounds are space-constructible, in zero space. -/
-theorem spaceConstructible_const (c : ℕ) : SpaceConstructible fun _ => c := by
-  obtain ⟨t, h⟩ := computableInTimeAndSpace_of_const (α := List Bool) (encIn := encBits)
-    (encOut := encNat) c
-  exact ⟨0, fun _ => t, h.mono (fun _ => le_rfl) fun _ => Nat.zero_le _⟩
-
-/-- `(n + 1) ^ k` is space-constructible. -/
-theorem spaceConstructible_succ_pow (k : ℕ) : SpaceConstructible fun n => (n + 1) ^ k := by
-  rcases k with _ | _ | k
-  · simpa using spaceConstructible_const 1
-  · simpa using spaceConstructible_succ
-  · exact (timeConstructible_succ_pow (by omega)).spaceConstructible
-
-/-- `2 ^ n` is space-constructible. -/
-theorem spaceConstructible_two_pow : SpaceConstructible (2 ^ ·) :=
-  timeConstructible_two_pow.spaceConstructible
 
 /-! ### The diagonal within a space budget -/
 
@@ -388,7 +121,7 @@ theorem computableTidilyInO_spaceDiagonal {G : ℕ → ℕ} (hG : SpaceConstruct
   have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
     ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
   have hdesc := hdec.inO.comp hu
-  have hsym := computableTidilyInDegree_map_eBit.inO_one
+  have hsym := Universal.computableTidilyInDegree_map_eBit.inO_one
   obtain ⟨TG, hGb⟩ := hG.computableTidilyInO
   have hGu := ComputableTidilyInO.natToUnary.comp hGb
   have hclock := ((ComputableTidilyInDegree.two_pow_length encUnary).inO_one.comp_linear
@@ -615,7 +348,7 @@ theorem DSPACE_pow_ssubset_DSPACE_pow_succ (k : ℕ) :
       · have : n ^ k ≤ n ^ (k + 1) := Nat.pow_le_pow_right hpos (Nat.le_succ k)
         omega
   refine (Set.ssubset_iff_of_subset hsub).mpr ⟨_, DSPACE_subset_of_le_mul_add (2 ^ (k + 1)) 1
-    (fun n => succ_pow_le n (k + 1))
+    (fun n => by simpa using Nat.mul_add_one_pow_le_two_pow 1 (k + 1) n)
     (setOf_spaceDiagonal_mem_DSPACE (spaceConstructible_succ_pow (k + 1)) hn),
     setOf_spaceDiagonal_notMem_DSPACE hn fun c => ?_⟩
   filter_upwards [eventually_ge_atTop (2 * c)] with n hc

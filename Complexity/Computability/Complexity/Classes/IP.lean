@@ -270,19 +270,6 @@ theorem isOraclePPTOn_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → 
     fun_prop
   exact (IsPPTOn.map_with (f := fun a r => V (a, r)) hcount.sampleList hV).isOraclePPTOn
 
-/-- The probability that a function of a uniform word of length `n` takes the value `b` is the
-fraction of the words where it does. -/
-private theorem uniformList_map_apply (n : ℕ) (g : List Bool → Bool) (b : Bool) :
-    (BitString.uniformList n).map g b =
-      (Finset.univ.filter fun r : Fin n → Bool => g (List.ofFn r) = b).card / 2 ^ n := by
-  classical
-  rw [BitString.uniformList, PMF.map_comp, PMF.map_apply, tsum_fintype]
-  simp only [PMF.uniformOfFintype_apply, Function.comp_apply, Fintype.card_fun, Fintype.card_bool,
-    Fintype.card_fin]
-  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.sum_const, nsmul_eq_mul,
-    div_eq_mul_inv]
-  simp [eq_comm]
-
 /-- The verifier without messages accepts every prover with the fraction of accepted random
 strings. -/
 theorem acceptProb_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool} (a : α)
@@ -292,7 +279,7 @@ theorem acceptProb_bppVerifier {p : Polynomial ℕ} {V : α × List Bool → Boo
         V (a, List.ofFn r) = true).card / 2 ^ p.eval (enc a).length := by
   simp only [acceptProb, bppVerifier, Prover.run_sample, PMF.map_comp, ProbComp.eval_map,
     BitString.eval_sampleList]
-  exact uniformList_map_apply _ _ true
+  exact BitString.uniformList_map_apply _ _ true
 
 private theorem natCast_div_le_natCast_div {a b c d : ℕ} (hb : b ≠ 0) (hd : d ≠ 0)
     (h : a * d ≤ b * c) : (a : ENNReal) / b ≤ (c : ENNReal) / d := by

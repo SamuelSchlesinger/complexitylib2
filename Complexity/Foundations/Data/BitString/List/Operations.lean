@@ -170,5 +170,35 @@ theorem listXor_eq_ofFn_sum {count : ℕ} (width : ℕ) (words : Fin count → L
   intro i hi hi'
   simp [listXor, hparity, ofList, List.map_ofFn, List.sum_ofFn, Finset.sum_apply]
 
+/-- Two-word `listXor` agrees with addition in `BitString m`. -/
+theorem listXor_pair (m : ℕ) (u v : List Bool) :
+    listXor m [u, v] = List.ofFn (ofList m u + ofList m v) := by
+  have h := listXor_eq_ofFn_sum m ![u, v]
+  simpa [List.ofFn_succ, Fin.sum_univ_two] using h
+
+/-- Fixed-width view of a two-word `listXor`. -/
+@[simp] theorem ofList_listXor_pair (m : ℕ) (u v : List Bool) :
+    ofList m (listXor m [u, v]) = ofList m u + ofList m v := by
+  rw [listXor_pair, ofList_ofFn]
+
+/-- Two-word `listXor` is commutative. -/
+theorem listXor_pair_comm (m : ℕ) (u v : List Bool) :
+    listXor m [u, v] = listXor m [v, u] := by
+  rw [listXor_pair, listXor_pair, add_comm]
+
+/-- Below the width `m`, each bit of a two-word `listXor` is the XOR of the corresponding bits of
+the words, with missing bits read as `false`. -/
+theorem getD_listXor_pair (m : ℕ) (u v : List Bool) (i : ℕ) (hi : i < m) :
+    (listXor m [u, v]).getD i false = (u.getD i false ^^ v.getD i false) := by
+  have h := congrFun (ofList_listXor_pair m u v) ⟨i, hi⟩
+  simpa [ofList, Pi.add_apply, Bool.add_eq_xor] using h
+
+/-- Below the width `m`, row `0` of a word agrees bitwise with the word itself, with missing bits
+read as `false`. -/
+theorem getD_listRow_zero (m : ℕ) (u : List Bool) (i : ℕ) (hi : i < m) :
+    (listRow m 0 u).getD i false = u.getD i false := by
+  simp only [listRow, Nat.zero_mul, List.drop_zero, ← ofFn_ofList_eq_take]
+  change ofList m (List.ofFn (ofList m u)) ⟨i, hi⟩ = _
+  simp [ofList, hi]
 
 end Cslib.BitString

@@ -8,12 +8,14 @@ module
 -- upstream: candidate (local addition beside the vendored `Turing.MultiTapeTM.Universal` files)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
-# The universal function with a unary clock in polynomial time
+# Universal input coding and polynomial-time simulation
 
 The universal function `Turing.MultiTapeTM.Universal.universal` runs a described machine on an
 input for a given number of steps. Its time and space are polynomial in the length of the
@@ -23,7 +25,24 @@ time when the number of steps is written in unary
 (`Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`). Written in binary, the
 number of steps would be exponential in its length.
 
+The input-coding API translates bits to unary symbols (`false ↦ 0`, `true ↦ 1`) in linear time
+and output size. It also certifies polynomial-time decoding of descriptions and coding of a
+single bit, independently of hierarchy theorems and Ladner's language.
+
+## Main definitions
+
+* `Turing.MultiTapeTM.Universal.encTrueDoubled`: a bit-list encoding doubling every `true`.
+* `Turing.MultiTapeTM.Universal.trueDoubleT`, `Turing.MultiTapeTM.Universal.symbolsT`: transducers
+  implementing the conversion from bit words to framed unary symbols.
+
 ## Main results
+
+* `Turing.MultiTapeTM.Universal.computableTidilyInDegree_map_eBit`: input symbols in linear time
+  and output size.
+* `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_decodeDesc`,
+  `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_map_eBit`,
+  `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_eBit`: polynomial-time description
+  decoding and bit coding.
 
 * `Turing.MultiTapeTM.Universal.universal_bounds_unary`: the time and space of the universal
   function, polynomially in the length of its input with the number of steps in unary.
@@ -40,6 +59,94 @@ number of steps would be exponential in its length.
 namespace Turing.MultiTapeTM.Universal
 
 open ComputableTidilyInPolyTime
+
+/-! ### The symbols of the input -/
+
+/-- The code of a bit list with every `true` doubled: `false ↦ [false]`, `true ↦ [true, true]`. -/
+def trueDoubled (b : Bool) : List Bool := if b then [true, true] else [false]
+
+/-- Bit lists with every `true` doubled. -/
+def encTrueDoubled : List Bool ↪ List Bool :=
+  ⟨fun x => x.flatMap trueDoubled, fun x y h => by
+    induction x generalizing y with
+    | nil => cases y with
+      | nil => rfl
+      | cons b y => cases b <;> simp [trueDoubled] at h
+    | cons a x ih => cases y with
+      | nil => cases a <;> simp [trueDoubled] at h
+      | cons b y =>
+        cases a <;> cases b <;> simp only [trueDoubled, List.flatMap_cons, Bool.false_eq_true,
+          ↓reduceIte, List.cons_append, List.nil_append, List.cons.injEq, true_and,
+          reduceCtorEq, false_and] at h ⊢ <;> exact ih _ h⟩
+
+/-- Doubles every `true`. -/
+def trueDoubleT : Transducer Bool Unit where
+  q₀ := ()
+  step _ b := ((), trueDoubled b)
+  final _ := []
+  length_step_le _ b := by cases b <;> simp [trueDoubled]
+  length_final_le _ := by simp
+
+/-- Reads a doubled word as the framed unary symbols `0` for `false` and `1` for `true`. -/
+def symbolsT : Transducer Bool Bool where
+  q₀ := false
+  step
+    | false, false => (false, [false])
+    | false, true => (true, [true, true])
+    | true, _ => (false, [false])
+  final _ := []
+  length_step_le q b := by cases q <;> cases b <;> simp
+  length_final_le _ := by simp
+
+theorem trueDoubleT_run (x : List Bool) : trueDoubleT.run () x = encTrueDoubled x := by
+  induction x with
+  | nil => rfl
+  | cons b x ih =>
+    rw [Transducer.run_cons, ih]
+    rfl
+
+theorem symbolsT_run (x : List Bool) :
+    symbolsT.run false (encTrueDoubled x) = encList encUnary (x.map eBit) := by
+  induction x with
+  | nil => rfl
+  | cons b x ih =>
+    cases b
+    · change (false :: symbolsT.run false (encTrueDoubled x)) = _
+      rw [ih]
+      rfl
+    · change (true :: true :: false :: symbolsT.run false (encTrueDoubled x)) = _
+      rw [ih]
+      rfl
+
+/-- The input as symbols, in linear time and space. -/
+theorem computableTidilyInDegree_map_eBit :
+    ComputableTidilyInDegree (fun x : List Bool => x.map eBit) encBits (encList encUnary) 1 1 :=
+  (ComputableTidilyInDegree.of_linear (encIn := encTrueDoubled)
+    (symbolsT.computableTidilyInLinearTimeAndSpace fun x => (symbolsT_run x).symm)).comp
+    (ComputableTidilyInDegree.of_linear (encIn := encBits) (encMid := encTrueDoubled) (f := id)
+      (trueDoubleT.computableTidilyInLinearTimeAndSpace fun x => (trueDoubleT_run x).symm))
+
+
+/-- Decoding a machine description is polynomial-time in the input word. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_decodeDesc :
+    ComputableTidilyInPolyTime decodeDesc encBits eDesc :=
+  let ⟨_, _, h⟩ := exists_computableTidilyInDegree_decodeDesc
+  h.computableTidilyInPolyTime
+
+/-- The input of a machine as symbols is linear. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_map_eBit :
+    ComputableTidilyInPolyTime (fun w : List Bool => w.map eBit) encBits (encList encUnary) :=
+  computableTidilyInDegree_map_eBit.computableTidilyInPolyTime
+
+/-- The coding of bits as symbols is a finite computation. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_eBit :
+    ComputableTidilyInPolyTime (fun b : Bool => eBit b) encBool encUnary :=
+  of_finite _
+
+/-! ### Simulation with a unary clock -/
 
 /-- The time and space of the universal function, polynomially in the length of its input with
 the number of steps in unary. -/

@@ -23,6 +23,12 @@ Framed-list and option rules infer the payload encoding from the representation 
 
 ## Main results
 
+* `Turing.MultiTapeTM.ComputableTidilyInO.comp_enc`: reuse a bit-word computation on encoded
+  instances, with bounds evaluated on their encodings.
+* `Turing.MultiTapeTM.ComputableTidilyInO.lengthUnary`: compute bit-word length in unary within
+  linear time and space.
+* `Turing.MultiTapeTM.ComputableTidilyInO.unary_two_pow`: compute `2 ^ n` from unary `n` within
+  time `O((n + 1) * 2 ^ n)` and space `O(2 ^ n)`.
 * `Turing.MultiTapeTM.ComputableTidilyInDegree.comp_le`: composition at requested degrees.
 * `Turing.MultiTapeTM.ComputableTidilyInDegree.prod_le`: pairing at requested degrees, retaining
   the components' output-size bounds.
@@ -185,5 +191,73 @@ theorem ite_le {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ List 
   (hc.ite (hf.restrict _) (hg.restrict _)).mono hd he
 
 end ComputableTidilyInDegree
+
+namespace ComputableTidilyInO
+
+variable {α β : Type} {encOut : β ↪ List Bool}
+
+/-- A function of bit words computed within given bounds is computed by the same machine on encoded
+instances. -/
+theorem comp_enc {f : List Bool → β} {T S : List Bool → ℕ}
+    (h : ComputableTidilyInO f encBits encOut T S) (enc : α ↪ List Bool) :
+    ComputableTidilyInO (fun a => f (enc a)) enc encOut (fun a => T (enc a)) fun a => S (enc a) :=
+  let ⟨c, ⟨k, State, hfinite, tm, htm⟩, hl⟩ := h
+  ⟨c, ⟨k, State, hfinite, tm, fun a => htm (enc a)⟩, fun a => hl (enc a)⟩
+
+/-- The length of a bit word in unary, within linear time and space, by the streaming machine of
+`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.length_bits`. -/
+theorem lengthUnary : ComputableTidilyInO (fun l : List Bool => l.length) encBits encUnary
+    (fun l => l.length) fun l => l.length :=
+  .of_bounds ComputableTidilyInTimeAndSpace.length_bits 8 (fun l => by omega)
+    (fun _ => Nat.zero_le _) fun l => by simp only [encUnary_apply, List.length_replicate]; omega
+
+/-- Doubling `m` once for each element of a list of length `n` multiplies it by `2 ^ n`. -/
+private theorem foldl_double (n m : ℕ) :
+    (List.replicate n true).foldl (fun m _ => m + m) m = m * 2 ^ n := by
+  induction n generalizing m with
+  | zero => simp
+  | succ n ih =>
+    rw [List.replicate_succ, List.foldl_cons, ih]
+    ring
+
+/-- **`2 ^ n` in unary**, by doubling `n` times, within time `O((n + 1) * 2 ^ n)` and space
+`O(2 ^ n)`. -/
+theorem unary_two_pow : ComputableTidilyInO (fun n : ℕ => 2 ^ n) encUnary encUnary
+    (fun n => (n + 1) * 2 ^ n) fun n => 2 ^ n := by
+  have hstep : ComputableTidilyInO (fun p : ℕ × Bool => p.1 + p.1) (encPair encUnary encBool)
+      encUnary (fun p => (encPair encUnary encBool p).length)
+      fun p => (encPair encUnary encBool p).length :=
+    (ComputableTidilyInDegree.unaryAdd (ComputableTidilyInDegree.fst encUnary encBool)
+      (ComputableTidilyInDegree.fst encUnary encBool) le_rfl le_rfl).inO_one
+  have hstate (n i : ℕ) : (encUnary (((List.replicate n true).take i).foldl
+      (fun m _ => m + m) 1)).length ≤ 2 ^ n := by
+    rw [List.take_replicate, foldl_double, encUnary_apply, List.length_replicate, one_mul]
+    exact Nat.pow_le_pow_right (by norm_num) (Nat.min_le_right _ _)
+  have h := foldl (encA := encBool) (encL := encBits) (encB := encUnary)
+    (list := fun n : ℕ => List.replicate n true) (init := fun _ => 1)
+    (step := fun m _ => m + m)
+    (of_linear (.of_eq (f := fun n : ℕ => List.replicate n true) (encIn := encUnary)
+      (encMid := encBits) fun _ => rfl)) (const 1) hstep
+    (R := fun n => 2 * 2 ^ n + 2) (Q := fun n => 2 * 2 ^ n + 2) (B := fun n => 2 ^ n)
+    (fun n i _ => by
+      have := hstate n i
+      simp only [length_encPair, encBool_apply, List.length_singleton]
+      omega)
+    (fun n i _ => by
+      have := hstate n i
+      simp only [length_encPair, encBool_apply, List.length_singleton]
+      omega)
+    fun n i _ => hstate n i
+  refine (h.mono 8 (fun n => ?_) fun n => ?_).of_enc_eq fun n => ?_
+  · have h₁ : n + 1 ≤ 2 ^ n := Nat.lt_two_pow_self
+    have h₂ := Nat.mul_le_mul_left (n + 1) h₁
+    simp only [encUnary_apply, encBits_apply, List.length_replicate]
+    nlinarith
+  · have h₁ : n + 1 ≤ 2 ^ n := Nat.lt_two_pow_self
+    simp only [encUnary_apply, encBits_apply, List.length_replicate]
+    omega
+  · rw [foldl_double, one_mul]
+
+end ComputableTidilyInO
 
 end Turing.MultiTapeTM

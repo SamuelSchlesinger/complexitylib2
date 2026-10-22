@@ -210,7 +210,7 @@ theorem hasKernel_of_mem_FPT [Nonempty α] (hA : A ∈ FPT enc κ) : HasKernel e
   have hin : ComputableTidilyInPolyTime (fun a => (desc eS eBit tm, (enc a).map eBit, N a)) enc
       (encPair eDesc (encPair (encList encUnary) encUnary)) :=
     (ComputableTidilyInPolyTime.const _).prod
-      ((Diagonal.computableTidilyInDegree_map_eBit.computableTidilyInPolyTime.comp
+      ((Universal.computableTidilyInDegree_map_eBit.computableTidilyInPolyTime.comp
         (ComputableTidilyInPolyTime.encode enc)).prod hN)
   have hr : ComputableTidilyInPolyTime r enc eOut := computableTidilyInPolyTime_universal.comp hin
   have hverdict : ComputableTidilyInPolyTime Diagonal.verdict eOut encBool :=

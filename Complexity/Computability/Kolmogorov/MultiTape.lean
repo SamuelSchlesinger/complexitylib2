@@ -67,18 +67,14 @@ variable {k : ℕ} {State : Type*} (tm : MultiTapeTM k Bool State)
 the program `p` is the input, and after `t` steps its output is the contents of the output tape if
 the machine has halted. -/
 noncomputable def ofMultiTapeTM : DescriptionMethod (List Bool) where
-  run p := ⟨fun t => if (tm.runFrom (tm.initCfg p) t).Halted then
-      some (tm.runFrom (tm.initCfg p) t).output else none, fun t x hx => by
-    simp only [Option.ite_none_right_eq_some, Option.some.injEq] at hx ⊢
-    rwa [tm.runFrom_eq_of_halt _ t.le_succ hx.1]⟩
+  run p := ⟨tm.runFor p, fun t _ hx => tm.runFor_mono p t.le_succ hx⟩
 
 variable {tm} {p x : List Bool} {t : ℕ}
 
 theorem mem_ofMultiTapeTM_runFor_iff_halted :
     x ∈ ((ofMultiTapeTM tm).run p).runFor t ↔
-      (tm.runFrom (tm.initCfg p) t).Halted ∧ (tm.runFrom (tm.initCfg p) t).output = x := by
-  change (if _ then _ else _) = _ ↔ _
-  simp only [Option.ite_none_right_eq_some, Option.some.injEq]
+      (tm.runFrom (tm.initCfg p) t).Halted ∧ (tm.runFrom (tm.initCfg p) t).output = x :=
+  tm.mem_runFor_iff
 
 /-- A program describes `x` exactly when the machine computes `x` from it. -/
 @[simp]
@@ -137,10 +133,8 @@ theorem exists_simulation_literal :
 mapping `dec` over `ofMultiTapeTM tm` yields a partial recursive description method. -/
 theorem isPartrec_ofMultiTapeTM_map {State : Type} [Finite State]
     (tm : MultiTapeTM k Bool State) {dec : List Bool → ℕ} (hdec : Computable dec) :
-    ((ofMultiTapeTM tm).map dec).IsPartrec := by
-  refine ⟨fun p => (tm.eval p).map dec,
-    tm.partrec_eval.map (hdec.comp Computable.snd).to₂, fun p n => ?_⟩
-  simp [Part.mem_map_iff]
+    ((ofMultiTapeTM tm).map dec).IsPartrec :=
+  IsPartrec.of_partrec_eval tm.partrec_eval (fun _ _ => by simp) hdec
 
 /-- **Optimality of `universal` over finite-state multi-tape Turing machines**: for every
 finite-state binary `MultiTapeTM` and computable decoder `dec : List Bool → ℕ`, `universal` is at
@@ -148,11 +142,8 @@ most an additive constant worse than `ofMultiTapeTM tm`. -/
 theorem exists_ecomplexity_universal_le_ofMultiTapeTM {State : Type} [Finite State]
     (tm : MultiTapeTM k Bool State) {dec : List Bool → ℕ} (hdec : Computable dec) :
     ∃ c : ℕ, ∀ x : List Bool,
-      universal.ecomplexity (dec x) ≤ (ofMultiTapeTM tm).ecomplexity x + c := by
-  obtain ⟨c, hc⟩ := isAdditivelyOptimal_universal.exists_ecomplexity_le
-    ((ofMultiTapeTM tm).map dec) (isPartrec_ofMultiTapeTM_map tm hdec)
-  exact ⟨c, fun x => (hc (dec x)).trans
-    (add_le_add_left ((ofMultiTapeTM tm).ecomplexity_map_le dec x) c)⟩
+      universal.ecomplexity (dec x) ≤ (ofMultiTapeTM tm).ecomplexity x + c :=
+  exists_ecomplexity_universal_le_of_partrec_eval tm.partrec_eval (fun _ _ => by simp) hdec
 
 /-- Using `Nat.bits` and `List.foldr Nat.bit 0`, `universal` is at most an additive constant worse
 than any finite-state binary `MultiTapeTM` on binary representations of natural numbers. -/

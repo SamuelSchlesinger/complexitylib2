@@ -331,19 +331,6 @@ theorem successorUnwindBody_summary_exec {d w stackBase₀ sp₀ base j cm : ℕ
     hsp3, hsp2, hsp1, hsp0, hj1, hoff, hb5, hch, hch1, hmul, hans,
     Nat.add_sub_assoc, Nat.add_zero]
 
-/-- A valid node with a query strictly below its cached maximum always has a strict successor
-in `[0, universeSize d)`. -/
-theorem successor_isSome_of_lt_max {d m M query : ℕ} {tree : Tree d}
-    (ht : tree.Valid) (hb : tree.bounds = some (m, M)) (hq : query < M) :
-    ∃ ans < universeSize d, tree.successor query = some ans := by
-  cases hs : tree.successor query with
-  | none =>
-    have hle := (Tree.successor_eq_none_iff ht query).mp hs M (ht.contains_maximum hb)
-    omega
-  | some ans =>
-    have hspec := (Tree.successor_eq_some_iff ht query ans).mp hs
-    exact ⟨ans, ht.contains_lt hspec.1, rfl⟩
-
 /-- Combined inductive certification of `successorDescent` and CPS `successorUnwind` whenever
 `tree.successor query = some ans`. -/
 theorem successor_some_spec {d w stackBase₀ sp₀ base query ans : ℕ} {tree : Tree d} {s : Data 32}
@@ -613,7 +600,8 @@ theorem successor_some_spec {d w stackBase₀ sp₀ base query ans : ℕ} {tree 
                   some ans := by
                 simpa only [Tree.successor, hlt_m, hnot_le, hi, ↓reduceDIte, ↓reduceIte,
                   i, lo, hc_max] using hans
-              obtain ⟨y, hy_lt, hy_suc⟩ := successor_isSome_of_lt_max (ht.2.2.1 i) hcb hlo_cM
+              obtain ⟨y, hy_lt, hy_suc⟩ :=
+                Tree.successor_isSome_of_lt_max (ht.2.2.1 i) hcb hlo_cM
               have hans_eq : i.val * universeSize d + y = ans := by
                 simpa only [hy_suc, Option.map_some, Option.some.injEq] using hans'
               have hnext_eq : next =
@@ -757,7 +745,7 @@ theorem successor_none_spec {d w stackBase₀ sp₀ base query : ℕ} {tree : Tr
         have hpres : s.mem base = 1 := by simpa [Tree.bounds] using hpres_raw
         have hnot_M : ¬query < M := by
           intro hlt
-          obtain ⟨ans, _, hans⟩ := successor_isSome_of_lt_max ht rfl hlt
+          obtain ⟨ans, _, hans⟩ := Tree.successor_isSome_of_lt_max ht rfl hlt
           simp [hans] at hnone
         have hnot_m : ¬query < m := by
           have hext := ht.extrema
@@ -812,5 +800,8 @@ theorem successor_loop_spec {d w stackBase₀ base query : ℕ} {tree : Tree d} 
     · intro a ha
       rw [hz.mem_eq]
       exact hframe₁ a ha
+
+@[deprecated (since := "2026-10-22")]
+alias successor_isSome_of_lt_max := Tree.successor_isSome_of_lt_max
 
 end Cslib.Algorithms.WordRAM.VanEmdeBoas

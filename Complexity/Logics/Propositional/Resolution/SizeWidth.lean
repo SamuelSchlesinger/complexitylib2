@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 /-!
@@ -140,17 +141,6 @@ theorem RefutableInWidth.of_restrict {v : V} {b : Bool} {w : ℕ}
 
 /-! ### Wide lines -/
 
-private theorem countP_and_not_add_countP_and {α : Type*} (p q : α → Prop) [DecidablePred p]
-    [DecidablePred q] (l : List α) :
-    l.countP (fun a => ¬ q a ∧ p a) + l.countP (fun a => p a ∧ q a) = l.countP (fun a => p a) := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    rw [List.countP_cons, List.countP_cons, List.countP_cons]
-    by_cases hp : p a <;> by_cases hq : q a <;>
-      simp only [hp, hq, not_true_eq_false, not_false_eq_true, and_true, and_false,
-        decide_true, decide_false, Bool.false_eq_true, ↓reduceIte] <;> omega
-
 /-- **Double counting**: summing over literals the number of clauses of a list containing them
 gives the total width, when the literals of the clauses are among the summed literals. -/
 private theorem sum_countP_mem_eq_sum_width (U : Finset (Literal V)) :
@@ -270,7 +260,7 @@ private theorem refutableInWidth_of_countP_wide (N d k : ℕ) :
       exact ⟨ls', h', this ▸ hc', hcount' d⟩
     -- fixing the literal to be true removes the many wide lines containing it
     obtain ⟨ls₁, h₁, hnil₁, hcount₁⟩ := hres β
-    have hsplit := countP_and_not_add_countP_and (fun c => d < Clause.width c)
+    have hsplit := List.countP_and_not_add_countP_and (fun c => d < Clause.width c)
       (fun c => (v, β) ∈ c) ls
     have hcnt : F.countP (fun c => (v, β) ∈ c) = ls.countP (fun c => d < c.width ∧ (v, β) ∈ c) := by
       rw [List.countP_filter]

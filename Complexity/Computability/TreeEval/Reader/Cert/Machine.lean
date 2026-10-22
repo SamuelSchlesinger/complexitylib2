@@ -38,16 +38,14 @@ open Turing MultiTapeTM ComputableTidilyInSpace Iter
 theorem pairFalse_inSpace :
     ComputableTidilyInSpace (fun x : Tuple => (x, false)) encTuple encStepInT
       fun x => stepBudget (x, false) :=
-  (budget_prod (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
-    (budget_const (encB := encBool) false (.refl _))).weaken (.of_le fun x => by
-      simp only [stepBudget, length_encPair]; omega)
+  ReadMachine.pairFalse_inSpace fun x => by simp only [stepBudget, encStepInT]; omega
 
 /-- A function of the tuple with the bit `false` within the budget of the step. -/
 theorem onTuple {β : Type} {encB : β ↪ List Bool} {f : Tuple × Bool → β}
     (h : ComputableTidilyInSpace f encStepInT encB stepBudget) :
     ComputableTidilyInSpace (fun x : Tuple => f (x, false)) encTuple encB
       fun x => stepBudget (x, false) :=
-  budget_comp h pairFalse_inSpace (.refl _)
+  ReadMachine.comp_pairFalse_inSpace (fun x => by simp only [stepBudget, encStepInT]; omega) h
 
 /-- **The halting test** on tuples. -/
 theorem haltT_inSpace :

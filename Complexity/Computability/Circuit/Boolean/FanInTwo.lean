@@ -51,6 +51,7 @@ For circuits of polynomial size `log (n + s)` is `O(log n)`, so polynomial-size 
 * `Cslib.Circuits.Boolean.AC_subset_NC_succ`: **ACⁱ ⊆ NCⁱ⁺¹**.
 * `Cslib.Circuits.Boolean.AC0_subset_NC_one`: **AC⁰ ⊆ NC¹**.
 * `Cslib.Circuits.Boolean.iUnion_NC_eq_iUnion_AC`: **NC = AC**.
+* `Cslib.Circuits.Boolean.AC_subset_PPoly`: **ACⁱ ⊆ P/poly**.
 
 ## References
 
@@ -293,6 +294,10 @@ theorem AC0_subset_NC_one : AC0 ⊆ NC 1 :=
 theorem iUnion_NC_eq_iUnion_AC : ⋃ i, NC i = ⋃ i, AC i :=
   (Set.iUnion_mono NC_subset_AC).antisymm <| Set.iUnion_subset fun i =>
     (AC_subset_NC_succ i).trans (Set.subset_iUnion NC (i + 1))
+
+/-- **`ACⁱ ⊆ P/poly`** for every `i`. -/
+theorem AC_subset_PPoly (i : ℕ) : AC i ⊆ PPoly :=
+  (AC_subset_NC_succ i).trans (NC_subset_PPoly (i + 1))
 
 end Boolean
 

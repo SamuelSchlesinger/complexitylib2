@@ -170,9 +170,14 @@ theorem isCodeFrom_circuitBlock {n k i : ℕ} (b e : Bool) (hi : e = false → i
     Program.IsCodeFrom signature n (3 * k + 3) (circuitBlock (n + 3 * k) i b e) := by
   cases e
   · have hi := hi rfl
-    cases b <;> simp [circuitBlock, Program.IsCodeFrom] <;> omega
-  · simp [circuitBlock, Program.IsCodeFrom]
-    omega
+    cases b <;>
+      refine ⟨⟨rfl, ?_⟩, ⟨rfl, ?_⟩, ⟨rfl, ?_⟩, trivial⟩ <;>
+      (intro _ h; simp only [Bool.false_eq_true, ↓reduceIte, List.mem_cons, List.not_mem_nil,
+        or_false, or_self] at h;
+        rcases h with rfl | rfl <;> omega)
+  · refine ⟨⟨rfl, ?_⟩, ⟨rfl, nofun⟩, ⟨rfl, ?_⟩, trivial⟩ <;>
+      (intro _ h; simp only [List.mem_cons, List.not_mem_nil, or_false] at h;
+        rcases h with rfl | rfl <;> omega)
 
 theorem isCodeFrom_circuitBlocks (φ : CNF ℕ) (steps : List (Literal ℕ × Bool)) (k : ℕ)
     (h : ∀ s ∈ steps, s.2 = false → s.1.1 ∈ φ.vars) :
@@ -206,7 +211,7 @@ theorem isSome_ofCode_circuitCode (φ : CNF ℕ) :
     refine ⟨by simp [Program.IsCodeFrom], ?_⟩
     simpa using isCodeFrom_circuitBlocks φ (circuitSteps φ) 0 fun s hs =>
       mem_vars_of_mem_circuitSteps hs
-  · simp [circuitCode, length_circuitGates]
+  · simp only [circuitCode, length_circuitGates, List.mem_singleton, forall_eq]
     omega
 
 /-- **The circuit of a formula**: one input for each literal occurrence, and the gates of

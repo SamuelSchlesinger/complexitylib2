@@ -245,11 +245,6 @@ section Correctness
 
 variable {edge : List Bool → List Bool → Bool} {w : ℕ}
 
-/-- Runs compose. -/
-private theorem iterate_trans {α : Type*} {f : α → α} {a b c : α} {m n : ℕ}
-    (h₁ : f^[m] a = b) (h₂ : f^[n] b = c) : f^[n + m] a = c := by
-  rw [Function.iterate_add_apply, h₁, h₂]
-
 /-- The midpoints still to be tried by a frame that is at the `k`-th midpoint. -/
 private theorem any_drop_enumList (P : List Bool → Bool) {k : ℕ} (hk : k < (enumList w).length) :
     ((enumList w).drop k).any P = (P (enumList w)[k] || ((enumList w).drop (k + 1)).any P) := by
@@ -287,9 +282,9 @@ private theorem run_frame {i c : ℕ} {u v : List Bool} {stack : List Frame}
     cases hmv : reach edge w i m v
     · obtain ⟨T₂, hT₂, h₂⟩ := hadv true
       rw [hmv] at h₁
-      exact ⟨T₂ + T₁, by nlinarith, iterate_trans h₁ h₂⟩
+      exact ⟨T₂ + T₁, by nlinarith, Function.iterate_trans h₁ h₂⟩
     · rw [hmv] at h₁
-      exact ⟨1 + T₁, by nlinarith, iterate_trans h₁ rfl⟩
+      exact ⟨1 + T₁, by nlinarith, Function.iterate_trans h₁ rfl⟩
   refine ⟨?_, hsecond⟩
   -- the first half
   obtain ⟨T₁, hT₁, h₁⟩ := ih u m (⟨i, u, v, m, false⟩ :: stack)
@@ -297,10 +292,10 @@ private theorem run_frame {i c : ℕ} {u v : List Bool} {stack : List Frame}
   · obtain ⟨T₂, hT₂, h₂⟩ := hadv false
     rw [hum] at h₁
     rw [Bool.false_and, Bool.false_or]
-    exact ⟨T₂ + T₁, by nlinarith, iterate_trans h₁ h₂⟩
+    exact ⟨T₂ + T₁, by nlinarith, Function.iterate_trans h₁ h₂⟩
   · obtain ⟨T₂, hT₂, h₂⟩ := hsecond hum
     rw [hum] at h₁ h₂
-    exact ⟨T₂ + (1 + T₁), by nlinarith, iterate_trans (iterate_trans h₁ rfl) h₂⟩
+    exact ⟨T₂ + (1 + T₁), by nlinarith, Function.iterate_trans (Function.iterate_trans h₁ rfl) h₂⟩
 
 /-- The runs of a frame, by induction on the number `j` of midpoints after the current one. -/
 private theorem run_frames {i c : ℕ} {u v : List Bool} {stack : List Frame}
@@ -326,7 +321,7 @@ private theorem run_frames {i c : ℕ} {u v : List Bool} {stack : List Frame}
     obtain ⟨T, hT, h⟩ := ih' (k + 1) (by omega)
     have hnext := next_getElem_enumList w k (by omega)
     rw [List.getElem?_eq_getElem (by omega)] at hnext
-    refine ⟨T + 1, by nlinarith, iterate_trans ?_ h⟩
+    refine ⟨T + 1, by nlinarith, Function.iterate_trans ?_ h⟩
     simp [step, hnext]
 
 /-- **Every call returns its value**: from a call at level `i`, the machine returns
@@ -347,7 +342,7 @@ theorem exists_iterate_step_call (i : ℕ) (u v : List Bool) (stack : List Frame
       rw [List.getElem?_eq_getElem (by omega)] at this
       exact Option.some.inj this
     rw [h₀, List.drop_zero] at h
-    refine ⟨T + 1, ?_, iterate_trans rfl h⟩
+    refine ⟨T + 1, ?_, Function.iterate_trans rfl h⟩
     have := Nat.one_le_two_pow (n := w)
     have : (2 * (2 ^ w - 1) + 2) = 2 * 2 ^ w := by omega
     simp only [callSteps]

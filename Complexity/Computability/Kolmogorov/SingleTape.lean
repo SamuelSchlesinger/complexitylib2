@@ -182,10 +182,8 @@ noncomputable def tm0Simulation {Λ : Type} [Inhabited Λ] [DecidableEq Λ]
 over `ofSingleTapeTM tm` yields a partial recursive description method. -/
 theorem isPartrec_ofSingleTapeTM_map (tm : SingleTapeTM Bool)
     {dec : List Bool → ℕ} (hdec : Computable dec) :
-    ((ofSingleTapeTM tm).map dec).IsPartrec := by
-  refine ⟨fun p => (tm.eval p).map dec,
-    tm.partrec_eval.map (hdec.comp Computable.snd).to₂, fun p n => ?_⟩
-  simp [Part.mem_map_iff]
+    ((ofSingleTapeTM tm).map dec).IsPartrec :=
+  IsPartrec.of_partrec_eval tm.partrec_eval (fun _ _ => by simp) hdec
 
 /-- For every finitely supported `TM0.Machine (Option Bool) Λ` and computable decoder
 `dec : List Bool → ℕ`, mapping `dec` over `ofTM0 M S hs` yields a partial recursive description
@@ -211,11 +209,8 @@ additive constant worse than `ofSingleTapeTM tm`. -/
 theorem exists_ecomplexity_universal_le_ofSingleTapeTM (tm : SingleTapeTM Bool)
     {dec : List Bool → ℕ} (hdec : Computable dec) :
     ∃ c : ℕ, ∀ x : List Bool,
-      universal.ecomplexity (dec x) ≤ (ofSingleTapeTM tm).ecomplexity x + c := by
-  obtain ⟨c, hc⟩ := isAdditivelyOptimal_universal.exists_ecomplexity_le
-    ((ofSingleTapeTM tm).map dec) (isPartrec_ofSingleTapeTM_map tm hdec)
-  exact ⟨c, fun x => (hc (dec x)).trans
-    (add_le_add_left ((ofSingleTapeTM tm).ecomplexity_map_le dec x) c)⟩
+      universal.ecomplexity (dec x) ≤ (ofSingleTapeTM tm).ecomplexity x + c :=
+  exists_ecomplexity_universal_le_of_partrec_eval tm.partrec_eval (fun _ _ => by simp) hdec
 
 /-- Using `Nat.bits` and `List.foldr Nat.bit 0`, `universal` is at most an additive constant worse
 than any `tm : SingleTapeTM Bool` on binary representations of natural numbers. -/

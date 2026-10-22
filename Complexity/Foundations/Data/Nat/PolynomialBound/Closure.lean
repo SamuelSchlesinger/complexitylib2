@@ -31,6 +31,8 @@ expressions in the component bounds and collapsed by `fun_prop`.
 
 ## Main results
 
+* `Nat.mul_add_one_pow_le_two_pow`: an explicit bound `c * (n + 1) ^ d` is at most
+  `c * 2 ^ d * n ^ d + c`.
 * `Cslib.PolynomiallyBounded.mono`: a function eventually below a polynomially bounded one is
   polynomially bounded.
 * `Cslib.PolynomiallyBounded.add`, `mul`, `pow`, `comp`: the closure rules proper.
@@ -40,6 +42,19 @@ expressions in the component bounds and collapsed by `fun_prop`.
 -/
 
 @[expose] public section
+
+/-- An explicit polynomial bound `c * (n + 1) ^ d` is a bound `O(n ^ d)`. -/
+theorem Nat.mul_add_one_pow_le_two_pow (c d n : ℕ) :
+    c * (n + 1) ^ d ≤ c * 2 ^ d * n ^ d + c := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · rcases Nat.eq_zero_or_pos d with rfl | hd
+    · simp
+    · simp [Nat.zero_pow hd]
+  · have : (n + 1) ^ d ≤ 2 ^ d * n ^ d := by
+      rw [← Nat.mul_pow]
+      exact Nat.pow_le_pow_left (by omega) d
+    calc c * (n + 1) ^ d ≤ c * (2 ^ d * n ^ d) := Nat.mul_le_mul_left c this
+      _ ≤ c * 2 ^ d * n ^ d + c := by rw [Nat.mul_assoc]; omega
 
 namespace Cslib
 

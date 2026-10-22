@@ -46,6 +46,8 @@ signed routing and the corresponding bidirectional `GapP` characterization.
 * `Cslib.Complexity.acceptCount_zero`, `Cslib.Complexity.acceptCount_add_acceptCount_not`,
   `Cslib.Complexity.acceptCount_not`: counts of trivial and negated verifiers.
 * `Cslib.Complexity.SharpP.exists_le_two_pow`: functions in `#P` are at most exponential.
+* `Cslib.Complexity.GapP.exists_abs_le_two_pow`: every `GapP` function is bounded in absolute value
+  by `2 ^ p(|x|)` for a polynomial `p`.
 * `Cslib.Complexity.GapP.neg_mem`: `GapP` is closed under negation.
 
 ## References
@@ -184,6 +186,24 @@ theorem exists_le_two_pow {f : α → ℕ} (hf : f ∈ SharpP enc) :
 end SharpP
 
 namespace GapP
+
+/-- Every function in `GapP` is bounded in absolute value by `2 ^ p(|x|)` for a polynomial `p`. -/
+theorem exists_abs_le_two_pow {g : α → ℤ} (hg : g ∈ GapP enc) :
+    ∃ p : Polynomial ℕ, ∀ a, |g a| ≤ (2 : ℤ) ^ p.eval (enc a).length := by
+  obtain ⟨f₁, hf₁, f₂, hf₂, h⟩ := hg
+  obtain ⟨p₁, hp₁⟩ := SharpP.exists_le_two_pow hf₁
+  obtain ⟨p₂, hp₂⟩ := SharpP.exists_le_two_pow hf₂
+  refine ⟨p₁ + p₂, fun a => ?_⟩
+  have h₁ : (f₁ a : ℤ) ≤ (2 : ℤ) ^ (p₁ + p₂).eval (enc a).length := by
+    exact_mod_cast (hp₁ a).trans (Nat.pow_le_pow_right (by omega)
+      (by simp only [Polynomial.eval_add]; omega))
+  have h₂ : (f₂ a : ℤ) ≤ (2 : ℤ) ^ (p₁ + p₂).eval (enc a).length := by
+    exact_mod_cast (hp₂ a).trans (Nat.pow_le_pow_right (by omega)
+      (by simp only [Polynomial.eval_add]; omega))
+  have hf₁_nonneg : (0 : ℤ) ≤ f₁ a := Int.natCast_nonneg _
+  have hf₂_nonneg : (0 : ℤ) ≤ f₂ a := Int.natCast_nonneg _
+  rw [h a, abs_le]
+  omega
 
 /-- The difference of two functions in `#P`, cast to the integers, is in `GapP`. -/
 theorem natCast_sub_natCast_mem {f₁ f₂ : α → ℕ} (hf₁ : f₁ ∈ SharpP enc)

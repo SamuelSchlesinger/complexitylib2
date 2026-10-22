@@ -30,6 +30,8 @@ tuple-index bookkeeping, and apply to arbitrary discrete sample types.
 ## Main results
 
 * `Cslib.Crypto.sequenceTest_gap`: an exact signed gap with the dyadic sampling-range loss.
+* `Cslib.Crypto.sequenceTest_advantage`: the corresponding exact unsigned loss,
+  including count zero.
 * `Cslib.Crypto.isPPTOn_sequenceTest`: a uniform strict PPT certificate, including padding indices.
 
 ## References
@@ -47,6 +49,7 @@ Adapted from `Crypto/Computational/Hybrid/Sequence.lean` on the cslib `crypto` b
 namespace Cslib.Crypto
 
 open Probability Turing.MultiTapeTM
+open scoped NNReal
 
 variable {α : Type}
 
@@ -146,6 +149,18 @@ theorem sequenceTest_gap (replacement original : ProbComp α) (count : ℕ)
   simpa only [sequenceHybrid_zero, sequenceHybrid_self,
     horiginal, hreplacement] using h
 
+/-- The exact unsigned sequence-hybrid loss, including the empty sequence. -/
+theorem sequenceTest_advantage (replacement original : ProbComp α) (count : ℕ)
+    (test : List α → ProbComp Bool) :
+    Game.advantage (ProbComp.eval (OracleComp.replicate count original >>= test))
+        (ProbComp.eval (OracleComp.replicate count replacement >>= test)) =
+      (dyadicSize count : ℝ≥0) *
+        Game.advantage (ProbComp.eval (original >>= sequenceTest replacement original count test))
+          (ProbComp.eval (replacement >>= sequenceTest replacement original count test)) := by
+  apply NNReal.eq
+  rw [NNReal.coe_mul, NNReal.coe_natCast, Game.coe_advantage, Game.coe_advantage,
+    sequenceTest_gap, abs_mul, Nat.abs_cast]
+
 /-- Efficient source programs and counts give an efficient independent hybrid sequence. -/
 theorem isPPTOn_sequenceHybrid {Param : Type} {input : Param ↪ List Bool} {sample : α ↪ List Bool}
     {replacement original : Param → ProbComp α} {count split : Param → ℕ}
@@ -195,5 +210,56 @@ theorem isPPTOn_sequenceTest {Param : Type} {input : Param ↪ List Bool} {sampl
   ppt
 
 attribute [program_certificate] isPPTOn_sequenceTest
+
+/-- Repeating two computationally indistinguishable PPT samplers a polynomially bounded number of
+times and applying an efficient postprocessor preserves computational indistinguishability. -/
+theorem ComputationallyIndistinguishable.replicate_bind {orig repl : ℕ → ProbComp (List Bool)}
+    (horig : IsPPTOn encUnary encBits orig) (hrepl : IsPPTOn encUnary encBits repl)
+    (h : ComputationallyIndistinguishable
+      (fun n => ProbComp.eval (orig n)) (fun n => ProbComp.eval (repl n)))
+    {count : ℕ → ℕ} (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
+    {process : ℕ → List (List Bool) → ProbComp (List Bool)}
+    (hprocess : IsPPTOn (encPair encUnary (encList encBits)) encBits
+      (fun p => process p.1 p.2)) :
+    ComputationallyIndistinguishable
+      (fun n => ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= process n))
+      (fun n => ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= process n)) := by
+  intro adversary hadversary
+  let test (n : ℕ) (xs : List (List Bool)) : ProbComp Bool := process n xs >>= adversary n
+  have htest : IsPPTOn (encPair encUnary (encList encBits)) encBool
+      (fun p => test p.1 p.2) := by
+    dsimp only [test]
+    ppt
+  let red : Distinguisher := fun n challenge =>
+    sequenceTest (repl n) (orig n) (count n) (test n) challenge
+  have hred : IsPPT encBool red := by
+    change IsPPTOn (encPair encUnary encBits) encBool (fun p => red p.1 p.2)
+    dsimp only [red]
+    ppt
+  have hpoly : PolynomiallyBounded (fun n => dyadicSize (count n)) := by
+    have hc : PolynomiallyBounded count := hcount.polynomiallyBounded
+    fun_prop
+  have hneg := (h red hred).polynomiallyBounded_mul hpoly
+  refine negligible_of_le hneg (fun n => ?_)
+  apply le_of_eq
+  apply NNReal.eq
+  dsimp only
+  have hgap := sequenceTest_gap (repl n) (orig n) (count n) (test n)
+  have horig_eq : distinguishingGame
+      (ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= process n)) (adversary n) =
+      ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= test n) := by
+    simp only [distinguishingGame, test, ProbComp.eval_bind, PMF.bind_bind]
+  have hrepl_eq : distinguishingGame
+      (ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= process n)) (adversary n) =
+      ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= test n) := by
+    simp only [distinguishingGame, test, ProbComp.eval_bind, PMF.bind_bind]
+  have hred_orig : distinguishingGame (ProbComp.eval (orig n)) (red n) =
+      ProbComp.eval (orig n >>= sequenceTest (repl n) (orig n) (count n) (test n)) := by
+    simp only [distinguishingGame, red, ProbComp.eval_bind]
+  have hred_repl : distinguishingGame (ProbComp.eval (repl n)) (red n) =
+      ProbComp.eval (repl n >>= sequenceTest (repl n) (orig n) (count n) (test n)) := by
+    simp only [distinguishingGame, red, ProbComp.eval_bind]
+  rw [horig_eq, hrepl_eq, hred_orig, hred_repl, NNReal.coe_mul, NNReal.coe_natCast,
+    Game.coe_advantage, Game.coe_advantage, hgap, abs_mul, Nat.abs_cast]
 
 end Cslib.Crypto

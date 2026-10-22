@@ -23,17 +23,13 @@ dimension therefore give first-order reductions.
 
 ## Main definitions
 
-* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.toDomainInterpretation`: the embedding.
-* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.certificate`: the native numeric certificate.
+* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.certificate`: the native numeric certificate for
+  `FullTupleInterpretation.toDomainInterpretation` (defined in `FullTuple/Encoding.lean`).
 
 ## Main results
 
-* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.unrank_toDomainInterpretation`: ranks are
-  lexicographic ranks.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.relMap_map_toDomainInterpretation`: agreement
   with `FullTupleInterpretation.inputStructure`.
-* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedMap_toDomainInterpretation`: the encoded
-  maps agree.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.isFirstOrderMap_map_toDomainInterpretation`:
   full-tuple images are first-order maps.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.reduces`: full-tuple interpretations of positive

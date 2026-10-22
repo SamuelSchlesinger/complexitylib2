@@ -28,6 +28,17 @@ most a `q ^ (-d)` fraction of the `k`-subsets when the ground set has at least `
 descending factorials and binomial coefficients grow at least as fast as powers on larger ground
 sets (`Nat.descFactorial_mul_pow_le`, `Nat.choose_mul_pow_le`), which gives the block-avoidance
 estimate `2 ^ r * C(b * m - m, b * r) ≤ C(b * m, b * r)` (`Nat.two_pow_mul_choose_sub_le`).
+
+## Main results
+
+* `Nat.pow_mul_descFactorial_le`, `Nat.pow_mul_choose_le_choose_mul`,
+  `Nat.pow_mul_choose_sub_le_choose`: scaling the ground set scales descending factorials and
+  binomial coefficients.
+* `Nat.choose_sub_mul_pow_le`, `Nat.pow_mul_choose_sub_le_choose_of_mul_le`: lowering the subset
+  size scales the binomial coefficient.
+* `Nat.descFactorial_mul_pow_le`, `Nat.choose_mul_pow_le`, `Nat.choose_mul_sub_mul_pow_le`,
+  `Nat.two_mul_pred_pow_le`, `Nat.two_pow_mul_choose_sub_le`: power comparisons and the
+  block-avoidance binomial estimate.
 -/
 
 @[expose] public section

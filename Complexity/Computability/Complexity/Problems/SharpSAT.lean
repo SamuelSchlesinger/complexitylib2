@@ -14,6 +14,7 @@ public import Complexity.Logics.Propositional.CNF.ModelCount
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
@@ -105,10 +106,6 @@ private theorem isFirst_idxOf {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
   have hlt := List.idxOf_lt_length_iff.2 hv
   simp [isFirst, hlt]
 
-private theorem getD_idxOf {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
-    φ.vars.getD (φ.vars.idxOf v) 0 = v := by
-  rw [List.getD_eq_getElem _ _ (List.idxOf_lt_length_iff.2 hv), List.getElem_idxOf]
-
 private theorem getD_mem_of_isFirst {φ : CNF ℕ} {i : ℕ} (h : isFirst φ i = true) :
     φ.vars.getD i 0 ∈ φ.vars ∧ φ.vars.idxOf (φ.vars.getD i 0) = i := by
   simp only [isFirst, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at h
@@ -127,7 +124,7 @@ theorem length_firstPositions (φ : CNF ℕ) :
   · simp only [List.mem_toFinset, List.mem_filter, List.mem_range] at hi₁ hi₂
     rw [← (getD_mem_of_isFirst hi₁.2).2, ← (getD_mem_of_isFirst hi₂.2).2, h]
   · have hv' := List.mem_toFinset.1 hv
-    refine ⟨φ.vars.idxOf v, ?_, getD_idxOf hv'⟩
+    refine ⟨φ.vars.idxOf v, ?_, List.getD_idxOf hv' 0⟩
     simp only [List.mem_toFinset, List.mem_filter, List.mem_range]
     exact ⟨List.idxOf_lt_length_iff.2 hv', isFirst_idxOf hv'⟩
 
@@ -153,7 +150,7 @@ theorem acceptCount_verifier (φ : CNF ℕ) :
     (fun w => verifier (φ, List.ofFn w) = true) (fun σ τ _ _ => ⟨fun h v hv => ?_,
       fun h => funext fun i => ?_⟩) fun w => ⟨fun hw => ?_, ?_⟩
   · have := congrFun h ⟨_, hlt hv⟩
-    simp only [isFirst_idxOf hv, getD_idxOf hv, Bool.true_and] at this
+    simp only [isFirst_idxOf hv, List.getD_idxOf hv 0, Bool.true_and] at this
     exact this
   · cases hi : isFirst φ i
     · rfl
@@ -177,7 +174,7 @@ theorem acceptCount_verifier (φ : CNF ℕ) :
       refine (CNF.eval_congr fun v hv => ?_).trans hσ
       rw [SAT.assignment, List.getD_eq_getElem _ _ (by simpa using hlt hv), List.getElem_ofFn]
       dsimp only
-      rw [isFirst_idxOf hv, getD_idxOf hv, Bool.true_and]
+      rw [isFirst_idxOf hv, List.getD_idxOf hv 0, Bool.true_and]
     · rw [List.length_ofFn] at hi
       rw [List.getD_eq_getElem _ _ (by simpa using hi), List.getElem_ofFn,
         Bool.and_eq_true] at h
