@@ -1,4 +1,5 @@
 import ComplexityTests.AWPPAmplification
+import ComplexityTests.AWPPLowness
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController
@@ -78,6 +79,7 @@ import ComplexityTests.DataStructureQueue
 import ComplexityTests.DataStructureRetroactive
 import ComplexityTests.DecisionTree
 import ComplexityTests.DenseMask
+import ComplexityTests.DependentTable
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
 import ComplexityTests.DynamicArray
@@ -184,6 +186,8 @@ import ComplexityTests.MassProduction.Menu
 import ComplexityTests.MassProduction.Pipeline
 import ComplexityTests.MassProduction.Scheduler
 import ComplexityTests.MassProduction.Uhlig
+import ComplexityTests.MathlibTM2
+import ComplexityTests.MathlibTM2Space
 import ComplexityTests.MemoizePPT
 import ComplexityTests.ModularGap
 import ComplexityTests.MonotoneCircuitValue
@@ -206,6 +210,7 @@ import ComplexityTests.OracleCircuits
 import ComplexityTests.OracleComposition
 import ComplexityTests.OracleComposition.Substitution
 import ComplexityTests.OraclePPT
+import ComplexityTests.OracleReplay
 import ComplexityTests.OracleRepresentation
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
@@ -317,6 +322,7 @@ import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SearchTree
+import ComplexityTests.SearchTreeErase
 import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
@@ -352,6 +358,7 @@ import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
 import ComplexityTests.Toda
 import ComplexityTests.TreeEval
+import ComplexityTests.TreeEvalAry
 import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash

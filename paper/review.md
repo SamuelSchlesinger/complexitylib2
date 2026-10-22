@@ -1,5 +1,116 @@
 # Theorem-index review
 
+## 2026-10-22: Search-tree deletion (#359)
+
+Worker `worker-crei-dc679113` (Claude Code, for Christian Reitwiessner) extends the existing
+unbalanced search-tree entry with a paragraph on the pure deletion operation and five
+declaration links pinned at `490f03d7092b12bd9b6d62cebc066f632c865da8`
+(`Complexity/Algorithms/Lean/SearchTree/Erase.lean`, lines 141/182/201/232/244). The prose states
+that deletion is not part of the stateful interface, which hypotheses need the ordering invariant,
+and the deviation from Chapter 12 of CLRS for nodes with only a right subtree.
+
+An independent AI subagent reviewed source revision `f4b5694a` (style/API, correctness,
+documentation) and found the original no-impact assessment for this entry wrong; the entry was
+added in response, and `erase_eq_self` was renamed `erase_eq_of_notMem`. A second independent
+subagent reviewed the delta at `9ee31b1d`, verified every link against the exact source line,
+checked quantifiers, hypotheses, cost model and height claims, and approved; its wording nit
+("leftmost (least)") was applied. LaTeX was unavailable locally, so the rendered PDF must be
+inspected from the CI artifact. This records AI review, not human editorial approval.
+
+## 2026-10-22: Fan-in-`d` Cook–Mertz procedure (#363)
+
+Worker `worker-crei-dc679113` (Claude Code, for Christian Reitwiessner) extends the Cook–Mertz
+Tree Evaluation entry with a paragraph on the fan-in-`d` procedure and three declaration links
+pinned at `4e9da5a9b9fe8c45d08d85b23c776b9cf04937b9` (`Ary/CookMertz.lean` lines 211/240,
+`Ary/Basic.lean` line 127). The prose states that only correctness is proved for the
+fan-in-`d` procedure and that the machine and space bounds concern the binary procedure.
+
+An independent AI subagent reviewed `8ae8219c` (style/API, correctness, index) and approved.
+It verified the register layout coincides with the binary one at `d = 2`, the degree bound
+`d * ℓ < |K| - 1`, non-vacuous test instances, and every link. Its findings (a gate declared in
+the wrong namespace, and wording implying a fan-in-`2` machine exists for the new procedure)
+were fixed in `4e9da5a9` and `11fee324`; the links were re-pinned and re-checked against the
+exact source lines. LaTeX was unavailable locally, so the rendered PDF must be inspected from the
+CI artifact. This records AI review, not human editorial approval.
+
+## 2026-10-22: AWPP is low for PP (#364 / PR #366)
+
+Reviewed Lean revision: `58e1be2840acca3c0169f8b032ed9542afe3994e`.
+Reviewed index and PR-head revision: `cff320b911f370292144063b5560d18649d8dd03`.
+Scope: “AWPP is low for PP” in `paper/sections/randomness.tex`, section 4.33.
+The entry states lowness for every AWPP word oracle and arbitrary injective input encoding
+in the strict adaptive oracle-verifier model. It records the common dyadic denominator,
+the aggregate error bound, rejection of exact majority ties, and the separate probabilistic
+oracle-machine characterization that remains outside the result.
+
+Independent read-only Codex reviewers `review_awpp_style` (API/style) and
+`review_awpp_foundations` (correctness and theorem-index semantics) approved these source
+and index revisions, as recorded in the PR. A stale index limitation was corrected before
+the final index review. Coordinator `coordinator-crei-dc679113` independently approved
+the mathematics and Lean sources at PR head `cff320b9` in
+[review comment 6343670967](https://github.com/cslib-community/complexitylib/pull/366#issuecomment-6343670967),
+requesting this review record and successful API-documentation evidence before merge.
+
+CI PDF provenance, checked by Codex worker `worker-awpp-review-20261022`:
+
+- [Theorem index PDF run 39769087126, attempt 2](https://github.com/cslib-community/complexitylib/actions/runs/39769087126/attempts/2),
+  [artifact 12433196414](https://github.com/cslib-community/complexitylib/actions/runs/39769087126/artifacts/12433196414).
+- Checked-out merge revision: `7954e28f09305e096f3ef1dd8ca48f81301b895f`.
+- PR head: `cff320b911f370292144063b5560d18649d8dd03`;
+  PR base: `62bbf525e2d7edce00dc8b6c79a52040223c5bed`.
+- The artifact's `provenance.json` reports clean sources and PDF SHA256
+  `c3f2ccfbf8629258cb8b8d2d4f87d9652d88969b2f9b65f917ff53c81074cd28`;
+  hashing the downloaded PDF reproduces it.
+- Visually inspected rendered page 58 of the 144-page artifact: the complete entry,
+  formulas, citation and three declaration links are readable, without clipping or overlap.
+  All three PDF URI annotations target the reviewed code revision, at `AWPP/Lowness.lean:145`,
+  `AWPP/OracleWeights.lean:43` and `SharpP/WeightedReplay.lean:63`; the published source
+  at each target contains the named declaration and matches the PR-head source.
+
+[API documentation run 39794423110](https://github.com/cslib-community/complexitylib/actions/runs/39794423110)
+succeeded at `cff320b911f370292144063b5560d18649d8dd03` on 22 October 2026.
+Documentation-pin checks, API generation, generated-documentation checks and artifact upload
+all succeeded. The evidence-record commit `504539b0fee950310d40ce1732defa6fb383cb63` changed
+only this review record. These AI reviews do not imply maintainer or human editorial approval,
+or a Lean proof of prose equivalence.
+
+### Optional review nits
+
+Worker `worker-awpp-review-20261022` also addressed all five optional nits from the coordinator's
+review: distinguish oracle-reply replay from saved-coin replay in the module documentation,
+write `replyStep_eq_answerStep` as a term, restrict the `p` unfolding to `dsimp only`, make
+the `2 ^ 4 = 16` rewrite explicit in `sum_error`, and credit Li's 1993 work alongside
+Fenner--Fortnow--Kurtz--Li and Fenner's amplification argument. The historical attribution
+was checked against Section 6.1 of *An Oracle Builder's Toolkit*, using its existing
+`FennerEtAl2003` bibliography entry.
+
+Independent read-only Codex reviewer `/root/review_awpp_nits` approved API/style, correctness
+and source credit with no findings. Reviewed base: `504539b0fee950310d40ce1732defa6fb383cb63`;
+SHA256 of `git diff --binary` against that base, restricted to `*.lean`:
+`f9307b13202b6474a9e4b884e2c8543e4158d62e4fb8b658a4a38d08aff3dc60`.
+The reviewer rechecked the final library-relative replay-module path for upstreamability.
+No public definitions, statements, hypotheses, models or bounds change, so the theorem index
+needs no prose rewrite. Its immutable declaration links still resolve at the reviewed source
+revision and original lines. This follow-up does not extend the earlier CI results to the
+changed sources; validation of this revision is recorded in its commit description.
+
+## 2026-10-22: Query machines in the space of their states (#367)
+
+Source revision: `3450e5b40702816dc5504c60be8d87cf27fc9049`. Worker `worker-crei-dc679113` (Claude Code, Claude Opus 5.5, for
+Christian Reitwiessner) extends the query-machine paragraph of the first-order model checking
+entry in `structure.tex`. It adds one sentence and a link to `Turing.QueryMachine.computableInSpace`,
+pinned at `9ab11b36b32709fd85bebd07d00e106125fa904b`, line 341. The log-space theorem keeps its
+signature and becomes a corollary. This is the first slice of implicit Tree Evaluation (M2 of #361).
+
+An independent AI review of `6f1e43eb` approved the statement, the corollary, the pin (checked with
+`git show`) and the prose. Its nits are applied: the module doc is reflowed, the docstring now says
+"length of the input", and the index sentence states the linear-space hypothesis on the parts.
+No author reviewed their own change.
+
+Validation: all six gates of `scripts/check.sh` passed at `6f1e43eb`. Later commits change only
+documentation and were rebuilt with targeted builds. LaTeX is not installed locally, so the CI
+"Theorem index PDF" artifact still needs inspection.
+
 ## 2026-10-21: Client resource contracts through interface refinements (#274)
 
 Published source revision: `5d9eefc4f20726054a71df3539c2471f1c18712c`.
@@ -2140,3 +2251,82 @@ The links target neutral declarations at lines 49/56, SearchTree Basic at 130/22
 at 91/136. No clipping or overlap was found. The final documentation commit changes no Lean
 bytes. Actual final-head CI PDF artifact/provenance inspection and coordinator integration
 approval remain separate gates. This records AI review, not human editorial approval.
+
+## 2026-10-21: Mathlib TM2 polynomial-time bridge
+
+Worker `/root`, assisted by OpenAI Codex, adds one entry pinned to source
+`670c5abcbfea59068c817ce0ba96c56ff7d09a1f` (tree
+`2693c452ed5f7e39b6d229cb1c4c10031bfe2274`). It transfers Mathlib's typed
+`TM2ComputableInPolyTime` certificate to the tidy binary multi-tape calculus.
+The statement requires injective typed word encoders and finite working alphabets;
+input and output alphabets may differ or be empty. It specifies the existing unary-rank,
+framed-word encodings and polynomial time and space in encoded input length. It does not
+claim quadratic overhead, preservation of a separate source space bound, or a converse
+class equivalence. The direct configuration proof is independent of Complexitylib PR #72;
+its regression examples informed the new tests.
+
+Independent nonauthor agents `/root/tm2_api_review` and `/root/tm2_correctness_review`
+approved the API, correctness, nonvacuous examples and semantic index statement. Optional
+requests for nonidentity alphabet conversions and concrete nonpalindromic outputs were
+implemented and re-reviewed. The final source and test contents are those in the pinned
+commit; no findings remain unresolved. `/root/tm2_design_review` contributed source code
+and is not counted as an independent reviewer. Existing entries and their pins are preserved.
+
+`python3 scripts/build_paper.py` built the local 115-page index. The author and independent
+reviewer `/root/tm2_api_review` inspected page 25 and checked its PDF annotation against the
+pinned source declaration at line 150. PDF SHA-256:
+`05b2da8072118e52a4f25d480337894635006693e8cc822f2647d3b27095e3b8`.
+Reviewed `paper/sections/space.tex` SHA-256:
+`40fc13984ce778b4e687a5e8fdee5e7c8167e20e7046c51fdd2c4ce8c934b8c8`.
+This is local rendering evidence; the CI theorem-index artifact/provenance review and
+maintainer integration approval remain pending. AI review does not imply human editorial
+approval or a Lean proof of prose equivalence. Generated artifacts remain unversioned.
+
+
+## 2026-10-22: Terminating Mathlib TM2 computations within polynomial space
+
+Worker `/root`, assisted by OpenAI Codex, adds the polynomial-space entry pinned to source
+`d519401281aca7ebe881ae9ea21b08991d4b9acf`, tree
+`77cc631dfb1c518c2d90e5e4b07d915a1a49bb7f`, on base `126a59b7`. It starts from a
+`TM2Computable` termination/correctness certificate with finite working alphabets and
+injective typed encoders. A polynomial bound on each stack over every source configuration,
+including initialization and padded halting, suffices. Input and output stacks both count.
+No source runtime bound or computability certificate for the space-bound function is required:
+a polynomial majorant gives an exponential clock, stored in binary, through a finite
+configuration-counting argument. The conclusion is tidy polynomial-space computation under
+standard binary word encodings; the Boolean adapter gives native `PSPACE` membership.
+Polynomial overhead is asserted, without linear overhead, a sublinear work-space simulation,
+or a converse class equivalence.
+
+Authoring subagent `/root/tm2_design_review` contributed configuration counting and regression
+proofs and is not an independent reviewer. Independent nonauthor agents `/root/tm2_api_review`
+and `/root/tm2_correctness_review` approved the source, exact tests and semantic index entry.
+A missing References section and a declaration-line pin were fixed and re-reviewed. No findings
+remain unresolved. Test SHA-256 is
+`39c36614b820cf596728038c52595faabe5ffa3bc42ff91d147052f581dbca0b`; examples include
+termination-only certificates on infinite input domains, an explicit exponential binary clock
+with early-halting padding, empty alphabets, distinct Boolean-input/empty-output stacks and
+Boolean answer recoding. Three named axiom guards permit only the standard three axioms.
+
+On this source, the full strict library build (11241 jobs), all 358 test modules and their
+aggregate driver (11962 jobs), global axiom audit, environment/style lint and public Init-import
+audit passed. Import generation checks passed for both explicit library roots. Windows default
+`mk_all` and `lint-style` commands hit duplicate `Lake.packageAttr` workspace registration;
+the equivalent explicit-root and exact-option checks passed. The first global axiom audit
+failed with resource exhaustion/no space left on device; a retry alone passed without code
+changes once disk space was available. Failed attempts are not counted as successful checks.
+Python maintenance tests (18), documentation configuration and offline upstream synchronization
+passed. API documentation generation retains the previously identified missing native `cc`
+prerequisite; generated API coverage was not checked. Full command evidence is in the code
+commit description.
+
+The local theorem index builds as 115 pages. The author and independent nonauthor reviewer
+`/root/tm2_api_review` inspected page 25 and verified its three PDF annotations against the
+pinned source declarations at lines 118, 75 and 39; no rendering or link findings remain. PDF SHA-256:
+`c1de2cccbf55e0682222256d4099c0b69355dbe9af044b2e2134cad3f0bbf99b`.
+Final `paper/sections/space.tex` SHA-256:
+`00efb4d2ae8bd0d89476f341918624a92f268737c7a6f7adf2de49528f4093b8`.
+Local provenance records the source commit and a dirty documentation tree. Independent final
+pin/render review is recorded in the companion documentation commit. CI artifact/provenance
+review and maintainer integration approval remain separate gates; AI review is not human
+editorial approval or a Lean proof of prose equivalence. Generated artifacts remain unversioned.

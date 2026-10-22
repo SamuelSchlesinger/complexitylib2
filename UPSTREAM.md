@@ -41,6 +41,16 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   branch; preserve it when resynchronizing the vendored files.
   `Foundations/Data/Nat/PolynomialBound/Closure.lean` is the proposed next submission following
   #1067.
+* **Mathlib TM2.** `Computability/Machines/Turing/TM2/*` certifies Mathlib's stack-machine
+  statements directly through the tidy calculus; it does not depend on the TM0 simulator in
+  [Complexitylib PR #72](https://github.com/SamuelSchlesinger/complexitylib/pull/72).
+  Its dependent finite-table helpers (`Encodings/DPi` and `Complexity/PolyTime/DPi` under
+  `Machines/Turing/MultiTape`) extend the existing table API. Coordinate these helpers with
+  the machine-calculus work above before upstreaming. The bridges preserve polynomial-time
+  computability and transfer terminating polynomial-stack-space computations under explicit word
+  encodings. The latter uses configuration counting and the existing binary-clock iteration API;
+  it claims polynomial space overhead, with input and output stacks counted, rather than linear
+  overhead or a converse class equivalence.
 * **Probabilistic programs.** Coordinate the shared `PFunctor.FreeM` API with #1086–#1089 and
   typed oracles with #1129. The copied PMF blocks have their own markers and removal instructions
   in [Probability/PMF.lean](Complexity/Probability/PMF.lean); remove only the merged blocks.
@@ -67,7 +77,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in their
   `Authors:` lines; confirm the attribution with him and submit the files with him,
   and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
-  programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
+  programs (#685, and the register word-RAM models in his Algolean repository) and the merged
+  query framework (#401), which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
   deviations from the source. The operations form a basis (`WordRAM/Basis`) over
@@ -117,17 +128,18 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   cost dependency. Bounded-key implementations may specialize insertion admissibility.
   `Algorithms/Lean/SearchTree/*` reuses Mathlib's `BinaryTree`, height and node count for an
   unbalanced ordered-set realization. Finite-set behavior, strict invariants and height-bounded
-  node visits are proved; allocation, comparison implementation and client computation are
-  excluded from that cost model. It is not a balanced tree or machine-time certificate.
+  node visits are proved, including for the pure deletion operation `erase`; allocation,
+  comparison implementation and client computation are excluded from that cost model. It is not
+  a balanced tree or machine-time certificate.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
   The direct shared-heap queue uses the existing FIFO operation signature and native operation
   traces, with a hidden two-stack representation, a concrete-register potential, framed storage,
   and separately charged initialization. Its `2 * capacity` reservation is explicit; external
   client computation and argument delivery are not charged by the operation-history bound.
-  Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
-  neither open framework is copied here. This is a prototype of composition and refinement,
-  not a replacement for their query models or a general cell-probe lower-bound semantics.
+  Coordinate placement and overlap with Srinivas's #685 and the merged #401 (`Algorithms/Lean/Query`)
+  before upstream submission; #685 is not copied here. This is a prototype of composition and
+  refinement, not a replacement for their query models or a general cell-probe lower-bound semantics.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
   #871–#875 requested composition above configuration level; use `TransformsTapes`-style specs.

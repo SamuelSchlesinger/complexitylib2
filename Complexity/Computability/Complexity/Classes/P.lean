@@ -32,9 +32,12 @@ definition, a polynomial time bound alone suffices
 (`Cslib.Complexity.mem_P_of_decidableInTimeAndSpace`). Both follow from the tidy normal form
 (`Turing.MultiTapeTM.computableTidilyInPolyTime_iff_exists_computableInTimeAndSpaceOfLength`).
 
-Mathlib's `Turing.TM2ComputableInPolyTime` is stated for Mathlib's two-stack machines; this file
+Mathlib's `Turing.TM2ComputableInPolyTime` is stated for Mathlib's stack machines; this file
 uses cslib's multi-tape machines, which carry the time and space measures the rest of the
-development is built on.
+development is built on. For finite working alphabets and injective word encoders,
+`Turing.TM2ComputableInPolyTime.computableTidilyInPolyTime` in
+`Complexity.Computability.Machines.Turing.TM2.PolyTime` transfers Mathlib certificates to this
+polynomial-time notion under the standard binary encodings of their words.
 
 ## Main definitions
 

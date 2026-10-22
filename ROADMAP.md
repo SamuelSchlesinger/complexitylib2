@@ -166,8 +166,10 @@ The [set lower bound protocol](Complexity/Computability/Complexity/Classes/Arthu
 already proves SBP ⊆ AM. [Uniform indexed #P/GapP products](Complexity/Computability/Complexity/Classes/SharpP/Products.lean)
 provide a counting-algebra foundation for future oracle simulations.
 [Relativized counting and majority verifiers](Complexity/Computability/Complexity/Classes/PP/Oracle.lean)
-now provide the positive-GapP characterization and elimination of P-decidable oracles;
-AWPP PP-lowness remains an approximate-counting milestone.
+provide the positive-GapP characterization and elimination of P-decidable oracles.
+[AWPP PP-lowness](Complexity/Computability/Complexity/Classes/AWPP/Lowness.lean) is proved for
+the strict adaptive oracle-verifier model: every AWPP word oracle satisfies
+`PPWithOracle A enc = PP enc`, with arbitrary injective input encodings and exact ties rejecting.
 These definitions retain the verifier-model boundary stated above.
 
 ### Extend the mathematical canon
@@ -875,7 +877,12 @@ transfers correctness and additive node-visit bounds to adaptive clients. Each o
 at most the initial height, bounded by set cardinality; this is not a logarithmic or RAM-time
 claim. [Checked examples](ComplexityTests/SearchTree.lean) contrast height-three and height-seven
 representations of the same seven keys and execute an answer-dependent two-minimum query.
-Deletion, balancing, and concrete heap/RAM representations remain open.
+[Deletion](Complexity/Algorithms/Lean/SearchTree/Erase.lean) replaces a matching node by its left
+subtree when the right one is empty and otherwise splices in the successor from the right subtree,
+with finite-set semantics, invariant preservation, unchanged trees for absent keys,
+and node visits and resulting height bounded by the initial height
+([examples](ComplexityTests/SearchTreeErase.lean)). Adding deletion to the shared stateful
+ordered-set interface, balancing, and concrete heap/RAM representations remain open.
 
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
@@ -971,11 +978,24 @@ for integration.
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
+* Mathlib TM2 compatibility: the [polynomial-time bridge](Complexity/Computability/Machines/Turing/TM2/PolyTime.lean)
+  transfers typed computations with finite working alphabets to the tidy multi-tape calculus
+  under standard binary word encodings. The [polynomial-space bridge](Complexity/Computability/Machines/Turing/TM2/PolySpace.lean)
+  transfers terminating computations with polynomially bounded stacks without a runtime bound.
+  Linear space overhead, sublinear work-space conventions and converse class comparisons remain
+  open;
 * Tree Evaluation: the [Cook–Mertz machine](Complexity/Computability/TreeEval/Space.lean)
   has a proved parameterized space bound on valid encoded instances and an
   `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and
   `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
-  remain outstanding;
+  remain outstanding. Toward Williams's `TIME[t] ⊆ SPACE[√(t log t)]` (#361), the
+  [fan-in-`d` procedure](Complexity/Computability/TreeEval/Ary/CookMertz.lean) is proved correct
+  over `d + 1` registers when `d · ℓ < |K| - 1` (milestone M1), and implicit Tree Evaluation (#367)
+  starts from
+  [query machines in the space of their states](Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean),
+  which charge neither the input nor the output; the fan-in-`d` space bound, subroutine calls for
+  implicit gates and leaves, a step-exact bridge to the binary procedure at `d = 2` (or deprecating
+  the binary copy), padding of non-perfect trees, and the remaining milestones are open;
 * the space hierarchy, which needs a space-budgeted universal simulation; the
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a

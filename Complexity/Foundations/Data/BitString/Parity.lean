@@ -48,7 +48,9 @@ it then takes each value on exactly half of the inputs (`card_filter_parityOn_eq
 ## Main results
 
 * `Cslib.parityOn_eq_sum`: the parity is the sum of the bits in the Boolean ring.
-* `Cslib.parityOn_union`, `Cslib.parityOn_biUnion`: the parity of a disjoint union.
+* `Cslib.parityOn_singleton`: the parity on a singleton `{i}` is `x i`.
+* `Cslib.parityOn_union`, `Cslib.parityOn_sdiff`, `Cslib.parityOn_biUnion`: the parity of a
+  disjoint union, set difference, and disjoint indexed union.
 * `Cslib.parityOn_symmDiff`: the parity of a symmetric difference.
 * `Cslib.parityOn_add`: parities are linear.
 * `Cslib.parity_update_not`: flipping any bit flips the parity.
@@ -95,6 +97,9 @@ theorem parityOn_eq_sum (s : Finset ι) (x : ι → Bool) : parityOn s x = ∑ i
 @[simp] theorem parityOn_empty (x : ι → Bool) : parityOn ∅ x = false := by
   rw [parityOn_eq_sum, sum_empty]
   rfl
+
+@[simp] theorem parityOn_singleton (i : ι) (x : ι → Bool) : parityOn {i} x = x i := by
+  rw [parityOn_eq_sum, sum_singleton]
 
 /-- The parity on `s` only reads the bits in `s`. -/
 theorem parityOn_congr {s : Finset ι} {x y : ι → Bool} (h : ∀ j ∈ s, x j = y j) :
@@ -144,6 +149,13 @@ theorem parityOn_union (h : Disjoint s t) (x : ι → Bool) :
     parityOn (s ∪ t) x = (parityOn s x ^^ parityOn t x) := by
   simp only [parityOn_eq_sum]
   exact sum_union h
+
+/-- The parity on a set difference `t \ s` for `s ⊆ t` is the exclusive or of the parities. -/
+theorem parityOn_sdiff (h : s ⊆ t) (x : ι → Bool) :
+    parityOn (t \ s) x = (parityOn t x ^^ parityOn s x) := by
+  have hpar : parityOn t x = (parityOn (t \ s) x ^^ parityOn s x) := by
+    rw [← parityOn_union disjoint_sdiff_self_left x, sdiff_union_of_subset h]
+  rw [hpar, Bool.xor_assoc, Bool.xor_self, Bool.xor_false]
 
 /-- The parity on a symmetric difference is the exclusive or of the parities: the bits in both
 sets are counted twice. -/
