@@ -27,6 +27,10 @@ numerators. Amplification depends on the original input, and all queries use a c
 denominator. Polynomial-time native replay and uniform GapP products and sums certify the
 resulting ordinary GapP function.
 
+PP-lowness was established by Li (1993); see [Fenner, Fortnow, Kurtz and Li][FennerEtAl2003],
+Section 6.1. The constant-error AWPP characterization and amplification used here follow
+[Fenner][Fenner2003].
+
 ## Main definitions
 
 The verifier classes `AWPP`, `PP`, and `PPWithOracle` are imported from their defining modules.
@@ -41,6 +45,8 @@ reject in both classes.
 
 ## References
 
+* [S. Fenner, L. Fortnow, S. Kurtz, L. Li, *An Oracle Builder's Toolkit*][FennerEtAl2003],
+  Section 6.1.
 * [S. Fenner, *PP-Lowness and a Simple Definition of AWPP*][Fenner2003]
 -/
 
@@ -99,7 +105,7 @@ private theorem weightedReplay_error {k : ℕ} {Control : Type}
     g ((machine.pendingRequest cfg).take (T a)) else false
   have hp : ∀ cfg, 0 ≤ p cfg ∧ p cfg ≤ D := by
     intro cfg
-    dsimp [p]
+    dsimp only [p]
     split
     · exact (hw _).1
     · exact ⟨le_rfl, by dsimp [D]; positivity⟩

@@ -211,8 +211,7 @@ theorem sum_error {m n : ℕ} {E : ℤ} (hE : 0 ≤ E)
   have hn : (n : ℤ) ≤ (2 : ℤ) ^ n := by exact_mod_cast (Nat.lt_two_pow_self (n := n)).le
   have hscale : 16 * ((2 : ℤ) ^ m * n) ≤ M := by
     dsimp [M]
-    rw [pow_add, pow_add]
-    norm_num
+    rw [pow_add, pow_add, show (2 : ℤ) ^ 4 = 16 by norm_num]
     nlinarith [mul_le_mul_of_nonneg_left hn (show 0 ≤ (2 : ℤ) ^ m by positivity)]
   rw [hdiff]
   apply (mul_le_mul_iff_right₀ hM).mp

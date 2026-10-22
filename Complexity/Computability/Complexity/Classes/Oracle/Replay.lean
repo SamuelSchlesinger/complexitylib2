@@ -21,6 +21,11 @@ is polynomial-time in the input and transcript lengths, including the constructi
 requests. The canonical transcript records the actual oracle reply at query instructions and
 `false` elsewhere. Replaying it recovers the complete coin-fixed configuration and output.
 
+The `replay*` declarations here replay supplied oracle replies with the coin fixed to `false`.
+The saved-coin controller `Turing.MultiTapePTM.replay` in
+`Computability/Machines/Turing/MultiTape/Probabilistic/Replay.lean` instead replays
+supplied random coins for a closed machine using an additional work tape.
+
 ## Main definitions
 
 * `Turing.MultiTapePTM.replyStep`: one native instruction with a supplied Boolean reply.
@@ -77,8 +82,8 @@ def replayOutput (input answers : List Bool) : List Bool :=
 
 /-- A supplied bit is equivalent to a constant one-bit oracle for this instruction. -/
 theorem replyStep_eq_answerStep (cfg : FiniteConfig k Bool Control Operation) (bit : Bool) :
-    machine.replyStep cfg bit = machine.answerStep (fun _ => [bit]) cfg := by
-  exact (machine.answerStep_bit (fun _ => bit) cfg).symm
+    machine.replyStep cfg bit = machine.answerStep (fun _ => [bit]) cfg :=
+  (machine.answerStep_bit (fun _ => bit) cfg).symm
 
 /-- Supplying the answer to the pending request recovers an instruction against that oracle. -/
 theorem replyStep_pendingRequest (g : List Bool → Bool)

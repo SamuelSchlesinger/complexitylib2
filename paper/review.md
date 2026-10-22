@@ -37,9 +37,29 @@ CI PDF provenance, checked by Codex worker `worker-awpp-review-20261022`:
 [API documentation run 39794423110](https://github.com/cslib-community/complexitylib/actions/runs/39794423110)
 succeeded at `cff320b911f370292144063b5560d18649d8dd03` on 22 October 2026.
 Documentation-pin checks, API generation, generated-documentation checks and artifact upload
-all succeeded. This follow-up changes only the review record; Lean sources, index statements
-and declaration links remain unchanged. These AI reviews do not imply maintainer or human
-editorial approval, or a Lean proof of prose equivalence.
+all succeeded. The evidence-record commit `504539b0fee950310d40ce1732defa6fb383cb63` changed
+only this review record. These AI reviews do not imply maintainer or human editorial approval,
+or a Lean proof of prose equivalence.
+
+### Optional review nits
+
+Worker `worker-awpp-review-20261022` also addressed all five optional nits from the coordinator's
+review: distinguish oracle-reply replay from saved-coin replay in the module documentation,
+write `replyStep_eq_answerStep` as a term, restrict the `p` unfolding to `dsimp only`, make
+the `2 ^ 4 = 16` rewrite explicit in `sum_error`, and credit Li's 1993 work alongside
+Fenner--Fortnow--Kurtz--Li and Fenner's amplification argument. The historical attribution
+was checked against Section 6.1 of *An Oracle Builder's Toolkit*, using its existing
+`FennerEtAl2003` bibliography entry.
+
+Independent read-only Codex reviewer `/root/review_awpp_nits` approved API/style, correctness
+and source credit with no findings. Reviewed base: `504539b0fee950310d40ce1732defa6fb383cb63`;
+SHA256 of `git diff --binary` against that base, restricted to `*.lean`:
+`f9307b13202b6474a9e4b884e2c8543e4158d62e4fb8b658a4a38d08aff3dc60`.
+The reviewer rechecked the final library-relative replay-module path for upstreamability.
+No public definitions, statements, hypotheses, models or bounds change, so the theorem index
+needs no prose rewrite. Its immutable declaration links still resolve at the reviewed source
+revision and original lines. This follow-up does not extend the earlier CI results to the
+changed sources; validation of this revision is recorded in its commit description.
 
 ## 2026-10-21: Client resource contracts through interface refinements (#274)
 
