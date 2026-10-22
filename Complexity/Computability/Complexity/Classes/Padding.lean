@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Composition
 import Complexity.Computability.Probabilistic.PPT.Capture
@@ -18,7 +19,6 @@ import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormal
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
@@ -32,12 +32,10 @@ the padding.
 
 ## Timed reductions
 
-A problem `B` decidable within time `O(t' m)` on instances of length `m` pulls back along a
-function `g` computable within time `O(T a)` to a problem decidable within time
-`O(T a + t' |g a|)` (`Cslib.Complexity.preimage_mem_DTIME`): compute `g a`, then decide whether it
-is in `B`. A decider of `B` within time `O(t' m)` is first brought to the tidy form, within time and
-space `O(t' m)` (`Cslib.Complexity.computableTidilyInO_indicator_of_mem_DTIME`), in which
-computations compose.
+The general timed-reduction API lives in
+`Complexity.Computability.Complexity.Classes.Time`. In particular,
+`Cslib.Complexity.preimage_mem_DTIME` computes a reduction and then tidily decides its output;
+the padding arguments below apply this API to their padded instances.
 
 ## The padded problem
 
@@ -57,7 +55,8 @@ within time `O(T n)`, then `NTIME t ⊆ ⋃ d, DTIME ((n + T n + 1) ^ d)`
 (`Cslib.Complexity.NTIME_subset_iUnion_DTIME_of_NP_subset_P`): the padded problem with padding
 `t n` is decided in time polynomial in `n + t n`. For `t n = 2 ^ f n` with `f` computable in unary
 in polynomial time and `n ≤ f n`, `2 ^ f n` is computed in unary by doubling, within time
-`O((f n + 1) * 2 ^ f n)` (`Turing.MultiTapeTM.ComputableTidilyInO.unary_two_pow`), and
+`O((f n + 1) * 2 ^ f n)` using the quantitative machine API
+(`Turing.MultiTapeTM.ComputableTidilyInO.unary_two_pow`), and
 `NTIME (2 ^ f n) ⊆ ⋃ d, DTIME (2 ^ (d * f n))`
 (`Cslib.Complexity.NTIME_two_pow_subset_iUnion_DTIME_of_NP_subset_P`). With `f n = (k + 1) * n`
 and `f n = n ^ (k + 1)` this gives `NE ⊆ E` and `NEXP ⊆ EXP`.
@@ -76,7 +75,6 @@ exponential padding yields an `NEXP` decider without a collapse hypothesis.
 
 ## Main results
 
-* `Cslib.Complexity.preimage_mem_DTIME`: `DTIME` under timed reductions.
 * `Cslib.Complexity.preimage_mem_NTIME_of_mem_NP`, `Cslib.Complexity.preimage_pad_mem_NEXP`:
   unconditional timed pullback of `NP`, including exponentially padded inputs.
 * `Turing.MultiTapeNTM.padded_mem_NP`,
@@ -97,67 +95,6 @@ exponential padding yields an `NEXP` decider without a collapse hypothesis.
 -/
 
 @[expose] public section
-
-namespace Turing.MultiTapeTM.ComputableTidilyInO
-
-variable {α β : Type} {encOut : β ↪ List Bool}
-
-/-- A function of bit words computed within given bounds is computed by the same machine on encoded
-instances. -/
-theorem comp_enc {f : List Bool → β} {T S : List Bool → ℕ}
-    (h : ComputableTidilyInO f encBits encOut T S) (enc : α ↪ List Bool) :
-    ComputableTidilyInO (fun a => f (enc a)) enc encOut (fun a => T (enc a)) fun a => S (enc a) :=
-  let ⟨c, ⟨k, State, hfinite, tm, htm⟩, hl⟩ := h
-  ⟨c, ⟨k, State, hfinite, tm, fun a => htm (enc a)⟩, fun a => hl (enc a)⟩
-
-/-- Doubling `m` once for each element of a list of length `n` multiplies it by `2 ^ n`. -/
-private theorem foldl_double (n m : ℕ) :
-    (List.replicate n true).foldl (fun m _ => m + m) m = m * 2 ^ n := by
-  induction n generalizing m with
-  | zero => simp
-  | succ n ih =>
-    rw [List.replicate_succ, List.foldl_cons, ih]
-    ring
-
-/-- **`2 ^ n` in unary**, by doubling `n` times, within time `O((n + 1) * 2 ^ n)` and space
-`O(2 ^ n)`. -/
-theorem unary_two_pow : ComputableTidilyInO (fun n : ℕ => 2 ^ n) encUnary encUnary
-    (fun n => (n + 1) * 2 ^ n) fun n => 2 ^ n := by
-  have hstep : ComputableTidilyInO (fun p : ℕ × Bool => p.1 + p.1) (encPair encUnary encBool)
-      encUnary (fun p => (encPair encUnary encBool p).length)
-      fun p => (encPair encUnary encBool p).length :=
-    (ComputableTidilyInDegree.unaryAdd (ComputableTidilyInDegree.fst encUnary encBool)
-      (ComputableTidilyInDegree.fst encUnary encBool) le_rfl le_rfl).inO_one
-  have hstate (n i : ℕ) : (encUnary (((List.replicate n true).take i).foldl
-      (fun m _ => m + m) 1)).length ≤ 2 ^ n := by
-    rw [List.take_replicate, foldl_double, encUnary_apply, List.length_replicate, one_mul]
-    exact Nat.pow_le_pow_right (by norm_num) (Nat.min_le_right _ _)
-  have h := foldl (encA := encBool) (encL := encBits) (encB := encUnary)
-    (list := fun n : ℕ => List.replicate n true) (init := fun _ => 1)
-    (step := fun m _ => m + m)
-    (of_linear (.of_eq (f := fun n : ℕ => List.replicate n true) (encIn := encUnary)
-      (encMid := encBits) fun _ => rfl)) (const 1) hstep
-    (R := fun n => 2 * 2 ^ n + 2) (Q := fun n => 2 * 2 ^ n + 2) (B := fun n => 2 ^ n)
-    (fun n i _ => by
-      have := hstate n i
-      simp only [length_encPair, encBool_apply, List.length_singleton]
-      omega)
-    (fun n i _ => by
-      have := hstate n i
-      simp only [length_encPair, encBool_apply, List.length_singleton]
-      omega)
-    fun n i _ => hstate n i
-  refine (h.mono 8 (fun n => ?_) fun n => ?_).of_enc_eq fun n => ?_
-  · have h₁ : n + 1 ≤ 2 ^ n := Nat.lt_two_pow_self
-    have h₂ := Nat.mul_le_mul_left (n + 1) h₁
-    simp only [encUnary_apply, encBits_apply, List.length_replicate]
-    nlinarith
-  · have h₁ : n + 1 ≤ 2 ^ n := Nat.lt_two_pow_self
-    simp only [encUnary_apply, encBits_apply, List.length_replicate]
-    omega
-  · rw [foldl_double, one_mul]
-
-end Turing.MultiTapeTM.ComputableTidilyInO
 
 namespace Turing.MultiTapeNTM
 
@@ -230,67 +167,6 @@ namespace Cslib.Complexity
 open _root_.Turing _root_.Turing.MultiTapeTM
 
 variable {α β : Type} {enc : α ↪ List Bool} {encB : β ↪ List Bool}
-
-/-! ### Timed reductions -/
-
-/-- `DTIME` absorbs constant factors. -/
-theorem DTIME_mono_of_le_mul_add {t₁ t₂ : ℕ → ℕ} {C : ℕ} (h : ∀ n, t₁ n ≤ C * t₂ n + C) :
-    DTIME enc t₁ ⊆ DTIME enc t₂ := by
-  rintro A ⟨c₁, c₂, s, hA⟩
-  refine ⟨c₁ * C, c₁ * C + c₂, s, ComputableInTimeAndSpace.mono hA (fun a => ?_) fun _ => le_rfl⟩
-  have := Nat.mul_le_mul_left c₁ (h (enc a).length)
-  rw [Nat.mul_add, ← Nat.mul_assoc] at this
-  omega
-
-/-- A problem in `DTIME enc t` is decided by a machine tidily computing its indicator within time
-and space `O(t n)`, on instances whose encoding has length `n`. -/
-theorem computableTidilyInO_indicator_of_mem_DTIME {A : Set α} {t : ℕ → ℕ}
-    (h : A ∈ DTIME enc t) :
-    ComputableTidilyInO (indicator A) enc encBool (fun a => t (enc a).length)
-      fun a => t (enc a).length := by
-  obtain ⟨c₁, c₂, s, hA⟩ := h
-  obtain ⟨g, hg, hgA⟩ := decidableInTimeAndSpace_iff.mp hA
-  obtain ⟨c, hg⟩ := hg.exists_space_linear
-  obtain ⟨d, hg⟩ := hg.exists_computableTidilyInTimeAndSpace
-  rw [indicator_eq_iff.mpr hgA]
-  refine .of_bounds hg ((2 + 3 * c) * (c₁ + c₂) + 3 * c + d + d * (c * (c₁ + c₂) + c + 1) + 1)
-    (fun a => ?_) (fun a => ?_) fun a => ?_
-  · set T := t (enc a).length
-    have hu : c₁ * T + c₂ ≤ (c₁ + c₂) * (T + 1) := by nlinarith
-    calc 2 * (c₁ * T + c₂) + 3 * (c * (c₁ * T + c₂) + c) + d
-        = (2 + 3 * c) * (c₁ * T + c₂) + (3 * c + d) := by ring
-      _ ≤ (2 + 3 * c) * ((c₁ + c₂) * (T + 1)) + (3 * c + d) * (T + 1) :=
-          Nat.add_le_add (Nat.mul_le_mul_left _ hu) (Nat.le_mul_of_pos_right _ (by omega))
-      _ = ((2 + 3 * c) * (c₁ + c₂) + 3 * c + d) * (T + 1) := by ring
-      _ ≤ _ := Nat.mul_le_mul_right _ (by omega)
-  · set T := t (enc a).length
-    have hu : c₁ * T + c₂ ≤ (c₁ + c₂) * (T + 1) := by nlinarith
-    calc d * (c * (c₁ * T + c₂) + c + 1)
-        ≤ d * (c * ((c₁ + c₂) * (T + 1)) + (c + 1) * (T + 1)) :=
-          Nat.mul_le_mul_left _ (by
-            have := Nat.mul_le_mul_left c hu
-            have : c + 1 ≤ (c + 1) * (T + 1) := Nat.le_mul_of_pos_right _ (by omega)
-            omega)
-      _ = d * (c * (c₁ + c₂) + c + 1) * (T + 1) := by ring
-      _ ≤ _ := Nat.mul_le_mul_right _ (by omega)
-  · simp only [encBool_apply, List.length_singleton]
-    exact Nat.one_le_iff_ne_zero.mpr (Nat.mul_ne_zero (by omega) (by omega))
-
-/-- **`DTIME` under timed reductions.** If `B` is decidable within time `O(t' m)` on instances whose
-encoding has length `m`, and `g` is computable within time `O(T a)`, then `g ⁻¹' B` is decidable
-within time `O(t n)` on instances whose encoding has length `n`, as soon as `T a + t' |encB (g a)|`
-is within `O(t |enc a|)`: compute `g a`, then decide whether it is in `B`. -/
-theorem preimage_mem_DTIME {B : Set β} {t' t : ℕ → ℕ} {g : α → β} {T S : α → ℕ} {C : ℕ}
-    (hB : B ∈ DTIME encB t') (hg : ComputableTidilyInO g enc encB T S)
-    (ht : ∀ a, T a + t' (encB (g a)).length ≤ C * t (enc a).length + C) :
-    g ⁻¹' B ∈ DTIME enc t := by
-  have h := (computableTidilyInO_indicator_of_mem_DTIME hB).comp hg
-  have hset : g ⁻¹' B = {a | (indicator B ∘ g) a = true} := by
-    ext a
-    simp [indicator]
-  rw [hset]
-  exact DTIME_mono_of_le_mul_add (C := C) (fun _ => le_rfl)
-    (setOf_mem_DTIME_of_computableTidilyInO (t := fun n => C * t n + C) h ht)
 
 /-- **Padding to exponential length.** If `Ψ` is polynomial-time on pairs of a bit word and a
 unary number, then the words `y` with `Ψ (y, 2 ^ |y|)` form a problem in `E`: the padding

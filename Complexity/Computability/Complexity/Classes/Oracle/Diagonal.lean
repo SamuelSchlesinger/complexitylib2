@@ -8,9 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.Oracle
+public import Complexity.Foundations.Data.BitString.ShortWords
 public import Mathlib.Order.Filter.AtTopBot.Basic
-import Mathlib.Data.Fintype.Pi
-import Mathlib.Data.List.OfFn
 
 /-!
 # An oracle diagonalizing against query-bounded deterministic programs
@@ -30,7 +29,8 @@ negatively. It then decides every word up to the longest request. Later stages a
 words, so by locality (`Cslib.OracleComp.interpret_id_congr`) the final oracle receives the same
 requests and the same answer as at that stage.
 
-The construction uses choice and is not claimed to be computable.
+The construction uses choice and is not claimed to be computable. Its counting step uses
+`Cslib.BitString.exists_length_eq_notMem` from the binary-word API.
 
 ## Main results
 
@@ -47,18 +47,8 @@ namespace Cslib.Complexity
 
 variable {Operation : Type}
 
-/-- Fewer than `2 ^ n` words leave a word of length `n` unused. -/
-theorem exists_length_eq_notMem (Q : List (List Bool)) (n : ℕ) (hQ : Q.length < 2 ^ n) :
-    ∃ w : List Bool, w.length = n ∧ w ∉ Q := by
-  classical
-  have hcard : Q.toFinset.card <
-      ((Finset.univ : Finset (Fin n → Bool)).image List.ofFn).card := by
-    rw [Finset.card_image_of_injective _ List.ofFn_injective, Finset.card_univ,
-      Fintype.card_fun, Fintype.card_bool, Fintype.card_fin]
-    exact (List.toFinset_card_le Q).trans_lt hQ
-  obtain ⟨w, hw, hwQ⟩ := Finset.exists_mem_notMem_of_card_lt_card hcard
-  obtain ⟨f, -, rfl⟩ := Finset.mem_image.mp hw
-  exact ⟨List.ofFn f, List.length_ofFn, fun h => hwQ (List.mem_toFinset.mpr h)⟩
+@[deprecated (since := "2026-10-22")]
+alias exists_length_eq_notMem := BitString.exists_length_eq_notMem
 
 /-- One stage defeats `D`. It extends an approximation `S`, whose words have length at most `m`,
 only by words longer than `m`, and decides every word up to a new length `m'`: any oracle agreeing
@@ -84,7 +74,7 @@ private theorem stage {D : ℕ → WordQueryComp Operation Bool} {bound : ℕ �
   set m' := n + (Q.map List.length).sum with hm'
   have hQm' : ∀ w ∈ Q, w.length ≤ m' := fun w hw =>
     (List.le_sum_of_mem (List.mem_map_of_mem hw)).trans (Nat.le_add_left _ _)
-  obtain ⟨w, hwn, hwQ⟩ := exists_length_eq_notMem Q n hQlen
+  obtain ⟨w, hwn, hwQ⟩ := BitString.exists_length_eq_notMem Q n hQlen
   -- add an unrequested word of length `n` exactly when `D n` answers negatively against `S`
   set S' : Set (List Bool) :=
     if OracleComp.interpret (m := Id) (languageOracle S) (D n) = true then S else insert w S
