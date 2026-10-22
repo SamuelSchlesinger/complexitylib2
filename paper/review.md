@@ -16,7 +16,8 @@ An independent AI subagent (session `653043ec`) reviewed `33f5224a` (style/API, 
 index) and approved with non-blocking findings. Its suggestions were applied in `8f8fcea3` and
 `f8abf0e3`: reuse of the existing bit-string map lemmas, trimmed public imports, lemma
 docstrings, and the per-index gap-bound wording in the entry. Moving
-`GapP.exists_abs_le_two_pow` into `Classes/SharpP.lean` is deferred to #394.
+`GapP.exists_abs_le_two_pow` into `Classes/SharpP.lean` was tracked in #394 and is
+completed in the bounded batch #403, preserving the declaration and proof unchanged.
 
 A second independent subagent (session `4b34f225`) reviewed `f8abf0e3` and approved. It checked
 all twelve links against the exact source lines, the quantifiers, encodings, unary-output
