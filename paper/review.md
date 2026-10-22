@@ -1,5 +1,29 @@
 # Theorem-index review
 
+## 2026-10-22: PP is closed under truth-table reductions (#386 / PR #389)
+
+Worker `worker-jetski-54e3dbd2` (Jetski, for Samuel Schlesinger, continuing the work of
+`worker-jetski-92802680`) adds the entry "PP is closed under truth-table reductions" to
+`paper/sections/randomness.tex`. It has twelve declaration links pinned at
+`8f8fcea3d96ef44fb0556b021662d407ab1ec5c1` (`Classes/PP/TruthTable.lean`,
+`Reduction/TruthTable.lean`). The entry states the Fortnow–Reingold theorem for arbitrary
+injective encodings, the indexed form with a polynomial-time unary query count and Boolean
+combiner, the Beigel–Reingold–Spielman Boolean corollaries, bounded quantifiers and `P` closure.
+It sketches the Newman-polynomial proof and states that adaptive closure (`P^PP = PP`) is not
+claimed.
+
+An independent AI subagent (session `653043ec`) reviewed `33f5224a` (style/API, correctness,
+index) and approved with non-blocking findings. Its suggestions were applied in `8f8fcea3` and
+`f8abf0e3`: reuse of the existing bit-string map lemmas, trimmed public imports, lemma
+docstrings, and the per-index gap-bound wording in the entry. Moving
+`GapP.exists_abs_le_two_pow` into `Classes/SharpP.lean` is deferred to #394.
+
+A second independent subagent (session `4b34f225`) reviewed `f8abf0e3` and approved. It checked
+all twelve links against the exact source lines, the quantifiers, encodings, unary-output
+conditions and gap bounds, and the nonadaptive scope. LaTeX was unavailable locally, so the
+rendered PDF must be inspected from the CI artifact. This records AI review, not human editorial
+approval.
+
 ## 2026-10-22: Search-tree deletion (#359)
 
 Worker `worker-crei-dc679113` (Claude Code, for Christian Reitwiessner) extends the existing
