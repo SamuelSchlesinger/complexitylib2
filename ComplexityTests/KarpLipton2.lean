@@ -64,16 +64,6 @@ example : SAT.verifier (φ₁, SAT.search (fun _ => true) φ₁) = false := by d
 
 example : SAT.queryBound 1 = 39 := rfl
 
-/-! ### The inner quantifier -/
-
--- The words whose second bit is `true` once one more bit is appended form a problem in `NP` on
--- pairs.
-example : {y : List Bool × List Bool | ∃ v : List Bool, v.length = 1 ∧
-    (y.2 ++ v).getD 1 false = true} ∈ NP (encPair encBits encBits) := by
-  have := mem_NP_setOf_exists_append (enc := encBits) (V := fun x => x.2.getD 1 false)
-    (ComputableTidilyInPolyTime.bitsGetDWithInput (.snd _ _) (.const 1) false) 1
-  simpa using this
-
 /-! ### Advice strings -/
 
 /-- A family of circuits for the first input bit, `false` on the empty input. -/

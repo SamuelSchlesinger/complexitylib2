@@ -22,7 +22,8 @@ import Mathlib.Data.List.GetD
 
 A verifier that guesses a circuit reads it from a certificate of a fixed length. This file fixes
 such a format for De Morgan circuits with `n` inputs, one output and at most `s` gates, of length
-`certLength n s`. Wire numbers are below `w = n + s` and are written in unary in fields of `w`
+`certLength n s`, monotone in the number of inputs (`certLength_mono_left`). Wire numbers are
+below `w = n + s` and are written in unary in fields of `w`
 bits (`unaryField`); an operation takes three bits (`Op.bits`). A certificate lists the number of
 gates in a field of `s` bits, the output wire, and then `s` rows of `3 + 2 w` bits, the first of
 which hold the gates (`certificate`).
@@ -44,6 +45,7 @@ polynomial-time test `codeCheck` tells the codes of circuits apart (`codeCheck_e
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.certLength_mono_left`: certificate length is monotone in the input count.
 * `Cslib.Circuits.Boolean.length_certificate`: certificates have length `certLength n s`.
 * `Cslib.Circuits.Boolean.readCertificate_certificate_append`: a certificate reads as the code of
   its circuit.
@@ -155,6 +157,11 @@ theorem readRow_gateRow {width : ℕ} {g : Op × List ℕ} (harity : g.2.length 
 
 /-- The length of the certificates of circuits with `n` inputs and at most `s` gates. -/
 def certLength (n s : ℕ) : ℕ := s + (n + s) + s * (3 + 2 * (n + s))
+
+/-- Certificate length is monotone in the number of inputs. -/
+theorem certLength_mono_left {m n : ℕ} (h : m ≤ n) (s : ℕ) : certLength m s ≤ certLength n s := by
+  unfold certLength
+  gcongr
 
 /-- The certificate of a circuit with `n` inputs and at most `s` gates, given by its gate list and
 its output wire: the number of gates and the output wire in fields of `s` and `n + s` bits, the
