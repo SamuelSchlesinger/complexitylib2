@@ -99,10 +99,10 @@ programs, which compile with identical instruction counts, are adapted from the 
 formalization accompanying the tromino undecidability paper.
 \citep[Sections 2.2 and 11.1]{CLRS2009}\citep{FredmanWillard1993,Hagerup1998}\citep{Tromino2025}
 \declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{287}{Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{334}{Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{329}{Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{334}{Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{329}{Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup}
 \declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Algorithms/WordRAM/ElementDistinctness.lean}{148}{Cslib.Algorithms.WordRAM.ElementDistinctness.inputFits}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/Time.lean}{212}{Cslib.WordRAM.Program.DecidesInTime}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{190}{Cslib.WordRAM.Program.DecidesInTime}
 \declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/Compile.lean}{135}{Cslib.WordRAM.Exec.runs}
 \end{result}
 
@@ -113,25 +113,33 @@ certificate selects one program $P_w$ for each width, with one register count an
 instruction-list length shared by all widths. Literal values may depend on $w$; code selection
 and the mathematical encoding are uncharged. For every admitted pair $(a,w)$ whose encoded
 input length and words fit, the selected program halts with the correct answer within $T(a,w)$
-instructions. A uniform certificate uses one program for all widths, possibly reading $w$.
+instructions. A uniform certificate uses one program for all widths; it may read $w$, branch on
+it, and have width-dependent execution time. Structured-code introduction rules package the
+fixed program without a separate family or code-length proof, and include the final halt.
 Every uniform certificate induces a bounded nonuniform family. Time bounds can be increased
 and width conditions restricted without changing the code; fit certificates remove the
 conditional input-fit premise, and admitted width schedules specialize the family contract.
 
-Conditions may give upper bounds, lower bounds, intervals, or a prescribed width. The default
-logarithmic convention admits every fitting width above $k(\lfloor\log_2\max(1,n)\rfloor+1)$ for some
-positive constant $k$. Separately, a width schedule $W(n)=O(g(n))$ after casting to the reals is
+Admissibility is an ordinary predicate on input/width pairs; inequalities express upper bounds,
+lower bounds and intervals, and equality prescribes a width. Define
+$\operatorname{logWidth}(k,n)=k(\lfloor\log_2\max(1,n)\rfloor+1)$.
+The \texttt{LogWord} wrappers express the transdichotomous assumption: every fitting width
+above $\operatorname{logWidth}(k,n)$ is admitted for some positive constant $k$.
+Separately, a width schedule $W(n)=O(g(n))$ after casting to the reals is
 equivalent to an eventual inequality $W(n)\le k g(n)$ with one positive natural $k$; swapping the
 functions expresses an Omega bound, including fractional lower constants. Asymptotic time
 certificates retain correctness on all admitted fitting inputs, with one eventual runtime
 constant and size threshold shared across widths. Empty admissible domains can still make
 contracts vacuous; input-dependent schedules can convey advice. No effective code or encoding
 selection, nor Turing-machine computability, is asserted.
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/Time.lean}{238}{Cslib.WordRAM.UniformDecidableInTime.decidableInTime}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/Time.lean}{179}{Cslib.WordRAM.ProgramFamily.DecidesInTime.mono}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/Time.lean}{185}{Cslib.WordRAM.ProgramFamily.DecidesInTime.of_inputFits}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/Time.lean}{191}{Cslib.WordRAM.ProgramFamily.DecidesInTime.at_width}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/Time.lean}{130}{Cslib.WordRAM.WidthCondition.isBigO_iff_eventually_atMost}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{216}{Cslib.WordRAM.UniformDecidableInTime.decidableInTime}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{157}{Cslib.WordRAM.WordSizeDependentProgram.DecidesInTime.mono}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{163}{Cslib.WordRAM.WordSizeDependentProgram.DecidesInTime.of_inputFits}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{169}{Cslib.WordRAM.WordSizeDependentProgram.DecidesInTime.at_width}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{110}{Cslib.WordRAM.isBigO_natCast_iff_eventually_le_mul}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{94}{Cslib.WordRAM.logWidth}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Time.lean}{268}{Cslib.WordRAM.UniformDecidableInTimeLogWord}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/Compile.lean}{209}{Cslib.WordRAM.UniformDecidableInTime.of_code}
 \end{result}
 
 \begin{result}
@@ -162,9 +170,9 @@ different bases is claimed.
 \declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/Basis.lean}{250}{Cslib.WordRAM.Basis.arithmetic}
 \declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/MapOp.lean}{132}{Cslib.WordRAM.step_mapOp}
 \declat{2435c31e21e20632084cfa25e88352d948c5e9a7}{Complexity/Computability/WordRAM/MapOp.lean}{153}{Cslib.WordRAM.executes_mapOp_iff}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/MapOp.lean}{232}{Cslib.WordRAM.DecidableInTime.mapOp}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/MapOp.lean}{248}{Cslib.WordRAM.LinearTime.mapOp}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Computability/WordRAM/MapOp.lean}{261}{Cslib.WordRAM.PolynomialTime.mapOp}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/MapOp.lean}{234}{Cslib.WordRAM.DecidableInTime.mapOp}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/MapOp.lean}{250}{Cslib.WordRAM.LinearTime.mapOp}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Computability/WordRAM/MapOp.lean}{263}{Cslib.WordRAM.PolynomialTime.mapOp}
 \end{result}
 
 \begin{result}
@@ -535,7 +543,7 @@ allocation algorithm, or conversion to Turing-machine polynomial time is claimed
 \declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Computability/WordRAM/Controller.lean}{155}{Cslib.WordRAM.Refines.call}
 \declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{170}{Cslib.WordRAM.Stack.Controller.refines}
 \declat{73b30ec4371e6bd75592ed6f98d89900f486bcb9}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{182}{Cslib.WordRAM.Stack.Controller.executes}
-\declat{d0f8ddfdf47fadb21afc027893dd376215251987}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{212}{Cslib.WordRAM.Stack.Controller.positive_polytime}
+\declat{36ecb6397ada8422e989ce480b4acff642e62824}{Complexity/Algorithms/WordRAM/Stack/Controller.lean}{212}{Cslib.WordRAM.Stack.Controller.positive_polytime}
 \end{result}
 
 \begin{result}
