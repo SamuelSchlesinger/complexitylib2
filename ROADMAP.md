@@ -936,7 +936,11 @@ transfers correctness and additive node-visit bounds to adaptive clients. Each o
 at most the initial height, bounded by set cardinality; this is not a logarithmic or RAM-time
 claim. [Checked examples](ComplexityTests/SearchTree.lean) contrast height-three and height-seven
 representations of the same seven keys and execute an answer-dependent two-minimum query.
-Deletion, balancing, and concrete heap/RAM representations remain open.
+[Deletion](Complexity/Algorithms/Lean/SearchTree/Erase.lean) splices in the successor from the
+right subtree, with finite-set semantics, invariant preservation, unchanged trees for absent keys,
+and node visits and resulting height bounded by the initial height
+([examples](ComplexityTests/SearchTreeErase.lean)). Adding deletion to the shared stateful
+ordered-set interface, balancing, and concrete heap/RAM representations remain open.
 
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
