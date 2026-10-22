@@ -326,6 +326,7 @@ import ComplexityTests.SmallCountingClasses
 import ComplexityTests.Smoke
 import ComplexityTests.SortingTrace
 import ComplexityTests.SourceComplexity
+import ComplexityTests.SourceReduction
 import ComplexityTests.Space
 import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
