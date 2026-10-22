@@ -38,8 +38,6 @@ completed reference developments.
 6. **Williams’s ACC lower bound.** NEXP ⊄ ACC⁰: some language in nondeterministic exponential time
    has no polynomial-size, constant-depth nonuniform circuit family over unbounded-fan-in AND, OR,
    NOT and modular-counting gates with fixed moduli.
-   [`ACC0`](Complexity/Computability/Circuit/Boolean/ACC0.lean) defines `ACC0` and proves
-   `ACC0 ⊆ AC 1 ⊆ NC 2 ⊆ PPoly`; no part of Williams's argument is formalized.
 7. **Valiant’s algebraic completeness theorem.** Over every field of characteristic different from
    two, the permanent polynomial family is VNP-complete under polynomially bounded projections:
    every VNP family is obtained from a polynomially larger permanent by substituting variables and
