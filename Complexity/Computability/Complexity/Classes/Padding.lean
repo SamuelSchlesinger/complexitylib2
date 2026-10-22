@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.NP.Nondeterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Composition
 import Complexity.Computability.Probabilistic.PPT.Capture
@@ -18,7 +19,6 @@ import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormal
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
 /-!
@@ -55,7 +55,8 @@ within time `O(T n)`, then `NTIME t ⊆ ⋃ d, DTIME ((n + T n + 1) ^ d)`
 (`Cslib.Complexity.NTIME_subset_iUnion_DTIME_of_NP_subset_P`): the padded problem with padding
 `t n` is decided in time polynomial in `n + t n`. For `t n = 2 ^ f n` with `f` computable in unary
 in polynomial time and `n ≤ f n`, `2 ^ f n` is computed in unary by doubling, within time
-`O((f n + 1) * 2 ^ f n)` (`Turing.MultiTapeTM.ComputableTidilyInO.unary_two_pow`), and
+`O((f n + 1) * 2 ^ f n)` using the quantitative machine API
+(`Turing.MultiTapeTM.ComputableTidilyInO.unary_two_pow`), and
 `NTIME (2 ^ f n) ⊆ ⋃ d, DTIME (2 ^ (d * f n))`
 (`Cslib.Complexity.NTIME_two_pow_subset_iUnion_DTIME_of_NP_subset_P`). With `f n = (k + 1) * n`
 and `f n = n ^ (k + 1)` this gives `NE ⊆ E` and `NEXP ⊆ EXP`.
@@ -94,67 +95,6 @@ exponential padding yields an `NEXP` decider without a collapse hypothesis.
 -/
 
 @[expose] public section
-
-namespace Turing.MultiTapeTM.ComputableTidilyInO
-
-variable {α β : Type} {encOut : β ↪ List Bool}
-
-/-- A function of bit words computed within given bounds is computed by the same machine on encoded
-instances. -/
-theorem comp_enc {f : List Bool → β} {T S : List Bool → ℕ}
-    (h : ComputableTidilyInO f encBits encOut T S) (enc : α ↪ List Bool) :
-    ComputableTidilyInO (fun a => f (enc a)) enc encOut (fun a => T (enc a)) fun a => S (enc a) :=
-  let ⟨c, ⟨k, State, hfinite, tm, htm⟩, hl⟩ := h
-  ⟨c, ⟨k, State, hfinite, tm, fun a => htm (enc a)⟩, fun a => hl (enc a)⟩
-
-/-- Doubling `m` once for each element of a list of length `n` multiplies it by `2 ^ n`. -/
-private theorem foldl_double (n m : ℕ) :
-    (List.replicate n true).foldl (fun m _ => m + m) m = m * 2 ^ n := by
-  induction n generalizing m with
-  | zero => simp
-  | succ n ih =>
-    rw [List.replicate_succ, List.foldl_cons, ih]
-    ring
-
-/-- **`2 ^ n` in unary**, by doubling `n` times, within time `O((n + 1) * 2 ^ n)` and space
-`O(2 ^ n)`. -/
-theorem unary_two_pow : ComputableTidilyInO (fun n : ℕ => 2 ^ n) encUnary encUnary
-    (fun n => (n + 1) * 2 ^ n) fun n => 2 ^ n := by
-  have hstep : ComputableTidilyInO (fun p : ℕ × Bool => p.1 + p.1) (encPair encUnary encBool)
-      encUnary (fun p => (encPair encUnary encBool p).length)
-      fun p => (encPair encUnary encBool p).length :=
-    (ComputableTidilyInDegree.unaryAdd (ComputableTidilyInDegree.fst encUnary encBool)
-      (ComputableTidilyInDegree.fst encUnary encBool) le_rfl le_rfl).inO_one
-  have hstate (n i : ℕ) : (encUnary (((List.replicate n true).take i).foldl
-      (fun m _ => m + m) 1)).length ≤ 2 ^ n := by
-    rw [List.take_replicate, foldl_double, encUnary_apply, List.length_replicate, one_mul]
-    exact Nat.pow_le_pow_right (by norm_num) (Nat.min_le_right _ _)
-  have h := foldl (encA := encBool) (encL := encBits) (encB := encUnary)
-    (list := fun n : ℕ => List.replicate n true) (init := fun _ => 1)
-    (step := fun m _ => m + m)
-    (of_linear (.of_eq (f := fun n : ℕ => List.replicate n true) (encIn := encUnary)
-      (encMid := encBits) fun _ => rfl)) (const 1) hstep
-    (R := fun n => 2 * 2 ^ n + 2) (Q := fun n => 2 * 2 ^ n + 2) (B := fun n => 2 ^ n)
-    (fun n i _ => by
-      have := hstate n i
-      simp only [length_encPair, encBool_apply, List.length_singleton]
-      omega)
-    (fun n i _ => by
-      have := hstate n i
-      simp only [length_encPair, encBool_apply, List.length_singleton]
-      omega)
-    fun n i _ => hstate n i
-  refine (h.mono 8 (fun n => ?_) fun n => ?_).of_enc_eq fun n => ?_
-  · have h₁ : n + 1 ≤ 2 ^ n := Nat.lt_two_pow_self
-    have h₂ := Nat.mul_le_mul_left (n + 1) h₁
-    simp only [encUnary_apply, encBits_apply, List.length_replicate]
-    nlinarith
-  · have h₁ : n + 1 ≤ 2 ^ n := Nat.lt_two_pow_self
-    simp only [encUnary_apply, encBits_apply, List.length_replicate]
-    omega
-  · rw [foldl_double, one_mul]
-
-end Turing.MultiTapeTM.ComputableTidilyInO
 
 namespace Turing.MultiTapeNTM
 

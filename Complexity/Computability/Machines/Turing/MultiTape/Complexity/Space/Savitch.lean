@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space
 public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Space.Reachability
-import Complexity.Computability.Kolmogorov.Incompressibility
+import Complexity.Foundations.Data.BitString.ShortWords
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -94,7 +94,7 @@ theorem savitchDecide_eq_true_iff {c d s : ℕ} {input : List Bool} (hs : ntm.Ru
   have hcard : {code | Relation.ReflTransGen (ntm.CodeStep width)
       (viewCode width (ntm.initView input)) code}.encard ≤ 2 ^ (2 * width + 2) + 1 := by
     refine (Set.encard_le_encard fun code hcode => ?_).trans
-      ((Cslib.Kolmogorov.encard_setOf_length_eq _).le.trans le_self_add)
+      ((Cslib.BitString.encard_setOf_length_eq _).le.trans le_self_add)
     induction hcode with
     | refl => exact hsrc
     | tail _ hstep _ => exact hstep.2.1
