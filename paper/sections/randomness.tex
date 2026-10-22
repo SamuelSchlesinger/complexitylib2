@@ -662,7 +662,7 @@ Each ordinary class is contained in its relativized counterpart by ignoring the 
 If $A\in\cc{P}$ on words encoded as themselves, certified oracle simulation gives
 $\#\cc{P}^A=\#\cc{P}$, $\cc{GapP}^A=\cc{GapP}$ and $\cc{PP}^A=\cc{PP}$.
 These are verifier statements; nondeterministic/probabilistic oracle-machine
-characterizations and approximate-counting lowness remain separate.
+characterizations remain separate. AWPP lowness for this model is proved below.
 \citep{FennerFortnowKurtz1994,Fortnow1997,AroraBarak09}
 \declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/SharpP/Oracle.lean}{73}{Cslib.Complexity.SharpP_subset_SharpPWithOracle}
 \declat{21c83869180e7e9238477d021280352addf96e30}{Complexity/Computability/Complexity/Classes/SharpP/Oracle.lean}{78}{Cslib.Complexity.GapP_subset_GapPWithOracle}
@@ -1061,8 +1061,8 @@ amplification. The definitions follow Watson's formulation of the class
 introduced by B\"ohler--Gla{\ss}er--Meister, and Fenner's constant-error
 characterization of AWPP.\citep{BoehlerGlasserMeister2006}
 \citep[Definition 2]{Watson2012}\citep{Fenner2003}
-Counting-machine characterizations and PP-lowness remain outstanding. The following
-entries add amplification and Boolean closure.
+The native counting characterizations are proved above; AWPP PP-lowness is proved below.
+The following entries add amplification and Boolean closure.
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{82}{Cslib.Complexity.NP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{90}{Cslib.Complexity.BPP_subset_SBP}
 \declat{e903aba8b29ef85b94c453114f12d604768587a5}{Complexity/Computability/Complexity/Classes/SBP.lean}{116}{Cslib.Complexity.SBP_subset_PP}
@@ -1151,11 +1151,35 @@ majority tail bound without assuming an efficient sampler for the original GapP
 value. The constant-error characterization and error reduction are credited to
 Fenner; the factor $12$ comes from the formalized majority estimate used for BPP.
 Here GapP retains the verifier-based model, whose native machine characterization
-is proved above. PP-lowness is not established.
+is proved above. PP-lowness for the adaptive oracle-verifier model is proved below.
 \citep{Fenner2003}\citep[Section 7.4.1]{AroraBarak09}
 \declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{118}{Cslib.Complexity.AWPPAmplification.majorityPolynomial_mem}
 \declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{231}{Cslib.Complexity.AWPPAmplification.amplify}
 \declat{c7d716f413c92d69597f5f6dee1863e9cb095a68}{Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean}{260}{Cslib.Complexity.exists_AWPP_gap_errorExponent}
 
+\end{result}
+
+\begin{result}
+\subsection{AWPP is low for PP}
+For every word language $A\subseteq\{0,1\}^*$ in $\cc{AWPP}$, every instance type $X$,
+and every injective encoding $\mathrm{enc}:X\hookrightarrow\{0,1\}^*$,
+\[
+ \cc{PP}^{A}(\mathrm{enc})=\cc{PP}(\mathrm{enc}).
+\]
+Here $\cc{PP}^{A}$ is the strict-majority oracle-verifier model above: one fixed native
+machine under a polynomial clock realizes the verifier against arbitrary stateful word
+replies, while correctness uses the stateless language oracle $A$. Queries may depend on
+earlier answers. No separate probabilistic oracle-machine characterization is asserted.
+
+For $m$ witness bits and native verifier clock $T$, the construction amplifies the oracle
+weights to error $2^{-(m+T+4)}$, with a common dyadic denominator $D$ depending on the
+original input. Summing products over instruction-indexed reply transcripts and witnesses
+gives an ordinary GapP numerator $S$. If $C$ witnesses actually accept and $E=D^T$, then
+$16|S-CE|\leq E$. The GapP function $4S-(2\cdot2^m+1)E$ is positive exactly when
+$2C>2^m$; exact majority ties reject. Zero witness lengths and zero clocks are allowed.
+This is the PP-lowness theorem for AWPP.\citep{Fenner2003}
+\declat{58e1be2840acca3c0169f8b032ed9542afe3994e}{Complexity/Computability/Complexity/Classes/AWPP/Lowness.lean}{145}{Cslib.Complexity.PPWithOracle_eq_PP_of_mem_AWPP}
+\declat{58e1be2840acca3c0169f8b032ed9542afe3994e}{Complexity/Computability/Complexity/Classes/AWPP/OracleWeights.lean}{43}{Cslib.Complexity.exists_AWPP_queryWeights}
+\declat{58e1be2840acca3c0169f8b032ed9542afe3994e}{Complexity/Computability/Complexity/Classes/SharpP/WeightedReplay.lean}{63}{Cslib.Complexity.GapP.weightedReplay_mem}
 \end{result}
 

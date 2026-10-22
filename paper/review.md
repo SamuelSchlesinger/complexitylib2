@@ -33,6 +33,67 @@ were fixed in `4e9da5a9` and `11fee324`; the links were re-pinned and re-checked
 exact source lines. LaTeX was unavailable locally, so the rendered PDF must be inspected from the
 CI artifact. This records AI review, not human editorial approval.
 
+## 2026-10-22: AWPP is low for PP (#364 / PR #366)
+
+Reviewed Lean revision: `58e1be2840acca3c0169f8b032ed9542afe3994e`.
+Reviewed index and PR-head revision: `cff320b911f370292144063b5560d18649d8dd03`.
+Scope: “AWPP is low for PP” in `paper/sections/randomness.tex`, section 4.33.
+The entry states lowness for every AWPP word oracle and arbitrary injective input encoding
+in the strict adaptive oracle-verifier model. It records the common dyadic denominator,
+the aggregate error bound, rejection of exact majority ties, and the separate probabilistic
+oracle-machine characterization that remains outside the result.
+
+Independent read-only Codex reviewers `review_awpp_style` (API/style) and
+`review_awpp_foundations` (correctness and theorem-index semantics) approved these source
+and index revisions, as recorded in the PR. A stale index limitation was corrected before
+the final index review. Coordinator `coordinator-crei-dc679113` independently approved
+the mathematics and Lean sources at PR head `cff320b9` in
+[review comment 6343670967](https://github.com/cslib-community/complexitylib/pull/366#issuecomment-6343670967),
+requesting this review record and successful API-documentation evidence before merge.
+
+CI PDF provenance, checked by Codex worker `worker-awpp-review-20261022`:
+
+- [Theorem index PDF run 39769087126, attempt 2](https://github.com/cslib-community/complexitylib/actions/runs/39769087126/attempts/2),
+  [artifact 12433196414](https://github.com/cslib-community/complexitylib/actions/runs/39769087126/artifacts/12433196414).
+- Checked-out merge revision: `7954e28f09305e096f3ef1dd8ca48f81301b895f`.
+- PR head: `cff320b911f370292144063b5560d18649d8dd03`;
+  PR base: `62bbf525e2d7edce00dc8b6c79a52040223c5bed`.
+- The artifact's `provenance.json` reports clean sources and PDF SHA256
+  `c3f2ccfbf8629258cb8b8d2d4f87d9652d88969b2f9b65f917ff53c81074cd28`;
+  hashing the downloaded PDF reproduces it.
+- Visually inspected rendered page 58 of the 144-page artifact: the complete entry,
+  formulas, citation and three declaration links are readable, without clipping or overlap.
+  All three PDF URI annotations target the reviewed code revision, at `AWPP/Lowness.lean:145`,
+  `AWPP/OracleWeights.lean:43` and `SharpP/WeightedReplay.lean:63`; the published source
+  at each target contains the named declaration and matches the PR-head source.
+
+[API documentation run 39794423110](https://github.com/cslib-community/complexitylib/actions/runs/39794423110)
+succeeded at `cff320b911f370292144063b5560d18649d8dd03` on 22 October 2026.
+Documentation-pin checks, API generation, generated-documentation checks and artifact upload
+all succeeded. The evidence-record commit `504539b0fee950310d40ce1732defa6fb383cb63` changed
+only this review record. These AI reviews do not imply maintainer or human editorial approval,
+or a Lean proof of prose equivalence.
+
+### Optional review nits
+
+Worker `worker-awpp-review-20261022` also addressed all five optional nits from the coordinator's
+review: distinguish oracle-reply replay from saved-coin replay in the module documentation,
+write `replyStep_eq_answerStep` as a term, restrict the `p` unfolding to `dsimp only`, make
+the `2 ^ 4 = 16` rewrite explicit in `sum_error`, and credit Li's 1993 work alongside
+Fenner--Fortnow--Kurtz--Li and Fenner's amplification argument. The historical attribution
+was checked against Section 6.1 of *An Oracle Builder's Toolkit*, using its existing
+`FennerEtAl2003` bibliography entry.
+
+Independent read-only Codex reviewer `/root/review_awpp_nits` approved API/style, correctness
+and source credit with no findings. Reviewed base: `504539b0fee950310d40ce1732defa6fb383cb63`;
+SHA256 of `git diff --binary` against that base, restricted to `*.lean`:
+`f9307b13202b6474a9e4b884e2c8543e4158d62e4fb8b658a4a38d08aff3dc60`.
+The reviewer rechecked the final library-relative replay-module path for upstreamability.
+No public definitions, statements, hypotheses, models or bounds change, so the theorem index
+needs no prose rewrite. Its immutable declaration links still resolve at the reviewed source
+revision and original lines. This follow-up does not extend the earlier CI results to the
+changed sources; validation of this revision is recorded in its commit description.
+
 ## 2026-10-21: Client resource contracts through interface refinements (#274)
 
 Published source revision: `5d9eefc4f20726054a71df3539c2471f1c18712c`.

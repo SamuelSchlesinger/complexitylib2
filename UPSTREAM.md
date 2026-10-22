@@ -67,7 +67,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in their
   `Authors:` lines; confirm the attribution with him and submit the files with him,
   and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
-  programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
+  programs (#685, and the register word-RAM models in his Algolean repository) and the merged
+  query framework (#401), which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
   deviations from the source. The operations form a basis (`WordRAM/Basis`) over
