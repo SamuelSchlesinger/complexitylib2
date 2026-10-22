@@ -53,8 +53,6 @@ words. Summing `(if d (a, List.ofFn w) then 1 else -1)` times the word weight ov
 
 ## Main results
 
-* `Cslib.Complexity.GapP.exists_abs_le_two_pow`: every `GapP` function is bounded in absolute value
-  by `2 ^ p(|x|)` for a polynomial `p`.
 * `Cslib.Complexity.truthTable_mem_PP`: `PP` is closed under polynomial-time Boolean combinations
   of a polynomial-time unary batch of queries to an indexed `PP` family.
 * `Cslib.Complexity.PolyTimeTruthTableReducible.mem_PP`: `PP` is closed under polynomial-time
@@ -80,24 +78,6 @@ namespace Cslib.Complexity
 open Turing.MultiTapeTM Finset
 
 variable {α : Type} {enc : α ↪ List Bool}
-
-/-- Every function in `GapP` is bounded in absolute value by `2 ^ p(|x|)` for a polynomial `p`. -/
-theorem GapP.exists_abs_le_two_pow {g : α → ℤ} (hg : g ∈ GapP enc) :
-    ∃ p : Polynomial ℕ, ∀ a, |g a| ≤ (2 : ℤ) ^ p.eval (enc a).length := by
-  obtain ⟨f₁, hf₁, f₂, hf₂, h⟩ := hg
-  obtain ⟨p₁, hp₁⟩ := SharpP.exists_le_two_pow hf₁
-  obtain ⟨p₂, hp₂⟩ := SharpP.exists_le_two_pow hf₂
-  refine ⟨p₁ + p₂, fun a => ?_⟩
-  have h₁ : (f₁ a : ℤ) ≤ (2 : ℤ) ^ (p₁ + p₂).eval (enc a).length := by
-    exact_mod_cast (hp₁ a).trans (Nat.pow_le_pow_right (by omega)
-      (by simp only [Polynomial.eval_add]; omega))
-  have h₂ : (f₂ a : ℤ) ≤ (2 : ℤ) ^ (p₁ + p₂).eval (enc a).length := by
-    exact_mod_cast (hp₂ a).trans (Nat.pow_le_pow_right (by omega)
-      (by simp only [Polynomial.eval_add]; omega))
-  have hf₁_nonneg : (0 : ℤ) ≤ f₁ a := Int.natCast_nonneg _
-  have hf₂_nonneg : (0 : ℤ) ≤ f₂ a := Int.natCast_nonneg _
-  rw [h a, abs_le]
-  omega
 
 /-! ### Newman's polynomial and amplified weights -/
 
