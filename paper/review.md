@@ -114,33 +114,31 @@ documentation and were rebuilt with targeted builds. LaTeX is not installed loca
 ## 2026-10-22: Withdrawal of hollow and overclaimed results (#372 / PR #375)
 
 Coordinator `coordinator-jetski-90c7e6c8` and worker `worker-jetski-90c7e6c8-docs` (Jetski, for
-Samuel Schlesinger, by maintainer decision) withdrew results merged earlier on 2026-10-22 after
-five independent read-only audit agents and a separate holistic review found them hollow or
-overclaimed. In the theorem index, the oblivious-transfer completeness entry (#340) and the
-Regev LWE entry (#343) are deleted from `crypto.tex`. The ACC⁰ entry in `circuits.tex` (#344),
-the permanent/PIT entry in `synthesis.tex` (#341) and the Håstad entry in `completeness.tex`
-(#347) are retitled and rewritten to say that Williams's `NEXP ⊄ ACC⁰`, Kabanets–Impagliazzo and
-Håstad's MAX-E3SAT hardness are *not* proved. The uniform-`P` frontier entry (#339/#350) is
-retitled "Conditional". Links to deleted declarations are removed; the Håstad dichotomy link is
-re-pinned to `cc3bf009` because its statement changed, and all other pins are kept. The theorem-index
-entries introduced by #340, #341, #343, #344 and #347 have no `review.md` entries of their own;
-this entry records their withdrawal or rewriting. The Gentry entry (#348) is unchanged and already states the interface
-boundary.
+Samuel Schlesinger, by maintainer decision) withdrew results merged earlier on 2026-10-22 after five
+independent read-only audit agents and a separate holistic review found them hollow or overclaimed.
+In the theorem index, the oblivious-transfer completeness entry (#340) and the Regev LWE entry
+(#343) are deleted from `crypto.tex`. The ACC⁰ entry in `circuits.tex` (#344), the permanent/PIT
+entry in `synthesis.tex` (#341) and the Håstad entry in `completeness.tex` (#347) are retitled and
+rewritten to say that Williams's `NEXP ⊄ ACC⁰`, Kabanets–Impagliazzo and Håstad's MAX-E3SAT hardness
+are *not* proved. The uniform-`P` frontier entry (#339/#350) is retitled "Conditional". Links to
+deleted declarations are removed; the Håstad dichotomy link is re-pinned to `cc3bf009` because its
+statement changed, and all other pins are kept. The theorem-index entries introduced by #340, #341,
+#343, #344 and #347 have no `review.md` entries of their own; this entry records their withdrawal or
+rewriting. The Gentry entry (#348) is unchanged and already states the interface boundary.
 
-Two independent AI reviewers that did not author the change reviewed `83154d45`
-([review comment 6346010319](https://github.com/cslib-community/complexitylib/pull/375#issuecomment-6346010319)).
-`acbe3d2f` (correctness and cslib API) approved. Its non-blocking findings were a stale Håstad
-test docstring and the `≈ 4.5624977` notation, both fixed in `e9cb03bf`/`fbf95767`, and pointers
-to the pre-withdrawal SHA `62bbf525`, added in ROADMAP. Possibly unused `IdentityTesting.lean`
-imports were left as a follow-up (listed in #381, now covered by #390); the cosmetic
-`Inclusions.lean` prose was left as an untracked follow-up. `67f11a80` (theorem index and
-documentation) approved. It verified every `\declat` link at its pin, including the Håstad
-dichotomy at `cc3bf009` line 1207, and checked that no withdrawn result is still claimed in
-`paper/`, `README.md` or `ROADMAP.md`. Its findings were applied before merge: the "folded Long
-Code tables" wording, the Håstad title, and the "Conditional" frontier titles. The delta to the
-merged head `fbf95767` contains only these fixes. The coordinator integrated the PR with a merge
-commit, so `cc3bf009` stays reachable
-([integration note](https://github.com/cslib-community/complexitylib/pull/375#issuecomment-6347215382)).
+Two independent AI reviewers that did not author the change reviewed `83154d45` ([review comment
+6346010319](https://github.com/cslib-community/complexitylib/pull/375#issuecomment-6346010319)).
+`acbe3d2f` (correctness and cslib API) approved. Its non-blocking findings were a stale Håstad test
+docstring and the `≈ 4.5624977` notation, both fixed in `e9cb03bf`/`fbf95767`, and pointers to the
+pre-withdrawal SHA `62bbf525`, added in ROADMAP. Possibly unused `IdentityTesting.lean` imports were
+left as a follow-up (listed in #381, now covered by #390); the cosmetic `Inclusions.lean` prose was
+left as an untracked follow-up. `67f11a80` (theorem index and documentation) approved. It verified
+every `\declat` link at its pin, including the Håstad dichotomy at `cc3bf009` line 1207, and checked
+that no withdrawn result is still claimed in `paper/`, `README.md` or `ROADMAP.md`. Its findings
+were applied before merge: the "folded Long Code tables" wording, the Håstad title, and the
+"Conditional" frontier titles. The delta to the merged head `fbf95767` contains only these fixes.
+The coordinator integrated the PR with a merge commit, so `cc3bf009` stays reachable ([integration
+note](https://github.com/cslib-community/complexitylib/pull/375#issuecomment-6347215382)).
 
 CI PDF provenance, inspected by `coordinator-jetski-90c7e6c8`: run
 [39815565810](https://github.com/cslib-community/complexitylib/actions/runs/39815565810),
@@ -163,15 +161,16 @@ optimality of `universal`. The prose states finite inhabited alphabet, inhabited
 store hypotheses, and that reverse multi-tape-to-single-tape simulation, prefix-free complexity
 and multi-tape-to-single-tape time-bounded transfer are not formalized.
 
-The PR body records independent subagent reviews: correctness `d93d2e32` and API/style
-`7fb754d2` (both approved; docstring nits fixed in `b7c39947`), and a theorem-index review
-`0e8b1992` of `structure.tex` (initial review at `e68b7190`, re-review at `b7c39947`). That review
-found a subscript typo, a duplicate `whenever` clause, and imprecise alphabet, state/store,
-`toTM1`/`toTM0` and quantifier wording. All of them (the PR body counts five) were fixed in `6f82f255`, the 44 links were
-verified, and the re-review approved. Coordinator `agy-coordinator-e5f10553` approved with
-reviewer `2683ca0d` at `6f82f255` and head `a90687f0` (entry split, equation wrap, merge of
-`main`) in [comment 6334347036](https://github.com/cslib-community/complexitylib/pull/345#issuecomment-6334347036).
-It records Theorem index PDF run `39733205950` (source `d26e697b`, PR head `a90687f0`, PDF SHA256
+The PR body records independent subagent reviews: correctness `d93d2e32` and API/style `7fb754d2`
+(both approved; docstring nits fixed in `b7c39947`), and a theorem-index review `0e8b1992` of
+`structure.tex` (initial review at `e68b7190`, re-review at `b7c39947`). That review found a
+subscript typo, a duplicate `whenever` clause, and imprecise alphabet, state/store, `toTM1`/`toTM0`
+and quantifier wording. All of them (the PR body counts five) were fixed in `6f82f255`, the 44 links
+were verified, and the re-review approved. Coordinator `agy-coordinator-e5f10553` approved with
+reviewer `2683ca0d` at `6f82f255` and head `a90687f0` (entry split, equation wrap, merge of `main`)
+in [comment
+6334347036](https://github.com/cslib-community/complexitylib/pull/345#issuecomment-6334347036). It
+records Theorem index PDF run `39733205950` (source `d26e697b`, PR head `a90687f0`, PDF SHA256
 `d825e097755bd9638253b94dacae16f27e8ada3c232e8db127ead798ec9d613d`), with rendered pages 27–29
 inspected; no artifact ID is recorded. The comment names `paper/sections/models.tex` and module
 names that differ from the merged diff (`structure.tex`). Backfilled on 2026-10-22 by
@@ -196,9 +195,9 @@ The PR records three independent AI reviews of `2586065d`: style/API
 (`ec7e2a56-0330-4909-8fc4-5019e22ef3d2`) checked all 28 links, quantifiers, models and bounds. It
 requested three changes: pin links at `2586065d`, define `A_d` inline, and state the finite
 commutative monoid `T` with capacity `β(n) = o(n)`. All three were fixed in `089c076c` and approved
-on re-check. Coordinator `agy-coordinator-e5f10553` approved in
-[comment 6334321748](https://github.com/cslib-community/complexitylib/pull/350#issuecomment-6334321748),
-with independent reviewer `47325b9f-8cd0-4db4-9d06-0b0a07003e2b`, at `089c076c` (full Lean and index
+on re-check. Coordinator `agy-coordinator-e5f10553` approved in [comment
+6334321748](https://github.com/cslib-community/complexitylib/pull/350#issuecomment-6334321748), with
+independent reviewer `47325b9f-8cd0-4db4-9d06-0b0a07003e2b`, at `089c076c` (full Lean and index
 review) and head `c7b02b44` (layout split into Entries 6.19 and 6.20, merge of `main`). The comment
 records Theorem index PDF run `39732739073` (source `f72ab6ab`, PR head `c7b02b44`, PDF SHA256
 `561fc322190ac5d3181e49e58c09a1d12881008c4a83a0244f12f65bb9b9b7db`); rendered pages 67–68 were
@@ -223,14 +222,14 @@ correctness review found no issues. All three API findings (moving the PMF dista
 `ec7e2a56-0330-4909-8fc4-5019e22ef3d2` checked `circuits.tex` against `7ec92e6d` and found no
 issues: quantifiers, hypotheses, models, bounds, limitations and all 12 links. Coordinator
 `agy-coordinator-e5f10553` approved head `8b3edf57`, with reviewer
-`031528e0-8785-4498-b4f3-a494411d50c0`, in
-[comment 6333775653](https://github.com/cslib-community/complexitylib/pull/339#issuecomment-6333775653).
-That comment records PDF run
-[39726538132](https://github.com/cslib-community/complexitylib/actions/runs/39726538132),
-artifact `theorem-index-e68f7d3c…-1`, source `e68f7d3c`, PR head `8b3edf57`, PDF SHA256
-`37858275b8fc83d06aac4fbd6fa5d60c10c24dd9adaaae08215ad377e2bf7070`. The coordinator visually
-checked page 63 and found all 12 link annotations targeting `7ec92e6d`. Backfilled on 2026-10-22
-by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
+`031528e0-8785-4498-b4f3-a494411d50c0`, in [comment
+6333775653](https://github.com/cslib-community/complexitylib/pull/339#issuecomment-6333775653). That
+comment records PDF run
+[39726538132](https://github.com/cslib-community/complexitylib/actions/runs/39726538132), artifact
+`theorem-index-e68f7d3c…-1`, source `e68f7d3c`, PR head `8b3edf57`, PDF SHA256
+`37858275b8fc83d06aac4fbd6fa5d60c10c24dd9adaaae08215ad377e2bf7070`. The coordinator visually checked
+page 63 and found all 12 link annotations targeting `7ec92e6d`. Backfilled on 2026-10-22 by
+`worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
 approval.
 
 ## 2026-10-22: Semifilter covers and De Morgan circuit size (#334 / PR #336)
@@ -245,41 +244,42 @@ unrestricted semifilters. It also says the bound on `C(f)` depends on `n`, is cu
 
 The PR records three reviews by separate, edit-free Claude Opus 5.5 subagents: correctness and
 cslib-style API reviews of `4746ce93`, whose findings (including overstated "polynomially
-equivalent" wording) were resolved in `46bde484`, and a fresh fix and theorem-index review
-of `7a745a18`. That review found an unproved "not in ρ(f) alone" claim and a missing link for
-`pairCoverComplexity_le_two_mul_complexity`, both resolved in `213783db`. It also checked
-every link against `46bde484` and every bib key. Coordinator `agy-coordinator-e5f10553` approved
-head `213783db` with independent reviewer `agy-reviewer-subagent-1e7a7626`
-([comment 6333204109](https://github.com/cslib-community/complexitylib/pull/336#issuecomment-6333204109)).
-The coordinator inspected PDF run 39725680620 (source `76e43681`, PR head `213783db`, PDF
-SHA256 `0b3359f9…`): page 74, entry 6.26, all six links matching the Lean declarations.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+equivalent" wording) were resolved in `46bde484`, and a fresh fix and theorem-index review of
+`7a745a18`. That review found an unproved "not in ρ(f) alone" claim and a missing link for
+`pairCoverComplexity_le_two_mul_complexity`, both resolved in `213783db`. It also checked every link
+against `46bde484` and every bib key. Coordinator `agy-coordinator-e5f10553` approved head
+`213783db` with independent reviewer `agy-reviewer-subagent-1e7a7626` ([comment
+6333204109](https://github.com/cslib-community/complexitylib/pull/336#issuecomment-6333204109)). The
+coordinator inspected PDF run 39725680620 (source `76e43681`, PR head `213783db`, PDF SHA256
+`0b3359f9…`): page 74, entry 6.26, all six links matching the Lean declarations. Backfilled on
+2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human
+editorial approval.
 
 ## 2026-10-22: Ordered first-order reductions are logspace reductions (PR #312)
 
 Main session `claude-opus-5-5-48cb80c1` (Claude (Opus 5.5), with Claude subagents as workers and
-reviewers; milestones 1 and 2 of #309) adds the `paper/sections/structure.tex` entry "Ordered first-order reductions are
-logspace reductions", with 20 declaration links pinned at `834487c03e8b5c978728c85dc4d45266f4a5408a`.
-It also rewrites the full-tuple transducer and order-free interpretation entries around the shared
-domain-counting transducer, re-pinning their links to `834487c0`, and fixes the stale
-"restricted-domain … remain open" sentence in the preceding entry. The prose states admissibility
-(`m ≥ 2`) as a library convention, that certificates are supplied rather than derived, and that
-only lexicographic image orders and relational targets are covered, excluding projections and
-completeness.
+reviewers; milestones 1 and 2 of #309) adds the `paper/sections/structure.tex` entry "Ordered
+first-order reductions are logspace reductions", with 20 declaration links pinned at
+`834487c03e8b5c978728c85dc4d45266f4a5408a`. It also rewrites the full-tuple transducer and
+order-free interpretation entries around the shared domain-counting transducer, re-pinning their
+links to `834487c0`, and fixes the stale "restricted-domain … remain open" sentence in the preceding
+entry. The prose states admissibility (`m ≥ 2`) as a library convention, that certificates are
+supplied rather than derived, and that only lexicographic image orders and relational targets are
+covered, excluding projections and completeness.
 
-At `d3840a07`, unnamed independent AI subagents approved correctness and API/style with nits
-(fixed or documented). The theorem-index reviewer requested prose changes (31/31 links OK): a stale
+At `d3840a07`, unnamed independent AI subagents approved correctness and API/style with nits (fixed
+or documented). The theorem-index reviewer requested prose changes (31/31 links OK): a stale
 neighbouring disclaimer, the certificate-scope sentence and a fixed-interpretation caveat. The PR
 body says these were fixed in the fix batch `5e78416e` and that a re-review of that batch was
-stopped before reporting, so the prose fixes rest on the author's account; the later approval
-below checked the links, not these prose changes. Reviewer `ea300e14-88c3-47b1-86e6-7f52e0fee39f` (research subagent, coordinator
-`agy-coordinator-b99e4a87`) then approved source `834487c0` and head `5e78416e` in
-[comment 6331708147](https://github.com/cslib-community/complexitylib/pull/312#issuecomment-6331708147).
-The review covered API/style and correctness, and checked all 28 `structure.tex` links against
+stopped before reporting, so the prose fixes rest on the author's account; the later approval below
+checked the links, not these prose changes. Reviewer `ea300e14-88c3-47b1-86e6-7f52e0fee39f`
+(research subagent, coordinator `agy-coordinator-b99e4a87`) then approved source `834487c0` and head
+`5e78416e` in [comment
+6331708147](https://github.com/cslib-community/complexitylib/pull/312#issuecomment-6331708147). The
+review covered API/style and correctness, and checked all 28 `structure.tex` links against
 `834487c0`. The author built the paper locally (pages 19–21); no CI PDF artifact or provenance is
-recorded. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+recorded. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this
+records AI review, not human editorial approval.
 
 ## 2026-10-22: Native van Emde Boas set operations on the word RAM (#273 / PR #313)
 
@@ -294,17 +294,17 @@ predecessor are not implemented. Sixteen links are pinned at source commit `c48d
 (`Init.lean`, `Call.lean`). The `Model.lean:125` link stays at `c4de62e6`. The index commit is
 the PR head, `bb7b987c`.
 
-The PR records one review in
-[comment 6331659911](https://github.com/cslib-community/complexitylib/pull/313#issuecomment-6331659911),
-posted from the shared account. Reviewer session `b74d5b21-b22a-41b8-8514-41d708ce0ebc`
-(`research` subagent) wrote it as an "Independent Review Report" and approved. It names
-coordinator session `agy-coordinator-b99e4a87`. It reviewed `c48d7153` and `bb7b987c` for
-cslib API/style, correctness and non-vacuity. For the theorem index, the report states only that
-all 17 `\declat` links match the exact paths, lines and declaration names. It records no check of
-the prose's quantifiers, hypotheses or bounds, and no findings or resolutions. The PR lists a
-local `python3 scripts/build_paper.py` run under validation. No CI PDF artifact or rendered-page
-inspection is recorded. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record
-(#381); this records AI review, not human editorial approval.
+The PR records one review in [comment
+6331659911](https://github.com/cslib-community/complexitylib/pull/313#issuecomment-6331659911),
+posted from the shared account. Reviewer session `b74d5b21-b22a-41b8-8514-41d708ce0ebc` (`research`
+subagent) wrote it as an "Independent Review Report" and approved. It names coordinator session
+`agy-coordinator-b99e4a87`. It reviewed `c48d7153` and `bb7b987c` for cslib API/style, correctness
+and non-vacuity. For the theorem index, the report states only that all 17 `\declat` links match the
+exact paths, lines and declaration names. It records no check of the prose's quantifiers, hypotheses
+or bounds, and no findings or resolutions. The PR lists a local `python3 scripts/build_paper.py` run
+under validation. No CI PDF artifact or rendered-page inspection is recorded. Backfilled on
+2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human
+editorial approval.
 
 ## 2026-10-22: Whole-run generic-RAM simulation and certificate transport (#292 / PR #311)
 
@@ -320,16 +320,16 @@ native multitape TM certificates, with word-RAM specializations. It keeps config
 selection and the trajectory length bound as caller hypotheses and claims no universal
 variable-program interpreter. The index text is in commit `92e5b496` (PR head).
 
-One review is recorded in
-[comment 6331087484](https://github.com/cslib-community/complexitylib/pull/311#issuecomment-6331087484).
-Its reviewer is `research` subagent session `9ce9b544-65ac-4a4f-b3c8-3b83f8053ac1`, and it
-lists coordinator session `agy-coordinator-b99e4a87`. The review covered source `5349b55a`
-and index commit `92e5b496` and approved, with no findings recorded. It covered cslib
-API/style, correctness and non-vacuity, and the theorem index. For the index, it checked all
-16 links against `5349b55a` (path, line, name) and judged the prose and scope limits accurate.
-The PR records no theorem-index PDF artifact or CI provenance, and no rendered-page check.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+One review is recorded in [comment
+6331087484](https://github.com/cslib-community/complexitylib/pull/311#issuecomment-6331087484). Its
+reviewer is `research` subagent session `9ce9b544-65ac-4a4f-b3c8-3b83f8053ac1`, and it lists
+coordinator session `agy-coordinator-b99e4a87`. The review covered source `5349b55a` and index
+commit `92e5b496` and approved, with no findings recorded. It covered cslib API/style, correctness
+and non-vacuity, and the theorem index. For the index, it checked all 16 links against `5349b55a`
+(path, line, name) and judged the prose and scope limits accurate. The PR records no theorem-index
+PDF artifact or CI provenance, and no rendered-page check. Backfilled on 2026-10-22 by
+`worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
+approval.
 
 ## 2026-10-22: Word-RAM doubling arrays (#160 / PR #310)
 
@@ -347,85 +347,86 @@ worker `6af1a6ac-54e0-44a9-8f47-e8985b0e86b2` completed it under coordinator
 
 Independent `research` subagent `d72f7fb3-7779-49dc-a06c-d83f06af2e89` approved the Lean sources,
 tests and `ROADMAP.md` at `992832d5`, and the index at PR head `0bf9852a`. It passed cslib
-API/style, correctness and non-vacuity, and theorem-index parity, and checked all eight pins
-against `992832d5`. It recorded no findings. Its report was posted in
-[comment 6330678781](https://github.com/cslib-community/complexitylib/pull/310#issuecomment-6330678781)
-from the shared `SamuelSchlesinger` account. The PR records no separate coordinator verdict. The Theorem index PDF CI run 39707489275
-succeeded at head `0bf9852a`, but the PR records no inspection of its artifact or rendered pages. Backfilled on 2026-10-22 by
-`worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
-approval.
+API/style, correctness and non-vacuity, and theorem-index parity, and checked all eight pins against
+`992832d5`. It recorded no findings. Its report was posted in [comment
+6330678781](https://github.com/cslib-community/complexitylib/pull/310#issuecomment-6330678781) from
+the shared `SamuelSchlesinger` account. The PR records no separate coordinator verdict. The Theorem
+index PDF CI run 39707489275 succeeded at head `0bf9852a`, but the PR records no inspection of its
+artifact or rendered pages. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record
+(#381); this records AI review, not human editorial approval.
 
 ## 2026-10-22: Polynomial-time rational hitting-list generator (#201 / PR #308)
 
 Google Antigravity worker `8583d3ab-5631-41b6-acf5-9118b0d39efa` (under coordinator
-`agy-coordinator-b99e4a87`) adds the entry "Polynomial-time rational matrix hitting-list
-generator" to `paper/sections/synthesis.tex`. It has 33 declaration links pinned at `9901fecb`.
-The entry states the hitting property, the dimension and encoding-length bounds, and the
-parameter, lift-table, Cramer and grid stages. It also states that the standalone
-generator is computable tidily in polynomial time on a multi-tape Turing machine (per the PR body
-and the Lean theorem, `hittingGenerator : List Bool → List Bool` from `encBits` to `encBits`). Its stated limitation is that polynomial bit complexity of evaluating a formula on
-the emitted matrices is not asserted. The "remains open" and "remains separate" sentences in the
-determinant-stage and rational-encoding entries now point to the new entry.
+`agy-coordinator-b99e4a87`) adds the entry "Polynomial-time rational matrix hitting-list generator"
+to `paper/sections/synthesis.tex`. It has 33 declaration links pinned at `9901fecb`. The entry
+states the hitting property, the dimension and encoding-length bounds, and the parameter,
+lift-table, Cramer and grid stages. It also states that the standalone generator is computable
+tidily in polynomial time on a multi-tape Turing machine (per the PR body and the Lean theorem,
+`hittingGenerator : List Bool → List Bool` from `encBits` to `encBits`). Its stated limitation is
+that polynomial bit complexity of evaluating a formula on the emitted matrices is not asserted. The
+"remains open" and "remains separate" sentences in the determinant-stage and rational-encoding
+entries now point to the new entry.
 
-The PR records one independent reviewer, `research` subagent
-`0075a653-f49b-4475-a801-0d730c582e84`. It reviewed the Lean sources and tests at `9901fecb`,
-and the roadmap and theorem index at `05f6a11f` (the PR head). Its verdict was APPROVE, with
-PASS on cslib API/style, mathematical correctness and non-vacuity, and theorem-index parity. It
-reported no findings and verified the `\declat` pins against `9901fecb`. The report is in
-[comment 6330641156](https://github.com/cslib-community/complexitylib/pull/308#issuecomment-6330641156).
-No separate coordinator approval is recorded. The Theorem index PDF CI run 39707258917 succeeded
-at head `05f6a11f`, but no inspection of its artifact is recorded. Backfilled on
-2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not
-human editorial approval.
+The PR records one independent reviewer, `research` subagent `0075a653-f49b-4475-a801-0d730c582e84`.
+It reviewed the Lean sources and tests at `9901fecb`, and the roadmap and theorem index at
+`05f6a11f` (the PR head). Its verdict was APPROVE, with PASS on cslib API/style, mathematical
+correctness and non-vacuity, and theorem-index parity. It reported no findings and verified the
+`\declat` pins against `9901fecb`. The report is in [comment
+6330641156](https://github.com/cslib-community/complexitylib/pull/308#issuecomment-6330641156). No
+separate coordinator approval is recorded. The Theorem index PDF CI run 39707258917 succeeded at
+head `05f6a11f`, but no inspection of its artifact is recorded. Backfilled on 2026-10-22 by
+`worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
+approval.
 
 ## 2026-10-22: Certified encoded steps for fixed generic-RAM programs (#298 / PR #307)
 
 The PR adds the entry "Certified encoded steps for fixed generic-RAM programs" to
-`paper/sections/query.tex`, with twelve declaration links pinned at `ead23ddb44ccb64c4c5796a0e19c275aaac714b7`
-(`GenericRAM/Simulation/Finite.lean`, `GenericRAM/Simulation/Turing.lean`, `BigO/Sum.lean`).
-The entry states that the finite-state step agrees exactly with `M`'s step, gives the framed
-encoding-length bound, and says each fixed program has a tidy native multitape TM certificate.
-Primitive and sparse-memory costs stay as parameters. The prose says that no universal
-interpreter for variable programs is claimed. It also leaves input initialization, output
-decoding, clocked iteration, word-width selection and whole-run transport as separate work.
-OpenAI Codex workers `worker-stateful-classics-20261021` (`f1f9b6e1`) and
+`paper/sections/query.tex`, with twelve declaration links pinned at
+`ead23ddb44ccb64c4c5796a0e19c275aaac714b7` (`GenericRAM/Simulation/Finite.lean`,
+`GenericRAM/Simulation/Turing.lean`, `BigO/Sum.lean`). The entry states that the finite-state step
+agrees exactly with `M`'s step, gives the framed encoding-length bound, and says each fixed program
+has a tidy native multitape TM certificate. Primitive and sparse-memory costs stay as parameters.
+The prose says that no universal interpreter for variable programs is claimed. It also leaves input
+initialization, output decoding, clocked iteration, word-width selection and whole-run transport as
+separate work. OpenAI Codex workers `worker-stateful-classics-20261021` (`f1f9b6e1`) and
 `worker-native-step-20261021` wrote it. Google Antigravity worker
-`3d6e71a5-59b4-4b8b-811a-3d4048ee1042` completed and validated it (`ead23ddb` / `9d3f4e47`),
-working under coordinator `agy-coordinator-b99e4a87`.
+`3d6e71a5-59b4-4b8b-811a-3d4048ee1042` completed and validated it (`ead23ddb` / `9d3f4e47`), working
+under coordinator `agy-coordinator-b99e4a87`.
 
-Independent `research` subagent `86ddbaef-91ff-4a0b-b90f-7113ad52b9c0` reviewed the Lean
-sources and tests at `ead23ddb` and the roadmap and index at `9d3f4e47` (PR head). It covered
-cslib API/style, correctness and non-vacuity, and theorem-index parity, and approved in
-[comment 6330244350](https://github.com/cslib-community/complexitylib/pull/307#issuecomment-6330244350).
-It re-reviewed the index after fixes to the `FiniteState` 4-tuple description and the
+Independent `research` subagent `86ddbaef-91ff-4a0b-b90f-7113ad52b9c0` reviewed the Lean sources and
+tests at `ead23ddb` and the roadmap and index at `9d3f4e47` (PR head). It covered cslib API/style,
+correctness and non-vacuity, and theorem-index parity, and approved in [comment
+6330244350](https://github.com/cslib-community/complexitylib/pull/307#issuecomment-6330244350). It
+re-reviewed the index after fixes to the `FiniteState` 4-tuple description and the
 `length_encoding_le` formula, and checked all 12 `\declat` pins. The PR records no separate
 coordinator approval, and no PDF/CI artifact provenance. Backfilled on 2026-10-22 by
-`worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human
-editorial approval.
+`worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
+approval.
 
 ## 2026-10-22: Fixed-program van Emde Boas membership on the word RAM (#302 / PR #306)
 
 OpenAI Codex worker `codex-veb-273-20261021-1949` (Lean `c4de62e6`, index `10f41219`), preserving
 prototype contributions by `/root/veb_273/veb_layout` and `/root/veb_273/veb_ram_plan`, adds the
 entry "Fixed-program van Emde Boas membership on the word RAM" to `paper/sections/query.tex`;
-coordinator `agy-coordinator-b99e4a87` integrated it onto `main` at `a8b00acd`. The entry states
-a fixed 32-register standard unsigned word-RAM program (213 compiled instructions) answering
+coordinator `agy-coordinator-b99e4a87` integrated it onto `main` at `a8b00acd`. The entry states a
+fixed 32-register standard unsigned word-RAM program (213 compiled instructions) answering
 membership within `28(d+1)+18` instructions, preserving memory and root, with stale extrema and
 arbitrary bounded surrounding memory. It records as uncharged or open: represented-memory
 construction, argument delivery/result decoding, a space/stack bound, an adaptive client, and
-insertion/strict-successor correctness. Four links are pinned at `c4de62e616a2a5859a089f60b0aa8c2546b7638b`
-(`Call.lean` lines 98/123/138, `Model.lean` line 125).
+insertion/strict-successor correctness. Four links are pinned at
+`c4de62e616a2a5859a089f60b0aa8c2546b7638b` (`Call.lean` lines 98/123/138, `Model.lean` line 125).
 
 Independent reviewer subagent `1ce2e5b0-36e4-4573-80c0-12c1c5dde0e3` (`research`) reviewed
-`c4de62e6` / `10f41219` for cslib API/style, correctness and non-vacuity, and theorem-index
-parity, and approved in
-[comment 6329884332](https://github.com/cslib-community/complexitylib/pull/306#issuecomment-6329884332).
-It found the prose accurate on quantifiers, model, exact bound, assumptions and limitations, and
-all four links matching the exact lines; it recorded no findings. The integration commit
-`a8b00acd` merges `main` and, beyond that, changes only `ROADMAP.md` URLs. The Theorem index PDF
-CI run 39701451685 succeeded at that head, but no inspection of its artifact is recorded.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+`c4de62e6` / `10f41219` for cslib API/style, correctness and non-vacuity, and theorem-index parity,
+and approved in [comment
+6329884332](https://github.com/cslib-community/complexitylib/pull/306#issuecomment-6329884332). It
+found the prose accurate on quantifiers, model, exact bound, assumptions and limitations, and all
+four links matching the exact lines; it recorded no findings. The integration commit `a8b00acd`
+merges `main` and, beyond that, changes only `ROADMAP.md` URLs. The Theorem index PDF CI run
+39701451685 succeeded at that head, but no inspection of its artifact is recorded. Backfilled on
+2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human
+editorial approval.
 
 ## 2026-10-21: Subbotovskaya shrinkage and Andreev's formula lower bound (#268 / PR #286)
 
@@ -439,24 +440,23 @@ explicit only because its truth table is part of the input, while the hard `b`-b
 the proof comes existentially from Shannon counting. Review fixes came from worker subagent
 `723f3e35` (continuing recovery work `agy-subbotovskaya-recovery-20261021-2228`).
 
-The author's independent subagent `agy-worker-b24933fa/review-268` (`4d8a0023`) reviewed
-`ad6af114` and `491c1653`: API/style passed with one module-docstring nit (fixed in
-`491c1653`); correctness and theorem-index review passed with no issues, checking quantifiers,
-bounds, limitations and all seven links. Coordinator `agy-coordinator-d55a006b`, with
-independent subagents `9157150e` (API/placement) and `6fb68dfb` (correctness and index), then
-requested changes at `491c1653`
-([comment 6324334296](https://github.com/cslib-community/complexitylib/pull/286#issuecomment-6324334296)),
+The author's independent subagent `agy-worker-b24933fa/review-268` (`4d8a0023`) reviewed `ad6af114`
+and `491c1653`: API/style passed with one module-docstring nit (fixed in `491c1653`); correctness
+and theorem-index review passed with no issues, checking quantifiers, bounds, limitations and all
+seven links. Coordinator `agy-coordinator-d55a006b`, with independent subagents `9157150e`
+(API/placement) and `6fb68dfb` (correctness and index), then requested changes at `491c1653`
+([comment
+6324334296](https://github.com/cslib-community/complexitylib/pull/286#issuecomment-6324334296)),
 including the missing truncation-at-0 caveats in the index, the main merge conflict and link
 re-pinning, and moving `PartialAssignment` and leaf-size lemmas to shared modules. Coordinator
-`agy-coordinator-b99e4a87` and independent re-reviewer `agy-reviewer-pr286-20261021`
-(`9bcb1cfd`) approved head `6dbe675e` (Lean `41d3ef2c`)
-([comment 6328441065](https://github.com/cslib-community/complexitylib/pull/286#issuecomment-6328441065)),
-listing resolutions for the earlier findings: the index now states both truncations and all seven links are
-re-pinned to `41d3ef2c` with checked line numbers. The author ran `scripts/build_paper.py`
-locally. The Theorem index PDF CI run 39690369346 succeeded at head `6dbe675e`, but no inspection
-of its artifact or rendered pages is recorded.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI
-review, not human editorial approval.
+`agy-coordinator-b99e4a87` and independent re-reviewer `agy-reviewer-pr286-20261021` (`9bcb1cfd`)
+approved head `6dbe675e` (Lean `41d3ef2c`) ([comment
+6328441065](https://github.com/cslib-community/complexitylib/pull/286#issuecomment-6328441065)),
+listing resolutions for the earlier findings: the index now states both truncations and all seven
+links are re-pinned to `41d3ef2c` with checked line numbers. The author ran `scripts/build_paper.py`
+locally. The Theorem index PDF CI run 39690369346 succeeded at head `6dbe675e`, but no inspection of
+its artifact or rendered pages is recorded. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae`
+from the PR record (#381); this records AI review, not human editorial approval.
 
 ## 2026-10-21: MOD_q gates in TC and threshold gates in NC^1 (#269 / PR #285)
 
@@ -470,17 +470,17 @@ is not covered. Its 25 declaration links are pinned at `5c7a9990`.
 The author's review subagent `agy-worker-b24933fa/review-269` reviewed `28552bfd` and `0df188f8`
 (style/API, correctness, theorem index) with no issues except unpinned `\decl` links, fixed in
 `0df188f8`. Coordinator `agy-coordinator-d55a006b` and independent subagent `c25e9fce` requested
-changes at head `0df188f8` (Lean `28552bfd`) in
-[comment 6324473636](https://github.com/cslib-community/complexitylib/pull/285#issuecomment-6324473636).
-They verified the bounds and the 25 anchors, but found misplaced test guards, a duplicate XOR
-formula, bit-string helpers outside `Cslib.BitString`, and API/import problems, and asked for
-re-pinned anchors. Coordinator `agy-coordinator-b99e4a87` and independent re-reviewer
-`agy-reviewer-pr285-20261021` approved head `682b0a72` (Lean `5c7a9990`) in
-[comment 6328533529](https://github.com/cslib-community/complexitylib/pull/285#issuecomment-6328533529),
-recording every finding as resolved and the anchors re-pinned with checked line numbers. No CI
-PDF artifact provenance is recorded; the PR reports only a local `python3 scripts/build_paper.py`
-run. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+changes at head `0df188f8` (Lean `28552bfd`) in [comment
+6324473636](https://github.com/cslib-community/complexitylib/pull/285#issuecomment-6324473636). They
+verified the bounds and the 25 anchors, but found misplaced test guards, a duplicate XOR formula,
+bit-string helpers outside `Cslib.BitString`, and API/import problems, and asked for re-pinned
+anchors. Coordinator `agy-coordinator-b99e4a87` and independent re-reviewer
+`agy-reviewer-pr285-20261021` approved head `682b0a72` (Lean `5c7a9990`) in [comment
+6328533529](https://github.com/cslib-community/complexitylib/pull/285#issuecomment-6328533529),
+recording every finding as resolved and the anchors re-pinned with checked line numbers. No CI PDF
+artifact provenance is recorded; the PR reports only a local `python3 scripts/build_paper.py` run.
+Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI
+review, not human editorial approval.
 
 ## 2026-10-21: Native bounds for fixed tuples and option branches (#301 / PR #304)
 
@@ -495,16 +495,19 @@ simulator and whole-run theorem transport remain separate work.
 
 Independent reviewer `controller_review / codex-coordinator-20261021-2200` approved API,
 correctness, tests and theorem-index content at source `798d9514` and exact head `0a70be7e`
-([comment 6327631484](https://github.com/cslib-community/complexitylib/pull/304#issuecomment-6327631484)).
-Its sole finding, in a test-file header, was fixed and rechecked. A local rendering review checked
-page 84 of the 116-page PDF and all six annotations. Coordinator `agy-coordinator-b99e4a87`
-inspected the CI artifact ([comment 6328104218](https://github.com/cslib-community/complexitylib/pull/304#issuecomment-6328104218)):
-[Theorem index PDF run 39682036237](https://github.com/cslib-community/complexitylib/actions/runs/39682036237),
-synthetic merge `b53dace8`, `source_dirty = false`, PR head `0a70be7e`, base `b235d43c`, PDF
-SHA256 `8ace530b4cded53473dfaf1c5e36a9172f230fe0280b217663978368572e921b` (checked against
-the download). The coordinator viewed page 84 and checked all six URI annotations against
-`798d9514`. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+([comment
+6327631484](https://github.com/cslib-community/complexitylib/pull/304#issuecomment-6327631484)). Its
+sole finding, in a test-file header, was fixed and rechecked. A local rendering review checked page
+84 of the 116-page PDF and all six annotations. Coordinator `agy-coordinator-b99e4a87` inspected the
+CI artifact ([comment
+6328104218](https://github.com/cslib-community/complexitylib/pull/304#issuecomment-6328104218)):
+[Theorem index PDF run
+39682036237](https://github.com/cslib-community/complexitylib/actions/runs/39682036237), synthetic
+merge `b53dace8`, `source_dirty = false`, PR head `0a70be7e`, base `b235d43c`, PDF SHA256
+`8ace530b4cded53473dfaf1c5e36a9172f230fe0280b217663978368572e921b` (checked against the download).
+The coordinator viewed page 84 and checked all six URI annotations against `798d9514`. Backfilled on
+2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human
+editorial approval.
 
 ## 2026-10-21: Encoded sparse memory on native multitape machines (#293 / PR #299)
 
@@ -522,14 +525,14 @@ index semantics at source `33579ebf` and documentation-only PR head `584a4001`, 
 documentation findings (asymptotic rather than exact bounds; dependence on encoded address length,
 not magnitude) were resolved; it inspected local page 82 and all seven links. Coordinator
 `codex-coordinator-20261021-1949` with nonauthor `/root/review_288` approved `584a4001` for source
-and index statements/links with no findings
-([comment 6326855292](https://github.com/cslib-community/complexitylib/pull/299#issuecomment-6326855292)).
-`controller_review / codex-coordinator-20261021-2200` approved CI artifact `12382706420` of
-[run 39676209285](https://github.com/cslib-community/complexitylib/actions/runs/39676209285)
-(merge `f4cb7021`, base `7ebefd57`, head `584a4001`; 115-page PDF SHA256 `0f5c69bd3e11dac9...`,
-matching provenance): page 82 clean, all URI annotations at `33579ebf`
-([comment 6327632872](https://github.com/cslib-community/complexitylib/pull/299#issuecomment-6327632872)).
-It also approved a combined tree with #303 (`552ef833`, index block byte-unchanged) and asked for
+and index statements/links with no findings ([comment
+6326855292](https://github.com/cslib-community/complexitylib/pull/299#issuecomment-6326855292)).
+`controller_review / codex-coordinator-20261021-2200` approved CI artifact `12382706420` of [run
+39676209285](https://github.com/cslib-community/complexitylib/actions/runs/39676209285) (merge
+`f4cb7021`, base `7ebefd57`, head `584a4001`; 115-page PDF SHA256 `0f5c69bd3e11dac9...`, matching
+provenance): page 82 clean, all URI annotations at `33579ebf` ([comment
+6327632872](https://github.com/cslib-community/complexitylib/pull/299#issuecomment-6327632872)). It
+also approved a combined tree with #303 (`552ef833`, index block byte-unchanged) and asked for
 refreshed-head CI evidence before integration; the PR records none. Backfilled on 2026-10-22 by
 `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
 approval.
@@ -546,20 +549,19 @@ No explicit degree is claimed. OpenAI Codex authored it; the PR gives no author 
 All five links pin `0e4ef81e` (`Native.lean` 116/88/185, `Native/Nat.lean` 131,
 `WordRAM/Native.lean` 48). Final head is `915660b9`, which is documentation-only.
 
-Independent nonauthor Codex reviewer `/root/controller_review` approved source `0e4ef81e` and
-head `915660b9` with no findings
-([comment 6326897033](https://github.com/cslib-community/complexitylib/pull/303#issuecomment-6326897033)).
-The approval covers API, correctness, tests and theorem-index prose. The reviewer inspected local
-PDF page 82 of 115 and all five link annotations. Coordinator
-`controller_review / codex-coordinator-20261021-2200` approved head `915660b9` and the CI artifact
-([comment 6327630636](https://github.com/cslib-community/complexitylib/pull/303#issuecomment-6327630636)).
-The artifact is `12383540126` from Theorem index PDF run `39678547035`. Its provenance records
-clean merge `6ae61459`, head `915660b9` and base `1e2dcd0c`. The PDF has 116 pages and SHA256
+Independent nonauthor Codex reviewer `/root/controller_review` approved source `0e4ef81e` and head
+`915660b9` with no findings ([comment
+6326897033](https://github.com/cslib-community/complexitylib/pull/303#issuecomment-6326897033)). The
+approval covers API, correctness, tests and theorem-index prose. The reviewer inspected local PDF
+page 82 of 115 and all five link annotations. Coordinator `controller_review /
+codex-coordinator-20261021-2200` approved head `915660b9` and the CI artifact ([comment
+6327630636](https://github.com/cslib-community/complexitylib/pull/303#issuecomment-6327630636)). The
+artifact is `12383540126` from Theorem index PDF run `39678547035`. Its provenance records clean
+merge `6ae61459`, head `915660b9` and base `1e2dcd0c`. The PDF has 116 pages and SHA256
 `b190dde0d1f927542f25e8ab455d4615d865431af439e956101315527c828956`. Page 82 and all five links were
 checked, with no findings. Comment 6327940549 approves a combined tree with #299 and records no
-findings.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+findings. Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this
+records AI review, not human editorial approval.
 
 ## 2026-10-21: Recursive van Emde Boas sets (#291 / PR #300)
 
@@ -575,13 +577,13 @@ are excluded. The PR is the first milestone of #273.
 Independent reviewers `/root/review_288` (API and correctness) and `/root/index_288` (theorem-index
 semantics, public links and local rendering) approved exact head `5c1c4772` (tree `b1886a71`) with
 no findings. A paper typo and the test-module witness from preliminary review were fixed.
-Coordinator `codex-coordinator-20261021-1949` approved in
-[comment 6326751486](https://github.com/cslib-community/complexitylib/pull/300#issuecomment-6326751486)
-and
-[comment 6326953691](https://github.com/cslib-community/complexitylib/pull/300#issuecomment-6326953691).
+Coordinator `codex-coordinator-20261021-1949` approved in [comment
+6326751486](https://github.com/cslib-community/complexitylib/pull/300#issuecomment-6326751486) and
+[comment
+6326953691](https://github.com/cslib-community/complexitylib/pull/300#issuecomment-6326953691).
 `/root/index_288` inspected CI PDF run 39676853239, artifact 12382577980 (synthetic checkout
-`81d30c0d`, base `7ebefd57`). It reports clean provenance and PDF SHA256 `41b20973…daee`. It
-viewed page 86 and checked all six URI targets against `c76e6915`, with no findings. Backfilled on
+`81d30c0d`, base `7ebefd57`). It reports clean provenance and PDF SHA256 `41b20973…daee`. It viewed
+page 86 and checked all six URI targets against `c76e6915`, with no findings. Backfilled on
 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human
 editorial approval.
 
@@ -596,46 +598,46 @@ entry certifies tidy polynomial-time multi-tape computation of `a / b` and `a % 
 that generating the full rational hitting list remains separate (M3–M5 of #201, per the PR body).
 
 Independent subagent `agy-reviewer-f29e46b2/m2-review` reviewed head `0089e7b2` (Lean `20c7c139`)
-for correctness, API/style and the theorem index, and approved with 0 findings after checking all
-14 links. For coordinator `codex-coordinator-20261021-1949`, nonauthor reviewers `/root/review_288`
+for correctness, API/style and the theorem index, and approved with 0 findings after checking all 14
+links. For coordinator `codex-coordinator-20261021-1949`, nonauthor reviewers `/root/review_288`
 (source/API/correctness) and `/root/index_288` (theorem index) approved the same head with no
-findings. Nonblocking items: the PR description's milestone range (corrected to M3–M5) and an extra blank
-line at `Gcd.lean:219` (left unfixed).
-Samuel supplied the downloaded archive of CI PDF artifact 12375449349 (Theorem index PDF run
-39664876749, attempt 1; synthetic merge `06887829`, head `0089e7b2`, base `23d97bee`). Root
-matched the archive hash and PDF SHA256 `f715ecb06c562667dab92f7ff6130e0414eaf5813fb905056d81565bf5ef3344`
-(115 pages). Root also inspected page 89 and checked all 14 PDF URI targets, and `/root/index_288`
-independently repeated these checks with no findings. The coordinator gave final approval in
-[comment 6326714226](https://github.com/cslib-community/complexitylib/pull/288#issuecomment-6326714226).
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+findings. Nonblocking items: the PR description's milestone range (corrected to M3–M5) and an extra
+blank line at `Gcd.lean:219` (left unfixed). Samuel supplied the downloaded archive of CI PDF
+artifact 12375449349 (Theorem index PDF run 39664876749, attempt 1; synthetic merge `06887829`, head
+`0089e7b2`, base `23d97bee`). Root matched the archive hash and PDF SHA256
+`f715ecb06c562667dab92f7ff6130e0414eaf5813fb905056d81565bf5ef3344` (115 pages). Root also inspected
+page 89 and checked all 14 PDF URI targets, and `/root/index_288` independently repeated these
+checks with no findings. The coordinator gave final approval in [comment
+6326714226](https://github.com/cslib-community/complexitylib/pull/288#issuecomment-6326714226).
+Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI
+review, not human editorial approval.
 
 ## 2026-10-21: Polynomial-time division-free integer determinant (PR #281)
 
 Worker `agy-worker-f29e46b2/detrows-m1` (Antigravity, Claude and Gemini) adds the entry
 "Polynomial-time division-free integer determinant" to `paper/sections/synthesis.tex`, with seven
-declaration links pinned at `ccbd129b70945682840a7c36525544c317b23d53` (`Rational/Runtime/Determinant.lean`,
-lines 184/265/286/432/474/537/670). The prose states `detRows A = det (ofRows A)`,
-the stage bit-length and `stageTableBound` length bounds, and `detRows_polytime` for
-`encList (encList encIntBin)` to `encIntBin`. It completes only Milestone 1 of #201 and says the
-remaining generator-runtime milestones (rational serialization, lift tables, Cramer words, grid
-enumeration) remain open.
+declaration links pinned at `ccbd129b70945682840a7c36525544c317b23d53`
+(`Rational/Runtime/Determinant.lean`, lines 184/265/286/432/474/537/670). The prose states `detRows
+A = det (ofRows A)`, the stage bit-length and `stageTableBound` length bounds, and
+`detRows_polytime` for `encList (encList encIntBin)` to `encIntBin`. It completes only Milestone 1
+of #201 and says the remaining generator-runtime milestones (rational serialization, lift tables,
+Cramer words, grid enumeration) remain open.
 
 Independent review subagent `agy-reviewer-f29e46b2/detrows-review` (`2c67fe90`) reviewed head
 `9bc03446` (Lean `72da75e2`) for correctness, attribution, API/style and the theorem index, and
 approved with no findings. Coordinator `agy-coordinator-d55a006b`, with independent subagent
 `32a1f222` (`DetRows M1 Reviewer`), requested changes at the same revision. The Theorem index PDF
-run `39657509819` failed on the undefined `\lean` macro. The coordinator also asked for
-docstring, proof and import cleanups and for re-pinned links. All items were fixed at head
-`0634a2b6` (Lean `ccbd129b`). `2c67fe90` re-reviewed this revision, rechecked all seven links
-against the exact lines, and approved with no findings. The coordinator re-reviewed and approved in
-[comment 6324535442](https://github.com/cslib-community/complexitylib/pull/281#issuecomment-6324535442).
-It inspected artifact `theorem-index-3c417c14…-1` from fork run
-[39660203891](https://github.com/SamuelSchlesinger/complexitylib2/actions/runs/39660203891)
-(source `3c417c14`, PR head `0634a2b6`, base `9e161a05`, PDF SHA256 `6753da8b…`). It viewed
-rendered page 87 (Section 13.2) and checked that all seven link annotations point to `ccbd129b`.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI
-review, not human editorial approval.
+run `39657509819` failed on the undefined `\lean` macro. The coordinator also asked for docstring,
+proof and import cleanups and for re-pinned links. All items were fixed at head `0634a2b6` (Lean
+`ccbd129b`). `2c67fe90` re-reviewed this revision, rechecked all seven links against the exact
+lines, and approved with no findings. The coordinator re-reviewed and approved in [comment
+6324535442](https://github.com/cslib-community/complexitylib/pull/281#issuecomment-6324535442). It
+inspected artifact `theorem-index-3c417c14…-1` from fork run
+[39660203891](https://github.com/SamuelSchlesinger/complexitylib2/actions/runs/39660203891) (source
+`3c417c14`, PR head `0634a2b6`, base `9e161a05`, PDF SHA256 `6753da8b…`). It viewed rendered page 87
+(Section 13.2) and checked that all seven link annotations point to `ccbd129b`. Backfilled on
+2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human
+editorial approval.
 
 ## 2026-10-21: Haken's pigeonhole lower bound for resolution (#271 / PR #279)
 
@@ -648,44 +650,45 @@ derivations. Scope: the Beame–Pitassi argument rather than size–width, non-o
 hole-surjectivity clauses, and proof size rather than solver runtime.
 
 Independent review subagent `agy-reviewer-f29e46b2/php-review` (`dfb49593`) reviewed `d8fe9cdb`
-(Lean `c9fdac89`). It approved correctness, cslib API/style and the theorem index with no
-blocking findings, and checked quantifiers, model, bounds, the non-onto scope note and all six
-links. Coordinator `agy-coordinator-d55a006b` approved PR head `cd4a64dd` (Lean `c9fdac89`) in
-[comment 6323978217](https://github.com/cslib-community/complexitylib/pull/279#issuecomment-6323978217).
-It cited API/style reviewer `a1dbdd38` and correctness/index reviewer `c7d73924`, both approving.
-CI PDF: artifact `theorem-index-afb57fae…-1` from
-[run 39656060894](https://github.com/SamuelSchlesinger/complexitylib2/actions/runs/39656060894)
-(source `afb57fae`, head `cd4a64dd`, base `028724cc`, PDF SHA256 `01fafb24…c16db6e9`). The
-coordinator inspected page 73 and checked all six URI annotations against `c9fdac89`.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+(Lean `c9fdac89`). It approved correctness, cslib API/style and the theorem index with no blocking
+findings, and checked quantifiers, model, bounds, the non-onto scope note and all six links.
+Coordinator `agy-coordinator-d55a006b` approved PR head `cd4a64dd` (Lean `c9fdac89`) in [comment
+6323978217](https://github.com/cslib-community/complexitylib/pull/279#issuecomment-6323978217). It
+cited API/style reviewer `a1dbdd38` and correctness/index reviewer `c7d73924`, both approving. CI
+PDF: artifact `theorem-index-afb57fae…-1` from [run
+39656060894](https://github.com/SamuelSchlesinger/complexitylib2/actions/runs/39656060894) (source
+`afb57fae`, head `cd4a64dd`, base `028724cc`, PDF SHA256 `01fafb24…c16db6e9`). The coordinator
+inspected page 73 and checked all six URI annotations against `c9fdac89`. Backfilled on 2026-10-22
+by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
+approval.
 
 ## 2026-10-21: Buss polynomial kernel for vertex cover (#270 / PR #277)
 
 Worker `agy-worker-f29e46b2` / `agy-worker-f29e46b2/buss-kernel` (Antigravity agent, Claude and
 Gemini) adds the entry "Buss's polynomial kernel for vertex cover" to
-`paper/sections/completeness.tex`, with ten declaration links pinned at `29c6c5e0ed7b97de51a4cb18276f3a2b72b07036`
-(`Parameterized/VertexCover/BussKernel.lean`), and removes the Buss-kernel limitation from the
-existing "Kernelization and parameterized vertex cover" entry. The prose states the exact-size
-cover encoding, the high-degree rule, active-vertex relabelling and isolated-vertex padding, the
-fixed rejecting instance, the `k(k+2)`-vertex, `(k(k+1))^2`-edge and `40(k+1)^6` bounds, and that
-crown and LP-based `O(k)`-vertex kernels are not covered; the computable-`g` limitation remains in
-the existing kernelization entry.
+`paper/sections/completeness.tex`, with ten declaration links pinned at
+`29c6c5e0ed7b97de51a4cb18276f3a2b72b07036` (`Parameterized/VertexCover/BussKernel.lean`), and
+removes the Buss-kernel limitation from the existing "Kernelization and parameterized vertex cover"
+entry. The prose states the exact-size cover encoding, the high-degree rule, active-vertex
+relabelling and isolated-vertex padding, the fixed rejecting instance, the `k(k+2)`-vertex,
+`(k(k+1))^2`-edge and `40(k+1)^6` bounds, and that crown and LP-based `O(k)`-vertex kernels are not
+covered; the computable-`g` limitation remains in the existing kernelization entry.
 
 Review subagent `agy-reviewer-f29e46b2/buss-review` (`9d8d595d`), separate from the authoring
 worker, reviewed PR head `a437d35a` (Lean commit `29c6c5e0`) and approved correctness, cslib
 API/style and the theorem index with no findings, checking quantifiers, encodings, bounds,
 limitations and all ten link lines. Coordinator `agy-coordinator-d55a006b` approved the same
-revision in [comment 6323614289](https://github.com/cslib-community/complexitylib/pull/277#issuecomment-6323614289),
-with independent subagents `8f5ade95` (API/style, approve) and `df572301` (correctness and
-theorem index, approve); no findings or fixes are recorded. CI: Lean Action CI run 39652686366
-and Theorem index PDF run 39652686110 (both in `SamuelSchlesinger/complexitylib2`) succeeded;
-artifact `theorem-index-12a31b6cb1cd6618e3f7532631decede0e7411a3-1` reports PR head `a437d35a`,
+revision in [comment
+6323614289](https://github.com/cslib-community/complexitylib/pull/277#issuecomment-6323614289), with
+independent subagents `8f5ade95` (API/style, approve) and `df572301` (correctness and theorem index,
+approve); no findings or fixes are recorded. CI: Lean Action CI run 39652686366 and Theorem index
+PDF run 39652686110 (both in `SamuelSchlesinger/complexitylib2`) succeeded; artifact
+`theorem-index-12a31b6cb1cd6618e3f7532631decede0e7411a3-1` reports PR head `a437d35a`,
 `source_dirty: false` and PDF SHA256
 `a7623eed13987a61cf913f06c2d023672ac154f314c7aeddf250dfda5cc644d2`. The coordinator inspected
 rendered pages 8 and 99 and checked all ten URI annotations against declaration names and lines.
-Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
-this records AI review, not human editorial approval.
+Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI
+review, not human editorial approval.
 
 ## 2026-10-21: Client resource contracts through interface refinements (#274)
 
