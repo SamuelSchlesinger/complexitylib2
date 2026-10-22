@@ -48,9 +48,8 @@ namespace Cslib.WordRAM.Queue
 open Cslib.Algorithms.Lean.Queue
 
 /-- The two reserved blocks contain exactly twice the queue capacity in word cells. -/
-theorem footprint_card (base capacity : ℕ) : (footprint base capacity).card = 2 * capacity := by
-  rw [footprint, Finset.card_image_of_injective _ (fun _ _ h => Nat.add_left_cancel h),
-    Finset.card_range]
+theorem footprint_card (base capacity : ℕ) : (footprint base capacity).card = 2 * capacity :=
+  Block.card_footprint _
 
 /-- A client observes a FIFO list, while the machine retains a hidden split between two stacks. -/
 def QueueRep (w base capacity : ℕ) (q : List ℕ) (x : Data 11) : Prop :=
@@ -62,18 +61,7 @@ def certificate {w base capacity : ℕ} (h1 : Fits w 1)
     DynamicCertificate (implementation w capacity) w where
   rep := QueueRep w base capacity
   bounded h := by obtain ⟨_, _, _, hr⟩ := h; exact hr.bounded
-  arguments_fit o hv i _ := by
-    cases o with
-    | enqueue v =>
-      change Fits w (if i = tag then 0 else v)
-      split
-      · exact fits_zero w
-      · exact hv.2
-    | dequeue =>
-      change Fits w (if i = tag then 1 else 0)
-      split
-      · exact h1
-      · exact fits_zero w
+  arguments_fit o hv i _ := arguments_fit h1 o hv i
   execute o hr hv := by
     obtain ⟨front, back, rfl, hr⟩ := hr
     obtain ⟨y, he, ha, hy, _⟩ := execute hc hr o hv
@@ -102,9 +90,7 @@ theorem instructions_eq {w base capacity : ℕ} (hc : Fits w (base + 2 * capacit
     (he : (implementation w capacity).ExecOp w x o a y trace) :
     trace.instructions = bodyCost front back o + 1 := by
   obtain ⟨z, hz, _, _, _⟩ := execute hc hr o hv
-  obtain ⟨_, n, ht, _, hn⟩ := he
-  obtain ⟨_, rfl⟩ := ht.exec.unique hz
-  exact hn
+  exact (he.eq_of_exec hz).2
 
 /-- Rear-stack credit is read from the concrete persistent length register. -/
 def potential (x : Data 11) : ℕ := 8 * x.regs backLen
@@ -117,8 +103,7 @@ theorem amortized {w base capacity : ℕ} (h1 : Fits w 1)
   step hr hv he := by
     obtain ⟨front, back, rfl, hr⟩ := hr
     obtain ⟨z, hz, _, hrz, _⟩ := execute hc hr _ hv
-    obtain ⟨_, n, ht, _, hn⟩ := he
-    obtain ⟨rfl, rfl⟩ := ht.exec.unique hz
+    obtain ⟨rfl, hn⟩ := he.eq_of_exec hz
     rw [hn]
     simpa only [potential, hr.backLen_eq, hrz.backLen_eq] using
       bodyCost_potential front back _
@@ -133,9 +118,8 @@ theorem run_client {w base capacity : ℕ} (h1 : Fits w 1)
         ((spec w capacity).runClient q p).1 y traces ∧
       QueueRep w base capacity ((spec w capacity).runClient q p).2.1 y ∧
       Stateful.total DynamicProgram.OperationTrace.instructions traces + potential y ≤
-        ((spec w capacity).runClient q p).2.2.length * 14 + potential x := by
-  obtain ⟨y, traces, he, hy, hb⟩ := (amortized h1 hc).run p hr hv
-  exact ⟨y, traces, he, hy, by simpa only [Stateful.spec_total_const] using hb⟩
+        ((spec w capacity).runClient q p).2.2.length * 14 + potential x :=
+  (amortized h1 hc).run_const p hr hv
 
 /-- Starting with arbitrary bounded data, charge the six initialization instructions before
 summing the actual queue calls. Empty regions need no zeroing; controller computation and
@@ -164,9 +148,7 @@ theorem modifies {w base capacity : ℕ}
     Modifies (footprint base capacity) x.mem y.mem := by
   obtain ⟨front, back, rfl, hr⟩ := hr
   obtain ⟨z, hz, _, _, hf⟩ := execute hc hr o hv
-  obtain ⟨_, n, ht, _, _⟩ := he
-  obtain ⟨rfl, _⟩ := ht.exec.unique hz
-  exact hf
+  exact (he.eq_of_exec hz).1 ▸ hf
 
 /-- Disjoint heap representations survive every queue call, including a full rear transfer. -/
 theorem frame {w base capacity : ℕ}

@@ -9,7 +9,7 @@ module
 
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 import Mathlib.Data.Fin.VecNotation
-import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.Fintype.Fin
 import Mathlib.Data.Bool.Basic
 import Mathlib.Order.Fin.Basic
 import Mathlib.Tactic.FinCases
@@ -39,30 +39,32 @@ namespace Cslib.BitonicSort
 
 variable {α : Type*}
 
-private instance instDecidableIsBitonic {n : ℕ} [LinearOrder α]
-    (sequence : Fin n → α) : Decidable (IsBitonic sequence) := by
-  -- Test each index inequality before enumerating the remaining indices.
-  exact decidable_of_iff
-    (∀ i j, i < j → ∀ k, j < k → ∀ l, k < l →
-      min (sequence i) (sequence k) ≤ max (sequence j) (sequence l) ∧
-        min (sequence j) (sequence l) ≤ max (sequence i) (sequence k))
-    ⟨fun h i j k l hij hjk hkl => h i j hij k hjk l hkl,
-      fun h i j hij k hjk l hkl => h i j k l hij hjk hkl⟩
-
 /-- Pairwise minima of the two Boolean halves used by the finite cleaning
 check. -/
 private def boolHalfMin (sequence : Fin 8 → Bool) : Fin 4 → Bool :=
   fun i => min (sequence (Fin.castAdd 4 i)) (sequence (Fin.natAdd 4 i))
 
--- Kernel reduction checks all 256 Boolean eight-tuples and their increasing four-tuples.
--- These local limits allow the finite enumeration and its reduction stack.
-set_option maxHeartbeats 2000000 in
--- The finite kernel check enumerates 256 tuples and their ordered four-tuples.
-set_option maxRecDepth 10000 in
--- The same reduction expands nested finite universal quantifiers.
+-- Any strictly increasing quadruple in `Fin 4` is `(0, 1, 2, 3)`, and six four-point
+-- bitonic constraints on `input` suffice to discharge the resulting eight-bit check.
 private theorem bool_min_bitonic (input : Fin 8 → Bool) (h : IsBitonic input) :
     IsBitonic (boolHalfMin input) := by
-  decide +revert +kernel
+  intro i j k l hij hjk hkl
+  obtain ⟨rfl, rfl, rfl, rfl⟩ : i = 0 ∧ j = 1 ∧ k = 2 ∧ l = 3 := by
+    refine ⟨Fin.ext ?_, Fin.ext ?_, Fin.ext ?_, Fin.ext ?_⟩ <;> lia
+  have h0123 := h 0 1 2 3 (by decide) (by decide) (by decide)
+  have h0127 := h 0 1 2 7 (by decide) (by decide) (by decide)
+  have h0167 := h 0 1 6 7 (by decide) (by decide) (by decide)
+  have h1234 := h 1 2 3 4 (by decide) (by decide) (by decide)
+  have h2345 := h 2 3 4 5 (by decide) (by decide) (by decide)
+  have h4567 := h 4 5 6 7 (by decide) (by decide) (by decide)
+  change (min (min (input 0) (input 4)) (min (input 2) (input 6)) ≤
+      max (min (input 1) (input 5)) (min (input 3) (input 7))) ∧
+    (min (min (input 1) (input 5)) (min (input 3) (input 7)) ≤
+      max (min (input 0) (input 4)) (min (input 2) (input 6)))
+  revert h0123 h0127 h0167 h1234 h2345 h4567
+  generalize input 0 = b0, input 1 = b1, input 2 = b2, input 3 = b3,
+    input 4 = b4, input 5 = b5, input 6 = b6, input 7 = b7
+  decide +revert
 
 private def threshold [LinearOrder α] (pivot value : α) : Bool :=
   decide (pivot ≤ value)

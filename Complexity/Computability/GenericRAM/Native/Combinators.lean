@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.GenericRAM.Native
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Sum
 
@@ -15,9 +16,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 # Compositional combinators for native resource certificates
 
 These combinators assemble `NativeCertificate` witnesses for tuples, branches, retained-input
-option elimination, and sum tags while tracking arbitrary input-dependent time and space bounds.
-Linear postprocessing is absorbed into the producer's bounds via its output-length guarantee;
-no polynomiality assumption or `ofPolyTime` selection is used.
+option elimination, sum tags, and clocked binary-counter iteration while tracking arbitrary
+input-dependent time and space bounds. Linear postprocessing is absorbed into the producer's
+bounds via its output-length guarantee; no polynomiality assumption or `ofPolyTime` selection is
+used in the certificate constructors, while companion `*_isPolynomial` lemmas show that all
+combinators preserve `NativeCertificate.IsPolynomial`.
 
 ## Main definitions
 
@@ -27,6 +30,13 @@ no polynomiality assumption or `ofPolyTime` selection is used.
   elimination.
 * `NativeCertificate.fst`, `.snd`, `.some`, `.inl`, `.inr`, `.congr`, `.pull`, `.payload`:
   projections, constructors, and retained-input helpers.
+* `NativeCertificate.maxRoundTime`, `.maxRoundSpace`, `.maxStateLength`, `.iterate`: clocked
+  binary-counter iteration with trajectory-maximum bounds.
+
+## Main results
+
+* `NativeCertificate.linear_isPolynomial`..`NativeCertificate.iterate_isPolynomial`: polynomiality
+  preservation across all certificate combinators.
 
 ## References
 
@@ -238,5 +248,253 @@ def payload (input : α ↪ List Bool) (out : β ↪ List Bool) :
 
 @[simp] theorem payload_space (input : α ↪ List Bool) (out : β ↪ List Bool) (a : α × β) :
     (payload input out).space a = (encPair input out a).length := rfl
+
+/-! ## Clocked iteration and polynomiality combinators for `NativeCertificate` -/
+
+noncomputable section
+
+variable {eb : β ↪ List Bool}
+
+/-- Maximum single-round time along the first `m + 1` iterates from `b`. -/
+def maxRoundTime {step : β → β} (cstep : NativeCertificate step eb eb) (m : ℕ) (b : β) : ℕ :=
+  listMax (fun j => cstep.time (step^[j] b)) (List.range (m + 1))
+
+/-- Maximum single-round space along the first `m + 1` iterates from `b`. -/
+def maxRoundSpace {step : β → β} (cstep : NativeCertificate step eb eb) (m : ℕ) (b : β) : ℕ :=
+  listMax (fun j => cstep.space (step^[j] b)) (List.range (m + 1))
+
+/-- Maximum encoded state length along the first `m + 1` iterates from `b`. -/
+def maxStateLength (eb : β ↪ List Bool) (step : β → β) (m : ℕ) (b : β) : ℕ :=
+  listMax (fun j => (eb (step^[j] b)).length) (List.range (m + 1))
+
+theorem le_maxRoundTime {step : β → β} (cstep : NativeCertificate step eb eb)
+    {m j : ℕ} (hj : j ≤ m) (b : β) :
+    cstep.time (step^[j] b) ≤ maxRoundTime cstep m b :=
+  le_listMax (f := fun i => cstep.time (step^[i] b)) (List.mem_range.mpr (by omega))
+
+theorem le_maxRoundSpace {step : β → β} (cstep : NativeCertificate step eb eb)
+    {m j : ℕ} (hj : j ≤ m) (b : β) :
+    cstep.space (step^[j] b) ≤ maxRoundSpace cstep m b :=
+  le_listMax (f := fun i => cstep.space (step^[i] b)) (List.mem_range.mpr (by omega))
+
+theorem le_maxStateLength (eb : β ↪ List Bool) (step : β → β)
+    {m j : ℕ} (hj : j ≤ m) (b : β) :
+    (eb (step^[j] b)).length ≤ maxStateLength eb step m b :=
+  le_listMax (f := fun i => (eb (step^[i] b)).length) (List.mem_range.mpr (by omega))
+
+theorem maxRoundTime_le {step : β → β} (cstep : NativeCertificate step eb eb)
+    (m : ℕ) (b : β) {R : ℕ} (h : ∀ j ≤ m, cstep.time (step^[j] b) ≤ R) :
+    maxRoundTime cstep m b ≤ R :=
+  listMax_le fun j hj => h j (by have := List.mem_range.mp hj; omega)
+
+theorem maxRoundSpace_le {step : β → β} (cstep : NativeCertificate step eb eb)
+    (m : ℕ) (b : β) {Q : ℕ} (h : ∀ j ≤ m, cstep.space (step^[j] b) ≤ Q) :
+    maxRoundSpace cstep m b ≤ Q :=
+  listMax_le fun j hj => h j (by have := List.mem_range.mp hj; omega)
+
+theorem maxStateLength_le (eb : β ↪ List Bool) (step : β → β)
+    (m : ℕ) (b : β) {B : ℕ} (h : ∀ j ≤ m, (eb (step^[j] b)).length ≤ B) :
+    maxStateLength eb step m b ≤ B :=
+  listMax_le fun j hj => h j (by have := List.mem_range.mp hj; omega)
+
+/-- Iterate `step` for `n a` rounds using a binary counter, charging the trajectory maxima over
+`0 ≤ j ≤ n a` without requiring `[Inhabited β]` or pre-supplied polynomial bounds. -/
+def iterate {n : α → ℕ} {init : α → β} {step : β → β}
+    (cn : NativeCertificate n ei encNat)
+    (cinit : NativeCertificate init ei eb)
+    (cstep : NativeCertificate step eb eb) :
+    NativeCertificate (fun a => step^[n a] (init a)) ei eb where
+  time a := cn.time a + cinit.time a +
+    (n a + 1) * (maxRoundTime cstep (n a) (init a) +
+      maxStateLength eb step (n a) (init a) + ((encNat (n a)).length + 1) ^ 2)
+  space a := cn.space a + cinit.space a +
+    maxRoundSpace cstep (n a) (init a) +
+    maxStateLength eb step (n a) (init a) + (encNat (n a)).length
+  computes := by
+    rcases isEmpty_or_nonempty β with h | ⟨⟨b₀⟩⟩
+    · exact (cinit.computes.mono_le (fun _ => by omega)
+        (fun _ => by omega)).of_enc_eq fun a => isEmptyElim (init a)
+    · let : Inhabited β := ⟨b₀⟩
+      exact ComputableTidilyInO.iterate cn.computes cinit.computes cstep.computes
+        (fun a j hj => le_maxRoundTime cstep hj (init a))
+        (fun a j hj => le_maxRoundSpace cstep hj (init a))
+        (fun a j hj => le_maxStateLength eb step hj (init a))
+
+@[simp] theorem iterate_time {n : α → ℕ} {init : α → β} {step : β → β}
+    (cn : NativeCertificate n ei encNat)
+    (cinit : NativeCertificate init ei eb)
+    (cstep : NativeCertificate step eb eb) (a : α) :
+    (iterate cn cinit cstep).time a = cn.time a + cinit.time a +
+      (n a + 1) * (maxRoundTime cstep (n a) (init a) +
+        maxStateLength eb step (n a) (init a) + ((encNat (n a)).length + 1) ^ 2) := rfl
+
+@[simp] theorem iterate_space {n : α → ℕ} {init : α → β} {step : β → β}
+    (cn : NativeCertificate n ei encNat)
+    (cinit : NativeCertificate init ei eb)
+    (cstep : NativeCertificate step eb eb) (a : α) :
+    (iterate cn cinit cstep).space a = cn.space a + cinit.space a +
+      maxRoundSpace cstep (n a) (init a) +
+      maxStateLength eb step (n a) (init a) + (encNat (n a)).length := rfl
+
+/-! ### Polynomiality preservation across certificate combinators -/
+
+theorem polyBounded_pow_of_polyBounded {size u : α → ℕ} (hu : PolyBounded size u) (c d : ℕ) :
+    PolyBounded size (fun a => c * (u a + 1) ^ d) :=
+  (PolyBounded.of_forall_le (size := id) (u := fun x => c * (x + 1) ^ d)
+    c d fun _ => le_rfl).comp hu
+
+theorem linear_isPolynomial {f : α → β}
+    (h : ComputableTidilyInO f ei eb (fun a => (ei a).length) (fun a => (ei a).length)) :
+    (linear h).IsPolynomial :=
+  ⟨.self, .self⟩
+
+theorem const_isPolynomial (b : β) : (const (ei := ei) (em := eb) b).IsPolynomial :=
+  ⟨.self, .self⟩
+
+theorem prod_isPolynomial {f : α → β} {g : α → γ}
+    (c : NativeCertificate f ei eb) (d : NativeCertificate g ei eo)
+    (hc : c.IsPolynomial) (hd : d.IsPolynomial) :
+    (prod c d).IsPolynomial :=
+  ⟨hc.1.add hd.1, hc.2.add hd.2⟩
+
+theorem post_isPolynomial {f : α → β} {g : β → γ}
+    (c : NativeCertificate f ei eb)
+    (h : ComputableTidilyInO g eb eo (fun b => (eb b).length) (fun b => (eb b).length))
+    (hc : c.IsPolynomial) :
+    (post c h).IsPolynomial := hc
+
+theorem fst_isPolynomial {f : α → β × γ}
+    (c : NativeCertificate f ei (encPair eb eo)) (hc : c.IsPolynomial) :
+    (fst c).IsPolynomial := hc
+
+theorem snd_isPolynomial {f : α → β × γ}
+    (c : NativeCertificate f ei (encPair eb eo)) (hc : c.IsPolynomial) :
+    (snd c).IsPolynomial := hc
+
+theorem some_isPolynomial {f : α → β}
+    (c : NativeCertificate f ei eb) (hc : c.IsPolynomial) :
+    (some c).IsPolynomial := hc
+
+theorem inl_isPolynomial {f : α → β}
+    (c : NativeCertificate f ei eb) (right : γ ↪ List Bool) (hc : c.IsPolynomial) :
+    (inl c right).IsPolynomial := hc
+
+theorem inr_isPolynomial {f : α → β}
+    (left : γ ↪ List Bool) (c : NativeCertificate f ei eb) (hc : c.IsPolynomial) :
+    (inr left c).IsPolynomial := hc
+
+theorem congr_isPolynomial {f g : α → β}
+    (c : NativeCertificate f ei eb) (h : ∀ a, f a = g a) (hc : c.IsPolynomial) :
+    (congr c h).IsPolynomial := hc
+
+theorem pull_isPolynomial {f : α → β}
+    (c : NativeCertificate f ei eb) (other : δ ↪ List Bool) (hc : c.IsPolynomial) :
+    (pull c other).IsPolynomial :=
+  comp_isPolynomial c (linear (ComputableTidilyInO.fst ei other)) hc ⟨.self, .self⟩
+
+theorem payload_isPolynomial (input : α ↪ List Bool) (out : β ↪ List Bool) :
+    (payload input out).IsPolynomial :=
+  ⟨.self, .self⟩
+
+theorem branch_isPolynomial {condition : α → Bool} {f g : α → β}
+    (test : NativeCertificate condition ei encBool)
+    (yes : NativeCertificate f ei eb) (no : NativeCertificate g ei eb)
+    (ht : test.IsPolynomial) (hy : yes.IsPolynomial) (hn : no.IsPolynomial) :
+    (branch test yes no).IsPolynomial := by
+  refine ⟨(ht.1.add (hy.1.add hn.1)).mono fun a => ?_,
+    (ht.2.add (hy.2.add hn.2)).mono fun a => ?_⟩ <;>
+    (simp only [branch_time, branch_space]; split <;> omega)
+
+theorem option_isPolynomial {value : α → Option β} {fallback : α → γ} {body : α × β → γ}
+    (c : NativeCertificate value ei (encOption eb))
+    (no : NativeCertificate fallback ei eo)
+    (yes : NativeCertificate body (encPair ei eb) eo)
+    (hc : c.IsPolynomial) (hno : no.IsPolynomial) (hyes : yes.IsPolynomial) :
+    (option c no yes).IsPolynomial := by
+  obtain ⟨ct, dt, hyt⟩ := hyes.1.exists_le
+  obtain ⟨cs, ds, hys⟩ := hyes.2.exists_le
+  have hlen : PolyBounded (fun a => (ei a).length)
+      (fun a => 2 * (ei a).length + (encOption eb (value a)).length) :=
+    ((PolyBounded.const 2).mul .self).add (c.polyTime hc).polyBounded_length
+  have hbodyT : PolyBounded (fun a => (ei a).length)
+      (fun a => ct * (2 * (ei a).length + (encOption eb (value a)).length + 1) ^ dt) :=
+    polyBounded_pow_of_polyBounded hlen ct dt
+  have hbodyS : PolyBounded (fun a => (ei a).length)
+      (fun a => cs * (2 * (ei a).length + (encOption eb (value a)).length + 1) ^ ds) :=
+    polyBounded_pow_of_polyBounded hlen cs ds
+  refine ⟨((((PolyBounded.const 2).mul hc.1).add .self).add (hno.1.add hbodyT)).mono fun a => ?_,
+    ((((PolyBounded.const 2).mul hc.2).add .self).add (hno.2.add hbodyS)).mono fun a => ?_⟩
+  · simp only [option_time]
+    cases hv : value a with
+    | none => simp
+    | some b =>
+      have hb := hyt (a, b)
+      have hpair : (encPair ei eb (a, b)).length =
+          2 * (ei a).length + (encOption eb (Option.some b)).length := by
+        simp; omega
+      rw [hpair] at hb
+      simp only [Option.elim_some]
+      omega
+  · simp only [option_space]
+    cases hv : value a with
+    | none => simp
+    | some b =>
+      have hb := hys (a, b)
+      have hpair : (encPair ei eb (a, b)).length =
+          2 * (ei a).length + (encOption eb (Option.some b)).length := by
+        simp; omega
+      rw [hpair] at hb
+      simp only [Option.elim_some]
+      omega
+
+/-- Clocked iteration preserves polynomiality when the step count and reachable state lengths are
+polynomially bounded in the encoded input length. -/
+theorem iterate_isPolynomial {n : α → ℕ} {init : α → β} {step : β → β}
+    (cn : NativeCertificate n ei encNat)
+    (cinit : NativeCertificate init ei eb)
+    (cstep : NativeCertificate step eb eb)
+    (hcn : cn.IsPolynomial) (hcinit : cinit.IsPolynomial) (hcstep : cstep.IsPolynomial)
+    (hn : PolyBounded (fun a => (ei a).length) n)
+    {B : α → ℕ} (hB : PolyBounded (fun a => (ei a).length) B)
+    (hstate : ∀ a, ∀ j ≤ n a, (eb (step^[j] (init a))).length ≤ B a) :
+    (iterate cn cinit cstep).IsPolynomial := by
+  obtain ⟨ct, dt, hst⟩ := hcstep.1.exists_le
+  obtain ⟨cs, ds, hss⟩ := hcstep.2.exists_le
+  have hlenN : PolyBounded (fun a => (ei a).length) (fun a => (encNat (n a)).length) :=
+    (cn.polyTime hcn).polyBounded_length
+  have hlenN2 : PolyBounded (fun a => (ei a).length)
+      (fun a => 1 * ((encNat (n a)).length + 1) ^ 2) :=
+    polyBounded_pow_of_polyBounded hlenN 1 2
+  have hRT : PolyBounded (fun a => (ei a).length) (fun a => ct * (B a + 1) ^ dt) :=
+    polyBounded_pow_of_polyBounded hB ct dt
+  have hRS : PolyBounded (fun a => (ei a).length) (fun a => cs * (B a + 1) ^ ds) :=
+    polyBounded_pow_of_polyBounded hB cs ds
+  have hmaxB : ∀ a, maxStateLength eb step (n a) (init a) ≤ B a :=
+    fun a => maxStateLength_le eb step (n a) (init a) (hstate a)
+  have hmaxT : ∀ a, maxRoundTime cstep (n a) (init a) ≤ ct * (B a + 1) ^ dt :=
+    fun a => maxRoundTime_le cstep (n a) (init a) fun j hj =>
+      (hst _).trans (Nat.mul_le_mul_left ct
+        (Nat.pow_le_pow_left (Nat.add_le_add_right (hstate a j hj) 1) dt))
+  have hmaxS : ∀ a, maxRoundSpace cstep (n a) (init a) ≤ cs * (B a + 1) ^ ds :=
+    fun a => maxRoundSpace_le cstep (n a) (init a) fun j hj =>
+      (hss _).trans (Nat.mul_le_mul_left cs
+        (Nat.pow_le_pow_left (Nat.add_le_add_right (hstate a j hj) 1) ds))
+  refine ⟨((hcn.1.add hcinit.1).add
+      ((hn.add (.const 1)).mul ((hRT.add hB).add hlenN2))).mono fun a => ?_,
+    ((((hcn.2.add hcinit.2).add hRS).add hB).add hlenN).mono fun a => ?_⟩
+  · simp only [iterate_time, one_mul]
+    have h1 := hmaxT a
+    have h2 := hmaxB a
+    have h3 : maxRoundTime cstep (n a) (init a) + maxStateLength eb step (n a) (init a) +
+        ((encNat (n a)).length + 1) ^ 2 ≤
+        ct * (B a + 1) ^ dt + B a + ((encNat (n a)).length + 1) ^ 2 := by omega
+    have h4 := Nat.mul_le_mul_left (n a + 1) h3
+    omega
+  · simp only [iterate_space]
+    have h1 := hmaxS a
+    have h2 := hmaxB a
+    omega
+
+end
 
 end Cslib.GenericRAM.NativeCertificate

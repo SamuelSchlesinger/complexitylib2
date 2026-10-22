@@ -133,9 +133,7 @@ theorem iid_card_ge_le {q : PMF Bool} {ε : ℝ}
   classical
   set a := (q true).toReal
   set b := (q false).toReal
-  have hab : a + b = 1 := by
-    have := sum_toReal q
-    rwa [Fintype.sum_bool] at this
+  have hab : a + b = 1 := toReal_true_add_toReal_false q
   have ha : 0 ≤ a := ENNReal.toReal_nonneg
   have hab' : a ≤ b := by linarith
   -- Each outcome with at least `r` true bits has probability at most `(a b) ^ r`.

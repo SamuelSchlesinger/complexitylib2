@@ -28,13 +28,16 @@ does not establish equivalence with the original integer/I/O model or with Turin
 
 ## Main definitions
 
-* `Cslib.WordRAM.ToRAM.preparedProgram`: input preparation followed by the fixed compiler.
+* `Cslib.WordRAM.ToRAM.preparedProgram`, `Cslib.WordRAM.ToRAM.preparedProgramAdditive`: input
+  preparation followed by the fixed compiler.
 
 ## Main results
 
-* `Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_of_bitLength_le`: the sum of preparation
-  and simulation costs, keeping the input bit bound separate from the source word width.
-* `Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared`: logarithmic cost at most
+* `Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_of_bitLength_le`,
+  `Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_of_bitLength_le_additive`: the sum of
+  preparation and simulation costs, keeping the input bit bound separate from the source word width.
+* `Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared`,
+  `Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_additive`: logarithmic cost at most
   `C_r (t + input.length + 1) (w + 1)`, for an explicit constant depending only on `r`.
 
 ## References
@@ -97,10 +100,8 @@ theorem haltsWithResultInTime_prepared {p : Program .standard r} (hp : p.IsAddit
     RAM.HaltsWithResultInTime RAM.logCost (preparedProgram p) (RAM.Input.encode 5 input) v
       (((24 + R) * (RAM.bitLength (R + 5) + 2) + 8 * (RAM.bitLength R + 1)) *
         (n + input.length + 1) * (w + 1)) := by
-  have hb {x : ℕ} (hx : Fits w x) : RAM.bitLength x ≤ w + 1 :=
-    (RAM.bitLength_le_iff (Nat.succ_ne_zero w)).mpr (hx.mono (Nat.le_succ w))
   have hcost := haltsWithResultInTime_prepared_of_bitLength_le hp hi h
-    (hb hi.1) (fun x hx => hb (hi.2 x hx))
+    hi.1.bitLength_le (fun x hx => (hi.2 x hx).bitLength_le)
   refine hcost.mono ?_
   calc
     _ ≤ (24 + memoryBase r) * (RAM.bitLength (memoryBase r + 5) + 2) *
@@ -108,6 +109,38 @@ theorem haltsWithResultInTime_prepared {p : Program .standard r} (hp : p.IsAddit
         8 * (RAM.bitLength (memoryBase r) + 1) * (n + input.length + 1) * (w + 1) := by
       gcongr <;> lia
     _ = _ := by ring
+
+/-- A fixed target program that prepares the length-bearing input and then simulates a
+source program over `Basis.additive`. -/
+def preparedProgramAdditive (p : Program .additive r) : RAM.Program :=
+  preparedProgram (p.mapOp Basis.additiveHomStandard)
+
+/-- Charged preparation and simulation bound for a program over `Basis.additive`, with a
+separate input bit-length bound. -/
+theorem haltsWithResultInTime_prepared_of_bitLength_le_additive {p : Program .additive r}
+    {input : List ℕ} {w v n b : ℕ} (hi : InputFits w input)
+    (h : Executes w p (State.init input) v n)
+    (hlen : RAM.bitLength input.length ≤ b)
+    (hinput : ∀ x ∈ input, RAM.bitLength x ≤ b) :
+    let R := memoryBase r
+    RAM.HaltsWithResultInTime RAM.logCost (preparedProgramAdditive p)
+      (RAM.Input.encode 5 input) v
+      ((24 + R) * (RAM.bitLength (R + 5) + 2) * (input.length + 1) * b +
+        8 * (RAM.bitLength R + 1) * (n + 1) * (w + 1)) :=
+  haltsWithResultInTime_prepared_of_bitLength_le p.mapOp_additiveHomStandard_isAdditive hi
+    ((executes_mapOp_iff Basis.additiveHomStandard).mpr h) hlen hinput
+
+/-- Charged preparation and simulation bound for a program over `Basis.additive`. -/
+theorem haltsWithResultInTime_prepared_additive {p : Program .additive r}
+    {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
+    (h : Executes w p (State.init input) v n) :
+    let R := memoryBase r
+    RAM.HaltsWithResultInTime RAM.logCost (preparedProgramAdditive p)
+      (RAM.Input.encode 5 input) v
+      (((24 + R) * (RAM.bitLength (R + 5) + 2) + 8 * (RAM.bitLength R + 1)) *
+        (n + input.length + 1) * (w + 1)) :=
+  haltsWithResultInTime_prepared p.mapOp_additiveHomStandard_isAdditive hi
+    ((executes_mapOp_iff Basis.additiveHomStandard).mpr h)
 
 end Cslib.WordRAM.ToRAM
 

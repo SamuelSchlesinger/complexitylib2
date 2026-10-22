@@ -19,8 +19,8 @@ literals are ordinary source families in this interface; no problem or model wra
 
 Supplied functions are free in `ecomplexityFrom`. In particular, supplying negative literals
 does not charge their construction. The circuit itself has only constants, AND and OR gates.
-This does not translate circuits with internal NOT gates into circuits with only input negations;
-such a translation needs its own correctness and cost bounds.
+Circuits with internal NOT gates are handled in `Fusion/DeMorgan.lean`, through the dual-rail
+translation, at the cost of a factor two in size.
 
 ## Main results
 

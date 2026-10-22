@@ -205,6 +205,12 @@ theorem of_interpretation {K : Set (Bundled.{w} L.Structure)} {K' : Set (Bundled
     Reduces K K' :=
   ⟨ι, inferInstance, I, h⟩
 
+/-- A first-order reduction from `K` to `K'` is also a reduction from `Kᶜ` to `K'ᶜ`. -/
+theorem compl {K : Set (Bundled.{w} L.Structure)} {K' : Set (Bundled.{w} L'.Structure)}
+    (h : Reduces K K') : Reduces Kᶜ K'ᶜ :=
+  let ⟨ι, hι, I, hI⟩ := h
+  ⟨ι, hι, I, fun M _ => not_congr (hI M)⟩
+
 end Reduces
 
 /-! ### One-dimensional reductions -/

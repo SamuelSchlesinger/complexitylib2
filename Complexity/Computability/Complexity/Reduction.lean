@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Reduction.ManyOne
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
 
 /-!
 # Polynomial-time many-one reductions
@@ -178,6 +179,18 @@ theorem PolyTimeReducible.mem_P (hAB : PolyTimeReducible encA encB A B) (hB : B 
 theorem PolyTimeReducible.compl (h : PolyTimeReducible encA encB A B) :
     PolyTimeReducible encA encB Aᶜ Bᶜ :=
   ManyOneReducibleBy.compl h
+
+/-- If polynomial-time reductions preserve membership from `D` to `C`, they also preserve
+membership in the complement classes `{B | Bᶜ ∈ D}` and `{A | Aᶜ ∈ C}`. -/
+theorem PolyTimeReducible.mem_compl {C : Set (Set α)} {D : Set (Set β)}
+    (hCD : ∀ {A : Set α} {B : Set β}, PolyTimeReducible encA encB A B → B ∈ D → A ∈ C)
+    (h : PolyTimeReducible encA encB A B) (hB : Bᶜ ∈ D) : Aᶜ ∈ C :=
+  ManyOneReducibleBy.mem_compl hCD h hB
+
+/-- A polynomial-time reduction is a mapping reduction. -/
+theorem PolyTimeReducible.mappingReducible (h : PolyTimeReducible encA encB A B) :
+    MappingReducible encA encB A B :=
+  ManyOneReducibleBy.mono (fun _ hf => hf.isComputable) h
 
 section Hardness
 

@@ -166,6 +166,49 @@ theorem BPP_subset_MA : BPP enc ⊆ MA enc := by
 
 /-! ### Closure under reductions -/
 
+private theorem two_mul_two_pow_le_card_filter_take {m M : ℕ} (hle : m ≤ M)
+    (g : List Bool → Prop) [DecidablePred g]
+    (h : 2 * 2 ^ m ≤ 3 * (univ.filter fun r : Fin m → Bool => g (List.ofFn r)).card) :
+    2 * 2 ^ M ≤ 3 * (univ.filter fun r : Fin M → Bool => g ((List.ofFn r).take m)).card := by
+  rw [BitString.card_filter_take hle g]
+  have hpow : 2 ^ M = 2 ^ (M - m) * 2 ^ m := by
+    rw [← pow_add, Nat.sub_add_cancel hle]
+  rw [hpow, mul_left_comm, mul_left_comm 3]
+  exact Nat.mul_le_mul_left _ h
+
+private theorem exists_truncated_verifier {encB : β ↪ List Bool} {f : α → β}
+    (hf : ComputableTidilyInPolyTime f enc encB) (p₁ p₂ : Polynomial ℕ)
+    {V : β × List Bool → Bool}
+    (hV : ComputableTidilyInPolyTime V (encPair encB encBits) encBool) :
+    ∃ (P₁ P₂ : Polynomial ℕ) (V' : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V' (encPair enc encBits) encBool ∧
+      (∀ a, p₁.eval (encB (f a)).length ≤ P₁.eval (enc a).length) ∧
+      (∀ a, p₂.eval (encB (f a)).length ≤ P₂.eval (enc a).length) ∧
+      ∀ (a : α) (u : Fin (P₁.eval (enc a).length) → Bool)
+        (v : Fin (P₂.eval (enc a).length) → Bool),
+        V' (a, List.ofFn u ++ List.ofFn v) =
+          V (f a, (List.ofFn u).take (p₁.eval (encB (f a)).length) ++
+            (List.ofFn v).take (p₂.eval (encB (f a)).length)) := by
+  have hp₁ : ComputableTidilyInPolyTime (fun a => p₁.eval (encB (f a)).length) enc encUnary :=
+    (ComputableTidilyInPolyTime.unary_eval p₁).comp
+      ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
+  have hp₂ : ComputableTidilyInPolyTime (fun a => p₂.eval (encB (f a)).length) enc encUnary :=
+    (ComputableTidilyInPolyTime.unary_eval p₂).comp
+      ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
+  obtain ⟨P₁, hP₁⟩ := hp₁.polyBounded.exists_polynomial
+  obtain ⟨P₂, hP₂⟩ := hp₂.polyBounded.exists_polynomial
+  have hP₁u : ComputableTidilyInPolyTime (fun a => P₁.eval (enc a).length) enc encUnary :=
+    (ComputableTidilyInPolyTime.unary_eval P₁).comp (ComputableTidilyInPolyTime.encoding_length enc)
+  refine ⟨P₁, P₂, fun x => V (f x.1, x.2.take (p₁.eval (encB (f x.1)).length) ++
+      (x.2.drop (P₁.eval (enc x.1).length)).take (p₂.eval (encB (f x.1)).length)),
+    hV.comp ((hf.comp (.fst enc encBits)).prod
+      (.bitsAppend (.bitsTakeWithInput (.snd enc encBits) (hp₁.comp (.fst enc encBits)))
+        (.bitsTakeWithInput (.bitsDropWithInput (.snd enc encBits) (hP₁u.comp (.fst enc encBits)))
+          (hp₂.comp (.fst enc encBits))))),
+    hP₁, hP₂, fun a u v => ?_⟩
+  dsimp only
+  rw [List.take_append_of_le_length (by simpa using hP₁ a), List.drop_left' List.length_ofFn]
+
 /-- **`MA` is closed under polynomial-time reductions.** The verifier runs the verifier of the
 target problem on the reduced instance, on the prefix of the proof and the prefix of the random
 string of the lengths that it expects. -/
@@ -173,62 +216,22 @@ theorem PolyTimeReducible.mem_MA {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ MA encB) : A ∈ MA enc := by
   obtain ⟨f, hf, hAB⟩ := h
   obtain ⟨q, p, V, hV, hVB⟩ := hB
-  have hq : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval q).comp
-      ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
-  have hp : ComputableTidilyInPolyTime (fun a => p.eval (encB (f a)).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval p).comp
-      ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
-  obtain ⟨Q, hQe⟩ := hq.polyBounded.exists_polynomial
-  obtain ⟨P, hPe⟩ := hp.polyBounded.exists_polynomial
-  have hQu : ComputableTidilyInPolyTime (fun a => Q.eval (enc a).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval Q).comp (ComputableTidilyInPolyTime.encoding_length enc)
-  refine ⟨Q, P, fun x => V (f x.1, x.2.take (q.eval (encB (f x.1)).length) ++
-      (x.2.drop (Q.eval (enc x.1).length)).take (p.eval (encB (f x.1)).length)), ?_,
-    fun a => ?_⟩
-  · exact hV.comp ((hf.comp (.fst enc encBits)).prod
-      (.bitsAppend (.bitsTakeWithInput (.snd enc encBits) (hq.comp (.fst enc encBits)))
-        (.bitsTakeWithInput (.bitsDropWithInput (.snd enc encBits) (hQu.comp (.fst enc encBits)))
-          (hp.comp (.fst enc encBits)))))
-  -- the verifier reads the prefixes of the proof and of the random string
-  have hsplit (y : Fin (Q.eval (enc a).length) → Bool) (r : Fin (P.eval (enc a).length) → Bool) :
-      (List.ofFn y ++ List.ofFn r).take (q.eval (encB (f a)).length) ++
-          ((List.ofFn y ++ List.ofFn r).drop (Q.eval (enc a).length)).take
-            (p.eval (encB (f a)).length) =
-        (List.ofFn y).take (q.eval (encB (f a)).length) ++
-          (List.ofFn r).take (p.eval (encB (f a)).length) := by
-    rw [List.take_append_of_le_length (by simpa using hQe a),
-      List.drop_left' List.length_ofFn]
+  obtain ⟨Q, P, V', hV', hQe, hPe, hsplit⟩ := exists_truncated_verifier hf q p hV
+  refine ⟨Q, P, V', hV', fun a => ?_⟩
   simp only [hsplit]
-  -- counts over the long random strings scale those over the short ones
-  have hcount (y : List Bool) (b : Bool) :
-      (univ.filter fun r : Fin (P.eval (enc a).length) → Bool =>
-        V (f a, y ++ (List.ofFn r).take (p.eval (encB (f a)).length)) = b).card =
-      2 ^ (P.eval (enc a).length - p.eval (encB (f a)).length) *
-        (univ.filter fun r : Fin (p.eval (encB (f a)).length) → Bool =>
-          V (f a, y ++ List.ofFn r) = b).card :=
-    BitString.card_filter_take (hPe a) fun w => V (f a, y ++ w) = b
-  have hpow : 2 ^ P.eval (enc a).length =
-      2 ^ (P.eval (enc a).length - p.eval (encB (f a)).length) *
-        2 ^ p.eval (encB (f a)).length := by
-    rw [← pow_add, Nat.sub_add_cancel (hPe a)]
-  have hscale {y : ℕ} (hxy : 2 * 2 ^ p.eval (encB (f a)).length ≤ 3 * y) :
-      2 * 2 ^ P.eval (enc a).length ≤
-        3 * (2 ^ (P.eval (enc a).length - p.eval (encB (f a)).length) * y) := by
-    rw [hpow, mul_left_comm, mul_left_comm 3]
-    exact Nat.mul_le_mul_left _ hxy
   constructor
   · intro ha
     obtain ⟨y, hy⟩ := (hVB (f a)).1 ((hAB a).1 ha)
     refine ⟨BitString.ofList _ (List.ofFn y), ?_⟩
-    rw [BitString.take_ofFn_ofList (hQe a), hcount]
-    exact hscale hy
+    rw [BitString.take_ofFn_ofList (hQe a)]
+    exact two_mul_two_pow_le_card_filter_take (hPe a)
+      (fun w => V (f a, List.ofFn y ++ w) = true) hy
   · intro ha y
     have hy := (hVB (f a)).2 (fun hb => ha ((hAB a).2 hb))
       (BitString.ofList _ ((List.ofFn y).take (q.eval (encB (f a)).length)))
     rw [BitString.ofFn_ofList (by simp [hQe a])] at hy
-    rw [hcount]
-    exact hscale hy
+    exact two_mul_two_pow_le_card_filter_take (hPe a)
+      (fun w => V (f a, (List.ofFn y).take (q.eval (encB (f a)).length) ++ w) = false) hy
 
 /-- **`AM` is closed under polynomial-time reductions.** The verifier runs the verifier of the
 target problem on the reduced instance, on the prefix of the random string and the prefix of the
@@ -237,34 +240,8 @@ theorem PolyTimeReducible.mem_AM {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ AM encB) : A ∈ AM enc := by
   obtain ⟨f, hf, hAB⟩ := h
   obtain ⟨p, q, V, hV, hVB⟩ := hB
-  have hq : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval q).comp
-      ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
-  have hp : ComputableTidilyInPolyTime (fun a => p.eval (encB (f a)).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval p).comp
-      ((ComputableTidilyInPolyTime.encoding_length encB).comp hf)
-  obtain ⟨Q, hQe⟩ := hq.polyBounded.exists_polynomial
-  obtain ⟨P, hPe⟩ := hp.polyBounded.exists_polynomial
-  have hPu : ComputableTidilyInPolyTime (fun a => P.eval (enc a).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval P).comp (ComputableTidilyInPolyTime.encoding_length enc)
-  refine ⟨P, Q, fun x => V (f x.1, x.2.take (p.eval (encB (f x.1)).length) ++
-      (x.2.drop (P.eval (enc x.1).length)).take (q.eval (encB (f x.1)).length)), ?_,
-    fun a => ?_⟩
-  · exact hV.comp ((hf.comp (.fst enc encBits)).prod
-      (.bitsAppend (.bitsTakeWithInput (.snd enc encBits) (hp.comp (.fst enc encBits)))
-        (.bitsTakeWithInput (.bitsDropWithInput (.snd enc encBits) (hPu.comp (.fst enc encBits)))
-          (hq.comp (.fst enc encBits)))))
-  -- the verifier reads the prefixes of the random string and of the reply
-  have hsplit (r : Fin (P.eval (enc a).length) → Bool) (y : Fin (Q.eval (enc a).length) → Bool) :
-      (List.ofFn r ++ List.ofFn y).take (p.eval (encB (f a)).length) ++
-          ((List.ofFn r ++ List.ofFn y).drop (P.eval (enc a).length)).take
-            (q.eval (encB (f a)).length) =
-        (List.ofFn r).take (p.eval (encB (f a)).length) ++
-          (List.ofFn y).take (q.eval (encB (f a)).length) := by
-    rw [List.take_append_of_le_length (by simpa using hPe a),
-      List.drop_left' List.length_ofFn]
-  simp only [hsplit]
-  -- a reply matters only through its prefix, and the random string only through its prefix
+  obtain ⟨P, Q, V', hV', hPe, hQe, hsplit⟩ := exists_truncated_verifier hf p q hV
+  refine ⟨P, Q, V', hV', fun a => ?_⟩
   have hex (r : Fin (P.eval (enc a).length) → Bool) :
       (∃ y : Fin (Q.eval (enc a).length) → Bool, V (f a, (List.ofFn r).take
           (p.eval (encB (f a)).length) ++ (List.ofFn y).take (q.eval (encB (f a)).length)) = true) ↔
@@ -280,24 +257,12 @@ theorem PolyTimeReducible.mem_AM {encB : β ↪ List Bool} {B : Set β}
           V (f a, (List.ofFn r).take (p.eval (encB (f a)).length) ++ List.ofFn y) = false :=
     BitString.forall_take_ofFn_iff (hQe a)
       (g := fun w => V (f a, (List.ofFn r).take (p.eval (encB (f a)).length) ++ w) = false)
-  simp only [hex, hall]
-  have hpow : 2 ^ P.eval (enc a).length =
-      2 ^ (P.eval (enc a).length - p.eval (encB (f a)).length) *
-        2 ^ p.eval (encB (f a)).length := by
-    rw [← pow_add, Nat.sub_add_cancel (hPe a)]
-  have hscale {y : ℕ} (hxy : 2 * 2 ^ p.eval (encB (f a)).length ≤ 3 * y) :
-      2 * 2 ^ P.eval (enc a).length ≤
-        3 * (2 ^ (P.eval (enc a).length - p.eval (encB (f a)).length) * y) := by
-    rw [hpow, mul_left_comm, mul_left_comm 3]
-    exact Nat.mul_le_mul_left _ hxy
-  constructor
-  · intro ha
-    rw [BitString.card_filter_take (hPe a) fun w =>
-      ∃ y : Fin (q.eval (encB (f a)).length) → Bool, V (f a, w ++ List.ofFn y) = true]
-    exact hscale ((hVB (f a)).1 ((hAB a).1 ha))
-  · intro ha
-    rw [BitString.card_filter_take (hPe a) fun w =>
-      ∀ y : Fin (q.eval (encB (f a)).length) → Bool, V (f a, w ++ List.ofFn y) = false]
-    exact hscale ((hVB (f a)).2 fun hb => ha ((hAB a).2 hb))
+  simp only [hsplit, hex, hall]
+  exact ⟨fun ha => two_mul_two_pow_le_card_filter_take (hPe a)
+      (fun w => ∃ y : Fin (q.eval (encB (f a)).length) → Bool, V (f a, w ++ List.ofFn y) = true)
+      ((hVB (f a)).1 ((hAB a).1 ha)),
+    fun ha => two_mul_two_pow_le_card_filter_take (hPe a)
+      (fun w => ∀ y : Fin (q.eval (encB (f a)).length) → Bool, V (f a, w ++ List.ofFn y) = false)
+      ((hVB (f a)).2 fun hb => ha ((hAB a).2 hb))⟩
 
 end Cslib.Complexity

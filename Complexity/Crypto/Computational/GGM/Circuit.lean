@@ -123,7 +123,9 @@ def listGenerator (G : PRG.Generator (BitString k) (BitString (2 * k))) :
 private theorem ofFn_block (y : BitString (2 * k)) (bit : Bool) :
     List.ofFn (BitString.block y (finTwoEquiv.symm bit)) = selectChild k (List.ofFn y) bit := by
   apply List.ext_getElem
-  · cases bit <;> simp [selectChild] <;> omega
+  · cases bit <;>
+      simp only [selectChild, Bool.false_eq_true, ↓reduceIte, List.length_take, List.length_drop,
+        List.length_ofFn] <;> omega
   · intro i _ _
     cases bit <;> simp [selectChild, finProdFinEquiv, finTwoEquiv, Nat.add_comm]
 

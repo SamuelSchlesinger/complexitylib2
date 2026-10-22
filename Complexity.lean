@@ -59,6 +59,7 @@ public import Complexity.Computability.Circuit.Basic
 public import Complexity.Computability.Circuit.BipartiteMatching
 public import Complexity.Computability.Circuit.Bird
 public import Complexity.Computability.Circuit.Boolean.AC0
+public import Complexity.Computability.Circuit.Boolean.ACC0
 public import Complexity.Computability.Circuit.Boolean.Advice
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser
 public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Deletion
@@ -285,6 +286,7 @@ public import Complexity.Computability.Circuit.Frontier.Correlation.Asymptotics
 public import Complexity.Computability.Circuit.Frontier.Correlation.Circuit
 public import Complexity.Computability.Circuit.Frontier.Correlation.Rectangle
 public import Complexity.Computability.Circuit.Frontier.Demand
+public import Complexity.Computability.Circuit.Frontier.Extractor
 public import Complexity.Computability.Circuit.Frontier.FanInTwo
 public import Complexity.Computability.Circuit.Frontier.Layouts.Basic
 public import Complexity.Computability.Circuit.Frontier.Layouts.BoundedDegree
@@ -337,6 +339,7 @@ public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Cyclic
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Closure
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Compiler
+public import Complexity.Computability.Circuit.Fusion.DeMorgan
 public import Complexity.Computability.Circuit.Fusion.Encoding
 public import Complexity.Computability.Circuit.Fusion.Extension
 public import Complexity.Computability.Circuit.Fusion.Graph
@@ -941,6 +944,7 @@ public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family
 public import Complexity.Computability.PCP.Amplifier
 public import Complexity.Computability.PCP.Approximation
+public import Complexity.Computability.PCP.Approximation.Hastad
 public import Complexity.Computability.PCP.Approximation.IndependentSet
 public import Complexity.Computability.PCP.Approximation.LabelCover
 public import Complexity.Computability.PCP.Approximation.MaxCSP
@@ -1128,6 +1132,7 @@ public import Complexity.Computability.WordRAM.Structured
 public import Complexity.Computability.WordRAM.Time
 public import Complexity.Computability.WordRAM.Trace
 public import Complexity.Crypto.Computational.Basic
+public import Complexity.Crypto.Computational.Bootstrapping
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
@@ -1200,10 +1205,13 @@ public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle
 public import Complexity.Crypto.Computational.PseudorandomFunction.TruthTable
 public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Computational.Stretch
+public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.UniformChoice
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
+public import Complexity.Crypto.Lattice.LWE
+public import Complexity.Crypto.Multiparty.ObliviousTransfer
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
 public import Complexity.Crypto.Primitives.PRG.Circuit
@@ -1215,6 +1223,7 @@ public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Derandomization
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
+public import Complexity.Foundations.Analysis.HarmonicMean
 public import Complexity.Foundations.Analysis.MarkovInequality
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
@@ -1346,6 +1355,7 @@ public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Broadcast
 public import Complexity.Foundations.Data.BitString.Counter
+public import Complexity.Foundations.Data.BitString.CoverCoding
 public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Foundations.Data.BitString.Hamming

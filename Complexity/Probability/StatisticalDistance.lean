@@ -23,6 +23,10 @@ These statements reuse the upstream finite-PMF metric and its enumeration instan
 * `Cslib.Probability.PMF.abs_sum_mul_sub_le`: bounded-score changes under statistical distance.
 * `Cslib.Probability.PMF.dist_bind_pair`: exact average distance with a shared public sample.
 * `Cslib.Probability.PMF.dist_bind_pair_sq_le`: the squared-distance bound used in leftover hashing.
+* `Cslib.Probability.PMF.dist_bind_left_le`: convexity of statistical distance in `PMF.bind`.
+* `Cslib.Probability.PMF.dist_bind_left_le_of_le`: uniform distance bound across a `PMF.bind`
+  mixture.
+* `Cslib.Probability.PMF.dist_uniformOfFintype_bool`: statistical distance from uniform on `Bool`.
 
 ## References
 
@@ -103,5 +107,55 @@ theorem abs_sum_mul_sub_le [Fintype α] (p q : PMF α) (score : α → ℝ)
       rw [abs_mul]
       exact mul_le_mul_of_nonneg_left (hscore a) (abs_nonneg _)
     _ = _ := by rw [← Finset.sum_mul, dist_eq]; ring
+
+/-- Convexity of statistical distance in the first argument: the distance of a mixture `p.bind f`
+from `q` is at most the `p`-weighted average distance of `f a` from `q`. -/
+theorem dist_bind_left_le [Fintype α] [Fintype β] (p : PMF α) (f : α → PMF β) (q : PMF β) :
+    dist (p.bind f) q ≤ ∑ a, (p a).toReal * dist (f a) q := by
+  have h1 : (p.bind fun a => (f a).map (a, ·)).map Prod.snd = p.bind f := by
+    rw [PMF.map_bind]
+    refine congrArg (p.bind ·) (funext fun a => ?_)
+    exact (PMF.map_comp _ _ _).trans (PMF.map_id _)
+  have h2 : (p.bind fun a => q.map (a, ·)).map Prod.snd = q := by
+    rw [PMF.map_bind]
+    have hq : (fun a : α => (q.map (a, ·)).map Prod.snd) = fun _ => q :=
+      funext fun a => (PMF.map_comp _ _ _).trans (PMF.map_id _)
+    rw [hq, PMF.bind_const]
+  calc
+    dist (p.bind f) q
+      = dist ((p.bind fun a => (f a).map (a, ·)).map Prod.snd)
+          ((p.bind fun a => q.map (a, ·)).map Prod.snd) := by rw [h1, h2]
+    _ ≤ dist (p.bind fun a => (f a).map (a, ·)) (p.bind fun a => q.map (a, ·)) :=
+      dist_map_le _ _ Prod.snd
+    _ = ∑ a, (p a).toReal * dist (f a) q := dist_bind_pair p f fun _ => q
+
+/-- If every component `f a` in the support of `p` is within `δ` of `q`, so is `p.bind f`. -/
+theorem dist_bind_left_le_of_le [Finite α] [Fintype β] (p : PMF α) (f : α → PMF β) (q : PMF β)
+    {δ : ℝ} (h : ∀ a ∈ p.support, dist (f a) q ≤ δ) :
+    dist (p.bind f) q ≤ δ := by
+  cases nonempty_fintype α
+  calc
+    dist (p.bind f) q ≤ ∑ a, (p a).toReal * dist (f a) q := dist_bind_left_le p f q
+    _ ≤ ∑ a, (p a).toReal * δ := by
+      refine Finset.sum_le_sum fun a _ => ?_
+      by_cases ha : a ∈ p.support
+      · exact mul_le_mul_of_nonneg_left (h a ha) ENNReal.toReal_nonneg
+      · rw [(p.apply_eq_zero_iff a).mpr ha, ENNReal.toReal_zero, zero_mul, zero_mul]
+    _ = δ := by rw [← Finset.sum_mul, sum_toReal, one_mul]
+
+/-- Statistical distance on `Bool` from the uniform distribution is the bias `|p(true) - 1 / 2|`. -/
+theorem dist_uniformOfFintype_bool (p : PMF Bool) :
+    dist p (uniformOfFintype Bool) = |(p true).toReal - 1 / 2| := by
+  have hsum : (p true).toReal + (p false).toReal = 1 := by
+    have h := p.tsum_coe
+    rw [tsum_fintype, Fintype.sum_bool] at h
+    have h' := congrArg ENNReal.toReal h
+    rwa [ENNReal.toReal_add (p.apply_ne_top _) (p.apply_ne_top _), ENNReal.toReal_one] at h'
+  rw [dist_eq, Fintype.sum_bool]
+  simp only [uniformOfFintype_apply, Fintype.card_bool, Nat.cast_ofNat, ENNReal.toReal_inv,
+    ENNReal.toReal_ofNat]
+  have hfalse : |(p false).toReal - 2⁻¹| = |(p true).toReal - 2⁻¹| := by
+    rw [show (p false).toReal - 2⁻¹ = -((p true).toReal - 2⁻¹) by linarith, abs_neg]
+  linarith
 
 end Cslib.Probability.PMF

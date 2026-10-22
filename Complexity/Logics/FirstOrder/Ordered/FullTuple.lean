@@ -96,27 +96,17 @@ variable {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)]
 theorem constants_valid (hk : 0 < k) : I.constants.Valid (Fin n) := by
   cases k with
   | zero => lia
-  | succ k =>
-    intro c
-    refine ⟨⟨constantTuple c, Formula.realize_top.mpr trivial⟩,
-      (realize_tupleConstants c _).mpr rfl, ?_⟩
-    intro x hx
-    exact Interpretation.Model.ext ((realize_tupleConstants c x.val).mp hx)
+  | succ k => exact tupleConstants_valid.of_eq rfl rfl
 
 /-- The selected constants have the exact canonical numerical ranks. -/
 theorem lexRank_constants_value (hk : 0 < k) (c : NumericFunction 0) :
-    lexRank (I.constants.value (I.constants_valid hk (n := n)) c).val =
-      match c with | .zero => 0 | .one => 1 | .max => n ^ k - 1 := by
+    lexRank (I.constants.value (I.constants_valid hk (n := n)) c).val = c.index (n ^ k) := by
   cases k with
   | zero => lia
   | succ k =>
-    have h := (realize_tupleConstants c _).mp
-      (I.constants.value_spec (I.constants_valid hk (n := n)) c)
-    rw [h]
-    cases c
-    · exact lexRank_tupleZero
-    · exact lexRank_tupleOne
-    · exact lexRank_tupleMax
+    exact (congrArg lexRank
+      (Interpretation.WithConstants.val_value_eq rfl rfl tupleConstants_valid
+        (I.constants_valid hk (n := n)) c)).trans (lexRank_tupleConstants_value c)
 
 variable [L'.IsRelational]
 

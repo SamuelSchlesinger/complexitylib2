@@ -50,6 +50,7 @@ import ComplexityTests.CommunicationComplexity3
 import ComplexityTests.CommunicationComplexity4
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComparisonCircuits
+import ComplexityTests.Computability.Circuit.Boolean.ACC0
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
@@ -70,6 +71,9 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
+import ComplexityTests.Crypto.Bootstrapping
+import ComplexityTests.Crypto.LWE
+import ComplexityTests.Crypto.ObliviousTransfer
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
 import ComplexityTests.DataStructureQueue
@@ -107,6 +111,7 @@ import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierExtractor
 import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
@@ -117,6 +122,7 @@ import ComplexityTests.FusionConondeterministic
 import ComplexityTests.FusionConsistency
 import ComplexityTests.FusionConverse
 import ComplexityTests.FusionCyclic
+import ComplexityTests.FusionDeMorgan
 import ComplexityTests.FusionGraph
 import ComplexityTests.FusionHomomorphism
 import ComplexityTests.FusionQuadratic
@@ -139,6 +145,7 @@ import ComplexityTests.Halting
 import ComplexityTests.HardCore
 import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
+import ComplexityTests.Hastad
 import ComplexityTests.HastadSharp
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems

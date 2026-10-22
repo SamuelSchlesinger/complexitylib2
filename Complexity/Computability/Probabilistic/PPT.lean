@@ -51,6 +51,14 @@ control type, as the upstream tidy calculus does, instead of imposing a separate
 
 namespace Cslib.Probability
 
+/-- Complementing a Boolean program's answer replaces the real probability of `true` by its
+complement. -/
+theorem _root_.Cslib.ProbComp.probability_not (program : ProbComp Bool) :
+    (ProbComp.eval (Bool.not <$> program) true).toReal =
+      1 - (ProbComp.eval program true).toReal := by
+  simpa [ProbComp.eval_map, PMF.map_apply] using
+    PMF.toReal_false_eq_one_sub (ProbComp.eval program)
+
 variable {α β : Type} {input : α ↪ List Bool} {output : β ↪ List Bool}
   {program program' : α → ProbComp β}
 

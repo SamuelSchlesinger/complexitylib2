@@ -10,7 +10,11 @@ module
 public import Complexity.Init
 public import Mathlib.Data.Nat.Choose.Basic
 public import Mathlib.Data.Nat.Factorial.Basic
+import Mathlib.Algebra.Order.Ring.Pow
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Zify
 
 /-!
 # Scaling bounds for binomial coefficients
@@ -20,7 +24,10 @@ Scaling the ground set by `q` scales the number of `d`-subsets by at least `q ^ 
 most a `q ^ (-d)` fraction of the `k`-subsets when the ground set has at least `q k` elements
 (`Nat.pow_mul_choose_sub_le_choose`). Lowering `ℓ` by `s` scales the number of `ℓ`-subsets of an
 `m`-set by at most `(ℓ / (m - ℓ + 1)) ^ s` (`Nat.choose_sub_mul_pow_le`), so by at most
-`q ^ (-s)` when `(q + 1) ℓ ≤ m` (`Nat.pow_mul_choose_sub_le_choose_of_mul_le`).
+`q ^ (-s)` when `(q + 1) ℓ ≤ m` (`Nat.pow_mul_choose_sub_le_choose_of_mul_le`). Conversely,
+descending factorials and binomial coefficients grow at least as fast as powers on larger ground
+sets (`Nat.descFactorial_mul_pow_le`, `Nat.choose_mul_pow_le`), which gives the block-avoidance
+estimate `2 ^ r * C(b * m - m, b * r) ≤ C(b * m, b * r)` (`Nat.two_pow_mul_choose_sub_le`).
 -/
 
 @[expose] public section
@@ -96,5 +103,99 @@ theorem pow_mul_choose_sub_le_choose_of_mul_le {m ℓ s q : ℕ} (hs : s ≤ ℓ
     _ ≤ q ^ s * (m.choose ℓ * ℓ ^ s) := Nat.mul_le_mul_left _ (choose_sub_mul_pow_le hs hℓm)
     _ = m.choose ℓ * (q * ℓ) ^ s := by rw [Nat.mul_pow]; ring
     _ ≤ m.choose ℓ * (m - ℓ + 1) ^ s := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hqℓ s)
+
+/-- Descending factorials compare like powers: `s^{(k)} / n^{(k)} ≤ (s / n)^k` for `s ≤ n`. -/
+theorem descFactorial_mul_pow_le {s n : ℕ} (h : s ≤ n) (k : ℕ) :
+    s.descFactorial k * n ^ k ≤ s ^ k * n.descFactorial k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    have hk : (s - k) * n ≤ s * (n - k) := by
+      rcases le_or_gt k s with hks | hks
+      · zify [hks, hks.trans h]
+        nlinarith
+      · rw [Nat.sub_eq_zero_of_le hks.le, zero_mul]
+        exact Nat.zero_le _
+    rw [descFactorial_succ, descFactorial_succ, pow_succ, pow_succ]
+    calc (s - k) * s.descFactorial k * (n ^ k * n)
+        = s.descFactorial k * n ^ k * ((s - k) * n) := by ring
+      _ ≤ s ^ k * n.descFactorial k * (s * (n - k)) := Nat.mul_le_mul ih hk
+      _ = s ^ k * s * ((n - k) * n.descFactorial k) := by ring
+
+/-- For `a ≤ s`, `C(a, k) * s ^ k ≤ C(s, k) * a ^ k`. -/
+theorem choose_mul_pow_le {a s : ℕ} (has : a ≤ s) (k : ℕ) :
+    a.choose k * s ^ k ≤ s.choose k * a ^ k := by
+  refine Nat.le_of_mul_le_mul_left ?_ (factorial_pos k)
+  calc k.factorial * (a.choose k * s ^ k)
+      = (k.factorial * a.choose k) * s ^ k := by ring
+    _ = a.descFactorial k * s ^ k := by rw [← descFactorial_eq_factorial_mul_choose]
+    _ ≤ a ^ k * s.descFactorial k := descFactorial_mul_pow_le has k
+    _ = a ^ k * (k.factorial * s.choose k) := by rw [descFactorial_eq_factorial_mul_choose]
+    _ = k.factorial * (s.choose k * a ^ k) := by ring
+
+/-- `C(b * m - m, k) * b ^ k ≤ C(b * m, k) * (b - 1) ^ k`. -/
+theorem choose_mul_sub_mul_pow_le (b m k : ℕ) :
+    (b * m - m).choose k * b ^ k ≤ (b * m).choose k * (b - 1) ^ k := by
+  rcases Nat.eq_zero_or_pos m with rfl | hm
+  · rcases k with _ | k <;> simp
+  · have hbm : b * m - m = (b - 1) * m := by
+      rw [Nat.sub_mul, one_mul]
+    rw [hbm]
+    have hle : (b - 1) * m ≤ b * m := Nat.mul_le_mul_right m (Nat.sub_le b 1)
+    have h := choose_mul_pow_le hle k
+    rw [Nat.mul_pow, Nat.mul_pow] at h
+    have hpos : 0 < m ^ k := by positivity
+    refine Nat.le_of_mul_le_mul_right ?_ hpos
+    calc ((b - 1) * m).choose k * b ^ k * m ^ k
+        = ((b - 1) * m).choose k * (b ^ k * m ^ k) := by ring
+      _ ≤ (b * m).choose k * ((b - 1) ^ k * m ^ k) := h
+      _ = (b * m).choose k * (b - 1) ^ k * m ^ k := by ring
+
+/-- Bernoulli's inequality in `ℕ`: for `1 ≤ n`, `d ^ n + n * d ^ (n - 1) ≤ (d + 1) ^ n`. -/
+private theorem pow_add_mul_pow_sub_one_le (d : ℕ) {n : ℕ} (hn : 1 ≤ n) :
+    d ^ n + n * d ^ (n - 1) ≤ (d + 1) ^ n := by
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  clear hn
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    simp only [Nat.add_sub_cancel] at ih ⊢
+    calc d ^ (k + 2) + (k + 2) * d ^ (k + 1)
+        = (d ^ (k + 1) + (k + 1) * d ^ k) * d + d ^ (k + 1) := by ring
+      _ ≤ (d ^ (k + 1) + (k + 1) * d ^ k) * d + d ^ (k + 1) + (k + 1) * d ^ k :=
+          Nat.le_add_right _ _
+      _ = (d ^ (k + 1) + (k + 1) * d ^ k) * (d + 1) := by ring
+      _ ≤ (d + 1) ^ (k + 1) * (d + 1) := Nat.mul_le_mul_right (d + 1) ih
+      _ = (d + 1) ^ (k + 2) := by ring
+
+/-- For `1 ≤ b`, `2 * (b - 1) ^ b ≤ b ^ b`. -/
+theorem two_mul_pred_pow_le {b : ℕ} (hb : 1 ≤ b) :
+    2 * (b - 1) ^ b ≤ b ^ b := by
+  obtain ⟨d, rfl⟩ : ∃ d, b = d + 1 := ⟨b - 1, by omega⟩
+  have h := pow_add_mul_pow_sub_one_le d (Nat.succ_pos d)
+  calc 2 * d ^ (d + 1)
+      = d ^ (d + 1) + d * d ^ d := by ring
+    _ ≤ d ^ (d + 1) + (d + 1) * d ^ d :=
+        Nat.add_le_add_left (Nat.mul_le_mul_right (d ^ d) (Nat.le_succ d)) _
+    _ ≤ (d + 1) ^ (d + 1) := h
+
+/-- For `1 ≤ b`, `2 ^ r * C(b * m - m, b * r) ≤ C(b * m, b * r)`. -/
+theorem two_pow_mul_choose_sub_le {b m : ℕ} (hb : 1 ≤ b) (r : ℕ) :
+    2 ^ r * (b * m - m).choose (b * r) ≤ (b * m).choose (b * r) := by
+  have hpow : 2 ^ r * (b - 1) ^ (b * r) ≤ b ^ (b * r) := by
+    calc 2 ^ r * (b - 1) ^ (b * r)
+        = (2 * (b - 1) ^ b) ^ r := by rw [Nat.mul_pow, ← pow_mul]
+      _ ≤ (b ^ b) ^ r := Nat.pow_le_pow_left (two_mul_pred_pow_le hb) r
+      _ = b ^ (b * r) := by rw [← pow_mul]
+  have hchoose := choose_mul_sub_mul_pow_le b m (b * r)
+  have hpos : 0 < b ^ (b * r) := by positivity
+  refine Nat.le_of_mul_le_mul_right ?_ hpos
+  calc 2 ^ r * (b * m - m).choose (b * r) * b ^ (b * r)
+      = 2 ^ r * ((b * m - m).choose (b * r) * b ^ (b * r)) := by ring
+    _ ≤ 2 ^ r * ((b * m).choose (b * r) * (b - 1) ^ (b * r)) :=
+        Nat.mul_le_mul_left (2 ^ r) hchoose
+    _ = (b * m).choose (b * r) * (2 ^ r * (b - 1) ^ (b * r)) := by ring
+    _ ≤ (b * m).choose (b * r) * b ^ (b * r) :=
+        Nat.mul_le_mul_left _ hpow
 
 end Nat

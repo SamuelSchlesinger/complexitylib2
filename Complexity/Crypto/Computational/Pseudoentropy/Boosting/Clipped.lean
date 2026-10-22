@@ -140,13 +140,8 @@ theorem eval_clippedPredict_correct (bound numerator : ℕ) (votes : List Bool) 
     (ProbComp.eval (clippedPredict bound numerator votes) truth).toReal =
       clippedProbability (numerator / dyadicSize bound) (listVoteMargin votes truth) := by
   cases truth
-  · have hsum := Cslib.Probability.PMF.sum_toReal
-      (ProbComp.eval (clippedPredict bound numerator votes))
-    simp only [Fintype.sum_bool, eval_clippedPredict_true] at hsum
-    have hmargin : listVoteMargin votes false = -listVoteMargin votes true :=
-      listVoteMargin_not votes true
-    rw [hmargin, clippedProbability_neg]
-    linarith
+  · rw [Cslib.Probability.PMF.toReal_false_eq_one_sub, eval_clippedPredict_true,
+      show false = !true from rfl, listVoteMargin_not, clippedProbability_neg]
   · exact eval_clippedPredict_true bound numerator votes
 
 /-- The opposite label has the complementary clipped probability. -/

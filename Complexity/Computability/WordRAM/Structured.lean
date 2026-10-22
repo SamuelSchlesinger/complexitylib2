@@ -225,6 +225,13 @@ theorem width : Exec w (.op (.width d)) x (x.set d w) 1 := .op (Op.eval_width w 
 
 end Standard
 
+/-- A loop whose condition holds initially and fails after one body execution runs in `m + 4`
+instructions. -/
+theorem loop_once {c : Cond r} {body : Code B r} {x y : Data r} {m : ℕ}
+    (hc : c.Holds x) (h : Exec w body x y m) (hy : ¬c.Holds y) :
+    Exec w (.loop c body) x y (m + 4) :=
+  loop_iter hc h (loop_exit hy)
+
 /-- A loop through the states `xs 0, …, xs k`: the condition holds at the first `k` of them and
 fails at the last, and the body leads from each to the next in `T` instructions. -/
 theorem loop {cond : Cond r} {body : Code B r} (xs : ℕ → Data r) (k T : ℕ)
@@ -289,6 +296,12 @@ theorem loop_iter (hc : cond.Holds x) (h₁ : ExecWithin w body x y T₁)
   let ⟨m, hm, he₁⟩ := h₁
   let ⟨n, hn, he₂⟩ := h₂
   ⟨m + n + 2, by omega, .loop_iter hc he₁ he₂⟩
+
+/-- A loop whose condition holds initially and fails after one body execution runs within `T + 4`
+instructions. -/
+theorem loop_once (hc : cond.Holds x) (h : ExecWithin w body x y T) (hy : ¬cond.Holds y) :
+    ExecWithin w (.loop cond body) x y (T + 4) :=
+  loop_iter hc h (loop_exit hy)
 
 /-- **Loop rule, explicit states.** If the condition holds at `xs 0, …, xs (k - 1)` and fails at
 `xs k`, and the body leads from each state to the next within `T` instructions, the loop leads

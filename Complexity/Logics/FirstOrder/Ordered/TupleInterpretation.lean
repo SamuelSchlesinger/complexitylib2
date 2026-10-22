@@ -144,16 +144,20 @@ theorem tupleConstants_valid : (tupleConstants L k).Valid (Fin n) := by
   intro x hx
   exact Interpretation.Model.ext ((realize_tupleConstants c x.val).mp hx)
 
-/-- The interpreted constant values have exactly the canonical numerical ranks. -/
-theorem lexRank_tupleConstants_value (c : NumericFunction 0) :
-    lexRank ((tupleConstants L k).value (tupleConstants_valid (n := n)) c).val =
-      match c with | .zero => 0 | .one => 1 | .max => n ^ (k + 1) - 1 := by
-  have h := (realize_tupleConstants c _).mp
-    ((tupleConstants L k).value_spec (tupleConstants_valid (n := n)) c)
-  rw [h]
+/-- The canonical constant tuples have ranks `0`, `1` and `n ^ (k + 1) - 1`. -/
+theorem lexRank_constantTuple (c : NumericFunction 0) :
+    lexRank (constantTuple (n := n) (k := k) c) = c.index (n ^ (k + 1)) := by
   cases c
   · exact lexRank_tupleZero
   · exact lexRank_tupleOne
   · exact lexRank_tupleMax
+
+/-- The interpreted constant values have exactly the canonical numerical ranks. -/
+theorem lexRank_tupleConstants_value (c : NumericFunction 0) :
+    lexRank ((tupleConstants L k).value (tupleConstants_valid (n := n)) c).val =
+      c.index (n ^ (k + 1)) := by
+  rw [(realize_tupleConstants c _).mp
+    ((tupleConstants L k).value_spec (tupleConstants_valid (n := n)) c)]
+  exact lexRank_constantTuple c
 
 end Cslib.Logic.FO.Ordered

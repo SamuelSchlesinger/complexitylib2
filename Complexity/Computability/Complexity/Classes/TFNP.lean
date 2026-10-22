@@ -393,16 +393,31 @@ def SearchReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (R : α 
       (∀ a, a ∈ searchDomain R → f a ∈ searchDomain S) ∧ ∀ a w, S (f a) w → R a (g (a, w))
 
 /-- `S` is hard for the class `𝒞` of search problems under search reductions: every problem in
-`𝒞`, with any encoding of its instances, reduces to `S`. -/
+`𝒞`, with any encoding of its instances, reduces to `S`. This is `HardUnder` for
+`SearchReducible`. -/
 def SearchHard (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool → Prop))
     (encB : β ↪ List Bool) (S : β → List Bool → Prop) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (R : α → List Bool → Prop), R ∈ 𝒞 enc →
-    SearchReducible enc encB R S
+  HardUnder (fun enc => SearchReducible enc encB) @𝒞 S
 
-/-- `S` is complete for the class `𝒞` of search problems: it is in `𝒞` and hard for it. -/
+/-- `S` is complete for the class `𝒞` of search problems: it is in `𝒞` and hard for it. This is
+`CompleteUnder` for `SearchReducible` (`searchComplete_iff_completeUnder`), with its second conjunct
+stated as `SearchHard`. -/
 def SearchComplete (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool → Prop))
     (encB : β ↪ List Bool) (S : β → List Bool → Prop) : Prop :=
   S ∈ 𝒞 encB ∧ SearchHard 𝒞 encB S
+
+/-- Search hardness is hardness under `SearchReducible`. -/
+theorem searchHard_iff_hardUnder {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool → Prop)}
+    {encB : β ↪ List Bool} {S : β → List Bool → Prop} :
+    SearchHard 𝒞 encB S ↔ HardUnder (fun enc => SearchReducible enc encB) @𝒞 S :=
+  Iff.rfl
+
+/-- Search completeness is completeness under `SearchReducible`. -/
+theorem searchComplete_iff_completeUnder
+    {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool → Prop)}
+    {encB : β ↪ List Bool} {S : β → List Bool → Prop} :
+    SearchComplete 𝒞 encB S ↔ CompleteUnder (fun enc => SearchReducible enc encB) @𝒞 encB S :=
+  Iff.rfl
 
 section Reductions
 
@@ -475,7 +490,7 @@ variable {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (α → List Bool �
 /-- Hardness transfers along search reductions. -/
 theorem SearchHard.trans (hT : SearchHard 𝒞 encB T) (hTU : SearchReducible encB encC T U) :
     SearchHard 𝒞 encC U :=
-  fun enc R hR => (hT enc R hR).trans hTU
+  HardUnder.trans (fun _ _ h h' => h.trans h') hT hTU
 
 /-- **A hard problem in `FPSearch` collapses the class.** If every problem of `𝒞` is in `FNP` and
 a `𝒞`-hard problem is in `FPSearch`, then every problem of `𝒞` is in `FPSearch`. -/

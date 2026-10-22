@@ -97,7 +97,7 @@ theorem queryLoop_full (hx : Entry b n n δ x) (hn : 0 < n)
     (hxans : x.regs ans = a) (ha : Fits w (b + 2 * n)) (hv : Fits w (a + x.mem b)) :
     ∃ y, ExecWithin w queryLoop x y 15 ∧ y.regs ans = a + x.mem b ∧ y.mem = x.mem := by
   have he := queryBody_exec hx le_rfl hn hxans ha hv (fun h => (h rfl).elim)
-  refine ⟨_, (he.loop_iter (cond := .lt zero idx) ?_ (ExecWithin.loop_exit ?_)), ?_,
+  refine ⟨_, he.loop_once (cond := .lt zero idx) ?_ ?_, ?_,
     queryNext_mem⟩
   · simp only [Cond.holds_lt, hx.zero_eq, hx.idx_eq, hn]
   · simp +decide [queryNext]

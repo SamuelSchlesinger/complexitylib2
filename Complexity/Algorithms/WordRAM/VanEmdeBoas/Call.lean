@@ -548,11 +548,10 @@ theorem instruction_bound {d w base stackBase₀ : ℕ}
     (hstk_lo : base + span d ≤ stackBase₀) (hstk_fit : Fits w (stackBase₀ + 4 * d)) :
     Stateful.Bound (certificate hstk_lo hstk_fit).realization
       DynamicProgram.OperationTrace.instructions (fun _ _ => 65 * (d + 1) + 22) := by
-  apply DynamicCertificate.instruction_bound
-  intro s x o y n hx ho he
+  apply (certificate hstk_lo hstk_fit).instruction_bound_const
+  intro s x o hx ho
   obtain ⟨z, ⟨k, hk, he'⟩, _, _⟩ := dispatch_spec hstk_lo hstk_fit o hx ho
-  obtain ⟨_, rfl⟩ := he.unique he'
-  omega
+  exact ⟨z, k, he', by omega⟩
 
 /-- The per-operation instruction certificate written in terms of the universe size. -/
 theorem instruction_bound_log {d w base stackBase₀ : ℕ}
@@ -573,10 +572,8 @@ theorem execOp_frame {d w base stackBase₀ : ℕ}
     (he : (dynamicProgram d w).ExecOp w x o a y trace) {j : ℕ}
     (hj_tree : j < base ∨ base + span d ≤ j)
     (hj_stk : j < stackBase₀ ∨ stackBase₀ + 4 * d ≤ j) : y.mem j = x.mem j := by
-  obtain ⟨z, ⟨k, _, hk⟩, _, _, hf⟩ := dispatch_spec hstk_lo hstk_fit o hx ho
-  obtain ⟨_, n, hn, _, _⟩ := he
-  obtain ⟨rfl, _⟩ := hn.exec.unique hk
-  exact hf j hj_tree hj_stk
+  obtain ⟨z, ⟨_, _, hk⟩, _, _, hf⟩ := dispatch_spec hstk_lo hstk_fit o hx ho
+  exact (he.eq_of_exec hk).1 ▸ hf j hj_tree hj_stk
 
 /-- Every admissible adaptive client execution preserves memory outside the tree and stack
 regions across the entire interaction history. -/
@@ -588,13 +585,9 @@ theorem executes_client_frame {d w base stackBase₀ : ℕ}
     (hv : (spec d w).ValidHistory s ((spec d w).runClient s p).2.2)
     (he : Stateful.Executes ((dynamicProgram d w).ExecOp w) p x val y traces) {j : ℕ}
     (hj_tree : j < base ∨ base + span d ≤ j)
-    (hj_stk : j < stackBase₀ ∨ stackBase₀ + 4 * d ≤ j) : y.mem j = x.mem j := by
-  induction he generalizing s with
-  | pure _ _ => rfl
-  | call hstep _ ih =>
-    obtain ⟨ha, hx'⟩ := (certificate hstk_lo hstk_fit).realization.correct hx hv.1 hstep
-    subst ha
-    exact (ih hx' hv.2).trans (execOp_frame hstk_lo hstk_fit hx hv.1 hstep hj_tree hj_stk)
+    (hj_stk : j < stackBase₀ ∨ stackBase₀ + 4 * d ≤ j) : y.mem j = x.mem j :=
+  (certificate hstk_lo hstk_fit).executes_client_frame
+    (fun hx' ho' he' => execOp_frame hstk_lo hstk_fit hx' ho' he' hj_tree hj_stk) hx hv he
 
 /-- Every admissible adaptive client has a concrete execution with the specified answers and
 final finite set, at most `65 * (d + 1) + 22` instructions per operation, and unchanged memory
@@ -611,11 +604,10 @@ theorem client_spec {d w base stackBase₀ : ℕ}
         ((spec d w).runClient s p).2.2.length * (65 * (d + 1) + 22) ∧
       (∀ j, (j < base ∨ base + span d ≤ j) →
         (j < stackBase₀ ∨ stackBase₀ + 4 * d ≤ j) → y.mem j = x.mem j) := by
-  obtain ⟨y, traces, he, hr⟩ := (certificate hstk_lo hstk_fit).realization.run p hx hv
-  refine ⟨y, traces, he, hr, ?_, fun j hjt hjs =>
+  obtain ⟨y, traces, he, hr, hcost⟩ :=
+    (certificate hstk_lo hstk_fit).run_client_const (instruction_bound hstk_lo hstk_fit) p hx hv
+  exact ⟨y, traces, he, hr, hcost, fun j hjt hjs =>
     executes_client_frame hstk_lo hstk_fit hx hv he hjt hjs⟩
-  exact (Stateful.Bound.client (instruction_bound hstk_lo hstk_fit) hx hv he).trans
-    ((spec d w).totalCost_le_length_mul _ _ (fun _ _ _ => le_rfl) hv)
 
 /-- Combined native initialization and adaptive client execution: starting from any bounded
 machine state `s₀` with `s₀.regs root = base`, `s₀.regs depth = d`, and

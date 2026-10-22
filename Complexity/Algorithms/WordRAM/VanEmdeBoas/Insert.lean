@@ -274,7 +274,7 @@ private theorem insertLoop_finish {d w base key : ℕ} {tree' : Tree d} {s : Dat
     ∃ z, ExecWithin w insertLoop s z 41 ∧ Rep tree' base z.mem ∧
       (∀ a, a < base ∨ base + span d ≤ a → z.mem a = s.mem a) := by
   have hz := (insertNext_constants hs).1
-  refine ⟨_, he.loop_iter (cond := .lt zero runFlag) ?_ (ExecWithin.loop_exit ?_), hrep, hframe⟩
+  refine ⟨_, he.loop_once (cond := .lt zero runFlag) ?_ ?_, hrep, hframe⟩
   · simp only [Cond.holds_lt, hs.zero_eq, hs.runFlag_eq]
     decide
   · simp only [Cond.holds_lt, hz, hk, lt_self_iff_false, not_false_eq_true]

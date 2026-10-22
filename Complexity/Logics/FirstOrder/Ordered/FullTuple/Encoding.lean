@@ -8,22 +8,32 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple
-public import Complexity.Logics.FirstOrder.Encoding.Layout
+public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation.Encoding
 
 /-!
 # Encoding canonical full-tuple interpretations
 
-A valid source of size at least two is mapped to the full tuple universe, numbered by
-`lexRank`. Only the target input relations are serialized; canonical order, BIT and constants
-are computed from the target cardinality. Relation tables keep `tupleIndex` order across their
-arguments. Malformed sources and sizes zero and one map to a fixed malformed target.
+A full-tuple interpretation is the ordered interpretation whose domain formula is `true`
+(`FullTupleInterpretation.toDomainInterpretation`), with ranks given by lexicographic rank on all
+tuples. A valid source of size at least two is mapped to the full tuple universe, numbered by
+`lexRank`, agreeing with `DomainInterpretation.encodedMap`
+(`FullTupleInterpretation.encodedMap_toDomainInterpretation`). Only the target input relations are
+serialized; canonical order, BIT and constants are computed from the target cardinality. Relation
+tables keep `tupleIndex` order across their arguments. Malformed sources and sizes zero and one map
+to a fixed malformed target.
 
 ## Main definitions
 
+* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.toDomainInterpretation`: embedding as an
+  interpretation with domain formula `⊤`.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedMap`: the total map on parsed instances.
 
 ## Main results
 
+* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.unrank_toDomainInterpretation`: ranks are
+  lexicographic ranks.
+* `Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedMap_toDomainInterpretation`: agreement
+  with `DomainInterpretation.encodedMap`.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.card_encodedMap`: exact target cardinality.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.table_encodedMap`: exact table numbering.
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.wellFormed_encodedMap_iff`: exact shape guard.
@@ -40,6 +50,39 @@ arguments. Malformed sources and sizes zero and one map to a fixed malformed tar
 open FirstOrder Language Structure
 
 namespace Cslib.Logic.FO.Ordered.FullTupleInterpretation
+
+section DomainInterpretation
+
+variable {L L' : Language} {k : ℕ} (I : FullTupleInterpretation L L' k)
+
+/-- A full-tuple interpretation is the ordered interpretation with domain formula `true`. -/
+def toDomainInterpretation : DomainInterpretation L L' k where
+  domain := ⊤
+  rel := I.rel
+
+variable {I}
+
+theorem card_toDomainInterpretation (M : Structure L) :
+    I.toDomainInterpretation.card M = M.size ^ k :=
+  DomainInterpretation.card_of_forall fun _ => Formula.realize_top.mpr trivial
+
+variable {M : Structure L}
+
+/-- The ranks of a full-tuple interpretation are the lexicographic ranks of all tuples. -/
+theorem unrank_toDomainInterpretation (i : Fin (I.toDomainInterpretation.card M)) :
+    I.toDomainInterpretation.unrank M i =
+      lexEquiv.symm (Fin.cast (card_toDomainInterpretation M) i) :=
+  DomainInterpretation.unrank_of_forall (fun _ => Formula.realize_top.mpr trivial) i
+
+@[simp] theorem lexRank_unrank_toDomainInterpretation (i : Fin (I.toDomainInterpretation.card M)) :
+    lexRank (I.toDomainInterpretation.unrank M i) = i :=
+  DomainInterpretation.lexRank_unrank_of_forall (fun _ => Formula.realize_top.mpr trivial) i
+
+/-- Positive-dimensional full-tuple interpretations are admissible. -/
+theorem admissible_toDomainInterpretation (hk : 0 < k) : I.toDomainInterpretation.Admissible :=
+  fun M => (card_toDomainInterpretation M).symm ▸ two_le_pow (n := M.size) hk
+
+end DomainInterpretation
 
 variable {L L' : Language} [L.IsRelational] [L'.IsRelational] {k : ℕ}
   (I : FullTupleInterpretation L L' k) (v : Vocabulary L) (v' : Vocabulary L')
@@ -68,6 +111,26 @@ theorem encodedMap_of_not_admissible (ha : ¬(v.WellFormed a ∧ 2 ≤ a.1)) :
     I.encodedMap v v' a = (0, List.replicate (v'.count + 1) []) :=
   dite_eq_right ha
 
+/-- **The encoded maps agree**: the full-tuple encoded map is that of the embedded interpretation,
+for every dimension and every input. -/
+theorem encodedMap_toDomainInterpretation {I : FullTupleInterpretation L L' k} (v : Vocabulary L)
+    (v' : Vocabulary L') : I.toDomainInterpretation.encodedMap v v' = I.encodedMap v v' := by
+  funext a
+  by_cases h : v.WellFormed a ∧ 2 ≤ a.1
+  · rw [DomainInterpretation.encodedMap_of_admissible _ v v' h.1 h.2,
+      I.encodedMap_of_admissible v v' h.1 h.2]
+    let _ : Fact (2 ≤ a.1) := ⟨h.2⟩
+    let _ := v.decode a
+    let _ := I.toDomainInterpretation.inputStructure (decoded v a h.2)
+    let _ := I.inputStructure (n := a.1)
+    refine v'.encode_congr _ _ (card_toDomainInterpretation (decoded v a h.2)) fun R x => ?_
+    change (I.rel R).Realize
+      (fun p => I.toDomainInterpretation.unrank (decoded v a h.2) (x p.1) p.2) ↔ _
+    simp only [unrank_toDomainInterpretation]
+    rfl
+  · rw [DomainInterpretation.encodedMap_of_not_admissible _ v v' h,
+      I.encodedMap_of_not_admissible v v' h]
+
 /-- The canonical rank universe has exactly one element per source tuple. -/
 theorem card_encodedMap (ha : v.WellFormed a) (hn : 2 ≤ a.1) :
     (I.encodedMap v v' a).1 = a.1 ^ k := by
@@ -78,17 +141,7 @@ theorem card_encodedMap (ha : v.WellFormed a) (hn : 2 ≤ a.1) :
 needed when asking for canonical target numerics, not for this shape statement. -/
 @[simp] theorem wellFormed_encodedMap_iff :
     v'.WellFormed (I.encodedMap v v' a) ↔ v.WellFormed a ∧ 2 ≤ a.1 := by
-  by_cases h : v.WellFormed a ∧ 2 ≤ a.1
-  · rw [I.encodedMap_of_admissible v v' h.1 h.2]
-    let : Fact (2 ≤ a.1) := ⟨h.2⟩
-    let := v.decode a
-    let := I.inputStructure (n := a.1)
-    exact iff_of_true (Vocabulary.wellFormed_encode _ _) h
-  · rw [I.encodedMap_of_not_admissible v v' h]
-    refine iff_of_false (fun h' => ?_) h
-    have := h'.1
-    simp only [List.length_replicate] at this
-    lia
+  rw [← I.encodedMap_toDomainInterpretation, DomainInterpretation.wellFormed_encodedMap_iff]
 
 /-- A positive-dimensional admissible source produces an admissible target cardinality. -/
 theorem two_le_card_encodedMap (hk : 0 < k) (ha : v.WellFormed a) (hn : 2 ≤ a.1) :
@@ -115,9 +168,9 @@ theorem table_encodedMap (ha : v.WellFormed a) (hn : 2 ≤ a.1) {r : ℕ}
 theorem length_encStructure_encodedMap (ha : v.WellFormed a) (hn : 2 ≤ a.1) :
     (encStructure (I.encodedMap v v' a)).length =
       2 * a.1 ^ k + 1 + ∑ j : Fin v'.count, (2 * (a.1 ^ k) ^ v'.arity j + 1) := by
-  rw [I.encodedMap_of_admissible v v' ha hn, encStructure_eq]
-  simp [Vocabulary.encode, Vocabulary.length_relTable, Turing.MultiTapeTM.length_frame,
-    Vocabulary.arity, List.sum_ofFn]
+  rw [← I.encodedMap_toDomainInterpretation,
+    DomainInterpretation.length_encStructure_encodedMap _ v v' ha hn, card_toDomainInterpretation]
+  rfl
 
 /-- The decoded output, with its own canonical numerics, is the interpreted full ordered
 structure. Its underlying numbering is the exact lexicographic rank, not an arbitrary input

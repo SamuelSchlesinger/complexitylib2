@@ -139,10 +139,14 @@ theorem PolyTimeReducible.exists_polyTimeReducible (h : PolyTimeReducible encA e
 
 /-- A promise problem is **NP-hard** when every problem in `NP`, with any encoding of its
 instances, reduces to it: some polynomial-time function maps its members to yes-instances and its
-non-members to no-instances. -/
+non-members to no-instances. This is `HardUnder` for `PolyTimeReducible` from `ofSet`. -/
 def NPHard (encB : β ↪ List Bool) (Y : PromiseProblem β) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ NP enc →
-    PolyTimeReducible enc encB (ofSet A) Y
+  HardUnder (fun enc A Y => PolyTimeReducible enc encB (ofSet A) Y) @NP Y
+
+/-- NP-hardness of a promise problem is hardness for `NP` under `PolyTimeReducible` from `ofSet`. -/
+theorem npHard_iff_hardUnder :
+    NPHard encB Y ↔ HardUnder (fun enc A Y => PolyTimeReducible enc encB (ofSet A) Y) @NP Y :=
+  Iff.rfl
 
 /-- On decision problems, NP-hardness as a promise problem is `Cslib.Complexity.NPHard`. -/
 theorem npHard_ofSet_iff {B : Set β} : NPHard encB (ofSet B) ↔ Complexity.NPHard encB B :=
@@ -151,7 +155,7 @@ theorem npHard_ofSet_iff {B : Set β} : NPHard encB (ofSet B) ↔ Complexity.NPH
 
 /-- NP-hardness transfers along reductions. -/
 theorem NPHard.trans (hX : NPHard encA X) (h : PolyTimeReducible encA encB X Y) : NPHard encB Y :=
-  fun enc A hA => (hX enc A hA).trans h
+  HardUnder.trans (fun _ _ h' h'' => h'.trans h'') hX h
 
 /-- Enlarging the promise preserves NP-hardness. -/
 theorem NPHard.mono (hY : NPHard encB Y) (hyes : Y.yes ⊆ Y'.yes) (hno : Y.no ⊆ Y'.no) :

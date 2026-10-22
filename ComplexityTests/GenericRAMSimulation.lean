@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.GenericRAM.Simulation.Turing
 public import Complexity.Computability.GenericRAM.Simulation.Run
 public import Complexity.Computability.GenericRAM.Native.Nat
+public import Complexity.Computability.WordRAM.Native
 import Mathlib.Data.Fin.VecNotation
 
 /-!
@@ -336,69 +337,6 @@ theorem doubleProgram_executes (x : ℕ) :
       (doubleInit x).denote (x + x) m :=
   FiniteState.executes_of_run_eq_inr (doubleProgram_run x)
 
-/-- Iterating `roundCertificate` a fixed number of rounds `j` yields a polynomial certificate. -/
-noncomputable def doubleRoundIterCert : (j : ℕ) →
-    NativeCertificate
-      (fun x => (FiniteState.round doubleProgram)^[j]
-        (doubleConfig x, some (.inl (doubleInit x))))
-      encNat (FiniteState.loopEncoding encoding)
-  | 0 => NativeCertificate.prod doubleConfigCert
-      (NativeCertificate.some (NativeCertificate.inl doubleInitCert encoding.value))
-  | j + 1 =>
-    ((FiniteState.roundCertificate encoding nativePrimitives doubleProgram).comp
-      (doubleRoundIterCert j)).congr fun _ => (Function.iterate_succ_apply' _ _ _).symm
-
-theorem doubleRoundIterCert_isPolynomial : ∀ j : ℕ, (doubleRoundIterCert j).IsPolynomial
-  | 0 => NativeCertificate.prod_isPolynomial _ _ doubleConfigCert_isPolynomial
-      (NativeCertificate.some_isPolynomial _
-        (NativeCertificate.inl_isPolynomial _ _ doubleInitCert_isPolynomial))
-  | j + 1 =>
-    NativeCertificate.congr_isPolynomial _ _
-      (NativeCertificate.comp_isPolynomial _ _
-        (FiniteState.roundCertificate_isPolynomial encoding nativePrimitives
-          doubleProgram nativePrimitives_isPolynomial)
-        (doubleRoundIterCert_isPolynomial j))
-
-theorem doubleRun_length_polyBounded (j : ℕ) :
-    PolyBounded (fun x => (encNat x).length)
-      (fun x => (FiniteState.resultEncoding encoding
-        (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length) := by
-  have hloop :=
-    ((doubleRoundIterCert j).polyTime (doubleRoundIterCert_isPolynomial j)).polyBounded_length
-  refine hloop.mono fun x => ?_
-  rw [FiniteState.iterate_round_inl]
-  simp only [FiniteState.loopEncoding, length_encPair]
-  omega
-
-/-- Trajectory-sum upper bound on encoded outcomes of `doubleProgram` across `0 ≤ j ≤ 6`. -/
-noncomputable def doubleOutcomeBound (x : ℕ) : ℕ :=
-  ∑ j ∈ Finset.range 7,
-    (FiniteState.resultEncoding encoding
-      (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length
-
-theorem doubleOutcomeBound_polyBounded :
-    PolyBounded (fun x => (encNat x).length) doubleOutcomeBound := by
-  unfold doubleOutcomeBound
-  suffices ∀ n : ℕ, PolyBounded (fun x => (encNat x).length)
-      (fun x => ∑ j ∈ Finset.range n,
-        (FiniteState.resultEncoding encoding
-          (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length) from this 7
-  intro n
-  induction n with
-  | zero =>
-    simpa only [Finset.range_zero, Finset.sum_empty] using PolyBounded.const 0
-  | succ n ih =>
-    simpa only [Finset.sum_range_succ] using ih.add (doubleRun_length_polyBounded n)
-
-theorem doubleOutcome_length_le (x : ℕ) (j : ℕ) (hj : j ≤ 6) :
-    (FiniteState.resultEncoding encoding
-      (FiniteState.run (doubleConfig x) doubleProgram j (doubleInit x))).length ≤
-      doubleOutcomeBound x :=
-  Finset.single_le_sum
-    (f := fun i => (FiniteState.resultEncoding encoding
-      (FiniteState.run (doubleConfig x) doubleProgram i (doubleInit x))).length)
-    (fun _ _ => Nat.zero_le _) (Finset.mem_range.mpr (by omega))
-
 /-- Explicit native multitape TM certificate transported from `doubleProgram`. -/
 noncomputable def doubleTransportCert :
     NativeCertificate (fun x : ℕ => x + x) encNat encNat :=
@@ -413,14 +351,14 @@ theorem double_inO :
     doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
 
 /-- Automatic `ComputableTidilyInPolyTime` transport for `doubleProgram` via
-`FiniteState.transport_polyTime`. -/
+`FiniteState.transport_polyTime_of_le_const`. -/
 theorem double_polyTime :
     ComputableTidilyInPolyTime (fun x : ℕ => x + x) encNat encNat :=
-  FiniteState.transport_polyTime encoding nativePrimitives doubleProgram
+  FiniteState.transport_polyTime_of_le_const encoding nativePrimitives doubleProgram
     doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
     nativePrimitives_isPolynomial
     doubleStepsCert_isPolynomial doubleConfigCert_isPolynomial doubleInitCert_isPolynomial
-    (PolyBounded.const 6) doubleOutcomeBound_polyBounded doubleOutcome_length_le
+    6 (fun _ => le_rfl)
 
 /-- Automatic `ComputableTidilyInPolyTime` single-step simulation for `doubleProgram` via
 `FiniteState.step_polyTime`. -/

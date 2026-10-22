@@ -325,7 +325,7 @@ theorem PolyTimeReducible.mem_BH {encB : β ↪ List Bool} {B : Set β} {n : ℕ
 /-- Many-one reductions preserve each finite dual level. -/
 theorem PolyTimeReducible.mem_coBH {encB : β ↪ List Bool} {B : Set β} {n : ℕ}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ coBH encB n) : A ∈ coBH enc n :=
-  h.compl.mem_BH hB
+  h.mem_compl PolyTimeReducible.mem_BH hB
 
 /-- Many-one reductions preserve `BooleanHierarchy`. -/
 theorem PolyTimeReducible.mem_BooleanHierarchy {encB : β ↪ List Bool} {B : Set β}

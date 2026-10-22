@@ -150,7 +150,8 @@ theorem isPairwiseIndependentHash (hh : IsKWiseIndependentHash k h)
     (hk : 2 ≤ k) : IsPairwiseIndependentHash h where
   dens_filter_apply_eq x y := by
     classical
-    have h1 := hh.dens_filter_restrict_eq (T := {x}) (by simp; omega) fun _ => y
+    have h1 := hh.dens_filter_restrict_eq (T := {x}) (by simp only [card_singleton]; omega)
+      fun _ => y
     rw [card_singleton, pow_one] at h1
     rw [← h1]
     congr 1

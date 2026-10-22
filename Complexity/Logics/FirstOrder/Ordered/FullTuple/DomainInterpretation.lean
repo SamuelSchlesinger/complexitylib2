@@ -53,41 +53,11 @@ open FirstOrder Language Structure
 
 namespace FullTupleInterpretation
 
-variable {L L' : Language} {k : ℕ} (I : FullTupleInterpretation L L' k)
-
-/-- A full-tuple interpretation is the ordered interpretation with domain formula `true`. -/
-def toDomainInterpretation : DomainInterpretation L L' k where
-  domain := ⊤
-  rel := I.rel
-
-variable {I}
-
-theorem card_toDomainInterpretation (M : Structure L) :
-    I.toDomainInterpretation.card M = M.size ^ k :=
-  DomainInterpretation.card_of_forall fun _ => Formula.realize_top.mpr trivial
-
-variable {M : Structure L}
-
-/-- The ranks of a full-tuple interpretation are the lexicographic ranks of all tuples. -/
-theorem unrank_toDomainInterpretation (i : Fin (I.toDomainInterpretation.card M)) :
-    I.toDomainInterpretation.unrank M i =
-      lexEquiv.symm (Fin.cast (card_toDomainInterpretation M) i) :=
-  DomainInterpretation.unrank_of_forall (fun _ => Formula.realize_top.mpr trivial) i
-
-@[simp] theorem lexRank_unrank_toDomainInterpretation (i : Fin (I.toDomainInterpretation.card M)) :
-    lexRank (I.toDomainInterpretation.unrank M i) = i :=
-  DomainInterpretation.lexRank_unrank_of_forall (fun _ => Formula.realize_top.mpr trivial) i
-
-/-- Positive-dimensional full-tuple interpretations are admissible. -/
-theorem admissible_toDomainInterpretation (hk : 0 < k) : I.toDomainInterpretation.Admissible :=
-  fun M => (card_toDomainInterpretation M).symm ▸ two_le_pow (n := M.size) hk
+variable {L L' : Language} {k : ℕ} {I : FullTupleInterpretation L L' k} {M : Structure L}
 
 theorem lexRank_constantTuple {n : ℕ} [Fact (2 ≤ n)] (c : NumericFunction 0) :
-    lexRank (constantTuple (n := n) (k := k) c) = c.index (n ^ (k + 1)) := by
-  cases c
-  · exact lexRank_tupleZero
-  · exact lexRank_tupleOne
-  · exact lexRank_tupleMax
+    lexRank (constantTuple (n := n) (k := k) c) = c.index (n ^ (k + 1)) :=
+  Ordered.lexRank_constantTuple c
 
 variable (I) in
 /-- The native tuple formulas for order, `BIT` and constants certify a positive-dimensional
@@ -110,12 +80,7 @@ noncomputable def certificate (hk : 0 < k) : I.toDomainInterpretation.Certificat
       change ((tupleConstants L k).constant c).Realize _ ↔ _
       rw [realize_tupleConstants, ← lexRank_injective.eq_iff,
         lexRank_unrank_toDomainInterpretation, lexRank_constantTuple]
-      have := card_toDomainInterpretation (I := I) M
-      cases c
-      · exact Iff.rfl
-      · exact Iff.rfl
-      · simp only [NumericFunction.index]
-        constructor <;> intro h <;> lia
+      simp only [card_toDomainInterpretation]
 
 variable [L'.IsRelational]
 
@@ -141,26 +106,6 @@ theorem reduces (hk : 0 < k) {K : Query L} {K' : Query L'}
       I.toDomainInterpretation.map (I.admissible_toDomainInterpretation hk) M ∈ K') :
     Reduces K K' :=
   Reduces.of_interpretation _ (I.certificate hk) h
-
-/-- **The encoded maps agree**: the full-tuple encoded map is that of the embedded interpretation,
-for every dimension and every input. -/
-theorem encodedMap_toDomainInterpretation [L.IsRelational] (v : Vocabulary L)
-    (v' : Vocabulary L') : I.toDomainInterpretation.encodedMap v v' = I.encodedMap v v' := by
-  funext a
-  by_cases h : v.WellFormed a ∧ 2 ≤ a.1
-  · rw [DomainInterpretation.encodedMap_of_admissible _ v v' h.1 h.2,
-      I.encodedMap_of_admissible v v' h.1 h.2]
-    let _ : Fact (2 ≤ a.1) := ⟨h.2⟩
-    let _ := v.decode a
-    let _ := I.toDomainInterpretation.inputStructure (decoded v a h.2)
-    let _ := I.inputStructure (n := a.1)
-    refine v'.encode_congr _ _ (card_toDomainInterpretation (decoded v a h.2)) fun R x => ?_
-    change (I.rel R).Realize
-      (fun p => I.toDomainInterpretation.unrank (decoded v a h.2) (x p.1) p.2) ↔ _
-    simp only [unrank_toDomainInterpretation]
-    rfl
-  · rw [DomainInterpretation.encodedMap_of_not_admissible _ v v' h,
-      I.encodedMap_of_not_admissible v v' h]
 
 end FullTupleInterpretation
 

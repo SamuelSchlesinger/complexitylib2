@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.SharpP.Closure
+public import Complexity.Computability.Complexity.Reduction.ManyOne
 
 /-!
 # Parsimonious reductions and #P-completeness
@@ -54,17 +55,30 @@ def ParsimoniousReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (f
     (g : β → ℕ) : Prop :=
   ∃ r : α → β, ComputableTidilyInPolyTime r encA encB ∧ ∀ a, f a = g (r a)
 
-/-- Every function in `#P`, with any encoding of its instances, reduces parsimoniously to `g`. -/
+/-- Every function in `#P`, with any encoding of its instances, reduces parsimoniously to `g`. This
+is `HardUnder` for `ParsimoniousReducible`. -/
 def SharpPHard (encB : β ↪ List Bool) (g : β → ℕ) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (f : α → ℕ), f ∈ SharpP enc →
-    ParsimoniousReducible enc encB f g
+  HardUnder (fun enc => ParsimoniousReducible enc encB) @SharpP g
 
-/-- `g` is in `#P` and every function in `#P` reduces parsimoniously to it. -/
+/-- `g` is in `#P` and every function in `#P` reduces parsimoniously to it. This is `CompleteUnder`
+for `ParsimoniousReducible` (`sharpPComplete_iff_completeUnder`), with its second conjunct stated as
+`SharpPHard`. -/
 def SharpPComplete (encB : β ↪ List Bool) (g : β → ℕ) : Prop :=
   g ∈ SharpP encB ∧ SharpPHard encB g
 
 variable {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
   {f : α → ℕ} {g : β → ℕ} {h : γ → ℕ}
+
+/-- `#P`-hardness is hardness for `#P` under `ParsimoniousReducible`. -/
+theorem sharpPHard_iff_hardUnder :
+    SharpPHard encB g ↔ HardUnder (fun enc => ParsimoniousReducible enc encB) @SharpP g :=
+  Iff.rfl
+
+/-- `#P`-completeness is completeness for `#P` under `ParsimoniousReducible`. -/
+theorem sharpPComplete_iff_completeUnder :
+    SharpPComplete encB g ↔
+      CompleteUnder (fun enc => ParsimoniousReducible enc encB) @SharpP encB g :=
+  Iff.rfl
 
 /-- Every counting function reduces parsimoniously to itself by the identity function. -/
 @[refl]
@@ -90,6 +104,6 @@ theorem ParsimoniousReducible.mem_SharpP (hfg : ParsimoniousReducible encA encB 
 /-- `#P`-hardness transfers along a parsimonious reduction. -/
 theorem SharpPHard.trans (hg : SharpPHard encB g) (hgh : ParsimoniousReducible encB encC g h) :
     SharpPHard encC h :=
-  fun enc f hf => (hg enc f hf).trans hgh
+  HardUnder.trans (fun _ _ h h' => h.trans h') hg hgh
 
 end Cslib.Complexity

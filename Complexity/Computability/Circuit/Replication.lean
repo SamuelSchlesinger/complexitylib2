@@ -102,7 +102,7 @@ theorem eval_parallelFamily_apply {k : ℕ} (cs : Fin k → Circuit σ n m) (I :
           simp [finProdFinEquiv, j']]
       rw [Fin.append_left, ih, show j'.castSucc = j from Fin.ext rfl]
       congr 1
-    · have hj' : j = Fin.last k := Fin.ext (by simp; lia)
+    · have hj' : j = Fin.last k := Fin.ext (by simp only [Fin.val_last]; lia)
       subst hj'
       rw [show Fin.cast (Nat.succ_mul k m) (finProdFinEquiv (Fin.last k, i)) =
         Fin.natAdd (k * m) i by

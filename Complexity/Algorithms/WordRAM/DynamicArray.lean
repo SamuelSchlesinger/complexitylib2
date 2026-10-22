@@ -618,8 +618,7 @@ theorem amortized {w : ℕ} (h1 : Fits w 1) :
       DynamicProgram.OperationTrace.instructions potential (fun _ o => charge o) where
   step hr hv he := by
     obtain ⟨z, n, hz, _, _, _, hpot⟩ := dispatch_exec h1 hr _ hv
-    obtain ⟨_, k, ht, _, hk⟩ := he
-    obtain ⟨rfl, rfl⟩ := ht.exec.unique hz
+    obtain ⟨rfl, hk⟩ := he.eq_of_exec hz
     rw [hk]
     exact hpot
 
@@ -638,8 +637,7 @@ theorem modifies {w : ℕ} (h1 : Fits w 1) {vs : List ℕ} {x y : Data 12} {o : 
     (he : (implementation w).ExecOp w x o a y trace) :
     Modifies (Finset.range (y.regs frontier)) x.mem y.mem := by
   obtain ⟨z, n, hz, _, _, hf, _⟩ := dispatch_exec h1 hr o hv
-  obtain ⟨_, k, ht, _, _⟩ := he
-  obtain ⟨rfl, _⟩ := ht.exec.unique hz
+  obtain ⟨rfl, _⟩ := he.eq_of_exec hz
   intro addr haddr
   exact hf addr (Nat.le_of_not_lt (Finset.mem_range.not.mp haddr))
 
@@ -665,9 +663,8 @@ theorem run_client {w : ℕ} (h1 : Fits w 1) {α : Type} (p : (spec w).Client α
           ((spec w).runClient vs p).2.2.length * 52 + potential vs x ∧
       (((spec w).runClient vs p).2.1 ≠ [] →
         y.regs frontier < 4 * ((spec w).runClient vs p).2.1.length) := by
-  obtain ⟨y, traces, he, hy, hb⟩ := (amortized_uniform h1).run p hr hv
-  refine ⟨y, traces, he, hy, ?_, fun hne => hy.rep.space hne⟩
-  simpa only [Stateful.spec_total_const] using hb
+  obtain ⟨y, traces, he, hy, hb⟩ := (amortized_uniform h1).run_const p hr hv
+  exact ⟨y, traces, he, hy, hb, fun hne => hy.rep.space hne⟩
 
 /-- Starting from arbitrary bounded machine data, run `initProgram` (15 instructions) followed
 by any admissible adaptive client `p`. Total instructions across initialization and `m` operations

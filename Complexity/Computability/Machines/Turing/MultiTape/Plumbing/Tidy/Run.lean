@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate (addition to `Plumbing/Tidy/Defs.lean`)
 
-public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
+public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 
 /-!
@@ -31,9 +31,8 @@ variable {k : ℕ} {Symbol State : Type*} {tm : MultiTapeTM k Symbol State}
 /-- A tidy computation restores all work tapes and heads within its stated time bound. -/
 theorem ComputesTidilyInTimeAndSpace.runFrom_initCfg_eq {input output : List Symbol} {t s : ℕ}
     (h : tm.ComputesTidilyInTimeAndSpace input output t s) :
-    tm.runFrom (tm.initCfg input) t = wordsCfg input none (fun _ => []) output := by
-  obtain ⟨p, hhead, hlast, htime, -⟩ := computesTidily_iff.1 h
-  rw [initCfg_eq_wordsCfg, ← hhead, runFrom_eq_of_runPath (by rw [hlast]; rfl) htime, hlast]
+    tm.runFrom (tm.initCfg input) t = wordsCfg input none (fun _ => []) output :=
+  initCfg_eq_wordsCfg input ▸ (computesTidily_iff_runFrom.mp h).1
 
 /-- A tidy computation halts after the given number of steps from the initial configuration, with
 the given output. -/

@@ -35,7 +35,8 @@ a certificate of scalar primitives, not of memory, complete RAM steps or runs.
 ## Main results
 
 * `constant_polyTime`, `operation_polyTime`, `test_polyTime`, `address_polyTime`,
-  `validMove_polyTime`, `validPC_polyTime`: native polynomial-time implementations.
+  `validMove_polyTime`, `validPC_polyTime`, `nativePrimitives_isPolynomial`: native
+  polynomial-time implementations and bundle polynomiality.
 
 ## References
 
@@ -135,5 +136,14 @@ noncomputable def nativePrimitives : model.NativePrimitives encoding where
   address := .ofPolyTime address_polyTime
   validMove := .ofPolyTime validMove_polyTime
   validPC := .ofPolyTime validPC_polyTime
+
+/-- The bounded-natural primitive bundle has polynomial resource bounds in all fields. -/
+theorem nativePrimitives_isPolynomial : nativePrimitives.IsPolynomial where
+  constant c := NativeCertificate.ofPolyTime_isPolynomial (constant_polyTime c)
+  operation op := NativeCertificate.ofPolyTime_isPolynomial (operation_polyTime op)
+  test t := NativeCertificate.ofPolyTime_isPolynomial (test_polyTime t)
+  address := NativeCertificate.ofPolyTime_isPolynomial address_polyTime
+  validMove := NativeCertificate.ofPolyTime_isPolynomial validMove_polyTime
+  validPC := NativeCertificate.ofPolyTime_isPolynomial validPC_polyTime
 
 end Cslib.GenericRAM.BoundedNat

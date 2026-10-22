@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Circuit
 public import Complexity.Foundations.Data.BitString.Enumeration
+import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Nat.Choose.Bounds
 import Mathlib.Tactic.Linarith
@@ -442,31 +443,6 @@ theorem listGenerator_take_greedyMasks (h : m ≤ (greedyMasks ℓ n a).length)
 
 /-! ### Fooling small circuits, in counting form -/
 
-private theorem toReal_uniformOfFintype_map_apply_true {β : Type*} [Fintype β] [Nonempty β]
-    (p : β → Bool) :
-    (((uniformOfFintype β).map p) true).toReal = (#{b | p b = true} : ℝ) / Fintype.card β := by
-  rw [PMF.map_apply, tsum_fintype]
-  simp only [uniformOfFintype_apply]
-  rw [← sum_filter, sum_const, nsmul_eq_mul, ENNReal.toReal_mul, ENNReal.toReal_inv,
-    ENNReal.toReal_natCast, ENNReal.toReal_natCast, div_eq_mul_inv,
-    filter_congr fun b _ => (eq_comm : true = p b ↔ _)]
-
-private theorem toReal_realExperiment_pure {Seed Output : Type*} [Fintype Seed] [Nonempty Seed]
-    (G : Generator Seed Output) (test : Output → Bool) :
-    ((G.realExperiment fun y => PMF.pure (test y)) true).toReal =
-      (#{z | test (G z) = true} : ℝ) / Fintype.card Seed := by
-  rw [Generator.realExperiment, Generator.outputDist, PMF.bind_map,
-    show (fun y => PMF.pure (test y)) ∘ G = PMF.pure ∘ (test ∘ G) from rfl, PMF.bind_pure_comp]
-  exact toReal_uniformOfFintype_map_apply_true _
-
-private theorem toReal_idealExperiment_pure {Output : Type*} [Fintype Output] [Nonempty Output]
-    (test : Output → Bool) :
-    ((Generator.idealExperiment fun y => PMF.pure (test y)) true).toReal =
-      (#{y | test y = true} : ℝ) / Fintype.card Output := by
-  rw [Generator.idealExperiment, show (fun y => PMF.pure (test y)) = PMF.pure ∘ test from rfl,
-    PMF.bind_pure_comp]
-  exact toReal_uniformOfFintype_map_apply_true _
-
 /-- The fraction of inputs where a negated test is `true`. -/
 private theorem card_not_div {X : Type*} [Fintype X] [Nonempty X] (p : X → Bool) :
     (#{x | (!p x) = true} : ℝ) / Fintype.card X =
@@ -522,7 +498,8 @@ theorem abs_card_div_sub_card_div_lt (D : Design ℓ n a m) {f : BooleanFunction
     test htest
   have h₂ := toReal_realExperiment_sub_toReal_idealExperiment_lt D f hm0 (hhard (S + 1) le_rfl)
     (fun r => !test r) ((complexity_not_le test).trans (by omega))
-  rw [toReal_realExperiment_pure, toReal_idealExperiment_pure] at h₁ h₂
+  rw [Generator.toReal_realExperiment_pure, Generator.toReal_idealExperiment_pure,
+    nnratCast_dens, nnratCast_dens] at h₁ h₂
   rw [card_not_div (fun z => test (generator D f z)), card_not_div test] at h₂
   rw [hcardSeed, hcardOut] at h₁ h₂
   rw [abs_sub_lt_iff]

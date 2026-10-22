@@ -200,7 +200,8 @@ theorem word_addCarry (ha : ∀ i : Fin w, (fun x => (a x).getLsbD i.val) ∈ s)
         (a x).getLsbD i.val ^^ ((b x).getLsbD i.val ^^ BitVec.carry i.val (a x) (b x) c) :=
     funext fun i => funext fun x => BitVec.getLsbD_add_add_bool i.isLt (a x) (b x) c
   rw [wordWires, heq]
-  exact h.mono Set.Subset.rfl Set.Subset.rfl (by simp; omega)
+  exact h.mono Set.Subset.rfl Set.Subset.rfl
+    (by simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]; omega)
 
 /-- Ripple-carry addition modulo the word width. -/
 theorem word_add (ha : ∀ i : Fin w, (fun x => (a x).getLsbD i.val) ∈ s)

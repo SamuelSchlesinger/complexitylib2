@@ -50,7 +50,11 @@ on `Primcodable` types, the instance of this shape for computable maps; it is no
 * `Cslib.Complexity.ManyOneReducibleBy.refl`, `Cslib.Complexity.ManyOneReducibleBy.trans`:
   reflexivity and transitivity from identity and composition closure.
 * `Cslib.Complexity.ManyOneReducibleBy.mono`: more admissible maps give more reductions.
-* `Cslib.Complexity.ManyOneReducibleBy.compl`: reductions between complements.
+* `Cslib.Complexity.ManyOneReducibleBy.compl`, `Cslib.Complexity.ManyOneReducibleBy.mem_compl`:
+  reductions between complements and closure of complement classes.
+* `Cslib.Complexity.compl_union_mem`, `Cslib.Complexity.compl_inter_mem`,
+  `Cslib.Complexity.exists_forall_mem_compl_iff`: De Morgan and existential complement-class
+  helpers.
 * `Cslib.Complexity.ManyOneReducibleBy.lift`: transfer along partial decodings.
 * `Cslib.Complexity.HardUnder.trans`: hardness transfers along reductions.
 * `Cslib.Complexity.HardUnder.mono`, `Cslib.Complexity.CompleteUnder.mono`: a weaker reducibility
@@ -106,6 +110,13 @@ theorem compl (h : ManyOneReducibleBy Good A B) : ManyOneReducibleBy Good Aᶜ B
   let ⟨f, hf, hAB⟩ := h
   ⟨f, hf, fun a => not_congr (hAB a)⟩
 
+/-- If reductions preserve membership from `D` to `C`, they also preserve membership in the
+complement classes `{B | Bᶜ ∈ D}` and `{A | Aᶜ ∈ C}`. -/
+theorem mem_compl {C : Set (Set α)} {D : Set (Set β)}
+    (hCD : ∀ {A : Set α} {B : Set β}, ManyOneReducibleBy Good A B → B ∈ D → A ∈ C)
+    (h : ManyOneReducibleBy Good A B) (hB : Bᶜ ∈ D) : Aᶜ ∈ C :=
+  hCD h.compl hB
+
 /-- **Transfer along partial decodings.** Suppose representations `α'` and `β'` partially decode
 to `α` and `β`, and every admissible map `f` is simulated by an admissible map `F` of
 representations, in that `F` decodes to `f` on decodable inputs and to nothing elsewhere. Then a
@@ -126,39 +137,79 @@ theorem lift {α' : Type w} {β' : Type x} {Good' : (α' → β') → Prop}
 
 end ManyOneReducibleBy
 
+/-! ### Complement-class helpers -/
+
+/-- De Morgan dual: if `C` is closed under intersection, `{A | Aᶜ ∈ C}` is closed under union. -/
+theorem compl_union_mem {C : Set (Set α)} {A B : Set α}
+    (hinter : ∀ {A B : Set α}, A ∈ C → B ∈ C → A ∩ B ∈ C)
+    (hA : Aᶜ ∈ C) (hB : Bᶜ ∈ C) : (A ∪ B)ᶜ ∈ C :=
+  Set.compl_union A B ▸ hinter hA hB
+
+/-- De Morgan dual: if `C` is closed under union, `{A | Aᶜ ∈ C}` is closed under intersection. -/
+theorem compl_inter_mem {C : Set (Set α)} {A B : Set α}
+    (hunion : ∀ {A B : Set α}, A ∈ C → B ∈ C → A ∪ B ∈ C)
+    (hA : Aᶜ ∈ C) (hB : Bᶜ ∈ C) : (A ∩ B)ᶜ ∈ C :=
+  Set.compl_inter A B ▸ hunion hA hB
+
+/-- Negating the pointwise membership condition characterizes the complement `Aᶜ`. -/
+theorem forall_mem_compl_iff {P Q : α → Prop} (hPQ : ∀ a, ¬ P a ↔ Q a) :
+    (∀ a, a ∈ Aᶜ ↔ P a) ↔ ∀ a, a ∈ A ↔ Q a :=
+  ⟨fun h a => by simpa [← hPQ a] using not_congr (h a),
+    fun h a => by simpa [← hPQ a] using not_congr (h a)⟩
+
+/-- Negating the pointwise membership condition in an existential class characterization gives
+the characterization of the complement class `{A | Aᶜ ∈ C}`. -/
+theorem exists_forall_mem_compl_iff {ι : Type w} {F : Set ι} {P Q : ι → α → Prop}
+    (hPQ : ∀ f a, ¬ P f a ↔ Q f a) :
+    (∃ f ∈ F, ∀ a, a ∈ Aᶜ ↔ P f a) ↔ ∃ f ∈ F, ∀ a, a ∈ A ↔ Q f a :=
+  exists_congr fun f => and_congr_right' (forall_mem_compl_iff (hPQ f))
+
 /-! ### Hardness and completeness -/
 
 section Hardness
 
-variable {R R' : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop}
-  {𝒞 𝒟 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
+variable {P : Type → Type u} {Q : Type v} {Q' : Type w}
 
 /-- `B` is hard for the class `𝒞` under the reducibility `R`: every problem in `𝒞`, with any
 encoding `enc` of its instances, reduces to `B`, in that `R enc A B`. -/
-def HardUnder (R : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop)
-    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (B : Set β) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒞 enc → R enc A B
+def HardUnder (R : ∀ {α : Type}, (α ↪ List Bool) → P α → Q → Prop)
+    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)) (B : Q) : Prop :=
+  ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), A ∈ 𝒞 enc → R enc A B
 
 /-- `B` is complete for the class `𝒞` under the reducibility `R`: it is in `𝒞`, with the encoding
 `encB`, and is `𝒞`-hard under `R`. -/
-def CompleteUnder {β : Type} (R : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop)
-    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)) (encB : β ↪ List Bool) (B : Set β) :
+def CompleteUnder {β : Type} (R : ∀ {α : Type}, (α ↪ List Bool) → P α → P β → Prop)
+    (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)) (encB : β ↪ List Bool) (B : P β) :
     Prop :=
   B ∈ 𝒞 encB ∧ HardUnder @R @𝒞 B
 
 /-- A weaker reducibility preserves hardness. -/
-theorem HardUnder.mono
-    (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), R enc A B → R' enc A B)
+theorem HardUnder.mono {R R' : ∀ {α : Type}, (α ↪ List Bool) → P α → Q → Prop}
+    {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)} {B : Q}
+    (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → R' enc A B)
     (hB : HardUnder @R @𝒞 B) : HardUnder @R' @𝒞 B :=
   fun enc A hA => hR enc A (hB enc A hA)
 
 /-- **Hardness transfers along a reduction** `S B C` that composes with `R`-reductions to `B` into
 `R'`-reductions to `C`. -/
-theorem HardUnder.trans {R' : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set γ → Prop}
-    {S : Set β → Set γ → Prop} {C : Set γ}
-    (hRS : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), R enc A B → S B C → R' enc A C)
+theorem HardUnder.trans {R : ∀ {α : Type}, (α ↪ List Bool) → P α → Q → Prop}
+    {R' : ∀ {α : Type}, (α ↪ List Bool) → P α → Q' → Prop}
+    {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)}
+    {S : Q → Q' → Prop} {B : Q} {C : Q'}
+    (hRS : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → S B C → R' enc A C)
     (hB : HardUnder @R @𝒞 B) (hBC : S B C) : HardUnder @R' @𝒞 C :=
   fun enc A hA => hRS enc A (hB enc A hA) hBC
+
+/-- A weaker reducibility preserves completeness. -/
+theorem CompleteUnder.mono {β : Type}
+    {R R' : ∀ {α : Type}, (α ↪ List Bool) → P α → P β → Prop}
+    {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)} {encB : β ↪ List Bool}
+    {B : P β} (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → R' enc A B)
+    (hB : CompleteUnder @R @𝒞 encB B) : CompleteUnder @R' @𝒞 encB B :=
+  ⟨hB.1, HardUnder.mono hR hB.2⟩
+
+variable {R : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop}
+  {𝒞 𝒟 : ∀ {α : Type}, (α ↪ List Bool) → Set (Set α)}
 
 /-- If `R` relates complements and the complement of every problem in `𝒟` is in `𝒞`, the
 complement of a `𝒞`-hard problem is `𝒟`-hard. -/
@@ -166,13 +217,6 @@ theorem HardUnder.compl (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set 
     R enc Aᶜ Bᶜ) (h𝒟𝒞 : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒟 enc → Aᶜ ∈ 𝒞 enc)
     (hB : HardUnder @R @𝒞 B) : HardUnder @R @𝒟 Bᶜ :=
   fun enc A hA => compl_compl A ▸ hR enc Aᶜ (hB enc Aᶜ (h𝒟𝒞 enc A hA))
-
-/-- A weaker reducibility preserves completeness. -/
-theorem CompleteUnder.mono {β : Type}
-    {R R' : ∀ {α : Type}, (α ↪ List Bool) → Set α → Set β → Prop} {encB : β ↪ List Bool}
-    {B : Set β} (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), R enc A B → R' enc A B)
-    (hB : CompleteUnder @R @𝒞 encB B) : CompleteUnder @R' @𝒞 encB B :=
-  ⟨hB.1, HardUnder.mono hR hB.2⟩
 
 /-- If `R` relates complements and the problems in `𝒟` are exactly the complements of the
 problems in `𝒞`, the complement of a `𝒞`-complete problem is `𝒟`-complete. -/

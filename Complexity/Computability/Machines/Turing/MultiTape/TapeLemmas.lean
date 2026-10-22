@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -40,6 +40,9 @@ after halting.
   computation path.
 * `Turing.MultiTapeTM.exists_runPath_iff_runFrom`: a run path to a halted configuration is the run
   of the given number of steps, with its space.
+* `Turing.MultiTapeTM.exists_visitedByTapeHead_eq_Icc`,
+  `Turing.MultiTapeTM.workTapes_runFrom_eq_of_notMem_visitedByTapeHead`: the visited cells of a
+  work-tape head form an interval, and unvisited cells keep their contents.
 -/
 
 @[expose] public section
@@ -251,5 +254,42 @@ theorem exists_runPath_iff_runFrom {cfg cfg' : Cfg k Symbol State input} (h : cf
   refine ⟨(runFrom_eq_of_halt tm cfg ht hhalt).trans (hlast.symm.trans hl), ?_⟩
   exact (MultiTapeNTM.RunPath.space_le_of_subset
     (mem_of_last_halted (p := p) (q := .ofDeterministic tm cfg t) (hl ▸ h) hh.symm)).trans hs
+
+-- upstream: candidate
+/-- The values of a function on `0, …, n` that changes by at most one per step form an interval. -/
+private theorem exists_image_range_eq_Icc {f : ℕ → ℤ} (hf : ∀ m, |f (m + 1) - f m| ≤ 1) (n : ℕ) :
+    ∃ L R, (Finset.range (n + 1)).image f = Finset.Icc L R := by
+  induction n with
+  | zero => exact ⟨f 0, f 0, by simp⟩
+  | succ n ih =>
+    obtain ⟨L, R, h⟩ := ih
+    have hn : f n ∈ Finset.Icc L R := h ▸ Finset.mem_image_of_mem f (by simp)
+    rw [Finset.mem_Icc] at hn
+    have := abs_le.1 (hf n)
+    refine ⟨min L (f (n + 1)), max R (f (n + 1)), ?_⟩
+    rw [Finset.range_add_one, Finset.image_insert, h]
+    ext x
+    simp only [Finset.mem_insert, Finset.mem_Icc]
+    omega
+
+-- upstream: candidate
+/-- The cells visited by a head up to step `n` form an interval. -/
+theorem exists_visitedByTapeHead_eq_Icc {tm : MultiTapeTM k Symbol State}
+    (c : Cfg k Symbol State input) (n : ℕ) (i : Fin k) :
+    ∃ L R, tm.visitedByTapeHead c n i = Finset.Icc L R := by
+  obtain ⟨L, R, h⟩ := exists_image_range_eq_Icc (f := fun m => (tm.runFrom c m).workTapePos i)
+    (fun m => by rw [runFrom_succ]; exact workTapePos_step_le _ i) n
+  refine ⟨L, R, ?_⟩
+  rw [← h]
+  ext x
+  simp only [mem_visitedByTapeHead, Finset.mem_image, Finset.mem_range]
+
+-- upstream: candidate
+/-- A cell the head of a tape never visits keeps its contents. -/
+theorem workTapes_runFrom_eq_of_notMem_visitedByTapeHead {tm : MultiTapeTM k Symbol State}
+    {c : Cfg k Symbol State input} {n : ℕ} {i : Fin k} {x : ℤ}
+    (hx : x ∉ tm.visitedByTapeHead c n i) : (tm.runFrom c n).workTapes i x = c.workTapes i x := by
+  by_contra h
+  exact hx (mem_visitedByTapeHead_of_workTapes_ne i n x h)
 
 end Turing.MultiTapeTM

@@ -191,12 +191,6 @@ theorem passState_eq (i : ℕ) :
   | succ i ih =>
     rw [MultiTapeTM.passState, ih, (streamState_passNext_length M), passEnd, run_succ, step]
 
-private lemma streamEmit_const_nil {τ : Type*} (next : τ × Bool → τ) (s : τ) (l : List Bool) :
-    MultiTapeTM.streamEmit next (fun _ => []) s l = [] := by
-  induction l generalizing s with
-  | nil => rfl
-  | cons a l ih => exact ih _
-
 /-! ### The parts of the simulation, in linear space -/
 
 section Parts
