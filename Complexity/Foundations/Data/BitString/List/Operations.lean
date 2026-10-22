@@ -187,11 +187,15 @@ theorem listXor_pair_comm (m : ℕ) (u v : List Bool) :
     listXor m [u, v] = listXor m [v, u] := by
   rw [listXor_pair, listXor_pair, add_comm]
 
+/-- Below the width `m`, each bit of a two-word `listXor` is the XOR of the corresponding bits of
+the words, with missing bits read as `false`. -/
 theorem getD_listXor_pair (m : ℕ) (u v : List Bool) (i : ℕ) (hi : i < m) :
     (listXor m [u, v]).getD i false = (u.getD i false ^^ v.getD i false) := by
   have h := congrFun (ofList_listXor_pair m u v) ⟨i, hi⟩
   simpa [ofList, Pi.add_apply, Bool.add_eq_xor] using h
 
+/-- Below the width `m`, row `0` of a word agrees bitwise with the word itself, with missing bits
+read as `false`. -/
 theorem getD_listRow_zero (m : ℕ) (u : List Bool) (i : ℕ) (hi : i < m) :
     (listRow m 0 u).getD i false = u.getD i false := by
   simp only [listRow, Nat.zero_mul, List.drop_zero, ← ofFn_ofList_eq_take]

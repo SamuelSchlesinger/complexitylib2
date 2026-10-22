@@ -49,8 +49,9 @@ entries.
   `fun _ => a` and `fun _ => w`.
 * **Bundled witness relation (`ZeroKnowledgeProof.isWitness`).** `ZeroKnowledgeProof` bundles its
   own polynomial-time witness predicate `isWitness : α → List Bool → Bool` characterizing `A`
-  (`mem_iff_exists_witness`) and imposes no explicit polynomial witness-length bound on `w` (in
-  `zero_knowledge`, `w : ℕ → List Bool` is polynomial-time-generable in `1^n`). In
+  (`mem_iff_exists_witness`). No witness-length bound is imposed, so `isWitness` by itself need not
+  be an `NP` relation; membership in `IP` (`mem_IP`) does not need one, and in `zero_knowledge`
+  the witness family `w : ℕ → List Bool` is polynomial-time-generable in `1^n`. In
   `PseudorandomGenerator.zeroKnowledgeProofOfReduction` and
   `PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP`, the bundled predicate
   `isWitness a w := ThreeSAT.verifier (f a, w)` checks a `ThreeSAT` witness for the Karp-reduced
@@ -103,9 +104,10 @@ Micali, and Wigderson][GoldreichMicaliWigderson1991].
 * `prover n a w`: the honest prover strategy on security parameter `n`, instance `a`, and
   witness `w`, certified efficient by `interact`, `eval_interact`, and `isPPT_interact`.
 * `isWitness a w`: the bundled polynomial-time witness predicate characterizing membership in `A`
-  (`mem_iff_exists_witness`), imposing no explicit polynomial witness-length bound on `w` (in
-  `zero_knowledge`, `w` is polynomial-time-generable in `1^n`). When constructed via a Karp
-  reduction `f : α → CNF ℕ` to `ThreeSAT` (`PseudorandomGenerator.zeroKnowledgeProofOfReduction`),
+  (`mem_iff_exists_witness`). No witness-length bound is imposed, so `isWitness` by itself need
+  not be an `NP` relation (in `zero_knowledge`, `w` is polynomial-time-generable in `1^n`). When
+  constructed via a Karp reduction `f : α → CNF ℕ` to `ThreeSAT`
+  (`PseudorandomGenerator.zeroKnowledgeProofOfReduction`),
   `isWitness a w` is `ThreeSAT.verifier (f a, w)`, checking a `ThreeSAT` witness for `f a`.
 * `complete` and `sound`: completeness `1` for valid witnesses and soundness error at most `1 / 3`
   against all computationally unbounded stateful provers `P : Prover Unit`.
