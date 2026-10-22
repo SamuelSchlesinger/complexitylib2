@@ -67,7 +67,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in their
   `Authors:` lines; confirm the attribution with him and submit the files with him,
   and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
-  programs (#685, and the register word-RAM models in his Algolean repository) and #401, which
+  programs (#685, and the register word-RAM models in his Algolean repository) and the merged
+  query framework (#401), which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
   RAM, the objection that pure Lean computation is uncharged. The module docstrings record the
   deviations from the source. The operations form a basis (`WordRAM/Basis`) over
@@ -125,8 +126,9 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   traces, with a hidden two-stack representation, a concrete-register potential, framed storage,
   and separately charged initialization. Its `2 * capacity` reservation is explicit; external
   client computation and argument delivery are not charged by the operation-history bound.
-  Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
-  neither open framework is copied here. This is a prototype of composition and refinement,
+  Coordinate placement and overlap with Srinivas's #685 and the merged query framework (#401)
+  before upstream submission. The former is not copied here; #401 is available through the base
+  pin. This is a prototype of composition and refinement,
   not a replacement for their query models or a general cell-probe lower-bound semantics.
 * **Earlier review requests.** The withdrawn #1099–#1101 requested abstract word encodings and
   textbook sources for FP/poly, P/poly and their machine simulation. The withdrawn #869 and
