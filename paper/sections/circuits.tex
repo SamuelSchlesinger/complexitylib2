@@ -461,6 +461,57 @@ are explicit hypotheses of the theorems.\citep{ChattopadhyayLiao2022,Li2023,Mish
 \end{result}
 
 \begin{result}
+\subsection{XOR source reduction, fourth-moment majority certificate, and somewhere-sampler amplification}
+For a finite additive type $G$, flat sumset extraction on supports $P,Q\subseteq G$ of cardinality
+at least $K$ with error $\nu$ (\lean{FlatSumsetExtractor}) is equivalent to
+$\operatorname{SumsetBias}(\{z\mid f(z)=\mathrm{true}\},K,\nu)$ (\lean{flatSumsetExtractor_iff_sumsetBias}),
+and conditioning on the second source $y\in Q$ shows that if a subset $\mathrm{Good}\subseteq Q$ of
+size at least $\theta|Q|$ satisfies $\Pr_{x\in P}[f(x+y)=b]\ge\rho$ for every $y\in\mathrm{Good}$
+and $b\in\mathrm{Bool}$, then $\operatorname{SumsetBias}(\{z\mid f(z)=\mathrm{true}\},K,1/2-\rho\theta)$
+holds (\lean{SumsetBias.of_many_good_fibers}). For $\pm 1$-valued votes $\sigma_i(x)$ on $m>0$ good
+coordinates of $D$ outer seeds with non-empty parity biases bounded by $\delta\ge 0$ up to degree
+$4$ (\lean{ParityBiasBound}), expanding the first four moments of the normalized signed vote sum
+$Z(x)=(\sum_{i<m}\sigma_i(x))/\sqrt{m}$ and evaluating the upper-bound quartic certificate
+$P(z)=z(z+1)^2(3-z)$ ($P(z)\le 0$ for $z\le 0$ and $P(z)\le 36$ for $z>0$) at $Z-1/8$ and $-Z-1/8$
+proves that whenever $100m^2\delta\le 1$ and the bad coordinates satisfy $D-m\le\sqrt{m}/8$, both
+strict-majority outcomes $\operatorname{strictMajority}(g(x+y))=\mathrm{true}$ and $\mathrm{false}$
+carry mass at least $1/36$ (\lean{strictMajority_mass_ge_of_parityBias}). Composing a base sampler
+with a neighbor generator (\lean{NeighborCoverage}) produces a \lean{SomewhereSampler}
+(\lean{Sampler.amplify}); for the Chattopadhyay--Liao XOR source reduction
+$\operatorname{affineSourceReduction}(\mathrm{cb},\mathrm{sampler},\mathrm{advice})(z)_i=
+\bigoplus_{j<C}\mathrm{cb}(z,\mathrm{sampler}(z,i,j),\mathrm{advice}(i,j))$, the absolute parity
+bias of any outer coordinate subset equals the absolute bias of the product of its $|U|\cdot C$
+candidate signs, and under the dyadic parameter schedule ($D=2^{8b}$, $C=2^c$, $b\ge 5$, target
+$54b+c+10$, discrepancy threshold $2^{-(17b+10)}$) a \lean{SomewhereSampler} with failure
+$\delta\le 1/2$ and a bad-seed family for parities of order at most $4$ yield
+$\operatorname{SumsetBias}(\{z\mid\operatorname{strictMajority}(g(z))=\mathrm{true}\},K,35/72)$
+(\lean{sumsetBias_strictMajority_affineSourceReduction}). Furthermore, \lean{Cslib.strictMajority}
+and \lean{Cslib.parity} are tidily computable in polynomial time on bit lists, so composing
+\lean{strictMajority} with any polynomial-time vote generator $g_N:\mathrm{BitString}\,N\to
+\mathrm{BitString}\,D_N$ yields a language $L=\operatorname{ofSlices}(\operatorname{strictMajority}\circ g)\in\cc{P}$
+with $(4.56249-\varepsilon)N$ average-case agreement at most $1/2+35/72+e^{-\gamma N}$ and
+$(4.56249-\varepsilon)N$ worst-case circuit size lower bounds over \texttt{fullSignature 2 Bool}
+once the sampler and correlation-breaker hypotheses are
+supplied.\citep{ChattopadhyayLiao2022,ChattopadhyayZuckerman2019,Schlesinger2026Algebraic}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction/Conditioning.lean}{117}{Cslib.Circuits.Frontier.flatSumsetExtractor_iff_sumsetBias}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction/Conditioning.lean}{201}{Cslib.Circuits.Frontier.SumsetBias.of_many_good_fibers}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction/FourthMoment.lean}{74}{Cslib.Circuits.Frontier.fourthMoment_positive_tail_of_approx}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction/Moments.lean}{315}{Cslib.Circuits.Frontier.signSum_tails_of_parityBias}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction/Majority.lean}{190}{Cslib.Circuits.Frontier.strictMajority_mass_ge_of_parityBias}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction/Sampler.lean}{135}{Cslib.Circuits.Frontier.FlatSeededExtractor.sampler}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction/Sampler.lean}{309}{Cslib.Circuits.Frontier.Sampler.amplify}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction.lean}{136}{Cslib.Circuits.Frontier.strictMajority_sumsetBias_of_parity_fibers}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction.lean}{154}{Cslib.Circuits.Frontier.affineSourceReduction}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction.lean}{382}{Cslib.Circuits.Frontier.SomewhereSampler.parity_fibers}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Circuit/Frontier/SourceReduction.lean}{595}{Cslib.Circuits.Frontier.sumsetBias_strictMajority_affineSourceReduction}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Complexity/SourceReduction.lean}{101}{Cslib.Circuits.Frontier.computableTidilyInPolyTime_strictMajority}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Complexity/SourceReduction.lean}{128}{Cslib.Circuits.Frontier.computableTidilyInPolyTime_parity}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Complexity/SourceReduction.lean}{147}{Cslib.Circuits.Frontier.computableTidilyInPolyTime_strictMajority_comp}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Complexity/SourceReduction.lean}{225}{Cslib.Circuits.Frontier.exists_mem_P_eventually_agreement_le_of_strictMajority_parity_fibers}
+\declat{97da160018746f290edaed6cf0fd74e593679cee}{Complexity/Computability/Complexity/SourceReduction.lean}{271}{Cslib.Circuits.Frontier.exists_mem_P_eventually_lt_size_of_affineSourceReduction}
+\end{result}
+
+\begin{result}
 \subsection{Weighted-threshold activity and capacity bounds}
 Consider real-weight threshold gates, and count as input-reading a gate with a
 nonzero effective coefficient on an original input; repeated wires are aggregated
