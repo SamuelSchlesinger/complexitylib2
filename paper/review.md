@@ -122,9 +122,9 @@ the permanent/PIT entry in `synthesis.tex` (#341) and the Håstad entry in `comp
 (#347) are retitled and rewritten to say that Williams's `NEXP ⊄ ACC⁰`, Kabanets–Impagliazzo and
 Håstad's MAX-E3SAT hardness are *not* proved. The uniform-`P` frontier entry (#339/#350) is
 retitled "Conditional". Links to deleted declarations are removed; the Håstad dichotomy link is
-re-pinned to `cc3bf009` because its statement changed, and all other pins are kept. The entries
-recorded for #340, #341, #343, #344 and #347 should be read with this withdrawal; they have no
-separate ledger entries. The Gentry entry (#348) is unchanged and already states the interface
+re-pinned to `cc3bf009` because its statement changed, and all other pins are kept. The theorem-index
+entries introduced by #340, #341, #343, #344 and #347 have no `review.md` entries of their own;
+this entry records their withdrawal or rewriting. The Gentry entry (#348) is unchanged and already states the interface
 boundary.
 
 Two independent AI reviewers that did not author the change reviewed `83154d45`
@@ -132,7 +132,8 @@ Two independent AI reviewers that did not author the change reviewed `83154d45`
 `acbe3d2f` (correctness and cslib API) approved. Its non-blocking findings were a stale Håstad
 test docstring and the `≈ 4.5624977` notation, both fixed in `e9cb03bf`/`fbf95767`, and pointers
 to the pre-withdrawal SHA `62bbf525`, added in ROADMAP. Possibly unused `IdentityTesting.lean`
-imports and `Inclusions.lean` prose were left as follow-ups (#381). `67f11a80` (theorem index and
+imports were left as a follow-up (listed in #381, now covered by #390); the cosmetic
+`Inclusions.lean` prose was left as an untracked follow-up. `67f11a80` (theorem index and
 documentation) approved. It verified every `\declat` link at its pin, including the Håstad
 dichotomy at `cc3bf009` line 1207, and checked that no withdrawn result is still claimed in
 `paper/`, `README.md` or `ROADMAP.md`. Its findings were applied before merge: the "folded Long
@@ -166,7 +167,7 @@ The PR body records independent subagent reviews: correctness `d93d2e32` and API
 `7fb754d2` (both approved; docstring nits fixed in `b7c39947`), and a theorem-index review
 `0e8b1992` of `structure.tex` (initial review at `e68b7190`, re-review at `b7c39947`). That review
 found a subscript typo, a duplicate `whenever` clause, and imprecise alphabet, state/store,
-`toTM1`/`toTM0` and quantifier wording. All five were fixed in `6f82f255`, the 44 links were
+`toTM1`/`toTM0` and quantifier wording. All of them (the PR body counts five) were fixed in `6f82f255`, the 44 links were
 verified, and the re-review approved. Coordinator `agy-coordinator-e5f10553` approved with
 reviewer `2683ca0d` at `6f82f255` and head `a90687f0` (entry split, equation wrap, merge of
 `main`) in [comment 6334347036](https://github.com/cslib-community/complexitylib/pull/345#issuecomment-6334347036).
@@ -257,9 +258,9 @@ this records AI review, not human editorial approval.
 
 ## 2026-10-22: Ordered first-order reductions are logspace reductions (PR #312)
 
-Main session `claude-opus-5-5-48cb80c1` (Claude Code, with delegated worker subagents; milestones
-1 and 2 of #309) adds the `paper/sections/structure.tex` entry "Ordered first-order reductions are
-logspace reductions", with 21 declaration links pinned at `834487c03e8b5c978728c85dc4d45266f4a5408a`.
+Main session `claude-opus-5-5-48cb80c1` (Claude (Opus 5.5), with Claude subagents as workers and
+reviewers; milestones 1 and 2 of #309) adds the `paper/sections/structure.tex` entry "Ordered first-order reductions are
+logspace reductions", with 20 declaration links pinned at `834487c03e8b5c978728c85dc4d45266f4a5408a`.
 It also rewrites the full-tuple transducer and order-free interpretation entries around the shared
 domain-counting transducer, re-pinning their links to `834487c0`, and fixes the stale
 "restricted-domain … remain open" sentence in the preceding entry. The prose states admissibility
@@ -269,9 +270,10 @@ completeness.
 
 At `d3840a07`, unnamed independent AI subagents approved correctness and API/style with nits
 (fixed or documented). The theorem-index reviewer requested prose changes (31/31 links OK): a stale
-neighbouring disclaimer, the certificate-scope sentence and a fixed-interpretation caveat. These
-were fixed in the fix batch `5e78416e`. The PR body says a re-review of that batch was stopped
-before reporting. Reviewer `ea300e14-88c3-47b1-86e6-7f52e0fee39f` (research subagent, coordinator
+neighbouring disclaimer, the certificate-scope sentence and a fixed-interpretation caveat. The PR
+body says these were fixed in the fix batch `5e78416e` and that a re-review of that batch was
+stopped before reporting, so the prose fixes rest on the author's account; the later approval
+below checked the links, not these prose changes. Reviewer `ea300e14-88c3-47b1-86e6-7f52e0fee39f` (research subagent, coordinator
 `agy-coordinator-b99e4a87`) then approved source `834487c0` and head `5e78416e` in
 [comment 6331708147](https://github.com/cslib-community/complexitylib/pull/312#issuecomment-6331708147).
 The review covered API/style and correctness, and checked all 28 `structure.tex` links against
@@ -348,8 +350,8 @@ tests and `ROADMAP.md` at `992832d5`, and the index at PR head `0bf9852a`. It pa
 API/style, correctness and non-vacuity, and theorem-index parity, and checked all eight pins
 against `992832d5`. It recorded no findings. Its report was posted in
 [comment 6330678781](https://github.com/cslib-community/complexitylib/pull/310#issuecomment-6330678781)
-from the shared `SamuelSchlesinger` account. The PR records no separate coordinator verdict, and
-no Theorem index PDF artifact, CI run or rendered-page inspection. Backfilled on 2026-10-22 by
+from the shared `SamuelSchlesinger` account. The PR records no separate coordinator verdict. The Theorem index PDF CI run 39707489275
+succeeded at head `0bf9852a`, but the PR records no inspection of its artifact or rendered pages. Backfilled on 2026-10-22 by
 `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not human editorial
 approval.
 
@@ -359,9 +361,9 @@ Google Antigravity worker `8583d3ab-5631-41b6-acf5-9118b0d39efa` (under coordina
 `agy-coordinator-b99e4a87`) adds the entry "Polynomial-time rational matrix hitting-list
 generator" to `paper/sections/synthesis.tex`. It has 33 declaration links pinned at `9901fecb`.
 The entry states the hitting property, the dimension and encoding-length bounds, and the
-parameter, lift-table, Cramer and grid stages. It also states the standalone
-`hittingGenerator : List Bool → List Bool`, which is `ComputableTidilyInPolyTime` from `encBits`
-to `encBits`. Its stated limitation is that polynomial bit complexity of evaluating a formula on
+parameter, lift-table, Cramer and grid stages. It also states that the standalone
+generator is computable tidily in polynomial time on a multi-tape Turing machine (per the PR body
+and the Lean theorem, `hittingGenerator : List Bool → List Bool` from `encBits` to `encBits`). Its stated limitation is that polynomial bit complexity of evaluating a formula on
 the emitted matrices is not asserted. The "remains open" and "remains separate" sentences in the
 determinant-stage and rational-encoding entries now point to the new entry.
 
@@ -371,7 +373,8 @@ and the roadmap and theorem index at `05f6a11f` (the PR head). Its verdict was A
 PASS on cslib API/style, mathematical correctness and non-vacuity, and theorem-index parity. It
 reported no findings and verified the `\declat` pins against `9901fecb`. The report is in
 [comment 6330641156](https://github.com/cslib-community/complexitylib/pull/308#issuecomment-6330641156).
-No separate coordinator approval and no CI PDF artifact provenance are recorded. Backfilled on
+No separate coordinator approval is recorded. The Theorem index PDF CI run 39707258917 succeeded
+at head `05f6a11f`, but no inspection of its artifact is recorded. Backfilled on
 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI review, not
 human editorial approval.
 
@@ -419,7 +422,8 @@ parity, and approved in
 [comment 6329884332](https://github.com/cslib-community/complexitylib/pull/306#issuecomment-6329884332).
 It found the prose accurate on quantifiers, model, exact bound, assumptions and limitations, and
 all four links matching the exact lines; it recorded no findings. The integration commit
-`a8b00acd` changed only `ROADMAP.md` URLs. No PDF/CI artifact provenance is recorded.
+`a8b00acd` merges `main` and, beyond that, changes only `ROADMAP.md` URLs. The Theorem index PDF
+CI run 39701451685 succeeded at that head, but no inspection of its artifact is recorded.
 Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381);
 this records AI review, not human editorial approval.
 
@@ -447,9 +451,10 @@ re-pinning, and moving `PartialAssignment` and leaf-size lemmas to shared module
 `agy-coordinator-b99e4a87` and independent re-reviewer `agy-reviewer-pr286-20261021`
 (`9bcb1cfd`) approved head `6dbe675e` (Lean `41d3ef2c`)
 ([comment 6328441065](https://github.com/cslib-community/complexitylib/pull/286#issuecomment-6328441065)),
-recording all findings resolved: the index now states both truncations and all seven links are
+listing resolutions for the earlier findings: the index now states both truncations and all seven links are
 re-pinned to `41d3ef2c` with checked line numbers. The author ran `scripts/build_paper.py`
-locally; no CI theorem-index PDF artifact or rendered-page inspection is recorded.
+locally. The Theorem index PDF CI run 39690369346 succeeded at head `6dbe675e`, but no inspection
+of its artifact or rendered pages is recorded.
 Backfilled on 2026-10-22 by `worker-jetski-89a6c8ae` from the PR record (#381); this records AI
 review, not human editorial approval.
 
@@ -588,13 +593,14 @@ canonical rational serialization from the open milestones listed in the determin
 entry certifies tidy polynomial-time multi-tape computation of `a / b` and `a % b` (where
 `a / 0 = 0` and `a % 0 = a`), of `Nat.gcd` with fuel `ℓ(a) + ℓ(b) + 1`, of `encodeNat`, and of
 `encodeRat (Rat.divInt a b)`. It has 14 declaration links pinned at `20c7c139`. The prose says
-that generating the full rational hitting list remains separate (M3–M5 of #201).
+that generating the full rational hitting list remains separate (M3–M5 of #201, per the PR body).
 
 Independent subagent `agy-reviewer-f29e46b2/m2-review` reviewed head `0089e7b2` (Lean `20c7c139`)
 for correctness, API/style and the theorem index, and approved with 0 findings after checking all
 14 links. For coordinator `codex-coordinator-20261021-1949`, nonauthor reviewers `/root/review_288`
 (source/API/correctness) and `/root/index_288` (theorem index) approved the same head with no
-findings. The only nit, an extra blank line at `Gcd.lean:219`, was left unfixed as nonblocking.
+findings. Nonblocking items: the PR description's milestone range (corrected to M3–M5) and an extra blank
+line at `Gcd.lean:219` (left unfixed).
 Samuel supplied the downloaded archive of CI PDF artifact 12375449349 (Theorem index PDF run
 39664876749, attempt 1; synthetic merge `06887829`, head `0089e7b2`, base `23d97bee`). Root
 matched the archive hash and PDF SHA256 `f715ecb06c562667dab92f7ff6130e0414eaf5813fb905056d81565bf5ef3344`
@@ -608,8 +614,8 @@ this records AI review, not human editorial approval.
 
 Worker `agy-worker-f29e46b2/detrows-m1` (Antigravity, Claude and Gemini) adds the entry
 "Polynomial-time division-free integer determinant" to `paper/sections/synthesis.tex`, with seven
-declaration links pinned at `ccbd129b70945682840a7c36525544c317b23d53` (`Rational/Runtime/
-Determinant.lean`, lines 184/265/286/432/474/537/670). The prose states `detRows A = det (ofRows A)`,
+declaration links pinned at `ccbd129b70945682840a7c36525544c317b23d53` (`Rational/Runtime/Determinant.lean`,
+lines 184/265/286/432/474/537/670). The prose states `detRows A = det (ofRows A)`,
 the stage bit-length and `stageTableBound` length bounds, and `detRows_polytime` for
 `encList (encList encIntBin)` to `encIntBin`. It completes only Milestone 1 of #201 and says the
 remaining generator-runtime milestones (rational serialization, lift tables, Cramer words, grid
@@ -663,7 +669,8 @@ Gemini) adds the entry "Buss's polynomial kernel for vertex cover" to
 existing "Kernelization and parameterized vertex cover" entry. The prose states the exact-size
 cover encoding, the high-degree rule, active-vertex relabelling and isolated-vertex padding, the
 fixed rejecting instance, the `k(k+2)`-vertex, `(k(k+1))^2`-edge and `40(k+1)^6` bounds, and that
-crown and LP-based `O(k)`-vertex kernels (and the computable-`g` variant) are not covered.
+crown and LP-based `O(k)`-vertex kernels are not covered; the computable-`g` limitation remains in
+the existing kernelization entry.
 
 Review subagent `agy-reviewer-f29e46b2/buss-review` (`9d8d595d`), separate from the authoring
 worker, reviewed PR head `a437d35a` (Lean commit `29c6c5e0`) and approved correctness, cslib

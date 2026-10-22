@@ -227,7 +227,8 @@ certified equality, list-search and filtering routines. Numeric addresses are re
 encoded words; the construction does not allocate an array up to the largest address.
 This entry is a finite-memory backend component, not arbitrary exact real arithmetic. The
 fixed-program step and whole-run simulation results below use it for loads and stores; scalar
-primitive certificates and configuration selection remain hypotheses there.
+primitive certificates remain hypotheses there, and whole-run transport also takes configuration,
+initial-state and step-budget certificates and trajectory bounds as hypotheses.
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{82}{Cslib.GenericRAM.SparseMemory.read_insert}
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{98}{Cslib.GenericRAM.SparseMemory.length_insert_of_mem}
 \declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{96}{Cslib.GenericRAM.SparseMemory.length_encoding_le}
