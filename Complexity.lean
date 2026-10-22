@@ -550,6 +550,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.TQBF
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.P.Closure
 public import Complexity.Computability.Complexity.Classes.P.Complement
+public import Complexity.Computability.Complexity.Classes.P.Slices
 public import Complexity.Computability.Complexity.Classes.PCP
 public import Complexity.Computability.Complexity.Classes.PCP.NP
 public import Complexity.Computability.Complexity.Classes.PCP.ZeroRandomness
