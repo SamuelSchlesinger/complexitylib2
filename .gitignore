@@ -4,15 +4,5 @@ __pycache__/
 .DS_Store
 .claude
 
-# The theorem index is built by CI; local products are optional.
-/paper/build/
-/paper/*.pdf
-/paper/*.aux
-/paper/*.bbl
-/paper/*.blg
-/paper/*.fdb_latexmk
-/paper/*.fls
-/paper/*.log
-/paper/*.out
-/paper/*.synctex.gz
-/paper/*.toc
+# Formal abstract PDFs and generated TeX are built by CI.
+/abstracts/build/

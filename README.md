@@ -28,63 +28,25 @@ The checked examples show `fun_prop`, `polytime`, and `ppt` with explicit encodi
 client-supplied invariants. The deterministic backend builds on Christian Reitwiessner's tidy
 machine calculus.
 
-The [theorem index](https://github.com/cslib-community/complexitylib/releases/download/theorem-index/main.pdf)
-gives selected proved statements with their assumptions,
-formalization scope and links to Lean declarations. Its [LaTeX source and editing guide](paper/README.md)
-are maintained alongside the library; it is a curated catalogue, not an exhaustive API reference.
+The [selected formal abstracts](abstracts/README.md) present a small set of major results with
+inspectable definitions and checked Lean statements. The [combined PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/catalogue.pdf)
+and individual PDFs are generated from those sources. Each states its model and limitations;
+the selection is not an exhaustive API reference.
 
-## Selected developments
+## Selected results
 
-* [Cook–Levin](Complexity/Computability/Complexity/CookLevin/Completeness.lean): SAT NP-completeness
-  and UNSAT coNP-completeness, including the polynomial-time tableau reduction.
-* Structural complexity:
-  [Ladner's theorem](Complexity/Computability/Complexity/Classes/Ladner.lean),
-  a [Baker–Gill–Solovay](Complexity/Computability/Complexity/Classes/Oracle/BakerGillSolovay.lean)
-  oracle with `P^A ≠ NP^A`,
-  a [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean)
-  with a polynomial gap for bit-string problems and
-  [`P ⊊ EXP`](Complexity/Computability/Complexity/Classes/EXP.lean),
-  [`NPSPACE = PSPACE`](Complexity/Computability/Complexity/Classes/Space/Savitch.lean),
-  [TQBF PSPACE-completeness](Complexity/Computability/Complexity/Classes/Space/TQBF.lean),
-  [`NL ⊆ P`](Complexity/Computability/Complexity/Classes/LogSpace/PolyTime.lean),
-  [`USTCON ∈ L`](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean),
-  [Toda's theorem `PH ⊆ P^#P`](Complexity/Computability/Complexity/Classes/Toda.lean),
-  [Sipser–Gács–Lautemann](Complexity/Computability/Complexity/Classes/PH/SipserLautemann.lean),
-  [`BPP ⊆ P/poly`](Complexity/Computability/Circuit/Boolean/PolynomialTime.lean) and
-  [worst-case-hardness derandomization](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean).
-* Interactive proofs: [`NP ⊆ IP`](Complexity/Computability/Complexity/Classes/IP.lean),
-  [Shamir's theorem `IP = PSPACE`](Complexity/Computability/Complexity/Classes/IP/Shamir.lean), and
-  private- and public-coin protocols for [graph non-isomorphism](Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean)
-  ([in `AM`](Complexity/Computability/Complexity/Classes/ArthurMerlin/GraphNonIsomorphism.lean)).
-* NP-completeness of [3-coloring](Complexity/Computability/Complexity/Problems/Coloring.lean),
-  [Hamiltonian cycle](Complexity/Computability/Complexity/Problems/Hamiltonian/Undirected.lean),
-  [TSP](Complexity/Computability/Complexity/Problems/TSP.lean),
-  [subset sum](Complexity/Computability/Complexity/Problems/SubsetSum.lean) and further graph and number problems,
-  by polynomial-time reductions.
-* [Total search](Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean):
-  `LocalOpt`, `Pigeon`, `EndOfLine` and `Leaf` are complete for PLS, PPP, PPAD and PPA,
-  using polynomial-time construction of their circuit codes.
-* [Fagin's theorem](Complexity/Computability/Complexity/Fagin/Converse.lean): a class of finite relational
-  structures is definable in existential second-order logic exactly when it is closed under
-  isomorphism and in NP.
-* [One-way functions to PRGs](Complexity/Crypto/Computational/OneWayToPRG.lean) and
-  [adaptive PRFs](Complexity/Crypto/Computational/OneWayToPRF.lean), including
-  [Goldreich–Levin](Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean),
-  [polynomial stretch](Complexity/Crypto/Computational/Stretch.lean),
-  [GGM](Complexity/Crypto/Computational/GGM/Security.lean),
-  [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean), and
-  [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean)
-  (uniform, over polynomial-time-generable instance, witness and auxiliary-input families),
-  with efficient security reductions.
-* [Circuit APIs](Complexity/Computability/Circuit/SourceComplexity.lean): Boolean, monotone,
-  and arithmetic developments share CSLib's circuit definitions, costs, and simulations.
-  The [quadratic-form correlation bound](Complexity/Computability/Circuit/Frontier/Correlation.lean)
-  uses a nonconstructively chosen family; it supplies no efficient construction.
-* [The PCP theorem](Complexity/Computability/PCP/Completeness.lean): `NP = PCP(log n, 1)`, with
-  polynomial-time construction and verification, perfect completeness and soundness at most
-  one half. The proof uses [Dinur's gap construction](Complexity/Computability/PCP/Encoded/GapTheorem.lean)
-  and the library's deterministic-verifier definition of NP. Expander rotations are polynomial
-  in the vertex count; the fixed construction constants remain enormous.
+* [Cook–Levin: SAT is NP-complete](ComplexityTests/Abstracts/CookLevinAbstract.lean): Every efficiently checkable bit-string problem reduces in polynomial time to satisfiability.
+* [The PCP theorem](ComplexityTests/Abstracts/PCPAbstract.lean): NP proofs can be checked with logarithmic randomness and constantly many nonadaptive queries.
+* [Fagin: logic captures NP](ComplexityTests/Abstracts/FaginAbstract.lean): Existential second-order logic captures precisely the isomorphism-invariant NP properties of finite relational structures.
+* [Savitch: NPSPACE equals PSPACE](ComplexityTests/Abstracts/SavitchAbstract.lean): Nondeterminism does not enlarge polynomial space.
+* [Reingold: undirected reachability is in L](ComplexityTests/Abstracts/USTCONAbstract.lean): Undirected graph connectivity can be decided with logarithmic work space.
+* [Shamir: IP equals PSPACE](ComplexityTests/Abstracts/ShamirAbstract.lean): Interaction and randomness give a polynomial-time verifier the power of polynomial space.
+* [Toda: a counting oracle decides the polynomial hierarchy](ComplexityTests/Abstracts/TodaAbstract.lean): Every problem in the polynomial hierarchy is decidable in polynomial time with an exact counting oracle.
+* [Barrington: five states capture NC¹](ComplexityTests/Abstracts/BarringtonAbstract.lean): Polynomial-length permutation programs on five states capture logarithmic-depth polynomial-size Boolean circuits.
+* [Håstad and Razborov–Smolensky: parity resists shallow circuits](ComplexityTests/Abstracts/ConstantDepthAbstract.lean): At fixed depth, parity requires more than polynomially many gates, including over an odd-prime modular basis.
+* [Formula lower bounds: parity and Andreev](ComplexityTests/Abstracts/FormulaBoundsAbstract.lean): Tree-shaped computation pays for repeated work: parity requires quadratic leaf size, and Andreev gives a stronger explicit bound.
+* [One-way functions yield pseudorandom generators and adaptive functions](ComplexityTests/Abstracts/CryptographyAbstract.lean): One-wayness yields pseudorandomness, from an extra output bit to functions secure against adaptive oracle queries.
+* [Haken: pigeonhole formulas require long resolution proofs](ComplexityTests/Abstracts/ResolutionAbstract.lean): The pigeonhole principle has short CNF statements but requires exponentially many resolution lines.
 
 ## Build and use
 

@@ -4,12 +4,12 @@ description: >-
   Create or revise a human-readable Lean formal abstract with minimal definitions
   and main theorems in *Abstract.lean, proved through *Bridge.lean and audited by
   #check_abstract. Use when adding or updating self-contained formal abstracts for
-  headline theorems in Complexitylib or aligning them with paper/main.tex.
+  headline theorems in Complexitylib or maintaining the curated headline catalogue.
 ---
 
 # Lean Abstract (`complexitylib`)
 
-Write the formal equivalent of a paper abstract: a short, self-contained Lean file whose mathematical statements a human referee can understand and audit on a single page without reading the implementation, with proofs mechanically checked against the library via a bridge module and audited by `#check_abstract`.
+Write the formal equivalent of a paper abstract: a short, self-contained Lean file whose mathematical statements a human referee can understand and audit without reading proof implementation details, with proofs mechanically checked against the library via a bridge module and audited by `#check_abstract`.
 
 Adapted from Erik Demaine's [`lean-abstract`](https://github.com/edemaine/agents-config/blob/main/skills/lean-abstract/SKILL.md) workflow for `complexitylib`.
 
@@ -29,7 +29,7 @@ Import new `*Abstract.lean` modules from [ComplexityTests.lean](../../../Complex
 
 ## Choose the Public Definitions
 
-Inspect the main theorem statements, their hypotheses, and the corresponding `\begin{result}` entry in `paper/sections/*.tex`. Identify only the concepts needed to state the requested results. The abstract may use simpler, more direct representations than the internal proof, provided the bridge proves the correspondence without weakening or strengthening the intended claims.
+Inspect the main theorem statements, their hypotheses, and the selected claim and scope in `abstracts/catalogue.json`. Identify only the concepts needed to state the requested results. The abstract may use simpler, more direct representations than the internal proof, provided the bridge proves the correspondence without weakening or strengthening the intended claims.
 
 Outside implementation references are allowed **only in theorem proofs**. Every reference in a public definition, type, or theorem statement must resolve to:
 1. A declaration within the abstract namespace itself, defined in the abstract file (`#check_abstract` rejects declarations that another module, such as the bridge, places in the abstract namespace),

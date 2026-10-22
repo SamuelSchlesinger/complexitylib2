@@ -10,17 +10,15 @@ For mathematical changes, state the public claim and its important assumptions. 
 <!-- Record commands/outcomes and the tested revision. Mention representative clients,
 independent review, resolved findings and remaining limitations. Do not claim review not yet done. -->
 
-## Theorem index
+## Headline abstracts
 
-<!-- Every AI-authored PR must check paper/main.tex and its included sections against its
-final Lean changes. Update affected statements, assumptions, limitations and declaration links;
-add new headline results. Explain no-impact assessments, including proof-only changes that
-preserve statements and scope. Internal helper lemmas need no separate entry. -->
+<!-- Every AI-authored PR must assess the selected abstracts against its final Lean changes.
+Update affected definitions, statements and scope notes; explain no-impact assessments.
+A new theorem does not automatically merit headline selection. -->
 
-- Affected entries and declaration links, or reason the index is unaffected:
-- Independent AI index review (reviewer, exact Lean/prose revisions, findings/resolutions):
-- PDF artifact/run, checked-out and PR-head revisions, rendered-page and declaration-link checks
-  (when changed; CI artifact review suffices, local generation is optional):
+- Affected abstracts/catalogue entries, or reason the selection is unaffected:
+- Independent abstract review (reviewer, exact source revision, findings/resolutions):
+- PDF artifact/run and source/PR-head revisions; rendered-page and declaration-link checks:
 
 ## AI assistance
 

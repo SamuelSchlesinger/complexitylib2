@@ -78,36 +78,33 @@ also update the doc-gen4 tag in `docbuild/lakefile.toml` and run
 `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update doc-gen4`.
 Commit the refreshed documentation lockfile and run the documentation checks and build.
 
-## Maintaining the theorem index
+## Maintaining the headline abstracts
 
-The LaTeX manuscript at `paper/main.tex` is a curated, human-readable index of proved
-statements. Give each result's assumptions, precise model, quantitative bounds, scope limitations,
-and links to Lean declarations, with appropriate source credit. It is not a proof translation
-or an exhaustive API reference. Keep outstanding work in `ROADMAP.md`.
+The small selection in [abstracts/catalogue.json](abstracts/catalogue.json) is the public headline
+catalogue. Every selected result has a checked Lean abstract and bridge, with explicit definitions,
+models, encodings, hypotheses, bounds and limitations. The library contains many other results;
+selection is an editorial decision, not an automatic consequence of adding a theorem. A headline
+must establish a substantial full endpoint with conventional semantics and nonvacuous premises.
+Keep incomplete endpoints in `ROADMAP.md` and credit mathematical and formalization sources.
 
-Every AI-authored PR must check the index against its final Lean changes. Update affected
-entries and links, and add entries for new headline results. Run
-`python3 scripts/pin_paper_links.py --check` (or `--pin <SHA>` to re-pin `\declat{<SHA>}{<path>}{<line>}{<decl>}`
-and matching `\decl` links)
-to verify that every declaration link in `paper/` resolves to the exact 1-based declaration line
-and names its full declaration name. `--pin` takes a full 40-character SHA of a commit on the
-current branch. The **Theorem index PDF** workflow runs `--check`, which needs every pinned SHA
-to stay reachable: pin to commits that will land on `main` unchanged (merge commits preserve
-them), and re-pin to the merged commit after a squash or rebase merge.
-Internal helper lemmas need no
-separate entry. Proof-only changes preserving statements and scope may record a no-impact
-assessment instead of changing the prose. Explain any no-impact assessment in the PR.
+Every AI-authored PR must assess its final Lean changes against the selection. Update affected
+abstracts and scope notes, or explain why the catalogue is unaffected. Proof-only changes with
+unchanged statements and scope can record that assessment without rewriting the abstract. Follow
+the repository's `lean-abstract` skill, import new abstracts in `ComplexityTests.lean`, and run their
+`#check_abstract` audits. Allow only narrow, explained foundational models; do not allowlist the
+result's class definitions or construction to evade a self-contained statement.
 
-An independent AI reviewer must compare changed entries with the final formal definitions and
-statements, checking hypotheses, quantifiers, models and resource bounds. Record the exact
-revisions and findings, visually inspect the PDF, and verify declaration links. The **Theorem
-index PDF** workflow builds paper-related PR changes and uploads the PDF with checked-out and
-PR-head revision provenance. Reviewing that artifact satisfies the rendered-PDF requirement;
-record its workflow run/artifact and reviewed revisions. Local generation with
-`python3 scripts/build_paper.py` is optional. Keep LaTeX sources versioned and leave generated
-PDFs and auxiliary files untracked; the workflow publishes the latest main PDF as a release asset.
-This supplements the library's API and correctness reviews. It is not a formal equivalence
-check or human editorial approval. Keep the author's control over selection and wording.
+Arrange independent API, correctness and abstract reviews against the final source revision.
+Reviewers must check quantifiers, semantics, encodings, bounds, nonvacuity and readability. Record
+reviewers, exact revisions, findings and resolutions. These checks supplement Lean's proof checking;
+they are not a proof that the English interpretation is equivalent or human editorial approval.
+
+Run `python3 -B scripts/build_abstracts.py --check` to check the selection. The **Formal abstract
+PDFs** workflow generates individual PDFs and a combined catalogue with source digests, revision
+provenance and exact declaration links. Inspect its rendered pages and links before integration,
+recording the artifact/run and source revisions. Local generation is supported; see
+[the build guide](abstracts/README.md). The `formal-abstracts` release publishes the latest main
+build. Generated TeX and PDFs stay untracked; the former paper/TeX index has been retired.
 
 ## Upstreaming
 

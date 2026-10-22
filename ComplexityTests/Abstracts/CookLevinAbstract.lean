@@ -9,21 +9,18 @@ Authors: Samuel Schlesinger
 import ComplexityTests.Abstracts.Check
 import ComplexityTests.Abstracts.CookLevinBridge
 
-/-! # A formal abstract of the Cook–Levin theorem
+/-! # Cook–Levin: satisfiability captures efficient verification
 
-This file introduces propositional formulas in conjunctive normal form (CNF),
-their framed binary encoding, polynomial-time verifiers, the classes NP and
-coNP, and polynomial-time many-one reductions, and proves that SAT is
-NP-complete and UNSAT is coNP-complete.
+A proposed satisfying truth assignment is easy to check. Cook–Levin says that every problem
+with short, efficiently checkable witnesses can be
+translated into satisfiability in polynomial time. The translation describes a verifier's
+computation by Boolean constraints: a satisfying assignment records an accepting computation.
+Thus SAT is NP-complete, and its complement UNSAT is coNP-complete.
 
-To check that the formalization establishes these results, a reader only needs
-to inspect the definitions and theorem statements in this file. Every public
-definition and theorem statement here depends only on this file, `Mathlib`, and
-upstream `Cslib`'s multi-tape Turing machine model
-(`Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength` and
-`Cslib.PolynomiallyBounded`); `#check_abstract` mechanically verifies that no
-internal `Complexitylib` definitions leak into the statements, and Lean verifies
-the proofs through `CookLevinBridge`.
+The definitions below specify CNF formulas, their binary encoding, total polynomial-time
+reductions and native finite-state machine bounds. The claims are about asymptotic complexity,
+not a fast practical SAT solver. Lean checks the bridge proofs; `#check_abstract` checks that the
+statements use only the definitions here and upstream mathematical and machine foundations.
 
 ## References
 
