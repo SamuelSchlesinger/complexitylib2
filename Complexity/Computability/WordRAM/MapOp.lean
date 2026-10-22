@@ -205,41 +205,70 @@ theorem Program.answers_mapOp_iff {p : Program B r} {w : ℕ} {input : List ℕ}
     {time : ℕ} : (p.mapOp φ).Answers w input b time ↔ p.Answers w input b time := by
   simp only [Program.Answers, executes_mapOp_iff]
 
-theorem Program.DecidesInTime.mapOp {p : Program B r} {encode : α → List ℕ} {A : Set α}
-    {time bits : α → ℕ} (h : p.DecidesInTime encode A time bits) :
-    (p.mapOp φ).DecidesInTime encode A time bits :=
+theorem Program.DecidesInTime.mapOp {p : Program B r} {encode : ℕ → α → List ℕ} {A : Set α}
+    {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+    (h : p.DecidesInTime encode A time allowed) :
+    (p.mapOp φ).DecidesInTime encode A time allowed :=
   fun a w hw hi => (answers_mapOp_iff φ).2 (h a w hw hi)
 
-theorem Program.DecidesInTimeAt.mapOp {p : Program B r} {encode : α → List ℕ} {A : Set α}
-    {time width : α → ℕ} (h : p.DecidesInTimeAt encode A time width) :
-    (p.mapOp φ).DecidesInTimeAt encode A time width :=
-  fun a hi => (answers_mapOp_iff φ).2 (h a hi)
+/-- Translate each member of a width-indexed family. -/
+def ProgramFamily.mapOp (P : ProgramFamily B r) : ProgramFamily B' r :=
+  fun w => (P w).mapOp φ
 
-/-- **Decision grows with the basis.** What a program over `B` decides, its translation over `B'`
-decides within the same time bound and word-size threshold. -/
-theorem DecidableInTime.mapOp {encode : α → List ℕ} {A : Set α} {time bits : α → ℕ}
-    (φ : B.Hom B') (h : DecidableInTime B A encode time bits) :
-    DecidableInTime B' A encode time bits :=
-  let ⟨r, p, hp⟩ := h
-  ⟨r, p.mapOp φ, hp.mapOp φ⟩
+/-- Translation preserves the code-length bound. -/
+theorem ProgramFamily.BoundedCode.mapOp {P : ProgramFamily B r} (h : P.BoundedCode) :
+    (P.mapOp φ).BoundedCode :=
+  let ⟨L, hL⟩ := h
+  ⟨L, fun w => by simpa only [ProgramFamily.mapOp, Program.mapOp, List.length_map] using hL w⟩
 
-theorem DecidableInTimeAt.mapOp {encode : α → List ℕ} {A : Set α} {time width : α → ℕ}
-    (φ : B.Hom B') (h : DecidableInTimeAt B A encode time width) :
-    DecidableInTimeAt B' A encode time width :=
+/-- Translation preserves family decision at the same width and instruction count. -/
+theorem ProgramFamily.DecidesInTime.mapOp {P : ProgramFamily B r}
+    {encode : ℕ → α → List ℕ} {A : Set α} {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+    (h : P.DecidesInTime encode A time allowed) :
+    (P.mapOp φ).DecidesInTime encode A time allowed :=
+  fun a w hw hi => (Program.answers_mapOp_iff φ).2 (h a w hw hi)
+
+/-- Nonuniform decision grows with the operation basis, preserving code length. -/
+theorem DecidableInTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α}
+    {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+    (φ : B.Hom B') (h : DecidableInTime B A encode time allowed) :
+    DecidableInTime B' A encode time allowed :=
+  let ⟨r, P, hP, hp⟩ := h
+  ⟨r, P.mapOp φ, hP.mapOp φ, hp.mapOp φ⟩
+
+/-- Uniform decision grows with the operation basis. -/
+theorem UniformDecidableInTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α}
+    {time : α → ℕ → ℕ} {allowed : WidthCondition α}
+    (φ : B.Hom B') (h : UniformDecidableInTime B A encode time allowed) :
+    UniformDecidableInTime B' A encode time allowed :=
   let ⟨r, p, hp⟩ := h
   ⟨r, p.mapOp φ, hp.mapOp φ⟩
 
 /-- Linear time over a basis is linear time over every larger basis. -/
-theorem LinearTime.mapOp {encode : α → List ℕ} {A : Set α} {size : α → ℕ} (φ : B.Hom B')
+theorem LinearTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α} {size : α → ℕ} (φ : B.Hom B')
     (h : LinearTime B A encode size) : LinearTime B' A encode size :=
-  let ⟨c, k, hd⟩ := h
-  ⟨c, k, hd.mapOp φ⟩
+  let ⟨c, k, hk, hd⟩ := h
+  ⟨c, k, hk, hd.mapOp φ⟩
+
+/-- Uniform linear time grows with the operation basis. -/
+theorem UniformLinearTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α} {size : α → ℕ}
+    (φ : B.Hom B') (h : UniformLinearTime B A encode size) :
+    UniformLinearTime B' A encode size :=
+  let ⟨c, k, hk, hd⟩ := h
+  ⟨c, k, hk, hd.mapOp φ⟩
 
 /-- Polynomial time over a basis is polynomial time over every larger basis. -/
-theorem PolynomialTime.mapOp {encode : α → List ℕ} {A : Set α} {size : α → ℕ} (φ : B.Hom B')
+theorem PolynomialTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α} {size : α → ℕ} (φ : B.Hom B')
     (h : PolynomialTime B A encode size) : PolynomialTime B' A encode size :=
-  let ⟨T, hT, k, hd⟩ := h
-  ⟨T, hT, k, hd.mapOp φ⟩
+  let ⟨T, hT, k, hk, hd⟩ := h
+  ⟨T, hT, k, hk, hd.mapOp φ⟩
+
+/-- Uniform polynomial time grows with the operation basis. -/
+theorem UniformPolynomialTime.mapOp {encode : ℕ → α → List ℕ} {A : Set α} {size : α → ℕ}
+    (φ : B.Hom B') (h : UniformPolynomialTime B A encode size) :
+    UniformPolynomialTime B' A encode size :=
+  let ⟨T, hT, k, hk, hd⟩ := h
+  ⟨T, hT, k, hk, hd.mapOp φ⟩
 
 /-! ## Functoriality -/
 

@@ -80,12 +80,21 @@ example (w : ℕ) (hw : 4 ≤ w) : Executes w double (.init [3]) 6 4 :=
 
 /-! ## Decision grows with the basis -/
 
-example {α : Type} {A : Set α} {encode : α → List ℕ} {size : α → ℕ}
+example {α : Type} {A : Set α} {encode : ℕ → α → List ℕ} {size : α → ℕ}
     (h : LinearTime .additive A encode size) : LinearTime .standard A encode size :=
   (h.mapOp Basis.additiveHomArithmetic).mapOp Basis.arithmeticHomStandard
 
-example {α : Type} {A : Set α} {encode : α → List ℕ} {size : α → ℕ}
+example {α : Type} {A : Set α} {encode : ℕ → α → List ℕ} {size : α → ℕ}
     (h : PolynomialTime .arithmetic A encode size) : PolynomialTime .standard A encode size :=
+  h.mapOp Basis.arithmeticHomStandard
+
+example {α : Type} {A : Set α} {encode : ℕ → α → List ℕ} {size : α → ℕ}
+    (h : UniformLinearTime .additive A encode size) : UniformLinearTime .standard A encode size :=
+  (h.mapOp Basis.additiveHomArithmetic).mapOp Basis.arithmeticHomStandard
+
+example {α : Type} {A : Set α} {encode : ℕ → α → List ℕ} {size : α → ℕ}
+    (h : UniformPolynomialTime .arithmetic A encode size) :
+    UniformPolynomialTime .standard A encode size :=
   h.mapOp Basis.arithmeticHomStandard
 
 /--

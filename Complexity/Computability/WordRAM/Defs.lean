@@ -30,8 +30,10 @@ file with indirect memory, and a different input and halting convention. Changin
 alone does not change these operational choices. No simulation between these models or Turing
 machines is proved here.
 
-This file defines the machine and its runs. Time-bounded decision, parameterized by an encoding
-and a word-size threshold, is `Cslib.WordRAM.DecidableInTime`; structured programs
+This file defines the machine and its runs. `Cslib.WordRAM.DecidableInTime` allows width-indexed
+code of uniformly bounded length, width-dependent encodings and time bounds, and arbitrary
+admissible input/width pairs. `Cslib.WordRAM.UniformDecidableInTime` uses one fixed program.
+Structured programs
 (`Cslib.WordRAM.Code`) compile
 to the flat programs of this file with the same instruction counts.
 
@@ -84,7 +86,8 @@ The definitions are adapted from the Lean formalization accompanying
   (`Cslib.WordRAM.Runs.bounded_init`); omitting them spares every program proof their side
   conditions.
 * Memory starts zeroed beyond the input, so a program may use any cell before writing it.
-* The program counter is not required to fit a word: a program has constant length.
+* The program counter is not required to fit a word. Each execution uses a finite program;
+  the complexity predicates additionally bound code length independently of word size.
 * Data instructions have one semantics, `Cslib.WordRAM.Op.eval`, shared by flat and structured
   programs; runs are counted with cslib's `Relation.RelatesInSteps`.
 
@@ -93,7 +96,8 @@ the operations form a basis, whose standard instance adds bitwise operations, sh
 size to the source's arithmetic (`Cslib.WordRAM.Basis.arithmetic`); copies, loads,
 addresses and the halting output are not checked against the word size; the program counter is
 unbounded; and the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
-of binary digits of the size rather than by `log₂ (size + 2) + 2`, which defines the same classes.
+of binary digits of the size rather than by `log₂ (size + 2) + 2`. The current classes allow
+width-indexed code; the `Uniform` variants retain the fixed-program convention.
 
 ## Main definitions
 

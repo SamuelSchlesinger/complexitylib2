@@ -166,19 +166,22 @@ private def widthAdvice : Program .standard 2 :=
 
 example :
     (∀ b : Bool, InputFits (if b then 2 else 1) []) ∧
-    DecidableInTimeAt .standard {b : Bool | b = true} (fun _ => [])
-      (fun _ => 4) (fun b => if b then 2 else 1) := by
+    UniformDecidableInTime .standard {b : Bool | b = true} (fun _ _ => [])
+      (fun _ _ => 4) (.atWidth fun b => if b then 2 else 1) := by
   refine ⟨fun b => ⟨fits_zero _, by simp⟩, 2, widthAdvice, ?_⟩
-  intro b _
+  intro b w hw _
+  change w = (if b then 2 else 1) at hw
+  subst w
   cases b
   · exact ⟨0, 4, .of_run (fuel := 4) (by decide), le_rfl, by decide, by decide⟩
   · exact ⟨1, 4, .of_run (fuel := 4) (by decide), le_rfl, by decide, by decide⟩
 
-/-- No uniform decider separates the same two instances: at a common fitting width its initial
-state is identical. Thus the unrestricted prescribed-width-to-uniform converse is false. -/
-example (time bits : Bool → ℕ) :
-    ¬DecidableInTime .standard {b : Bool | b = true} (fun _ => []) time bits := by
-  rintro ⟨r, p, hp⟩
+/-- Even a nonuniform family cannot separate identically encoded instances at one common
+width: selecting code by width gives both instances the same initial state and program. -/
+example (time : Bool → ℕ → ℕ) (bits : Bool → ℕ) :
+    ¬DecidableInTime .standard {b : Bool | b = true} (fun _ _ => []) time
+      (.atLeast bits) := by
+  rintro ⟨r, p, _, hp⟩
   let w := max (bits false) (bits true)
   have hi : InputFits w [] := ⟨fits_zero w, by simp⟩
   obtain ⟨v₀, n₀, he₀, _, _, hb₀⟩ := hp false w (le_max_left _ _) hi
@@ -191,9 +194,12 @@ example (time bits : Bool → ℕ) :
 /-- If the prescribed width never fits the input, the conditional contract accepts any set
 without a successful run. -/
 example (A : Set Bool) :
-    DecidableInTimeAt .standard A (fun _ => [1]) (fun _ => 0) (fun _ => 0) := by
+    UniformDecidableInTime .standard A (fun _ _ => [1]) (fun _ _ => 0)
+      (.atWidth fun _ => 0) := by
   refine ⟨0, [], ?_⟩
-  intro b hi
+  intro b w hw hi
+  change w = 0 at hw
+  subst w
   have h := hi.1
   change 1 < 1 at h
   exact False.elim (Nat.lt_irrefl 1 h)
@@ -201,12 +207,12 @@ example (A : Set Bool) :
 /-- A constant-answer program works at every fitting width for arbitrary singleton words. -/
 private def accept : Program .standard 1 := [.op (.const 0 1), .halt 0]
 
-example : LinearTime .standard (Set.univ : Set ℕ) (fun n => [n]) (fun _ => 1) := by
-  refine ⟨1, 0, 1, accept, ?_⟩
+example : UniformLinearTime .standard (Set.univ : Set ℕ) (fun _ n => [n]) (fun _ => 1) := by
+  refine ⟨1, 1, by decide, 1, accept, ?_⟩
   intro n w _ hi
   have h1 : Fits w 1 := hi.1
   refine ⟨1, 2, .of_run (fuel := 2) ?_, le_rfl, le_rfl, by simp⟩
-  simp [run, step, accept, Op.eval, Data.put, h1, Data.set, State.init]
+  simp [ProgramFamily.const, run, step, accept, Op.eval, Data.put, h1, Data.set, State.init]
 
 /-- The encoding above is injective and has constant word-count size, but no width depending
 only on that size can fit all its instances. -/
@@ -254,13 +260,18 @@ example : logWidth 2 0 = 2 ∧ InputFits (logWidth 2 0) [] ∧
     (run (logWidth 2 0) (decider.program ans) 16 (.init [])).map (·.1) = some 1 := by
   decide
 
-/-- The decider also decides at any word size above its threshold, which it may read, and element
-distinctness for small entries is in polynomial time. -/
-example : (decider.program ans).DecidesInTimeAt (fun l : Input => l.1) {l | l.1.Nodup}
-      (fun l => 16 * (l.1.length + 1)) (fun l => logWidth 2 l.1.length + 7) ∧
-    PolynomialTime .standard {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
-  ⟨decidesInTime_nodup.decidesInTimeAt fun _ => Nat.le_add_right _ _,
-    linearTime_nodup.polynomialTime⟩
+/-- The decider also decides at a prescribed width above its threshold, and element distinctness
+for small entries is uniformly in polynomial time. -/
+example : (decider.program ans).DecidesInTime (fun _ (l : Input) => l.1) {l | l.1.Nodup}
+      (fun l _ => 16 * (l.1.length + 1)) (.atWidth fun l => logWidth 2 l.1.length + 7) ∧
+    UniformPolynomialTime .standard {l : Input | l.1.Nodup} (fun _ l => l.1)
+      (fun l => l.1.length) := by
+  refine ⟨decidesInTime_nodup.mono (fun _ _ => le_rfl) ?_,
+    uniformLinearTime_nodup.polynomialTime⟩
+  intro a w hw
+  change w = logWidth 2 a.1.length + 7 at hw
+  change logWidth 2 a.1.length ≤ w
+  omega
 
 end ElementDistinctness
 
@@ -274,11 +285,11 @@ info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup' depends
 #print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup
 
 /--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup' depends on axioms:
+info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup
+#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup
 
 /--
 info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive' depends on axioms:
@@ -288,11 +299,11 @@ info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive
 #print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive
 
 /--
-info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup_additive' depends on axioms:
-[propext, Classical.choice, Quot.sound]
+info: 'Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup_additive'
+depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup_additive
+#print axioms Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup_additive
 
 /--
 info: 'Cslib.WordRAM.Exec.runs' depends on axioms:
@@ -302,18 +313,17 @@ info: 'Cslib.WordRAM.Exec.runs' depends on axioms:
 #print axioms Cslib.WordRAM.Exec.runs
 
 /--
-info: 'Cslib.WordRAM.DecidableInTime.of_code' depends on axioms:
+info: 'Cslib.WordRAM.UniformDecidableInTime.of_code' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.DecidableInTime.of_code
+#print axioms Cslib.WordRAM.UniformDecidableInTime.of_code
 
 /--
-info: 'Cslib.WordRAM.DecidableInTime.decidableInTimeAt' depends on axioms:
-[propext]
+info: 'Cslib.WordRAM.UniformDecidableInTime.decidableInTime' depends on axioms: [propext]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.WordRAM.DecidableInTime.decidableInTimeAt
+#print axioms Cslib.WordRAM.UniformDecidableInTime.decidableInTime
 
 /--
 info: 'Cslib.WordRAM.Executes.mono_width' depends on axioms:

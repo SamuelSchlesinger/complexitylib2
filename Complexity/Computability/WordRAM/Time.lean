@@ -10,83 +10,46 @@ module
 public import Complexity.Computability.WordRAM.Defs
 public import Cslib.Foundations.Data.Nat.PolynomialBound
 public import Mathlib.Data.Nat.Log
+import Mathlib.Algebra.Order.Archimedean.Real.Basic
 
 /-!
 # Time-bounded decision on the word RAM
 
-These predicates count instructions of the word RAM over a basis of operations
-(`Cslib.WordRAM.Basis`), with an explicit input encoding, time bound and word-size parameter. A
-word must accommodate the input and its addresses [Cormen et al., Section 2.2][CLRS2009]. Two
-contracts are useful, and the first specializes to the second above its threshold.
+Time bounds and input encodings may depend on word size. An arbitrary `WidthCondition` selects
+admissible input/width pairs. `ProgramFamily` selects code using only width, with a fixed register
+count. `DecidableInTime` requires a width-independent bound on instruction-list length; literal
+values may depend on width. Code selection and the mathematical encoding are uncharged.
+`UniformDecidableInTime` instead uses one program, which may still read the width.
 
-* **Uniform decision** (`Cslib.WordRAM.Program.DecidesInTime`,
-  `Cslib.WordRAM.DecidableInTime`): one program answers correctly within the time bound at
-  *every* word size `w ≥ bits a` that accommodates the input words, as in the transdichotomous
-  model of [Fredman and Willard][FredmanWillard1993]. The same time bound must work at all these
-  widths, even for a program that reads the word size.
-* **Decision at a given word size** (`Cslib.WordRAM.Program.DecidesInTimeAt`,
-  `Cslib.WordRAM.DecidableInTimeAt`): one program answers correctly at the word size `width a`
-  whenever the input fits. The program may read that word size if its basis allows it, as the
-  standard basis does (`Cslib.WordRAM.Op.width`).
-  `Cslib.WordRAM.DecidableInTime.decidableInTimeAt` gives this conditional contract from a
-  uniform decider at every word size above its threshold.
-
-For a program that does not read the word size, answering correctly at one word size implies
-answering correctly at every larger one (`Cslib.WordRAM.Program.Answers.mono_width`), so for such a
-program the uniform form asks for correctness only at the least word size `w ≥ bits a` that
-accommodates the input words.
-
-The prescribed-width contract does not require the input to fit: if no instance fits, every
-predicate satisfies it without a successful run. It also permits arbitrary `width a`, which can
-pass instance-dependent advice through the width instruction. Thus its unrestricted converse to
-uniform decision is false, even when every prescribed width fits. An interpretation as a usual
-complexity class needs an input-fit guarantee and a specified size-based width convention;
-converting it to another model also needs computability and resource bounds for selecting that
-width and for the input encoding. Those assumptions are not bundled in these low-level predicates.
-
-The classes `Cslib.WordRAM.LinearTime` and `Cslib.WordRAM.PolynomialTime` use the uniform form,
-with the threshold a constant multiple `k (⌊log₂ n⌋ + 1)` of the number of binary digits of the
-size `n`, taking one digit at zero: the time bound must hold at every larger width that fits the
-input. The threshold is a lower bound, not an input-fit certificate. For example, singleton
-inputs `[m]` have constant word-count size but unbounded bit length. To obtain a logarithmic-width
-specialization, supply a fixed `k'` with `InputFits (logWidth k' (size a)) (encode a)` for every
-instance and increase the threshold to the maximum of the two constants. The element-distinctness
-client supplies such a certificate. Without it these classes do not assert execution with
-`O(log(size a))`-bit words. No identification with Turing-machine polynomial time is proved here.
+All contracts are conditional on `InputFits`. Empty conditions or inputs that never fit can make
+them vacuous. A logarithmic lower threshold is not an input-fit certificate: word-count size alone
+does not bound input words. An input-dependent width schedule can communicate advice. No effective
+code/encoding selection or identification with Turing-machine complexity is asserted.
 
 ## Main definitions
 
-* `Cslib.WordRAM.Program.Answers`: a program answers a yes/no question on an input at a word size
-  within a number of instructions.
-* `Cslib.WordRAM.Program.DecidesInTime`, `Cslib.WordRAM.DecidableInTime`: uniform decision by a
-  given program, and by some program.
-* `Cslib.WordRAM.Program.DecidesInTimeAt`, `Cslib.WordRAM.DecidableInTimeAt`: decision at a given
-  word size.
-* `Cslib.WordRAM.logWidth`: the word size `k (⌊log₂ n⌋ + 1)`.
-* `Cslib.WordRAM.LinearTime`, `Cslib.WordRAM.PolynomialTime`: linear and polynomial instruction
-  bounds, uniformly at every fitting word size above a logarithmic lower threshold.
+* `ProgramFamily`, `ProgramFamily.BoundedCode`: width-indexed code and its uniform length bound.
+* `WidthCondition`: arbitrary admissible widths, with lower, upper, interval and schedule forms.
+* `DecidableInTime`, `UniformDecidableInTime`: nonuniform and uniform instruction bounds.
+* `DecidableInTimeLog`, `UniformDecidableInTimeLog`: logarithmic lower-threshold conventions.
+* `DecidableInO`, `UniformDecidableInO`: asymptotic time with constants shared by all widths.
+* `LinearTime`, `PolynomialTime`, `UniformLinearTime`, `UniformPolynomialTime`: size-based classes.
 
 ## Main results
 
-* `Cslib.WordRAM.DecidableInTime.decidableInTimeAt`: a uniform decider decides at every word size
-  above its threshold.
-* `Cslib.WordRAM.Program.Answers.mono_width`: a program that does not read the word size answers
-  in the same way at every larger word size.
-* `Cslib.WordRAM.LinearTime.polynomialTime`: linear time is polynomial time.
-* `Cslib.WordRAM.DecidableInTime.recode`, `Cslib.WordRAM.LinearTime.recode`,
-  `Cslib.WordRAM.PolynomialTime.recode`: decision transfers along maps between instance types
-  that preserve the input words.
-* `Cslib.WordRAM.fits_of_lt_pow`: a number below `(n + 1) ^ k` fits a word of
-  `k (⌊log₂ n⌋ + 1)` bits.
+* `UniformDecidableInTime.decidableInTime`: constant families give nonuniform certificates.
+* `ProgramFamily.DecidesInTime.mono`: increase time and restrict admissible widths.
+* `ProgramFamily.DecidesInTime.of_inputFits`: discharge input fitting with a certificate.
+* `LinearTime.polynomialTime`, `UniformLinearTime.polynomialTime`: linear time is polynomial.
+* `fits_of_lt_pow`: polynomially bounded values fit logarithmic words.
 
 ## References
 
-* [T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to
-  Algorithms*][CLRS2009]
+* [T. H. Cormen et al., *Introduction to Algorithms*][CLRS2009]
 * [M. L. Fredman and D. E. Willard, *Surpassing the information theoretic bound with fusion
   trees*][FredmanWillard1993]
-* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]; the uniform
-  decision predicate is adapted from its accompanying Lean formalization.
+* [MIT–ULB CompGeom Group, *Undecidability of tiling with a tromino*][Tromino2025]; the
+  fixed-program decision predicate is adapted from its accompanying Lean formalization.
 -/
 
 @[expose] public section
@@ -124,99 +87,12 @@ theorem mono_width (hp : ¬p.ReadsWidth) (h : p.Answers w input b time) {w' : �
 
 end Program.Answers
 
-/-! ## Uniform decision and decision at a given word size -/
+/-! ## Width conditions and program families -/
 
-/-- **Uniform time-bounded decision.** The program `p` decides `A` on instances encoded by
-`encode`: for every instance `a` and every word size `w ≥ bits a` that accommodates the input
-words, it answers whether `a ∈ A` within `time a` instructions. Runs that fault do not count.
-The input need not fit at the threshold itself. -/
-def Program.DecidesInTime (p : Program B r) (encode : α → List ℕ) (A : Set α)
-    (time bits : α → ℕ) : Prop :=
-  ∀ a w, bits a ≤ w → InputFits w (encode a) → p.Answers w (encode a) (a ∈ A) (time a)
+/-- Admissible input/word-size pairs. This condition does not include input fitting. -/
+abbrev WidthCondition (α : Type*) := α → ℕ → Prop
 
-/-- **Decision at a given word size.** The program `p` decides `A` on instances encoded by
-`encode` when run at word size `width a`, provided the input words fit it. This is vacuous on
-instances that do not fit; the program may read the unrestricted, instance-dependent word size.
-No input-fit or size-only width-selection guarantee is included. -/
-def Program.DecidesInTimeAt (p : Program B r) (encode : α → List ℕ) (A : Set α)
-    (time width : α → ℕ) : Prop :=
-  ∀ a, InputFits (width a) (encode a) → p.Answers (width a) (encode a) (a ∈ A) (time a)
-
-/-- Some program over the basis `B` decides `A` uniformly within `time a` instructions at every
-word size `w ≥ bits a` that accommodates the input words. -/
-def DecidableInTime (B : Basis) (A : Set α) (encode : α → List ℕ) (time bits : α → ℕ) : Prop :=
-  ∃ r, ∃ p : Program B r, p.DecidesInTime encode A time bits
-
-/-- Some program over the basis `B` decides `A` within `time a` instructions at the word size
-`width a`, conditional on the input fitting. This permits the vacuity and width advice of
-`Program.DecidesInTimeAt`. -/
-def DecidableInTimeAt (B : Basis) (A : Set α) (encode : α → List ℕ) (time width : α → ℕ) : Prop :=
-  ∃ r, ∃ p : Program B r, p.DecidesInTimeAt encode A time width
-
-variable {encode : α → List ℕ} {A : Set α} {time time' bits bits' width : α → ℕ}
-
-namespace Program
-
-variable {p : Program B r}
-
-/-- A uniform decider decides at every word size above its threshold. -/
-theorem DecidesInTime.decidesInTimeAt (h : p.DecidesInTime encode A time bits)
-    (hw : ∀ a, bits a ≤ width a) : p.DecidesInTimeAt encode A time width :=
-  fun a ha => h a (width a) (hw a) ha
-
-/-- Time bounds can be increased and thresholds raised. -/
-theorem DecidesInTime.mono (h : p.DecidesInTime encode A time bits)
-    (ht : ∀ a, time a ≤ time' a) (hb : ∀ a, bits a ≤ bits' a) :
-    p.DecidesInTime encode A time' bits' :=
-  fun a w hw hi => (h a w ((hb a).trans hw) hi).mono (ht a)
-
-/-- A program that does not read the word size and answers correctly at the least admissible
-word size decides uniformly. -/
-theorem decidesInTime_of_not_readsWidth (hp : ¬p.ReadsWidth)
-    (h : ∀ a w, bits a ≤ w → InputFits w (encode a) →
-      ∃ w₀ ≤ w, bits a ≤ w₀ ∧ p.Answers w₀ (encode a) (a ∈ A) (time a)) :
-    p.DecidesInTime encode A time bits :=
-  fun a w hw hi =>
-    let ⟨_, hw₀, _, h₀⟩ := h a w hw hi
-    h₀.mono_width hp hw₀
-
-end Program
-
-/-- A uniform decider decides at every word size above its threshold. -/
-theorem DecidableInTime.decidableInTimeAt (h : DecidableInTime B A encode time bits)
-    (hw : ∀ a, bits a ≤ width a) : DecidableInTimeAt B A encode time width :=
-  let ⟨r, p, hp⟩ := h
-  ⟨r, p, hp.decidesInTimeAt hw⟩
-
-/-- Time bounds can be increased and thresholds raised. -/
-theorem DecidableInTime.mono (h : DecidableInTime B A encode time bits)
-    (ht : ∀ a, time a ≤ time' a) (hb : ∀ a, bits a ≤ bits' a) :
-    DecidableInTime B A encode time' bits' :=
-  let ⟨r, p, hp⟩ := h
-  ⟨r, p, hp.mono ht hb⟩
-
-/-- A time bound can be increased. -/
-theorem DecidableInTimeAt.mono (h : DecidableInTimeAt B A encode time width)
-    (ht : ∀ a, time a ≤ time' a) : DecidableInTimeAt B A encode time' width :=
-  let ⟨r, p, hp⟩ := h
-  ⟨r, p, fun a ha => (hp a ha).mono (ht a)⟩
-
-/-- Decision transfers along a map between instance types that preserves the input words: the
-same program decides, and no conversion is charged. -/
-theorem DecidableInTime.recode {encode' : β → List ℕ} {A' : Set β} {timeB bitsB : β → ℕ}
-    (f : α → β) (hf : ∀ a, encode a = encode' (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
-    (ht : ∀ a, timeB (f a) ≤ time a) (hb : ∀ a, bitsB (f a) ≤ bits a)
-    (h : DecidableInTime B A' encode' timeB bitsB) : DecidableInTime B A encode time bits :=
-  let ⟨r, p, hp⟩ := h
-  ⟨r, p, fun a w hw hi => by
-    rw [hf] at hi ⊢
-    exact ((hp (f a) w ((hb a).trans hw) hi).mono (ht a)).congr (hA a).symm⟩
-
-/-! ## Linear and polynomial time -/
-
-/-- The word size `k (⌊log₂ n⌋ + 1)`: `k` times the number of binary digits of `n` (with `0`
-written as one digit, as in `Cslib.RAM.bitLength`). Every word size of order `log n` lies between
-two of these. -/
+/-- The word size `k (⌊log₂ n⌋ + 1)`, taking one digit at zero. -/
 def logWidth (k n : ℕ) : ℕ := k * (Nat.log 2 n + 1)
 
 /-- A number below `(n + 1) ^ k` fits a word of `logWidth k n` bits. -/
@@ -230,44 +106,300 @@ theorem logWidth_mono {k k' n n' : ℕ} (hk : k ≤ k') (hn : n ≤ n') :
     logWidth k n ≤ logWidth k' n' :=
   Nat.mul_le_mul hk (Nat.add_le_add_right (Nat.log_mono_right hn) 1)
 
-/-- **Linear time.** A single program over the basis `B` decides `A` within `c (size a + 1)`
-instructions at every word size of at least `k` times the number of binary digits of `size a`
-that accommodates the input words, for some constants `c` and `k`. This does not assert that
-inputs fit at any logarithmic word size. -/
-def LinearTime (B : Basis) (A : Set α) (encode : α → List ℕ) (size : α → ℕ) : Prop :=
-  ∃ c k, DecidableInTime B A encode (fun a => c * (size a + 1)) (fun a => logWidth k (size a))
+namespace WidthCondition
 
-/-- **Polynomial time.** A single program over the basis `B` decides `A` within `T (size a)`
-instructions for a polynomially bounded `T`, at every word size of at least `k` times the number of
-binary digits of `size a` that accommodates the input words, for some constant `k`. This does not
-assert that inputs fit at any logarithmic word size or identify this class with Turing-machine
-polynomial time. -/
-def PolynomialTime (B : Basis) (A : Set α) (encode : α → List ℕ) (size : α → ℕ) : Prop :=
-  ∃ T, PolynomiallyBounded T ∧ ∃ k, DecidableInTime B A encode (fun a => T (size a))
-    (fun a => logWidth k (size a))
+/-- All widths at least the given input-dependent threshold. -/
+def atLeast (bits : α → ℕ) : WidthCondition α := fun a w => bits a ≤ w
 
+/-- All widths at most the given input-dependent threshold. -/
+def atMost (bits : α → ℕ) : WidthCondition α := fun a w => w ≤ bits a
+
+/-- A closed interval of widths. -/
+def between (lo hi : α → ℕ) : WidthCondition α := fun a w => lo a ≤ w ∧ w ≤ hi a
+
+/-- A prescribed width; size-based schedules use `width := W ∘ size`. -/
+def atWidth (width : α → ℕ) : WidthCondition α := fun a w => w = width a
+
+/-- Widths above a constant multiple of the binary digit count of the size. -/
+def logAtLeast (size : α → ℕ) (k : ℕ) : WidthCondition α :=
+  atLeast fun a => logWidth k (size a)
+
+/-- A big-O bound on a natural-valued width schedule is an eventual upper-width condition
+with a fixed positive natural multiplier. Swapping `width` and `bound` expresses a big-Omega
+bound, as `bound n ≤ k * width n`; the reciprocal lower constant need not be integral. -/
+theorem isBigO_iff_eventually_atMost (width bound : ℕ → ℕ) :
+    Asymptotics.IsBigO Filter.atTop (fun n => (width n : ℝ)) (fun n => (bound n : ℝ)) ↔
+      ∃ k : ℕ, 0 < k ∧ ∀ᶠ n in Filter.atTop, atMost (fun n => k * bound n) n (width n) := by
+  constructor
+  · intro h
+    obtain ⟨c, _, hc⟩ := h.exists_pos
+    refine ⟨⌈c⌉₊ + 1, by omega, ?_⟩
+    filter_upwards [hc.bound] with n hn
+    rw [Real.norm_natCast, Real.norm_natCast] at hn
+    have hk : c ≤ ((⌈c⌉₊ + 1 : ℕ) : ℝ) :=
+      (Nat.le_ceil c).trans (by exact_mod_cast Nat.le_add_right ⌈c⌉₊ 1)
+    have hb := hn.trans (mul_le_mul_of_nonneg_right hk (Nat.cast_nonneg (bound n)))
+    exact_mod_cast hb
+  · rintro ⟨k, _, hk⟩
+    apply Asymptotics.isBigO_iff.2
+    refine ⟨k, ?_⟩
+    filter_upwards [hk] with n hn
+    rw [Real.norm_natCast, Real.norm_natCast]
+    exact_mod_cast hn
+
+end WidthCondition
+
+/-- Code selected using only word size, with a fixed finite register file. -/
+abbrev ProgramFamily (B : Basis) (r : ℕ) := ℕ → Program B r
+
+namespace ProgramFamily
+
+/-- One instruction-list length bound works at every width. Literal values may depend on width;
+no computability or construction cost for selecting code is asserted. -/
+def BoundedCode (P : ProgramFamily B r) : Prop := ∃ L, ∀ w, (P w).length ≤ L
+
+/-- The constant family associated to a uniform program. -/
+def const (p : Program B r) : ProgramFamily B r := fun _ => p
+
+/-- Constant families have bounded code. -/
+theorem const_boundedCode (p : Program B r) : (const p).BoundedCode :=
+  ⟨p.length, fun _ => le_rfl⟩
+
+/-- A family answers correctly within a width-dependent bound on every admitted fitting input.
+The raw contract does not impose a code-length bound. -/
+def DecidesInTime (P : ProgramFamily B r) (encode : ℕ → α → List ℕ) (A : Set α)
+    (time : α → ℕ → ℕ) (allowed : WidthCondition α) : Prop :=
+  ∀ a w, allowed a w → InputFits w (encode w a) →
+    (P w).Answers w (encode w a) (a ∈ A) (time a w)
+
+variable {P : ProgramFamily B r} {encode : ℕ → α → List ℕ} {A : Set α}
+  {time time' : α → ℕ → ℕ} {allowed allowed' : WidthCondition α}
+
+/-- Increase time and restrict admitted input/width pairs. -/
+theorem DecidesInTime.mono (h : P.DecidesInTime encode A time allowed)
+    (ht : ∀ a w, time a w ≤ time' a w) (hw : ∀ a w, allowed' a w → allowed a w) :
+    P.DecidesInTime encode A time' allowed' :=
+  fun a w ha hi => (h a w (hw a w ha) hi).mono (ht a w)
+
+/-- A fit certificate removes the conditional input-fit premise. -/
+theorem DecidesInTime.of_inputFits (h : P.DecidesInTime encode A time allowed)
+    (hi : ∀ a w, allowed a w → InputFits w (encode w a)) :
+    ∀ a w, allowed a w → (P w).Answers w (encode w a) (a ∈ A) (time a w) :=
+  fun a w ha => h a w ha (hi a w ha)
+
+/-- Evaluate a family contract along any admitted width schedule. -/
+theorem DecidesInTime.at_width (h : P.DecidesInTime encode A time allowed)
+    (width : α → ℕ) (hw : ∀ a, allowed a (width a)) :
+    ∀ a, InputFits (width a) (encode (width a) a) →
+      (P (width a)).Answers (width a) (encode (width a) a) (a ∈ A) (time a (width a)) :=
+  fun a hi => h a (width a) (hw a) hi
+
+/-- Transfer without a charged conversion when the encoded input words agree. -/
+theorem DecidesInTime.recode {encode' : ℕ → β → List ℕ} {A' : Set β}
+    {timeB : β → ℕ → ℕ} {allowedB : WidthCondition β} (f : α → β)
+    (hf : ∀ w a, encode w a = encode' w (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
+    (ht : ∀ a w, timeB (f a) w ≤ time a w)
+    (hw : ∀ a w, allowed a w → allowedB (f a) w)
+    (h : P.DecidesInTime encode' A' timeB allowedB) : P.DecidesInTime encode A time allowed :=
+  fun a w ha hi => by
+    rw [hf] at hi ⊢
+    exact ((h (f a) w (hw a w ha) hi).mono (ht a w)).congr (hA a).symm
+
+end ProgramFamily
+
+/-- One fixed program answers correctly at every admitted fitting width. Reading word size is
+allowed; uniformity concerns code selection, not the runtime or execution path. -/
+def Program.DecidesInTime (p : Program B r) (encode : ℕ → α → List ℕ) (A : Set α)
+    (time : α → ℕ → ℕ) (allowed : WidthCondition α) : Prop :=
+  (ProgramFamily.const p).DecidesInTime encode A time allowed
+
+/-- Nonuniform decision: width selects code, with one register count and one code-length bound
+shared by every width. The time bound and encoding may depend on width. -/
+def DecidableInTime (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ)
+    (time : α → ℕ → ℕ) (allowed : WidthCondition α) : Prop :=
+  ∃ r, ∃ P : ProgramFamily B r, P.BoundedCode ∧ P.DecidesInTime encode A time allowed
+
+/-- Uniform decision by one fixed program, possibly reading word size. -/
+def UniformDecidableInTime (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ)
+    (time : α → ℕ → ℕ) (allowed : WidthCondition α) : Prop :=
+  ∃ r, ∃ p : Program B r, p.DecidesInTime encode A time allowed
+
+variable {encode : ℕ → α → List ℕ} {A : Set α}
+  {time time' : α → ℕ → ℕ} {allowed allowed' : WidthCondition α}
+
+/-- Increase time and restrict admissible widths for a fixed program. -/
+theorem Program.DecidesInTime.mono {p : Program B r}
+    (h : p.DecidesInTime encode A time allowed) (ht : ∀ a w, time a w ≤ time' a w)
+    (hw : ∀ a w, allowed' a w → allowed a w) :
+    p.DecidesInTime encode A time' allowed' :=
+  ProgramFamily.DecidesInTime.mono h ht hw
+
+/-- A fixed program gives a bounded nonuniform family. -/
+theorem UniformDecidableInTime.decidableInTime
+    (h : UniformDecidableInTime B A encode time allowed) :
+    DecidableInTime B A encode time allowed :=
+  let ⟨r, p, hp⟩ := h
+  ⟨r, .const p, ProgramFamily.const_boundedCode p, hp⟩
+
+/-- Increase time and restrict admitted widths without changing code. -/
+theorem DecidableInTime.mono (h : DecidableInTime B A encode time allowed)
+    (ht : ∀ a w, time a w ≤ time' a w) (hw : ∀ a w, allowed' a w → allowed a w) :
+    DecidableInTime B A encode time' allowed' :=
+  let ⟨r, P, hP, hp⟩ := h
+  ⟨r, P, hP, hp.mono ht hw⟩
+
+/-- Increase time and restrict admitted widths for a uniform certificate. -/
+theorem UniformDecidableInTime.mono (h : UniformDecidableInTime B A encode time allowed)
+    (ht : ∀ a w, time a w ≤ time' a w) (hw : ∀ a w, allowed' a w → allowed a w) :
+    UniformDecidableInTime B A encode time' allowed' :=
+  let ⟨r, p, hp⟩ := h
+  ⟨r, p, hp.mono ht hw⟩
+
+/-- Transfer nonuniform decision along a map preserving encoded words. -/
+theorem DecidableInTime.recode {encode' : ℕ → β → List ℕ} {A' : Set β}
+    {timeB : β → ℕ → ℕ} {allowedB : WidthCondition β} (f : α → β)
+    (hf : ∀ w a, encode w a = encode' w (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
+    (ht : ∀ a w, timeB (f a) w ≤ time a w)
+    (hw : ∀ a w, allowed a w → allowedB (f a) w)
+    (h : DecidableInTime B A' encode' timeB allowedB) : DecidableInTime B A encode time allowed :=
+  let ⟨r, P, hP, hp⟩ := h
+  ⟨r, P, hP, hp.recode f hf hA ht hw⟩
+
+/-- Transfer uniform decision along a map preserving encoded words. -/
+theorem UniformDecidableInTime.recode {encode' : ℕ → β → List ℕ} {A' : Set β}
+    {timeB : β → ℕ → ℕ} {allowedB : WidthCondition β} (f : α → β)
+    (hf : ∀ w a, encode w a = encode' w (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
+    (ht : ∀ a w, timeB (f a) w ≤ time a w)
+    (hw : ∀ a w, allowed a w → allowedB (f a) w)
+    (h : UniformDecidableInTime B A' encode' timeB allowedB) :
+    UniformDecidableInTime B A encode time allowed :=
+  let ⟨r, p, hp⟩ := h
+  ⟨r, p, ProgramFamily.DecidesInTime.recode f hf hA ht hw hp⟩
+
+/-! ## Logarithmic lower thresholds and asymptotic time -/
+
+/-- Nonuniform decision at every fitting width above some positive logarithmic threshold.
+This lower threshold is not an input-fit guarantee. -/
+def DecidableInTimeLog (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ)
+    (size : α → ℕ) (time : α → ℕ → ℕ) : Prop :=
+  ∃ k, 0 < k ∧ DecidableInTime B A encode time (.logAtLeast size k)
+
+/-- Uniform decision at every fitting width above some positive logarithmic threshold. -/
+def UniformDecidableInTimeLog (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ)
+    (size : α → ℕ) (time : α → ℕ → ℕ) : Prop :=
+  ∃ k, 0 < k ∧ UniformDecidableInTime B A encode time (.logAtLeast size k)
+
+/-- A uniform logarithmic-threshold certificate is nonuniform as well. -/
+theorem UniformDecidableInTimeLog.decidableInTimeLog {size : α → ℕ}
+    (h : UniformDecidableInTimeLog B A encode size time) :
+    DecidableInTimeLog B A encode size time :=
+  let ⟨k, hk, hd⟩ := h
+  ⟨k, hk, hd.decidableInTime⟩
+
+/-- Asymptotic nonuniform time `T n w`. Correctness holds on every admitted fitting input;
+one positive constant and one size threshold bound the runtime at all admitted widths. -/
+def DecidableInO (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ) (size : α → ℕ)
+    (T : ℕ → ℕ → ℕ) (allowed : WidthCondition α) : Prop :=
+  ∃ time, DecidableInTime B A encode time allowed ∧
+    ∃ c n₀, 0 < c ∧ ∀ a w, n₀ ≤ size a → allowed a w → time a w ≤ c * T (size a) w
+
+/-- Uniform asymptotic time, with correctness on all admitted fitting inputs and one eventual
+runtime estimate shared by every width. -/
+def UniformDecidableInO (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ) (size : α → ℕ)
+    (T : ℕ → ℕ → ℕ) (allowed : WidthCondition α) : Prop :=
+  ∃ time, UniformDecidableInTime B A encode time allowed ∧
+    ∃ c n₀, 0 < c ∧ ∀ a w, n₀ ≤ size a → allowed a w → time a w ≤ c * T (size a) w
+
+/-- Uniform asymptotic decision implies nonuniform asymptotic decision. -/
+theorem UniformDecidableInO.decidableInO {size : α → ℕ} {T : ℕ → ℕ → ℕ}
+    (h : UniformDecidableInO B A encode size T allowed) :
+    DecidableInO B A encode size T allowed :=
+  let ⟨time, hd, hb⟩ := h
+  ⟨time, hd.decidableInTime, hb⟩
+
+/-! ## Linear and polynomial time -/
+
+/-- Nonuniform linear instruction time above a logarithmic lower threshold. Code length and
+the time and threshold constants are bounded independently of width. -/
+def LinearTime (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ) (size : α → ℕ) : Prop :=
+  ∃ c, DecidableInTimeLog B A encode size (fun a _ => c * (size a + 1))
+
+/-- Uniform linear instruction time above a logarithmic lower threshold. -/
+def UniformLinearTime (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ)
+    (size : α → ℕ) : Prop :=
+  ∃ c, UniformDecidableInTimeLog B A encode size (fun a _ => c * (size a + 1))
+
+/-- Nonuniform polynomial instruction time in size above a logarithmic lower threshold.
+This does not assert effective code selection or Turing-machine computability. -/
+def PolynomialTime (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ) (size : α → ℕ) : Prop :=
+  ∃ T, PolynomiallyBounded T ∧ DecidableInTimeLog B A encode size (fun a _ => T (size a))
+
+/-- Uniform polynomial instruction time in size above a logarithmic lower threshold. -/
+def UniformPolynomialTime (B : Basis) (A : Set α) (encode : ℕ → α → List ℕ)
+    (size : α → ℕ) : Prop :=
+  ∃ T, PolynomiallyBounded T ∧ UniformDecidableInTimeLog B A encode size (fun a _ => T (size a))
+
+/-- Uniform linear time implies nonuniform linear time. -/
+theorem UniformLinearTime.linearTime {size : α → ℕ} (h : UniformLinearTime B A encode size) :
+    LinearTime B A encode size :=
+  let ⟨c, hd⟩ := h
+  ⟨c, hd.decidableInTimeLog⟩
+
+/-- Uniform polynomial time implies nonuniform polynomial time. -/
+theorem UniformPolynomialTime.polynomialTime {size : α → ℕ}
+    (h : UniformPolynomialTime B A encode size) : PolynomialTime B A encode size :=
+  let ⟨T, hT, hd⟩ := h
+  ⟨T, hT, hd.decidableInTimeLog⟩
+
+/-- Linear time is polynomial time, using the same family. -/
 theorem LinearTime.polynomialTime {size : α → ℕ} (h : LinearTime B A encode size) :
     PolynomialTime B A encode size :=
-  let ⟨c, k, hd⟩ := h
-  ⟨fun n => c * (n + 1), polynomiallyBounded_iff_le.2 ⟨c, 1, fun n => by simp⟩, k, hd⟩
+  let ⟨c, hd⟩ := h
+  ⟨fun n => c * (n + 1), polynomiallyBounded_iff_le.2 ⟨c, 1, fun n => by simp⟩, hd⟩
 
-/-- Polynomial time transfers along a map between instance types that preserves the input words
-and the sizes. -/
-theorem PolynomialTime.recode {encode' : β → List ℕ} {A' : Set β} {size : α → ℕ}
-    {size' : β → ℕ} (f : α → β) (hf : ∀ a, encode a = encode' (f a))
-    (hs : ∀ a, size a = size' (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
-    (h : PolynomialTime B A' encode' size') : PolynomialTime B A encode size :=
-  let ⟨T, hT, k, hd⟩ := h
-  ⟨T, hT, k, hd.recode f hf hA (fun a => by rw [hs]) (fun a => by rw [hs])⟩
+/-- Uniform linear time is uniform polynomial time, using the same program. -/
+theorem UniformLinearTime.polynomialTime {size : α → ℕ} (h : UniformLinearTime B A encode size) :
+    UniformPolynomialTime B A encode size :=
+  let ⟨c, hd⟩ := h
+  ⟨fun n => c * (n + 1), polynomiallyBounded_iff_le.2 ⟨c, 1, fun n => by simp⟩, hd⟩
 
-/-- Linear time transfers along a map between instance types that preserves the input words and
-the sizes. -/
-theorem LinearTime.recode {encode' : β → List ℕ} {A' : Set β} {size : α → ℕ}
-    {size' : β → ℕ} (f : α → β) (hf : ∀ a, encode a = encode' (f a))
+/-- Linear time transfers without charged conversion when words and sizes agree. -/
+theorem LinearTime.recode {encode' : ℕ → β → List ℕ} {A' : Set β} {size : α → ℕ}
+    {size' : β → ℕ} (f : α → β) (hf : ∀ w a, encode w a = encode' w (f a))
     (hs : ∀ a, size a = size' (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
     (h : LinearTime B A' encode' size') : LinearTime B A encode size :=
-  let ⟨c, k, hd⟩ := h
-  ⟨c, k, hd.recode f hf hA (fun a => by rw [hs]) (fun a => by rw [hs])⟩
+  let ⟨c, k, hk, hd⟩ := h
+  ⟨c, k, hk, hd.recode f hf hA (fun a _ => by rw [hs]) (fun a _ ha => by
+      simpa only [WidthCondition.logAtLeast, WidthCondition.atLeast, hs] using ha)⟩
+
+/-- Uniform linear time transfers when words and sizes agree. -/
+theorem UniformLinearTime.recode {encode' : ℕ → β → List ℕ} {A' : Set β} {size : α → ℕ}
+    {size' : β → ℕ} (f : α → β) (hf : ∀ w a, encode w a = encode' w (f a))
+    (hs : ∀ a, size a = size' (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
+    (h : UniformLinearTime B A' encode' size') : UniformLinearTime B A encode size :=
+  let ⟨c, k, hk, hd⟩ := h
+  ⟨c, k, hk, hd.recode f hf hA (fun a _ => by rw [hs]) (fun a _ ha => by
+      simpa only [WidthCondition.logAtLeast, WidthCondition.atLeast, hs] using ha)⟩
+
+/-- Polynomial time transfers when words and sizes agree. -/
+theorem PolynomialTime.recode {encode' : ℕ → β → List ℕ} {A' : Set β} {size : α → ℕ}
+    {size' : β → ℕ} (f : α → β) (hf : ∀ w a, encode w a = encode' w (f a))
+    (hs : ∀ a, size a = size' (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
+    (h : PolynomialTime B A' encode' size') : PolynomialTime B A encode size :=
+  let ⟨T, hT, k, hk, hd⟩ := h
+  ⟨T, hT, k, hk, hd.recode f hf hA (fun a _ => by rw [hs])
+    (fun a _ ha => by
+      simpa only [WidthCondition.logAtLeast, WidthCondition.atLeast, hs] using ha)⟩
+
+/-- Uniform polynomial time transfers when words and sizes agree. -/
+theorem UniformPolynomialTime.recode {encode' : ℕ → β → List ℕ} {A' : Set β} {size : α → ℕ}
+    {size' : β → ℕ} (f : α → β) (hf : ∀ w a, encode w a = encode' w (f a))
+    (hs : ∀ a, size a = size' (f a)) (hA : ∀ a, a ∈ A ↔ f a ∈ A')
+    (h : UniformPolynomialTime B A' encode' size') : UniformPolynomialTime B A encode size :=
+  let ⟨T, hT, k, hk, hd⟩ := h
+  ⟨T, hT, k, hk, hd.recode f hf hA (fun a _ => by rw [hs])
+    (fun a _ ha => by
+      simpa only [WidthCondition.logAtLeast, WidthCondition.atLeast, hs] using ha)⟩
 
 end Cslib.WordRAM
 

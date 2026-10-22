@@ -46,9 +46,9 @@ loop rule `Cslib.WordRAM.ExecWithin.loop_invariant`.
   `Cslib.Algorithms.WordRAM.ElementDistinctness.decidesInTime_nodup_additive`: the compiled decider
   decides element distinctness within `16 (n + 1)` instructions at every word size of at least
   `2 (⌊log₂ n⌋ + 1)`.
-* `Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup`,
-  `Cslib.Algorithms.WordRAM.ElementDistinctness.linearTime_nodup_additive`: element distinctness for
-  entries below the length is in linear time on the word RAM over `Basis.standard` and
+* `Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.uniformLinearTime_nodup_additive`: element
+  distinctness for entries below the length is uniformly in linear time over `Basis.standard` and
   `Basis.additive`.
 
 ## References
@@ -316,31 +316,45 @@ theorem answers (hl : ∀ v ∈ l, v < l.length) (hw : Fits w (2 * l.length + 1)
 length `n`, the compiled decider decides whether there are no duplicates within `16 (n + 1)`
 instructions, the final `halt` included, at every word size of at least `2 (⌊log₂ n⌋ + 1)`. -/
 theorem decidesInTime_nodup :
-    (decider.program ans).DecidesInTime (fun l : Input => l.1) {l | l.1.Nodup}
-      (fun l => 16 * (l.1.length + 1)) (fun l => logWidth 2 l.1.length) :=
-  (decider.decidesInTime_program (time := fun l : Input => 14 * l.1.length + 15)
+    (decider.program ans).DecidesInTime (fun _ (l : Input) => l.1) {l | l.1.Nodup}
+      (fun l _ => 16 * (l.1.length + 1)) (.logAtLeast (fun l => l.1.length) 2) :=
+  (decider.decidesInTime_program (encode := fun _ (l : Input) => l.1)
+    (allowed := .logAtLeast (fun l => l.1.length) 2)
+    (time := fun (l : Input) _ => 14 * l.1.length + 15)
     (A := {l | l.1.Nodup}) ans fun a _ hw _ => answers a.2 (fits_two_mul_add_one hw)).mono
-    (fun a => by omega) fun _ => le_rfl
+    (fun a _ => by omega) fun _ _ h => h
 
-/-- **Element distinctness is in linear time** on the word RAM, for lists whose entries are below
-their length. -/
+/-- **Element distinctness is uniformly in linear time** on the word RAM, for lists whose entries
+are below their length. -/
+theorem uniformLinearTime_nodup :
+    UniformLinearTime .standard {l : Input | l.1.Nodup} (fun _ l => l.1) (fun l => l.1.length) :=
+  ⟨16, 2, by decide, _, _, decidesInTime_nodup⟩
+
+/-- Element distinctness also has a bounded nonuniform linear-time family. -/
 theorem linearTime_nodup :
-    LinearTime .standard {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
-  ⟨16, 2, _, _, decidesInTime_nodup⟩
+    LinearTime .standard {l : Input | l.1.Nodup} (fun _ l => l.1) (fun l => l.1.length) :=
+  uniformLinearTime_nodup.linearTime
 
 /-- **Element distinctness in linear time over `Basis.additive`.** -/
 theorem decidesInTime_nodup_additive :
-    (deciderAdditive.program ans).DecidesInTime (fun l : Input => l.1) {l | l.1.Nodup}
-      (fun l => 16 * (l.1.length + 1)) (fun l => logWidth 2 l.1.length) := by
+    (deciderAdditive.program ans).DecidesInTime (fun _ (l : Input) => l.1) {l | l.1.Nodup}
+      (fun l _ => 16 * (l.1.length + 1)) (.logAtLeast (fun l => l.1.length) 2) := by
   intro a w hw hi
   have h := decidesInTime_nodup a w hw hi
+  change (decider.program ans).Answers w a.1 a.1.Nodup (16 * (a.1.length + 1)) at h
+  change (deciderAdditive.program ans).Answers w a.1 a.1.Nodup (16 * (a.1.length + 1))
   rwa [← deciderAdditive_mapOp, Code.program_mapOp, Program.answers_mapOp_iff] at h
 
-/-- **Element distinctness is in linear time over `Basis.additive`**, for lists whose entries are
-below their length. -/
+/-- **Element distinctness is uniformly in linear time over `Basis.additive`**, for lists whose
+entries are below their length. -/
+theorem uniformLinearTime_nodup_additive :
+    UniformLinearTime .additive {l : Input | l.1.Nodup} (fun _ l => l.1) (fun l => l.1.length) :=
+  ⟨16, 2, by decide, _, _, decidesInTime_nodup_additive⟩
+
+/-- Element distinctness also has a bounded nonuniform linear-time family over `Basis.additive`. -/
 theorem linearTime_nodup_additive :
-    LinearTime .additive {l : Input | l.1.Nodup} (fun l => l.1) (fun l => l.1.length) :=
-  ⟨16, 2, _, _, decidesInTime_nodup_additive⟩
+    LinearTime .additive {l : Input | l.1.Nodup} (fun _ l => l.1) (fun l => l.1.length) :=
+  uniformLinearTime_nodup_additive.linearTime
 
 end Cslib.Algorithms.WordRAM.ElementDistinctness
 

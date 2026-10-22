@@ -26,7 +26,7 @@ instructions (`Cslib.WordRAM.Exec.runs`). A complete program ends with a `halt`
 (`Cslib.WordRAM.Code.program`), so a structured proof that a program answers a question
 (`Cslib.WordRAM.Code.Answers`) gives a flat program that answers it with one more instruction
 (`Cslib.WordRAM.Code.Answers.program`), and a uniform decision procedure
-(`Cslib.WordRAM.Code.decidesInTime_program`, `Cslib.WordRAM.DecidableInTime.of_code`).
+(`Cslib.WordRAM.Code.decidesInTime_program`, `Cslib.WordRAM.UniformDecidableInTime.of_code`).
 
 ## Main definitions
 
@@ -40,8 +40,9 @@ instructions (`Cslib.WordRAM.Exec.runs`). A complete program ends with a `halt`
 * `Cslib.WordRAM.Exec.runs`: structured executions are runs of the assembled program with the
   same instruction count.
 * `Cslib.WordRAM.Exec.executes`: a structured execution followed by `halt` is a halting run.
-* `Cslib.WordRAM.Code.decidesInTime_program`, `Cslib.WordRAM.DecidableInTime.of_code`: structured
-  decision procedures are uniform deciders.
+* `Cslib.WordRAM.Code.decidesInTime_program`, `Cslib.WordRAM.UniformDecidableInTime.of_code`:
+  structured decision procedures are uniform deciders. Width-indexed code with a uniform size bound
+  gives `Cslib.WordRAM.DecidableInTime.of_code`.
 * `Cslib.WordRAM.Code.not_readsWidth_program`: a compiled program reads the word size only if the
   structured program does.
 
@@ -196,24 +197,34 @@ theorem Code.Answers.program {c : Code B r} {out : Fin r} {w : ℕ} {input : Lis
   let ⟨y, ⟨n, hn, he⟩, hv⟩ := h
   ⟨y.regs out, n + 1, he.executes out, Nat.add_le_add_right hn 1, hv⟩
 
-/-- **Structured decision procedures are uniform deciders.** If a structured program answers
-whether `a ∈ A` in register `out` within `time a` instructions at every word size `w ≥ bits a`
-that accommodates the input words, then the compiled program decides `A` uniformly within
-`time a + 1` instructions. -/
-theorem Code.decidesInTime_program {α : Type*} {encode : α → List ℕ} {A : Set α}
-    {time bits : α → ℕ} (c : Code B r) (out : Fin r)
-    (h : ∀ a w, bits a ≤ w → InputFits w (encode a) →
-      c.Answers out w (encode a) (a ∈ A) (time a)) :
-    (c.program out).DecidesInTime encode A (fun a => time a + 1) bits :=
+/-- Structured answers give a fixed-program decision certificate, charging the final halt. -/
+theorem Code.decidesInTime_program {α : Type*} {encode : ℕ → α → List ℕ} {A : Set α}
+    {time : α → ℕ → ℕ} {allowed : WidthCondition α} (c : Code B r) (out : Fin r)
+    (h : ∀ a w, allowed a w → InputFits w (encode w a) →
+      c.Answers out w (encode w a) (a ∈ A) (time a w)) :
+    (c.program out).DecidesInTime encode A (fun a w => time a w + 1) allowed :=
   fun a w hw hi => (h a w hw hi).program
 
-/-- **Structured decision procedures are uniform deciders.** -/
-theorem DecidableInTime.of_code {α : Type*} {encode : α → List ℕ} {A : Set α}
-    {time bits : α → ℕ} (c : Code B r) (out : Fin r)
-    (h : ∀ a w, bits a ≤ w → InputFits w (encode a) →
-      c.Answers out w (encode a) (a ∈ A) (time a)) :
-    DecidableInTime B A encode (fun a => time a + 1) bits :=
+/-- Structured decision procedures are uniform deciders. -/
+theorem UniformDecidableInTime.of_code {α : Type*} {encode : ℕ → α → List ℕ} {A : Set α}
+    {time : α → ℕ → ℕ} {allowed : WidthCondition α} (c : Code B r) (out : Fin r)
+    (h : ∀ a w, allowed a w → InputFits w (encode w a) →
+      c.Answers out w (encode w a) (a ∈ A) (time a w)) :
+    UniformDecidableInTime B A encode (fun a w => time a w + 1) allowed :=
   ⟨r, c.program out, c.decidesInTime_program out h⟩
+
+/-- Structured families with bounded compiled code give nonuniform deciders. -/
+theorem DecidableInTime.of_code {α : Type*} {encode : ℕ → α → List ℕ} {A : Set α}
+    {time : α → ℕ → ℕ} {allowed : WidthCondition α} (c : ℕ → Code B r) (out : Fin r)
+    (hc : ∃ L, ∀ w, (c w).size ≤ L)
+    (h : ∀ a w, allowed a w → InputFits w (encode w a) →
+      (c w).Answers out w (encode w a) (a ∈ A) (time a w)) :
+    DecidableInTime B A encode (fun a w => time a w + 1) allowed :=
+  let ⟨L, hL⟩ := hc
+  ⟨r, (fun w => (c w).program out), ⟨L + 1, fun w => by
+    simpa only [Code.program, List.length_append, Code.length_assemble,
+      List.length_cons, List.length_nil] using Nat.add_le_add_right (hL w) 1⟩,
+    fun a w hw hi => (h a w hw hi).program⟩
 
 /-! ## Reading the word size -/
 

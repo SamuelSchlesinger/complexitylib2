@@ -109,8 +109,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   operation-cost contracts and separate method-budget composition. The `stateful` Aesop rules
   support these contracts. `WordRAM/Controller` adds fixed-code client refinements with charged
   preparation, control flow and final halt; the adaptive stack example constructs its empty
-  representation from the standard input. `WordRAM/Function` gives a separate uniform RAM
-  function-time predicate, with named-certificate reuse by `polytime`. Arbitrary continuation
+  representation from the standard input. `WordRAM/Function` gives separate nonuniform and
+  uniform RAM function-time predicates, with named-certificate reuse by `polytime`. Arbitrary continuation
   synthesis, iterative clients and a Turing-machine simulation remain open.
   `Foundations/Data/OrderedSet` and `Foundations/Semantics/Stateful/OrderedSet` provide neutral
   optional-minimum contracts, a typed finite-set interface and adaptive clients, with no tree or
@@ -252,3 +252,15 @@ grandfathered without an alias; this list records them for downstream users.
 
 The [historical ledger](https://github.com/cslib-community/complexitylib/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
 preserves earlier integration notes and per-module follow-up ideas.
+
+* **Word-RAM word-size contracts (2026-10-22).** Time and encoding arguments now depend on
+  word size, and a `WidthCondition` admits arbitrary input/width pairs. `ProgramFamily` selects
+  code only by width; the primary decision and function classes require a fixed register count
+  and uniformly bounded instruction-list length. `Uniform` variants retain one fixed program,
+  which may read the width. Existing fixed-code clients prove the uniform variants and can
+  forget uniformity. The logarithmic-threshold wrappers require a positive constant and remain
+  conditional on input fitting. Asymptotic time keeps correctness at every admitted fitting input
+  and makes only the runtime estimate eventual, with constants shared by all widths. Width
+  schedules connect to Mathlib's real-valued big-O after casting. No effective selection of code,
+  width or encoding, or Turing-machine complexity identification, follows. These breaking local
+  API changes intentionally retain no deprecated aliases, as authorized by Erik for this redesign.

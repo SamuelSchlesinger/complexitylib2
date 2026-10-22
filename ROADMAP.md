@@ -1053,8 +1053,11 @@ space bounds. Further class-level work needs resource certificates for the actua
   `ToRAM.compileAdditive` and `Basis.additiveHomStandard` (#315). Simulating an operation by a
   program over a smaller basis with an instruction budget (the analogue of circuit
   `SimulatesWithCost`) and an AC⁰ basis remain open. The machine has [linear and polynomial
-  instruction bounds](Complexity/Computability/WordRAM/Time.lean) uniform over all fitting widths
-  above a logarithmic lower threshold,
+  instruction bounds](Complexity/Computability/WordRAM/Time.lean) with width-dependent time and
+  encodings, arbitrary width conditions, and width-indexed code of uniformly bounded length.
+  Explicit `Uniform` variants retain one fixed program; logarithmic lower-threshold wrappers,
+  asymptotic time with constants shared across widths, and Mathlib width-schedule bridges are
+  available. The machine also has
   [structured programs](Complexity/Computability/WordRAM/Structured.lean) compiling with exact
   instruction counts, [allocation and arrays](Complexity/Computability/WordRAM/Allocation.lean) and
   a [linear-time element-distinctness client](Complexity/Algorithms/WordRAM/ElementDistinctness.lean)
