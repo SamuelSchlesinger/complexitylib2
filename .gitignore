@@ -2,6 +2,7 @@
 /.worktrees
 .DS_Store
 .claude
+.agents/teamwork/
 
 # The theorem index is built by CI; local products are optional.
 /paper/build/
