@@ -206,7 +206,8 @@ $\mathsf{isWitness}(a,w)=\mathrm{ThreeSAT.verifier}(f(a),w)$ in which:
   $w:\mathbb N\to\{0,1\}^*$ ($\forall n,\;\mathsf{isWitness}(a(n),w(n))=\mathsf{true}$, with no
   separate explicit witness-length bound on $w$), and auxiliary inputs $z:\mathbb N\to\{0,1\}^*$
   (giving fixed-instance security via \texttt{zero\_knowledge\_const} for every fixed $a\in A$ and
-  valid witness $w$).
+  valid witness $w$). Since $z$ is a deterministic polynomial-time function of $1^n$, a uniform
+  $V^*$ could compute it itself, so the auxiliary input adds no power here.
 \end{itemize}
 Consequently, if a uniform one-way function exists, every language in $\cc{NP}$ has a computational
 zero-knowledge interactive proof system in this uniform polynomial-time-family model. Soundness is

@@ -22,10 +22,13 @@ completed reference developments.
      `OneWay.exists_zeroKnowledgeProof_of_mem_NP`) from any uniform one-way function via HILL and
      Cook–Levin, with uniform zero knowledge over deterministic polynomial-time-generable
      instance/witness/auxiliary-input families `(x n, w n, z n)` (and fixed-instance security via
-     `zero_knowledge_const`) at soundness error `1 / 3` (`1 / 8 + 2^{-(n+8)}`). Goldreich's
-     universal-instance and arbitrary-auxiliary-input quantification, randomized stateful-receiver
-     hiding, witness-level Levin reductions, and sequential soundness amplification to negligible
-     error remain open.
+     `zero_knowledge_const`) at soundness error `1 / 3` (`1 / 8 + 2^{-(n+8)}`). Because the
+     auxiliary input is a deterministic polynomial-time function of `1^n`, this does not reach the
+     auxiliary-input statement above.
+   - *Open (this priority):* zero knowledge in Goldreich's sense (Def. 4.3.10), for every
+     `x ∈ L` with arbitrary auxiliary input `z` against probabilistic polynomial-time verifiers;
+     hiding against randomized receivers whose state is passed to the distinguisher; witness-level
+     Levin reductions; and sequential soundness amplification to negligible error.
 2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
    exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
    polynomial-time adversaries.
