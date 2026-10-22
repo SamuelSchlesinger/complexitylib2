@@ -1054,7 +1054,8 @@ truth-table reduction with one query; the relation is reflexive, and both
 languages may be complemented.
 
 The proof follows Fortnow--Reingold. Write the PP gap as a nonzero $\cc{GapP}$
-function $g$ with $|g|\le2^{M(x)}$ for a polynomial-time unary $M$. Newman's
+function $g(x,i)$ with $|g(x,i)|\le2^{M(x)}$ for $i<r(x)$, where $M$ is
+polynomial-time with unary output. Newman's
 polynomial $P_M(z)=\prod_{j\le M}(2^j+z)$ satisfies $2|P_M(-z)|\le P_M(z)$ for
 $1\le z\le2^M$. Its power $P_M(\pm g)^{2(r(x)+1)}$ weights each guessed answer
 bit, and the product over $i<r(x)$ weights each guessed answer word. The correct
@@ -1064,18 +1065,18 @@ required sign.\citep{FortnowReingold1996,BeigelReingoldSpielman1995}
 The result is nonadaptive. Closure of $\cc{PP}$ under adaptive polynomial-time
 Turing reductions, $\cc{P}^{\cc{PP}}=\cc{PP}$, is not claimed; by Toda's theorem
 it would give $\cc{PH}\subseteq\cc{PP}$.
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{352}{Cslib.Complexity.PolyTimeTruthTableReducible.mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{306}{Cslib.Complexity.truthTable_mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{390}{Cslib.Complexity.inter_mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{409}{Cslib.Complexity.union_mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{415}{Cslib.Complexity.diff_mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{421}{Cslib.Complexity.symmDiff_mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{365}{Cslib.Complexity.forall_lt_mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{377}{Cslib.Complexity.exists_lt_mem_PP}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{128}{Cslib.Complexity.two_mul_abs_newmanPoly_neg_le}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Reduction/TruthTable.lean}{178}{Cslib.Complexity.PolyTimeTruthTableReducible.mem_P}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Reduction/TruthTable.lean}{115}{Cslib.Complexity.PolyTimeReducible.polyTimeTruthTableReducible}
-\declat{f3dbb4660cbdf680a3e24836bb4981bee797b322}{Complexity/Computability/Complexity/Reduction/TruthTable.lean}{152}{Cslib.Complexity.PolyTimeTruthTableReducible.compl}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{361}{Cslib.Complexity.PolyTimeTruthTableReducible.mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{315}{Cslib.Complexity.truthTable_mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{399}{Cslib.Complexity.inter_mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{418}{Cslib.Complexity.union_mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{424}{Cslib.Complexity.diff_mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{430}{Cslib.Complexity.symmDiff_mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{374}{Cslib.Complexity.forall_lt_mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{386}{Cslib.Complexity.exists_lt_mem_PP}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Classes/PP/TruthTable.lean}{133}{Cslib.Complexity.two_mul_abs_newmanPoly_neg_le}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Reduction/TruthTable.lean}{155}{Cslib.Complexity.PolyTimeTruthTableReducible.mem_P}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Reduction/TruthTable.lean}{96}{Cslib.Complexity.PolyTimeReducible.polyTimeTruthTableReducible}
+\declat{8f8fcea3d96ef44fb0556b021662d407ab1ec5c1}{Complexity/Computability/Complexity/Reduction/TruthTable.lean}{133}{Cslib.Complexity.PolyTimeTruthTableReducible.compl}
 \end{result}
 
 \begin{result}
