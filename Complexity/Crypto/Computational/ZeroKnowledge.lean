@@ -47,6 +47,10 @@ entries.
   arbitrary sequences `(x, w) ∈ R_L` and `z ∈ {0, 1}^*`. Fixed-instance zero-knowledge
   (`ZeroKnowledgeProof.zero_knowledge_const`) is an immediate corollary for constant families
   `fun _ => a` and `fun _ => w`.
+  The separate finite theorem `GMW.gmwView_advantage_le` applies pointwise without generation
+  assumptions. Its full-input clock and `GMW.gmwView_negligible_of_advice_prg` expose the stronger
+  advice-PRG premise needed for arbitrary polynomially bounded families; they do not strengthen
+  this bundled uniform-family field or derive that premise from uniform one-wayness.
 * **Bundled witness relation (`ZeroKnowledgeProof.isWitness`).** `ZeroKnowledgeProof` bundles its
   own polynomial-time witness predicate `isWitness : α → List Bool → Bool` characterizing `A`
   (`mem_iff_exists_witness`). No witness-length bound is imposed, so `isWitness` by itself need not

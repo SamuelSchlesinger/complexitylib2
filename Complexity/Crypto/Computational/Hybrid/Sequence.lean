@@ -30,6 +30,8 @@ tuple-index bookkeeping, and apply to arbitrary discrete sample types.
 ## Main results
 
 * `Cslib.Crypto.sequenceTest_gap`: an exact signed gap with the dyadic sampling-range loss.
+* `Cslib.Crypto.sequenceTest_advantage`: the corresponding exact unsigned loss,
+  including count zero.
 * `Cslib.Crypto.isPPTOn_sequenceTest`: a uniform strict PPT certificate, including padding indices.
 
 ## References
@@ -146,6 +148,18 @@ theorem sequenceTest_gap (replacement original : ProbComp α) (count : ℕ)
     count (dyadicSize count) (lt_dyadicSize count).le
   simpa only [sequenceHybrid_zero, sequenceHybrid_self,
     horiginal, hreplacement] using h
+
+/-- The exact unsigned sequence-hybrid loss, including the empty sequence. -/
+theorem sequenceTest_advantage (replacement original : ProbComp α) (count : ℕ)
+    (test : List α → ProbComp Bool) :
+    Game.advantage (ProbComp.eval (OracleComp.replicate count original >>= test))
+        (ProbComp.eval (OracleComp.replicate count replacement >>= test)) =
+      (dyadicSize count : ℝ≥0) *
+        Game.advantage (ProbComp.eval (original >>= sequenceTest replacement original count test))
+          (ProbComp.eval (replacement >>= sequenceTest replacement original count test)) := by
+  apply NNReal.eq
+  rw [NNReal.coe_mul, NNReal.coe_natCast, Game.coe_advantage, Game.coe_advantage,
+    sequenceTest_gap, abs_mul, Nat.abs_cast]
 
 /-- Efficient source programs and counts give an efficient independent hybrid sequence. -/
 theorem isPPTOn_sequenceHybrid {Param : Type} {input : Param ↪ List Bool} {sample : α ↪ List Bool}
