@@ -504,6 +504,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Or
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ordered.Reduction
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Output
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Reduction
+public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Transducer
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 public import Complexity.Computability.Complexity.Classes.ModP
