@@ -35,9 +35,9 @@ example : modGate 6 4 ![true, true, true, false] = true := by decide
 -- Fast Zeta transform agrees with the Boolean-lattice Zeta transform on concrete tables.
 example :
     let f : BitString 3 → ℕ := fun p => (p 0).toNat + 2 * (p 1).toNat + 4 * (p 2).toNat
-    fastZeta f ![true, false, true] = zetaTransform f ![true, false, true] ∧
-      fastZeta f ![true, false, true] = 10 := by
-   refine ⟨fastZeta_eq_zetaTransform _ _, ?_⟩
+    BitString.fastZeta f ![true, false, true] = BitString.zetaTransform f ![true, false, true] ∧
+      BitString.fastZeta f ![true, false, true] = 10 := by
+   refine ⟨BitString.fastZeta_eq_zetaTransform _ _, ?_⟩
    decide
 
 -- Concrete `Sym⁺` circuit for `MOD_3` on `4 = 2 + 2` bits, evaluated both directly and via
@@ -197,9 +197,16 @@ info: 'Cslib.Circuits.Boolean.ACC0_subset_PPoly' depends on axioms: [propext, Cl
 #print axioms Cslib.Circuits.Boolean.ACC0_subset_PPoly
 
 /--
+info: 'Cslib.BitString.fastZeta_eq_zetaTransform' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.fastZeta_eq_zetaTransform
+
+/--
 info: 'Cslib.Circuits.Boolean.fastZeta_eq_zetaTransform' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
+set_option linter.deprecated false in
 #print axioms Cslib.Circuits.Boolean.fastZeta_eq_zetaTransform
 
 /--
