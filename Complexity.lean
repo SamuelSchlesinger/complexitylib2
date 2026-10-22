@@ -336,6 +336,7 @@ public import Complexity.Computability.Circuit.Fusion.Counting
 public import Complexity.Computability.Circuit.Fusion.Cyclic
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Closure
 public import Complexity.Computability.Circuit.Fusion.Cyclic.Compiler
+public import Complexity.Computability.Circuit.Fusion.DeMorgan
 public import Complexity.Computability.Circuit.Fusion.Encoding
 public import Complexity.Computability.Circuit.Fusion.Extension
 public import Complexity.Computability.Circuit.Fusion.Graph

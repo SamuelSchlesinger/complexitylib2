@@ -1017,6 +1017,45 @@ five comes from the grouped certificate construction formalized here.
 \end{result}
 
 \begin{result}
+\subsection{Semifilter covers and De Morgan circuit size}
+Let $f:\{0,1\}^n\to\{0,1\}$ and write $\rho(f)$ for the minimum length of an
+unrestricted semifilter pair cover of $f^{-1}(1)$ from the true sets of the
+$2n$ positive and negative literals (with value $\infty$ if no cover exists).
+Let $C_\wedge(f)$ be the minimum number of AND gates of a circuit over
+$\{\wedge,\vee,0,1\}$ computing $f$ from the literals, with OR gates, constants,
+supplied literals, wiring and fanout free, and let $C(f)$ be the minimum size of
+a circuit over the De Morgan basis $\{\wedge,\vee,\neg,0,1\}$ computing $f$ from
+$x_1,\ldots,x_n$, with negations allowed anywhere and every gate, constants
+included, charged. Then
+\[
+\rho(f)\le C_\wedge(f)\le\rho(f)^2,
+\qquad
+\rho(f)\le 2\,C(f),
+\qquad
+C(f)\le 4(\rho(f)+1)^2(2n+\rho(f)+1)+n .
+\]
+In particular $\rho(f)$ is finite, and the formalized bound on $C(f)$ depends on
+$n$ as well as on $\rho(f)$. The lower bound $\rho(f)\le 2C(f)$ holds for
+every admissible class of witnesses, including semi-ultrafilters: the
+dual-rail translation doubles the size of a De Morgan circuit and removes its
+negations, and the dual-rail inputs are wired from the literals and one free
+constant. For the upper bound, the quadratic compiler for a $t$-pair cover over
+$m$ supplied sets has at most $4(t+1)^2(m+t+1)$ gates in total, unions and
+constants included; with $m=2n$ literal sets and $n$ negations prepended this
+gives a De Morgan circuit. This formalized upper bound is cubic rather than
+quadratic in $\rho(f)$ when $\rho(f)\ge n$, because the compiler's unions are
+charged; that is a property of the construction, not a lower bound. These are
+formalizations of known correspondences, not new circuit lower bounds.
+\citep{CavalarOliveira2025,Goldschlager1977,Razborov1989}
+\declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/Quadratic.lean}{322}{Cslib.Circuits.Fusion.PairCover.size_toCircuit_le}
+\declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{164}{Cslib.Circuits.Fusion.ecomplexityFrom_literals_bounds}
+\declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{178}{Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_size}
+\declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{201}{Cslib.Circuits.Fusion.pairCoverComplexity_le_two_mul_complexity}
+\declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{213}{Cslib.Circuits.Fusion.PairCover.exists_computes_size_le}
+\declat{46bde4844593046190dda2ea08d8c9f4df64653f}{Complexity/Computability/Circuit/Fusion/DeMorgan.lean}{233}{Cslib.Circuits.Fusion.pairCoverComplexity_complexity_bounds}
+\end{result}
+
+\begin{result}
 \subsection{Subbotovskaya shrinkage and Andreev's formula lower bound}
 Let $L(f)$ be the minimum input-leaf count among De Morgan formulas computing
 $f:\{0,1\}^n\to\{0,1\}$, with constants contributing zero leaves. For any
