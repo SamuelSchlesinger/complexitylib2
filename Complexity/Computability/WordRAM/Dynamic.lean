@@ -126,6 +126,15 @@ theorem ExecOp.unique {w : ℕ} {x y y' : Data r} {o : D.Op} {a a' : D.Result o}
   obtain ⟨rfl, rfl⟩ := he.exec.unique he'.exec
   exact ⟨rfl, Option.some.inj (ha.symm.trans ha'), ht.trans ht'.symm⟩
 
+/-- A call's final state and instruction count agree with any structured execution of the code. -/
+theorem ExecOp.eq_of_exec {P : DynamicProgram D r} {w : ℕ} {x y z : Data r} {o : D.Op}
+    {a : D.Result o} {trace : OperationTrace} {m : ℕ} (he : P.ExecOp w x o a y trace)
+    (h : Exec w P.code (P.prepare o x) z m) :
+    y = z ∧ trace.instructions = m + 1 := by
+  obtain ⟨_, n, ht, _, hn⟩ := he
+  obtain ⟨rfl, rfl⟩ := ht.exec.unique h
+  exact ⟨rfl, hn⟩
+
 /-- The write transcript supplies a frame rule for a call, including register-only delivery. -/
 theorem ExecOp.frame {w : ℕ} {x y : Data r} {o : D.Op} {a : D.Result o}
     {trace : OperationTrace} (h : P.ExecOp w x o a y trace) {Q : HeapAssertion}
@@ -177,6 +186,80 @@ theorem instruction_bound (charge : D.State → D.Op → ℕ)
   obtain ⟨_, n, ht, _, hn⟩ := he
   rw [hn]
   exact hbound o hr hv ht.exec
+
+/-- A uniform constant instruction bound follows from an existential per-operation execution. -/
+theorem instruction_bound_const (K : ℕ)
+    (hbound : ∀ {s x} (o), C.rep s x → D.valid s o →
+      ∃ y n, Exec w P.code (P.prepare o x) y n ∧ n + 1 ≤ K) :
+    Stateful.Bound C.realization DynamicProgram.OperationTrace.instructions (fun _ _ => K) := by
+  apply C.instruction_bound
+  intro s x o y n hr hv he
+  obtain ⟨z, m, he', hn⟩ := hbound o hr hv
+  obtain ⟨_, rfl⟩ := he.unique he'
+  exact hn
+
+/-- Adaptive client execution, final representation, and linear total instruction bound for a
+uniform constant per-operation instruction certificate. -/
+theorem run_client_const {K : ℕ}
+    (B : Stateful.Bound C.realization DynamicProgram.OperationTrace.instructions (fun _ _ => K))
+    {α : Type*} (p : D.Client α) {s : D.State} {x : Data r}
+    (hr : C.rep s x) (hv : D.ValidHistory s (D.runClient s p).2.2) :
+    ∃ y traces, Stateful.Executes (P.ExecOp w) p x (D.runClient s p).1 y traces ∧
+      C.rep (D.runClient s p).2.1 y ∧
+      Stateful.total DynamicProgram.OperationTrace.instructions traces ≤
+        (D.runClient s p).2.2.length * K :=
+  B.run_const p hr hv
+
+/-- Lift a per-operation pointwise memory frame from `Exec` to `ExecOp`. -/
+theorem frame_of_execute {j : ℕ}
+    (hframe : ∀ {s x} (o), C.rep s x → D.valid s o →
+      ∃ z n, Exec w P.code (P.prepare o x) z n ∧ z.mem j = x.mem j)
+    {s : D.State} {x y : Data r} {o : D.Op} {a : D.Result o}
+    {trace : DynamicProgram.OperationTrace}
+    (hr : C.rep s x) (hv : D.valid s o) (he : P.ExecOp w x o a y trace) :
+    y.mem j = x.mem j := by
+  obtain ⟨z, n, hz, hf⟩ := hframe o hr hv
+  exact (he.eq_of_exec hz).1 ▸ hf
+
+/-- Lift a per-operation `Modifies` bound from `Exec` to `ExecOp`. -/
+theorem modifies_of_execute {F : Finset ℕ}
+    (hmod : ∀ {s x} (o), C.rep s x → D.valid s o →
+      ∃ z n, Exec w P.code (P.prepare o x) z n ∧ Modifies F x.mem z.mem)
+    {s : D.State} {x y : Data r} {o : D.Op} {a : D.Result o}
+    {trace : DynamicProgram.OperationTrace}
+    (hr : C.rep s x) (hv : D.valid s o) (he : P.ExecOp w x o a y trace) :
+    Modifies F x.mem y.mem :=
+  fun j hj => C.frame_of_execute
+    (fun o hr' hv' => let ⟨z, n, hz, hf⟩ := hmod o hr' hv'; ⟨z, n, hz, hf j hj⟩)
+    hr hv he
+
+/-- Lift a per-operation pointwise memory frame across an adaptive client execution. -/
+theorem executes_client_frame {j : ℕ}
+    (hframe : ∀ {s x y o a trace}, C.rep s x → D.valid s o →
+      P.ExecOp w x o a y trace → y.mem j = x.mem j)
+    {α : Type*} {p : D.Client α} {s : D.State} {x y : Data r} {val : α}
+    {traces : List DynamicProgram.OperationTrace}
+    (hr : C.rep s x) (hv : D.ValidHistory s (D.runClient s p).2.2)
+    (he : Stateful.Executes (P.ExecOp w) p x val y traces) :
+    y.mem j = x.mem j := by
+  induction he generalizing s with
+  | pure _ _ => rfl
+  | call hstep _ ih =>
+    obtain ⟨ha, hr'⟩ := C.realization.correct hr hv.1 hstep
+    subst ha
+    exact (ih hr' hv.2).trans (hframe hr hv.1 hstep)
+
+/-- Lift a per-operation `Modifies` bound across an adaptive client execution. -/
+theorem executes_client_modifies {F : Finset ℕ}
+    (hmod : ∀ {s x y o a trace}, C.rep s x → D.valid s o →
+      P.ExecOp w x o a y trace → Modifies F x.mem y.mem)
+    {α : Type*} {p : D.Client α} {s : D.State} {x y : Data r} {val : α}
+    {traces : List DynamicProgram.OperationTrace}
+    (hr : C.rep s x) (hv : D.ValidHistory s (D.runClient s p).2.2)
+    (he : Stateful.Executes (P.ExecOp w) p x val y traces) :
+    Modifies F x.mem y.mem :=
+  fun j hj => C.executes_client_frame
+    (fun hr' hv' he' => hmod hr' hv' he' j hj) hr hv he
 
 /-- The same native evidence separately bounds memory probes by the instruction charge. -/
 theorem probe_bound (charge : D.State → D.Op → ℕ)

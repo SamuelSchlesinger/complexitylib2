@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.WordRAM.Defs
+public import Complexity.Computability.WordRAM.MapOp
 public import Complexity.Computability.RAM.Cost
 import Mathlib.Data.List.GetD
 
@@ -34,15 +34,23 @@ integer/I/O model. Neither this compiler nor its cost bound is a Turing-machine 
 ## Main definitions
 
 * `Cslib.WordRAM.Instr.IsAdditive`: the supported instruction fragment.
-* `Cslib.WordRAM.ToRAM.compile`: fixed-block compilation, with explicit code placement.
+* `Cslib.WordRAM.ToRAM.compile`, `Cslib.WordRAM.ToRAM.compileAdditive`: fixed-block compilation,
+  with explicit code placement.
+* `Cslib.WordRAM.ToRAM.paddedProgram`, `Cslib.WordRAM.ToRAM.paddedProgramAdditive`: complete
+  compiled programs using `paddedInput`.
 * `Cslib.WordRAM.ToRAM.Represents`: the register and memory layout.
 
 ## Main results
 
-* `Cslib.WordRAM.ToRAM.executes_compile`: a successful bounded-word run is simulated by the
-  actual compiled code with logarithmic cost at most `8 t (bitLength (r + 5) + w + 1)`.
-* `Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded`: the complete target program, including its
-  register initialization, uses logarithmic cost at most
+* `Cslib.WordRAM.Fits.bitLength_le`: a fitting word has `RAM.bitLength` at most `w + 1`.
+* `Cslib.WordRAM.Program.mapOp_additiveHomStandard_isAdditive`: every program translated from
+  `Basis.additive` belongs to the additive fragment.
+* `Cslib.WordRAM.ToRAM.executes_compile`, `Cslib.WordRAM.ToRAM.executes_compileAdditive`: a
+  successful bounded-word run is simulated by the actual compiled code with logarithmic cost at
+  most `8 t (bitLength (r + 5) + w + 1)`.
+* `Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded`,
+  `Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded_additive`: the complete target program,
+  including its register initialization, uses logarithmic cost at most
   `8 (bitLength (r + 5) + 1) (t + 1) (w + 1)` on the stated padded input convention.
 
 ## References
@@ -56,6 +64,10 @@ integer/I/O model. Neither this compiler nor its cost bound is a Turing-machine 
 namespace Cslib.WordRAM
 
 variable {r : ℕ}
+
+/-- A word fitting `w` bits has logarithmic RAM bit-length at most `w + 1`. -/
+theorem Fits.bitLength_le {w v : ℕ} (h : Fits w v) : RAM.bitLength v ≤ w + 1 :=
+  (RAM.bitLength_le_iff (Nat.succ_ne_zero w)).2 (h.mono (Nat.le_succ w))
 
 /-- The fragment compiled to the logarithmic-cost natural-number RAM. -/
 def Instr.IsAdditive : Instr .standard r → Prop
@@ -75,6 +87,35 @@ def Program.IsAdditive (p : Program .standard r) : Prop := ∀ i ∈ p, i.IsAddi
 
 instance (p : Program .standard r) : Decidable p.IsAdditive :=
   inferInstanceAs (Decidable (∀ i ∈ p, i.IsAdditive))
+
+/-- Every instruction translated from `Basis.additive` belongs to the additive fragment. -/
+theorem Instr.mapOp_additiveHomStandard_isAdditive (i : Instr .additive r) :
+    (i.mapOp Basis.additiveHomStandard).IsAdditive := by
+  cases i with
+  | op o =>
+    cases o with
+    | alu f d args =>
+      rcases f with ⟨f, hf⟩
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at hf
+      rcases hf with rfl | rfl
+      · exact Or.inl rfl
+      · exact Or.inr rfl
+    | _ => trivial
+  | _ => trivial
+
+/-- Every program translated from `Basis.additive` belongs to the additive fragment. -/
+theorem Program.mapOp_additiveHomStandard_isAdditive (p : Program .additive r) :
+    (p.mapOp Basis.additiveHomStandard).IsAdditive := by
+  intro i hi
+  obtain ⟨j, _, rfl⟩ := List.mem_map.1 hi
+  exact j.mapOp_additiveHomStandard_isAdditive
+
+/-- Assembling a structured program over `Basis.additive` and translating to `Basis.standard`
+produces an additive-fragment program. -/
+theorem Code.program_mapOp_additiveHomStandard_isAdditive (c : Code .additive r) (out : Fin r) :
+    ((c.mapOp Basis.additiveHomStandard).program out).IsAdditive := by
+  rw [Code.program_mapOp]
+  exact (c.program out).mapOp_additiveHomStandard_isAdditive
 
 namespace ToRAM
 
@@ -203,9 +244,6 @@ private theorem scratch (h : Represents x σ) {a : ℕ} (ha : a = address r ∨ 
 
 end Represents
 
-private theorem bitLength_le_of_fits {w v : ℕ} (h : Fits w v) : RAM.bitLength v ≤ w + 1 :=
-  (RAM.bitLength_le_iff (Nat.succ_ne_zero w)).2 (h.mono (Nat.le_succ w))
-
 private def Reaches (p : RAM.Program) (s t : RAM.State) (T : ℕ) : Prop :=
   ∃ n, RAM.run p n s = t ∧ RAM.time RAM.logCost p n s ≤ T
 
@@ -257,14 +295,14 @@ private theorem op_simulation {q : RAM.Program} {base length pc w : ℕ} {o : Op
     (he : o.eval w x = some y) :
     ∃ τ, Reaches q ⟨entry base pc, σ⟩ ⟨entry base (pc + 1), τ⟩
       (8 * (RAM.bitLength (memoryBase r) + w + 1)) ∧ Represents y τ := by
-  have hr (i : Fin r) : RAM.bitLength (x.regs i) ≤ w + 1 := bitLength_le_of_fits (hx.1 i)
-  have hm (a : ℕ) : RAM.bitLength (x.mem a) ≤ w + 1 := bitLength_le_of_fits (hx.2 a)
+  have hr (i : Fin r) : RAM.bitLength (x.regs i) ≤ w + 1 := (hx.1 i).bitLength_le
+  have hm (a : ℕ) : RAM.bitLength (x.mem a) ≤ w + 1 := (hx.2 a).bitLength_le
   cases o with
   | const d v =>
     obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 he
     refine ⟨_, (reaches_set_jump hσ hcode.first rfl (hcode 1 (by decide))).mono ?_, hσ.set d v⟩
     change RAM.bitLength v + 1 ≤ _
-    have := bitLength_le_of_fits hv
+    have := hv.bitLength_le
     lia
   | copy d i =>
     cases he
@@ -342,7 +380,7 @@ private theorem branch_simulation {q : RAM.Program} {base length pc target w : �
     ∃ τ, Reaches q ⟨entry base pc, σ⟩
       ⟨entry base (if c.Holds x then target else pc + 1), τ⟩
       (8 * (RAM.bitLength (memoryBase r) + w + 1)) ∧ Represents x τ := by
-  have hr (i : Fin r) : RAM.bitLength (x.regs i) ≤ w + 1 := bitLength_le_of_fits (hx.1 i)
+  have hr (i : Fin r) : RAM.bitLength (x.regs i) ≤ w + 1 := (hx.1 i).bitLength_le
   have hd (i j : Fin r) : RAM.bitLength (x.regs i - x.regs j) ≤ w + 1 :=
     (RAM.bitLength_mono (Nat.sub_le _ _)).trans (hr i)
   cases c with
@@ -428,7 +466,7 @@ private theorem halt_simulation {q : RAM.Program} {base length pc w : ℕ} {i : 
   have hone : τ.read (one r) = 1 := by
     rw [URM.Regs.write_read_of_ne _ _ _ _ (by dsimp [one]; lia), hσ.one]
   refine ⟨τ, (hfirst.trans (reaches_jump (hcode 1 (by decide)) hone)).mono ?_, ?_⟩
-  · have := bitLength_le_of_fits (hx.1 i)
+  · have := (hx.1 i).bitLength_le
     lia
   · exact URM.Regs.write_read_self _ _ _
 
@@ -630,6 +668,54 @@ theorem haltsWithResultInTime_padded {p : Program .standard r} (hp : p.IsAdditiv
       (8 * (RAM.bitLength (memoryBase r) + 1) * (n + 1) * (w + 1)) := by
   simpa [RAM.HaltsWithResultInTime, paddedProgram, RAM.State.init] using
     executes_compile_from_paddedInput hp [] hi h
+
+/-- Compile a program over `Basis.additive` directly to `RAM.Program`. -/
+def compileAdditive (base : ℕ) (p : Program .additive r) : RAM.Program :=
+  compile base (p.mapOp Basis.additiveHomStandard)
+
+@[simp]
+theorem length_compileAdditive (base : ℕ) (p : Program .additive r) :
+    (compileAdditive base p).length = 8 * p.length := by
+  simp [compileAdditive]
+
+/-- Successful bounded-word execution of a program over `Basis.additive` is simulated by
+`compileAdditive`, without a separate `IsAdditive` side condition. -/
+theorem executes_compileAdditive {p : Program .additive r} (pre : RAM.Program)
+    {w v n : ℕ} {s : State r} {σ : URM.Regs} (hσ : Represents s.data σ)
+    (hs : s.data.Bounded w) (h : Executes w p s v n) :
+    ∃ k, (RAM.run (pre ++ compileAdditive pre.length p) k ⟨entry pre.length s.pc, σ⟩).isHalted
+        (pre ++ compileAdditive pre.length p) ∧
+      (RAM.run (pre ++ compileAdditive pre.length p) k ⟨entry pre.length s.pc, σ⟩).regs.output = v ∧
+      RAM.time RAM.logCost (pre ++ compileAdditive pre.length p) k ⟨entry pre.length s.pc, σ⟩ ≤
+        n * (8 * (RAM.bitLength (memoryBase r) + w + 1)) :=
+  executes_compile p.mapOp_additiveHomStandard_isAdditive pre hσ hs
+    ((executes_mapOp_iff Basis.additiveHomStandard).mpr h)
+
+/-- A complete compiled program over `Basis.additive` using `paddedInput`. -/
+def paddedProgramAdditive (p : Program .additive r) : RAM.Program :=
+  paddedProgram (p.mapOp Basis.additiveHomStandard)
+
+/-- Start the compiled simulation of a `Basis.additive` program after an arbitrary
+already-executed prefix, from the supplied padded register layout. -/
+theorem executes_compile_from_paddedInput_additive {p : Program .additive r}
+    (pre : RAM.Program) {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
+    (h : Executes w p (State.init input) v n) :
+    let q := (pre ++ prologue r) ++ compileAdditive (pre.length + 2) p
+    let s := RAM.State.mk pre.length (URM.Regs.ofInputs (paddedInput r input))
+    ∃ k, (RAM.run q k s).isHalted q ∧ (RAM.run q k s).regs.output = v ∧
+      RAM.time RAM.logCost q k s ≤
+        8 * (RAM.bitLength (memoryBase r) + 1) * (n + 1) * (w + 1) :=
+  executes_compile_from_paddedInput p.mapOp_additiveHomStandard_isAdditive pre hi
+    ((executes_mapOp_iff Basis.additiveHomStandard).mpr h)
+
+/-- The padded-input logarithmic-cost simulation for programs over `Basis.additive`. -/
+theorem haltsWithResultInTime_padded_additive {p : Program .additive r}
+    {input : List ℕ} {w v n : ℕ} (hi : InputFits w input)
+    (h : Executes w p (State.init input) v n) :
+    RAM.HaltsWithResultInTime RAM.logCost (paddedProgramAdditive p) (paddedInput r input) v
+      (8 * (RAM.bitLength (memoryBase r) + 1) * (n + 1) * (w + 1)) :=
+  haltsWithResultInTime_padded p.mapOp_additiveHomStandard_isAdditive hi
+    ((executes_mapOp_iff Basis.additiveHomStandard).mpr h)
 
 end ToRAM
 end Cslib.WordRAM

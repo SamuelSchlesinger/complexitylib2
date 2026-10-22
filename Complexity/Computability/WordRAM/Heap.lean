@@ -39,6 +39,21 @@ this file uses explicit finite supports rather than partial-heap semantics. See
 
 namespace Cslib.WordRAM
 
+/-- The finite set of memory cells owned by the block. -/
+def Block.footprint (b : Block) : Finset ℕ :=
+  (Finset.range b.length).image (b.base + ·)
+
+@[simp]
+theorem Block.mem_footprint {b : Block} {a : ℕ} : a ∈ b.footprint ↔ b.Owns a := by
+  simp only [Block.footprint, Finset.mem_image, Finset.mem_range, Block.Owns]
+  exact ⟨fun ⟨i, hi, ha⟩ => ⟨by omega, by omega⟩,
+    fun ⟨hlo, hhi⟩ => ⟨a - b.base, by omega, by omega⟩⟩
+
+@[simp]
+theorem Block.card_footprint (b : Block) : b.footprint.card = b.length := by
+  rw [Block.footprint, Finset.card_image_of_injective _ (fun _ _ h => Nat.add_left_cancel h),
+    Finset.card_range]
+
 /-- A predicate depending only on a finite set of memory cells. -/
 structure HeapAssertion where
   /-- Cells on which the predicate may depend. -/
@@ -69,6 +84,20 @@ theorem update (m : ℕ → ℕ) (a v : ℕ) : Modifies {a} m (Function.update m
   intro b hb
   exact Function.update_of_ne (by simpa using hb) v m
 
+/-- Writing a cell owned by a block modifies at most the block's footprint. -/
+theorem write_of_owns {base n a : ℕ} {m : ℕ → ℕ} (ha : base ≤ a ∧ a < base + n) (v : ℕ) :
+    Modifies (Block.mk base n).footprint m (Function.update m a v) := by
+  intro c hc
+  have hne : c ≠ a := fun h => hc (Block.mem_footprint.mpr (h ▸ ha))
+  exact Function.update_of_ne hne v m
+
+/-- Modifying at most a block's footprint is equivalent to preserving all cells outside its
+address interval. -/
+theorem block_iff {b : Block} {m m' : ℕ → ℕ} :
+    Modifies b.footprint m m' ↔ ∀ a, a < b.base ∨ b.base + b.length ≤ a → m' a = m a := by
+  simp only [Modifies, Block.mem_footprint, Block.Owns]
+  constructor <;> intro h a ha <;> exact h a (by omega)
+
 end Modifies
 
 namespace HeapAssertion
@@ -87,12 +116,12 @@ def pointsto (a v : ℕ) : HeapAssertion where
 
 /-- A record, or array, of consecutive owned cells. -/
 def array (base n : ℕ) (values : Fin n → ℕ) : HeapAssertion where
-  footprint := (Finset.range n).image (base + ·)
+  footprint := (Block.mk base n).footprint
   holds m := (Block.mk base n).Realizes m values
   supported h hm i := by
     dsimp only [Block.Realizes, Block.read] at hm ⊢
-    exact (h (base + i) (Finset.mem_image.mpr ⟨i, Finset.mem_range.mpr i.isLt, rfl⟩)).symm.trans
-      (hm i)
+    exact (h (base + i) (Block.mem_footprint.mpr
+      ⟨Nat.le_add_right _ _, Nat.add_lt_add_left i.isLt _⟩)).symm.trans (hm i)
 
 /-- Conjunction of assertions with disjoint ownership. -/
 def sep (P Q : HeapAssertion) : HeapAssertion where

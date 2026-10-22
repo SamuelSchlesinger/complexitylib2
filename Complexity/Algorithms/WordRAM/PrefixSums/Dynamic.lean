@@ -210,11 +210,10 @@ def certificate (ha : Fits w (b + 2 * 2 ^ h)) : DynamicCertificate (program h w)
 theorem instruction_bound (ha : Fits w (b + 2 * 2 ^ h)) :
     Stateful.Bound (certificate ha).realization DynamicProgram.OperationTrace.instructions
       (fun _ _ => 13 * (h + 1) + 12) := by
-  apply DynamicCertificate.instruction_bound
-  intro s x o y n hx ho he
+  apply (certificate ha).instruction_bound_const
+  intro s x o hx ho
   obtain ⟨z, ⟨k, hk, he'⟩, _, _⟩ := dispatch_spec ha o hx ho
-  obtain ⟨_, rfl⟩ := he.unique he'
-  omega
+  exact ⟨z, k, he', by omega⟩
 
 /-- The same instruction certificate stated in terms of the abstract array length. -/
 theorem instruction_bound_log (ha : Fits w (b + 2 * 2 ^ h)) :
@@ -231,10 +230,8 @@ theorem execOp_frame (ha : Fits w (b + 2 * 2 ^ h)) {s : List ℕ} {o : Operation
     (hx : Rep h b w s x) (ho : (spec h w).valid s o)
     (he : (program h w).ExecOp w x o a y trace) {j : ℕ}
     (hj : j < b ∨ b + Tree.words h ≤ j) : y.mem j = x.mem j := by
-  obtain ⟨z, ⟨k, _, hk⟩, _, _, hf⟩ := dispatch_spec ha o hx ho
-  obtain ⟨_, n, hn, _, _⟩ := he
-  obtain ⟨rfl, _⟩ := hn.exec.unique hk
-  exact hf j hj
+  obtain ⟨z, ⟨_, _, hk⟩, _, _, hf⟩ := dispatch_spec ha o hx ho
+  exact (he.eq_of_exec hk).1 ▸ hf j hj
 
 /-- Every admissible adaptive client has a concrete execution with the specified result and
 final array, and at most `13 (h + 1) + 12` instructions for each selected operation. The client
@@ -246,11 +243,8 @@ theorem client_spec (ha : Fits w (b + 2 * 2 ^ h)) {α : Type}
         ((spec h w).runClient s p).1 y traces ∧
       Rep h b w ((spec h w).runClient s p).2.1 y ∧
       Stateful.total DynamicProgram.OperationTrace.instructions traces ≤
-        ((spec h w).runClient s p).2.2.length * (13 * (h + 1) + 12) := by
-  obtain ⟨y, traces, he, hr⟩ := (certificate ha).realization.run p hx hv
-  refine ⟨y, traces, he, hr, ?_⟩
-  exact (Stateful.Bound.client (instruction_bound ha) hx hv he).trans
-    ((spec h w).totalCost_le_length_mul _ _ (fun _ _ _ => le_rfl) hv)
+        ((spec h w).runClient s p).2.2.length * (13 * (h + 1) + 12) :=
+  (certificate ha).run_client_const (instruction_bound ha) p hx hv
 
 /-- Concrete zero memory and persistent metadata. Supplying this state is not a charged
 initialization algorithm. -/

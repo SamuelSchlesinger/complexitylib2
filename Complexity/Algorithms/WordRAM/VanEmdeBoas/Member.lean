@@ -199,7 +199,7 @@ private theorem memberLoop_finish {w base query answer : ℕ} {s : Data 32}
     (hout : (memberNext s base query).regs out = answer) :
     ∃ z, ExecWithin w memberLoop s z 30 ∧ z.regs out = answer ∧ z.mem = s.mem := by
   have hz := (memberNext_constants hs).1
-  refine ⟨_, he.loop_iter (cond := .lt zero runFlag) ?_ (ExecWithin.loop_exit ?_),
+  refine ⟨_, he.loop_once (cond := .lt zero runFlag) ?_ ?_,
     hout, memberNext_mem _ _ _⟩
   · simp only [Cond.holds_lt, hs.zero_eq, hs.runFlag_eq]
     decide

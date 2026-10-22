@@ -120,4 +120,25 @@ info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared' depends on axioms:
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared
 
+/--
+info: 'Cslib.WordRAM.ToRAM.executes_compileAdditive' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.ToRAM.executes_compileAdditive
+
+/--
+info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded_additive' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_padded_additive
+
+/--
+info: 'Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_additive' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.ToRAM.haltsWithResultInTime_prepared_additive
+
 end ComplexityTests.WordRAMRAM

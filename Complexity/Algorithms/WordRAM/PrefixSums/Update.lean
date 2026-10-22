@@ -146,7 +146,7 @@ theorem updateLoop_spec (t : Tree h) (hx : Entry b (2 ^ h) i δ x) (hi : i < 2 ^
     have he := updateBody_exec hx (by decide) ha (by simpa [Tree.total, hr.root] using hv)
     have hy := updateNext_entry hx
     have hylen : y.regs len = 0 := by simpa [y] using hy.len_eq
-    refine ⟨y, (he.loop_iter (cond := .lt zero len) ?_ (ExecWithin.loop_exit ?_)).mono ?_,
+    refine ⟨y, (he.loop_once (cond := .lt zero len) ?_ ?_).mono ?_,
       ?_, ?_⟩
     · simp only [Cond.holds_lt, hx.zero_eq, hx.len_eq]; decide
     · change ¬y.regs zero < y.regs len

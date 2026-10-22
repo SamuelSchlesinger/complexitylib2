@@ -52,6 +52,12 @@ def Bound {exec : Execution D C τ} (R : Realization D exec)
   ∀ {s c o a c' trace}, R.rep s c → D.valid s o → exec c o a c' trace →
     weight trace ≤ charge s o
 
+theorem spec_total_const (D : Spec.{u, v, w}) (K : Nat) (s : D.State) (os : List D.Op) :
+    D.totalCost (fun _ _ => K) s os = os.length * K := by
+  induction os generalizing s with
+  | nil => simp [Spec.totalCost]
+  | cons o os ih => simp [Spec.totalCost, ih, Nat.add_mul, Nat.add_comm]
+
 theorem Bound.client {exec : Execution D C τ} {R : Realization D exec}
     {weight : τ → Nat} {charge : D.State → D.Op → Nat} (B : Bound R weight charge)
     {p : D.Client α} {s : D.State} {c c' : C} {a : α} {traces : List τ}
@@ -65,6 +71,37 @@ theorem Bound.client {exec : Execution D C τ} {R : Realization D exec}
     have ht := B hr hv.1 he
     subst ha
     exact Nat.add_le_add ht (ih hr' hv.2)
+
+/-- Existence and semantic correctness are inherited independently from the realization. -/
+theorem Bound.run {exec : Execution D C τ} {R : Realization D exec}
+    {weight : τ → Nat} {charge : D.State → D.Op → Nat} (B : Bound R weight charge)
+    (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
+    (hv : D.ValidHistory s (D.runClient s p).2.2) :
+    ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
+      R.rep (D.runClient s p).2.1 c' ∧
+      total weight traces ≤ D.totalCost charge s (D.runClient s p).2.2 := by
+  obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
+  exact ⟨c', traces, he, hr', B.client hr hv he⟩
+
+/-- Uniform constant per-operation bounds scale by the history length. -/
+theorem Bound.client_const {exec : Execution D C τ} {R : Realization D exec}
+    {weight : τ → Nat} {K : Nat} (B : Bound R weight (fun _ _ => K))
+    {p : D.Client α} {s : D.State} {c c' : C} {a : α} {traces : List τ}
+    (hr : R.rep s c) (hv : D.ValidHistory s (D.runClient s p).2.2)
+    (he : Executes exec p c a c' traces) :
+    total weight traces ≤ (D.runClient s p).2.2.length * K := by
+  simpa only [spec_total_const] using B.client hr hv he
+
+/-- Existence, correctness, and total cost for a uniform constant per-operation bound. -/
+theorem Bound.run_const {exec : Execution D C τ} {R : Realization D exec}
+    {weight : τ → Nat} {K : Nat} (B : Bound R weight (fun _ _ => K))
+    (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
+    (hv : D.ValidHistory s (D.runClient s p).2.2) :
+    ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
+      R.rep (D.runClient s p).2.1 c' ∧
+      total weight traces ≤ (D.runClient s p).2.2.length * K := by
+  obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
+  exact ⟨c', traces, he, hr', B.client_const hr hv he⟩
 
 namespace Module
 
@@ -124,12 +161,6 @@ theorem spec_total_one (D : Spec.{u, v, w}) (s : D.State) (os : List D.Op) :
   induction os generalizing s with
   | nil => rfl
   | cons o os ih => simp [Spec.totalCost, ih, Nat.add_comm]
-
-theorem spec_total_const (D : Spec.{u, v, w}) (K : Nat) (s : D.State) (os : List D.Op) :
-    D.totalCost (fun _ _ => K) s os = os.length * K := by
-  induction os generalizing s with
-  | nil => simp [Spec.totalCost]
-  | cons o os ih => simp [Spec.totalCost, ih, Nat.add_mul, Nat.add_comm]
 
 theorem total_append (weight : τ → Nat) (xs ys : List τ) :
     total weight (xs ++ ys) = total weight xs + total weight ys := by
