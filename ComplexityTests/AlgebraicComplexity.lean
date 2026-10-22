@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Arithmetic.Determinant
 import Complexity.Computability.Circuit.Arithmetic.VNP
+import Complexity.Foundations.Data.Matrix.Permanent
 import Mathlib.Algebra.Field.ZMod
 
 /-!
@@ -16,7 +17,8 @@ with `X` as a function but not as a polynomial. The product monomial is a projec
 `2 × 2` determinant, and the products of `n` variables form a p-projection of the determinant
 family, so they are in `VP` by closure. Repeated squaring has small circuits but is not in `VP`.
 The determinant circuits evaluate concrete determinants, a Boolean sum is computed, and the
-determinant family is in `VNP`. Named axiom guards cover the headline theorems.
+determinant family is in `VNP`. The permanent expands along row 0 and its generic family is a
+p-family. Named axiom guards cover the headline theorems.
 -/
 
 namespace ComplexityTests.AlgebraicComplexity
@@ -112,6 +114,14 @@ example : detFamily (ZMod 2) ∈ VP (ZMod 2) := detFamily_mem_VP
 
 example : detFamily (MvPolynomial (Fin 3) ℤ) ∈ VP (MvPolynomial (Fin 3) ℤ) := detFamily_mem_VP
 
+/-! ### The permanent -/
+
+example (A : Matrix (Fin 2) (Fin 2) ℤ) :
+    A.permanent = ∑ j : Fin 2, A 0 j * (A.submatrix Fin.succ j.succAbove).permanent :=
+  Matrix.permanent_succ_row_zero A
+
+example : (permFamily ℚ).IsPFamily := isPFamily_permFamily
+
 /-! ### VNP -/
 
 example : detFamily ℚ ∈ VNP ℚ := VP_subset_VNP detFamily_mem_VP
@@ -189,5 +199,17 @@ info: 'Cslib.Circuits.Arithmetic.powTwoPowFamily_not_mem_VP' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms powTwoPowFamily_not_mem_VP
+
+/--
+info: 'Matrix.permanent_succ_column_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.permanent_succ_column_zero
+
+/--
+info: 'Matrix.permanent_succ_row_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Matrix.permanent_succ_row_zero
 
 end ComplexityTests.AlgebraicComplexity

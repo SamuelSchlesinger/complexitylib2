@@ -35,8 +35,8 @@ re-exported here:
 This module adds the resulting separations:
 
 * **`P ⊄ AC⁰` and `P ⊄ AC⁰[p]`**: parity lies in `P` (`parity_mem_P`), so it witnesses languages in
-  `P` outside `AC0` (`exists_mem_P_notMem_AC0`) and outside `AC0Mod p` for every odd prime `p`
-  (`exists_mem_P_notMem_AC0Mod`) [Razborov1987], [Smolensky1987].
+  `P` outside `AC0` (`exists_mem_P_notMem_AC0`) [Hastad1986] and outside `AC0Mod p` for every odd
+  prime `p` (`exists_mem_P_notMem_AC0Mod`) [Razborov1987], [Smolensky1987].
 * **Fixed-exponent `MOD_q` circuit lower bounds in `Σ₂`**: for every modulus `q` (prime or
   composite) and every exponent `k`, combining `SIZEMod_subset_SIZE` with Kannan's theorem gives a
   language in `Σ₂` with no `MOD_q` circuits of size `O(n ^ k)` of any depth
@@ -58,6 +58,7 @@ This module adds the resulting separations:
   languages in NC¹*][Barrington1989]
 * [H. Vollmer, *Introduction to Circuit Complexity*][Vollmer1999]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
+* [J. Håstad, *Almost optimal lower bounds for small depth circuits*][Hastad1986]
 * [A. A. Razborov, *Lower bounds on the size of bounded depth circuits over a complete basis with
   logical addition*][Razborov1987]
 * [R. Smolensky, *Algebraic methods in the theory of lower bounds for Boolean circuit
@@ -109,19 +110,16 @@ theorem parity_mem_P : (Language.ofSlices parity : Set (List Bool)) ∈ P encBit
   · change w ∈ (Language.ofSlices parity : Language Bool) ↔ w.foldl bne false = true
     rw [Language.mem_ofSlices, foldl_bne_eq_parity]
 
-
-/-- **Unconditional separation `P ⊄ AC⁰`**: parity is in `P` and not in `AC⁰`. -/
+/-- **Unconditional separation `P ⊄ AC⁰`**: parity is in `P` and not in `AC⁰` [Hastad1986]. -/
 theorem exists_mem_P_notMem_AC0 :
     ∃ L : Language Bool, (L : Set (List Bool)) ∈ P encBits ∧ L ∉ AC0 :=
   ⟨Language.ofSlices parity, parity_mem_P, parity_notMem_AC0⟩
-
 
 /-- **Unconditional separation `P ⊄ AC⁰[p]`** for every odd prime `p`: parity is in `P` and not in
 `AC⁰[p]` [Razborov1987], [Smolensky1987]. -/
 theorem exists_mem_P_notMem_AC0Mod {p : ℕ} [Fact p.Prime] (hp2 : p ≠ 2) :
     ∃ L : Language Bool, (L : Set (List Bool)) ∈ P encBits ∧ L ∉ AC0Mod p :=
   ⟨Language.ofSlices parity, parity_mem_P, Smolensky.parity_notMem_AC0Mod hp2⟩
-
 
 /-- **Kannan's language escapes `SIZEMod q`**: for every `q, k, c : ℕ`,
 `Kannan.language (8 * (k + 1))` has no circuits over the `AC⁰[q]` basis of size
@@ -141,6 +139,5 @@ theorem exists_mem_SigmaP_two_notMem_SIZEMod (q k : ℕ) :
   obtain ⟨L, hL₂, hLnot⟩ := exists_mem_SigmaP_two_notMem_SIZE (8 * (k + 1))
   refine ⟨L, hL₂, fun c hc => ?_⟩
   exact hLnot ((2100 * (max q 1) ^ 3) ^ 2 * (c + 1) ^ 8) (SIZEMod_subset_SIZE q c k hc)
-
 
 end Cslib.Circuits.Boolean

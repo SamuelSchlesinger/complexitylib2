@@ -32,6 +32,7 @@ are the constant-depth classes (`polylogDepth_zero`). Every hierarchy is monoton
 
 * `Cslib.Circuits.Boolean.NC_subset_AC`, `AC_subset_TC`, `AC_subset_ACMod`: the inclusions.
 * `Cslib.Circuits.Boolean.AC_zero`, `TC_zero`, `ACMod_zero`: the constant-depth classes.
+* `Cslib.Circuits.Boolean.NC_subset_PPoly`: **NCⁱ ⊆ P/poly**.
 
 ## References
 
