@@ -291,7 +291,6 @@ public import Complexity.Computability.Circuit.Frontier.Correlation.Asymptotics
 public import Complexity.Computability.Circuit.Frontier.Correlation.Circuit
 public import Complexity.Computability.Circuit.Frontier.Correlation.Rectangle
 public import Complexity.Computability.Circuit.Frontier.Demand
-public import Complexity.Computability.Circuit.Frontier.Extractor
 public import Complexity.Computability.Circuit.Frontier.FanInTwo
 public import Complexity.Computability.Circuit.Frontier.Layouts.Basic
 public import Complexity.Computability.Circuit.Frontier.Layouts.BoundedDegree
@@ -649,7 +648,6 @@ public import Complexity.Computability.Complexity.FineGrained.GraphProblems
 public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
 public import Complexity.Computability.Complexity.FineGrained.Reduction
 public import Complexity.Computability.Complexity.FineGrained.Sparsification
-public import Complexity.Computability.Complexity.FrontierExtractor
 public import Complexity.Computability.Complexity.HardnessEncoding.PolyTime
 public import Complexity.Computability.Complexity.HardnessEncoding.Program
 public import Complexity.Computability.Complexity.Parameterized

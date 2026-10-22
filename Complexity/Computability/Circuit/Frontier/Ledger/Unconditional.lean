@@ -42,9 +42,8 @@ fixed `m` cost nothing in the leading term.
 * `Cslib.Circuits.Frontier.eventually_two_sub_mul_lt_mul_card_of_aggregates`: with aggregate
   gates.
 * `Cslib.Circuits.Frontier.eventually_gaussian_sub_mul_lt_card_of_ledger`,
-  `eventually_gaussian_sub_mul_lt_card_of_aggregates`,
-  `eventually_456249_div_100000_sub_mul_lt_card_of_aggregates`: the Gaussian `(4.5625 - ε) n` and
-  `(4.56249 - ε) n` bounds at ordinary fan-in two.
+  `eventually_gaussian_sub_mul_lt_card_of_aggregates`: the Gaussian `(L - ε) n` bounds at ordinary
+  fan-in two.
 -/
 
 @[expose] public section
@@ -155,28 +154,5 @@ theorem eventually_gaussian_sub_mul_lt_card_of_aggregates
   filter_upwards [h] with n hn σ I Acc c special _ T _ _ hfan hagg hT hdec
   simpa only [Nat.cast_ofNat, show (2 : ℝ) - 1 = 1 by norm_num, one_mul] using
     hn σ I Acc c special T hfan hagg hT hdec
-
-/-- **The `(4.56249 - ε) n` frontier lower bound with aggregate gates, at ordinary fan-in two.** -/
-theorem eventually_456249_div_100000_sub_mul_lt_card_of_aggregates
-    (hfree : ∀ᶠ n in atTop, RectangleFree (S n) (K n))
-    (hK : (fun n => Real.log (K n)) =o[atTop] fun n => (n : ℝ))
-    (hdense : (fun n => n * Real.log (Nat.card U) - Real.log (S n).ncard) =o[atTop]
-      fun n => (n : ℝ))
-    {β : ℕ → ℝ} (hβ : β =o[atTop] fun n => (n : ℝ)) {ε : ℝ} (hε : 0 < ε) :
-    ∀ᶠ n in atTop, ∀ (σ : Signature.{v}) (I : Interpretation σ U) (Acc : Set U)
-      (c : Circuit σ n 1) (special : Fin c.size → Prop) [DecidablePred special] (T : Type w)
-      [CommMonoid T] [Finite T],
-        (∀ g, ¬special g → σ.Arity (c.program.lines g).op ≤ 2) →
-        (∀ g, special g → Aggregates (I (c.program.lines g).op) T) →
-        Nat.card {g // special g} * Real.log (Nat.card T) ≤ β n →
-        c.Decides I Acc (S n) →
-          (456249 / 100000 - ε) * n <
-            (c.program.innerGates.filter fun g => ¬special g).card := by
-  filter_upwards
-    [eventually_gaussian_sub_mul_lt_card_of_aggregates.{u, v, w} hfree hK hdense hβ hε]
-    with n hn σ I Acc c special _ T _ _ hfan hagg hT hdec
-  refine lt_of_le_of_lt ?_ (hn σ I Acc c special T hfan hagg hT hdec)
-  exact mul_le_mul_of_nonneg_right (by linarith [Gaussian.circuitCoefficient_ge_456249])
-    (Nat.cast_nonneg n)
 
 end Cslib.Circuits.Frontier

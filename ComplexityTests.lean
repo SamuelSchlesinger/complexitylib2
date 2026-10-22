@@ -111,7 +111,6 @@ import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
-import ComplexityTests.FrontierExtractor
 import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
