@@ -47,8 +47,9 @@ moved into the affine system as an equation (`affEqn_holds`).
 
 * `Cslib.Circuits.Boolean.SemiCircuit`: semi-circuits, with `SemiCircuit.Consistent`
   assignments, `SemiCircuit.WellFormed`, `SemiCircuit.children`, `SemiCircuit.deg` and
-  `SemiCircuit.size` (building on `SemiCircuit.Lit`, `SemiCircuit.Gate`, `SemiCircuit.Equation`,
-  and `SemiCircuit.IsAffineOp` in `SemiCircuit/Equation.lean`).
+  `SemiCircuit.size` (building on `SemiCircuit.Lit`, `SemiCircuit.Gate` and
+  `SemiCircuit.IsAffineOp` in `SemiCircuit/Gate.lean`, and `SemiCircuit.Equation` in
+  `SemiCircuit/Equation.lean`).
 * `Cslib.Circuits.Boolean.SemiCircuit.subst`: rerouting an internal value to a literal.
 * `Cslib.Circuits.Boolean.SemiCircuit.AffineIn`,
   `Cslib.Circuits.Boolean.SemiCircuit.LiftsTo`: affine dependence on the parameters and lifting

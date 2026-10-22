@@ -113,7 +113,7 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   parameterized by explicit time and space bounds; `transport_polyTime` needs a polynomial step
   bound (`hStepsBound`) and a polynomial bound on the encoded intermediate run results
   (`hOutLen`); `transport_polyTime_of_le_const` derives both from a constant step bound. Uniform
-  arbitrary-program dispatch remains separate.
+  arbitrary-program dispatch and charged configuration selection remain separate.
 * **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
   with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
   routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,
