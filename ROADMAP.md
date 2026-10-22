@@ -687,11 +687,11 @@ Jukna coverage below is an additional target beyond the V1 port:
   [grid enumeration, unary input parsing, and the standalone generator](Complexity/Computability/Circuit/Rational/Runtime.lean)
   (`hittingList_polytime`, `hittingGenerator_polytime`, `hittingGenerator_spec`), charging all
   arithmetic and storage growth. Polynomial bit complexity of formula evaluation on the emitted
-  matrices remains separate. Remaining extractor work: port v1's explicit sumset-extractor
-  construction (`Complexitylib/Algebraic/LowerBound/Cutwidth/Extractor`) together with its
-  instantiation, proving that an explicit family in `Complexity.P encBits` is eventually
-  `RectangleFree` (or `RectangleBias`) with `log K_n = o(n)` and the density condition, so that it
-  discharges the hypotheses of the [frontier lower bounds](Complexity/Computability/Circuit/Frontier/FanInTwo.lean).
+  matrices remains separate.
+* **Explicit frontier extractor.** Port v1's explicit sumset-extractor construction
+  (`Complexitylib/Algebraic/LowerBound/Cutwidth/Extractor`) together with its instantiation:
+  an explicit family in `Complexity.P encBits` that discharges the hypotheses of the worst-case or
+  average-case [frontier lower bounds](Complexity/Computability/Circuit/Frontier/FanInTwo.lean).
   Such a port needs an independent correctness review of the frontier core, since it would exceed
   the library's unconditional `3.5 N - o(N)` bound in `P`
   (`AffineDisperser.exists_mem_P_eventually_le_size`). The earlier conditional sumset-extractor
