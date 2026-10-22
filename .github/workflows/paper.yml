@@ -123,3 +123,47 @@ jobs:
             --prerelease --latest=false --title "Theorem index (generated from main)" \
             --notes-file release-notes.md
           echo "[Latest main PDF](https://github.com/$GITHUB_REPOSITORY/releases/download/theorem-index/main.pdf)" >> "$GITHUB_STEP_SUMMARY"
+
+  # Temporary review transport. Replace integrate/bounded-batch-20261022 before adding under jobs.
+  review-export:
+    if: github.event_name == 'pull_request' && github.head_ref == 'integrate/bounded-batch-20261022'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: theorem-index-${{ github.sha }}-${{ github.run_attempt }}
+          path: review-artifact
+      - name: Export verified public PDF for review
+        env:
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          EXPECTED_SOURCE_SHA: ${{ github.sha }}
+          EXPECTED_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path("review-artifact")
+          provenance = json.loads((root / "provenance.json").read_text())
+          pdf = (root / "main.pdf").read_bytes()
+          assert provenance["repository"] == os.environ["EXPECTED_REPOSITORY"]
+          assert provenance["source_sha"] == os.environ["EXPECTED_SOURCE_SHA"]
+          assert provenance["pull_request_head_sha"] == os.environ["EXPECTED_PR_HEAD_SHA"]
+          assert provenance["event"] == "pull_request" and not provenance["source_dirty"]
+          assert provenance["pdf_sha256"] == hashlib.sha256(pdf).hexdigest()
+          assert pdf.startswith(b"%PDF-") and len(pdf) <= 8 * 1024 * 1024
+          encoded = base64.b64encode(pdf).decode("ascii")
+          chunks = [encoded[i:i + 8192] for i in range(0, len(encoded), 8192)]
+          print("THEOREM_REVIEW_META " + json.dumps({
+              "provenance": provenance, "pdf_bytes": len(pdf), "chunks": len(chunks)
+          }, sort_keys=True))
+          for index, chunk in enumerate(chunks):
+              print(f"THEOREM_REVIEW_PDF {index + 1}/{len(chunks)} {chunk}")
+          PY
