@@ -25,7 +25,9 @@ jump around in their input: counters, tuples of elements, indices into tables.
 
 Such a machine runs within logarithmic space when its states have logarithmic encodings and its
 parts are tidily computable within space linear in the encoded state
-(`Turing.QueryMachine.computableInLogSpace`). The proof is a multi-pass fold over the input
+(`Turing.QueryMachine.computableInLogSpace`), and more generally within the space of its states,
+once that is at least logarithmic (`Turing.QueryMachine.computableInSpace`). The proof is a
+multi-pass fold over the input
 (`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.multiPassFold`): each pass simulates one step,
 scanning the whole input with a binary position counter to fetch the queried bit, so that only
 the state, the counter and the fetched bit are ever stored [Sipser, Section 8.4][Sipser2013].
@@ -46,6 +48,9 @@ directly from the multi-pass fold.
 
 ## Main results
 
+* `Turing.QueryMachine.computableInSpace`: a query machine whose states along its runs have length
+  `O(S)`, for a bound `S` at least logarithmic in the input, and whose parts are computable in
+  linear space, computes a function in space `O(S)`.
 * `Turing.QueryMachine.computableInLogSpace`: a query machine with logarithmic states and parts
   computable in linear space computes a function in logarithmic space.
 
@@ -327,12 +332,13 @@ end Simulation
 
 open MultiTapeTM Simulation
 
-/-- **Query machines run in logarithmic space.** Let a query machine halt on every encoded input
-`enc a`, first after `time a` steps, with output `encOut (f a)`. If its states along these runs
-have encodings of logarithmic length in the length of the input, and its query, transition,
-emission, halting test and final word are tidily computable within space linear in the encoded
-state, then `f` is computable in logarithmic space. -/
-theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : β ↪ List Bool}
+/-- **Query machines run in the space of their states.** Let a query machine halt on every encoded
+input `enc a`, first after `time a` steps, with output `encOut (f a)`. If its states along these
+runs have encodings of length `O(S a)`, where `S a` is at least logarithmic in the length of the
+input, and its query, transition, emission, halting test and final word are tidily computable
+within space linear in the encoded state, then `f` is computable within space `O(S a)`. The input
+is not charged, so `S` may be much smaller than the input. -/
+theorem computableInSpace {α β : Type} {enc : α ↪ List Bool} {encOut : β ↪ List Bool}
     {σ : Type} {encS : σ ↪ List Bool} (M : QueryMachine σ)
     (hquery : ComputableTidilyInSpace M.query encS encNat fun s => (encS s).length)
     (hnext : ComputableTidilyInSpace M.next (encPair encS (encOption encBool)) encS
@@ -345,12 +351,13 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
     (hhalt : ∀ a, M.halted (M.run (enc a) (time a)) = true)
     (hpre : ∀ a, ∀ t < time a, M.halted (M.run (enc a) t) = false)
     (hf : ∀ a, encOut (f a) = M.output (enc a) (time a))
-    (hsize : ∃ c, ∀ a, ∀ t ≤ time a,
-      (encS (M.run (enc a) t)).length ≤ c * (Nat.log2 (enc a).length + 1)) :
-    ComputableInLogSpace f enc encOut := by
+    (S : α → ℕ) (hlog : ∀ a, Nat.log2 (enc a).length + 1 ≤ S a)
+    (hsize : ∃ c, ∀ a, ∀ t ≤ time a, (encS (M.run (enc a) t)).length ≤ c * S a) :
+    ∃ t c, ComputableInTimeAndSpace f enc encOut t fun a => c * S a := by
   obtain ⟨cS, hS⟩ := hsize
+  have hS1 (a : α) : 1 ≤ S a := (Nat.le_add_left _ _).trans (hlog a)
   have hS' (a : α) (t : ℕ) :
-      (encS (M.run (enc a) t)).length ≤ cS * (Nat.log2 (enc a).length + 1) := by
+      (encS (M.run (enc a) t)).length ≤ cS * S a := by
     rcases le_or_gt t (time a) with h | h
     · exact hS a t h
     · rw [M.run_eq_of_le _ (hhalt a) h.le]
@@ -377,20 +384,22 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
   have hlenQ (a : α) (i : ℕ) {j : ℕ} (hj : j ≤ (enc a).length) :
       (encPass encS (streamState (passState ((M.init, 0, none) : PassState σ) (passNext M)
         (passEnd M) (enc a) i) (passNext M) (enc a) j)).length ≤
-        K * (Nat.log2 (enc a).length + 1) := by
+        K * S a := by
     rw [hQ a i hj]
     refine (length_encPass_le encS _).trans ?_
     have h₁ := hS' a i
-    have h₂ := length_encNat_le_log2 hj
+    have h₂ := (length_encNat_le_log2 hj).trans (hlog a)
+    have := hS1 a
     simp only at h₂ ⊢
     rw [hK]
     nlinarith
   have hlenP (a : α) (i : ℕ) :
       (encPass encS (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
-        (enc a) i)).length ≤ K * (Nat.log2 (enc a).length + 1) := by
+        (enc a) i)).length ≤ K * S a := by
     rw [hP]
     refine (length_encPass_le encS _).trans ?_
     have h₁ := hS' a i
+    have := hS1 a
     simp only [encNat_apply, Nat.zero_bits, List.length_nil]
     rw [hK]
     nlinarith
@@ -459,8 +468,8 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
           (enc a) i) (passNext M) (enc a) (enc a).length) +
         tC (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M) (enc a) (i + 1)))))
     (sMax := fun a =>
-      (2 * cN + cPE + cPN + cC + 4) * ((2 * K + 3) * (Nat.log2 (enc a).length + 1)))
-    (lMax := fun a => (K + 1) * (Nat.log2 (enc a).length + 1))
+      (2 * cN + cPE + cPN + cC + 4) * ((2 * K + 3) * S a))
+    (lMax := fun a => (K + 1) * S a)
     ?_ ?_ ?_ ?_ ?_ ?_ ?_
   rotate_left
   · intro a i hi j hj
@@ -483,6 +492,7 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
   · intro a i hi
     have h₁ := hlenQ a i (le_refl (enc a).length)
     have h₂ := hlenP a (i + 1)
+    have := hS1 a
     simp only at h₁ h₂ ⊢
     nlinarith
   · intro a i hi j hj
@@ -490,20 +500,45 @@ theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : �
   · intro a
     exact (hlenP a _).trans (Nat.mul_le_mul_right _ (Nat.le_succ K))
   · intro a j hj
+    have := hS1 a
     simp only [encBool_apply, List.length_singleton]
     nlinarith
   obtain ⟨c, h⟩ := key
   refine ⟨_, c * (cF * (K + 1) + (2 * cN + cPE + cPN + cC + 4) * (2 * K + 3) + (K + 1) + 1),
     h.computableInTimeAndSpace.mono (fun _ => le_rfl) fun a => ?_⟩
   have h₁ := hlenP a (time a - 1 + 1)
-  have hL : 1 ≤ Nat.log2 (enc a).length + 1 := Nat.le_add_left _ _
+  have hL := hS1 a
   simp only at h₁ ⊢
-  generalize Nat.log2 (enc a).length + 1 = L at *
+  generalize S a = L at *
   generalize (encPass encS (passState ((M.init, 0, none) : PassState σ) (passNext M) (passEnd M)
     (enc a) (time a - 1 + 1))).length = E at *
   rw [Nat.mul_assoc]
   refine Nat.mul_le_mul_left c ?_
   nlinarith
+
+/-- **Query machines run in logarithmic space.** Let a query machine halt on every encoded input
+`enc a`, first after `time a` steps, with output `encOut (f a)`. If its states along these runs
+have encodings of logarithmic length in the length of the input, and its query, transition,
+emission, halting test and final word are tidily computable within space linear in the encoded
+state, then `f` is computable in logarithmic space. -/
+theorem computableInLogSpace {α β : Type} {enc : α ↪ List Bool} {encOut : β ↪ List Bool}
+    {σ : Type} {encS : σ ↪ List Bool} (M : QueryMachine σ)
+    (hquery : ComputableTidilyInSpace M.query encS encNat fun s => (encS s).length)
+    (hnext : ComputableTidilyInSpace M.next (encPair encS (encOption encBool)) encS
+      fun p => (encPair encS (encOption encBool) p).length)
+    (hemit : ComputableTidilyInSpace M.emit (encPair encS (encOption encBool)) encBits
+      fun p => (encPair encS (encOption encBool) p).length)
+    (hhalted : ComputableTidilyInSpace M.halted encS encBool fun s => (encS s).length)
+    (hfinish : ComputableTidilyInSpace M.finish encS encBits fun s => (encS s).length)
+    {f : α → β} (time : α → ℕ)
+    (hhalt : ∀ a, M.halted (M.run (enc a) (time a)) = true)
+    (hpre : ∀ a, ∀ t < time a, M.halted (M.run (enc a) t) = false)
+    (hf : ∀ a, encOut (f a) = M.output (enc a) (time a))
+    (hsize : ∃ c, ∀ a, ∀ t ≤ time a,
+      (encS (M.run (enc a) t)).length ≤ c * (Nat.log2 (enc a).length + 1)) :
+    ComputableInLogSpace f enc encOut :=
+  M.computableInSpace hquery hnext hemit hhalted hfinish time hhalt hpre hf _ (fun _ => le_rfl)
+    hsize
 
 end QueryMachine
 
