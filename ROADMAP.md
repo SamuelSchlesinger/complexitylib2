@@ -867,15 +867,21 @@ space bounds. Further class-level work needs resource certificates for the actua
   with linear access/gather/update and arbitrary summed construction bounds,
   [retained-input option elimination](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean)
   charging extraction, repeated option computation, input retention, and the selected handler
-  (#301), [sum injections](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean),
+  (#301), [sum injections and projections](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean),
   and [native certificate combinators](Complexity/Computability/GenericRAM/Native/Combinators.lean).
-  The [finite-state step representation](Complexity/Computability/GenericRAM/Simulation/Finite.lean)
-  and [certified native step simulator](Complexity/Computability/GenericRAM/Simulation/Turing.lean)
-  implement one step of any fixed generic-RAM program over sparse memory and arbitrary
-  `NativePrimitives`, preserving all successor states, halts and faults (`denote_step`) and
-  retaining parameterized primitive and sparse-memory time/space bounds (#298). Uniform
-  arbitrary-program dispatch, charged initialization and output decoding, clocked multi-step
-  iteration, width selection/input fit, and whole-run theorem transport remain open (#292, #293).
+  The [finite-state step representation](Complexity/Computability/GenericRAM/Simulation/Finite.lean),
+  [certified native step simulator](Complexity/Computability/GenericRAM/Simulation/Turing.lean),
+  and [clocked multi-step simulator and whole-run transport](Complexity/Computability/GenericRAM/Simulation/Run.lean)
+  implement single steps and clocked multi-step runs of any fixed generic-RAM program over sparse
+  memory and arbitrary `NativePrimitives`, preserving all successor states, halts and faults
+  (`denote_step`, `denote_run`, `executes_iff_exists_run`), bounding sparse-memory growth by at most
+  one stored address per step (`length_entries_run_le`), retaining parameterized primitive and
+  sparse-memory time/space bounds along the run (`le_runTime_of_run_eq_inl`,
+  `le_runSpace_of_run_eq_inl`), and transporting halting `Executes` certificates to native
+  multitape Turing machines with both explicit `ComputableTidilyInO` bounds and automatic
+  `ComputableTidilyInPolyTime` corollaries, including `WordRAM` specializations (#298, #292).
+  Uniform arbitrary-program dispatch, general width-selection/input-fit theorems, and simulating
+  individual operations by programs over smaller bases remain open (#293).
   Generalizing the structured program calculus and time-class APIs to arbitrary domains,
   weighted/bit costs, and simulations between these instances also remain open. No
   real-RAM/Turing-machine equivalence is claimed;
@@ -885,10 +891,10 @@ space bounds. Further class-level work needs resource certificates for the actua
   encoded equality/search/filter calculus. Parameterized time/space bounds depend on stored-cell
   count and encoded address/value lengths; cubic-time and linear-space corollaries use full binary
   input length. Overwrites preserve cardinality, and writes retain distinct addresses. The read
-  default is supplied as input to one uniform machine. Combined with the certified single-step
-  simulator above (#298), this provides the memory and single-step components of #292/#293,
-  not a whole RAM simulation: charged initialization/output, clocked multi-step iteration, width
-  selection and whole-run theorem transport remain open. No bridge
+  default is supplied as input to one uniform machine. Combined with the certified single-step and
+  clocked whole-run simulators above (#298, #292), this supports transporting fixed-program RAM
+  executions to native multitape Turing machines; uniform arbitrary-program dispatch and general
+  width-selection/input-fit reductions remain open (#293). No bridge
   for arbitrary exact real arithmetic is claimed;
 * RAM models: the [bounded-word RAM](Complexity/Computability/WordRAM/Defs.lean), adapted from the
   Lean formalization accompanying the tromino undecidability paper, is parameterized by a
