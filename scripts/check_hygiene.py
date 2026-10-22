@@ -37,9 +37,6 @@ CUSTOM_AXIOM_RE = re.compile(
     re.M,
 )
 SET_OPTION_RE = re.compile(r"^\s*set_option\s+(maxHeartbeats|maxRecDepth)\b")
-BARE_SIMP_RE = re.compile(
-    r"(?<![.\w])simp(?:\?)?(?!\s+only\b|\s*\[[^\]]*\]\s*at\b)(?=\s*$|\s+\[|\s+at\b)"
-)
 
 
 def is_candidate_module(text: str) -> bool:

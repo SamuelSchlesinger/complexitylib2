@@ -26,21 +26,29 @@ class PinPaperLinksTests(unittest.TestCase):
     def test_parse_declarations_with_namespaces_and_root(self) -> None:
         source = (
             "/-\nHeader comment with theorem fake_in_comment\n-/\n"
+            "@[expose] public section\n"
             "namespace Cslib.Demo\n"
             "section Inner\n"
             "@[simp] theorem first_thm : True := trivial\n"
             "noncomputable def _root_.TopLevel.helper : Nat := 0\n"
             "end Inner\n"
+            "theorem after_inner_sec : True := trivial\n"
             "end Cslib.Demo\n"
+            "end\n"
         )
         decls = pin_paper_links.parse_declarations(source)
-        self.assertEqual(decls[6], ("first_thm", "Cslib.Demo.first_thm"))
-        self.assertEqual(decls[7], ("TopLevel.helper", "TopLevel.helper"))
+        self.assertEqual(decls[7], ("first_thm", "Cslib.Demo.first_thm"))
+        self.assertEqual(decls[8], ("TopLevel.helper", "TopLevel.helper"))
+        self.assertEqual(decls[10], ("after_inner_sec", "Cslib.Demo.after_inner_sec"))
         self.assertEqual(
-            pin_paper_links.find_declaration_line(decls, "Cslib.Demo.first_thm"), 6
+            pin_paper_links.find_declaration_line(decls, "Cslib.Demo.first_thm"), 7
         )
         self.assertEqual(
-            pin_paper_links.find_declaration_line(decls, "TopLevel.helper"), 7
+            pin_paper_links.find_declaration_line(decls, "TopLevel.helper"), 8
+        )
+        self.assertEqual(
+            pin_paper_links.find_declaration_line(decls, "Cslib.Demo.after_inner_sec"),
+            10,
         )
 
     def test_check_and_pin_worktree_links(self) -> None:
@@ -57,8 +65,7 @@ class PinPaperLinksTests(unittest.TestCase):
         tex_file.write_text(
             "\\declat{1111111111111111111111111111111111111111}"
             "{Complexity/Demo/Basic.lean}{3}{Cslib.Demo.alpha\\_eq}\n"
-            "\\declat{1111111111111111111111111111111111111111}"
-            "{Complexity/Demo/Basic.lean}{4}{Cslib.Demo.beta\\_val}\n",
+            "\\decl{Complexity/Demo/Basic.lean}{4}{Cslib.Demo.beta\\_val}\n",
             encoding="utf-8",
         )
         checked, errors = pin_paper_links.check_links(self.root, worktree_only=True)

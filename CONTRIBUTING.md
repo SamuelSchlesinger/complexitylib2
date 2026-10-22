@@ -85,7 +85,8 @@ or an exhaustive API reference. Keep outstanding work in `ROADMAP.md`.
 
 Every AI-authored PR must check the index against its final Lean changes. Update affected
 entries and links, and add entries for new headline results. Run
-`python3 scripts/pin_paper_links.py --check` (or `--pin` to rewrite `\decl` into `\declat{line}`)
+`python3 scripts/pin_paper_links.py --check` (or `--pin <SHA>` to re-pin `\declat{<SHA>}{<path>}{<line>}{<decl>}`
+and matching `\decl` links)
 to verify that every declaration link in `paper/` resolves to the exact 1-based declaration line.
 Internal helper lemmas need no
 separate entry. Proof-only changes preserving statements and scope may record a no-impact

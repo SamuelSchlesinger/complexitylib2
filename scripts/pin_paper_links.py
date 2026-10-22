@@ -57,24 +57,34 @@ def parse_declarations(text: str) -> dict[int, tuple[str, str]]:
             scope.extend(parts)
             blocks.append(("ns", len(parts)))
             continue
-        m_sec = re.match(r"^(?:noncomputable\s+)?section(?:\s+(\S+))?$", s)
+        m_sec = re.match(
+            r"^(?:@\[[^\]\n]*\]\s*)*(?:(?:public|private|noncomputable)\s+)*section(?:\s+(\S+))?$",
+            s,
+        )
         if m_sec:
-            blocks.append(("sec", 0))
+            sec_parts = m_sec.group(1).split(".") if m_sec.group(1) else []
+            blocks.append(("sec", max(1, len(sec_parts))))
             continue
         m_end = re.match(r"^end(?:\s+(\S+))?$", s)
         if m_end:
             if m_end.group(1):
-                parts = m_end.group(1).split(".")
-                for _ in range(len(parts)):
-                    if scope:
-                        scope.pop()
-                if blocks:
-                    blocks.pop()
+                remaining = len(m_end.group(1).split("."))
+                while remaining > 0 and blocks:
+                    kind, count = blocks.pop()
+                    take = min(remaining, count)
+                    if kind == "ns":
+                        for _ in range(take):
+                            if scope:
+                                scope.pop()
+                    if count > take:
+                        blocks.append((kind, count - take))
+                    remaining -= take
             elif blocks:
-                _, count = blocks.pop()
-                for _ in range(count):
-                    if scope:
-                        scope.pop()
+                kind, count = blocks.pop()
+                if kind == "ns":
+                    for _ in range(count):
+                        if scope:
+                            scope.pop()
             continue
         m_decl = DECL_LINE_RE.match(line)
         if m_decl:
@@ -211,6 +221,7 @@ def pin_links(
     use_worktree: bool = False,
 ) -> int:
     reader = SourceReader(root)
+    base_sha = default_base_sha(root)
     rev = None if use_worktree else target_sha
     updated = 0
 
@@ -230,7 +241,26 @@ def pin_links(
                 updated += 1
             return f"{m.group(1)}{target_sha}{m.group(3)}{path}{m.group(5)}{new_line}{m.group(7)}{decl}{m.group(9)}"
 
+        def replace_decl(m: re.Match[str]) -> str:
+            nonlocal updated
+            path, old_line, decl = m.group(2), m.group(4), m.group(6)
+            if path_prefix and not path.startswith(path_prefix):
+                return m.group(0)
+            if from_sha and not base_sha.startswith(from_sha):
+                return m.group(0)
+            if not path_prefix and not from_sha:
+                return m.group(0)
+            decls = reader.get_decls(rev, path)
+            new_line = str(find_declaration_line(decls, decl))
+            if target_sha == base_sha:
+                if old_line != new_line:
+                    updated += 1
+                return f"{m.group(1)}{path}{m.group(3)}{new_line}{m.group(5)}{decl}{m.group(7)}"
+            updated += 1
+            return f"\\declat{{{target_sha}}}{{{path}}}{{{new_line}}}{{{decl}}}"
+
         new_content = DECLAT_RE.sub(replace_declat, content)
+        new_content = DECL_RE.sub(replace_decl, new_content)
         if new_content != content:
             tex.write_text(new_content, encoding="utf-8")
 
