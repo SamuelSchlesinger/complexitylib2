@@ -1038,8 +1038,9 @@ space bounds. Further class-level work needs resource certificates for the actua
   `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
   remain outstanding. The [fan-in-`d` procedure](Complexity/Computability/TreeEval/Ary/CookMertz.lean)
   is proved correct over `d + 1` registers when `d · ℓ < |K| - 1` (milestone M1 of the Williams
-  `TIME[t] ⊆ SPACE[√(t log t)]` plan, #361); its space bound, implicit gate access and the
-  remaining milestones are open;
+  `TIME[t] ⊆ SPACE[√(t log t)]` plan, #361); its space bound, implicit gate access, a
+  step-exact bridge to the binary procedure at `d = 2` (or deprecating the binary copy), padding
+  of non-perfect trees, and the remaining milestones are open;
 * the space hierarchy, which needs a space-budgeted universal simulation; the
   [time hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Time.lean) and `P ⊊ EXP`
   are proved with a polynomial simulation gap, so a tight tape-indexed hierarchy needs a
