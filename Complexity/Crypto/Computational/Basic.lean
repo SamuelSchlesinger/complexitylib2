@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
+import Complexity.Crypto.Negligible.Basic
 import Complexity.Probability.PMF
 import Complexity.Tactic.PPT
 
@@ -148,5 +149,16 @@ theorem ComputationallyIndistinguishable.map {X Y : ℕ → PMF (List Bool)}
     ComputationallyIndistinguishable (fun n => (X n).map (f n)) (fun n => (Y n).map (f n)) := by
   have hp : IsPPT encBits (fun n word => pure (f n word)) := by ppt
   simpa only [ProbComp.eval_pure, PMF.map, Function.comp_def] using h.bind hp
+
+/-- Shifting the security parameter by a fixed additive offset preserves computational
+indistinguishability. -/
+theorem ComputationallyIndistinguishable.shift {X Y : ℕ → PMF (List Bool)}
+    (h : ComputationallyIndistinguishable X Y) (c : ℕ) :
+    ComputationallyIndistinguishable (fun n => X (n + c)) (fun n => Y (n + c)) := by
+  intro adversary hadversary
+  have hadv' : IsPPT encBool (fun m word => adversary (m - c) word) :=
+    hadversary.preprocess (by fun_prop) (by fun_prop)
+  have hneg := (h (fun m word => adversary (m - c) word) hadv').shift c
+  simpa only [Game.advantage, Nat.add_sub_cancel] using hneg
 
 end Cslib.Crypto

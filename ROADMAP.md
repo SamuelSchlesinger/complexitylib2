@@ -5,23 +5,27 @@ completed reference developments.
 
 ## Highest priorities
 
-1. **Goldreich–Micali–Wigderson zero knowledge (proved:
-   [Commitment](Complexity/Crypto/Computational/Commitment.lean),
-   [ZeroKnowledge](Complexity/Crypto/Computational/ZeroKnowledge.lean)).** If one-way functions
-   exist, every language in NP has an interactive computational zero-knowledge proof system, secure
-   against probabilistic polynomial-time verifiers with auxiliary input. Naor's two-message bit
-   commitment scheme (`naorCommit`, `naorBitCommitment`, `OneWay.exists_bitCommitmentScheme`) and a
-   two-round 3-copy masked-3SAT truth-table commitment zero-knowledge proof system for `ThreeSAT`
-   and every `A ∈ NP` (`ZeroKnowledgeProof`, `zeroKnowledgeProofThreeSAT`,
-   `OneWay.exists_zeroKnowledgeProof_of_mem_NP`) are proved from any uniform one-way function via
-   HILL and Cook–Levin. Here `BitCommitmentScheme.computational_hiding` is formulated over
-   deterministic polynomial-time receiver-string and bit families, and `ZeroKnowledgeProof`
-   formulates computational zero knowledge as uniform zero knowledge over deterministic
-   polynomial-time-generable instance/witness/auxiliary-input families `(x n, w n, z n)` (giving
-   fixed-instance security via `zero_knowledge_const`) with soundness error `1 / 3` (`1 / 8 +
-   2^{-(n+8)}`). Extending to Goldreich's universal-instance and arbitrary-auxiliary-input
-   quantification, stateful randomized malicious-receiver hiding, witness-level Levin reductions,
-   and sequential soundness amplification to negligible error remains open.
+1. **Goldreich–Micali–Wigderson zero knowledge.** If one-way functions exist, every language in NP
+   has an interactive computational zero-knowledge proof system, secure against probabilistic
+   polynomial-time verifiers with auxiliary input.
+   - *Partial:* [Commitment](Complexity/Crypto/Computational/Commitment.lean) proves Naor's
+     two-message bit commitment scheme (`naorCommit`, `naorBitCommitment`,
+     `OneWay.exists_bitCommitmentScheme`) with statistical binding and computational hiding over
+     deterministic polynomial-time receiver-string and bit families, and
+     [ZeroKnowledge](Complexity/Crypto/Computational/ZeroKnowledge.lean)
+     ([GMW/Protocol](Complexity/Crypto/Computational/GMW/Protocol.lean),
+     [GMW/Soundness](Complexity/Crypto/Computational/GMW/Soundness.lean),
+     [GMW/PolyTime](Complexity/Crypto/Computational/GMW/PolyTime.lean),
+     [GMW/Simulator](Complexity/Crypto/Computational/GMW/Simulator.lean)) proves a two-round
+     3-copy masked-3SAT truth-table commitment zero-knowledge proof system for `ThreeSAT` and every
+     `A ∈ NP` (`ZeroKnowledgeProof`, `zeroKnowledgeProofThreeSAT`,
+     `OneWay.exists_zeroKnowledgeProof_of_mem_NP`) from any uniform one-way function via HILL and
+     Cook–Levin, with uniform zero knowledge over deterministic polynomial-time-generable
+     instance/witness/auxiliary-input families `(x n, w n, z n)` (and fixed-instance security via
+     `zero_knowledge_const`) at soundness error `1 / 3` (`1 / 8 + 2^{-(n+8)}`). Goldreich's
+     universal-instance and arbitrary-auxiliary-input quantification, randomized stateful-receiver
+     hiding, witness-level Levin reductions, and sequential soundness amplification to negligible
+     error remain open.
 2. **Rompel’s signature theorem.** One-way functions exist if and only if digital signature schemes
    exist that are existentially unforgeable under adaptive chosen-message attacks by probabilistic
    polynomial-time adversaries.
@@ -203,7 +207,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings, and [polynomial identity testing, Schwartz–Zippel, and permanent self-reducibility](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean). Prove permanent VNP-completeness with its characteristic assumptions, prove the Kabanets–Impagliazzo theorem, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | [Håstad's 3-bit test](Complexity/Computability/PCP/Approximation/Hastad.lean) proves the `7 / 8` random-assignment bound for exact 3-CNF with three distinct variables per clause (`CNF.IsExactThreeDistinct`) and completeness and soundness of Håstad's 3-bit linear test against `GapLabelCover` (`1 - δ` vs `1 / 2 + 4 * ε`). Build the reduction to MAX-E3LIN and, via the 4-clause gadget, to `GapExactThreeDistinctSAT`, Raz's parallel repetition theorem, and the perfect-completeness `(1, 7 / 8 + ε)` reduction; develop further gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
 | Pseudorandomness and coding | Hardness versus randomness, space-bounded generators, extractors/condensers, limited independence, explicit expanders, and list/local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
-| Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean) and [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) are proved from one-way functions. Extend the existing OWF/PRG/PRF/commitment/ZK results with reusable adaptive reductions, digital signatures, encryption, stateful-receiver hiding, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
+| Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean) (with hiding against deterministic polynomial-time receiver-string and bit families) and [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (uniform zero knowledge over deterministic polynomial-time instance/witness/auxiliary-input families via a 3-copy masked-3SAT truth-table commitment protocol) are proved from one-way functions. Extend the existing OWF/PRG/PRF/commitment/ZK results with reusable adaptive reductions, digital signatures, encryption, stateful-receiver hiding, universal-instance zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
 | Communication, queries and data structures | Randomized and multiparty protocols, discrepancy and information complexity, direct-sum/product results, lifting theorems, and reductions to streaming, sketching and cell-probe lower bounds. Reuse upstream query models. |
 | Proof complexity | Build on [Cook–Reckhow systems and simulations](Complexity/Logics/Propositional/ProofSystem.lean), including the polynomially bounded-system characterization of NP = coNP, the [resolution size–width tradeoff](Complexity/Logics/Propositional/Resolution/SizeWidth.lean), [tree-like resolution/DPLL search-tree certificates](Complexity/Logics/Propositional/Resolution/TreeLike.lean), [Tseitin formulas on expanders](Complexity/Logics/Propositional/Resolution/TseitinExpander.lean) and [Haken's pigeonhole lower bound](Complexity/Logics/Propositional/Resolution/Pigeonhole.lean). Extend proof-space lower bounds, Frege, cutting planes, polynomial calculus and sum-of-squares. The certificate correspondence does not certify a DPLL solver's runtime. |
 | Average-case complexity and learning | Uniform-distribution learning on CSLib's PAC API, the LMN low-degree algorithm and Kushilevitz–Mansour with membership queries are [proved](Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean); running times are not machine-certified. Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |

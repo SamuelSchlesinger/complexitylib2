@@ -44,7 +44,10 @@ length `n` using a pseudorandom generator `generator`:
   word of length `m` makes the commitment distribution exactly `BitString.uniformList m` for
   every receiver string `r` and committed bit `b`.
 * `Cslib.Crypto.PseudorandomGenerator.naorCommit_indistinguishable_uniform`,
-  `Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding`: computational hiding of Naor commitments.
+  `Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding`: computational hiding of Naor commitments
+  for deterministic polynomial-time families of receiver strings `r : ℕ → List Bool` and bit
+  families `b₀ b₁ : ℕ → Bool` (rather than a stateful randomized PPT malicious receiver whose
+  internal state passes to the distinguisher).
 * `Cslib.Crypto.naorBindingProb_le`, `Cslib.Crypto.naorBindingProb_le_of_three_mul_add_one`,
   `Cslib.Crypto.negligible_naorBindingError`: statistical binding when `3 * n ≤ length n`.
 * `Cslib.Crypto.PseudorandomGenerator.naorBitCommitment`,
@@ -116,42 +119,6 @@ theorem computableTidilyInPolyTime_naorCommit {α : Type} {input : α ↪ List B
 
 /-! ### Algebraic and distributional laws -/
 
-/-- Two-word `listXor` agrees with addition in `BitString m`. -/
-theorem listXor_pair (m : ℕ) (u v : List Bool) :
-    BitString.listXor m [u, v] = List.ofFn (BitString.ofList m u + BitString.ofList m v) := by
-  have h := BitString.listXor_eq_ofFn_sum m ![u, v]
-  simpa [List.ofFn_succ, Fin.sum_univ_two] using h
-
-/-- Fixed-width view of a two-word `listXor`. -/
-@[simp] theorem ofList_listXor_pair (m : ℕ) (u v : List Bool) :
-    BitString.ofList m (BitString.listXor m [u, v]) =
-      BitString.ofList m u + BitString.ofList m v := by
-  rw [listXor_pair, BitString.ofList_ofFn]
-
-theorem getD_listXor_pair (m : ℕ) (u v : List Bool) (i : ℕ) (hi : i < m) :
-    (BitString.listXor m [u, v]).getD i false = (u.getD i false ^^ v.getD i false) := by
-  have h := congrFun (ofList_listXor_pair m u v) ⟨i, hi⟩
-  simpa [BitString.ofList, Pi.add_apply, Bool.add_eq_xor] using h
-
-theorem getD_listRow_zero (m : ℕ) (u : List Bool) (i : ℕ) (hi : i < m) :
-    (BitString.listRow m 0 u).getD i false = u.getD i false := by
-  simp only [BitString.listRow, Nat.zero_mul, List.drop_zero,
-    ← BitString.ofFn_ofList_eq_take]
-  change BitString.ofList m (List.ofFn (BitString.ofList m u)) ⟨i, hi⟩ = _
-  simp [BitString.ofList, hi]
-
-/-- XORing a uniform `m`-bit word with any word `r` preserves the uniform distribution. -/
-theorem uniformList_map_listXor (m : ℕ) (r : List Bool) :
-    (BitString.uniformList m).map (fun y => BitString.listXor m [y, r]) =
-      BitString.uniformList m := by
-  unfold BitString.uniformList
-  rw [PMF.map_comp]
-  have hfun : (fun y => BitString.listXor m [y, r]) ∘ List.ofFn =
-      List.ofFn ∘ Equiv.addRight (BitString.ofList m r) := by
-    funext x
-    simp [listXor_pair]
-  rw [hfun, ← PMF.map_comp, PMF.uniformOfFintype_map_equiv]
-
 /-- Applying `naorCommit id r b` to a uniform `m`-bit word yields a uniform `m`-bit word for
 every receiver string `r` and bit `b`. -/
 @[simp] theorem uniformList_map_naorCommit_id (m : ℕ) (r : List Bool) (b : Bool) :
@@ -159,7 +126,7 @@ every receiver string `r` and bit `b`. -/
   cases b
   · exact PMF.map_id _
   · refine (Probability.PMF.map_congr_on_support _ _
-      (fun y => BitString.listXor m [y, r]) ?_).trans (uniformList_map_listXor m r)
+      (fun y => BitString.listXor m [y, r]) ?_).trans (BitString.uniformList_map_listXor m r)
     intro y hy
     simp only [naorCommit_true, id_eq, BitString.length_of_mem_support_uniformList hy]
 
@@ -194,9 +161,11 @@ theorem PseudorandomGenerator.naorCommit_indistinguishable_uniform
   have hind := hG.indistinguishable.map (f := fun n y => naorCommit id (r n) (b n) y) hmap
   simpa only [← naorCommitEnsemble_eq_map, uniformList_map_naorCommit_id] using hind
 
-/-- **Computational hiding of Naor bit commitment.** Commitments to any two polynomial-time bit
-families `b₀` and `b₁` under a polynomial-time receiver string `r` are computationally
-indistinguishable. -/
+/-- **Computational hiding of Naor bit commitment.** Commitments to any two deterministic
+polynomial-time bit families `b₀` and `b₁` under any deterministic polynomial-time receiver string
+family `r : ℕ → List Bool` are computationally indistinguishable against uniform strict PPT
+distinguishers (formulated over deterministic polynomial-time families `r, b₀, b₁`, rather than a
+stateful randomized PPT malicious receiver whose internal state passes to the distinguisher). -/
 theorem PseudorandomGenerator.naorCommit_hiding
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
@@ -268,7 +237,7 @@ theorem mem_image_naorBadShift_of_not_naorBinding {generator : List Bool → Lis
   have hlen₁ : (generator (List.ofFn s₁)).length = length n := by
     simpa using hlen (List.ofFn s₁)
   have hbit := congrArg (BitString.ofList (length n)) heq
-  rw [naorCommit_false, naorCommit_true, hlen₁, ofList_listXor_pair] at hbit
+  rw [naorCommit_false, naorCommit_true, hlen₁, BitString.ofList_listXor_pair] at hbit
   let y₀ := BitString.ofList (length n) (generator (List.ofFn s₀))
   let y₁ := BitString.ofList (length n) (generator (List.ofFn s₁))
   let r' := BitString.ofList (length n) r
@@ -814,74 +783,6 @@ theorem eval_replicate_naorSelectPads (s : ℕ) (generator : List Bool → List 
     · simp only [Bool.false_eq_true, ↓reduceIte, PMF.bind_const, D_s]
     · simp only [↓reduceIte, PMF.bind_const, D_s]
 
-/-- Shifting the security parameter by a fixed additive offset preserves negligibility. -/
-theorem Negligible.shift {ε : ℕ → ℝ≥0} (hε : Negligible ε) (c : ℕ) :
-    Negligible (fun n => ε (n + c)) :=
-  hε.comp_of_polynomial_bound (bound := id) (Filter.tendsto_add_atTop_nat c) (by fun_prop)
-    (Filter.Eventually.of_forall (fun n => Nat.le_add_right n c))
-
-/-- Shifting the security parameter by a fixed additive offset preserves computational
-indistinguishability. -/
-theorem ComputationallyIndistinguishable.shift {X Y : ℕ → PMF (List Bool)}
-    (h : ComputationallyIndistinguishable X Y) (c : ℕ) :
-    ComputationallyIndistinguishable (fun n => X (n + c)) (fun n => Y (n + c)) := by
-  intro adversary hadversary
-  have hadv' : IsPPT encBool (fun m word => adversary (m - c) word) :=
-    hadversary.preprocess (by fun_prop) (by fun_prop)
-  have hneg := (h (fun m word => adversary (m - c) word) hadv').shift c
-  simpa only [Game.advantage, Nat.add_sub_cancel] using hneg
-
-/-- Repeating two computationally indistinguishable PPT samplers a polynomially bounded number of
-times and applying an efficient postprocessor preserves computational indistinguishability. -/
-theorem ComputationallyIndistinguishable.replicate_bind {orig repl : ℕ → ProbComp (List Bool)}
-    (horig : IsPPTOn encUnary encBits orig) (hrepl : IsPPTOn encUnary encBits repl)
-    (h : ComputationallyIndistinguishable
-      (fun n => ProbComp.eval (orig n)) (fun n => ProbComp.eval (repl n)))
-    {count : ℕ → ℕ} (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
-    {process : ℕ → List (List Bool) → ProbComp (List Bool)}
-    (hprocess : IsPPTOn (encPair encUnary (encList encBits)) encBits
-      (fun p => process p.1 p.2)) :
-    ComputationallyIndistinguishable
-      (fun n => ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= process n))
-      (fun n => ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= process n)) := by
-  intro adversary hadversary
-  let test (n : ℕ) (xs : List (List Bool)) : ProbComp Bool := process n xs >>= adversary n
-  have htest : IsPPTOn (encPair encUnary (encList encBits)) encBool
-      (fun p => test p.1 p.2) := by
-    dsimp only [test]
-    ppt
-  let red : Distinguisher := fun n challenge =>
-    sequenceTest (repl n) (orig n) (count n) (test n) challenge
-  have hred : IsPPT encBool red := by
-    change IsPPTOn (encPair encUnary encBits) encBool (fun p => red p.1 p.2)
-    dsimp only [red]
-    ppt
-  have hpoly : PolynomiallyBounded (fun n => dyadicSize (count n)) := by
-    have hc : PolynomiallyBounded count := hcount.polynomiallyBounded
-    fun_prop
-  have hneg := (h red hred).polynomiallyBounded_mul hpoly
-  refine negligible_of_le hneg (fun n => ?_)
-  apply le_of_eq
-  apply NNReal.eq
-  dsimp only
-  have hgap := sequenceTest_gap (repl n) (orig n) (count n) (test n)
-  have horig_eq : distinguishingGame
-      (ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= process n)) (adversary n) =
-      ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= test n) := by
-    simp only [distinguishingGame, test, ProbComp.eval_bind, PMF.bind_bind]
-  have hrepl_eq : distinguishingGame
-      (ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= process n)) (adversary n) =
-      ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= test n) := by
-    simp only [distinguishingGame, test, ProbComp.eval_bind, PMF.bind_bind]
-  have hred_orig : distinguishingGame (ProbComp.eval (orig n)) (red n) =
-      ProbComp.eval (orig n >>= sequenceTest (repl n) (orig n) (count n) (test n)) := by
-    simp only [distinguishingGame, red, ProbComp.eval_bind]
-  have hred_repl : distinguishingGame (ProbComp.eval (repl n)) (red n) =
-      ProbComp.eval (repl n >>= sequenceTest (repl n) (orig n) (count n) (test n)) := by
-    simp only [distinguishingGame, red, ProbComp.eval_bind]
-  rw [horig_eq, hrepl_eq, hred_orig, hred_repl, NNReal.coe_mul, NNReal.coe_natCast,
-    Game.coe_advantage, Game.coe_advantage, hgap, abs_mul, Nat.abs_cast]
-
 /-! ### Packaged bit commitment scheme -/
 
 /-- Verification of a Naor bit commitment opening `(b, seed)` against seed length `n`, receiver
@@ -963,9 +864,12 @@ structure BitCommitmentScheme where
       ((BitString.uniformList (challengeLength n)).toOuterMeasure
         {r | ¬ ∀ s₀ s₁ : List Bool, s₀.length = n → s₁.length = n →
           commit r false s₀ ≠ commit r true s₁}).toNNReal)
-  /-- Computational hiding: for every polynomial-time family of receiver strings `r : ℕ → List Bool`
-  and any two polynomial-time families of committed bits `b₀ b₁ : ℕ → Bool`, the commitment
-  ensembles for `b₀` and `b₁` are computationally indistinguishable. -/
+  /-- Computational hiding: for every deterministic polynomial-time family of receiver strings
+  `r : ℕ → List Bool` and any two deterministic polynomial-time families of committed bits
+  `b₀ b₁ : ℕ → Bool`, the commitment ensembles for `b₀` and `b₁` are computationally
+  indistinguishable against uniform strict PPT distinguishers (formulated over deterministic
+  polynomial-time families `r, b₀, b₁`, rather than a stateful randomized PPT malicious receiver
+  whose internal state passes to the distinguisher). -/
   computational_hiding :
     ∀ (r : ℕ → List Bool) (b₀ b₁ : ℕ → Bool),
       ComputableTidilyInPolyTime r encUnary encBits →

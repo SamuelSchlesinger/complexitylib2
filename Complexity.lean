@@ -1171,6 +1171,10 @@ public import Complexity.Crypto.Computational.GGM.Expansion
 public import Complexity.Crypto.Computational.GGM.Hybrid
 public import Complexity.Crypto.Computational.GGM.Reduction
 public import Complexity.Crypto.Computational.GGM.Security
+public import Complexity.Crypto.Computational.GMW.PolyTime
+public import Complexity.Crypto.Computational.GMW.Protocol
+public import Complexity.Crypto.Computational.GMW.Simulator
+public import Complexity.Crypto.Computational.GMW.Soundness
 public import Complexity.Crypto.Computational.GeneratorPadding
 public import Complexity.Crypto.Computational.GeneratorReindex
 public import Complexity.Crypto.Computational.GeneratorXor

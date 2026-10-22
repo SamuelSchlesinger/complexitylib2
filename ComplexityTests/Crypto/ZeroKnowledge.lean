@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Computational.ZeroKnowledge
+import Complexity.Tactic.PPT
 
 /-! Tests and axiom guards for Naor's bit commitment scheme and the Goldreich–Micali–Wigderson
 computational zero-knowledge interactive proof system for `NP`. -/
@@ -28,9 +29,43 @@ example (r : List Bool) (b : Bool) :
   naorVerify_naorCommit r b (by decide)
 
 -- Concrete soundness check for Naor's statistical binding bound.
+-- (We do not provide an unconditional `BitCommitmentScheme` instance: any statistically binding
+-- and computationally hiding bit commitment scheme implies the existence of one-way functions,
+-- which is an open complexity-theoretic question. Instead we test `naorVerify` and
+-- `naorBindingProb` unconditionally and instantiate `naorBitCommitment` from a PRG / OWF below.)
 example (n : ℕ) :
     naorBindingProb tripleGen (fun k => 3 * k + 1) n ≤ (1 / 2 : ENNReal) ^ (n + 1) :=
   naorBindingProb_le_of_three_mul_add_one length_tripleGen n le_rfl
+
+/-- Unconditional non-vacuity instance of `ZeroKnowledgeProof` for the empty language `∅`. -/
+noncomputable def emptyZeroKnowledgeProof : ZeroKnowledgeProof encBits (∅ : Set (List Bool)) where
+  verifier _ _ := pure false
+  prover _ _ _ :=
+    { State := ℕ × List Bool
+      init := (0, [false, false, false])
+      respond := fun q s => PMF.pure (GMW.twoRoundStep (fun _ => []) (fun _ => []) q.2 s) }
+  isWitness _ _ := false
+  polyTime_isWitness := by fun_prop
+  mem_iff_exists_witness a := by simp
+  isOraclePPT_verifier := by fun_prop
+  interact _ _ _ prog :=
+    Prod.fst <$> GMW.runTwoRound (fun _ => []) (fun _ => []) prog (0, [false, false, false])
+  eval_interact _ _ _ prog :=
+    (ProbComp.eval_map _ _).trans
+      (congrArg (PMF.map Prod.fst)
+        (GMW.eval_runTwoRound (fun _ => []) (fun _ => []) prog (0, [false, false, false])))
+  isPPT_interact {Vstar} hV := by
+    have hrun := GMW.isPPTOn_runTwoRound hV
+      (input := encPair encUnary (encPair encBits (encPair encBits encBits)))
+      (prepare := fun p : ℕ × List Bool × List Bool × List Bool => (p.1, p.2.1, p.2.2.2))
+      (reply1 := fun _ => []) (reply2 := fun _ => []) (bound := fun _ => 0)
+      (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+      (fun _ _ => le_rfl) (fun _ _ => le_rfl)
+    ppt
+  complete _ _ _ hw := Bool.noConfusion hw
+  sound _ _ _ P := by simp [acceptProb, Prover.run]
+  zero_knowledge {_} _ :=
+    ⟨fun _ _ _ => pure [], by ppt, fun _ _ _ _ _ _ hw => Bool.noConfusion (hw 0)⟩
 
 -- Concrete satisfiable 3CNF formula and witness check.
 private def satFormula : CNF ℕ := [[(0, true), (1, false)]]
