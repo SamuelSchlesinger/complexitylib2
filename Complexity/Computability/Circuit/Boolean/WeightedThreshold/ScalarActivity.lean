@@ -9,9 +9,10 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activity
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
+public import Complexity.Foundations.Data.BitString.CoverCoding
 
 /-!
-# Scalar query-activity run capacity and Cover enumerative coding
+# Scalar query-activity run capacity
 
 When every gate of a weighted threshold program `p` reads the original inputs along a single
 direction `w : Fin n → ℝ` (`∀ j, ∃ c : ℝ, inputWeight p j = c • w`), fixing the restricted
@@ -29,11 +30,9 @@ by the monotone count of transcripts realized up to `t`. This yields at most
 outputs by `(attainableTranscripts p).card` and hence by the Hamming-ball sums at `inputActivity p`
 and `gateActivity p` (Theorem 4.1 of `[ThresholdCircuitRepresentations2026]`). Combining this
 one-dimensional representation with the multilevel rectangle-free capacity bound gives the scalar
-activity lower bounds for two-sided `K`-rectangle-free functions (Corollary 4.2).
-
-Finally, we formalize Cover's lexicographic rank (`coverRank`) and greedy threshold decoder
-(`coverDecode`) establishing an explicit bijection between `{z : Fin q → Bool | weight z ≤ e}` and
-`Fin (ballSize q e)` (the combinatorial core of Theorem 4.3).
+activity lower bounds for two-sided `K`-rectangle-free functions (Corollary 4.2). Cover's
+enumerative coding for weight-bounded words (Theorem 4.3) is in
+`Complexity.Foundations.Data.BitString.CoverCoding`.
 
 ## Main definitions
 
@@ -43,10 +42,6 @@ Finally, we formalize Cover's lexicographic rank (`coverRank`) and greedy thresh
   `Cslib.Circuits.Boolean.WeightedThreshold.scalarTranscript`,
   `Cslib.Circuits.Boolean.WeightedThreshold.scalarReadout`: extension of gate evaluation,
   input-reading transcripts, and readouts to `ℝ` along `scalarScore w`.
-* `Cslib.Circuits.Boolean.WeightedThreshold.ballSize`,
-  `Cslib.Circuits.Boolean.WeightedThreshold.coverRank`,
-  `Cslib.Circuits.Boolean.WeightedThreshold.coverDecode`: Hamming-ball size and Cover's
-  enumerative encoding and decoding of weight-bounded Boolean words.
 
 ## Main results
 
@@ -65,11 +60,6 @@ Finally, we formalize Cover's lexicographic rank (`coverRank`) and greedy thresh
   `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_of_direction`,
   `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_gateActivity_of_direction`:
   rectangle-free scalar activity bounds (Corollary 4.2).
-* `Cslib.Circuits.Boolean.WeightedThreshold.coverRank_lt_ballSize`,
-  `Cslib.Circuits.Boolean.WeightedThreshold.weight_coverDecode_le`,
-  `Cslib.Circuits.Boolean.WeightedThreshold.coverRank_coverDecode`,
-  `Cslib.Circuits.Boolean.WeightedThreshold.coverDecode_coverRank`: correctness of Cover's
-  enumerative coding for weight-bounded words (Theorem 4.3).
 
 ## References
 
@@ -556,217 +546,23 @@ theorem circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction (c : Circuit
 
 /-! ### Section 4.3: Cover's enumerative coding for weight-bounded words -/
 
-/-- Size `B(q, e) = ∑ j ∈ range (e + 1), q.choose j` of the Hamming ball of radius `e` in
-`{0, 1}^q`. -/
-def ballSize (q e : ℕ) : ℕ :=
-  ∑ j ∈ range (e + 1), q.choose j
-
-@[simp]
-theorem ballSize_zero_left (e : ℕ) : ballSize 0 e = 1 := by
-  induction e with
-  | zero => simp [ballSize]
-  | succ e ih =>
-    rw [ballSize, sum_range_succ, Nat.choose_zero_succ, add_zero]
-    exact ih
-
-@[simp]
-theorem ballSize_zero_right (q : ℕ) : ballSize q 0 = 1 := by
-  simp [ballSize]
-
-theorem ballSize_pos (q e : ℕ) : 0 < ballSize q e := by
-  rw [ballSize, sum_range_succ']
-  simp
-
-/-- Pascal recurrence `B(q + 1, e + 1) = B(q, e + 1) + B(q, e)` for Hamming-ball sizes. -/
-theorem ballSize_succ_succ (q e : ℕ) :
-    ballSize (q + 1) (e + 1) = ballSize q (e + 1) + ballSize q e := by
-  have h1 := sum_range_succ' (fun k => (q + 1).choose k) (e + 1)
-  have h2 := sum_range_succ' (fun k => q.choose k) (e + 1)
-  simp only [Nat.choose_zero_right, Nat.choose_succ_succ, Nat.succ_eq_add_one,
-    sum_add_distrib] at h1 h2
-  unfold ballSize
-  omega
-
-/-- The number of words `z : Fin q → Bool` of weight at most `e` equals `ballSize q e`. -/
-theorem card_filter_weight_le_eq_ballSize (q e : ℕ) :
-    #{z : Fin q → Bool | weight z ≤ e} = ballSize q e := by
-  simpa [ballSize] using card_filter_weight_le (ι := Fin q) e
-
-/-- Cover's lexicographic rank of a word `z : Fin q → Bool` among words of weight at most `e`. -/
-def coverRank : {q : ℕ} → ℕ → (Fin q → Bool) → ℕ
-  | 0, _, _ => 0
-  | _ + 1, 0, _ => 0
-  | q + 1, e + 1, z =>
-    if z 0 then
-      ballSize q (e + 1) + coverRank e (fun i : Fin q => z i.succ)
-    else
-      coverRank (e + 1) (fun i : Fin q => z i.succ)
-
-/-- Cover's greedy threshold decoder recovering a word `z : Fin q → Bool` of weight at most `e`
-from its rank `t < ballSize q e`. -/
-def coverDecode : (q e t : ℕ) → Fin q → Bool
-  | 0, _, _, i => i.elim0
-  | _ + 1, 0, _, _ => false
-  | q + 1, e + 1, t, i =>
-    let b := decide (ballSize q (e + 1) ≤ t)
-    Fin.cases b (fun j =>
-      if b then coverDecode q e (t - ballSize q (e + 1)) j
-      else coverDecode q (e + 1) t j) i
-
-private theorem weight_cons_succ {q : ℕ} (z : Fin (q + 1) → Bool) :
-    weight z = (z 0).toNat + weight (fun i : Fin q => z i.succ) := by
-  simp only [weight_eq_sum_toNat, Fin.sum_univ_succ]
-
-/-- Every word `z : Fin q → Bool` of weight at most `e` has `coverRank e z < ballSize q e`. -/
-theorem coverRank_lt_ballSize {q : ℕ} (e : ℕ) (z : Fin q → Bool) (hz : weight z ≤ e) :
-    coverRank e z < ballSize q e := by
-  induction q generalizing e with
-  | zero =>
-    simp [coverRank]
-  | succ q ih =>
-    cases e with
-    | zero =>
-      simp [coverRank]
-    | succ e =>
-      rw [coverRank, ballSize_succ_succ]
-      have hcons := weight_cons_succ z
-      cases h0 : z 0
-      · simp only [Bool.false_eq_true, ↓reduceIte]
-        have hz' : weight (fun i : Fin q => z i.succ) ≤ e + 1 := by
-          simp only [h0, Bool.toNat_false, zero_add] at hcons
-          omega
-        exact (ih (e + 1) _ hz').trans_le (Nat.le_add_right _ _)
-      · simp only [↓reduceIte]
-        have hz' : weight (fun i : Fin q => z i.succ) ≤ e := by
-          simp only [h0, Bool.toNat_true] at hcons
-          omega
-        exact Nat.add_lt_add_left (ih e _ hz') _
-
-/-- Every decoded word `coverDecode q e t` has Hamming weight at most `e`. -/
-theorem weight_coverDecode_le (q e t : ℕ) :
-    weight (coverDecode q e t) ≤ e := by
-  induction q generalizing e t with
-  | zero =>
-    simp [weight]
-  | succ q ih =>
-    cases e with
-    | zero =>
-      change weight (fun _ : Fin (q + 1) => false) ≤ 0
-      simp [weight]
-    | succ e =>
-      rw [weight_cons_succ]
-      by_cases ht : ballSize q (e + 1) ≤ t
-      · have h0 : coverDecode (q + 1) (e + 1) t 0 = true := by
-          simp [coverDecode, ht]
-        have htail : (fun i : Fin q => coverDecode (q + 1) (e + 1) t i.succ) =
-            coverDecode q e (t - ballSize q (e + 1)) := by
-          funext i
-          simp [coverDecode, ht]
-        rw [h0, htail]
-        have := ih e (t - ballSize q (e + 1))
-        simp only [Bool.toNat_true]
-        omega
-      · have h0 : coverDecode (q + 1) (e + 1) t 0 = false := by
-          simp [coverDecode, ht]
-        have htail : (fun i : Fin q => coverDecode (q + 1) (e + 1) t i.succ) =
-            coverDecode q (e + 1) t := by
-          funext i
-          simp [coverDecode, ht]
-        rw [h0, htail]
-        have := ih (e + 1) t
-        simp only [Bool.toNat_false, zero_add]
-        exact this
-
-/-- Ranking a decoded word `coverDecode q e t` for `t < ballSize q e` recovers `t`. -/
-@[simp]
-theorem coverRank_coverDecode {q e t : ℕ} (ht : t < ballSize q e) :
-    coverRank e (coverDecode q e t) = t := by
-  induction q generalizing e t with
-  | zero =>
-    simp only [ballSize_zero_left] at ht
-    simp only [coverRank]
-    omega
-  | succ q ih =>
-    cases e with
-    | zero =>
-      simp only [ballSize_zero_right] at ht
-      simp only [coverRank]
-      omega
-    | succ e =>
-      rw [ballSize_succ_succ] at ht
-      by_cases hle : ballSize q (e + 1) ≤ t
-      · have h0 : coverDecode (q + 1) (e + 1) t 0 = true := by
-          simp [coverDecode, hle]
-        have htail : (fun i : Fin q => coverDecode (q + 1) (e + 1) t i.succ) =
-            coverDecode q e (t - ballSize q (e + 1)) := by
-          funext i
-          simp [coverDecode, hle]
-        rw [coverRank, h0]
-        simp only [↓reduceIte, htail]
-        rw [ih (by omega)]
-        omega
-      · have h0 : coverDecode (q + 1) (e + 1) t 0 = false := by
-          simp [coverDecode, hle]
-        have htail : (fun i : Fin q => coverDecode (q + 1) (e + 1) t i.succ) =
-            coverDecode q (e + 1) t := by
-          funext i
-          simp [coverDecode, hle]
-        rw [coverRank, h0]
-        simp only [Bool.false_eq_true, ↓reduceIte, htail]
-        exact ih (by omega)
-
-/-- Decoding the rank `coverRank e z` of a word `z : Fin q → Bool` with `weight z ≤ e` recovers
-`z`. -/
-@[simp]
-theorem coverDecode_coverRank {q e : ℕ} (z : Fin q → Bool) (hz : weight z ≤ e) :
-    coverDecode q e (coverRank e z) = z := by
-  induction q generalizing e with
-  | zero =>
-    funext i
-    exact i.elim0
-  | succ q ih =>
-    cases e with
-    | zero =>
-      have hz0 : ∀ i : Fin (q + 1), z i = false := by
-        intro i
-        by_contra h
-        have hi : z i = true := Bool.eq_true_of_not_eq_false h
-        have hpos : 0 < weight z := card_pos.mpr ⟨i, by simp [hi]⟩
-        omega
-      funext i
-      rw [hz0 i]
-      rfl
-    | succ e =>
-      have hcons := weight_cons_succ z
-      cases h0 : z 0
-      · have hz' : weight (fun i : Fin q => z i.succ) ≤ e + 1 := by
-          simp only [h0, Bool.toNat_false, zero_add] at hcons
-          omega
-        have hlt : coverRank (e + 1) (fun i : Fin q => z i.succ) < ballSize q (e + 1) :=
-          coverRank_lt_ballSize (e + 1) _ hz'
-        have hnot : ¬ ballSize q (e + 1) ≤ coverRank (e + 1) z := by
-          rw [coverRank, h0]
-          simp only [Bool.false_eq_true, ↓reduceIte, not_le]
-          exact hlt
-        funext i
-        refine Fin.cases ?_ (fun j => ?_) i
-        · simp [coverDecode, hnot, h0]
-        · have hstep : coverDecode (q + 1) (e + 1) (coverRank (e + 1) z) j.succ =
-              coverDecode q (e + 1) (coverRank (e + 1) (fun k : Fin q => z k.succ)) j := by
-            simp [coverDecode, coverRank, h0, not_le.mpr hlt]
-          rw [hstep, ih _ hz']
-      · have hz' : weight (fun i : Fin q => z i.succ) ≤ e := by
-          simp only [h0, Bool.toNat_true] at hcons
-          omega
-        have hle : ballSize q (e + 1) ≤ coverRank (e + 1) z := by
-          rw [coverRank, h0]
-          simp
-        funext i
-        refine Fin.cases ?_ (fun j => ?_) i
-        · simp [coverDecode, hle, h0]
-        · have hstep : coverDecode (q + 1) (e + 1) (coverRank (e + 1) z) j.succ =
-              coverDecode q e (coverRank e (fun k : Fin q => z k.succ)) j := by
-            simp [coverDecode, coverRank, h0]
-          rw [hstep, ih _ hz']
+@[deprecated (since := "2026-10-21")] alias ballSize := Cslib.BitString.ballSize
+@[deprecated (since := "2026-10-21")] alias ballSize_zero_left := Cslib.BitString.ballSize_zero_left
+@[deprecated (since := "2026-10-21")]
+alias ballSize_zero_right := Cslib.BitString.ballSize_zero_right
+@[deprecated (since := "2026-10-21")] alias ballSize_pos := Cslib.BitString.ballSize_pos
+@[deprecated (since := "2026-10-21")] alias ballSize_succ_succ := Cslib.BitString.ballSize_succ_succ
+@[deprecated (since := "2026-10-21")]
+alias card_filter_weight_le_eq_ballSize := Cslib.BitString.card_filter_weight_le_eq_ballSize
+@[deprecated (since := "2026-10-21")] alias coverRank := Cslib.BitString.coverRank
+@[deprecated (since := "2026-10-21")] alias coverDecode := Cslib.BitString.coverDecode
+@[deprecated (since := "2026-10-21")]
+alias coverRank_lt_ballSize := Cslib.BitString.coverRank_lt_ballSize
+@[deprecated (since := "2026-10-21")]
+alias weight_coverDecode_le := Cslib.BitString.weight_coverDecode_le
+@[deprecated (since := "2026-10-21")]
+alias coverRank_coverDecode := Cslib.BitString.coverRank_coverDecode
+@[deprecated (since := "2026-10-21")]
+alias coverDecode_coverRank := Cslib.BitString.coverDecode_coverRank
 
 end Cslib.Circuits.Boolean.WeightedThreshold

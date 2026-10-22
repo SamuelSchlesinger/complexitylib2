@@ -61,7 +61,8 @@ local notation "glue" => fun (U : Finset (Fin n)) (p : U → Bool)
   (q : {i : Fin n // i ∉ U} → Bool) =>
     Equiv.symm (Equiv.piEquivPiSubtypeProd (· ∈ U) fun _ => Bool) (p, q)
 
-local notation "weightedSum" => fun (w : Fin n → ℝ) (x : Fin n → Bool) =>
+/-- The weighted sum `∑ i, w i * (x i).toNat` of a Boolean input `x` with real weights `w`. -/
+@[simp] abbrev weightedSum (w : Fin n → ℝ) (x : Fin n → Bool) : ℝ :=
   ∑ i, w i * Bool.toNat (x i)
 
 /-- The kind of a block in a block decomposition. -/
@@ -119,16 +120,6 @@ structure BlockDecomposition (f : Cslib.BooleanFunction n) (H : Type*) where
 def BlockDecomposition.cost {f : Cslib.BooleanFunction n} {H : Type*}
     (D : BlockDecomposition f H) : ℕ :=
   ∏ i ∈ Finset.range D.length, (D.kind i).cost
-
-/-- The weighted sum of a glued input splits into the two sides. -/
-private theorem weightedSum_glue (w : Fin n → ℝ) (U : Finset (Fin n)) (p : U → Bool)
-    (q : ↥(↑U : Set (Fin n))ᶜ → Bool) :
-    weightedSum w (glue U p q) =
-      weightedSum w (glue U p fun _ => false) + weightedSum w (glue U (fun _ => false) q) := by
-  dsimp only
-  rw [← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  by_cases hi : i ∈ U <;> simp [Equiv.piEquivPiSubtypeProd, hi]
 
 namespace BlockKind
 
@@ -207,7 +198,12 @@ private theorem reachable_succ (D : BlockDecomposition f H) (U : Finset (Fin n))
     let Ψ : (↥(↑U : Set (Fin n))ᶜ → Bool) → ℝ → H := fun q t => Φ (η q) (t + β q)
     have hval : ∀ p ∈ P, ∀ q ∈ Q, D.history (i + 1) (glue U p q) = Ψ q (α p) := by
       intro p hp q hq
-      rw [hnext, hη p hp q hq, weightedSum_glue]
+      rw [hnext, hη p hp q hq]
+      congr 1
+      dsimp only [α, β, weightedSum]
+      rw [← Finset.sum_add_distrib]
+      refine Finset.sum_congr rfl fun j _ => ?_
+      by_cases hj : j ∈ U <;> simp [Equiv.piEquivPiSubtypeProd, hj]
     obtain ⟨P', hP', Qbad, hQbad, hcardP, hcardQ, hconst⟩ :=
       ChangesAtMost.exists_sorted_group P Q α Ψ hG
         (fun q _ => (hΦ (η q)).comp_monotone (monotone_id.add_const (β q)))

@@ -135,14 +135,6 @@ lemma val_coordinate_symm_snd (e : ℕ) (i : Fin (Generator.matrixDimension e)) 
 
 /-! ### Lists of rows -/
 
-@[simp] lemma length_tabulateRows (d : ℕ) (g : ℕ → ℕ → ℤ) : (tabulateRows d g).length = d := by
-  simp [tabulateRows]
-
-lemma length_of_mem_tabulateRows {d : ℕ} {g : ℕ → ℕ → ℤ} {row : List ℤ}
-    (h : row ∈ tabulateRows d g) : row.length = d := by
-  obtain ⟨i, -, rfl⟩ := List.mem_map.mp h
-  simp
-
 /-- A tabulated list of rows is the list of rows of a matrix it agrees with. -/
 lemma tabulateRows_eq_rowsOf {d : ℕ} (g : ℕ → ℕ → ℤ) (A : Matrix (Fin d) (Fin d) ℤ)
     (h : ∀ i j : Fin d, g i j = A i j) : tabulateRows d g = rowsOf A := by
@@ -772,8 +764,8 @@ private theorem intBin_of_unary {n : α → ℕ}
     ComputableTidilyInPolyTime (fun x => (n x : ℤ)) encIn encIntBin :=
   intBin_natCast.comp (unary_to_binary.comp hn)
 
-@[local fun_prop]
-private theorem unary_decide_eq {a b : α → ℕ}
+@[fun_prop]
+theorem unary_decide_eq {a b : α → ℕ}
     (ha : ComputableTidilyInPolyTime a encIn encUnary)
     (hb : ComputableTidilyInPolyTime b encIn encUnary) :
     ComputableTidilyInPolyTime (fun x => decide (a x = b x)) encIn encBool :=

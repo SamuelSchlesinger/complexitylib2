@@ -92,8 +92,8 @@ def muxCircuit (w : ℕ) : Circuit signature (1 + (w + w)) w :=
   cases c <;> simp [interpretation]
 
 @[simp] theorem size_muxCircuit (w : ℕ) : (muxCircuit w).size = 3 * w + 1 := by
+  rw [show 3 * w + 1 = 1 + w * 3 by ring]
   simp [muxCircuit, muxBit]
-  ring
 
 theorem depth_muxCircuit_le (w : ℕ) : (muxCircuit w).depth ≤ 3 :=
   (Circuit.depth_comp_le _ _).trans <| Nat.add_le_add (b := 2) (d := 1)

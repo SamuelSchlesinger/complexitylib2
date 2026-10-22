@@ -55,7 +55,9 @@ theorem liftResidue_invariant (lower period r t : ℕ) (hp : 0 < period) (hr : r
     let v := (liftResidue lower period)^[t] r
     (lower ≤ v ∨ t ≤ v) ∧ v < lower + period ∧ v % period = r := by
   induction t with
-  | zero => exact ⟨Or.inr (Nat.zero_le _), by simp; omega, Nat.mod_eq_of_lt hr⟩
+  | zero =>
+    exact ⟨Or.inr (Nat.zero_le _), by simp only [Function.iterate_zero_apply]; omega,
+      Nat.mod_eq_of_lt hr⟩
   | succ t ih =>
     dsimp only at ih ⊢
     rw [Function.iterate_succ_apply', liftResidue]

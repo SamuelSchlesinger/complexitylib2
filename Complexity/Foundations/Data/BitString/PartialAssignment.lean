@@ -16,6 +16,7 @@ public import Mathlib.Data.Fintype.Powerset
 public import Mathlib.Data.Part
 public import Mathlib.Logic.Function.DependsOn
 import Complexity.Foundations.Data.BitString.Agree
+import Complexity.Foundations.Data.Nat.Choose
 import Mathlib.Algebra.Group.Action.Defs
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Combinatorics.Enumerative.DoubleCounting
@@ -733,96 +734,6 @@ theorem mul_card_extensions_sub_one (ρ₀ : PartialAssignment ι) {t : ℕ} (ht
   rw [h, sum_congr rfl hinner, sum_const, smul_eq_mul]
   ring
 
-/-- For `a ≤ s`, `C(a, k) * s ^ k ≤ C(s, k) * a ^ k`. -/
-private theorem choose_mul_pow_le {a s : ℕ} (has : a ≤ s) (k : ℕ) :
-    a.choose k * s ^ k ≤ s.choose k * a ^ k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    by_cases hk : a < k + 1
-    · rw [Nat.choose_eq_zero_of_lt hk, zero_mul]
-      exact Nat.zero_le _
-    · have hka : k ≤ a := by omega
-      have hks : k ≤ s := hka.trans has
-      have hstep : (a - k) * s ≤ (s - k) * a := by
-        zify [hka, hks]
-        nlinarith
-      have hpos : 0 < k + 1 := by positivity
-      refine Nat.le_of_mul_le_mul_right ?_ hpos
-      calc a.choose (k + 1) * s ^ (k + 1) * (k + 1)
-          = a.choose (k + 1) * (k + 1) * s ^ k * s := by ring
-        _ = a.choose k * (a - k) * s ^ k * s := by rw [Nat.choose_succ_right_eq]
-        _ = a.choose k * s ^ k * ((a - k) * s) := by ring
-        _ ≤ s.choose k * a ^ k * ((s - k) * a) := Nat.mul_le_mul ih hstep
-        _ = s.choose k * (s - k) * a ^ k * a := by ring
-        _ = s.choose (k + 1) * (k + 1) * a ^ k * a := by rw [← Nat.choose_succ_right_eq]
-        _ = s.choose (k + 1) * a ^ (k + 1) * (k + 1) := by ring
-
-/-- `C(b * m - m, k) * b ^ k ≤ C(b * m, k) * (b - 1) ^ k`. -/
-private theorem choose_sub_mul_pow_le (b m k : ℕ) :
-    (b * m - m).choose k * b ^ k ≤ (b * m).choose k * (b - 1) ^ k := by
-  rcases Nat.eq_zero_or_pos m with rfl | hm
-  · rcases k with _ | k <;> simp
-  · have hbm : b * m - m = (b - 1) * m := by
-      rw [Nat.sub_mul, one_mul]
-    rw [hbm]
-    have hle : (b - 1) * m ≤ b * m := Nat.mul_le_mul_right m (Nat.sub_le b 1)
-    have h := choose_mul_pow_le hle k
-    rw [Nat.mul_pow, Nat.mul_pow] at h
-    have hpos : 0 < m ^ k := by positivity
-    refine Nat.le_of_mul_le_mul_right ?_ hpos
-    calc ((b - 1) * m).choose k * b ^ k * m ^ k
-        = ((b - 1) * m).choose k * (b ^ k * m ^ k) := by ring
-      _ ≤ (b * m).choose k * ((b - 1) ^ k * m ^ k) := h
-      _ = (b * m).choose k * (b - 1) ^ k * m ^ k := by ring
-
-/-- Bernoulli's inequality in `ℕ`: for `1 ≤ n`, `d ^ n + n * d ^ (n - 1) ≤ (d + 1) ^ n`. -/
-private theorem pow_add_mul_pow_sub_one_le (d : ℕ) {n : ℕ} (hn : 1 ≤ n) :
-    d ^ n + n * d ^ (n - 1) ≤ (d + 1) ^ n := by
-  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
-  clear hn
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    simp only [Nat.add_sub_cancel] at ih ⊢
-    calc d ^ (k + 2) + (k + 2) * d ^ (k + 1)
-        = (d ^ (k + 1) + (k + 1) * d ^ k) * d + d ^ (k + 1) := by ring
-      _ ≤ (d ^ (k + 1) + (k + 1) * d ^ k) * d + d ^ (k + 1) + (k + 1) * d ^ k :=
-          Nat.le_add_right _ _
-      _ = (d ^ (k + 1) + (k + 1) * d ^ k) * (d + 1) := by ring
-      _ ≤ (d + 1) ^ (k + 1) * (d + 1) := Nat.mul_le_mul_right (d + 1) ih
-      _ = (d + 1) ^ (k + 2) := by ring
-
-/-- For `1 ≤ b`, `2 * (b - 1) ^ b ≤ b ^ b`. -/
-private theorem two_mul_pred_pow_le {b : ℕ} (hb : 1 ≤ b) :
-    2 * (b - 1) ^ b ≤ b ^ b := by
-  obtain ⟨d, rfl⟩ : ∃ d, b = d + 1 := ⟨b - 1, by omega⟩
-  have h := pow_add_mul_pow_sub_one_le d (Nat.succ_pos d)
-  calc 2 * d ^ (d + 1)
-      = d ^ (d + 1) + d * d ^ d := by ring
-    _ ≤ d ^ (d + 1) + (d + 1) * d ^ d :=
-        Nat.add_le_add_left (Nat.mul_le_mul_right (d ^ d) (Nat.le_succ d)) _
-    _ ≤ (d + 1) ^ (d + 1) := h
-
-/-- For `1 ≤ b`, `2 ^ r * C(b * m - m, b * r) ≤ C(b * m, b * r)`. -/
-private theorem two_pow_mul_choose_sub_le {b m : ℕ} (hb : 1 ≤ b) (r : ℕ) :
-    2 ^ r * (b * m - m).choose (b * r) ≤ (b * m).choose (b * r) := by
-  have hpow : 2 ^ r * (b - 1) ^ (b * r) ≤ b ^ (b * r) := by
-    calc 2 ^ r * (b - 1) ^ (b * r)
-        = (2 * (b - 1) ^ b) ^ r := by rw [Nat.mul_pow, ← pow_mul]
-      _ ≤ (b ^ b) ^ r := Nat.pow_le_pow_left (two_mul_pred_pow_le hb) r
-      _ = b ^ (b * r) := by rw [← pow_mul]
-  have hchoose := choose_sub_mul_pow_le b m (b * r)
-  have hpos : 0 < b ^ (b * r) := by positivity
-  refine Nat.le_of_mul_le_mul_right ?_ hpos
-  calc 2 ^ r * (b * m - m).choose (b * r) * b ^ (b * r)
-      = 2 ^ r * ((b * m - m).choose (b * r) * b ^ (b * r)) := by ring
-    _ ≤ 2 ^ r * ((b * m).choose (b * r) * (b - 1) ^ (b * r)) :=
-        Nat.mul_le_mul_left (2 ^ r) hchoose
-    _ = (b * m).choose (b * r) * (2 ^ r * (b - 1) ^ (b * r)) := by ring
-    _ ≤ (b * m).choose (b * r) * b ^ (b * r) :=
-        Nat.mul_le_mul_left _ hpow
-
 /-- **Union bound for block survival**: if `ρ₀` has `b * m` free coordinates and `B 0, …, B (b - 1)`
 are `b` subsets of `ρ₀.free` of size `m`, then for `1 ≤ b` and `2 * b ≤ 2 ^ r`, at least half of
 all extensions in `ρ₀.extensions (b * r)` leave at least one free coordinate in every block
@@ -859,7 +770,7 @@ theorem card_extensions_le_two_mul_card_filter_forall_nonempty
       _ ≤ 2 ^ r * (b * m - m).choose k * 2 ^ (b * m - k) :=
           Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _ hbr)
       _ ≤ (b * m).choose k * 2 ^ (b * m - k) :=
-          Nat.mul_le_mul_right _ (two_pow_mul_choose_sub_le hb r)
+          Nat.mul_le_mul_right _ (Nat.two_pow_mul_choose_sub_le hb r)
       _ = #E := hE_card.symm
   have hAsub : A ⊆ E := filter_subset _ _
   have hpart : #(E \ A) + #A = #E := card_sdiff_add_card_eq_card hAsub

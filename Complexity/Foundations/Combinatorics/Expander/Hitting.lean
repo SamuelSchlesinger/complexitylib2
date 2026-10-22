@@ -105,9 +105,7 @@ theorem expect_prod_walkAt (t : ℕ) (h : ℕ → V → ℝ) (v : V) :
   induction t generalizing h v with
   | zero => simp
   | succ t ih =>
-    rw [← Fintype.expect_equiv (Fin.consEquiv fun _ => D)
-      (fun x => ∏ i ∈ range (t + 2), h i (G.walkAt (v, Fin.cons x.1 x.2) i)) _ fun _ => rfl,
-      Fintype.expect_prod_type, weightedWalk_succ, Pi.mul_apply, walk_apply, mul_expect]
+    rw [Fin.expect_univ_cons, weightedWalk_succ, Pi.mul_apply, walk_apply, mul_expect]
     refine expect_congr rfl fun a _ => ?_
     simp only [prod_range_succ' _ (t + 1), walkAt_cons_succ, walkAt_zero,
       ← expect_mul, ih (fun i => h (i + 1))]

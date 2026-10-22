@@ -23,6 +23,7 @@ belong to both level sets; no injectivity or tie-breaking assumption is required
 ## Main results
 
 * `Finset.exists_quantile`: select a pivot retaining the requested proportions on both sides.
+* `Finset.exists_median`: select a median pivot with at least half of the elements on each side.
 
 ## References
 
@@ -72,5 +73,18 @@ theorem exists_quantile (s : Finset α) (hs : s.Nonempty) (score : α → β)
       ((s.filter fun x => score x ≤ score p').card : ℝ) := by
     exact_mod_cast card_le_card hsub
   exact hlt (hmin p' (mem_filter.mpr ⟨hp's, hlow.le.trans hcard⟩))
+
+/-- Every nonempty finite set `s` equipped with a linearly ordered score `score : α → β` has a
+median element `p ∈ s` with at least half of `s` weakly below `score p` and at least half weakly
+above `score p`. -/
+theorem exists_median (s : Finset α) (hs : s.Nonempty) (score : α → β) :
+    ∃ p ∈ s, s.card ≤ 2 * (s.filter fun x => score x ≤ score p).card ∧
+      s.card ≤ 2 * (s.filter fun x => score p ≤ score x).card := by
+  obtain ⟨p, hp, hlo, hhi⟩ := s.exists_quantile hs score (a := 1 / 2) (by norm_num) (by norm_num)
+  refine ⟨p, hp, ?_, ?_⟩
+  · exact_mod_cast
+      (by linarith : (s.card : ℝ) ≤ 2 * ((s.filter fun x => score x ≤ score p).card : ℝ))
+  · exact_mod_cast
+      (by linarith : (s.card : ℝ) ≤ 2 * ((s.filter fun x => score p ≤ score x).card : ℝ))
 
 end Finset

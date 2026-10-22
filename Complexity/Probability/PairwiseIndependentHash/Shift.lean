@@ -45,9 +45,6 @@ vector `A (x₁ - x₂)`. It also applies to their restriction to Toeplitz matri
 
 ## Main results
 
-* `Cslib.Probability.card_mul_card_filter_eq_of_shift`,
-  `Cslib.Probability.dens_filter_eq_of_shift`: a function into a finite group whose translates
-  are all realized by permutations has fibers of equal size.
 * `Cslib.Probability.isPairwiseIndependentHash_add_of_dens_filter_sub_eq`: masking a family
   whose differences are uniformly distributed gives a pairwise independent family.
 * `Cslib.Probability.isPairwiseIndependentHash_add_of_shift`: the shift criterion.

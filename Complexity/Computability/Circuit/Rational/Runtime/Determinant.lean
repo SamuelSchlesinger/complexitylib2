@@ -497,11 +497,11 @@ theorem intBits_step_le {A F : List (List ℤ)} {b e : ℕ}
 
 open Turing MultiTapeTM MultiTapeTM.ComputableTidilyInPolyTime
 
-private lemma length_tabulateRows (d : ℕ) (g : ℕ → ℕ → ℤ) :
+@[simp] lemma length_tabulateRows (d : ℕ) (g : ℕ → ℕ → ℤ) :
     (tabulateRows d g).length = d := by
   simp [tabulateRows]
 
-private lemma length_of_mem_tabulateRows {d : ℕ} {g : ℕ → ℕ → ℤ} {row : List ℤ}
+lemma length_of_mem_tabulateRows {d : ℕ} {g : ℕ → ℕ → ℤ} {row : List ℤ}
     (hrow : row ∈ tabulateRows d g) : row.length = d := by
   obtain ⟨_, -, rfl⟩ := List.mem_map.mp hrow; simp
 

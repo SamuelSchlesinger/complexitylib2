@@ -14,7 +14,7 @@ public import Mathlib.Algebra.Group.Pi.Basic
 public import Mathlib.Algebra.GroupWithZero.Units.Fintype
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Data.Fintype.Prod
-import Complexity.Foundations.Data.HammingBound
+import Complexity.Foundations.Data.BitString.Weight
 import Mathlib.Data.Nat.Choose.Sum
 import Mathlib.FieldTheory.Finiteness
 
@@ -111,11 +111,7 @@ end Weights
 theorem card_filter_hammingNorm_le_eq_sum_choose {κ : Type*} [Fintype κ] [DecidableEq κ]
     (r : ℕ) :
     #{x : κ → Bool | hammingNorm x ≤ r} = ∑ j ∈ range (r + 1), (Fintype.card κ).choose j := by
-  simp only [← hammingDist_zero_left]
-  rw [card_filter_hammingDist_le_eq_sum]
-  refine sum_congr rfl fun j _ => ?_
-  rw [card_filter_hammingDist_eq_choose_mul_pow (q := 2) (fun _ => Fintype.card_bool)]
-  simp
+  simpa only [← BitString.weight_eq_hammingNorm] using BitString.card_filter_weight_le r
 
 /-- **A binomial estimate** for the size of a Hamming ball: `V * 4 ^ ℓ ≤ 4 ^ r * 5 ^ ℓ` for
 `V = ∑_{j ≤ r} C(ℓ, j)`, since `5 ^ ℓ = ∑_j C(ℓ, j) * 4 ^ (ℓ - j)`. -/
