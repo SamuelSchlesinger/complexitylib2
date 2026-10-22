@@ -23,9 +23,9 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 # Polynomial identity testing, the Schwartz–Zippel lemma and Kabanets–Impagliazzo
 
 *Polynomial identity testing* (`PIT`) asks whether a given arithmetic circuit computes the zero
-formal polynomial. Over the integers, `Cslib.Circuits.Arithmetic.PITℤ` is the set of pairs
+formal polynomial. Over the integers, `Cslib.Circuits.Arithmetic.PITInt` is the set of pairs
 `⟨n, c⟩ : Σ n, Circuit (arithSignature ℤ) n 1` with `c.polynomial 0 = 0` in
-`MvPolynomial (Fin n) ℤ`, encoded as bit strings by `Cslib.Circuits.Arithmetic.encArithCircuitℤ`
+`MvPolynomial (Fin n) ℤ`, encoded as bit strings by `Cslib.Circuits.Arithmetic.encArithCircuitInt`
 (number of inputs in unary, gate operations with binary integer constants via `encIntBin`, and
 wire indices in binary).
 
@@ -38,11 +38,11 @@ and algebraic-to-Boolean circuit lower bounds:
    at most `d * #S ^ (n - 1)` roots in `S ^ n` (`MvPolynomial.card_roots_le`), and if `d < #S`
    then `P` evaluates to a nonzero element at some point of `S ^ n`
    (`MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card`). Specializing to `c.polynomial 0`
-   bounds the zero set of any arithmetic circuit outside `PITℤ`
-   (`Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITℤ`,
-   `Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITℤ`).
+   bounds the zero set of any arithmetic circuit outside `PITInt`
+   (`Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITInt`,
+   `Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITInt`).
 
-2. **Laplace cofactor expansion of the permanent and downward self-reducibility to `PITℤ`**
+2. **Laplace cofactor expansion of the permanent and downward self-reducibility to `PITInt`**
    [Kabanets and Impagliazzo, Lemma 4.2][KabanetsImpagliazzo2004],
    [Arora and Barak, Theorem 20.16][AroraBarak09]: for any `(n + 1) × (n + 1)` matrix `A`,
    `A.permanent = ∑ j, A 0 j * (A.submatrix Fin.succ j.succAbove).permanent`
@@ -53,12 +53,12 @@ and algebraic-to-Boolean circuit lower bounds:
    circuit `permBaseDiff` and the Laplace step test circuit `permStepDiff` with explicit polynomial
    gate-size bounds (`size_permBaseDiff`, `size_permStepDiff`). A candidate family
    `C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1` computes `(genericMatrix ℤ m).permanent` for all
-   `m ≤ n` if and only if `⟨0, permBaseDiff (C 0)⟩ ∈ PITℤ` and
-   `⟨(m + 1) * (m + 1), permStepDiff m (C m) (C (m + 1))⟩ ∈ PITℤ` for all `m < n`
-   (`forall_polynomial_eq_permanent_iff_mem_PITℤ`). When `PITℤ ∈ P encArithCircuitℤ` and the
-   integer permanent family `intPermFamily` lies in `VP ℤ`, a polynomial-time decider for `PITℤ`
+   `m ≤ n` if and only if `⟨0, permBaseDiff (C 0)⟩ ∈ PITInt` and
+   `⟨(m + 1) * (m + 1), permStepDiff m (C m) (C (m + 1))⟩ ∈ PITInt` for all `m < n`
+   (`forall_polynomial_eq_permanent_iff_mem_PITInt`). When `PITInt ∈ P encArithCircuitInt` and the
+   integer permanent family `intPermFamily` lies in `VP ℤ`, a polynomial-time decider for `PITInt`
    soundly and completely certifies permanent circuit chains
-   (`exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP`).
+   (`exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP`).
 
 3. **`NEXP` circuit lower bounds and the Kabanets–Impagliazzo theorem**
    [Kabanets and Impagliazzo, Theorem 4.1][KabanetsImpagliazzo2004],
@@ -67,7 +67,7 @@ and algebraic-to-Boolean circuit lower bounds:
      inclusion `Σ₂ ⊆ PH ⊆ PSPACE ⊆ EXP ⊆ NEXP` (`SigmaP_subset_NEXP`) shows that for every fixed
      degree `k`, `NEXP` contains a language outside `SIZE (c (n + 1) ^ k)`
      (`exists_mem_NEXP_notMem_SIZE`).
-   - Conditionally on `PITℤ ∈ P encArithCircuitℤ` and the Impagliazzo–Kabanets–Wigderson /
+   - Conditionally on `PITInt ∈ P encArithCircuitInt` and the Impagliazzo–Kabanets–Wigderson /
      Valiant–Toda collapse from a polynomial-time PIT-certified permanent circuit family under
      `NEXP ⊆ P/poly`, either `NEXP ⊄ P/poly` or `intPermFamily ∉ VP ℤ`
      (`kabanets_impagliazzo`, `kabanets_impagliazzo_of_EXP_subset_P`). The external collapse step
@@ -76,19 +76,19 @@ and algebraic-to-Boolean circuit lower bounds:
 
 ## Main definitions
 
-* `Cslib.Circuits.Arithmetic.encArithOpℤ`, `Cslib.Circuits.Arithmetic.encArithGateℤ`,
-  `Cslib.Circuits.Arithmetic.encArithCodeℤ`, `Cslib.Circuits.Arithmetic.encArithCircuitℤ`:
+* `Cslib.Circuits.Arithmetic.encArithOpInt`, `Cslib.Circuits.Arithmetic.encArithGateInt`,
+  `Cslib.Circuits.Arithmetic.encArithCodeInt`, `Cslib.Circuits.Arithmetic.encArithCircuitInt`:
   injective bit-string encoding of single-output integer arithmetic circuits.
-* `Cslib.Circuits.Arithmetic.PITℤ`: the Polynomial Identity Testing problem over `ℤ`.
-* `Cslib.Circuits.Arithmetic.intPermFamily`: the integer permanent family
-  `n ↦ (genericMatrix ℤ n).permanent`.
+* `Cslib.Circuits.Arithmetic.PITInt`: the Polynomial Identity Testing problem over `ℤ`.
+* `Cslib.Circuits.Arithmetic.permFamily`, `Cslib.Circuits.Arithmetic.intPermFamily`: the permanent
+  family `n ↦ (genericMatrix R n).permanent` and its integer specialization.
 * `Cslib.Circuits.Arithmetic.constCircuit`, `varCircuit`, `addCircuit`, `mulCircuit`, `negCircuit`,
   `subCircuit`, `reindexCircuit`, `finSumCircuit`: constructive arithmetic circuit combinators.
 * `Cslib.Circuits.Arithmetic.minorVar`, `permBaseDiff`, `permStepDiff`, `laplacePermCircuit`,
   `IsLaplacePermChain`: the Laplace cofactor difference circuits, explicit recursive permanent
-  circuit family, and Laplace permanent chain predicate reducing permanent verification to `PITℤ`.
-* `Cslib.Circuits.Arithmetic.PermPITCertified`: existence of a polynomial-time `PITℤ` decider and a
-  polynomially bounded arithmetic circuit family certified by it on all Laplace permanent
+  circuit family, and Laplace permanent chain predicate reducing permanent verification to `PITInt`.
+* `Cslib.Circuits.Arithmetic.PermPITCertified`: existence of a polynomial-time `PITInt` decider and
+  a polynomially bounded arithmetic circuit family certified by it on all Laplace permanent
   identities.
 
 ## Main results
@@ -96,18 +96,19 @@ and algebraic-to-Boolean circuit lower bounds:
 * `MvPolynomial.card_mul_card_roots_le`, `MvPolynomial.card_roots_le`,
   `MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card`: the multivariate Schwartz–Zippel
   lemma and its non-vanishing corollary.
-* `Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITℤ`,
-  `Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITℤ`: Schwartz–Zippel zero bounds for
-  arithmetic circuits outside `PITℤ`.
+* `Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITInt`,
+  `Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITInt`: Schwartz–Zippel zero bounds for
+  arithmetic circuits outside `PITInt`.
 * `Matrix.permanent_succ_column_zero`, `Matrix.permanent_succ_row_zero`: Laplace cofactor expansion
   of the permanent along column 0 and row 0.
 * `Cslib.Circuits.Arithmetic.permanent_genericMatrix_zero`,
   `Cslib.Circuits.Arithmetic.permanent_genericMatrix_succ`: Laplace recurrence for the generic
   permanent polynomial.
-* `Cslib.Circuits.Arithmetic.forall_polynomial_eq_permanent_iff_mem_PITℤ`: Kabanets–Impagliazzo
-  Lemma 4.2, characterizing permanent circuits up to dimension `n` via `n + 1` instances of `PITℤ`.
-* `Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP`: `PITℤ ∈ P` and
-  `intPermFamily ∈ VP ℤ` yield a `PermPITCertified` permanent tester.
+* `Cslib.Circuits.Arithmetic.forall_polynomial_eq_permanent_iff_mem_PITInt`: Kabanets–Impagliazzo
+  Lemma 4.2, characterizing permanent circuits up to dimension `n` via `n + 1` instances of
+  `PITInt`.
+* `Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP`:
+  `PITInt ∈ P` and `intPermFamily ∈ VP ℤ` yield a `PermPITCertified` permanent tester.
 * `Cslib.Complexity.exists_mem_NEXP_notMem_SIZE`: unconditional fixed-degree circuit lower bound
   in `NEXP`.
 * `Cslib.Circuits.Arithmetic.kabanets_impagliazzo`,
@@ -251,11 +252,11 @@ namespace Arithmetic
 
 open Finset Turing.MultiTapeTM
 
-/-! #### Encoding of integer arithmetic circuits and `PITℤ` -/
+/-! #### Encoding of integer arithmetic circuits and `PITInt` -/
 
 /-- Encoding of an operation of `arithSignature ℤ`: `.add` is `[false, false]`, `.mul` is
 `[false, true]`, and `.const z` is `true :: encIntBin z`. -/
-def encArithOpℤ : ArithOp ℤ ↪ List Bool where
+def encArithOpInt : ArithOp ℤ ↪ List Bool where
   toFun
     | .add => [false, false]
     | .mul => [false, true]
@@ -269,54 +270,54 @@ def encArithOpℤ : ArithOp ℤ ↪ List Bool where
 
 /-- Encoding of a gate of an integer arithmetic circuit: its operation paired with the list of its
 argument wire codes in binary. -/
-def encArithGateℤ : ArithOp ℤ × List ℕ ↪ List Bool :=
-  encPair encArithOpℤ (encList encNat)
+def encArithGateInt : ArithOp ℤ × List ℕ ↪ List Bool :=
+  encPair encArithOpInt (encList encNat)
 
 /-- Encoding of the code of an integer arithmetic circuit: the list of gates paired with the list
 of designated output wire codes. -/
-def encArithCodeℤ : List (ArithOp ℤ × List ℕ) × List ℕ ↪ List Bool :=
-  encPair (encList encArithGateℤ) (encList encNat)
+def encArithCodeInt : List (ArithOp ℤ × List ℕ) × List ℕ ↪ List Bool :=
+  encPair (encList encArithGateInt) (encList encNat)
 
 /-- Encoding of a single-output integer arithmetic circuit bundled with its input arity: the input
 arity in unary paired with the circuit code. -/
-def encArithCircuitℤ : (Σ n, Circuit (arithSignature ℤ) n 1) ↪ List Bool where
-  toFun c := encPair encUnary encArithCodeℤ (c.1, c.2.code)
+def encArithCircuitInt : (Σ n, Circuit (arithSignature ℤ) n 1) ↪ List Bool where
+  toFun c := encPair encUnary encArithCodeInt (c.1, c.2.code)
   inj' := by
     rintro ⟨n₁, c₁⟩ ⟨n₂, c₂⟩ h
-    obtain ⟨rfl, hcode⟩ := Prod.mk.inj ((encPair encUnary encArithCodeℤ).injective h)
+    obtain ⟨rfl, hcode⟩ := Prod.mk.inj ((encPair encUnary encArithCodeInt).injective h)
     exact Sigma.mk.inj_iff.mpr ⟨rfl, heq_of_eq (Circuit.code_injective hcode)⟩
 
-@[simp] theorem encArithCircuitℤ_apply (c : Σ n, Circuit (arithSignature ℤ) n 1) :
-    encArithCircuitℤ c = encPair encUnary encArithCodeℤ (c.1, c.2.code) := rfl
+@[simp] theorem encArithCircuitInt_apply (c : Σ n, Circuit (arithSignature ℤ) n 1) :
+    encArithCircuitInt c = encPair encUnary encArithCodeInt (c.1, c.2.code) := rfl
 
 /-- The encoded length of a bundled integer arithmetic circuit is at least its number of input
 variables. -/
-theorem le_length_encArithCircuitℤ (c : Σ n, Circuit (arithSignature ℤ) n 1) :
-    c.1 ≤ (encArithCircuitℤ c).length := by
-  simpa [encArithCircuitℤ] using length_le_encPair_left encUnary encArithCodeℤ (c.1, c.2.code)
+theorem le_length_encArithCircuitInt (c : Σ n, Circuit (arithSignature ℤ) n 1) :
+    c.1 ≤ (encArithCircuitInt c).length := by
+  simpa [encArithCircuitInt] using length_le_encPair_left encUnary encArithCodeInt (c.1, c.2.code)
 
-/-- **Polynomial Identity Testing (`PITℤ`)**: the single-output arithmetic circuits over `ℤ` whose
+/-- **Polynomial Identity Testing (`PITInt`)**: the single-output arithmetic circuits over `ℤ` whose
 designated output computes the zero formal polynomial. -/
-def PITℤ : Set (Σ n, Circuit (arithSignature ℤ) n 1) :=
+def PITInt : Set (Σ n, Circuit (arithSignature ℤ) n 1) :=
   { c | c.2.polynomial 0 = 0 }
 
-@[simp] theorem mem_PITℤ_iff {c : Σ n, Circuit (arithSignature ℤ) n 1} :
-    c ∈ PITℤ ↔ c.2.polynomial 0 = 0 := Iff.rfl
+@[simp] theorem mem_PITInt_iff {c : Σ n, Circuit (arithSignature ℤ) n 1} :
+    c ∈ PITInt ↔ c.2.polynomial 0 = 0 := Iff.rfl
 
-/-- **Schwartz–Zippel root bound for arithmetic circuits**: if `⟨n, c⟩ ∉ PITℤ`, the circuit
+/-- **Schwartz–Zippel root bound for arithmetic circuits**: if `⟨n, c⟩ ∉ PITInt`, the circuit
 evaluates to zero at at most `(c.polynomial 0).totalDegree * #S ^ (n - 1)` points of `S ^ n`. -/
-theorem card_roots_eval_le_of_notMem_PITℤ {n : ℕ} {c : Circuit (arithSignature ℤ) n 1}
-    (hc : (⟨n, c⟩ : Σ m, Circuit (arithSignature ℤ) m 1) ∉ PITℤ) (S : Finset ℤ) :
+theorem card_roots_eval_le_of_notMem_PITInt {n : ℕ} {c : Circuit (arithSignature ℤ) n 1}
+    (hc : (⟨n, c⟩ : Σ m, Circuit (arithSignature ℤ) m 1) ∉ PITInt) (S : Finset ℤ) :
     #(Fintype.piFinset (fun _ : Fin n => S) |>.filter
         (fun x => c.eval (arithInterpretation ℤ) x 0 = 0)) ≤
       (c.polynomial 0).totalDegree * S.card ^ (n - 1) := by
   simpa only [Circuit.eval_polynomial] using MvPolynomial.card_roots_le hc S
 
-/-- **Schwartz–Zippel hitting property for arithmetic circuits**: if `⟨n, c⟩ ∉ PITℤ` and
+/-- **Schwartz–Zippel hitting property for arithmetic circuits**: if `⟨n, c⟩ ∉ PITInt` and
 `(c.polynomial 0).totalDegree < #S`, then `c` evaluates to a nonzero integer at some point of
 `S ^ n`. -/
-theorem exists_eval_ne_zero_of_notMem_PITℤ {n : ℕ} {c : Circuit (arithSignature ℤ) n 1}
-    (hc : (⟨n, c⟩ : Σ m, Circuit (arithSignature ℤ) m 1) ∉ PITℤ) {S : Finset ℤ}
+theorem exists_eval_ne_zero_of_notMem_PITInt {n : ℕ} {c : Circuit (arithSignature ℤ) n 1}
+    (hc : (⟨n, c⟩ : Σ m, Circuit (arithSignature ℤ) m 1) ∉ PITInt) {S : Finset ℤ}
     (hdeg : (c.polynomial 0).totalDegree < S.card) :
     ∃ x : Fin n → ℤ, (∀ i, x i ∈ S) ∧ c.eval (arithInterpretation ℤ) x 0 ≠ 0 := by
   obtain ⟨x, hxS, hx0⟩ := MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card hc hdeg
@@ -441,13 +442,13 @@ def finSumCircuit : {k : ℕ} → (Fin k → Circuit (arithSignature R) n 1) →
 end Combinators
 
 /-- Two integer arithmetic circuits compute the same formal polynomial if and only if their
-difference circuit `subCircuit c₁ c₂` belongs to `PITℤ`. -/
-theorem mem_PITℤ_subCircuit_iff {n : ℕ} (c₁ c₂ : Circuit (arithSignature ℤ) n 1) :
-    (⟨n, subCircuit c₁ c₂⟩ : Σ m, Circuit (arithSignature ℤ) m 1) ∈ PITℤ ↔
+difference circuit `subCircuit c₁ c₂` belongs to `PITInt`. -/
+theorem mem_PITInt_subCircuit_iff {n : ℕ} (c₁ c₂ : Circuit (arithSignature ℤ) n 1) :
+    (⟨n, subCircuit c₁ c₂⟩ : Σ m, Circuit (arithSignature ℤ) m 1) ∈ PITInt ↔
       c₁.polynomial 0 = c₂.polynomial 0 := by
-  rw [mem_PITℤ_iff, polynomial_subCircuit, sub_eq_zero]
+  rw [mem_PITInt_iff, polynomial_subCircuit, sub_eq_zero]
 
-/-! #### The integer permanent family and Laplace self-reducibility via `PITℤ` -/
+/-! #### The permanent family and Laplace self-reducibility via `PITInt` -/
 
 section Permanent
 
@@ -463,16 +464,25 @@ theorem totalDegree_permanent_genericMatrix_le (n : ℕ) :
         Finset.sum_le_sum fun i _ => (totalDegree_monomial_le _ _).trans (by simp)
     _ = n := by simp
 
+/-- The permanent family over `R`: its `n`-th member is the permanent of `genericMatrix R n`, a
+polynomial in `n * n` variables. -/
+noncomputable def permFamily (R : Type u) [CommSemiring R] : PolynomialFamily R where
+  vars n := n * n
+  poly n := (genericMatrix R n).permanent
+
+/-- The permanent family over `R` is a p-family (`vars n = n ^ 2` and `totalDegree ≤ n`). -/
+theorem isPFamily_permFamily : (permFamily R).IsPFamily :=
+  ⟨PolynomiallyBounded.id.mul PolynomiallyBounded.id,
+    PolynomiallyBounded.id.mono_of_le (totalDegree_permanent_genericMatrix_le (R := R))⟩
+
 /-- The permanent family over `ℤ`: its `n`-th member is the permanent of `genericMatrix ℤ n`, a
 polynomial in `n * n` variables. -/
-noncomputable def intPermFamily : PolynomialFamily ℤ where
-  vars n := n * n
-  poly n := (genericMatrix ℤ n).permanent
+noncomputable abbrev intPermFamily : PolynomialFamily ℤ :=
+  permFamily ℤ
 
 /-- The integer permanent family is a p-family (`vars n = n ^ 2` and `totalDegree ≤ n`). -/
 theorem isPFamily_intPermFamily : intPermFamily.IsPFamily :=
-  ⟨PolynomiallyBounded.id.mul PolynomiallyBounded.id,
-    PolynomiallyBounded.id.mono_of_le (totalDegree_permanent_genericMatrix_le (R := ℤ))⟩
+  isPFamily_permFamily
 
 /-- Reindexing map sending the `(i, k)` variable of an `m × m` matrix to the
 `(i.succ, j.succAbove k)` variable of an `(m + 1) × (m + 1)` matrix (the `(0, j)`-minor). -/
@@ -553,38 +563,39 @@ def permStepDiff (m : ℕ) (cm : Circuit (arithSignature R) (m * m) 1)
           X (finProdFinEquiv (0, j)) * MvPolynomial.rename (minorVar j) (cm.polynomial 0) := by
   simp [permStepDiff]
 
-/-- `permBaseDiff c₀` lies in `PITℤ` if and only if `c₀` computes the `0 × 0` generic permanent. -/
-theorem mem_PITℤ_permBaseDiff_iff (c₀ : Circuit (arithSignature ℤ) 0 1) :
-    (⟨0, permBaseDiff c₀⟩ : Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITℤ ↔
+/-- `permBaseDiff c₀` lies in `PITInt` if and only if `c₀` computes the `0 × 0` generic permanent.
+-/
+theorem mem_PITInt_permBaseDiff_iff (c₀ : Circuit (arithSignature ℤ) 0 1) :
+    (⟨0, permBaseDiff c₀⟩ : Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITInt ↔
       c₀.polynomial 0 = (genericMatrix ℤ 0).permanent := by
-  rw [mem_PITℤ_iff, polynomial_permBaseDiff, permanent_genericMatrix_zero, sub_eq_zero]
+  rw [mem_PITInt_iff, polynomial_permBaseDiff, permanent_genericMatrix_zero, sub_eq_zero]
 
-/-- Given that `cm` computes the `m × m` generic permanent, `permStepDiff m cm cm1` lies in `PITℤ`
+/-- Given that `cm` computes the `m × m` generic permanent, `permStepDiff m cm cm1` lies in `PITInt`
 if and only if `cm1` computes the `(m + 1) × (m + 1)` generic permanent. -/
-theorem mem_PITℤ_permStepDiff_iff {m : ℕ} {cm : Circuit (arithSignature ℤ) (m * m) 1}
+theorem mem_PITInt_permStepDiff_iff {m : ℕ} {cm : Circuit (arithSignature ℤ) (m * m) 1}
     (hcm : cm.polynomial 0 = (genericMatrix ℤ m).permanent)
     (cm1 : Circuit (arithSignature ℤ) ((m + 1) * (m + 1)) 1) :
     (⟨(m + 1) * (m + 1), permStepDiff m cm cm1⟩ :
-        Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITℤ ↔
+        Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITInt ↔
       cm1.polynomial 0 = (genericMatrix ℤ (m + 1)).permanent := by
-  rw [mem_PITℤ_iff, polynomial_permStepDiff, hcm, ← permanent_genericMatrix_succ, sub_eq_zero]
+  rw [mem_PITInt_iff, polynomial_permStepDiff, hcm, ← permanent_genericMatrix_succ, sub_eq_zero]
 
-/-- **Downward self-reducibility of the permanent to `PITℤ`**
+/-- **Downward self-reducibility of the permanent to `PITInt`**
 ([Kabanets and Impagliazzo, Lemma 4.2][KabanetsImpagliazzo2004];
 [Arora and Barak, Theorem 20.16][AroraBarak09]): a family of arithmetic circuits
 `C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1` computes `(genericMatrix ℤ m).permanent` for every
 `m ≤ n` if and only if `permBaseDiff (C 0)` and `permStepDiff m (C m) (C (m + 1))` for all `m < n`
-belong to `PITℤ`. -/
-theorem forall_polynomial_eq_permanent_iff_mem_PITℤ
+belong to `PITInt`. -/
+theorem forall_polynomial_eq_permanent_iff_mem_PITInt
     (C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1) (n : ℕ) :
     (∀ m ≤ n, (C m).polynomial 0 = (genericMatrix ℤ m).permanent) ↔
-      (⟨0, permBaseDiff (C 0)⟩ : Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITℤ ∧
+      (⟨0, permBaseDiff (C 0)⟩ : Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITInt ∧
         ∀ m < n,
           (⟨(m + 1) * (m + 1), permStepDiff m (C m) (C (m + 1))⟩ :
-            Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITℤ := by
+            Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITInt := by
   induction n with
   | zero =>
-    rw [mem_PITℤ_permBaseDiff_iff]
+    rw [mem_PITInt_permBaseDiff_iff]
     simp
   | succ n ih =>
     constructor
@@ -595,7 +606,7 @@ theorem forall_polynomial_eq_permanent_iff_mem_PITℤ
       refine ⟨h0, fun m hm => ?_⟩
       rcases Nat.lt_succ_iff_lt_or_eq.mp hm with hlt | rfl
       · exact hstep m hlt
-      · exact (mem_PITℤ_permStepDiff_iff (h m (Nat.le_succ m)) (C (m + 1))).mpr
+      · exact (mem_PITInt_permStepDiff_iff (h m (Nat.le_succ m)) (C (m + 1))).mpr
           (h (m + 1) le_rfl)
     · rintro ⟨h0, hstep⟩
       have hn : ∀ m ≤ n, (C m).polynomial 0 = (genericMatrix ℤ m).permanent :=
@@ -603,20 +614,20 @@ theorem forall_polynomial_eq_permanent_iff_mem_PITℤ
       intro m hm
       rcases Nat.le_iff_lt_or_eq.mp hm with hlt | rfl
       · exact hn m (Nat.le_of_lt_succ hlt)
-      · exact (mem_PITℤ_permStepDiff_iff (hn n le_rfl) (C (n + 1))).mp
+      · exact (mem_PITInt_permStepDiff_iff (hn n le_rfl) (C (n + 1))).mp
           (hstep n (Nat.lt_succ_self n))
 
 /-- A family of integer arithmetic circuits `C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1` forms a
 *Laplace permanent chain* up to dimension `n` when its base circuit `C 0` and its consecutive pairs
-`(C m, C (m + 1))` for `m < n` satisfy the `PITℤ` identities `permBaseDiff` and `permStepDiff`
+`(C m, C (m + 1))` for `m < n` satisfy the `PITInt` identities `permBaseDiff` and `permStepDiff`
 ([Kabanets and Impagliazzo, Lemma 4.2][KabanetsImpagliazzo2004]). -/
 structure IsLaplacePermChain (C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1) (n : ℕ) : Prop where
-  /-- The `0 × 0` circuit satisfies `permBaseDiff (C 0) ∈ PITℤ`. -/
-  base_mem : (⟨0, permBaseDiff (C 0)⟩ : Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITℤ
-  /-- Every step `m < n` satisfies `permStepDiff m (C m) (C (m + 1)) ∈ PITℤ`. -/
+  /-- The `0 × 0` circuit satisfies `permBaseDiff (C 0) ∈ PITInt`. -/
+  base_mem : (⟨0, permBaseDiff (C 0)⟩ : Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITInt
+  /-- Every step `m < n` satisfies `permStepDiff m (C m) (C (m + 1)) ∈ PITInt`. -/
   step_mem : ∀ m < n,
     (⟨(m + 1) * (m + 1), permStepDiff m (C m) (C (m + 1))⟩ :
-      Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITℤ
+      Σ k, Circuit (arithSignature ℤ) k 1) ∈ PITInt
 
 /-- A candidate integer arithmetic circuit family `C` computes `(genericMatrix ℤ m).permanent` for
 all `m ≤ n` if and only if `IsLaplacePermChain C n` holds. -/
@@ -624,13 +635,13 @@ theorem forall_polynomial_eq_permanent_iff_isLaplacePermChain
     (C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1) (n : ℕ) :
     (∀ m ≤ n, (C m).polynomial 0 = (genericMatrix ℤ m).permanent) ↔
       IsLaplacePermChain C n := by
-  rw [forall_polynomial_eq_permanent_iff_mem_PITℤ]
+  rw [forall_polynomial_eq_permanent_iff_mem_PITInt]
   exact ⟨fun ⟨h0, hs⟩ => ⟨h0, hs⟩, fun ⟨h0, hs⟩ => ⟨h0, hs⟩⟩
 
 /-- Explicit arithmetic circuit family computing the `m × m` generic permanent by recursive Laplace
 expansion along row 0. Its gate count grows factorially, witnessing unconditionally that the
-Laplace `PITℤ` identities `permBaseDiff` and `permStepDiff` are satisfiable at every dimension `m`.
--/
+Laplace `PITInt` identities `permBaseDiff` and `permStepDiff` are satisfiable at every dimension
+`m`. -/
 def laplacePermCircuit : ∀ m : ℕ, Circuit (arithSignature R) (m * m) 1
   | 0 => constCircuit 1
   | m + 1 =>
@@ -656,32 +667,34 @@ theorem isLaplacePermChain_laplacePermCircuit (n : ℕ) :
 
 end Permanent
 
-/-! #### Certified permanent circuit families from `PITℤ ∈ P` and `intPermFamily ∈ VP ℤ` -/
+/-! #### Certified permanent circuit families from `PITInt ∈ P` and `intPermFamily ∈ VP ℤ` -/
 
-/-- Existence of a polynomial-time `PITℤ` certification package for the integer permanent: a
-polynomial-time decider `decidePIT` for `PITℤ` together with a polynomially bounded arithmetic
+/-- Existence of a polynomial-time `PITInt` certification package for the integer permanent: a
+polynomial-time decider `decidePIT` for `PITInt` together with a polynomially bounded arithmetic
 circuit family `C` whose Laplace expansion identities `permBaseDiff` and `permStepDiff` are accepted
 by `decidePIT`, and such that any candidate family `C'` accepted by `decidePIT` on those identities
 up to dimension `n` computes `(genericMatrix ℤ m).permanent` for all `m ≤ n`. -/
-def PermPITCertified : Prop :=
-  ∃ (decidePIT : (Σ n, Circuit (arithSignature ℤ) n 1) → Bool)
-    (C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1),
-    ComputableTidilyInPolyTime decidePIT encArithCircuitℤ encBool ∧
-    PolynomiallyBounded (fun m => (C m).size) ∧
-    PolynomiallyBounded (fun m => (permStepDiff m (C m) (C (m + 1))).size) ∧
-    (∀ c, c ∈ PITℤ ↔ decidePIT c = true) ∧
-    decidePIT ⟨0, permBaseDiff (C 0)⟩ = true ∧
-    (∀ m, decidePIT ⟨(m + 1) * (m + 1), permStepDiff m (C m) (C (m + 1))⟩ = true) ∧
-    ∀ (C' : ∀ m, Circuit (arithSignature ℤ) (m * m) 1) (n : ℕ),
-      (∀ m ≤ n, (C' m).polynomial 0 = (genericMatrix ℤ m).permanent) ↔
-        decidePIT ⟨0, permBaseDiff (C' 0)⟩ = true ∧
-          ∀ m < n, decidePIT ⟨(m + 1) * (m + 1), permStepDiff m (C' m) (C' (m + 1))⟩ = true
+structure PermPITCertified : Prop where
+  /-- Existence of a polynomial-time decider and certified polynomially bounded circuit family. -/
+  exists_tester :
+    ∃ (decidePIT : (Σ n, Circuit (arithSignature ℤ) n 1) → Bool)
+      (C : ∀ m, Circuit (arithSignature ℤ) (m * m) 1),
+      ComputableTidilyInPolyTime decidePIT encArithCircuitInt encBool ∧
+      PolynomiallyBounded (fun m => (C m).size) ∧
+      PolynomiallyBounded (fun m => (permStepDiff m (C m) (C (m + 1))).size) ∧
+      (∀ c, c ∈ PITInt ↔ decidePIT c = true) ∧
+      decidePIT ⟨0, permBaseDiff (C 0)⟩ = true ∧
+      (∀ m, decidePIT ⟨(m + 1) * (m + 1), permStepDiff m (C m) (C (m + 1))⟩ = true) ∧
+      ∀ (C' : ∀ m, Circuit (arithSignature ℤ) (m * m) 1) (n : ℕ),
+        (∀ m ≤ n, (C' m).polynomial 0 = (genericMatrix ℤ m).permanent) ↔
+          decidePIT ⟨0, permBaseDiff (C' 0)⟩ = true ∧
+            ∀ m < n, decidePIT ⟨(m + 1) * (m + 1), permStepDiff m (C' m) (C' (m + 1))⟩ = true
 
-/-- **If `PITℤ ∈ P` and `intPermFamily ∈ VP ℤ`, then the integer permanent has a polynomial-time
+/-- **If `PITInt ∈ P` and `intPermFamily ∈ VP ℤ`, then the integer permanent has a polynomial-time
 PIT-certified circuit family** (`PermPITCertified`)
 [Kabanets and Impagliazzo, Lemma 4.2][KabanetsImpagliazzo2004]. -/
-theorem exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP
-    (hPIT : PITℤ ∈ Cslib.Complexity.P encArithCircuitℤ) (hPerm : intPermFamily ∈ VP ℤ) :
+theorem exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP
+    (hPIT : PITInt ∈ Cslib.Complexity.P encArithCircuitInt) (hPerm : intPermFamily ∈ VP ℤ) :
     PermPITCertified := by
   obtain ⟨decidePIT, hdec_poly, hdec_iff⟩ := hPIT
   obtain ⟨_, C, hC_size, hC_poly⟩ := hPerm
@@ -698,7 +711,7 @@ theorem exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP
       (∀ m ≤ n, (C' m).polynomial 0 = (genericMatrix ℤ m).permanent) ↔
         decidePIT ⟨0, permBaseDiff (C' 0)⟩ = true ∧
           ∀ m < n, decidePIT ⟨(m + 1) * (m + 1), permStepDiff m (C' m) (C' (m + 1))⟩ = true := by
-    rw [forall_polynomial_eq_permanent_iff_mem_PITℤ]
+    rw [forall_polynomial_eq_permanent_iff_mem_PITInt]
     simp only [hdec_iff]
   have hC_all (n : ℕ) : ∀ m ≤ n, (C m).polynomial 0 = (genericMatrix ℤ m).permanent :=
     fun m _ => hC_poly m
@@ -706,7 +719,7 @@ theorem exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP
     ((hsound C 0).mp (hC_all 0)).1
   have hCm (m : ℕ) : decidePIT ⟨(m + 1) * (m + 1), permStepDiff m (C m) (C (m + 1))⟩ = true :=
     ((hsound C (m + 1)).mp (hC_all (m + 1))).2 m (Nat.lt_succ_self m)
-  exact ⟨decidePIT, C, hdec_poly, hC_size, hstep_size, hdec_iff, hC0, hCm, hsound⟩
+  exact ⟨⟨decidePIT, C, hdec_poly, hC_size, hstep_size, hdec_iff, hC0, hCm, hsound⟩⟩
 
 end Arithmetic
 
@@ -751,18 +764,18 @@ open Turing.MultiTapeTM Cslib.Complexity Cslib.Circuits.Boolean
 /-- **The Kabanets–Impagliazzo derandomization-to-lower-bounds theorem**
 ([Kabanets and Impagliazzo, Theorem 4.1][KabanetsImpagliazzo2004];
 [Arora and Barak, Theorem 20.16][AroraBarak09]): if Polynomial Identity Testing over `ℤ` is in `P`
-(`PITℤ ∈ P encArithCircuitℤ`), then under the Impagliazzo–Kabanets–Wigderson / Valiant–Toda
+(`PITInt ∈ P encArithCircuitInt`), then under the Impagliazzo–Kabanets–Wigderson / Valiant–Toda
 collapse (stating that if `NEXP ⊆ P/poly` and `PermPITCertified` holds, then `Σ₂` has Boolean
 circuits of some fixed polynomial degree `O(n ^ k)`), either `NEXP ⊄ P/poly` or the integer
 permanent family `intPermFamily` is not in `VP ℤ`.
 
-The downward self-reducibility of the permanent to `PITℤ`
-(`forall_polynomial_eq_permanent_iff_mem_PITℤ` and
-`exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP`) and the `Σ₂` fixed-degree circuit lower
+The downward self-reducibility of the permanent to `PITInt`
+(`forall_polynomial_eq_permanent_iff_mem_PITInt` and
+`exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP`) and the `Σ₂` fixed-degree circuit lower
 bound (`exists_mem_SigmaP_two_notMem_SIZE`) are proved unconditionally; `hCollapse` supplies the
 external collapse from `NEXP ⊆ P/poly` and the PIT-certified permanent circuit family. -/
 theorem kabanets_impagliazzo
-    (hPIT : PITℤ ∈ Cslib.Complexity.P encArithCircuitℤ)
+    (hPIT : PITInt ∈ Cslib.Complexity.P encArithCircuitInt)
     (hCollapse :
       (∀ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits → L ∈ PPoly) →
       PermPITCertified →
@@ -775,7 +788,7 @@ theorem kabanets_impagliazzo
   · refine Or.inr fun hPerm => ?_
     push Not at hNEXP
     have hCert : PermPITCertified :=
-      exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP hPIT hPerm
+      exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP hPIT hPerm
     obtain ⟨k, hSigmaSize⟩ := hCollapse hNEXP hCert
     obtain ⟨L, hL₂, hLnot⟩ := exists_mem_SigmaP_two_notMem_SIZE k
     obtain ⟨c, hc⟩ := hSigmaSize L hL₂
@@ -783,11 +796,11 @@ theorem kabanets_impagliazzo
 
 /-- **The Kabanets–Impagliazzo theorem via time-hierarchy collapse (`EXP ⊆ P`)**
 ([Kabanets and Impagliazzo, Theorem 4.1][KabanetsImpagliazzo2004];
-[Arora and Barak, Theorem 20.16][AroraBarak09]): if `PITℤ ∈ P encArithCircuitℤ`, then under the
+[Arora and Barak, Theorem 20.16][AroraBarak09]): if `PITInt ∈ P encArithCircuitInt`, then under the
 collapse from `NEXP ⊆ P/poly` and `PermPITCertified` to `EXP ⊆ P`, either `NEXP ⊄ P/poly` or
 `intPermFamily ∉ VP ℤ`, refuting `EXP ⊆ P` by the time hierarchy theorem (`P_ssubset_EXP`). -/
 theorem kabanets_impagliazzo_of_EXP_subset_P
-    (hPIT : PITℤ ∈ Cslib.Complexity.P encArithCircuitℤ)
+    (hPIT : PITInt ∈ Cslib.Complexity.P encArithCircuitInt)
     (hCollapse :
       (∀ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits → L ∈ PPoly) →
       PermPITCertified →
@@ -799,7 +812,7 @@ theorem kabanets_impagliazzo_of_EXP_subset_P
   · refine Or.inr fun hPerm => ?_
     push Not at hNEXP
     have hCert : PermPITCertified :=
-      exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP hPIT hPerm
+      exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP hPIT hPerm
     exact P_ssubset_EXP.not_subset (hCollapse hNEXP hCert)
 
 end Cslib.Circuits.Arithmetic

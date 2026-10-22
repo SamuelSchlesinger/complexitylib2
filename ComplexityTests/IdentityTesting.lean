@@ -9,7 +9,7 @@ import Complexity.Computability.Circuit.Arithmetic.IdentityTesting
 /-!
 # Tests for polynomial identity testing, Schwartz–Zippel and Kabanets–Impagliazzo
 
-Concrete membership and non-membership in `PITℤ`, Schwartz–Zippel root bounds and non-vanishing
+Concrete membership and non-membership in `PITInt`, Schwartz–Zippel root bounds and non-vanishing
 witnesses on integer arithmetic circuits, Laplace permanent expansion and downward self-reducibility
 via `laplacePermCircuit` and `IsLaplacePermChain`, the unconditional `NEXP` circuit lower bound, and
 axiom guards for the headline results of
@@ -20,18 +20,19 @@ namespace ComplexityTests.IdentityTesting
 
 open Cslib Cslib.Circuits Cslib.Circuits.Arithmetic Cslib.Complexity MvPolynomial Finset
 
-/-! ### Concrete membership and non-membership in `PITℤ` -/
+/-! ### Concrete membership and non-membership in `PITInt` -/
 
-/-- `X₀ - X₀` is the zero polynomial, so `subCircuit (varCircuit 0) (varCircuit 0)` is in `PITℤ`. -/
+/-- `X₀ - X₀` is the zero polynomial, so `subCircuit (varCircuit 0) (varCircuit 0)` is in `PITInt`.
+-/
 example :
     (⟨1, subCircuit (varCircuit (R := ℤ) 0) (varCircuit 0)⟩ :
-      Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITℤ := by
-  rw [mem_PITℤ_subCircuit_iff]
+      Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITInt := by
+  rw [mem_PITInt_subCircuit_iff]
 
-/-- `X₀` is nonzero, so `varCircuit 0` is not in `PITℤ`. -/
-private theorem varCircuit_zero_notMem_PITℤ :
-    (⟨1, varCircuit (R := ℤ) 0⟩ : Σ n, Circuit (arithSignature ℤ) n 1) ∉ PITℤ := by
-  rw [mem_PITℤ_iff, polynomial_varCircuit]
+/-- `X₀` is nonzero, so `varCircuit 0` is not in `PITInt`. -/
+private theorem varCircuit_zero_notMem_PITInt :
+    (⟨1, varCircuit (R := ℤ) 0⟩ : Σ n, Circuit (arithSignature ℤ) n 1) ∉ PITInt := by
+  rw [mem_PITInt_iff, polynomial_varCircuit]
   exact X_ne_zero 0
 
 /-! ### Schwartz–Zippel on a concrete circuit -/
@@ -39,7 +40,7 @@ private theorem varCircuit_zero_notMem_PITℤ :
 example :
     ∃ x : Fin 1 → ℤ, (∀ i, x i ∈ ({0, 1} : Finset ℤ)) ∧
       (varCircuit (R := ℤ) 0).eval (arithInterpretation ℤ) x 0 ≠ 0 := by
-  refine exists_eval_ne_zero_of_notMem_PITℤ varCircuit_zero_notMem_PITℤ ?_
+  refine exists_eval_ne_zero_of_notMem_PITInt varCircuit_zero_notMem_PITInt ?_
   rw [polynomial_varCircuit, totalDegree_X]
   decide
 
@@ -56,20 +57,20 @@ example (n : ℕ) : IsLaplacePermChain (laplacePermCircuit (R := ℤ)) n :=
 
 example :
     (⟨0, permBaseDiff (laplacePermCircuit (R := ℤ) 0)⟩ :
-      Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITℤ :=
+      Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITInt :=
   (isLaplacePermChain_laplacePermCircuit 0).base_mem
 
 example (m : ℕ) :
     (⟨(m + 1) * (m + 1),
         permStepDiff m (laplacePermCircuit (R := ℤ) m) (laplacePermCircuit (m + 1))⟩ :
-      Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITℤ :=
+      Σ n, Circuit (arithSignature ℤ) n 1) ∈ PITInt :=
   (isLaplacePermChain_laplacePermCircuit (m + 1)).step_mem m (Nat.lt_succ_self m)
 
 /-- A circuit computing `0` instead of `1` at dimension `0` is rejected by `permBaseDiff`. -/
 example :
     (⟨0, permBaseDiff (constCircuit (R := ℤ) 0)⟩ :
-      Σ n, Circuit (arithSignature ℤ) n 1) ∉ PITℤ := by
-  rw [mem_PITℤ_permBaseDiff_iff, polynomial_constCircuit, map_zero, permanent_genericMatrix_zero]
+      Σ n, Circuit (arithSignature ℤ) n 1) ∉ PITInt := by
+  rw [mem_PITInt_permBaseDiff_iff, polynomial_constCircuit, map_zero, permanent_genericMatrix_zero]
   exact zero_ne_one
 
 /-! ### Unconditional `NEXP` circuit lower bound -/
@@ -95,18 +96,18 @@ info: 'MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card' depends on axiom
 #print axioms MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card
 
 /--
-info: 'Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITℤ' depends on axioms:
+info: 'Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITInt' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms card_roots_eval_le_of_notMem_PITℤ
+#print axioms card_roots_eval_le_of_notMem_PITInt
 
 /--
-info: 'Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITℤ' depends on axioms:
+info: 'Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITInt' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms exists_eval_ne_zero_of_notMem_PITℤ
+#print axioms exists_eval_ne_zero_of_notMem_PITInt
 
 /--
 info: 'Matrix.permanent_succ_column_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -128,11 +129,11 @@ info: 'Cslib.Circuits.Arithmetic.permanent_genericMatrix_succ' depends on axioms
 #print axioms permanent_genericMatrix_succ
 
 /--
-info: 'Cslib.Circuits.Arithmetic.forall_polynomial_eq_permanent_iff_mem_PITℤ' depends on axioms:
+info: 'Cslib.Circuits.Arithmetic.forall_polynomial_eq_permanent_iff_mem_PITInt' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms forall_polynomial_eq_permanent_iff_mem_PITℤ
+#print axioms forall_polynomial_eq_permanent_iff_mem_PITInt
 
 /--
 info: 'Cslib.Circuits.Arithmetic.isLaplacePermChain_laplacePermCircuit' depends on axioms:
@@ -142,11 +143,11 @@ info: 'Cslib.Circuits.Arithmetic.isLaplacePermChain_laplacePermCircuit' depends 
 #print axioms isLaplacePermChain_laplacePermCircuit
 
 /--
-info: 'Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP' depends on
+info: 'Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP' depends on
 axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP
+#print axioms exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP
 
 /--
 info: 'Cslib.Complexity.exists_mem_NEXP_notMem_SIZE' depends on axioms:

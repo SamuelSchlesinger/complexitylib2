@@ -34,12 +34,12 @@ completed reference developments.
    for arithmetic circuits over the integers has a deterministic polynomial-time algorithm, then
    either NEXP ⊄ P/poly or the permanent family has no polynomial-size arithmetic circuits over the
    integers. [IdentityTesting](Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean)
-   encodes single-output integer arithmetic circuits (`encArithCircuitℤ`) and `PITℤ`, proves the
+   encodes single-output integer arithmetic circuits (`encArithCircuitInt`) and `PITInt`, proves the
    multivariate Schwartz–Zippel lemma (`MvPolynomial.card_roots_le`,
-   `exists_eval_ne_zero_of_notMem_PITℤ`), Laplace cofactor expansion of the permanent
+   `exists_eval_ne_zero_of_notMem_PITInt`), Laplace cofactor expansion of the permanent
    (`Matrix.permanent_succ_row_zero`), downward self-reducibility of permanent circuits up to
-   dimension `n` to `n + 1` instances of `PITℤ` (`forall_polynomial_eq_permanent_iff_mem_PITℤ`,
-   `exists_certified_perm_family_of_PITℤ_mem_P_of_mem_VP`), the unconditional fixed-degree circuit
+   dimension `n` to `n + 1` instances of `PITInt` (`forall_polynomial_eq_permanent_iff_mem_PITInt`,
+   `exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP`), the unconditional fixed-degree circuit
    lower bound in `NEXP` (`exists_mem_NEXP_notMem_SIZE`), and the conditional Kabanets–Impagliazzo
    theorem (`kabanets_impagliazzo`, `kabanets_impagliazzo_of_EXP_subset_P`); discharging the
    easy-witness / Valiant–Toda collapse hypothesis from `NEXP ⊆ P/poly` and `PermPITCertified`
