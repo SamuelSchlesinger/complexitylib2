@@ -1108,38 +1108,44 @@ Unconditionally, parity lies in $\mathrm{P}\subseteq\mathrm{EXP}\subseteq\mathrm
 separating $\mathrm{P}$ and $\mathrm{NEXP}$ from $\mathrm{AC}^0$ and from
 $\mathrm{AC}^0[p]$ for every odd prime $p$. For every modulus $q\in\mathbb N$
 (prime or composite) and every degree $k$, simulating size-$c(n+1)^k$
-$\mathrm{MOD}_q$ circuits in De Morgan $\mathrm{SIZE}$ and applying Kannan's
-theorem yields a language in $\Sigma_2^{\mathrm P}\subseteq\mathrm{NEXP}$
-outside $\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$ (even at
-unbounded depth). Unconditionally, $\mathrm{NEXP}\subseteq\mathrm{ACC}^0$
-implies $\mathrm{NEXP}\subseteq\mathrm{P/poly}$ and collapses $\mathrm{PH}$ to
-$\Sigma_2^{\mathrm P}$. Combining the unconditional $\Sigma_2^{\mathrm P}$
-modular circuit lower bound (or the time-hierarchy separation
-$\mathrm{P}\subsetneq\mathrm{EXP}$) with the easy-witness and $\mathrm{Sym}^+$
-satisfiability collapse hypothesis gives Williams's theorem
-$\mathrm{NEXP}\not\subseteq\mathrm{ACC}^0$. Multi-layer Yao--Beigel--Tarui
-compilation (\lean{SymPlusCompilation}) and the easy-witness collapse from
-$\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ to a fixed-degree $\mathrm{MOD}_q$ bound
-on $\Sigma_2^{\mathrm P}$ (or $\mathrm{EXP}\subseteq\mathrm{P}$) are explicit
+$\mathrm{MOD}_q$ circuits in De Morgan $\mathrm{SIZE}$ shows that Kannan's
+$\Sigma_3^{\mathrm P}$ language $\mathrm{Kannan.language}(8(k+1))$ lies outside
+$\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$ (even at unbounded
+depth), and gives a language in $\Sigma_2^{\mathrm P}\subseteq\mathrm{NEXP}$
+outside $\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for all $c$.
+Unconditionally, $\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ implies
+$\mathrm{NEXP}\subseteq\mathrm{P/poly}$ and collapses $\mathrm{PH}$ to
+$\Sigma_2^{\mathrm P}$, placing $\mathrm{Kannan.language}(k)$ into
+$\Sigma_2^{\mathrm P}$ for every $k$. Combining this collapse with the
+easy-witness and $\mathrm{Sym}^+$ satisfiability collapse hypothesis (that
+$\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ places $\Sigma_2^{\mathrm P}$ into
+$\bigcup_{c}\mathrm{SIZE}_{\mathrm{MOD}_q}(c(n+1)^k)$ for some $q,k$) gives
+Williams's theorem $\mathrm{NEXP}\not\subseteq\mathrm{ACC}^0$. Depth-$0$
+$\mathrm{Sym}^+$ compilation is proved (\lean{symPlusCompilation_zero}), while
+multi-layer Yao--Beigel--Tarui compilation (\lean{SymPlusCompilation}) and the
+easy-witness collapse from $\mathrm{NEXP}\subseteq\mathrm{ACC}^0$ to a
+fixed-degree $\mathrm{MOD}_q$ bound on $\Sigma_2^{\mathrm P}$ are explicit
 hypotheses of the final implication theorems.\citep{Williams2014,Yao1990,BeigelTarui1994,Barrington1989,Vollmer1999,Kannan1982,KarpLipton1980}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{248}{Cslib.Circuits.Boolean.AC0Mod_subset_AC0Mod_of_dvd}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{260}{Cslib.Circuits.Boolean.ACC0}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{283}{Cslib.Circuits.Boolean.ACC0_eq_iUnion_AC0Mod}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{330}{Cslib.Circuits.Boolean.AC0Mod_ssubset_ACC0}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{379}{Cslib.Circuits.Boolean.ACC0.inf}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{522}{Cslib.Circuits.Boolean.Unbounded.exists_unbounded_simulation_modGate}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{548}{Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_modGate}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{600}{Cslib.Circuits.Boolean.ACMod_subset_AC_succ}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{657}{Cslib.Circuits.Boolean.ACC0_subset_PPoly}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{737}{Cslib.Circuits.Boolean.fastZeta_eq_zetaTransform}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{957}{Cslib.Circuits.Boolean.SymPlusCircuit.zetaTransform_coeffTable_eq_activeCount}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{994}{Cslib.Circuits.Boolean.SymPlusCircuit.fastSymPlusEval_eq_eval}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1029}{Cslib.Circuits.Boolean.exists_fastSymPlusEval_of_symPlusCompilation}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1131}{Cslib.Circuits.Boolean.SIZEMod_subset_SIZE}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1173}{Cslib.Circuits.Boolean.exists_mem_SigmaP_two_notMem_SIZEMod}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1183}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_SIZEMod}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1198}{Cslib.Circuits.Boolean.PH_eq_SigmaP_two_of_NEXP_subset_ACC0}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1212}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_ACC0}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1226}{Cslib.Circuits.Boolean.not_NEXP_subset_ACC0}
-\declat{9a0ef383087767d3142881f69b013b3e2d1b7d0f}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1240}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_ACC0_of_EXP_subset_P}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{247}{Cslib.Circuits.Boolean.AC0Mod_subset_AC0Mod_of_dvd}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{259}{Cslib.Circuits.Boolean.ACC0}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{282}{Cslib.Circuits.Boolean.ACC0_eq_iUnion_AC0Mod}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{329}{Cslib.Circuits.Boolean.AC0Mod_ssubset_ACC0}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{378}{Cslib.Circuits.Boolean.ACC0.inf}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{521}{Cslib.Circuits.Boolean.Unbounded.exists_unbounded_simulation_modGate}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{547}{Cslib.Circuits.Boolean.Unbounded.exists_deMorgan_simulation_modGate}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{599}{Cslib.Circuits.Boolean.ACMod_subset_AC_succ}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{656}{Cslib.Circuits.Boolean.ACC0_subset_PPoly}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{736}{Cslib.Circuits.Boolean.fastZeta_eq_zetaTransform}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{956}{Cslib.Circuits.Boolean.SymPlusCircuit.zetaTransform_coeffTable_eq_activeCount}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{993}{Cslib.Circuits.Boolean.SymPlusCircuit.fastSymPlusEval_eq_eval}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1026}{Cslib.Circuits.Boolean.symPlusCompilation_zero}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1044}{Cslib.Circuits.Boolean.exists_fastSymPlusEval_of_symPlusCompilation}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1152}{Cslib.Circuits.Boolean.SIZEMod_subset_SIZE}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1193}{Cslib.Circuits.Boolean.Kannan.language_notMem_SIZEMod}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1202}{Cslib.Circuits.Boolean.exists_mem_SigmaP_two_notMem_SIZEMod}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1212}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_SIZEMod}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1227}{Cslib.Circuits.Boolean.PH_eq_SigmaP_two_of_NEXP_subset_ACC0}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1239}{Cslib.Circuits.Boolean.Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1250}{Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_ACC0}
+\declat{25b090a32c99ad7a3028496c2e8901a1a051d9df}{Complexity/Computability/Circuit/Boolean/ACC0.lean}{1266}{Cslib.Circuits.Boolean.not_NEXP_subset_ACC0}
 \end{result}

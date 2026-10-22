@@ -29,11 +29,13 @@ completed reference developments.
    (`ACC0_eq_iUnion_AC0Mod`), divisibility monotonicity (`AC0Mod_subset_AC0Mod_of_dvd`), Boolean
    closure, the containments `ACC0 ⊆ TC0` and `ACC0 ⊆ AC 1 ⊆ NC 2 ⊆ PPoly`, strict separations
    `AC0 ⊂ AC0Mod 2 ⊆ ACC0` and `AC0Mod p ⊂ ACC0` for odd prime `p`, depth-two `Sym⁺` circuits with
-   split-variable Fast Zeta multipoint evaluation (`SymPlusCircuit.fastSymPlusEval_eq_eval`),
-   unconditional fixed-degree `Σ₂ ⊆ NEXP` lower bounds against `SIZEMod q` for every modulus `q`
-   (`exists_mem_SigmaP_two_notMem_SIZEMod`, `exists_mem_NEXP_notMem_SIZEMod`), the Karp–Lipton
-   collapse `NEXP ⊆ ACC0 → PH = Σ₂` (`PH_eq_SigmaP_two_of_NEXP_subset_ACC0`), and the final
-   contradiction step (`exists_mem_NEXP_notMem_ACC0`, `not_NEXP_subset_ACC0`) are in
+   split-variable Fast Zeta multipoint evaluation (`SymPlusCircuit.fastSymPlusEval_eq_eval`) and
+   depth-`0` compilation (`symPlusCompilation_zero`), unconditional fixed-degree `Σ₂ ⊆ NEXP` lower
+   bounds against `SIZEMod q` for every modulus `q` (`Kannan.language_notMem_SIZEMod`,
+   `exists_mem_SigmaP_two_notMem_SIZEMod`, `exists_mem_NEXP_notMem_SIZEMod`), the Karp–Lipton
+   collapse `NEXP ⊆ ACC0 → PH = Σ₂` (`PH_eq_SigmaP_two_of_NEXP_subset_ACC0`,
+   `Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0`), and the final contradiction step
+   (`exists_mem_NEXP_notMem_ACC0`, `not_NEXP_subset_ACC0`) are in
    [`ACC0`](Complexity/Computability/Circuit/Boolean/ACC0.lean); discharging the multi-layer
    Yao–Beigel–Tarui `SymPlusCompilation` and easy-witness collapse hypotheses remains open.
 7. **Valiant’s algebraic completeness theorem.** Over every field of characteristic different from
