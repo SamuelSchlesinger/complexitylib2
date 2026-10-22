@@ -7,10 +7,12 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.PP.Characterization
-public import Complexity.Computability.Complexity.Classes.SharpP.Products
+public import Complexity.Computability.Complexity.Classes.PP
+public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Reduction.TruthTable
 import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.PP.Characterization
+import Complexity.Computability.Complexity.Classes.SharpP.Products
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
@@ -120,11 +122,14 @@ private theorem exists_two_pow_interval {M : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (h
     · refine ⟨M, mem_range.mpr (by omega), by omega, ?_⟩
       simpa [pow_succ'] using hz₂
 
+/-- Newman's polynomial is at least `1` at every positive integer. -/
 theorem one_le_newmanPoly {M : ℕ} {z : ℤ} (hz : 1 ≤ z) : 1 ≤ newmanPoly M z :=
   one_le_prod₀ fun j _ => by
     have : (0 : ℤ) ≤ (2 : ℤ) ^ j := by positivity
     omega
 
+/-- **Newman's inequality:** for `1 ≤ z ≤ 2 ^ M`, twice `|newmanPoly M (-z)|` is at most
+`newmanPoly M z`. -/
 theorem two_mul_abs_newmanPoly_neg_le {M : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (hz₂ : z ≤ (2 : ℤ) ^ M) :
     2 * |newmanPoly M (-z)| ≤ newmanPoly M z := by
   obtain ⟨k, hk, hk₁, hk₂⟩ := exists_two_pow_interval hz₁ hz₂
@@ -142,12 +147,16 @@ theorem two_mul_abs_newmanPoly_neg_le {M : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (hz�
     rcases abs_cases ((2 : ℤ) ^ j + -z) with ⟨h, _⟩ | ⟨h, _⟩ <;> omega
   exact mul_le_mul hhead htail (abs_nonneg _) (by omega)
 
+/-- The amplified weight is nonnegative, being an even power. -/
 theorem newmanAmp_nonneg (M K : ℕ) (z : ℤ) : 0 ≤ newmanAmp M K z :=
   Even.pow_nonneg (even_two_mul K) _
 
+/-- The amplified weight is at least `1` at every positive integer. -/
 theorem one_le_newmanAmp {M K : ℕ} {z : ℤ} (hz : 1 ≤ z) : 1 ≤ newmanAmp M K z :=
   one_le_pow₀ (one_le_newmanPoly hz)
 
+/-- For `1 ≤ z ≤ 2 ^ M`, the amplified weight at `z` exceeds the weight at `-z` by a factor of
+at least `2 ^ (2 * K)`. -/
 theorem two_pow_mul_newmanAmp_neg_le {M K : ℕ} {z : ℤ} (hz₁ : 1 ≤ z) (hz₂ : z ≤ (2 : ℤ) ^ M) :
     (2 : ℤ) ^ (2 * K) * newmanAmp M K (-z) ≤ newmanAmp M K z := by
   unfold newmanAmp

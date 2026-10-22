@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
 /-!
@@ -52,11 +53,14 @@ does not assert that membership in the indexed language is computable. -/
 noncomputable def truthTableAnswers {α : Type} (A : Set (α × ℕ)) (r : α → ℕ) (a : α) : List Bool :=
   List.ofFn fun i : Fin (r a) => decide ((a, i.1) ∈ A)
 
+/-- The answer word has one bit per query. -/
 @[simp]
 theorem length_truthTableAnswers {α : Type} (A : Set (α × ℕ)) (r : α → ℕ) (a : α) :
     (truthTableAnswers A r a).length = r a := by
   simp [truthTableAnswers]
 
+/-- For a decidable indexed family, the answer word is the decided membership of each index below
+the query count. -/
 theorem truthTableAnswers_eq_map_range {α : Type} (A : Set (α × ℕ)) [DecidablePred (· ∈ A)]
     (r : α → ℕ) (a : α) :
     truthTableAnswers A r a = (List.range (r a)).map fun i => decide ((a, i) ∈ A) := by
@@ -64,36 +68,13 @@ theorem truthTableAnswers_eq_map_range {α : Type} (A : Set (α × ℕ)) [Decida
   intro i hi₁ hi₂
   simp [truthTableAnswers]
 
+/-- Answers for the complemented family are the negated answers. -/
 theorem truthTableAnswers_compl {α : Type} (A : Set (α × ℕ)) (r : α → ℕ) (a : α) :
     truthTableAnswers Aᶜ r a = (truthTableAnswers A r a).map (!·) := by
   classical
   apply List.ext_getElem (by simp [truthTableAnswers])
   intro i hi₁ hi₂
   simp [truthTableAnswers]
-
-private theorem foldl_cons_reverse {α β : Type} (f : α → β) (l : List α) (acc : List β) :
-    (l.foldl (fun s a => f a :: s) acc).reverse = acc.reverse ++ l.map f := by
-  induction l generalizing acc with
-  | nil => simp
-  | cons a l ih =>
-    rw [List.foldl_cons, ih (f a :: acc)]
-    simp [List.append_assoc]
-
-private theorem bitsMapWith {α γ π : Type} {encIn : γ ↪ List Bool} {encP : π ↪ List Bool}
-    {encA : α ↪ List Bool} {encL : List α ↪ List Bool}
-    [ListEncoding encA encL] [SizedListEncoding encA encL]
-    {f : π × α → Bool} {par : γ → π} {list : γ → List α}
-    (hf : ComputableTidilyInPolyTime f (encPair encP encA) encBool)
-    (hpar : ComputableTidilyInPolyTime par encIn encP)
-    (hlist : ComputableTidilyInPolyTime list encIn encL) :
-    ComputableTidilyInPolyTime (fun x => (list x).map fun a => f (par x, a)) encIn encBits := by
-  have hstep : ComputableTidilyInPolyTime (fun p : (π × List Bool) × α => f (p.1.1, p.2) :: p.1.2)
-      (encPair (encPair encP encBits) encA) encBits := by fun_prop
-  have hfold := ComputableTidilyInPolyTime.foldlWith_of_bounded_growth (encA := encA)
-    (encL := encL) (encB := encBits) (step := fun p acc a => f (p, a) :: acc)
-    hpar hlist (.const []) hstep (growth := fun _ => 1) (.const 1) (fun _ _ _ _ => by simp)
-  simpa only [Function.comp_def, foldl_cons_reverse, List.reverse_nil, List.nil_append] using
-    ComputableTidilyInPolyTime.bitsReverse.comp hfold
 
 variable {α : Type}
 
@@ -141,8 +122,8 @@ theorem PolyTimeTruthTableReducible.compl_right
   obtain ⟨r, q, d, hr, hq, hd, hL⟩ := h
   have hmap : ComputableTidilyInPolyTime (fun x : α × List Bool => x.2.map (!·))
       (encPair encA encBits) encBits :=
-    bitsMapWith (encP := encBool) (encA := encBool) (encL := encBits)
-      (f := fun p : Bool × Bool => !p.2) (by fun_prop) (.const false) (.snd encA encBits)
+    ComputableTidilyInPolyTime.bitsMapWithInput (f := fun _ b => !b) (.snd encA encBits)
+      (by fun_prop)
   refine ⟨r, q, fun x => d (x.1, x.2.map (!·)), hr, hq,
     hd.comp ((ComputableTidilyInPolyTime.fst encA encBits).prod hmap), fun a => ?_⟩
   rw [hL a, show q ⁻¹' Bᶜ = (q ⁻¹' B)ᶜ from rfl, truthTableAnswers_compl]
@@ -161,18 +142,14 @@ theorem truthTable_mem_P {A : Set (α × ℕ)} {r : α → ℕ} {d : α × List 
     (hr : ComputableTidilyInPolyTime r encA encUnary)
     (hd : ComputableTidilyInPolyTime d (encPair encA encBits) encBool) :
     {a | d (a, truthTableAnswers A r a) = true} ∈ P encA := by
+  classical
   obtain ⟨f, hf, hAf⟩ := hA
   have hans : ComputableTidilyInPolyTime
       (fun a => (List.range (r a)).map fun i => f (a, i)) encA encBits :=
-    bitsMapWith (encA := encUnary) (encL := encList encUnary) hf .id'
-      (ComputableTidilyInPolyTime.range.comp hr)
+    ComputableTidilyInPolyTime.mapToBitsWithInput (ComputableTidilyInPolyTime.range.comp hr) hf
   refine ⟨fun a => d (a, (List.range (r a)).map fun i => f (a, i)),
     hd.comp (ComputableTidilyInPolyTime.id'.prod hans), fun a => ?_⟩
-  have hfg : truthTableAnswers A r a = (List.range (r a)).map fun i => f (a, i) := by
-    apply List.ext_getElem (by simp [truthTableAnswers])
-    intro i hi₁ hi₂
-    simp [truthTableAnswers, hAf (a, i)]
-  simp [hfg]
+  simp [truthTableAnswers_eq_map_range, hAf]
 
 /-- **`P` is closed under polynomial-time truth-table reductions.** -/
 theorem PolyTimeTruthTableReducible.mem_P
