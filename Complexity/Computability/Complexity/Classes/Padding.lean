@@ -32,12 +32,10 @@ the padding.
 
 ## Timed reductions
 
-A problem `B` decidable within time `O(t' m)` on instances of length `m` pulls back along a
-function `g` computable within time `O(T a)` to a problem decidable within time
-`O(T a + t' |g a|)` (`Cslib.Complexity.preimage_mem_DTIME`): compute `g a`, then decide whether it
-is in `B`. A decider of `B` within time `O(t' m)` is first brought to the tidy form, within time and
-space `O(t' m)` (`Cslib.Complexity.computableTidilyInO_indicator_of_mem_DTIME`), in which
-computations compose.
+The general timed-reduction API lives in
+`Complexity.Computability.Complexity.Classes.Time`. In particular,
+`Cslib.Complexity.preimage_mem_DTIME` computes a reduction and then tidily decides its output;
+the padding arguments below apply this API to their padded instances.
 
 ## The padded problem
 
@@ -76,7 +74,6 @@ exponential padding yields an `NEXP` decider without a collapse hypothesis.
 
 ## Main results
 
-* `Cslib.Complexity.preimage_mem_DTIME`: `DTIME` under timed reductions.
 * `Cslib.Complexity.preimage_mem_NTIME_of_mem_NP`, `Cslib.Complexity.preimage_pad_mem_NEXP`:
   unconditional timed pullback of `NP`, including exponentially padded inputs.
 * `Turing.MultiTapeNTM.padded_mem_NP`,
@@ -230,67 +227,6 @@ namespace Cslib.Complexity
 open _root_.Turing _root_.Turing.MultiTapeTM
 
 variable {α β : Type} {enc : α ↪ List Bool} {encB : β ↪ List Bool}
-
-/-! ### Timed reductions -/
-
-/-- `DTIME` absorbs constant factors. -/
-theorem DTIME_mono_of_le_mul_add {t₁ t₂ : ℕ → ℕ} {C : ℕ} (h : ∀ n, t₁ n ≤ C * t₂ n + C) :
-    DTIME enc t₁ ⊆ DTIME enc t₂ := by
-  rintro A ⟨c₁, c₂, s, hA⟩
-  refine ⟨c₁ * C, c₁ * C + c₂, s, ComputableInTimeAndSpace.mono hA (fun a => ?_) fun _ => le_rfl⟩
-  have := Nat.mul_le_mul_left c₁ (h (enc a).length)
-  rw [Nat.mul_add, ← Nat.mul_assoc] at this
-  omega
-
-/-- A problem in `DTIME enc t` is decided by a machine tidily computing its indicator within time
-and space `O(t n)`, on instances whose encoding has length `n`. -/
-theorem computableTidilyInO_indicator_of_mem_DTIME {A : Set α} {t : ℕ → ℕ}
-    (h : A ∈ DTIME enc t) :
-    ComputableTidilyInO (indicator A) enc encBool (fun a => t (enc a).length)
-      fun a => t (enc a).length := by
-  obtain ⟨c₁, c₂, s, hA⟩ := h
-  obtain ⟨g, hg, hgA⟩ := decidableInTimeAndSpace_iff.mp hA
-  obtain ⟨c, hg⟩ := hg.exists_space_linear
-  obtain ⟨d, hg⟩ := hg.exists_computableTidilyInTimeAndSpace
-  rw [indicator_eq_iff.mpr hgA]
-  refine .of_bounds hg ((2 + 3 * c) * (c₁ + c₂) + 3 * c + d + d * (c * (c₁ + c₂) + c + 1) + 1)
-    (fun a => ?_) (fun a => ?_) fun a => ?_
-  · set T := t (enc a).length
-    have hu : c₁ * T + c₂ ≤ (c₁ + c₂) * (T + 1) := by nlinarith
-    calc 2 * (c₁ * T + c₂) + 3 * (c * (c₁ * T + c₂) + c) + d
-        = (2 + 3 * c) * (c₁ * T + c₂) + (3 * c + d) := by ring
-      _ ≤ (2 + 3 * c) * ((c₁ + c₂) * (T + 1)) + (3 * c + d) * (T + 1) :=
-          Nat.add_le_add (Nat.mul_le_mul_left _ hu) (Nat.le_mul_of_pos_right _ (by omega))
-      _ = ((2 + 3 * c) * (c₁ + c₂) + 3 * c + d) * (T + 1) := by ring
-      _ ≤ _ := Nat.mul_le_mul_right _ (by omega)
-  · set T := t (enc a).length
-    have hu : c₁ * T + c₂ ≤ (c₁ + c₂) * (T + 1) := by nlinarith
-    calc d * (c * (c₁ * T + c₂) + c + 1)
-        ≤ d * (c * ((c₁ + c₂) * (T + 1)) + (c + 1) * (T + 1)) :=
-          Nat.mul_le_mul_left _ (by
-            have := Nat.mul_le_mul_left c hu
-            have : c + 1 ≤ (c + 1) * (T + 1) := Nat.le_mul_of_pos_right _ (by omega)
-            omega)
-      _ = d * (c * (c₁ + c₂) + c + 1) * (T + 1) := by ring
-      _ ≤ _ := Nat.mul_le_mul_right _ (by omega)
-  · simp only [encBool_apply, List.length_singleton]
-    exact Nat.one_le_iff_ne_zero.mpr (Nat.mul_ne_zero (by omega) (by omega))
-
-/-- **`DTIME` under timed reductions.** If `B` is decidable within time `O(t' m)` on instances whose
-encoding has length `m`, and `g` is computable within time `O(T a)`, then `g ⁻¹' B` is decidable
-within time `O(t n)` on instances whose encoding has length `n`, as soon as `T a + t' |encB (g a)|`
-is within `O(t |enc a|)`: compute `g a`, then decide whether it is in `B`. -/
-theorem preimage_mem_DTIME {B : Set β} {t' t : ℕ → ℕ} {g : α → β} {T S : α → ℕ} {C : ℕ}
-    (hB : B ∈ DTIME encB t') (hg : ComputableTidilyInO g enc encB T S)
-    (ht : ∀ a, T a + t' (encB (g a)).length ≤ C * t (enc a).length + C) :
-    g ⁻¹' B ∈ DTIME enc t := by
-  have h := (computableTidilyInO_indicator_of_mem_DTIME hB).comp hg
-  have hset : g ⁻¹' B = {a | (indicator B ∘ g) a = true} := by
-    ext a
-    simp [indicator]
-  rw [hset]
-  exact DTIME_mono_of_le_mul_add (C := C) (fun _ => le_rfl)
-    (setOf_mem_DTIME_of_computableTidilyInO (t := fun n => C * t n + C) h ht)
 
 /-- **Padding to exponential length.** If `Ψ` is polynomial-time on pairs of a bit word and a
 unary number, then the words `y` with `Ψ (y, 2 ^ |y|)` form a problem in `E`: the padding
