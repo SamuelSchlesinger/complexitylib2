@@ -1478,6 +1478,8 @@ public import Complexity.Logics.FirstOrder.Ordered.BitArithmetic
 public import Complexity.Logics.FirstOrder.Ordered.BitSum
 public import Complexity.Logics.FirstOrder.Ordered.BitSum.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.Constants
+public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation
+public import Complexity.Logics.FirstOrder.Ordered.DomainInterpretation.Encoding
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Composition
 public import Complexity.Logics.FirstOrder.Ordered.FullTuple.Encoding
