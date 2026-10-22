@@ -199,7 +199,7 @@ theorem exactThreeSAT_npComplete : NPComplete encCNF ExactThreeSAT :=
   CookLevinBridge.exactThreeSAT_npComplete
 
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.CookLevinAbstract`: 27 root
+info: abstract audit passed for `ComplexityTests.Abstracts.CookLevinAbstract`: 28 root
 declarations, 68 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in

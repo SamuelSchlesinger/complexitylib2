@@ -126,7 +126,10 @@ def strip_theorem_proof(block: str) -> str:
     return block.rstrip()
 
 
-INJECTIVITY_HELPER_RE = re.compile(r"^(?:private\s+)?theorem\s+\S*_injective\b")
+INJECTIVITY_HELPER_RE = re.compile(
+    r"^(?:private\s+)?theorem\s+\S*_injective\s*(?:(?:\{[^}]*\}|\([^)]*\))\s*)*:\s*"
+    r"Function\.Injective\b"
+)
 
 
 def clean_code_for_display(code: str, is_undocumented_tail: bool = False) -> str:

@@ -153,7 +153,7 @@ theorem subsetSum_npComplete : NPComplete encSubsetSum SubsetSum :=
   SubsetSumBridge.subsetSum_npComplete
 
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.SubsetSumAbstract`: 19 root
+info: abstract audit passed for `ComplexityTests.Abstracts.SubsetSumAbstract`: 20 root
 declarations, 61 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in

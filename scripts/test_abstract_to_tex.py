@@ -75,11 +75,13 @@ class AbstractToTexTests(unittest.TestCase):
         sample = (
             "def encX : X → List Bool := f\n\n"
             "theorem encX_injective : Function.Injective encX :=\n  Bridge.encX_injective\n\n"
-            "theorem other_fact : P :=\n  Bridge.other_fact"
+            "theorem other_fact : P :=\n  Bridge.other_fact\n\n"
+            "theorem misnamed_injective : Q :=\n  Bridge.misnamed_injective"
         )
         self.assertEqual(
             abstract_to_tex.clean_code_for_display(sample),
-            "def encX : X → List Bool := f\n\ntheorem other_fact : P",
+            "def encX : X → List Bool := f\n\ntheorem other_fact : P\n\n"
+            "theorem misnamed_injective : Q",
         )
 
     def test_guarded_audit_is_stripped(self):

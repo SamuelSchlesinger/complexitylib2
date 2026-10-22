@@ -205,8 +205,8 @@ theorem tqbf_pspaceComplete : PSPACEComplete encQBF TQBF :=
     (by constructor <;> intros <;> rfl)
 
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.TQBFAbstract`: 73 root
-declarations, 126 dependencies checked
+info: abstract audit passed for `ComplexityTests.Abstracts.TQBFAbstract`: 87 root
+declarations, 130 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.TQBFAbstract

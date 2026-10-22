@@ -129,6 +129,70 @@ implementation declaration `Cslib.Complexity.NP` from
   Complexity.Computability.Complexity.Reduction
 ]
 
+/- 9. A `private` theorem is audited even when nothing in the namespace refers to it. -/
+namespace PrivateTheoremLeak
+def ok : Nat := 0
+private theorem hiddenMain : Cslib.Complexity.SAT = Cslib.Complexity.SAT := rfl
+end PrivateTheoremLeak
+
+/--
+error: abstract audit: `ComplexityTests.Abstracts.CheckTests.PrivateTheoremLeak.hiddenMain`
+depends on implementation declaration `Cslib.Logic.PL.CNF` from
+`Complexity.Logics.Propositional.CNF`
+-/
+#guard_msgs (whitespace := lax) in
+#check_abstract ComplexityTests.Abstracts.CheckTests.PrivateTheoremLeak
+
+/- 10. A user declaration with an internal-looking name is audited. -/
+namespace InternalNameLeak
+theorem eq_1 : Cslib.Complexity.SAT = Cslib.Complexity.SAT := rfl
+end InternalNameLeak
+
+/--
+error: abstract audit: `ComplexityTests.Abstracts.CheckTests.InternalNameLeak.eq_1` depends on
+implementation declaration `Cslib.Logic.PL.CNF` from `Complexity.Logics.Propositional.CNF`
+-/
+#guard_msgs (whitespace := lax) in
+#check_abstract ComplexityTests.Abstracts.CheckTests.InternalNameLeak
+
+/- 11. A structure-field default value is audited. -/
+namespace StructureDefaultLeak
+structure Hidden where
+  x : Set (List (List (ℕ × Bool))) := Cslib.Complexity.SAT
+end StructureDefaultLeak
+
+/--
+error: abstract audit:
+`ComplexityTests.Abstracts.CheckTests.StructureDefaultLeak.Hidden.x._default` depends on
+implementation declaration `Cslib.Logic.PL.CNF` from `Complexity.Logics.Propositional.CNF`
+-/
+#guard_msgs (whitespace := lax) in
+#check_abstract ComplexityTests.Abstracts.CheckTests.StructureDefaultLeak
+
+/- 12. `partial` definitions are rejected. -/
+namespace PartialDefLeak
+partial def loop (n : Nat) : Nat := loop (n + 1)
+end PartialDefLeak
+
+/--
+error: abstract audit: `ComplexityTests.Abstracts.CheckTests.PartialDefLeak.loop` is `opaque`,
+`partial`, or `unsafe`
+-/
+#guard_msgs (whitespace := lax) in
+#check_abstract ComplexityTests.Abstracts.CheckTests.PartialDefLeak
+
+/- 13. `unsafe` definitions are rejected. -/
+namespace UnsafeDefLeak
+unsafe def hiddenUnsafe : Nat := 0
+end UnsafeDefLeak
+
+/--
+error: abstract audit: `ComplexityTests.Abstracts.CheckTests.UnsafeDefLeak.hiddenUnsafe` is
+`opaque`, `partial`, or `unsafe`
+-/
+#guard_msgs (whitespace := lax) in
+#check_abstract ComplexityTests.Abstracts.CheckTests.UnsafeDefLeak
+
 end ComplexityTests.Abstracts.CheckTests
 
 /- 8. Declarations that an imported module (here the Cook–Levin bridge) places in the audited
@@ -149,7 +213,7 @@ namespace ComplexityTests.Abstracts.CheckTests
 
 /-! ### Accepted abstracts -/
 
-/- 9. An allowlisted module is accepted when the allowlist covers its dependencies. -/
+/- 14. An allowlisted module is accepted when the allowlist covers its dependencies. -/
 namespace AllowlistAccepted
 def usesEncNat : ℕ ↪ List Bool := Turing.MultiTapeTM.encNat
 end AllowlistAccepted

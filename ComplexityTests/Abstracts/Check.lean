@@ -19,24 +19,34 @@ statements whose proofs delegate to a bridge module (`*Bridge.lean`). The comman
 
 1. Every declaration in `Namespace` must be defined in the current file. A declaration placed in
    `Namespace` by an imported module (for example a bridge) is rejected.
-2. Every non-internal declaration in `Namespace` is a root. The audit traverses the roots
-   transitively, following `type` for all declarations, `value?` for non-theorems and the
-   constructors of inductive types, including private and equation-compiler helpers.
+2. Every declaration in `Namespace` is a root, including private declarations, generated
+   auxiliaries (equation lemmas, matchers, structure-field defaults) and user declarations with
+   internal-looking names. The audit traverses the roots transitively, following `type` for all
+   declarations, `value?` for non-theorems and the constructors of inductive types.
 3. A dependency defined in the current file must lie in `Namespace`. A dependency from an imported
    `Complexity.*` or `ComplexityTests.*` module is rejected unless its module is allowlisted with
    `allowing [...]`. The audit keeps traversing allowlisted declarations, so the allowlist must
-   cover their transitive dependencies as well. Traversal stops at the background libraries
-   (`Init`, `Std`, `Lean`, `Batteries`, `Mathlib`, upstream `Cslib`).
+   cover their transitive dependencies as well. Traversal stops at every other module: the
+   background libraries `Init`, `Std`, `Lean`, `Batteries`, `Mathlib` and upstream `Cslib`, and
+   the dependencies they bring in (`Aesop`, `Qq`, `Plausible`, `ProofWidgets`, …).
 4. Every declaration in `Namespace` is checked with `collectAxioms` to depend only on `propext`,
    `Classical.choice` and `Quot.sound`.
-5. Roots may not be `opaque`, `partial` or `unsafe`, nor may dependencies defined in the current
-   file.
+5. Declarations in `Namespace` whose user-facing names are not internal may not be `opaque`,
+   `partial` or `unsafe`, nor may dependencies defined in the current file.
 
-On success the command logs the number of audited roots and dependencies.
+On success the command logs the number of audited roots and dependencies. Both counts include
+compiler-generated declarations, so they may change with the Lean toolchain.
 
-The audit is semantic: it inspects elaborated declarations, not syntax. Notation, macros, local
-instances and `open` declarations that change how the abstract reads are outside its scope, and
-the `lean-abstract` skill forbids them in abstracts.
+### Scope
+
+The audit is semantic: it inspects elaborated declarations, not syntax. A reader of an abstract
+must still check the following, which the `lean-abstract` skill requires:
+
+* every headline theorem lies in the audited namespace, and the file declares nothing outside it
+  (declarations of the current file outside `Namespace` are only checked when a root uses them);
+* the file declares no notation, macros, instances of background classes, local instances or
+  `open` renamings that change how it reads;
+* the imported bridge declares no global syntax extensions, elaborators or unification hints.
 
 Adapted from `scripts/CheckAbstract.lean` in `edemaine/lean-canny` (commit `2a50a2ee`), by Erik
 Demaine.
@@ -84,18 +94,21 @@ def checkAbstract (abstractNamespace : Name) (allowedModules : Array Name := #[]
     throwError "abstract audit: `{userFacingName name}` lies in `{abstractNamespace}` but is \
       defined in imported module `{owner}`, not in the current file"
   let mut pending : Array (Name × Name) := #[]
-  let mut roots : Nat := 0
   for (name, info) in members do
     for ax in ← collectAxioms name do
       unless allowedAxioms.contains ax do
         throwError "abstract audit: `{userFacingName name}` depends on disallowed axiom `{ax}`"
-    unless name.isInternalDetail do
+    -- Generated helpers such as `_unsafe_rec` are exempt; `partial` and `unsafe` declarations
+    -- themselves are caught through their user-facing names.
+    unless (userFacingName name).isInternalDetail do
       if info.isUnsafe || info matches .opaqueInfo _ then
         throwError
           "abstract audit: `{userFacingName name}` is `opaque`, `partial`, or `unsafe`"
-      roots := roots + 1
-      for c in statementDependencies info do
-        pending := pending.push (name, c)
+    -- Every member is a root, so private and internal-looking declarations are audited even
+    -- when nothing else in the namespace refers to them.
+    for c in statementDependencies info do
+      pending := pending.push (name, c)
+  let roots := members.size
   if roots == 0 then
     throwError "abstract audit: no declarations found in namespace `{abstractNamespace}`"
   -- Process roots in sorted order: `pending` is a stack.

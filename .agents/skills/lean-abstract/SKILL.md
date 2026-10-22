@@ -40,6 +40,8 @@ This requirement applies transitively: an alias or wrapper around an internal de
 
 ### Readability Guidelines
 - **No top-level `open` in the public abstract**: Use explicit namespace prefixes (e.g., `Cslib.PolynomiallyBounded`, `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`) so readers can immediately distinguish local abstract definitions from background libraries. `open` may be used locally inside `by` proofs or in the bridge.
+- **Everything in one namespace**: Put every declaration of `*Abstract.lean`, in particular every headline theorem, inside the audited namespace. `#check_abstract` audits that namespace only; other declarations in the file are checked only when an audited declaration uses them.
+- **No new instances of background classes**: Do not declare instances of background classes on background types (e.g. a new `LE ℕ`), even inside the abstract namespace; they silently change the meaning of standard notation.
 - **No notation, macros, local instances, or shadowing**: `#check_abstract` audits elaborated declarations, not syntax, so it cannot see how the file *reads*. Do not declare `notation`, `infix`, `macro`, `syntax`, `local instance`/`attribute [local instance]`, `set_option` that changes elaboration or pretty-printing, or `open ... renaming`/`open ... hiding`, and do not give abstract declarations names that shadow background-library names a reader would expect (`Nat`, `List.sum`, …). A reader must be able to take every symbol in the abstract at its standard meaning.
 - **One canonical definition per concept**: Avoid duplicate theorem formulations or multiple equivalent predicates unless the headline result itself compares them.
 - **Prefer ordinary types and quantifiers**: Prefer functions, `List`, `Fin n → α`, quantifiers, membership, and equalities over custom interfaces, typeclasses, or implementation-specific dependent records.
@@ -54,6 +56,8 @@ This requirement applies transitively: an alias or wrapper around an internal de
 Keep the import graph acyclic: **`*Abstract.lean` imports `*Bridge.lean`, so `*Bridge.lean` cannot import `*Abstract.lean`.**
 
 Use one of two bridge patterns depending on whether `*Abstract.lean` defines fresh `inductive`/`structure` types:
+
+**Bridges must not change syntax.** A `*Bridge.lean` (and anything it imports) must not declare global notation, `macro_rules`, elaborators or unification hints: they would change how the abstract elaborates without appearing in it. Reviewers check this, since `#check_abstract` cannot.
 
 ### Pattern A: Unfolded Types / `abbrev` (Default)
 When `*Abstract.lean` defines problem inputs using type aliases over standard types (e.g., `abbrev Formula := List (List (ℕ × Bool))`):
@@ -95,7 +99,7 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
      Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
    ]
    ```
-   Local `-DwarningAsError=true` runs report linter warnings as infos; validate with `lake test --wfail --iofail`.
+   Validate with `lake test --wfail --iofail` (as CI does). Do not rely on `-DwarningAsError=true`: under that option the `hashCommand` linter reports an unguarded `#check_abstract` as an info, not a warning, so the problem goes unnoticed.
 2. **Compile and check**:
    ```bash
    lake build --wfail --iofail ComplexityTests.Abstracts.<Topic>Abstract
