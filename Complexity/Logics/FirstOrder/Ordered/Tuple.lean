@@ -36,6 +36,8 @@ Numeric predicates on restricted domains require separate constructions.
 
 * `Cslib.Logic.FO.Ordered.lexRank_lt_iff`: order is determined by the first differing coordinate.
 * `Cslib.Logic.FO.Ordered.lexRank_lt_iff_lex`: agreement with Mathlib's lexicographic relation.
+* `Cslib.Logic.FO.Ordered.lexRank_comp_lt_lexRank_comp_iff`: increasing maps of coordinates
+  preserve lexicographic order.
 * `Cslib.Logic.FO.Ordered.lexRank_tupleZero`, `Cslib.Logic.FO.Ordered.lexRank_tupleOne`,
   `Cslib.Logic.FO.Ordered.lexRank_tupleMax`: exact canonical ranks.
 
@@ -95,6 +97,11 @@ theorem lexRank_lt_iff_lex {n k : ℕ} (x y : Fin k → Fin n) :
     lexRank x < lexRank y ↔ Pi.Lex (· < ·) (· < ·) x y := by
   rw [lexRank_lt_iff, Pi.Lex]
   exact exists_congr fun _ => and_comm
+
+/-- Applying an increasing map to every coordinate preserves lexicographic order. -/
+theorem lexRank_comp_lt_lexRank_comp_iff {n n' k : ℕ} {f : Fin n → Fin n'} (hf : StrictMono f)
+    (x y : Fin k → Fin n) : lexRank (f ∘ x) < lexRank (f ∘ y) ↔ lexRank x < lexRank y := by
+  simp only [lexRank_lt_iff, Function.comp_apply, hf.lt_iff_lt, hf.injective.eq_iff]
 
 variable {n k : ℕ} [Fact (2 ≤ n)]
 

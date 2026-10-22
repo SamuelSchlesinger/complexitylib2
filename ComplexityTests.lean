@@ -170,6 +170,7 @@ import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MachineStateMap
+import ComplexityTests.ManyOne
 import ComplexityTests.MassProduction
 import ComplexityTests.MassProduction.Fine
 import ComplexityTests.MassProduction.HighRate
@@ -203,6 +204,7 @@ import ComplexityTests.OracleRepresentation
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
+import ComplexityTests.OrderedFOReduction
 import ComplexityTests.OrderedFagin
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking
