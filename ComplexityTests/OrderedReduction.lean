@@ -428,4 +428,21 @@ info: 'Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith' depend
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith
 
+/-- Level-1 reduction through an admissible interpretation: the two-dimensional full-tuple
+interpretation `advInterp`, as a domain interpretation, reduces every pulled-back ordered query. -/
+example (K' : Query Language.graph) :
+    Cslib.Complexity.LogSpaceReducible encStructure encStructure
+      (Query.encodedLanguage (L := L) {M | advInterp.toDomainInterpretation.map
+        (advInterp.admissible_toDomainInterpretation (by decide)) M ∈ K'} vocabulary)
+      (K'.encodedLanguage graphVocabulary) :=
+  advInterp.toDomainInterpretation.logSpaceReducible vocabulary graphVocabulary
+    (advInterp.admissible_toDomainInterpretation (by decide)) fun _ => Iff.rfl
+
+/--
+info: 'Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible
+
 end Cslib.Tests.OrderedReduction
