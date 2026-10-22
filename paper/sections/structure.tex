@@ -395,8 +395,9 @@ The construction reuses the existing shape checker and quantified counter-progra
 control, and Christian Reitwiessner's native binary arithmetic and digit-access
 certificate. Binary value and index storage, as well as arithmetic intermediates,
 are charged by the native simulation. No time bound for digit access is asserted.
-The next entry supplies the canonical full-tuple interpretation transducer;
-restricted-domain ordered reductions, projections and capture remain open.
+The next entry supplies the canonical full-tuple interpretation transducer.
+Certified ordered first-order reductions, including restricted domains, follow
+two entries below; projections and capture remain open.
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{65}{Cslib.Logic.FO.Ordered.queryLanguage}
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{224}{Cslib.Logic.FO.Ordered.modelChecker}
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{236}{Cslib.Logic.FO.Ordered.queryLanguage_mem_L}
@@ -452,9 +453,10 @@ completeness.
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{115}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.length_encStructure_encodedMap}
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{125}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv}
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{174}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv_apply_val}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{222}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{229}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.mem_queryLanguage_encodedMap_iff}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{262}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean}{147}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedMap_toDomainInterpretation}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{211}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{218}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.mem_queryLanguage_encodedMap_iff}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{251}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence}
 \end{result}
 
 \begin{result}
@@ -469,13 +471,14 @@ universe the $k$-tuples satisfying $\varphi_0$, ordered lexicographically and
 renumbered by rank onto $[m]$, with the target relations evaluated at the
 corresponding tuples and canonical numerics on $[m]$. The interpretation is
 admissible when $m\ge2$ for every source; this is the library's convention,
-motivated by Proviso~1.15, since Immerman does not address domains with fewer
-than two tuples. Its total encoded map sends well-formed sources with $n\ge2$
+motivated by Proviso~1.15, since Definition~1.26 does not discuss domains with
+fewer than two tuples. Its total encoded map sends well-formed sources with $n\ge2$
 to the encoded image, of any size $m$ (images with $m<2$ belong to no ordered
 query language), and all other inputs to the malformed sentinel.
 
-One fixed multi-tape Turing machine computes this map in logarithmic work
-space relative to \lean{encStructure}. It counts the domain tuples to write the
+For each fixed interpretation and pair of vocabularies, one multi-tape Turing
+machine computes this map in logarithmic work space relative to
+\lean{encStructure}. It counts the domain tuples to write the
 unary size and streams each target relation table, recovering the tuple of
 each rank by counting again; the same domain-counting transducer, parametrized
 by the formula compiler, also computes order-free interpretations. Hence an
@@ -490,33 +493,40 @@ certificate: formulas defining the target order, BIT and constants on domain
 tuples, correct on every source, as Remark~1.32 requires. Without
 $\varphi_0\equiv\mathrm{true}$, BIT need not be first-order definable in the
 image (the paragraph after Exercise~1.33), so the certificate is supplied rather
-than derived. Certified interpretations compose, making $\le_{\mathrm{fo}}$
-reflexive and transitive (Proposition~1.28, Exercise~2.15); it respects
+than derived. The identity interpretation is certified and certified
+interpretations compose, so $\le_{\mathrm{fo}}$ is reflexive and transitive
+(Proposition~1.28, Exercise~2.15(1)); it respects
 complements, first-order definability pulls back along it, and full-tuple
 interpretations of positive dimension are certified. Every first-order
-reduction is therefore a logspace reduction of encoded ordered queries, and
-membership in L or P transfers from target to source
+reduction is therefore a logspace reduction of encoded ordered queries
+(Theorem~3.1), and membership in L or P transfers from target to source
 (Proposition~3.10).\citep{Immerman1999}
-Certificates are given explicitly; none are constructed automatically for
-restricted domains beyond the full-tuple and identity cases. First-order and
-quantifier-free projections and completeness results are not covered.
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{97}{Cslib.Logic.FO.Ordered.DomainInterpretation}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{273}{Cslib.Logic.FO.Ordered.DomainInterpretation.Admissible}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{287}{Cslib.Logic.FO.Ordered.DomainInterpretation.map}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Encoding.lean}{97}{Cslib.Logic.FO.Ordered.DomainInterpretation.encodedMap}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Encoding.lean}{162}{Cslib.Logic.FO.Ordered.DomainInterpretation.decode?_encodedMap}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Transducer.lean}{853}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{156}{Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{164}{Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Certificate.lean}{76}{Cslib.Logic.FO.Ordered.DomainInterpretation.Certificate}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Certificate.lean}{217}{Cslib.Logic.FO.Ordered.DomainInterpretation.Certificate.realize_onSentence}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{147}{Cslib.Logic.FO.Ordered.Reduces}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{157}{Cslib.Logic.FO.Ordered.Reduces.trans}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{177}{Cslib.Logic.FO.Ordered.Definable.of_reduces}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean}{110}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.certificate}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{189}{Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{196}{Cslib.Logic.FO.Ordered.Reduces.encodedLanguage_mem_L}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{202}{Cslib.Logic.FO.Ordered.Reduces.encodedLanguage_mem_P}
+Certificates are supplied explicitly; the library builds them for full-tuple
+interpretations of positive dimension, the identity, and composites of
+certified interpretations. Images are always ordered lexicographically
+(Remark~1.32's default; other definable orders are not covered) and targets
+are relational, without constant symbols; projections and completeness are
+not covered.
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{79}{Cslib.Logic.FO.Ordered.DomainInterpretation}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{261}{Cslib.Logic.FO.Ordered.DomainInterpretation.Admissible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{275}{Cslib.Logic.FO.Ordered.DomainInterpretation.map}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Encoding.lean}{97}{Cslib.Logic.FO.Ordered.DomainInterpretation.encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Encoding.lean}{162}{Cslib.Logic.FO.Ordered.DomainInterpretation.decode?_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Transducer.lean}{853}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{136}{Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{159}{Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Certificate.lean}{76}{Cslib.Logic.FO.Ordered.DomainInterpretation.Certificate}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Certificate.lean}{217}{Cslib.Logic.FO.Ordered.DomainInterpretation.Certificate.realize_onSentence}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{163}{Cslib.Logic.FO.Ordered.Reduces}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{169}{Cslib.Logic.FO.Ordered.Reduces.refl}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{173}{Cslib.Logic.FO.Ordered.Reduces.trans}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{178}{Cslib.Logic.FO.Ordered.Reduces.compl}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{193}{Cslib.Logic.FO.Ordered.Definable.of_reduces}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean}{95}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.certificate}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean}{139}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.reduces}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{178}{Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{187}{Cslib.Logic.FO.Ordered.Reduces.encodedLanguage_mem_L}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{193}{Cslib.Logic.FO.Ordered.Reduces.encodedLanguage_mem_P}
 \end{result}
 
 \begin{result}
@@ -539,10 +549,10 @@ These statements concern the order-free general layer. The machine is the
 same domain-counting transducer as for ordered interpretations, instantiated
 with the order-free formula compiler.
 \citep{Immerman1999,Sipser2013}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{95}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{114}{Cslib.Logic.FO.Reduces.logSpaceReducible}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{128}{Cslib.Logic.FO.Reduces.queryLanguage_mem_L}
-\declat{9f6115063491ff3af3ec1d0c062ad4752aa3977f}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{135}{Cslib.Logic.FO.Reduces.queryLanguage_mem_P}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{95}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{114}{Cslib.Logic.FO.Reduces.logSpaceReducible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{128}{Cslib.Logic.FO.Reduces.queryLanguage_mem_L}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{135}{Cslib.Logic.FO.Reduces.queryLanguage_mem_P}
 \end{result}
 
 
