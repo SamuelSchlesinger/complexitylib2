@@ -269,6 +269,53 @@ for private coins; the public-coin AM protocol is in the Arthur--Merlin entry.
 \decl{Complexity/Computability/Complexity/Classes/IP/GraphNonIsomorphism.lean}{603}{Cslib.Complexity.GraphNonIsomorphism.mem_IP}
 \end{result}
 
+\begin{result}
+\subsection{Multiprover interactive proofs lie in nondeterministic exponential time}
+\[
+\cc{PSPACE}=\cc{IP}\subseteq\cc{MIP}_2\subseteq\cc{MIP}\subseteq\cc{NEXP},
+\]
+for every injective encoding of instances. A multiprover interactive proof over a finite prover index
+type $\iota$ uses a single private-coin probabilistic polynomial-time verifier (`IsOraclePPTOn`
+over the tagged query alphabet $\iota\times\mathrm{List}\;\mathrm{Bool}$) interacting with the product
+strategy `Prover.independent P` of a family $P : \iota\to\mathrm{Prover}\;\mathrm{Unit}$ of
+independent stateful randomized provers: when the verifier queries channel $(i,w)$, prover $i$
+transitions on $w$ using its own private state and randomness while every other prover $j\ne i$
+receives neither $i$ nor $w$ and its state is unchanged (`Prover.independent_state_eq_of_ne`),
+enforcing the non-communication requirement of Ben-Or, Goldwasser, Kilian, and Wigderson.
+Completeness is at least $2/3$ and soundness against every non-communicating prover family is at most
+$1/3$; $\cc{MIP}_2$ fixes $\iota=\mathrm{Fin}\;2$ and $\cc{MIP}$ quantifies existentially over
+`k : \mathbb N` with $\iota=\mathrm{Fin}\;k$. Both classes are closed under polynomial-time (Karp)
+reductions, and embedding a single-prover verifier on channel $0$ gives $\cc{IP}\subseteq\cc{MIP}_2$.
+
+For the upper bound $\cc{MIP}\subseteq\cc{NEXP}$, a $T$-step clocked verifier uses at most $T$ fair
+coins (`MIP.acceptProb_eq_sum`), and presampling each prover's response tree shows that every
+randomized stateful prover family is matched or beaten in acceptance probability on a given input by
+a deterministic history-based prover family (`MIP.exists_deterministic_prover_family`). A family of
+transcripts over all $2^T$ coin strings comes from a single deterministic non-communicating prover
+family if and only if for every prover $i$ and every pair of coin strings, the $i$-projections of the
+two transcripts agree on their first differing step (`MIP.DetProver.ValidFrom.consistentHist`,
+`MIP.validFrom_candidateProver`). Padding the instance by $2^{p(|x|)}$ places transcript-bundle
+verification in $\cc{NP}$ (`MIP.paddedMIP_mem_NP`), and pulling back along the exponential padding map
+places the original language in $\cc{NEXP}$. The reverse inclusion $\cc{NEXP}\subseteq\cc{MIP}_2$ of
+Babai, Fortnow, and Lund (multilinearity testing and arithmetization of $\cc{NEXP}$ computation
+tableaux) is not proved here.
+\citep{BenOrGoldwasserKilianWigderson1988,BabaiFortnowLund1991}\citep[Section 8.4]{AroraBarak09}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{274}{Cslib.Complexity.Prover.independent}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{287}{Cslib.Complexity.Prover.independent_state_eq_of_ne}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{354}{Cslib.Complexity.IsMultiproverProof}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{403}{Cslib.Complexity.MIP₂}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{414}{Cslib.Complexity.MIP}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{447}{Cslib.Complexity.IP_subset_MIP₂}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{454}{Cslib.Complexity.MIP₂_subset_MIP}
+\decl{Complexity/Computability/Complexity/Classes/MIP/Defs.lean}{463}{Cslib.Complexity.PSPACE_subset_MIP₂}
+\decl{Complexity/Computability/Complexity/Classes/MIP/OptimalProver.lean}{758}{Cslib.Complexity.MIP.exists_deterministic_prover_family}
+\decl{Complexity/Computability/Complexity/Classes/MIP/OptimalProver.lean}{852}{Cslib.Complexity.MIP.DetProver.ValidFrom.consistentHist}
+\decl{Complexity/Computability/Complexity/Classes/MIP/OptimalProver.lean}{893}{Cslib.Complexity.MIP.validFrom_candidateProver}
+\decl{Complexity/Computability/Complexity/Classes/MIP/NEXP.lean}{850}{Cslib.Complexity.MIP.paddedMIP_mem_NP}
+\decl{Complexity/Computability/Complexity/Classes/MIP/NEXP.lean}{1252}{Cslib.Complexity.MIP_subset_NEXP}
+\decl{Complexity/Computability/Complexity/Classes/MIP/NEXP.lean}{1373}{Cslib.Complexity.MIP₂_subset_NEXP}
+\end{result}
+
 
 \begin{result}
 \subsection{Cook--Mertz Tree Evaluation in small space}

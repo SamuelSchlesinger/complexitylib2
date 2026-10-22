@@ -514,6 +514,10 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Re
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Transducer
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
+public import Complexity.Computability.Complexity.Classes.MIP
+public import Complexity.Computability.Complexity.Classes.MIP.Defs
+public import Complexity.Computability.Complexity.Classes.MIP.NEXP
+public import Complexity.Computability.Complexity.Classes.MIP.OptimalProver
 public import Complexity.Computability.Complexity.Classes.ModP
 public import Complexity.Computability.Complexity.Classes.ModP.GapP
 public import Complexity.Computability.Complexity.Classes.NP

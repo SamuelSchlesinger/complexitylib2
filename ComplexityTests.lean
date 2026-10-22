@@ -170,6 +170,7 @@ import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
 import ComplexityTests.LogSpace
 import ComplexityTests.Logarithms
+import ComplexityTests.MIP
 import ComplexityTests.MachineClock
 import ComplexityTests.MachineExtendTapes
 import ComplexityTests.MachineIOBuffer
