@@ -28,7 +28,7 @@ class AbstractToTexTests(unittest.TestCase):
             ],
             "SubsetSumAbstract.lean": [
                 "def SubsetSum : Set (List ℕ × ℕ) :=",
-                "theorem subsetSum_npComplete :",
+                "theorem subsetSum_npComplete : NPComplete encSubsetSum SubsetSum",
             ],
         }
         for filename, snippets in expected_theorems.items():
@@ -42,6 +42,8 @@ class AbstractToTexTests(unittest.TestCase):
 
             # Verify proof bodies and #check_abstract command are stripped from code blocks
             self.assertNotIn("#check_abstract ComplexityTests", md)
+            self.assertNotIn("abstract audit passed", md)
+            self.assertNotIn("guard_msgs", md)
             self.assertNotIn("check\\_abstract ComplexityTests", tex)
             self.assertNotIn("Bridge.", md.split("## Main result")[-1])
 
@@ -68,6 +70,30 @@ class AbstractToTexTests(unittest.TestCase):
             abstract_to_tex.escape_tex_prose(prose),
             r"Check \texttt{x ** y} and \textbf{bold} text.",
         )
+
+    def test_only_injectivity_helpers_are_elided(self):
+        sample = (
+            "def encX : X → List Bool := f\n\n"
+            "theorem encX_injective : Function.Injective encX :=\n  Bridge.encX_injective\n\n"
+            "theorem other_fact : P :=\n  Bridge.other_fact"
+        )
+        self.assertEqual(
+            abstract_to_tex.clean_code_for_display(sample),
+            "def encX : X → List Bool := f\n\ntheorem other_fact : P",
+        )
+
+    def test_guarded_audit_is_stripped(self):
+        sample = (
+            "/-! # Title\n\nIntro.\n-/\n\n"
+            "namespace Foo\n\n"
+            "/-- A definition. -/\ndef x : Nat := 0\n\n"
+            "/--\ninfo: abstract audit passed for `Foo`: 1 root\ndeclarations, 0 dependencies"
+            " checked\n-/\n#guard_msgs (whitespace := lax) in\n#check_abstract Foo\n\n"
+            "end Foo\n"
+        )
+        _, _, sections = abstract_to_tex.parse_abstract(sample)
+        self.assertEqual(len(sections), 1)
+        self.assertEqual(sections[0]["code"], "def x : Nat := 0")
 
     @unittest.skipUnless(shutil.which("pdflatex"), "pdflatex not installed")
     def test_pdflatex_compiles_rendered_abstracts(self):

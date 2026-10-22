@@ -626,6 +626,16 @@ batches.
    narrowly oriented and machine transitions out of global simp. Share mathematical bookkeeping
    only with demonstrated reuse, counting helper proofs as part of the total cost.
 
+5. **Formal abstracts for headline theorems.** `#check_abstract` and the `lean-abstract` skill
+   audit self-contained statements of
+   [Cook–Levin](ComplexityTests/Abstracts/CookLevinAbstract.lean),
+   [TQBF](ComplexityTests/Abstracts/TQBFAbstract.lean) and
+   [Subset Sum](ComplexityTests/Abstracts/SubsetSumAbstract.lean). Remaining work: render the
+   abstracts into `paper/` with `scripts/abstract_to_tex.py` (the CI build does not include them
+   yet), and add abstracts for further headline results in the theorem index. The audit inspects
+   elaborated declarations only; notation, macros and local instances are excluded by the skill's
+   rules, not mechanically.
+
 ## Remaining theorem developments
 
 The port still includes substantial mathematical developments beyond the completed reference

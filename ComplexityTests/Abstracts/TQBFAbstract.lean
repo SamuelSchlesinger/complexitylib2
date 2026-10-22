@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+-- upstream: local-only (formal abstract tests)
+
 import ComplexityTests.Abstracts.Check
 import ComplexityTests.Abstracts.TQBFBridge
 
@@ -21,6 +23,12 @@ definition and theorem statement depends only on this file, `Mathlib`, and
 upstream `Cslib`'s multi-tape Turing machine model; `#check_abstract`
 mechanically verifies that no internal `Complexitylib` declarations leak into
 the statements, and Lean checks the proofs through `TQBFBridge`.
+
+## References
+
+* [L. J. Stockmeyer, A. R. Meyer, *Word problems requiring exponential time*][StockmeyerMeyer1973]
+* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
 namespace ComplexityTests.Abstracts.TQBFAbstract
@@ -33,6 +41,7 @@ quantification `ex v φ` (`∃ v, φ`), and universal quantification `all v φ`
 (`∀ v, φ`). Formulas are not restricted to prenex normal form.
 -/
 
+/-- Quantified Boolean formulas over the variables `ℕ`. -/
 inductive Formula where
   | var : ℕ → Formula
   | top : Formula
@@ -89,6 +98,7 @@ pair of `kind` in unary (`List.replicate kind true`) and `var` in little-endian
 binary (`Nat.bits`).
 -/
 
+/-- The prefix-order token list of a formula: one `(kind, var)` token per constructor. -/
 def Formula.tokens : Formula → List (ℕ × ℕ)
   | .var v => [(0, v)]
   | .top => [(1, 0)]
@@ -99,19 +109,25 @@ def Formula.tokens : Formula → List (ℕ × ℕ)
   | .ex v φ => (6, v) :: φ.tokens
   | .all v φ => (7, v) :: φ.tokens
 
+/-- Frame a bitstring: write each bit `b` as `[true, b]`, then terminate with `[false]`. -/
 def frame (w : List Bool) : List Bool :=
   w.flatMap (fun b => [true, b]) ++ [false]
 
+/-- Encode a pair by framing the encoding of its first component and appending the encoding of
+its second component. -/
 def encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
     List Bool :=
   frame (encA p.1) ++ encB p.2
 
+/-- Encode a list by concatenating the framed encodings of its elements. -/
 def encodeList {α : Type} (enc : α → List Bool) (l : List α) : List Bool :=
   l.flatMap (frame ∘ enc)
 
+/-- Encode a token `(kind, var)` as the pair of `kind` in unary and `var` in binary. -/
 def encodeToken : ℕ × ℕ → List Bool :=
   encodePair (fun k => List.replicate k true) Nat.bits
 
+/-- Encode a formula as the list encoding of its prefix-order tokens. -/
 def encodeQBF (φ : Formula) : List Bool :=
   encodeList encodeToken φ.tokens
 
@@ -188,6 +204,11 @@ theorem tqbf_pspaceComplete : PSPACEComplete encQBF TQBF :=
       eval := Formula.eval, freeVars := Formula.freeVars, tokens := Formula.tokens }
     (by constructor <;> intros <;> rfl)
 
+/--
+info: abstract audit passed for `ComplexityTests.Abstracts.TQBFAbstract`: 73 root
+declarations, 126 dependencies checked
+-/
+#guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.TQBFAbstract
 
 end ComplexityTests.Abstracts.TQBFAbstract

@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+-- upstream: local-only (formal abstract tests)
+
 import Complexity.Computability.Complexity.Classes.Space.TQBF
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 

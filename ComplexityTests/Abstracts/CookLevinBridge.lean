@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+-- upstream: local-only (formal abstract tests)
+
 import ComplexityTests.Abstracts.Check
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.ExactThreeSAT
@@ -16,8 +18,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pl
 Connects the self-contained definitions in `CookLevinAbstract.lean` (plain CNF formulas as nested
 lists of `(ℕ × Bool)`, framed binary encodings, and plain upstream `Cslib` polynomial-time Turing
 machine computability) to `Cslib.Complexity.CookLevin.SAT_npComplete`, `UNSAT_coNPComplete`, and
-`ExactThreeSAT_npComplete`. Also hosts the `#guard_msgs` regression test suite (`AuditTests`) for
-`#check_abstract`.
+`ExactThreeSAT_npComplete`.
 -/
 
 namespace ComplexityTests.Abstracts.CookLevinBridge
@@ -157,105 +158,5 @@ theorem exactThreeSAT_npComplete :
   rw [exactThreeSAT_eq]
   refine ⟨mem_NP_iff.mpr ExactThreeSAT_npComplete.1, fun α encA A hA => ?_⟩
   exact polyTimeReducible_iff.mpr (ExactThreeSAT_npComplete.2 encA A (mem_NP_iff.mp hA))
-
-/-! ### Regression tests for `#check_abstract` -/
-
-namespace AuditTests
-
-/- 1. Direct leak in a public definition body. -/
-namespace DirectDefLeak
-def leakedDef : Set (List (List (ℕ × Bool))) := Cslib.Complexity.SAT
-end DirectDefLeak
-
-/--
-error: abstract audit:
-`ComplexityTests.Abstracts.CookLevinBridge.AuditTests.DirectDefLeak.leakedDef` depends on
-implementation declaration `Cslib.Complexity.SAT` from
-`Complexity.Computability.Complexity.Problems.SAT`
--/
-#guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.CookLevinBridge.AuditTests.DirectDefLeak
-
-/- 2. Allowlist permits references to an explicitly listed module. -/
-#check_abstract ComplexityTests.Abstracts.CookLevinBridge.AuditTests.DirectDefLeak allowing [
-  Complexity.Computability.Complexity.Problems.SAT
-]
-
-/- 3. Transitive leak through a `private` pattern-matching helper inside the namespace. -/
-namespace PrivateMatcherLeak
-private def helper : Bool → Set (List (List (ℕ × Bool)))
-  | true => Cslib.Complexity.SAT
-  | false => ∅
-def publicWrapper : Set (List (List (ℕ × Bool))) := helper true
-end PrivateMatcherLeak
-
-/--
-error: abstract audit:
-`ComplexityTests.Abstracts.CookLevinBridge.AuditTests.PrivateMatcherLeak.publicWrapper` depends on
-implementation declaration `Cslib.Complexity.SAT` from
-`Complexity.Computability.Complexity.Problems.SAT`
--/
-#guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.CookLevinBridge.AuditTests.PrivateMatcherLeak
-
-/- 4. Leak in a `theorem` statement/type (even when the proof is `rfl`). -/
-namespace TheoremTypeLeak
-theorem leakedStmt : Cslib.Complexity.SAT = Cslib.Complexity.SAT := rfl
-end TheoremTypeLeak
-
-/--
-error: abstract audit:
-`ComplexityTests.Abstracts.CookLevinBridge.AuditTests.TheoremTypeLeak.leakedStmt` depends on
-implementation declaration `Cslib.Complexity.SAT` from
-`Complexity.Computability.Complexity.Problems.SAT`
--/
-#guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.CookLevinBridge.AuditTests.TheoremTypeLeak
-
-/- 5. Leak to a declaration in the same file outside the audited namespace. -/
-def outsideHelper : Nat := 42
-namespace OutsideNamespaceLeak
-def usesOutside : Nat := outsideHelper
-end OutsideNamespaceLeak
-
-/--
-error: abstract audit:
-`ComplexityTests.Abstracts.CookLevinBridge.AuditTests.OutsideNamespaceLeak.usesOutside` depends on
-declaration `ComplexityTests.Abstracts.CookLevinBridge.AuditTests.outsideHelper` outside
-`ComplexityTests.Abstracts.CookLevinBridge.AuditTests.OutsideNamespaceLeak`
--/
-#guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.CookLevinBridge.AuditTests.OutsideNamespaceLeak
-
-/- 6. Leak inside the constructor of a `private inductive` referenced only by type. -/
-namespace PrivateInductiveCtorLeak
-private inductive Hidden where
-  | mk (h : Cslib.Complexity.SAT = Cslib.Complexity.SAT)
-def usesHiddenType : Prop := Nonempty Hidden
-end PrivateInductiveCtorLeak
-
-/--
-error: abstract audit:
-`ComplexityTests.Abstracts.CookLevinBridge.AuditTests.PrivateInductiveCtorLeak.usesHiddenType`
-depends on implementation declaration `Cslib.Complexity.SAT` from
-`Complexity.Computability.Complexity.Problems.SAT`
--/
-#guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.CookLevinBridge.AuditTests.PrivateInductiveCtorLeak
-
-/- 7. Rejection of `opaque` / `partial` definitions in an abstract namespace. -/
-namespace OpaqueDefLeak
-opaque hiddenVal : Nat
-end OpaqueDefLeak
-
-/--
-error: abstract audit:
-`ComplexityTests.Abstracts.CookLevinBridge.AuditTests.OpaqueDefLeak.hiddenVal` is `opaque`,
-`partial`, or `unsafe`
--/
-#guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.CookLevinBridge.AuditTests.OpaqueDefLeak
-
-end AuditTests
 
 end ComplexityTests.Abstracts.CookLevinBridge

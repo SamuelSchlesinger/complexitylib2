@@ -1,6 +1,7 @@
 import ComplexityTests.AWPPAmplification
 import ComplexityTests.AWPPLowness
 import ComplexityTests.Abstracts.Check
+import ComplexityTests.Abstracts.CheckTests
 import ComplexityTests.Abstracts.CookLevinAbstract
 import ComplexityTests.Abstracts.CookLevinBridge
 import ComplexityTests.Abstracts.SubsetSumAbstract

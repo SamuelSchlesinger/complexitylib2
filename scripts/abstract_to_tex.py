@@ -79,6 +79,13 @@ def parse_abstract(text: str):
     body_start = mod_match.end() if mod_match else 0
     body = text[body_start:]
     body = re.sub(r"^\s*namespace\s+[^\n]+\n", "", body, flags=re.MULTILINE)
+    # Drop the `#check_abstract` audit together with the `#guard_msgs` docstring pinning its report.
+    body = re.sub(
+        r"/--(?:(?!-/).)*-/\s*#guard_msgs[^\n]*\n(?=\s*#check_abstract\b)",
+        "",
+        body,
+        flags=re.DOTALL,
+    )
     body = re.sub(
         r"^\s*#check_abstract\b[^\n]*(?:\[\s*(?:[^\]]*\n)*[^\]]*\])?\n?",
         "",
@@ -119,18 +126,26 @@ def strip_theorem_proof(block: str) -> str:
     return block.rstrip()
 
 
+INJECTIVITY_HELPER_RE = re.compile(r"^(?:private\s+)?theorem\s+\S*_injective\b")
+
+
 def clean_code_for_display(code: str, is_undocumented_tail: bool = False) -> str:
-    """Keep definitions and theorem signatures while eliding proof bodies and helper lemmas."""
+    """Keep definitions and theorem signatures while eliding proof bodies.
+
+    The only declarations omitted are undocumented `*_injective` helper theorems that follow a
+    definition block or a section docstring: they are the injectivity glue for packaging an
+    encoding as an embedding (see the lean-abstract skill). Every other theorem keeps its
+    signature.
+    """
     blocks = re.split(r"\n\s*\n", code.strip())
     kept = []
     for idx, block in enumerate(blocks):
         block = block.strip()
         if not block:
             continue
-        # Omit undocumented helper theorems that follow a definition block (e.g. injectivity glue)
-        if re.match(r"^(?:private\s+)?theorem\s+", block) and (idx > 0 or is_undocumented_tail):
+        if INJECTIVITY_HELPER_RE.match(block) and (idx > 0 or is_undocumented_tail):
             continue
-        if re.match(r"^theorem\s+", block):
+        if re.match(r"^(?:private\s+)?theorem\s+", block):
             kept.append(strip_theorem_proof(block))
         else:
             # Replace inline proof terms `, by ...⟩` inside structure constructors with `, _⟩`
@@ -177,12 +192,39 @@ def escape_tex_prose(text: str) -> str:
                     out.append(ch)
             escaped_prose = "".join(out)
             escaped_prose = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", escaped_prose)
+            escaped_prose = re.sub(r"\*([^*\s][^*]*)\*", r"\\emph{\1}", escaped_prose)
             rendered.append(escaped_prose)
     return "".join(rendered)
 
 
+def render_tex_intro(intro: str) -> list[str]:
+    """Render the module docstring, turning `## Heading` lines into paragraphs and `* ` bullet
+    lines into an itemized list."""
+    lines = []
+    in_list = False
+    for raw in intro.splitlines():
+        line = raw.strip()
+        if line.startswith("* "):
+            if not in_list:
+                lines.append("\\begin{itemize}")
+                in_list = True
+            lines.append("\\item " + escape_tex_prose(line[2:]))
+            continue
+        if in_list and line:
+            lines.append("\\end{itemize}")
+            in_list = False
+        heading = re.match(r"^##\s*(.+)$", line)
+        if heading:
+            lines.append(f"\\paragraph{{{escape_tex_prose(heading.group(1).strip())}.}}")
+        else:
+            lines.append(escape_tex_prose(line))
+    if in_list:
+        lines.append("\\end{itemize}")
+    return lines
+
+
 def render_tex(title: str, intro: str, sections: list[dict]) -> str:
-    lines = [f"\\subsection{{{escape_tex_prose(title)}}}", "", escape_tex_prose(intro), ""]
+    lines = [f"\\subsection{{{escape_tex_prose(title)}}}", "", *render_tex_intro(intro), ""]
     for item in sections:
         doc = item["doc"]
         if item["kind"] == "section":

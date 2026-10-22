@@ -21,9 +21,9 @@ Because every module under `Complexity/` must be upstreamable to `cslib` unchang
 
 - **Bridge module**: `ComplexityTests/Abstracts/<Topic>Bridge.lean`
 - **Abstract module**: `ComplexityTests/Abstracts/<Topic>Abstract.lean`
-- **Audit helper**: [Check.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests/Abstracts/Check.lean) (`#check_abstract`)
+- **Audit helper**: [Check.lean](../../../ComplexityTests/Abstracts/Check.lean) (`#check_abstract`)
 
-Import new `*Abstract.lean` modules from [ComplexityTests.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests.lean) so `lake test --wfail --iofail` builds and audits every abstract in CI.
+Import new `*Abstract.lean` modules from [ComplexityTests.lean](../../../ComplexityTests.lean) so `lake test --wfail --iofail` builds and audits every abstract in CI.
 
 ---
 
@@ -32,18 +32,19 @@ Import new `*Abstract.lean` modules from [ComplexityTests.lean](file:///usr/loca
 Inspect the main theorem statements, their hypotheses, and the corresponding `\begin{result}` entry in `paper/sections/*.tex`. Identify only the concepts needed to state the requested results. The abstract may use simpler, more direct representations than the internal proof, provided the bridge proves the correspondence without weakening or strengthening the intended claims.
 
 Outside implementation references are allowed **only in theorem proofs**. Every reference in a public definition, type, or theorem statement must resolve to:
-1. A declaration within the abstract namespace itself,
+1. A declaration within the abstract namespace itself, defined in the abstract file (`#check_abstract` rejects declarations that another module, such as the bridge, places in the abstract namespace),
 2. An upstream background library (`Init`, `Std`, `Lean`, `Batteries`, `Mathlib`, or upstream `Cslib`), or
-3. An explicitly allowlisted core model module when using `#check_abstract ... allowing [...]`.
+3. An explicitly allowlisted `Complexity.*` or `ComplexityTests.*` module when using `#check_abstract ... allowing [...]`.
 
-This requirement applies transitively: an alias or wrapper around an internal declaration does not make it self-contained, and `#check_abstract` will reject it.
+This requirement applies transitively: an alias or wrapper around an internal declaration does not make it self-contained, and `#check_abstract` will reject it. The audit also traverses the statements and definition bodies of allowlisted declarations, so an allowlist must be closed under their dependencies. For the library's complexity classes this closure includes the tidy-machine modules, so prefer restating the classes over plain upstream machines (Pattern A) to allowlisting them.
 
 ### Readability Guidelines
 - **No top-level `open` in the public abstract**: Use explicit namespace prefixes (e.g., `Cslib.PolynomiallyBounded`, `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`) so readers can immediately distinguish local abstract definitions from background libraries. `open` may be used locally inside `by` proofs or in the bridge.
+- **No notation, macros, local instances, or shadowing**: `#check_abstract` audits elaborated declarations, not syntax, so it cannot see how the file *reads*. Do not declare `notation`, `infix`, `macro`, `syntax`, `local instance`/`attribute [local instance]`, `set_option` that changes elaboration or pretty-printing, or `open ... renaming`/`open ... hiding`, and do not give abstract declarations names that shadow background-library names a reader would expect (`Nat`, `List.sum`, …). A reader must be able to take every symbol in the abstract at its standard meaning.
 - **One canonical definition per concept**: Avoid duplicate theorem formulations or multiple equivalent predicates unless the headline result itself compares them.
 - **Prefer ordinary types and quantifiers**: Prefer functions, `List`, `Fin n → α`, quantifiers, membership, and equalities over custom interfaces, typeclasses, or implementation-specific dependent records.
 - **Use `Fin n → α` for homogeneous tuples**: For more than two homogeneous components, prefer `Fin n → α` over nested cross products, with short descriptive aliases for indices.
-- **Explicit encodings**: When a theorem depends on a binary encoding (such as `encCNF` or binary tree encodings), either spell out the encoding combinators (`frame`, `encodePair`, `encodeList`, `Nat.bits`) directly in the abstract or explicitly allow the foundational encoding module. When packaging an encoding function `encodeX : X → List Bool` into an embedding `def encX : X ↪ List Bool := ⟨encodeX, encodeX_injective⟩`, declare `theorem encodeX_injective : Function.Injective encodeX := Bridge.encodeX_injective` as a local `theorem` before `def encX`: `#check_abstract` traverses the `value?` of non-theorem `def`s and stops at `theorem` proof boundaries, and `scripts/abstract_to_tex.py` automatically elides undocumented helper theorems following a definition block.
+- **Explicit encodings**: When a theorem depends on a binary encoding (such as `encCNF` or binary tree encodings), either spell out the encoding combinators (`frame`, `encodePair`, `encodeList`, `Nat.bits`) directly in the abstract or explicitly allow the foundational encoding module. When packaging an encoding function `encodeX : X → List Bool` into an embedding `def encX : X ↪ List Bool := ⟨encodeX, encodeX_injective⟩`, declare `theorem encodeX_injective : Function.Injective encodeX := Bridge.encodeX_injective` as a local `theorem` before `def encX`: `#check_abstract` traverses the `value?` of non-theorem `def`s and stops at `theorem` proof boundaries, and `scripts/abstract_to_tex.py` elides undocumented `*_injective` helper theorems following a definition block (and only those).
 - **State plain machine bounds where possible**: `Complexitylib` uses `ComputableTidilyInPolyTime` internally for compositional closure (`@[fun_prop]`), and proves it equivalent to plain upstream `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength` with `Cslib.PolynomiallyBounded`. Using the plain upstream notion in the abstract lets a reader verify the theorem statement without needing to inspect tidy-machine invariants.
 
 ---
@@ -79,19 +80,22 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
 
 ## Verify and Integrate
 
-1. **Add `#check_abstract` at the end of `*Abstract.lean`**:
+1. **Add `#check_abstract` at the end of `*Abstract.lean`**, wrapped in `#guard_msgs` so the success report (number of root declarations and dependencies) is pinned and the `hashCommand` linter is satisfied:
    ```lean
+   /--
+   info: abstract audit passed for `ComplexityTests.Abstracts.<Topic>Abstract`: <n> root
+   declarations, <m> dependencies checked
+   -/
+   #guard_msgs (whitespace := lax) in
    #check_abstract ComplexityTests.Abstracts.<Topic>Abstract
    ```
-   Or, if deliberately referencing core `Complexity.*` class definitions:
+   Or, if deliberately referencing `Complexity.*` declarations, list every module in the transitive closure of their statements and definitions:
    ```lean
    #check_abstract ComplexityTests.Abstracts.<Topic>Abstract allowing [
-     Complexity.Computability.Complexity.Reduction,
-     Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair,
-     Complexity.Computability.Machines.Turing.MultiTape.Encodings.List,
      Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
    ]
    ```
+   Local `-DwarningAsError=true` runs report linter warnings as infos; validate with `lake test --wfail --iofail`.
 2. **Compile and check**:
    ```bash
    lake build --wfail --iofail ComplexityTests.Abstracts.<Topic>Abstract
@@ -110,8 +114,10 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
 Consult these concrete implementations in `ComplexityTests/Abstracts/`:
 
 - **Pattern A (Unfolded types, zero `Complexity.*` dependencies)**:
-  [CookLevinAbstract.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests/Abstracts/CookLevinAbstract.lean) and [CookLevinBridge.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests/Abstracts/CookLevinBridge.lean) (`SAT` and `ExactThreeSAT` are `NP`-complete, `UNSAT` is `coNP`-complete).
+  [CookLevinAbstract.lean](../../../ComplexityTests/Abstracts/CookLevinAbstract.lean) and [CookLevinBridge.lean](../../../ComplexityTests/Abstracts/CookLevinBridge.lean) (`SAT` and `ExactThreeSAT` are `NP`-complete, `UNSAT` is `coNP`-complete).
 - **Pattern B (Fresh `inductive` syntax + polymorphic `Presentation` / `Laws`, zero `Complexity.*` dependencies)**:
-  [TQBFAbstract.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests/Abstracts/TQBFAbstract.lean) and [TQBFBridge.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests/Abstracts/TQBFBridge.lean) (`TQBF` is `PSPACE`-complete).
-- **Allowlist mode (`#check_abstract ... allowing [...]`)**:
-  [SubsetSumAbstract.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests/Abstracts/SubsetSumAbstract.lean) and [SubsetSumBridge.lean](file:///usr/local/google/home/samschlesinger/code/complexitylib2/ComplexityTests/Abstracts/SubsetSumBridge.lean) (`SubsetSum` is `NP`-complete, reusing `Cslib.Complexity.NPComplete` and framed binary encodings while keeping `SubsetSum` self-contained).
+  [TQBFAbstract.lean](../../../ComplexityTests/Abstracts/TQBFAbstract.lean) and [TQBFBridge.lean](../../../ComplexityTests/Abstracts/TQBFBridge.lean) (`TQBF` is `PSPACE`-complete).
+- **Pattern A reusing another bridge**:
+  [SubsetSumAbstract.lean](../../../ComplexityTests/Abstracts/SubsetSumAbstract.lean) and [SubsetSumBridge.lean](../../../ComplexityTests/Abstracts/SubsetSumBridge.lean) (`SubsetSum` is `NP`-complete with numbers in binary; the bridge reuses the plain `NP` transfer lemmas of `CookLevinBridge`).
+- **Audit regression tests, including allowlist mode**:
+  [CheckTests.lean](../../../ComplexityTests/Abstracts/CheckTests.lean).
