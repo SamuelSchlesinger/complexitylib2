@@ -58,6 +58,20 @@ example :
     C.fastSymPlusEval x₁ x₂ = true := by
   decide
 
+-- Non-vacuity of `SymPlusCompilation` and `exists_fastSymPlusEval_of_symPlusCompilation` at
+-- depth `0`: a depth-`0` wiring circuit compiles to a `Sym⁺` circuit of size `≤ 1`.
+example (q : ℕ) :
+    let C : Circuit Unbounded.extSignature (2 + 2) 1 :=
+      Circuit.wiring Unbounded.extSignature fun _ => 1
+    ∃ s ≤ 1, ∃ S : SymPlusCircuit (2 + 2) s,
+      (∀ x₁ x₂, S.fastSymPlusEval x₁ x₂ =
+        C.eval (Unbounded.extInterpretation (modGate q)) (Fin.append x₁ x₂) 0) ∧
+      ((∃ x : BitString (2 + 2),
+        C.eval (Unbounded.extInterpretation (modGate q)) x 0 = true) ↔
+        ∃ x₁ x₂, S.fastSymPlusEval x₁ x₂ = true) :=
+  exists_fastSymPlusEval_of_symPlusCompilation (symPlusCompilation_zero q)
+    (Circuit.wiring Unbounded.extSignature fun _ => 1) (by simp)
+
 -- Non-vacuity of `SIZEMod`: for every modulus `q`, every `c ≥ 1`, and every degree `k`,
 -- `Language.ofSlices (modGate q)` belongs to `SIZEMod q (fun n => c * (n + 1) ^ k)`.
 theorem modGate_mem_SIZEMod (q : ℕ) {c : ℕ} (hc : 1 ≤ c) (k : ℕ) :
@@ -217,6 +231,12 @@ info: 'Cslib.Circuits.Boolean.SymPlusCircuit.fastSymPlusEval_eq_eval' depends on
 #print axioms Cslib.Circuits.Boolean.SymPlusCircuit.fastSymPlusEval_eq_eval
 
 /--
+info: 'Cslib.Circuits.Boolean.symPlusCompilation_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.symPlusCompilation_zero
+
+/--
 info: 'Cslib.Circuits.Boolean.exists_fastSymPlusEval_of_symPlusCompilation' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -248,6 +268,13 @@ info: 'Cslib.Circuits.Boolean.SIZEMod_subset_SIZE' depends on axioms: [propext, 
 #print axioms Cslib.Circuits.Boolean.SIZEMod_subset_SIZE
 
 /--
+info: 'Cslib.Circuits.Boolean.Kannan.language_notMem_SIZEMod' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Kannan.language_notMem_SIZEMod
+
+/--
 info: 'Cslib.Circuits.Boolean.exists_mem_SigmaP_two_notMem_SIZEMod' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -269,6 +296,13 @@ info: 'Cslib.Circuits.Boolean.PH_eq_SigmaP_two_of_NEXP_subset_ACC0' depends on a
 #print axioms Cslib.Circuits.Boolean.PH_eq_SigmaP_two_of_NEXP_subset_ACC0
 
 /--
+info: 'Cslib.Circuits.Boolean.Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0
+
+/--
 info: 'Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_ACC0' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
@@ -281,12 +315,5 @@ info: 'Cslib.Circuits.Boolean.not_NEXP_subset_ACC0' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.not_NEXP_subset_ACC0
-
-/--
-info: 'Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_ACC0_of_EXP_subset_P' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.exists_mem_NEXP_notMem_ACC0_of_EXP_subset_P
 
 end ComplexityTests.Computability.Circuit.Boolean.ACC0

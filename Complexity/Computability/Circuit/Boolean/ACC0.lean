@@ -9,12 +9,12 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.ModMajority
-public import Complexity.Computability.Circuit.Boolean.PPolyHard
-public import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
 public import Complexity.Computability.Circuit.Boolean.ThresholdNC1
 public import Complexity.Computability.Complexity.Classes.EXP
 public import Complexity.Computability.Complexity.Classes.Inclusions
 public import Complexity.Computability.Complexity.Classes.PH.Kannan
+import Complexity.Computability.Circuit.Boolean.PPolyHard
+import Complexity.Computability.Circuit.Boolean.Smolensky.Majority
 import Complexity.Computability.Complexity.Classes.PH.KarpLipton
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Foundations.Data.Nat.PolynomialBound.Log
@@ -65,12 +65,11 @@ The second half of the file develops Williams's algorithmic method for `ACC⁰` 
     a language in `Σ₂ ⊆ NEXP` with no `MOD_q` circuits of size `O(n ^ k)` of any depth
     (`exists_mem_SigmaP_two_notMem_SIZEMod`, `exists_mem_NEXP_notMem_SIZEMod`).
   - Unconditionally, if `NEXP ⊆ ACC0`, then `NEXP ⊆ PPoly` and the polynomial hierarchy collapses
-    to `Σ₂` (`PH_eq_SigmaP_two_of_NEXP_subset_ACC0`).
-  - Combining the satisfiability-to-lower-bounds / easy-witness collapse with the unconditional
-    fixed-degree `Σ₂` lower bound (`exists_mem_SigmaP_two_notMem_SIZEMod`) and time-hierarchy
-    separation (`P_ssubset_EXP`) yields Williams's separation `NEXP ⊄ ACC⁰`
-    (`exists_mem_NEXP_notMem_ACC0`, `not_NEXP_subset_ACC0`,
-    `exists_mem_NEXP_notMem_ACC0_of_EXP_subset_P`).
+    to `Σ₂` (`PH_eq_SigmaP_two_of_NEXP_subset_ACC0`), placing Kannan's `Σ₃` language into `Σ₂`
+    (`Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0`).
+  - Combining the satisfiability-to-lower-bounds / easy-witness collapse with the Karp–Lipton
+    collapse `PH_eq_SigmaP_two_of_NEXP_subset_ACC0` and `Kannan.language_notMem_SIZEMod` yields
+    Williams's separation `NEXP ⊄ ACC⁰` (`exists_mem_NEXP_notMem_ACC0`, `not_NEXP_subset_ACC0`).
 
 ## Main definitions
 
@@ -1023,6 +1022,22 @@ def SymPlusCompilation (q d : ℕ) (sizeBound : ℕ → ℕ → ℕ) : Prop :=
     ∃ s ≤ sizeBound n C.size, ∃ S : SymPlusCircuit n s,
       ∀ x : BitString n, S.eval x = C.eval (extInterpretation (modGate q)) x 0
 
+/-- Depth-`0` `AC⁰[q]` circuits (pure input projections) compile to `Sym⁺` circuits of size `1`. -/
+theorem symPlusCompilation_zero (q : ℕ) : SymPlusCompilation q 0 (fun _ _ => 1) := by
+  intro n C hd
+  have h0 : C.program.wireDepths (C.outputs 0) ≤ 0 :=
+    (C.outputDepths_le_depth 0).trans hd
+  cases hout : C.outputs 0 with
+  | input i =>
+    refine ⟨1, le_rfl, SymPlusCircuit.ofProj n i, fun x => ?_⟩
+    rw [SymPlusCircuit.eval_ofProj]
+    change x i = C.program.trace (extInterpretation (modGate q)) x (C.outputs 0)
+    rw [hout]
+    rfl
+  | gate k =>
+    rw [hout, Program.wireDepths_gateWire] at h0
+    exact absurd (C.program.depths_pos k) (by omega)
+
 /-- Under `SymPlusCompilation q d sizeBound`, satisfiability of any depth-`d` `AC⁰[q]` circuit `C`
 on `n₁ + n₂` inputs reduces to `fastSymPlusEval` on a `Sym⁺` circuit of size at most
 `sizeBound (n₁ + n₂) C.size`. -/
@@ -1116,6 +1131,12 @@ def SIZEMod (q : ℕ) (s : ℕ → ℕ) : Set (Language Bool) :=
   {L | ∀ n, ∃ C : Circuit extSignature n 1,
     C.Computes (extInterpretation (modGate q)) (single (L.slice n)) ∧ C.size ≤ s n}
 
+/-- `SIZEMod q` is monotone in the size bound. -/
+theorem SIZEMod_mono (q : ℕ) : Monotone (SIZEMod q) := by
+  intro s₁ s₂ hs L hL n
+  obtain ⟨C, hCc, hCs⟩ := hL n
+  exact ⟨C, hCc, hCs.trans (hs n)⟩
+
 /-- Every `AC⁰[q]` language lies in `SIZEMod q s` for some polynomially bounded `s`. -/
 theorem exists_mem_SIZEMod_of_mem_AC0Mod {q : ℕ} {L : Language Bool} (hL : L ∈ AC0Mod q) :
     ∃ c k : ℕ, L ∈ SIZEMod q fun n => c * (n + 1) ^ k := by
@@ -1166,6 +1187,14 @@ theorem SigmaP_subset_NEXP {α : Type} {enc : α ↪ List Bool} (k : ℕ) :
     SigmaP k enc ⊆ NEXP enc :=
   (SigmaP_subset_EXP k).trans EXP_subset_NEXP
 
+/-- **Kannan's language escapes `SIZEMod q`**: for every `q, k, c : ℕ`,
+`Kannan.language (8 * (k + 1))` has no circuits over the `AC⁰[q]` basis of size
+`c * (n + 1) ^ k` [Kannan1982]. -/
+theorem Kannan.language_notMem_SIZEMod (q k c : ℕ) :
+    Kannan.language (8 * (k + 1)) ∉ SIZEMod q fun n => c * (n + 1) ^ k :=
+  fun hc => Kannan.language_notMem_SIZE (8 * (k + 1))
+    ((2100 * (max q 1) ^ 3) ^ 2 * (c + 1) ^ 8) (SIZEMod_subset_SIZE q c k hc)
+
 /-- **Unconditional fixed-exponent `MOD_q` circuit lower bound in `Σ₂`** (for every modulus `q`,
 prime or composite): for every `q, k : ℕ`, some language in `Σ₂` has no circuits over the `AC⁰[q]`
 basis of size `O(n ^ k)` (even of unbounded depth), by combining `SIZEMod_subset_SIZE` with
@@ -1205,45 +1234,44 @@ theorem PH_eq_SigmaP_two_of_NEXP_subset_ACC0
   exact ⟨encCNF '' SAT, ACC0_subset_PPoly (h _ hSAT_NEXP),
     fun φ => encCNF.injective.mem_set_image.symm⟩
 
+/-- **If `NEXP ⊆ ACC⁰`, then Kannan's `Σ₃` language `Kannan.language k` lies in `Σ₂`**, via
+`PH_eq_SigmaP_two_of_NEXP_subset_ACC0` and `Kannan.language_mem_SigmaP_three`. -/
+theorem Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0
+    (h : ∀ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits → L ∈ ACC0) (k : ℕ) :
+    (Kannan.language k : Set (List Bool)) ∈ SigmaP 2 encBits := by
+  rw [← PH_eq_SigmaP_two_of_NEXP_subset_ACC0 h encBits]
+  exact SigmaP_subset_PH 3 (Kannan.language_mem_SigmaP_three k)
+
 /-- **Williams's `NEXP ⊄ ACC⁰` theorem** [Williams, Theorem 1.1][Williams2014]: under the
-easy-witness and `Sym⁺` satisfiability collapse (which from `NEXP ⊆ ACC⁰` places `Σ₂` into a fixed
-polynomial-size modular circuit class `SIZEMod q (c (n + 1) ^ k)`), some language in `NEXP` is not
-in `ACC⁰`, refuted unconditionally by `exists_mem_SigmaP_two_notMem_SIZEMod`. -/
+easy-witness and `Sym⁺` satisfiability collapse (which from `NEXP ⊆ ACC⁰` places `Σ₂` into
+fixed-degree polynomial-size modular circuits `SIZEMod q (c (n + 1) ^ k)` for some modulus `q` and
+exponent `k`), some language in `NEXP` is not in `ACC⁰`, refuted by
+`Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0` and `Kannan.language_notMem_SIZEMod`. -/
 theorem exists_mem_NEXP_notMem_ACC0
     (hCollapse :
       (∀ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits → L ∈ ACC0) →
-      ∃ q k c : ℕ, ∀ L : Language Bool,
-        (L : Set (List Bool)) ∈ SigmaP 2 encBits → L ∈ SIZEMod q fun n => c * (n + 1) ^ k) :
+      ∃ q k : ℕ, ∀ L : Language Bool,
+        (L : Set (List Bool)) ∈ SigmaP 2 encBits →
+        ∃ c : ℕ, L ∈ SIZEMod q fun n => c * (n + 1) ^ k) :
     ∃ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits ∧ L ∉ ACC0 := by
   by_contra hAll
   push Not at hAll
-  obtain ⟨q, k, c, hSigma⟩ := hCollapse hAll
-  obtain ⟨L, hL₂, hLnot⟩ := exists_mem_SigmaP_two_notMem_SIZEMod q k
-  exact hLnot c (hSigma L hL₂)
+  obtain ⟨q, k, hSigma⟩ := hCollapse hAll
+  obtain ⟨c, hc⟩ := hSigma (Kannan.language (8 * (k + 1)))
+    (Kannan.language_mem_SigmaP_two_of_NEXP_subset_ACC0 hAll (8 * (k + 1)))
+  exact Kannan.language_notMem_SIZEMod q k c hc
 
 /-- **Williams's `NEXP ⊄ ACC⁰` theorem, negated-inclusion form**
 [Williams, Theorem 1.1][Williams2014]: not every language in `NEXP` belongs to `ACC⁰`. -/
 theorem not_NEXP_subset_ACC0
     (hCollapse :
       (∀ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits → L ∈ ACC0) →
-      ∃ q k c : ℕ, ∀ L : Language Bool,
-        (L : Set (List Bool)) ∈ SigmaP 2 encBits → L ∈ SIZEMod q fun n => c * (n + 1) ^ k) :
+      ∃ q k : ℕ, ∀ L : Language Bool,
+        (L : Set (List Bool)) ∈ SigmaP 2 encBits →
+        ∃ c : ℕ, L ∈ SIZEMod q fun n => c * (n + 1) ^ k) :
     ¬ (∀ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits → L ∈ ACC0) := by
   intro hAll
   obtain ⟨L, hLNEXP, hLnot⟩ := exists_mem_NEXP_notMem_ACC0 hCollapse
   exact hLnot (hAll L hLNEXP)
-
-/-- **Williams's `NEXP ⊄ ACC⁰` theorem via time-hierarchy collapse (`EXP ⊆ P`)**
-[Williams, Theorem 1.1][Williams2014]: if `NEXP ⊆ ACC⁰` collapses `EXP` to `P`, then some language
-in `NEXP` is not in `ACC⁰`, refuted unconditionally by the deterministic time hierarchy separation
-`P_ssubset_EXP`. -/
-theorem exists_mem_NEXP_notMem_ACC0_of_EXP_subset_P
-    (hCollapse :
-      (∀ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits → L ∈ ACC0) →
-      EXP encBits ⊆ P encBits) :
-    ∃ L : Language Bool, (L : Set (List Bool)) ∈ NEXP encBits ∧ L ∉ ACC0 := by
-  by_contra hAll
-  push Not at hAll
-  exact P_ssubset_EXP.not_subset (hCollapse hAll)
 
 end Cslib.Circuits.Boolean
