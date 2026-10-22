@@ -1164,6 +1164,7 @@ public import Complexity.Crypto.Computational.Bootstrapping
 public import Complexity.Crypto.Computational.Bootstrapping.HomomorphicEval
 public import Complexity.Crypto.Computational.Bootstrapping.KeyChain
 public import Complexity.Crypto.Computational.Bootstrapping.KeyEncryption
+public import Complexity.Crypto.Computational.Commitment
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
@@ -1238,6 +1239,7 @@ public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Crypto.Computational.UniformChoice
+public import Complexity.Crypto.Computational.ZeroKnowledge
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical

@@ -1,0 +1,112 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+import Complexity.Crypto.Computational.ZeroKnowledge
+
+/-! Tests and axiom guards for Naor's bit commitment scheme and the Goldreich–Micali–Wigderson
+computational zero-knowledge interactive proof system for `NP`. -/
+
+namespace ComplexityTests.Crypto.ZeroKnowledge
+
+open Cslib Cslib.Crypto Cslib.Complexity Cslib.Probability Cslib.Logic.PL Turing.MultiTapeTM
+
+private def tripleGen (s : List Bool) : List Bool :=
+  s ++ s ++ s ++ [false]
+
+private theorem length_tripleGen (s : List Bool) :
+    (tripleGen s).length = 3 * s.length + 1 := by
+  simp [tripleGen]
+  omega
+
+-- Concrete completeness check for Naor's commitment scheme on a 2-bit seed.
+example (r : List Bool) (b : Bool) :
+    naorVerify tripleGen 2 r
+      (naorCommit tripleGen r b [true, false]) b [true, false] = true :=
+  naorVerify_naorCommit r b (by decide)
+
+-- Concrete soundness check for Naor's statistical binding bound.
+example (n : ℕ) :
+    naorBindingProb tripleGen (fun k => 3 * k + 1) n ≤ (1 / 2 : ENNReal) ^ (n + 1) :=
+  naorBindingProb_le_of_three_mul_add_one length_tripleGen n le_rfl
+
+-- Concrete satisfiable 3CNF formula and witness check.
+private def satFormula : CNF ℕ := [[(0, true), (1, false)]]
+
+private theorem satFormula_verified :
+    ThreeSAT.verifier (satFormula, [true, false]) = true := by
+  decide
+
+-- Concrete completeness of the GMW verifier against the honest GMW prover on `satFormula`.
+example (n : ℕ) :
+    acceptProb
+      (GMW.gmwVerifier tripleGen (fun k => 3 * k + 1) id n satFormula)
+      (GMW.gmwProver tripleGen (n + 7) (3 * (n + 7) + 1) satFormula [true, false]) = 1 :=
+  GMW.acceptProb_gmwVerifier_gmwProver length_tripleGen id n satFormula satFormula_verified
+
+-- Concrete soundness of the GMW verifier on the unsatisfiable formula `[[]]` against all provers.
+private theorem unsatFormula_not_mem_ThreeSAT : ([] :: [] : CNF ℕ) ∉ ThreeSAT := by
+  rintro ⟨_, τ, hτ⟩
+  cases hτ
+
+example (n : ℕ) (P : Prover Unit) :
+    acceptProb
+      (GMW.gmwVerifier tripleGen (fun k => 3 * k + 1) id n ([[]] : CNF ℕ)) P ≤ 1 / 3 :=
+  GMW.acceptProb_gmwVerifier_le length_tripleGen (fun _ => le_rfl) id n [[]]
+    unsatFormula_not_mem_ThreeSAT P
+
+-- Every language with a zero-knowledge interactive proof system belongs to `IP`.
+example {α : Type} {enc : α ↪ List Bool} {A : Set α} (zk : ZeroKnowledgeProof enc A) :
+    A ∈ IP enc :=
+  zk.mem_IP
+
+-- `ThreeSAT` has a computational zero-knowledge proof system from any one-way function.
+example {f : List Bool → List Bool} (hf : OneWay f) :
+    Nonempty (ZeroKnowledgeProof encCNF ThreeSAT) :=
+  hf.exists_zeroKnowledgeProof_of_mem_NP ThreeSAT.mem_NP
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.naorBitCommitment' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PseudorandomGenerator.naorBitCommitment
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_bitCommitmentScheme' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_bitCommitmentScheme
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PseudorandomGenerator.naorCommit_hiding
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.zeroKnowledgeProofThreeSAT' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PseudorandomGenerator.zeroKnowledgeProofThreeSAT
+
+/--
+info: 'Cslib.Crypto.PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_zeroKnowledgeProof_of_mem_NP
+
+end ComplexityTests.Crypto.ZeroKnowledge
