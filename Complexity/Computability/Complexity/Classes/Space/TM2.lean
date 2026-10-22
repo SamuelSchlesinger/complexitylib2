@@ -1,0 +1,55 @@
+/-
+Copyright (c) 2026 Erik Demaine. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Erik Demaine
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Computability.Machines.Turing.TM2.PolySpace
+public import Complexity.Computability.Complexity.Classes.Inclusions
+
+/-!
+# Polynomial-space Mathlib stack machines decide problems in PSPACE
+
+The source certificate supplies termination and a Boolean answer. A polynomial bound on every
+reachable source stack gives a tidy polynomial-space computation, then membership in `PSPACE`.
+The source runtime need not be polynomially bounded. Input and output words use the bridge's
+standard finite-symbol encodings; the final Boolean answer is recoded to `encBool`.
+
+## Main results
+
+* `Cslib.Complexity.mem_PSPACE_of_tm2`: a terminating Mathlib TM2 decider with polynomially
+  bounded stacks decides a problem in `PSPACE`.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.1][Sipser2013]
+-/
+
+@[expose] public section
+
+namespace Cslib.Complexity
+
+open _root_.Turing _root_.Turing.MultiTapeTM
+
+/-- A terminating finite-alphabet Mathlib stack-machine decider with polynomially bounded
+stacks decides a problem in `PSPACE`, under the standard binary input-word encoding. -/
+theorem mem_PSPACE_of_tm2 {α αΓ βΓ : Type} [Finite αΓ] [Finite βΓ]
+    {ea : α → List αΓ} {eb : Bool → List βΓ} {f : α → Bool} {A : Set α}
+    (h : TM2Computable ea eb f) [∀ k, Finite (h.tm.Γ k)]
+    (ha : Function.Injective ea) (hb : Function.Injective eb)
+    {space : α → ℕ} (hspace : PolyBounded (fun a => (ea a).length) space)
+    (hstacks : ∀ a i k,
+      (((TM2.stepTotal h.tm.m)^[i]
+        (initList h.tm (List.map h.inputAlphabet.symm (ea a)))).stk k).length ≤ space a)
+    (hA : ∀ a, a ∈ A ↔ f a = true) :
+    A ∈ PSPACE ((⟨ea, ha⟩ : α ↪ List αΓ).trans (encList (encFinite αΓ))) := by
+  have hf := h.computableTidilyInPolySpace ha hb hspace hstacks
+  have hbool := ComputableTidilyInPolyTime.of_finite (id : Bool → Bool)
+    (encA := (⟨eb, hb⟩ : Bool ↪ List βΓ).trans (encList (encFinite βΓ))) (encB := encBool)
+  exact mem_PSPACE_of_computableTidilyInPolySpace
+    ((ComputableTidilyInPolySpace.of_polyTime hbool).comp hf) hA
+
+end Cslib.Complexity

@@ -593,6 +593,7 @@ public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeogr
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Membership
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
+public import Complexity.Computability.Complexity.Classes.Space.TM2
 public import Complexity.Computability.Complexity.Classes.Space.TQBF
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Evaluation
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Formula
@@ -787,6 +788,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.DPi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
@@ -841,6 +843,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Verifi
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.DPi
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
@@ -955,6 +958,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Resou
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space
 public import Complexity.Computability.Machines.Turing.SingleTape.Partrec
 public import Complexity.Computability.Machines.Turing.SingleTape.PostTuringMachine
+public import Complexity.Computability.Machines.Turing.TM2.ConfigBound
+public import Complexity.Computability.Machines.Turing.TM2.Encoding
+public import Complexity.Computability.Machines.Turing.TM2.PolySpace
+public import Complexity.Computability.Machines.Turing.TM2.PolyTime
+public import Complexity.Computability.Machines.Turing.TM2.Simulation
 public import Complexity.Computability.PCP.Amplification
 public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family

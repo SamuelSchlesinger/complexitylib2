@@ -1,6 +1,41 @@
 \section{Space, alternation and interaction}
 
 \begin{result}
+\subsection{Mathlib stack machines give polynomial-time multi-tape computations}
+Let $f:\alpha\to\beta$ have a Mathlib \lean{TM2ComputableInPolyTime} certificate with
+injective word encoders $e_\alpha,e_\beta$. The fixed source machine has finitely many stacks,
+labels and register states; assume also that every working alphabet is finite. Encode each
+input or output word using \lean{encList (encFinite \_)}: symbols are unary ranks in a fixed
+enumeration, with framing between symbols. Then an actual tidy binary multi-tape Turing machine
+computes $f$ under these encodings in polynomial time and space in the encoded input length.
+The input and output alphabets may differ or be empty. The proof certifies source statements
+through the list and finite-table calculus and bounds intermediate configurations; it does not
+assert preservation of a source space bound or a converse class equivalence.
+\declat{670c5abcbfea59068c817ce0ba96c56ff7d09a1f}{Complexity/Computability/Machines/Turing/TM2/PolyTime.lean}{150}{Turing.TM2ComputableInPolyTime.computableTidilyInPolyTime}
+\end{result}
+
+\begin{result}
+\subsection{Terminating Mathlib stack machines with polynomial space}
+Let $f:\alpha\to\beta$ have a Mathlib \lean{TM2Computable} certificate with injective word
+encoders, and assume all working alphabets are finite. Suppose there is a polynomial $p$ such
+that, on input $a$, each stack in every configuration of the source run has length at most
+$p(n)$, where $n=|e_\alpha(a)|$. This includes initialization and the halted configuration;
+input and output stacks both count. Then $f$ is tidily computable in polynomial space in the
+encoded input length, using the same binary word encodings as above. No source runtime bound
+is required. For Boolean $f$, any problem decided by $f$ belongs to $\cc{PSPACE}$.
+
+The proof bounds configuration encodings linearly in stack space. A terminating deterministic
+run cannot repeat a configuration before halting, so for a machine-dependent constant $C$,
+$2^{C(p(n)+1)+1}$ rounds suffice. Existing polynomial-space iteration uses a binary clock and
+retains only polynomially sized intermediate states. The resulting space overhead is polynomial;
+no linear overhead, sublinear work-space simulation or converse equivalence is asserted.
+\cite{Sipser2013,AroraBarak09}
+\declat{d519401281aca7ebe881ae9ea21b08991d4b9acf}{Complexity/Computability/Machines/Turing/TM2/ConfigBound.lean}{118}{Turing.TM2.exists_exponential_clock}
+\declat{d519401281aca7ebe881ae9ea21b08991d4b9acf}{Complexity/Computability/Machines/Turing/TM2/PolySpace.lean}{75}{Turing.TM2Computable.computableTidilyInPolySpace}
+\declat{d519401281aca7ebe881ae9ea21b08991d4b9acf}{Complexity/Computability/Complexity/Classes/Space/TM2.lean}{39}{Cslib.Complexity.mem_PSPACE_of_tm2}
+\end{result}
+
+\begin{result}
 \textbf{Containment map.}
 The proved machine-class relationships include
 \[
