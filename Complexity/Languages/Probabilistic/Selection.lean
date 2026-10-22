@@ -230,9 +230,8 @@ theorem selectBest_test_error_le (count confidence inverseTolerance : ℕ)
     {false} (error := (eval (test i) false).toReal + 2 / inverseTolerance)
     (by positivity) (by
       intro chosen _ hgood
-      have hchosen := Probability.PMF.sum_toReal (eval (test chosen))
-      have hi' := Probability.PMF.sum_toReal (eval (test i))
-      simp only [Fintype.sum_bool] at hchosen hi'
+      have hchosen := Probability.PMF.toReal_true_add_toReal_false (eval (test chosen))
+      have hi' := Probability.PMF.toReal_true_add_toReal_false (eval (test i))
       simp only [PMF.toOuterMeasure_apply_singleton]
       have := hgood.2 i hi
       linarith)

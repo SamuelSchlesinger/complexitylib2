@@ -395,8 +395,9 @@ The construction reuses the existing shape checker and quantified counter-progra
 control, and Christian Reitwiessner's native binary arithmetic and digit-access
 certificate. Binary value and index storage, as well as arithmetic intermediates,
 are charged by the native simulation. No time bound for digit access is asserted.
-The next entry supplies the canonical full-tuple interpretation transducer;
-restricted-domain ordered reductions, projections and capture remain open.
+The next entry supplies the canonical full-tuple interpretation transducer.
+Certified ordered first-order reductions, including restricted domains, follow
+two entries below; projections and capture remain open.
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{65}{Cslib.Logic.FO.Ordered.queryLanguage}
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{224}{Cslib.Logic.FO.Ordered.modelChecker}
 \declat{e7cab391135be9da1becec0fbfd62c63e37853b6}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered.lean}{236}{Cslib.Logic.FO.Ordered.queryLanguage_mem_L}
@@ -439,15 +440,12 @@ This proves the full-domain canonical transducer case of
 \href{https://people.cs.umass.edu/~immerman/book/ch3.pdf\#page=4}{Immerman's
 Proposition~3.5}, using the numeric lifting of Remark~1.32 and
 Exercise~1.33.\citep{Immerman1999}
-The counter-program transducer checks source shape and $n\ge2$, writes the
-unary header of length $n^k$, and streams each target relation table by
-converting each target argument's rank to its reversed base-$n$ coordinates
-under the source evaluator. It shares the header, table-framing and rejection
-output routines with the order-free interpretation transducer below. The bound
-is for a fixed vocabulary, dimension and interpretation relative to the
-structure encoding; it does not claim a canonical numeric target for $k=0$,
-automatic numeric preservation on restricted domains, isomorphism-closed
-class-level ordered reduction closure, or first-order projection completeness.
+The machine is the domain-formula transducer of the next entry applied to the
+interpretation with domain $\top$, whose encoded map coincides with
+\lean{encodedMap} for every $k$. The bound is for a fixed vocabulary,
+dimension and interpretation relative to the structure encoding; it does not
+claim a canonical numeric target for $k=0$ or first-order projection
+completeness.
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{49}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedMap}
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{72}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.card_encodedMap}
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{79}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.wellFormed_encodedMap_iff}
@@ -455,9 +453,80 @@ class-level ordered reduction closure, or first-order projection completeness.
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{115}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.length_encStructure_encodedMap}
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{125}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv}
 \declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean}{174}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedModelEquiv_apply_val}
-\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{409}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap}
-\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{492}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.mem_queryLanguage_encodedMap_iff}
-\declat{bf7afb0a2bb77c5b0c67a8a1b9e643763b312a60}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{525}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean}{147}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.encodedMap_toDomainInterpretation}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{211}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.computableInLogSpace_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{218}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.mem_queryLanguage_encodedMap_iff}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{251}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.logSpaceReducible_onSentence}
+\end{result}
+
+\begin{result}
+\subsection{Ordered first-order reductions are logspace reductions}
+Fix finite relational source and target input vocabularies and a dimension
+$k$. An ordered interpretation with a domain formula consists of a formula
+$\varphi_0(\bar x)$ in $k$ variables and, for each $r$-ary target input
+relation, a formula in $r$ blocks of $k$ variables, all over the source
+vocabulary expanded by canonical $\le$, BIT and the constants $0$, $1$ and
+$\max$. On an ordered source structure on $[n]$, $n\ge2$, its image has as
+universe the $k$-tuples satisfying $\varphi_0$, ordered lexicographically and
+renumbered by rank onto $[m]$, with the target relations evaluated at the
+corresponding tuples and canonical numerics on $[m]$. The interpretation is
+admissible when $m\ge2$ for every source; this is the library's convention,
+motivated by Proviso~1.15, since Definition~1.26 does not discuss domains with
+fewer than two tuples. Its total encoded map sends well-formed sources with $n\ge2$
+to the encoded image, of any size $m$ (images with $m<2$ belong to no ordered
+query language), and all other inputs to the malformed sentinel.
+
+For each fixed interpretation and pair of vocabularies, one multi-tape Turing
+machine computes this map in logarithmic work space relative to
+\lean{encStructure}. It counts the domain tuples to write the
+unary size and streams each target relation table, recovering the tuple of
+each rank by counting again; the same domain-counting transducer, parametrized
+by the formula compiler, also computes order-free interpretations. Hence an
+admissible interpretation whose image map sends exactly the members of an
+ordered query $K$ into $K'$ yields a logarithmic-space many-one reduction
+between their encoded query languages. No first-order definability of the
+target numerics is assumed: ranks are computed by counting.
+
+First-order reducibility $K\le_{\mathrm{fo}}K'$ (\lean{Reduces}) is many-one
+reducibility by images of admissible interpretations carrying a numeric
+certificate: formulas defining the target order, BIT and constants on domain
+tuples, correct on every source, as Remark~1.32 requires. Without
+$\varphi_0\equiv\mathrm{true}$, BIT need not be first-order definable in the
+image (the paragraph after Exercise~1.33), so the certificate is supplied rather
+than derived. The identity interpretation is certified and certified
+interpretations compose, so $\le_{\mathrm{fo}}$ is reflexive and transitive
+(Proposition~1.28, Exercise~2.15(1)); it respects
+complements, first-order definability pulls back along it, and full-tuple
+interpretations of positive dimension are certified. Every first-order
+reduction is therefore a logspace reduction of encoded ordered queries
+(Theorem~3.1), and membership in L or P transfers from target to source
+(Proposition~3.10).\citep{Immerman1999}
+Certificates are supplied explicitly; the library builds them for full-tuple
+interpretations of positive dimension, the identity, and composites of
+certified interpretations. Images are always ordered lexicographically
+(Remark~1.32's default; other definable orders are not covered) and targets
+are relational, without constant symbols; projections and completeness are
+not covered.
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{79}{Cslib.Logic.FO.Ordered.DomainInterpretation}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{261}{Cslib.Logic.FO.Ordered.DomainInterpretation.Admissible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation.lean}{275}{Cslib.Logic.FO.Ordered.DomainInterpretation.map}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Encoding.lean}{97}{Cslib.Logic.FO.Ordered.DomainInterpretation.encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Encoding.lean}{162}{Cslib.Logic.FO.Ordered.DomainInterpretation.decode?_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Transducer.lean}{853}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMapWith}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{136}{Cslib.Logic.FO.Ordered.DomainInterpretation.computableInLogSpace_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{159}{Cslib.Logic.FO.Ordered.DomainInterpretation.logSpaceReducible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Certificate.lean}{76}{Cslib.Logic.FO.Ordered.DomainInterpretation.Certificate}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/DomainInterpretation/Certificate.lean}{217}{Cslib.Logic.FO.Ordered.DomainInterpretation.Certificate.realize_onSentence}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{163}{Cslib.Logic.FO.Ordered.Reduces}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{169}{Cslib.Logic.FO.Ordered.Reduces.refl}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{173}{Cslib.Logic.FO.Ordered.Reduces.trans}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{178}{Cslib.Logic.FO.Ordered.Reduces.compl}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/Reduction.lean}{193}{Cslib.Logic.FO.Ordered.Definable.of_reduces}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean}{95}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.certificate}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Logics/FirstOrder/Ordered/FullTuple/DomainInterpretation.lean}{139}{Cslib.Logic.FO.Ordered.FullTupleInterpretation.reduces}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{178}{Cslib.Logic.FO.Ordered.Reduces.logSpaceReducible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{187}{Cslib.Logic.FO.Ordered.Reduces.encodedLanguage_mem_L}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Ordered/Reduction.lean}{193}{Cslib.Logic.FO.Ordered.Reduces.encodedLanguage_mem_P}
 \end{result}
 
 \begin{result}
@@ -476,13 +545,14 @@ from the target query language to the source. Parsed structure data with invalid
 table sizes map to fixed invalid target data; this is the shape check within
 the encoding-relative contract. Empty universes, empty interpreted domains,
 nullary relations, and dimension-zero interpretations are included.
-These statements concern the order-free general layer; the canonical full-tuple
-ordered transducer is covered in the preceding entry.
+These statements concern the order-free general layer. The machine is the
+same domain-counting transducer as for ordered interpretations, instantiated
+with the order-free formula compiler.
 \citep{Immerman1999,Sipser2013}
-\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{892}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap}
-\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{987}{Cslib.Logic.FO.Reduces.logSpaceReducible}
-\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{1001}{Cslib.Logic.FO.Reduces.queryLanguage_mem_L}
-\declat{ec952980ee9ce16d14771a8738e13219dca27c81}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{1008}{Cslib.Logic.FO.Reduces.queryLanguage_mem_P}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{95}{Cslib.Logic.FO.Interpretation.computableInLogSpace_encodedMap}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{114}{Cslib.Logic.FO.Reduces.logSpaceReducible}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{128}{Cslib.Logic.FO.Reduces.queryLanguage_mem_L}
+\declat{834487c03e8b5c978728c85dc4d45266f4a5408a}{Complexity/Computability/Complexity/Classes/LogSpace/FirstOrder/Reduction.lean}{135}{Cslib.Logic.FO.Reduces.queryLanguage_mem_P}
 \end{result}
 
 
@@ -754,4 +824,154 @@ $C$ in the literature, not prefix-free complexity.\citep{LiVitanyi2019}
 \decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{82}{Cslib.Kolmogorov.DescriptionMethod.tendsto_complexity_universal}
 \decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{184}{Cslib.Kolmogorov.DescriptionMethod.frequently_complexity_universal_lt_of_computable}
 \decl{Complexity/Computability/Kolmogorov/Uncomputability.lean}{208}{Cslib.Kolmogorov.DescriptionMethod.not_computable_complexity_universal}
+\end{result}
+
+\begin{result}
+\subsection{Single-tape, Post--Turing (\texttt{TM0}/\texttt{TM1}) and multi-tape machine simulations}
+Over any alphabet $\Sigma$, the library's trailing-blank stack tapes and bi-infinite
+tapes are isomorphic to Mathlib's \lean{Turing.ListBlank} and \lean{Turing.Tape} on
+$\operatorname{Option}\Sigma$ (\lean{StackTape.equivListBlank},
+\lean{BiTape.equivTape}), commuting with initialization, reads, writes and head
+moves. For a finite inhabited alphabet $\Sigma$, every single-tape Turing machine
+$M$ (\lean{SingleTapeTM}) embeds step-for-step into Mathlib's Wang B-machine model
+\lean{Turing.TM1} (\lean{toTM1}) preserving \lean{StateTransition.eval} and
+\lean{EvalsToInTime}, and compiles via \lean{TM1to0.tr} into a finitely
+supported Post--Turing machine \lean{Turing.TM0} (\lean{toTM0}) preserving
+\lean{TM0.eval}. Conversely, every Post--Turing machine $M_0$ on
+$\operatorname{Option}\Sigma$ over an inhabited state type $\Lambda$ (with decidable
+equality) supported on a finite state set $S$ compiles to a single-tape machine
+\lean{ofTM0} whose non-halting transitions match $M_0$ one-for-one and whose
+terminal states transition to \lean{none} in one final step, so halting in at most
+$t$ steps of $M_0$ with standard output tape $\operatorname{mk}_1(y)$ is equivalent
+to \lean{OutputsWithinTime} in $t+1$ steps; composing with \lean{TM1to0.tr}
+compiles any finitely supported \lean{TM1} machine with inhabited state type
+$\Lambda$ and finite inhabited local variable type $\sigma$ (\lean{ofTM1}).
+
+For a finite inhabited alphabet $\Sigma$, every single-tape machine $M$ is simulated
+by a deterministic one-work-tape multi-tape machine \lean{MultiTapeTM.ofSingleTapeTM}
+in three sequential phases (copying the read-only input $x$ to work tape~$0$ and
+rewinding in $2|x|+4$ steps, executing $t$ single-tape steps on work tape~$0$, and
+emitting $y$ to the output tape until the first blank cell in $|y|+1$ steps; the
+copy and emit phases themselves require no alphabet assumptions): if $M$ outputs
+$y$ on $x$ within $t$ steps, \lean{ofSingleTapeTM} computes $y$ on $x$ in
+output-sensitive time $T=2|x|+4+(t+(|y|+1))$ and work-tape space $T+1$, and in
+input-only time $T_{\mathrm{in}}=3|x|+2t+6$ and space $T_{\mathrm{in}}+1$ (since
+$|y|\le\max(1,|x|)+t$). Consequently, single-tape time-bounded computability lifts
+to \lean{ComputesFunInTimeAndSpace} over $\Sigma$ and to
+\lean{ComputableInTimeAndSpace} over $\mathrm{Bool}$ with time bound
+$3|x|+2t(|x|)+6$ and space bound $3|x|+2t(|x|)+7$, and single-tape polynomial-time
+computability over $\mathrm{Bool}$ lifts to tidy multi-tape polynomial-time
+computability (\lean{PolyTimeComputable.computableTidilyInPolyTime}). Reverse
+multi-tape-to-single-tape simulation is not formalized here.\citep{AroraBarak09,Sipser2013}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Foundations/Data/StackTape.lean}{160}{Cslib.Turing.StackTape.equivListBlank}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Foundations/Data/BiTape.lean}{188}{Cslib.Turing.BiTape.equivTape}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{106}{Cslib.Turing.SingleTapeTM.outputs_iff_mem_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{114}{Cslib.Turing.SingleTapeTM.outputsWithinTime_iff_evalsToInTime}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{229}{Cslib.Turing.SingleTapeTM.eval_toTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{275}{Cslib.Turing.SingleTapeTM.outputsWithinTime_iff_evalsToInTime_toTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{319}{Cslib.Turing.SingleTapeTM.outputs_imp_mem_eval_toTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{507}{Cslib.Turing.SingleTapeTM.outputsWithinTime_ofTM0_iff}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{525}{Cslib.Turing.SingleTapeTM.outputs_ofTM0_iff}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{545}{Cslib.Turing.SingleTapeTM.eval_ofTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/PostTuringMachine.lean}{597}{Cslib.Turing.SingleTapeTM.eval_ofTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{353}{Turing.MultiTapeTM.computesInTimeAndSpace_ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{366}{Turing.MultiTapeTM.computesInTimeAndSpace_ofSingleTapeTM_of_input}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{378}{Turing.MultiTapeTM.computes_ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{386}{Turing.MultiTapeTM.computesInTimeAndSpace_ofTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{419}{Cslib.Turing.SingleTapeTM.TimeComputable.computesFunInTimeAndSpace}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{432}{Cslib.Turing.SingleTapeTM.TimeComputable.computableInTimeAndSpace}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/SingleTape.lean}{443}{Cslib.Turing.SingleTapeTM.PolyTimeComputable.computableTidilyInPolyTime}
+\end{result}
+
+\begin{result}
+\subsection{Partial recursiveness of single-tape, \texttt{TM0}/\texttt{TM1} and multi-tape machines}
+For any \lean{Primcodable} state space with a computable step function,
+\lean{StateTransition.eval} is partial recursive (\lean{Computable.stateTransition_eval}).
+Over any finite inhabited \lean{Primcodable} alphabet, the step function and
+clocked run of every \lean{SingleTapeTM} are primitive recursive and its partial
+evaluation is \lean{Partrec}, as are the evaluations of finitely supported
+\lean{TM0} and \lean{TM1} machines (over inhabited state and finite inhabited local
+store types). Likewise, the universal multi-tape simulator
+\lean{Universal.simulate} is primitive recursive, so \lean{Desc.eval} and the
+partial evaluation \lean{tm.eval} of every finite-state binary \lean{MultiTapeTM}
+are \lean{Partrec}. It follows that on \lean{Primcodable} types, every multi-tape
+\lean{IsComputable} function (with computable input encoding and computable left
+inverse for the output encoding) is Mathlib-\lean{Computable}, every
+\lean{IsDecidable} set with computable encoding satisfies \lean{ComputablePred},
+and every \lean{MappingReducible} reduction (with computable input encoding and
+left-invertible target encoding) induces a Mathlib \lean{ManyOneReducible}
+reduction.\citep{AroraBarak09,Sipser2013}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{58}{Computable.stateTransition_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{553}{Cslib.Turing.SingleTapeTM.partrec_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{563}{Cslib.Turing.SingleTapeTM.partrec_tm0_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/SingleTape/Partrec.lean}{579}{Cslib.Turing.SingleTapeTM.partrec_tm1_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{448}{Turing.MultiTapeTM.Universal.primrec_simulate}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{531}{Turing.MultiTapeTM.Universal.Desc.partrec_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{632}{Turing.MultiTapeTM.partrec_eval}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{653}{Turing.MultiTapeTM.IsComputable.computable}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{679}{Turing.MultiTapeTM.IsDecidable.computablePred}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Machines/Turing/MultiTape/Halting/Partrec.lean}{696}{Turing.MultiTapeTM.MappingReducible.manyOneReducible}
+\end{result}
+
+\begin{result}
+\subsection{Machine-backed Kolmogorov complexity and additive optimality of the universal method}
+Every binary single-tape machine $M$ (\texttt{SingleTapeTM Bool}), finitely
+supported Post--Turing machine (\lean{TM0}) or Wang B-machine (\lean{TM1}) over
+an inhabited state type (with decidable state equality and, for \lean{TM1}, finite
+inhabited local variable type), and deterministic binary $k$-work-tape machine
+(\lean{MultiTapeTM}) defines a clocked description method on binary words
+(\lean{ofSingleTapeTM}, \lean{ofTM0}, \lean{ofTM1}, \lean{ofMultiTapeTM}): for
+single-tape machines, program $p\in\{0,1\}^*$ outputs $x$ within $t$ steps when
+$M$ reaches state \lean{none} with standard output tape $\operatorname{mk}_1(x)$
+within $t$ steps. The identity program compilation gives a simulation
+\lean{singleTapeSimulation} (and \lean{tm0Simulation}) of \lean{ofSingleTapeTM} $M$
+inside \lean{ofMultiTapeTM} $(\operatorname{ofSingleTapeTM} M)$ with zero program
+overhead ($c=0$) and linear time overhead $3|p|+2t+6$, so for all $x,t,k$,
+\[
+\begin{aligned}
+C_{\operatorname{ofMultiTapeTM}(\operatorname{ofSingleTapeTM} M)}(x)
+  &\le C_{\operatorname{ofSingleTapeTM} M}(x),\\
+C_{\operatorname{ofSingleTapeTM} M}^{t}(x)\le k
+  &\implies
+C_{\operatorname{ofMultiTapeTM}(\operatorname{ofSingleTapeTM} M)}^{3k+2t+6}(x)
+  \le k.
+\end{aligned}
+\]
+
+For any finite-state binary \lean{MultiTapeTM} or \lean{SingleTapeTM} (or finitely
+supported \lean{TM0}/\lean{TM1}) and any Mathlib-\lean{Computable} decoder
+$\operatorname{dec}:\{0,1\}^*\to\mathbb N$, the pushed-forward description method
+on $\mathbb N$ is partial recursive (\lean{IsPartrec}). By the invariance theorem
+for the universal partial-recursive description method \lean{universal}, there is a
+constant $c\in\mathbb N$ (depending on the machine and $\operatorname{dec}$) such
+that for every $x\in\{0,1\}^*$,
+\[
+C_{\mathrm{universal}}(\operatorname{dec}(x))
+  \le C_{\operatorname{map}(\operatorname{dec},M)}(\operatorname{dec}(x))+c
+  \le C_M(x)+c,
+\]
+and in particular for $\operatorname{dec}(w)=\operatorname{foldr}\operatorname{Nat.bit}0\,w$
+and every $n\in\mathbb N$,
+\[
+C_{\mathrm{universal}}(n)\le C_M(\operatorname{bits}(n))+c.
+\]
+This is plain (and step-count time-bounded) Kolmogorov complexity; prefix-free
+machine complexity and multi-tape-to-single-tape time-bounded complexity transfer
+are not formalized here.\citep{LiVitanyi2019}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{69}{Cslib.Kolmogorov.DescriptionMethod.ofMultiTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{81}{Cslib.Kolmogorov.DescriptionMethod.ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{111}{Cslib.Kolmogorov.DescriptionMethod.ofTM0}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{133}{Cslib.Kolmogorov.DescriptionMethod.ofTM1}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{143}{Cslib.Kolmogorov.DescriptionMethod.singleTapeSimulation}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{154}{Cslib.Kolmogorov.DescriptionMethod.ecomplexity_ofMultiTapeTM_ofSingleTapeTM_le}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{162}{Cslib.Kolmogorov.DescriptionMethod.etimeBoundedComplexity_ofMultiTapeTM_ofSingleTapeTM_le}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{172}{Cslib.Kolmogorov.DescriptionMethod.tm0Simulation}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{138}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofMultiTapeTM_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{148}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofMultiTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/MultiTape.lean}{159}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofMultiTapeTM_bits}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{183}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofSingleTapeTM_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{193}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofTM0_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{202}{Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofTM1_map}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{211}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofSingleTapeTM}
+\declat{b7c399478f6dc2fe3b50d4bc18396df450207f30}{Complexity/Computability/Kolmogorov/SingleTape.lean}{222}{Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofSingleTapeTM_bits}
 \end{result}

@@ -10,6 +10,7 @@ module
 public import Complexity.Logics.FirstOrder.Ordered.Tuple
 public import Complexity.Logics.FirstOrder.Ordered.Constants
 public import Complexity.Logics.FirstOrder.QuantifierFree
+import Complexity.Tactic.FirstOrder
 
 /-!
 # Order and constants on full tuple universes
@@ -52,6 +53,16 @@ namespace Cslib.Logic.FO.Ordered
 
 open FirstOrder Language Structure
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
+theorem isAtomic_le (L : Language) {α : Type*} (s t : (language L).Term α) :
+    (le L s t).IsAtomic :=
+  .rel _ _
+
+@[aesop safe apply (rule_sets := [FirstOrder])]
+theorem isAtomic_bit (L : Language) {α : Type*} (s i : (language L).Term α) :
+    (bit L s i).IsAtomic :=
+  .rel _ _
+
 /-- Strict tuple order: one coordinate increases and all earlier coordinates agree. -/
 noncomputable def tupleLt (L : Language) (k : ℕ) : (language L).Formula (Fin 2 × Fin k) :=
   Formula.iSup fun i : Fin k =>
@@ -63,35 +74,29 @@ noncomputable def tupleLt (L : Language) (k : ℕ) : (language L).Formula (Fin 2
 noncomputable def tupleLe (L : Language) (k : ℕ) : (language L).Formula (Fin 2 × Fin k) :=
   ((tupleLt L k).relabel fun p => (p.1.rev, p.2)).not
 
+@[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isQF_tupleLt (L : Language) (k : ℕ) : (tupleLt L k).IsQF := by
-  apply Formula.isQF_iSup
-  intro i
-  apply BoundedFormula.IsQF.inf
-  · exact (BoundedFormula.IsAtomic.rel _ _).isQF.not
-  · apply Formula.isQF_iInf
-    intro j
-    split_ifs
-    · exact (BoundedFormula.IsAtomic.equal _ _).isQF
-    · exact BoundedFormula.IsQF.top
+  unfold tupleLt; fo_qf
 
-theorem isQF_tupleLe (L : Language) (k : ℕ) : (tupleLe L k).IsQF :=
-  ((isQF_tupleLt L k).relabel _).not
+@[aesop safe apply (rule_sets := [FirstOrder])]
+theorem isQF_tupleLe (L : Language) (k : ℕ) : (tupleLe L k).IsQF := by
+  unfold tupleLe; fo_qf
 
 variable {L : Language} {n k : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)]
 
 /-- The strict-order formula compares the canonical lexicographic ranks. -/
+@[simp, fo_realize]
 theorem realize_tupleLt (v : Fin 2 × Fin k → Fin n) :
     (tupleLt L k).Realize v ↔ lexRank (fun i => v (0, i)) < lexRank (fun i => v (1, i)) := by
-  simp only [tupleLt, Formula.realize_iSup, Formula.realize_inf, Formula.realize_not,
-    realize_le, Term.realize_var, Formula.realize_iInf, not_le, lexRank_lt_iff]
+  fo_simp [tupleLt, not_le, lexRank_lt_iff]
   refine exists_congr fun i => and_congr_right fun _ => forall_congr' fun j => ?_
   by_cases hji : j < i <;> simp [hji]
 
 /-- The weak-order formula compares the canonical lexicographic ranks. -/
+@[simp, fo_realize]
 theorem realize_tupleLe (v : Fin 2 × Fin k → Fin n) :
     (tupleLe L k).Realize v ↔ lexRank (fun i => v (0, i)) ≤ lexRank (fun i => v (1, i)) := by
-  simp only [tupleLe, Formula.realize_not, Formula.realize_relabel, realize_tupleLt,
-    Function.comp_apply]
+  fo_simp [tupleLe]
   exact not_lt
 
 /-- The whole tuple universe, with no additional target relation symbols. -/
@@ -139,16 +144,20 @@ theorem tupleConstants_valid : (tupleConstants L k).Valid (Fin n) := by
   intro x hx
   exact Interpretation.Model.ext ((realize_tupleConstants c x.val).mp hx)
 
-/-- The interpreted constant values have exactly the canonical numerical ranks. -/
-theorem lexRank_tupleConstants_value (c : NumericFunction 0) :
-    lexRank ((tupleConstants L k).value (tupleConstants_valid (n := n)) c).val =
-      match c with | .zero => 0 | .one => 1 | .max => n ^ (k + 1) - 1 := by
-  have h := (realize_tupleConstants c _).mp
-    ((tupleConstants L k).value_spec (tupleConstants_valid (n := n)) c)
-  rw [h]
+/-- The canonical constant tuples have ranks `0`, `1` and `n ^ (k + 1) - 1`. -/
+theorem lexRank_constantTuple (c : NumericFunction 0) :
+    lexRank (constantTuple (n := n) (k := k) c) = c.index (n ^ (k + 1)) := by
   cases c
   · exact lexRank_tupleZero
   · exact lexRank_tupleOne
   · exact lexRank_tupleMax
+
+/-- The interpreted constant values have exactly the canonical numerical ranks. -/
+theorem lexRank_tupleConstants_value (c : NumericFunction 0) :
+    lexRank ((tupleConstants L k).value (tupleConstants_valid (n := n)) c).val =
+      c.index (n ^ (k + 1)) := by
+  rw [(realize_tupleConstants c _).mp
+    ((tupleConstants L k).value_spec (tupleConstants_valid (n := n)) c)]
+  exact lexRank_constantTuple c
 
 end Cslib.Logic.FO.Ordered

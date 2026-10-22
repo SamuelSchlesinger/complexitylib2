@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
+import Complexity.Foundations.Data.Finset.Quantile
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Algebra.QuadraticDiscriminant
 
@@ -374,27 +375,11 @@ private theorem exists_median (f : V → ℝ) :
     ∃ m : ℝ, 2 * #{v | m < f v} ≤ Fintype.card V ∧ 2 * #{v | f v < m} ≤ Fintype.card V := by
   rcases isEmpty_or_nonempty V with hV | hV
   · exact ⟨0, by simp, by simp⟩
-  have hA : ({v | Fintype.card V ≤ 2 * #{w | f w ≤ f v}} : Finset V).Nonempty := by
-    obtain ⟨v, -, hv⟩ := univ.exists_max_image f univ_nonempty
-    refine ⟨v, mem_filter.2 ⟨mem_univ v, ?_⟩⟩
-    rw [filter_true_of_mem fun w _ ↦ hv w (mem_univ w), card_univ]
-    omega
-  obtain ⟨v₀, hv₀, hmin⟩ := exists_min_image _ f hA
-  rw [mem_filter] at hv₀
-  refine ⟨f v₀, ?_, ?_⟩
-  · have := card_filter_add_card_filter_not (s := univ) fun w ↦ f w ≤ f v₀
-    simp only [not_le, card_univ] at this
-    omega
-  rcases ({v | f v < f v₀} : Finset V).eq_empty_or_nonempty with h | h
-  · rw [h, card_empty]
-    omega
-  obtain ⟨v₁, hv₁, hmax⟩ := exists_max_image _ f h
-  rw [mem_filter] at hv₁
-  have hv₁' : ¬Fintype.card V ≤ 2 * #{w | f w ≤ f v₁} := fun h ↦
-    (hmin v₁ (mem_filter.2 ⟨mem_univ v₁, h⟩)).not_gt hv₁.2
-  have := card_le_card fun w (hw : w ∈ ({v | f v < f v₀} : Finset V)) ↦
-    mem_filter.2 ⟨mem_univ w, hmax w hw⟩
-  omega
+  obtain ⟨v₀, -, hlo, hhi⟩ := univ.exists_median univ_nonempty f
+  have h₁ := card_filter_add_card_filter_not (s := univ) fun w ↦ f w ≤ f v₀
+  have h₂ := card_filter_add_card_filter_not (s := univ) fun w ↦ f v₀ ≤ f w
+  simp only [not_le, card_univ] at hlo hhi h₁ h₂
+  exact ⟨f v₀, by omega, by omega⟩
 
 /-- The positive and negative parts of two reals are closer than the reals themselves. -/
 private theorem sq_max_sub_max_add_sq_max_sub_max_le (a b : ℝ) :

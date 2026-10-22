@@ -10,6 +10,8 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Executable
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Mathlib.Data.List.GetD
 
 /-!
@@ -19,8 +21,8 @@ At every grid point the executable generator materializes the integer lift matri
 `Rational.Generator.integralLift`, built from the integer Taylor test matrices
 `Rational.IntegralTest.padded` and the signed-monomial formula `Rational.IntegralLift.entry`.
 Those definitions are indexed by `Fin` and `ZMod` with a type-level modulus, and use `Nat.choose`.
-This file restates them as ordinary programs on natural numbers, integers and lists of rows, so
-that they can later be certified on a multi-tape machine:
+This file restates them as ordinary programs on natural numbers, integers and lists of rows, and
+certifies that they run in polynomial time on a multi-tape machine:
 
 * the coefficients of `(X + c) ^ k` are computed by `k` shift-and-add steps, with no division;
 * the Taylor test matrix is a list of rows of sums over `List.range M`;
@@ -54,6 +56,11 @@ generator's parameters is `Rational.PolynomialBounds.logarithmic n s + 2`.
   `Rational.intBits_le_of_mem_liftRows`: the bit-length bounds.
 * `Rational.intBits_le_of_mem_liftRows_parameters`: at the generator's parameters, every entry
   has at most `logConstant * (n + s + 1) ^ 22 + 2` bits.
+* `Rational.length_encList_coeffRow_le`: encoded length bound on intermediate coefficient rows.
+* `Rational.computableTidilyInPolyTime_coeffRow`, `Rational.computableTidilyInPolyTime_testRows`,
+  `Rational.computableTidilyInPolyTime_liftTable`, `Rational.computableTidilyInPolyTime_liftRows`,
+  `Rational.liftRows_polytime`: polynomial-time certificates for the coefficient rows, the Taylor
+  test matrix and the integer lift tables.
 
 ## References
 
@@ -127,14 +134,6 @@ lemma val_coordinate_symm_snd (e : ℕ) (i : Fin (Generator.matrixDimension e)) 
   rfl
 
 /-! ### Lists of rows -/
-
-@[simp] lemma length_tabulateRows (d : ℕ) (g : ℕ → ℕ → ℤ) : (tabulateRows d g).length = d := by
-  simp [tabulateRows]
-
-lemma length_of_mem_tabulateRows {d : ℕ} {g : ℕ → ℕ → ℤ} {row : List ℤ}
-    (h : row ∈ tabulateRows d g) : row.length = d := by
-  obtain ⟨i, -, rfl⟩ := List.mem_map.mp h
-  simp
 
 /-- A tabulated list of rows is the list of rows of a matrix it agrees with. -/
 lemma tabulateRows_eq_rowsOf {d : ℕ} (g : ℕ → ℕ → ℤ) (A : Matrix (Fin d) (Fin d) ℤ)
@@ -704,6 +703,300 @@ theorem intBits_le_of_mem_liftRows_parameters {n s t p r : ℕ} (ht : t ≤ Para
     intBits z ≤ PolynomialBounds.logConstant * (n + s + 1) ^ 22 + 2 :=
   (intBits_le_of_mem_liftRows (by unfold Parameters.ambientDimension; exact Nat.one_le_two_pow)
     (by unfold Parameters.gridSize; omega) ht hp hr htable hrow hz).trans (liftBits_bound n s)
+
+/-! ### Polynomial-time certificates -/
+
+open Turing MultiTapeTM MultiTapeTM.ComputableTidilyInPolyTime
+
+/-- Upper bound on the bit length of any entry of `coeffRow c i` for `i ≤ k`, where `L` is the
+encoded length of `c`. -/
+def coeffEntryBound (L k : ℕ) : ℕ := (L + 1) * k + 2
+
+/-- Upper bound on the encoded length of `coeffRow c i` for `i ≤ k`, where `L` is the encoded
+length of `c`. -/
+def coeffRowBound (L k : ℕ) : ℕ := (k + 1) * (2 * coeffEntryBound L k + 1)
+
+/-- Every intermediate coefficient row up to stage `k` has encoded length bounded by
+`coeffRowBound`. -/
+theorem length_encList_coeffRow_le (c : ℤ) {i k : ℕ} (hik : i ≤ k) :
+    (encList encIntBin (coeffRow c i)).length ≤ coeffRowBound (encIntBin c).length k := by
+  set L := (encIntBin c).length
+  have hc_lt : c.natAbs < 2 ^ L := by
+    rw [← intBits_le_iff, intBits_eq_length_encIntBin]
+    exact Nat.le_succ L
+  have h2w : 2 * (c.natAbs + 1) ≤ 2 ^ (L + 1) := by
+    rw [pow_succ']
+    exact Nat.mul_le_mul_left 2 hc_lt
+  have hentry {z : ℤ} (hz : z ∈ coeffRow c i) :
+      (encIntBin z).length ≤ coeffEntryBound L k := by
+    obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hz
+    rw [← intBits_eq_length_encIntBin, coeffEntryBound, intBits_le_iff,
+      ← List.getD_eq_getElem _ 0 hj]
+    calc ((coeffRow c i).getD j 0).natAbs
+        ≤ (2 * (c.natAbs + 1)) ^ i := natAbs_getD_coeffRow_le (by omega) (by omega) i j
+      _ ≤ (2 ^ (L + 1)) ^ i := Nat.pow_le_pow_left h2w i
+      _ = 2 ^ ((L + 1) * i) := (pow_mul 2 (L + 1) i).symm
+      _ ≤ 2 ^ ((L + 1) * k) := Nat.pow_le_pow_right (by norm_num) (Nat.mul_le_mul_left _ hik)
+      _ < 2 ^ ((L + 1) * k + 1) := Nat.pow_lt_pow_right (by norm_num) (Nat.lt_succ_self _)
+  refine (length_encList_le encIntBin (coeffRow c i) fun z hz => hentry hz).trans ?_
+  rw [length_coeffRow]
+  exact Nat.mul_le_mul_right _ (Nat.add_le_add_right hik 1)
+
+private lemma polyBounded_coeffRowBound {α : Type} {size L k : α → ℕ}
+    (hL : PolyBounded size L) (hk : PolyBounded size k) :
+    PolyBounded size (fun x => coeffRowBound (L x) (k x)) := by
+  have hentry : PolyBounded size (fun x => coeffEntryBound (L x) (k x)) :=
+    ((hL.add (.const 1)).mul hk).add (.const 2)
+  exact (hk.add (.const 1)).mul (((PolyBounded.const 2).mul hentry).add (.const 1))
+
+variable {α : Type} {encIn : α ↪ List Bool}
+
+@[local fun_prop]
+private theorem listGetD_intBin {l : α → List ℤ} {i : α → ℕ}
+    (hl : ComputableTidilyInPolyTime l encIn (encList encIntBin))
+    (hi : ComputableTidilyInPolyTime i encIn encUnary) (d : ℤ) :
+    ComputableTidilyInPolyTime (fun x => (l x).getD (i x) d) encIn encIntBin :=
+  (listGetD (encA := encIntBin) d).comp (hl.prod hi)
+
+@[local fun_prop]
+private theorem intBin_of_unary {n : α → ℕ}
+    (hn : ComputableTidilyInPolyTime n encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => (n x : ℤ)) encIn encIntBin :=
+  intBin_natCast.comp (unary_to_binary.comp hn)
+
+@[fun_prop]
+theorem unary_decide_eq {a b : α → ℕ}
+    (ha : ComputableTidilyInPolyTime a encIn encUnary)
+    (hb : ComputableTidilyInPolyTime b encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => decide (a x = b x)) encIn encBool :=
+  (decide_eq encUnary).comp (ha.prod hb)
+
+/-- One shift-and-add step of the coefficient recurrence is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_shiftAddRow {c : α → ℤ} {l : α → List ℤ}
+    (hc : ComputableTidilyInPolyTime c encIn encIntBin)
+    (hl : ComputableTidilyInPolyTime l encIn (encList encIntBin)) :
+    ComputableTidilyInPolyTime (fun x => shiftAddRow (c x) (l x)) encIn (encList encIntBin) := by
+  unfold shiftAddRow
+  fun_prop
+
+/-- Computing the coefficient row `coeffRow c k` is polynomial-time for a binary integer `c` and a
+unary degree `k`. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_coeffRow {c : α → ℤ} {k : α → ℕ}
+    (hc : ComputableTidilyInPolyTime c encIn encIntBin)
+    (hk : ComputableTidilyInPolyTime k encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => coeffRow (c x) (k x)) encIn (encList encIntBin) :=
+  iterateWith hc hk (const [1])
+    (computableTidilyInPolyTime_shiftAddRow (fst _ _) (snd _ _))
+    (polyBounded_coeffRowBound hc.polyBounded_length hk.polyBounded)
+    fun x _ hi => length_encList_coeffRow_le (c x) hi
+
+/-- Computing the table of coefficient rows `coeffRows c M` is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_coeffRows {c : α → ℤ} {M : α → ℕ}
+    (hc : ComputableTidilyInPolyTime c encIn encIntBin)
+    (hM : ComputableTidilyInPolyTime M encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => coeffRows (c x) (M x))
+      encIn (encList (encList encIntBin)) := by
+  unfold coeffRows
+  fun_prop
+
+/-- Computing one summand of a Taylor test matrix entry is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_testTerm {M u v q : α → ℕ} {minus plus : α → List (List ℤ)}
+    {t : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hminus : ComputableTidilyInPolyTime minus encIn (encList (encList encIntBin)))
+    (hplus : ComputableTidilyInPolyTime plus encIn (encList (encList encIntBin)))
+    (ht : ComputableTidilyInPolyTime t encIn encIntBin)
+    (hu : ComputableTidilyInPolyTime u encIn encUnary)
+    (hv : ComputableTidilyInPolyTime v encIn encUnary)
+    (hq : ComputableTidilyInPolyTime q encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => testTerm (M x) (minus x) (plus x) (t x) (u x) (v x) (q x))
+      encIn encIntBin := by
+  unfold testTerm
+  fun_prop
+
+/-- Computing the list of summands of a Taylor test matrix entry is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_testTerms {M u v : α → ℕ} {minus plus : α → List (List ℤ)}
+    {t : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hminus : ComputableTidilyInPolyTime minus encIn (encList (encList encIntBin)))
+    (hplus : ComputableTidilyInPolyTime plus encIn (encList (encList encIntBin)))
+    (ht : ComputableTidilyInPolyTime t encIn encIntBin)
+    (hu : ComputableTidilyInPolyTime u encIn encUnary)
+    (hv : ComputableTidilyInPolyTime v encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => testTerms (M x) (minus x) (plus x) (t x) (u x) (v x))
+      encIn (encList encIntBin) := by
+  unfold testTerms
+  fun_prop
+
+/-- Computing one entry of the integer Taylor test matrix is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_testEntry {M N u v : α → ℕ} {minus plus : α → List (List ℤ)}
+    {t : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hN : ComputableTidilyInPolyTime N encIn encUnary)
+    (hminus : ComputableTidilyInPolyTime minus encIn (encList (encList encIntBin)))
+    (hplus : ComputableTidilyInPolyTime plus encIn (encList (encList encIntBin)))
+    (ht : ComputableTidilyInPolyTime t encIn encIntBin)
+    (hu : ComputableTidilyInPolyTime u encIn encUnary)
+    (hv : ComputableTidilyInPolyTime v encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => testEntry (M x) (N x) (minus x) (plus x) (t x) (u x) (v x))
+      encIn encIntBin := by
+  unfold testEntry
+  fun_prop
+
+/-- Computing the integer Taylor test matrix `testRows M N a t` is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_testRows {M N : α → ℕ} {a t : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hN : ComputableTidilyInPolyTime N encIn encUnary)
+    (ha : ComputableTidilyInPolyTime a encIn encIntBin)
+    (ht : ComputableTidilyInPolyTime t encIn encIntBin) :
+    ComputableTidilyInPolyTime (fun x => testRows (M x) (N x) (a x) (t x))
+      encIn (encList (encList encIntBin)) := by
+  unfold testRows
+  fun_prop
+
+/-- Computing the signed cyclotomic regular-representation coefficient is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_signedCoeff {Dg z i j : α → ℕ}
+    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
+    (hz : ComputableTidilyInPolyTime z encIn encUnary)
+    (hi : ComputableTidilyInPolyTime i encIn encUnary)
+    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => signedCoeff (Dg x) (z x) (i x) (j x))
+      encIn encIntBin := by
+  unfold signedCoeff
+  fun_prop
+
+/-- Computing one summand of an integer lift entry is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_liftTerm {M Dg u v i j a k : α → ℕ}
+    {T : α → List (List ℤ)} {p r : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
+    (hT : ComputableTidilyInPolyTime T encIn (encList (encList encIntBin)))
+    (hp : ComputableTidilyInPolyTime p encIn encIntBin)
+    (hr : ComputableTidilyInPolyTime r encIn encIntBin)
+    (hu : ComputableTidilyInPolyTime u encIn encUnary)
+    (hv : ComputableTidilyInPolyTime v encIn encUnary)
+    (hi : ComputableTidilyInPolyTime i encIn encUnary)
+    (hj : ComputableTidilyInPolyTime j encIn encUnary)
+    (ha : ComputableTidilyInPolyTime a encIn encUnary)
+    (hk : ComputableTidilyInPolyTime k encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => liftTerm (M x) (Dg x) (T x) (p x) (r x) (u x) (v x) (i x) (j x) (a x) (k x))
+      encIn encIntBin := by
+  unfold liftTerm
+  fun_prop
+
+/-- Computing the inner list of summands of an integer lift entry is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_liftTerms {M Dg u v i j a : α → ℕ}
+    {T : α → List (List ℤ)} {p r : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
+    (hT : ComputableTidilyInPolyTime T encIn (encList (encList encIntBin)))
+    (hp : ComputableTidilyInPolyTime p encIn encIntBin)
+    (hr : ComputableTidilyInPolyTime r encIn encIntBin)
+    (hu : ComputableTidilyInPolyTime u encIn encUnary)
+    (hv : ComputableTidilyInPolyTime v encIn encUnary)
+    (hi : ComputableTidilyInPolyTime i encIn encUnary)
+    (hj : ComputableTidilyInPolyTime j encIn encUnary)
+    (ha : ComputableTidilyInPolyTime a encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => liftTerms (M x) (Dg x) (T x) (p x) (r x) (u x) (v x) (i x) (j x) (a x))
+      encIn (encList encIntBin) := by
+  unfold liftTerms
+  fun_prop
+
+/-- Computing the list of inner sums of an integer lift entry is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_liftSums {M Dg u v i j : α → ℕ}
+    {T : α → List (List ℤ)} {p r : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
+    (hT : ComputableTidilyInPolyTime T encIn (encList (encList encIntBin)))
+    (hp : ComputableTidilyInPolyTime p encIn encIntBin)
+    (hr : ComputableTidilyInPolyTime r encIn encIntBin)
+    (hu : ComputableTidilyInPolyTime u encIn encUnary)
+    (hv : ComputableTidilyInPolyTime v encIn encUnary)
+    (hi : ComputableTidilyInPolyTime i encIn encUnary)
+    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => liftSums (M x) (Dg x) (T x) (p x) (r x) (u x) (v x) (i x) (j x))
+      encIn (encList encIntBin) := by
+  unfold liftSums
+  fun_prop
+
+/-- Computing one entry of the integer lift matrix is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_liftEntry {M Dg u v i j : α → ℕ}
+    {T : α → List (List ℤ)} {p r : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
+    (hT : ComputableTidilyInPolyTime T encIn (encList (encList encIntBin)))
+    (hp : ComputableTidilyInPolyTime p encIn encIntBin)
+    (hr : ComputableTidilyInPolyTime r encIn encIntBin)
+    (hu : ComputableTidilyInPolyTime u encIn encUnary)
+    (hv : ComputableTidilyInPolyTime v encIn encUnary)
+    (hi : ComputableTidilyInPolyTime i encIn encUnary)
+    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => liftEntry (M x) (Dg x) (T x) (p x) (r x) (u x) (v x) (i x) (j x))
+      encIn encIntBin := by
+  unfold liftEntry
+  fun_prop
+
+/-- Computing the integer lift matrix `liftTable M Dg T p r` is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_liftTable {M Dg : α → ℕ}
+    {T : α → List (List ℤ)} {p r : α → ℤ}
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
+    (hT : ComputableTidilyInPolyTime T encIn (encList (encList encIntBin)))
+    (hp : ComputableTidilyInPolyTime p encIn encIntBin)
+    (hr : ComputableTidilyInPolyTime r encIn encIntBin) :
+    ComputableTidilyInPolyTime
+      (fun x => liftTable (M x) (Dg x) (T x) (p x) (r x))
+      encIn (encList (encList encIntBin)) := by
+  unfold liftTable
+  fun_prop
+
+/-- Computing all `n + 1` integer lift tables `liftRows n N M Dg t p r` at a grid point is
+polynomial-time from unary parameters and coordinates. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_liftRows {n N M Dg t p r : α → ℕ}
+    (hn : ComputableTidilyInPolyTime n encIn encUnary)
+    (hN : ComputableTidilyInPolyTime N encIn encUnary)
+    (hM : ComputableTidilyInPolyTime M encIn encUnary)
+    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
+    (ht : ComputableTidilyInPolyTime t encIn encUnary)
+    (hp : ComputableTidilyInPolyTime p encIn encUnary)
+    (hr : ComputableTidilyInPolyTime r encIn encUnary) :
+    ComputableTidilyInPolyTime
+      (fun x => liftRows (n x) (N x) (M x) (Dg x) (t x) (p x) (r x))
+      encIn (encList (encList (encList encIntBin))) := by
+  unfold liftRows
+  fun_prop
+
+/-- Standalone polynomial-time certificate for `liftRows` on a 7-tuple of unary naturals. -/
+@[fun_prop]
+theorem liftRows_polytime :
+    ComputableTidilyInPolyTime
+      (fun q : ℕ × ℕ × ℕ × ℕ × ℕ × ℕ × ℕ =>
+        liftRows q.1 q.2.1 q.2.2.1 q.2.2.2.1 q.2.2.2.2.1 q.2.2.2.2.2.1 q.2.2.2.2.2.2)
+      (encPair encUnary (encPair encUnary (encPair encUnary (encPair encUnary
+        (encPair encUnary (encPair encUnary encUnary))))))
+      (encList (encList (encList encIntBin))) := by
+  fun_prop
 
 end Rational
 

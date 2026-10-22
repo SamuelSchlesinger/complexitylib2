@@ -44,7 +44,7 @@ variable {k p m : ℕ}
 
 /-- The key of a record: its first `k` bits. -/
 def recordKey (r : BitString (k + p)) : BitString k :=
-  fun i => r (Fin.castAdd p i)
+  fstBits r
 
 /-- Of two records, the one with the smaller key, the first on ties. -/
 def keyedMinFn (r s : BitString (k + p)) : BitString (k + p) :=

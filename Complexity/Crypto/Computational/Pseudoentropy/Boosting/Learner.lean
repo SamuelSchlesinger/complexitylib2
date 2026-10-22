@@ -56,12 +56,6 @@ local notation "Pr[" p "]" => ENNReal.toReal (ProbComp.eval p true)
 
 variable {α : Type}
 
-private theorem probability_not (program : ProbComp Bool) :
-    Pr[Bool.not <$> program] = 1 - Pr[program] := by
-  have h := PMF.sum_toReal (ProbComp.eval program)
-  simp only [Fintype.sum_bool] at h
-  simpa [ProbComp.eval_map, PMF.map_apply] using (eq_sub_of_add_eq' h)
-
 /-- Run a trial on a freshly weighted example, with a fair baseline when its weight coin fails. -/
 noncomputable def weightedTrial (source : ProbComp α) (mask test : α → ProbComp Bool) :
     ProbComp Bool := do
@@ -72,8 +66,7 @@ noncomputable def weightedTrial (source : ProbComp α) (mask test : α → ProbC
 private theorem gate_probability (mask test : ProbComp Bool) :
     Pr[mask >>= fun active => if active then test else ProbComp.uniform Bool] =
       1 / 2 + Pr[mask] * (Pr[test] - 1 / 2) := by
-  have htotal := PMF.sum_toReal (ProbComp.eval mask)
-  simp only [Fintype.sum_bool] at htotal
+  have htotal := PMF.toReal_true_add_toReal_false (ProbComp.eval mask)
   simp only [ProbComp.eval_bind, PMF.bind_apply_toReal, Fintype.sum_bool,
     Bool.false_eq_true, ite_false, ite_true]
   have hfair : Pr[ProbComp.uniform Bool] = 1 / 2 := by
@@ -142,7 +135,7 @@ theorem weightedTrial_not (source : ProbComp α) (mask test : α → ProbComp Bo
     funext active
     cases active <;> simp only [Bool.false_eq_true, ite_false, ite_true, hfair]
   simpa only [hlaw, ProbComp.eval_map] using
-    probability_not (weightedTrial source mask test)
+    ProbComp.probability_not (weightedTrial source mask test)
 
 /-- A deterministic predictor's validation rate is one half plus half its weighted correlation. -/
 theorem weightedTrial_correlation [Fintype α] (source : ProbComp α)
@@ -155,7 +148,9 @@ theorem weightedTrial_correlation [Fintype α] (source : ProbComp α)
   apply Finset.sum_congr rfl
   intro value _
   cases predict value <;> cases truth value <;>
-    simp [signedVote] <;> ring
+    simp only [signedVote, ProbComp.eval_pure, PMF.pure_apply, beq_self_eq_true, Bool.false_beq,
+      Bool.true_beq, Bool.not_true, Bool.true_eq_false, Bool.false_eq_true, ↓reduceIte,
+      ENNReal.toReal_one, ENNReal.toReal_zero] <;> ring
 
 /-- Add a fresh fair orientation bit to a sampled predictor description. -/
 noncomputable def randomSign (candidates : ProbComp (List Bool)) : ProbComp (List Bool) := do
@@ -203,14 +198,14 @@ theorem randomSign_good_probability (candidates : ProbComp (List Bool))
         {code | threshold ≤ Pr[Bool.not <$> test code]}).toReal := by
       simpa only [ProbComp.eval_bind,
         PMF.toOuterMeasure_apply_singleton] using h
-    simpa only [← map_bind, probability_not, negative] using h'
+    simpa only [← map_bind, ProbComp.probability_not, negative] using h'
   have hlaw : ((ProbComp.eval (randomSign candidates)).toOuterMeasure
       {code | threshold ≤ Pr[signedTest test code]}).toReal =
       (positive + negative) / 2 := by
     simp only [randomSign, ProbComp.eval_bind, ProbComp.eval_uniform,
       PMF.toOuterMeasure_bind_toReal, ProbComp.eval_map, PMF.toOuterMeasure_map_apply,
       Fintype.sum_bool, PMF.uniformOfFintype_apply]
-    simp only [Set.preimage_ofPred_eq, signedTest_false, signedTest_true, probability_not]
+    simp only [Set.preimage_ofPred_eq, signedTest_false, signedTest_true, ProbComp.probability_not]
     norm_num [positive, negative]
     ring
   rw [hlaw]
@@ -273,7 +268,7 @@ theorem signedTest_weightedTrial (source : ProbComp α) (mask : α → ProbComp 
   | false =>
     simp only [signedTest, signedPredict, hsign, Bool.false_eq_true, ite_false, id_map']
   | true =>
-    simp only [signedTest, signedPredict, hsign, ite_true, probability_not]
+    simp only [signedTest, signedPredict, hsign, ite_true, ProbComp.probability_not]
     rw [hnot, weightedTrial_not]
 
 /-- The learned deterministic predictor has positive weighted correlation. The advantage

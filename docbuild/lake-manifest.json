@@ -13,7 +13,7 @@
    "configFile": "lakefile.lean"},
   {"type": "path",
    "scope": "",
-   "name": "complexitylib2",
+   "name": "complexitylib",
    "manifestFile": "lake-manifest.json",
    "inherited": false,
    "dir": "..",

@@ -77,7 +77,7 @@ theorem exists_le_three_mul_add_sqrt (a b M N : ℕ) (hb : 0 < b) (hba : b ≤ a
   have hM : 0 < M := by
     by_contra h
     have : M = 0 := by omega
-    simp [q, this] at hqa
+    simp only [q, this, Nat.cast_zero, mul_zero] at hqa
     linarith
   have hM1 : (1 : ℝ) ≤ M := by exact_mod_cast hM
   have hzM : z ≤ (a : ℝ) * M := by

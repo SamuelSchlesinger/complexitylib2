@@ -39,9 +39,8 @@ polynomial time and space on a multi-tape Turing machine:
 \[
 \texttt{ComputableTidilyInPolyTime}\;\texttt{detRows}\;(\texttt{encList}\;(\texttt{encList}\;\texttt{encIntBin}))\;\texttt{encIntBin}.
 \]
-This certifies the integer determinant stage of the rational matrix hitting-list runtime; the remaining
-generator runtime milestones (canonical rational serialization, certified integer lift tables, per-point
-Cramer words, and grid enumeration) remain open.\citep{Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
+This certifies the integer determinant stage of the rational matrix hitting-list runtime; the
+full generator runtime is assembled in the rational hitting-list entry below.\citep{Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{184}{Cslib.Circuits.Rational.detRows}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{265}{Cslib.Circuits.Rational.detRows_eq_det_ofRows}
 \declat{ccbd129b70945682840a7c36525544c317b23d53}{Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean}{286}{Cslib.Circuits.Rational.detRows_eq}
@@ -67,4 +66,216 @@ most functions already needs $(1-o(1))2^n/n$ nonconstant gates\citep{Shannon1949
 no matching lower bound is claimed for $\gamma>0$. The construction is nonuniform and supplies no
 certified runtime for choosing its tables.\citep{Schlesinger2026MassProduction}
 \declat{2357cdd84d08ece1f218530f7c587d3c0f87467e}{Complexity/Computability/Circuit/Boolean/MassProduction/Fine.lean}{364}{Cslib.Circuits.Boolean.MassProduction.realFineMassProduction}
+\end{result}
+
+\begin{result}
+\subsection{Polynomial-time binary division, Euclidean GCD, and reduced-rational encoding}
+Over the unsigned little-endian binary natural encoding \texttt{encNat} and sign-magnitude
+binary integer encoding \texttt{encIntBin}, the following operations are computable tidily in
+polynomial time on multi-tape Turing machines
+(\texttt{Turing.MultiTapeTM.ComputableTidilyInPolyTime}):
+\begin{itemize}
+\item \textbf{Binary division and remainder.} Folding the shift-and-subtract step
+\texttt{BinaryDiv.divModStep} over any most-significant-bit-first word $w\in\{0,1\}^*$ from
+$(0,0)$ produces $(\mathrm{val}(w)/b,\mathrm{val}(w)\bmod b)$, with encoded pair length at most
+$3|w|+1$. On the reversed digit list of $a\in\mathbb N$ this yields $(a/b,a\bmod b)$ (including
+$a/0=0$ and $a\bmod 0=a$), certifying $(a,b)\mapsto a/b$ and $(a,b)\mapsto a\bmod b$.
+\item \textbf{Euclidean greatest common divisor.} For $0<a\le b$, the remainder step satisfies
+$2a(b\bmod a)\le ab$. Iterating \texttt{BinaryGcd.gcdStep} for
+$\ell(a)+\ell(b)+1$ steps from $(a,b)$, where $\ell(n)=|\texttt{Nat.bits}\ n|$, reaches
+$(\gcd(a,b),0)$ while keeping every intermediate encoded pair within three times the input pair
+length, certifying $(a,b)\mapsto\gcd(a,b)$.
+\item \textbf{Canonical natural and reduced-rational encodings.} The self-delimiting natural code
+$\texttt{encodeNat}(a)=\texttt{true}^{\ell(a)}\mathbin{+\!+}[\texttt{false}]\mathbin{+\!+}\texttt{Nat.bits}(a)$
+is computable in polynomial time from \texttt{encNat}. For $a,b\in\mathbb Z$ with $b\ne 0$ and
+$g=\gcd(|a|,|b|)$, the reduced rational $q=\texttt{Rat.divInt}(a,b)$ has numerator magnitude
+$|q.\texttt{num}|=|a|/g$, denominator $q.\texttt{den}=|b|/g$, and negativity bit
+$(a\ne 0)\wedge((a<0)\oplus(b<0))$ (and $\texttt{Rat.divInt}(a,0)=0$), certifying the canonical
+reduced-rational encoding $(a,b)\mapsto\texttt{encodeRat}(\texttt{Rat.divInt}(a,b))$ from
+$\texttt{encPair}\ \texttt{encIntBin}\ \texttt{encIntBin}$ to \texttt{encBits}.
+\end{itemize}
+These certificates cover individual natural and reduced-rational encodings and feed the
+polynomial-time rational matrix hitting-list generator below.
+\citep{AroraBarak09,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{99}{Turing.MultiTapeTM.BinaryDiv.foldl_divModStep}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{110}{Turing.MultiTapeTM.BinaryDiv.divMod_eq}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{160}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_div}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/BinaryDiv.lean}{166}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mod}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean}{53}{Turing.MultiTapeTM.BinaryGcd.gcd_product_halving}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean}{160}{Turing.MultiTapeTM.BinaryGcd.iterate_gcdStep_eq}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Gcd.lean}{189}{Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_gcd}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{68}{Cslib.Circuits.Rational.encodeNat_eq}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{74}{Cslib.Circuits.Rational.encodeNat_polytime}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{89}{Cslib.Circuits.Rational.divInt_num_abs}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{97}{Cslib.Circuits.Rational.divInt_den}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{102}{Cslib.Circuits.Rational.divInt_sign}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{151}{Cslib.Circuits.Rational.encodeRat_divInt}
+\declat{20c7c1390afb0a50fd39759e3010e668a620678c}{Complexity/Computability/Circuit/Rational/Runtime/Encode.lean}{164}{Cslib.Circuits.Rational.encodeDivInt_polytime}
+\end{result}
+
+\begin{result}
+\subsection{Polynomial-time rational matrix hitting-list generator}
+Let $n,s\in\mathbb N$. A noncommutative rational formula $f\in\texttt{Formula}\ n$ is
+\emph{admissible} if it has a defined value at some substitution of $d\times d$ rational matrices
+with $d>0$, and \emph{nonzero} if it has a defined nonzero value at some such substitution. The
+executable hitting list $\texttt{hittingList}(n,s)\in\texttt{Output}\ n$ consists of substitutions
+of $d\times d$ rational matrices with common dimension
+\[
+0 < d = \texttt{matrixDimension}(e(n,s)) \le 256(n+s+1)^{10}
+\]
+and canonical reduced-rational binary encoding length
+\[
+|\texttt{encodeOutput}(\texttt{hittingList}(n,s))| \le
+\texttt{PolynomialBounds.outputConstant}\cdot(n+s+1)^{104}
+\]
+such that every admissible nonzero formula $f\in\texttt{Formula}\ n$ with
+$\texttt{nodeCount}(f)\le s$ evaluates to an invertible matrix at some tuple
+$X\in(\texttt{hittingList}(n,s)).\texttt{tuples}$ (\texttt{hittingList\_hits}).
+
+The runtime pipeline realizes this construction on lists of rows of binary sign-magnitude integers
+(\texttt{encIntBin}) and certifies every stage in
+\texttt{Turing.MultiTapeTM.ComputableTidilyInPolyTime}:
+\begin{itemize}
+\item \textbf{Parameter schedule and integer lift tables.} From $(n,s)$ in unary,
+\texttt{generatorParameters} computes the truncation $N$, exponent $e$, ambient dimension $M=2^{e+1}$,
+cyclotomic degree $D_g=2^e$, grid size $H$, and matrix dimension $d=MD_g$ in unary. At each grid
+point $(t,p,r)$, $\texttt{liftRows}(n,N,M,D_g,t,p,r)$ computes the $n+1$ integer lift tables
+$[U_0,U_1,\dots,U_n]$ by division-free shift-and-add binomial recurrences (\texttt{coeffRow}, with
+encoded intermediate length bounded by \texttt{coeffRowBound}), integer Taylor test tables
+(\texttt{testRows}), and double-sum cyclotomic regular-representation lifts (\texttt{liftTable}),
+agreeing with \texttt{ExecutableGenerator.inputTables} (\texttt{liftRows\_eq\_inputTables}). At the
+generator's parameters for $t,p,r\le H$, every entry $z$ of every table in \texttt{liftRows}
+satisfies $\texttt{intBits}(z)\le\texttt{logConstant}\cdot(n+s+1)^{22}+2$.
+\item \textbf{Per-point Cramer normalization and grid enumeration.} Given integer tables
+$\texttt{tables}=[U_0,U_1,\dots,U_n]$, \texttt{pointWordOfTables} and \texttt{pointWordsOfTables}
+compute $\mathrm{den}=\texttt{detRows}(U_0)$, emit $[]$ when $\mathrm{den}=0$, and otherwise emit
+the reduced-rational encoding of every entry $(U_0^{-1}U_a)_{i,j}$ as
+$\texttt{encodeRat}(\texttt{Rat.divInt}(\texttt{detRows}(\texttt{cramerRows}(U_0,U_a,i,j)),\mathrm{den}))$,
+agreeing with \texttt{ExecutableGenerator.atPoint} composed with \texttt{encodeTuple}
+(\texttt{pointWord\_eq}, \texttt{pointWords\_eq}). Enumerating $\{1,\dots,H\}^3$ in lexicographic
+order via \texttt{gridPointWords} and prepending $\texttt{encodeNat}(MD_g)$ and the encoded emitted
+tuple count produces $\texttt{hittingListWord}(n,s)=\texttt{encodeOutput}(\texttt{hittingList}(n,s))$
+(\texttt{hittingListWord\_eq}), certifying $(n,s)\mapsto\texttt{encodeOutput}(\texttt{hittingList}(n,s))$
+from $\texttt{encPair}\ \texttt{encUnary}\ \texttt{encUnary}$ to \texttt{encBits}
+(\texttt{hittingList\_polytime}).
+\item \textbf{Standalone bit-word generator.} Writing
+$\texttt{inputWord}(n,s)=\texttt{true}^n\mathbin{+\!+}[\texttt{false}]\mathbin{+\!+}\texttt{true}^s$
+of length $n+s+1$, the parser \texttt{parseInput} satisfies
+$\texttt{parseInput}(w)=\texttt{some}(n,s)\iff 1\le n\wedge 1\le s\wedge w=\texttt{inputWord}(n,s)$.
+The standalone generator
+\[
+\texttt{hittingGenerator} : \mathrm{List}\,\mathrm{Bool} \to \mathrm{List}\,\mathrm{Bool}
+\]
+satisfies $\texttt{hittingGenerator}(\texttt{inputWord}(n,s))=\texttt{encodeOutput}(\texttt{hittingList}(n,s))$
+for all $1\le n$ and $1\le s$, returns $[]$ on all other words, and is computable tidily in
+polynomial time on a multi-tape Turing machine (\texttt{hittingGenerator\_polytime},
+\texttt{hittingGenerator\_spec}).
+\end{itemize}
+This certifies polynomial-time generation of the hitting list; polynomial bit complexity of
+evaluating a rational formula on the emitted matrices is not asserted here.
+\citep{AroraBarak09,Bird2011,OpenAI2026RationalHitting,Schlesinger2026RationalHitting}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational.lean}{66}{Cslib.Circuits.Rational.hittingList}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational.lean}{74}{Cslib.Circuits.Rational.hittingList_hits}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Parameters.lean}{188}{Cslib.Circuits.Rational.computableTidilyInPolyTime_generatorParameters}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Lift.lean}{384}{Cslib.Circuits.Rational.liftRows_eq_inputTables}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Lift.lean}{1000}{Cslib.Circuits.Rational.liftRows_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{193}{Cslib.Circuits.Rational.pointWord_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime/Point.lean}{366}{Cslib.Circuits.Rational.pointWord_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{128}{Cslib.Circuits.Rational.hittingListWord_eq}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{194}{Cslib.Circuits.Rational.hittingGenerator_inputWord}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{300}{Cslib.Circuits.Rational.hittingList_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{344}{Cslib.Circuits.Rational.hittingGenerator_polytime}
+\declat{9901fecb9fda6f2f877b4b627bbd26abca905c91}{Complexity/Computability/Circuit/Rational/Runtime.lean}{355}{Cslib.Circuits.Rational.hittingGenerator_spec}
+\end{result}
+
+\begin{result}
+\subsection{Polynomial identity testing and Schwartz--Zippel root bounds}
+A single-output integer arithmetic circuit bundled with its input arity
+$\langle n,c\rangle\in\Sigma n,\;\texttt{Circuit}\;(\texttt{arithSignature}\;\mathbb Z)\;n\;1$ is
+encoded injectively as a bit word by $\texttt{encArithCircuitInt}$ (input arity $n$ in unary via
+$\texttt{encUnary}$, gate operations with sign-magnitude binary integer constants via $\texttt{encIntBin}$,
+and wire indices in binary via $\texttt{encNat}$), with $n\le|\texttt{encArithCircuitInt}\langle n,c\rangle|$
+(\texttt{le\_length\_encArithCircuitInt}). The polynomial identity testing language over $\mathbb Z$ is
+\[
+\texttt{PITInt}
+=
+\bigl\{\langle n,c\rangle \;\big|\; c.\texttt{polynomial}\;0 = 0 \in \texttt{MvPolynomial}\;(\mathrm{Fin}\;n)\;\mathbb Z\bigr\}.
+\]
+Over any integral domain $R$, every nonzero polynomial
+$P\in\texttt{MvPolynomial}\;(\mathrm{Fin}\;n)\;R$ and finite subset $S\subseteq R$ satisfy the
+multivariate Schwartz--Zippel root bounds
+\[
+|S|\cdot\bigl|\{x\in S^n \mid P(x)=0\}\bigr| \le \deg(P)\cdot |S|^n
+\quad\text{and}\quad
+\bigl|\{x\in S^n \mid P(x)=0\}\bigr| \le \deg(P)\cdot |S|^{n-1},
+\]
+so if $\deg(P)<|S|$ there exists $x\in S^n$ with $P(x)\ne 0$. Specializing to $c.\texttt{polynomial}\;0$
+shows that any integer circuit $\langle n,c\rangle\notin\texttt{PITInt}$ vanishes at at most
+$\deg(c.\texttt{polynomial}\;0)\cdot |S|^{n-1}$ points of $S^n$ and evaluates under
+$\texttt{arithInterpretation}\;\mathbb Z$ to a nonzero integer at some point of $S^n$ whenever
+$\deg(c.\texttt{polynomial}\;0)<|S|$.\citep{DeMilloLipton1978,Zippel1979,Schwartz1980,AroraBarak09}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{146}{MvPolynomial.card_mul_card_roots_le}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{162}{MvPolynomial.card_roots_le}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{181}{MvPolynomial.exists_eval_ne_zero_of_totalDegree_lt_card}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{283}{Cslib.Circuits.Arithmetic.encArithCircuitInt}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{301}{Cslib.Circuits.Arithmetic.PITInt}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{309}{Cslib.Circuits.Arithmetic.card_roots_eval_le_of_notMem_PITInt}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{319}{Cslib.Circuits.Arithmetic.exists_eval_ne_zero_of_notMem_PITInt}
+\end{result}
+
+\begin{result}
+\subsection{Permanent self-reducibility to \texttt{PITInt} and Kabanets--Impagliazzo}
+Over any commutative semiring $R$, the permanent of $A\in R^{(n+1)\times(n+1)}$ expands along
+column~$0$ or row~$0$:
+\[
+\mathrm{perm}(A) = \sum_{j=0}^{n} A_{0,j}\,\mathrm{perm}(A_{\mathrm{succ},\,j.\mathrm{succAbove}}).
+\]
+On the generic matrix $\texttt{genericMatrix}\;R\;(m+1)$, the $(0,j)$-minor permanent equals
+$\texttt{rename}(\texttt{minorVar}\;j)$ applied to $\mathrm{perm}(\texttt{genericMatrix}\;R\;m)$.
+From candidate circuits $c_0$ on $0$ variables, $c_m$ on $m^2$ variables, and $c_{m+1}$ on
+$(m+1)^2$ variables, the constructive difference circuits $\texttt{permBaseDiff}(c_0)$ (gate size
+$|c_0|+4$, computing $c_0.\texttt{polynomial}\;0 - 1$) and $\texttt{permStepDiff}(m,c_m,c_{m+1})$
+(gate size $|c_{m+1}|+(m+1)(|c_m|+2)+4$, computing
+$c_{m+1}.\texttt{polynomial}\;0 - \sum_{j=0}^{m} X_{(0,j)}\,\texttt{rename}(\texttt{minorVar}\;j)(c_m.\texttt{polynomial}\;0)$)
+satisfy Kabanets and Impagliazzo's downward self-reducibility equivalence\citep[Lemma 4.2]{KabanetsImpagliazzo2004}:
+for every family $C : \forall m,\;\texttt{Circuit}\;(\texttt{arithSignature}\;\mathbb Z)\;(m^2)\;1$ and $n\in\mathbb N$,
+\[
+\begin{aligned}
+\forall m\le n,\; &(C\;m).\texttt{polynomial}\;0 = \mathrm{perm}(\texttt{genericMatrix}\;\mathbb Z\;m) \\
+&\iff
+\langle 0,\texttt{permBaseDiff}(C\;0)\rangle\in\texttt{PITInt} \\
+&\quad\wedge\;
+\forall m<n,\;\langle (m+1)^2,\texttt{permStepDiff}(m,C\;m,C(m+1))\rangle\in\texttt{PITInt}.
+\end{aligned}
+\]
+The explicit recursive family \lean{laplacePermCircuit} unconditionally satisfies these identities at
+every dimension $n$ (\lean{isLaplacePermChain_laplacePermCircuit}), and if
+$\texttt{PITInt}\in\cc{P}\;\texttt{encArithCircuitInt}$ and the integer permanent p-family
+$\texttt{intPermFamily}=\texttt{permFamily}\;\mathbb Z$ belongs to $\cc{VP}\;\mathbb Z$, there exist a
+polynomial-time decider for $\texttt{PITInt}$ and a polynomially bounded permanent circuit family with
+polynomially bounded step-test sizes certified by it (\lean{PermPITCertified},
+\lean{exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP}; gate-size bounds on
+\lean{permBaseDiff} and \lean{permStepDiff} are combinatorial circuit sizes, without a separate
+uniform constructor certificate).
+
+Combining $\cc{\Sigma}_k^{\cc{P}}\subseteq\cc{PSPACE}\subseteq\cc{EXP}\subseteq\cc{NEXP}$ with Kannan's
+theorem shows unconditionally that for every $k\in\mathbb N$ there is a language $L\in\cc{NEXP}$ outside
+$\cc{SIZE}(c(n+1)^k)$ for all $c\in\mathbb N$ (\lean{exists_mem_NEXP_notMem_SIZE}). If
+$\texttt{PITInt}\in\cc{P}\;\texttt{encArithCircuitInt}$, then under the explicit collapse
+hypothesis from $\cc{NEXP}\subseteq\cc{P/poly}$ and \lean{PermPITCertified} (either to a fixed degree
+$k$ such that every $L\in\cc{\Sigma}_2^{\cc{P}}$ lies in $\bigcup_c\cc{SIZE}(c(n+1)^k)$, refuted by Kannan's
+theorem, or to $\cc{EXP}\subseteq\cc{P}$, refuted by $\cc{P}\subsetneq\cc{EXP}$), either
+$\cc{NEXP}\not\subseteq\cc{P/poly}$ or $\texttt{intPermFamily}\notin\cc{VP}\;\mathbb Z$. The easy-witness
+and Valiant--Toda collapse step from $\cc{NEXP}\subseteq\cc{P/poly}$ and \lean{PermPITCertified} is
+taken as an explicit hypothesis.\citep{Kannan1982,KabanetsImpagliazzo2004,AroraBarak09}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{213}{Matrix.permanent_succ_column_zero}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{224}{Matrix.permanent_succ_row_zero}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{480}{Cslib.Circuits.Arithmetic.intPermFamily}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{518}{Cslib.Circuits.Arithmetic.permanent_genericMatrix_succ}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{589}{Cslib.Circuits.Arithmetic.forall_polynomial_eq_permanent_iff_mem_PITInt}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{663}{Cslib.Circuits.Arithmetic.isLaplacePermChain_laplacePermCircuit}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{696}{Cslib.Circuits.Arithmetic.exists_certified_perm_family_of_PITInt_mem_P_of_mem_VP}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{752}{Cslib.Complexity.exists_mem_NEXP_notMem_SIZE}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{777}{Cslib.Circuits.Arithmetic.kabanets_impagliazzo}
+\declat{860b6595115e5fc139815e34908765c4e044eca9}{Complexity/Computability/Circuit/Arithmetic/IdentityTesting.lean}{802}{Cslib.Circuits.Arithmetic.kabanets_impagliazzo_of_EXP_subset_P}
 \end{result}

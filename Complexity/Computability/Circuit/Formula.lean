@@ -326,6 +326,26 @@ theorem leafSizeIn_le_leafSize (Y : Finset (Fin n)) (F : Formula σ n) :
     F.leafSizeIn Y ≤ F.leafSize := by
   simpa using F.sum_leafSizeIn_le_leafSize (s := {Y}) (Y := id) (by simp)
 
+/-- The leaves in a set of inputs are the leaves at each of its inputs. -/
+theorem sum_leafSizeIn_singleton (S : Finset (Fin n)) (F : Formula σ n) :
+    ∑ i ∈ S, F.leafSizeIn {i} = F.leafSizeIn S := by
+  induction F with
+  | input j =>
+    simp only [leafSizeIn_input, Finset.mem_singleton]
+    rw [Finset.sum_ite_eq]
+  | gate op args ih =>
+    simp only [leafSizeIn_gate]
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun j _ => ih j
+
+/-- Every leaf reads an input in a set or in its complement. -/
+theorem leafSizeIn_add_leafSizeIn_compl (S : Finset (Fin n)) (F : Formula σ n) :
+    F.leafSizeIn S + F.leafSizeIn Sᶜ = F.leafSize := by
+  induction F with
+  | input j => by_cases h : j ∈ S <;> simp [h]
+  | gate op args ih =>
+    simp only [leafSizeIn_gate, leafSize_gate, ← Finset.sum_add_distrib, ih]
+
 /-- A formula with no leaf in `Y` depends only on the inputs outside `Y`. -/
 theorem dependsOn_eval_of_leafSizeIn_eq_zero {Y : Finset (Fin n)} {F : Formula σ n}
     (hF : F.leafSizeIn Y = 0) (I : Interpretation σ U) :

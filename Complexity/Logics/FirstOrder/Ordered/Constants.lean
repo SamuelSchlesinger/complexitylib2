@@ -19,8 +19,9 @@ every canonical `Fin n` structure with `n ≥ 2`. Thus the native constant-aware
 to all formulas of the input relational vocabulary expanded by these three target constants.
 
 This supplies target constants in the semantic interpretation API. Native full-tuple BIT is
-constructed separately in `Ordered.TupleBit`. Numeric-preserving composition and the ordered
-logspace/capture results remain open.
+constructed separately in `Ordered.TupleBit`, and numeric-preserving composition in
+`Ordered.FullTuple.Composition` and `Ordered.DomainInterpretation.Composition`. Ordered
+logspace and machine-capture results remain separate.
 
 ## Main definitions
 
@@ -65,10 +66,9 @@ theorem constants_valid : (constants L).Valid (Fin n) := by
 
 /-- The selected target constants have indices zero, one and `n - 1`, respectively. -/
 theorem constants_value_val (c : NumericFunction 0) :
-    (((constants L).value (constants_valid (n := n)) c).val ()).val =
-      match c with | .zero => 0 | .one => 1 | .max => n - 1 := by
+    (((constants L).value (constants_valid (n := n)) c).val ()).val = c.index n := by
   have h := (constants L).value_spec (constants_valid (L := L) (n := n)) c
   simp only [constants, Formula.realize_equal, Term.realize_var, Term.realize_func] at h
-  cases c <;> exact congrArg Fin.val h
+  exact congrArg Fin.val h
 
 end Cslib.Logic.FO.Ordered

@@ -336,6 +336,19 @@ theorem eval_literalsCircuit (x : BitString n) :
 theorem size_literalsCircuit (n : ℕ) : (literalsCircuit n).size = n := by
   simp [literalsCircuit]
 
+/-- The circuit computing the positive and the negated inputs over the De Morgan basis, with one
+negation gate per input. -/
+def deMorganLiteralsCircuit (n : ℕ) : Circuit Boolean.signature n (n + n) :=
+  (Circuit.wiring _ id).append (Circuit.pi fun i => Circuit.oneGate .not fun _ => i)
+
+theorem eval_deMorganLiteralsCircuit (x : BitString n) :
+    (deMorganLiteralsCircuit n).eval Boolean.interpretation x = literals x := by
+  rw [deMorganLiteralsCircuit, Circuit.eval_append, Circuit.eval_pi]
+  rfl
+
+theorem size_deMorganLiteralsCircuit (n : ℕ) : (deMorganLiteralsCircuit n).size = n := by
+  simp [deMorganLiteralsCircuit]
+
 theorem depth_literalsCircuit_le (n : ℕ) : (literalsCircuit n).depth ≤ 1 :=
   (Circuit.depth_append_le _ _).trans (max_le (by simp)
     (Circuit.depth_pi_le _ fun _ => (Circuit.depth_oneGate _ _).le))

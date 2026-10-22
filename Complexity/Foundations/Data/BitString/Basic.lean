@@ -32,11 +32,13 @@ Boolean functions, are combined with `^^`.
 ## Main definitions
 
 * `Cslib.BitString.equivFin`: the numbering of the strings of `n` bits by `Fin (2 ^ n)`.
+* `Cslib.BitString.fstBits`, `Cslib.BitString.sndBits`: the two parts of an appended word.
 * `Cslib.BitString.indexBits`: a finite index represented in `⌈log₂ n⌉` bits.
 
 ## Main results
 
 * `Cslib.BitString.card`: the number of strings of `n` bits.
+* `Cslib.BitString.val_equivFin_eq_sum`: the unsigned value as a sum of binary digits.
 * `Cslib.BitString.val_equivFin_cons`: a new first bit is the least significant binary digit.
 * `Cslib.BitString.val_equivFin_succ`, `Cslib.BitString.decide_equivFin_le_succ`: numbering and
   comparing words by their highest bit.
@@ -87,6 +89,40 @@ theorem val_equivFin_succ (x : BitString (n + 1)) :
     Equiv.refl_apply, Fin.init, Fin.val_last]
   congr 1
   cases x (Fin.last n) <;> rfl
+
+/-- The unsigned value of an `n`-bit word (least significant bit first) as an explicit sum. -/
+theorem val_equivFin_eq_sum (x : BitString n) :
+    (BitString.equivFin n x : ℕ) = ∑ i : Fin n, (x i).toNat * 2 ^ (i : ℕ) := by
+  induction n with
+  | zero =>
+    have h := (BitString.equivFin 0 x).isLt
+    simp only [pow_zero, Nat.lt_one_iff] at h
+    simp
+  | succ n ih =>
+    rw [BitString.val_equivFin_succ, ih, Fin.sum_univ_castSucc, Fin.val_last]
+    rfl
+
+/-- The zero word of `n` bits has unsigned value zero. -/
+@[simp] theorem val_equivFin_false (n : ℕ) :
+    (BitString.equivFin n (fun _ => false) : ℕ) = 0 := by
+  rw [val_equivFin_eq_sum]
+  simp
+
+/-- The first `a` bits of an `(a + b)`-bit word. -/
+def fstBits {a b : ℕ} (x : BitString (a + b)) : BitString a :=
+  x ∘ Fin.castAdd b
+
+/-- The last `b` bits of an `(a + b)`-bit word. -/
+def sndBits {a b : ℕ} (x : BitString (a + b)) : BitString b :=
+  x ∘ Fin.natAdd a
+
+@[simp] theorem fstBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
+    fstBits (Fin.append u v) = u :=
+  funext fun i => Fin.append_left u v i
+
+@[simp] theorem sndBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
+    sndBits (Fin.append u v) = v :=
+  funext fun i => Fin.append_right u v i
 
 /-- Comparing words of `n + 1` bits: `x ≤ y` when the last bit of `x` is below that of `y`, or when
 they are equal and `x ≤ y` on the first `n` bits. -/

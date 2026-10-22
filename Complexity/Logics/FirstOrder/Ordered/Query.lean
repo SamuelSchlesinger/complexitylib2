@@ -26,6 +26,7 @@ encoding serializes no numeric tables: the canonical numeric vocabulary is suppl
 
 ## Main results
 
+* `Cslib.Logic.FO.Ordered.Structure.ext`: equality of ordered structures through a size cast.
 * `Cslib.Logic.FO.Ordered.mem_encodedLanguage_encode`: exact canonical encoding membership.
 
 ## References
@@ -57,6 +58,22 @@ instance structureInput {L : Language.{u, v}} (M : Structure L) : L.Structure M 
 
 instance structureSize {L : Language.{u, v}} (M : Structure L) : Fact (2 ≤ M.size) :=
   ⟨M.size_ge_two⟩
+
+/-- Ordered structures over a relational language are equal when their sizes are and the size
+cast preserves every relation. -/
+theorem Structure.ext {L : Language} [L.IsRelational] {M N : Structure L} (h : M.size = N.size)
+    (hrel : ∀ {r} (R : L.Relations r) (x : Fin r → Fin M.size),
+      Language.Structure.RelMap R x ↔ Language.Structure.RelMap R (Fin.cast h ∘ x)) : M = N := by
+  obtain ⟨m, hm, s⟩ := M
+  obtain ⟨n, hn, t⟩ := N
+  change m = n at h
+  subst h
+  congr 1
+  apply FirstOrder.Language.Structure.ext
+  · funext r f
+    exact isEmptyElim f
+  · funext r R x
+    exact propext (hrel R x)
 
 /-- An ordered query is an arbitrary class of canonically ordered structures. Input relations
 need not be invariant under permutations that change the fixed order. -/
@@ -93,17 +110,8 @@ noncomputable def encode {L : Language} (v : Vocabulary L) (M : Structure L) : E
 /-- Decoding the canonical encoding returns the same ordered structure. -/
 @[simp]
 theorem decoded_encode {L : Language} [L.IsRelational] (v : Vocabulary L) (M : Structure L) :
-    decoded v (encode v M) M.size_ge_two = M := by
-  obtain ⟨n, hn, s⟩ := M
-  let := s
-  change Structure.mk n hn (v.decode (v.encode (Fin n) (Equiv.refl _))) = Structure.mk n hn s
-  congr 1
-  apply FirstOrder.Language.Structure.ext
-  · funext k f
-    exact isEmptyElim f
-  · funext k r xs
-    apply propext
-    exact v.relMap_decode_encode (Fin n) (Equiv.refl _) r xs
+    decoded v (encode v M) M.size_ge_two = M :=
+  Structure.ext rfl fun r xs => v.relMap_decode_encode M (Equiv.refl _) r xs
 
 @[simp]
 theorem mem_encodedLanguage_encode {L : Language} [L.IsRelational] (v : Vocabulary L)

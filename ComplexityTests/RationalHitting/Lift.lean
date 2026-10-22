@@ -143,6 +143,31 @@ example {table : List (List ℤ)} (htable : table ∈ liftRows 0 2 4 2 385 385 3
 #eval (((liftRows 0 2 4 2 385 385 385).flatten.flatten.map intBits).foldr max 0,
   liftBits 0 4 385)
 
+/-! ### Polynomial-time certificates -/
+
+open Turing MultiTapeTM MultiTapeTM.ComputableTidilyInPolyTime
+
+example : (encList encIntBin (coeffRow 2 3)).length ≤ coeffRowBound (encIntBin 2).length 3 :=
+  length_encList_coeffRow_le 2 le_rfl
+
+example : ComputableTidilyInPolyTime (fun p : ℤ × ℕ => coeffRow p.1 p.2)
+    (encPair encIntBin encUnary) (encList encIntBin) := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime (fun p : (ℕ × ℕ) × (ℤ × ℤ) =>
+    testRows p.1.1 p.1.2 p.2.1 p.2.2)
+    (encPair (encPair encUnary encUnary) (encPair encIntBin encIntBin))
+    (encList (encList encIntBin)) := by
+  fun_prop
+
+example : ComputableTidilyInPolyTime
+    (fun q : ℕ × ℕ × ℕ × ℕ × ℕ × ℕ × ℕ =>
+      liftRows q.1 q.2.1 q.2.2.1 q.2.2.2.1 q.2.2.2.2.1 q.2.2.2.2.2.1 q.2.2.2.2.2.2)
+    (encPair encUnary (encPair encUnary (encPair encUnary (encPair encUnary
+      (encPair encUnary (encPair encUnary encUnary))))))
+    (encList (encList (encList encIntBin))) :=
+  liftRows_polytime
+
 /-! ### Axioms -/
 
 /--
@@ -207,5 +232,26 @@ Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms intBits_le_of_mem_liftRows_parameters
+
+/--
+info: 'Cslib.Circuits.Rational.length_encList_coeffRow_le' depends on axioms: [propext,
+Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms length_encList_coeffRow_le
+
+/--
+info: 'Cslib.Circuits.Rational.computableTidilyInPolyTime_liftRows' depends on axioms: [propext,
+Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms computableTidilyInPolyTime_liftRows
+
+/--
+info: 'Cslib.Circuits.Rational.liftRows_polytime' depends on axioms: [propext, Classical.choice,
+Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms liftRows_polytime
 
 end ComplexityTests.RationalHitting.Lift

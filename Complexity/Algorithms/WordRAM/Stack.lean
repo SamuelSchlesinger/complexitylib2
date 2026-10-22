@@ -112,14 +112,11 @@ structure Rep (w base capacity : ℕ) (vs : List ℕ) (x : Data 9) : Prop where
 
 /-- Reserved memory footprint; it stays fixed through pushes and pops. -/
 def footprint (base capacity : ℕ) : Finset ℕ :=
-  (Finset.range capacity).image (base + ·)
+  (Block.mk base capacity).footprint
 
-private theorem prepare_bounded {w capacity : ℕ} (h2 : Fits w 2)
-    {vs : List ℕ} {x : Data 9} {o : StackOp ℕ}
-    (hx : x.Bounded w) (hv : (spec w capacity).valid vs o) :
-    ((implementation w capacity).prepare o x).Bounded w := by
-  apply DynamicProgram.prepare_bounded _ hx
-  intro i _
+theorem arguments_fit {w capacity : ℕ} (h2 : Fits w 2) {vs : List ℕ} (o : StackOp ℕ)
+    (hv : (spec w capacity).valid vs o) (i : Fin 9) :
+    Fits w ((implementation w capacity).encode o i) := by
   cases o with
   | push v =>
     change Fits w (if i = tag then 0 else v)
@@ -132,6 +129,12 @@ private theorem prepare_bounded {w capacity : ℕ} (h2 : Fits w 2)
   | size =>
     change Fits w (if i = tag then 2 else 0)
     split <;> first | exact h2 | exact fits_zero w
+
+private theorem prepare_bounded {w capacity : ℕ} (h2 : Fits w 2)
+    {vs : List ℕ} {x : Data 9} {o : StackOp ℕ}
+    (hx : x.Bounded w) (hv : (spec w capacity).valid vs o) :
+    ((implementation w capacity).prepare o x).Bounded w :=
+  (implementation w capacity).prepare_bounded hx (fun i _ => arguments_fit h2 o hv i)
 
 /-- Actual instructions excluding the final halt. -/
 def bodyCost (vs : List ℕ) : StackOp ℕ → ℕ
@@ -171,13 +174,7 @@ private theorem execute_push {w base capacity : ℕ} (h2 : Fits w 2)
           omega
         simp [y, Data.set, Data.write, implementation, DynamicProgram.prepare,
           List.reverse_cons, hi']
-  · intro a ha
-    have hne : a ≠ base + vs.length := by
-      intro heq
-      apply ha
-      exact Finset.mem_image.mpr ⟨vs.length, Finset.mem_range.mpr hv, heq.symm⟩
-    simp [y, Data.set, Data.write, implementation, DynamicProgram.prepare,
-      Function.update_of_ne hne]
+  · exact Modifies.write_of_owns ⟨Nat.le_add_right _ _, Nat.add_lt_add_left hv _⟩ v
 
 private theorem execute_pop_cons {w base capacity : ℕ} (h2 : Fits w 2)
     (hcap : Fits w (base + capacity)) {vs : List ℕ} {x : Data 9} {v : ℕ}
@@ -274,23 +271,7 @@ def certificate {w base capacity : ℕ} (h2 : Fits w 2) (hcap : Fits w (base + c
     DynamicCertificate (implementation w capacity) w where
   rep := Rep w base capacity
   bounded h := h.bounded
-  arguments_fit o hv i _ := by
-    cases o with
-    | push v =>
-      change Fits w (if i = tag then 0 else v)
-      split
-      · exact fits_zero w
-      · exact hv.2
-    | pop =>
-      change Fits w (if i = tag then 1 else 0)
-      split
-      · exact h2.of_le (by decide)
-      · exact fits_zero w
-    | size =>
-      change Fits w (if i = tag then 2 else 0)
-      split
-      · exact h2
-      · exact fits_zero w
+  arguments_fit o hv i _ := arguments_fit h2 o hv i
   execute o hr hv := by
     obtain ⟨y, he, ha, hr, _⟩ := Stack.execute h2 hcap hr o hv
     exact ⟨y, _, he, ha, hr⟩
@@ -303,21 +284,19 @@ theorem instructions_eq {w base capacity : ℕ} (h2 : Fits w 2)
     (he : (implementation w capacity).ExecOp w x o a y trace) :
     trace.instructions = bodyCost vs o + 1 := by
   obtain ⟨z, hz, _, _, _⟩ := execute h2 hcap hr o hv
-  obtain ⟨_, n, ht, _, hn⟩ := he
-  obtain ⟨_, rfl⟩ := ht.exec.unique hz
-  exact hn
+  exact (he.eq_of_exec hz).2
 
 /-- Every admissible call has a separate worst-case bound of twelve native instructions. -/
 theorem instruction_bound {w base capacity : ℕ} (h2 : Fits w 2)
     (hcap : Fits w (base + capacity)) :
     Stateful.Bound (certificate h2 hcap).realization
-      DynamicProgram.OperationTrace.instructions (fun _ _ => 12) := by
-  intro vs x o a y trace hr hv he
-  rw [instructions_eq h2 hcap hr hv he]
-  cases o with
-  | push => exact (by decide : 8 ≤ 12)
-  | size => exact (by decide : 8 ≤ 12)
-  | pop => dsimp only [bodyCost]; split <;> decide
+      DynamicProgram.OperationTrace.instructions (fun _ _ => 12) :=
+  (certificate h2 hcap).instruction_bound_const 12 fun o hr hv => by
+    obtain ⟨y, he, _⟩ := execute h2 hcap hr o hv
+    refine ⟨y, bodyCost _ o, he, ?_⟩
+    cases o with
+    | push | size => simp +decide [bodyCost]
+    | pop => dsimp only [bodyCost]; split <;> decide
 
 /-- Every concrete call preserves all memory outside the same reserved stack block. -/
 theorem modifies {w base capacity : ℕ} (h2 : Fits w 2) (hcap : Fits w (base + capacity))
@@ -325,11 +304,10 @@ theorem modifies {w base capacity : ℕ} (h2 : Fits w 2) (hcap : Fits w (base + 
     {a : (spec w capacity).Result o} {trace : DynamicProgram.OperationTrace}
     (hr : Rep w base capacity vs x) (hv : (spec w capacity).valid vs o)
     (he : (implementation w capacity).ExecOp w x o a y trace) :
-    Modifies (footprint base capacity) x.mem y.mem := by
-  obtain ⟨z, hz, _, _, hf⟩ := execute h2 hcap hr o hv
-  obtain ⟨_, n, ht, _, _⟩ := he
-  obtain ⟨rfl, _⟩ := ht.exec.unique hz
-  exact hf
+    Modifies (footprint base capacity) x.mem y.mem :=
+  (certificate h2 hcap).modifies_of_execute
+    (fun o hr' hv' => let ⟨z, hz, _, _, hf⟩ := execute h2 hcap hr' o hv'; ⟨z, _, hz, hf⟩)
+    hr hv he
 
 /-- The machine stack preserves any disjoint heap representation. -/
 theorem frame {w base capacity : ℕ} (h2 : Fits w 2) (hcap : Fits w (base + capacity))
@@ -368,10 +346,7 @@ theorem run_client {w base capacity : ℕ} (h2 : Fits w 2) (hcap : Fits w (base 
         ((spec w capacity).runClient vs p).1 y traces ∧
       Rep w base capacity ((spec w capacity).runClient vs p).2.1 y ∧
       Stateful.total DynamicProgram.OperationTrace.instructions traces ≤
-        ((spec w capacity).runClient vs p).2.2.length * 12 := by
-  obtain ⟨y, traces, he, hr'⟩ := (certificate h2 hcap).realization.run p hr hv
-  refine ⟨y, traces, he, hr', ?_⟩
-  have hb := Stateful.Bound.client (instruction_bound h2 hcap) hr hv he
-  simpa only [Stateful.spec_total_const] using hb
+        ((spec w capacity).runClient vs p).2.2.length * 12 :=
+  (certificate h2 hcap).run_client_const (instruction_bound h2 hcap) p hr hv
 
 end Cslib.WordRAM.Stack

@@ -92,8 +92,8 @@ def muxCircuit (w : ℕ) : Circuit signature (1 + (w + w)) w :=
   cases c <;> simp [interpretation]
 
 @[simp] theorem size_muxCircuit (w : ℕ) : (muxCircuit w).size = 3 * w + 1 := by
+  rw [show 3 * w + 1 = 1 + w * 3 by ring]
   simp [muxCircuit, muxBit]
-  ring
 
 theorem depth_muxCircuit_le (w : ℕ) : (muxCircuit w).depth ≤ 3 :=
   (Circuit.depth_comp_le _ _).trans <| Nat.add_le_add (b := 2) (d := 1)
@@ -231,8 +231,8 @@ theorem append_comp_keyBits (r s : BitString (k + p)) :
     Fin.append r s ∘ keyBits k p = Fin.append (recordKey r) (recordKey s) := by
   funext j
   refine Fin.addCases (fun i => ?_) (fun i => ?_) j
-  · simp only [Function.comp_apply, keyBits, Fin.append_left, recordKey]
-  · simp only [Function.comp_apply, keyBits, Fin.append_right, recordKey]
+  · simp only [Function.comp_apply, keyBits, Fin.append_left, recordKey, BitString.fstBits]
+  · simp only [Function.comp_apply, keyBits, Fin.append_right, recordKey, BitString.fstBits]
 
 /-- The *keyed minimum*: reading two records of a key of `k` bits followed by a payload of `p`
 bits, it outputs the one with the smaller key, the first on ties. -/

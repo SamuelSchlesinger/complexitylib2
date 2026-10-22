@@ -98,6 +98,19 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   memory and checked word arithmetic. These are explicit model choices, not a proved equivalence
   with their two-array model. Coordinate this common core with the algorithm-model work above;
   the existing Cook–Reckhow-inspired RAM and its logarithmic cost remain separate.
+  `GenericRAM/Native` separately packages existing native TM `ComputableTidilyInO` witnesses for
+  encoded scalar primitives, with caller-selected configuration encoding and unrestricted
+  input-dependent bounds. Its forgetful bridge reuses `IsComputable`; polynomiality is a separate
+  bound property. `GenericRAM/Native/Nat` supplies a checked bounded-natural addition model;
+  `WordRAM/Native` certifies checked standard addition with unary width and binary operands.
+  Both reuse Christian Reitwiessner's native arithmetic/encoding calculus. These are per-symbol
+  certificates for fixed-program composition, not an arbitrary-program dispatcher or whole RAM
+  simulation. Sparse memory, finite control and charged configuration selection remain separate.
+* **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
+  with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
+  routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,
+  and polynomial-time corollaries. Coordinate this component with #292's effective RAM backend;
+  it does not yet simulate generic primitives, finite control or whole RAM executions.
 * **Stateful algorithms prototype.** `Foundations/Semantics/Stateful/*` reuses Quang Dao's merged
   `PFunctor.FreeM` for adaptive clients and substitution, adding persistent representation
   simulation, interface composition, semantic Hoare rules and separate native-resource
@@ -109,8 +122,19 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   representation from the standard input. `WordRAM/Function` gives a separate uniform RAM
   function-time predicate, with named-certificate reuse by `polytime`. Arbitrary continuation
   synthesis, iterative clients and a Turing-machine simulation remain open.
+  `Foundations/Data/OrderedSet` and `Foundations/Semantics/Stateful/OrderedSet` provide neutral
+  optional-minimum contracts, a typed finite-set interface and adaptive clients, with no tree or
+  cost dependency. Bounded-key implementations may specialize insertion admissibility.
+  `Algorithms/Lean/SearchTree/*` reuses Mathlib's `BinaryTree`, height and node count for an
+  unbalanced ordered-set realization. Finite-set behavior, strict invariants and height-bounded
+  node visits are proved; allocation, comparison implementation and client computation are
+  excluded from that cost model. It is not a balanced tree or machine-time certificate.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.
+  The direct shared-heap queue uses the existing FIFO operation signature and native operation
+  traces, with a hidden two-stack representation, a concrete-register potential, framed storage,
+  and separately charged initialization. Its `2 * capacity` reservation is explicit; external
+  client computation and argument delivery are not charged by the operation-history bound.
   Coordinate placement and overlap with Srinivas's #685 and #401 before upstream submission;
   neither open framework is copied here. This is a prototype of composition and refinement,
   not a replacement for their query models or a general cell-probe lower-bound semantics.
@@ -131,7 +155,7 @@ agreement during upstream review.
 | --- | --- |
 | `Computability/Machines/Turing/MultiTape/Encodings/StreamFold` | The candidate `streamFold_sum` generalizes the vendored proof; `streamFold` is its compatibility corollary. When resynchronizing or removing the copy, preserve the summed contract and shared proof until upstream includes them. |
 | `Computability/Machines/Turing/MultiTape/Encodings/Length` | Add to the tidy branch's `Encodings/List`. |
-| `Computability/Machines/Turing/MultiTape/Plumbing/Shadow` | Put general run lemmas in `TapeLemmas`. |
+| `Computability/Machines/Turing/MultiTape/TapeLemmas` | `exists_visitedByTapeHead_eq_Icc` and `workTapes_runFrom_eq_of_notMem_visitedByTapeHead` were relocated from `Plumbing/Shadow` (#316); upstream with `TapeLemmas`. |
 | `Turing.Action.instFinite` in `Computability/Machines/Turing/MultiTape/Machine/ChoiceTable` | Place beside `Action` in `Computability/Machines/Turing/MultiTape/Configuration`. |
 | `Computability/Machines/Turing/MultiTape/Plumbing/ExtendTapesView` | Derive the old `tapeEmb`/`noTapes` lemmas from `viewCfg`; `oneTapeCfg i = viewCfg (tapeEmb i)` by `rfl`. |
 | `Computability/Machines/Turing/MultiTape/Probabilistic/IterateWhile` | Its private tape helpers parallel the vendored deterministic `Combinators/IterateWhile`; share them once the tidy branch exposes them. |
@@ -142,10 +166,10 @@ agreement during upstream review.
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
 | `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
-| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}` | Consider Mathlib probability APIs and evaluate splitting `HarmonicMean`. |
+| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317, with deprecated aliases retained in `Cslib.BitString`). |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
 | `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
-| `Foundations/Combinatorics/Expander/Products` | Extract the private expectation helpers on product types to Mathlib if useful. |
+| `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |
 | `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
 | `Probability/PairwiseIndependentHash/Toeplitz` | Move `Matrix.toeplitz` to Mathlib beside `LinearAlgebra/Matrix/Circulant`. |
@@ -218,5 +242,5 @@ grandfathered without an alias; this list records them for downstream users.
   opened; use dot notation (`G.toSimpleGraph_adj`) or full names. Upstreaming the frontier
   multigraph therefore follows `Foundations/Combinatorics/Multigraph.lean`.
 
-The [historical ledger](https://github.com/SamuelSchlesinger/complexitylib2/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
+The [historical ledger](https://github.com/cslib-community/complexitylib/blob/d0e6373970029a91018528463ca7a5ccd0fc9fd1/UPSTREAM.md)
 preserves earlier integration notes and per-module follow-up ideas.

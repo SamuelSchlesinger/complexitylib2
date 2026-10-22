@@ -96,7 +96,11 @@ theorem bernoulliAverage_union_difference {ι : Type*} [Fintype ι] [DecidableEq
       (bernoulliAverage_bernoulliAverage_eq_sum (p + q - p * q) r (fun s t => (s, s && t)) g).symm)
   refine sum_congr rfl fun a _ => congrArg _ (prod_congr rfl fun i _ => ?_)
   obtain ⟨b, c⟩ := a i
-  cases b <;> cases c <;> simp <;> linarith
+  cases b <;> cases c <;> simp only [Bool.or_self, Bool.or_true, Bool.or_false,
+    Bool.not_true, Bool.not_false, Bool.and_self, Bool.and_true, Bool.and_false,
+    Prod.mk.injEq, Bool.true_eq_false, Bool.false_eq_true,
+    and_self, and_true, and_false, ↓reduceIte, mul_zero, add_zero,
+    zero_add] <;> linarith
 
 /-- The joint law of `P ∪ Q` and `P \ Q`, with the difference as a mask on the coordinates of the
 union. -/

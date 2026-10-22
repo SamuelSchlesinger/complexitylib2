@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Kolmogorov.Invariance
+public import Complexity.Computability.Kolmogorov.Partrec
+public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Partrec
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
@@ -19,6 +21,12 @@ program is an input of the machine, the clock counts steps, and the output of a 
 contents of the output tape once the machine has halted. Its complexity `C_tm(x)` is the length of
 a shortest input on which `tm` computes `x`, and `C_tm^t(x)` that of a shortest input on which `tm`
 computes `x` within `t` steps.
+
+When the state space is finite, `tm.eval` is partial recursive (`Turing.MultiTapeTM.partrec_eval`),
+so mapping any computable decoder `dec : List Bool → ℕ` over `ofMultiTapeTM tm` yields a partial
+recursive description method (`isPartrec_ofMultiTapeTM_map`). By the invariance theorem
+(`isAdditivelyOptimal_universal`), `universal` is at most an additive constant worse than any
+finite-state multi-tape Turing machine (`exists_ecomplexity_universal_le_ofMultiTapeTM`).
 
 ## Main definitions
 
@@ -36,6 +44,15 @@ computes `x` within `t` steps.
   the machine computes `x` within `t` steps bounds `C_tm^t(x)`.
 * `Cslib.Kolmogorov.DescriptionMethod.exists_simulation_literal`: some machine simulates the
   literal description method.
+* `Cslib.Kolmogorov.DescriptionMethod.isPartrec_ofMultiTapeTM_map`: mapping a computable decoder
+  over the description method of a finite-state multi-tape machine is partial recursive.
+* `Cslib.Kolmogorov.DescriptionMethod.exists_ecomplexity_universal_le_ofMultiTapeTM`: `universal`
+  is at most an additive constant worse than any finite-state multi-tape machine.
+
+## References
+
+* [M. Li, P. Vitányi, *An Introduction to Kolmogorov Complexity and Its
+  Applications*][LiVitanyi2019]
 -/
 
 @[expose] public section
@@ -113,5 +130,39 @@ theorem exists_simulation_literal :
   let ⟨k, State, hfin, tm, h⟩ := MultiTapeTM.computableInTimeAndSpace_id
     (enc := Function.Embedding.refl (List Bool))
   ⟨k, State, hfin, tm, ⟨literalSimulation h⟩⟩
+
+/-! ### Partial recursiveness and optimality of `universal` over `MultiTapeTM` -/
+
+/-- For every finite-state binary `MultiTapeTM` and computable decoder `dec : List Bool → ℕ`,
+mapping `dec` over `ofMultiTapeTM tm` yields a partial recursive description method. -/
+theorem isPartrec_ofMultiTapeTM_map {State : Type} [Finite State]
+    (tm : MultiTapeTM k Bool State) {dec : List Bool → ℕ} (hdec : Computable dec) :
+    ((ofMultiTapeTM tm).map dec).IsPartrec := by
+  refine ⟨fun p => (tm.eval p).map dec,
+    tm.partrec_eval.map (hdec.comp Computable.snd).to₂, fun p n => ?_⟩
+  simp [Part.mem_map_iff]
+
+/-- **Optimality of `universal` over finite-state multi-tape Turing machines**: for every
+finite-state binary `MultiTapeTM` and computable decoder `dec : List Bool → ℕ`, `universal` is at
+most an additive constant worse than `ofMultiTapeTM tm`. -/
+theorem exists_ecomplexity_universal_le_ofMultiTapeTM {State : Type} [Finite State]
+    (tm : MultiTapeTM k Bool State) {dec : List Bool → ℕ} (hdec : Computable dec) :
+    ∃ c : ℕ, ∀ x : List Bool,
+      universal.ecomplexity (dec x) ≤ (ofMultiTapeTM tm).ecomplexity x + c := by
+  obtain ⟨c, hc⟩ := isAdditivelyOptimal_universal.exists_ecomplexity_le
+    ((ofMultiTapeTM tm).map dec) (isPartrec_ofMultiTapeTM_map tm hdec)
+  exact ⟨c, fun x => (hc (dec x)).trans
+    (add_le_add_left ((ofMultiTapeTM tm).ecomplexity_map_le dec x) c)⟩
+
+/-- Using `Nat.bits` and `List.foldr Nat.bit 0`, `universal` is at most an additive constant worse
+than any finite-state binary `MultiTapeTM` on binary representations of natural numbers. -/
+theorem exists_ecomplexity_universal_le_ofMultiTapeTM_bits {State : Type} [Finite State]
+    (tm : MultiTapeTM k Bool State) :
+    ∃ c : ℕ, ∀ n : ℕ,
+      universal.ecomplexity n ≤ (ofMultiTapeTM tm).ecomplexity n.bits + c := by
+  obtain ⟨c, hc⟩ :=
+    exists_ecomplexity_universal_le_ofMultiTapeTM tm Primrec.list_foldr_nat_bit.to_comp
+  refine ⟨c, fun n => ?_⟩
+  simpa [Nat.foldr_bit_bits] using hc n.bits
 
 end Cslib.Kolmogorov.DescriptionMethod

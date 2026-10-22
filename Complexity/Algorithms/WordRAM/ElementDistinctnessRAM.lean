@@ -55,22 +55,37 @@ namespace Cslib.Algorithms.WordRAM.ElementDistinctness
 
 open Cslib.WordRAM
 
-/-- Every instruction of the compiled source decider is in the additive-memory fragment. -/
-theorem program_isAdditive : (decider.program Reg.ans).IsAdditive := by decide
+/-- Every instruction of the compiled source decider is in the additive-memory fragment,
+because `decider` is the image of `deciderAdditive` under `Basis.additiveHomStandard`. -/
+theorem program_isAdditive : (decider.program Reg.ans).IsAdditive := by
+  rw [← deciderAdditive_mapOp]
+  exact deciderAdditive.program_mapOp_additiveHomStandard_isAdditive Reg.ans
 
 /-- The fixed twelve-register source decider compiled to the natural-number RAM. Its input
 convention is `ToRAM.paddedInput 12`, whose supplied zero prefix has length seventeen. -/
-def paddedRamProgram : RAM.Program := ToRAM.paddedProgram (decider.program Reg.ans)
+def paddedRamProgram : RAM.Program :=
+  ToRAM.paddedProgramAdditive (deciderAdditive.program Reg.ans)
+
+@[simp]
+theorem paddedRamProgram_eq :
+    paddedRamProgram = ToRAM.paddedProgram (decider.program Reg.ans) := by
+  simp [paddedRamProgram, ToRAM.paddedProgramAdditive, ← Code.program_mapOp]
 
 /-- The fixed compiled decider preceded by charged input relocation and workspace clearing.
 Its external input convention is `RAM.Input.encode 5`. -/
-def ramProgram : RAM.Program := ToRAM.preparedProgram (decider.program Reg.ans)
+def ramProgram : RAM.Program :=
+  ToRAM.preparedProgramAdditive (deciderAdditive.program Reg.ans)
+
+@[simp]
+theorem ramProgram_eq :
+    ramProgram = ToRAM.preparedProgram (decider.program Reg.ans) := by
+  simp [ramProgram, ToRAM.preparedProgramAdditive, ← Code.program_mapOp]
 
 private theorem exists_nodup_execution (a : Input) :
-    ∃ t, Executes (logWidth 2 a.1.length) (decider.program Reg.ans) (State.init a.1)
+    ∃ t, Executes (logWidth 2 a.1.length) (deciderAdditive.program Reg.ans) (State.init a.1)
       (if a.1.Nodup then 1 else 0) t ∧ t ≤ 16 * (a.1.length + 1) := by
   obtain ⟨v, t, he, ht, hv, hnodup⟩ :=
-    decidesInTime_nodup a (logWidth 2 a.1.length) le_rfl (inputFits a le_rfl)
+    decidesInTime_nodup_additive a (logWidth 2 a.1.length) le_rfl (inputFits a le_rfl)
   have hvalue : v = if a.1.Nodup then 1 else 0 := by
     change v = 1 ↔ a.1.Nodup at hnodup
     by_cases ha : a.1.Nodup
@@ -101,7 +116,7 @@ theorem haltsWithResultInTime_nodup_padded (a : Input) :
       (if a.1.Nodup then 1 else 0)
       (2448 * (a.1.length + 1) * (Nat.log 2 (a.1.length + 1) + 1)) := by
   obtain ⟨t, he, ht⟩ := exists_nodup_execution a
-  exact (ToRAM.haltsWithResultInTime_padded program_isAdditive (inputFits a le_rfl) he).mono
+  exact (ToRAM.haltsWithResultInTime_padded_additive (inputFits a le_rfl) he).mono
     (compiled_cost_le ht)
 
 /-- Bounded-universe element distinctness has logarithmic RAM cost
@@ -117,7 +132,7 @@ theorem haltsWithResultInTime_nodup (a : Input) :
     RAM.bitLength_mono (Nat.le_succ a.1.length)
   have hinput (x : ℕ) (hx : x ∈ a.1) : RAM.bitLength x ≤ Nat.log 2 (a.1.length + 1) + 1 :=
     (RAM.bitLength_mono (a.2 x hx).le).trans hlen
-  have h := ToRAM.haltsWithResultInTime_prepared_of_bitLength_le program_isAdditive
+  have h := ToRAM.haltsWithResultInTime_prepared_of_bitLength_le_additive
     (inputFits a le_rfl) he hlen hinput
   refine h.mono ?_
   change 287 * (a.1.length + 1) * (Nat.log 2 (a.1.length + 1) + 1) +

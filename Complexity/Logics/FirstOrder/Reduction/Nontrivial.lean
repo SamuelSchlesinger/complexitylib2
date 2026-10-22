@@ -90,6 +90,11 @@ namespace ReducesNontrivial
 theorem refl [L.IsRelational] (hK : IsoClosed K) : ReducesNontrivial K K :=
   (Reduces.refl hK).reducesNontrivial
 
+/-- A reduction on nontrivial structures from `K` to `K'` is also one from `Kᶜ` to `K'ᶜ`. -/
+theorem compl (h : ReducesNontrivial K K') : ReducesNontrivial Kᶜ K'ᶜ :=
+  let ⟨ι, hι, I, hI⟩ := h
+  ⟨ι, hι, I, fun M _ hM => not_congr (hI M hM)⟩
+
 /-- A reduction on nontrivial structures followed by an order-free reduction. -/
 theorem trans_reduces (h : ReducesNontrivial K K') (h' : Reduces K' K'') (hK'' : IsoClosed K'') :
     ReducesNontrivial K K'' := by

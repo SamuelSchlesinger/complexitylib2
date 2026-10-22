@@ -130,3 +130,148 @@ advantage is at least $1/4$ for all large $n$.\citep{KabanetsCai2000,GGM1986}
 \declat{73cf7ce29398479e7b7fef5c8921b67ae6b7f269}{Complexity/Crypto/Computational/PseudorandomFunction/TruthTable.lean}{173}{Cslib.Crypto.KabanetsCai.exists_complexity_restriction_le}
 \end{result}
 
+\begin{result}
+\subsection{Completeness of oblivious transfer with abort}
+In the ideal $1$-out-of-$2$ oblivious-transfer hybrid model, every $k$-party
+($k\ge1$) functionality computed by a De Morgan Boolean circuit $c$ with
+$k\cdot w_{\mathrm{in}}$ input wires, $k\cdot w_{\mathrm{out}}$ output wires,
+and $|c|$ gates is evaluated on $k$-party additive secret shares by
+$\mathrm{evalCircuitOT}$ using $k^2|c|$ pairwise calls to $\mathrm{idealOT}$
+($\mathrm{otCallBudget}$), reconstructing $c$'s exact output on the shared
+inputs ($\mathrm{parity\_evalCircuitOT}$). Against any static malicious
+corruption set $C\subseteq\mathrm{Fin}\,k$, $\mathrm{MaliciousOTAdversary}$
+models static malicious behavior in the OT-hybrid protocol via effective input
+substitution ($\mathrm{chooseInputs}$), boolean input-validity and
+gate-consistency predicates ($\mathrm{corruptedInputValid}$,
+$\mathrm{gatePhaseConsistent}$) on the corrupted view that trigger early abort
+($\mathrm{finalizeEarlyAbort}$) when violated, combined honest output-share
+parity $\mathrm{honestOutputReconstructionShares}$
+($\mathrm{parityOn}(\mathrm{Finset.univ}\setminus C)$) for corrupted parties'
+output wires, and a rushing output-delivery flag ($\mathrm{deliver}$), while
+wire shares during circuit evaluation are computed by $\mathrm{evalCircuitOT}$
+on the effective inputs and honest parties' delivered outputs are the
+reconstructed circuit outputs on those effective inputs (leaving compilation of
+commitments, zero-knowledge proofs, or IPS watch-lists against arbitrary
+per-gate share tampering from raw OT, as well as adaptive corruptions, to
+future work). Under the black-box simulator $\mathrm{kilianSimulator}$, the
+real OT-hybrid execution $\mathrm{realOTHybridExecution}$ and the ideal
+execution with abort $\mathrm{idealExecutionWithAbort}$ have the exact same
+probability distribution
+($\mathrm{realOTHybridExecution\_eq\_idealExecutionWithAbort}$, statistical
+distance $0$), where the trusted party reveals only the corrupted parties'
+outputs $\mathrm{maskOutputsToCorrupted}$ to the simulator and honest parties
+outside $C$ receive $\mathrm{some}(y_i)$ on delivery or $\mathrm{none}$ on
+abort. $\mathrm{PolyTimeFunctionality}$ packages a De Morgan circuit family with
+polynomially bounded input width, output width, and gate count (whose semantics
+agrees with the certified uniform polynomial-time circuit evaluator
+$\mathrm{Boolean.evalOutput}$, without a separate uniform circuit-generation
+machine field, and whose OT call budget is polynomially bounded), and
+$\mathrm{MaliciousOTAdversary}$ and $\mathrm{kilianSimulator}$ are defined at
+the distribution ($\mathrm{PMF}$) level, so both zero-error statistical
+security ($\mathrm{ot\_complete\_statisticallySecureWithAbort}$) and uniform
+strict-PPT computational security
+($\mathrm{ot\_complete\_computationallySecureWithAbort}$) follow from the exact
+distributional identity. Security with abort guarantees neither output delivery
+($\mathrm{not\_guaranteedOutputDelivery\_of\_abort}$) nor fairness: in two-party
+XOR, a rushing adversary controlling party $0$ learns honest party $1$'s input
+bit with probability $1$ while forcing party $1$ to output $\mathrm{none}$
+($\mathrm{unfair\_twoPartyXor\_execution}$), and any constant fallback rule on
+abort disagrees with a uniform output bit with probability $1/2$
+($\mathrm{cleve\_unfair\_fallback}$).\citep{Kilian1988,IPS2008,Goldreich2004Vol2,Cleve1986}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{136}{Cslib.Crypto.Multiparty.idealOT}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{185}{Cslib.Crypto.Multiparty.otAndShare_uniform}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{236}{Cslib.Crypto.Multiparty.parity_shareAnd}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{325}{Cslib.Crypto.Multiparty.parity_evalCircuitOT}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{591}{Cslib.Crypto.Multiparty.programMaskToCorruptedOT}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{856}{Cslib.Crypto.Multiparty.idealExecutionWithAbort}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{895}{Cslib.Crypto.Multiparty.realOTHybridExecution}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{931}{Cslib.Crypto.Multiparty.kilianSimulator}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1013}{Cslib.Crypto.Multiparty.realOTHybridExecution_eq_idealExecutionWithAbort}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1046}{Cslib.Crypto.Multiparty.dist_realOTHybridExecution_idealExecutionWithAbort}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1080}{Cslib.Crypto.Multiparty.ot_complete_statisticallySecureWithAbort}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1114}{Cslib.Crypto.Multiparty.PolyTimeFunctionality.polynomiallyBounded_otCallBudget}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1124}{Cslib.Crypto.Multiparty.PolyTimeFunctionality.circuitFunctionality_apply_eq_evalOutput}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1164}{Cslib.Crypto.Multiparty.ot_complete_computationallySecureWithAbort}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1223}{Cslib.Crypto.Multiparty.not_guaranteedOutputDelivery_of_abort}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1288}{Cslib.Crypto.Multiparty.unfair_twoPartyXor_execution}
+\declat{81b45235be1662e2ad642080e6dbb9909be91fee}{Complexity/Crypto/Multiparty/ObliviousTransfer.lean}{1340}{Cslib.Crypto.Multiparty.cleve_unfair_fallback}
+\end{result}
+
+\begin{result}
+\subsection{Regev's worst-case-to-average-case reduction for LWE}
+For a full-rank $n$-dimensional lattice $L(B)\subseteq\mathbb R^n$ ($n>0$, $\det B\ne 0$) with dual
+basis $B^*=(B^{-1})^T$, the successive minima satisfy $0<\lambda_1(B)\le\lambda_n(B)$ and the
+unconditional lower transference bound $1\le\lambda_1(B)\lambda_n(B^*)$ (with Banaszczyk's upper
+bound $\lambda_1(B)\lambda_n(B^*)\le n$ recorded in \lean{HasBanaszczykBound} and proved for all
+scaled identity lattices $c I_n$ and their duals). For modulus $q\ge 2$ and Gaussian noise rate
+$0<\alpha<1$ satisfying Regev's smoothing condition $\alpha q > 2\sqrt{n}$ (\lean{RegevParameters},
+instantiated explicitly by $q=n^2+5$ and $\alpha=3/\sqrt{n}$ for $n\ge 10$ or
+$\alpha=3/(\sqrt{n}+3)$ for all $n\ge 1$), the discrete Gaussian noise law $\Psi_\alpha$ on
+$\mathbb Z_q$ weights each residue $e$ by $\exp(-\pi(|e|_q/(\alpha q))^2)$, and the LWE sample
+distribution map $s\mapsto A_{s,\alpha}$ (\lean{lweSamplePMF}) is injective for every $\alpha\ne 0$,
+yielding a concrete non-vacuous \lean{SearchLWEOracle}. In the classical step, rounding the inner
+product of primal lattice vectors $B a$ of norm at most $r$ against a public dual-lattice
+$\cc{BDD}$ target $x=B^* s+\delta$ at distance $\|\delta\|_2\le \alpha q/(\sqrt{2}\,r)$
+(\lean{bddSampleFromTarget}) produces the LWE sample $(a\bmod q,\langle a,s\rangle+\operatorname{round}(\langle B a,\delta\rangle)\bmod q)$ with continuous error $|\langle B a,\delta\rangle|\le \alpha q/\sqrt{2}$,
+recovering $s\bmod q$ when the basis-projected offsets lie below $1/2$. In the iterative quantum
+reduction on lattices satisfying \lean{HasBanaszczykBound}, each step shrinks the discrete Gaussian
+width by factor $2\sqrt{n}/(\alpha q)<1$ (clamped at the stopping threshold
+$2\sqrt{n}/(\alpha\lambda_1(B^*))$ in \lean{stepGaussianWidth}, making
+\lean{RegevQuantumStepOracle} non-vacuous), producing $n$ linearly independent lattice vectors
+solving worst-case $\cc{SIVP}_\gamma$ on $B$ (under \lean{HasBanaszczykBound} on $B^*$) and a
+promise decider solving worst-case $\cc{GapSVP}_{\gamma,d}$ on $B$ (under \lean{HasBanaszczykBound}
+on $B$) with approximation factor $\gamma=2n/\alpha\le 2n(\ln n+1)/\alpha
+=\tilde O(n/\alpha)$.\citep{Regev2009,Banaszczyk1993}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{403}{Cslib.Crypto.one_le_lambda1_mul_lambdaN_dualBasis}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{667}{Cslib.Crypto.regevParameters_explicit}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{802}{Cslib.Crypto.lweSamplePMF_injective}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{859}{Cslib.Crypto.nonempty_searchLWEOracle}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{979}{Cslib.Crypto.bddSampleFromTarget_eq_lweSampleFromNoise}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1012}{Cslib.Crypto.solveDualBDDModQ_eq_secretCoords}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1235}{Cslib.Crypto.nonempty_regevQuantumStepOracle}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1318}{Cslib.Crypto.terminalGaussianState_width_le}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1390}{Cslib.Crypto.regevSIVPSolver}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1413}{Cslib.Crypto.regev_lwe_to_sivp}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1446}{Cslib.Crypto.regev_lwe_to_gapsvp}
+\declat{298c7bdc86508c525500519c330941c986c223df}{Complexity/Crypto/Lattice/LWE.lean}{1496}{Cslib.Crypto.regev_lwe_to_sivp_gapsvp}
+\end{result}
+
+\begin{result}
+\subsection{Gentry's bootstrapping theorem}
+Let $S$ be a public-key bit-encryption scheme (\texttt{EncryptionScheme}) equipped with a
+bootstrappable augmented-decryption evaluator (\texttt{Bootstrappable}) that homomorphically
+evaluates the De Morgan operations (\texttt{Boolean.Op}: Boolean constants \texttt{.const}\,$b$,
+unary negation \texttt{.not}, and binary \texttt{.and} and \texttt{.or}) composed with decryption on
+pairs of ciphertexts under $\mathsf{sk}_1$ using an encrypted evaluation key
+$\mathsf{ek}\leftarrow\mathsf{encryptKey}(\mathsf{pk}_2,\mathsf{sk}_1)$ under a target public key
+$\mathsf{pk}_2$, producing ciphertexts under $\mathsf{pk}_2$ of length at most a polynomial bound
+$\mathsf{cipherBound}(n)$.
+\begin{itemize}
+\item \textbf{Leveled FHE without circular security:} For every unary polynomial-time depth bound
+  $D:\mathbb N\to\mathbb N$, the acyclic key-chain construction $\mathsf{leveledKeyGen}(D(n),n)$ and
+  synchronous level-by-level evaluator $\mathsf{evalLeveledOutput}$ form a compact leveled FHE
+  scheme that evaluates every De Morgan circuit $c$ (or formula $F$) of depth at most $D(n)$ in
+  deterministic polynomial time, with output ciphertext bit-length at most $\mathsf{cipherBound}(n)$
+  independent of $|c|$ and $D(n)$. If $S$ is semantically secure against uniform strict PPT
+  distinguishers (\texttt{SemanticSecure}), then the leveled scheme is semantically secure
+  (\texttt{LeveledSemanticSecure}) given the full evaluation key chain, proved via a two-tier hybrid
+  reduction over the $D(n)$ levels and the $\mathsf{skLength}(n)$ secret-key bits at each level.
+\item \textbf{Fixed-key FHE under circular security:} Under circular security
+  (\texttt{CircularSecure}, semantic security given a self-encrypted evaluation key
+  $\mathsf{ek}\leftarrow\mathsf{encryptKey}(\mathsf{pk},\mathsf{sk})$), the fixed-key scheme
+  $(\mathsf{fixedKeyGen},\mathsf{encrypt},\mathsf{evalHomOutput},\mathsf{decrypt})$ homomorphically
+  evaluates De Morgan circuits and formulas of arbitrary depth and size in deterministic polynomial
+  time with output ciphertext bit-length at most $\mathsf{cipherBound}(n)$.
+\end{itemize}
+Here \texttt{Bootstrappable} axiomatizes polynomial-time augmented-decryption gate evaluation
+(\texttt{evalAugDecrypt}) and its compactness bound (\texttt{cipherBound}) directly as a primitive
+interface on $S$, rather than compiling \texttt{S.decrypt} to a circuit and evaluating that circuit
+inside a bounded-depth somewhat homomorphic scheme; the theorem also does not construct a concrete
+ideal-lattice or LWE-based somewhat homomorphic encryption scheme.\citep{Gentry2009}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1946}{Cslib.Crypto.EncryptionScheme.leveledFHE_of_bootstrappable}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1038}{Cslib.Crypto.EncryptionScheme.leveledSemanticSecure_of_semanticSecure}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1503}{Cslib.Crypto.EncryptionScheme.fixedKeyFHE_of_circularSecure}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1865}{Cslib.Crypto.EncryptionScheme.decrypt_evalLeveledOutput_circuit}
+\declat{9003d00af791faf5861a7e4cdc233cecc46ab39e}{Complexity/Crypto/Computational/Bootstrapping.lean}{1384}{Cslib.Crypto.EncryptionScheme.decrypt_evalHomOutput_circuit}
+\end{result}
+

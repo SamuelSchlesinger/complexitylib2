@@ -173,6 +173,71 @@ complexity-class equivalence is claimed. Input layout is an explicit caller conv
 \end{result}
 
 \begin{result}
+\subsection{Native certificates for encoded RAM primitives}
+For fixed injective binary encodings of input and output, a native certificate for $f$
+records arbitrary functions $T,S$ and a finite native multi-tape machine computing $f$ on
+\emph{every} encoded input $a$, in time at most $c(T(a)+1)$ and work space at most
+$c(S(a)+1)$, with output length also at most $c(S(a)+1)$, for some constant $c$.
+Such a certificate exists exactly when $f$ is natively computable. Polynomial bounds on
+$T,S$ in encoded input length yield native polynomial time. Certificates for $f$ followed
+by $g$ compose with bounds $T_f(a)+T_g(f(a))$ and $S_f(a)+S_g(f(a))$, up to constants.
+
+For a RAM model with chosen value, address and configuration encodings, a scalar bundle
+certifies checked literals and operation results, optional Boolean tests, address conversion,
+move validity and control-label validity. Admissibility rejection is included in the
+literal/operation result, with a proved connection to instruction evaluation. Each symbol
+is fixed; configuration and all operands are runtime inputs. A machine and its constants may
+depend on the symbol and a later fixed finite program; no arbitrary-program dispatcher is claimed.
+
+A complete addition/order model checks values, addresses and labels against an exclusive
+runtime bound, with binary encodings throughout; every scalar primitive has polynomial native
+bounds. Separately, checked standard word addition returns $x+y$ if $x+y<2^w$ and faults otherwise,
+in polynomial time with \emph{unary} width $w$ and binary operands. These instances select
+polynomial bounds from native proofs; no explicit degree or sharper numerical rate is claimed.
+They reuse Christian Reitwiessner's native arithmetic and encoding calculus. Memory access,
+control dispatch, initialization/output, whole-run simulation and charged width selection with
+input fit remain additional obligations. No exact-real bit encoding or certification of the
+whole standard word-operation basis is asserted. \citep{Sipser2013,Tromino2025}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{116}{Cslib.GenericRAM.NativeCertificate.nonempty_iff_isComputable}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{88}{Cslib.GenericRAM.NativeCertificate.comp}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native.lean}{185}{Cslib.GenericRAM.Model.NativePrimitives}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/GenericRAM/Native/Nat.lean}{131}{Cslib.GenericRAM.BoundedNat.nativePrimitives}
+\declat{0e4ef81e8eb56c42a280f1223dd4d28ddf4486e0}{Complexity/Computability/WordRAM/Native.lean}{48}{Cslib.WordRAM.checkedAdd_polyTime}
+\end{result}
+
+\begin{result}
+\subsection{Encoded sparse memory on native multitape machines}
+For arbitrary address and value types with injective binary encodings and decidable address
+equality, finite memory is represented by Mathlib's association list with distinct keys.
+Reading returns the stored value or an explicit default; writing denotes functional update.
+A write adds at most one stored address, and replacing an existing address preserves the count.
+A default-valued write still retains a binding: the count measures stored cells, not nondefault
+support. If there are $m$ bindings with maximum encoded key length $K$ and value length $V$,
+the store's framed encoding has length at most $m(4K+2V+3)$.
+
+Actual native binary multitape machines implement reads and writes. The primary certificates
+retain parameterized scan and argument-preparation bounds in entry count and encoded lengths.
+For each operation and fixed pair of encodings, one finite machine and a constant factor handle
+all inputs;
+these are asymptotic bounds, not exact TM step counts. In particular, both operations take
+$O((E+1)^3)$ time and $O(E+1)$ workspace, where $E$ is the length of the full encoded operation
+input, including the store and, for reads, the input-supplied default. Polynomial-time
+computability follows. These conservative bounds come from composing Christian Reitwiessner's
+certified equality, list-search and filtering routines. Numeric addresses are represented by
+encoded words; the construction does not allocate an array up to the largest address.
+This proves a finite-memory backend component, not a simulation of whole RAM programs or
+arbitrary exact real arithmetic. Primitive implementations, control, initialization and output
+transport remain separate obligations.
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{82}{Cslib.GenericRAM.SparseMemory.read_insert}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Basic.lean}{98}{Cslib.GenericRAM.SparseMemory.length_insert_of_mem}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{96}{Cslib.GenericRAM.SparseMemory.length_encoding_le}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{323}{Cslib.GenericRAM.SparseMemory.read_inO}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{266}{Cslib.GenericRAM.SparseMemory.insert_inO}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{359}{Cslib.GenericRAM.SparseMemory.read_inO_cube}
+\declat{33579ebfa4725e6fe09e13fbb6924018a351cbe1}{Complexity/Computability/GenericRAM/SparseMemory/Turing.lean}{335}{Cslib.GenericRAM.SparseMemory.insert_inO_cube}
+\end{result}
+
+\begin{result}
 \subsection{Additive word-RAM simulation with charged preparation}
 Let $p$ be a fixed word-RAM program with $r$ named registers, using only constants, copies,
 addition, truncated subtraction, indirect loads and stores, equality and unsigned comparison,
@@ -237,6 +302,144 @@ RAM, and the lean-trominoes word-RAM formalization.
 \declat{aec70b38fb3158a09850dc3640fba31e8e312f1e}{Complexity/Algorithms/WordRAM/ElementDistinctnessRAM.lean}{99}{Cslib.Algorithms.WordRAM.ElementDistinctness.haltsWithResultInTime_nodup_padded}
 \end{result}
 
+
+\begin{result}
+\subsection{Native bounds for fixed tuples and retained-input option branches}
+For arbitrary injective binary encodings, fixed finite tuple selection, gathering, and
+fixed-index update have tidy native multitape Turing-machine time and space $O(E+1)$,
+where $E$ is the full encoded input length. Update receives the stored tuple and replacement
+value; gathering may repeat indices. The tuple dimensions and index map are fixed independently
+of the input, and machine constants may depend on them.
+
+If component $i$ has arbitrary native time and space bound expressions $T_i(x),S_i(x)$,
+tuple construction has respective bounds
+\[
+E(x)+\sum_i T_i(x),\qquad E(x)+\sum_i S_i(x).
+\]
+The native resource predicate also bounds the complete encoded output by a constant times the
+space expression plus one. Empty tuples and empty value types are covered.
+
+For an option computation $v(x)$ with bounds $T_v,S_v$, a fallback handler on $x$ with bounds
+$T_0,S_0$, and a payload handler on the framed pair $(x,b)$ with bounds $T_1,S_1$, elimination
+retaining $x$ has bounds
+\[
+2T_v(x)+E(x)+
+\begin{cases}T_0(x)&v(x)=\mathrm{none},\\T_1(x,b)&v(x)=\mathrm{some}(b),\end{cases}
+\]
+and the analogous expression with $S$ in place of $T$. This conservative construction charges
+the repeated option computation used for payload extraction, tag testing, input retention,
+and the selected handler. No inhabited-payload assumption is required. All displayed expressions
+are asymptotic bounds with existential machine constants, not exact transition counts.
+The proofs reuse Christian Reitwiessner's native tidy calculus and the existing finite-table
+encoding. These are compositional native-machine rules; an encoded RAM step simulator and
+whole-run theorem transport remain separate work.
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{43}{Turing.MultiTapeTM.ComputableTidilyInO.ofFn}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{58}{Turing.MultiTapeTM.ComputableTidilyInO.pi}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{82}{Turing.MultiTapeTM.ComputableTidilyInO.pi_apply}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{99}{Turing.MultiTapeTM.ComputableTidilyInO.pi_gather}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean}{110}{Turing.MultiTapeTM.ComputableTidilyInO.pi_update}
+\declat{798d9514dd6334ffe51809474a9bf5883d6c9f44}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean}{39}{Turing.MultiTapeTM.ComputableTidilyInO.optionElimWithInput}
+\end{result}
+
+\begin{result}
+\subsection{Certified encoded steps for fixed generic-RAM programs}
+For a generic RAM model $M$ and $r$ registers, a finite state
+$s=(\mathit{pc},\mathit{regs},\mathit{default},\mathit{mem})$ combines a natural program counter,
+an $r$-tuple of register values, an explicit default memory value, and an association-list sparse
+memory. Its denotation reads $\mathit{mem}$ with default $\mathit{default}$. For every runtime
+configuration $c$, program $p$, and finite state $s$, the finite-state transition function matches
+one step of $M$ on the denoted state: it steps to the denoted successor state, halts with the same
+output, or faults under the exact same conditions (including program-counter falloff, undefined
+literals or operations, failed or faulting tests, invalid addresses, disallowed moves or halts, and
+invalid jump or branch targets). If $\mathit{pc}$ has binary encoding length at most $P$, each of
+the $r$ registers has encoding length at most $R$, $\mathit{default}$ has encoding length at most
+$D$, and $\mathit{mem}$ has $m$ stored bindings with encoded addresses of length at most $K$ and
+values of length at most $V$, the framed state encoding has length at most
+\[
+  2P + 2r(2R+1) + 2D + m(4K+2V+3) + 3.
+\]
+
+Given decidable address equality and a native scalar-primitive certificate bundle for $M$, every
+fixed program $p$ has a tidy native binary multitape Turing-machine certificate computing the
+encoded step function $(c,s)\mapsto\mathrm{step}(c,p,s)$ on all inputs. One finite machine and its
+implicit asymptotic constant handle all runtime configurations $c$ and finite states $s$, while
+depending on the fixed program $p$, register count $r$, and primitive certificates; no universal
+interpreter for variable programs is claimed. The exported time and space bound functions are
+defined by structural recursion along $p$, charging program-counter comparison and branch selection
+across the instruction list together with the supplied native primitive bounds (for constants, ALU
+operations, tests, address conversion, move/halt checks, and label validation), the parameterized
+sparse-memory read and insert bounds at the live state, and linear tuple-access, register-update,
+and sum-injection framing overhead. In particular, primitive and memory costs are retained as
+parameters rather than collapsed to unit or polynomial bounds. The proof adds tidy sum-injection
+rules and certificate combinators atop Christian Reitwiessner's native multitape Turing-machine
+calculus. Clocked multi-step iteration and whole-run certificate transport are established in the
+next result; uniform arbitrary-program dispatch and general word-width selection remain separate
+obligations.\citep{CookReckhow1973,Sipser2013}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Finite.lean}{44}{Cslib.GenericRAM.FiniteState}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Finite.lean}{166}{Cslib.GenericRAM.FiniteState.step}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Finite.lean}{184}{Cslib.GenericRAM.FiniteState.denote_step}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{106}{Cslib.GenericRAM.FiniteState.length_encoding_le}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{423}{Cslib.GenericRAM.FiniteState.stepCertificate}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{474}{Cslib.GenericRAM.FiniteState.step_inO}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{505}{Cslib.GenericRAM.FiniteState.stepTime_eq}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{547}{Cslib.GenericRAM.FiniteState.stepTime_cons}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{603}{Cslib.GenericRAM.FiniteState.le_opTime_load}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/GenericRAM/Simulation/Turing.lean}{625}{Cslib.GenericRAM.FiniteState.le_opTime_store}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean}{37}{Turing.MultiTapeTM.ComputableTidilyInO.inl}
+\declat{ead23ddb44ccb64c4c5796a0e19c275aaac714b7}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean}{48}{Turing.MultiTapeTM.ComputableTidilyInO.inr}
+\end{result}
+
+\begin{result}
+\subsection{Whole-run generic-RAM simulation and certificate transport}
+Iterating the finite-state transition function with absorbing halting and faulting outcomes defines
+a clocked $n$-step execution $\mathrm{run}(c,p,n,s)$ and halting output projection
+$\mathrm{eval}(c,p,n,s)$. Every continuing run preserves $\mathit{default}$ and adds at most $n$
+distinct stored bindings to $\mathit{mem}$. On halting outcomes, $\mathrm{run}(c,p,n,s)$ agrees
+with the fuel-bounded semantic interpreter on $s.\mathrm{denote}$, and a semantic halting execution
+of $p$ from $s.\mathrm{denote}$ with output $v$ in at most $n$ instructions exists if and only if
+$\mathrm{run}(c,p,n,s)=\mathrm{some}(\mathrm{inr}(v))$ (equivalently
+$\mathrm{eval}(c,p,n,s)=\mathrm{some}(v)$). For every word-RAM basis $B$, this equivalence transfers
+directly to word-RAM executions from any state whose generic denotation matches $s.\mathrm{denote}$.
+
+On the native binary multitape Turing-machine side, a clocked iteration combinator packages
+binary-counter iteration with trajectory-maximum resource bounds over $0\le j\le n$. For a fixed
+program $p$ and scalar certificate bundle, one finite native machine implements
+$(n,c,s)\mapsto\mathrm{run}(c,p,n,s)$ and $(n,c,s)\mapsto\mathrm{eval}(c,p,n,s)$ uniformly across
+all step budgets $n$, configurations $c$, and finite states $s$. Its time bound adds linear input
+preparation to $(n+1)$ times the maximum per-round time, maximum encoded loop-state length along
+the trajectory, and $(|\mathrm{enc}(n)|+1)^2$; its space bound adds linear preparation to the
+maximum per-round space, maximum encoded loop-state length, and $|\mathrm{enc}(n)|$. Every active
+intermediate state $t$ reached at step $j\le n$ retains its parameterized single-step bounds
+$\mathrm{stepTime}(c,t)\le\mathrm{runTime}(n,c,s)$ and
+$\mathrm{stepSpace}(c,t)\le\mathrm{runSpace}(n,c,s)$.
+
+If an algorithm $f\colon\alpha\to V$ is computed by $p$ from $s_0(a).\mathrm{denote}$ at
+configuration $c(a)$ within $n(a)$ instructions, native certificates for $n$, $c$, and $s_0$
+compose with $\mathrm{eval}$ and framing-prefix removal to transport the RAM execution certificate
+to a native multitape Turing-machine certificate for $f$, without assuming $V$ is inhabited. When
+the scalar primitives, $n$, $c$, and $s_0$ have polynomial native bounds and both $n(a)$ and the
+encoded outcomes along $0\le j\le n(a)$ are polynomially bounded in input length, the single-step
+transition and the transported whole-run function $f$ are tidily computable in polynomial time; the
+same transport theorems specialize to every word-RAM basis $B$. Configuration selection $c(a)$ and
+the trajectory length bound remain explicit hypotheses supplied by the caller; no universal
+variable-program interpreter is claimed.\citep{CookReckhow1973,Sipser2013}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{147}{Cslib.GenericRAM.FiniteState.run}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{365}{Cslib.GenericRAM.FiniteState.length_entries_run_le}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{442}{Cslib.GenericRAM.FiniteState.denote_run}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{506}{Cslib.GenericRAM.FiniteState.executes_iff_exists_run}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{569}{Cslib.GenericRAM.NativeCertificate.iterate}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1010}{Cslib.GenericRAM.FiniteState.run_inO}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1055}{Cslib.GenericRAM.FiniteState.le_runTime_of_run_eq_inl}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1099}{Cslib.GenericRAM.FiniteState.transportCertificate}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1140}{Cslib.GenericRAM.FiniteState.transport_inO}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1370}{Cslib.GenericRAM.FiniteState.step_polyTime}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1517}{Cslib.GenericRAM.FiniteState.transport_polyTime}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1549}{Cslib.WordRAM.executes_iff_exists_finiteRun}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1574}{Cslib.WordRAM.transport_inO}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/GenericRAM/Simulation/Run.lean}{1590}{Cslib.WordRAM.transport_polyTime}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean}{112}{Turing.MultiTapeTM.ComputableTidilyInO.getLeft?}
+\declat{5349b55a5ca5d749895939e99b74444d284e367f}{Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Sum.lean}{120}{Turing.MultiTapeTM.ComputableTidilyInO.getRight?}
+\end{result}
 
 \begin{result}
 \subsection{Stateful semantic composition and independent resource certificates}
@@ -322,6 +525,102 @@ conditional backend-resource theorem, not a compiled Word-RAM queue-time theorem
 \end{result}
 
 \begin{result}
+\subsection{A shared-memory FIFO queue with amortized RAM instructions}
+A fixed eleven-register word-RAM dispatcher implements enqueue and dequeue using two disjoint
+array regions $[b,b+c)$ and $[b+c,b+2c)$, with at most $c$ live words in total. The represented
+FIFO sequence is the front stack followed by the reversed rear stack. Assume bounded registers
+and memory, $b+2c<2^w$, and $1<2^w$. Enqueue requires spare capacity and a fitting value;
+dequeue is total, with a presence flag distinguishing an empty result from the word zero.
+A dequeue transfers the rear only when the front is empty, using six data instructions and two
+loop-control instructions per moved word. Starting from a configuration satisfying the queue
+representation invariant, every admissible adaptive client selecting $m$ queue operations has
+a correct native execution, and every such execution satisfies
+\[
+  T + 8|\mathit{rear}_{\rm final}|
+  \le 14m + 8|\mathit{rear}_{\rm initial}|.
+\]
+Here $T$ counts actual operation instructions, including dispatch, all transfer work and one
+halt per call. Six register instructions initialize the empty representation from arbitrary
+bounded machine data without changing memory, giving an initialized bound $6+14m$.
+The reservation contains exactly $2c$ word cells; all memory outside it is preserved.
+
+This direct implementation shares the FIFO specification with the abstract queue above,
+without claiming to compile its free-monad methods. External argument delivery, result decoding,
+and arbitrary pure client-controller computation are excluded from the operation-history bound.
+The fixed capacity is reserved in advance; allocation, growth, and a Turing-machine simulation
+are not claimed.\citep[Exercise 10.1-6 and Chapter 17]{CLRS2009}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Basic.lean}{324}{Cslib.WordRAM.Queue.execute}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Basic.lean}{383}{Cslib.WordRAM.Queue.initialize_exec}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Dynamic.lean}{113}{Cslib.WordRAM.Queue.amortized}
+\declat{f21c5d6ea700bfaa2dc3281065c68ff0092738f9}{Complexity/Algorithms/WordRAM/Queue/Dynamic.lean}{143}{Cslib.WordRAM.Queue.run_initialized}
+\end{result}
+
+\begin{result}
+\subsection{Doubling arrays with charged allocation on the word RAM}
+On the standard unsigned word RAM, a fixed twelve-register program maintains a dynamic array
+$v_0,\ldots,v_{n-1}$ at a current block pointer $p$ with capacity $c>0$ and bump-allocator
+frontier $f$, satisfying $n\le c\le\max(1,2n)$, $p+1=c$, and $f+1=2c$. Fifteen instructions
+initialize the empty array from arbitrary bounded machine data by allocating and zeroing a
+one-word block at address zero ($p=0$, $n=0$, $c=1$, $f=1$). When $n<c$, appending a word writes
+in place in $7$ instructions; when $n=c$ and $f+2c<2^w$, growth allocates and zeroes $[f,f+2c)$,
+copies the $c$ live words, updates $p$ and $c$, and appends the new word within $15c+19$
+instructions. With the natural-valued potential $\Phi(v,x)=15(2n-c)$, every append satisfies
+\[
+  t+\Phi(v',y)\le 49+\Phi(v,x).
+\]
+A two-instruction indexed read loads $v_i$ for $i<n$ without modifying memory or $\Phi$. Through
+one fixed operation dispatcher, append has amortized charge $52$ and indexed read has charge $6$,
+counting dispatch and the final halt per call; append admissibility requires $v<2^w$ and
+$8n+4<2^w$, while read admissibility requires $i<n$ and $i<2^w$. From any bounded initial state
+with $1<2^w$, charged initialization followed by an admissible adaptive client issuing $m$
+operations halts with total instructions at most $15+52m$ (retaining final credit), and whenever
+the final array has $n>0$ elements the allocator frontier satisfies $f<4n$.
+
+Old blocks are retained in $[0,p)$ rather than reclaimed, so $f<4n$ bounds total words ever
+allocated over append/read histories rather than reclaimed live storage. Shrinking, deletion,
+external argument delivery, result decoding, and compiled client controllers are not claimed.
+\citep[Section 17.4]{CLRS2009}\citep{Tromino2025}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{121}{Cslib.Algorithms.WordRAM.DynamicArray.Rep.space}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{152}{Cslib.Algorithms.WordRAM.DynamicArray.grow_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{249}{Cslib.Algorithms.WordRAM.DynamicArray.append_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{387}{Cslib.Algorithms.WordRAM.DynamicArray.get_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{412}{Cslib.Algorithms.WordRAM.DynamicArray.init_exec}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{616}{Cslib.Algorithms.WordRAM.DynamicArray.amortized}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{676}{Cslib.Algorithms.WordRAM.DynamicArray.run_initialized}
+\declat{992832d5fdcf691050a85717e291612bcebb82f1}{Complexity/Algorithms/WordRAM/DynamicArray.lean}{724}{Cslib.Algorithms.WordRAM.DynamicArray.run_appendAll}
+\end{result}
+
+\begin{result}
+\subsection{An unbalanced search tree as a stateful ordered set}
+For keys in any linear order, an ordinary binary tree satisfying the strict search-tree
+invariant represents a finite set. Membership agrees with set membership; insertion adds the
+requested key and preserves the invariant, and reinserting a present key preserves the entire
+tree. Minimum and strict-successor queries return the least eligible key, or \texttt{none} exactly
+when no eligible key exists. A successor query does not require its argument to be stored.
+The algorithms follow Chapter 12 of \citet{CLRS2009}; the representation reuses Mathlib's binary
+tree and height definitions. The typed finite-set interface and complete optional-minimum
+contract are representation-independent: they do not import trees or a cost model. The shared
+interface admits all operations; a bounded-key implementation can separately restrict insertion
+admissibility while retaining arbitrary membership and successor queries.
+
+In the explicit internal-node-visit model, every operation costs at most the initial tree height
+$h$, and $h\le |S|$ for a represented set $S$. Empty-child tests, allocation, reconstruction,
+comparison implementation and pure client computation are excluded. Inserting into the empty
+tree therefore has zero node visits. The native realization supplies correct executions for
+every terminating adaptive client, and its executable interpreter agrees with the finite-set
+semantics. Summed node visits are bounded by the sum of the current set cardinalities along the
+selected operation history. No balancing, logarithmic worst-case bound or RAM-time result is
+claimed. Checked examples contrast insertion orders producing heights three and seven on the
+same seven keys, and a client asks for the minimum before choosing its strict-successor argument.
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Data/OrderedSet.lean}{49}{Cslib.OrderedSet.least_spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Foundations/Semantics/Stateful/OrderedSet.lean}{56}{Cslib.OrderedSet.spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{130}{Cslib.Algorithms.Lean.SearchTree.ordered_insert}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Basic.lean}{225}{Cslib.Algorithms.Lean.SearchTree.successor_spec}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{91}{Cslib.Algorithms.Lean.SearchTree.exec_visits_le_height}
+\declat{b3aac7104315ae4004236afd3b01df17ddd59220}{Complexity/Algorithms/Lean/SearchTree/Stateful.lean}{136}{Cslib.Algorithms.Lean.SearchTree.run_correct}
+\end{result}
+
+\begin{result}
 \subsection{Fixed-program dynamic stacks and prefix sums on the word RAM}
 Starting from a bounded represented configuration, a fixed nine-register stack program supports
 push, pop (including empty pop), and size in
@@ -350,6 +649,96 @@ claim is made. The backend extends the existing bounded-word machine and compile
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{220}{Cslib.Algorithms.WordRAM.PrefixSums.instruction_bound_log}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{242}{Cslib.Algorithms.WordRAM.PrefixSums.client_spec}
 \declat{71bbe4852e02662c9e0db82561edd635e13ed43c}{Complexity/Algorithms/WordRAM/PrefixSums/Dynamic.lean}{229}{Cslib.Algorithms.WordRAM.PrefixSums.execOp_frame}
+\end{result}
+
+\begin{result}
+\subsection{Recursive van Emde Boas sets: functional correctness}
+For every depth $d\geq 0$, let $U_d=2^{2^d}$. A valid recursive van Emde Boas tree
+represents a finite subset of $\{0,\ldots,U_d-1\}$. Inserting any $x<U_d$ preserves
+the invariant and changes the represented set $S$ to $S\cup\{x\}$, including duplicate
+insertions. Membership agrees with $S$. For every natural query $x$, including queries
+outside the universe, successor returns $y$ exactly when $y\in S$, $x<y$, and every
+$z\in S$ with $x<z$ satisfies $y\leq z$; it returns no key exactly when every element
+of $S$ is at most $x$. The representation stores the minimum outside recursive clusters,
+caches the maximum, and maintains a recursive summary of nonempty clusters.
+
+A proposed contiguous layout uses a five-word header, one summary and $U_d$ cluster
+records at depth $d+1$. Its record-size recurrence
+$S_0=5$, $S_{d+1}=5+(U_d+1)S_d$ satisfies $S_d\leq10U_d$; the recursive address
+intervals do not overlap. This is layout arithmetic, not a proved memory representation.
+The operations are Lean functions: no native RAM instruction bound, charged initializer,
+implemented machine-space bound or compiled adaptive controller is established here.
+Deletion and predecessor are outside this result. The recursive minimum-excluded variant
+follows Demaine's exposition, whose notes credit Michael Bender; it is distinguished from
+the original stratified-tree implementation with $O(U\log\log U)$
+storage.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Basic.lean}{235}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.member_iff_contains}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Insert.lean}{283}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.valid_insert}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Elements.lean}{60}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.elements_insert}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{221}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_some_iff}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Successor.lean}{245}{Cslib.Algorithms.Lean.VanEmdeBoas.Tree.successor_eq_none_iff}
+\declat{c76e69150ffb627ee0166044826ff463f198e334}{Complexity/Algorithms/Lean/VanEmdeBoas/Layout.lean}{110}{Cslib.Algorithms.Lean.VanEmdeBoas.span_le}
+\end{result}
+
+\begin{result}
+\subsection{Fixed-program van Emde Boas sets on the word RAM}
+For every $d\geq0$ and $U=2^{2^d}$, a valid recursive van Emde Boas tree has a
+five-word-header interpretation in actual memory at $[b,b+S_d)$, with recursive summary and
+cluster regions, arbitrary surrounding bounded memory, and possibly stale empty extrema. One
+fixed 32-register dispatcher program implements bounded insertion ($\mathrm{tag}=0$),
+membership ($\mathrm{tag}=1$), and strict successor ($\mathrm{tag}=2$) on the standard
+unsigned word RAM, whose basis includes multiplication, division and remainder. Its compiled
+code has 213 instructions including halt, independently of $d$, $U$, the arguments and the
+word width $w$. All initial registers and memory words must fit $w$. Including constant
+setup, dispatch, loop tests and jumps, and the final halt:
+\begin{itemize}
+\item For any key $k<U$ with $b+S_d<2^w$, insertion executes at most
+  $39(d+1)+16=39(\log_2\log_2 U+1)+16$ instructions, updates the represented tree to
+  $\mathrm{insert}(T,k)$, preserves persistent registers, and modifies no memory outside
+  $[b,b+S_d)$.
+\item For any fitting query word (including queries $\geq U$) with $b+S_d<2^w$, membership
+  executes at most $28(d+1)+18=28(\log_2\log_2 U+1)+18$ instructions, cached-maximum
+  rejection precedes recursive child addressing, and the complete memory is unchanged.
+\item For any fitting query word and scratch stack base $s_0\geq b+S_d$ with
+  $s_0+4d<2^w$, strict successor executes at most
+  $65(d+1)+22=65(\log_2\log_2 U+1)+22$ instructions, returns the exact optional successor
+  encoded by $(\mathrm{found},\mathrm{out})$, preserves the represented tree at $[b,b+S_d)$,
+  restores the stack pointer to $s_0$, and modifies no memory outside the $4d$-word scratch
+  region $[s_0,s_0+4d)$.
+\end{itemize}
+A separate fixed 32-register initializer constructs the empty representation at $[b,b+S_d)$
+and sets $s_0=b+S_d$ from any bounded state with $\mathrm{root}=b$, $\mathrm{depth}=d$, and
+$b+S_d+4(d+1)<2^w$ on arbitrary initial memory in at most
+$8S_d+20d+25 \leq 80U+20d$ instructions including halt, modifying no memory outside the
+combined footprint of $S_d+4(d+1)\leq 10U+4(d+1)$ words. All four flat executions transfer
+with exact instruction counts to the shared generic RAM model. Packaged as a dynamic
+realization of the finite-set specification on $2^{\{0,\ldots,U-1\}}$, every admissible
+adaptive client executes from an initialized state with at most $65(d+1)+22$ instructions per
+operation while preserving all memory outside $[b,b+S_d+4(d+1))$.
+
+External client control between calls, argument register writes, and result decoding are not
+charged to individual operations, and deletion and predecessor are not implemented. The
+minimum-excluded variant follows Demaine's exposition, whose notes credit Michael Bender;
+the contiguous records, scratch stack, and register programs are engineering choices,
+distinct from the original stratified
+representation.\citep{Demaine2015VanEmdeBoas,VanEmdeBoasKaasZijlstra1977}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{86}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_space_le}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1024}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1047}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Init.lean}{1057}{Cslib.Algorithms.WordRAM.VanEmdeBoas.init_executes_universe}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{138}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{166}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{177}{Cslib.Algorithms.WordRAM.VanEmdeBoas.insert_executes_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{209}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{234}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{245}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_executes_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{289}{Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_call}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{322}{Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_executes_generic}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{338}{Cslib.Algorithms.WordRAM.VanEmdeBoas.successor_executes_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{558}{Cslib.Algorithms.WordRAM.VanEmdeBoas.instruction_bound_log}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{602}{Cslib.Algorithms.WordRAM.VanEmdeBoas.client_spec}
+\declat{c48d71537d61ceed22d07c632da171a7f9033840}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Call.lean}{627}{Cslib.Algorithms.WordRAM.VanEmdeBoas.run_initialized}
+\declat{c4de62e616a2a5859a089f60b0aa8c2546b7638b}{Complexity/Algorithms/WordRAM/VanEmdeBoas/Model.lean}{125}{Cslib.Algorithms.WordRAM.VanEmdeBoas.member_descendant_read_safe}
 \end{result}
 
 \begin{result}

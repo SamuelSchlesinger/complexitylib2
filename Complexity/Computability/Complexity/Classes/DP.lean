@@ -123,12 +123,12 @@ theorem mem_coDP_iff_union : A ∈ coDP enc ↔
       simp [Set.inter_comm]⟩
 
 /-- Union closure is dual to intersection closure of DP. -/
-theorem union_mem_coDP (hA : A ∈ coDP enc) (hB : B ∈ coDP enc) : A ∪ B ∈ coDP enc := by
-  simpa [coDP] using inter_mem_DP hA hB
+theorem union_mem_coDP (hA : A ∈ coDP enc) (hB : B ∈ coDP enc) : A ∪ B ∈ coDP enc :=
+  compl_union_mem inter_mem_DP hA hB
 
 /-- Polynomial-time reductions preserve coDP. -/
 theorem PolyTimeReducible.mem_coDP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ coDP encB) : A ∈ coDP enc :=
-  h.compl.mem_DP hB
+  h.mem_compl PolyTimeReducible.mem_DP hB
 
 end Cslib.Complexity

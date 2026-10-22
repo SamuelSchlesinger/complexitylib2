@@ -22,6 +22,8 @@ the outer tuple in base `n ^ k` gives exactly the rank of the flattened base-`n`
 
 ## Main results
 
+* `Cslib.Logic.FO.Ordered.flattenTuple_finProdFinEquiv`: flattening the blocks of a tuple
+  recovers it.
 * `Cslib.Logic.FO.Ordered.lexRank_flattenTuple`: exact preservation of numeric rank.
 
 ## References
@@ -40,6 +42,16 @@ def flattenTuple {α : Type*} {k l : ℕ} (x : Fin l → Fin k → α) : Fin (l 
 @[simp] theorem flattenTuple_apply {α : Type*} {k l : ℕ} (x : Fin l → Fin k → α)
     (j : Fin l) (i : Fin k) : flattenTuple x (finProdFinEquiv (j, i)) = x j i := by
   simp [flattenTuple]
+
+/-- Flattening the blocks of a tuple recovers it. -/
+theorem flattenTuple_finProdFinEquiv {α : Type*} {k l : ℕ} (x : Fin (l * k) → α) :
+    (flattenTuple fun j i => x (finProdFinEquiv (j, i))) = x := by
+  funext a
+  simp only [flattenTuple, Prod.mk.eta, Equiv.apply_symm_apply]
+
+theorem flattenTuple_finProdFinEquiv_apply {α : Type*} {k l : ℕ} (x : Fin l → Fin k → α)
+    (p : Fin l × Fin k) : flattenTuple x (finProdFinEquiv p) = x p.1 p.2 :=
+  flattenTuple_apply x p.1 p.2
 
 /-- Successive arbitrary-base ranks agree with the rank after outer-then-inner flattening. -/
 theorem lexRank_flattenTuple {n k l : ℕ} (x : Fin l → Fin k → Fin n) :

@@ -50,6 +50,7 @@ import ComplexityTests.CommunicationComplexity3
 import ComplexityTests.CommunicationComplexity4
 import ComplexityTests.CompareSwap
 import ComplexityTests.ComparisonCircuits
+import ComplexityTests.Computability.Circuit.Boolean.ACC0
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
 import ComplexityTests.ConfigurationPolyTime
@@ -70,6 +71,9 @@ import ComplexityTests.CountingOracleEquivalence
 import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
+import ComplexityTests.Crypto.Bootstrapping
+import ComplexityTests.Crypto.LWE
+import ComplexityTests.Crypto.ObliviousTransfer
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure
 import ComplexityTests.DataStructureQueue
@@ -79,6 +83,7 @@ import ComplexityTests.DenseMask
 import ComplexityTests.DependentTable
 import ComplexityTests.Derandomization
 import ComplexityTests.DuplicateFlags
+import ComplexityTests.DynamicArray
 import ComplexityTests.ElementDistinctnessRAM
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
@@ -107,6 +112,7 @@ import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierExtractor
 import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum
@@ -117,6 +123,7 @@ import ComplexityTests.FusionConondeterministic
 import ComplexityTests.FusionConsistency
 import ComplexityTests.FusionConverse
 import ComplexityTests.FusionCyclic
+import ComplexityTests.FusionDeMorgan
 import ComplexityTests.FusionGraph
 import ComplexityTests.FusionHomomorphism
 import ComplexityTests.FusionQuadratic
@@ -131,16 +138,20 @@ import ComplexityTests.GeneratorReindex
 import ComplexityTests.GeneratorXor
 import ComplexityTests.GenericRAM
 import ComplexityTests.GenericRAMAlgebraic
+import ComplexityTests.GenericRAMNative
 import ComplexityTests.GenericRAMSigned
+import ComplexityTests.GenericRAMSimulation
 import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
 import ComplexityTests.HardnessAmplification
 import ComplexityTests.HashedParity
+import ComplexityTests.Hastad
 import ComplexityTests.HastadSharp
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
+import ComplexityTests.IdentityTesting
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
@@ -168,6 +179,7 @@ import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MachineStateMap
+import ComplexityTests.ManyOne
 import ComplexityTests.MassProduction
 import ComplexityTests.MassProduction.Fine
 import ComplexityTests.MassProduction.HighRate
@@ -188,6 +200,7 @@ import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
 import ComplexityTests.NPWitness
 import ComplexityTests.NatBits
+import ComplexityTests.NativeProducts
 import ComplexityTests.NaturalProofs
 import ComplexityTests.NegligibleSqrt
 import ComplexityTests.NonVacuity
@@ -202,11 +215,13 @@ import ComplexityTests.OracleRepresentation
 import ComplexityTests.OrderedAddition
 import ComplexityTests.OrderedBitSum
 import ComplexityTests.OrderedComposition
+import ComplexityTests.OrderedFOReduction
 import ComplexityTests.OrderedFagin
 import ComplexityTests.OrderedFirstOrder
 import ComplexityTests.OrderedModelChecking
 import ComplexityTests.OrderedMultiplication
 import ComplexityTests.OrderedReduction
+import ComplexityTests.OrderedSet
 import ComplexityTests.OrderedSuccessor
 import ComplexityTests.OrderedTupleBit
 import ComplexityTests.OrderedTuples
@@ -253,6 +268,7 @@ import ComplexityTests.PolyTimeSum
 import ComplexityTests.PolyTimeTactic
 import ComplexityTests.PolynomialBound
 import ComplexityTests.PolynomialClock
+import ComplexityTests.PostTuringMachine
 import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
@@ -286,9 +302,12 @@ import ComplexityTests.RandomOracle
 import ComplexityTests.RandomizedDisjointness
 import ComplexityTests.RationalHitting
 import ComplexityTests.RationalHitting.Determinant
+import ComplexityTests.RationalHitting.Encode
 import ComplexityTests.RationalHitting.IntBinary
 import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
+import ComplexityTests.RationalHitting.Point
+import ComplexityTests.RationalHitting.Runtime
 import ComplexityTests.ReductionClasses
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
@@ -302,6 +321,7 @@ import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
 import ComplexityTests.SavedPrediction
+import ComplexityTests.SearchTree
 import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
@@ -316,7 +336,9 @@ import ComplexityTests.Space.Machines
 import ComplexityTests.Space.Savitch
 import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
+import ComplexityTests.SparseMemory
 import ComplexityTests.StatefulRefinement
+import ComplexityTests.SubbotovskayaAndreev
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF
@@ -329,6 +351,7 @@ import ComplexityTests.ThresholdCapacity
 import ComplexityTests.ThresholdCapacityCircuit
 import ComplexityTests.ThresholdInnerProduct
 import ComplexityTests.ThresholdInnerProductActivity
+import ComplexityTests.ThresholdNC1
 import ComplexityTests.ThresholdRectangles
 import ComplexityTests.ThresholdTranscript
 import ComplexityTests.TimeHierarchy
@@ -338,6 +361,8 @@ import ComplexityTests.UniformCircuits
 import ComplexityTests.UniformNat
 import ComplexityTests.UniversalHash
 import ComplexityTests.UniversalResourceBound
+import ComplexityTests.VanEmdeBoas
+import ComplexityTests.VanEmdeBoasRAM
 import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
@@ -353,6 +378,7 @@ import ComplexityTests.WordRAMController
 import ComplexityTests.WordRAMDynamic
 import ComplexityTests.WordRAMGeneric
 import ComplexityTests.WordRAMPrefixSums
+import ComplexityTests.WordRAMQueue
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy

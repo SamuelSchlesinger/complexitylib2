@@ -510,12 +510,13 @@ example :
     (fun _ => 1) negatePrior_along negateCircuit_eval (oneBit_rectangleFree _)
 
 example (z : Fin 3 → Bool) :
-    coverDecode 3 3 (coverRank 3 z) = z :=
-  coverDecode_coverRank z (by simpa using BitString.weight_le z)
+    BitString.coverDecode 3 3 (BitString.coverRank 3 z) = z :=
+  BitString.coverDecode_coverRank z (by simpa using BitString.weight_le z)
 
-example (t : ℕ) (ht : t < ballSize 3 2) :
-    coverRank 2 (coverDecode 3 2 t) = t ∧ BitString.weight (coverDecode 3 2 t) ≤ 2 :=
-  ⟨coverRank_coverDecode ht, weight_coverDecode_le 3 2 t⟩
+example (t : ℕ) (ht : t < BitString.ballSize 3 2) :
+    BitString.coverRank 2 (BitString.coverDecode 3 2 t) = t ∧
+      BitString.weight (BitString.coverDecode 3 2 t) ≤ 2 :=
+  ⟨BitString.coverRank_coverDecode ht, BitString.weight_coverDecode_le 3 2 t⟩
 
 /--
 info: 'Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_scalarScore_between' depends on axioms:
@@ -616,32 +617,32 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.circuit_two_pow_lt_mul_sum_choos
 #print axioms circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.coverRank_lt_ballSize' depends on axioms:
+info: 'Cslib.BitString.coverRank_lt_ballSize' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms coverRank_lt_ballSize
+#print axioms BitString.coverRank_lt_ballSize
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.weight_coverDecode_le' depends on axioms:
+info: 'Cslib.BitString.weight_coverDecode_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms weight_coverDecode_le
+#print axioms BitString.weight_coverDecode_le
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.coverRank_coverDecode' depends on axioms:
+info: 'Cslib.BitString.coverRank_coverDecode' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms coverRank_coverDecode
+#print axioms BitString.coverRank_coverDecode
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.coverDecode_coverRank' depends on axioms:
+info: 'Cslib.BitString.coverDecode_coverRank' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms coverDecode_coverRank
+#print axioms BitString.coverDecode_coverRank
 
 /--
 info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_attainableTranscripts_le_sum_choose_inputActivityFrom'
