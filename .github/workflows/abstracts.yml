@@ -35,7 +35,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
-            latexmk texlive-latex-extra texlive-fonts-extra texlive-science poppler-utils
+            latexmk lmodern texlive-latex-extra texlive-fonts-extra texlive-science \
+            texlive-plain-generic poppler-utils
       - name: Test abstract generation
         run: python3 -B -m unittest discover -s scripts -p 'test_*abstract*.py'
       - name: Build individual PDFs, catalogue and provenance

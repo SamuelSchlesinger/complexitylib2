@@ -43,9 +43,9 @@ python3 -B scripts/build_abstracts.py --check
 python3 -B scripts/build_abstracts.py
 ```
 
-On Debian/Ubuntu, the workflow installs `latexmk`, `poppler-utils`, `texlive-latex-extra`,
-`texlive-fonts-extra` and `texlive-science`. Outputs go to `abstracts/build/`: individual PDFs,
-`catalogue.pdf`, generated TeX, and `provenance.json`. They are untracked. Use `--require-clean`
+On Debian/Ubuntu, the workflow installs `latexmk`, `lmodern`, `poppler-utils`, `texlive-latex-extra`,
+`texlive-fonts-extra`, `texlive-science` and `texlive-plain-generic`. Outputs go to `abstracts/build/`:
+individual PDFs, `catalogue.pdf`, generated TeX, and `provenance.json`. They are untracked. Use `--require-clean`
 for publication builds; a local build with edits records dirty-source digests and labels links as
 pointing to the base revision.
 
