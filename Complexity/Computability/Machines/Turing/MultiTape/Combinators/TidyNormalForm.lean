@@ -115,6 +115,38 @@ def clearedCfg (l : List (Fin k)) (C : Cfg (k + k) Symbol σ input) :
   ⟨none, C.inputPos, fun j => if pairIdx j ∈ l then fun _ => none else C.workTapes j,
     fun j => if pairIdx j ∈ l then 0 else C.workTapePos j, C.output⟩
 
+omit [DecidableEq Symbol] in
+@[simp] theorem clearedCfg_nil (C : Cfg (k + k) Symbol σ input) :
+    clearedCfg (σ' := σ') [] C = C.withState none := by
+  refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext j <;>
+    simp only [clearedCfg, List.not_mem_nil, ↓reduceIte, Cfg.withState]
+
+omit [DecidableEq Symbol] in
+theorem clearedCfg_cons {σ₁ : Type*} (i : Fin k) (l : List (Fin k))
+    (C : Cfg (k + k) Symbol σ input) :
+    clearedCfg (σ' := σ') (i :: l) C =
+      clearedCfg (σ' := σ') l (clearedCfg (σ' := σ₁) [i] C) := by
+  refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext j <;>
+    simp only [clearedCfg, List.mem_cons] <;>
+    by_cases hj : pairIdx j = i <;> by_cases hj' : pairIdx j ∈ l <;> simp [hj, hj']
+
+omit [DecidableEq Symbol] in
+@[simp] theorem Sequential.rightCfg_clearedCfg {State₀ State₁ : Type*} (l : List (Fin k))
+    (C : Cfg (k + k) Symbol σ input) :
+    Sequential.rightCfg (State₀ := State₀) (clearedCfg (σ' := State₁) l C) =
+      clearedCfg (σ' := State₀ ⊕ State₁) l C := rfl
+
+omit [DecidableEq Symbol] in
+/-- Clearing tapes `l` preserves `PairReady` on any tape `i ∉ l`. -/
+theorem PairReady.clearedCfg {C : Cfg (k + k) Symbol σ input} {i : Fin k} {a b c : ℕ}
+    {V : Finset ℤ} {l : List (Fin k)} (h : PairReady m₀ m₁ C i a b c V) (hil : i ∉ l) :
+    PairReady m₀ m₁ (Turing.MultiTapeTM.clearedCfg (σ' := σ') l C) i a b c V where
+  pos_castAdd := by simp [Turing.MultiTapeTM.clearedCfg, hil, h.pos_castAdd]
+  pos_natAdd := by simpa [Turing.MultiTapeTM.clearedCfg, hil] using h.pos_natAdd
+  insert_eq := h.insert_eq
+  shadow_eq := by simpa [Turing.MultiTapeTM.clearedCfg, hil] using h.shadow_eq
+  blank y hy := by simp [Turing.MultiTapeTM.clearedCfg, hil, h.blank y hy]
+
 /-- **Clearing one work tape and its shadow** inside a machine with `k + k` work tapes. -/
 theorem runFrom_clearShadowed_pairEmb (hm : m₀ ≠ m₁) {C : Cfg (k + k) Symbol σ input} {i : Fin k}
     {a b c : ℕ} {V : Finset ℤ} (h : PairReady m₀ m₁ C i a b c V) :
@@ -180,17 +212,13 @@ theorem exists_runPath_clearList (hm : m₀ ≠ m₁) (l : List (Fin k)) (hl : l
         p.time ≤ (l.map fun i => a i + 2 * b i + c i + 5).sum + 1 := by
   induction l generalizing C σ with
   | nil =>
-    refine ⟨.ofDeterministic _ _ 1, rfl, (runFrom_nop_withState C).trans
-      (Cfg.ext rfl rfl ?_ ?_ rfl), le_rfl⟩ <;> funext j <;>
-      simp only [clearedCfg, List.not_mem_nil, ↓reduceIte, Cfg.withState]
+    exact ⟨.ofDeterministic _ _ 1, rfl,
+      (runFrom_nop_withState C).trans (clearedCfg_nil C).symm, le_rfl⟩
   | cons i l ih =>
     obtain ⟨hil, hl⟩ := List.nodup_cons.1 hl
     have hmid := runFrom_clearShadowed_pairEmb hm (hC i List.mem_cons_self)
-    obtain ⟨p₁, hh₁, hl₁, ht₁⟩ := ih hl (clearedCfg (σ' := σ) [i] C) fun j hj => by
-      have hji : j ≠ i := fun h => hil (h ▸ hj)
-      obtain ⟨h₁, h₂, h₄, h₅, h₆⟩ := hC j (List.mem_cons_of_mem _ hj)
-      exact ⟨by simp [clearedCfg, hji, h₁], by simpa [clearedCfg, hji] using h₂, h₄,
-        by simpa [clearedCfg, hji] using h₅, fun y hy => by simp [clearedCfg, hji, h₆ y hy]⟩
+    obtain ⟨p₁, hh₁, hl₁, ht₁⟩ := ih hl (clearedCfg (σ' := σ) [i] C) fun j hj =>
+      (hC j (List.mem_cons_of_mem _ hj)).clearedCfg (by simp [ne_of_mem_of_not_mem hj hil])
     -- clear tape `i`, then the others
     obtain ⟨p, hh, hl', ht, -⟩ := exists_runPath_seq
       (p₀ := .ofDeterministic ((clearShadowed m₀ m₁).extendTapes (pairEmb i))
@@ -198,10 +226,8 @@ theorem exists_runPath_clearList (hm : m₀ ≠ m₁) (l : List (Fin k)) (hl : l
       (by rw [MultiTapeNTM.RunPath.last_ofDeterministic, hmid]; rfl)
       (by rw [hh₁, MultiTapeNTM.RunPath.last_ofDeterministic, hmid]; rfl) (by rw [hl₁]; rfl)
     refine ⟨p, hh, hl'.trans ?_, ?_⟩
-    · rw [hl₁]
-      refine Cfg.ext rfl rfl ?_ ?_ rfl <;> funext j <;>
-        simp only [Sequential.rightCfg, Cfg.mapState, clearedCfg, List.mem_cons] <;>
-        by_cases hj : pairIdx j = i <;> by_cases hj' : pairIdx j ∈ l <;> simp [hj, hj']
+    · rw [hl₁, Sequential.rightCfg_clearedCfg]
+      exact (clearedCfg_cons i l C).symm
     · change p.length ≤ a i + 2 * b i + c i + 5 + p₁.length at ht
       change p₁.length ≤ _ at ht₁
       change p.length ≤ _

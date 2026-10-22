@@ -63,12 +63,6 @@ Uses Christian Reitwiessner's `ComputableTidilyInTimeAndSpace.streamFold` from t
 
 namespace Turing.MultiTapeTM
 
-private lemma streamEmit_nil {σ : Type} (next : σ × Bool → σ) (init : σ) (l : List Bool) :
-    streamEmit next (fun _ => []) init l = [] := by
-  induction l generalizing init with
-  | nil => rfl
-  | cons a l ih => exact ih _
-
 /-- Stream a bit list with cumulative round costs. `R l i` includes the step, the current and next
 encoded state lengths, and control. `Q` and `B` bound peak step workspace and encoded state size.
 The input is scanned without copying; final output and tape restoration are charged too.
@@ -96,7 +90,7 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream_sum {σ : Type}
     (fun a rest => by simp [reader, InputReader.read])
     id (fun l => by simp) hi.computableTidilyInTimeAndSpace hstep
     he.computableTidilyInTimeAndSpace computableTidilyInTimeAndSpace_id
-    (fun l => by simp [streamEmit_nil, streamState])
+    (fun l => by simp [streamState])
     (roundCost := fun l i => (2 * ce + 4) * R l i) (sMax := Q)
     (lMax := fun l => B l + 1)
     (fun l i hi => by
@@ -291,7 +285,7 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_pair_stream_sum {σ : Type}
     (fun a rest => by simp [reader, InputReader.read])
     Prod.fst Prod.snd (fun p => by simp [encPair_apply])
     hstep he.computableTidilyInTimeAndSpace computableTidilyInTimeAndSpace_id
-    (fun p => by simp [streamEmit_nil, streamState])
+    (fun p => by simp [streamState])
     (roundCost := fun p i => (2 * ce + 4) * R p i) (sMax := Q)
     (lMax := fun p => B p + 1)
     (fun p i hi => by

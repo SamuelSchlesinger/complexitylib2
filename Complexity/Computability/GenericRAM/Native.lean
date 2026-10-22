@@ -34,7 +34,8 @@ selection and an input-fit guarantee, rather than instance-dependent width advic
 * `NativeCertificate`: native implementation with arbitrary resource bounds.
 * `Model.Encoding`: selectable encodings of values, addresses and configuration.
 * `Model.checkedConstant`, `Model.checkedOp`: include the result admissibility check.
-* `Model.NativePrimitives`: scalar obligations, including move and control-label validation.
+* `Model.NativePrimitives`, `Model.NativePrimitives.IsPolynomial`: scalar obligations, including
+  move and control-label validation, and their polynomiality predicate.
 
 ## Main results
 
@@ -200,6 +201,22 @@ structure NativePrimitives (M : Model.{0, 0, 0, 0}) (enc : Encoding M) where
   /-- Current and continuing control labels both require validation. -/
   validPC : NativeCertificate (fun p => M.validPC p.1 p.2)
     (encPair enc.config encNat) encBool
+
+/-- All six primitive certificates in a bundle have polynomial time and space bounds. -/
+structure NativePrimitives.IsPolynomial {M : Model.{0, 0, 0, 0}} {enc : M.Encoding}
+    (N : M.NativePrimitives enc) : Prop where
+  /-- Every literal symbol's certificate has polynomial time and space bounds. -/
+  constant : ∀ c, (N.constant c).IsPolynomial
+  /-- Every ALU operation symbol's certificate has polynomial time and space bounds. -/
+  operation : ∀ op, (N.operation op).IsPolynomial
+  /-- Every test symbol's certificate has polynomial time and space bounds. -/
+  test : ∀ t, (N.test t).IsPolynomial
+  /-- The address extraction certificate has polynomial time and space bounds. -/
+  address : N.address.IsPolynomial
+  /-- The move validation certificate has polynomial time and space bounds. -/
+  validMove : N.validMove.IsPolynomial
+  /-- The control-label validation certificate has polynomial time and space bounds. -/
+  validPC : N.validPC.IsPolynomial
 
 end Model
 end Cslib.GenericRAM

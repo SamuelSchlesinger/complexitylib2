@@ -25,9 +25,7 @@ the marked cells (`Turing.MultiTapeTM.clearShadowed`).
 
 The first step of `shadow m₀ m₁ tm` marks the start cells; after it, the machine mirrors `tm` step
 by step (`Shadow.runFrom_cfg`), and if `tm` first halts at step `u` it has halted at step `u + 1`
-(`runFrom_shadow`). Two general facts about runs are proved along the way: the cells a head
-visits form an interval (`exists_visitedByTapeHead_eq_Icc`), and a cell the head never visits keeps
-its contents (`workTapes_runFrom_eq_of_notMem_visitedByTapeHead`).
+(`runFrom_shadow`).
 
 ## Main definitions
 
@@ -46,42 +44,6 @@ its contents (`workTapes_runFrom_eq_of_notMem_visitedByTapeHead`).
 namespace Turing.MultiTapeTM
 
 variable {k : ℕ} {Symbol State : Type*} {input : List Symbol}
-
-/-! ### Visited cells -/
-
-/-- The values of a function on `0, …, n` that changes by at most one per step form an interval. -/
-private theorem exists_image_range_eq_Icc {f : ℕ → ℤ} (hf : ∀ m, |f (m + 1) - f m| ≤ 1) (n : ℕ) :
-    ∃ L R, (Finset.range (n + 1)).image f = Finset.Icc L R := by
-  induction n with
-  | zero => exact ⟨f 0, f 0, by simp⟩
-  | succ n ih =>
-    obtain ⟨L, R, h⟩ := ih
-    have hn : f n ∈ Finset.Icc L R := h ▸ Finset.mem_image_of_mem f (by simp)
-    rw [Finset.mem_Icc] at hn
-    have := abs_le.1 (hf n)
-    refine ⟨min L (f (n + 1)), max R (f (n + 1)), ?_⟩
-    rw [Finset.range_add_one, Finset.image_insert, h]
-    ext x
-    simp only [Finset.mem_insert, Finset.mem_Icc]
-    omega
-
-/-- The cells visited by a head up to step `n` form an interval. -/
-theorem exists_visitedByTapeHead_eq_Icc {tm : MultiTapeTM k Symbol State}
-    (c : Cfg k Symbol State input) (n : ℕ) (i : Fin k) :
-    ∃ L R, tm.visitedByTapeHead c n i = Finset.Icc L R := by
-  obtain ⟨L, R, h⟩ := exists_image_range_eq_Icc (f := fun m => (tm.runFrom c m).workTapePos i)
-    (fun m => by rw [runFrom_succ]; exact workTapePos_step_le _ i) n
-  refine ⟨L, R, ?_⟩
-  rw [← h]
-  ext x
-  simp only [mem_visitedByTapeHead, Finset.mem_image, Finset.mem_range]
-
-/-- A cell the head of a tape never visits keeps its contents. -/
-theorem workTapes_runFrom_eq_of_notMem_visitedByTapeHead {tm : MultiTapeTM k Symbol State}
-    {c : Cfg k Symbol State input} {n : ℕ} {i : Fin k} {x : ℤ}
-    (hx : x ∉ tm.visitedByTapeHead c n i) : (tm.runFrom c n).workTapes i x = c.workTapes i x := by
-  by_contra h
-  exact hx (mem_visitedByTapeHead_of_workTapes_ne i n x h)
 
 /-- The work tape a tape of `k + k` belongs to: tape `i` and its shadow `k + i` belong to `i`. -/
 def pairIdx (j : Fin (k + k)) : Fin k :=
