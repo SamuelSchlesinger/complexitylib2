@@ -331,6 +331,13 @@ info: 'Turing.QueryMachine.computableInLogSpace' depends on axioms:
 #print axioms Turing.QueryMachine.computableInLogSpace
 
 /--
+info: 'Turing.QueryMachine.computableInSpace' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.QueryMachine.computableInSpace
+
+/--
 info: 'Turing.CounterProgram.computableInLogSpace' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
