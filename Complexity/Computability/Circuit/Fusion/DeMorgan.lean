@@ -32,11 +32,10 @@ unrestricted `t`-pair cover into a monotone circuit with at most `4 (t + 1)² (2
 adding `n` negations for the literals gives a De Morgan circuit. In the same terms, monotone AND
 complexity from literals lies between `ρ(f)` and `ρ(f)²`.
 
-The formalized upper bound is `O((t + 1)² (n + t))`, cubic in the cover size when `t ≥ n`, rather
-than quadratic, because unions, free in the AND cost, are charged in size; this is a property of the
-construction, not a proven lower bound. The size bound is polynomial in `ρ(f)` and `n` together,
-since a projection has `ρ(f) = 0`. These are formalizations of known correspondences, not new
-lower bounds.
+The formalized upper bound is `O((t + 1)² (n + t))`, cubic in the cover size when `t ≥ n`
+rather than quadratic, because unions, free in the AND cost, are charged in size; this is a
+property of the construction, not a proven lower bound. The size bound is polynomial in `ρ(f)`
+and `n` together, not in `ρ(f)` alone. These formalize known correspondences, not new bounds.
 
 ## Main definitions
 
