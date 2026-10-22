@@ -336,6 +336,7 @@ import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.ShortWords
 import ComplexityTests.SipserLautemann
 import ComplexityTests.SmallCountingClasses
 import ComplexityTests.Smoke
