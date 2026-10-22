@@ -9,7 +9,7 @@ module
 
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Init.Table
 public import Complexity.Computability.WordRAM.Generic
-import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Ring
 
 /-!
 # Charged uniform Word-RAM initialization of van Emde Boas trees
@@ -27,10 +27,12 @@ The initializer executes in three phases:
    at `[tableBase + 2 * (d + 1) + 1, tableBase + 3 * d + 2]`, writing `0`, `splitSize k`, and
    `childSpan k` into every depth-`k` header while leaving empty minimum/maximum cells untouched.
 
+The program `initProgram` and its first two phases are developed in
+`Complexity.Algorithms.WordRAM.VanEmdeBoas.Init.Table` and re-exported here.
+
 ## Main definitions
 
-* `initProgram`: the fixed 32-register structured initializer program (re-exported from
-  `Init.Table`).
+* `DfsConst`, `DfsState`: the constant-register and loop invariants of the Phase 3 traversal.
 
 ## Main results
 
