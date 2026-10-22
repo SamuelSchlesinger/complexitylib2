@@ -115,7 +115,7 @@ def ofNat (i : ℕ) (h : i < n + k) : Wire n k := (equivFin n k).symm ⟨i, h⟩
 theorem toNat_injective : Function.Injective (toNat : Wire n k → ℕ) :=
   fun _ _ h => (equivFin n k).injective (Fin.ext h)
 
-theorem toNat_castSucc (w : Wire n k) : w.castSucc.toNat = w.toNat := by
+@[simp] theorem toNat_castSucc (w : Wire n k) : w.castSucc.toNat = w.toNat := by
   cases w <;> rfl
 
 end Wire
@@ -246,7 +246,7 @@ theorem IsCodeFrom.getElem {k : ℕ} {gates : List (σ.Op × List ℕ)} (h : IsC
 
 /-- A list of gates satisfies `IsCodeFrom σ n k` when every entry `j` has the arity of its
 operation and reads only the first `n + k + j` wires. -/
-theorem isCodeFrom_of_getElem {k : ℕ} {gates : List (σ.Op × List ℕ)}
+theorem isCodeFrom_of_getElem {gates : List (σ.Op × List ℕ)}
     (h : ∀ j (hj : j < gates.length), gates[j].2.length = σ.Arity gates[j].1 ∧
       ∀ i ∈ gates[j].2, i < n + k + j) :
     IsCodeFrom σ n k gates := by

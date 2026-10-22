@@ -80,12 +80,6 @@ theorem remainder_word (T : ℕ) (x : BitString k) :
     word (remainder T x) =
       BitVec.ofNat k (if (word x).toNat = 0 then 0 else T % (word x).toNat) := word_getLsbD _
 
-theorem remainder_lt (T : ℕ) {x : BitString k} (hx : 0 < (word x).toNat) :
-    (word (remainder T x)).toNat < (word x).toNat := by
-  rw [remainder_word, ite_eq_right (Nat.ne_of_gt hx), BitVec.toNat_ofNat,
-    Nat.mod_eq_of_lt ((Nat.mod_lt _ hx).trans (word x).isLt)]
-  exact Nat.mod_lt _ hx
-
 theorem addResidue_spec (a b r : BitVec k) (T : ℕ)
     (hr : 0 < a.toNat → r.toNat = T % a.toNat) :
     addResidue a b r = BitVec.ofNat k (advance a.toNat b.toNat T) := by

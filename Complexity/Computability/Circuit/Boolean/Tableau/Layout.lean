@@ -391,10 +391,6 @@ noncomputable def GlobLoc.ofIdx (m : ℕ) : GlobLoc k State :=
 
 @[deprecated (since := "2026-10-21")] alias outViewOf := OutView.ofIndex
 
-@[deprecated (since := "2026-10-21")] alias outViewOf_index := OutView.ofIndex_index
-
-@[deprecated (since := "2026-10-21")] alias index_outViewOf := OutView.index_ofIndex
-
 /-- The global feature with a number. -/
 noncomputable def GFeat.ofIdx (m : ℕ) : GFeat State :=
   if h : m < Fintype.card (Option State) then
@@ -416,10 +412,10 @@ def gadgetJ (m : ℕ) : Fin 8 := ⟨m % 8, Nat.mod_lt _ (by norm_num)⟩
 
 /-! ### Decoding inverts the layout -/
 
-theorem symOf_symIdx (s : Option Bool) : symOf (symIdx s) = s := by
+private theorem symOf_symIdx (s : Option Bool) : symOf (symIdx s) = s := by
   rcases s with _ | _ | _ <;> rfl
 
-theorem symIdx_lt (s : Option Bool) : symIdx s < 3 := by
+private theorem symIdx_lt (s : Option Bool) : symIdx s < 3 := by
   rcases s with _ | _ | _ <;> simp [symIdx]
 
 theorem ScanQ.ofIdx_idx (q : ScanQ k) : ScanQ.ofIdx q.idx = q := by
@@ -457,7 +453,7 @@ theorem ScanLoc.idx_lt (l : ScanLoc k) : l.idx < scanWidth k := by
   · have := q.idx_lt; omega
   · have := q.idx_lt; omega
 
-theorem attrIdx_lt (v : Attr k State) : attrIdx v < Fintype.card (Attr k State) :=
+private theorem attrIdx_lt (v : Attr k State) : attrIdx v < Fintype.card (Attr k State) :=
   (Fintype.equivFin (Attr k State) v).isLt
 
 theorem GlobLoc.idx_lt (l : GlobLoc k State) : l.idx < globWidth k State := by
@@ -577,9 +573,13 @@ def Loc.ColOK (T c : ℕ) : Loc k State → Prop
   | .glob _ => c = 0
   | .gf _ _ _ => c = 0
 
-theorem mul_add_lt_mul {c w W i : ℕ} (hc : c < W) (hi : i < w) : c * w + i < W * w :=
+private theorem mul_add_lt_mul {c w W i : ℕ} (hc : c < W) (hi : i < w) : c * w + i < W * w :=
   calc c * w + i < (c + 1) * w := by rw [Nat.succ_mul]; omega
     _ ≤ W * w := Nat.mul_le_mul_right _ hc
+
+theorem scan_offset_lt_globStart {c : ℕ} (hc : c < numCols T) (l : ScanLoc k) :
+    c * scanWidth k + l.idx < globStart k T :=
+  mul_add_lt_mul hc l.idx_lt
 
 theorem gfStart_add_gadgetIdx_lt (f : GFeat State) (b : Bool) (j : Fin 8) :
     gfStart k State T + gadgetIdx f.idx b j < colStart k State T := by
@@ -588,7 +588,7 @@ theorem gfStart_add_gadgetIdx_lt (f : GFeat State) (b : Bool) (j : Fin 8) :
   simp only [colStart, gfWidth]
   omega
 
-theorem colStart_add_lt {c : ℕ} (hc : c < numCols T) (f : ColFeat k)
+private theorem colStart_add_lt {c : ℕ} (hc : c < numCols T) (f : ColFeat k)
     (b : Bool) (j : Fin 8) :
     colStart k State T + c * colWidth k + gadgetIdx f.idx b j < blockSize k State T := by
   have h₁ := gadgetIdx_lt f.idx b j
@@ -649,7 +649,7 @@ theorem div_mod_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T c
 
 /-! ### Every gate sits at a position -/
 
-theorem symIdx_symOf {m : ℕ} (hm : m < 3) : symIdx (symOf m) = m := by
+private theorem symIdx_symOf {m : ℕ} (hm : m < 3) : symIdx (symOf m) = m := by
   rcases m with _ | _ | _ | m
   · rfl
   · rfl
@@ -714,7 +714,7 @@ theorem ColFeat.idx_ofIdx {m : ℕ} (hm : m < 1 + 4 * k) :
     omega
   · exact absurd (by omega) h₃
 
-theorem gadgetIdx_decode (m : ℕ) : gadgetIdx (m / 16) (gadgetB m) (gadgetJ m) = m := by
+private theorem gadgetIdx_decode (m : ℕ) : gadgetIdx (m / 16) (gadgetB m) (gadgetJ m) = m := by
   simp only [gadgetIdx, gadgetB, gadgetJ]
   by_cases h : 8 ≤ m % 16 <;>
     simp only [h, decide_true, decide_false, Bool.toNat_true, Bool.toNat_false, mul_one, mul_zero,

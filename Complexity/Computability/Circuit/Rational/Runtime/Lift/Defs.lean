@@ -350,7 +350,7 @@ theorem liftTable_eq (n N e : ℕ) (x : Fin 3 → ℕ) (a : Fin (n + 1)) :
 theorem rowEntry_liftTable (n N e : ℕ) (x : Fin 3 → ℕ) (a : Fin (n + 1))
     (i j : Fin (Generator.matrixDimension e)) :
     rowEntry (liftTable (CyclotomicRing.dimension e) (CyclotomicRing.degree e)
-         (testRows (CyclotomicRing.dimension e) N a (x 0)) (x 1) (x 2)) i j =
+        (testRows (CyclotomicRing.dimension e) N a (x 0)) (x 1) (x 2)) i j =
       Generator.integralLift n N e x a i j := by
   rw [liftTable_eq, rowEntry_rowsOf]
 
@@ -377,14 +377,6 @@ theorem liftRows_eq_inputTables (n N e : ℕ) (x : Fin 3 → ℕ) :
 @[simp] lemma length_liftRows (n N M Dg t p r : ℕ) :
     (liftRows n N M Dg t p r).length = n + 1 := by
   simp [liftRows]
-
-lemma getD_liftRows (n N M Dg t p r a : ℕ) :
-    (liftRows n N M Dg t p r).getD a [] =
-      if a < n + 1 then liftTable M Dg (testRows M N a t) p r else [] := by
-  unfold liftRows
-  split_ifs with h
-  · rw [List.getD_eq_getElem _ _ (by simpa using h), List.getElem_map, List.getElem_range]
-  · rw [List.getD_eq_default _ _ (by simpa using h)]
 
 end Rational
 

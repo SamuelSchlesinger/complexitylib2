@@ -238,9 +238,8 @@ theorem gateCode_wire {n T t : ℕ} {l : Loc k State} {c : ℕ} (hl : l.ColOK T 
   rcases l with l | l | ⟨f, b, j⟩ | ⟨f, b, j⟩ <;> simp only [Loc.ColOK] at hl <;>
     simp only [Loc.offset]
   · have hi := l.idx_lt
-    have hlt := mul_add_lt_mul hl hi
     have hw : 0 < scanWidth k := by simp only [scanWidth]; omega
-    have h₁ : c * scanWidth k + l.idx < globStart k T := by simpa only [globStart] using hlt
+    have h₁ : c * scanWidth k + l.idx < globStart k T := scan_offset_lt_globStart hl l
     have h₂ : (c * scanWidth k + l.idx) / scanWidth k = c := by
       rw [Nat.add_comm, Nat.add_mul_div_right _ _ hw, Nat.div_eq_of_lt hi, Nat.zero_add]
     have h₃ : (c * scanWidth k + l.idx) % scanWidth k = l.idx := by
@@ -321,10 +320,6 @@ private theorem resolve_cur_lt {l' : Loc k State} {cs : ColSel} {g : Guard}
   · simp only [wire]; omega
 
 end Earlier
-
-omit [DecidableEq State] in
-private theorem scan_offset_lt_globStart {c : ℕ} (hc : c < numCols T) (l : ScanLoc k) :
-    c * scanWidth k + l.idx < globStart k T := mul_add_lt_mul hc l.idx_lt
 
 omit [DecidableEq State] in
 private theorem globStart_le_gfStart : globStart k T ≤ gfStart k State T := Nat.le_add_right _ _
