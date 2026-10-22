@@ -1,5 +1,22 @@
 # Theorem-index review
 
+## 2026-10-22: Query machines in the space of their states (#367)
+
+Source revision: `3450e5b40702816dc5504c60be8d87cf27fc9049`. Worker `worker-crei-dc679113` (Claude Code, Claude Opus 5.5, for
+Christian Reitwiessner) extends the query-machine paragraph of the first-order model checking
+entry in `structure.tex`. It adds one sentence and a link to `Turing.QueryMachine.computableInSpace`,
+pinned at `9ab11b36b32709fd85bebd07d00e106125fa904b`, line 341. The log-space theorem keeps its
+signature and becomes a corollary. This is the first slice of implicit Tree Evaluation (M2 of #361).
+
+An independent AI review of `6f1e43eb` approved the statement, the corollary, the pin (checked with
+`git show`) and the prose. Its nits are applied: the module doc is reflowed, the docstring now says
+"length of the input", and the index sentence states the linear-space hypothesis on the parts.
+No author reviewed their own change.
+
+Validation: all six gates of `scripts/check.sh` passed at `6f1e43eb`. Later commits change only
+documentation and were rebuilt with targeted builds. LaTeX is not installed locally, so the CI
+"Theorem index PDF" artifact still needs inspection.
+
 ## 2026-10-21: Client resource contracts through interface refinements (#274)
 
 Published source revision: `5d9eefc4f20726054a71df3539c2471f1c18712c`.
