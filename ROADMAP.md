@@ -190,6 +190,17 @@ existing developments, source credit and saved branches remain available for a f
    hypotheses remains open in [#486](https://github.com/cslib-community/complexitylib/issues/486).
    The insecure construction fixtures and security-only fixtures do not supply that joint
    instantiation. The reductions do not claim Gentry's exact concrete-security loss.
+   The [deterministic GSW core](Complexity/Crypto/Computational/Homomorphic/GSW/Basic.lean)
+   constructs the public matrix, encryption with explicit binary coins, NAND and decryption for
+   modulus `q = 2^w` and Boolean ciphertext matrices of dimension `N = (n + 1) * w`.
+   It proves the exact integer error equations and correctness under the strict margin
+   `4 * |error| < q`. The [noise bounds](Complexity/Crypto/Computational/Homomorphic/GSW/Noise.lean)
+   are `m * β` for fresh encryption and `B₁ + N * B₂` for NAND.
+   [Tests](ComplexityTests/Crypto/GSW.lean) exercise both messages and all NAND inputs with nonzero
+   noise, including negative wraparound and decoder boundaries. This is the power-of-two
+   specialization of Gentry--Sahai--Waters (2013), omitting its redundant top digit.
+   Sampling, computational security, uniform native algorithms, admissible parameter families
+   and bootstrappability remain open in #486.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
