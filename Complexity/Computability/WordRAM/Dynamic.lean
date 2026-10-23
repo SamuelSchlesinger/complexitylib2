@@ -28,6 +28,23 @@ execution. The generic history theorem then preserves all observations and adds 
 The same single compiled program is used at every call; the interface does not generate code
 from the requested operation.
 
+## Evaluating calls
+
+`P.eval w fuel o x` delivers the arguments, runs the fixed program and decodes the operation's
+typed observation. It returns `some (y, answer, cost)`, with final data `y` for the next call and
+a cost that already includes halt. `fuel` bounds each structured loop's iterations per entry,
+not the total instruction count. Exhaustion, a machine fault or decoder rejection returns
+outer `none`; a successful empty stack pop instead has observation `none`.
+
+Evaluation does not establish admissibility or check untouched memory for word bounds.
+`C.execOp_of_eval hr hv he` turns a successful evaluation `he` into exact execution evidence
+using representation `hr` and admissibility `hv`. Argument delivery and decoding remain
+uncharged. Whole-client bounds remain separate resource proofs.
+
+See the checked examples in `ComplexityTests/WordRAMDynamic.lean` for typed stack observations,
+the seven-body/eight-charged push and certificate lifting, and
+`ComplexityTests/WordRAMPrefixSums.lean` for repeated calls retaining persistent data.
+
 ## Main definitions
 
 * `DynamicProgram`: fixed code, an input-register convention, and an output decoder.
