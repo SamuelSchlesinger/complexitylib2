@@ -993,13 +993,13 @@ batches.
    than mechanically. Generated PDFs are review and dissemination artifacts, not additional proofs.
 
 6. **Plain computability in definitions and public results (#456).** Plain
-   `ComputableInPolyTime` and its tidy bridges are in place, and `P`, `NP`, `FNP` and the
-   polynomial-time reductions use it (#546). Redefine the classes and reductions that still use
-   `ComputableTidilyInPolyTime` (#547–#550), add plain space, big-O and FPT notions
-   (#551), restate public characterizations and closure lemmas plainly, and switch the abstract
-   bridges to the shared predicate after #497. WPP/LWPP list, indexed and two-sided robustness
-   results expose plain certificates with deprecated `_tidy` forms (#562); the
-   remaining public-result migration stays open under #456.
+   `ComputableInPolyTime` and its tidy bridges are in place, together with plain space, big-O and
+   FPT notions (#551). `P`, `NP`, `FNP` and the polynomial-time reductions (#546), the
+   probabilistic, counting and hierarchy classes (#547), the `TFNP` subclasses (#548), FPT
+   reductions, kernels and proof systems (#549) use it, and the WPP/LWPP robustness results expose
+   plain certificates (#562). Remaining: the cryptographic primitives (#550), plain restatements of
+   the other public characterizations and closure lemmas, and switching the abstract bridges to
+   the shared predicate; the migration stays open under #456.
 
 ## Remaining theorem developments
 
