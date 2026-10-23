@@ -173,7 +173,7 @@ theorem fst_mem_vars (h : φ.IsProof ls) (hc : c ∈ ls) {l : Literal V} (hl : l
 end IsProof
 
 /-- A derivable clause is a line of some proof. -/
-theorem Derives.exists_isProof (h : φ.Derives c) : ∃ ls, φ.IsProof ls ∧ c ∈ ls := by
+private theorem Derives.exists_isProof (h : φ.Derives c) : ∃ ls, φ.IsProof ls ∧ c ∈ ls := by
   induction h with
   | mem hc => exact ⟨[_], IsProof.nil.mem hc, List.mem_singleton_self _⟩
   | resolvent v _ _ hv₁ hv₂ ih₁ ih₂ =>

@@ -94,7 +94,7 @@ theorem threshold_of_one_le {j : ℕ} (hj : 1 ≤ j) :
   unfold threshold
   rw [ite_eq_right (by omega)]
 
-theorem threshold_pred_le (hk : 1 ≤ k) (hα : 1 ≤ α) {c : ℕ} (hc : 1 ≤ c) :
+private theorem threshold_pred_le (hk : 1 ≤ k) (hα : 1 ≤ α) {c : ℕ} (hc : 1 ≤ c) :
     threshold k α (c - 1) ≤ α * base k α ^ (2 * c - 2) := by
   rcases Nat.eq_or_lt_of_le hc with rfl | hc2
   · simp [threshold, hα]
@@ -153,7 +153,7 @@ theorem card_introducedOfCard_le_pow (P : Path (threshold k α) V)
 
 /-- **Few introduced clauses.** Along a branch from a clause set of width `k` over the `N`
 variables of `U`, ending in a sparse node, at most `N k X ^ (2 k)` clauses are introduced. -/
-theorem card_introduced_le (P : Path (threshold k α) V) (hk0 : ∀ C ∈ P.node 0, C.card ≤ k)
+private theorem card_introduced_le (P : Path (threshold k α) V) (hk0 : ∀ C ∈ P.node 0, C.card ≤ k)
     (hleaf : Sparse (threshold k α) (P.node P.len)) (U : Finset V)
     (hU : ∀ C ∈ P.node 0, ∀ l ∈ C, l.1 ∈ U) :
     P.introduced.card ≤ U.card * (k * base k α ^ (2 * k)) := by
@@ -253,7 +253,7 @@ theorem IsLeafWord.length_le {w : List Bool} (hw : R.IsLeafWord s w) :
 
 /-- **Leaf words have few petal steps.** From a reduced clause set of width `k` over the `N`
 variables of `U`, every leaf word has at most `(k - 1) N / α` petal steps. -/
-theorem IsLeafWord.mul_card_le {w : List Bool} (hw : R.IsLeafWord s w) :
+private theorem IsLeafWord.mul_card_le {w : List Bool} (hw : R.IsLeafWord s w) :
     α * ((range w.length).filter fun i => w.getD i false = true).card ≤ (k - 1) * U.card := by
   obtain ⟨P, hP0, hPlen, hPleaf, hPdir⟩ := exists_path_of_isLeafWord hred hw
   have h0 : P.node 0 = R.toClauseSet s := by simpa [walk] using hP0 0 (Nat.zero_le _)

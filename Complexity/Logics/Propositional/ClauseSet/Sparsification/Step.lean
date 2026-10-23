@@ -277,7 +277,7 @@ theorem card_le_of_mem_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : 
     exact (card_le_card hCD.subset).trans (hk D (flower_subset ψ c H hD))
 
 /-- The flower disappears from both children. -/
-theorem disjoint_flower_child {θ : ℕ → ℕ} {ψ : ClauseSet V} {c : ℕ}
+private theorem disjoint_flower_child {θ : ℕ → ℕ} {ψ : ClauseSet V} {c : ℕ}
     {H : Finset (Literal V)} (h : Heavy θ ψ c H) (b : Bool) :
     Disjoint (flower ψ c H) (child ψ c H b) := by
   rw [Finset.disjoint_left]

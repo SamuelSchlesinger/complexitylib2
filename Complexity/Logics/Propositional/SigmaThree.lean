@@ -150,7 +150,7 @@ theorem piThreeSize_eq_sigmaThreeSize_not (k : ℕ) (f : BitString N → Bool) :
 /-- **The finite bound**: for `k ≥ 1` and `ε > 0` there is `C ≥ 0` such that every OR of `t`
 formulas of width at most `k` computing a function whose true inputs contain no subcube of
 dimension `D` has `|f⁻¹(1)| ≤ t · 2 ^ ((1 - 1 / k + ε) N + C D)`. -/
-theorem IsSigmaThree.card_filter_le_length_mul (k : ℕ) (hk : 1 ≤ k) {ε : ℝ} (hε : 0 < ε) :
+private theorem IsSigmaThree.card_filter_le_length_mul (k : ℕ) (hk : 1 ≤ k) {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ (N : ℕ) (f : BitString N → Bool) (D : ℕ) (Fs : List (CNF (Fin N))),
       IsSigmaThree k f Fs → ¬ ContainsSubcube {x | f x = true} D →
       (#{x | f x = true} : ℝ) ≤ Fs.length * 2 ^ ((1 - 1 / (k : ℝ) + ε) * N + C * D) := by

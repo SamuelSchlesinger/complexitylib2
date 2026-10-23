@@ -91,7 +91,7 @@ theorem parityOn_incidence_update_not [DecidableEq E] (σ : E → Bool) (e : E) 
 
 /-- On a connected multigraph, the parities at any two vertices `u` and `w`, and nowhere else, can
 be flipped: some assignment has parity `1` exactly at `u` and `w` (and nowhere if `u = w`). -/
-theorem exists_forall_parityOn_incidence_eq_xor [Finite V]
+private theorem exists_forall_parityOn_incidence_eq_xor [Finite V]
     (hG : (Multigraph.toSimpleGraph ends).Connected) (u w : V) :
     ∃ τ : E → Bool, ∀ v,
       parityOn (Multigraph.incidence ends v) τ = (decide (v = u) ^^ decide (v = w)) := by
@@ -144,7 +144,7 @@ theorem parityOn_univ_parityOn_incidence_eq_false (σ : E → Bool) :
       simp [hab, h], sum_pair h, BooleanRing.add_self]
 
 /-- An assignment satisfying the constraints of all vertices has even total charge. -/
-theorem parityOn_univ_eq_false_of_forall {σ : E → Bool} {χ : V → Bool}
+private theorem parityOn_univ_eq_false_of_forall {σ : E → Bool} {χ : V → Bool}
     (h : ∀ v, parityOn (Multigraph.incidence ends v) σ = χ v) : parityOn univ χ = false := by
   rw [← parityOn_univ_parityOn_incidence_eq_false (ends := ends) σ]
   exact parityOn_congr fun v _ => (h v).symm
@@ -152,7 +152,7 @@ theorem parityOn_univ_eq_false_of_forall {σ : E → Bool} {χ : V → Bool}
 /-- On a connected multigraph, for every vertex `u` some assignment satisfies the constraints of
 all vertices except possibly `u`: its parity at `v` is `χ v`, flipped at `u` when the total charge
 is odd. -/
-theorem exists_forall_parityOn_incidence_eq (hG : (Multigraph.toSimpleGraph ends).Connected)
+private theorem exists_forall_parityOn_incidence_eq (hG : (Multigraph.toSimpleGraph ends).Connected)
     (χ : V → Bool) (u : V) :
     ∃ σ : E → Bool, ∀ v,
       parityOn (Multigraph.incidence ends v) σ = ((parityOn univ χ && decide (v = u)) ^^ χ v) := by
@@ -237,7 +237,7 @@ theorem satisfiable_tseitinFormula_iff (hG : (Multigraph.toSimpleGraph ends).Con
 
 /-- A clause of a Tseitin formula has as many literals as some vertex has edges other than
 self-loops. -/
-theorem exists_length_eq_of_mem_tseitinFormula {c : Clause E}
+private theorem exists_length_eq_of_mem_tseitinFormula {c : Clause E}
     (hc : c ∈ tseitinFormula ends χ) :
     ∃ v, c.length = #(Multigraph.incidence ends v) := by
   obtain ⟨v, hv⟩ := mem_tseitinFormula.1 hc

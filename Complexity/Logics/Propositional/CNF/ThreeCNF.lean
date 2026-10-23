@@ -57,7 +57,7 @@ def Clause.split3 (fresh : ℕ → W) (j : ℕ) : Clause W → CNF W
   | [] => [[]]
   | carry :: rest => Clause.splitAux fresh j carry rest
 
-theorem Clause.length_le_three_of_mem_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Literal W)
+private theorem Clause.length_le_three_of_mem_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Literal W)
     (rest : Clause W) : ∀ d ∈ Clause.splitAux fresh j carry rest, d.length ≤ 3 := by
   induction j, carry, rest using Clause.splitAux.induct fresh with
   | case1 j carry b c d rest ih =>
@@ -78,8 +78,8 @@ theorem Clause.length_le_three_of_mem_splitAux (fresh : ℕ → W) (j : ℕ) (ca
 
 /-- Resolving on the auxiliary variables: an assignment satisfying the chain satisfies the
 clause. -/
-theorem Clause.eval_of_eval_splitAux (fresh : ℕ → W) (σ : W → Bool) (j : ℕ) (carry : Literal W)
-    (rest : Clause W) (h : (Clause.splitAux fresh j carry rest).eval σ = true) :
+private theorem Clause.eval_of_eval_splitAux (fresh : ℕ → W) (σ : W → Bool) (j : ℕ)
+    (carry : Literal W) (rest : Clause W) (h : (Clause.splitAux fresh j carry rest).eval σ = true) :
     Clause.eval σ (carry :: rest) = true := by
   induction j, carry, rest using Clause.splitAux.induct fresh with
   | case1 j carry b c d rest ih =>
@@ -100,7 +100,7 @@ theorem Clause.eval_of_eval_splitAux (fresh : ℕ → W) (σ : W → Bool) (j : 
 
 /-- An assignment satisfying the clause, and giving each auxiliary variable `fresh k` the value of
 the literals after its position, satisfies the chain. -/
-theorem Clause.eval_splitAux (fresh : ℕ → W) (σ : W → Bool) (j : ℕ) (carry : Literal W)
+private theorem Clause.eval_splitAux (fresh : ℕ → W) (σ : W → Bool) (j : ℕ) (carry : Literal W)
     (rest : Clause W) (hfresh : ∀ k, j ≤ k → σ (fresh k) = Clause.eval σ (rest.drop (k - j + 1)))
     (h : Clause.eval σ (carry :: rest) = true) :
     (Clause.splitAux fresh j carry rest).eval σ = true := by
@@ -149,7 +149,7 @@ theorem Clause.eval_of_eval_split3 (fresh : ℕ → W) (σ : W → Bool) (j : �
   | nil => simp [Clause.split3] at h
   | cons carry rest => exact Clause.eval_of_eval_splitAux fresh σ j carry rest h
 
-theorem Clause.relabel_drop (f : V → W) (c : Clause V) (n : ℕ) :
+private theorem Clause.relabel_drop (f : V → W) (c : Clause V) (n : ℕ) :
     (c.relabel f).drop n = Clause.relabel f (c.drop n) :=
   (List.map_drop ..).symm
 

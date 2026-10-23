@@ -141,16 +141,16 @@ theorem mem_toClauseSet {ψ : CNF V} {C : Finset (Literal V)} :
     C ∈ ψ.toClauseSet ↔ ∃ D ∈ ψ, D.toFinset = C := by
   simp [CNF.toClauseSet]
 
-theorem toClauseSet_append (ψ χ : CNF V) :
+private theorem toClauseSet_append (ψ χ : CNF V) :
     (ψ ++ χ).toClauseSet = ψ.toClauseSet ∪ χ.toClauseSet := by
   simp [CNF.toClauseSet, List.toFinset_append]
 
-theorem toClauseSet_mono {ψ χ : CNF V} (h : ψ ⊆ χ) : ψ.toClauseSet ⊆ χ.toClauseSet := by
+private theorem toClauseSet_mono {ψ χ : CNF V} (h : ψ ⊆ χ) : ψ.toClauseSet ⊆ χ.toClauseSet := by
   intro C hC
   obtain ⟨D, hD, rfl⟩ := mem_toClauseSet.mp hC
   exact mem_toClauseSet.mpr ⟨D, h hD, rfl⟩
 
-theorem subclause_eq_true_iff {D C : Clause V} :
+private theorem subclause_eq_true_iff {D C : Clause V} :
     subclause D C = true ↔ D.toFinset ⊆ C.toFinset := by
   simp only [subclause, List.all_eq_true, List.any_eq_true, beq_iff_eq, exists_eq_right]
   constructor
@@ -167,7 +167,7 @@ private theorem not_and_not_subclause_iff {D C : Clause V} :
   cases subclause D C <;> cases subclause C D <;> simp
 
 /-- The list-level reduction computes the reduction of clause sets. -/
-theorem toClauseSet_reduce (ψ : CNF V) :
+private theorem toClauseSet_reduce (ψ : CNF V) :
     (reduce ψ).toClauseSet = ClauseSet.Sparsification.reduce ψ.toClauseSet := by
   have hkeep (C : Clause V) : (ψ.all fun D => !(subclause D C && !subclause C D)) = true ↔
       ∀ D' ∈ ψ.toClauseSet, ¬ D' ⊂ C.toFinset := by
@@ -188,7 +188,7 @@ theorem toClauseSet_reduce (ψ : CNF V) :
     obtain ⟨C, hC, rfl⟩ := mem_toClauseSet.mp hC'
     exact ⟨C, List.mem_filter.mpr ⟨hC, (hkeep C).mpr hk⟩, rfl⟩
 
-theorem toClauseSet_flower {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) (H : Clause V) :
+private theorem toClauseSet_flower {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) (H : Clause V) :
     (flower ψ c H).toClauseSet = ClauseSet.Sparsification.flower ψ.toClauseSet c H.toFinset := by
   ext C'
   rw [mem_toClauseSet, ClauseSet.Sparsification.mem_flower, mem_toClauseSet]
@@ -202,7 +202,7 @@ theorem toClauseSet_flower {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) 
     simp only [Bool.and_eq_true, beq_iff_eq, subclause_eq_true_iff]
     exact ⟨by rw [← List.toFinset_card_of_nodup (hnd C hC), hcard], hH⟩
 
-theorem toFinset_filter_not_mem (C H : Clause V) :
+private theorem toFinset_filter_not_mem (C H : Clause V) :
     (C.filter fun l => !H.any (· == l)).toFinset = C.toFinset \ H.toFinset := by
   ext l
   rw [List.mem_toFinset, List.mem_filter, Finset.mem_sdiff, List.mem_toFinset, List.mem_toFinset]
@@ -210,7 +210,7 @@ theorem toFinset_filter_not_mem (C H : Clause V) :
   rw [Bool.not_eq_true', List.any_eq_false]
   exact ⟨fun h hl => h l hl (beq_self_eq_true l), fun h l' hl' heq => h (beq_iff_eq.mp heq ▸ hl')⟩
 
-theorem toClauseSet_petals {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) (H : Clause V) :
+private theorem toClauseSet_petals {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) (H : Clause V) :
     (petals ψ c H).toClauseSet = ClauseSet.Sparsification.petals ψ.toClauseSet c H.toFinset := by
   ext C'
   rw [mem_toClauseSet, ClauseSet.Sparsification.mem_petals, ← toClauseSet_flower hnd]
@@ -221,7 +221,7 @@ theorem toClauseSet_petals {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) 
   · rintro ⟨_, ⟨C, hC, rfl⟩, rfl⟩
     exact ⟨_, ⟨C, hC, rfl⟩, toFinset_filter_not_mem C H⟩
 
-theorem toClauseSet_intro {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) (H : Clause V)
+private theorem toClauseSet_intro {ψ : CNF V} (hnd : ∀ C ∈ ψ, C.Nodup) (c : ℕ) (H : Clause V)
     (b : Bool) :
     (intro ψ c H b).toClauseSet =
       ClauseSet.Sparsification.intro ψ.toClauseSet c H.toFinset b := by
@@ -261,14 +261,14 @@ theorem Normalized.card_le {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) :
   rw [List.toFinset_card_of_nodup (h.nodup D hD)]
   exact h.length_le D hD
 
-theorem Normalized.length_flower {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) (c : ℕ) (H : Clause V) :
-    (flower ψ c H).length =
+private theorem Normalized.length_flower {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) (c : ℕ)
+    (H : Clause V) : (flower ψ c H).length =
       (ClauseSet.Sparsification.flower ψ.toClauseSet c H.toFinset).card := by
   have hsub : flower ψ c H <+ ψ := List.filter_sublist
   rw [← toClauseSet_flower h.nodup, CNF.toClauseSet,
     List.toFinset_card_of_nodup ((hsub.map _).nodup h.nodup_toFinset), List.length_map]
 
-theorem heavy_eq_true_iff {θ : ℕ → ℕ} {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) {c : ℕ}
+private theorem heavy_eq_true_iff {θ : ℕ → ℕ} {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) {c : ℕ}
     {H : Clause V} (hH : H.Nodup) :
     heavy θ ψ (c, H) = true ↔ Heavy θ ψ.toClauseSet c H.toFinset := by
   simp only [heavy, Bool.and_eq_true, decide_eq_true_eq, Heavy,
@@ -277,14 +277,14 @@ theorem heavy_eq_true_iff {θ : ℕ → ℕ} {k : ℕ} {ψ : CNF V} (h : Normali
 /-! ### Candidates -/
 
 omit [DecidableEq V] in
-theorem mem_hearts {k : ℕ} {C H : Clause V} (hH : H ∈ hearts k C) : H <+ C := by
+private theorem mem_hearts {k : ℕ} {C H : Clause V} (hH : H ∈ hearts k C) : H <+ C := by
   obtain ⟨S, -, rfl⟩ := List.mem_map.mp hH
   conv_rhs => rw [← List.zipIdx_map_fst 0 C]
   exact List.filter_sublist.map _
 
 /-- For a clause of width `k`, every subclause is a candidate heart. -/
-theorem exists_mem_hearts {k : ℕ} {C : Clause V} (hk : C.length ≤ k) {H' : Finset (Literal V)}
-    (hH' : H' ⊆ C.toFinset) : ∃ H ∈ hearts k C, H.toFinset = H' := by
+private theorem exists_mem_hearts {k : ℕ} {C : Clause V} (hk : C.length ≤ k)
+    {H' : Finset (Literal V)} (hH' : H' ⊆ C.toFinset) : ∃ H ∈ hearts k C, H.toFinset = H' := by
   set S := (C.zipIdx.filter fun p => decide (p.1 ∈ H')).map Prod.snd
   have hS : S ∈ (List.range k).sublists := by
     refine List.mem_sublists.mpr (List.Sublist.trans ?_ (List.range_sublist.mpr hk))
@@ -320,19 +320,19 @@ theorem exists_mem_hearts {k : ℕ} {C : Clause V} (hk : C.length ≤ k) {H' : F
       (List.getElem?_eq_getElem hi), decide_eq_true hl⟩, rfl⟩
 
 omit [DecidableEq V] in
-theorem mem_candidates {k : ℕ} {ψ : CNF V} {x : ℕ × Clause V} (hx : x ∈ candidates k ψ) :
+private theorem mem_candidates {k : ℕ} {ψ : CNF V} {x : ℕ × Clause V} (hx : x ∈ candidates k ψ) :
     ∃ C ∈ ψ, x.1 = C.length ∧ x.2 <+ C := by
   obtain ⟨C, hC, hx⟩ := List.mem_flatMap.mp hx
   obtain ⟨H, hH, rfl⟩ := List.mem_map.mp hx
   exact ⟨C, hC, rfl, mem_hearts hH⟩
 
-theorem Normalized.nodup_of_mem_candidates {k : ℕ} {ψ : CNF V} (h : Normalized k ψ)
+private theorem Normalized.nodup_of_mem_candidates {k : ℕ} {ψ : CNF V} (h : Normalized k ψ)
     {x : ℕ × Clause V} (hx : x ∈ candidates k ψ) : x.2.Nodup := by
   obtain ⟨C, hC, -, hsub⟩ := mem_candidates hx
   exact hsub.nodup (h.nodup C hC)
 
 /-- Every heavy heart of a formula in normal form is a candidate. -/
-theorem Normalized.exists_mem_candidates {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V}
+private theorem Normalized.exists_mem_candidates {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V}
     (h : Normalized k ψ) {c : ℕ} {H' : Finset (Literal V)} (hH' : Heavy θ ψ.toClauseSet c H') :
     ∃ H, (c, H) ∈ candidates k ψ ∧ H.toFinset = H' := by
   obtain ⟨C', hC'⟩ := hH'.flower_nonempty hθ
@@ -342,7 +342,7 @@ theorem Normalized.exists_mem_candidates {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ 
   refine ⟨H, List.mem_flatMap.mpr ⟨C, hC, List.mem_map.mpr ⟨H, hH, ?_⟩⟩, hHeq⟩
   rw [← hcard, List.toFinset_card_of_nodup (h.nodup C hC)]
 
-theorem rank_lt {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) {x : ℕ × Clause V}
+private theorem rank_lt {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) {x : ℕ × Clause V}
     (hx : x ∈ candidates k ψ) : rank k x < (k + 1) * (k + 1) + 1 := by
   obtain ⟨C, hC, hx1, -⟩ := mem_candidates hx
   have h₁ : C.length * (k + 1) ≤ k * (k + 1) := Nat.mul_le_mul_right _ (h.length_le C hC)
@@ -354,8 +354,9 @@ theorem rank_lt {k : ℕ} {ψ : CNF V} (h : Normalized k ψ) {x : ℕ × Clause 
 omit [DecidableEq V] in
 /-- A smaller rank has a clause size at most as large, and a heart at least as large at the same
 clause size. -/
-theorem le_of_rank_le {k : ℕ} {x y : ℕ × Clause V} (hx : x.2.length ≤ k) (hy : y.2.length ≤ k)
-    (h : rank k x ≤ rank k y) : x.1 ≤ y.1 ∧ (x.1 = y.1 → y.2.length ≤ x.2.length) := by
+private theorem le_of_rank_le {k : ℕ} {x y : ℕ × Clause V} (hx : x.2.length ≤ k)
+    (hy : y.2.length ≤ k) (h : rank k x ≤ rank k y) :
+    x.1 ≤ y.1 ∧ (x.1 = y.1 → y.2.length ≤ x.2.length) := by
   unfold rank at h
   constructor
   · by_contra hlt
@@ -456,14 +457,14 @@ theorem isSparse_eq_true_iff {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : �
 
 /-! ### The step preserves the normal form -/
 
-theorem reduce_nodup_toFinset {ψ : CNF V} (h : (ψ.map List.toFinset).Nodup) :
+private theorem reduce_nodup_toFinset {ψ : CNF V} (h : (ψ.map List.toFinset).Nodup) :
     ((reduce ψ).map List.toFinset).Nodup :=
   ((reduce_sublist ψ).map _).nodup h
 
 /-- **The children are in normal form.** -/
-theorem normalized_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V} (h : Normalized k ψ)
-    {c : ℕ} {H : Clause V} (hH : H.Nodup) (hheavy : Heavy θ ψ.toClauseSet c H.toFinset)
-    (b : Bool) : Normalized k (child ψ c H b) := by
+private theorem normalized_child {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} {ψ : CNF V}
+    (h : Normalized k ψ) {c : ℕ} {H : Clause V} (hH : H.Nodup)
+    (hheavy : Heavy θ ψ.toClauseSet c H.toFinset) (b : Bool) : Normalized k (child ψ c H b) := by
   have hsub : child ψ c H b <+ ψ ++ intro ψ c H b := reduce_sublist _
   -- the introduced clauses are new, distinct, without repetitions and narrower
   have hintro : ∀ C ∈ intro ψ c H b, C.Nodup ∧
@@ -539,13 +540,14 @@ def rule {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) (k : ℕ) :
     simp only [hs]
     exact toClauseSet_next ψ.2 b
 
-theorem rule_next_val {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ} (ψ : {ψ : CNF V // Normalized k ψ})
-    (hs : isSparse θ k ψ.1 = false) (b : Bool) : ((rule hθ k).next ψ b).1 = next θ k ψ.1 b := by
+private theorem rule_next_val {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {k : ℕ}
+    (ψ : {ψ : CNF V // Normalized k ψ}) (hs : isSparse θ k ψ.1 = false) (b : Bool) :
+    ((rule hθ k).next ψ b).1 = next θ k ψ.1 b := by
   simp [rule, hs]
 
 /-! ### Normalization -/
 
-theorem mem_dedup {C : Clause V} {l : Literal V} : l ∈ dedup C ↔ l ∈ C := by
+private theorem mem_dedup {C : Clause V} {l : Literal V} : l ∈ dedup C ↔ l ∈ C := by
   simp only [dedup, List.mem_map, List.mem_filter, beq_iff_eq, Prod.exists, exists_and_right,
     exists_eq_right]
   constructor
@@ -555,7 +557,7 @@ theorem mem_dedup {C : Clause V} {l : Literal V} : l ∈ dedup C ↔ l ∈ C := 
     refine ⟨C.idxOf l, List.mem_zipIdx_iff_getElem?.mpr ?_, rfl⟩
     rw [List.getElem?_eq_getElem (List.idxOf_lt_length_iff.mpr hl), List.getElem_idxOf]
 
-theorem nodup_dedup (C : Clause V) : (dedup C).Nodup := by
+private theorem nodup_dedup (C : Clause V) : (dedup C).Nodup := by
   have hzip : C.zipIdx.Nodup := by
     rw [List.Nodup, List.pairwise_iff_getElem]
     intro i j hi hj hij heq
@@ -567,7 +569,7 @@ theorem nodup_dedup (C : Clause V) : (dedup C).Nodup := by
   simp only [List.mem_filter, beq_iff_eq] at hu hv
   rw [← hu.2, ← hv.2]
 
-theorem length_dedup_le (C : Clause V) : (dedup C).length ≤ C.length := by
+private theorem length_dedup_le (C : Clause V) : (dedup C).length ≤ C.length := by
   rw [← List.toFinset_card_of_nodup (nodup_dedup C)]
   refine (card_le_card fun l hl => ?_).trans (List.toFinset_card_le C)
   exact List.mem_toFinset.mpr (mem_dedup.mp (List.mem_toFinset.mp hl))
@@ -588,7 +590,7 @@ private theorem pairwise_zipIdx (ψ : CNF V) :
   simp only [List.getElem_zipIdx, Nat.zero_add]
   exact hij
 
-theorem nodup_toFinset_dedupClauses (ψ : CNF V) :
+private theorem nodup_toFinset_dedupClauses (ψ : CNF V) :
     ((dedupClauses ψ).map List.toFinset).Nodup := by
   rw [dedupClauses, List.map_map, List.nodup_iff_pairwise_ne, List.pairwise_map]
   refine ((pairwise_zipIdx ψ).filter _).imp_of_mem fun {p q} _ hq hpq heq => ?_
@@ -600,7 +602,7 @@ theorem nodup_toFinset_dedupClauses (ψ : CNF V) :
   have h₂ : subclause q.1 p.1 = true := subclause_eq_true_iff.mpr heq.ge
   simp [hpq, h₁, h₂] at this
 
-theorem toClauseSet_dedupClauses (ψ : CNF V) :
+private theorem toClauseSet_dedupClauses (ψ : CNF V) :
     (dedupClauses ψ).toClauseSet = ψ.toClauseSet := by
   refine Finset.Subset.antisymm (toClauseSet_mono (dedupClauses_sublist ψ).subset) ?_
   intro C' hC'
@@ -629,7 +631,7 @@ theorem toClauseSet_dedupClauses (ψ : CNF V) :
     cases h₁ : subclause ψ[j] ψ[i] <;> cases h₂ : subclause ψ[i] ψ[j] <;> simp_all
   · simp [hji]
 
-theorem toClauseSet_normalize (φ : CNF V) :
+private theorem toClauseSet_normalize (φ : CNF V) :
     (normalize φ).toClauseSet = ClauseSet.Sparsification.reduce φ.toClauseSet := by
   rw [normalize, toClauseSet_reduce, toClauseSet_dedupClauses]
   congr 1

@@ -72,18 +72,18 @@ local notation "encC" => encList (encPair encV encBool)
 local notation "encF" => encList (encList (encPair encV encBool))
 
 /-- The list-level reduction is polynomial-time. -/
-theorem computableTidilyInPolyTime_reduce :
+private theorem computableTidilyInPolyTime_reduce :
     ComputableTidilyInPolyTime (reduce (V := V)) encF encF := by
   unfold reduce subclause
   fun_prop
 
-theorem computableTidilyInPolyTime_flower :
+private theorem computableTidilyInPolyTime_flower :
     ComputableTidilyInPolyTime (fun p : CNF V × (ℕ × Clause V) => flower p.1 p.2.1 p.2.2)
       (encPair encF (encPair encUnary encC)) encF := by
   unfold flower subclause
   fun_prop
 
-theorem computableTidilyInPolyTime_heavy {θ : ℕ → ℕ}
+private theorem computableTidilyInPolyTime_heavy {θ : ℕ → ℕ}
     (hθ : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (θ p.1 ≤ p.2))
       (encPair encUnary encUnary) encBool) :
     ComputableTidilyInPolyTime (fun p : CNF V × (ℕ × Clause V) => heavy θ p.1 p.2)
@@ -100,7 +100,7 @@ theorem computableTidilyInPolyTime_heavy {θ : ℕ → ℕ}
   exact bool_and.comp (h₁.prod (hθ.comp h₂))
 
 omit [DecidableEq V] in
-theorem computableTidilyInPolyTime_candidates (k : ℕ) :
+private theorem computableTidilyInPolyTime_candidates (k : ℕ) :
     ComputableTidilyInPolyTime (candidates (V := V) k) encF (encList (encPair encUnary encC)) := by
   have : ComputableTidilyInPolyTime (hearts (V := V) k) encC (encList encC) := by
     unfold hearts
@@ -109,7 +109,7 @@ theorem computableTidilyInPolyTime_candidates (k : ℕ) :
   fun_prop
 
 /-- The computed choice is polynomial-time. -/
-theorem computableTidilyInPolyTime_choice {θ : ℕ → ℕ}
+private theorem computableTidilyInPolyTime_choice {θ : ℕ → ℕ}
     (hθ : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (θ p.1 ≤ p.2))
       (encPair encUnary encUnary) encBool) (k : ℕ) :
     ComputableTidilyInPolyTime (choice (V := V) θ k) encF (encPair encUnary encC) := by

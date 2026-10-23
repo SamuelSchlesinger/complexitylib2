@@ -112,7 +112,7 @@ theorem card_flower_singleton_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 �
 
 /-- At most `2 N θ (c - 1)` clauses of size `c ≥ 1` survive in a sparse clause set whose variables
 are among `N` given ones. -/
-theorem card_filter_card_eq_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V}
+private theorem card_filter_card_eq_le_of_sparse {θ : ℕ → ℕ} (hθ : ∀ j, 1 ≤ θ j) {ψ : ClauseSet V}
     (hsparse : Sparse θ ψ) (U : Finset V) (hU : ∀ C ∈ ψ, ∀ l ∈ C, l.1 ∈ U) {c : ℕ} (hc : 1 ≤ c) :
     (ψ.filter (·.card = c)).card ≤ 2 * U.card * θ (c - 1) := by
   have hflower := card_flower_singleton_le_of_sparse hθ hsparse hc
@@ -156,10 +156,10 @@ def petalSteps (j : ℕ) : Finset ℕ :=
 
 variable {P}
 
-theorem heavy {i : ℕ} (hi : i < P.len) : Heavy θ (P.node i) (P.size i) (P.heart i) :=
+private theorem heavy {i : ℕ} (hi : i < P.len) : Heavy θ (P.node i) (P.size i) (P.heart i) :=
   (P.choice i hi).1
 
-theorem reduced_node : ∀ i ≤ P.len, Reduced (P.node i)
+private theorem reduced_node : ∀ i ≤ P.len, Reduced (P.node i)
   | 0, _ => P.reduced_zero
   | i + 1, hi => by
     rw [P.step i hi]
@@ -174,21 +174,21 @@ section
 variable (hθ : ∀ j, 1 ≤ θ j)
 include hθ
 
-theorem refines_succ {i : ℕ} (hi : i < P.len) : Refines (P.node (i + 1)) (P.node i) := by
+private theorem refines_succ {i : ℕ} (hi : i < P.len) : Refines (P.node (i + 1)) (P.node i) := by
   intro a ha
   rcases mem_union.mp (node_succ_subset hi ha) with ha | ha
   · exact ⟨a, ha, subset_rfl⟩
   · obtain ⟨C, hC, haC⟩ := exists_flower_ssuperset hθ (heavy hi) ha
     exact ⟨C, flower_subset _ _ _ hC, haC.subset⟩
 
-theorem refines_of_le {i j : ℕ} (hij : i ≤ j) (hj : j ≤ P.len) :
+private theorem refines_of_le {i j : ℕ} (hij : i ≤ j) (hj : j ≤ P.len) :
     Refines (P.node j) (P.node i) := by
   induction j, hij using Nat.le_induction with
   | base => exact fun a ha => ⟨a, ha, subset_rfl⟩
   | succ j hij ih => exact (refines_succ hθ hj).trans (ih (by omega))
 
 /-- **Introduced clauses survive.** Every clause introduced at step `i` is in node `i + 1`. -/
-theorem introAt_subset {i : ℕ} (hi : i < P.len) : P.introAt i ⊆ P.node (i + 1) := by
+private theorem introAt_subset {i : ℕ} (hi : i < P.len) : P.introAt i ⊆ P.node (i + 1) := by
   intro a ha
   rw [P.step i hi, child, mem_reduce]
   refine ⟨mem_union_right _ ha, fun D hD hDa => ?_⟩
@@ -207,7 +207,7 @@ theorem introAt_subset {i : ℕ} (hi : i < P.len) : P.introAt i ⊆ P.node (i + 
       exact lt_irrefl _ this
 
 /-- **Introduced clauses are new.** A clause introduced at step `i` occurs in no node `j ≤ i`. -/
-theorem disjoint_introAt_node {i j : ℕ} (hi : i < P.len) (hji : j ≤ i) :
+private theorem disjoint_introAt_node {i j : ℕ} (hi : i < P.len) (hji : j ≤ i) :
     Disjoint (P.introAt i) (P.node j) := by
   rw [Finset.disjoint_left]
   intro a ha haj
@@ -215,12 +215,12 @@ theorem disjoint_introAt_node {i j : ℕ} (hi : i < P.len) (hji : j ≤ i) :
   obtain ⟨D, hD, hCD⟩ := refines_of_le hθ hji hi.le C (flower_subset _ _ _ hC)
   exact reduced_node j (hji.trans hi.le) D hD a haj (haC.trans_subset hCD)
 
-theorem disjoint_introAt {i j : ℕ} (hij : i < j) (hj : j < P.len) :
+private theorem disjoint_introAt {i j : ℕ} (hij : i < j) (hj : j < P.len) :
     Disjoint (P.introAt i) (P.introAt j) :=
   Finset.disjoint_of_subset_left (introAt_subset hθ (hij.trans hj))
     (disjoint_introAt_node hθ hj hij).symm
 
-theorem pairwiseDisjoint_introAt :
+private theorem pairwiseDisjoint_introAt :
     ((range P.len : Finset ℕ) : Set ℕ).PairwiseDisjoint P.introAt := by
   intro i hi j hj hne
   simp only [coe_range, Set.mem_Iio] at hi hj
@@ -235,8 +235,8 @@ theorem len_le_card_introduced : P.len ≤ P.introduced.card := by
     _ ≤ ∑ i ∈ range P.len, (P.introAt i).card :=
         sum_le_sum fun i hi => card_pos.mpr (intro_nonempty hθ (heavy (mem_range.mp hi)) _)
 
-theorem notMem_node_zero_of_mem_introduced {a : Finset (Literal V)} (ha : a ∈ P.introduced) :
-    a ∉ P.node 0 := by
+private theorem notMem_node_zero_of_mem_introduced {a : Finset (Literal V)}
+    (ha : a ∈ P.introduced) : a ∉ P.node 0 := by
   obtain ⟨i, hi, hai⟩ := mem_biUnion.mp ha
   exact disjoint_left.mp (disjoint_introAt_node hθ (mem_range.mp hi) (Nat.zero_le i)) hai
 
@@ -455,7 +455,7 @@ theorem mul_card_petalSteps_le (j : ℕ) :
     _ ≤ (P.introducedOfCard j).card := card_le_card hsub
 
 /-- In a branch from a clause set of width `k`, all nodes have width `k`. -/
-theorem card_le_of_mem_node {k : ℕ} (hk : ∀ C ∈ P.node 0, C.card ≤ k) :
+private theorem card_le_of_mem_node {k : ℕ} (hk : ∀ C ∈ P.node 0, C.card ≤ k) :
     ∀ i ≤ P.len, ∀ C ∈ P.node i, C.card ≤ k
   | 0, _ => hk
   | i + 1, hi => by
@@ -464,7 +464,7 @@ theorem card_le_of_mem_node {k : ℕ} (hk : ∀ C ∈ P.node 0, C.card ≤ k) :
     exact card_le_of_mem_child hθ (heavy hi) (card_le_of_mem_node hk i (by omega)) hC
 
 /-- Introduced clauses have size between `1` and `k - 1`. -/
-theorem card_mem_Ico_of_mem_introduced {k : ℕ} (hk : ∀ C ∈ P.node 0, C.card ≤ k)
+private theorem card_mem_Ico_of_mem_introduced {k : ℕ} (hk : ∀ C ∈ P.node 0, C.card ≤ k)
     {a : Finset (Literal V)} (ha : a ∈ P.introduced) : a.card ∈ Ico 1 k := by
   obtain ⟨i, hi, hai⟩ := mem_biUnion.mp ha
   have hi' := mem_range.mp hi
