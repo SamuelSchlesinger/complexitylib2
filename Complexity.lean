@@ -125,9 +125,12 @@ public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Boolean.BitBlast
 public import Complexity.Computability.Circuit.Boolean.BoundedError
 public import Complexity.Computability.Circuit.Boolean.Broadcast
+public import Complexity.Computability.Circuit.Boolean.CarryLookahead
+public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CarrySave
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.CodeSubstitution
+public import Complexity.Computability.Circuit.Boolean.CodeTemplate
 public import Complexity.Computability.Circuit.Boolean.CompareSwap
 public import Complexity.Computability.Circuit.Boolean.Comparison
 public import Complexity.Computability.Circuit.Boolean.Conondeterministic
@@ -141,6 +144,7 @@ public import Complexity.Computability.Circuit.Boolean.DuplicateFlags
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
+public import Complexity.Computability.Circuit.Boolean.EncodingSize
 public import Complexity.Computability.Circuit.Boolean.Equality
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 public import Complexity.Computability.Circuit.Boolean.FanInTwo

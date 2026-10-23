@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Complexity.Computability.Circuit.Iteration
+public import Complexity.Foundations.Data.BitString.Basic
 public import Init.Data.BitVec.Bitblast
 public import Mathlib.Data.List.OfFn
 
@@ -73,6 +74,35 @@ theorem getLsbD_word (bits : BitString w) (i : Fin w) :
 
 theorem word_getLsbD (a : BitVec w) : word (fun i : Fin w => a.getLsbD i.val) = a :=
   BitVec.eq_of_getLsbD_eq fun i hi => getLsbD_word _ ⟨i, hi⟩
+
+/-- The word representation and the bit-string numbering use the same unsigned value. -/
+theorem toNat_word_eq_equivFin {w : ℕ} (x : BitString w) :
+    (word x).toNat = (BitString.equivFin w x : ℕ) := by
+  induction w with
+  | zero =>
+    have h := (BitString.equivFin 0 x).isLt
+    simp only [pow_zero, Nat.lt_one_iff] at h
+    have hx := (word x).isLt
+    simp only [pow_zero, Nat.lt_one_iff] at hx
+    exact hx.trans h.symm
+  | succ w ih =>
+    have heq : x = Fin.cons (x 0) (fun i => x i.succ) := by
+      funext i
+      induction i using Fin.cases <;> rfl
+    rw [heq, BitString.val_equivFin_cons]
+    have hw : word (Fin.cons (x 0) (fun i => x i.succ)) =
+        (word (fun i => x i.succ)).concat (x 0) := by
+      apply BitVec.eq_of_getLsbD_eq
+      intro i hi
+      rw [getLsbD_word _ ⟨i, hi⟩, BitVec.getLsbD_concat]
+      cases i with
+      | zero => simp
+      | succ i =>
+        simp only [Nat.add_eq_zero_iff, Nat.one_ne_zero, and_false, ite_false,
+          Nat.add_sub_cancel]
+        exact (getLsbD_word (fun i => x i.succ) ⟨i, by omega⟩).symm
+    rw [hw, BitVec.toNat_concat, ih]
+    omega
 
 /-- The coordinate functions of a word-valued function. -/
 def wordWires (a : BitString n → BitVec w) : Set (BooleanFunction n) :=
