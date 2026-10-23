@@ -111,6 +111,14 @@ ownership indefinitely.
 
 Reviewing submitted PRs is the highest priority. Keep reviews moving alongside other work.
 
+When choosing work, give simplification and usability real priority alongside new mathematics:
+replacing repeated proof plumbing with a small lemma, finishing a migration and removing what it
+superseded, removing unused scaffolding, fixing recurring build or search problems, and making
+results easy to find, import and apply. Choose these from the friction met during ongoing work,
+and carry each improvement through to the clients that benefit. In review, ask what the next
+person will no longer have to figure out; the answer should be visible in the code, examples or
+tooling.
+
 - Read the PR and existing reviews. Arrange review of uncovered questions under the review cycle
   below; do not commission a fresh review merely because a new coordinator arrived.
 - Give a clear verdict. For requested changes, post a short link in the task issue. This ends the
