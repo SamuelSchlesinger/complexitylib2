@@ -50,6 +50,10 @@ independent random choices [Arora and Barak, Chapters 7 and 17][AroraBarak09].
   `Cslib.Complexity.computableTidilyInPolyTime_orVerifier`,
   `Cslib.Complexity.computableTidilyInPolyTime_selectVerifier`: the combined verifiers are
   polynomial-time.
+* `Cslib.Complexity.computableInPolyTime_andVerifier`,
+  `Cslib.Complexity.computableInPolyTime_orVerifier`,
+  `Cslib.Complexity.computableInPolyTime_selectVerifier`: plain `fun_prop` rules accepting plain
+  verifier hypotheses.
 
 ## References
 
@@ -123,6 +127,15 @@ theorem computableTidilyInPolyTime_andVerifier {enc : α ↪ List Bool} {k : α 
   unfold andVerifier
   fun_prop
 
+/-- Independent conjunction of plain polynomial-time verifiers is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_andVerifier {enc : α ↪ List Bool} {k : α → ℕ}
+    {V₁ V₂ : α × List Bool → Bool} (hk : ComputableInPolyTime k enc encUnary)
+    (hV₁ : ComputableInPolyTime V₁ (encPair enc encBits) encBool)
+    (hV₂ : ComputableInPolyTime V₂ (encPair enc encBits) encBool) :
+    ComputableInPolyTime (andVerifier k V₁ V₂) (encPair enc encBits) encBool :=
+  .of_tidy (computableTidilyInPolyTime_andVerifier hk.tidy hV₁.tidy hV₂.tidy)
+
 /-! ### Disjunction on disjoint parts of the string -/
 
 /-- Run `V₁` on the first `k a` bits and `V₂` on the remaining bits, and accept when either
@@ -151,6 +164,15 @@ theorem computableTidilyInPolyTime_orVerifier {enc : α ↪ List Bool} {k : α �
   unfold orVerifier
   fun_prop
 
+/-- Independent disjunction of plain polynomial-time verifiers is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_orVerifier {enc : α ↪ List Bool} {k : α → ℕ}
+    {V₁ V₂ : α × List Bool → Bool} (hk : ComputableInPolyTime k enc encUnary)
+    (hV₁ : ComputableInPolyTime V₁ (encPair enc encBits) encBool)
+    (hV₂ : ComputableInPolyTime V₂ (encPair enc encBits) encBool) :
+    ComputableInPolyTime (orVerifier k V₁ V₂) (encPair enc encBits) encBool :=
+  .of_tidy (computableTidilyInPolyTime_orVerifier hk.tidy hV₁.tidy hV₂.tidy)
+
 /-! ### Choosing by the first bit -/
 
 /-- Run `V₀` on the remaining bits when the first bit is `false`, and `V₁` when it is `true`. -/
@@ -176,5 +198,14 @@ theorem computableTidilyInPolyTime_selectVerifier {enc : α ↪ List Bool}
     ComputableTidilyInPolyTime (selectVerifier V₀ V₁) (encPair enc encBits) encBool := by
   unfold selectVerifier
   fun_prop
+
+/-- Selection by the first bit preserves plain polynomial-time verification. -/
+@[fun_prop]
+theorem computableInPolyTime_selectVerifier {enc : α ↪ List Bool}
+    {V₀ V₁ : α × List Bool → Bool}
+    (hV₀ : ComputableInPolyTime V₀ (encPair enc encBits) encBool)
+    (hV₁ : ComputableInPolyTime V₁ (encPair enc encBits) encBool) :
+    ComputableInPolyTime (selectVerifier V₀ V₁) (encPair enc encBits) encBool :=
+  .of_tidy (computableTidilyInPolyTime_selectVerifier hV₀.tidy hV₁.tidy)
 
 end Cslib.Complexity
