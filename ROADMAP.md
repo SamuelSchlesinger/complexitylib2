@@ -1147,12 +1147,16 @@ Jukna coverage below is an additional target beyond the V1 port:
   extractors and perfect simulators, the
   [linear-preimage protocol](Complexity/Crypto/Protocols/SigmaProtocol/Linear.lean) over prime
   order `q` with Schnorr, Okamoto, Chaum–Pedersen and linear systems as instances, and
-  [AND/OR composition](Complexity/Crypto/Protocols/SigmaProtocol/Composition.lean). Open: the
-  rewinding lemma and extraction bound `ε' ≥ ε² − ε/N`, a discrete-log assumption for a group
-  family with native polynomial-time operations, Schnorr identification secure against direct and
-  eavesdropping attacks, and Fiat–Shamir/Schnorr signatures in the random-oracle model with the
-  forking bound of Theorem 19.16. Strict PPT samples bit strings but not `ZMod q` exactly, so
-  those bounds will carry explicit statistical-distance terms.
+  [AND/OR composition](Complexity/Crypto/Protocols/SigmaProtocol/Composition.lean). The exact
+  [rewinding lemma](Complexity/Probability/Rewinding.lean), the extraction bound
+  `ε ≤ 1/N + √ε'` and HVZK ⇒ eavesdropping security are proved for
+  [identification from Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Identification.lean)
+  and [Schnorr identification](Complexity/Crypto/Protocols/SigmaProtocol/SchnorrIdentification.lean).
+  Open: a discrete-log assumption for a group family with native polynomial-time operations,
+  efficiency of the reductions and the asymptotic security of Schnorr identification, and
+  Fiat–Shamir/Schnorr signatures in the random-oracle model with the forking bound of
+  Theorem 19.16. Strict PPT samples bit strings but not `ZMod q` exactly, so those bounds will
+  carry explicit statistical-distance terms.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
