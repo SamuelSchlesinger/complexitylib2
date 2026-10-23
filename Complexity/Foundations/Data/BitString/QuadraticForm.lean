@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.BooleanAnalysis.LowDegree
+public import Complexity.Foundations.Data.BitString.Sign
 public import Complexity.Foundations.LinearAlgebra.Matrix.CutRank
 public import Mathlib.Data.ZMod.Defs
 import Mathlib.Data.ZMod.Basic

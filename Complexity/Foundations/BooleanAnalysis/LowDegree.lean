@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Cslib.Foundations.Data.BitString
+public import Complexity.Foundations.Data.BitString.Sign
 public import Mathlib.Algebra.Algebra.Pi
 public import Mathlib.LinearAlgebra.Span.Defs
 public import Mathlib.Algebra.Algebra.Operations
@@ -40,7 +41,7 @@ These are the polynomials of Razborov's and Smolensky's approximation method
 
 ## Main definitions
 
-* `Cslib.BitString.bitVal`, `Cslib.BitString.monomial`, `Cslib.BitString.lowDegree`.
+* `Cslib.BitString.monomial`, `Cslib.BitString.lowDegree`.
 
 ## Main results
 
@@ -69,10 +70,6 @@ open Finset
 
 variable (R : Type*) [CommRing R] {ι : Type*}
 
-/-- A bit read as `0` or `1` in `R`. -/
-def bitVal (b : Bool) : R :=
-  if b then 1 else 0
-
 /-- The monomial of a set `S` of coordinates: the product of the selected bits, read in `R`. The
 empty monomial is the constant `1`. -/
 def monomial (S : Finset ι) (x : ι → Bool) : R :=
@@ -85,17 +82,6 @@ def lowDegree (D : ℕ) : Submodule R ((ι → Bool) → R) :=
   Submodule.span R (monomial R '' {S | #S ≤ D})
 
 variable {R}
-
-@[simp] theorem bitVal_true : bitVal R true = 1 := rfl
-
-@[simp] theorem bitVal_false : bitVal R false = 0 := rfl
-
-/-- A bit read in `R` is idempotent. -/
-theorem bitVal_pow (b : Bool) {k : ℕ} (hk : k ≠ 0) : bitVal R b ^ k = bitVal R b := by
-  cases b <;> simp [bitVal, hk]
-
-theorem bitVal_not (b : Bool) : bitVal R (!b) = 1 - bitVal R b := by
-  cases b <;> simp [bitVal]
 
 /-- A monomial is `1` where all its coordinates are true and `0` elsewhere. -/
 theorem monomial_apply (S : Finset ι) (x : ι → Bool) :
