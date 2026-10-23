@@ -21,7 +21,7 @@ mathematics. See [Contributing](CONTRIBUTING.md) to propose, implement, or revie
 | Certify functional programs and loops | [PolyTime examples](ComplexityTests/PolyTimeTactic.lean) |
 | Construct circuits for polynomial-time function families | [Uniform circuit examples](ComplexityTests/UniformCircuits.lean) |
 | Write probabilistic programs or oracle reductions | [PPT examples](ComplexityTests/PPTTactic.lean), [oracle examples](ComplexityTests/OraclePPT.lean) |
-| Find a computational model or mathematical tool | [Search the API documentation](https://cslib-community.github.io/complexitylib/search.html), rebuilt nightly from `main`; [Complexity.lean](Complexity.lean) lists every module, and each documents its definitions, results, and references |
+| Find a computational model or mathematical tool | [Search the API documentation](https://www.cslib.io/complexitylib/search.html), rebuilt nightly from `main`; [Complexity.lean](Complexity.lean) lists every module, and each documents its definitions, results, and references |
 | Contribute a result or improve an API | [Contributing](CONTRIBUTING.md) |
 
 The checked examples show `fun_prop`, `polytime`, and `ppt` with explicit encodings and
@@ -77,7 +77,7 @@ python3 -m http.server --bind 127.0.0.1 --directory docbuild/.lake/build/doc
 ```
 
 Open `http://localhost:8000` to browse and search. The **API documentation** workflow publishes
-`main` to the [API documentation site](https://cslib-community.github.io/complexitylib/) nightly.
+`main` to the [API documentation site](https://www.cslib.io/complexitylib/) nightly.
 A manual run on another branch produces an `api-docs` artifact instead; serve it by replacing
 the directory argument above with the extracted artifact directory.
 

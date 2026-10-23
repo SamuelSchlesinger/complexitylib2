@@ -1,6 +1,6 @@
 name: API documentation
 
-# Builds of `main` deploy to https://cslib-community.github.io/complexitylib/. A manual run on
+# Builds of `main` deploy to https://www.cslib.io/complexitylib/. A manual run on
 # another branch does not deploy; it uploads an `api-docs` artifact. Pull requests never run this.
 on:
   schedule:
