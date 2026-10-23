@@ -28,6 +28,7 @@ is certified separately in `Computability.Probabilistic.Repeat`.
 * `Cslib.OracleComp.replicate_add`, `.replicate_snoc`: split an execution into segments.
 * `Cslib.ProbComp.eval_replicate`: finite outputs have the independent product law.
 * `Cslib.ProbComp.eval_replicate_map`: transport a sampling law through repeated draws.
+* `Cslib.ProbComp.eval_replicate_splice`: draw one coordinate first without changing the joint law.
 * `Cslib.ProbComp.eval_countTrue`: the success count is a sum of independent indicators.
 * `Cslib.ProbComp.countTrue_le`: every supported success count respects the trial budget.
 * `Cslib.ProbComp.eval_replicate_of_uniform`: realize the joint law from independent finite seeds.
@@ -124,6 +125,19 @@ theorem eval_replicate_congr {first second : ProbComp α} (h : eval first = eval
   induction count with
   | zero => rfl
   | succ count ih => simp only [OracleComp.replicate_succ, eval_bind, eval_map, h, ih]
+
+/-- Draw one designated coordinate first, then insert it between independent prefix and suffix
+draws. This preserves the complete joint law, including repeated sample values. -/
+theorem eval_replicate_splice (source : ProbComp α) (before after : ℕ) :
+    eval (do
+      let middle ← source
+      let front ← OracleComp.replicate before source
+      let back ← OracleComp.replicate after source
+      pure (front ++ middle :: back)) =
+        eval (OracleComp.replicate (before + (after + 1)) source) := by
+  rw [OracleComp.replicate_add, OracleComp.replicate_succ]
+  simp only [eval_bind, eval_pure, eval_map, PMF.bind_bind, PMF.bind_map, Function.comp_def]
+  exact PMF.bind_comm _ _ _
 
 /-- An encoded sampling law lifts to repeated draws without requiring either type to be finite
 or the encoding to be injective. The order and multiplicity of all draws are preserved. -/

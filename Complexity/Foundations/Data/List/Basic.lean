@@ -25,6 +25,7 @@ import Mathlib.Data.List.GetD
 * `List.countP_and_not_add_countP_and`: the members satisfying `p` split by whether they satisfy
   `q`.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
+* `List.zip_tail_append_cons`: split adjacent pairs at a shared boundary element.
 * `List.decide_mem_eq_any`: membership as a scan of the list.
 * `List.getD_set_self`, `List.getD_set_ne`, `List.forall_mem_set_of_forall_mem`,
   `List.getD_le_of_forall_le`: lists as register files, updated by `List.set` and read by
@@ -39,6 +40,20 @@ Adapts the selection identity from `Computability/Probabilistic/Finite.lean` on 
 -/
 
 @[expose] public section
+
+/-- Split consecutive pairs at a boundary element shared by the two list segments. -/
+theorem List.zip_tail_append_cons {α : Type*} (before : List α) (middle : α)
+    (after : List α) :
+    (before ++ middle :: after).zip (before ++ middle :: after).tail =
+      (before ++ [middle]).zip (before ++ [middle]).tail ++ (middle :: after).zip after := by
+  induction before with
+  | nil => simp
+  | cons first before ih =>
+    cases before with
+    | nil => simp
+    | cons second before =>
+      simpa only [List.cons_append, List.tail_cons, List.zip_cons_cons] using
+        congrArg (List.cons (first, second)) ih
 
 /-- An invariant depending on the number of consumed elements holds after every bounded prefix
 fold if it holds initially and is preserved by the next list element. Unlike `List.foldlRecOn`,

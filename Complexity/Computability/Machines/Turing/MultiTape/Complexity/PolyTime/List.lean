@@ -69,6 +69,8 @@ counting folds a counter directly instead of constructing the matching sublist.
   compositional rules for first-occurrence lookup and raw-bit access.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsDropWithInput`, `.bitsTakeWithInput`:
   runtime bit-string slicing, with computed unary indices.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.takeUnary`, `.listTakeWithInput`,
+  `.listDropWithInput`: slice framed lists at computed unary indices.
 -/
 
 @[expose] public section
@@ -654,6 +656,31 @@ theorem dropUnary {encL : List α ↪ List Bool} [ListEncoding encA encL]
       simp only [length_encPair]
       lia)
   simpa only [heq] using h
+
+/-- Drop a computed unary number of elements from a computed framed list. -/
+@[fun_prop]
+theorem listDropWithInput {list : γ → List α} {count : γ → ℕ}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (hcount : ComputableTidilyInPolyTime count encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => (list x).drop (count x)) encIn (encList encA) :=
+  (dropUnary (encA := encA)).comp (hlist.prod hcount)
+
+/-- Take a unary number of framed-list elements using certified reversal and dropping. -/
+@[fun_prop]
+theorem takeUnary (enc : α ↪ List Bool) : ComputableTidilyInPolyTime
+    (fun p : List α × ℕ => p.1.take p.2) (encPair (encList enc) encUnary) (encList enc) := by
+  have h : ComputableTidilyInPolyTime
+      (fun p : List α × ℕ => (p.1.reverse.drop (p.1.length - p.2)).reverse)
+      (encPair (encList enc) encUnary) (encList enc) := by fun_prop
+  simpa only [← List.reverse_take, List.reverse_reverse] using h
+
+/-- Take a computed unary number of elements from a computed framed list. -/
+@[fun_prop]
+theorem listTakeWithInput {list : γ → List α} {count : γ → ℕ}
+    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
+    (hcount : ComputableTidilyInPolyTime count encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => (list x).take (count x)) encIn (encList encA) :=
+  (takeUnary encA).comp (hlist.prod hcount)
 
 /-- Look up a computed unary index, returning `none` outside a computed list. The list certificate
 determines its encoding before proof search checks the corresponding operation and size rules. -/
