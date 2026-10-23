@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit
+import all Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Circuit.Boolean.Modular.InnerProduct.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Modular.Subtract.PolyTime
@@ -127,7 +128,7 @@ private theorem decoderCode_eq (w : ℕ) : decoderCode w = (decodeWord w).code :
       simpa only [decoderCode, decodeWord, h₀, h₁, ↓reduceIte, ↓reduceDIte] using ht
 
 /-- Generate the full selected-row GSW decryptor, including width-zero fallback behavior. -/
-@[expose] def code (n w : ℕ) : Code :=
+def code (n w : ℕ) : Code :=
   private_decl% (if w = 0 then ([(.const false, [])], [inputWidth n w])
   else compCode (inputWidth n w) (decoderCode w)
     (compCode (inputWidth n w) (Modular.subtractCode w)

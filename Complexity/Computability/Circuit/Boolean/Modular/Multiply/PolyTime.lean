@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Modular.Multiply
+import all Complexity.Computability.Circuit.Boolean.Modular.Multiply
 public import Complexity.Computability.Circuit.Boolean.Modular.PartialProduct.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CarrySave.Reduce.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -26,7 +27,7 @@ unary width. The output is the full existing circuit code, including unused fall
 * `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_multiply`: uniform native generation.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 

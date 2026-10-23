@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Modular.PartialProduct
+import all Complexity.Computability.Circuit.Boolean.Modular.PartialProduct
 public import Complexity.Computability.Circuit.Boolean.CodeTemplate
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -26,7 +27,7 @@ valid shift.
 * `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_partialProductCode`: native generation.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 
@@ -35,7 +36,7 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 variable {w : ℕ}
 
 /-- Code for one retained product digit or its zero fallback. -/
-def partialProductBitCode (w i j : ℕ) : List (Op × List ℕ) × List ℕ :=
+private def partialProductBitCode (w i j : ℕ) : List (Op × List ℕ) × List ℕ :=
   if i ≤ j then formulaCode (w + w)
     ((Formula.input (n := 2) 0).and (.input 1)) ![j - i, w + i]
   else ([(.const false, [])], [w + w])

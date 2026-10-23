@@ -109,7 +109,8 @@ example (n w : ℕ) :
     (Layered.encCompiled (Layered.compile
       (DecryptionCircuit.inputWidth n w + DecryptionCircuit.inputWidth n w) D.code)).length ≤
       4 * D.depth * (2 * width * (6 * bits + 21) + 1) + (2 * bits + 1) + 1 :=
-  Layered.length_encCompiled_compile_le (augmentNand (DecryptionCircuit.circuit n w))
+  by simpa only [one_mul] using
+    Layered.length_encCompiled_compile_le (augmentNand (DecryptionCircuit.circuit n w))
 
 /-- info: 'Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.correct' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

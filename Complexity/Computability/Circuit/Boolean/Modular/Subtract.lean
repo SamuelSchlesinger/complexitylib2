@@ -29,7 +29,7 @@ discards the final carry, so underflow wraps modulo `2 ^ w` instead of truncated
 Parallel-prefix finishing follows [Ladner and Fischer][LadnerFischer1980].
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 
@@ -38,12 +38,12 @@ open BitString
 variable {w : ℕ}
 
 /-- Keep the first word, complement the second word in parallel, and append a true carry. -/
-def subtractInputs (w : ℕ) : Circuit signature (w + w) (w + w + 1) :=
+private def subtractInputs (w : ℕ) : Circuit signature (w + w) (w + w + 1) :=
   ((Circuit.wiring signature (Fin.castAdd w)).append
     (Circuit.pi fun i : Fin w => (Formula.input (Fin.natAdd w i)).not.toCircuit)).append
       (Circuit.oneGate (.const true) Fin.elim0)
 
-@[simp] theorem eval_subtractInputs (a b : BitString w) :
+@[simp] private theorem eval_subtractInputs (a b : BitString w) :
     (subtractInputs w).eval interpretation (Fin.append a b) =
       Fin.append (Fin.append a (fun i => !b i)) (fun _ => true) := by
   simp only [subtractInputs, Circuit.eval_append, Circuit.eval_wiring, Circuit.eval_pi,
@@ -52,10 +52,10 @@ def subtractInputs (w : ℕ) : Circuit signature (w + w) (w + w + 1) :=
   funext i
   exact Fin.append_left a b i
 
-@[simp] theorem size_subtractInputs (w : ℕ) : (subtractInputs w).size = w + 1 := by
+@[simp] private theorem size_subtractInputs (w : ℕ) : (subtractInputs w).size = w + 1 := by
   simp [subtractInputs]
 
-theorem depth_subtractInputs_le (w : ℕ) : (subtractInputs w).depth ≤ 1 := by
+private theorem depth_subtractInputs_le (w : ℕ) : (subtractInputs w).depth ≤ 1 := by
   apply (Circuit.depth_append_le _ _).trans
   apply max_le
   · apply (Circuit.depth_append_le _ _).trans

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.CarrySave.Reduce
+import all Complexity.Computability.Circuit.Boolean.CarrySave.Reduce
 public import Complexity.Computability.Circuit.Boolean.CarrySave.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
 public import Complexity.Computability.Circuit.Boolean.BalancedCode
@@ -27,7 +28,7 @@ Input counts and references are binary, word widths unary, and all supplied leaf
 * `Cslib.Circuits.Boolean.computableTidilyInPolyTime_sumPairsCode`: uniform native generation.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean
 
@@ -36,7 +37,7 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 local notation "Code" => List (Op × List ℕ) × List ℕ
 
 /-- One shared false gate with a complete repeated-output word. -/
-def falseWordCode (n w : ℕ) : Code := ([(.const false, [])], List.replicate w n)
+private def falseWordCode (n w : ℕ) : Code := ([(.const false, [])], List.replicate w n)
 
 private theorem falseWordCode_eq (n w : ℕ) :
     falseWordCode n w =
@@ -69,7 +70,7 @@ theorem sumPairsCode_eq_code {n w : ℕ} (cs : List (Circuit signature n (w + w)
   rfl
 
 /-- Shared zero words are generated in time polynomial in unary output width and binary arity. -/
-@[fun_prop] theorem computableTidilyInPolyTime_falseWordCode
+@[fun_prop] private theorem computableTidilyInPolyTime_falseWordCode
     {α : Type} {enc : α ↪ List Bool} {n w : α → ℕ}
     (hn : ComputableTidilyInPolyTime n enc encNat)
     (hw : ComputableTidilyInPolyTime w enc encUnary) :
@@ -85,7 +86,8 @@ theorem sumPairsCode_eq_code {n w : ℕ} (cs : List (Circuit signature n (w + w)
     (hC : ComputableTidilyInPolyTime C enc encCode) :
     ComputableTidilyInPolyTime (fun a => pairWithZeroCode (n a) (w a) (C a)) enc encCode := by
   unfold pairWithZeroCode
-  fun_prop
+  exact computableTidilyInPolyTime_appendCode hn hC
+    (computableTidilyInPolyTime_falseWordCode hn hw)
 
 /-- The native generator charges the complete leaf list and both reduction stages. -/
 @[fun_prop] theorem computableTidilyInPolyTime_sumPairsCode

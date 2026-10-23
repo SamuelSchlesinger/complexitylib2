@@ -33,7 +33,7 @@ The underlying carry-save construction and source credit are in `Boolean.CarrySa
 parallel-prefix finishing follows [Ladner and Fischer][LadnerFischer1980].
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean
 

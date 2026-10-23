@@ -30,7 +30,7 @@ The carry-save multiplication construction is standard binary partial-product ar
 see [Vollmer, Chapter 1][Vollmer1999].
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 
@@ -39,7 +39,7 @@ open BitString
 variable {w : ℕ}
 
 /-- Each retained product digit is one AND gate; lower shifted-out positions are false. -/
-def partialProductBit (w : ℕ) (i j : Fin w) : Formula signature (w + w) :=
+private def partialProductBit (w : ℕ) (i j : Fin w) : Formula signature (w + w) :=
   if h : i.val ≤ j.val then
     (Formula.input (Fin.castAdd w ⟨j.val - i.val, by omega⟩)).and
       (.input (Fin.natAdd w i))
@@ -49,7 +49,7 @@ def partialProductBit (w : ℕ) (i j : Fin w) : Formula signature (w + w) :=
 def partialProduct (w : ℕ) (i : Fin w) : Circuit signature (w + w) w :=
   Circuit.pi fun j => (partialProductBit w i j).toCircuit
 
-theorem eval_partialProduct (i j : Fin w) (a b : BitString w) :
+private theorem eval_partialProduct (i j : Fin w) (a b : BitString w) :
     (partialProduct w i).eval interpretation (Fin.append a b) j =
       if h : i.val ≤ j.val then a ⟨j.val - i.val, by omega⟩ && b i else false := by
   by_cases h : i.val ≤ j.val
@@ -59,7 +59,7 @@ theorem eval_partialProduct (i j : Fin w) (a b : BitString w) :
       h, ↓reduceDIte, Formula.eval_const]
 
 /-- The circuit word agrees with the corresponding truncated `BitVec` shift. -/
-theorem word_eval_partialProduct (i : Fin w) (a b : BitString w) :
+private theorem word_eval_partialProduct (i : Fin w) (a b : BitString w) :
     word ((partialProduct w i).eval interpretation (Fin.append a b)) =
       if b i then word a <<< i.val else 0 := by
   apply BitVec.eq_of_getLsbD_eq

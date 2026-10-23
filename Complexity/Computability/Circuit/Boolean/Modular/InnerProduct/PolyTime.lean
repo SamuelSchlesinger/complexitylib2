@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Modular.InnerProduct
+import all Complexity.Computability.Circuit.Boolean.Modular.InnerProduct
 public import Complexity.Computability.Circuit.Boolean.Modular.Multiply.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -25,7 +26,7 @@ balanced sum. Binary wire numbers and every generated code list are charged.
 * `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_innerProduct`: native generation.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 
@@ -34,7 +35,7 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 local notation "Code" => List (Op × List ℕ) × List ℕ
 
 /-- Raw input selectors for the corresponding block of two complete word arrays. -/
-def innerProductInputsCode (k w j : ℕ) : Code :=
+private def innerProductInputsCode (k w j : ℕ) : Code :=
   ([], (List.range w).map (fun i => j * w + i) ++
     (List.range w).map (fun i => k * w + (j * w + i)))
 

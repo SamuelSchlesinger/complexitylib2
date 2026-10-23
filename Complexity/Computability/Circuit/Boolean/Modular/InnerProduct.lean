@@ -32,7 +32,7 @@ This is the selected-row arithmetic used by [Gentry, Sahai and Waters][GentrySah
 Sections 3.1 and 3.4, with the modular multiplier and carry-save bounds proved in companion files.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 
@@ -42,11 +42,11 @@ open scoped BigOperators
 variable {k w : ℕ}
 
 /-- Read the same word position from each of the two input arrays. -/
-def innerProductInputs (k w : ℕ) (j : Fin k) : Fin (w + w) → Fin (k * w + k * w) :=
+private def innerProductInputs (k w : ℕ) (j : Fin k) : Fin (w + w) → Fin (k * w + k * w) :=
   Fin.addCases (fun i => Fin.castAdd (k * w) (finProdFinEquiv (j, i)))
     (fun i => Fin.natAdd (k * w) (finProdFinEquiv (j, i)))
 
-theorem append_comp_innerProductInputs (j : Fin k) (a b : BitString (k * w)) :
+private theorem append_comp_innerProductInputs (j : Fin k) (a b : BitString (k * w)) :
     Fin.append a b ∘ innerProductInputs k w j = Fin.append (block a j) (block b j) := by
   funext i
   refine Fin.addCases (fun h => ?_) (fun h => ?_) i <;>
@@ -54,10 +54,10 @@ theorem append_comp_innerProductInputs (j : Fin k) (a b : BitString (k * w)) :
       Fin.append_left, Fin.append_right, block_apply]
 
 /-- One modular product of corresponding word blocks. -/
-def innerProductTerm (k w : ℕ) (j : Fin k) : Circuit signature (k * w + k * w) w :=
+private def innerProductTerm (k w : ℕ) (j : Fin k) : Circuit signature (k * w + k * w) w :=
   (multiply w).comp (Circuit.wiring signature (innerProductInputs k w j))
 
-theorem val_eval_innerProductTerm (j : Fin k) (a b : BitString (k * w)) :
+private theorem val_eval_innerProductTerm (j : Fin k) (a b : BitString (k * w)) :
     (BitString.equivFin w ((innerProductTerm k w j).eval interpretation (Fin.append a b)) : ℕ) =
       ((BitString.equivFin w (block a j) : ℕ) * (BitString.equivFin w (block b j) : ℕ)) %
         2 ^ w := by

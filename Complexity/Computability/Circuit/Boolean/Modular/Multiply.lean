@@ -33,7 +33,7 @@ Binary partial products and carry-save reduction follow [Vollmer, Chapter 1][Vol
 parallel-prefix finishing follows [Ladner and Fischer][LadnerFischer1980].
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 

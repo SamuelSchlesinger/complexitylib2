@@ -23,12 +23,14 @@ or noise hypothesis. Arithmetic circuits preserve residues modulo the word modul
 ## Main definitions
 
 * `Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.inputWidth`: the complete raw input length.
-* `Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.decodeWord`: the width-sensitive bit decoder.
+* `Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.circuit`: the actual total raw-input decryptor.
 
 ## Main results
 
-* `Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.eval_decodeWord`: agreement with the total
-  half-open scalar decoder, including widths zero and one.
+* `Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.correct`: agreement with serialized decryption
+  on every well-sized raw input, including widths zero and one and both half-open decoder ties.
+* `Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.depth_circuit_le`: explicit logarithmic depth.
+* `Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.size_circuit_le`: explicit polynomial gate count.
 
 ## References
 
@@ -36,7 +38,7 @@ or noise hypothesis. Arithmetic circuits preserve residues modulo the word modul
 * [C. Gentry][Gentry2009], Definition 4: augmented decryption takes all key and ciphertext bits.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit
 
@@ -49,11 +51,11 @@ variable {n w : ℕ}
 abbrev inputWidth (n w : ℕ) : ℕ := n * w + ((n + 1) * w) * ((n + 1) * w)
 
 /-- Interpret the raw first block with the same total decoder as the serialized scheme. -/
-def inputSecret (x : BitString (inputWidth n w)) : Fin n → ZMod (2 ^ w) :=
+private def inputSecret (x : BitString (inputWidth n w)) : Fin n → ZMod (2 ^ w) :=
   decodeSecret n w (List.ofFn (fstBits x))
 
 /-- Interpret every raw ciphertext bit, including ciphertexts outside encryption support. -/
-def inputCiphertext (x : BitString (inputWidth n w)) : Ciphertext n w :=
+private def inputCiphertext (x : BitString (inputWidth n w)) : Ciphertext n w :=
   decodeCiphertext n w (List.ofFn (sndBits x))
 
 private theorem inputSecret_apply (x : BitString (inputWidth n w)) (j : Fin n) :
@@ -82,11 +84,11 @@ private theorem inputCiphertext_apply (x : BitString (inputWidth n w))
   rfl
 
 /-- The selected row is the last binary digit of the leading expanded-secret coordinate. -/
-def selectedRow (n w : ℕ) (hw : 0 < w) : Fin (n + 1) × Fin w :=
+private def selectedRow (n w : ℕ) (hw : 0 < w) : Fin (n + 1) × Fin w :=
   (0, ⟨w - 1, by omega⟩)
 
 /-- Wire one selected-row word directly out of the complete ciphertext input. -/
-def rowInputs (n w : ℕ) (hw : 0 < w) (j : Fin (n + 1)) :
+private def rowInputs (n w : ℕ) (hw : 0 < w) (j : Fin (n + 1)) :
     Fin w → Fin (inputWidth n w) :=
   fun l => Fin.natAdd (n * w)
     (finProdFinEquiv (finProdFinEquiv (selectedRow n w hw), finProdFinEquiv (j, l)))
@@ -109,7 +111,7 @@ private theorem block_rowTail (x : BitString (inputWidth n w)) (hw : 0 < w) (j :
   simp only [rowTail, block, Equiv.symm_apply_apply]
 
 /-- Feed the complete secret and the non-leading selected-row words to the inner product. -/
-def productInputs (n w : ℕ) (hw : 0 < w) : Fin (n * w + n * w) → Fin (inputWidth n w) :=
+private def productInputs (n w : ℕ) (hw : 0 < w) : Fin (n * w + n * w) → Fin (inputWidth n w) :=
   Fin.append (m := n * w) (n := n * w)
     (Fin.castAdd (((n + 1) * w) * ((n + 1) * w)))
     (fun i => rowInputs n w hw (finProdFinEquiv.symm i).1.succ (finProdFinEquiv.symm i).2)
@@ -124,7 +126,7 @@ private theorem append_comp_productInputs (x : BitString (inputWidth n w)) (hw :
       ⟨w - 1, by omega⟩ (finProdFinEquiv.symm j).2).symm
 
 /-- The actual selected-row modular inner product, reading directly from raw inputs. -/
-def productSum (n w : ℕ) (hw : 0 < w) : Circuit signature (inputWidth n w) w :=
+private def productSum (n w : ℕ) (hw : 0 < w) : Circuit signature (inputWidth n w) w :=
   (Modular.innerProduct n w).comp (Circuit.wiring signature (productInputs n w hw))
 
 private theorem productSum_cast (x : BitString (inputWidth n w)) (hw : 0 < w) :
@@ -138,7 +140,7 @@ private theorem productSum_cast (x : BitString (inputWidth n w)) (hw : 0 < w) :
   rw [Nat.cast_mul, ← inputSecret_apply, block_rowTail, rowWord_cast, mul_comm]
 
 /-- Subtract the selected row's inner product from its leading word, modulo `2 ^ w`. -/
-def phase (n w : ℕ) (hw : 0 < w) : Circuit signature (inputWidth n w) w :=
+private def phase (n w : ℕ) (hw : 0 < w) : Circuit signature (inputWidth n w) w :=
   (Modular.subtract w).comp
     ((Circuit.wiring signature (rowInputs n w hw 0)).append (productSum n w hw))
 
@@ -167,13 +169,13 @@ private theorem testBit_wordValue (x : BitString w) (i : Fin w) :
   simpa only [BitVec.getLsbD, toNat_word_eq_equivFin] using getLsbD_word x i
 
 /-- Implement the actual width-zero, width-one and top-two-bit decoder cases. -/
-def decodeWord (w : ℕ) : Circuit signature w 1 :=
+private def decodeWord (w : ℕ) : Circuit signature w 1 :=
   if h₀ : w = 0 then Circuit.oneGate (.const false) Fin.elim0
   else if h₁ : w = 1 then Circuit.wiring signature (fun _ => ⟨0, by omega⟩)
   else ((Formula.input ⟨w - 1, by omega⟩).xor (.input ⟨w - 2, by omega⟩)).toCircuit
 
 /-- The scalar decoder is computed on every modular word, including both quarter ties. -/
-theorem eval_decodeWord (x : BitString w) :
+private theorem eval_decodeWord (x : BitString w) :
     (decodeWord w).eval interpretation x 0 =
       decode w ((BitString.equivFin w x : ℕ) : ZMod (2 ^ w)) := by
   have hv : (((BitString.equivFin w x : ℕ) : ZMod (2 ^ w)).val) =
@@ -212,7 +214,7 @@ def circuit (n w : ℕ) : Circuit signature (inputWidth n w) 1 :=
   else Circuit.oneGate (.const false) Fin.elim0
 
 /-- All raw inputs agree with typed GSW decryption, without generation or noise hypotheses. -/
-theorem eval_circuit (x : BitString (inputWidth n w)) :
+private theorem eval_circuit (x : BitString (inputWidth n w)) :
     (circuit n w).eval interpretation x 0 = decrypt (inputSecret x) (inputCiphertext x) := by
   by_cases hw : 0 < w
   · rw [circuit, dite_eq_left hw, Circuit.eval_comp, eval_decodeWord, phase_cast x hw,

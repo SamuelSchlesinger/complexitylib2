@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Modular.Subtract
+import all Complexity.Computability.Circuit.Boolean.Modular.Subtract
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -25,7 +26,7 @@ wire references and output selectors are charged.
 * `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_subtract`: native constructor.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Circuits.Boolean.Modular
 
