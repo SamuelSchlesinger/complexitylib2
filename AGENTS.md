@@ -163,6 +163,24 @@ concrete and the change is small; otherwise record a specific follow-up with dec
 consumers, and a proposed home. Preserve public interfaces under the compatibility rules below.
 Do not expand a bounded PR into an unbounded architectural cleanup.
 
+### Improving library ergonomics
+
+When work exposes library friction, workers should improve the relevant API, lemma, documentation
+or automation within the agreed scope, or record a concrete follow-up. Identify the affected
+client and declarations, search existing and upstream APIs, and prefer the smallest generally
+useful fix. Show representative before/after usage and explain what becomes clearer or easier.
+
+Coordinators should be satisfied that the examples demonstrate a real improvement, that the
+proposal fits the mathematical API and upstream design, and that its benefit justifies the added
+maintenance and migration cost. Challenge arbitrary programming conventions and speculative
+abstractions; a familiar pattern alone is not a reason to adopt it. Reuse the placement,
+compatibility and review rules here.
+
+Keep the evidence proportional. A small friction fix usually needs a short explanation and a
+checked example; broader API changes need representative affected clients and a compatibility
+plan. Investigate performance when it is material to the change, without requiring a benchmark
+campaign or separate design study for every small improvement.
+
 ## Lean development: use the Lean MCP server first
 
 Use MCP goal inspection, diagnostics and theorem search while iterating; reserve `lake` commands
