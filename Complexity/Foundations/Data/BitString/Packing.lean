@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 Samuel Schlesinger, Erik Demaine. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: Samuel Schlesinger, Erik Demaine
 -/
 
 module
@@ -10,7 +10,9 @@ module
 public import Complexity.Init
 public import Mathlib.Data.Nat.Bits
 public import Batteries.Data.Nat.Basic
+public import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Ring
 
 /-!
 # Fixed-width packed words
@@ -20,11 +22,13 @@ constrains its entire value, including all bits outside the specified width.
 
 ## Main definitions
 
+* `Cslib.BitString.packRadix`: bounded fields in a common radix.
 * `Cslib.BitString.packWords`: split a bit stream into a fixed tuple of words.
 * `Cslib.BitString.readPackedField`: read a bounded-width field across word boundaries.
 
 ## Main results
 
+* `Cslib.BitString.packRadix_field`: exact radix-field decoding.
 * `Cslib.BitString.readPackedField_packWords`: exact field decoding.
 * `Cslib.BitString.readPackedField_fields`: decoding fixed-width consecutive fields.
 -/
@@ -32,6 +36,8 @@ constrains its entire value, including all bits outside the specified width.
 @[expose] public section
 
 namespace Cslib.BitString
+
+open scoped BigOperators
 
 /-- Pack a bit stream into `B` words of `h` bits each. -/
 def packWords (f : ℕ → Bool) (h B : ℕ) (r : Fin B) : ℕ :=
@@ -95,5 +101,48 @@ theorem readPackedField_fields (v : ℕ → ℕ) {h B q s : ℕ} (hs : 0 < s)
   intro b hb
   rw [Nat.mul_comm q s, Nat.mul_add_div hs, Nat.div_eq_of_lt hb, Nat.add_zero,
     Nat.mul_add_mod_self_left, Nat.mod_eq_of_lt hb]
+
+/-- Pack `n` radix-`base` fields, least significant field first. -/
+def packRadix (base n : ℕ) (f : ℕ → ℕ) : ℕ :=
+  ∑ i ∈ Finset.range n, f i * base ^ i
+
+private theorem packRadix_succ (base n : ℕ) (f : ℕ → ℕ) :
+    packRadix base (n + 1) f = f 0 + base * packRadix base n (fun i => f (i + 1)) := by
+  simp only [packRadix, Finset.sum_range_succ', pow_succ, pow_zero, mul_one,
+    Finset.mul_sum]
+  rw [add_comm]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro i _
+  ring
+
+/-- Bounded fields fit the total radix capacity, including the empty tuple. -/
+theorem packRadix_lt {base n : ℕ} (f : ℕ → ℕ)
+    (hf : ∀ i < n, f i < base) : packRadix base n f < base ^ n := by
+  induction n with
+  | zero => simp [packRadix]
+  | succ n ih =>
+    rw [packRadix, Finset.sum_range_succ]
+    have hp := ih (fun i hi => hf i (by omega))
+    have hn := hf n (by omega)
+    rw [pow_succ]
+    change packRadix base n f + f n * base ^ n < base ^ n * base
+    nlinarith
+
+/-- Reading a radix field recovers its entire value, with no contributions from other fields. -/
+theorem packRadix_field {base n i : ℕ} (hb : 0 < base) (f : ℕ → ℕ)
+    (hf : ∀ j < n, f j < base) (hi : i < n) :
+    packRadix base n f / base ^ i % base = f i := by
+  induction n generalizing i f with
+  | zero => omega
+  | succ n ih =>
+    rw [packRadix_succ]
+    have h0 := hf 0 (by omega)
+    cases i with
+    | zero => simp [Nat.add_mod, Nat.mod_eq_of_lt h0]
+    | succ i =>
+      rw [pow_succ, Nat.mul_comm (base ^ i) base, ← Nat.div_div_eq_div_mul,
+        Nat.add_mul_div_left _ _ hb, Nat.div_eq_of_lt h0, zero_add]
+      exact ih _ (fun j hj => hf (j + 1) (by omega)) (by omega)
 
 end Cslib.BitString

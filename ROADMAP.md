@@ -946,6 +946,27 @@ and node visits and resulting height bounded by the initial height
 ([examples](ComplexityTests/SearchTreeErase.lean)). Adding deletion to the shared stateful
 ordered-set interface, balancing, and concrete heap/RAM representations remain open.
 
+[Static fusion trees #443](https://github.com/cslib-community/complexitylib/issues/443)
+have a [finite-set endpoint](Complexity/Algorithms/WordRAM/FusionTree/Static.lean) proving
+worst-case inclusive predecessor in `O(1 + log_w n)` actual standard-basis RAM instructions
+and `O(n)` words for nonempty sets (`O(n + 1)` including empty sets).
+The [query program](Complexity/Algorithms/WordRAM/FusionTree/Query.lean) charges initialization,
+node search, checked multiword arithmetic, pointer traversal, and halt. Explicit bounds are
+`3100000 * (Nat.log w n + 1)` instructions and `126n + 1042` data/register words, uniformly
+for `w ≥ 2`. Presence and value occupy separate registers, so key zero remains distinct from
+absence. The entire allocation frontier must fit an address word separately from the keys.
+The bounded-size code family contains width-dependent constants; static preprocessing uses
+classical witnesses and has no RAM running-time certificate. Uniform preprocessing and dynamic
+updates remain open. The checked-overflow
+[multiword multiplication dependency #444](https://github.com/cslib-community/complexitylib/issues/444)
+provides reusable arithmetic. A focused API follow-up is to extract the duplicated
+`Schoolbook.value`/`Bounded` and `Difference.value`/`Bounded` into a shared
+`WordRAM/Multiword/Digits` module, letting Transfer, Bitwise and Shift import digit infrastructure
+without depending on multiplication.
+Likewise, move the generic child-height lemma duplicated in `Model` and
+`QueryProgram.child_height_lt` into `Algorithms/Lean/FusionTree/Tree`, for reuse by
+`Model.decode_rep` and `QueryProgram.exec_loop_height`.
+
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing
 rules retain answer-dependent costs; separate method budgets transport contracts through
