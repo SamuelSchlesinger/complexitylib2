@@ -156,10 +156,8 @@ private theorem card_filter_take_drop (m k : ℕ) (P : List Bool → List Bool �
       P ((List.ofFn r).take m) ((List.ofFn r).drop m)).card =
       (Finset.univ.filter fun x : (Fin m → Bool) × (Fin k → Bool) =>
         P (List.ofFn x.1) (List.ofFn x.2)).card := by
-  refine Finset.card_equiv ((Fin.appendEquiv m k).symm) fun r => ?_
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-  rw [BitString.ofFn_eq_append r, List.take_left' List.length_ofFn,
-    List.drop_left' List.length_ofFn]
+  rw [BitString.card_filter_ofFn_add m k P, Finset.card_filter, Fintype.sum_prod_type]
+  simp only [Finset.card_filter]
 
 /-- The random strings of length `m + k` whose last `k` bits satisfy `P`. -/
 private theorem card_filter_drop (m k : ℕ) (P : List Bool → Prop) [DecidablePred P] :

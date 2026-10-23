@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.ValiantVazirani
+public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Reduction
+public import Complexity.Foundations.Data.BitString.WordCount
 public import Complexity.Probability.BitString.AffineHash
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
@@ -218,7 +219,7 @@ theorem three_mul_two_pow_le_card_filter_card_eq_one {M B : ℕ} {S : Finset (Bi
       ring
     exact_mod_cast h
   -- transfer to the words read by the test
-  have hsplit := card_filter_take_drop (m := B) hB
+  have hsplit := BitString.card_filter_take_drop (m := B) hB
     (fun w => #{x ∈ S | affineHash (matrix k M w, offset k M w) x = 0} = 1) (fun _ => True)
   simp only [and_true, filter_true, card_univ, Fintype.card_fun, Fintype.card_bool,
     Fintype.card_fin, matrix_take, offset_take] at hsplit

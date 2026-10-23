@@ -48,6 +48,7 @@ represent sets of words.
 * `Cslib.BitString.card_filter_ofFn_add`, `Cslib.BitString.card_filter_ofFn_succ`: counting
   words by a prefix or by their first bit.
 * `Cslib.BitString.card_filter_take`: counting words by a condition on a prefix.
+* `Cslib.BitString.card_filter_take_drop`: independent prefix/suffix tests give a product.
 * `Cslib.BitString.two_mul_two_pow_le_of_four_mul_card_filter_not_le`: a quarter of failures leaves
   two thirds of successes.
 * `Cslib.BitString.two_pow_mul_card_filter_card_filter_block_le`: majority votes of `12 e` blocks
@@ -97,6 +98,22 @@ theorem card_filter_take {k K : ℕ} (h : k ≤ K) (g : List Bool → Prop) [Dec
   rw [card_filter_ofFn_add k j fun u _ => g u, Nat.add_sub_cancel_left, card_filter, mul_sum]
   refine sum_congr rfl fun u _ => ?_
   by_cases hu : g (List.ofFn u) <;> simp [hu]
+
+/-- Counting words of length `m` by a condition on their first `a` bits and a condition on the
+remaining bits gives the product of the two counts. -/
+theorem card_filter_take_drop {m a : ℕ} (h : a ≤ m) (P Q : List Bool → Prop) [DecidablePred P]
+    [DecidablePred Q] :
+    (Finset.univ.filter fun r : Fin m → Bool =>
+      P ((List.ofFn r).take a) ∧ Q ((List.ofFn r).drop a)).card =
+      (Finset.univ.filter fun u : Fin a → Bool => P (List.ofFn u)).card *
+        (Finset.univ.filter fun v : Fin (m - a) → Bool => Q (List.ofFn v)).card := by
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le h
+  rw [BitString.card_filter_ofFn_add a k (fun u v => P u ∧ Q v), Nat.add_sub_cancel_left]
+  simp_rw [Finset.card_filter]
+  rw [Finset.sum_mul]
+  apply Finset.sum_congr rfl
+  intro u _
+  by_cases hu : P (List.ofFn u) <;> simp [hu]
 
 /-- **Error at most `1 / 4` is error at most `1 / 3`**: if at most a quarter of the strings of `m`
 bits fail `g`, at least two thirds of them satisfy it. -/
