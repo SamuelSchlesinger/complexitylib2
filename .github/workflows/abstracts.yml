@@ -7,6 +7,7 @@ on:
     paths:
       - "ComplexityTests/Abstracts/**"
       - "abstracts/**"
+      - "lakefile.toml"
       - "scripts/abstract_to_tex.py"
       - "scripts/build_abstracts.py"
       - "scripts/test_abstract*.py"

@@ -10,6 +10,12 @@ and individual PDFs are published from main by the **Formal abstract PDFs** work
 provide review artifacts with checked-out and PR-head revisions. Publication requires integration;
 a newly proposed entry may not yet appear in the main release.
 
+Lean sources live in `abstracts/ComplexityAbstracts/`, built as the dedicated `ComplexityAbstracts`
+library (`lake build ComplexityAbstracts`). The library root imports every abstract and bridge;
+`lake test` also runs their audits and the regression tests in `ComplexityTests/Abstracts/`.
+Existing declaration namespaces are preserved; the catalogue records them separately from
+module names when needed. Generated products remain in the ignored `abstracts/build/` folder.
+
 ## Selection
 
 A headline must establish a substantial full endpoint with conventional, inspectable semantics,
@@ -20,18 +26,18 @@ The former paper/TeX index is retired; Git history retains its sources.
 
 | Result | Model and scope |
 | --- | --- |
-| [Cook–Levin: SAT is NP-complete](../ComplexityTests/Abstracts/CookLevinAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/cook-levin.pdf) | Explicit CNF encoding, total native-machine reductions, and UNSAT coNP-completeness. |
-| [The PCP theorem](../ComplexityTests/Abstracts/PCPAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/pcp.pdf) | Perfect completeness, soundness at most one half, and explicit native efficiency; construction constants are large. |
-| [Fagin: logic captures NP](../ComplexityTests/Abstracts/FaginAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/fagin.pdf) | Finite relational signatures, explicit encodings, empty universes and nullary relations. |
-| [Savitch: NPSPACE equals PSPACE](../ComplexityTests/Abstracts/SavitchAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/savitch.pdf) | Native machines and polynomial space; this abstract states class equality rather than a parameterized quadratic-space bound. |
-| [Reingold: undirected reachability is in L](../ComplexityTests/Abstracts/USTCONAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/reingold.pdf) | Explicit unary-size header and adjacency-matrix encoding; native logspace, without a reduction-defined SL corollary. |
-| [Shamir: IP equals PSPACE](../ComplexityTests/Abstracts/ShamirAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/shamir.pdf) | All prover strategies are quantified explicitly, with a uniform native clock and specified completeness and soundness. |
-| [Toda: a counting oracle decides the polynomial hierarchy](../ComplexityTests/Abstracts/TodaAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/toda.pdf) | Witness counts and oracle bit answers are explicit; correctness holds for every extension of valid oracle answers. |
-| [Barrington: five states capture NC¹](../ComplexityTests/Abstracts/BarringtonAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/barrington.pdf) | Nonuniform circuits and permutation programs; no uniform generator or compiler runtime is asserted. |
-| [Håstad and Razborov–Smolensky: parity resists shallow circuits](../ComplexityTests/Abstracts/ConstantDepthAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/constant-depth.pdf) | Explicit finite bounds, gate semantics and depth conventions; nonuniform lower bounds. |
-| [Formula lower bounds: parity and Andreev](../ComplexityTests/Abstracts/FormulaBoundsAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/formula-bounds.pdf) | De Morgan formulas, literal leaves, explicit block indexing and finite quantitative bounds; no general-circuit lower bound. |
-| [One-way functions yield pseudorandom generators and adaptive functions](../ComplexityTests/Abstracts/CryptographyAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/cryptography.pdf) | Uniform probabilistic polynomial time with explicit native evaluators, negligible advantage and full stateful oracle semantics; asymptotic security, not a concrete implementation audit. |
-| [Haken: pigeonhole formulas require long resolution proofs](../ComplexityTests/Abstracts/ResolutionAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/resolution.pdf) | The non-onto pigeonhole formula and a line-based resolution rule, with bound 2^(floor(n/24)); proof size is not solver runtime. |
+| [Cook–Levin: SAT is NP-complete](ComplexityAbstracts/CookLevinAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/cook-levin.pdf) | Explicit CNF encoding, total native-machine reductions, and UNSAT coNP-completeness. |
+| [The PCP theorem](ComplexityAbstracts/PCPAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/pcp.pdf) | Perfect completeness, soundness at most one half, and explicit native efficiency; construction constants are large. |
+| [Fagin: logic captures NP](ComplexityAbstracts/FaginAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/fagin.pdf) | Finite relational signatures, explicit encodings, empty universes and nullary relations. |
+| [Savitch: NPSPACE equals PSPACE](ComplexityAbstracts/SavitchAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/savitch.pdf) | Native machines and polynomial space; this abstract states class equality rather than a parameterized quadratic-space bound. |
+| [Reingold: undirected reachability is in L](ComplexityAbstracts/USTCONAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/reingold.pdf) | Explicit unary-size header and adjacency-matrix encoding; native logspace, without a reduction-defined SL corollary. |
+| [Shamir: IP equals PSPACE](ComplexityAbstracts/ShamirAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/shamir.pdf) | All prover strategies are quantified explicitly, with a uniform native clock and specified completeness and soundness. |
+| [Toda: a counting oracle decides the polynomial hierarchy](ComplexityAbstracts/TodaAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/toda.pdf) | Witness counts and oracle bit answers are explicit; correctness holds for every extension of valid oracle answers. |
+| [Barrington: five states capture NC¹](ComplexityAbstracts/BarringtonAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/barrington.pdf) | Nonuniform circuits and permutation programs; no uniform generator or compiler runtime is asserted. |
+| [Håstad and Razborov–Smolensky: parity resists shallow circuits](ComplexityAbstracts/ConstantDepthAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/constant-depth.pdf) | Explicit finite bounds, gate semantics and depth conventions; nonuniform lower bounds. |
+| [Formula lower bounds: parity and Andreev](ComplexityAbstracts/FormulaBoundsAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/formula-bounds.pdf) | De Morgan formulas, literal leaves, explicit block indexing and finite quantitative bounds; no general-circuit lower bound. |
+| [One-way functions yield pseudorandom generators and adaptive functions](ComplexityAbstracts/CryptographyAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/cryptography.pdf) | Uniform probabilistic polynomial time with explicit native evaluators, negligible advantage and full stateful oracle semantics; asymptotic security, not a concrete implementation audit. |
+| [Haken: pigeonhole formulas require long resolution proofs](ComplexityAbstracts/ResolutionAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/resolution.pdf) | The non-onto pigeonhole formula and a line-based resolution rule, with bound 2^(floor(n/24)); proof size is not solver runtime. |
 
 ## Generate and review PDFs
 

@@ -17,13 +17,13 @@ Adapted from Erik Demaine's [`lean-abstract`](https://github.com/edemaine/agents
 
 ## Placement and Naming in `complexitylib`
 
-Because every module under `Complexity/` must be upstreamable to `cslib` unchanged (`AGENTS.md`), formal abstracts and their bridges live under `ComplexityTests/Abstracts/`:
+Formal abstracts and their bridges live in the dedicated `ComplexityAbstracts` Lean library under `abstracts/ComplexityAbstracts/`, with `srcDir = "abstracts"`. They are project scaffolding, outside the upstreamable `Complexity/` library:
 
-- **Bridge module**: `ComplexityTests/Abstracts/<Topic>Bridge.lean`
-- **Abstract module**: `ComplexityTests/Abstracts/<Topic>Abstract.lean`
-- **Audit helper**: [Check.lean](../../../ComplexityTests/Abstracts/Check.lean) (`#check_abstract`)
+- **Bridge module**: `abstracts/ComplexityAbstracts/<Topic>Bridge.lean`
+- **Abstract module**: `abstracts/ComplexityAbstracts/<Topic>Abstract.lean`
+- **Audit helper**: [Check.lean](../../../abstracts/ComplexityAbstracts/Check.lean) (`#check_abstract`)
 
-Import new `*Abstract.lean` modules from [ComplexityTests.lean](../../../ComplexityTests.lean) so `lake test --wfail --iofail` builds and audits every abstract in CI.
+Import new `*Abstract.lean` modules from [ComplexityAbstracts.lean](../../../abstracts/ComplexityAbstracts.lean). The test driver imports that library, so `lake test --wfail --iofail` builds and audits every abstract in CI. Keep regression tests in `ComplexityTests/Abstracts/` and import them from [ComplexityTests.lean](../../../ComplexityTests.lean). Existing abstracts retain their `ComplexityTests.Abstracts.*` declaration namespaces for compatibility; new abstracts may use `ComplexityAbstracts.*`. Catalogue entries specify `namespace` when it differs from their module name.
 
 ---
 
@@ -34,7 +34,7 @@ Inspect the main theorem statements, their hypotheses, and the selected claim an
 Outside implementation references are allowed **only in theorem proofs**. Every reference in a public definition, type, or theorem statement must resolve to:
 1. A declaration within the abstract namespace itself, defined in the abstract file (`#check_abstract` rejects declarations that another module, such as the bridge, places in the abstract namespace),
 2. An upstream background library (`Init`, `Std`, `Lean`, `Batteries`, `Mathlib`, or upstream `Cslib`), or
-3. An explicitly allowlisted `Complexity.*` or `ComplexityTests.*` module when using `#check_abstract ... allowing [...]`.
+3. An explicitly allowlisted `Complexity.*`, `ComplexityAbstracts.*` or `ComplexityTests.*` module when using `#check_abstract ... allowing [...]`.
 
 This requirement applies transitively: an alias or wrapper around an internal declaration does not make it self-contained, and `#check_abstract` will reject it. The audit also traverses the statements and definition bodies of allowlisted declarations, so an allowlist must be closed under their dependencies. For the library's complexity classes this closure includes the tidy-machine modules, so prefer restating the classes over plain upstream machines (Pattern A) to allowlisting them.
 
@@ -87,27 +87,27 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
 1. **Add `#check_abstract` at the end of `*Abstract.lean`**, wrapped in `#guard_msgs` so the success report (number of root declarations and dependencies) is pinned and the `hashCommand` linter is satisfied:
    ```lean
    /--
-   info: abstract audit passed for `ComplexityTests.Abstracts.<Topic>Abstract`: <n> root
+   info: abstract audit passed for `ComplexityAbstracts.<Topic>Abstract`: <n> root
    declarations, <m> dependencies checked
    -/
    #guard_msgs (whitespace := lax) in
-   #check_abstract ComplexityTests.Abstracts.<Topic>Abstract
+   #check_abstract ComplexityAbstracts.<Topic>Abstract
    ```
    Or, if deliberately referencing `Complexity.*` declarations, list every module in the transitive closure of their statements and definitions:
    ```lean
-   #check_abstract ComplexityTests.Abstracts.<Topic>Abstract allowing [
+   #check_abstract ComplexityAbstracts.<Topic>Abstract allowing [
      Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
    ]
    ```
    Validate with `lake test --wfail --iofail` (as CI does). Do not rely on `-DwarningAsError=true`: under that option the `hashCommand` linter reports an unguarded `#check_abstract` as an info, not a warning, so the problem goes unnoticed.
 2. **Compile and check**:
    ```bash
-   lake build --wfail --iofail ComplexityTests.Abstracts.<Topic>Abstract
+   lake build --wfail --iofail ComplexityAbstracts.<Topic>Abstract
    ```
 3. **Render and test TeX / Markdown generation**:
    ```bash
-   python3 scripts/abstract_to_tex.py ComplexityTests/Abstracts/<Topic>Abstract.lean --format markdown
-   python3 scripts/abstract_to_tex.py ComplexityTests/Abstracts/<Topic>Abstract.lean --format tex
+   python3 scripts/abstract_to_tex.py abstracts/ComplexityAbstracts/<Topic>Abstract.lean --format markdown
+   python3 scripts/abstract_to_tex.py abstracts/ComplexityAbstracts/<Topic>Abstract.lean --format tex
    python3 -m unittest discover -s scripts -p "test_abstract_to_tex.py" -v
    ```
 
@@ -115,13 +115,13 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
 
 ## Reference Examples in `complexitylib`
 
-Consult these concrete implementations in `ComplexityTests/Abstracts/`:
+Consult these concrete implementations in `abstracts/ComplexityAbstracts/`:
 
 - **Pattern A (Unfolded types, zero `Complexity.*` dependencies)**:
-  [CookLevinAbstract.lean](../../../ComplexityTests/Abstracts/CookLevinAbstract.lean) and [CookLevinBridge.lean](../../../ComplexityTests/Abstracts/CookLevinBridge.lean) (`SAT` and `ExactThreeSAT` are `NP`-complete, `UNSAT` is `coNP`-complete).
+  [CookLevinAbstract.lean](../../../abstracts/ComplexityAbstracts/CookLevinAbstract.lean) and [CookLevinBridge.lean](../../../abstracts/ComplexityAbstracts/CookLevinBridge.lean) (`SAT` and `ExactThreeSAT` are `NP`-complete, `UNSAT` is `coNP`-complete).
 - **Pattern B (Fresh `inductive` syntax + polymorphic `Presentation` / `Laws`, zero `Complexity.*` dependencies)**:
-  [TQBFAbstract.lean](../../../ComplexityTests/Abstracts/TQBFAbstract.lean) and [TQBFBridge.lean](../../../ComplexityTests/Abstracts/TQBFBridge.lean) (`TQBF` is `PSPACE`-complete).
+  [TQBFAbstract.lean](../../../abstracts/ComplexityAbstracts/TQBFAbstract.lean) and [TQBFBridge.lean](../../../abstracts/ComplexityAbstracts/TQBFBridge.lean) (`TQBF` is `PSPACE`-complete).
 - **Pattern A reusing another bridge**:
-  [SubsetSumAbstract.lean](../../../ComplexityTests/Abstracts/SubsetSumAbstract.lean) and [SubsetSumBridge.lean](../../../ComplexityTests/Abstracts/SubsetSumBridge.lean) (`SubsetSum` is `NP`-complete with numbers in binary; the bridge reuses the plain `NP` transfer lemmas of `CookLevinBridge`).
+  [SubsetSumAbstract.lean](../../../abstracts/ComplexityAbstracts/SubsetSumAbstract.lean) and [SubsetSumBridge.lean](../../../abstracts/ComplexityAbstracts/SubsetSumBridge.lean) (`SubsetSum` is `NP`-complete with numbers in binary; the bridge reuses the plain `NP` transfer lemmas of `CookLevinBridge`).
 - **Audit regression tests, including allowlist mode**:
   [CheckTests.lean](../../../ComplexityTests/Abstracts/CheckTests.lean).

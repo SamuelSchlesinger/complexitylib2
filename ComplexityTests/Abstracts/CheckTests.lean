@@ -6,8 +6,8 @@ Authors: Samuel Schlesinger
 
 -- upstream: local-only (formal abstract tests)
 
-import ComplexityTests.Abstracts.Check
-import ComplexityTests.Abstracts.CookLevinBridge
+import ComplexityAbstracts.Check
+import ComplexityAbstracts.CookLevinBridge
 import Complexity.Computability.Complexity.Problems.SAT
 import Complexity.Computability.Complexity.Reduction
 
@@ -19,6 +19,20 @@ Each test places a deliberate leak in its own namespace and pins the audit's err
 -/
 
 namespace ComplexityTests.Abstracts.CheckTests
+
+/- A bridge moved to the dedicated library is still a repository-local dependency. -/
+namespace MovedBridgeLeak
+def leaked : List Bool := ComplexityTests.Abstracts.CookLevinBridge.frame []
+end MovedBridgeLeak
+
+/--
+error: abstract audit:
+`ComplexityTests.Abstracts.CheckTests.MovedBridgeLeak.leaked` depends on
+implementation declaration `ComplexityTests.Abstracts.CookLevinBridge.frame` from
+`ComplexityAbstracts.CookLevinBridge`
+-/
+#guard_msgs (whitespace := lax) in
+#check_abstract ComplexityTests.Abstracts.CheckTests.MovedBridgeLeak
 
 /-! ### Rejected leaks -/
 
@@ -204,7 +218,7 @@ end ComplexityTests.Abstracts.CookLevinBridge
 /--
 error: abstract audit: `ComplexityTests.Abstracts.CookLevinBridge.ComputableInPolyTime` lies in
 `ComplexityTests.Abstracts.CookLevinBridge` but is defined in imported module
-`ComplexityTests.Abstracts.CookLevinBridge`, not in the current file
+`ComplexityAbstracts.CookLevinBridge`, not in the current file
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.CookLevinBridge

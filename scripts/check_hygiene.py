@@ -3,7 +3,8 @@
 
 Checks enforced by default (see AGENTS.md):
 1. Every module under Complexity/ has a valid `-- upstream:` marker.
-2. No `sorry`, custom `axiom`, or `native_decide` in Complexity/ or ComplexityTests/.
+2. No `sorry`, custom `axiom`, or `native_decide` in Complexity/, ComplexityTests/ or the
+   dedicated abstract library.
 3. Every `set_option maxHeartbeats` or `set_option maxRecDepth` has an explanatory comment
    on the same line or within the preceding 3 lines.
 
@@ -173,7 +174,7 @@ def main() -> int:
     parser.add_argument(
         "paths",
         nargs="*",
-        help="Files or directories to check (defaults to Complexity/ and ComplexityTests/); "
+        help="Files or directories to check (defaults to library, test and abstract sources); "
              "the selection must contain at least one source file",
     )
     parser.add_argument(
@@ -192,7 +193,7 @@ def main() -> int:
     if args.paths:
         targets = [pathlib.Path(p).resolve() for p in args.paths]
     else:
-        targets = [ROOT / "Complexity", ROOT / "ComplexityTests"]
+        targets = [ROOT / "Complexity", ROOT / "ComplexityTests", ROOT / "abstracts/ComplexityAbstracts"]
 
     errors = check_paths(
         targets,

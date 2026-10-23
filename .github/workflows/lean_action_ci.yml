@@ -22,12 +22,16 @@ jobs:
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - uses: leanprover/lean-action@v1
         with:
-          build-args: "--wfail --iofail @complexitylib @mathlib/mk_all @/checkInitImports @mathlib/lint-style"
+          build-args: "--wfail --iofail @complexitylib @/mk_all @/checkInitImports @mathlib/lint-style"
           test-args: "--wfail --iofail"
       - name: "lake exe mk_all --check"
         run: |
           set -e
           lake exe mk_all --check
+      - name: Test import generation with custom source directories
+        run: |
+          test -x .lake/build/bin/mk_all
+          python3 -B -m unittest discover -s scripts -p 'test_mk_all.py'
       - name: "lake exe lint-style"
         run: |
           set -e

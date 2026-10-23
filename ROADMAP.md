@@ -257,7 +257,7 @@ existing developments, source credit and saved branches remain available for a f
    correctness margins simultaneously; the security theorem leaves only the specified LWE
    hypothesis. [Regression clients](ComplexityTests/Crypto/GSWSecurity.lean) check saved-state
    preservation, the attained factor-two loss, adaptive message choice and actual algorithm
-   certificates. A [checked formal abstract](ComplexityTests/Abstracts/GSWSecurityAbstract.lean)
+   certificates. A [checked formal abstract](abstracts/ComplexityAbstracts/GSWSecurityAbstract.lean)
    spells out both algorithms, their native efficiency and this precise conditional security
    result. It remains outside the curated headline catalogue while the full FHE recovery is open.
    Hardness for the specified noise family is assumed; no worst-case lattice reduction is supplied.

@@ -35,7 +35,7 @@ class BuildAbstractsTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="test-abstract-builder-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        source = self.root / "ComplexityTests/Abstracts/ExampleAbstract.lean"
+        source = self.root / "abstracts/ComplexityAbstracts/ExampleAbstract.lean"
         source.parent.mkdir(parents=True)
         source.write_text(SOURCE)
         scripts = self.root / "scripts"
@@ -44,7 +44,8 @@ class BuildAbstractsTests(unittest.TestCase):
             shutil.copyfile(Path(build.__file__).with_name(name), scripts / name)
         self.entry = {"id": "example", "title": "An example", "summary": "The selected result.",
                       "scope": "No algorithmic claim.",
-                      "module": "ComplexityTests.Abstracts.ExampleAbstract",
+                      "module": "ComplexityAbstracts.ExampleAbstract",
+                      "namespace": "ComplexityTests.Abstracts.ExampleAbstract",
                       "headline_theorems": ["ComplexityTests.Abstracts.ExampleAbstract.chosen"]}
         self.manifest = self.root / "catalogue.json"
         self.write_manifest([self.entry])
@@ -52,18 +53,77 @@ class BuildAbstractsTests(unittest.TestCase):
     def write_manifest(self, entries):
         self.manifest.write_text(json.dumps({"title": "Selected abstracts", "entries": entries}))
 
+    def test_module_source_path_uses_dedicated_library_root(self):
+        self.assertEqual(build.module_source_path(self.entry["module"], self.root),
+                         self.root / "abstracts/ComplexityAbstracts/ExampleAbstract.lean")
+        for module in ("ComplexityTests.Abstracts.ExampleAbstract", "Other.ExampleAbstract",
+                       "ComplexityAbstracts../ExampleAbstract", "ComplexityAbstracts.9Abstract"):
+            with self.subTest(module=module), self.assertRaisesRegex(ValueError, "module"):
+                build.module_source_path(module, self.root)
+
+    def test_module_namespace_is_the_default_when_not_overridden(self):
+        self.entry.pop("namespace")
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace("ComplexityTests.Abstracts.ExampleAbstract",
+                                         self.entry["module"]))
+        self.entry["headline_theorems"] = [self.entry["module"] + ".chosen"]
+        self.write_manifest([self.entry])
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+
+    def test_invalid_missing_and_foreign_namespaces_are_rejected(self):
+        for namespace in (None, 42, "", " ", "Other..Abstract", "Other.9Abstract", "Other\nAbstract"):
+            with self.subTest(namespace=namespace):
+                self.entry["namespace"] = namespace
+                self.write_manifest([self.entry])
+                with self.assertRaisesRegex(ValueError, "Invalid abstract namespace"):
+                    build.load_catalogue(self.manifest, self.root)
+        self.entry.pop("namespace")
+        self.write_manifest([self.entry])
+        with self.assertRaisesRegex(ValueError, "namespace.*not declared"):
+            build.load_catalogue(self.manifest, self.root)
+        self.entry["namespace"] = "Other.Abstract"
+        self.write_manifest([self.entry])
+        with self.assertRaisesRegex(ValueError, "namespace.*not declared"):
+            build.load_catalogue(self.manifest, self.root)
+
+    def test_quote_character_does_not_hide_the_source_namespace(self):
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text("def quote := '\"'\n" + SOURCE)
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+
+    def test_comment_and_string_namespace_spoofs_are_rejected(self):
+        namespace = self.entry["namespace"]
+        source = build.module_source_path(self.entry["module"], self.root)
+        foreign_source = SOURCE.replace(namespace, "Other.Abstract")
+        for spoof in (f"/- outer /- nested -/\nnamespace {namespace}\n-/\n",
+                      f' def banner := "\nnamespace {namespace}\n"\n',
+                      f' def banner := r##"\nnamespace {namespace}\n"##\n'):
+            with self.subTest(spoof=spoof):
+                source.write_text(spoof + foreign_source)
+                with self.assertRaisesRegex(ValueError, "namespace.*not declared"):
+                    build.load_catalogue(self.manifest, self.root)
+
+    def test_headline_in_a_different_source_namespace_is_rejected(self):
+        namespace = self.entry["namespace"]
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace("/-- The selected result. -/",
+                                         f"end {namespace}\nnamespace Other.Abstract\n"
+                                         "/-- The selected result. -/"))
+        with self.assertRaisesRegex(ValueError, "outside namespace"):
+            build.load_catalogue(self.manifest, self.root)
+
     def test_selection_rejects_duplicates_and_non_theorem_headlines(self):
         self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
         self.write_manifest([self.entry, self.entry])
         with self.assertRaisesRegex(ValueError, "duplicate catalogue id"):
             build.load_catalogue(self.manifest, self.root)
-        self.entry["headline_theorems"] = [self.entry["module"] + ".value"]
+        self.entry["headline_theorems"] = [self.entry["namespace"] + ".value"]
         self.write_manifest([self.entry])
         with self.assertRaisesRegex(ValueError, "not a theorem"):
             build.load_catalogue(self.manifest, self.root)
 
     def test_missing_or_foreign_headline_is_rejected(self):
-        self.entry["headline_theorems"] = [self.entry["module"] + ".missing"]
+        self.entry["headline_theorems"] = [self.entry["namespace"] + ".missing"]
         self.write_manifest([self.entry])
         with self.assertRaisesRegex(ValueError, "found 0"):
             build.load_catalogue(self.manifest, self.root)
@@ -80,7 +140,7 @@ class BuildAbstractsTests(unittest.TestCase):
         self.assertNotIn("supporting result", rendered)
         self.assertNotIn("other", rendered)
         self.assertNotIn("rfl", rendered)
-        self.assertIn("a" * 40 + "/ComplexityTests/Abstracts/ExampleAbstract.lean", rendered)
+        self.assertIn("a" * 40 + "/abstracts/ComplexityAbstracts/ExampleAbstract.lean", rendered)
         self.assertIn(r"\textcolor{leanblue}", rendered)
 
     def test_source_links_pin_the_declaration_line(self):
@@ -90,6 +150,10 @@ class BuildAbstractsTests(unittest.TestCase):
                          "https://github.com/owner/repo/blob/" + "a" * 40 + f"/X.lean#L{line}")
 
     def test_provenance_records_pdf_and_input_digests(self):
+        source = build.module_source_path(self.entry["module"], self.root)
+        bridge = source.with_name("ExampleBridge.lean")
+        bridge.write_text("-- proof bridge fixture\n")
+
         def fake_pdf(tex):
             pdf = tex.with_suffix(".pdf")
             pdf.write_bytes(b"%PDF-fixture")
@@ -103,9 +167,15 @@ class BuildAbstractsTests(unittest.TestCase):
         self.assertEqual(result["documents"][0]["pdf_sha256"],
                          build.digest(self.root / "build/example.pdf"))
         self.assertEqual(result["documents"][0]["source_sha256"],
-                         build.digest(self.root / "ComplexityTests/Abstracts/ExampleAbstract.lean"))
+                         build.digest(self.root / "abstracts/ComplexityAbstracts/ExampleAbstract.lean"))
         self.assertTrue(result["documents"][0]["headlines"][0]["url"].endswith("#L10"))
-        self.assertEqual(len(result["inputs"]), 4)
+        self.assertEqual(result["documents"][0]["source"],
+                         "abstracts/ComplexityAbstracts/ExampleAbstract.lean")
+        self.assertIn("/abstracts/ComplexityAbstracts/ExampleAbstract.lean#L10",
+                      result["documents"][0]["headlines"][0]["url"])
+        self.assertIn({"path": "abstracts/ComplexityAbstracts/ExampleBridge.lean",
+                       "sha256": build.digest(bridge)}, result["inputs"])
+        self.assertEqual(len(result["inputs"]), 5)
 
     def test_relative_manifest_and_output_paths_record_relative_inputs(self):
         def fake_pdf(tex):
@@ -136,7 +206,7 @@ class BuildAbstractsTests(unittest.TestCase):
         def changing_pdf(tex):
             pdf = tex.with_suffix(".pdf")
             pdf.write_bytes(b"%PDF-fixture")
-            source = self.root / "ComplexityTests/Abstracts/ExampleAbstract.lean"
+            source = self.root / "abstracts/ComplexityAbstracts/ExampleAbstract.lean"
             source.write_text(source.read_text() + "\n-- changed during generation\n")
             return pdf
 
@@ -151,7 +221,7 @@ class BuildAbstractsTests(unittest.TestCase):
         self.assertFalse((output / "provenance.json").exists())
 
     def test_explicit_support_is_rendered_without_promoting_it_to_a_headline(self):
-        self.entry["supporting_theorems"] = [self.entry["module"] + ".other"]
+        self.entry["supporting_theorems"] = [self.entry["namespace"] + ".other"]
         self.write_manifest([self.entry])
         build.load_catalogue(self.manifest, self.root)
         rendered = build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
@@ -174,7 +244,7 @@ class BuildAbstractsTests(unittest.TestCase):
             links = subprocess.check_output(
                 ["pdfinfo", "-url", str(self.root / "build/example.pdf")], text=True)
             self.assertIn("/blob/" + "a" * 40 +
-                          "/ComplexityTests/Abstracts/ExampleAbstract.lean#L10", links)
+                          "/abstracts/ComplexityAbstracts/ExampleAbstract.lean#L10", links)
 
 
 if __name__ == "__main__":
