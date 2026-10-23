@@ -84,9 +84,13 @@ creates, in order (each step can be rerun alone, e.g. `setup-gcs.sh alert`):
 
 CI skips the upload until the repository variable `LAKE_CACHE_BUCKET` is set.
 
-**Costs.** Storage and egress are small at this size: each `main` push uploads only modules whose
-outputs changed, and Cloud Storage's free tier covers 5 GB of storage and 100 GB of egress per
-month in `us-east1`. The budget alerts and the kill switch bound abuse of the public bucket.
+**Costs.** Storage is small: each `main` push uploads only modules whose outputs changed. CI
+downloads only what its restored `.lake` lacks: nothing when the Actions cache is current, about
+12 MB when it is a few hundred modules behind, and a complete set (about 75 MB) when it misses.
+Cloud Storage's free tier covers 5 GB of storage and 100 GB of egress per month in `us-east1`;
+at 150–200 CI runs a day, a complete download on every run would exceed that several times over
+and soon reach the budget. The budget alerts and the kill switch bound abuse of the public
+bucket.
 
 **After the kill switch fires.** Downloads fail and builds fall back to compiling. Check the egress
 graph and the function's log, then restore public read:
