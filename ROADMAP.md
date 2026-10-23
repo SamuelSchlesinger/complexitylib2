@@ -876,7 +876,8 @@ batches.
      The [native generators](Complexity/Computability/Circuit/Boolean/CarryLookahead/PolyTime.lean)
      construct the complete binary gate/output codes from unary width, reusing fixed formula
      templates and shared-input code assembly. This establishes polynomial-time uniformity for
-     these arithmetic circuits; stronger uniformity and shallow cryptographic decryption remain open.
+     these arithmetic circuits. The complete GSW shallow-decryption circuit and native constructor
+     are described above; stronger logspace and DLOGTIME uniformity remain open.
      Define logspace and DLOGTIME uniformity with explicit gate-address, direct-connection and
      input encodings. Certify circuit generation and evaluation and the relevant machine-to-
      circuit simulations, preserving size, depth and construction-resource bounds. Prove
