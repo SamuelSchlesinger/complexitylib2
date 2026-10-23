@@ -124,13 +124,20 @@ existing developments, source credit and saved branches remain available for a f
    uniformly in unary `(n, B)`. They yield efficient schemes for efficiently computed unary budget
    families. The decryption-circuit generator also supplies polynomial bounds on both derived
    widths; decryption itself has no budget parameter.
+   [Compactness](Complexity/Crypto/Computational/Homomorphic/Leveled/Compactness.lean) gives one
+   polynomial-size circuit family and common polynomial time and space bounds in the security
+   parameter for the complete tagged decryption algorithm, including endpoint decoding and tag
+   selection. The circuit family and resource bounds are independent of every budget and requested
+   depth family and cover all inputs of the prescribed widths, including malformed secrets. The
+   circuit result proves nonuniform existence; it does not provide a generator for these wrapper
+   circuits.
    [Refresh tests](ComplexityTests/Crypto/HomomorphicRefresh.lean),
    [layered tests](ComplexityTests/Crypto/HomomorphicLayered.lean), and
    [ordinary-circuit tests](ComplexityTests/Crypto/HomomorphicEvaluation.lean) instantiate the
-   hypotheses in an explicitly insecure scheme whose base evaluator rejects evaluated inputs.
-   They exercise key switching, repeated refresh, shared wires, constants, empty layers and zero
-   depth. [Compiler tests](ComplexityTests/CircuitLayering.lean) also cover dead gates, empty
-   outputs, shared OR gates, skipped depths, and malformed binary references.
+   construction and runtime hypotheses in an explicitly insecure scheme whose base evaluator
+   rejects evaluated inputs. They exercise key switching, repeated refresh, shared wires, constants,
+   empty layers and zero depth. [Compiler tests](ComplexityTests/CircuitLayering.lean) also cover
+   dead gates, empty outputs, shared OR gates, skipped depths, and malformed binary references.
    [Leveled tests](ComplexityTests/Crypto/HomomorphicLeveled.lean) check budgets zero, one and two,
    distinct initial/final secrets at positive budgets, and circuits of different actual depths
    under the same endpoint, malformed inputs and nonconstant efficient budget families.
@@ -142,9 +149,17 @@ existing developments, source credit and saved branches remain available for a f
    [key-chain reduction](Complexity/Crypto/Computational/Homomorphic/KeyChain/Security.lean)
    erases links in reverse order with uniform link/bit sampling and an executable polynomial
    cap derived from native key generation; no circular-security or efficient-width premise is
-   used. The [combined theorem](Complexity/Crypto/Computational/Homomorphic/Leveled/Bootstrapping.lean)
-   gives correctness, exact polynomial widths independent of the budget, and IND-CPA for the
-   same constructed scheme. [Key-chain tests](ComplexityTests/Crypto/KeyChainSecurity.lean) and
+   used. The [combined theorems](Complexity/Crypto/Computational/Homomorphic/Leveled/Bootstrapping.lean)
+   give correctness, exact polynomial widths independent of the budget, and IND-CPA for the
+   same constructed scheme. `Leveled.exists_scheme_of_polynomiallyBounded` covers every
+   `PolynomiallyBounded` requested depth family by selecting a computable unary budget
+   `c * (n + 1)^d` that dominates it at every parameter, including its finite prefix. The requested
+   family need not be computable: the algorithms execute the majorant. The theorem supplies native
+   certificates for all four algorithms and permits every circuit within the requested depth.
+   [Endpoint tests](ComplexityTests/Crypto/Bootstrapping.lean) cover arbitrary predicate-dependent
+   depth families, large finite-prefix spikes, and the full tagged decoder's compactness, while
+   retaining the security assumptions explicitly.
+   [Key-chain tests](ComplexityTests/Crypto/KeyChainSecurity.lean) and
    [leveled security tests](ComplexityTests/Crypto/LeveledSecurity.lean) exercise repeated random
    keys, retained encryption randomness, adaptive saved state, empty secrets, zero links and padding.
    This is a qualitative single-challenge security transfer, not Gentry's exact
@@ -169,10 +184,12 @@ existing developments, source credit and saved branches remain available for a f
    under one key, even though the explicitly insecure base fixture rejects evaluated inputs.
    [Security tests](ComplexityTests/Crypto/FixedKeySecurity.lean) reject joint leakage hidden by
    identical ciphertext marginals and keep a security-only fixture's failed correctness explicit.
-   These recover the generic conditional bootstrapping constructions. A concrete LWE-based
-   cryptosystem satisfying their hypotheses remains open in
-   [#322](https://github.com/cslib-community/complexitylib/issues/322); these reductions do not
-   supply that instantiation or Gentry's exact concrete-security loss.
+   Together these establish the generic qualitative conditional bootstrapping theorem tracked in
+   [#322](https://github.com/cslib-community/complexitylib/issues/322). A concrete LWE-based
+   cryptosystem satisfying its correctness, security, bootstrappability and native efficiency
+   hypotheses remains open in [#486](https://github.com/cslib-community/complexitylib/issues/486).
+   The insecure construction fixtures and security-only fixtures do not supply that joint
+   instantiation. The reductions do not claim Gentry's exact concrete-security loss.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
