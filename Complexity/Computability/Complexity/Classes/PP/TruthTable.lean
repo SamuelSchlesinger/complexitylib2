@@ -346,7 +346,7 @@ theorem PolyTimeTruthTableReducible.mem_PP {β : Type} {encB : β ↪ List Bool}
   obtain ⟨r, q, d, hr, hq, hd, hL⟩ := h
   have hqB : q ⁻¹' B ∈ PP (encPair enc encUnary) :=
     PolyTimeReducible.mem_PP ⟨q, hq, fun _ => Iff.rfl⟩ hB
-  convert truthTable_mem_PP hqB hr hd using 1
+  convert truthTable_mem_PP hqB hr.tidy hd.tidy using 1
   ext a
   exact hL a
 

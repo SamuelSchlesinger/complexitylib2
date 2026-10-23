@@ -282,6 +282,6 @@ theorem computableTidilyInPolyTime_verifier :
 /-- **MCSP is in `NP`**, for instances encoded by their truth table and the threshold in
 binary. -/
 theorem mem_NP : MCSP ∈ NP encInstance :=
-  ⟨certPolynomial, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨certPolynomial, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end Cslib.MCSP

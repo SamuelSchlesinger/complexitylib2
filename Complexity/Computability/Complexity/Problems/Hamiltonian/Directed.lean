@@ -237,7 +237,7 @@ end SAT
 /-- `SAT` reduces to `DirHamPath` in polynomial time via `SAT.toDirHamPath`. -/
 theorem polyTimeReducible_SAT_DirHamPath :
     PolyTimeReducible encCNF (encPair encGraph (encPair encNat encNat)) SAT DirHamPath :=
-  ⟨SAT.toDirHamPath, SAT.computableTidilyInPolyTime_toDirHamPath,
+  ⟨SAT.toDirHamPath, .of_tidy SAT.computableTidilyInPolyTime_toDirHamPath,
     fun φ => (SAT.toDirHamPath_mem_iff φ).symm⟩
 
 /-- `ThreeSAT` reduces to `DirHamPath` in polynomial time: a formula with a clause of more than
@@ -263,7 +263,7 @@ theorem DirHamPath_npHard : NPHard (encPair encGraph (encPair encNat encNat)) Di
 
 /-- `SAT` reduces to `DirHamCycle` in polynomial time via `SAT.toDirHamCycle`. -/
 theorem polyTimeReducible_SAT_DirHamCycle : PolyTimeReducible encCNF encGraph SAT DirHamCycle :=
-  ⟨SAT.toDirHamCycle, SAT.computableTidilyInPolyTime_toDirHamCycle,
+  ⟨SAT.toDirHamCycle, .of_tidy SAT.computableTidilyInPolyTime_toDirHamCycle,
     fun φ => (SAT.toDirHamCycle_mem_iff φ).symm⟩
 
 /-- `DirHamCycle` is `NP`-hard. -/

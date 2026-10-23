@@ -130,8 +130,8 @@ def NPSPACE (enc : α ↪ List Bool) : Set (Set α) :=
     (s : α → ℕ), PolyBounded (fun a => (enc a).length) s ∧ ntm.DecidesInSpace enc A s}
 
 /-- **Polynomial time is within polynomial space.** -/
-theorem P_subset_PSPACE : P enc ⊆ PSPACE enc := by
-  rintro A ⟨f, ⟨t, s, -, hs, hf⟩, hA⟩
+theorem P_subset_PSPACE : P enc ⊆ PSPACE enc := fun A hA => by
+  obtain ⟨f, ⟨t, s, -, hs, hf⟩, hA⟩ := mem_P_iff_tidy.mp hA
   exact ⟨f, ⟨t, s, hs, hf.computableInTimeAndSpace⟩, hA⟩
 
 /-- **A deterministic polynomial-space machine is a nondeterministic one**, with one computation

@@ -130,7 +130,8 @@ def padded (ntm : MultiTapeNTM k Bool State) (c : ℕ) : Set (List Bool) :=
 /-- The padded problem is in `NP`, with certificates of length `c * |x|`. -/
 theorem padded_mem_NP (ntm : MultiTapeNTM k Bool State) (c : ℕ) :
     ntm.padded c ∈ Cslib.Complexity.NP encBits :=
-  ⟨Polynomial.C c * Polynomial.X, ntm.checkPadded, ntm.computableTidilyInPolyTime_checkPadded,
+  ⟨Polynomial.C c * Polynomial.X, ntm.checkPadded,
+    .of_tidy ntm.computableTidilyInPolyTime_checkPadded,
     fun x => by simp [padded]⟩
 
 /-- **Padded instances.** If `ntm` decides `A` within `t`, then the padded word
@@ -334,7 +335,7 @@ theorem preimage_mem_NTIME_of_mem_NP {B : Set (List Bool)} {g : α → List Bool
   have hcount : ComputableTidilyInPolyTime (fun x : List Bool => p.eval x.length)
       encBits encUnary :=
     (unary_eval p).comp (encoding_length encBits)
-  have hprogram : IsPPTOn encBits encBool program := hcount.sampleList.map_with hV
+  have hprogram : IsPPTOn encBits encBool program := hcount.sampleList.map_with hV.tidy
   obtain ⟨k₁, State₁, hfinite₁, M_NP, c₁, d₁, heval₂, hhalt₂⟩ := hprogram.exists_halting_machine
   set t₂ : α → ℕ := fun a => c₁ * (t₁ a + 1) ^ d₁
   have ht₂_le (a : α) : c₁ * ((g a).length + 1) ^ d₁ ≤ t₂ a :=

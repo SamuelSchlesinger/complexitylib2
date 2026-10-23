@@ -248,7 +248,7 @@ theorem PH_eq_P_of_NP_subset_P (h : ∀ {β : Type} (encB : β ↪ List Bool), N
   rw [PH_eq_NP_of_coNP_subset_NP fun encB A hA => ?_, hNP]
   obtain ⟨f, hf, hfA⟩ := h encB hA
   rw [hNP]
-  exact ⟨fun a => !f a, ComputableTidilyInPolyTime.bool_not.comp hf, fun a => by
+  exact ⟨fun a => !f a, .of_tidy (ComputableTidilyInPolyTime.bool_not.comp hf.tidy), fun a => by
     simpa using (hfA a).not⟩
 
 /-- **`Σₖ₊₁ ⊆ Σₖ` collapses the polynomial hierarchy to `Σₖ`**, for every `k`: then

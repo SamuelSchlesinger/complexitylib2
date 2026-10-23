@@ -146,7 +146,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `Clique` belongs to `NP`. -/
 theorem mem_NP : Clique ∈ NP (encPair encGraph encNat) :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end Clique
 

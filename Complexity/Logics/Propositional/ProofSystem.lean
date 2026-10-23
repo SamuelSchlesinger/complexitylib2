@@ -303,7 +303,7 @@ theorem exists_polynomiallyBounded_iff_mem_NP (D : Decoder enc) (hL : L.Nonempty
     (∃ P : ProofSystem enc L, P.PolynomiallyBounded) ↔ L ∈ NP enc := by
   refine ⟨fun ⟨_, hP⟩ => hP.mem_NP, fun ⟨p, V, hV, hVL⟩ => ?_⟩
   obtain ⟨a₀, ha₀⟩ := hL
-  exact ⟨_, polynomiallyBounded_ofVerifier D hV hVL ha₀⟩
+  exact ⟨_, polynomiallyBounded_ofVerifier D hV.tidy hVL ha₀⟩
 
 /-! ### The theorem of Cook and Reckhow -/
 

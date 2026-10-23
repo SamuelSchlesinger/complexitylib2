@@ -134,7 +134,7 @@ theorem mem_NP_of_decidableInPolyTime (h : MultiTapeNTM.DecidableInPolyTime A en
     A ∈ NP enc := by
   obtain ⟨t, ht, k, State, hfinite, ntm, hdecides⟩ := h
   obtain ⟨c, d, hle⟩ := ht.exists_le
-  exact ⟨_, ntm.checkChoices enc, ntm.computableTidilyInPolyTime_checkChoices,
+  exact ⟨_, ntm.checkChoices enc, .of_tidy ntm.computableTidilyInPolyTime_checkChoices,
     (hdecides.mono hle).isVerifier⟩
 
 /-- **`NP` is nondeterministic polynomial time** [Arora and Barak, Theorem 2.6][AroraBarak09]:

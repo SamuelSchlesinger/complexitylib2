@@ -181,13 +181,14 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `ThreeSAT` belongs to `NP`. -/
 theorem mem_NP : ThreeSAT ∈ NP encCNF :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end ThreeSAT
 
 /-- `SAT` reduces to `ThreeSAT` in polynomial time via `toThreeSAT`. -/
 theorem polyTimeReducible_SAT_ThreeSAT : PolyTimeReducible encCNF encCNF SAT ThreeSAT :=
-  ⟨toThreeSAT, computableTidilyInPolyTime_toThreeSAT, fun φ => (mem_ThreeSAT_toThreeSAT_iff φ).symm⟩
+  ⟨toThreeSAT, .of_tidy computableTidilyInPolyTime_toThreeSAT,
+    fun φ => (mem_ThreeSAT_toThreeSAT_iff φ).symm⟩
 
 /-- `ThreeSAT` is `NP`-hard. -/
 theorem ThreeSAT_npHard : NPHard encCNF ThreeSAT :=

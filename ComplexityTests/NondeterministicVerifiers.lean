@@ -271,8 +271,8 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePT
 example : MultiTapeNTM.DecidableInPolyTime {a : Bool × ℕ | a.1 = true}
     (encPair encBool encNat) := by
   refine decidableInPolyTime_of_mem_NP ⟨0, fun x => x.1.1, ?_, fun a => by simp⟩
-  exact (ComputableTidilyInPolyTime.fst encBool encNat).comp
-    (ComputableTidilyInPolyTime.fst (encPair encBool encNat) encBits)
+  exact (ComputableInPolyTime.fst encBool encNat).comp
+    (ComputableInPolyTime.fst (encPair encBool encNat) encBits)
 
 /-! ### Checking encoded accepting computations -/
 

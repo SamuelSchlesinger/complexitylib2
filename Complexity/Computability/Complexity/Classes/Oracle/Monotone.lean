@@ -66,7 +66,7 @@ theorem ComputableInPolyTimeWithOracle.of_polyTimeReducible {A B : Set (List Boo
           (fun r => (r, ())) <$> (List.take 1 <$> ProbOracleComp.query
             (spec := fun _ : Unit × List Bool => List Bool) ((), g pair.2.1.2))) :=
       (IsOraclePPTOn.query_take () (request := fun pair : α × (Unit × List Bool) × Unit =>
-        g pair.2.1.2) (limit := fun _ => 1) (hg.comp (by fun_prop)) (by fun_prop)).map
+        g pair.2.1.2) (limit := fun _ => 1) (hg.tidy.comp (by fun_prop)) (by fun_prop)).map
         (by fun_prop)
     have hsub := hcert.run_interpret_preprocess_open (State := Unit)
       (handler := fun _ q _ => (fun r => (r, ())) <$> (List.take 1 <$> ProbOracleComp.query

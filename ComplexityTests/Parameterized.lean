@@ -47,7 +47,7 @@ example : ∃ f : ℕ → ℕ, Monotone f ∧ ∃ c : ℕ, DecidableInTimeO SAT 
 private def Narrow : Set (CNF ℕ) := {φ | ∀ c ∈ φ, c.length ≤ 3}
 
 private theorem narrow_mem_P : Narrow ∈ P encCNF :=
-  ⟨_, computableTidilyInPolyTime_all_length_le 3, fun φ => by simp [Narrow]⟩
+  ⟨_, .of_tidy (computableTidilyInPolyTime_all_length_le 3), fun φ => by simp [Narrow]⟩
 
 example : Narrow ∈ FPT encCNF CNF.numVars := P_subset_FPT narrow_mem_P
 

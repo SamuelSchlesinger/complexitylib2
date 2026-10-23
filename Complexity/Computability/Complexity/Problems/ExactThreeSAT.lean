@@ -129,7 +129,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `ExactThreeSAT` belongs to `NP`. -/
 theorem mem_NP : ExactThreeSAT ∈ NP encCNF :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end ExactThreeSAT
 
@@ -164,7 +164,7 @@ theorem mem_ExactThreeSAT_toExactThreeSAT_iff (φ : CNF ℕ) :
 /-- `ThreeSAT` reduces to `ExactThreeSAT` in polynomial time via `toExactThreeSAT`. -/
 theorem polyTimeReducible_ThreeSAT_ExactThreeSAT :
     PolyTimeReducible encCNF encCNF ThreeSAT ExactThreeSAT :=
-  ⟨toExactThreeSAT, computableTidilyInPolyTime_toExactThreeSAT,
+  ⟨toExactThreeSAT, .of_tidy computableTidilyInPolyTime_toExactThreeSAT,
     fun φ => (mem_ExactThreeSAT_toExactThreeSAT_iff φ).symm⟩
 
 /-- `ExactThreeSAT` is `NP`-hard. -/

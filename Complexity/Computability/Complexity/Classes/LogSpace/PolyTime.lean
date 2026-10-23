@@ -49,7 +49,7 @@ theorem mem_P_of_recognizesInSpace {k : ℕ} {State : Type} [Finite State]
     (h : ntm.RecognizesInSpace enc A fun a => c * (Nat.log2 (enc a).length + 1)) : A ∈ P enc := by
   obtain ⟨rounds, hrounds, hpoly⟩ :=
     ntm.exists_computableTidilyInPolyTime_searchAccepts (enc := enc) fun a => (h a).1
-  exact ⟨_, hpoly, fun a =>
+  exact ⟨_, .of_tidy hpoly, fun a =>
     (h a).2.trans (MultiTapeNTM.searchAccepts_iff (h a).1 (hrounds a)).symm⟩
 
 /-- **Nondeterministic logarithmic space is within polynomial time**: breadth-first search

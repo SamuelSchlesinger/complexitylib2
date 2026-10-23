@@ -176,9 +176,9 @@ theorem mem_NP_iff_exists_SharpP {A : Set α} :
     A ∈ NP enc ↔ ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ 0 < f a := by
   constructor
   · rintro ⟨p, V, hV, h⟩
-    exact ⟨_, ⟨p, V, .of_tidy hV, fun _ => rfl⟩, fun a => (h a).trans acceptCount_pos_iff.symm⟩
+    exact ⟨_, ⟨p, V, hV, fun _ => rfl⟩, fun a => (h a).trans acceptCount_pos_iff.symm⟩
   · rintro ⟨f, ⟨p, V, hV, hf⟩, h⟩
-    exact ⟨p, V, hV.tidy, fun a => by rw [h a, hf a, acceptCount_pos_iff]⟩
+    exact ⟨p, V, hV, fun a => by rw [h a, hf a, acceptCount_pos_iff]⟩
 
 namespace SharpP
 

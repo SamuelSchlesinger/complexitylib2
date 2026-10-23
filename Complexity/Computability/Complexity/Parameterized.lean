@@ -456,7 +456,7 @@ theorem FPT_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : FPT encA κ = P enc
   obtain ⟨g, ⟨f, c, hg⟩, hA⟩ :=
     mem_FPT_iff_computableTidilyInFPTTime.mp (FPT_subset_FPT_of_le_comp (κ' := fun _ => 0)
       (h := fun _ => K) hκ hA)
-  exact ⟨g, hg.computableTidilyInPolyTime (.of_forall_le (f 0) c fun _ => le_rfl)
+  exact ⟨g, .of_tidy <| hg.computableTidilyInPolyTime (.of_forall_le (f 0) c fun _ => le_rfl)
     (.of_forall_le (f 0) c fun _ => le_rfl), hA⟩
 
 /-- **Bounded parameters.** For a parameter bounded by a constant, `XP` is `P`. -/
@@ -465,7 +465,7 @@ theorem XP_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : XP encA κ = P encA 
   obtain ⟨g, f, e, hg, hA⟩ :=
     mem_XP_iff_exists_computableTidilyInO.mp (XP_subset_XP_of_le_comp (κ' := fun _ => 0)
       (h := fun _ => K) hκ hA)
-  exact ⟨g, hg.computableTidilyInPolyTime (.of_forall_le (f 0) (e 0) fun _ => le_rfl)
+  exact ⟨g, .of_tidy <| hg.computableTidilyInPolyTime (.of_forall_le (f 0) (e 0) fun _ => le_rfl)
     (.of_forall_le (f 0) (e 0) fun _ => le_rfl), hA⟩
 
 /-! ### Boolean closure -/

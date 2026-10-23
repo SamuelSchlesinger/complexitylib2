@@ -661,7 +661,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `DirHamPath` belongs to `NP`. -/
 theorem mem_NP : DirHamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨_, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end DirHamPath
 
@@ -693,7 +693,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `DirHamCycle` belongs to `NP`. -/
 theorem mem_NP : DirHamCycle ∈ NP encGraph :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨_, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end DirHamCycle
 
@@ -730,7 +730,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `HamPath` belongs to `NP`. -/
 theorem mem_NP : HamPath ∈ NP (encPair encGraph (encPair encNat encNat)) :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨_, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end HamPath
 
@@ -764,7 +764,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `HamCycle` belongs to `NP`. -/
 theorem mem_NP : HamCycle ∈ NP encGraph :=
-  ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨_, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end HamCycle
 

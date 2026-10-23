@@ -306,7 +306,7 @@ instance is mapped to the tableau circuit of a polynomial-time decider on inputs
 the encoded instance, with the encoded instance as its input. -/
 theorem logSpaceReducible_of_mem_P {α : Type} {enc : α ↪ List Bool} {A : Set α}
     (hA : A ∈ P enc) : LogSpaceReducible enc encCircuitValue A CircuitValue := by
-  obtain ⟨f, ⟨t, s, ht, -, k, State, hfin, tm, htm⟩, hAf⟩ := hA
+  obtain ⟨f, ⟨t, s, ht, -, k, State, hfin, tm, htm⟩, hAf⟩ := mem_P_iff_tidy.mp hA
   have := Fintype.ofFinite State
   classical
   obtain ⟨C, d, htle⟩ := ht.exists_le

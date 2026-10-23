@@ -575,13 +575,13 @@ end DirHamPath
 theorem polyTimeReducible_DirHamPath_HamPath :
     PolyTimeReducible (encPair encGraph (encPair encNat encNat))
       (encPair encGraph (encPair encNat encNat)) DirHamPath HamPath :=
-  ⟨DirHamPath.toHamPath, DirHamPath.computableTidilyInPolyTime_toHamPath,
+  ⟨DirHamPath.toHamPath, .of_tidy DirHamPath.computableTidilyInPolyTime_toHamPath,
     fun x => (DirHamPath.toHamPath_mem_iff x).symm⟩
 
 /-- `DirHamCycle` reduces to `HamCycle` in polynomial time via `Graph.split`. -/
 theorem polyTimeReducible_DirHamCycle_HamCycle :
     PolyTimeReducible encGraph encGraph DirHamCycle HamCycle :=
-  ⟨Graph.split, Graph.computableTidilyInPolyTime_split,
+  ⟨Graph.split, .of_tidy Graph.computableTidilyInPolyTime_split,
     fun G => (Graph.split_mem_HamCycle_iff G).symm⟩
 
 /-- `HamPath` is `NP`-hard. -/

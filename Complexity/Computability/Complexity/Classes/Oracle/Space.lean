@@ -134,7 +134,7 @@ theorem mem_PSPACE_of_isVerifier {p : Polynomial ℕ} {V : α × List Bool → B
     L ∈ PSPACE enc := by
   classical
   rcases isEmpty_or_nonempty α with hα | hα
-  · exact P_subset_PSPACE ⟨fun _ => false, ComputableTidilyInPolyTime.const false,
+  · exact P_subset_PSPACE ⟨fun _ => false, ComputableInPolyTime.const false,
       fun a => isEmptyElim a⟩
   let _ : Inhabited α := Classical.inhabited_of_nonempty hα
   obtain ⟨cS, dS, hS⟩ := hS.exists_le

@@ -66,7 +66,7 @@ example (A : Set (List Bool)) (hA : [true] ∉ A) :
 
 /-- A problem in `P`, here every word, is in `P` relative to every oracle. -/
 example (A : Set (List Bool)) : (Set.univ : Set (List Bool)) ∈ PWithOracle A encBits :=
-  P_subset_PWithOracle A encBits ⟨fun _ => true, ComputableTidilyInPolyTime.const true,
+  P_subset_PWithOracle A encBits ⟨fun _ => true, ComputableInPolyTime.const true,
     fun _ => by simp⟩
 
 /-- A deterministic computation is polynomial time relative to an oracle, with a certificate. -/
@@ -160,7 +160,7 @@ example : ∃ B : Set (List Bool), ∃ n, ¬(OracleComp.interpret (m := Id) (lan
 /-- An oracle in `PSPACE`: the empty language. `P` relative to it is within `PSPACE`. -/
 example : PWithOracle (∅ : Set (List Bool)) encBits ⊆ PSPACE encBits :=
   PWithOracle_subset_PSPACE (P_subset_PSPACE ⟨fun _ => false,
-    ComputableTidilyInPolyTime.const false, fun _ => by simp⟩)
+    ComputableInPolyTime.const false, fun _ => by simp⟩)
 
 /-- A token list with an unexpected token, one with a missing operand, and one whose constant
 carries a variable are not well formed; a negated constant and a quantified variable are. -/

@@ -464,6 +464,6 @@ theorem isVerifier : IsVerifier encBits Polynomial.X verifier SATH := by
 
 /-- **Ladner's language is in `NP`**, with the verifier evaluating the padded formula. -/
 theorem SATH_mem_NP : SATH ∈ NP encBits :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end Cslib.Complexity.Ladner

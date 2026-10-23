@@ -266,7 +266,7 @@ theorem isVerifier :
 
 /-- **`GraphIsomorphism ∈ NP`.** -/
 theorem mem_NP : GraphIsomorphism ∈ NP (encPair encGraph encGraph) :=
-  ⟨Polynomial.X ^ 2, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X ^ 2, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end GraphIsomorphism
 

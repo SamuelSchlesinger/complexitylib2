@@ -94,7 +94,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `Knapsack` belongs to `NP`. -/
 theorem mem_NP : Knapsack ∈ NP encKnapsack :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end Knapsack
 
@@ -130,7 +130,7 @@ end SubsetSum
 /-- `SubsetSum` reduces to `Knapsack` in polynomial time. -/
 theorem polyTimeReducible_SubsetSum_Knapsack :
     PolyTimeReducible (encPair (encList encNat) encNat) encKnapsack SubsetSum Knapsack :=
-  ⟨SubsetSum.toKnapsack, SubsetSum.computableTidilyInPolyTime_toKnapsack,
+  ⟨SubsetSum.toKnapsack, .of_tidy SubsetSum.computableTidilyInPolyTime_toKnapsack,
     fun x => (SubsetSum.toKnapsack_mem_iff x).symm⟩
 
 /-- `Knapsack` is `NP`-hard. -/

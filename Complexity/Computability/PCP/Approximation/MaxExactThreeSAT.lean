@@ -155,7 +155,7 @@ open GapExactThreeSAT
 soundness `1 / 2 ≤ s < 1`, by `GapExactThreeSAT.reduce`. -/
 theorem polyTimeReducible_GapThreeSAT_GapExactThreeSAT (hs : 1 / 2 ≤ s) (hs1 : s < 1) :
     PromiseProblem.PolyTimeReducible encCNF encCNF (GapThreeSAT s) (GapExactThreeSAT s) := by
-  refine ⟨reduce, computableTidilyInPolyTime_reduce, fun φ hφ => ?_, fun φ hφ => ?_⟩
+  refine ⟨reduce, .of_tidy computableTidilyInPolyTime_reduce, fun φ hφ => ?_, fun φ hφ => ?_⟩
   · rw [yes_GapThreeSAT] at hφ
     rw [yes_GapExactThreeSAT]
     have hne : φ.any List.isEmpty = false := by

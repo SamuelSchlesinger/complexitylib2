@@ -201,7 +201,8 @@ theorem computableTidilyInPolyTime_verifier :
   exact Graph.computableTidilyInPolyTime_verifyOrdering hV (binary_le' hlen hb)
 
 /-- `TSP` belongs to `NP`. -/
-theorem mem_NP : TSP ∈ NP encTSP := ⟨_, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+theorem mem_NP : TSP ∈ NP encTSP :=
+  ⟨_, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end TSP
 
@@ -403,7 +404,7 @@ end HamCycle
 
 /-- `HamCycle` reduces to `TSP` in polynomial time via `HamCycle.toTSP`. -/
 theorem polyTimeReducible_HamCycle_TSP : PolyTimeReducible encGraph encTSP HamCycle TSP :=
-  ⟨HamCycle.toTSP, HamCycle.computableTidilyInPolyTime_toTSP,
+  ⟨HamCycle.toTSP, .of_tidy HamCycle.computableTidilyInPolyTime_toTSP,
     fun G => (HamCycle.toTSP_mem_iff G).symm⟩
 
 /-- `TSP` is `NP`-hard. -/

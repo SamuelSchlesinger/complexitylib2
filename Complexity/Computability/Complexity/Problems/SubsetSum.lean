@@ -143,7 +143,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `SubsetSum` belongs to `NP`. -/
 theorem mem_NP : SubsetSum ∈ NP (encPair (encList encNat) encNat) :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end SubsetSum
 
@@ -668,7 +668,7 @@ end ThreeSAT
 /-- `ThreeSAT` reduces to `SubsetSum` in polynomial time by Sipser's digit construction. -/
 theorem polyTimeReducible_ThreeSAT_SubsetSum :
     PolyTimeReducible encCNF (encPair (encList encNat) encNat) ThreeSAT SubsetSum :=
-  ⟨ThreeSAT.toSubsetSum, ThreeSAT.computableTidilyInPolyTime_toSubsetSum,
+  ⟨ThreeSAT.toSubsetSum, .of_tidy ThreeSAT.computableTidilyInPolyTime_toSubsetSum,
     fun φ => (ThreeSAT.toSubsetSum_mem_iff φ).symm⟩
 
 /-- `SubsetSum` is `NP`-hard. -/

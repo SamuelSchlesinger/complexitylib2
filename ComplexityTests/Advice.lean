@@ -41,12 +41,12 @@ example (r : BitString 1) (x : BitString 2) :
 private theorem top_mem_advice : (⊤ : Language Bool) ∈ PAdvice := by
   refine ⟨fun _ => [], (by change PolynomiallyBounded fun _ : ℕ => 0; fun_prop),
     Set.univ, ?_, fun _ => Iff.rfl⟩
-  exact ⟨fun _ => true, ComputableTidilyInPolyTime.const _, fun _ => by simp⟩
+  exact ⟨fun _ => true, ComputableInPolyTime.const _, fun _ => by simp⟩
 
 private theorem zero_mem_advice : (0 : Language Bool) ∈ PAdvice := by
   refine ⟨fun _ => [true], (by change PolynomiallyBounded fun _ : ℕ => 1; fun_prop),
     ∅, ?_, fun _ => Iff.rfl⟩
-  exact ⟨fun _ => false, ComputableTidilyInPolyTime.const _, fun _ => by simp⟩
+  exact ⟨fun _ => false, ComputableInPolyTime.const _, fun _ => by simp⟩
 
 example : (⊤ : Language Bool) ∈ PPoly := PAdvice_subset_PPoly top_mem_advice
 example : (0 : Language Bool) ∈ PPoly := PAdvice_subset_PPoly zero_mem_advice

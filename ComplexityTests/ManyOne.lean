@@ -24,17 +24,17 @@ variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {A :
 
 /-! ### Polynomial-time reductions keep their `∃` form -/
 
-example (f : α → β) (hf : ComputableTidilyInPolyTime f encA encB) (h : ∀ a, a ∈ A ↔ f a ∈ B) :
+example (f : α → β) (hf : ComputableInPolyTime f encA encB) (h : ∀ a, a ∈ A ↔ f a ∈ B) :
     PolyTimeReducible encA encB A B :=
   ⟨f, hf, h⟩
 
 example (h : PolyTimeReducible encA encB A B) :
-    ∃ f : α → β, ComputableTidilyInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B := by
+    ∃ f : α → β, ComputableInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B := by
   obtain ⟨f, hf, hAB⟩ := h
   exact ⟨f, hf, hAB⟩
 
 example : PolyTimeReducible encA encB A B ↔
-    ∃ f : α → β, ComputableTidilyInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B :=
+    ∃ f : α → β, ComputableInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B :=
   Iff.rfl
 
 example : PolyTimeHard 𝒞 encB B ↔
@@ -62,14 +62,14 @@ example (hB : PolyTimeHard 𝒞 encB B) (hA : A ∈ 𝒞 encA) (hBP : B ∈ P en
 
 /-- A hardness proof by introduction and an anonymous constructor. -/
 example (h : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒞 enc →
-    ∃ f : α → β, ComputableTidilyInPolyTime f enc encB ∧ ∀ a, a ∈ A ↔ f a ∈ B) :
+    ∃ f : α → β, ComputableInPolyTime f enc encB ∧ ∀ a, a ∈ A ↔ f a ∈ B) :
     PolyTimeHard 𝒞 encB B := by
   intro α enc A hA
   obtain ⟨f, hf, hAB⟩ := h enc A hA
   exact ⟨f, hf, hAB⟩
 
 /-- Regression test: the admissibility goal of an anonymous constructor is
-`ComputableTidilyInPolyTime f encA encB` itself, not a beta-redex, so `fun_prop` proves it with no
+`ComputableInPolyTime f encA encB` itself, not a beta-redex, so `fun_prop` proves it with no
 `beta_reduce`. -/
 example : PolyTimeReducible encBits encBits {w : List Bool | w.tail.headD false = true}
     {w | w.headD false = true} :=
@@ -77,7 +77,7 @@ example : PolyTimeReducible encBits encBits {w : List Bool | w.tail.headD false 
 
 example : PolyTimeReducible encBits encBits {w : List Bool | w.tail.headD false = true}
     {w | w.headD false = true} :=
-  ⟨List.tail, by guard_target =ₛ ComputableTidilyInPolyTime List.tail encBits encBits; fun_prop,
+  ⟨List.tail, by guard_target =ₛ ComputableInPolyTime List.tail encBits encBits; fun_prop,
     fun _ => Iff.rfl⟩
 
 /-! ### Logspace reductions keep their `∃` form -/
@@ -110,7 +110,7 @@ example : LogSpaceComplete 𝒞 encB B ↔ B ∈ 𝒞 encB ∧ LogSpaceHard 𝒞
 
 /-- Both reducibilities are many-one reducibility by their class of maps. -/
 example : PolyTimeReducible encA encB A B ↔
-    ManyOneReducibleBy (ComputableTidilyInPolyTime · encA encB) A B :=
+    ManyOneReducibleBy (ComputableInPolyTime · encA encB) A B :=
   polyTimeReducible_iff_manyOneReducibleBy
 
 example : LogSpaceReducible encA encB A B ↔
@@ -125,7 +125,7 @@ example : LogSpaceReducible encA encA A A :=
 /-- A core reduction by polynomial-time maps is a polynomial-time reduction through the bridge. -/
 example : PolyTimeReducible encA encA A A :=
   polyTimeReducible_iff_manyOneReducibleBy.mpr
-    (ManyOneReducibleBy.refl ComputableTidilyInPolyTime.id' A)
+    (ManyOneReducibleBy.refl ComputableInPolyTime.id' A)
 
 /-- Completeness under logspace reductions is `CompleteUnder` for `LogSpaceReducible`. -/
 example (h : LogSpaceComplete 𝒞 encB B) :

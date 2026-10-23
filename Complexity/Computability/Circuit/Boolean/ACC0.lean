@@ -105,7 +105,7 @@ theorem foldl_bne_eq_parity (w : List Bool) :
 /-- **Parity is in `P`** (`Language.ofSlices parity ∈ P encBits`). -/
 theorem parity_mem_P : (Language.ofSlices parity : Set (List Bool)) ∈ P encBits := by
   refine ⟨fun w => w.foldl bne false, ?_, fun w => ?_⟩
-  · exact ComputableTidilyInPolyTime.bitsFoldlWithInput bne
+  · exact .of_tidy <| ComputableTidilyInPolyTime.bitsFoldlWithInput bne
       ComputableTidilyInPolyTime.id' (ComputableTidilyInPolyTime.const false)
   · change w ∈ (Language.ofSlices parity : Language Bool) ↔ w.foldl bne false = true
     rw [Language.mem_ofSlices, foldl_bne_eq_parity]

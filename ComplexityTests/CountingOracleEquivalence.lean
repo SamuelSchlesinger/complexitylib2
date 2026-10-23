@@ -26,7 +26,7 @@ example : (2 * 1 + (2 ^ 1 - 1)).testBit 2 = false ∧
     (2 * 2 + (2 ^ 1 - 1)).testBit 2 = true := by decide
 
 private theorem true_mem_PP : {b : Bool | b = true} ∈ PP encBool :=
-  BPP_subset_PP (P_subset_BPP ⟨id, ComputableTidilyInPolyTime.id', fun _ => Iff.rfl⟩)
+  BPP_subset_PP (P_subset_BPP ⟨id, ComputableInPolyTime.id', fun _ => Iff.rfl⟩)
 
 -- The input hypothesis has a satisfiable, nonconstant instance.
 example : ∃ f ∈ SharpP encBool, ∃ q : Polynomial ℕ,

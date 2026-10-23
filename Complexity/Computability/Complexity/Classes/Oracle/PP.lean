@@ -113,7 +113,7 @@ theorem P_subset_PWithPPOracle : P enc ⊆ PWithPPOracle enc := by
   rintro L ⟨g, hg, hL⟩
   have hempty : (∅ : Set α) ∈ PP enc :=
     BPP_subset_PP (P_subset_BPP ⟨fun _ => false, .const false, fun _ => by simp⟩)
-  exact ⟨α, enc, ∅, hempty, fun a => pure (g a), hg.isOraclePPTOn, fun _ _ a => hL a⟩
+  exact ⟨α, enc, ∅, hempty, fun a => pure (g a), hg.tidy.isOraclePPTOn, fun _ _ a => hL a⟩
 
 /-- **`PP ⊆ P^PP`**: the program asks the oracle about its instance, with one query. -/
 theorem PP_subset_PWithPPOracle : PP enc ⊆ PWithPPOracle enc := by

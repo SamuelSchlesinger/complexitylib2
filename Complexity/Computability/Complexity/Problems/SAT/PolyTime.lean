@@ -117,7 +117,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- Satisfiability is in NP, with certificates of length equal to the encoded formula length. -/
 theorem mem_NP : SAT ∈ NP encCNF :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end SAT
 

@@ -25,7 +25,7 @@ private theorem head_mem_P : {w : List Bool | w.headD false = true} ∈ P encBit
   ⟨fun w => w.headD false, by fun_prop, fun _ => Iff.rfl⟩
 
 private theorem tail_mem_P : {w : List Bool | w.tail.headD false = true} ∈ P encBits :=
-  ⟨fun w => w.tail.headD false, by fun_prop, fun _ => Iff.rfl⟩
+  ⟨fun w => w.tail.headD false, .of_tidy (by fun_prop), fun _ => Iff.rfl⟩
 
 example : {w : List Bool | w.headD false = true} ∩ {w | w.tail.headD false = true} ∈ P encBits :=
   inter_mem_P head_mem_P tail_mem_P

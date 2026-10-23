@@ -64,7 +64,8 @@ def language : Set (List Bool) :=
   {w | combine (w, truthTableAnswers (query ⁻¹' headTrue) count w) = true}
 
 theorem reduction : PolyTimeTruthTableReducible encBits encBits language headTrue :=
-  ⟨count, query, combine, polyTime_count, polyTime_query, polyTime_combine, fun _ => Iff.rfl⟩
+  ⟨count, query, combine, .of_tidy polyTime_count, .of_tidy polyTime_query,
+    .of_tidy polyTime_combine, fun _ => Iff.rfl⟩
 
 example : language ∈ PP encBits := reduction.mem_PP headTrue_mem_PP
 
@@ -82,7 +83,7 @@ example : PolyTimeTruthTableReducible encBits encBits headTrue headTrue :=
   PolyTimeTruthTableReducible.refl encBits headTrue
 
 theorem joint_mem_PP : query ⁻¹' headTrue ∈ PP (encPair encBits encUnary) :=
-  PolyTimeReducible.mem_PP ⟨query, polyTime_query, fun _ => Iff.rfl⟩ headTrue_mem_PP
+  PolyTimeReducible.mem_PP ⟨query, .of_tidy polyTime_query, fun _ => Iff.rfl⟩ headTrue_mem_PP
 
 example : language ∈ PP encBits :=
   truthTable_mem_PP joint_mem_PP polyTime_count polyTime_combine

@@ -487,14 +487,14 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `IndependentSet` belongs to `NP`. -/
 theorem mem_NP : IndependentSet ∈ NP (encPair encGraph encNat) :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end IndependentSet
 
 /-- `SAT` reduces to `IndependentSet` in polynomial time via `SAT.toIndependentSet`. -/
 theorem polyTimeReducible_SAT_IndependentSet :
     PolyTimeReducible encCNF (encPair encGraph encNat) SAT IndependentSet :=
-  ⟨SAT.toIndependentSet, SAT.computableTidilyInPolyTime_toIndependentSet,
+  ⟨SAT.toIndependentSet, .of_tidy SAT.computableTidilyInPolyTime_toIndependentSet,
     fun φ => (SAT.toIndependentSet_mem_iff φ).symm⟩
 
 /-- `IndependentSet` is `NP`-hard. -/

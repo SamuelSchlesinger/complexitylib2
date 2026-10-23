@@ -33,10 +33,10 @@ example (q : Bool) (P Q : List Bool → Prop) :
   alternation_splitAlternatingBlocks [(1, 2), (0, 1), (2, 0)] q P Q
 
 private theorem true_in_P : ({true} : Set Bool) ∈ P encBool :=
-  ⟨id, ComputableTidilyInPolyTime.id', fun _ => Iff.rfl⟩
+  ⟨id, ComputableInPolyTime.id', fun _ => Iff.rfl⟩
 
 private theorem false_in_P : ({false} : Set Bool) ∈ P encBool :=
-  ⟨Bool.not, ComputableTidilyInPolyTime.bool_not, fun b => by cases b <;> simp⟩
+  ⟨Bool.not, .of_tidy ComputableTidilyInPolyTime.bool_not, fun b => by cases b <;> simp⟩
 
 example : ({true} ∪ {false} : Set Bool) ∈ SigmaP 0 encBool :=
   union_mem_SigmaP (P_subset_SigmaP_zero true_in_P) (P_subset_SigmaP_zero false_in_P)

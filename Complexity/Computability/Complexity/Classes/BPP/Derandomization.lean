@@ -156,7 +156,7 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {c : ℕ}
   set block : α → ℕ := fun x => c * (4 * t (enc x).length) with hblock
   set overlap : α → ℕ := fun x => t (enc x).length - 1 with hoverlap
   set out : α → ℕ := fun x => p.eval (enc x).length with hout
-  refine ⟨nwDecider V g seed block overlap out, ?_, fun x => ?_⟩
+  refine ⟨nwDecider V g seed block overlap out, .of_tidy ?_, fun x => ?_⟩
   · -- polynomial time
     have hlog : ComputableTidilyInPolyTime (fun x => t (enc x).length) enc encUnary := by
       simp only [ht]

@@ -157,7 +157,7 @@ private theorem two_mul_two_pow_le_card_filter_of_eq_zero {m : ℕ} (hm : m = 0)
 /-- **`NP ⊆ MA`**: an `NP` verifier is a Merlin–Arthur verifier that flips no coins. -/
 theorem NP_subset_MA : NP enc ⊆ MA enc := by
   rintro A ⟨p, V, hV, hA⟩
-  refine ⟨p, 0, V, .of_tidy hV, fun a => ⟨fun ha => ?_, fun ha y => ?_⟩⟩
+  refine ⟨p, 0, V, hV, fun a => ⟨fun ha => ?_, fun ha y => ?_⟩⟩
   · obtain ⟨w, hw, hVw⟩ := (hA a).1 ha
     refine ⟨BitString.ofList _ w, two_mul_two_pow_le_card_filter_of_eq_zero
       (Polynomial.eval_zero) _ fun r => ?_⟩
@@ -230,7 +230,7 @@ theorem PolyTimeReducible.mem_MA {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ MA encB) : A ∈ MA enc := by
   obtain ⟨f, hf, hAB⟩ := h
   obtain ⟨q, p, V, hV, hVB⟩ := hB
-  obtain ⟨Q, P, V', hV', hQe, hPe, hsplit⟩ := exists_truncated_verifier hf q p hV.tidy
+  obtain ⟨Q, P, V', hV', hQe, hPe, hsplit⟩ := exists_truncated_verifier hf.tidy q p hV.tidy
   refine ⟨Q, P, V', .of_tidy hV', fun a => ?_⟩
   simp only [hsplit]
   constructor
@@ -254,7 +254,7 @@ theorem PolyTimeReducible.mem_AM {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ AM encB) : A ∈ AM enc := by
   obtain ⟨f, hf, hAB⟩ := h
   obtain ⟨p, q, V, hV, hVB⟩ := hB
-  obtain ⟨P, Q, V', hV', hPe, hQe, hsplit⟩ := exists_truncated_verifier hf p q hV.tidy
+  obtain ⟨P, Q, V', hV', hPe, hQe, hsplit⟩ := exists_truncated_verifier hf.tidy p q hV.tidy
   refine ⟨P, Q, V', .of_tidy hV', fun a => ?_⟩
   have hex (r : Fin (P.eval (enc a).length) → Bool) :
       (∃ y : Fin (Q.eval (enc a).length) → Bool, V (f a, (List.ofFn r).take

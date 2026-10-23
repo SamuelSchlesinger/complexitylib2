@@ -20,11 +20,11 @@ open Cslib Cslib.Complexity Turing Turing.MultiTapeTM
 /-! ### Inhabitants -/
 
 example : (∅ : Set (List Bool)) ∈ PSPACE encBits :=
-  P_subset_PSPACE ⟨fun _ => false, ComputableTidilyInPolyTime.const false, fun _ => by simp⟩
+  P_subset_PSPACE ⟨fun _ => false, ComputableInPolyTime.const false, fun _ => by simp⟩
 
 example : (Set.univ : Set (List Bool)) ∈ NPSPACE encBits :=
   PSPACE_subset_NPSPACE (P_subset_PSPACE
-    ⟨fun _ => true, ComputableTidilyInPolyTime.const true, fun _ => by simp⟩)
+    ⟨fun _ => true, ComputableInPolyTime.const true, fun _ => by simp⟩)
 
 /-! ### A branch running forever -/
 

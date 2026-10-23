@@ -135,20 +135,21 @@ theorem ComputableInPolyTimeWithOracle.computableTidilyInPolyTime {f : α → β
   subst hg'
   obtain ⟨program, hcert, hprogram⟩ := hf
   obtain ⟨k, m, machine, c, d, hrun⟩ := hcert.exists_fin_run_pure_false
-  refine (machine.computableTidilyInPolyTime_run (input := enc) hg c d).of_enc_eq fun a => ?_
+  refine (machine.computableTidilyInPolyTime_run (input := enc) hg.tidy c d).of_enc_eq fun a => ?_
   rw [← hprogram a, ← hrun a (languageOracle A)]
   rfl
 
 /-- **`P` relative to an oracle in `P` is `P`.** -/
 theorem PWithOracle_eq_P (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
     PWithOracle A enc = P enc :=
-  Set.Subset.antisymm (fun _ ⟨f, hf, hL⟩ => ⟨f, hf.computableTidilyInPolyTime hA, hL⟩)
+  Set.Subset.antisymm (fun _ ⟨f, hf, hL⟩ => ⟨f, .of_tidy (hf.computableTidilyInPolyTime hA), hL⟩)
     (P_subset_PWithOracle A enc)
 
 /-- **`NP` relative to an oracle in `P` is `NP`.** -/
 theorem NPWithOracle_eq_NP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
     NPWithOracle A enc = NP enc :=
-  Set.Subset.antisymm (fun _ ⟨p, V, hV, hL⟩ => ⟨p, V, hV.computableTidilyInPolyTime hA, hL⟩)
+  Set.Subset.antisymm
+    (fun _ ⟨p, V, hV, hL⟩ => ⟨p, V, .of_tidy (hV.computableTidilyInPolyTime hA), hL⟩)
     (NP_subset_NPWithOracle A enc)
 
 end Cslib.Complexity

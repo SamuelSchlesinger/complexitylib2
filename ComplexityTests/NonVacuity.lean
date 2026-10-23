@@ -79,16 +79,16 @@ theorem polyTime_const {α : Type} (enc : α ↪ List Bool) (b : Bool) :
     0, Unit, inferInstance, constTM b, fun a => computesTidily_constTM b (enc a)⟩
 
 example : (∅ : Set (List Bool)) ∈ Cslib.Complexity.P encBits :=
-  ⟨fun _ => false, polyTime_const _ false, fun _ => by simp⟩
+  ⟨fun _ => false, .const false, fun _ => by simp⟩
 
 example : (Set.univ : Set (List Bool)) ∈ Cslib.Complexity.P encBits :=
-  ⟨fun _ => true, polyTime_const _ true, fun _ => by simp⟩
+  ⟨fun _ => true, .const true, fun _ => by simp⟩
 
 example : (∅ : Set (List Bool)) ∈ NP encBits :=
-  ⟨0, fun _ => false, polyTime_const _ false, fun _ => by simp⟩
+  ⟨0, fun _ => false, .const false, fun _ => by simp⟩
 
 example : (Set.univ : Set (List Bool)) ∈ NP encBits :=
-  ⟨0, fun _ => true, polyTime_const _ true, fun _ => by simp⟩
+  ⟨0, fun _ => true, .const true, fun _ => by simp⟩
 
 example : (∅ : Set (List Bool)) ∈ BPP encBits :=
   ⟨0, fun _ => false, .const false, fun _ => ⟨fun h => h.elim, fun _ => by
@@ -102,7 +102,7 @@ example : (∅ : Set (List Bool)) ∈ RP encBits :=
 
 /-- `P ⊆ P/poly` applies to a language in `P`. -/
 example : (⊤ : Language Bool) ∈ PPoly :=
-  PPoly.of_mem_P ⟨fun _ => true, polyTime_const _ true, fun _ => ⟨fun _ => rfl, fun _ => trivial⟩⟩
+  PPoly.of_mem_P ⟨fun _ => true, .const true, fun _ => ⟨fun _ => rfl, fun _ => trivial⟩⟩
 
 /-- `BPP ⊆ P/poly` applies to a language in `BPP`. -/
 example : (⊥ : Language Bool) ∈ PPoly :=

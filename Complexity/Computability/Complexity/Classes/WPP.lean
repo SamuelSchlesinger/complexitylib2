@@ -203,7 +203,7 @@ theorem PolyTimeReducible.mem_WPP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ WPP encB) : A ∈ WPP enc := by
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨g, hg, f, hf, hn, hgr, hB⟩ := hB
-  exact ⟨g ∘ r, GapP.comp_mem hg hr, f ∘ r, .of_tidy (hf.tidy.comp hr), fun a => hn _,
+  exact ⟨g ∘ r, GapP.comp_mem hg hr.tidy, f ∘ r, hf.comp hr, fun a => hn _,
     fun a => hgr _, fun a => (hAB a).trans (hB _)⟩
 
 /-- The complementary gap uses the same length-dependent target. -/
@@ -424,7 +424,7 @@ theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α �
 index `k a = |r(a)|`, which `mem_LWPP_of_polyTime_index` normalizes to a function of `|a|`. -/
 theorem PolyTimeReducible.mem_LWPP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ LWPP encB) : A ∈ LWPP enc := by
-  obtain ⟨r, hr, hAB⟩ := h
+  obtain ⟨r, hr, hAB⟩ := polyTimeReducible_iff_tidy.mp h
   obtain ⟨g, hg, f, hf, hn, hgr, hB⟩ := hB
   exact mem_LWPP_of_polyTime_index (GapP.comp_mem hg hr) hf.tidy hn
     ((ComputableTidilyInPolyTime.encoding_length encB).comp hr)

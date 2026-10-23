@@ -16,9 +16,9 @@ import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 # The Cook–Levin theorem
 
 The complete tableau reduction is correct and polynomial-time. Together with the certified SAT
-verifier, this proves that SAT is NP-complete under the library's tidy polynomial-time many-one
-reductions. Complementation gives coNP-completeness of UNSAT. No reduction-efficiency hypothesis
-remains in these statements.
+verifier, this proves that SAT is NP-complete under polynomial-time many-one reductions.
+Complementation gives coNP-completeness of UNSAT. No reduction-efficiency hypothesis remains in
+these statements.
 
 ## Main results
 
@@ -40,11 +40,12 @@ open Turing Turing.MultiTapeTM Cslib.Logic.PL
 
 /-- Every NP problem reduces to SAT in polynomial time through its verifier's tableau. -/
 theorem SAT_npHard : NPHard encCNF SAT := by
-  rintro α enc A ⟨p, V, ⟨t, s, ht, -, k, State, hfin, tm, htm⟩, hV⟩
+  intro α enc A hA
+  obtain ⟨p, V, ⟨t, s, ht, -, k, State, hfin, tm, htm⟩, hV⟩ := mem_NP_iff_tidy.mp hA
   obtain ⟨c, d, ht⟩ := ht.exists_le
   have := Fintype.ofFinite State
   classical
-  refine ⟨reduce tm p c d enc, computableTidilyInPolyTime_reduce tm p c d enc, fun a =>
+  refine ⟨reduce tm p c d enc, .of_tidy (computableTidilyInPolyTime_reduce tm p c d enc), fun a =>
     (reduce_mem_SAT_iff_of_computesTidily (s := s) hV ?_ a).symm⟩
   exact htm.mono (fun x => ht x) (fun _ => le_rfl)
 

@@ -624,7 +624,7 @@ open GeneralizedGeography Turing.MultiTapeTM
 [LichtensteinSipser1980]. -/
 theorem polyTimeReducible_TQBFCNF_GeneralizedGeography :
     PolyTimeReducible encPrenexCNF (encPair encGraph encNat) TQBFCNF GeneralizedGeography :=
-  ⟨reduce, computableTidilyInPolyTime_reduce, fun x => (reduce_mem_iff x).symm⟩
+  ⟨reduce, .of_tidy computableTidilyInPolyTime_reduce, fun x => (reduce_mem_iff x).symm⟩
 
 /-- **Generalized Geography is `PSPACE`-hard** [Sipser, Theorem 8.14][Sipser2013]
 [LichtensteinSipser1980]. -/

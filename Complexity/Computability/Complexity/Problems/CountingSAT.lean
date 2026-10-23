@@ -200,7 +200,7 @@ theorem SharpSATAtLeast_ppComplete :
   · obtain ⟨f, hf, q, hA⟩ := mem_PP_iff_exists_SharpP.1 hA
     obtain ⟨r, hr, hfr⟩ := CookLevin.SharpSAT_sharpPHard enc _ (SharpP.add_mem hf hf)
     refine ⟨fun a => (r a, 2 ^ q.eval (enc a).length + 1),
-      hr.prod (computableTidilyInPolyTime_two_pow_add enc q 1), fun a => ?_⟩
+      hr.prod (.of_tidy (computableTidilyInPolyTime_two_pow_add enc q 1)), fun a => ?_⟩
     have := hfr a
     simp only [Pi.add_apply] at this
     simp only [SharpSATAtLeast, Set.mem_ofPred_eq, hA a, ← this]
@@ -216,7 +216,8 @@ theorem SharpSATExact_ceqPComplete :
   obtain ⟨p, hle, hsub⟩ := SharpP.exists_two_pow_sub_mem hf₂
   obtain ⟨r, hr, hfr⟩ := CookLevin.SharpSAT_sharpPHard enc _ (SharpP.add_mem hf₁ hsub)
   refine ⟨fun a => (r a, 2 ^ p.eval (enc a).length),
-    by simpa using hr.prod (computableTidilyInPolyTime_two_pow_add enc p 0), fun a => ?_⟩
+    by simpa using hr.prod (.of_tidy (computableTidilyInPolyTime_two_pow_add enc p 0)),
+    fun a => ?_⟩
   have h₁ := hfr a
   have h₂ := hle a
   simp only [Pi.add_apply] at h₁
@@ -529,7 +530,7 @@ theorem MAJSAT_ppHard : PolyTimeHard PP encCNF MAJSAT := by
     (ComputableTidilyInPolyTime.unary_eval q).comp
       (ComputableTidilyInPolyTime.encoding_length enc)
   refine ⟨fun a => padMajority (r a) (q.eval (enc a).length),
-    computableTidilyInPolyTime_padMajority.comp (hr.prod hq), fun a => ?_⟩
+    .of_tidy (computableTidilyInPolyTime_padMajority.comp (hr.tidy.prod hq)), fun a => ?_⟩
   have h := hfr a
   simp only [Pi.add_apply] at h
   rw [hA a, padMajority_mem_MAJSAT_iff, ← h]

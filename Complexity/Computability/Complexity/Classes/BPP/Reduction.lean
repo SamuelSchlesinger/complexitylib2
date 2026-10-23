@@ -48,7 +48,7 @@ variable {α β : Type} {enc : α ↪ List Bool} {encB : β ↪ List Bool} {A : 
 theorem PolyTimeReducible.mem_BPP (h : PolyTimeReducible enc encB A B) (hB : B ∈ BPP encB) :
     A ∈ BPP enc := by
   rw [mem_BPP_iff_tidy] at hB ⊢
-  obtain ⟨g, hg, hAB⟩ := h
+  obtain ⟨g, hg, hAB⟩ := polyTimeReducible_iff_tidy.mp h
   obtain ⟨q, W, hW, hWB⟩ := hB
   have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (g a)).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval q).comp

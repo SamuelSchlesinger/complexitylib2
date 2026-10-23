@@ -108,8 +108,8 @@ private theorem emptyRel_searchReducible_emptyRel :
 solution is `[true]`, and every solution back to the empty word. -/
 private theorem emptyRel_searchReducible_copyRel :
     SearchReducible encBits encBits emptyRel copyRel :=
-  ⟨fun _ => [true], fun _ => [], ComputableTidilyInPolyTime.const _,
-    ComputableTidilyInPolyTime.const _, fun _ _ => ⟨[true], rfl, rfl⟩, fun _ _ _ => rfl⟩
+  ⟨fun _ => [true], fun _ => [], ComputableInPolyTime.const _,
+    ComputableInPolyTime.const _, fun _ _ => ⟨[true], rfl, rfl⟩, fun _ _ _ => rfl⟩
 
 example : SearchReducible encBits encBits emptyRel copyRel :=
   emptyRel_searchReducible_emptyRel.trans emptyRel_searchReducible_copyRel

@@ -147,7 +147,7 @@ example (m : ℕ) (hm : 0 < m) : ∃ f ∈ SharpP encBits, ∃ k : List Bool →
 
 example : {w : List Bool | w.headD false = true} ∩ {w | w.tail.headD false = true} ∈
     SBP encBits := inter_mem_SBP_of_mem_BPP head_mem_SBP
-      (P_subset_BPP ⟨fun w => w.tail.headD false, by fun_prop, fun _ => Iff.rfl⟩)
+      (P_subset_BPP ⟨fun w => w.tail.headD false, .of_tidy (by fun_prop), fun _ => Iff.rfl⟩)
 
 example : (Set.univ : Set (List Bool)) ∩ {w | w.headD false = true} ∈ SBP encBits :=
   inter_mem_SBP_of_mem_BPP univ_mem_SBP_zero (P_subset_BPP head_mem_P)

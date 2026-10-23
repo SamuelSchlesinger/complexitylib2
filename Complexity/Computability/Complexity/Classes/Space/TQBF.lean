@@ -76,8 +76,8 @@ theorem TQBF_pspaceHard : PSPACEHard encQBF TQBF := by
   obtain ⟨cV, dV, htV⟩ := htV.exists_le
   have := Fintype.ofFinite StateV
   classical
-  refine ⟨TQBF.reduce enc ntm c d tmV cV dV, TQBF.computableTidilyInPolyTime_reduce tmV cV dV,
-    fun a => ?_⟩
+  refine ⟨TQBF.reduce enc ntm c d tmV cV dV,
+    .of_tidy (TQBF.computableTidilyInPolyTime_reduce tmV cV dV), fun a => ?_⟩
   rw [TQBF.reduce_mem_TQBF_iff (htmV.mono htV fun _ => le_rfl) (hA.recognizesInSpace a).1
     (hcd a)]
   exact (hA.recognizesInSpace a).2

@@ -190,7 +190,7 @@ example {α : Type} (enc : α ↪ List Bool) (A : Set α) (hA : A ∈ NPSPACE en
 
 example : PolyTimeReducible encBits encQBF (∅ : Set (List Bool)) TQBF :=
   TQBF_pspaceHard encBits ∅
-    (P_subset_PSPACE ⟨fun _ => false, ComputableTidilyInPolyTime.const false, fun _ => by simp⟩)
+    (P_subset_PSPACE ⟨fun _ => false, .const false, fun _ => by simp⟩)
 
 /-- `PSPACE`-hardness of `TQBF` transfers to every problem `TQBF` reduces to, `TQBF` itself
 included. -/
