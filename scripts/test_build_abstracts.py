@@ -40,7 +40,7 @@ class BuildAbstractsTests(unittest.TestCase):
         source.write_text(SOURCE)
         scripts = self.root / "scripts"
         scripts.mkdir()
-        for name in ("build_abstracts.py", "abstract_to_tex.py"):
+        for name in ("build_abstracts.py", "abstract_to_tex.py", "proof_lengths.py"):
             shutil.copyfile(Path(build.__file__).with_name(name), scripts / name)
         self.entry = {"id": "example", "title": "An example", "summary": "The selected result.",
                       "scope": "No algorithmic claim.",
@@ -90,6 +90,18 @@ class BuildAbstractsTests(unittest.TestCase):
         source = build.module_source_path(self.entry["module"], self.root)
         source.write_text("def quote := '\"'\n" + SOURCE)
         self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+
+    def test_primed_identifiers_are_not_character_literals(self):
+        self.assertEqual(build.declaration_line(
+            "namespace Example\ntheorem lemma'a' : True := by trivial\nend Example\n",
+            "Example.lemma'a'"), 2)
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace("theorem chosen :", "theorem chosen'a' :")
+                          .replace("rfl\n", "rfl\n\ndef quote := 'q'\n", 1))
+        entry = {**self.entry,
+                 "headline_theorems": ["ComplexityTests.Abstracts.ExampleAbstract.chosen'a'"]}
+        self.write_manifest([entry])
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [entry])
 
     def test_comment_and_string_namespace_spoofs_are_rejected(self):
         namespace = self.entry["namespace"]

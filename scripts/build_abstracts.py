@@ -13,6 +13,7 @@ from urllib.parse import quote
 import xml.etree.ElementTree as ET
 
 import abstract_to_tex as render
+from proof_lengths import CHAR_LITERAL
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -94,8 +95,9 @@ def _lean_code(text):
         elif text.startswith("--", index):
             end = text.find("\n", index)
             width = (len(text) if end < 0 else end) - index
-        elif text[index] == "'" and (literal := re.match(r"'(?:\\.|[^'\\\n])'", text[index:])):
-            width = len(literal.group())
+        # A quote directly after an identifier character is part of the name (`lemma'`).
+        elif text[index] == "'" and (literal := CHAR_LITERAL.match(text, index)):
+            width = literal.end() - index
         elif text[index] == '"' or (text[index] == "r" and re.match(r'r#+"', text[index:])):
             raw = re.match(r'r(#+)"', text[index:])
             if raw:
