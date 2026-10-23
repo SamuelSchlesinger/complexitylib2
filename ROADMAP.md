@@ -253,6 +253,88 @@ existing developments, source credit and saved branches remain available for a f
     Õ(n/α). The noise distribution, modulus restrictions and quantum reduction are part of the
     theorem.
 
+## Modern FHE methods and deployment priorities
+
+The planning update is tracked in
+[#513](https://github.com/cslib-community/complexitylib/issues/513). The targets below remain
+unimplemented; the generic Gentry theorem and current GSW development do not establish them.
+First complete [#486](https://github.com/cslib-community/complexitylib/issues/486): actual GSW
+algorithms, the exact chosen-noise decision-LWE reduction, admissible parameters, and shallow
+augmented decryption connected to the leveled/fixed-key endpoints. The current native
+key-generation/encryption and security milestones are
+[#500](https://github.com/cslib-community/complexitylib/issues/500) and
+[#501](https://github.com/cslib-community/complexitylib/issues/501); completing them still leaves
+decryption/evaluation runtime and bootstrappability obligations.
+
+**Industrial context, checked 2026-10-23.** Current FHE libraries serve distinct workloads:
+
+| Workload | Methods and current implementation evidence |
+| --- | --- |
+| Exact modular arithmetic and packed integer computations | BFV/BGV are supported by [Microsoft SEAL](https://github.com/microsoft/SEAL) and [OpenFHE](https://github.com/openfheorg/openfhe-development). |
+| Approximate vector arithmetic, including numerical inference | CKKS is supported by SEAL and OpenFHE; its numerical approximation is part of the result contract. |
+| Boolean/integer operations, comparisons and lookup tables | [TFHE-rs](https://docs.zama.org/tfhe-rs/get-started) implements TFHE with programmable bootstrapping; OpenFHE also implements FHEW/TFHE-family methods. |
+
+There is commercial use beyond library availability: [Duality states that its secure data
+collaboration platform is built with OpenFHE](https://dualitytech.com/platform/open-source/), and
+[Zama documents TFHE-rs execution in its confidential-blockchain coprocessors](https://docs.zama.org/protocol/protocol/overview/coprocessor).
+These are vendor descriptions, not market-share measurements or independent deployment audits.
+Bounded-depth arithmetic can use leveled evaluation without bootstrapping; a bootstrap is a
+separate algorithmic capability, not something every workload invokes.
+
+Develop the following in reviewable milestones, reusing existing finite sampling, gadget algebra,
+native certificates and game reductions where their hypotheses match:
+
+1. **Shared ring arithmetic and precise RLWE experiments.** Construct the actual polynomial-ring
+   operations, starting with `R_q = (Z/qZ)[X]/(X^d + 1)` for power-of-two `d`. Prove residue-number
+   (RNS/CRT) conversions, rounding and modulus-switching error bounds; prove that forward/inverse
+   negacyclic NTTs implement ring multiplication under explicit modulus/root conditions. Give
+   native certificates for the serialized algorithms, including malformed inputs. The
+   [Intel HEXL kernels](https://github.com/IntelLabs/hexl) provide a concrete implementation target.
+   Define the exact RLWE secret/error distributions and distinguishing experiment separately:
+   an ordinary-LWE reduction for #486 does not establish this RLWE claim.
+2. **FHEW/TFHE programmable bootstrapping.** Follow
+   [Ducas–Micciancio](https://eprint.iacr.org/2014/816) and
+   [Chillotti–Gama–Georgieva–Izabachène](https://eprint.iacr.org/2016/870), a close next use of the
+   GSW gadget work. Construct ring-GSW external products, blind rotation, sample extraction and
+   key switching. For an explicit plaintext domain and admissible lookup table `f`, prove that
+   the actual bootstrap decrypts to `f(m)`, with its noise and failure bounds, output width and
+   total runtime. Account for negacyclic lookup restrictions and finite torus representations;
+   floating-point FFT implementations need their own rounding-error proof. Then assess
+   [smaller-key methods of Lee et al.](https://eprint.iacr.org/2022/198) and batched variants,
+   preserving their exact secret distributions and joint error bounds.
+3. **Exact packed BFV/BGV.** Formalize the constructions of
+   [Brakerski–Gentry–Vaikuntanathan](https://eprint.iacr.org/2011/277) and
+   [Fan–Vercauteren](https://eprint.iacr.org/2012/144), including slot encoding, multiplication,
+   relinearization, rotations and level/modulus management. For permitted arithmetic circuits,
+   prove decryption equals evaluation in the stated plaintext ring, with explicit depth, noise,
+   modulus and packing conditions. Distinguish equality modulo the plaintext modulus from
+   ordinary integer equality; the latter needs a range bound. Establish leveled evaluation
+   before adding a separately proved refresh algorithm.
+4. **Approximate packed CKKS and its bootstrap.** Follow
+   [Cheon–Kim–Kim–Song](https://eprint.iacr.org/2016/421). Define finite message encodings and the
+   complex-slot interpretation, then prove an explicit norm bound on decoded evaluation error
+   for bounded inputs and specified scales, levels and circuits. Include rescaling, rounding,
+   key switching and rotations in that bound. A bootstrap must prove its precision after modulus
+   raising, coefficient/slot transforms and approximate modular reduction; use the
+   [OpenFHE bootstrap description](https://github.com/openfheorg/openfhe-development/blob/main/src/pke/examples/CKKS_BOOTSTRAPPING.md)
+   as a concrete implementation reference. Approximate arithmetic requires an explicit
+   approximate-correctness interface, not the current exact Boolean equality contract.
+5. **Scheme switching and multiparty extensions.** OpenFHE's CKKS/FHEW switching, vectorized
+   functional bootstrapping and threshold variants motivate later targets. Prove each conversion
+   preserves the intended value within its range/precision contract and state the joint
+   evaluation-key security assumption. For threshold key generation/decryption, fix corruption
+   thresholds, interaction, robustness and decryption-query access explicitly; distinguish
+   honest-but-curious security from malicious security. These are protocol theorems beyond
+   single-key IND-CPA.
+
+For every scheme, specify whether encryption is public-key or symmetric and prove the matching
+chosen-plaintext security reduction for the actual algorithms and public evaluation keys. Keep
+ordinary LWE/RLWE assumptions, circular/KDM assumptions and concrete attack-cost estimates distinct.
+If correctness permits a nonzero decryption-failure probability, introduce that game explicitly
+and relate it to the current perfect-support interface. Require nonvacuous parameter families,
+composed error bounds, full-input native runtime and independent source/statement review before
+claiming an endpoint. Hardware acceleration benchmarks do not replace any of these proofs.
+
 ## Long-term coverage and reuse
 
 The long-term bar is to support formalizing every paper appearing in the
