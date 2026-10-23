@@ -327,7 +327,7 @@ theorem logSpaceReducible_of_mem_P {α : Type} {enc : α ↪ List Bool} {A : Set
 
 /-- **The circuit value problem is `P`-hard under logarithmic-space reductions** [Ladner1975]. -/
 theorem logSpaceHard : LogSpaceHard @P encCircuitValue CircuitValue :=
-  fun _ _ hA => logSpaceReducible_of_mem_P hA
+  fun _ _ _ hA => logSpaceReducible_of_mem_P hA
 
 /-- **The circuit value problem is `P`-complete under logarithmic-space
 reductions** [Ladner1975], [Arora and Barak, Section 6.7][AroraBarak09]. -/

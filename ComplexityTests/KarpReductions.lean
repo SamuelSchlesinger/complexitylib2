@@ -36,6 +36,12 @@ example : NPComplete (encPair encGraph encNat) Clique := Clique_npComplete
 example : PolyTimeReducible encCNF (encPair encGraph encNat) SAT Clique :=
   polyTimeReducible_SAT_IndependentSet.trans polyTimeReducible_IndependentSet_Clique
 
+-- Hardness chains along reductions with dot notation: the hardness statement is not specialized
+-- to a type of instances before `.trans` is resolved.
+example : NPHard (encPair encGraph encNat) Clique :=
+  (CookLevin.SAT_npHard.trans polyTimeReducible_SAT_IndependentSet).trans
+    polyTimeReducible_IndependentSet_Clique
+
 /-! ### Compositional `fun_prop` synthesis -/
 
 example : ComputableTidilyInPolyTime toThreeSAT encCNF encCNF := by fun_prop

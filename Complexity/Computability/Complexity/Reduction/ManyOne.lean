@@ -171,10 +171,15 @@ section Hardness
 variable {P : Type → Type u} {Q : Type v} {Q' : Type w}
 
 /-- `B` is hard for the class `𝒞` under the reducibility `R`: every problem in `𝒞`, with any
-encoding `enc` of its instances, reduces to `B`, in that `R enc A B`. -/
+encoding `enc` of its instances, reduces to `B`, in that `R enc A B`.
+
+The type of instances is a strict-implicit argument, inferred from `enc` when a hardness proof is
+applied. An ordinary implicit argument would be instantiated as soon as a hardness proof is
+produced, for example by `h.trans r`, so that its type would no longer be a hardness statement
+and `(h.trans r).trans r'` would not elaborate. -/
 def HardUnder (R : ∀ {α : Type}, (α ↪ List Bool) → P α → Q → Prop)
     (𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)) (B : Q) : Prop :=
-  ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), A ∈ 𝒞 enc → R enc A B
+  ∀ ⦃α : Type⦄ (enc : α ↪ List Bool) (A : P α), A ∈ 𝒞 enc → R enc A B
 
 /-- `B` is complete for the class `𝒞` under the reducibility `R`: it is in `𝒞`, with the encoding
 `encB`, and is `𝒞`-hard under `R`. -/
@@ -188,7 +193,7 @@ theorem HardUnder.mono {R R' : ∀ {α : Type}, (α ↪ List Bool) → P α → 
     {𝒞 : ∀ {α : Type}, (α ↪ List Bool) → Set (P α)} {B : Q}
     (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → R' enc A B)
     (hB : HardUnder @R @𝒞 B) : HardUnder @R' @𝒞 B :=
-  fun enc A hA => hR enc A (hB enc A hA)
+  fun _ enc A hA => hR enc A (hB enc A hA)
 
 /-- **Hardness transfers along a reduction** `S B C` that composes with `R`-reductions to `B` into
 `R'`-reductions to `C`. -/
@@ -198,7 +203,7 @@ theorem HardUnder.trans {R : ∀ {α : Type}, (α ↪ List Bool) → P α → Q 
     {S : Q → Q' → Prop} {B : Q} {C : Q'}
     (hRS : ∀ {α : Type} (enc : α ↪ List Bool) (A : P α), R enc A B → S B C → R' enc A C)
     (hB : HardUnder @R @𝒞 B) (hBC : S B C) : HardUnder @R' @𝒞 C :=
-  fun enc A hA => hRS enc A (hB enc A hA) hBC
+  fun _ enc A hA => hRS enc A (hB enc A hA) hBC
 
 /-- A weaker reducibility preserves completeness. -/
 theorem CompleteUnder.mono {β : Type}
@@ -216,7 +221,7 @@ complement of a `𝒞`-hard problem is `𝒟`-hard. -/
 theorem HardUnder.compl (hR : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), R enc A B →
     R enc Aᶜ Bᶜ) (h𝒟𝒞 : ∀ {α : Type} (enc : α ↪ List Bool) (A : Set α), A ∈ 𝒟 enc → Aᶜ ∈ 𝒞 enc)
     (hB : HardUnder @R @𝒞 B) : HardUnder @R @𝒟 Bᶜ :=
-  fun enc A hA => compl_compl A ▸ hR enc Aᶜ (hB enc Aᶜ (h𝒟𝒞 enc A hA))
+  fun _ enc A hA => compl_compl A ▸ hR enc Aᶜ (hB enc Aᶜ (h𝒟𝒞 enc A hA))
 
 /-- If `R` relates complements and the problems in `𝒟` are exactly the complements of the
 problems in `𝒞`, the complement of a `𝒞`-complete problem is `𝒟`-complete. -/

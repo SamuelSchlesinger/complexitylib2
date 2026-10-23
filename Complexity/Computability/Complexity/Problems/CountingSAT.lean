@@ -143,7 +143,7 @@ theorem polyTimeComplete_sharpSAT {C : ∀ {α : Type}, (α ↪ List Bool) → S
       A ∈ C enc ↔ ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ Q (f a)) :
     PolyTimeComplete C encCNF {φ | Q (SharpSAT φ)} := by
   refine ⟨(hC encCNF _).2 ⟨SharpSAT, SharpSAT.mem_SharpP, fun _ => Iff.rfl⟩,
-    fun enc A hA => ?_⟩
+    fun _ enc A hA => ?_⟩
   obtain ⟨f, hf, hA⟩ := (hC enc A).1 hA
   obtain ⟨r, hr, hfr⟩ := CookLevin.SharpSAT_sharpPHard enc f hf
   exact ⟨r, hr, fun a => (hA a).trans (by rw [hfr a]; rfl)⟩
@@ -192,7 +192,7 @@ theorem SharpSATAtLeast_ppComplete :
     PolyTimeComplete PP (encPair encCNF encNat) SharpSATAtLeast := by
   refine ⟨mem_PP_iff_exists_GapP.2 ⟨_, GapP.natCast_sub_natCast_mem
     (SharpP.add_one_mem sharpSAT_fst_mem_SharpP) snd_mem_SharpP, fun x => ?_⟩,
-    fun enc A hA => ?_⟩
+    fun _ enc A hA => ?_⟩
   · simp only [SharpSATAtLeast, Set.mem_ofPred_eq, Pi.add_apply, Pi.one_apply]
     omega
   · obtain ⟨f, hf, q, hA⟩ := mem_PP_iff_exists_SharpP.1 hA
@@ -209,7 +209,7 @@ assignments, for `m` given in binary. -/
 theorem SharpSATExact_ceqPComplete :
     PolyTimeComplete CeqP (encPair encCNF encNat) SharpSATExact := by
   refine ⟨mem_CeqP_iff_exists_SharpP.2 ⟨_, sharpSAT_fst_mem_SharpP, _, snd_mem_SharpP,
-    fun _ => Iff.rfl⟩, fun enc A hA => ?_⟩
+    fun _ => Iff.rfl⟩, fun _ enc A hA => ?_⟩
   obtain ⟨f₁, hf₁, f₂, hf₂, hA⟩ := mem_CeqP_iff_exists_SharpP.1 hA
   obtain ⟨p, hle, hsub⟩ := SharpP.exists_two_pow_sub_mem hf₂
   obtain ⟨r, hr, hfr⟩ := CookLevin.SharpSAT_sharpPHard enc _ (SharpP.add_mem hf₁ hsub)
