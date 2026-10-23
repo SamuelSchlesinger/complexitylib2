@@ -78,6 +78,18 @@ existing developments, source credit and saved branches remain available for a f
    depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
    circuits. With an appropriate additional circular-security assumption, the construction yields a
    fixed-key fully homomorphic scheme without a predetermined depth bound.
+   *Recovery milestone:* [refresh](Complexity/Crypto/Computational/Homomorphic/Refresh.lean)
+   constructs identity and NAND refresh from actual decryption circuits and proves correctness
+   for arbitrary well-sized old ciphertexts, including prior evaluation outputs, with fixed
+   output width. [Efficiency](Complexity/Crypto/Computational/Homomorphic/Efficiency.lean)
+   derives strict PPT refresh from base encryption/evaluation certificates and a uniform
+   decryption-circuit generator; construction of the NAND augmentation is also certified.
+   [Tests](ComplexityTests/Crypto/HomomorphicRefresh.lean) instantiate all these hypotheses in an
+   explicitly insecure scheme, exercising key switching and repeated refresh even though its
+   base evaluator rejects evaluated inputs. The layered DAG evaluator, its resource bounds,
+   the acyclic key-chain IND-CPA reduction, and the additional circular-security result remain
+   open in [#322](https://github.com/cslib-community/complexitylib/issues/322). No concrete LWE
+   scheme or encryption-security theorem is established by this milestone.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the

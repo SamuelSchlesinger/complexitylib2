@@ -62,6 +62,13 @@ theorem ofFn_ofList {n : ℕ} {word : List Bool} (hlen : word.length = n) :
   intro i hi hi'
   simp [ofList, List.getD, List.getElem?_eq_getElem hi']
 
+/-- Concatenating words of the declared widths agrees with concatenating their bit strings. -/
+theorem ofList_append {n m : ℕ} {u v : List Bool} (hu : u.length = n) (hv : v.length = m) :
+    ofList (n + m) (u ++ v) = Fin.append (ofList n u) (ofList m v) := by
+  have h : List.ofFn (Fin.append (ofList n u) (ofList m v)) = u ++ v := by
+    rw [List.ofFn_fin_append, ofFn_ofList hu, ofFn_ofList hv]
+  rw [← h, ofList_ofFn]
+
 /-- A string of `k + j` bits is its first `k` bits followed by its last `j` bits. -/
 theorem ofFn_eq_append {k j : ℕ} (y : BitString (k + j)) :
     List.ofFn y = List.ofFn ((Fin.appendEquiv k j).symm y).1 ++

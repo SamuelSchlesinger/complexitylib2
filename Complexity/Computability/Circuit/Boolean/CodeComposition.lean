@@ -22,11 +22,15 @@ input references. On codes of circuits, the result is the code of `Circuit.appen
 `bundleCode` combines a list of equally sized blocks by direct relocation and agrees with repeated
 append. Both constructors are tidily computable in polynomial time with binary layout parameters.
 
+`compCode n d c` instead feeds `c`'s output wires to `d`'s inputs. Its polynomial-time constructor
+performs binary-indexed lookup and gate relocation, and agrees exactly with `Circuit.comp`.
+
 ## Main definitions
 
 * `Cslib.Circuits.Program.appendWireCode`: wire numbers under program continuation.
 * `Cslib.Circuits.Boolean.appendCode`: combine raw codes on shared inputs.
 * `Cslib.Circuits.Boolean.bundleCode`: combine equal-sized raw blocks on shared inputs.
+* `Cslib.Circuits.Boolean.compCode`: compose raw circuit codes through their output wires.
 
 ## Main results
 
@@ -37,6 +41,8 @@ append. Both constructors are tidily computable in polynomial time with binary l
 * `Cslib.Circuits.Boolean.bundleCode_eq_foldl_appendCode`: bundling agrees with repeated append.
 * `Cslib.Circuits.Boolean.computableTidilyInPolyTime_bundleCode`: bundling efficiency.
 * `Cslib.Circuits.Boolean.exists_circuit_bundleCode`: raw bundles realize typed output families.
+* `Cslib.Circuits.Boolean.compCode_code`: agreement with typed sequential composition.
+* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_compCode`: sequential constructor efficiency.
 
 ## References
 
@@ -308,6 +314,86 @@ theorem exists_circuit_bundleCode {k n : ℕ} (cs : Fin k → Circuit signature 
       bundleCode n blockSize (List.ofFn (fun j => (cs j).code)) = c.code ∧
         ∀ x j, c.eval interpretation x j = (cs j).eval interpretation x 0 :=
   ⟨Circuit.pi cs, bundleCode_code cs blockSize hs, fun x j => congrFun (Circuit.eval_pi cs x) j⟩
+
+/-- Route a later circuit's inputs through `c`'s outputs and shift its gates past `c`'s gates. -/
+def compCodeWire (n : ℕ) (c : List (Op × List ℕ) × List ℕ) (i : ℕ) : ℕ :=
+  if i < c.2.length then c.2.getD i 0 else n + c.1.length + (i - c.2.length)
+
+/-- Feed the outputs of `c` to the inputs of `d`, matching the argument order of `Circuit.comp`.
+The constructor is total on raw data, including malformed circuit codes. -/
+def compCode (n : ℕ) (d c : List (Op × List ℕ) × List ℕ) :
+    List (Op × List ℕ) × List ℕ :=
+  (c.1 ++ d.1.map (fun g => (g.1, g.2.map (compCodeWire n c))),
+    d.2.map (compCodeWire n c))
+
+private theorem compCodeWire_code {n m : ℕ} (c : Circuit signature n m) (i : ℕ) :
+    compCodeWire n c.code i = Program.appendWireCode n m c.size c.outputs i := by
+  have hlength := Program.length_code c.program
+  by_cases hi : i < m <;>
+    simp [compCodeWire, Circuit.code, Program.appendWireCode, hi,
+      List.getD_eq_getElem?_getD, hlength]
+
+/-- Raw sequential composition is exactly the code of typed circuit composition. -/
+theorem compCode_code {n m p : ℕ} (d : Circuit signature m p)
+    (c : Circuit signature n m) : compCode n d.code c.code = (d.comp c).code := by
+  have hwire : compCodeWire n c.code =
+      Program.appendWireCode n m c.size c.outputs := funext (compCodeWire_code c)
+  apply Prod.ext
+  · simp only [compCode, Circuit.code, Circuit.comp, Program.code_append]
+    change c.program.code ++ d.program.code.map (fun g => (g.1, g.2.map
+      (compCodeWire n c.code))) = _
+    rw [hwire]
+  · simp only [compCode, Circuit.code, Circuit.comp, List.map_ofFn, Function.comp_apply]
+    congr 1
+    funext i
+    rw [Program.appendedWire_toNat]
+    exact compCodeWire_code c _
+
+/-- Sequential composition retains both gate lists. -/
+@[simp] theorem length_compCode (n : ℕ) (d c : List (Op × List ℕ) × List ℕ) :
+    (compCode n d c).1.length = c.1.length + d.1.length := by
+  simp [compCode]
+
+/-- Sequential composition retains the later circuit's number of outputs. -/
+@[simp] theorem length_compCode_outputs (n : ℕ) (d c : List (Op × List ℕ) × List ℕ) :
+    (compCode n d c).2.length = d.2.length := by
+  simp [compCode]
+
+/-- Resolve a composed wire in polynomial time, including binary output lookup and offsets. -/
+@[fun_prop] theorem computableTidilyInPolyTime_compCodeWire {α : Type}
+    {enc : α ↪ List Bool} {n i : α → ℕ}
+    {c : α → List (Op × List ℕ) × List ℕ}
+    (hn : ComputableTidilyInPolyTime n enc encNat)
+    (hc : ComputableTidilyInPolyTime c enc encCode)
+    (hi : ComputableTidilyInPolyTime i enc encNat) :
+    ComputableTidilyInPolyTime (fun a => compCodeWire (n a) (c a) (i a)) enc encNat := by
+  have houtputs : ComputableTidilyInPolyTime (fun a => (c a).2.length) enc encNat :=
+    unary_to_binary.comp ((length_list encNat).comp hc.snd')
+  have hgates : ComputableTidilyInPolyTime (fun a => (c a).1.length) enc encNat :=
+    unary_to_binary.comp ((length_list encGate).comp hc.fst')
+  have hlookup : ComputableTidilyInPolyTime (fun a => (c a).2.getD (i a) 0) enc encNat :=
+    listGetD_binary 0 hc.snd' hi
+  unfold compCodeWire
+  fun_prop
+
+/-- Construct sequential circuit codes in polynomial time. All wire indices and input counts
+are binary; list lengths, input lookup, gate relocation and the whole output code are charged. -/
+@[fun_prop] theorem computableTidilyInPolyTime_compCode {α : Type} {enc : α ↪ List Bool}
+    {n : α → ℕ} {d c : α → List (Op × List ℕ) × List ℕ}
+    (hn : ComputableTidilyInPolyTime n enc encNat)
+    (hd : ComputableTidilyInPolyTime d enc encCode)
+    (hc : ComputableTidilyInPolyTime c enc encCode) :
+    ComputableTidilyInPolyTime (fun a => compCode (n a) (d a) (c a)) enc encCode := by
+  have hwire : ComputableTidilyInPolyTime
+      (fun p : α × ℕ => compCodeWire (n p.1) (c p.1) p.2)
+      (encPair enc encNat) encNat := by fun_prop
+  have hgate : ComputableTidilyInPolyTime
+      (fun p : α × (Op × List ℕ) => (p.2.1, p.2.2.map (compCodeWire (n p.1) (c p.1))))
+      (encPair enc encGate) encGate := by
+    exact ((snd enc encGate).fst').prod
+      (mapWith hwire (fst enc encGate) ((snd enc encGate).snd'))
+  exact (listAppend' hc.fst' (mapWith hgate id' hd.fst')).prod
+    (mapWith hwire id' hd.snd')
 
 end Boolean
 

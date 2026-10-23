@@ -110,6 +110,7 @@ public import Complexity.Computability.Circuit.Boolean.Formula.Andreev
 public import Complexity.Computability.Circuit.Boolean.Formula.Restriction
 public import Complexity.Computability.Circuit.Boolean.Formula.Subbotovskaya
 public import Complexity.Computability.Circuit.Boolean.GateElimination
+public import Complexity.Computability.Circuit.Boolean.Gates
 public import Complexity.Computability.Circuit.Boolean.Hamming
 public import Complexity.Computability.Circuit.Boolean.HardCore
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification
@@ -1070,6 +1071,7 @@ public import Complexity.Computability.Probabilistic.Realization.OracleSimulatio
 public import Complexity.Computability.Probabilistic.Repeat
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Probabilistic.Selection
+public import Complexity.Computability.Probabilistic.Traverse
 public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Computability.QueryComplexity.ApproximateDegree
 public import Complexity.Computability.QueryComplexity.ApproximateDegree.Or
@@ -1203,6 +1205,11 @@ public import Complexity.Crypto.Computational.GoldreichLevin.Reduction
 public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction
 public import Complexity.Crypto.Computational.HardCore
+public import Complexity.Crypto.Computational.Homomorphic.Basic
+public import Complexity.Crypto.Computational.Homomorphic.Circuit
+public import Complexity.Crypto.Computational.Homomorphic.Circuit.PolyTime
+public import Complexity.Crypto.Computational.Homomorphic.Efficiency
+public import Complexity.Crypto.Computational.Homomorphic.Refresh
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
