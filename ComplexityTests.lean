@@ -63,6 +63,7 @@ import ComplexityTests.BooleanHierarchyPH
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
+import ComplexityTests.CarryLookahead
 import ComplexityTests.CircuitCertificate
 import ComplexityTests.CircuitEvaluation
 import ComplexityTests.CircuitHamming.Approximation
