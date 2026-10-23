@@ -120,7 +120,7 @@ theorem getElem?_encStructure_two_mul_card (a : EncodedStructure) :
   rw [encStructure_eq, List.getElem?_append_left (by simp [length_frame])]
   simpa using getElem?_frame_two_mul_length (List.replicate a.1 true)
 
-theorem flatMap_frame_drop {a : EncodedStructure} {i : ℕ} (hi : i < a.2.length) :
+private theorem flatMap_frame_drop {a : EncodedStructure} {i : ℕ} (hi : i < a.2.length) :
     (a.2.drop i).flatMap frame = frame a.2[i] ++ (a.2.drop (i + 1)).flatMap frame := by
   rw [List.drop_eq_getElem_cons hi, List.flatMap_cons]
 

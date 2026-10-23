@@ -115,7 +115,7 @@ theorem IsCarrySuccessor.lexRank_succ {n k : ℕ} {x y : Fin k → Fin n}
   lia
 
 /-- Consecutive ranks have precisely one increment coordinate and a carried suffix. -/
-theorem isCarrySuccessor_of_lexRank_succ {n k : ℕ} {x y : Fin k → Fin n}
+private theorem isCarrySuccessor_of_lexRank_succ {n k : ℕ} {x y : Fin k → Fin n}
     (h : lexRank y = lexRank x + 1) : IsCarrySuccessor x y := by
   obtain ⟨hxy, hgap⟩ := (lexRank_succ_iff x y).mp h
   obtain ⟨i, hi, hpre⟩ := (lexRank_lt_iff x y).mp hxy

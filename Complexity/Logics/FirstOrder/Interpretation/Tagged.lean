@@ -405,18 +405,18 @@ theorem coords_data_self (a b : M) (e : I.Model M) (i : ι e.1) :
   simp [coords]
 
 omit [Finite T] [∀ t, Finite (ι t)] in
-theorem coords_data_mk (a b : M) (t : T) (x : ι t → M) (hx : (I.domain t).Realize x) (i : ι t) :
-    coords a b ⟨t, x, hx⟩ (data ⟨t, i⟩) = x i :=
+private theorem coords_data_mk (a b : M) (t : T) (x : ι t → M) (hx : (I.domain t).Realize x)
+    (i : ι t) : coords a b ⟨t, x, hx⟩ (data ⟨t, i⟩) = x i :=
   coords_data_self a b ⟨t, x, hx⟩ i
 
 omit [Finite T] [∀ t, Finite (ι t)] in
-theorem coords_tag_eq_iff {a b : M} (h : a ≠ b) (e : I.Model M) (t : T) :
+private theorem coords_tag_eq_iff {a b : M} (h : a ≠ b) (e : I.Model M) (t : T) :
     coords a b e (tag t) = b ↔ t = e.1 := by
   simp only [coords]
   split_ifs with ht <;> simp [ht, h]
 
 omit [Finite T] [∀ t, Finite (ι t)] in
-theorem coords_injective {a b a' b' : M} (h : a ≠ b) {e e' : I.Model M}
+private theorem coords_injective {a b a' b' : M} (h : a ≠ b) {e e' : I.Model M}
     (heq : coords a b e = coords a' b' e') : a = a' ∧ b = b' ∧ e = e' := by
   have ha : a = a' := congrFun heq Coord.p
   have hb : b = b' := congrFun heq Coord.q

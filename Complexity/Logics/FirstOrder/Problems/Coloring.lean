@@ -94,7 +94,7 @@ theorem colorable_copies_iff [Nonempty J] : Colorable n (Copies J M) ↔ Colorab
     exact ⟨fun x => f x.val, fun x y h => hf _ _ ((Copies.relMap_copies_two adj _ _).1 h).2⟩
 
 /-- A positive number of disjoint copies of a graph is a simple graph exactly when the graph is. -/
-theorem simpleGraph_copies_iff [Nonempty J] :
+private theorem simpleGraph_copies_iff [Nonempty J] :
     Copies J M ⊨ Theory.simpleGraph ↔ M ⊨ Theory.simpleGraph := by
   simp only [Theory.simpleGraph_model_iff, Copies.relMap_copies_two]
   constructor

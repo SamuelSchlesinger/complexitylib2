@@ -107,7 +107,7 @@ noncomputable def unrank (i : Fin (I.card M)) : Fin k → Fin M.size :=
 
 variable {I M}
 
-theorem mem_domainRanks {r : Fin (M.size ^ k)} :
+private theorem mem_domainRanks {r : Fin (M.size ^ k)} :
     r ∈ I.domainRanks M ↔ I.domain.Realize (lexEquiv.symm r) := by
   classical
   simp [domainRanks]

@@ -107,7 +107,7 @@ noncomputable def cnfInterpretation :
     | .pos => binaryRel fun t w => Template.listFormula (coloringClauseTemplates t true) w
     | .neg => binaryRel fun t w => Template.listFormula (coloringClauseTemplates t false) w
 
-theorem cnfInterpretation_rel_lit (b : Bool) (ts : Fin 2 → ColoringClauseTag) :
+private theorem cnfInterpretation_rel_lit (b : Bool) (ts : Fin 2 → ColoringClauseTag) :
     cnfInterpretation.rel (lit b) ts =
       binaryRel (fun t w => Template.listFormula (coloringClauseTemplates t b) w) ts := by
   cases b <;> rfl
@@ -264,7 +264,7 @@ def cnfSubsingleton : Interpretation Language.graph cnf Unit where
     | .pos => ∼(adj.formula₂ (.var (0, ())) (.var (0, ())))
     | .neg => ⊥
 
-theorem threeSat_cnfSubsingleton_iff [Subsingleton M] [Nonempty M] :
+private theorem threeSat_cnfSubsingleton_iff [Subsingleton M] [Nonempty M] :
     (IsThreeCNF (cnfSubsingleton.Model M) ∧ Satisfiable (cnfSubsingleton.Model M)) ↔
       Colorable 3 M := by
   obtain ⟨v⟩ := ‹Nonempty M›
