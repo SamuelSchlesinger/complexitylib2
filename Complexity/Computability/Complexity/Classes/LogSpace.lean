@@ -45,8 +45,10 @@ follows (`Cslib.Complexity.NL_subset_P`).
 bounds every computation path, though a path may end stuck before it, and then does not accept.
 Every upper bound proved here for `NL` also holds for logspace recognizers, whose branches may run
 forever (`Turing.MultiTapeNTM.RecognizesInSpace`): such a problem is in `P`
-(`Cslib.Complexity.mem_P_of_recognizesInSpace`). That it is in `NL` itself, by a clock of
-logarithmic length counting the polynomially many reachable views, is not formalized here.
+(`Cslib.Complexity.mem_P_of_recognizesInSpace`). The complement construction also puts it in
+`NL` itself (`Cslib.Complexity.mem_NL_of_recognizesInSpace` in
+`Complexity.Computability.Complexity.Classes.LogSpace.Complement`), without requiring source
+termination.
 
 `Cslib.Complexity.LogSpaceReducible encA encB A B` asks for a logspace function mapping instances
 of `A` to instances of `B`, preserving membership [Sipser, Section 8.5][Sipser2013]. By definition

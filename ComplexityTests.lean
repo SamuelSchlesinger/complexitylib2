@@ -89,6 +89,7 @@ import ComplexityTests.ComparisonCircuits
 import ComplexityTests.Computability.Circuit.Boolean.ACC0
 import ComplexityTests.ComputationalCrypto
 import ComplexityTests.ConditioningCollision
+import ComplexityTests.ConfigurationGraph
 import ComplexityTests.ConfigurationPolyTime
 import ComplexityTests.Consolidation
 import ComplexityTests.ContextualPower
@@ -195,6 +196,7 @@ import ComplexityTests.HastadSharp
 import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
+import ComplexityTests.InductiveCounting
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration
@@ -237,6 +239,7 @@ import ComplexityTests.MemoizePPT
 import ComplexityTests.ModularGap
 import ComplexityTests.MonotoneCircuitValue
 import ComplexityTests.MultiTapePolyTime
+import ComplexityTests.NLComplement
 import ComplexityTests.NPCompleteGraphs
 import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NPCompleteGraphs.TSP
