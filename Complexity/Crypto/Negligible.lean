@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: submitted #1069 @dd99d29a04228c74c2ae15f411e4bb2d981be30d
+-- upstream: submitted #1069 @1d14c55a10cfe3fe4463cffa61a7f02f0d56f502
 
 public import Complexity.Init
 public import Cslib.Foundations.Data.Nat.PolynomialBound
@@ -30,12 +30,13 @@ algorithm before asserting negligibility; this module does not change that quant
 
 ## Main results
 
+* `Cslib.Crypto.negligible_iff`: explicit eventual bounds for every inverse power.
 * `Cslib.Crypto.Negligible.polynomiallyBounded_mul`: polynomial losses preserve negligibility.
 * `Cslib.Crypto.negligible_of_eventually_le`: comparison outside a finite initial segment.
 
 ## References
 
-Copied from cslib PR #1069 at `dd99d29a04228c74c2ae15f411e4bb2d981be30d`, including the
+Copied from cslib PR #1069 at `1d14c55a10cfe3fe4463cffa61a7f02f0d56f502`, including the
 negligibility definitions of its prerequisite PR #1068 and the later automation registrations.
 -/
 
@@ -50,6 +51,11 @@ security parameter. The nonnegative codomain records that advantages are magnitu
 the decay condition is Mathlib's superpolynomial decay in the nonnegative reals. -/
 @[fun_prop] def Negligible (ε : ℕ → ℝ≥0) : Prop :=
   Asymptotics.SuperpolynomialDecay Filter.atTop (fun n : ℕ => (n : ℝ≥0)) ε
+
+/-- Negligible advantages eventually beat every positive inverse-power threshold. -/
+theorem negligible_iff (ε : ℕ → ℝ≥0) :
+    Negligible ε ↔ ∀ k : ℕ, ∀ δ > (0 : ℝ≥0), ∃ m : ℕ, ∀ n ≥ m, n ^ k * ε n < δ := by
+  simp [Negligible, Asymptotics.SuperpolynomialDecay, tendsto_order]
 
 /-- The zero advantage is negligible. -/
 @[simp, fun_prop] theorem negligible_zero : Negligible (fun _ => 0) :=

@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: submitted #1069 @dd99d29a04228c74c2ae15f411e4bb2d981be30d
+-- upstream: submitted #1069 @1d14c55a10cfe3fe4463cffa61a7f02f0d56f502
 
 public import Complexity.Crypto.Negligible
 public import Cslib.Probability.PMF
@@ -40,7 +40,7 @@ directly, and computational definitions over infinite sample spaces can reuse th
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023], Section 3.1.
 
-Copied from cslib PR #1069 at `dd99d29a04228c74c2ae15f411e4bb2d981be30d`.
+Copied from cslib PR #1069 at `1d14c55a10cfe3fe4463cffa61a7f02f0d56f502`.
 -/
 
 @[expose] public section

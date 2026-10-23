@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: submitted #1070 @dd4dacc93c4f333a4d93ce1dc5adeab8559ccdc2
+-- upstream: submitted #1070 @833a3b94f940982cc7374c5d76fe6558b031accc
 
 public import Complexity.Crypto.Game
 import Complexity.Probability.PMF

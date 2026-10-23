@@ -22,6 +22,16 @@ example {ε δ : ℕ → ℝ≥0} (hε : Negligible ε) (hδ : Negligible δ) :
 
 example : ¬ Negligible (fun _ => (1 : ℝ≥0)) := not_negligible_const one_ne_zero
 
+-- The explicit decay criterion constructs a bound and exposes thresholds for a nonzero family.
+example : Negligible (fun _ => (0 : ℝ≥0)) := by
+  apply (negligible_iff _).mpr
+  intro k δ hδ
+  exact ⟨0, fun n _ => by simpa only [mul_zero] using hδ⟩
+
+example (k : ℕ) (δ : ℝ≥0) (hδ : 0 < δ) :
+    ∃ m : ℕ, ∀ n ≥ m, n ^ k * (1 / 4 : ℝ≥0) ^ n < δ :=
+  (negligible_iff _).mp (negligible_geometric (by norm_num : (1 / 4 : ℝ≥0) < 1)) k δ hδ
+
 example : IsPPT encBits (fun _ input => pure input) := by ppt
 
 example : IsPPT encBits (fun n _ => BitString.sampleList (n * n)) := by ppt

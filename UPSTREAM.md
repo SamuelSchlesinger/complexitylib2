@@ -60,6 +60,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   in [Probability/PMF.lean](Complexity/Probability/PMF.lean); remove only the merged blocks.
 * **Security games.** `Crypto/Negligible.lean` and `Crypto/Game.lean` include the #1068 base
   beneath #1069. If #1068 lands first, remove its declarations and retain the #1069 additions.
+  The probability/game stack copies the October 23 upstream refresh (#1062, #1069, #1070,
+  #1072 and #1129). Its only added copied declaration is `Crypto.negligible_iff`; local PMF
+  additions and negligible closure/automation remain alongside the copied portions. Exact
+  revisions are recorded in their source markers.
   The following hybrid layer is tracked by its own marker in `Crypto/Game/Hybrid.lean`.
   `Crypto/Game/Statistical.lean` copies only the Boolean equality from #1072; its remaining
   declarations require the arbitrary-type metric replacement in #1065. Until that is in the
