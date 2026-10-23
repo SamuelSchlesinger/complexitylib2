@@ -124,7 +124,10 @@ def step (k distance : ℕ) : Circuit signature (k + k) (k + k) :=
     (Circuit.pi fun i => (propagateFormula k distance i).toCircuit)
 
 @[simp] theorem size_step (k distance : ℕ) : (step k distance).size = 3 * k := by
-  simp [step, generateFormula, propagateFormula, Formula.size_toCircuit]
+  simp only [step, generateFormula, Fin.natAdd_eq_addNat, propagateFormula, Circuit.size_append,
+    Circuit.size_pi, Formula.size_toCircuit, Formula.size_or, Formula.size_input, Formula.size_and,
+    add_zero, zero_add, Nat.reduceAdd, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+    smul_eq_mul, mul_one]
   omega
 
 theorem depth_step_le (k distance : ℕ) : (step k distance).depth ≤ 2 := by
