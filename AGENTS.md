@@ -357,6 +357,11 @@ are not versioned.
   recovering `MultiTapeTM` and `Choose := Set` recovering `MultiTapeNTM`, step-exactly.
 - Computability predicates (`PolyTime`, `InTimeSpace`, …) are `@[fun_prop]`-registered; loops
   go through Hoare-style `iterate_spec` rules and the Aesop `polytime` set.
+- Tidy computability (`ComputableTidily…`) is a proof device for composing machines. Definitions
+  and public results use plain computability with independent time and space bounds: upstream
+  `ComputableInTimeAndSpace…` and its plain counterparts such as `ComputableInPolyTime`. Proofs
+  switch through the bridges (`ComputableInPolyTime.tidy`, `.of_tidy`); the combinator layer
+  stays tidy. Existing tidy definitions are being migrated (#456).
 - Programs are `PFunctor.FreeM` values; a machine's clocked run is itself a program.
 - The universal machine is an interpreter program certified by the calculus, not a hand-built
   machine.
