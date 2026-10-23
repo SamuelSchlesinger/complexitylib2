@@ -144,6 +144,30 @@ end Example
             r"Check \texttt{x ** y} and \textbf{bold} text.",
         )
 
+    def test_attributed_theorems_strip_proofs_and_injectivity_helpers(self):
+        attribute = '@[deprecated (since := "2026-10-23")]\n'
+        sample = "def encX := f\n\n" + attribute + (
+            "theorem encX_injective : Function.Injective encX := Bridge.proof\n\n") + attribute + (
+            "lemma visible : P := Bridge.other_proof")
+        output = abstract_to_tex.clean_code_for_display(sample)
+        self.assertNotIn("encX_injective", output)
+        self.assertNotIn("Bridge.", output)
+        self.assertIn("lemma visible : P", output)
+        self.assertEqual(abstract_to_tex.theorem_name(attribute + "theorem selected : P := proof"),
+                         "selected")
+
+    def test_wrapped_prose_is_one_paragraph_and_citation_keys_allow_whitespace(self):
+        output = abstract_to_tex.render_tex_intro(
+            "A machine has read-only input and write-only\noutput, with a polynomial bound.\n\n"
+            "A separate paragraph.\n## References\n"
+            "* [A. Author, *A paper*]\n  [Reference2026]\n")
+        self.assertEqual(output[0],
+                         "A machine has read-only input and write-only output, with a polynomial bound.")
+        self.assertEqual(output[1], "A separate paragraph.")
+        self.assertIn(r"\item{} A. Author, \emph{A paper} {\footnotesize (Reference2026)}", output)
+        self.assertEqual(abstract_to_tex.escape_tex_prose("[A title]\n[Reference2026]"),
+                         r"A title {\footnotesize (Reference2026)}")
+
     def test_only_injectivity_helpers_are_elided(self):
         sample = (
             "def encX : X → List Bool := f\n\n"

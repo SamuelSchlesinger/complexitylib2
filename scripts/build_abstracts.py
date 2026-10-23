@@ -44,9 +44,27 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 \definecolor{leanblue}{RGB}{41,110,166}
 \definecolor{leangreen}{RGB}{38,128,89}
 \hypersetup{colorlinks=true,urlcolor=leanblue,linkcolor=leanblue}
+\tcbset{leandeclarationmeasure/.style={}}
 \newtcolorbox{leanbox}{breakable,enhanced,colback=black!3,colframe=black!45,
   boxrule=0.5pt,arc=2pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
-  before skip=7pt,after skip=9pt}
+  before skip=7pt,after skip=9pt,leandeclarationmeasure}
+% Measure a declaration's prose and code at their actual display width. Keep the pair
+% together only below 35% of the text height; larger declarations retain breakable boxes.
+% environ is already required by tcolorbox. These bodies contain display text, not counters.
+\newsavebox{\leandeclarationbox}
+\NewEnviron{leandeclaration}{%
+  \par
+  \sbox{\leandeclarationbox}{%
+    \begin{minipage}{\linewidth}
+    \setlength{\parskip}{0.45em}
+    \tcbset{leandeclarationmeasure/.style={unbreakable}}%
+    \BODY
+    \end{minipage}}%
+  \ifdim\dimexpr\ht\leandeclarationbox+\dp\leandeclarationbox\relax<0.35\textheight
+    \noindent\usebox{\leandeclarationbox}\par
+  \else
+    \BODY
+  \fi}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.45em}
 \setlength{\emergencystretch}{2em}
@@ -218,28 +236,33 @@ def render_sections(sections, selected=None):
     """Display all definitions, and either all theorem signatures or an explicit selection."""
     lines, displayed = [], set()
     for item in sections:
+        item_lines = []
         code = render.clean_code_for_display(item["code"],
                                              is_undocumented_tail=item["kind"] == "section")
         kept = []
         for block in re.split(r"\n\s*\n", code):
-            theorem = re.match(r"(?:private\s+)?(?:theorem|lemma)\s+(\S+)", block)
-            if not theorem or selected is None or theorem.group(1) in selected:
+            theorem = render.theorem_name(block)
+            if not theorem or selected is None or theorem in selected:
                 kept.append(block)
                 if theorem:
-                    displayed.add(theorem.group(1))
+                    displayed.add(theorem)
         code = "\n\n".join(kept).strip()
         if item["kind"] == "decl" and item["code"].strip() and not code:
             continue
         heading = render.section_heading(item)
         if heading:
-            lines.extend([r"\subsection*{" + render.escape_tex_prose(heading.group(1).strip()) + "}",
-                          render.escape_tex_prose(heading.group(2).strip())])
+            item_lines.extend([r"\subsection*{" + render.escape_tex_prose(heading.group(1).strip()) + "}",
+                               render.escape_tex_prose(heading.group(2).strip())])
         else:
-            lines.append(render.escape_tex_prose(item["doc"]))
+            item_lines.append(render.escape_tex_prose(item["doc"]))
         if code:
             code_lines = [highlighted_line(line) or "~" for line in code.splitlines()]
-            lines.extend([r"\begin{leanbox}\small\ttfamily\raggedright\noindent",
-                          " \\\\\n".join(code_lines), r"\par\end{leanbox}"])
+            item_lines.extend([r"\begin{leanbox}\small\ttfamily\raggedright\noindent",
+                               " \\\\\n".join(code_lines), r"\par\end{leanbox}"])
+        if item["kind"] == "decl" and code:
+            lines.extend([r"\begin{leandeclaration}", *item_lines, r"\end{leandeclaration}"])
+        else:
+            lines.extend(item_lines)
     return "\n\n".join(lines), displayed
 
 

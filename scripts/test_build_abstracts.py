@@ -293,6 +293,46 @@ class BuildAbstractsTests(unittest.TestCase):
         self.assertIn("a" * 40 + "/abstracts/ComplexityAbstracts/ExampleAbstract.lean", rendered)
         self.assertIn(r"\textcolor{leanblue}", rendered)
 
+    def test_attributed_unselected_theorems_do_not_leak_docs_or_proofs(self):
+        sections = [{"kind": "decl", "doc": "Unselected compatibility helper.",
+                     "code": '@[deprecated (since := "2026-10-23")]\n'
+                             "theorem helper : True := Bridge.helper"},
+                    {"kind": "decl", "doc": "Selected result.",
+                     "code": "@[simp]\ntheorem chosen : True := Bridge.chosen"}]
+        output, displayed = build.render_sections(sections, {"chosen"})
+        self.assertEqual(displayed, {"chosen"})
+        self.assertNotIn("helper", output)
+        self.assertNotIn("Bridge", output)
+        self.assertIn("chosen", output)
+
+    @unittest.skipUnless(shutil.which("latexmk") and shutil.which("pdftotext")
+                         and shutil.which("kpsewhich"), "TeX/Poppler not installed")
+    def test_short_declaration_stays_together_and_long_definition_still_breaks(self):
+        for package in ("libertine.sty", "newtxmath.sty", "zi4.sty", "tcolorbox.sty"):
+            if subprocess.run(["kpsewhich", package], capture_output=True).returncode:
+                self.skipTest(f"TeX package missing: {package}")
+        short = {"kind": "decl", "doc": "ExplanationMarker belongs to this declaration.",
+                 "code": "def ShortMarker : Nat :=\n  123456"}
+        long = {"kind": "decl", "doc": "A longer definition must remain breakable.",
+                "code": "def longDefinition : List Nat := [\n" +
+                        ",\n".join(f"  {n}" for n in range(1001, 1081)) + "]"}
+        body = r"\vbox to 0.94\textheight{\hbox{BeforeMarker}\vfil}\par" + "\n" + \
+            build.render_sections([short, long])[0]
+        tex = self.root / "pagination.tex"
+        tex.write_text(build.document(body))
+        pdf = build.build_pdf(tex)
+        pages = subprocess.check_output(["pdftotext", "-layout", str(pdf), "-"], text=True).split("\f")
+
+        def page_of(marker):
+            return next(i for i, page in enumerate(pages) if marker in page)
+
+        self.assertGreater(page_of("ExplanationMarker"), page_of("BeforeMarker"))
+        self.assertEqual(page_of("ExplanationMarker"), page_of("ShortMarker"))
+        self.assertEqual(page_of("ShortMarker"), page_of("123456"))
+        self.assertLess(page_of("1001"), page_of("1080"))
+        for number in range(1001, 1081):
+            self.assertIn(str(number), "\n".join(pages))
+
     def test_source_links_pin_the_declaration_line(self):
         line = build.declaration_line(SOURCE, self.entry["headline_theorems"][0])
         self.assertEqual(SOURCE.splitlines()[line - 1], "theorem chosen : value = 0 := rfl")

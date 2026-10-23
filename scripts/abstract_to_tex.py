@@ -313,6 +313,28 @@ INJECTIVITY_HELPER_RE = re.compile(
 )
 
 
+def declaration_body(block: str) -> str:
+    """Skip leading Lean attributes without interpreting their quoted strings as syntax."""
+    masked = lean_code(block)
+    pos = len(masked) - len(masked.lstrip())
+    while masked.startswith("@[", pos):
+        depth, end = 1, pos + 2
+        while end < len(masked) and depth:
+            depth += (masked[end] == "[") - (masked[end] == "]")
+            end += 1
+        if depth:
+            return block[pos:]
+        pos = end
+        while pos < len(masked) and masked[pos].isspace():
+            pos += 1
+    return block[pos:]
+
+
+def theorem_name(block: str):
+    match = re.match(r"(?:private\s+)?(?:theorem|lemma)\s+([^\s:{(]+)", declaration_body(block))
+    return match.group(1) if match else None
+
+
 def clean_code_for_display(code: str, is_undocumented_tail: bool = False) -> str:
     """Keep definitions and theorem signatures while eliding proof bodies.
 
@@ -327,9 +349,9 @@ def clean_code_for_display(code: str, is_undocumented_tail: bool = False) -> str
         block = block.strip()
         if not block:
             continue
-        if INJECTIVITY_HELPER_RE.match(block) and (idx > 0 or is_undocumented_tail):
+        if INJECTIVITY_HELPER_RE.match(declaration_body(block)) and (idx > 0 or is_undocumented_tail):
             continue
-        if re.match(r"^(?:private\s+)?(?:theorem|lemma)\s+", block):
+        if theorem_name(block):
             kept.append(strip_theorem_proof(block))
         else:
             # Replace inline proof terms `, by ...⟩` inside structure constructors with `, _⟩`
@@ -364,10 +386,10 @@ def escape_tex_code_line(line: str) -> str:
 def escape_tex_prose(text: str) -> str:
     """Convert docstring prose (with inline `...` code spans and **bold**) into pdflatex."""
     # Split by inline code spans `...` first so `**` inside code is untouched
-    parts = re.split(r"(`[^`]+`|\[[^\[\]]+\]\[[A-Za-z0-9_:.-]+\])", text)
+    parts = re.split(r"(`[^`]+`|\[[^\[\]]+\]\s*\[[A-Za-z0-9_:.-]+\])", text)
     rendered = []
     for part in parts:
-        reference = re.fullmatch(r"\[([^\[\]]+)\]\[([A-Za-z0-9_:.-]+)\]", part)
+        reference = re.fullmatch(r"\[([^\[\]]+)\]\s*\[([A-Za-z0-9_:.-]+)\]", part)
         if reference:
             rendered.append(escape_tex_prose(reference.group(1)) +
                             r" {\footnotesize (" + escape_tex_prose(reference.group(2)) + ")}")
@@ -398,9 +420,17 @@ def render_tex_intro(intro: str) -> list[str]:
     lines = []
     in_list = False
     item_parts = []
+    paragraph = []
+
+    def flush_paragraph():
+        if paragraph:
+            lines.append(escape_tex_prose(" ".join(paragraph)))
+            paragraph.clear()
+
     for raw in intro.splitlines():
         line = raw.strip()
         if line.startswith("* "):
+            flush_paragraph()
             if not in_list:
                 lines.append("\\begin{itemize}\\raggedright")
                 in_list = True
@@ -419,12 +449,16 @@ def render_tex_intro(intro: str) -> list[str]:
             in_list = False
         heading = re.match(r"^##\s*(.+)$", line)
         if heading:
+            flush_paragraph()
             lines.append(f"\\subsubsection*{{{escape_tex_prose(heading.group(1).strip())}}}")
+        elif line:
+            paragraph.append(line)
         else:
-            lines.append(escape_tex_prose(line))
+            flush_paragraph()
     if in_list:
         lines.append("\\item{} " + escape_tex_prose(" ".join(item_parts)))
         lines.append("\\end{itemize}")
+    flush_paragraph()
     return lines
 
 
