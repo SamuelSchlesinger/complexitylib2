@@ -186,6 +186,12 @@ campaign or separate design study for every small improvement.
 Use MCP goal inspection, diagnostics and theorem search while iterating; reserve `lake` commands
 for validation checkpoints. If MCP tools are unavailable, say so and use the smallest shell check.
 
+In a fresh checkout or worktree, run `scripts/cache/get.sh` before the first build. Lake's local
+artifact cache then shares outputs between all checkouts on the machine, so a module is compiled
+once per machine for given inputs. Proof-only edits do not rebuild dependents; statement and
+definition changes in widely imported modules do. [scripts/cache/README.md](scripts/cache/README.md)
+describes both caches.
+
 ## Validation sequence
 
 ```bash

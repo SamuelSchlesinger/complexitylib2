@@ -57,9 +57,13 @@ namespaces begin with `Cslib`, and Turing-machine declarations use `Turing`. Use
 From a checkout:
 
 ```bash
-lake exe cache get
+scripts/cache/get.sh   # prebuilt Mathlib and Complexitylib outputs
 lake build --wfail --iofail
 ```
+
+`scripts/cache/get.sh` downloads the outputs CI built for `main`, so `lake build` compiles only
+local changes; without it the first build compiles the whole library. See
+[scripts/cache/README.md](scripts/cache/README.md) for how the caches work and what they trust.
 
 Import the specific modules you need. `import Complexity` imports the whole library.
 
