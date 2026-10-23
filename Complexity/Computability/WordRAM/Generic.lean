@@ -21,7 +21,6 @@ remain unchecked. Address extraction is the identity, including on arbitrary ini
 
 The adapter preserves each step, including faults, and every fuel-bounded result and exact
 instruction count. It does not impose new validity assumptions on existing WordRAM states.
-The original WordRAM public API and its clients remain available unchanged.
 
 ## Main definitions
 
@@ -52,7 +51,7 @@ abbrev Basis.genericModel (B : Basis) : GenericRAM.Model where
   operations := B.toSignature
   tests := ⟨Bool, fun _ => 2⟩
   constant _ c := some c
-  evalOp w f args := some (B.interp w f args)
+  evalOp w f args := B.interp w f args
   evalTest _ f args := some (if f then decide (args 0 < args 1) else decide (args 0 = args 1))
   admissible w v := decide (Fits w v)
   address _ v := some v
@@ -111,7 +110,15 @@ def Outcome.toGeneric (B : Basis) : Outcome r → GenericRAM.Outcome B.genericMo
 /-- Data instructions preserve success and failure, even on unbounded initial data. -/
 theorem Op.eval_toGeneric (o : Op B r) (w : ℕ) (x : Data r) :
     o.toGeneric.eval w (x.toGeneric B) = (o.eval w x).map (Data.toGeneric B) := by
-  cases o <;>
+  cases o with
+  | alu f d args =>
+    change (B.interp w f (x.regs ∘ args)).bind _ = ((B.interp w f (x.regs ∘ args)).bind _).map _
+    cases B.interp w f (x.regs ∘ args) with
+    | none => rfl
+    | some v =>
+      by_cases h : Fits w v <;> simp [Basis.genericModel, GenericRAM.Data.put, Data.put, h,
+        Data.toGeneric, Data.set, GenericRAM.Data.set]
+  | _ =>
     simp [Op.toGeneric, GenericRAM.Op.eval, Basis.genericModel, GenericRAM.Data.put,
       GenericRAM.Data.move, Op.eval, Data.put, Data.toGeneric, Data.set, Data.write,
       GenericRAM.Data.set, GenericRAM.Data.write]

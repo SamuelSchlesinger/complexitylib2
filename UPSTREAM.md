@@ -242,6 +242,17 @@ grandfathered without an alias; this list records them for downstream users.
   binder of the `recode` lemmas in `WordRAM/Time` is now `A'`; named-argument callers must follow.
   On the same date `Cslib.Circuits.Signature.Hom` and `Signature.Hom.Preserves` moved, with their
   names unchanged, from `Circuit/MapOp` to `Circuit/SignatureHom`, which `Circuit/MapOp` imports.
+* **Word-RAM bases with undefined values.** On 2026-10-23 `Cslib.WordRAM.Basis.interp` became
+  `Option`-valued, and an operation whose value is `none` faults. The field
+  `Basis.interp_mono_of_not_readsWidth` replaces `Basis.interp_eq_of_not_readsWidth`; it only keeps
+  values that fit a word, and the old name is a deprecated alias with this new signature.
+  `Basis.Hom.preserves` is now a field of its own, an equation per word size, operation and
+  arguments, rather than `Signature.Hom.Preserves`. `StandardOp.eval`, `Basis.standard_interp_bin`
+  and `Basis.standard_interp_width` wrap their old values in `some`. `Op.eval_alu` now reads
+  `(B.interp w f (x.regs ∘ args)).bind (x.put w d)`: an undefined value propagates, and the word
+  check follows for a defined one. `Exec.alu` and `ExecWithin.alu` take the value `v` and the
+  hypothesis `B.interp w f (x.regs ∘ args) = some v`. `Basis.standard` keeps its semantics; the new
+  `Basis.exact` faults on `x - y` for `y > x` and on `x / 0` and `x % 0`.
 * **Renamed modules.** On 2026-10-20 `Circuit/Boolean/MassProduction/{Sharp,SharpParameters,
   SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
   deprecated alias, but imports of the old module paths must be updated: a module stub would have

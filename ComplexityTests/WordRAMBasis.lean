@@ -11,8 +11,9 @@ import Complexity.Computability.WordRAM.MapOp
 
 Regressions for operation bases: a program over the additive basis runs, faults and halts exactly
 as its translation over the standard basis does, the translation is the program written with the
-standard instructions, programs avoiding the word-size operation do not read the word size, and
-decision transfers along the maps between the named bases.
+standard instructions, programs avoiding the word-size operation do not read the word size,
+the exact basis faults on subtraction below zero and division by zero, and decision transfers
+along the maps between the named bases.
 -/
 
 namespace ComplexityTests.WordRAMBasis
@@ -76,6 +77,41 @@ example (f : StandardOp) : Basis.standard.ReadsWidth f ↔ f = .width := Iff.rfl
 /-- A program that does not read the word size halts in the same way at every larger word size. -/
 example (w : ℕ) (hw : 4 ≤ w) : Executes w double (.init [3]) 6 4 :=
   (Executes.of_run (fuel := 10) (by decide : run 4 double 10 (.init [3]) = some (6, 4))).mono_width
+    (by decide) hw
+
+/-! ## The exact basis -/
+
+/-- Load the two input words into registers `0` and `1` and apply `f` to them, over the exact
+basis. -/
+def applyExact (f : BinOp) : Program .exact 3 :=
+  [.op (.const 2 1), .op (.load 0 2), .op (.const 2 2), .op (.load 1 2),
+    .op (.exactBin f 0 0 1), .halt 0]
+
+/-- The same program over the standard basis. -/
+def applyStandard (f : BinOp) : Program .standard 3 :=
+  [.op (.const 2 1), .op (.load 0 2), .op (.const 2 2), .op (.load 1 2), .op (.bin f 0 0 1),
+    .halt 0]
+
+/-- Exact subtraction faults below zero, where the standard basis truncates to `0`. -/
+example : run 4 (applyExact .sub) 10 (.init [5, 3]) = some (2, 6) ∧
+    run 4 (applyExact .sub) 10 (.init [3, 5]) = none ∧
+    run 4 (applyStandard .sub) 10 (.init [3, 5]) = some (0, 6) := by
+  decide
+
+/-- Exact division and remainder fault on a zero divisor, where the standard basis follows
+Lean's `x / 0 = 0` and `x % 0 = x`. -/
+example : run 4 (applyExact .div) 10 (.init [7, 2]) = some (3, 6) ∧
+    run 4 (applyExact .div) 10 (.init [7, 0]) = none ∧
+    run 4 (applyExact .mod) 10 (.init [7, 0]) = none ∧
+    run 4 (applyStandard .div) 10 (.init [7, 0]) = some (0, 6) ∧
+    run 4 (applyStandard .mod) 10 (.init [7, 0]) = some (7, 6) := by
+  decide
+
+/-- Word-size monotonicity covers exact subtraction: a successful run is a run at every larger
+word size. -/
+example (w : ℕ) (hw : 4 ≤ w) : Executes w (applyExact .sub) (.init [5, 3]) 2 6 :=
+  (Executes.of_run (fuel := 10)
+    (by decide : run 4 (applyExact .sub) 10 (.init [5, 3]) = some (2, 6))).mono_width
     (by decide) hw
 
 /-! ## Decision grows with the basis -/

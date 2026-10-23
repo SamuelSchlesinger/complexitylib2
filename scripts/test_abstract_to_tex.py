@@ -119,7 +119,7 @@ class AbstractToTexTests(unittest.TestCase):
         self.assertNotIn(r"\paragraph{", rendered)
 
     def test_catalogue_symbols_and_author_names_are_pdflatex_safe(self):
-        sample = "∏ ∑ ⊥ ⊤ χ π ρ μ ν ι ℓ ∞ ⨅ ⨆ ≃ Σ ⦃x⦄ ⌈x⌉₊ x₀ x₁ x₂ f⁻¹ x² x³ x⁵ x⁹ ∑ˢ ⋃ ⊂ ·"
+        sample = "∏ ∑ ⊥ ⊤ χ π ρ μ ν ι ℓ ∞ ⨅ ⨆ ≃ Σ ⦃x⦄ ⌈x⌉₊ x₀ x₁ x₂ xₖ f⁻¹ x² x³ x⁵ x⁹ ∑ˢ ⋃ ⊂ ·"
         rendered = abstract_to_tex.escape_tex_code_line(sample)
         self.assertTrue(rendered.isascii())
         for command in (r"\prod", r"\sum", r"\bot", r"\top", r"\chi", r"\infty"):

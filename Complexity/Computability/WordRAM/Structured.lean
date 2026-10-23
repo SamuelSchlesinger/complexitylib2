@@ -199,10 +199,10 @@ theorem const {v : ℕ} (h : Fits w v) :
     Exec (B := B) w (.op (.const d v)) x (x.set d v) 1 :=
   .op (Data.put_of_fits h)
 
-theorem alu {f : B.Op} {args : Fin (B.Arity f) → Fin r}
-    (h : Fits w (B.interp w f (x.regs ∘ args))) :
-    Exec w (.op (.alu f d args)) x (x.set d (B.interp w f (x.regs ∘ args))) 1 :=
-  .op (Data.put_of_fits h)
+theorem alu {f : B.Op} {args : Fin (B.Arity f) → Fin r} {v : ℕ}
+    (hf : B.interp w f (x.regs ∘ args) = some v) (h : Fits w v) :
+    Exec w (.op (.alu f d args)) x (x.set d v) 1 :=
+  .op (by rw [Op.eval_alu, hf]; exact Data.put_of_fits h)
 
 theorem copy : Exec (B := B) w (.op (.copy d s)) x (x.set d (x.regs s)) 1 := .op rfl
 
@@ -343,10 +343,10 @@ theorem const {v : ℕ} (h : Fits w v) :
     ExecWithin (B := B) w (.op (.const d v)) x (x.set d v) 1 :=
   (Exec.const h).within
 
-theorem alu {f : B.Op} {args : Fin (B.Arity f) → Fin r}
-    (h : Fits w (B.interp w f (x.regs ∘ args))) :
-    ExecWithin w (.op (.alu f d args)) x (x.set d (B.interp w f (x.regs ∘ args))) 1 :=
-  (Exec.alu h).within
+theorem alu {f : B.Op} {args : Fin (B.Arity f) → Fin r} {v : ℕ}
+    (hf : B.interp w f (x.regs ∘ args) = some v) (h : Fits w v) :
+    ExecWithin w (.op (.alu f d args)) x (x.set d v) 1 :=
+  (Exec.alu hf h).within
 
 theorem copy : ExecWithin (B := B) w (.op (.copy d s)) x (x.set d (x.regs s)) 1 :=
   Exec.copy.within
@@ -481,8 +481,11 @@ theorem Op.regs_eq {w : ℕ} {o : Op B r} {x y : Data r} {i : Fin r} (hi : o.des
     (h : o.eval w x = some y) : y.regs i = x.regs i := by
   have hne {d : Fin r} (hd : o.dest = some d) : i ≠ d := fun hid => hi (hid ▸ hd)
   cases o with
-  | const d | alu _ d =>
+  | const d =>
     obtain ⟨-, rfl⟩ := Data.put_eq_some.1 h
+    simp [Function.update_of_ne (hne rfl)]
+  | alu _ d =>
+    obtain ⟨_, -, -, rfl⟩ := Op.eval_alu_eq_some.1 h
     simp [Function.update_of_ne (hne rfl)]
   | copy d | load d => cases h; simp [Function.update_of_ne (hne rfl)]
   | store => cases h; rfl
@@ -611,7 +614,13 @@ theorem Op.eval_rename (hf : f.Injective) (o : Op B r) (w : ℕ) (x : Data r') :
     unfold Data.put
     split <;> simp [Data.extend_set hf, Data.extend_comap hf]
   cases o with
-  | const | alu => exact hput
+  | const => exact hput
+  | alu g d args =>
+    change (B.interp w g ((x.comap f).regs ∘ args)).bind (x.put w (f d)) =
+      ((B.interp w g ((x.comap f).regs ∘ args)).bind ((x.comap f).put w d)).map _
+    cases B.interp w g ((x.comap f).regs ∘ args) with
+    | none => rfl
+    | some v => exact hput
   | copy | load =>
     simp [Op.rename, Op.eval, Data.extend_set hf, Data.extend_comap hf]
   | store a s =>

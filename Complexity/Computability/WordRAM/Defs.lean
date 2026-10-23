@@ -46,17 +46,20 @@ to the flat programs of this file with the same instruction counts.
   of the basis to registers, and read or write the memory cell whose address is held in a
   register. The standard basis has the arithmetic, bitwise and shift operations
   (`Cslib.WordRAM.BinOp`, applied by `Cslib.WordRAM.Op.bin`) and reads the word size `w`
-  (`Cslib.WordRAM.Op.width`). The control instructions jump, branch on an equality or unsigned
+  (`Cslib.WordRAM.Op.width`); the exact basis (`Cslib.WordRAM.Basis.exact`) has the same
+  operations, with subtraction below zero and division by zero undefined. The control
+  instructions jump, branch on an equality or unsigned
   comparison of two registers, and halt with the contents of a register as output.
 * A run starts at instruction `0` with all registers `0`, the input length at address `0` and the
   input words at addresses `1, …, n` (`Cslib.WordRAM.State.init`); all other cells hold `0`.
   Installing this initial input and extracting the halting output are uncharged; executing the
   final `halt` costs one instruction.
 * On a run from an input whose length and words fit a word (`Cslib.WordRAM.InputFits`), an
-  instruction that would write a number of more than `w` bits into a register *faults*, and so
-  does running off the end of the program. A fault is not a result: only runs that halt count.
-  Registers and memory hold words throughout such a run (`Cslib.WordRAM.Runs.bounded_init`), so
-  every address is a word and the memory has `2 ^ w` usable cells.
+  instruction that would write a number of more than `w` bits into a register *faults*, and so do
+  an operation whose value is undefined and running off the end of the program. A fault is not a
+  result: only runs that halt count. Registers and memory hold words throughout such a run
+  (`Cslib.WordRAM.Runs.bounded_init`), so every address is a word and the memory has `2 ^ w`
+  usable cells.
 
 ## Design notes
 
@@ -71,9 +74,9 @@ The definitions are adapted from the Lean formalization accompanying
   Algorithms that use arithmetic modulo `2 ^ w` [Hagerup][Hagerup1998] must reduce explicitly,
   for instance with the word size and half-word arithmetic; this is not formalized here.
 * Words are unsigned [Hagerup][Hagerup1998]. In the standard basis subtraction is truncated, and
-  division and remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. These are
-  part of this machine's semantics; transfer to a model with other conventions requires a separate
-  simulation.
+  division and remainder by zero follow Lean's conventions `x / 0 = 0` and `x % 0 = x`. In the
+  exact basis these values are undefined, so the operation faults. These are part of this
+  machine's semantics; transfer to a model with other conventions requires a separate simulation.
 * The operations form a parameter, as the gates of a circuit do: word-RAM models differ in their
   instruction sets [Hagerup][Hagerup1998]. The standard basis has addition, subtraction,
   multiplication, bitwise operations and shifts as in Hagerup's multiplication RAM, together with
@@ -95,16 +98,22 @@ Compared with the source formalization, words are unsigned rather than two's-com
 the operations form a basis, whose standard instance adds bitwise operations, shifts and the word
 size to the source's arithmetic (`Cslib.WordRAM.Basis.arithmetic`); copies, loads,
 addresses and the halting output are not checked against the word size; the program counter is
-unbounded; and the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
-of binary digits of the size rather than by `log₂ (size + 2) + 2`. The current classes allow
-width-indexed code; the `Uniform` variants retain the fixed-program convention.
+unbounded; the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
+of binary digits of the size rather than by `log₂ (size + 2) + 2`; and an operation may be
+undefined, which faults. In particular, the exact basis faults on subtraction below zero and on
+division and remainder by zero. The source does not reject these cases as such: its signed
+subtraction may give a negative word, its division and remainder follow Lean's integer conventions
+`x / 0 = 0` and `x % 0 = x`, and only its usual check that the result fits a signed word applies.
+The current classes allow width-indexed code; the `Uniform` variants retain the fixed-program
+convention.
 
 ## Main definitions
 
 * `Cslib.WordRAM.Fits`: a number fits a `w`-bit word.
 * `Cslib.WordRAM.Cond`, `Cslib.WordRAM.Op`, `Cslib.WordRAM.Instr`, `Cslib.WordRAM.Program`:
   conditions, data instructions, instructions and programs over a basis.
-* `Cslib.WordRAM.Op.bin`, `Cslib.WordRAM.Op.width`: the data instructions of the standard basis.
+* `Cslib.WordRAM.Op.bin`, `Cslib.WordRAM.Op.width`: the data instructions of the standard basis;
+  `Cslib.WordRAM.Op.exactBin`, `Cslib.WordRAM.Op.exactWidth`: those of the exact basis.
 * `Cslib.WordRAM.Data`, `Cslib.WordRAM.State`: registers with memory, and with a program counter.
 * `Cslib.WordRAM.Op.eval`: the effect of a data instruction, `none` on a fault.
 * `Cslib.WordRAM.step`: one step of a program, which continues, halts with an output, or faults.
@@ -197,6 +206,13 @@ def Op.bin (f : BinOp) (d i j : Fin r) : Op .standard r := .alu (.bin f) d ![i, 
 
 /-- `width d` sets register `d` to the word size. -/
 def Op.width (d : Fin r) : Op .standard r := .alu .width d ![]
+
+/-- `exactBin f d i j` sets register `d` to the exact value of the binary operation `f` applied
+to registers `i` and `j`. -/
+def Op.exactBin (f : BinOp) (d i j : Fin r) : Op .exact r := .alu (.bin f) d ![i, j]
+
+/-- `exactWidth d` sets register `d` to the word size, over the exact basis. -/
+def Op.exactWidth (d : Fin r) : Op .exact r := .alu .width d ![]
 
 /-- Instructions over the basis `B`: data instructions, jumps, conditional branches and halting.
 Jump and branch targets are instruction indices. -/
@@ -291,14 +307,15 @@ theorem Cond.holds_lt {i j : Fin r} {x : Data r} : (Cond.lt i j).Holds x ↔ x.r
   Iff.rfl
 
 /-- The effect of a data instruction at word size `w`, or `none` if it faults. Only constants
-and operations can produce a number that does not fit a word, and they fault when they do.
+and operations can produce a number that does not fit a word, and they fault when they do; an
+operation also faults when its value is undefined.
 Copying, loading and storing need no check: throughout a run from an input that fits, registers
 and memory hold words (`Cslib.WordRAM.Runs.bounded_init`), so every address held in a register is
 a word too. -/
 def Op.eval (w : ℕ) : Op B r → Data r → Option (Data r)
   | .const d v, x => x.put w d v
   | .copy d s, x => some (x.set d (x.regs s))
-  | .alu f d args, x => x.put w d (B.interp w f (x.regs ∘ args))
+  | .alu f d args, x => (B.interp w f (x.regs ∘ args)).bind (x.put w d)
   | .load d a, x => some (x.set d (x.mem (x.regs a)))
   | .store a s, x => some (x.write (x.regs a) (x.regs s))
 
@@ -314,7 +331,7 @@ theorem Op.eval_copy : (Op.copy (B := B) d s).eval w x = some (x.set d (x.regs s
 
 @[simp]
 theorem Op.eval_alu (f : B.Op) (args : Fin (B.Arity f) → Fin r) :
-    (Op.alu f d args).eval w x = x.put w d (B.interp w f (x.regs ∘ args)) := rfl
+    (Op.alu f d args).eval w x = (B.interp w f (x.regs ∘ args)).bind (x.put w d) := rfl
 
 @[simp]
 theorem Op.eval_load : (Op.load (B := B) d a).eval w x = some (x.set d (x.mem (x.regs a))) := rfl
@@ -325,6 +342,16 @@ theorem Op.eval_store :
 
 end Eval
 
+/-- An operation succeeds when its value is defined and fits a word. -/
+theorem Op.eval_alu_eq_some {w : ℕ} {x y : Data r} {f : B.Op} {d : Fin r}
+    {args : Fin (B.Arity f) → Fin r} :
+    (Op.alu f d args).eval w x = some y ↔
+      ∃ v, B.interp w f (x.regs ∘ args) = some v ∧ Fits w v ∧ x.set d v = y := by
+  rw [Op.eval_alu]
+  cases B.interp w f (x.regs ∘ args) with
+  | none => exact ⟨nofun, fun ⟨_, h, _⟩ => nomatch h⟩
+  | some v => exact Data.put_eq_some.trans ⟨fun h => ⟨v, rfl, h⟩, fun ⟨_, rfl, h⟩ => h⟩
+
 @[simp]
 theorem Op.eval_bin (w : ℕ) (f : BinOp) (d i j : Fin r) (x : Data r) :
     (Op.bin f d i j).eval w x = x.put w d (f.eval (x.regs i) (x.regs j)) := rfl
@@ -333,6 +360,16 @@ theorem Op.eval_bin (w : ℕ) (f : BinOp) (d i j : Fin r) (x : Data r) :
 @[simp]
 theorem Op.eval_width (w : ℕ) (d : Fin r) (x : Data r) :
     (Op.width d).eval w x = some (x.set d w) :=
+  Data.put_of_fits (fits_self w)
+
+@[simp]
+theorem Op.eval_exactBin (w : ℕ) (f : BinOp) (d i j : Fin r) (x : Data r) :
+    (Op.exactBin f d i j).eval w x = (f.evalExact (x.regs i) (x.regs j)).bind (x.put w d) :=
+  rfl
+
+@[simp]
+theorem Op.eval_exactWidth (w : ℕ) (d : Fin r) (x : Data r) :
+    (Op.exactWidth d).eval w x = some (x.set d w) :=
   Data.put_of_fits (fits_self w)
 
 /-- The outcome of a step: the next state, halting with an output, or a fault. -/
@@ -570,8 +607,11 @@ theorem Data.Bounded.write {w : ℕ} {x : Data r} (hx : x.Bounded w) {a v : ℕ}
 theorem Data.Bounded.op {w : ℕ} {x y : Data r} (hx : x.Bounded w) {o : Op B r}
     (h : o.eval w x = some y) : y.Bounded w := by
   cases o with
-  | const | alu =>
+  | const =>
     obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
+    exact hx.set hv
+  | alu =>
+    obtain ⟨v, -, hv, rfl⟩ := Op.eval_alu_eq_some.1 h
     exact hx.set hv
   | copy d s => cases h; exact hx.set (hx.1 s)
   | load d a => cases h; exact hx.set (hx.2 _)
@@ -606,8 +646,8 @@ theorem Runs.bounded_init {w : ℕ} {p : Program B r} {input : List ℕ} {t : St
 Overflow faults, so a program that does not read the word size cannot tell word sizes apart on
 a run that succeeds: the same run succeeds at every larger word size. -/
 
-/-- The data instruction reads the word size: it applies an operation of the basis that does,
-such as `Op.width` in the standard basis. -/
+/-- The data instruction reads the word size: it applies an operation that the basis marks with
+`Basis.ReadsWidth`, such as `Op.width` in the standard basis. -/
 def Op.ReadsWidth : Op B r → Prop
   | .alu f _ _ => B.ReadsWidth f
   | _ => False
@@ -648,8 +688,8 @@ theorem Op.eval_mono_width {w w' : ℕ} {o : Op B r} {x y : Data r} (ho : ¬o.Re
     obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
     exact Data.put_of_fits (hv.mono hw)
   | alu f d args =>
-    obtain ⟨hv, rfl⟩ := Data.put_eq_some.1 h
-    rw [Op.eval, ← B.interp_eq_of_not_readsWidth f ho w w']
+    obtain ⟨v, hf, hv, rfl⟩ := Op.eval_alu_eq_some.1 h
+    rw [Op.eval, B.interp_mono_of_not_readsWidth f ho hw hf hv]
     exact Data.put_of_fits (hv.mono hw)
   | copy | load | store => exact h
 

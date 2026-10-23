@@ -30,6 +30,8 @@ import ComplexityTests.Abstracts.TodaAbstract
 import ComplexityTests.Abstracts.TodaBridge
 import ComplexityTests.Abstracts.USTCONAbstract
 import ComplexityTests.Abstracts.USTCONBridge
+import ComplexityTests.Abstracts.WordRAMAbstract
+import ComplexityTests.Abstracts.WordRAMBridge
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController
