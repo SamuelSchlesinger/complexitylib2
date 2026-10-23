@@ -75,4 +75,11 @@ example : Cslib.Crypto.HardCore (fun _ => []) (fun word => word.headD false) := 
   obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by lia : n ≠ 0)
   simp only [hidden_head, Game.advantage_self]
 
+-- A primitive's plain certificate composes directly in an ordinary client proof.
+example {f : List Bool → List Bool} {predicate : List Bool → Bool}
+    (h : Cslib.Crypto.HardCore f predicate) :
+    ComputableInPolyTime (fun word => !(predicate word)) encBits encBool := by
+  have hp := h.polyTime
+  fun_prop
+
 end ComplexityTests.HardCore

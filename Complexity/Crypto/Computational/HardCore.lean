@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.PseudorandomGenerator
@@ -74,14 +75,25 @@ noncomputable abbrev predictionAdvantage (f : List Bool → List Bool)
     (predicate : List Bool → Bool) (adversary : Distinguisher) (n : ℕ) : ℝ≥0 :=
   Game.guessingAdvantage (ProbComp.eval (predictionGame f predicate adversary n))
 
-/-- An efficient predicate whose value is computationally hidden by the image function. -/
+/-- A plain polynomial-time predicate whose value is computationally hidden by the image
+function. -/
 structure HardCore (f : List Bool → List Bool) (predicate : List Bool → Bool) : Prop where
   /-- Computing the predicate from the seed uses a fixed polynomial-time machine. -/
-  polyTime : ComputableTidilyInPolyTime predicate encBits encBool
+  polyTime : ComputableInPolyTime predicate encBits encBool
   /-- A predictor's correctness is indistinguishable from a fair coin. -/
   secure : Game.Indistinguishable
     (fun adversary n => ProbComp.eval (predictionGame f predicate adversary n))
     (fun _ _ => PMF.uniformOfFintype Bool) (IsPPT encBool)
+
+/-- Recover the tidy presentation for proofs without changing the security contract. -/
+theorem hardCore_iff_tidy {f : List Bool → List Bool} {predicate : List Bool → Bool} :
+    HardCore f predicate ↔
+    (ComputableTidilyInPolyTime predicate encBits encBool) ∧
+    (Game.Indistinguishable
+    (fun adversary n => ProbComp.eval (predictionGame f predicate adversary n))
+    (fun _ _ => PMF.uniformOfFintype Bool) (IsPPT encBool)) :=
+  ⟨fun h => ⟨h.polyTime.tidy, h.secure⟩,
+    fun ⟨h0, h1⟩ => ⟨.of_tidy h0, h1⟩⟩
 
 /-- The shared security property gives negligible absolute prediction bias. -/
 theorem HardCore.unpredictable {f : List Bool → List Bool} {predicate : List Bool → Bool}
@@ -92,7 +104,8 @@ theorem HardCore.unpredictable {f : List Bool → List Bool} {predicate : List B
 theorem HardCore.of_unpredictable {f : List Bool → List Bool} {predicate : List Bool → Bool}
     (hp : ComputableTidilyInPolyTime predicate encBits encBool)
     (h : ∀ adversary : Distinguisher, IsPPT encBool adversary →
-      Negligible (predictionAdvantage f predicate adversary)) : HardCore f predicate := ⟨hp, h⟩
+      Negligible (predictionAdvantage f predicate adversary)) : HardCore f predicate :=
+      ⟨.of_tidy hp, h⟩
 
 /-- The prediction experiment is a uniform PPT program when its ingredients are efficient. -/
 @[program_certificate]
@@ -224,7 +237,7 @@ theorem HardCore.pseudorandomGenerator {f : List Bool → List Bool} {predicate 
     (hlen : ∀ word, (f word).length = word.length)
     (huniform : ∀ n, (BitString.uniformList n).map f = BitString.uniformList n) :
     PseudorandomGenerator (fun seed => f seed ++ [predicate seed]) (fun n => n + 1) := by
-  have hp := h.polyTime
+  have hp := h.polyTime.tidy
   refine PseudorandomGenerator.of_indistinguishable (by fun_prop) ?_ Nat.lt_succ_self
     (h.indistinguishable_of_uniform huniform)
   intro seed
@@ -234,6 +247,6 @@ theorem HardCore.pseudorandomGenerator {f : List Bool → List Bool} {predicate 
 theorem OneWayPermutation.pseudorandomGenerator_of_hardCore {f : List Bool → List Bool}
     {predicate : List Bool → Bool} (hf : OneWayPermutation f) (h : HardCore f predicate) :
     PseudorandomGenerator (fun seed => f seed ++ [predicate seed]) (fun n => n + 1) :=
-  h.pseudorandomGenerator hf.oneWay.polyTime hf.length_eq hf.uniformList_map
+  h.pseudorandomGenerator hf.oneWay.polyTime.tidy hf.length_eq hf.uniformList_map
 
 end Cslib.Crypto

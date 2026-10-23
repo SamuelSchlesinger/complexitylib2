@@ -345,7 +345,7 @@ theorem indistinguishable {generator : List Bool → List Bool} {count : ℕ →
     ComputationallyIndistinguishable (generatorEnsemble (stretch generator count))
       (fun n => uniformList (n + count n)) := by
   intro adversary hadversary
-  have hreduce := isPPT_reduction hgenerator.polyTime hcount hadversary
+  have hreduce := isPPT_reduction hgenerator.polyTime.tidy hcount hadversary
   have hnegligible := hgenerator.indistinguishable _ hreduce
   have hloss := hnegligible.polynomiallyBounded_mul (loss_polynomial hcount)
   convert hloss using 1
@@ -360,7 +360,7 @@ theorem pseudorandomGenerator {generator : List Bool → List Bool} {count : ℕ
     (hpositive : ∀ n, 0 < count n) :
     PseudorandomGenerator (stretch generator count) (fun n => n + count n) := by
   refine PseudorandomGenerator.of_indistinguishable
-    (polyTime_stretch hgenerator.polyTime hcount) ?_ ?_
+    (polyTime_stretch hgenerator.polyTime.tidy hcount) ?_ ?_
     (indistinguishable hgenerator hcount)
   · intro seed
     exact length_iterate hgenerator.length_eq _ _ _
@@ -395,7 +395,7 @@ theorem PseudorandomGenerator.truncate {generator : List Bool → List Bool} {le
     (htarget : ComputableTidilyInPolyTime target encUnary encUnary)
     (hle : ∀ n, target n ≤ length n) (hstretch : ∀ n, n < target n) :
     PseudorandomGenerator (fun seed => (generator seed).take (target seed.length)) target := by
-  have hpoly := hgenerator.polyTime
+  have hpoly := hgenerator.polyTime.tidy
   refine PseudorandomGenerator.of_indistinguishable (by polytime) ?_ hstretch ?_
   · intro seed
     simp only [List.length_take, hgenerator.length_eq, Nat.min_eq_left (hle _)]

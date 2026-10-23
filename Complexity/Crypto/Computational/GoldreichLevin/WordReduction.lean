@@ -199,7 +199,7 @@ theorem negligible_parityPrediction {f : List Bool → List Bool} (hf : OneWay f
   apply negligible_prediction_of_negligible_inversion
   intro degree
   simpa only [eval_wordInversionGame f] using
-    hf.inversion_negligible _ (isPPT_wordInverter hf.polyTime hefficient c d degree)
+    hf.inversion_negligible _ (isPPT_wordInverter hf.polyTime.tidy hefficient c d degree)
 
 /-- One efficient typed evaluator witnesses the concrete reduction at every precision degree.
 When `f` is efficient, `isPPT_wordInverter` certifies each resulting inverter. -/

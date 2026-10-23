@@ -148,9 +148,9 @@ theorem PseudorandomGenerator.oneWay_of_card_le {generator : List Bool → List 
     (hgenerator : PseudorandomGenerator generator ℓ) {ε : ℕ → ℝ≥0} (hε : Negligible ε)
     (P : ℕ → Finset (List Bool)) (hP : ∀ n (x : List Bool), ℓ x.length = ℓ n → x ∈ P n)
     (hcard : ∀ n, (#(P n) : ℝ≥0) ≤ ε n * 2 ^ ℓ n) : OneWay generator := by
-  refine OneWay.of_inversion_negligible hgenerator.polyTime fun adversary hadversary => ?_
+  refine OneWay.of_inversion_negligible hgenerator.polyTime.tidy fun adversary hadversary => ?_
   have hind := hgenerator.indistinguishable (test generator adversary)
-    (isPPT_test hgenerator.polyTime hadversary)
+    (isPPT_test hgenerator.polyTime.tidy hadversary)
   refine negligible_of_le (hind.add_fun hε) fun n => ?_
   rw [inversionGame_eq_prgRealGame, eval_prgRealGame]
   exact ((NNReal.le_add_nndist _ _).trans_eq (add_comm _ _)).trans <| by

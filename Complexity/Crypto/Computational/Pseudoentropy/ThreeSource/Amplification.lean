@@ -62,7 +62,7 @@ theorem isPolyTime_amplifiedGenerate {pair : SamplablePair} (saved : pair.SeedRe
         (observationBound input.1.1) (densityBound input.1.1) (common input.1.1) input.1.2
           (saved.evaluate input.1.1) input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits := by
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   have hgenerate := isPolyTime_paddedGenerate saved hobservation hdensity hcommon
   unfold amplifiedGenerate
   apply PRGStretch.polyTime_iterate
@@ -113,7 +113,7 @@ theorem exists_secure_amplified_choice {pair : SamplablePair} {gap : ℕ → ℝ
   obtain ⟨choose, hchoose, hsecure⟩ :=
     exists_secure_padded_choice hpair saved bounds hgap
   obtain ⟨hobservation, hdensity, hcommon, _, _⟩ := bounds
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   have hcount : ComputableTidilyInPolyTime (fun n =>
       size (saved.length n) (densityBound n) * common n + 1 - common n) encUnary encUnary := by
     polytime

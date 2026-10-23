@@ -16,6 +16,11 @@ namespace ComplexityTests.PseudoentropyThreeSource
 
 open Cslib Cslib.Probability Cslib.BitString Cslib.Crypto.Pseudoentropy Turing.MultiTapeTM
 
+-- The plain efficiency contract is inhabited independently of entropy/security assumptions.
+example : ThreeSource.Efficient (fun _ => 1) (fun _ => 2) (fun _ => 3) (fun _ => 4)
+    (fun _ _ => 5) (fun _ _ => 6) (fun _ _ => 7) (fun _ _ => 8) := by
+  constructor <;> fun_prop
+
 -- Runtime divisors, including zero, use the same total quotient/remainder certificate.
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (p.1 / p.2, p.1 % p.2))
     (encPair encUnary encUnary) (encPair encUnary encUnary) :=

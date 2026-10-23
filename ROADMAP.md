@@ -1002,10 +1002,12 @@ batches.
    `ComputableInPolyTime` and its tidy bridges are in place, together with plain space, big-O and
    FPT notions (#551). `P`, `NP`, `FNP` and the polynomial-time reductions (#546), the
    probabilistic, counting and hierarchy classes (#547), the `TFNP` subclasses (#548), FPT
-   reductions, kernels and proof systems (#549) use it, and the WPP/LWPP robustness results expose
-   plain certificates (#562). Remaining: the cryptographic primitives (#550), plain restatements of
-   the other public characterizations and closure lemmas, and switching the abstract bridges to
-   the shared predicate; the migration stays open under #456.
+   reductions, kernels and proof systems (#549) and the cryptographic primitives (#550, including
+   deterministic families in commitment hiding and zero-knowledge) use it, and the WPP/LWPP
+   robustness results expose plain certificates (#562). Remaining: isolating tidy computability
+   to proofs everywhere, by mechanically mirroring the calculus in plain form (#608), sweeping
+   the remaining public tidy statements and guarding the result in CI (#456), and switching the
+   abstract bridges to the shared predicate.
 
 ## Remaining theorem developments
 

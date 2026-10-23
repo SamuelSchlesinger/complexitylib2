@@ -67,8 +67,8 @@ example : Nonempty fairPair.SeedRealization := fairPair.exists_seedRealization
 -- The shared padding contract has a concrete saved sampler and a realizable common schedule.
 example : ∃ common, EntropyGrid.PaddingBounds paddedSeed (fun _ => 0) (fun _ => 2) common := by
   obtain ⟨common, hcommon, _, _, hsize⟩ := EntropyGrid.exists_common_seedLength
-    paddedSeed.length_isPolyTime (show ComputableTidilyInPolyTime (fun _ => 0) encUnary encUnary
-      from by fun_prop)
+    paddedSeed.length_isPolyTime.tidy
+    (show ComputableTidilyInPolyTime (fun _ => 0) encUnary encUnary from by fun_prop)
     (show ComputableTidilyInPolyTime (fun _ => 2) encUnary encUnary from by fun_prop)
   exact ⟨common, ⟨by fun_prop, by fun_prop, hcommon, fun _ _ _ => Nat.le_refl 0, hsize⟩⟩
 

@@ -1045,7 +1045,7 @@ theorem gmwView_indistinguishable_gmwSimulator {α : Type} {enc : α ↪ List Bo
       (fun p => adversary p.1.1 p.2) :=
     hadversary.preprocess (by fun_prop) (by fun_prop)
   have hclock := isPPTOn_gmwViewReduction
-    (adversary := fun n _ _ view => adversary n view) hG.polyTime hG.length_eq hf hV htest
+    (adversary := fun n _ _ view => adversary n view) hG.polyTime.tidy hG.length_eq hf hV htest
   let red : Distinguisher := fun n challenge =>
     gmwViewReduction generator length f Vstar (fun n _ _ view => adversary n view)
       n (a n) (w n) (z n) challenge

@@ -64,7 +64,7 @@ theorem isPolyTime_combinedGenerate {pair : SamplablePair} (saved : pair.SeedRea
       combinedGenerate input.1 (saved.length input.1) (observationBound input.1)
         (densityBound input.1) (common input.1) (saved.evaluate input.1) input.2)
       (encPair encUnary encBits) encBits := by
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   unfold combinedGenerate
   refine GeneratorXor.isPolyTime_generate (by polytime) (by polytime) (by polytime) ?_ (by polytime)
   have hgenerate := isPolyTime_amplifiedGenerate saved hobservation hdensity hcommon
@@ -91,7 +91,7 @@ theorem combinedGenerate_indistinguishable {pair : SamplablePair} {gap : ℕ →
       (fun n => uniformList (size (saved.length n) (densityBound n) * common n + 1)) := by
   obtain ⟨choose, hchoose, hsecure⟩ := exists_secure_amplified_choice hpair saved bounds hgap
   obtain ⟨hobservation, hdensity, hcommon, _, _⟩ := bounds
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   unfold combinedGenerate
   refine GeneratorXor.indistinguishable (choose := choose)
     (count := fun n => size (saved.length n) (densityBound n)) (seedBits := common)

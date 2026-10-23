@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Crypto.Computational.GMW.Simulator
 public import Complexity.Crypto.Computational.GMW.Soundness
@@ -43,7 +44,7 @@ entries.
   quantifies over uniform strict oracle PPT malicious verifiers `Vstar` and deterministic
   polynomial-time-generable families of instances `a : ℕ → α`, valid witnesses
   `w : ℕ → List Bool` (`∀ n, isWitness (a n) (w n) = true`), and auxiliary inputs
-  `z : ℕ → List Bool` (`ComputableTidilyInPolyTime · encUnary _`), rather than non-uniformly over
+  `z : ℕ → List Bool` (`ComputableInPolyTime · encUnary _`), rather than non-uniformly over
   arbitrary sequences `(x, w) ∈ R_L` and `z ∈ {0, 1}^*`. Fixed-instance zero-knowledge
   (`ZeroKnowledgeProof.zero_knowledge_const`) is an immediate corollary for constant families
   `fun _ => a` and `fun _ => w`.
@@ -121,7 +122,7 @@ Micali, and Wigderson][GoldreichMicaliWigderson1991].
   without any witness) whose output ensemble is computationally indistinguishable from the real
   interaction output across all deterministic polynomial-time-generable families of instances
   `a : ℕ → α`, valid witnesses `w : ℕ → List Bool`, and auxiliary inputs `z : ℕ → List Bool`
-  (`ComputableTidilyInPolyTime · encUnary _`). -/
+  (`ComputableInPolyTime · encUnary _`). -/
 structure ZeroKnowledgeProof {α : Type} (enc : α ↪ List Bool) (A : Set α) where
   /-- The honest verifier, indexed by security parameter `n` and instance `a`. -/
   verifier : ℕ → α → WordOracleComp Unit Bool
@@ -129,9 +130,9 @@ structure ZeroKnowledgeProof {α : Type} (enc : α ↪ List Bool) (A : Set α) w
   prover : ℕ → α → List Bool → Prover Unit
   /-- The polynomial-time witness check used by the honest prover. -/
   isWitness : α → List Bool → Bool
-  /-- `isWitness` is computable in polynomial time. -/
+  /-- `isWitness` is computable in plain polynomial time. -/
   polyTime_isWitness :
-    ComputableTidilyInPolyTime (fun p : α × List Bool => isWitness p.1 p.2)
+    ComputableInPolyTime (fun p : α × List Bool => isWitness p.1 p.2)
       (encPair enc encBits) encBool
   /-- `a ∈ A` if and only if some witness `w` satisfies `isWitness a w = true`. -/
   mem_iff_exists_witness : ∀ a, a ∈ A ↔ ∃ w, isWitness a w = true
@@ -170,14 +171,41 @@ structure ZeroKnowledgeProof {α : Type} (enc : α ↪ List Bool) (A : Set α) w
         IsPPTOn (encPair encUnary (encPair enc encBits)) encBits
           (fun p : ℕ × α × List Bool => S p.1 p.2.1 p.2.2) ∧
         ∀ (a : ℕ → α) (w z : ℕ → List Bool),
-          ComputableTidilyInPolyTime a encUnary enc →
-          ComputableTidilyInPolyTime w encUnary encBits →
-          ComputableTidilyInPolyTime z encUnary encBits →
+          ComputableInPolyTime a encUnary enc →
+          ComputableInPolyTime w encUnary encBits →
+          ComputableInPolyTime z encUnary encBits →
           (∀ n, isWitness (a n) (w n) = true) →
           ComputationallyIndistinguishable
             (fun n => ((prover n (a n) (w n)).run (Vstar n (a n) (z n))
               (prover n (a n) (w n)).init).map Prod.fst)
             (fun n => ProbComp.eval (S n (a n) (z n)))
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem ZeroKnowledgeProof.polyTime_isWitness_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    (h : ZeroKnowledgeProof enc A) :
+    ComputableTidilyInPolyTime (fun p : α × List Bool => h.isWitness p.1 p.2)
+      (encPair enc encBits) encBool := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.polyTime_isWitness
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem ZeroKnowledgeProof.zero_knowledge_tidy {α : Type} {enc : α ↪ List Bool} {A : Set α}
+    (h : ZeroKnowledgeProof enc A) :
+    ∀ Vstar : ℕ → α → List Bool → WordOracleComp Unit (List Bool),
+      IsOraclePPTOn (encPair encUnary (encPair enc encBits)) encBits
+        (fun p : ℕ × α × List Bool => Vstar p.1 p.2.1 p.2.2) →
+      ∃ S : ℕ → α → List Bool → ProbComp (List Bool),
+        IsPPTOn (encPair encUnary (encPair enc encBits)) encBits
+          (fun p : ℕ × α × List Bool => S p.1 p.2.1 p.2.2) ∧
+        ∀ (a : ℕ → α) (w z : ℕ → List Bool),
+          ComputableTidilyInPolyTime a encUnary enc →
+          ComputableTidilyInPolyTime w encUnary encBits →
+          ComputableTidilyInPolyTime z encUnary encBits →
+          (∀ n, h.isWitness (a n) (w n) = true) →
+          ComputationallyIndistinguishable
+            (fun n => ((h.prover n (a n) (w n)).run (Vstar n (a n) (z n))
+              (h.prover n (a n) (w n)).init).map Prod.fst)
+            (fun n => ProbComp.eval (S n (a n) (z n))) := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.zero_knowledge
 
 namespace ZeroKnowledgeProof
 
@@ -217,7 +245,7 @@ theorem zero_knowledge_const (zk : ZeroKnowledgeProof enc A)
           (fun n => ((zk.prover n a w).run (Vstar n a (z n))
             (zk.prover n a w).init).map Prod.fst)
           (fun n => ProbComp.eval (S n a (z n))) := by
-  obtain ⟨S, hS_ppt, hS_zk⟩ := zk.zero_knowledge Vstar hV
+  obtain ⟨S, hS_ppt, hS_zk⟩ := zk.zero_knowledge_tidy Vstar hV
   exact ⟨S, hS_ppt, fun a w z hw hz =>
     hS_zk (fun _ => a) (fun _ => w) z (const a) (const w) hz (fun _ => hw)⟩
 
@@ -248,18 +276,18 @@ noncomputable def PseudorandomGenerator.zeroKnowledgeProofOfReduction
     · simp only [ThreeSAT.verifier, SAT.verifier, Bool.and_eq_true, List.all_eq_true,
         decide_eq_true_eq] at hw
       exact ⟨hw.1, SAT.assignment (f a) w, hw.2⟩
-  isOraclePPT_verifier := GMW.isOraclePPTOn_gmwVerifier hG.polyTime hG.length_eq hf
+  isOraclePPT_verifier := GMW.isOraclePPTOn_gmwVerifier hG.polyTime.tidy hG.length_eq hf
   interact n a w prog := GMW.gmwInteract generator (n + 7) (length (n + 7)) (f a) w prog
   eval_interact n a w prog := GMW.eval_gmwInteract generator (n + 7) (length (n + 7)) (f a) w prog
-  isPPT_interact _ hV := GMW.isPPTOn_gmwInteract hG.polyTime hG.length_eq hf hV
+  isPPT_interact _ hV := GMW.isPPTOn_gmwInteract hG.polyTime.tidy hG.length_eq hf hV
   complete n a _ hw := GMW.acceptProb_gmwVerifier_gmwProver hG.length_eq f n a hw
   sound n a ha P :=
     GMW.acceptProb_gmwVerifier_le hG.length_eq hstretch f n a (mt (hred a).mpr ha) P
   zero_knowledge Vstar hV :=
     ⟨GMW.gmwSimulator generator length f Vstar,
-      GMW.isPPTOn_gmwSimulator hG.polyTime hG.length_eq hf hV,
+      GMW.isPPTOn_gmwSimulator hG.polyTime.tidy hG.length_eq hf hV,
       fun _ _ _ ha hw_comp hz hw_sat =>
-        GMW.gmwView_indistinguishable_gmwSimulator hG hf hV ha hw_comp hz hw_sat⟩
+        GMW.gmwView_indistinguishable_gmwSimulator hG hf hV ha.tidy hw_comp.tidy hz.tidy hw_sat⟩
 
 /-- The Goldreich–Micali–Wigderson computational zero-knowledge proof system for `ThreeSAT`, built
 from any pseudorandom generator with stretch at least `3 * k + 1` via the 3-copy masked-3SAT
