@@ -109,7 +109,11 @@ step_killswitch() {
   done
   gc functions deploy lake-cache-kill-switch --project="$PROJECT" --region="$REGION" --gen2 \
     --runtime=python312 --source=kill-switch --entry-point=handle --trigger-topic="$TOPIC" \
-    --service-account="$KILLER" --set-env-vars="BUCKET=$BUCKET" --max-instances=1
+    --service-account="$KILLER" --trigger-service-account="$KILLER" \
+    --set-env-vars="BUCKET=$BUCKET" --max-instances=1 --ingress-settings=internal-only
+  # The trigger delivers messages as $KILLER, which must be allowed to invoke the function.
+  gc run services add-iam-policy-binding lake-cache-kill-switch --project="$PROJECT" \
+    --region="$REGION" --member="serviceAccount:$KILLER" --role=roles/run.invoker >/dev/null
 }
 
 step_alert() {
