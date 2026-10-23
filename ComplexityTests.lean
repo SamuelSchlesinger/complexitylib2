@@ -114,6 +114,7 @@ import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
+import ComplexityTests.Crypto.GSWSampling
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicFixedKey

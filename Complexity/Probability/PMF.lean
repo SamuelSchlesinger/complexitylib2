@@ -25,6 +25,7 @@ of the whole experiment (`exists_bind_apply_le`).
 
 ## Main results
 
+* `Cslib.Probability.PMF.mem_support_uniformOfFintype`: every value has positive uniform mass.
 * `Cslib.Probability.PMF.uniformOfFintype_prod_map_fst`: the first component of a uniform pair is
   uniform.
 * `Cslib.Probability.PMF.uniformOfFintype_bind_map_fst_equiv`,
@@ -262,6 +263,11 @@ theorem map_injective {f : α → β} (hf : Function.Injective f) :
   simpa only [PMF.map_apply, hf.eq_iff, tsum_ite_eq'] using congrArg (fun law => law (f a)) h
 
 section Uniform
+
+/-- Every value of a nonempty finite type is in the uniform distribution's support. -/
+theorem mem_support_uniformOfFintype [Fintype α] [Nonempty α] (a : α) :
+    a ∈ (uniformOfFintype α).support := by
+  simp [uniformOfFintype]
 
 variable [Fintype α] [Nonempty α] [Fintype β] [Nonempty β]
 
