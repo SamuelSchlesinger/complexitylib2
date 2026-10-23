@@ -37,12 +37,12 @@ uniform* tractability); that variant is not formalized here. The function `f` ma
 monotone (`Cslib.Complexity.mem_FPT_iff_exists_monotone`).
 
 `Cslib.Complexity.FPTReducible encA encB κA κB A B`: `A` reduces to `B` by an *fpt-reduction*
-[FlumGrohe2006, Definition 2.1] [CyganEtAl2015, Definition 13.1]: a map `f` computable within
-time `F (κA a) * (L + 1) ^ c` (`Cslib.Complexity.ComputableTidilyInFPTTime`) with
-`a ∈ A ↔ f a ∈ B` and `κB (f a) ≤ h (κA a)` for a function `h`. The plain counterpart
-`Cslib.Complexity.ComputableInFPTTime` of fpt-time computability asks for any machine within
-these bounds, not necessarily a tidy one; the two notions agree
-(`Cslib.Complexity.computableInFPTTime_iff_computableTidilyInFPTTime`). Polynomial-time
+[FlumGrohe2006, Definition 2.1] [CyganEtAl2015, Definition 13.1]: a map `f` computable by some
+machine within time `F (κA a) * (L + 1) ^ c` (`Cslib.Complexity.ComputableInFPTTime`) with
+`a ∈ A ↔ f a ∈ B` and `κB (f a) ≤ h (κA a)` for a function `h`. The tidy notion
+`Cslib.Complexity.ComputableTidilyInFPTTime` agrees with the plain one
+(`Cslib.Complexity.computableInFPTTime_iff_computableTidilyInFPTTime`), and proofs that compose
+reductions use it through `Cslib.Complexity.fptReducible_iff_tidy`. Polynomial-time
 reductions with a parameter bound are fpt-reductions
 (`Cslib.Complexity.FPTReducible.of_computableTidilyInPolyTime`). `FPT` and `XP` are closed under
 fpt-reductions. As for `FPT`, the functions `F` and `h` are arbitrary, where the cited
@@ -77,6 +77,7 @@ definitions require them to be computable.
   (`Cslib.Complexity.SAT_mem_FPT`, `Cslib.Complexity.KSAT_mem_FPT`).
 * `Cslib.Complexity.compl_mem_FPT`, `Cslib.Complexity.inter_mem_FPT`,
   `Cslib.Complexity.union_mem_FPT`, `Cslib.Complexity.compl_mem_XP`: Boolean closure.
+* `Cslib.Complexity.fptReducible_iff_tidy`: fpt-reductions with tidy fpt-time computability.
 * `Cslib.Complexity.FPTReducible.refl`, `Cslib.Complexity.FPTReducible.trans`: fpt-reducibility
   is a preorder; `Cslib.Complexity.FPTReducible.compl` passes to complements.
 * `Cslib.Complexity.FPTReducible.mem_FPT`, `Cslib.Complexity.FPTReducible.mem_XP`: `FPT` and `XP`
@@ -527,7 +528,7 @@ section Reduction
 `κA a`. -/
 def ComputableInFPTWithParam {α β : Type*} (encA : α ↪ List Bool) (encB : β ↪ List Bool)
     (κA : α → ℕ) (κB : β → ℕ) (f : α → β) : Prop :=
-  ComputableTidilyInFPTTime f encA encB κA ∧ ∃ h : ℕ → ℕ, ∀ a, κB (f a) ≤ h (κA a)
+  ComputableInFPTTime f encA encB κA ∧ ∃ h : ℕ → ℕ, ∀ a, κB (f a) ≤ h (κA a)
 
 /-- **Fpt-reductions** [FlumGrohe2006, Definition 2.1] [CyganEtAl2015, Definition 13.1]: `A`
 reduces to `B` by a map `f`, computable in fpt time with respect to `κA`, with `a ∈ A ↔ f a ∈ B`,
@@ -536,7 +537,7 @@ whose parameter `κB (f a)` is bounded by a function `h` of `κA a`. This is `Ma
 function of the time bound are arbitrary; the cited definitions require them to be computable. -/
 def FPTReducible {α β : Type*} (encA : α ↪ List Bool) (encB : β ↪ List Bool) (κA : α → ℕ)
     (κB : β → ℕ) (A : Set α) (B : Set β) : Prop :=
-  ∃ f : α → β, (ComputableTidilyInFPTTime f encA encB κA ∧
+  ∃ f : α → β, (ComputableInFPTTime f encA encB κA ∧
     ∃ h : ℕ → ℕ, ∀ a, κB (f a) ≤ h (κA a)) ∧ ∀ a, a ∈ A ↔ f a ∈ B
 
 variable {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
@@ -549,25 +550,42 @@ theorem fptReducible_iff_manyOneReducibleBy :
       ManyOneReducibleBy (ComputableInFPTWithParam encA encB κA κB) A B :=
   Iff.rfl
 
+/-- `Cslib.Complexity.ComputableInFPTWithParam` with the tidy notion of fpt-time computability, for
+proofs that compose machines. -/
+theorem computableInFPTWithParam_iff_tidy {f : α → β} :
+    ComputableInFPTWithParam encA encB κA κB f ↔
+      ComputableTidilyInFPTTime f encA encB κA ∧ ∃ h : ℕ → ℕ, ∀ a, κB (f a) ≤ h (κA a) :=
+  and_congr_left' computableInFPTTime_iff_computableTidilyInFPTTime
+
+/-- Fpt-reducibility with the tidy notion of fpt-time computability, for proofs that compose
+machines. -/
+theorem fptReducible_iff_tidy :
+    FPTReducible encA encB κA κB A B ↔
+      ∃ f : α → β, (ComputableTidilyInFPTTime f encA encB κA ∧
+        ∃ h : ℕ → ℕ, ∀ a, κB (f a) ≤ h (κA a)) ∧ ∀ a, a ∈ A ↔ f a ∈ B := by
+  simp only [← computableInFPTTime_iff_computableTidilyInFPTTime]
+  rfl
+
 /-- **Polynomial-time reductions bounding the parameter are fpt-reductions.** -/
 theorem FPTReducible.of_computableTidilyInPolyTime {f : α → β}
     (hf : ComputableTidilyInPolyTime f encA encB) {h : ℕ → ℕ} (hκ : ∀ a, κB (f a) ≤ h (κA a))
     (hfA : ∀ a, a ∈ A ↔ f a ∈ B) : FPTReducible encA encB κA κB A B :=
-  ⟨f, ⟨hf.computableTidilyInFPTTime κA, h, hκ⟩, hfA⟩
+  ⟨f, ⟨(hf.computableTidilyInFPTTime κA).computableInFPTTime, h, hκ⟩, hfA⟩
 
 /-- Every parameterized problem reduces to itself by the identity. -/
 @[refl]
 theorem FPTReducible.refl (encA : α ↪ List Bool) (κA : α → ℕ) (A : Set α) :
     FPTReducible encA encA κA κA A A :=
-  ManyOneReducibleBy.refl ⟨ComputableTidilyInPolyTime.id'.computableTidilyInFPTTime κA,
-    id, fun _ => le_rfl⟩ A
+  ManyOneReducibleBy.refl
+    ⟨(ComputableTidilyInPolyTime.id'.computableTidilyInFPTTime κA).computableInFPTTime, id,
+      fun _ => le_rfl⟩ A
 
 /-- **Fpt-reductions compose.** -/
 @[trans]
 theorem FPTReducible.trans (hAB : FPTReducible encA encB κA κB A B)
     (hBC : FPTReducible encB encC κB κC B C) : FPTReducible encA encC κA κC A C :=
   ManyOneReducibleBy.trans
-    (fun _ _ ⟨hf, h₁, hκ₁⟩ ⟨hg, h₂, hκ₂⟩ => ⟨hg.comp hf hκ₁,
+    (fun _ _ ⟨hf, h₁, hκ₁⟩ ⟨hg, h₂, hκ₂⟩ => ⟨(hg.tidy.comp hf.tidy hκ₁).computableInFPTTime,
       fun k => ∑ j ∈ Finset.range (h₁ k + 1), h₂ j,
       fun a => (hκ₂ _).trans (le_sum_range_succ (hκ₁ a))⟩)
     hAB hBC
@@ -581,13 +599,13 @@ theorem FPTReducible.compl (h : FPTReducible encA encB κA κB A B) :
 theorem FPTReducible.mem_FPT (hAB : FPTReducible encA encB κA κB A B) (hB : B ∈ FPT encB κB) :
     A ∈ FPT encA κA :=
   mem_FPT_iff_computableTidilyInFPTTime.mpr
-    (ManyOneReducibleBy.trans (C := {true}) (fun _ _ ⟨hf, _, hκ⟩ hg => hg.comp hf hκ)
+    (ManyOneReducibleBy.trans (C := {true}) (fun _ _ ⟨hf, _, hκ⟩ hg => hg.comp hf.tidy hκ)
       hAB (mem_FPT_iff_computableTidilyInFPTTime.mp hB))
 
 /-- **`XP` is closed under fpt-reductions.** -/
 theorem FPTReducible.mem_XP (hAB : FPTReducible encA encB κA κB A B) (hB : B ∈ XP encB κB) :
     A ∈ XP encA κA := by
-  obtain ⟨f, ⟨⟨F₁, c₁, hf⟩, h, hκ⟩, hAB⟩ := hAB
+  obtain ⟨f, ⟨⟨F₁, c₁, hf⟩, h, hκ⟩, hAB⟩ := fptReducible_iff_tidy.mp hAB
   obtain ⟨g, F₂, e₂, hg, hB⟩ := mem_XP_iff_exists_computableTidilyInO.mp hB
   obtain ⟨l, hgf⟩ := computableTidilyInO_comp
     (F₂' := fun k => ∑ j ∈ Finset.range (h k + 1), F₂ j)

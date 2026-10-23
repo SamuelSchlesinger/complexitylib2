@@ -105,6 +105,11 @@ example : IsKernelization (encPair encGraph encNat) Prod.snd VertexCover bussKer
 example : HasPolyKernel (encPair encGraph encNat) Prod.snd VertexCover :=
   VertexCover_hasPolyKernel
 
+/-- The kernelization is tidily computable in polynomial time, for proofs that compose it. -/
+example :
+    ComputableTidilyInPolyTime bussKernel (encPair encGraph encNat) (encPair encGraph encNat) :=
+  (isKernelization_iff_tidy.mp isKernelization_bussKernel).1
+
 /-! ### Axioms -/
 
 /--

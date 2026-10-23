@@ -34,6 +34,10 @@ example : wordsProofSystem.PolynomiallyBounded :=
 
 example : wordsProofSystem.PSimulates wordsProofSystem := .refl
 
+/-- A tidy polynomial-time translation gives a p-simulation. -/
+example : wordsProofSystem.PSimulates wordsProofSystem :=
+  ProofSystem.pSimulates_iff_tidy.mpr ⟨id, ComputableTidilyInPolyTime.id', fun _ => rfl⟩
+
 example : wordsProofSystem.Simulates wordsProofSystem := ProofSystem.PSimulates.refl.simulates
 
 /-! ### The proof system of the `SAT` verifier -/

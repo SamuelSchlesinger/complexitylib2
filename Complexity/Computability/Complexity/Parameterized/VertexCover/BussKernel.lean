@@ -629,7 +629,7 @@ size bound `40 (k + 1) ^ 6`. -/
 theorem isKernelization_bussKernel :
     IsKernelization (encPair encGraph encNat) Prod.snd VertexCover bussKernel
       fun k => 40 * (k + 1) ^ 6 where
-  polyTime := computableTidilyInPolyTime_bussKernel
+  polyTime := computableTidilyInPolyTime_bussKernel.computableInPolyTime
   mem_iff := bussKernel_mem_iff
   length_le := length_encode_bussKernel_le
   parameter_le x := by
