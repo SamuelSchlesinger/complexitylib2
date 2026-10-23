@@ -67,6 +67,7 @@ import ComplexityTests.CircuitHamming.Continuity
 import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
+import ComplexityTests.CircuitLayerPadding
 import ComplexityTests.CircuitLayering
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CircuitValueCompleteness
@@ -112,6 +113,7 @@ import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicLayered
+import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.ZeroKnowledge

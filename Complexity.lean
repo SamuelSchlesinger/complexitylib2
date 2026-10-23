@@ -221,6 +221,8 @@ public import Complexity.Computability.Circuit.Boolean.Layered.Compile
 public import Complexity.Computability.Circuit.Boolean.Layered.Compile.Correctness
 public import Complexity.Computability.Circuit.Boolean.Layered.Compile.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Layered.Compile.Size
+public import Complexity.Computability.Circuit.Boolean.Layered.Padding
+public import Complexity.Computability.Circuit.Boolean.Layered.Padding.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Layered.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Layered.Size
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
@@ -1300,6 +1302,10 @@ public import Complexity.Crypto.Computational.Homomorphic.KeyChain.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Layered
 public import Complexity.Crypto.Computational.Homomorphic.Layered.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.Layered.PolyTime
+public import Complexity.Crypto.Computational.Homomorphic.Leveled.Basic
+public import Complexity.Crypto.Computational.Homomorphic.Leveled.Correctness
+public import Complexity.Crypto.Computational.Homomorphic.Leveled.Encoding
+public import Complexity.Crypto.Computational.Homomorphic.Leveled.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Refresh
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence

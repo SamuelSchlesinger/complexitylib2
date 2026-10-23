@@ -17,8 +17,9 @@ Compile the shared De Morgan circuit, execute its layers, and select the designa
 without another key transition. There are twice the circuit's designated-output depth many
 transitions. Unused gates do not increase this count, and depth-zero wiring uses the input key.
 
-The final key still depends on actual circuit depth. A depth-budgeted encryption interface,
-its normalization to a common final key, and security reductions remain separate obligations.
+The final key here depends on actual circuit depth. `Homomorphic.Leveled.Basic` constructs a
+depth-budgeted scheme, and `Homomorphic.Leveled.Correctness` proves normalization to a common
+final key. Security reductions remain separate obligations.
 
 ## Main definitions
 

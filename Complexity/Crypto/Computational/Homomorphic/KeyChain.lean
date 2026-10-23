@@ -137,4 +137,15 @@ theorem lengths_of_mem_support_generateKeyChain {n depth : ℕ}
   obtain ⟨hkeys, _, hlinks⟩ := (E.mem_support_generateKeyChain_iff n depth keys links).1 h
   exact ⟨hkeys, by simpa only [hkeys, Nat.add_sub_cancel] using hlinks.length_eq⟩
 
+/-- Every position through the final level of a generated chain is a supported base key pair.
+The index bound ensures that the default pair is never used. -/
+theorem key_mem_support_of_generatedChain {n depth : ℕ}
+    {keys : List (List Bool × List Bool)} {links : List (List (List Bool))}
+    (h : (keys, links) ∈ (ProbComp.eval (E.generateKeyChain n depth)).support)
+    {i : ℕ} (hi : i ≤ depth) :
+    keys.getD i ([], []) ∈ (ProbComp.eval (E.keyGen n)).support := by
+  obtain ⟨hlength, hkeys, _⟩ := (E.mem_support_generateKeyChain_iff n depth keys links).1 h
+  have hindex : i < keys.length := by omega
+  exact hkeys _ (by rw [List.getD_eq_getElem _ _ hindex]; exact List.getElem_mem _)
+
 end Cslib.Crypto.Homomorphic.Scheme

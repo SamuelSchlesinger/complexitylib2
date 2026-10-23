@@ -197,12 +197,6 @@ theorem PolynomiallyBounded.of_simulates {P Q : ProofSystem enc L} (hP : P.Polyn
 
 /-! ### Polynomially bounded proof systems and `NP` -/
 
-/-- Words are their own encoding, decoded by the identity. -/
-private def bitsDecoder : Decoder encBits where
-  decode := id
-  decode_enc _ := rfl
-  computable := ⟨1, 1, .of_eq fun _ => rfl⟩
-
 /-- **A set with a polynomially bounded proof system is in `NP`**: a short proof is a certificate,
 checked by computing the member it proves. -/
 theorem PolynomiallyBounded.mem_NP {P : ProofSystem enc L} (hP : P.PolynomiallyBounded) :
@@ -212,7 +206,7 @@ theorem PolynomiallyBounded.mem_NP {P : ProofSystem enc L} (hP : P.PolynomiallyB
   have hcheck : ComputableTidilyInPolyTime (fun x : α × List Bool => decide (P x.2 = x.1))
       (encPair enc encBits) encBool :=
     ComputableTidilyInPolyTime.decide_eq' (P.computable.comp (.snd enc encBits)) (.fst enc encBits)
-  have h := mem_NP_of_witness (p := p) bitsDecoder hcheck (R := fun a π => P π = a)
+  have h := mem_NP_of_witness (p := p) Decoder.bits hcheck (R := fun a π => P π = a)
     (fun _ _ => decide_eq_true_iff) fun a π hπ => hp a (hπ ▸ P.mem π)
   have hL : {a | ∃ π, P π = a} = L := P.range_eq
   rwa [hL] at h

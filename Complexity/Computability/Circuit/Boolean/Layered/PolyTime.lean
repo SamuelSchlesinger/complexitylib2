@@ -26,6 +26,8 @@ the specified fallback without running for time proportional to the numerical in
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeEval`: evaluate one node.
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_evalLayer`: evaluate one layer.
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_select`: select ordered outputs.
+* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_outputWidth`: compute the final
+  row width in unary, retaining the input width for an empty schedule.
 -/
 
 @[expose] public section
@@ -116,5 +118,22 @@ theorem computableTidilyInPolyTime_select {α : Type} {input : α ↪ List Bool}
   apply ComputableTidilyInPolyTime.listToBits.comp
   apply ComputableTidilyInPolyTime.mapWithInput houtputs
   exact ComputableTidilyInPolyTime.listGetD_binary false (by fun_prop) (by fun_prop)
+
+/-- Read the last layer's length, or retain the computed input width for an empty schedule. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_outputWidth {α : Type} {input : α ↪ List Bool}
+    {inputCount : α → ℕ} {layers : α → List (List Node)}
+    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
+    (hlayers : ComputableTidilyInPolyTime layers input (encList (encList encNode))) :
+    ComputableTidilyInPolyTime (fun a => outputWidth (inputCount a) (layers a)) input encUnary := by
+  have heq (n : ℕ) (ls : List (List Node)) :
+      outputWidth n ls = ((n :: ls.map List.length).reverse).headD 0 := by
+    induction ls using List.reverseRecOn with
+    | nil => simp
+    | append_singleton ls layer _ => simp [outputWidth_append]
+  have hlengths := (ComputableTidilyInPolyTime.length_list encNode).map.comp hlayers
+  have h := ComputableTidilyInPolyTime.listHeadDWithInput 0
+    ((hn.cons' hlengths).listReverseWithInput)
+  simpa only [heq, Function.comp_def] using h
 
 end Cslib.Circuits.Boolean.Layered
