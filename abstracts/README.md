@@ -4,8 +4,10 @@ The catalogue promotes twelve major result groups. Each has a checked Lean abstr
 definitions needed to understand its statement, a bridge to the library proof, and an audited
 dependency boundary. Some abstracts also allowlist a few library modules for foundational models
 (for example circuit signatures or oracle runs); each such abstract names them in its docstring, and
-a reader must inspect them as well. The generated PDFs display those definitions and statements with
-proof bodies omitted. Lean checks the proofs; independent review must still check their intended
+a reader must inspect them as well. The generated PDFs present the mathematical definitions and
+selected statements first, followed by exact representation details and any shared foundations in
+appendices. Proof bodies are omitted. Lean checks the proofs; independent review must still check
+their intended
 meaning.
 
 The [combined PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/catalogue.pdf)
@@ -89,6 +91,29 @@ event/SHA filtering, pagination and attempt handling follow the
 artifact selection follows [download-artifact v4](https://github.com/actions/download-artifact/tree/v4).
 
 ## Layout and sources
+
+The source section `/-! ## Representation details ... -/` marks definitions and explanations
+to display in an appendix. The group ends at the next `##` section heading. Its definitions are
+retained in full; selected theorem statements must remain in the main presentation. A
+`## Compatibility aliases` section is omitted only when all its code consists of explicit
+`@[deprecated ...] alias old := target` declarations. Any substantive declaration there fails
+validation. These are presentation conventions in comments, not new Lean syntax.
+
+An entry using shared definitions lists their modules in its `foundations` array, for example
+`["ComplexityAbstracts.Encoding", "ComplexityAbstracts.Computation"]`. The list must exactly match
+the abstract's direct foundation imports and their transitive foundation imports. The audit helper
+and proof bridges are excluded from that display check; Lean's `#check_abstract` still checks the
+actual elaborated dependency boundary, including dependencies of allowed definitions. A listed
+foundation cannot be another abstract or bridge, and missing, duplicate, unused or cyclic
+foundation modules fail validation.
+
+Individual PDFs include the needed foundations with their definitions, theorem signatures,
+namespaces and source links. The combined catalogue displays each foundation once, after the
+selected abstracts. `provenance.json` records each foundation's source digest and declaration
+links, and a source change during rendering invalidates the build. Single-file Markdown and TeX
+previews also include imported foundations and identify their local source digests. Moving a
+definition to an appendix does not establish an encoding-invariance or model-equivalence theorem;
+any such change still needs a checked correspondence in Lean.
 
 The typography, syntax colors and pale code boxes adapt Erik Demaine and Stefan Langerman’s
 [translation-tiling paper style](https://github.com/edemaine/translation-tiling-paper/blob/5309313e662377d2efb353acba454859469606bd/paper.texlish)

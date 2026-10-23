@@ -7,6 +7,8 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.Encoding
+import ComplexityAbstracts.Computation
 import ComplexityAbstracts.CookLevinBridge
 
 /-! # Cook–Levin: satisfiability captures efficient verification
@@ -20,7 +22,7 @@ Thus SAT is NP-complete, and its complement UNSAT is coNP-complete.
 The definitions below specify CNF formulas, their binary encoding, total polynomial-time
 reductions and native finite-state machine bounds. The claims are about asymptotic complexity,
 not a fast practical SAT solver. Lean checks the bridge proofs; `#check_abstract` checks that the
-statements use only the definitions here and upstream mathematical and machine foundations.
+statements use the definitions here, the displayed shared foundations, and upstream mathematics.
 
 ## References
 
@@ -66,76 +68,54 @@ has length 3 (repeated literals within a clause are permitted). -/
 def ExactThreeSAT : Set Formula :=
   {φ | (∀ c ∈ φ, c.length = 3) ∧ Satisfiable φ}
 
-/-! ## Binary encoding convention
+/-! ## Representation details
 
-Values are encoded injectively as bitstrings (`List Bool`). A bitstring `w` is
-framed by encoding each bit `b` as `[true, b]` and appending `[false]`, making
-framed bitstrings self-delimiting under concatenation. Pairs frame the first
-component before appending the second, and lists concatenate the framed
-encodings of their elements. Natural numbers use Mathlib's canonical
-little-endian binary digits `Nat.bits` (`0 ↦ []`, positive `n` with least
-significant bit first and final bit `true`).
+CNF formulas are lists of clauses with binary variable indices. The following fixed encoding
+uses the common framing conventions in the appendix.
 -/
-
-/-- Frame a bitstring: write each bit `b` as `[true, b]`, then terminate with `[false]`. -/
-def frame (w : List Bool) : List Bool :=
-  w.flatMap (fun b => [true, b]) ++ [false]
-
-/-- Encode a pair by framing the encoding of its first component and appending the encoding of
-its second component. -/
-def encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
-    List Bool :=
-  frame (encA p.1) ++ encB p.2
-
-/-- Encode a list by concatenating the framed encodings of its elements. -/
-def encodeList {α : Type} (enc : α → List Bool) (l : List α) : List Bool :=
-  l.flatMap (frame ∘ enc)
 
 /-- Encode a CNF formula as a list of clauses, each a list of literals `(v, b)` encoded as the
 pair of `Nat.bits v` and the one-bit word `[b]`. -/
 def encodeCNF : Formula → List Bool :=
-  encodeList (encodeList (encodePair Nat.bits (fun b => [b])))
-
-theorem encodePair_injective {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
-    Function.Injective (encodePair encA encB) :=
-  CookLevinBridge.encodePair_injective encA encB
+  Encoding.encodeList (Encoding.encodeList (Encoding.encodePair Nat.bits (fun b => [b])))
 
 theorem encodeCNF_injective : Function.Injective encodeCNF :=
   CookLevinBridge.encodeCNF_injective
-
-/-- Injective encoding of bitstrings as themselves. -/
-def encBits : List Bool ↪ List Bool := Function.Embedding.refl _
-
-/-- Injective encoding of a single Boolean as a one-bit word `[b]`. -/
-def encBool : Bool ↪ List Bool :=
-  ⟨fun b => [b], by intro a b h; injection h⟩
-
-/-- Injective framed encoding of pairs. -/
-def encPair {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) : α × β ↪ List Bool :=
-  ⟨encodePair encA encB, encodePair_injective encA encB⟩
 
 /-- Injective framed binary encoding of CNF formulas. -/
 def encCNF : Formula ↪ List Bool :=
   ⟨encodeCNF, encodeCNF_injective⟩
 
-/-! ## Polynomial-time computability, NP, coNP, and completeness
+/-! Older client names keep their original named encoding arguments. -/
 
-In upstream `Cslib`, `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f encA encB t s`
-means that there exists a deterministic multi-tape Turing machine with a binary
-tape alphabet and finitely many states that halts on every encoded input
-`encA a` within `t (encA a).length` steps and `s (encA a).length` work-tape
-cells, leaving `encB (f a)` on its output tape. `Cslib.PolynomiallyBounded`
-asserts that a growth bound `ℕ → ℕ` is bounded above by a polynomial.
--/
+@[deprecated Encoding.encodePair (since := "2026-10-23")]
+abbrev encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
+    List Bool :=
+  Encoding.encodePair encA encB p
 
-/-- A total function `f : α → β` is computable in polynomial time with respect
-to input encoding `encA` and output encoding `encB` if some deterministic
-multi-tape binary Turing machine computes it within polynomially bounded time
-and space in the input bit length. -/
-def ComputableInPolyTime {α β : Type} (f : α → β)
+@[deprecated Encoding.encodePair_injective (since := "2026-10-23")]
+theorem encodePair_injective {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
+    Function.Injective (Encoding.encodePair encA encB) :=
+  Encoding.encodePair_injective encA encB
+
+@[deprecated Encoding.encPair (since := "2026-10-23")]
+abbrev encPair {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) : α × β ↪ List Bool :=
+  Encoding.encPair encA encB
+
+@[deprecated Computation.PolyTime (since := "2026-10-23")]
+abbrev ComputableInPolyTime {α β : Type} (f : α → β)
     (encA : α ↪ List Bool) (encB : β ↪ List Bool) : Prop :=
-  ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
-    Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f encA encB t s
+  Computation.PolyTime f encA encB
+
+/-! ## Efficient verification and reductions
+
+`Computation.PolyTimeVerifier enc V` means that one deterministic machine halts on every
+instance/certificate pair in polynomial time in their combined bit length. The machine and
+polynomial bound are fixed for the problem. We use certificates of exactly `p(|enc a|)` bits;
+this is the fixed-length certificate convention. `Computation.PolyTime` is the same total
+computation contract for general input and output encodings. Their definitions are in the
+foundations appendix.
+-/
 
 /-- A function `V : α × List Bool → Bool` verifies a decision problem `A` with
 certificate length polynomial `p` if an instance `a` belongs to `A` exactly
@@ -149,7 +129,7 @@ problems that have a polynomial-time verifier with polynomially long binary
 certificates. -/
 def NP {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A}
+    Computation.PolyTimeVerifier enc V ∧ IsVerifier enc p V A}
 
 /-- The class coNP consists of decision problems whose complements belong to NP. -/
 def coNP {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
@@ -160,7 +140,7 @@ problem `B` (with encoding `encB`) if a polynomial-time computable map `f`
 preserves yes/no membership on every instance. -/
 def PolyTimeReducible {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool)
     (A : Set α) (B : Set β) : Prop :=
-  ∃ f : α → β, ComputableInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
+  ∃ f : α → β, Computation.PolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
 
 /-- A problem `B` is NP-complete if it belongs to NP and every NP problem (over
 any instance type `α` and injective binary encoding `encA`) reduces to `B` in
@@ -195,11 +175,20 @@ NP-complete under polynomial-time many-one reductions. -/
 theorem exactThreeSAT_npComplete : NPComplete encCNF ExactThreeSAT :=
   CookLevinBridge.exactThreeSAT_npComplete
 
+/-! ## Compatibility aliases -/
+
+@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
+@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
+@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
+@[deprecated (since := "2026-10-23")] alias encBits := Encoding.encBits
+
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.CookLevinAbstract`: 28 root
-declarations, 68 dependencies checked
+info: abstract audit passed for `ComplexityTests.Abstracts.CookLevinAbstract`:
+27 root declarations, 69 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.CookLevinAbstract
+#check_abstract ComplexityTests.Abstracts.CookLevinAbstract allowing [
+  ComplexityAbstracts.Encoding, ComplexityAbstracts.Computation
+]
 
 end ComplexityTests.Abstracts.CookLevinAbstract

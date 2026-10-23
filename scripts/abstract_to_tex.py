@@ -2,9 +2,12 @@
 """Render a Complexitylib *Abstract.lean file into Markdown or pdflatex-ready LaTeX."""
 
 import argparse
+import hashlib
 from pathlib import Path
 import re
 import sys
+
+from proof_lengths import CHAR_LITERAL
 
 
 UNICODE_TO_TEX_MATH = {
@@ -110,6 +113,93 @@ TEX_SPECIAL_CODE = {
 }
 
 
+def lean_code(text: str) -> str:
+    """Mask comments and literals, preserving source positions and line numbers."""
+    result, index, depth = list(text), 0, 0
+    while index < len(text):
+        if depth:
+            if text.startswith("/-", index):
+                depth += 1
+                width = 2
+            elif text.startswith("-/", index):
+                depth -= 1
+                width = 2
+            else:
+                width = 1
+        elif text.startswith("/-", index):
+            depth, width = 1, 2
+        elif text.startswith("--", index):
+            end = text.find("\n", index)
+            width = (len(text) if end < 0 else end) - index
+        elif text[index] == "'" and (literal := CHAR_LITERAL.match(text, index)):
+            width = len(literal.group())
+        elif text[index] == '"' or (text[index] == "r" and re.match(r'r#+"', text[index:])):
+            raw = re.match(r'r(#+)"', text[index:])
+            if raw:
+                close = '"' + raw.group(1)
+                end = text.find(close, index + len(raw.group()))
+                width = (len(text) if end < 0 else end + len(close)) - index
+            else:
+                end = index + 1
+                while end < len(text):
+                    if text[end] == "\\":
+                        end += 2
+                    elif text[end] == '"':
+                        end += 1
+                        break
+                    else:
+                        end += 1
+                width = end - index
+        else:
+            index += 1
+            continue
+        for offset in range(index, min(index + width, len(text))):
+            if text[offset] != "\n":
+                result[offset] = " "
+        index += width
+    return "".join(result)
+
+
+def module_source_path(module: str, root: Path) -> Path:
+    """Resolve a module in the dedicated abstract library, never an arbitrary path."""
+    if not isinstance(module, str) or not re.fullmatch(
+            r"ComplexityAbstracts\.[A-Za-z_][A-Za-z0-9_]*", module):
+        raise ValueError(f"Not a formal-abstract module: {module}")
+    return Path(root).joinpath("abstracts", *module.split(".")).with_suffix(".lean")
+
+
+def foundation_modules(source: Path, root: Path) -> list[str]:
+    """Find directly imported shared foundations and their dependency closure in source order.
+
+    Bridges and the audit helper supply proofs, not displayed definitions. Imports from outside
+    the abstract library are handled by Lean's dependency audit rather than this display check.
+    """
+    ordered, visiting, visited = [], set(), set()
+
+    def visit(path):
+        for match in re.finditer(r"^\s*(?:(?:public|meta)\s+)*import\s+([^\n]+)",
+                                 lean_code(path.read_text()), re.MULTILINE):
+            for module in match.group(1).split():
+                if not module.startswith("ComplexityAbstracts."):
+                    continue
+                dependency = module_source_path(module, root)
+                if module == "ComplexityAbstracts.Check" or module.endswith("Bridge"):
+                    continue
+                if module.endswith("Abstract"):
+                    raise ValueError(f"A shared foundation cannot be another abstract: {module}")
+                if module in visiting:
+                    raise ValueError(f"Cyclic shared foundations: {module}")
+                if module not in visited:
+                    visiting.add(module)
+                    visit(dependency)
+                    visiting.remove(module)
+                    visited.add(module)
+                    ordered.append(module)
+
+    visit(Path(source))
+    return ordered
+
+
 def parse_abstract(text: str):
     """Extract the title, module introduction, and alternating docstring/code sections."""
     mod_match = re.search(r"/-\!\s*#\s*([^\n]+)\n(.*?)-/", text, re.DOTALL)
@@ -139,16 +229,66 @@ def parse_abstract(text: str):
     pos = 0
     for m in re.finditer(r"(/-\!(.*?)-/|/--(.*?)-/)", body, re.DOTALL):
         code_before = body[pos:m.start()].strip()
-        if code_before and sections:
-            sections[-1]["code"] += ("\n\n" if sections[-1]["code"] else "") + code_before
+        if code_before:
+            if not sections:
+                sections.append({"kind": "section", "doc": "", "code": code_before})
+            else:
+                sections[-1]["code"] += ("\n\n" if sections[-1]["code"] else "") + code_before
         is_section = m.group(1).startswith("/-!")
         doc = (m.group(2) if is_section else m.group(3)).strip()
         sections.append({"kind": "section" if is_section else "decl", "doc": doc, "code": ""})
         pos = m.end()
     trailing = body[pos:].strip()
-    if trailing and sections:
-        sections[-1]["code"] += ("\n\n" if sections[-1]["code"] else "") + trailing
+    if trailing:
+        if not sections:
+            sections.append({"kind": "section", "doc": "", "code": trailing})
+        else:
+            sections[-1]["code"] += ("\n\n" if sections[-1]["code"] else "") + trailing
     return title, intro, sections
+
+
+def section_heading(item: dict):
+    return (re.match(r"^##\s+([^\n]+)\n?(.*)", item["doc"], re.DOTALL)
+            if item["kind"] == "section" else None)
+
+
+def split_sections(sections: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Keep the mathematical presentation first and move marked representation details last.
+
+    A compatibility section may hide only explicitly deprecated aliases. Reject any other code
+    rather than allowing a heading to suppress a definition or theorem.
+    """
+    main, details, destination = [], [], "main"
+    alias = re.compile(r"\s*@\[\s*deprecated\b[^\]]*\]\s*alias\s+"
+                       r"[A-Za-z_][\w'.]*\s*:=\s*[A-Za-z_][\w'.]*\s*")
+    for item in sections:
+        heading = section_heading(item)
+        if heading:
+            destination = {"Representation details": "details",
+                           "Compatibility aliases": "compatibility"}.get(
+                               heading.group(1).strip(), "main")
+        if destination == "compatibility":
+            code = lean_code(item["code"]).strip()
+            while code:
+                match = alias.match(code)
+                if not match:
+                    raise ValueError("Compatibility aliases may contain only explicitly "
+                                     "deprecated alias declarations")
+                code = code[match.end():].strip()
+        else:
+            (details if destination == "details" else main).append(item)
+    return main, details
+
+
+def presentation_sections(sections: list[dict]) -> list[dict]:
+    main, details = split_sections(sections)
+    if not details:
+        return main
+    appendix = [{"kind": "section", "doc": "## Appendix: representation details", "code": ""}]
+    for item in details:
+        heading = section_heading(item)
+        appendix.append({**item, "doc": heading.group(2).strip()} if heading else item)
+    return main + appendix
 
 
 def strip_theorem_proof(block: str) -> str:
@@ -189,7 +329,7 @@ def clean_code_for_display(code: str, is_undocumented_tail: bool = False) -> str
             continue
         if INJECTIVITY_HELPER_RE.match(block) and (idx > 0 or is_undocumented_tail):
             continue
-        if re.match(r"^(?:private\s+)?theorem\s+", block):
+        if re.match(r"^(?:private\s+)?(?:theorem|lemma)\s+", block):
             kept.append(strip_theorem_proof(block))
         else:
             # Replace inline proof terms `, by ...⟩` inside structure constructors with `, _⟩`
@@ -290,7 +430,7 @@ def render_tex_intro(intro: str) -> list[str]:
 
 def render_tex(title: str, intro: str, sections: list[dict]) -> str:
     lines = [f"\\subsection{{{escape_tex_prose(title)}}}", "", *render_tex_intro(intro), ""]
-    for item in sections:
+    for item in presentation_sections(sections):
         doc = item["doc"]
         if item["kind"] == "section":
             m = re.match(r"^##\s*([^\n]+)\n?(.*)", doc, re.DOTALL)
@@ -319,7 +459,7 @@ def render_tex(title: str, intro: str, sections: list[dict]) -> str:
 
 def render_markdown(title: str, intro: str, sections: list[dict]) -> str:
     lines = [f"# {title}", "", intro, ""]
-    for item in sections:
+    for item in presentation_sections(sections):
         lines.append(item["doc"])
         code = clean_code_for_display(item["code"], is_undocumented_tail=(item["kind"] == "section"))
         if code:
@@ -328,16 +468,34 @@ def render_markdown(title: str, intro: str, sections: list[dict]) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def render_source(path: Path, format: str) -> str:
+    """Render one source and its shared foundations for a standalone local preview."""
+    path = path.resolve()
+    renderer = render_tex if format == "tex" else render_markdown
+    result = renderer(*parse_abstract(path.read_text()))
+    root = path.parent.parent.parent
+    modules = foundation_modules(path, root)
+    for module in modules:
+        source = module_source_path(module, root)
+        title, intro, sections = parse_abstract(source.read_text())
+        sha = hashlib.sha256(source.read_bytes()).hexdigest()
+        provenance = f"Source: `{source.relative_to(root)}`. SHA256: `{sha}`."
+        if format == "markdown":
+            provenance = f"[Lean source]({source.as_uri()}). SHA256: `{sha}`."
+        result += "\n" + renderer("Shared foundation: " + title,
+                                    provenance + "\n\n" + intro, sections)
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", type=Path, help="Path to *Abstract.lean file")
     parser.add_argument("--format", choices=("markdown", "tex"), default="markdown")
     args = parser.parse_args()
-    title, intro, sections = parse_abstract(args.path.read_text())
-    if args.format == "tex":
-        sys.stdout.write(render_tex(title, intro, sections))
-    else:
-        sys.stdout.write(render_markdown(title, intro, sections))
+    try:
+        sys.stdout.write(render_source(args.path, args.format))
+    except (OSError, ValueError) as error:
+        parser.exit(1, f"Abstract render failed: {error}\n")
 
 
 if __name__ == "__main__":

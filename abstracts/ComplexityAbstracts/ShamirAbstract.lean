@@ -23,8 +23,9 @@ stateful randomized provers. Completeness is at least two thirds and soundness a
 bounds and correctness apply to encoded instances. The explicit foundational model below
 distinguishes finite-uniform requests in program syntax from their efficient fair-coin realization.
 
-Lean checks the bridge, and the audit permits only the seven listed foundational program and
-machine modules, with no complexity-class or headline-result allowance.
+The definitions and theorem statement below specify the claim. Lean checks the bridge, and the
+audit permits only the seven listed foundational program and machine modules, with no
+complexity-class or headline-result allowance.
 
 ## References
 
@@ -50,12 +51,9 @@ abbrev InteractiveProgram (β : Type) :=
 
 /-- One fixed finite fair-coin machine and one polynomial clock realize the entire joint law
 of the program's encoded result and the oracle's final state, against every stateful oracle.
-Each live instruction consumes one fresh fair bit to select between two transitions. Ordinary
-steps perform an upstream tape action, append at most one bit to a query buffer and move a
-read-only reply head by at most one cell. A query step submits the buffer, installs the reply,
-resets the reply head and clears the buffer. Each instruction costs one unit; the oracle's
-computation is external. The bounded run observes its written output on halting or clock
-exhaustion, so the definition does not pretend the unclocked machine has already halted. -/
+The clock charges computation, query writing, reply access and output writing. Each instruction
+costs one unit; the prover's computation is external. The bounded run returns its written output
+on halting or clock exhaustion; it does not require the unclocked machine to halt. -/
 def StrictOraclePPT {α β : Type} (enc : α ↪ List Bool) (out : β ↪ List Bool)
     (program : α → InteractiveProgram β) : Prop :=
   ∃ (k : ℕ) (Control : Type) (_ : Finite Control)
@@ -96,6 +94,17 @@ def PSPACE {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
 deterministic polynomial space. Provers may be stateful, randomized and unbounded. -/
 theorem ip_eq_pspace {α : Type} (enc : α ↪ List Bool) : IP enc = PSPACE enc :=
   ShamirBridge.ip_eq_pspace enc
+
+/-! ## Representation details
+
+The fair-coin machine uses one independent fair bit at each live instruction to choose between
+two transitions. Ordinary instructions perform an upstream tape action, append at most one bit
+to a query buffer and move a read-only reply head by at most one cell. A query instruction submits
+the buffer, installs the reply, resets the reply head and clears the buffer. Query construction
+and reply access therefore consume the verifier's clock, while the prover's computation does not.
+Private sampling leaves the prover's state unchanged. The required equality preserves both the
+verifier's output and the final prover state for every initial state and response strategy.
+-/
 
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.ShamirAbstract`:

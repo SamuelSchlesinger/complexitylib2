@@ -7,6 +7,8 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.Encoding
+import ComplexityAbstracts.Computation
 import ComplexityAbstracts.FaginBridge
 
 /-! # Fagin's theorem
@@ -32,52 +34,6 @@ Lean checks the explicit logical and computational correspondence through the br
 -/
 
 namespace ComplexityTests.Abstracts.FaginAbstract
-
-/-- Frame each bit as `[true, b]` and terminate the word with `[false]`. -/
-def frame (w : List Bool) : List Bool := w.flatMap (fun b => [true, b]) ++ [false]
-
-/-- Encode a pair by framing its first component and appending its second component. -/
-def encodePair {α β : Type} (a : α → List Bool) (b : β → List Bool) (p : α × β) :
-    List Bool := frame (a p.1) ++ b p.2
-
-/-- Encode a list by concatenating its framed elements. -/
-def encodeList {α : Type} (enc : α → List Bool) (l : List α) : List Bool :=
-  l.flatMap (frame ∘ enc)
-
-theorem encodePair_injective {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) :
-    Function.Injective (encodePair a b) := FaginBridge.encodePair_injective a b
-
-theorem encodeList_injective {α : Type} (enc : α ↪ List Bool) :
-    Function.Injective (encodeList enc) := FaginBridge.encodeList_injective enc
-
-/-- Pair encoding; `↪` records injectivity. -/
-def encPair {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) : α × β ↪ List Bool :=
-  ⟨encodePair a b, encodePair_injective a b⟩
-
-/-- List encoding. -/
-def encList {α : Type} (enc : α ↪ List Bool) : List α ↪ List Bool :=
-  ⟨encodeList enc, encodeList_injective enc⟩
-
-/-- A Boolean is encoded by a single bit. -/
-def encBool : Bool ↪ List Bool := ⟨fun b => [b], by intro a b h; injection h⟩
-
-/-- Bitstrings encode themselves. -/
-def encBits : List Bool ↪ List Bool := Function.Embedding.refl _
-
-/-- A single finite-state binary multi-tape machine computes `f` on every encoded input,
-within polynomial time and work space. Inputs are read-only; outputs are write-only.
-`Cslib.PolynomiallyBounded` means bounded above by some polynomial. -/
-def ComputableInPolyTime {α β : Type} (f : α → β)
-    (a : α ↪ List Bool) (b : β ↪ List Bool) : Prop :=
-  ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
-    Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f a b t s
-
-/-- NP consists of problems with a polynomial-time deterministic verifier and binary
-certificates of an exact polynomial length. The verifier halts on every input pair. -/
-def NP {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
-  {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableInPolyTime V (encPair enc encBits) encBool ∧
-    ∀ a, a ∈ A ↔ ∃ w : List Bool, w.length = p.eval (enc a).length ∧ V (a, w) = true}
 
 /-- Relation variables with prescribed arities, used for existential second-order quantifiers.
 There are no function symbols; a relation symbol is its index together with its arity equation. -/
@@ -107,17 +63,35 @@ def IsoClosed {L : FirstOrder.Language} (K : Set (CategoryTheory.Bundled.{0} L.S
   ∀ ⦃M N : CategoryTheory.Bundled.{0} L.Structure⦄ [Finite M],
     (FirstOrder.Language.Equiv L M N) → (M ∈ K ↔ N ∈ K)
 
+/-! ## Efficient verification
+
+`Computation.PolyTimeVerifier enc V` means one deterministic verifier running in polynomial
+time in the combined encoded length of its instance and certificate, on every such pair.
+The fixed certificate length is the polynomial `p` evaluated at the instance bit length.
+The machine and encoding conventions are collected in the foundations appendix.
+-/
+
+/-- NP consists of problems with a polynomial-time deterministic verifier and binary
+certificates of an exact polynomial length. The verifier halts on every input pair. -/
+def NP {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
+  {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+    Computation.PolyTimeVerifier enc V ∧
+    ∀ a, a ∈ A ↔ ∃ w : List Bool, w.length = p.eval (enc a).length ∧ V (a, w) = true}
+
 /-- Parsed input data: cardinality and one Boolean truth table for each relation symbol. -/
 abbrev Input := ℕ × List (List Bool)
 
-/-- An injective encoding of cardinalities in unary. -/
-def encUnary : ℕ ↪ List Bool :=
-  ⟨fun n => List.replicate n true, by
-    intro a b h
-    simpa only [List.length_replicate] using congrArg List.length h⟩
+/-! ## Representation details
+
+An input gives the universe size in unary and one truth table per relation symbol. Unary size
+ensures that input length is at least the universe size, even for an empty vocabulary.
+A `CategoryTheory.Bundled L.Structure` is simply a universe together with an interpretation
+of the symbols of `L`. The decoder below uses the universe `Fin a.1`.
+-/
 
 /-- Encode the unary cardinality and the framed list of relation truth tables. -/
-def encInput : Input ↪ List Bool := encPair encUnary (encList encBits)
+def encInput : Input ↪ List Bool :=
+  Encoding.encPair Encoding.encUnary (Encoding.encList Encoding.encBits)
 
 /-- Decode input data according to a finite enumeration of all relation symbols, with arities.
 The first tuple coordinate is least significant (`finFunctionFinEquiv`); missing entries read
@@ -127,6 +101,8 @@ false. The theorem's query language separately rejects incorrect table sizes. -/
   funMap f := isEmptyElim f
   RelMap r x := (a.2.getD (symbols.symm ⟨_, r⟩).val []).getD
     (finFunctionFinEquiv x).val false = true
+
+/-! ## The query language -/
 
 /-- Parsed data is well formed when every relation symbol has a table of exactly `n^arity`
 bits, including one bit for every nullary relation even when `n=0`. -/
@@ -149,11 +125,27 @@ theorem fagin {L : FirstOrder.Language} [L.IsRelational] {count : ℕ}
     ESODefinable K ↔ IsoClosed K ∧ queryLanguage symbols K ∈ NP encInput :=
   FaginBridge.fagin symbols K
 
+/-! ## Compatibility aliases -/
+
+@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
+@[deprecated (since := "2026-10-23")] alias encodePair := Encoding.encodePair
+@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
+@[deprecated (since := "2026-10-23")] alias encodePair_injective := Encoding.encodePair_injective
+@[deprecated (since := "2026-10-23")] alias encodeList_injective := Encoding.encodeList_injective
+@[deprecated (since := "2026-10-23")] alias encPair := Encoding.encPair
+@[deprecated (since := "2026-10-23")] alias encList := Encoding.encList
+@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
+@[deprecated (since := "2026-10-23")] alias encBits := Encoding.encBits
+@[deprecated (since := "2026-10-23")] alias encUnary := Encoding.encUnary
+@[deprecated (since := "2026-10-23")] alias ComputableInPolyTime := Computation.PolyTime
+
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.FaginAbstract`:
-25 root declarations, 100 dependencies checked
+23 root declarations, 101 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.FaginAbstract
+#check_abstract ComplexityTests.Abstracts.FaginAbstract allowing [
+  ComplexityAbstracts.Encoding, ComplexityAbstracts.Computation
+]
 
 end ComplexityTests.Abstracts.FaginAbstract

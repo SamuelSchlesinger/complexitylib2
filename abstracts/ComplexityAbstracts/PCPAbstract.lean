@@ -7,6 +7,8 @@ Authors: Bolton Bailey, Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.Encoding
+import ComplexityAbstracts.Computation
 import ComplexityAbstracts.PCPBridge
 
 /-! # The PCP theorem
@@ -33,55 +35,18 @@ statement's dependency boundary.
 
 namespace ComplexityTests.Abstracts.PCPAbstract
 
-/-- Frame each bit as `[true, b]` and terminate the word with `[false]`. -/
-def frame (w : List Bool) : List Bool := w.flatMap (fun b => [true, b]) ++ [false]
+/-! ## Efficient verification
 
-/-- Encode a pair by framing its first component and appending its second component. -/
-def encodePair {α β : Type} (a : α → List Bool) (b : β → List Bool) (p : α × β) :
-    List Bool := frame (a p.1) ++ b p.2
-
-/-- Encode a list by concatenating its framed elements. -/
-def encodeList {α : Type} (enc : α → List Bool) (l : List α) : List Bool :=
-  l.flatMap (frame ∘ enc)
-
-theorem encodePair_injective {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) :
-    Function.Injective (encodePair a b) := PCPBridge.encodePair_injective a b
-
-theorem encodeList_injective {α : Type} (enc : α ↪ List Bool) :
-    Function.Injective (encodeList enc) := PCPBridge.encodeList_injective enc
-
-theorem bits_injective : Function.Injective Nat.bits := PCPBridge.bits_injective
-
-/-- Natural numbers are encoded by their canonical little-endian binary digits. -/
-def encNat : ℕ ↪ List Bool := ⟨Nat.bits, bits_injective⟩
-
-/-- Pair encoding; `↪` records injectivity. -/
-def encPair {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) : α × β ↪ List Bool :=
-  ⟨encodePair a b, encodePair_injective a b⟩
-
-/-- List encoding. -/
-def encList {α : Type} (enc : α ↪ List Bool) : List α ↪ List Bool :=
-  ⟨encodeList enc, encodeList_injective enc⟩
-
-/-- A Boolean is encoded by a single bit. -/
-def encBool : Bool ↪ List Bool := ⟨fun b => [b], by intro a b h; injection h⟩
-
-/-- Bitstrings encode themselves. -/
-def encBits : List Bool ↪ List Bool := Function.Embedding.refl _
-
-/-- A single finite-state binary multi-tape machine computes `f` on every encoded input,
-within polynomial time and work space. Inputs are read-only; outputs are write-only.
-`Cslib.PolynomiallyBounded` means bounded above by some polynomial. -/
-def ComputableInPolyTime {α β : Type} (f : α → β)
-    (a : α ↪ List Bool) (b : β ↪ List Bool) : Prop :=
-  ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
-    Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f a b t s
+`Computation.PolyTimeVerifier enc V` is one deterministic verifier that halts on every pair
+in polynomial time in `|enc a| + |w|`. Its code and bound are fixed before either input is
+chosen. Certificates here have exactly the polynomial length `p(|enc a|)`.
+-/
 
 /-- NP consists of problems with a polynomial-time deterministic verifier and binary
 certificates of an exact polynomial length. The verifier halts on every input pair. -/
 def NP {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableInPolyTime V (encPair enc encBits) encBool ∧
+    Computation.PolyTimeVerifier enc V ∧
     ∀ a, a ∈ A ↔ ∃ w : List Bool, w.length = p.eval (enc a).length ∧ V (a, w) = true}
 
 /-- Read a finite proof at the queried addresses. Positions beyond its end read as false. -/
@@ -94,6 +59,30 @@ def acceptCount {α : Type} (queries : α × List Bool → List ℕ)
   (Finset.univ.filter fun r : Fin n → Bool =>
     verdict ((a, List.ofFn r), proofAnswers proof (queries (a, List.ofFn r))) = true).card
 
+/-! ## Representation details
+
+All three verifier routines run in polynomial time. Query positions are binary integers, so
+constructing their addresses is charged; the proof itself is accessed only at those positions.
+-/
+
+/-- Native polynomial-time realization of the coin count, query list and verdict. -/
+def EfficientVerifier {α : Type} (enc : α ↪ List Bool) (coins : α → ℕ)
+    (queries : α × List Bool → List ℕ)
+    (verdict : (α × List Bool) × List Bool → Bool) : Prop :=
+  Computation.PolyTime coins enc Encoding.encNat ∧
+  Computation.PolyTime queries (Encoding.encPair enc Encoding.encBits)
+    (Encoding.encList Encoding.encNat) ∧
+  Computation.PolyTime verdict
+    (Encoding.encPair (Encoding.encPair enc Encoding.encBits) Encoding.encBits) Encoding.encBool
+
+/-! ## Probabilistically checkable proofs
+
+Randomness is a uniformly chosen word of exactly `coins a` bits. Thus the acceptance
+probability is `acceptCount / 2^(coins a)`. The final inequality below says it is at most
+one half, without division or rounding. `EfficientVerifier` charges coin counting, query selection
+and the final verdict.
+-/
+
 /-- Nonadaptive probabilistically checkable proofs: one fixed polynomial-time algorithm
 computes the number of random bits, the list of binary proof addresses and the final verdict.
 For constants `c,d`, it uses at most `c*r(n)` random bits and `d*q(n)` queries. A yes-instance
@@ -102,9 +91,7 @@ accepted on at most half of the random strings. -/
 def PCP {α : Type} (r q : ℕ → ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (coins : α → ℕ) (queries : α × List Bool → List ℕ)
       (verdict : (α × List Bool) × List Bool → Bool) (c d : ℕ),
-    ComputableInPolyTime coins enc encNat ∧
-    ComputableInPolyTime queries (encPair enc encBits) (encList encNat) ∧
-    ComputableInPolyTime verdict (encPair (encPair enc encBits) encBits) encBool ∧
+    EfficientVerifier enc coins queries verdict ∧
     (∀ a, coins a ≤ c * r (enc a).length) ∧
     (∀ a ρ, ρ.length = coins a → (queries (a, ρ)).length ≤ d * q (enc a).length) ∧
     (∀ a ∈ A, ∃ proof : List Bool, ∀ ρ, ρ.length = coins a →
@@ -115,13 +102,33 @@ def PCP {α : Type} (r q : ℕ → ℕ) (enc : α ↪ List Bool) : Set (Set α) 
 soundness at most one half. Queries are nonadaptive; their binary addresses and all computation
 are charged, including the full gap-graph construction. -/
 theorem pcp_theorem {α : Type} (enc : α ↪ List Bool) :
-    NP enc = PCP (fun n => Nat.log 2 n + 1) (fun _ => 1) enc := PCPBridge.pcp_theorem enc
+    NP enc = PCP (fun n => Nat.log 2 n + 1) (fun _ => 1) enc := by
+  unfold PCP EfficientVerifier
+  simp only [and_assoc]
+  exact PCPBridge.pcp_theorem enc
+
+/-! ## Compatibility aliases -/
+
+@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
+@[deprecated (since := "2026-10-23")] alias encodePair := Encoding.encodePair
+@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
+@[deprecated (since := "2026-10-23")] alias encodePair_injective := Encoding.encodePair_injective
+@[deprecated (since := "2026-10-23")] alias encodeList_injective := Encoding.encodeList_injective
+@[deprecated (since := "2026-10-23")] alias bits_injective := Encoding.bits_injective
+@[deprecated (since := "2026-10-23")] alias encNat := Encoding.encNat
+@[deprecated (since := "2026-10-23")] alias encPair := Encoding.encPair
+@[deprecated (since := "2026-10-23")] alias encList := Encoding.encList
+@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
+@[deprecated (since := "2026-10-23")] alias encBits := Encoding.encBits
+@[deprecated (since := "2026-10-23")] alias ComputableInPolyTime := Computation.PolyTime
 
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.PCPAbstract`:
-18 root declarations, 83 dependencies checked
+19 root declarations, 85 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.PCPAbstract
+#check_abstract ComplexityTests.Abstracts.PCPAbstract allowing [
+  ComplexityAbstracts.Encoding, ComplexityAbstracts.Computation
+]
 
 end ComplexityTests.Abstracts.PCPAbstract

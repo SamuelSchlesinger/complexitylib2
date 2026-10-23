@@ -25,7 +25,9 @@ abbrev ACBasis := Cslib.Circuits.Boolean.Unbounded.signature
 def meaning : Cslib.Circuits.Interpretation ACBasis Bool :=
   Cslib.Circuits.Boolean.Unbounded.interpretation
 
-/-- Charge one for AND/OR, including their nullary constant cases; negations are free. -/
+/-- Depth charges one for AND/OR, including their nullary constant cases, and zero for NOT.
+This weight affects depth only: `C.size` counts every operation gate, including NOT and
+constants. -/
 def andOrCost : Cslib.Circuits.Boolean.Unbounded.Op → ℕ
   | .not => 0
   | .and _ | .or _ => 1
@@ -38,7 +40,7 @@ def modularMeaning (p : ℕ) :
 
 /-- **Håstad.** A parity circuit of AND/OR depth at most `d` needs `2^s` gates whenever
 `s ≥ 2` and `17s(16s+1)^(d-2) ≤ n`. Subtraction is in naturals. This gives the sharp exponent
-`1/(d-1)` for every fixed `d ≥ 2`; negations cost zero in the depth bound. -/
+`1/(d-1)` for every fixed `d ≥ 2`. Negations cost zero in depth and one gate in size. -/
 theorem hastad {n d s : ℕ} (C : Cslib.Circuits.Circuit ACBasis n 1)
     (correct : ∀ x, C.eval meaning x 0 = parity n x) (hs : 2 ≤ s)
     (depth : C.depthWith andOrCost ≤ d) (budget : 17 * s * (16 * s + 1) ^ (d - 2) ≤ n) :

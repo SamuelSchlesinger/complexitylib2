@@ -11,7 +11,11 @@
       ],
       "summary": "Every efficiently checkable bit-string problem reduces in polynomial time to satisfiability.",
       "scope": "Explicit CNF encoding, total native-machine reductions, and UNSAT coNP-completeness.",
-      "namespace": "ComplexityTests.Abstracts.CookLevinAbstract"
+      "namespace": "ComplexityTests.Abstracts.CookLevinAbstract",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation"
+      ]
     },
     {
       "id": "pcp",
@@ -22,7 +26,11 @@
       ],
       "summary": "NP proofs can be checked with logarithmic randomness and constantly many nonadaptive queries.",
       "scope": "Perfect completeness, soundness at most one half, and explicit native efficiency; construction constants are large.",
-      "namespace": "ComplexityTests.Abstracts.PCPAbstract"
+      "namespace": "ComplexityTests.Abstracts.PCPAbstract",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation"
+      ]
     },
     {
       "id": "fagin",
@@ -33,7 +41,11 @@
       ],
       "summary": "Existential second-order logic captures precisely the isomorphism-invariant NP properties of finite relational structures.",
       "scope": "Finite relational signatures, explicit encodings, empty universes and nullary relations.",
-      "namespace": "ComplexityTests.Abstracts.FaginAbstract"
+      "namespace": "ComplexityTests.Abstracts.FaginAbstract",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation"
+      ]
     },
     {
       "id": "savitch",
@@ -77,7 +89,11 @@
       ],
       "summary": "Every problem in the polynomial hierarchy is decidable in polynomial time with an exact counting oracle.",
       "scope": "Witness counts and oracle bit answers are explicit; correctness holds for every extension of valid oracle answers.",
-      "namespace": "ComplexityTests.Abstracts.TodaAbstract"
+      "namespace": "ComplexityTests.Abstracts.TodaAbstract",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation"
+      ]
     },
     {
       "id": "barrington",
@@ -124,7 +140,11 @@
       ],
       "summary": "One-wayness yields pseudorandomness, from an extra output bit to functions secure against adaptive oracle queries.",
       "scope": "Uniform probabilistic polynomial time with explicit native evaluators, negligible advantage and full stateful oracle semantics; asymptotic security, not a concrete implementation audit.",
-      "namespace": "ComplexityTests.Abstracts.CryptographyAbstract"
+      "namespace": "ComplexityTests.Abstracts.CryptographyAbstract",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation"
+      ]
     },
     {
       "id": "resolution",

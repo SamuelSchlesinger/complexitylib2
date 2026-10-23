@@ -7,6 +7,8 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.Encoding
+import ComplexityAbstracts.Computation
 import ComplexityAbstracts.TQBFBridge
 
 /-! # A formal abstract of the PSPACE-completeness of TQBF
@@ -17,12 +19,9 @@ space (`PSPACE`), and polynomial-time many-one reductions, and proves that the
 true closed quantified Boolean formulas (`TQBF`) form a `PSPACE`-complete
 problem.
 
-To check that the formalization establishes this result, a reader only needs to
-inspect the definitions and theorem statements in this file. Every public
-definition and theorem statement depends only on this file, `Mathlib`, and
-upstream `Cslib`'s multi-tape Turing machine model; `#check_abstract`
-mechanically verifies that no internal `Complexitylib` declarations leak into
-the statements, and Lean checks the proofs through `TQBFBridge`.
+A reader can inspect the definitions and theorem statements here together with the displayed
+shared-foundation appendix. `#check_abstract` audits their dependencies on upstream mathematics
+and machine models; Lean checks the proofs through `TQBFBridge`.
 
 ## References
 
@@ -88,7 +87,7 @@ excluded from `TQBF`. -/
 def TQBF : Set Formula :=
   {φ | φ.Closed ∧ φ.eval (fun _ => false) = true}
 
-/-! ## Prefix-order binary encoding
+/-! ## Representation details
 
 A formula is serialized in prefix (Polish) order as a list of `(kind, var)`
 tokens, where `kind ∈ {0, …, 7}` identifies the constructor (`var`, `top`,
@@ -109,27 +108,13 @@ def Formula.tokens : Formula → List (ℕ × ℕ)
   | .ex v φ => (6, v) :: φ.tokens
   | .all v φ => (7, v) :: φ.tokens
 
-/-- Frame a bitstring: write each bit `b` as `[true, b]`, then terminate with `[false]`. -/
-def frame (w : List Bool) : List Bool :=
-  w.flatMap (fun b => [true, b]) ++ [false]
-
-/-- Encode a pair by framing the encoding of its first component and appending the encoding of
-its second component. -/
-def encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
-    List Bool :=
-  frame (encA p.1) ++ encB p.2
-
-/-- Encode a list by concatenating the framed encodings of its elements. -/
-def encodeList {α : Type} (enc : α → List Bool) (l : List α) : List Bool :=
-  l.flatMap (frame ∘ enc)
-
 /-- Encode a token `(kind, var)` as the pair of `kind` in unary and `var` in binary. -/
 def encodeToken : ℕ × ℕ → List Bool :=
-  encodePair (fun k => List.replicate k true) Nat.bits
+  Encoding.encodePair (fun k => List.replicate k true) Nat.bits
 
 /-- Encode a formula as the list encoding of its prefix-order tokens. -/
 def encodeQBF (φ : Formula) : List Bool :=
-  encodeList encodeToken φ.tokens
+  Encoding.encodeList encodeToken φ.tokens
 
 theorem encodeQBF_injective : Function.Injective encodeQBF :=
   TQBFBridge.encodeQBF_injective
@@ -145,17 +130,30 @@ theorem encodeQBF_injective : Function.Injective encodeQBF :=
 def encQBF : Formula ↪ List Bool :=
   ⟨encodeQBF, encodeQBF_injective⟩
 
-/-- Injective encoding of a single Boolean as a one-bit word `[b]`. -/
-def encBool : Bool ↪ List Bool :=
-  ⟨fun b => [b], by intro a b h; injection h⟩
+/-! Older client names keep their original named encoding arguments. -/
+
+@[deprecated Encoding.encodePair (since := "2026-10-23")]
+abbrev encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
+    List Bool :=
+  Encoding.encodePair encA encB p
+
+@[deprecated Computation.PolyTime (since := "2026-10-23")]
+abbrev ComputableInPolyTime {α β : Type} (f : α → β)
+    (encA : α ↪ List Bool) (encB : β ↪ List Bool) : Prop :=
+  Computation.PolyTime f encA encB
 
 /-! ## Polynomial space (`PSPACE`) and PSPACE-completeness
+
+`Computation.PolyTime` below is total polynomial-time computation in the input bit length,
+with its exact machine contract in the foundations appendix. Variable indices are in binary;
+counting syntax nodes alone would not account for their lengths.
 
 In upstream `Cslib`, `Turing.MultiTapeTM.ComputableInTimeAndSpace f encIn encOut t s`
 means that one deterministic binary multi-tape Turing machine with finitely many
 states halts on every input `encIn a` within `t a` steps and `s a` work-tape
 cells, outputting `encOut (f a)`. Read-only input cells and write-only output
-cells are not charged to work space.
+cells are not charged to work space. The time bound is unrestricted; termination is required,
+but polynomial running time is not.
 -/
 
 /-- A decision problem `A : Set α` (with instance encoding `enc`) belongs to
@@ -165,22 +163,14 @@ number of work-tape cells bounded by a polynomial in the input bit length. -/
 def PSPACE {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (f : α → Bool) (t : α → ℕ) (s : ℕ → ℕ),
     Cslib.PolynomiallyBounded s ∧
-    Turing.MultiTapeTM.ComputableInTimeAndSpace f enc encBool
+    Turing.MultiTapeTM.ComputableInTimeAndSpace f enc Encoding.encBool
       t (fun a => s (enc a).length) ∧
     ∀ a, a ∈ A ↔ f a = true}
-
-/-- A total function `f : α → β` is computable in polynomial time with respect
-to `encA` and `encB` if a deterministic multi-tape Turing machine computes it
-within polynomially bounded time and space in the input bit length. -/
-def ComputableInPolyTime {α β : Type} (f : α → β)
-    (encA : α ↪ List Bool) (encB : β ↪ List Bool) : Prop :=
-  ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
-    Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f encA encB t s
 
 /-- Polynomial-time many-one reducibility between encoded decision problems. -/
 def PolyTimeReducible {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool)
     (A : Set α) (B : Set β) : Prop :=
-  ∃ f : α → β, ComputableInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
+  ∃ f : α → β, Computation.PolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
 
 /-- A problem `B` is PSPACE-complete if it belongs to PSPACE and every PSPACE
 problem (over any instance type `α` and injective binary encoding `encA`)
@@ -204,11 +194,19 @@ theorem tqbf_pspaceComplete : PSPACEComplete encQBF TQBF :=
       eval := Formula.eval, freeVars := Formula.freeVars, tokens := Formula.tokens }
     (by constructor <;> intros <;> rfl)
 
+/-! ## Compatibility aliases -/
+
+@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
+@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
+@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
+
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.TQBFAbstract`: 87 root
-declarations, 130 dependencies checked
+info: abstract audit passed for `ComplexityTests.Abstracts.TQBFAbstract`:
+86 root declarations, 130 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.TQBFAbstract
+#check_abstract ComplexityTests.Abstracts.TQBFAbstract allowing [
+  ComplexityAbstracts.Encoding, ComplexityAbstracts.Computation
+]
 
 end ComplexityTests.Abstracts.TQBFAbstract

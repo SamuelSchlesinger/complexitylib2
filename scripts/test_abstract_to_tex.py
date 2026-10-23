@@ -16,6 +16,74 @@ ABSTRACTS_DIR = ROOT / "abstracts/ComplexityAbstracts"
 
 
 class AbstractToTexTests(unittest.TestCase):
+    def test_representation_sections_move_after_results_without_losing_code(self):
+        sample = """/-! # Title
+An abstract.
+-/
+namespace Example
+universe u
+/-! ## Representation details
+The exact delimiter convention.
+-/
+/-- A delimiter. -/
+def delimiter : Bool := false
+/-! A continuation of the representation explanation. -/
+def serial : List Bool := [delimiter]
+/-! ## Main result -/
+/-- The result. -/
+theorem headline : serial = [false] := rfl
+/-! ## Representation details -/
+/-- A second representation detail. -/
+def extra : Nat := 2
+end Example
+"""
+        title, intro, sections = abstract_to_tex.parse_abstract(sample)
+        for renderer in (abstract_to_tex.render_markdown, abstract_to_tex.render_tex):
+            with self.subTest(renderer=renderer.__name__):
+                output = renderer(title, intro, sections)
+                self.assertIn("universe u", output)
+                self.assertLess(output.index("headline"), output.index("Appendix:"))
+                self.assertLess(output.index("Appendix:"), output.index("def delimiter"))
+                self.assertLess(output.index("def serial"), output.index("def extra"))
+                self.assertEqual(output.count("def delimiter"), 1)
+                self.assertIn("continuation of the representation", output)
+                self.assertNotIn("rfl", output)
+
+    def test_only_explicitly_deprecated_compatibility_aliases_are_omitted(self):
+        sections = [
+            {"kind": "section", "doc": "## Compatibility aliases", "code": ""},
+            {"kind": "decl", "doc": "Compatibility spelling.", "code":
+                '@[deprecated (since := "2026-10-23")] alias old := Foundation.current'},
+            {"kind": "section", "doc": "## Main result", "code": ""},
+            {"kind": "decl", "doc": "The result.", "code": "theorem result : True := by trivial"},
+        ]
+        output = abstract_to_tex.render_markdown("Title", "", sections)
+        self.assertNotIn("old", output)
+        self.assertNotIn("Compatibility", output)
+        self.assertIn("theorem result : True", output)
+        for code in ("alias old := Foundation.current", "def important := 1",
+                     "theorem selected : True := by trivial",
+                     '@[deprecated (since := "2026-10-23")] theorem old : True := by trivial',
+                     '@[deprecated (since := "2026-10-23")] alias old := Foundation.current\n'
+                     "def hidden := 1"):
+            sections[1]["code"] = code
+            with self.subTest(code=code), self.assertRaisesRegex(ValueError, "deprecated alias"):
+                abstract_to_tex.render_markdown("Title", "", sections)
+
+    def test_undocumented_declarations_are_not_silently_omitted(self):
+        sample = "/-! # Title\nIntro.\n-/\nnamespace Example\ndef first := 1\nend Example\n"
+        output = abstract_to_tex.render_markdown(*abstract_to_tex.parse_abstract(sample))
+        self.assertIn("def first := 1", output)
+
+    def test_lean_scanner_preserves_primed_identifiers_beside_character_literals(self):
+        text = "def result := f' 'a'\ndef quote := '\"'\nnamespace Real\n"
+        masked = abstract_to_tex.lean_code(text)
+        self.assertIn("f'", masked)
+        self.assertNotIn("'a'", masked)
+        self.assertNotIn("\"", masked)
+        self.assertIn("namespace Real", masked)
+        self.assertEqual(len(masked), len(text))
+
     def test_all_abstracts_render_markdown_and_tex(self):
         expected_theorems = {
             "CookLevinAbstract.lean": [

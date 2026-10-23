@@ -47,31 +47,6 @@ def ComputableInPolyTime {α β : Type} (f : α → β)
   ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
     Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f a b t s
 
-/-- Word-query programs with fresh private random bits. This foundational program type is an
-explicit trusted model boundary, not a definition of an efficiency or complexity class. -/
-abbrev InteractiveProgram (β : Type) :=
-  Cslib.ProbOracleComp (fun _ : Unit × List Bool => List Bool) β
-
-/-- One fixed finite fair-coin machine and one polynomial clock realize the entire joint law
-of the program's encoded result and the oracle's final state, against every stateful oracle.
-The clock charges constructing requests and reading replies; oracle computation is external. -/
-def StrictOraclePPT {α β : Type} (enc : α ↪ List Bool) (out : β ↪ List Bool)
-    (program : α → InteractiveProgram β) : Prop :=
-  ∃ (k : ℕ) (Control : Type) (_ : Finite Control)
-    (machine : Turing.MultiTapePTM k Bool Control Unit) (c d : ℕ),
-    ∀ a (State : Type)
-      (oracle : Unit × List Bool → StateT State PMF (List Bool)) s,
-      Cslib.ProbOracleComp.runWith oracle (out <$> program a) s =
-        Cslib.ProbOracleComp.runWith oracle
-          (machine.runOracle (c * ((enc a).length + 1) ^ d) (enc a)) s
-
-/-- Deterministic word-query programs; the syntax has queries but no random operation. -/
-abbrev QueryProgram (β : Type) := Cslib.OracleComp (fun _ : Unit × List Bool => List Bool) β
-
-/-- An oracle language replies to each requested word with its one-bit membership verdict. -/
-noncomputable def languageOracle (B : Set (List Bool)) (q : Unit × List Bool) : List Bool :=
-  [@decide (q.2 ∈ B) (Classical.propDecidable _)]
-
 /-- Count the accepted binary strings of exactly `n` bits. -/
 def acceptCount {α : Type} (V : α × List Bool → Bool) (a : α) (n : ℕ) : ℕ :=
   (Finset.univ.filter fun w : Fin n → Bool => V (a, List.ofFn w) = true).card
@@ -98,6 +73,31 @@ def PH {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
     ∀ a, a ∈ A ↔ Alternation true (ps.map (fun p => p.eval (enc a).length))
       (fun w => V (a, w) = true)}
+
+/-- Word-query programs with fresh private random bits. This foundational program type is an
+explicit trusted model boundary, not a definition of an efficiency or complexity class. -/
+abbrev InteractiveProgram (β : Type) :=
+  Cslib.ProbOracleComp (fun _ : Unit × List Bool => List Bool) β
+
+/-- One fixed finite fair-coin machine and one polynomial clock realize the entire joint law
+of the program's encoded result and the oracle's final state, against every stateful oracle.
+The clock charges constructing requests and reading replies; oracle computation is external. -/
+def StrictOraclePPT {α β : Type} (enc : α ↪ List Bool) (out : β ↪ List Bool)
+    (program : α → InteractiveProgram β) : Prop :=
+  ∃ (k : ℕ) (Control : Type) (_ : Finite Control)
+    (machine : Turing.MultiTapePTM k Bool Control Unit) (c d : ℕ),
+    ∀ a (State : Type)
+      (oracle : Unit × List Bool → StateT State PMF (List Bool)) s,
+      Cslib.ProbOracleComp.runWith oracle (out <$> program a) s =
+        Cslib.ProbOracleComp.runWith oracle
+          (machine.runOracle (c * ((enc a).length + 1) ^ d) (enc a)) s
+
+/-- Deterministic word-query programs; the syntax has queries but no random operation. -/
+abbrev QueryProgram (β : Type) := Cslib.OracleComp (fun _ : Unit × List Bool => List Bool) β
+
+/-- An oracle language replies to each requested word with its one-bit membership verdict. -/
+noncomputable def languageOracle (B : Set (List Bool)) (q : Unit × List Bool) : List Bool :=
+  [@decide (q.2 ∈ B) (Classical.propDecidable _)]
 
 /-- An oracle language answers the bits of `f`: every valid query `(b,i)` returns the `i`th
 binary digit. Answers to words outside the encoding image are unrestricted. -/

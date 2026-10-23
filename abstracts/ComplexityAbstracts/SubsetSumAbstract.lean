@@ -7,6 +7,8 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.Encoding
+import ComplexityAbstracts.Computation
 import ComplexityAbstracts.SubsetSumBridge
 
 /-! # A formal abstract of Subset Sum NP-completeness
@@ -15,11 +17,9 @@ This file defines the Subset Sum decision problem on finite lists of natural num
 encoding, polynomial-time verifiers, the class NP and polynomial-time many-one reductions, and
 proves that Subset Sum is NP-complete when numbers are written in binary.
 
-To check that the formalization establishes this result, a reader only needs to inspect the
-definitions and theorem statements in this file. Every public definition and theorem statement
-depends only on this file, `Mathlib`, and upstream `Cslib`'s multi-tape Turing machine model;
-`#check_abstract` mechanically verifies that no internal `Complexitylib` declarations leak into the
-statements, and Lean checks the proofs through `SubsetSumBridge`.
+A reader can inspect the definitions and theorem statements here together with the displayed
+shared-foundation appendix. `#check_abstract` audits their dependencies on upstream mathematics
+and machine models; Lean checks the proofs through `SubsetSumBridge`.
 
 ## References
 
@@ -38,83 +38,46 @@ most once. -/
 def SubsetSum : Set (List ℕ × ℕ) :=
   {x | ∃ s : List ℕ, s.Sublist x.1 ∧ s.sum = x.2}
 
-/-! ## Binary encoding convention
+/-! ## Representation details
 
-Values are encoded injectively as bitstrings (`List Bool`). A bitstring `w` is
-framed by encoding each bit `b` as `[true, b]` and appending `[false]`, making
-framed bitstrings self-delimiting under concatenation. Pairs frame the first
-component before appending the second, and lists concatenate the framed
-encodings of their elements. Natural numbers use Mathlib's canonical
-little-endian binary digits `Nat.bits` (`0 ↦ []`, positive `n` with least
-significant bit first and final bit `true`).
+The input list and target are encoded in binary. Each input occurrence can be selected once;
+input size includes every number's binary digits. The fixed pair/list delimiters are given below.
 -/
-
-/-- Frame a bitstring: write each bit `b` as `[true, b]`, then terminate with `[false]`. -/
-def frame (w : List Bool) : List Bool :=
-  w.flatMap (fun b => [true, b]) ++ [false]
-
-/-- Encode a pair by framing the encoding of its first component and appending the encoding of
-its second component. -/
-def encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
-    List Bool :=
-  frame (encA p.1) ++ encB p.2
-
-/-- Encode a list by concatenating the framed encodings of its elements. -/
-def encodeList {α : Type} (enc : α → List Bool) (l : List α) : List Bool :=
-  l.flatMap (frame ∘ enc)
-
-theorem encodePair_injective {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
-    Function.Injective (encodePair encA encB) :=
-  CookLevinBridge.encodePair_injective encA encB
-
-theorem encodeList_injective {α : Type} (enc : α ↪ List Bool) :
-    Function.Injective (encodeList enc) :=
-  SubsetSumBridge.encodeList_injective enc
-
-theorem bits_injective : Function.Injective Nat.bits :=
-  SubsetSumBridge.bits_injective
-
-/-- Injective binary encoding of natural numbers by `Nat.bits`. -/
-def encNat : ℕ ↪ List Bool :=
-  ⟨Nat.bits, bits_injective⟩
-
-/-- Injective framed encoding of lists. -/
-def encList {α : Type} (enc : α ↪ List Bool) : List α ↪ List Bool :=
-  ⟨encodeList enc, encodeList_injective enc⟩
-
-/-- Injective framed encoding of pairs. -/
-def encPair {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) : α × β ↪ List Bool :=
-  ⟨encodePair encA encB, encodePair_injective encA encB⟩
-
-/-- Injective encoding of bitstrings as themselves. -/
-def encBits : List Bool ↪ List Bool := Function.Embedding.refl _
-
-/-- Injective encoding of a single Boolean as a one-bit word `[b]`. -/
-def encBool : Bool ↪ List Bool :=
-  ⟨fun b => [b], by intro a b h; injection h⟩
 
 /-- Injective binary encoding of Subset Sum instances: the list of numbers, then the target. -/
 def encSubsetSum : List ℕ × ℕ ↪ List Bool :=
-  encPair (encList encNat) encNat
+  Encoding.encPair (Encoding.encList Encoding.encNat) Encoding.encNat
 
-/-! ## Polynomial-time computability, NP, and NP-completeness
+/-! Older client names keep their original named encoding arguments. -/
 
-In upstream `Cslib`, `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f encA encB t s`
-means that there exists a deterministic multi-tape Turing machine with a binary
-tape alphabet and finitely many states that halts on every encoded input
-`encA a` within `t (encA a).length` steps and `s (encA a).length` work-tape
-cells, leaving `encB (f a)` on its output tape. `Cslib.PolynomiallyBounded`
-asserts that a growth bound `ℕ → ℕ` is bounded above by a polynomial.
--/
+@[deprecated Encoding.encodePair (since := "2026-10-23")]
+abbrev encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
+    List Bool :=
+  Encoding.encodePair encA encB p
 
-/-- A total function `f : α → β` is computable in polynomial time with respect
-to input encoding `encA` and output encoding `encB` if some deterministic
-multi-tape binary Turing machine computes it within polynomially bounded time
-and space in the input bit length. -/
-def ComputableInPolyTime {α β : Type} (f : α → β)
+@[deprecated Encoding.encodePair_injective (since := "2026-10-23")]
+theorem encodePair_injective {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
+    Function.Injective (Encoding.encodePair encA encB) :=
+  Encoding.encodePair_injective encA encB
+
+@[deprecated Encoding.encPair (since := "2026-10-23")]
+abbrev encPair {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) : α × β ↪ List Bool :=
+  Encoding.encPair encA encB
+
+@[deprecated Computation.PolyTime (since := "2026-10-23")]
+abbrev ComputableInPolyTime {α β : Type} (f : α → β)
     (encA : α ↪ List Bool) (encB : β ↪ List Bool) : Prop :=
-  ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
-    Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f encA encB t s
+  Computation.PolyTime f encA encB
+
+/-! ## Efficient verification and reductions
+
+`Computation.PolyTimeVerifier enc V` means that one deterministic machine halts on every
+instance/certificate pair in polynomial time in their combined bit length. The machine and
+polynomial bound are fixed for the problem. We use certificates of exactly `p(|enc a|)` bits;
+this is the fixed-length certificate convention. `Computation.PolyTime` is the same total
+computation contract for general input and output encodings. Their definitions are in the
+foundations appendix.
+-/
 
 /-- A function `V : α × List Bool → Bool` verifies a decision problem `A` with
 certificate length polynomial `p` if an instance `a` belongs to `A` exactly
@@ -128,14 +91,14 @@ problems that have a polynomial-time verifier with polynomially long binary
 certificates. -/
 def NP {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A}
+    Computation.PolyTimeVerifier enc V ∧ IsVerifier enc p V A}
 
 /-- Problem `A` (with encoding `encA`) many-one reduces in polynomial time to
 problem `B` (with encoding `encB`) if a polynomial-time computable map `f`
 preserves yes/no membership on every instance. -/
 def PolyTimeReducible {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool)
     (A : Set α) (B : Set β) : Prop :=
-  ∃ f : α → β, ComputableInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
+  ∃ f : α → β, Computation.PolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
 
 /-- A problem `B` is NP-complete if it belongs to NP and every NP problem (over
 any instance type `α` and injective binary encoding `encA`) reduces to `B` in
@@ -152,11 +115,24 @@ reductions when the input list and target sum are encoded in binary. -/
 theorem subsetSum_npComplete : NPComplete encSubsetSum SubsetSum :=
   SubsetSumBridge.subsetSum_npComplete
 
+/-! ## Compatibility aliases -/
+
+@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
+@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
+@[deprecated (since := "2026-10-23")] alias encodeList_injective := Encoding.encodeList_injective
+@[deprecated (since := "2026-10-23")] alias bits_injective := Encoding.bits_injective
+@[deprecated (since := "2026-10-23")] alias encNat := Encoding.encNat
+@[deprecated (since := "2026-10-23")] alias encList := Encoding.encList
+@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
+@[deprecated (since := "2026-10-23")] alias encBits := Encoding.encBits
+
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.SubsetSumAbstract`: 20 root
-declarations, 61 dependencies checked
+info: abstract audit passed for `ComplexityTests.Abstracts.SubsetSumAbstract`:
+19 root declarations, 62 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
-#check_abstract ComplexityTests.Abstracts.SubsetSumAbstract
+#check_abstract ComplexityTests.Abstracts.SubsetSumAbstract allowing [
+  ComplexityAbstracts.Encoding, ComplexityAbstracts.Computation
+]
 
 end ComplexityTests.Abstracts.SubsetSumAbstract

@@ -53,6 +53,144 @@ class BuildAbstractsTests(unittest.TestCase):
     def write_manifest(self, entries):
         self.manifest.write_text(json.dumps({"title": "Selected abstracts", "entries": entries}))
 
+    def add_foundations(self):
+        modules = ["ComplexityAbstracts.Encoding", "ComplexityAbstracts.Computation"]
+        for module, imports, name in (
+            (modules[0], "import Complexity.ProofOnly\n", "binaryCode"),
+            (modules[1], "import ComplexityAbstracts.Encoding\n", "polynomialTime"),
+        ):
+            build.module_source_path(module, self.root).write_text(
+                imports + f"/-! # {module.rsplit('.', 1)[-1]} foundation\n"
+                "Exact checked definitions.\n-/\n"
+                f"namespace ComplexityTests.Abstracts.{module.rsplit('.', 1)[-1]}\n"
+                f"/-- The foundational definition {name}. -/\ndef {name} : Nat := 0\n"
+                f"end ComplexityTests.Abstracts.{module.rsplit('.', 1)[-1]}\n")
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text("import ComplexityAbstracts.Check\n"
+                          "import ComplexityAbstracts.ExampleBridge\n"
+                          "import ComplexityAbstracts.Computation\n" + SOURCE)
+        self.entry["foundations"] = modules
+        self.write_manifest([self.entry])
+        return modules
+
+    @staticmethod
+    def fake_pdf(tex):
+        pdf = tex.with_suffix(".pdf")
+        pdf.write_bytes(b"%PDF-fixture")
+        return pdf
+
+    def test_foundations_require_an_exact_manifest_and_import_closure(self):
+        modules = self.add_foundations()
+        self.assertEqual(build.entry_foundations(self.entry, self.root), modules)
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+        for listed, message in ((None, "list of module"), (modules * 2, "Duplicate foundation"),
+                                ([modules[1]], "missing"), ([], "missing"),
+                                (["Other.Encoding"], "formal-abstract module"),
+                                (["ComplexityAbstracts.Missing"], "Missing shared foundation"),
+                                (["ComplexityAbstracts.ExampleAbstract"], "Not a shared")):
+            self.entry["foundations"] = listed
+            self.write_manifest([self.entry])
+            with self.subTest(listed=listed), self.assertRaisesRegex(ValueError, message):
+                build.load_catalogue(self.manifest, self.root)
+        self.entry["foundations"] = modules
+        build.module_source_path(self.entry["module"], self.root).write_text(SOURCE)
+        self.write_manifest([self.entry])
+        with self.assertRaisesRegex(ValueError, "unused"):
+            build.load_catalogue(self.manifest, self.root)
+
+    def test_comment_import_spoofs_do_not_create_foundation_dependencies(self):
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text('/- import ComplexityAbstracts.Missing -/\n' + SOURCE +
+                          '\ndef banner := "import ComplexityAbstracts.Missing"\n')
+        self.assertEqual(build.entry_foundations(self.entry, self.root), [])
+
+    def test_cyclic_foundations_fail_closed(self):
+        modules = self.add_foundations()
+        source = build.module_source_path(modules[0], self.root)
+        source.write_text("import ComplexityAbstracts.Computation\n" + source.read_text())
+        with self.assertRaisesRegex(ValueError, "Cyclic shared foundations"):
+            build.load_catalogue(self.manifest, self.root)
+
+    def test_foundations_are_displayed_with_source_and_declaration_links(self):
+        modules = self.add_foundations()
+        output = build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+        self.assertLess(output.index(r"\textbf{theorem}"), output.index("Appendix: shared"))
+        self.assertIn("binary", output)
+        self.assertIn("polynomial", output)
+        for module in modules:
+            record = build.foundation_record(module, "owner/repo", "a" * 40, self.root)
+            self.assertIn(record["url"], output)
+            self.assertIn(record["declarations"][0]["url"], output)
+            self.assertEqual(record["source_sha256"],
+                             build.digest(build.module_source_path(module, self.root)))
+        self.assertIn("ComplexityTests.Abstracts.Encoding",
+                      build.foundation_record(modules[0], "owner/repo", "a" * 40,
+                                              self.root)["namespaces"])
+
+    def test_combined_catalogue_includes_shared_foundations_once(self):
+        modules = self.add_foundations()
+        other = {**self.entry, "id": "second", "module": "ComplexityAbstracts.SecondAbstract",
+                 "namespace": "ComplexityTests.Abstracts.SecondAbstract",
+                 "headline_theorems": ["ComplexityTests.Abstracts.SecondAbstract.chosen"]}
+        source = build.module_source_path(self.entry["module"], self.root).read_text()
+        build.module_source_path(other["module"], self.root).write_text(
+            source.replace("ExampleAbstract", "SecondAbstract"))
+        self.write_manifest([self.entry, other])
+        with patch.object(build, "git", side_effect=["a" * 40, ""]), \
+             patch.object(build.shutil, "which", return_value="latexmk"), \
+             patch.object(build, "build_pdf", side_effect=self.fake_pdf):
+            result = build.build(self.manifest, self.root / "build", root=self.root)
+        for name in ("example", "second", "catalogue"):
+            output = (self.root / f"build/{name}.tex").read_text()
+            self.assertEqual(output.count(r"\section*{Appendix: shared foundations}"), 1)
+            self.assertEqual(output.count(r"\subsection*{Encoding foundation}"), 1)
+            self.assertEqual(output.count(r"\subsection*{Computation foundation}"), 1)
+        combined = (self.root / "build/catalogue.tex").read_text()
+        self.assertGreater(combined.index("Appendix: shared"), combined.index(r"\hypertarget{second}"))
+        self.assertEqual(result["catalogue"]["foundations"], modules)
+        for module in modules:
+            path = build.module_source_path(module, self.root)
+            self.assertIn({"path": str(path.relative_to(self.root)), "sha256": build.digest(path)},
+                          result["inputs"])
+        self.assertEqual([record["module"] for record in result["documents"][0]["foundations"]],
+                         modules)
+
+    def test_foundation_change_during_generation_invalidates_provenance(self):
+        modules = self.add_foundations()
+
+        def changing_pdf(tex):
+            path = build.module_source_path(modules[0], self.root)
+            path.write_text(path.read_text() + "\n-- changed\n")
+            return self.fake_pdf(tex)
+
+        with patch.object(build, "git", side_effect=["a" * 40, ""]), \
+             patch.object(build.shutil, "which", return_value="latexmk"), \
+             patch.object(build, "build_pdf", side_effect=changing_pdf):
+            with self.assertRaisesRegex(ValueError, "Source changed.*Encoding.lean"):
+                build.build(self.manifest, self.root / "build", root=self.root)
+        self.assertFalse((self.root / "build/provenance.json").exists())
+
+    def test_selected_theorems_cannot_be_moved_to_an_appendix_or_hidden(self):
+        source = build.module_source_path(self.entry["module"], self.root)
+        for section, message in (("Representation details", "main presentation"),
+                                 ("Compatibility aliases", "deprecated alias")):
+            source.write_text(SOURCE.replace("/-- The selected result. -/",
+                                             f"/-! ## {section} -/\n/-- The selected result. -/"))
+            with self.subTest(section=section), self.assertRaisesRegex(ValueError, message):
+                build.load_catalogue(self.manifest, self.root)
+
+    def test_standalone_previews_include_foundation_definitions_and_digests(self):
+        modules = self.add_foundations()
+        source = build.module_source_path(self.entry["module"], self.root)
+        for format in ("markdown", "tex"):
+            output = build.render.render_source(source, format)
+            for module in modules:
+                path = build.module_source_path(module, self.root)
+                self.assertIn(build.digest(path), output)
+            self.assertIn("binary", output)
+            self.assertIn("polynomial", output)
+            self.assertLess(output.index("chosen"), output.index("Shared foundation:"))
+
     def test_module_source_path_uses_dedicated_library_root(self):
         self.assertEqual(build.module_source_path(self.entry["module"], self.root),
                          self.root / "abstracts/ComplexityAbstracts/ExampleAbstract.lean")
@@ -247,6 +385,7 @@ class BuildAbstractsTests(unittest.TestCase):
         for package in ("libertine.sty", "newtxmath.sty", "zi4.sty", "tcolorbox.sty"):
             if subprocess.run(["kpsewhich", package], capture_output=True).returncode:
                 self.skipTest(f"TeX package missing: {package}")
+        self.add_foundations()
         with patch.object(build, "git", side_effect=["a" * 40, ""]):
             result = build.build(self.manifest, self.root / "build", root=self.root,
                                  require_clean=True)
@@ -255,8 +394,10 @@ class BuildAbstractsTests(unittest.TestCase):
         if shutil.which("pdfinfo"):
             links = subprocess.check_output(
                 ["pdfinfo", "-url", str(self.root / "build/example.pdf")], text=True)
-            self.assertIn("/blob/" + "a" * 40 +
-                          "/abstracts/ComplexityAbstracts/ExampleAbstract.lean#L10", links)
+            self.assertIn(result["documents"][0]["headlines"][0]["url"], links)
+            for foundation in result["documents"][0]["foundations"]:
+                self.assertIn(foundation["url"], links)
+                self.assertIn(foundation["declarations"][0]["url"], links)
 
 
 if __name__ == "__main__":
