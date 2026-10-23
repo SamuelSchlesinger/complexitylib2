@@ -67,49 +67,62 @@ GROUPS = [
 ]
 
 
+NORMAL_SPECIAL = re.compile(r"--|/-|['\"]")
+COMMENT_SPECIAL = re.compile(r"/-|-/")
+STRING_SPECIAL = re.compile(r'[\\"]')
+
+
 def masks(text: str) -> tuple[str, str]:
     """Preserve offsets while masking nested comments, then string/character literals."""
     code, syntax = list(text), list(text)
+    size = len(text)
+
+    def blank(target: list[str], start: int, end: int) -> None:
+        for j in range(start, end):
+            if text[j] != "\n":
+                target[j] = " "
+
     depth, quoted, i = 0, False, 0
-    while i < len(text):
+    while i < size:
         if depth:
-            if text.startswith("/-", i):
-                size, depth = 2, depth + 1
-            elif text.startswith("-/", i):
-                size, depth = 2, depth - 1
-            else:
-                size = 1
-            for j in range(i, i + size):
-                if text[j] != "\n":
-                    code[j] = syntax[j] = " "
-            i += size
+            match = COMMENT_SPECIAL.search(text, i)
+            if not match:
+                break
+            blank(code, i, match.end())
+            blank(syntax, i, match.end())
+            depth += 1 if match[0] == "/-" else -1
+            i = match.end()
         elif quoted:
-            if text[i] == "\\" and i + 1 < len(text):
-                syntax[i:i + 2] = [" ", " "]
-                i += 2
+            match = STRING_SPECIAL.search(text, i)
+            if not match:
+                break
+            j = match.start()
+            blank(syntax, i, j)
+            if text[j] == "\\" and j + 1 < size:
+                syntax[j:j + 2] = [" ", " "]
+                i = j + 2
             else:
-                if text[i] != "\n":
-                    syntax[i] = " "
-                if text[i] == '"':
-                    quoted = False
-                i += 1
-        elif text.startswith("--", i):
-            end = text.find("\n", i)
-            end = len(text) if end < 0 else end
-            code[i:end] = syntax[i:end] = [" "] * (end - i)
-            i = end
-        elif text.startswith("/-", i):
-            code[i:i + 2] = syntax[i:i + 2] = [" ", " "]
-            depth, i = 1, i + 2
-        elif text[i] == "'" and (literal := CHAR_LITERAL.match(text, i)):
-            for j in range(i, literal.end()):
-                if text[j] != "\n":
-                    syntax[j] = " "
-            i = literal.end()
-        elif text[i] == '"':
-            syntax[i], quoted, i = " ", True, i + 1
+                syntax[j], quoted, i = " ", text[j] != '"', j + 1
         else:
-            i += 1
+            match = NORMAL_SPECIAL.search(text, i)
+            if not match:
+                break
+            j = match.start()
+            if match[0] == "--":
+                end = text.find("\n", j)
+                end = size if end < 0 else end
+                code[j:end] = syntax[j:end] = [" "] * (end - j)
+                i = end
+            elif match[0] == "/-":
+                code[j:j + 2] = syntax[j:j + 2] = [" ", " "]
+                depth, i = 1, j + 2
+            elif match[0] == "'":
+                literal = CHAR_LITERAL.match(text, j)
+                if literal:
+                    blank(syntax, j, literal.end())
+                i = literal.end() if literal else j + 1
+            else:
+                syntax[j], quoted, i = " ", True, j + 1
     if depth or quoted:
         raise ValueError("Unterminated comment or string")
     return "".join(code), "".join(syntax)
