@@ -5,19 +5,21 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.BatchLookup
+import ComplexityTests.CircuitMaterialize
 
 /-!
 # Batched lookup clients
 
 Exercise the actual circuits on repeated queries, all small tables, duplicate sources, extra
 padding, and empty dimensions. These compiled regression cases supplement the general proofs;
-they do not introduce trusted computational axioms.
+they do not introduce trusted computational axioms. Exhaustive checks evaluate the materialized
+circuit, which `materialize_eq` proves equal to the original.
 -/
 
 namespace ComplexityTests.BatchLookup
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean
-open bitonicSortTraceCircuit
+open bitonicSortTraceCircuit ComplexityTests.CircuitMaterialize
 
 example {k v : ℕ} (table : BitString k → BitString v) (requests : ℕ)
     (x : BitString (requests * k)) :
@@ -55,7 +57,7 @@ example (table : BitString 0 → BitString 0) : (batchLookupCircuit table 0).siz
   (List.finRange 16).all fun tableBits =>
     let table : BitString 2 → BitString 1 := fun key _ =>
       ((BitString.equivFin 4).symm tableBits) ((BitString.equivFin 2) key)
-    let c := batchLookupCircuit table 3
+    let c := materialize (batchLookupCircuit table 3)
     (List.finRange 64).all fun raw =>
       let x := (BitString.equivFin 6).symm raw
       List.ofFn ((c.evalVector interpretation x).get) == List.ofFn (blockMap table 3 x)
@@ -67,7 +69,7 @@ example (table : BitString 0 → BitString 0) : (batchLookupCircuit table 0).siz
   (List.finRange 16).all fun rawTable =>
     let table : BitString 1 → BitString 2 := fun key bit =>
       ((BitString.equivFin 4).symm rawTable) (finProdFinEquiv ((BitString.equivFin 1) key, bit))
-    let c := batchLookupCircuit table 3
+    let c := materialize (batchLookupCircuit table 3)
     (List.finRange 8).all fun raw =>
       let x := (BitString.equivFin 3).symm raw
       List.ofFn ((c.evalVector interpretation x).get) == List.ofFn (blockMap table 3 x)
@@ -77,7 +79,7 @@ example (table : BitString 0 → BitString 0) : (batchLookupCircuit table 0).siz
 /-- info: true -/
 #guard_msgs in
 #eval
-  let c := routeValuesCircuit (Fin.castSucc : Fin 1 → Fin 2) (Fin.last 1) 2 1
+  let c := materialize (routeValuesCircuit (Fin.castSucc : Fin 1 → Fin 2) (Fin.last 1) 2 1)
   (List.finRange 4096).all fun raw =>
     let x := (BitString.equivFin 12).symm raw
     let rows : Fin 4 → BitString 3 := directProductInput x
@@ -91,8 +93,8 @@ example (table : BitString 0 → BitString 0) : (batchLookupCircuit table 0).siz
 #guard_msgs in
 #eval
   let table : BitString 2 → BitString 2 := fun x => ![x 1, !x 0]
-  let c := batchLookupCircuit.withPadding table
-    (by decide : 3 + (2 ^ 2 + 9) = BitonicSort.arity 4)
+  let c := materialize (batchLookupCircuit.withPadding table
+    (by decide : 3 + (2 ^ 2 + 9) = BitonicSort.arity 4))
   (List.finRange 64).all fun raw =>
     let x := (BitString.equivFin 6).symm raw
     List.ofFn ((c.evalVector interpretation x).get) == List.ofFn (blockMap table 3 x)

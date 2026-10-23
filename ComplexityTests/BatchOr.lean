@@ -6,17 +6,20 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.BatchOr
 import Complexity.Foundations.Data.BitString.Basic
+import ComplexityTests.CircuitMaterialize
 
 /-!
 # Dynamic shared OR lookup clients
 
 Check repeated and missing keys, independent value bits, empty arrays and extra padding on the
-actual circuits. Exhaustive compiled examples supplement the general correctness proofs.
+actual circuits. Exhaustive compiled examples supplement the general correctness proofs; the
+512-input check evaluates the materialized circuit, which `materialize_eq` proves equal to the
+original.
 -/
 
 namespace ComplexityTests.BatchOr
 
-open Cslib Cslib.Circuits Cslib.Circuits.Boolean
+open Cslib Cslib.Circuits Cslib.Circuits.Boolean ComplexityTests.CircuitMaterialize
 
 example {input sources requests k v : ℕ}
     (sourceKeys : Fin sources → Fin k → Fin input ⊕ Bool)
@@ -37,7 +40,7 @@ example {input sources requests k v : ℕ}
   let sourceValues : Fin 2 → Fin 2 → Fin 9 ⊕ Bool := fun i bit =>
     .inl ⟨2 + 2 * i.val + bit.val, by lia⟩
   let queryKeys : Fin 3 → Fin 1 → Fin 9 ⊕ Bool := fun i _ => .inl ⟨6 + i.val, by lia⟩
-  let c := batchOrCircuit sourceKeys sourceValues queryKeys
+  let c := materialize (batchOrCircuit sourceKeys sourceValues queryKeys)
   (List.finRange 512).all fun raw =>
     let x := (BitString.equivFin 9).symm raw
     let out := (c.evalVector interpretation x).get
