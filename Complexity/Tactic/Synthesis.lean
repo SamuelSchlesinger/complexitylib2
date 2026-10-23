@@ -26,7 +26,7 @@ The tactic never adds a gate or invokes a synthesis theorem.
 public section
 
 /-- Find already available wires, without synthesizing new functions. -/
-syntax "synthesis_available" : tactic
+syntax (name := synthesisAvailable) "synthesis_available" : tactic
 macro_rules | `(tactic| synthesis_available) => `(tactic|
   first
   | assumption
@@ -34,7 +34,12 @@ macro_rules | `(tactic| synthesis_available) => `(tactic|
   | rfl
   | (solve | apply Set.mem_union_right; synthesis_available)
   | (solve | apply Set.mem_union_left; synthesis_available)
-  | (solve | rw [Set.mem_iUnion]; refine ⟨?_, ?_⟩; rotate_left; synthesis_available)
+  | (solve |
+      change _ ∈ Set.iUnion _
+      rw [Set.mem_iUnion]
+      refine ⟨?_, ?_⟩
+      rotate_left
+      synthesis_available)
   | (solve | apply Set.range_subset_iff.mpr; intro i; synthesis_available)
   | (solve | apply Set.iUnion_subset; intro i; synthesis_available)
   | solve_by_elim (maxDepth := 3) (symm := false) (exfalso := false)
@@ -42,7 +47,7 @@ macro_rules | `(tactic| synthesis_available) => `(tactic|
   | (solve | intro i; synthesis_available))
 
 /-- Append a synthesis rule to the named builder, solving its available-wire premises. -/
-syntax "synthesis_step " ident " using " term : tactic
+syntax (name := synthesisStep) "synthesis_step " ident " using " term : tactic
 macro_rules
   | `(tactic| synthesis_step $b:ident using $rule:term) =>
     `(tactic| let $b := ($b).add (by apply $rule <;> synthesis_available))
