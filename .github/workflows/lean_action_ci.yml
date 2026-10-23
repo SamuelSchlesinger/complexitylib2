@@ -66,10 +66,14 @@ jobs:
       - name: "lake lint"
         id: lint
         run: lake lint
-      # As lean-action did: keep a successful build even when tests or linting fail.
+      # As lean-action did: keep a successful build even when tests or linting fail. Only `main`
+      # pushes save: each save is about 2.8 GB, and PR or merge-queue copies would evict `main`'s
+      # entry from the 10 GB Actions cache. Other runs restore `main`'s entry through the
+      # restore-keys prefix and fetch anything newer from the remote cache.
       - name: Save .lake to the Actions cache
         if: >-
-          ${{ !cancelled() && steps.lake-cache.outputs.cache-hit != 'true' &&
+          ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+              steps.lake-cache.outputs.cache-hit != 'true' &&
               (success() || steps.test.outcome == 'failure' || steps.lint.outcome == 'failure') }}
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
