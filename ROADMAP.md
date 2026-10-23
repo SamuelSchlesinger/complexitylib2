@@ -199,6 +199,16 @@ existing developments, source credit and saved branches remain available for a f
    [Tests](ComplexityTests/Crypto/GSW.lean) exercise both messages and all NAND inputs with nonzero
    noise, including negative wraparound and decoder boundaries. This is the power-of-two
    specialization of Gentry--Sahai--Waters (2013), omitting its redundant top digit.
+   The [statistical hiding theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Hiding.lean)
+   proves the uniform-public-matrix step of their security argument. For `d = n + 1` and
+   `N = d * w`, the actual ciphertext gives any randomized two-stage adversary acceptance
+   probabilities differing by at most `N * sqrt(2^(w*d) / 2^m)`. The adversary sees the public
+   matrix before choosing its messages and retains arbitrary state. The underlying
+   [shared-matrix bound](Complexity/Probability/BitString/SubsetSum/Matrix.lean) works for every
+   positive modulus, with loss linear in the number of independently sampled binary rows;
+   it neither assumes whole-matrix two-universality nor gives a bound for every fixed matrix.
+   [Regressions](ComplexityTests/Crypto/GSWHiding.lean) include a composite-modulus counterexample
+   to whole-matrix universality and an adaptive game with exact nonzero advantage.
    Sampling, computational security, uniform native algorithms, admissible parameter families
    and bootstrappability remain open in #486.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
