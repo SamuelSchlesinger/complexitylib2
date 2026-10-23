@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
-import Complexity.Computability.Complexity.Classes.Inclusions
 import Complexity.Computability.Complexity.Classes.PH.Collapse
 import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.BPP
 import Complexity.Crypto.Computational.OneWay.BPP
 import Complexity.Crypto.Computational.OneWay.MCSP
 import Complexity.Crypto.Computational.OneWay.NP
