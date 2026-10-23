@@ -20,9 +20,9 @@ There is one key transition per scheduled layer, regardless of its number of nod
 
 The runtime receives the public projection of the target keys and encrypted links. The full
 key-pair list is only a witness in these theorems. The final plaintexts decrypt with the last
-secret key; fresh inputs use the first key. Packaging these distinct levels into an encryption
-interface and proving security remain separate obligations. `Homomorphic.Evaluation` composes
-this theorem with the ordinary-circuit compiler and output selection.
+secret key; fresh inputs use the first key. `Homomorphic.Evaluation` composes this theorem with
+the ordinary-circuit compiler and output selection. `Homomorphic.Leveled.Correctness` packages
+the endpoint distinction in a depth-budgeted scheme; security remains a separate obligation.
 
 ## Main results
 

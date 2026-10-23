@@ -108,6 +108,22 @@ existing developments, source credit and saved branches remain available for a f
    exact ciphertext width. Its
    [PPT certificate](Complexity/Crypto/Computational/Homomorphic/Evaluation/PolyTime.lean)
    covers the complete public input without correctness or validity assumptions.
+   The [depth-budgeted scheme](Complexity/Crypto/Computational/Homomorphic/Leveled/Basic.lean)
+   generates `2B + 1` base keys for budget `B`. It uses
+   [identity-layer padding](Complexity/Computability/Circuit/Boolean/Layered/Padding.lean) so every
+   circuit of designated-output depth at most `B` finishes under the same final key. Its public
+   artifact contains public keys and adjacent encrypted links; its private artifact retains the
+   initial and final secrets. A tag distinguishes fresh from evaluated ciphertexts, adapting the
+   two endpoints to the existing `Scheme.Correct` interface. There is no circular encrypted link.
+   [Correctness](Complexity/Crypto/Computational/Homomorphic/Leveled/Correctness.lean) proves this
+   interface for the actual algorithms on fresh inputs. Exact secret-key and ciphertext lengths
+   are `3 * secretWidth n + 1` and `ciphertextWidth n + 1`, independent of `B`. This does not
+   promise that evaluated wrapper ciphertexts can be reused as fresh inputs to another call.
+   [Native certificates](Complexity/Crypto/Computational/Homomorphic/Leveled/PolyTime.lean)
+   cover serialization, total decoding, compilation, padding and tagged decryption on all inputs,
+   uniformly in unary `(n, B)`. They yield efficient schemes for efficiently computed unary budget
+   families. The decryption-circuit generator also supplies polynomial bounds on both derived
+   widths; decryption itself has no budget parameter.
    [Refresh tests](ComplexityTests/Crypto/HomomorphicRefresh.lean),
    [layered tests](ComplexityTests/Crypto/HomomorphicLayered.lean), and
    [ordinary-circuit tests](ComplexityTests/Crypto/HomomorphicEvaluation.lean) instantiate the
@@ -115,9 +131,10 @@ existing developments, source credit and saved branches remain available for a f
    They exercise key switching, repeated refresh, shared wires, constants, empty layers and zero
    depth. [Compiler tests](ComplexityTests/CircuitLayering.lean) also cover dead gates, empty
    outputs, shared OR gates, skipped depths, and malformed binary references.
-   A leveled scheme interface that normalizes the final key for circuits below its depth budget,
-   the acyclic IND-CPA reduction, and the
-   additional circular-security result remain open in
+   [Leveled tests](ComplexityTests/Crypto/HomomorphicLeveled.lean) check budgets zero, one and two,
+   distinct initial/final secrets at positive budgets, and circuits of different actual depths
+   under the same endpoint, malformed inputs and nonconstant efficient budget families. The acyclic IND-CPA
+   reduction and the additional circular-security result remain open in
    [#322](https://github.com/cslib-community/complexitylib/issues/322). These milestones establish
    neither a concrete LWE scheme nor an encryption-security theorem.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
