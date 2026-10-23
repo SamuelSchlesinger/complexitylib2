@@ -117,6 +117,7 @@ public import Complexity.Computability.Circuit.Boolean.AffineDisperser.Step
 public import Complexity.Computability.Circuit.Boolean.AltFormula
 public import Complexity.Computability.Circuit.Boolean.AltFormula.TopDown
 public import Complexity.Computability.Circuit.Boolean.AtLeast
+public import Complexity.Computability.Circuit.Boolean.BalancedCode
 public import Complexity.Computability.Circuit.Boolean.Barrington
 public import Complexity.Computability.Circuit.Boolean.BarringtonClass
 public import Complexity.Computability.Circuit.Boolean.BatchLookup

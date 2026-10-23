@@ -34,6 +34,7 @@ not charge the fallback. Appending circuits duplicates their programs, even on s
 
 * `Cslib.Circuits.Circuit.eval_balanced`: it computes the balanced fold of their values.
 * `Cslib.Circuits.Circuit.size_balanced`: its size, for a nonempty list.
+* `Cslib.Circuits.Circuit.size_balanced_le`: a uniform bound including the empty fallback.
 * `Cslib.Circuits.Circuit.depth_balanced_le`: its depth.
 
 ## References
@@ -79,6 +80,16 @@ theorem size_balanced (op : Circuit σ (r + r) r) (unit : Circuit σ n r)
   rw [size_comp, size_append, hC h₁, hD h₂, List.map_append, List.sum_append, List.length_append,
     ha, hb, Nat.add_sub_cancel, Nat.add_sub_cancel, show a + 1 + (b + 1) - 1 = a + b + 1 by omega]
   ring
+
+/-- A uniform gate bound also covering the empty fallback and an unused expensive operator. -/
+theorem size_balanced_le (op : Circuit σ (r + r) r) (unit : Circuit σ n r)
+    (l : List (Circuit σ n r)) :
+    (balanced op unit l).size ≤ unit.size + (l.map size).sum + l.length * op.size := by
+  by_cases hl : l = []
+  · simp [hl, balanced]
+  · rw [size_balanced op unit hl]
+    have := Nat.mul_le_mul_right op.size (Nat.sub_le l.length 1)
+    omega
 
 /-- **Depth of a balanced tree of circuits.** If every circuit of a list of `k` circuits has depth
 at most `D`, then combining them by `op` along a balanced tree gives depth at most

@@ -281,6 +281,12 @@ existing developments, source credit and saved branches remain available for a f
    [Native carry-save generators](Complexity/Computability/Circuit/Boolean/CarrySave/PolyTime.lean)
    construct the exact existing three-to-two and four-to-two reducers from unary width,
    including all binary references and the unequal carry-bit blocks.
+   The [balanced-code generator](Complexity/Computability/Circuit/Boolean/BalancedCode.lean)
+   constructs the exact existing half-split tree from the complete native leaf-code list,
+   binary input arity and native operator/fallback codes. Its polynomial certificate charges
+   all interval-table rows and wire encodings, including dead gates and malformed raw data.
+   This completes the balanced-construction prerequisite #543; the actual shallow-decryption
+   circuit, its native generator and parameter fit remain the separate #528 objective.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the

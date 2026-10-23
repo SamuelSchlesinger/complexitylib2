@@ -17,6 +17,7 @@ import ComplexityTests.ArithmeticHessianRelative
 import ComplexityTests.ArithmeticWaring
 import ComplexityTests.ArthurMerlin
 import ComplexityTests.Axioms
+import ComplexityTests.BalancedCode
 import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
