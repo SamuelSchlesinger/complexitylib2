@@ -91,7 +91,7 @@ def independentSetSentence : ESO.Sentence sizedGraph :=
 
 variable {M : Type*} [sizedGraph.Structure M]
 
-theorem realize_independentSetMatrix (R : ∀ i, Set (Fin (independentSetArity i) → M)) :
+private theorem realize_independentSetMatrix (R : ∀ i, Set (Fin (independentSetArity i) → M)) :
     (letI := varLanguage.structure R; M ⊨ independentSetMatrix) ↔
       (∀ x y, ![x, y] ∈ R 1 → ![x] ∈ R 0 ∧ RelMap sizedGraph.size ![y]) ∧
       (∀ x y z, ![x, y] ∈ R 1 → ![x, z] ∈ R 1 → y = z) ∧

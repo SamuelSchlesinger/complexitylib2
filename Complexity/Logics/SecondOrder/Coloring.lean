@@ -89,17 +89,17 @@ noncomputable def colorable (n : ℕ) : Sentence Language.graph :=
 
 variable {n : ℕ} {M : Type w} [Language.graph.Structure M]
 
-theorem relMap_edge (R : Fin n → Set (Fin 1 → M)) (x : Fin 2 → M) :
+private theorem relMap_edge (R : Fin n → Set (Fin 1 → M)) (x : Fin 2 → M) :
     @RelMap _ M (@sumStructure _ _ M _ (varLanguage.structure R)) 2 (edge n) x ↔ RelMap adj x :=
   Iff.rfl
 
-theorem relMap_color (R : Fin n → Set (Fin 1 → M)) (c : Fin n) (x : Fin 1 → M) :
+private theorem relMap_color (R : Fin n → Set (Fin 1 → M)) (c : Fin n) (x : Fin 1 → M) :
     @RelMap _ M (@sumStructure _ _ M _ (varLanguage.structure R)) 1 (color c) x ↔ x ∈ R c :=
   Iff.rfl
 
 /-- The first-order part of the colorability sentence holds of unary relations `R c` when they
 cover the vertices and no edge has both ends in the same `R c`. -/
-theorem realize_colorableMatrix (R : Fin n → Set (Fin 1 → M)) :
+private theorem realize_colorableMatrix (R : Fin n → Set (Fin 1 → M)) :
     (letI := varLanguage.structure (arity := fun _ : Fin n => 1) R; M ⊨ colorableMatrix n) ↔
       (∀ x, ∃ c, ![x] ∈ R c) ∧ ∀ x y, RelMap adj ![x, y] → ∀ c, ![x] ∈ R c → ![y] ∉ R c := by
   simp [colorableMatrix, FirstOrder.Language.Sentence.Realize, Formula.Realize, relMap_edge,

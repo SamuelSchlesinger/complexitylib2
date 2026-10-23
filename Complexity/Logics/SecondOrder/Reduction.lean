@@ -73,7 +73,8 @@ variable {I} {M : Type w} [L.Structure M] {arity}
 noncomputable def flatten {n : ℕ} (x : Fin n → I.Model M) : Fin (n * Nat.card κ) → M :=
   fun m => (x (blockEquiv κ n m).1).1 (blockEquiv κ n m).2
 
-theorem flatten_injective {n : ℕ} : Function.Injective (flatten (I := I) (M := M) (n := n)) := by
+private theorem flatten_injective {n : ℕ} :
+    Function.Injective (flatten (I := I) (M := M) (n := n)) := by
   intro x y h
   funext a
   refine Model.ext (funext fun j => ?_)
@@ -86,7 +87,8 @@ noncomputable def modelRel (R : ∀ i, Set (Fin (arity i * Nat.card κ) → M)) 
     Set (Fin (arity i) → I.Model M) :=
   flatten ⁻¹' R i
 
-theorem modelRel_surjective : Function.Surjective (modelRel (I := I) (M := M) (arity := arity)) :=
+private theorem modelRel_surjective :
+    Function.Surjective (modelRel (I := I) (M := M) (arity := arity)) :=
   fun R => ⟨fun i => flatten '' R i, funext fun _ => Set.preimage_image_eq _ flatten_injective⟩
 
 variable [L'.IsRelational]

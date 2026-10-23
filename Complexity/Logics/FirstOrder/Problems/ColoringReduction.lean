@@ -88,7 +88,7 @@ abbrev GadgetProper (u v w : Fin 3) (g : Fin 6 → Fin 3) (f b : Fin 3) : Prop :
 
 /-- With true `0`, false `1` and base `2`, the gadget is properly colored when some input is
 true. -/
-theorem gadgetProper_gadgetColor :
+private theorem gadgetProper_gadgetColor :
     ∀ u v w : Fin 3, u ≠ 2 → v ≠ 2 → w ≠ 2 → (u = 0 ∨ v = 0 ∨ w = 0) →
       GadgetProper u v w (gadgetColor u v w) 1 2 := by
   decide
@@ -104,7 +104,7 @@ private theorem fin_three_eq {x y z w : Fin 3} (hx : x ≠ w) (hy : y ≠ w) (hx
 
 /-- **The gadget forces the clause**: in a proper coloring with palette `t`, `f`, `b`, some input
 of the gadget has the color `t` of true, if all inputs are colored `t` or `f`. -/
-theorem gadget_forces {t f b u v w : Fin 3} {g : Fin 6 → Fin 3} (hu : u = t ∨ u = f)
+private theorem gadget_forces {t f b u v w : Fin 3} {g : Fin 6 → Fin 3} (hu : u = t ∨ u = f)
     (hv : v = t ∨ v = f) (hw : w = t ∨ w = f) (h : GadgetProper u v w g f b) :
     u = t ∨ v = t ∨ w = t := by
   by_contra hne
@@ -174,7 +174,7 @@ noncomputable def gadgetDomain (ps : Fin 3 → Bool) : cnf.Formula (Fin 4) :=
         Formula.iSup fun i : Fin 3 =>
           if ps i = p then varEq (.inr ()) (.inl i.succ) else ⊥)
 
-theorem realize_gadgetDomain (ps : Fin 3 → Bool) (d : Fin 4 → M) :
+private theorem realize_gadgetDomain (ps : Fin 3 → Bool) (d : Fin 4 → M) :
     (gadgetDomain ps).Realize d ↔ GadgetDomain ps d := by
   simp only [gadgetDomain, Formula.realize_inf, Formula.realize_iInf, Formula.realize_rel₂,
     Term.realize_var, Formula.realize_iAlls, Formula.realize_imp, Formula.realize_iSup,
@@ -195,7 +195,7 @@ theorem realize_gadgetDomain (ps : Fin 3 → Bool) (d : Fin 4 → M) :
 noncomputable def badSentence : cnf.Sentence :=
   ∼(threeCNFSentence ⊓ nonemptyClausesSentence)
 
-theorem realize_badSentence :
+private theorem realize_badSentence :
     M ⊨ badSentence ↔ ¬(IsThreeCNF M ∧ ∀ c : M, (literals c).Nonempty) := by
   rw [badSentence, Sentence.realize_not, Sentence.realize_inf, realize_threeCNFSentence,
     realize_nonemptyClausesSentence]
@@ -586,12 +586,12 @@ def coloringSubsingleton : Interpretation cnf Language.graph Unit where
     | .adj => ∼(cnf.pos.formula₂ (.var (0, ())) (.var (0, ())) ⊔
         cnf.neg.formula₂ (.var (0, ())) (.var (0, ())))
 
-theorem coloringSubsingleton_rel_adj :
+private theorem coloringSubsingleton_rel_adj :
     coloringSubsingleton.rel adj = ∼(cnf.pos.formula₂ (.var (0, ())) (.var (0, ())) ⊔
       cnf.neg.formula₂ (.var (0, ())) (.var (0, ()))) :=
   rfl
 
-theorem colorable_coloringSubsingleton_iff [Subsingleton M] [Nonempty M] :
+private theorem colorable_coloringSubsingleton_iff [Subsingleton M] [Nonempty M] :
     graph.Colorable 3 (coloringSubsingleton.Model M) ↔ IsThreeCNF M ∧ Satisfiable M := by
   obtain ⟨e⟩ := ‹Nonempty M›
   have hv (v : coloringSubsingleton.Model M) : v.1 () = e := Subsingleton.elim _ _
@@ -617,7 +617,7 @@ theorem colorable_coloringSubsingleton_iff [Subsingleton M] [Nonempty M] :
     exact ⟨fun _ => 0, fun v w hvw => absurd (hsat.1 h) ((hadj v w).1 hvw)⟩
 
 /-- On a satisfiable structure with at most one element, the graph has no edge. -/
-theorem simpleGraph_coloringSubsingleton [Subsingleton M] [Nonempty M] (h : Satisfiable M) :
+private theorem simpleGraph_coloringSubsingleton [Subsingleton M] [Nonempty M] (h : Satisfiable M) :
     coloringSubsingleton.Model M ⊨ Theory.simpleGraph := by
   obtain ⟨e⟩ := ‹Nonempty M›
   have hno (v w : coloringSubsingleton.Model M) : ¬RelMap adj ![v, w] := by

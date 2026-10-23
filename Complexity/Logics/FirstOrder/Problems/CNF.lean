@@ -245,7 +245,7 @@ section Copies
 
 variable {J : Type*}
 
-theorem literals_copies (j : J) (c : M) :
+private theorem literals_copies (j : J) (c : M) :
     literals (M := Copies J M) ⟨j, c⟩ =
       (fun l : Bool × M => (l.1, (⟨j, l.2⟩ : Copies J M))) '' literals c := by
   ext ⟨b, ⟨j', x⟩⟩
@@ -259,7 +259,7 @@ theorem literals_copies (j : J) (c : M) :
 
 /-- A positive number of disjoint copies of a CNF structure is satisfiable exactly when the
 structure is. -/
-theorem satisfiable_copies_iff [Nonempty J] : Satisfiable (Copies J M) ↔ Satisfiable M := by
+private theorem satisfiable_copies_iff [Nonempty J] : Satisfiable (Copies J M) ↔ Satisfiable M := by
   constructor
   · rintro ⟨A, hA⟩
     obtain ⟨j₀⟩ := ‹Nonempty J›
@@ -277,7 +277,7 @@ theorem satisfiable_copies_iff [Nonempty J] : Satisfiable (Copies J M) ↔ Satis
 
 /-- A positive number of disjoint copies of a CNF structure is a 3-CNF structure exactly when the
 structure is. -/
-theorem isThreeCNF_copies_iff [Nonempty J] : IsThreeCNF (Copies J M) ↔ IsThreeCNF M := by
+private theorem isThreeCNF_copies_iff [Nonempty J] : IsThreeCNF (Copies J M) ↔ IsThreeCNF M := by
   have hinj (j : J) : Function.Injective fun l : Bool × M => (l.1, (⟨j, l.2⟩ : Copies J M)) := by
     intro l l' h
     simp only [Prod.mk.injEq, Copies.mk.injEq, true_and] at h
@@ -371,21 +371,21 @@ def satMatrix : (cnf.sum (ESO.varLanguage fun _ : Unit => 1)).Sentence :=
 def satSentence : ESO.Sentence cnf :=
   ⟨Unit, fun _ => 1, satMatrix⟩
 
-theorem relMap_posSym (R : Unit → Set (Fin 1 → M)) (x : Fin 2 → M) :
+private theorem relMap_posSym (R : Unit → Set (Fin 1 → M)) (x : Fin 2 → M) :
     @RelMap _ M (@sumStructure _ _ M _ (ESO.varLanguage.structure R)) 2 posSym x ↔
       RelMap cnf.pos x :=
   Iff.rfl
 
-theorem relMap_negSym (R : Unit → Set (Fin 1 → M)) (x : Fin 2 → M) :
+private theorem relMap_negSym (R : Unit → Set (Fin 1 → M)) (x : Fin 2 → M) :
     @RelMap _ M (@sumStructure _ _ M _ (ESO.varLanguage.structure R)) 2 negSym x ↔
       RelMap cnf.neg x :=
   Iff.rfl
 
-theorem relMap_trueSym (R : Unit → Set (Fin 1 → M)) (x : Fin 1 → M) :
+private theorem relMap_trueSym (R : Unit → Set (Fin 1 → M)) (x : Fin 1 → M) :
     @RelMap _ M (@sumStructure _ _ M _ (ESO.varLanguage.structure R)) 1 trueSym x ↔ x ∈ R () :=
   Iff.rfl
 
-theorem realize_satMatrix (R : Unit → Set (Fin 1 → M)) :
+private theorem realize_satMatrix (R : Unit → Set (Fin 1 → M)) :
     (letI := ESO.varLanguage.structure (arity := fun _ : Unit => 1) R; M ⊨ satMatrix) ↔
       Satisfies fun x => ![x] ∈ R () := by
   simp [satMatrix, Sentence.Realize, Formula.Realize, Fin.snoc, relMap_posSym, relMap_negSym,
@@ -415,7 +415,7 @@ noncomputable def threeCNFSentence : cnf.Sentence :=
   closeAll Unit ∼(Formula.iSup fun bs : Fin 4 → Bool => Formula.iExs (Fin 4)
     (fourLiteralsFormula bs))
 
-theorem realize_iExs_fourLiteralsFormula (c : M) :
+private theorem realize_iExs_fourLiteralsFormula (c : M) :
     (Formula.iSup fun bs : Fin 4 → Bool => Formula.iExs (Fin 4) (fourLiteralsFormula bs)).Realize
         (fun _ : Unit => c) ↔
       ∃ l : Fin 4 → Bool × M, (∀ i, l i ∈ literals c) ∧ Function.Injective l := by

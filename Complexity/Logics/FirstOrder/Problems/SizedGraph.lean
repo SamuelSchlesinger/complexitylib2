@@ -206,7 +206,7 @@ def complementSize : Interpretation sizedGraph sizedGraph Unit where
     | .size => ∼(rel₁ sizedGraph.size (0, ()))
 
 /-- A set of vertices is independent exactly when its complement is a vertex cover. -/
-theorem pairwise_not_adj_iff_compl {M : Type*} [sizedGraph.Structure M] (s : Set M) :
+private theorem pairwise_not_adj_iff_compl {M : Type*} [sizedGraph.Structure M] (s : Set M) :
     (s.Pairwise fun x y => ¬ RelMap sizedGraph.adj ![x, y]) ↔
       ∀ x y, x ≠ y → RelMap sizedGraph.adj ![x, y] → x ∈ sᶜ ∨ y ∈ sᶜ := by
   refine ⟨fun h x y hxy hadj => ?_, fun h x hx y hy hxy hadj => ?_⟩

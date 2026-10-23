@@ -201,7 +201,7 @@ noncomputable def groundInterpretation :
     | .pos => binaryRel fun t w => Template.listFormula (Φ.groundTemplates t true) w
     | .neg => binaryRel fun t w => Template.listFormula (Φ.groundTemplates t false) w
 
-theorem groundInterpretation_rel_lit (b : Bool) (ts : Fin 2 → Φ.GroundTag) :
+private theorem groundInterpretation_rel_lit (b : Bool) (ts : Fin 2 → Φ.GroundTag) :
     Φ.groundInterpretation.rel (lit b) ts =
       binaryRel (fun t w => Template.listFormula (Φ.groundTemplates t b) w) ts := by
   cases b <;> rfl
@@ -790,7 +790,7 @@ private theorem relMap_pos_subsingletonInterpretation (c y : Φ.subsingletonInte
   rw [Formula.realize_relabel]
   exact iff_of_eq (congrArg (Formula.Realize Φ.subsingletonSentence) (Subsingleton.elim _ _))
 
-theorem satisfiable_subsingletonInterpretation_iff [Nonempty M] :
+private theorem satisfiable_subsingletonInterpretation_iff [Nonempty M] :
     cnf.Satisfiable (Φ.subsingletonInterpretation.Model M) ↔ M ⊨ Φ.subsingletonSentence := by
   constructor
   · rintro ⟨A, hA⟩
