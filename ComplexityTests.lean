@@ -410,6 +410,7 @@ import ComplexityTests.SparseLanguages
 import ComplexityTests.SparseMemory
 import ComplexityTests.StatefulRefinement
 import ComplexityTests.SubbotovskayaAndreev
+import ComplexityTests.SynthesisBuilder
 import ComplexityTests.TFNP
 import ComplexityTests.TFNPCompleteness
 import ComplexityTests.TQBF

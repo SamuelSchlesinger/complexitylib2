@@ -12,15 +12,25 @@ public import Cslib.Computability.Circuit.Synthesis
 import Cslib.Computability.Circuit.Composition
 
 /-!
-# Applying circuits to available functions
+# Building circuits from available functions
 
 An existing circuit can be inserted into a synthesis construction by wiring its inputs to
 available functions. Its outputs then become available at a cost of its number of gates, while
 all previously computed functions remain available. Repeated inputs share their original wires.
 
+`Synthesis.Builder` accumulates available wires and gate costs through `Builder.start` and
+`Builder.add`. Each appended construction is charged once; selecting and reusing wires is free.
+`Builder.finish` selects the outputs and checks the requested bound. These operations compose
+ordinary `Synthesis` certificates; they do not search for a cheaper construction.
+
+## Main definitions
+
+* `Cslib.Circuits.Synthesis.Builder`: available wires and their accumulated synthesis bound.
+
 ## Main results
 
 * `Cslib.Circuits.Synthesis.circuit`: applying a circuit costs its number of gates.
+* `Cslib.Circuits.Synthesis.Builder.finish`: select outputs within a requested gate budget.
 
 ## References
 
@@ -54,5 +64,39 @@ theorem Synthesis.circuit {s : Set ((Fin n → U) → U)} {m p : ℕ} (c : Circu
     have : (fun i => p₁.trace I x (wires i)) = fun i => g i x := funext fun i => hw i x
     rw [this]
     rfl
+
+namespace Synthesis
+
+variable {s : Set ((Fin n → U) → U)}
+
+/-- A sequence of certified constructions, including every wire available along the way. -/
+structure Builder (I : Interpretation σ U) (s : Set ((Fin n → U) → U)) where
+  /-- Original sources and all outputs built so far. -/
+  wires : Set ((Fin n → U) → U)
+  /-- Sum of the appended constructions' gate budgets. -/
+  cost : ℕ
+  /-- The accumulated synthesis certificate. -/
+  bound : Synthesis I s wires cost
+
+namespace Builder
+
+/-- Begin with the source wires, without adding gates. -/
+def start (I : Interpretation σ U) (s : Set ((Fin n → U) → U)) : Builder I s :=
+  ⟨s, 0, .of_subset Set.Subset.rfl⟩
+
+/-- Append a construction whose inputs are available, retaining both old and new wires. -/
+def add (b : Builder I s) {t : Set ((Fin n → U) → U)} {k : ℕ}
+    (h : Synthesis I b.wires t k) : Builder I s :=
+  ⟨b.wires ∪ t, b.cost + k,
+    b.bound.comp (h.mono Set.subset_union_right Set.Subset.rfl le_rfl)⟩
+
+/-- Select outputs from the final wires and enlarge the accumulated budget. -/
+theorem finish (b : Builder I s) {t : Set ((Fin n → U) → U)} {k : ℕ}
+    (ht : t ⊆ b.wires) (hk : b.cost ≤ k) : Synthesis I s t k :=
+  b.bound.mono Set.Subset.rfl ht hk
+
+end Builder
+
+end Synthesis
 
 end Cslib.Circuits
