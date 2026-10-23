@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Computability.WordRAM.Multiword.Mul
+public import Complexity.Computability.WordRAM.Multiword.Workspace
 import Mathlib.Data.Nat.Bitwise
 import all Init.Data.Nat.Bitwise.Basic
 
@@ -37,7 +37,7 @@ schoolbook multiplication.
 
 namespace Cslib.WordRAM.Multiword.Bitwise
 
-open Schoolbook
+open Workspace
 
 variable {r : ℕ}
 

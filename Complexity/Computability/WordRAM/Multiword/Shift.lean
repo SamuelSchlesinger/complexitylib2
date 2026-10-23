@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Computability.WordRAM.Multiword.Mul
+public import Complexity.Computability.WordRAM.Multiword.Workspace
 
 /-!
 # Checked multiword right shifts
@@ -38,23 +38,9 @@ the scalar is a separate physical word. All four reserved registers may change.
 
 namespace Cslib.WordRAM.Multiword.Shift
 
-open Schoolbook
+open Workspace
 
 variable {r : ℕ}
-
-private theorem digit_ne {i : Fin (r + 4)} (hi : IsDigit i) :
-    i ≠ total ∧ i ≠ carry ∧ i ≠ base ∧ i ≠ zero := by
-  dsimp [IsDigit] at hi
-  simp only [ne_eq, Fin.ext_iff, total, carry, base, zero]
-  omega
-
-private theorem frame_mono {x y : Data (r + 4)} {ds es : List (Fin (r + 4))}
-    (h : Frame x y ds) (hs : ds ⊆ es) : Frame x y es :=
-  ⟨h.1, fun i hi ht hc => h.2 i (fun hm => hi (hs hm)) ht hc⟩
-
-private theorem frame_trans {x y z : Data (r + 4)} {ds : List (Fin (r + 4))}
-    (h : Frame x y ds) (h' : Frame y z ds) : Frame x z ds :=
-  ⟨h'.1.trans h.1, fun i hi ht hc => (h'.2 i hi ht hc).trans (h.2 i hi ht hc)⟩
 
 private theorem value_frame {β : ℕ} {x y : Data (r + 4)}
     {ds as : List (Fin (r + 4))} (hf : Frame x y ds)

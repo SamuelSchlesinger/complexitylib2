@@ -128,7 +128,7 @@ theorem exists_multiplier_digits {w L M : ℕ}
 /-- Initialize the radix, convert the query, multiply three digits by three digits, and
 extract the retained window. Registers 7--9 contain the precomputed multiplier digits. -/
 def code : Code .standard 21 :=
-  .seq Schoolbook.setup (.seq split
+  .seq Workspace.setup (.seq split
     (.seq ((Schoolbook.fixedProgram 3 3).rename embed) (ram[
       out ← productDigit >>> offset;
       out ← out &&& retained ])))
@@ -149,9 +149,9 @@ private theorem three_digits_value {β a : ℕ} (hβ : 0 < β) (ha : a < β ^ 3)
 
 private theorem split_left {w : ℕ} (hw : 2 ≤ w) (x : Data 21)
     (hx : Fits w (x.regs query)) :
-    Schoolbook.Bounded (radix w) ((splitResult w x).comap embed)
+    Multiword.Bounded (radix w) ((splitResult w x).comap embed)
       (Schoolbook.leftRegs 3 3) ∧
-    Schoolbook.value (radix w) ((splitResult w x).comap embed)
+    Multiword.value (radix w) ((splitResult w x).comap embed)
       (Schoolbook.leftRegs 3 3) = x.regs query &&& x.regs positions := by
   have hβ : 0 < radix w := lt_trans Nat.zero_lt_one (one_lt_radix hw)
   have ha : x.regs query &&& x.regs positions < radix w ^ 3 := by
@@ -163,12 +163,12 @@ private theorem split_left {w : ℕ} (hw : 2 ≤ w) (x : Data 21)
     simp only [Schoolbook.leftRegs, Schoolbook.registers, List.mem_ofFn] at hi
     obtain ⟨j, rfl⟩ := hi
     fin_cases j <;> simp +decide [Data.comap, embed, splitResult, Nat.mod_lt _ hβ]
-  · simpa +decide [Schoolbook.value, Schoolbook.leftRegs, Schoolbook.registers,
+  · simpa +decide [Multiword.value, Schoolbook.leftRegs, Schoolbook.registers,
       List.ofFn_succ, Data.comap, embed, splitResult] using three_digits_value hβ ha
 
 private theorem third_digit {w : ℕ} (y : Data 16)
-    (hy : Schoolbook.Bounded (radix w) y (Schoolbook.outputRegs 3 3)) :
-    Schoolbook.value (radix w) y (Schoolbook.outputRegs 3 3) /
+    (hy : Multiword.Bounded (radix w) y (Schoolbook.outputRegs 3 3)) :
+    Multiword.value (radix w) y (Schoolbook.outputRegs 3 3) /
       radix w ^ 2 % radix w = y.regs 12 := by
   let digits : Fin 6 → ℕ := fun i => y.regs ⟨10 + i.val, by omega⟩
   have hb (i : Fin 6) : digits i < radix w := by
@@ -183,8 +183,8 @@ query word is charged. The retained mask occupies `L` bits and satisfies the sta
 half-word window condition. -/
 theorem exec {w L M : ℕ} (hw : 2 ≤ w) (x : Data 21)
     (hx : Fits w (x.regs query))
-    (hb : Schoolbook.Bounded (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3))
-    (hM : Schoolbook.value (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3) = M)
+    (hb : Multiword.Bounded (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3))
+    (hM : Multiword.value (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3) = M)
     (ho : x.regs offset = w - 2 * (w / 2))
     (hD : x.regs retained < 2 ^ L)
     (hL : L + (w - 2 * (w / 2)) ≤ w / 2) :
@@ -194,28 +194,28 @@ theorem exec {w L M : ℕ} (hw : 2 ≤ w) (x : Data 21)
       y.mem = x.mem ∧
       ∀ i : Fin 21, (7 ≤ i.val ∧ i.val < 10) ∨ (16 ≤ i.val ∧ i.val < 20) →
         y.regs i = x.regs i := by
-  let z := Schoolbook.setupResult w x
+  let z := Workspace.setupResult w x
   let u := splitResult w z
   have hzq : z.regs query = x.regs query := by
-    simp +decide [z, Schoolbook.setupResult, Schoolbook.base, Schoolbook.zero]
+    simp +decide [z, Workspace.setupResult, Workspace.base, Workspace.zero]
   have hzp : z.regs positions = x.regs positions := by
-    simp +decide [z, Schoolbook.setupResult, Schoolbook.base, Schoolbook.zero]
-  have hzbase : z.regs 2 = radix w := by simp [z, Schoolbook.setupResult,
-    Schoolbook.base, Schoolbook.zero]
-  have hez : Exec w Schoolbook.setup x z 6 := Schoolbook.exec_setup hw x
+    simp +decide [z, Workspace.setupResult, Workspace.base, Workspace.zero]
+  have hzbase : z.regs 2 = radix w := by simp [z, Workspace.setupResult,
+    Workspace.base, Workspace.zero]
+  have hez : Exec w Workspace.setup x z 6 := Workspace.exec_setup hw x
   have heu : Exec w split z u 6 := exec_split z (by rwa [hzq]) hzbase
   obtain ⟨hua, huav⟩ := split_left hw z (by rwa [hzq])
   have hur (i : Fin 16) (hi : i ∈ Schoolbook.rightRegs 3 3) :
       (u.comap embed).regs i = (x.comap embed).regs i := by
     obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hi
     fin_cases j <;> simp +decide [u, z, Data.comap, embed, splitResult,
-      Schoolbook.setupResult, Schoolbook.base, Schoolbook.zero]
-  have hub : Schoolbook.Bounded (radix w) (u.comap embed) (Schoolbook.rightRegs 3 3) := by
+      Workspace.setupResult, Workspace.base, Workspace.zero]
+  have hub : Multiword.Bounded (radix w) (u.comap embed) (Schoolbook.rightRegs 3 3) := by
     intro i hi
     rw [hur i hi]
     exact hb i hi
-  have hum : Schoolbook.value (radix w) (u.comap embed) (Schoolbook.rightRegs 3 3) = M := by
-    rw [Schoolbook.value, List.map_congr_left hur]
+  have hum : Multiword.value (radix w) (u.comap embed) (Schoolbook.rightRegs 3 3) = M := by
+    rw [Multiword.value, List.map_congr_left hur]
     exact hM
   obtain ⟨v, hev, hvb, hv, hvm, _⟩ := Schoolbook.exec_fixedProgram hw 3 3 (u.comap embed)
     hua hub
@@ -233,7 +233,7 @@ theorem exec {w L M : ℕ} (hw : 2 ≤ w) (x : Data 21)
       t.regs i = x.regs i := by
     apply (hez.seq (heu.seq het)).regs_eq
     have hp : ∀ i : Fin 21, 16 ≤ i.val ∧ i.val < 20 →
-        (Code.seq (B := .standard) Schoolbook.setup
+        (Code.seq (B := .standard) Workspace.setup
           (.seq split ((Schoolbook.fixedProgram 3 3).rename embed))).Preserves i := by decide
     exact hp i hi
   let d := t.regs productDigit >>> t.regs offset
@@ -266,8 +266,8 @@ parameter construction and comparison theorem are independent of this execution 
 The caller supplies the position and retained masks and three multiplier digits. -/
 theorem exec_approximateSketch {w L r : ℕ} (hw : 2 ≤ w) (b m : Fin r → ℕ)
     (x : Data 21) (hx : Fits w (x.regs query))
-    (hb : Schoolbook.Bounded (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3))
-    (hM : Schoolbook.value (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3) =
+    (hb : Multiword.Bounded (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3))
+    (hM : Multiword.value (radix w) (x.comap embed) (Schoolbook.rightRegs 3 3) =
       Lean.FusionTree.positionMask m)
     (hC : x.regs positions = Lean.FusionTree.positionMask b)
     (hD : x.regs retained = Lean.FusionTree.positionMask (fun i => b i + m i - w))

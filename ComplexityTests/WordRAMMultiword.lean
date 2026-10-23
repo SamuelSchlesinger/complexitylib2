@@ -44,10 +44,10 @@ example : (fixedProgram 18 18).size = 2465 := size_fixedProgram 18 18
 /-- The full six-word product contract has a bounded concrete instance at width two. -/
 example : ∃ x y : Data 76, x.Bounded 2 ∧ y.Bounded 2 ∧
     Exec 2 (fixedProgram 18 18) x y 2465 ∧
-    value (radix 2) x (leftRegs 18 18) = 4095 ∧
-    value (radix 2) x (rightRegs 18 18) = 4095 ∧
-    Bounded (radix 2) y (outputRegs 18 18) ∧
-    value (radix 2) y (outputRegs 18 18) = 4095 * 4095 :=
+    Multiword.value (radix 2) x (leftRegs 18 18) = 4095 ∧
+    Multiword.value (radix 2) x (rightRegs 18 18) = 4095 ∧
+    Multiword.Bounded (radix 2) y (outputRegs 18 18) ∧
+    Multiword.value (radix 2) y (outputRegs 18 18) = 4095 * 4095 :=
   six_word_product (by decide) (by decide) (by decide)
 
 /-- info: 'Cslib.WordRAM.Multiword.Schoolbook.exec_fixedProgram' depends on axioms:

@@ -35,7 +35,8 @@ standard instruction per digit. Scalar arithmetic is provided separately in `Ban
 
 namespace Cslib.WordRAM.Multiword.Bank
 
-open Schoolbook
+open Workspace
+open Schoolbook (registers)
 
 variable {n : ℕ}
 

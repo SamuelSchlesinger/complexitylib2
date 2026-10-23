@@ -34,7 +34,8 @@ are part of the code, so even width two requires no address large enough to name
 
 namespace Cslib.WordRAM.Multiword.Bank
 
-open Schoolbook
+open Workspace
+open Schoolbook (registers)
 
 variable {n : ℕ}
 

@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Computability.WordRAM.Multiword
+public import Complexity.Computability.WordRAM.Multiword.Digits
 
 /-!
 # Checked multiword subtraction
@@ -55,14 +55,6 @@ private theorem digit_ne {i : Fin (r + 4)} (hi : IsDigit i) :
   dsimp only [IsDigit] at hi
   simp only [ne_eq, Fin.ext_iff, total, borrow, base, one]
   omega
-
-/-- The value of a little-endian register list. -/
-def value (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : ℕ :=
-  Nat.ofDigits β (ds.map x.regs)
-
-/-- A list contains only bounded radix digits. -/
-def Bounded (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
-  ∀ i ∈ ds, x.regs i < β
 
 /-- Only destination digits and the two arithmetic workspaces may change. -/
 def Frame (x y : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
@@ -332,10 +324,20 @@ theorem exec {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
     convert hh using 1
     · rfl
     · omega
-  · rw [hzero, Nat.mul_zero, Nat.add_zero] at hyeq
+  · simp only [hzero, Nat.mul_zero, Nat.add_zero] at hyeq
     omega
   · intro i hi
     exact (hyf.2 i (fun him => List.disjoint_left.mp hdis hi him)
       (digit_ne (hbs i hi)).1 (digit_ne (hbs i hi)).2.1).trans (hz i (hbs i hi))
+
+/-- Deprecated compatibility spelling for the shared register-digit value. -/
+@[deprecated Cslib.WordRAM.Multiword.value +typeChanged (since := "2026-10-23")]
+abbrev value (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : ℕ :=
+  Multiword.value β x ds
+
+/-- Deprecated compatibility spelling for shared digit boundedness. -/
+@[deprecated Cslib.WordRAM.Multiword.Bounded +typeChanged (since := "2026-10-23")]
+abbrev Bounded (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
+  Multiword.Bounded β x ds
 
 end Cslib.WordRAM.Multiword.Difference
