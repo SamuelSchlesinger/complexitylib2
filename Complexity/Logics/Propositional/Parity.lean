@@ -43,6 +43,10 @@ ORs of formulas in conjunctive normal form for parity, of depth three, are in
   `2 ^ (n - 1)` terms or clauses.
 * `Cslib.Logic.PL.DNF.not_forall_eval_eq_parity_fill_bne`: narrow formulas in disjunctive normal
   form do not compute restricted parity.
+
+## References
+
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
 -/
 
 @[expose] public section

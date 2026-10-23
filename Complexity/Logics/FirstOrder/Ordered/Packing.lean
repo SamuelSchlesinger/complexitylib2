@@ -27,6 +27,10 @@ zeros above its width and zeros at unused addresses.
 
 * `Cslib.Logic.FO.Ordered.realize_packedBit`: exact word-address semantics.
 * `Cslib.Logic.FO.Ordered.realize_packedField`: exact natural-number field semantics.
+
+## References
+
+* [N. Immerman, *Descriptive Complexity*][Immerman1999], Theorem 1.17(1)
 -/
 
 @[expose] public section
@@ -58,6 +62,8 @@ noncomputable def packedField {α : Type*} {B : ℕ} (h : (language L).Term α)
 
 variable {L : Language} {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)] {α : Type*}
 
+/-- `packedBit L h w a` holds exactly when position `a` falls in one of the `B` words `w`, of
+width `h`, at a set bit. -/
 @[simp, fo_realize]
 theorem realize_packedBit {B : ℕ} (h : (language L).Term α)
     (w : Fin B → (language L).Term α) (a : (language L).Term α) (v : α → Fin n) :
@@ -75,6 +81,8 @@ theorem realize_packedBit {B : ℕ} (h : (language L).Term α)
     have ho : r.val * (h.realize v).val < n := by have := (a.realize v).isLt; lia
     exact ⟨r, ![⟨_, ho⟩, b], rfl, ha, hb, hw⟩
 
+/-- When `B` words of width `h` fit in the universe, `packedField L h w a s z` holds exactly when
+`z` is the field of `s` bits at position `a` (`BitString.readPackedField`). -/
 @[fo_realize]
 theorem realize_packedField {B : ℕ} (h : (language L).Term α)
     (w : Fin B → (language L).Term α) (a s z : (language L).Term α) (v : α → Fin n)

@@ -73,6 +73,7 @@ theorem not_wellFormed_encodedMap (ha : ¬ v.WellFormed a) :
   simp only [List.length_replicate] at this
   omega
 
+/-- The encoded interpreted structure is well formed exactly when the input is. -/
 @[simp]
 theorem wellFormed_encodedMap_iff :
     v'.WellFormed (I.encodedMap v v' e a) ↔ v.WellFormed a := by

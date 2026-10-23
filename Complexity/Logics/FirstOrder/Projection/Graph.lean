@@ -24,13 +24,15 @@ predicate.
 
 ## Main definitions
 
-* `Projection.offDiagonalComplement`: complement off the diagonal, with identity numeric data.
+* `Cslib.Logic.FO.Projection.offDiagonalComplement`: complement off the diagonal, with identity
+  numeric data.
 
 ## Main results
 
-* `Projection.realize_offDiagonalComplement`: the output edge predicate is inequality and
-  nonadjacency.
-* `Projection.isQF_offDiagonalComplement`: all numeric tests and definitions are quantifier-free.
+* `Cslib.Logic.FO.Projection.realize_offDiagonalComplement`: the output edge predicate is inequality
+  and nonadjacency.
+* `Cslib.Logic.FO.Projection.isQF_offDiagonalComplement`: all numeric tests and definitions are
+  quantifier-free.
 
 ## References
 

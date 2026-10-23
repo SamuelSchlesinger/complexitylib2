@@ -73,6 +73,8 @@ noncomputable def closeAll (V : Type) [Finite V] (φ : L.Formula V) : L.Sentence
 noncomputable def closeEx (V : Type) [Finite V] (φ : L.Formula V) : L.Sentence :=
   Formula.iExs V (φ.relabel Sum.inr)
 
+/-- The universal closure holds exactly when the formula holds under every assignment of its
+free variables. -/
 @[simp, fo_realize]
 theorem realize_closeAll {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ : L.Formula V) :
     (closeAll V φ).Realize M ↔ ∀ v : V → M, φ.Realize v := by
@@ -82,6 +84,8 @@ theorem realize_closeAll {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ 
     funext x; rfl
   rw [h]
 
+/-- The existential closure holds exactly when the formula holds under some assignment of its
+free variables. -/
 @[simp, fo_realize]
 theorem realize_closeEx {M : Type w} [L.Structure M] (V : Type) [Finite V] (φ : L.Formula V) :
     (closeEx V φ).Realize M ↔ ∃ v : V → M, φ.Realize v := by
@@ -201,6 +205,7 @@ theorem realize_le {V : Type*} (v : V → Fin B) (u w : V) :
     (le r u w).Realize v ↔ v u ≤ v w := by
   simp [le, realize_lt hlt]
 
+/-- On `Fin B`, with `r` read as `<`, `isZero r u` holds exactly when `u` is assigned `0`. -/
 @[fo_realize]
 theorem realize_isZero {V : Type*} (v : V → Fin B) (u : V) :
     (isZero r u).Realize v ↔ (v u : ℕ) = 0 := by
@@ -219,6 +224,7 @@ theorem realize_isZero {V : Type*} (v : V → Fin B) (u : V) :
     simp only [Fin.lt_def, h]
     omega
 
+/-- On `Fin B`, with `r` read as `<`, `isMax r u` holds exactly when `u` is assigned `B - 1`. -/
 @[fo_realize]
 theorem realize_isMax {V : Type*} (v : V → Fin B) (u : V) :
     (isMax r u).Realize v ↔ (v u : ℕ) = B - 1 := by
@@ -238,6 +244,8 @@ theorem realize_isMax {V : Type*} (v : V → Fin B) (u : V) :
     simp only [Fin.lt_def]
     omega
 
+/-- On `Fin B`, with `r` read as `<`, `succ r u w` holds exactly when `w` is assigned the
+successor of the value of `u`. -/
 @[fo_realize]
 theorem realize_succ {V : Type*} (v : V → Fin B) (u w : V) :
     (succ r u w).Realize v ↔ (v w : ℕ) = (v u : ℕ) + 1 := by
@@ -262,6 +270,8 @@ theorem realize_succ {V : Type*} (v : V → Fin B) (u w : V) :
     simp only [Fin.lt_def]
     omega
 
+/-- On `Fin B`, with `r` read as `<` and a domain formula holding exactly below `M < B`,
+`isFirstOut r inDom u` holds exactly when `u` is assigned `M`. -/
 @[fo_realize]
 theorem realize_isFirstOut {inDom : L.Formula (Fin 1)} {M : ℕ} (hMB : M < B)
     (hdom : ∀ j : Fin B, inDom.Realize ![j] ↔ (j : ℕ) < M) {V : Type*}
@@ -296,6 +306,8 @@ finite structure `M` iff `Nat.card M = n`. -/
 def cardEqSentence (L : Language.{u, v}) (n : ℕ) : L.Sentence :=
   Sentence.cardGe L n ⊓ ∼(Sentence.cardGe L (n + 1))
 
+/-- On a finite structure, `cardEqSentence L n` holds exactly when the structure has `n`
+elements. -/
 @[simp, fo_realize]
 theorem realize_cardEqSentence [Finite M] (n : ℕ) :
     M ⊨ cardEqSentence L n ↔ Nat.card M = n := by
@@ -311,6 +323,8 @@ noncomputable def truthTableSentence {m : ℕ} (φ : Fin m → L.Sentence)
     BoundedFormula.iInf fun i : Fin m => if s.1 i then φ i else ∼(φ i)
 
 open scoped Classical in
+/-- `truthTableSentence φ P` holds exactly when the truth values of the sentences `φ i` satisfy
+`P`. -/
 @[simp, fo_realize]
 theorem realize_truthTableSentence {m : ℕ} (φ : Fin m → L.Sentence)
     (P : (Fin m → Bool) → Prop) :

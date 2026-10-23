@@ -29,6 +29,12 @@ works with. A formula in conjunctive normal form and its clause set have the sam
 * `Cslib.Logic.PL.ClauseSet.Sat`, `Cslib.Logic.PL.ClauseSet.solutions`: satisfaction.
 * `Cslib.Logic.PL.ClauseSet.occurrences`: the number of clauses mentioning a variable.
 * `Cslib.Logic.PL.CNF.toClauseSet`, `Cslib.Logic.PL.ClauseSet.toCNF`: the translations.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 2.3][AroraBarak09]
+* [C. Calabro, R. Impagliazzo, R. Paturi, *A duality between clause width and clause density for
+  SAT*][CalabroImpagliazzoPaturi2006]
 -/
 
 @[expose] public section

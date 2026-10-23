@@ -28,7 +28,8 @@ neither the position nor a fixed chunk number must fit in one source element.
 
 ## References
 
-The full-tuple application follows [Immerman1999], Exercise 1.33(3).
+* [N. Immerman, *Descriptive Complexity*][Immerman1999], Exercise 1.33(3): the full-tuple
+  application.
 -/
 
 @[expose] public section
@@ -59,6 +60,8 @@ noncomputable def bitIndex (L : Language) {α : Type*} {d : ℕ}
 
 variable {L : Language} {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)] {α : Type*}
 
+/-- When `1 < B` and `B ^ 3` fits in the universe, `cardinality L B N` holds exactly when `N` is
+a radix-`B` word whose value is the universe size `n`, including its high digit. -/
 @[fo_realize]
 theorem realize_cardinality {m : ℕ} (B : (language L).Term α)
     (N : Fin m → (language L).Term α) (v : α → Fin n)
@@ -97,6 +100,8 @@ theorem realize_cardinality {m : ℕ} (B : (language L).Term α)
     rw [hMv, hOv, he]
     lia
 
+/-- For a radix `B = 2 ^ e` with `0 < e` and `B ^ 3` in the universe, and radix-`B` words `x` and
+`y`, `bitIndex L B e x y` holds exactly when bit `y` of `x` is set. -/
 @[fo_realize]
 theorem realize_bitIndex {d : ℕ} (B e : (language L).Term α)
     (x y : Fin d → (language L).Term α) (v : α → Fin n)

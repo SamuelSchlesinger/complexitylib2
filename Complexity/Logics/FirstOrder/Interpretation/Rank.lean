@@ -64,6 +64,8 @@ variable {I e n}
 
 theorem domainRank_zero : I.domainRank e n 0 = 0 := by simp [domainRank]
 
+/-- Ranks count the indices of the domain: the rank of `u + 1` is that of `u`, plus one when `u`
+indexes a tuple of the domain. -/
 theorem domainRank_succ (u : ℕ) [Decidable (I.InDomain e n u)] :
     I.domainRank e n (u + 1) = I.domainRank e n u + if I.InDomain e n u then 1 else 0 := by
   by_cases h : I.InDomain e n u <;> simp [domainRank, Nat.count_succ, h]

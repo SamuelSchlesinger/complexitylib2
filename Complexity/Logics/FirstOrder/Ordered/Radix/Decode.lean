@@ -27,7 +27,8 @@ works even when the universe size is not a power of two.
 
 ## References
 
-The full-tuple application follows [Immerman1999], Exercise 1.33(3).
+* [N. Immerman, *Descriptive Complexity*][Immerman1999], Exercise 1.33(3): the full-tuple
+  application.
 -/
 
 @[expose] public section
@@ -70,6 +71,8 @@ theorem realize_quotientEq (B x q r : (language L).Term α) (v : α → Fin n) :
       lia
     exact ⟨fun _ => ⟨_, ht⟩, rfl, he.symm⟩
 
+/-- When `1 ≤ B`, `decode L B x w` holds exactly when `w` is a radix-`B` word with the value of
+`x`. -/
 @[fo_realize]
 theorem realize_decode {d : ℕ} (B x : (language L).Term α)
     (w : Fin d → (language L).Term α) (v : α → Fin n) (hB : 1 ≤ (B.realize v).val) :

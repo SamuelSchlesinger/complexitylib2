@@ -110,6 +110,8 @@ theorem encodesNode_sumTree (f : ℕ → Bool) {m h j q : ℕ}
 
 variable {L : Language} {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)] {α : Type*}
 
+/-- `treeAddress L m j b q a` holds exactly when `j ≤ m` and `a` is the address
+`BitString.sumTreeAddress m j b q`. -/
 @[simp, fo_realize]
 theorem realize_treeAddress (m j b q a : (language L).Term α) (v : α → Fin n) :
     (treeAddress L m j b q a).Realize v ↔ (j.realize v).val ≤ (m.realize v).val ∧
@@ -142,6 +144,8 @@ theorem realize_treeAddress (m j b q a : (language L).Term α) (v : α → Fin n
     refine ⟨![⟨e, he⟩, ⟨_, hjb⟩, ⟨3, hthree⟩, ⟨c, hc⟩, ⟨s, hs⟩], ?_⟩
     exact ⟨by dsimp [e]; lia, rfl, rfl, rfl, rfl, ha⟩
 
+/-- `packedBit L h w a` holds exactly when position `a` falls in one of the eight words `w`, of
+width `h`, at a set bit. -/
 @[simp, fo_realize]
 theorem realize_packedBit (h : (language L).Term α) (w : Fin 8 → (language L).Term α)
     (a : (language L).Term α) (v : α → Fin n) :
@@ -150,6 +154,8 @@ theorem realize_packedBit (h : (language L).Term α) (w : Fin 8 → (language L)
         b.val < (h.realize v).val ∧ ((w r).realize v).val.testBit b.val = true :=
   Ordered.realize_packedBit h w a v
 
+/-- When `j ≤ m` and eight words of width `h` fit in the universe, `nodeValue L m h w j q z`
+holds exactly when the words encode the value `z` at node `j` (`EncodesNode`). -/
 @[fo_realize]
 theorem realize_nodeValue (m h : (language L).Term α) (w : Fin 8 → (language L).Term α)
     (j q z : (language L).Term α) (v : α → Fin n)
