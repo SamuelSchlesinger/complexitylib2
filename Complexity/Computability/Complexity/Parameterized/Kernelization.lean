@@ -9,9 +9,11 @@ module
 
 public import Complexity.Computability.Complexity.Parameterized
 public import Complexity.Computability.Complexity.Classes.Time
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Complexity.Classes.Hierarchy
 import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -51,6 +53,7 @@ Problems in `P` have kernels of constant size (`Cslib.Complexity.hasPolyKernel_o
 
 ## Main results
 
+* `Cslib.Complexity.isKernelization_iff_tidy`: kernelizations with a tidy polynomial-time map.
 * `Cslib.Complexity.IsKernelization.fptReducible`: every kernelization is an fpt-reduction from the
   problem to itself.
 * `Cslib.Complexity.HasKernel.mem_FPT`, `Cslib.Complexity.hasKernel_of_mem_FPT`,
@@ -85,7 +88,7 @@ parameter at most `g (κ a)`. -/
 structure IsKernelization (enc : α ↪ List Bool) (κ : α → ℕ) (A : Set α) (K : α → α)
     (g : ℕ → ℕ) : Prop where
   /-- The kernelization is computable in polynomial time. -/
-  polyTime : ComputableTidilyInPolyTime K enc enc
+  polyTime : ComputableInPolyTime K enc enc
   /-- The kernelization preserves membership. -/
   mem_iff : ∀ a, K a ∈ A ↔ a ∈ A
   /-- The output has encoded length bounded by a function of the parameter. -/
@@ -102,6 +105,15 @@ polynomially bounded size bound. -/
 def HasPolyKernel (enc : α ↪ List Bool) (κ : α → ℕ) (A : Set α) : Prop :=
   ∃ (K : α → α) (g : ℕ → ℕ), PolynomiallyBounded g ∧ IsKernelization enc κ A K g
 
+/-- `Cslib.Complexity.IsKernelization` with a tidy polynomial-time kernelization, for proofs that
+compose machines. -/
+theorem isKernelization_iff_tidy {enc : α ↪ List Bool} {κ : α → ℕ} {A : Set α} {K : α → α}
+    {g : ℕ → ℕ} : IsKernelization enc κ A K g ↔ ComputableTidilyInPolyTime K enc enc ∧
+      (∀ a, K a ∈ A ↔ a ∈ A) ∧ (∀ a, (enc (K a)).length ≤ g (κ a)) ∧
+        ∀ a, κ (K a) ≤ g (κ a) :=
+  ⟨fun h => ⟨h.polyTime.tidy, h.mem_iff, h.length_le, h.parameter_le⟩,
+    fun ⟨h₁, h₂, h₃, h₄⟩ => ⟨.of_tidy h₁, h₂, h₃, h₄⟩⟩
+
 theorem HasPolyKernel.hasKernel {enc : α ↪ List Bool} {κ : α → ℕ} {A : Set α}
     (h : HasPolyKernel enc κ A) : HasKernel enc κ A :=
   let ⟨K, g, _, hK⟩ := h
@@ -114,7 +126,7 @@ variable {α : Type} {enc : α ↪ List Bool} {κ : α → ℕ} {A : Set α}
 /-- Every kernelization of `(A, κ)` is an fpt-reduction from `(A, κ)` to itself. -/
 theorem IsKernelization.fptReducible {K : α → α} {g : ℕ → ℕ} (hK : IsKernelization enc κ A K g) :
     FPTReducible enc enc κ κ A A :=
-  .of_computableTidilyInPolyTime hK.polyTime hK.parameter_le fun a => (hK.mem_iff a).symm
+  .of_computableTidilyInPolyTime hK.polyTime.tidy hK.parameter_le fun a => (hK.mem_iff a).symm
 
 /-! ### Kernels give fixed-parameter tractability -/
 
@@ -124,7 +136,7 @@ theorem IsKernelization.mem_FPT {K : α → α} {g : ℕ → ℕ} (hK : IsKernel
     {t : ℕ → ℕ} (hA : A ∈ DTIME enc t) : A ∈ FPT enc κ := by
   obtain ⟨dec, tt, c, hdec, hdecA, htt⟩ :=
     (mem_DTIME_iff_decidableInTimeO.mp hA).exists_computableTidilyInO
-  obtain ⟨d, _, hKd⟩ := hK.polyTime.exists_degree
+  obtain ⟨d, _, hKd⟩ := hK.polyTime.tidy.exists_degree
   have htt' : ∀ a, tt (K a) ≤ c * (∑ j ∈ Finset.range (g (κ a) + 1), t j) + c := fun a => by
     have h₁ : tt (K a) ≤ c * t (enc (K a)).length + c := by exact_mod_cast htt (K a)
     have h₂ : t (enc (K a)).length ≤ ∑ j ∈ Finset.range (g (κ a) + 1), t j :=
@@ -155,8 +167,7 @@ theorem HasKernel.mem_FPT (h : HasKernel enc κ A) {t : ℕ → ℕ} (hA : A ∈
 /-- A constant map is a kernelization of a problem with no instance or every instance. -/
 private theorem hasKernel_of_forall (a₀ : α) (h : ∀ a, a ∈ A ↔ a₀ ∈ A) : HasKernel enc κ A :=
   ⟨fun _ => a₀, fun _ => (enc a₀).length + κ a₀,
-    ⟨ComputableTidilyInPolyTime.const a₀, fun a => (h a).symm, fun _ => Nat.le_add_right _ _,
-      fun _ => Nat.le_add_left _ _⟩⟩
+    ⟨.const a₀, fun a => (h a).symm, fun _ => Nat.le_add_right _ _, fun _ => Nat.le_add_left _ _⟩⟩
 
 /-- The arithmetic of the clocked run: if `(c + 1) (L + 1) ^ (e + 1) < c (F (L + 1) ^ e) + c`,
 then `L < F`. -/
@@ -261,7 +272,7 @@ theorem hasKernel_of_mem_FPT [Nonempty α] (hA : A ∈ FPT enc κ) : HasKernel e
       simp only [K, hr_eq, Diagonal.verdict]
       simp
   refine ⟨K, fun k => f k + (enc y).length + (enc n).length + κ y + κ n + k,
-    ⟨hK, fun a => ?_, fun a => ?_, fun a => ?_⟩⟩
+    ⟨hK.computableInPolyTime, fun a => ?_, fun a => ?_, fun a => ?_⟩⟩
   · rcases hrun a with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩ | ⟨h₁, -⟩ <;> rw [h₁]
     · exact iff_of_true hyA h₂
     · exact iff_of_false hnA h₂
@@ -286,7 +297,7 @@ the instance, and output a fixed instance with the same answer. -/
 theorem hasPolyKernel_of_mem_P [Nonempty α] (hA : A ∈ P enc) : HasPolyKernel enc κ A := by
   have hconst : ∀ a₀ : α, (∀ a, a ∈ A ↔ a₀ ∈ A) → HasPolyKernel enc κ A := fun a₀ h =>
     ⟨fun _ => a₀, fun _ => (enc a₀).length + κ a₀, polynomiallyBounded_const _,
-      ⟨ComputableTidilyInPolyTime.const a₀, fun a => (h a).symm, fun _ => Nat.le_add_right _ _,
+      ⟨.const a₀, fun a => (h a).symm, fun _ => Nat.le_add_right _ _,
         fun _ => Nat.le_add_left _ _⟩⟩
   by_cases hy : ∃ y, y ∈ A
   swap
@@ -302,8 +313,7 @@ theorem hasPolyKernel_of_mem_P [Nonempty α] (hA : A ∈ P enc) : HasPolyKernel 
   obtain ⟨dec, hdec, hdecA⟩ := hA
   refine ⟨fun a => if dec a then y else n,
     fun _ => (enc y).length + (enc n).length + κ y + κ n, polynomiallyBounded_const _,
-    ⟨ComputableTidilyInPolyTime.ite' hdec (ComputableTidilyInPolyTime.const y)
-      (ComputableTidilyInPolyTime.const n), fun a => ?_, fun a => ?_, fun a => ?_⟩⟩
+    ⟨by fun_prop, fun a => ?_, fun a => ?_, fun a => ?_⟩⟩
   · rw [hdecA a]
     cases dec a
     · exact iff_of_false hnA Bool.false_ne_true

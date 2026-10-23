@@ -10,12 +10,14 @@ module
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Cslib.Foundations.Data.Polynomial.Monotone
 import Complexity.Computability.Complexity.Classes.NP.Witness
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Proof systems
@@ -56,6 +58,8 @@ that instance when the verifier and certificate-length checks pass, and a fixed 
 
 ## Main results
 
+* `Cslib.Complexity.ProofSystem.pSimulates_iff_tidy`: p-simulation with a tidy polynomial-time
+  translation.
 * `Cslib.Complexity.ProofSystem.PSimulates.simulates`: p-simulation implies simulation; both are
   preorders.
 * `Cslib.Complexity.ProofSystem.PolynomiallyBounded.of_simulates`: a proof system simulating a
@@ -100,7 +104,7 @@ structure ProofSystem (enc : α ↪ List Bool) (L : Set α) where
   /-- The member of `L` that a word proves. -/
   toFun : List Bool → α
   /-- The member a proof proves is computed in polynomial time. -/
-  computable : ComputableTidilyInPolyTime toFun encBits enc
+  computable : ComputableInPolyTime toFun encBits enc
   /-- The proved members are exactly the members of `L`. -/
   range_eq : Set.range toFun = L
 
@@ -134,7 +138,14 @@ def Simulates (Q P : ProofSystem enc L) : Prop :=
 /-- `Q` **p-simulates** `P` [CookReckhow1979]: a function computable in polynomial time translates
 every proof for `P` into a proof for `Q` of the same member. -/
 def PSimulates (Q P : ProofSystem enc L) : Prop :=
-  ∃ t : List Bool → List Bool, ComputableTidilyInPolyTime t encBits encBits ∧ ∀ π, Q (t π) = P π
+  ∃ t : List Bool → List Bool, ComputableInPolyTime t encBits encBits ∧ ∀ π, Q (t π) = P π
+
+/-- `Cslib.Complexity.ProofSystem.PSimulates` with a tidy polynomial-time translation, for proofs
+that compose machines. -/
+theorem pSimulates_iff_tidy {Q P : ProofSystem enc L} : Q.PSimulates P ↔
+    ∃ t : List Bool → List Bool, ComputableTidilyInPolyTime t encBits encBits ∧
+      ∀ π, Q (t π) = P π := by
+  simp only [PSimulates, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 namespace Simulates
 
@@ -205,7 +216,8 @@ theorem PolynomiallyBounded.mem_NP {P : ProofSystem enc L} (hP : P.PolynomiallyB
   obtain ⟨p, hp⟩ := hP
   have hcheck : ComputableTidilyInPolyTime (fun x : α × List Bool => decide (P x.2 = x.1))
       (encPair enc encBits) encBool :=
-    ComputableTidilyInPolyTime.decide_eq' (P.computable.comp (.snd enc encBits)) (.fst enc encBits)
+    ComputableTidilyInPolyTime.decide_eq' (P.computable.tidy.comp (.snd enc encBits))
+      (.fst enc encBits)
   have h := mem_NP_of_witness (p := p) Decoder.bits hcheck (R := fun a π => P π = a)
     (fun _ _ => decide_eq_true_iff) fun a π hπ => hp a (hπ ▸ P.mem π)
   have hL : {a | ∃ π, P π = a} = L := P.range_eq
@@ -241,7 +253,7 @@ def ofVerifier (D : Decoder enc) (hV : ComputableTidilyInPolyTime V (encPair enc
       (unary_eval p).comp ((encoding_length enc).comp hi)
     have hacc : ComputableTidilyInPolyTime (verifierAccepts D p V) encBits encBool :=
       .bool_and' (hV.comp (hi.prod .dropFrame)) (.decide_eq' (length_bits.comp .dropFrame) hlen)
-    exact hacc.cond hi (.const a₀)
+    exact (hacc.cond hi (.const a₀)).computableInPolyTime
   range_eq := by
     refine Set.Subset.antisymm ?_ fun a ha => ?_
     · rintro _ ⟨π, rfl⟩
