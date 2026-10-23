@@ -147,11 +147,32 @@ existing developments, source credit and saved branches remain available for a f
    same constructed scheme. [Key-chain tests](ComplexityTests/Crypto/KeyChainSecurity.lean) and
    [leveled security tests](ComplexityTests/Crypto/LeveledSecurity.lean) exercise repeated random
    keys, retained encryption randomness, adaptive saved state, empty secrets, zero links and padding.
-   This is a
-   qualitative single-challenge security transfer, not Gentry's exact concrete-security bound.
-   The additional circular-security theorem for a fixed-key scheme without a depth budget
-   remains open in [#322](https://github.com/cslib-community/complexitylib/issues/322), as does a
-   concrete LWE-based cryptosystem; neither is established by these generic reductions.
+   This is a qualitative single-challenge security transfer, not Gentry's exact
+   concrete-security bound.
+   The [fixed-key construction](Complexity/Crypto/Computational/Homomorphic/FixedKey/Basic.lean)
+   samples one base key and encrypts its secret bits under that same public key. Key generation
+   has no circuit or depth parameter; the public artifact is reused at every compiled layer.
+   [Correctness](Complexity/Crypto/Computational/Homomorphic/FixedKey/Correctness.lean) covers
+   all finite Boolean circuits and arbitrary well-sized decrypting inputs, including prior
+   evaluation outputs. Secret and ciphertext widths are exactly the original base widths.
+   [Native certificates](Complexity/Crypto/Computational/Homomorphic/FixedKey/PolyTime.lean)
+   cover all four actual algorithms and the complete encoded circuit and input data, including
+   malformed artifacts. The uniform decryption-circuit generator bounds both widths and the
+   unchanged decryption-circuit size polynomially in the security parameter.
+   [Security](Complexity/Crypto/Computational/Homomorphic/FixedKey/Security.lean) assumes base
+   IND-CPA and the explicit [one-key circular experiment](Complexity/Crypto/Computational/Encryption/Circular.lean):
+   the public key and complete vector of secret-bit encryptions must be jointly indistinguishable
+   from the corresponding zero encryptions. This fixed-query assumption does not assert general
+   adaptive KDM security. The [combined theorem](Complexity/Crypto/Computational/Homomorphic/FixedKey/Bootstrapping.lean)
+   proves correctness, compactness, native efficiency and IND-CPA for the same fixed-key scheme.
+   [Construction tests](ComplexityTests/Crypto/HomomorphicFixedKey.lean) check repeated evaluation
+   under one key, even though the explicitly insecure base fixture rejects evaluated inputs.
+   [Security tests](ComplexityTests/Crypto/FixedKeySecurity.lean) reject joint leakage hidden by
+   identical ciphertext marginals and keep a security-only fixture's failed correctness explicit.
+   These recover the generic conditional bootstrapping constructions. A concrete LWE-based
+   cryptosystem satisfying their hypotheses remains open in
+   [#322](https://github.com/cslib-community/complexitylib/issues/322); these reductions do not
+   supply that instantiation or Gentry's exact concrete-security loss.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
