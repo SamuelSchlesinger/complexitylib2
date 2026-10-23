@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.CodeComposition
+import Complexity.Computability.Circuit.Boolean.CarrySave
 
 /-! Tests of shared-input code append, including original input references, shifted gate
 references, repeated outputs, zero-input constants and empty circuits. -/
@@ -62,6 +63,56 @@ example : bundleCode 2 1 [left, ([(.and, [0, 1])], [0, 2]), left] =
 
 example : bundleCode 0 0 [([], []), ([], [])] = ([], []) := by decide
 
+-- Different gate counts, with zero-gate wiring between the two nonempty blocks.
+example : appendCodes 2 [left, ([], [1, 0, 1]), right] =
+    ([(.not, [0]), (.not, [1]), (.and, [0, 3])], [2, 1, 0, 1, 4, 1, 4]) := by decide
+
+example : (appendCodes 2 [left, ([], [1, 0, 1]), right]).2.map
+    (evalOutput [true, false] (appendCodes 2 [left, ([], [1, 0, 1]), right]).1) =
+      [false, false, true, false, true, false, true] := by decide
+
+example : appendCodes 0 [] = ([], []) := rfl
+
+example : appendCodes 0 [([], []), ([(.const true, [])], [0, 0]),
+    ([(.const false, []), (.not, [0])], [1])] =
+      ([(.const true, []), (.const false, []), (.not, [1])], [0, 0, 2]) := by decide
+
+-- Invalid references are relocated as binary data, including indices far beyond the gate list.
+example : appendCodes 2 [left, ([(.not, [2 ^ 80])], [2 ^ 80, 0])] =
+    ([(.not, [0]), (.not, [2 ^ 80 + 1])], [2, 2 ^ 80 + 1, 0]) := by decide
+
+-- Malformed blocks need not evaluate independently: a missing earlier output can refer to a
+-- later block after concatenation. The semantic theorem intentionally uses typed circuits.
+example : (appendCodes 0 [([], [0]), ([(.const true, [])], [0])]).2.map
+    (evalOutput [] (appendCodes 0 [([], [0]), ([(.const true, [])], [0])]).1) =
+      [true, true] := by decide
+
+example : [evalOutput [] [] 0, evalOutput [] [(.const true, [])] 0] =
+    [false, true] := by decide
+
+/-- Varying-size construction is certified uniformly on all raw codes and binary input counts. -/
+theorem varying_bundler_polynomialTime :
+    ComputableTidilyInPolyTime
+      (fun p : ℕ × List (List (Op × List ℕ) × List ℕ) => appendCodes p.1 p.2)
+      (encPair encNat (encList encCode)) encCode := by fun_prop
+
+-- The carry-save carry outputs have different gate counts: no common block size applies.
+example : (csaCarryFormula 2 0).toCircuit.size = 1 ∧
+    (csaCarryFormula 2 1).toCircuit.size = 5 := by decide
+
+/-- The existing carry-save circuit is assembled without padding its unequal carry-bit blocks. -/
+example (w : ℕ) :
+    appendCode (w + (w + w))
+      (appendCodes (w + (w + w)) (List.ofFn fun i => (csaSumFormula w i).toCircuit.code))
+      (appendCodes (w + (w + w)) (List.ofFn fun i => (csaCarryFormula w i).toCircuit.code)) =
+        (csa3to2 w).code := by
+  rw [appendCodes_code, appendCodes_code, appendCode_code]
+  rfl
+
+example (cs : Fin 0 → Circuit signature 0 1) :
+    appendCodes 0 (List.ofFn fun i => (cs i).code) = (Circuit.pi cs).code :=
+  appendCodes_code cs
+
 /-- The bundler has no block-size or well-formedness promise in its runtime certificate. -/
 theorem bundler_polynomialTime :
     ComputableTidilyInPolyTime
@@ -98,6 +149,17 @@ example (cs : Fin 0 → Circuit signature 0 1) :
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms bundler_polynomialTime
+
+/-- info: 'ComplexityTests.CodeComposition.varying_bundler_polynomialTime' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms varying_bundler_polynomialTime
+
+/-- info: 'Cslib.Circuits.Boolean.appendCodes_code' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Circuits.Boolean.appendCodes_code
 
 /-- info: 'Cslib.Circuits.Boolean.exists_circuit_bundleCode' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

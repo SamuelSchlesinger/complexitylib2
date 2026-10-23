@@ -19,8 +19,10 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 `appendCode n c d` runs both codes on the same `n` inputs, keeping the outputs of `c` before
 those of `d`. It shifts the gate references of `d` past the gates of `c`, while preserving its
 input references. On codes of circuits, the result is the code of `Circuit.append`.
-`bundleCode` combines a list of equally sized blocks by direct relocation and agrees with repeated
-append. Both constructors are tidily computable in polynomial time with binary layout parameters.
+`appendCodes` combines any list of blocks by repeated append; each block is relocated by the
+number of preceding gates. `bundleCode` uses a fixed block size and agrees with `appendCodes`
+when its blocks have that size. All three constructors are tidily computable in polynomial time
+with binary layout parameters.
 
 `compCode n d c` instead feeds `c`'s output wires to `d`'s inputs. Its polynomial-time constructor
 performs binary-indexed lookup and gate relocation, and agrees exactly with `Circuit.comp`.
@@ -29,6 +31,7 @@ performs binary-indexed lookup and gate relocation, and agrees exactly with `Cir
 
 * `Cslib.Circuits.Program.appendWireCode`: wire numbers under program continuation.
 * `Cslib.Circuits.Boolean.appendCode`: combine raw codes on shared inputs.
+* `Cslib.Circuits.Boolean.appendCodes`: combine raw blocks of varying sizes on shared inputs.
 * `Cslib.Circuits.Boolean.bundleCode`: combine equal-sized raw blocks on shared inputs.
 * `Cslib.Circuits.Boolean.compCode`: compose raw circuit codes through their output wires.
 
@@ -38,6 +41,9 @@ performs binary-indexed lookup and gate relocation, and agrees exactly with `Cir
 * `Cslib.Circuits.Boolean.appendCode_code`: agreement with typed circuit append.
 * `Cslib.Circuits.Boolean.length_appendCode`: additive gate count.
 * `Cslib.Circuits.Boolean.computableTidilyInPolyTime_appendCode`: constructor efficiency.
+* `Cslib.Circuits.Boolean.appendCodes_code`: agreement with arbitrary typed output families.
+* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_appendCodes`: varying-size constructor
+  efficiency, including arbitrary binary wire indices.
 * `Cslib.Circuits.Boolean.bundleCode_eq_foldl_appendCode`: bundling agrees with repeated append.
 * `Cslib.Circuits.Boolean.computableTidilyInPolyTime_bundleCode`: bundling efficiency.
 * `Cslib.Circuits.Boolean.exists_circuit_bundleCode`: raw bundles realize typed output families.
@@ -217,6 +223,110 @@ theorem computableTidilyInPolyTime_appendCode {α : Type} {enc : α ↪ List Boo
   have hshift := computableTidilyInPolyTime_shiftCode hn hlen hd
   exact (listAppend' hc.fst' hshift.fst').prod (listAppend' hc.snd' hshift.snd')
 
+/-- Combine a list of raw codes on shared inputs, preserving block and output order.
+Blocks may have different gate counts and any number of outputs. -/
+def appendCodes (n : ℕ) (codes : List (List (Op × List ℕ) × List ℕ)) :
+    List (Op × List ℕ) × List ℕ :=
+  codes.foldl (appendCode n) ([], [])
+
+@[simp] theorem appendCodes_nil (n : ℕ) : appendCodes n [] = ([], []) := rfl
+
+/-- Adding a final block is ordinary shared-input append. -/
+theorem appendCodes_append_singleton (n : ℕ)
+    (codes : List (List (Op × List ℕ) × List ℕ)) (code : List (Op × List ℕ) × List ℕ) :
+    appendCodes n (codes ++ [code]) = appendCode n (appendCodes n codes) code := by
+  simp [appendCodes]
+
+/-- The combined code retains every gate, without padding the individual blocks. -/
+@[simp] theorem length_appendCodes (n : ℕ) (codes : List (List (Op × List ℕ) × List ℕ)) :
+    (appendCodes n codes).1.length = (codes.flatMap Prod.fst).length := by
+  induction codes using List.reverseRecOn with
+  | nil => rfl
+  | append_singleton codes code ih =>
+    simp [appendCodes_append_singleton, ih]
+
+/-- The combined code retains all outputs, including repeated outputs and zero-gate blocks. -/
+@[simp] theorem length_appendCodes_outputs (n : ℕ)
+    (codes : List (List (Op × List ℕ) × List ℕ)) :
+    (appendCodes n codes).2.length = (codes.flatMap Prod.snd).length := by
+  induction codes using List.reverseRecOn with
+  | nil => rfl
+  | append_singleton codes code ih =>
+    simp [appendCodes_append_singleton, ih]
+
+private def appendCodesDirect (n : ℕ) (codes : List (List (Op × List ℕ) × List ℕ)) :
+    List (Op × List ℕ) × List ℕ :=
+  (codes.zipIdx.flatMap fun q =>
+      (shiftCode n ((codes.take q.2).flatMap Prod.fst).length q.1).1,
+    codes.zipIdx.flatMap fun q =>
+      (shiftCode n ((codes.take q.2).flatMap Prod.fst).length q.1).2)
+
+private theorem appendCodesDirect_snoc (n : ℕ)
+    (codes : List (List (Op × List ℕ) × List ℕ)) (code : List (Op × List ℕ) × List ℕ) :
+    appendCodesDirect n (codes ++ [code]) =
+      ((appendCodesDirect n codes).1 ++
+          (shiftCode n (codes.flatMap Prod.fst).length code).1,
+        (appendCodesDirect n codes).2 ++
+          (shiftCode n (codes.flatMap Prod.fst).length code).2) := by
+  have hprefix (q : (List (Op × List ℕ) × List ℕ) × ℕ) (hq : q ∈ codes.zipIdx) :
+      (codes ++ [code]).take q.2 = codes.take q.2 :=
+    List.take_append_of_le_length (by have := List.snd_lt_of_mem_zipIdx hq; omega)
+  simp only [appendCodesDirect, List.zipIdx_append, List.flatMap_append, List.zipIdx_cons,
+    List.zipIdx_nil, List.flatMap_cons, List.flatMap_nil, Nat.zero_add,
+    List.take_left, List.append_nil]
+  apply Prod.ext <;> dsimp only <;> congr 1 <;>
+    apply List.flatMap_congr <;> intro q hq <;> rw [hprefix q hq]
+
+private theorem appendCodesDirect_eq_appendCodes (n : ℕ)
+    (codes : List (List (Op × List ℕ) × List ℕ)) :
+    appendCodesDirect n codes = appendCodes n codes := by
+  induction codes using List.reverseRecOn with
+  | nil => rfl
+  | append_singleton codes code ih =>
+    rw [appendCodesDirect_snoc, appendCodes_append_singleton, ih]
+    simp only [appendCode, length_appendCodes, shiftCode]
+
+/-- Combining arbitrary raw blocks is polynomial-time in their complete encodings.
+Input and wire numbers are binary; no uniform block-size or well-formedness premise is needed. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_appendCodes {α : Type} {enc : α ↪ List Bool}
+    {n : α → ℕ} {codes : α → List (List (Op × List ℕ) × List ℕ)}
+    (hn : ComputableTidilyInPolyTime n enc encNat)
+    (hcodes : ComputableTidilyInPolyTime codes enc (encList encCode)) :
+    ComputableTidilyInPolyTime (fun a => appendCodes (n a) (codes a)) enc encCode := by
+  let encBlock := encPair encCode encUnary
+  have hblocks := (zipIdx encCode).comp hcodes
+  have hpar := fst enc encBlock
+  have hentry := snd enc encBlock
+  have hprefix := listTakeWithInput (hcodes.comp hpar) hentry.snd'
+  have hprefixGates := flatMapWithInput (encB := encGate)
+    (f := fun (_ : α × ((List (Op × List ℕ) × List ℕ) × ℕ)) c => c.1)
+    hprefix ((snd _ encCode).fst')
+  have hoffset := unary_to_binary.comp ((length_list encGate).comp hprefixGates)
+  have hshift := computableTidilyInPolyTime_shiftCode (hn.comp hpar) hoffset hentry.fst'
+  have hgates := flatMapWithInput (encB := encGate)
+    (f := fun a (q : (List (Op × List ℕ) × List ℕ) × ℕ) =>
+      (shiftCode (n a) (((codes a).take q.2).flatMap Prod.fst).length q.1).1)
+    hblocks hshift.fst'
+  have houtputs := flatMapWithInput (encB := encNat)
+    (f := fun a (q : (List (Op × List ℕ) × List ℕ) × ℕ) =>
+      (shiftCode (n a) (((codes a).take q.2).flatMap Prod.fst).length q.1).2)
+    hblocks hshift.snd'
+  have h := hgates.prod houtputs
+  change ComputableTidilyInPolyTime (fun a => appendCodesDirect (n a) (codes a)) enc encCode at h
+  simpa only [appendCodesDirect_eq_appendCodes] using h
+
+/-- Combining single-output circuit codes agrees exactly with `Circuit.pi`, with no restriction
+on the gate counts of its components. -/
+theorem appendCodes_code {k n : ℕ} (cs : Fin k → Circuit signature n 1) :
+    appendCodes n (List.ofFn (fun j => (cs j).code)) = (Circuit.pi cs).code := by
+  induction k with
+  | zero => simp [Circuit.pi, Circuit.code, Circuit.wiring]
+  | succ k ih =>
+    rw [List.ofFn_succ_last, appendCodes_append_singleton,
+      ih (fun j => cs j.castSucc), appendCode_code]
+    rfl
+
 /-- Combine equal-sized gate blocks on shared inputs. Block `j` is relocated by `j * blockSize`.
 The construction is total on raw data; its append semantics requires the stated block sizes. -/
 def bundleCode (n blockSize : ℕ) (codes : List (List (Op × List ℕ) × List ℕ)) :
@@ -290,6 +400,13 @@ theorem bundleCode_eq_foldl_appendCode (n blockSize : ℕ)
       fun c hc => hlen c (List.mem_append_left _ hc)
     rw [bundleCode_snoc, List.foldl_append, List.foldl_cons, List.foldl_nil, ← ih hprefix]
     simp only [appendCode, length_bundleCode n blockSize codes hprefix, shiftCode]
+
+/-- Fixed-size bundling is a specialization of the varying-size constructor. -/
+theorem bundleCode_eq_appendCodes (n blockSize : ℕ)
+    (codes : List (List (Op × List ℕ) × List ℕ))
+    (hlen : ∀ c ∈ codes, c.1.length = blockSize) :
+    bundleCode n blockSize codes = appendCodes n codes :=
+  bundleCode_eq_foldl_appendCode n blockSize codes hlen
 
 /-- The typed and raw bundles have exactly the same code when component sizes agree. -/
 theorem bundleCode_code {k n : ℕ} (cs : Fin k → Circuit signature n 1) (blockSize : ℕ)
