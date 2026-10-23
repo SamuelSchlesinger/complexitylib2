@@ -98,12 +98,53 @@ example : ComputableTidilyInPolyTime
     (fun p : ℕ × (List (Op × List ℕ) × List ℕ) => compile p.1 p.2)
     (encPair encUnary encCode) encCompiled := by fun_prop
 
+/--
+info: 'Cslib.Circuits.Boolean.wireDepthsCode_getD_toNat' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms wireDepthsCode_getD_toNat
+
+/--
+info: 'Cslib.Circuits.Boolean.depthCode_code' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms depthCode_code
+
+/--
+info: 'Cslib.Circuits.Boolean.Layered.length_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms length_compile
+
+/--
+info: 'Cslib.Circuits.Boolean.Layered.wellFormed_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms wellFormed_compile
+
+/--
+info: 'Cslib.Circuits.Boolean.Layered.select_eval_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms select_eval_compile
+
+/--
+info: 'Cslib.Circuits.Boolean.Layered.length_encCompiled_compile_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms length_encCompiled_compile_le
+
+/--
+info: 'Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_compile' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms computableTidilyInPolyTime_compile
 
 end ComplexityTests.CircuitLayering
