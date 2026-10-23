@@ -32,7 +32,7 @@ generation experiment (Attack Game 19.2).
 * **Extraction** (Theorem 19.14). If the protocol has special soundness with extractor
   `extract`, rewinding an impersonator with direct-attack success probability `ε` recovers a
   witness for the key with probability at least `ε ^ 2 - ε / N`, where `N` is the number of
-  challenges; equivalently `ε ≤ 1 / N + √ε'`. No assumption on the key generator is needed.
+  challenges; consequently `ε ≤ 1 / N + √ε'`. No assumption on the key generator is needed.
 * **Simulation** (Theorems 19.3 and 19.15). If the protocol is special HVZK, an eavesdropper
   succeeds with exactly the probability of the direct impersonator that simulates the
   conversations itself, provided the key generator only outputs pairs in the relation.
