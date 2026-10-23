@@ -90,6 +90,8 @@ noncomputable def andSimulate (simulate₀ : Y₀ → C → PMF (T₀ × Z₀))
 variable {P₀ : SigmaProtocol X₀ Y₀ T₀ C Z₀} {P₁ : SigmaProtocol X₁ Y₁ T₁ C Z₁}
   {R₀ : X₀ → Y₀ → Prop} {R₁ : X₁ → Y₁ → Prop}
 
+/-- An AND conversation is accepting exactly when both halves are accepting at the shared
+challenge. -/
 @[simp] theorem andProof_accepts_iff {y : Y₀ × Y₁} {t : T₀ × T₁} {c : C} {z : Z₀ × Z₁} :
     (P₀.andProof P₁).Accepts y t c z ↔ P₀.Accepts y.1 t.1 c z.1 ∧ P₁.Accepts y.2 t.2 c z.2 := by
   simp only [Accepts, andProof, Bool.and_eq_true]
@@ -197,6 +199,8 @@ variable {P₀ : SigmaProtocol X₀ Y₀ T₀ C Z₀} {P₁ : SigmaProtocol X₁
   {R₀ : X₀ → Y₀ → Prop} {R₁ : X₁ → Y₁ → Prop}
   {simulate₀ : Y₀ → C → PMF (T₀ × Z₀)} {simulate₁ : Y₁ → C → PMF (T₁ × Z₁)}
 
+/-- An OR conversation `(c₀, z₀, z₁)` for the challenge `c` is accepting exactly when the first
+side accepts at `c₀` and the second at `c - c₀`. -/
 @[simp] theorem orProof_accepts_iff {y : Y₀ × Y₁} {t : T₀ × T₁} {c : C} {z : C × Z₀ × Z₁} :
     (orProof P₀ P₁ simulate₀ simulate₁).Accepts y t c z ↔
       P₀.Accepts y.1 t.1 z.1 z.2.1 ∧ P₁.Accepts y.2 t.2 (c - z.1) z.2.2 := by
