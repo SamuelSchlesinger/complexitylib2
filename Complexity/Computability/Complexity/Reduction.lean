@@ -22,8 +22,9 @@ and Barak, Definition 2.7][AroraBarak09]. It is, by definition, the many-one red
 (`Cslib.Complexity.polyTimeReducible_iff_manyOneReducibleBy`), and its preorder and complement
 lemmas are instances of the core's. Its body is kept as the `∃` statement, so that the
 admissibility goal of an anonymous constructor is `ComputableInPolyTime f encA encB` itself, as
-`fun_prop` expects. `Cslib.Complexity.polyTimeReducible_iff_tidy` states it with a reduction
-computable tidily in polynomial time, the form in which proofs build reductions.
+`fun_prop` expects. The checked client in `ComplexityTests.NPCompleteness` supplies plain decider,
+verifier and reduction certificates, then transfers IndependentSet hardness to Clique.
+`Cslib.Complexity.polyTimeReducible_iff_tidy` also gives the equivalent tidy formulation.
 
 A class of problems is given, as `NP` or `coNP`, by a set of problems for every type of instances
 and every encoding of them. A problem `B` is hard for such a class `C` when every problem in `C`,
@@ -43,6 +44,58 @@ recognising the encodings of its members.
 
 Mathlib's `ManyOneReducible` (`Mathlib/Computability/Reduce.lean`) is the computable, not the
 polynomial-time, reducibility, and is stated for `Primcodable` types; it is not reused here.
+
+## Finding a proved NP-complete problem
+
+The declarations below give the exact problems, encodings and hypotheses; follow their source
+module to import a result. Names in this table are relative to `Cslib.Complexity`. For example,
+import `Complexity.Computability.Complexity.Problems.Clique` to use `Clique_npComplete` and
+`polyTimeReducible_IndependentSet_Clique`. Cook–Levin's `CookLevin.SAT_npHard` reduces every NP
+problem to SAT. These are navigation tables, not an exhaustive list of reductions or classes.
+
+| Problem | NP-completeness declaration |
+| --- | --- |
+| CNF satisfiability (Cook–Levin) | `CookLevin.SAT_npComplete` |
+| At most three literals per clause | `ThreeSAT_npComplete` |
+| Exactly three literals, repetitions allowed | `ExactThreeSAT_npComplete` |
+| Boolean circuit satisfiability | `CircuitSAT_npComplete` |
+| Independent set | `IndependentSet_npComplete` |
+| Clique | `Clique_npComplete` |
+| Vertex cover | `VertexCover_npComplete` |
+| Three-colorability | `ThreeColoring_npComplete` |
+| Fixed `k`-colorability, `3 ≤ k` | `KColoring_npComplete` |
+| Directed Hamiltonian path, specified endpoints | `DirHamPath_npComplete` |
+| Directed Hamiltonian cycle | `DirHamCycle_npComplete` |
+| Undirected Hamiltonian path, specified endpoints | `HamPath_npComplete` |
+| Undirected Hamiltonian cycle | `HamCycle_npComplete` |
+| Subset sum | `SubsetSum_npComplete` |
+| Partition | `Partition_npComplete` |
+| Knapsack | `Knapsack_npComplete` |
+| Zero-one integer programming | `ZeroOneIP_npComplete` |
+| Traveling salesperson | `TSP_npComplete` |
+
+| Source → target | Reduction declaration |
+| --- | --- |
+| SAT → ThreeSAT | `polyTimeReducible_SAT_ThreeSAT` |
+| ThreeSAT → ExactThreeSAT | `polyTimeReducible_ThreeSAT_ExactThreeSAT` |
+| SAT → CircuitSAT | `SAT.polyTimeReducible_CircuitSAT` |
+| SAT → IndependentSet | `polyTimeReducible_SAT_IndependentSet` |
+| IndependentSet → Clique | `polyTimeReducible_IndependentSet_Clique` |
+| IndependentSet → VertexCover | `polyTimeReducible_IndependentSet_VertexCover` |
+| SAT → ThreeColoring | `polyTimeReducible_SAT_ThreeColoring` |
+| ThreeSAT → ThreeColoring | `polyTimeReducible_ThreeSAT_ThreeColoring` |
+| SAT → KColoring `k`, for `3 ≤ k` | `polyTimeReducible_SAT_KColoring` |
+| SAT → DirHamPath | `polyTimeReducible_SAT_DirHamPath` |
+| ThreeSAT → DirHamPath | `polyTimeReducible_ThreeSAT_DirHamPath` |
+| SAT → DirHamCycle | `polyTimeReducible_SAT_DirHamCycle` |
+| DirHamPath → HamPath | `polyTimeReducible_DirHamPath_HamPath` |
+| DirHamCycle → HamCycle | `polyTimeReducible_DirHamCycle_HamCycle` |
+| ThreeSAT → SubsetSum | `polyTimeReducible_ThreeSAT_SubsetSum` |
+| SubsetSum → Partition | `polyTimeReducible_SubsetSum_Partition` |
+| SubsetSum → Knapsack | `polyTimeReducible_SubsetSum_Knapsack` |
+| SubsetSum → ZeroOneIP | `polyTimeReducible_SubsetSum_ZeroOneIP` |
+| ThreeSAT → ZeroOneIP | `polyTimeReducible_ThreeSAT_ZeroOneIP` |
+| HamCycle → TSP | `polyTimeReducible_HamCycle_TSP` |
 
 ## Main definitions
 
@@ -88,7 +141,15 @@ variable {α β : Type*}
 
 /-- `A` reduces to `B` in polynomial time: some `f`, computable in polynomial time with respect to
 `encA` and `encB`, satisfies `a ∈ A ↔ f a ∈ B`. This is `ManyOneReducibleBy` for the maps computable
-in polynomial time (`polyTimeReducible_iff_manyOneReducibleBy`). -/
+in polynomial time (`polyTimeReducible_iff_manyOneReducibleBy`).
+
+Construct a proof as `⟨f, by fun_prop, h⟩`, where `h` proves the membership equivalence for every
+source instance. Write `f` with certified Boolean, list and arithmetic operations; unfold local
+definitions so `fun_prop` or `polytime` can see them. When a `decide` expression hides those
+operations, prove an equality to Boolean tests first, rewrite with it, then run automation.
+Cost and correctness are separate obligations: automation does not prove `h`. See the checked
+graph-complement example in `ComplexityTests.NPCompleteness` and the existing certificate in
+`Graph.computableTidilyInPolyTime_compl` for the Boolean-test rewrite. -/
 def PolyTimeReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (A : Set α) (B : Set β) :
     Prop :=
   ∃ f : α → β, ComputableInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
