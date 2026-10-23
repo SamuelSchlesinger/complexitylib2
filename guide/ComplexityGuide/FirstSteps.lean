@@ -4,43 +4,37 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 import VersoManual
-import Complexity.Computability.Complexity.CookLevin.Completeness
+import Complexity.Computability.Complexity.Classes.NP
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
+set_option verso.code.warnLineLength 80
 
 #doc (Manual) "First Steps" =>
 %%%
 tag := "first-steps"
 %%%
 
-The package is named `complexitylib` and its modules begin with `Complexity.`; `import Complexity`
-imports the whole library. Declarations use CSLib's namespaces: most begin with `Cslib`, and
-Turing-machine declarations begin with `Turing`. This chapter imports one module,
-`Complexity.Computability.Complexity.CookLevin.Completeness`, which proves the Cook–Levin theorem.
+The package is named `complexitylib`, and its modules begin with `Complexity.` and mirror CSLib's
+layout. `import Complexity` imports the whole library, which is convenient for exploring but slow
+to load; a development imports the modules it uses. Each module's documentation lists its main
+definitions and results, with references.
 
-A decision problem is a set of instances, together with an encoding of instances as bit strings.
-{name}`Cslib.Complexity.NPComplete` takes both:
+Declarations use CSLib's namespaces. Turing machines, encodings and polynomial-time computability
+live under `Turing`, and complexity classes, problems and reductions under `Cslib.Complexity`.
+For example, this chapter imports `Complexity.Computability.Complexity.Classes.NP`, which defines
+the class {name}`Cslib.Complexity.NP` in terms of
+{name}`Turing.MultiTapeTM.ComputableInPolyTime`:
 
-```lean (name := npComplete)
-#check Cslib.Complexity.NPComplete
+```lean (name := npType)
+#check @Cslib.Complexity.NP
 ```
-```leanOutput npComplete
-Cslib.Complexity.NPComplete {β : Type} (encB : β ↪ List Bool) (B : Set β) : Prop
-```
-
-The Cook–Levin theorem states that satisfiability of CNF formulas, under the library's encoding of
-formulas, is NP-complete:
-
-```lean (name := cookLevin)
-open Cslib.Complexity CookLevin in
-#check (SAT_npComplete : NPComplete encCNF SAT)
-```
-```leanOutput cookLevin
-SAT_npComplete : NPComplete encCNF SAT
+```leanOutput npType
+@Cslib.Complexity.NP : {α : Type} → (α ↪ List Bool) → Set (Set α)
 ```
 
-Hovering over a name shows its type and docstring, and clicking it opens its entry in the API
-documentation.
+To find a declaration, search the
+[API documentation](https://www.cslib.io/complexitylib/search.html). In this guide,
+hovering over a name shows its type and docstring, and clicking it opens its entry there.
