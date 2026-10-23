@@ -725,16 +725,12 @@ abbrev encCertEntry : (List Bool × TaggedHistory) ↪ List Bool :=
 /-- Encoding of multiprover certificates. -/
 abbrev encCert : Cert ↪ List Bool := encList encCertEntry
 
-/-- Total decoder for raw bit strings. -/
-def bitsDecoder : Decoder encBits where
-  decode := id
-  decode_enc _ := rfl
-  computable := (ComputableTidilyInPolyTime.id' (encIn := encBits)).exists_degree
+@[deprecated (since := "2026-10-23")] alias bitsDecoder := Decoder.bits
 
 /-- Total decoder for multiprover certificates. -/
 def certDecoder : Decoder encCert :=
-  Decoder.list (Decoder.pair bitsDecoder
-    (Decoder.list (Decoder.pair Decoder.unary (Decoder.pair bitsDecoder bitsDecoder))))
+  Decoder.list (Decoder.pair Decoder.bits
+    (Decoder.list (Decoder.pair Decoder.unary (Decoder.pair Decoder.bits Decoder.bits))))
 
 section Checker
 

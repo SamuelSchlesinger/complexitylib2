@@ -37,9 +37,9 @@ elements.
 * `Turing.MultiTapeTM.frames`: the framed words one after another in a word.
 * `Turing.MultiTapeTM.ofBits`: binary digits, least significant first, read as a number.
 * `Turing.MultiTapeTM.Decoder`: total decoders with tidy certificates of fixed degrees.
-* `Turing.MultiTapeTM.Decoder.unary`, `.nat`, `.bool`, `.option`, `.pair`, `.list`, `.map`:
-  decoders of unary and binary numbers, Booleans, options, pairs and lists, and transport along
-  an equivalence of encodings.
+* `Turing.MultiTapeTM.Decoder.bits`, `.unary`, `.nat`, `.bool`, `.option`, `.pair`, `.list`, `.map`:
+  decoders of bit strings, unary and binary numbers, Booleans, options, pairs and lists, and
+  transport along an equivalence of encodings.
 
 ## Main results
 
@@ -230,6 +230,19 @@ structure Decoder {α : Type} (enc : α ↪ List Bool) where
 namespace Decoder
 
 variable {α β : Type} {enc : α ↪ List Bool} {enc' : β ↪ List Bool}
+
+/-- Every total decoder has a native polynomial-time certificate. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime (D : Decoder enc) :
+    ComputableTidilyInPolyTime D.decode encBits enc := by
+  obtain ⟨_, _, h⟩ := D.computable
+  exact h.computableTidilyInPolyTime
+
+/-- Bit strings are their own encoding. -/
+def bits : Decoder encBits where
+  decode := id
+  decode_enc _ := rfl
+  computable := ⟨1, 1, .of_eq fun _ => rfl⟩
 
 /-- Unary numbers are decoded by the length of the word. -/
 def unary : Decoder encUnary where
