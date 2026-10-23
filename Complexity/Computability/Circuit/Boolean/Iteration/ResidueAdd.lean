@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.Word
+import Complexity.Tactic.Synthesis
 
 /-!
 # Carry-safe addition and subtraction of reduced residues
@@ -84,38 +85,30 @@ theorem synthesis_addResidue (s : Set (BitString n → Bool)) (a b r : BitString
     (ha : wordWires a ⊆ s) (hb : wordWires b ⊆ s) (hr : wordWires r ⊆ s) :
     Synthesis Boolean.interpretation s
       (wordWires fun x => addResidue (a x) (b x) (r x)) (100 * (k + 1)) := by
-  let s0 := s ∪ {fun _ : BitString n => false}
-  have hz : (fun _ : BitString n => false) ∈ s0 := Or.inr rfl
-  have hw (v : BitString n → BitVec k) (hv : wordWires v ⊆ s) :=
-    wordWires_setWidth_subset (v := k + 1) (s := s0) (value := v) (fun _ h => Or.inl (hv h)) hz
   let sum := fun x => (b x).setWidth (k + 1) + (r x).setWidth (k + 1)
   let aw := fun x => (a x).setWidth (k + 1)
-  have hadd := Synthesis.word_add (s := s0) _ _
-    (fun i => hw b hb ⟨i, rfl⟩) (fun i => hw r hr ⟨i, rfl⟩)
-  let s1 := s0 ∪ wordWires sum
-  have hsum (i : Fin (k + 1)) : (fun x => (sum x).getLsbD i.val) ∈ s1 := Or.inr ⟨i, rfl⟩
-  have haw (i : Fin (k + 1)) : (fun x => (aw x).getLsbD i.val) ∈ s1 :=
-    Or.inl (hw a ha ⟨i, rfl⟩)
-  have hsub := Synthesis.word_sub (s := s1) sum aw hsum haw
-  have hlt := Synthesis.word_ult (s := s1) sum aw hsum haw
-  let s2 := s1 ∪ (wordWires (fun x => sum x - aw x) ∪ {fun x => (sum x).ult (aw x)})
   let reduced := fun x => if (sum x).ult (aw x) then sum x else sum x - aw x
-  have hred := Synthesis.word_mux (s := s2) sum (fun x => sum x - aw x)
-    (fun x => (sum x).ult (aw x)) (Or.inr (Or.inr rfl))
-    (fun i => Or.inl (hsum i)) (fun i => Or.inr (Or.inl ⟨i, rfl⟩))
-  let s3 := s2 ∪ wordWires reduced
-  have hre := wordWires_setWidth_subset (v := k) (s := s3) (value := reduced) (fun _ h => Or.inr h)
-    (Or.inl (Or.inl (Or.inl hz)))
-  have hactive := Synthesis.word_ult (s := s3) b a
-    (fun i => Or.inl (Or.inl (Or.inl (Or.inl (hb ⟨i, rfl⟩)))))
-    (fun i => Or.inl (Or.inl (Or.inl (Or.inl (ha ⟨i, rfl⟩)))))
-  have hout := Synthesis.word_mux (s := s3 ∪ {fun x => (b x).ult (a x)})
-    (fun x => (reduced x).setWidth k) b (fun x => (b x).ult (a x)) (Or.inr rfl)
-    (fun i => Or.inl (hre ⟨i, rfl⟩))
-    (fun i => Or.inl (Or.inl (Or.inl (Or.inl (Or.inl (hb ⟨i, rfl⟩))))))
-  exact ((Synthesis.const (s := s) false).trans
-    (hadd.trans ((hsub.union hlt).trans (hred.trans (hactive.trans hout))))).mono
-      Set.Subset.rfl Set.Subset.rfl (by lia)
+  -- Widening selects existing wires; each arithmetic construction is charged once.
+  let build := Synthesis.Builder.start Boolean.interpretation s
+  let build := build.add (Synthesis.const false)
+  have hw (v : BitString n → BitVec k) (hv : wordWires v ⊆ s) :=
+    wordWires_setWidth_subset (v := k + 1) (s := build.wires) (value := v)
+      (by synthesis_available) (by synthesis_available)
+  have haw := hw a ha
+  let build := build.add (Synthesis.word_add (fun x => (b x).setWidth (k + 1))
+    (fun x => (r x).setWidth (k + 1))
+    (fun i => hw b hb ⟨i, rfl⟩) (fun i => hw r hr ⟨i, rfl⟩))
+  synthesis_step build using Synthesis.word_sub sum aw
+  synthesis_step build using Synthesis.word_ult sum aw
+  synthesis_step build using
+    Synthesis.word_mux sum (fun x => sum x - aw x) (fun x => (sum x).ult (aw x))
+  have hre := wordWires_setWidth_subset (v := k) (s := build.wires) (value := reduced)
+    (by synthesis_available) (by synthesis_available)
+  synthesis_step build using Synthesis.word_ult b a
+  synthesis_step build using
+    Synthesis.word_mux (fun x => (reduced x).setWidth k) b (fun x => (b x).ult (a x))
+  exact build.finish (by synthesis_available)
+    (by dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]; omega)
 
 /-- Subtract reduced residues `a` and `b` modulo `d` without general division when `a < d` and
 `b < d`. -/
@@ -147,19 +140,14 @@ theorem synthesis_subtractResidues (s : Set (BitString n → Bool))
     (ha : wordWires a ⊆ s) (hb : wordWires b ⊆ s) (hd : wordWires d ⊆ s) :
     Synthesis Boolean.interpretation s
       (wordWires fun x => subtractResidues (a x) (b x) (d x)) (140 * (k + 1)) := by
-  have hba := Synthesis.word_sub (s := s) b a (fun i => hb ⟨i, rfl⟩) (fun i => ha ⟨i, rfl⟩)
-  let s1 := s ∪ wordWires (fun x => b x - a x)
-  have hwrap := Synthesis.word_sub (s := s1) d (fun x => b x - a x)
-    (fun i => Or.inl (hd ⟨i, rfl⟩)) (fun i => Or.inr ⟨i, rfl⟩)
-  have hab := Synthesis.word_sub (s := s) a b (fun i => ha ⟨i, rfl⟩) (fun i => hb ⟨i, rfl⟩)
-  have hlt := Synthesis.word_ult (s := s) a b (fun i => ha ⟨i, rfl⟩) (fun i => hb ⟨i, rfl⟩)
-  let src := s ∪ ((wordWires (fun x => d x - (b x - a x)) ∪
-    wordWires (fun x => a x - b x)) ∪ {fun x => (a x).ult (b x)})
-  have hout := Synthesis.word_mux (s := src) (fun x => d x - (b x - a x))
-    (fun x => a x - b x) (fun x => (a x).ult (b x)) (Or.inr (Or.inr rfl))
-    (fun i => Or.inr (Or.inl (Or.inl ⟨i, rfl⟩)))
-    (fun i => Or.inr (Or.inl (Or.inr ⟨i, rfl⟩)))
-  exact ((((hba.trans hwrap).union hab).union hlt).trans hout).mono
-    Set.Subset.rfl Set.Subset.rfl (by lia)
+  let build := Synthesis.Builder.start Boolean.interpretation s
+  synthesis_step build using Synthesis.word_sub b a
+  synthesis_step build using Synthesis.word_sub d (fun x => b x - a x)
+  synthesis_step build using Synthesis.word_sub a b
+  synthesis_step build using Synthesis.word_ult a b
+  synthesis_step build using Synthesis.word_mux (fun x => d x - (b x - a x))
+      (fun x => a x - b x) (fun x => (a x).ult (b x))
+  exact build.finish (by synthesis_available)
+    (by dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]; omega)
 
 end Cslib.Circuits.Boolean.Iteration

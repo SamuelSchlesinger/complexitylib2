@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Word
 public import Mathlib.Data.Nat.ModEq
+import Complexity.Tactic.Synthesis
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -129,13 +130,13 @@ theorem synthesis_remainderStep (s : Set (BooleanFunction a)) (d r : BitString a
         decide_true, Bool.true_and, ite_true] using hb
     · simpa only [next, BitVec.getLsbD_shiftConcat, i.isLt, decide_true, Bool.true_and, hi,
         ite_false] using hr ⟨i.val - 1, by have := i.isLt; omega⟩
-  have hs := Synthesis.word_sub (s := s) next d hn hd
-  have hl := Synthesis.word_ult (s := s) next d hn hd
-  have hm := Synthesis.word_mux
-    (s := s ∪ (wordWires (fun x => next x - d x) ∪ {fun x => (next x).ult (d x)}))
-    next (fun x => next x - d x) (fun x => (next x).ult (d x)) (Or.inr (Or.inr rfl))
-    (fun i => Or.inl (hn i)) (fun i => Or.inr (Or.inl ⟨i, rfl⟩))
-  exact ((hs.union hl).trans hm).mono Set.Subset.rfl Set.Subset.rfl (by omega)
+  let build := Synthesis.Builder.start interpretation s
+  synthesis_step build using Synthesis.word_sub next d
+  synthesis_step build using Synthesis.word_ult next d
+  synthesis_step build using Synthesis.word_mux next (fun x => next x - d x)
+    (fun x => (next x).ult (d x))
+  exact build.finish (by synthesis_available)
+    (by dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]; omega)
 
 /-- Streaming an available `m`-bit number through long division by an available word costs
 `22 * w + 3` gates per bit. -/
@@ -276,26 +277,18 @@ theorem synthesis_subMod (s : Set (BooleanFunction n)) (a b d : BitString n → 
       (50 * (w + 1) ^ 2) := by
   let ra := fun x => streamRemainder (d x) fun i : Fin w => (a x).getLsbD i.val
   let rb := fun x => streamRemainder (d x) fun i : Fin w => (b x).getLsbD i.val
-  have hra := synthesis_streamRemainder s d (fun x i => (a x).getLsbD i.val) hd ha hz
-  have hrb := synthesis_streamRemainder s d (fun x i => (b x).getLsbD i.val) hd hb hz
-  let s1 := s ∪ (wordWires ra ∪ wordWires rb)
-  have hra' (i : Fin w) : (fun x => (ra x).getLsbD i.val) ∈ s1 := Or.inr (Or.inl ⟨i, rfl⟩)
-  have hrb' (i : Fin w) : (fun x => (rb x).getLsbD i.val) ∈ s1 := Or.inr (Or.inr ⟨i, rfl⟩)
-  have hd' (i : Fin w) : (fun x => (d x).getLsbD i.val) ∈ s1 := Or.inl (hd i)
-  have hsum := Synthesis.word_add (s := s1) ra d hra' hd'
-  have hlt := Synthesis.word_ult (s := s1) ra rb hra' hrb'
-  have hdiff := Synthesis.word_sub (s := s1) ra rb hra' hrb'
-  let s2 := s1 ∪ ((wordWires (fun x => ra x + d x) ∪ {fun x => (ra x).ult (rb x)}) ∪
-    wordWires fun x => ra x - rb x)
-  have hwrap := Synthesis.word_sub (s := s2) (fun x => ra x + d x) rb
-    (fun i => Or.inr (Or.inl (Or.inl ⟨i, rfl⟩))) fun i => Or.inl (hrb' i)
-  have hm := Synthesis.word_mux (s := s2 ∪ wordWires fun x => ra x + d x - rb x)
-    (fun x => ra x + d x - rb x) (fun x => ra x - rb x)
-    (fun x => (ra x).ult (rb x)) (Or.inl (Or.inr (Or.inl (Or.inr rfl))))
-    (fun i => Or.inr ⟨i, rfl⟩) fun i => Or.inl (Or.inr (Or.inr ⟨i, rfl⟩))
-  have h := (hra.union hrb).trans (((hsum.union hlt).union hdiff).trans (hwrap.trans hm))
-  refine h.mono Set.Subset.rfl ?_ ?_
-  · rfl
-  · nlinarith
+  let build := Synthesis.Builder.start interpretation s
+  synthesis_step build using synthesis_streamRemainder build.wires d
+    (fun x i => (a x).getLsbD i.val)
+  synthesis_step build using synthesis_streamRemainder build.wires d
+    (fun x i => (b x).getLsbD i.val)
+  synthesis_step build using Synthesis.word_add ra d
+  synthesis_step build using Synthesis.word_ult ra rb
+  synthesis_step build using Synthesis.word_sub ra rb
+  synthesis_step build using Synthesis.word_sub (fun x => ra x + d x) rb
+  synthesis_step build using Synthesis.word_mux (fun x => ra x + d x - rb x)
+    (fun x => ra x - rb x) (fun x => (ra x).ult (rb x))
+  exact build.finish (by synthesis_available)
+    (by dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]; nlinarith)
 
 end Cslib.Circuits.Boolean.Iteration

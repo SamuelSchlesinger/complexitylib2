@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.InputTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.LabelCircuit
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Projection
+import Complexity.Tactic.Synthesis
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
 
@@ -108,34 +109,31 @@ theorem synthesis_compressedTime (s : Set (BooleanFunction a)) (ell : BitString 
       (m * (22 * (n + 3) + 3) + 50 * (n + 4) ^ 2 + 16 * (n + 3) + 1 + (5 * m + 2)) := by
   let rem := fun x => streamRemainder (ell x) (bits x)
   let bound := fun _ : BitString a => BitVec.ofNat (n + 3) (2 ^ n)
-  have hrem := synthesis_streamRemainder s ell bits (fun i => hl ⟨i, rfl⟩) hb (hc false)
-  let s1 := s ∪ wordWires rem
   let difference := fun x => subMod (rem x) (bound x) (ell x)
-  have hdiff := synthesis_subMod s1 rem bound ell (fun i => Or.inr ⟨i, rfl⟩)
-    (fun i => Or.inl (hc ((BitVec.ofNat (n + 3) (2 ^ n)).getLsbD i.val)))
-    (fun i => Or.inl (hl ⟨i, rfl⟩)) (Or.inl (hc false))
-  let s2 := s1 ∪ wordWires difference
   let advance := fun x => bound x + difference x
-  have hadd := Synthesis.word_add (s := s2) bound difference
-    (fun i => Or.inl (Or.inl (hc ((BitVec.ofNat (n + 3) (2 ^ n)).getLsbD i.val))))
-    fun i => Or.inr ⟨i, rfl⟩
-  let s3 := s2 ∪ wordWires advance
-  have hword (i : Fin m) : (fun x => (word (bits x)).getLsbD i.val) ∈ s3 := by
-    rw [show (fun x => (word (bits x)).getLsbD i.val) = fun x => bits x i from
-      funext fun x => getLsbD_word _ i]
-    exact Or.inl (Or.inl (Or.inl (hb i)))
   let short := fun x => (word (bits x)).ult (BitVec.ofNat m (2 ^ n))
-  have hcmp := Synthesis.word_ult (s := s3) (fun x => word (bits x))
-    (fun _ => BitVec.ofNat m (2 ^ n)) hword
-    fun i => Or.inl (Or.inl (Or.inl (hc ((BitVec.ofNat m (2 ^ n)).getLsbD i.val))))
-  let s4 := s3 ∪ {short}
-  have hresize := wordWires_setWidth_subset (v := n + 3) (s := s4)
-    (value := fun x => word (bits x)) (by rintro _ ⟨i, rfl⟩; exact Or.inl (hword i))
-    (Or.inl (Or.inl (Or.inl (Or.inl (hc false)))))
-  have hmux := Synthesis.word_mux (s := s4) (fun x => (word (bits x)).setWidth (n + 3)) advance
-    short (Or.inr rfl) (fun i => hresize ⟨i, rfl⟩) fun i => Or.inl (Or.inr ⟨i, rfl⟩)
-  exact (hrem.trans (hdiff.trans (hadd.trans (hcmp.trans hmux)))).mono Set.Subset.rfl
-    Set.Subset.rfl (by rw [show n + 3 + 1 = n + 4 from rfl]; omega)
+  have hbound : wordWires bound ⊆ s := by
+    rintro _ ⟨i, rfl⟩
+    exact hc ((BitVec.ofNat (n + 3) (2 ^ n)).getLsbD i.val)
+  have hword : wordWires (fun x => word (bits x)) ⊆ s := by
+    rintro _ ⟨i, rfl⟩
+    simpa only [getLsbD_word] using hb i
+  -- Later stages reuse the remainder and the intermediate compressed words.
+  let b := Synthesis.Builder.start interpretation s
+  synthesis_step b using synthesis_streamRemainder b.wires ell bits
+  synthesis_step b using synthesis_subMod b.wires rem bound ell
+  synthesis_step b using Synthesis.word_add bound difference
+  synthesis_step b using
+    Synthesis.word_ult (fun x => word (bits x)) (fun _ => BitVec.ofNat m (2 ^ n))
+  have hresize := wordWires_setWidth_subset (v := n + 3) (s := b.wires)
+    (value := fun x => word (bits x)) (by synthesis_available) (by synthesis_available)
+  synthesis_step b using
+    Synthesis.word_mux (fun x => (word (bits x)).setWidth (n + 3)) advance short
+  exact b.finish (by synthesis_available)
+    (by
+      dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]
+      rw [show n + 3 + 1 = n + 4 from rfl]
+      omega)
 
 /-- The gate count of the long-time construction: constants, the label circuit, the time
 compression and binary powering over `n + 3` time bits. -/
@@ -154,46 +152,45 @@ theorem long_time_circuit (c : Circuit signature n n) (m L : ℕ) (hnm : n < m) 
   let f := c.eval interpretation
   let init := fun z : BitString (n + m) => fun i : Fin n => z (Fin.castAdd m i)
   let bits := fun z : BitString (n + m) => fun j : Fin m => z (Fin.natAdd n j)
-  let constants : Set (BooleanFunction (n + m)) := {fun _ => false, fun _ => true}
-  have hconst : Synthesis interpretation (inputs (n + m)) constants 2 :=
-    (Synthesis.const false).union (Synthesis.const true)
-  let s0 := inputs (n + m) ∪ constants
-  have hc (b : Bool) : (fun _ : BitString (n + m) => b) ∈ s0 := by
-    cases b <;> simp [s0, constants]
+  let b := (Synthesis.Builder.start interpretation (inputs (n + m))).add
+    ((Synthesis.const false).union (Synthesis.const true))
+  have hc (bit : Bool) : (fun _ : BitString (n + m) => bit) ∈ b.wires := by
+    cases bit <;> synthesis_available
   obtain ⟨labels, hl, hls⟩ := cycle_label_circuit c L hL hLN
-  have hlabels : Synthesis interpretation s0 (wires fun z => canonicalLabel f (init z))
+  have hlabels : Synthesis interpretation b.wires (wires fun z => canonicalLabel f (init z))
       labels.size := by
-    refine (Synthesis.circuit (I := interpretation) (s := s0) labels (fun i z => init z i)
-      fun i => Or.inl ⟨_, rfl⟩).mono Set.Subset.rfl ?_ le_rfl
+    refine (Synthesis.circuit (I := interpretation) (s := b.wires) labels (fun i z => init z i)
+      (by synthesis_available)).mono Set.Subset.rfl ?_ le_rfl
     rintro _ ⟨bit, rfl⟩
     exact ⟨bit, funext fun z => by
       change labels.eval interpretation (init z) bit = _
       rw [hl]⟩
-  let s1 := s0 ∪ wires fun z => canonicalLabel f (init z)
+  let b := b.add hlabels
   let ell := fun z => labelLength (canonicalLabel f (init z))
-  have hlength : wordWires ell ⊆ s1 := by
+  have hlength : wordWires ell ⊆ b.wires := by
     rintro _ ⟨i, rfl⟩
     simp only [ell, labelLength, getLsbD_word]
-    exact Or.inr ⟨_, rfl⟩
-  have htime := synthesis_compressedTime s1 ell bits hlength (fun j => Or.inl (Or.inl ⟨_, rfl⟩))
-    fun b => Or.inl (hc b)
+    synthesis_available
+  synthesis_step b using synthesis_compressedTime b.wires ell bits
   let time := fun z => compressedTime n (ell z) (bits z)
-  let s2 := s1 ∪ wordWires time
-  have hpower := synthesis_binary_powering (m := n + 3) f _
-    (fun j _ => fixed_power n c (2 ^ j) L hL hLN) s2 init (fun z i => (time z).getLsbD i.val)
-    (by rintro _ ⟨i, rfl⟩; exact Or.inl (Or.inl (Or.inl ⟨_, rfl⟩)))
-    (by rintro _ ⟨i, rfl⟩; exact Or.inr ⟨i, rfl⟩)
-  obtain ⟨out, ho, hs⟩ :=
-    (hconst.trans (hlabels.trans (htime.trans hpower))).exists_circuit_outputs
-  refine ⟨out, fun z => ?_, hs.trans ?_⟩
+  synthesis_step b using synthesis_binary_powering (m := n + 3) f _
+      (fun j _ => fixed_power n c (2 ^ j) L hL hLN) b.wires init
+      (fun z i => (time z).getLsbD i.val)
+  have h := b.finish (t := wires fun z =>
+    f^[(word fun i : Fin (n + 3) => (time z).getLsbD i.val).toNat] (init z))
+    (by synthesis_available) (k := longTimeBudget n c.size m L)
+    (by
+      dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]
+      unfold longTimeBudget
+      omega)
+  obtain ⟨out, ho, hs⟩ := h.exists_circuit_outputs
+  refine ⟨out, fun z => ?_, hs⟩
   · rw [ho z]
     change f^[(word fun i : Fin (n + 3) => (time z).getLsbD i.val).toNat] (init z) =
       f^[(word (bits z)).toNat] (init z)
     rw [word_getLsbD]
     simp only [time, ell, canonicalLabel, labelLength_labelBits]
     rw [toNat_compressedTime f _ _ hnm, iterate_normalizedTime]
-  · unfold longTimeBudget
-    omega
 
 theorem longTimeBudget_le (n s m L : ℕ) :
     longTimeBudget n s m L ≤

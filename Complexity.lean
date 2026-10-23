@@ -1760,4 +1760,5 @@ public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init
 public import Complexity.Tactic.Stateful
 public import Complexity.Tactic.Stateful.Init
+public import Complexity.Tactic.Synthesis
 public import Complexity.Tactic.WordRAM

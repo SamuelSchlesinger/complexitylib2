@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Iteration.InputTime
 public import Complexity.Computability.Circuit.Boolean.Iteration.NavigationFeatures
+import Complexity.Tactic.Synthesis
 
 /-!
 # Circuit synthesis for reachability and first hitting times
@@ -64,105 +65,37 @@ theorem synthesis_navigation_given_flag (f : BitString n → BitString n)
       (Set.range fun i z => navigationBits f (inputLeft z) (inputRight z) i)
       (2 + 2 * depth.size + 2 * label.size + transientReach.size +
         50 * (n + 4) ^ 2 + (49 * n + 138)) := by
-  let constants : Set (BooleanFunction (n + n)) := {fun _ => false, fun _ => true}
-  have hconst : Synthesis interpretation (inputs (n + n)) constants 2 :=
-    (Synthesis.const false).union (Synthesis.const true)
-  let s0 := inputs (n + n) ∪ constants
-  have hc0 (b : Bool) : (fun _ : BitString (n + n) => b) ∈ s0 := by
-    cases b <;> simp [s0, constants]
-  have hleft : wires (inputLeft (n := n)) ⊆ s0 := by
-    rintro _ ⟨i, rfl⟩
-    exact Or.inl ⟨Fin.castAdd n i, rfl⟩
-  have hright : wires (inputRight (n := n)) ⊆ s0 := by
-    rintro _ ⟨i, rfl⟩
-    exact Or.inl ⟨Fin.natAdd n i, rfl⟩
-  have hdx := synthesis_depthWord f depth hd s0 inputLeft hleft (hc0 false)
-  have hdy := synthesis_depthWord f depth hd s0 inputRight hright (hc0 false)
-  have hlx := synthesis_label_parts f label hl s0 inputLeft hleft
-  have hly := synthesis_label_parts f label hl s0 inputRight hright
-  have hfeatures := (hdx.union hdy).union (hlx.union hly)
-  let s1 := s0 ∪ ((wordWires (fun z => depthWord f (inputLeft z)) ∪
-      wordWires (fun z => depthWord f (inputRight z))) ∪
-    ((wires (fun z => canonicalCycle f (inputLeft z)) ∪
-        wordWires (fun z => lengthWord f (inputLeft z)) ∪
-        wordWires (fun z => phaseWord f (inputLeft z))) ∪
-      (wires (fun z => canonicalCycle f (inputRight z)) ∪
-        wordWires (fun z => lengthWord f (inputRight z)) ∪
-        wordWires (fun z => phaseWord f (inputRight z)))))
-  have hc1 (b : Bool) : (fun _ : BitString (n + n) => b) ∈ s1 := Or.inl (hc0 b)
-  have hdx1 (bit : Fin (n + 3)) :
-      (fun z => (depthWord f (inputLeft z)).getLsbD bit.val) ∈ s1 :=
-    Or.inr (Or.inl (Or.inl ⟨bit, rfl⟩))
-  have hdy1 (bit : Fin (n + 3)) :
-      (fun z => (depthWord f (inputRight z)).getLsbD bit.val) ∈ s1 :=
-    Or.inr (Or.inl (Or.inr ⟨bit, rfl⟩))
-  have hrepx1 : wires (fun z => canonicalCycle f (inputLeft z)) ⊆ s1 :=
-    fun _ h => Or.inr (Or.inr (Or.inl (Or.inl (Or.inl h))))
-  have hell1 (bit : Fin (n + 3)) :
-      (fun z => (lengthWord f (inputLeft z)).getLsbD bit.val) ∈ s1 :=
-    Or.inr (Or.inr (Or.inl (Or.inl (Or.inr ⟨bit, rfl⟩))))
-  have hpx1 (bit : Fin (n + 3)) :
-      (fun z => (phaseWord f (inputLeft z)).getLsbD bit.val) ∈ s1 :=
-    Or.inr (Or.inr (Or.inl (Or.inr ⟨bit, rfl⟩)))
-  have hrepy1 : wires (fun z => canonicalCycle f (inputRight z)) ⊆ s1 :=
-    fun _ h => Or.inr (Or.inr (Or.inr (Or.inl (Or.inl h))))
-  have hpy1 (bit : Fin (n + 3)) :
-      (fun z => (phaseWord f (inputRight z)).getLsbD bit.val) ∈ s1 :=
-    Or.inr (Or.inr (Or.inr (Or.inr ⟨bit, rfl⟩)))
+  -- The builder retains each stage's wires for the rest of the construction.
+  let b := Synthesis.Builder.start interpretation (inputs (n + n))
+  let b := b.add ((Synthesis.const false).union (Synthesis.const true))
+  synthesis_step b using synthesis_depthWord f depth hd b.wires inputLeft
+  synthesis_step b using synthesis_depthWord f depth hd b.wires inputRight
+  synthesis_step b using synthesis_label_parts f label hl b.wires inputLeft
+  synthesis_step b using synthesis_label_parts f label hl b.wires inputRight
   let diff := fun z => navigationGap f (inputLeft z) (inputRight z)
-  have hsub : Synthesis interpretation s1 (wordWires diff) (13 * (n + 3) + 1) :=
-    Synthesis.word_sub (s := s1)
-      (fun z => depthWord f (inputLeft z)) (fun z => depthWord f (inputRight z)) hdx1 hdy1
-  have hyZero := Synthesis.word_eq_const (s := s1)
-    (fun z => depthWord f (inputRight z)) hdy1 0
-  have hrepEq := synthesis_bits_eq s1
+  synthesis_step b using Synthesis.word_sub
+    (fun z => depthWord f (inputLeft z)) (fun z => depthWord f (inputRight z))
+  synthesis_step b using Synthesis.word_eq_const (v := 0)
+    (fun z => depthWord f (inputRight z))
+  synthesis_step b using synthesis_bits_eq b.wires
     (fun z => canonicalCycle f (inputLeft z)) (fun z => canonicalCycle f (inputRight z))
-    hrepx1 hrepy1
-  have htrSynth : Synthesis interpretation s1
-      {fun z => transientReach.eval interpretation z 0} transientReach.size := by
-    refine (Synthesis.circuit (I := interpretation) (s := s1) transientReach
-      (fun i z => z i) (fun i => Or.inl (Or.inl ⟨i, rfl⟩))).mono Set.Subset.rfl ?_ le_rfl
-    rintro _ rfl
-    exact ⟨0, rfl⟩
+  synthesis_step b using Synthesis.circuit transientReach (fun i z => z i)
   let sumx := fun z => phaseWord f (inputLeft z) + depthWord f (inputLeft z)
-  have hsumx := Synthesis.word_add (s := s1)
-    (fun z => phaseWord f (inputLeft z))
-    (fun z => depthWord f (inputLeft z)) hpx1 hdx1
-  let s2 := s1 ∪ (((wordWires diff ∪
-    {fun z => decide (depthWord f (inputRight z) = 0)}) ∪
-      {fun z => decide (canonicalCycle f (inputLeft z) = canonicalCycle f (inputRight z))}) ∪
-      ({fun z => transientReach.eval interpretation z 0} ∪ wordWires sumx))
-  have hc2 (b : Bool) : (fun _ : BitString (n + n) => b) ∈ s2 := Or.inl (hc1 b)
+  synthesis_step b using Synthesis.word_add
+    (fun z => phaseWord f (inputLeft z)) (fun z => depthWord f (inputLeft z))
   let cycDist := fun z => navigationDistance f (inputLeft z) (inputRight z)
-  have hsubm : Synthesis interpretation s2 (wordWires cycDist) (50 * (n + 4) ^ 2) :=
-    synthesis_subMod s2
-      (fun z => phaseWord f (inputRight z))
-      sumx
-      (fun z => lengthWord f (inputLeft z))
-      (fun bit => Or.inl (hpy1 bit))
-      (fun bit => Or.inr (Or.inr (Or.inr ⟨bit, rfl⟩)))
-      (fun bit => Or.inl (hell1 bit))
-      (hc2 false)
-  let s3 := s2 ∪ wordWires cycDist
-  have hcycAdd := Synthesis.word_add (s := s3)
-    (fun z => depthWord f (inputLeft z)) cycDist
-    (fun bit => Or.inl (Or.inl (hdx1 bit)))
-    (fun bit => Or.inr ⟨bit, rfl⟩)
+  synthesis_step b using synthesis_subMod b.wires (fun z => phaseWord f (inputRight z)) sumx
+    (fun z => lengthWord f (inputLeft z))
   let cycTime := fun z => depthWord f (inputLeft z) + cycDist z
-  let s4 := s3 ∪ wordWires cycTime
-  have hflagMux : Synthesis interpretation s4
+  synthesis_step b using Synthesis.word_add (fun z => depthWord f (inputLeft z)) cycDist
+  have hflagMux : Synthesis interpretation b.wires
       {fun z => if decide (depthWord f (inputRight z) = 0)
         then decide (canonicalCycle f (inputLeft z) = canonicalCycle f (inputRight z))
         else transientReach.eval interpretation z 0} 4 :=
-    Synthesis.mux
-      (Or.inl (Or.inl (Or.inr (Or.inl (Or.inl (Or.inr rfl))))))
-      (Or.inl (Or.inl (Or.inr (Or.inl (Or.inr rfl)))))
-      (Or.inl (Or.inl (Or.inr (Or.inr (Or.inl rfl)))))
-  have htimeMux := Synthesis.word_mux (s := s4) cycTime diff
+    Synthesis.mux (by synthesis_available) (by synthesis_available) (by synthesis_available)
+  have htimeMux := Synthesis.word_mux (s := b.wires) cycTime diff
     (fun z => decide (depthWord f (inputRight z) = 0))
-    (Or.inl (Or.inl (Or.inr (Or.inl (Or.inl (Or.inr rfl))))))
-    (fun bit => Or.inr ⟨bit, rfl⟩)
-    (fun bit => Or.inl (Or.inl (Or.inr (Or.inl (Or.inl (Or.inl ⟨bit, rfl⟩))))))
+    (by synthesis_available) (by synthesis_available) (by synthesis_available)
   have hflagEq : (fun z => if decide (depthWord f (inputRight z) = 0)
       then decide (canonicalCycle f (inputLeft z) = canonicalCycle f (inputRight z))
       else transientReach.eval interpretation z 0) =
@@ -182,14 +115,19 @@ theorem synthesis_navigation_given_flag (f : BitString n → BitString n)
     simp only [navigationTime, cycTime, cycDist, diff, decide_eq_true_eq]
   rw [hflagEq] at hflagMux
   rw [htimeEq] at htimeMux
-  have hchain := hconst.trans (hfeatures.trans
-    ((((hsub.union hyZero).union hrepEq).union (htrSynth.union hsumx)).trans
-      (hsubm.trans (hcycAdd.trans (hflagMux.union htimeMux)))))
-  refine hchain.mono Set.Subset.rfl ?_ (by omega)
-  rintro _ ⟨i, rfl⟩
-  refine Fin.addCases (fun a => ?_) (fun b => ?_) i
-  · exact Or.inl (funext fun z => by simp [navigationBits])
-  · exact Or.inr ⟨⟨b.val, by omega⟩, funext fun z => by simp [navigationBits]⟩
+  let b := b.add (hflagMux.union htimeMux)
+  apply b.finish
+  · rintro _ ⟨i, rfl⟩
+    refine Fin.addCases (fun a => ?_) (fun j => ?_) i
+    · simpa only [navigationBits, Fin.append_left, Fin.isValue, Fin.elim0, Fin.cons_zero] using
+        (show (fun z => navigationFlag f (inputLeft z) (inputRight z)) ∈ b.wires from
+          by synthesis_available)
+    · have h := show (fun z => (navigationTime f (inputLeft z) (inputRight z)).getLsbD
+          (⟨j.val, by omega⟩ : Fin (n + 3)).val) ∈ b.wires from by synthesis_available
+      simpa only [navigationBits, Fin.append_right] using h
+  · dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]
+    rw [show n + 3 + 1 = n + 4 from rfl]
+    omega
 
 /-- Combine depth, cycle-label, and binary-powering circuits into the navigation word. -/
 theorem synthesis_navigation (f : BitString n → BitString n) (K : ℕ)
@@ -204,60 +142,34 @@ theorem synthesis_navigation (f : BitString n → BitString n) (K : ℕ)
       (Set.range fun i z => navigationBits f (inputLeft z) (inputRight z) i)
       (4 + 4 * depth.size + 2 * label.size + (n + 1) * (K + 4 * n) +
         50 * (n + 4) ^ 2 + (73 * n + 198)) := by
-  let constants : Set (BooleanFunction (n + n)) := {fun _ => false, fun _ => true}
-  have hconst : Synthesis interpretation (inputs (n + n)) constants 2 :=
-    (Synthesis.const false).union (Synthesis.const true)
-  let s0 := inputs (n + n) ∪ constants
-  have hc0 (b : Bool) : (fun _ : BitString (n + n) => b) ∈ s0 := by
-    cases b <;> simp [s0, constants]
-  have hleft : wires (inputLeft (n := n)) ⊆ s0 := by
-    rintro _ ⟨i, rfl⟩
-    exact Or.inl ⟨Fin.castAdd n i, rfl⟩
-  have hright : wires (inputRight (n := n)) ⊆ s0 := by
-    rintro _ ⟨i, rfl⟩
-    exact Or.inl ⟨Fin.natAdd n i, rfl⟩
-  have hdx := synthesis_depthWord f depth hd s0 inputLeft hleft (hc0 false)
-  have hdy := synthesis_depthWord f depth hd s0 inputRight hright (hc0 false)
-  let s1 := s0 ∪ (wordWires (fun z => depthWord f (inputLeft z)) ∪
-    wordWires (fun z => depthWord f (inputRight z)))
-  have hdx1 (bit : Fin (n + 3)) :
-      (fun z => (depthWord f (inputLeft z)).getLsbD bit.val) ∈ s1 :=
-    Or.inr (Or.inl ⟨bit, rfl⟩)
-  have hdy1 (bit : Fin (n + 3)) :
-      (fun z => (depthWord f (inputRight z)).getLsbD bit.val) ∈ s1 :=
-    Or.inr (Or.inr ⟨bit, rfl⟩)
+  let b := Synthesis.Builder.start interpretation (inputs (n + n))
+  let b := b.add ((Synthesis.const false).union (Synthesis.const true))
+  synthesis_step b using synthesis_depthWord f depth hd b.wires inputLeft
+  synthesis_step b using synthesis_depthWord f depth hd b.wires inputRight
   let diff := fun z => navigationGap f (inputLeft z) (inputRight z)
-  have hsub : Synthesis interpretation s1 (wordWires diff) (13 * (n + 3) + 1) :=
-    Synthesis.word_sub (s := s1)
-      (fun z => depthWord f (inputLeft z)) (fun z => depthWord f (inputRight z)) hdx1 hdy1
-  have hult := Synthesis.word_ult (s := s1)
-    (fun z => depthWord f (inputLeft z)) (fun z => depthWord f (inputRight z)) hdx1 hdy1
-  let s2 : Set (BooleanFunction (n + n)) := s1 ∪ (wordWires diff ∪
-    {fun z : BitString (n + n) => (depthWord f (inputLeft z)).ult (depthWord f (inputRight z))})
-  have hleSynth : Synthesis interpretation s2
+  synthesis_step b using Synthesis.word_sub
+      (fun z => depthWord f (inputLeft z)) (fun z => depthWord f (inputRight z))
+  synthesis_step b using Synthesis.word_ult
+      (fun z => depthWord f (inputLeft z)) (fun z => depthWord f (inputRight z))
+  have hleSynth : Synthesis interpretation b.wires
       {fun z => !(depthWord f (inputLeft z)).ult (depthWord f (inputRight z))} 1 :=
-    (Synthesis.of_mem (Or.inr (Or.inr rfl))).not
+    (Synthesis.of_mem (by synthesis_available)).not
+  let b := b.add hleSynth
   let diffBits : BitString (n + n) → BitString (n + 1) :=
-    fun z (i : Fin (n + 1)) => (diff z).getLsbD i.val
-  have hvar := synthesis_binary_powering (m := n + 1) f K hpowers s2 inputLeft diffBits
-    (fun _ h => Or.inl (Or.inl (hleft h)))
-    (by rintro _ ⟨i, rfl⟩; exact Or.inr (Or.inl ⟨⟨i.val, by omega⟩, rfl⟩))
-  let s3 : Set (BooleanFunction (n + n)) := s2 ∪
-    ({fun z : BitString (n + n) => !(depthWord f (inputLeft z)).ult (depthWord f (inputRight z))} ∪
-      wires (fun z => f^[(word (diffBits z)).toNat] (inputLeft z)))
-  have hmatchEq := synthesis_bits_eq s3
-    (fun z => f^[(word (diffBits z)).toNat] (inputLeft z)) inputRight
-    (fun _ h => Or.inr (Or.inr h))
-    (fun _ h => Or.inl (Or.inl (Or.inl (hright h))))
-  let s4 : Set (BooleanFunction (n + n)) :=
-    s3 ∪ {fun z : BitString (n + n) =>
-      decide (f^[(word (diffBits z)).toNat] (inputLeft z) = inputRight z)}
-  have htrFlag : Synthesis interpretation s4
-      {fun z => (!(depthWord f (inputLeft z)).ult (depthWord f (inputRight z))) &&
-        decide (f^[(word (diffBits z)).toNat] (inputLeft z) = inputRight z)} 1 :=
-    (Synthesis.of_mem (Or.inl (Or.inr (Or.inl rfl)))).and (Synthesis.of_mem (Or.inr rfl))
-  have htrAll := hconst.trans ((hdx.union hdy).trans ((hsub.union hult).trans
-    ((hleSynth.union hvar).trans (hmatchEq.trans htrFlag))))
+    fun z i => (diff z).getLsbD i.val
+  have hdiffBits : wires diffBits ⊆ wordWires diff := by
+    rintro _ ⟨i, rfl⟩
+    exact ⟨⟨i.val, by omega⟩, rfl⟩
+  synthesis_step b using
+    synthesis_binary_powering (m := n + 1) f K hpowers b.wires inputLeft diffBits
+  synthesis_step b using synthesis_bits_eq b.wires
+      (fun z => f^[(word (diffBits z)).toNat] (inputLeft z)) inputRight
+  let transientFlag := fun z => (!(depthWord f (inputLeft z)).ult (depthWord f (inputRight z))) &&
+    decide (f^[(word (diffBits z)).toNat] (inputLeft z) = inputRight z)
+  have htrFlag : Synthesis interpretation b.wires {transientFlag} 1 :=
+    (Synthesis.of_mem (by synthesis_available)).and (Synthesis.of_mem (by synthesis_available))
+  let b := b.add htrFlag
+  have htrAll := b.finish (t := {transientFlag}) (by synthesis_available) le_rfl
   obtain ⟨transientReach, htrEval, htrSize⟩ := htrAll.exists_circuit
   have htrSpec (z : BitString (n + n)) (hy : 0 < transientDepth f (inputRight z)) :
       transientReach.eval interpretation z 0 = true ↔
@@ -291,6 +203,7 @@ theorem synthesis_navigation (f : BitString n → BitString n) (K : ℕ)
       exact ⟨hle, by rwa [hdiffToNat hle]⟩
   have hmain := synthesis_navigation_given_flag f depth hd label hl transientReach htrSpec
   refine hmain.mono Set.Subset.rfl Set.Subset.rfl ?_
+  dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start] at htrSize
   omega
 
 end Cslib.Circuits.Boolean.Iteration

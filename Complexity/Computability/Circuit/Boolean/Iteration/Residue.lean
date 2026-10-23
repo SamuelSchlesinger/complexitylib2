@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Computability.Circuit.Iteration
 public import Complexity.Foundations.Combinatorics.FunctionalGraph
+import Complexity.Tactic.Synthesis
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -142,13 +143,13 @@ theorem synthesis_liftWord {n w : ℕ} (s : Set (BooleanFunction n))
     (hr : ∀ i : Fin w, (fun x => (r x).getLsbD i.val) ∈ s) :
     Synthesis interpretation s (wordWires fun x => liftWord (lower x) (period x) (r x))
       (21 * w + 3) := by
-  have hsum := Synthesis.word_add (s := s) r period hr hp
-  have hcmp := Synthesis.word_ult (s := s) r lower hr hl
-  have hmux := Synthesis.word_mux (s :=
-    s ∪ (wordWires (fun x => r x + period x) ∪ {fun x => (r x).ult (lower x)}))
-    (fun x => r x + period x) r (fun x => (r x).ult (lower x))
-    (Or.inr (Or.inr rfl)) (fun i => Or.inr (Or.inl ⟨i, rfl⟩)) (fun i => Or.inl (hr i))
-  exact ((hsum.union hcmp).trans hmux).mono Set.Subset.rfl Set.Subset.rfl (by omega)
+  let build := Synthesis.Builder.start interpretation s
+  synthesis_step build using Synthesis.word_add r period
+  synthesis_step build using Synthesis.word_ult r lower
+  synthesis_step build using Synthesis.word_mux (fun x => r x + period x) r
+    (fun x => (r x).ult (lower x))
+  exact build.finish (by synthesis_available)
+    (by dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]; omega)
 
 /-- Iterated word corrections, sharing all intermediate words. -/
 theorem synthesis_liftWord_iterate {n w : ℕ} (s : Set (BooleanFunction n))
@@ -191,13 +192,12 @@ theorem synthesis_repeatWordIndex {n w : ℕ} (s : Set (BooleanFunction n))
       (100 * (K + 1) * (w + 1) ^ 2) := by
   let p := fun x => hi x - lo x
   let r := fun x => residueWord T K (p x)
-  have hp := Synthesis.word_sub (s := s) hi lo hhi hlo
-  have hr := synthesis_residueWord (s ∪ wordWires p) T K p
-    (fun i => Or.inr ⟨i, rfl⟩) fun b => Or.inl (hconst b)
-  have hout := synthesis_liftWord_iterate (s ∪ (wordWires p ∪ wordWires r)) lo p r
-    (fun i => Or.inl (hlo i)) (fun i => Or.inr (Or.inl ⟨i, rfl⟩))
-    (fun i => Or.inr (Or.inr ⟨i, rfl⟩)) K
-  apply ((hp.comp hr).trans hout).mono Set.Subset.rfl Set.Subset.rfl
-  nlinarith [Nat.zero_le (K * w ^ 2), Nat.zero_le (K * w)]
+  let build := Synthesis.Builder.start interpretation s
+  synthesis_step build using Synthesis.word_sub hi lo
+  synthesis_step build using synthesis_residueWord build.wires T K p
+  synthesis_step build using synthesis_liftWord_iterate (K := K) build.wires lo p r
+  exact build.finish (by synthesis_available) (by
+    dsimp +zetaDelta [Synthesis.Builder.add, Synthesis.Builder.start]
+    nlinarith [Nat.zero_le (K * w ^ 2), Nat.zero_le (K * w)])
 
 end Cslib.Circuits.Boolean.Iteration
