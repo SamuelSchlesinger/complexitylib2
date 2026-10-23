@@ -103,27 +103,21 @@ private def field (name : String) (value : String) : String × Json := (name, to
 def search (env : Environment) (type : Expr) (budget : Nat) (forbidden : Std.HashSet Name := {}) : IO Json := do
   let opts := Lean.maxHeartbeats.set {} budget
   let action : MetaM Json := do
+    let goal ← mkFreshExprMVar type
+    let tacticCode ← `(tactic| fun_prop)
     let start ← IO.getNumHeartbeats
-    let ctx : Mathlib.Meta.FunProp.Context := {
-      disch := fun e => do
-        try
-          let goal ← mkFreshExprMVar e
-          if ← goal.mvarId!.assumptionCore then return some (← instantiateMVars goal)
-          return none
-        catch _ => return none }
-    let state : Mathlib.Meta.FunProp.State := {
-      morTheorems := morTheoremsExt.getState (← getEnv)
-      transitionTheorems := transitionTheoremsExt.getState (← getEnv) }
-    let (result, _) ← (funProp type ctx).run state
+    let (goals, _) ← Lean.Elab.runTactic goal.mvarId! tacticCode
     let used := (← IO.getNumHeartbeats) - start
-    if let some result := result then
-      let leaked := (constants result.proof).filter forbidden.contains
-      unless leaked.isEmpty do throwError "held-out certificate leaked into proof: {leaked}"
-      checkWithKernel result.proof
-      unless ← isDefEq (← inferType result.proof) type do throwError "wrong search proof type"
-      return Json.mkObj [field "status" "success", ("heartbeats_raw", toJson used),
-        ("proof_constants", toJson ((constants result.proof).map Name.toString))]
-    return Json.mkObj [field "status" "failed", ("heartbeats_raw", toJson used)]
+    unless goals.isEmpty do
+      return Json.mkObj [field "status" "failed", ("heartbeats_raw", toJson used)]
+    let proof ← instantiateMVars goal
+    if proof.hasExprMVar then throwError "search left unresolved metavariables"
+    let leaked := (constants proof).filter forbidden.contains
+    unless leaked.isEmpty do throwError "held-out certificate leaked into proof: {leaked}"
+    checkWithKernel proof
+    unless ← isDefEq (← inferType proof) type do throwError "wrong search proof type"
+    return Json.mkObj [field "status" "success", ("heartbeats_raw", toJson used),
+      ("proof_constants", toJson ((constants proof).map Name.toString))]
   let start ← IO.getNumHeartbeats
   try
     let context : Lean.Core.Context := {
