@@ -69,7 +69,7 @@ theorem acceptCount_powerVerifier (r k : α → ℕ) (V : α × List Bool → Bo
 theorem pow_mem_polyTime {f : α → ℕ} {r : α → ℕ} (hf : f ∈ SharpP enc)
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     (fun a => f a ^ r a) ∈ SharpP enc := by
-  obtain ⟨p, V, hV, hf⟩ := hf
+  obtain ⟨p, V, hV, hf⟩ := mem_SharpP_iff_tidy.mp hf
   let k : α → ℕ := fun a => p.eval (enc a).length
   have hk : ComputableTidilyInPolyTime k enc encUnary := by dsimp [k]; fun_prop
   convert SharpP.of_polyTime_length (polyTime_powerVerifier hr hk hV)

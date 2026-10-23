@@ -152,7 +152,8 @@ theorem mem_WPP_iff_exists_disjoint_targets {α : Type} {enc : α ↪ List Bool}
       (∀ a, (yes a).Disjoint (no a)) ∧
       (∀ a, a ∈ A → g a ∈ yes a) ∧ ∀ a, a ∉ A → g a ∈ no a := by
   constructor
-  · rintro ⟨g, hg, f, hf, hn, hr, hA⟩
+  · rw [mem_WPP_iff_tidy]
+    rintro ⟨g, hg, f, hf, hn, hr, hA⟩
     refine ⟨g, hg, fun a => [f a], fun _ => [0], by fun_prop, .const _, ?_, ?_, ?_⟩
     · intro a
       simpa using Ne.symm (hn a)
@@ -175,7 +176,8 @@ theorem mem_LWPP_iff_exists_disjoint_targets {α : Type} {enc : α ↪ List Bool
       (∀ a, a ∈ A → g a ∈ yes (enc a).length) ∧
       ∀ a, a ∉ A → g a ∈ no (enc a).length := by
   constructor
-  · rintro ⟨g, hg, f, hf, hn, hr, hA⟩
+  · rw [mem_LWPP_iff_tidy]
+    rintro ⟨g, hg, f, hf, hn, hr, hA⟩
     refine ⟨g, hg, fun n => [f n], fun _ => [0], by fun_prop, .const _, ?_, ?_, ?_⟩
     · intro n
       simpa using Ne.symm (hn n)

@@ -51,6 +51,7 @@ Oracle lowness of `WPP` and `LWPP` is separate.
 
 ## Main results
 
+* `mem_WPP_iff_tidy`, `mem_LWPP_iff_tidy`: membership through a tidy target machine.
 * `SPP_subset_LWPP`, `LWPP_subset_WPP`, `UP_subset_LWPP`, `UP_subset_WPP`,
   `coUP_subset_LWPP`, `coUP_subset_WPP`, `FewP_subset_LWPP`, `FewP_subset_WPP`,
   `WPP_subset_CeqP`, `WPP_subset_coCeqP`.
@@ -82,14 +83,38 @@ variable {α β : Type} {enc : α ↪ List Bool} {A B : Set α}
 
 /-- Wide gaps: zero on nonmembers and a nonzero binary FP target on members. -/
 def WPP (enc : α ↪ List Bool) : Set (Set α) :=
-  {A | ∃ g ∈ GapP enc, ∃ f : α → ℤ, ComputableTidilyInPolyTime f enc encIntBin ∧
+  {A | ∃ g ∈ GapP enc, ∃ f : α → ℤ, ComputableInPolyTime f enc encIntBin ∧
     (∀ a, f a ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f a) ∧ ∀ a, a ∈ A ↔ g a = f a}
 
 /-- Wide gaps with a target computed in polynomial time from unary input length. -/
 def LWPP (enc : α ↪ List Bool) : Set (Set α) :=
-  {A | ∃ g ∈ GapP enc, ∃ f : ℕ → ℤ, ComputableTidilyInPolyTime f encUnary encIntBin ∧
+  {A | ∃ g ∈ GapP enc, ∃ f : ℕ → ℤ, ComputableInPolyTime f encUnary encIntBin ∧
     (∀ n, f n ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f (enc a).length) ∧
     ∀ a, a ∈ A ↔ g a = f (enc a).length}
+
+theorem mem_WPP : A ∈ WPP enc ↔ ∃ g ∈ GapP enc, ∃ f : α → ℤ,
+    ComputableInPolyTime f enc encIntBin ∧
+      (∀ a, f a ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f a) ∧ ∀ a, a ∈ A ↔ g a = f a :=
+  Iff.rfl
+
+/-- `Cslib.Complexity.mem_WPP` with a tidy target machine, for proofs that compose machines. -/
+theorem mem_WPP_iff_tidy : A ∈ WPP enc ↔ ∃ g ∈ GapP enc, ∃ f : α → ℤ,
+    ComputableTidilyInPolyTime f enc encIntBin ∧
+      (∀ a, f a ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f a) ∧ ∀ a, a ∈ A ↔ g a = f a := by
+  simp only [mem_WPP, computableInPolyTime_iff_computableTidilyInPolyTime]
+
+theorem mem_LWPP : A ∈ LWPP enc ↔ ∃ g ∈ GapP enc, ∃ f : ℕ → ℤ,
+    ComputableInPolyTime f encUnary encIntBin ∧
+      (∀ n, f n ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f (enc a).length) ∧
+      ∀ a, a ∈ A ↔ g a = f (enc a).length :=
+  Iff.rfl
+
+/-- `Cslib.Complexity.mem_LWPP` with a tidy target machine, for proofs that compose machines. -/
+theorem mem_LWPP_iff_tidy : A ∈ LWPP enc ↔ ∃ g ∈ GapP enc, ∃ f : ℕ → ℤ,
+    ComputableTidilyInPolyTime f encUnary encIntBin ∧
+      (∀ n, f n ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f (enc a).length) ∧
+      ∀ a, a ∈ A ↔ g a = f (enc a).length := by
+  simp only [mem_LWPP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 /-- The constant target one witnesses the SPP containment. -/
 theorem SPP_subset_LWPP : SPP enc ⊆ LWPP enc := by
@@ -100,7 +125,7 @@ theorem SPP_subset_LWPP : SPP enc ⊆ LWPP enc := by
 theorem LWPP_subset_WPP : LWPP enc ⊆ WPP enc := by
   rintro A ⟨g, hg, f, hf, hn, hr, hA⟩
   exact ⟨g, hg, fun a => f (enc a).length,
-    hf.comp (.encoding_length enc), fun a => hn _, hr, hA⟩
+    .of_tidy (hf.tidy.comp (.encoding_length enc)), fun a => hn _, hr, hA⟩
 
 /-- Unambiguous polynomial time is contained in `LWPP` via `SPP`. -/
 theorem UP_subset_LWPP : UP enc ⊆ LWPP enc :=
@@ -129,7 +154,7 @@ theorem FewP_subset_WPP : FewP enc ⊆ WPP enc :=
 /-- Subtraction of the target gives a zero test for WPP membership. -/
 theorem WPP_subset_CeqP : WPP enc ⊆ CeqP enc := by
   rintro A ⟨g, hg, f, hf, -, -, hA⟩
-  exact ⟨g - f, GapP.sub_mem' hg (GapP.of_polyTime hf), fun a => by
+  exact ⟨g - f, GapP.sub_mem' hg (GapP.of_polyTime hf.tidy), fun a => by
     simpa [sub_eq_zero] using hA a⟩
 
 /-- A WPP gap is nonzero exactly on members. -/
@@ -141,6 +166,7 @@ theorem WPP_subset_coCeqP : WPP enc ⊆ coCeqP enc := by
 
 /-- Complement exchanges the zero and target values. -/
 theorem compl_mem_WPP (hA : A ∈ WPP enc) : Aᶜ ∈ WPP enc := by
+  rw [mem_WPP_iff_tidy] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hr, hA⟩ := hA
   refine ⟨f - g, GapP.sub_mem' (GapP.of_polyTime hf) hg, f, hf, hn,
     fun a => ?_, fun a => ?_⟩
@@ -149,6 +175,7 @@ theorem compl_mem_WPP (hA : A ∈ WPP enc) : Aᶜ ∈ WPP enc := by
 
 /-- Products preserve the zero-or-target condition and the target is still nonzero. -/
 theorem inter_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∩ B ∈ WPP enc := by
+  rw [mem_WPP_iff_tidy] at hA hB ⊢
   obtain ⟨g, hg, f, hf, hn, hr, hA⟩ := hA
   obtain ⟨g', hg', f', hf', hn', hr', hB⟩ := hB
   refine ⟨g * g', GapP.mul_mem hg hg', f * f', hf.intBin_mul' hf',
@@ -176,11 +203,12 @@ theorem PolyTimeReducible.mem_WPP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ WPP encB) : A ∈ WPP enc := by
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨g, hg, f, hf, hn, hgr, hB⟩ := hB
-  exact ⟨g ∘ r, GapP.comp_mem hg hr, f ∘ r, hf.comp hr, fun a => hn _,
+  exact ⟨g ∘ r, GapP.comp_mem hg hr, f ∘ r, .of_tidy (hf.tidy.comp hr), fun a => hn _,
     fun a => hgr _, fun a => (hAB a).trans (hB _)⟩
 
 /-- The complementary gap uses the same length-dependent target. -/
 theorem compl_mem_LWPP (hA : A ∈ LWPP enc) : Aᶜ ∈ LWPP enc := by
+  rw [mem_LWPP_iff_tidy] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hr, hA⟩ := hA
   have htarget := GapP.of_polyTime (hf.comp (.encoding_length enc))
   refine ⟨(fun a => f (enc a).length) - g, GapP.sub_mem' htarget hg,
@@ -190,6 +218,7 @@ theorem compl_mem_LWPP (hA : A ∈ LWPP enc) : Aᶜ ∈ LWPP enc := by
 
 /-- Multiplying length-dependent targets preserves length dependence. -/
 theorem inter_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∩ B ∈ LWPP enc := by
+  rw [mem_LWPP_iff_tidy] at hA hB ⊢
   obtain ⟨g, hg, f, hf, hn, hr, hA⟩ := hA
   obtain ⟨g', hg', f', hf', hn', hr', hB⟩ := hB
   refine ⟨g * g', GapP.mul_mem hg hg', f * f', hf.intBin_mul' hf',
@@ -286,7 +315,7 @@ theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} 
     (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i a)
     (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i a) : A ∈ WPP enc := by
   obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg hf hn hr hA
-  exact ⟨G, hG, _, finset_prod_intBin s hf,
+  exact ⟨G, hG, _, .of_tidy (finset_prod_intBin s hf),
     fun a => Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi a, hR, hGA⟩
 
 /-- **Finite multiple-target robustness for `LWPP`:** a `GapP` function that takes `0` outside `A`
@@ -302,7 +331,7 @@ theorem mem_LWPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ}
   obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg
     (fun i hi => (hf i hi).comp (.encoding_length enc))
     (fun i hi a => hn i hi (enc a).length) hr hA
-  exact ⟨G, hG, fun n => ∏ i ∈ s, f i n, finset_prod_intBin s hf,
+  exact ⟨G, hG, fun n => ∏ i ∈ s, f i n, .of_tidy (finset_prod_intBin s hf),
     fun n => Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi n, hR, hGA⟩
 
 /-! ### Unary-indexed target normalization and `LWPP` reduction closure -/
@@ -379,7 +408,8 @@ theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α �
         (ComputableTidilyInPolyTime.filterWithInput hlist htest))
   have hmul (a : α) : f (k a) * h a = F (enc a).length :=
     mul_prod_filter_range_ne f (hlt a)
-  refine ⟨g * h, GapP.mul_mem hg (GapP.of_polyTime hh), F, hF, hFn, fun a => ?_, fun a => ?_⟩
+  refine ⟨g * h, GapP.mul_mem hg (GapP.of_polyTime hh), F, .of_tidy hF, hFn, fun a => ?_,
+    fun a => ?_⟩
   · rcases hr a with hz | hfk
     · exact Or.inl (by simp [hz])
     · exact Or.inr (by simp [hfk, hmul a])
@@ -396,7 +426,7 @@ theorem PolyTimeReducible.mem_LWPP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ LWPP encB) : A ∈ LWPP enc := by
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨g, hg, f, hf, hn, hgr, hB⟩ := hB
-  exact mem_LWPP_of_polyTime_index (GapP.comp_mem hg hr) hf hn
+  exact mem_LWPP_of_polyTime_index (GapP.comp_mem hg hr) hf.tidy hn
     ((ComputableTidilyInPolyTime.encoding_length encB).comp hr)
     (fun a => hgr (r a)) (fun a => (hAB a).trans (hB (r a)))
 

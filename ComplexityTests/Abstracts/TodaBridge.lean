@@ -123,8 +123,7 @@ theorem strict_iff {α β : Type} {enc : α ↪ List Bool} {out : β ↪ List Bo
 
 theorem sharpP_eq {α : Type} (enc : α ↪ List Bool) : SharpP enc = Cslib.Complexity.SharpP enc := by
   ext f
-  exact exists_congr fun p => exists_congr fun V => and_congr_left fun _ =>
-    CookLevinBridge.computableInPolyTime_iff_tidy
+  exact exists_congr fun p => exists_congr fun V => and_congr_left fun _ => Iff.rfl
 
 theorem alternation_eq (q : Bool) (ns : List ℕ) (V : List Bool → Prop) :
     Alternation q ns V ↔ Cslib.Complexity.Alternation q ns V := by
@@ -139,13 +138,11 @@ theorem ph_eq {α : Type} (enc : α ↪ List Bool) : PH enc = Cslib.Complexity.P
   ext A
   constructor
   · rintro ⟨ps, V, hV, hA⟩
-    exact Cslib.Complexity.mem_PH.mpr ⟨ps.length, ps, V, rfl,
-      CookLevinBridge.computableInPolyTime_iff_tidy.mp hV,
+    exact Cslib.Complexity.mem_PH.mpr ⟨ps.length, ps, V, rfl, hV,
       fun a => (hA a).trans (alternation_eq _ _ _)⟩
   · intro h
     obtain ⟨_, ps, V, _, hV, hA⟩ := Cslib.Complexity.mem_PH.mp h
-    exact ⟨ps, V, CookLevinBridge.computableInPolyTime_iff_tidy.mpr hV,
-      fun a => (hA a).trans (alternation_eq _ _ _).symm⟩
+    exact ⟨ps, V, hV, fun a => (hA a).trans (alternation_eq _ _ _).symm⟩
 
 theorem psharp_eq {α : Type} (enc : α ↪ List Bool) :
     PWithSharpPOracle enc = Cslib.Complexity.PWithSharpPOracle enc := by

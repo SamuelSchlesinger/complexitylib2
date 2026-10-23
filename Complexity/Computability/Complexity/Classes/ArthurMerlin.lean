@@ -57,6 +57,8 @@ the second level of the polynomial hierarchy in
 
 ## Main results
 
+* `Cslib.Complexity.mem_MA_iff_tidy`, `Cslib.Complexity.mem_AM_iff_tidy`: membership through a
+  tidy verifier.
 * `Cslib.Complexity.NP_subset_MA`, `Cslib.Complexity.BPP_subset_MA`.
 * `Cslib.Complexity.PolyTimeReducible.mem_MA`, `Cslib.Complexity.PolyTimeReducible.mem_AM`:
   closure under polynomial-time many-one reductions.
@@ -96,12 +98,18 @@ def IsMerlinArthurVerifier (enc : α ↪ List Bool) (q p : Polynomial ℕ) (V : 
 random strings, with respect to the encoding `enc` of instances [Babai][Babai1985]. -/
 def MA (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (q p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsMerlinArthurVerifier enc q p V A}
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsMerlinArthurVerifier enc q p V A}
 
 theorem mem_MA : A ∈ MA enc ↔ ∃ (q p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsMerlinArthurVerifier enc q p V A :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_MA` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_MA_iff_tidy : A ∈ MA enc ↔ ∃ (q p : Polynomial ℕ) (V : α × List Bool → Bool),
+    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      IsMerlinArthurVerifier enc q p V A := by
+  simp only [mem_MA, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 /-! ### Arthur–Merlin -/
 
@@ -123,12 +131,18 @@ strings and replies, with respect to the encoding `enc` of instances
 [Babai][Babai1985], [Babai and Moran][BabaiMoran1988]. -/
 def AM (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsArthurMerlinVerifier enc p q V A}
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsArthurMerlinVerifier enc p q V A}
 
 theorem mem_AM : A ∈ AM enc ↔ ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsArthurMerlinVerifier enc p q V A :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_AM` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_AM_iff_tidy : A ∈ AM enc ↔ ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool),
+    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      IsArthurMerlinVerifier enc p q V A := by
+  simp only [mem_AM, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 /-! ### `NP` and `BPP` -/
 
@@ -143,7 +157,7 @@ private theorem two_mul_two_pow_le_card_filter_of_eq_zero {m : ℕ} (hm : m = 0)
 /-- **`NP ⊆ MA`**: an `NP` verifier is a Merlin–Arthur verifier that flips no coins. -/
 theorem NP_subset_MA : NP enc ⊆ MA enc := by
   rintro A ⟨p, V, hV, hA⟩
-  refine ⟨p, 0, V, hV, fun a => ⟨fun ha => ?_, fun ha y => ?_⟩⟩
+  refine ⟨p, 0, V, .of_tidy hV, fun a => ⟨fun ha => ?_, fun ha y => ?_⟩⟩
   · obtain ⟨w, hw, hVw⟩ := (hA a).1 ha
     refine ⟨BitString.ofList _ w, two_mul_two_pow_le_card_filter_of_eq_zero
       (Polynomial.eval_zero) _ fun r => ?_⟩
@@ -216,8 +230,8 @@ theorem PolyTimeReducible.mem_MA {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ MA encB) : A ∈ MA enc := by
   obtain ⟨f, hf, hAB⟩ := h
   obtain ⟨q, p, V, hV, hVB⟩ := hB
-  obtain ⟨Q, P, V', hV', hQe, hPe, hsplit⟩ := exists_truncated_verifier hf q p hV
-  refine ⟨Q, P, V', hV', fun a => ?_⟩
+  obtain ⟨Q, P, V', hV', hQe, hPe, hsplit⟩ := exists_truncated_verifier hf q p hV.tidy
+  refine ⟨Q, P, V', .of_tidy hV', fun a => ?_⟩
   simp only [hsplit]
   constructor
   · intro ha
@@ -240,8 +254,8 @@ theorem PolyTimeReducible.mem_AM {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ AM encB) : A ∈ AM enc := by
   obtain ⟨f, hf, hAB⟩ := h
   obtain ⟨p, q, V, hV, hVB⟩ := hB
-  obtain ⟨P, Q, V', hV', hPe, hQe, hsplit⟩ := exists_truncated_verifier hf p q hV
-  refine ⟨P, Q, V', hV', fun a => ?_⟩
+  obtain ⟨P, Q, V', hV', hPe, hQe, hsplit⟩ := exists_truncated_verifier hf p q hV.tidy
+  refine ⟨P, Q, V', .of_tidy hV', fun a => ?_⟩
   have hex (r : Fin (P.eval (enc a).length) → Bool) :
       (∃ y : Fin (Q.eval (enc a).length) → Bool, V (f a, (List.ofFn r).take
           (p.eval (encB (f a)).length) ++ (List.ofFn y).take (q.eval (encB (f a)).length)) = true) ↔

@@ -91,14 +91,14 @@ example : (Set.univ : Set (List Bool)) ∈ NP encBits :=
   ⟨0, fun _ => true, polyTime_const _ true, fun _ => by simp⟩
 
 example : (∅ : Set (List Bool)) ∈ BPP encBits :=
-  ⟨0, fun _ => false, polyTime_const _ false, fun _ => ⟨fun h => h.elim, fun _ => by
+  ⟨0, fun _ => false, .const false, fun _ => ⟨fun h => h.elim, fun _ => by
       simp only [Polynomial.eval_zero, pow_zero, mul_one]
       exact le_trans (by norm_num : 2 ≤ 3 * 1)
         (Nat.mul_le_mul_left 3 (Finset.card_pos.2
           ⟨fun _ => false, Finset.mem_filter.2 ⟨Finset.mem_univ _, trivial⟩⟩))⟩⟩
 
 example : (∅ : Set (List Bool)) ∈ RP encBits :=
-  ⟨0, fun _ => false, polyTime_const _ false, fun _ => ⟨fun h => h.elim, fun _ _ => rfl⟩⟩
+  ⟨0, fun _ => false, .const false, fun _ => ⟨fun h => h.elim, fun _ _ => rfl⟩⟩
 
 /-- `P ⊆ P/poly` applies to a language in `P`. -/
 example : (⊤ : Language Bool) ∈ PPoly :=
@@ -106,7 +106,7 @@ example : (⊤ : Language Bool) ∈ PPoly :=
 
 /-- `BPP ⊆ P/poly` applies to a language in `BPP`. -/
 example : (⊥ : Language Bool) ∈ PPoly :=
-  PPoly.of_mem_BPP ⟨0, fun _ => false, polyTime_const _ false,
+  PPoly.of_mem_BPP ⟨0, fun _ => false, .const false,
     fun _ => ⟨fun h => h.elim, fun _ => by
       simp only [Polynomial.eval_zero, pow_zero, mul_one]
       exact le_trans (by norm_num : 2 ≤ 3 * 1)

@@ -49,7 +49,7 @@ theorem SharpP.sum_bits_mem {f : α × List Bool → ℕ} {r : α → ℕ}
     (hf : f ∈ SharpP (encPair enc encBits))
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     (fun a => ∑ w : Fin (r a) → Bool, f (a, List.ofFn w)) ∈ SharpP enc := by
-  obtain ⟨p, V, hV, hf⟩ := hf
+  obtain ⟨p, V, hV, hf⟩ := mem_SharpP_iff_tidy.mp hf
   let q : α → ℕ := fun a => p.eval (2 * (enc a).length + 1 + r a)
   let W : α × List Bool → Bool := fun x => V ((x.1, x.2.take (r x.1)), x.2.drop (r x.1))
   have hq : ComputableTidilyInPolyTime q enc encUnary := by dsimp [q]; fun_prop
@@ -163,6 +163,8 @@ theorem GapP.pow_mem_polyTime {g : α → ℤ} {r : α → ℕ} (hg : g ∈ GapP
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     (fun a => g a ^ r a) ∈ GapP enc := by
   obtain ⟨f₁, ⟨p₁, V₁, hV₁, hf₁⟩, f₂, ⟨p₂, V₂, hV₂, hf₂⟩, hg⟩ := hg
+  replace hV₁ := hV₁.tidy
+  replace hV₂ := hV₂.tidy
   let k : α → ℕ := fun a => (p₁ + p₂).eval (enc a).length
   let V := andVerifier (fun a => p₁.eval (enc a).length) V₁ allFalseVerifier
   let W := andVerifier (fun a => p₂.eval (enc a).length) V₂ allFalseVerifier

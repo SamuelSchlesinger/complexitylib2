@@ -45,6 +45,7 @@ Two runs reject a member with probability at most `1 / 4`, so `RP ⊆ BPP`.
 
 ## Main results
 
+* `Cslib.Complexity.mem_RP_iff_tidy`: membership through a tidy verifier.
 * `Cslib.Complexity.RP_subset_NP`, `Cslib.Complexity.coRP_subset_coNP`.
 * `Cslib.Complexity.DecidesWithOneSidedError.repeatAny`: repetition reduces the error to
   `2 ^ (-q(n))`.
@@ -78,7 +79,7 @@ def DecidesWithOneSidedError (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : 
 long random strings, with respect to the encoding `enc` of instances. -/
 def RP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       DecidesWithOneSidedError enc p V A}
 
 /-- The problems whose complements are in `RP`. -/
@@ -87,9 +88,15 @@ def coRP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ RP enc}
 variable {enc : α ↪ List Bool}
 
 theorem mem_RP {A : Set α} : A ∈ RP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       DecidesWithOneSidedError enc p V A :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_RP` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_RP_iff_tidy {A : Set α} : A ∈ RP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      DecidesWithOneSidedError enc p V A := by
+  simp only [mem_RP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 theorem mem_coRP {A : Set α} : A ∈ coRP enc ↔ Aᶜ ∈ RP enc := Iff.rfl
 
@@ -115,7 +122,7 @@ theorem DecidesWithOneSidedError.isVerifier {p : Polynomial ℕ} {V : α × List
     rw [hV] at this
     exact Bool.noConfusion this
 
-theorem RP_subset_NP : RP enc ⊆ NP enc := fun _ ⟨p, V, hV, h⟩ => ⟨p, V, hV, h.isVerifier⟩
+theorem RP_subset_NP : RP enc ⊆ NP enc := fun _ ⟨p, V, hV, h⟩ => ⟨p, V, hV.tidy, h.isVerifier⟩
 
 theorem coRP_subset_coNP : coRP enc ⊆ coNP enc := fun _ hA => RP_subset_NP hA
 
@@ -205,15 +212,15 @@ theorem mem_RP_iff_forall_decidesWithOneSidedErrorExponent {A : Set α} :
       ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithOneSidedErrorExponent enc q p V A := by
   refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨q * p, _,
-    computableTidilyInPolyTime_repeatAny hV _ _, h.repeatAny q⟩, fun h => ?_⟩
+    computableTidilyInPolyTime_repeatAny hV.tidy _ _, h.repeatAny q⟩, fun h => ?_⟩
   obtain ⟨p, V, hV, h⟩ := h 1
-  exact ⟨p, V, hV, h.decidesWithOneSidedError fun _ => by simp⟩
+  exact ⟨p, V, .of_tidy hV, h.decidesWithOneSidedError fun _ => by simp⟩
 
 /-- **`RP ⊆ BPP`** [Arora and Barak, Chapter 7][AroraBarak09]: two runs of a one-sided-error
 decider reject a member with probability at most `1 / 4`. -/
 theorem RP_subset_BPP : RP enc ⊆ BPP enc := fun _ hA => by
   obtain ⟨p, V, hV, h⟩ := mem_RP_iff_forall_decidesWithOneSidedErrorExponent.1 hA 2
-  exact ⟨p, V, hV, h.decidesWithErrorExponent.decidesWithBoundedError fun _ => by simp⟩
+  exact ⟨p, V, .of_tidy hV, h.decidesWithErrorExponent.decidesWithBoundedError fun _ => by simp⟩
 
 /-- **`coRP ⊆ BPP`**: `BPP` is closed under complement. -/
 theorem coRP_subset_BPP : coRP enc ⊆ BPP enc := fun A hA => by

@@ -61,7 +61,8 @@ variable {α β : Type} {A : Set (List Bool)}
 /-- **`RP` relative to an oracle in `P` is `RP`.** -/
 theorem RPWithOracle_eq_RP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
     RPWithOracle A enc = RP enc :=
-  Set.Subset.antisymm (fun _ ⟨p, V, hV, hL⟩ => ⟨p, V, hV.computableTidilyInPolyTime hA, hL⟩)
+  Set.Subset.antisymm
+    (fun _ ⟨p, V, hV, hL⟩ => ⟨p, V, .of_tidy (hV.computableTidilyInPolyTime hA), hL⟩)
     (RP_subset_RPWithOracle A enc)
 
 open Classical in

@@ -216,7 +216,7 @@ theorem PiP_two_subset_SigmaP_two_of_SAT (hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈
     (enc : α ↪ List Bool) : PiP 2 enc ⊆ SigmaP 2 enc := by
   rintro A ⟨ps, V, hlen, hV, hA⟩
   obtain ⟨p, q, rfl⟩ := List.length_eq_two.1 hlen
-  obtain ⟨f, hf, hfB⟩ := CookLevin.SAT_npHard _ _ (mem_NP_setOf_exists_append hV q)
+  obtain ⟨f, hf, hfB⟩ := CookLevin.SAT_npHard _ _ (mem_NP_setOf_exists_append hV.tidy q)
   obtain ⟨L, hL, hSAT⟩ := hSAT
   obtain ⟨C, s, hs, hC⟩ := mem_PPoly_iff_exists_circuits.1 hL
   obtain ⟨c, d, hcd⟩ := polynomiallyBounded_iff_le.1 hs
@@ -248,7 +248,7 @@ theorem PiP_two_subset_SigmaP_two_of_SAT (hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈
       rw [hS]
       exact Nat.mul_le_mul_left c (Nat.pow_le_pow_left (Nat.add_le_add_right hm 1) d))
   refine ⟨[P, p], KarpLipton.verifier enc f S W P, rfl,
-    KarpLipton.computableTidilyInPolyTime_verifier hf S W P, fun a => ?_⟩
+    .of_tidy (KarpLipton.computableTidilyInPolyTime_verifier hf S W P), fun a => ?_⟩
   set n := (enc a).length
   -- membership in `A` through `SAT`
   have hA' : a ∈ A ↔ ∀ u : List Bool, u.length = p.eval n → f (a, u) ∈ SAT := by

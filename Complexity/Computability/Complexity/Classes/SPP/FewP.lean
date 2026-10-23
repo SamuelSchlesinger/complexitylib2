@@ -370,9 +370,9 @@ theorem FewP_subset_SPP : FewP enc ⊆ SPP enc := by
   set O : α → ℕ := fun a =>
     acceptCount (verifier enc p q V true) a ((q * (p + 1)).eval (enc a).length) with hO_def
   have hE : E ∈ SharpP enc :=
-    ⟨q * (p + 1), _, computableTidilyInPolyTime_verifier hV p q false, fun _ => rfl⟩
+    ⟨q * (p + 1), _, .of_tidy (computableTidilyInPolyTime_verifier hV.tidy p q false), fun _ => rfl⟩
   have hO : O ∈ SharpP enc :=
-    ⟨q * (p + 1), _, computableTidilyInPolyTime_verifier hV p q true, fun _ => rfl⟩
+    ⟨q * (p + 1), _, .of_tidy (computableTidilyInPolyTime_verifier hV.tidy p q true), fun _ => rfl⟩
   have hdiff (a : α) : (E a : ℤ) - O a = if 0 < f a then 0 else 1 := by
     have hsum : (E a : ℤ) - O a =
         signedSum (fun c => V (a, c)) (p.eval (enc a).length) (q.eval (enc a).length) init := by

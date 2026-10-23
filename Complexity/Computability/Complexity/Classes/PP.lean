@@ -36,6 +36,7 @@ characterisation by probabilistic machines is not proved here.
 
 ## Main results
 
+* `Cslib.Complexity.mem_PP_iff_tidy`: membership through a tidy verifier.
 * `Cslib.Complexity.DecidesWithBoundedError.decidesByMajority`: bounded error gives a majority.
 * `Cslib.Complexity.BPP_subset_PP`.
 
@@ -64,13 +65,18 @@ def DecidesByMajority (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × L
 strings, with respect to the encoding `enc` of instances. -/
 def PP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesByMajority enc p V A}
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧ DecidesByMajority enc p V A}
 
 variable {enc : α ↪ List Bool}
 
 theorem mem_PP {A : Set α} : A ∈ PP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesByMajority enc p V A :=
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧ DecidesByMajority enc p V A :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_PP` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_PP_iff_tidy {A : Set α} : A ∈ PP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesByMajority enc p V A := by
+  simp only [mem_PP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 /-- Bounded error gives a majority: a decider that is right on at least two thirds of the random
 strings accepts the members of its problem, and only them, on more than half. -/

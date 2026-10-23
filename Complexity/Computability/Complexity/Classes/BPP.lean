@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
@@ -38,6 +39,7 @@ The probability is written as a count over the random strings, which are functio
 
 ## Main results
 
+* `Cslib.Complexity.mem_BPP_iff_tidy`: membership through a tidy verifier.
 * `Cslib.Complexity.DecidesWithBoundedError.compl`: negating the verifier decides the complement
   with bounded error.
 * `Cslib.Complexity.compl_mem_BPP`, `Cslib.Complexity.BPP_eq_preimage_compl_BPP`: `BPP` is closed
@@ -73,13 +75,20 @@ def DecidesWithBoundedError (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : �
 random strings, with respect to the encoding `enc` of instances. -/
 def BPP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithBoundedError enc p V A}
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithBoundedError enc p V A}
 
 theorem mem_BPP {enc : α ↪ List Bool} {A : Set α} :
     A ∈ BPP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithBoundedError enc p V A :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_BPP` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_BPP_iff_tidy {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ BPP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+        DecidesWithBoundedError enc p V A := by
+  simp only [mem_BPP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 namespace DecidesWithBoundedError
 
@@ -94,7 +103,7 @@ end DecidesWithBoundedError
 /-- `BPP` is closed under complement. -/
 theorem compl_mem_BPP {enc : α ↪ List Bool} {A : Set α} (hA : A ∈ BPP enc) : Aᶜ ∈ BPP enc :=
   let ⟨p, V, hV, h⟩ := hA
-  ⟨p, fun x => !V x, ComputableTidilyInPolyTime.bool_not.comp hV, h.compl⟩
+  ⟨p, fun x => !V x, by fun_prop, h.compl⟩
 
 /-- `BPP` equals its preimage under complement. -/
 theorem BPP_eq_preimage_compl_BPP (enc : α ↪ List Bool) : BPP enc = compl ⁻¹' BPP enc := by

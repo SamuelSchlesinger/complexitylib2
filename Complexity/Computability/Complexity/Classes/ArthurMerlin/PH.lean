@@ -283,8 +283,8 @@ theorem MA_subset_SigmaP_two : MA enc ⊆ SigmaP 2 enc := by
   exact ⟨[q + (12 * p + 1) * (12 * (12 * p + 1) * p), 12 * (12 * p + 1) * p],
     sigmaTwoVerifier enc q (12 * p + 1) (12 * (12 * p + 1) * p)
       (merlinArthurRepeat enc q (6 * (12 * p + 1)) p V), rfl,
-    computableTidilyInPolyTime_sigmaTwoVerifier
-      (computableTidilyInPolyTime_merlinArthurRepeat hV _ _ _) _ _ _,
+    .of_tidy (computableTidilyInPolyTime_sigmaTwoVerifier
+      (computableTidilyInPolyTime_merlinArthurRepeat hV.tidy _ _ _) _ _ _),
     isAlternatingVerifier_sigmaTwoVerifier (h.repeatMajority _) (eval_lt_mul p)
       fun _ => Nat.lt_two_pow_self⟩
 
@@ -297,8 +297,8 @@ theorem AM_subset_PiP_two : AM enc ⊆ PiP 2 enc := by
       12 * (12 * p + 1) * p + (12 * p + 1) * (12 * (12 * p + 1) * q)],
     piTwoVerifier enc (12 * p + 1) (12 * (12 * p + 1) * p) (12 * (12 * p + 1) * q)
       (arthurMerlinRepeat enc (6 * (12 * p + 1)) p q V), rfl,
-    computableTidilyInPolyTime_piTwoVerifier
-      (computableTidilyInPolyTime_arthurMerlinRepeat hV _ _ _) _ _ _,
+    .of_tidy (computableTidilyInPolyTime_piTwoVerifier
+      (computableTidilyInPolyTime_arthurMerlinRepeat hV.tidy _ _ _) _ _ _),
     isAlternatingVerifier_piTwoVerifier (h.repeatMajority _) (eval_lt_mul p)
       fun _ => Nat.lt_two_pow_self⟩
 

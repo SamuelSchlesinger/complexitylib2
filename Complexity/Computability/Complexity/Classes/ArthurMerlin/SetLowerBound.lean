@@ -265,7 +265,7 @@ theorem mem_AM_of_card_certifiedSet {N c : Polynomial ℕ} {R : α × List Bool 
   set m : Polynomial ℕ := B + 2 with hm
   set T : Polynomial ℕ := B + 4 with hT
   refine ⟨m * (5 * N + T) + m, 5 * N + T + 5 * c, verifier enc N c m T ℓ R,
-    computableTidilyInPolyTime_verifier hℓ hR, fun a => ?_⟩
+    .of_tidy (computableTidilyInPolyTime_verifier hℓ hR), fun a => ?_⟩
   have hP : (m * (5 * N + T) + m).eval (enc a).length = m.eval (enc a).length *
       (5 * N.eval (enc a).length + T.eval (enc a).length) + m.eval (enc a).length := by simp
   have hQ : (5 * N + T + 5 * c).eval (enc a).length = 5 * N.eval (enc a).length +
@@ -341,7 +341,7 @@ theorem SBP_subset_AM : SBP enc ⊆ AM enc := by
     exact ⟨fun ⟨_, h⟩ => h, fun h => ⟨fun _ => false, h⟩⟩
   refine mem_AM_of_card_certifiedSet (N := s) (c := 0)
     (R := fun x => W (x.1, x.2.take (s.eval (enc x.1).length)))
-    (hW.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod
+    (hW.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod
       (ComputableTidilyInPolyTime.bitsTakeWithInput (.snd enc encBits)
         (((ComputableTidilyInPolyTime.unary_eval s).comp
           (ComputableTidilyInPolyTime.encoding_length enc)).comp (.fst enc encBits)))))

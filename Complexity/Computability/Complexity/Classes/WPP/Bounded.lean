@@ -56,6 +56,7 @@ private theorem prod_eq_zero_of_not_forall {g f : α × ℕ → ℤ}
 theorem forall_lt_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     {a | ∀ i < r a, (a, i) ∈ A} ∈ WPP enc := by
+  rw [mem_WPP_iff_tidy] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
   let G a := ∏ i ∈ range (r a), g (a, i)
   let F a := ∏ i ∈ range (r a), f (a, i)
@@ -92,7 +93,7 @@ normalizes the nonzero targets `∏ i < k, f (2 * n + 1 + i)` for every `k ≤ p
 theorem forall_lt_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     {a | ∀ i < r a, (a, i) ∈ A} ∈ LWPP enc := by
-  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
+  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := mem_LWPP_iff_tidy.mp hA
   obtain ⟨p, hb⟩ := hr.polyBounded.exists_polynomial
   let T (x : ℕ × ℕ) := ∏ i ∈ range x.2, f (2 * x.1 + 1 + i)
   have hT : ComputableTidilyInPolyTime T (encPair encUnary encUnary) encIntBin := by

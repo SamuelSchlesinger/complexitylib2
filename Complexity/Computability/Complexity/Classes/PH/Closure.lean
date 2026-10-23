@@ -142,13 +142,13 @@ theorem IsAlternatingVerifier.inter {q : Bool}
 
 private theorem exists_inter_verifier {q : Bool} {k : ℕ} {A B : Set α}
     (hA : ∃ ps V, ps.length = k ∧
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsAlternatingVerifier enc q ps V A)
     (hB : ∃ ps V, ps.length = k ∧
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsAlternatingVerifier enc q ps V B) :
     ∃ ps V, ps.length = k ∧
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsAlternatingVerifier enc q ps V (A ∩ B) := by
   obtain ⟨ps, V, hp, hV, hA⟩ := hA
   obtain ⟨qs, W, hq, hW, hB⟩ := hB
@@ -163,8 +163,9 @@ private theorem exists_inter_verifier {q : Bool} {k : ℕ} {A B : Set α}
         (encPair enc encBits) encUnary := by fun_prop
     have hs := computableTidilyInPolyTime_splitAlternatingBlocks (ps.zip qs) hn
       (ComputableTidilyInPolyTime.snd enc encBits)
-    exact (hV.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.fst')).bool_and'
-      (hW.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.snd'))
+    exact .of_tidy <|
+      (hV.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.fst')).bool_and'
+        (hW.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.snd'))
 
 variable {k : ℕ} {A B : Set α}
 

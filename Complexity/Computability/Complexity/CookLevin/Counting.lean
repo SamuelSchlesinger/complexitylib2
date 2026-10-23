@@ -46,7 +46,8 @@ open Turing Turing.MultiTapeTM Cslib.Logic.PL
 /-- **The parsimonious Cook–Levin theorem**: every function in `#P` reduces parsimoniously to
 `#SAT`, through the tableau of its verifier. -/
 theorem SharpSAT_sharpPHard : SharpPHard encCNF SharpSAT := by
-  rintro α enc f ⟨p, V, ⟨t, s, ht, -, k, State, hfin, tm, htm⟩, hf⟩
+  rintro α enc f ⟨p, V, hV, hf⟩
+  obtain ⟨t, s, ht, -, k, State, hfin, tm, htm⟩ := hV.tidy
   obtain ⟨c, d, ht⟩ := ht.exists_le
   have := Fintype.ofFinite State
   classical

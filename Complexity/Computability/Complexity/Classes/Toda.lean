@@ -72,7 +72,7 @@ theorem exists_SharpP_testBit_of_mem_BPOp_ParityP {L : Set α}
   set pF : Polynomial ℕ := (ρ + 1) + ((ρ + 1) + (ρ + (ρ + 1) * Zp)) + 1 + 1 with hpF
   refine ⟨fun a => acceptCount (fun x => sharpTest (fun r z => V ((x.1, r), z))
       (ρ.eval (enc x.1).length) (Zp.eval (enc x.1).length) x.2) a (pF.eval (enc a).length),
-    ⟨pF, _, by fun_prop, fun _ => rfl⟩, ρ + 1, fun a => ?_⟩
+    ⟨pF, _, .of_tidy (by fun_prop), fun _ => rfl⟩, ρ + 1, fun a => ?_⟩
   have hpFn : pF.eval (enc a).length = (ρ.eval (enc a).length + 1) +
       ((ρ.eval (enc a).length + 1) + (ρ.eval (enc a).length +
         (ρ.eval (enc a).length + 1) * Zp.eval (enc a).length)) + 1 + 1 := by

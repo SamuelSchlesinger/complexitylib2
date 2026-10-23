@@ -43,7 +43,7 @@ theorem WPP_subset_AWPP : WPP enc ⊆ AWPP enc := by
   rintro A ⟨g, hg, f, hf, hf0, hrange, hA⟩
   let k a := (f a * f a).toNat
   have hk : ComputableTidilyInPolyTime k enc encNat :=
-    ComputableTidilyInPolyTime.intBin_toNat.comp (hf.intBin_mul' hf)
+    ComputableTidilyInPolyTime.intBin_toNat.comp (hf.tidy.intBin_mul' hf.tidy)
   let r a := (encNat (k a)).length
   have hr : ComputableTidilyInPolyTime r enc encUnary :=
     (ComputableTidilyInPolyTime.encoding_length encNat).comp hk

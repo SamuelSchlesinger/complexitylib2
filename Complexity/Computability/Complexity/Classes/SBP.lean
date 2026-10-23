@@ -36,6 +36,7 @@ are proved in `Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplific
 
 ## Main results
 
+* `Cslib.Complexity.mem_SBP_iff_tidy`: membership through a tidy threshold machine.
 * `Cslib.Complexity.NP_subset_SBP`, `Cslib.Complexity.BPP_subset_SBP`,
   `Cslib.Complexity.SBP_subset_PP`.
 * `Cslib.Complexity.union_mem_SBP`, `Cslib.Complexity.PolyTimeReducible.mem_SBP`: union and
@@ -61,13 +62,24 @@ variable {α β : Type} {enc : α ↪ List Bool} {A B : Set α}
 /-- A #P count at least an FP threshold on members and strictly below half on nonmembers.
 The threshold is encoded in binary and may be exponentially large. -/
 def SBP (enc : α ↪ List Bool) : Set (Set α) :=
-  {A | ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
+  {A | ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧
     ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a)}
+
+theorem mem_SBP : A ∈ SBP enc ↔ ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧
+    ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) :=
+  Iff.rfl
+
+/-- `Cslib.Complexity.mem_SBP` with a tidy threshold machine, for proofs that compose machines. -/
+theorem mem_SBP_iff_tidy : A ∈ SBP enc ↔
+    ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
+      ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
+  simp only [mem_SBP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 /-- Replacing `(f, k)` by `(2f + 1, 2k + 1)` makes the threshold positive. -/
 theorem mem_SBP_iff_exists_pos_threshold : A ∈ SBP enc ↔
     ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
       (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
+  rw [mem_SBP_iff_tidy]
   constructor
   · rintro ⟨f, hf, k, hk, hA⟩
     refine ⟨f + f + 1, SharpP.add_mem (SharpP.add_mem hf hf) SharpP.one_mem,
@@ -97,7 +109,7 @@ theorem BPP_subset_SBP : BPP enc ⊆ SBP enc := by
   intro A hA
   obtain ⟨p, V, hV, hA⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hA 2
   have hf : (fun a => acceptCount V a (p.eval (enc a).length)) ∈ SharpP enc :=
-    ⟨p, V, hV, fun _ => rfl⟩
+    ⟨p, V, .of_tidy hV, fun _ => rfl⟩
   refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 3) hf,
     fun a => 2 * 2 ^ p.eval (enc a).length,
     by fun_prop, fun a => ?_⟩
@@ -119,7 +131,7 @@ theorem BPP_subset_SBP : BPP enc ⊆ SBP enc := by
 theorem SBP_subset_PP : SBP enc ⊆ PP enc := by
   rintro A ⟨f, hf, k, hk, hA⟩
   have hg := GapP.sub_mem' (SharpP.natCast_mem_GapP (SharpP.add_mem hf hf))
-    (SharpP.natCast_mem_GapP (SharpP.of_polyTime hk))
+    (SharpP.natCast_mem_GapP (SharpP.of_polyTime hk.tidy))
   refine mem_PP_iff_exists_GapP.mpr ⟨_, GapP.add_mem hg GapP.one_mem, fun a => ?_⟩
   change a ∈ A ↔ 0 < ((f a + f a : ℕ) : ℤ) - (k a : ℤ) + 1
   by_cases ha : a ∈ A
@@ -135,7 +147,7 @@ theorem PolyTimeReducible.mem_SBP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ SBP encB) : A ∈ SBP enc := by
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨f, hf, k, hk, hB⟩ := hB
-  exact ⟨f ∘ r, SharpP.comp_mem hf hr, k ∘ r, hk.comp hr, fun a => by
+  exact ⟨f ∘ r, SharpP.comp_mem hf hr, k ∘ r, .of_tidy (hk.tidy.comp hr), fun a => by
     simpa only [Function.comp_apply, ← hAB a] using hB (r a)⟩
 
 /-- Normalize two positive thresholds by cross multiplication, then square and add the counts. -/
@@ -193,10 +205,10 @@ theorem inter_mem_SBP_of_mem_BPP (hA : A ∈ SBP enc) (hB : B ∈ BPP enc) :
   obtain ⟨p, hp⟩ := SharpP.exists_le_two_pow hf
   obtain ⟨q, V, hV, hB⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hB (p + 2)
   let c a := acceptCount V a (q.eval (enc a).length)
-  have hc : c ∈ SharpP enc := ⟨q, V, hV, fun _ => rfl⟩
+  have hc : c ∈ SharpP enc := ⟨q, V, .of_tidy hV, fun _ => rfl⟩
   refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 4) (SharpP.mul_mem hf hc),
     fun a => 3 * (k a * 2 ^ q.eval (enc a).length),
-    by fun_prop, fun a => ?_⟩
+    .of_tidy (by fun_prop), fun a => ?_⟩
   have hs := acceptCount_add_card_filter_eq_false (V := V) (a := a)
     (n := q.eval (enc a).length)
   have hc_le : c a ≤ 2 ^ q.eval (enc a).length := acceptCount_le_two_pow

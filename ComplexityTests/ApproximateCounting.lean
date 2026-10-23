@@ -80,7 +80,8 @@ private theorem head_mem_SBP : {w : List Bool | w.headD false = true} ∈ SBP en
       (fun w : List Bool => if w.headD false then 2 ^ w.length else 0) encBits encNat := by
     fun_prop
   refine ⟨_, SharpP.of_polyTime hf, fun w => 2 ^ w.length,
-    ComputableTidilyInPolyTime.binary_two_pow.comp (.encoding_length encBits), fun w => ?_⟩
+    .of_tidy (ComputableTidilyInPolyTime.binary_two_pow.comp (.encoding_length encBits)),
+    fun w => ?_⟩
   have hp : 0 < 2 ^ w.length := by positivity
   simp only [Set.mem_ofPred_eq]
   cases w.headD false <;> simp [hp]
@@ -108,7 +109,7 @@ private theorem head_mem_WPP_negative : {w : List Bool | w.headD false = true} �
   have hg : ComputableTidilyInPolyTime
       (fun w : List Bool => if w.headD false then f w else 0) encBits encIntBin := by fun_prop
   have hn (w : List Bool) : f w ≠ 0 := by simp [f]
-  refine ⟨_, GapP.of_polyTime hg, f, hf, hn, fun w => ?_, fun w => ?_⟩
+  refine ⟨_, GapP.of_polyTime hg, f, .of_tidy hf, hn, fun w => ?_, fun w => ?_⟩
   · cases w.headD false <;> simp
   · simp only [Set.mem_ofPred_eq]
     cases w.headD false <;> simp [(hn w).symm]

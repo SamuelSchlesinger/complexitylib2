@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.Order.Group.Int
 public import Mathlib.Data.Fintype.Pi
@@ -41,6 +42,7 @@ signed routing and the corresponding bidirectional `GapP` characterization.
 
 ## Main results
 
+* `Cslib.Complexity.mem_SharpP_iff_tidy`: membership through a tidy verifier.
 * `Cslib.Complexity.mem_NP_iff_exists_SharpP`: `NP` consists of the supports of functions in `#P`.
 * `Cslib.Complexity.acceptCount_add`: counting accepted strings by their prefixes.
 * `Cslib.Complexity.acceptCount_zero`, `Cslib.Complexity.acceptCount_add_acceptCount_not`,
@@ -143,7 +145,7 @@ end acceptCount
 certificates of polynomial length, with respect to the encoding `enc` of instances. -/
 def SharpP (enc : α ↪ List Bool) : Set (α → ℕ) :=
   {f | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       ∀ a, f a = acceptCount V a (p.eval (enc a).length)}
 
 /-- The differences of two functions in `#P`, with respect to the encoding `enc` of instances. -/
@@ -153,9 +155,16 @@ def GapP (enc : α ↪ List Bool) : Set (α → ℤ) :=
 variable {enc : α ↪ List Bool}
 
 theorem mem_SharpP {f : α → ℕ} : f ∈ SharpP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       ∀ a, f a = acceptCount V a (p.eval (enc a).length) :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_SharpP` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_SharpP_iff_tidy {f : α → ℕ} :
+    f ∈ SharpP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+        ∀ a, f a = acceptCount V a (p.eval (enc a).length) := by
+  simp only [mem_SharpP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 theorem mem_GapP {g : α → ℤ} :
     g ∈ GapP enc ↔ ∃ f₁ ∈ SharpP enc, ∃ f₂ ∈ SharpP enc, ∀ a, g a = f₁ a - f₂ a :=
@@ -167,9 +176,9 @@ theorem mem_NP_iff_exists_SharpP {A : Set α} :
     A ∈ NP enc ↔ ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ 0 < f a := by
   constructor
   · rintro ⟨p, V, hV, h⟩
-    exact ⟨_, ⟨p, V, hV, fun _ => rfl⟩, fun a => (h a).trans acceptCount_pos_iff.symm⟩
+    exact ⟨_, ⟨p, V, .of_tidy hV, fun _ => rfl⟩, fun a => (h a).trans acceptCount_pos_iff.symm⟩
   · rintro ⟨f, ⟨p, V, hV, hf⟩, h⟩
-    exact ⟨p, V, hV, fun a => by rw [h a, hf a, acceptCount_pos_iff]⟩
+    exact ⟨p, V, hV.tidy, fun a => by rw [h a, hf a, acceptCount_pos_iff]⟩
 
 namespace SharpP
 

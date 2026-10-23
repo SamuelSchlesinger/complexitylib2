@@ -46,7 +46,7 @@ theorem SharpP.of_polyTime {f : α → ℕ} (hf : ComputableTidilyInPolyTime f e
     f ∈ SharpP enc := by
   obtain ⟨p, hb⟩ := hf.polyBounded_length.exists_polynomial
   refine ⟨p, fun x => decide (BitString.binaryValue x.2 < f x.1), ?_, fun a => ?_⟩
-  · exact ComputableTidilyInPolyTime.binary_lt.comp
+  · exact .of_tidy <| ComputableTidilyInPolyTime.binary_lt.comp
       ((ComputableTidilyInPolyTime.bitsBinaryValue.comp (.snd enc encBits)).prod
         (hf.comp (.fst enc encBits)))
   · symm

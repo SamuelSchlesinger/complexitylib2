@@ -172,7 +172,7 @@ preimage under `enc` of a language in `P/poly`. -/
 theorem PPoly.exists_of_mem_BPP {A : Set α} (hA : A ∈ Complexity.BPP enc) :
     ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
   obtain ⟨p, V, hV, hdec⟩ := hA
-  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV
+  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV.tidy
   obtain ⟨L, hL, hLg⟩ := PPoly.exists_of_boundedError (fun n => framedSlice L' n (p.eval n))
     (polynomiallyBounded_complexity_framedSlice hL' (by fun_prop)) (encodes enc)
     (encodesMember enc A) fun n x ⟨a, ha⟩ => by
@@ -194,7 +194,7 @@ under `enc` of a language in `P/poly`. -/
 theorem PPoly.exists_of_mem_RP {A : Set α} (hA : A ∈ Complexity.RP enc) :
     ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
   obtain ⟨p, V, hV, hdec⟩ := hA
-  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV
+  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV.tidy
   obtain ⟨L, hL, hLg⟩ := PPoly.exists_of_oneSidedError (fun n => framedSlice L' n (p.eval n))
     (polynomiallyBounded_complexity_framedSlice hL' (by fun_prop)) (encodes enc)
     (encodesMember enc A) (fun n x ⟨a, ha⟩ hx => by

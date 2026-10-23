@@ -165,7 +165,7 @@ theorem SigmaP_succ_subset_SigmaP {k : ℕ} (hk : 1 ≤ k)
     refine ⟨ps, fun z => V (z.1.1, z.1.2 ++ truncateBlocks ps (enc z.1.1).length
       (encPair enc encBits z.1).length z.2), hlen', ?_, fun y => ?_⟩
     · have hfst := (ComputableTidilyInPolyTime.fst (encPair enc encBits) encBits)
-      exact hV.comp (((ComputableTidilyInPolyTime.fst _ _).comp hfst).prod
+      exact .of_tidy <| hV.tidy.comp (((ComputableTidilyInPolyTime.fst _ _).comp hfst).prod
         (ComputableTidilyInPolyTime.bitsAppend ((ComputableTidilyInPolyTime.snd _ _).comp hfst)
           (computableTidilyInPolyTime_truncateBlocks ps
             ((ComputableTidilyInPolyTime.encoding_length enc).comp
@@ -189,7 +189,7 @@ theorem SigmaP_succ_subset_SigmaP {k : ℕ} (hk : 1 ≤ k)
         (encPair enc encBits) encUnary :=
       ((ComputableTidilyInPolyTime.unary_eval p).comp
         (ComputableTidilyInPolyTime.encoding_length enc)).comp (.fst _ _)
-    exact hV'.comp (((ComputableTidilyInPolyTime.fst _ _).prod
+    exact .of_tidy <| hV'.tidy.comp (((ComputableTidilyInPolyTime.fst _ _).prod
       (ComputableTidilyInPolyTime.bitsTakeWithInput (.snd _ _) hn)).prod
         (ComputableTidilyInPolyTime.bitsDropWithInput (.snd _ _) hn))
   · rw [hA a]

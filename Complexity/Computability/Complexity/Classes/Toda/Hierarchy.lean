@@ -444,7 +444,7 @@ pairs of an instance and a random string. -/
 theorem PH_subset_BPOp_ParityP : PH enc ⊆ BPOp enc (ParityP (encPair enc encBits)) := by
   intro L hL
   obtain ⟨k, ps, V, -, hV, hLV⟩ := mem_PH.1 hL
-  obtain ⟨ρ, ζ, W, hW, h⟩ := exists_isRandomParityRep_alternation hV ps true 0 2
+  obtain ⟨ρ, ζ, W, hW, h⟩ := exists_isRandomParityRep_alternation hV.tidy ps true 0 2
   set L' : Set (α × List Bool) :=
     {x | Odd (acceptCount (fun y => W (y.1, x.2 ++ y.2)) x.1 (ζ.eval (enc x.1).length))} with hL'
   refine ⟨ρ, L', ?_, fun a => ?_⟩

@@ -139,7 +139,8 @@ variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 `0`. -/
 theorem P_subset_BPP : P enc ⊆ BPP enc := by
   rintro A ⟨f, hf, hA⟩
-  refine ⟨0, fun x => f x.1, hf.comp (.fst enc encBits), fun a => ⟨fun ha => ?_, fun ha => ?_⟩⟩
+  refine ⟨0, fun x => f x.1, .of_tidy (hf.comp (.fst enc encBits)),
+    fun a => ⟨fun ha => ?_, fun ha => ?_⟩⟩
   · simp [(hA a).mp ha]
   · have : f a = false := by simpa [hA a] using ha
     simp [this]
@@ -166,7 +167,7 @@ theorem NP_subset_PP : NP enc ⊆ PP enc := by
         ((ComputableTidilyInPolyTime.headD (encA := encBool) false).comp (.snd _ _))).prod
         (hV.comp ((ComputableTidilyInPolyTime.fst _ _).prod
           (ComputableTidilyInPolyTime.bitsTail.comp (.snd _ _)))))
-  refine ⟨p + 1, V', hV', fun a => ?_⟩
+  refine ⟨p + 1, V', .of_tidy hV', fun a => ?_⟩
   have hcount (m : ℕ) : acceptCount V' a (m + 1) = 2 ^ m + acceptCount V a m := by
     rw [acceptCount, card_filter_ofFn_succ m fun l => V' (a, l) = true]
     simp [V', acceptCount]
@@ -180,6 +181,7 @@ what the verifier accepts on `w` when `b₁ = true`. With `acc` accepted and `re
 of length `m`, this accepts `2 ^ m + 1 + 2 * rej` of the `4 * 2 ^ m` strings, more than half
 exactly when `2 * acc ≤ 2 ^ m`. -/
 theorem compl_mem_PP (hA : A ∈ PP enc) : Aᶜ ∈ PP enc := by
+  rw [mem_PP_iff_tidy] at hA ⊢
   obtain ⟨p, V, hV, hA⟩ := hA
   let V' (x : α × List Bool) : Bool :=
     if x.2.headD false then !V (x.1, x.2.tail.tail)
@@ -574,7 +576,7 @@ theorem SigmaP_subset_PSPACE (k : ℕ) : SigmaP k enc ⊆ PSPACE enc := by
   rintro A ⟨ps, V, -, hV, hA⟩
   refine PolyTimeReducible.mem_PSPACE ⟨fun a => (a, []),
     ComputableTidilyInPolyTime.id'.prod (.const []), fun a => ?_⟩
-    (alternationSet_mem_PSPACE ps true V hV)
+    (alternationSet_mem_PSPACE ps true V hV.tidy)
   simp [alternationSet, hA a]
 
 /-- **`PH ⊆ PSPACE`** [Arora and Barak, Chapter 5][AroraBarak09],
