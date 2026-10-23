@@ -29,6 +29,9 @@ deterministic `f(X, Y)`: averaging over the second stage's coins turns the indic
 success probability `p(s, t) ∈ [0, 1]`, and the proof needs only `p ^ 2 ≤ p`. The first stage
 may have infinitely many outcomes. The statements are exact; no efficiency is involved.
 
+The experiments are written in `do` notation for `PMF`, whose monad lives in a single universe;
+since they return a `PMF Bool`, the outcome, challenge and answer types are in `Type`.
+
 ## Main definitions
 
 * `Cslib.Probability.Rewinding.once`: one run of the two-stage experiment.
