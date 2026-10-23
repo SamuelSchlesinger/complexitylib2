@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Logics.FirstOrder.Problems.SizedGraph
 import Complexity.Logics.FirstOrder.Projection.Graph
+import Complexity.Logics.FirstOrder.Subformula
 import Complexity.Tactic.FirstOrder
 
 /-!
@@ -15,7 +16,8 @@ Exercise `fo_qf`, `fo_simp` and `fo_reduction` on formulas, interpretations, pro
 reductions, including their documented failure modes: quantified formulas are not
 quantifier-free, bare relation constructors block `simp`, and a domain formula that may fail
 leaves the semantic goal about the interpreted structure. The classes of independent sets and
-cliques are shown nonvacuous and distinct on a two-vertex structure.
+cliques are shown nonvacuous and distinct on a two-vertex structure. The closure properties of
+`subformulas` are checked on the sentence saying that a graph has no loops.
 -/
 
 namespace ComplexityTests.FirstOrderAutomation
@@ -442,5 +444,26 @@ info: 'Cslib.Logic.FO.Projection.tupleModelEquiv' depends on axioms: [Quot.sound
 #guard_msgs (whitespace := lax) in
 #print axioms Projection.tupleModelEquiv
 
+
+/-! ### Subformulas -/
+
+section Subformulas
+
+/-- `∀ x, ¬ x ~ x`: a graph has no loops. -/
+private def noLoops : Language.graph.Sentence := ∀' ∼(adj.boundedFormula₂ &0 &0)
+
+example : (subformulas noLoops).Finite := finite_subformulas _
+
+/-- The body of the quantifier, its atom and `⊥` are subformulas. -/
+example : ⟨1, ∼(adj.boundedFormula₂ &0 &0)⟩ ∈ subformulas noLoops :=
+  mem_subformulas_of_all (self_mem_subformulas _)
+
+example : ⟨1, adj.boundedFormula₂ &0 &0⟩ ∈ subformulas noLoops :=
+  mem_subformulas_of_imp_left (mem_subformulas_of_all (self_mem_subformulas _))
+
+example : ⟨1, ⊥⟩ ∈ subformulas noLoops :=
+  mem_subformulas_of_imp_right (mem_subformulas_of_all (self_mem_subformulas _))
+
+end Subformulas
 
 end ComplexityTests.FirstOrderAutomation
