@@ -112,7 +112,7 @@ theorem encryptWithCoinsSerialized_eq (n m w : ℕ) (publicWord : List Bool) (me
     encryptWithCoinsSerialized n m w publicWord message coins = serializeCiphertext
       (encryptWithCoins (Cslib.Matrix.ofBinary m (n + 1) w publicWord) message
         (decodeCoins n m w coins)) := by
-  rw [encryptWithCoins_eq_decompose]
+  rw [encryptWithCoins_eq_decomposeMatrix]
   simp only [encryptWithCoinsSerialized, serializeCiphertext, List.flatMap_def,
     List.map_range_eq_ofFn, lowBits_eq_ofFn, ofFn_blocksEquiv_symm,
     encryptEntry_eq, decomposeMatrix, bitDecomp]

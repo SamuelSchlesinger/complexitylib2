@@ -37,7 +37,7 @@ probability of excessive noise.
 
 * `encryptWithCoins_hasError`: the encryption error is the integer subset sum `R * error`.
 * `recomposeMatrix_encryptWithCoins`: the public ciphertext recomposes to `μ * G + R * A`.
-* `encryptWithCoins_eq_decompose`: the ciphertext is the bit decomposition of that matrix.
+* `encryptWithCoins_eq_decomposeMatrix`: the ciphertext is the bit decomposition of that matrix.
 * `nand_hasError`: the actual NAND operation has the stated propagated integer error.
 * `decrypt_eq_of_hasError`: the decoder recovers a bit below its explicit noise threshold.
 * `decrypt_encryptWithCoins`, `decrypt_nand`: correctness from input noise bounds.
@@ -96,16 +96,14 @@ def encryptWithCoins {n m w : ℕ} (A : Matrix (Fin m) (Fin (n + 1)) (ZMod (2 ^ 
   flattenMatrix w ((μ.toNat : ZMod (2 ^ w)) • 1 +
     bitMatrix (ZMod (2 ^ w)) (decomposeMatrix w (bitMatrix (ZMod (2 ^ w)) R * A)))
 
-/-- The typed encryption formula is the bit decomposition of `message * G + R * A`. -/
-theorem encryptWithCoins_eq_decompose {n m w : ℕ}
-    (A : _root_.Matrix (Fin m) (Fin (n + 1)) (ZMod (2 ^ w))) (message : Bool)
-    (coins : _root_.Matrix (Fin (n + 1) × Fin w) (Fin m) Bool) :
-    encryptWithCoins A message coins = decomposeMatrix w
-      ((message.toNat : ZMod (2 ^ w)) • gadgetMatrix n w +
-        bitMatrix (ZMod (2 ^ w)) coins * A) := by
-  unfold encryptWithCoins flattenMatrix
-  rw [recomposeMatrix_add, recomposeMatrix_smul, recomposeMatrix_decomposeMatrix]
-  rfl
+/-- The actual ciphertext is the canonical decomposition of its message shift and subset sums. -/
+theorem encryptWithCoins_eq_decomposeMatrix {n m w : ℕ}
+    (A : Matrix (Fin m) (Fin (n + 1)) (ZMod (2 ^ w))) (μ : Bool)
+    (R : Matrix (Fin (n + 1) × Fin w) (Fin m) Bool) :
+    encryptWithCoins A μ R = decomposeMatrix w
+      ((μ.toNat : ZMod (2 ^ w)) • gadgetMatrix n w + bitMatrix (ZMod (2 ^ w)) R * A) := by
+  simp only [encryptWithCoins, flattenMatrix, recomposeMatrix_add, recomposeMatrix_smul,
+    recomposeMatrix_decomposeMatrix, gadgetMatrix]
 
 /-- Homomorphic NAND, with dimensions and binary output entries preserved structurally. -/
 def nand {n w : ℕ} (C₁ C₂ : Ciphertext n w) : Ciphertext n w :=
