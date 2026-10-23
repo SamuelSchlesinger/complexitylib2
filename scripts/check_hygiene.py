@@ -151,13 +151,20 @@ def check_paths(
     max_lines: int | None = None,
 ) -> list[str]:
     errors: list[str] = []
+    checked = 0
     for p in paths:
+        if not p.exists():
+            errors.append(f"{p}: input path does not exist")
+            continue
         if p.is_dir():
             files = sorted(p.rglob("*.lean"))
         else:
             files = [p]
         for f in files:
+            checked += 1
             errors.extend(check_file(f, root=root, check_simp=check_simp, max_lines=max_lines))
+    if not checked and not errors:
+        errors.append("no source files found in selected paths")
     return errors
 
 
@@ -166,7 +173,8 @@ def main() -> int:
     parser.add_argument(
         "paths",
         nargs="*",
-        help="Files or directories to check (defaults to Complexity/ and ComplexityTests/)",
+        help="Files or directories to check (defaults to Complexity/ and ComplexityTests/); "
+             "the selection must contain at least one source file",
     )
     parser.add_argument(
         "--check-simp",
