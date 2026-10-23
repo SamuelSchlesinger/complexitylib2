@@ -172,17 +172,6 @@ theorem bitsEnumList_of_polyBounded {count : γ → ℕ}
     _ ≤ 3 * (c * ((encIn x).length + 1) ^ d) ^ 2 :=
         Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (h x) 2)
 
-/-- The first `count x` elements of a computed framed list. -/
-private theorem listTakeWithInput {α : Type} {encA : α ↪ List Bool} {list : γ → List α}
-    {count : γ → ℕ} (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => (list x).take (count x)) encIn (encList encA) := by
-  have hlen := (length_list encA).comp hlist
-  have hdrop := (dropUnary (encA := encA) (encL := encList encA)).comp
-    (((listReverse encA).comp hlist).prod (unary_sub.comp (hlen.prod hcount)))
-  have h := (listReverse encA).comp hdrop
-  simpa only [Function.comp_def, ← List.reverse_take, List.reverse_reverse] using h
-
 end ComputableTidilyInPolyTime
 
 end Turing.MultiTapeTM

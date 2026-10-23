@@ -133,10 +133,25 @@ existing developments, source credit and saved branches remain available for a f
    outputs, shared OR gates, skipped depths, and malformed binary references.
    [Leveled tests](ComplexityTests/Crypto/HomomorphicLeveled.lean) check budgets zero, one and two,
    distinct initial/final secrets at positive budgets, and circuits of different actual depths
-   under the same endpoint, malformed inputs and nonconstant efficient budget families. The acyclic IND-CPA
-   reduction and the additional circular-security result remain open in
-   [#322](https://github.com/cslib-community/complexitylib/issues/322). These milestones establish
-   neither a concrete LWE scheme nor an encryption-security theorem.
+   under the same endpoint, malformed inputs and nonconstant efficient budget families.
+   The [IND-CPA reduction](Complexity/Crypto/Computational/Homomorphic/Leveled/Security.lean)
+   proves security of the actual serialized leveled scheme against uniform native two-stage
+   adversaries. It assumes base IND-CPA security, native key generation and encryption, fixed
+   supported secret length, and an efficient unary budget. The adversary chooses its messages
+   after seeing the entire public artifact and retains its exact saved state. The
+   [key-chain reduction](Complexity/Crypto/Computational/Homomorphic/KeyChain/Security.lean)
+   erases links in reverse order with uniform link/bit sampling and an executable polynomial
+   cap derived from native key generation; no circular-security or efficient-width premise is
+   used. The [combined theorem](Complexity/Crypto/Computational/Homomorphic/Leveled/Bootstrapping.lean)
+   gives correctness, exact polynomial widths independent of the budget, and IND-CPA for the
+   same constructed scheme. [Key-chain tests](ComplexityTests/Crypto/KeyChainSecurity.lean) and
+   [leveled security tests](ComplexityTests/Crypto/LeveledSecurity.lean) exercise repeated random
+   keys, retained encryption randomness, adaptive saved state, empty secrets, zero links and padding.
+   This is a
+   qualitative single-challenge security transfer, not Gentry's exact concrete-security bound.
+   The additional circular-security theorem for a fixed-key scheme without a depth budget
+   remains open in [#322](https://github.com/cslib-community/complexitylib/issues/322), as does a
+   concrete LWE-based cryptosystem; neither is established by these generic reductions.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
