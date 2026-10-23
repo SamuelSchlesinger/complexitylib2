@@ -887,7 +887,9 @@ noncomputable def PseudorandomGenerator.naorBitCommitment
   computational_hiding _ _ _ hr hb₀ hb₁ := hG.naorCommit_hiding hr hb₀ hb₁
 
 /-- **Existence of bit commitments from one-way functions** [Naor1991]: if a one-way function
-exists, then there exists a statistically binding, computationally hiding bit commitment scheme. -/
+exists, then there exists a statistically binding, computationally hiding bit commitment scheme.
+Hiding is in the sense of `BitCommitmentScheme.computational_hiding`: against deterministic
+polynomial-time families of receiver strings, not a stateful randomized malicious receiver. -/
 theorem OneWay.exists_bitCommitmentScheme {f : List Bool → List Bool} (hf : OneWay f) :
     Nonempty BitCommitmentScheme := by
   obtain ⟨generator, hG⟩ := hf.exists_pseudorandomGenerator_three_mul

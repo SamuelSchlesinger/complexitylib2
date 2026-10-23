@@ -21,8 +21,8 @@ alphabet `Σ₀ = Bool × (Fin 6 → Bool)` with polynomially many vertices and 
 (`satisfiable_gapGraph_iff`), and whose value is at least the universal constant
 `Cslib.PCP.Dinur.gap` when `φ` is unsatisfiable (`gap_le_unsatVal_gapGraph`). As the
 construction can be carried out in polynomial time [Dinur, Theorem 4.1][Dinur2005], telling the
-two cases apart is as hard as 3-SAT: this is the PCP theorem in its gap form, of which only the
-combinatorial half is proved here.
+two cases apart is as hard as 3-SAT: this is the PCP theorem in its gap form. This module proves
+its combinatorial half; the polynomial-time half is `Cslib.PCP.Encoded.isPolyTime_gapGraph`.
 
 The construction:
 
@@ -35,8 +35,10 @@ The construction:
    `1 / |E|`, the value reaches the threshold, while the size grows by a factor polynomial in `|E|`.
 
 Everything here is a noncomputable definition: the expanders of preprocessing are chosen
-non-constructively (`Cslib.RotationMap.expanderFamily`), and the realization of the construction in
-polynomial time, which needs explicit expanders [Dinur, Lemma 2.2][Dinur2005], is not addressed.
+non-constructively (`Cslib.RotationMap.expanderFamily`). The polynomial-time realization, which
+needs explicit expanders [Dinur, Lemma 2.2][Dinur2005], is the separate pipeline
+`Cslib.PCP.Encoded.gapGraph` in `Complexity.Computability.PCP.Encoded.GapTheorem`, built on the
+explicit arithmetic expander family; it is the construction the PCP theorem uses.
 As the function `gapGraph` is fixed, the theorems below are not mere existence statements, which
 would be trivial: a function deciding satisfiability could output one fixed graph of each kind.
 

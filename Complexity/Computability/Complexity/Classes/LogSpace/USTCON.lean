@@ -46,7 +46,7 @@ two-vertex witness `Cslib.Complexity.USTCONInstance.ofBool` yields completeness 
 * `Cslib.Complexity.USTCON_mem_SL`, `Cslib.Complexity.LogSpaceReducible.mem_SL`: `USTCON ∈ SL` and
   closure of `SL` under logspace many-one reductions.
 * `Cslib.Complexity.USTCON_logSpaceHard_SL`, `Cslib.Complexity.USTCON_logSpaceComplete_SL`:
-  `USTCON` is logspace-complete for `SL`.
+  `USTCON` is logspace-complete for `SL`, immediately from the definition of `SL`.
 * `Cslib.Complexity.USTCON_logSpaceHard_L`, `Cslib.Complexity.USTCON_logSpaceComplete_L`:
   `USTCON` is logspace-complete for `L`.
 * `Cslib.Complexity.SL_subset_L`, `Cslib.Complexity.L_subset_SL`, `Cslib.Complexity.SL_eq_L`:
@@ -95,11 +95,13 @@ theorem LogSpaceReducible.mem_SL (hAB : LogSpaceReducible enc encB A B) (hB : B 
     A ∈ SL enc :=
   hAB.trans hB
 
-/-- `USTCON` is logspace-hard for `SL`. -/
+/-- `USTCON` is logspace-hard for `SL`. This holds by the definition of `SL`; the theorem of Lewis
+and Papadimitriou about symmetric machines is not formalized. -/
 theorem USTCON_logSpaceHard_SL : LogSpaceHard SL encUSTCON USTCON :=
   fun _ _ hA ↦ hA
 
-/-- **`USTCON` is logspace-complete for `SL`** [Lewis and Papadimitriou][LewisPapadimitriou1982]. -/
+/-- `USTCON` is logspace-complete for `SL`, by the definition of `SL`. For symmetric machines this
+is the theorem of Lewis and Papadimitriou [LewisPapadimitriou1982], which is not formalized. -/
 theorem USTCON_logSpaceComplete_SL : LogSpaceComplete SL encUSTCON USTCON :=
   ⟨USTCON_mem_SL, USTCON_logSpaceHard_SL⟩
 

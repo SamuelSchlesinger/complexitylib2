@@ -2,8 +2,11 @@
 
 The catalogue promotes twelve major result groups. Each has a checked Lean abstract with the
 definitions needed to understand its statement, a bridge to the library proof, and an audited
-dependency boundary. The generated PDFs display those definitions and statements with proof
-bodies omitted. Lean checks the proofs; independent review must still check their intended meaning.
+dependency boundary. Some abstracts also allowlist a few library modules for foundational models
+(for example circuit signatures or oracle runs); each such abstract names them in its docstring, and
+a reader must inspect them as well. The generated PDFs display those definitions and statements with
+proof bodies omitted. Lean checks the proofs; independent review must still check their intended
+meaning.
 
 The [combined PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/catalogue.pdf)
 and individual PDFs are published from main by the **Formal abstract PDFs** workflow. PR builds
@@ -19,10 +22,11 @@ module names when needed. Generated products remain in the ignored `abstracts/bu
 ## Selection
 
 A headline must establish a substantial full endpoint with conventional, inspectable semantics,
-satisfiable hypotheses, explicit models and encodings, and honest quantitative bounds. The
-catalogue does not promote a partial construction, assumed core reduction, bounded experiment
-or helper API as a standard theorem. Many useful library results remain outside this selection.
-The former paper/TeX index is retired; Git history retains its sources.
+hypotheses that are satisfiable or are standard open assumptions stated as such (such as the
+existence of a one-way function), explicit models and encodings, and honest quantitative bounds. The
+catalogue does not promote a partial construction, assumed core reduction, bounded experiment or
+helper API as a standard theorem. Many useful library results remain outside this selection. The
+former paper/TeX index is retired; Git history retains its sources.
 
 | Result | Model and scope |
 | --- | --- |
