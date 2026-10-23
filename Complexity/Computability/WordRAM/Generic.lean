@@ -21,7 +21,6 @@ remain unchecked. Address extraction is the identity, including on arbitrary ini
 
 The adapter preserves each step, including faults, and every fuel-bounded result and exact
 instruction count. It does not impose new validity assumptions on existing WordRAM states.
-The original WordRAM public API and its clients remain available unchanged.
 
 ## Main definitions
 

@@ -646,8 +646,8 @@ theorem Runs.bounded_init {w : ℕ} {p : Program B r} {input : List ℕ} {t : St
 Overflow faults, so a program that does not read the word size cannot tell word sizes apart on
 a run that succeeds: the same run succeeds at every larger word size. -/
 
-/-- The data instruction reads the word size: it applies an operation of the basis that does,
-such as `Op.width` in the standard basis. -/
+/-- The data instruction reads the word size: it applies an operation that the basis marks with
+`Basis.ReadsWidth`, such as `Op.width` in the standard basis. -/
 def Op.ReadsWidth : Op B r → Prop
   | .alu f _ _ => B.ReadsWidth f
   | _ => False

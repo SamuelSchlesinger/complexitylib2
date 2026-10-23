@@ -23,9 +23,10 @@ A *basis* (`Cslib.WordRAM.Basis`) fixes these operations, as a circuit basis doe
 operation symbols with arities (`Cslib.Circuits.Signature`), and the value of every symbol on
 natural numbers at each word size `w`, which may be undefined (`none`). The machine itself, its
 registers, memory, control flow and faults are the same for every basis; an operation faults
-when its value is undefined or does not fit a word. A basis also marks the operations that may
-depend on the word size, so that programs avoiding them run in the same way at every larger word
-size.
+when its value is undefined or does not fit a word. A basis also marks the operations that are
+exempt from word-size monotonicity: every other operation keeps each value that fits a word at
+every larger word size, so that a successful run of a program avoiding the marked operations
+succeeds in the same way at every larger word size.
 
 Bases are compared by meaning-preserving maps of their operations (`Cslib.WordRAM.Basis.Hom`),
 built on `Cslib.Circuits.Signature.Hom`. A program over a basis runs instruction for instruction
@@ -33,8 +34,8 @@ over a larger one; `Cslib.WordRAM.Basis.restrict` gives the sub-bases of a basis
 
 ## Main definitions
 
-* `Cslib.WordRAM.Basis`: operation symbols, their meaning at each word size, and the symbols whose
-  meaning depends on the word size.
+* `Cslib.WordRAM.Basis`: operation symbols, their meaning at each word size, and the symbols
+  exempt from word-size monotonicity.
 * `Cslib.WordRAM.BinOp`, `Cslib.WordRAM.StandardOp`, `Cslib.WordRAM.Basis.standard`: the standard
   word-RAM operations: addition, subtraction, multiplication, bitwise operations and shifts as in
   [Hagerup][Hagerup1998], together with division, remainder and the word size, with truncated
@@ -77,7 +78,8 @@ size. Whether a value fits a word is checked by the machine, not by the basis. -
 structure Basis extends Signature.{0} where
   /-- Operation symbols have decidable equality, so that programs do. -/
   [decEq : DecidableEq Op]
-  /-- The operations whose value may depend on the word size. -/
+  /-- The operations exempt from word-size monotonicity (`interp_mono_of_not_readsWidth`), such as
+  one that returns the word size. -/
   ReadsWidth : Op → Prop
   /-- Whether an operation reads the word size is decidable. -/
   [decReadsWidth : DecidablePred ReadsWidth]
