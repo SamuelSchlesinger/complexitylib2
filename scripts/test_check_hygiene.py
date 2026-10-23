@@ -9,6 +9,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import check_hygiene  # noqa: E402
+import proof_lengths  # noqa: E402
 
 
 class CheckHygieneTests(unittest.TestCase):
@@ -75,6 +76,57 @@ class CheckHygieneTests(unittest.TestCase):
         self.assertTrue(any("forbidden custom `axiom`" in e for e in errors))
         self.assertTrue(any("non-terminal bare `simp`" in e for e in errors))
         self.assertTrue(any("forbidden `sorry`" in e for e in errors))
+
+    def test_quote_characters_do_not_hide_forbidden_theorem(self) -> None:
+        for literal in ("'\"'", r"'\"'"):
+            with self.subTest(literal=literal):
+                p = self.write(
+                    "Complexity/Quote.lean",
+                    "module\n-- upstream: candidate\n"
+                    f"def quote : Char := {literal}\n"
+                    "theorem hole : True := by sorry\n"
+                    f"def quoteAgain : Char := {literal}\n",
+                )
+                self.assertEqual(check_hygiene.check_file(p, root=self.root),
+                                 ["Complexity/Quote.lean:4: forbidden `sorry`"])
+
+    def test_character_masks_preserve_offsets_and_count_literal_proofs(self) -> None:
+        literals = ("'a'", "'é'", "'😊'", "'('", "')'", "'['", "']'", "'{'", "'}'",
+                    r"'\''", r"'\\'", r"'\n'", r"'\r'",
+                    r"'\t'", r"'\x22'", r"'\u0022'")
+        for literal in literals:
+            with self.subTest(literal=literal):
+                text = f"theorem quoted : {literal} = {literal} := by\n  rfl\n"
+                code, syntax = proof_lengths.masks(text)
+                self.assertEqual(code, text)
+                self.assertEqual(len(syntax), len(text))
+                self.assertEqual([i for i, c in enumerate(syntax) if c == "\n"],
+                                 [i for i, c in enumerate(text) if c == "\n"])
+                self.assertEqual(syntax.count("'"), 0)
+                rows = proof_lengths.scan(text, "Complexity/Quote.lean")
+                self.assertEqual([(row["name"], row["body_lines"]) for row in rows],
+                                 [("quoted", 1)])
+
+    def test_primed_identifiers_are_not_character_literals(self) -> None:
+        names = ("lemma'a'", "lemma!'a'", "lemma?'a'", "α'a'")
+        text = "\n".join(f"theorem {name} : True := True.intro" for name in names)
+        code, syntax = proof_lengths.masks(text)
+        self.assertEqual((code, syntax), (text, text))
+        self.assertEqual([row["name"] for row in proof_lengths.scan(text, "Complexity/Prime.lean")],
+                         list(names))
+
+    def test_character_literal_text_in_strings_and_comments_is_ignored(self) -> None:
+        p = self.write(
+            "Complexity/QuotedText.lean",
+            "module\n-- upstream: candidate\n"
+            r'''def text := "'\"' sorry"''' + "\n"
+            "-- '\"' sorry\n"
+            "/- outer '\"' /- sorry -/ comment -/\n"
+            "def quote : Char := '\"'\n"
+            "theorem hole : True := by native_decide\n",
+        )
+        self.assertEqual(check_hygiene.check_file(p, root=self.root),
+                         ["Complexity/QuotedText.lean:7: forbidden `native_decide`"])
 
 
 if __name__ == "__main__":

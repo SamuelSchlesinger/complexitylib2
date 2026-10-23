@@ -26,6 +26,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# Lean.Parser.charLitFnAux/quotedCharCoreFn: one character, or a supported escape.
+# Apostrophes inside identifiers are primes, not the start of character literals.
+CHAR_LITERAL = re.compile(r"(?<![\w'!?])'(?:\\(?:[\\\"'rnt]|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4})|[^\\'])'")
 MODIFIERS = r"(?:(?:public|private|protected|noncomputable|unsafe|partial|nonrec|scoped|local)\s+)*"
 DECL = re.compile(
     r"^(?:@\[[^\]\n]*\]\s*)*" + MODIFIERS + r"(theorem|lemma)\s+(\S+)", re.M
@@ -65,7 +68,7 @@ GROUPS = [
 
 
 def masks(text: str) -> tuple[str, str]:
-    """Preserve offsets while masking nested comments, then string contents."""
+    """Preserve offsets while masking nested comments, then string/character literals."""
     code, syntax = list(text), list(text)
     depth, quoted, i = 0, False, 0
     while i < len(text):
@@ -98,6 +101,11 @@ def masks(text: str) -> tuple[str, str]:
         elif text.startswith("/-", i):
             code[i:i + 2] = syntax[i:i + 2] = [" ", " "]
             depth, i = 1, i + 2
+        elif text[i] == "'" and (literal := CHAR_LITERAL.match(text, i)):
+            for j in range(i, literal.end()):
+                if text[j] != "\n":
+                    syntax[j] = " "
+            i = literal.end()
         elif text[i] == '"':
             syntax[i], quoted, i = " ", True, i + 1
         else:
