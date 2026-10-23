@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 # Run the validation sequence of AGENTS.md (cslib's CI) and report each gate.
-# Usage: scripts/check.sh            (from the repository root or any worktree)
+# Usage: scripts/check.sh [--quick [--base REF]] (from the repository root or any worktree)
 set -u
 cd "$(dirname "$0")/.." || exit 1
+if (($#)); then
+  if [ "$1" = "--quick" ]; then
+    shift
+    exec python3 scripts/quick_check.py "$@"
+  fi
+  echo "Usage: scripts/check.sh [--quick [--base REF]]" >&2
+  exit 2
+fi
 log_dir=$(mktemp -d "${TMPDIR:-/tmp}/complexitylib-check.XXXXXX") || exit 1
 status=0
 gate=0
