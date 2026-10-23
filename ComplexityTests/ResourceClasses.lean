@@ -20,6 +20,10 @@ open Cslib Cslib.Complexity Turing Turing.MultiTapeTM
 theorem univ_mem_P : (Set.univ : Set (List Bool)) ∈ P encBits :=
   ⟨fun _ => true, .const true, fun _ => by simp⟩
 
+/-- The words starting with `true`: neither empty nor everything. -/
+theorem headD_mem_P : {w : List Bool | w.headD false = true} ∈ P encBits :=
+  ⟨fun w => w.headD false, by fun_prop, fun _ => Iff.rfl⟩
+
 /-! ### Time classes -/
 
 example {α : Type} (enc : α ↪ List Bool) (A : Set α) :
@@ -42,9 +46,27 @@ example : ∃ k, (Set.univ : Set (List Bool)) ∈ BPTIME encBits (· ^ k) :=
 example : ∃ k, (Set.univ : Set (List Bool)) ∈ NTIME encBits (· ^ k) :=
   mem_NP_iff_exists_mem_NTIME.mp (P_subset_NP univ_mem_P)
 
+/-- The words starting with `true` are decided with bounded error in polynomial time. -/
+example : ∃ k, {w : List Bool | w.headD false = true} ∈ BPTIME encBits (· ^ k) :=
+  mem_BPP_iff_exists_mem_BPTIME.mp (P_subset_BPP headD_mem_P)
+
+/-- The words starting with `true` are decided nondeterministically in polynomial time. -/
+example : ∃ k, {w : List Bool | w.headD false = true} ∈ NTIME encBits (· ^ k) :=
+  mem_NP_iff_exists_mem_NTIME.mp (P_subset_NP headD_mem_P)
+
 /-- The diagonal problem, outside `P`, is in nondeterministic exponential time. -/
 example : {x | diagonal x = true} ∈ NEXP encBits ∧ {x | diagonal x = true} ∉ P encBits :=
   ⟨EXP_subset_NEXP setOf_diagonal_mem_EXP, diagonal_notMem_P⟩
+
+/-- The diagonal problem is decided within time `O(2 ^ (4 n))`, by its tidy machine. -/
+theorem setOf_diagonal_mem_DTIME :
+    {x | diagonal x = true} ∈ DTIME encBits fun n => 2 ^ (4 * n) :=
+  setOf_mem_DTIME_of_computableTidilyInO computableTidilyInO_diagonal fun _ => le_rfl
+
+/-- A deterministic machine is a nondeterministic one: the diagonal problem, outside `P`, is in
+`NTIME (2 ^ (4 n))`. -/
+example : {x | diagonal x = true} ∈ NTIME encBits fun n => 2 ^ (4 * n) :=
+  DTIME_subset_NTIME setOf_diagonal_mem_DTIME
 
 /-! ### Exponential time -/
 
@@ -56,6 +78,16 @@ example {α : Type} (enc : α ↪ List Bool) : NP enc ⊆ NE enc ∧ NE enc ⊆ 
 
 example {α : Type} (enc : α ↪ List Bool) : E enc ⊆ NE enc ∧ EXP enc ⊆ NEXP enc :=
   ⟨E_subset_NE, EXP_subset_NEXP⟩
+
+/-- The diagonal problem, outside `P`, is in linear exponential time `E`, with `k = 4`. -/
+example : {x | diagonal x = true} ∈ E encBits := mem_E_iff.mpr ⟨4, setOf_diagonal_mem_DTIME⟩
+
+/-- The diagonal problem, outside `P`, is in `NE` through `NTIME (2 ^ (4 n))`. -/
+example : {x | diagonal x = true} ∈ NE encBits ∧ {x | diagonal x = true} ∉ P encBits :=
+  ⟨mem_NE_iff.mpr ⟨4, DTIME_subset_NTIME setOf_diagonal_mem_DTIME⟩, diagonal_notMem_P⟩
+
+example : {w : List Bool | w.headD false = true} ∈ NE encBits :=
+  NP_subset_NE (P_subset_NP headD_mem_P)
 
 /-! ### `ZPP` -/
 

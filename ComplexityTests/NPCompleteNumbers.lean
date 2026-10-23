@@ -183,6 +183,13 @@ example : Knapsack.verifier (([(2 ^ 90 + 1, 2 ^ 95)], 2 ^ 90, 2 ^ 95), [true]) =
 
 example : SubsetSum.toKnapsack ([3, 5], 5) = ([(3, 3), (5, 5)], 5, 5) := rfl
 
+-- The reduction carries the solvable instance `([3, 5], 8)` to a solvable knapsack, and the
+-- unsolvable `([3, 5], 4)` to an unsolvable one.
+example : SubsetSum.toKnapsack ([3, 5], 8) ∈ Knapsack :=
+  (SubsetSum.toKnapsack_mem_iff _).2 (mem_SubsetSum_iff_sublists.2 (by decide))
+example : SubsetSum.toKnapsack ([3, 5], 4) ∉ Knapsack := fun h =>
+  absurd (mem_SubsetSum_iff_sublists.1 ((SubsetSum.toKnapsack_mem_iff _).1 h)) (by decide)
+
 /-! ### `ZeroOneIP` -/
 
 -- `x₀ + x₁ = 1` and `2 x₀ + 3 x₁ + x₂ = 4` with `x = (0, 1, 1)`.
@@ -201,6 +208,13 @@ example : [([], 1)] ∉ ZeroOneIP := by
   simp at hx
 
 example : SubsetSum.toZeroOneIP ([3, 5], 5) = [([3, 5], 5)] := rfl
+
+-- The reduction carries the solvable instance `([3, 5], 8)` to a feasible system, and the
+-- unsolvable `([3, 5], 4)` to an infeasible one.
+example : SubsetSum.toZeroOneIP ([3, 5], 8) ∈ ZeroOneIP :=
+  (SubsetSum.toZeroOneIP_mem_iff _).2 (mem_SubsetSum_iff_sublists.2 (by decide))
+example : SubsetSum.toZeroOneIP ([3, 5], 4) ∉ ZeroOneIP := fun h =>
+  absurd (mem_SubsetSum_iff_sublists.1 ((SubsetSum.toZeroOneIP_mem_iff _).1 h)) (by decide)
 
 /-! ### Axiom checks for headline theorems -/
 

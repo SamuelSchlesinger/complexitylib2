@@ -37,6 +37,29 @@ example : acceptCount (succVerifier fun x : Unit × List Bool => x.2.headD false
 /-- `BP·P` is `BPP`. -/
 example : BPOp encBits (P (encPair encBits encBits)) = BPP encBits := BPOp_P
 
+/-- The words starting with `true`, through the parity operator with one certificate bit: the
+pairs whose word and certificate both start with `true`. A word starting with `true` is accepted
+with one of the two certificates `[false]` and `[true]`, an odd count, and any other word with
+none. -/
+theorem headD_mem_ParityOp : {w : List Bool | w.headD false = true} ∈
+    ParityOp encBits (P (encPair encBits encBits)) := by
+  refine mem_ParityOp.2 ⟨1, {x | (x.1.headD false && x.2.headD false) = true},
+    ⟨fun x => x.1.headD false && x.2.headD false, by fun_prop, fun _ => Iff.rfl⟩, fun w => ?_⟩
+  simp only [Set.mem_ofPred_eq, Polynomial.eval_one]
+  cases w with
+  | nil => simp [acceptCount]
+  | cons b w =>
+    cases b
+    · simp [acceptCount]
+    · simp only [List.headD_cons, acceptCount, List.ofFn_succ, List.ofFn_zero, Bool.true_and,
+        Bool.decide_eq_true, true_iff]
+      decide
+
+/-- The parity operator is monotone: the same problem is in `⊕·NP`. -/
+example : {w : List Bool | w.headD false = true} ∈
+    ParityOp encBits (NP (encPair encBits encBits)) :=
+  ParityOp_mono P_subset_NP headD_mem_ParityOp
+
 /-! ### The Valiant–Vazirani test -/
 
 /-- With one equation read from the seed `10 1`, coefficients `10` and offset `1`, the word `10`
