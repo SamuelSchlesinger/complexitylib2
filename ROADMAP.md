@@ -1132,6 +1132,18 @@ Jukna coverage below is an additional target beyond the V1 port:
   and [Buss's polynomial kernel for vertex cover](Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean)
   (#270) are proved; develop strongly uniform variants and the W hierarchy.
   The long-term coverage table identifies the broader class families.
+* **Sigma protocols, Schnorr identification and Fiat–Shamir (#581).** Boneh–Shoup Chapter 19.
+  The exact algebraic core is proved:
+  [Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Basic.lean) with explicit
+  extractors and perfect simulators, the
+  [linear-preimage protocol](Complexity/Crypto/Protocols/SigmaProtocol/Linear.lean) over prime
+  order `q` with Schnorr, Okamoto, Chaum–Pedersen and linear systems as instances, and
+  [AND/OR composition](Complexity/Crypto/Protocols/SigmaProtocol/Composition.lean). Open: the
+  rewinding lemma and extraction bound `ε' ≥ ε² − ε/N`, a discrete-log assumption for a group
+  family with native polynomial-time operations, Schnorr identification secure against direct and
+  eavesdropping attacks, and Fiat–Shamir/Schnorr signatures in the random-oracle model with the
+  forking bound of Theorem 19.16. Strict PPT samples bit strings but not `ZMod q` exactly, so
+  those bounds will carry explicit statistical-distance terms.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should

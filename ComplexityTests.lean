@@ -103,6 +103,7 @@ import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
+import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
