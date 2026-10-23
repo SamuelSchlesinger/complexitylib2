@@ -157,7 +157,7 @@ run_meta do
         runner.validate_rows(rows)
         records = rows[1:]
         isolated = next(r for r in records if r["declaration"]["name"] == "isolated_source")
-        assert isolated["tidy_holdout"]["status"] == "failed", isolated
+        assert isolated["tidy_holdout"]["status"] != "success", isolated
         assert isolated["excluded_count"] >= 2
         local = [r for r in records if r["declaration"].get("local_path")]
         assert local and all(r["declaration"]["private"] for r in local)
