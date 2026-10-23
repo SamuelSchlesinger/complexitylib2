@@ -88,8 +88,9 @@ def prefixSearch (R : α → List Bool → Prop) (x : α × List Bool) (v : List
 
 /-- The prefix problem of an `FNP` relation is in `FNP`. -/
 theorem prefixSearch_mem_FNP (hR : R ∈ FNP enc) : prefixSearch R ∈ FNP (encPair enc encBits) := by
-  obtain ⟨⟨p, hp⟩, V, hV, hRV⟩ := hR
-  refine ⟨⟨p, fun x v h => ?_⟩, fun y => V (y.1.1, y.1.2 ++ y.2), ?_, fun x v => hRV _ _⟩
+  obtain ⟨⟨p, hp⟩, V, hV, hRV⟩ := mem_FNP_iff_tidy.mp hR
+  refine mem_FNP_iff_tidy.mpr
+    ⟨⟨p, fun x v h => ?_⟩, fun y => V (y.1.1, y.1.2 ++ y.2), ?_, fun x v => hRV _ _⟩
   · have h₁ := hp _ _ h
     have h₂ := Polynomial.eval_mono p (length_le_encPair_left enc encBits x)
     simp only [List.length_append] at h₁
@@ -213,12 +214,14 @@ prefixes, and checks the result. -/
 theorem FNP_subset_FPSearch_of_NP_subset_P
     (h : NP (encPair enc encBits) ⊆ P (encPair enc encBits)) : FNP enc ⊆ FPSearch enc := by
   intro R hR
-  obtain ⟨⟨p, hp⟩, V, hV, hRV⟩ := hR
-  obtain ⟨D, hD, hDR⟩ := h (searchDomain_mem_NP (prefixSearch_mem_FNP ⟨⟨p, hp⟩, V, hV, hRV⟩))
+  obtain ⟨⟨p, hp⟩, V, hV, hRV⟩ := mem_FNP_iff_tidy.mp hR
+  obtain ⟨D, hD, hDR⟩ := mem_P_iff_tidy.mp
+    (h (searchDomain_mem_NP (prefixSearch_mem_FNP (mem_FNP_iff_tidy.mpr ⟨⟨p, hp⟩, V, hV, hRV⟩))))
   let n : α → ℕ := fun a => p.eval (enc a).length
   have hn : ComputableTidilyInPolyTime n enc encUnary := (unary_eval p).comp (encoding_length enc)
   have hrun := computableTidilyInPolyTime_prefixSearchRun hV hD hn
-  refine ⟨⟨⟨p, hp⟩, V, hV, hRV⟩, fun a => if V (a, prefixSearchRun V D n a) then
+  refine mem_FPSearch_iff_tidy.mpr
+    ⟨mem_FNP_iff_tidy.mpr ⟨⟨p, hp⟩, V, hV, hRV⟩, fun a => if V (a, prefixSearchRun V D n a) then
     some (prefixSearchRun V D n a) else none, ?_, fun a => ?_⟩
   · exact cond (hV.comp (id'.prod hrun)) ((optionSome encBits).comp hrun) (const none)
   · have hcorrect := rel_prefixSearchRun hRV (fun a u => (hDR (a, u)).symm) hp (a := a)
@@ -269,11 +272,12 @@ theorem searchDomain_searchRel : searchDomain searchRel = SAT := by
 when `SAT ∈ P`. -/
 theorem searchRel_mem_FPSearch_iff : searchRel ∈ FPSearch encCNF ↔ SAT ∈ P encCNF := by
   refine ⟨fun h => searchDomain_searchRel ▸ searchDomain_mem_P h, fun h => ?_⟩
-  obtain ⟨D, hD, hSAT⟩ := h
+  obtain ⟨D, hD, hSAT⟩ := mem_P_iff_tidy.mp h
   have hsearch : ComputableTidilyInPolyTime (search D) encCNF encBits :=
     computableTidilyInPolyTime_search (D := fun _ => D) (hD.comp (snd _ _)) id'
-  refine ⟨searchRel_mem_FNP, fun φ => if D φ then some (search D φ) else none,
-    cond hD ((optionSome encBits).comp hsearch) (const none), fun φ => ⟨fun w hw => ?_, ?_⟩⟩
+  refine mem_FPSearch_iff_tidy.mpr
+    ⟨searchRel_mem_FNP, fun φ => if D φ then some (search D φ) else none,
+      cond hD ((optionSome encBits).comp hsearch) (const none), fun φ => ⟨fun w hw => ?_, ?_⟩⟩
   · beta_reduce at hw
     split_ifs at hw with hDφ
     cases Option.some_injective _ hw

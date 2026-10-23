@@ -139,7 +139,7 @@ variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 `0`. -/
 theorem P_subset_BPP : P enc ⊆ BPP enc := by
   rintro A ⟨f, hf, hA⟩
-  refine ⟨0, fun x => f x.1, .of_tidy (hf.comp (.fst enc encBits)),
+  refine ⟨0, fun x => f x.1, hf.comp (.fst enc encBits),
     fun a => ⟨fun ha => ?_, fun ha => ?_⟩⟩
   · simp [(hA a).mp ha]
   · have : f a = false := by simpa [hA a] using ha
@@ -165,7 +165,7 @@ theorem NP_subset_PP : NP enc ⊆ PP enc := by
     ComputableTidilyInPolyTime.bool_or.comp
       ((ComputableTidilyInPolyTime.bool_not.comp
         ((ComputableTidilyInPolyTime.headD (encA := encBool) false).comp (.snd _ _))).prod
-        (hV.comp ((ComputableTidilyInPolyTime.fst _ _).prod
+        (hV.tidy.comp ((ComputableTidilyInPolyTime.fst _ _).prod
           (ComputableTidilyInPolyTime.bitsTail.comp (.snd _ _)))))
   refine ⟨p + 1, V', .of_tidy hV', fun a => ?_⟩
   have hcount (m : ℕ) : acceptCount V' a (m + 1) = 2 ^ m + acceptCount V a m := by
@@ -394,7 +394,7 @@ theorem PolyTimeReducible.mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : 
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ PSPACE encB) : A ∈ PSPACE enc := by
   obtain ⟨g, hg, hAB⟩ := h
   obtain ⟨f, T, S, hf, hS, hB⟩ := mem_PSPACE_iff_computableTidilyInO.mp hB
-  obtain ⟨Tg, Sg, hSg, hgO⟩ := ComputableTidilyInPolySpace.of_polyTime hg
+  obtain ⟨Tg, Sg, hSg, hgO⟩ := ComputableTidilyInPolySpace.of_polyTime hg.tidy
   exact mem_PSPACE_iff_computableTidilyInO.mpr ⟨f ∘ g, _, _, hf.comp hgO,
     hSg.add (hS.comp hg.polyBounded_length), fun a => (hAB a).trans (hB (g a))⟩
 
@@ -539,7 +539,7 @@ private theorem alternationSet_mem_PSPACE (ps : List (Polynomial ℕ)) :
   induction ps with
   | nil =>
     intro q V hV
-    exact P_subset_PSPACE ⟨V, hV, fun x => by simp [alternationSet]⟩
+    exact P_subset_PSPACE ⟨V, .of_tidy hV, fun x => by simp [alternationSet]⟩
   | cons p ps ih =>
     have hex (V : α × List Bool → Bool)
         (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) :
@@ -548,9 +548,9 @@ private theorem alternationSet_mem_PSPACE (ps : List (Polynomial ℕ)) :
       have hB : {y : (α × List Bool) × List Bool | (y.1.1, y.1.2 ++ y.2) ∈
           alternationSet enc false ps V} ∈ PSPACE (encPair (encPair enc encBits) encBits) :=
         PolyTimeReducible.mem_PSPACE ⟨fun y => (y.1.1, y.1.2 ++ y.2),
-          ((ComputableTidilyInPolyTime.fst _ _).comp (.fst _ _)).prod
+          .of_tidy (((ComputableTidilyInPolyTime.fst _ _).comp (.fst _ _)).prod
             (ComputableTidilyInPolyTime.bitsAppend
-              ((ComputableTidilyInPolyTime.snd _ _).comp (.fst _ _)) (.snd _ _)),
+              ((ComputableTidilyInPolyTime.snd _ _).comp (.fst _ _)) (.snd _ _))),
           fun _ => Iff.rfl⟩ (ih false V hV)
       have hℓ : ComputableTidilyInPolyTime (fun x : α × List Bool => p.eval (enc x.1).length)
           (encPair enc encBits) encUnary :=
@@ -575,7 +575,7 @@ private theorem alternationSet_mem_PSPACE (ps : List (Polynomial ℕ)) :
 theorem SigmaP_subset_PSPACE (k : ℕ) : SigmaP k enc ⊆ PSPACE enc := by
   rintro A ⟨ps, V, -, hV, hA⟩
   refine PolyTimeReducible.mem_PSPACE ⟨fun a => (a, []),
-    ComputableTidilyInPolyTime.id'.prod (.const []), fun a => ?_⟩
+    ComputableInPolyTime.id'.prod (.const []), fun a => ?_⟩
     (alternationSet_mem_PSPACE ps true V hV.tidy)
   simp [alternationSet, hA a]
 

@@ -196,14 +196,28 @@ example {list : α → List Bool} (hlist : ComputableInPolyTime list enc encBits
 
 /-- Membership in `P` from a plain certificate. -/
 example : firstBit ∈ P encBits :=
-  ⟨fun w => w.headD false, (by polytime : ComputableInPolyTime _ encBits encBool).tidy,
+  ⟨fun w => w.headD false, (by polytime : ComputableInPolyTime _ encBits encBool),
     fun _ => Iff.rfl⟩
 
-/-- A reduction stated plainly is the library's polynomial-time reduction. -/
+/-- Membership in `P` from a tidy certificate, through `mem_P_iff_tidy`. -/
+example : firstBit ∈ P encBits :=
+  mem_P_iff_tidy.mpr ⟨fun w => w.headD false, by polytime, fun _ => Iff.rfl⟩
+
+/-- A reduction stated plainly is the library's polynomial-time reduction, by definition. -/
 example {β : Type} {encB : β ↪ List Bool} {A : Set α} {B : Set β} :
     (∃ f : α → β, ComputableInPolyTime f enc encB ∧ ∀ a, a ∈ A ↔ f a ∈ B) ↔
-      PolyTimeReducible enc encB A B := by
-  simp only [PolyTimeReducible, computableInPolyTime_iff_computableTidilyInPolyTime]
+      PolyTimeReducible enc encB A B :=
+  Iff.rfl
+
+/-- A reduction built from plain hypotheses with `fun_prop`, and transported along it. -/
+example {f : α → Bool} (hf : ComputableInPolyTime f enc encBool) {B : Set Bool}
+    (hB : B ∈ P encBool) : {a | f a ∈ B} ∈ P enc :=
+  PolyTimeReducible.mem_P ⟨f, by fun_prop, fun _ => Iff.rfl⟩ hB
+
+/-- A tidy reduction, through `polyTimeReducible_iff_tidy`. -/
+example : PolyTimeReducible encBits encBits {w : List Bool | w.headD false = true}
+    {w | w.headD false = true} :=
+  polyTimeReducible_iff_tidy.mpr ⟨id, .id', fun _ => Iff.rfl⟩
 
 /-- Without a hypothesis or a certificate for `f`, `fun_prop` does not claim polynomial time. -/
 example {f : α → Bool} (hf : ComputableInPolyTime f enc encBool) :

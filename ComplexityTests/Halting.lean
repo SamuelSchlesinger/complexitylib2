@@ -172,7 +172,7 @@ example : MappingReducible encBits (encPair encBits encBits) selfHaltingProblem 
 example {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {A : Set α} {B : Set β}
     (h : Cslib.Complexity.PolyTimeReducible encA encB A B) : MappingReducible encA encB A B :=
   let ⟨f, hf, hAB⟩ := h
-  ⟨f, hf.isComputable, hAB⟩
+  ⟨f, hf.tidy.isComputable, hAB⟩
 
 /-- No computable function decides, from the pair of a description and an input, whether the
 described machine halts with output `[true]`. -/

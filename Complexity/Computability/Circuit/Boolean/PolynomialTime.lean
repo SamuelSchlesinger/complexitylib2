@@ -75,7 +75,7 @@ under `enc` of a language in `P/poly`. -/
 theorem PPoly.exists_of_mem_P {α : Type*} {enc : α ↪ List Bool} {A : Set α}
     (hA : A ∈ Complexity.P enc) : ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
   obtain ⟨f, hf, hA⟩ := hA
-  obtain ⟨L, hL, h⟩ := PPoly.exists_of_polyTime hf
+  obtain ⟨L, hL, h⟩ := PPoly.exists_of_polyTime hf.tidy
   exact ⟨L, hL, fun a => (hA a).trans (h a)⟩
 
 /-- **P ⊆ P/poly** for languages over `Bool`, with words encoded as themselves. -/

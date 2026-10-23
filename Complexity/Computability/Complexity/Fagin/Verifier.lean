@@ -476,7 +476,7 @@ the finite structures satisfying `Φ`, with respect to the encoding of structure
 vocabulary. -/
 theorem queryLanguage_mem_NP : v.queryLanguage {M | Φ.Realize M} ∈ NP encStructure :=
   let ℓ := Layout.ofFinite Φ
-  ⟨ℓ.polynomial, ℓ.verifier v, ℓ.computableTidilyInPolyTime_verifier,
+  ⟨ℓ.polynomial, ℓ.verifier v, .of_tidy ℓ.computableTidilyInPolyTime_verifier,
     ℓ.isVerifier fun _ _ => Iff.rfl⟩
 
 end Sentence
@@ -490,6 +490,6 @@ theorem Definable.queryLanguage_mem_NP {L : Language.{u, v}} [L.IsRelational] (v
     v.queryLanguage K ∈ NP encStructure :=
   let ⟨Φ, hΦ⟩ := hK
   let ℓ := Sentence.Layout.ofFinite Φ
-  ⟨ℓ.polynomial, ℓ.verifier v, ℓ.computableTidilyInPolyTime_verifier, ℓ.isVerifier hΦ⟩
+  ⟨ℓ.polynomial, ℓ.verifier v, .of_tidy ℓ.computableTidilyInPolyTime_verifier, ℓ.isVerifier hΦ⟩
 
 end Cslib.Logic.ESO

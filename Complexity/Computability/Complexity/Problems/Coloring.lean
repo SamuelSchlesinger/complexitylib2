@@ -193,7 +193,7 @@ theorem computableTidilyInPolyTime_verifier (k : ℕ) :
 
 /-- `KColoring k` belongs to `NP`. -/
 theorem mem_NP (k : ℕ) : KColoring k ∈ NP encGraph :=
-  ⟨_, verifier k, computableTidilyInPolyTime_verifier k, isVerifier k⟩
+  ⟨_, verifier k, .of_tidy (computableTidilyInPolyTime_verifier k), isVerifier k⟩
 
 end KColoring
 
@@ -735,7 +735,7 @@ end SAT
 /-- `SAT` reduces to `ThreeColoring` in polynomial time via `SAT.toThreeColoring`. -/
 theorem polyTimeReducible_SAT_ThreeColoring :
     PolyTimeReducible encCNF encGraph SAT ThreeColoring :=
-  ⟨SAT.toThreeColoring, SAT.computableTidilyInPolyTime_toThreeColoring,
+  ⟨SAT.toThreeColoring, .of_tidy SAT.computableTidilyInPolyTime_toThreeColoring,
     fun φ => (SAT.toThreeColoring_mem_iff φ).symm⟩
 
 /-- `ThreeSAT` reduces to `ThreeColoring` in polynomial time: a formula with a clause of more than
@@ -767,7 +767,7 @@ theorem ThreeColoring_npComplete : NPComplete encGraph ThreeColoring :=
 theorem polyTimeReducible_SAT_KColoring {k : ℕ} (hk : 3 ≤ k) :
     PolyTimeReducible encCNF encGraph SAT (KColoring k) := by
   obtain ⟨m, rfl⟩ : ∃ m, k = m + 3 := ⟨k - 3, by omega⟩
-  exact ⟨SAT.toKColoring m, SAT.computableTidilyInPolyTime_toKColoring m,
+  exact ⟨SAT.toKColoring m, .of_tidy (SAT.computableTidilyInPolyTime_toKColoring m),
     fun φ => (SAT.toKColoring_mem_iff m φ).symm⟩
 
 /-- For `k ≥ 3`, `KColoring k` is `NP`-hard. -/

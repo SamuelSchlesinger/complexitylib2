@@ -102,7 +102,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `ZeroOneIP` belongs to `NP`. -/
 theorem mem_NP : ZeroOneIP ∈ NP (encList (encPair (encList encNat) encNat)) :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end ZeroOneIP
 
@@ -139,7 +139,7 @@ end SubsetSum
 theorem polyTimeReducible_SubsetSum_ZeroOneIP :
     PolyTimeReducible (encPair (encList encNat) encNat)
       (encList (encPair (encList encNat) encNat)) SubsetSum ZeroOneIP :=
-  ⟨SubsetSum.toZeroOneIP, SubsetSum.computableTidilyInPolyTime_toZeroOneIP,
+  ⟨SubsetSum.toZeroOneIP, .of_tidy SubsetSum.computableTidilyInPolyTime_toZeroOneIP,
     fun x => (SubsetSum.toZeroOneIP_mem_iff x).symm⟩
 
 /-- `ThreeSAT` reduces to `ZeroOneIP` in polynomial time, through Sipser's digit construction. -/

@@ -66,7 +66,7 @@ example : ∃ inverter : Inverter, Probability.IsPPT encBits inverter ∧
 -- Closure of `BPP` under reductions applies to a concrete reduction into a problem in `BPP`.
 example : {b : Bool | b = true} ∈ BPP encBool :=
   PolyTimeReducible.mem_BPP
-    ⟨fun b => if b then (0, [], []) else (0, [true], []), ComputableTidilyInPolyTime.of_finite _,
+    ⟨fun b => if b then (0, [], []) else (0, [true], []), ComputableInPolyTime.of_finite _,
       fun b => by cases b <;> simp [preimagePrefix]⟩
     (P_subset_BPP preimagePrefix_const_mem_P)
 

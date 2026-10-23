@@ -118,7 +118,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- **Circuit satisfiability is in `NP`**, with certificates as long as the encoded circuit. -/
 theorem mem_NP : CircuitSAT ∈ NP (encCircuit 1) :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end CircuitSAT
 
@@ -415,7 +415,8 @@ theorem computableTidilyInPolyTime_toCircuit :
 
 /-- **`SAT` reduces to `CircuitSAT`** in polynomial time. -/
 theorem polyTimeReducible_CircuitSAT : PolyTimeReducible encCNF (encCircuit 1) SAT CircuitSAT :=
-  ⟨toCircuit, computableTidilyInPolyTime_toCircuit, fun φ => (toCircuit_mem_CircuitSAT_iff φ).symm⟩
+  ⟨toCircuit, .of_tidy computableTidilyInPolyTime_toCircuit,
+    fun φ => (toCircuit_mem_CircuitSAT_iff φ).symm⟩
 
 end SAT
 

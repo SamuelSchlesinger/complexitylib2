@@ -114,12 +114,12 @@ theorem BPOp_P : BPOp enc (P (encPair enc encBits)) = BPP enc := by
   ext L
   constructor
   · rintro ⟨p, L', ⟨f, hf, hL'⟩, h⟩
-    refine ⟨p, f, .of_tidy hf, ?_⟩
+    refine ⟨p, f, hf, ?_⟩
     convert h using 1
     funext x
     simp [hL' x]
   · rintro ⟨p, V, hV, h⟩
-    refine ⟨p, {x | V x = true}, ⟨V, hV.tidy, fun _ => Iff.rfl⟩, ?_⟩
+    refine ⟨p, {x | V x = true}, ⟨V, hV, fun _ => Iff.rfl⟩, ?_⟩
     convert h using 1
     funext x
     simp

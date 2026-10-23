@@ -88,14 +88,15 @@ problem in `NP` on words, when the encoding has a decoder: the verifier decodes 
 that it encodes what was decoded, and runs the verifier of the problem. -/
 theorem mem_NP_image {β : Type} {encB : β ↪ List Bool} (D : Decoder encB) {B : Set β}
     (hB : B ∈ NP encB) : encB '' B ∈ NP encBits := by
-  obtain ⟨p, V, hV, hBV⟩ := hB
+  obtain ⟨p, V, hV, hBV⟩ := mem_NP_iff_tidy.mp hB
   obtain ⟨d, e, hD⟩ := D.computable
   have hdec : ComputableTidilyInPolyTime (fun x : List Bool × List Bool => D.decode x.1)
       (encPair encBits encBits) encB :=
     hD.computableTidilyInPolyTime.comp (fst _ _)
-  refine ⟨p, fun x => decide (encB (D.decode x.1) = x.1) && V (D.decode x.1, x.2),
-    bool_and' (decide_eq' ((encode encB).comp hdec) (fst _ _)) (hV.comp (hdec.prod (snd _ _))),
-    fun w => ?_⟩
+  refine mem_NP_iff_tidy.mpr
+    ⟨p, fun x => decide (encB (D.decode x.1) = x.1) && V (D.decode x.1, x.2),
+      bool_and' (decide_eq' ((encode encB).comp hdec) (fst _ _)) (hV.comp (hdec.prod (snd _ _))),
+      fun w => ?_⟩
   simp only [encBits_apply, Bool.and_eq_true, decide_eq_true_eq]
   constructor
   · rintro ⟨b, hb, rfl⟩

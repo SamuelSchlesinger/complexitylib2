@@ -403,7 +403,8 @@ theorem IsGameVerifier.polyTimeReducible
   obtain ⟨cV, dV, htV⟩ := htV.exists_le
   have := Fintype.ofFinite StateV
   classical
-  exact ⟨TQBF.gameReduce enc p tmV cV dV, TQBF.computableTidilyInPolyTime_gameReduce tmV cV dV,
+  exact ⟨TQBF.gameReduce enc p tmV cV dV,
+    .of_tidy (TQBF.computableTidilyInPolyTime_gameReduce tmV cV dV),
     fun a => (h a).trans (TQBF.gameReduce_mem_TQBF_iff (htmV.mono htV fun _ => le_rfl) a).symm⟩
 
 /-- **Games of polynomially many moves are decided in polynomial space**: a problem with a

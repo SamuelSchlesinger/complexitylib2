@@ -283,7 +283,7 @@ theorem PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP
     (hA : A ∈ NP enc) :
     Nonempty (ZeroKnowledgeProof enc A) := by
   obtain ⟨f, hf, hred⟩ := ThreeSAT_npHard enc A hA
-  exact ⟨hG.zeroKnowledgeProofOfReduction hstretch hf hred⟩
+  exact ⟨hG.zeroKnowledgeProofOfReduction hstretch hf.tidy hred⟩
 
 /-- **Goldreich–Micali–Wigderson theorem (from a one-way function).** If a one-way function exists,
 then every language `A ∈ NP enc` has a computational zero-knowledge interactive proof system

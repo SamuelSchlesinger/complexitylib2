@@ -257,7 +257,7 @@ end TQBF
 /-- `TQBFCNF` is in `PSPACE`: writing the formula is polynomial-time. -/
 theorem TQBFCNF_mem_PSPACE : TQBFCNF ∈ PSPACE encPrenexCNF :=
   PolyTimeReducible.mem_PSPACE
-    ⟨fun x => QBF.rounds x.1 (QBF.ofCNF x.2), by unfold encPrenexCNF encCNF; fun_prop,
+    ⟨fun x => QBF.rounds x.1 (QBF.ofCNF x.2), .of_tidy (by unfold encPrenexCNF encCNF; fun_prop),
       fun _ => Iff.rfl⟩
     TQBF_mem_PSPACE
 
@@ -271,7 +271,8 @@ theorem TQBFCNF_pspaceHard : PSPACEHard encPrenexCNF TQBFCNF := by
   obtain ⟨cV, dV, htV⟩ := htV.exists_le
   have := Fintype.ofFinite StateV
   classical
-  exact ⟨TQBF.prenexReduce enc p tmV cV dV, TQBF.computableTidilyInPolyTime_prenexReduce tmV cV dV,
+  exact ⟨TQBF.prenexReduce enc p tmV cV dV,
+    .of_tidy (TQBF.computableTidilyInPolyTime_prenexReduce tmV cV dV),
     fun a => (h a).trans
       ((TQBF.gameReduce_mem_TQBF_iff (htmV.mono htV fun _ => le_rfl) a).symm.trans
         (TQBF.prenexReduce_mem_TQBFCNF_iff tmV cV dV a).symm)⟩

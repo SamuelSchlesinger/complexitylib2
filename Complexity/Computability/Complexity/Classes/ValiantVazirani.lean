@@ -233,7 +233,7 @@ theorem NP_subset_RPWithPromiseOracle_PromiseUSAT (enc : α ↪ List Bool) :
     NP enc ⊆ RPWithPromiseOracle PromiseUSAT encCNF enc := by
   classical
   intro L hL
-  obtain ⟨g, hg, hgL⟩ := CookLevin.SAT_npHard enc L hL
+  obtain ⟨g, hg, hgL⟩ := polyTimeReducible_iff_tidy.mp (CookLevin.SAT_npHard enc L hL)
   obtain ⟨c, d, hlen⟩ := hg.polyBounded_length.exists_le
   let queries : α × List Bool → List (List Bool) := fun x =>
     (BitString.listRows (11 * (c * ((enc x.1).length + 1) ^ d + 3))

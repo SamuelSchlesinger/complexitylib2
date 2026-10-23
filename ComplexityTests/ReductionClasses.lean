@@ -34,6 +34,6 @@ example {β γ : Type} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
 
 /-- The containment applies to the always-accepting decider with an empty certificate. -/
 example : (Set.univ : Set (List Bool)) ∈ NP encBits :=
-  P_subset_NP ⟨fun _ => true, ComputableTidilyInPolyTime.const true, fun _ => by simp⟩
+  P_subset_NP ⟨fun _ => true, ComputableInPolyTime.const true, fun _ => by simp⟩
 
 end ComplexityTests.ReductionClasses

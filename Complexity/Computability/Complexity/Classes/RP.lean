@@ -122,7 +122,7 @@ theorem DecidesWithOneSidedError.isVerifier {p : Polynomial ℕ} {V : α × List
     rw [hV] at this
     exact Bool.noConfusion this
 
-theorem RP_subset_NP : RP enc ⊆ NP enc := fun _ ⟨p, V, hV, h⟩ => ⟨p, V, hV.tidy, h.isVerifier⟩
+theorem RP_subset_NP : RP enc ⊆ NP enc := fun _ ⟨p, V, hV, h⟩ => ⟨p, V, hV, h.isVerifier⟩
 
 theorem coRP_subset_coNP : coRP enc ⊆ coNP enc := fun _ hA => RP_subset_NP hA
 

@@ -248,7 +248,7 @@ theorem PiP_two_subset_SigmaP_two_of_SAT (hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈
       rw [hS]
       exact Nat.mul_le_mul_left c (Nat.pow_le_pow_left (Nat.add_le_add_right hm 1) d))
   refine ⟨[P, p], KarpLipton.verifier enc f S W P, rfl,
-    .of_tidy (KarpLipton.computableTidilyInPolyTime_verifier hf S W P), fun a => ?_⟩
+    .of_tidy (KarpLipton.computableTidilyInPolyTime_verifier hf.tidy S W P), fun a => ?_⟩
   set n := (enc a).length
   -- membership in `A` through `SAT`
   have hA' : a ∈ A ↔ ∀ u : List Bool, u.length = p.eval n → f (a, u) ∈ SAT := by

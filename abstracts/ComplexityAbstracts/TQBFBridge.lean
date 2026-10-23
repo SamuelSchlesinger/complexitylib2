@@ -222,7 +222,7 @@ theorem tqbf_pspaceHard (S : Presentation) (h : Laws S) :
           {p : S.Formula | S.freeVars p = ∅ ∧ S.eval (fun _ => false) p = true} := by
   intro α encA A hA
   obtain ⟨f, hf, hiff⟩ := Cslib.Complexity.TQBF_pspaceHard encA A (mem_PSPACE_iff.mp hA)
-  obtain ⟨t, s, ht, hs, k, State, hfin, tm, htm⟩ := hf.exists_computableInTimeAndSpaceOfLength
+  obtain ⟨t, s, ht, hs, k, State, hfin, tm, htm⟩ := hf
   refine ⟨fun a => toFormula S (f a), ⟨t, s, ht, hs, k, State, hfin, tm, fun a => ?_⟩, fun a => ?_⟩
   · simpa [encQBF, encodeQBF_toFormula S h (f a)] using htm a
   · exact (hiff a).trans (mem_TQBF_toFormula_iff S h (f a)).symm

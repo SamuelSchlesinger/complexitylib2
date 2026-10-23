@@ -87,8 +87,15 @@ of `Y` and its no-instances to no-instances of `Y`. Instances outside the promis
 anywhere. Between gap problems these are the gap-preserving reductions. -/
 def PolyTimeReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (X : PromiseProblem α)
     (Y : PromiseProblem β) : Prop :=
-  ∃ f : α → β, ComputableTidilyInPolyTime f encA encB ∧ Set.MapsTo f X.yes Y.yes ∧
+  ∃ f : α → β, ComputableInPolyTime f encA encB ∧ Set.MapsTo f X.yes Y.yes ∧
     Set.MapsTo f X.no Y.no
+
+/-- Reductions of promise problems with a reduction computable tidily in polynomial time, the form
+in which proofs build reductions. -/
+theorem polyTimeReducible_iff_tidy : PolyTimeReducible encA encB X Y ↔
+    ∃ f : α → β, ComputableTidilyInPolyTime f encA encB ∧ Set.MapsTo f X.yes Y.yes ∧
+      Set.MapsTo f X.no Y.no := by
+  simp only [PolyTimeReducible, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 /-- On decision problems, reductions of promise problems are polynomial-time reductions. -/
 theorem polyTimeReducible_ofSet_iff {A : Set α} {B : Set β} :
@@ -101,7 +108,7 @@ theorem polyTimeReducible_ofSet_iff {A : Set α} {B : Set β} :
 @[refl]
 theorem PolyTimeReducible.refl (encA : α ↪ List Bool) (X : PromiseProblem α) :
     PolyTimeReducible encA encA X X :=
-  ⟨id, ComputableTidilyInPolyTime.id', Set.mapsTo_id _, Set.mapsTo_id _⟩
+  ⟨id, ComputableInPolyTime.id', Set.mapsTo_id _, Set.mapsTo_id _⟩
 
 /-- Reductions of promise problems compose. -/
 @[trans]
@@ -115,12 +122,12 @@ theorem PolyTimeReducible.trans (hXY : PolyTimeReducible encA encB X Y)
 no-instances: enlarging the promise can only make a problem harder. -/
 theorem PolyTimeReducible.of_subset (hyes : Y.yes ⊆ Y'.yes) (hno : Y.no ⊆ Y'.no) :
     PolyTimeReducible encB encB Y Y' :=
-  ⟨id, ComputableTidilyInPolyTime.id', fun _ h => hyes h, fun _ h => hno h⟩
+  ⟨id, ComputableInPolyTime.id', fun _ h => hyes h, fun _ h => hno h⟩
 
 /-- **`PromiseP` is closed under reductions.** -/
 theorem PolyTimeReducible.mem_PromiseP (h : PolyTimeReducible encA encB X Y)
     (hY : Y ∈ PromiseP encB) : X ∈ PromiseP encA := by
-  obtain ⟨f, hf, hyes, hno⟩ := h
+  obtain ⟨f, hf, hyes, hno⟩ := polyTimeReducible_iff_tidy.mp h
   obtain ⟨g, hg, hgyes, hgno⟩ := mem_PromiseP_iff.1 hY
   exact mem_PromiseP_iff.2 ⟨g ∘ f, hg.comp hf, fun a ha => hgyes _ (hyes ha),
     fun a ha => hgno _ (hno ha)⟩

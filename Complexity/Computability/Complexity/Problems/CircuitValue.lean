@@ -104,7 +104,7 @@ theorem computableTidilyInPolyTime_eval :
 /-- **The circuit value problem is in `P`**, for the binary encoding of circuits followed by the
 input bits. -/
 theorem mem_P : CircuitValue ∈ P encCircuitValue :=
-  ⟨_, computableTidilyInPolyTime_eval, fun _ => Iff.rfl⟩
+  ⟨_, .of_tidy computableTidilyInPolyTime_eval, fun _ => Iff.rfl⟩
 
 end CircuitValue
 

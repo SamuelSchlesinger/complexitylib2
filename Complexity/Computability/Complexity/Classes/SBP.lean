@@ -147,7 +147,7 @@ theorem PolyTimeReducible.mem_SBP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ SBP encB) : A ∈ SBP enc := by
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨f, hf, k, hk, hB⟩ := hB
-  exact ⟨f ∘ r, SharpP.comp_mem hf hr, k ∘ r, .of_tidy (hk.tidy.comp hr), fun a => by
+  exact ⟨f ∘ r, SharpP.comp_mem hf hr.tidy, k ∘ r, hk.comp hr, fun a => by
     simpa only [Function.comp_apply, ← hAB a] using hB (r a)⟩
 
 /-- Normalize two positive thresholds by cross multiplication, then square and add the counts. -/

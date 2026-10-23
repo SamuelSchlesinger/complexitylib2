@@ -66,7 +66,7 @@ theorem mem_UP : A ∈ UP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool 
 /-- A deterministic decider uses only the empty certificate. -/
 theorem P_subset_UP : P enc ⊆ UP enc := by
   rintro A ⟨f, hf, hA⟩
-  refine mem_UP.mpr ⟨0, fun x => f x.1, hf.comp (.fst enc encBits), ?_, ?_⟩
+  refine mem_UP.mpr ⟨0, fun x => f x.1, hf.tidy.comp (.fst enc encBits), ?_, ?_⟩
   · intro a
     simp only [Polynomial.eval_zero, acceptCount_zero]
     split <;> omega
@@ -94,7 +94,7 @@ theorem PolyTimeReducible.mem_UP {β : Type} {encB : β ↪ List Bool} {B : Set 
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ UP encB) : A ∈ UP enc := by
   obtain ⟨g, hg, hAB⟩ := h
   obtain ⟨f, hf, hle, hB⟩ := hB
-  exact ⟨f ∘ g, SharpP.comp_mem hf hg, fun a => hle (g a),
+  exact ⟨f ∘ g, SharpP.comp_mem hf hg.tidy, fun a => hle (g a),
     fun a => (hAB a).trans (hB (g a))⟩
 
 /-- Complements of unambiguous polynomial-time languages, using the usual `co` convention. -/

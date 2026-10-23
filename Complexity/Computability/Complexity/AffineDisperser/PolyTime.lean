@@ -582,6 +582,6 @@ theorem computableTidilyInPolyTime_explicitDisperser :
 theorem setOf_explicitDisperser_mem_P :
     {x : List Bool | explicitDisperser x.length (BitString.ofList x.length x) = true} ∈
       Cslib.Complexity.P encBits :=
-  ⟨_, computableTidilyInPolyTime_explicitDisperser, fun _ => Iff.rfl⟩
+  ⟨_, .of_tidy computableTidilyInPolyTime_explicitDisperser, fun _ => Iff.rfl⟩
 
 end Cslib.AffineDisperser

@@ -62,7 +62,7 @@ variable {α : Type} {enc : α ↪ List Bool}
 length `0`. -/
 theorem P_subset_RP : P enc ⊆ RP enc := by
   rintro A ⟨f, hf, hA⟩
-  refine ⟨0, fun x => f x.1, .of_tidy (hf.comp (.fst enc encBits)),
+  refine ⟨0, fun x => f x.1, hf.comp (.fst enc encBits),
     fun a => ⟨fun ha => ?_, fun ha r => ?_⟩⟩
   · simp [(hA a).mp ha]
   · simpa [hA a] using ha

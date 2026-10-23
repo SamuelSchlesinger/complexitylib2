@@ -120,7 +120,7 @@ the same power of two. -/
 theorem PolyTimeReducible.mem_PP {β : Type} {encB : β ↪ List Bool} {A : Set α} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ PP encB) : A ∈ PP enc := by
   rw [mem_PP_iff_tidy] at hB ⊢
-  obtain ⟨f, hf, hAB⟩ := h
+  obtain ⟨f, hf, hAB⟩ := polyTimeReducible_iff_tidy.mp h
   obtain ⟨q, W, hW, hWB⟩ := hB
   have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval q).comp

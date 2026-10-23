@@ -103,8 +103,8 @@ def PolyTimeReducible {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ Li
 
 theorem polyTimeReducible_iff {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {A : Set α} {B : Set β} :
-    PolyTimeReducible encA encB A B ↔ Cslib.Complexity.PolyTimeReducible encA encB A B := by
-  simp only [PolyTimeReducible, Cslib.Complexity.PolyTimeReducible, computableInPolyTime_iff_tidy]
+    PolyTimeReducible encA encB A B ↔ Cslib.Complexity.PolyTimeReducible encA encB A B :=
+  Iff.rfl
 
 /-- Quantifier-based satisfiability of a CNF formula represented as `List (List (ℕ × Bool))`. -/
 def Satisfiable (φ : List (List (ℕ × Bool))) : Prop :=

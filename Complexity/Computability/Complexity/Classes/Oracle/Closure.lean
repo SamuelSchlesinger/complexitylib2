@@ -139,7 +139,7 @@ theorem PolyTimeReducible.mem_PWithOracle {encA : α ↪ List Bool} {encB : β �
     (hL' : L' ∈ PWithOracle A encB) : L ∈ PWithOracle A encA :=
   let ⟨g, hg, hL⟩ := h
   let ⟨f, hf, hL'⟩ := hL'
-  ⟨fun a => f (g a), hf.preprocess hg, fun a => (hL a).trans (hL' (g a))⟩
+  ⟨fun a => f (g a), hf.preprocess hg.tidy, fun a => (hL a).trans (hL' (g a))⟩
 
 /-- **`NP` relative to an oracle is closed under polynomial-time many-one reductions.** The
 certificates are padded to a polynomial of the instance length; the verifier reads the prefix of
@@ -147,7 +147,7 @@ the length required by the reduced instance. -/
 theorem PolyTimeReducible.mem_NPWithOracle {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {L : Set α} {L' : Set β} (h : PolyTimeReducible encA encB L L')
     (hL' : L' ∈ NPWithOracle A encB) : L ∈ NPWithOracle A encA := by
-  obtain ⟨g, hg, hL⟩ := h
+  obtain ⟨g, hg, hL⟩ := polyTimeReducible_iff_tidy.mp h
   obtain ⟨p, V, hV, hL'⟩ := hL'
   obtain ⟨r, hlen⟩ := hg.polyBounded_length.exists_polynomial
   -- the certificate length of the reduced instance, as a polynomial of the instance length

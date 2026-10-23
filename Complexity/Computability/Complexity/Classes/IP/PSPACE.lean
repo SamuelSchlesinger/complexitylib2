@@ -620,7 +620,7 @@ values (`Cslib.Complexity.mem_iff_two_pow_lt_value`). -/
 theorem IP_subset_PSPACE (enc : α ↪ List Bool) : IP enc ⊆ PSPACE enc := by
   rintro A ⟨V, hV, hA⟩
   rcases isEmpty_or_nonempty α with hα | hα
-  · exact P_subset_PSPACE ⟨fun _ => false, ComputableTidilyInPolyTime.const false,
+  · exact P_subset_PSPACE ⟨fun _ => false, ComputableInPolyTime.const false,
       fun a => isEmptyElim a⟩
   let _ : Inhabited α := Classical.inhabited_of_nonempty hα
   obtain ⟨_, k, Control, _, M, c, d, hreal⟩ := hV

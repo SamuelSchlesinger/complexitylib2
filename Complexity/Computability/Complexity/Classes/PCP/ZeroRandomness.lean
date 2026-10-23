@@ -61,7 +61,8 @@ theorem PCP_zero_zero : PCP (fun _ => 0) (fun _ => 0) enc = P enc := by
   · rintro ⟨V, c, d, ⟨-, -, hv⟩, hcoins, hqs, hcomp, hsound⟩
     simp only [mul_zero, nonpos_iff_eq_zero] at hcoins hqs
     refine ⟨fun a => V.verdict ((a, []), []), ?_, fun a => ?_⟩
-    · exact hv.comp (g := fun a : α => ((a, ([] : List Bool)), ([] : List Bool))) (by fun_prop)
+    · exact .of_tidy <|
+        hv.comp (g := fun a : α => ((a, ([] : List Bool)), ([] : List Bool))) (by fun_prop)
     · -- with no random bits there are no queries, so the verdict ignores the proof
       have key (π : List Bool) : V.Accepts a π [] = V.verdict ((a, []), []) := by
         have h0 : V.queries (a, []) = [] :=
@@ -82,7 +83,7 @@ theorem PCP_zero_zero : PCP (fun _ => 0) (fun _ => 0) enc = P enc := by
     refine ⟨⟨fun _ => 0, fun _ => [], fun x => f x.1.1⟩, 0, 0, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_⟩
     · exact ComputableTidilyInPolyTime.const _
     · exact ComputableTidilyInPolyTime.const _
-    · exact hf.comp ((ComputableTidilyInPolyTime.fst enc encBits).comp
+    · exact hf.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).comp
         (ComputableTidilyInPolyTime.fst (encPair enc encBits) encBits))
     · intro a
       simp
@@ -106,7 +107,7 @@ of the proof, where `n` is the length of the encoded instance and `p(n)` the len
 certificates, and runs the `NP` verifier on the bits read. -/
 theorem exists_mem_PCP_zero_of_mem_NP {A : Set α} (hA : A ∈ NP enc) :
     ∃ k : ℕ, A ∈ PCP (fun _ => 0) (fun n => (n + 1) ^ k) enc := by
-  obtain ⟨p, V, hV, hver⟩ := hA
+  obtain ⟨p, V, hV, hver⟩ := mem_NP_iff_tidy.mp hA
   obtain ⟨c, k, hle⟩ := polynomiallyBounded_iff_le.mp (PolynomiallyBounded.polynomial_eval p)
   refine ⟨k, ⟨fun _ => 0, fun x => List.range (p.eval (enc x.1).length),
     fun y => V (y.1.1, y.2)⟩, 0, c, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_⟩

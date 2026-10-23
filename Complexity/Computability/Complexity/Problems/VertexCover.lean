@@ -235,7 +235,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `VertexCover` belongs to `NP`. -/
 theorem mem_NP : VertexCover ∈ NP (encPair encGraph encNat) :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end VertexCover
 
@@ -244,7 +244,7 @@ end VertexCover
 theorem polyTimeReducible_IndependentSet_VertexCover :
     PolyTimeReducible (encPair encGraph encNat) (encPair encGraph encNat) IndependentSet
       VertexCover :=
-  ⟨IndependentSet.toVertexCover, IndependentSet.computableTidilyInPolyTime_toVertexCover,
+  ⟨IndependentSet.toVertexCover, .of_tidy IndependentSet.computableTidilyInPolyTime_toVertexCover,
     fun x => (IndependentSet.toVertexCover_mem_iff x).symm⟩
 
 /-- `VertexCover` is `NP`-hard. -/

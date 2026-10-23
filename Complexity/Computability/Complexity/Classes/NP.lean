@@ -7,12 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Mathlib.Algebra.Polynomial.Eval.Defs
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # The class NP
@@ -39,7 +38,9 @@ builds them from polynomial-time witness relations.
 The verifier's efficiency can equally be stated in upstream terms: some machine computes it, in the
 sense of `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`, within time and space bounded by
 polynomially bounded functions of the length of its encoded input, which pairs the instance with
-the certificate (`Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfLength`).
+the certificate (`Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfLength`). Proofs
+usually build verifiers with the tidy calculus; `Cslib.Complexity.mem_NP_iff_tidy` states
+membership with a tidy verifier (`Turing.MultiTapeTM.ComputableTidilyInPolyTime`).
 
 ## Main definitions
 
@@ -48,6 +49,7 @@ the certificate (`Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfL
 
 ## Main results
 
+* `Cslib.Complexity.mem_NP_iff_tidy`: `NP` with tidy verifiers.
 * `Cslib.Complexity.mem_NP_iff_exists_computableInTimeAndSpaceOfLength`: `NP` with verifiers
   computed in the sense of upstream `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`.
 * `Cslib.Complexity.IsVerifier.of_padding`: a verifier that accepts certificates of exactly the
@@ -79,12 +81,18 @@ def IsVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Boo
 the encoding `enc` of instances. -/
 def NP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A}
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A}
 
 theorem mem_NP {enc : α ↪ List Bool} {A : Set α} :
     A ∈ NP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A :=
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A :=
   Iff.rfl
+
+/-- `NP` with tidy verifiers, the form in which proofs build them. -/
+theorem mem_NP_iff_tidy {enc : α ↪ List Bool} {A : Set α} :
+    A ∈ NP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A := by
+  simp only [mem_NP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 /-- **`NP` in upstream terms:** `A ∈ NP enc` exactly when, for a polynomial `p`, some verifier for
 `A` with certificates of length `p` is computed by a machine with a binary alphabet and finitely
@@ -94,13 +102,9 @@ theorem mem_NP_iff_exists_computableInTimeAndSpaceOfLength {enc : α ↪ List Bo
     A ∈ NP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool) (t s : ℕ → ℕ),
       PolynomiallyBounded t ∧ PolynomiallyBounded s ∧
         ComputableInTimeAndSpaceOfLength V (encPair enc encBits) encBool t s ∧
-          IsVerifier enc p V A := by
-  constructor
-  · rintro ⟨p, V, hV, hA⟩
-    obtain ⟨t, s, ht, hs, hV⟩ := hV.exists_computableInTimeAndSpaceOfLength
-    exact ⟨p, V, t, s, ht, hs, hV, hA⟩
-  · rintro ⟨p, V, t, s, ht, -, hV, hA⟩
-    exact ⟨p, V, hV.computableTidilyInPolyTime ht, hA⟩
+          IsVerifier enc p V A :=
+  ⟨fun ⟨p, V, ⟨t, s, ht, hs, hV⟩, hA⟩ => ⟨p, V, t, s, ht, hs, hV, hA⟩,
+    fun ⟨p, V, t, s, ht, hs, hV, hA⟩ => ⟨p, V, ⟨t, s, ht, hs, hV⟩, hA⟩⟩
 
 /-! ### Padded certificates -/
 

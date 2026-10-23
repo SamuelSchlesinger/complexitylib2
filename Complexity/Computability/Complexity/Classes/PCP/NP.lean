@@ -154,7 +154,8 @@ theorem PCP_log_subset_NP (q : ℕ → ℕ) :
     (PCPVerifier.isPolyTime_queryTable hV hcoins).polyBounded_length.exists_polynomial
   have hbound (a : α) : (V.queryTable a).length ≤ p.eval (enc a).length := by
     exact (length_le_length_encList encNat (V.queryTable a)).trans (hlength a)
-  refine ⟨p, V.tableVerifier, PCPVerifier.isPolyTime_tableVerifier hV hcoins, fun a => ?_⟩
+  refine ⟨p, V.tableVerifier, .of_tidy (PCPVerifier.isPolyTime_tableVerifier hV hcoins),
+    fun a => ?_⟩
   constructor
   · intro ha
     obtain ⟨proof, hproof⟩ := hcomplete a ha

@@ -96,7 +96,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `Partition` belongs to `NP`. -/
 theorem mem_NP : Partition ∈ NP (encList encNat) :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
 
 end Partition
 
@@ -145,7 +145,7 @@ end SubsetSum
 /-- `SubsetSum` reduces to `Partition` in polynomial time. -/
 theorem polyTimeReducible_SubsetSum_Partition :
     PolyTimeReducible (encPair (encList encNat) encNat) (encList encNat) SubsetSum Partition :=
-  ⟨SubsetSum.toPartition, SubsetSum.computableTidilyInPolyTime_toPartition,
+  ⟨SubsetSum.toPartition, .of_tidy SubsetSum.computableTidilyInPolyTime_toPartition,
     fun x => (SubsetSum.toPartition_mem_iff x).symm⟩
 
 /-- `Partition` is `NP`-hard. -/

@@ -241,7 +241,7 @@ theorem acceptProb_npVerifier_const {p : Polynomial ℕ} {V : α × List Bool �
 /-- **`NP ⊆ IP`**, with one message, completeness `1` and soundness error `0`. -/
 theorem NP_subset_IP (enc : α ↪ List Bool) : NP enc ⊆ IP enc := by
   rintro A ⟨p, V, hV, hA⟩
-  refine mem_IP_of (isOraclePPTOn_npVerifier (p := p) hV) (c := 1) (s := 0)
+  refine mem_IP_of (isOraclePPTOn_npVerifier (p := p) hV.tidy) (c := 1) (s := 0)
     ⟨fun a ha => ?_, fun a ha P => ?_⟩ (ENNReal.div_le_of_le_mul (by norm_num)) bot_le
   · obtain ⟨w, hw, hVw⟩ := (hA a).1 ha
     refine ⟨Prover.const w, ?_⟩

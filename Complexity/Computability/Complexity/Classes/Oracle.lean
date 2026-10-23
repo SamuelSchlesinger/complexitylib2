@@ -205,12 +205,12 @@ theorem mem_NPWithOracle {A : Set (List Bool)} {enc : α ↪ List Bool} {L : Set
 /-- Every problem in `P` is in `P` relative to every oracle. -/
 theorem P_subset_PWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     P enc ⊆ PWithOracle A enc := fun _ ⟨f, hf, h⟩ =>
-  ⟨f, hf.computableInPolyTimeWithOracle A, h⟩
+  ⟨f, hf.tidy.computableInPolyTimeWithOracle A, h⟩
 
 /-- Every problem in `NP` is in `NP` relative to every oracle. -/
 theorem NP_subset_NPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     NP enc ⊆ NPWithOracle A enc := fun _ ⟨p, V, hV, h⟩ =>
-  ⟨p, V, hV.computableInPolyTimeWithOracle A, h⟩
+  ⟨p, V, hV.tidy.computableInPolyTimeWithOracle A, h⟩
 
 end Complexity
 

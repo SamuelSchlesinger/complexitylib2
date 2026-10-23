@@ -147,7 +147,7 @@ theorem eventually_clock_le (i : ℕ) :
 /-- **If `SATH` is in `P`, then `H` is bounded**: some index of a machine deciding `SATH` has a
 clock exceeding its polynomial time bound, and from some point on `H` is at most that index. -/
 theorem exists_H_le_of_mem_P (h : SATH ∈ P encBits) : ∃ C, ∀ n, H n ≤ C := by
-  obtain ⟨f, ⟨t, s, ht, -, k, State, hfinite, tm, htm⟩, hf⟩ := h
+  obtain ⟨f, ⟨t, s, ht, -, k, State, hfinite, tm, htm⟩, hf⟩ := mem_P_iff_tidy.mp h
   have := Fintype.ofFinite State
   let eS : State ↪ ℕ := (Fintype.equivFin State).toEmbedding.trans Fin.valEmbedding
   have hrun (x : List Bool) : (tm.runFrom (tm.initCfg x) (t x)).Halted ∧
@@ -188,7 +188,7 @@ theorem computableTidilyInPolyTime_padBounded (C : ℕ) :
 /-- **If `H` is bounded, padding reduces `SAT` to `SATH` in polynomial time.** -/
 theorem reducible_of_H_le {C : ℕ} (hC : ∀ n, H n ≤ C) :
     PolyTimeReducible encCNF encBits SAT SATH := by
-  refine ⟨padBounded C, computableTidilyInPolyTime_padBounded C, fun φ => ?_⟩
+  refine ⟨padBounded C, .of_tidy (computableTidilyInPolyTime_padBounded C), fun φ => ?_⟩
   have hpow : (encCNF φ).length ^ H (encCNF φ).length ≤ ((encCNF φ).length + 1) ^ C :=
     (Nat.pow_le_pow_left (Nat.le_succ _) _).trans
       (Nat.pow_le_pow_right (Nat.succ_pos _) (hC _))
@@ -327,7 +327,7 @@ then `SAT` is in `P`: the self-reduction leaves a formula of bounded length, dec
 table. -/
 theorem SAT_mem_P_of_reducible_of_tendsto (hR : PolyTimeReducible encCNF encBits SAT SATH)
     (hH : Filter.Tendsto H Filter.atTop Filter.atTop) : SAT ∈ P encCNF := by
-  obtain ⟨R, hRpoly, hR⟩ := hR
+  obtain ⟨R, hRpoly, hR⟩ := polyTimeReducible_iff_tidy.mp hR
   obtain ⟨c, d, hRlen⟩ := hRpoly.polyBounded_length.exists_le
   simp only [encBits_apply] at hRlen
   obtain ⟨M, hM⟩ := Filter.eventually_atTop.mp (Filter.tendsto_atTop.mp hH (d + 1))
@@ -362,7 +362,7 @@ theorem SAT_mem_P_of_reducible_of_tendsto (hR : PolyTimeReducible encCNF encBits
       ComputableTidilyInPolyTime.anyConst _ fun w _ =>
         (ComputableTidilyInPolyTime.decide_eq encBits).comp
           ((ComputableTidilyInPolyTime.encode encCNF).prod (ComputableTidilyInPolyTime.const w))
-    exact hdec.comp hreduce
+    exact .of_tidy (hdec.comp hreduce)
   · obtain ⟨hsat, hlen⟩ := hinv φ
     have hmem := mem_smallSAT (N := N) (φ := selfReduce R N φ) (by rw [selfReduce]; omega)
     rw [selfReduce] at hmem

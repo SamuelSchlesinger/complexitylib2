@@ -109,7 +109,7 @@ theorem mem_PWithOracle_bitGraph (hL : L ∈ PWithSharpPOracle enc) :
 /-- **`P ⊆ P^#P`**: a polynomial-time decider makes no query. -/
 theorem P_subset_PWithSharpPOracle : P enc ⊆ PWithSharpPOracle enc := by
   rintro L ⟨g, hg, hL⟩
-  exact ⟨α, enc, 0, SharpP.zero_mem, fun a => pure (g a), hg.isOraclePPTOn,
+  exact ⟨α, enc, 0, SharpP.zero_mem, fun a => pure (g a), hg.tidy.isOraclePPTOn,
     fun _ _ a => hL a⟩
 
 /-- **One bit of a `#P` value is in `P^#P`**: a problem decided by the bit at a polynomial

@@ -138,7 +138,7 @@ theorem computableTidilyInPolyTime_preimagePrefixVerifier
 time. -/
 theorem preimagePrefix_mem_NP (hf : ComputableTidilyInPolyTime f encBits encBits) :
     preimagePrefix f ∈ NP encPreimagePrefix :=
-  ⟨_, _, computableTidilyInPolyTime_preimagePrefixVerifier hf,
+  ⟨_, _, .of_tidy (computableTidilyInPolyTime_preimagePrefixVerifier hf),
     isVerifier_preimagePrefixVerifier f⟩
 
 /-! ### Search to decision -/
@@ -256,7 +256,7 @@ theorem exists_inverse_of_preimagePrefix_mem_P (h : preimagePrefix f ∈ P encPr
       ComputableTidilyInPolyTime inverse (encPair encUnary encBits) encBits ∧
         ∀ x, f (inverse (x.length, f x)) = f x := by
   obtain ⟨D, hD, hDf⟩ := h
-  exact ⟨preimageSearch D, computableTidilyInPolyTime_preimageSearch hD,
+  exact ⟨preimageSearch D, computableTidilyInPolyTime_preimageSearch hD.tidy,
     apply_preimageSearch hDf⟩
 
 /-! ### One-way functions -/
