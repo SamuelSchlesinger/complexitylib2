@@ -354,16 +354,6 @@ theorem verifier_polyTime {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α 
 
 /-! ### Correctness of the matrix verifier -/
 
-/-- Entry `k` of the row of width `width` numbered `row` is bit `row * width + k` of the word,
-or `false` beyond its end. -/
-private theorem getElem_listRow {width : ℕ} (row : ℕ) (w : List Bool) {k : ℕ} (hk : k < width) :
-    (BitString.listRow width row w)[k]'(by simpa using hk) = w.getD (row * width + k) false := by
-  simp only [BitString.listRow, List.getElem_take, List.getElem_append, List.length_drop,
-    List.getElem_drop, List.getElem_replicate, List.getD_eq_getElem?_getD]
-  split
-  · rw [List.getElem?_eq_getElem (by omega), Option.getD_some]
-  · rw [List.getElem?_eq_none (by omega), Option.getD_none]
-
 /-- On a combined certificate `u ++ r` with `u.length = witnessLen m`, `trialSeed` reconstructs
 the `j`-th block of the shifted seed `listToSeed m r + listToShifts m u i`. -/
 theorem trialSeed_append {m : ℕ} {u r : List Bool} (hu : u.length = witnessLen m)
@@ -381,11 +371,12 @@ theorem trialSeed_append {m : ℕ} {u r : List Bool} (hu : u.length = witnessLen
     ring
   have hleft : (BitString.listRow m (shifts m * runs m + j.1) (u ++ r))[k]'(by simpa using hk) =
       r.getD (k + m * j.1) false := by
-    rw [getElem_listRow _ _ hk, hsplit, List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+    rw [BitString.getElem_listRow hk, hsplit, List.getD_eq_getElem?_getD,
+      List.getD_eq_getElem?_getD,
       List.getElem?_append_right (Nat.le_add_right _ _), Nat.add_sub_cancel_left]
   have hright : (BitString.listRow m (i.1 * runs m + j.1) (u ++ r))[k]'(by simpa using hk) =
       u.getD (k + m * j.1 + runs m * m * i.1) false := by
-    rw [getElem_listRow _ _ hk, List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+    rw [BitString.getElem_listRow hk, List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
       List.getElem?_append_left hlt, hidx]
   simp only [trialSeed, List.getElem_zipWith, hleft, hright, List.getElem_ofFn, Pi.add_apply,
     Bool.add_eq_xor, listToSeed, listToShifts, BitString.block_apply, BitString.ofList,

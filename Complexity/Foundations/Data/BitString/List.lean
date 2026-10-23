@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 Bolton Bailey, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: Bolton Bailey, Samuel Schlesinger
 -/
 
 module
@@ -31,6 +31,10 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 * `Cslib.BitString.exists_take_ofFn_iff`, `Cslib.BitString.forall_take_ofFn_iff`: quantifying over
   longer strings through their prefixes.
 * `Cslib.BitString.ofFn_ofList_eq_take`: the fixed-width view pads with `false` or truncates.
+* `Cslib.BitString.getElem_listRow`, `Cslib.BitString.getD_listRow`: row indexing, including
+  false padding on short words.
+* `Cslib.BitString.listRow_flatMap_append`, `Cslib.BitString.listRow_flatten`: recover
+  equal-width rows from concatenated words.
 * `Cslib.BitString.listRows_eq_ofFn`, `Cslib.BitString.listRows_ofFn`: agreement with the finite
   block representation.
 * `Cslib.BitString.listRows_succ_append`: the rows of a word whose first row is given.
@@ -147,6 +151,55 @@ def listRow (width row : ℕ) (word : List Bool) : List Bool :=
 @[simp] theorem length_listRow (width row : ℕ) (word : List Bool) :
     (listRow width row word).length = width := by
   simp [listRow]
+
+/-- Entry `i` of row `row` is bit `row * width + i` of the word, or `false` beyond its end. -/
+theorem getElem_listRow {width row i : ℕ} {word : List Bool} (hi : i < width) :
+    (listRow width row word)[i]'(by simpa using hi) = word.getD (row * width + i) false := by
+  simp only [listRow, List.getElem_take, List.getElem_append, List.length_drop,
+    List.getElem_drop, List.getElem_replicate, List.getD_eq_getElem?_getD]
+  split
+  · rw [List.getElem?_eq_getElem (by omega), Option.getD_some]
+  · rw [List.getElem?_eq_none (by omega), Option.getD_none]
+
+/-- Below the row width, defaulted indexing reads the corresponding word bit, even when the
+word is too short and the row is padded with `false`. -/
+theorem getD_listRow {width row i : ℕ} {word : List Bool} (hi : i < width) :
+    (listRow width row word).getD i false = word.getD (row * width + i) false := by
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem (by simpa using hi), Option.getD_some]
+  exact getElem_listRow hi
+
+/-- Row zero is the fixed-width view of the word. -/
+theorem listRow_zero (width : ℕ) (word : List Bool) :
+    listRow width 0 word = List.ofFn (ofList width word) := by
+  simpa only [listRow, Nat.zero_mul, List.drop_zero] using (ofFn_ofList_eq_take width word).symm
+
+/-- Reading an existing row from concatenated equal-width words recovers that row, regardless
+of the appended suffix. Width zero is allowed. -/
+theorem listRow_flatMap_append {α : Type*} {width : ℕ} (f : α → List Bool) (l : List α)
+    (hf : ∀ a ∈ l, (f a).length = width) (rest : List Bool) (j : ℕ) (hj : j < l.length) :
+    listRow width j (l.flatMap f ++ rest) = f l[j] := by
+  induction l generalizing j with
+  | nil => simp at hj
+  | cons a l ih =>
+    have ha := hf a (List.mem_cons_self ..)
+    cases j with
+    | zero =>
+      simp only [listRow, Nat.zero_mul, List.drop_zero, List.flatMap_cons,
+        List.append_assoc, List.getElem_cons_zero]
+      exact List.take_left' ha
+    | succ j =>
+      have := ih (fun b hb => hf b (List.mem_cons_of_mem _ hb)) j (by simpa using hj)
+      simp only [listRow, List.flatMap_cons, List.append_assoc,
+        List.getElem_cons_succ] at this ⊢
+      rw [Nat.add_mul, Nat.one_mul, Nat.add_comm, ← List.drop_drop, List.drop_left' ha]
+      exact this
+
+/-- Reading an existing row of a flattened list of equal-width words recovers that word. -/
+theorem listRow_flatten {width : ℕ} {words : List (List Bool)}
+    (hwords : ∀ w ∈ words, w.length = width) {i : ℕ} (hi : i < words.length) :
+    listRow width i words.flatten = words.getD i [] := by
+  simpa [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi] using
+    listRow_flatMap_append id words hwords [] i hi
 
 /-- List slicing agrees with the finite block representation, even on short input lists. -/
 theorem listRow_eq_ofFn {count : ℕ} (width : ℕ) (row : Fin count) (word : List Bool) :

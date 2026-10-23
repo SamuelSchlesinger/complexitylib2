@@ -52,6 +52,7 @@ import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BipartiteMatching
 import ComplexityTests.BitStringProjection
+import ComplexityTests.BitStringRows
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
