@@ -307,6 +307,7 @@ import ComplexityTests.Parameterized
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
+import ComplexityTests.PolyTimeMixes
 import ComplexityTests.PolyTimePlain
 import ComplexityTests.PolyTimeScans
 import ComplexityTests.PolyTimeSearch
