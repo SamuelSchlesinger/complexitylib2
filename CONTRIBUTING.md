@@ -27,6 +27,24 @@ certified efficiency, and security in declaration docstrings.
 For documentation-only changes, check links, claims against source, and Lean examples with the
 imports shown. Record the scope of validation and review accurately.
 
+## Library quality standard
+
+Every area of the library is held to the same bar ([#587](https://github.com/cslib-community/complexitylib/issues/587)):
+
+1. **Surface.** Public declarations are the intended API; helpers are `private`, and `@[expose]`
+   marks only definitions whose bodies downstream proofs must unfold.
+2. **Statements.** User-facing statements use mathematical notions and plain computability. Proof
+   devices such as tidy machines stay inside proofs and the combinator layer that needs them.
+   Names follow Mathlib's conventions.
+3. **Placement.** No duplicates; small topic modules; clients import what they use.
+4. **Documentation.** Module docstrings list the actual public API; public definitions and headline
+   theorems have docstrings; each area has a chapter in the guide.
+5. **Proofs.** Hygiene checks pass, and certificates come from automation rather than plumbing.
+6. **Tests.** Checked, nonvacuous examples of the area's main API.
+
+Improving an interface never weakens the mathematics: keep the models, encodings, independent
+resource bounds and nonvacuity of the results it touches.
+
 ## AI assistance and review
 
 AI-assisted and human-written contributions follow the same standards. Disclose which AI tools
