@@ -26,6 +26,9 @@
 #   are preserved. Do not edit shared package sources. `--copy-cslib` also copies cslib's sources
 #   (for upstream edits or a pin bump); `--copy-packages` copies every package's sources.
 #   Seeding skips existing destination caches; it does not repair previously shared caches.
+#
+# Pruning considers registered worktrees directly under `.worktrees/`, retaining locked,
+# symlinked, dirty and unmerged worktrees. Git removes eligible worktrees and their caches.
 
 set -euo pipefail
 
@@ -204,7 +207,32 @@ case "$cmd" in
     if [ ! -d "$ROOT/.worktrees" ]; then
       exit 0
     fi
-    for wt in "$ROOT"/.worktrees/*; do
+    wt=""
+    locked="false"
+    # NUL-delimited inventory keeps spaces/newlines in paths and excludes foreign directories.
+    git worktree list --porcelain -z | while IFS= read -r -d '' record; do
+      case "$record" in
+        "worktree "*)
+          wt="${record#worktree }"
+          locked="false"
+          continue
+          ;;
+        locked|locked\ *) locked="true"; continue ;;
+        "") ;;
+        *) continue ;;
+      esac
+      case "$wt" in
+        "$ROOT/.worktrees/"*) ;;
+        *) continue ;;
+      esac
+      # Match the former direct-child scope, excluding nested paths and prefix lookalikes.
+      case "${wt#"$ROOT/.worktrees/"}" in
+        ""|*/*) continue ;;
+      esac
+      if [ "$locked" = "true" ] || [ -L "$wt" ]; then
+        echo "Keeping $wt (locked or symlinked worktree)"
+        continue
+      fi
       [ -d "$wt" ] || continue
       if [ -n "$(git -C "$wt" status --porcelain)" ]; then
         echo "Keeping $wt (dirty working tree)"
@@ -219,8 +247,8 @@ case "$cmd" in
         echo "Would remove merged worktree $wt"
       else
         echo "Removing merged worktree $wt"
-        rm -rf "$wt/.lake"
-        git worktree remove --force "$wt"
+        # Git checks registration, locks and cleanliness again before deleting anything.
+        git worktree remove "$wt"
       fi
     done
     ;;

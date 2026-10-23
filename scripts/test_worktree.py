@@ -260,5 +260,157 @@ class WorktreeSeedTests(unittest.TestCase):
                 self.assertEqual(list(external.iterdir()), [])
 
 
+@unittest.skipUnless(shutil.which("git"), "git is required")
+class WorktreePruneTests(unittest.TestCase):
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = pathlib.Path(tmp.name)
+        self.root = self.tmp / "root"
+        self.root.mkdir()
+        git(self.root, "init", "--quiet", "-b", "main")
+        (self.root / "scripts").mkdir()
+        shutil.copy(SCRIPT, self.root / "scripts/worktree.sh")
+        (self.root / ".gitignore").write_text("/.worktrees/\n/.worktrees-lookalike/\n.lake/\n")
+        (self.root / "README").write_text("base\n")
+        git(self.root, "add", ".")
+        git(self.root, "commit", "--quiet", "-m", "fixture")
+        self.branch_count = 0
+
+    def registered(self, path: pathlib.Path) -> pathlib.Path:
+        self.branch_count += 1
+        git(self.root, "worktree", "add", "--quiet", "-b", f"worker-{self.branch_count}",
+            str(path), "main")
+        return self.cache(path)
+
+    def cache(self, path: pathlib.Path) -> pathlib.Path:
+        cache = path / ".lake/sentinel"
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_bytes(b"keep this cache\n")
+        return cache
+
+    def prune(self, *flags: str, env=None) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["bash", str(self.root / "scripts/worktree.sh"), "prune-merged", "main", *flags],
+            capture_output=True, text=True, check=False, env=GIT_ENV if env is None else env,
+        )
+
+    def test_unregistered_directory_retains_its_cache(self) -> None:
+        cache = self.cache(self.root / ".worktrees/plain")
+        result = self.prune()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(cache.read_bytes(), b"keep this cache\n")
+
+    def test_locked_worktree_retains_cache_and_does_not_block_other_pruning(self) -> None:
+        locked = self.root / ".worktrees/locked"
+        cache = self.registered(locked)
+        git(self.root, "worktree", "lock", "--reason", "active worker", str(locked))
+        removable = self.root / ".worktrees/removable"
+        self.registered(removable)
+        result = self.prune()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("locked", result.stdout)
+        self.assertEqual(cache.read_bytes(), b"keep this cache\n")
+        self.assertFalse(removable.exists())
+        self.assertIn(str(locked.resolve()), git(self.root, "worktree", "list", "--porcelain"))
+
+    def test_merged_registered_worktree_with_special_path_is_removed_by_git(self) -> None:
+        for name in ("merged worker", "merged\nworker"):
+            with self.subTest(name=name):
+                target = self.root / ".worktrees" / name
+                self.registered(target)
+                dependency = target / ".lake/packages/demo"
+                dependency.mkdir(parents=True)
+                git(dependency, "init", "--quiet")
+                result = self.prune()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertFalse(target.exists())
+                self.assertNotIn(str(target.resolve()),
+                                 git(self.root, "worktree", "list", "--porcelain", "-z"))
+
+    def test_dry_run_preserves_cache_and_registration(self) -> None:
+        target = self.root / ".worktrees/merged"
+        cache = self.registered(target)
+        result = self.prune("--dry-run")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Would remove", result.stdout)
+        self.assertEqual(cache.read_bytes(), b"keep this cache\n")
+        self.assertIn(str(target.resolve()), git(self.root, "worktree", "list", "--porcelain"))
+
+    def test_git_refusal_after_a_late_edit_preserves_work_and_cache(self) -> None:
+        target = self.root / ".worktrees/late-edit"
+        cache = self.registered(target)
+        wrapper = self.tmp / "bin/git"
+        wrapper.parent.mkdir()
+        wrapper.write_text('''#!/usr/bin/env bash
+if [ "${1:-}" = "worktree" ] && [ "${2:-}" = "remove" ]; then
+  printf 'late untracked work\\n' > "$LATE_FILE"
+fi
+exec "$REAL_GIT" "$@"
+''')
+        wrapper.chmod(0o755)
+        late_file = target / "late-work"
+        result = self.prune(env={**GIT_ENV, "REAL_GIT": shutil.which("git"),
+                                 "LATE_FILE": str(late_file),
+                                 "PATH": str(wrapper.parent) + os.pathsep + os.environ["PATH"]})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(cache.read_bytes(), b"keep this cache\n")
+        self.assertEqual(late_file.read_bytes(), b"late untracked work\n")
+        self.assertIn(str(target.resolve()), git(self.root, "worktree", "list", "--porcelain"))
+
+    def test_dirty_and_unmerged_worktrees_retain_caches(self) -> None:
+        dirty = self.root / ".worktrees/dirty"
+        dirty_cache = self.registered(dirty)
+        (dirty / "README").write_text("uncommitted work\n")
+        unmerged = self.root / ".worktrees/unmerged"
+        unmerged_cache = self.registered(unmerged)
+        (unmerged / "README").write_text("unmerged work\n")
+        git(unmerged, "add", "README")
+        git(unmerged, "commit", "--quiet", "-m", "worker change")
+        result = self.prune()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("dirty working tree", result.stdout)
+        self.assertIn("unmerged commits", result.stdout)
+        self.assertEqual(dirty_cache.read_bytes(), b"keep this cache\n")
+        self.assertEqual(unmerged_cache.read_bytes(), b"keep this cache\n")
+
+    def test_foreign_worktree_retains_cache(self) -> None:
+        foreign = self.tmp / "foreign"
+        foreign.mkdir()
+        git(foreign, "init", "--quiet", "-b", "main")
+        (foreign / ".gitignore").write_text(".lake/\n")
+        git(foreign, "add", ".")
+        git(foreign, "commit", "--quiet", "-m", "foreign fixture")
+        target = self.root / ".worktrees/foreign"
+        git(foreign, "worktree", "add", "--quiet", "-b", "worker", str(target))
+        cache = self.cache(target)
+        result = self.prune()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(cache.read_bytes(), b"keep this cache\n")
+        self.assertIn(str(target.resolve()), git(foreign, "worktree", "list", "--porcelain"))
+
+    def test_symlinked_worktree_retains_cache(self) -> None:
+        target = self.root / ".worktrees/linked"
+        self.registered(target)
+        moved = self.tmp / "moved-worker"
+        target.rename(moved)
+        target.symlink_to(moved, target_is_directory=True)
+        result = self.prune()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((moved / ".lake/sentinel").read_bytes(), b"keep this cache\n")
+        self.assertTrue(target.is_symlink())
+
+    def test_prefix_lookalike_and_nested_worktrees_stay_outside_scope(self) -> None:
+        nearby = self.root / ".worktrees-lookalike/nearby"
+        nearby_cache = self.registered(nearby)
+        parent = self.root / ".worktrees/group"
+        parent_cache = self.cache(parent)
+        nested_cache = self.registered(parent / "nested")
+        result = self.prune()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for cache in (nearby_cache, parent_cache, nested_cache):
+            self.assertEqual(cache.read_bytes(), b"keep this cache\n")
+
+
 if __name__ == "__main__":
     unittest.main()
