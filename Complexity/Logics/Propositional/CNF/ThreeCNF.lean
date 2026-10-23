@@ -138,6 +138,7 @@ theorem Clause.length_le_three_of_mem_split3 (fresh : ℕ → W) (j : ℕ) (c : 
   | nil => simp [Clause.split3]
   | cons carry rest => exact Clause.length_le_three_of_mem_splitAux fresh j carry rest
 
+/-- Every clause of `CNF.to3CNF φ` has at most three literals. -/
 theorem CNF.length_le_three_of_mem_to3CNF {φ : CNF V} {c : Clause (V ⊕ (ℕ × ℕ))}
     (hc : c ∈ φ.to3CNF) : c.length ≤ 3 := by
   obtain ⟨x, -, hc⟩ := List.mem_flatMap.1 hc

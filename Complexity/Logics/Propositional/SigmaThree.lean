@@ -41,6 +41,12 @@ width `k` when `k` divides `n` (`CNF.exists_any_eval_eq_parity`).
 * `Cslib.Logic.PL.eventually_two_rpow_le_sigmaThreeSize`,
   `Cslib.Logic.PL.eventually_two_rpow_le_piThreeSize`: subcube dispersers need `2 ^ ((1/k - ε) n)`
   formulas.
+
+## References
+
+* [R. Paturi, P. Pudlák, F. Zane, *Satisfiability coding lemma*][PaturiPudlakZane1999]
+* [R. Impagliazzo, R. Paturi, F. Zane, *Which problems have strongly exponential
+  complexity?*][ImpagliazzoPaturiZane2001]
 -/
 
 @[expose] public section

@@ -61,8 +61,9 @@ these facts about sets of vertices.
 
 ## Main results
 
-* `Cslib.Logic.FO.sizedGraph.isoClosed_IndependentSet`, `isoClosed_Clique`,
-  `isoClosed_VertexCover`: closure under isomorphism.
+* `Cslib.Logic.FO.sizedGraph.isoClosed_IndependentSet`,
+  `Cslib.Logic.FO.sizedGraph.isoClosed_Clique`, `Cslib.Logic.FO.sizedGraph.isoClosed_VertexCover`:
+  closure under isomorphism.
 * `Cslib.Logic.FO.sizedGraph.qfReduces_IndependentSet_Clique`,
   `Cslib.Logic.FO.sizedGraph.qfReduces_Clique_IndependentSet`: complementing the edges.
 * `Cslib.Logic.FO.sizedGraph.qfReduces_IndependentSet_VertexCover`,
