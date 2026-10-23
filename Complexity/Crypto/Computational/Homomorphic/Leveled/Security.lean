@@ -79,37 +79,29 @@ theorem publicKey_indistinguishable_zero :
 Both adversary stages are uniform strict PPT, with arbitrary polynomial saved state. -/
 theorem indCPA_keyGen :
     Encryption.INDCPA (fun n => keyGen E n (budget n)) (encrypt E) := by
-  intro adversary hadversary
   let depth := fun n => 2 * budget n
   have hdepth : ComputableTidilyInPolyTime depth encUnary encUnary := by
     dsimp only [depth]
     fun_prop
-  have hfalse := Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth hdepth
-    (isPPTOn_publicKeyGame hencrypt hadversary false)
-  have htrue := Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth hdepth
-    (isPPTOn_publicKeyGame hencrypt hadversary true)
-  have hzero := hsecure (zeroLinkAdversary E depth adversary)
-    (isPPT_zeroLinkAdversary hencrypt hadversary hkeyGen hdepth)
-  have heq (bit : Bool) (n : ℕ) :=
-    eval_zeroLinkAdversary E depth adversary bit n (width n) (hwidth n)
-  simp only [heq] at hzero
-  refine negligible_of_le ((hfalse.add hzero).add htrue) (fun n => ?_)
-  dsimp only
-  rw [eval_game_keyGen, eval_game_keyGen]
-  let real (bit : Bool) := ProbComp.eval (E.publicKeyChainHybrid n (depth n) (depth n) >>=
-    publicKeyGame E adversary bit n)
-  let zero (bit : Bool) := ProbComp.eval (E.publicKeyChainHybrid n (depth n) 0 >>=
-    publicKeyGame E adversary bit n)
-  change Game.advantage (real false) (real true) ≤
-    (Game.advantage (real false) (zero false) + Game.advantage (zero false) (zero true)) +
-      Game.advantage (real true) (zero true)
-  calc
-    _ ≤ Game.advantage (real false) (zero false) +
-        Game.advantage (zero false) (real true) := Game.advantage_triangle _ _ _
-    _ ≤ Game.advantage (real false) (zero false) +
-        (Game.advantage (zero false) (zero true) + Game.advantage (zero true) (real true)) :=
-      add_le_add le_rfl (Game.advantage_triangle _ _ _)
-    _ = _ := by rw [← add_assoc, Game.advantage_comm (zero true) (real true)]
+  let zero (bit : Bool) (adversary : Encryption.Adversary) (n : ℕ) : Game :=
+    ProbComp.eval (do
+      let artifact ← E.publicKeyChainHybrid n (depth n) 0
+      publicKeyGame E adversary bit n artifact)
+  have hhop (bit : Bool) : Game.Indistinguishable
+      (fun adversary n => ProbComp.eval
+        (Encryption.game (fun n => keyGen E n (budget n)) (encrypt E) adversary bit n))
+      (zero bit) Encryption.Adversary.IsPPT := by
+    intro adversary hadversary
+    simpa only [eval_game_keyGen] using
+      Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth hdepth
+        (isPPTOn_publicKeyGame hencrypt hadversary bit)
+  have hzero : Game.Indistinguishable (zero false) (zero true) Encryption.Adversary.IsPPT := by
+    intro adversary hadversary
+    have heq (bit : Bool) (n : ℕ) :=
+      eval_zeroLinkAdversary E depth adversary bit n (width n) (hwidth n)
+    simpa only [heq] using hsecure (zeroLinkAdversary E depth adversary)
+      (isPPT_zeroLinkAdversary hencrypt hadversary hkeyGen hdepth)
+  exact (hhop false).trans (hzero.trans (hhop true).symm)
 
 /-- The actual depth-budgeted scheme is IND-CPA secure. The decryption circuit family identifies
 the scheme but supplies no security premise; only base security and the stated native hypotheses

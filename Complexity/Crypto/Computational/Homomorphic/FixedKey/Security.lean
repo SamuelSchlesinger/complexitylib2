@@ -105,31 +105,24 @@ theorem indCPA_keyGen {E : Scheme}
     {width : ℕ → ℕ}
     (hwidth : ∀ n keys, keys ∈ (ProbComp.eval (E.keyGen n)).support → keys.2.length = width n) :
     Encryption.INDCPA (keyGen E) (encrypt E) := by
-  intro adversary hadversary
-  have hfalse := negligible_publicKeyGame hcircular hencrypt hadversary false
-  have htrue := negligible_publicKeyGame hcircular hencrypt hadversary true
-  have hzero := hsecure (zeroAdversary E adversary)
-    (isPPT_zeroAdversary hencrypt hadversary hkeyGen)
-  have heq (bit : Bool) (n : ℕ) :=
-    eval_zeroAdversary E adversary bit n (width n) (hwidth n)
-  simp only [heq] at hzero
-  refine negligible_of_le ((hfalse.add hzero).add htrue) (fun n => ?_)
-  dsimp only
-  rw [eval_game_keyGen, eval_game_keyGen]
-  let real (bit : Bool) := ProbComp.eval
-    (Encryption.circularPublicKey E.keyGen E.encrypt true n >>= publicKeyGame E adversary bit n)
-  let zero (bit : Bool) := ProbComp.eval
-    (Encryption.circularPublicKey E.keyGen E.encrypt false n >>= publicKeyGame E adversary bit n)
-  change Game.advantage (real false) (real true) ≤
-    (Game.advantage (real false) (zero false) + Game.advantage (zero false) (zero true)) +
-      Game.advantage (real true) (zero true)
-  calc
-    _ ≤ Game.advantage (real false) (zero false) +
-        Game.advantage (zero false) (real true) := Game.advantage_triangle _ _ _
-    _ ≤ Game.advantage (real false) (zero false) +
-        (Game.advantage (zero false) (zero true) + Game.advantage (zero true) (real true)) :=
-      add_le_add le_rfl (Game.advantage_triangle _ _ _)
-    _ = _ := by rw [← add_assoc, Game.advantage_comm (zero true) (real true)]
+  let zero (bit : Bool) (adversary : Encryption.Adversary) (n : ℕ) : Game :=
+    ProbComp.eval (do
+      let artifact ← Encryption.circularPublicKey E.keyGen E.encrypt false n
+      publicKeyGame E adversary bit n artifact)
+  have hhop (bit : Bool) : Game.Indistinguishable
+      (fun adversary n => ProbComp.eval
+        (Encryption.game (keyGen E) (encrypt E) adversary bit n))
+      (zero bit) Encryption.Adversary.IsPPT := by
+    intro adversary hadversary
+    simpa only [eval_game_keyGen] using
+      negligible_publicKeyGame hcircular hencrypt hadversary bit
+  have hzero : Game.Indistinguishable (zero false) (zero true) Encryption.Adversary.IsPPT := by
+    intro adversary hadversary
+    have heq (bit : Bool) (n : ℕ) :=
+      eval_zeroAdversary E adversary bit n (width n) (hwidth n)
+    simpa only [heq] using hsecure (zeroAdversary E adversary)
+      (isPPT_zeroAdversary hencrypt hadversary hkeyGen)
+  exact (hhop false).trans (hzero.trans (hhop true).symm)
 
 /-- The actual all-circuit fixed-key scheme is conditionally IND-CPA secure. The decryption
 family identifies the construction but contributes no security assumption. -/
