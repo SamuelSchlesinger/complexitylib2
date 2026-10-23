@@ -54,8 +54,11 @@ reject in both classes.
 
 namespace Cslib.Complexity
 
-open _root_.Turing _root_.Turing.MultiTapeTM _root_.Turing.MultiTapeMachine
-  _root_.Turing.MultiTapePTM
+open _root_.Turing (MultiTapePTM)
+open _root_.Turing.MultiTapeTM
+  (ComputableTidilyInPolyTime encBits encBits_apply encBool_apply encPair encUnary length_encPair)
+open _root_.Turing.MultiTapeMachine (FiniteConfig)
+open _root_.Turing.MultiTapePTM (replyStep)
 open Probability.AdaptiveWeights Finset
 
 variable {α : Type} {enc : α ↪ List Bool} {A : Set (List Bool)}

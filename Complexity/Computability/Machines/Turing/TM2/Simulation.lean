@@ -22,9 +22,13 @@ Halting configurations remain fixed, so a clock may safely run beyond the source
 ## Main definitions
 
 * `Turing.TM2.stepTotal`: a TM2 step that stays put after halting.
+* `Turing.TM2.pushBound`: a syntactic upper bound on pushes along a statement path.
 
 ## Main results
 
+* `Turing.TM2.cfg_label`, `Turing.TM2.cfg_var`, `Turing.TM2.cfg_stacks` and
+  `Turing.TM2.cfg_mk`: polynomial-time configuration projections and construction.
+* `Turing.TM2.stepAux_polyTime`: executing one fixed statement is polynomial-time.
 * `Turing.TM2.stepTotal_polyTime`: one fixed source transition is polynomial-time in the complete
   encoded configuration.
 * `Turing.TM2.stepTotal_stack_bound`: a fixed source transition adds at most a constant number

@@ -211,6 +211,113 @@ example : {b : Bool | b = true} ∈ Cslib.Complexity.PSPACE
   exact hbound.trans ((List.length_map boolComputer.inputAlphabet.symm).le.trans
     (show (encodeBool b).length ≤ 1 from le_rfl))
 
+-- A decider over all Boolean words, including empty and nonempty inputs. It saves the
+-- emptiness answer on a separate stack, clears the input, then halts with that one-bit output.
+private abbrev emptyMachine : FinTM2 where
+  K := Bool
+  k₀ := false
+  k₁ := true
+  Γ _ := Bool
+  Λ := Bool
+  main := false
+  σ := Bool
+  initialState := false
+  m
+    | false => .peek false (fun _ a => a.isNone)
+        (.push true id (.load (fun _ => false) (.goto (fun _ => true))))
+    | true => .pop false (fun _ a => a.isSome) (.branch id (.goto (fun _ => true)) .halt)
+
+private def emptyCfg (xs : List Bool) (answer v : Bool) : emptyMachine.Cfg where
+  l := some true
+  var := v
+  stk k := if k then [answer] else xs
+
+private theorem empty_init (xs : List Bool) :
+    emptyMachine.step (initList emptyMachine xs) =
+      some (emptyCfg xs xs.isEmpty false) := by
+  cases xs <;> apply congrArg some <;>
+    change TM2.Cfg.mk _ _ _ = TM2.Cfg.mk _ _ _ <;>
+    congr 1 <;> funext k <;> cases k <;> rfl
+
+private theorem empty_step (xs : List Bool) (answer v : Bool) :
+    emptyMachine.step (emptyCfg xs answer v) = some (match xs with
+      | [] => haltList emptyMachine [answer]
+      | _ :: xs => emptyCfg xs answer true) := by
+  cases xs <;> apply congrArg some <;>
+    change TM2.Cfg.mk _ _ _ = TM2.Cfg.mk _ _ _ <;>
+    congr 1 <;> funext k <;> cases k <;> rfl
+
+private noncomputable abbrev emptyComputer :
+    TM2Computable id encodeBool (List.isEmpty : List Bool → Bool) where
+  tm := emptyMachine
+  inputAlphabet := Equiv.refl Bool
+  outputAlphabet := Equiv.refl Bool
+  outputsFun xs := by
+    have hrun (xs : List Bool) (answer v : Bool) :
+        (fun s : Option emptyMachine.Cfg => s.bind emptyMachine.step)^[xs.length + 1]
+          (some (emptyCfg xs answer v)) = some (haltList emptyMachine [answer]) := by
+      induction xs generalizing v with
+      | nil => exact empty_step [] answer v
+      | cons a xs ih =>
+        rw [List.length_cons, Function.iterate_succ_apply]
+        simp only [Option.bind_some, empty_step]
+        exact ih true
+    refine ⟨xs.length + 2, ?_⟩
+    change (fun s : Option emptyMachine.Cfg => s.bind emptyMachine.step)^[xs.length + 2]
+      (some (initList emptyMachine (List.map id xs))) =
+        some (haltList emptyMachine (List.map id (encodeBool xs.isEmpty)))
+    rw [List.map_id, List.map_id, Function.iterate_succ_apply]
+    simp only [Option.bind_some, empty_init]
+    exact hrun xs xs.isEmpty false
+
+private theorem empty_bound (xs : List Bool) (i : ℕ) (k : Bool) :
+    (((TM2.stepTotal emptyMachine.m)^[i] (initList emptyMachine xs)).stk k).length ≤
+      xs.length + 1 := by
+  have hrun (i : ℕ) (xs : List Bool) (answer v : Bool) :
+      (((TM2.stepTotal emptyMachine.m)^[i] (emptyCfg xs answer v)).stk k).length ≤
+        xs.length + 1 := by
+    induction i generalizing xs v with
+    | zero => cases k <;> simp [emptyCfg]
+    | succ i ih =>
+      have hstep : TM2.stepTotal emptyMachine.m (emptyCfg xs answer v) =
+          (match xs with
+          | [] => haltList emptyMachine [answer]
+          | _ :: xs => emptyCfg xs answer true) := by
+        exact (TM2.stepTotal_of_step emptyMachine.m (emptyCfg xs answer v)).trans
+          (congrArg (fun cfg : Option emptyMachine.Cfg => cfg.getD (emptyCfg xs answer v))
+            (empty_step xs answer v))
+      have heq := (Function.iterate_succ_apply (TM2.stepTotal emptyMachine.m) i
+        (emptyCfg xs answer v)).trans (congrArg ((TM2.stepTotal emptyMachine.m)^[i]) hstep)
+      have hlength := (congrArg (fun cfg : emptyMachine.Cfg => (cfg.stk k).length) heq).le
+      cases xs with
+      | nil =>
+        have hfixed := Function.iterate_fixed (show TM2.stepTotal emptyMachine.m
+          (haltList emptyMachine [answer]) = haltList emptyMachine [answer] from rfl) i
+        exact hlength.trans
+          ((congrArg (fun cfg : emptyMachine.Cfg => (cfg.stk k).length) hfixed).le.trans
+            (by cases k <;> simp [haltList]))
+      | cons a xs => exact hlength.trans ((ih xs true).trans (by simp))
+  cases i with
+  | zero => cases k <;> simp [initList]
+  | succ i =>
+    have hstep : TM2.stepTotal emptyMachine.m (initList emptyMachine xs) =
+        emptyCfg xs xs.isEmpty false := by
+      exact (TM2.stepTotal_of_step emptyMachine.m (initList emptyMachine xs)).trans
+        (congrArg (fun cfg : Option emptyMachine.Cfg => cfg.getD (initList emptyMachine xs))
+          (empty_init xs))
+    have heq := (Function.iterate_succ_apply (TM2.stepTotal emptyMachine.m) i
+      (initList emptyMachine xs)).trans (congrArg ((TM2.stepTotal emptyMachine.m)^[i]) hstep)
+    exact (congrArg (fun cfg : emptyMachine.Cfg => (cfg.stk k).length) heq).le.trans
+      (hrun i xs xs.isEmpty false)
+
+example : {xs : List Bool | xs = []} ∈ Cslib.Complexity.PSPACE (encList (encFinite Bool)) := by
+  let : ∀ k, Finite (emptyComputer.tm.Γ k) := fun _ => inferInstanceAs (Finite Bool)
+  apply Cslib.Complexity.mem_PSPACE_of_tm2 emptyComputer Function.injective_id
+    encodingBoolBool.encode_injective (space := fun xs => xs.length + 1)
+    (PolyBounded.self.add (.const 1)) ?_ (by simp)
+  intro xs i k
+  simpa only [Equiv.refl_symm, Equiv.coe_refl, id_eq, List.map_id] using empty_bound xs i k
+
 /--
 info: 'Turing.TM2.exists_exponential_clock' depends on axioms:
 [propext, Classical.choice, Quot.sound]
