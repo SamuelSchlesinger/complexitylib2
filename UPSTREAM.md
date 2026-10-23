@@ -24,7 +24,7 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   adaptations. The branch's `IterateWhile` supersedes the version from #1112. Coordinate the
   shared encodings and calculus through CSLib issue #611, including the `TapeEncodable`
   interface proposed in #590. Check #767 and its split #768 before adding space-to-time
-  inclusions or overlapping class definitions; reconcile the local encoded, tidy-machine
+  inclusions or overlapping class definitions; reconcile the local encoded, plain-machine
   definitions of `P`/`NP` with its `DTIME`-based language classes. The local `DSPACE`, `L`,
   `DTIME` and `EXP` (`Classes/Space/Basic`, `Classes/LogSpace`, `Classes/Time`, `Classes/EXP`)
   use #767's shapes over encoded instances; once #767 lands, derive them from its
