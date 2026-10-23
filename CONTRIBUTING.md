@@ -51,6 +51,13 @@ the root checkout and, when `<branch>` exists only on `origin`, checks it out tr
 `origin/<branch>`). Run `python3 scripts/check_hygiene.py` to audit `-- upstream:` markers,
 forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
 heuristic check for non-terminal bare `simp` calls in candidate modules).
+
+The helper hard-links package sources by default, but copies root and dependency build caches
+with independent files, including symlink targets. Do not edit shared package sources; use
+`--copy-cslib` or `--copy-packages` when those sources must change. Seeding preserves existing
+destination caches and does not repair worktrees created with shared dependency caches by an
+older helper; use a fresh worktree for isolated validation.
+
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
 an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.
 

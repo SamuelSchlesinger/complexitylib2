@@ -20,13 +20,12 @@
 #     tracking, so a plain `git push` cannot target the base branch.
 #
 # Cache seeding note:
-#   By default, `.lake/packages` is hard-linked (`cp -al`) from the root checkout for speed
-#   and disk efficiency, while `.lake/build` and `.lake/config` are copied (`cp -r`) so build
-#   outputs remain isolated. Because hard-linked files share inodes with the root checkout, do
-#   not mutate files inside `.lake/packages/` in a default worktree. `--copy-cslib` copies only
-#   `.lake/packages/cslib` (for upstream cslib edits or a cslib pin bump) and still hard-links
-#   every other package, including mathlib; `--copy-packages` copies all packages (several GB),
-#   for example when the Mathlib pin changes.
+#   Package sources are hard-linked (`cp -al`) by default. Root build/config caches and every
+#   package's `.lake` cache are copied with independent inodes, preserving modes and mtimes.
+#   Cache symlinks are dereferenced so their mutable targets are copied too; source symlinks
+#   are preserved. Do not edit shared package sources. `--copy-cslib` also copies cslib's sources
+#   (for upstream edits or a pin bump); `--copy-packages` copies every package's sources.
+#   Seeding skips existing destination caches; it does not repair previously shared caches.
 
 set -euo pipefail
 
@@ -34,6 +33,22 @@ SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 GIT_COMMON_DIR="$(git -C "$SCRIPT_DIR" rev-parse --path-format=absolute --git-common-dir)"
 ROOT="$(cd "$GIT_COMMON_DIR/.." && pwd)"
 cd "$ROOT"
+
+# seed_package <source> <destination> <copy_sources>. Copy caches without first hard-linking them.
+seed_package() (
+  local source="$1" destination="$2" copy_sources="$3" entry
+  mkdir -p "$destination"
+  shopt -s dotglob nullglob
+  for entry in "$source"/*; do
+    if [ "$(basename "$entry")" = ".lake" ]; then
+      cp -aL "$entry" "$destination/.lake"
+    elif [ "$copy_sources" = "true" ]; then
+      cp -a "$entry" "$destination/"
+    else
+      cp -al "$entry" "$destination/"
+    fi
+  done
+)
 
 # seed_lake <worktree_path> <copy_mode>, where copy_mode is `none`, `cslib` or `all`.
 seed_lake() {
@@ -43,34 +58,33 @@ seed_lake() {
     echo "No root .lake directory found at $ROOT/.lake; skipping cache seed."
     return 0
   fi
+  local path
+  for path in "$wt_path/.lake" "$wt_path/.lake/packages" \
+      "$wt_path/.lake/build" "$wt_path/.lake/config"; do
+    if [ -L "$path" ]; then
+      echo "Refusing to seed through destination cache symlink: $path" >&2
+      return 1
+    fi
+  done
   mkdir -p "$wt_path/.lake"
   if [ -d "$ROOT/.lake/packages" ] && [ ! -d "$wt_path/.lake/packages" ]; then
-    case "$copy_mode" in
-      all)
-        cp -a "$ROOT/.lake/packages" "$wt_path/.lake/packages"
-        ;;
-      cslib)
-        mkdir -p "$wt_path/.lake/packages"
-        for pkg in "$ROOT"/.lake/packages/*; do
-          local name
-          name="$(basename "$pkg")"
-          if [ "$name" = "cslib" ]; then
-            cp -a "$pkg" "$wt_path/.lake/packages/cslib"
-          else
-            cp -al "$pkg" "$wt_path/.lake/packages/$name"
-          fi
-        done
-        ;;
-      *)
-        cp -al "$ROOT/.lake/packages" "$wt_path/.lake/packages"
-        ;;
-    esac
+    mkdir -p "$wt_path/.lake/packages"
+    local pkg name copy_sources
+    for pkg in "$ROOT"/.lake/packages/*; do
+      [ -d "$pkg" ] || continue
+      name="$(basename "$pkg")"
+      copy_sources="false"
+      if [ "$copy_mode" = "all" ] || { [ "$copy_mode" = "cslib" ] && [ "$name" = "cslib" ]; }; then
+        copy_sources="true"
+      fi
+      seed_package "$pkg" "$wt_path/.lake/packages/$name" "$copy_sources"
+    done
   fi
   if [ -d "$ROOT/.lake/config" ] && [ ! -d "$wt_path/.lake/config" ]; then
-    cp -r "$ROOT/.lake/config" "$wt_path/.lake/config"
+    cp -aL "$ROOT/.lake/config" "$wt_path/.lake/config"
   fi
   if [ -d "$ROOT/.lake/build" ] && [ ! -d "$wt_path/.lake/build" ]; then
-    cp -r "$ROOT/.lake/build" "$wt_path/.lake/build"
+    cp -aL "$ROOT/.lake/build" "$wt_path/.lake/build"
   fi
 }
 
