@@ -196,7 +196,7 @@ theorem freeVars_exs (vs : List V) (φ : QBF V) :
     simp only [Finset.mem_erase, Finset.mem_sdiff, Finset.mem_insert]
     tauto
 
-theorem freeVars_alls (vs : List V) (φ : QBF V) :
+private theorem freeVars_alls (vs : List V) (φ : QBF V) :
     (alls vs φ).freeVars = φ.freeVars \ vs.toFinset := by
   induction vs with
   | nil => simp [alls]
@@ -260,7 +260,7 @@ theorem tokens_conj (l : List (QBF ℕ)) :
   | nil => rfl
   | cons φ l ih => simpa [conj, tokens] using ih
 
-theorem tokens_imp (φ ψ : QBF ℕ) :
+private theorem tokens_imp (φ ψ : QBF ℕ) :
     (imp φ ψ).tokens = (Kind.or, 0) :: (Kind.not, 0) :: (φ.tokens ++ ψ.tokens) := rfl
 
 theorem tokens_iff (φ ψ : QBF ℕ) : (iff φ ψ).tokens =
@@ -314,7 +314,7 @@ theorem blockVar_inj {k k' i i' j j' : ℕ} (hk : k < 3) (hk' : k' < 3)
   simp only [blockVar, Nat.mul_left_cancel_iff two_pos, Nat.pair_eq_pair] at h
   omega
 
-theorem blockVar_mem_blockVars {w k k' i i' j : ℕ} (hk : k < 3) (hk' : k' < 3) :
+private theorem blockVar_mem_blockVars {w k k' i i' j : ℕ} (hk : k < 3) (hk' : k' < 3) :
     blockVar k i j ∈ blockVars w k' i' ↔ k = k' ∧ i = i' ∧ j < w := by
   simp only [blockVars, List.mem_map, List.mem_range]
   constructor
@@ -324,7 +324,7 @@ theorem blockVar_mem_blockVars {w k k' i i' j : ℕ} (hk : k < 3) (hk' : k' < 3)
   · rintro ⟨rfl, rfl, hj⟩
     exact ⟨j, hj, rfl⟩
 
-theorem nodup_blockVars (w kind i : ℕ) (hk : kind < 3) : (blockVars w kind i).Nodup :=
+private theorem nodup_blockVars (w kind i : ℕ) (hk : kind < 3) : (blockVars w kind i).Nodup :=
   List.nodup_range.map fun _ _ h => (blockVar_inj hk hk h).2.2
 
 /-- The source and target blocks of a level are disjoint. -/
@@ -338,13 +338,14 @@ theorem nodup_blockVars_append (w i : ℕ) : (blockVars w 0 i ++ blockVars w 1 i
 
 /-- Assignments agreeing outside a list of variables that misses a block hold the same word in
 it. -/
-theorem block_eq_of_agree {σ τ : ℕ → Bool} {vs : List ℕ} (h : ∀ x ∉ vs, τ x = σ x) {w k i : ℕ}
+private theorem block_eq_of_agree {σ τ : ℕ → Bool} {vs : List ℕ} (h : ∀ x ∉ vs, τ x = σ x)
+    {w k i : ℕ}
     (hvs : ∀ j < w, blockVar k i j ∉ vs) : block τ w k i = block σ w k i := by
   simp only [block, blockVars, List.map_map]
   exact List.map_inj_left.mpr fun j hj => h _ (hvs j (List.mem_range.mp hj))
 
 /-- Any values can be given to a list of distinct variables, keeping the others. -/
-theorem exists_agree_map_eq (σ : ℕ → Bool) {vs : List ℕ} (hvs : vs.Nodup) {bs : List Bool}
+private theorem exists_agree_map_eq (σ : ℕ → Bool) {vs : List ℕ} (hvs : vs.Nodup) {bs : List Bool}
     (hbs : bs.length = vs.length) : ∃ τ, (∀ x ∉ vs, τ x = σ x) ∧ vs.map τ = bs := by
   classical
   refine ⟨fun x => if x ∈ vs then bs.getD (vs.idxOf x) false else σ x, fun x hx => by simp [hx], ?_⟩
@@ -354,7 +355,8 @@ theorem exists_agree_map_eq (σ : ℕ → Bool) {vs : List ℕ} (hvs : vs.Nodup)
 
 /-- Any two words of width `w` can be held by the source and target blocks of a level, keeping the
 other variables. -/
-theorem exists_agree_block (σ : ℕ → Bool) {w : ℕ} (i : ℕ) {u v : List Bool} (hu : u.length = w)
+private theorem exists_agree_block (σ : ℕ → Bool) {w : ℕ} (i : ℕ) {u v : List Bool}
+    (hu : u.length = w)
     (hv : v.length = w) : ∃ τ, (∀ x ∉ blockVars w 0 i ++ blockVars w 1 i, τ x = σ x) ∧
       block τ w 0 i = u ∧ block τ w 1 i = v := by
   obtain ⟨τ, hτ, h⟩ := exists_agree_map_eq σ (nodup_blockVars_append w i) (bs := u ++ v)
@@ -364,7 +366,7 @@ theorem exists_agree_block (σ : ℕ → Bool) {w : ℕ} (i : ℕ) {u v : List B
   exact ⟨τ, hτ, h₁, h₂⟩
 
 /-- Any word of width `w` can be held by a block, keeping the other variables. -/
-theorem exists_agree_block_one (σ : ℕ → Bool) {w k : ℕ} (hk : k < 3) (i : ℕ) {u : List Bool}
+private theorem exists_agree_block_one (σ : ℕ → Bool) {w k : ℕ} (hk : k < 3) (i : ℕ) {u : List Bool}
     (hu : u.length = w) : ∃ τ, (∀ x ∉ blockVars w k i, τ x = σ x) ∧ block τ w k i = u :=
   exists_agree_map_eq σ (nodup_blockVars w k i hk) (by simp [blockVars, hu])
 
@@ -384,7 +386,7 @@ theorem eval_eqBlock (σ : ℕ → Bool) (w k i k' i' : ℕ) :
   rw [Bool.eq_iff_iff, List.all_eq_true, decide_eq_true_iff, List.map_inj_left]
   simp
 
-theorem eval_isBlock (σ : ℕ → Bool) {w : ℕ} (k i : ℕ) {u : List Bool} (hu : u.length = w) :
+private theorem eval_isBlock (σ : ℕ → Bool) {w : ℕ} (k i : ℕ) {u : List Bool} (hu : u.length = w) :
     (isBlock w k i u).eval σ = decide (block σ w k i = u) := by
   have hu' : u = (List.range w).map fun j => u.getD j false :=
     List.ext_getElem (by simp [hu]) fun j h₁ h₂ => by simp [List.getD_eq_getElem?_getD, h₁]
@@ -402,7 +404,8 @@ theorem mem_freeVars_eqBlock {w k i k' i' x : ℕ} (hx : x ∈ (eqBlock w k i k'
   · exact .inl (List.mem_map.mpr ⟨j, List.mem_range.mpr hj, rfl⟩)
   · exact .inr (List.mem_map.mpr ⟨j, List.mem_range.mpr hj, rfl⟩)
 
-theorem mem_freeVars_isBlock {w k i x : ℕ} {u : List Bool} (hx : x ∈ (isBlock w k i u).freeVars) :
+private theorem mem_freeVars_isBlock {w k i x : ℕ} {u : List Bool}
+    (hx : x ∈ (isBlock w k i u).freeVars) :
     x ∈ blockVars w k i := by
   simp only [isBlock, QBF.mem_freeVars_conj, List.mem_map, List.mem_range] at hx
   obtain ⟨_, ⟨j, hj, rfl⟩, hx⟩ := hx
@@ -493,7 +496,7 @@ theorem eval_midpoint {e : List Bool → List Bool → Bool} {w : ℕ} {base : Q
 
 /-- The free variables of the midpoint formula of level `i` lie in the source and target blocks
 of level `i`, as soon as those of the formula of level `0` lie in the blocks of level `0`. -/
-theorem mem_freeVars_midpoint {w : ℕ} {base : QBF ℕ}
+private theorem mem_freeVars_midpoint {w : ℕ} {base : QBF ℕ}
     (hbase : ∀ x ∈ base.freeVars, x ∈ blockVars w 0 0 ∨ x ∈ blockVars w 1 0) (i : ℕ) :
     ∀ x ∈ (midpoint w base i).freeVars, x ∈ blockVars w 0 i ∨ x ∈ blockVars w 1 i := by
   induction i with
@@ -569,7 +572,7 @@ def levelTokens (w i : ℕ) : List (QBF.Kind × ℕ) :=
     (blockVars w 0 i ++ blockVars w 1 i).map (fun v => (.all, v)) ++
     (halves w i).not.tokens.cons (.or, 0)
 
-theorem tokens_midpoint_succ (w : ℕ) (base : QBF ℕ) (i : ℕ) :
+private theorem tokens_midpoint_succ (w : ℕ) (base : QBF ℕ) (i : ℕ) :
     (midpoint w base (i + 1)).tokens = levelTokens w i ++ (midpoint w base i).tokens := by
   simp only [midpoint, QBF.tokens_exs, QBF.tokens_alls, QBF.tokens_imp, levelTokens,
     List.append_assoc, List.cons_append, QBF.tokens]

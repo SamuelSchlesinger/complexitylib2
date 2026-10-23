@@ -68,7 +68,7 @@ theorem eval_initClauses :
 
 /-- The input clauses at position `j`: the input head there reads the input symbol, a certificate
 bit included. -/
-theorem eval_inputClauses (t j : ℕ) :
+private theorem eval_inputClauses (t j : ℕ) :
     (inputClauses (k := k) (State := State) u L t j).eval σ = true ↔
       (σ (.holds t (.inPos j)) = true →
         σ (.holds t (.inRead (inputAt (u ++ certWord σ L) j))) = true) := by
@@ -107,7 +107,7 @@ theorem eval_readClauses (t : ℕ) :
     fun ⟨h, h'⟩ => ⟨fun i z hz s ⟨hh, hc⟩ => h i z s hz hh hc, h'⟩⟩
 
 /-- The accept clauses ask for a halted run with output `[true]`. -/
-theorem eval_acceptClauses :
+private theorem eval_acceptClauses :
     (acceptClauses (k := k) (State := State) T).eval σ = true ↔
       σ (.holds T (.state none)) = true ∧ σ (.holds T (.out (.one true))) = true := by
   simp [acceptClauses]
@@ -117,7 +117,7 @@ section Soundness
 variable [Fintype State]
 
 /-- The situation clauses: a situation holds when its state and the symbols it reads do. -/
-theorem eval_sitClauses (t : ℕ) :
+private theorem eval_sitClauses (t : ℕ) :
     (sitClauses (k := k) (State := State) t).eval σ = true ↔
       ∀ y : Situation k State, σ (.holds t (.state (some y.1))) = true →
         σ (.holds t (.inRead y.2.1)) = true → (∀ i, σ (.holds t (.read i (y.2.2 i))) = true) →
@@ -180,7 +180,7 @@ theorem eval_stepClauses (t : ℕ) :
     Clause.eval_impLits, List.forall_mem_map]
 
 /-- The one-hot clauses at time `t`. -/
-theorem eval_oneHotClauses (t : ℕ) :
+private theorem eval_oneHotClauses (t : ℕ) :
     (oneHotClauses (k := k) (State := State) u L T t).eval σ = true ↔
       ∀ g ∈ groups (u.length + L) T, (CNF.exactlyOne (g.map (.holds t))).eval σ = true :=
   CNF.eval_flatMap_eq_true_iff ..
@@ -213,7 +213,7 @@ theorem Agrees.of_oneHot {input : List Bool} {cfg : Cfg k Bool State input} {t :
 
 /-- One step of the induction: if `σ` describes `cfg` at time `t` and satisfies the clauses of
 time `t`, it describes the next configuration at time `t + 1`. -/
-theorem Agrees.step {cfg : Cfg k Bool State (u ++ certWord σ L)} {t : ℕ}
+private theorem Agrees.step {cfg : Cfg k Bool State (u ++ certWord σ L)} {t : ℕ}
     (hA : Agrees σ (u.length + L) T t cfg) (hb : ∀ i, |cfg.workTapePos i| ≤ T)
     (hb' : ∀ i, |(tm.step cfg).workTapePos i| ≤ T)
     (hread : (readClauses u L T t).eval σ = true) (hsit : (sitClauses t).eval σ = true)
@@ -267,7 +267,7 @@ noncomputable def runAssignment (tm : MultiTapeTM k Bool State) (u w : List Bool
   | .holds t φ => decide (φ.Holds (tm.runFrom (tm.initCfg (u ++ w)) t))
   | .cert j => w.getD j false
 
-theorem certWord_runAssignment {w : List Bool} (hw : w.length = L) :
+private theorem certWord_runAssignment {w : List Bool} (hw : w.length = L) :
     certWord (runAssignment tm u w) L = w := by
   subst hw
   refine List.ext_getElem (by simp) fun j h₁ h₂ => ?_

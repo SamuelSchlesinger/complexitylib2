@@ -84,7 +84,7 @@ section LabelCoverSoundness
 `W : I → α → ℝ`, and vertex-wise sub-probability distributions `p : ℕ → α → ℝ` (`0 ≤ p u a` and
 `∑ a, p u a ≤ 1`), choosing the best label at each vertex produces a deterministic assignment
 `f : ℕ → α` whose payoff is at least the expected payoff under `p`. -/
-theorem exists_choice_sum_le {I α : Type*} [Fintype I] [Fintype α] [Nonempty α]
+private theorem exists_choice_sum_le {I α : Type*} [Fintype I] [Fintype α] [Nonempty α]
     (v : I → ℕ) (W : I → α → ℝ) (hW : ∀ i a, 0 ≤ W i a)
     (p : ℕ → α → ℝ) (hp0 : ∀ u a, 0 ≤ p u a) (hp1 : ∀ u, ∑ a : α, p u a ≤ 1) :
     ∃ f : ℕ → α, (∑ i : I, ∑ a : α, p (v i) a * W i a) ≤ ∑ i : I, W i (f (v i)) := by
@@ -128,7 +128,7 @@ theorem exists_choice_sum_le {I α : Type*} [Fintype I] [Fintype α] [Nonempty �
 
 /-- Any deterministic labelling `(ℓ, r)` of a Label Cover instance `g` satisfies at most
 `g.edges.length * (1 - (g.toGraph projectionEval).unsatVal)` edges. -/
-theorem sum_satisfies_le_unsatVal {β γ : Type} [DecidableEq γ]
+private theorem sum_satisfies_le_unsatVal {β γ : Type} [DecidableEq γ]
     (g : Graph (β → γ)) (ℓ : ℕ → β) (r : ℕ → γ) :
     (∑ i : Fin g.edges.length,
       if (g.edges.get i).constraint (ℓ (g.edges.get i).src) = r (g.edges.get i).dst then (1 : ℝ)
@@ -198,7 +198,7 @@ theorem exists_labelling_of_spectralWeight (g : Graph (β → γ)) (k : ℕ)
 
 /-- Total spectral weight agreement across the edges of a Label Cover instance `g` is at most
 `g.edges.length * (1 - (g.toGraph projectionEval).unsatVal)`. -/
-theorem sum_spectralWeight_le_unsatVal (g : Graph (β → γ)) (k : ℕ)
+private theorem sum_spectralWeight_le_unsatVal (g : Graph (β → γ)) (k : ℕ)
     (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool) :
     (∑ i : Fin g.edges.length, ∑ x : β,
       spectralWeight k (A (g.edges.get i).src) x *
@@ -224,7 +224,7 @@ noncomputable def hastadGraphLinearProb (g : Graph (β → γ)) (δ : ℝ)
 omit [Nonempty β] [Nonempty γ] in
 /-- For a Label Cover instance with at least one edge,
 `hastadGraphLinearProb g δ B A = 1 / 2 + 1 / 2 * hastadGraphLinearCorr g δ B A`. -/
-theorem hastadGraphLinearProb_eq_add_hastadGraphLinearCorr {g : Graph (β → γ)}
+private theorem hastadGraphLinearProb_eq_add_hastadGraphLinearCorr {g : Graph (β → γ)}
     (hg : g.edges ≠ []) (δ : ℝ) (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool) :
     hastadGraphLinearProb g δ B A = 1 / 2 + 1 / 2 * hastadGraphLinearCorr g δ B A := by
   have hne : (univ : Finset (Fin g.edges.length)).Nonempty :=
@@ -307,7 +307,7 @@ theorem hastadGraphLinearCorr_sq_le (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0
 `1 - (g.toGraph projectionEval).unsatVal ≤ η` and `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * η ≤ (8 * ε) ^ 2`
 (`0 ≤ ε`), every assignment of folded right tables `B` and left tables `A` has average linear
 correlation at most `8 * ε`. -/
-theorem hastadGraphLinearCorr_le_of_unsatVal (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0 ≤ δ)
+private theorem hastadGraphLinearCorr_le_of_unsatVal (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0 ≤ δ)
     (hδ1 : δ ≤ 1 / 2) (k : ℕ) {η ε : ℝ} (hε : 0 ≤ ε)
     (hη : 1 - (g.toGraph projectionEval).unsatVal ≤ η)
     (hparam : (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * η ≤ (8 * ε) ^ 2)
@@ -323,7 +323,7 @@ theorem hastadGraphLinearCorr_le_of_unsatVal (g : Graph (β → γ)) {δ : ℝ} 
 
 /-- For every `ε > 0` and `0 < δ < 1 / 2`, there exist a degree cutoff `k : ℕ` and a Label Cover
 soundness threshold `η > 0` such that `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * η ≤ (8 * ε) ^ 2`. -/
-theorem exists_hastad_params {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
+private theorem exists_hastad_params {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
     ∃ (k : ℕ) (η : ℝ), 0 < η ∧ (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * η ≤ (8 * ε) ^ 2 := by
   have hρ0 : 0 ≤ 1 - 2 * δ := by linarith
   have hρ1 : 1 - 2 * δ < 1 := by linarith

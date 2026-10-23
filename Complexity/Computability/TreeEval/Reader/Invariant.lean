@@ -64,12 +64,12 @@ def Inv (ℓ H : ℕ) (s : State) : Prop :=
       q ≤ primeFor ℓ ∧ 2 ≤ d ∧ d ≤ q
   | _ => RunInv ℓ H s
 
-theorem inv_init (ℓ H : ℕ) : Inv ℓ H init := ⟨rfl, Nat.zero_le _⟩
+private theorem inv_init (ℓ H : ℕ) : Inv ℓ H init := ⟨rfl, Nat.zero_le _⟩
 
 variable {ℓ H : ℕ} (T : Tree ℓ H)
 
 /-- **A step keeps the invariant.** -/
-theorem inv_step {s : State} (hs : Inv ℓ H s) (hh : machine.halt s = false) :
+private theorem inv_step {s : State} (hs : Inv ℓ H s) (hh : machine.halt s = false) :
     Inv ℓ H (machine.step s (machine.readBit T.encode s)).1 := by
   obtain ⟨e, h, p, R, st, m, c⟩ := s
   cases c with

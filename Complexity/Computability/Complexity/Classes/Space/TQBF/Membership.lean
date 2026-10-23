@@ -152,16 +152,16 @@ open ComputableTidilyInPolyTime
   ((snd _ _).comp (snd _ _)).comp frameFields_pt
 
 /-- The next token, or `(top, 0)` when the input is empty. -/
-def State.head (s : State) : QBF.Kind × ℕ := s.input.headD (.top, 0)
+private def State.head (s : State) : QBF.Kind × ℕ := s.input.headD (.top, 0)
 
 /-- The top frame, or a frame of `top` when the stack is empty. -/
-def State.top (s : State) : Frame := s.stack.headD ⟨(.top, 0), none, []⟩
+private def State.top (s : State) : Frame := s.stack.headD ⟨(.top, 0), none, []⟩
 
 /-- The value being returned, or `false`. -/
-def State.ret (s : State) : Bool := s.value.getD false
+private def State.ret (s : State) : Bool := s.value.getD false
 
 /-- A step reading a token of kind `k`. -/
-def readStep (k : QBF.Kind) (s : State) : State :=
+private def readStep (k : QBF.Kind) (s : State) : State :=
   match k with
   | .var => ⟨s.input.tail, s.stack, some (assignment s.stack s.head.2),
       s.ok && (lookup s.stack s.head.2).isSome⟩
@@ -172,7 +172,7 @@ def readStep (k : QBF.Kind) (s : State) : State :=
 
 /-- A step returning a value into a frame of kind `k`, during its second operand or pass when
 `second` holds. -/
-def retStep (k : QBF.Kind) (second : Bool) (s : State) : State :=
+private def retStep (k : QBF.Kind) (second : Bool) (s : State) : State :=
   match k, second with
   | .not, _ => ⟨s.input, s.stack.tail, some !s.ret, s.ok⟩
   | .and, false | .or, false =>
@@ -184,7 +184,7 @@ def retStep (k : QBF.Kind) (second : Bool) (s : State) : State :=
   | .var, _ | .top, _ | .bot, _ => ⟨s.input, s.stack.tail, some s.ret, s.ok⟩
 
 /-- The step as a case distinction on Boolean tests and finite tags. -/
-theorem step_eq (s : State) : step s =
+private theorem step_eq (s : State) : step s =
     if s.value.isSome then
       (if s.stack.isEmpty then s else retStep s.top.token.1 s.top.first.isSome s)
     else if s.input.isEmpty then ⟨s.input, s.stack, some false, s.ok⟩ else readStep s.head.1 s := by
@@ -198,12 +198,12 @@ theorem step_eq (s : State) : step s =
     · cases k <;> cases first <;> rfl
 
 /-- Whether a variable is bound, by a search of the stack. -/
-theorem isSome_lookup (stack : List Frame) (v : ℕ) :
+private theorem isSome_lookup (stack : List Frame) (v : ℕ) :
     (lookup stack v).isSome = (stack.find? (Frame.binds v)).isSome := by
   simp [lookup]
 
 /-- The value of a variable, by a search of the stack. -/
-theorem assignment_eq (stack : List Frame) (v : ℕ) :
+private theorem assignment_eq (stack : List Frame) (v : ℕ) :
     assignment stack v = (stack.find? (Frame.binds v)).elim false fun f => f.first.isSome := by
   simp only [assignment, lookup]
   cases stack.find? (Frame.binds v) <;> rfl
@@ -295,7 +295,7 @@ private theorem length_encList_le_of_suffix {l l' : List (QBF.Kind × ℕ)} (h :
 
 /-- A frame storing a token of `φ` followed by a suffix of its tokens is no longer than the
 encoding of `φ`, up to its value. -/
-theorem length_encFrame_le {φ : QBF ℕ} {f : Frame} (h : f.token :: f.rest <:+ φ.tokens) :
+private theorem length_encFrame_le {φ : QBF ℕ} {f : Frame} (h : f.token :: f.rest <:+ φ.tokens) :
     (encFrame f).length ≤ (encQBF φ).length + 5 := by
   have hs := length_encList_le_of_suffix h
   have hfirst : (encOption encBool f.first).length ≤ 2 := by cases f.first <;> simp [encOption]

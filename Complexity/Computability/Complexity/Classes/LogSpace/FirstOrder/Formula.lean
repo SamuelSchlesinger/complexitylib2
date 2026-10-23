@@ -59,7 +59,7 @@ def boundDepth {α : Type*} : ∀ {k : ℕ}, L.BoundedFormula α k → ℕ
   | _, .imp φ ψ => max (boundDepth φ) (boundDepth ψ)
   | _, .all φ => boundDepth φ
 
-theorem le_boundDepth {α : Type*} : ∀ {k : ℕ} (φ : L.BoundedFormula α k), k ≤ boundDepth φ
+private theorem le_boundDepth {α : Type*} : ∀ {k : ℕ} (φ : L.BoundedFormula α k), k ≤ boundDepth φ
   | _, .falsum => le_rfl
   | _, .equal _ _ => le_rfl
   | _, .rel _ _ => le_rfl

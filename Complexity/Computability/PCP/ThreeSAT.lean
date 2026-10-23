@@ -131,7 +131,7 @@ def cnfAssignment (A : V ⊕ Fin φ.length → Fin 3 → Bool) (x : V) : Bool :=
 
 /-- A labelling satisfies the three edges of a clause only if the assignment it induces satisfies
 the clause. -/
-theorem eval_cnfAssignment_of_forall_satisfies {A : V ⊕ Fin φ.length → Fin 3 → Bool}
+private theorem eval_cnfAssignment_of_forall_satisfies {A : V ⊕ Fin φ.length → Fin 3 → Bool}
     {j : Fin φ.length} (h : ∀ q, (ofCNF φ).Satisfies A (j, q)) :
     φ[j].eval (cnfAssignment A) = true := by
   obtain ⟨q, l, hl, hq⟩ := (h 0).1
@@ -157,7 +157,7 @@ theorem countUnsat_cnfAssignment_le_card_unsatEdges (A : V ⊕ Fin φ.length →
 variable (φ)
 
 /-- The labelling by an assignment satisfies the consistency part of every constraint. -/
-theorem cnfLabelling_consistent (τ : V → Bool) (e : Fin φ.length × Fin 3) :
+private theorem cnfLabelling_consistent (τ : V → Bool) (e : Fin φ.length × Fin 3) :
     ∀ l, φ[e.1][e.2.val]? = some l → cnfLabelling φ τ (.inr e.1) e.2 =
       cnfLabelling φ τ ((ofCNF φ).dst e) 0 := by
   intro l hl
@@ -166,7 +166,7 @@ theorem cnfLabelling_consistent (τ : V → Bool) (e : Fin φ.length × Fin 3) :
 
 /-- If the clauses of `φ` have at most three literals, the labelling by an assignment satisfies
 every edge of a clause that the assignment satisfies. -/
-theorem satisfies_cnfLabelling (h3 : ∀ c ∈ φ, c.length ≤ 3) {τ : V → Bool}
+private theorem satisfies_cnfLabelling (h3 : ∀ c ∈ φ, c.length ≤ 3) {τ : V → Bool}
     {e : Fin φ.length × Fin 3} (he : φ[e.1].eval τ = true) :
     (ofCNF φ).Satisfies (cnfLabelling φ τ) e := by
   refine ⟨?_, cnfLabelling_consistent φ τ e⟩
@@ -209,12 +209,12 @@ theorem satisfiable_ofCNF_iff (h3 : ∀ c ∈ φ, c.length ≤ 3) :
     exact (CNF.eval_eq_true_iff _ _).1 hτ _ (List.getElem_mem _)
 
 /-- The constraint graph of a formula with `m` clauses has `3 m` edges. -/
-theorem card_edges_ofCNF : Fintype.card (Fin φ.length × Fin 3) = 3 * φ.length := by
+private theorem card_edges_ofCNF : Fintype.card (Fin φ.length × Fin 3) = 3 * φ.length := by
   simp [mul_comm]
 
 /-- **Soundness**: a labelling violates at least a third of the proportion of clauses that the
 assignment read off from it falsifies. -/
-theorem countUnsat_div_le_unsatFrac (A : V ⊕ Fin φ.length → Fin 3 → Bool) :
+private theorem countUnsat_div_le_unsatFrac (A : V ⊕ Fin φ.length → Fin 3 → Bool) :
     (φ.countUnsat (cnfAssignment A) : ℝ) / φ.length / 3 ≤ (ofCNF φ).unsatFrac A := by
   rw [unsatFrac, card_edges_ofCNF, Nat.cast_mul, div_div, mul_comm (φ.length : ℝ), Nat.cast_ofNat]
   gcongr

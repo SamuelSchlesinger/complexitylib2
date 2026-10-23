@@ -31,7 +31,7 @@ namespace Reader
 open Turing MultiTapeTM ComputableTidilyInSpace
 
 /-- The projections of a triple. -/
-theorem proj3 :
+private theorem proj3 :
     ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.1) encNat3 encNat
       (fun q => (encNat3 q).length) ∧
     ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.2.1) encNat3 encNat
@@ -79,9 +79,9 @@ theorem chi_inSpace :
   exact (budget_ite (snd _ _) hmod hadd).of_enc_eq fun q => by simp only [chi]
 
 /-- One factor of a power modulo `p`, on `(p, a, acc)`. -/
-def powStep (q : ℕ × ℕ × ℕ) : ℕ × ℕ × ℕ := (q.1, q.2.1, mulMod q.1 q.2.2 q.2.1)
+private def powStep (q : ℕ × ℕ × ℕ) : ℕ × ℕ × ℕ := (q.1, q.2.1, mulMod q.1 q.2.2 q.2.1)
 
-theorem iterate_powStep (p a n : ℕ) : powStep^[n] (p, a, 1 % p) = (p, a, powMod p a n) := by
+private theorem iterate_powStep (p a n : ℕ) : powStep^[n] (p, a, 1 % p) = (p, a, powMod p a n) := by
   induction n with
   | zero => rfl
   | succ n ih => rw [Function.iterate_succ_apply', ih]; rfl

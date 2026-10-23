@@ -286,7 +286,7 @@ noncomputable def numHits (A : V → WalkLabels D T → α) (σ : V → α)
 
 open Classical in
 /-- The number of hits is the sum of the indicators of the hits at the steps before `T`. -/
-theorem numHits_eq_sum (A : V → WalkLabels D T → α) (σ : V → α)
+private theorem numHits_eq_sum (A : V → WalkLabels D T → α) (σ : V → α)
     (p : V × (Fin T → D) × (Fin T → Fin q)) :
     (R.numHits T q A σ p : ℝ) = ∑ i ∈ range T, if R.Hit T q A σ p i then 1 else 0 := by
   rw [numHits, card_filter]
@@ -510,7 +510,7 @@ theorem expect_numHits_sq_le (A : V → WalkLabels D T → α) (σ : V → α)
 open Classical in
 /-- A killed walk hit at some step is violated: the proportion of the killed walks hit at some step
 is at most the proportion of the darts of the powered constraint graph violated by `A`. -/
-theorem expect_numHits_ne_zero_le (A : V → WalkLabels D T → α) (σ : V → α) :
+private theorem expect_numHits_ne_zero_le (A : V → WalkLabels D T → α) (σ : V → α) :
     𝔼 p, (if (R.numHits T q A σ p : ℝ) = 0 then 0 else 1) ≤
       (R.power T q).toConstraintGraph.unsatFrac A := by
   rw [← ConstraintGraph.expect_mem_unsatEdges]

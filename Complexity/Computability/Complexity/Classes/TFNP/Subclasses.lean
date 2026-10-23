@@ -105,7 +105,7 @@ variable {α β : Type}
 /-! ### Polynomial-time bit-string and binary-number primitives -/
 
 /-- `zeroVertex n = List.replicate n false` is computable in polynomial time from `n` in unary. -/
-theorem computableTidilyInPolyTime_zeroVertex :
+private theorem computableTidilyInPolyTime_zeroVertex :
     ComputableTidilyInPolyTime zeroVertex encUnary encBits := by
   have heq (n : ℕ) : (List.replicate n true).foldl (fun acc _ => false :: acc) [] =
       zeroVertex n := by
@@ -155,7 +155,7 @@ private theorem foldl_binaryBitsStep (w : List Bool) :
 
 /-- Decoding a most-significant-first bit string to its binary natural number (`encNat`) is
 polynomial-time. -/
-theorem computableTidilyInPolyTime_binaryValue :
+private theorem computableTidilyInPolyTime_binaryValue :
     ComputableTidilyInPolyTime binaryValue encBits encNat := by
   have hstep : ComputableTidilyInPolyTime
       (fun p : List Bool × Bool => binaryBitsStep p.1 p.2)
@@ -592,7 +592,7 @@ theorem PPA_subset_TFNP : PPA enc ⊆ TFNP enc := by
   exact ⟨hR, hred.isTotalSearch (isTotalSearch_leafRel hN₁_len hN₂_len)⟩
 
 /-- Every directed end-of-line family search-reduces to its associated pigeonhole family. -/
-theorem endOfLineRel_searchReducible_pigeonRel {n : α → ℕ} {P S : α × List Bool → List Bool}
+private theorem endOfLineRel_searchReducible_pigeonRel {n : α → ℕ} {P S : α × List Bool → List Bool}
     (hn : ComputableTidilyInPolyTime n enc encUnary)
     (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
     (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits)
@@ -617,7 +617,7 @@ theorem PPAD_subset_PPP : PPAD enc ⊆ PPP enc := by
 
 /-- Every directed end-of-line family search-reduces to its associated bipartite undirected parity
 family. -/
-theorem endOfLineRel_searchReducible_leafRel {n : α → ℕ} {P S : α × List Bool → List Bool}
+private theorem endOfLineRel_searchReducible_leafRel {n : α → ℕ} {P S : α × List Bool → List Bool}
     (hP_len : ∀ a u, u.length = n a → (P (a, u)).length = n a)
     (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
     SearchReducible enc enc (endOfLineRel n P S)
@@ -677,7 +677,7 @@ def evalCircuitOutputs (code : CircuitCode) (u : List Bool) : List Bool :=
   let vals := evalCode interpretation false u code.1
   code.2.map (fun o => vals.getD o false)
 
-theorem evalCircuitOutputs_eq_map (code : CircuitCode) (u : List Bool) :
+private theorem evalCircuitOutputs_eq_map (code : CircuitCode) (u : List Bool) :
     evalCircuitOutputs code u =
       code.2.map fun o => (evalCode interpretation false u code.1).getD o false :=
   rfl

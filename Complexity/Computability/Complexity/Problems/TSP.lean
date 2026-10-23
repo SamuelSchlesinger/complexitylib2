@@ -225,10 +225,11 @@ def toTSP (G : Graph) : List (List ℕ) × ℕ :=
     (cities G).length)
 
 /-- The cities of `G` are its declared vertices. -/
-theorem mem_cities {G : Graph} {v : ℕ} : v ∈ cities G ↔ v ∈ G.1 := Graph.mem_distinctVertices
+private theorem mem_cities {G : Graph} {v : ℕ}
+    : v ∈ cities G ↔ v ∈ G.1 := Graph.mem_distinctVertices
 
 /-- The cities of `G` are distinct. -/
-theorem nodup_cities (G : Graph) : (cities G).Nodup := G.nodup_distinctVertices
+private theorem nodup_cities (G : Graph) : (cities G).Nodup := G.nodup_distinctVertices
 
 private theorem dist_map {V : List ℕ} {G : Graph} {i j : ℕ} (hi : i < V.length)
     (hj : j < V.length) :

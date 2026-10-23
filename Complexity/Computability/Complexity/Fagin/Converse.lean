@@ -98,15 +98,15 @@ arities of `v`. -/
 def maxArity : ℕ :=
   Finset.univ.sup v.arity + 1
 
-theorem one_le_maxArity : 1 ≤ v.maxArity :=
+private theorem one_le_maxArity : 1 ≤ v.maxArity :=
   Nat.le_add_left 1 _
 
-theorem arity_le_maxArity (i : Fin v.count) : v.arity i ≤ v.maxArity :=
+private theorem arity_le_maxArity (i : Fin v.count) : v.arity i ≤ v.maxArity :=
   (Finset.le_sup (Finset.mem_univ i)).trans (Nat.le_add_right _ 1)
 
 /-- For a well-formed input `a` with `1 ≤ a.1`, the `m`-th prefix of `encStructure a` has length at
 most `(m + 1) * (2 * a.1 ^ v.maxArity + 1)`. -/
-theorem length_encStructurePrefix_le_pow {a : EncodedStructure} (ha : v.WellFormed a)
+private theorem length_encStructurePrefix_le_pow {a : EncodedStructure} (ha : v.WellFormed a)
     (ha1 : 1 ≤ a.1) (m : ℕ) (hm : m ≤ v.count) :
     (v.encStructurePrefix a m).length ≤ (m + 1) * (2 * a.1 ^ v.maxArity + 1) := by
   induction m with

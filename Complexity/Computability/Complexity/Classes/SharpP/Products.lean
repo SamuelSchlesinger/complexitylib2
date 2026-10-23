@@ -137,7 +137,7 @@ theorem prod_sub_mul_eq_sum {n : ℕ} (f g : Fin n → ℤ) (c : ℤ) :
 
 /-- Expanding a product of differences over Boolean choices: each term selects `g i` where `w i` is
 true and `f i` where `w i` is false, weighted by `(-1)` to the number of true bits. -/
-theorem prod_sub_eq_sum {n : ℕ} (f g : Fin n → ℤ) :
+private theorem prod_sub_eq_sum {n : ℕ} (f g : Fin n → ℤ) :
     (∏ i, (f i - g i)) = ∑ w : Fin n → Bool,
       (-1 : ℤ) ^ (List.ofFn w).countP id * ∏ i, if w i then g i else f i := by
   simpa using prod_sub_mul_eq_sum f g 1

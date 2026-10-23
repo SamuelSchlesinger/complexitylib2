@@ -84,7 +84,7 @@ open ClauseSet.Sparsification (threshold base one_le_threshold BranchingRule)
 abbrev State : Type := List (CNF ℕ) × Bool
 
 /-- States encoded as framed tuples. -/
-abbrev encState : State ↪ List Bool := encPair (encList encCNF) encBool
+private abbrev encState : State ↪ List Bool := encPair (encList encCNF) encBool
 
 /-- One step of the depth-first search of the sparsification tree, for width `K` and the
 thresholds `threshold K α`: a sparse formula on top of the stack is popped and the decider `g` is
@@ -113,11 +113,12 @@ def search (K α k M : ℕ) (g : CNF ℕ → Bool) (φ : CNF ℕ) : Bool :=
 variable {K α : ℕ} (hK : 1 ≤ K) (hα : 1 ≤ α)
 
 /-- The list-level branching rule for width `K` and the thresholds `threshold K α`. -/
-abbrev rule : BranchingRule (threshold K α) ℕ {ψ : CNF ℕ // Normalized K ψ} :=
+private abbrev rule : BranchingRule (threshold K α) ℕ {ψ : CNF ℕ // Normalized K ψ} :=
   CNF.Sparsification.rule (one_le_threshold hK hα) K
 
 include hK hα in
-theorem step_map (g : CNF ℕ → Bool) (stk : List {ψ : CNF ℕ // Normalized K ψ}) (acc : Bool) :
+private theorem step_map (g : CNF ℕ → Bool) (stk : List {ψ : CNF ℕ // Normalized K ψ})
+    (acc : Bool) :
     step K α g (stk.map Subtype.val, acc) =
       Prod.map (List.map Subtype.val) id
         ((rule hK hα).searchStep (g ∘ Subtype.val) (stk, acc)) := by
@@ -133,7 +134,8 @@ theorem step_map (g : CNF ℕ → Bool) (stk : List {ψ : CNF ℕ // Normalized 
       simp [step, BranchingRule.searchStep, hs, hs', rule, CNF.Sparsification.rule]
 
 include hK hα in
-theorem iterate_step_map (g : CNF ℕ → Bool) (n : ℕ) (stk : List {ψ : CNF ℕ // Normalized K ψ})
+private theorem iterate_step_map (g : CNF ℕ → Bool) (n : ℕ)
+    (stk : List {ψ : CNF ℕ // Normalized K ψ})
     (acc : Bool) :
     (step K α g)^[n] (stk.map Subtype.val, acc) =
       Prod.map (List.map Subtype.val) id
@@ -145,15 +147,15 @@ theorem iterate_step_map (g : CNF ℕ → Bool) (n : ℕ) (stk : List {ψ : CNF 
     obtain ⟨stk', acc'⟩ := (rule hK hα).searchStep (g ∘ Subtype.val) (stk, acc)
     exact ih stk' acc'
 
-theorem step_nil (g : CNF ℕ → Bool) (acc : Bool) : step K α g ([], acc) = ([], acc) := rfl
+private theorem step_nil (g : CNF ℕ → Bool) (acc : Bool) : step K α g ([], acc) = ([], acc) := rfl
 
-theorem iterate_step_nil (g : CNF ℕ → Bool) (n : ℕ) (acc : Bool) :
+private theorem iterate_step_nil (g : CNF ℕ → Bool) (n : ℕ) (acc : Bool) :
     (step K α g)^[n] ([], acc) = ([], acc) :=
   Function.iterate_fixed (step_nil g acc) n
 
 /-! ### The root -/
 
-theorem normalized_root {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : Normalized K (root k φ) := by
+private theorem normalized_root {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : Normalized K (root k φ) := by
   unfold root
   split_ifs with h
   · simp only [List.all_eq_true, decide_eq_true_eq] at h
@@ -161,7 +163,7 @@ theorem normalized_root {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : Normalized K 
   · exact ⟨by simp, by simp, by simp, by simp [CNF.toClauseSet, ClauseSet.Sparsification.Reduced]⟩
 
 /-- Every clause of the root has the literals of a clause of the formula. -/
-theorem exists_of_mem_root {k : ℕ} {φ : CNF ℕ} {C : Clause ℕ} (hC : C ∈ root k φ) :
+private theorem exists_of_mem_root {k : ℕ} {φ : CNF ℕ} {C : Clause ℕ} (hC : C ∈ root k φ) :
     ∃ D ∈ φ, C.toFinset = D.toFinset := by
   unfold root at hC
   split_ifs at hC
@@ -171,7 +173,7 @@ theorem exists_of_mem_root {k : ℕ} {φ : CNF ℕ} {C : Clause ℕ} (hC : C ∈
     exact ⟨D, hD, toFinset_dedup D⟩
   · simp at hC
 
-theorem length_root_le (k : ℕ) (φ : CNF ℕ) : (root k φ).length ≤ φ.length := by
+private theorem length_root_le (k : ℕ) (φ : CNF ℕ) : (root k φ).length ≤ φ.length := by
   unfold root
   split_ifs
   · exact ((reduce_sublist _).trans (dedupClauses_sublist _)).length_le.trans
@@ -179,10 +181,10 @@ theorem length_root_le (k : ℕ) (φ : CNF ℕ) : (root k φ).length ≤ φ.leng
   · exact Nat.zero_le _
 
 /-- The root as a state of the list-level rule. -/
-def rootState {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : {ψ : CNF ℕ // Normalized K ψ} :=
+private def rootState {k : ℕ} (hkK : k ≤ K) (φ : CNF ℕ) : {ψ : CNF ℕ // Normalized K ψ} :=
   ⟨root k φ, normalized_root hkK φ⟩
 
-theorem mem_vars_of_mem_root {k : ℕ} {φ : CNF ℕ} :
+private theorem mem_vars_of_mem_root {k : ℕ} {φ : CNF ℕ} :
     ∀ C ∈ (root k φ).toClauseSet, ∀ l ∈ C, l.1 ∈ φ.vars.toFinset := by
   intro C hC l hl
   obtain ⟨C', hC', rfl⟩ := mem_toClauseSet.mp hC
@@ -201,7 +203,7 @@ variable {k : ℕ} (hkK : k ≤ K) {φ : CNF ℕ} {w : List Bool}
 include hK hα hkK
 
 /-- Every clause of a state of the tree has its literals in a clause of the formula. -/
-theorem exists_of_mem_walk (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) {C : Clause ℕ}
+private theorem exists_of_mem_walk (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) {C : Clause ℕ}
     (hC : C ∈ ((rule hK hα).walk (rootState hkK φ) w).1) :
     ∃ D ∈ φ, C.toFinset ⊆ D.toFinset := by
   obtain ⟨D', hD', hCD'⟩ := BranchingRule.IsNodeWord.refines_walk (one_le_threshold hK hα) hw
@@ -211,7 +213,7 @@ theorem exists_of_mem_walk (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) 
   exact ⟨D, hD, hDeq ▸ hCD'⟩
 
 /-- The states of the tree have at most `m + n K X ^ (2 K)` clauses. -/
-theorem length_walk_le (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) :
+private theorem length_walk_le (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) :
     ((rule hK hα).walk (rootState hkK φ) w).1.length ≤
       φ.length + φ.numVars * (K * base K α ^ (2 * K)) := by
   have h : (((rule hK hα).walk (rootState hkK φ) w).1.toClauseSet).card ≤
@@ -225,7 +227,7 @@ theorem length_walk_le (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) :
 
 /-- **The leaves are small.** The sparse states of the tree have at most `c n + 1` clauses, for
 `c = occBound K α`. -/
-theorem length_walk_le_of_isSparse (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w)
+private theorem length_walk_le_of_isSparse (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w)
     (hs : isSparse (threshold K α) K ((rule hK hα).walk (rootState hkK φ) w).1 = true) :
     ((rule hK hα).walk (rootState hkK φ) w).1.length ≤ occBound K α * φ.numVars + 1 := by
   set ψ := (rule hK hα).walk (rootState hkK φ) w
@@ -239,7 +241,7 @@ theorem length_walk_le_of_isSparse (hw : (rule hK hα).IsNodeWord (rootState hkK
   exact List.mem_toFinset.mpr (List.mem_map.mpr ⟨l, List.mem_flatten.mpr ⟨D, hD, hl'⟩, rfl⟩)
 
 /-- The states of the tree from a formula of width `k` have width `k`. -/
-theorem length_le_of_mem_walk (hφ : ∀ c ∈ φ, c.length ≤ k)
+private theorem length_le_of_mem_walk (hφ : ∀ c ∈ φ, c.length ≤ k)
     (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) {C : Clause ℕ}
     (hC : C ∈ ((rule hK hα).walk (rootState hkK φ) w).1) : C.length ≤ k := by
   obtain ⟨D, hD, hCD⟩ := exists_of_mem_walk hK hα hkK hw hC
@@ -260,7 +262,7 @@ open Classical in
 /-- **The run of the search.** After the rounds, the stack is empty and the accumulator records
 whether the decider accepts a leaf of the tree. Meanwhile the stack holds at most
 `n K X ^ (2 K) + 1` states of the tree. -/
-theorem iterate_step {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M) (g : CNF ℕ → Bool)
+private theorem iterate_step {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M) (g : CNF ℕ → Bool)
     (φ : CNF ℕ) :
     (step K α g)^[rounds M φ] ([root k φ], false) =
       ([], decide (∃ w, (rule hK hα).IsLeafWord (rootState hkK φ) w ∧
@@ -340,7 +342,7 @@ section PolyTime
 
 open ComputableTidilyInPolyTime
 
-theorem computableTidilyInPolyTime_isSparse_head (K α : ℕ) :
+private theorem computableTidilyInPolyTime_isSparse_head (K α : ℕ) :
     ComputableTidilyInPolyTime (fun s : State => isSparse (threshold K α) K (s.1.headD []))
       encState encBool := by
   have h := computableTidilyInPolyTime_isSparse encNat
@@ -350,7 +352,7 @@ theorem computableTidilyInPolyTime_isSparse_head (K α : ℕ) :
     fun_prop
   exact h.comp hH
 
-theorem computableTidilyInPolyTime_inner (K α : ℕ) :
+private theorem computableTidilyInPolyTime_inner (K α : ℕ) :
     ComputableTidilyInPolyTime (fun s : State => (next (threshold K α) K (s.1.headD []) false ::
       next (threshold K α) K (s.1.headD []) true :: s.1.tail, s.2)) encState encState := by
   have h := computableTidilyInPolyTime_next encNat
@@ -358,14 +360,14 @@ theorem computableTidilyInPolyTime_inner (K α : ℕ) :
   unfold encState encCNF
   fun_prop
 
-theorem computableTidilyInPolyTime_root (k : ℕ) :
+private theorem computableTidilyInPolyTime_root (k : ℕ) :
     ComputableTidilyInPolyTime (fun φ : CNF ℕ => (([root k φ], false) : State)) encCNF
       encState := by
   have h := computableTidilyInPolyTime_normalize encNat
   unfold root encState encCNF
   fun_prop
 
-theorem computableTidilyInPolyTime_rounds (M : ℕ) :
+private theorem computableTidilyInPolyTime_rounds (M : ℕ) :
     ComputableTidilyInPolyTime (rounds M) encCNF encNat := by
   have h := unary_div_const M
   unfold rounds
@@ -373,7 +375,7 @@ theorem computableTidilyInPolyTime_rounds (M : ℕ) :
 
 /-- **The time of a step**: a polynomial in the length of the encoded state, plus the time of the
 decider when it runs on the formula on top of the stack. -/
-theorem exists_computableTidilyInO_step (K α : ℕ) {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ}
+private theorem exists_computableTidilyInO_step (K α : ℕ) {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ}
     (hg : ComputableTidilyInO g encCNF encBool t t) :
     ∃ d, ComputableTidilyInO (step K α g) encState encState
       (fun s => ((encState s).length + 1) ^ d +
@@ -420,15 +422,15 @@ end PolyTime
 /-! ### Sizes -/
 
 /-- A bound on the length of the encoded states of the tree. -/
-def nodeBound (K α : ℕ) (φ : CNF ℕ) : ℕ :=
+private def nodeBound (K α : ℕ) (φ : CNF ℕ) : ℕ :=
   (φ.length + φ.numVars * (K * base K α ^ (2 * K))) *
     (2 * (K * (2 * (encCNF φ).length + 1)) + 1)
 
 /-- A bound on the length of the encoded states of the search. -/
-def stateBound (K α : ℕ) (φ : CNF ℕ) : ℕ :=
+private def stateBound (K α : ℕ) (φ : CNF ℕ) : ℕ :=
   2 * ((φ.numVars * (K * base K α ^ (2 * K)) + 1) * (2 * nodeBound K α φ + 1)) + 2
 
-theorem length_encLiteral_le {φ : CNF ℕ} {D : Clause ℕ} (hD : D ∈ φ) {l : Literal ℕ}
+private theorem length_encLiteral_le {φ : CNF ℕ} {D : Clause ℕ} (hD : D ∈ φ) {l : Literal ℕ}
     (hl : l ∈ D) : (encPair encNat encBool l).length ≤ (encCNF φ).length :=
   (length_le_encList_of_mem _ hl).trans (length_le_encList_of_mem _ hD)
 
@@ -437,7 +439,8 @@ section Sizes
 variable {k : ℕ} (hkK : k ≤ K) {φ : CNF ℕ}
 include hK hα hkK
 
-theorem length_encCNF_walk_le {w : List Bool} (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) :
+private theorem length_encCNF_walk_le {w : List Bool}
+    (hw : (rule hK hα).IsNodeWord (rootState hkK φ) w) :
     (encCNF ((rule hK hα).walk (rootState hkK φ) w).1).length ≤ nodeBound K α φ := by
   set ψ := (rule hK hα).walk (rootState hkK φ) w
   refine (length_encList_le _ ψ.1 (b := K * (2 * (encCNF φ).length + 1)) fun C hC => ?_).trans
@@ -447,7 +450,7 @@ theorem length_encCNF_walk_le {w : List Bool} (hw : (rule hK hα).IsNodeWord (ro
   obtain ⟨D, hD, hCD⟩ := exists_of_mem_walk hK hα hkK hw hC
   exact length_encLiteral_le hD (List.mem_toFinset.mp (hCD (List.mem_toFinset.mpr hl)))
 
-theorem length_encState_le {stk : List {ψ : CNF ℕ // Normalized K ψ}} {acc : Bool}
+private theorem length_encState_le {stk : List {ψ : CNF ℕ // Normalized K ψ}} {acc : Bool}
     (hstk : stk.length ≤ φ.numVars * (K * base K α ^ (2 * K)) + 1)
     (hmem : ∀ t ∈ stk, ∃ w, (rule hK hα).IsNodeWord (rootState hkK φ) w ∧
       (rule hK hα).walk (rootState hkK φ) w = t) :
@@ -466,7 +469,7 @@ end Sizes
 /-! ### The time of the search -/
 
 /-- The time bound of the decider on the leaves of the tree. -/
-noncomputable def leafTime (K α : ℕ) (δ : ℝ) (c e : ℕ) (φ : CNF ℕ) : ℕ :=
+private noncomputable def leafTime (K α : ℕ) (δ : ℝ) (c e : ℕ) (φ : CNF ℕ) : ℕ :=
   ⌈(c : ℝ) * (2 ^ (δ * ((occBound K α * φ.numVars + 1 : ℕ) : ℝ)) *
     ((nodeBound K α φ : ℝ) + 1) ^ e) + c⌉₊
 
@@ -475,7 +478,7 @@ include hK hα in
 a round: a polynomial in the length of the encoded states (`stateBound`), plus the time bound of
 the decider on the leaves (`leafTime`), plus the cost of the counter; and within polynomial time
 for the start. -/
-theorem exists_computableTidilyInO_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M)
+private theorem exists_computableTidilyInO_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M)
     {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ} (hg : ComputableTidilyInO g encCNF encBool t t)
     {δ : ℝ} (hδ : 0 ≤ δ) {c e : ℕ}
     (ht : ∀ ψ : CNF ℕ, (t ψ : ℝ) ≤ c * (2 ^ (δ * ψ.length) * ((encCNF ψ).length + 1) ^ e) + c) :

@@ -80,7 +80,7 @@ def stageCode (t : Term ι) (x : ι → Bool) : List ι → List (ℕ × Bool ×
 
 variable {t : Term ι}
 
-theorem satisfying_of_mem (ht : (t.map Prod.fst).Nodup) {l : Literal ι} (hl : l ∈ t) :
+private theorem satisfying_of_mem (ht : (t.map Prod.fst).Nodup) {l : Literal ι} (hl : l ∈ t) :
     t.satisfying l.1 = l.2 := by
   induction t with
   | nil => simp at hl
@@ -103,7 +103,7 @@ theorem stageCode_eq_nil_iff {x : ι → Bool} {W : List ι} :
     t.stageCode x W = [] ↔ W = [] := by
   cases W <;> simp [stageCode]
 
-theorem fst_lt_of_mem_stageCode {x : ι → Bool} {W : List ι}
+private theorem fst_lt_of_mem_stageCode {x : ι → Bool} {W : List ι}
     (hW : ∀ v ∈ W, v ∈ t.map Prod.fst) {e : ℕ × Bool × Bool} (he : e ∈ t.stageCode x W) :
     e.1 < t.length := by
   induction W with
@@ -119,23 +119,23 @@ namespace DNF
 
 variable {F : DNF ι} {ρ θ : PartialAssignment ι} {t : Term ι}
 
-theorem queried_eq_freeVars (ht : F.firstTerm ρ = some t) : F.queried ρ = t.freeVars ρ := by
+private theorem queried_eq_freeVars (ht : F.firstTerm ρ = some t) : F.queried ρ = t.freeVars ρ := by
   simp [queried, ht]
 
-theorem exists_firstTerm_of_queried_ne_nil (h : F.queried ρ ≠ []) :
+private theorem exists_firstTerm_of_queried_ne_nil (h : F.queried ρ ≠ []) :
     ∃ t, F.firstTerm ρ = some t := by
   cases ht : F.firstTerm ρ with
   | none => simp [queried, ht] at h
   | some t => exact ⟨t, rfl⟩
 
-theorem mem_of_firstTerm_eq_some (ht : F.firstTerm ρ = some t) : t ∈ F :=
+private theorem mem_of_firstTerm_eq_some (ht : F.firstTerm ρ = some t) : t ∈ F :=
   List.mem_of_find?_eq_some ht
 
-theorem not_falsifiedBy_of_firstTerm_eq_some (ht : F.firstTerm ρ = some t) :
+private theorem not_falsifiedBy_of_firstTerm_eq_some (ht : F.firstTerm ρ = some t) :
     ¬ t.FalsifiedBy ρ := by
   simpa using List.find?_some ht
 
-theorem nodup_queried (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) : (F.queried ρ).Nodup := by
+private theorem nodup_queried (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) : (F.queried ρ).Nodup := by
   unfold queried
   cases ht : F.firstTerm ρ with
   | none => simp
@@ -143,7 +143,7 @@ theorem nodup_queried (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) : (F.queried ρ
     simpa [Term.freeVars] using
       ((List.filter_sublist (l := t)).map Prod.fst).nodup (hF t (mem_of_firstTerm_eq_some ht))
 
-theorem mem_map_fst_of_mem_queried (ht : F.firstTerm ρ = some t) {v : ι}
+private theorem mem_map_fst_of_mem_queried (ht : F.firstTerm ρ = some t) {v : ι}
     (hv : v ∈ F.queried ρ) : v ∈ t.map Prod.fst := by
   rw [queried_eq_freeVars ht] at hv
   obtain ⟨b, hb, -⟩ := Term.mem_freeVars.1 hv
@@ -151,7 +151,7 @@ theorem mem_map_fst_of_mem_queried (ht : F.firstTerm ρ = some t) {v : ι}
 
 /-- Extending a restriction keeps its first term not falsified, as long as that term stays
 unfalsified. -/
-theorem firstTerm_eq_of_extends (ht : F.firstTerm ρ = some t) (h : θ.Extends ρ)
+private theorem firstTerm_eq_of_extends (ht : F.firstTerm ρ = some t) (h : θ.Extends ρ)
     (hθ : ¬ t.FalsifiedBy θ) :
     F.firstTerm θ = some t := by
   rw [firstTerm, List.find?_eq_some_iff_append] at ht ⊢
@@ -163,7 +163,7 @@ variable [DecidableEq ι]
 
 /-- Fixing some queried variables to the values satisfying the first term keeps it first, in any
 extension leaving the other queried variables free. -/
-theorem firstTerm_assign_satisfying (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup)
+private theorem firstTerm_assign_satisfying (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup)
     (ht : F.firstTerm ρ = some t) (h : θ.Extends ρ) {W : List ι}
     (hWq : ∀ v ∈ W, v ∈ F.queried ρ) (hW : ∀ v ∈ F.queried ρ, v ∉ W → θ v = none) :
     F.firstTerm (θ.assign W.toFinset t.satisfying) = some t := by
@@ -207,7 +207,7 @@ def decode (θ : PartialAssignment ι) (c : List (ℕ × Bool × Bool)) :
 variable {F}
 
 /-- One step of the decoder: set the variable at position `j` of the current term to `b`. -/
-theorem decodeAux_cons {cur : Option (Term ι)} {θ : PartialAssignment ι}
+private theorem decodeAux_cons {cur : Option (Term ι)} {θ : PartialAssignment ι}
     {t : Term ι} (ht : cur.getD ((F.firstTerm θ).getD []) = t) {j : ℕ} {v : ι}
     (hv : (t.map Prod.fst)[j]? = some v) (Q : Finset ι) (b e : Bool)
     (c : List (ℕ × Bool × Bool)) :
@@ -217,7 +217,7 @@ theorem decodeAux_cons {cur : Option (Term ι)} {θ : PartialAssignment ι}
   simp only [decodeAux, hv]
 
 /-- Replaying a stage from its term. -/
-theorem decodeAux_stageCode {t : Term ι} {W : List ι}
+private theorem decodeAux_stageCode {t : Term ι} {W : List ι}
     (hW : ∀ v ∈ W, v ∈ t.map Prod.fst) (hne : W ≠ []) (x : ι → Bool)
     (θ : PartialAssignment ι) (Q : Finset ι) (c : List (ℕ × Bool × Bool)) :
     F.decodeAux (some t) θ Q (t.stageCode x W ++ c) =
@@ -255,7 +255,7 @@ theorem decodeAux_stageCode {t : Term ι} {W : List ι}
         tauto
 
 /-- At the start of a stage, the decoder reads the first term not falsified. -/
-theorem decodeAux_none {c : List (ℕ × Bool × Bool)} (hc : c ≠ []) (θ : PartialAssignment ι)
+private theorem decodeAux_none {c : List (ℕ × Bool × Bool)} (hc : c ≠ []) (θ : PartialAssignment ι)
     (Q : Finset ι) :
     F.decodeAux none θ Q c = F.decodeAux ((F.firstTerm θ).getD []) θ Q c := by
   obtain ⟨⟨j, b, e⟩, c, rfl⟩ := List.exists_cons_of_ne_nil hc
@@ -283,17 +283,17 @@ decreasing_by exact this
 
 variable {F}
 
-theorem encode_of_queried_eq_nil (h : F.queried ρ = []) (s : ℕ) (x : ι → Bool) :
+private theorem encode_of_queried_eq_nil (h : F.queried ρ = []) (s : ℕ) (x : ι → Bool) :
     F.encode s ρ x = (ρ, []) := by
   rw [encode, dite_eq_left h]
 
-theorem encode_of_le (h : F.queried ρ ≠ []) {s : ℕ} (hs : s ≤ (F.queried ρ).length)
+private theorem encode_of_le (h : F.queried ρ ≠ []) {s : ℕ} (hs : s ≤ (F.queried ρ).length)
     (x : ι → Bool) :
     F.encode s ρ x = (ρ.assign ((F.queried ρ).take s).toFinset ((F.firstTerm ρ).getD []).satisfying,
       ((F.firstTerm ρ).getD []).stageCode x ((F.queried ρ).take s)) := by
   rw [encode, dite_eq_right h, ite_eq_left hs]
 
-theorem encode_of_lt (h : F.queried ρ ≠ []) {s : ℕ} (hs : (F.queried ρ).length < s)
+private theorem encode_of_lt (h : F.queried ρ ≠ []) {s : ℕ} (hs : (F.queried ρ).length < s)
     (x : ι → Bool) :
     F.encode s ρ x =
       ((F.encode (s - (F.queried ρ).length) (ρ.assign (F.queried ρ).toFinset x) x).1.assign
@@ -303,7 +303,7 @@ theorem encode_of_lt (h : F.queried ρ ≠ []) {s : ℕ} (hs : (F.queried ρ).le
   rw [encode, dite_eq_right h, ite_eq_right (by omega)]
 
 /-- The encoding extends the restriction it encodes. -/
-theorem encode_extends (s : ℕ) (ρ : PartialAssignment ι) (x : ι → Bool) :
+private theorem encode_extends (s : ℕ) (ρ : PartialAssignment ι) (x : ι → Bool) :
     (F.encode s ρ x).1.Extends ρ := by
   intro i b hi
   have hiV : i ∉ (F.queried ρ).toFinset := fun hiV => by
@@ -336,7 +336,7 @@ private theorem encode_assign_eq (s : ℕ) (x : ι → Bool) {i : ι}
 
 /-- Decoding the encoding of a restriction with a query path of length at least `s` gives the
 restriction back, freeing the accumulated variables `Q`. -/
-theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : PartialAssignment ι}
+private theorem decodeAux_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : PartialAssignment ι}
     {s : ℕ} {x : ι → Bool} (hs : s ≤ F.pathLength ρ x) (Q : Finset ι) :
     F.decodeAux none (F.encode s ρ x).1 Q (F.encode s ρ x).2 = ρ.unassign Q := by
   by_cases h : F.queried ρ = []
@@ -383,7 +383,7 @@ theorem decode_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {s : ℕ} {x : 
   rw [decode, decodeAux_encode hF hs, PartialAssignment.unassign_empty]
 
 /-- The encoding fixes `s` more variables. -/
-theorem card_free_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : PartialAssignment ι}
+private theorem card_free_encode (hF : ∀ t ∈ F, (t.map Prod.fst).Nodup) {ρ : PartialAssignment ι}
     {s : ℕ} {x : ι → Bool} (hs : s ≤ F.pathLength ρ x) :
     #(F.encode s ρ x).1.free = #ρ.free - s := by
   by_cases h : F.queried ρ = []
@@ -412,7 +412,7 @@ termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h x
 
 /-- The code of a query path of length at least `s` has length `s`. -/
-theorem length_encode {ρ : PartialAssignment ι} {s : ℕ} {x : ι → Bool}
+private theorem length_encode {ρ : PartialAssignment ι} {s : ℕ} {x : ι → Bool}
     (hs : s ≤ F.pathLength ρ x) : (F.encode s ρ x).2.length = s := by
   by_cases h : F.queried ρ = []
   · rw [pathLength_of_queried_eq_nil h] at hs
@@ -432,7 +432,7 @@ termination_by #ρ.free
 decreasing_by exact card_free_assign_lt h x
 
 /-- The positions recorded in a code are positions in terms of at most `k` literals. -/
-theorem fst_lt_of_mem_encode {k : ℕ} (hF : ∀ t ∈ F, t.length ≤ k) (s : ℕ)
+private theorem fst_lt_of_mem_encode {k : ℕ} (hF : ∀ t ∈ F, t.length ≤ k) (s : ℕ)
     (ρ : PartialAssignment ι) (x : ι → Bool) {e : ℕ × Bool × Bool}
     (he : e ∈ (F.encode s ρ x).2) : e.1 < k := by
   by_cases h : F.queried ρ = []

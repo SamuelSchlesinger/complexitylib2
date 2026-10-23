@@ -67,7 +67,7 @@ theorem mem_freeVars {v : ι} : v ∈ t.freeVars ρ ↔ ∃ b, (v, b) ∈ t ∧ 
   simp [freeVars, Option.isNone_iff_eq_none]
 
 /-- A falsified term is false on every input filled from the restriction. -/
-theorem eval_fill_of_falsifiedBy (h : t.FalsifiedBy ρ) (x : ι → Bool) :
+private theorem eval_fill_of_falsifiedBy (h : t.FalsifiedBy ρ) (x : ι → Bool) :
     Term.eval (ρ.fill x) t = false := by
   obtain ⟨l, hl, hρ⟩ := h
   rw [Bool.eq_false_iff, ne_eq, Term.eval_eq_true_iff, not_forall]
@@ -75,7 +75,7 @@ theorem eval_fill_of_falsifiedBy (h : t.FalsifiedBy ρ) (x : ι → Bool) :
 
 /-- A term that is not falsified and has no free variable is true on every input filled from the
 restriction. -/
-theorem eval_fill_of_freeVars_eq_nil (h : ¬ t.FalsifiedBy ρ) (hV : t.freeVars ρ = [])
+private theorem eval_fill_of_freeVars_eq_nil (h : ¬ t.FalsifiedBy ρ) (hV : t.freeVars ρ = [])
     (x : ι → Bool) : Term.eval (ρ.fill x) t = true := by
   rw [Term.eval_eq_true_iff]
   intro l hl
@@ -113,7 +113,7 @@ theorem free_of_mem_queried {v : ι} (hv : v ∈ F.queried ρ) : ρ v = none := 
 
 /-- When nothing is queried, the formula is constant under the restriction: true exactly when some
 term is not falsified. -/
-theorem eval_fill_of_queried_eq_nil (h : F.queried ρ = []) (x : ι → Bool) :
+private theorem eval_fill_of_queried_eq_nil (h : F.queried ρ = []) (x : ι → Bool) :
     DNF.eval (ρ.fill x) F = (F.firstTerm ρ).isSome := by
   unfold queried at h
   cases hf : F.firstTerm ρ with
@@ -164,11 +164,11 @@ decreasing_by exact this
 
 variable {F}
 
-theorem canonicalTree_of_queried_eq_nil (h : F.queried ρ = []) :
+private theorem canonicalTree_of_queried_eq_nil (h : F.queried ρ = []) :
     F.canonicalTree ρ = leaf (DNF.eval (ρ.fill fun _ => false) F) := by
   rw [canonicalTree, dite_eq_left h]
 
-theorem canonicalTree_of_queried_ne_nil (h : F.queried ρ ≠ []) :
+private theorem canonicalTree_of_queried_ne_nil (h : F.queried ρ ≠ []) :
     F.canonicalTree ρ = graft (F.queried ρ)
       (fun a => F.canonicalTree (ρ.assign (F.queried ρ).toFinset a)) fun _ => false := by
   rw [canonicalTree, dite_eq_right h]

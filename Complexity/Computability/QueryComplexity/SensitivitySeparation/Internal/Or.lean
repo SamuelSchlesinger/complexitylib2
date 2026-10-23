@@ -68,7 +68,7 @@ def orBits (x : K → Bool) : Bool := decide (∃ k, x k = true)
 
 /-- If some coordinate `j ≠ i` of `x` is true, then flipping coordinate `i` does not change
 `orBits x`. -/
-theorem orBits_flip_of_witness (x : K → Bool) {i j : K}
+private theorem orBits_flip_of_witness (x : K → Bool) {i j : K}
     (hji : j ≠ i) (hj : x j = true) : orBits (flip x {i}) = orBits x := by
   have h₁ : orBits x = true := (orBits_eq_true x).mpr ⟨j, hj⟩
   have h₂ : orBits (flip x {i}) = true :=

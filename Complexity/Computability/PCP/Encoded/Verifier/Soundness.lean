@@ -105,7 +105,7 @@ theorem rejectProb_edgeVerifier (width : ℕ) (decode : (Fin width → Bool) →
     labels]
 
 /-- Rounding the edge sampling range to a power of two loses at most half the rejection rate. -/
-theorem unsatFrac_div_two_le_rejectProb (width : ℕ) (decode : (Fin width → Bool) → α)
+private theorem unsatFrac_div_two_le_rejectProb (width : ℕ) (decode : (Fin width → Bool) → α)
     (eval : C → α → α → Bool) (g : Graph C) (proof : List Bool) :
     (g.toGraph eval).unsatFrac (proofLabels width decode proof) / 2 ≤
       (((BitString.uniformList (Nat.clog 2 g.edges.length)).map

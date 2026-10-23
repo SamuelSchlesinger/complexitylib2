@@ -116,7 +116,7 @@ def bitExpr (i : ℕ) {l : ℕ} (vars : Fin l → ℕ) : Expr :=
 
 variable {v}
 
-theorem eval_tupleExprWith {l n : ℕ} (values : Fin l → Expr) {regs : List ℕ}
+private theorem eval_tupleExprWith {l n : ℕ} (values : Fin l → Expr) {regs : List ℕ}
     (h0 : regs.getD 0 0 = n) (x : Fin l → Fin n)
     (hx : ∀ m, (values m).eval regs = x m) :
     (tupleExprWith values).eval regs = tupleIndex x := by
@@ -128,7 +128,7 @@ theorem eval_tupleExpr {l n : ℕ} (vars : Fin l → ℕ) {regs : List ℕ} (h0 
     (tupleExpr vars).eval regs = tupleIndex x :=
   eval_tupleExprWith _ h0 x hx
 
-theorem eval_startExpr {a : EncodedStructure} (ha : v.WellFormed a) {regs : List ℕ}
+private theorem eval_startExpr {a : EncodedStructure} (ha : v.WellFormed a) {regs : List ℕ}
     (h0 : regs.getD 0 0 = a.1) {i : ℕ} (hi : i ≤ v.count) :
     (startExpr v i).eval regs = tableStart a i := by
   simp only [startExpr, eval_add, eval_mul, eval_const, eval_reg, h0, eval_sum, List.map_ofFn,
@@ -156,7 +156,7 @@ theorem eval_bitExprWith {a : EncodedStructure} (ha : v.WellFormed a) {regs : Li
   simp only [bitExprWith, eval_add, eval_mul, eval_const, eval_startExpr ha h0 hi,
     eval_tupleExprWith values h0 x hx]
 
-theorem eval_bitExpr {a : EncodedStructure} (ha : v.WellFormed a) {regs : List ℕ}
+private theorem eval_bitExpr {a : EncodedStructure} (ha : v.WellFormed a) {regs : List ℕ}
     (h0 : regs.getD 0 0 = a.1) {i : ℕ} (hi : i ≤ v.count) {l : ℕ} (vars : Fin l → ℕ)
     (x : Fin l → Fin a.1) (hx : ∀ m, regs.getD (vars m) 0 = x m) :
     (bitExpr v i vars).eval regs = tableStart a i + 2 * tupleIndex x + 1 :=
@@ -193,9 +193,9 @@ def shapeCode (b T F : ℕ) : List Instr :=
   (List.range v.count).flatMap (fun i => tableCode v (b + 3 + 6 * i) i F) ++
   [.read (reg 1) F F T]
 
-theorem length_tableCode (c i F : ℕ) : (tableCode v c i F).length = 6 := rfl
+private theorem length_tableCode (c i F : ℕ) : (tableCode v c i F).length = 6 := rfl
 
-theorem length_tables (b F : ℕ) :
+private theorem length_tables (b F : ℕ) :
     ((List.range v.count).flatMap fun i => tableCode v (b + 3 + 6 * i) i F).length =
       6 * v.count := by
   rw [List.length_flatMap]
@@ -215,7 +215,7 @@ instance (a : EncodedStructure) (i : ℕ) : Decidable (TableOk v a i) :=
 
 variable {v}
 
-theorem wellFormed_iff_tableOk {a : EncodedStructure} :
+private theorem wellFormed_iff_tableOk {a : EncodedStructure} :
     v.WellFormed a ↔ (∀ i < v.count, TableOk v a i) ∧ a.2.length = v.count := by
   constructor
   · rintro ⟨hlen, htab⟩
@@ -232,12 +232,12 @@ theorem wellFormed_iff_tableOk {a : EncodedStructure} :
 
 variable {P : CounterProgram} {a : EncodedStructure} {B : ℕ}
 
-theorem eval_lenExpr {regs : List ℕ} (h0 : regs.getD 0 0 = a.1) (i : ℕ) :
+private theorem eval_lenExpr {regs : List ℕ} (h0 : regs.getD 0 0 = a.1) (i : ℕ) :
     (lenExpr v i).eval regs = a.1 ^ arityAt v i := by
   simp only [lenExpr, eval_pow, eval_reg, h0]
 
 /-- Counting the markers of the unary cardinality. -/
-theorem reaches_count {b F : ℕ}
+private theorem reaches_count {b F : ℕ}
     (h₀ : P.instr b = .read (mul (const 2) (reg 0)) (b + 1) (b + 2) F)
     (h₁ : P.instr (b + 1) = .assign 0 (add (reg 0) (const 1)) b) (hnB : a.1 ≤ B) :
     ∀ e (regs : List ℕ), a.1 - regs.getD 0 0 = e → regs.getD 0 0 ≤ a.1 → 0 < regs.length →
@@ -265,7 +265,7 @@ theorem reaches_count {b F : ℕ}
     exact Reaches.assign h₁ hB (by simpa using hreach)
 
 /-- The markers of a table, counted up to `n ^ k`. -/
-theorem reaches_markers {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
+private theorem reaches_markers {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
     (hi : i < a.2.length) (hLB : a.1 ^ arityAt v i ≤ B) :
     ∀ e j (regs : List ℕ), a.1 ^ arityAt v i - j = e → j ≤ a.1 ^ arityAt v i →
       j ≤ a.2[i].length → regs.getD 0 0 = a.1 → regs.getD 1 0 = tableStart a i →
@@ -320,7 +320,7 @@ theorem reaches_markers {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
 cardinality in register `0` and the position of the table in register `1`, the program moves
 register `1` past the table and goes to `c + 6` if the table exists and has `n ^ k` bits, and goes
 to `F` otherwise. -/
-theorem reaches_tableCode {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
+private theorem reaches_tableCode {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
     (hi : i ≤ a.2.length) (hLB : a.1 ^ arityAt v i ≤ B) (hwB : (encStructure a).length ≤ B)
     (regs : List ℕ) (h0 : regs.getD 0 0 = a.1) (h1 : regs.getD 1 0 = tableStart a i)
     (hlen : 3 ≤ regs.length) (hB : ∀ r ∈ regs, r ≤ B) :
@@ -401,7 +401,7 @@ theorem reaches_tableCode {c i F : ℕ} (hP : P.CodeAt c (tableCode v c i F))
       exact Reaches.refl _
 
 /-- **Checking the tables**, from the table at position `m` on. -/
-theorem reaches_tables {b F : ℕ}
+private theorem reaches_tables {b F : ℕ}
     (hP : P.CodeAt (b + 3) ((List.range v.count).flatMap fun i => tableCode v (b + 3 + 6 * i) i F))
     (hLB : ∀ i, a.1 ^ arityAt v i ≤ B) (hwB : (encStructure a).length ≤ B) :
     ∀ e m (regs : List ℕ), v.count - m = e → m ≤ v.count → (∀ i < m, TableOk v a i) →
@@ -550,7 +550,7 @@ def termReg {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
   Sum.elim fv (fun i : Fin k => base + i) (termVar t)
 
 /-- The register of the variable of a term holds the value of the term. -/
-theorem getD_termReg {α : Type*} {n : ℕ} [L.Structure (Fin n)] {fv : α → ℕ}
+private theorem getD_termReg {α : Type*} {n : ℕ} [L.Structure (Fin n)] {fv : α → ℕ}
     {base k : ℕ} {regs : List ℕ} {val : α → Fin n} {xs : Fin k → Fin n}
     (hv : ∀ x, regs.getD (fv x) 0 = val x) (hxs : ∀ i : Fin k, regs.getD (base + i) 0 = xs i)
     (t : L.Term (α ⊕ Fin k)) :
@@ -575,7 +575,7 @@ def formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
     (φ : L.BoundedFormula α k) (b T F : ℕ) : List Instr :=
   formulaCodeWith (atomicCompiler v fv base) base φ b T F
 
-theorem length_formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
+private theorem length_formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
     (φ : L.BoundedFormula α k) (b T F : ℕ) :
     (formulaCode v fv base φ b T F).length = codeLength φ :=
   length_formulaCodeWith _ _ _ _ _ _

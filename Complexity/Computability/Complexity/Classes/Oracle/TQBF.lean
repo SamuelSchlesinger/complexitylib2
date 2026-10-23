@@ -79,14 +79,14 @@ number of formulas still expected. -/
 def wfStep (s : Bool × ℕ) (t : QBF.Kind × ℕ) : Bool × ℕ :=
   (s.1 && decide (s.2 ≠ 0) && tokenOk t, s.2 - 1 + arity t.1)
 
-theorem foldl_wfStep_false (ts : List (QBF.Kind × ℕ)) (n : ℕ) :
+private theorem foldl_wfStep_false (ts : List (QBF.Kind × ℕ)) (n : ℕ) :
     (ts.foldl wfStep (false, n)).1 = false := by
   induction ts generalizing n with
   | nil => rfl
   | cons t ts ih => exact ih _
 
 /-- Reading the tokens of a formula consumes one expected formula. -/
-theorem foldl_wfStep_tokens (φ : QBF ℕ) (n : ℕ) (rest : List (QBF.Kind × ℕ)) :
+private theorem foldl_wfStep_tokens (φ : QBF ℕ) (n : ℕ) (rest : List (QBF.Kind × ℕ)) :
     (φ.tokens ++ rest).foldl wfStep (true, n + 1) = rest.foldl wfStep (true, n) := by
   induction φ generalizing n rest with
   | var v => simp [QBF.tokens, wfStep, tokenOk, arity]
@@ -115,7 +115,7 @@ theorem foldl_wfStep_tokens (φ : QBF ℕ) (n : ℕ) (rest : List (QBF.Kind × �
     simpa using ih n rest
 
 /-- The concatenated tokens of `n` formulas are accepted. -/
-theorem foldl_wfStep_flatten (φs : List (QBF ℕ)) :
+private theorem foldl_wfStep_flatten (φs : List (QBF ℕ)) :
     (φs.map QBF.tokens).flatten.foldl wfStep (true, φs.length) = (true, 0) := by
   induction φs with
   | nil => rfl
@@ -179,7 +179,7 @@ def kindOfIndex : ℕ → QBF.Kind
   | 6 => .ex
   | _ => .all
 
-theorem kindIndex_kindOfIndex : ∀ n, kindIndex (kindOfIndex n) = min n 7
+private theorem kindIndex_kindOfIndex : ∀ n, kindIndex (kindOfIndex n) = min n 7
   | 0 | 1 | 2 | 3 | 4 | 5 | 6 => rfl
   | n + 7 => by simp [kindOfIndex, kindIndex]
 
@@ -212,7 +212,8 @@ theorem wellFormed_iff (ts : List (QBF.Kind × ℕ)) :
   · rintro ⟨φ, rfl⟩
     exact ⟨[φ], rfl, by simp⟩
 
-theorem wellFormed_pt : ComputableTidilyInPolyTime wellFormed (encList encToken) encBool := by
+private theorem wellFormed_pt : ComputableTidilyInPolyTime wellFormed
+    (encList encToken) encBool := by
   have hstep : ComputableTidilyInPolyTime (fun p : (Bool × ℕ) × (QBF.Kind × ℕ) => wfStep p.1 p.2)
       (encPair (encPair encBool encUnary) encToken) (encPair encBool encUnary) := by
     have hok : ComputableTidilyInPolyTime tokenOk encToken encBool := by
@@ -285,7 +286,7 @@ open Classical in
 noncomputable def decodeQBF (w : List Bool) : QBF ℕ :=
   if h : ∃ φ, encQBF φ = w then h.choose else .bot
 
-theorem encQBF_decodeQBF (w : List Bool) :
+private theorem encQBF_decodeQBF (w : List Bool) :
     encQBF (decodeQBF w) = if isCode w then w else encQBF .bot := by
   unfold decodeQBF
   split_ifs with h₁ h₂ h₃
@@ -298,7 +299,7 @@ theorem decodeQBF_pt : ComputableTidilyInPolyTime decodeQBF encBits encQBF :=
   (ComputableTidilyInPolyTime.ite' isCode_pt ComputableTidilyInPolyTime.id'
     (ComputableTidilyInPolyTime.const (encQBF .bot))).of_enc_eq fun w => encQBF_decodeQBF w
 
-theorem decodeQBF_encQBF (φ : QBF ℕ) : decodeQBF (encQBF φ) = φ :=
+private theorem decodeQBF_encQBF (φ : QBF ℕ) : decodeQBF (encQBF φ) = φ :=
   encQBF.injective (by simp [encQBF_decodeQBF, (isCode_iff _).mpr ⟨φ, rfl⟩])
 
 end Cslib.Complexity.TQBF

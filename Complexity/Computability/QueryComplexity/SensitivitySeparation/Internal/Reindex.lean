@@ -55,7 +55,7 @@ def reindex (e : I ≃ J) (f : (I → Bool) → Bool) : (J → Bool) → Bool :=
 open scoped Classical in
 /-- Pulling back along `e` the input `x` with the image block `B.map e.toEmbedding` flipped gives
 the pullback `fun i => x (e i)` with `B` flipped. -/
-theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
+private theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
     (fun i => flip x (B.map e.toEmbedding) (e i)) =
       flip (fun i => x (e i)) B := by
   funext i
@@ -63,7 +63,7 @@ theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
 
 /-- Singleton case of `flip_reindex`: pulling back `flip x {e i}` along `e` gives the pullback of
 `x` with `i` flipped. -/
-theorem flip_reindex_singleton (e : I ≃ J) (x : J → Bool) (i : I) :
+private theorem flip_reindex_singleton (e : I ≃ J) (x : J → Bool) (i : I) :
     (fun a => flip x {e i} (e a)) = flip (fun a => x (e a)) {i} := by
   simpa using flip_reindex e x {i}
 
@@ -107,7 +107,7 @@ theorem sensitivity_reindex (e : I ≃ J) (f : (I → Bool) → Bool) :
 
 /-- The block sensitivity of `f` at the pullback `fun i => x (e i)` is at most the block sensitivity
 of `reindex e f` at `x`. -/
-theorem blockSensitivityAt_le_reindex (e : I ≃ J) (f : (I → Bool) → Bool)
+private theorem blockSensitivityAt_le_reindex (e : I ≃ J) (f : (I → Bool) → Bool)
     (x : J → Bool) :
     blockSensitivityAt f (fun i => x (e i)) ≤ blockSensitivityAt (reindex e f) x := by
   apply blockSensitivityAt_le

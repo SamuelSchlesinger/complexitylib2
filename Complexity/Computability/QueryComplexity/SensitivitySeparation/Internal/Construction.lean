@@ -78,13 +78,13 @@ def terminalPredicate {M r : ℕ} (d : ℕ) (T : RegularTournament M)
   towerFamily T.toTournament A.label (constructionBase d M) d 1 0
 
 /-- The base family at index count `d + 1` is nested. -/
-theorem construction_base_nested (d M : ℕ) :
+private theorem construction_base_nested (d M : ℕ) :
     NestedFamily (constructionBase d M (d + 1)) := by
   simpa only [constructionBase, baseExtension_same] using
       initialFamily_nested d M
 
 /-- Every predicate of the base family at index count `1 + d` rejects the all-false input. -/
-theorem construction_base_zero (d M : ℕ) :
+private theorem construction_base_zero (d M : ℕ) :
     ∀ q, constructionBase d M (1 + d) q (fun _ => false) = false := by
   rw [Nat.add_comm 1 d]
   simpa only [constructionBase, baseExtension_same] using
@@ -92,7 +92,7 @@ theorem construction_base_zero (d M : ℕ) :
 
 /-- Every predicate of the base family at index count `1 + d` accepts the all-false input with any
 row block `baseBlock b` flipped. -/
-theorem construction_base_blocks (d M : ℕ) :
+private theorem construction_base_blocks (d M : ℕ) :
     ∀ b q, constructionBase d M (1 + d) q
       (flip (fun _ => false) (baseBlock b)) = true := by
   rw [Nat.add_comm 1 d]
@@ -101,7 +101,7 @@ theorem construction_base_blocks (d M : ℕ) :
       initialFamily_baseBlock d M q b
 
 /-- For `0 < r`, the terminal predicate rejects the all-false input. -/
-theorem terminalPredicate_zero {M r : ℕ} (d : ℕ) (T : RegularTournament M)
+private theorem terminalPredicate_zero {M r : ℕ} (d : ℕ) (T : RegularTournament M)
     (A : GoodLabeling T.toTournament r) (hr : 0 < r) :
     terminalPredicate d T A (fun _ => false) = false :=
   towerFamily_zero T.toTournament A.label (constructionBase d M) hr d 1
@@ -109,7 +109,7 @@ theorem terminalPredicate_zero {M r : ℕ} (d : ℕ) (T : RegularTournament M)
 
 /-- For `0 < r`, the terminal predicate accepts the all-false input with any lifted base block
 `towerBlocks baseBlock d b` flipped. -/
-theorem terminalPredicate_blocks {M r : ℕ} (d : ℕ) (T : RegularTournament M)
+private theorem terminalPredicate_blocks {M r : ℕ} (d : ℕ) (T : RegularTournament M)
     (A : GoodLabeling T.toTournament r) (hr : 0 < r)
     (b : TowerBlockIndex (2 * M ^ 2 + 1) (Fin M) d) :
     terminalPredicate d T A (flip (fun _ => false)
@@ -163,7 +163,7 @@ theorem construction_profiles {M r : ℕ} (d : ℕ) (T : RegularTournament M)
 /-- Under the budget `max r 16 / M * 3 ^ (d + 1) ≤ 2`, the terminal predicate has sensitivity at
 most `2 * (d + 2) * M ^ d` at every rejected input and at most `2 * (d + 2) * M ^ (d + 1)` at every
 accepted input. -/
-theorem terminalPredicate_sensitivityAt {M r : ℕ} (d : ℕ) (T : RegularTournament M)
+private theorem terminalPredicate_sensitivityAt {M r : ℕ} (d : ℕ) (T : RegularTournament M)
     (A : GoodLabeling T.toTournament r) (hM : 0 < M) (hr : 0 < r)
     (hbudget : ((max r 16 : ℕ) : ℝ) / M * 3 ^ (d + 1) ≤ 2) :
     (∀ x, terminalPredicate d T A x = false →
@@ -183,14 +183,14 @@ def finalBoolean {M r : ℕ} (d : ℕ) (T : RegularTournament M)
   orCopies (K := Fin M) (terminalPredicate d T A)
 
 /-- For `0 < r`, the final Boolean function rejects the all-false input. -/
-theorem finalBoolean_zero {M r : ℕ} (d : ℕ) (T : RegularTournament M)
+private theorem finalBoolean_zero {M r : ℕ} (d : ℕ) (T : RegularTournament M)
     (A : GoodLabeling T.toTournament r) (hr : 0 < r) :
     finalBoolean d T A (fun _ => false) = false :=
   orCopies_zero _ (terminalPredicate_zero d T A hr)
 
 /-- Under the budget `max r 16 / M * 3 ^ (d + 1) ≤ 2`,
 `sensitivity (finalBoolean d T A) ≤ 2 * (d + 2) * M ^ (d + 1)`. -/
-theorem finalBoolean_sensitivity {M r : ℕ} (d : ℕ) (T : RegularTournament M)
+private theorem finalBoolean_sensitivity {M r : ℕ} (d : ℕ) (T : RegularTournament M)
     (A : GoodLabeling T.toTournament r) (hM : 0 < M) (hr : 0 < r)
     (hbudget : ((max r 16 : ℕ) : ℝ) / M * 3 ^ (d + 1) ≤ 2) :
     sensitivity (finalBoolean d T A) ≤ 2 * (d + 2) * M ^ (d + 1) := by
@@ -201,7 +201,7 @@ theorem finalBoolean_sensitivity {M r : ℕ} (d : ℕ) (T : RegularTournament M)
 
 /-- For `0 < r`, the final Boolean function has block sensitivity at least
 `M ^ 2 * (2 * M ^ 2 + 1) ^ d` at the all-false input. -/
-theorem finalBoolean_blockSensitivity {M r : ℕ} (d : ℕ) (T : RegularTournament M)
+private theorem finalBoolean_blockSensitivity {M r : ℕ} (d : ℕ) (T : RegularTournament M)
     (A : GoodLabeling T.toTournament r) (hr : 0 < r) :
     M ^ 2 * (2 * M ^ 2 + 1) ^ d ≤ blockSensitivityAt (finalBoolean d T A) (fun _ => false) := by
   have h := (Nat.mul_le_mul_left M (terminalPredicate_blockSensitivity d T A hr)).trans

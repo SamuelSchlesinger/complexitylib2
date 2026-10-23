@@ -105,7 +105,7 @@ noncomputable def certLinkCNF (k : ℕ) (State : Type) [Fintype State] (w : ℕ)
     [[(tabVar (CookLevin.Var.cert (k := k) (State := State) j), false), (certVar w j, true)],
       [(tabVar (CookLevin.Var.cert (k := k) (State := State) j), true), (certVar w j, false)]]
 
-theorem eval_certLinkCNF (w : ℕ) (σ : ℕ → Bool) :
+private theorem eval_certLinkCNF (w : ℕ) (σ : ℕ → Bool) :
     CNF.eval σ (certLinkCNF k State w) = (certLinks k State w).eval σ := by
   rw [Bool.eq_iff_iff, certLinkCNF, CNF.eval_flatMap_eq_true_iff, certLinks, QBF.eval_conj,
     List.all_map, List.all_eq_true]
@@ -119,14 +119,14 @@ theorem eval_certLinkCNF (w : ℕ) (σ : ℕ → Bool) :
 the midpoint block of level `0`. -/
 def dummyVar : ℕ := blockVar 2 0 0
 
-theorem dummyVar_ne_tabVar (v : CookLevin.Var k State) : dummyVar ≠ tabVar v := by
+private theorem dummyVar_ne_tabVar (v : CookLevin.Var k State) : dummyVar ≠ tabVar v := by
   intro h
   have h₁ := blockVar_mod_two 2 0 0
   have h₂ := tabVar_mod_two v
   rw [dummyVar] at h
   omega
 
-theorem dummyVar_ne_certVar (w j : ℕ) : dummyVar ≠ certVar w j := by
+private theorem dummyVar_ne_certVar (w j : ℕ) : dummyVar ≠ certVar w j := by
   intro h
   unfold dummyVar certVar at h
   split_ifs at h
@@ -143,7 +143,7 @@ as clauses, then the tableau. -/
 noncomputable def prenexMatrix (tab : CNF (CookLevin.Var k State)) (w : ℕ) : CNF ℕ :=
   certLinkCNF k State w ++ tab.relabel tabVar
 
-theorem mem_vars_prenexMatrix {tab : CNF (CookLevin.Var k State)} {w x : ℕ}
+private theorem mem_vars_prenexMatrix {tab : CNF (CookLevin.Var k State)} {w x : ℕ}
     (hx : x ∈ (prenexMatrix tab w).vars) :
     (∃ j < 2 * w, x = tabVar (CookLevin.Var.cert (k := k) (State := State) j) ∨
       x = certVar w j) ∨ ∃ v ∈ tab.vars, x = tabVar v := by
@@ -163,7 +163,7 @@ theorem mem_vars_prenexMatrix {tab : CNF (CookLevin.Var k State)} {w x : ℕ}
     obtain ⟨l', hl', rfl⟩ := hl
     exact Or.inr ⟨l'.1, List.mem_map.2 ⟨l', List.mem_flatten.2 ⟨c', hc', hl'⟩, rfl⟩, rfl⟩
 
-theorem dummyVar_notMem_freeVars (tab : CNF (CookLevin.Var k State)) (w : ℕ) :
+private theorem dummyVar_notMem_freeVars (tab : CNF (CookLevin.Var k State)) (w : ℕ) :
     dummyVar ∉ (QBF.ofCNF (prenexMatrix tab w)).freeVars := by
   rw [QBF.mem_freeVars_ofCNF]
   intro h

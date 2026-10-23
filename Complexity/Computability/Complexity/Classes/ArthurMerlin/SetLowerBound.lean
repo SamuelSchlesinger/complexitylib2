@@ -172,7 +172,7 @@ theorem computableTidilyInPolyTime_verifier {N c m T : Polynomial ℕ} {ℓ : α
 /-- On a seed, an element and five certificates, the verifier accepts exactly when the blocks of
 the element have accepted certificates, the padding starts with `ℓ` bits `false` and the affine
 hash given by the seed sends the element to zero. -/
-theorem verifier_ofFn_append {N c m T : Polynomial ℕ} {ℓ : α → ℕ} {R : α × List Bool → Bool}
+private theorem verifier_ofFn_append {N c m T : Polynomial ℕ} {ℓ : α → ℕ} {R : α × List Bool → Bool}
     (a : α) (r : BitString (m.eval (enc a).length * (5 * N.eval (enc a).length +
       T.eval (enc a).length) + m.eval (enc a).length))
     (e : BitString (5 * N.eval (enc a).length + T.eval (enc a).length))

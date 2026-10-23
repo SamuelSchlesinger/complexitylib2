@@ -117,7 +117,7 @@ variable {V D : α × List Bool → Bool} (hV : ∀ a w, R a w ↔ V (a, w) = tr
 include hV
 
 /-- A solution is kept by the search. -/
-theorem foldl_prefixSearchStep_of_rel {a : α} {u : List Bool} (hu : R a u) (l : List Bool) :
+private theorem foldl_prefixSearchStep_of_rel {a : α} {u : List Bool} (hu : R a u) (l : List Bool) :
     l.foldl (fun u _ => prefixSearchStep V D a u) u = u := by
   induction l with
   | nil => rfl
@@ -129,7 +129,8 @@ include hD
 
 /-- A step from a word that some solution extends, but that is not a solution, adds one bit and
 keeps a solution extending the word. -/
-theorem prefixSearchStep_spec {a : α} {u : List Bool} (hu : ∃ v, R a (u ++ v)) (hnot : ¬R a u) :
+private theorem prefixSearchStep_spec {a : α} {u : List Bool} (hu : ∃ v, R a (u ++ v))
+    (hnot : ¬R a u) :
     (∃ v, R a (prefixSearchStep V D a u ++ v)) ∧
       (prefixSearchStep V D a u).length = u.length + 1 := by
   have hVu : ¬V (a, u) = true := fun h => hnot ((hV a u).2 h)
@@ -147,7 +148,7 @@ theorem prefixSearchStep_spec {a : α} {u : List Bool} (hu : ∃ v, R a (u ++ v)
 
 /-- The search through prefixes keeps a solution extending the word, and the word is a solution or
 has grown by one bit per step. -/
-theorem foldl_prefixSearchStep_spec {a : α} (l : List Bool) {u : List Bool}
+private theorem foldl_prefixSearchStep_spec {a : α} (l : List Bool) {u : List Bool}
     (hu : ∃ v, R a (u ++ v)) :
     (∃ v, R a (l.foldl (fun u _ => prefixSearchStep V D a u) u ++ v)) ∧
       (R a (l.foldl (fun u _ => prefixSearchStep V D a u) u) ∨
@@ -182,7 +183,7 @@ theorem rel_prefixSearchRun {n : α → ℕ} (hn : ∀ a w, R a w → w.length �
 end Correctness
 
 /-- The search through prefixes is polynomial-time when `V`, `D` and the number of steps are. -/
-theorem computableTidilyInPolyTime_prefixSearchRun {V D : α × List Bool → Bool} {n : α → ℕ}
+private theorem computableTidilyInPolyTime_prefixSearchRun {V D : α × List Bool → Bool} {n : α → ℕ}
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
     (hD : ComputableTidilyInPolyTime D (encPair enc encBits) encBool)
     (hn : ComputableTidilyInPolyTime n enc encUnary) :

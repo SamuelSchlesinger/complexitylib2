@@ -214,7 +214,8 @@ structure TableauRels.AgreesAt (r : TableauRels L' m State)
 
 include hlt in
 /-- Semantic characterization of `inReadFormula` under `AgreesAt`. -/
-theorem realize_inReadFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
+private theorem realize_inReadFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)}
+    {t : Fin B}
     (heB : u.length + w.length + 1 < B)
     (huLen : ∀ z : Fin B, RelMap r.uLen ![z] ↔ (z : ℕ) = u.length)
     (huBit : ∀ p : Fin B, (p : ℕ) < u.length → (RelMap r.uBit ![p] ↔ u[(p : ℕ)]? = some true))
@@ -235,7 +236,7 @@ theorem realize_inReadFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)
     exact ⟨![(⟨cfg.inputPos.val, by omega⟩ : Fin B)], rfl, hs⟩
 
 /-- Semantic characterization of `readFormula` under `AgreesAt`. -/
-theorem realize_readFormula {input : List Bool} {cfg : Cfg m Bool State input} {t : Fin B}
+private theorem realize_readFormula {input : List Bool} {cfg : Cfg m Bool State input} {t : Fin B}
     (hb : ∀ i : Fin m, |cfg.workTapePos i| < B) (hA : r.AgreesAt cfg t)
     (i : Fin m) (s : Option Bool) {V : Type*} (vT : V) (env : V → Fin B) (ht : env vT = t) :
     (readFormula r i s vT).Realize env ↔ (Feature.read i s).Holds cfg := by
@@ -276,7 +277,8 @@ theorem realize_sitFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {
 
 include hlt in
 /-- Semantic characterization of `inPosPrevFormula` under `AgreesAt`. -/
-theorem realize_inPosPrevFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)} {t : Fin B}
+private theorem realize_inPosPrevFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++ w)}
+    {t : Fin B}
     (heB : u.length + w.length + 1 < B)
     (hend : ∀ z : Fin B, RelMap r.endPos ![z] ↔ (z : ℕ) = u.length + w.length)
     (hA : r.AgreesAt cfg t)
@@ -326,7 +328,7 @@ theorem realize_inPosPrevFormula {u w : List Bool} {cfg : Cfg m Bool State (u ++
 
 include hlt in
 /-- Semantic characterization of `headPrevFormula`. -/
-theorem realize_headPrevFormula {headSame headOpp : L'.Relations 2} {t : Fin B}
+private theorem realize_headPrevFormula {headSame headOpp : L'.Relations 2} {t : Fin B}
     {pos : ℤ} (hb : |pos| + 1 < B) {sign : ℤ} (hsign : sign = 1 ∨ sign = -1)
     (hSame : ∀ a : Fin B, RelMap headSame ![t, a] ↔ pos = sign * (a : ℤ))
     (hOpp : ∀ a : Fin B, RelMap headOpp ![t, a] ↔ pos = -sign * (a : ℤ))

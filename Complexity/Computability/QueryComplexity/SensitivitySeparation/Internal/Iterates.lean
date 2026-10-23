@@ -70,7 +70,7 @@ def iterateCompose {I : Type} (f : (I → Bool) → Bool) :
   | m + 1 => compose f (iterateCompose f m)
 
 /-- If `f` rejects the all-false input, then so does every iterate `iterateCompose f m`. -/
-theorem iterateCompose_zero {I : Type} (f : (I → Bool) → Bool)
+private theorem iterateCompose_zero {I : Type} (f : (I → Bool) → Bool)
     (hf : f (fun _ => false) = false) (m : ℕ) :
     iterateCompose f m (fun _ => false) = false := by
   induction m with
@@ -89,7 +89,7 @@ theorem iterateCoord_card (m : ℕ) :
     rw [Fintype.card_prod, ih, pow_succ, Nat.mul_comm]
 
 /-- Sensitivity of iterates: `sensitivity (iterateCompose f m) ≤ sensitivity f ^ m`. -/
-theorem sensitivity_iterateCompose_le (f : (I → Bool) → Bool) (m : ℕ) :
+private theorem sensitivity_iterateCompose_le (f : (I → Bool) → Bool) (m : ℕ) :
     sensitivity (iterateCompose f m) ≤ sensitivity f ^ m := by
   induction m with
   | zero =>
@@ -105,7 +105,7 @@ theorem sensitivity_iterateCompose_le (f : (I → Bool) → Bool) (m : ℕ) :
 
 /-- If `f` rejects the all-false input, then the `m`-th power of its block sensitivity at the
 all-false input is at most the block sensitivity of `iterateCompose f m` there. -/
-theorem blockSensitivityAt_iterateCompose_zero (f : (I → Bool) → Bool)
+private theorem blockSensitivityAt_iterateCompose_zero (f : (I → Bool) → Bool)
     (hf : f (fun _ => false) = false) (m : ℕ) :
     blockSensitivityAt f (fun _ => false) ^ m ≤
       blockSensitivityAt (iterateCompose f m) (fun _ => false) := by

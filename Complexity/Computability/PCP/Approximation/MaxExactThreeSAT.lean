@@ -125,13 +125,14 @@ def reduce (φ : CNF ℕ) : CNF ℕ :=
   if φ.any List.isEmpty then contradiction else toExactThreeSAT φ
 
 /-- Padding the clauses does not change the number of clauses an assignment falsifies. -/
-theorem countUnsat_toExactThreeSAT (σ : ℕ → Bool) (φ : CNF ℕ) :
+private theorem countUnsat_toExactThreeSAT (σ : ℕ → Bool) (φ : CNF ℕ) :
     (toExactThreeSAT φ).countUnsat σ = φ.countUnsat σ := by
   simp only [toExactThreeSAT, CNF.countUnsat, List.countP_map, Function.comp_def,
     ExactThreeSAT.eval_padClause]
 
 /-- Padding the clauses does not change the value of a formula. -/
-theorem unsatVal_toExactThreeSAT (φ : CNF ℕ) : (toExactThreeSAT φ).unsatVal = φ.unsatVal := by
+private theorem unsatVal_toExactThreeSAT (φ : CNF ℕ) :
+    (toExactThreeSAT φ).unsatVal = φ.unsatVal := by
   unfold CNF.unsatVal
   simp only [countUnsat_toExactThreeSAT]
   rw [toExactThreeSAT, List.length_map]
@@ -251,13 +252,13 @@ theorem Clause.isExactThreeDistinct_iff {c : Clause V} :
 
 /-- The falsification indicator of a literal `(v, b)` under `σ` is
 `(1 - signVal b * signVal (σ v)) / 2`. -/
-theorem Literal.if_eval_eq_zero_one (l : Literal V) (σ : V → Bool) :
+private theorem Literal.if_eval_eq_zero_one (l : Literal V) (σ : V → Bool) :
     (if l.eval σ then (0 : ℝ) else 1) = (1 - signVal l.2 * signVal (σ l.1)) / 2 := by
   rcases l with ⟨v, b⟩
   cases b <;> cases h : σ v <;> simp [Literal.eval, signVal, h]
 
 /-- A clause `l :: c` is falsified iff both `l` and `c` are falsified. -/
-theorem Clause.if_eval_cons_eq_mul (l : Literal V) (c : Clause V) (σ : V → Bool) :
+private theorem Clause.if_eval_cons_eq_mul (l : Literal V) (c : Clause V) (σ : V → Bool) :
     (if Clause.eval σ (l :: c) then (0 : ℝ) else 1) =
       (if l.eval σ then (0 : ℝ) else 1) * (if c.eval σ then (0 : ℝ) else 1) := by
   rw [Clause.eval_cons]
@@ -348,7 +349,8 @@ theorem Clause.IsExactThreeDistinct.card_eval_eq_true {c : Clause (Fin 3)}
 
 /-- The expected number of falsified clauses in an exact 3-CNF formula with distinct variables per
 clause under a uniform random assignment is `φ.length / 8`. -/
-theorem CNF.IsExactThreeDistinct.expect_countUnsat {φ : CNF ι} (hφ : φ.IsExactThreeDistinct) :
+private theorem CNF.IsExactThreeDistinct.expect_countUnsat {φ : CNF ι}
+    (hφ : φ.IsExactThreeDistinct) :
     (𝔼 σ : ι → Bool, (φ.countUnsat σ : ℝ)) = (φ.length : ℝ) / 8 := by
   induction φ with
   | nil => simp [CNF.countUnsat]
@@ -368,7 +370,7 @@ end FintypeCube
 
 /-- Relabelling a clause along a map that is injective on its variables preserves
 `Clause.IsExactThreeDistinct`. -/
-theorem Clause.IsExactThreeDistinct.relabel_of_injOn {f : V → ι} {c : Clause V}
+private theorem Clause.IsExactThreeDistinct.relabel_of_injOn {f : V → ι} {c : Clause V}
     (hf : ∀ x ∈ c.map Prod.fst, ∀ y ∈ c.map Prod.fst, f x = f y → x = y)
     (hc : c.IsExactThreeDistinct) : (c.relabel f).IsExactThreeDistinct := by
   refine ⟨by rw [Clause.length_relabel, hc.1], ?_⟩

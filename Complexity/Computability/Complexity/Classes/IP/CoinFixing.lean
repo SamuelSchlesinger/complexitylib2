@@ -88,7 +88,8 @@ local notation "handler" o =>
   ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) o
 
 /-- An instruction with a fixed coin makes the requests of `coinStep`. -/
-theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : Bool)
+private theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Control Unit)
+    (b : Bool)
     (s : S) :
     (OracleComp.interpret (handler oracle) (M.finiteStep (fun choices => choices <$> pure b)
       (fun op w => List.take t <$> ProbOracleComp.query (op, w)) cfg)).run s =
@@ -105,7 +106,8 @@ theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Contr
         OracleComp.interpret_query, OracleComp.interpret_pure]
 
 /-- Instructions with fixed coins make the requests of `coinStep`. -/
-theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool) (cfg : FiniteConfig k Bool Control Unit)
+private theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool)
+    (cfg : FiniteConfig k Bool Control Unit)
     (s : S) :
     (OracleComp.interpret (handler oracle) (r.foldlM (fun cfg b => M.finiteStep
       (fun choices => choices <$> pure b)
@@ -118,7 +120,7 @@ theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool) (cfg : FiniteConfig 
       run_interpret_finiteStep_pure, ih]
 
 /-- An instruction drawing a fair coin averages the instructions with fixed coins. -/
-theorem run_interpret_finiteStep_sample
+private theorem run_interpret_finiteStep_sample
     (query : Unit → List Bool →
       ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
     (cfg : FiniteConfig k Bool Control Unit) (s : S) :
@@ -139,7 +141,7 @@ theorem run_interpret_finiteStep_sample
     rfl
 
 /-- A clocked loop drawing fair coins averages the loops with fixed coins. -/
-theorem run_interpret_iterate_eq_coins
+private theorem run_interpret_iterate_eq_coins
     (query : Unit → List Bool →
       ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
     (n : ℕ) (cfg : FiniteConfig k Bool Control Unit) (s : S) :
@@ -241,7 +243,7 @@ def simulate (t : ℕ) (x r : List Bool) (h : History) :
     (.ok (FiniteConfig.init M.initial x, h))
 
 /-- The replay of an instruction is `replayStep`. -/
-theorem replay_coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : Bool)
+private theorem replay_coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : Bool)
     (h : History) :
     (replay (coinStep M t cfg b)).run h = replayStep M t (cfg, h) b := by
   unfold coinStep MultiTapeMachine.finiteStep replayStep
@@ -264,7 +266,7 @@ theorem replay_coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : 
         split_ifs with hm <;> simp [hm]
 
 /-- A fold in the state and exception monad is a fold of results. -/
-theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε) β) (l : List γ)
+private theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε) β) (l : List γ)
     (b : β) (s : σ) :
     (l.foldlM g b).run s =
       l.foldl (fun acc c => acc.bind fun p => (g p.1 c).run p.2) (.ok (b, s)) := by
@@ -289,7 +291,7 @@ theorem foldlM_run {σ ε β γ : Type} (g : β → γ → StateT σ (Except ε)
     exact ih p.1 p.2
 
 /-- A replay of a fold is a fold of replays. -/
-theorem replay_foldlM {β γ : Type} (f : β → γ → WordQueryComp Unit β) (l : List γ)
+private theorem replay_foldlM {β γ : Type} (f : β → γ → WordQueryComp Unit β) (l : List γ)
     (b : β) :
     replay (l.foldlM f b) = l.foldlM (fun b c => replay (f b c)) b :=
   (PFunctor.FreeM.isMonadHom_liftM (P := ⟨Unit × List Bool, fun _ => List Bool⟩)
@@ -320,7 +322,7 @@ def ReplayInv (t : ℕ) (x : List Bool) (h : History) (i : ℕ) :
   | .error none => True
 
 /-- An instruction of the replay preserves the invariant. -/
-theorem replayInv_step {t : ℕ} {x : List Bool} {h : History} {i : ℕ}
+private theorem replayInv_step {t : ℕ} {x : List Bool} {h : History} {i : ℕ}
     {acc : Except (Option (List Bool)) (FiniteConfig k Bool Control Unit × History)}
     (hacc : ReplayInv t x h i acc) (b : Bool) :
     ReplayInv t x h (i + 1) (acc.bind fun p => replayStep M t p b) := by
@@ -356,7 +358,7 @@ theorem replayInv_step {t : ℕ} {x : List Bool} {h : History} {i : ℕ}
           · trivial
 
 /-- The replay satisfies the invariant after all its coins. -/
-theorem replayInv_simulate (t : ℕ) (x : List Bool) (h : History) (r : List Bool) :
+private theorem replayInv_simulate (t : ℕ) (x : List Bool) (h : History) (r : List Bool) :
     ReplayInv t x h r.length (simulate M t x r h) := by
   suffices ∀ (l : List Bool) (acc) (i : ℕ), ReplayInv t x h i acc →
       ReplayInv t x h (i + l.length)
@@ -371,10 +373,10 @@ theorem replayInv_simulate (t : ℕ) (x : List Bool) (h : History) (r : List Boo
     simpa [Nat.add_assoc, Nat.add_comm 1] using ih _ _ (replayInv_step M hacc b)
 
 /-- Truncate every reply of a history to its first `t` bits. -/
-def truncate (t : ℕ) (h : History) : History := h.map fun e => (e.1, e.2.take t)
+private def truncate (t : ℕ) (h : History) : History := h.map fun e => (e.1, e.2.take t)
 
 /-- An instruction of the replay reads replies only through their first `t` bits. -/
-theorem replayStep_truncate (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (h : History)
+private theorem replayStep_truncate (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (h : History)
     (b : Bool) :
     (replayStep M t (cfg, h) b).map (fun p => (p.1, truncate t p.2)) =
       (replayStep M t (cfg, truncate t h) b).map (fun p => (p.1, truncate t p.2)) := by
@@ -396,7 +398,7 @@ theorem replayStep_truncate (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (
         split_ifs <;> simp [Except.map, List.map_map, Function.comp_def, List.take_take]
 
 /-- The replay reads replies only through their first `t` bits. -/
-theorem simulate_truncate (t : ℕ) (x r : List Bool) {h h' : History}
+private theorem simulate_truncate (t : ℕ) (x r : List Bool) {h h' : History}
     (hh : truncate t h = truncate t h') :
     (simulate M t x r h).map (fun p => (p.1, truncate t p.2)) =
       (simulate M t x r h').map (fun p => (p.1, truncate t p.2)) := by

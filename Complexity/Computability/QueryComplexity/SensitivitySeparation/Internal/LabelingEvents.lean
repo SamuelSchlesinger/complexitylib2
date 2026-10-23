@@ -70,7 +70,7 @@ theorem mem_labelingEvent_iff {v : Fin n → Fin k} {m : Fin n → Fin r}
 open scoped Classical in
 /-- For injective `v`, the labeling event is the set of labelings taking the value
 `m (Function.invFun v p.2)` on every internal edge `p` of the image of `v`. -/
-theorem labelingEvent_eq [NeZero n] (v : Fin n → Fin k) (m : Fin n → Fin r)
+private theorem labelingEvent_eq [NeZero n] (v : Fin n → Fin k) (m : Fin n → Fin r)
     (hv : Function.Injective v) :
     T.labelingEvent v m = Finset.univ.filter fun A =>
       ∀ p ∈ T.internalEdges (Finset.univ.image v), A p = m (Function.invFun v p.2) := by
@@ -98,7 +98,7 @@ theorem card_labelingEvent [NeZero n] (v : Fin n → Fin k) (m : Fin n → Fin r
 open scoped Classical in
 /-- Every labeling event has at most `r ^ (k * k - n.choose 2)` elements; it is empty when `v` is
 not injective. -/
-theorem card_labelingEvent_le [NeZero n] (v : Fin n → Fin k) (m : Fin n → Fin r) :
+private theorem card_labelingEvent_le [NeZero n] (v : Fin n → Fin k) (m : Fin n → Fin r) :
     (T.labelingEvent v m).card ≤ r ^ (k * k-n.choose 2) := by
   by_cases hv : Function.Injective v
   · exact (T.card_labelingEvent v m hv).le

@@ -100,7 +100,7 @@ def termExpr {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ} :
 variable {v}
 
 /-- Compiled terms realize genuine numeric constants as well as variables. -/
-theorem eval_termExpr {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)]
+private theorem eval_termExpr {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)]
     {α : Type*} {fv : α → ℕ} {base k : ℕ} {regs : List ℕ}
     {val : α → Fin n} {xs : Fin k → Fin n} (h0 : regs.getD 0 0 = n)
     (hv : ∀ x, regs.getD (fv x) 0 = val x)
@@ -191,7 +191,7 @@ def formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
     (φ : (language L).BoundedFormula α k) (b T F : ℕ) : List Instr :=
   formulaCodeWith (atomicCompiler v fv base) base φ b T F
 
-theorem length_formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
+private theorem length_formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
     (φ : (language L).BoundedFormula α k) (b T F : ℕ) :
     (formulaCode v fv base φ b T F).length = codeLength φ :=
   length_formulaCodeWith _ _ _ _ _ _
@@ -199,7 +199,8 @@ theorem length_formulaCode {α : Type*} (fv : α → ℕ) (base : ℕ) {k : ℕ}
 variable {v}
 
 /-- Evaluation of every ordered formula, including genuine constants inside quantified atoms. -/
-theorem reaches_formulaCode {P : CounterProgram} {a : EncodedStructure} (ha : v.WellFormed a)
+private theorem reaches_formulaCode {P : CounterProgram} {a : EncodedStructure}
+    (ha : v.WellFormed a)
     [Fact (2 ≤ a.1)] {B : ℕ} (hnB : a.1 ≤ B) {α : Type*} (fv : α → ℕ) (base : ℕ)
     (hbase : 0 < base) (hfv : ∀ x, fv x < base) (val : α → Fin a.1) :
     ∀ {k : ℕ} (φ : (language L).BoundedFormula α k) (b T F : ℕ)

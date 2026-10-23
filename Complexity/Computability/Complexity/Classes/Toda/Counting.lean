@@ -136,7 +136,7 @@ theorem sum_range_neg_two_pow_mul_choose_zmod (c K : ℕ) :
 and `2 ^ K - 2 ^ i` for odd `i`. -/
 def parityCoeff (K i : ℕ) : ℕ := if Even i then 2 ^ i else 2 ^ K - 2 ^ i
 
-theorem cast_parityCoeff {K i : ℕ} (hi : i ≤ K) :
+private theorem cast_parityCoeff {K i : ℕ} (hi : i ≤ K) :
     (parityCoeff K i : ZMod (2 ^ K)) = (-2) ^ i := by
   have h2 : ((2 ^ K : ℕ) : ZMod (2 ^ K)) = 0 := ZMod.natCast_self _
   unfold parityCoeff
@@ -153,7 +153,7 @@ theorem cast_parityCoeff {K i : ℕ} (hi : i ≤ K) :
 
 /-- **One bit decides the majority.** If `H` is `G` modulo `2 ^ (R + 1)` and `G ≤ 2 ^ R`, then the
 bit `R + 1` of `2 H + (2 ^ R - 1)` says whether `2 G > 2 ^ R`. -/
-theorem testBit_two_mul_add_two_pow_sub_one {R G H : ℕ} (hG : G ≤ 2 ^ R)
+private theorem testBit_two_mul_add_two_pow_sub_one {R G H : ℕ} (hG : G ≤ 2 ^ R)
     (hH : (H : ZMod (2 ^ (R + 1))) = G) :
     (2 * H + (2 ^ R - 1)).testBit (R + 1) = decide (2 ^ R < 2 * G) := by
   have hGlt : G < 2 ^ (R + 1) := by
@@ -216,7 +216,7 @@ theorem card_filter_strictMono {β : Type*} [LinearOrder β] [Fintype β] (A : F
     exact ⟨(s.orderEmbOfFin hs.2).strictMono, fun i => hs.1 (orderEmbOfFin_mem s hs.2 i)⟩
 
 /-- A tuple increasing at every step is strictly increasing. -/
-theorem strictMono_of_lt_succ {β : Type*} [Preorder β] {k : ℕ} {g : Fin k → β}
+private theorem strictMono_of_lt_succ {β : Type*} [Preorder β] {k : ℕ} {g : Fin k → β}
     (h : ∀ (i : ℕ) (hi : i + 1 < k), g ⟨i, by omega⟩ < g ⟨i + 1, hi⟩) : StrictMono g := by
   cases k with
   | zero => exact fun i => i.elim0
@@ -246,7 +246,7 @@ theorem computableTidilyInPolyTime_subsetTest {γ : Type} {input : γ ↪ List B
   fun_prop
 
 /-- **The `k`-subset test counts `k`-element sets of accepted words**, for `k ≤ K`. -/
-theorem card_filter_subsetTest (acc : List Bool → Bool) {K k : ℕ} (Z : ℕ) (hk : k ≤ K) :
+private theorem card_filter_subsetTest (acc : List Bool → Bool) {K k : ℕ} (Z : ℕ) (hk : k ≤ K) :
     (univ.filter fun zs : Fin (K * Z) → Bool => subsetTest acc K Z k (List.ofFn zs) = true).card =
       ((univ.filter fun z : Fin Z → Bool => acc (List.ofFn z) = true).card).choose k := by
   classical
@@ -356,7 +356,7 @@ theorem computableTidilyInPolyTime_unaryTest {γ : Type} {input : γ ↪ List Bo
 
 /-- Summing over the words passing the unary test of length `K` sums over the sizes
 `1, …, K`. -/
-theorem sum_unaryTest (K : ℕ) (F : ℕ → ℕ) :
+private theorem sum_unaryTest (K : ℕ) (F : ℕ → ℕ) :
     ∑ kb : Fin K → Bool, (if unaryTest K (List.ofFn kb) then F ((List.ofFn kb).count true) else 0) =
       ∑ i ∈ range K, F (i + 1) := by
   classical
@@ -406,7 +406,7 @@ theorem computableTidilyInPolyTime_coeffTest {γ : Type} {input : γ ↪ List Bo
   fun_prop
 
 /-- The coefficient test for size `k` accepts `parityCoeff K (k - 1)` words. -/
-theorem card_filter_coeffTest {K k : ℕ} (hk : 1 ≤ k) (hkK : k ≤ K) :
+private theorem card_filter_coeffTest {K k : ℕ} (hk : 1 ≤ k) (hkK : k ≤ K) :
     (univ.filter fun cb : Fin K → Bool => coeffTest K k (List.ofFn cb) = true).card =
       parityCoeff K (k - 1) := by
   classical

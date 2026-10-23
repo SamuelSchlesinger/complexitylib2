@@ -155,7 +155,7 @@ theorem accepts_eq_true_iff (x r : List Bool) (h : History) :
     cases rest <;> simp [Except.map, replayOutcome]
 
 /-- `accepts_eq_true_iff` for any number of coins equal to the length of the coins. -/
-theorem accepts_eq_true_iff_of_length {x r : List Bool} {t : ℕ} (hr : r.length = t)
+private theorem accepts_eq_true_iff_of_length {x r : List Bool} {t : ℕ} (hr : r.length = t)
     (h : History) : accepts M x r h = true ↔ outcome (coinProgram M t x r) h = .done true := by
   subst hr
   exact accepts_eq_true_iff M x r h
@@ -167,14 +167,14 @@ section PolyTime
 open ComputableTidilyInPolyTime
 
 /-- The instruction of `M` in the configuration `cfg` with the coin `b`, unless it has halted. -/
-def instruction (cfg : MultiTapeMachine.FiniteConfig k Bool Control Unit) (b : Bool) :
+private def instruction (cfg : MultiTapeMachine.FiniteConfig k Bool Control Unit) (b : Bool) :
     Option (MultiTapeMachine.Action k Bool Control Unit) :=
   cfg.tapes.state.map fun c =>
     M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b
 
 /-- Answer a request on the channel `op` from the history, moving to the control state `next`, or
 stop when the history is exhausted or sends another message. -/
-def answerFromHistory (t : ℕ) (op : Unit) (next : Control) (s : AliveState k Control) :
+private def answerFromHistory (t : ℕ) (op : Unit) (next : Control) (s : AliveState k Control) :
     AliveState k Control :=
   if s.2.1.isEmpty then (s.1, s.2.1, false)
   else if (s.2.1.headD ([], [])).1 = (s.1.channels op).1 then
@@ -182,7 +182,7 @@ def answerFromHistory (t : ℕ) (op : Unit) (next : Control) (s : AliveState k C
   else (s.1, s.2.1, false)
 
 /-- The live replay step by its liveness and instruction. -/
-def taggedStep (t : ℕ) :
+private def taggedStep (t : ℕ) :
     Bool × Option (MultiTapeMachine.Action k Bool Control Unit) → AliveState k Control →
       AliveState k Control
   | (false, _), s => s
@@ -191,7 +191,7 @@ def taggedStep (t : ℕ) :
   | (true, some (.query op next)), s => answerFromHistory t op next s
 
 /-- The live replay step as a case distinction on a finite tag. -/
-theorem aliveStep_eq (t : ℕ) (s : AliveState k Control) (b : Bool) :
+private theorem aliveStep_eq (t : ℕ) (s : AliveState k Control) (b : Bool) :
     aliveStep M t s b = taggedStep t (s.2.2, instruction M s.1 b) s := by
   obtain ⟨cfg, rest, _ | _⟩ := s
   · rfl
@@ -215,11 +215,11 @@ theorem aliveStep_eq (t : ℕ) (s : AliveState k Control) (b : Bool) :
 variable [Finite Control]
 
 /-- Live replay states, encoded by their fields. -/
-noncomputable abbrev encAliveState : AliveState k Control ↪ List Bool :=
+private noncomputable abbrev encAliveState : AliveState k Control ↪ List Bool :=
   encPair encFiniteConfig (encPair encHistory encBool)
 
 /-- The instruction is polynomial-time: it reads finitely many observations. -/
-theorem computableTidilyInPolyTime_instruction :
+private theorem computableTidilyInPolyTime_instruction :
     ComputableTidilyInPolyTime (fun p : MultiTapeMachine.FiniteConfig k Bool Control Unit × Bool =>
       instruction M p.1 p.2) (encPair encFiniteConfig encBool)
       (encFinite (Option (MultiTapeMachine.Action k Bool Control Unit))) := by
@@ -236,7 +236,7 @@ theorem computableTidilyInPolyTime_instruction :
         M.tr c obs.2.1 obs.2.2.1 obs.2.2.2.1 obs.2.2.2.2).comp hobs).of_enc_eq fun _ => rfl
 
 /-- Answering from the history is polynomial-time. -/
-theorem computableTidilyInPolyTime_answerFromHistory (op : Unit) (next : Control) :
+private theorem computableTidilyInPolyTime_answerFromHistory (op : Unit) (next : Control) :
     ComputableTidilyInPolyTime (fun p : (ℕ × AliveState k Control) × Bool =>
       answerFromHistory p.1.1 op next p.1.2) (encPair (encPair encUnary encAliveState) encBool)
       encAliveState := by
@@ -244,7 +244,7 @@ theorem computableTidilyInPolyTime_answerFromHistory (op : Unit) (next : Control
   fun_prop
 
 /-- **A step of the live replay is polynomial-time.** -/
-theorem computableTidilyInPolyTime_aliveStep :
+private theorem computableTidilyInPolyTime_aliveStep :
     ComputableTidilyInPolyTime (fun p : (ℕ × AliveState k Control) × Bool =>
       aliveStep M p.1.1 p.1.2 p.2) (encPair (encPair encUnary encAliveState) encBool)
       encAliveState := by
@@ -267,7 +267,7 @@ theorem computableTidilyInPolyTime_aliveStep :
 
 omit [Finite Control] in
 /-- A step of the live replay grows the storage by a bounded amount and consumes the history. -/
-theorem aliveStep_spaceBound {n i t : ℕ} {h : History} {s : AliveState k Control}
+private theorem aliveStep_spaceBound {n i t : ℕ} {h : History} {s : AliveState k Control}
     (hs : MultiTapeMachine.FiniteConfig.SpaceBound n i t s.1 ∧ s.2.1 <:+ h) (b : Bool) :
     MultiTapeMachine.FiniteConfig.SpaceBound n (i + 1) t (aliveStep M t s b).1 ∧
       (aliveStep M t s b).2.1 <:+ h := by
@@ -294,7 +294,7 @@ theorem aliveStep_spaceBound {n i t : ℕ} {h : History} {s : AliveState k Contr
           · exact ⟨hspace.mono le_rfl (by lia) le_rfl, hsuffix⟩
 
 /-- **The live replay is polynomial-time** in the input, the coins and the history. -/
-theorem computableTidilyInPolyTime_aliveRun :
+private theorem computableTidilyInPolyTime_aliveRun :
     ComputableTidilyInPolyTime (fun p : List Bool × List Bool × History =>
       aliveRun M p.1 p.2.1 p.2.2) (encPair encBits (encPair encBits encHistory))
       encAliveState := by
@@ -352,7 +352,7 @@ def countAccepts (q : α × History) : ℕ :=
 
 open Classical in
 /-- After `j` rounds the count has tried the first `j` values of the counter. -/
-theorem iterate_countStep (q : α × History) (m j : ℕ) :
+private theorem iterate_countStep (q : α × History) (m j : ℕ) :
     (countStep M enc)^[j] (q, List.replicate m false, 0) =
       (q, increment^[j] (List.replicate m false),
         ((Finset.range j).filter fun i =>

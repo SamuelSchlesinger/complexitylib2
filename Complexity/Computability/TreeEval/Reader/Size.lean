@@ -41,7 +41,7 @@ open Iter Turing MultiTapeTM
 def spaceBound (ℓ H : ℕ) : ℕ := (ℓ + H + 1) * ((encNat ℓ).length + 1)
 
 /-- A residue below the prime has at most three bits more than `ℓ`. -/
-theorem length_lt_primeFor {ℓ v : ℕ} (hv : v ≤ primeFor ℓ) : (encNat v).length ≤
+private theorem length_lt_primeFor {ℓ v : ℕ} (hv : v ≤ primeFor ℓ) : (encNat v).length ≤
     (encNat ℓ).length + 3 :=
   by
   refine (ComputableTidilyInO.length_encNat_mono (hv.trans (primeFor_le ℓ))).trans ?_
@@ -51,7 +51,7 @@ theorem length_lt_primeFor {ℓ v : ℕ} (hv : v ≤ primeFor ℓ) : (encNat v).
   rw [pow_add]
   omega
 
-theorem length_encFrame_le {fr : Frame} {P : ℕ} (h : (encNat fr.round).length ≤ P) :
+private theorem length_encFrame_le {fr : Frame} {P : ℕ} (h : (encNat fr.round).length ≤ P) :
     (encFrame fr).length ≤ 2 * P + 25 := by
   rw [encFrame_apply, length_encPair]
   have := length_encFinite_lt (Frame.equiv fr).2
@@ -60,20 +60,20 @@ theorem length_encFrame_le {fr : Frame} {P : ℕ} (h : (encNat fr.round).length 
   simp only [Frame.equiv, Equiv.coe_fn_mk] at this ⊢
   omega
 
-theorem length_encList_frames_le {st : List Frame} {P : ℕ}
+private theorem length_encList_frames_le {st : List Frame} {P : ℕ}
     (h : ∀ fr ∈ st, (encNat fr.round).length ≤ P) :
     (encList encFrame st).length ≤ st.length * (4 * P + 51) :=
   (length_encList_le encFrame st fun fr hfr => length_encFrame_le (h fr hfr)).trans_eq
     (by ring)
 
-theorem length_encMode_lt (m : Mode) : (encMode m).length < 7 := by
+private theorem length_encMode_lt (m : Mode) : (encMode m).length < 7 := by
   have := length_encFinite_lt m
   have hc : Nat.card Mode = 7 := by
     rw [Nat.card_congr Mode.equiv]; simp
   rw [hc] at this
   exact this
 
-theorem length_encTag_lt (t : Fin 7) : (encFinite (Fin 7) t).length < 7 := by
+private theorem length_encTag_lt (t : Fin 7) : (encFinite (Fin 7) t).length < 7 := by
   simpa using length_encFinite_lt t
 
 /-- The bounds on the components of a state that satisfies the invariant. -/
@@ -90,7 +90,8 @@ structure Bounds (ℓ H : ℕ) (s : State) : Prop where
   acc : s.ctl.toTuple.2.2.2.length ≤ ℓ ∧
     (encList encNat s.ctl.toTuple.2.2.2).length ≤ ℓ * (2 * ((encNat ℓ).length + 3) + 1)
 
-theorem bounds_regs_wf {ℓ p : ℕ} {R : Regs} (hR : R.WF p ℓ) (hp : p ≤ primeFor ℓ) (r : Fin 3) :
+private theorem bounds_regs_wf {ℓ p : ℕ} {R : Regs} (hR : R.WF p ℓ) (hp : p ≤ primeFor ℓ)
+    (r : Fin 3) :
     (R.get r).length ≤ ℓ ∧
       (encList encNat (R.get r)).length ≤ ℓ * (2 * ((encNat ℓ).length + 3) + 1) := by
   obtain ⟨hlen, hlt⟩ := hR r

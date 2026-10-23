@@ -83,14 +83,14 @@ theorem rowLift_nonempty {k r : ℕ} {I : Type} (i : Fin k) (B : Finset I)
   exact ⟨((i, ⟨0, hr⟩), a), (mem_rowLift i B _).mpr ⟨rfl, ha⟩⟩
 
 /-- Blocks lifted to distinct rows are disjoint. -/
-theorem rowLift_disjoint_of_ne {k r : ℕ} {I : Type} (i j : Fin k)
+private theorem rowLift_disjoint_of_ne {k r : ℕ} {I : Type} (i j : Fin k)
     (B C : Finset I) (hij : i ≠ j) : Disjoint (rowLift (r := r) i B) (rowLift j C) := by
   apply Finset.disjoint_left.mpr
   intro p hp hq
   exact hij (((mem_rowLift i B p).mp hp).1.symm.trans ((mem_rowLift j C p).mp hq).1)
 
 /-- Lifts of disjoint child blocks are disjoint, whichever rows they are lifted to. -/
-theorem rowLift_disjoint {k r : ℕ} {I : Type} (i j : Fin k) (B C : Finset I)
+private theorem rowLift_disjoint {k r : ℕ} {I : Type} (i j : Fin k) (B C : Finset I)
     (hBC : Disjoint B C) : Disjoint (rowLift (r := r) i B) (rowLift j C) := by
   apply Finset.disjoint_left.mpr
   intro p hp hq
@@ -113,7 +113,7 @@ theorem rowLift_family_disjoint {k r : ℕ} {I K : Type} (blocks : K → Finset 
 
 /-- After flipping `rowLift i B` in the all-false input, every child of row `i` is the all-false
 child input with `B` flipped. -/
-theorem recursiveChild_rowLift_same {k r : ℕ} {I : Type}
+private theorem recursiveChild_rowLift_same {k r : ℕ} {I : Type}
     (i : Fin k) (B : Finset I) (c : Fin r) :
     recursiveChild (flip (fun _ => false) (rowLift (r := r) i B)) i c =
       flip (fun _ => false) B := by
@@ -122,7 +122,7 @@ theorem recursiveChild_rowLift_same {k r : ℕ} {I : Type}
 
 /-- After flipping `rowLift i B` in the all-false input, every child outside row `i` is still
 all-false. -/
-theorem recursiveChild_rowLift_other {k r : ℕ} {I : Type}
+private theorem recursiveChild_rowLift_other {k r : ℕ} {I : Type}
     (i j : Fin k) (B : Finset I) (c : Fin r) (hji : j ≠ i) :
     recursiveChild (flip (fun _ => false) (rowLift (r := r) i B)) j c =
       fun _ => false := by
