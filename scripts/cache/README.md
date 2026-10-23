@@ -9,18 +9,41 @@ other checkout on the same machine with the same inputs. Outputs are hard-linked
 `.lake/build`. `lake cache clean` empties it; it lives in the Lean toolchain's directory under
 `~/.elan` unless `LAKE_CACHE_DIR` says otherwise.
 
-**Remote cache.** CI uploads the build outputs of every commit on `main`; `scripts/cache/get.sh`
-downloads them for the nearest cached ancestor of your `HEAD`:
+**Remote cache.** CI uploads the build outputs of every commit on `main`, together with its
+pinned CSLib library. `scripts/cache/get.sh` downloads each package's outputs for its nearest
+cached ancestor:
 
 ```bash
-scripts/cache/get.sh   # Mathlib's cache, then Complexitylib's outputs
+scripts/cache/get.sh   # Mathlib, CSLib, then Complexitylib
 lake build             # compiles only what you changed
 ```
 
-A complete set of library and test outputs is about 70 MB compressed. Outputs are platform
-independent (`platformIndependent = true`), so Linux CI builds serve macOS checkouts.
+A complete set of Complexitylib library and test outputs is about 70 MB compressed.
+Complexitylib sets `platformIndependent = true`, so Linux CI builds serve macOS checkouts.
 `COMPLEXITYLIB_CACHE_URL` overrides the location; set it to an empty string to skip the
-Complexitylib download.
+CSLib and Complexitylib downloads.
+
+## Standalone CSLib checkouts
+
+From a CSLib checkout using the same Lean toolchain, run:
+
+```bash
+lake exe cache get
+/path/to/complexitylib/scripts/cache/get-cslib.sh
+lake build
+```
+
+The helper runs in the caller's directory and downloads the full `Cslib` library, including
+modules Complexitylib does not import. It uses CSLib's own Git revision, not Complexitylib's.
+Only CSLib revisions pinned by published Complexitylib `main` builds are available; this is not
+an upstream CSLib cache service. Lake searches up to 100 commits back, and rebuilds changed or
+missing modules normally. No CSLib configuration change is needed to consume the cache.
+
+The cache covers Lean module artifacts, not `CslibTests` or native validation executables.
+CSLib's build options and dependency hashes are preserved. The helper selects the platform-free
+mapping with `--platform=`; it does not change CSLib's platform settings. Native dependencies or
+different compiler options can still prevent reuse. `COMPLEXITYLIB_CACHE_URL` selects the same
+bucket as for Complexitylib; an empty value disables the download.
 
 ## Trust and privacy
 
@@ -38,8 +61,8 @@ requires:
   replaced. Lake checks every downloaded artifact against the hash recorded in the mapping.
 - Merge-gating CI always builds from source; the cache only saves local build time.
 
-The cache contains only build outputs of commits on `main` (sources that are public in this
-repository); build logs and machine paths are not uploaded. Downloads are anonymous HTTPS
+The cache contains only build outputs of commits on `main` and their pinned public CSLib
+sources; build logs and machine paths are not uploaded. Downloads are anonymous HTTPS
 requests to Google Cloud Storage; the bucket keeps no access logs.
 
 ## Maintainer runbook
@@ -79,3 +102,8 @@ grows, delete the artifacts that no revision mapping still in the bucket refers 
 **Layout.** `a0/cslib-community/complexitylib/<hash>.art` holds module archives and
 `r0/cslib-community/complexitylib/tc/<toolchain>/<commit>.jsonl` the input-to-output mappings of
 each commit, as written by `scripts/cache/upload.sh` and read by `lake cache get`.
+CSLib uses `a0/leanprover/cslib/<hash>.art` and
+`r0/leanprover/cslib/tc/<toolchain>/<cslib-commit>.jsonl` in the same bucket. The publisher checks
+that the CSLib checkout is clean at the manifest pin, builds the full library with strict
+warnings/errors, and uploads its archives before its mapping. The first publication of a pin
+can build CSLib modules not needed by Complexitylib. Only new archives are uploaded thereafter.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Upload this checkout's build outputs to the remote cache. Run by `main` CI after a successful
-# build; it needs write access to the bucket and is not meant for local use.
+# Upload this checkout's and its pinned CSLib library's build outputs to the remote cache.
+# Run by `main` CI after a successful build; it needs write access to the bucket.
 #
 # Usage: scripts/cache/upload.sh <bucket>
 #
@@ -21,23 +21,41 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   echo "Refusing to upload: the work tree differs from $rev." >&2
   exit 1
 fi
+cslib_dir=".lake/packages/cslib"
+cslib_rev="$(git -C "$cslib_dir" rev-parse HEAD)"
+cslib_pin="$(python3 -c 'import json; print(next(p["rev"] for p in json.load(open("lake-manifest.json"))["packages"] if p["name"] == "cslib"))')"
+if [ "$cslib_rev" != "$cslib_pin" ] ||
+    [ -n "$(git -C "$cslib_dir" status --porcelain --untracked-files=no)" ]; then
+  echo "Refusing to upload: CSLib must be clean at the manifest pin $cslib_pin." >&2
+  exit 1
+fi
 # `leanprover/lean4:v4.36.0` → `leanprover--lean4---v4.36.0`, as Lake names toolchain scopes.
 toolchain="$(tr -d '[:space:]' < lean-toolchain | sed 's#/#--#; s#:#---#')"
 
 stage="$(mktemp -d "${TMPDIR:-/tmp}/complexitylib-cache.XXXXXX")"
 trap 'rm -rf "$stage"' EXIT
-lake build Complexity ComplexityTests -o "$stage/mappings.jsonl"
-lake cache stage "$stage/mappings.jsonl" "$stage/out"
-mkdir "$stage/art"
-for f in "$stage"/out/*.ltar; do
-  base="$(basename "$f" .ltar)"
-  mv "$f" "$stage/art/$base.art"
-done
-count="$(find "$stage/art" -name '*.art' | wc -l | tr -d ' ')"
-echo "Uploading up to $count artifacts for $rev (existing objects are skipped)"
-find "$stage/art" -name '*.art' | gcloud storage cp --no-clobber --quiet \
-  --content-type=application/vnd.reservoir.artifact -I "gs://$bucket/a0/$scope/"
-gcloud storage cp --no-clobber --quiet \
-  --content-type=application/vnd.reservoir.outputs+json-lines \
-  "$stage/mappings.jsonl" "gs://$bucket/r0/$scope/tc/$toolchain/$rev.jsonl"
-echo "Published gs://$bucket/r0/$scope/tc/$toolchain/$rev.jsonl"
+# Cover standalone `lake build` too, not only the CSLib modules Complexitylib imports.
+# Keep CSLib's own options and natural dependency hashes; no native executables are published.
+lake build --wfail --iofail @cslib/Cslib --package=cslib -o "$stage/cslib.jsonl"
+lake build Complexity ComplexityTests -o "$stage/complexitylib.jsonl"
+
+publish() {
+  local package_scope="$1" package_rev="$2" name="$3" f base count
+  lake cache stage "$stage/$name.jsonl" "$stage/$name"
+  mkdir "$stage/$name-art"
+  for f in "$stage/$name"/*.ltar; do
+    base="$(basename "$f" .ltar)"
+    mv "$f" "$stage/$name-art/$base.art"
+  done
+  count="$(find "$stage/$name-art" -name '*.art' | wc -l | tr -d ' ')"
+  echo "Uploading up to $count artifacts for $package_scope@$package_rev (existing objects are skipped)"
+  find "$stage/$name-art" -name '*.art' | gcloud storage cp --no-clobber --quiet \
+    --content-type=application/vnd.reservoir.artifact -I "gs://$bucket/a0/$package_scope/"
+  gcloud storage cp --no-clobber --quiet \
+    --content-type=application/vnd.reservoir.outputs+json-lines \
+    "$stage/$name.jsonl" "gs://$bucket/r0/$package_scope/tc/$toolchain/$package_rev.jsonl"
+  echo "Published gs://$bucket/r0/$package_scope/tc/$toolchain/$package_rev.jsonl"
+}
+
+publish leanprover/cslib "$cslib_rev" cslib
+publish "$scope" "$rev" complexitylib
