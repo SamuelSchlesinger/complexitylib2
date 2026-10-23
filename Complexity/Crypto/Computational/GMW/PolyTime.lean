@@ -562,9 +562,9 @@ noncomputable def gmwSimWithPads (generator : List Bool → List Bool) (s m : �
 
 /-- One attempt of the GMW zero-knowledge simulator (without any witness). -/
 noncomputable def gmwSimAttempt (generator : List Bool → List Bool) (s m : ℕ) (φ : CNF ℕ)
-    (prog : WordOracleComp Unit (List Bool)) : ProbComp (List Bool) :=
-  OracleComp.replicate (totalLen φ) (BitString.sampleList m) >>=
-    gmwSimWithPads generator s m φ prog
+    (prog : WordOracleComp Unit (List Bool)) : ProbComp (List Bool) := do
+  let pads ← OracleComp.replicate (totalLen φ) (BitString.sampleList m)
+  gmwSimWithPads generator s m φ prog pads
 
 /-- The GMW zero-knowledge simulator: repeat `gmwSimAttempt` `n + 1` times and return the first
 successful output (`gmwFirstSuccess`). -/

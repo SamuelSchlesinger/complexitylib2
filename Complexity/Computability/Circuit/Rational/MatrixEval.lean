@@ -70,15 +70,16 @@ private theorem evalMatrix?_sound {n d : ℕ} (f : Formula n) (X : Tuple n d)
   | add f g ihf ihg =>
     obtain ⟨a, ha, b, hb, rfl⟩ : ∃ a, f.evalMatrix? X = some a ∧
         ∃ b, g.evalMatrix? X = some b ∧ a + b = v := by
-      simpa only [evalMatrix?_add, Option.bind_eq_some_iff, Option.some.injEq] using h
+      simpa only [evalMatrix?_add, bind, pure, Option.bind_eq_some_iff, Option.some.injEq] using h
     exact Eval.add (ihf ha) (ihg hb)
   | mul f g ihf ihg =>
     obtain ⟨a, ha, b, hb, rfl⟩ : ∃ a, f.evalMatrix? X = some a ∧
         ∃ b, g.evalMatrix? X = some b ∧ a * b = v := by
-      simpa only [evalMatrix?_mul, Option.bind_eq_some_iff, Option.some.injEq] using h
+      simpa only [evalMatrix?_mul, bind, pure, Option.bind_eq_some_iff, Option.some.injEq] using h
     exact Eval.mul (ihf ha) (ihg hb)
   | inv f ih =>
-    rw [evalMatrix?_inv, Option.bind_eq_some_iff] at h
+    rw [evalMatrix?_inv] at h
+    simp only [bind, Option.bind_eq_some_iff] at h
     obtain ⟨a, ha, hb⟩ := h
     by_cases hd : a.det = 0
     · simp [hd] at hb

@@ -148,9 +148,11 @@ theorem extractedSequence_learn_error_pow {Seed Output : Type} [Fintype α]
           (fun samples => extractLabels seed hash samples >>= test) (observe value)))
     (confidence inverseGap : ℕ) (hgap : 0 < inverseGap)
     (hdistinguish : (dyadicSize count : ℝ) / inverseGap + ε ≤
-      (Game.advantage (ProbComp.eval (OracleComp.replicate count
-        ((fun value => (observe value, truth value)) <$> source) >>=
-          fun samples => extractLabels seed hash samples >>= test))
+      (Game.advantage (ProbComp.eval (do
+        let samples ← OracleComp.replicate count
+          ((fun value => (observe value, truth value)) <$> source)
+        let result ← extractLabels seed hash samples
+        test result))
         (ideal.bind (fun output => ProbComp.eval (test output))) : ℝ)) :
     ((ProbComp.eval (learn candidates (fun code => weightedTrial source mask
       (fun value => pure (predict code (observe value) == truth value)))

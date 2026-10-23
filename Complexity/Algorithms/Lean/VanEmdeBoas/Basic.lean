@@ -126,11 +126,11 @@ def successor : {d : ℕ} → Tree d → ℕ → Option ℕ
         let low := x % universeSize d
         if (c i).maximum.any (low < ·) then
           (successor (c i) low).map (i.val * universeSize d + ·)
-        else
-          (successor s i.val).bind fun j =>
-            if hj : j < universeSize d then
-              (c ⟨j, hj⟩).minimum.map (j * universeSize d + ·)
-            else none
+        else do
+          let j ← successor s i.val
+          if hj : j < universeSize d then
+            (c ⟨j, hj⟩).minimum.map (j * universeSize d + ·)
+          else none
       else none
 
 /-- Mathematical interpretation. The minimum is absent from the cluster interpretation. -/

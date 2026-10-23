@@ -72,17 +72,25 @@ def evalMatrix? (f : Formula n) (X : Tuple n d) : Option (Mat d) :=
 
 @[simp] theorem evalMatrix?_add (f g : Formula n) (X : Tuple n d) :
     (add f g).evalMatrix? X =
-      (f.evalMatrix? X).bind fun a => (g.evalMatrix? X).bind fun b => some (a + b) :=
+      (do
+        let a ← f.evalMatrix? X
+        let b ← g.evalMatrix? X
+        return a + b) :=
   rfl
 
 @[simp] theorem evalMatrix?_mul (f g : Formula n) (X : Tuple n d) :
     (mul f g).evalMatrix? X =
-      (f.evalMatrix? X).bind fun a => (g.evalMatrix? X).bind fun b => some (a * b) :=
+      (do
+        let a ← f.evalMatrix? X
+        let b ← g.evalMatrix? X
+        return a * b) :=
   rfl
 
 @[simp] theorem evalMatrix?_inv (f : Formula n) (X : Tuple n d) :
     (inv f).evalMatrix? X =
-      (f.evalMatrix? X).bind fun v => if v.det = 0 then none else some (v.det⁻¹ • v.adjugate) :=
+      (do
+        let v ← f.evalMatrix? X
+        if v.det = 0 then none else some (v.det⁻¹ • v.adjugate)) :=
   rfl
 
 end Formula

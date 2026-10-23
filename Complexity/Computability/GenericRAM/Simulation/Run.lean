@@ -216,11 +216,11 @@ theorem default_evalOp {k : M.Config} {o : Op M r} {s t : FiniteState M r}
     obtain ⟨_, _, rfl⟩ := h
     rfl
   | load d a =>
-    simp only [evalOp, Option.bind_eq_some_iff] at h
+    simp only [evalOp, bind, Option.bind_eq_some_iff] at h
     obtain ⟨_, _, hm⟩ := h
     exact default_move hm
   | store a src =>
-    simp only [evalOp, Option.bind_eq_some_iff] at h
+    simp only [evalOp, bind, Option.bind_eq_some_iff] at h
     obtain ⟨_, _, hm⟩ := h
     split at hm
     · injection hm with hm; subst hm; rfl
@@ -243,12 +243,12 @@ theorem length_entries_evalOp_le {k : M.Config} {o : Op M r} {s t : FiniteState 
     obtain ⟨_, _, rfl⟩ := h
     exact Nat.le_add_right _ _
   | load d a =>
-    simp only [evalOp, Option.bind_eq_some_iff] at h
+    simp only [evalOp, bind, Option.bind_eq_some_iff] at h
     obtain ⟨_, _, hm⟩ := h
     rw [length_entries_move_eq hm]
     exact Nat.le_add_right _ _
   | store a src =>
-    simp only [evalOp, Option.bind_eq_some_iff] at h
+    simp only [evalOp, bind, Option.bind_eq_some_iff] at h
     obtain ⟨addr, _, hm⟩ := h
     split at hm
     · injection hm with hm
@@ -276,14 +276,14 @@ theorem default_evalInstr {k : M.Config} {nextPC : ℕ} {i : Instr M r} {s t : F
     (h : evalInstr k nextPC i s = some (.inl t)) : t.default = s.default := by
   cases i with
   | op o =>
-    simp only [evalInstr, Option.bind_eq_some_iff] at h
+    simp only [evalInstr, bind, Option.bind_eq_some_iff] at h
     obtain ⟨u, ho, hr⟩ := h
     exact (default_resume hr).trans (default_evalOp ho)
   | jump target => exact default_resume h
   | branch c target =>
     cases c with
     | test f args =>
-      simp only [evalInstr, Option.bind_eq_some_iff] at h
+      simp only [evalInstr, bind, Option.bind_eq_some_iff] at h
       obtain ⟨_, _, hr⟩ := h
       exact default_resume hr
   | halt idx =>
@@ -295,7 +295,7 @@ theorem length_entries_evalInstr_le {k : M.Config} {nextPC : ℕ} {i : Instr M r
     (SparseMemory.entries t.memory).length ≤ (SparseMemory.entries s.memory).length + 1 := by
   cases i with
   | op o =>
-    simp only [evalInstr, Option.bind_eq_some_iff] at h
+    simp only [evalInstr, bind, Option.bind_eq_some_iff] at h
     obtain ⟨u, ho, hr⟩ := h
     rw [memory_resume hr]
     exact length_entries_evalOp_le ho
@@ -305,7 +305,7 @@ theorem length_entries_evalInstr_le {k : M.Config} {nextPC : ℕ} {i : Instr M r
   | branch c target =>
     cases c with
     | test f args =>
-      simp only [evalInstr, Option.bind_eq_some_iff] at h
+      simp only [evalInstr, bind, Option.bind_eq_some_iff] at h
       obtain ⟨_, _, hr⟩ := h
       rw [memory_resume hr]
       exact Nat.le_add_right _ _
@@ -318,8 +318,8 @@ theorem default_step {k : M.Config} {p : Program M r} {s t : FiniteState M r}
     (h : step k p s = some (.inl t)) : t.default = s.default := by
   unfold step at h
   split at h
-  · rw [dispatch_eq_getElem? k p 0 s (Nat.zero_le _), Nat.sub_zero,
-      Option.bind_eq_some_iff] at h
+  · rw [dispatch_eq_getElem? k p 0 s (Nat.zero_le _), Nat.sub_zero] at h
+    simp only [bind, Option.bind_eq_some_iff] at h
     obtain ⟨i, _, hi⟩ := h
     exact default_evalInstr hi
   · simp at h
@@ -330,8 +330,8 @@ theorem length_entries_step_le {k : M.Config} {p : Program M r} {s t : FiniteSta
     (SparseMemory.entries t.memory).length ≤ (SparseMemory.entries s.memory).length + 1 := by
   unfold step at h
   split at h
-  · rw [dispatch_eq_getElem? k p 0 s (Nat.zero_le _), Nat.sub_zero,
-      Option.bind_eq_some_iff] at h
+  · rw [dispatch_eq_getElem? k p 0 s (Nat.zero_le _), Nat.sub_zero] at h
+    simp only [bind, Option.bind_eq_some_iff] at h
     obtain ⟨i, _, hi⟩ := h
     exact length_entries_evalInstr_le hi
   · simp at h

@@ -85,7 +85,8 @@ theorem length_generate {seedBits commonBits : ℕ} {generator : List Bool → L
 theorem generate_distribution {seedBits commonBits : ℕ} (generator : List Bool → List Bool)
     (hfits : seedBits ≤ commonBits) :
     (uniformList commonBits).map (generate seedBits commonBits generator) =
-      ((uniformList seedBits).map generator).bind (fun word =>
+      (do
+        let word ← (uniformList seedBits).map generator
         (uniformList (commonBits - seedBits)).map
           (fun padding => (word ++ padding).take (commonBits + 1))) := by
   change (uniformList commonBits).bind (fun seed => PMF.pure
@@ -94,18 +95,19 @@ theorem generate_distribution {seedBits commonBits : ℕ} (generator : List Bool
   rw [uniformList_bind_split seedBits (commonBits - seedBits)
     (fun front padding => PMF.pure
       ((generator front ++ padding).take (commonBits + 1)))]
-  simp only [PMF.map, PMF.bind_bind, PMF.pure_bind, Function.comp_def]
+  simp only [PMF.monad_bind_eq_bind, PMF.map, PMF.bind_bind, PMF.pure_bind, Function.comp_def]
 
 /-- Uniform raw output and independent padding give exactly the desired uniform output. -/
 theorem ideal_distribution {seedBits outputBits commonBits : ℕ}
     (hexpands : seedBits < outputBits) :
-    (uniformList outputBits).bind (fun word =>
+    (do
+      let word ← uniformList outputBits
       (uniformList (commonBits - seedBits)).map
         (fun padding => (word ++ padding).take (commonBits + 1))) =
       uniformList (commonBits + 1) := by
   rw [← uniformList_take (n := outputBits + (commonBits - seedBits))
     (k := commonBits + 1) (by lia), uniformList_add, PMF.map_bind]
-  simp only [PMF.map_comp, Function.comp_def]
+  simp only [PMF.monad_bind_eq_bind, PMF.map_comp, Function.comp_def]
 
 /-- A distinguisher for padded output is an ordinary randomized postprocessing of raw output. -/
 noncomputable def test (seedBits commonBits : ℕ) (adversary : List Bool → ProbComp Bool)
@@ -142,6 +144,7 @@ theorem advantage_eq {seedBits outputBits commonBits : ℕ} (generator : List Bo
       ((uniformList outputBits).bind
         (fun word => ProbComp.eval (test seedBits commonBits adversary word))) := by
   rw [generate_distribution generator hfits, ← ideal_distribution hexpands]
+  simp only [PMF.monad_bind_eq_bind]
   simp only [test, ProbComp.eval_bind, BitString.eval_sampleList, PMF.bind_bind, PMF.bind_map,
     Function.comp_def]
 

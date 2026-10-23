@@ -176,7 +176,9 @@ theorem HasQueryBounds.eval_presample {program : ProbOracleComp spec α}
         (handler (fun n => StateT.lift (ProbComp.unifFin n))
           (withSampleList fallback oracle)) program).run (s, values)) =
       ProbComp.eval ((interpret (handler (fun n => StateT.lift (ProbComp.unifFin n))
-        (fun q s => source >>= fun value => oracle value q s)) program).run s) := by
+        (fun q s => do
+          let value ← source
+          oracle value q s)) program).run s) := by
   have hrun := run_interpret_presample source fallback
     (fun value q s => ProbComp.eval (oracle value q s)) program s count
     (fun result next transcript hresult => (h _ _ s next result transcript hresult).1)

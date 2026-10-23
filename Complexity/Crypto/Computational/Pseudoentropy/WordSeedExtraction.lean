@@ -152,6 +152,7 @@ theorem SamplablePair.SeedRealization.extract_word_observations {pair : Samplabl
   rw [← hrealTest, uniformList_add]
   simp only [count, extractWordObservations, OracleComp.replicate_map, ProbComp.eval_bind,
     ProbComp.eval_map, uniformList, PMF.bind_bind, PMF.bind_map, PMF.map_comp, Function.comp_def]
+  simp only [monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
 
 /-- Hash complete sampler seeds while retaining every sampled observation and label. -/
 noncomputable def extractWordSeeds (count seedBits outputBits : ℕ)

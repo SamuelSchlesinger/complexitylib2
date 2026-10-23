@@ -164,7 +164,7 @@ theorem indistinguishable {length : ℕ → ℕ} {generator : ℕ → List Bool 
     (Eventually.of_forall (fun size => (lt_length_succ_parameter hge size).le))
   apply negligible_of_eventually_le hdecay
   filter_upwards [eventually_ge_atTop (length 0)] with size hsize
-  simp only [distinguishingGame]
+  simp only [distinguishingGame, PMF.monad_bind_eq_bind]
   rw [generate_distribution length generator hsize,
     GeneratorPadding.advantage_eq _ _ (parameter_fits hsize) (Nat.lt_succ_self _)]
   simpa only [real, ideal, test, ProbComp.eval_bind, ProbComp.eval_map,

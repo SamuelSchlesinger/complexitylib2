@@ -83,7 +83,8 @@ theorem eval_runClosedConfigFrom_seq_prependOutput :
     _ (Sequential.left source cfg)) = _
   rw [eval_runClosedConfigFrom_seq _ _ _ prepareTime runTime
     (by simp [hfirst, ready]) (by simpa [hfirst] using hsecond),
-    hfirst, PMF.pure_bind, hstart, runClosedConfigFrom_prependOutput, ProbComp.eval_map,
+    Probability.PMF.monad_bind_eq_bind, hfirst, PMF.pure_bind, hstart,
+    runClosedConfigFrom_prependOutput, ProbComp.eval_map,
     PMF.map_comp]
   rfl
 

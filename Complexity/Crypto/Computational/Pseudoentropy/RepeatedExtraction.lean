@@ -72,10 +72,11 @@ def extractLabels {Observation Label Seed Output : Type} (seed : ProbComp Seed)
 independent uniform output. The ambient observation and seed types need not be finite. -/
 noncomputable def extractLabelsIdeal {Observation Seed Output : Type}
     [Fintype Output] [Nonempty Output] (source : ProbComp Observation) (count : ℕ)
-    (seed : ProbComp Seed) : PMF (List Observation × Seed × Output) :=
-  (ProbComp.eval (OracleComp.replicate count source)).bind (fun observed =>
-    ((ProbComp.eval seed).bind (fun s => (PMF.uniformOfFintype Output).map (s, ·))).map
-      (observed, ·))
+    (seed : ProbComp Seed) : PMF (List Observation × Seed × Output) := do
+  let observed ← ProbComp.eval (OracleComp.replicate count source)
+  (do
+    let s ← ProbComp.eval seed
+    (PMF.uniformOfFintype Output).map (s, ·)).map (observed, ·)
 
 /-- A sampling law for re-encoded observations transports the ideal extraction experiment. -/
 theorem extractLabelsIdeal_map_observation {α β Seed Output : Type}
@@ -85,7 +86,7 @@ theorem extractLabelsIdeal_map_observation {α β Seed Output : Type}
     (extractLabelsIdeal (Output := Output) source count seed).map
       (fun result => (result.1.map observe, result.2)) =
         extractLabelsIdeal encoded count seed := by
-  simp only [extractLabelsIdeal, ProbComp.eval_replicate_map hsource,
+  simp only [extractLabelsIdeal, monad_bind_eq_bind, ProbComp.eval_replicate_map hsource,
     PMF.map_bind, PMF.map_comp, PMF.bind_map, Function.comp_def]
 
 /-- Forgetting side information leaves an independent public seed and uniform output. -/
@@ -94,7 +95,8 @@ theorem extractLabelsIdeal_map_snd {Observation Seed Output : Type}
     (seed : ProbComp Seed) :
     (extractLabelsIdeal (Output := Output) source count seed).map Prod.snd =
       (ProbComp.eval seed).bind (fun key => (PMF.uniformOfFintype Output).map (key, ·)) := by
-  simp only [extractLabelsIdeal, PMF.map_bind, PMF.map_comp, Function.comp_def, PMF.bind_const]
+  simp only [extractLabelsIdeal, monad_bind_eq_bind, PMF.map_bind, PMF.map_comp, Function.comp_def,
+    PMF.bind_const]
 
 /-- Re-encoding both fields changes only the hash's input representation and public output. -/
 theorem extractLabels_map_pair {α β Label Value Seed Output : Type}
@@ -183,8 +185,10 @@ theorem extractLabels_sequence_gap {Observation Label Seed Output : Type}
         (ProbComp.eval (OracleComp.replicate count comparison >>= reduced)) : ℝ) := by
   dsimp only
   have htriangle := Game.advantage_triangle
-    (ProbComp.eval (OracleComp.replicate count original >>=
-      fun samples => extractLabels seed hash samples >>= test))
+    (ProbComp.eval (do
+      let samples ← OracleComp.replicate count original
+      let result ← extractLabels seed hash samples
+      test result))
     ((ProbComp.eval (OracleComp.replicate count comparison >>= extractLabels seed hash)).bind
       (fun output => ProbComp.eval (test output)))
     (ideal.bind (fun output => ProbComp.eval (test output)))
@@ -219,7 +223,8 @@ theorem extractLabels_dist_bind_le {Observation Label Seed Output : Type}
     (fun result : (Fin count → Observation) × Seed × Output =>
       test (List.ofFn result.1, result.2))).trans h
   simp only [extractLabelsIdeal, eval_replicate_extractLabels, ProbComp.eval_replicate,
-    ProbComp.eval_map, PMF.bind_bind, PMF.bind_map, PMF.map_bind, PMF.map_comp,
+    ProbComp.eval_map] at hmap ⊢
+  simp only [monad_bind_eq_bind, PMF.bind_bind, PMF.bind_map, PMF.map_bind, PMF.map_comp,
     Function.comp_def] at hmap ⊢
   refine hmap.trans ?_
   gcongr
@@ -240,8 +245,8 @@ theorem eval_extractLabels_of_subsingleton {Observation Label Seed Output : Type
     simp [PMF.uniformOfFintype_apply, PMF.pure_apply, Fintype.card_unique,
       Subsingleton.elim result value]
   simp only [extractLabelsIdeal, OracleComp.replicate_map, ProbComp.eval_map,
-    ProbComp.eval_bind, extractLabels, bind_pure_comp, PMF.bind_map, PMF.map_bind,
-    PMF.map_comp, Function.comp_def]
+    ProbComp.eval_bind, extractLabels, bind_pure_comp]
+  simp only [monad_bind_eq_bind, PMF.bind_map, PMF.map_bind, PMF.map_comp, Function.comp_def]
   congr 1
   funext samples
   rw [PMF.map]
@@ -323,9 +328,11 @@ theorem seededHash_replicate_indistinguishable {Label Seed : ℕ → Type}
           (ProbComp.eval (OracleComp.replicate
             (ExtractionSchedule.count n (sourceBits n) (inverseSlack n)) (source n)))
               (hash n)).bind (test n))
-      (fun test n => ((ProbComp.eval (seed n)).bind
-        (fun key => (PMF.uniformOfFintype (BitString (outputBits n))).map (key, ·))).bind
-          (test n)) (fun _ => True) := by
+      (fun test n => do
+        let result ← do
+          let key ← ProbComp.eval (seed n)
+          (PMF.uniformOfFintype (BitString (outputBits n))).map (key, ·)
+        test n result) (fun _ => True) := by
   intro test _
   have h := extractLabels_indistinguishable
     (fun n => ((), ·) <$> source n) sourceBits inverseSlack outputBits
@@ -348,8 +355,9 @@ theorem seededHash_replicate_indistinguishable {Label Seed : ℕ → Type}
   simp only [PMF.bind_map, Function.comp_def] at hideal
   rw [hideal]
   congr 1
-  simp only [OracleComp.replicate_map, ProbComp.eval_bind, ProbComp.eval_map,
-    extractLabels, bind_pure_comp, PMF.bind_map, PMF.bind_bind,
-    Function.comp_def, List.map_map, List.map_id_fun', id_eq, seededHash_eq_bind]
+  · simp only [OracleComp.replicate_map, ProbComp.eval_bind, ProbComp.eval_map,
+      extractLabels, bind_pure_comp, PMF.bind_map, PMF.bind_bind,
+      Function.comp_def, List.map_map, List.map_id_fun', id_eq, seededHash_eq_bind]
+  · simp only [monad_bind_eq_bind, PMF.bind_bind]
 
 end Cslib.Crypto.Pseudoentropy

@@ -374,8 +374,9 @@ def Code.evalLoop (c : Cond r) (body : Data r → Option (Data r × ℕ)) :
     ℕ → Data r → Option (Data r × ℕ)
   | 0, x => if c.Holds x then none else some (x, 2)
   | fuel + 1, x =>
-    if c.Holds x then
-      (body x).bind fun ym => (evalLoop c body fuel ym.1).map fun zn => (zn.1, ym.2 + zn.2 + 2)
+    if c.Holds x then do
+      let ym ← body x
+      (evalLoop c body fuel ym.1).map fun zn => (zn.1, ym.2 + zn.2 + 2)
     else some (x, 2)
 
 /-- Run a structured program at word size `w`, allowing each loop at most `fuel` iterations per
@@ -384,8 +385,9 @@ runs out of iterations. The definition is structurally recursive, so `simp` and 
 evaluate it. -/
 def Code.eval (w fuel : ℕ) : Code B r → Data r → Option (Data r × ℕ)
   | .op o, x => (o.eval w x).map fun y => (y, 1)
-  | .seq c₁ c₂, x =>
-    (c₁.eval w fuel x).bind fun ym => (c₂.eval w fuel ym.1).map fun zn => (zn.1, ym.2 + zn.2)
+  | .seq c₁ c₂, x => do
+    let ym ← c₁.eval w fuel x
+    (c₂.eval w fuel ym.1).map fun zn => (zn.1, ym.2 + zn.2)
   | .branch c pos neg, x =>
     if c.Holds x then (pos.eval w fuel x).map fun yn => (yn.1, yn.2 + 1)
     else (neg.eval w fuel x).map fun yn => (yn.1, yn.2 + 2)

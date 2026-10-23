@@ -103,7 +103,7 @@ theorem prfIdealGame_eq_cached (adversary : OracleDistinguisher) (n : ℕ) :
     ProbOracleComp.eval_interpret, ProbComp.eval_pure, PMF.pi_uniformOfFintype,
     OracleComp.interpret_interpret, ProbOracleComp.interpret_handler,
     ProbOracleComp.interpret_sample, ProbComp.unifFin, OracleComp.interpret_query,
-    Function.Embedding.coeFn_mk, hstep, heager] using h
+    Function.Embedding.coeFn_mk, hstep, heager, PMF.monad_bind_eq_bind] using h
 
 open Turing.MultiTapeTM in
 /-- The ideal experiment has a strict PPT realization through its lazy cache. This does not

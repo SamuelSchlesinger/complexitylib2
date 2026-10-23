@@ -116,16 +116,17 @@ theorem isPPT_hardCorePredictor {adversary : Distinguisher}
   ppt
 
 /-- The ideal hybrid replaces the hidden predicate by an independent fair bit. -/
-noncomputable def hardCoreIdeal (f : List Bool → List Bool) (n : ℕ) : PMF (List Bool) :=
-  (BitString.uniformList n).bind (fun seed =>
-    (PMF.uniformOfFintype Bool).map (fun bit => f seed ++ [bit]))
+noncomputable def hardCoreIdeal (f : List Bool → List Bool) (n : ℕ) : PMF (List Bool) := do
+  let seed ← BitString.uniformList n
+  (PMF.uniformOfFintype Bool).map (fun bit => f seed ++ [bit])
 
 private theorem real_probability (f : List Bool → List Bool) (predicate : List Bool → Bool)
     (adversary : Distinguisher) (n : ℕ) :
     Pr[prgRealGame (fun seed => f seed ++ [predicate seed]) adversary n] =
       ∑ bits : BitString n, ((PMF.uniformOfFintype (BitString n)) bits).toReal *
         Pr[adversary n (f (List.ofFn bits) ++ [predicate (List.ofFn bits)])] := by
-  simp only [coe_probability, eval_prgRealGame, distinguishingGame, generatorEnsemble,
+  simp only [coe_probability, eval_prgRealGame, distinguishingGame, PMF.monad_bind_eq_bind,
+    generatorEnsemble,
     BitString.uniformList, PMF.bind_map, Function.comp_def, PMF.map_comp, PMF.bind_apply_toReal]
 
 private theorem ideal_probability (f : List Bool → List Bool) (adversary : Distinguisher)
@@ -134,7 +135,8 @@ private theorem ideal_probability (f : List Bool → List Bool) (adversary : Dis
       ∑ bits : BitString n, ((PMF.uniformOfFintype (BitString n)) bits).toReal *
         ((Pr[adversary n (f (List.ofFn bits) ++ [false])] +
           Pr[adversary n (f (List.ofFn bits) ++ [true])]) / 2) := by
-  simp only [coe_probability, distinguishingGame, hardCoreIdeal, BitString.uniformList,
+  simp only [coe_probability, distinguishingGame, hardCoreIdeal, PMF.monad_bind_eq_bind,
+    BitString.uniformList,
     PMF.bind_map, PMF.bind_bind, Function.comp_def, PMF.bind_apply_toReal]
   apply Finset.sum_congr rfl
   intro bits _

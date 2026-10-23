@@ -146,7 +146,7 @@ theorem sequenceTest_gap (replacement original : ProbComp α) (count : ℕ)
   have h := Game.succProbability_hybrid_average
     (fun i => ProbComp.eval (sequenceHybrid replacement original count i >>= test))
     count (dyadicSize count) (lt_dyadicSize count).le
-  simpa only [sequenceHybrid_zero, sequenceHybrid_self,
+  simpa only [sequenceHybrid_zero, sequenceHybrid_self, PMF.monad_bind_eq_bind,
     horiginal, hreplacement] using h
 
 /-- The exact unsigned sequence-hybrid loss, including the empty sequence. -/
@@ -248,17 +248,17 @@ theorem ComputationallyIndistinguishable.replicate_bind {orig repl : ℕ → Pro
   have horig_eq : distinguishingGame
       (ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= process n)) (adversary n) =
       ProbComp.eval (OracleComp.replicate (count n) (orig n) >>= test n) := by
-    simp only [distinguishingGame, test, ProbComp.eval_bind, PMF.bind_bind]
+    simp only [distinguishingGame, PMF.monad_bind_eq_bind, test, ProbComp.eval_bind, PMF.bind_bind]
   have hrepl_eq : distinguishingGame
       (ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= process n)) (adversary n) =
       ProbComp.eval (OracleComp.replicate (count n) (repl n) >>= test n) := by
-    simp only [distinguishingGame, test, ProbComp.eval_bind, PMF.bind_bind]
+    simp only [distinguishingGame, PMF.monad_bind_eq_bind, test, ProbComp.eval_bind, PMF.bind_bind]
   have hred_orig : distinguishingGame (ProbComp.eval (orig n)) (red n) =
       ProbComp.eval (orig n >>= sequenceTest (repl n) (orig n) (count n) (test n)) := by
-    simp only [distinguishingGame, red, ProbComp.eval_bind]
+    simp only [distinguishingGame, PMF.monad_bind_eq_bind, red, ProbComp.eval_bind]
   have hred_repl : distinguishingGame (ProbComp.eval (repl n)) (red n) =
       ProbComp.eval (repl n >>= sequenceTest (repl n) (orig n) (count n) (test n)) := by
-    simp only [distinguishingGame, red, ProbComp.eval_bind]
+    simp only [distinguishingGame, PMF.monad_bind_eq_bind, red, ProbComp.eval_bind]
   rw [horig_eq, hrepl_eq, hred_orig, hred_repl, NNReal.coe_mul, NNReal.coe_natCast,
     Game.coe_advantage, Game.coe_advantage, hgap, abs_mul, Nat.abs_cast]
 

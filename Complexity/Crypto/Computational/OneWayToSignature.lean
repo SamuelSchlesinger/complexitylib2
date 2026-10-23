@@ -231,11 +231,11 @@ theorem SignatureScheme.OneTimeEUFCMA.exists_oneWay {S : SignatureScheme}
   have hlt : size < schedule (n + 1) := GeneratorReindex.lt_length_succ_parameter hge size
   have hlt_dyadic : size < dyadicSize (schedule (n + 1)) :=
     hlt.trans (lt_dyadicSize (schedule (n + 1)))
-  let trial (idx : ℕ) : PMF Bool :=
-    (ProbComp.eval (S.keyGen n)).bind fun keys =>
-      (ProbComp.eval (adversary idx (encPair encUnary encBits (n, keys.1)))).bind fun cand =>
-        (ProbComp.eval (S.sign (evaluate n cand).2 (List.replicate n false))).map fun sig =>
-          S.verify keys.1 (List.replicate n false) sig
+  let trial (idx : ℕ) : PMF Bool := do
+    let keys ← ProbComp.eval (S.keyGen n)
+    let cand ← ProbComp.eval (adversary idx (encPair encUnary encBits (n, keys.1)))
+    (ProbComp.eval (S.sign (evaluate n cand).2 (List.replicate n false))).map fun sig =>
+      S.verify keys.1 (List.replicate n false) sig
   have hgame_eq : ProbComp.eval (S.eufOneTimeGame forger n) =
       (PMF.uniformOfFintype (Fin (dyadicSize (schedule (n + 1))))).bind
         (fun idx => trial idx.val) := by
@@ -249,7 +249,7 @@ theorem SignatureScheme.OneTimeEUFCMA.exists_oneWay {S : SignatureScheme}
       Game.succProbability (trial size) := by
     apply ENNReal.toNNReal_mono (PMF.apply_ne_top _ _)
     dsimp only [trial, inversionGame]
-    rw [hlaw n size hbudget, PMF.bind_map]
+    rw [hlaw n size hbudget, PMF.monad_bind_eq_bind, PMF.bind_map]
     simp only [ProbComp.eval_bind, ProbComp.eval_pure, BitString.eval_sampleList,
       Function.comp_def]
     refine PMF.bind_apply_mono_on_support _ true fun seed hseed => ?_
@@ -423,10 +423,11 @@ private theorem getD_append_cons_ne {α : Type*} (front back : List α) (x₁ x�
 
 private theorem eval_replicate_split {α : Type} (prog : ProbComp α) {m j : ℕ} (hj : j < m) :
     ProbComp.eval (OracleComp.replicate m prog) =
-      (ProbComp.eval prog).bind fun xStar =>
-        (ProbComp.eval (OracleComp.replicate j prog)).bind fun front =>
-          (ProbComp.eval (OracleComp.replicate (m - j - 1) prog)).map fun back =>
-            front ++ xStar :: back := by
+      (do
+        let xStar ← ProbComp.eval prog
+        let front ← ProbComp.eval (OracleComp.replicate j prog)
+        (ProbComp.eval (OracleComp.replicate (m - j - 1) prog)).map fun back =>
+          front ++ xStar :: back) := by
   have hm : m = j + (m - j - 1 + 1) := by omega
   conv_lhs => rw [hm, OracleComp.replicate_add, OracleComp.replicate_succ]
   simp only [ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure,
@@ -713,10 +714,9 @@ theorem OneWay.oneTimeEUFCMA_lamport {f : List Bool → List Bool} (hf : OneWay 
       return (frames out.1.2).getD (j / 2) []
     else
       return []
-  let trial (j : ℕ) : PMF Bool :=
-    (BitString.uniformList n).bind fun xStar =>
-      (ProbComp.eval (inverterAt j (f xStar))).map fun cand =>
-        f cand == f xStar
+  let trial (j : ℕ) : PMF Bool := do
+    let xStar ← BitString.uniformList n
+    (ProbComp.eval (inverterAt j (f xStar))).map fun cand => f cand == f xStar
   have hinv_eq : ProbComp.eval (inversionGame f inverter n) =
       (PMF.uniformOfFintype (Fin (dyadicSize (2 * n)))).bind (fun j => trial j.val) := by
     simp only [inversionGame, inverter, lamportInverter, trial, inverterAt,
@@ -730,8 +730,8 @@ theorem OneWay.oneTimeEUFCMA_lamport {f : List Bool → List Bool} (hf : OneWay 
     dsimp only [μ, trial, inverterAt]
     rw [eval_replicate_split (BitString.sampleList n) hj]
     simp only [hj, ↓reduceIte, BitString.eval_sampleList, lamportSimKeys, ProbComp.eval_bind,
-      ProbComp.eval_pure, PMF.bind_bind, PMF.bind_map, PMF.pure_bind, PMF.map_bind,
-      Function.comp_def]
+      ProbComp.eval_pure, PMF.monad_bind_eq_bind, PMF.bind_bind, PMF.bind_map, PMF.pure_bind,
+      PMF.map_bind, Function.comp_def]
     refine PMF.bind_congr_on_support _ _ _ fun xStar _ => ?_
     refine PMF.bind_congr_on_support _ _ _ fun front hfront => ?_
     have hfront_len : front.length = j :=

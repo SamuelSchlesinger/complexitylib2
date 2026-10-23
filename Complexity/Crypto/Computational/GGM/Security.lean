@@ -71,7 +71,8 @@ theorem GGM.pseudorandomFunction_of_indistinguishable {generator : List Bool →
   have hquery : ProbOracleComp.HasQueryBounds (adversary n []) (fun request => request.2.length)
       (count n) (count n) := by simpa [count] using hqueries n []
   have h := reduction_advantage generator adversary count n (count n) hquery
-  simpa only [distinguishingGame, ProbComp.eval_bind, ProbComp.eval_map, BitString.eval_sampleList,
+  simpa only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_bind, ProbComp.eval_map,
+    BitString.eval_sampleList,
     generatorEnsemble, Nat.cast_mul] using h.le
 
 /-- A secure generator providing at least two full labels gives the GGM pseudorandom function.

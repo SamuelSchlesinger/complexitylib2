@@ -467,7 +467,7 @@ theorem successor_some_spec {d w stackBase₀ sp₀ base query ans : ℕ} {tree 
                     (cluster ⟨j, hj⟩).minimum.map (j * universeSize d + ·)
                   else none) = some ans := by
               simpa only [Tree.successor, hlt_m, hnot_le, hi, ↓reduceDIte, ↓reduceIte,
-                i, lo, hc_max, Bool.false_eq_true] using hans
+                i, lo, hc_max, Bool.false_eq_true, bind] using hans
             cases hsuc : summary.successor i.val with
             | none => simp [hsuc] at hans'
             | some j =>

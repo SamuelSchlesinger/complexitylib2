@@ -74,7 +74,8 @@ private noncomputable def seedLaw {n : ℕ} (image : BitString n) :
 private theorem negative_prediction (n : ℕ) :
     predictionExperiment (id : BitString n → BitString n)
       (fun image _ query => !(image ⬝ᵥ query)) seedLaw = PMF.pure false := by
-  simp only [predictionExperiment, id_eq, Bool.not_beq_self, PMF.bind_const]
+  simp only [predictionExperiment, id_eq, Bool.not_beq_self, PMF.monad_bind_eq_bind,
+    PMF.bind_const]
   exact PMF.map_const _ _
 
 -- Perfectly negative bias is handled by the same random-sign inverter, with dependent seeds.

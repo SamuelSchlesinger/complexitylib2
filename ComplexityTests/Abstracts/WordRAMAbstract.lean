@@ -275,7 +275,7 @@ theorem decidableInTime_iff {α : Type u} (A : Set α) (encode : α → List ℕ
 
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.WordRAMAbstract`: 234 root
-declarations, 338 dependencies checked
+declarations, 340 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.WordRAMAbstract allowing [

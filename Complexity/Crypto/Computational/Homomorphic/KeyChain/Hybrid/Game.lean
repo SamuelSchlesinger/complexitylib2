@@ -72,15 +72,15 @@ theorem publicKeyLinkHybrid_gap (n beforeCount afterCount width capacity : ℕ)
 /-- Average reverse link indices and forward bit indices. Inactive coordinates return the same
 constant in both worlds. This is a distributional definition, not an unchecked sampler. -/
 noncomputable def keyChainHybridGame (n depth width capacity : ℕ)
-    (test : (List (List Bool) × List (List (List Bool))) → ProbComp Bool) (bit : Bool) : Game :=
-  (PMF.uniformOfFintype (Fin (dyadicSize depth))).bind (fun i =>
-    if i.val < depth then
-      (PMF.uniformOfFintype (Fin (dyadicSize capacity))).bind (fun j =>
-        if j.val < width then
-          ProbComp.eval (E.publicKeyLinkHybrid n (depth - i.val - 1) i.val
-            (j.val + if bit then 1 else 0) >>= test)
-        else PMF.pure false)
-    else PMF.pure false)
+    (test : (List (List Bool) × List (List (List Bool))) → ProbComp Bool) (bit : Bool) : Game := do
+  let i ← PMF.uniformOfFintype (Fin (dyadicSize depth))
+  if i.val < depth then
+    let j ← PMF.uniformOfFintype (Fin (dyadicSize capacity))
+    if j.val < width then
+      ProbComp.eval (E.publicKeyLinkHybrid n (depth - i.val - 1) i.val
+        (j.val + if bit then 1 else 0) >>= test)
+    else pure false
+  else pure false
 
 /-- The real-to-zero public-key gap is the signed gap of one uniformly selected link/bit
 hybrid, multiplied by the two dyadic range sizes. -/
@@ -112,7 +112,8 @@ theorem publicKeyChainHybrid_gap (n depth width capacity : ℕ)
     simpa only [games, original, replacement, Nat.sub_sub] using h
   have h := Game.succProbability_hybrid_reduction games original replacement
     depth (dyadicSize depth) (lt_dyadicSize depth).le (dyadicSize capacity) hstep
-  simpa only [games, original, replacement, keyChainHybridGame,
+  simpa only [games, original, replacement, keyChainHybridGame, PMF.monad_bind_eq_bind,
+    PMF.monad_pure_eq_pure,
     Nat.sub_zero, Nat.sub_self, Bool.false_eq_true, ↓reduceIte, Nat.add_zero] using h
 
 end Cslib.Crypto.Homomorphic.Scheme

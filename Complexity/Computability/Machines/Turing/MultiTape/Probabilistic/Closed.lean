@@ -102,8 +102,9 @@ theorem eval_runClosedConfigFrom_seq (first : MultiTapePTM k Symbol State₀)
         final.tapes.state = none) :
     ProbComp.eval ((first.seq second).runClosedConfigFrom
       (firstTime + secondTime) (left second cfg)) =
-      (ProbComp.eval (first.runClosedConfigFrom firstTime cfg)).bind
-        (fun result => (ProbComp.eval
+      (do
+        let result ← ProbComp.eval (first.runClosedConfigFrom firstTime cfg)
+        (ProbComp.eval
           (second.runClosedConfigFrom secondTime (start second result))).map right) := by
   have h := run_interpret_runConfigFrom_seq first second (ProbComp.uniform Bool) Empty.elim
     (fun q (s : Unit) => (fun a => (a, s)) <$> ProbComp.unifOracle q)

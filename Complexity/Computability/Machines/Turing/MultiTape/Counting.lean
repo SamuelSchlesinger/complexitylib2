@@ -103,7 +103,9 @@ def lts (machine : MultiTapeCTM k Symbol State) (input : List Symbol) :
 def runBranch (machine : MultiTapeCTM k Symbol State) :
     Cfg k Symbol State input → List ℕ → Option (Cfg k Symbol State input)
   | cfg, [] => some cfg
-  | cfg, index :: rest => (machine.step? cfg index).bind (fun next => machine.runBranch next rest)
+  | cfg, index :: rest => do
+      let next ← machine.step? cfg index
+      machine.runBranch next rest
 
 @[simp]
 theorem runBranch_nil (machine : MultiTapeCTM k Symbol State) (cfg : Cfg k Symbol State input) :

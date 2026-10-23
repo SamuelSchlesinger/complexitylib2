@@ -269,8 +269,9 @@ theorem isCodeFrom_of_getElem {gates : List (σ.Op × List ℕ)}
 
 /-- Extend a decoded program by the line with code `g`, when `g` reads only earlier wires. -/
 def pushCode (n : ℕ) (p : Option (Σ k, Program σ n k)) (g : σ.Op × List ℕ) :
-    Option (Σ k, Program σ n k) :=
-  p.bind fun p => (Line.ofCode n p.1 g).map fun line => ⟨p.1 + 1, p.2.gate line⟩
+    Option (Σ k, Program σ n k) := do
+  let p ← p
+  (Line.ofCode n p.1 g).map fun line => ⟨p.1 + 1, p.2.gate line⟩
 
 /-- The program on `n` inputs whose lines have the codes `gates`, when every entry is the code of
 a line reading only inputs and earlier gates. -/
@@ -326,17 +327,17 @@ def code (c : Circuit σ n m) : List (σ.Op × List ℕ) × List ℕ :=
 
 /-- The circuit on `n` inputs with `m` outputs whose program and outputs have the code `code`,
 when the program decodes and `code.2` lists `m` wires of it. -/
-def ofCode (n m : ℕ) (code : List (σ.Op × List ℕ) × List ℕ) : Option (Circuit σ n m) :=
-  (Program.ofCode n code.1).bind fun p =>
-    if h : code.2.length = m ∧ ∀ i ∈ code.2, i < n + p.1 then
-      some ⟨p.2, fun j => Wire.ofNat (code.2[j.val]'(h.1 ▸ j.isLt)) (h.2 _ (List.getElem_mem _))⟩
-    else none
+def ofCode (n m : ℕ) (code : List (σ.Op × List ℕ) × List ℕ) : Option (Circuit σ n m) := do
+  let p ← Program.ofCode n code.1
+  if h : code.2.length = m ∧ ∀ i ∈ code.2, i < n + p.1 then
+    some ⟨p.2, fun j => Wire.ofNat (code.2[j.val]'(h.1 ▸ j.isLt)) (h.2 _ (List.getElem_mem _))⟩
+  else none
 
 /-- Decoding inverts coding. -/
 @[simp] theorem ofCode_code (c : Circuit σ n m) : ofCode n m c.code = some c := by
   have h : c.code.2.length = m ∧ ∀ i ∈ c.code.2, i < n + c.size :=
     ⟨by simp [code], by simp [code, Wire.toNat_lt]⟩
-  simp only [ofCode, code, Program.ofCode_code, Option.bind_some]
+  simp only [ofCode, code, Program.ofCode_code, bind, Option.bind_some]
   split_ifs with h'
   · cases c
     simp [Wire.toNat_lt]
@@ -364,7 +365,7 @@ theorem isSome_ofCode_iff {code : List (σ.Op × List ℕ) × List ℕ} :
   · simp
   · have hp : p.1 = code.1.length := by
       rw [← Program.length_code p.2, Program.code_of_ofCode_eq_some h]
-    simp only [Option.bind_some, Option.isSome_some, true_and, hp]
+    simp only [bind, Option.bind_some, Option.isSome_some, true_and, hp]
     split_ifs with hc
     · simpa using hc
     · simpa using hc

@@ -110,7 +110,7 @@ theorem wordInverter_eval (f : List Bool → List Bool)
         (fun image => PMF.uniformOfFintype (BitString (coinBudget c d n image.length)))
         (maskCount n (precision degree n)) image).map List.ofFn := by
   simp only [wordInverter, ProbComp.eval_bind, ProbComp.eval_uniform, BitString.eval_sampleList,
-    ProbComp.eval_pure, invertSigned, invert, PMF.map_bind]
+    ProbComp.eval_pure, invertSigned, invert, PMF.monad_bind_eq_bind, PMF.map_bind]
   congr 1
   funext flip
   rw [uniformList, PMF.bind_map]

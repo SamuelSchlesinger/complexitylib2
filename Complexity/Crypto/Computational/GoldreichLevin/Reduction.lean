@@ -149,24 +149,23 @@ noncomputable def invert {n : ℕ} {Coins : Image → Type*} (f : BitString n �
 noncomputable def predictionExperiment {n : ℕ} {Coins : Image → Type*}
     (f : BitString n → Image)
     (predictor : (image : Image) → Coins image → BitString n → Bool)
-    (coins : (image : Image) → PMF (Coins image)) : PMF Bool :=
-  (PMF.uniformOfFintype (BitString n)).bind fun x =>
-    (coins (f x)).bind fun seed =>
-      (PMF.uniformOfFintype (BitString n)).map
-        (fun r => predictor (f x) seed r == x ⬝ᵥ r)
+    (coins : (image : Image) → PMF (Coins image)) : PMF Bool := do
+  let x ← PMF.uniformOfFintype (BitString n)
+  (coins (f x)).bind fun seed =>
+    (PMF.uniformOfFintype (BitString n)).map (fun r => predictor (f x) seed r == x ⬝ᵥ r)
 
 /-- Challenge the inverter with the image of a uniform input and accept any valid preimage. -/
 noncomputable def inversionExperiment {n : ℕ} (f : BitString n → Image)
-    (inverter : Image → PMF (BitString n)) : PMF Bool :=
-  (PMF.uniformOfFintype (BitString n)).bind fun x =>
-    (inverter (f x)).map (fun z => f z == f x)
+    (inverter : Image → PMF (BitString n)) : PMF Bool := do
+  let x ← PMF.uniformOfFintype (BitString n)
+  (inverter (f x)).map (fun z => f z == f x)
 
 /-- Independent private randomness may be sampled before or after the inversion challenge. -/
 theorem inversionExperiment_bind {n : ℕ} {Coins : Type*} (f : BitString n → Image)
     (coins : PMF Coins) (inverter : Coins → Image → PMF (BitString n)) :
     inversionExperiment f (fun image => coins.bind (fun seed => inverter seed image)) =
       coins.bind (fun seed => inversionExperiment f (inverter seed)) := by
-  simp only [inversionExperiment, PMF.map_bind]
+  simp only [inversionExperiment, PMF.monad_bind_eq_bind, PMF.map_bind]
   rw [PMF.bind_comm]
 
 /-- Positive prediction bias `ε` gives inversion success at least `ε / 4`.
@@ -197,7 +196,8 @@ theorem invert_success_ge {n k : ℕ} {Coins : Image → Type*} [∀ image, Fini
       (predictionExperiment f predictor coins true).toReal ≤
         1 / 2 + ε / 2 +
           2 * (inversionExperiment f (invert f predictor coins k) true).toReal := by
-    simp only [predictionExperiment, inversionExperiment, invert, PMF.map_bind,
+    simp only [predictionExperiment, inversionExperiment, invert, PMF.monad_bind_eq_bind,
+      PMF.map_bind,
       PMF.bind_apply_toReal, ← agreement_eq_probability]
     exact PMF.sum_le_affine _ fun x => PMF.sum_le_affine _ (hpoint x)
   linarith
@@ -206,9 +206,9 @@ theorem invert_success_ge {n k : ℕ} {Coins : Image → Type*} [∀ image, Fini
 whether to complement the predictor; no advice about its bias is required. -/
 noncomputable def invertSigned {n : ℕ} {Coins : Image → Type*} (f : BitString n → Image)
     (predictor : (image : Image) → Coins image → BitString n → Bool)
-    (coins : (image : Image) → PMF (Coins image)) (k : ℕ) (image : Image) : PMF (BitString n) :=
-  (PMF.uniformOfFintype Bool).bind fun flip =>
-    invert f (fun y seed r => predictor y seed r ^^ flip) coins k image
+    (coins : (image : Image) → PMF (Coins image)) (k : ℕ) (image : Image) : PMF (BitString n) := do
+  let flip ← PMF.uniformOfFintype Bool
+  invert f (fun y seed r => predictor y seed r ^^ flip) coins k image
 
 omit [DecidableEq Image] in
 private theorem predictionExperiment_not {n : ℕ} {Coins : Image → Type*}
@@ -218,7 +218,8 @@ private theorem predictionExperiment_not {n : ℕ} {Coins : Image → Type*}
     predictionExperiment f (fun y seed r => !(predictor y seed r)) coins =
       (predictionExperiment f predictor coins).map Bool.not := by
   have h (a b : Bool) : ((!a) == b) = !(a == b) := by cases a <;> cases b <;> rfl
-  simp only [predictionExperiment, PMF.map_bind, PMF.map_comp, Function.comp_def, h]
+  simp only [predictionExperiment, PMF.monad_bind_eq_bind, PMF.map_bind, PMF.map_comp,
+    Function.comp_def, h]
 
 private theorem invertSigned_probability {n k : ℕ} {Coins : Image → Type*}
     (f : BitString n → Image)
@@ -229,6 +230,7 @@ private theorem invertSigned_probability {n k : ℕ} {Coins : Image → Type*}
       (1 / 2) * (inversionExperiment f
         (invert f (fun y seed r => !(predictor y seed r)) coins k) true).toReal := by
   unfold invertSigned
+  simp only [PMF.monad_bind_eq_bind]
   rw [inversionExperiment_bind, PMF.bind_apply_toReal]
   simp [PMF.uniformOfFintype_apply, add_comm, one_div]
 

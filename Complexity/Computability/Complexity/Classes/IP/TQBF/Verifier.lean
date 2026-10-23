@@ -201,11 +201,21 @@ noncomputable def stepAt : ArithQBF.Kind → StepData → WordOracleComp Unit VS
   | .bot, a => pure (a.2.1.tail, a.below, decide (0 % a.modulus = a.top.2 % a.modulus))
   | .not, a => pure (a.2.1.tail,
       (normPt a.modulus a.xs a.top.1, subMod a.modulus 1 a.top.2) :: a.below, true)
-  | .and, a => ask a >>= fun word => pure (binNext .and a word)
-  | .or, a => ask a >>= fun word => pure (binNext .or a word)
-  | .ex, a => ask a >>= opCont .ex a
-  | .all, a => ask a >>= opCont .all a
-  | .lin, a => ask a >>= opCont .lin a
+  | .and, a => do
+      let word ← ask a
+      return binNext .and a word
+  | .or, a => do
+      let word ← ask a
+      return binNext .or a word
+  | .ex, a => do
+      let word ← ask a
+      opCont .ex a word
+  | .all, a => do
+      let word ← ask a
+      opCont .all a word
+  | .lin, a => do
+      let word ← ask a
+      opCont .lin a word
 
 /-- **One step of the machine**: while every check passed and tokens remain, process the next
 token; otherwise stay put. -/

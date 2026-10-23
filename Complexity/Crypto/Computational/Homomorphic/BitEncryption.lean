@@ -70,7 +70,8 @@ theorem encryptBitsHybrid_length (n : ℕ) (pk bits : List Bool) :
 /-- An encryption of the selected original bit supplies the earlier adjacent hybrid. -/
 theorem eval_spliceEncryptedBit_original (n : ℕ) (pk bits : List Bool) (cut : ℕ)
     (hcut : cut < bits.length) :
-    ProbComp.eval (E.encrypt n pk (bits.getD cut false) >>= fun challenge =>
+    ProbComp.eval (do
+      let challenge ← E.encrypt n pk (bits.getD cut false)
       E.spliceEncryptedBit n pk cut (bits.drop (cut + 1)) challenge) =
         ProbComp.eval (E.encryptBitsHybrid n pk bits cut) := by
   simp only [spliceEncryptedBit, encryptBits, encryptBitsHybrid,
@@ -81,7 +82,8 @@ theorem eval_spliceEncryptedBit_original (n : ℕ) (pk bits : List Bool) (cut : 
 /-- An encryption of zero supplies the next adjacent hybrid. -/
 theorem eval_spliceEncryptedBit_zero (n : ℕ) (pk bits : List Bool) (cut : ℕ)
     (hcut : cut < bits.length) :
-    ProbComp.eval (E.encrypt n pk false >>= fun challenge =>
+    ProbComp.eval (do
+      let challenge ← E.encrypt n pk false
       E.spliceEncryptedBit n pk cut (bits.drop (cut + 1)) challenge) =
         ProbComp.eval (E.encryptBitsHybrid n pk bits (cut + 1)) := by
   simpa only [spliceEncryptedBit, encryptBits, encryptBitsHybrid,

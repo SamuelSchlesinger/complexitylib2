@@ -235,7 +235,9 @@ def replayStep (t : ℕ) (p : FiniteConfig k Bool Control Unit × History) (b : 
 /-- The replay of `M` on the input `x` with the coins `r` against the history `h`. -/
 def simulate (t : ℕ) (x r : List Bool) (h : History) :
     Except (Option (List Bool)) (FiniteConfig k Bool Control Unit × History) :=
-  r.foldl (fun acc b => acc.bind fun p => replayStep M t p b)
+  r.foldl (fun acc b => do
+    let p ← acc
+    replayStep M t p b)
     (.ok (FiniteConfig.init M.initial x, h))
 
 /-- The replay of an instruction is `replayStep`. -/
@@ -359,7 +361,7 @@ theorem replayInv_simulate (t : ℕ) (x : List Bool) (h : History) (r : List Boo
   suffices ∀ (l : List Bool) (acc) (i : ℕ), ReplayInv t x h i acc →
       ReplayInv t x h (i + l.length)
         (l.foldl (fun acc b => acc.bind fun p => replayStep M t p b) acc) by
-    simpa [simulate] using this r (.ok (FiniteConfig.init M.initial x, h)) 0
+    simpa [simulate, bind] using this r (.ok (FiniteConfig.init M.initial x, h)) 0
       ⟨⟨[], rfl, le_rfl⟩, FiniteConfig.spaceBound_init _ _ _⟩
   intro l
   induction l with

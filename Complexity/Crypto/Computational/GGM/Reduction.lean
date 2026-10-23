@@ -199,7 +199,7 @@ theorem reduction_gap (generator : List Bool → List Bool) (adversary : OracleD
     (lt_dyadicSize n).le (dyadicSize (count n))
     (fun depth hdepth =>
       levelTest_gap generator adversary n depth (count n) maxSize hdepth hqueries)
-  simpa only [eval_bind_sampleDyadicIndex_guard,
+  simpa only [eval_bind_sampleDyadicIndex_guard, PMF.monad_bind_eq_bind,
     hybridGame_zero, hybridGame_self] using h
 
 /-- The real/ideal PRF advantage is the reduction's generator advantage times the two sampling

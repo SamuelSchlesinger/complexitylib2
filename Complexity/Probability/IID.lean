@@ -55,14 +55,16 @@ variable {α β : Type*}
 /-- `k` independent draws from `μ`, as a tuple: draw the first coordinate, then the others. -/
 noncomputable def iid (μ : PMF α) : (k : ℕ) → PMF (Fin k → α)
   | 0 => PMF.pure Fin.elim0
-  | k + 1 => μ.bind fun a => (iid μ k).map (Fin.cons a)
+  | k + 1 => do
+      let a ← μ
+      (iid μ k).map (Fin.cons a)
 
 /-- A tuple of independent draws has the product of the masses of its coordinates. -/
 @[simp] theorem iid_apply (μ : PMF α) : ∀ {k : ℕ} (v : Fin k → α), iid μ k v = ∏ i, μ (v i)
   | 0, v => by
     rw [iid, Fin.prod_univ_zero, Subsingleton.elim v Fin.elim0, PMF.pure_apply_self]
   | k + 1, v => by
-    rw [iid, PMF.bind_apply, Fin.prod_univ_succ, tsum_eq_single (v 0)]
+    rw [iid, monad_bind_eq_bind, PMF.bind_apply, Fin.prod_univ_succ, tsum_eq_single (v 0)]
     · rw [PMF.map_apply, tsum_eq_single (Fin.tail v), iid_apply μ (Fin.tail v)]
       · simp [Fin.cons_self_tail, Fin.tail]
       · intro w hw
@@ -98,7 +100,8 @@ theorem iid_map (μ : PMF α) (g : α → β) (k : ℕ) :
     funext i
     exact i.elim0
   | succ k ih =>
-    rw [iid, iid, PMF.map_bind, PMF.bind_map, ih]
+    rw [iid, iid]
+    simp only [monad_bind_eq_bind, PMF.map_bind, PMF.bind_map, ih]
     congr 1
     funext a
     rw [Function.comp_apply, PMF.map_comp, PMF.map_comp]

@@ -86,9 +86,11 @@ def evalOp (k : M.Config) (o : Op M r) (s : FiniteState M r) :
   | .const d c => (M.checkedConstant c k).map (s.set d)
   | .copy d src => s.move k d (s.regs src)
   | .alu f d args => (M.checkedOp f (k, s.regs ∘ args)).map (s.set d)
-  | .load d a => (M.address k (s.regs a)).bind fun p =>
+  | .load d a => do
+      let p ← M.address k (s.regs a)
       s.move k d (SparseMemory.read s.default p s.memory)
-  | .store a src => (M.address k (s.regs a)).bind fun p =>
+  | .store a src => do
+      let p ← M.address k (s.regs a)
       if M.validMove k (s.regs src) then some (s.write p (s.regs src)) else none
 
 /-- Moving a value commutes with interpretation, including invalid moves. -/
@@ -150,9 +152,12 @@ def resume (k : M.Config) (pc : ℕ) (s : FiniteState M r) : Result M r :=
 def evalInstr (k : M.Config) (nextPC : ℕ) (i : Instr M r) (s : FiniteState M r) :
     Result M r :=
   match i with
-  | .op o => (evalOp k o s).bind (resume k nextPC)
+  | .op o => do
+      let next ← evalOp k o s
+      resume k nextPC next
   | .jump target => resume k target s
-  | .branch (.test f args) target => (M.evalTest k f (s.regs ∘ args)).bind fun b =>
+  | .branch (.test f args) target => do
+      let b ← M.evalTest k f (s.regs ∘ args)
       resume k (if b then target else nextPC) s
   | .halt i => if M.validMove k (s.regs i) then some (.inr (s.regs i)) else none
 
@@ -169,7 +174,9 @@ def step (k : M.Config) (p : Program M r) (s : FiniteState M r) : Result M r :=
 /-- Dispatch agrees with indexed lookup wherever the current label is at or above the offset. -/
 theorem dispatch_eq_getElem? (k : M.Config) (p : Program M r) (pc : ℕ)
     (s : FiniteState M r) (h : pc ≤ s.pc) :
-    dispatch k p pc s = (p[s.pc - pc]?).bind (fun i => evalInstr k (s.pc + 1) i s) := by
+    dispatch k p pc s = (do
+      let i ← p[s.pc - pc]?
+      evalInstr k (s.pc + 1) i s) := by
   induction p generalizing pc with
   | nil => simp [dispatch]
   | cons i p ih =>
@@ -190,17 +197,17 @@ theorem denote_step (k : M.Config) (p : Program M r) (s : FiniteState M r) :
     cases hp : p[s.pc]? with
     | none => rfl
     | some i =>
-      simp only [Option.bind_some]
+      simp only [bind, Option.bind_some]
       cases i with
       | op o =>
         have h := denote_evalOp k o s
         cases he : evalOp k o s with
         | none =>
           simp only [he, Option.map_none] at h
-          simp only [evalInstr, he, Option.bind_none, denoteResult, ← h]
+          simp only [evalInstr, he, bind, Option.bind_none, denoteResult, ← h]
         | some t =>
           simp only [he, Option.map_some] at h
-          simp only [evalInstr, he, Option.bind_some, denote_resume, ← h]
+          simp only [evalInstr, he, bind, Option.bind_some, denote_resume, ← h]
       | jump t => exact denote_resume k t s
       | branch c t =>
         cases c with

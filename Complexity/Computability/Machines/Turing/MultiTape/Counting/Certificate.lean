@@ -55,7 +55,8 @@ def decodeCertificate (machine : MultiTapeCTM k Symbol State) :
     | none => if word = List.replicate word.length 0 then some ([], cfg) else none
     | some _ => match word with
       | [] => none
-      | index :: rest => (machine.step? cfg index).bind fun next =>
+      | index :: rest => do
+          let next ← machine.step? cfg index
           (machine.decodeCertificate next rest).map fun result => (index :: result.1, result.2)
 
 theorem decodeCertificate_of_halted (machine : MultiTapeCTM k Symbol State)
@@ -105,7 +106,7 @@ theorem decodeCertificate_sound (machine : MultiTapeCTM k Symbol State)
       · obtain ⟨rfl, rfl⟩ := Option.some.inj h
         exact ⟨rfl, hs, by simpa using hzero⟩
     | some state =>
-      simp only [decodeCertificate, hs, Option.bind_eq_some_iff,
+      simp only [decodeCertificate, hs, bind, Option.bind_eq_some_iff,
         Option.map_eq_some_iff] at h
       obtain ⟨next, hstep, ⟨rest, final'⟩, hdecode, heq⟩ := h
       cases heq

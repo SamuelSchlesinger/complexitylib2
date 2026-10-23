@@ -275,7 +275,8 @@ private theorem prefix_eager (n depth width : ℕ) (hdepth : depth ≤ n)
     by_cases hquery : query.length = n <;> simp [adapter, hquery, PMF.pure_map]
   simpa only [PMF.pi_uniformOfFintype, OracleComp.interpret_interpret,
     ProbOracleComp.interpret_handler, ProbOracleComp.interpret_sample, ProbComp.unifFin,
-    OracleComp.interpret_query, Function.Embedding.coeFn_mk, hstep, heval] using h
+    OracleComp.interpret_query, Function.Embedding.coeFn_mk, hstep, heval,
+    PMF.monad_bind_eq_bind] using h
 
 private def childrenEquiv (n : ℕ) : BitString (2 * n) ≃ (Bool → BitString n) :=
   (BitString.blocksEquiv (m := 2) (k := n)).trans

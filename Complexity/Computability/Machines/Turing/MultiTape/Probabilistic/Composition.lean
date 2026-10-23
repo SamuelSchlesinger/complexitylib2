@@ -124,8 +124,8 @@ theorem eval_runClosedConfigFrom_continuation (machine : MultiTapePTM k₁ Symbo
   rw [eval_runClosedConfigFrom_seq _ _ _ prepareTime runTime
     (by simp [hstate, ready])
     (by simpa [hstate, start_ready] using consumer_halted machine mark cfg runTime hrun),
-    hstate, PMF.pure_bind, start_ready, runClosedConfigFrom_consumer, ProbComp.eval_map,
-    PMF.map_comp]
+    Probability.PMF.monad_bind_eq_bind, hstate, PMF.pure_bind, start_ready,
+    runClosedConfigFrom_consumer, ProbComp.eval_map, PMF.map_comp]
   rfl
 
 /-- The handoff and continuation actually halt within the combined bound. -/
@@ -184,8 +184,10 @@ The first phase takes `firstTime`, preparation at most `firstTime + 4`, and the 
 theorem eval_runClosedConfigFrom_comp :
     ProbComp.eval ((second.comp first mark).runClosedConfigFrom
       (firstTime + (firstTime + 4 + secondTime)) ((second.comp first mark).initialConfig input)) =
-      (ProbComp.eval (first.runClosedConfigFrom firstTime (first.initialConfig input))).bind
-        (fun sourceFinal => (ProbComp.eval (second.runClosedConfigFrom secondTime
+      (do
+        let sourceFinal ← ProbComp.eval (first.runClosedConfigFrom firstTime
+          (first.initialConfig input))
+        (ProbComp.eval (second.runClosedConfigFrom secondTime
           (second.initialConfig sourceFinal.tapes.output))).map
           (MultiTapeMachine.Composition.finalConfig mark sourceFinal)) := by
   have hlength (final : Config k₀ Symbol State₀ Empty input)
@@ -212,7 +214,8 @@ theorem eval_runClosedConfigFrom_comp :
       exact Composition.continuation_halted second mark final (firstTime + 4) secondTime
         (by have := hlength final hfinal; lia)
         (hsecond _ (Composition.output_mem first firstTime input final hfinal))),
-    Composition.runClosedConfigFrom_source, ProbComp.eval_map, PMF.bind_map]
+    Composition.runClosedConfigFrom_source, ProbComp.eval_map]
+  simp only [Probability.PMF.monad_bind_eq_bind, PMF.bind_map]
   apply Probability.PMF.bind_congr_on_support
   intro final hfinal
   dsimp only [Function.comp_def]
@@ -225,11 +228,13 @@ theorem eval_runClosedConfigFrom_comp :
 theorem eval_comp :
     ProbComp.eval ((second.comp first mark).runClosed
       (firstTime + (firstTime + 4 + secondTime)) input) =
-      (ProbComp.eval (first.runClosed firstTime input)).bind
-        (fun word => ProbComp.eval (second.runClosed secondTime word)) := by
+      (do
+        let word ← ProbComp.eval (first.runClosed firstTime input)
+        ProbComp.eval (second.runClosed secondTime word)) := by
   have h := congrArg (PMF.map (fun final => final.tapes.output))
     (eval_runClosedConfigFrom_comp first second mark input firstTime secondTime hfirst hsecond)
-  simpa only [runClosed_eq_map, ProbComp.eval_map, PMF.map_bind, PMF.map_comp, PMF.bind_map,
+  simpa only [Probability.PMF.monad_bind_eq_bind, runClosed_eq_map, ProbComp.eval_map,
+    PMF.map_bind, PMF.map_comp, PMF.bind_map,
     Function.comp_def, MultiTapeMachine.Composition.finalConfig_output] using h
 
 /-- Every supported execution of the composed machine has halted within the combined bound. -/

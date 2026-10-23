@@ -452,9 +452,10 @@ theorem predict_extracted_error {Seed Output : Type}
             extractLabels seed hash)).bind (fun output => ProbComp.eval (test output)))
         (ideal.bind (fun output => ProbComp.eval (test output))) : ℝ) ≤ ε)
     (hdistinguish : (dyadicSize count : ℝ) / inverseGap + ε ≤
-      (Game.advantage (ProbComp.eval (OracleComp.replicate count
-        ((fun x => (observe x, truth x)) <$> source) >>=
-          fun samples => extractLabels seed hash samples >>= test))
+      (Game.advantage (ProbComp.eval (do
+        let samples ← OracleComp.replicate count ((fun x => (observe x, truth x)) <$> source)
+        let result ← extractLabels seed hash samples
+        test result))
         (ideal.bind (fun output => ProbComp.eval (test output))) : ℝ)) :
     (ProbComp.eval (do
       let x ← source

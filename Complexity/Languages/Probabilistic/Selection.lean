@@ -218,8 +218,9 @@ theorem selectBest_error_pow (count confidence inverseTolerance : ℕ) (hcount :
 up to twice the estimation tolerance and the probability of a selection error. -/
 theorem selectBest_test_error_le (count confidence inverseTolerance : ℕ)
     (htolerance : 0 < inverseTolerance) (test : ℕ → ProbComp Bool) (i : ℕ) (hi : i < count) :
-    (eval (OracleComp.selectBest count ((confidence + 1) * inverseTolerance ^ 2) test >>=
-      test) false).toReal ≤ (eval (test i) false).toReal + 2 / inverseTolerance +
+    (eval (do
+      let chosen ← OracleComp.selectBest count ((confidence + 1) * inverseTolerance ^ 2) test
+      test chosen) false).toReal ≤ (eval (test i) false).toReal + 2 / inverseTolerance +
         count * (1 / 2 : ℝ) ^ confidence := by
   have hselect := selectBest_error_pow count confidence inverseTolerance (by lia) htolerance test
   have hfailure := Probability.PMF.toOuterMeasure_bind_failure_toReal_le
