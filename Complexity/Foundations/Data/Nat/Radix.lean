@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Data.Nat.Digits.Lemmas
 public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Data.Fintype.EquivFin
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -19,11 +20,19 @@ These lemmas use Mathlib's `Nat.ofDigits` and `finFunctionFinEquiv` to relate fi
 of digits, exact carry equations, and ordinary natural-number values. No modular overflow is
 implicit in a carry equation.
 
+## Main definitions
+
+* `Cslib.Radix.digit`: recursive fixed-position digit extraction.
+* `Cslib.Radix.pack`: little-endian finite-tuple packing with a fixed enumeration.
+* `Cslib.Radix.component`: extraction using the same finite-tuple enumeration.
+
 ## Main results
 
 * `Nat.ofDigits_ofFn_eq_sum`: fixed tuples have the usual weighted value.
 * `Nat.exists_ofDigits_ofFn`: every value below the fixed capacity has bounded digits.
 * `Nat.radix_carry_split`: one exact low-digit equation and its remaining carry.
+* `Cslib.Radix.component_pack`, `Cslib.Radix.pack_lt`: recovery and capacity for tuples indexed
+  by any fixed finite type, independently of a machine or resource model.
 
 ## References
 
@@ -54,6 +63,17 @@ theorem ofDigits_ofFn_lt {B d : ℕ} (hB : 1 < B) (x : Fin d → ℕ)
     (hx : ∀ i, x i < B) : ofDigits B (List.ofFn x) < B ^ d := by
   simpa only [List.length_ofFn] using ofDigits_lt_base_pow_length hB
     (show ∀ a ∈ List.ofFn x, a < B by simpa using hx)
+
+/-- Bounded digits fit in their radix power, including radix one and the empty word. -/
+theorem ofDigits_lt_base_pow_length_of_pos {B : ℕ} (_hB : 0 < B) (l : List ℕ)
+    (hl : ∀ a ∈ l, a < B) : ofDigits B l < B ^ l.length := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    have ha := hl a (by simp)
+    have ht := ih (fun b hb => hl b (by simp [hb]))
+    simp only [ofDigits_cons, List.length_cons, pow_succ]
+    nlinarith
 
 theorem ofDigits_ofFn_inj {B d : ℕ} (hB : 1 < B) {x y : Fin d → ℕ}
     (hx : ∀ i, x i < B) (hy : ∀ i, y i < B)
@@ -233,3 +253,57 @@ theorem exists_binary_radix {n : ℕ} (hn : 8 < n) :
   refine ⟨e, he, ?_, ?_⟩ <;> rw [← pow_mul] <;> lia
 
 end Nat
+
+namespace Cslib.Radix
+
+/-- Read a digit by repeatedly dividing by the radix. This is total even at radix zero. -/
+def digit (B x : ℕ) : ℕ → ℕ
+  | 0 => x % B
+  | i + 1 => digit B (x / B) i
+
+/-- The recursive extractor agrees with ordinary fixed-position radix arithmetic. -/
+theorem digit_eq_div_pow_mod (B x i : ℕ) : digit B x i = x / B ^ i % B := by
+  induction i generalizing x with
+  | zero => simp [digit]
+  | succ i ih =>
+    rw [digit, ih, Nat.div_div_eq_div_mul, Nat.pow_succ]
+    rw [Nat.mul_comm]
+
+/-- Recover a bounded digit of a little-endian word, including radix one. -/
+theorem digit_ofDigits {B : ℕ} (_hB : 0 < B) (l : List ℕ)
+    (hl : ∀ a ∈ l, a < B) (i : ℕ) (hi : i < l.length) :
+    digit B (Nat.ofDigits B l) i = l[i] := by
+  rw [digit_eq_div_pow_mod]
+  simpa only [List.ofFn_getElem] using
+    Nat.ofDigits_ofFn_div_mod (fun j : Fin l.length => l[j.val])
+      (fun j => hl _ (List.getElem_mem j.isLt)) ⟨i, hi⟩
+
+variable {ι : Type} [Fintype ι]
+
+/-- Pack a finite tuple in little-endian order using the fixed `Fintype.equivFin` enumeration.
+The enumeration is independent of the radix and tuple values. -/
+noncomputable def pack (B : ℕ) (f : ι → ℕ) : ℕ :=
+  Nat.ofDigits B (List.ofFn fun i => f ((Fintype.equivFin ι).symm i))
+
+/-- Read one component using the same fixed enumeration as `pack`. -/
+noncomputable def component (B x : ℕ) (i : ι) : ℕ :=
+  digit B x (Fintype.equivFin ι i).val
+
+/-- Bounded finite-tuple components are recovered exactly, including radix one. -/
+theorem component_pack {B : ℕ} (_hB : 0 < B) {f : ι → ℕ} (hf : ∀ i, f i < B) (i : ι) :
+    component B (pack B f) i = f i := by
+  unfold component pack
+  rw [digit_eq_div_pow_mod]
+  simpa using Nat.ofDigits_ofFn_div_mod
+    (fun j => f ((Fintype.equivFin ι).symm j))
+    (fun j => hf ((Fintype.equivFin ι).symm j)) (Fintype.equivFin ι i)
+
+/-- Bounded finite tuples fit below their radix power, including the empty tuple. -/
+theorem pack_lt {B : ℕ} (hB : 0 < B) {f : ι → ℕ} (hf : ∀ i, f i < B) :
+    pack B f < B ^ Fintype.card ι := by
+  simpa only [pack, List.length_ofFn] using
+    Nat.ofDigits_lt_base_pow_length_of_pos hB
+      (List.ofFn fun i => f ((Fintype.equivFin ι).symm i)) (by
+        simpa using fun i : Fin (Fintype.card ι) => hf ((Fintype.equivFin ι).symm i))
+
+end Cslib.Radix

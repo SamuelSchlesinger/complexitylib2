@@ -91,11 +91,11 @@ theorem readRegisters_vertexID {v : FiniteCfg k Bool State}
     (hf : Fits (radix D v.input.length) (registers v)) :
     readRegisters D v.input.length (vertexID D v) = registers v := by
   funext i
-  exact component_pack (radix_pos _ _) hf i
+  exact Cslib.Radix.component_pack (radix_pos _ _) hf i
 
 theorem vertexID_lt {v : FiniteCfg k Bool State}
     (hf : Fits (radix D v.input.length) (registers v)) :
-    vertexID D v < vertexBound (k := k) D v.input.length := pack_lt (radix_pos _ _) hf
+    vertexID D v < vertexBound (k := k) D v.input.length := Cslib.Radix.pack_lt (radix_pos _ _) hf
 
 theorem valid_vertexID {v : FiniteCfg k Bool State}
     (hf : Fits (radix D v.input.length) (registers v)) :
@@ -182,7 +182,8 @@ theorem edge_sound {v : FiniteCfg k Bool State} {u : ℕ}
       rw [registers_step]
       exact fitsB_eq_true.mp hfit
     refine ⟨_, hnext, rfl, ?_, hf'⟩
-    change u = pack (radix D v.input.length) (registers (v.step t.2.2.2).summarizeOutput)
+    change u = Cslib.Radix.pack (radix D v.input.length)
+      (registers (v.step t.2.2.2).summarizeOutput)
     rwa [registers_step]
 
 /-- Every fitting native view edge is an edge of the compact graph. -/
@@ -209,13 +210,13 @@ theorem edge_complete {v v' : FiniteCfg k Bool State}
     simp only [Edge, edgeWithSymbol, hr, Bool.and_eq_true, Bool.or_eq_true,
       decide_eq_true_eq, List.any_eq_true]
     refine ⟨⟨valid_vertexID hf, valid_vertexID hf'⟩, .inr ⟨t, ht, ⟨⟨hm, hfits⟩, ?_⟩⟩⟩
-    exact congrArg (pack (radix D v.input.length)) (registers_step v a)
+    exact congrArg (Cslib.Radix.pack (radix D v.input.length)) (registers_step v a)
 
 /-- Initial storage has an input-length-only ID. -/
 theorem vertexID_init (ntm : MultiTapeNTM k Bool State) (D : ℕ) (w : List Bool) :
     vertexID D (ntm.initView w) = startID ntm D w.length := by
   unfold vertexID startID
-  apply congrArg (pack (radix D w.length))
+  apply congrArg (Cslib.Radix.pack (radix D w.length))
   funext i
   cases i <;> rfl
 

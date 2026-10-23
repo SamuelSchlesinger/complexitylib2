@@ -67,6 +67,36 @@ example (D : ℕ) : ComputableTidilyInSpace
       edgeWithSymbol acceptMachine D a.1 a.2.1 a.2.2.1 a.2.2.2)
     encEdge encBool (fun a => (encEdge a).length) := edgeWithSymbol_inSpace acceptMachine D
 
+-- Legacy Nat-only interfaces retain their original arguments and remain definitionally equal.
+set_option linter.deprecated false in
+example : (packList : ℕ → List ℕ → ℕ) = Nat.ofDigits := rfl
+
+set_option linter.deprecated false in
+example (B x i : ℕ) : digit B x i = Cslib.Radix.digit B x i := rfl
+
+set_option linter.deprecated false in
+example (B : ℕ) (f : Bool → ℕ) : pack B f = Cslib.Radix.pack B f := rfl
+
+set_option linter.deprecated false in
+example (B x : ℕ) (i : Bool) : component B x i = Cslib.Radix.component B x i := rfl
+
+set_option linter.deprecated false in
+example {B : ℕ} (hB : 0 < B) (l : List ℕ) (hl : ∀ a ∈ l, a < B)
+    (i : ℕ) (hi : i < l.length) : digit B (packList B l) i = l[i] :=
+  digit_packList (hB := hB) l hl i hi
+
+set_option linter.deprecated false in
+example {B : ℕ} (hB : 0 < B) (l : List ℕ) (hl : ∀ a ∈ l, a < B) :
+    packList B l < B ^ l.length := packList_lt (_hB := hB) l hl
+
+set_option linter.deprecated false in
+example {B : ℕ} (hB : 0 < B) {f : Bool → ℕ} (hf : ∀ i, f i < B) (i : Bool) :
+    component B (pack B f) i = f i := component_pack (hB := hB) hf i
+
+set_option linter.deprecated false in
+example {B : ℕ} (hB : 0 < B) {f : Bool → ℕ} (hf : ∀ i, f i < B) :
+    pack B f < B ^ Fintype.card Bool := pack_lt (hB := hB) hf
+
 /--
 info: 'Turing.MultiTapeNTM.ConfigurationGraph.accepts_iff_reachable_bad_of_runsInSpace'
 depends on axioms:
