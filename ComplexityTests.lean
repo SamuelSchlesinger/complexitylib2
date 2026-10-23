@@ -64,6 +64,7 @@ import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
 import ComplexityTests.CarryLookahead
+import ComplexityTests.CarrySaveNative
 import ComplexityTests.CircuitCertificate
 import ComplexityTests.CircuitEvaluation
 import ComplexityTests.CircuitHamming.Approximation

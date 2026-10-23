@@ -128,6 +128,7 @@ public import Complexity.Computability.Circuit.Boolean.Broadcast
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CarrySave
+public import Complexity.Computability.Circuit.Boolean.CarrySave.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.CodeSubstitution
 public import Complexity.Computability.Circuit.Boolean.CodeTemplate
