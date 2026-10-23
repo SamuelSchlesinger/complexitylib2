@@ -70,7 +70,7 @@ theorem sumPairsCode_eq_code {n w : ℕ} (cs : List (Circuit signature n (w + w)
   rfl
 
 /-- Shared zero words are generated in time polynomial in unary output width and binary arity. -/
-@[fun_prop] private theorem computableTidilyInPolyTime_falseWordCode
+private theorem computableTidilyInPolyTime_falseWordCode
     {α : Type} {enc : α ↪ List Bool} {n w : α → ℕ}
     (hn : ComputableTidilyInPolyTime n enc encNat)
     (hw : ComputableTidilyInPolyTime w enc encUnary) :
