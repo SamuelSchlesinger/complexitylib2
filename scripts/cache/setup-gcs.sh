@@ -98,8 +98,15 @@ step_killswitch() {
     gc iam roles create lakeCacheKillSwitch --project="$PROJECT" \
       --title="Remove public access from the cache bucket" \
       --permissions=storage.buckets.get,storage.buckets.getIamPolicy,storage.buckets.setIamPolicy
-  gc storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$KILLER" \
-    --role="projects/$PROJECT/roles/lakeCacheKillSwitch"
+  # A new custom role takes a minute or two to become grantable.
+  local attempt
+  for attempt in 1 2 3 4 5 6; do
+    gc storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$KILLER" \
+      --role="projects/$PROJECT/roles/lakeCacheKillSwitch" >/dev/null && break
+    [ "$attempt" -lt 6 ] || return 1
+    echo "Role not yet grantable; retrying in 30 s" >&2
+    sleep 30
+  done
   gc functions deploy lake-cache-kill-switch --project="$PROJECT" --region="$REGION" --gen2 \
     --runtime=python312 --source=kill-switch --entry-point=handle --trigger-topic="$TOPIC" \
     --service-account="$KILLER" --set-env-vars="BUCKET=$BUCKET" --max-instances=1
