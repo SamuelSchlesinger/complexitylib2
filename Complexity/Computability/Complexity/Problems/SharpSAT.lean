@@ -211,7 +211,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- **`#SAT` belongs to `#P`**, with certificates as long as the encoded formula. -/
 theorem mem_SharpP : SharpSAT ∈ SharpP encCNF :=
-  ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier, fun φ => by
+  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, fun φ => by
     rw [Polynomial.eval_X, acceptCount_verifier]⟩
 
 end SharpSAT

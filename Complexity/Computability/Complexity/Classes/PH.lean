@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Complexity.Classes.P
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 
@@ -192,7 +193,7 @@ the problems verified in polynomial time through `k` alternating blocks of polyn
 certificates, the first existential. -/
 def SigmaP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsAlternatingVerifier enc true ps V A}
 
 /-- The level `Πₖ` of the polynomial hierarchy, with respect to the encoding `enc` of instances:
@@ -200,7 +201,7 @@ the problems verified in polynomial time through `k` alternating blocks of polyn
 certificates, the first universal. -/
 def PiP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+    ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsAlternatingVerifier enc false ps V A}
 
 /-- The polynomial hierarchy: the union of the levels `Σₖ`. -/
@@ -210,15 +211,29 @@ variable {k : ℕ}
 
 theorem mem_SigmaP : A ∈ SigmaP k enc ↔
     ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
         IsAlternatingVerifier enc true ps V A :=
   Iff.rfl
 
-theorem mem_PiP : A ∈ PiP k enc ↔
+/-- `Cslib.Complexity.mem_SigmaP` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_SigmaP_iff_tidy : A ∈ SigmaP k enc ↔
     ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
       ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+        IsAlternatingVerifier enc true ps V A := by
+  simp only [mem_SigmaP, computableInPolyTime_iff_computableTidilyInPolyTime]
+
+theorem mem_PiP : A ∈ PiP k enc ↔
+    ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
         IsAlternatingVerifier enc false ps V A :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_PiP` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_PiP_iff_tidy : A ∈ PiP k enc ↔
+    ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+        IsAlternatingVerifier enc false ps V A := by
+  simp only [mem_PiP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 theorem mem_PH : A ∈ PH enc ↔ ∃ k, A ∈ SigmaP k enc := Set.mem_iUnion
 
@@ -238,19 +253,19 @@ theorem SigmaP_one : SigmaP 1 enc = NP enc := by
   constructor
   · rintro ⟨ps, V, hk, hV, h⟩
     obtain ⟨p, rfl⟩ := List.length_eq_one_iff.1 hk
-    exact ⟨p, V, hV, isAlternatingVerifier_true_singleton.1 h⟩
+    exact ⟨p, V, hV.tidy, isAlternatingVerifier_true_singleton.1 h⟩
   · rintro ⟨p, V, hV, h⟩
-    exact ⟨[p], V, rfl, hV, isAlternatingVerifier_true_singleton.2 h⟩
+    exact ⟨[p], V, rfl, .of_tidy hV, isAlternatingVerifier_true_singleton.2 h⟩
 
 /-- `P ⊆ Σ₀`: a decider can ignore its certificate. -/
 theorem P_subset_SigmaP_zero : P enc ⊆ SigmaP 0 enc := fun _ ⟨f, hf, h⟩ =>
-  ⟨[], fun x => f x.1, rfl, hf.comp (.fst enc encBits), fun a => by simpa using h a⟩
+  ⟨[], fun x => f x.1, rfl, .of_tidy (hf.comp (.fst enc encBits)), fun a => by simpa using h a⟩
 
 /-- `Σ₀ ⊆ P`: run a verifier with no quantifiers on the empty certificate. -/
 theorem SigmaP_zero_subset_P : SigmaP 0 enc ⊆ P enc := by
   rintro _ ⟨ps, V, hk, hV, h⟩
   obtain rfl := List.length_eq_zero_iff.1 hk
-  exact ⟨fun a => V (a, []), hV.comp (.prod .id' (.const [])), fun a => by simpa using h a⟩
+  exact ⟨fun a => V (a, []), hV.tidy.comp (.prod .id' (.const [])), fun a => by simpa using h a⟩
 
 /-- **`Σ₀ = P`.** -/
 theorem SigmaP_zero : SigmaP 0 enc = P enc :=
@@ -301,11 +316,11 @@ theorem P_subset_PH : P enc ⊆ PH enc :=
 
 theorem compl_mem_PiP_of_mem_SigmaP (hA : A ∈ SigmaP k enc) : Aᶜ ∈ PiP k enc :=
   let ⟨ps, V, hk, hV, h⟩ := hA
-  ⟨ps, fun x => !V x, hk, ComputableTidilyInPolyTime.bool_not.comp hV, h.compl⟩
+  ⟨ps, fun x => !V x, hk, by fun_prop, h.compl⟩
 
 theorem compl_mem_SigmaP_of_mem_PiP (hA : A ∈ PiP k enc) : Aᶜ ∈ SigmaP k enc :=
   let ⟨ps, V, hk, hV, h⟩ := hA
-  ⟨ps, fun x => !V x, hk, ComputableTidilyInPolyTime.bool_not.comp hV, h.compl⟩
+  ⟨ps, fun x => !V x, hk, by fun_prop, h.compl⟩
 
 /-- **`Πₖ = coΣₖ`.** -/
 theorem PiP_eq_preimage_compl_SigmaP : PiP k enc = compl ⁻¹' SigmaP k enc := by

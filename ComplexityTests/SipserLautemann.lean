@@ -106,7 +106,8 @@ theorem noisyHeadVerifier_decides :
     decide
 
 theorem noisyHead_mem_BPP : {x : List Bool | x.headD false = true} ∈ BPP encBits :=
-  ⟨Polynomial.C 2, noisyHeadVerifier, noisyHeadVerifier_polyTime, noisyHeadVerifier_decides⟩
+  ⟨Polynomial.C 2, noisyHeadVerifier, .of_tidy noisyHeadVerifier_polyTime,
+    noisyHeadVerifier_decides⟩
 
 theorem noisyHead_mem_SigmaP_two : {x : List Bool | x.headD false = true} ∈ SigmaP 2 encBits :=
   BPP_subset_SigmaP_two noisyHead_mem_BPP

@@ -124,6 +124,7 @@ theorem truthTable_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
     (hr : ComputableTidilyInPolyTime r enc encUnary)
     (hd : ComputableTidilyInPolyTime d (encPair enc encBits) encBool) :
     {a | d (a, truthTableAnswers A r a) = true} ∈ WPP enc := by
+  rw [mem_WPP_iff_tidy] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
   have hF (a) : (∏ i ∈ range (r a), f (a, i)) ≠ 0 :=
     prod_ne_zero_iff.mpr fun i _ => hn (a, i)
@@ -143,7 +144,7 @@ theorem truthTable_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     (hr : ComputableTidilyInPolyTime r enc encUnary)
     (hd : ComputableTidilyInPolyTime d (encPair enc encBits) encBool) :
     {a | d (a, truthTableAnswers A r a) = true} ∈ LWPP enc := by
-  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
+  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := mem_LWPP_iff_tidy.mp hA
   let F (x : α × ℕ) := f ((encPair enc encUnary x).length)
   have hF : ComputableTidilyInPolyTime F (encPair enc encUnary) encIntBin :=
     hf.comp (.encoding_length _)

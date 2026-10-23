@@ -414,6 +414,7 @@ a fair-coin machine halting within a polynomial clock, and a fair-coin machine h
 clock `T` is a verifier replaying random strings of length `T`. -/
 theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : Set α} :
     A ∈ BPP enc ↔ ∃ k, A ∈ BPTIME enc (· ^ k) := by
+  rw [mem_BPP_iff_tidy]
   constructor
   · rintro ⟨p, V, hV, hA⟩
     -- sample a random string and run the verifier on it

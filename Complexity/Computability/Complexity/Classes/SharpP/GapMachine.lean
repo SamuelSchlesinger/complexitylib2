@@ -199,7 +199,8 @@ theorem mem_GapP_iff_exists_machine :
   constructor
   · rintro ⟨f₁, ⟨p, positive, hpositive, hf₁⟩, f₂, ⟨q, negative, hnegative, hf₂⟩, hg⟩
     obtain ⟨k, State, hfinite, machine, clock, hnon, hm⟩ :=
-      MultiTapeCTM.exists_verifier_difference_machine enc p q positive negative hpositive hnegative
+      MultiTapeCTM.exists_verifier_difference_machine enc p q positive negative hpositive.tidy
+        hnegative.tidy
     refine ⟨k, State, hfinite, machine, clock, hnon, fun a => ⟨(hm a).1, ?_⟩⟩
     rw [(hm a).2, hg a, hf₁ a, hf₂ a]
   · rintro ⟨k, State, hfinite, machine, clock, _, hm⟩

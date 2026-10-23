@@ -147,9 +147,9 @@ theorem mem_ParityP_iff_exists_SharpP :
   rw [mem_ParityP]
   constructor
   · rintro ⟨p, V, hV, h⟩
-    exact ⟨_, ⟨p, V, hV, fun _ => rfl⟩, h⟩
+    exact ⟨_, ⟨p, V, .of_tidy hV, fun _ => rfl⟩, h⟩
   · rintro ⟨f, ⟨p, V, hV, hf⟩, h⟩
-    exact ⟨p, V, hV, fun a => by rw [h a, hf a]⟩
+    exact ⟨p, V, hV.tidy, fun a => by rw [h a, hf a]⟩
 
 /-- **`⊕P` is closed under complement**: `succVerifier` accepts one more string. -/
 theorem compl_mem_ParityP (hL : L ∈ ParityP enc) : Lᶜ ∈ ParityP enc := by

@@ -546,7 +546,8 @@ theorem computableTidilyInPolyTime_verifier (k : ℕ) :
 /-- **Kannan's language is in `Σ₃`.** -/
 theorem language_mem_SigmaP_three (k : ℕ) :
     (language k : Set (List Bool)) ∈ SigmaP 3 encBits :=
-  ⟨_, verifier k, rfl, computableTidilyInPolyTime_verifier k, isAlternatingVerifier_verifier k⟩
+  ⟨_, verifier k, rfl, .of_tidy (computableTidilyInPolyTime_verifier k),
+    isAlternatingVerifier_verifier k⟩
 
 end Kannan
 

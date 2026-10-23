@@ -109,7 +109,7 @@ theorem mem_SharpP_iff_exists_machine :
   constructor
   · rintro ⟨p, verifier, hverify, hf⟩
     obtain ⟨k, State, hfinite, machine, clock, hnon, hm⟩ :=
-      MultiTapeCTM.exists_verifier_counting_machine enc p verifier hverify
+      MultiTapeCTM.exists_verifier_counting_machine enc p verifier hverify.tidy
     exact ⟨k, State, hfinite, machine, clock, hnon,
       fun a => ⟨(hm a).1, (hm a).2.1.trans (hf a).symm⟩⟩
   · rintro ⟨k, State, hfinite, machine, clock, _, hm⟩

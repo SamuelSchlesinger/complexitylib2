@@ -59,7 +59,7 @@ private theorem head_mem_LWPP : {w : List Bool | w.headD false = true} ∈ LWPP 
   have hgap : ComputableTidilyInPolyTime
       (fun w : List Bool => if w.headD false then target w.length else 0) encBits encIntBin := by
     fun_prop
-  refine ⟨_, GapP.of_polyTime hgap, target, target_poly, target_ne_zero,
+  refine ⟨_, GapP.of_polyTime hgap, target, .of_tidy target_poly, target_ne_zero,
     fun w => ?_, fun w => ?_⟩
   · cases w.headD false <;> simp
   · change (w.headD false = true) ↔ _

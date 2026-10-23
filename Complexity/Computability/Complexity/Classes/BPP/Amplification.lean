@@ -131,6 +131,7 @@ theorem mem_BPP_iff_forall_decidesWithErrorExponent {A : Set α} :
     A ∈ BPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithErrorExponent enc q p V A := by
+  rw [mem_BPP_iff_tidy]
   refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨12 * q * p, _,
     computableTidilyInPolyTime_repeatMajority hV _ _, h.repeatMajority q⟩, fun h => ?_⟩
   obtain ⟨p, V, hV, h⟩ := h 2

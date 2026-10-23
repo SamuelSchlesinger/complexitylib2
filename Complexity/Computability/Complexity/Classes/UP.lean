@@ -59,9 +59,9 @@ theorem mem_UP : A ∈ UP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool 
     ∀ a, a ∈ A ↔ acceptCount V a (p.eval (enc a).length) = 1 := by
   constructor
   · rintro ⟨f, ⟨p, V, hV, hf⟩, hle, hA⟩
-    exact ⟨p, V, hV, fun a => hf a ▸ hle a, fun a => (hA a).trans (by rw [hf a])⟩
+    exact ⟨p, V, hV.tidy, fun a => hf a ▸ hle a, fun a => (hA a).trans (by rw [hf a])⟩
   · rintro ⟨p, V, hV, hle, hA⟩
-    exact ⟨_, ⟨p, V, hV, fun _ => rfl⟩, hle, hA⟩
+    exact ⟨_, ⟨p, V, .of_tidy hV, fun _ => rfl⟩, hle, hA⟩
 
 /-- A deterministic decider uses only the empty certificate. -/
 theorem P_subset_UP : P enc ⊆ UP enc := by

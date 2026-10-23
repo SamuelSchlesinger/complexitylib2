@@ -291,7 +291,7 @@ private theorem natCast_div_le_natCast_div {a b c d : ℕ} (hb : b ≠ 0) (hd : 
 /-- **`BPP ⊆ IP`**, without messages. -/
 theorem BPP_subset_IP (enc : α ↪ List Bool) : BPP enc ⊆ IP enc := by
   rintro A ⟨p, V, hV, hA⟩
-  refine ⟨_, isOraclePPTOn_bppVerifier (p := p) hV, fun a ha => ⟨Prover.const [], ?_⟩,
+  refine ⟨_, isOraclePPTOn_bppVerifier (p := p) hV.tidy, fun a ha => ⟨Prover.const [], ?_⟩,
     fun a ha P => ?_⟩ <;> rw [acceptProb_bppVerifier]
   · have h := (hA a).1 ha
     exact_mod_cast natCast_div_le_natCast_div (a := 2) (b := 3)

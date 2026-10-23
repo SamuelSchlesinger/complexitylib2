@@ -77,7 +77,7 @@ theorem SigmaP_two_subset_AM_of_coNP_subset_AM
     refine ⟨ps, fun z => V (z.1.1, z.1.2 ++ truncateBlocks ps (enc z.1.1).length
       (encPair enc encBits z.1).length z.2), hlen', ?_, fun y => ?_⟩
     · have hfst := (ComputableTidilyInPolyTime.fst (encPair enc encBits) encBits)
-      exact hV.comp (((ComputableTidilyInPolyTime.fst _ _).comp hfst).prod
+      exact .of_tidy <| hV.tidy.comp (((ComputableTidilyInPolyTime.fst _ _).comp hfst).prod
         (ComputableTidilyInPolyTime.bitsAppend ((ComputableTidilyInPolyTime.snd _ _).comp hfst)
           (computableTidilyInPolyTime_truncateBlocks ps
             ((ComputableTidilyInPolyTime.encoding_length enc).comp

@@ -149,7 +149,7 @@ theorem mem_WPP_of_polyTime_targets {α : Type} {enc : α ↪ List Bool} {A : Se
     (hy : ∀ a, a ∈ A → g a ∈ f a) (hno : ∀ a, a ∉ A → g a = 0) :
     A ∈ WPP enc := by
   obtain ⟨G, hG, hR, hA⟩ := targetWitness hg hf hn hy hno
-  exact ⟨G, hG, _, ComputableTidilyInPolyTime.intBin_prod.comp hf,
+  exact ⟨G, hG, _, .of_tidy (ComputableTidilyInPolyTime.intBin_prod.comp hf),
     fun a => List.prod_ne_zero (hn a), hR, hA⟩
 
 /-- **Polynomial-family robustness of LWPP.** The target list is uniformly computed from unary
@@ -162,7 +162,7 @@ theorem mem_LWPP_of_polyTime_targets {α : Type} {enc : α ↪ List Bool} {A : S
     A ∈ LWPP enc := by
   obtain ⟨G, hG, hR, hA⟩ := targetWitness hg (hf.comp (.encoding_length enc))
     (fun a => hn (enc a).length) hy hno
-  exact ⟨G, hG, fun n => (f n).prod, ComputableTidilyInPolyTime.intBin_prod.comp hf,
+  exact ⟨G, hG, fun n => (f n).prod, .of_tidy (ComputableTidilyInPolyTime.intBin_prod.comp hf),
     fun n => List.prod_ne_zero (hn n), hR, hA⟩
 
 /-- The list of targets `f (a, 0), ..., f (a, r a - 1)` for an indexed target family. -/
@@ -228,7 +228,8 @@ theorem mem_WPP_iff_exists_polyTime_targets {α : Type} {enc : α ↪ List Bool}
       (∀ a, (0 : ℤ) ∉ f a) ∧ (∀ a, a ∈ A → g a ∈ f a) ∧
       ∀ a, a ∉ A → g a = 0 := by
   constructor
-  · rintro ⟨g, hg, f, hf, hn, hr, hA⟩
+  · rw [mem_WPP_iff_tidy]
+    rintro ⟨g, hg, f, hf, hn, hr, hA⟩
     refine ⟨g, hg, fun a => [f a], by fun_prop, ?_, ?_, ?_⟩
     · intro a
       simpa only [List.mem_singleton] using Ne.symm (hn a)
@@ -248,7 +249,8 @@ theorem mem_LWPP_iff_exists_polyTime_targets {α : Type} {enc : α ↪ List Bool
       (∀ n, (0 : ℤ) ∉ f n) ∧ (∀ a, a ∈ A → g a ∈ f (enc a).length) ∧
       ∀ a, a ∉ A → g a = 0 := by
   constructor
-  · rintro ⟨g, hg, f, hf, hn, hr, hA⟩
+  · rw [mem_LWPP_iff_tidy]
+    rintro ⟨g, hg, f, hf, hn, hr, hA⟩
     refine ⟨g, hg, fun n => [f n], by fun_prop, ?_, ?_, ?_⟩
     · intro n
       simpa only [List.mem_singleton] using Ne.symm (hn n)

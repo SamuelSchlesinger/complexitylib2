@@ -158,7 +158,7 @@ theorem computableTidilyInPolySpace_acceptCount {V : α × List Bool → Bool} {
 /-- Every #P function is computable in polynomial space when its output is written in binary. -/
 theorem SharpP.computableTidilyInPolySpace {f : α → ℕ} (hf : f ∈ SharpP enc) :
     ComputableTidilyInPolySpace f enc encNat := by
-  obtain ⟨p, V, hV, hf⟩ := hf
+  obtain ⟨p, V, hV, hf⟩ := mem_SharpP_iff_tidy.mp hf
   exact (computableTidilyInPolySpace_acceptCount hV (by fun_prop)).congr fun a => (hf a).symm
 
 /-- Every GapP function is computable in polynomial space with binary sign-magnitude output. -/

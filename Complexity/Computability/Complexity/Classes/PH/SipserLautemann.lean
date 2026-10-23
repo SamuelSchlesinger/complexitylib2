@@ -452,7 +452,7 @@ theorem BPP_subset_SigmaP_two : BPP enc ⊆ SigmaP 2 enc := by
   rintro A ⟨p, V, hV, hA⟩
   exact ⟨[SipserLautemann.witnessPoly p, SipserLautemann.seedPoly p],
     SipserLautemann.verifier enc p V, rfl,
-    SipserLautemann.verifier_polyTime hV,
+    .of_tidy (SipserLautemann.verifier_polyTime hV.tidy),
     SipserLautemann.isAlternatingVerifier_verifier hA⟩
 
 /-- **The Sipser–Gács–Lautemann theorem (`Π₂` form)**: every problem in `BPP` lies in `Π₂`,

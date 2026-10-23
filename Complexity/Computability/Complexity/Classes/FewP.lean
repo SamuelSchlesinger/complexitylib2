@@ -63,9 +63,9 @@ theorem mem_FewP : A ∈ FewP enc ↔ ∃ (p q : Polynomial ℕ) (V : α × List
     ∀ a, a ∈ A ↔ 0 < acceptCount V a (p.eval (enc a).length) := by
   constructor
   · rintro ⟨f, ⟨p, V, hV, hf⟩, q, hle, hA⟩
-    exact ⟨p, q, V, hV, fun a => hf a ▸ hle a, fun a => by rw [hA a, hf a]⟩
+    exact ⟨p, q, V, hV.tidy, fun a => hf a ▸ hle a, fun a => by rw [hA a, hf a]⟩
   · rintro ⟨p, q, V, hV, hle, hA⟩
-    exact ⟨_, ⟨p, V, hV, fun _ => rfl⟩, q, hle, hA⟩
+    exact ⟨_, ⟨p, V, .of_tidy hV, fun _ => rfl⟩, q, hle, hA⟩
 
 /-- A bound of one is a polynomial ambiguity bound. -/
 theorem UP_subset_FewP : UP enc ⊆ FewP enc := by

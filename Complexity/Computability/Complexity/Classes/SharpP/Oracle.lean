@@ -72,7 +72,7 @@ def GapPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (α → 
 /-- Ordinary counting verifiers can ignore every oracle. -/
 theorem SharpP_subset_SharpPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     SharpP enc ⊆ SharpPWithOracle A enc := fun _ ⟨p, V, hV, hf⟩ =>
-  ⟨p, V, hV.computableInPolyTimeWithOracle A, hf⟩
+  ⟨p, V, hV.tidy.computableInPolyTimeWithOracle A, hf⟩
 
 /-- Ordinary gap functions can ignore every oracle. -/
 theorem GapP_subset_GapPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
@@ -84,7 +84,7 @@ theorem GapP_subset_GapPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool
 theorem SharpPWithOracle_eq_SharpP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
     SharpPWithOracle A enc = SharpP enc :=
   Set.Subset.antisymm (fun _ ⟨p, V, hV, hf⟩ =>
-    ⟨p, V, hV.computableTidilyInPolyTime hA, hf⟩) (SharpP_subset_SharpPWithOracle A enc)
+    ⟨p, V, .of_tidy (hV.computableTidilyInPolyTime hA), hf⟩) (SharpP_subset_SharpPWithOracle A enc)
 
 /-- A polynomial-time oracle adds no gap functions. -/
 theorem GapPWithOracle_eq_GapP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :

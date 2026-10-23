@@ -91,7 +91,7 @@ theorem mem_RPWithOracle {A : Set (List Bool)} {enc : α ↪ List Bool} {L : Set
 /-- Every problem in `RP` is in `RP` relative to every oracle. -/
 theorem RP_subset_RPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     RP enc ⊆ RPWithOracle A enc := fun _ ⟨p, V, hV, h⟩ =>
-  ⟨p, V, hV.computableInPolyTimeWithOracle A, h⟩
+  ⟨p, V, hV.tidy.computableInPolyTimeWithOracle A, h⟩
 
 /-- `RP` relative to an oracle lies inside `NP` relative to the same oracle: an accepted random
 string is a certificate. -/
@@ -117,7 +117,7 @@ def RPWithPromiseOracle (Q : PromiseProblem β) (encQ : β ↪ List Bool) (enc :
 request. -/
 theorem RP_subset_RPWithPromiseOracle (Q : PromiseProblem β) (encQ : β ↪ List Bool)
     (enc : α ↪ List Bool) : RP enc ⊆ RPWithPromiseOracle Q encQ enc := fun _ ⟨p, V, hV, h⟩ =>
-  ⟨p, fun x => pure (V x), hV.isOraclePPTOn, fun _ _ => h⟩
+  ⟨p, fun x => pure (V x), hV.tidy.isOraclePPTOn, fun _ _ => h⟩
 
 open Classical in
 /-- `RP` relative to a promise problem lies inside `RP` relative to every oracle language solving

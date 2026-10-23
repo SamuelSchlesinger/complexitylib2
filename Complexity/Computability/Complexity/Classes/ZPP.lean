@@ -43,6 +43,7 @@ the random strings, and on a non-member the second does.
 
 ## Main results
 
+* `Cslib.Complexity.mem_ZPP_iff_tidy`: membership through a tidy verifier.
 * `Cslib.Complexity.ZPP_subset_RP`, `Cslib.Complexity.ZPP_subset_coRP`.
 * `Cslib.Complexity.RP_inter_coRP_subset_ZPP`.
 * `Cslib.Complexity.ZPP_eq_RP_inter_coRP`: `ZPP = RP ∩ coRP`.
@@ -76,16 +77,23 @@ def DecidesWithZeroError (enc : α ↪ List Bool) (p : Polynomial ℕ)
 random strings, with respect to the encoding `enc` of instances. -/
 def ZPP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Option Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) (encOption encBool) ∧
+    ComputableInPolyTime V (encPair enc encBits) (encOption encBool) ∧
       DecidesWithZeroError enc p V A}
 
 variable {enc : α ↪ List Bool}
 
 theorem mem_ZPP {A : Set α} : A ∈ ZPP enc ↔ ∃ (p : Polynomial ℕ)
     (V : α × List Bool → Option Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) (encOption encBool) ∧
+    ComputableInPolyTime V (encPair enc encBits) (encOption encBool) ∧
       DecidesWithZeroError enc p V A :=
   Iff.rfl
+
+/-- `Cslib.Complexity.mem_ZPP` with a tidy verifier, for proofs that compose machines. -/
+theorem mem_ZPP_iff_tidy {A : Set α} : A ∈ ZPP enc ↔ ∃ (p : Polynomial ℕ)
+    (V : α × List Bool → Option Bool),
+    ComputableTidilyInPolyTime V (encPair enc encBits) (encOption encBool) ∧
+      DecidesWithZeroError enc p V A := by
+  simp only [mem_ZPP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 namespace DecidesWithZeroError
 
@@ -120,8 +128,8 @@ end DecidesWithZeroError
 
 /-- **`ZPP` is closed under complement.** -/
 theorem compl_mem_ZPP {A : Set α} (hA : A ∈ ZPP enc) : Aᶜ ∈ ZPP enc := by
-  obtain ⟨p, V, hV, h⟩ := hA
-  refine ⟨p, fun x => (V x).map Bool.not, ?_, h.compl⟩
+  obtain ⟨p, V, hV, h⟩ := mem_ZPP_iff_tidy.mp hA
+  refine mem_ZPP_iff_tidy.mpr ⟨p, fun x => (V x).map Bool.not, ?_, h.compl⟩
   have : ComputableTidilyInPolyTime (fun x => (V x).elim none fun b => some !b)
       (encPair enc encBits) (encOption encBool) :=
     ComputableTidilyInPolyTime.optionElimWithInput hV (.const none)
@@ -133,7 +141,8 @@ theorem compl_mem_ZPP {A : Set α} (hA : A ∈ ZPP enc) : Aᶜ ∈ ZPP enc := by
 /-- **`ZPP ⊆ RP`**: accept exactly on the answer `some true`. -/
 theorem ZPP_subset_RP : ZPP enc ⊆ RP enc := fun _ ⟨p, V, hV, h⟩ =>
   ⟨p, fun x => (V x).getD false,
-    ComputableTidilyInPolyTime.optionGetDWithInput hV (.const false), h.decidesWithOneSidedError⟩
+    .of_tidy (ComputableTidilyInPolyTime.optionGetDWithInput hV.tidy (.const false)),
+    h.decidesWithOneSidedError⟩
 
 /-- **`ZPP ⊆ coRP`**: the complement is in `ZPP`, hence in `RP`. -/
 theorem ZPP_subset_coRP : ZPP enc ⊆ coRP enc := fun _ hA => ZPP_subset_RP (compl_mem_ZPP hA)
@@ -178,7 +187,9 @@ private theorem exists_ofFn_eq_drop {m k : ℕ} (r : Fin (m + k) → Bool) :
 reading the first and the last part of the random string, answer `some true` when `V₁` accepts,
 `some false` when `V₂` does, and `none` otherwise. -/
 theorem RP_inter_coRP_subset_ZPP : RP enc ∩ coRP enc ⊆ ZPP enc := by
-  rintro A ⟨⟨p₁, V₁, hV₁, h₁⟩, ⟨p₂, V₂, hV₂, h₂⟩⟩
+  rintro A ⟨hA₁, hA₂⟩
+  obtain ⟨p₁, V₁, hV₁, h₁⟩ := mem_RP_iff_tidy.mp hA₁
+  obtain ⟨p₂, V₂, hV₂, h₂⟩ := mem_RP_iff_tidy.mp (mem_coRP.mp hA₂)
   let len (a : α) : ℕ := p₁.eval (enc a).length
   let V (x : α × List Bool) : Option Bool :=
     if V₁ (x.1, x.2.take (len x.1)) then some true
@@ -196,7 +207,7 @@ theorem RP_inter_coRP_subset_ZPP : RP enc ∩ coRP enc ⊆ ZPP enc := by
         (hV₂.comp ((ComputableTidilyInPolyTime.fst _ _).prod
           (ComputableTidilyInPolyTime.bitsDropWithInput (.snd _ _) hlen)))
         (.const _) (.const _))
-  refine ⟨p₁ + p₂, V, hpoly, fun a => ?_⟩
+  refine ⟨p₁ + p₂, V, .of_tidy hpoly, fun a => ?_⟩
   have heval : (p₁ + p₂).eval (enc a).length = len a + p₂.eval (enc a).length :=
     Polynomial.eval_add
   rw [heval]

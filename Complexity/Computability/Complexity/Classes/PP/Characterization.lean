@@ -102,14 +102,14 @@ theorem mem_PP_iff_decidesByNonstrictMajority {A : Set α} :
         DecidesByNonstrictMajority enc p V A := by
   constructor
   · intro hA
-    obtain ⟨p, V, hV, h⟩ := compl_mem_PP hA
+    obtain ⟨p, V, hV, h⟩ := mem_PP_iff_tidy.mp (compl_mem_PP hA)
     refine ⟨p, fun x => !V x, ComputableTidilyInPolyTime.bool_not.comp hV, ?_⟩
     simpa using decidesByMajority_iff_decidesByNonstrictMajority_compl.1 h
   · rintro ⟨p, V, hV, h⟩
     have h' : DecidesByMajority enc p (fun x => !V x) Aᶜ := by
       rw [decidesByMajority_iff_decidesByNonstrictMajority_compl]
       simpa using h
-    simpa using compl_mem_PP ⟨p, _, ComputableTidilyInPolyTime.bool_not.comp hV, h'⟩
+    simpa using compl_mem_PP ⟨p, _, .of_tidy (ComputableTidilyInPolyTime.bool_not.comp hV), h'⟩
 
 /-! ### Reductions -/
 
@@ -119,6 +119,7 @@ of the encoded instance, and the ignored bits multiply both sides of the majorit
 the same power of two. -/
 theorem PolyTimeReducible.mem_PP {β : Type} {encB : β ↪ List Bool} {A : Set α} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ PP encB) : A ∈ PP enc := by
+  rw [mem_PP_iff_tidy] at hB ⊢
   obtain ⟨f, hf, hAB⟩ := h
   obtain ⟨q, W, hW, hWB⟩ := hB
   have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
@@ -148,6 +149,7 @@ theorem mem_PP_iff_exists_SharpP {A : Set α} :
   · rintro ⟨p, V, hV, h⟩
     exact ⟨_, ⟨p, V, hV, fun _ => rfl⟩, p, h⟩
   · rintro ⟨f, ⟨p, V, hV, hf⟩, q, h⟩
+    replace hV := hV.tidy
     -- on `false`, accept unless the first `k + 1` bits are `false`; on `true`, accept a
     -- certificate of `V` followed by a free bit and bits `false`
     refine ⟨p + q + 1 + 1, selectVerifier

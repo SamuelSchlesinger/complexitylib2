@@ -28,7 +28,7 @@ private theorem count_mem : count ∈ SharpP encBits :=
   SharpP.of_polyTime (f := count) (by unfold count; fun_prop)
 
 private theorem language_mem : language ∈ SBP encBits := by
-  refine ⟨count, count_mem, fun _ => 3, ComputableTidilyInPolyTime.const 3, fun w => ?_⟩
+  refine ⟨count, count_mem, fun _ => 3, .const 3, fun w => ?_⟩
   cases w with
   | nil => norm_num [count, language]
   | cons b w => cases b <;> norm_num [count, language]

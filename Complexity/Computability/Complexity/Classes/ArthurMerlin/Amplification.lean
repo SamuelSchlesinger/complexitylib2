@@ -194,6 +194,7 @@ theorem mem_MA_iff_exists_forall_errorExponent :
     A ∈ MA enc ↔ ∃ q : Polynomial ℕ, ∀ e : Polynomial ℕ, ∃ (p : Polynomial ℕ)
       (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
         IsMerlinArthurVerifierWithErrorExponent enc e q p V A := by
+  rw [mem_MA_iff_tidy]
   refine ⟨fun ⟨q, p, V, hV, h⟩ => ⟨q, fun e => ⟨12 * e * p, _,
     computableTidilyInPolyTime_merlinArthurRepeat hV _ _ _, h.repeatMajority e⟩⟩,
     fun ⟨q, h⟩ => ?_⟩
@@ -347,6 +348,7 @@ theorem mem_AM_iff_forall_errorExponent :
     A ∈ AM enc ↔ ∀ e : Polynomial ℕ, ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
         IsArthurMerlinVerifierWithErrorExponent enc e p q V A := by
+  rw [mem_AM_iff_tidy]
   refine ⟨fun ⟨p, q, V, hV, h⟩ e => ⟨12 * e * p, 12 * e * q, _,
     computableTidilyInPolyTime_arthurMerlinRepeat hV _ _ _, h.repeatMajority e⟩, fun h => ?_⟩
   obtain ⟨p, q, V, hV, h⟩ := h 2
@@ -368,7 +370,7 @@ theorem MA_subset_AM : MA enc ⊆ AM enc := by
     (ComputableTidilyInPolyTime.unary_eval P).comp (ComputableTidilyInPolyTime.encoding_length enc)
   refine ⟨P, q, fun x => W (x.1, x.2.drop (P.eval (enc x.1).length) ++
     x.2.take (P.eval (enc x.1).length)), ?_, fun a => ?_⟩
-  · exact (computableTidilyInPolyTime_merlinArthurRepeat hV _ _ _).comp
+  · exact .of_tidy <| (computableTidilyInPolyTime_merlinArthurRepeat hV.tidy _ _ _).comp
       ((ComputableTidilyInPolyTime.fst enc encBits).prod
         (.bitsAppend (.bitsDropWithInput (.snd enc encBits) (hPu.comp (.fst enc encBits)))
           (.bitsTakeWithInput (.snd enc encBits) (hPu.comp (.fst enc encBits)))))
@@ -444,12 +446,12 @@ theorem MA_subset_SBP : MA enc ⊆ SBP enc := by
   set W := merlinArthurRepeat enc q (6 * (q + 2)) p V with hW
   set P : Polynomial ℕ := 12 * (q + 2) * p with hP
   have hf : (fun a => acceptCount W a ((q + P).eval (enc a).length)) ∈ SharpP enc :=
-    ⟨q + P, W, computableTidilyInPolyTime_merlinArthurRepeat hV _ _ _, fun _ => rfl⟩
+    ⟨q + P, W, .of_tidy (computableTidilyInPolyTime_merlinArthurRepeat hV.tidy _ _ _), fun _ => rfl⟩
   have hd : ComputableTidilyInPolyTime (fun a => 2 ^ P.eval (enc a).length) enc encNat :=
     ComputableTidilyInPolyTime.binary_two_pow.comp
       ((ComputableTidilyInPolyTime.unary_eval P).comp (.encoding_length enc))
   refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 4) hf, fun a => 3 * 2 ^ P.eval (enc a).length,
-    (ComputableTidilyInPolyTime.const 3).binary_mul' hd, fun a => ?_⟩
+    .of_tidy ((ComputableTidilyInPolyTime.const 3).binary_mul' hd), fun a => ?_⟩
   change (a ∈ A → 3 * 2 ^ P.eval (enc a).length ≤
       4 * acceptCount W a ((q + P).eval (enc a).length)) ∧
     (a ∉ A → 2 * (4 * acceptCount W a ((q + P).eval (enc a).length)) <
@@ -530,7 +532,7 @@ theorem mem_AM_of_exists {B : Set (α × List Bool)} (hB : B ∈ AM (encPair enc
       x.2.take ((pB.comp L).eval (enc x.1).length) ++
         x.2.drop ((pB.comp L).eval (enc x.1).length + p.eval (enc x.1).length)), ?_,
     fun a => ?_⟩
-  · exact hVB.comp (((ComputableTidilyInPolyTime.fst _ _).prod
+  · exact .of_tidy <| hVB.comp (((ComputableTidilyInPolyTime.fst _ _).prod
       (ComputableTidilyInPolyTime.bitsTakeWithInput
         (ComputableTidilyInPolyTime.bitsDropWithInput (.snd _ _) hP) hp)).prod
       (ComputableTidilyInPolyTime.bitsAppend
