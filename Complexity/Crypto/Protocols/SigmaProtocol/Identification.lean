@@ -41,6 +41,10 @@ Both reductions only run the given impersonator and the simulator or extractor. 
 efficiency, and the corresponding asymptotic statements under a hardness assumption, are
 separate obligations.
 
+The experiments are `Game`s, that is `PMF Bool`, written in `do` notation; the `PMF` monad lives
+in a single universe, so the protocol's types and the impersonator's state are in `Type` here,
+although `SigmaProtocol` itself is universe-polymorphic.
+
 ## Main definitions
 
 * `SigmaProtocol.Impersonator`: a two-stage prover strategy.

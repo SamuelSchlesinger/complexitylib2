@@ -22,6 +22,8 @@ this `α'` is the sampled `α`.
 The two theorems here are the exact forms of Boneh and Shoup's Theorems 19.1 and 19.5 at a fixed
 group. They make no efficiency or hardness claim; the discrete-logarithm assumption and the
 asymptotic security statement need a group family with efficient operations.
+As for the identification experiments they instantiate, the group and challenge types are in
+`Type`.
 
 ## Main definitions
 
