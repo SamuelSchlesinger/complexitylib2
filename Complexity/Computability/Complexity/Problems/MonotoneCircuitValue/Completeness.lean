@@ -308,7 +308,7 @@ theorem logSpaceReducible_of_mem_P {α : Type} {enc : α ↪ List Bool} {A : Set
 
 /-- Monotone circuit value is `P`-hard under logarithmic-space reductions [Goldschlager1977]. -/
 theorem logSpaceHard : LogSpaceHard @P encMonotoneCircuitValue MonotoneCircuitValue :=
-  fun _ _ hA => logSpaceReducible_of_mem_P hA
+  fun _ _ _ hA => logSpaceReducible_of_mem_P hA
 
 /-- Monotone circuit value is `P`-complete under logarithmic-space reductions [Goldschlager1977]. -/
 theorem logSpaceComplete : LogSpaceComplete @P encMonotoneCircuitValue MonotoneCircuitValue :=

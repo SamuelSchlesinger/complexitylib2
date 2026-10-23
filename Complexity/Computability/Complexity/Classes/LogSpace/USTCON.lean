@@ -97,7 +97,7 @@ theorem LogSpaceReducible.mem_SL (hAB : LogSpaceReducible enc encB A B) (hB : B 
 
 /-- `USTCON` is logspace-hard for `SL`. -/
 theorem USTCON_logSpaceHard_SL : LogSpaceHard SL encUSTCON USTCON :=
-  fun _ _ hA ↦ hA
+  fun _ _ _ hA ↦ hA
 
 /-- **`USTCON` is logspace-complete for `SL`** [Lewis and Papadimitriou][LewisPapadimitriou1982]. -/
 theorem USTCON_logSpaceComplete_SL : LogSpaceComplete SL encUSTCON USTCON :=

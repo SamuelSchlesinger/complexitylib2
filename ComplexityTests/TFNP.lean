@@ -129,7 +129,7 @@ example : SearchReducible encBits encBits emptyRel emptyRel :=
 time: such a problem reduces to it by solving the instance in the map back. -/
 example : SearchComplete (fun {α : Type} (enc : α ↪ List Bool) => TFNP enc ∩ FPSearch enc)
     encBits emptyRel := by
-  refine ⟨⟨emptyRel_mem_TFNP, emptyRel_mem_FPSearch⟩, fun enc R ⟨hR, hR'⟩ => ?_⟩
+  refine ⟨⟨emptyRel_mem_TFNP, emptyRel_mem_FPSearch⟩, fun _ enc R ⟨hR, hR'⟩ => ?_⟩
   obtain ⟨g, hg, hgR⟩ := exists_total_of_mem_FPSearch hR' hR.2
   exact .of_isTotalSearch emptyRel_mem_TFNP.2 (ComputableTidilyInPolyTime.const [])
     (hg.comp (ComputableTidilyInPolyTime.fst enc encBits)) fun a _ _ => hgR a
