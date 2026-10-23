@@ -89,10 +89,6 @@ open Finset Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 
-@[deprecated BitString.two_pow_mul_card_filter_card_filter_block_le (since := "2026-10-19")]
-alias two_pow_mul_card_filter_card_filter_block_le :=
-  BitString.two_pow_mul_card_filter_card_filter_block_le
-
 /-! ### Error reduction for `MA` -/
 
 /-- `V` is a Merlin–Arthur verifier for `A` with error at most `2 ^ (-e(n))`, with proofs of length

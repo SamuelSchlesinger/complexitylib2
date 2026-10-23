@@ -93,9 +93,6 @@ structure Basis extends Signature.{0} where
 
 attribute [instance] Basis.decEq Basis.decReadsWidth
 
-@[deprecated (since := "2026-10-23")]
-alias Basis.interp_eq_of_not_readsWidth := Basis.interp_mono_of_not_readsWidth
-
 /-! ## The standard basis -/
 
 /-- The binary operations of the word RAM. -/

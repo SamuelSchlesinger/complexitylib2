@@ -317,9 +317,6 @@ theorem setOf_timeDiagonal_notMem_DTIME {f J : ℕ → ℕ}
   revert hgx
   cases g (frame (eDesc (desc eS eBit tm)) ++ pad) <;> decide
 
-@[deprecated (since := "2026-10-19")]
-alias setOf_timeDiagonal_not_mem_DTIME := setOf_timeDiagonal_notMem_DTIME
-
 /-- The problem of the clocked diagonal is decidable within time
 `O((n + 1) ^ 5 * (J n + 1) ^ 3)`. -/
 theorem setOf_timeDiagonal_mem_DTIME {J : ℕ → ℕ} (hJ : TimeConstructible J) :

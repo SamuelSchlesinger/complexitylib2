@@ -190,22 +190,6 @@ theorem computableTidilyInPolyTime_getD_list {α γ : Type} {input : α ↪ List
 
 /-! ### The parameters -/
 
-/-- Deprecated: primality by trial division, now
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_prime_eq`. -/
-@[deprecated "Use `Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_prime_eq`."
-  (since := "2026-10-19")]
-theorem decide_prime_eq (p : ℕ) : decide p.Prime =
-    (decide (2 ≤ p) && (List.range p).all fun m => decide (m < 2) || decide (p % m ≠ 0)) :=
-  Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_prime_eq p
-
-/-- Deprecated: primality of a unary natural, now
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_decide_prime`. -/
-@[deprecated "Use `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_decide_prime`."
-  (since := "2026-10-19")]
-theorem computableTidilyInPolyTime_decide_prime :
-    ComputableTidilyInPolyTime (fun p : ℕ => decide p.Prime) encUnary encBool :=
-  Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_decide_prime
-
 /-- The primes in `(a, b]`, from unary bounds. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_primesIoc :

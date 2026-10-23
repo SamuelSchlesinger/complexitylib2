@@ -71,10 +71,6 @@ theorem edgeExpansion_mul_card_div_three_le_of_refutableInWidth (hG : 0 < G.edge
   exact G.edgeExpansion_mul_card_div_three_le_minBalancedCut.trans
     (by exact_mod_cast minBalancedCut_le_of_refutableInWidth hc h)
 
-@[deprecated (since := "2026-10-19")]
-alias edgeExpansion_le_of_refutableInWidth_rotationMap :=
-  edgeExpansion_mul_card_div_three_le_of_refutableInWidth
-
 /-- **The size lower bound for Tseitin formulas on rotation maps**
 [Ben-Sasson and Wigderson, Corollary 3.6][BenSassonWigderson2001]: if
 `|D| + 2 ≤ h(G) |V| / 3`, every resolution refutation of a Tseitin formula on `G` has at least
@@ -101,9 +97,6 @@ theorem exp_edgeExpansion_le_of_refutableInSize
   rw [mul_assoc]
   gcongr
   linarith
-
-@[deprecated (since := "2026-10-19")]
-alias exp_le_of_refutableInSize_rotationMap := exp_edgeExpansion_le_of_refutableInSize
 
 end Tseitin
 

@@ -18,7 +18,7 @@ reading a fixed digit therefore require only finitely many binary additions, mul
 divisions and remainders. The radix itself remains an ordinary binary argument.
 
 The pure operations and their recovery/capacity results live in `Cslib.Radix`, in the module
-`Complexity.Foundations.Data.Nat.Radix`. Deprecated compatibility names remain here.
+`Complexity.Foundations.Data.Nat.Radix`.
 
 ## Main results
 
@@ -31,39 +31,7 @@ The pure operations and their recovery/capacity results live in `Cslib.Radix`, i
 
 namespace Turing.MultiTapeNTM.ConfigurationGraph
 
-/-- Deprecated Nat-specialized spelling of Mathlib's little-endian packing. -/
-@[deprecated Nat.ofDigits +typeChanged (since := "2026-10-23")]
-abbrev packList (B : ℕ) : List ℕ → ℕ := Nat.ofDigits B
-
-@[deprecated Cslib.Radix.digit (since := "2026-10-23")]
-alias digit := Cslib.Radix.digit
-
-@[deprecated Cslib.Radix.digit_ofDigits (since := "2026-10-23")]
-theorem digit_packList {B : ℕ} (hB : 0 < B) (l : List ℕ)
-    (hl : ∀ a ∈ l, a < B) (i : ℕ) (hi : i < l.length) :
-    Cslib.Radix.digit B (Nat.ofDigits B l) i = l[i] :=
-  Cslib.Radix.digit_ofDigits hB l hl i hi
-
-@[deprecated Nat.ofDigits_lt_base_pow_length_of_pos (since := "2026-10-23")]
-theorem packList_lt {B : ℕ} (_hB : 0 < B) (l : List ℕ) (hl : ∀ a ∈ l, a < B) :
-    Nat.ofDigits B l < B ^ l.length :=
-  Nat.ofDigits_lt_base_pow_length_of_pos _hB l hl
-
-@[deprecated Cslib.Radix.pack (since := "2026-10-23")]
-alias pack := Cslib.Radix.pack
-
-@[deprecated Cslib.Radix.component (since := "2026-10-23")]
-alias component := Cslib.Radix.component
-
 variable {ι : Type} [Fintype ι]
-
-@[deprecated Cslib.Radix.component_pack (since := "2026-10-23")]
-theorem component_pack {B : ℕ} (hB : 0 < B) {f : ι → ℕ} (hf : ∀ i, f i < B) (i : ι) :
-    Cslib.Radix.component B (Cslib.Radix.pack B f) i = f i :=
-  Cslib.Radix.component_pack hB hf i
-
-@[deprecated Cslib.Radix.pack_lt (since := "2026-10-23")]
-alias pack_lt := Cslib.Radix.pack_lt
 
 open MultiTapeTM ComputableTidilyInSpace
 

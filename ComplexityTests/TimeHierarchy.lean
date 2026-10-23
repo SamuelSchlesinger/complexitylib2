@@ -14,14 +14,6 @@ namespace ComplexityTests.TimeHierarchy
 
 open Cslib Cslib.Complexity Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal
 
--- The former hierarchy import and resource-bound name remain compatible.
-set_option linter.deprecated false in
-example {D N J B L : ℕ} (hD : D ≤ B) (hN : N ≤ B) (hL : L ≤ B) (hJ : 1 ≤ J) :
-    (J + 1) * (stepBound D N J + runBound D N J + (L + 1) ^ 2) ≤
-        100000 * (B + 1) ^ 5 * J ^ 3 ∧
-      runBound D N J ≤ 200 * (B + 1) ^ 2 * J :=
-  Cslib.Complexity.Diagonal.universal_bounds_le hD hN hL hJ
-
 /-! ### Framed words and decoding -/
 
 example : frames [] = [] := frames_nil
@@ -156,11 +148,5 @@ info: 'Turing.MultiTapeTM.frames_encList' depends on axioms: [propext, Classical
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.frames_encList
-
-/--
-info: 'Cslib.Complexity.Diagonal.universal_bounds_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Diagonal.universal_bounds_le
 
 end ComplexityTests.TimeHierarchy

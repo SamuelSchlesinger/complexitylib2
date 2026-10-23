@@ -160,19 +160,4 @@ info: 'Cslib.Circuits.Boolean.MassProduction.Fine.eventually_overhead_le' depend
 #guard_msgs (whitespace := lax) in
 #print axioms Fine.eventually_overhead_le
 
-/-! ### Deprecated names -/
-
-set_option linter.deprecated false in
-/-- Field notation on a hypothesis of the deprecated type still resolves. -/
-example (h : SharpMassProducesThrough 1 2) : SharpMassProducesAt 1 2 := h.sharpMassProducesAt
-
-set_option linter.deprecated false in
-/-- Field notation skips the explicit rate hypothesis. -/
-example (h : SharpMassProducesThrough 1 2) : MassProducesAt 1 2 := h.massProducesAt (by decide)
-
-set_option linter.deprecated false in
-/-- So does the old idiom through the deprecated theorem name. -/
-example : SharpMassProducesAt 1 2 :=
-  (sharpMassProducesThrough (num := 1) (den := 2) (by decide)).sharpMassProducesAt
-
 end ComplexityTests.MassProduction.Fine

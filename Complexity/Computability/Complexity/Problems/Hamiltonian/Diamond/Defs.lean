@@ -230,8 +230,6 @@ theorem notMem_arcs_topNode_zero (u : ℕ) : (u, topNode 0) ∉ arcs N slots D :
       ⟨i, -, ⟨-, h₂ | h₂⟩ | ⟨-, h₂⟩ | ⟨a, -, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩⟩ |
       ⟨d, -, ⟨-, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩ | ⟨-, ⟨-, h₂⟩ | ⟨-, h₂⟩⟩⟩ <;> simp at h₂
 
-@[deprecated (since := "2026-10-19")] alias not_mem_arcs_topNode_zero := notMem_arcs_topNode_zero
-
 end Diamond
 
 end Cslib.Complexity

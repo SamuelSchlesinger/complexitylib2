@@ -462,25 +462,4 @@ theorem coordinateMarginal_light_fraction_le {f : (ι → Bool) → ℝ}
 
 end
 
-@[deprecated (since := "2026-10-21")] alias harmonicMean := Cslib.harmonicMean
-@[deprecated (since := "2026-10-21")]
-alias harmonicMean_eq_zero_of_exists := Cslib.harmonicMean_eq_zero_of_exists
-@[deprecated (since := "2026-10-21")] alias harmonicMean_of_pos := Cslib.harmonicMean_of_pos
-@[deprecated (since := "2026-10-21")] alias harmonicMean_nonneg := Cslib.harmonicMean_nonneg
-@[deprecated (since := "2026-10-21")] alias harmonicMean_equiv := Cslib.harmonicMean_equiv
-@[deprecated (since := "2026-10-21")] alias harmonicMean_le_energy := Cslib.harmonicMean_le_energy
-@[deprecated (since := "2026-10-21")]
-alias harmonicMean_exists_weight := Cslib.harmonicMean_exists_weight
-@[deprecated (since := "2026-10-21")]
-alias harmonicMean_variational := Cslib.harmonicMean_variational
-@[deprecated (since := "2026-10-21")] alias harmonicMean_mono := Cslib.harmonicMean_mono
-@[deprecated (since := "2026-10-21")]
-alias concaveOn_harmonicMean := Cslib.concaveOn_harmonicMean
-@[deprecated (since := "2026-10-21")] alias harmonicMean_le_expect := Cslib.harmonicMean_le_expect
-@[deprecated (since := "2026-10-21")] alias expect_harmonicMean_le := Cslib.expect_harmonicMean_le
-@[deprecated (since := "2026-10-21")] alias harmonicMean_const := Cslib.harmonicMean_const
-@[deprecated (since := "2026-10-21")]
-alias harmonicMean_light_fraction_le := Cslib.harmonicMean_light_fraction_le
-@[deprecated (since := "2026-10-21")] alias harmonicMean_pair := Cslib.harmonicMean_pair
-
 end Cslib.BitString

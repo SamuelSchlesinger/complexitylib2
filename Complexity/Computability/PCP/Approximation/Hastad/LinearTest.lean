@@ -392,30 +392,4 @@ theorem hastadLinearCorr_sq_le (π : β → γ) {δ : ℝ} (hδ0 : 0 ≤ δ) (h�
 
 end Soundness
 
-/-! ### Deprecated aliases -/
-
-@[deprecated (since := "2026-10-22")] alias signVal_longCode := Cslib.BitString.signVal_longCode
-@[deprecated (since := "2026-10-22")] alias IsFolded := Cslib.BitString.IsOdd
-@[deprecated (since := "2026-10-22")] alias isFolded_longCode := Cslib.BitString.isOdd_longCode
-@[deprecated (since := "2026-10-22")] alias foldTable := Cslib.BitString.foldTable
-@[deprecated (since := "2026-10-22")] alias isFolded_foldTable := Cslib.BitString.isOdd_foldTable
-@[deprecated (since := "2026-10-22")]
-alias IsFolded.foldTable_eq := Cslib.BitString.IsOdd.foldTable_eq
-@[deprecated (since := "2026-10-22")]
-alias IsFolded.fourierCoeff_empty := Cslib.BitString.IsOdd.fourierCoeff_empty
-@[deprecated (since := "2026-10-22")]
-alias IsFolded.fourierCoeff_of_even := Cslib.BitString.IsOdd.fourierCoeff_of_even
-@[deprecated (since := "2026-10-22")] alias projectSet := Cslib.BitString.projectSet
-@[deprecated (since := "2026-10-22")] alias mem_projectSet := Cslib.BitString.mem_projectSet
-@[deprecated (since := "2026-10-22")] alias projectSet_empty := Cslib.BitString.projectSet_empty
-@[deprecated (since := "2026-10-22")]
-alias exists_mem_of_mem_projectSet := Cslib.BitString.exists_mem_of_mem_projectSet
-@[deprecated (since := "2026-10-22")]
-alias projectSet_subset_image := Cslib.BitString.projectSet_subset_image
-@[deprecated (since := "2026-10-22")]
-alias card_projectSet_le := Cslib.BitString.card_projectSet_le
-@[deprecated (since := "2026-10-22")] alias projectSet_insert := Cslib.BitString.projectSet_insert
-@[deprecated (since := "2026-10-22")]
-alias chi_comp_eq_chi_projectSet := Cslib.BitString.chi_comp_eq_chi_projectSet
-
 end Cslib.PCP.Hastad

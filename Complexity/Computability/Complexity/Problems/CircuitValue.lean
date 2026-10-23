@@ -108,6 +108,4 @@ theorem mem_P : CircuitValue ∈ P encCircuitValue :=
 
 end CircuitValue
 
-@[deprecated (since := "2026-10-19")] alias CircuitValue_mem_P := CircuitValue.mem_P
-
 end Cslib.Complexity

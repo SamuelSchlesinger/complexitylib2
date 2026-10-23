@@ -330,14 +330,4 @@ theorem exec {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
     exact (hyf.2 i (fun him => List.disjoint_left.mp hdis hi him)
       (digit_ne (hbs i hi)).1 (digit_ne (hbs i hi)).2.1).trans (hz i (hbs i hi))
 
-/-- Deprecated compatibility spelling for the shared register-digit value. -/
-@[deprecated Cslib.WordRAM.Multiword.value +typeChanged (since := "2026-10-23")]
-abbrev value (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : ℕ :=
-  Multiword.value β x ds
-
-/-- Deprecated compatibility spelling for shared digit boundedness. -/
-@[deprecated Cslib.WordRAM.Multiword.Bounded +typeChanged (since := "2026-10-23")]
-abbrev Bounded (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
-  Multiword.Bounded β x ds
-
 end Cslib.WordRAM.Multiword.Difference

@@ -57,12 +57,6 @@ example : language ∈ LWPP encBits :=
   mem_LWPP_iff_exists_disjoint_targets.mpr
     ⟨gap, gap_mem, yesTargets, noTargets, yes_polyTime, no_polyTime, disjoint, accepts, rejects⟩
 
--- The deprecated `_tidy` form consumes certificates with the former tidy types.
-set_option linter.deprecated false in
-example : language ∈ LWPP encBits :=
-  mem_LWPP_of_disjoint_targets_tidy gap_mem yes_polyTime.tidy no_polyTime.tidy
-    disjoint accepts rejects
-
 -- Swapping the lists gives zero as a rejecting target, without a zero-free hypothesis.
 example : languageᶜ ∈ LWPP encBits := by
   apply mem_LWPP_of_disjoint_targets gap_mem no_polyTime yes_polyTime
@@ -107,18 +101,6 @@ example : language ∈ LWPP encBits := by
     refine ⟨0, by lia, ?_⟩
     have ht : w.headD false = false := Bool.eq_false_iff.mpr hw
     simp only [gap, ht, Bool.false_eq_true, ite_false]
-
-/--
-info: 'Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets_tidy' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets_tidy
-
-/--
-info: 'Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets_tidy' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets_tidy
 
 /--
 info: 'Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets' depends on axioms: [propext, Classical.choice, Quot.sound]

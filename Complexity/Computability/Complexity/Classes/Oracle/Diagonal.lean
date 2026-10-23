@@ -47,9 +47,6 @@ namespace Cslib.Complexity
 
 variable {Operation : Type}
 
-@[deprecated (since := "2026-10-22")]
-alias exists_length_eq_notMem := BitString.exists_length_eq_notMem
-
 /-- One stage defeats `D`. It extends an approximation `S`, whose words have length at most `m`,
 only by words longer than `m`, and decides every word up to a new length `m'`: any oracle agreeing
 with the extension up to length `m'` is defeated at some `n`. -/

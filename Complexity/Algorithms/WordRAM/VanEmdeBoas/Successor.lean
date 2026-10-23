@@ -801,7 +801,4 @@ theorem successor_loop_spec {d w stackBase₀ base query : ℕ} {tree : Tree d} 
       rw [hz.mem_eq]
       exact hframe₁ a ha
 
-@[deprecated (since := "2026-10-22")]
-alias successor_isSome_of_lt_max := Tree.successor_isSome_of_lt_max
-
 end Cslib.Algorithms.WordRAM.VanEmdeBoas

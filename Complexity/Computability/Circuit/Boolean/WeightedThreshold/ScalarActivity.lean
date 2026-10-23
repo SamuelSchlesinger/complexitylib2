@@ -544,25 +544,4 @@ theorem circuit_two_pow_lt_mul_sum_choose_gateActivity_of_direction (c : Circuit
   apply two_pow_lt_mul_sum_choose_gateActivity_of_direction c.program (fun z => z gate) w hw ?_ hf
   simpa only [Circuit.eval_of_output_eq_gate hgate] using hcomputes
 
-/-! ### Section 4.3: Cover's enumerative coding for weight-bounded words -/
-
-@[deprecated (since := "2026-10-21")] alias ballSize := Cslib.BitString.ballSize
-@[deprecated (since := "2026-10-21")] alias ballSize_zero_left := Cslib.BitString.ballSize_zero_left
-@[deprecated (since := "2026-10-21")]
-alias ballSize_zero_right := Cslib.BitString.ballSize_zero_right
-@[deprecated (since := "2026-10-21")] alias ballSize_pos := Cslib.BitString.ballSize_pos
-@[deprecated (since := "2026-10-21")] alias ballSize_succ_succ := Cslib.BitString.ballSize_succ_succ
-@[deprecated (since := "2026-10-21")]
-alias card_filter_weight_le_eq_ballSize := Cslib.BitString.card_filter_weight_le_eq_ballSize
-@[deprecated (since := "2026-10-21")] alias coverRank := Cslib.BitString.coverRank
-@[deprecated (since := "2026-10-21")] alias coverDecode := Cslib.BitString.coverDecode
-@[deprecated (since := "2026-10-21")]
-alias coverRank_lt_ballSize := Cslib.BitString.coverRank_lt_ballSize
-@[deprecated (since := "2026-10-21")]
-alias weight_coverDecode_le := Cslib.BitString.weight_coverDecode_le
-@[deprecated (since := "2026-10-21")]
-alias coverRank_coverDecode := Cslib.BitString.coverRank_coverDecode
-@[deprecated (since := "2026-10-21")]
-alias coverDecode_coverRank := Cslib.BitString.coverDecode_coverRank
-
 end Cslib.Circuits.Boolean.WeightedThreshold

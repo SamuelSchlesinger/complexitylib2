@@ -34,9 +34,6 @@ namespace Reader
 
 open Turing MultiTapeTM ComputableTidilyInSpace
 
-@[deprecated (since := "2026-10-20")] alias testBit_inSpace :=
-  Turing.MultiTapeTM.ComputableTidilyInSpace.natTestBit
-
 /-! ### Half of a weight, over a counter -/
 
 /-- A factor of half of a weight, on `((p, k, o), x)` and the counter and product `(j, a)`. -/

@@ -684,12 +684,6 @@ theorem init_executes_universe {w base d : ℕ} {s : Data 32}
   have hsp := span_add_fifteen_le d
   exact ⟨n, by omega, he⟩
 
-@[deprecated (since := "2026-10-22")]
-alias universeSize_mono := Cslib.Algorithms.Lean.VanEmdeBoas.universeSize_mono
-
-@[deprecated (since := "2026-10-22")]
-alias span_mono := Cslib.Algorithms.Lean.VanEmdeBoas.span_mono
-
 /-- The combined tree and scratch region of `span d + 4 * (d + 1)` words is bounded by
 `10 * universeSize d + 4 * (d + 1)`. -/
 theorem init_space_le (d : ℕ) :

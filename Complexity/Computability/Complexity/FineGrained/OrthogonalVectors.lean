@@ -613,9 +613,6 @@ theorem DecidableInTimeO.decidableInExpTime_SAT {ε : ℝ} (hε : 0 < ε) {e : �
   rw [Nat.cast_add, show ((3 + 9 * c : ℕ) : ℝ) = 3 + 9 * (c : ℝ) by push_cast; ring]
   nlinarith
 
-@[deprecated (since := "2026-10-19")]
-alias DecidableInExpTime.SAT_of_OV := DecidableInTimeO.decidableInExpTime_SAT
-
 /-- **The strong exponential time hypothesis implies the orthogonal vectors hypothesis**
 [Williams2005]. -/
 theorem OVH_of_SETH (h : SETH) : OVH := by

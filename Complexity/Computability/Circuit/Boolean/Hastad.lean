@@ -201,9 +201,6 @@ theorem card_filter_not_shallow_le_of_ne_not {op : Op} (hop : op ≠ .not) {k : 
   rw [this, complexity_comp_of_injective (by cases b <;> decide)]
   simpa only [PartialAssignment.fill_fill_of_extends hext] using not_lt.1 hdeep
 
-@[deprecated (since := "2026-10-19")]
-alias card_filter_not_shallow_le_of_andOr := card_filter_not_shallow_le_of_ne_not
-
 /-- **The switching step for one operation.** If the arguments of an operation are shallow under
 `ρ`, few extensions of `ρ` leave it deep. -/
 theorem card_filter_not_shallow_le {op : Op} {args : Fin op.arity → BitString n → Bool}
@@ -250,10 +247,6 @@ theorem two_pow_mul_card_filter_not_shallow_le_of_ne_not {op : Op} (hop : op ≠
     2 ^ s * #{ρ' ∈ ρ.extensions ℓ | ¬ Shallow s ρ' fun x => interpretation op fun j => args j x} ≤
       #(ρ.extensions ℓ) :=
   two_pow_mul_le_card_extensions (card_filter_not_shallow_le_of_ne_not hop h ℓ s) hsℓ hℓ
-
-@[deprecated (since := "2026-10-19")]
-alias two_pow_mul_card_filter_not_shallow_le_of_andOr :=
-  two_pow_mul_card_filter_not_shallow_le_of_ne_not
 
 /-- **The switching fraction for one operation**: if the arguments of an operation are shallow
 under `ρ`, at most a `2 ^ (-s)` fraction of the extensions of `ρ` with `ℓ` free bits leave it
