@@ -82,11 +82,11 @@ def Fits (B : ℕ) (r : Register k → ℕ) : Prop := ∀ i, r i < B
 
 /-- Packed input-free configuration ID. -/
 noncomputable def vertexID (D : ℕ) (v : FiniteCfg k Bool State) : ℕ :=
-  pack (radix D v.input.length) (registers v)
+  Cslib.Radix.pack (radix D v.input.length) (registers v)
 
 /-- Read the registers of an arbitrary ID. -/
 noncomputable def readRegisters (D n u : ℕ) : Register k → ℕ :=
-  component (radix D n) u
+  Cslib.Radix.component (radix D n) u
 
 /-- The input bit to request, in the native zero-based word indexing. Boundary requests are
 ignored by `inputSymbol`; the right boundary may request the absent bit at `n`. -/
@@ -169,7 +169,7 @@ noncomputable def edgeWithSymbol (ntm : MultiTapeNTM k Bool State) (D n u v : �
     ((decide (r .control = stateCode (none : Option State)) && decide (v = u)) ||
       (instructions ntm).any fun t =>
         matchesEntry n r symbol t && fitsB B (nextRegisters n r t.2.2.2) &&
-          decide (v = pack B (nextRegisters n r t.2.2.2)))
+          decide (v = Cslib.Radix.pack B (nextRegisters n r t.2.2.2)))
 
 /-- Accepting halted vertices, the bad set for complement reachability. -/
 noncomputable def bad (D n u : ℕ) : Bool :=
@@ -179,7 +179,7 @@ noncomputable def bad (D n u : ℕ) : Bool :=
 
 /-- The start vertex depends only on input length, since initial storage is blank. -/
 noncomputable def startID (ntm : MultiTapeNTM k Bool State) (D n : ℕ) : ℕ :=
-  pack (radix D n) fun i : Register k => match i with
+  Cslib.Radix.pack (radix D n) fun i : Register k => match i with
     | .inputPos => 1
     | .control => stateCode (some ntm.q₀)
     | _ => 0
