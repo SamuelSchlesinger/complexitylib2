@@ -1289,6 +1289,11 @@ for integration.
 Polynomial efficiency is sufficient for many reductions, but does not establish tight time or
 space bounds. Further class-level work needs resource certificates for the actual algorithms:
 
+* Binary-counted space loops: the [native `Nat.fold` certificate](Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolySpace/Fold.lean)
+  ports lean-canny's indexed fold and adds a prefix-invariant rule. The child and seed may use
+  arbitrary polynomial space; every accumulator prefix must have polynomially bounded encoded
+  length. Extracting lean-canny's recursive evaluator, implicit arithmetic and ETR algorithm
+  remains separate work; this fold establishes none of their algebraic or class-level results.
 * Mathlib TM2 compatibility: the [polynomial-time bridge](Complexity/Computability/Machines/Turing/TM2/PolyTime.lean)
   transfers typed computations with finite working alphabets to the tidy multi-tape calculus
   under standard binary word encodings. The [polynomial-space bridge](Complexity/Computability/Machines/Turing/TM2/PolySpace.lean)
