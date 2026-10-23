@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
@@ -106,16 +107,7 @@ theorem compl_mem_Clique_iff (G : Graph) (m : ℕ) :
 @[fun_prop]
 theorem computableTidilyInPolyTime_compl :
     ComputableTidilyInPolyTime compl encGraph encGraph := by
-  have hdec : ∀ (G : Graph) (u v : ℕ),
-      decide (u ≠ v ∧ (u, v) ∉ G.2 ∧ (v, u) ∉ G.2) = (!decide (u = v) && !G.adjBool u v) := by
-    intro G u v
-    rw [Bool.eq_iff_iff]
-    simp only [decide_eq_true_eq, Bool.and_eq_true, Bool.not_eq_true', decide_eq_false_iff_not,
-      adjBool_eq_false_iff, toSimpleGraph, SimpleGraph.fromRel_adj, ne_eq, not_and, not_or]
-    tauto
-  unfold compl
-  simp_rw [hdec]
-  unfold adjBool encGraph
+  unfold compl encGraph
   fun_prop
 
 end Graph
@@ -146,7 +138,7 @@ theorem computableTidilyInPolyTime_verifier :
 
 /-- `Clique` belongs to `NP`. -/
 theorem mem_NP : Clique ∈ NP (encPair encGraph encNat) :=
-  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, by fun_prop, isVerifier⟩
 
 end Clique
 

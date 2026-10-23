@@ -446,4 +446,20 @@ example {α : Type} (input : α ↪ List Bool) (L N C : α → ℕ)
       ((((L p.1.1, C p.1.1), source p.1.1), p.1.2), p.2)) (by fun_prop)
   polytime
 
+-- Membership and its negation, written as on paper, need no rewriting into Boolean operations.
+example : ComputableInPolyTime (fun l : List ℕ => decide (3 ∈ l)) (encList encNat) encBool := by
+  polytime
+
+example : ComputableInPolyTime (fun p : List ℕ × List ℕ => p.1.filter fun x => x ∉ p.2)
+    (encPair (encList encNat) (encList encNat)) (encList encNat) := by
+  polytime
+
+-- The complement of an edge list on its vertices, as a reduction map writes it.
+example : ComputableInPolyTime
+    (fun G : List ℕ × List (ℕ × ℕ) => G.1.flatMap fun u =>
+      (G.1.filter fun v => decide (u ≠ v ∧ (u, v) ∉ G.2 ∧ (v, u) ∉ G.2)).map fun v => (u, v))
+    (encPair (encList encNat) (encList (encPair encNat encNat)))
+    (encList (encPair encNat encNat)) := by
+  polytime
+
 end ComplexityTests.PolyTimeTactic
