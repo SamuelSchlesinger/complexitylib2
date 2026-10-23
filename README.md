@@ -22,7 +22,7 @@ mathematics. See [Contributing](CONTRIBUTING.md) to propose, implement, or revie
 | State P/NP membership or prove a problem NP-complete | [Checked plain examples](ComplexityTests/NPCompleteness.lean), then [Clique](Complexity/Computability/Complexity/Problems/Clique.lean) |
 | Construct circuits for polynomial-time function families | [Uniform circuit examples](ComplexityTests/UniformCircuits.lean) |
 | Write probabilistic programs or oracle reductions | [PPT examples](ComplexityTests/PPTTactic.lean), [oracle examples](ComplexityTests/OraclePPT.lean) |
-| Find a computational model or mathematical tool | [Module index](Complexity.lean); each module documents its definitions, results, and references |
+| Find a computational model or mathematical tool | [Search the API documentation](https://cslib-community.github.io/complexitylib/search.html), rebuilt nightly from `main`; [Complexity.lean](Complexity.lean) lists every module, and each documents its definitions, results, and references |
 | Contribute a result or improve an API | [Contributing](CONTRIBUTING.md) |
 
 The checked examples show `fun_prop`, `polytime`, and `ppt` with explicit encodings and
@@ -85,9 +85,10 @@ python3 scripts/check_docs.py
 python3 -m http.server --bind 127.0.0.1 --directory docbuild/.lake/build/doc
 ```
 
-Open `http://localhost:8000` to browse and search. The on-demand **API documentation** workflow
-also produces an `api-docs` artifact; serve it by replacing the directory argument above with
-the extracted artifact directory.
+Open `http://localhost:8000` to browse and search. The **API documentation** workflow publishes
+`main` to the [API documentation site](https://cslib-community.github.io/complexitylib/) nightly.
+A manual run on another branch produces an `api-docs` artifact instead; serve it by replacing
+the directory argument above with the extracted artifact directory.
 
 This is the canonical CSLib-based Complexitylib. The renamed historical
 [pre-CSLib implementation](https://github.com/SamuelSchlesinger/complexitylib-v1) remains available
