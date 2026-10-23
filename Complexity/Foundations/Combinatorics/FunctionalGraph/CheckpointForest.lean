@@ -66,10 +66,10 @@ open scoped BigOperators
 universe u
 variable {α : Type u} [Finite α] (f : α → α)
 
+open scoped Classical in
 /-- Follow each checkpoint in `H` along its orbit up to its first periodic point. -/
-noncomputable def checkpointHull (H : Finset α) : Finset α := by
-  classical
-  exact H.biUnion fun h => (Finset.range (transientDepth f h + 1)).image fun t => f^[t] h
+noncomputable def checkpointHull (H : Finset α) : Finset α :=
+  H.biUnion fun h => (Finset.range (transientDepth f h + 1)).image fun t => f^[t] h
 
 theorem mem_checkpointHull (H : Finset α) (x : α) :
     x ∈ checkpointHull f H ↔ ∃ h ∈ H, ∃ t ≤ transientDepth f h, f^[t] h = x := by
@@ -117,35 +117,35 @@ theorem checkpointHull_predecessor (H : Finset α) {x : α}
       show t - 1 + 1 = t by lia]
     exact he
 
+open scoped Classical in
 /-- Sources of the forest edges after cutting outgoing edges at periodic vertices. -/
-noncomputable def forestSources (H : Finset α) : Finset α := by
-  classical
-  exact (checkpointHull f H).filter fun x => 0 < transientDepth f x
+noncomputable def forestSources (H : Finset α) : Finset α :=
+  (checkpointHull f H).filter fun x => 0 < transientDepth f x
 
+open scoped Classical in
 /-- Predecessors of `x` in `forestSources f H`. -/
-noncomputable def forestChildren (H : Finset α) (x : α) : Finset α := by
-  classical
-  exact (forestSources f H).filter fun y => f y = x
+noncomputable def forestChildren (H : Finset α) (x : α) : Finset α :=
+  (forestSources f H).filter fun y => f y = x
 
+open scoped Classical in
 /-- Periodic vertices in `checkpointHull f H` (the roots of the cut forest). -/
-noncomputable def forestRoots (H : Finset α) : Finset α := by
-  classical
-  exact checkpointHull f H \ forestSources f H
+noncomputable def forestRoots (H : Finset α) : Finset α :=
+  checkpointHull f H \ forestSources f H
 
+open scoped Classical in
 /-- Vertices of `checkpointHull f H` with no predecessor in `forestSources f H`. -/
-noncomputable def forestLeaves (H : Finset α) : Finset α := by
-  classical
-  exact (checkpointHull f H).filter fun x => (forestChildren f H x).card = 0
+noncomputable def forestLeaves (H : Finset α) : Finset α :=
+  (checkpointHull f H).filter fun x => (forestChildren f H x).card = 0
 
+open scoped Classical in
 /-- Vertices of `checkpointHull f H` with at least two predecessors in `forestSources f H`. -/
-noncomputable def forestBranches (H : Finset α) : Finset α := by
-  classical
-  exact (checkpointHull f H).filter fun x => 2 ≤ (forestChildren f H x).card
+noncomputable def forestBranches (H : Finset α) : Finset α :=
+  (checkpointHull f H).filter fun x => 2 ≤ (forestChildren f H x).card
 
+open scoped Classical in
 /-- The refined mark set consisting of `H`, the forest roots, and the branching vertices. -/
-noncomputable def forestMarks (H : Finset α) : Finset α := by
-  classical
-  exact H ∪ (forestRoots f H ∪ forestBranches f H)
+noncomputable def forestMarks (H : Finset α) : Finset α :=
+  H ∪ (forestRoots f H ∪ forestBranches f H)
 
 theorem mem_forestSources (H : Finset α) (x : α) :
     x ∈ forestSources f H ↔ x ∈ checkpointHull f H ∧ 0 < transientDepth f x := by

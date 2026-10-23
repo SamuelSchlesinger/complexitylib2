@@ -80,10 +80,10 @@ theorem minimalPeriod_at_periodic_iterate (x : α) {t : ℕ}
     minimalPeriod f (f^[t] x) = cycleLength f x :=
   minimalPeriod_eq_of_periodic_iterates f x ht (iterate_transientDepth_mem_periodicPts f x)
 
+open scoped Classical in
 /-- The eventual cycle of `x`, as a finite set. -/
-noncomputable def cycleSet (x : α) : Finset α := by
-  classical
-  exact Finset.univ.image fun j : Fin (cycleLength f x) =>
+noncomputable def cycleSet (x : α) : Finset α :=
+  Finset.univ.image fun j : Fin (cycleLength f x) =>
     f^[j.val] (f^[transientDepth f x] x)
 
 theorem mem_cycleSet_iff (x y : α) :

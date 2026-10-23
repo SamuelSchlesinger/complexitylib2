@@ -46,11 +46,11 @@ open Function
 universe u
 variable {α : Type u} [Fintype α] (f : α → α)
 
+open scoped Classical in
 /-- The states of transient depth at least `L` and the periodic states on cycles of length at
 least `L`. -/
-noncomputable def activeVertices (L : ℕ) : Finset α := by
-  classical
-  exact Finset.univ.filter fun x => L ≤ transientDepth f x ∨
+noncomputable def activeVertices (L : ℕ) : Finset α :=
+  Finset.univ.filter fun x => L ≤ transientDepth f x ∨
     x ∈ periodicPts f ∧ L ≤ cycleLength f x
 
 theorem mem_activeVertices (L : ℕ) (x : α) :
