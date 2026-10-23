@@ -29,7 +29,7 @@ KEYWORDS = {"abbrev", "def", "theorem", "lemma", "inductive", "structure", "wher
 TYPES = {"Prop", "Type", "Set", "List", "Fin", "Nat", "Bool", "Polynomial", "Finset", "Option"}
 TOKEN_RE = re.compile(r"\b(?:" + "|".join(sorted(KEYWORDS | TYPES)) + r")\b")
 
-# Typography, code-box treatment and syntax colors adapted from Erik Demaine's
+# Typography, code-box treatment and syntax colors adapted from Erik Demaine and Stefan Langerman's
 # translation-tiling-paper, paper.texlish:25-78 at the exact revision linked above.
 # This uses no logo or copied mathematical exposition.
 PREAMBLE = r"""\documentclass[11pt]{article}
@@ -205,8 +205,8 @@ def style_credit():
     return (r"\fancyfoot[C]{\parbox[b]{\textwidth}{\centering\fontsize{8}{9.5}\selectfont"
             r"\color{black!60} Theorem and helper proofs are omitted. "
             "Proof-field underscores mark omitted checked terms. Linked sources contain complete "
-            "definitions and proofs. Layout adapted from Erik Demaine's " +
-            link(STYLE_SOURCE, "paper style") + "; extraction follows his " +
+            "definitions and proofs. Layout adapted from Erik Demaine and Stefan Langerman's " +
+            link(STYLE_SOURCE, "paper style") + "; extraction follows their " +
             link(EXTRACTION_SOURCE, "Lean snippet workflow") + r".\par\thepage}}" + "\n")
 
 

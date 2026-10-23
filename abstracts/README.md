@@ -79,7 +79,7 @@ artifact selection follows [download-artifact v4](https://github.com/actions/dow
 
 ## Layout and sources
 
-The typography, syntax colors and pale code boxes adapt Erik Demaine’s
+The typography, syntax colors and pale code boxes adapt Erik Demaine and Stefan Langerman’s
 [translation-tiling paper style](https://github.com/edemaine/translation-tiling-paper/blob/5309313e662377d2efb353acba454859469606bd/paper.texlish)
 and [Lean snippet extraction workflow](https://github.com/edemaine/translation-tiling-paper/blob/5309313e662377d2efb353acba454859469606bd/figures/extract_lean_snippets.py).
 No logo is copied. Mathematical sources and earlier formalizations are credited in each Lean
