@@ -130,6 +130,8 @@ public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.Continuity
 public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
+public import Complexity.Computability.Circuit.Boolean.DepthTime
+public import Complexity.Computability.Circuit.Boolean.DepthTime.PolyTime
 public import Complexity.Computability.Circuit.Boolean.DuplicateFlags
 public import Complexity.Computability.Circuit.Boolean.ElementDistinctness
 public import Complexity.Computability.Circuit.Boolean.Encoding
@@ -210,7 +212,12 @@ public import Complexity.Computability.Circuit.Boolean.Khrapchenko
 public import Complexity.Computability.Circuit.Boolean.KhrapchenkoDepth
 public import Complexity.Computability.Circuit.Boolean.LMN
 public import Complexity.Computability.Circuit.Boolean.Layered
+public import Complexity.Computability.Circuit.Boolean.Layered.Compile
+public import Complexity.Computability.Circuit.Boolean.Layered.Compile.Correctness
+public import Complexity.Computability.Circuit.Boolean.Layered.Compile.PolyTime
+public import Complexity.Computability.Circuit.Boolean.Layered.Compile.Size
 public import Complexity.Computability.Circuit.Boolean.Layered.PolyTime
+public import Complexity.Computability.Circuit.Boolean.Layered.Size
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
 public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
@@ -1260,6 +1267,8 @@ public import Complexity.Crypto.Computational.Homomorphic.Basic
 public import Complexity.Crypto.Computational.Homomorphic.Circuit
 public import Complexity.Crypto.Computational.Homomorphic.Circuit.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Efficiency
+public import Complexity.Crypto.Computational.Homomorphic.Evaluation
+public import Complexity.Crypto.Computational.Homomorphic.Evaluation.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Layered

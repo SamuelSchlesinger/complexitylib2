@@ -21,6 +21,7 @@ import Mathlib.Data.List.GetD
   Used by deterministic and probabilistic finite-control certificates.
 * `List.getD_mem_or`, `List.getD_idxOf`: a defaulted lookup returns a list member or the default
   value, and returns a member at its first index.
+* `List.getD_map_range`: look up a function tabulated over a bounded range.
 * `List.countP_and_not_add_countP_and`: the members satisfying `p` split by whether they satisfy
   `q`.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
@@ -127,6 +128,12 @@ theorem List.getD_mem_or {α : Type*} (l : List α) (j : ℕ) (d : α) :
 theorem List.getD_idxOf {α : Type*} [BEq α] [LawfulBEq α] {l : List α} {x : α} (hx : x ∈ l)
     (d : α) : l.getD (l.idxOf x) d = x := by
   rw [List.getD_eq_getElem _ _ (List.idxOf_lt_length_iff.2 hx), List.getElem_idxOf]
+
+/-- Reading a mapped range at a valid index applies the map to that index. -/
+theorem List.getD_map_range {α : Type*} (f : ℕ → α) (d : α) {n i : ℕ} (hi : i < n) :
+    ((List.range n).map f).getD i d = f i := by
+  rw [List.getD_eq_getElem _ _ (by simpa using hi)]
+  simp
 
 /-- Partitioning the elements of a list satisfying `p` by whether they satisfy `q`. -/
 theorem List.countP_and_not_add_countP_and {α : Type*} (p q : α → Prop) [DecidablePred p]

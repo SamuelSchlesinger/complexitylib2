@@ -94,12 +94,29 @@ existing developments, source credit and saved branches remain available for a f
    Its [PPT certificate](Complexity/Crypto/Computational/Homomorphic/Layered/PolyTime.lean)
    charges the complete public encoding, including binary wire indices, and bounds execution
    even on malformed keys, links and references.
-   [Refresh tests](ComplexityTests/Crypto/HomomorphicRefresh.lean) and
-   [layered tests](ComplexityTests/Crypto/HomomorphicLayered.lean) instantiate the hypotheses in an
-   explicitly insecure scheme whose base evaluator rejects evaluated inputs. They exercise key
-   switching, repeated refresh, shared wires, constants, empty layers and zero depth.
-   General-circuit conversion with size/depth bounds, a leveled scheme interface that normalizes
-   the final key for circuits below its depth budget, the acyclic IND-CPA reduction, and the
+   The [circuit compiler](Complexity/Computability/Circuit/Boolean/Layered/Compile.lean)
+   turns a shared De Morgan circuit with `s` gates, `n` inputs and designated-output depth `d`
+   into exactly `2d` layers, each of width `n + 3s`, followed by ordered output wiring.
+   [Correctness](Complexity/Computability/Circuit/Boolean/Layered/Compile/Correctness.lean)
+   preserves its semantics, including unused gates, repeated outputs and depth-zero wiring;
+   [size bounds](Complexity/Computability/Circuit/Boolean/Layered/Compile/Size.lean) charge
+   every binary reference and encoding delimiter. Its
+   [native certificate](Complexity/Computability/Circuit/Boolean/Layered/Compile/PolyTime.lean)
+   computes the depth table and schedule uniformly across arities, including malformed raw codes.
+   [Ordinary encrypted evaluation](Complexity/Crypto/Computational/Homomorphic/Evaluation.lean)
+   composes the compiler and layered evaluator along a generated chain of `2d + 1` keys, retaining
+   exact ciphertext width. Its
+   [PPT certificate](Complexity/Crypto/Computational/Homomorphic/Evaluation/PolyTime.lean)
+   covers the complete public input without correctness or validity assumptions.
+   [Refresh tests](ComplexityTests/Crypto/HomomorphicRefresh.lean),
+   [layered tests](ComplexityTests/Crypto/HomomorphicLayered.lean), and
+   [ordinary-circuit tests](ComplexityTests/Crypto/HomomorphicEvaluation.lean) instantiate the
+   hypotheses in an explicitly insecure scheme whose base evaluator rejects evaluated inputs.
+   They exercise key switching, repeated refresh, shared wires, constants, empty layers and zero
+   depth. [Compiler tests](ComplexityTests/CircuitLayering.lean) also cover dead gates, empty
+   outputs, shared OR gates, skipped depths, and malformed binary references.
+   A leveled scheme interface that normalizes the final key for circuits below its depth budget,
+   the acyclic IND-CPA reduction, and the
    additional circular-security result remain open in
    [#322](https://github.com/cslib-community/complexitylib/issues/322). These milestones establish
    neither a concrete LWE scheme nor an encryption-security theorem.

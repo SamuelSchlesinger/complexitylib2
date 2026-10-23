@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Prim
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
+import Mathlib.Data.List.GetD
 
 /-!
 # Circuits as lists of gates
@@ -202,6 +203,12 @@ theorem code_eq_ofFn_lines (p : Program σ n k) :
   | gate q line ih =>
     rw [code_gate, ih, List.ofFn_succ' fun j => ((q.gate line).lines j).code]
     simp [Line.code_mapWires_castSucc, List.concat_eq_append]
+
+/-- Reading an existing encoded gate returns the code of its widened program line. -/
+theorem getD_code (p : Program σ n k) (j : Fin k) (d : σ.Op × List ℕ) :
+    p.code.getD j d = (p.lines j).code := by
+  rw [code_eq_ofFn_lines]
+  simp
 
 /-- `IsCodeFrom σ n k gates`: every entry of `gates` has the arity of its operation and reads only
 the `n` inputs and the gates before it, the first entry being gate `k`. Such lists, with `k = 0`,

@@ -21,8 +21,11 @@ the specified fallback without running for time proportional to the numerical in
 ## Main results
 
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeCode`: read a node's code.
+* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeConst`,
+  `computableTidilyInPolyTime_nodeCopy`, `computableTidilyInPolyTime_nodeNand`: construct nodes.
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeEval`: evaluate one node.
 * `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_evalLayer`: evaluate one layer.
+* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_select`: select ordered outputs.
 -/
 
 @[expose] public section
@@ -37,6 +40,30 @@ theorem computableTidilyInPolyTime_nodeCode :
     ComputableTidilyInPolyTime Node.code encNode
       (encPair (encPair encBool encBool) (encPair encNat encNat)) :=
   .of_eq fun _ => rfl
+
+/-- Construct a constant node. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_nodeConst :
+    ComputableTidilyInPolyTime Node.const encBool encNode :=
+  .of_finite _
+
+/-- Construct a copy node, preserving the binary wire index. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_nodeCopy :
+    ComputableTidilyInPolyTime Node.copy encNat encNode := by
+  have h : ComputableTidilyInPolyTime (fun i : ℕ => ((true, false), i, 0)) encNat
+      (encPair (encPair encBool encBool) (encPair encNat encNat)) := by fun_prop
+  exact h.of_enc_eq fun _ => rfl
+
+/-- Construct a NAND node, preserving both binary wire indices. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_nodeNand :
+    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Node.nand p.1 p.2)
+      (encPair encNat encNat) encNode := by
+  have h : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => ((true, true), p))
+      (encPair encNat encNat) (encPair (encPair encBool encBool) (encPair encNat encNat)) := by
+    fun_prop
+  exact h.of_enc_eq fun _ => rfl
 
 /-- Node evaluation is polynomial in the encoded input, including invalid binary wire indices. -/
 @[fun_prop]
@@ -78,5 +105,16 @@ theorem computableTidilyInPolyTime_evalLayer {α : Type} {input : α ↪ List Bo
   apply ComputableTidilyInPolyTime.listToBits.comp
   apply ComputableTidilyInPolyTime.mapWithInput hlayer
   apply computableTidilyInPolyTime_nodeEval <;> fun_prop
+
+/-- Free output selection is polynomial even for malformed binary indices. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_select {α : Type} {input : α ↪ List Bool}
+    {inputs : α → List Bool} {outputs : α → List ℕ}
+    (hinputs : ComputableTidilyInPolyTime inputs input encBits)
+    (houtputs : ComputableTidilyInPolyTime outputs input (encList encNat)) :
+    ComputableTidilyInPolyTime (fun a => select (inputs a) (outputs a)) input encBits := by
+  apply ComputableTidilyInPolyTime.listToBits.comp
+  apply ComputableTidilyInPolyTime.mapWithInput houtputs
+  exact ComputableTidilyInPolyTime.listGetD_binary false (by fun_prop) (by fun_prop)
 
 end Cslib.Circuits.Boolean.Layered

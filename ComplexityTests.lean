@@ -67,6 +67,7 @@ import ComplexityTests.CircuitHamming.Continuity
 import ComplexityTests.CircuitHamming.Gates
 import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
+import ComplexityTests.CircuitLayering
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CircuitValueCompleteness
 import ComplexityTests.ClassClosure
@@ -107,6 +108,7 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.GMWPointwise
+import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicLayered
 import ComplexityTests.Crypto.HomomorphicRefresh

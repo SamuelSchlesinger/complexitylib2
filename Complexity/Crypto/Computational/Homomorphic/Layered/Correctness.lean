@@ -21,7 +21,8 @@ There is one key transition per scheduled layer, regardless of its number of nod
 The runtime receives the public projection of the target keys and encrypted links. The full
 key-pair list is only a witness in these theorems. The final plaintexts decrypt with the last
 secret key; fresh inputs use the first key. Packaging these distinct levels into an encryption
-interface, general-circuit conversion, and security reductions are separate obligations.
+interface and proving security remain separate obligations. `Homomorphic.Evaluation` composes
+this theorem with the ordinary-circuit compiler and output selection.
 
 ## Main results
 
