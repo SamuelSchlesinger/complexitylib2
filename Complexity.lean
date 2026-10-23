@@ -1447,7 +1447,9 @@ public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
+public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.SigmaProtocol.Linear
+public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Foundations.Analysis.HarmonicMean
 public import Complexity.Foundations.Analysis.MarkovInequality
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
@@ -1860,6 +1862,7 @@ public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
 public import Complexity.Probability.Product
 public import Complexity.Probability.Quantile
+public import Complexity.Probability.Rewinding
 public import Complexity.Probability.Shearer
 public import Complexity.Probability.SmallBias
 public import Complexity.Probability.SmallBias.Powering
