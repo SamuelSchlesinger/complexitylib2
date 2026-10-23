@@ -993,8 +993,9 @@ batches.
    than mechanically. Generated PDFs are review and dissemination artifacts, not additional proofs.
 
 6. **Plain computability in definitions and public results (#456).** Plain
-   `ComputableInPolyTime` and its tidy bridges are in place. Redefine the classes and reductions
-   that still use `ComputableTidilyInPolyTime` (#546–#550), add plain space, big-O and FPT notions
+   `ComputableInPolyTime` and its tidy bridges are in place, and `P`, `NP`, `FNP` and the
+   polynomial-time reductions use it (#546). Redefine the classes and reductions that still use
+   `ComputableTidilyInPolyTime` (#547–#550), add plain space, big-O and FPT notions
    (#551), restate public characterizations and closure lemmas plainly, and switch the abstract
    bridges to the shared predicate after #497.
 
