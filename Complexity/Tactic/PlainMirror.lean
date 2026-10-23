@@ -115,6 +115,46 @@ private def registerFunProp (source target : Name) (kind : AttributeKind) : Meta
   else if let some rule := transitions.find? (·.thmName == source) then
     Mathlib.Meta.FunProp.addTheorem target kind rule.priority
 
+private def mirroredApply {α : Type} (rule : Aesop.Rule α) (target : Name) :
+    MetaM (Aesop.Rule α) := do
+  let .apply (.const _) transparency := rule.tac
+    | throwError "unsupported Aesop builder for plain mirror {rule.name.name}"
+  if rule.pattern?.isSome then
+    throwError "an explicit Aesop pattern requires a separately checked plain counterpart"
+  let indexingMode ← match rule.indexingMode with
+    | .unindexed => pure .unindexed
+    | .target _ => Aesop.IndexingMode.targetMatchingConclusion (← getConstInfo target).type
+    | _ => throwError "unsupported Aesop indexing mode for plain mirror {rule.name.name}"
+  let name : Aesop.RuleName := {
+    name := target
+    builder := rule.name.builder
+    phase := rule.name.phase
+    scope := rule.name.scope }
+  return { rule with name, indexingMode, tac := .apply (.const target) transparency }
+
+private def registerAesop (source target : Name) (kind : AttributeKind) : MetaM Unit := do
+  let (ext, _, _, _, _) ← Aesop.Frontend.getGlobalRuleSetData `PolyTime
+  let entries ← globalEntries ext
+  for entry in entries do
+    if entry.name.name == source then
+      let mirrored ← match entry with
+        | .safeRule rule => pure (.safeRule (← mirroredApply rule target))
+        | .unsafeRule rule => pure (.unsafeRule (← mirroredApply rule target))
+        | .normRule rule => pure (.normRule (← mirroredApply rule target))
+        | _ => throwError "unsupported Aesop rule form for plain mirror {source}"
+      unless entries.any (·.name == mirrored.name) do ext.add mirrored kind
+
+private def registerRules (source target : Name) (kind : AttributeKind) : MetaM Unit := do
+  registerFunProp source target kind
+  for (_key, name, eager) in ← globalEntries Cslib.Tactic.certificateExt do
+    if name == source then
+      let key ← forallTelescope (← getConstInfo target).type fun _ conclusion =>
+        Cslib.Tactic.efficiencyKey conclusion
+      let existing := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD key #[]
+      unless existing.any (·.1 == target) do
+        Cslib.Tactic.certificateExt.add (key, target, eager) kind
+  registerAesop source target kind
+
 private def existingCovers (target : Name) (type : Expr) : MetaM Unit := do
   forallTelescope type fun xs conclusion => do
     let goal ← mkFreshExprMVar conclusion
@@ -157,12 +197,7 @@ def mirrorDeclaration (source target : Name) (kind : AttributeKind := .global) :
     let value ← mkEqMPR (← result.getProof) (mkConst source (info.levelParams.map .param))
     addDecl (.thmDecl { name := target, levelParams := info.levelParams, type, value })
     addDocStringCore target s!"Plain counterpart of `{source}`, derived by proved equivalences."
-  registerFunProp source target kind
-  for (_key, name, eager) in ← globalEntries Cslib.Tactic.certificateExt do
-    if name == source then
-      let plainKey ← forallTelescope type fun _ conclusion =>
-        Cslib.Tactic.efficiencyKey conclusion
-      Cslib.Tactic.certificateExt.add (plainKey, target, eager) kind
+  registerRules source target kind
   let env ← getEnv
   let sourceModule := match env.getModuleIdxFor? source with
     | some idx => env.header.moduleNames[idx]!
@@ -226,3 +261,12 @@ syntax (name := plainMirrorSources) "plain_mirror_sources" "[" ident,* "]" : com
 elab_rules : command
   | `(plain_mirror_sources [$modules:ident,*]) => Command.liftTermElabM do
     Cslib.Tactic.PlainMirror.mirrorModules (modules.getElems.map (·.getId))
+
+/-- Refresh mirror registrations after source rule annotations, preserving eager premises and
+Aesop apply priorities without duplicating existing entries. -/
+syntax (name := plainMirrorRegistrations) "plain_mirror_registrations" : command
+
+elab_rules : command
+  | `(plain_mirror_registrations) => Command.liftTermElabM do
+    for (source, target, _) in ← Cslib.Tactic.PlainMirror.mirrorPairs do
+      Cslib.Tactic.PlainMirror.registerRules source target .global
