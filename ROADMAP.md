@@ -214,8 +214,18 @@ existing developments, source credit and saved branches remain available for a f
    [Sampling tests](ComplexityTests/Crypto/GSWSampling.lean) include nonzero signed errors,
    actual generated keys, both messages, NAND, empty dimensions and growing native inputs.
    These results do not identify the finite noise with a Gaussian or assert its hardness.
-   Computational security, native certificates for complete matrix algorithms, admissible parameter families
-   and bootstrappability remain open in #486.
+   The [statistical hiding theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Hiding.lean)
+   proves the uniform-public-matrix step of their security argument. For `d = n + 1` and
+   `N = d * w`, the actual ciphertext gives any randomized two-stage adversary acceptance
+   probabilities differing by at most `N * sqrt(2^(w*d) / 2^m)`. The adversary sees the public
+   matrix before choosing its messages and retains arbitrary state. The underlying
+   [shared-matrix bound](Complexity/Probability/BitString/SubsetSum/Matrix.lean) works for every
+   positive modulus, with loss linear in the number of independently sampled binary rows;
+   it neither assumes whole-matrix two-universality nor gives a bound for every fixed matrix.
+   [Regressions](ComplexityTests/Crypto/GSWHiding.lean) include a composite-modulus counterexample
+   to whole-matrix universality and an adaptive game with exact nonzero advantage.
+   Computational security, native certificates for complete matrix algorithms, admissible parameter
+   families and bootstrappability remain open in #486.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
@@ -1273,7 +1283,9 @@ space bounds. Further class-level work needs resource certificates for the actua
   individual operations by programs over smaller bases remain open (#293).
   Generalizing the structured program calculus and time-class APIs to arbitrary domains,
   weighted/bit costs, and simulations between these instances also remain open. No
-  real-RAM/Turing-machine equivalence is claimed;
+  real-RAM/Turing-machine equivalence is claimed. The redesigned typed core is proposed in
+  [CSLib #1158](https://github.com/leanprover/cslib/pull/1158); its scope and remaining compatibility
+  bridges are recorded in [UPSTREAM.md](UPSTREAM.md#coordination-before-submission);
 * Sparse RAM memory: [association-list semantics](Complexity/Computability/GenericRAM/SparseMemory/Basic.lean)
   and [native multitape TM certificates](Complexity/Computability/GenericRAM/SparseMemory/Turing.lean)
   implement default-valued reads and insert/replace writes using Mathlib's `AList` and the existing

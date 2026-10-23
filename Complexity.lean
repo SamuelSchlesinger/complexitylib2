@@ -1313,6 +1313,7 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Noise
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Randomness
@@ -1791,6 +1792,8 @@ public import Complexity.Probability.BitString.LinearHash.Collisions
 public import Complexity.Probability.BitString.List
 public import Complexity.Probability.BitString.List.All
 public import Complexity.Probability.BitString.List.Vote
+public import Complexity.Probability.BitString.SubsetSum
+public import Complexity.Probability.BitString.SubsetSum.Matrix
 public import Complexity.Probability.BoundedDifferences
 public import Complexity.Probability.Chernoff
 public import Complexity.Probability.Collision
@@ -1826,6 +1829,7 @@ public import Complexity.Probability.Shearer
 public import Complexity.Probability.SmallBias
 public import Complexity.Probability.SmallBias.Powering
 public import Complexity.Probability.StatisticalDistance
+public import Complexity.Probability.StatisticalDistance.Product
 public import Complexity.Probability.Uniform
 public import Complexity.Probability.UniformNat
 public import Complexity.Probability.UniversalHash
