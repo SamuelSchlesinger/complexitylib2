@@ -1116,6 +1116,7 @@ public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.SelectedComposition
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.Adaptive
+public import Complexity.Computability.Probabilistic.CenteredBinomial
 public import Complexity.Computability.Probabilistic.CoinTape
 public import Complexity.Computability.Probabilistic.Finite
 public import Complexity.Computability.Probabilistic.LinearHash
@@ -1314,6 +1315,9 @@ public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Noise
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Randomness
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Serialized
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid.Game
@@ -1655,6 +1659,7 @@ public import Complexity.Foundations.Semantics.Stateful.Resource
 public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
+public import Complexity.Languages.Probabilistic.CenteredBinomial
 public import Complexity.Languages.Probabilistic.Concentration
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.LinearHash
@@ -1673,6 +1678,7 @@ public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.Traverse
 public import Complexity.Languages.Probabilistic.UniformNat
+public import Complexity.Languages.Probabilistic.Vector
 public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding
 public import Complexity.Logics.FirstOrder.Encoding.Layout

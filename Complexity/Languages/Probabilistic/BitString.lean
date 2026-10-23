@@ -24,6 +24,7 @@ certified separately in `Computability.Probabilistic.Sampling`.
 ## Main results
 
 * `Cslib.BitString.eval_sampleList`: agreement with the finite uniform distribution.
+* `Cslib.ProbComp.eval_bind_of_uniformList`: concatenate fixed-length seeds for sequential runs.
 
 ## References
 
@@ -49,3 +50,22 @@ noncomputable def sampleList : ℕ → ProbComp (List Bool)
   | succ n ih => simp [sampleList, uniformList_succ, ih]
 
 end Cslib.BitString
+
+namespace Cslib.ProbComp
+
+/-- Two fixed-length fair-bit seeds concatenate, including when the second program depends on
+the first result. This is an exact distribution law, without an efficiency assertion. -/
+theorem eval_bind_of_uniformList {α β : Type} (first second : ℕ)
+    (program : ProbComp α) (next : α → ProbComp β)
+    (evaluate : List Bool → α) (evaluateNext : α → List Bool → β)
+    (hprogram : eval program = (BitString.uniformList first).map evaluate)
+    (hnext : ∀ a, eval (next a) = (BitString.uniformList second).map (evaluateNext a)) :
+    eval (do let a ← program; next a) =
+      (BitString.uniformList (first + second)).map (fun tape =>
+        evaluateNext (evaluate (tape.take first)) (tape.drop first)) := by
+  rw [eval_bind, hprogram, PMF.bind_map]
+  simp only [Function.comp_def, hnext]
+  exact (BitString.uniformList_bind_split first second
+    (fun front back => PMF.pure (evaluateNext (evaluate front) back))).symm
+
+end Cslib.ProbComp

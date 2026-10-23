@@ -9,18 +9,23 @@ module
 
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Computability.Probabilistic.Sampling
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Tactic.PPT
 
 /-!
 # Sampling bounded indices in strict polynomial time
 
-Each sampler uses a fixed number of fair bits. Binary decoding saturates at a computed cap,
-so both its intermediate states and its unary output remain polynomially bounded. The dyadic
-range is at most `2 * (bound + 1)`, including zero. No unbounded rejection loop is used.
+Each sampler uses a fixed number of fair bits. `sampleBinaryNat` takes a unary bit width and
+returns the sampled value in binary. The bounded-index samplers instead saturate binary decoding
+at a computed cap, so both their intermediate states and their unary outputs remain polynomially
+bounded. The dyadic range is at most `2 * (bound + 1)`, including zero. No unbounded rejection
+loop is used.
 
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_dyadicSize`: efficient unary range size.
+* `Cslib.Probability.isPPTOn_sampleBinaryNat`: uniform sampling with binary output.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat`: sample a computed bit width.
 * `Cslib.Probability.isPPTOn_sampleDyadicIndex`: exact uniform sampling in the dyadic range.
 * `Cslib.Probability.isPPTOn_sampleBoundedIndex`: capped sampling with a rejection sentinel.
 * `Cslib.Probability.isPPTOn_sampleDyadicCoin`: exact capped dyadic probabilities.
@@ -50,6 +55,10 @@ namespace Cslib.Probability
 
 open Turing.MultiTapeTM
 
+/-- A unary bit width gives a uniformly strict PPT sampler with binary natural output. -/
+theorem isPPTOn_sampleBinaryNat : IsPPTOn encUnary encNat sampleBinaryNat :=
+  isPPTOn_sampleList.map ComputableTidilyInPolyTime.bitsBinaryValue
+
 /-- An efficiently supplied unary bound gives a strict PPT exact dyadic sampler. -/
 @[program_certificate]
 theorem isPPTOn_sampleDyadicIndex {α : Type} {input : α ↪ List Bool} {bound : α → ℕ}
@@ -77,3 +86,12 @@ theorem isPPTOn_sampleBoundedIndex {α : Type} {input : α ↪ List Bool} {bound
   ppt
 
 end Cslib.Probability
+
+/-- Sample a binary natural using an efficiently computed unary bit width. -/
+@[fun_prop]
+theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat {α : Type}
+    {input : α ↪ List Bool} {width : α → ℕ}
+    (hwidth : ComputableTidilyInPolyTime width input encUnary) :
+    Cslib.Probability.IsPPTOn input encNat
+      (fun a => Cslib.Probability.sampleBinaryNat (width a)) :=
+  Cslib.Probability.isPPTOn_sampleBinaryNat.preprocess hwidth

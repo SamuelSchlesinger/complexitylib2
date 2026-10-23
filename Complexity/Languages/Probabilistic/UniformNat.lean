@@ -13,6 +13,9 @@ public import Complexity.Probability.UniformNat
 /-!
 # Sampling bounded indices
 
+`sampleBinaryNat width` interprets exactly `width` fair bits as a natural number, giving the
+uniform distribution below `2 ^ width`. Its runtime certificate uses binary output.
+
 `sampleBoundedIndex bound` uses `log₂ bound + 1` fair bits. Each index strictly below `bound`
 has the same probability; the remaining probability is assigned to the sentinel `bound`.
 There is no unbounded rejection loop.
@@ -23,12 +26,14 @@ range is at most `2 * (bound + 1)`. `sampleDyadicCoin bound numerator` compares 
 
 ## Main definitions
 
+* `sampleBinaryNat`: exact uniform sampling from a specified bit width.
 * `sampleDyadicIndex`: exact uniform sampling in the power-of-two range.
 * `sampleBoundedIndex`: a capped uniform index with a rejection sentinel.
 * `sampleDyadicCoin`: an exact capped dyadic acceptance probability.
 
 ## Main results
 
+* `eval_sampleBinaryNat`, `mem_support_sampleBinaryNat_iff`: the exact law and support.
 * `eval_sampleDyadicIndex`, `eval_sampleBoundedIndex`: exact distribution laws.
 * `eval_sampleDyadicCoin_true`: exact acceptance mass, including zero and one.
 
@@ -43,6 +48,29 @@ Adapted from `Languages/Probabilistic/UniformNat.lean` on the cslib `crypto` bra
 namespace Cslib.Probability
 
 open BitString
+
+/-- Interpret exactly `width` independent fair bits as a binary natural number. -/
+noncomputable def sampleBinaryNat (width : ℕ) : ProbComp ℕ :=
+  binaryValue <$> BitString.sampleList width
+
+@[simp] theorem sampleBinaryNat_zero : sampleBinaryNat 0 = pure 0 := rfl
+
+/-- The sampled value is exactly uniform below `2 ^ width`, including width zero. -/
+theorem eval_sampleBinaryNat (width : ℕ) :
+    ProbComp.eval (sampleBinaryNat width) =
+      (PMF.uniformOfFintype (Fin (2 ^ width))).map Fin.val := by
+  simp only [sampleBinaryNat, ProbComp.eval_map, BitString.eval_sampleList,
+    uniformList_binaryValue]
+
+/-- Every value below `2 ^ width` can occur, and no other value can occur. -/
+theorem mem_support_sampleBinaryNat_iff (width value : ℕ) :
+    value ∈ (ProbComp.eval (sampleBinaryNat width)).support ↔ value < 2 ^ width := by
+  rw [eval_sampleBinaryNat, PMF.mem_support_map_iff]
+  constructor
+  · rintro ⟨i, _, rfl⟩
+    exact i.isLt
+  · intro hvalue
+    exact ⟨⟨value, hvalue⟩, by simp, rfl⟩
 
 /-- An exact uniform index in a power-of-two range, using a fixed number of fair bits. -/
 noncomputable def sampleDyadicIndex (bound : ℕ) : ProbComp ℕ :=

@@ -199,6 +199,21 @@ existing developments, source credit and saved branches remain available for a f
    [Tests](ComplexityTests/Crypto/GSW.lean) exercise both messages and all NAND inputs with nonzero
    noise, including negative wraparound and decoder boundaries. This is the power-of-two
    specialization of Gentry--Sahai--Waters (2013), omitting its redundant top digit.
+   The [finite samplers](Complexity/Crypto/Computational/Homomorphic/GSW/Sampling.lean)
+   instantiate actual key generation and encryption with uniform power-of-two residues,
+   independent binary coins and errors given by the difference of two independent `η`-bit counts.
+   Every supported error lies in `[-η, η]`. Fresh encryption and NAND of two fresh ciphertexts
+   are correct under the respective strict margins
+   `4*m*η < 2^w` and `4*(1+N)*m*η < 2^w`, respectively, with `w > 0`.
+   A [flat-tape identity](Complexity/Crypto/Computational/Homomorphic/GSW/Sampling/Randomness.lean)
+   preserves the full joint public-key, secret-key and ciphertext law using
+   `n*w + m*n*w + 2*m*η + N*m` fair bits.
+   [Serialized random-input samplers](Complexity/Crypto/Computational/Homomorphic/GSW/Sampling/Serialized.lean)
+   have uniform native PPT certificates and exact typed-distribution bridges, with unary
+   dimensions, binary residues and signed binary errors.
+   [Sampling tests](ComplexityTests/Crypto/GSWSampling.lean) include nonzero signed errors,
+   actual generated keys, both messages, NAND, empty dimensions and growing native inputs.
+   These results do not identify the finite noise with a Gaussian or assert its hardness.
    The [statistical hiding theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Hiding.lean)
    proves the uniform-public-matrix step of their security argument. For `d = n + 1` and
    `N = d * w`, the actual ciphertext gives any randomized two-stage adversary acceptance
@@ -209,8 +224,8 @@ existing developments, source credit and saved branches remain available for a f
    it neither assumes whole-matrix two-universality nor gives a bound for every fixed matrix.
    [Regressions](ComplexityTests/Crypto/GSWHiding.lean) include a composite-modulus counterexample
    to whole-matrix universality and an adaptive game with exact nonzero advantage.
-   Sampling, computational security, uniform native algorithms, admissible parameter families
-   and bootstrappability remain open in #486.
+   Computational security, native certificates for complete matrix algorithms, admissible parameter
+   families and bootstrappability remain open in #486.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
