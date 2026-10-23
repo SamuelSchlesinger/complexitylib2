@@ -1257,10 +1257,12 @@ public import Complexity.Computability.WordRAM.Multiword.Bitwise
 public import Complexity.Computability.WordRAM.Multiword.Circuit
 public import Complexity.Computability.WordRAM.Multiword.CircuitRun
 public import Complexity.Computability.WordRAM.Multiword.Compile
+public import Complexity.Computability.WordRAM.Multiword.Digits
 public import Complexity.Computability.WordRAM.Multiword.Mul
 public import Complexity.Computability.WordRAM.Multiword.Shift
 public import Complexity.Computability.WordRAM.Multiword.Sub
 public import Complexity.Computability.WordRAM.Multiword.Transfer
+public import Complexity.Computability.WordRAM.Multiword.Workspace
 public import Complexity.Computability.WordRAM.Native
 public import Complexity.Computability.WordRAM.Notation
 public import Complexity.Computability.WordRAM.PackedCount

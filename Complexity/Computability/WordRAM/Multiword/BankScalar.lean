@@ -37,7 +37,7 @@ Variable right shifts assemble only the shift amount; the shifted input remains 
 
 namespace Cslib.WordRAM.Multiword.Bank
 
-open Schoolbook
+open Workspace
 
 variable {n : ℕ}
 

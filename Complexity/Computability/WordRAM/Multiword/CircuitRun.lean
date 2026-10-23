@@ -80,7 +80,7 @@ end Operation
 
 /-- A one-instruction terminator that copies a workspace register to itself. -/
 def nop : Code .standard (Bank.capacity n + 4) :=
-  .op (.copy Schoolbook.carry Schoolbook.carry)
+  .op (.copy Workspace.carry Workspace.carry)
 
 /-- Execute up to `fuel` consecutive nodes, stopping at the end of the graph. -/
 def run (emit : Fin n → Operation n → Code .standard (Bank.capacity n + 4))
@@ -125,7 +125,7 @@ theorem exec_run
     refine ⟨x, ?_, ?_, rfl⟩
     · simpa [run, nop, Data.set] using
         (ExecWithin.copy (B := .standard) (w := w) (x := x)
-          (d := Schoolbook.carry) (s := Schoolbook.carry))
+          (d := Workspace.carry) (s := Workspace.carry))
     · simpa only [Nat.add_zero] using hx
   | succ fuel ih =>
     have hk : k < n := by omega

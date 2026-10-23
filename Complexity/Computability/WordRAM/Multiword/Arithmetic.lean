@@ -56,24 +56,18 @@ end Arithmetic
 
 namespace Schoolbook
 
-private theorem digit_ne_workspace {i : Fin (r + 4)} (hi : IsDigit i) :
-    i ≠ total ∧ i ≠ carry ∧ i ≠ base ∧ i ≠ zero := by
-  dsimp only [IsDigit] at hi
-  simp only [ne_eq, Fin.ext_iff, total, carry, base, zero]
-  omega
-
 /-- A multiplication cell writes only its output digit and arithmetic workspace. -/
-theorem preserves_cell (a b d i : Fin (r + 4)) (hi : IsDigit i) (hid : i ≠ d) :
+theorem preserves_cell (a b d i : Fin (r + 4)) (hi : Workspace.IsDigit i) (hid : i ≠ d) :
     (cell a b d).Preserves i := by
-  obtain ⟨ht, hc, _, _⟩ := digit_ne_workspace hi
+  obtain ⟨ht, hc, _, _⟩ := Workspace.digit_ne hi
   simp only [cell, Code.Preserves, Op.dest_bin, ne_eq, Option.some.injEq]
   exact ⟨Ne.symm ht, Ne.symm ht, Ne.symm ht, Ne.symm hid, Ne.symm hc⟩
 
 /-- Every digit register outside a row's destinations is syntactically preserved. -/
 theorem preserves_row (a : Fin (r + 4)) (bs ds : List (Fin (r + 4)))
-    (i : Fin (r + 4)) (hi : IsDigit i) (hid : i ∉ ds) :
+    (i : Fin (r + 4)) (hi : Workspace.IsDigit i) (hid : i ∉ ds) :
     (row a bs ds).Preserves i := by
-  have hc := (digit_ne_workspace hi).2.1
+  have hc := (Workspace.digit_ne hi).2.1
   induction bs generalizing ds with
   | nil =>
     simpa only [row, Code.Preserves, Op.dest, ne_eq, Option.some.injEq] using Ne.symm hc
@@ -87,9 +81,9 @@ theorem preserves_row (a : Fin (r + 4)) (bs ds : List (Fin (r + 4)))
 
 /-- Every digit register outside all row destinations is syntactically preserved. -/
 theorem preserves_rows (as bs ds os : List (Fin (r + 4)))
-    (i : Fin (r + 4)) (hi : IsDigit i) (hid : i ∉ ds ++ os) :
+    (i : Fin (r + 4)) (hi : Workspace.IsDigit i) (hid : i ∉ ds ++ os) :
     (rows as bs ds os).Preserves i := by
-  have hc := (digit_ne_workspace hi).2.1
+  have hc := (Workspace.digit_ne hi).2.1
   induction as generalizing bs ds os with
   | nil =>
     simpa only [rows, Code.Preserves, Op.dest, ne_eq, Option.some.injEq] using Ne.symm hc
@@ -100,7 +94,7 @@ theorem preserves_rows (as bs ds os : List (Fin (r + 4)))
     | cons d os =>
       simp only [rows, Code.Preserves, Op.dest, ne_eq, Option.some.injEq]
       refine ⟨Ne.symm hc, preserves_row a bs ds i hi (fun hm => hid (by simp [hm])),
-        ?_, ih (zero :: bs) (ds ++ [d]) os ?_⟩
+        ?_, ih (Workspace.zero :: bs) (ds ++ [d]) os ?_⟩
       · simpa only [Code.Preserves, Op.dest, ne_eq, Option.some.injEq] using
           (show d ≠ i from fun he => hid (by simp [he]))
       · intro hm
@@ -110,40 +104,40 @@ theorem preserves_rows (as bs ds os : List (Fin (r + 4)))
 
 /-- Clearing an accumulator preserves every digit register outside it. -/
 theorem preserves_clear (ds : List (Fin (r + 4)))
-    (i : Fin (r + 4)) (hi : IsDigit i) (hid : i ∉ ds) :
+    (i : Fin (r + 4)) (hi : Workspace.IsDigit i) (hid : i ∉ ds) :
     (clear ds).Preserves i := by
   induction ds with
   | nil =>
     simpa only [clear, Code.Preserves, Op.dest, ne_eq, Option.some.injEq] using
-      Ne.symm (digit_ne_workspace hi).2.1
+      Ne.symm (Workspace.digit_ne hi).2.1
   | cons d ds ih =>
     refine ⟨?_, ih (fun hm => hid (by simp [hm]))⟩
     simpa only [Code.Preserves, Op.dest, ne_eq, Option.some.injEq] using
       (show d ≠ i from fun he => hid (by simp [he]))
 
 /-- Radix initialization writes only the four reserved workspace registers. -/
-theorem preserves_setup (i : Fin (r + 4)) (hi : IsDigit i) :
-    (setup (r := r)).Preserves i := by
-  obtain ⟨ht, hc, hb, hz⟩ := digit_ne_workspace hi
-  simp only [setup, Code.Preserves, Op.width, Op.bin, Op.dest,
+theorem preserves_setup (i : Fin (r + 4)) (hi : Workspace.IsDigit i) :
+    (Workspace.setup (r := r)).Preserves i := by
+  obtain ⟨ht, hc, hb, hz⟩ := Workspace.digit_ne hi
+  simp only [Workspace.setup, Code.Preserves, Op.width, Op.bin, Op.dest,
     ne_eq, Option.some.injEq]
   exact ⟨Ne.symm ht, Ne.symm hc, Ne.symm hb, Ne.symm hc, Ne.symm hb, Ne.symm hz⟩
 
 /-- Multiplication writes only destination digits and the four reserved workspace registers. -/
 theorem preserves_program (as bs ds os : List (Fin (r + 4)))
-    (i : Fin (r + 4)) (hi : IsDigit i) (hid : i ∉ ds ++ os) :
+    (i : Fin (r + 4)) (hi : Workspace.IsDigit i) (hid : i ∉ ds ++ os) :
     (program as bs ds os).Preserves i :=
   ⟨preserves_setup i hi, preserves_clear ds i hi (fun hm => hid (by simp [hm])),
     preserves_rows as bs ds os i hi hid⟩
 
 /-- Clear a digit list, with its full frame and exact cost. -/
 theorem exec_clear_framed {w : ℕ} (ds : List (Fin (r + 4)))
-    (hds : ∀ i ∈ ds, IsDigit i) (hnd : ds.Nodup) (x : Data (r + 4)) :
+    (hds : ∀ i ∈ ds, Workspace.IsDigit i) (hnd : ds.Nodup) (x : Data (r + 4)) :
     ∃ y, Exec w (clear ds) x y (ds.length + 1) ∧
       (∀ i ∈ ds, y.regs i = 0) ∧ Arithmetic.Frame x y ds := by
   induction ds generalizing x with
   | nil =>
-    let y := x.set carry (x.regs carry)
+    let y := x.set Workspace.carry (x.regs Workspace.carry)
     have he : Exec w (clear []) x y 1 := by ram_eval [clear, y]
     exact ⟨y, he, by simp, rfl, fun i hi hid =>
       he.regs_eq (preserves_clear [] i hi hid)⟩
@@ -167,13 +161,15 @@ theorem exec_clear_framed {w : ℕ} (ds : List (Fin (r + 4)))
 and operands have arbitrary fixed lengths and arbitrary disjoint register layouts. -/
 theorem exec_framed {w : ℕ} (hw : 2 ≤ w) (as bs ds os : List (Fin (r + 4)))
     (hlen : bs.length = ds.length) (hos : os.length = as.length)
-    (hin : ∀ i ∈ as ++ bs, IsDigit i) (hout : ∀ i ∈ ds ++ os, IsDigit i)
+    (hin : ∀ i ∈ as ++ bs, Workspace.IsDigit i) (hout : ∀ i ∈ ds ++ os, Workspace.IsDigit i)
     (hnd : (ds ++ os).Nodup) (hdis : List.Disjoint (ds ++ os) (as ++ bs))
-    (x : Data (r + 4)) (ha : Bounded (radix w) x as) (hb : Bounded (radix w) x bs) :
+    (x : Data (r + 4))
+    (ha : Multiword.Bounded (radix w) x as) (hb : Multiword.Bounded (radix w) x bs) :
     ∃ y, Exec w (program as bs ds os) x y
         (7 + bs.length + rowCost as.length bs.length) ∧
-      Bounded (radix w) y (ds ++ os) ∧
-      value (radix w) y (ds ++ os) = value (radix w) x as * value (radix w) x bs ∧
+      Multiword.Bounded (radix w) y (ds ++ os) ∧
+      Multiword.value (radix w) y (ds ++ os) =
+        Multiword.value (radix w) x as * Multiword.value (radix w) x bs ∧
       Arithmetic.Frame x y (ds ++ os) := by
   obtain ⟨y, he, hy, hv, hm, _⟩ := exec hw as bs ds os hlen hos hin hout hnd hdis x ha hb
   exact ⟨y, he, hy, hv, hm, fun i hi hid =>
@@ -185,12 +181,14 @@ theorem exec_eighteen_framed {w : ℕ} (hw : 2 ≤ w)
     (as bs ds os : List (Fin (r + 4)))
     (has : as.length = 18) (hbs : bs.length = 18)
     (hds : ds.length = 18) (hos : os.length = 18)
-    (hin : ∀ i ∈ as ++ bs, IsDigit i) (hout : ∀ i ∈ ds ++ os, IsDigit i)
+    (hin : ∀ i ∈ as ++ bs, Workspace.IsDigit i) (hout : ∀ i ∈ ds ++ os, Workspace.IsDigit i)
     (hnd : (ds ++ os).Nodup) (hdis : List.Disjoint (ds ++ os) (as ++ bs))
-    (x : Data (r + 4)) (ha : Bounded (radix w) x as) (hb : Bounded (radix w) x bs) :
+    (x : Data (r + 4))
+    (ha : Multiword.Bounded (radix w) x as) (hb : Multiword.Bounded (radix w) x bs) :
     ∃ y, Exec w (program as bs ds os) x y 2465 ∧
-      Bounded (radix w) y (ds ++ os) ∧
-      value (radix w) y (ds ++ os) = value (radix w) x as * value (radix w) x bs ∧
+      Multiword.Bounded (radix w) y (ds ++ os) ∧
+      Multiword.value (radix w) y (ds ++ os) =
+        Multiword.value (radix w) x as * Multiword.value (radix w) x bs ∧
       Arithmetic.Frame x y (ds ++ os) := by
   simpa only [has, hbs, rowCost] using
     exec_framed hw as bs ds os (hbs.trans hds.symm) (hos.trans has.symm)
@@ -205,11 +203,12 @@ This is the arithmetic core used before clearing a negative result. -/
 theorem exec_borrow_framed {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
     (hlen : bs.length = ds.length) (hbs : ∀ b ∈ bs, IsDigit b)
     (hds : ∀ d ∈ ds, IsDigit d) (hnd : ds.Nodup) (hdis : List.Disjoint bs ds)
-    (x : Data (r + 4)) (hb : Bounded (radix w) x bs) (hd : Bounded (radix w) x ds) :
+    (x : Data (r + 4))
+    (hb : Multiword.Bounded (radix w) x bs) (hd : Multiword.Bounded (radix w) x ds) :
     ∃ y, Exec w (program w bs ds) x y (6 * ds.length + 4) ∧
-      Bounded (radix w) y ds ∧ y.regs borrow ≤ 1 ∧ y.regs one = 1 ∧
-      value (radix w) y ds + value (radix w) x bs =
-        value (radix w) x ds + radix w ^ ds.length * y.regs borrow ∧
+      Multiword.Bounded (radix w) y ds ∧ y.regs borrow ≤ 1 ∧ y.regs one = 1 ∧
+      Multiword.value (radix w) y ds + Multiword.value (radix w) x bs =
+        Multiword.value (radix w) x ds + radix w ^ ds.length * y.regs borrow ∧
       Arithmetic.Frame x y ds := by
   let z := ((x.set base (radix w)).set one 1).set borrow 0
   have hz (i : Fin (r + 4)) (hi : IsDigit i) : z.regs i = x.regs i := by
@@ -220,8 +219,8 @@ theorem exec_borrow_framed {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
     simp only [z, Data.set_regs, Function.update_apply, hne.1, hne.2.1, hne.2.2,
       ↓reduceIte]
   have hzvalue (es : List (Fin (r + 4))) (hes : ∀ i ∈ es, IsDigit i) :
-      value (radix w) z es = value (radix w) x es := by
-    unfold value
+      Multiword.value (radix w) z es = Multiword.value (radix w) x es := by
+    unfold Multiword.value
     congr 1
     exact List.map_congr_left fun i hi => hz i (hes i hi)
   obtain ⟨y, he, hyd, hyc, hyeq, hyf⟩ := exec_digits hw bs ds hlen hbs hds hnd hdis z
@@ -272,11 +271,13 @@ The clear branch costs `ds.length + 2`; the other branch costs three instruction
 theorem exec_truncating {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
     (hlen : bs.length = ds.length) (hbs : ∀ b ∈ bs, IsDigit b)
     (hds : ∀ d ∈ ds, IsDigit d) (hnd : ds.Nodup) (hdis : List.Disjoint bs ds)
-    (x : Data (r + 4)) (hb : Bounded (radix w) x bs) (hd : Bounded (radix w) x ds) :
+    (x : Data (r + 4))
+    (hb : Multiword.Bounded (radix w) x bs) (hd : Multiword.Bounded (radix w) x ds) :
     ∃ y, ExecWithin w (truncatingProgram w bs ds) x y
         (6 * ds.length + 4 + max (ds.length + 2) 3) ∧
-      Bounded (radix w) y ds ∧
-      value (radix w) y ds = value (radix w) x ds - value (radix w) x bs ∧
+      Multiword.Bounded (radix w) y ds ∧
+      Multiword.value (radix w) y ds =
+        Multiword.value (radix w) x ds - Multiword.value (radix w) x bs ∧
       Arithmetic.Frame x y ds := by
   obtain ⟨z, he, hzd, hzc, hzo, hzeq, hzf⟩ :=
     exec_borrow_framed hw bs ds hlen hbs hds hnd hdis x hb hd
@@ -287,8 +288,8 @@ theorem exec_truncating {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
         z y (ds.length + 2) := by
       exact hey.branch_pos (show (Cond.eq borrow one).Holds z from hc.trans hzo.symm)
     have he' := he.seq hbranch
-    have hlt : value (radix w) x ds < value (radix w) x bs := by
-      have hyv : value (radix w) z ds < radix w ^ ds.length := by
+    have hlt : Multiword.value (radix w) x ds < Multiword.value (radix w) x bs := by
+      have hyv : Multiword.value (radix w) z ds < radix w ^ ds.length := by
         exact Nat.ofDigits_lt_base_pow_length (one_lt_radix hw)
           (by
             intro a ha
@@ -304,7 +305,7 @@ theorem exec_truncating {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
       have := one_lt_radix hw
       omega
     · rw [Nat.sub_eq_zero_of_le (Nat.le_of_lt hlt)]
-      unfold value
+      unfold Multiword.value
       have hm : ds.map y.regs = List.replicate ds.length 0 := by
         simpa only [List.map_const'] using List.map_congr_left hy
       rw [hm, Nat.ofDigits_replicate_zero]
@@ -317,8 +318,8 @@ theorem exec_truncating {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
     have he' := he.seq hbranch
     have hyi (i : Fin (r + 4)) : y.regs i = z.regs i := by
       simp [y, Data.set_regs]
-    have hyvalue : value (radix w) y ds = value (radix w) z ds := by
-      unfold value
+    have hyvalue : Multiword.value (radix w) y ds = Multiword.value (radix w) z ds := by
+      unfold Multiword.value
       congr 1
       exact List.map_congr_left fun i _ => hyi i
     refine ⟨y, ⟨_, ?_, he'⟩, ?_, ?_, rfl.trans hzf.1,
@@ -328,7 +329,7 @@ theorem exec_truncating {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
       rw [hyi]
       exact hzd i hi
     · rw [hyvalue]
-      rw [hc0, Nat.mul_zero, Nat.add_zero] at hzeq
+      simp only [hc0, Nat.mul_zero, Nat.add_zero] at hzeq
       omega
 
 /-- General eighteen-digit natural-number subtraction takes at most 132 instructions. -/
@@ -336,10 +337,12 @@ theorem exec_eighteen_truncating {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r 
     (hbslen : bs.length = 18) (hdslen : ds.length = 18)
     (hbs : ∀ b ∈ bs, IsDigit b) (hds : ∀ d ∈ ds, IsDigit d)
     (hnd : ds.Nodup) (hdis : List.Disjoint bs ds)
-    (x : Data (r + 4)) (hb : Bounded (radix w) x bs) (hd : Bounded (radix w) x ds) :
+    (x : Data (r + 4))
+    (hb : Multiword.Bounded (radix w) x bs) (hd : Multiword.Bounded (radix w) x ds) :
     ∃ y, ExecWithin w (truncatingProgram w bs ds) x y 132 ∧
-      Bounded (radix w) y ds ∧
-      value (radix w) y ds = value (radix w) x ds - value (radix w) x bs ∧
+      Multiword.Bounded (radix w) y ds ∧
+      Multiword.value (radix w) y ds =
+        Multiword.value (radix w) x ds - Multiword.value (radix w) x bs ∧
       Arithmetic.Frame x y ds := by
   simpa [hdslen, max_def] using
     exec_truncating hw bs ds (hbslen.trans hdslen.symm) hbs hds hnd hdis x hb hd
@@ -348,11 +351,13 @@ theorem exec_eighteen_truncating {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r 
 theorem exec_framed {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)))
     (hlen : bs.length = ds.length) (hbs : ∀ b ∈ bs, IsDigit b)
     (hds : ∀ d ∈ ds, IsDigit d) (hnd : ds.Nodup) (hdis : List.Disjoint bs ds)
-    (x : Data (r + 4)) (hb : Bounded (radix w) x bs) (hd : Bounded (radix w) x ds)
-    (hle : value (radix w) x bs ≤ value (radix w) x ds) :
+    (x : Data (r + 4))
+    (hb : Multiword.Bounded (radix w) x bs) (hd : Multiword.Bounded (radix w) x ds)
+    (hle : Multiword.value (radix w) x bs ≤ Multiword.value (radix w) x ds) :
     ∃ y, Exec w (program w bs ds) x y (6 * ds.length + 4) ∧
-      Bounded (radix w) y ds ∧ y.regs borrow = 0 ∧
-      value (radix w) y ds = value (radix w) x ds - value (radix w) x bs ∧
+      Multiword.Bounded (radix w) y ds ∧ y.regs borrow = 0 ∧
+      Multiword.value (radix w) y ds =
+        Multiword.value (radix w) x ds - Multiword.value (radix w) x bs ∧
       Arithmetic.Frame x y ds := by
   obtain ⟨y, he, hy, hc, hv, hm, _⟩ := exec hw bs ds hlen hbs hds hnd hdis x hb hd hle
   exact ⟨y, he, hy, hc, hv, hm, fun i hi hid =>
@@ -364,11 +369,13 @@ theorem exec_eighteen_framed {w : ℕ} (hw : 2 ≤ w) (bs ds : List (Fin (r + 4)
     (hbslen : bs.length = 18) (hdslen : ds.length = 18)
     (hbs : ∀ b ∈ bs, IsDigit b) (hds : ∀ d ∈ ds, IsDigit d)
     (hnd : ds.Nodup) (hdis : List.Disjoint bs ds)
-    (x : Data (r + 4)) (hb : Bounded (radix w) x bs) (hd : Bounded (radix w) x ds)
-    (hle : value (radix w) x bs ≤ value (radix w) x ds) :
+    (x : Data (r + 4))
+    (hb : Multiword.Bounded (radix w) x bs) (hd : Multiword.Bounded (radix w) x ds)
+    (hle : Multiword.value (radix w) x bs ≤ Multiword.value (radix w) x ds) :
     ∃ y, Exec w (program w bs ds) x y 112 ∧
-      Bounded (radix w) y ds ∧ y.regs borrow = 0 ∧
-      value (radix w) y ds = value (radix w) x ds - value (radix w) x bs ∧
+      Multiword.Bounded (radix w) y ds ∧ y.regs borrow = 0 ∧
+      Multiword.value (radix w) y ds =
+        Multiword.value (radix w) x ds - Multiword.value (radix w) x bs ∧
       Arithmetic.Frame x y ds := by
   simpa only [hdslen, Nat.reduceMul, Nat.reduceAdd] using
     exec_framed hw bs ds (hbslen.trans hdslen.symm) hbs hds hnd hdis x hb hd hle

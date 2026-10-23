@@ -291,9 +291,9 @@ theorem exec_positiveCode {w z : ℕ} (hw : 3 ≤ w) (hz0 : 0 < z) (hz : z < 2 ^
     funext i
     exact ite_eq_left i.isLt
   rw [hp] at hu
-  have hval : Schoolbook.value (radix w) u (Bank.regs (43 : Fin 44)) = z.log2 :=
+  have hval : Multiword.value (radix w) u (Bank.regs (43 : Fin 44)) = z.log2 :=
     (hu 43).2.trans (values_output hz0 hz)
-  have hfit : Fits w (Schoolbook.value (radix w) u (Bank.regs (43 : Fin 44))) := by
+  have hfit : Fits w (Multiword.value (radix w) u (Bank.regs (43 : Fin 44))) := by
     rw [hval]
     exact ((Nat.log2_lt (by omega : z ≠ 0)).mpr hz).trans Nat.lt_two_pow_self
   obtain ⟨y, hey, hy, hyf, _⟩ := Transfer.exec_assemble (by omega)
@@ -482,10 +482,10 @@ theorem exec_scalarCode {w : ℕ} (hw : 3 ≤ w) (x : Data (Bank.capacity 44 + 4
   obtain ⟨u, heu, hu, hum, hin⟩ := Bank.exec_clear (w := w) (by omega) x
   obtain ⟨t, het, htb, htv, htf, htp⟩ := Transfer.exec_split_eighteen (w := w) (by omega)
     Bank.inputReg (Bank.regs (0 : Fin 44)) (Bank.length_regs 0)
-    (by dsimp [Schoolbook.IsDigit, Bank.inputReg]; omega)
+    (by dsimp [Workspace.IsDigit, Bank.inputReg]; omega)
     (Bank.digit_regs 0) (Bank.nodup_regs 0) u (by rwa [hin])
   have htbank := Bank.encodes_update hu (0 : Fin 44) _ htb htv
-    (fun i hi hid => htp i (by dsimp [Schoolbook.IsDigit]; omega) hid)
+    (fun i hi hid => htp i (by dsimp [Workspace.IsDigit]; omega) hid)
   rw [hin] at htbank
   have hnot : (Bank.inputReg : Fin (Bank.capacity 44 + 4)) ∉ Bank.regs (0 : Fin 44) := by
     intro hi
@@ -493,7 +493,7 @@ theorem exec_scalarCode {w : ℕ} (hw : 3 ≤ w) (x : Data (Bank.capacity 44 + 4
     dsimp only [Bank.inputReg] at hh
     omega
   have htin : t.regs Bank.inputReg = x.regs Bank.inputReg :=
-    (htp Bank.inputReg (by dsimp [Schoolbook.IsDigit, Bank.inputReg]; omega) hnot).trans hin
+    (htp Bank.inputReg (by dsimp [Workspace.IsDigit, Bank.inputReg]; omega) hnot).trans hin
   obtain ⟨y, hey, hy, hym⟩ := exec_finishCode hw hz t htbank htin
   refine ⟨y, ?_, hy, hym.trans (htf.1.trans hum)⟩
   have hh := heu.within.seq (het.within.seq hey)

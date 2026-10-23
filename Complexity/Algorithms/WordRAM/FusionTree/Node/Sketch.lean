@@ -76,12 +76,12 @@ theorem exec_compress {w n q : ℕ} {keys : Fin n → ℕ} (p : NodeParameters w
           parameter, headerBank, compressBank, bank, NodeParameters.words] using hx.words_eq 2
       | simpa +decide [u, moved, compressionInputs, Data.comap, CompressProgram.embed,
           parameter, headerBank, compressBank, bank, NodeParameters.words] using hx.words_eq 3
-  have hb : Schoolbook.Bounded (radix w) ((u.comap compressBank).comap CompressProgram.embed)
+  have hb : Multiword.Bounded (radix w) ((u.comap compressBank).comap CompressProgram.embed)
       (Schoolbook.rightRegs 3 3) := by
     intro i hi
     obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hi
     exact (hdigit j).trans_lt (p.digits_lt j)
-  have hm : Schoolbook.value (radix w) ((u.comap compressBank).comap CompressProgram.embed)
+  have hm : Multiword.value (radix w) ((u.comap compressBank).comap CompressProgram.embed)
       (Schoolbook.rightRegs 3 3) = p.M := by
     change Nat.ofDigits (radix w)
       [((u.comap compressBank).comap CompressProgram.embed).regs 7,

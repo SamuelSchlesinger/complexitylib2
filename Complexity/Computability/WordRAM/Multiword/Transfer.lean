@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Computability.WordRAM.Multiword.Mul
+public import Complexity.Computability.WordRAM.Multiword.Workspace
 
 /-!
 # Checked transfers between scalar words and digit lists
@@ -38,15 +38,9 @@ little endian in the half-word radix. Registers zero through three are reserved 
 
 namespace Cslib.WordRAM.Multiword.Transfer
 
-open Schoolbook
+open Workspace
 
 variable {r : ℕ}
-
-private theorem digit_ne {i : Fin (r + 4)} (hi : IsDigit i) :
-    i ≠ total ∧ i ≠ carry ∧ i ≠ base ∧ i ≠ zero := by
-  dsimp [IsDigit] at hi
-  simp only [ne_eq, Fin.ext_iff, total, carry, base, zero]
-  omega
 
 /-- Copy one register per instruction, with a final workspace self-copy. -/
 def copy : List (Fin (r + 4)) → List (Fin (r + 4)) → Code .standard (r + 4)
@@ -250,19 +244,13 @@ private theorem exec_accumulate {w : ℕ} (hw : 2 ≤ w) (as : List (Fin (r + 4)
 
 /-- Initialize the radix, reconstruct, and copy to the physical destination register. -/
 def assemble (as : List (Fin (r + 4))) (d : Fin (r + 4)) : Code .standard (r + 4) :=
-  .seq Schoolbook.setup (.seq (accumulate as) (.op (.copy d total)))
+  .seq Workspace.setup (.seq (accumulate as) (.op (.copy d total)))
 
 /-- Assembly has a linear instruction count independent of the physical width. -/
 theorem size_assemble (as : List (Fin (r + 4))) (d : Fin (r + 4)) :
     (assemble as d).size = 2 * as.length + 8 := by
-  simp only [assemble, Code.size, Schoolbook.setup, size_accumulate]
+  simp only [assemble, Code.size, Workspace.setup, size_accumulate]
   omega
-
-private theorem setup_preserves (w : ℕ) (x : Data (r + 4))
-    {i : Fin (r + 4)} (hi : IsDigit i) : (Schoolbook.setupResult w x).regs i = x.regs i := by
-  obtain ⟨ht, hc, hb, hz⟩ := digit_ne hi
-  simp only [Schoolbook.setupResult, Data.set_regs, Function.update_of_ne ht,
-    Function.update_of_ne hc, Function.update_of_ne hb, Function.update_of_ne hz]
 
 /-- Reconstruction is checked at the original physical width. All intermediate Horner values
 fit because the nonnegative final scalar fits. Inputs are preserved when disjoint from `d`.
@@ -273,24 +261,24 @@ theorem exec_assemble {w : ℕ} (hw : 2 ≤ w) (as : List (Fin (r + 4)))
     ∃ y, Exec w (assemble as d) x y (2 * as.length + 8) ∧
       y.regs d = value (radix w) x as ∧ Frame x y [base, zero, d] ∧
       ∀ i, IsDigit i → i ≠ d → y.regs i = x.regs i := by
-  let z := Schoolbook.setupResult w x
+  let z := Workspace.setupResult w x
   have hval : value (radix w) z as = value (radix w) x as := by
     unfold value
     congr 1
-    exact List.map_congr_left fun i hi => setup_preserves w x (hin i hi)
+    exact List.map_congr_left fun i hi => Workspace.setup_digit w x (hin i hi)
   have hbase : z.regs base = radix w := by
-    simp [z, Schoolbook.setupResult, base, zero]
+    simp [z, Workspace.setupResult, base, zero]
   obtain ⟨u, heu, huv, hum, hup⟩ := exec_accumulate hw as hin z hbase
     (by rwa [hval])
   let y := u.set d (u.regs total)
   have hp (i : Fin (r + 4)) (hi : IsDigit i) (hid : i ≠ d) :
       y.regs i = x.regs i := by
     rw [show y.regs i = u.regs i by simp [y, hid], hup i (digit_ne hi).1]
-    exact setup_preserves w x hi
+    exact Workspace.setup_digit w x hi
   refine ⟨y, ?_, ?_, ⟨hum, ?_⟩, hp⟩
   · have hecopy : Exec w (.op (.copy (B := .standard) d total)) u y 1 := Exec.copy
     unfold assemble
-    convert (Schoolbook.exec_setup hw x).seq (heu.seq hecopy) using 1
+    convert (Workspace.exec_setup hw x).seq (heu.seq hecopy) using 1
     omega
   · simpa only [y, Data.set_regs, Function.update_self, hval] using huv
   · intro i hi ht hc
@@ -298,7 +286,7 @@ theorem exec_assemble {w : ℕ} (hw : 2 ≤ w) (as : List (Fin (r + 4)))
     have hz : i ≠ zero := by intro h; exact hi (by simp [h])
     have hd : i ≠ d := by intro h; exact hi (by simp [h])
     simp only [y, Data.set_regs, Function.update_of_ne hd, hup i ht,
-      z, Schoolbook.setupResult, Function.update_of_ne ht, Function.update_of_ne hc,
+      z, Workspace.setupResult, Function.update_of_ne ht, Function.update_of_ne hc,
       Function.update_of_ne hb, Function.update_of_ne hz]
 
 /-- Extract low digits by remainder and division, retaining the final quotient in `total`. -/
@@ -369,12 +357,12 @@ private theorem exec_extract {w : ℕ} (hw : 2 ≤ w) (ds : List (Fin (r + 4)))
 
 /-- Initialize the half-word radix and extract a scalar into fixed output registers. -/
 def split (a : Fin (r + 4)) (ds : List (Fin (r + 4))) : Code .standard (r + 4) :=
-  .seq Schoolbook.setup (.seq (.op (.copy total a)) (extract ds))
+  .seq Workspace.setup (.seq (.op (.copy total a)) (extract ds))
 
 /-- Conversion has a linear width-independent instruction count, including radix setup. -/
 theorem size_split (a : Fin (r + 4)) (ds : List (Fin (r + 4))) :
     (split a ds).size = 2 * ds.length + 8 := by
-  simp only [split, Code.size, Schoolbook.setup, size_extract]
+  simp only [split, Code.size, Workspace.setup, size_extract]
   omega
 
 /-- Exact conversion when the supplied digit list has enough capacity. The input may occur
@@ -387,13 +375,13 @@ theorem exec_split {w : ℕ} (hw : 2 ≤ w) (a : Fin (r + 4))
       Bounded (radix w) y ds ∧ value (radix w) y ds = x.regs a ∧
       Frame x y (base :: zero :: ds) ∧
       ∀ i, IsDigit i → i ∉ ds → y.regs i = x.regs i := by
-  let z := Schoolbook.setupResult w x
+  let z := Workspace.setupResult w x
   let u := z.set total (z.regs a)
   have hua : u.regs total = x.regs a := by
     simp only [u, Data.set_regs, Function.update_self]
-    exact setup_preserves w x ha
+    exact Workspace.setup_digit w x ha
   have hub : u.regs base = radix w := by
-    simp [u, z, Schoolbook.setupResult, base, total, zero]
+    simp [u, z, Workspace.setupResult, base, total, zero]
   obtain ⟨y, hey, hyb, hyv, _, hym, hyp⟩ := exec_extract hw ds hout hnd u hub
     (by rwa [hua])
   rw [hua] at hyv
@@ -407,11 +395,11 @@ theorem exec_split {w : ℕ} (hw : 2 ≤ w) (a : Fin (r + 4))
       y.regs i = x.regs i := by
     rw [hyp i hid (digit_ne hi).1]
     simp only [u, Data.set_regs, Function.update_of_ne (digit_ne hi).1]
-    exact setup_preserves w x hi
+    exact Workspace.setup_digit w x hi
   refine ⟨y, ?_, hyb, ?_, ⟨hym, ?_⟩, hp⟩
   · have hecopy : Exec w (.op (.copy (B := .standard) total a)) z u 1 := Exec.copy
     unfold split
-    convert (Schoolbook.exec_setup hw x).seq (hecopy.seq hey) using 1
+    convert (Workspace.exec_setup hw x).seq (hecopy.seq hey) using 1
     omega
   · simpa only [hyzero, mul_zero, add_zero] using hyv
   · intro i hi ht hc
@@ -419,7 +407,7 @@ theorem exec_split {w : ℕ} (hw : 2 ≤ w) (a : Fin (r + 4))
     have hz : i ≠ zero := by intro h; exact hi (by simp [h])
     have hd : i ∉ ds := fun hm => hi (by simp [hm])
     rw [hyp i hd ht]
-    simp only [u, z, Schoolbook.setupResult, Data.set_regs,
+    simp only [u, z, Workspace.setupResult, Data.set_regs,
       Function.update_of_ne ht, Function.update_of_ne hc,
       Function.update_of_ne hb, Function.update_of_ne hz]
 

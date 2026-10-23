@@ -1189,8 +1189,7 @@ The bounded-size code family contains width-dependent constants; static preproce
 classical witnesses and has no RAM running-time certificate. Uniform preprocessing and dynamic
 updates remain open. The checked-overflow
 [multiword multiplication dependency #444](https://github.com/cslib-community/complexitylib/issues/444)
-provides reusable arithmetic. A focused API follow-up is to extract the duplicated
-`Schoolbook.value`/`Bounded` and `Difference.value`/`Bounded` into a shared
+provides reusable arithmetic. Shared workspace initialization now accompanies the canonical
 `WordRAM/Multiword/Digits` module, letting Transfer, Bitwise and Shift import digit infrastructure
 without depending on multiplication.
 The shared child-height lemmas in `Algorithms/Lean/FusionTree/Tree` support both

@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Computability.WordRAM.Multiword
+public import Complexity.Computability.WordRAM.Multiword.Workspace
 import Mathlib.Data.Nat.Choose.Basic
 
 /-!
@@ -44,37 +44,9 @@ are excluded: their floor-half radix is one and cannot represent a nonzero integ
 
 namespace Cslib.WordRAM.Multiword.Schoolbook
 
+open Workspace
+
 variable {r : ℕ}
-
-/-- Product and partial-sum workspace. -/
-abbrev total : Fin (r + 4) := ⟨0, by omega⟩
-/-- Carry workspace. -/
-abbrev carry : Fin (r + 4) := ⟨1, by omega⟩
-/-- Half-word radix. -/
-abbrev base : Fin (r + 4) := ⟨2, by omega⟩
-/-- A preserved zero, used to shift the multiplier. -/
-abbrev zero : Fin (r + 4) := ⟨3, by omega⟩
-
-/-- Registers outside the four reserved workspace registers. -/
-def IsDigit (i : Fin (r + 4)) : Prop := 4 ≤ i.val
-
-private theorem digit_ne {i : Fin (r + 4)} (hi : IsDigit i) :
-    i ≠ total ∧ i ≠ carry ∧ i ≠ base ∧ i ≠ zero := by
-  dsimp [IsDigit] at hi
-  simp only [ne_eq, Fin.ext_iff, total, carry, base, zero]
-  omega
-
-/-- The value of a little-endian register list. -/
-def value (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : ℕ :=
-  Nat.ofDigits β (ds.map x.regs)
-
-/-- Every register in a digit list contains a radix digit. -/
-def Bounded (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
-  ∀ i ∈ ds, x.regs i < β
-
-/-- A routine changes only its destination digits and the product and carry workspace. -/
-def Frame (x y : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
-  y.mem = x.mem ∧ ∀ i, i ∉ ds → i ≠ total → i ≠ carry → y.regs i = x.regs i
 
 private theorem value_cons (β : ℕ) (x : Data (r + 4)) (d : Fin (r + 4))
     (ds : List (Fin (r + 4))) :
@@ -296,14 +268,6 @@ theorem rowCost_le (m n : ℕ) : rowCost m n ≤ 5 * m * (n + m) + 3 * m + 1 := 
     simp only [rowCost]
     nlinarith
 
-private theorem frame_mono {x y : Data (r + 4)} {ds es : List (Fin (r + 4))}
-    (h : Frame x y ds) (hsub : ds ⊆ es) : Frame x y es :=
-  ⟨h.1, fun i hi ht hc => h.2 i (fun hm => hi (hsub hm)) ht hc⟩
-
-private theorem frame_trans {x y z : Data (r + 4)} {ds : List (Fin (r + 4))}
-    (h : Frame x y ds) (h' : Frame y z ds) : Frame x z ds :=
-  ⟨h'.1.trans h.1, fun i hi ht hc => (h'.2 i hi ht hc).trans (h.2 i hi ht hc)⟩
-
 private theorem frame_carry (x : Data (r + 4)) (v : ℕ) (ds : List (Fin (r + 4))) :
     Frame x (x.set carry v) ds := by
   refine ⟨rfl, fun i _ _ hi => ?_⟩
@@ -483,36 +447,6 @@ theorem exec_rows {w : ℕ} (hw : 2 ≤ w) (I : Set (Fin (r + 4)))
               rcases List.mem_append.mp hi with hi | hi
               · exact Or.inl hi
               · exact Or.inr (Or.inl (List.mem_singleton.mp hi))))) hyf
-
-/-- Compute the half-word radix and a preserved zero in six standard instructions. -/
-def setup : Code .standard (r + 4) := ram[
-  total ← width%;
-  carry ← #2;
-  base ← total / carry;
-  carry ← #1;
-  base ← carry <<< base;
-  zero ← #0 ]
-
-/-- Exact workspace contents after initialization. -/
-def setupResult (w : ℕ) (x : Data (r + 4)) : Data (r + 4) :=
-  let y := (((x.set total w).set carry 2).set base (w / 2)).set carry 1
-  (y.set base (radix w)).set zero 0
-
-theorem exec_setup {w : ℕ} (hw : 2 ≤ w) (x : Data (r + 4)) :
-    Exec w setup x (setupResult w x) 6 := by
-  have h2 : Fits w 2 := lt_of_lt_of_le (by decide : 2 < 2 ^ 2)
-    (Nat.pow_le_pow_right (by decide) hw)
-  have hhalf := (fits_self w).of_le (Nat.div_le_self w 2)
-  have h1 := fits_one (w := w) (by omega)
-  have hβ := radix_fits hw
-  have hshift : 1 <<< (w / 2) = radix w := by rw [Nat.shiftLeft_eq, one_mul]; rfl
-  ram_eval [setup, setupResult, total, carry, base, zero, Fin.mk.injEq,
-    h2, hhalf, h1, hβ, hshift]
-
-private theorem setup_digit (w : ℕ) (x : Data (r + 4)) {i : Fin (r + 4)}
-    (hi : IsDigit i) : (setupResult w x).regs i = x.regs i := by
-  obtain ⟨ht, hc, hb, hz⟩ := digit_ne hi
-  simp only [setupResult, Data.set_regs, Function.update_apply, ht, hc, hb, hz, ↓reduceIte]
 
 /-- Clear the initial accumulator; the empty clear uses one carry self-copy. -/
 def clear : List (Fin (r + 4)) → Code .standard (r + 4)
@@ -846,6 +780,35 @@ theorem six_word_product {w a b : ℕ} (hw : 2 ≤ w)
   have hxb : value (radix w) x (rightRegs 18 18) = b :=
     (value_input_right _ _ _ _ _).trans hvalbs
   exact ⟨x, y, hx, he.bounded hx, he, hxa, hxb, hyb, by rwa [hxa, hxb] at hyval⟩
+
+/-- Deprecated compatibility spelling for the shared register-digit value. -/
+@[deprecated Cslib.WordRAM.Multiword.value +typeChanged (since := "2026-10-23")]
+abbrev value (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : ℕ :=
+  Multiword.value β x ds
+
+/-- Deprecated compatibility spelling for shared digit boundedness. -/
+@[deprecated Cslib.WordRAM.Multiword.Bounded +typeChanged (since := "2026-10-23")]
+abbrev Bounded (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
+  Multiword.Bounded β x ds
+
+@[deprecated Workspace.total (since := "2026-10-23")] alias total := Workspace.total
+
+@[deprecated Workspace.carry (since := "2026-10-23")] alias carry := Workspace.carry
+
+@[deprecated Workspace.base (since := "2026-10-23")] alias base := Workspace.base
+
+@[deprecated Workspace.zero (since := "2026-10-23")] alias zero := Workspace.zero
+
+@[deprecated Workspace.IsDigit (since := "2026-10-23")] alias IsDigit := Workspace.IsDigit
+
+@[deprecated Workspace.Frame (since := "2026-10-23")] alias Frame := Workspace.Frame
+
+@[deprecated Workspace.setup (since := "2026-10-23")] alias setup := Workspace.setup
+
+@[deprecated Workspace.setupResult (since := "2026-10-23")]
+alias setupResult := Workspace.setupResult
+
+@[deprecated Workspace.exec_setup (since := "2026-10-23")] alias exec_setup := Workspace.exec_setup
 
 end Cslib.WordRAM.Multiword.Schoolbook
 
