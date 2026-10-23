@@ -144,12 +144,11 @@ variable {α β : Type*}
 in polynomial time (`polyTimeReducible_iff_manyOneReducibleBy`).
 
 Construct a proof as `⟨f, by fun_prop, h⟩`, where `h` proves the membership equivalence for every
-source instance. Write `f` with certified Boolean, list and arithmetic operations; unfold local
-definitions so `fun_prop` or `polytime` can see them. When a `decide` expression hides those
-operations, prove an equality to Boolean tests first, rewrite with it, then run automation.
-Cost and correctness are separate obligations: automation does not prove `h`. See the checked
-graph-complement example in `ComplexityTests.NPCompleteness` and the existing certificate in
-`Graph.computableTidilyInPolyTime_compl` for the Boolean-test rewrite. -/
+source instance. Write `f` with certified Boolean, list and arithmetic operations, including
+`decide` of connectives, (in)equalities and list membership; unfold local definitions so
+`fun_prop` or `polytime` can see them. Cost and correctness are separate obligations: automation
+does not prove `h`. See the checked graph-complement example in `ComplexityTests.NPCompleteness`.
+-/
 def PolyTimeReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (A : Set α) (B : Set β) :
     Prop :=
   ∃ f : α → β, ComputableInPolyTime f encA encB ∧ ∀ a, a ∈ A ↔ f a ∈ B
