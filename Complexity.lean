@@ -577,6 +577,7 @@ public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Classes.Promise.Circuit
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.RP.Closure
+public import Complexity.Computability.Complexity.Classes.RepeatedTrials
 public import Complexity.Computability.Complexity.Classes.SBP
 public import Complexity.Computability.Complexity.Classes.SBP.Amplification
 public import Complexity.Computability.Complexity.Classes.SPP

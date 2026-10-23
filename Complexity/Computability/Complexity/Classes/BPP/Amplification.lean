@@ -8,10 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.BPP
-public import Complexity.Foundations.Data.BitString.List
+public import Complexity.Computability.Complexity.Classes.RepeatedTrials
 import Complexity.Computability.Complexity.Classes.SharpP
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Foundations.Data.List.OfFn
 
@@ -40,7 +38,6 @@ is `Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent`.
 
 ## Main results
 
-* `Cslib.BitString.listRows_ofFn`: the rows of a word of `k * m` bits are its blocks.
 * `Cslib.Complexity.DecidesWithBoundedError.repeatMajority`: `12 q(n)` majority votes reduce the
   error to `2 ^ (-q(n))`.
 * `Cslib.Complexity.computableTidilyInPolyTime_repeatMajority`: majority votes take polynomial
@@ -55,15 +52,6 @@ is `Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent`.
 -/
 
 @[expose] public section
-
-namespace Cslib.BitString
-
-/-- The rows of a word of `k * m` bits are its blocks. -/
-theorem listRows_ofFn {k m : ℕ} (x : BitString (k * m)) :
-    listRows k m (List.ofFn x) = List.ofFn fun i => List.ofFn (block x i) := by
-  rw [listRows_eq_ofFn, ofList_ofFn]
-
-end Cslib.BitString
 
 namespace Cslib.Complexity
 
@@ -84,33 +72,7 @@ def DecidesWithErrorExponent (enc : α ↪ List Bool) (q p : Polynomial ℕ)
       (univ.filter fun r : Fin (p.eval (enc a).length) → Bool =>
         V (a, List.ofFn r) = true).card ≤ 2 ^ p.eval (enc a).length)
 
-/-- The strict majority of `2 r(n)` runs of `V`, where `n` is the length of the encoded instance:
-the random string is cut into `2 r(n)` rows of `p(n)` bits (`Cslib.BitString.listRows`), `V` runs
-on each row, and the answer is `true` when more than `r(n)` runs accept. Bits missing from a short
-random string read as `false`. -/
-def repeatMajority (enc : α ↪ List Bool) (r p : Polynomial ℕ) (V : α × List Bool → Bool)
-    (x : α × List Bool) : Bool :=
-  decide (r.eval (enc x.1).length <
-    (BitString.listRows (2 * r.eval (enc x.1).length) (p.eval (enc x.1).length) x.2).countP
-      fun row => V (x.1, row))
-
 variable {enc : α ↪ List Bool}
-
-/-- Majority votes of a polynomial-time decider take polynomial time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_repeatMajority {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (r p : Polynomial ℕ) :
-    ComputableTidilyInPolyTime (repeatMajority enc r p V) (encPair enc encBits) encBool := by
-  unfold repeatMajority
-  fun_prop
-
-/-- On a random string of `2 r(n)` rows of `p(n)` bits, the majority vote compares the number of
-accepting rows with `r(n)`. -/
-theorem repeatMajority_ofFn {r p : Polynomial ℕ} {V : α × List Bool → Bool} (a : α)
-    (x : BitString (2 * r.eval (enc a).length * p.eval (enc a).length)) :
-    repeatMajority enc r p V (a, List.ofFn x) = decide (r.eval (enc a).length <
-      (univ.filter fun i => V (a, List.ofFn (BitString.block x i)) = true).card) := by
-  rw [repeatMajority, BitString.listRows_ofFn, List.countP_ofFn, card_filter]
 
 /-- **Error reduction for `BPP`** [Arora and Barak, Section 7.4.1][AroraBarak09]. The strict
 majority of `12 q(n)` runs of a bounded-error decider, on independent blocks of random bits, errs on

@@ -31,7 +31,8 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 * `Cslib.BitString.exists_take_ofFn_iff`, `Cslib.BitString.forall_take_ofFn_iff`: quantifying over
   longer strings through their prefixes.
 * `Cslib.BitString.ofFn_ofList_eq_take`: the fixed-width view pads with `false` or truncates.
-* `Cslib.BitString.listRows_eq_ofFn`: agreement with the finite block representation.
+* `Cslib.BitString.listRows_eq_ofFn`, `Cslib.BitString.listRows_ofFn`: agreement with the finite
+  block representation.
 * `Cslib.BitString.listRows_succ_append`: the rows of a word whose first row is given.
 * `Cslib.BitString.ofFn_blocksEquiv_symm`: packing fixed-width rows is list concatenation.
 
@@ -173,6 +174,11 @@ theorem listRows_eq_ofFn (count width : ℕ) (word : List Bool) :
   intro row hleft hright
   simpa only [listRows, List.getElem_map, List.getElem_range, List.getElem_ofFn] using
     listRow_eq_ofFn width ⟨row, by simpa using hright⟩ word
+
+/-- The rows of a word of `k * m` bits are its blocks. -/
+theorem listRows_ofFn {k m : ℕ} (x : BitString (k * m)) :
+    listRows k m (List.ofFn x) = List.ofFn fun i => List.ofFn (block x i) := by
+  rw [listRows_eq_ofFn, ofList_ofFn]
 
 /-- The rows of a word starting with a full row `u` are `u` followed by the rows of the rest. -/
 theorem listRows_succ_append (count width : ℕ) {u : List Bool} (hu : u.length = width)
