@@ -324,9 +324,11 @@ and [API review with explicit nonblocking nits](https://github.com/leanprover/cs
 ## Curated formal abstracts
 
 `abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
-`*Abstract.lean` and `*Bridge.lean` under `ComplexityTests/Abstracts/`, imported by
-`ComplexityTests.lean`. The Lean definitions and statements are the source of truth; PDFs are
-generated from them, with proof bodies omitted. There is no separately maintained paper/TeX index.
+`*Abstract.lean` and `*Bridge.lean` under `abstracts/ComplexityAbstracts/`, imported by the
+dedicated `ComplexityAbstracts` library. `ComplexityTests.lean` imports that library and its
+regression tests. Existing declaration namespaces remain stable across the source relocation.
+The Lean definitions and statements are the source of truth; PDFs are generated from them, with
+proof bodies omitted. There is no separately maintained paper/TeX index.
 
 Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
 endpoint with conventional, inspectable semantics, satisfiable hypotheses, explicit models and

@@ -39,11 +39,24 @@ rev = "6ff325e870ed89f86be10515f0e7297fa5a32845"
 name = "Complexity"
 
 [[lean_lib]]
+name = "ComplexityAbstracts"
+srcDir = "abstracts"
+leanOptions = {weak.linter.style.header = false}
+allowNonModules = true
+
+[[lean_lib]]
 name = "ComplexityTests"
 leanOptions = {weak.linter.style.header = false}
 # The test files do not use the module system, but they import Mathlib, whose package sets
 # `requiresModuleSystem`.
 allowNonModules = true
+
+[[lean_exe]]
+name = "mk_all"
+srcDir = "scripts"
+root = "MkAll"
+allowNonModules = true
+supportInterpreter = true
 
 [[lean_exe]]
 name = "checkInitImports"

@@ -68,13 +68,86 @@ def git(root, *args):
     return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
 
 
+def module_source_path(module, root=ROOT):
+    """Resolve the dedicated abstract library's modules within its configured source root."""
+    if not isinstance(module, str) or not re.fullmatch(
+            r"ComplexityAbstracts\.[A-Za-z_][A-Za-z0-9_]*", module):
+        raise ValueError(f"Not a formal-abstract module: {module}")
+    return Path(root).joinpath("abstracts", *module.split(".")).with_suffix(".lean")
+
+
+def _lean_code(text):
+    """Mask comments and strings while preserving source positions and line numbers."""
+    result, index, depth = list(text), 0, 0
+    while index < len(text):
+        if depth:
+            if text.startswith("/-", index):
+                depth += 1
+                width = 2
+            elif text.startswith("-/", index):
+                depth -= 1
+                width = 2
+            else:
+                width = 1
+        elif text.startswith("/-", index):
+            depth, width = 1, 2
+        elif text.startswith("--", index):
+            end = text.find("\n", index)
+            width = (len(text) if end < 0 else end) - index
+        elif text[index] == "'" and (literal := re.match(r"'(?:\\.|[^'\\\n])'", text[index:])):
+            width = len(literal.group())
+        elif text[index] == '"' or (text[index] == "r" and re.match(r'r#+"', text[index:])):
+            raw = re.match(r'r(#+)"', text[index:])
+            if raw:
+                close = '"' + raw.group(1)
+                end = text.find(close, index + len(raw.group()))
+                width = (len(text) if end < 0 else end + len(close)) - index
+            else:
+                end = index + 1
+                while end < len(text):
+                    if text[end] == "\\":
+                        end += 2
+                    elif text[end] == '"':
+                        end += 1
+                        break
+                    else:
+                        end += 1
+                width = end - index
+        else:
+            index += 1
+            continue
+        for offset in range(index, min(index + width, len(text))):
+            if text[offset] != "\n":
+                result[offset] = " "
+        index += width
+    return "".join(result)
+
+
+def _namespace_contexts(text):
+    """Track namespace commands (and section scopes) in the abstract's source code."""
+    declared, contexts, stack, namespace = set(), {}, [], ""
+    for number, line in enumerate(_lean_code(text).splitlines(), 1):
+        contexts[number] = namespace
+        opening = re.fullmatch(r"\s*namespace\s+([A-Za-z_][A-Za-z0-9_.]*)\s*", line)
+        if opening:
+            stack.append(namespace)
+            namespace = ".".join(filter(None, (namespace, opening.group(1))))
+            declared.add(namespace)
+        elif re.fullmatch(r"\s*(?:noncomputable\s+)?section(?:\s+\w+)?\s*", line):
+            stack.append(namespace)
+        elif re.fullmatch(r"\s*end(?:\s+[A-Za-z_][A-Za-z0-9_.]*)?\s*", line):
+            if stack:
+                namespace = stack.pop()
+    return declared, contexts
+
+
 def declaration_line(text, name):
     """Locate the named source declaration; headline names may be qualified."""
     short = name.rsplit(".", 1)[-1]
     pattern = re.compile(r"^\s*(?:(?:private|noncomputable)\s+)?"
                          r"(?:theorem|lemma|def|abbrev|inductive|structure)\s+"
                          + re.escape(short) + r"(?=[\s:{(])")
-    matches = [i for i, line in enumerate(text.splitlines(), 1) if pattern.search(line)]
+    matches = [i for i, line in enumerate(_lean_code(text).splitlines(), 1) if pattern.search(line)]
     if len(matches) != 1:
         raise ValueError(f"Expected exactly one declaration named {name}, found {len(matches)}")
     return matches[0]
@@ -100,10 +173,17 @@ def load_catalogue(manifest, root=ROOT):
             raise ValueError(f"Invalid or duplicate catalogue id: {entry_id}")
         seen_ids.add(entry_id)
         module = entry["module"]
-        if not re.fullmatch(r"ComplexityTests\.Abstracts\.[A-Za-z0-9_]+Abstract", module):
+        source = module_source_path(module, root)
+        if not module.endswith("Abstract"):
             raise ValueError(f"Not a formal-abstract module: {module}")
-        source = root.joinpath(*module.split(".")).with_suffix(".lean")
+        namespace = entry.get("namespace", module)
+        if not isinstance(namespace, str) or not re.fullmatch(
+                r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", namespace):
+            raise ValueError(f"Invalid abstract namespace: {namespace}")
         text = source.read_text()
+        declared, contexts = _namespace_contexts(text)
+        if namespace not in declared:
+            raise ValueError(f"Abstract namespace {namespace} is not declared in {source}")
         headlines = entry.get("headline_theorems")
         if not isinstance(headlines, list) or not headlines:
             raise ValueError(f"No selected headline theorems in {entry_id}")
@@ -111,12 +191,15 @@ def load_catalogue(manifest, root=ROOT):
         if not isinstance(supporting, list):
             raise ValueError(f"Supporting theorems must be a list in {entry_id}")
         for name in [*headlines, *supporting]:
-            if not isinstance(name, str) or not name.startswith(module + "."):
-                raise ValueError(f"Headline must be qualified within {module}: {name}")
+            if not isinstance(name, str) or not re.fullmatch(
+                    re.escape(namespace) + r"\.[A-Za-z_][A-Za-z0-9_']*", name):
+                raise ValueError(f"Headline must be qualified within {namespace}: {name}")
             if name in seen_headlines:
                 raise ValueError(f"Duplicate selected headline: {name}")
             seen_headlines.add(name)
             line = declaration_line(text, name)
+            if contexts[line] != namespace:
+                raise ValueError(f"Headline is outside namespace {namespace}: {name}")
             if not re.match(r"\s*(?:theorem|lemma)\s", text.splitlines()[line - 1]):
                 raise ValueError(f"Selected headline is not a theorem: {name}")
     return entries
@@ -148,7 +231,7 @@ def highlighted_line(line):
 
 
 def render_entry(entry, repository, sha, dirty, root=ROOT):
-    source = root.joinpath(*entry["module"].split(".")).with_suffix(".lean")
+    source = module_source_path(entry["module"], root)
     text = source.read_text()
     _, intro, sections = render.parse_abstract(text)
     relative = source.relative_to(root)
@@ -252,7 +335,7 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
         raise ValueError("latexmk is required (see abstracts/README.md for TeX dependencies)")
     inputs = {Path(manifest), root / "scripts/build_abstracts.py", root / "scripts/abstract_to_tex.py"}
     for entry in entries:
-        source = root.joinpath(*entry["module"].split(".")).with_suffix(".lean")
+        source = module_source_path(entry["module"], root)
         inputs.add(source)
         bridge = source.with_name(source.name.replace("Abstract.lean", "Bridge.lean"))
         if bridge.is_file():
@@ -273,7 +356,7 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
         tex = output / (entry["id"] + ".tex")
         tex.write_text(document(body))
         pdf = build_pdf(tex)
-        source = root.joinpath(*entry["module"].split(".")).with_suffix(".lean")
+        source = module_source_path(entry["module"], root)
         text = source.read_text()
         documents.append({
             "id": entry["id"], "title": entry["title"], "pdf": pdf.name,

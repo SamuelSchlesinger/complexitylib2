@@ -12,7 +12,7 @@ import abstract_to_tex
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ABSTRACTS_DIR = ROOT / "ComplexityTests/Abstracts"
+ABSTRACTS_DIR = ROOT / "abstracts/ComplexityAbstracts"
 
 
 class AbstractToTexTests(unittest.TestCase):
@@ -32,7 +32,10 @@ class AbstractToTexTests(unittest.TestCase):
                 "theorem subsetSum_npComplete : NPComplete encSubsetSum SubsetSum",
             ],
         }
-        for path in sorted(ABSTRACTS_DIR.glob("*Abstract.lean")):
+        paths = sorted(ABSTRACTS_DIR.glob("*Abstract.lean"))
+        self.assertTrue(set(expected_theorems).issubset({path.name for path in paths}),
+                        f"Expected abstract sources under {ABSTRACTS_DIR}")
+        for path in paths:
             filename = path.name
             snippets = expected_theorems.get(filename, [])
             title, intro, sections = abstract_to_tex.parse_abstract(path.read_text())
