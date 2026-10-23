@@ -60,7 +60,7 @@ theorem testBit_eq_false_of_width {w x i : ℕ} (hx : x < 2 ^ w) (hi : w ≤ i) 
   Nat.testBit_eq_false_of_lt (hx.trans_le (Nat.pow_le_pow_right (by decide) hi))
 
 /-- Distinct bounded words have a differing bit below their word width. -/
-theorem differingBits_nonempty {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
+private theorem differingBits_nonempty {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
     (hne : x ≠ y) : (differingBits w x y).Nonempty := by
   by_contra h
   apply hne

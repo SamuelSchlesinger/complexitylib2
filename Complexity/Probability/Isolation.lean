@@ -88,7 +88,7 @@ def Ambiguous (val : W → G) (w : U → W) (F : Finset (Finset U)) (i : U) : Pr
   (∃ S ∈ minWeightSets val w F, i ∈ S) ∧ ∃ T ∈ minWeightSets val w F, i ∉ T
 
 /-- Two sets of minimum weight make an element of their symmetric difference ambiguous. -/
-theorem exists_ambiguous_of_card_ne_one (val : W → G) (w : U → W)
+private theorem exists_ambiguous_of_card_ne_one (val : W → G) (w : U → W)
     {F : Finset (Finset U)} (hF : F.Nonempty) (h : (minWeightSets val w F).card ≠ 1) :
     ∃ i, Ambiguous val w F i := by
   classical
@@ -152,7 +152,8 @@ variable [Fintype U] [DecidableEq U] [Fintype W] {val : W → G}
 open Classical in
 /-- Each element is ambiguous for at most a `1 / |W|` fraction of the labellings: relabelling
 `i` is injective on the ambiguous labellings. -/
-theorem card_ambiguous_mul_le (hval : Function.Injective val) (F : Finset (Finset U)) (i : U) :
+private theorem card_ambiguous_mul_le (hval : Function.Injective val) (F : Finset (Finset U))
+    (i : U) :
     (univ.filter fun w : U → W => Ambiguous val w F i).card * Fintype.card W ≤
       Fintype.card (U → W) := by
   rw [← card_univ (α := W), ← card_product, ← card_univ (α := U → W)]

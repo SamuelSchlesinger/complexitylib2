@@ -117,7 +117,7 @@ def scanStep (K i : ℕ) (σ : ScanState α) : ScanState α where
 def scan (K : ℕ) (x : α) : ScanState α :=
   runStages (scanStep f H K) (K + 1) ⟨x, false, 0, x⟩
 
-theorem scan_invariant (K : ℕ) (x : α) :
+private theorem scan_invariant (K : ℕ) (x : α) :
     ∀ k ≤ K + 1,
       (runStages (scanStep f H K) k ⟨x, false, 0, x⟩).u = f^[min k K] x ∧
       ((runStages (scanStep f H K) k ⟨x, false, 0, x⟩).found = true ↔
@@ -242,7 +242,7 @@ def periodStep (y : α) (i : ℕ) (σ : PeriodState α) : PeriodState α where
 def periodWalk (K : ℕ) (y : α) : PeriodState α :=
   runStages (periodStep f y) K ⟨y, false, 1⟩
 
-theorem periodWalk_invariant (y : α) (k : ℕ) :
+private theorem periodWalk_invariant (y : α) (k : ℕ) :
     (runStages (periodStep f y) k ⟨y, false, 1⟩).w = f^[k] y ∧
     ((runStages (periodStep f y) k ⟨y, false, 1⟩).found = true ↔
       ∃ j, 1 ≤ j ∧ j ≤ k ∧ f^[j] y = y) ∧

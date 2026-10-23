@@ -489,7 +489,7 @@ variable [Fintype D]
 /-- From a fixed start `v`, the `i`-th dart of a uniformly random walk leaves the vertex reached by
 the random walk after `i` steps along a uniformly random label: the average of `f` over it is
 `(G.walk ^ i) (fun w ↦ 𝔼 a, f (w, a)) v`. -/
-theorem expect_walkDart_mk (v : V) (i : Fin t) (f : V × D → ℝ) :
+private theorem expect_walkDart_mk (v : V) (i : Fin t) (f : V × D → ℝ) :
     𝔼 k : Fin t → D, f (G.walkDart (v, k) i) = (G.walk ^ (i : ℕ)) (fun w ↦ 𝔼 a, f (w, a)) v := by
   rcases isEmpty_or_nonempty D with hD | hD
   · have : IsEmpty (Fin t → D) := ⟨fun k ↦ hD.false (k i)⟩

@@ -345,7 +345,7 @@ theorem linearizedEval_pow_two_pow [Finite F] {n : ℕ} [NeZero n] (hn : finrank
     pow_two_pow_mod hn x (j.val + k), ZMod.val_add, ZMod.val_natCast, Nat.add_mod_mod]
 
 omit [Algebra (ZMod 2) F] in
-theorem linearizedEval_sub_mul {n : ℕ} [NeZero n] (a b : ZMod n → F) (c x : F) :
+private theorem linearizedEval_sub_mul {n : ℕ} [NeZero n] (a b : ZMod n → F) (c x : F) :
     linearizedEval (fun j => b j - c * a j) x = linearizedEval b x - c * linearizedEval a x := by
   simp only [linearizedEval, sub_mul, Finset.sum_sub_distrib, Finset.mul_sum, mul_assoc]
 

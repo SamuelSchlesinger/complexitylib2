@@ -100,7 +100,7 @@ theorem checkpointHull_step (H : Finset α) {x : α} (hx : x ∈ checkpointHull 
     checkpointHull_iterate f H hx (t := 1) (by lia)
 
 /-- Every hull vertex outside `H` has a transient predecessor in the hull. -/
-theorem checkpointHull_predecessor (H : Finset α) {x : α}
+private theorem checkpointHull_predecessor (H : Finset α) {x : α}
     (hx : x ∈ checkpointHull f H) (hH : x ∉ H) :
     ∃ y ∈ checkpointHull f H, 0 < transientDepth f y ∧ f y = x := by
   obtain ⟨h, hh, t, ht, he⟩ := (mem_checkpointHull f H x).mp hx

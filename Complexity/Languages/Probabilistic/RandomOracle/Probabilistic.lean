@@ -50,7 +50,7 @@ variable {Query Value α : Type} [BEq Query]
 
 /-- Each new cache entry comes from an external request and its sampled answer. Private samples
 do not add entries or enter the external transcript. Arbitrary initial lists are allowed. -/
-theorem run_interpret_memoize_transcript_prob (distribution : Query → PMF Value)
+private theorem run_interpret_memoize_transcript_prob (distribution : Query → PMF Value)
     (program : ProbOracleComp (fun _ : Query => Value) α) (cache cache' : List (Query × Value))
     (result : α) (transcript : OracleComp.Transcript (fun _ : Query => Value))
     (h : (result, cache', transcript) ∈ ((OracleComp.interpret

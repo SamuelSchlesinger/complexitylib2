@@ -428,7 +428,7 @@ def extensions (ρ₀ : PartialAssignment ι) (ℓ : ℕ) : Finset (PartialAssig
 
 /-- For a fixed subset `S ∈ powersetCard ℓ ρ₀.free`, there are `2 ^ (#ρ₀.free - ℓ)` extensions in
 `ρ₀.extensions ℓ` whose free set is `S`. -/
-theorem card_filter_extensions_free_eq (ρ₀ : PartialAssignment ι) (ℓ : ℕ)
+private theorem card_filter_extensions_free_eq (ρ₀ : PartialAssignment ι) (ℓ : ℕ)
     {S : Finset ι} (hS : S ∈ powersetCard ℓ ρ₀.free) :
     #{ρ ∈ ρ₀.extensions ℓ | ρ.free = S} = 2 ^ (#ρ₀.free - ℓ) := by
   obtain ⟨hSsub, hScard⟩ := mem_powersetCard.1 hS
@@ -503,7 +503,7 @@ theorem card_filter_extensions_free_subset (ρ₀ : PartialAssignment ι) (ℓ :
 
 /-- The number of extensions in `ρ₀.extensions ℓ` that fix every coordinate of `B ⊆ ρ₀.free` is
 `C(#ρ₀.free - |B|, ℓ) * 2 ^ (#ρ₀.free - ℓ)`. -/
-theorem card_filter_extensions_not_nonempty_inter (ρ₀ : PartialAssignment ι) (ℓ : ℕ)
+private theorem card_filter_extensions_not_nonempty_inter (ρ₀ : PartialAssignment ι) (ℓ : ℕ)
     {B : Finset ι} (hB : B ⊆ ρ₀.free) :
     #{ρ ∈ ρ₀.extensions ℓ | ¬(ρ.free ∩ B).Nonempty} =
       (#ρ₀.free - #B).choose ℓ * 2 ^ (#ρ₀.free - ℓ) := by
@@ -543,7 +543,8 @@ theorem card_withFree (ℓ : ℕ) :
 
 /-- A partial assignment with `ℓ'` free coordinates extends `C(|ι| - ℓ', ℓ - ℓ')` of the ones
 with `ℓ ≥ ℓ'` free coordinates: those that free `ℓ - ℓ'` of its fixed coordinates. -/
-theorem card_filter_extends_withFree {ρ' : PartialAssignment ι} {ℓ : ℕ} (hℓ : #ρ'.free ≤ ℓ) :
+private theorem card_filter_extends_withFree {ρ' : PartialAssignment ι} {ℓ : ℕ}
+    (hℓ : #ρ'.free ≤ ℓ) :
     #((withFree ι ℓ).filter fun ρ => ρ'.Extends ρ) =
       (Fintype.card ι - #ρ'.free).choose (ℓ - #ρ'.free) := by
   have h := card_filter_powersetCard_subset ρ'.free univ ℓ (subset_univ _) hℓ
@@ -584,7 +585,7 @@ theorem card_filter_extends_withFree {ρ' : PartialAssignment ι} {ℓ : ℕ} (h
 
 /-- The words agreeing with a partial assignment outside its free coordinates: `2 ^ ℓ` of them for
 `ℓ` free coordinates. -/
-theorem card_filter_outside_eq (ρ : PartialAssignment ι) :
+private theorem card_filter_outside_eq (ρ : PartialAssignment ι) :
     #{z : ι → Bool | outside ρ.free z = ρ} = 2 ^ #ρ.free := by
   rw [← card_filter_forall_notMem_eq ρ.free (ρ.fill fun _ => false)]
   congr 1
