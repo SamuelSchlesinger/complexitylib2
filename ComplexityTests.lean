@@ -307,6 +307,7 @@ import ComplexityTests.ReductionClasses
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
 import ComplexityTests.RelativizedCounting
+import ComplexityTests.RepeatedTrials
 import ComplexityTests.ResourceClasses
 import ComplexityTests.ResourceClasses2
 import ComplexityTests.ResourceClasses3

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.ArthurMerlin
-public import Complexity.Computability.Complexity.Classes.BPP.Amplification
+public import Complexity.Computability.Complexity.Classes.RepeatedTrials
 public import Complexity.Computability.Complexity.Classes.SBP
 public import Complexity.Foundations.Data.BitString.WordCount
 
@@ -122,7 +122,7 @@ def merlinArthurRepeat (enc : α ↪ List Bool) (q r p : Polynomial ℕ) (V : α
 theorem computableTidilyInPolyTime_merlinArthurRepeat {V : α × List Bool → Bool}
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (q r p : Polynomial ℕ) :
     ComputableTidilyInPolyTime (merlinArthurRepeat enc q r p V) (encPair enc encBits) encBool := by
-  unfold merlinArthurRepeat repeatMajority
+  unfold merlinArthurRepeat repeatMajority repeatVotes
   fun_prop
 
 /-- On a proof followed by `2 r(n)` rows of `p(n)` bits, the majority vote compares the number of

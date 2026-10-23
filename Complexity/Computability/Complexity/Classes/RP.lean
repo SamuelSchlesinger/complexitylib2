@@ -9,9 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.Complexity.Classes.RepeatedTrials
 public import Mathlib.Data.Fintype.Pi
 import Complexity.Computability.Complexity.Classes.SharpP
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Mathlib.Data.Fintype.BigOperators
 
@@ -131,31 +131,6 @@ def DecidesWithOneSidedErrorExponent (enc : α ↪ List Bool) (q p : Polynomial 
       (Finset.univ.filter fun r : Fin (p.eval (enc a).length) → Bool =>
         V (a, List.ofFn r) = false).card ≤ 2 ^ p.eval (enc a).length) ∧
     (a ∉ A → ∀ r : Fin (p.eval (enc a).length) → Bool, V (a, List.ofFn r) = false)
-
-/-- The disjunction of `q(n)` runs of `V`, where `n` is the length of the encoded instance: the
-random string is cut into `q(n)` rows of `p(n)` bits (`Cslib.BitString.listRows`), `V` runs on each
-row, and the answer is `true` when some run accepts. Bits missing from a short random string read
-as `false`. -/
-def repeatAny (enc : α ↪ List Bool) (q p : Polynomial ℕ) (V : α × List Bool → Bool)
-    (x : α × List Bool) : Bool :=
-  (BitString.listRows (q.eval (enc x.1).length) (p.eval (enc x.1).length) x.2).any
-    fun row => V (x.1, row)
-
-/-- Repeating a polynomial-time decider takes polynomial time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_repeatAny {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (q p : Polynomial ℕ) :
-    ComputableTidilyInPolyTime (repeatAny enc q p V) (encPair enc encBits) encBool := by
-  unfold repeatAny
-  fun_prop
-
-/-- On a random string of `q(n)` rows of `p(n)` bits, the repetition accepts when some row is
-accepted. -/
-theorem repeatAny_ofFn_eq_true_iff {q p : Polynomial ℕ} {V : α × List Bool → Bool} (a : α)
-    (x : BitString (q.eval (enc a).length * p.eval (enc a).length)) :
-    repeatAny enc q p V (a, List.ofFn x) = true ↔
-      ∃ i, V (a, List.ofFn (BitString.block x i)) = true := by
-  simp [repeatAny, BitString.listRows_ofFn, List.any_eq_true, List.mem_ofFn]
 
 /-- **Error reduction for `RP`** [Arora and Barak, Chapter 7][AroraBarak09]. The disjunction of
 `q(n)` runs of a one-sided-error decider, on independent blocks of random bits, rejects a member
