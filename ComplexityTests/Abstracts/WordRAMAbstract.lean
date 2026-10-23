@@ -38,6 +38,8 @@ last section.
 
 namespace ComplexityTests.Abstracts.WordRAMAbstract
 
+universe u
+
 variable {r : ℕ}
 
 /-! ## Words and operations
@@ -271,7 +273,7 @@ concludes `Cslib.WordRAM.UniformDecidableInTime .exact A (fun _ => encode) (fun 
 (fun a w => bits a ≤ w)` is a time bound on the machine of this file. This theorem does not cover
 the library's nonuniform `Cslib.WordRAM.DecidableInTime`, where the program may depend on the
 word size, nor encodings and time bounds that depend on the word size. -/
-theorem decidableInTime_iff {α : Type*} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ) :
+theorem decidableInTime_iff {α : Type u} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ) :
     DecidableInTime A encode T bits ↔
       Cslib.WordRAM.UniformDecidableInTime .exact A (fun _ => encode) (fun a _ => T a)
         (fun a w => bits a ≤ w) :=
