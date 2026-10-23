@@ -214,10 +214,10 @@ theorem type_let (n : Nat) :
 
 lemma after_multi_line : multi_line = [0] := by
   rfl
-theorem do_let : (do
+theorem do_let : some 1 = do
     let n ← some 1
     let m := n
-    return m) = some 1 := by
+    return m := by
   rfl
 universe u
 end Sample
