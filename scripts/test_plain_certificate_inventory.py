@@ -100,8 +100,10 @@ import Mathlib.Tactic.FunProp
 open Lean Meta Mathlib.Meta.FunProp PlainCertificateInventory
 @[fun_prop] def TidyInventoryProperty (f : ℕ → ℕ) : Prop := ∀ x, f x = f x
 opaque uniqueFunction : ℕ → ℕ := id
+abbrev HiddenProperty := TidyInventoryProperty
 @[fun_prop] theorem isolated_source : TidyInventoryProperty uniqueFunction := fun _ => rfl
 @[fun_prop] theorem indirect_source : TidyInventoryProperty uniqueFunction := isolated_source
+theorem hidden_source : HiddenProperty uniqueFunction := isolated_source
 private theorem captured_source (f : ℕ → ℕ) (hf : TidyInventoryProperty f) :
     TidyInventoryProperty f := by
   have localRoutine : TidyInventoryProperty f := hf
@@ -159,6 +161,7 @@ run_meta do
         isolated = next(r for r in records if r["declaration"]["name"] == "isolated_source")
         assert isolated["tidy_holdout"]["status"] != "success", isolated
         assert isolated["excluded_count"] >= 2
+        assert any(r["declaration"]["name"] == "hidden_source" for r in records)
         local = [r for r in records if r["declaration"].get("local_path")]
         assert local and all(r["declaration"]["private"] for r in local)
         assert any("localRoutine" in r["declaration"]["name"] for r in local)
