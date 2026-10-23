@@ -29,6 +29,43 @@ def tidyNames (e : Expr) : Array Name :=
   (constants e).filter fun n =>
     (n.toString.splitOn "Tidily").length > 1 || (n.toString.splitOn "Tidy").length > 1
 
+/-- Reducible aliases that reach a tidy notion, including transitively hidden predicate names. -/
+def aliasNames (env : Environment) : Std.HashSet Name := Id.run do
+  let mut reverse : Std.HashMap Name (Array Name) := {}
+  let mut todo : Array Name := #[]
+  for (name, ci) in env.constants.toList do
+    if !(tidyNames (.const name [])).isEmpty then todo := todo.push name
+    if getReducibilityStatusCore env name == .reducible then
+      if let some value := ci.value? then
+        for dep in constants value do
+          reverse := reverse.insert dep ((reverse.getD dep #[]).push name)
+  let mut seen : Std.HashSet Name := {}
+  let mut aliases : Std.HashSet Name := {}
+  while !todo.isEmpty do
+    let name := todo.back!
+    todo := todo.pop
+    if seen.contains name then continue
+    seen := seen.insert name
+    for aliasName in reverse.getD name #[] do
+      if (tidyNames (.const aliasName [])).isEmpty then aliases := aliases.insert aliasName
+      todo := todo.push aliasName
+  return aliases
+
+/-- Unfold only relevant reducible aliases, preserving the base predicates and resource bounds. -/
+def expandAliases (env : Environment) (aliases : Std.HashSet Name) (e : Expr) : Expr := Id.run do
+  let mut e := e
+  for _ in [:aliases.size + 1] do
+    let expanded := e.replace fun term => match term with
+      | .const name levels =>
+        if aliases.contains name then
+          (env.find? name).bind fun ci =>
+            ci.value?.map fun value => value.instantiateLevelParams ci.levelParams levels
+        else none
+      | _ => none
+    if expanded == e then break
+    e := expanded
+  return e
+
 /-- Filter both evaluated leaves and pending lazy discrimination-tree entries. -/
 def filterGeneral (bad : Std.HashSet Name) (s : GeneralTheorems) : GeneralTheorems :=
   { s with theorems := { s.theorems with tries := s.theorems.tries.map fun node =>
@@ -53,23 +90,23 @@ structure Candidate where
 
 /-- Close local `have`/`let` certificate types over their actual enclosing parameters and lets.
 No source-text heuristic is used and no binder or growth hypothesis is discarded. -/
-partial def localCertificates (owner : Name) (e : Expr) (path : String := "body")
+partial def localCertificates (normalize : Expr → Expr) (owner : Name) (e : Expr) (path : String := "body")
     (close : Expr → Expr := id) : Array Candidate := Id.run do
   match e with
   | .lam n ty body bi =>
-    return localCertificates owner body (path ++ ".lambda") fun goal =>
+    return localCertificates normalize owner body (path ++ ".lambda") fun goal =>
       close (.forallE n ty goal bi)
   | .letE n ty value body nondep =>
-    let here := if (tidyNames ty).isEmpty then #[] else
+    let here := if (tidyNames (normalize ty)).isEmpty then #[] else
       #[{ owner, target := close ty, localPath := some (path ++ "." ++ n.toString) }]
-    let values := localCertificates owner value (path ++ ".value") close
-    let bodies := localCertificates owner body (path ++ ".let") fun goal =>
+    let values := localCertificates normalize owner value (path ++ ".value") close
+    let bodies := localCertificates normalize owner body (path ++ ".let") fun goal =>
       close (.letE n ty value goal nondep)
     return here ++ values ++ bodies
   | .app f a =>
-    return localCertificates owner f (path ++ ".function") close ++
-      localCertificates owner a (path ++ ".argument") close
-  | .mdata _ body | .proj _ _ body => return localCertificates owner body path close
+    return localCertificates normalize owner f (path ++ ".function") close ++
+      localCertificates normalize owner a (path ++ ".argument") close
+  | .mdata _ body | .proj _ _ body => return localCertificates normalize owner body path close
   | _ => return #[]
 
 /-- Reverse proof/body dependencies of project declarations. Imported upstream declarations cannot
@@ -131,10 +168,10 @@ def search (env : Environment) (type : Expr) (budget : Nat) (forbidden : Std.Has
       ("heartbeats_raw", toJson ((← IO.getNumHeartbeats) - start))]
 
 /-- Inspect a declaration without invoking its own proof as the benchmark. -/
-def describe (candidate : Candidate) : MetaM (Expr × Json × Option Name) := do
+def describe (aliases : Std.HashSet Name) (candidate : Candidate) : MetaM (Expr × Json × Option Name) := do
   let name := candidate.owner
   let type := candidate.target
-  let heads := tidyNames type
+  let heads := tidyNames (expandAliases (← getEnv) aliases type)
   let mirror ← if candidate.localPath.isSome then pure none else
     Cslib.Tactic.PlainMirror.getMirror? name
   let prop ← isProp type
@@ -163,15 +200,17 @@ unsafe def main (args : List String) : IO UInt32 := do
   let moduleSet : Std.HashSet Name := .ofArray mods
   let (pairs, _) ← Lean.Core.CoreM.toIO Cslib.Tactic.PlainMirror.mirrorPairs
     { fileName := "mirror-registry", fileMap := default } { env }
+  let aliases := aliasNames env
+  let normalize := expandAliases env aliases
   let reverse := reverseDependencies env moduleSet
   let mut candidates : Array Candidate := #[]
   for (name, ci) in env.constants.toList do
     let some idx := env.getModuleIdxFor? name | continue
     unless moduleSet.contains env.header.moduleNames[idx.toNat]! do continue
-    if !(tidyNames ci.type).isEmpty then
+    if !(tidyNames (normalize ci.type)).isEmpty then
       candidates := candidates.push { owner := name, target := ci.type }
     if let some value := ci.value? true then
-      candidates := candidates ++ localCertificates name value
+      candidates := candidates ++ localCertificates normalize name value
   candidates := candidates.qsort fun a b =>
     Name.quickLt a.owner b.owner || (a.owner == b.owner && decide (a.localPath.getD "" < b.localPath.getD ""))
   let handle ← IO.FS.Handle.mk outputFile .write
@@ -183,7 +222,7 @@ unsafe def main (args : List String) : IO UInt32 := do
   let mut count := 0
   for candidate in candidates do
     if limit != 0 && count >= limit then break
-    let ((type, info, mirror), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe candidate))
+    let ((type, info, mirror), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe aliases candidate))
       { fileName := "certificate-inventory", fileMap := default } { env }
     let seeds := #[candidate.owner] ++ mirror.toArray
     let forbidden := closure reverse seeds
@@ -196,7 +235,7 @@ unsafe def main (args : List String) : IO UInt32 := do
       let tidy ← search heldout type budget forbidden
       fields := fields ++ [("tidy_holdout", tidy)]
       try
-        let (plain, _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (Cslib.Tactic.PlainMirror.plainType type))
+        let (plain, _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (Cslib.Tactic.PlainMirror.plainType (normalize type)))
           { fileName := "certificate-transform", fileMap := default } { env }
         let residual := tidyNames plain
         if !residual.isEmpty then
@@ -210,7 +249,7 @@ unsafe def main (args : List String) : IO UInt32 := do
               ("plain_registration", ← search env plain budget),
               field "registration_scope" "indexing/transport only; not holdout synthesis"]
       catch e =>
-        let unsupported := (tidyNames type).filter fun n =>
+        let unsupported := (tidyNames (normalize type)).filter fun n =>
           !Cslib.Tactic.PlainMirror.equivalences.any (fun entry => entry.1 == n)
         if !unsupported.isEmpty then
           fields := fields ++ [field "status" "unsupported_tidy", ("residual_tidy", toJson
