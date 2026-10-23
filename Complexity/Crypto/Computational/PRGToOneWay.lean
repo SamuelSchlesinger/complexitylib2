@@ -151,7 +151,7 @@ theorem PseudorandomGenerator.oneWay_of_card_le {generator : List Bool → List 
   refine OneWay.of_inversion_negligible hgenerator.polyTime fun adversary hadversary => ?_
   have hind := hgenerator.indistinguishable (test generator adversary)
     (isPPT_test hgenerator.polyTime hadversary)
-  refine negligible_of_le (hind.add hε) fun n => ?_
+  refine negligible_of_le (hind.add_fun hε) fun n => ?_
   rw [inversionGame_eq_prgRealGame, eval_prgRealGame]
   exact ((NNReal.le_add_nndist _ _).trans_eq (add_comm _ _)).trans <| by
     gcongr
