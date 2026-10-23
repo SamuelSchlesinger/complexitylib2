@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Mathlib.Data.Nat.Bits
 import Complexity.Foundations.Data.Nat.Bits
 import Mathlib.Data.List.Induction
+import Mathlib.Data.List.OfFn
 import Mathlib.Data.Nat.Size
 
 /-!
@@ -24,6 +25,7 @@ bounded on arbitrary input words; it agrees with capping the full mathematical b
 * `binaryValue`: the natural represented by a binary word, without a size bound.
 * `boundedBinaryValue`: the same fold with a cap at every step.
 * `binaryWord`: the word of a given width representing a number.
+* `lowBits`: a fixed-width word in the opposite, least-significant-first order.
 
 ## Main results
 
@@ -43,6 +45,25 @@ Adapted from `Probability/UniformNat.lean` on the cslib `crypto` branch at
 @[expose] public section
 
 namespace Cslib.BitString
+
+/-- The first `width` digits of a natural, least significant first. Unlike `binaryWord`, this
+always has the declared width: high digits are truncated and absent digits are `false`. -/
+def lowBits (width value : ℕ) : List Bool := (List.range width).map value.testBit
+
+@[simp] theorem length_lowBits (width value : ℕ) : (lowBits width value).length = width := by
+  simp [lowBits]
+
+/-- The executable digit loop agrees with the finite coordinate view. -/
+theorem lowBits_eq_ofFn (width value : ℕ) :
+    lowBits width value = List.ofFn (fun i : Fin width => value.testBit i.val) := by
+  apply List.ext_getElem (by simp)
+  intro i hi hi'
+  simp [lowBits]
+
+/-- Low-order-first reconstruction is exact for values fitting in the declared width. -/
+theorem foldr_lowBits {width value : ℕ} (h : value < 2 ^ width) :
+    (lowBits width value).foldr Nat.bit 0 = value :=
+  Nat.foldr_bit_testBit (Nat.size_le.2 h)
 
 /-- The natural number represented by a word, most significant bit first. -/
 def binaryValue (word : List Bool) : ℕ :=

@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Data.List.Basic
 import Mathlib.Data.List.GetD
+import Mathlib.Data.List.OfFn
 
 /-!
 # List identities and fold invariants
@@ -22,6 +23,7 @@ import Mathlib.Data.List.GetD
 * `List.getD_mem_or`, `List.getD_idxOf`: a defaulted lookup returns a list member or the default
   value, and returns a member at its first index.
 * `List.getD_map_range`: look up a function tabulated over a bounded range.
+* `List.map_range_eq_ofFn`: runtime tabulation agrees with the finite coordinate view.
 * `List.countP_and_not_add_countP_and`: the members satisfying `p` split by whether they satisfy
   `q`.
 * `List.length_flatMap_le`: blocks of bounded length have bounded total length.
@@ -148,6 +150,13 @@ theorem List.getD_idxOf {α : Type*} [BEq α] [LawfulBEq α] {l : List α} {x : 
 theorem List.getD_map_range {α : Type*} (f : ℕ → α) (d : α) {n i : ℕ} (hi : i < n) :
     ((List.range n).map f).getD i d = f i := by
   rw [List.getD_eq_getElem _ _ (by simpa using hi)]
+  simp
+
+/-- Tabulating a natural-indexed function over a range agrees with its finite coordinate view. -/
+theorem List.map_range_eq_ofFn {α : Type*} (n : ℕ) (f : ℕ → α) :
+    (List.range n).map f = List.ofFn (fun i : Fin n => f i.val) := by
+  apply List.ext_getElem (by simp)
+  intro i hi hi'
   simp
 
 /-- Partitioning the elements of a list satisfying `p` by whether they satisfy `q`. -/

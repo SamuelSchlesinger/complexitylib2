@@ -32,7 +32,6 @@ bootstrappability.
 
 ## Main results
 
-* `encryptWithCoins_eq_decomposeMatrix`: the exact ciphertext is decomposition of `μ * G + R * A`.
 * `dist_uniformPublicGame_ideal_le`: the shared-matrix statistical bound preserves saved state.
 * `uniformPublicGame_advantage_le`: the two chosen-message games differ by at most
   `N * sqrt(2^(w * (n + 1)) / 2^m)`, where `N = (n + 1) * w`.
@@ -52,15 +51,6 @@ open Probability Probability.PMF
 open scoped Matrix NNReal
 
 variable {n m w : ℕ}
-
-/-- The actual ciphertext is the canonical decomposition of its message shift and subset sums. -/
-theorem encryptWithCoins_eq_decomposeMatrix
-    (A : Matrix (Fin m) (Fin (n + 1)) (ZMod (2 ^ w))) (μ : Bool)
-    (R : Matrix (Fin (n + 1) × Fin w) (Fin m) Bool) :
-    encryptWithCoins A μ R = decomposeMatrix w
-      ((μ.toNat : ZMod (2 ^ w)) • gadgetMatrix n w + bitMatrix (ZMod (2 ^ w)) R * A) := by
-  simp only [encryptWithCoins, flattenMatrix, recomposeMatrix_add, recomposeMatrix_smul,
-    recomposeMatrix_decomposeMatrix, gadgetMatrix]
 
 /-- Adding any fixed modular message shift preserves the decomposed uniform distribution. -/
 theorem uniform_decomposeMatrix_add
