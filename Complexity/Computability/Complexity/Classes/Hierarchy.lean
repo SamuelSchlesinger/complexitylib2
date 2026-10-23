@@ -195,13 +195,7 @@ on tidy normal forms. -/
 theorem not_computableInTimeAndSpace_diagonal {t s : List Bool → ℕ}
     (ht : PolyBounded List.length t) : ¬ComputableInTimeAndSpace diagonal encBits encBool t s := by
   rintro ⟨k, State, hfinite, tm, htm⟩
-  refine not_forall_halted_diagonal tm ht fun x => ?_
-  obtain ⟨⟨u, hu, hout⟩, htime, -⟩ := htm x
-  have hhalt := MultiTapeTM.runsInTime_iff_halted.mp htime
-  refine ⟨hhalt, ?_⟩
-  rcases le_total u (t x) with hut | htu
-  · exact (congrArg Cfg.output (MultiTapeTM.runFrom_eq_of_halt tm _ hut hu)).trans hout
-  · exact (congrArg Cfg.output (MultiTapeTM.runFrom_eq_of_halt tm _ htu hhalt)).symm.trans hout
+  exact not_forall_halted_diagonal tm ht fun x => (htm x).runFrom_of_le le_rfl
 
 namespace Diagonal
 

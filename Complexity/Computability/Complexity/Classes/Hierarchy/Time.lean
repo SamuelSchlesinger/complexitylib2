@@ -9,7 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Constructible
 public import Complexity.Computability.Complexity.Classes.Hierarchy
+public import Complexity.Computability.Complexity.Classes.Hierarchy.ShortDesc
 public import Complexity.Computability.Complexity.Classes.Time
+public import Complexity.Computability.Machines.Turing.MultiTape.Run
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
@@ -32,7 +34,8 @@ The clocked diagonal `Cslib.Complexity.clockedDiagonal J` of
 its input `x` on `x` for `J x.length` steps with the universal function, and negates the verdict;
 the diagonal function `Cslib.Complexity.diagonal` has the clock `2 ^ n`.
 `Cslib.Complexity.timeDiagonal J` applies it only when the framed description is short,
-`2 ^ |unframe x| ≤ |x|` (`Cslib.Complexity.Diagonal.shortDesc`), and answers `false` otherwise.
+`2 ^ |unframe x| ≤ |x|` (`Cslib.Complexity.Diagonal.shortDesc`, in
+`Complexity.Computability.Complexity.Classes.Hierarchy.ShortDesc`), and answers `false` otherwise.
 Decoding a description of `L` bits takes time polynomial in `L`, of a degree fixed by the decoder,
 hence `O(2 ^ L)`, which is `O(n)` on short descriptions; padded descriptions are short.
 
@@ -75,36 +78,6 @@ logarithmic overhead and is not claimed here.
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM
-
-/-! ### Lengths of words and numbers -/
-
-/-- The word framed at the start of a word is no longer than the word. -/
-theorem length_unframe_le : ∀ w : List Bool, (unframe w).length ≤ w.length
-  | true :: _ :: v => by
-    simp only [unframe, List.length_cons]
-    have := length_unframe_le v
-    omega
-  | [] | [true] | false :: _ => by simp [unframe]
-
-/-! ### Halted runs -/
-
-/-- A machine that computes `out` within time `t` has halted with output `out` after any number of
-steps from `t` on. -/
-theorem ComputesInTimeAndSpace.runFrom_of_le {k : ℕ} {Symbol State : Type*}
-    {tm : MultiTapeTM k Symbol State} {x out : List Symbol} {t s J : ℕ}
-    (h : tm.ComputesInTimeAndSpace x out t s) (hJ : t ≤ J) :
-    (tm.runFrom (tm.initCfg x) J).Halted ∧ (tm.runFrom (tm.initCfg x) J).output = out := by
-  obtain ⟨⟨u, hu, hout⟩, htime, -⟩ := h
-  have hhalt := MultiTapeTM.runsInTime_iff_halted.mp htime
-  rw [MultiTapeTM.runFrom_eq_of_halt tm _ hJ hhalt]
-  refine ⟨hhalt, ?_⟩
-  rcases le_total u t with hut | htu
-  · exact (congrArg Cfg.output (MultiTapeTM.runFrom_eq_of_halt tm _ hut hu)).trans hout
-  · exact (congrArg Cfg.output (MultiTapeTM.runFrom_eq_of_halt tm _ htu hhalt)).symm.trans hout
-
-end Turing.MultiTapeTM
-
 namespace Cslib.Complexity
 
 open Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal Filter
@@ -112,41 +85,6 @@ open Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal Filter
 /-! ### The clocked diagonal -/
 
 namespace Diagonal
-
-/-- The description framed at the start of `x` is *short*: `2 ^ |unframe x| ≤ |x|`. -/
-def shortDesc (x : List Bool) : Bool := decide (2 ^ (unframe x).length ≤ x.length)
-
-/-- Shortness compares the length of the description with the number of binary digits of the
-length of the word. -/
-theorem shortDesc_eq_decide (x : List Bool) :
-    shortDesc x = decide ((unframe x).length + 1 ≤ (encNat x.length).length) := by
-  rw [shortDesc, encNat_apply, Nat.size_eq_bits_len]
-  exact decide_eq_decide.mpr (Nat.lt_size.symm.trans Nat.lt_iff_add_one_le)
-
-/-- Shortness is decided within quadratic time and linear space. -/
-theorem computableTidilyInO_shortDesc :
-    ComputableTidilyInO shortDesc encBits encBool (fun x => (x.length + 1) ^ 2)
-      fun x => x.length + 1 := by
-  have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
-    ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
-  have ha := ComputableTidilyInDegree.unary_succ.inO_one.comp
-    (ComputableTidilyInO.lengthUnary.comp hu)
-  have hb := ComputableTidilyInO.lengthUnary.comp
-    (ComputableTidilyInO.lengthNat.of_enc_eq (encOut := encBits)
-      (g := fun x : List Bool => encNat x.length) fun _ => rfl)
-  have h := ComputableTidilyInO.unaryLe.comp (ha.prod hb)
-  refine (h.mono 64 (fun x => ?_) fun x => ?_).of_enc_eq fun x => ?_
-  · have h₁ := length_unframe_le x
-    have h₂ := Universal.length_encNat_le x.length
-    simp only [Function.comp_apply, length_encPair, encUnary_apply,
-      List.length_replicate] at h₁ h₂ ⊢
-    nlinarith
-  · have h₁ := length_unframe_le x
-    have h₂ := Universal.length_encNat_le x.length
-    simp only [Function.comp_apply, length_encPair, encUnary_apply,
-      List.length_replicate] at h₁ h₂ ⊢
-    omega
-  · simp only [Function.comp_apply, shortDesc_eq_decide]
 
 /-- The space of the universal run grows with the number of steps. -/
 theorem runBound_le_succ (D N J : ℕ) : runBound D N J ≤ runBound D N (J + 1) := by
