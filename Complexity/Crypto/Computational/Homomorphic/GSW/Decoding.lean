@@ -9,6 +9,8 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.ZMod.Basic
+import Mathlib.Data.Nat.Bitwise
+import Mathlib.Tactic.IntervalCases
 
 /-!
 # Scalar decoding for GSW ciphertexts
@@ -27,6 +29,8 @@ by modular wraparound.
 
 * `Cslib.Crypto.Homomorphic.GSW.decode_eq_of_error`: errors of magnitude strictly below
   one quarter of the modulus preserve the encoded bit.
+* `Cslib.Crypto.Homomorphic.GSW.decode_eq_xor_highBits`: for width at least two, decoding
+  is exclusive-or of the two highest bits of the canonical residue, on every input.
 
 ## References
 
@@ -46,6 +50,47 @@ def decode (w : ℕ) (x : ZMod (2 ^ w)) : Bool :=
 @[simp] theorem decode_eq_true_iff (w : ℕ) (x : ZMod (2 ^ w)) :
     decode w x = true ↔ 2 ^ w ≤ 4 * x.val ∧ 4 * x.val < 3 * 2 ^ w := by
   simp [decode]
+
+/-- Width zero has only the zero residue, which decodes to `false`. -/
+@[simp] theorem decode_zero (x : ZMod (2 ^ 0)) : decode 0 x = false := by
+  have hx : x.val = 0 := by
+    have h : x.val < 1 := ZMod.val_lt x
+    omega
+  simp [decode, hx]
+
+/-- At width one, the single bit is already the decoded message. -/
+theorem decode_one (x : ZMod (2 ^ 1)) : decode 1 x = x.val.testBit 0 := by
+  have hx : x.val < 2 := ZMod.val_lt x
+  simp only [decode, pow_one, Nat.testBit_eq_decide_div_mod_eq, pow_zero, Nat.div_one,
+    Nat.mod_eq_of_lt hx]
+  congr 1
+  apply propext
+  omega
+
+/-- The half-open middle interval is exactly the set where the two highest bits differ.
+This identity holds on every residue, including both quarter-boundary ties. -/
+theorem decode_eq_xor_highBits {w : ℕ} (hw : 2 ≤ w) (x : ZMod (2 ^ w)) :
+    decode w x = (x.val.testBit (w - 1) ^^ x.val.testBit (w - 2)) := by
+  obtain ⟨k, rfl⟩ : ∃ k, w = k + 2 := ⟨w - 2, by omega⟩
+  have hp : 0 < 2 ^ k := Nat.two_pow_pos k
+  have hq : 2 ^ (k + 2) = 4 * 2 ^ k := by simp [pow_add, Nat.mul_comm]
+  have hh : 2 ^ (k + 2 - 1) = 2 ^ k * 2 := by
+    rw [show k + 2 - 1 = k + 1 by omega, pow_succ]
+  have hx : x.val / 2 ^ k < 4 := (Nat.div_lt_iff_lt_mul hp).mpr (by
+    have := ZMod.val_lt x
+    omega)
+  have hlo : 1 ≤ x.val / 2 ^ k ↔ 2 ^ k ≤ x.val := by
+    simpa only [one_mul] using (Nat.le_div_iff_mul_le hp :
+      1 ≤ x.val / 2 ^ k ↔ 1 * 2 ^ k ≤ x.val)
+  have hhi : x.val / 2 ^ k < 3 ↔ x.val < 3 * 2 ^ k := Nat.div_lt_iff_lt_mul hp
+  have hdecode : decode (k + 2) x = decide (1 ≤ x.val / 2 ^ k ∧ x.val / 2 ^ k < 3) := by
+    simp only [decode, hq, hlo, hhi]
+    congr 1
+    apply propext
+    omega
+  rw [hdecode, Nat.testBit_eq_decide_div_mod_eq, Nat.testBit_eq_decide_div_mod_eq,
+    hh, Nat.add_sub_cancel, ← Nat.div_div_eq_div_mul]
+  interval_cases h : x.val / 2 ^ k <;> simp
 
 /-- Decoding recovers a bit whenever its integer error has magnitude strictly below one
 quarter of the modulus. The strict inequality excludes the decoder's asymmetric ties. -/

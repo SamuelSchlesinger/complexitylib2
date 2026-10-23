@@ -40,6 +40,8 @@ redundant; this module uses the minimal `w` digits. Width zero is allowed: its r
 * `decomposeMatrix_mulVec`: decomposition preserves multiplication by the expanded secret.
 * `flattenMatrix_mulVec`: flattening preserves that multiplication on arbitrary modular inputs.
 * `recomposeMatrix_flattenMatrix`: flattening preserves recomposition.
+* `recomposeMatrix_sub`, `recomposeMatrix_mul`: row recomposition commutes with subtraction
+  and left matrix multiplication, as used by serialized NAND.
 
 ## References
 
@@ -136,6 +138,21 @@ theorem recomposeMatrix_add (w : ℕ) (A B : Matrix ρ (ι × Fin w) (ZMod (2 ^ 
     recomposeMatrix w (A + B) = recomposeMatrix w A + recomposeMatrix w B := by
   funext i
   exact bitCompose_add w (A i) (B i)
+
+/-- Row recomposition preserves subtraction before the resulting residues are decomposed. -/
+theorem recomposeMatrix_sub (w : ℕ) (A B : Matrix ρ (ι × Fin w) (ZMod (2 ^ w))) :
+    recomposeMatrix w (A - B) = recomposeMatrix w A - recomposeMatrix w B := by
+  ext i j
+  simp [recomposeMatrix, bitCompose, sub_mul, Finset.sum_sub_distrib]
+
+/-- Recompose a matrix product by recomposing the right operand, retaining all modular counts. -/
+theorem recomposeMatrix_mul [Fintype κ] (w : ℕ)
+    (A : Matrix ρ κ (ZMod (2 ^ w))) (B : Matrix κ (ι × Fin w) (ZMod (2 ^ w))) :
+    recomposeMatrix w (A * B) = A * recomposeMatrix w B := by
+  ext i j
+  simp only [recomposeMatrix, bitCompose, Matrix.mul_apply,
+    Finset.sum_mul, Finset.mul_sum, mul_assoc]
+  rw [Finset.sum_comm]
 
 /-- Recomposition commutes with modular scalar multiplication. -/
 theorem recomposeMatrix_smul (w : ℕ) (a : ZMod (2 ^ w))

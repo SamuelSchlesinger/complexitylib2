@@ -1318,6 +1318,7 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Reduction
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Decryption
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.LWE
@@ -1329,6 +1330,8 @@ public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Serialize
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.Correctness
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.Evaluation
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.Evaluation.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid
