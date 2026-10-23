@@ -57,7 +57,7 @@ open Finset
 variable {ι : Type*} {α : ι → Type*} [∀ i, Finite (α i)]
 
 /-- Conditioning a coordinate on a larger set of coordinates cannot increase its entropy. -/
-theorem conditionalEntropy_map_restrict_le (P : PMF (∀ i, α i)) {s t : Finset ι}
+private theorem conditionalEntropy_map_restrict_le (P : PMF (∀ i, α i)) {s t : Finset ι}
     (hst : s ⊆ t) (i : ι) :
     conditionalEntropy (P.map fun x => (t.restrict x, x i)) ≤
       conditionalEntropy (P.map fun x => (s.restrict x, x i)) := by
@@ -120,7 +120,7 @@ theorem entropy_map_restrict_eq_sum [LinearOrder ι] (P : PMF (∀ i, α i)) (s 
     rw [hfilter]
 
 /-- The restriction of a tuple to all coordinates carries the tuple's entropy. -/
-theorem entropy_map_restrict_univ [Fintype ι] (P : PMF (∀ i, α i)) :
+private theorem entropy_map_restrict_univ [Fintype ι] (P : PMF (∀ i, α i)) :
     entropy (P.map (univ : Finset ι).restrict) = entropy P := by
   apply entropy_map_of_injective
   intro x y hxy

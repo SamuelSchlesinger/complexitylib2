@@ -155,7 +155,7 @@ theorem IsTwoUniversal.conditionalEntropy_hash_le {seed : PMF Seed}
 omit [Fintype Output] in
 /-- Averaging over hash lengths `1, …, count` leaves at most the average logarithmic fiber size
 plus two bits, divided by `count`. This is the entropy bound in Holenstein's Lemma 3. -/
-theorem mean_conditionalEntropy_hash_le (count : ℕ) (seed : PMF Seed) (source : PMF Input)
+private theorem mean_conditionalEntropy_hash_le (count : ℕ) (seed : PMF Seed) (source : PMF Input)
     (f : Input → Image) (hash : (i : Fin count) → Seed → Input → (Fin (i.val + 1) → Bool))
     (hhash : ∀ i, IsTwoUniversal seed (hash i)) (predicate : Fin count → Seed → Input → Bool) :
     (∑ i, conditionalEntropy (seed.bind (fun s => source.map

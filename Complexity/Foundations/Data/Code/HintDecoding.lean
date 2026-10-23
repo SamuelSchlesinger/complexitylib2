@@ -88,12 +88,12 @@ theorem sum_coeffWeight_mul_eval {R : F[X]} (hR : R.natDegree < Fintype.card F) 
 /-! ### Newton iteration -/
 
 /-- The polynomial `Q(X + τ, A(X))`. -/
-noncomputable def shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) : F[X] :=
+private noncomputable def shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) : F[X] :=
   (Q.map (taylorAlgHom τ : F[X] →+* F[X])).eval A
 
 omit [Fintype F] [DecidableEq F] in
 /-- The value of `Q(X + τ, A(X))` at `s` is `Q(s + τ, A(s))`. -/
-theorem eval_shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) (s : F) :
+private theorem eval_shiftEval (Q : F[X][Y]) (τ : F) (A : F[X]) (s : F) :
     (shiftEval Q τ A).eval s = Q.evalEval (s + τ) (A.eval s) := by
   rw [shiftEval, eval_map, ← coe_evalRingHom, hom_eval₂, coe_evalRingHom]
   have : (evalRingHom s).comp (taylorAlgHom τ : F[X] →+* F[X]) = evalRingHom (s + τ) :=

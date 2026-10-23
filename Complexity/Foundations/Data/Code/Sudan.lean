@@ -214,7 +214,7 @@ theorem IsInterpolant.natDegree_mul_sub_one_le (hQ : IsInterpolant α w k D Q) :
   omega
 
 /-- If `P` has degree less than `k`, then `Q(X, P(X))` has degree at most `D`. -/
-theorem IsInterpolant.natDegree_eval_le (hQ : IsInterpolant α w k D Q) {P : F[X]}
+private theorem IsInterpolant.natDegree_eval_le (hQ : IsInterpolant α w k D Q) {P : F[X]}
     (hP : P.degree < k) : (Q.eval P).natDegree ≤ D := by
   refine natDegree_eval_le_of_weighted (d := k - 1) ?_ hQ.weightedDegree_le
   rcases eq_or_ne P 0 with rfl | hP0

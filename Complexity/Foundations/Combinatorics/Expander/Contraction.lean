@@ -96,7 +96,7 @@ theorem neighbor_contract (v : V) (d : D) :
 
 include h in
 /-- Distinct original darts remain distinct after moving the slot into the label. -/
-theorem contractDart_injective : Function.Injective (contractDart (D := D) encode) := by
+private theorem contractDart_injective : Function.Injective (contractDart (D := D) encode) := by
   rintro ⟨v, d⟩ ⟨v', d'⟩ he
   apply Prod.ext
   · apply h.injective
@@ -221,7 +221,7 @@ theorem isPartialInv_finSlots (hcap : m ≤ k * n) :
     exact Fin.ext (congrArg (fun j : Fin (k * n) => j.val) he.symm)
 
 /-- If there are at least `n` original vertices, every new vertex has a representative. -/
-theorem finSlotEncode_fst_surjective (hcap : m ≤ k * n) (hsize : n ≤ m) :
+private theorem finSlotEncode_fst_surjective (hcap : m ≤ k * n) (hsize : n ≤ m) :
     Function.Surjective (fun v => (finSlotEncode hcap v).1) := by
   intro w
   refine ⟨⟨w.val, w.isLt.trans_le hsize⟩, ?_⟩

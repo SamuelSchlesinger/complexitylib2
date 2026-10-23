@@ -100,7 +100,7 @@ theorem mem_forestPath (x y : α) :
 theorem self_mem_forestPath (x : α) : x ∈ forestPath f x :=
   (mem_forestPath f x x).mpr ⟨0, Nat.zero_le _, rfl⟩
 
-theorem forestPath_step (x : α) (hx : 0 < transientDepth f x) :
+private theorem forestPath_step (x : α) (hx : 0 < transientDepth f x) :
     forestPath f x = forestPath f (f x) ++ [x] := by
   have hd : transientDepth f (f x) + 1 = transientDepth f x := by
     have hh := transientDepth_iterate f x 1
@@ -111,7 +111,7 @@ theorem forestPath_step (x : α) (hx : 0 < transientDepth f x) :
     (forestTrace f (f x) (transientDepth f (f x) + 1)).reverse ++ [x]
   rw [hd]
 
-theorem forestPath_iterate_prefix (x : α) {t : ℕ} (ht : t ≤ transientDepth f x) :
+private theorem forestPath_iterate_prefix (x : α) {t : ℕ} (ht : t ≤ transientDepth f x) :
     forestPath f (f^[t] x) <+: forestPath f x := by
   induction t generalizing x with
   | zero => exact ⟨[], List.append_nil _⟩

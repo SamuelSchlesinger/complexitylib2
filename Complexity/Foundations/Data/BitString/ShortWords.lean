@@ -75,7 +75,7 @@ theorem nil_mem_shortWords (L : ℕ) : [] ∈ shortWords L := by simp
 
 /-- The binary words of length at most `L` are the words `List.ofFn r` for `r : Fin m → Bool` and
 `m ≤ L`. -/
-theorem shortWords_eq_biUnion (L : ℕ) :
+private theorem shortWords_eq_biUnion (L : ℕ) :
     shortWords L =
       (range (L + 1)).biUnion fun m => univ.image (List.ofFn : (Fin m → Bool) → _) := by
   ext w

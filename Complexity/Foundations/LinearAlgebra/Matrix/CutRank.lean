@@ -85,7 +85,7 @@ theorem blockRank_eq_rank [Finite m] (S : Set m) (T : Set n) [Fintype T] :
 
 /-- Restricting the columns of a block maps its row space onto the row space of the smaller
 block. -/
-theorem span_range_row_submatrix_eq_map (S : Set m) {T T' : Set n} (h : T' ⊆ T) :
+private theorem span_range_row_submatrix_eq_map (S : Set m) {T T' : Set n} (h : T' ⊆ T) :
     span K (range (M.submatrix ((↑) : S → m) ((↑) : T' → n)).row) =
       (span K (range (M.submatrix ((↑) : S → m) ((↑) : T → n)).row)).map
         (LinearMap.funLeft K K (inclusion h)) := by
