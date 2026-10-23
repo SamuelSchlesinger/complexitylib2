@@ -273,7 +273,6 @@ theorem succProbability_schnorrDirectGame_le (setup : ℕ → PMF F.Desc) (k : �
 
 /-- The extracted witness is computable in polynomial time from the group description and the
 four binary numbers. -/
-@[fun_prop]
 private theorem computableTidilyInPolyTime_extractNat {α : Type} {input : α ↪ List Bool}
     {d : α → F.Desc} {c z c' z' : α → ℕ} (hd : ComputableTidilyInPolyTime d input F.encDesc)
     (hc : ComputableTidilyInPolyTime c input encNat)
@@ -294,6 +293,8 @@ private theorem computableTidilyInPolyTime_extractNat {α : Type} {input : α �
     (ComputableInPolyTime.of_tidy (.binary_sub' hq (.const 2)))
     (ComputableInPolyTime.of_tidy hq) fun a => (F.prime_order (d a)).pos).tidy
   exact .binary_mod' (.binary_mul' hpow (hdiff hz hz')) hq
+
+attribute [local fun_prop] computableTidilyInPolyTime_extractNat
 
 /-- **The rewinding adversary is uniform strict PPT** when the impersonator is and the challenge
 length is computable in polynomial time. -/
