@@ -1203,6 +1203,11 @@ public import Complexity.Crypto.Computational.GoldreichLevin.Reduction
 public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction
 public import Complexity.Crypto.Computational.HardCore
+public import Complexity.Crypto.Computational.Homomorphic.Basic
+public import Complexity.Crypto.Computational.Homomorphic.Circuit
+public import Complexity.Crypto.Computational.Homomorphic.Circuit.PolyTime
+public import Complexity.Crypto.Computational.Homomorphic.Efficiency
+public import Complexity.Crypto.Computational.Homomorphic.Refresh
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.OneWay
