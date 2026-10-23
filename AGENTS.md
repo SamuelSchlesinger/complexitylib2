@@ -162,6 +162,10 @@ objects, refs, worktree registrations, or metadata belonging to another session.
 Keep mutable build outputs separate. Integration experiments must be contained so their failure
 cannot damage the user's checkout or another worker's repository.
 
+Machines are shared between agents. Stop only processes and tasks you started, by PID or task
+ID; never use pattern-based kills such as `pkill -f`, which also hit other agents' builds. Keep
+scratch files under a directory or name unique to your agent.
+
 ### Placement and reuse
 
 Place reusable definitions and general lemmas in the lowest suitable mathematical module.
