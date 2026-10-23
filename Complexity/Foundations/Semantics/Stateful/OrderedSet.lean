@@ -27,6 +27,8 @@ choose a representation or charge a computational cost.
 
 ## Main results
 
+* `Cslib.OrderedSet.insertAll_run`: batch insertion unions the keys into the state and preserves
+  insertion order and duplicates in the operation history.
 * `Cslib.OrderedSet.firstTwo_run`: the selected query history depends on the minimum answer.
 
 ## References
@@ -71,6 +73,17 @@ abbrev spec (α : Type) [LinearOrder α] : Spec where
 def insertAll : List α → (spec α).Client Unit
   | [] => .pure ()
   | x :: xs => .liftBind (.insert x) fun _ => insertAll xs
+
+/-- Batch insertion adds each key to the state, retaining every insertion in its original order. -/
+theorem insertAll_run (s : Finset α) (xs : List α) :
+    (spec α).runClient s (insertAll xs) = ((), s ∪ xs.toFinset, xs.map Op.insert) := by
+  induction xs generalizing s with
+  | nil =>
+    change ((), s, []) = ((), s ∪ ∅, [])
+    rw [Finset.union_empty]
+  | cons x xs ih =>
+    simp only [insertAll, Spec.runClient, spec, ih, List.toFinset_cons, List.map_cons]
+    simp [Finset.insert_union, Finset.union_insert]
 
 /-- Read the two smallest distinct keys. The successor argument comes from the minimum answer. -/
 def firstTwo : (spec α).Client (Option α × Option α) :=
