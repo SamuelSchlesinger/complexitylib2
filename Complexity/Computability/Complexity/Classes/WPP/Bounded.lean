@@ -100,7 +100,7 @@ theorem forall_lt_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     apply ComputableTidilyInPolyTime.intBin_prod_range
       (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2)) <;> fun_prop
   have hp : ComputableTidilyInPolyTime (fun n => p.eval n + 1) encUnary encUnary := by fun_prop
-  apply mem_LWPP_of_indexed_targets_plain (GapP.prod_range_mem hg hr)
+  apply mem_LWPP_of_indexed_targets (GapP.prod_range_mem hg hr)
     hT.computableInPolyTime hp.computableInPolyTime
   · intro n k _
     exact prod_ne_zero_iff.mpr fun i _ => hn _
