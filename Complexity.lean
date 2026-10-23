@@ -1323,6 +1323,7 @@ public import Complexity.Crypto.Computational.Homomorphic.Layered.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.Layered.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Basic
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Bootstrapping
+public import Complexity.Crypto.Computational.Homomorphic.Leveled.Compactness
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Encoding
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.PolyTime
