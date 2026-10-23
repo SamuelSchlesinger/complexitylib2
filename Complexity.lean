@@ -1324,6 +1324,8 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decryption
+public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters
+public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.LWE
