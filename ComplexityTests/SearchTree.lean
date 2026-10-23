@@ -35,6 +35,11 @@ private def sortedFirst : BinaryTree Nat := build [1, 2, 3, 4, 5, 6, 7]
 theorem ordered_build (xs : List Nat) : Ordered (build xs) :=
   (run_correct (insertAll xs) rep_empty).2.1.1
 
+-- The neutral client theorem transfers arbitrary-list contents to the concrete realization.
+theorem elements_build (xs : List Nat) : elements (build xs) = xs.toFinset := by
+  have h := (run_correct (insertAll xs) rep_empty).2.1.2
+  simpa only [build, insertAll_run, Finset.empty_union] using h
+
 -- These shapes represent exactly the same set, with satisfiable strict ordering invariants.
 example : Ordered medianFirst := ordered_build _
 example : Ordered sortedFirst := ordered_build _
