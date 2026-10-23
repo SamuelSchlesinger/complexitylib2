@@ -33,6 +33,14 @@ Passing from tidy to plain computations is lossless: a tidy machine is a machine
 bounds. Passing from plain to tidy computations changes the bounds by linear functions whose
 coefficients depend on the machine.
 
+The plain notion, `Turing.MultiTapeTM.ComputableInPolyTime`, is the one for definitions and public
+statements; the tidy notion is a proof device. Proofs switch between them with
+`Turing.MultiTapeTM.ComputableInPolyTime.tidy` and
+`Turing.MultiTapeTM.ComputableInPolyTime.of_tidy`.
+The closure rules of the plain notion are proved through the tidy calculus and registered with
+`fun_prop`, together with the transition from tidy to plain computability, so `fun_prop` proves a
+plain goal from plain hypotheses and from any tidy certificate.
+
 Upstream `Turing.MultiTapeTM.DecidableInTimeAndSpace` decides a problem through its Boolean
 indicator. `Turing.MultiTapeTM.decidableInTimeAndSpace_iff` restates it for any Boolean function
 deciding membership, the form used by the classes in `Cslib.Complexity`.
@@ -48,6 +56,13 @@ deciding membership, the form used by the classes in `Cslib.Complexity`.
   polynomial time gives a machine within polynomially bounded time and space.
 * `Turing.MultiTapeTM.computableTidilyInPolyTime_iff_exists_computableInTimeAndSpaceOfLength`: the
   two notions agree.
+* `Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime`: the same statement for
+  `Turing.MultiTapeTM.ComputableInPolyTime`, with the shortcuts
+  `Turing.MultiTapeTM.ComputableInPolyTime.tidy`, `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy`
+  and `Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTime`.
+* `Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInPolyTime`: a polynomial time bound for
+  any machine, with any space bound, gives polynomial time.
+* `Turing.MultiTapeTM.ComputableInPolyTime.comp`, `.pair`, `.ite'`, `.fst`, `.snd`: closure rules.
 
 ## References
 
