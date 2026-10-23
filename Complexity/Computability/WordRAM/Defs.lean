@@ -101,9 +101,10 @@ addresses and the halting output are not checked against the word size; the prog
 unbounded; the time classes of `Cslib.WordRAM.LinearTime` measure the word size by the number
 of binary digits of the size rather than by `log₂ (size + 2) + 2`; and an operation may be
 undefined, which faults. In particular, the exact basis faults on subtraction below zero and on
-division and remainder by zero, where the source's signed subtraction gives a negative word and
-its division and remainder follow Lean's integer conventions `x / 0 = 0` and `x % 0 = x`. The
-current classes allow width-indexed code; the `Uniform` variants retain the fixed-program
+division and remainder by zero. The source does not reject these cases as such: its signed
+subtraction may give a negative word, its division and remainder follow Lean's integer conventions
+`x / 0 = 0` and `x % 0 = x`, and only its usual check that the result fits a signed word applies.
+The current classes allow width-indexed code; the `Uniform` variants retain the fixed-program
 convention.
 
 ## Main definitions

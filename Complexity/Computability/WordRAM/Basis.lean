@@ -208,9 +208,10 @@ def StandardOp.evalExact (w : ℕ) : (f : StandardOp) → (Fin f.arity → ℕ) 
 /-- The exact word-RAM basis: the operations of `Basis.standard`, where every operation computes
 its exact value, so that subtraction below zero and division and remainder by zero are undefined
 and fault. Only the word size reads the word size. The bounded-word RAM of
-[MIT–ULB CompGeom Group][Tromino2025] does not fault in these cases: it subtracts signed words, and
-its division and remainder by zero follow Lean's integer conventions `x / 0 = 0` and
-`x % 0 = x`. -/
+[MIT–ULB CompGeom Group][Tromino2025] does not reject a negative difference or a zero divisor as
+such: it subtracts signed words, its division and remainder by zero follow Lean's integer
+conventions `x / 0 = 0` and `x % 0 = x`, and only its usual check that the result fits a signed
+word applies. -/
 abbrev Basis.exact : Basis where
   Op := StandardOp
   Arity := StandardOp.arity
