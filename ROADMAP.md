@@ -223,6 +223,15 @@ existing developments, source credit and saved branches remain available for a f
    `m*(n+1)*w` and `n*w`, and all `N^2` ciphertext bits.
    [Runtime tests](ComplexityTests/Crypto/GSWNative.lean) cover signed wraparound, ragged and
    truncated inputs, zero dimensions, bit order and growing-parameter clients.
+   [Serialized decryption and NAND](Complexity/Crypto/Computational/Homomorphic/GSW/Serialized/Evaluation.lean)
+   agree with the typed operations on every raw word, padding missing bits with zero and ignoring
+   excess bits. NAND retains modular integer counts and produces exactly `N^2` bits. Their
+   [native certificates](Complexity/Crypto/Computational/Homomorphic/GSW/Serialized/Evaluation/PolyTime.lean)
+   charge the full inputs and output with uniformly varying unary dimensions and binary arithmetic.
+   Correctness transports the existing strict noise margins, including every supported actual
+   key and encryption draw. [Regressions](ComplexityTests/Crypto/GSWEvaluation.lean) check small
+   widths, negative wraparound, asymmetric NAND products, positive noise and a native client
+   composing key generation, encryption, NAND and decryption.
    The [statistical hiding theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Hiding.lean)
    proves the uniform-public-matrix step of their security argument. For `d = n + 1` and
    `N = d * w`, the actual ciphertext gives any randomized two-stage adversary acceptance
@@ -252,11 +261,10 @@ existing developments, source credit and saved branches remain available for a f
    spells out both algorithms, their native efficiency and this precise conditional security
    result. It remains outside the curated headline catalogue while the full FHE recovery is open.
    Hardness for the specified noise family is assumed; no worst-case lattice reduction is supplied.
-   Native decryption/NAND/evaluation certificates, bootstrappability with compatible parameters
-   and the concrete FHE instantiation remain open in #486. This parameter family proves fresh
-   and one-NAND correctness; it does not yet supply the augmented-decryption circuit or the
-   separate joint circular-security assumption needed
-   for the fixed-key endpoint.
+   Full native circuit evaluation, shallow decryption circuits, bootstrappability with compatible
+   parameters and the concrete FHE instantiation remain open in #486. This parameter family
+   proves fresh and one-NAND correctness; it does not yet supply the augmented-decryption circuit
+   or the separate joint circular-security assumption needed for the fixed-key endpoint.
    The [code-composition API](Complexity/Computability/Circuit/Boolean/CodeComposition.lean)
    provides a native polynomial-time constructor for shared-input blocks with different gate
    counts, checked against the existing carry-save circuit without padding. This supports the
