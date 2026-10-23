@@ -130,6 +130,8 @@ public import Complexity.Computability.Circuit.Boolean.CarryLookahead
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CarrySave
 public import Complexity.Computability.Circuit.Boolean.CarrySave.PolyTime
+public import Complexity.Computability.Circuit.Boolean.CarrySave.Reduce
+public import Complexity.Computability.Circuit.Boolean.CarrySave.Reduce.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.CodeSubstitution
 public import Complexity.Computability.Circuit.Boolean.CodeTemplate
@@ -255,6 +257,14 @@ public import Complexity.Computability.Circuit.Boolean.Metric
 public import Complexity.Computability.Circuit.Boolean.Minterms
 public import Complexity.Computability.Circuit.Boolean.ModGates
 public import Complexity.Computability.Circuit.Boolean.ModMajority
+public import Complexity.Computability.Circuit.Boolean.Modular.InnerProduct
+public import Complexity.Computability.Circuit.Boolean.Modular.InnerProduct.PolyTime
+public import Complexity.Computability.Circuit.Boolean.Modular.Multiply
+public import Complexity.Computability.Circuit.Boolean.Modular.Multiply.PolyTime
+public import Complexity.Computability.Circuit.Boolean.Modular.PartialProduct
+public import Complexity.Computability.Circuit.Boolean.Modular.PartialProduct.PolyTime
+public import Complexity.Computability.Circuit.Boolean.Modular.Subtract
+public import Complexity.Computability.Circuit.Boolean.Modular.Subtract.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Multiplicity
 public import Complexity.Computability.Circuit.Boolean.NaturalProof
 public import Complexity.Computability.Circuit.Boolean.NaturalProof.Generator
@@ -1330,6 +1340,9 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decryption
+public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit
+public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit.Parameters
+public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget

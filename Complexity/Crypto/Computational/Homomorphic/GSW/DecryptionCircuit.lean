@@ -56,14 +56,14 @@ def inputSecret (x : BitString (inputWidth n w)) : Fin n → ZMod (2 ^ w) :=
 def inputCiphertext (x : BitString (inputWidth n w)) : Ciphertext n w :=
   decodeCiphertext n w (List.ofFn (sndBits x))
 
-theorem inputSecret_apply (x : BitString (inputWidth n w)) (j : Fin n) :
+private theorem inputSecret_apply (x : BitString (inputWidth n w)) (j : Fin n) :
     inputSecret x j = ((BitString.equivFin w (block (fstBits x) j) : ℕ) : ZMod (2 ^ w)) := by
   simp only [inputSecret, decodeSecret, Cslib.Matrix.ofBinary_apply,
     Cslib.Matrix.binaryEntry, Fin.val_zero, zero_mul, zero_add,
     listRow_eq_ofFn w j, ofList_ofFn, Nat.foldr_bit_ofFn, BitString.val_equivFin_eq_sum]
 
 /-- Recompose any row's binary word by the same place values as the circuit word convention. -/
-theorem rowWord_cast (C : Ciphertext n w) (row : Fin (n + 1) × Fin w) (j : Fin (n + 1)) :
+private theorem rowWord_cast (C : Ciphertext n w) (row : Fin (n + 1) × Fin w) (j : Fin (n + 1)) :
     ((BitString.equivFin w (fun l => C row (j, l)) : ℕ) : ZMod (2 ^ w)) =
       recomposeMatrix w (bitMatrix (ZMod (2 ^ w)) C) row j := by
   simp only [BitString.val_equivFin_eq_sum, Nat.cast_sum, Nat.cast_mul, Nat.cast_pow,
@@ -91,7 +91,7 @@ def rowInputs (n w : ℕ) (hw : 0 < w) (j : Fin (n + 1)) :
   fun l => Fin.natAdd (n * w)
     (finProdFinEquiv (finProdFinEquiv (selectedRow n w hw), finProdFinEquiv (j, l)))
 
-theorem eval_rowInputs (x : BitString (inputWidth n w)) (hw : 0 < w) (j : Fin (n + 1)) :
+private theorem eval_rowInputs (x : BitString (inputWidth n w)) (hw : 0 < w) (j : Fin (n + 1)) :
     (Circuit.wiring signature (rowInputs n w hw j)).eval interpretation x =
       fun l => inputCiphertext x (selectedRow n w hw) (j, l) := by
   funext l
@@ -99,11 +99,11 @@ theorem eval_rowInputs (x : BitString (inputWidth n w)) (hw : 0 < w) (j : Fin (n
   exact (inputCiphertext_apply x 0 j ⟨w - 1, by omega⟩ l).symm
 
 /-- Consecutive selected-row words paired with the unexpanded secret, omitting column zero. -/
-def rowTail (x : BitString (inputWidth n w)) (hw : 0 < w) : BitString (n * w) :=
+private def rowTail (x : BitString (inputWidth n w)) (hw : 0 < w) : BitString (n * w) :=
   fun i => inputCiphertext x (selectedRow n w hw)
     ((finProdFinEquiv.symm i).1.succ, (finProdFinEquiv.symm i).2)
 
-theorem block_rowTail (x : BitString (inputWidth n w)) (hw : 0 < w) (j : Fin n) :
+private theorem block_rowTail (x : BitString (inputWidth n w)) (hw : 0 < w) (j : Fin n) :
     block (rowTail x hw) j = fun l => inputCiphertext x (selectedRow n w hw) (j.succ, l) := by
   funext l
   simp only [rowTail, block, Equiv.symm_apply_apply]
@@ -114,7 +114,7 @@ def productInputs (n w : ℕ) (hw : 0 < w) : Fin (n * w + n * w) → Fin (inputW
     (Fin.castAdd (((n + 1) * w) * ((n + 1) * w)))
     (fun i => rowInputs n w hw (finProdFinEquiv.symm i).1.succ (finProdFinEquiv.symm i).2)
 
-theorem append_comp_productInputs (x : BitString (inputWidth n w)) (hw : 0 < w) :
+private theorem append_comp_productInputs (x : BitString (inputWidth n w)) (hw : 0 < w) :
     x ∘ productInputs n w hw = Fin.append (fstBits x) (rowTail x hw) := by
   funext i
   refine Fin.addCases (fun j => ?_) (fun j => ?_) i
@@ -127,7 +127,7 @@ theorem append_comp_productInputs (x : BitString (inputWidth n w)) (hw : 0 < w) 
 def productSum (n w : ℕ) (hw : 0 < w) : Circuit signature (inputWidth n w) w :=
   (Modular.innerProduct n w).comp (Circuit.wiring signature (productInputs n w hw))
 
-theorem productSum_cast (x : BitString (inputWidth n w)) (hw : 0 < w) :
+private theorem productSum_cast (x : BitString (inputWidth n w)) (hw : 0 < w) :
     ((BitString.equivFin w ((productSum n w hw).eval interpretation x) : ℕ) : ZMod (2 ^ w)) =
       ∑ j : Fin n, recomposeMatrix w (bitMatrix (ZMod (2 ^ w)) (inputCiphertext x))
         (selectedRow n w hw) j.succ * inputSecret x j := by
@@ -143,7 +143,7 @@ def phase (n w : ℕ) (hw : 0 < w) : Circuit signature (inputWidth n w) w :=
     ((Circuit.wiring signature (rowInputs n w hw 0)).append (productSum n w hw))
 
 /-- The raw circuit phase is exactly the original selected-row residue on every input. -/
-theorem phase_cast (x : BitString (inputWidth n w)) (hw : 0 < w) :
+private theorem phase_cast (x : BitString (inputWidth n w)) (hw : 0 < w) :
     ((BitString.equivFin w ((phase n w hw).eval interpretation x) : ℕ) : ZMod (2 ^ w)) =
       decryptionPhase (inputSecret x) (inputCiphertext x) (selectedRow n w hw) := by
   let a := (Circuit.wiring signature (rowInputs n w hw 0)).eval interpretation x
@@ -194,7 +194,7 @@ theorem eval_decodeWord (x : BitString w) :
       rw [testBit_wordValue x ⟨w - 1, by omega⟩,
         testBit_wordValue x ⟨w - 2, by omega⟩]
 
-theorem depth_decodeWord_le (w : ℕ) : (decodeWord w).depth ≤ 3 := by
+private theorem depth_decodeWord_le (w : ℕ) : (decodeWord w).depth ≤ 3 := by
   unfold decodeWord
   split_ifs
   · simp
@@ -202,7 +202,7 @@ theorem depth_decodeWord_le (w : ℕ) : (decodeWord w).depth ≤ 3 := by
   · exact (Formula.depth_toCircuit_le _).trans
       ((Formula.depth_xor_le _ _).trans (by simp))
 
-theorem size_decodeWord_le (w : ℕ) : (decodeWord w).size ≤ 5 := by
+private theorem size_decodeWord_le (w : ℕ) : (decodeWord w).size ≤ 5 := by
   unfold decodeWord
   split_ifs <;> simp
 

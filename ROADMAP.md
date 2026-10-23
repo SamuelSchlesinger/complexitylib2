@@ -268,16 +268,24 @@ existing developments, source credit and saved branches remain available for a f
    unary parameter routines. Only the modulus is returned in binary.
    Its [security corollary](Complexity/Crypto/Computational/Homomorphic/GSW/DepthParameters/Security.lean)
    assumes decision LWE for this exact new family; the earlier family's hardness premise is
-   insufficient. The actual augmented-decryption circuit still has to be constructed and proved
-   to fit `L`; this arithmetic result does not establish bootstrappability.
-   Full native circuit evaluation, shallow decryption circuits, bootstrappability with compatible
-   parameters and the concrete FHE instantiation remain open in #486. The earlier parameter family
+   insufficient. The [actual selected-row decryptor](Complexity/Crypto/Computational/Homomorphic/GSW/DecryptionCircuit.lean)
+   computes total serialized decryption on every well-sized raw secret/ciphertext pair, including
+   widths zero and one. Its depth is at most `28 + 18*clog₂(w+1) + 12*clog₂(n)` and its gate
+   count at most `131*(n+1)*(w+1)²`. The [native generator](Complexity/Crypto/Computational/Homomorphic/GSW/DecryptionCircuit/PolyTime.lean)
+   charges all arithmetic, indexing, wiring and complete layered NAND augmentation.
+   The [parameter fit](Complexity/Crypto/Computational/Homomorphic/GSW/DecryptionCircuit/Parameters.lean)
+   proves that the actual augmented circuit, with two NAND microlevels per De Morgan level,
+   fits `L` at every security parameter. [Checked clients](ComplexityTests/Crypto/GSWDecryptionCircuit.lean)
+   include both decoder ties, negative wraparound, boundary widths and a uniform family generator.
+   These circuit results do not establish bootstrappability or transfer a hardness premise.
+   Full native circuit evaluation, bootstrappability with compatible parameters and the concrete
+   FHE instantiation remain open in #486. The earlier parameter family
    proves fresh and one-NAND correctness; it does not yet supply the augmented-decryption circuit
    or the separate joint circular-security assumption needed for the fixed-key endpoint.
    The [code-composition API](Complexity/Computability/Circuit/Boolean/CodeComposition.lean)
    provides a native polynomial-time constructor for shared-input blocks with different gate
    counts, checked against the existing carry-save circuit without padding. This supports the
-   shallow-decryption generator in #528; that full circuit and its certificate remain open.
+   complete shallow-decryption generator in #528.
    [Native carry-save generators](Complexity/Computability/Circuit/Boolean/CarrySave/PolyTime.lean)
    construct the exact existing three-to-two and four-to-two reducers from unary width,
    including all binary references and the unequal carry-bit blocks.
@@ -285,8 +293,7 @@ existing developments, source credit and saved branches remain available for a f
    constructs the exact existing half-split tree from the complete native leaf-code list,
    binary input arity and native operator/fallback codes. Its polynomial certificate charges
    all interval-table rows and wire encodings, including dead gates and malformed raw data.
-   This completes the balanced-construction prerequisite #543; the actual shallow-decryption
-   circuit, its native generator and parameter fit remain the separate #528 objective.
+   This completes the balanced-construction prerequisite #543 used by the complete #528 decryptor.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
