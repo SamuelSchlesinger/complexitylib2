@@ -100,8 +100,9 @@ python3 -m http.server --bind 127.0.0.1 --directory guide/.lake/build/site/html-
 ```
 
 The first build compiles Verso and links the guide's generator, which takes a few minutes. The
-**Guide** workflow builds pull requests that change the guide and uploads the pages as a `guide`
-artifact.
+**API documentation** workflow publishes the guide from `main` with the API documentation, at
+[/guide/](https://www.cslib.io/complexitylib/guide/). The **Guide** workflow builds
+pull requests that change the guide and uploads the pages as a `guide` artifact.
 
 This is the canonical CSLib-based Complexitylib. The renamed historical
 [pre-CSLib implementation](https://github.com/SamuelSchlesinger/complexitylib-v1) remains available
