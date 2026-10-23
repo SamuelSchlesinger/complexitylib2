@@ -208,14 +208,23 @@ campaign or separate design study for every small improvement.
 
 ## Lean development: use the Lean MCP server first
 
-Use MCP goal inspection, diagnostics and theorem search while iterating; reserve `lake` commands
-for validation checkpoints. If MCP tools are unavailable, say so and use the smallest shell check.
+Before the first Lean MCP operation that can elaborate or build in a checkout, run
+`scripts/cache/ensure.sh`. Run it again after pulling, switching branches, or changing the
+toolchain or dependency pins. This applies regardless of the agent client: MCP's
+`lean_build(fetch_cache=true)` fetches Mathlib's cache, not the CSLib and Complexitylib caches.
+The bootstrap attempts all three and suppresses repeated downloads for the same checkout state
+for ten minutes; `scripts/cache/ensure.sh --refresh` retries immediately. A miss or download
+failure leaves Lean to compile the missing outputs.
 
-In a fresh checkout or worktree, run `scripts/cache/get.sh` before the first build. Lake's local
-artifact cache then shares outputs between all checkouts on the machine, so a module is compiled
-once per machine for given inputs. Proof-only edits do not rebuild dependents; statement and
-definition changes in widely imported modules do. [scripts/cache/README.md](scripts/cache/README.md)
-describes both caches.
+Use MCP goal inspection, diagnostics and theorem search while iterating; reserve builds for
+validation checkpoints. `scripts/build.sh [Lake build arguments]` and `scripts/check.sh` run the
+same bootstrap automatically. Bare `lake` and MCP commands do not invoke it. If MCP tools are
+unavailable, say so and use the smallest shell check.
+
+Lake's local artifact cache then shares outputs between checkouts on the same machine with the
+same inputs. Proof-only edits do not rebuild dependents; statement and definition changes in
+widely imported modules do. [scripts/cache/README.md](scripts/cache/README.md) describes both
+caches and the deliberate opt-out for builds that must not download artifacts.
 
 ## Validation sequence
 
@@ -228,7 +237,7 @@ lake exe lint-style
 lake exe checkInitImports
 ```
 
-`scripts/check.sh` runs this sequence. CI runs the same checks.
+`scripts/check.sh` restores optional caches and runs this sequence. CI runs the same checks.
 
 For the edit loop, `scripts/check.sh --quick [--base REF]` builds changed Lean modules and their
 transitive importing clients, then checks import aggregates. The comparison uses the merge base

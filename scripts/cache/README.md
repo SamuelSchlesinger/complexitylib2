@@ -13,8 +13,7 @@ other checkout on the same machine with the same inputs. Outputs are hard-linked
 downloads them for the nearest cached ancestor of your `HEAD`:
 
 ```bash
-scripts/cache/get.sh   # Mathlib's cache, then Complexitylib's outputs
-lake build             # compiles only what you changed
+scripts/build.sh --wfail --iofail   # restore caches, then build changed or missing modules
 ```
 
 A complete set of library and test outputs is about 75 MB compressed. Outputs are platform
@@ -26,6 +25,37 @@ CI reads the cache too. After restoring `.lake` from the GitHub Actions cache, L
 `scripts/cache/get-missing.sh`, which downloads the same outputs except those of modules whose
 input hash already matches a build trace in `.lake`. A fresh runner would otherwise download a
 complete set on every run, although `.lake` usually has most of it.
+
+## Automatic restoration
+
+`scripts/build.sh` runs `scripts/cache/ensure.sh`, then forwards its arguments and exit status to
+`lake build`. `scripts/check.sh` uses the same bootstrap before full or quick validation; a quick
+check that falls back to all six gates does not download twice. Bare `lake` commands do not
+bootstrap. Before using Lean MCP diagnostics or another operation that can elaborate/build, run:
+
+```bash
+scripts/cache/ensure.sh
+```
+
+The instruction in `AGENTS.md` applies to every agent client. MCP's
+`lean_build(fetch_cache=true)` only fetches Mathlib's cache, so it does not replace this command.
+
+The bootstrap records a completed **attempt**, not a successful cache hit, in
+`.lake/cache-bootstrap/attempt.json`. For ten minutes it skips another attempt with the same
+checkout path, `HEAD`, toolchain, manifest, Lake configuration, endpoint and `LAKE_CACHE_DIR`.
+Working proof edits do not trigger another download. A changed `HEAD`, pin or configuration
+triggers a new attempt; an unchanged state is retried after ten minutes, including a previous miss or
+network failure. The stamp is written atomically after the fetch command finishes.
+
+```bash
+scripts/cache/ensure.sh --refresh             # retry now, e.g. after clearing caches
+COMPLEXITYLIB_CACHE_AUTO=0 scripts/build.sh    # skip automatic downloads deliberately
+```
+
+The opt-out also applies to `scripts/check.sh` and direct bootstrap calls. It leaves existing
+build outputs and Lake's local cache in place. `scripts/cache/get.sh` remains the explicit,
+unstamped fetch command. Cache misses and download failures are optional: builds compile what
+is missing, and the bootstrap never claims that all requested artifacts were available.
 
 ## Trust and privacy
 
