@@ -94,6 +94,8 @@ noncomputable def linearSimulate (ψ : Y → M →ₗ[ZMod q] N) (u : Y → N) (
 
 variable (ψ : Y → M →ₗ[ZMod q] N) (u : Y → N) (ι : C ↪ ZMod q)
 
+/-- A conversation is accepting exactly when it satisfies the verification equation
+`ψ y z = t + ι c • u y`. -/
 @[simp] theorem linear_accepts_iff {y : Y} {t : N} {c : C} {z : M} :
     (linear ψ u ι).Accepts y t c z ↔ ψ y z = t + ι c • u y := by
   simp only [Accepts, linear, decide_eq_true_eq]
@@ -153,6 +155,7 @@ noncomputable def schnorr (g : G) : SigmaProtocol (ZMod q) G G C (ZMod q) :=
 
 variable {ι} {g : G}
 
+/-- Schnorr's verification equation `z • g = t + c • u` ([BonehShoup2023], Example 19.1). -/
 @[simp] theorem schnorr_accepts_iff {u t : G} {c : C} {z : ZMod q} :
     (schnorr ι g).Accepts u t c z ↔ z • g = t + ι c • u := by
   simp only [schnorr, linear_accepts_iff, LinearMap.toSpanSingleton_apply, id]
@@ -182,6 +185,8 @@ noncomputable def okamoto (g h : G) : SigmaProtocol (ZMod q × ZMod q) G G C (ZM
 
 variable {h : G}
 
+/-- Okamoto's verification equation `z₁ • g + z₂ • h = t + c • u`
+([BonehShoup2023], Section 19.5.1). -/
 @[simp] theorem okamoto_accepts_iff {u t : G} {c : C} {z : ZMod q × ZMod q} :
     (okamoto ι g h).Accepts u t c z ↔ z.1 • g + z.2 • h = t + ι c • u := by
   simp only [okamoto, linear_accepts_iff, LinearMap.coprod_apply,
@@ -212,6 +217,8 @@ noncomputable def chaumPedersen (g : G) : SigmaProtocol (ZMod q) (G × G × G) (
   linear (fun s => (LinearMap.toSpanSingleton (ZMod q) G g).prod
     (LinearMap.toSpanSingleton (ZMod q) G s.1)) Prod.snd ι
 
+/-- The Chaum–Pedersen verification equations `z • g = t₁ + c • v` and `z • u = t₂ + c • w`
+([BonehShoup2023], Section 19.5.2). -/
 @[simp] theorem chaumPedersen_accepts_iff {s : G × G × G} {t : G × G} {c : C} {z : ZMod q} :
     (chaumPedersen ι g).Accepts s t c z ↔
       z • g = t.1 + ι c • s.2.1 ∧ z • s.1 = t.2 + ι c • s.2.2 := by
@@ -247,6 +254,8 @@ noncomputable def linearSystem (m n : ℕ) :
 
 variable {m n : ℕ}
 
+/-- The generic linear protocol checks each equation `∑ j, z j • g i j = t i + c • u i`
+([BonehShoup2023], Figure 19.8). -/
 @[simp] theorem linearSystem_accepts_iff {s : (Fin m → Fin n → G) × (Fin m → G)}
     {t : Fin m → G} {c : C} {z : Fin n → ZMod q} :
     (linearSystem ι m n).Accepts s t c z ↔ ∀ i, ∑ j, z j • s.1 i j = t i + ι c • s.2 i := by
