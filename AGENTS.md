@@ -293,10 +293,10 @@ lake exe checkInitImports
   laws directly, and for operations such as `PMF.bind` between different universes that the standard
   monad interface cannot express. Retain concise point-free composition and maps when naming an
   intermediate value would not improve readability. Check affected proofs when changing notation.
-- As in Mathlib, renaming, moving or removing a public declaration that is already on `main`
-  leaves a deprecated alias at the old full name, `@[deprecated (since := "YYYY-MM-DD")] alias
-  oldName := newName` (or a `@[deprecated]` theorem when the statement changes shape). Private
-  declarations and declarations introduced in the same unmerged branch need no alias.
+- The library supports no downstream users yet, so renaming, moving, removing or privatizing a
+  public declaration needs no deprecated alias: update every client in this repository (library,
+  tests, abstracts and guide) in the same change. Delete existing deprecated aliases when touching
+  their area. Revisit this rule before the first supported release.
 - `ComplexityTests/Axioms.lean` audits all declarations stored in imported `Complexity` modules
   for dependencies beyond `propext`, `Classical.choice` and `Quot.sound` and keeps its existing
   named guards. Add named `#print axioms` guards for an epic's headline theorems to the epic's
