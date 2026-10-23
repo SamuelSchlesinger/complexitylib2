@@ -49,6 +49,7 @@ counting folds a counter directly instead of constructing the matching sublist.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.length`, `.range`, `.replicate`: unary lengths,
   ranges and lists of a computed length, charging each repeated value.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.zipIdx`: number list entries with unary indices.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.zip`: pair entries of framed lists.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWith`, `.allWith`: Boolean scans with a
   parameter, applied explicitly like the fold rules.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.countPWith`, `.anyWithEncoding`,
@@ -748,6 +749,41 @@ theorem listGetD_binary {encL : List α ↪ List Bool} [ListEncoding encA encL]
     · rw [Nat.min_eq_left h, List.getD_eq_default _ _ h, List.getD_eq_default _ _ le_rfl]
   rw [heq]
   exact (listGetD d).comp (hl.prod hcap)
+
+/-- Zip framed lists, charging both inputs and every pair in the output. -/
+@[fun_prop]
+theorem zip {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
+    ComputableTidilyInPolyTime (fun p : List α × List β => p.1.zip p.2)
+      (encPair (encList encA) (encList encB)) (encList (encPair encA encB)) := by
+  rcases isEmpty_or_nonempty α with h | h
+  · have heq : (fun p : List α × List β => p.1.zip p.2) = fun _ => [] := by
+      funext p
+      cases p.1 with
+      | nil => rfl
+      | cons a _ => exact isEmptyElim a
+    rw [heq]
+    exact const []
+  rcases isEmpty_or_nonempty β with h' | h'
+  · have heq : (fun p : List α × List β => p.1.zip p.2) = fun _ => [] := by
+      funext p
+      cases p.2 with
+      | nil => simp
+      | cons b _ => exact isEmptyElim b
+    rw [heq]
+    exact const []
+  obtain ⟨a⟩ := h
+  obtain ⟨b⟩ := h'
+  have heq (p : List α × List β) : p.1.zip p.2 =
+      (List.range (min p.1.length p.2.length)).map
+        (fun i => (p.1.getD i a, p.2.getD i b)) := by
+    apply List.ext_getElem (by simp)
+    intro i hi hi'
+    have hleft : i < p.1.length := (Nat.lt_min.mp (by simpa using hi)).1
+    have hright : i < p.2.length := (Nat.lt_min.mp (by simpa using hi)).2
+    simp only [List.getElem_zip, List.getElem_map, List.getElem_range,
+      List.getD_eq_getElem _ _ hleft, List.getD_eq_getElem _ _ hright]
+  simp_rw [heq, List.getD_eq_getElem?_getD]
+  fun_prop
 
 /-- Number the entries of a framed list with unary indices, charging the list and every index. -/
 @[fun_prop]
