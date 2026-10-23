@@ -175,6 +175,8 @@ public import Complexity.Computability.Circuit.Boolean.KeyedSort
 public import Complexity.Computability.Circuit.Boolean.Khrapchenko
 public import Complexity.Computability.Circuit.Boolean.KhrapchenkoDepth
 public import Complexity.Computability.Circuit.Boolean.LMN
+public import Complexity.Computability.Circuit.Boolean.Layered
+public import Complexity.Computability.Circuit.Boolean.Layered.PolyTime
 public import Complexity.Computability.Circuit.Boolean.MachineSimulation
 public import Complexity.Computability.Circuit.Boolean.Majority
 public import Complexity.Computability.Circuit.Boolean.MassProduction.Basic
@@ -1207,6 +1209,11 @@ public import Complexity.Crypto.Computational.Homomorphic.Basic
 public import Complexity.Crypto.Computational.Homomorphic.Circuit
 public import Complexity.Crypto.Computational.Homomorphic.Circuit.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Efficiency
+public import Complexity.Crypto.Computational.Homomorphic.KeyChain
+public import Complexity.Crypto.Computational.Homomorphic.KeyChain.PolyTime
+public import Complexity.Crypto.Computational.Homomorphic.Layered
+public import Complexity.Crypto.Computational.Homomorphic.Layered.Correctness
+public import Complexity.Crypto.Computational.Homomorphic.Layered.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Refresh
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
@@ -1538,6 +1545,7 @@ public import Complexity.Languages.Probabilistic.Repeat
 public import Complexity.Languages.Probabilistic.Selection
 public import Complexity.Languages.Probabilistic.Simulation
 public import Complexity.Languages.Probabilistic.Transcript
+public import Complexity.Languages.Probabilistic.Traverse
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Logics.FirstOrder.Basic
 public import Complexity.Logics.FirstOrder.Encoding

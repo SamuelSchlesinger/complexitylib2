@@ -104,6 +104,8 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.GMWPointwise
+import ComplexityTests.Crypto.HomomorphicExample
+import ComplexityTests.Crypto.HomomorphicLayered
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.ZeroKnowledge
