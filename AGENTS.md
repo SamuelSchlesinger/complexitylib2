@@ -8,6 +8,21 @@ therefore apply here verbatim; read cslib's `AGENTS.md`, `CONTRIBUTING.md` and `
 `ROADMAP.md` records outstanding work;
 `UPSTREAM.md` records coordination and exceptional integration decisions.
 
+## Writing in issues and PRs
+
+Write for human collaborators. Start with the point; use short paragraphs or a small flat list.
+Use headings, tables and checklists only when they make the content easier to read. Give technical
+detail where it explains a finding or decision; omit routine inspection narratives and boilerplate.
+
+Small PRs usually need one or two paragraphs plus validation/review links and a brief AI
+disclosure. State what changed, why, and important limitations. Keep evidence in one place;
+link to it instead of copying full reports, hashes or logs across threads.
+
+Comments should add a finding, answer, decision, blocker or useful handoff. Keep CI polling and
+internal agent discussion out of public threads. Reply directly to questions and fixes; a short
+"Fixed in <commit>" is enough when the change is clear. Be courteous, welcome disagreement, and
+do not imply that an agent review is human review.
+
 ## Agent roles and task ownership
 
 Each agent works as either a **coordinator** or a **worker**. Follow the role assigned by the
@@ -48,16 +63,14 @@ documentation progress.
 
 ### Durable records
 
-The issue is authoritative for scope, ownership, current state, and remaining work. The PR is
-authoritative for the final change, validation, and review verdicts. Work without a PR records
-validation and review in its commit description, linked from the issue.
+The issue owns scope, ownership and remaining work; the PR owns the final change, validation and
+review. Link between them instead of mirroring reports. Record tested and reviewed revisions once,
+in GitHub review/CI metadata or a concise PR record; link reusable evidence rather than reproducing
+it. Without a PR, record evidence in the commit description and link it from the issue.
+A local path alone is insufficient for a handoff.
 
-Keep the reporting cadence below, but report changes since the previous update and link existing
-evidence instead of duplicating full validation reports across related issues. Local paths alone
-are insufficient for a durable handoff; publish the relevant branch, commit, or concise findings.
-
-At integration, summarize what was proved or improved, what remains deferred, and what became
-reusable by future contributors.
+At integration, briefly state what landed and any remaining gap. Keep the full objective visible
+when a milestone completes only part of it.
 
 ### Workers
 
@@ -66,12 +79,10 @@ reusable by future contributors.
    GitHub account must use distinct agent/session IDs in comments; the assignee alone does not
    identify the active worker. A worker may own multiple active issues; identify the responsible
    agent for each delegated task in its issue.
-2. Report status in that issue at least hourly while actively working, and whenever you become
-   blocked, hand off, or stop. Include your agent/session ID, current state, completed work,
-   validation performed, blockers, and next step. Link the branch, commits, or draft PR so
-   another worker can resume. Report on every active issue, including delegated work; the owner
-   or its delegating agent may report, identifying whose work is covered. An idle or stopped
-   agent must not promise unattended updates.
+2. Post a brief issue update at least hourly while active or retaining blocked work, and when
+   blocked, handing off or stopping. Give the agent/session, state and next step; link the branch
+   or PR for code and evidence. One line suffices when nothing changed. A delegating agent may
+   report for its workers. Do not promise unattended updates after stopping.
 3. If active work has had no status report from its owner or delegating agent for **three hours**,
    another worker may claim it. Re-read the issue and linked PR immediately before taking over,
    post a takeover comment, update the assignment, and verify ownership before editing.
@@ -98,36 +109,23 @@ ownership indefinitely.
 
 ### Coordinators
 
-**Reviewing worker PRs and approving or requesting changes is the coordinator's highest
-priority.** Keep reviews moving while planning, implementation, and documentation proceed in
-parallel. Use review subagents when helpful; do not make unrelated work wait for a serial queue.
+Reviewing submitted PRs is the highest priority. Keep reviews moving alongside other work.
 
-- Review the exact PR revision for correctness, API design, scope, source credit, validation,
-  and documentation. Arrange the independent reviews required below, record concrete findings,
-  and give an explicit approval or request for changes. Re-review fixes before approval.
-  If the platform prevents a formal review because agents share an account, record the verdict,
-  reviewer agent/session ID, and reviewed SHA in a PR comment; do not represent this as a
-  platform approval or bypass required maintainer approval.
-- When requesting changes, also post `changes requested` with the review link in the issue.
-  That comment ends the review-wait exemption and starts a fresh three-hour response window.
-  If neither the owner nor its delegating agent posts a status update within that window,
-  another worker may take over using the claim procedure above. The responding agent must
-  record whether work is active, blocked, or released; hourly reporting resumes for active or
-  retained blocked work, with the normal three-hour takeover rule.
-- Review existing tasks, resolve ownership or dependency conflicts, and create or split issues
-  when useful. Human-created issues belong to the same queue. Check stale active tasks and
-  unattended review requests; help workers reach a clear next step.
-- Own the consistency of `ROADMAP.md`, `abstracts/catalogue.json`, `UPSTREAM.md`, and the other project
-  documentation. Ensure completed results, open work, limitations, and upstream coordination
-  remain accurate. Workers still supply updates affected by their PRs; coordinators check their
-  integration and arrange the formal-abstract review described below.
-- Keep approval distinct from integration: merge only within the authority granted by maintainers
-  and after required checks and reviews. Close completed issues on merge, and record remaining
-  work in follow-up issues and the roadmap where appropriate.
-- If implementing a task yourself, follow the worker ownership and reporting rules and obtain
-  review from another coordinator. Self-review never substitutes for independent approval.
-  Review subagents must be independent of authoring the changes they review; an authoring
-  subagent's self-review does not count as independent review.
+- Read the PR and existing reviews. Arrange review of uncovered questions under the review cycle
+  below; do not commission a fresh review merely because a new coordinator arrived.
+- Give a clear verdict. For requested changes, post a short link in the task issue. This ends the
+  review-wait exemption and starts a fresh three-hour response window; the worker reports active,
+  blocked or released status, with the usual reporting and takeover rules thereafter.
+- Resolve ownership and dependency conflicts, and help stale tasks reach a useful next step.
+- Check affected `ROADMAP.md`, `abstracts/catalogue.json`, `UPSTREAM.md` and other documentation.
+  Preserve source credit and the distinction between a completed milestone and its open objective.
+- Merge only with maintainer authority, required validation and independent review of the current
+  revision. Close completed issues and link any remaining work.
+- For your own implementation, follow the worker rules and obtain another coordinator's review.
+  Changing roles or delegating authorship never makes an author eligible to approve their work.
+
+If a shared GitHub account prevents formal approval, use one brief PR comment naming the reviewer
+agent/session, revision and verdict. This is agent review, not platform or human approval.
 
 ## Working on changes
 
@@ -264,36 +262,35 @@ lake exe checkInitImports
 
 ## Review cycle
 
-Maintainers arrange these reviews; contributors do not need a particular agent installation.
-Record the reviewed revision, scope, findings and resolutions in the PR or commit description,
-following [CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
+Maintainers arrange independent review of correctness and API quality (naming, reuse, placement,
+documentation and source credit). One non-authoring reviewer may cover both. Add a reviewer for a
+specific uncovered question or needed expertise, not to reach an approval count. Contributors do
+not need a particular agent installation.
 
-- Every batch of new or refactored modules gets an independent cslib-style review (naming, API,
-  duplication, placement, documentation) before or soon after it lands on `main`.
-- Every batch also gets an independent correctness review:
-  are the statements true and as the docstrings claim, are hypotheses satisfiable and
-  non-vacuous, do definitions match the cited literature. Reviewers report findings; fixes are
-  made separately.
+Read the actual definitions and statements. For substantive mathematics, explain briefly what is
+proved, its limiting hypotheses/model/resource conventions, and a checked instance or edge case.
+For a refactor, check declaration preservation, imports and a client using the intended API.
+Lean acceptance under audited axioms does not establish that a definition matches its intended
+mathematics; state material limits of the review.
 
-### Independent review method
+Use inline comments for local findings. Explain the problem and a concrete change or question;
+mark optional suggestions as nits. Group related points. Keep unrelated cleanup as a follow-up,
+and do not turn an optional preference into a moving merge requirement. Authors may disagree:
+discuss the technical reason and settle the point.
 
-Reviewers must inspect the exact definitions and statements before relying on the author's
-summary. For substantive mathematical results, briefly record in the existing review:
+After fixes, review the delta and affected reasoning. Revisit more of the code when a change
+invalidates earlier conclusions. Reuse existing reviews after verifying their scope and source
+identity; do not repeat a full review of unchanged code. Before merging, confirm that the current
+revision is covered and required validation passes.
 
-- what the formal theorem actually establishes;
-- which hypotheses, model choices, or resource conventions limit it;
-- which concrete instance or edge case was checked for non-vacuity or semantic mismatch.
+Finish with a short approval or a clear request for changes. A substantive concern may need a
+long explanation; a clean review does not need a checklist of everything inspected. Record the
+reviewed revision, meaningful findings and resolutions once in the PR, following
+[CONTRIBUTING.md](CONTRIBUTING.md#ai-assistance-and-review).
 
-For extractions and refactors, check declaration preservation, import boundaries, and a client
-using the intended smaller imports.
-
-Separate reviewers can share blind spots. Lean compilation establishes kernel acceptance under
-the audited axioms; it does not establish that definitions express the intended mathematics or
-that prose accurately describes them. State which questions the review actually checked.
-
-Record findings and the evidence needed for the verdict. Reuse existing review records when the
-reviewed content is unchanged, explicitly verify that identity on the final revision, and review
-subsequent deltas. This does not replace the exact-revision approval and validation requirements.
+CSLib examples: [focused fixes and replies](https://github.com/leanprover/cslib/pull/1145),
+[an architectural suggestion kept separate from approval](https://github.com/leanprover/cslib/pull/1120),
+and [API review with explicit nonblocking nits](https://github.com/leanprover/cslib/pull/923#pullrequestreview-5560941186).
 
 ## Curated formal abstracts
 
@@ -317,15 +314,18 @@ including proof-only refactors with unchanged statements and scope.
 Follow the local `lean-abstract` skill and run `#check_abstract`. An allowlist may expose narrowly
 identified foundational models with their meaning explained; it must not hide the result or its
 complexity-class semantics. The audit checks elaborated dependencies, not human interpretation.
-Obtain independent reviews of API quality, correctness, and each changed abstract against the final
-Lean sources, including quantifiers, encoding, resource bounds, nonvacuity and readability. Record
-exact revisions, findings and resolutions in the PR. Do not imply human editorial approval.
+Independent review must cover API quality, correctness and each changed abstract against the final
+Lean sources, including quantifiers, encoding, resource bounds, nonvacuity and readability. This may
+be part of the same review above; reuse unchanged evidence. Record revisions and findings once in
+the PR. Do not imply human editorial approval.
 
 `scripts/build_abstracts.py` generates individual PDFs, a combined catalogue and provenance with
 source digests and exact declaration links. The **Formal abstract PDFs** workflow uploads review
-artifacts and publishes main builds as `formal-abstracts` release assets. Inspect the rendered
-pages and declaration links before integration; record the artifact/run and reviewed revisions.
-Local generation is supported. Generated TeX, PDFs and auxiliary products are not versioned.
+artifacts and publishes main builds as `formal-abstracts` release assets. When abstracts or rendering
+change, inspect affected rendered pages and declaration links before integration; record the
+artifact/run and revisions. If abstracts and rendering are unaffected, record no impact; no new
+PDF review is needed. Local generation is supported. Generated TeX, PDFs and auxiliary products
+are not versioned.
 
 ## Design commitments (do not re-litigate casually)
 
