@@ -53,6 +53,7 @@ open Finset
 def ballSize (q e : ℕ) : ℕ :=
   ∑ j ∈ range (e + 1), q.choose j
 
+/-- The Hamming ball of any radius in the cube of dimension `0` has one point. -/
 @[simp]
 theorem ballSize_zero_left (e : ℕ) : ballSize 0 e = 1 := by
   induction e with
@@ -61,10 +62,12 @@ theorem ballSize_zero_left (e : ℕ) : ballSize 0 e = 1 := by
     rw [ballSize, sum_range_succ, Nat.choose_zero_succ, add_zero]
     exact ih
 
+/-- The Hamming ball of radius `0` has one point. -/
 @[simp]
 theorem ballSize_zero_right (q : ℕ) : ballSize q 0 = 1 := by
   simp [ballSize]
 
+/-- Hamming balls are nonempty: `0 < ballSize q e`. -/
 theorem ballSize_pos (q e : ℕ) : 0 < ballSize q e := by
   rw [ballSize, sum_range_succ']
   simp

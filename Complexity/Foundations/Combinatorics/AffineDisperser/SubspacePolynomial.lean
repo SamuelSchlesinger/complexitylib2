@@ -43,6 +43,8 @@ composite-degree fields.
 ## Main definitions
 
 * `Cslib.AffineDisperser.IsLinearized`: every exponent of a polynomial is a power of two.
+* `Cslib.AffineDisperser.IsLinearized.toLinearMap`: the `𝔽₂`-linear map given by evaluating a
+  linearized polynomial.
 * `Cslib.AffineDisperser.subspacePoly`: the subspace polynomial of a finite family.
 * `Cslib.AffineDisperser.linearizedEval`: evaluation of a coefficient vector indexed by `ZMod n`.
 * `Cslib.AffineDisperser.CoeffPattern`: the zero pattern of an image-subspace polynomial.
@@ -83,20 +85,24 @@ namespace IsLinearized
 
 variable {P Q : F[X]}
 
+/-- The zero polynomial is linearized. -/
 theorem zero : IsLinearized (0 : F[X]) := by
   intro i hi
   simp at hi
 
+/-- A sum of linearized polynomials is linearized. -/
 theorem add (hP : IsLinearized P) (hQ : IsLinearized Q) : IsLinearized (P + Q) := by
   intro i hi
   rcases Finset.mem_union.1 (support_add hi) with h | h
   exacts [hP i h, hQ i h]
 
+/-- A constant multiple `C c * P` of a linearized polynomial is linearized. -/
 theorem C_mul (hP : IsLinearized P) (c : F) : IsLinearized (C c * P) := by
   intro i hi
   rw [Polynomial.mem_support_iff, coeff_C_mul] at hi
   exact hP i (Polynomial.mem_support_iff.2 (right_ne_zero_of_mul hi))
 
+/-- The monomial `X ^ 2 ^ j` is linearized. -/
 theorem X_pow_two_pow (j : ℕ) : IsLinearized (X ^ 2 ^ j : F[X]) := by
   intro i hi
   rw [Polynomial.mem_support_iff, coeff_X_pow] at hi
@@ -104,6 +110,7 @@ theorem X_pow_two_pow (j : ℕ) : IsLinearized (X ^ 2 ^ j : F[X]) := by
   · exact ⟨j, h⟩
   · exact absurd rfl hi
 
+/-- In characteristic two, the square of a linearized polynomial is linearized. -/
 theorem sq [CharP F 2] (hP : IsLinearized P) : IsLinearized (P ^ 2) := by
   intro i hi
   rw [← map_frobenius_expand 2, Polynomial.mem_support_iff, coeff_map, coeff_expand two_pos] at hi
@@ -112,6 +119,7 @@ theorem sq [CharP F 2] (hP : IsLinearized P) : IsLinearized (P ^ 2) := by
     exact ⟨j + 1, by rw [pow_succ, ← hj, Nat.div_mul_cancel h]⟩
   · exact absurd (map_zero _) hi
 
+/-- A linearized polynomial has constant coefficient `0`. -/
 theorem coeff_zero (hP : IsLinearized P) : P.coeff 0 = 0 := by
   by_contra h
   obtain ⟨j, hj⟩ := hP 0 (Polynomial.mem_support_iff.2 h)
@@ -125,16 +133,21 @@ theorem comp_add [CharP F 2] (hP : IsLinearized P) (f g : F[X]) :
   obtain ⟨j, rfl⟩ := hP i hi
   rw [add_pow_char_pow]
 
+/-- In characteristic two, a linearized polynomial composes subtractively:
+`P.comp (f - g) = P.comp f - P.comp g`. -/
 theorem comp_sub [CharP F 2] (hP : IsLinearized P) (f g : F[X]) :
     P.comp (f - g) = P.comp f - P.comp g := by
   rw [eq_sub_iff_add_eq, ← hP.comp_add, sub_add_cancel]
 
+/-- In characteristic two, a linearized polynomial evaluates additively:
+`P.eval (x + y) = P.eval x + P.eval y`. -/
 theorem eval_add [CharP F 2] (hP : IsLinearized P) (x y : F) :
     P.eval (x + y) = P.eval x + P.eval y := by
   have h := hP.comp_add (C x) (C y)
   rw [← C_add, comp_C, comp_C, comp_C, ← C_add] at h
   exact C_injective h
 
+/-- A linearized polynomial vanishes at `0`. -/
 theorem eval_zero (hP : IsLinearized P) : P.eval 0 = 0 := by
   rw [← coeff_zero_eq_eval_zero, hP.coeff_zero]
 
@@ -150,6 +163,7 @@ def IsLinearized.toLinearMap [Algebra (ZMod 2) F] {P : F[X]} (hP : IsLinearized 
         have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
         exact hP.eval_add }
 
+/-- The linear map of a linearized polynomial `P` sends `x` to `P.eval x`. -/
 @[simp]
 theorem IsLinearized.toLinearMap_apply [Algebra (ZMod 2) F] {P : F[X]} (hP : IsLinearized P)
     (x : F) : hP.toLinearMap x = P.eval x :=
@@ -163,9 +177,11 @@ variable [Algebra (ZMod 2) F]
 noncomputable def subspacePoly {m : ℕ} (b : Fin m → F) : F[X] :=
   ∏ c : Fin m → ZMod 2, (X - C (∑ l, c l • b l))
 
+/-- The subspace polynomial is monic. -/
 theorem monic_subspacePoly {m : ℕ} (b : Fin m → F) : (subspacePoly b).Monic :=
   monic_prod_of_monic _ _ fun _ _ => monic_X_sub_C _
 
+/-- The subspace polynomial of a family of `m` elements has degree `2 ^ m`. -/
 theorem natDegree_subspacePoly {m : ℕ} (b : Fin m → F) :
     (subspacePoly b).natDegree = 2 ^ m := by
   rw [subspacePoly, natDegree_prod_of_monic _ _ fun _ _ => monic_X_sub_C _]

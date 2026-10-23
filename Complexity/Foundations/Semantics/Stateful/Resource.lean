@@ -52,12 +52,15 @@ def Bound {exec : Execution D C τ} (R : Realization D exec)
   ∀ {s c o a c' trace}, R.rep s c → D.valid s o → exec c o a c' trace →
     weight trace ≤ charge s o
 
+/-- A constant charge `K` per operation totals `K` times the length of the history. -/
 theorem spec_total_const (D : Spec.{u, v, w}) (K : Nat) (s : D.State) (os : List D.Op) :
     D.totalCost (fun _ _ => K) s os = os.length * K := by
   induction os generalizing s with
   | nil => simp [Spec.totalCost]
   | cons o os ih => simp [Spec.totalCost, ih, Nat.add_mul, Nat.add_comm]
 
+/-- Under a resource certificate, every native execution of a client whose history is admissible,
+from related states, has total weight at most the total charge of the specified history. -/
 theorem Bound.client {exec : Execution D C τ} {R : Realization D exec}
     {weight : τ → Nat} {charge : D.State → D.Op → Nat} (B : Bound R weight charge)
     {p : D.Client α} {s : D.State} {c c' : C} {a : α} {traces : List τ}
@@ -151,23 +154,27 @@ theorem amortized_client (R : Realization E exec) {weight : τ → Nat}
 
 end Module
 
+/-- Unit weights total the length of the trace. -/
 theorem total_one (ts : List τ) : total (fun _ => 1) ts = ts.length := by
   induction ts with
   | nil => rfl
   | cons t ts ih => simp [total, ih, Nat.add_comm]
 
+/-- A unit charge per operation totals the length of the history. -/
 theorem spec_total_one (D : Spec.{u, v, w}) (s : D.State) (os : List D.Op) :
     D.totalCost (fun _ _ => 1) s os = os.length := by
   induction os generalizing s with
   | nil => rfl
   | cons o os ih => simp [Spec.totalCost, ih, Nat.add_comm]
 
+/-- The total of a concatenation is the sum of the totals. -/
 theorem total_append (weight : τ → Nat) (xs ys : List τ) :
     total weight (xs ++ ys) = total weight xs + total weight ys := by
   induction xs with
   | nil => simp [total]
   | cons x xs ih => simp [total, ih, Nat.add_assoc]
 
+/-- The total of a flattened list of chunks is the sum of the totals of the chunks. -/
 theorem total_flatten (weight : τ → Nat) (chunks : List (List τ)) :
     total weight chunks.flatten = total (total weight) chunks := by
   induction chunks with

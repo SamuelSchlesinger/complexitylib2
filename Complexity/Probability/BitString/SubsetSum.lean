@@ -25,6 +25,7 @@ modulus; no prime-modulus hypothesis is needed.
 ## Main definitions
 
 * `Cslib.BitString.SubsetSum.hash`: sum the weights selected by a binary word.
+* `Cslib.BitString.SubsetSum.hashRows`: hash every binary row with the same weights.
 
 ## Main results
 

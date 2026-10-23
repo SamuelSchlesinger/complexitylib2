@@ -63,6 +63,7 @@ and `false`, the sign `1`, elsewhere. -/
 noncomputable def signRound (g : (ι → Bool) → ℝ) (x : ι → Bool) : Bool :=
   decide (g x < 0)
 
+/-- The sign rounding of `g` at `x` is `true` exactly when `g x < 0`. -/
 @[simp] theorem signRound_apply (g : (ι → Bool) → ℝ) (x : ι → Bool) :
     signRound g x = decide (g x < 0) :=
   rfl

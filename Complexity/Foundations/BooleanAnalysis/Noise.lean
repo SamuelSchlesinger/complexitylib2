@@ -170,6 +170,7 @@ noncomputable def noiseOpₗ (ρ : ℝ) : ((ι → Bool) → ℝ) →ₗ[ℝ] (�
   map_add' f g := funext (noiseOp_add ρ f g)
   map_smul' c f := funext (noiseOp_const_mul ρ c f)
 
+/-- The linear map `noiseOpₗ ρ` applies the noise operator `T_ρ`. -/
 @[simp] theorem noiseOpₗ_apply (ρ : ℝ) (f : (ι → Bool) → ℝ) : noiseOpₗ ρ f = noiseOp ρ f :=
   rfl
 

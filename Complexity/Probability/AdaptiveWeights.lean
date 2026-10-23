@@ -27,6 +27,8 @@ This finite weighted-tree calculation is used in approximate oracle simulation
 
 ## Main definitions
 
+* `AdaptiveWeights.branchWeight`: the weight of one answer, `p s` for `true` and `D - p s` for
+  `false`.
 * `AdaptiveWeights.pathWeight`: the product of weights along an explicit answer list.
 * `AdaptiveWeights.acceptWeight`: the total weight of accepting answer sequences.
 

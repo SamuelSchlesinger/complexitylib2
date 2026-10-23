@@ -62,6 +62,8 @@ def toSimpleGraph : SimpleGraph V :=
   SimpleGraph.fromEdgeSet (Set.range ends)
 
 variable {ends} in
+/-- `u` and `v` are adjacent in the underlying simple graph exactly when they are distinct and
+some edge has ends `u` and `v`. -/
 theorem toSimpleGraph_adj {u v : V} :
     (toSimpleGraph ends).Adj u v ↔ u ≠ v ∧ ∃ e, ends e = s(u, v) := by
   rw [toSimpleGraph, SimpleGraph.fromEdgeSet_adj, Set.mem_range, and_comm]
@@ -82,6 +84,8 @@ def incidence (v : V) : Finset E :=
   {e | v ∈ ends e ∧ ¬(ends e).IsDiag}
 
 variable {ends} in
+/-- An edge is at `v`, and not a self-loop, exactly when `v` is one of its ends and its ends are
+distinct. -/
 @[simp] theorem mem_incidence {v : V} {e : E} :
     e ∈ incidence ends v ↔ v ∈ ends e ∧ ¬(ends e).IsDiag := by
   simp [incidence]
@@ -105,6 +109,7 @@ def edgeCut (S : Finset V) : Finset E :=
   {e | ∃ v ∈ S, ∃ w ∈ Sᶜ, ends e = s(v, w)}
 
 variable {ends} in
+/-- An edge is in the edge cut of `S` exactly when it joins a vertex of `S` to a vertex of `Sᶜ`. -/
 theorem mem_edgeCut {S : Finset V} {e : E} :
     e ∈ edgeCut ends S ↔ ∃ v ∈ S, ∃ w ∈ Sᶜ, ends e = s(v, w) := by
   simp only [edgeCut, mem_filter, mem_univ, true_and]

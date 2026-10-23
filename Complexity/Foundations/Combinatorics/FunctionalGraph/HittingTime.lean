@@ -98,6 +98,7 @@ theorem iterate_mem_cycleSet {x : α} (hx : x ∈ periodicPts f) (j : ℕ) : f^[
 
 variable [LinearOrder α]
 
+/-- The canonical time is at least the transient depth. -/
 theorem transientDepth_le_canonicalTime (x : α) : transientDepth f x ≤ canonicalTime f x := by
   rw [← iterate_mem_periodicPts_iff, canonicalTime_spec]
   exact canonicalCycle_periodic f x
@@ -230,6 +231,7 @@ noncomputable def hittingTime (x y : α) : ℕ :=
   if transientDepth f y = 0 then transientDepth f x + cyclicDistance f x y
   else transientDepth f x - transientDepth f y
 
+/-- `reaches f x y` holds exactly when the orbit of `x` visits `y`. -/
 theorem reaches_iff (x y : α) : reaches f x y = true ↔ ∃ t, f^[t] x = y := by
   unfold reaches
   split_ifs with hy

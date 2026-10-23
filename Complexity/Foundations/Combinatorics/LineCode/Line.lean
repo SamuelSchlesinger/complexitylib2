@@ -55,6 +55,7 @@ open Finset
 
 variable {K : Type*} [Field K] [Fintype K] [DecidableEq K] {ℓ : ℕ}
 
+/-- Whether a request is clean is decidable. -/
 instance {k : ℕ} (occupied : Finset (Fin ℓ → K)) (targets directions : Fin k → Fin ℓ → K) :
     DecidablePred (IsClean occupied targets directions) :=
   fun _ => inferInstanceAs (Decidable (_ ∧ _))

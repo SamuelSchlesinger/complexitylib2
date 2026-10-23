@@ -67,6 +67,7 @@ private theorem minimalPeriod_eq_of_periodic_iterates (x : α) {a b : ℕ}
       rw [← iterate_add_apply, Nat.sub_add_cancel h]
     rw [ht, minimalPeriod_apply_iterate hb]
 
+/-- Advancing along the orbit does not change the cycle length. -/
 theorem cycleLength_iterate (x : α) (t : ℕ) : cycleLength f (f^[t] x) = cycleLength f x := by
   unfold cycleLength
   rw [← iterate_add_apply]
@@ -75,6 +76,7 @@ theorem cycleLength_iterate (x : α) (t : ℕ) : cycleLength f (f^[t] x) = cycle
     exact iterate_transientDepth_mem_periodicPts f _
   · exact iterate_transientDepth_mem_periodicPts f x
 
+/-- Every periodic state on the orbit of `x` has the cycle length of `x` as minimal period. -/
 theorem minimalPeriod_at_periodic_iterate (x : α) {t : ℕ}
     (ht : f^[t] x ∈ periodicPts f) :
     minimalPeriod f (f^[t] x) = cycleLength f x :=
@@ -86,6 +88,7 @@ noncomputable def cycleSet (x : α) : Finset α := by
   exact Finset.univ.image fun j : Fin (cycleLength f x) =>
     f^[j.val] (f^[transientDepth f x] x)
 
+/-- The eventual cycle of `x` is the periodic orbit of the state at its transient depth. -/
 theorem mem_cycleSet_iff (x y : α) :
     y ∈ cycleSet f x ↔ y ∈ periodicOrbit f (f^[transientDepth f x] x) := by
   classical
@@ -98,11 +101,13 @@ theorem mem_cycleSet_iff (x y : α) :
     exact ⟨⟨t % cycleLength f x, Nat.mod_lt _ (cycleLength_pos f x)⟩,
       (isPeriodicPt_cycleLength f x).iterate_mod_apply t⟩
 
+/-- The eventual cycle is nonempty. -/
 theorem cycleSet_nonempty (x : α) : (cycleSet f x).Nonempty := by
   classical
   exact ⟨_, (mem_cycleSet_iff f x _).mpr
     (self_mem_periodicOrbit (iterate_transientDepth_mem_periodicPts f x))⟩
 
+/-- Advancing along the orbit does not change the eventual cycle. -/
 theorem cycleSet_iterate (x : α) (t : ℕ) : cycleSet f (f^[t] x) = cycleSet f x := by
   classical
   ext y
@@ -123,6 +128,7 @@ theorem cycleSet_iterate (x : α) (t : ℕ) : cycleSet f (f^[t] x) = cycleSet f 
       rw [← iterate_add_apply, Nat.sub_add_cancel h]
     rw [ht, periodicOrbit_apply_iterate_eq hb]
 
+/-- Every state on the eventual cycle of `x` is periodic and reachable from `x`. -/
 theorem cycleSet_spec {x y : α} (hy : y ∈ cycleSet f x) :
     y ∈ periodicPts f ∧ ∃ t, f^[t] x = y := by
   classical
@@ -137,20 +143,25 @@ variable [LinearOrder α]
 /-- The least element of the eventual cycle in the chosen state order. -/
 noncomputable def canonicalCycle (x : α) : α := (cycleSet f x).min' (cycleSet_nonempty f x)
 
+/-- The canonical representative lies on the eventual cycle. -/
 theorem canonicalCycle_mem (x : α) : canonicalCycle f x ∈ cycleSet f x :=
   Finset.min'_mem _ _
 
+/-- The canonical representative is at most every state of the eventual cycle. -/
 theorem canonicalCycle_le (x : α) {y : α} (hy : y ∈ cycleSet f x) : canonicalCycle f x ≤ y :=
   Finset.min'_le _ _ hy
 
+/-- Advancing along the orbit does not change the canonical representative. -/
 theorem canonicalCycle_iterate (x : α) (t : ℕ) :
     canonicalCycle f (f^[t] x) = canonicalCycle f x := by
   unfold canonicalCycle
   simp only [cycleSet_iterate]
 
+/-- The canonical representative is periodic. -/
 theorem canonicalCycle_periodic (x : α) : canonicalCycle f x ∈ periodicPts f :=
   (cycleSet_spec f (canonicalCycle_mem f x)).1
 
+/-- The canonical representative is reachable from `x`. -/
 theorem canonicalCycle_reachable (x : α) : ∃ t, f^[t] x = canonicalCycle f x :=
   (cycleSet_spec f (canonicalCycle_mem f x)).2
 
@@ -177,12 +188,15 @@ theorem exists_iterate_eq_iff_canonicalCycle_eq (x y : α) (hy : y ∈ periodicP
 /-- The first visit to the canonical cycle representative, always below the state count. -/
 noncomputable def canonicalTime (x : α) : ℕ := Nat.find (canonicalCycle_reachable f x)
 
+/-- At the canonical time, the orbit of `x` is at its canonical representative. -/
 theorem canonicalTime_spec (x : α) : f^[canonicalTime f x] x = canonicalCycle f x :=
   Nat.find_spec (canonicalCycle_reachable f x)
 
+/-- Before the canonical time, the orbit of `x` avoids its canonical representative. -/
 theorem canonicalTime_min (x : α) {j : ℕ} (hj : j < canonicalTime f x) :
     f^[j] x ≠ canonicalCycle f x := Nat.find_min (canonicalCycle_reachable f x) hj
 
+/-- For a periodic state, the canonical time is less than the cycle length. -/
 theorem canonicalTime_lt_cycleLength (x : α) (hx : x ∈ periodicPts f) :
     canonicalTime f x < cycleLength f x := by
   have hp : IsPeriodicPt f (cycleLength f x) x := by
@@ -192,6 +206,7 @@ theorem canonicalTime_lt_cycleLength (x : α) (hx : x ∈ periodicPts f) :
   exact (Nat.find_min' (canonicalCycle_reachable f x) ht).trans_lt
     (Nat.mod_lt _ (cycleLength_pos f x))
 
+/-- The canonical time is less than the number of states. -/
 theorem canonicalTime_lt_card [Fintype α] (x : α) : canonicalTime f x < Fintype.card α := by
   obtain ⟨t, ht, hp, _⟩ := exists_first_visit f (fun y => y = canonicalCycle f x) x
     (canonicalCycle_reachable f x)
@@ -202,6 +217,7 @@ length. -/
 noncomputable def phase (x : α) : ℕ :=
   (cycleLength f x - canonicalTime f x % cycleLength f x) % cycleLength f x
 
+/-- The phase is less than the cycle length. -/
 theorem phase_lt (x : α) : phase f x < cycleLength f x := Nat.mod_lt _ (cycleLength_pos f x)
 
 end Cslib.FunctionalGraph

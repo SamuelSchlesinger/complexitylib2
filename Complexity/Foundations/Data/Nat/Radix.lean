@@ -43,10 +43,13 @@ The application to full-tuple numeric predicates follows [Immerman1999], Exercis
 
 namespace Nat
 
+/-- The value of `d + 1` digits is the first digit plus `B` times the value of the remaining
+digits. -/
 theorem ofDigits_ofFn_succ {d : ℕ} (B : ℕ) (x : Fin (d + 1) → ℕ) :
     ofDigits B (List.ofFn x) = x 0 + B * ofDigits B (List.ofFn (fun i => x i.succ)) := by
   rw [List.ofFn_succ, ofDigits_cons]
 
+/-- The value of a tuple `x` of digits in base `B` is `∑ i, x i * B ^ i`. -/
 theorem ofDigits_ofFn_eq_sum {d : ℕ} (B : ℕ) (x : Fin d → ℕ) :
     ofDigits B (List.ofFn x) = ∑ i, x i * B ^ i.val := by
   induction d with
@@ -59,6 +62,7 @@ theorem ofDigits_ofFn_eq_sum {d : ℕ} (B : ℕ) (x : Fin d → ℕ) :
     intro i _
     ring
 
+/-- For `1 < B`, the value of `d` digits less than `B` is less than `B ^ d`. -/
 theorem ofDigits_ofFn_lt {B d : ℕ} (hB : 1 < B) (x : Fin d → ℕ)
     (hx : ∀ i, x i < B) : ofDigits B (List.ofFn x) < B ^ d := by
   simpa only [List.length_ofFn] using ofDigits_lt_base_pow_length hB
@@ -75,6 +79,7 @@ theorem ofDigits_lt_base_pow_length_of_pos {B : ℕ} (_hB : 0 < B) (l : List ℕ
     simp only [ofDigits_cons, List.length_cons, pow_succ]
     nlinarith
 
+/-- For `1 < B`, two tuples of digits less than `B` with the same value are equal. -/
 theorem ofDigits_ofFn_inj {B d : ℕ} (hB : 1 < B) {x y : Fin d → ℕ}
     (hx : ∀ i, x i < B) (hy : ∀ i, y i < B)
     (h : ofDigits B (List.ofFn x) = ofDigits B (List.ofFn y)) : x = y := by
@@ -89,6 +94,8 @@ theorem exists_ofDigits_ofFn {B d v : ℕ} (hv : v < B ^ d) :
   rw [ofDigits_ofFn_eq_sum, ← finFunctionFinEquiv_apply]
   exact congrArg Fin.val (finFunctionFinEquiv.apply_symm_apply ⟨v, hv⟩)
 
+/-- The digit at `i` of a tuple of digits less than `B` is recovered from its value `v` as
+`v / B ^ i % B`. -/
 theorem ofDigits_ofFn_div_mod {B d : ℕ} (x : Fin d → ℕ) (hx : ∀ i, x i < B)
     (i : Fin d) : ofDigits B (List.ofFn x) / B ^ i.val % B = x i := by
   let y : Fin d → Fin B := fun i => ⟨x i, hx i⟩

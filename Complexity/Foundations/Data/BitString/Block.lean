@@ -48,6 +48,7 @@ variable {m k : ℕ}
 def block (x : BitString (m * k)) (i : Fin m) : BitString k :=
   fun j => x (finProdFinEquiv (i, j))
 
+/-- Bit `j` of block `i` is bit `finProdFinEquiv (i, j)` of the string. -/
 @[simp] theorem block_apply (x : BitString (m * k)) (i : Fin m) (j : Fin k) :
     block x i j = x (finProdFinEquiv (i, j)) :=
   rfl
@@ -65,6 +66,7 @@ def blocksEquiv : BitString (m * k) ≃ (Fin m → BitString k) where
       (finProdFinEquiv.symm (finProdFinEquiv (i, j))).2 = y i j
     rw [Equiv.symm_apply_apply]
 
+/-- `blocksEquiv` cuts a string into its blocks with `block`. -/
 @[simp] theorem blocksEquiv_apply (x : BitString (m * k)) : blocksEquiv x = block x :=
   rfl
 
@@ -77,6 +79,7 @@ def blocksEquiv : BitString (m * k) ≃ (Fin m → BitString k) where
 def blockBits (k : ℕ) (i : Fin m) : Finset (Fin (m * k)) :=
   univ.filter fun p => (finProdFinEquiv.symm p).1 = i
 
+/-- A position lies in block `i` exactly when its block index under `finProdFinEquiv` is `i`. -/
 theorem mem_blockBits {i : Fin m} {p : Fin (m * k)} :
     p ∈ blockBits k i ↔ (finProdFinEquiv.symm p).1 = i := by
   simp [blockBits]

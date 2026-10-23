@@ -24,6 +24,7 @@ constrains its entire value, including all bits outside the specified width.
 
 * `Cslib.BitString.packRadix`: bounded fields in a common radix.
 * `Cslib.BitString.packWords`: split a bit stream into a fixed tuple of words.
+* `Cslib.BitString.readPackedBit`: read one bit of a fixed tuple of words by its address.
 * `Cslib.BitString.readPackedField`: read a bounded-width field across word boundaries.
 
 ## Main results
@@ -43,6 +44,7 @@ open scoped BigOperators
 def packWords (f : ℕ → Bool) (h B : ℕ) (r : Fin B) : ℕ :=
   Nat.ofBits (fun b : Fin h => f (r.val * h + b.val))
 
+/-- Each packed word is below `2 ^ h`. -/
 theorem packWords_lt (f : ℕ → Bool) (h B : ℕ) (r : Fin B) :
     packWords f h B r < 2 ^ h := Nat.ofBits_lt_two_pow _
 
@@ -54,9 +56,12 @@ def readPackedBit {B : ℕ} (h : ℕ) (w : Fin B → ℕ) (a : ℕ) : Bool :=
 def readPackedField {B : ℕ} (h : ℕ) (w : Fin B → ℕ) (a s : ℕ) : ℕ :=
   Nat.ofBits (fun b : Fin s => readPackedBit h w (a + b.val))
 
+/-- A field of width `s` is below `2 ^ s`. -/
 theorem readPackedField_lt {B : ℕ} (h : ℕ) (w : Fin B → ℕ) (a s : ℕ) :
     readPackedField h w a s < 2 ^ s := Nat.ofBits_lt_two_pow _
 
+/-- Bit `b` of the field of width `s` at address `a` is set exactly when `b < s` and the packed
+bit at address `a + b`, bit `t` of word `r` with `r * h + t = a + b`, is set. -/
 theorem readPackedField_testBit {B : ℕ} (h : ℕ) (w : Fin B → ℕ) (a s b : ℕ) :
     (readPackedField h w a s).testBit b = true ↔
       b < s ∧ ∃ r : Fin B, ∃ t : Fin h, r.val * h + t.val = a + b ∧

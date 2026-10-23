@@ -32,7 +32,12 @@ time or space bound for sign determination.
 ## Main definitions
 
 * `Cslib.SignQueries.signCount`: the number of points realizing a sign pattern.
+* `Cslib.SignQueries.weight`: the coefficients of the quadratics giving twice the indicator of a
+  sign.
+* `Cslib.SignQueries.patternWeight`: the coefficient of an exponent vector in the expanded
+  indicator product.
 * `Cslib.SignQueries.queryPolynomial`: a product with exponents in `{0, 1, 2}`.
+* `Cslib.SignQueries.signSum`: the sum of the signs of a polynomial on a finite set of points.
 * `Cslib.SignQueries.tarskiQuery`: the sum of signs at distinct real roots.
 * `Cslib.SignQueries.scaledRootCount`: the integer combination of root sign queries.
 

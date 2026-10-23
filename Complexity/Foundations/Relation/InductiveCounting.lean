@@ -73,6 +73,7 @@ within `n` steps. -/
 def reachableWithin (r : α → α → Prop) (a : α) (n : ℕ) : Set α :=
   {b | RelatesWithinSteps r a b n}
 
+/-- An element is in round `n` exactly when `r` relates `a` to it within `n` steps. -/
 @[simp]
 theorem mem_reachableWithin : b ∈ reachableWithin r a n ↔ RelatesWithinSteps r a b n :=
   Iff.rfl

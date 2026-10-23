@@ -80,6 +80,7 @@ def ListDecodes [Fintype ι] [DecidableEq β] (ρ : ℝ) : Prop :=
 def candidates [DecidableEq α] (w : ι → β) : Finset α :=
   univ.image (C.decode w)
 
+/-- A message is a candidate for `w` exactly when the decoder returns it at some index. -/
 @[simp]
 theorem mem_candidates [DecidableEq α] {w : ι → β} {x : α} :
     x ∈ C.candidates w ↔ ∃ k, C.decode w k = x := by

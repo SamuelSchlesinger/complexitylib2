@@ -36,6 +36,7 @@ argument and need only equality tests to evaluate.
 
 * `Cslib.Code.lagrangeWeight`, `Cslib.Code.lagrangeDecode`: interpolation along a line.
 * `Cslib.Code.maj3`, `Cslib.Code.majTree`: majorities of three and majority trees.
+* `Cslib.Code.tripleEquiv`: the splitting of `3 ^ (L + 1)` indices into three blocks of `3 ^ L`.
 
 ## Main results
 

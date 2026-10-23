@@ -37,11 +37,14 @@ other.
 ## Main definitions
 
 * `Cslib.RotationMap.Hom`: homomorphisms of rotation maps with the same labels.
+* `Cslib.RotationMap.Hom.id`, `Cslib.RotationMap.Hom.comp`: the identity homomorphism and the
+  composition of homomorphisms.
 * `Cslib.RotationMap.Hom.pow`, `Cslib.RotationMap.Hom.relabel`, `Cslib.RotationMap.Hom.zigzag`:
   the induced homomorphisms of powers, relabellings and zig-zag products.
 * `Cslib.RotationMap.restrict`, `Cslib.RotationMap.restrictHom`: the restriction to a set of
   vertices closed under taking neighbors, and its inclusion.
 * `Cslib.RotationMap.componentGraph`: the restriction to the vertices reachable from a vertex.
+* `Cslib.RotationMap.componentHom`: the inclusion of that restriction into the graph.
 
 ## Main results
 
@@ -82,6 +85,7 @@ namespace Hom
 
 variable {G : RotationMap V D} {G' : RotationMap W D} {G'' : RotationMap X D}
 
+/-- A homomorphism of rotation maps coerces to its map of the vertices. -/
 instance : FunLike (Hom G G') V W where
   coe := toFun
   coe_injective φ ψ h := by

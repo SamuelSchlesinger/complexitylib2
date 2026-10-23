@@ -168,6 +168,7 @@ determines its value, so arbitrary initial lists are supported without a uniquen
 def ofList (cache : List (Query × Value)) : Cache (fun _ : Query => Value) :=
   fun q => cache.lookup q
 
+/-- The empty list represents the empty cache. -/
 @[simp] theorem ofList_nil : ofList ([] : List (Query × Value)) = fun _ => none := rfl
 
 variable [LawfulBEq Query] [DecidableEq Query]

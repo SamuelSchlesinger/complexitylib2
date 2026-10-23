@@ -40,6 +40,8 @@ at the far end, the frame popped (`exists_iterate_reingoldEvalStep`).
   the final permutation of a step of the transformation, on the labels.
 * `Cslib.RotationMap.ReingoldPc`, `Cslib.RotationMap.ReingoldEvalState`,
   `Cslib.RotationMap.reingoldEvalStep`: the evaluation with an explicit stack.
+* `Cslib.RotationMap.ReingoldEvalState.mapVertex`: renaming the vertex of the original graph in
+  a state of the evaluation.
 * `Cslib.RotationMap.ReingoldEvalState.atRoot`: whether the next step is a step of the original
   graph.
 
@@ -85,6 +87,7 @@ inductive ReingoldPc where
   | finish
   deriving DecidableEq
 
+/-- There are finitely many program counters. -/
 instance : Fintype ReingoldPc where
   elems := {.zig₀, .call₀, .zag₀, .zig₁, .call₁, .zag₁, .finish}
   complete x := by cases x <;> simp

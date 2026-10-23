@@ -71,12 +71,16 @@ noncomputable def reedMuller (m d : ℕ) : Submodule F ((Fin m → F) → F) :=
 
 variable {F} {m d : ℕ}
 
+/-- A word is a codeword of the Reed–Muller code of degree `d` exactly when it is the evaluation
+table of a polynomial of total degree at most `d`. -/
 theorem mem_reedMuller {f : (Fin m → F) → F} :
     f ∈ reedMuller F m d ↔
       ∃ P : MvPolynomial (Fin m) F, P.totalDegree ≤ d ∧ (fun x => eval x P) = f := by
   simp only [reedMuller, Submodule.mem_map, mem_restrictTotalDegree]
   rfl
 
+/-- The evaluation table of a polynomial of total degree at most `d` is a codeword of the
+Reed–Muller code of degree `d`. -/
 theorem eval_mem_reedMuller {P : MvPolynomial (Fin m) F} (hP : P.totalDegree ≤ d) :
     (fun x => eval x P) ∈ reedMuller F m d :=
   mem_reedMuller.2 ⟨P, hP, rfl⟩

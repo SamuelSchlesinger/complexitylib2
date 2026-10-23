@@ -67,10 +67,12 @@ variable {α : Type u}
 def forestTrace (f : α → α) (x : α) (k : ℕ) : List α :=
   List.iterate f x k
 
+/-- The trace of length `k` has `k` states. -/
 @[simp] theorem length_forestTrace (f : α → α) (x : α) (k : ℕ) :
     (forestTrace f x k).length = k :=
   List.length_iterate f x k
 
+/-- A state lies on the trace of length `k` exactly when it is `f^[i] x` for some `i < k`. -/
 theorem mem_forestTrace (f : α → α) (x y : α) (k : ℕ) :
     y ∈ forestTrace f x k ↔ ∃ i < k, f^[i] x = y := by
   simpa only [forestTrace, eq_comm] using List.mem_iterate (f := f) (a := x) (n := k) (b := y)
@@ -81,22 +83,28 @@ variable [Finite α] (f : α → α)
 noncomputable def forestPath (x : α) : List α :=
   (forestTrace f x (transientDepth f x + 1)).reverse
 
+/-- The root path of `x` has one more state than the transient depth of `x`. -/
 @[simp] theorem length_forestPath (x : α) :
     (forestPath f x).length = transientDepth f x + 1 := by
   simp [forestPath]
 
+/-- The root path of `x` ends at `x`. -/
 theorem forestPath_last (x : α) : (forestPath f x).getLast? = some x := by
   simp [forestPath, forestTrace]
 
+/-- Distinct states have distinct root paths. -/
 theorem forestPath_injective : Function.Injective (forestPath f) := by
   intro x y he
   have hh := congrArg List.getLast? he
   simpa only [forestPath_last, Option.some.injEq] using hh
 
+/-- A state lies on the root path of `x` exactly when it is `f^[i] x` for some
+`i ≤ transientDepth f x`. -/
 theorem mem_forestPath (x y : α) :
     y ∈ forestPath f x ↔ ∃ i ≤ transientDepth f x, f^[i] x = y := by
   simp only [forestPath, List.mem_reverse, mem_forestTrace, Nat.lt_succ_iff]
 
+/-- Every state lies on its own root path. -/
 theorem self_mem_forestPath (x : α) : x ∈ forestPath f x :=
   (mem_forestPath f x x).mpr ⟨0, Nat.zero_le _, rfl⟩
 
@@ -161,6 +169,7 @@ theorem list_prefix_interval [LinearOrder α] {p a b c : List α}
       exact ⟨ds, congrArg (List.cons h) he⟩
 
 omit [Finite α] in
+/-- A list is lexicographically at most every list it is a prefix of. -/
 theorem list_prefix_le [LinearOrder α] {a b : List α} (h : a <+: b) : a ≤ b := by
   obtain ⟨tail, rfl⟩ := h
   induction a with
@@ -180,6 +189,7 @@ noncomputable def forestRank (x : α) : Fin (Fintype.card α) :=
     rw [Finset.card_image_of_injective _ (forestPath_injective f), Finset.card_univ])).symm
       ⟨forestPath f x, Finset.mem_image.mpr ⟨x, Finset.mem_univ _, rfl⟩⟩
 
+/-- Ranks compare exactly as the root paths compare lexicographically. -/
 theorem forestRank_le (x y : α) :
     forestRank f x ≤ forestRank f y ↔ forestPath f x ≤ forestPath f y :=
   OrderIso.le_iff_le _
@@ -188,6 +198,8 @@ theorem forestRank_le (x y : α) :
 noncomputable def forestDescendantRanks (x : α) : Finset (Fin (Fintype.card α)) :=
   (Finset.univ.filter fun y => forestPath f x <+: forestPath f y).image (forestRank f)
 
+/-- A rank is a descendant rank of `x` exactly when it is the rank of a state whose root path
+extends that of `x`. -/
 theorem mem_forestDescendantRanks (x : α) (r : Fin (Fintype.card α)) :
     r ∈ forestDescendantRanks f x ↔
       ∃ y, forestPath f x <+: forestPath f y ∧ forestRank f y = r := by
@@ -195,6 +207,7 @@ theorem mem_forestDescendantRanks (x : α) (r : Fin (Fintype.card α)) :
   simp only [forestDescendantRanks, Finset.mem_image, Finset.mem_filter,
     Finset.mem_univ, true_and]
 
+/-- Every state has a descendant rank, namely its own. -/
 theorem forestDescendantRanks_nonempty (x : α) : (forestDescendantRanks f x).Nonempty :=
   ⟨forestRank f x, (mem_forestDescendantRanks f x _).mpr
     ⟨x, ⟨[], List.append_nil _⟩, rfl⟩⟩

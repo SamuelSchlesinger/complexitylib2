@@ -55,9 +55,11 @@ def iterate : ℕ → (State → OracleComp spec State) → State → OracleComp
   | 0, _, initial => pure initial
   | count + 1, step, initial => iterate count step initial >>= step
 
+/-- Zero iterations return the initial state. -/
 @[simp] theorem iterate_zero (step : State → OracleComp spec State) (initial : State) :
     iterate 0 step initial = pure initial := rfl
 
+/-- `count + 1` iterations run `count` iterations, then one more step. -/
 theorem iterate_succ (count : ℕ) (step : State → OracleComp spec State) (initial : State) :
     iterate (count + 1) step initial = iterate count step initial >>= step := rfl
 

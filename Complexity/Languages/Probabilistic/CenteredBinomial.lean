@@ -49,6 +49,7 @@ noncomputable def sampleCenteredBinomial (η : ℕ) : ProbComp ℤ := do
   let negative ← OracleComp.countTrue η (ProbComp.uniform Bool)
   return (positive : ℤ) - negative
 
+/-- With `η = 0` the centered binomial sampler returns `0` without sampling. -/
 @[simp] theorem sampleCenteredBinomial_zero : sampleCenteredBinomial 0 = pure 0 := by
   simp [sampleCenteredBinomial, OracleComp.countTrue]
 

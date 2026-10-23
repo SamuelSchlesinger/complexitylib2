@@ -69,6 +69,7 @@ section Fintype
 
 variable [Fintype α]
 
+/-- After as many steps as there are states, every orbit is at a periodic point. -/
 theorem iterate_card_mem_periodicPts (x : α) : f^[Fintype.card α] x ∈ periodicPts f :=
   (iterate_mem_periodicPts_iff f x _).mpr (transientDepth_lt_card f x).le
 
@@ -76,17 +77,21 @@ theorem iterate_card_mem_periodicPts (x : α) : f^[Fintype.card α] x ∈ period
 state to a periodic point of its orbit. -/
 def cycleProjection (x : α) : α := f^[(Fintype.card α).factorial] x
 
+/-- The cycle projection of every state is periodic. -/
 theorem cycleProjection_mem_periodicPts (x : α) : cycleProjection f x ∈ periodicPts f :=
   (iterate_mem_periodicPts_iff f x _).mpr
     ((transientDepth_lt_card f x).le.trans (Nat.self_le_factorial _))
 
+/-- The cycle projection fixes `x` exactly when `x` is periodic. -/
 theorem cycleProjection_eq_self_iff (x : α) : cycleProjection f x = x ↔ x ∈ periodicPts f :=
   mem_periodicPts_iff_isPeriodicPt_factorial_card.symm
 
+/-- The cycle projection is idempotent. -/
 @[simp] theorem cycleProjection_cycleProjection (x : α) :
     cycleProjection f (cycleProjection f x) = cycleProjection f x :=
   (cycleProjection_eq_self_iff f _).mpr (cycleProjection_mem_periodicPts f x)
 
+/-- The cycle projection commutes with iterating `f`. -/
 theorem cycleProjection_iterate (x : α) (t : ℕ) :
     cycleProjection f (f^[t] x) = f^[t] (cycleProjection f x) := by
   unfold cycleProjection
@@ -120,6 +125,7 @@ cycle length. -/
 noncomputable def normalizedTime (x : α) (t : ℕ) : ℕ :=
   if t < Fintype.card α then t else Fintype.card α + (t - Fintype.card α) % cycleLength f x
 
+/-- The normalized time is less than twice the number of states. -/
 theorem normalizedTime_lt (x : α) (t : ℕ) : normalizedTime f x t < 2 * Fintype.card α := by
   unfold normalizedTime
   split_ifs with ht
@@ -128,6 +134,7 @@ theorem normalizedTime_lt (x : α) (t : ℕ) : normalizedTime f x t < 2 * Fintyp
     have hc := transientDepth_add_cycleLength_le_card f x
     omega
 
+/-- At the normalized time, the orbit of `x` is in the same state as at time `t`. -/
 theorem iterate_normalizedTime (x : α) (t : ℕ) : f^[normalizedTime f x t] x = f^[t] x := by
   unfold normalizedTime
   split_ifs with ht

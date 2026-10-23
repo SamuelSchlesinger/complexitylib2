@@ -68,11 +68,15 @@ noncomputable def reedSolomon (α : ι → F) (k : ℕ) : Submodule F (ι → F)
 
 variable {α : ι → F} {k : ℕ}
 
+/-- A word is a codeword of the Reed–Solomon code of dimension `k` exactly when it is `i ↦ p (α i)`
+for a polynomial `p` of degree less than `k`. -/
 theorem mem_reedSolomon {w : ι → F} :
     w ∈ reedSolomon α k ↔ ∃ p : F[X], p.degree < k ∧ (fun i => p.eval (α i)) = w := by
   simp only [reedSolomon, Submodule.mem_map, mem_degreeLT]
   rfl
 
+/-- The values `i ↦ p (α i)` of a polynomial `p` of degree less than `k` form a codeword of the
+Reed–Solomon code of dimension `k`. -/
 theorem eval_mem_reedSolomon (α : ι → F) {p : F[X]} (hp : p.degree < k) :
     (fun i => p.eval (α i)) ∈ reedSolomon α k :=
   mem_reedSolomon.2 ⟨p, hp, rfl⟩

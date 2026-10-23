@@ -53,8 +53,11 @@ noncomputable def runWith (program : ProbOracleComp spec α) (s : State) : PMF (
 noncomputable def acceptProbWith (program : ProbOracleComp spec Bool) (s : State) : ℝ≥0∞ :=
   (runWith oracle program s).map Prod.fst true
 
+/-- A pure program returns its value and leaves the oracle state unchanged. -/
 theorem runWith_pure (a : α) (s : State) : runWith oracle (pure a) s = PMF.pure (a, s) := rfl
 
+/-- Running `program >>= next` runs `program`, then runs `next` at its result from the oracle
+state it reached. -/
 theorem runWith_bind (program : ProbOracleComp spec α) (next : α → ProbOracleComp spec β)
     (s : State) :
     runWith oracle (program >>= next) s =
@@ -62,29 +65,36 @@ theorem runWith_bind (program : ProbOracleComp spec α) (next : α → ProbOracl
   simp only [runWith, OracleComp.interpret_bind, StateT.run_bind]
   rfl
 
+/-- Mapping `f` over a program maps it over the result and keeps the final oracle state. -/
 theorem runWith_map (f : α → β) (program : ProbOracleComp spec α) (s : State) :
     runWith oracle (f <$> program) s = (runWith oracle program s).map (Prod.map f id) := by
   simp only [runWith, OracleComp.interpret_map, StateT.run_map]
   rfl
 
+/-- A single external call is answered by the oracle from the current state. -/
 theorem runWith_query (q : Query) (s : State) :
     runWith oracle (query (spec := spec) q) s = oracle q s := by
   simp only [runWith, interpret_query]
   rfl
 
+/-- A private sample has the law of the sampled program and leaves the oracle state unchanged. -/
 theorem runWith_sample (program : ProbComp α) (s : State) :
     runWith oracle (sample (spec := spec) program) s = (ProbComp.eval program).map (·, s) :=
   run_interpret_sample _ _ _
 
+/-- A pure program accepts with probability `1` if it returns `true` and `0` otherwise. -/
 theorem acceptProbWith_pure (b : Bool) (s : State) :
     acceptProbWith oracle (pure b) s = if b then 1 else 0 := by
   rw [acceptProbWith, runWith_pure, PMF.pure_map, PMF.pure_apply]
   cases b <;> simp
 
+/-- An acceptance probability is at most `1`. -/
 theorem acceptProbWith_le_one (program : ProbOracleComp spec Bool) (s : State) :
     acceptProbWith oracle program s ≤ 1 :=
   PMF.coe_le_one _ _
 
+/-- The acceptance probability of `program >>= next` averages the acceptance probability of `next`
+over the joint law of the result and oracle state of `program`. -/
 theorem acceptProbWith_bind (program : ProbOracleComp spec α)
     (next : α → ProbOracleComp spec Bool) (s : State) :
     acceptProbWith oracle (program >>= next) s =
@@ -92,12 +102,16 @@ theorem acceptProbWith_bind (program : ProbOracleComp spec α)
   rw [acceptProbWith, runWith_bind, PMF.map_bind, PMF.bind_apply]
   rfl
 
+/-- The acceptance probability after an external call `q` averages over the oracle's replies and
+next states. -/
 theorem acceptProbWith_query_bind (q : Query) (next : spec q → ProbOracleComp spec Bool)
     (s : State) :
     acceptProbWith oracle (query (spec := spec) q >>= next) s =
       ∑' x, oracle q s x * acceptProbWith oracle (next x.1) x.2 := by
   rw [acceptProbWith_bind, runWith_query]
 
+/-- The acceptance probability after a private sample averages over the law of the sample, with
+the oracle state unchanged. -/
 theorem acceptProbWith_sample_bind (program : ProbComp α) (next : α → ProbOracleComp spec Bool)
     (s : State) :
     acceptProbWith oracle (sample program >>= next) s =

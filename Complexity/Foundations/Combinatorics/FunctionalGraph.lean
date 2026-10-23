@@ -117,6 +117,8 @@ theorem exists_first_visit [Fintype α] (P : α → Prop) (x : α) (h : ∃ t, P
 def absorb (P : α → Prop) [DecidablePred P] (x : α) : α :=
   if P x then x else f x
 
+/-- Before any visit to `P`, the absorbing map agrees with `f`: if no `f^[j] x` with `j < t`
+satisfies `P`, then `(absorb f P)^[t] x = f^[t] x`. -/
 theorem absorb_iterate_of_forall_not (P : α → Prop) [DecidablePred P] (x : α) (t : ℕ)
     (h : ∀ j < t, ¬P (f^[j] x)) : (absorb f P)^[t] x = f^[t] x := by
   induction t with
@@ -125,6 +127,7 @@ theorem absorb_iterate_of_forall_not (P : α → Prop) [DecidablePred P] (x : α
     rw [iterate_succ_apply', iterate_succ_apply', ih fun j hj => h j (by omega)]
     simp [absorb, h t (by omega)]
 
+/-- The absorbing map fixes every state satisfying `P`, under any number of iterations. -/
 theorem absorb_iterate_of_pos (P : α → Prop) [DecidablePred P] {x : α} (hx : P x) (t : ℕ) :
     (absorb f P)^[t] x = x := by
   induction t with
@@ -178,6 +181,7 @@ noncomputable def transientDepth (x : α) : ℕ := by
   classical
   exact Nat.find (exists_iterate_mem_periodicPts f x)
 
+/-- The orbit of `x` is at a periodic point at its transient depth. -/
 theorem iterate_transientDepth_mem_periodicPts (x : α) :
     f^[transientDepth f x] x ∈ periodicPts f := by
   classical
@@ -194,15 +198,18 @@ theorem iterate_mem_periodicPts_iff (x : α) (t : ℕ) :
     have h := mk_mem_periodicPts hp (hperiod.apply_iterate (t - transientDepth f x))
     rwa [← iterate_add_apply, Nat.sub_add_cancel ht] at h
 
+/-- The transient depth of `x` is zero exactly when `x` is periodic. -/
 @[simp] theorem transientDepth_eq_zero_iff (x : α) :
     transientDepth f x = 0 ↔ x ∈ periodicPts f := by
   simpa using (iterate_mem_periodicPts_iff f x 0).symm
 
+/-- The transient depth is less than the number of states. -/
 theorem transientDepth_lt_card [Fintype α] (x : α) : transientDepth f x < Fintype.card α := by
   obtain ⟨t, ht, hp, _⟩ := exists_first_visit f (· ∈ periodicPts f) x
     (exists_iterate_mem_periodicPts f x)
   exact ((iterate_mem_periodicPts_iff f x t).mp hp).trans_lt ht
 
+/-- Advancing `t` steps lowers the transient depth by `t`, truncated at zero. -/
 theorem transientDepth_iterate (x : α) (t : ℕ) :
     transientDepth f (f^[t] x) = transientDepth f x - t := by
   apply Nat.le_antisymm
@@ -217,9 +224,11 @@ theorem transientDepth_iterate (x : α) (t : ℕ) :
 noncomputable def cycleLength (x : α) : ℕ :=
   minimalPeriod f (f^[transientDepth f x] x)
 
+/-- The cycle length is positive. -/
 theorem cycleLength_pos (x : α) : 0 < cycleLength f x :=
   minimalPeriod_pos_of_mem_periodicPts (iterate_transientDepth_mem_periodicPts f x)
 
+/-- The state at the transient depth is periodic with period the cycle length. -/
 theorem isPeriodicPt_cycleLength (x : α) :
     IsPeriodicPt f (cycleLength f x) (f^[transientDepth f x] x) :=
   isPeriodicPt_minimalPeriod _ _
@@ -262,6 +271,7 @@ theorem orbit_prefix_injective (x : α) :
   · exact key i.val j.val hij j.isLt he
   · exact key j.val i.val hji i.isLt he.symm
 
+/-- The transient depth plus the cycle length is at most the number of states. -/
 theorem transientDepth_add_cycleLength_le_card [Fintype α] (x : α) :
     transientDepth f x + cycleLength f x ≤ Fintype.card α := by
   simpa only [Fintype.card_fin] using Fintype.card_le_of_injective _ (orbit_prefix_injective f x)

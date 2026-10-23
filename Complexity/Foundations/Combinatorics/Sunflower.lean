@@ -61,9 +61,11 @@ def ContainsSunflower (p : ℕ) (F : Finset (Finset α)) : Prop :=
 /-- The bound of the sunflower lemma for sets of size at most `w`: `(p - 1) ^ w * w!`. -/
 def sunflowerBound (p w : ℕ) : ℕ := (p - 1) ^ w * w.factorial
 
+/-- The sunflower bound is positive when `2 ≤ p`. -/
 theorem sunflowerBound_pos {p : ℕ} (hp : 2 ≤ p) (w : ℕ) : 0 < sunflowerBound p w :=
   Nat.mul_pos (Nat.pow_pos (by omega)) (Nat.factorial_pos w)
 
+/-- A subfamily of a sunflower with core `K` is a sunflower with core `K`. -/
 theorem IsSunflower.mono {S T : Finset (Finset α)} {K : Finset α} (h : IsSunflower T K)
     (hST : S ⊆ T) : IsSunflower S K :=
   Set.Pairwise.mono (coe_subset.2 hST) h
