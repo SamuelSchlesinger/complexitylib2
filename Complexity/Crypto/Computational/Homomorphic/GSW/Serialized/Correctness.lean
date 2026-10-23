@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized
+import Mathlib.Algebra.BigOperators.Fin
 import Complexity.Foundations.Data.List.Basic
 
 /-!

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Foundations.Data.BitString.Parity.Weight
 import Complexity.Computability.DecisionTree.Symmetric
 import Complexity.Computability.QueryComplexity.Monotone
 import Complexity.Computability.QueryComplexity.SensitivityBounds

@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomial
 public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
+import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.List.GetD
 
 /-!

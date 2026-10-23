@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Mathlib.Algebra.BigOperators.Fin
 import Complexity.Foundations.BooleanAnalysis.HadamardRectangles
 import Complexity.Computability.DecisionTree.InnerProduct
 import Mathlib.Data.Fintype.Powerset

@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
 public import Complexity.Foundations.BooleanAnalysis.Hadamard
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Pending-bias state simulation and input-summary lower bounds for threshold circuits

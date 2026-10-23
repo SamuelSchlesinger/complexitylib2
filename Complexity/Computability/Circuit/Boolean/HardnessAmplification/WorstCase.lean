@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.Sta
 public import Complexity.Foundations.BooleanAnalysis.Hadamard
 public import Complexity.Foundations.Data.Code.Concatenation
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
+import Complexity.Foundations.Data.BitString.Basic
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Positivity

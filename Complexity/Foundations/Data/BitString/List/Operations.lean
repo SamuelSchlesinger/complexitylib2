@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.Weight
 public import Mathlib.Data.Matrix.Mul
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Algebraic operations on lists of bits
