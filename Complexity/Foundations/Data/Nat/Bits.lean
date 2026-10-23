@@ -8,7 +8,9 @@ module
 -- upstream: candidate (Mathlib, `Mathlib/Data/Nat/Bits.lean`)
 
 public import Complexity.Init
+public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Data.Nat.Bits
+import Mathlib.Data.List.OfFn
 import Mathlib.Data.Nat.Size
 
 /-!
@@ -21,9 +23,23 @@ with initial value zero reconstructs the original number.
 
 * `Nat.foldr_bit_bits`: folding `Nat.bit` over the binary representation of `n` gives `n`.
 * `Nat.foldr_bit_lt`, `Nat.foldr_bit_testBit`: fixed-width little-endian reconstruction.
+* `Nat.foldr_bit_ofFn`: reconstruction is the sum of the digits' binary place values.
 -/
 
 @[expose] public section
+
+open scoped BigOperators
+
+/-- Reconstructing a finite little-endian word sums the digits' binary place values. -/
+theorem Nat.foldr_bit_ofFn {w : ℕ} (bits : Fin w → Bool) :
+    (List.ofFn bits).foldr Nat.bit 0 = ∑ k : Fin w, (bits k).toNat * 2 ^ k.val := by
+  induction w with
+  | zero => simp
+  | succ w ih =>
+    rw [List.ofFn_succ, List.foldr_cons, ih]
+    simp only [Fin.sum_univ_succ, Fin.val_zero, pow_zero, mul_one, Fin.val_succ,
+      pow_succ, Nat.bit_val, ← Nat.mul_assoc, ← Finset.sum_mul]
+    omega
 
 /-- Folding `Nat.bit` over the binary representation of `n` gives back `n`. -/
 @[simp]

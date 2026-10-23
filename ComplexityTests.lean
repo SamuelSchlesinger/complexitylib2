@@ -117,6 +117,8 @@ import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
+import ComplexityTests.Crypto.GSWDecryption
+import ComplexityTests.Crypto.GSWEvaluation
 import ComplexityTests.Crypto.GSWHiding
 import ComplexityTests.Crypto.GSWNative
 import ComplexityTests.Crypto.GSWParameters
