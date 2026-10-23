@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Probabilistic.PPT
+public import Complexity.Languages.Probabilistic.Traverse
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Probabilistic.CoinTape
 import Complexity.Computability.Probabilistic.Sampling

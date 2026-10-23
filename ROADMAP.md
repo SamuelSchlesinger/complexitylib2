@@ -78,18 +78,31 @@ existing developments, source credit and saved branches remain available for a f
    depth. Here bootstrappability requires homomorphic evaluation of suitably augmented decryption
    circuits. With an appropriate additional circular-security assumption, the construction yields a
    fixed-key fully homomorphic scheme without a predetermined depth bound.
-   *Recovery milestone:* [refresh](Complexity/Crypto/Computational/Homomorphic/Refresh.lean)
+   *Recovery milestones:* [refresh](Complexity/Crypto/Computational/Homomorphic/Refresh.lean)
    constructs identity and NAND refresh from actual decryption circuits and proves correctness
    for arbitrary well-sized old ciphertexts, including prior evaluation outputs, with fixed
    output width. [Efficiency](Complexity/Crypto/Computational/Homomorphic/Efficiency.lean)
    derives strict PPT refresh from base encryption/evaluation certificates and a uniform
    decryption-circuit generator; construction of the NAND augmentation is also certified.
-   [Tests](ComplexityTests/Crypto/HomomorphicRefresh.lean) instantiate all these hypotheses in an
-   explicitly insecure scheme, exercising key switching and repeated refresh even though its
-   base evaluator rejects evaluated inputs. The layered DAG evaluator, its resource bounds,
-   the acyclic key-chain IND-CPA reduction, and the additional circular-security result remain
-   open in [#322](https://github.com/cslib-community/complexitylib/issues/322). No concrete LWE
-   scheme or encryption-security theorem is established by this milestone.
+   [KeyChain](Complexity/Crypto/Computational/Homomorphic/KeyChain.lean) constructs the actual
+   sampler with `L + 1` independent key pairs and `L` adjacent encrypted links, with exact support
+   and native PPT certificates. The [layered evaluator](Complexity/Crypto/Computational/Homomorphic/Layered.lean)
+   uses only public keys and encrypted links. Its
+   [correctness theorem](Complexity/Crypto/Computational/Homomorphic/Layered/Correctness.lean)
+   covers every well-formed consecutive-layer program and every supported key chain and output,
+   preserving exact wire counts and ciphertext widths through one key transition per layer.
+   Its [PPT certificate](Complexity/Crypto/Computational/Homomorphic/Layered/PolyTime.lean)
+   charges the complete public encoding, including binary wire indices, and bounds execution
+   even on malformed keys, links and references.
+   [Refresh tests](ComplexityTests/Crypto/HomomorphicRefresh.lean) and
+   [layered tests](ComplexityTests/Crypto/HomomorphicLayered.lean) instantiate the hypotheses in an
+   explicitly insecure scheme whose base evaluator rejects evaluated inputs. They exercise key
+   switching, repeated refresh, shared wires, constants, empty layers and zero depth.
+   General-circuit conversion with size/depth bounds, a leveled scheme interface that normalizes
+   the final key for circuits below its depth budget, the acyclic IND-CPA reduction, and the
+   additional circular-security result remain open in
+   [#322](https://github.com/cslib-community/complexitylib/issues/322). These milestones establish
+   neither a concrete LWE scheme nor an encryption-security theorem.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
