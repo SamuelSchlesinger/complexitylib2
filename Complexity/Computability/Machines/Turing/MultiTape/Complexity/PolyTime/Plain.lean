@@ -52,6 +52,8 @@ deciding membership, the form used by the classes in `Cslib.Complexity`.
 
 * `Turing.MultiTapeTM.ComputesInTimeAndSpace.space_linear`,
   `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_space_linear`: time bounds space.
+* `Turing.MultiTapeTM.ComputesInTimeAndSpace.length_output_le`,
+  `Turing.MultiTapeTM.ComputableInTimeAndSpace.length_le`: time bounds the output.
 * `Turing.MultiTapeTM.decidableInTimeAndSpace_iff`: decidability through any Boolean decider.
 * `Turing.MultiTapeTM.ComputableInTimeAndSpace.computableTidilyInPolyTime`: a polynomial time
   bound for any machine, with any space bound, gives tidy polynomial time.
@@ -94,6 +96,18 @@ theorem ComputesInTimeAndSpace.space_linear {input output : List Symbol} {t s : 
     tm.ComputesInTimeAndSpace input output t (k * t + k) :=
   ⟨h.1, h.2.1, runsInSpace_of_halted (runsInTime_iff_halted.mp h.2.1) (tm.space_linear _ t)⟩
 
+/-- A computation within `t` steps emits at most `t` symbols. -/
+theorem ComputesInTimeAndSpace.length_output_le {input output : List Symbol} {t s : ℕ}
+    (h : tm.ComputesInTimeAndSpace input output t s) : output.length ≤ t := by
+  obtain ⟨⟨u, hu, rfl⟩, ht, -⟩ := h
+  have ht := runsInTime_iff_halted.mp ht
+  have heq : tm.runFrom (tm.initCfg input) u = tm.runFrom (tm.initCfg input) t := by
+    rcases le_total u t with hut | htu
+    · exact (runFrom_eq_of_halt tm _ hut hu).symm
+    · exact runFrom_eq_of_halt tm _ htu ht
+  rw [heq]
+  simpa using tm.length_output_runFrom_le (tm.initCfg input) t
+
 end Machine
 
 variable {α β : Type*} {f : α → β} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
@@ -105,6 +119,12 @@ theorem ComputableInTimeAndSpace.exists_space_linear {t s : α → ℕ}
     ∃ c, ComputableInTimeAndSpace f encIn encOut t fun a => c * t a + c :=
   let ⟨k, State, hfinite, tm, htm⟩ := h
   ⟨k, k, State, hfinite, tm, fun a => (htm a).space_linear⟩
+
+/-- The encoded values of a function computable within time `t` have length at most `t`. -/
+theorem ComputableInTimeAndSpace.length_le {t s : α → ℕ}
+    (h : ComputableInTimeAndSpace f encIn encOut t s) (a : α) : (encOut (f a)).length ≤ t a :=
+  let ⟨_, _, _, _, htm⟩ := h
+  (htm a).length_output_le
 
 /-- The indicator of `A` is the Boolean function that is `true` exactly on `A`. -/
 theorem indicator_eq_iff {A : Set α} {g : α → Bool} :

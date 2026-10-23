@@ -13,6 +13,7 @@ public import Complexity.Computability.Complexity.Reduction.ManyOne
 import Complexity.Computability.Complexity.Classes.Time
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Fixed-parameter tractability
@@ -58,6 +59,8 @@ definitions require them to be computable.
 ## Main results
 
 * `Cslib.Complexity.mem_FPT`, `Cslib.Complexity.mem_XP`: unfolding the classes.
+* `Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInFPTTime`: a time bound alone gives
+  fpt-time computability.
 * `Cslib.Complexity.computableInFPTTime_iff_computableTidilyInFPTTime`: the plain and tidy notions
   of fpt-time computability agree, with the shortcuts `Cslib.Complexity.ComputableInFPTTime.tidy`,
   `Cslib.Complexity.ComputableInFPTTime.of_tidy` and
@@ -234,7 +237,9 @@ section Machines
 
 /-- `f` is computable in fpt time with respect to the parameter `κ`: some machine computes `f`
 within time and space `F (κ a) * (|encA a| + 1) ^ c`, for a function `F : ℕ → ℕ` and a constant
-`c`. -/
+`c`. Bounding the space by the same expression is no restriction, since a machine within time `t`
+visits at most `k t + k` work-tape cells
+(`Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInFPTTime`). -/
 def ComputableInFPTTime {α β : Type*} (f : α → β) (encA : α ↪ List Bool)
     (encB : β ↪ List Bool) (κ : α → ℕ) : Prop :=
   ∃ (F : ℕ → ℕ) (c : ℕ), ComputableInTimeAndSpace f encA encB
@@ -273,6 +278,24 @@ theorem ComputableInFPTTime.of_tidy (h : ComputableTidilyInFPTTime f encA encB �
 theorem ComputableTidilyInFPTTime.computableInFPTTime
     (h : ComputableTidilyInFPTTime f encA encB κ) : ComputableInFPTTime f encA encB κ :=
   .of_tidy h
+
+/-- **A time bound alone suffices.** A function computable by some machine within time
+`F (κ a) * (|encA a| + 1) ^ c`, with any space bound, is computable in fpt time: a machine with `k`
+work tapes within time `t` visits at most `k t + k` work-tape cells. -/
+theorem _root_.Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInFPTTime {F : ℕ → ℕ}
+    {c : ℕ} {s : α → ℕ}
+    (h : ComputableInTimeAndSpace f encA encB (fun a => F (κ a) * ((encA a).length + 1) ^ c) s) :
+    ComputableInFPTTime f encA encB κ := by
+  obtain ⟨k, h⟩ := h.exists_space_linear
+  have hle (a : α) (m : ℕ) (hm : m ≤ k + 1) :
+      m * (F (κ a) * ((encA a).length + 1) ^ c) + m ≤
+        (k + 1) * (F (κ a) + 1) * ((encA a).length + 1) ^ c := by
+    have hP := Nat.one_le_pow c _ (Nat.succ_pos (encA a).length)
+    have := Nat.mul_le_mul_right (F (κ a) * ((encA a).length + 1) ^ c) hm
+    nlinarith
+  exact ⟨fun n => (k + 1) * (F n + 1), c,
+    h.mono (fun a => by dsimp only; have := hle a 1 (by omega); omega)
+      fun a => by dsimp only; exact hle a k (by omega)⟩
 
 /-- **Plain and tidy computability in fpt time agree.** -/
 theorem computableInFPTTime_iff_computableTidilyInFPTTime :

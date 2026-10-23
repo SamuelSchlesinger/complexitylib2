@@ -27,11 +27,22 @@ are independent bounds: a space bound is never derived from a time bound.
 The bounds `T` and `S` are any functions of the input, not only of the length of its encoding, so
 that they can be stated in several measures of the input.
 
-Each notion also bounds the length of the encoded value `encOut (f a)` by its space bound. The
-machine writes the value on its output tape, which the space bound does not charge, so this is a
-separate requirement. It costs nothing for decision problems, whose values are single bits, and it
-makes the notions closed under composition, where the value is the input of the next computation.
-For polynomial space, it is the usual requirement that the value have polynomial length.
+Each notion also bounds the length of the encoded value `encOut (f a)` by its space bound, so the
+value is charged to the space bound although the machine writes it on its output tape. For
+`ComputableInO` and `ComputableInSpace` this departs from the usual convention, in which a space
+bound counts only the work tapes and the output of a transducer may be much longer than the bound
+[Arora and Barak, Chapter 4][AroraBarak09] [Papadimitriou, Section 2.5][Papadimitriou94]. It also
+departs from the library's `Turing.MultiTapeTM.ComputableInLogSpace`, which charges neither the
+input nor the output. At sublinear bounds these notions are therefore strictly stronger than
+transducer space. For instance, the identity on words is computable in logarithmic space, but not
+within space `O(log n)` in the sense of `ComputableInSpace`, since its value is as long as its
+input. Transducer space, as in log-space reductions, is `Turing.MultiTapeTM.ComputableInLogSpace`,
+or upstream `ComputableInTimeAndSpace` with an explicit space bound.
+
+The condition is the one of the tidy counterparts, whose combinators keep a value on a work tape,
+and it makes each notion agree with its tidy counterpart with the same bounds. It costs nothing
+for decision problems, whose values are single bits. For polynomial space it is the usual
+requirement that the value have polynomial length.
 
 These are the plain counterparts of `Turing.MultiTapeTM.ComputableTidilyInO`,
 `Turing.MultiTapeTM.ComputableTidilyInSpace` and `Turing.MultiTapeTM.ComputableTidilyInPolySpace`,
@@ -51,6 +62,7 @@ devices. Each plain notion agrees with its tidy counterpart with the same bounds
 ## References
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Chapter 4][AroraBarak09]
+* [C. H. Papadimitriou, *Computational Complexity*, Section 2.5][Papadimitriou94]
 -/
 
 @[expose] public section
@@ -61,7 +73,11 @@ variable {α β : Type*}
 
 /-- `f` is computable within time `O(T a)` and space `O(S a)` on the input `a`, and its encoded
 value has length `O(S a)`: for a constant `c`, some machine computes `f` within time `c (T a + 1)`
-and space `c (S a + 1)`, and `encOut (f a)` has length at most `c (S a + 1)`. -/
+and space `c (S a + 1)`, and `encOut (f a)` has length at most `c (S a + 1)`.
+
+Unlike the textbook convention and `Turing.MultiTapeTM.ComputableInLogSpace`, the value is charged
+to the space bound, as in `Turing.MultiTapeTM.ComputableTidilyInO`; see the module documentation.
+-/
 def ComputableInO (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool) (T S : α → ℕ) :
     Prop :=
   ∃ c, ComputableInTimeAndSpace f encIn encOut (fun a => c * (T a + 1)) (fun a => c * (S a + 1)) ∧
@@ -69,7 +85,14 @@ def ComputableInO (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ Li
 
 /-- `f` is computable within space `O(S a)` on the input `a`, in some time, and its encoded value
 has length `O(S a)`: for a constant `c`, some machine computes `f` within some time and space
-`c (S a + 1)`, and `encOut (f a)` has length at most `c (S a + 1)`. -/
+`c (S a + 1)`, and `encOut (f a)` has length at most `c (S a + 1)`.
+
+Unlike the textbook convention and `Turing.MultiTapeTM.ComputableInLogSpace`, the value is charged
+to the space bound, as in `Turing.MultiTapeTM.ComputableTidilyInSpace`. At sublinear bounds this
+notion is strictly stronger than transducer space: with the bound
+`fun a => Nat.log2 (encIn a).length` it implies `Turing.MultiTapeTM.ComputableInLogSpace`, but
+not conversely. See the module documentation.
+-/
 def ComputableInSpace (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool) (S : α → ℕ) :
     Prop :=
   ∃ (t : α → ℕ) (c : ℕ), ComputableInTimeAndSpace f encIn encOut t (fun a => c * (S a + 1)) ∧
