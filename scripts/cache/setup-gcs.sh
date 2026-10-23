@@ -48,7 +48,7 @@ step_bucket() {
   lifecycle="$(mktemp)"
   echo '{"rule":[{"action":{"type":"Delete"},"condition":{"age":180,"matchesPrefix":["r0/"]}}]}' \
     > "$lifecycle"
-  gc storage buckets update "gs://$BUCKET" --versioning=false --lifecycle-file="$lifecycle"
+  gc storage buckets update "gs://$BUCKET" --no-versioning --lifecycle-file="$lifecycle"
   rm -f "$lifecycle"
   # Anyone may read an object by name (Lake downloads without credentials); nobody may list.
   gc storage buckets add-iam-policy-binding "gs://$BUCKET" \
