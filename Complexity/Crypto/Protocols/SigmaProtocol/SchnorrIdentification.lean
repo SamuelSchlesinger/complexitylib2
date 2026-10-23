@@ -72,7 +72,7 @@ theorem schnorr_succProbability_directAttack_le [Fact q.Prime] (A : Impersonator
     (Game.succProbability ((schnorr ι g).directAttack (schnorrKeyGen g) A) : ℝ) ≤
       1 / Fintype.card C + √(Game.succProbability
         (oneWayGame (schnorrKeyGen g) (fun α u => α • g = u) (A.rewind (linearExtract ι)))) :=
-  succProbability_directAttack_le schnorr_specialSoundness _ A
+  succProbability_directAttack_le (schnorr_specialSoundness.specialSoundOn _) A
 
 /-- **Schnorr identification against eavesdropping** ([BonehShoup2023], Theorem 19.5, exact
 form): an eavesdropper succeeds with exactly the probability of the direct impersonator that
