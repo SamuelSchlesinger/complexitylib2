@@ -163,8 +163,8 @@ concrete and the change is small; otherwise record a specific follow-up with dec
 consumers, and a proposed home. Preserve public interfaces under the compatibility rules below.
 Do not expand a bounded PR into an unbounded architectural cleanup.
 
-"Lowest suitable" does not mean the most widely imported file. Adding any declaration to a
-module changes its public interface, so every module importing it rebuilds, whether or not it uses
+"Lowest suitable" does not mean the most widely imported file. Adding a public declaration to a
+module changes its public interface, so modules downstream of it rebuild, whether or not they use
 the new declaration. Prefer a small topic module imported by its consumers over appending to a hub
 such as `Foundations/Data/List/Basic.lean` or `Probability/PMF.lean`; #569 records the measured
 fan-out. Exposed definition bodies (`@[expose]`) belong to the interface too, so expose only what
