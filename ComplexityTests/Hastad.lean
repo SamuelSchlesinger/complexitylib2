@@ -47,7 +47,7 @@ example : eightClauses.unsatVal = 1 / 8 := by
   have hlen : eightClauses.length = 8 := rfl
   have hcount : eightClauses.countUnsat σ = 1 := by
     cases h0 : σ 0 <;> cases h1 : σ 1 <;> cases h2 : σ 2 <;>
-      simp [eightClauses, CNF.countUnsat, Clause.eval, Literal.eval, h0, h1, h2]
+      simp [eightClauses, CNF.countUnsat, h0, h1, h2]
   rw [hcount, hlen]
   norm_num
 

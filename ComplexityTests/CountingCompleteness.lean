@@ -32,7 +32,7 @@ theorem sharpSAT_nil : SharpSAT [] = 1 :=
 theorem sharpSAT_contradiction : SharpSAT [[(0, true)], [(0, false)]] = 0 := by
   refine Nat.eq_zero_of_not_pos fun h => ?_
   obtain ⟨σ, hσ⟩ := CNF.modelCount_pos_iff.1 h
-  cases h0 : σ 0 <;> simp [CNF.eval, Clause.eval, Literal.eval, h0] at hσ
+  cases h0 : σ 0 <;> simp [h0] at hσ
 
 /-- The clause `x₀ ∨ x₁` has three satisfying assignments of its two variables; variables that
 do not occur are not counted. -/

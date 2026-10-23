@@ -174,7 +174,7 @@ theorem eval_update_of_eval_restrict {σ : V → Bool} (h : (φ.restrict v b).ev
     refine (Clause.eval_eq_true_iff _ _).2 ⟨l, (List.mem_filter.1 hl).1, ?_⟩
     have hlv := fst_ne_of_mem_restrict (mem_restrict.2 ⟨d, hd, hvd, rfl⟩) hl
     obtain ⟨u, a⟩ := l
-    simpa [Literal.eval, Function.update_of_ne hlv] using he
+    simpa [Function.update_of_ne hlv] using he
 
 /-- Fixing a variable of an unsatisfiable formula leaves an unsatisfiable formula. -/
 theorem not_satisfiable_restrict (h : ¬ φ.Satisfiable) : ¬ (φ.restrict v b).Satisfiable :=

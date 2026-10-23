@@ -74,7 +74,7 @@ example : gap ≤ ((gapGraph wideContradiction).toGraph id).unsatVal := by
   apply gap_le_unsatVal_gapGraph
   rintro ⟨σ, hσ⟩
   cases σ (2 ^ 100) <;>
-    simp [wideContradiction, CNF.eval, Clause.eval, Literal.eval] at hσ
+    simp [wideContradiction] at hσ
 
 example : (gapGraph wideContradiction).WellFormed := wellFormed_gapGraph _
 

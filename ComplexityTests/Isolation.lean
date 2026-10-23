@@ -23,7 +23,7 @@ example : ([[(0, true)]] : CNF ℕ) ∈ USAT := by
   simp only [CNF.vars, List.flatten_cons, List.flatten_nil, List.append_nil, List.map_cons,
     List.map_nil, List.mem_cons, List.not_mem_nil, or_false] at hv
   subst hv
-  simpa [CNF.eval, Clause.eval, Literal.eval] using hτ
+  simpa using hτ
 
 /-- The empty formula has no variables, so it is uniquely satisfiable. -/
 example : ([] : CNF ℕ) ∈ USAT := ⟨fun _ => false, rfl, fun _ _ _ hv => by simp [CNF.vars] at hv⟩
@@ -38,7 +38,7 @@ example : ([[(0, true), (1, true)]] : CNF ℕ) ∉ USAT := by
 /-- `x₀ ∧ ¬x₀` is a no-instance of `PromiseUSAT`. -/
 example : ([[(0, true)], [(0, false)]] : CNF ℕ) ∈ PromiseUSAT.no := by
   rintro ⟨σ, hσ⟩
-  cases h : σ 0 <;> simp [CNF.eval, Clause.eval, Literal.eval, h] at hσ
+  cases h : σ 0 <;> simp [h] at hσ
 
 example : PromiseUSAT ∈ PromiseNP encCNF := PromiseUSAT_mem_PromiseNP
 
@@ -74,7 +74,7 @@ example : ¬CNF.Satisfiable (reduce ([[(0, true)]], [false, true, true, false]))
       [(3, true), (1, true), (0, false)]] by decide]
   rintro ⟨σ, hσ⟩
   cases h₀ : σ 0 <;> cases h₁ : σ 1 <;> cases h₃ : σ 3 <;>
-    simp [CNF.eval, Clause.eval, Literal.eval, h₀, h₁, h₃] at hσ
+    simp [h₀, h₁, h₃] at hσ
 
 /-- The affine hash family of bit strings is pairwise independent. -/
 example : IsPairwiseIndependentHash (BitString.LinearHash.affineHash (k := 2) (n := 3)) :=
@@ -109,7 +109,7 @@ example : ∃ u : Fin 3 → Bool, BitString.binaryValue (List.ofFn u) = 5 :=
 /-- An unsatisfiable formula stays unsatisfiable. -/
 example (r : List Bool) : reduce ([[(0, true)], [(0, false)]], r) ∈ UNSAT := by
   refine reduce_mem_UNSAT (fun ⟨σ, hσ⟩ => ?_) r
-  cases h : σ 0 <;> simp [CNF.eval, Clause.eval, Literal.eval, h] at hσ
+  cases h : σ 0 <;> simp [h] at hσ
 
 /-! ### Oracle classes -/
 

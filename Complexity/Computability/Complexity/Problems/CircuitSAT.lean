@@ -278,7 +278,7 @@ private theorem evalCode_flatMap (φ : CNF ℕ) (x : List Bool) (hx : x.length =
       cases e
       · have h := hread rfl
         rw [List.getD_eq_getElem?_getD] at h
-        simp [circuitState, Literal.eval, h]
+        simp [circuitState, h]
       · simp [circuitState]
     · rw [show φ.vars.length + 3 * (k + 1) + 2 = V.length + 2 by omega,
         List.getD_append_right _ _ _ _ (by omega), Nat.add_sub_cancel_left, h₁, h₂]
