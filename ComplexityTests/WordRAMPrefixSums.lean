@@ -55,9 +55,9 @@ example : ∃ y traces, Stateful.Executes ((program 2 8).ExecOp 8) adaptive
 def runCalls : List Operation → Data 14 → Option (Data 14 × List ℕ × ℕ)
   | [], x => some (x, [], 0)
   | o :: os, x => do
-    let (y, n) ← dispatch.eval 8 4 ((program 2 8).prepare o x)
+    let (y, answer, cost) ← (program 2 8).eval 8 4 o x
     let (z, answers, time) ← runCalls os y
-    pure (z, y.regs Reg.ans :: answers, n + 1 + time)
+    pure (z, answer :: answers, cost + time)
 
 /-- Boundary prefixes and both children are exercised on real machine execution. -/
 example : ((runCalls [.sum 0, .add 0 2, .add 2 3, .sum 1, .sum 3, .sum 4]
@@ -69,7 +69,7 @@ example : ¬(spec 2 8).valid [255, 0, 0, 0] (.add 0 1) := by simp [spec, fits_if
 
 /-- The bounded-word machine faults when an actual aggregate addition overflows. -/
 example : (((zeroData 2 10).write 10 255) |> fun x =>
-    dispatch.eval 8 4 ((program 2 8).prepare (.add 0 1) x)).isNone = true := by decide
+    (program 2 8).eval 8 4 (.add 0 1) x).isNone = true := by decide
 
 /--
 info: 'Cslib.Algorithms.WordRAM.PrefixSums.Tree.prefixSum_eq_sum_take' depends on axioms:

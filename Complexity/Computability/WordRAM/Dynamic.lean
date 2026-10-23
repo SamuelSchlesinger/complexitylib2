@@ -31,12 +31,14 @@ from the requested operation.
 ## Main definitions
 
 * `DynamicProgram`: fixed code, an input-register convention, and an output decoder.
+* `DynamicProgram.eval`: typed call evaluation with halt-inclusive instruction cost.
 * `DynamicProgram.ExecOp`: execution of a call, including the final halt charge.
 * `DynamicCertificate`: representation, word bounds, and per-operation semantic machine proofs.
 
 ## Main results
 
 * `DynamicProgram.ExecOp.executes`: calls execute the same flat program.
+* `DynamicCertificate.execOp_of_eval`: certify an evaluated admissible call.
 * `DynamicCertificate.realization`: machine certificates instantiate shared adaptive execution.
 * `DynamicCertificate.instruction_bound`: separate native instruction-cost certificates.
 -/
@@ -88,6 +90,17 @@ theorem prepare_bounded {w : ℕ} {o : D.Op} {x : Data r} (hx : x.Bounded w)
   · exact ho i (by assumption)
   · exact hx.1 i
 
+/-- Evaluate one typed call, delivering its arguments and decoding its observation. The returned
+cost includes the final halt. `fuel` bounds iterations of each structured loop per entry, not
+instructions; exhaustion, a machine fault, or decoder failure returns `none`.
+
+This interpreter does not check the initial state's global word bound or operation admissibility.
+Use `DynamicCertificate.execOp_of_eval` to connect a successful call to certified execution. -/
+def eval (w fuel : ℕ) (o : D.Op) (x : Data r) : Option (Data r × D.Result o × ℕ) :=
+  match P.code.eval w fuel (P.prepare o x) with
+  | none => none
+  | some (y, n) => (P.decode o y.regs).map fun a => (y, a, n + 1)
+
 /-- Native evidence for one call: instruction count including halt and the memory transcript. -/
 structure OperationTrace where
   /-- Number of executed machine instructions, including the final halt. -/
@@ -99,6 +112,23 @@ structure OperationTrace where
 def ExecOp (w : ℕ) : Stateful.Execution D (Data r) OperationTrace := fun x o a y trace =>
   (P.prepare o x).Bounded w ∧ ∃ n, TraceExec w P.code (P.prepare o x) y n trace.probes ∧
     P.decode o y.regs = some a ∧ trace.instructions = n + 1
+
+/-- Successful typed evaluation supplies an exact operation trace when the delivered state is
+bounded. Evaluator success alone does not imply a bound on untouched memory. -/
+theorem ExecOp.of_eval {w fuel k : ℕ} {o : D.Op} {x y : Data r} {a : D.Result o}
+    (hb : (P.prepare o x).Bounded w) (h : P.eval w fuel o x = some (y, a, k)) :
+    ∃ probes, P.ExecOp w x o a y ⟨k, probes⟩ := by
+  cases he : P.code.eval w fuel (P.prepare o x) with
+  | none => simp [eval, he] at h
+  | some yn =>
+    obtain ⟨z, n⟩ := yn
+    cases hd : P.decode o z.regs with
+    | none => simp [eval, he, hd] at h
+    | some b =>
+      simp only [eval, he, hd, Option.map_some, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl, rfl⟩ := h
+      obtain ⟨probes, hp⟩ := (Exec.of_eval he).exists_trace
+      exact ⟨probes, hb, n, hp, hd, rfl⟩
 
 /-- Every call is an execution of one fixed flat machine program. The returned register tuple
 is observed at the final state; the designated output register is also the halt value. -/
@@ -162,6 +192,14 @@ structure DynamicCertificate (P : DynamicProgram D r) (w : ℕ) where
 namespace DynamicCertificate
 
 variable {P : DynamicProgram D r} {w : ℕ} (C : DynamicCertificate P w)
+
+/-- A represented state and an admissible operation supply the word bounds needed to turn
+typed evaluation into a certified call, including its final halt charge. -/
+theorem execOp_of_eval {s : D.State} {x y : Data r} {o : D.Op} {a : D.Result o} {fuel k : ℕ}
+    (hr : C.rep s x) (hv : D.valid s o) (h : P.eval w fuel o x = some (y, a, k)) :
+    ∃ probes, P.ExecOp w x o a y ⟨k, probes⟩ :=
+  DynamicProgram.ExecOp.of_eval P
+    (P.prepare_bounded (C.bounded hr) (C.arguments_fit o hv)) h
 
 /-- Fixed-program certificates realize the common dynamic specification, without choosing a cost. -/
 def realization : Stateful.Realization D (P.ExecOp w) where
