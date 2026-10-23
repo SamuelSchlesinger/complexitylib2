@@ -20,6 +20,12 @@ These lemmas use Mathlib's `Nat.ofDigits` and `finFunctionFinEquiv` to relate fi
 of digits, exact carry equations, and ordinary natural-number values. No modular overflow is
 implicit in a carry equation.
 
+## Main definitions
+
+* `Cslib.Radix.digit`: recursive fixed-position digit extraction.
+* `Cslib.Radix.pack`: little-endian finite-tuple packing with a fixed enumeration.
+* `Cslib.Radix.component`: extraction using the same finite-tuple enumeration.
+
 ## Main results
 
 * `Nat.ofDigits_ofFn_eq_sum`: fixed tuples have the usual weighted value.
