@@ -19,6 +19,7 @@ mathematics. See [Contributing](CONTRIBUTING.md) to propose, implement, or revie
 | I want to… | Start with… |
 | --- | --- |
 | Certify functional programs and loops | [PolyTime examples](ComplexityTests/PolyTimeTactic.lean) |
+| State P/NP membership or prove a problem NP-complete | [Checked plain examples](ComplexityTests/NPCompleteness.lean), then [Clique](Complexity/Computability/Complexity/Problems/Clique.lean) |
 | Construct circuits for polynomial-time function families | [Uniform circuit examples](ComplexityTests/UniformCircuits.lean) |
 | Write probabilistic programs or oracle reductions | [PPT examples](ComplexityTests/PPTTactic.lean), [oracle examples](ComplexityTests/OraclePPT.lean) |
 | Find a computational model or mathematical tool | [Module index](Complexity.lean); each module documents its definitions, results, and references |
@@ -27,6 +28,14 @@ mathematics. See [Contributing](CONTRIBUTING.md) to propose, implement, or revie
 The checked examples show `fun_prop`, `polytime`, and `ppt` with explicit encodings and
 client-supplied invariants. The deterministic backend builds on Christian Reitwiessner's tidy
 machine calculus.
+
+For an NP-completeness proof, fix the instance encoding, give a verifier with a polynomial
+certificate-length bound, and reduce a known NP-hard problem to yours. Prove the verifier and
+reduction map polynomial-time with `fun_prop` or `polytime`, then prove their membership
+equivalences. The [Clique example](Complexity/Computability/Complexity/Problems/Clique.lean)
+uses graph complementation; the [reduction index](Complexity/Computability/Complexity/Reduction.lean)
+points to the other proved problems and their reduction maps. The checked examples state these
+claims with plain `ComputableInPolyTime`.
 
 The [selected formal abstracts](abstracts/README.md) present a small set of major results with
 inspectable definitions and checked Lean statements. The [combined PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/catalogue.pdf)

@@ -237,6 +237,7 @@ import ComplexityTests.NPCompleteGraphs.Hamiltonian
 import ComplexityTests.NPCompleteGraphs.TSP
 import ComplexityTests.NPCompleteGraphs.Undirected
 import ComplexityTests.NPCompleteNumbers
+import ComplexityTests.NPCompleteness
 import ComplexityTests.NPExistsAppend
 import ComplexityTests.NPWitness
 import ComplexityTests.NatBits
