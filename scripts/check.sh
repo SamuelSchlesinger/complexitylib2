@@ -3,13 +3,24 @@
 # Usage: scripts/check.sh [--quick [--base REF]] (from the repository root or any worktree)
 set -u
 cd "$(dirname "$0")/.." || exit 1
+quick=0
 if (($#)); then
   if [ "$1" = "--quick" ]; then
     shift
-    exec python3 scripts/quick_check.py "$@"
+    quick=1
+  else
+    echo "Usage: scripts/check.sh [--quick [--base REF]]" >&2
+    exit 2
   fi
-  echo "Usage: scripts/check.sh [--quick [--base REF]]" >&2
-  exit 2
+fi
+# A quick check may restart this script for all six gates. Restore only once in that process
+# chain, even if planning takes longer than the bootstrap's ordinary retry window.
+if [ "${COMPLEXITYLIB_CACHE_CHECK_STARTED-}" != "1" ]; then
+  scripts/cache/ensure.sh
+  export COMPLEXITYLIB_CACHE_CHECK_STARTED=1
+fi
+if ((quick)); then
+  exec python3 scripts/quick_check.py "$@"
 fi
 log_dir=$(mktemp -d "${TMPDIR:-/tmp}/complexitylib-check.XXXXXX") || exit 1
 status=0

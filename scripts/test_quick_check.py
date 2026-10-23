@@ -208,6 +208,8 @@ class QuickCheckTests(unittest.TestCase):
 
     def test_default_command_keeps_six_gate_order_and_rejects_unknown_args(self):
         self.write("scripts/check.sh", (REPO / "scripts/check.sh").read_text())
+        self.write("scripts/cache/ensure.sh", "#!/usr/bin/env bash\nexit 0\n")
+        (self.root / "scripts/cache/ensure.sh").chmod(0o755)
         self.write("bin/lake", '#!/usr/bin/env python3\nimport json,os,sys\n'
                    'with open(os.environ["QUICK_COMMAND_LOG"], "a") as f:\n'
                    ' f.write(json.dumps(sys.argv[1:])+"\\n")\n')

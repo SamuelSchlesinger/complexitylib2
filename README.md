@@ -57,12 +57,15 @@ namespaces begin with `Cslib`, and Turing-machine declarations use `Turing`. Use
 From a checkout:
 
 ```bash
-scripts/cache/get.sh   # prebuilt Mathlib and Complexitylib outputs
-lake build --wfail --iofail
+scripts/build.sh --wfail --iofail
 ```
 
-`scripts/cache/get.sh` downloads the outputs CI built for `main`, so `lake build` compiles only
-local changes; without it the first build compiles the whole library. See
+The wrapper restores Mathlib, CSLib and Complexitylib caches before invoking `lake build`, then
+compiles changed or missing modules. It forwards Lake arguments and its exit status.
+`scripts/check.sh` also restores caches before validation. Before using Lean through MCP or
+another editor, run `scripts/cache/ensure.sh`; bare `lake` and MCP commands do not call it.
+Repeated bootstrap calls for the same checkout state reuse a ten-minute attempt stamp.
+Use `scripts/cache/ensure.sh --refresh` to retry immediately. See
 [scripts/cache/README.md](scripts/cache/README.md) for how the caches work and what they trust.
 
 Import the specific modules you need. `import Complexity` imports the whole library.
