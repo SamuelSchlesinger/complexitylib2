@@ -54,7 +54,8 @@ is not formalized.
 * `Cslib.PCP.Hastad.exists_labelling_of_spectralWeight`: spectral decoding of Label Cover tables.
 * `Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le`: multi-edge Cauchy–Schwarz + Parseval soundness
   bound.
-* `Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy`: for every `ε` and `δ` there is an `η > 0`,
+* `Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy_lt_one`: for every `ε` and `δ` there is a
+  threshold `0 < η < 1`,
   independent of the label sets, such that on `GapLabelCover` yes-instances some folded tables pass
   the 3-bit test with probability `1 - δ`, and on no-instances every folded table passes with
   probability at most `1 / 2 + 4 * ε`.
@@ -340,7 +341,7 @@ end LabelCoverSoundness
 
 /-- **Completeness and soundness of Håstad's 3-bit linear test against Label Cover**
 [Håstad, Theorem 5.6][Hastad2001]:
-for every `ε > 0` and `0 < δ < 1 / 2`, there exists a Label Cover soundness parameter `η > 0`,
+for every `ε > 0` and `0 < δ < 1 / 2`, there exists a Label Cover soundness parameter `0 < η < 1`,
 independent of the label sets `β` and `γ`, such that for every Label Cover instance
 `g : Graph (β → γ)` with `g.edges ≠ []`:
 1. (**Completeness**) If `g ∈ (GapLabelCover β γ 1 η).yes`, there exist folded tables `B` and `A`
@@ -350,9 +351,12 @@ independent of the label sets `β` and `γ`, such that for every Label Cover ins
 
 This is the analytic core of Håstad's MAX-E3LIN hardness proof. It is not a reduction: no
 instance of MAX-E3LIN or MAX-E3SAT is constructed, and NP-hardness of `GapLabelCover` is not
-proved here. -/
-theorem hastad_gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
-    ∃ η : ℝ, 0 < η ∧ ∀ {β γ : Type} [Fintype β] [DecidableEq β] [Nonempty β]
+proved here. The threshold is strictly below the completeness value, as required by the
+no-instance promise. This does not assert that no-instances exist for every fixed pair of label
+sets; sufficiently large label sets can be required. -/
+theorem hastad_gapLabelCover_dichotomy_lt_one {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ)
+    (hδ1 : δ < 1 / 2) :
+    ∃ η : ℝ, 0 < η ∧ η < 1 ∧ ∀ {β γ : Type} [Fintype β] [DecidableEq β] [Nonempty β]
       [Fintype γ] [DecidableEq γ] [Nonempty γ] {g : Graph (β → γ)}, g.edges ≠ [] →
       (g ∈ (GapLabelCover β γ 1 η).yes →
         ∃ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
@@ -362,8 +366,14 @@ theorem hastad_gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < 
         ∀ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
           (∀ w, IsOdd (B w)) →
             hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε) := by
-  obtain ⟨k, η, hη, hparam⟩ := exists_hastad_params hε hδ0 hδ1
-  refine ⟨η, hη, fun {β γ} _ _ _ _ _ _ {g} hg => ⟨?_, ?_⟩⟩
+  obtain ⟨k, θ, hθ, hparam⟩ := exists_hastad_params hε hδ0 hδ1
+  let η := min θ (1 / 2)
+  have hη : 0 < η := lt_min hθ (by norm_num)
+  have hη1 : η < 1 := (min_le_right _ _).trans_lt (by norm_num)
+  have hparam' : (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * η ≤ (8 * ε) ^ 2 :=
+    (add_le_add le_rfl
+      (mul_le_mul_of_nonneg_left (min_le_left θ (1 / 2)) (sq_nonneg (k : ℝ)))).trans hparam
+  refine ⟨η, hη, hη1, fun {β γ} _ _ _ _ _ _ {g} hg => ⟨?_, ?_⟩⟩
   · intro hyes
     simp only [GapLabelCover, PromiseProblem.mem_yes_gapMax] at hyes
     have hunsat0 : (g.toGraph projectionEval).unsatVal = 0 :=
@@ -375,8 +385,24 @@ theorem hastad_gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < 
     exact ⟨fun w => longCode (r w), fun u => longCode (ℓ u), hfold, hlin⟩
   · intro hno B A hB
     simp only [GapLabelCover, PromiseProblem.mem_no_gapMax] at hno
-    have hcorr := hastadGraphLinearCorr_le_of_unsatVal g hδ0.le hδ1.le k hε.le hno.1 hparam hB A
+    have hcorr := hastadGraphLinearCorr_le_of_unsatVal g hδ0.le hδ1.le k hε.le hno.1 hparam' hB A
     have hlin := hastadGraphLinearProb_eq_add_hastadGraphLinearCorr hg δ B A
     linarith
+
+/-- Compatibility form of `hastad_gapLabelCover_dichotomy_lt_one`, retaining the original public
+statement. Use the stronger theorem when a nontrivial Label Cover gap is needed. -/
+theorem hastad_gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
+    ∃ η : ℝ, 0 < η ∧ ∀ {β γ : Type} [Fintype β] [DecidableEq β] [Nonempty β]
+      [Fintype γ] [DecidableEq γ] [Nonempty γ] {g : Graph (β → γ)}, g.edges ≠ [] →
+      (g ∈ (GapLabelCover β γ 1 η).yes →
+        ∃ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
+          (∀ w, IsOdd (B w)) ∧
+            hastadGraphLinearProb g δ B A = 1 - δ) ∧
+      (g ∈ (GapLabelCover β γ 1 η).no →
+        ∀ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
+          (∀ w, IsOdd (B w)) →
+            hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε) := by
+  obtain ⟨η, hη, _, h⟩ := hastad_gapLabelCover_dichotomy_lt_one hε hδ0 hδ1
+  exact ⟨η, hη, h⟩
 
 end Cslib.PCP.Hastad
