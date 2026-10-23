@@ -317,11 +317,11 @@ theorem power_eq_power_iff (hℓ : ∀ r, ℓ r < 2 ^ K) (S T : ℕ) :
     · rfl
 
 /-- The nontrivial classes (`1 < ℓ r`). -/
-noncomputable def active : Finset (BitVec m) := Finset.univ.filter fun r => 1 < ℓ r
+def active : Finset (BitVec m) := Finset.univ.filter fun r => 1 < ℓ r
 
 /-- The common-period product of the nontrivial cycle lengths (which equals the exact permutation
 order under `LengthsCoprime`). -/
-noncomputable def order : ℕ := ∏ r ∈ active ℓ, ℓ r
+def order : ℕ := ∏ r ∈ active ℓ, ℓ r
 
 theorem order_pos : 0 < order ℓ :=
   Finset.prod_pos fun r hr => by
@@ -421,9 +421,8 @@ def candidate (g : ℕ) (f : ℕ → ℕ) (r : BitVec m) (z : ℕ) : ℕ :=
   2 ^ (m + g) + (r.toNat ^^^ f z) * 2 ^ g + z
 
 /-- The class length: the prime candidate with least `z < 2 ^ g`, or `1` if there is none. -/
-noncomputable def classPrime (m g : ℕ) (f : ℕ → ℕ) (r : BitVec m) : ℕ := by
-  classical
-  exact if h : ∃ z, z < 2 ^ g ∧ (candidate g f r z).Prime then
+def classPrime (m g : ℕ) (f : ℕ → ℕ) (r : BitVec m) : ℕ :=
+  if h : ∃ z, z < 2 ^ g ∧ (candidate g f r z).Prime then
     candidate g f r (Nat.find h) else 1
 
 theorem candidate_mod {g : ℕ} (f : ℕ → ℕ) (r : BitVec m) {z : ℕ} (hz : z < 2 ^ g) :
@@ -555,7 +554,7 @@ noncomputable def perm : Equiv.Perm (BitString (m + K)) :=
   Equiv.ofBijective D.step D.step_bijective
 
 /-- The order of `D.step`, equal to the product of the nontrivial cycle lengths. -/
-noncomputable def period : ℕ :=
+def period : ℕ :=
   PrimeCycles.order D.length
 
 theorem period_dvd_of_fixed (T : ℕ) :
@@ -749,7 +748,7 @@ theorem power_circuit (T : ℕ) (cLen cRem : Circuit signature m K)
   exact ⟨out, ho, hsize⟩
 
 /-- Construct `PrimeCycleData` from the hash-class prime construction `PrimeCycles.classPrime`. -/
-noncomputable def ofHash (m g : ℕ) (f : ℕ → ℕ) (hf : ∀ z, f z < 2 ^ m) :
+def ofHash (m g : ℕ) (f : ℕ → ℕ) (hf : ∀ z, f z < 2 ^ m) :
     PrimeCycleData m (m + g + 1) where
   length := PrimeCycles.classPrime m g f
   length_lt r := (PrimeCycles.classPrime_bounds hf r).1

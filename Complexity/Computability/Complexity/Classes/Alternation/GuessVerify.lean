@@ -290,7 +290,7 @@ variable {k : ℕ}
 
 /-- The guessing machine with move `b` on work tape `B`: at a cell `true` it moves right to the
 next cell, which receives the move `b`, and the player alternates; at any other cell it halts. -/
-noncomputable def guess (B : Fin k) (b : Bool) : MultiTapeTM k Bool GuessState :=
+def guess (B : Fin k) (b : Bool) : MultiTapeTM k Bool GuessState :=
   MultiTapeTM.ofTr (.tag false) fun q _ work =>
     match q, work B with
     | .tag u, some true =>

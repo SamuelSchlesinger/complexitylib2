@@ -141,7 +141,7 @@ theorem eval_zero (hP : IsLinearized P) : P.eval 0 = 0 := by
 end IsLinearized
 
 /-- The `𝔽₂`-linear map given by evaluating a linearized polynomial. -/
-noncomputable def IsLinearized.toLinearMap [Algebra (ZMod 2) F] {P : F[X]} (hP : IsLinearized P) :
+def IsLinearized.toLinearMap [Algebra (ZMod 2) F] {P : F[X]} (hP : IsLinearized P) :
     F →ₗ[ZMod 2] F :=
   AddMonoidHom.toZModLinearMap 2
     { toFun := P.eval

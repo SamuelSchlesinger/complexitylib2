@@ -83,7 +83,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 /-- The bias of a distribution `X` on the cube at a set `S` of coordinates: the expectation of the
 character `χ_S` under `X`, which is `Pr[⊕_{i ∈ S} xᵢ = 0] - Pr[⊕_{i ∈ S} xᵢ = 1]`
 (`bias_eq_one_sub_two_mul`). -/
-noncomputable def bias (X : PMF (ι → Bool)) (S : Finset ι) : ℝ :=
+def bias (X : PMF (ι → Bool)) (S : Finset ι) : ℝ :=
   ∑ x, (X x).toReal * chi ℝ S x
 
 /-- Every distribution has bias one at the empty set. -/

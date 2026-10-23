@@ -48,7 +48,7 @@ Adapted from the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203c
 
 namespace Cslib.Crypto.Pseudoentropy.Boosting
 
-private noncomputable def curve (x : ℝ) : ℝ := min 1 (max 0 (1 - x))
+private def curve (x : ℝ) : ℝ := min 1 (max 0 (1 - x))
 
 private noncomputable def area (x : ℝ) : ℝ :=
   if x ≤ 0 then 1 / 2 - x else (max 0 (1 - x)) ^ 2 / 2
@@ -125,7 +125,7 @@ private theorem area_le_quadratic (x y : ℝ) :
           nlinarith [sq_nonneg (y - x)]
 
 /-- The clipped linear weight on an example's signed margin relative to the threshold. -/
-noncomputable def weight (rate margin : ℝ) : ℝ := min 1 (max 0 (1 - rate * margin))
+def weight (rate margin : ℝ) : ℝ := min 1 (max 0 (1 - rate * margin))
 
 /-- The area to the right of the margin under the clipped linear weight curve. -/
 noncomputable def potential (rate margin : ℝ) : ℝ :=

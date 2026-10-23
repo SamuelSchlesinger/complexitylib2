@@ -185,9 +185,8 @@ theorem forestRank_le (x y : α) :
   OrderIso.le_iff_le _
 
 /-- All descendant ranks, including the vertex's own rank. -/
-noncomputable def forestDescendantRanks (x : α) : Finset (Fin (Fintype.card α)) := by
-  classical
-  exact (Finset.univ.filter fun y => forestPath f x <+: forestPath f y).image (forestRank f)
+noncomputable def forestDescendantRanks (x : α) : Finset (Fin (Fintype.card α)) :=
+  (Finset.univ.filter fun y => forestPath f x <+: forestPath f y).image (forestRank f)
 
 theorem mem_forestDescendantRanks (x : α) (r : Fin (Fintype.card α)) :
     r ∈ forestDescendantRanks f x ↔

@@ -145,7 +145,7 @@ theorem gate_correct (hw : 1 ≤ w) (op : Op) (A : Fin (signature.Arity op) → 
 
 /-- **Positive errors.** The approximation scheme on the complete graphs on `k`-sets: the
 approximate value is at least the exact one away from the exceptions of the conjunctions. -/
-noncomputable def scheme (hw : 2 ≤ w) (hk : w + 1 ≤ k) :
+def scheme (hw : 2 ≤ w) (hk : w + 1 ≤ k) :
     Approximation.Scheme Monotone.interpretation (Approximator.interpretation (n := n) (p := p))
       (fun (A : Approximator n p w) (c : CliqueSet n k) => A.decode (ofFinset c.1))
       (fun c => ofFinset c.1) Approximator.input where

@@ -312,7 +312,7 @@ theorem isSome_ofCode_dualRail (c : Circuit Boolean.signature n m) :
 
 /-- **The dual-rail translation of a De Morgan circuit**: a monotone circuit on the `2 n + 1`
 dual-rail inputs with two gates for every gate. -/
-noncomputable def dualRail (c : Circuit Boolean.signature n m) : Circuit signature (2 * n + 1) m :=
+def dualRail (c : Circuit Boolean.signature n m) : Circuit signature (2 * n + 1) m :=
   (Circuit.ofCode (2 * n + 1) m (dualCode c.code.1, c.code.2.map (railWire true))).get
     (isSome_ofCode_dualRail c)
 

@@ -157,7 +157,7 @@ theorem Learns.mono {A : Learner (ι → Bool) Bool m} {C C' : ConceptClass (ι 
 
 /-- The *uniform realizable family* of a concept class `C`: the distributions of a uniform point
 labelled by a concept of `C`. -/
-noncomputable def uniformRealizable (C : ConceptClass (ι → Bool) Bool) :
+def uniformRealizable (C : ConceptClass (ι → Bool) Bool) :
     Set (Measure ((ι → Bool) × Bool)) :=
   {D | ∃ f ∈ C, D = ((PMF.uniformOfFintype (ι → Bool)).map fun x => (x, f x)).toMeasure}
 

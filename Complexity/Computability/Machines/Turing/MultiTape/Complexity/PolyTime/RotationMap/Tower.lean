@@ -48,7 +48,7 @@ variable [Fintype D]
 noncomputable abbrev encoding (label : D ↪ List Bool) : TowerTable D ↪ List Bool :=
   encList (encPi (encPair encUnary (encPair label label)))
 
-private noncomputable def vertexEncoding : Fin b ↪ List Bool :=
+private def vertexEncoding : Fin b ↪ List Bool :=
   ⟨fun vertex => encUnary vertex.val, fun _ _ h => Fin.val_injective (encUnary.injective h)⟩
 
 /-- A table lookup charges its complete stored prefix and its returned entry. -/

@@ -180,7 +180,7 @@ variable {R : Type} [Fintype R] (F : R → WordQueryComp Unit Bool) (L : ℕ)
 
 open Classical in
 /-- The number of coin values whose programs accept after the history `h`. -/
-noncomputable def accepted (h : History) : ℕ :=
+def accepted (h : History) : ℕ :=
   (Finset.univ.filter fun r => outcome (F r) h = .done true).card
 
 /-- The value of the history `h` with `n` rounds to go: the accepting programs, plus, for every

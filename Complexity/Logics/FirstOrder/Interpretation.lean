@@ -324,7 +324,7 @@ variable [L''.IsRelational]
 
 /-- **The composite of interpretations** interprets, up to isomorphism, the structure interpreted
 by `J` in the structure interpreted by `I`. -/
-noncomputable def compEquiv [Finite κ] (J : Interpretation L' L'' κ)
+def compEquiv [Finite κ] (J : Interpretation L' L'' κ)
     (I : Interpretation L L' ι) : J.Model (I.Model M) ≃[L''] (J.comp I).Model M where
   toFun x := ⟨fun p => (x.1 p.1).1 p.2, by
     simp only [comp, Formula.realize_inf, Formula.realize_iInf, Formula.realize_relabel]

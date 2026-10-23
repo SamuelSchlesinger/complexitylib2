@@ -256,7 +256,7 @@ variable {I J : Type*} [Fintype I] [Fintype J]
 
 /-- The distribution on a finite type whose probabilities are the weights of a point of the
 standard simplex. -/
-noncomputable def ofStdSimplex (p : StdSimplex ℝ I) : PMF I :=
+def ofStdSimplex (p : StdSimplex ℝ I) : PMF I :=
   PMF.ofFintype (fun i => ENNReal.ofReal (p.weights i)) (by
     rw [← ENNReal.ofReal_sum_of_nonneg fun i _ => p.weights_nonneg i, p.total_of_fintype,
       ENNReal.ofReal_one])

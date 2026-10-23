@@ -131,7 +131,7 @@ namespace State
 variable {α : Type*}
 
 /-- The signed margin of the stored descriptions on a labeled source point. -/
-noncomputable def margin (state : State) (predict : List Bool → α → Bool) (truth : α → Bool)
+def margin (state : State) (predict : List Bool → α → Bool) (truth : α → Bool)
     (x : α) : ℝ :=
   listVoteMargin (state.predictors.map (fun code => predict code x)) (truth x)
 

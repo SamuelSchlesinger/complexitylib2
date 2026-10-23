@@ -113,7 +113,7 @@ variable [L'.IsRelational]
 /-- The target input relations on the canonical rank universe. Numeric symbols are supplied
 separately by `numericStructure`, with no target numeric tables as parameters. -/
 @[instance_reducible]
-noncomputable def inputStructure : L'.Structure (Fin (n ^ k)) where
+def inputStructure : L'.Structure (Fin (n ^ k)) where
   RelMap R x := (I.rel R).Realize fun p => lexEquiv.symm (x p.1) p.2
 
 /-- The actual ordered target structure on interpreted tuples, including numeric constants. -/
@@ -129,7 +129,7 @@ theorem two_le_pow (hk : 0 < k) : 2 ≤ n ^ k :=
 
 /-- Ranking the interpreted tuples preserves all input relations and canonical numeric symbols,
 including the genuine target constants zero, one and maximum. -/
-noncomputable def modelEquiv (hk : 0 < k) :
+def modelEquiv (hk : 0 < k) :
     letI := I.modelStructure hk (n := n)
     letI := I.inputStructure (n := n)
     letI : Fact (2 ≤ n ^ k) := ⟨two_le_pow (n := n) hk⟩

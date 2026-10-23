@@ -171,7 +171,7 @@ noncomputable def comp [Finite ι] [Finite κ] [N'.IsRelational]
 
 /-- A composite projection is isomorphic to successive interpretation, preserving both numeric
 and input relations. The underlying equivalence is the existing numeric composition map. -/
-noncomputable def compEquiv [Finite ι] [Finite κ]
+def compEquiv [Finite ι] [Finite κ]
     [N'.IsRelational] [N''.IsRelational] [L'.IsRelational] [L''.IsRelational]
     (J : Projection N' N'' L' L'' κ) (I : Projection N N' L L' ι)
     (M : Type*) [N.Structure M] [L.Structure M] :

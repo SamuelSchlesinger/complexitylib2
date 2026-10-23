@@ -101,7 +101,7 @@ noncomputable def onESOSentence (Φ : ESO.Sentence L') : ESO.Sentence L where
 
 /-- The structure interpreted by the extension of `I` in the expansion of `M` by relations `R` is
 isomorphic to the expansion of `I.Model M` by the relations `modelRel R`. -/
-noncomputable def sumVarEquiv (R : ∀ i, Set (Fin (arity i * Nat.card κ) → M)) :
+def sumVarEquiv (R : ∀ i, Set (Fin (arity i * Nat.card κ) → M)) :
     letI := varLanguage.structure R
     letI := varLanguage.structure (modelRel (I := I) R)
     (I.sumVar arity).Model M ≃[L'.sum (varLanguage arity)] I.Model M :=

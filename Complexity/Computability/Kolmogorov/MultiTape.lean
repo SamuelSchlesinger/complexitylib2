@@ -108,7 +108,7 @@ theorem etimeBoundedComplexity_ofMultiTapeTM_le (ht : tm.RunsInTime p t) (h : tm
 
 /-- From a computation of the identity, a simulation of the literal description method with one
 extra step. -/
-noncomputable def literalSimulation
+def literalSimulation
     (h : tm.ComputesFunInTimeAndSpace (Function.Embedding.refl _) (Function.Embedding.refl _) id
       (fun p => p.length + 1) (fun _ => 0)) :
     Simulation literal (ofMultiTapeTM tm) 0 fun _ t => t + 1 where

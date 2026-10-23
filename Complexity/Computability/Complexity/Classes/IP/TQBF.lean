@@ -424,7 +424,7 @@ theorem mem_linVars {ψ : QBF ℕ} {v : ℕ} (hv : v ∈ ψ.vars) : v ∈ linVar
     exact hv.imp id ih
 
 /-- The arithmetic formula checked by the machine on `ψ`. -/
-noncomputable def arithOf : ArithQBF ℕ := ψ.arithmetize (linVars ψ)
+def arithOf : ArithQBF ℕ := ψ.arithmetize (linVars ψ)
 
 theorem modOf_loopInput : modOf (loopInput ψ) = modulus ψ :=
   Nat.sub_add_cancel (prime_modulus ψ).1.one_lt.le

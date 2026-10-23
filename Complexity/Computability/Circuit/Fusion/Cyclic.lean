@@ -52,7 +52,7 @@ def cyclicAtoms (c : CyclicCircuit σ n m) (input : Fin n → U)
   arguments := Wire.elim input state ∘ (c.lines i).wires
 
 /-- The AND pairs at the least solution defeat every admissible semifilter witness. -/
-noncomputable def PairCover.ofCyclicCircuit (c : CyclicCircuit Monotone.signature n m)
+def PairCover.ofCyclicCircuit (c : CyclicCircuit Monotone.signature n m)
     (input : Fin n → Set U) (o : Fin m) {target : Set U}
     (hc : c.eval (Monotone.setInterpretation U) Monotone.setInterpretation_mono input o = target)
     (admissible : Semifilter ↥(targetᶜ) → Prop := fun _ => True) :

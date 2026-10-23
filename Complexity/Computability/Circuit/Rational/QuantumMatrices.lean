@@ -268,7 +268,7 @@ abbrev divisionSubring := coefficientRing (monomialUnit χ) (monomialUnit_zero �
     (monomialUnit_mul χ)
 
 /-- The division ring structure of `divisionSubring`. -/
-noncomputable instance : DivisionRing (divisionSubring χ) :=
+instance : DivisionRing (divisionSubring χ) :=
   divisionRing (monomialUnit χ) (monomialUnit_zero χ) (monomialUnit_mul χ)
 
 /-- The Fourier lift as a finite Hahn series. -/

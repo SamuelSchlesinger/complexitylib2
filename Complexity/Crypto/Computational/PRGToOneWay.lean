@@ -70,7 +70,7 @@ namespace PRGToOneWay
 
 /-- The test built from an inverter: on a word `y`, run the inverter and accept when it returns a
 preimage of `y` under the generator. -/
-noncomputable def test (generator : List Bool → List Bool) (adversary : Inverter) :
+def test (generator : List Bool → List Bool) (adversary : Inverter) :
     Distinguisher := fun n word => do
   let preimage ← adversary n word
   return generator preimage == word

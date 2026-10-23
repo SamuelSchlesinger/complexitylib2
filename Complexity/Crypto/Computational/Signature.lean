@@ -150,7 +150,7 @@ private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ 
 
 /-- Stateful signing oracle that signs the requested message under `sk` and prepends the message to
 the list of queried messages. -/
-noncomputable def signingOracle (S : SignatureScheme) (sk : List Bool)
+def signingOracle (S : SignatureScheme) (sk : List Bool)
     (request : Unit × List Bool) : StateT (List (List Bool)) ProbComp (List Bool) :=
   fun queried => do
     let sig ← S.sign sk request.2
@@ -159,7 +159,7 @@ noncomputable def signingOracle (S : SignatureScheme) (sk : List Bool)
 /-- The EUF-CMA experiment: sample `(pk, sk) ← S.keyGen n`, run the adaptive forger on `(n, pk)`
 with oracle access to `S.signingOracle sk`, and accept when the forger outputs a valid signature on
 an `n`-bit message that was never queried to the signing oracle. -/
-noncomputable def eufCmaGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
+def eufCmaGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
     ProbComp Bool := do
   let keys ← S.keyGen n
   let out ← (OracleComp.interpret
@@ -247,7 +247,7 @@ theorem EUFCMA.of_negligible {S : SignatureScheme}
 
 /-- One-time signing oracle that answers at most the first signing query using `S.sign sk` and
 returns the empty word without signing on any subsequent query. -/
-noncomputable def oneTimeSigningOracle (S : SignatureScheme) (sk : List Bool)
+def oneTimeSigningOracle (S : SignatureScheme) (sk : List Bool)
     (request : Unit × List Bool) : StateT (List (List Bool)) ProbComp (List Bool) :=
   fun queried =>
     if queried.isEmpty then do
@@ -260,7 +260,7 @@ noncomputable def oneTimeSigningOracle (S : SignatureScheme) (sk : List Bool)
 `(n, pk)` with oracle access to `S.oneTimeSigningOracle sk` (which answers at most one signing
 query), and accept when the forger outputs a valid signature on an `n`-bit message distinct from
 the queried message (if any). -/
-noncomputable def eufOneTimeGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
+def eufOneTimeGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
     ProbComp Bool := do
   let keys ← S.keyGen n
   let out ← (OracleComp.interpret

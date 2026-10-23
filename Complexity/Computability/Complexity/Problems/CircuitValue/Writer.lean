@@ -107,7 +107,7 @@ variable (S : WriterSpec)
 /-- The step of the writer. Its state is a phase, the length `n` of the input and a counter:
 phase `0` counts the input, phase `1` writes the chunks, phase `2` copies the input, phase `3`
 halts. -/
-noncomputable def step (s : ℕ × ℕ × ℕ) (b : Bool) : (ℕ × ℕ × ℕ) × List Bool :=
+def step (s : ℕ × ℕ × ℕ) (b : Bool) : (ℕ × ℕ × ℕ) × List Bool :=
   if s.1 = 0 then
     if b then ((0, 0, s.2.2 + 1), S.countUnit) else ((1, s.2.2, 0), S.countEnd)
   else if s.1 = 1 then
@@ -118,20 +118,20 @@ noncomputable def step (s : ℕ × ℕ × ℕ) (b : Bool) : (ℕ × ℕ × ℕ) 
   else (s, [])
 
 /-- **The writer**, as a read machine on the framed input. -/
-noncomputable def machine : ReadMachine (ℕ × ℕ × ℕ) where
+def machine : ReadMachine (ℕ × ℕ × ℕ) where
   init := (0, 0, 0)
   halt s := decide (s.1 = 3)
   addr := writerAddr
   step := S.step
 
 /-- **The word written** on the input `w`. -/
-noncomputable def output (w : List Bool) : List Bool :=
+def output (w : List Bool) : List Bool :=
   (List.replicate w.length S.countUnit).flatten ++ S.countEnd ++
     ((List.range (S.numChunks w.length)).map (S.chunk w.length)).flatten ++
       S.trailer w.length ++ w.flatMap S.copyBit
 
 /-- The number of steps of the writer on an input of length `n`. -/
-noncomputable def rounds (n : ℕ) : ℕ := (n + 1) + (S.numChunks n + 1) + (n + 1)
+def rounds (n : ℕ) : ℕ := (n + 1) + (S.numChunks n + 1) + (n + 1)
 
 private theorem readBit_count (w : List Bool) (i : ℕ) :
     S.machine.readBit (frame w) (0, 0, i) = decide (i < w.length) := by

@@ -301,7 +301,7 @@ variable {k : ℕ} {State : Type} [Finite State] {α : Type} {enc : α ↪ List 
 
 /-- The verifier of a game on the strict table: it accepts when the strict table, replayed from
 the moves on the encoded instance, emits `[true]`. -/
-noncomputable def gameVerifier (atm : MultiTapeATM k Bool State) (enc : α ↪ List Bool)
+def gameVerifier (atm : MultiTapeATM k Bool State) (enc : α ↪ List Bool)
     (x : α × List Bool) : Bool :=
   decide (atm.strict.runClosedCoins x.2 (enc x.1) = [true])
 

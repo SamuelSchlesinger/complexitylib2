@@ -123,15 +123,13 @@ theorem counter_power_lower_bound (k : ℕ) (hk : 64 ≤ k) :
   exact hh out hout
 
 /-- Exponents below `ModulusCounter.period k` whose power has a circuit of size at most `q`. -/
-noncomputable def easyCounterPowers (k q : ℕ) : Finset (Fin (ModulusCounter.period k)) := by
-  classical
-  exact Finset.univ.filter fun T => ModulusCounter.power (k := k) T.val ∈
+noncomputable def easyCounterPowers (k q : ℕ) : Finset (Fin (ModulusCounter.period k)) :=
+  Finset.univ.filter fun T => ModulusCounter.power (k := k) T.val ∈
     Circuit.functionsAtMost interpretation (k + k) (k + k) q
 
 /-- Exponents below `ModulusCounter.period k` whose power requires more than `q` gates. -/
-noncomputable def hardCounterPowers (k q : ℕ) : Finset (Fin (ModulusCounter.period k)) := by
-  classical
-  exact Finset.univ \ easyCounterPowers k q
+noncomputable def hardCounterPowers (k q : ℕ) : Finset (Fin (ModulusCounter.period k)) :=
+  Finset.univ \ easyCounterPowers k q
 
 theorem mem_easyCounterPowers (k q : ℕ) (T : Fin (ModulusCounter.period k)) :
     T ∈ easyCounterPowers k q ↔

@@ -240,7 +240,7 @@ def decodeHistory (hs : List (List Bool × List Bool)) : History :=
   simp [decodeHistory]
 
 /-- The leaf value of a game-tree history: the number of accepting programs. -/
-noncomputable def leafValue (hs : List (List Bool × List Bool)) : ℕ :=
+def leafValue (hs : List (List Bool × List Bool)) : ℕ :=
   accepted F (decodeHistory hs)
 
 /-- **The value is the value of the game tree** of the codes of the short words, with sums capped
@@ -306,7 +306,7 @@ abbrev EvalState (α : Type) := α × List (GameTree.Frame (List Bool)) × Optio
 
 /-- One step of the evaluation of the game tree of the verifier `M` on `a`, with `fuel a` coins,
 rounds and message lengths. -/
-noncomputable def evalStep (s : EvalState α) : EvalState α :=
+def evalStep (s : EvalState α) : EvalState α :=
   (s.1, GameTree.step (fuel s.1) (2 ^ fuel s.1) (firstCode (fuel s.1)) BitString.increment
     (lastCode (fuel s.1)) (leafValue (coinFamily M (fuel s.1) (enc s.1))) s.2)
 
@@ -314,7 +314,7 @@ noncomputable def evalStep (s : EvalState α) : EvalState α :=
 def evalTime (a : α) : ℕ := 2 ^ ((fuel a + 1) * (2 * fuel a + 1))
 
 /-- The value computed by the evaluation. -/
-noncomputable def evaluate (a : α) : ℕ :=
+def evaluate (a : α) : ℕ :=
   ((evalStep enc M fuel)^[evalTime fuel a] (a, [], none)).2.2.getD 0
 
 /-- The evaluation keeps its instance and runs the game-tree evaluator. -/
@@ -422,11 +422,11 @@ variable {α : Type} (enc : α ↪ List Bool) {k : ℕ} {Control : Type}
   (M : _root_.Turing.MultiTapePTM k Bool Control Unit) (fuel : α → ℕ)
 
 /-- Frames, encoded by their fields. -/
-noncomputable abbrev encFrame : GameTree.Frame (List Bool) ↪ List Bool :=
+abbrev encFrame : GameTree.Frame (List Bool) ↪ List Bool :=
   encPair encBits (encPair encBits (encPair encNat encNat))
 
 /-- States of the evaluation, encoded by their fields. -/
-noncomputable abbrev encEvalState : EvalState α ↪ List Bool :=
+abbrev encEvalState : EvalState α ↪ List Bool :=
   encPair enc (encPair (encList encFrame) (encOption encNat))
 
 variable {enc fuel} (hfuel : ComputableTidilyInPolyTime fuel enc encUnary)

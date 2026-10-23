@@ -113,7 +113,7 @@ theorem BitSynthesis.mono {enc : F ≃ BitString w} {G : (Fin m → F) → F} {a
 /-- **The Goldreich–Levin decoder of the inner code.** At a point `x`, the corrected-majority
 candidate of the predictor `r ↦ C (bits of x, r)` with fixed masks and guess, read as a field
 element. -/
-noncomputable def glPredictor (enc : F ≃ BitString w) (C : BooleanFunction (m * w + w)) {K : ℕ}
+def glPredictor (enc : F ≃ BitString w) (C : BooleanFunction (m * w + w)) {K : ℕ}
     (masks : Fin K → BitString w) (guess : BitString K) : (Fin m → F) → F :=
   fun x => enc.symm
     (Crypto.GoldreichLevin.candidate (fun r => C (Fin.append (bitsOfPoint enc x) r)) masks guess)
