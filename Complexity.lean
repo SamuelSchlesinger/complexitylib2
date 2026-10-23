@@ -1016,6 +1016,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Transf
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileCond
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileInput
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Closed

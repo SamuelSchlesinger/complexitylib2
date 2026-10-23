@@ -8,6 +8,7 @@ module
 -- upstream: candidate (after crei/tidy-universal lands)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 
@@ -142,4 +143,104 @@ theorem computableTidilyInPolyTime_iff_exists_computableInTimeAndSpaceOfLength :
   ⟨ComputableTidilyInPolyTime.exists_computableInTimeAndSpaceOfLength,
     fun ⟨_, _, ht, _, h⟩ => h.computableTidilyInPolyTime ht⟩
 
+/-! ### Bridges to `ComputableInPolyTime` -/
+
+/-- **Plain and tidy polynomial time agree.** `Turing.MultiTapeTM.ComputableInPolyTime` unfolds to
+the right-hand side of
+`Turing.MultiTapeTM.computableTidilyInPolyTime_iff_exists_computableInTimeAndSpaceOfLength`. -/
+theorem computableInPolyTime_iff_computableTidilyInPolyTime :
+    ComputableInPolyTime f encIn encOut ↔ ComputableTidilyInPolyTime f encIn encOut :=
+  computableTidilyInPolyTime_iff_exists_computableInTimeAndSpaceOfLength.symm
+
+/-- A function computable in polynomial time is tidily computable in polynomial time. The tidy
+machine adds linear overhead to both bounds. -/
+theorem ComputableInPolyTime.tidy (h : ComputableInPolyTime f encIn encOut) :
+    ComputableTidilyInPolyTime f encIn encOut :=
+  computableInPolyTime_iff_computableTidilyInPolyTime.mp h
+
+/-- A function tidily computable in polynomial time is computable in polynomial time, by the same
+machine within the same bounds. -/
+theorem ComputableInPolyTime.of_tidy (h : ComputableTidilyInPolyTime f encIn encOut) :
+    ComputableInPolyTime f encIn encOut :=
+  h.exists_computableInTimeAndSpaceOfLength
+
+/-- `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy` for dot notation on a tidy hypothesis. It is
+a `fun_prop` transition rule, so every tidy certificate also proves plain goals. -/
+@[fun_prop]
+theorem ComputableTidilyInPolyTime.computableInPolyTime
+    (h : ComputableTidilyInPolyTime f encIn encOut) : ComputableInPolyTime f encIn encOut :=
+  .of_tidy h
+
+/-- **A polynomial time bound alone suffices.** A function computable by some machine within a time
+bound polynomial in the length of the encoded input, with any space bound, is computable in
+polynomial time: within `t` steps the machine visits at most `c t + c` work-tape cells. -/
+theorem ComputableInTimeAndSpace.computableInPolyTime {t : ℕ → ℕ} {s : α → ℕ}
+    (ht : PolynomiallyBounded t)
+    (h : ComputableInTimeAndSpace f encIn encOut (fun a => t (encIn a).length) s) :
+    ComputableInPolyTime f encIn encOut :=
+  let ⟨c, h⟩ := h.exists_space_linear
+  ⟨t, fun n => c * t n + c, ht, by fun_prop, h⟩
+
 end Turing.MultiTapeTM
+
+/-! ### Closure of `ComputableInPolyTime`
+
+The rules that need a machine construction, proved through the tidy calculus. Together with
+`Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTime` they make `fun_prop` prove
+plain goals from plain hypotheses and tidy certificates. -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+universe u
+
+variable {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+  {encOut : γ ↪ List Bool}
+
+/-- The encoded value of a function computable in polynomial time has polynomial length. -/
+theorem polyBounded_length {f : α → β} (h : ComputableInPolyTime f encIn encMid) :
+    PolyBounded (fun a => (encIn a).length) fun a => (encMid (f a)).length :=
+  h.tidy.polyBounded_length
+
+theorem comp {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
+    (hg : ComputableInPolyTime g encIn encMid) : ComputableInPolyTime (f ∘ g) encIn encOut :=
+  .of_tidy (hf.tidy.comp hg.tidy)
+
+theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
+    {enc₂ : β₂ ↪ List Bool} {enc : β₁ × β₂ ↪ List Bool} [PairEncoding enc₁ enc₂ enc]
+    {f : α → β₁} {g : α → β₂} (hf : ComputableInPolyTime f encIn enc₁)
+    (hg : ComputableInPolyTime g encIn enc₂) :
+    ComputableInPolyTime (fun x => (f x, g x)) encIn enc :=
+  .of_tidy (hf.tidy.pair hg.tidy)
+
+@[fun_prop]
+theorem comp' {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
+    (hg : ComputableInPolyTime g encIn encMid) :
+    ComputableInPolyTime (fun a => f (g a)) encIn encOut :=
+  hf.comp hg
+
+@[fun_prop]
+theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
+    {enc₂ : β₂ ↪ List Bool} {f : α → β₁} {g : α → β₂} (hf : ComputableInPolyTime f encIn enc₁)
+    (hg : ComputableInPolyTime g encIn enc₂) :
+    ComputableInPolyTime (fun x => (f x, g x)) encIn (encPair enc₁ enc₂) :=
+  hf.pair hg
+
+@[fun_prop]
+theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
+    ComputableInPolyTime (fun p : β₁ × β₂ => p.1) (encPair enc₁ enc₂) enc₁ :=
+  .of_tidy (ComputableTidilyInPolyTime.fst enc₁ enc₂)
+
+@[fun_prop]
+theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
+    ComputableInPolyTime (fun p : β₁ × β₂ => p.2) (encPair enc₁ enc₂) enc₂ :=
+  .of_tidy (ComputableTidilyInPolyTime.snd enc₁ enc₂)
+
+/-- A case distinction between functions computable in polynomial time on all inputs. -/
+@[fun_prop]
+theorem ite' {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
+    (hc : ComputableInPolyTime c encIn encC) (hf : ComputableInPolyTime f encIn encMid)
+    (hg : ComputableInPolyTime g encIn encMid) :
+    ComputableInPolyTime (fun x => if c x then f x else g x) encIn encMid :=
+  .of_tidy (hc.tidy.ite' hf.tidy hg.tidy)
+
+end Turing.MultiTapeTM.ComputableInPolyTime
