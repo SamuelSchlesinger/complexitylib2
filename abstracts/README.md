@@ -57,6 +57,26 @@ verify exact declaration links, and record the reviewed source revision and arti
 provenance identifies source files, bridge files, their digests, PDFs and selected declarations;
 it supplements these reviews rather than replacing them.
 
+Release publication additionally requires successful **Lean Action CI** for the exact artifact
+source SHA, from a `push` to `main` in this repository. The publication job waits up to 20 minutes
+for that run, selects the latest workflow run and current attempt, and rejects missing, failed,
+cancelled, mismatched or still-pending validation. It rechecks Lean success and current main
+before every release creation, asset deletion/replacement and release edit. PR PDF review
+artifacts remain available without publication. No second Lean build is started for this gate.
+
+After a failed Lean run, rerun Lean CI first; once its latest attempt succeeds, the failed
+publication job can be retried while that SHA is still main. It downloads the immutable artifact
+ID exported by the successful PDF build, rather than assuming a new artifact exists for the
+publication retry's attempt number. API checks and release mutations are separate operations:
+a concurrent main update or rerun can still occur after a check. Each subsequent write rechecks
+the gate, and an already-started write cannot be rolled back atomically with GitHub's CI state.
+
+This gate addresses the two codebase-review findings recorded in
+[#432](https://github.com/cslib-community/complexitylib/issues/432). Its workflow identity,
+event/SHA filtering, pagination and attempt handling follow the
+[GitHub workflow-run REST API](https://docs.github.com/en/rest/actions/workflow-runs);
+artifact selection follows [download-artifact v4](https://github.com/actions/download-artifact/tree/v4).
+
 ## Layout and sources
 
 The typography, syntax colors and pale code boxes adapt Erik Demaine’s
