@@ -996,7 +996,9 @@ batches.
    `ComputableInPolyTime` and its tidy bridges are in place. Redefine the classes and reductions
    that still use `ComputableTidilyInPolyTime` (#546–#550), add plain space, big-O and FPT notions
    (#551), restate public characterizations and closure lemmas plainly, and switch the abstract
-   bridges to the shared predicate after #497.
+   bridges to the shared predicate after #497. WPP/LWPP list, indexed and two-sided robustness
+   results expose plain certificates with deprecated tidy compatibility wrappers (#562); the
+   remaining public-result migration stays open under #456.
 
 ## Remaining theorem developments
 
