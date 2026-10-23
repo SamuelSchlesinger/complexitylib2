@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Reduction.ManyOne
 import Complexity.Computability.Complexity.Classes.Time
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 
 /-!
@@ -37,8 +38,11 @@ monotone (`Cslib.Complexity.mem_FPT_iff_exists_monotone`).
 `Cslib.Complexity.FPTReducible encA encB κA κB A B`: `A` reduces to `B` by an *fpt-reduction*
 [FlumGrohe2006, Definition 2.1] [CyganEtAl2015, Definition 13.1]: a map `f` computable within
 time `F (κA a) * (L + 1) ^ c` (`Cslib.Complexity.ComputableTidilyInFPTTime`) with
-`a ∈ A ↔ f a ∈ B` and `κB (f a) ≤ h (κA a)` for a function `h`. Polynomial-time reductions
-with a parameter bound are fpt-reductions
+`a ∈ A ↔ f a ∈ B` and `κB (f a) ≤ h (κA a)` for a function `h`. The plain counterpart
+`Cslib.Complexity.ComputableInFPTTime` of fpt-time computability asks for any machine within
+these bounds, not necessarily a tidy one; the two notions agree
+(`Cslib.Complexity.computableInFPTTime_iff_computableTidilyInFPTTime`). Polynomial-time
+reductions with a parameter bound are fpt-reductions
 (`Cslib.Complexity.FPTReducible.of_computableTidilyInPolyTime`). `FPT` and `XP` are closed under
 fpt-reductions. As for `FPT`, the functions `F` and `h` are arbitrary, where the cited
 definitions require them to be computable.
@@ -47,12 +51,17 @@ definitions require them to be computable.
 
 * `Cslib.Complexity.FPT`, `Cslib.Complexity.XP`: fixed-parameter tractable and slicewise
   polynomial problems.
-* `Cslib.Complexity.ComputableTidilyInFPTTime`: functions computable in fpt time.
+* `Cslib.Complexity.ComputableInFPTTime`, `Cslib.Complexity.ComputableTidilyInFPTTime`: functions
+  computable in fpt time, by any machine and by a tidy one.
 * `Cslib.Complexity.FPTReducible`: fpt-reductions.
 
 ## Main results
 
 * `Cslib.Complexity.mem_FPT`, `Cslib.Complexity.mem_XP`: unfolding the classes.
+* `Cslib.Complexity.computableInFPTTime_iff_computableTidilyInFPTTime`: the plain and tidy notions
+  of fpt-time computability agree, with the shortcuts `Cslib.Complexity.ComputableInFPTTime.tidy`,
+  `Cslib.Complexity.ComputableInFPTTime.of_tidy` and
+  `Cslib.Complexity.ComputableTidilyInFPTTime.computableInFPTTime`.
 * `Cslib.Complexity.P_subset_FPT`, `Cslib.Complexity.FPT_subset_XP`: `P ⊆ FPT ⊆ XP`, for every
   parameter.
 * `Cslib.Complexity.FPT_eq_P_of_le`, `Cslib.Complexity.XP_eq_P_of_le`: for a bounded parameter,
@@ -223,6 +232,14 @@ end Classes
 
 section Machines
 
+/-- `f` is computable in fpt time with respect to the parameter `κ`: some machine computes `f`
+within time and space `F (κ a) * (|encA a| + 1) ^ c`, for a function `F : ℕ → ℕ` and a constant
+`c`. -/
+def ComputableInFPTTime {α β : Type*} (f : α → β) (encA : α ↪ List Bool)
+    (encB : β ↪ List Bool) (κ : α → ℕ) : Prop :=
+  ∃ (F : ℕ → ℕ) (c : ℕ), ComputableInTimeAndSpace f encA encB
+    (fun a => F (κ a) * ((encA a).length + 1) ^ c) fun a => F (κ a) * ((encA a).length + 1) ^ c
+
 /-- `f` is tidily computable in fpt time with respect to the parameter `κ`: within time and space
 `F (κ a) * (|encA a| + 1) ^ c` up to a constant factor, for a function `F : ℕ → ℕ` and a constant
 `c`. -/
@@ -230,6 +247,39 @@ def ComputableTidilyInFPTTime {α β : Type*} (f : α → β) (encA : α ↪ Lis
     (encB : β ↪ List Bool) (κ : α → ℕ) : Prop :=
   ∃ (F : ℕ → ℕ) (c : ℕ), ComputableTidilyInO f encA encB
     (fun a => F (κ a) * ((encA a).length + 1) ^ c) fun a => F (κ a) * ((encA a).length + 1) ^ c
+
+section Plain
+
+variable {α β : Type*} {f : α → β} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {κ : α → ℕ}
+
+/-- A function computable in fpt time is tidily computable in fpt time: the output is within the
+time bound, which is also the space bound. -/
+theorem ComputableInFPTTime.tidy (h : ComputableInFPTTime f encA encB κ) :
+    ComputableTidilyInFPTTime f encA encB κ :=
+  let ⟨F, c, hc⟩ := h
+  ⟨F, c, hc.computableTidilyInO hc.length_le⟩
+
+/-- A function tidily computable in fpt time is computable in fpt time, by the same machine. -/
+theorem ComputableInFPTTime.of_tidy (h : ComputableTidilyInFPTTime f encA encB κ) :
+    ComputableInFPTTime f encA encB κ := by
+  obtain ⟨F, c, d, hd, -⟩ := h
+  have hle (a : α) : d * (F (κ a) * ((encA a).length + 1) ^ c + 1) ≤
+      d * (F (κ a) + 1) * ((encA a).length + 1) ^ c := by
+    have := Nat.mul_le_mul_left d (Nat.one_le_pow c _ (Nat.succ_pos (encA a).length))
+    nlinarith
+  exact ⟨fun k => d * (F k + 1), c, hd.computableInTimeAndSpace.mono hle hle⟩
+
+/-- `Cslib.Complexity.ComputableInFPTTime.of_tidy` for dot notation on a tidy hypothesis. -/
+theorem ComputableTidilyInFPTTime.computableInFPTTime
+    (h : ComputableTidilyInFPTTime f encA encB κ) : ComputableInFPTTime f encA encB κ :=
+  .of_tidy h
+
+/-- **Plain and tidy computability in fpt time agree.** -/
+theorem computableInFPTTime_iff_computableTidilyInFPTTime :
+    ComputableInFPTTime f encA encB κ ↔ ComputableTidilyInFPTTime f encA encB κ :=
+  ⟨ComputableInFPTTime.tidy, ComputableInFPTTime.of_tidy⟩
+
+end Plain
 
 variable {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
   {κ κA : α → ℕ} {κB : β → ℕ} {κC : γ → ℕ}
