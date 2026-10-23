@@ -203,25 +203,25 @@ theorem localOptRel_searchReducible_LocalOpt {n : α → ℕ}
 /-- Circuit `Pigeon` is complete for `PPP` under polynomial-time search reductions. -/
 theorem Pigeon_searchComplete : SearchComplete @PPP encPigeon Pigeon := by
   refine ⟨Pigeon_mem_PPP, fun enc R hR => ?_⟩
-  obtain ⟨-, n, F, hn, hF, hlen, hred⟩ := hR
+  obtain ⟨-, n, F, hn, hF, hlen, hred⟩ := mem_PPP_iff_tidy.mp hR
   exact hred.trans (pigeonRel_searchReducible_Pigeon hn hF hlen)
 
 /-- Circuit `EndOfLine` is complete for `PPAD` under polynomial-time search reductions. -/
 theorem EndOfLine_searchComplete : SearchComplete @PPAD encEndOfLine EndOfLine := by
   refine ⟨EndOfLine_mem_PPAD, fun enc R hR => ?_⟩
-  obtain ⟨-, n, P, S, hn, hP, hS, hP_len, hS_len, hred⟩ := hR
+  obtain ⟨-, n, P, S, hn, hP, hS, hP_len, hS_len, hred⟩ := mem_PPAD_iff_tidy.mp hR
   exact hred.trans (endOfLineRel_searchReducible_EndOfLine hn hP hS hP_len hS_len)
 
 /-- Circuit `Leaf` is complete for `PPA` under polynomial-time search reductions. -/
 theorem Leaf_searchComplete : SearchComplete @PPA encLeaf Leaf := by
   refine ⟨Leaf_mem_PPA, fun enc R hR => ?_⟩
-  obtain ⟨-, n, N₁, N₂, hn, hN₁, hN₂, hN₁_len, hN₂_len, hred⟩ := hR
+  obtain ⟨-, n, N₁, N₂, hn, hN₁, hN₂, hN₁_len, hN₂_len, hred⟩ := mem_PPA_iff_tidy.mp hR
   exact hred.trans (leafRel_searchReducible_Leaf hn hN₁ hN₂ hN₁_len hN₂_len)
 
 /-- Circuit `LocalOpt` is complete for `PLS` under polynomial-time search reductions. -/
 theorem LocalOpt_searchComplete : SearchComplete @PLS encLocalOpt LocalOpt := by
   refine ⟨LocalOpt_mem_PLS, fun enc R hR => ?_⟩
-  obtain ⟨-, n, N, C, hn, hN, hC, hlen, hred⟩ := hR
+  obtain ⟨-, n, N, C, hn, hN, hC, hlen, hred⟩ := mem_PLS_iff_tidy.mp hR
   exact hred.trans (localOptRel_searchReducible_LocalOpt hn hN hC hlen)
 
 end Cslib.Complexity
