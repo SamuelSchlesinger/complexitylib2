@@ -1247,7 +1247,9 @@ space bounds. Further class-level work needs resource certificates for the actua
   individual operations by programs over smaller bases remain open (#293).
   Generalizing the structured program calculus and time-class APIs to arbitrary domains,
   weighted/bit costs, and simulations between these instances also remain open. No
-  real-RAM/Turing-machine equivalence is claimed;
+  real-RAM/Turing-machine equivalence is claimed. The redesigned typed core is proposed in
+  [CSLib #1158](https://github.com/leanprover/cslib/pull/1158); its scope and remaining compatibility
+  bridges are recorded in [UPSTREAM.md](UPSTREAM.md#coordination-before-submission);
 * Sparse RAM memory: [association-list semantics](Complexity/Computability/GenericRAM/SparseMemory/Basic.lean)
   and [native multitape TM certificates](Complexity/Computability/GenericRAM/SparseMemory/Turing.lean)
   implement default-valued reads and insert/replace writes using Mathlib's `AList` and the existing
