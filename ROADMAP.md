@@ -257,6 +257,10 @@ existing developments, source credit and saved branches remain available for a f
    and one-NAND correctness; it does not yet supply the augmented-decryption circuit or the
    separate joint circular-security assumption needed
    for the fixed-key endpoint.
+   The [code-composition API](Complexity/Computability/Circuit/Boolean/CodeComposition.lean)
+   provides a native polynomial-time constructor for shared-input blocks with different gate
+   counts, checked against the existing carry-save circuit without padding. This supports the
+   shallow-decryption generator in #528; that full circuit and its certificate remain open.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
