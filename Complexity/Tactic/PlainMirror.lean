@@ -30,6 +30,8 @@ public meta section
 
 open Lean Meta Elab
 
+initialize registerTraceClass `Meta.Tactic.plain_mirror
+
 namespace Cslib.Tactic.PlainMirror
 
 /-- Supported triples: tidy predicate, plain predicate and proved plain-to-tidy equivalence.
@@ -67,16 +69,25 @@ def mirrorName (name : Name) : Name :=
   (name.toString.replace "ComputableTidily" "Computable"
     |>.replace "computableTidily" "computable").toName
 
-private initialize mirrors : SimplePersistentEnvExtension (Name × Name) (Std.HashMap Name Name) ←
+private initialize mirrors :
+    SimplePersistentEnvExtension (Name × Name × Name) (Std.HashMap Name (Name × Name)) ←
   registerSimplePersistentEnvExtension {
-    addEntryFn := fun state (source, target) => state.insert source target
+    addEntryFn := fun state (source, target, sourceModule) =>
+      state.insert source (target, sourceModule)
     addImportedFn := fun entries => entries.foldl (fun state es =>
-      es.foldl (fun state (source, target) => state.insert source target) state) {}
+      es.foldl (fun state (source, target, sourceModule) =>
+        state.insert source (target, sourceModule)) state) {}
   }
 
 /-- Look up the exact recorded counterpart, including mirrors from imported modules. -/
 def getMirror? (source : Name) : CoreM (Option Name) := do
-  return (mirrors.getState (← getEnv)).get? source
+  return ((mirrors.getState (← getEnv)).get? source).map Prod.fst
+
+/-- Deterministic registry entries: original name, plain counterpart and original source module.
+This distinguishes retained machine sources from clients during a later namespace migration. -/
+def mirrorPairs : CoreM (Array (Name × Name × Name)) := do
+  return (mirrors.getState (← getEnv)).toArray.map (fun (source, target, sourceModule) =>
+    (source, target, sourceModule)) |>.qsort (fun a b => Name.lt a.1 b.1)
 
 private def globalEntries {α σ : Type} (ext : SimpleScopedEnvExtension α σ) : CoreM (Array α) := do
   let state := ext.ext.toEnvExtension.getState (← getEnv)
@@ -92,6 +103,9 @@ private def registerFunProp (source target : Name) (kind : AttributeKind) : Meta
   let lambdas ← globalEntries lambdaTheoremsExt
   let morphisms ← globalEntries morTheoremsExt
   let transitions ← globalEntries transitionTheoremsExt
+  if functions.any (·.thmOrigin.name == target) || lambdas.any (·.thmName == target) ||
+      morphisms.any (·.thmName == target) || transitions.any (·.thmName == target) then
+    return
   if let some rule := functions.find? (·.thmOrigin.name == source) then
     Mathlib.Meta.FunProp.addTheorem target kind rule.priority
   else if lambdas.any (·.thmName == source) then
@@ -101,19 +115,36 @@ private def registerFunProp (source target : Name) (kind : AttributeKind) : Meta
   else if let some rule := transitions.find? (·.thmName == source) then
     Mathlib.Meta.FunProp.addTheorem target kind rule.priority
 
+private def existingCovers (target : Name) (type : Expr) : MetaM Unit := do
+  forallTelescope type fun xs conclusion => do
+    let goal ← mkFreshExprMVar conclusion
+    let premises ← goal.mvarId!.apply (← mkConstWithFreshMVarLevels target)
+    for premise in premises do
+      unless ← premise.isAssigned do premise.assumption
+    let proof ← mkLambdaFVars xs (← instantiateMVars goal)
+    check proof
+    unless ← isDefEq (← inferType proof) type do
+      throwError "existing counterpart {target} does not cover the full statement"
+
 /-- Derive and kernel-check a counterpart, transporting the full proposition rather than its
-conclusion alone. An existing counterpart must have a definitionally equal statement. -/
+conclusion alone. An existing counterpart must directly cover the full statement using only
+its supplied hypotheses; this preserves stronger universe-polymorphic interfaces. -/
 def mirrorDeclaration (source target : Name) (kind : AttributeKind := .global) :
     MetaM Unit := do
   let info ← getConstInfo source
   unless ← isProp info.type do
     throwError "plain mirror expects a proposition-valued declaration"
   let type ← plainType info.type
+  if type.find? (fun e => match e with
+      | .const name _ => (name.toString.splitOn "Tidily").length > 1
+      | _ => false) |>.isSome then
+    throwError "{source} retains an unsupported tidy notion after transformation"
   if type == info.type then
     throwError "{source} has no supported tidy predicate"
   if let some existing := (← getEnv).find? target then
-    unless ← isDefEq existing.type type do
-      throwError "existing counterpart {target} has a different statement"
+    let existingType ← inferType (← mkConstWithFreshMVarLevels existing.name)
+    unless ← isDefEq existingType type do
+      existingCovers existing.name type
   else
     let mut thms : SimpTheorems := {}
     for entry in equivalences do
@@ -127,7 +158,41 @@ def mirrorDeclaration (source target : Name) (kind : AttributeKind := .global) :
     addDecl (.thmDecl { name := target, levelParams := info.levelParams, type, value })
     addDocStringCore target s!"Plain counterpart of `{source}`, derived by proved equivalences."
   registerFunProp source target kind
-  modifyEnv (mirrors.addEntry · (source, target))
+  for (_key, name, eager) in ← globalEntries Cslib.Tactic.certificateExt do
+    if name == source then
+      let plainKey ← forallTelescope type fun _ conclusion =>
+        Cslib.Tactic.efficiencyKey conclusion
+      Cslib.Tactic.certificateExt.add (plainKey, target, eager) kind
+  let env ← getEnv
+  let sourceModule := match env.getModuleIdxFor? source with
+    | some idx => env.header.moduleNames[idx]!
+    | none => env.mainModule
+  modifyEnv (mirrors.addEntry · (source, target, sourceModule))
+
+private def mirrorModules (modules : Array Name) : MetaM Unit := do
+  let env ← getEnv
+  let candidates := env.constants.toList.filterMap fun (name, info) => do
+    let isTheorem : Bool := match info with
+      | .thmInfo _ | .axiomInfo _ => true
+      | _ => false
+    unless isTheorem do none
+    let idx ← env.getModuleIdxFor? name
+    if !modules.contains env.header.moduleNames[idx]! || isPrivateName name then none
+    else if info.type.find? (fun e => equivalences.any (fun entry => e.isConstOf entry.1))
+        |>.isSome then some name else none
+  if candidates.isEmpty then
+    throwError "plain mirror source selection contains no supported statements"
+  let mut count : Nat := 0
+  for source in candidates.toArray.qsort Name.lt do
+    let saved ← saveState
+    try
+      mirrorDeclaration source (mirrorName source)
+      count := count + 1
+    catch ex =>
+      saved.restore
+      trace[Meta.Tactic.plain_mirror] "skipped {source}: {ex.toMessageData}"
+  if count == 0 then throwError "plain mirror derived no selected statements"
+  trace[Meta.Tactic.plain_mirror] "derived {count} of {candidates.length} statements"
 
 end Cslib.Tactic.PlainMirror
 
@@ -143,3 +208,21 @@ initialize registerBuiltinAttribute {
       else stx[1][0].getId
     Cslib.Tactic.PlainMirror.mirrorDeclaration source target kind
 }
+
+/-- Emit the source-to-counterpart registry as deterministic JSON for coordinated migrations. -/
+syntax (name := mirrorPairsCommand) "#mirror_pairs" : command
+
+elab_rules : command
+  | `(#mirror_pairs) => do
+    let entries ← Command.liftCoreM Cslib.Tactic.PlainMirror.mirrorPairs
+    let json := Json.arr (entries.map fun (source, target, sourceModule) => Json.mkObj [
+      ("original", toJson source.toString), ("plain", toJson target.toString),
+      ("module", toJson sourceModule.toString)])
+    logInfo json.compress
+
+/-- Derive supported counterparts from an explicit list of generic calculus source modules. -/
+syntax (name := plainMirrorSources) "plain_mirror_sources" "[" ident,* "]" : command
+
+elab_rules : command
+  | `(plain_mirror_sources [$modules:ident,*]) => Command.liftTermElabM do
+    Cslib.Tactic.PlainMirror.mirrorModules (modules.getElems.map (·.getId))
