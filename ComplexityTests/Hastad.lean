@@ -149,9 +149,8 @@ private theorem parallelGraph_unsatVal (n : ℕ) :
 /-- The theorem's positive threshold admits an actual graph no-instance with nonempty edges,
 and therefore bounds the concrete odd Long Code tables on that graph. This exercises retained
 analytic soundness; it makes no SAT reduction or hardness claim. The threshold is chosen from
-`exists_hastad_params` and restricted below one. This does not strengthen the exported
-`hastad_gapLabelCover_dichotomy` contract, which promises only positivity of its threshold and
-therefore permits an empty no-instance domain when that threshold is at least one. -/
+`hastad_gapLabelCover_dichotomy_lt_one` before the label sets. Its strict upper bound ensures
+that the no-instance domain is not empty merely because the gap thresholds overlap. -/
 theorem exists_soundness_noInstance : ∃ η : ℝ, 0 < η ∧ η < 1 ∧ ∃ n : ℕ,
     (parallelGraph n).edges ≠ [] ∧ (parallelGraph n).WellFormed ∧
     1 - ((parallelGraph n).toGraph projectionEval).unsatVal = 1 / (n + 1 : ℝ) ∧
@@ -159,11 +158,9 @@ theorem exists_soundness_noInstance : ∃ η : ℝ, 0 < η ∧ η < 1 ∧ ∃ n 
     (∀ _w : ℕ, IsOdd (longCode (0 : Fin (n + 1)))) ∧
     Hastad.hastadGraphLinearProb (parallelGraph n) (1 / 4)
       (fun _ => longCode 0) (fun _ => longCode ()) ≤ 1 / 2 + 4 * (1 / 64) := by
-  obtain ⟨k, θ, hθ, hparam⟩ := Hastad.exists_hastad_params (ε := 1 / 64) (δ := 1 / 4)
+  obtain ⟨η, hη, hη1, h⟩ := Hastad.hastad_gapLabelCover_dichotomy_lt_one
+    (ε := 1 / 64) (δ := 1 / 4)
     (by norm_num) (by norm_num) (by norm_num)
-  let η := min θ (1 / 2)
-  have hη : 0 < η := lt_min hθ (by norm_num)
-  have hη1 : η < 1 := (min_le_right _ _).trans_lt (by norm_num)
   obtain ⟨n, hn⟩ := exists_nat_one_div_lt hη
   have hval : 1 - ((parallelGraph n).toGraph projectionEval).unsatVal =
       1 / (n + 1 : ℝ) := by rw [parallelGraph_unsatVal]; ring
@@ -171,13 +168,8 @@ theorem exists_soundness_noInstance : ∃ η : ℝ, 0 < η ∧ η < 1 ∧ ∃ n 
     simp only [GapLabelCover, PromiseProblem.mem_no_gapMax]
     exact ⟨by rw [hval]; exact hn.le, hη1⟩
   have hB : ∀ w : ℕ, IsOdd (longCode (0 : Fin (n + 1))) := fun _ => isOdd_longCode _
-  have hcorr := Hastad.hastadGraphLinearCorr_le_of_unsatVal (parallelGraph n)
-    (δ := 1 / 4) (by norm_num) (by norm_num) k (ε := 1 / 64) (by norm_num)
-    (by rw [hval]; exact hn.le.trans (min_le_left _ _)) hparam hB (fun _ => longCode ())
-  have hprob := Hastad.hastadGraphLinearProb_eq_add_hastadGraphLinearCorr
-    (parallelGraph_nonempty n) (1 / 4) (fun _ => longCode 0) (fun _ => longCode ())
   exact ⟨η, hη, hη1, n, parallelGraph_nonempty n, parallelGraph_wellFormed n, hval, hno, hB,
-    by linarith⟩
+    (h (parallelGraph_nonempty n)).2 hno _ _ hB⟩
 
 /-! ### Axioms -/
 
@@ -187,6 +179,13 @@ info: 'ComplexityTests.Hastad.exists_soundness_noInstance' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms ComplexityTests.Hastad.exists_soundness_noInstance
+
+/--
+info: 'Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy_lt_one' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy_lt_one
 
 /--
 info: 'Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_false' depends on axioms:
