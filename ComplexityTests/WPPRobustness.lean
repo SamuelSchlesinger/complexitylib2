@@ -58,11 +58,6 @@ example : (fun w => ((targets w.length).map (fun z => z - gap w)).prod) ∈ GapP
       (ComputableTidilyInPolyTime.encoding_length encBits).computableInPolyTime)
     gap_mem
 
--- The deprecated `_tidy` form preserves the former input type for a client needing it.
-set_option linter.deprecated false in
-example : language ∈ LWPP encBits :=
-  mem_LWPP_of_polyTime_targets_tidy gap_mem targets_polyTime.tidy targets_nonzero accepts rejects
-
 example : [true] ∈ language ∧ [false] ∉ language := by simp [language]
 example : targets 0 = [-1, -1] := rfl
 example : targets 3 = [-1, -1, -2, -2, -2] := rfl
@@ -89,13 +84,6 @@ example : ComputableInPolyTime
     encUnary (encList encIntBin) :=
   polyTime_indexedTargets (by fun_prop) (by fun_prop)
 
--- The deprecated `_tidy` indexed target-list certificate returns the former predicate.
-set_option linter.deprecated false in
-example : ComputableTidilyInPolyTime
-    (indexedTargets (fun ni : ℕ × ℕ => -((ni.2 : ℤ) + 1)) (fun n => n + 1))
-    encUnary (encList encIntBin) :=
-  polyTime_indexedTargets_tidy (by fun_prop) (by fun_prop)
-
 -- A varying last target witnesses acceptance; the theorem receives only its existence.
 example : language ∈ LWPP encBits := by
   apply mem_LWPP_of_indexed_targets
@@ -120,18 +108,6 @@ example : language ∈ LWPP encBits := by
   · intro w hw
     have ht : w.headD false = false := Bool.eq_false_iff.mpr hw
     simp only [indexedGap, ht, Bool.false_eq_true, ite_false]
-
-/-- info: 'Cslib.Complexity.GapP.prod_sub_mem_tidy' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.GapP.prod_sub_mem_tidy
-
-/-- info: 'Cslib.Complexity.mem_WPP_iff_exists_polyTime_targets_tidy' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_WPP_iff_exists_polyTime_targets_tidy
-
-/-- info: 'Cslib.Complexity.mem_LWPP_iff_exists_polyTime_targets_tidy' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_LWPP_iff_exists_polyTime_targets_tidy
 
 /-- info: 'Cslib.Complexity.GapP.prod_sub_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

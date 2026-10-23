@@ -264,15 +264,6 @@ theorem eq_add_sum_of_step {z f : ℕ → Bool} {c : Bool} {n : ℕ} (h0 : z 0 =
     rw [hstep j (by omega), ih (by omega), Finset.sum_range_succ, ← add_assoc]
     rfl
 
-@[deprecated BitString.LinearHash.affineHash (since := "2026-10-19")]
-alias hash := BitString.LinearHash.affineHash
-
-@[deprecated BitString.LinearHash.affineHash_eq_affineHash (since := "2026-10-19")]
-alias hash_eq_affineHash := BitString.LinearHash.affineHash_eq_affineHash
-
-@[deprecated BitString.LinearHash.isPairwiseIndependentHash_affineHash (since := "2026-10-19")]
-alias isPairwiseIndependentHash_hash := BitString.LinearHash.isPairwiseIndependentHash_affineHash
-
 open BitString.LinearHash (affineHash isPairwiseIndependentHash_affineHash)
 
 /-- The variables `vars` read off an assignment of the original variables. -/
@@ -328,10 +319,6 @@ theorem eval_hashCNF_extend {vars : List ℕ} {k : ℕ} {w : List Bool} {σ : �
     rfl
 
 /-! ### Variables of the reduced formula -/
-
-@[deprecated (since := "2026-10-19")] alias mem_vars_iff := CNF.mem_vars
-
-@[deprecated (since := "2026-10-19")] alias vars_relabel := CNF.vars_relabel
 
 /-- The clauses of a step only mention its three variables. -/
 theorem mem_vars_stepClauses {bit : Bool} {next prev x u : Var}
@@ -547,9 +534,6 @@ theorem drop_ofFn {m a : ℕ} (h : a ≤ m) (r : Fin m → Bool) :
     (List.ofFn r).drop a = List.ofFn fun j : Fin (m - a) => r ⟨a + j, by omega⟩ :=
   List.ext_getElem (by simp) fun i _ _ => by simp
 
-@[deprecated BitString.card_filter_take_drop (since := "2026-10-23")]
-alias card_filter_take_drop := BitString.card_filter_take_drop
-
 /-- The coefficients only read the first `k * width + k` bits. -/
 theorem matrix_take (k width : ℕ) (w : List Bool) :
     matrix k width (w.take (k * width + k)) = matrix k width w := by
@@ -565,9 +549,6 @@ theorem offset_take (k width : ℕ) (w : List Bool) :
   simp only [offset, BitString.ofList, List.getD_eq_getElem?_getD, List.getElem?_drop,
     List.getElem?_take]
   rw [ite_eq_left (by omega)]
-
-@[deprecated BitString.ofList_ofFn_append (since := "2026-10-19")]
-alias ofList_ofFn_append := BitString.ofList_ofFn_append
 
 /-- The coefficients of a word of exactly `k * width + k` bits are its first blocks. -/
 theorem matrix_ofFn_append {k width : ℕ} (a : BitString (k * width)) (b : BitString k) :

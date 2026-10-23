@@ -63,8 +63,6 @@ coordinates. -/
 theorem le_minDist_iff : d ≤ minDist C ↔ ∀ x ∈ C, ∀ y ∈ C, x ≠ y → d ≤ hammingDist x y := by
   simp only [minDist, le_iInf_iff]
 
-@[deprecated (since := "2026-10-19")] alias le_minDist := le_minDist_iff
-
 /-- The minimum distance exceeds `r` iff distinct codewords differ on more than `r`
 coordinates. -/
 theorem natCast_lt_minDist_iff {r : ℕ} :
@@ -86,8 +84,6 @@ theorem minDist_eq_top_iff : minDist C = ⊤ ↔ C.Subsingleton := by
   refine ⟨fun h x hx y hy => ?_, fun h x hx y hy hxy => absurd (h hx hy) hxy⟩
   by_contra hxy
   exact ENat.natCast_ne_top _ (top_le_iff.1 (h x hx y hy hxy))
-
-@[deprecated (since := "2026-10-19")] alias minDist_eq_top := minDist_eq_top_iff
 
 @[simp]
 theorem minDist_empty : minDist (∅ : Set (∀ i, β i)) = ⊤ :=

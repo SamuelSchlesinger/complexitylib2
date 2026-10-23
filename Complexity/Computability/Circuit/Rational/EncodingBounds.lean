@@ -150,11 +150,6 @@ lemma normalization_bit_bound {d b : ℕ} (A B : Matrix (Fin d) (Fin d) ℤ) (hA
     rw [← Int.natCast_natAbs] at h
     exact_mod_cast h
 
-@[deprecated "use `List.length_flatMap_le`" (since := "2026-10-19")]
-lemma flatMap_length_le {α β : Type*} (l : List α) (f : α → List β) (B : ℕ)
-    (h : ∀ a ∈ l, (f a).length ≤ B) : (l.flatMap f).length ≤ l.length * B :=
-  List.length_flatMap_le h
-
 lemma tuple_length_le {n d B : ℕ} (X : Tuple n d)
     (h : ∀ a i j, (encodeRat (X a i j)).length ≤ B) :
     (encodeTuple X).length ≤ n * d * d * B := by

@@ -225,8 +225,7 @@ theorem coe_subring : (subring enc : Set (α → ℤ)) = GapP enc :=
 theorem mem_subring {g : α → ℤ} : g ∈ subring enc ↔ g ∈ GapP enc :=
   Iff.rfl
 
-/-- **`GapP` is closed under subtraction.** The unprimed name `GapP.sub_mem` is the deprecated
-alias of `GapP.natCast_sub_natCast_mem`. -/
+/-- **`GapP` is closed under subtraction.** -/
 theorem sub_mem' {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g₂ ∈ GapP enc) :
     g₁ - g₂ ∈ GapP enc :=
   (subring enc).sub_mem h₁ h₂

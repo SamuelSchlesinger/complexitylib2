@@ -57,8 +57,6 @@ an explicit exponential-time computation is not in `P`. No time-bounded classes 
 * `Cslib.Complexity.clockedDiagonal_desc`, `Cslib.Complexity.diagonal_desc`,
   `Cslib.Complexity.not_forall_halted_diagonal`: the reusable diagonal core: the negated answer on
   a padded description, and the diagonal argument itself.
-* `Turing.MultiTapeTM.Universal.universal_bounds_le`: the resources of the universal run, in the
-  sizes of its input.
 
 ## References
 
@@ -97,34 +95,6 @@ def diagonal : List Bool → Bool := clockedDiagonal (2 ^ ·)
 
 /-- The diagonal is the clocked diagonal with clock `2 ^ n`. -/
 theorem clockedDiagonal_two_pow : clockedDiagonal (2 ^ ·) = diagonal := rfl
-
-namespace Diagonal
-
-/-! ### Compatibility names for universal input coding -/
-
-@[deprecated (since := "2026-10-22")]
-alias trueDoubled := Turing.MultiTapeTM.Universal.trueDoubled
-
-@[deprecated (since := "2026-10-22")]
-alias encTrueDoubled := Turing.MultiTapeTM.Universal.encTrueDoubled
-
-@[deprecated (since := "2026-10-22")]
-alias trueDoubleT := Turing.MultiTapeTM.Universal.trueDoubleT
-
-@[deprecated (since := "2026-10-22")]
-alias symbolsT := Turing.MultiTapeTM.Universal.symbolsT
-
-@[deprecated (since := "2026-10-22")]
-alias trueDoubleT_run := Turing.MultiTapeTM.Universal.trueDoubleT_run
-
-@[deprecated (since := "2026-10-22")]
-alias symbolsT_run := Turing.MultiTapeTM.Universal.symbolsT_run
-
-@[deprecated (since := "2026-10-22")]
-alias computableTidilyInDegree_map_eBit :=
-  Turing.MultiTapeTM.Universal.computableTidilyInDegree_map_eBit
-
-end Diagonal
 
 /-- On its padded description, the clocked diagonal negates the answer of a machine that halts
 within the clock. -/
@@ -189,8 +159,6 @@ theorem diagonal_notMem_P : {x | diagonal x = true} ∉ P encBits := by
     obtain ⟨hhalt, hout⟩ := ComputesTidilyInTimeAndSpace.runFrom_initCfg (htm x)
     exact ⟨hhalt, hout.trans (by rw [encBool_apply, hfx])⟩
 
-@[deprecated (since := "2026-10-19")] alias diagonal_not_mem_P := diagonal_notMem_P
-
 /-- **No plain machine computes the diagonal in polynomial time**: the separation does not depend
 on tidy normal forms. -/
 theorem not_computableInTimeAndSpace_diagonal {t s : List Bool → ℕ}
@@ -201,10 +169,6 @@ theorem not_computableInTimeAndSpace_diagonal {t s : List Bool → ℕ}
 namespace Diagonal
 
 /-! ### The resources of the diagonal -/
-
-/-- Compatibility name for the universal simulator's polynomial resource estimate. -/
-@[deprecated (since := "2026-10-21")]
-alias universal_bounds_le := Turing.MultiTapeTM.Universal.universal_bounds_le
 
 /-- The test is within time quadratic and space linear in the encoded result. -/
 theorem computableTidilyInO_verdict :

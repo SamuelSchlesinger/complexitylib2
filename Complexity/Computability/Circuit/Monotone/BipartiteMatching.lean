@@ -95,12 +95,6 @@ vertices. On the left, `inl (inl i)` is the vertex `bᵢ` of the gadget of `i`; 
 abbrev Vertex (m e : ℕ) : Type :=
   (Fin m ⊕ Fin m) ⊕ Fin e
 
-/-- Deprecated: the vertices of the graphs of the reduction, now
-`Cslib.Circuits.BipartiteMatching.RazWigderson.Vertex`. -/
-@[deprecated Vertex (since := "2026-10-19")]
-abbrev _root_.Cslib.Circuits.BipartiteMatching.RWVertex (m e : ℕ) : Type :=
-  Vertex m e
-
 /-- Exchange `inl i` and `inr i` exactly when the bit `x i` is zero. -/
 def swapIf (x : BitString m) : Fin m ⊕ Fin m → Fin m ⊕ Fin m
   | .inl i => cond (x i) (.inl i) (.inr i)
@@ -524,72 +518,5 @@ theorem le_mul_eformulaDepth_bipartitePerfectMatching_add (n : ℕ) :
   exact le_mul_ecomplexity_bipartitePerfectMatching_add n
 
 end Monotone
-
-/-! ### Deprecated names
-
-The Raz–Wigderson reduction moved into the namespace `BipartiteMatching.RazWigderson`. -/
-
-namespace BipartiteMatching
-
-/-- Deprecated: the relabellings of the graphs of the reduction, now
-`Cslib.Circuits.BipartiteMatching.RazWigderson.Relabeling`. -/
-@[deprecated RazWigderson.Relabeling (since := "2026-10-19")]
-abbrev Relabeling (m e : ℕ) : Type :=
-  RazWigderson.Relabeling m e
-
-@[deprecated (since := "2026-10-19")] alias swapIf := RazWigderson.swapIf
-
-@[deprecated (since := "2026-10-19")] alias swapIf_involutive := RazWigderson.swapIf_involutive
-
-@[deprecated (since := "2026-10-19")] alias aliceMatching := RazWigderson.aliceMatching
-
-@[deprecated (since := "2026-10-19")]
-alias aliceMatching_inl_inl := RazWigderson.aliceMatching_inl_inl
-
-@[deprecated (since := "2026-10-19")] alias aliceGraph := RazWigderson.aliceGraph
-
-@[deprecated (since := "2026-10-19")] alias hallSet := RazWigderson.hallSet
-
-@[deprecated (since := "2026-10-19")] alias coverSet := RazWigderson.coverSet
-
-@[deprecated (since := "2026-10-19")] alias bobGraph := RazWigderson.bobGraph
-
-@[deprecated (since := "2026-10-19")] alias bobAnswer := RazWigderson.bobAnswer
-
-@[deprecated (since := "2026-10-19")]
-alias hasPerfectMatching_aliceGraph := RazWigderson.hasPerfectMatching_aliceGraph
-
-@[deprecated (since := "2026-10-19")]
-alias not_hasPerfectMatching_bobGraph := RazWigderson.not_hasPerfectMatching_bobGraph
-
-@[deprecated (since := "2026-10-19")]
-alias exists_of_aliceGraph_of_bobGraph := RazWigderson.exists_of_aliceGraph_of_bobGraph
-
-@[deprecated (since := "2026-10-19")] alias relabel := RazWigderson.relabel
-
-@[deprecated (since := "2026-10-19")] alias oneRun := RazWigderson.oneRun
-
-@[deprecated (since := "2026-10-19")] alias run_oneRun := RazWigderson.run_oneRun
-
-@[deprecated (since := "2026-10-19")] alias depth_oneRun_le := RazWigderson.depth_oneRun_le
-
-@[deprecated (since := "2026-10-19")]
-alias bipartitePerfectMatching_aliceGraph := RazWigderson.bipartitePerfectMatching_aliceGraph
-
-@[deprecated (since := "2026-10-19")]
-alias bipartitePerfectMatching_bobGraph := RazWigderson.bipartitePerfectMatching_bobGraph
-
-@[deprecated (since := "2026-10-19")]
-alias two_mul_card_filter_run_oneRun_le := RazWigderson.two_mul_card_filter_run_oneRun_le
-
-@[deprecated (since := "2026-10-19")] alias repeatedRun := RazWigderson.repeatedRun
-
-@[deprecated (since := "2026-10-19")] alias reduction := RazWigderson.reduction
-
-@[deprecated (since := "2026-10-19")] alias depth_reduction_le := RazWigderson.depth_reduction_le
-
-@[deprecated (since := "2026-10-19")] alias solves_reduction := RazWigderson.solves_reduction
-
-end BipartiteMatching
 
 end Cslib.Circuits

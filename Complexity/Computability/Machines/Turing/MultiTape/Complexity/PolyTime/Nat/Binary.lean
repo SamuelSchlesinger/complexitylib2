@@ -178,10 +178,6 @@ lemma bits_getD (n i : ℕ) : n.bits.getD i false = n.testBit i := by
   rw [Nat.testBit_eq_inth, ← List.getD_default_eq_getI]
   rfl
 
-@[deprecated (since := "2026-10-23")] alias foldr_bit_lt := Nat.foldr_bit_lt
-
-@[deprecated (since := "2026-10-23")] alias foldr_bit_testBit := Nat.foldr_bit_testBit
-
 lemma foldl_subStep (ps : List (Bool × Bool)) (c : Bool) (out : List Bool) :
     ∃ ds, (ps.foldl subStep (c, out)).2 = out ++ ds ∧ ds.length = ps.length ∧
       ds.foldr Nat.bit 0 + (ps.map Prod.snd).foldr Nat.bit 0 + c.toNat =

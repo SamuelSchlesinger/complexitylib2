@@ -149,8 +149,6 @@ theorem andOrCost_le_one (op : Op) : andOrCost op ≤ 1 := by
 theorem andOrCost_eq_one_of_ne_not {op : Op} (hop : op ≠ .not) : andOrCost op = 1 := by
   cases op <;> simp_all
 
-@[deprecated (since := "2026-10-19")] alias andOrCost_eq_one := andOrCost_eq_one_of_ne_not
-
 open Finset in
 /-- The AND/OR cost of a program is its number of conjunctions and disjunctions. -/
 theorem cost_andOrCost_eq_card {n g : ℕ} (p : Program signature n g) :

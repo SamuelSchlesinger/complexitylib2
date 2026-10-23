@@ -84,11 +84,6 @@ theorem mem_support_iid_iff (μ : PMF α) {k : ℕ} (v : Fin k → α) :
   simp only [PMF.mem_support_iff, iid_apply, Finset.prod_ne_zero_iff, Finset.mem_univ,
     forall_const]
 
-@[deprecated mem_support_iid_iff +typeChanged (since := "2026-10-19")]
-theorem mem_support_iid {μ : PMF α} {k : ℕ} {v : Fin k → α} (hv : v ∈ (iid μ k).support) :
-    ∀ i, v i ∈ μ.support :=
-  (mem_support_iid_iff μ v).1 hv
-
 /-- Applying a function to each coordinate of independent draws gives independent draws of the
 image. -/
 theorem iid_map (μ : PMF α) (g : α → β) (k : ℕ) :
@@ -164,8 +159,5 @@ theorem iid_card_ge_le {q : PMF Bool} {ε : ℝ}
         have hb : b = 1 - a := by linarith
         rw [hb]
         nlinarith
-
-@[deprecated (since := "2026-10-19")]
-alias toOuterMeasure_iid_le_card_filter_toReal_le := iid_card_ge_le
 
 end Cslib.Probability.PMF

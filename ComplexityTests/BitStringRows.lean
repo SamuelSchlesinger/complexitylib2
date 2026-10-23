@@ -5,7 +5,6 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.Data.BitString.List.Operations
-import Complexity.Crypto.Computational.Commitment
 
 /-! # Clients of the padded-row API
 
@@ -42,11 +41,5 @@ example (suffix : List Bool) : BitString.listRow 0 1 ([[], []].flatten ++ suffix
 example (word : List Bool) : BitString.listRow 0 0 word = [] := by
   rw [BitString.listRow_zero]
   rfl
-
-set_option linter.deprecated false in
-example {width : ℕ} {words : List (List Bool)}
-    (hwords : ∀ word ∈ words, word.length = width) {i : ℕ} (hi : i < words.length) :
-    BitString.listRow width i words.flatten = words.getD i [] :=
-  Crypto.listRow_flatten hwords hi
 
 end ComplexityTests.BitStringRows

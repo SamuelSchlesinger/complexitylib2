@@ -389,8 +389,6 @@ noncomputable def GlobLoc.ofIdx (m : ℕ) : GlobLoc k State :=
       ⟨(m - numSit k State * (k + 1)) % (numSit k State + 1), Nat.mod_lt _ (Nat.succ_pos _)⟩
   else .attr (.inMove 0) 0
 
-@[deprecated (since := "2026-10-21")] alias outViewOf := OutView.ofIndex
-
 /-- The global feature with a number. -/
 noncomputable def GFeat.ofIdx (m : ℕ) : GFeat State :=
   if h : m < Fintype.card (Option State) then

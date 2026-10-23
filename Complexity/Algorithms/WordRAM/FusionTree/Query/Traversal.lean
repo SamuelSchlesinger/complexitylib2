@@ -53,9 +53,6 @@ theorem Done.stopped {q : ℕ} {ans : Option ℕ} {mem : ℕ → ℕ} {y : Data 
     (hy : Done q ans mem y) : ¬(Cond.lt zero active).Holds y := by
   simp [Cond.holds_lt, hy.zero_eq, hy.active_eq]
 
-@[deprecated Lean.FusionTree.Tree.height_getElem_lt_node (since := "2026-10-23")]
-alias child_height_lt := Lean.FusionTree.Tree.height_getElem_lt_node
-
 private theorem descent_time_le {k h : ℕ} (hk : k < h) :
     201011 + (201022 * (k + 1) + 2) + 2 ≤ 201022 * (h + 1) + 2 := by
   omega

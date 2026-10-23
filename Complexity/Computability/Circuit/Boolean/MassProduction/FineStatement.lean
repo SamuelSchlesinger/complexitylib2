@@ -242,33 +242,4 @@ theorem realFineMassProduction_of_fine
   rw [← mul_div_assoc, le_div_iff₀ hnR]
   linarith
 
-/-! ### Deprecated names -/
-
-@[deprecated (since := "2026-10-20")] alias SharpMassProducesThrough := FineMassProducesThrough
-@[deprecated (since := "2026-10-20")] alias SharpMassProducesAt := FineMassProducesAt
-@[deprecated (since := "2026-10-20")] alias RealSharpMassProduction := RealFineMassProduction
-
-set_option linter.deprecated false in
-/-- Deprecated: use `FineMassProducesThrough.fineMassProducesAt`. Stated on the old name, so that
-field notation on hypotheses of the old type keeps working. -/
-@[deprecated FineMassProducesThrough.fineMassProducesAt (since := "2026-10-20")]
-theorem SharpMassProducesThrough.sharpMassProducesAt (h : SharpMassProducesThrough num den) :
-    SharpMassProducesAt num den :=
-  FineMassProducesThrough.fineMassProducesAt h
-
-set_option linter.deprecated false in
-/-- Deprecated: use `FineMassProducesThrough.massProducesAt`. Stated on the old name, so that
-field notation on hypotheses of the old type keeps working. -/
-@[deprecated FineMassProducesThrough.massProducesAt (since := "2026-10-20")]
-theorem SharpMassProducesThrough.massProducesAt (hnd : num < den)
-    (h : SharpMassProducesThrough num den) : MassProducesAt num den :=
-  FineMassProducesThrough.massProducesAt hnd h
-
-@[deprecated (since := "2026-10-20")]
-alias FineMassProducesThrough.sharpMassProducesAt := FineMassProducesThrough.fineMassProducesAt
-@[deprecated (since := "2026-10-20")]
-alias exponentialMassProduction_of_sharp := exponentialMassProduction_of_fine
-@[deprecated (since := "2026-10-20")]
-alias realSharpMassProduction_of_sharp := realFineMassProduction_of_fine
-
 end Cslib.Circuits.Boolean.MassProduction

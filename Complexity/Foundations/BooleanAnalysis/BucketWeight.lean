@@ -108,11 +108,4 @@ theorem bucketWeight_eq_expect_sample (F : (ι → Bool) → ℝ) (J S : Finset 
   conv_rhs => enter [2, x]; rw [expect_comm]
   conv_rhs => rw [expect_comm]
 
-@[deprecated bucketWeight_eq_expect_sample +typeChanged (since := "2026-10-19")]
-theorem expect_bucketWeight_sample (F : (ι → Bool) → ℝ) (J S : Finset ι) :
-    𝔼 p : (ι → Bool) × (ι → Bool) × (ι → Bool),
-      F (J.piecewise p.1 p.2.2) * chi ℝ S p.1 * (F (J.piecewise p.2.1 p.2.2) * chi ℝ S p.2.1) =
-        bucketWeight F J S :=
-  (bucketWeight_eq_expect_sample F J S).symm
-
 end Cslib.BitString

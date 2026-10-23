@@ -118,15 +118,6 @@ theorem shallow_trace_of_forall_ne_not {p : Program signature n g} (hs : 2 ≤ s
       ((p.wireDepthsWith_lines_add_le andOrCost k _).trans hk))).not
   · exact h k hop hk
 
-@[deprecated shallow_trace_of_forall_ne_not +typeChanged (since := "2026-10-19")]
-theorem shallow_trace_of_forall_andOr {n s : ℕ} {ρ : PartialAssignment (Fin n)} {g : ℕ}
-    {p : Program signature n g} (hs : 2 ≤ s) {j : ℕ}
-    (h : ∀ k, (p.lines k).op ≠ .not → p.depthsWith andOrCost k ≤ j →
-      Shallow s ρ fun x => p.eval interpretation x k)
-    (w : Wire n g) (hw : p.wireDepthsWith andOrCost w ≤ j) :
-    Shallow s ρ fun x => p.trace interpretation x w :=
-  shallow_trace_of_forall_ne_not hs h w hw
-
 /-- Every wire of AND/OR depth zero, a literal, has decision tree depth at most one under every
 restriction. -/
 theorem shallow_two_trace_of_wireDepthsWith_eq_zero {p : Program signature n g}
@@ -249,10 +240,6 @@ theorem two_pow_mul_card_filter_exists_not_shallow_le_depthWith {p : Program sig
     · rw [Nat.sub_add_cancel (by omega)]
       by_contra hdeep
       exact hb ⟨k', hk', hdeep⟩
-
-@[deprecated (since := "2026-10-19")]
-alias two_pow_mul_card_filter_exists_not_shallow_le_andOr :=
-  two_pow_mul_card_filter_exists_not_shallow_le_depthWith
 
 /-- Under a restriction leaving at least `s ≥ 2` bits free and making every gate of AND/OR depth at
 most `j` `s`-shallow, no wire of AND/OR depth at most `j + 1` computes restricted parity, up to

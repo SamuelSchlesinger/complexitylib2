@@ -265,18 +265,4 @@ theorem reachable_slotGraph_iff (hσ : ∀ a b, σ.SameCycle a b) {v w a b : V} 
 
 end Slots
 
-/-! ### Deprecated names -/
-
-@[deprecated (since := "2026-10-19")] alias ofSimpleGraph := slotGraph
-@[deprecated (since := "2026-10-19")] alias neighbor_ofSimpleGraph_inl := neighbor_slotGraph_inl
-@[deprecated (since := "2026-10-19")] alias neighbor_ofSimpleGraph_inr_false :=
-  neighbor_slotGraph_inr_false
-@[deprecated (since := "2026-10-19")] alias neighbor_ofSimpleGraph_inr_true :=
-  neighbor_slotGraph_inr_true
-@[deprecated (since := "2026-10-19")] alias card_ofSimpleGraph_label := card_slotLabel
-@[deprecated (since := "2026-10-19")] alias reachable_ofSimpleGraph_zpow := reachable_slotGraph_zpow
-@[deprecated (since := "2026-10-19")] alias reachable_fst_of_reachable_ofSimpleGraph :=
-  reachable_fst_of_reachable_slotGraph
-@[deprecated (since := "2026-10-19")] alias reachable_ofSimpleGraph_iff := reachable_slotGraph_iff
-
 end Cslib.RotationMap

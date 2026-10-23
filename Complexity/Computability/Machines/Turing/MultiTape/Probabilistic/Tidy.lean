@@ -245,12 +245,6 @@ theorem ComputesTidily.prefix {prep : MultiTapeTM k₁ Bool State₁}
 
 /-! ### Conditional branching (`branch` and `itePTM`) -/
 
-@[deprecated (since := "2026-10-22")]
-alias mapActionState := MultiTapeMachine.Action.mapState
-
-@[deprecated (since := "2026-10-22")]
-alias mapConfigState := MultiTapeMachine.Config.mapState
-
 /-- Read the cell under the head of work tape `i`, moving no head and writing nothing, then run
 `tm₁` if the cell is not blank and `tm₂` if it is. -/
 def branch (i : Fin k) (tm₁ : MultiTapePTM k Bool State₁ Operation)

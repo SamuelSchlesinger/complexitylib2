@@ -172,10 +172,6 @@ theorem acceptFrom_query_bind (P : Prover Unit) (s : P.State) (m : List Bool)
 
 /-! ### The value of a history -/
 
-@[deprecated (since := "2026-10-19")] alias shortWords := BitString.shortWords
-@[deprecated (since := "2026-10-19")] alias mem_shortWords := BitString.mem_shortWords
-@[deprecated (since := "2026-10-19")] alias nil_mem_shortWords := BitString.nil_mem_shortWords
-
 variable {R : Type} [Fintype R] (F : R → WordQueryComp Unit Bool) (L : ℕ)
 
 open Classical in

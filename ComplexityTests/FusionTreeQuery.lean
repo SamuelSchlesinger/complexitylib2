@@ -18,12 +18,6 @@ open Cslib.Algorithms.WordRAM.FusionTree.QueryProgram
 
 namespace FusionTreeQueryTests
 
--- Existing clients retain the old public theorem with its original explicit arguments.
-set_option linter.deprecated false in
-example (m : ℕ) (cs : List Tree) (i : Fin cs.length) :
-    cs[i].height < (Cslib.Algorithms.Lean.FusionTree.Tree.node m cs).height :=
-  child_height_lt m cs i
-
 private theorem small_parameters : parameterWords 16 = fun _ _ => 0 := by
   funext t
   cases t with

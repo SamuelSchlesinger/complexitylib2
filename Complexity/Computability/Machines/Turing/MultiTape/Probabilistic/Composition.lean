@@ -254,35 +254,4 @@ theorem comp_halted :
   rw [hhalt]
   rfl
 
-namespace Composition
-
-@[deprecated (since := "2026-10-20")] alias reserve :=
-  MultiTapeMachine.Composition.reserve
-
-@[deprecated (since := "2026-10-20")] alias buffer :=
-  MultiTapeMachine.Composition.buffer
-
-@[deprecated (since := "2026-10-20")] alias consumerConfig :=
-  MultiTapeMachine.Composition.consumerConfig
-
-@[deprecated (since := "2026-10-20")] alias ready :=
-  MultiTapeMachine.Composition.ready
-
-@[deprecated (since := "2026-10-20")] alias buffer_tapes :=
-  MultiTapeMachine.Composition.buffer_tapes
-
-@[deprecated (since := "2026-10-20")] alias runFrom_prepare :=
-  MultiTapeMachine.Composition.runFrom_prepare
-
-@[deprecated (since := "2026-10-20")] alias start_ready :=
-  MultiTapeMachine.Composition.start_ready
-
-@[deprecated (since := "2026-10-20")] alias finalConfig :=
-  MultiTapeMachine.Composition.finalConfig
-
-@[deprecated (since := "2026-10-20")] alias finalConfig_output :=
-  MultiTapeMachine.Composition.finalConfig_output
-
-end Composition
-
 end Turing.MultiTapePTM

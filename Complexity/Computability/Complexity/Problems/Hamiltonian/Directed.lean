@@ -105,19 +105,6 @@ theorem toDirHamPath_eq (φ : CNF ℕ) : toDirHamPath φ =
     (Diamond.graph φ.vars.length (fun _ => φ.length) φ.length (diamondDetours φ),
       Diamond.topNode 0, Diamond.topNode φ.vars.length) := rfl
 
-@[deprecated (since := "2026-10-19")] alias topNode := Diamond.topNode
-@[deprecated (since := "2026-10-19")] alias rowNode := Diamond.rowNode
-@[deprecated (since := "2026-10-19")] alias clauseNode := Diamond.clauseNode
-@[deprecated (since := "2026-10-19")] alias topNode_inj := Diamond.topNode_inj
-@[deprecated (since := "2026-10-19")] alias rowNode_inj := Diamond.rowNode_inj
-@[deprecated (since := "2026-10-19")] alias clauseNode_inj := Diamond.clauseNode_inj
-@[deprecated (since := "2026-10-19")] alias topNode_ne_rowNode := Diamond.topNode_ne_rowNode
-@[deprecated (since := "2026-10-19")] alias rowNode_ne_topNode := Diamond.rowNode_ne_topNode
-@[deprecated (since := "2026-10-19")] alias topNode_ne_clauseNode := Diamond.topNode_ne_clauseNode
-@[deprecated (since := "2026-10-19")] alias clauseNode_ne_topNode := Diamond.clauseNode_ne_topNode
-@[deprecated (since := "2026-10-19")] alias rowNode_ne_clauseNode := Diamond.rowNode_ne_clauseNode
-@[deprecated (since := "2026-10-19")] alias clauseNode_ne_rowNode := Diamond.clauseNode_ne_rowNode
-
 /-! ### Correctness -/
 
 private theorem fst_mem_vars {φ : CNF ℕ} {j : ℕ} {l : Literal ℕ} (hj : j < φ.length)

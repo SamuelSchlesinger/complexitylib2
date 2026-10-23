@@ -75,8 +75,6 @@ open Cslib.Logic.PL
 
 /-! ### Decoding formulas -/
 
-@[deprecated (since := "2026-10-19")] alias cnfDecoder := Complexity.cnfDecoder
-
 /-- The formula decoded from a word. -/
 def decodeCNF (w : List Bool) : CNF ℕ := Complexity.cnfDecoder.decode w
 
@@ -334,18 +332,6 @@ theorem hstepB_eq (T : List ℕ) : hstepB T = Hstep T := by
   ext i
   simp only [Set.mem_ofPred_eq, List.all_eq_true, List.mem_range]
   exact or_congr_right (forall₂_congr fun j hj => agreesB_iff hj)
-
-@[deprecated (since := "2026-10-22")]
-alias computableTidilyInPolyTime_decodeDesc :=
-  Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_decodeDesc
-
-@[deprecated (since := "2026-10-22")]
-alias computableTidilyInPolyTime_map_eBit :=
-  Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_map_eBit
-
-@[deprecated (since := "2026-10-22")]
-alias computableTidilyInPolyTime_eBit :=
-  Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_eBit
 
 /-- The run of an indexed machine, with the number of steps in unary, is polynomial-time. -/
 @[fun_prop]

@@ -198,7 +198,7 @@ agreement during upstream review.
 | `Foundations/Data/List/Basic` | `List.getD_idxOf`, `List.countP_and_not_add_countP_and` and register-file/unary-header helpers; consider Mathlib's `Data/List/GetD` and `Data/List/Basic`. |
 | `Foundations/Relation/RelatesWithinSteps` | `Function.iterate_trans` and bounded reachability helpers; consider Mathlib's `Logic/Function/Iterate` and `Logic/Relation`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
-| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317, with deprecated aliases retained in `Cslib.BitString`). |
+| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317). |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
 | `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
@@ -209,16 +209,17 @@ agreement during upstream review.
 | `Probability/ApproximateCounting/Relative` | Extract the natural-number root lemmas to Mathlib. |
 | `Foundations/Data/Nat/Bits` | `Nat.foldr_bit_bits` is a candidate for Mathlib's `Data/Nat/Bits`; its local relocation is complete, but upstream integration is still pending. |
 
-## Deprecation policy and grandfathered changes
+## Deprecation policy and breaking changes
 
-Since `2110aa5a` (2026-10-19), renaming, moving or removing a public declaration already on `main`
-leaves a deprecated alias or theorem at the old full name (`AGENTS.md`, Proof hygiene). The sweep
-integrated at `7738dcea` added aliases for the names that changed before the rule existed and
-restored old binder orders where they had changed. Changes that have no mechanical successor are
-grandfathered without an alias; this list records them for downstream users.
+From `2110aa5a` (2026-10-19), renaming, moving or removing a public declaration already on `main`
+left a deprecated alias or theorem at the old full name; the sweep integrated at `7738dcea` added
+aliases for the names that changed before the rule existed and restored old binder orders where
+they had changed. The library supports no downstream users yet, so #587 deleted every deprecated
+declaration, and such changes now update all clients in this repository instead (`AGENTS.md`,
+Proof hygiene). This list records earlier changes that had no mechanical successor.
 
-* **Signature changes under the old name.** `GeneralizedGeography.decide_mem_eq_any` is now an
-  alias of the more general `List.decide_mem_eq_any`; `RotationMap.le_edgeExpansion_of_spectralExpansion_le`
+* **Signature changes under the old name.** `GeneralizedGeography.decide_mem_eq_any` became the
+  more general `List.decide_mem_eq_any`; `RotationMap.le_edgeExpansion_of_spectralExpansion_le`
   takes `V` implicitly; `PolyTimeComplete` takes `{β}` before `C`; `PMF.iid_map` has the opposite
   orientation; `eval_toUnbounded_atomsOf` changed its signature.
 * **Removed or made private, without a successor of the same shape.**
@@ -262,7 +263,7 @@ grandfathered without an alias; this list records them for downstream users.
 * **Word-RAM bases with undefined values.** On 2026-10-23 `Cslib.WordRAM.Basis.interp` became
   `Option`-valued, and an operation whose value is `none` faults. The field
   `Basis.interp_mono_of_not_readsWidth` replaces `Basis.interp_eq_of_not_readsWidth`; it only keeps
-  values that fit a word, and the old name is a deprecated alias with this new signature.
+  values that fit a word.
   `Basis.Hom.preserves` is now a field of its own, an equation per word size, operation and
   arguments, rather than `Signature.Hom.Preserves`. `StandardOp.eval`, `Basis.standard_interp_bin`
   and `Basis.standard_interp_width` wrap their old values in `some`. `Op.eval_alu` now reads
@@ -271,13 +272,9 @@ grandfathered without an alias; this list records them for downstream users.
   hypothesis `B.interp w f (x.regs ∘ args) = some v`. `Basis.standard` keeps its semantics; the new
   `Basis.exact` faults on `x - y` for `y > x` and on `x / 0` and `x % 0`.
 * **Renamed modules.** On 2026-10-20 `Circuit/Boolean/MassProduction/{Sharp,SharpParameters,
-  SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`. Every declaration keeps a
-  deprecated alias, but imports of the old module paths must be updated: a module stub would have
-  no upstream counterpart, so none is kept.
-* **Side effects of keeping aliases.** An alias that shares its base name with its successor makes
-  the unqualified name ambiguous when both namespaces are open (for example `restrictTable`,
-  `Ladner.cnfDecoder`); qualify the new name. A `def` alias does not unfold to the old body under
-  `unfold` or `simp [old]`.
+  SharpStatement}` became `…/{Fine,FineParameters,FineStatement}`, with their `Sharp` declarations
+  renamed to `Fine`. Imports of the old module paths must be updated: a module stub would have no
+  upstream counterpart, so none is kept.
 * **Withdrawn results of 2026-10-22 (#372).** On 2026-10-22 the maintainer withdrew results merged
   that morning without adequate correctness review, deleting them without aliases. An alias would
   keep exactly the names being withdrawn, and none of them had been submitted to cslib or used
@@ -311,8 +308,7 @@ grandfathered without an alias; this list records them for downstream users.
     its five lemmas, `hastadLinearProb_le_of_hastadLinearCorr_le` and the same-day alias
     `Cslib.PCP.Hastad.fourierCoeff_sq_signVal_le_one`. The kept long-code, folding and projection
     lemmas moved to `Cslib.BitString` in `Foundations/BooleanAnalysis/LongCode` (`IsFolded`
-    became `IsOdd`; deprecated aliases remain, but dot notation on an `IsFolded` hypothesis must
-    switch to `IsOdd`), and `Hastad/ExactThreeDistinct` merged into
+    became `IsOdd`), and `Hastad/ExactThreeDistinct` merged into
     `PCP/Approximation/MaxExactThreeSAT`, keeping its declaration names; imports of the deleted
     module path must be updated. `hastad_gapLabelCover_dichotomy` now chooses `η` before the label
     sets, keeping its name.

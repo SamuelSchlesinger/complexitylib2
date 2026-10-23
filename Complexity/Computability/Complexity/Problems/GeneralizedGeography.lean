@@ -115,12 +115,6 @@ theorem geographyWins_congr {G : Graph} {vis vis' : List ℕ} (h : ∀ u, u ∈ 
 
 end Graph
 
-namespace GeneralizedGeography
-
-@[deprecated (since := "2026-10-19")] alias decide_mem_eq_any := List.decide_mem_eq_any
-
-end GeneralizedGeography
-
 /-- **Generalized Geography**, vertex version [Sipser, Section 8.3][Sipser2013]
 [LichtensteinSipser1980]: the graphs with a start vertex on which the first player wins, moving
 first with the token on the start vertex, when no vertex may be visited twice. -/

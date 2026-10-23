@@ -50,9 +50,6 @@ namespace Cslib.Kolmogorov
 
 /-! ### Counting binary strings -/
 
-@[deprecated (since := "2026-10-22")]
-alias encard_setOf_length_eq := BitString.encard_setOf_length_eq
-
 /-- There are `2 ^ n - 1` binary strings of length below `n`. -/
 theorem encard_setOf_length_lt_add_one (n : ℕ) :
     {p : List Bool | p.length < n}.encard + 1 = 2 ^ n := by

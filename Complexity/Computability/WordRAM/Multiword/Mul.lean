@@ -781,35 +781,6 @@ theorem six_word_product {w a b : ℕ} (hw : 2 ≤ w)
     (value_input_right _ _ _ _ _).trans hvalbs
   exact ⟨x, y, hx, he.bounded hx, he, hxa, hxb, hyb, by rwa [hxa, hxb] at hyval⟩
 
-/-- Deprecated compatibility spelling for the shared register-digit value. -/
-@[deprecated Cslib.WordRAM.Multiword.value +typeChanged (since := "2026-10-23")]
-abbrev value (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : ℕ :=
-  Multiword.value β x ds
-
-/-- Deprecated compatibility spelling for shared digit boundedness. -/
-@[deprecated Cslib.WordRAM.Multiword.Bounded +typeChanged (since := "2026-10-23")]
-abbrev Bounded (β : ℕ) (x : Data (r + 4)) (ds : List (Fin (r + 4))) : Prop :=
-  Multiword.Bounded β x ds
-
-@[deprecated Workspace.total (since := "2026-10-23")] alias total := Workspace.total
-
-@[deprecated Workspace.carry (since := "2026-10-23")] alias carry := Workspace.carry
-
-@[deprecated Workspace.base (since := "2026-10-23")] alias base := Workspace.base
-
-@[deprecated Workspace.zero (since := "2026-10-23")] alias zero := Workspace.zero
-
-@[deprecated Workspace.IsDigit (since := "2026-10-23")] alias IsDigit := Workspace.IsDigit
-
-@[deprecated Workspace.Frame (since := "2026-10-23")] alias Frame := Workspace.Frame
-
-@[deprecated Workspace.setup (since := "2026-10-23")] alias setup := Workspace.setup
-
-@[deprecated Workspace.setupResult (since := "2026-10-23")]
-alias setupResult := Workspace.setupResult
-
-@[deprecated Workspace.exec_setup (since := "2026-10-23")] alias exec_setup := Workspace.exec_setup
-
 end Cslib.WordRAM.Multiword.Schoolbook
 
 end

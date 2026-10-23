@@ -583,8 +583,6 @@ theorem naorCommitSplit_append (generator : List Bool → List Bool) (r : List B
           simp only [List.length_cons, Nat.add_right_cancel_iff] at hflags hseeds hpads
           simp [naorCommitSplit, ih hflags hseeds hpads]
 
-@[deprecated (since := "2026-10-23")] alias listRow_flatten := BitString.listRow_flatten
-
 /-- Select seeds of width `s` at opened coordinates and pad unopened coordinates with `s` false
 bits. -/
 def naorSelectSeeds (s : ℕ) : List Bool → List Bool → List (List Bool) → List (List Bool)

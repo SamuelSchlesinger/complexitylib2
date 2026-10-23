@@ -63,11 +63,6 @@ example : RazWigderson.aliceGraph (e := 0) (![false, true, true] : BitString 3)
           false := by
   decide
 
--- The deprecated names of the vertex and relabelling types still carry their instances.
-set_option linter.deprecated false in
-example : Fintype (RWVertex 2 3) × DecidableEq (RWVertex 2 3) × Fintype (Relabeling 2 3) :=
-  ⟨inferInstance, inferInstance, inferInstance⟩
-
 /-! ### Lower bounds -/
 
 example : PublicCoin.ecomplexityFun (1 / 2 ^ 1) (disjointness : BitString 1 → BitString 1 → Bool) ≤

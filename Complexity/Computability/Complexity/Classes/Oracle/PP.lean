@@ -148,9 +148,6 @@ theorem exists_mem_PP_mem_PWithOracle_image (hL : L ∈ PWithPPOracle enc) :
   exact ⟨β, encβ, B, hB, _, ⟨program, hprogram, fun _ => rfl⟩,
     h _ fun _ => encβ.injective.mem_set_image⟩
 
-@[deprecated (since := "2026-10-19")]
-alias mem_PWithOracle_image := exists_mem_PP_mem_PWithOracle_image
-
 /-! ### Comparing with a `#P` value -/
 
 /-- **Comparing with a `#P` value is in `PP`**: for `f ∈ #P`, the pairs `(a, k)` with `k ≤ f a`,

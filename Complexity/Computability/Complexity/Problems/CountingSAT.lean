@@ -123,8 +123,6 @@ def SharpSATAtLeast : Set (CNF ℕ × ℕ) := {x | x.2 ≤ SharpSAT x.1}
 encoded with `m` in binary (`encPair encCNF encNat`). -/
 def SharpSATExact : Set (CNF ℕ × ℕ) := {x | SharpSAT x.1 = x.2}
 
-@[deprecated (since := "2026-10-19")] alias mem_USAT_iff := SharpSAT.mem_USAT_iff
-
 /-- Modulo two, a nonzero residue is oddness. -/
 theorem ModSAT_two : ModSAT 2 = ParitySAT := by
   ext φ

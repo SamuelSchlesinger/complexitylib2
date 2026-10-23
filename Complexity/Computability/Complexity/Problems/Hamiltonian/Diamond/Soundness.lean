@@ -389,8 +389,6 @@ theorem satisfiable_of_mem_DirHamPath (hD : WellFormed N slots M D)
   refine ⟨d, hd, hdj, ?_⟩
   cases hb : d.2.2.2 <;> simp_all
 
-@[deprecated (since := "2026-10-19")] alias satisfiable_of_mem := satisfiable_of_mem_DirHamPath
-
 end PathToDirections
 
 end Cslib.Complexity.Diamond

@@ -219,14 +219,10 @@ theorem natCast_sub_natCast_mem {f₁ f₂ : α → ℕ} (hf₁ : f₁ ∈ Sharp
     (hf₂ : f₂ ∈ SharpP enc) : (fun a => (f₁ a : ℤ) - f₂ a) ∈ GapP enc :=
   ⟨f₁, hf₁, f₂, hf₂, fun _ => rfl⟩
 
-@[deprecated (since := "2026-10-19")] alias sub_mem := natCast_sub_natCast_mem
-
 /-- `GapP` is closed under negation: exchange the two functions in `#P`. -/
 theorem neg_mem {g : α → ℤ} (hg : g ∈ GapP enc) : -g ∈ GapP enc :=
   let ⟨f₁, hf₁, f₂, hf₂, h⟩ := hg
   ⟨f₂, hf₂, f₁, hf₁, fun a => by rw [Pi.neg_apply, h a, neg_sub]⟩
-
-@[deprecated (since := "2026-10-19")] alias neg := neg_mem
 
 end GapP
 
