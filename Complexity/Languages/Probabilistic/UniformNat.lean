@@ -62,12 +62,18 @@ theorem eval_sampleDyadicIndex (bound : ℕ) :
 indices. This exposes the finite average used by random-coordinate reductions. -/
 theorem eval_bind_sampleDyadicIndex_guard {α β : Type} (source : ProbComp α) (bound : ℕ)
     (test : ℕ → α → ProbComp β) (fallback : β) :
-    ProbComp.eval (source >>= fun value => do
+    ProbComp.eval (do
+      let value ← source
       let index ← sampleDyadicIndex bound
       if index < bound then test index value else pure fallback) =
-      (PMF.uniformOfFintype (Fin (dyadicSize bound))).bind (fun i =>
-        if i.val < bound then ProbComp.eval (source >>= test i.val) else PMF.pure fallback) := by
-  simp only [ProbComp.eval_bind, eval_sampleDyadicIndex, PMF.bind_map, Function.comp_def]
+      (do
+        let i ← PMF.uniformOfFintype (Fin (dyadicSize bound))
+        if i.val < bound then ProbComp.eval (do
+          let value ← source
+          test i.val value)
+        else PMF.pure fallback) := by
+  simp only [ProbComp.eval_bind, eval_sampleDyadicIndex]
+  simp only [PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
   rw [PMF.bind_comm]
   congr 1
   funext i

@@ -97,7 +97,8 @@ example : ¬ProbOracleComp.HasQueryBounds duplicatedRequests (fun _ => 1) 1 1 :=
 
 -- Private sampling remains fresh while an external query is answered consistently.
 example :
-    (PMF.uniformOfFintype (Bool → Bool)).bind (fun table =>
+    (do
+      let table ← PMF.uniformOfFintype (Bool → Bool)
       OracleComp.interpret
         (ProbOracleComp.handler ProbComp.unifOracle (fun q => PMF.pure (table q))) randomized) =
       ((OracleComp.interpret
@@ -111,7 +112,8 @@ example :
     ProbComp.eval (Prod.fst <$> (OracleComp.interpret
       (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n))
         (memoize (fun _ : Bool => ProbComp.uniform Bool))) randomized).run []) =
-      (PMF.pi (fun _ : Bool => PMF.uniformOfFintype Bool)).bind (fun table =>
+      (do
+        let table ← PMF.pi (fun _ : Bool => PMF.uniformOfFintype Bool)
         OracleComp.interpret
           (ProbOracleComp.handler ProbComp.unifOracle (fun q => PMF.pure (table q)))
             randomized) := by

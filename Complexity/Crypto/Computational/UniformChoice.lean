@@ -86,10 +86,11 @@ theorem isPPTOn_test {α : Type} {input : α ↪ List Bool}
 theorem eval_bind_test (bound : ℕ) (real ideal source : ProbComp (List Bool))
     (adversary : ℕ → List Bool → ProbComp Bool) :
     ProbComp.eval (source >>= test bound real ideal adversary) =
-      (PMF.uniformOfFintype (Fin (dyadicSize bound))).bind (fun index =>
+      (do
+        let index ← PMF.uniformOfFintype (Fin (dyadicSize bound))
         ProbComp.eval (calibratedTest (real >>= adversary index.val)
           (ideal >>= adversary index.val) (source >>= adversary index.val))) := by
-  simp only [test, ProbComp.eval_bind, eval_sampleDyadicIndex, PMF.bind_map,
+  simp only [test, ProbComp.eval_bind, eval_sampleDyadicIndex, PMF.monad_bind_eq_bind, PMF.bind_map,
     Function.comp_def]
   rw [PMF.bind_comm]
   congr 1
@@ -108,9 +109,9 @@ theorem advantage_eq (bound : ℕ) (real ideal : ProbComp (List Bool))
   have hgap := fun index : Fin (dyadicSize bound) =>
     calibratedTest_gap (real >>= adversary index.val) (ideal >>= adversary index.val)
   apply NNReal.eq
-  rw [Game.coe_advantage, eval_bind_test, eval_bind_test,
-    Game.succProbability_uniform, Game.succProbability_uniform]
-  simp only [NNReal.coe_div, NNReal.coe_sum, NNReal.coe_pow, NNReal.coe_natCast,
+  rw [Game.coe_advantage, eval_bind_test, eval_bind_test]
+  simp only [PMF.monad_bind_eq_bind, Game.succProbability_uniform,
+    NNReal.coe_div, NNReal.coe_sum, NNReal.coe_pow, NNReal.coe_natCast,
     Fintype.card_fin, ← sub_div, ← Finset.sum_sub_distrib, hgap]
   exact abs_of_nonneg (div_nonneg (Finset.sum_nonneg (fun _ _ => sq_nonneg _))
     (Nat.cast_nonneg _))
@@ -153,7 +154,8 @@ theorem ComputationallyIndistinguishable.uniform_bound
   have hnegligible : Negligible (fun n =>
       Game.advantage (ProbComp.eval (real n >>= reduction n))
         (ProbComp.eval (ideal n >>= reduction n))) := by
-    simpa only [distinguishingGame, ProbComp.eval_bind] using hsecure reduction hreduce
+    simpa only [distinguishingGame, PMF.monad_bind_eq_bind,
+      ProbComp.eval_bind] using hsecure reduction hreduce
   have hscaled := hnegligible.polynomiallyBounded_mul
     (dyadicSize_polynomiallyBounded.comp hbound.polynomiallyBounded)
   refine ⟨_, hscaled.sqrt, fun n index hindex => ?_⟩

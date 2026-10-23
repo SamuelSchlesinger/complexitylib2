@@ -79,8 +79,9 @@ def finish (finite : Storage k State) : Option (List Bool) :=
 /-- Replay all canonical occurrence indices using finite storage. -/
 def output (machine : MultiTapeCTM k Bool State) : Storage k State → List ℕ → Option (List Bool)
   | finite, [] => finish finite
-  | finite, index :: rest =>
-      (indexStep machine finite index).bind (fun next => output machine next rest)
+  | finite, index :: rest => do
+      let next ← indexStep machine finite index
+      output machine next rest
 
 /-- Finite local views give the same ordered occurrences as a represented native configuration. -/
 theorem localActions_eq_actions (machine : MultiTapeCTM k Bool State)
@@ -104,7 +105,7 @@ theorem output_eq_decodeCertificate (machine : MultiTapeCTM k Bool State)
     cases hs : finite.tapes.state with
     | none =>
       have hhalt : cfg.Halted := h.state.symm.trans hs
-      simp only [output, indexStep, hs]
+      simp only [output, bind, indexStep, hs]
       by_cases hz : index = 0
       · subst index
         rw [ite_eq_left rfl, Option.bind_some, ih h,
@@ -117,7 +118,7 @@ theorem output_eq_decodeCertificate (machine : MultiTapeCTM k Bool State)
       cases hi : (machine.actions cfg)[index]? with
       | none => rfl
       | some action =>
-        simp only [Option.map_some, Option.bind_some, Option.map_map, Function.comp_def]
+        simp only [bind, Option.map_some, Option.bind_some, Option.map_map, Function.comp_def]
         exact ih (finite := finite.step action Empty.elim Empty.elim) (h.step action)
 
 /-- The actual finite-storage transition checker is certified, including arbitrary invalid
@@ -190,7 +191,8 @@ abbrev Runtime (k : ℕ) (State : Type) := List Bool × Option (Storage k State)
 for a full block it equals ordinary binary decoding. -/
 def binaryStep (machine : MultiTapeCTM k Bool State) (width : ℕ)
     (runtime : Runtime k State) : Runtime k State :=
-  (runtime.1.drop width, runtime.2.bind fun finite =>
+  (runtime.1.drop width, do
+    let finite ← runtime.2
     indexStep machine finite (BitString.boundedBinaryValue (2 ^ width) (runtime.1.take width)))
 
 /-- Execute one binary certificate block using the certified parser and finite replay step. -/
@@ -288,7 +290,10 @@ theorem computableTidilyInPolyTime_finish [Finite State] :
 
 /-- A leftover partial block or an invalid/nonhalting replay has no output certificate. -/
 def finishRuntime (runtime : Runtime k State) : Option (List Bool) :=
-  if runtime.1 = [] then runtime.2.bind finish else none
+  if runtime.1 = [] then do
+    let finite ← runtime.2
+    finish finite
+  else none
 
 /-- On full-width certificates the actual loop is exactly the canonical index replay. Failure
 remains absorbing, so the equality also covers invalid occurrence indices and padding. -/
@@ -322,7 +327,7 @@ theorem finishRuntime_iterate_binaryStep (machine : MultiTapeCTM k Bool State)
       (word.drop width, current.bind fun finite =>
         indexStep machine finite (BitString.boundedBinaryValue (2 ^ width) (word.take width)))) = _
     rw [ih hdrop]
-    simp only [binaryIndices, hrows, List.map_cons, hvalue, output, Option.bind_assoc]
+    simp only [binaryIndices, hrows, List.map_cons, hvalue, output, bind, Option.bind_assoc]
 
 /-- The compiled loop returns exactly the output of the canonical native decoder. The positive
 block width converts the supplied binary length into the declared number of machine steps. -/

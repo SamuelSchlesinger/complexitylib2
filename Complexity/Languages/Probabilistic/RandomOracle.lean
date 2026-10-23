@@ -240,9 +240,11 @@ theorem complete_update [DecidableEq Query] (distribution : (q : Query) → PMF 
 completing first and reading the table. -/
 theorem answer_complete [DecidableEq Query] (distribution : (q : Query) → PMF (Response q))
     (cache : Cache Response) (q : Query) :
-    (answer distribution q cache).bind (fun (value, cache') =>
+    (do
+      let (value, cache') ← answer distribution q cache
       (complete distribution cache').map (value, ·)) =
         (complete distribution cache).map (fun table => (table q, table)) := by
+  simp only [PMF.monad_bind_eq_bind]
   cases h : cache q with
   | none =>
     simp only [answer, h, PMF.bind_map, Function.comp_def, complete_update]
@@ -259,15 +261,18 @@ every initial cache. Later continuations can inspect both the result and that ta
 theorem run_interpret_answer_complete [DecidableEq Query]
     (distribution : (q : Query) → PMF (Response q))
     (program : OracleComp Response α) (cache : Cache Response) :
-    ((OracleComp.interpret (answer distribution) program).run cache).bind (fun (result, cache') =>
+    (do
+      let (result, cache') ← (OracleComp.interpret (answer distribution) program).run cache
       (complete distribution cache').map (result, ·)) =
-        (complete distribution cache).bind (fun table =>
+        (do
+          let table ← complete distribution cache
           (OracleComp.interpret (fun q => PMF.pure (table q)) program).map (·, table)) := by
+  simp only [PMF.monad_bind_eq_bind]
   have h := OracleComp.run_interpret_simulation (answer distribution)
     (fun q table => (·, table) <$> PMF.pure (table q)) (complete distribution)
     (fun q cache => by
-      simpa only [PMF.monad_map_eq_map, PMF.pure_map, PMF.map, Function.comp_def,
-        PMF.pure_bind] using
+      simpa only [PMF.monad_bind_eq_bind, PMF.monad_map_eq_map, PMF.pure_map, PMF.map,
+        Function.comp_def, PMF.pure_bind] using
         answer_complete distribution cache q) program cache
   refine h.trans (congrArg ((complete distribution cache).bind) (funext fun table => ?_))
   simpa only [PMF.monad_map_eq_map] using OracleComp.run_interpret_readOnly
@@ -277,19 +282,22 @@ theorem run_interpret_answer_complete [DecidableEq Query]
 in advance, even for adaptive programs with repeated queries. -/
 theorem interpret_eq_lazy [DecidableEq Query] (distribution : (q : Query) → PMF (Response q))
     (program : OracleComp Response α) :
-    (PMF.pi distribution).bind (fun table =>
+    (do
+      let table ← PMF.pi distribution
       OracleComp.interpret (fun q => PMF.pure (table q)) program) =
         ((OracleComp.interpret (answer distribution) program).run (fun _ => none)).map
           Prod.fst := by
   have h := congrArg (PMF.map Prod.fst)
     (run_interpret_answer_complete distribution program (fun _ => none))
-  simpa only [complete_empty, PMF.map_bind, PMF.map_comp, PMF.map, Function.comp_def,
+  simpa only [PMF.monad_bind_eq_bind, complete_empty, PMF.map_bind, PMF.map_comp, PMF.map,
+    Function.comp_def,
     PMF.bind_const, PMF.bind_pure, PMF.bind_bind, PMF.pure_bind] using h.symm
 
 /-- A uniformly sampled function can be replaced by a consistent lazy uniform oracle. -/
 theorem uniform_interpret_eq_lazy [DecidableEq Query] [∀ q, Fintype (Response q)]
     [∀ q, Nonempty (Response q)] (program : OracleComp Response α) :
-    (PMF.uniformOfFintype ((q : Query) → Response q)).bind (fun table =>
+    (do
+      let table ← PMF.uniformOfFintype ((q : Query) → Response q)
       OracleComp.interpret (fun q => PMF.pure (table q)) program) =
         ((OracleComp.interpret (answer (fun q => PMF.uniformOfFintype (Response q)))
           program).run (fun _ => none)).map Prod.fst := by
@@ -306,7 +314,8 @@ variable {Value : Type u} [Fintype Query] [Finite Value]
 /-- An ordinary list-based cache implements eager independent function sampling. -/
 theorem interpret_eq_memoize (distribution : Query → PMF Value)
     (program : OracleComp (fun _ : Query => Value) α) :
-    (PMF.pi distribution).bind (fun table =>
+    (do
+      let table ← PMF.pi distribution
       OracleComp.interpret (fun q => PMF.pure (table q)) program) =
         ((OracleComp.interpret (memoize distribution) program).run []).map Prod.fst := by
   classical
@@ -321,7 +330,8 @@ theorem interpret_eq_memoize_map {Key' Value' : Type u} [BEq Key'] [LawfulBEq Ke
     (distribution : Query → PMF Value) (sample' : Key' → PMF Value')
     (hsample : ∀ key, sample' (keyMap key) = (distribution key).map valueMap)
     (program : OracleComp (fun _ : Query => Value') α) :
-    (PMF.pi distribution).bind (fun table =>
+    (do
+      let table ← PMF.pi distribution
       OracleComp.interpret (fun key => PMF.pure (valueMap (table key))) program) =
       ((OracleComp.interpret (fun key => memoize sample' (keyMap key)) program).run []).map
         Prod.fst := by
@@ -362,7 +372,8 @@ theorem eval_run_interpret_memoize [DecidableEq Key] (sample : Key → ProbComp 
 theorem eval_run_interpret_memoize_eq_eager [Fintype Key] [Finite Value]
     (sample : Key → ProbComp Value) (program : OracleComp (fun _ : Key => Value) Result) :
     ProbComp.eval (Prod.fst <$> (OracleComp.interpret (memoize sample) program).run []) =
-      (PMF.pi (fun q => ProbComp.eval (sample q))).bind (fun table =>
+      (do
+        let table ← PMF.pi (fun q => ProbComp.eval (sample q))
         OracleComp.interpret (fun q => PMF.pure (table q)) program) := by
   classical
   rw [interpret_eq_lazy]

@@ -123,13 +123,14 @@ theorem generate_distribution (count seedBits bound observationBits labelBits re
     (evaluate : List Bool → List Bool × Bool) :
     (uniformList (seedLength count seedBits bound observationBits labelBits remainingBits)).map
         (generate count seedBits bound observationBits labelBits remainingBits evaluate) =
-      (uniformList (count * seedBits)).bind (fun coins =>
-        (uniformList (remainingBits * (count * seedBits))).bind (fun lastKey =>
-          (uniformList (labelBits * count)).bind (fun middleKey =>
-            (uniformList (observationBits * (count * (2 * bound + 1)))).map (fun firstKey =>
-              hashSamples count seedBits bound observationBits labelBits remainingBits
-                ((listRows count seedBits coins).map (fun seed => (evaluate seed, seed)))
-                firstKey middleKey lastKey)))) := by
+      (do
+        let coins ← uniformList (count * seedBits)
+        let lastKey ← uniformList (remainingBits * (count * seedBits))
+        let middleKey ← uniformList (labelBits * count)
+        (uniformList (observationBits * (count * (2 * bound + 1)))).map fun firstKey =>
+          hashSamples count seedBits bound observationBits labelBits remainingBits
+            ((listRows count seedBits coins).map (fun seed => (evaluate seed, seed)))
+            firstKey middleKey lastKey) := by
   unfold seedLength
   let run (coins lastKey middleKey firstKey : List Bool) :=
     hashSamples count seedBits bound observationBits labelBits remainingBits
@@ -166,11 +167,12 @@ theorem eval_hashSamples (count seedBits bound observationBits labelBits remaini
       let middle ← extractWordLabels count labelBits third.1
       let front ← finish bound observationBits middle
       return front ++ (third.2.1 ++ third.2.2)) =
-      (uniformList (remainingBits * (count * seedBits))).bind (fun lastKey =>
-        (uniformList (labelBits * count)).bind (fun middleKey =>
-          (uniformList (observationBits * (count * (2 * bound + 1)))).map (fun firstKey =>
-            hashSamples count seedBits bound observationBits labelBits remainingBits samples
-              firstKey middleKey lastKey))) := by
+      (do
+        let lastKey ← uniformList (remainingBits * (count * seedBits))
+        let middleKey ← uniformList (labelBits * count)
+        (uniformList (observationBits * (count * (2 * bound + 1)))).map fun firstKey =>
+          hashSamples count seedBits bound observationBits labelBits remainingBits samples
+            firstKey middleKey lastKey) := by
   have hfits : ∀ observation ∈ samples.map (fun sample => sample.1.1),
       observation.length ≤ bound := by
     intro observation hobservation
@@ -182,6 +184,7 @@ theorem eval_hashSamples (count seedBits bound observationBits labelBits remaini
     extractLabels, finish, extractWordObservations, LinearHash.extract,
     ProbComp.eval_pure, BitString.eval_sampleList, hashSamples, List.map_map, Function.comp_def,
     hlength, PMF.pure_bind, PMF.map, PMF.bind_bind, id_eq]
+  rfl
 
 /-- A uniform seed of exactly `seedLength` bits realizes the complete sampled extractor.
 The only size premise is the observation bound on correctly sized sampler seeds. -/

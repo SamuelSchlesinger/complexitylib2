@@ -85,9 +85,10 @@ theorem HasGap.indexed_extracted_advantage_negligible {pair : SamplablePair} {ga
           (-(count n * ((numerator n (choose n) : ℝ) / dyadicSize (densityBound n)) -
             slack n)))) / 2))) :
     Negligible (fun n => Game.advantage
-      (ProbComp.eval (OracleComp.replicate (count n) (pair.sample n) >>=
-        fun samples => extractLabels (seed n (choose n)) (hash n (choose n)) samples >>=
-          test n (choose n)))
+      (ProbComp.eval (do
+        let samples ← OracleComp.replicate (count n) (pair.sample n)
+        let result ← extractLabels (seed n (choose n)) (hash n (choose n)) samples
+        test n (choose n) result))
       ((extractLabelsIdeal ((fun value => pair.encode n value.1) <$>
         pair.latentSample n) (count n) (seed n (choose n))).bind
           (fun output => ProbComp.eval (test n (choose n) output)))) := by
@@ -96,7 +97,9 @@ theorem HasGap.indexed_extracted_advantage_negligible {pair : SamplablePair} {ga
     2 * Real.exp (-2 * slack n ^ 2 / (count n * (realization.length n + n + 2 : ℕ) ^ 2)) +
       Real.sqrt (Fintype.card (Output n (choose n)) * (2 * (2 : ℝ) ^
         (-(count n * ((numerator n (choose n) : ℝ) / dyadicSize (densityBound n)) - slack n)))) / 2
-  let reduced := fun n i samples => extractLabels (seed n i) (hash n i) samples >>= test n i
+  let reduced := fun n i samples => do
+    let result ← extractLabels (seed n i) (hash n i) samples
+    test n i result
   apply negligible_iff_coe.mpr
   apply (Asymptotics.superpolynomialDecay_iff_abs_isBoundedUnder _
     tendsto_natCast_atTop_atTop).mpr
@@ -193,10 +196,11 @@ theorem HasGap.extract_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ}
         ExtractionSchedule.count n (realization.length n) (inverseSlack n) *
           ((numerator n (choose n) : ℝ) / dyadicSize (densityBound n))) :
     Negligible (fun n => Game.advantage
-      (ProbComp.eval (OracleComp.replicate
-        (ExtractionSchedule.count n (realization.length n) (inverseSlack n)) (pair.sample n) >>=
-          fun samples => extractLabels (seed n (choose n)) (hash n (choose n)) samples >>=
-            test n (choose n)))
+      (ProbComp.eval (do
+        let samples ← OracleComp.replicate
+          (ExtractionSchedule.count n (realization.length n) (inverseSlack n)) (pair.sample n)
+        let result ← extractLabels (seed n (choose n)) (hash n (choose n)) samples
+        test n (choose n) result))
       ((extractLabelsIdeal ((fun value => pair.encode n value.1) <$>
         pair.latentSample n)
           (ExtractionSchedule.count n (realization.length n) (inverseSlack n))

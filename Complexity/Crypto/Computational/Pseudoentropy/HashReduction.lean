@@ -61,21 +61,21 @@ abbrev MatrixPredictor (n count : ℕ) (Image : Type*) :=
 
 /-- The prediction game for the hashed parity construction, with uniform matrices. -/
 noncomputable def matrixPrediction {n count : ℕ} [NeZero count] {Image : Type*}
-    (f : BitString n → Image) (predictor : MatrixPredictor n count Image) : PMF Bool :=
-  (PMF.uniformOfFintype (BitString n)).bind fun x =>
-    (PMF.uniformOfFintype (Fin count)).bind fun i =>
-      (PMF.uniformOfFintype (Fin count → BitString n)).bind fun rows =>
-        (PMF.uniformOfFintype (BitString n)).map fun query =>
-          predictor (f x) i rows
-            (LinearHash.hash (rows ∘ Fin.castLE (Nat.succ_le_of_lt i.isLt)) x) query == x ⬝ᵥ query
+    (f : BitString n → Image) (predictor : MatrixPredictor n count Image) : PMF Bool := do
+  let x ← PMF.uniformOfFintype (BitString n)
+  let i ← PMF.uniformOfFintype (Fin count)
+  let rows ← PMF.uniformOfFintype (Fin count → BitString n)
+  (PMF.uniformOfFintype (BitString n)).map fun query =>
+    predictor (f x) i rows
+      (LinearHash.hash (rows ∘ Fin.castLE (Nat.succ_le_of_lt i.isLt)) x) query == x ⬝ᵥ query
 
 /-- The inverter guesses a length, matrix, and digest, then invokes the common decoder. -/
 noncomputable def matrixInverter {n count : ℕ} [NeZero count] {Image : Type*}
     [DecidableEq Image] (f : BitString n → Image) (predictor : MatrixPredictor n count Image)
-    (precision : ℕ) (image : Image) : PMF (BitString n) :=
-  (PMF.uniformOfFintype (Fin count)).bind fun i =>
-    guessInverter f (predictor image i) (PMF.uniformOfFintype (Fin count → BitString n))
-      precision image
+    (precision : ℕ) (image : Image) : PMF (BitString n) := do
+  let i ← PMF.uniformOfFintype (Fin count)
+  guessInverter f (predictor image i) (PMF.uniformOfFintype (Fin count → BitString n))
+    precision image
 
 private theorem uniform_length_tail (count cutoff : ℕ) [NeZero count] (hcutoff : cutoff ≤ count) :
     (∑ i : Fin count, (PMF.uniformOfFintype (Fin count) i).toReal *
@@ -295,7 +295,7 @@ theorem matrix_fiber_mean_correlation_le {n count : ℕ} [NeZero count] {Image :
         sum_toReal, one_mul, mul_left_comm _ (128 * (dyadicSize (16 * count) : ℝ) ^ 2),
         ← Finset.mul_sum, uniform_length_tail count cutoff hcutoff,
         cutoff, Nat.cast_add, Nat.cast_ofNat,
-        matrixInverter, PMF.map_bind, bind_apply_toReal, success]
+        matrixInverter, monad_bind_eq_bind, PMF.map_bind, bind_apply_toReal, success]
 
 /-- The complete finite reduction bound, averaged over images as well as hash lengths.
 All fibers share one inverter and one precision; no regularity or injectivity is required. -/
@@ -362,13 +362,13 @@ theorem matrixPrediction_correlation_le {n count : ℕ} [NeZero count] {Image : 
       2 * (matrixPrediction f predictor true).toReal - 1 := by
     have ha (value : ℝ) : 2 * value - 1 = -1 + 2 * value := by ring
     simp only [correlation, ha, sum_affine, agreement_eq_probability,
-      matrixPrediction, bind_apply_toReal, source]
+      matrixPrediction, monad_bind_eq_bind, bind_apply_toReal, source]
   rw [hprediction] at havg
   apply havg.trans_eq
   simp only [mul_add, mul_sub, mul_one, ← mul_div_assoc, Finset.sum_add_distrib,
     Finset.sum_sub_distrib, ← Finset.sum_div, ← Finset.sum_mul, sum_toReal, one_mul,
     mul_left_comm _ (128 * (dyadicSize (16 * count) : ℝ) ^ 2), ← Finset.mul_sum,
-    inversionExperiment, bind_apply_toReal, success, source]
+    inversionExperiment, monad_bind_eq_bind, bind_apply_toReal, success, source]
 
 /-- Prediction beyond the hashed pair's entropy threshold forces inversion with polynomial
 loss. This is the finite content of Holenstein's Lemma 4, for public matrix hashing. -/

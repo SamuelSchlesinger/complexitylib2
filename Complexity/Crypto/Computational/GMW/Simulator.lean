@@ -322,9 +322,9 @@ private noncomputable def bernoulliAttempt (out : List Bool) : PMF (List Bool) :
     (fun ch_guess => if [false, false, false] == ch_guess then true :: out else [])
 
 /-- Choose `p` when a uniform 3-bit challenge equals `[false, false, false]`, and `q` otherwise. -/
-private noncomputable def mixThree {α : Type} (p q : PMF α) : PMF α :=
-  (BitString.uniformList 3).bind
-    (fun ch_guess => if [false, false, false] == ch_guess then p else q)
+private noncomputable def mixThree {α : Type} (p q : PMF α) : PMF α := do
+  let ch_guess ← BitString.uniformList 3
+  if [false, false, false] == ch_guess then p else q
 
 /-- Distribution of `gmwFirstSuccess` after `k` independent attempts from
 `μ.bind bernoulliAttempt`. -/
@@ -403,7 +403,7 @@ private theorem distinguishingGame_mixThree (p q : PMF (List Bool))
     (adv : List Bool → ProbComp Bool) :
     distinguishingGame (mixThree p q) adv =
       mixThree (distinguishingGame p adv) (distinguishingGame q adv) := by
-  simp only [distinguishingGame, mixThree, PMF.bind_bind]
+  simp only [distinguishingGame, PMF.monad_bind_eq_bind, mixThree, PMF.bind_bind]
   congr 1
   funext ch_guess
   split_ifs <;> rfl
@@ -413,7 +413,8 @@ private theorem advantage_mixThree (g1 g2 : Game) :
   have hunif : mixThree g1 g2 =
       (PMF.uniformOfFintype (BitString 3)).bind
         (fun v => if v = 0 then g1 else g2) := by
-    simp only [mixThree, BitString.uniformList, PMF.bind_map, Function.comp_def]
+    simp only [mixThree, BitString.uniformList, PMF.monad_bind_eq_bind, PMF.bind_map,
+      Function.comp_def]
     congr 1
     funext v
     by_cases hv : v = 0
@@ -475,16 +476,16 @@ noncomputable def gmwRealWithPads (generator : List Bool → List Bool) (s m : �
 
 /-- Single-attempt hybrid with pseudorandom unopened pads. -/
 noncomputable def gmwRealPRGPads (generator : List Bool → List Bool) (s m : ℕ) (φ : CNF ℕ)
-    (w : List Bool) (prog : WordOracleComp Unit (List Bool)) : ProbComp (List Bool) :=
-  OracleComp.replicate (totalLen φ) (generator <$> BitString.sampleList s) >>=
-    gmwRealWithPads generator s m φ w prog
+    (w : List Bool) (prog : WordOracleComp Unit (List Bool)) : ProbComp (List Bool) := do
+  let pads ← OracleComp.replicate (totalLen φ) (generator <$> BitString.sampleList s)
+  gmwRealWithPads generator s m φ w prog pads
 
 /-- Single-attempt hybrid with uniform unopened pads. -/
 noncomputable def gmwRealUniformPads (generator : List Bool → List Bool) (s m : ℕ)
     (φ : CNF ℕ)
-    (w : List Bool) (prog : WordOracleComp Unit (List Bool)) : ProbComp (List Bool) :=
-  OracleComp.replicate (totalLen φ) (BitString.sampleList m) >>=
-    gmwRealWithPads generator s m φ w prog
+    (w : List Bool) (prog : WordOracleComp Unit (List Bool)) : ProbComp (List Bool) := do
+  let pads ← OracleComp.replicate (totalLen φ) (BitString.sampleList m)
+  gmwRealWithPads generator s m φ w prog pads
 
 private theorem eval_bind_gameWithPads (d_pads : ProbComp (List (List Bool)))
     (generator : List Bool → List Bool) (s m : ℕ) (φ : CNF ℕ) (w : List Bool)
@@ -739,7 +740,8 @@ noncomputable def gmwViewReduction {α : Type} (generator : List Bool → List B
   let φ := f a
   let prog := Vstar n a z
   sequenceTest (BitString.sampleList m) (generator <$> BitString.sampleList s) (totalLen φ)
-    (fun pads => gmwRealWithPads generator s m φ w prog pads >>= fun attempt =>
+    (fun pads => do
+      let attempt ← gmwRealWithPads generator s m φ w prog pads
       sequenceTest (gmwRealUniformPads generator s m φ w prog)
         (gmwRealPRGPads generator s m φ w prog) (n + 1)
         (fun attempts => adversary n a z (gmwFirstSuccess attempts)) attempt)
@@ -826,7 +828,8 @@ theorem gmwView_advantage_le {α : Type} (generator : List Bool → List Bool)
         (adversary n a z) =
       ProbComp.eval (OracleComp.replicate (n + 1) g >>=
         fun attempts => adversary n a z (gmwFirstSuccess attempts)) := by
-    simp only [distinguishingGame, ProbComp.eval_map, ProbComp.eval_bind, PMF.bind_map,
+    simp only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_map, ProbComp.eval_bind,
+      PMF.bind_map,
       Function.comp_def]
   have hzero : ProbComp.eval (gmwFirstSuccess <$> OracleComp.replicate (n + 1)
       (gmwRealPRGPads generator (n + 7) (length (n + 7)) (f a) w (Vstar n a z))) = guess := by
@@ -1059,7 +1062,7 @@ theorem gmwView_indistinguishable_gmwSimulator {α : Type} {enc : α ↪ List Bo
   have herr := (negligible_geometric (by norm_num : (7 / 8 : ℝ≥0) < 1)).shift 1
   apply negligible_of_le (herr.add (hneg.polynomiallyBounded_mul hloss))
   intro n
-  simpa only [distinguishingGame, ProbComp.eval_bind, ProbComp.eval_map,
+  simpa only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_bind, ProbComp.eval_map,
     BitString.eval_sampleList, generatorEnsemble, Nat.cast_mul, red] using
     gmwView_advantage_le generator length f Vstar (fun n _ _ view => adversary n view)
       n (a n) (w n) (z n) (hw_sat n)

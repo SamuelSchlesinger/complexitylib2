@@ -81,12 +81,13 @@ theorem hybrid_zero (generator : List Bool → List Bool) (count : ℕ → ℕ) 
 
 /-- Replacing the challenge by a genuine generator output gives the earlier hybrid. -/
 theorem real_hop (generator : List Bool → List Bool) (n total i : ℕ) (hi : i < total) :
-    (generatorEnsemble generator n).bind (fun challenge =>
+    (do
+      let challenge ← generatorEnsemble generator n
       (uniformList i).map (fun suffix =>
         iterate generator n (total - (i + 1)) (challenge ++ suffix))) =
       hybrid generator n total i := by
   have hcount : total - i = total - (i + 1) + 1 := by lia
-  simp only [generatorEnsemble, PMF.bind_map, hybrid,
+  simp only [generatorEnsemble, PMF.monad_bind_eq_bind, PMF.bind_map, hybrid,
     uniformList_add, PMF.map_bind, PMF.map_comp, Function.comp_def]
   apply PMF.bind_congr_on_support
   intro seed hseed
@@ -97,12 +98,13 @@ theorem real_hop (generator : List Bool → List Bool) (n total i : ℕ) (hi : i
 
 /-- Replacing the challenge by uniform bits gives the next hybrid. -/
 theorem ideal_hop (generator : List Bool → List Bool) (n total i : ℕ) :
-    (uniformList (n + 1)).bind (fun challenge =>
+    (do
+      let challenge ← uniformList (n + 1)
       (uniformList i).map (fun suffix =>
         iterate generator n (total - (i + 1)) (challenge ++ suffix))) =
       hybrid generator n total (i + 1) := by
   rw [hybrid, show n + (i + 1) = (n + 1) + i by lia, uniformList_add (n + 1) i]
-  simp only [PMF.map_bind, PMF.map_comp, Function.comp_def]
+  simp only [PMF.monad_bind_eq_bind, PMF.map_bind, PMF.map_comp, Function.comp_def]
 
 /-- Embed one challenge at a chosen hop; out-of-range hops reject on both sides. -/
 noncomputable def hop (generator : List Bool → List Bool) (count : ℕ → ℕ)
@@ -186,7 +188,7 @@ theorem eval_real_hop (generator : List Bool → List Bool) (count : ℕ → ℕ
     have h := congrArg (fun distribution : PMF (List Bool) =>
       distribution.bind (fun word => ProbComp.eval (adversary n word)))
       (real_hop generator n (count n) i hi)
-    simpa only [hop, hi, ↓reduceIte, ProbComp.eval_bind, eval_sampleList,
+    simpa only [hop, hi, ↓reduceIte, ProbComp.eval_bind, eval_sampleList, PMF.monad_bind_eq_bind,
       PMF.bind_bind, PMF.bind_map, Function.comp_def] using h
   · simp [hop, hi, PMF.bind_const]
 
@@ -204,7 +206,7 @@ theorem eval_ideal_hop (generator : List Bool → List Bool) (count : ℕ → �
     have h := congrArg (fun distribution : PMF (List Bool) =>
       distribution.bind (fun word => ProbComp.eval (adversary n word)))
       (ideal_hop generator n (count n) i)
-    simpa only [hop, hi, ↓reduceIte, ProbComp.eval_bind, eval_sampleList,
+    simpa only [hop, hi, ↓reduceIte, ProbComp.eval_bind, eval_sampleList, PMF.monad_bind_eq_bind,
       PMF.bind_bind, PMF.bind_map, Function.comp_def] using h
   · simp [hop, hi, PMF.bind_const]
 
@@ -248,7 +250,8 @@ theorem advantage_eq (generator : List Bool → List Bool) (count : ℕ → ℕ)
     (2 ^ (Nat.log 2 (count n) + 1))
     (Nat.le_of_lt (Nat.lt_pow_succ_log_self (by decide : 1 < 2) (count n)))
   rw [← hreal, ← hideal, hybrid_zero, hybrid_last] at havg
-  simpa only [eval_prgRealGame, eval_prgIdealGame, distinguishingGame] using havg
+  simpa only [eval_prgRealGame, eval_prgIdealGame, distinguishingGame,
+    PMF.monad_bind_eq_bind] using havg
 
 /-- The same exact loss applies with the seed length independent of the security parameter.
 This form is convenient for indexed candidate families. -/
@@ -268,7 +271,7 @@ theorem test_advantage_eq (generator : List Bool → List Bool) (seedBits count 
   simp only [eval_prgRealGame, eval_prgIdealGame] at h
   rw [← hybrid_zero generator (fun _ => count) seedBits] at h
   simpa only [hybrid, Nat.add_zero, Nat.sub_zero, generatorEnsemble,
-    distinguishingGame, test] using h
+    distinguishingGame, PMF.monad_bind_eq_bind, test] using h
 
 /-- Padding the sampled hop loses at most twice the number of expansions. -/
 theorem advantage_le (generator : List Bool → List Bool) (count : ℕ → ℕ)

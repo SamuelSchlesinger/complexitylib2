@@ -113,12 +113,13 @@ theorem generate_distribution (count seedBits outputBits : ℕ)
 of every other seed block. The simulator may sample and discard the unused chosen block. -/
 theorem real_distribution (count seedBits outputBits : ℕ) (generator : ℕ → List Bool → List Bool)
     (i : Fin count) :
-    ((uniformList seedBits).map (generator i.val)).bind (fun challenge =>
+    (do
+      let challenge ← (uniformList seedBits).map (generator i.val)
       (uniformList (count * seedBits)).map (generate count seedBits outputBits
         (fun j seed => if j = i.val then challenge else generator j seed))) =
       (uniformList (count * seedBits)).map (generate count seedBits outputBits generator) := by
   simp_rw [generate_distribution]
-  simp only [uniformList, PMF.bind_map, Function.comp_def]
+  simp only [uniformList, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
   let evaluate := fun seeds : Fin count → BitString seedBits =>
     List.ofFn (∑ j : Fin count, ofList outputBits (generator j.val (List.ofFn (seeds j))))
   have h := congrArg (PMF.map evaluate)
@@ -141,12 +142,13 @@ theorem real_distribution (count seedBits outputBits : ℕ) (generator : ℕ →
 /-- One uniform candidate masks the complete XOR, for every fixed choice of the other outputs. -/
 theorem ideal_distribution (count seedBits outputBits : ℕ) (generator : ℕ → List Bool → List Bool)
     (i : Fin count) :
-    (uniformList outputBits).bind (fun challenge =>
+    (do
+      let challenge ← uniformList outputBits
       (uniformList (count * seedBits)).map (generate count seedBits outputBits
         (fun j seed => if j = i.val then challenge else generator j seed))) =
       uniformList outputBits := by
   simp_rw [generate_distribution]
-  simp only [uniformList, PMF.bind_map, Function.comp_def]
+  simp only [uniformList, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
   simp only [PMF.map]
   rw [PMF.bind_comm]
   calc
@@ -223,8 +225,8 @@ theorem advantage_eq (count seedBits outputBits : ℕ) (generator : ℕ → List
           ProbComp.eval (test count seedBits outputBits generator i.val adversary word))) := by
   conv_lhs => rw [← real_distribution count seedBits outputBits generator i,
     ← ideal_distribution count seedBits outputBits generator i]
-  simp only [test, ProbComp.eval_bind, BitString.eval_sampleList, PMF.bind_bind, PMF.bind_map,
-    Function.comp_def]
+  simp only [test, ProbComp.eval_bind, BitString.eval_sampleList, PMF.monad_bind_eq_bind,
+    PMF.bind_bind, PMF.bind_map, Function.comp_def]
 
 /-- One secure choice in a uniformly efficient family makes the XOR computationally uniform.
 The combiner evaluates the whole family; only the reduction receives the proof's chosen index. -/
@@ -257,7 +259,7 @@ theorem indistinguishable {generator : ℕ → ℕ → List Bool → List Bool}
     apply isPPTOn_test <;> first | polytime | ppt
   apply (hsecure reduction hreduce).congr'
   filter_upwards [hchoose] with n hn
-  simpa only [distinguishingGame] using
+  simpa only [distinguishingGame, PMF.monad_bind_eq_bind] using
     (advantage_eq (count n) (seedBits n) (outputBits n) (generator n) ⟨choose n, hn⟩
       (adversary n)).symm
 

@@ -103,7 +103,8 @@ attribute [program_certificate] isPPTOn_extract
 noncomputable def withoutSeeds
     (count seedBits bound observationBits labelBits remainingBits : ℕ)
     (source : ProbComp (List Bool × Bool)) : ProbComp (List Bool) := do
-  let middle ← OracleComp.replicate count source >>= extractWordLabels count labelBits
+  let samples ← OracleComp.replicate count source
+  let middle ← extractWordLabels count labelBits samples
   let front ← finish bound observationBits middle
   let suffix ← BitString.sampleList (remainingBits * (count * seedBits) + remainingBits)
   return front ++ suffix
@@ -112,7 +113,8 @@ noncomputable def withoutSeeds
 noncomputable def withoutLabels
     (count seedBits bound observationBits labelBits remainingBits : ℕ)
     (source : ProbComp (List Bool)) : ProbComp (List Bool) := do
-  let first ← OracleComp.replicate count source >>= extractWordObservations bound observationBits
+  let samples ← OracleComp.replicate count source
+  let first ← extractWordObservations bound observationBits samples
   let middle ← BitString.sampleList (labelBits * count + labelBits)
   let third ← BitString.sampleList (remainingBits * (count * seedBits) + remainingBits)
   return (first ++ middle) ++ third
@@ -200,11 +202,11 @@ theorem seedLength_lt_outputLength_iff
 theorem eval_ideal_remaining
     (count seedBits bound observationBits labelBits remainingBits : ℕ)
     (source : ProbComp (List Bool × Bool)) :
-    ProbComp.eval (extractMatrixLabelsIdeal source count (count * seedBits) remainingBits >>=
-      fun third => do
-        let middle ← extractWordLabels count labelBits third.1
-        let front ← finish bound observationBits middle
-        return front ++ (third.2.1 ++ third.2.2)) =
+    ProbComp.eval (do
+      let third ← extractMatrixLabelsIdeal source count (count * seedBits) remainingBits
+      let middle ← extractWordLabels count labelBits third.1
+      let front ← finish bound observationBits middle
+      return front ++ (third.2.1 ++ third.2.2)) =
       ProbComp.eval (withoutSeeds count seedBits bound observationBits labelBits remainingBits
         source) := by
   simpa only [withoutSeeds, ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure,
@@ -217,8 +219,8 @@ theorem eval_ideal_labels (count bound observationBits labelBits : ℕ)
     (source : ProbComp (List Bool)) :
     ProbComp.eval (extractWordLabelsIdeal source count labelBits >>= finish bound observationBits) =
       ProbComp.eval (do
-        let first ← OracleComp.replicate count source >>=
-          extractWordObservations bound observationBits
+        let samples ← OracleComp.replicate count source
+        let first ← extractWordObservations bound observationBits samples
         let middle ← BitString.sampleList (labelBits * count + labelBits)
         return first ++ middle) := by
   simpa only [extractWordLabelsIdeal, ProbComp.eval_bind, finish, ProbComp.eval_map,
@@ -491,6 +493,7 @@ theorem SamplablePair.HasGap.extract_three {pair : SamplablePair} {gap : ℕ →
     (numerator := fun n _ => numerator n) efficient hfits
     (Eventually.of_forall (by intro n; decide))
     hvalid hfirst hmiddle hlast (fun n _ => adversary n) (by ppt)
-  simpa only [distinguishingGame, ProbComp.eval_bind, BitString.eval_sampleList] using h
+  simpa only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_bind,
+    BitString.eval_sampleList] using h
 
 end Cslib.Crypto.Pseudoentropy

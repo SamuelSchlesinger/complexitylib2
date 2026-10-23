@@ -396,10 +396,10 @@ noncomputable def presampleTree (Q : Prover Unit) (L : ℕ) (queries : List (Lis
     (d : ℕ) → Q.State → PMF (TreeStrategy d)
   | 0, _ => PMF.pure PUnit.unit
   | d + 1, s =>
-    queries.mapM fun m =>
-      ((Q.respond ((), m)).run s).bind fun ys =>
-        (presampleTree Q L queries d ys.2).map fun child =>
-          (m, (ys.1.take L, child))
+    queries.mapM fun m => do
+      let ys ← (Q.respond ((), m)).run s
+      (presampleTree Q L queries d ys.2).map fun child =>
+        (m, (ys.1.take L, child))
 
 /-- Looking up an element `m ∈ queries` in a table sampled via `queries.mapM` marginalizes all
 other entries and returns the sample at `m`. -/
@@ -439,7 +439,8 @@ theorem presampleTree_step (Q : Prover Unit) (L : ℕ) (queries : List (List Boo
       (presampleTree Q L queries d ys.2).map fun child => (ys.1.take L, child)
   have h1 : presampleTree Q L queries (d + 1) s =
       queries.mapM fun m' => (f m').map fun p => (m', p) := by
-    simp only [presampleTree, f, PMF.map_bind, PMF.map_comp, Function.comp_def]
+    simp only [presampleTree, f, Probability.PMF.monad_bind_eq_bind, PMF.map_bind,
+      PMF.map_comp, Function.comp_def]
   have h2 := congrArg (PMF.map fun o : Option (List Bool × TreeStrategy d) =>
       match o with
       | some (y, child) => (y, (⟨d, child⟩ : Sigma TreeStrategy))
@@ -456,9 +457,9 @@ outside `l`. -/
 private noncomputable def listPiPMF [DecidableEq ι] (default : α) (μ : ι → PMF α) :
     List ι → PMF (ι → α)
   | [] => PMF.pure (fun _ => default)
-  | i :: rest =>
-    (μ i).bind fun a =>
-      (listPiPMF default μ rest).map fun f => Function.update f i a
+  | i :: rest => do
+    let a ← μ i
+    (listPiPMF default μ rest).map fun f => Function.update f i a
 
 private theorem listPiPMF_congr [DecidableEq ι] (default : α) {μ₁ μ₂ : ι → PMF α}
     (l : List ι) (h : ∀ i ∈ l, μ₁ i = μ₂ i) :
@@ -486,7 +487,8 @@ private theorem listPiPMF_extract [DecidableEq ι] (default : α) (μ : ι → P
       have herase : (i :: rest).erase i₀ = i :: rest.erase i₀ := by
         simp [Ne.symm h]
       rw [herase, listPiPMF, ih hl_rest hi₀_rest]
-      simp only [listPiPMF, PMF.map_bind, PMF.map_comp, Function.comp_def]
+      simp only [listPiPMF, Probability.PMF.monad_bind_eq_bind, PMF.map_bind, PMF.map_comp,
+        Function.comp_def]
       rw [PMF.bind_comm]
       congr 1
       funext a₀
@@ -687,7 +689,8 @@ private theorem support_presampleTree_subset (Q : Prover Unit) (L : ℕ)
     simp only [presampleTree] at ht
     simp only [allTrees]
     refine mem_listMapM (fun m _ entry hentry => ?_) t ht
-    simp only [PMF.mem_support_bind_iff, PMF.mem_support_map_iff] at hentry
+    simp only [Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff,
+      PMF.mem_support_map_iff] at hentry
     obtain ⟨ys, _, child, hchild, rfl⟩ := hentry
     simp only [List.mem_flatMap, List.mem_map]
     refine ⟨ys.1.take L, ?_, child, ih ys.2 child hchild, rfl⟩
@@ -711,7 +714,8 @@ private theorem support_listPiPMF_subset [DecidableEq ι] (default : α)
     exact List.mem_singleton_self _
   | cons i rest ih =>
     intro f hf
-    simp only [listPiPMF, PMF.mem_support_bind_iff, PMF.mem_support_map_iff] at hf
+    simp only [listPiPMF, Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff,
+      PMF.mem_support_map_iff] at hf
     obtain ⟨a, ha, g, hg, rfl⟩ := hf
     simp only [allListPi, List.mem_flatMap, List.mem_map]
     exact ⟨a, hS i List.mem_cons_self a ha, g,

@@ -89,11 +89,12 @@ theorem eval_game (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Bool → ProbComp (List Bool))
     (adversary : Adversary) (bit : Bool) (n : ℕ) :
     ProbComp.eval (game keyGen encrypt adversary bit n) =
-      ((ProbComp.eval (keyGen n)).map Prod.fst).bind (fun pk =>
-        (ProbComp.eval (adversary.choose n pk)).bind (fun choice =>
-          (ProbComp.eval (encrypt n pk (if bit then choice.1.2 else choice.1.1))).bind
-            (fun ciphertext => ProbComp.eval (adversary.guess n choice.2 ciphertext)))) := by
-  simp only [game, ProbComp.eval_bind, PMF.bind_map, Function.comp_def]
+      (do
+        let pk ← (ProbComp.eval (keyGen n)).map Prod.fst
+        let choice ← ProbComp.eval (adversary.choose n pk)
+        let ciphertext ← ProbComp.eval (encrypt n pk (if bit then choice.1.2 else choice.1.1))
+        ProbComp.eval (adversary.guess n choice.2 ciphertext)) := by
+  simp only [game, ProbComp.eval_bind, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
 
 /-- Equal public-key marginals and equal encryption laws preserve security. -/
 theorem INDCPA.congr {keyGen keyGen' : ℕ → ProbComp (List Bool × List Bool)}

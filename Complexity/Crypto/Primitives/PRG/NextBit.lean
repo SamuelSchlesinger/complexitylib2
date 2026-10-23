@@ -89,8 +89,9 @@ variable {S : Type*}
 
 /-- Guess a bit with a randomized distinguisher `d`: draw a uniform candidate bit `r`, run `d r`,
 and output `r` if it accepts and `!r` if it rejects [Boneh and Shoup, Lemma 3.5][BonehShoup2023]. -/
-noncomputable def guessOfDistinguisher (d : Bool → PMF Bool) : PMF Bool :=
-  (uniformOfFintype Bool).bind fun r => (d r).map fun a => if a then r else !r
+noncomputable def guessOfDistinguisher (d : Bool → PMF Bool) : PMF Bool := do
+  let r ← uniformOfFintype Bool
+  (d r).map fun a => if a then r else !r
 
 private theorem map_decide_eq_apply_true {α : Type*} [DecidableEq α] (q : PMF α) (c : α) :
     (q.map fun a => decide (a = c)) true = q c := by
@@ -103,7 +104,7 @@ private theorem guessOfDistinguisher_apply_add (d : Bool → PMF Bool) (b : Bool
   have hd (r : Bool) : d r true + d r false = 1 := by
     simpa [tsum_bool] using (d r).tsum_coe
   have h2 : (2⁻¹ : ℝ≥0∞) * 2 = 1 := ENNReal.inv_mul_cancel two_ne_zero ENNReal.ofNat_ne_top
-  simp only [guessOfDistinguisher, PMF.bind_apply, PMF.map_apply, tsum_bool,
+  simp only [guessOfDistinguisher, monad_bind_eq_bind, PMF.bind_apply, PMF.map_apply, tsum_bool,
     uniformOfFintype_apply, Fintype.card_bool, Nat.cast_ofNat]
   cases b
   · simp only [Bool.false_eq_true, ↓reduceIte, Bool.not_false, Bool.not_true, zero_add, add_zero]
@@ -172,15 +173,15 @@ variable {Seed α : Type*} [Fintype Seed] [Nonempty Seed] [Fintype α] [Nonempty
 by independent uniform symbols. It is Hybrid `m - k` of
 [Boneh and Shoup, Section 3.5][BonehShoup2023]. -/
 noncomputable def Generator.hybridDist (G : Generator Seed (Fin m → α)) (k : ℕ) :
-    PMF (Fin m → α) :=
-  G.outputDist.bind fun y =>
-    (uniformOfFintype (Fin m → α)).map fun z j => if (j : ℕ) < k then y j else z j
+    PMF (Fin m → α) := do
+  let y ← G.outputDist
+  (uniformOfFintype (Fin m → α)).map fun z j => if (j : ℕ) < k then y j else z j
 
 /-- The `0`-th hybrid is uniform. -/
 @[simp]
 theorem Generator.hybridDist_zero (G : Generator Seed (Fin m → α)) :
     G.hybridDist 0 = uniformOfFintype (Fin m → α) := by
-  simp only [Generator.hybridDist, Nat.not_lt_zero, ite_false, PMF.bind_const]
+  simp only [Generator.hybridDist, monad_bind_eq_bind, Nat.not_lt_zero, ite_false, PMF.bind_const]
   exact PMF.map_id _
 
 /-- The `k`-th hybrid with `m ≤ k` is the output distribution of the generator. -/
@@ -191,7 +192,7 @@ theorem Generator.hybridDist_of_le (G : Generator Seed (Fin m → α)) {k : ℕ}
         Function.const _ y := by
     funext z j
     simp [j.isLt.trans_le hk]
-  simp only [Generator.hybridDist, h, PMF.map_const, PMF.bind_pure]
+  simp only [Generator.hybridDist, monad_bind_eq_bind, h, PMF.map_const, PMF.bind_pure]
 
 /-- Run a test on the `k`-th hybrid. -/
 noncomputable def Generator.hybridExperiment (G : Generator Seed (Fin m → α))
@@ -218,7 +219,8 @@ theorem Generator.hybridExperiment_eq_bind (G : Generator Seed (Fin m → α))
     G.hybridExperiment adversary k = G.outputDist.bind fun y =>
       (uniformOfFintype (Fin m → α)).bind fun z =>
         adversary fun j => if (j : ℕ) < k then y j else z j := by
-  simp only [Generator.hybridExperiment, Generator.hybridDist, PMF.bind_bind, PMF.bind_map]
+  simp only [Generator.hybridExperiment, Generator.hybridDist, monad_bind_eq_bind, PMF.bind_bind,
+    PMF.bind_map]
   rfl
 
 /-- The `i`-th hybrid gap of a test: the probability that it accepts the `(i + 1)`-st hybrid
@@ -265,9 +267,9 @@ variable {Seed : Type*} [Fintype Seed] [Nonempty Seed] {m : ℕ}
 first `i` bits of the generator's output on a uniform seed, and the experiment outputs `true`
 exactly when the predictor's guess is bit `i`. -/
 noncomputable def Generator.predictionExperiment (G : Generator Seed (Fin m → Bool))
-    (i : Fin m) (predictor : Adversary (Fin i → Bool)) : PMF Bool :=
-  G.outputDist.bind fun y =>
-    (predictor (Fin.take i i.isLt.le y)).map fun g => decide (g = y i)
+    (i : Fin m) (predictor : Adversary (Fin i → Bool)) : PMF Bool := do
+  let y ← G.outputDist
+  (predictor (Fin.take i i.isLt.le y)).map fun g => decide (g = y i)
 
 /-- The advantage of a predictor in Attack Game 3.2 of [BonehShoup2023]: the distance of its
 probability of guessing bit `i` correctly from `1 / 2`. -/
@@ -289,7 +291,8 @@ def Generator.Unpredictable (G : Generator Seed (Fin m → Bool))
 test on `x`, followed by `r` at position `i`, followed by uniform bits. -/
 noncomputable def nextBitPredictor (adversary : Adversary (Fin m → Bool)) (i : Fin m) :
     Adversary (Fin i → Bool) := fun x =>
-  guessOfDistinguisher fun r => (uniformOfFintype (Fin m → Bool)).bind fun z =>
+  guessOfDistinguisher fun r => do
+    let z ← uniformOfFintype (Fin m → Bool)
     adversary fun j => if h : (j : ℕ) < i then x ⟨j, h⟩ else if j = i then r else z j
 
 /-- The guess of the predictor built from a deterministic test, with its random choices fixed.
@@ -304,9 +307,10 @@ def nextBitGuess (test : (Fin m → Bool) → Bool) (i : Fin m) (r : Bool) (u : 
 uniform string `u` and outputs `nextBitGuess test i r u x`. -/
 theorem nextBitPredictor_pure (test : (Fin m → Bool) → Bool) (i : Fin m) (x : Fin i → Bool) :
     nextBitPredictor (fun y => PMF.pure (test y)) i x =
-      (uniformOfFintype Bool).bind fun r =>
-        (uniformOfFintype (Fin m → Bool)).map fun u => nextBitGuess test i r u x := by
-  simp only [nextBitPredictor, guessOfDistinguisher, PMF.map_bind, PMF.pure_map]
+      (do
+        let r ← uniformOfFintype Bool
+        (uniformOfFintype (Fin m → Bool)).map fun u => nextBitGuess test i r u x) := by
+  simp only [nextBitPredictor, guessOfDistinguisher, monad_bind_eq_bind, PMF.map_bind, PMF.pure_map]
   rfl
 
 /-- The predictor built from a test guesses bit `i` correctly with probability exactly `1 / 2`

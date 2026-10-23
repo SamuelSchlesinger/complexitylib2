@@ -68,7 +68,8 @@ private theorem chooseWord_output (input : List Bool) :
 example : ProbComp.eval ((readFirst.comp chooseWord true).runClosed 9 [false]) =
     (ProbComp.eval (ProbComp.uniform Bool)).map (fun bit => if bit then [true] else []) := by
   rw [MultiTapePTM.eval_comp chooseWord readFirst true [false] 2 1 (chooseWord_halts _)
-    (fun word _ => readFirst_halts word), chooseWord_output, PMF.bind_map]
+    (fun word _ => readFirst_halts word), Probability.PMF.monad_bind_eq_bind,
+    chooseWord_output, PMF.bind_map]
   rw [PMF.map]
   apply Probability.PMF.bind_congr_on_support
   intro bit _

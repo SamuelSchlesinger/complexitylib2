@@ -71,8 +71,9 @@ def IsPPTTest (test : ℕ → List Bool → PMF Bool) : Prop :=
 
 /-- Give a sample from a distribution to a distinguisher; this law assumes no efficient sampler. -/
 noncomputable def distinguishingGame (distribution : PMF (List Bool))
-    (adversary : List Bool → ProbComp Bool) : Game :=
-  distribution.bind (fun word => ProbComp.eval (adversary word))
+    (adversary : List Bool → ProbComp Bool) : Game := do
+  let word ← distribution
+  ProbComp.eval (adversary word)
 
 /-- An actual sampler followed by a distinguisher realizes the corresponding experiment. -/
 theorem eval_bind_eq_distinguishingGame (sample : ProbComp (List Bool))
@@ -94,7 +95,7 @@ theorem distinguishingGame_map (distribution : PMF (List Bool))
     (adversary : List Bool → ProbComp Bool) (f : Bool → Bool) :
     distinguishingGame distribution (fun word => f <$> adversary word) =
       (distinguishingGame distribution adversary).map f := by
-  simp only [distinguishingGame, ProbComp.eval_map, PMF.map_bind]
+  simp only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_map, PMF.map_bind]
 
 /-- Each uniform strict PPT distinguisher has negligible advantage between the two ensembles.
 Neither ensemble is required to be efficiently sampleable or polynomially bounded in length. -/
@@ -110,7 +111,7 @@ theorem computationallyIndistinguishable_iff_tests {X Y : ℕ → PMF (List Bool
         (fun test n => (Y n).bind (test n)) IsPPTTest := by
   constructor
   · rintro h test ⟨program, hprogram, heq⟩
-    simpa only [distinguishingGame, heq] using h program hprogram
+    simpa only [distinguishingGame, PMF.monad_bind_eq_bind, heq] using h program hprogram
   · intro h adversary hadversary
     exact h (fun n input => ProbComp.eval (adversary n input)) (isPPTTest_eval.mpr hadversary)
 
@@ -139,7 +140,8 @@ theorem ComputationallyIndistinguishable.bind {X Y : ℕ → PMF (List Bool)}
   have hefficient : IsPPT encBool (fun n word => do
       let result ← process n word
       adversary n result) := by ppt
-  simpa only [distinguishingGame, ProbComp.eval_bind, PMF.bind_bind] using h _ hefficient
+  simpa only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_bind,
+    PMF.bind_bind] using h _ hefficient
 
 /-- Efficient parameter-dependent deterministic postprocessing preserves indistinguishability. -/
 theorem ComputationallyIndistinguishable.map {X Y : ℕ → PMF (List Bool)}

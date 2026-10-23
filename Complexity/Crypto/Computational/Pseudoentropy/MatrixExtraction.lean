@@ -122,13 +122,15 @@ theorem eval_extractMatrixLabelsIdeal {Observation : Type} (source : ProbComp Ob
   simp only [extractMatrixLabelsIdeal, ProbComp.eval_bind, ProbComp.eval_pure,
     extractLabelsIdeal, ProbComp.eval_uniform, eval_sampleList, uniformList,
     Function.comp_def, PMF.map, PMF.bind_bind, PMF.pure_bind]
+  simp only [PMF.monad_bind_eq_bind, PMF.bind_bind, PMF.pure_bind]
 
 /-- In the ideal experiment, the public matrix seed and digest together form one uniform word.
 The continuation may depend on all retained observations. -/
 theorem eval_extractMatrixLabelsIdeal_bind {Observation Output : Type}
     (source : ProbComp Observation) (count inputBits outputBits : ℕ)
     (next : List Observation → List Bool → ProbComp Output) :
-    ProbComp.eval (extractMatrixLabelsIdeal source count inputBits outputBits >>= fun result =>
+    ProbComp.eval (do
+      let result ← extractMatrixLabelsIdeal source count inputBits outputBits
       next result.1 (result.2.1 ++ result.2.2)) =
         ProbComp.eval (do
           let observations ← OracleComp.replicate count source
@@ -143,16 +145,18 @@ theorem eval_extractMatrixLabelsIdeal_bind {Observation Output : Type}
 theorem eval_extractMatrixLabelsIdeal_append {Observation : Type}
     (source : ProbComp Observation) (count inputBits outputBits : ℕ)
     (next : List Observation → ProbComp (List Bool)) :
-    ProbComp.eval (extractMatrixLabelsIdeal source count inputBits outputBits >>= fun result =>
+    ProbComp.eval (do
+      let result ← extractMatrixLabelsIdeal source count inputBits outputBits
       (fun front => front ++ (result.2.1 ++ result.2.2)) <$> next result.1) =
         ProbComp.eval (do
-          let front ← OracleComp.replicate count source >>= next
+          let observations ← OracleComp.replicate count source
+          let front ← next observations
           let suffix ← BitString.sampleList (outputBits * inputBits + outputBits)
           return front ++ suffix) := by
   rw [eval_extractMatrixLabelsIdeal_bind source count inputBits outputBits
     (fun observations suffix => (fun front => front ++ suffix) <$> next observations)]
   simp only [ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure,
-    BitString.eval_sampleList, PMF.bind_bind]
+    BitString.eval_sampleList]
   congr 1
   funext observations
   simp only [PMF.map, Function.comp_def]

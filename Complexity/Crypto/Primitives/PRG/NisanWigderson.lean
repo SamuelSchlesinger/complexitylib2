@@ -247,19 +247,21 @@ block fixed to those of `w`: the input `x` of bit `i` is uniform, the predictor 
 first `i` bits of the output on the seed `D.extend i x w`, and the experiment outputs `true`
 exactly when the predictor's guess is `f x`. -/
 noncomputable def hardwiredExperiment (D : Design ℓ n a m) (f : (Fin n → Bool) → Bool)
-    (i : Fin m) (w : Fin ℓ → Bool) (predictor : Adversary (Fin i → Bool)) : PMF Bool :=
-  (uniformOfFintype (Fin n → Bool)).bind fun x =>
-    (predictor (Fin.take i i.isLt.le (generator D f (D.extend i x w)))).map fun g =>
-      decide (g = f x)
+    (i : Fin m) (w : Fin ℓ → Bool) (predictor : Adversary (Fin i → Bool)) : PMF Bool := do
+  let x ← uniformOfFintype (Fin n → Bool)
+  (predictor (Fin.take i i.isLt.le (generator D f (D.extend i x w)))).map fun g =>
+    decide (g = f x)
 
 /-- The prediction experiment for bit `i` of the generator is the average, over a uniform `w`,
 of the experiments with the seed bits outside the `i`-th block fixed to those of `w`. -/
 theorem predictionExperiment_generator (D : Design ℓ n a m) (f : (Fin n → Bool) → Bool)
     (i : Fin m) (predictor : Adversary (Fin i → Bool)) :
     (generator D f).predictionExperiment i predictor =
-      (uniformOfFintype (Fin ℓ → Bool)).bind fun w => hardwiredExperiment D f i w predictor := by
-  rw [Generator.predictionExperiment, Generator.outputDist, PMF.bind_map,
-    D.uniformOfFintype_bind_eq i]
+      (do
+        let w ← uniformOfFintype (Fin ℓ → Bool)
+        hardwiredExperiment D f i w predictor) := by
+  simp only [Generator.predictionExperiment, Generator.outputDist, monad_bind_eq_bind, PMF.bind_map]
+  rw [D.uniformOfFintype_bind_eq i]
   simp only [Function.comp_apply, generator_apply, Design.restrict_extend]
   rfl
 
@@ -296,11 +298,14 @@ random choices of the predictor drawn first. -/
 theorem hardwiredExperiment_nextBitPredictor_pure (D : Design ℓ n a m)
     (f : (Fin n → Bool) → Bool) (test : (Fin m → Bool) → Bool) (i : Fin m) (w : Fin ℓ → Bool) :
     hardwiredExperiment D f i w (nextBitPredictor (fun y => PMF.pure (test y)) i) =
-      (uniformOfFintype Bool).bind fun r => (uniformOfFintype (Fin m → Bool)).bind fun u =>
+      (do
+        let r ← uniformOfFintype Bool
+        let u ← uniformOfFintype (Fin m → Bool)
         (uniformOfFintype (Fin n → Bool)).map fun x => decide
           (nextBitGuess test i r u (Fin.take i i.isLt.le (generator D f (D.extend i x w))) =
-            f x) := by
-  simp only [hardwiredExperiment, nextBitPredictor_pure, ← PMF.bind_pure_comp, PMF.bind_bind,
+            f x)) := by
+  simp only [hardwiredExperiment, nextBitPredictor_pure, monad_bind_eq_bind, ← PMF.bind_pure_comp,
+    PMF.bind_bind,
     Function.comp_apply, PMF.pure_bind]
   rw [PMF.bind_comm]
   congr 1

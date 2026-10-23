@@ -241,7 +241,8 @@ challenge recovers the full earlier hybrid distribution. -/
 theorem eval_spliceEncryptedKeyLink_original (n : ℕ) (before : List (List Bool × List Bool))
     (predecessor next : List Bool × List Bool) (after : List (List Bool × List Bool))
     (cut : ℕ) (hcut : cut < predecessor.2.length) :
-    ProbComp.eval (E.encrypt n next.1 (predecessor.2.getD cut false) >>= fun challenge =>
+    ProbComp.eval (do
+      let challenge ← E.encrypt n next.1 (predecessor.2.getD cut false)
       E.spliceEncryptedKeyLink n before predecessor next after cut challenge) =
         ProbComp.eval (E.encryptKeyLinkHybrid n before predecessor next after cut) := by
   have hmiddle := E.eval_spliceEncryptedBit_original n next.1 predecessor.2 cut hcut
@@ -258,7 +259,8 @@ encrypted links and their randomness. -/
 theorem eval_spliceEncryptedKeyLink_zero (n : ℕ) (before : List (List Bool × List Bool))
     (predecessor next : List Bool × List Bool) (after : List (List Bool × List Bool))
     (cut : ℕ) (hcut : cut < predecessor.2.length) :
-    ProbComp.eval (E.encrypt n next.1 false >>= fun challenge =>
+    ProbComp.eval (do
+      let challenge ← E.encrypt n next.1 false
       E.spliceEncryptedKeyLink n before predecessor next after cut challenge) =
         ProbComp.eval (E.encryptKeyLinkHybrid n before predecessor next after (cut + 1)) := by
   have hmiddle := E.eval_spliceEncryptedBit_zero n next.1 predecessor.2 cut hcut

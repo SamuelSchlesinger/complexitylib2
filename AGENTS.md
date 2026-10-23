@@ -267,6 +267,11 @@ lake exe checkInitImports
 - `set_option maxHeartbeats` / `maxRecDepth` overrides need a justifying comment.
 - Never put `[simp]` on machine step functions or transition tables (goals explode).
 - Non-terminal `simp` only as `simp only`; definitions as terms, not `by` blocks, where possible.
+- Prefer `do` notation for sequential monadic computations, including probabilistic experiments
+  in theorem statements. Keep explicit `bind` in laws about bind and proof steps that use those
+  laws directly, and for operations such as `PMF.bind` between different universes that the standard
+  monad interface cannot express. Retain concise point-free composition and maps when naming an
+  intermediate value would not improve readability. Check affected proofs when changing notation.
 - As in Mathlib, renaming, moving or removing a public declaration that is already on `main`
   leaves a deprecated alias at the old full name, `@[deprecated (since := "YYYY-MM-DD")] alias
   oldName := newName` (or a `@[deprecated]` theorem when the statement changes shape). Private

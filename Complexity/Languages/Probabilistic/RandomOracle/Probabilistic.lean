@@ -137,17 +137,20 @@ and complete-table distributions agree, even for arbitrary preassigned cache ent
 theorem run_interpret_answer_complete_prob [DecidableEq Query]
     (distribution : (q : Query) → PMF (Response q))
     (program : ProbOracleComp Response α) (cache : Cache Response) :
-    ((OracleComp.interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (answer distribution))
-        program).run cache).bind (fun (result, cache') =>
-          (complete distribution cache').map (result, ·)) =
-      (complete distribution cache).bind (fun table =>
+    (do
+      let (result, cache') ← (OracleComp.interpret
+        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (answer distribution))
+          program).run cache
+      (complete distribution cache').map (result, ·)) =
+      (do
+        let table ← complete distribution cache
         (OracleComp.interpret
           (handler ProbComp.unifOracle (fun q => PMF.pure (table q))) program).map (·, table)) := by
+  simp only [PMF.monad_bind_eq_bind]
   have h := ProbOracleComp.run_interpret_simulation (answer distribution)
     (fun q table => (PMF.pure (table q)).map (·, table)) (complete distribution)
     (fun q cache => by
-      simpa only [PMF.map, Function.comp_def, PMF.pure_bind] using
+      simpa only [PMF.monad_bind_eq_bind, PMF.map, Function.comp_def, PMF.pure_bind] using
         answer_complete distribution cache q) program cache
   refine h.trans (congrArg ((complete distribution cache).bind) (funext fun table => ?_))
   exact ProbOracleComp.run_interpret_readOnly
@@ -157,7 +160,8 @@ theorem run_interpret_answer_complete_prob [DecidableEq Query]
 adaptive clients, with private randomness independent of the table. -/
 theorem interpret_prob_eq_lazy [DecidableEq Query]
     (distribution : (q : Query) → PMF (Response q)) (program : ProbOracleComp Response α) :
-    (PMF.pi distribution).bind (fun table =>
+    (do
+      let table ← PMF.pi distribution
       OracleComp.interpret
         (handler ProbComp.unifOracle (fun q => PMF.pure (table q))) program) =
       ((OracleComp.interpret
@@ -165,14 +169,16 @@ theorem interpret_prob_eq_lazy [DecidableEq Query]
           program).run (fun _ => none)).map Prod.fst := by
   have h := congrArg (PMF.map Prod.fst)
     (run_interpret_answer_complete_prob distribution program (fun _ => none))
-  simpa only [complete_empty, PMF.map_bind, PMF.map_comp, PMF.map, Function.comp_def,
+  simpa only [PMF.monad_bind_eq_bind, complete_empty, PMF.map_bind, PMF.map_comp, PMF.map,
+    Function.comp_def,
     PMF.bind_const, PMF.bind_pure, PMF.bind_bind, PMF.pure_bind] using h.symm
 
 /-- A uniform random function can be implemented by consistent lazy uniform replies even when
 the client uses private randomness between its adaptive queries. -/
 theorem uniform_interpret_prob_eq_lazy [DecidableEq Query] [∀ q, Fintype (Response q)]
     [∀ q, Nonempty (Response q)] (program : ProbOracleComp Response α) :
-    (PMF.uniformOfFintype ((q : Query) → Response q)).bind (fun table =>
+    (do
+      let table ← PMF.uniformOfFintype ((q : Query) → Response q)
       OracleComp.interpret
         (handler ProbComp.unifOracle (fun q => PMF.pure (table q))) program) =
       ((OracleComp.interpret
@@ -185,7 +191,8 @@ theorem uniform_interpret_prob_eq_lazy [DecidableEq Query] [∀ q, Fintype (Resp
 /-- A list cache implements eager independent sampling for clients with private randomness. -/
 theorem interpret_prob_eq_memoize {Value : Type} [Finite Value] [BEq Query] [LawfulBEq Query]
     (distribution : Query → PMF Value) (program : ProbOracleComp (fun _ : Query => Value) α) :
-    (PMF.pi distribution).bind (fun table =>
+    (do
+      let table ← PMF.pi distribution
       OracleComp.interpret (handler ProbComp.unifOracle (fun q => PMF.pure (table q))) program) =
       ((OracleComp.interpret
         (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (memoize distribution))
@@ -203,8 +210,10 @@ theorem interpret_prob_eq_memoize_map {Value Key' Value' : Type} [Finite Value]
     (distribution : Query → PMF Value) (sample' : Key' → PMF Value')
     (hsample : ∀ key, sample' (keyMap key) = (distribution key).map valueMap)
     (program : ProbOracleComp (fun _ : Query => Value') α) :
-    (PMF.pi distribution).bind (fun table => OracleComp.interpret
-      (handler ProbComp.unifOracle (fun key => PMF.pure (valueMap (table key)))) program) =
+    (do
+      let table ← PMF.pi distribution
+      OracleComp.interpret
+        (handler ProbComp.unifOracle (fun key => PMF.pure (valueMap (table key)))) program) =
       ((OracleComp.interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n))
         (fun key => memoize sample' (keyMap key))) program).run []).map Prod.fst := by
   let represent := fun cache : List (Query × Value) =>
@@ -230,7 +239,8 @@ theorem eval_run_interpret_memoize_prob_eq_eager {Key Value Result : Type}
     (compute : Key → ProbComp Value) (program : ProbOracleComp (fun _ : Key => Value) Result) :
     ProbComp.eval (Prod.fst <$> (OracleComp.interpret
       (handler (fun n => StateT.lift (ProbComp.unifFin n)) (memoize compute)) program).run []) =
-        (PMF.pi (fun q => ProbComp.eval (compute q))).bind (fun table =>
+        (do
+          let table ← PMF.pi (fun q => ProbComp.eval (compute q))
           OracleComp.interpret (handler ProbComp.unifOracle (fun q => PMF.pure (table q)))
             program) := by
   rw [interpret_prob_eq_memoize]

@@ -124,7 +124,7 @@ theorem prfIdealGame_eq_lazy (adversary : OracleDistinguisher) (n : ℕ) :
   simpa only [adapted, prfIdealGame, ProbComp.eval_bind, ProbComp.eval_uniform,
     ProbOracleComp.eval_interpret, ProbComp.eval_pure, OracleComp.interpret_interpret,
     ProbOracleComp.interpret_handler, ProbOracleComp.interpret_sample, ProbComp.unifFin,
-    OracleComp.interpret_query, heager, lazyRandomFunctionOracle] using h
+    OracleComp.interpret_query, heager, lazyRandomFunctionOracle, PMF.monad_bind_eq_bind] using h
 
 /-- An efficiently evaluated keyed family secure against every uniform adaptive oracle test. -/
 structure PseudorandomFunction (family : List Bool → List Bool → List Bool) : Prop where

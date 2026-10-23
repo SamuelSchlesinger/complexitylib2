@@ -90,8 +90,9 @@ example (test : ℕ → ℕ → List Bool → ProbComp Bool)
 example (test : ℕ → ℕ → List Bool → ProbComp Bool)
     (htest : IsPPTOn (encPair (encPair encNat encUnary) encBits) encBool
       (fun input => test input.1.1 input.1.2 input.2)) :
-    IsPPTOn (encPair encNat encUnary) encBool (fun input : ℕ × ℕ =>
-      BitString.sampleList input.2 >>= fun word => test input.1 input.2 word) := by
+    IsPPTOn (encPair encNat encUnary) encBool (fun input : ℕ × ℕ => do
+      let word ← BitString.sampleList input.2
+      test input.1 input.2 word) := by
   ppt
 
 -- Failure of the first encoding must leave the second local certificate usable.

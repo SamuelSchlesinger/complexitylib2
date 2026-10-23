@@ -63,8 +63,11 @@ theorem observation_extraction {pair : SamplablePair} (saved : pair.SeedRealizat
           (ProbComp.eval (OracleComp.replicate
             (ExtractionSchedule.count n (saved.length n) (inverseSlack n))
               (Prod.fst <$> pair.latentSample n))) (hash n)).bind (test n))
-      (fun test n => ((ProbComp.eval (key n)).bind
-        (fun k => (PMF.uniformOfFintype (BitString (outputBits n))).map (k, ·))).bind (test n))
+      (fun test n => do
+        let result ← do
+          let k ← ProbComp.eval (key n)
+          (PMF.uniformOfFintype (BitString (outputBits n))).map (k, ·)
+        test n result)
       (fun _ => True) := by
   apply seededHash_replicate_indistinguishable
     (fun n => Prod.fst <$> pair.latentSample n) saved.length inverseSlack outputBits
@@ -94,8 +97,11 @@ theorem observation_word_extraction {pair : SamplablePair} (saved : pair.SeedRea
           (ProbComp.eval (OracleComp.replicate
             (ExtractionSchedule.count n (saved.length n) (inverseSlack n))
               (Prod.fst <$> pair.sample n))) (hash n)).bind (test n))
-      (fun test n => ((ProbComp.eval (key n)).bind
-        (fun k => (PMF.uniformOfFintype (BitString (outputBits n))).map (k, ·))).bind (test n))
+      (fun test n => do
+        let result ← do
+          let k ← ProbComp.eval (key n)
+          (PMF.uniformOfFintype (BitString (outputBits n))).map (k, ·)
+        test n result)
       (fun _ => True) := by
   intro test _
   have h := saved.observation_extraction inverseSlack outputBits key

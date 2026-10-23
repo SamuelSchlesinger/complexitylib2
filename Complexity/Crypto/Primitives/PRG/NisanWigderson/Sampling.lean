@@ -177,7 +177,7 @@ theorem toReal_predictionExperiment_eq_expect_trialAgreement (i : Fin m) :
         true).toReal =
       𝔼 w, 𝔼 r, 𝔼 u, (trialAgreement D f test ⟨i, w, r, u⟩ : ℝ) := by
   simp only [predictionExperiment_generator, hardwiredExperiment_nextBitPredictor_pure,
-    toReal_uniformOfFintype_bind_apply, toReal_uniformOfFintype_map_apply_true,
+    monad_bind_eq_bind, toReal_uniformOfFintype_bind_apply, toReal_uniformOfFintype_map_apply_true,
     decide_eq_true_eq]
   rfl
 

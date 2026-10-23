@@ -72,7 +72,8 @@ theorem publicKey_indistinguishable_zero :
     fun_prop
   have h := Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth hdepth
     (test := fun n artifact => adversary n (encPublicKey artifact)) htest
-  simpa only [eval_keyGen_public, distinguishingGame, PMF.bind_map, Function.comp_def,
+  simpa only [eval_keyGen_public, distinguishingGame, PMF.monad_bind_eq_bind, PMF.bind_map,
+    Function.comp_def,
     ProbComp.eval_bind] using h
 
 /-- The actual serialized acyclic public key and fresh tagged encryption preserve IND-CPA.

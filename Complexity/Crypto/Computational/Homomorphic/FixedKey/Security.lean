@@ -90,7 +90,7 @@ theorem negligible_publicKeyGame {E : Scheme}
       (publicKeyDecoder.computableTidilyInPolyTime.comp
         (ComputableTidilyInPolyTime.snd encUnary encBits)))
   have h := hcircular _ htest
-  simpa only [distinguishingGame, PMF.bind_map, Function.comp_def,
+  simpa only [distinguishingGame, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def,
     publicKeyDecoder.decode_enc, ProbComp.eval_bind] using h
 
 /-- Self-encrypted evaluation keys preserve adaptive IND-CPA under ordinary base IND-CPA and

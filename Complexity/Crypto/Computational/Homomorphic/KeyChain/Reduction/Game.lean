@@ -139,7 +139,7 @@ theorem eval_linkAdversary (depth capacity : ℕ → ℕ)
   · simp only [hi, ↓reduceIte]
     congr 1
     funext j
-    simpa only [Encryption.game, linkAdversaryAt, ProbComp.eval_bind] using
+    simpa only [Encryption.game, linkAdversaryAt, ProbComp.eval_bind, PMF.monad_pure_eq_pure] using
       E.eval_linkAdversaryAt (fun _ => depth n - i.val - 1) (fun _ => i.val)
         (fun _ => j.val) test n width bit hwidth
   · simp [hi, rejectLinkChoice]

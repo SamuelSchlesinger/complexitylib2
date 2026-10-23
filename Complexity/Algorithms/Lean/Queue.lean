@@ -104,8 +104,9 @@ def methods : Methods (queue α) (stackPair α)
   | .enqueue n => .liftBind (.inr (.push n)) fun _ => .pure ()
   | .dequeue => .liftBind (.inl .pop) fun
       | some a => .pure (some a)
-      | none => .liftBind (.inr .size) fun n =>
-          (transfer n).bind fun _ => .liftBind (.inl .pop) fun a => .pure a
+      | none => .liftBind (.inr .size) fun n => do
+          let _ ← transfer n
+          .liftBind (.inl .pop) fun a => .pure a
 
 /-- Primitive-operation trace of transferring the rear contents to the front. -/
 def transferTrace : List α → List (stackPair α).Op
@@ -142,7 +143,7 @@ def implementation : Module (queue α) (stackPair α) where
       cases front with
       | cons a front => exact ⟨rfl, rfl⟩
       | nil =>
-        simp only [methods, Spec.runClient, stackPair, product, stack,
+        simp only [methods, bind, Spec.runClient, stackPair, product, stack,
           List.tail_nil, List.head?_nil]
         rw [Spec.runClient_bind, transfer_run]
         simp [Spec.runClient]
@@ -170,7 +171,7 @@ theorem potential_step (s : (stackPair α).State) (o : QueueOp α) :
       change 1 + 2 * back.length ≤ 3 + 2 * back.length
       omega
     | nil =>
-      simp only [methods, Spec.runClient, stackPair, product, stack,
+      simp only [methods, bind, Spec.runClient, stackPair, product, stack,
           List.tail_nil, List.head?_nil]
       rw [Spec.runClient_bind, transfer_run]
       simp only [Spec.runClient]

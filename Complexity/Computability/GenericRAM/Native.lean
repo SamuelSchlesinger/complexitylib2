@@ -152,14 +152,16 @@ structure Encoding (M : Model.{0, 0, 0, 0}) where
 variable {M : Model.{0, 0, 0, 0}}
 
 /-- A fixed literal's result, including the admissibility check performed by `Data.put`. -/
-def checkedConstant (M : Model) (c : M.Const) (k : M.Config) : Option M.Value :=
-  (M.constant k c).bind fun v => if M.admissible k v then some v else none
+def checkedConstant (M : Model) (c : M.Const) (k : M.Config) : Option M.Value := do
+  let v ← M.constant k c
+  if M.admissible k v then some v else none
 
 /-- A fixed operation's result, including the admissibility check performed by `Data.put`.
 A native implementation can reject overflow without materializing the unchecked result. -/
 def checkedOp (M : Model) (op : M.operations.Op)
-    (p : M.Config × (Fin (M.operations.Arity op) → M.Value)) : Option M.Value :=
-  (M.evalOp p.1 op p.2).bind fun v => if M.admissible p.1 v then some v else none
+    (p : M.Config × (Fin (M.operations.Arity op) → M.Value)) : Option M.Value := do
+  let v ← M.evalOp p.1 op p.2
+  if M.admissible p.1 v then some v else none
 
 /-- A constant instruction stores exactly the checked literal result, preserving faults. -/
 theorem eval_const_eq_map_checkedConstant {r : ℕ} (k : M.Config) (x : Data M r)
@@ -168,7 +170,7 @@ theorem eval_const_eq_map_checkedConstant {r : ℕ} (k : M.Config) (x : Data M r
   cases h : M.constant k c with
   | none => simp [Op.eval, checkedConstant, h]
   | some v =>
-    simp only [Op.eval, checkedConstant, h, Option.bind_some, Data.put]
+    simp only [Op.eval, checkedConstant, h, bind, Option.bind_some, Data.put]
     split <;> rfl
 
 /-- An ALU instruction stores exactly the checked operation result, preserving faults. -/
@@ -178,7 +180,7 @@ theorem eval_alu_eq_map_checkedOp {r : ℕ} (k : M.Config) (x : Data M r)
   cases h : M.evalOp k op (x.regs ∘ args) with
   | none => simp [Op.eval, checkedOp, h]
   | some v =>
-    simp only [Op.eval, checkedOp, h, Option.bind_some, Data.put]
+    simp only [Op.eval, checkedOp, h, bind, Option.bind_some, Data.put]
     split <;> rfl
 
 /-- Scalar certificates needed by a fixed-program RAM simulation. Memory lookup/update and

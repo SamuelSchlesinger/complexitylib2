@@ -174,7 +174,7 @@ theorem successor_spec {d : ℕ} {t : Tree d} (ht : t.Valid) (x : ℕ) :
               cases hsuc : s.successor i.val with
               | none =>
                 simp only [hsuc] at hs
-                simp only [Option.bind_none]
+                simp only [bind, Option.bind_none]
                 intro z hz
                 obtain ⟨m', M', hb, hz⟩ := hz
                 cases hb
@@ -195,7 +195,7 @@ theorem successor_spec {d : ℕ} {t : Tree d} (ht : t.Valid) (x : ℕ) :
                   obtain ⟨cm, cM⟩ := b
                   have hce := (ht.2.2.1 k).extrema
                   simp only [Extrema, hb] at hce
-                  simp only [Option.bind_some]
+                  simp only [bind, Option.bind_some]
                   rw [dite_eq_left hj, minimum, hb]
                   simp only [Option.map_some]
                   refine ⟨⟨m, M, rfl, Or.inr ⟨k, cm, hce.2.2.1, rfl⟩⟩, ?_, ?_⟩

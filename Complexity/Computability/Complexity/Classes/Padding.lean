@@ -363,7 +363,7 @@ theorem preimage_mem_NTIME_of_mem_NP {B : Set (List Bool)} {g : α → List Bool
         ProbComp.eval (M_comp.runClosed (totalTime a) (enc a)) =
           ProbComp.eval (M_NP.runClosed (c₁ * ((g a).length + 1) ^ d₁) (g a)) := by
       rw [M_pad.eval_comp M_NP false (enc a) (t₁ a) (t₂ a) (hfirst a) (hsecond a),
-        hout₁ a, PMF.pure_bind,
+        hout₁ a, Probability.PMF.monad_bind_eq_bind, PMF.pure_bind,
         M_NP.eval_runClosed_eq_of_halted (g a) (ht₂_le a) (hhalt₂ (g a))]
     have hsupport := congrArg (fun μ => [true] ∈ μ.support)
       ((heval₂ (g a)).trans hcomp_eval.symm)

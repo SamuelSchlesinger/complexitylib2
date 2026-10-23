@@ -315,7 +315,9 @@ a word too. -/
 def Op.eval (w : ℕ) : Op B r → Data r → Option (Data r)
   | .const d v, x => x.put w d v
   | .copy d s, x => some (x.set d (x.regs s))
-  | .alu f d args, x => (B.interp w f (x.regs ∘ args)).bind (x.put w d)
+  | .alu f d args, x => do
+      let value ← B.interp w f (x.regs ∘ args)
+      x.put w d value
   | .load d a, x => some (x.set d (x.mem (x.regs a)))
   | .store a s, x => some (x.write (x.regs a) (x.regs s))
 

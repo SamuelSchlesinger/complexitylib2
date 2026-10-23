@@ -89,8 +89,9 @@ theorem eval_extract_ofFn {n m : ℕ} (input : BitString n) :
 /-- Hashing concatenated independent fixed-width words has the tuple extraction law. -/
 theorem eval_extract_replicate {width : ℕ} (source : ProbComp (BitString width))
     (count outputBits : ℕ) :
-    ProbComp.eval (OracleComp.replicate count (List.ofFn <$> source) >>=
-      fun words => extract outputBits words.flatten) =
+    ProbComp.eval (do
+      let words ← OracleComp.replicate count (List.ofFn <$> source)
+      extract outputBits words.flatten) =
         (seededHash (PMF.uniformOfFintype (BitString (outputBits * (count * width))))
           (ProbComp.eval (OracleComp.replicate count source))
           (fun seed values => hash (blocksEquiv (m := outputBits) (k := count * width) seed)

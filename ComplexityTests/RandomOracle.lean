@@ -46,8 +46,9 @@ private theorem adaptive_queryBounds : adaptive.HasQueryBounds (fun _ => 1) 3 1 
 
 -- Eagerly sample a table or lazily cache it: the adaptive client's output has the same law.
 example :
-    (PMF.uniformOfFintype (Bool → Bool)).bind
-        (fun table => OracleComp.interpret (fun q => PMF.pure (table q)) adaptive) =
+    (do
+      let table ← PMF.uniformOfFintype (Bool → Bool)
+      OracleComp.interpret (fun q => PMF.pure (table q)) adaptive) =
       ((OracleComp.interpret
         (Cslib.RandomOracle.answer (fun _ => PMF.uniformOfFintype Bool)) adaptive).run
           (fun _ => none)).map Prod.fst :=
@@ -77,8 +78,9 @@ example (table : Bool → Bool)
 example :
     ProbComp.eval (Prod.fst <$>
       (OracleComp.interpret (memoize (fun _ : Bool => ProbComp.uniform Bool)) adaptive).run []) =
-      (PMF.pi (fun _ : Bool => PMF.uniformOfFintype Bool)).bind
-        (fun table => OracleComp.interpret (fun q => PMF.pure (table q)) adaptive) := by
+      (do
+        let table ← PMF.pi (fun _ : Bool => PMF.uniformOfFintype Bool)
+        OracleComp.interpret (fun q => PMF.pure (table q)) adaptive) := by
   simpa only [ProbComp.eval_uniform] using
     Cslib.RandomOracle.eval_run_interpret_memoize_eq_eager
       (fun _ : Bool => ProbComp.uniform Bool) adaptive

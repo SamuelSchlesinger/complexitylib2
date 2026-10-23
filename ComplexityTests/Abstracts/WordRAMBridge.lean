@@ -254,7 +254,7 @@ theorem step_matches {S : Presentation} (h : Laws S) (w : ℕ) (q : Program .exa
     | none =>
       rw [hg] at he
       exact fault (h.step_alu_none hget he) (by simp only [Cslib.WordRAM.step, hq, Op.eval,
-        Basis.exact, hlib, hg, Option.bind_none])
+        Basis.exact, hlib, hg, bind, Option.bind_none])
     | some x =>
       rw [hg] at he
       by_cases hx : x < 2 ^ w

@@ -102,12 +102,13 @@ theorem isPPTOn_extractedWordTest {α : Type} {input : α ↪ List Bool} {count 
     (houtput : ComputableTidilyInPolyTime outputBits input encUnary) :
     IsPPTOn (encPair input
       (encList (encPair encBits encBool))) encBool
-      (fun input => extractLabels
-        (ProbComp.uniform (BitString (outputBits input.1 * count input.1)))
-        (fun seed bits => LinearHash.hash
-          (blocksEquiv (m := outputBits input.1) (k := count input.1) seed)
-          (ofList (count input.1) bits)) input.2 >>= fun result =>
-            test input.1 (result.1, List.ofFn result.2.1, List.ofFn result.2.2)) := by
+      (fun input => do
+        let result ← extractLabels
+          (ProbComp.uniform (BitString (outputBits input.1 * count input.1)))
+          (fun seed bits => LinearHash.hash
+            (blocksEquiv (m := outputBits input.1) (k := count input.1) seed)
+            (ofList (count input.1) bits)) input.2
+        test input.1 (result.1, List.ofFn result.2.1, List.ofFn result.2.2)) := by
   have hword : IsPPTOn (encPair input
       (encList (encPair encBits encBool))) encBool
       (fun input => extractWordLabels (count input.1) (outputBits input.1) input.2 >>=
@@ -146,9 +147,10 @@ theorem SamplablePair.HasGap.extract_indexed_word_labels {pair : SamplablePair} 
       encBool (fun input => test input.1.1 input.1.2 input.2)) :
     let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
     Negligible (fun n => Game.advantage
-      (ProbComp.eval (OracleComp.replicate (count n) (pair.sample n) >>=
-        fun samples => extractWordLabels (count n) (outputBits n (choose n)) samples >>=
-          test n (choose n)))
+      (ProbComp.eval (do
+        let samples ← OracleComp.replicate (count n) (pair.sample n)
+        let result ← extractWordLabels (count n) (outputBits n (choose n)) samples
+        test n (choose n) result))
       (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
         (outputBits n (choose n)) >>= test n (choose n)))) := by
   let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
@@ -202,8 +204,10 @@ theorem SamplablePair.HasGap.extract_word_labels {pair : SamplablePair} {gap : �
       (encPair encBits encBits))) encBool (fun input => test input.1 input.2)) :
     let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
     Negligible (fun n => Game.advantage
-      (ProbComp.eval (OracleComp.replicate (count n) (pair.sample n) >>=
-        fun samples => extractWordLabels (count n) (outputBits n) samples >>= test n))
+      (ProbComp.eval (do
+        let samples ← OracleComp.replicate (count n) (pair.sample n)
+        let result ← extractWordLabels (count n) (outputBits n) samples
+        test n result))
       (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
         (outputBits n) >>= test n))) := by
   exact hpair.extract_indexed_word_labels realization (fun _ => 0)
