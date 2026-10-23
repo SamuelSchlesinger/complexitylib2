@@ -35,7 +35,12 @@ namespace Cslib.Complexity
 open _root_.Turing _root_.Turing.MultiTapeTM
 
 /-- A terminating finite-alphabet Mathlib stack-machine decider with polynomially bounded
-stacks decides a problem in `PSPACE`, under the standard binary input-word encoding. -/
+stacks decides a problem in `PSPACE`, under the standard binary input-word encoding.
+
+The hypothesis `hstacks` uses `Turing.TM2.stepTotal`, which agrees with Mathlib's partial
+`Turing.TM2.step` whenever it returns a successor and fixes halted configurations
+(`Turing.TM2.stepTotal_of_step`). Thus it bounds the ordinary source run, including its initial
+and final configurations; padding beyond halting imposes no additional stack bound. -/
 theorem mem_PSPACE_of_tm2 {α αΓ βΓ : Type} [Finite αΓ] [Finite βΓ]
     {ea : α → List αΓ} {eb : Bool → List βΓ} {f : α → Bool} {A : Set α}
     (h : TM2Computable ea eb f) [∀ k, Finite (h.tm.Γ k)]
