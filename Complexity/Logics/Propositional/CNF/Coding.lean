@@ -130,7 +130,7 @@ theorem disjoint_agreeOffForced {x x' : BitString N} (hx : φ.eval x = true) (hx
     · exact hxv (((mem_filter.1 hy).2 v hfx).symm.trans ((mem_filter.1 hy').2 v hfx'))
 
 /-- `2 ^ |forced σ x|` words agree with `x` off its forced variables. -/
-theorem card_agreeOffForced (x : BitString N) :
+private theorem card_agreeOffForced (x : BitString N) :
     (φ.agreeOffForced σ x).card = 2 ^ (φ.forced σ x).card :=
   BitString.card_filter_forall_notMem_eq _ x
 
@@ -195,7 +195,7 @@ theorem critical_congr {x : BitString N} {i : Fin N} {c c' : Clause (Fin N)}
 
 /-- **A clause is critical at few inputs**: for each direction, a clause with `v` variables is
 critical at at most `2 ^ (N - v)` inputs, since they all agree on its variables. -/
-theorem card_filter_critical_le (c : Clause (Fin N)) (i : Fin N) :
+private theorem card_filter_critical_le (c : Clause (Fin N)) (i : Fin N) :
     #{x : BitString N | Critical x c i} ≤ 2 ^ (N - (c.map Prod.fst).toFinset.card) := by
   set V := (c.map Prod.fst).toFinset
   rcases ({x : BitString N | Critical x c i} : Finset _).eq_empty_or_nonempty with h | ⟨x₀, hx₀⟩
@@ -238,7 +238,7 @@ theorem card_filter_critical_prod_le (c : Clause (Fin N)) :
 /-- **Critical clauses force often.** A direction `i` with a critical clause `c` at `x` is forced
 whenever it comes last among the variables of `c`, so for at least a `1 / v` fraction of the
 orders, where `v` is the number of variables of `c`. -/
-theorem factorial_le_card_mul_card_filter_mem_forced {x : BitString N} {i : Fin N}
+private theorem factorial_le_card_mul_card_filter_mem_forced {x : BitString N} {i : Fin N}
     {c : Clause (Fin N)} (hc : c ∈ φ) (hcrit : Critical x c i) :
     N.factorial ≤ (c.map Prod.fst).toFinset.card *
       (univ.filter fun σ : Equiv.Perm (Fin N) => i ∈ φ.forced σ x).card := by
@@ -269,7 +269,7 @@ theorem factorial_le_mul_card_filter_mem_forced {k : ℕ} (hk : ∀ c ∈ φ, c.
 
 /-- Summed over the variables, the orders forcing each count the forced variables of every
 order. -/
-theorem sum_card_filter_mem_forced (x : BitString N) :
+private theorem sum_card_filter_mem_forced (x : BitString N) :
     ∑ i, (univ.filter fun σ : Equiv.Perm (Fin N) => i ∈ φ.forced σ x).card =
       ∑ σ : Equiv.Perm (Fin N), (φ.forced σ x).card := by
   simp only [card_eq_sum_ones, sum_filter]
@@ -380,7 +380,7 @@ theorem exists_critical_card_eq_critWidth {x : BitString N} {i : Fin N}
   exact Nat.sInf_mem (s := {v | ∃ c ∈ φ, Critical x c i ∧ (c.map Prod.fst).toFinset.card = v})
     ⟨_, c, hc, hcrit, rfl⟩
 
-theorem critWidth_eq_zero {x : BitString N} {i : Fin N} (h : ¬ ∃ c ∈ φ, Critical x c i) :
+private theorem critWidth_eq_zero {x : BitString N} {i : Fin N} (h : ¬ ∃ c ∈ φ, Critical x c i) :
     φ.critWidth x i = 0 := by
   refine Nat.sInf_eq_zero.2 (Or.inr (Set.eq_empty_iff_forall_notMem.2 fun v hv => ?_))
   obtain ⟨c, hc, hcrit, -⟩ := hv
@@ -394,7 +394,7 @@ theorem critWidth_pos {x : BitString N} {i : Fin N} (h : ∃ c ∈ φ, Critical 
 
 /-- The average number of variables forced on `x` is at least its *weight*
 `∑ᵢ 1 / critWidth φ x i`. -/
-theorem sum_inv_critWidth_le (x : BitString N) :
+private theorem sum_inv_critWidth_le (x : BitString N) :
     ∑ i, 1 / (φ.critWidth x i : ℝ) ≤
       (∑ σ : Equiv.Perm (Fin N), ((φ.forced σ x).card : ℝ)) / N.factorial := by
   have hswap : ∑ σ : Equiv.Perm (Fin N), ((φ.forced σ x).card : ℝ) =

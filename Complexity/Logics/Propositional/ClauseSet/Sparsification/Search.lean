@@ -70,12 +70,12 @@ theorem exists_isLeafWord_sat_iff (hθ : ∀ j, 1 ≤ θ j) (s : σ) (x : V → 
 
 /-- The leaf words of a state that is not sparse are the leaf words of its children, after their
 branch. -/
-theorem isLeafWord_cons_iff {s : σ} {b : Bool} {w : List Bool} :
+private theorem isLeafWord_cons_iff {s : σ} {b : Bool} {w : List Bool} :
     R.IsLeafWord s (b :: w) ↔ ¬ Sparse θ (R.toClauseSet s) ∧ R.IsLeafWord (R.next s b) w :=
   Iff.rfl
 
 /-- The only leaf word of a sparse state is the empty word. -/
-theorem IsLeafWord.eq_nil {s : σ} (hs : Sparse θ (R.toClauseSet s)) {w : List Bool}
+private theorem IsLeafWord.eq_nil {s : σ} (hs : Sparse θ (R.toClauseSet s)) {w : List Bool}
     (hw : R.IsLeafWord s w) : w = [] := by
   cases w with
   | nil => rfl

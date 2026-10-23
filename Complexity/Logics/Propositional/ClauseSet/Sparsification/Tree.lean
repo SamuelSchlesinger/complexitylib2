@@ -149,15 +149,15 @@ variable {R}
 /-! ### One step -/
 
 /-- A child only loses solutions: its solutions are solutions of the parent. -/
-theorem sat_of_sat_next {s : σ} (hs : ¬ Sparse θ (R.toClauseSet s)) {b : Bool} {x : V → Bool}
-    (hx : (R.toClauseSet (R.next s b)).Sat x) : (R.toClauseSet s).Sat x := by
+private theorem sat_of_sat_next {s : σ} (hs : ¬ Sparse θ (R.toClauseSet s)) {b : Bool}
+    {x : V → Bool} (hx : (R.toClauseSet (R.next s b)).Sat x) : (R.toClauseSet s).Sat x := by
   obtain ⟨c, H, -, hnext⟩ := R.exists_choice_next s hs
   rw [hnext] at hx
   exact sat_of_sat_child hx
 
 /-- **The branches cover.** Every solution of a state that is not sparse is a solution of one of
 its children. -/
-theorem exists_sat_next {s : σ} (hs : ¬ Sparse θ (R.toClauseSet s)) {x : V → Bool}
+private theorem exists_sat_next {s : σ} (hs : ¬ Sparse θ (R.toClauseSet s)) {x : V → Bool}
     (hx : (R.toClauseSet s).Sat x) : ∃ b, (R.toClauseSet (R.next s b)).Sat x := by
   obtain ⟨c, H, -, hnext⟩ := R.exists_choice_next s hs
   refine ⟨decide ¬ ∃ l ∈ H, x l.1 = l.2, ?_⟩
@@ -172,8 +172,8 @@ theorem potential_next_lt (hθ : ∀ j, 1 ≤ θ j) {s : σ} (hs : ¬ Sparse θ 
   exact potential_child_lt hθ hch.1 b
 
 /-- Every clause of a child is contained in a clause of its parent. -/
-theorem refines_next (hθ : ∀ j, 1 ≤ θ j) {s : σ} (hs : ¬ Sparse θ (R.toClauseSet s)) (b : Bool) :
-    Refines (R.toClauseSet (R.next s b)) (R.toClauseSet s) := by
+private theorem refines_next (hθ : ∀ j, 1 ≤ θ j) {s : σ} (hs : ¬ Sparse θ (R.toClauseSet s))
+    (b : Bool) : Refines (R.toClauseSet (R.next s b)) (R.toClauseSet s) := by
   obtain ⟨c, H, hch, hnext⟩ := R.exists_choice_next s hs
   intro C hC
   rw [hnext] at hC
@@ -184,7 +184,8 @@ theorem refines_next (hθ : ∀ j, 1 ≤ θ j) {s : σ} (hs : ¬ Sparse θ (R.to
 
 /-! ### Words -/
 
-theorem walk_append (s : σ) (u v : List Bool) : R.walk s (u ++ v) = R.walk (R.walk s u) v := by
+private theorem walk_append (s : σ) (u v : List Bool) :
+    R.walk s (u ++ v) = R.walk (R.walk s u) v := by
   induction u generalizing s with
   | nil => rfl
   | cons a u ih => exact ih (R.next s a)
@@ -207,24 +208,24 @@ theorem IsLeafWord.sparse_walk {s : σ} {w : List Bool} (h : R.IsLeafWord s w) :
   | nil => exact h
   | cons b w ih => exact ih h.2
 
-theorem IsNodeWord.isLeafWord {s : σ} {w : List Bool} (hn : R.IsNodeWord s w)
+private theorem IsNodeWord.isLeafWord {s : σ} {w : List Bool} (hn : R.IsNodeWord s w)
     (hs : Sparse θ (R.toClauseSet (R.walk s w))) : R.IsLeafWord s w := by
   induction w generalizing s with
   | nil => exact hs
   | cons b w ih => exact ⟨hn.1, ih hn.2 hs⟩
 
 /-- A leaf word is a node word reaching a sparse state. -/
-theorem isLeafWord_iff {s : σ} {w : List Bool} :
+private theorem isLeafWord_iff {s : σ} {w : List Bool} :
     R.IsLeafWord s w ↔ R.IsNodeWord s w ∧ Sparse θ (R.toClauseSet (R.walk s w)) :=
   ⟨fun h => ⟨h.isNodeWord, h.sparse_walk⟩, fun h => h.1.isLeafWord h.2⟩
 
-theorem IsNodeWord.append {s : σ} {u v : List Bool} (hu : R.IsNodeWord s u)
+private theorem IsNodeWord.append {s : σ} {u v : List Bool} (hu : R.IsNodeWord s u)
     (hv : R.IsNodeWord (R.walk s u) v) : R.IsNodeWord s (u ++ v) := by
   induction u generalizing s with
   | nil => exact hv
   | cons b u ih => exact ⟨hu.1, ih hu.2 hv⟩
 
-theorem IsNodeWord.of_append {s : σ} {u v : List Bool} (h : R.IsNodeWord s (u ++ v)) :
+private theorem IsNodeWord.of_append {s : σ} {u v : List Bool} (h : R.IsNodeWord s (u ++ v)) :
     R.IsNodeWord s u ∧ R.IsNodeWord (R.walk s u) v := by
   induction u generalizing s with
   | nil => exact ⟨trivial, h⟩
@@ -232,7 +233,7 @@ theorem IsNodeWord.of_append {s : σ} {u v : List Bool} (h : R.IsNodeWord s (u +
     obtain ⟨h₁, h₂⟩ := ih h.2
     exact ⟨⟨h.1, h₁⟩, h₂⟩
 
-theorem IsNodeWord.not_sparse_take {s : σ} {w : List Bool} (h : R.IsNodeWord s w) :
+private theorem IsNodeWord.not_sparse_take {s : σ} {w : List Bool} (h : R.IsNodeWord s w) :
     ∀ i < w.length, ¬ Sparse θ (R.toClauseSet (R.walk s (w.take i))) := by
   induction w generalizing s with
   | nil => intro i hi; simp at hi

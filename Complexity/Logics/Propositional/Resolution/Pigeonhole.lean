@@ -155,18 +155,18 @@ theorem matchPair_eq_none {i : Fin m} {j : Fin n} {v : Fin m × Fin n} :
   · push Not at h₂
     simp [h₂]
 
-theorem matchPair_of_fst_eq_of_snd_ne {i : Fin m} {j j' : Fin n} (hj : j' ≠ j) :
+private theorem matchPair_of_fst_eq_of_snd_ne {i : Fin m} {j j' : Fin n} (hj : j' ≠ j) :
     matchPair i j (i, j') = some false := by
   simp [matchPair, hj]
 
-theorem matchPair_of_fst_ne_of_snd_eq {i i' : Fin m} {j : Fin n} (hi : i' ≠ i) :
+private theorem matchPair_of_fst_ne_of_snd_eq {i i' : Fin m} {j : Fin n} (hi : i' ≠ i) :
     matchPair i j (i', j) = some false := by
   simp [matchPair, hi]
 
 /-- Restricting `pigeonholeOn P H` by matching `i₀` to `j₀ ∈ H` leaves clauses of
 `pigeonholeOn (P.erase i₀) (H.erase j₀)`. -/
-theorem restrictBy_pigeonholeOn_subset {P : Finset (Fin m)} {H : Finset (Fin n)} {i₀ : Fin m}
-    {j₀ : Fin n} (hj₀ : j₀ ∈ H) :
+private theorem restrictBy_pigeonholeOn_subset {P : Finset (Fin m)} {H : Finset (Fin n)}
+    {i₀ : Fin m} {j₀ : Fin n} (hj₀ : j₀ ∈ H) :
     (pigeonholeOn P H).restrictBy (matchPair i₀ j₀) ⊆ pigeonholeOn (P.erase i₀) (H.erase j₀) := by
   intro c hc
   obtain ⟨d, hd, hsat, rfl⟩ := CNF.mem_restrictBy.1 hc
@@ -211,7 +211,7 @@ def critAssign (H : Finset (Fin n)) (g : Fin n → Fin m) (v : Fin m × Fin n) :
   decide (v.2 ∈ H ∧ g v.2 = v.1)
 
 /-- Every hole clause on distinct pigeons is satisfied by `critAssign H g`. -/
-theorem eval_holeClause_critAssign (H : Finset (Fin n)) (g : Fin n → Fin m) {i i' : Fin m}
+private theorem eval_holeClause_critAssign (H : Finset (Fin n)) (g : Fin n → Fin m) {i i' : Fin m}
     (hne : i ≠ i') (j : Fin n) :
     (CNF.holeClause i i' j).eval (critAssign H g) = true := by
   rw [CNF.eval_holeClause]
@@ -220,14 +220,14 @@ theorem eval_holeClause_critAssign (H : Finset (Fin n)) (g : Fin n → Fin m) {i
   exact hne (h.1.2.symm.trans h.2.2)
 
 /-- The pigeon clause of `i` on `H` is satisfied by `critAssign H g` iff `i ∈ H.image g`. -/
-theorem eval_pigeonClauseOn_critAssign (H : Finset (Fin n)) (g : Fin n → Fin m) (i : Fin m) :
-    (pigeonClauseOn H i).eval (critAssign H g) = true ↔ i ∈ H.image g := by
+private theorem eval_pigeonClauseOn_critAssign (H : Finset (Fin n)) (g : Fin n → Fin m)
+    (i : Fin m) : (pigeonClauseOn H i).eval (critAssign H g) = true ↔ i ∈ H.image g := by
   simp [eval_pigeonClauseOn, critAssign, mem_image]
 
 /-- When `#P = #H + 1`, a critical assignment leaves out at most one pigeon of `P`. -/
-theorem eq_of_not_mem_image_of_isCrit {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin n → Fin m}
-    (hP : #P = #H + 1) (hg : IsCrit P H g) {i₁ i₂ : Fin m} (hi₁ : i₁ ∈ P) (hi₂ : i₂ ∈ P)
-    (h₁ : i₁ ∉ H.image g) (h₂ : i₂ ∉ H.image g) : i₁ = i₂ := by
+private theorem eq_of_not_mem_image_of_isCrit {P : Finset (Fin m)} {H : Finset (Fin n)}
+    {g : Fin n → Fin m} (hP : #P = #H + 1) (hg : IsCrit P H g) {i₁ i₂ : Fin m} (hi₁ : i₁ ∈ P)
+    (hi₂ : i₂ ∈ P) (h₁ : i₁ ∉ H.image g) (h₂ : i₂ ∉ H.image g) : i₁ = i₂ := by
   by_contra hne
   have hsub : H.image g ⊆ P := image_subset_iff.2 hg.1
   have hcard : #(H.image g) = #H := card_image_of_injOn hg.2
@@ -241,15 +241,15 @@ theorem eq_of_not_mem_image_of_isCrit {P : Finset (Fin m)} {H : Finset (Fin n)} 
   rw [card_pair hne, hcard, hP] at hle
   omega
 
-theorem mem_image_of_ne_of_isCrit {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin n → Fin m}
-    (hP : #P = #H + 1) (hg : IsCrit P H g) {i₀ i : Fin m} (hi₀ : i₀ ∈ P) (h₀ : i₀ ∉ H.image g)
-    (hi : i ∈ P) (hne : i ≠ i₀) : i ∈ H.image g := by
+private theorem mem_image_of_ne_of_isCrit {P : Finset (Fin m)} {H : Finset (Fin n)}
+    {g : Fin n → Fin m} (hP : #P = #H + 1) (hg : IsCrit P H g) {i₀ i : Fin m} (hi₀ : i₀ ∈ P)
+    (h₀ : i₀ ∉ H.image g) (hi : i ∈ P) (hne : i ≠ i₀) : i ∈ H.image g := by
   by_contra h
   exact hne (eq_of_not_mem_image_of_isCrit hP hg hi hi₀ h h₀)
 
 /-- Swapping the missing pigeon `i₀` into hole `j ∈ H` gives a critical assignment whose missing
 pigeon is `g j`. -/
-theorem isCrit_update {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin n → Fin m}
+private theorem isCrit_update {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin n → Fin m}
     (hg : IsCrit P H g) {i₀ : Fin m} (hi₀ : i₀ ∈ P) (h₀ : i₀ ∉ H.image g) {j : Fin n} :
     IsCrit P H (Function.update g j i₀) := by
   refine ⟨fun y hy => ?_, fun y₁ hy₁ y₂ hy₂ heq => ?_⟩
@@ -268,7 +268,7 @@ theorem isCrit_update {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin n → F
     · simp only [Function.update_of_ne h₁, Function.update_of_ne h₂] at heq
       exact hg.2 hy₁ hy₂ heq
 
-theorem not_mem_image_update {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin n → Fin m}
+private theorem not_mem_image_update {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin n → Fin m}
     (hg : IsCrit P H g) {i₀ : Fin m} (h₀ : i₀ ∉ H.image g) {j : Fin n} (hj : j ∈ H) :
     g j ∉ H.image (Function.update g j i₀) := by
   intro h
@@ -281,7 +281,7 @@ theorem not_mem_image_update {P : Finset (Fin m)} {H : Finset (Fin n)} {g : Fin 
     exact hyj (hg.2 hy hj heq)
 
 /-- When `#P = #H + 1`, every pigeon `i₀ ∈ P` is the missing pigeon of some critical assignment. -/
-theorem exists_isCrit_not_mem_image {P : Finset (Fin m)} {H : Finset (Fin n)}
+private theorem exists_isCrit_not_mem_image {P : Finset (Fin m)} {H : Finset (Fin n)}
     (hP : #P = #H + 1) {i₀ : Fin m} (hi₀ : i₀ ∈ P) :
     ∃ g, IsCrit P H g ∧ i₀ ∉ H.image g := by
   have hcard : Fintype.card H = Fintype.card (P.erase i₀) := by
@@ -303,8 +303,8 @@ theorem exists_isCrit_not_mem_image {P : Finset (Fin m)} {H : Finset (Fin n)}
 
 /-- If a variable `v` changes truth value when hole `j ∈ H` is updated to `i₀`, then `v` lies in
 column `j` and `matchPair i₀ j` assigns `v` its new truth value. -/
-theorem matchPair_eq_some_of_critAssign_ne {H : Finset (Fin n)} {g : Fin n → Fin m} {i₀ : Fin m}
-    {j : Fin n} (hj : j ∈ H) {v : Fin m × Fin n}
+private theorem matchPair_eq_some_of_critAssign_ne {H : Finset (Fin n)} {g : Fin n → Fin m}
+    {i₀ : Fin m} {j : Fin n} (hj : j ∈ H) {v : Fin m × Fin n}
     (hne : critAssign H g v ≠ critAssign H (Function.update g j i₀) v) :
     matchPair i₀ j v = some (critAssign H (Function.update g j i₀) v) := by
   obtain ⟨x, y⟩ := v
@@ -323,7 +323,7 @@ def satPairs (P : Finset (Fin m)) (H : Finset (Fin n)) (c : Clause (Fin m × Fin
     Finset (Fin m × Fin n) :=
   (P ×ˢ H).filter fun p => ∃ l ∈ c, matchPair p.1 p.2 l.1 = some l.2
 
-theorem satPairs_subset {P' P : Finset (Fin m)} {H' H : Finset (Fin n)}
+private theorem satPairs_subset {P' P : Finset (Fin m)} {H' H : Finset (Fin n)}
     {c' c : Clause (Fin m × Fin n)} (hP : P' ⊆ P) (hH : H' ⊆ H) (hc : ∀ l ∈ c', l ∈ c) :
     satPairs P' H' c' ⊆ satPairs P H c := by
   intro p hp
@@ -349,9 +349,9 @@ theorem falsifiedPigeons_subset (P : Finset (Fin m)) (H : Finset (Fin n))
   exact (mem_falsifiedPigeons.1 hi).1
 
 /-- A clause of `pigeonholeOn P H` has at most one falsified pigeon when `#P = #H + 1`. -/
-theorem card_falsifiedPigeons_le_one_of_mem_pigeonholeOn {P : Finset (Fin m)} {H : Finset (Fin n)}
-    (hP : #P = #H + 1) {c : Clause (Fin m × Fin n)} (hc : c ∈ pigeonholeOn P H) :
-    #(falsifiedPigeons P H c) ≤ 1 := by
+private theorem card_falsifiedPigeons_le_one_of_mem_pigeonholeOn {P : Finset (Fin m)}
+    {H : Finset (Fin n)} (hP : #P = #H + 1) {c : Clause (Fin m × Fin n)}
+    (hc : c ∈ pigeonholeOn P H) : #(falsifiedPigeons P H c) ≤ 1 := by
   rcases mem_pigeonholeOn.1 hc with ⟨i₀, hi₀, rfl⟩ | ⟨i, _, i', _, j, _, hii', rfl⟩
   · refine card_le_one.2 fun i₁ hi₁ i₂ hi₂ => ?_
     obtain ⟨hi₁P, g₁, hg₁, h₁, hc₁⟩ := mem_falsifiedPigeons.1 hi₁
@@ -365,7 +365,7 @@ theorem card_falsifiedPigeons_le_one_of_mem_pigeonholeOn {P : Finset (Fin m)} {H
     cases hc₁
 
 /-- `falsifiedPigeons` is subadditive across resolution steps. -/
-theorem card_falsifiedPigeons_resolvent_le (P : Finset (Fin m)) (H : Finset (Fin n))
+private theorem card_falsifiedPigeons_resolvent_le (P : Finset (Fin m)) (H : Finset (Fin n))
     (c₁ c₂ : Clause (Fin m × Fin n)) (v : Fin m × Fin n) :
     #(falsifiedPigeons P H (c₁.resolvent c₂ v)) ≤
       #(falsifiedPigeons P H c₁) + #(falsifiedPigeons P H c₂) := by
@@ -381,7 +381,7 @@ theorem card_falsifiedPigeons_resolvent_le (P : Finset (Fin m)) (H : Finset (Fin
     exact mem_union_right _ (mem_falsifiedPigeons.2 ⟨hiP, g, hg, h₀, hc₂⟩)
 
 /-- Every pigeon of `P` is a falsified pigeon of the empty clause when `#P = #H + 1`. -/
-theorem falsifiedPigeons_nil {P : Finset (Fin m)} {H : Finset (Fin n)} (hP : #P = #H + 1) :
+private theorem falsifiedPigeons_nil {P : Finset (Fin m)} {H : Finset (Fin n)} (hP : #P = #H + 1) :
     falsifiedPigeons P H [] = P := by
   ext i
   rw [mem_falsifiedPigeons]
@@ -417,7 +417,7 @@ private theorem forall_or_exists_card_falsifiedPigeons {P : Finset (Fin m)} {H :
 
 /-- Every refutation of `pigeonholeOn P H` (with `#P = #H + 1`) contains a line `c` with
 `2 (#H)² ≤ 9 #(falsifiedPigeons P H c) (#P - #(falsifiedPigeons P H c))`. -/
-theorem exists_le_card_falsifiedPigeons_mul {P : Finset (Fin m)} {H : Finset (Fin n)}
+private theorem exists_le_card_falsifiedPigeons_mul {P : Finset (Fin m)} {H : Finset (Fin n)}
     (hP : #P = #H + 1) {ls : List (Clause (Fin m × Fin n))} (h : (pigeonholeOn P H).IsProof ls)
     (hnil : [] ∈ ls) :
     ∃ c ∈ ls, 2 * (#H) ^ 2 ≤
@@ -471,7 +471,7 @@ private theorem sub_le_card_filter_satPairs {P : Finset (Fin m)} {H : Finset (Fi
 
 /-- **Relating falsified pigeons and monotone pairs** [Beame and Pitassi][BeamePitassi1996]:
 `#(falsifiedPigeons P H c) (#P - #(falsifiedPigeons P H c)) ≤ #(satPairs P H c)`. -/
-theorem card_falsifiedPigeons_mul_le_card_satPairs {P : Finset (Fin m)} {H : Finset (Fin n)}
+private theorem card_falsifiedPigeons_mul_le_card_satPairs {P : Finset (Fin m)} {H : Finset (Fin n)}
     (hP : #P = #H + 1) (c : Clause (Fin m × Fin n)) :
     #(falsifiedPigeons P H c) * (#P - #(falsifiedPigeons P H c)) ≤ #(satPairs P H c) := by
   set S := falsifiedPigeons P H c
@@ -540,7 +540,7 @@ private theorem countP_le_of_forall₂ {α β : Type*} {R : α → β → Prop} 
 `(i₀, j₀) ∈ P ×ˢ H` restricts a refutation of `pigeonholeOn P H` to a refutation of
 `pigeonholeOn (P.erase i₀) (H.erase j₀)` whose number `f'` of lines with
 `d ≤ #(satPairs (P.erase i₀) (H.erase j₀) c)` satisfies `C f' ≤ (C - 1) f`. -/
-theorem exists_restrict_countP_satPairs {P : Finset (Fin m)} {H : Finset (Fin n)} {C d : ℕ}
+private theorem exists_restrict_countP_satPairs {P : Finset (Fin m)} {H : Finset (Fin n)} {C d : ℕ}
     (hP : P.Nonempty) (hH : H.Nonempty) (hd : 0 < d) (hC : #P * #H ≤ C * d)
     {ls : List (Clause (Fin m × Fin n))} (h : (pigeonholeOn P H).IsProof ls) (hnil : [] ∈ ls) :
     ∃ i₀ ∈ P, ∃ j₀ ∈ H, ∃ ls',
@@ -600,7 +600,7 @@ theorem exists_restrict_countP_satPairs {P : Finset (Fin m)} {H : Finset (Fin n)
 /-- **Iterated greedy matching restriction.** If `#P = #H + 1`, `t ≤ #H`, `#P · #H ≤ C d`,
 `0 < d`, and `9 d ≤ 2 (#H - t)²`, then every refutation `ls` of `pigeonholeOn P H` satisfies
 `C ^ t ≤ (C - 1) ^ t · ls.countP (fun c => d ≤ #(satPairs P H c))`. -/
-theorem pow_le_mul_countP_satPairs {C d : ℕ} (hd : 0 < d) :
+private theorem pow_le_mul_countP_satPairs {C d : ℕ} (hd : 0 < d) :
     ∀ (t : ℕ) {P : Finset (Fin m)} {H : Finset (Fin n)} {ls : List (Clause (Fin m × Fin n))},
       #P = #H + 1 → t ≤ #H → #P * #H ≤ C * d → 9 * d ≤ 2 * (#H - t) ^ 2 →
       (pigeonholeOn P H).IsProof ls → [] ∈ ls →

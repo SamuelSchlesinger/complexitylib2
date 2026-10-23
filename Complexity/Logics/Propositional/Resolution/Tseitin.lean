@@ -88,7 +88,7 @@ theorem Implies.mono {S T : Finset V} {c : Clause E} (h : Implies ends χ S c) (
   fun σ hσ => h σ fun v hv => hσ v (hST hv)
 
 /-- A clause of the Tseitin formula is implied by the constraint of a single vertex. -/
-theorem exists_implies_singleton_of_mem_tseitinFormula {c : Clause E}
+private theorem exists_implies_singleton_of_mem_tseitinFormula {c : Clause E}
     (hc : c ∈ CNF.tseitinFormula ends χ) : ∃ v, Implies ends χ {v} c := by
   obtain ⟨v, hv⟩ := CNF.mem_tseitinFormula.1 hc
   refine ⟨v, fun σ hσ => ?_⟩
@@ -103,14 +103,14 @@ theorem Implies.resolvent {S₁ S₂ : Finset V} {c₁ c₂ : Clause E} (h₁ : 
     (h₂ σ fun v hv => hσ v (mem_union_right _ hv))
 
 /-- A clause derivable from the Tseitin formula is implied by the constraints of all vertices. -/
-theorem implies_univ_of_derives {c : Clause E} (h : (CNF.tseitinFormula ends χ).Derives c) :
+private theorem implies_univ_of_derives {c : Clause E} (h : (CNF.tseitinFormula ends χ).Derives c) :
     Implies ends χ univ c := fun σ hσ =>
   h.eval_eq_true ((CNF.eval_tseitinFormula_eq_true_iff σ).2 fun v => hσ v (mem_univ v))
 
 omit [DecidableEq E] in
 /-- On a connected multigraph, only the constraints of all vertices imply the empty clause. -/
-theorem eq_univ_of_implies_nil (hG : (Multigraph.toSimpleGraph ends).Connected) {S : Finset V}
-    (h : Implies ends χ S []) : S = univ := by
+private theorem eq_univ_of_implies_nil (hG : (Multigraph.toSimpleGraph ends).Connected)
+    {S : Finset V} (h : Implies ends χ S []) : S = univ := by
   by_contra hS
   obtain ⟨σ, hσ⟩ := exists_forall_mem_parityOn_incidence_eq hG χ hS
   exact Bool.false_ne_true (h σ hσ)
@@ -151,7 +151,7 @@ theorem exists_mem_of_mem_edgeCut {S : Finset V} {c : Clause E} (h : Implies end
 
 /-- If the constraints of `S` imply `c`, but those of `S` without any one of its vertices do not,
 then `c` is at least as wide as the number of edges leaving `S`. -/
-theorem card_edgeCut_le_width {S : Finset V} {c : Clause E} (h : Implies ends χ S c)
+private theorem card_edgeCut_le_width {S : Finset V} {c : Clause E} (h : Implies ends χ S c)
     (hmin : ∀ v ∈ S, ¬ Implies ends χ (S.erase v) c) :
     #(Multigraph.edgeCut ends S) ≤ c.width := by
   choose! b hb using fun e (he : e ∈ Multigraph.edgeCut ends S) =>
