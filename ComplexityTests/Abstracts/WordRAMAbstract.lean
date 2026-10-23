@@ -250,20 +250,10 @@ theorem runsAgree (r : ℕ) :
     (∀ p : Program r, ∃ q : Cslib.WordRAM.Program .exact r, Same p q) ∧
       ∀ q : Cslib.WordRAM.Program .exact r, ∃ p : Program r, Same p q :=
   WordRAMBridge.runsAgree
-    { AluOp := AluOp
-      add := .add, sub := .sub, mul := .mul, div := .div, mod := .mod
-      and := .and, or := .or, xor := .xor, shl := .shl, shr := .shr
-      aluOp_induction := @AluOp.rec
-      eval := AluOp.eval
-      Instr := Instr
-      const := .const, copy := .copy, alu := .alu, width := .width, load := .load
-      store := .store, jump := .jump, branchEq := .branchEq, branchLt := .branchLt
-      halt := .halt
-      instr_induction := @Instr.rec
-      State := State, state := .mk
-      Outcome := Outcome, next := .next, halted := .halt, fault := .fault
-      step := step, Halts := Halts, OutcomeAgrees := OutcomeAgrees }
-    (by constructor <;> intros <;> simp_all [step, Halts, OutcomeAgrees, AluOp.eval]) r
+    ⟨AluOp, .add, .sub, .mul, .div, .mod, .and, .or, .xor, .shl, .shr, @AluOp.rec, AluOp.eval,
+      Instr, .const, .copy, .alu, .width, .load, .store, .jump, .branchEq, .branchLt, .halt,
+      @Instr.rec, State, .mk, Outcome, .next, .halt, .fault, step, Halts, OutcomeAgrees⟩
+    (by constructor <;> simp_all [step, Halts, OutcomeAgrees, AluOp.eval]) r
 
 /-- **Same time classes.** For every type `α` of instances, problem `A`, encoding, time bound
 `T` and word-size threshold `bits`, `A` is decidable in time `T` on the machine of this file
@@ -278,21 +268,10 @@ theorem decidableInTime_iff {α : Type u} (A : Set α) (encode : α → List ℕ
       Cslib.WordRAM.UniformDecidableInTime .exact A (fun _ => encode) (fun a _ => T a)
         (fun a w => bits a ≤ w) :=
   WordRAMBridge.decidableInTime_iff
-    { AluOp := AluOp
-      add := .add, sub := .sub, mul := .mul, div := .div, mod := .mod
-      and := .and, or := .or, xor := .xor, shl := .shl, shr := .shr
-      aluOp_induction := @AluOp.rec
-      eval := AluOp.eval
-      Instr := Instr
-      const := .const, copy := .copy, alu := .alu, width := .width, load := .load
-      store := .store, jump := .jump, branchEq := .branchEq, branchLt := .branchLt
-      halt := .halt
-      instr_induction := @Instr.rec
-      State := State, state := .mk
-      Outcome := Outcome, next := .next, halted := .halt, fault := .fault
-      step := step, Halts := Halts, OutcomeAgrees := OutcomeAgrees }
-    (by constructor <;> intros <;> simp_all [step, Halts, OutcomeAgrees, AluOp.eval])
-    A encode T bits
+    ⟨AluOp, .add, .sub, .mul, .div, .mod, .and, .or, .xor, .shl, .shr, @AluOp.rec, AluOp.eval,
+      Instr, .const, .copy, .alu, .width, .load, .store, .jump, .branchEq, .branchLt, .halt,
+      @Instr.rec, State, .mk, Outcome, .next, .halt, .fault, step, Halts, OutcomeAgrees⟩
+    (by constructor <;> simp_all [step, Halts, OutcomeAgrees, AluOp.eval]) A encode T bits
 
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.WordRAMAbstract`: 234 root
