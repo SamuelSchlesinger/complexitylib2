@@ -305,6 +305,7 @@ import ComplexityTests.PPTTactic
 import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
+import ComplexityTests.PlainMirror
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
