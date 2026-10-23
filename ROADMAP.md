@@ -233,8 +233,30 @@ existing developments, source credit and saved branches remain available for a f
    it neither assumes whole-matrix two-universality nor gives a bound for every fixed matrix.
    [Regressions](ComplexityTests/Crypto/GSWHiding.lean) include a composite-modulus counterexample
    to whole-matrix universality and an adaptive game with exact nonzero advantage.
-   Computational security, native decryption and NAND certificates, admissible parameter families
-   and bootstrappability remain open in #486.
+   The [generated-key security theorem](Complexity/Crypto/Computational/Homomorphic/GSW/Security.lean)
+   proves single-challenge IND-CPA for the actual serialized key generator and encryption program
+   against uniform classical strict PPT adversaries. Its
+   [decision-LWE assumption](Complexity/Crypto/Computational/LWE/Basic.lean) compares the public
+   word `[B*t+e | B]` with a uniform matrix of the same shape; the
+   [distribution bridge](Complexity/Crypto/Computational/Homomorphic/GSW/LWE.lean) supplies exactly
+   the sampled centered-binomial error law, without exposing the secret or errors.
+   One uniform hidden-bit reduction preserves the adversary's full saved state and bounds its
+   chosen-message advantage by twice its decision-LWE advantage plus the statistical term above.
+   The [positive-noise parameter family](Complexity/Crypto/Computational/Homomorphic/GSW/Parameters.lean)
+   takes `n = η = λ+1`, `w = 16+8*ceil(log₂(λ+1))` and `m = (n+1)*w+2λ`.
+   It proves the entropy surplus, uniform native parameter routines and strict fresh/one-NAND
+   correctness margins simultaneously; the security theorem leaves only the specified LWE
+   hypothesis. [Regression clients](ComplexityTests/Crypto/GSWSecurity.lean) check saved-state
+   preservation, the attained factor-two loss, adaptive message choice and actual algorithm
+   certificates. A [checked formal abstract](ComplexityTests/Abstracts/GSWSecurityAbstract.lean)
+   spells out both algorithms, their native efficiency and this precise conditional security
+   result. It remains outside the curated headline catalogue while the full FHE recovery is open.
+   Hardness for the specified noise family is assumed; no worst-case lattice reduction is supplied.
+   Native decryption/NAND/evaluation certificates, bootstrappability with compatible parameters
+   and the concrete FHE instantiation remain open in #486. This parameter family proves fresh
+   and one-NAND correctness; it does not yet supply the augmented-decryption circuit or the
+   separate joint circular-security assumption needed
+   for the fixed-key endpoint.
 4. **Completeness of oblivious transfer.** In the ideal oblivious-transfer hybrid model, every
    polynomial-time multiparty functionality admits a protocol secure against static malicious
    corruptions, with security defined by real/ideal simulation and allowing abort, under the
