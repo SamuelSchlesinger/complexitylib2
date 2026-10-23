@@ -21,7 +21,7 @@ a nonempty finite type `T`, and lets a second stage answer `t` from `s`; it succ
 independent challenge. Boneh and Shoup's rewinding lemma ([BonehShoup2023], Lemma 19.2) says
 that if one run succeeds with probability `ε` and `N` is the number of challenges, then both runs
 succeed with distinct challenges with probability at least `ε² − ε / N`
-(`sq_sub_le_twice`). Equivalently, `ε ≤ 1 / N + √δ` for that probability `δ`
+(`sq_sub_le_twice`). Consequently `ε ≤ 1 / N + √δ` for that probability `δ`
 (`le_inv_add_sqrt_twice`), the form that turns a bound on `δ` into one on `ε`.
 
 The second stage may use fresh randomness in each run. This generalizes the book's
