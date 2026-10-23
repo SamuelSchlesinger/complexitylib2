@@ -14,6 +14,8 @@ import ComplexityTests.Abstracts.FaginAbstract
 import ComplexityTests.Abstracts.FaginBridge
 import ComplexityTests.Abstracts.FormulaBoundsAbstract
 import ComplexityTests.Abstracts.FormulaBoundsBridge
+import ComplexityTests.Abstracts.GSWSecurityAbstract
+import ComplexityTests.Abstracts.GSWSecurityBridge
 import ComplexityTests.Abstracts.PCPAbstract
 import ComplexityTests.Abstracts.PCPBridge
 import ComplexityTests.Abstracts.ResolutionAbstract
@@ -116,7 +118,9 @@ import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
 import ComplexityTests.Crypto.GSWHiding
 import ComplexityTests.Crypto.GSWNative
+import ComplexityTests.Crypto.GSWParameters
 import ComplexityTests.Crypto.GSWSampling
+import ComplexityTests.Crypto.GSWSecurity
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicFixedKey

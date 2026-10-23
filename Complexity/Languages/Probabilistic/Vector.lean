@@ -96,6 +96,16 @@ theorem eval_replicateFin_map {β : Type} {source : ProbComp α} {encoded : Prob
   rw [eval_replicate_map h, ← OracleComp.map_ofFn_replicateFin, eval_map, PMF.map_comp]
   simp only [Function.comp_def, List.map_ofFn]
 
+/-- Mapping each coordinate after independent runs agrees with mapping each run's outcome.
+Neither outcome type needs to be finite. -/
+theorem eval_replicateFin_map_coords {β : Type} (count : ℕ) (program : ProbComp α)
+    (f : α → β) :
+    eval (OracleComp.replicateFin count (f <$> program)) =
+      (eval (OracleComp.replicateFin count program)).map (fun values i => f (values i)) := by
+  apply PMF.map_injective List.ofFn_injective
+  rw [← eval_map, OracleComp.map_ofFn_replicateFin, PMF.map_comp]
+  exact eval_replicateFin_map (eval_map f program) count
+
 /-- Disjoint blocks of one uniform tape realize a vector of independently sampled values.
 The output type may be infinite, and either the count or the block width may be zero. -/
 theorem eval_replicateFin_of_uniformList (count width : ℕ) (program : ProbComp α)
