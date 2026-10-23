@@ -44,27 +44,28 @@ private theorem rejects (w : List Bool) (h : w ∉ language) : gap w ∈ noTarge
 
 -- Zero is an accepting target. Both lists grow, with signed and repeated entries.
 example : language ∈ LWPP encBits :=
-  mem_LWPP_of_disjoint_targets_plain gap_mem yes_polyTime no_polyTime disjoint accepts rejects
+  mem_LWPP_of_disjoint_targets gap_mem yes_polyTime no_polyTime disjoint accepts rejects
 
 example : language ∈ WPP encBits :=
-  mem_WPP_of_disjoint_targets_plain gap_mem
+  mem_WPP_of_disjoint_targets gap_mem
     (yes_polyTime.comp (ComputableTidilyInPolyTime.encoding_length encBits).computableInPolyTime)
     (no_polyTime.comp (ComputableTidilyInPolyTime.encoding_length encBits).computableInPolyTime)
     (fun w => disjoint w.length) accepts rejects
 
 -- The plain characterization retains zero and signed/repeated targets on disjoint sides.
 example : language ∈ LWPP encBits :=
-  mem_LWPP_iff_exists_disjoint_targets_plain.mpr
+  mem_LWPP_iff_exists_disjoint_targets.mpr
     ⟨gap, gap_mem, yesTargets, noTargets, yes_polyTime, no_polyTime, disjoint, accepts, rejects⟩
 
--- The old full name still consumes the original tidy certificates.
+-- The deprecated `_tidy` form consumes certificates with the former tidy types.
 set_option linter.deprecated false in
 example : language ∈ LWPP encBits :=
-  mem_LWPP_of_disjoint_targets gap_mem yes_polyTime.tidy no_polyTime.tidy disjoint accepts rejects
+  mem_LWPP_of_disjoint_targets_tidy gap_mem yes_polyTime.tidy no_polyTime.tidy
+    disjoint accepts rejects
 
 -- Swapping the lists gives zero as a rejecting target, without a zero-free hypothesis.
 example : languageᶜ ∈ LWPP encBits := by
-  apply mem_LWPP_of_disjoint_targets_plain gap_mem no_polyTime yes_polyTime
+  apply mem_LWPP_of_disjoint_targets gap_mem no_polyTime yes_polyTime
     (fun n => (disjoint n).symm)
   · intro w hw
     exact rejects w hw
@@ -79,19 +80,19 @@ example : ¬([0] : List ℤ).Disjoint [0] := by simp
 
 -- Empty rejection lists are consistent with a full language, even with gap zero.
 example : (Set.univ : Set (List Bool)) ∈ WPP encBits :=
-  mem_WPP_of_disjoint_targets_plain (GapP.zero_mem (enc := encBits))
+  mem_WPP_of_disjoint_targets (GapP.zero_mem (enc := encBits))
     (ComputableInPolyTime.const ([0] : List ℤ))
     (ComputableInPolyTime.const ([] : List ℤ)) (by simp) (by simp) (by simp)
 
 -- Empty acceptance lists are consistent with an empty language and rejection target zero.
 example : (∅ : Set (List Bool)) ∈ LWPP encBits :=
-  mem_LWPP_of_disjoint_targets_plain (GapP.zero_mem (enc := encBits))
+  mem_LWPP_of_disjoint_targets (GapP.zero_mem (enc := encBits))
     (ComputableInPolyTime.const ([] : List ℤ))
     (ComputableInPolyTime.const ([0] : List ℤ)) (by simp) (by simp) (by simp)
 
 -- The source-style indexed interface uses two independent growing target counts.
 example : language ∈ LWPP encBits := by
-  apply mem_LWPP_of_disjoint_indexed_targets_plain gap_mem
+  apply mem_LWPP_of_disjoint_indexed_targets gap_mem
     (yes := fun _ => 0) (no := fun _ => 1) (ry := fun n => n + 1) (rn := fun n => 2 * n + 1)
   · fun_prop
   · fun_prop
@@ -108,6 +109,18 @@ example : language ∈ LWPP encBits := by
     simp only [gap, ht, Bool.false_eq_true, ite_false]
 
 /--
+info: 'Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets_tidy' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets_tidy
+
+/--
+info: 'Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets_tidy' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets_tidy
+
+/--
 info: 'Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
@@ -118,17 +131,5 @@ info: 'Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets' depends on axioms:
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets
-
-/--
-info: 'Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets_plain' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_WPP_iff_exists_disjoint_targets_plain
-
-/--
-info: 'Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets_plain' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.mem_LWPP_iff_exists_disjoint_targets_plain
 
 end WPPTwoSidedTests
