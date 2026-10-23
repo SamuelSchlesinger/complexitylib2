@@ -20,13 +20,15 @@ copies carry values across layers; NAND nodes may read a wire twice. The last la
 all outputs, and the empty program preserves all inputs. Wire indices have binary encodings.
 
 The number of scheduled layers counts copies and empty layers too. It is not identified here
-with the depth of a De Morgan circuit. A conversion from ordinary circuits, with its size and
-depth guarantees, is separate work.
+with the depth of a De Morgan circuit. `Layered.Compile` converts ordinary shared circuits into
+exactly two layers per designated-output depth, with output selection as separate wiring.
 
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.Layered.Node`: constants, copies and NANDs.
 * `Cslib.Circuits.Boolean.Layered.eval`: evaluation of a list of layers.
+* `Cslib.Circuits.Boolean.Layered.outputWidth`: the number of wires in the final row.
+* `Cslib.Circuits.Boolean.Layered.select`: ordered output wiring, allowing repeated wires.
 * `Cslib.Circuits.Boolean.Layered.WellFormed`: all references read the preceding layer.
 * `Cslib.Circuits.Boolean.Layered.encNode`: two tag bits and binary wire indices.
 
@@ -101,6 +103,38 @@ theorem eval_append (inputs : List Bool) (first second : List (List Node)) :
   | nil => rfl
   | cons layer layers ih => exact ih (evalLayer inputs layer)
 
+/-- The number of wires after the schedule, retaining the input width for an empty schedule. -/
+def outputWidth (inputCount : ℕ) : List (List Node) → ℕ
+  | [] => inputCount
+  | layer :: layers => outputWidth layer.length layers
+
+@[simp] theorem outputWidth_nil (inputCount : ℕ) : outputWidth inputCount [] = inputCount := rfl
+
+@[simp] theorem outputWidth_cons (inputCount : ℕ) (layer : List Node)
+    (layers : List (List Node)) :
+    outputWidth inputCount (layer :: layers) = outputWidth layer.length layers := rfl
+
+theorem outputWidth_append (inputCount : ℕ) (first second : List (List Node)) :
+    outputWidth inputCount (first ++ second) =
+      outputWidth (outputWidth inputCount first) second := by
+  induction first generalizing inputCount with
+  | nil => rfl
+  | cons layer layers ih => exact ih layer.length
+
+/-- Evaluation has the width determined by the syntax, regardless of reference validity. -/
+@[simp] theorem length_eval (inputs : List Bool) (layers : List (List Node)) :
+    (eval inputs layers).length = outputWidth inputs.length layers := by
+  induction layers generalizing inputs with
+  | nil => rfl
+  | cons layer layers ih => simp only [eval_cons, ih, length_evalLayer, outputWidth_cons]
+
+/-- Select output wires in order, allowing repetitions. Selection adds no circuit layer. -/
+def select (inputs : List Bool) (outputs : List ℕ) : List Bool :=
+  outputs.map (inputs.getD · false)
+
+@[simp] theorem length_select (inputs : List Bool) (outputs : List ℕ) :
+    (select inputs outputs).length = outputs.length := List.length_map _
+
 /-- Extending a prefix executes precisely its next scheduled layer. -/
 theorem eval_take_succ (inputs : List Bool) (layers : List (List Node)) {i : ℕ}
     (hi : i < layers.length) :
@@ -120,6 +154,14 @@ def WellFormed (inputCount : ℕ) : List (List Node) → Prop
     (layers : List (List Node)) :
     WellFormed inputCount (layer :: layers) ↔
       (∀ node ∈ layer, node.Valid inputCount) ∧ WellFormed layer.length layers := Iff.rfl
+
+theorem wellFormed_append (inputCount : ℕ) (first second : List (List Node)) :
+    WellFormed inputCount (first ++ second) ↔
+      WellFormed inputCount first ∧ WellFormed (outputWidth inputCount first) second := by
+  induction first generalizing inputCount with
+  | nil => simp
+  | cons layer layers ih => simp only [List.cons_append, wellFormed_cons, outputWidth_cons,
+      ih, and_assoc]
 
 /-- Each scheduled layer reads valid wires of the evaluated prefix. -/
 theorem WellFormed.valid_getD {inputs : List Bool} {layers : List (List Node)}
