@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.FullArithmetic
 public import Complexity.Foundations.LinearAlgebra.KernelVector
+import Complexity.Tactic.Synthesis
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -168,64 +169,56 @@ theorem full_kernelStep (a : Fin n → (Fin N → F) → F) (Nv : Fin n → Fin 
       (Set.range fun il : Fin n × Fin n =>
         fun x => kernelStep (fun l => a l x) (fun i l => Nv i l x) il.1 il.2)
       (8 * (n + 1) ^ 2) := by
+  let build := Builder.start (fullInterpretation (k := 2)) s
   -- the row values
   let b : Fin n → (Fin N → F) → F := fun i x => ∑ l, a l x * Nv i l x
-  have h₁ := family (I := fullInterpretation (k := 2)) (s := s) b (fun _ => 2 * n + 1)
-    (fun i => by
-      simpa [card_univ] using full_dot (s := s) univ a (Nv i) (fun l _ => ha l)
-        (fun l _ => hN i l))
-  set s₁ := s ∪ Set.range b
-  have hb : ∀ i, b i ∈ s₁ := fun i => Set.mem_union_right _ ⟨i, rfl⟩
+  let build := build.add (family (I := fullInterpretation (k := 2)) (s := build.wires)
+    b (fun _ => 2 * n + 1) (fun i => by
+      simpa only [card_univ, Fintype.card_fin] using
+        full_dot (s := build.wires) univ a (Nv i)
+          (by synthesis_available) (by synthesis_available)))
   -- the pivot flags
   let sel : Fin n → (Fin N → F) → F := fun i x => firstFlags (fun j => b j x) i
-  have h₂ := full_firstFlags (s := s₁) b hb
-  set s₂ := s₁ ∪ Set.range sel
-  have hsel : ∀ i, sel i ∈ s₂ := fun i => Set.mem_union_right _ ⟨i, rfl⟩
-  have hb₂ : ∀ i, b i ∈ s₂ := fun i => Set.mem_union_left _ (hb i)
-  have hN₂ : ∀ i l, Nv i l ∈ s₂ := fun i l =>
-    Set.mem_union_left _ (Set.mem_union_left _ (hN i l))
-  have ha₂ : ∀ l, a l ∈ s₂ := fun l => Set.mem_union_left _ (Set.mem_union_left _ (ha l))
+  synthesis_step build using full_firstFlags b
   -- the pivot vector
   let P : Fin n → (Fin N → F) → F := fun l x => ∑ j, sel j x * Nv j l x
-  have h₃ := family (I := fullInterpretation (k := 2)) (s := s₂) P (fun _ => 2 * n + 1)
-    (fun l => by
-      simpa [card_univ] using full_dot (s := s₂) univ sel (fun j => Nv j l)
-        (fun j _ => hsel j) (fun j _ => hN₂ j l))
-  set s₃ := s₂ ∪ Set.range P
-  have hP : ∀ l, P l ∈ s₃ := fun l => Set.mem_union_right _ ⟨l, rfl⟩
+  let build := build.add (family (I := fullInterpretation (k := 2)) (s := build.wires)
+    P (fun _ => 2 * n + 1) (fun l => by
+      simpa only [card_univ, Fintype.card_fin] using
+        full_dot (s := build.wires) univ sel (fun j => Nv j l)
+          (by synthesis_available) (by synthesis_available)))
   -- the pivot value
   let β : (Fin N → F) → F := fun x => ∑ l, a l x * P l x
-  have h₄ : Synthesis (fullInterpretation (k := 2)) s₃ {β} (2 * n + 1) := by
-    simpa [card_univ] using full_dot (s := s₃) univ a P
-      (fun l _ => Set.mem_union_left _ (ha₂ l)) (fun l _ => hP l)
-  set s₄ := s₃ ∪ {β}
+  have hβ : Synthesis (fullInterpretation (k := 2)) build.wires {β} (2 * n + 1) := by
+    simpa only [card_univ, Fintype.card_fin] using
+      full_dot (s := build.wires) univ a P
+        (by synthesis_available) (by synthesis_available)
+  let build := build.add hβ
   -- the ratios
   let ρ : Fin n → (Fin N → F) → F := fun i x => b i x / β x
-  have h₅ := family (I := fullInterpretation (k := 2)) (s := s₄) ρ (fun _ => 1)
-    (fun i => full_binary_mem (· / ·)
-      (Set.mem_union_left _ (Set.mem_union_left _ (hb₂ i))) (Set.mem_union_right _ rfl))
-  set s₅ := s₄ ∪ Set.range ρ
+  let build := build.add (family (I := fullInterpretation (k := 2)) (s := build.wires)
+    ρ (fun _ => 1) (fun i => full_binary_mem (· / ·)
+      (by synthesis_available) (by synthesis_available)))
   -- the corrections
   let t : Fin n × Fin n → (Fin N → F) → F := fun il x => ρ il.1 x * P il.2 x
-  have h₆ := family (I := fullInterpretation (k := 2)) (s := s₅) t (fun _ => 1)
-    (fun il => full_binary_mem (· * ·) (Set.mem_union_right _ ⟨il.1, rfl⟩)
-      (Set.mem_union_left _ (Set.mem_union_left _ (hP il.2))))
-  set s₆ := s₅ ∪ Set.range t
+  let build := build.add (family (I := fullInterpretation (k := 2)) (s := build.wires)
+    t (fun _ => 1) (fun il => full_binary_mem (· * ·)
+      (by synthesis_available) (by synthesis_available)))
   -- the new family
   let N' : Fin n × Fin n → (Fin N → F) → F := fun il x => Nv il.1 il.2 x - t il x
-  have h₇ := family (I := fullInterpretation (k := 2)) (s := s₆) N' (fun _ => 1)
-    (fun il => full_binary_mem (· - ·)
-      (Set.mem_union_left _ (Set.mem_union_left _ (Set.mem_union_left _
-        (Set.mem_union_left _ (hN₂ il.1 il.2)))))
-      (Set.mem_union_right _ ⟨il, rfl⟩))
-  have htotal := h₁.trans (h₂.trans (h₃.trans (h₄.trans (h₅.trans (h₆.trans h₇)))))
-  refine htotal.mono Set.Subset.rfl ?_ ?_
+  let build := build.add (family (I := fullInterpretation (k := 2)) (s := build.wires)
+    N' (fun _ => 1) (fun il => full_binary_mem (· - ·)
+      (by synthesis_available) (by synthesis_available)))
+  refine build.finish ?_ ?_
   · rintro _ ⟨⟨i, l⟩, rfl⟩
-    refine ⟨(i, l), funext fun x => ?_⟩
+    have hmem : N' (i, l) ∈ build.wires := by synthesis_available
+    convert hmem using 1
+    funext x
     simp only [N', t, ρ, β, P, sel, b, kernelStep, rowValues, pivotVec, dotProduct,
       Pi.sub_apply, Pi.smul_apply, smul_eq_mul, Finset.sum_apply]
     rfl
-  · simp only [sum_const, card_univ, Fintype.card_fin, Fintype.card_prod, smul_eq_mul, mul_one]
+  · dsimp +zetaDelta [Builder.add, Builder.start]
+    simp only [sum_const, card_univ, Fintype.card_fin, Fintype.card_prod, smul_eq_mul, mul_one]
     have := kernelStep_budget n
     linarith
 
