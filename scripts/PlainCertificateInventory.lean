@@ -45,6 +45,33 @@ def exclude (env : Environment) (bad : Std.HashSet Name) : Environment := Id.run
   let env := transitionTheoremsExt.modifyState env (filterGeneral bad)
   return morTheoremsExt.modifyState env (filterGeneral bad)
 
+/-- An original declaration or a captured local certificate in its stored body. -/
+structure Candidate where
+  owner : Name
+  target : Expr
+  localPath : Option String := none
+
+/-- Close local `have`/`let` certificate types over their actual enclosing parameters and lets.
+No source-text heuristic is used and no binder or growth hypothesis is discarded. -/
+partial def localCertificates (owner : Name) (e : Expr) (path : String := "body")
+    (close : Expr → Expr := id) : Array Candidate := Id.run do
+  match e with
+  | .lam n ty body bi =>
+    return localCertificates owner body (path ++ ".lambda") fun goal =>
+      close (.forallE n ty goal bi)
+  | .letE n ty value body nondep =>
+    let here := if (tidyNames ty).isEmpty then #[] else
+      #[{ owner, target := close ty, localPath := some (path ++ "." ++ n.toString) }]
+    let values := localCertificates owner value (path ++ ".value") close
+    let bodies := localCertificates owner body (path ++ ".let") fun goal =>
+      close (.letE n ty value goal nondep)
+    return here ++ values ++ bodies
+  | .app f a =>
+    return localCertificates owner f (path ++ ".function") close ++
+      localCertificates owner a (path ++ ".argument") close
+  | .mdata _ body | .proj _ _ body => return localCertificates owner body path close
+  | _ => return #[]
+
 /-- Reverse proof/body dependencies of project declarations. Imported upstream declarations cannot
 refer to project certificates. Type dependencies count too, conservatively. -/
 def reverseDependencies (env : Environment) (modules : Std.HashSet Name) :
@@ -73,7 +100,7 @@ def closure (reverse : Std.HashMap Name (Array Name)) (seeds : Array Name) : Std
 private def field (name : String) (value : String) : String × Json := (name, toJson value)
 
 /-- One search with fresh state; preprocessing and proof validation are outside its heartbeat cost. -/
-def search (env : Environment) (type : Expr) (budget : Nat) : IO Json := do
+def search (env : Environment) (type : Expr) (budget : Nat) (forbidden : Std.HashSet Name := {}) : IO Json := do
   let opts := Lean.maxHeartbeats.set {} budget
   let action : MetaM Json := do
     let start ← IO.getNumHeartbeats
@@ -90,7 +117,9 @@ def search (env : Environment) (type : Expr) (budget : Nat) : IO Json := do
     let (result, _) ← (funProp type ctx).run state
     let used := (← IO.getNumHeartbeats) - start
     if let some result := result then
-      check result.proof
+      let leaked := (constants result.proof).filter forbidden.contains
+      unless leaked.isEmpty do throwError "held-out certificate leaked into proof: {leaked}"
+      checkWithKernel result.proof
       unless ← isDefEq (← inferType result.proof) type do throwError "wrong search proof type"
       return Json.mkObj [field "status" "success", ("heartbeats_raw", toJson used),
         ("proof_constants", toJson ((constants result.proof).map Name.toString))]
@@ -108,19 +137,25 @@ def search (env : Environment) (type : Expr) (budget : Nat) : IO Json := do
       ("heartbeats_raw", toJson ((← IO.getNumHeartbeats) - start))]
 
 /-- Inspect a declaration without invoking its own proof as the benchmark. -/
-def describe (name : Name) : MetaM (Expr × Json × Option Name) := do
-  let ci ← getConstInfo name
-  let heads := tidyNames ci.type
-  let mirror ← Cslib.Tactic.PlainMirror.getMirror? name
-  let prop ← isProp ci.type
-  let row := [field "name" name.toString, ("tidy_constants", toJson (heads.map Name.toString)),
+def describe (candidate : Candidate) : MetaM (Expr × Json × Option Name) := do
+  let name := candidate.owner
+  let type := candidate.target
+  let heads := tidyNames type
+  let mirror ← if candidate.localPath.isSome then pure none else
+    Cslib.Tactic.PlainMirror.getMirror? name
+  let prop ← isProp type
+  let env ← getEnv
+  let module := env.getModuleIdxFor? name |>.map fun i => env.header.moduleNames[i.toNat]!
+  let identity := name.toString ++ (candidate.localPath.map ("#" ++ ·)).getD ""
+  let row := [field "name" identity, field "owner" name.toString,
+    ("local_path", toJson candidate.localPath), ("module", toJson (module.map Name.toString)), ("tidy_constants", toJson (heads.map Name.toString)),
     ("private", toJson (isPrivateName name)), ("proposition", toJson prop),
-    ("type", toJson (toString (← ppExpr ci.type))),
+    ("type", toJson (toString (← ppExpr type))),
     ("mirror", toJson (mirror.map Name.toString))]
-  return (ci.type, Json.mkObj row, mirror)
+  return (type, Json.mkObj row, mirror)
 
 /-- Inventory all project declarations, not only attributes or hand-picked public examples. -/
-def main (args : List String) : IO UInt32 := do
+unsafe def main (args : List String) : IO UInt32 := do
   let [moduleFile, outputFile, budgetText, limitText] := args
     | throw <| IO.userError "expected MODULES OUTPUT HEARTBEAT_BUDGET LIMIT(0=all)"
   let budget := budgetText.toNat?.getD 200000
@@ -129,25 +164,34 @@ def main (args : List String) : IO UInt32 := do
   let names := (← IO.FS.readFile moduleFile).splitOn "\n" |>.filter (!·.isEmpty)
   let mods := names.toArray.map String.toName
   let imports := mods.map fun n => ({ module := n, importAll := true } : Import)
+  enableInitializersExecution
   let env ← importModules imports {} (loadExts := true)
   let moduleSet : Std.HashSet Name := .ofArray mods
+  let (pairs, _) ← Lean.Core.CoreM.toIO Cslib.Tactic.PlainMirror.mirrorPairs
+    { fileName := "mirror-registry", fileMap := default } { env }
   let reverse := reverseDependencies env moduleSet
-  let mut candidates : Array Name := #[]
+  let mut candidates : Array Candidate := #[]
   for (name, ci) in env.constants.toList do
     let some idx := env.getModuleIdxFor? name | continue
-    if moduleSet.contains env.header.moduleNames[idx.toNat]! && !(tidyNames ci.type).isEmpty then
-      candidates := candidates.push name
-  candidates := candidates.qsort Name.quickLt
+    unless moduleSet.contains env.header.moduleNames[idx.toNat]! do continue
+    if !(tidyNames ci.type).isEmpty then
+      candidates := candidates.push { owner := name, target := ci.type }
+    if let some value := ci.value? true then
+      candidates := candidates ++ localCertificates name value
+  candidates := candidates.qsort fun a b =>
+    Name.quickLt a.owner b.owner || (a.owner == b.owner && decide (a.localPath.getD "" < b.localPath.getD ""))
   let handle ← IO.FS.Handle.mk outputFile .write
   handle.putStrLn (Json.mkObj [("inventory_total", toJson candidates.size),
     ("module_count", toJson mods.size), ("limit", toJson limit),
-    ("heartbeat_budget", toJson budget)]).compress
+    ("heartbeat_budget", toJson budget),
+    ("mirror_pairs", toJson (pairs.map fun (source, plain, module) =>
+      (source.toString, plain.toString, module.toString)))]).compress
   let mut count := 0
-  for name in candidates do
+  for candidate in candidates do
     if limit != 0 && count >= limit then break
-    let ((type, info, mirror), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe name))
+    let ((type, info, mirror), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe candidate))
       { fileName := "certificate-inventory", fileMap := default } { env }
-    let seeds := #[name] ++ mirror.toArray
+    let seeds := #[candidate.owner] ++ mirror.toArray
     let forbidden := closure reverse seeds
     let heldout := exclude env forbidden
     let mut fields := [("declaration", info), ("excluded_count", toJson forbidden.size)]
@@ -155,7 +199,7 @@ def main (args : List String) : IO UInt32 := do
     if !prop then
       fields := fields ++ [field "status" "non_proposition"]
     else
-      let tidy ← search heldout type budget
+      let tidy ← search heldout type budget forbidden
       fields := fields ++ [("tidy_holdout", tidy)]
       try
         let (plain, _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (Cslib.Tactic.PlainMirror.plainType type))
@@ -165,12 +209,20 @@ def main (args : List String) : IO UInt32 := do
           fields := fields ++ [field "status" "unsupported_tidy", ("residual_tidy", toJson
             (residual.map Name.toString))]
         else
-          let plainResult ← search heldout plain budget
+          let plainResult ← search heldout plain budget forbidden
           fields := fields ++ [field "status" "compared", ("plain_holdout", plainResult)]
           if mirror.isSome then
-            fields := fields ++ [("plain_registration", ← search env plain budget),
+            fields := fields ++ [("tidy_registration", ← search env type budget),
+              ("plain_registration", ← search env plain budget),
               field "registration_scope" "indexing/transport only; not holdout synthesis"]
-      catch e => fields := fields ++ [field "status" "transform_error", field "error" e.toString]
+      catch e =>
+        let unsupported := (tidyNames type).filter fun n =>
+          !Cslib.Tactic.PlainMirror.equivalences.any (fun entry => entry.1 == n)
+        if !unsupported.isEmpty then
+          fields := fields ++ [field "status" "unsupported_tidy", ("residual_tidy", toJson
+            (unsupported.map Name.toString)), field "error" e.toString]
+        else
+          fields := fields ++ [field "status" "transform_error", field "error" e.toString]
     handle.putStrLn (Json.mkObj fields).compress
     handle.flush
     count := count + 1
@@ -178,4 +230,4 @@ def main (args : List String) : IO UInt32 := do
 
 end PlainCertificateInventory
 
-def main := PlainCertificateInventory.main
+unsafe def main := PlainCertificateInventory.main

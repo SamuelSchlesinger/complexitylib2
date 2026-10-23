@@ -33,6 +33,8 @@ def discover_sources(root: Path) -> dict[str, Path]:
         row = libraries[name]
         src = root / row.get("srcDir", ".")
         base = src.joinpath(*name.split("."))
+        if src.is_symlink() or base.is_symlink() or any(p.is_symlink() for p in base.rglob("*")):
+            raise ValueError(f"symlinked source tree is not a complete inventory: {base}")
         paths = [base.with_suffix(".lean"), *sorted(base.rglob("*.lean"))]
         for path in paths:
             if not path.is_file():
@@ -54,6 +56,27 @@ def validate_ileans(root: Path, sources: dict[str, Path]) -> None:
         data = json.loads(path.read_text())
         if data.get("version") != 5 or data.get("module") != module:
             raise ValueError(f"unsupported or mismatched .ilean: {path}")
+
+
+def annotate_sources(root: Path, sources: dict[str, Path], rows: list[dict]) -> None:
+    """Distinguish source-written certificates from generated helpers without dropping either."""
+    definitions = {}
+    for module, path in sources.items():
+        artifact = root / ".lake/build/lib/lean" / Path(*module.split("."))
+        data = json.loads(artifact.with_suffix(".ilean").read_text())
+        for key, info in data["references"].items():
+            constant = json.loads(key).get("c")
+            if constant and constant["m"] == module and info.get("definition"):
+                definitions[constant["n"]] = (str(path.relative_to(root)), info["definition"])
+    for row in rows[1:]:
+        decl = row["declaration"]
+        definition = definitions.get(decl.get("owner", decl["name"]))
+        decl["source_written"] = definition is not None and not decl.get("local_path")
+        decl["scope"] = "local_certificate" if decl.get("local_path") else (
+            "source_declaration" if definition else "generated_helper")
+        if definition:
+            decl["source_path"], decl["source_definition"] = definition
+        decl["elaborated_type_sha256"] = hashlib.sha256(decl["type"].encode()).hexdigest()
 
 
 def validate_rows(rows: list[dict]) -> dict:
@@ -90,6 +113,12 @@ def validate_rows(rows: list[dict]) -> dict:
         "statuses": dict(statuses),
         "holdout_pairs": {f"tidy:{a}/plain:{b}": n for (a, b), n in sorted(pairs.items())},
         "registration_probes": sum("plain_registration" in row for row in records),
+        "holdout_pairs_by_role": {
+            role: dict(Counter(
+                f"tidy:{r['tidy_holdout']['status']}/plain:{r['plain_holdout']['status']}"
+                for r in records if r["status"] == "compared" and
+                ("mirrored_rule" if r["declaration"].get("mirror") else "unmirrored") == role))
+            for role in ("mirrored_rule", "unmirrored")},
     }
 
 
@@ -130,18 +159,39 @@ def main() -> int:
             "Heartbeats measure search with fresh state; import/filter/transform costs are excluded.",
         ],
     }
+    raw_file = args.output.with_suffix(".attempts.jsonl")
+    args.output.with_suffix(".metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
     with tempfile.TemporaryDirectory(prefix="plain-certificate-inventory-") as td:
-        module_file, raw_file = Path(td) / "modules.txt", Path(td) / "attempts.jsonl"
+        module_file = Path(td) / "modules.txt"
         module_file.write_text("\n".join(sorted(set(sources) | set(args.extra_import))) + "\n")
-        subprocess.run(["lake", "env", "lean", "--run", RUNNER, str(module_file),
-                        str(raw_file), str(args.heartbeats), str(args.limit)], cwd=ROOT, check=True)
-        rows = [json.loads(line) for line in raw_file.read_text().splitlines() if line.strip()]
-    summary = validate_rows(rows)
+        process = subprocess.run(["lake", "env", "lean", "--run", RUNNER, str(module_file),
+                                  str(raw_file.resolve()), str(args.heartbeats), str(args.limit)],
+                                 cwd=ROOT, check=False)
+    rows, errors = [], []
+    for number, line in enumerate(raw_file.read_text().splitlines() if raw_file.exists() else [], 1):
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            errors.append(f"invalid/truncated raw row {number}")
+    if process.returncode:
+        errors.append(f"Lean runner exited {process.returncode}")
+    try:
+        summary = validate_rows(rows)
+    except (ValueError, KeyError) as error:
+        errors.append(str(error))
+        summary = {"inventory_complete": False, "records": max(0, len(rows) - 1)}
     if any(digest(ROOT / p) != sha for p, sha in identities.items()):
-        raise RuntimeError("source snapshot changed during inventory")
-    report = {"metadata": metadata, "summary": summary, "header": rows[0], "records": rows[1:]}
+        errors.append("source snapshot changed during inventory")
+    annotate_sources(ROOT, sources, rows)
+    if errors:
+        summary["inventory_complete"] = False
+    report = {"metadata": metadata, "summary": summary, "errors": errors,
+              "header": rows[0] if rows else {}, "records": rows[1:]}
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
     print(json.dumps(summary, sort_keys=True))
+    if errors:
+        raise RuntimeError("; ".join(errors))
+
     return 0
 
 

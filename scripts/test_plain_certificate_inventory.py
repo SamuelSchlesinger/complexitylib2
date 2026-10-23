@@ -84,5 +84,91 @@ srcDir = "abstracts"
             runner.validate_rows([{"inventory_total": 1, "limit": 0}, record(status="skipped")])
 
 
+
+def native_probes():
+    """Opt-in checked Lean fixtures: private/local inventory and independent self-exclusion."""
+    import os
+    import subprocess
+    import sys
+    root = Path(__file__).resolve().parents[1]
+    lean = subprocess.check_output(["lake", "env", "which", "lean"], cwd=root, text=True).strip()
+    leanpath = subprocess.check_output(["lake", "env", "printenv", "LEAN_PATH"],
+                                       cwd=root, text=True).strip()
+    fixture = r"""
+import scripts.PlainCertificateInventory
+import Mathlib.Tactic.FunProp
+open Lean Meta Mathlib.Meta.FunProp PlainCertificateInventory
+@[fun_prop] def TidyInventoryProperty (f : ℕ → ℕ) : Prop := ∀ x, f x = f x
+opaque uniqueFunction : ℕ → ℕ := id
+@[fun_prop] theorem isolated_source : TidyInventoryProperty uniqueFunction := fun _ => rfl
+@[fun_prop] theorem indirect_source : TidyInventoryProperty uniqueFunction := isolated_source
+private theorem captured_source (f : ℕ → ℕ) (hf : TidyInventoryProperty f) :
+    TidyInventoryProperty f := by
+  have localRoutine : TidyInventoryProperty f := hf
+  exact localRoutine
+run_meta do
+  let bad : Std.HashSet Name := .ofArray #[`blocked]
+  let entry : GeneralTheorem := { (default : GeneralTheorem) with thmName := `blocked }
+  let node : Lean.Meta.RefinedDiscrTree.Trie GeneralTheorem := {
+    (default : Lean.Meta.RefinedDiscrTree.Trie GeneralTheorem) with
+    values := #[entry]
+    pending := #[(default, entry)] }
+  let tree : GeneralTheorems := { theorems := { tries := #[node] } }
+  let env ← getEnv
+  let f : FunctionTheorem := {
+    funPropName := `P, thmOrigin := .decl `blocked, funOrigin := .decl `f,
+    mainArgs := #[], appliedArgs := 1, form := .uncurried }
+  let l : LambdaTheorem := { funPropName := `P, thmName := `blocked, thmArgs := .id }
+  let env := functionTheoremsExt.modifyState env fun s => { s with
+    theorems := s.theorems.insert `f ((s.theorems.getD `f {}).insert `P #[f]) }
+  let env := lambdaTheoremsExt.modifyState env fun s => { s with
+    theorems := s.theorems.insert (`P, .id) #[l] }
+  let env := transitionTheoremsExt.modifyState env fun _ => tree
+  let env := morTheoremsExt.modifyState env fun _ => tree
+  let filtered := exclude env bad
+  unless (((functionTheoremsExt.getState filtered).theorems.getD `f {}).getD `P #[]).isEmpty do
+    throwError "function database exclusion failed"
+  unless ((lambdaTheoremsExt.getState filtered).theorems.getD (`P, .id) #[]).isEmpty do
+    throwError "lambda database exclusion failed"
+  for state in #[transitionTheoremsExt.getState filtered, morTheoremsExt.getState filtered] do
+    unless state.theorems.tries[0]!.values.isEmpty &&
+        state.theorems.tries[0]!.pending.isEmpty do
+      throwError "lazy/evaluated general database exclusion failed"
+  let reverse := ({} : Std.HashMap Name (Array Name)).insert `blocked #[`dependent]
+    |>.insert `dependent #[`transitive]
+  unless (closure reverse #[`blocked]).contains `transitive do
+    throwError "indirect exclusion failed"
+"""
+    with tempfile.TemporaryDirectory(prefix="plain-inventory-native-") as td:
+        tmp = Path(td)
+        lib = tmp / "lib"
+        (lib / "scripts").mkdir(parents=True)
+        env = {**os.environ, "LEAN_PATH": str(lib) + ":" + leanpath, "LEAN_NUM_THREADS": "2"}
+        subprocess.run([lean, "-o", str(lib / "scripts/PlainCertificateInventory.olean"),
+                        "scripts/PlainCertificateInventory.lean"], cwd=root, env=env, check=True)
+        (tmp / "PlainInventoryProbe.lean").write_text(fixture)
+        subprocess.run([lean, "-o", str(lib / "PlainInventoryProbe.olean"),
+                        "PlainInventoryProbe.lean"], cwd=tmp, env=env, check=True)
+        modules, output = tmp / "modules.txt", tmp / "rows.jsonl"
+        modules.write_text("PlainInventoryProbe\n")
+        subprocess.run([lean, "--run", str(root / runner.RUNNER), str(modules),
+                        str(output), "20000", "0"], cwd=root, env=env, check=True)
+        rows = [json.loads(line) for line in output.read_text().splitlines()]
+        runner.validate_rows(rows)
+        records = rows[1:]
+        isolated = next(r for r in records if r["declaration"]["name"] == "isolated_source")
+        assert isolated["tidy_holdout"]["status"] == "failed", isolated
+        assert isolated["excluded_count"] >= 2
+        local = [r for r in records if r["declaration"].get("local_path")]
+        assert local and all(r["declaration"]["private"] for r in local)
+        assert any("localRoutine" in r["declaration"]["name"] for r in local)
+        assert all(r["declaration"]["type"].count("TidyInventoryProperty") >= 2 for r in local)
+        print("Native probes passed: four databases, lazy leaves, indirect exclusion, private/local capture")
+
+
 if __name__ == "__main__":
-    unittest.main()
+    import sys
+    if sys.argv[1:] == ["--native"]:
+        native_probes()
+    else:
+        unittest.main()
