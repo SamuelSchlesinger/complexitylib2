@@ -65,7 +65,6 @@ sentence over `L`.
 * `Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP`: every isomorphism-closed class `K` whose
   query language is in `NP` is existential second-order definable.
 * `Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP`,
-  `Cslib.Logic.Vocabulary.definable_iff_queryLanguage_mem_NP`,
   `Cslib.Logic.ESO.definable_iff_isoClosed_and_queryLanguage_mem_NP`: **Fagin's theorem**
   (`Definable K ↔ v.queryLanguage K ∈ NP encStructure` for isomorphism-closed `K`, and
   `Definable K ↔ IsoClosed K ∧ v.queryLanguage K ∈ NP encStructure` in general).

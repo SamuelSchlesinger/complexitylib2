@@ -42,7 +42,9 @@ the round maps `Σ₀` to itself and **doubles the value up to the threshold** `
 `min (2 UNSAT(G)) γ ≤ UNSAT(G.amplify T q)` (`Cslib.PCP.Dinur.min_le_unsatVal_amplify`). This is
 Dinur's main theorem, in a non-explicit form: the expanders of preprocessing are chosen
 non-constructively (`Cslib.RotationMap.expanderFamily`), and the round is a noncomputable
-definition; its realization in polynomial time is not addressed here. The construction remains
+definition. Its polynomial-time realization, with explicit expanders and a larger killing rate, is
+`Cslib.PCP.Encoded.Graph.arithmeticAmplify`, in
+`Complexity.Computability.PCP.Encoded.Amplification.Arithmetic`. The construction remains
 asymptotic: despite the smaller answer alphabet, the size factors are triply exponential in `T`.
 
 ## Main definitions

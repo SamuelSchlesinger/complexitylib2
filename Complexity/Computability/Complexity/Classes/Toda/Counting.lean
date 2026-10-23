@@ -61,7 +61,6 @@ odd number of accepted witnesses (`Cslib.Complexity.Toda.testBit_card_filter_sha
 ## Main definitions
 
 * `Cslib.Complexity.Toda.parityCoeff`: the coefficients of the amplification.
-* `Cslib.BitString.wordLt`: the lexicographic order on words of equal length.
 * `Cslib.Complexity.Toda.countingTest`, `Cslib.Complexity.Toda.sharpTest`: the word tests of the
   counting functions.
 

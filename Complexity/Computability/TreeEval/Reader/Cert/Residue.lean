@@ -19,7 +19,8 @@ in the lengths of their encoded arguments.
 ## Main results
 
 * `Cslib.TreeEval.Reader.addMod_inSpace`, `.mulMod_inSpace`, `.negMod_inSpace`,
-  `.powMod_inSpace`, `.chi_inSpace`: the residue operations.
+  `.chi_inSpace`, `.unitInv_inSpace`: the residue operations; `unitInv p j` computes
+  `(j + 1) ^ (p - 2)` modulo `p` by repeated multiplication.
 -/
 
 @[expose] public section
