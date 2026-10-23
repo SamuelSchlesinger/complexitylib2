@@ -843,6 +843,15 @@ batches.
      now certifies construction of circuit codes from encoded instances, with separately
      prescribed unary input/output widths. Its proof reuses the uniform tableau writer,
      prefix hardwiring and shared-input circuit composition; it establishes no depth bound.
+     The [carry-lookahead adder](Complexity/Computability/Circuit/Boolean/CarryLookahead.lean)
+     computes exact unsigned addition with carry-in and carry-out at every width, including zero.
+     Its depth is at most `7 + 2*ceil(log₂(w+1))`, with polynomial size and every gate charged.
+     The modular version has depth at most `8 + 2*ceil(log₂(w+1))`; a carry-save finishing client
+     preserves the existing 4-to-2 reducer's value modulo `2^w` and clears its second word.
+     The [native generators](Complexity/Computability/Circuit/Boolean/CarryLookahead/PolyTime.lean)
+     construct the complete binary gate/output codes from unary width, reusing fixed formula
+     templates and shared-input code assembly. This establishes polynomial-time uniformity for
+     these arithmetic circuits; stronger uniformity and shallow cryptographic decryption remain open.
      Define logspace and DLOGTIME uniformity with explicit gate-address, direct-connection and
      input encodings. Certify circuit generation and evaluation and the relevant machine-to-
      circuit simulations, preserving size, depth and construction-resource bounds. Prove
