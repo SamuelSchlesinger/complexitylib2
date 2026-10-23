@@ -36,16 +36,6 @@ jobs:
         run: |
           set -e
           lake exe checkInitImports
-      # Input-to-output mappings of this build, for diagnosing remote-cache misses.
-      - name: "Record build-output mappings"
-        run: |
-          set -e
-          lake build Complexity ComplexityTests -o lake-mappings.jsonl
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: lake-mappings
-          path: lake-mappings.jsonl
-          retention-days: 14
       # Publish the build outputs to the remote cache read by scripts/cache/get.sh. Skipped until
       # the maintainer sets the repository variables described in scripts/cache/README.md.
       - name: "Authenticate to the remote cache"
