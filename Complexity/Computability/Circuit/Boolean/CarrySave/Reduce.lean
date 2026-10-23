@@ -52,7 +52,7 @@ def pairWithZero (C : Circuit signature n w) : Circuit signature n (w + w) :=
   simp only [pairWithZero, Circuit.eval_append, Circuit.eval_comp, Circuit.eval_wiring]
   rfl
 
-@[simp] theorem pairVal_eval_pairWithZero (C : Circuit signature n w) (x : BitString n) :
+theorem pairVal_eval_pairWithZero (C : Circuit signature n w) (x : BitString n) :
     pairVal ((pairWithZero C).eval interpretation x) =
       (BitString.equivFin w (C.eval interpretation x) : ℕ) := by
   rw [eval_pairWithZero, pairVal_append, val_equivFin_false, Nat.add_zero]
