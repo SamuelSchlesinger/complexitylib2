@@ -595,7 +595,7 @@ def twoRoundStep (reply1 reply2 : List Bool → List Bool) (q : List Bool)
   else ([], s)
 
 /-- Run a `WordOracleComp Unit` program against `twoRoundStep` inside `ProbComp`. -/
-noncomputable def runTwoRound {α : Type} (reply1 reply2 : List Bool → List Bool)
+def runTwoRound {α : Type} (reply1 reply2 : List Bool → List Bool)
     (prog : WordOracleComp Unit α) (s : ℕ × List Bool) : ProbComp (α × (ℕ × List Bool)) :=
   (OracleComp.interpret (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n))
     (fun q state => pure (twoRoundStep reply1 reply2 q.2 state))) prog).run s

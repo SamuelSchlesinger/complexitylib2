@@ -53,7 +53,7 @@ open scoped NNReal
 
 /-- Compare predictors on fresh labeled samples, then use the chosen predictor on the challenge.
 The challenge's hidden label is never an input to this program. -/
-noncomputable def selectPredictor (count trials : ℕ) (source : ProbComp (List Bool × Bool))
+def selectPredictor (count trials : ℕ) (source : ProbComp (List Bool × Bool))
     (predict : ℕ → List Bool → ProbComp Bool) (observation : List Bool) : ProbComp Bool := do
   let chosen ← OracleComp.selectBest count trials (fun i => do
     let sample ← source

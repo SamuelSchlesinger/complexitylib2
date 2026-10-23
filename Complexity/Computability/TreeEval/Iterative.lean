@@ -93,7 +93,7 @@ section ZMod
 variable {p : ℕ} [Fact p.Prime]
 
 /-- The units `1, …, p - 1` of `ZMod p`, in order: `zmodUnit j` is `j + 1` for `j < p - 1`. -/
-noncomputable def zmodUnit (p : ℕ) [Fact p.Prime] (j : ℕ) : (ZMod p)ˣ :=
+def zmodUnit (p : ℕ) [Fact p.Prime] (j : ℕ) : (ZMod p)ˣ :=
   if h : ((j + 1 : ℕ) : ZMod p) = 0 then 1 else Units.mk0 _ h
 
 theorem zmodUnit_val {j : ℕ} (hj : j < p - 1) :

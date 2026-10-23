@@ -67,7 +67,7 @@ open NativeCertificate
 variable {M : Model.{0, 0, 0, 0}} {r : ℕ}
 
 /-- Encode all finite state components, including the default and distinct stored bindings. -/
-noncomputable def encoding (enc : M.Encoding) : FiniteState M r ↪ List Bool :=
+def encoding (enc : M.Encoding) : FiniteState M r ↪ List Bool :=
   ⟨fun s => encPair encNat (encPair (encPi enc.value)
       (encPair enc.value (SparseMemory.encoding enc.address enc.value)))
       (s.pc, s.regs, s.default, s.memory), by
@@ -85,12 +85,12 @@ noncomputable def encoding (enc : M.Encoding) : FiniteState M r ↪ List Bool :=
       (s.pc, s.regs, s.default, s.memory) := rfl
 
 /-- Configuration is a runtime input, alongside the complete finite state. -/
-noncomputable abbrev inputEncoding (enc : M.Encoding) :
+abbrev inputEncoding (enc : M.Encoding) :
     (M.Config × FiniteState M r) ↪ List Bool :=
   encPair enc.config (encoding enc)
 
 /-- Fault, continuing state and halted value have distinct tags. -/
-noncomputable abbrev resultEncoding (enc : M.Encoding) : Result M r ↪ List Bool :=
+abbrev resultEncoding (enc : M.Encoding) : Result M r ↪ List Bool :=
   encOption (encSum (encoding enc) enc.value)
 
 /-- Exact bit length of an encoded finite state in terms of its four encoded fields. -/

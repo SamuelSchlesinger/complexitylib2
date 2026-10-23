@@ -898,7 +898,7 @@ theorem BitCommitmentScheme.computational_hiding_tidy (h : BitCommitmentScheme) 
 
 /-- **Naor's bit commitment scheme** built from any pseudorandom generator with stretch at least
 `3 * n` [Naor1991]. -/
-noncomputable def PseudorandomGenerator.naorBitCommitment
+def PseudorandomGenerator.naorBitCommitment
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
     (hstretch : ∀ n, 3 * n ≤ length n) :

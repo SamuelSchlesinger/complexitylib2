@@ -74,12 +74,12 @@ open scoped BigOperators
 
 /-- The probability of the mask `selected` when each coordinate is selected independently with
 probability `p`. -/
-noncomputable def bernoulliWeight {ι : Type*} [Fintype ι] (p : ℝ) (selected : ι → Bool) : ℝ :=
+def bernoulliWeight {ι : Type*} [Fintype ι] (p : ℝ) (selected : ι → Bool) : ℝ :=
   ∏ i, if selected i then p else 1 - p
 
 /-- The expectation of `f` over a random mask selecting each coordinate independently with
 probability `p`. It is a probability expectation when `0 ≤ p ≤ 1`. -/
-noncomputable def bernoulliAverage {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ)
+def bernoulliAverage {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ)
     (f : (ι → Bool) → ℝ) : ℝ :=
   ∑ selected, bernoulliWeight p selected * f selected
 

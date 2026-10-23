@@ -55,10 +55,10 @@ abbrev Game := PMF Bool
 namespace Game
 
 /-- The probability that an experiment succeeds, that is, outputs `true`. -/
-noncomputable abbrev succProbability (game : Game) : ℝ≥0 := (game true).toNNReal
+abbrev succProbability (game : Game) : ℝ≥0 := (game true).toNNReal
 
 /-- The probability that an experiment fails, that is, outputs `false`. -/
-noncomputable abbrev failProbability (game : Game) : ℝ≥0 := (game false).toNNReal
+abbrev failProbability (game : Game) : ℝ≥0 := (game false).toNNReal
 
 /-- Success probability is at most one. -/
 theorem succProbability_le_one (game : Game) : succProbability game ≤ 1 := by
@@ -82,7 +82,7 @@ theorem failProbability_eq (game : Game) : failProbability game = 1 - succProbab
 
 /-- The distinguishing advantage between two games is the absolute difference of their success
 probabilities. -/
-noncomputable abbrev advantage (game1 game2 : Game) : ℝ≥0 :=
+abbrev advantage (game1 game2 : Game) : ℝ≥0 :=
   nndist game1.succProbability game2.succProbability
 
 /-- As a real number, the advantage is the absolute difference of the success probabilities. -/

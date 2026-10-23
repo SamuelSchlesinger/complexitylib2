@@ -270,7 +270,7 @@ noncomputable def GlobLoc.idx : GlobLoc k State → ℕ
   | .attr v j => numSit k State * (k + 1) + attrIdx v * (numSit k State + 1) + j
 
 /-- The number of global gates. -/
-noncomputable def globWidth (k : ℕ) (State : Type) [Fintype State] : ℕ :=
+def globWidth (k : ℕ) (State : Type) [Fintype State] : ℕ :=
   numSit k State * (k + 1) + Fintype.card (Attr k State) * (numSit k State + 1)
 
 /-- The number of a global feature. -/
@@ -300,19 +300,19 @@ def numCols (T : ℕ) : ℕ := 2 * T + 1
 def globStart (k T : ℕ) : ℕ := numCols T * scanWidth k
 
 /-- The start of the global features within a block. -/
-noncomputable def gfStart (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
+def gfStart (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
   globStart k T + globWidth k State
 
 /-- The start of the column features within a block. -/
-noncomputable def colStart (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
+def colStart (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
   gfStart k State T + gfWidth State
 
 /-- The number of gates of a block. -/
-noncomputable def blockSize (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
+def blockSize (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
   colStart k State T + numCols T * colWidth k
 
 /-- The number of gates of the tableau: the two constants and `T + 1` blocks. -/
-noncomputable def numGates (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
+def numGates (k : ℕ) (State : Type) [Fintype State] (T : ℕ) : ℕ :=
   2 + (T + 1) * blockSize k State T
 
 /-- The offset of a position in column `c` from the start of its block. -/

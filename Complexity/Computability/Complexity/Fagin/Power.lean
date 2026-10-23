@@ -239,7 +239,7 @@ include hk in
 /-- **The power isomorphism**: when `M` is expanded by the strict linear order of `e : M ≃ Fin n`,
  the structure interpreted by `v.powerInterpretation k har` is isomorphic to `Fin (n ^ k)` with
 `v.powerStructure (v.encode M e) (n ^ k)`. -/
-noncomputable def powerEquiv (M : Type) [L.Structure M] {n : ℕ} (e : M ≃ Fin n) :
+def powerEquiv (M : Type) [L.Structure M] {n : ℕ} (e : M ≃ Fin n) :
     letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e)
     letI := v.powerStructure (v.encode M e) (n ^ k)
     (v.powerInterpretation k har).Model M ≃[v.powerLanguage] Fin (n ^ k) :=

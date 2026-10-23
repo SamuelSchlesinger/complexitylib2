@@ -94,7 +94,7 @@ theorem SemifilterWitness.isExact_of_isConsistentWith {ι : Type*}
 
 /-- Observation in a single witness fiber of the extended approximation model. Away from its
 distinguished point, membership is unchanged. -/
-noncomputable def SemifilterWitness.observe (w : SemifilterWitness target input admissible)
+def SemifilterWitness.observe (w : SemifilterWitness target input admissible)
     (s : Set U) : Set U :=
   open Classical in
   {x | if x = w.point.val then w.filter (Subtype.val ⁻¹' s) else x ∈ s}

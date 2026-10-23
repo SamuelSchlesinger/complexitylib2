@@ -51,7 +51,7 @@ open Cslib.Probability.PMF
 variable {α : Type*} [Fintype α]
 
 /-- The total mass of the soft weights under the source distribution. -/
-noncomputable def density (source : PMF α) (rate : ℝ) (margin : α → ℝ) : ℝ :=
+def density (source : PMF α) (rate : ℝ) (margin : α → ℝ) : ℝ :=
   ∑ x, (source x).toReal * weight rate (margin x)
 
 /-- The expected potential of an example drawn from the source. -/

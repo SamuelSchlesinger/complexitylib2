@@ -76,7 +76,7 @@ public lemma length_read_fst_le (q : Q) (w : List Symbol) :
 
 /-- `r` as a machine with one work tape: it appends what it emits to the work tape, with the head
 on the cell after the word, and moves the input head over what it reads. -/
-noncomputable def core : MultiTapeTM 1 Symbol Q :=
+def core : MultiTapeTM 1 Symbol Q :=
   ofTr r.q₀ fun q inp _ =>
     match inp with
     | none => ⟨0, fun _ => (none, 0), none, none⟩

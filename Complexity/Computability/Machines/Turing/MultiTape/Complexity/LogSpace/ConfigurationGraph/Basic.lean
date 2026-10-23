@@ -185,7 +185,7 @@ noncomputable def startID (ntm : MultiTapeNTM k Bool State) (D n : ℕ) : ℕ :=
     | _ => 0
 
 /-- The graph on an actual input; it reads no other bit than `queryIndex`. -/
-noncomputable def Edge (ntm : MultiTapeNTM k Bool State) (D : ℕ) (w : List Bool)
+def Edge (ntm : MultiTapeNTM k Bool State) (D : ℕ) (w : List Bool)
     (u v : ℕ) : Prop :=
   edgeWithSymbol ntm D w.length u v w[queryIndex (k := k) D w.length u]? = true
 

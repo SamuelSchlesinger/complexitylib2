@@ -97,9 +97,8 @@ theorem length_le_period (hf : Function.Injective f) (j : Fin R) :
 end CounterIntervalChart
 
 /-- Starts of the linear pieces; the last counter edge creates no additional piece. -/
-noncomputable def counterIntervalStarts (f : BitVec n → BitVec n) : Finset ℕ := by
-  classical
-  exact insert 0 (((disagreement f (fun x => x + 1)).image
+noncomputable def counterIntervalStarts (f : BitVec n → BitVec n) : Finset ℕ :=
+  insert 0 (((disagreement f (fun x => x + 1)).image
     (fun x => x.toNat + 1)).filter fun a => a < 2 ^ n)
 
 theorem counterIntervalStarts_bound (f : BitVec n → BitVec n) :
@@ -117,7 +116,7 @@ theorem counterIntervalStarts_lt (f : BitVec n → BitVec n) {a : ℕ}
   · exact (Finset.mem_filter.mp ha).2
 
 /-- The next start, or the upper endpoint of the whole universe. -/
-noncomputable def nextBoundary (S : Finset ℕ) (N a : ℕ) : ℕ :=
+def nextBoundary (S : Finset ℕ) (N a : ℕ) : ℕ :=
   (insert N (S.filter fun b => a < b)).min' (by simp)
 
 theorem nextBoundary_gt (S : Finset ℕ) {N a : ℕ} (ha : a < N) :

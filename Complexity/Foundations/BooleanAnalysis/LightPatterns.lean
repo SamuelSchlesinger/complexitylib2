@@ -200,7 +200,7 @@ relative to the uniform distribution, scaled by the number of patterns
 
 /-- Sum of the masses of all completions of a coordinate pattern. For a
 nonnegative mass function summing to one, this is the probability of the pattern. -/
-noncomputable def coordinateMass (mass : (ι → Bool) → ℝ) (selected : ι → Bool)
+def coordinateMass (mass : (ι → Bool) → ℝ) (selected : ι → Bool)
     (pattern : {i // selected i = true} → Bool) : ℝ :=
   ∑ rest : {i // selected i ≠ true} → Bool,
     mass (fun i => if h : selected i = true then pattern ⟨i, h⟩ else rest ⟨i, h⟩)

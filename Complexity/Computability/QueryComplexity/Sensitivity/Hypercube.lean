@@ -77,7 +77,7 @@ variable [LinearOrder ι]
 /-- The signed adjacency operator of the cube along the coordinates of `S`: the value at `x` sums
 the values at the neighbors of `x` in the directions `i ∈ S`, the edge in direction `i` signed by
 the character of the coordinates of `S` below `i`. -/
-noncomputable def signedAdjacency (S : Finset ι) : Module.End ℝ ((ι → Bool) → ℝ) where
+def signedAdjacency (S : Finset ι) : Module.End ℝ ((ι → Bool) → ℝ) where
   toFun v x := ∑ i ∈ S, chi ℝ {j ∈ S | j < i} x * v (update x i (!x i))
   map_add' v w := funext fun x => by
     simp only [Pi.add_apply, mul_add, sum_add_distrib]

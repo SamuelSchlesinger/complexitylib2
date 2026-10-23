@@ -380,7 +380,7 @@ lemma coefficientRing_isUnit_or_eq_zero (x : coefficientRing B h0 hB) :
 
 /-- An actual division ring containing all ordered quantum-monomial series;
 no finite-dimensional-domain or external division-algebra theorem is assumed. -/
-noncomputable abbrev divisionRing : DivisionRing (coefficientRing B h0 hB) :=
+abbrev divisionRing : DivisionRing (coefficientRing B h0 hB) :=
   DivisionRing.ofIsUnitOrEqZero (coefficientRing_isUnit_or_eq_zero B h0 hB)
 
 end

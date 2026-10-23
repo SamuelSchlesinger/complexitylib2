@@ -324,7 +324,7 @@ theorem card_hintDecode_line_ne_le {d D : ℕ} (hd : 1 ≤ d)
   exact h
 
 /-- The normalized directions: those whose first nonzero entry is `1`. -/
-private noncomputable def normDirs (m : ℕ) (F : Type*) [Field F] [Fintype F] [DecidableEq F] :
+private def normDirs (m : ℕ) (F : Type*) [Field F] [Fintype F] [DecidableEq F] :
     Finset (Fin m → F) := univ.filter fun v => firstNonzero v = 1
 
 /-- There are at most `(Q - 1) / (q - 1)` normalized directions. -/

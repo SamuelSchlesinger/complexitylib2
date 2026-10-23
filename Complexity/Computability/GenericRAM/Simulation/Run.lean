@@ -519,7 +519,7 @@ variable {M : Model.{0, 0, 0, 0}} {r : ℕ}
 variable {α : Type} {ei : α ↪ List Bool}
 
 /-- Framed encoding of initialization arguments `(regs, default, memory)`. -/
-noncomputable abbrev initEncoding (enc : M.Encoding) :
+abbrev initEncoding (enc : M.Encoding) :
     ((Fin r → M.Value) × M.Value × SparseMemory M.Address M.Value) ↪ List Bool :=
   encPair (encPi enc.value) (encPair enc.value (SparseMemory.encoding enc.address enc.value))
 
@@ -649,12 +649,12 @@ def outputCertificate (enc : M.Encoding) :
 /-! ### Clocked multi-step simulation certificates -/
 
 /-- Encoding of the loop state `(k, res) : M.Config × Result M r`. -/
-noncomputable abbrev loopEncoding (enc : M.Encoding) :
+abbrev loopEncoding (enc : M.Encoding) :
     (M.Config × Result M r) ↪ List Bool :=
   encPair enc.config (resultEncoding enc)
 
 /-- Encoding of a clocked simulation input `(n, (k, s)) : ℕ × (M.Config × FiniteState M r)`. -/
-noncomputable abbrev runInputEncoding (enc : M.Encoding) :
+abbrev runInputEncoding (enc : M.Encoding) :
     (ℕ × (M.Config × FiniteState M r)) ↪ List Bool :=
   encPair encNat (inputEncoding enc)
 
