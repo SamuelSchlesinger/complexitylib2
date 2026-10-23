@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Complexity.Foundations.Data.Nat.Bits
 import Mathlib.Data.List.GetD
 import Mathlib.Data.Nat.Bitwise
 
@@ -177,27 +178,9 @@ lemma bits_getD (n i : ℕ) : n.bits.getD i false = n.testBit i := by
   rw [Nat.testBit_eq_inth, ← List.getD_default_eq_getI]
   rfl
 
-lemma foldr_bit_lt (l : List Bool) : l.foldr Nat.bit 0 < 2 ^ l.length := by
-  induction l with
-  | nil => simp
-  | cons b l ih =>
-    simp only [List.foldr_cons, Nat.bit_val, List.length_cons, Nat.pow_succ]
-    cases b <;> simp only [Bool.toNat_true, Bool.toNat_false] <;> lia
+@[deprecated (since := "2026-10-23")] alias foldr_bit_lt := Nat.foldr_bit_lt
 
-lemma foldr_bit_testBit {n K : ℕ} (h : n.size ≤ K) :
-    ((List.range K).map n.testBit).foldr Nat.bit 0 = n := by
-  induction K generalizing n with
-  | zero =>
-    simp only [List.range_zero, List.map_nil, List.foldr_nil]
-    exact (Nat.size_eq_zero.1 (Nat.le_zero.1 h)).symm
-  | succ K ih =>
-    have hn : (n / 2).size ≤ K := by
-      have := Nat.size_le.1 h
-      rw [Nat.pow_succ] at this
-      exact Nat.size_le.2 (by lia)
-    rw [List.range_succ_eq_map, List.map_cons, List.map_map, List.foldr_cons]
-    have hmap : n.testBit ∘ Nat.succ = (n / 2).testBit := funext fun i => Nat.testBit_succ n i
-    rw [hmap, ih hn, ← Nat.shiftRight_one, Nat.bit_testBit_zero_shiftRight_one]
+@[deprecated (since := "2026-10-23")] alias foldr_bit_testBit := Nat.foldr_bit_testBit
 
 lemma foldl_subStep (ps : List (Bool × Bool)) (c : Bool) (out : List Bool) :
     ∃ ds, (ps.foldl subStep (c, out)).2 = out ++ ds ∧ ds.length = ps.length ∧
@@ -227,11 +210,11 @@ lemma sub_eq (p : ℕ × ℕ) : p.1 - p.2 =
   obtain ⟨ds, hds, hlen, hval⟩ := foldl_subStep (digitPairs p) false []
   have hfst : ((digitPairs p).map Prod.fst).foldr Nat.bit 0 = p.1 := by
     simp only [digitPairs, List.map_map, Function.comp_def, bits_getD]
-    exact foldr_bit_testBit (by simp [Nat.size_eq_bits_len])
+    exact Nat.foldr_bit_testBit (by simp [Nat.size_eq_bits_len])
   have hsnd : ((digitPairs p).map Prod.snd).foldr Nat.bit 0 = p.2 := by
     simp only [digitPairs, List.map_map, Function.comp_def, bits_getD]
-    exact foldr_bit_testBit (by simp [Nat.size_eq_bits_len])
-  have hlt := foldr_bit_lt ds
+    exact Nat.foldr_bit_testBit (by simp [Nat.size_eq_bits_len])
+  have hlt := Nat.foldr_bit_lt ds
   rw [hfst, hsnd, ← hlen] at hval
   rw [hds, List.nil_append]
   cases h : ((digitPairs p).foldl subStep (false, [])).1 <;>

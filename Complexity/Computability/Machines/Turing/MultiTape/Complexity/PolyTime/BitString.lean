@@ -30,8 +30,11 @@ polynomial bound on the complete encoded output. The operations are total on emp
 
 * `Turing.MultiTapeTM.ofBits_reverse`: agreement of the two binary-word conventions.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBinaryValue`: binary-valued word decoding.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsLow`: fixed-width low-order binary digits.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsToList`, `.listToBits`: encoding conversion.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFlatten`: concatenate computed raw words.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapToBitsWithInput`: concatenate captured
+  words over a framed list.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFrame`, `.bitsPadWord`: self-delimiting
   framing and bounded padding, including arbitrary encoded inputs and overlong words.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsGetElem?`: optional lookup in raw bits.
@@ -196,6 +199,29 @@ theorem mapToBitsWithInput {β : Type} {enc : β ↪ List Bool} {list : α → L
       (encPair input enc) encBool) :
     ComputableTidilyInPolyTime (fun a => (list a).map (f a)) input encBits :=
   listToBits.comp (mapWithInput hlist hf)
+
+/-- Concatenate captured raw bit strings over a framed list. The complete intermediate words
+and their framing are charged before concatenation. Apply this rule explicitly: registering both
+raw and framed `flatMap` outputs makes existing enumeration proof search exceed its limit. -/
+theorem flatMapToBitsWithInput {β : Type} {enc : β ↪ List Bool} {list : α → List β}
+    {f : α → β → List Bool}
+    (hlist : ComputableTidilyInPolyTime list input (encList enc))
+    (hf : ComputableTidilyInPolyTime (fun p : α × β => f p.1 p.2)
+      (encPair input enc) encBits) :
+    ComputableTidilyInPolyTime (fun a => (list a).flatMap (f a)) input encBits := by
+  simpa only [List.flatten_eq_flatMap, List.flatMap_map, id_eq] using
+    bitsFlatten (mapWithInput hlist hf)
+
+/-- Emit a computed unary number of low-order digits of a computed binary natural. The width
+charges every output bit, including leading zero digits. -/
+@[fun_prop]
+theorem bitsLow {width value : α → ℕ}
+    (hwidth : ComputableTidilyInPolyTime width input encUnary)
+    (hvalue : ComputableTidilyInPolyTime value input encNat) :
+    ComputableTidilyInPolyTime (fun a => Cslib.BitString.lowBits (width a) (value a))
+      input encBits := by
+  unfold Cslib.BitString.lowBits
+  exact mapToBitsWithInput (range.comp hwidth) (by fun_prop)
 
 /-- Map a captured Boolean operation over a raw bit string. -/
 @[fun_prop]

@@ -37,6 +37,7 @@ probability of excessive noise.
 
 * `encryptWithCoins_hasError`: the encryption error is the integer subset sum `R * error`.
 * `recomposeMatrix_encryptWithCoins`: the public ciphertext recomposes to `μ * G + R * A`.
+* `encryptWithCoins_eq_decompose`: the ciphertext is the bit decomposition of that matrix.
 * `nand_hasError`: the actual NAND operation has the stated propagated integer error.
 * `decrypt_eq_of_hasError`: the decoder recovers a bit below its explicit noise threshold.
 * `decrypt_encryptWithCoins`, `decrypt_nand`: correctness from input noise bounds.
@@ -80,11 +81,31 @@ theorem publicMatrix_mulVec_secretVector {n m w : ℕ}
 def gadgetMatrix (n w : ℕ) : Matrix (Fin (n + 1) × Fin w) (Fin (n + 1)) (ZMod (2 ^ w)) :=
   recomposeMatrix w 1
 
+/-- A gadget row contains its binary place value at its original coordinate and zero elsewhere. -/
+theorem gadgetMatrix_apply {n w : ℕ} (i : Fin (n + 1)) (k : Fin w) (j : Fin (n + 1)) :
+    gadgetMatrix n w (i, k) j = if i = j then 2 ^ k.val else 0 := by
+  classical
+  by_cases h : i = j
+  · subst j
+    simp [gadgetMatrix, recomposeMatrix, bitCompose, _root_.Matrix.one_apply, Prod.mk.injEq]
+  · simp [gadgetMatrix, recomposeMatrix, bitCompose, Prod.mk.injEq, h]
+
 /-- Encrypt using only the public matrix, the Boolean message, and binary coins. -/
 def encryptWithCoins {n m w : ℕ} (A : Matrix (Fin m) (Fin (n + 1)) (ZMod (2 ^ w)))
     (μ : Bool) (R : Matrix (Fin (n + 1) × Fin w) (Fin m) Bool) : Ciphertext n w :=
   flattenMatrix w ((μ.toNat : ZMod (2 ^ w)) • 1 +
     bitMatrix (ZMod (2 ^ w)) (decomposeMatrix w (bitMatrix (ZMod (2 ^ w)) R * A)))
+
+/-- The typed encryption formula is the bit decomposition of `message * G + R * A`. -/
+theorem encryptWithCoins_eq_decompose {n m w : ℕ}
+    (A : _root_.Matrix (Fin m) (Fin (n + 1)) (ZMod (2 ^ w))) (message : Bool)
+    (coins : _root_.Matrix (Fin (n + 1) × Fin w) (Fin m) Bool) :
+    encryptWithCoins A message coins = decomposeMatrix w
+      ((message.toNat : ZMod (2 ^ w)) • gadgetMatrix n w +
+        bitMatrix (ZMod (2 ^ w)) coins * A) := by
+  unfold encryptWithCoins flattenMatrix
+  rw [recomposeMatrix_add, recomposeMatrix_smul, recomposeMatrix_decomposeMatrix]
+  rfl
 
 /-- Homomorphic NAND, with dimensions and binary output entries preserved structurally. -/
 def nand {n w : ℕ} (C₁ C₂ : Ciphertext n w) : Ciphertext n w :=
