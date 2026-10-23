@@ -116,19 +116,38 @@ step_killswitch() {
     --region="$REGION" --member="serviceAccount:$KILLER" --role=roles/run.invoker >/dev/null
 }
 
+# channel <type> <display name> <label>: print the name of the notification channel, creating it
+# unless one with this display name exists, so that rerunning the step adds no duplicates.
+channel() {
+  local existing
+  existing="$(gcloud beta monitoring channels list --project="$PROJECT" \
+    --filter="displayName=\"$2\"" --format='value(name)' | head -n 1)"
+  if [ -n "$existing" ]; then
+    echo "$existing"
+  else
+    gc beta monitoring channels create --project="$PROJECT" --type="$1" --display-name="$2" \
+      --channel-labels="$3" --format='value(name)'
+  fi
+}
+
 step_alert() {
   # Billing data lags by hours; this fires within minutes of an unusual download rate, notifies
   # the maintainer (when ALERT_EMAIL is set) and triggers the kill switch through the topic.
-  local channels policy
-  gc pubsub topics add-iam-policy-binding "$TOPIC" --project="$PROJECT" --role=roles/pubsub.publisher \
-    --member="serviceAccount:service-$(project_number)@gcp-sa-monitoring-notification.iam.gserviceaccount.com"
-  channels="$(gc beta monitoring channels create --project="$PROJECT" --type=pubsub \
-    --display-name="Cache kill switch" --channel-labels="topic=projects/$PROJECT/topics/$TOPIC" \
-    --format='value(name)')"
+  local channels policy attempt
+  # Monitoring's notification service agent only exists once created; it publishes to the topic.
+  gc beta services identity create --service=monitoring.googleapis.com --project="$PROJECT" >/dev/null
+  for attempt in 1 2 3 4 5 6; do
+    gc pubsub topics add-iam-policy-binding "$TOPIC" --project="$PROJECT" \
+      --role=roles/pubsub.publisher >/dev/null \
+      --member="serviceAccount:service-$(project_number)@gcp-sa-monitoring-notification.iam.gserviceaccount.com" &&
+      break
+    [ "$attempt" -lt 6 ] || return 1
+    echo "Monitoring service agent not yet visible; retrying in 30 s" >&2
+    sleep 30
+  done
+  channels="$(channel pubsub "Cache kill switch" "topic=projects/$PROJECT/topics/$TOPIC")"
   if [ -n "${ALERT_EMAIL:-}" ]; then
-    channels="$channels,$(gc beta monitoring channels create --project="$PROJECT" --type=email \
-      --display-name="Cache maintainer" --channel-labels="email_address=$ALERT_EMAIL" \
-      --format='value(name)')"
+    channels="$channels,$(channel email "Cache maintainer" "email_address=$ALERT_EMAIL")"
   fi
   policy="$(mktemp)"
   cat > "$policy" <<EOF
