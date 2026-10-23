@@ -72,7 +72,8 @@ def efficiencyKey (statement : Expr) : MetaM (Name × Name × Bool) := do
   let statement := statement.consumeMData
   let some predicate := statement.getAppFn.constName?
     | throwError "expected an efficiency statement"
-  let argument := if predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime then
+  let argument := if predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
+      predicate == `Turing.MultiTapeTM.ComputableInPolyTime then
     statement.getAppArgs[2]! else statement.getAppArgs.back!
   let program ← Core.betaReduce (← etaExpand argument)
   let some (head, encoded) ← lambdaTelescope program fun _ body => pure (programHead? body)
@@ -148,6 +149,7 @@ initialize registerBuiltinAttribute {
         efficiencyKey conclusion
       return (certificate, key)
     if key.1 == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
+        key.1 == `Turing.MultiTapeTM.ComputableInPolyTime ||
         key.1 == `Cslib.Probability.IsPPTOn then
       unless ← hasGlobalFunProp certificate do
         Attribute.add certificate `fun_prop .missing kind
