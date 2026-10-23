@@ -89,6 +89,33 @@ theorem id_computableInPolySpace :
 example : ComputableTidilyInPolySpace (id : List Bool → List Bool) encBits encBits :=
   id_computableInPolySpace.tidy
 
+/-! ### Compositional automation within plain polynomial space -/
+
+example {α : Type} (enc : α ↪ List Bool) :
+    ComputableInPolySpace (id : α → α) enc enc := by
+  fun_prop
+
+/-- Compose functions with plain certificates without converting either hypothesis by hand. -/
+example {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {encC : γ ↪ List Bool} {f : α → β} {g : β → γ}
+    (hf : ComputableInPolySpace f encA encB) (hg : ComputableInPolySpace g encB encC) :
+    ComputableInPolySpace (fun a => g (f a)) encA encC := by
+  fun_prop
+
+/-- Pairing and case distinction can mix plain space, tidy space and plain time certificates. -/
+example {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {encC : γ ↪ List Bool} {f : α → β} {g h : α → γ} {c : α → Bool}
+    (hf : ComputableInPolySpace f encA encB) (hg : ComputableTidilyInPolySpace g encA encC)
+    (hh : ComputableInPolyTime h encA encC) (hc : ComputableInPolyTime c encA encBool) :
+    ComputableInPolySpace (fun a => if c a then (f a, g a) else (f a, h a))
+      encA (encPair encB encC) := by
+  fun_prop
+
+/-- Missing certificates fail instead of cycling between the plain and tidy predicates. -/
+example {f : List Bool → Bool} : f = f := by
+  fail_if_success have : ComputableInPolySpace f encBits encBool := by fun_prop
+  rfl
+
 /-- The copy machine computes the identity in fpt time, for every parameter. -/
 theorem id_computableInFPTTime (κ : List Bool → ℕ) :
     ComputableInFPTTime (id : List Bool → List Bool) encBits encBits κ :=
@@ -157,6 +184,14 @@ example : ComputableInPolySpace
 example : ∃ f, ComputableInPolySpace f encQBF encBool ∧ ∀ φ, φ ∈ TQBF ↔ f φ = true := by
   obtain ⟨f, hf, hA⟩ := mem_PSPACE_iff_computableTidilyInPolySpace.mp TQBF_mem_PSPACE
   exact ⟨f, .of_tidy hf, hA⟩
+
+/-- A plain polynomial-time preprocessing of the existing TQBF decider stays in `PSPACE`.
+The decider's tidy certificate and the preprocessing's plain certificate compose automatically. -/
+example {α : Type} {enc : α ↪ List Bool} {f : α → Logic.PL.QBF ℕ}
+    (hf : ComputableInPolyTime f enc encQBF) : {a | f a ∈ TQBF} ∈ PSPACE enc := by
+  obtain ⟨dec, hdec, hA⟩ := mem_PSPACE_iff_computableTidilyInPolySpace.mp TQBF_mem_PSPACE
+  have hcomp : ComputableInPolySpace (fun a => dec (f a)) enc encBool := by fun_prop
+  exact mem_PSPACE_iff_computableTidilyInPolySpace.mpr ⟨_, hcomp.tidy, fun a => hA (f a)⟩
 
 /-- `SAT` has a plain fpt-time decider in the number of variables. -/
 example : ∃ g, ComputableInFPTTime g encCNF encBool Logic.PL.CNF.numVars ∧
