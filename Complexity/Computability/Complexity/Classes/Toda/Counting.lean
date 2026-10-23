@@ -12,7 +12,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Prim
 public import Complexity.Foundations.Data.BitString.List
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Order.PiLex
-import Complexity.Computability.Complexity.Classes.ValiantVazirani
 public import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -20,6 +19,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Mathlib.Data.Finset.Sort
 import Mathlib.Data.List.GetD
+import Mathlib.Data.Nat.Choose.Sum
 
 /-!
 # Counting the parities of a random string with one bit of a `#P` value
@@ -30,9 +30,11 @@ number `G` of random strings with `f r` odd is read off one bit of a single coun
 
 ## Modulus amplification by binomial coefficients
 
-Toda amplifies the modulus of a parity with a polynomial `T` such that `T (c)` is `0` modulo
-`2 ^ K` for even `c` and `-1` for odd `c`. Here the amplification comes from the binomial
-expansion of `(1 - 2) ^ c` (`Cslib.Complexity.Toda.sum_range_neg_two_pow_mul_choose`):
+Toda's amplifier uses residues `0` modulo `2 ^ K` for even counts and `-1` for odd counts.
+This module uses the opposite sign: `0` for even counts and `+1` for odd counts. Negating our
+amplifier modulo `2 ^ K` recovers the `0`/`-1` convention. All subsequent counts and bit
+extraction here use the `+1` convention, from the binomial expansion of `(1 - 2) ^ c`
+(`Cslib.Complexity.Toda.sum_range_neg_two_pow_mul_choose`):
 
 `[c odd] = ∑ i < c, (-2) ^ i * choose c (i + 1)`,
 
@@ -408,7 +410,7 @@ theorem card_filter_coeffTest {K k : ℕ} (hk : 1 ≤ k) (hkK : k ≤ K) :
     (univ.filter fun cb : Fin K → Bool => coeffTest K k (List.ofFn cb) = true).card =
       parityCoeff K (k - 1) := by
   classical
-  have hsplit := ValiantVazirani.card_filter_take_drop (m := K) (a := K + 1 - k) (by omega)
+  have hsplit := BitString.card_filter_take_drop (m := K) (a := K + 1 - k) (by omega)
     (fun u => (if k % 2 = 1 then !(u.any fun b => b) else u.any fun b => b) = true) (fun _ => True)
   simp only [and_true, filter_true, card_univ, Fintype.card_fun, Fintype.card_bool,
     Fintype.card_fin] at hsplit
@@ -573,7 +575,7 @@ theorem card_filter_sharpTest (accept : List Bool → List Bool → Bool) (R Z :
       sharpTest accept R Z (false :: List.ofFn w) = true).card = 2 ^ R - 1 := by
     simp only [sharpTest, List.headD_cons, Bool.false_and, Bool.not_false, Bool.true_and,
       Bool.false_or, List.tail_cons]
-    have := ValiantVazirani.card_filter_take_drop (m := LH + 1) (a := R) (by omega)
+    have := BitString.card_filter_take_drop (m := LH + 1) (a := R) (by omega)
       (fun u => (!(u.all fun b => b)) = true) (fun v => (!(v.any fun b => b)) = true)
     simp only [Bool.and_eq_true]
     rw [this, BitString.card_filter_not_any, mul_one]

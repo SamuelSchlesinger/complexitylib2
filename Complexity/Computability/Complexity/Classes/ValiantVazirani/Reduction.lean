@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Problems.USAT
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
+public import Complexity.Foundations.Data.BitString.WordCount
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Probability.BitString.AffineHash
 public import Complexity.Probability.UniformNat
@@ -546,21 +547,8 @@ theorem drop_ofFn {m a : ℕ} (h : a ≤ m) (r : Fin m → Bool) :
     (List.ofFn r).drop a = List.ofFn fun j : Fin (m - a) => r ⟨a + j, by omega⟩ :=
   List.ext_getElem (by simp) fun i _ _ => by simp
 
-/-- Counting words of length `m` by a condition on their first `a` bits and a condition on the
-remaining bits gives the product of the two counts. -/
-theorem card_filter_take_drop {m a : ℕ} (h : a ≤ m) (P Q : List Bool → Prop) [DecidablePred P]
-    [DecidablePred Q] :
-    (Finset.univ.filter fun r : Fin m → Bool =>
-      P ((List.ofFn r).take a) ∧ Q ((List.ofFn r).drop a)).card =
-      (Finset.univ.filter fun u : Fin a → Bool => P (List.ofFn u)).card *
-        (Finset.univ.filter fun v : Fin (m - a) → Bool => Q (List.ofFn v)).card := by
-  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le h
-  rw [BitString.card_filter_ofFn_add a k (fun u v => P u ∧ Q v), Nat.add_sub_cancel_left]
-  simp_rw [Finset.card_filter]
-  rw [Finset.sum_mul]
-  apply Finset.sum_congr rfl
-  intro u _
-  by_cases hu : P (List.ofFn u) <;> simp [hu]
+@[deprecated BitString.card_filter_take_drop (since := "2026-10-23")]
+alias card_filter_take_drop := BitString.card_filter_take_drop
 
 /-- The coefficients only read the first `k * width + k` bits. -/
 theorem matrix_take (k width : ℕ) (w : List Bool) :
@@ -632,9 +620,9 @@ theorem three_mul_two_pow_le_card {φ : CNF ℕ} (hφ : φ.Satisfiable) {m : ℕ
     simp only
     rw [hr.1]
     exact reduceWith_mem_USAT hr.2
-  have hsplit := card_filter_take_drop (show t ≤ m by omega)
+  have hsplit := BitString.card_filter_take_drop (show t ≤ m by omega)
     (fun w => BitString.binaryValue w = k) (fun w => Isolates φ (matrix k n w, offset k n w))
-  have hrest := card_filter_take_drop (show k * n + k ≤ m - t by omega)
+  have hrest := BitString.card_filter_take_drop (show k * n + k ≤ m - t by omega)
     (fun w => Isolates φ (matrix k n w, offset k n w)) (fun _ => True)
   simp only [and_true, Finset.filter_true, Finset.card_univ, Fintype.card_fun,
     Fintype.card_bool, Fintype.card_fin, matrix_take, offset_take] at hrest
