@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Primitives.PRG.Game
 public import Complexity.Foundations.Data.BitString.List
@@ -170,16 +171,26 @@ theorem isPPTOn_prgIdealGame {length : ℕ → ℕ} {adversary : Distinguisher}
   unfold prgIdealGame
   ppt
 
-/-- A uniform polynomial-time stretching generator, secure in the existing finite-family API. -/
+/-- A plain polynomial-time stretching generator, secure in the existing finite-family API. -/
 structure PseudorandomGenerator (generator : List Bool → List Bool) (length : ℕ → ℕ) : Prop where
   /-- One deterministic polynomial-time machine evaluates the generator. -/
-  polyTime : ComputableTidilyInPolyTime generator encBits encBits
+  polyTime : ComputableInPolyTime generator encBits encBits
   /-- The output length depends only on the seed length. -/
   length_eq : ∀ word, (generator word).length = length word.length
   /-- Every seed length is strictly expanded. -/
   stretch : ∀ n, n < length n
   /-- The finite family is secure against uniformly realizable PPT tests. -/
   secure : (PRG.wordFamily generator length).Secure IsPPTBitStringTest
+
+/-- Recover the tidy presentation for proofs without changing the security contract. -/
+theorem pseudorandomGenerator_iff_tidy {generator : List Bool → List Bool} {length : ℕ → ℕ} :
+    PseudorandomGenerator generator length ↔
+    (ComputableTidilyInPolyTime generator encBits encBits) ∧
+    (∀ word, (generator word).length = length word.length) ∧
+    (∀ n, n < length n) ∧
+    ((PRG.wordFamily generator length).Secure IsPPTBitStringTest) :=
+  ⟨fun h => ⟨h.polyTime.tidy, h.length_eq, h.stretch, h.secure⟩,
+    fun ⟨h0, h1, h2, h3⟩ => ⟨.of_tidy h0, h1, h2, h3⟩⟩
 
 /-- Establish a uniform PRG with an ordinary word-ensemble security argument. -/
 theorem PseudorandomGenerator.of_indistinguishable
@@ -189,7 +200,7 @@ theorem PseudorandomGenerator.of_indistinguishable
     (hstretch : ∀ n, n < length n)
     (hsecure : ComputationallyIndistinguishable (generatorEnsemble generator)
       (fun n => BitString.uniformList (length n))) : PseudorandomGenerator generator length :=
-  ⟨hg, hlen, hstretch, (PRG.wordFamily_secure_iff hlen).mpr hsecure⟩
+  ⟨.of_tidy hg, hlen, hstretch, (PRG.wordFamily_secure_iff hlen).mpr hsecure⟩
 
 /-- The generated words are computationally indistinguishable from uniform words. -/
 theorem PseudorandomGenerator.indistinguishable
@@ -216,7 +227,7 @@ theorem PseudorandomGenerator.polyTime_length
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (h : PseudorandomGenerator generator length) :
     ComputableTidilyInPolyTime length encUnary encUnary :=
-  PRG.polyTime_length h.polyTime h.length_eq
+  PRG.polyTime_length h.polyTime.tidy h.length_eq
 
 /-- The declared expansion is bounded by a polynomial in the seed length. -/
 theorem PseudorandomGenerator.length_le {generator : List Bool → List Bool} {length : ℕ → ℕ}

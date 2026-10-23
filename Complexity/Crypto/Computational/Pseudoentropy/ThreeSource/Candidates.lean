@@ -128,8 +128,8 @@ theorem isPolyTime_generate_of_realization {pair : SamplablePair} (saved : pair.
       (observationBound input.1.1) (densityBound input.1.1) input.1.2
       (saved.evaluate input.1.1) input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits := by
-  have hlength := saved.length_isPolyTime
-  have hevaluate := saved.efficient
+  have hlength := saved.length_isPolyTime.tidy
+  have hevaluate := saved.efficient.tidy
   apply isPolyTime_generate <;> polytime
 
 /-- The advertised lengths give strict expansion for every entry, even an inaccurate guess. -/
@@ -193,7 +193,7 @@ theorem exists_secure_choice {pair : SamplablePair} {gap : ℕ → ℝ}
   obtain ⟨choose, hvalid⟩ := exists_valid_choice hpair saved hgap
   refine ⟨choose, hvalid.mono (fun _ h => h.index_lt), ?_⟩
   intro test htest
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   have h := hpair.extract_indexed_three saved choose
     (candidates := fun n => size (saved.length n) (densityBound n))
     (inverseSlack := fun n => dyadicSize (densityBound n) - 1)
@@ -201,8 +201,8 @@ theorem exists_secure_choice {pair : SamplablePair} {gap : ℕ → ℝ}
     (labelBits := fun n i => labelBits n (saved.length n) (densityBound n) i)
     (remainingBits := fun n i => remainingBits n (saved.length n) (densityBound n) i)
     (numerator := fun n i => numerator (densityBound n) i)
-    ⟨by polytime, hobservation, by polytime, by polytime, by polytime, by polytime,
-      by polytime, hdensity⟩ hfits (hvalid.mono (fun _ h => h.index_lt))
+    ⟨by polytime, .of_tidy hobservation, by polytime, by polytime, by polytime, by polytime,
+      by polytime, .of_tidy hdensity⟩ hfits (hvalid.mono (fun _ h => h.index_lt))
     (hvalid.mono (fun n h => ⟨numerator_pos _ _, h.numerator_le, h.density_le⟩))
     (hvalid.mono (fun _ h => by simpa only [scale, Nat.cast_mul, Nat.cast_ofNat]
       using h.observation_budget))

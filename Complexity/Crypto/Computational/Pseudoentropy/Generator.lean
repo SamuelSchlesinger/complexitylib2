@@ -55,9 +55,9 @@ theorem SamplablePair.HasGap.exists_pseudorandomGenerator {pair : SamplablePair}
   obtain ⟨bound, hbound, hfits⟩ := pair.exists_observationBound
   obtain ⟨common, hcommon, _, hge, hsize⟩ := EntropyGrid.exists_common_seedLength
     (sourceBits := saved.length) (observationBound := bound) (densityBound := densityBound)
-    saved.length_isPolyTime hbound hdensity
+    saved.length_isPolyTime.tidy hbound hdensity
   have htotal := ComputableTidilyInPolyTime.unary_mul.comp
-    ((EntropyGrid.isPolyTime_size saved.length_isPolyTime hdensity).prod hcommon)
+    ((EntropyGrid.isPolyTime_size saved.length_isPolyTime.tidy hdensity).prod hcommon)
   refine ⟨GeneratorReindex.generate
     (fun n => EntropyGrid.size (saved.length n) (densityBound n) * common n)
     (fun n => EntropyGrid.combinedGenerate n (saved.length n) (bound n) (densityBound n)

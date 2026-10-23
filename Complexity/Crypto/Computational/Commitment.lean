@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Crypto.Computational.OneWayToPRG
 public import Complexity.Crypto.Computational.Stretch
@@ -814,17 +815,17 @@ structure BitCommitmentScheme where
   commit : List Bool → Bool → List Bool → List Bool
   /-- Verification of an opening `(b, seed)` against `(n, r, c)`. -/
   verify : ℕ → List Bool → List Bool → Bool → List Bool → Bool
-  /-- `challengeLength` is computable in polynomial time in unary. -/
-  polyTime_challengeLength : ComputableTidilyInPolyTime challengeLength encUnary encUnary
-  /-- `commitLength` is computable in polynomial time in unary. -/
-  polyTime_commitLength : ComputableTidilyInPolyTime commitLength encUnary encUnary
-  /-- `commit` is computable in polynomial time. -/
+  /-- `challengeLength` is computable in plain polynomial time in unary. -/
+  polyTime_challengeLength : ComputableInPolyTime challengeLength encUnary encUnary
+  /-- `commitLength` is computable in plain polynomial time in unary. -/
+  polyTime_commitLength : ComputableInPolyTime commitLength encUnary encUnary
+  /-- `commit` is computable in plain polynomial time. -/
   polyTime_commit :
-    ComputableTidilyInPolyTime (fun p : List Bool × Bool × List Bool => commit p.1 p.2.1 p.2.2)
+    ComputableInPolyTime (fun p : List Bool × Bool × List Bool => commit p.1 p.2.1 p.2.2)
       (encPair encBits (encPair encBool encBits)) encBits
-  /-- `verify` is computable in polynomial time. -/
+  /-- `verify` is computable in plain polynomial time. -/
   polyTime_verify :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : ℕ × List Bool × List Bool × Bool × List Bool =>
         verify p.1 p.2.1 p.2.2.1 p.2.2.2.1 p.2.2.2.2)
       (encPair encUnary (encPair encBits (encPair encBits (encPair encBool encBits)))) encBool
@@ -854,12 +855,48 @@ structure BitCommitmentScheme where
   whose internal state passes to the distinguisher). -/
   computational_hiding :
     ∀ (r : ℕ → List Bool) (b₀ b₁ : ℕ → Bool),
+      ComputableInPolyTime r encUnary encBits →
+      ComputableInPolyTime b₀ encUnary encBool →
+      ComputableInPolyTime b₁ encUnary encBool →
+      ComputationallyIndistinguishable
+        (fun n => (BitString.uniformList n).map (commit (r n) (b₀ n)))
+        (fun n => (BitString.uniformList n).map (commit (r n) (b₁ n)))
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem BitCommitmentScheme.polyTime_challengeLength_tidy (h : BitCommitmentScheme) :
+    ComputableTidilyInPolyTime h.challengeLength encUnary encUnary := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using
+      h.polyTime_challengeLength
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem BitCommitmentScheme.polyTime_commitLength_tidy (h : BitCommitmentScheme) :
+    ComputableTidilyInPolyTime h.commitLength encUnary encUnary := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.polyTime_commitLength
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem BitCommitmentScheme.polyTime_commit_tidy (h : BitCommitmentScheme) :
+    ComputableTidilyInPolyTime (fun p : List Bool × Bool × List Bool => h.commit p.1 p.2.1 p.2.2)
+      (encPair encBits (encPair encBool encBits)) encBits := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.polyTime_commit
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem BitCommitmentScheme.polyTime_verify_tidy (h : BitCommitmentScheme) :
+    ComputableTidilyInPolyTime
+      (fun p : ℕ × List Bool × List Bool × Bool × List Bool =>
+        h.verify p.1 p.2.1 p.2.2.1 p.2.2.2.1 p.2.2.2.2)
+      (encPair encUnary (encPair encBits (encPair encBits (encPair encBool encBits)))) encBool := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.polyTime_verify
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem BitCommitmentScheme.computational_hiding_tidy (h : BitCommitmentScheme) :
+    ∀ (r : ℕ → List Bool) (b₀ b₁ : ℕ → Bool),
       ComputableTidilyInPolyTime r encUnary encBits →
       ComputableTidilyInPolyTime b₀ encUnary encBool →
       ComputableTidilyInPolyTime b₁ encUnary encBool →
       ComputationallyIndistinguishable
-        (fun n => (BitString.uniformList n).map (commit (r n) (b₀ n)))
-        (fun n => (BitString.uniformList n).map (commit (r n) (b₁ n)))
+        (fun n => (BitString.uniformList n).map (h.commit (r n) (b₀ n)))
+        (fun n => (BitString.uniformList n).map (h.commit (r n) (b₁ n))) := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.computational_hiding
 
 /-- **Naor's bit commitment scheme** built from any pseudorandom generator with stretch at least
 `3 * n` [Naor1991]. -/
@@ -872,19 +909,19 @@ noncomputable def PseudorandomGenerator.naorBitCommitment
   commitLength := length
   commit := naorCommit generator
   verify := naorVerify generator
-  polyTime_challengeLength := PRG.polyTime_length hG.polyTime hG.length_eq
-  polyTime_commitLength := PRG.polyTime_length hG.polyTime hG.length_eq
+  polyTime_challengeLength := .of_tidy (PRG.polyTime_length hG.polyTime.tidy hG.length_eq)
+  polyTime_commitLength := .of_tidy (PRG.polyTime_length hG.polyTime.tidy hG.length_eq)
   polyTime_commit := by
-    have hg := hG.polyTime
+    have hg := hG.polyTime.tidy
     fun_prop
   polyTime_verify := by
-    have hg := hG.polyTime
+    have hg := hG.polyTime.tidy
     fun_prop
   length_commit _ _ _ _ hseed := by rw [length_naorCommit, hG.length_eq, hseed]
   verify_commit _ r b _ hseed := naorVerify_naorCommit r b hseed
   eq_commit_of_verify h := eq_naorCommit_of_naorVerify h
   statistical_binding := negligible_naorBindingError hG.length_eq hstretch
-  computational_hiding _ _ _ hr hb₀ hb₁ := hG.naorCommit_hiding hr hb₀ hb₁
+  computational_hiding _ _ _ hr hb₀ hb₁ := hG.naorCommit_hiding hr.tidy hb₀.tidy hb₁.tidy
 
 /-- **Existence of bit commitments from one-way functions** [Naor1991]: if a one-way function
 exists, then there exists a statistically binding, computationally hiding bit commitment scheme. -/

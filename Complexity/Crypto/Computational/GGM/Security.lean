@@ -53,7 +53,7 @@ theorem GGM.pseudorandomFunction_of_indistinguishable {generator : List Bool →
     (hlength : ∀ seed, (generator seed).length = 2 * seed.length)
     (hsecure : ComputationallyIndistinguishable (generatorEnsemble generator)
       (fun n => BitString.uniformList (2 * n))) : PseudorandomFunction (GGM.eval generator) := by
-  refine ⟨computableTidilyInPolyTime_eval hgenerator, fun key query _ =>
+  refine ⟨.of_tidy (computableTidilyInPolyTime_eval hgenerator), fun key query _ =>
     length_eval (fun seed => by rw [hlength]) key query, ?_⟩
   intro adversary hadversary
   obtain ⟨c, d, hqueries⟩ := hadversary.query_bounds
@@ -80,7 +80,7 @@ Surplus bits are ignored; the hypothesis accommodates seed length zero. -/
 theorem PseudorandomGenerator.ggm {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hgenerator : PseudorandomGenerator generator length) (hdouble : ∀ n, 2 * n ≤ length n) :
     PseudorandomFunction (GGM.eval generator) := by
-  have hpoly := hgenerator.polyTime
+  have hpoly := hgenerator.polyTime.tidy
   have hsecure := hgenerator.indistinguishable.map
     (f := fun n word => word.take (2 * n)) (by polytime)
   have htruncated : ComputationallyIndistinguishable

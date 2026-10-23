@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Crypto.Computational.Pseudoentropy.WordExtraction
 public import Complexity.Crypto.Computational.Pseudoentropy.WordSeedExtraction
 import Complexity.Computability.Probabilistic.Repeat
@@ -294,23 +295,46 @@ theorem replace_observations {pair : SamplablePair} (saved : pair.SeedRealizatio
     ProbComp.eval_pure, uniformList_add, PMF.bind_bind, PMF.pure_bind, PMF.map,
     Function.comp_def, List.append_assoc]
 
-/-- Uniform computation of the size and density schedules used by three-source extraction.
+/-- Plain polynomial-time computation of the schedules used by three-source extraction.
 This contract covers every candidate; it imposes no computability requirement on the index chosen
 in the security proof. Entropy and observation-size assumptions remain separate. -/
 structure Efficient (candidates bound inverseSlack densityBound : ℕ → ℕ)
     (observationBits labelBits remainingBits numerator : ℕ → ℕ → ℕ) : Prop where
-  candidates_isPolyTime : ComputableTidilyInPolyTime candidates encUnary encUnary
-  bound_isPolyTime : ComputableTidilyInPolyTime bound encUnary encUnary
-  observation_isPolyTime : ComputableTidilyInPolyTime
+  candidates_isPolyTime : ComputableInPolyTime candidates encUnary encUnary
+  bound_isPolyTime : ComputableInPolyTime bound encUnary encUnary
+  observation_isPolyTime : ComputableInPolyTime
     (fun input => observationBits input.1 input.2) (encPair encUnary encUnary) encUnary
-  label_isPolyTime : ComputableTidilyInPolyTime
+  label_isPolyTime : ComputableInPolyTime
     (fun input => labelBits input.1 input.2) (encPair encUnary encUnary) encUnary
-  remaining_isPolyTime : ComputableTidilyInPolyTime
+  remaining_isPolyTime : ComputableInPolyTime
     (fun input => remainingBits input.1 input.2) (encPair encUnary encUnary) encUnary
-  slack_isPolyTime : ComputableTidilyInPolyTime inverseSlack encUnary encUnary
-  numerator_isPolyTime : ComputableTidilyInPolyTime
+  slack_isPolyTime : ComputableInPolyTime inverseSlack encUnary encUnary
+  numerator_isPolyTime : ComputableInPolyTime
     (fun input => numerator input.1 input.2) (encPair encUnary encUnary) encUnary
-  density_isPolyTime : ComputableTidilyInPolyTime densityBound encUnary encUnary
+  density_isPolyTime : ComputableInPolyTime densityBound encUnary encUnary
+
+/-- Recover the tidy presentation for proofs without changing the security contract. -/
+theorem efficient_iff_tidy {candidates bound inverseSlack densityBound : ℕ → ℕ}
+    {observationBits labelBits remainingBits numerator : ℕ → ℕ → ℕ} :
+    Efficient candidates bound inverseSlack densityBound observationBits labelBits
+      remainingBits numerator ↔
+    (ComputableTidilyInPolyTime candidates encUnary encUnary) ∧
+    (ComputableTidilyInPolyTime bound encUnary encUnary) ∧
+    (ComputableTidilyInPolyTime
+    (fun input => observationBits input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
+    (ComputableTidilyInPolyTime
+    (fun input => labelBits input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
+    (ComputableTidilyInPolyTime
+    (fun input => remainingBits input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
+    (ComputableTidilyInPolyTime inverseSlack encUnary encUnary) ∧
+    (ComputableTidilyInPolyTime
+    (fun input => numerator input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
+    (ComputableTidilyInPolyTime densityBound encUnary encUnary) :=
+  ⟨fun h => ⟨h.candidates_isPolyTime.tidy, h.bound_isPolyTime.tidy,
+      h.observation_isPolyTime.tidy, h.label_isPolyTime.tidy, h.remaining_isPolyTime.tidy,
+      h.slack_isPolyTime.tidy, h.numerator_isPolyTime.tidy, h.density_isPolyTime.tidy⟩,
+    fun ⟨h0, h1, h2, h3, h4, h5, h6, h7⟩ => ⟨.of_tidy h0, .of_tidy h1, .of_tidy h2, .of_tidy
+      h3, .of_tidy h4, .of_tidy h5, .of_tidy h6, .of_tidy h7⟩⟩
 
 open Probability.PMF Filter in
 /-- Indexed label extraction remains secure when the test computes the observation hash and
@@ -345,9 +369,9 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
         (labelBits n (choose n)) (remainingBits n (choose n)) (Prod.fst <$> pair.sample n) >>=
           adversary n (choose n)))) := by
   obtain ⟨hcandidates, hbound, hobservation, hlabel, hremaining, hslack, hnumerator, hdensity⟩ :=
-    efficient
+    efficient_iff_tidy.mp efficient
   let count := fun n => ExtractionSchedule.count n (saved.length n) (inverseSlack n)
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=
     ExtractionSchedule.isPolyTime_count (by fun_prop) hlength hslack
   let test (n i : ℕ) (middle : List (List Bool) × List Bool × List Bool) : ProbComp Bool := do

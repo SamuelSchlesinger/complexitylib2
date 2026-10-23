@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Probabilistic.Oracle.Parameter
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
@@ -93,8 +94,8 @@ structure SignatureScheme where
   keyGen_ppt : IsPPTOn encUnary (encPair encBits encBits) keyGen
   /-- Signing is uniformly strict PPT in the encoded secret key and message. -/
   sign_ppt : IsPPTOn (encPair encBits encBits) encBits (fun p => sign p.1 p.2)
-  /-- Verification is computable tidily in polynomial time on `(pk, msg, sig)`. -/
-  verify_polyTime : ComputableTidilyInPolyTime
+  /-- Verification is computable in plain polynomial time on `(pk, msg, sig)`. -/
+  verify_polyTime : ComputableInPolyTime
     (fun p : List Bool × List Bool × List Bool => verify p.1 p.2.1 p.2.2)
     (encPair encBits (encPair encBits encBits)) encBool
   /-- Every signature produced by `sign` on an `n`-bit message under a supported key pair at
@@ -103,6 +104,13 @@ structure SignatureScheme where
     ∀ msg, msg.length = n →
     ∀ sig, sig ∈ (ProbComp.eval (sign keys.2 msg)).support →
     verify keys.1 msg sig = true
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem SignatureScheme.verify_polyTime_tidy (h : SignatureScheme) :
+    ComputableTidilyInPolyTime
+    (fun p : List Bool × List Bool × List Bool => h.verify p.1 p.2.1 p.2.2)
+    (encPair encBits (encPair encBits encBits)) encBool := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.verify_polyTime
 
 namespace SignatureScheme
 
@@ -129,7 +137,7 @@ theorem computableTidilyInPolyTime_verify_comp (S : SignatureScheme)
     (hmsg : ComputableTidilyInPolyTime msg encIn encBits)
     (hsig : ComputableTidilyInPolyTime sig encIn encBits) :
     ComputableTidilyInPolyTime (fun a => S.verify (pk a) (msg a) (sig a)) encIn encBool :=
-  S.verify_polyTime.comp (hpk.prod (hmsg.prod hsig))
+  S.verify_polyTime.tidy.comp (hpk.prod (hmsg.prod hsig))
 
 @[fun_prop]
 private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ List Bool}

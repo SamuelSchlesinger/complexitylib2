@@ -383,7 +383,7 @@ theorem not_pseudorandomFunction_of_MCSP_mem_BPP (h : MCSP ∈ BPP MCSP.encInsta
   classical
   intro hprf
   obtain ⟨p, V, hV, hdec⟩ := h
-  obtain ⟨c, hc⟩ := KabanetsCai.exists_complexity_restriction_le hprf.polyTime
+  obtain ⟨c, hc⟩ := KabanetsCai.exists_complexity_restriction_le hprf.polyTime.tidy
   have hnegl := hprf.secure _ (isOraclePPT_mcspDistinguisher (p := p) (c + 2) hV.tidy)
   refine not_negligible_const (c := 1 / 4) (by norm_num) (negligible_of_eventually_le hnegl ?_)
   filter_upwards [eventually_tableArity c] with n ⟨hn, hm16, hmn, hsize⟩

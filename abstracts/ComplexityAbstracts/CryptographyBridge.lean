@@ -133,7 +133,7 @@ theorem oneWay_iff {f : List Bool → List Bool} : OneWay f ↔ Crypto.OneWay f 
       uniformBits, BitString.uniformList, Negligible, Crypto.Negligible,
       probability, Crypto.Game.succProbability, Asymptotics.SuperpolynomialDecay] using h
   · intro hf
-    refine ⟨polyTime_iff.mpr hf.polyTime, fun inverter hinverter => ?_⟩
+    refine ⟨polyTime_iff.mpr hf.polyTime.tidy, fun inverter hinverter => ?_⟩
     obtain ⟨program, hp, heq⟩ := strictPPT_iff.mp hinverter
     have h := hf.inversion_negligible (fun n word => program (n, word)) hp
     simpa only [Crypto.inversionGame, ProbComp.eval_bind, BitString.eval_sampleList,
@@ -153,7 +153,7 @@ theorem generator_iff {g : List Bool → List Bool} {length : ℕ → ℕ} :
     exact Crypto.PseudorandomGenerator.of_indistinguishable (polyTime_iff.mp hg) hlength
       hstretch (indistinguishable_iff.mp hsecure)
   · intro hg
-    exact ⟨polyTime_iff.mpr hg.polyTime, hg.length_eq, hg.stretch,
+    exact ⟨polyTime_iff.mpr hg.polyTime.tidy, hg.length_eq, hg.stretch,
       indistinguishable_iff.mpr hg.indistinguishable⟩
 
 theorem hill {f : List Bool → List Bool} (hf : OneWay f) :
@@ -272,12 +272,12 @@ theorem function_iff {family : List Bool → List Bool → List Bool} :
     PseudorandomFunction family ↔ Crypto.PseudorandomFunction family := by
   constructor
   · rintro ⟨hefficient, hlength, hsecure⟩
-    refine ⟨polyTime_iff.mp hefficient, hlength, fun adversary ha => ?_⟩
+    refine ⟨.of_tidy (polyTime_iff.mp hefficient), hlength, fun adversary ha => ?_⟩
     simpa only [realPRF_eq, idealPRF_eq, Negligible, Crypto.Negligible,
       Crypto.Game.advantage, Crypto.Game.succProbability, probability,
       Asymptotics.SuperpolynomialDecay] using hsecure adversary (oraclePPT_iff.mpr ha)
   · intro hf
-    refine ⟨polyTime_iff.mpr hf.polyTime, hf.length_eq, fun adversary ha => ?_⟩
+    refine ⟨polyTime_iff.mpr hf.polyTime.tidy, hf.length_eq, fun adversary ha => ?_⟩
     simpa only [realPRF_eq, idealPRF_eq, Negligible, Crypto.Negligible,
       Crypto.Game.advantage, Crypto.Game.succProbability, probability,
       Asymptotics.SuperpolynomialDecay] using hf.secure adversary (oraclePPT_iff.mp ha)

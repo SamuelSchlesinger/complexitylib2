@@ -278,13 +278,14 @@ theorem OneWay.preimagePrefix_notMem_P (hf : OneWay f) :
 
 /-- **One-way functions imply `P ≠ NP`**, for instances of the preimage-prefix problem. -/
 theorem OneWay.P_ne_NP (hf : OneWay f) : P encPreimagePrefix ≠ NP encPreimagePrefix := fun h =>
-  hf.preimagePrefix_notMem_P (h ▸ preimagePrefix_mem_NP hf.polyTime)
+  hf.preimagePrefix_notMem_P (h ▸ preimagePrefix_mem_NP hf.polyTime.tidy)
 
 /-- **One-way functions imply `SAT ∉ P`**: by the Cook–Levin theorem, the preimage-prefix problem
 reduces to `SAT`. -/
 theorem OneWay.SAT_notMem_P (hf : OneWay f) : SAT ∉ P encCNF := fun h =>
   hf.preimagePrefix_notMem_P
-    ((CookLevin.SAT_npComplete.2 encPreimagePrefix _ (preimagePrefix_mem_NP hf.polyTime)).mem_P h)
+    ((CookLevin.SAT_npComplete.2 encPreimagePrefix _
+      (preimagePrefix_mem_NP hf.polyTime.tidy)).mem_P h)
 
 /-- If `SAT` is in `P`, no function is one-way. -/
 theorem not_oneWay_of_SAT_mem_P (h : SAT ∈ P encCNF) : ¬ OneWay f := fun hf =>

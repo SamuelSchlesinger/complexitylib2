@@ -397,7 +397,7 @@ noncomputable def lamportScheme (f : List Bool → List Bool)
   verify := lamportVerify f
   keyGen_ppt := isPPTOn_lamportKeyGen hf
   sign_ppt := isPPTOn_lamportSign
-  verify_polyTime := computableTidilyInPolyTime_lamportVerify hf
+  verify_polyTime := .of_tidy (computableTidilyInPolyTime_lamportVerify hf)
   verify_sign := lamportVerify_lamportSign f
 
 /-! ### Security reduction for Lamport's one-time signature scheme -/
@@ -674,12 +674,12 @@ private theorem ennreal_tsum_finsetSum {α ι : Type*} (s : Finset ι) (g : ι �
 /-- **Lamport's one-time signature theorem**: for any one-way function `f`, `lamportScheme f` is
 existentially unforgeable under one-time adaptive chosen-message attack (`OneTimeEUFCMA`). -/
 theorem OneWay.oneTimeEUFCMA_lamport {f : List Bool → List Bool} (hf : OneWay f) :
-    (lamportScheme f hf.polyTime).OneTimeEUFCMA := by
-  let S := lamportScheme f hf.polyTime
+    (lamportScheme f hf.polyTime.tidy).OneTimeEUFCMA := by
+  let S := lamportScheme f hf.polyTime.tidy
   apply SignatureScheme.OneTimeEUFCMA.of_negligible
   intro adversary hadversary
-  let inverter := lamportInverter f hf.polyTime adversary
-  have hinv_ppt : IsPPT encBits inverter := isPPT_lamportInverter hf.polyTime hadversary
+  let inverter := lamportInverter f hf.polyTime.tidy adversary
+  have hinv_ppt : IsPPT encBits inverter := isPPT_lamportInverter hf.polyTime.tidy hadversary
   have hinv_neg := hf.inversion_negligible inverter hinv_ppt
   have htwo_poly : ComputableTidilyInPolyTime (fun n : ℕ => 2 * n) encUnary encUnary := by polytime
   have hscaled : Negligible (fun n =>
@@ -881,7 +881,7 @@ theorem OneWay.oneTimeEUFCMA_lamport {f : List Bool → List Bool} (hf : OneWay 
 /-- Any one-way function implies the existence of a one-time EUF-CMA secure signature scheme. -/
 theorem OneWay.exists_oneTimeSignature {f : List Bool → List Bool} (hf : OneWay f) :
     ∃ S : SignatureScheme, S.OneTimeEUFCMA :=
-  ⟨lamportScheme f hf.polyTime, hf.oneTimeEUFCMA_lamport⟩
+  ⟨lamportScheme f hf.polyTime.tidy, hf.oneTimeEUFCMA_lamport⟩
 
 /-- **Equivalence between one-way functions and one-time digital signatures**: a one-way function
 exists if and only if a one-time EUF-CMA secure uniform signature scheme exists. -/

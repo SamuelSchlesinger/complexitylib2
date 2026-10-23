@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Probability.EntropyConcentration
@@ -81,20 +82,33 @@ theorem exists_observationBound (pair : SamplablePair) :
   simpa only [encBits, Function.Embedding.refl_apply, encUnary_apply, List.length_replicate] using
     hbound n (pair.encode n observation) hsupported
 
-/-- A deterministic evaluator of a pair from a uniform seed, with all input bits counted. -/
+/-- A plain polynomial-time evaluator from a uniform seed, with all input bits counted. -/
 structure SeedRealization (pair : SamplablePair) where
   /-- The complete number of seed bits at this parameter. -/
   length : ℕ → ℕ
   /-- The seed length is efficiently available in unary. -/
-  length_isPolyTime : ComputableTidilyInPolyTime length encUnary encUnary
+  length_isPolyTime : ComputableInPolyTime length encUnary encUnary
   /-- Evaluate the public observation and hidden bit from a saved seed. -/
   evaluate : ℕ → List Bool → List Bool × Bool
   /-- Evaluation is one polynomial-time word program, also on malformed seeds. -/
-  efficient : ComputableTidilyInPolyTime (fun input : ℕ × List Bool => evaluate input.1 input.2)
+  efficient : ComputableInPolyTime (fun input : ℕ × List Bool => evaluate input.1 input.2)
     (encPair encUnary encBits) (encPair encBits encBool)
   /-- Uniform seeds realize exactly the original finite joint law. -/
   distribution : ∀ n, (BitString.uniformList (length n)).map (evaluate n) =
     (pair.joint n).map (fun output => (pair.encode n output.1, output.2))
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem SeedRealization.length_isPolyTime_tidy {pair : SamplablePair}
+    (h : SeedRealization pair) :
+    ComputableTidilyInPolyTime h.length encUnary encUnary := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.length_isPolyTime
+
+/-- The equivalent tidy contract used internally by compositional proofs. -/
+theorem SeedRealization.efficient_tidy {pair : SamplablePair}
+    (h : SeedRealization pair) :
+    ComputableTidilyInPolyTime (fun input : ℕ × List Bool => h.evaluate input.1 input.2)
+    (encPair encUnary encBits) (encPair encBits encBool) := by
+  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.efficient
 
 /-- A strict PPT sampler supplies an efficient uniform-seed realization with no additional
 computability or sampling assumption. -/
@@ -103,7 +117,7 @@ theorem exists_seedRealization (pair : SamplablePair) : Nonempty (SeedRealizatio
   refine ⟨{ length := fun n => c * (n + 1) ^ d
             length_isPolyTime := by polytime
             evaluate := evaluate
-            efficient := hefficient
+            efficient := .of_tidy hefficient
             distribution := ?_ }⟩
   intro n
   rw [← pair.eval_sample]
@@ -200,8 +214,8 @@ noncomputable def sampleWithSeed (n : ℕ) : ProbComp ((List Bool × Bool) × Li
 @[program_certificate]
 theorem isPPTOn_sampleWithSeed : IsPPTOn encUnary
     (encPair (encPair encBits encBool) encBits) seed.sampleWithSeed := by
-  have hlength := seed.length_isPolyTime
-  have hevaluate := seed.efficient
+  have hlength := seed.length_isPolyTime.tidy
+  have hevaluate := seed.efficient.tidy
   unfold sampleWithSeed
   ppt
 

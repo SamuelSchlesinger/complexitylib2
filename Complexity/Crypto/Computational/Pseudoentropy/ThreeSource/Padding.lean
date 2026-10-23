@@ -100,7 +100,7 @@ theorem isPolyTime_paddedGenerate {pair : SamplablePair} (saved : pair.SeedReali
       (observationBound input.1.1) (densityBound input.1.1) (common input.1.1) input.1.2
       (saved.evaluate input.1.1) input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits := by
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   have hgenerate := isPolyTime_generate_of_realization saved hobservation hdensity
   unfold paddedGenerate
   apply GeneratorPadding.isPolyTime_generate
@@ -145,7 +145,7 @@ theorem exists_secure_padded_choice {pair : SamplablePair} {gap : ℕ → ℝ}
   obtain ⟨choose, hchoose, hsecure⟩ :=
     exists_secure_choice hpair saved hobservation hdensity hfits hgap
   refine ⟨choose, hchoose, fun test htest => ?_⟩
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   have hseed : ComputableTidilyInPolyTime (fun input => seedLength input.1 (saved.length input.1)
       (observationBound input.1) (densityBound input.1) input.2)
       (encPair encUnary encUnary) encUnary := by

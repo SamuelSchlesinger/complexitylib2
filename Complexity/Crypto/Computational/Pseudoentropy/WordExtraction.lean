@@ -156,7 +156,7 @@ theorem SamplablePair.HasGap.extract_indexed_word_labels {pair : SamplablePair} 
   let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
   have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=
     ExtractionSchedule.isPolyTime_count (by fun_prop)
-      realization.length_isPolyTime hslack
+      realization.length_isPolyTime.tidy hslack
   have h := hpair.extract_indexed_labels realization choose
     (inverseSlack := inverseSlack)
     (fun n i => ProbComp.uniform (BitString (outputBits n i * count n)))

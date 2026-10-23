@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
 public import Complexity.Languages.Probabilistic.BitString
@@ -80,14 +81,23 @@ theorem isPPT_inversionGame {f : List Bool → List Bool} {adversary : Inverter}
     (hf : ComputableTidilyInPolyTime f encBits encBits) (ha : IsPPT encBits adversary) :
     IsPPT encBool (fun n _ => inversionGame f adversary n) := by ppt
 
-/-- One polynomial-time algorithm evaluates the function, and every uniform strict PPT inverter
+/-- One plain polynomial-time algorithm evaluates the function. Every uniform strict PPT inverter
 has negligible success over the uniform input and its own independent random coins. -/
 structure OneWay (f : List Bool → List Bool) : Prop where
   /-- A deterministic polynomial-time algorithm evaluates the function. -/
-  polyTime : ComputableTidilyInPolyTime f encBits encBits
+  polyTime : ComputableInPolyTime f encBits encBits
   /-- Inversion is indistinguishable from certain failure in the common game calculus. -/
   secure : Game.Indistinguishable (fun adversary n => ProbComp.eval (inversionGame f adversary n))
     (fun _ _ => PMF.pure false) (IsPPT encBits)
+
+/-- Recover the tidy presentation for proofs without changing the security contract. -/
+theorem oneWay_iff_tidy {f : List Bool → List Bool} :
+    OneWay f ↔
+    (ComputableTidilyInPolyTime f encBits encBits) ∧
+    (Game.Indistinguishable (fun adversary n => ProbComp.eval (inversionGame f adversary n))
+    (fun _ _ => PMF.pure false) (IsPPT encBits)) :=
+  ⟨fun h => ⟨h.polyTime.tidy, h.secure⟩,
+    fun ⟨h0, h1⟩ => ⟨.of_tidy h0, h1⟩⟩
 
 /-- The shared game definition gives the usual negligible inversion probability. -/
 theorem OneWay.inversion_negligible {f : List Bool → List Bool} (h : OneWay f)
@@ -101,7 +111,7 @@ theorem OneWay.of_inversion_negligible {f : List Bool → List Bool}
     (h : ∀ adversary : Inverter, IsPPT encBits adversary →
       Negligible (fun n => Game.succProbability (ProbComp.eval (inversionGame f adversary n)))) :
     OneWay f := by
-  refine ⟨hf, fun adversary hPPT => ?_⟩
+  refine ⟨.of_tidy hf, fun adversary hPPT => ?_⟩
   simpa only [Game.advantage_pure_false] using h adversary hPPT
 
 /-- A length-preserving permutation that is one-way against every uniform PPT inverter. -/

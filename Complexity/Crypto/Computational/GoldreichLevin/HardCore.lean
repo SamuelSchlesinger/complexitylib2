@@ -190,7 +190,7 @@ theorem OneWayPermutation.pseudorandomGenerator {f : List Bool → List Bool}
     (hf : OneWayPermutation f) :
     PseudorandomGenerator (generator f) (fun n => n + 1) :=
   (padded_hardCore hf.oneWay).pseudorandomGenerator
-    (polyTime_paddedFunction hf.oneWay.polyTime) (paddedFunction_length hf.length_eq)
+    (polyTime_paddedFunction hf.oneWay.polyTime.tidy) (paddedFunction_length hf.length_eq)
     (paddedFunction_uniform hf.uniformList_map)
 
 end Cslib.Crypto

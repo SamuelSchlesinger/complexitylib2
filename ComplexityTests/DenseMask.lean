@@ -95,7 +95,7 @@ example :
         (ThreeSource.extract (count n) (saved.length n) 2 0 (bits n) 0 (saved.sampleWithSeed n)))
       (fun n => uniformList
         (ThreeSource.outputLength (count n) (saved.length n) 2 0 (bits n) 0)) := by
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   apply fairPair_gap.extract_three saved
     (bound := fun _ => 2) (inverseSlack := fun _ => 0)
     (observationBits := fun _ => 0) (remainingBits := fun _ => 0)
@@ -126,7 +126,7 @@ example (choose : ℕ → ℕ) (hchoose : ∀ n, choose n < n + 1)
         extractWordLabels (count n) (bits n) values >>= test n (choose n)))
       (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> fairPair.sample n) (count n) (bits n)
         >>= test n (choose n)))) := by
-  have hlength := saved.length_isPolyTime
+  have hlength := saved.length_isPolyTime.tidy
   apply fairPair_gap.extract_indexed_word_labels saved choose
     (candidates := fun n => n + 1) (inverseSlack := fun _ => 0)
     (outputBits := fun n _ => ExtractionSchedule.slack n (saved.length n) 0)

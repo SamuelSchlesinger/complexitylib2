@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Probabilistic.Oracle.Parameter
 public import Complexity.Crypto.Game
 public import Complexity.Foundations.Data.BitString.List
@@ -126,10 +127,11 @@ theorem prfIdealGame_eq_lazy (adversary : OracleDistinguisher) (n : ℕ) :
     ProbOracleComp.interpret_handler, ProbOracleComp.interpret_sample, ProbComp.unifFin,
     OracleComp.interpret_query, heager, lazyRandomFunctionOracle, PMF.monad_bind_eq_bind] using h
 
-/-- An efficiently evaluated keyed family secure against every uniform adaptive oracle test. -/
+/-- A keyed family evaluated in plain polynomial time, secure against every uniform adaptive
+oracle test. -/
 structure PseudorandomFunction (family : List Bool → List Bool → List Bool) : Prop where
   /-- One deterministic machine evaluates the family from the encoded key and query. -/
-  polyTime : ComputableTidilyInPolyTime (fun pair => family pair.1 pair.2)
+  polyTime : ComputableInPolyTime (fun pair => family pair.1 pair.2)
     (encPair encBits encBits) encBits
   /-- Valid queries receive answers of the declared width. -/
   length_eq : ∀ key query, query.length = key.length → (family key query).length = key.length
@@ -137,5 +139,17 @@ structure PseudorandomFunction (family : List Bool → List Bool → List Bool) 
   secure : Game.Indistinguishable
     (fun adversary n => ProbComp.eval (prfRealGame family adversary n))
     (fun adversary n => ProbComp.eval (prfIdealGame adversary n)) (IsOraclePPT encBool)
+
+/-- Recover the tidy presentation for proofs without changing the security contract. -/
+theorem pseudorandomFunction_iff_tidy {family : List Bool → List Bool → List Bool} :
+    PseudorandomFunction family ↔
+    (ComputableTidilyInPolyTime (fun pair => family pair.1 pair.2)
+    (encPair encBits encBits) encBits) ∧
+    (∀ key query, query.length = key.length → (family key query).length = key.length) ∧
+    (Game.Indistinguishable
+    (fun adversary n => ProbComp.eval (prfRealGame family adversary n))
+    (fun adversary n => ProbComp.eval (prfIdealGame adversary n)) (IsOraclePPT encBool)) :=
+  ⟨fun h => ⟨h.polyTime.tidy, h.length_eq, h.secure⟩,
+    fun ⟨h0, h1, h2⟩ => ⟨.of_tidy h0, h1, h2⟩⟩
 
 end Cslib.Crypto
