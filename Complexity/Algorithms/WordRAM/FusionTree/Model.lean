@@ -394,18 +394,6 @@ def decode : ℕ → (ℕ → ℕ) → ℕ → Tree
       .node (mem (base + 2)) (List.ofFn fun i : Fin (mem (base + 1)) =>
         decode fuel mem (mem (base + headerWords + (2 * i.val + 1))))
 
-private theorem child_height_lt {m : ℕ} {cs : List Tree} {t : Tree} (ht : t ∈ cs) :
-    t.height < (Tree.node m cs).height := by
-  have hh : t.height ≤ (cs.map Tree.height).foldr max 0 := by
-    induction cs with
-    | nil => simp at ht
-    | cons u us ih =>
-      rcases List.mem_cons.mp ht with rfl | ht
-      · simp
-      · exact (ih ht).trans (by simp)
-  simp only [Tree.height]
-  omega
-
 /-- Concrete RAM decoding recovers every valid tree. In particular, empty and singleton
 leaves remain distinct even when the stored key is zero. -/
 theorem decode_rep {B fuel base : ℕ} {p : Parameters} {t : Tree} {mem : ℕ → ℕ}
@@ -432,7 +420,7 @@ theorem decode_rep {B fuel base : ℕ} {p : Parameters} {t : Tree} {mem : ℕ �
       simp only [Fin.val_cast]
       rw [hc.2.1]
       apply ih (ht.2.2.2 cs[i] (List.getElem_mem i.isLt)).1 hc.2.2
-      have hh' := child_height_lt (m := m) (List.getElem_mem i.isLt)
+      have hh' := Tree.height_lt_node_of_mem (m := m) (List.getElem_mem i.isLt)
       simp only [Fin.getElem_fin]
       omega
 

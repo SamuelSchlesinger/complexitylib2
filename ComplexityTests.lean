@@ -183,6 +183,7 @@ import ComplexityTests.FusionSampling
 import ComplexityTests.FusionSemifilter
 import ComplexityTests.FusionTransport
 import ComplexityTests.FusionTree
+import ComplexityTests.FusionTreeHeight
 import ComplexityTests.FusionTreeLayout
 import ComplexityTests.FusionTreeQuery
 import ComplexityTests.FusionTreeRAM
