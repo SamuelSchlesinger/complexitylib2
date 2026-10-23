@@ -17,10 +17,15 @@ scripts/cache/get.sh   # Mathlib's cache, then Complexitylib's outputs
 lake build             # compiles only what you changed
 ```
 
-A complete set of library and test outputs is about 70 MB compressed. Outputs are platform
+A complete set of library and test outputs is about 75 MB compressed. Outputs are platform
 independent (`platformIndependent = true`), so Linux CI builds serve macOS checkouts.
 `COMPLEXITYLIB_CACHE_URL` overrides the location; set it to an empty string to skip the
 Complexitylib download.
+
+CI reads the cache too. After restoring `.lake` from the GitHub Actions cache, Lean CI runs
+`scripts/cache/get-missing.sh`, which downloads the same outputs except those of modules whose
+input hash already matches a build trace in `.lake`. A fresh runner would otherwise download a
+complete set on every run, although `.lake` usually has most of it.
 
 ## Trust and privacy
 
@@ -30,13 +35,31 @@ can write to the cache could therefore make a false theorem appear proved or run
 machine. The cache is set up so that this is no more trust than building `main` already
 requires:
 
-- Only the `main` push job of this repository can write. It authenticates with GitHub's OIDC
+- Only push runs on `main` in this repository can write. They authenticate with GitHub's OIDC
   token through Workload Identity Federation, restricted to this repository's numeric id, the
-  `main` ref and the `push` event; no credentials are stored in GitHub. Pull requests, forks and
-  other workflows cannot obtain write access.
+  `main` ref and the `push` event; no credentials are stored in GitHub. Pull requests, forks,
+  merge-queue groups and other branches cannot obtain write access. The condition does not name
+  a workflow, so any workflow run by a push to `main` that requests an OIDC token could write;
+  today only the Lean CI job requests one.
 - The writer can create objects but not delete them, so a published artifact can never be
   replaced. Lake checks every downloaded artifact against the hash recorded in the mapping.
-- Merge-gating CI always builds from source; the cache only saves local build time.
+
+Merge-gating CI also reuses these outputs. Lean CI on pull requests, merge-queue groups and
+`main` pushes restores modules that earlier `main` runs uploaded instead of compiling them, so a
+module restored this way is not re-checked by the kernel in that run. This adds no party to
+trust. CI already restores `.lake` from the GitHub Actions cache, where runs on `main` save the
+copies that other branches and pull requests fall back to, and Lake reuses those outputs in the
+same way. The remote cache's writers are a subset of those runs, so both caches hold what code
+already on `main` built (the Actions cache also holds a pull request's own earlier runs).
+
+Lake reuses an output only for a module whose input hash (its source, the outputs of its
+imports, its options and the toolchain) matches the one uploaded. Every module that differs from
+what `main` CI built, which includes every module a pull request changes and every module that
+imports one, is still compiled and kernel-checked in the run. `lake test` rebuilds every such
+test module, and `lake lint`, `mk_all --check`, `lint-style` and `checkInitImports` run as
+before. Lake replays no build log for a restored module, so `--wfail` cannot see its warnings;
+this loses nothing, because `main` uploads only outputs whose build and tests passed `--wfail`.
+When nothing is cached, CI compiles everything, as before.
 
 The cache contains only build outputs of commits on `main` (sources that are public in this
 repository); build logs and machine paths are not uploaded. Downloads are anonymous HTTPS
