@@ -1640,6 +1640,7 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 public import Complexity.Foundations.Data.Nat.Radix
 public import Complexity.Foundations.Data.OrderedSet
 public import Complexity.Foundations.Data.Polynomial.CoeffList
+public import Complexity.Foundations.Data.Polynomial.SignQueries
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape

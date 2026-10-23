@@ -965,6 +965,10 @@ The port still includes substantial mathematical developments beyond the complet
 results. Track these by their public theorems, rather than by source-file counts.
 Jukna coverage below is an additional target beyond the V1 port:
 
+* **Real-algebraic decision procedures.** The [sign-query counting identity](Complexity/Foundations/Data/Polynomial/SignQueries.lean)
+  expresses scaled finite sign-pattern counts through integer product-sign queries, including
+  distinct real roots. Porting the Sturm–Tarski query evaluator, native space certificates and
+  ETR upper bound from [lean-canny](https://github.com/SamuelSchlesinger/lean-canny) remains open.
 * **Mass-production constructor runtime.** Certify runtime separately from the native gate-cost
   bounds in [Uhlig](Complexity/Computability/Circuit/Boolean/MassProduction/Uhlig.lean) and
   [fine mass production](Complexity/Computability/Circuit/Boolean/MassProduction/Fine.lean).
