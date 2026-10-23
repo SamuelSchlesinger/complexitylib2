@@ -1014,7 +1014,7 @@ theorem gmwView_negligible_of_advice_prg {α : Type} {enc : α ↪ List Bool}
   have hloss : PolynomiallyBounded
       (fun n => dyadicSize (n + 1) * dyadicSize (totalLen (f (a n)))) := by fun_prop
   have herr := (negligible_geometric (by norm_num : (7 / 8 : ℝ≥0) < 1)).shift 1
-  apply negligible_of_le (herr.add (hneg.polynomiallyBounded_mul hloss))
+  apply negligible_of_le (herr.add_fun (hneg.polynomiallyBounded_mul hloss))
   intro n
   simpa only [Nat.cast_mul] using
     gmwView_advantage_le generator length f Vstar adversary n (a n) (w n) (z n) (hw_sat n)
@@ -1060,7 +1060,7 @@ theorem gmwView_indistinguishable_gmwSimulator {α : Type} {enc : α ↪ List Bo
   have hloss : PolynomiallyBounded
       (fun n => dyadicSize (n + 1) * dyadicSize (totalLen (f (a n)))) := by fun_prop
   have herr := (negligible_geometric (by norm_num : (7 / 8 : ℝ≥0) < 1)).shift 1
-  apply negligible_of_le (herr.add (hneg.polynomiallyBounded_mul hloss))
+  apply negligible_of_le (herr.add_fun (hneg.polynomiallyBounded_mul hloss))
   intro n
   simpa only [distinguishingGame, PMF.monad_bind_eq_bind, ProbComp.eval_bind, ProbComp.eval_map,
     BitString.eval_sampleList, generatorEnsemble, Nat.cast_mul, red] using

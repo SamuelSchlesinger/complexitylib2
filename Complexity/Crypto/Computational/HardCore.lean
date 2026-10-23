@@ -197,7 +197,7 @@ theorem HardCore.indistinguishable {f : List Bool → List Bool} {predicate : Li
   intro adversary ha
   have hleft := h.unpredictable _ (isPPT_hardCorePredictor ha false)
   have hright := h.unpredictable _ (isPPT_hardCorePredictor ha true)
-  apply negligible_of_le (hleft.add hright)
+  apply negligible_of_le (hleft.add_fun hright)
   intro n
   simpa only [eval_prgRealGame] using (hardCore_advantage_le f predicate adversary n).trans
     (div_le_self (by positivity) (by norm_num))

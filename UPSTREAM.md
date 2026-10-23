@@ -58,12 +58,16 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
 * **Probabilistic programs.** Coordinate the shared `PFunctor.FreeM` API with #1086–#1089 and
   typed oracles with #1129. The copied PMF blocks have their own markers and removal instructions
   in [Probability/PMF.lean](Complexity/Probability/PMF.lean); remove only the merged blocks.
-* **Security games.** `Crypto/Negligible.lean` and `Crypto/Game.lean` include the #1068 base
-  beneath #1069. If #1068 lands first, remove its declarations and retain the #1069 additions.
+* **Security games.** The #1068 negligible-bound base is now supplied by the cslib pin.
+  `Crypto/Negligible.lean` imports it and retains the #1069 `fun_prop` registrations, with
+  pointwise addition/multiplication wrappers needed by lambda-shaped automation clients;
+  remove the submitted registrations when #1069 lands. The candidate public helpers
+  `Negligible.add_fun` and `Negligible.mul_fun` remain until upstream declarations preserve
+  those full names. `Crypto/Game.lean` retains the unmerged #1069 security-game API.
   The probability/game stack copies the October 23 upstream refresh (#1062, #1069, #1070,
-  #1072 and #1129). Its only added copied declaration is `Crypto.negligible_iff`; local PMF
-  additions and negligible closure/automation remain alongside the copied portions. Exact
-  revisions are recorded in their source markers.
+  #1072 and #1129). `Crypto.negligible_iff` and the negligible closure lemmas now come from
+  the base pin; local PMF additions and negligible automation remain alongside the copied portions.
+  Exact revisions are recorded in their source markers.
   The following hybrid layer is tracked by its own marker in `Crypto/Game/Hybrid.lean`.
   `Crypto/Game/Statistical.lean` copies only the Boolean equality from #1072; its remaining
   declarations require the arbitrary-type metric replacement in #1065. Until that is in the
