@@ -28,6 +28,8 @@ operations support polynomially bounded counters and list enumeration in reducti
   bound over a polynomially bounded range of indices, without computing the selected index.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_add`, `.unary_sub`, `.unary_mul`:
   arithmetic on unary naturals.
+* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_min`, `.unary_max`:
+  the smaller and larger of two unary naturals.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le`, `.unary_lt`, `.unary_pair`:
   comparisons and the natural-number pairing function.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le'`, `.unary_lt'`: comparisons of computed
@@ -106,6 +108,16 @@ theorem unary_mul : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
 theorem unary_min : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
     (encPair encUnary encUnary) encUnary :=
   ComputableTidilyInDegree.unary_min.computableTidilyInPolyTime
+
+/-- Take the larger of two unary naturals. -/
+@[fun_prop]
+theorem unary_max : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => max p.1 p.2)
+    (encPair encUnary encUnary) encUnary := by
+  have h : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + (p.2 - p.1))
+      (encPair encUnary encUnary) encUnary := by fun_prop
+  convert h using 1
+  funext p
+  omega
 
 /-- Compare unary naturals. -/
 @[fun_prop]
