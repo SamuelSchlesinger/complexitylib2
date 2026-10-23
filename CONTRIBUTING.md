@@ -29,18 +29,26 @@ imports shown. Record the scope of validation and review accurately.
 
 ## Library quality standard
 
-Every area of the library is held to the same bar ([#587](https://github.com/cslib-community/complexitylib/issues/587)):
+The bar is Mathlib's [style guidelines](https://leanprover-community.github.io/contribute/style.html)
+and CSLib's [CODESTYLE](https://github.com/leanprover/cslib/blob/main/CODESTYLE.md), applied
+uniformly to every area ([#587](https://github.com/cslib-community/complexitylib/issues/587)).
+Mathlib's standard linter set already enforces the mechanical part; reviews enforce the rest:
 
-1. **Surface.** Public declarations are the intended API; helpers are `private`, and `@[expose]`
+1. **Reuse.** Use existing abstractions, in CSLib, Mathlib or this library, instead of parallel
+   representations; formalize shared concepts once, at the level where they are general.
+2. **Surface.** Public declarations are the intended API; helpers are `private`, and `@[expose]`
    marks only definitions whose bodies downstream proofs must unfold.
-2. **Statements.** User-facing statements use mathematical notions and plain computability. Proof
+3. **Statements.** User-facing statements use mathematical notions and plain computability. Proof
    devices such as tidy machines stay inside proofs and the combinator layer that needs them.
    Names follow Mathlib's conventions.
-3. **Placement.** No duplicates; small topic modules; clients import what they use.
-4. **Documentation.** Module docstrings list the actual public API; public definitions and headline
-   theorems have docstrings; each area has a chapter in the guide.
-5. **Proofs.** Hygiene checks pass, and certificates come from automation rather than plumbing.
-6. **Tests.** Checked, nonvacuous examples of the area's main API.
+4. **Automation as API.** Curate `simp`, `grind` and `fun_prop` sets so routine facts follow
+   without unfolding; a fact that repeatedly needs plumbing signals a missing lemma or interface.
+5. **Definitions and proofs.** Definitions are terms where possible. Proofs keep their logical
+   progression visible: `simp only` mid-proof, and no large terminal `simpa` hiding the argument.
+6. **Placement.** No duplicates; small topic modules; clients import what they use.
+7. **Documentation.** Definitions and theorems are documented, citing sources; module docstrings
+   list the actual public API; each area has a chapter in the guide.
+8. **Tests.** Checked, nonvacuous examples of the area's main API.
 
 Improving an interface never weakens the mathematics: keep the models, encodings, independent
 resource bounds and nonvacuity of the results it touches.
