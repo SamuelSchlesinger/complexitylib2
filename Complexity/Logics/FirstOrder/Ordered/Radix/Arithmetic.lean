@@ -31,8 +31,9 @@ zero initial and final carries make these equations exact rather than modular.
 
 ## References
 
-The digit construction implements the arithmetic suggested by [Immerman1999],
-Exercise 1.33(3), using the native arithmetic of Theorem 1.17(1).
+* [N. Immerman, *Descriptive Complexity*][Immerman1999], Exercise 1.33(3) and Theorem 1.17(1): the
+  digit construction implements the suggested arithmetic with the native arithmetic of the
+  theorem.
 -/
 
 @[expose] public section
@@ -113,6 +114,9 @@ theorem realize_cell (B a b y c z c' : (language L).Term α) (v : α → Fin n) 
       rfl, rfl, rfl, rfl, ?_⟩
     exact he.symm
 
+/-- When the radix `B` is at least two and `B ^ 3` fits in the universe, `affine L B b x y z`
+holds exactly when `b ≤ B`, the words `x`, `y` and `z` have digits below `B`, and their values
+satisfy `b x + y = z`. -/
 @[fo_realize]
 theorem realize_affine {d : ℕ} (B b : (language L).Term α)
     (x y z : Fin d → (language L).Term α) (v : α → Fin n)

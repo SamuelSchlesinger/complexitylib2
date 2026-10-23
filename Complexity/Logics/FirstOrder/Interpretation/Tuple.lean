@@ -66,6 +66,7 @@ def tupleStructure : L'.Structure (ι → M) where
   RelMap R x := (I.rel R).Realize fun p => x p.1 p.2
 
 variable {M} in
+/-- On all tuples, a target relation holds exactly when its defining formula does. -/
 @[fo_realize]
 theorem relMap_tupleStructure {n : ℕ} (R : L'.Relations n) (x : Fin n → ι → M) :
     (I.tupleStructure M).RelMap R x ↔ (I.rel R).Realize fun p => x p.1 p.2 :=

@@ -54,6 +54,7 @@ def unitStructure : L'.Structure M where
   RelMap R x := (I.rel R).Realize fun p => x p.1
 
 variable {M} in
+/-- On single elements, a target relation holds exactly when its defining formula does. -/
 @[fo_realize]
 theorem relMap_unitStructure {n : ℕ} (R : L'.Relations n) (x : Fin n → M) :
     (I.unitStructure M).RelMap R x ↔ (I.rel R).Realize fun p => x p.1 :=

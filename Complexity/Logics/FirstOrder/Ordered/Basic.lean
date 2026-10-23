@@ -151,6 +151,8 @@ theorem realize_zero_ne_one (v : α → Fin n) : (zero L).realize v ≠ (one L).
   rw [le, Formula.realize_rel₂]
   rfl
 
+/-- `bit L s i` holds exactly when bit `i` of `s` is set, counting from the least significant
+bit. -/
 @[simp, fo_realize] theorem realize_bit (s i : (language L).Term α) (v : α → Fin n) :
     (bit L s i).Realize v ↔ (s.realize v).val.testBit (i.realize v).val = true := by
   rw [bit, Formula.realize_rel₂]

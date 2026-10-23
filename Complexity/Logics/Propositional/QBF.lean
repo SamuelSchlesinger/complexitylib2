@@ -23,7 +23,7 @@ truth values (`Function.update`).
 The value of a formula depends only on its free variables (`QBF.eval_congr`), so a closed formula,
 one without free variables, has the same value under every assignment (`QBF.eval_eq_of_closed`).
 The true closed formulas form the problem `TQBF`, which is `PSPACE`-complete [Arora and Barak,
-Section 4.2][AroraBarak09]; that theorem is not proved here.
+Section 4.2][AroraBarak09] (`Cslib.Complexity.TQBF_pspaceComplete`).
 
 cslib's `Cslib.Logic.PL.Proposition` has no quantifiers and is a syntax for proof systems rather
 than an evaluated one, so it is not reused.

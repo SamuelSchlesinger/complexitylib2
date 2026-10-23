@@ -25,10 +25,15 @@ subformula are subformulas.
 
 ## Main results
 
-* `Cslib.Logic.FO.self_mem_subformulas`, `Cslib.Logic.FO.finite_subformulas`.
+* `Cslib.Logic.FO.self_mem_subformulas`, `Cslib.Logic.FO.finite_subformulas`: a formula is one of
+  its finitely many subformulas.
 * `Cslib.Logic.FO.subformulas_subset`: the subformulas of a subformula are subformulas.
 * `Cslib.Logic.FO.mem_subformulas_of_imp_left`, `Cslib.Logic.FO.mem_subformulas_of_imp_right`,
   `Cslib.Logic.FO.mem_subformulas_of_all`: closure under taking operands.
+
+## References
+
+* [N. Immerman, *Descriptive Complexity*][Immerman1999]
 -/
 
 @[expose] public section
@@ -49,9 +54,11 @@ def subformulas : ∀ {n : ℕ}, L.BoundedFormula α n → Set (Σ k, L.BoundedF
   | n, .imp φ ψ => insert ⟨n, .imp φ ψ⟩ (subformulas φ ∪ subformulas ψ)
   | n, .all φ => insert ⟨n, .all φ⟩ (subformulas φ)
 
+/-- A formula is one of its own subformulas. -/
 theorem self_mem_subformulas {n : ℕ} (φ : L.BoundedFormula α n) : ⟨n, φ⟩ ∈ subformulas φ := by
   cases φ <;> simp [subformulas]
 
+/-- A formula has finitely many subformulas. -/
 theorem finite_subformulas {n : ℕ} (φ : L.BoundedFormula α n) : (subformulas φ).Finite := by
   induction φ with
   | falsum => exact Set.finite_singleton _
@@ -60,6 +67,7 @@ theorem finite_subformulas {n : ℕ} (φ : L.BoundedFormula α n) : (subformulas
   | imp _ _ ih₁ ih₂ => exact (ih₁.union ih₂).insert _
   | all _ ih => exact ih.insert _
 
+/-- The subformulas of a subformula are subformulas. -/
 theorem subformulas_subset {n k : ℕ} {φ : L.BoundedFormula α n} {ψ : L.BoundedFormula α k}
     (h : ⟨k, ψ⟩ ∈ subformulas φ) : subformulas ψ ⊆ subformulas φ := by
   induction φ with
@@ -80,14 +88,17 @@ theorem subformulas_subset {n k : ℕ} {φ : L.BoundedFormula α n} {ψ : L.Boun
 
 variable {n k : ℕ} {φ : L.BoundedFormula α n}
 
+/-- The antecedent of an implication among the subformulas is a subformula. -/
 theorem mem_subformulas_of_imp_left {ψ χ : L.BoundedFormula α k}
     (h : ⟨k, ψ.imp χ⟩ ∈ subformulas φ) : ⟨k, ψ⟩ ∈ subformulas φ :=
   subformulas_subset h (Set.mem_insert_of_mem _ (.inl (self_mem_subformulas ψ)))
 
+/-- The consequent of an implication among the subformulas is a subformula. -/
 theorem mem_subformulas_of_imp_right {ψ χ : L.BoundedFormula α k}
     (h : ⟨k, ψ.imp χ⟩ ∈ subformulas φ) : ⟨k, χ⟩ ∈ subformulas φ :=
   subformulas_subset h (Set.mem_insert_of_mem _ (.inr (self_mem_subformulas χ)))
 
+/-- The body of a universal quantification among the subformulas is a subformula. -/
 theorem mem_subformulas_of_all {ψ : L.BoundedFormula α (k + 1)}
     (h : ⟨k, ψ.all⟩ ∈ subformulas φ) : ⟨k + 1, ψ⟩ ∈ subformulas φ :=
   subformulas_subset h (Set.mem_insert_of_mem _ (self_mem_subformulas ψ))

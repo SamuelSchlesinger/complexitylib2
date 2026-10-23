@@ -29,6 +29,11 @@ in disjunctive normal form into the negation of a formula in conjunctive normal 
 * `Cslib.Logic.PL.DNF.eval_eq_true_iff`, `Cslib.Logic.PL.Term.eval_eq_true_iff`: the semantics as
   quantifiers over terms and literals.
 * `Cslib.Logic.PL.DNF.eval_negate`: de Morgan duality.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 2.3][AroraBarak09]
+* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
 -/
 
 @[expose] public section

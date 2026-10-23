@@ -113,6 +113,8 @@ private theorem realize_subst_bitSum {β : Type*} (x y : (language L).Term β) (
   rw [BoundedFormula.realize_subst]
   exact realize_bitSum _
 
+/-- `columnCount L x y j a` holds exactly when `a` is the number of rows contributing to column
+`j` of the product of `x` and `y` (`BitString.mulColumn`). -/
 @[simp, fo_realize]
 theorem realize_columnCount (x y j a : (language L).Term α) (v : α → Fin n) :
     (columnCount L x y j a).Realize v ↔ (a.realize v).val =
@@ -128,6 +130,8 @@ theorem realize_columnCount (x y j a : (language L).Term α) (v : α → Fin n) 
       (y.realize v).val (j.realize v).val) (x.realize v).isLt
     exact ⟨(fun _ => ⟨_, hw⟩), rfl, ha⟩
 
+/-- `carryStep L x y z i c c'` holds exactly when the carry `c` into column `i` plus its column
+count is bit `i` of `z` plus twice the outgoing carry `c'`, and that sum fits in the universe. -/
 @[fo_realize]
 theorem realize_carryStep (x y z i c c' : (language L).Term α) (v : α → Fin n) :
     (carryStep L x y z i c c').Realize v ↔

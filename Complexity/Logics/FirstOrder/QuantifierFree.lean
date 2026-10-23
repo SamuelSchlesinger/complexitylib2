@@ -160,14 +160,17 @@ section Combinators
 
 variable {L : Language} {V : Type*}
 
+/-- Equality of two variables is atomic. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isAtomic_varEq (u w : V) : (varEq (L := L) u w).IsAtomic :=
   Formula.isAtomic_equal _ _
 
+/-- A unary relation symbol applied to a variable is atomic. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isAtomic_rel₁ (r : L.Relations 1) (u : V) : (rel₁ r u).IsAtomic :=
   Formula.isAtomic_rel₁ _ _
 
+/-- A binary relation symbol applied to two variables is atomic. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isAtomic_rel₂ (r : L.Relations 2) (u w : V) : (rel₂ r u w).IsAtomic :=
   Formula.isAtomic_rel₂ _ _ _

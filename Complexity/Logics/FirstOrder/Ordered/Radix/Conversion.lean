@@ -26,7 +26,8 @@ They need not be smaller than that base; base one therefore also evaluates fixed
 
 ## References
 
-The application to lexicographic tuple ranks follows [Immerman1999], Exercise 1.33(3).
+* [N. Immerman, *Descriptive Complexity*][Immerman1999], Exercise 1.33(3): the application to
+  lexicographic tuple ranks.
 -/
 
 @[expose] public section
@@ -57,6 +58,9 @@ noncomputable def convert (L : Language) {α : Type*} {d m k : ℕ}
 
 variable {L : Language} {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)] {α : Type*}
 
+/-- When `1 < B`, `B ^ 3` fits in the universe and the word `N` is nonzero, `convert L B N x z`
+holds exactly when `N` and `z` are radix-`B` words and the digits `x`, read in base `N`, have the
+value of `z`. -/
 @[fo_realize]
 theorem realize_convert {d m k : ℕ} (B : (language L).Term α)
     (N : Fin m → (language L).Term α) (x : Fin k → (language L).Term α)

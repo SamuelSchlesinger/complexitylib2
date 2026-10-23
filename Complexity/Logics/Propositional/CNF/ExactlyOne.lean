@@ -97,6 +97,8 @@ theorem CNF.fst_mem_of_mem_exactlyOne {vs : List V} {c : Clause V}
     exact hv
   · exact CNF.fst_mem_of_mem_atMostOne hc hl
 
+/-- `CNF.exactlyOne vs` holds exactly when some variable of `vs` is true and no two distinct
+variables of `vs` are. -/
 theorem CNF.eval_exactlyOne (σ : V → Bool) (vs : List V) :
     (CNF.exactlyOne vs).eval σ = true ↔
       (∃ x ∈ vs, σ x = true) ∧ ∀ x ∈ vs, ∀ y ∈ vs, σ x = true → σ y = true → x = y := by

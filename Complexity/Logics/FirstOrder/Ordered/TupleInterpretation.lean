@@ -74,10 +74,12 @@ noncomputable def tupleLt (L : Language) (k : ℕ) : (language L).Formula (Fin 2
 noncomputable def tupleLe (L : Language) (k : ℕ) : (language L).Formula (Fin 2 × Fin k) :=
   ((tupleLt L k).relabel fun p => (p.1.rev, p.2)).not
 
+/-- The lexicographic order formula on tuples is quantifier-free. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isQF_tupleLt (L : Language) (k : ℕ) : (tupleLt L k).IsQF := by
   unfold tupleLt; fo_qf
 
+/-- The lexicographic weak order formula on tuples is quantifier-free. -/
 @[aesop safe apply (rule_sets := [FirstOrder])]
 theorem isQF_tupleLe (L : Language) (k : ℕ) : (tupleLe L k).IsQF := by
   unfold tupleLe; fo_qf

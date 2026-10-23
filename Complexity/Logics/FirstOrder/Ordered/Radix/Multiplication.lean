@@ -28,8 +28,8 @@ asking an unnecessarily large shift of the original word to fit.
 
 ## References
 
-This is an explicit radix implementation of the tuple arithmetic suggested by
-[Immerman1999], Exercise 1.33(3).
+* [N. Immerman, *Descriptive Complexity*][Immerman1999], Exercise 1.33(3): this is an explicit
+  radix implementation of the tuple arithmetic suggested there.
 -/
 
 @[expose] public section
@@ -60,6 +60,8 @@ noncomputable def multiply (L : Language) {α : Type*} {d m : ℕ}
 
 variable {L : Language} {n : ℕ} [Fact (2 ≤ n)] [L.Structure (Fin n)] {α : Type*}
 
+/-- When `1 < B` and `B ^ 3` fits in the universe, `multiply L B x y z` holds exactly when `x`,
+`y` and `z` are radix-`B` words and the value of `z` is the product of those of `x` and `y`. -/
 @[fo_realize]
 theorem realize_multiply {d m : ℕ} (B : (language L).Term α)
     (x : Fin d → (language L).Term α) (y : Fin m → (language L).Term α)

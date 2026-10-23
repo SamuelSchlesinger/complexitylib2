@@ -100,6 +100,7 @@ theorem realize_addEq (x y z : (language L).Term α) (v : α → Fin n) :
   rw [BoundedFormula.realize_subst]
   exact realize_addition _
 
+/-- `natEq L k x` holds exactly when `x` denotes `k`. -/
 @[simp, fo_realize]
 theorem realize_natEq (k : ℕ) (x : (language L).Term α) (v : α → Fin n) :
     (natEq L k x).Realize v ↔ (x.realize v).val = k := by
@@ -149,6 +150,7 @@ theorem realize_highestBit (x h : (language L).Term α) (v : α → Fin n) :
     change (i ()).val ≤ (h.realize v).val
     lia
 
+/-- `powerOfTwo L p e` holds exactly when `p = 2 ^ e`. -/
 @[simp, fo_realize]
 theorem realize_powerOfTwo (p e : (language L).Term α) (v : α → Fin n) :
     (powerOfTwo L p e).Realize v ↔ (p.realize v).val = 2 ^ (e.realize v).val := by
@@ -210,6 +212,8 @@ private theorem shift_iff (x e z : Fin n) :
         simp [hx]
       exact ⟨⟨j.val + e.val, bitIndex_lt hz⟩, rfl⟩
 
+/-- `shiftLeft L x e z` holds exactly when `x * 2 ^ e = z`; the product is not reduced modulo
+the universe size. -/
 @[simp, fo_realize]
 theorem realize_shiftLeft (x e z : (language L).Term α) (v : α → Fin n) :
     (shiftLeft L x e z).Realize v ↔

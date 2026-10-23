@@ -116,15 +116,18 @@ def tupleOne : Fin (k + 1) → Fin n := fun i =>
 def tupleMax : Fin k → Fin n := fun _ =>
   ⟨n - 1, by have := Fact.out (p := 2 ≤ n); lia⟩
 
+/-- The all-zero tuple has rank `0`. -/
 theorem lexRank_tupleZero : lexRank (tupleZero (n := n) (k := k)) = 0 := by
   simp [lexRank_apply, tupleZero]
 
+/-- The tuple with last coordinate one and the others zero has rank `1`. -/
 theorem lexRank_tupleOne : lexRank (tupleOne (n := n) (k := k)) = 1 := by
   rw [lexRank_apply, Fintype.sum_eq_single (Fin.last k)]
   · simp [tupleOne]
   · intro i hi
     simp [tupleOne, hi, tupleZero]
 
+/-- The tuple of maximal coordinates has the largest rank, `n ^ k - 1`. -/
 theorem lexRank_tupleMax : lexRank (tupleMax (n := n) (k := k)) = n ^ k - 1 := by
   have hn : 0 < n := by have := Fact.out (p := 2 ≤ n); lia
   have hp := Nat.pow_pos hn (n := k)

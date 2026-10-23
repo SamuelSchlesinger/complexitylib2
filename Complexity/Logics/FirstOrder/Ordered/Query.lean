@@ -113,6 +113,8 @@ theorem decoded_encode {L : Language} [L.IsRelational] (v : Vocabulary L) (M : S
     decoded v (encode v M) M.size_ge_two = M :=
   Structure.ext rfl fun r xs => v.relMap_decode_encode M (Equiv.refl _) r xs
 
+/-- The canonical encoding of an ordered structure is in the encoded language of a query exactly
+when the structure is in the query. -/
 @[simp]
 theorem mem_encodedLanguage_encode {L : Language} [L.IsRelational] (v : Vocabulary L)
     (K : Query L) (M : Structure L) : encode v M ∈ K.encodedLanguage v ↔ M ∈ K := by

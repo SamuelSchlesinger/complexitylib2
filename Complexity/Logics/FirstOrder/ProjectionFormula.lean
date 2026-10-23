@@ -26,19 +26,21 @@ machine resource bound, is implicit in this definition.
 
 ## Main definitions
 
-* `InputLiteral`: a constant or a signed relation applied to free variables.
-* `ProjectionFormula`: numeric tests with input literals at the leaves.
-* `ProjectionFormula.toFormula`: the ordinary formula over the sum of the two languages.
-* `ProjectionFormula.select`: the literal selected by the numeric structure alone.
+* `Cslib.Logic.FO.InputLiteral`: a constant or a signed relation applied to free variables.
+* `Cslib.Logic.FO.ProjectionFormula`: numeric tests with input literals at the leaves.
+* `Cslib.Logic.FO.ProjectionFormula.toFormula`: the ordinary formula over the sum of the two
+  languages.
+* `Cslib.Logic.FO.ProjectionFormula.select`: the literal selected by the numeric structure alone.
 
 ## Main results
 
-* `ProjectionFormula.realize_toFormula`: realization is that of the selected literal.
-* `ProjectionFormula.exists_literal`: one selected literal works for all input structures.
-* `ProjectionFormula.existsUnique_case`: the numeric cases partition assignments.
-* `ProjectionFormula.realize_iff_exists_case`: disjoint-case normal form.
-* `ProjectionFormula.realize_subst`: truth-preserving substitution.
-* `ProjectionFormula.realize_relabel`: variable renaming preserves realization.
+* `Cslib.Logic.FO.ProjectionFormula.realize_toFormula`: realization is that of the selected literal.
+* `Cslib.Logic.FO.ProjectionFormula.exists_literal`: one selected literal works for all input
+  structures.
+* `Cslib.Logic.FO.ProjectionFormula.existsUnique_case`: the numeric cases partition assignments.
+* `Cslib.Logic.FO.ProjectionFormula.realize_iff_exists_case`: disjoint-case normal form.
+* `Cslib.Logic.FO.ProjectionFormula.realize_subst`: truth-preserving substitution.
+* `Cslib.Logic.FO.ProjectionFormula.realize_relabel`: variable renaming preserves realization.
 
 ## References
 
