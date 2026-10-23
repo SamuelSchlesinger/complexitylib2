@@ -261,8 +261,17 @@ existing developments, source credit and saved branches remain available for a f
    spells out both algorithms, their native efficiency and this precise conditional security
    result. It remains outside the curated headline catalogue while the full FHE recovery is open.
    Hardness for the specified noise family is assumed; no worst-case lattice reduction is supplied.
+   A separate [depth-margin family](Complexity/Crypto/Computational/Homomorphic/GSW/DepthParameters.lean)
+   takes `t = 1+ceil(log₂(λ+2))`, `n = η = λ+1`, `w = 16384*t²`, `N = (n+1)*w`,
+   `m = N+2λ` and `L = 512*t`. It proves `4*m*η*(N+1)^L < 2^w` for every parameter,
+   including zero, together with the entropy surplus, polynomial bounds and uniform native
+   unary parameter routines. Only the modulus is returned in binary.
+   Its [security corollary](Complexity/Crypto/Computational/Homomorphic/GSW/DepthParameters/Security.lean)
+   assumes decision LWE for this exact new family; the earlier family's hardness premise is
+   insufficient. The actual augmented-decryption circuit still has to be constructed and proved
+   to fit `L`; this arithmetic result does not establish bootstrappability.
    Full native circuit evaluation, shallow decryption circuits, bootstrappability with compatible
-   parameters and the concrete FHE instantiation remain open in #486. This parameter family
+   parameters and the concrete FHE instantiation remain open in #486. The earlier parameter family
    proves fresh and one-NAND correctness; it does not yet supply the augmented-decryption circuit
    or the separate joint circular-security assumption needed for the fixed-key endpoint.
    The [code-composition API](Complexity/Computability/Circuit/Boolean/CodeComposition.lean)
