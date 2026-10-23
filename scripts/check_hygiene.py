@@ -6,7 +6,8 @@ Checks enforced by default (see AGENTS.md):
 2. No `sorry`, custom `axiom`, or `native_decide` in Complexity/, ComplexityTests/ or the
    dedicated abstract library.
 3. Every `set_option maxHeartbeats` or `set_option maxRecDepth` has an explanatory comment
-   on the same line or within the preceding 3 lines.
+   on the same line, within the preceding 3 lines, or (for `set_option ... in`) on the next
+   line, where Mathlib's `linter.style.maxHeartbeats` expects it.
 
 Opt-in heuristic checks:
 4. (`--check-simp`) Flag non-terminal bare `simp` tactics in `-- upstream: candidate` modules
@@ -50,7 +51,11 @@ def is_candidate_module(text: str) -> bool:
 
 def has_nearby_comment(raw_lines: list[str], code_lines: list[str], idx_0based: int) -> bool:
     start = max(0, idx_0based - 3)
-    for j in range(start, idx_0based + 1):
+    end = idx_0based + 1
+    # Mathlib's `linter.style.maxHeartbeats` wants the reason right after `set_option ... in`.
+    if code_lines[idx_0based].rstrip().endswith(" in") and idx_0based + 1 < len(code_lines):
+        end = idx_0based + 2
+    for j in range(start, end):
         # If masking comments changed the line, a comment is present on line j.
         if raw_lines[j] != code_lines[j]:
             return True

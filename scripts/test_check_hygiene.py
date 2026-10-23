@@ -61,6 +61,18 @@ class CheckHygieneTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("requires a justifying comment", errors[0])
 
+    def test_set_option_justified_on_the_next_line_passes(self) -> None:
+        p = self.write(
+            "Complexity/MathlibStyleOption.lean",
+            "module\n"
+            "-- upstream: candidate\n\n"
+            "\n\n\n"
+            "set_option maxHeartbeats 400000 in\n"
+            "-- Mathlib's maxHeartbeats linter expects the reason on this line.\n"
+            "theorem demo : True := trivial\n",
+        )
+        self.assertEqual(check_hygiene.check_file(p, root=self.root), [])
+
     def test_forbidden_tokens_and_nonterminal_simp(self) -> None:
         p = self.write(
             "Complexity/BadProof.lean",
