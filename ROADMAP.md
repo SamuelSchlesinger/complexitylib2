@@ -937,6 +937,12 @@ batches.
    dependencies; notation, macros and local instances are excluded by the skill's rules rather
    than mechanically. Generated PDFs are review and dissemination artifacts, not additional proofs.
 
+6. **Plain computability in definitions and public results (#456).** Plain
+   `ComputableInPolyTime` and its tidy bridges are in place. Redefine the classes and reductions
+   that still use `ComputableTidilyInPolyTime` (#546–#550), add plain space, big-O and FPT notions
+   (#551), restate public characterizations and closure lemmas plainly, and switch the abstract
+   bridges to the shared predicate after #497.
+
 ## Remaining theorem developments
 
 The port still includes substantial mathematical developments beyond the completed reference

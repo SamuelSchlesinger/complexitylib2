@@ -15,7 +15,7 @@ import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 machines with no tidiness or space guarantees give library certificates, and library certificates,
 including the verifier for SAT, give upstream machines within polynomial time and space. The plain
 predicate `Turing.MultiTapeTM.ComputableInPolyTime` is proved by `fun_prop` and `polytime` from
-plain hypotheses and tidy certificates. -/
+plain hypotheses and tidy certificates, with the limits of `fun_prop` tested below. -/
 
 namespace ComplexityTests.PolyTimePlain
 
@@ -103,6 +103,11 @@ example : ComputableInPolyTime (fun w : List Bool => w.headD false) encBits encB
   rw [computableInPolyTime_iff_computableTidilyInPolyTime]
   polytime
 
+example {f : α → Bool} (hf : ComputableInPolyTime f enc encBool) :
+    ComputableTidilyInPolyTime (fun a => !f a) enc encBool := by
+  rw [← computableInPolyTime_iff_computableTidilyInPolyTime]
+  fun_prop
+
 /-- A polynomial time bound alone suffices: upstream's copy machine with an exponential space
 bound. -/
 example : ComputableInPolyTime (id : List Bool → List Bool) encBits encBits :=
@@ -135,6 +140,51 @@ example {f : α → Bool} {g : α → ℕ} (hf : ComputableInPolyTime f enc encB
     (hg : ComputableTidilyInPolyTime g enc encNat) :
     ComputableInPolyTime (fun a => ((g a + 1, f a).2 && f a, g a)) enc
       (encPair encBool encNat) := by fun_prop
+
+/-- Projections and calls on the values of pair- and list-valued plain hypotheses: the intermediate
+encoding is inferred from the hypothesis. -/
+example {β γ : Type} {encB : β ↪ List Bool} {encC : γ ↪ List Bool} {f : α → β × γ}
+    (hf : ComputableInPolyTime f enc (encPair encB encC)) :
+    ComputableInPolyTime (fun a => (f a).1) enc encB ∧
+      ComputableInPolyTime (fun a => (f a).2) enc encC :=
+  ⟨by fun_prop, by fun_prop⟩
+
+example {f : α → List ℕ} (hf : ComputableInPolyTime f enc (encList encNat)) :
+    ComputableInPolyTime (fun a => (f a).length) enc encUnary := by fun_prop
+
+example {f : α → ℕ × Bool} (hf : ComputableInPolyTime f enc (encPair encNat encBool)) :
+    ComputableInPolyTime (fun a => !(f a).2) enc encBool := by fun_prop
+
+/-- The same goals from tidy hypotheses. -/
+example {β γ : Type} {encB : β ↪ List Bool} {encC : γ ↪ List Bool} {f : α → β × γ}
+    (hf : ComputableTidilyInPolyTime f enc (encPair encB encC)) :
+    ComputableInPolyTime (fun a => (f a).1) enc encB ∧
+      ComputableInPolyTime (fun a => (f a).2) enc encC :=
+  ⟨by fun_prop, by fun_prop⟩
+
+example {f : α → List ℕ} (hf : ComputableTidilyInPolyTime f enc (encList encNat)) :
+    ComputableInPolyTime (fun a => (f a).length) enc encUnary := by fun_prop
+
+example {f : α → ℕ × Bool} (hf : ComputableTidilyInPolyTime f enc (encPair encNat encBool)) :
+    ComputableInPolyTime (fun a => !(f a).2) enc encBool := by fun_prop
+
+/-- Limitation: `fun_prop` decomposes a plain goal before trying tidy certificates, so a tidy
+certificate for the whole composite, here
+`Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsAnyWithInput`, is not reached. `polytime`
+reaches it, and so does `.of_tidy` around a tidy `fun_prop` proof. -/
+example {list : α → List Bool} {test : α → Bool → Bool}
+    (hlist : ComputableTidilyInPolyTime list enc encBits)
+    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2) (encPair enc encBool)
+      encBool) :
+    ComputableInPolyTime (fun a => (list a).any (test a)) enc encBool := by
+  fail_if_success fun_prop
+  exact .of_tidy (by fun_prop)
+
+example {list : α → List Bool} {test : α → Bool → Bool}
+    (hlist : ComputableTidilyInPolyTime list enc encBits)
+    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2) (encPair enc encBool)
+      encBool) :
+    ComputableInPolyTime (fun a => (list a).any (test a)) enc encBool := by polytime
 
 /-- Another encoding of the same function uses its own certificate. -/
 example : ComputableInPolyTime (fun n : ℕ => n + 1) encUnary encNat := by fun_prop

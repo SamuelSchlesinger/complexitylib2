@@ -38,8 +38,11 @@ statements; the tidy notion is a proof device. Proofs switch between them with
 `Turing.MultiTapeTM.ComputableInPolyTime.tidy` and
 `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy`.
 The closure rules of the plain notion are proved through the tidy calculus and registered with
-`fun_prop`, together with the transition from tidy to plain computability, so `fun_prop` proves a
-plain goal from plain hypotheses and from any tidy certificate.
+`fun_prop`, together with the transition from tidy to plain computability. `fun_prop` decomposes a
+plain goal with the plain closure rules and proves the remaining atoms from plain hypotheses or,
+through the transition, from tidy certificates. A tidy certificate stated for a whole composite,
+such as the `…WithInput` scans, is not reached this way; use `polytime`, or `.of_tidy` around a
+tidy `fun_prop` proof.
 
 Upstream `Turing.MultiTapeTM.DecidableInTimeAndSpace` decides a problem through its Boolean
 indicator. `Turing.MultiTapeTM.decidableInTimeAndSpace_iff` restates it for any Boolean function
@@ -62,7 +65,8 @@ deciding membership, the form used by the classes in `Cslib.Complexity`.
   and `Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTime`.
 * `Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInPolyTime`: a polynomial time bound for
   any machine, with any space bound, gives polynomial time.
-* `Turing.MultiTapeTM.ComputableInPolyTime.comp`, `.pair`, `.ite'`, `.fst`, `.snd`: closure rules.
+* `Turing.MultiTapeTM.ComputableInPolyTime.comp`, `.trans`, `.pair`, `.ite'`, `.fst'`, `.snd'`:
+  closure rules.
 
 ## References
 
@@ -168,7 +172,7 @@ theorem computableInPolyTime_iff_computableTidilyInPolyTime :
   computableTidilyInPolyTime_iff_exists_computableInTimeAndSpaceOfLength.symm
 
 /-- A function computable in polynomial time is tidily computable in polynomial time. The tidy
-machine adds linear overhead to both bounds. -/
+machine runs within time and space linear in the plain time bound. -/
 theorem ComputableInPolyTime.tidy (h : ComputableInPolyTime f encIn encOut) :
     ComputableTidilyInPolyTime f encIn encOut :=
   computableInPolyTime_iff_computableTidilyInPolyTime.mp h
@@ -179,8 +183,8 @@ theorem ComputableInPolyTime.of_tidy (h : ComputableTidilyInPolyTime f encIn enc
     ComputableInPolyTime f encIn encOut :=
   h.exists_computableInTimeAndSpaceOfLength
 
-/-- `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy` for dot notation on a tidy hypothesis. It is
-a `fun_prop` transition rule, so every tidy certificate also proves plain goals. -/
+/-- `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy` for dot notation on a tidy hypothesis. As a
+`fun_prop` transition rule, it proves the atoms of a plain goal from tidy certificates. -/
 @[fun_prop]
 theorem ComputableTidilyInPolyTime.computableInPolyTime
     (h : ComputableTidilyInPolyTime f encIn encOut) : ComputableInPolyTime f encIn encOut :=
@@ -200,9 +204,11 @@ end Turing.MultiTapeTM
 
 /-! ### Closure of `ComputableInPolyTime`
 
-The rules that need a machine construction, proved through the tidy calculus. Together with
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTime` they make `fun_prop` prove
-plain goals from plain hypotheses and tidy certificates. -/
+The rules that need a machine construction, proved through the tidy calculus. `fun_prop`
+decomposes a plain goal with them and proves the remaining atoms from plain hypotheses or, through
+`Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTime`, from tidy certificates. As in
+the tidy rule set, `trans`, `fst'` and `snd'` let it infer intermediate encodings from the inner
+function. -/
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
 
@@ -240,6 +246,14 @@ theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β�
     ComputableInPolyTime (fun x => (f x, g x)) encIn (encPair enc₁ enc₂) :=
   hf.pair hg
 
+/-- Compose in execution order. This lets `fun_prop` infer the intermediate encoding from the
+inner function when it cannot be inferred from the outer function. -/
+@[fun_prop]
+theorem trans {f : α → β} {g : β → γ} (hf : ComputableInPolyTime f encIn encMid)
+    (hg : ComputableInPolyTime g encMid encOut) :
+    ComputableInPolyTime (fun x => g (f x)) encIn encOut :=
+  hg.comp hf
+
 @[fun_prop]
 theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
     ComputableInPolyTime (fun p : β₁ × β₂ => p.1) (encPair enc₁ enc₂) enc₁ :=
@@ -249,6 +263,20 @@ theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β�
 theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
     ComputableInPolyTime (fun p : β₁ × β₂ => p.2) (encPair enc₁ enc₂) enc₂ :=
   .of_tidy (ComputableTidilyInPolyTime.snd enc₁ enc₂)
+
+/-- Project the first component of a pair-valued function computable in polynomial time. -/
+@[fun_prop]
+theorem fst' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
+    ComputableInPolyTime (fun x => (f x).1) encIn enc₁ :=
+  (fst enc₁ enc₂).comp hf
+
+/-- Project the second component of a pair-valued function computable in polynomial time. -/
+@[fun_prop]
+theorem snd' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
+    ComputableInPolyTime (fun x => (f x).2) encIn enc₂ :=
+  (snd enc₁ enc₂).comp hf
 
 /-- A case distinction between functions computable in polynomial time on all inputs. -/
 @[fun_prop]
