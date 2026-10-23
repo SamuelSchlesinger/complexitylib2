@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain.Calculus
+import Complexity.Tactic.PolyTime
 
 /-! Plain synthesis through generated rules, captured routines and preserved resource premises. -/
 
@@ -62,3 +63,16 @@ run_meta do
 /-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms ComputableInPolyTime.binary_add
+
+-- The tactic's named-program registry uses the plain predicate and retains the source rule's
+-- eager list premise; the composed client needs no exposed tidy conversion.
+run_meta do
+  let rules := (Cslib.Tactic.certificateExt.getState (← Lean.getEnv)).getD
+    (`Turing.MultiTapeTM.ComputableInPolyTime, `List.any, false) #[]
+  unless rules.any (fun entry =>
+      entry.1 == `Turing.MultiTapeTM.ComputableInPolyTime.anyWithInput &&
+        entry.2 == #[`hlist]) do
+    throwError "plain routine rule lost its program index or eager list premise"
+
+example : ComputableInPolyTime (fun p : ℕ × List ℕ => p.2.any (fun x => decide (x = p.1)))
+    (encPair encNat (encList encNat)) encBool := by polytime

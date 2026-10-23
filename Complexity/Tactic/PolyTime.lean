@@ -15,6 +15,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain.Calculus
 public import Complexity.Tactic.PolyTime.Init
 
 /-!
@@ -22,10 +23,11 @@ public import Complexity.Tactic.PolyTime.Init
 
 Adapted from the cslib `crypto` branch: named certificates are tried before their implementations
 are unfolded. `fun_prop` handles composition; Aesop chooses loop rules and uses local growth
-contracts. Every rule proves the tidy machine predicate, with fixed machines and polynomial
-bounds across all encoded inputs. A plain `Turing.MultiTapeTM.ComputableInPolyTime` goal is
-reduced to the tidy predicate, and plain hypotheses are restated tidily, so plain statements use
-the same search. Unknown algorithms still require certificates.
+contracts. Plain structural and primitive certificates are transported mechanically from the
+internal tidy calculus, retaining their resource premises and registrations. Loop construction can
+also enter that internal calculus without changing the plain public statement. All certificates
+use fixed machines and polynomial bounds across encoded inputs. Unknown algorithms still require
+certificates.
 
 ## Main definitions
 
@@ -284,3 +286,6 @@ macro "polytime" : tactic => `(tactic| solve |
     (rule_sets := [PolyTime]))
 
 end Cslib.Tactic.PolyTime
+
+-- Source annotations above may add eager routine rules after the plain sidecar was imported.
+plain_mirror_registrations
