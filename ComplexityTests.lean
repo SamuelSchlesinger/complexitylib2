@@ -394,6 +394,7 @@ import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
 import ComplexityTests.ShortWords
+import ComplexityTests.SignQueries
 import ComplexityTests.SipserLautemann
 import ComplexityTests.SmallCountingClasses
 import ComplexityTests.Smoke
