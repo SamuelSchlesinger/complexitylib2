@@ -3,6 +3,15 @@ version = "0.2.0"
 defaultTargets = ["Complexity"]
 testDriver = "ComplexityTests"
 lintDriver = "batteries/runLinter"
+# Share build outputs between local checkouts (worktrees, agent sandboxes) through Lake's
+# content-addressed artifact cache, so a module built in one checkout is reused by every other
+# checkout with the same inputs. Restoring hard-links cached outputs back into `.lake/build`, so
+# tools and CI caches that read the build directory still see a complete tree.
+enableArtifactCache = true
+restoreAllArtifacts = true
+# The library has no native code, so its build outputs are the same on every platform and the
+# remote cache (see `scripts/cache/README.md`) built on Linux CI also serves macOS checkouts.
+platformIndependent = true
 
 # Linter settings are copied verbatim from cslib's lakefile so that every module here
 # compiles unchanged when it is upstreamed.
