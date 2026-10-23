@@ -39,8 +39,8 @@ jobs:
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ./.lake
-          key: lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('./lean-toolchain') }}-${{ hashFiles('./lake-manifest.json') }}-${{ github.sha }}
-          restore-keys: lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('./lean-toolchain') }}-${{ hashFiles('./lake-manifest.json') }}
+          key: lake-exp574-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('./lean-toolchain') }}-${{ hashFiles('./lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: lake-exp574-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('./lean-toolchain') }}-${{ hashFiles('./lake-manifest.json') }}
       - uses: leanprover/lean-action@v1
         with:
           auto-config: "false"
@@ -57,6 +57,8 @@ jobs:
       - name: Restore build outputs from the remote cache
         continue-on-error: true
         timeout-minutes: 10
+        env:
+          COMPLEXITYLIB_CACHE_URL: ""  # experiment for #574: no remote cache
         run: scripts/cache/get-missing.sh
       - name: "lake build"
         run: lake build --wfail --iofail @complexitylib @/mk_all @/checkInitImports @mathlib/lint-style
@@ -68,9 +70,7 @@ jobs:
         run: lake lint
       # As lean-action did: keep a successful build even when tests or linting fail.
       - name: Save .lake to the Actions cache
-        if: >-
-          ${{ !cancelled() && steps.lake-cache.outputs.cache-hit != 'true' &&
-              (success() || steps.test.outcome == 'failure' || steps.lint.outcome == 'failure') }}
+        if: false  # experiment for #574: never save
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ./.lake
