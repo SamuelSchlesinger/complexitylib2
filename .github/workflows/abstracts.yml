@@ -11,6 +11,8 @@ on:
       - "scripts/build_abstracts.py"
       - "scripts/test_abstract*.py"
       - "scripts/test_build_abstracts.py"
+      - "scripts/check_abstract_ci.py"
+      - "scripts/test_check_abstract_ci.py"
       - ".github/workflows/abstracts.yml"
   workflow_dispatch:
 
@@ -25,6 +27,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    outputs:
+      artifact-id: ${{ steps.artifact.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -74,19 +78,34 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 30
     permissions:
       contents: write
+      actions: read
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Require the PDF build's immutable artifact ID
+        env:
+          ARTIFACT_ID: ${{ needs.build.outputs.artifact-id }}
+        run: '[[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]]'
       - uses: actions/download-artifact@v4
         with:
-          name: formal-abstracts-${{ github.sha }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          merge-multiple: true
           path: abstract-artifact
       - name: Publish PDFs for the current main revision
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # Only this helper may issue release mutations. Recheck the current
+          # run/attempt and main before every write, including asset deletion.
+          publish() {
+            python3 -B scripts/check_abstract_ci.py
+            gh release "$@" --repo "$GITHUB_REPOSITORY"
+          }
           current_main=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
           if [ "$current_main" != "$GITHUB_SHA" ]; then
             echo "A newer main revision exists; its workflow will publish the PDFs." >> "$GITHUB_STEP_SUMMARY"
@@ -119,8 +138,11 @@ jobs:
               "The fixed tag is a download anchor; provenance identifies the exact source revision.\n"
           )
           PY
+          # Lean CI runs independently. Reuse its authoritative push/main result
+          # for this exact source; never accept a PR merge or an older green SHA.
+          python3 -B scripts/check_abstract_ci.py --wait-seconds 1200
           if ! gh release view formal-abstracts --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            gh release create formal-abstracts --repo "$GITHUB_REPOSITORY" \
+            publish create formal-abstracts \
               --target "$GITHUB_SHA" --prerelease --latest=false \
               --title "Formal abstracts (generated from main)" --notes-file release-notes.md
           fi
@@ -131,8 +153,7 @@ jobs:
             case "$asset" in
               *.pdf)
                 if [ ! -f "abstract-artifact/$asset" ]; then
-                  gh release delete-asset formal-abstracts "$asset" \
-                    --repo "$GITHUB_REPOSITORY" --yes
+                  publish delete-asset formal-abstracts "$asset" --yes
                 fi
                 ;;
             esac
@@ -141,9 +162,9 @@ jobs:
           if [ "$current_main" != "$GITHUB_SHA" ]; then
             exit 0
           fi
-          gh release upload formal-abstracts --repo "$GITHUB_REPOSITORY" --clobber \
+          publish upload formal-abstracts --clobber \
             abstract-artifact/*.pdf abstract-artifact/provenance.json
-          gh release edit formal-abstracts --repo "$GITHUB_REPOSITORY" \
+          publish edit formal-abstracts \
             --prerelease --latest=false --title "Formal abstracts (generated from main)" \
             --notes-file release-notes.md
           echo "[Latest catalogue PDF](https://github.com/$GITHUB_REPOSITORY/releases/download/formal-abstracts/catalogue.pdf)" >> "$GITHUB_STEP_SUMMARY"
