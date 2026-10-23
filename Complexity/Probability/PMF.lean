@@ -186,11 +186,11 @@ theorem bind_sigma_apply {β : α → Type*} (p : PMF α) (f : (a : α) → PMF 
 
 /-! ### Monad notation
 
-Copied from cslib PR #1129 at `4e626b5449d9c93b4ac7028e596e91324ed2f4f1`.
+Copied from cslib PR #1129 at `dbe22c640c85b2e9fbcb2ec16cd3d14ccb37c4e8`.
 Remove this block when that PR is in the base pin; the resampling lemmas below remain candidates.
 -/
 
--- upstream: submitted #1129 @4e626b5449d9c93b4ac7028e596e91324ed2f4f1
+-- upstream: submitted #1129 @dbe22c640c85b2e9fbcb2ec16cd3d14ccb37c4e8
 
 @[simp] theorem monad_pure_eq_pure (a : α) : (pure a : PMF α) = PMF.pure a := rfl
 
@@ -201,11 +201,11 @@ attribute [simp] _root_.PMF.monad_map_eq_map _root_.PMF.pure_map
 
 /-! ### Real-valued probability masses
 
-Copied from cslib PR #1062 at `807f066de941490e437833e91f099927a984eb87`.
+Copied from cslib PR #1062 at `b2b8dcdfe7dc7f791a146534ad2ca8eb383b51fd`.
 Remove this block when that PR is in the base pin; the candidate lemmas below remain.
 -/
 
--- upstream: submitted #1062 @807f066de941490e437833e91f099927a984eb87
+-- upstream: submitted #1062 @b2b8dcdfe7dc7f791a146534ad2ca8eb383b51fd
 
 /-- Real-valued probability masses are summable, even on an infinite ambient type. -/
 theorem summable_toReal (p : PMF α) : Summable (fun a => (p a).toReal) :=

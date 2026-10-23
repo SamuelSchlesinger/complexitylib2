@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: submitted #1072 @8c1c75599f9f3054aaa662c67f8ff83df1624295
+-- upstream: submitted #1072 @1606f7e2fb50e15a8843c9a26a04a8d94cb424c3
 
 public import Complexity.Crypto.Game
 public import Complexity.Probability.StatisticalDistance
@@ -22,7 +22,7 @@ finite-source statistical bounds apply to every randomized Boolean test of an en
 
 ## References
 
-Copied from cslib PR #1072 at `8c1c75599f9f3054aaa662c67f8ff83df1624295`.
+Copied from cslib PR #1072 at `1606f7e2fb50e15a8843c9a26a04a8d94cb424c3`.
 Only the Boolean equality is included: the remaining arbitrary-type metric API requires #1065.
 -/
 
