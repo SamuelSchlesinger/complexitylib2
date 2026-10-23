@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pathlib
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -12,14 +13,27 @@ import quality_report as q  # noqa: E402
 
 class QualityReportTests(unittest.TestCase):
     def test_areas_follow_the_program_table(self) -> None:
-        self.assertEqual(q.area_of("Foundations/Data/List/Basic.lean"), "Foundations")
-        self.assertEqual(q.area_of("Probability/PMF.lean"), "Foundations")
-        self.assertEqual(q.area_of("Computability/Probabilistic/PTM.lean"), "Machines")
-        self.assertEqual(q.area_of("Computability/PCP/Basic.lean"), "Classes")
-        self.assertEqual(q.area_of("Computability/Circuit/Defs.lean"), "Circuit")
-        self.assertEqual(q.area_of("Algorithms/Lean/Queue.lean"), "WordRAM")
-        self.assertEqual(q.area_of("Computability/GenericRAM/Defs.lean"), q.OTHER_AREA)
+        self.assertEqual(q.area_of("Foundations/Data/List/Basic/"), "Foundations")
+        self.assertEqual(q.area_of("Probability/PMF/"), "Foundations")
+        self.assertEqual(q.area_of("Computability/BitString/Basic/"), "Foundations")
+        self.assertEqual(q.area_of("Computability/Probabilistic/PTM/"), "Machines")
+        self.assertEqual(q.area_of("Computability/PCP/Basic/"), "Classes")
+        self.assertEqual(q.area_of("Computability/Circuit/Defs/"), "Circuit")
+        self.assertEqual(q.area_of("Algorithms/Lean/Queue/"), "WordRAM")
         self.assertEqual(q.area_of("Init/"), q.OTHER_AREA)
+
+    def test_areas_assigned_after_the_program_table(self) -> None:
+        # #587's assignment of the paths its table left out.
+        for path in ("Computability/GenericRAM/Defs/", "Computability/RAM/Basic/",
+                     "Tactic/PolyTime/"):
+            self.assertEqual(q.area_of(path), "Machines", path)
+        self.assertEqual(q.area_of("Computability/BranchingProgram/Defs/"), "Circuit")
+        for path in ("Computability/Kolmogorov/Basic/", "Computability/MCSP/Basic/",
+                     "Computability/USTCON/Reader/", "Computability/Languages/Regular/",
+                     "MachineLearning/UniformLearning/"):
+            self.assertEqual(q.area_of(path), "Classes", path)
+        # A module file named like an assigned directory belongs to it as well.
+        self.assertEqual(q.area_of("Tactic/"), "Machines")
 
     def test_module_roles(self) -> None:
         self.assertEqual(q.module_role("Complexity.Foundations.Data.List.Basic"), "lib")
@@ -106,6 +120,20 @@ Mentions `Ignored.name` in prose.
         self.assertEqual(q.listed_names(doc), [
             "Foo.bar", "Foo.baz", "Long.first", "Long.second", "relative", "Foo.bar_spec"])
 
+    def test_documentation_in_another_module_protects(self) -> None:
+        # Module A defines the declarations; only module B's docstring names `docApi`.
+        names = ["Cslib.Fixture.docApi", "Cslib.Fixture.helper", "Cslib.Other.mono",
+                 "Cslib.Fixture.mono", "Cslib.Fixture.monotone"]
+        doc_b = "/-! Module B builds on `Cslib.Fixture.docApi` and on `mono`. -/"
+        named = q.doc_named(names, q.doc_tokens(doc_b))
+        self.assertIn("Cslib.Fixture.docApi", named)
+        self.assertNotIn("Cslib.Fixture.helper", named)
+        # An ambiguous short name protects every declaration it could denote.
+        self.assertTrue({"Cslib.Other.mono", "Cslib.Fixture.mono"} <= named)
+        self.assertNotIn("Cslib.Fixture.monotone", named)
+        self.assertEqual(q.doc_named(names, q.doc_tokens("`Fixture.docApi`")),
+                         {"Cslib.Fixture.docApi"})
+
     def test_name_matching(self) -> None:
         self.assertTrue(q.matches("Cslib.Foo.bar", "Foo.bar"))
         self.assertTrue(q.matches("Cslib.Foo.bar", "Cslib.Foo.bar"))
@@ -123,6 +151,50 @@ Mentions `Ignored.name` in prose.
         self.assertEqual(fanout["B"], {"E"})
         importers = q.transitive_importers(imports)
         self.assertEqual(importers["A"], {"B", "C", "D", "E", "F"})
+
+
+class OutputCheckTests(unittest.TestCase):
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.reference = pathlib.Path(tmp.name) / "current"
+        self.copy = pathlib.Path(tmp.name) / "copy"
+        for directory in (self.reference, self.copy):
+            self.write(directory, "Complexity/A.ilean", "{}")
+            self.write(directory, "Complexity/A.olean", "a")
+            self.write(directory, "Complexity/A.c", "ignored")
+
+    @staticmethod
+    def write(directory: pathlib.Path, rel: str, text: str) -> None:
+        path = directory / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def check(self, build_dir: pathlib.Path, skip: bool = False, current: bool = True) -> str:
+        return q.check_outputs(build_dir, skip, current=lambda: current, reference=self.reference)
+
+    def test_identical_custom_directory_is_checked(self) -> None:
+        self.write(self.copy, "Complexity/A.c", "other files do not matter")
+        self.assertIn("identical", self.check(self.copy))
+        self.assertIn("lake build --no-build", self.check(self.reference))
+
+    def test_stale_custom_directory_is_refused(self) -> None:
+        # The current outputs gained a declaration that the copied directory lacks.
+        self.write(self.reference, "Complexity/A.olean", "a with a new declaration")
+        self.write(self.reference, "Complexity/B.ilean", "{}")
+        with self.assertRaises(SystemExit) as error:
+            self.check(self.copy)
+        self.assertIn("2 file(s)", str(error.exception.code))
+        self.assertEqual(q.output_differences(self.copy, self.reference),
+                         ["Complexity/A.olean", "Complexity/B.ilean"])
+
+    def test_stale_default_outputs_are_refused(self) -> None:
+        with self.assertRaises(SystemExit):
+            self.check(self.reference, current=False)
+
+    def test_unchecked_reports_say_so(self) -> None:
+        self.write(self.reference, "Complexity/A.olean", "changed")
+        self.assertIn("not checked", self.check(self.copy, skip=True))
 
 
 if __name__ == "__main__":

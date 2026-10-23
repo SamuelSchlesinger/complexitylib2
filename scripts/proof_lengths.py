@@ -133,7 +133,8 @@ def body_offset(statement: str) -> int:
     for i, char in enumerate(statement):
         if not depth and char == "l" and re.match(r"\blet(?:I)?\b", statement[i:]) and (
             not i or not (statement[i - 1].isalnum() or statement[i - 1] in "_'.")
-        ):
+        ) and not re.match(r"let(?:I)?\b[^=←\n]*←", statement[i:]):
+            # `let x ← e` in `do` notation binds without a `:=` of its own.
             pending_lets += 1
         if not depth and statement.startswith(":=", i):
             if pending_lets:
@@ -213,13 +214,18 @@ theorem type_let (n : Nat) :
 
 lemma after_multi_line : multi_line = [0] := by
   rfl
+theorem do_let : (do
+    let n ← some 1
+    let m := n
+    return m) = some 1 := by
+  rfl
 universe u
 end Sample
 """
     rows = scan(sample, "Complexity/Sample.lean")
     assert [(r["name"], r["body_lines"]) for r in rows] == [
         ("short", 1), ("term", 1), ("quoted", 1), ("separate_attribute", 1), ("equations", 2),
-        ("type_let", 1), ("after_annotated", 1), ("after_multi_line", 1)
+        ("type_let", 1), ("after_annotated", 1), ("after_multi_line", 1), ("do_let", 1)
     ]
     for row in rows[-2:]:
         assert row["name"] in sample.splitlines()[row["line"] - 1]

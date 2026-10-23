@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import filecmp
 import json
 import re
 import subprocess
@@ -46,21 +47,27 @@ from proof_lengths import masks, scan as scan_proofs  # noqa: E402
 ROOTS = ("Complexity", "ComplexityTests", "ComplexityAbstracts")
 # Documents outside module docstrings whose backquoted names count as intended API.
 EXTERNAL_DOCS = ("README.md", "abstracts/README.md")
+# The areas of #587: its table, completed by its assignment of the remaining paths
+# (https://github.com/cslib-community/complexitylib/issues/587#issuecomment-6376302681).
 AREAS = [
-    ("Foundations", "Foundations, Probability, Languages",
-     ("Foundations/", "Probability/", "Languages/")),
-    ("Machines", "Computability/Machines, Computability/Probabilistic",
-     ("Computability/Machines/", "Computability/Probabilistic/")),
+    ("Foundations", "Foundations, Probability, Languages, Computability/BitString",
+     ("Foundations/", "Probability/", "Languages/", "Computability/BitString/")),
+    ("Machines", "Computability/Machines, Probabilistic, RAM, GenericRAM; Tactic",
+     ("Computability/Machines/", "Computability/Probabilistic/", "Computability/RAM/",
+      "Computability/GenericRAM/", "Tactic/")),
     ("Classes", "Computability/Complexity, PCP, Communication, DecisionTree, QueryComplexity, "
-     "TreeEval",
+     "TreeEval, Kolmogorov, MCSP, USTCON, Languages; MachineLearning",
      ("Computability/Complexity/", "Computability/PCP/", "Computability/Communication/",
-      "Computability/DecisionTree/", "Computability/QueryComplexity/", "Computability/TreeEval/")),
-    ("Circuit", "Computability/Circuit", ("Computability/Circuit/",)),
+      "Computability/DecisionTree/", "Computability/QueryComplexity/", "Computability/TreeEval/",
+      "Computability/Kolmogorov/", "Computability/MCSP/", "Computability/USTCON/",
+      "Computability/Languages/", "MachineLearning/")),
+    ("Circuit", "Computability/Circuit, BranchingProgram",
+     ("Computability/Circuit/", "Computability/BranchingProgram/")),
     ("Crypto", "Crypto", ("Crypto/",)),
     ("Logics", "Logics", ("Logics/",)),
     ("WordRAM", "Computability/WordRAM, Algorithms", ("Computability/WordRAM/", "Algorithms/")),
 ]
-OTHER_AREA = "Other"
+OTHER_AREA = "Other"  # `Init.lean`, held jointly by the program leads, and unassigned paths
 TIDY_EXEMPT = "Computability/Machines/Turing/MultiTape/Combinators/"
 
 # Constants generated from a declaration; a reference to one counts as a reference to its owner.
@@ -274,6 +281,22 @@ def listed_names(doc: str) -> list[str]:
     return names
 
 
+def doc_named(names: list[str], tokens: set[str]) -> set[str]:
+    """The names that some documentation token could denote: the token is the name or one of its
+    suffixes on a component boundary. An ambiguous token, such as a short name, protects every
+    declaration it could denote."""
+    by_last: dict[str, list[str]] = defaultdict(list)
+    for name in names:
+        by_last[name.rsplit(".", 1)[-1]].append(name)
+    return {name for token in tokens for name in by_last.get(token.rsplit(".", 1)[-1], ())
+            if matches(name, token)}
+
+
+def doc_tokens(text: str) -> set[str]:
+    """The backquoted tokens of a docstring or Markdown text."""
+    return {t.lstrip("@.") for t in re.findall(r"`([^`\s]+)`", text)} - {""}
+
+
 def mentioned(doc_tokens: set[str], name: str) -> bool:
     return any(name == t or name.endswith("." + t) for t in doc_tokens)
 
@@ -329,6 +352,50 @@ def transitive_importers(imports: dict[str, list[tuple[str, bool]]]) -> dict[str
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, cwd=ROOT, text=True, check=True, **kwargs)
+
+
+DEFAULT_BUILD_DIR = ROOT / ".lake/build/lib/lean"
+# The build outputs the report reads.
+REPORT_INPUTS = (".ilean", ".olean", ".olean.server", ".olean.private")
+
+
+def lake_outputs_current() -> bool:
+    """Whether Lake finds the default build outputs of the three libraries current."""
+    return subprocess.run(["lake", "build", "--no-build", *ROOTS], cwd=ROOT,
+                          capture_output=True).returncode == 0
+
+
+def output_differences(build_dir: Path, reference: Path) -> list[str]:
+    """Report inputs that are missing, extra or different in `build_dir` compared to
+    `reference`, as paths relative to them."""
+    def inputs(directory: Path) -> set[Path]:
+        return {p.relative_to(directory) for root in ROOTS for p in (directory / root).rglob("*")
+                if p.name.endswith(REPORT_INPUTS) and p.is_file()}
+    ours, theirs = inputs(build_dir), inputs(reference)
+    changed = {p for p in ours & theirs
+               if not filecmp.cmp(build_dir / p, reference / p, shallow=False)}
+    return sorted(map(str, (ours ^ theirs) | changed))
+
+
+def check_outputs(build_dir: Path, skip: bool, current=lake_outputs_current,
+                  reference: Path = DEFAULT_BUILD_DIR) -> str:
+    """How the build outputs were checked, or exit when they are not current.
+
+    Lake checks only the default build directory, so another directory must hold exactly the
+    same report inputs as the checked default outputs."""
+    if skip:
+        return "not checked against the sources"
+    if not current():
+        sys.exit("build outputs are missing or stale; run `lake build " + " ".join(ROOTS)
+                 + "` (or pass --no-build-check)")
+    if build_dir.resolve() == reference.resolve():
+        return "checked current by `lake build --no-build`"
+    differences = output_differences(build_dir, reference)
+    if differences:
+        sys.exit(f"{build_dir} differs from the current build outputs in {len(differences)} "
+                 f"file(s) (e.g. {', '.join(differences[:3])}); pass --no-build-check to "
+                 "report on it anyway")
+    return "checked identical to the current outputs of `lake build --no-build`"
 
 
 def load_ileans(build_dir: Path) -> dict[str, dict]:
@@ -531,12 +598,12 @@ def check_module_docs(lib: Library, decls: dict[str, dict], owners: dict[str, st
     const_by_last: dict[str, list[str]] = defaultdict(list)
     for name in lib.constants:
         const_by_last[name.rsplit(".", 1)[-1]].append(name)
-    external = {t.lstrip("@.") for path in EXTERNAL_DOCS
-                for t in re.findall(r"`([^`\s]+)`", (ROOT / path).read_text())}
+    all_tokens = set().union(*(doc_tokens((ROOT / path).read_text()) for path in EXTERNAL_DOCS))
     drift_by_module = {}
     for module in lib.modules:
         docs = doc_blocks(lib.source(module).text)
-        tokens = {t.lstrip("@.") for doc in docs for t in re.findall(r"`([^`\s]+)`", doc)}
+        tokens = set().union(*map(doc_tokens, docs))
+        all_tokens |= tokens
         in_module = names_by_module[module]
         upstream = [name for name, defined_in, _ in lib.references(module)
                     if not defined_in.startswith("Complexity")]
@@ -560,11 +627,13 @@ def check_module_docs(lib: Library, decls: dict[str, dict], owners: dict[str, st
             decl = decls.get(name)
             if decl is None:
                 continue
-            decl["doc_named"] = mentioned(tokens, name) or mentioned(external, name)
             if (decl["role"] == "decl" and decl["keyword"] in DEFINITION_KEYWORDS
                     and "deprecated" not in decl["attrs"] and not mentioned(tokens, name)):
                 drift["unlisted"].append(name)
         drift_by_module[module] = drift
+    named = doc_named(list(decls), all_tokens)
+    for name, decl in decls.items():
+        decl["doc_named"] = name in named
     return drift_by_module
 
 
@@ -648,13 +717,18 @@ def analyse(build_dir: Path) -> dict:
     duplicates = find_duplicates(lib, decls)
     imports = {m: [(i[0], not i[1]) for i in lib.ileans[m]["directImports"]
                    if i[0].startswith("Complexity.") and i[0] in lib.ileans] for m in lib.modules}
-    proofs = {m: scan_proofs(lib.source(m).text, str(source_path(m).relative_to(ROOT)))
-              for m in lib.modules}
+    proofs, unparsed = {}, []
+    for m in lib.modules:
+        try:
+            proofs[m] = scan_proofs(lib.source(m).text, str(source_path(m).relative_to(ROOT)))
+        except ValueError as error:  # keep the other signals when one module defeats the scanner
+            proofs[m] = []
+            unparsed.append(f"{m}: {error}")
     return {
         "decls": decls, "doc_drift": doc_drift, "duplicates": duplicates, "proofs": proofs,
         "fanout": rebuild_fanout(imports), "importers": transitive_importers(imports),
         "private_count": sum(private_count.values()), "generated_public": generated_public,
-        "lib_modules": lib.modules,
+        "lib_modules": lib.modules, "proofs_unparsed": unparsed,
     }
 
 
@@ -774,16 +848,15 @@ def markdown(report: dict, top: int) -> str:
     t = report["totals"]
     s = t["surface"]
     dirty = " with uncommitted changes" if report["dirty"] else ""
-    out = [f"Revision `{report['revision']}`{dirty}"
-           f" ({report['date']}): {t['modules']:,} library modules, {s['public']:,} public "
+    out = [f"Revision `{report['revision']}`{dirty} ({report['date']}); build outputs "
+           f"{report['outputs']}. {t['modules']:,} library modules, {s['public']:,} public "
            f"declarations written in source, {report['private_declarations']:,} private ones. "
            f"References to the {report['generated_public']:,} public constants Lean generates "
            "(constructors, recursors, equation lemmas, `simps` lemmas, …) count for the "
            "declaration they come from; structure fields and constructors count for their type.",
            "", "### Quality signals by area (#587)", ""] + area_table(report)
-    out += ["", "Areas: " + "; ".join(f"**{n}** = {d}" for n, d, _ in AREAS)
-            + f"; **{OTHER_AREA}** = the remaining modules (Tactic, GenericRAM, Kolmogorov, "
-            "USTCON, MCSP, MachineLearning, …). (c) excludes "
+    out += ["", "Areas (#587): " + "; ".join(f"**{n}** = {d}" for n, d, _ in AREAS)
+            + f"; **{OTHER_AREA}** = `Init` and any unassigned path. (c) excludes "
             f"`{TIDY_EXEMPT}`. (d) lists theorems named in a module's \"Main …\" sections or used "
             "by an abstract. (f) counts declarations whose statement is alpha-equivalent to one "
             "in another module, and definitions whose type and exposed body both are. (g) counts "
@@ -795,7 +868,7 @@ def markdown(report: dict, top: int) -> str:
             f"{s.get('tests_only_abstracts', 0):,} by abstracts, {s.get('tests_only_both', 0):,} "
             "by both. Candidates are never referenced outside their module, carry no attribute "
             "through which they can be used without being named (`simp`, `fun_prop`, `aesop`, "
-            "instances, notation, …), are not named in a module docstring or README, are not "
+            "instances, notation, …), are not named in any module docstring or README, are not "
             "deprecated, and are not mentioned by the exported statement or exposed body of a "
             "declaration that stays public.",
             f"Definitions exposed by `@[expose]` (not instances or abbreviations): "
@@ -819,8 +892,18 @@ def markdown(report: dict, top: int) -> str:
                    f"{row['fanout']} | {row['public']} | {row['never_outside']} |")
     out += ["", "Rebuild fan-out: the modules Lake rebuilds when the module's exported interface "
             "changes, namely its direct importers and the importers of modules that reexport it "
-            "through `public import` chains."]
+            "through `public import` chains.", "", "Limitations: " + " ".join(report["notes"])]
     return "\n".join(out) + "\n"
+
+
+NOTES = [
+    "Counts are review signals, not rules: zero in-repository references does not mean that a "
+    "declaration is unwanted API.",
+    "Uses through simp sets, instances, fun_prop, Aesop rules, notation and macros leave no "
+    "reference; such declarations are flagged and never candidates.",
+    "Definitional unfolding without naming a definition (rfl, decide) is not detected.",
+    "The guide (#585) is not scanned.",
+]
 
 
 def build_report(result: dict, top: int) -> dict:
@@ -848,6 +931,11 @@ def build_report(result: dict, top: int) -> dict:
     order = [name for name, _, _ in AREAS] + [OTHER_AREA]
     return {
         "revision": revision, "dirty": dirty, "date": datetime.date.today().isoformat(),
+        "build_dir": str(DEFAULT_BUILD_DIR), "outputs": "",
+        "notes": NOTES + [f"Proof lengths skip {len(result['proofs_unparsed'])} modules the "
+                          "scanner cannot parse; see `proofs_unparsed`."] * bool(
+                              result["proofs_unparsed"]),
+        "proofs_unparsed": result["proofs_unparsed"],
         "private_declarations": result["private_count"],
         "generated_public": result["generated_public"],
         "areas": {a: group_metrics(by_area[a], modules_by_area[a], result) for a in order},
@@ -868,20 +956,18 @@ def build_report(result: dict, top: int) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--build-dir", type=Path, default=ROOT / ".lake/build/lib/lean")
+    parser.add_argument("--build-dir", type=Path, default=DEFAULT_BUILD_DIR,
+                        help="read build outputs from here; unless --no-build-check is given, "
+                        "they must equal the current default outputs")
     parser.add_argument("--json", type=Path, help="write the full report, with every declaration")
     parser.add_argument("--markdown", type=Path, help="write the tables to a file")
     parser.add_argument("--top", type=int, default=20)
     parser.add_argument("--no-build-check", action="store_true",
                         help="do not check that the build outputs are current")
     args = parser.parse_args()
-    if not args.no_build_check:
-        check = subprocess.run(["lake", "build", "--no-build", *ROOTS], cwd=ROOT,
-                               capture_output=True, text=True)
-        if check.returncode:
-            sys.exit("build outputs are missing or stale; run `lake build " + " ".join(ROOTS)
-                     + "` (or pass --no-build-check)")
+    outputs = check_outputs(args.build_dir, args.no_build_check)
     report = build_report(analyse(args.build_dir), args.top)
+    report["build_dir"], report["outputs"] = str(args.build_dir), outputs
     text = markdown(report, args.top)
     if args.markdown:
         args.markdown.write_text(text)
