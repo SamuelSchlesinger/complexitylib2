@@ -2,7 +2,9 @@ import ComplexityTests.AWPPAmplification
 import ComplexityTests.AWPPLowness
 import ComplexityTests.Abstracts.All
 import ComplexityTests.Abstracts.CheckTests
+import ComplexityTests.Abstracts.CommunicationTests
 import ComplexityTests.Abstracts.InputLayouts
+import ComplexityTests.Abstracts.SipserLautemannTests
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController

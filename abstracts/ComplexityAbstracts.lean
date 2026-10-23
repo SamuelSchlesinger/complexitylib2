@@ -1,6 +1,8 @@
 import ComplexityAbstracts.BarringtonAbstract
 import ComplexityAbstracts.BarringtonBridge
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.CommunicationAbstract
+import ComplexityAbstracts.CommunicationBridge
 import ComplexityAbstracts.Computation
 import ComplexityAbstracts.ConstantDepthAbstract
 import ComplexityAbstracts.ConstantDepthBridge
@@ -23,6 +25,8 @@ import ComplexityAbstracts.SavitchAbstract
 import ComplexityAbstracts.SavitchBridge
 import ComplexityAbstracts.ShamirAbstract
 import ComplexityAbstracts.ShamirBridge
+import ComplexityAbstracts.SipserLautemannAbstract
+import ComplexityAbstracts.SipserLautemannBridge
 import ComplexityAbstracts.SubsetSumAbstract
 import ComplexityAbstracts.SubsetSumBridge
 import ComplexityAbstracts.TQBFAbstract
