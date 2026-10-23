@@ -29,18 +29,65 @@ jobs:
     timeout-minutes: 30
     outputs:
       artifact-id: ${{ steps.artifact.outputs.artifact-id }}
+    env:
+      # What pdflatex reads: Libertine, newtxmath, Inconsolata (zi4) and mweights from
+      # texlive-fonts-extra; tcolorbox, enumitem, xurl and titlesec from texlive-latex-extra;
+      # binhex.tex from texlive-plain-generic; and Latin Modern for the renderer test. Poppler's
+      # pdftotext checks margins.
+      TEX_PACKAGES: >-
+        latexmk lmodern texlive-latex-extra texlive-fonts-extra texlive-plain-generic poppler-utils
+      # The downloaded archives (about 760 MB) are cached so that runs do not depend on the speed
+      # of the Ubuntu mirror; apt still resolves them from its index and verifies their digests.
+      TEX_DEBS: /var/cache/tex-debs
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Validate the curated selection
         run: python3 -B scripts/build_abstracts.py --check
-      - name: Install PDF tooling and fonts
+      - name: Resolve PDF tooling packages
+        id: tex-debs
         run: |
           sudo apt-get update
+          sudo install -d -o "$USER" "$TEX_DEBS"
+          # The cache key names the exact archives (file, size, digest) that apt would download.
+          apt-get install --no-install-recommends -y -qq --print-uris \
+            -o Dir::Cache::Archives="$TEX_DEBS" $TEX_PACKAGES \
+            | awk '{print $2, $3, $4}' | sort > "$RUNNER_TEMP/tex-debs.txt"
+          test -s "$RUNNER_TEMP/tex-debs.txt"
+          echo "prefix=tex-debs-$ImageOS-" >> "$GITHUB_OUTPUT"
+          echo "key=tex-debs-$ImageOS-$(sha256sum < "$RUNNER_TEMP/tex-debs.txt" | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore cached TeX packages
+        id: tex-debs-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /var/cache/tex-debs
+          key: ${{ steps.tex-debs.outputs.key }}
+          restore-keys: ${{ steps.tex-debs.outputs.prefix }}
+      - name: Install PDF tooling and fonts
+        run: |
           sudo apt-get install --no-install-recommends -y \
-            latexmk lmodern texlive-latex-extra texlive-fonts-extra texlive-science \
-            texlive-plain-generic poppler-utils
+            -o Dir::Cache::Archives="$TEX_DEBS" $TEX_PACKAGES
+      # Pull requests read the cache saved by main; they do not write their own copies. Cache
+      # maintenance never blocks the PDF build or its publication.
+      - name: Prune the TeX package cache
+        id: tex-debs-prune
+        if: steps.tex-debs-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
+        continue-on-error: true
+        run: |
+          sudo find "$TEX_DEBS" -mindepth 1 -maxdepth 1 ! -name '*.deb' -exec rm -rf {} +
+          cut -d' ' -f1 "$RUNNER_TEMP/tex-debs.txt" > "$RUNNER_TEMP/tex-debs.keep"
+          find "$TEX_DEBS" -maxdepth 1 -name '*.deb' -printf '%f\n' \
+            | { grep -vxFf "$RUNNER_TEMP/tex-debs.keep" || true; } \
+            | sed "s|^|$TEX_DEBS/|" | xargs -r sudo rm -f --
+          diff <(ls "$TEX_DEBS" | sort) <(sort "$RUNNER_TEMP/tex-debs.keep")
+      - name: Save the TeX package cache
+        if: steps.tex-debs-prune.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /var/cache/tex-debs
+          key: ${{ steps.tex-debs.outputs.key }}
       - name: Test abstract generation
         run: python3 -B -m unittest discover -s scripts -p 'test_*abstract*.py'
       - name: Build individual PDFs, catalogue and provenance
