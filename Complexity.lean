@@ -1278,6 +1278,7 @@ public import Complexity.Crypto.Computational.Commitment
 public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.Circular
 public import Complexity.Crypto.Computational.Encryption.PolyTime
+public import Complexity.Crypto.Computational.Encryption.PublicKeyReplacement
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
 public import Complexity.Crypto.Computational.GGM.Expansion
@@ -1318,10 +1319,13 @@ public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
+public import Complexity.Crypto.Computational.Homomorphic.GSW.LWE
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Noise
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Parameters
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Randomness
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Serialized
+public import Complexity.Crypto.Computational.Homomorphic.GSW.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.PolyTime
@@ -1350,6 +1354,7 @@ public import Complexity.Crypto.Computational.Homomorphic.Leveled.Security
 public import Complexity.Crypto.Computational.Homomorphic.Refresh
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
+public import Complexity.Crypto.Computational.LWE.Basic
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.BPP
 public import Complexity.Crypto.Computational.OneWay.Collision
@@ -1413,6 +1418,7 @@ public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
+public import Complexity.Crypto.Negligible.Dyadic
 public import Complexity.Crypto.Primitives.PRG.Circuit
 public import Complexity.Crypto.Primitives.PRG.Game
 public import Complexity.Crypto.Primitives.PRG.NextBit
