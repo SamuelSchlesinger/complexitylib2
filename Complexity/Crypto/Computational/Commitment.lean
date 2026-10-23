@@ -582,26 +582,7 @@ theorem naorCommitSplit_append (generator : List Bool → List Bool) (r : List B
           simp only [List.length_cons, Nat.add_right_cancel_iff] at hflags hseeds hpads
           simp [naorCommitSplit, ih hflags hseeds hpads]
 
-/-- Reading the `i`-th fixed-width row of a flattened list of words of length `width` recovers
-the `i`-th word. -/
-theorem listRow_flatten {width : ℕ} {words : List (List Bool)}
-    (hwords : ∀ w ∈ words, w.length = width) {i : ℕ} (hi : i < words.length) :
-    BitString.listRow width i words.flatten = words.getD i [] := by
-  induction words generalizing i with
-  | nil => contradiction
-  | cons w rest ih =>
-    have hw : w.length = width := hwords w List.mem_cons_self
-    have hrest : ∀ u ∈ rest, u.length = width :=
-      fun u hu => hwords u (List.mem_cons_of_mem _ hu)
-    cases i with
-    | zero =>
-      simp [BitString.listRow, ← hw]
-    | succ i =>
-      have hi' : i < rest.length := Nat.lt_of_succ_lt_succ hi
-      have hdrop : (w ++ rest.flatten).drop ((i + 1) * width) =
-          rest.flatten.drop (i * width) := by
-        rw [Nat.succ_mul, Nat.add_comm _ width, ← List.drop_drop, ← hw, List.drop_left]
-      simpa [BitString.listRow, List.flatten_cons, hdrop] using ih hrest hi'
+@[deprecated (since := "2026-10-23")] alias listRow_flatten := BitString.listRow_flatten
 
 /-- Select seeds of width `s` at opened coordinates and pad unopened coordinates with `s` false
 bits. -/

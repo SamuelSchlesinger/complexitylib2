@@ -181,26 +181,6 @@ theorem length_readCertificate_le (n s : ℕ) (w : List Bool) :
     (readCertificate n s w).1.length ≤ s := by
   simpa [readCertificate] using (List.count_le_length ..).trans (List.length_take_le s w)
 
-/-- The row of entry `j` of a list of rows of equal width. -/
-private theorem listRow_flatMap_append {α : Type*} {width : ℕ} (f : α → List Bool) (l : List α)
-    (hf : ∀ a ∈ l, (f a).length = width) (rest : List Bool) (j : ℕ) (hj : j < l.length) :
-    BitString.listRow width j (l.flatMap f ++ rest) = f l[j] := by
-  induction l generalizing j with
-  | nil => simp at hj
-  | cons a l ih =>
-    have ha := hf a (List.mem_cons_self ..)
-    cases j with
-    | zero =>
-      simp only [BitString.listRow, Nat.zero_mul, List.drop_zero, List.flatMap_cons,
-        List.append_assoc, List.getElem_cons_zero]
-      exact List.take_left' ha
-    | succ j =>
-      have := ih (fun b hb => hf b (List.mem_cons_of_mem _ hb)) j (by simpa using hj)
-      simp only [BitString.listRow, List.flatMap_cons, List.append_assoc,
-        List.getElem_cons_succ] at this ⊢
-      rw [Nat.add_mul, Nat.one_mul, Nat.add_comm, ← List.drop_drop, List.drop_left' ha]
-      exact this
-
 /-- The certificate of a circuit has length `certLength n s`. -/
 theorem length_certificate {n s : ℕ} {gates : List (Op × List ℕ)} {output : ℕ}
     (hs : gates.length ≤ s) (houtput : output ≤ n + s)
@@ -234,7 +214,7 @@ theorem readCertificate_certificate_append {n s : ℕ} {gates : List (Op × List
   refine Prod.ext ?_ rfl
   refine List.ext_getElem (by simp) fun j h₁ h₂ => ?_
   simp only [BitString.listRows, List.getElem_map, List.getElem_range]
-  rw [listRow_flatMap_append _ _ (fun g hg => length_gateRow (hgates g hg)) _ j h₂,
+  rw [BitString.listRow_flatMap_append _ _ (fun g hg => length_gateRow (hgates g hg)) _ j h₂,
     readRow_gateRow (hgate j h₂).1 (hgate j h₂).2]
 
 /-- **The certificate of a circuit** with at most `s` gates reads as its code. -/

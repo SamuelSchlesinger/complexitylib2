@@ -77,18 +77,6 @@ variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 
 namespace ArthurMerlin
 
-/-! ### Fixed-width rows -/
-
-/-- Row `0` of a word is its fixed-width view. -/
-private theorem listRow_zero (m : ℕ) (w : List Bool) :
-    BitString.listRow m 0 w = List.ofFn (BitString.ofList m w) := by
-  apply List.ext_getElem (by simp)
-  intro i hi _
-  simp only [BitString.length_listRow] at hi
-  by_cases h : i < w.length <;>
-    simp [BitString.listRow, BitString.ofList, List.getElem_append, List.getD_eq_getElem?_getD,
-      h]
-
 /-! ### The `Σ₂` verifier of a Merlin–Arthur verifier -/
 
 /-- The `Σ₂` verifier of a Merlin–Arthur verifier `W` with proofs of length `q` and random strings
@@ -131,12 +119,12 @@ theorem sigmaTwoVerifier_append_ofFn {q k p : Polynomial ℕ} {W : α × List Bo
   · rintro ⟨i, hi, h⟩
     refine ⟨⟨i, hi⟩, ?_⟩
     rwa [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ ⟨i, hi⟩,
-      BitString.ofList_append_of_le (by simp [hw]), listRow_zero, BitString.ofList_ofFn,
+      BitString.ofList_append_of_le (by simp [hw]), BitString.listRow_zero, BitString.ofList_ofFn,
       ← BitString.ofFn_add] at h
   · rintro ⟨i, h⟩
     refine ⟨i, i.2, ?_⟩
     rwa [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ i,
-      BitString.ofList_append_of_le (by simp [hw]), listRow_zero, BitString.ofList_ofFn,
+      BitString.ofList_append_of_le (by simp [hw]), BitString.listRow_zero, BitString.ofList_ofFn,
       ← BitString.ofFn_add]
 
 /-- **Merlin–Arthur verifiers in `Σ₂`.** If `W` is a Merlin–Arthur verifier for `A` with error at
@@ -221,11 +209,12 @@ theorem piTwoVerifier_append {k p q : Polynomial ℕ} {W : α × List Bool → B
     have h := h i i.2
     rwa [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ i,
       BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ i,
-      BitString.ofList_append_of_le (by simp [hu]), listRow_zero, ← BitString.ofFn_add] at h
+      BitString.ofList_append_of_le (by simp [hu]), BitString.listRow_zero,
+      ← BitString.ofFn_add] at h
   · intro h i hi
     rw [BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ ⟨i, hi⟩,
       BitString.listRow_eq_ofFn (count := k.eval (enc a).length) _ ⟨i, hi⟩,
-      BitString.ofList_append_of_le (by simp [hu]), listRow_zero, ← BitString.ofFn_add]
+      BitString.ofList_append_of_le (by simp [hu]), BitString.listRow_zero, ← BitString.ofFn_add]
     exact h ⟨i, hi⟩
 
 /-- **Arthur–Merlin verifiers in `Π₂`.** If `W` is an Arthur–Merlin verifier for `A` with error at

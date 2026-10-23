@@ -197,8 +197,6 @@ theorem getD_listXor_pair (m : ℕ) (u v : List Bool) (i : ℕ) (hi : i < m) :
 read as `false`. -/
 theorem getD_listRow_zero (m : ℕ) (u : List Bool) (i : ℕ) (hi : i < m) :
     (listRow m 0 u).getD i false = u.getD i false := by
-  simp only [listRow, Nat.zero_mul, List.drop_zero, ← ofFn_ofList_eq_take]
-  change ofList m (List.ofFn (ofList m u)) ⟨i, hi⟩ = _
-  simp [ofList, hi]
+  simpa only [Nat.zero_mul, Nat.zero_add] using getD_listRow (row := 0) hi
 
 end Cslib.BitString

@@ -159,7 +159,7 @@ private theorem verifyTranscript_honest {generator : List Bool → List Bool} {s
       simp [List.getD, List.getElem?_eq_getElem hi_seeds]
     have hseed_i : BitString.listRow s i (naorSelectSeeds s flags bits seeds).flatten =
         seeds.getD i [] := by
-      rw [listRow_flatten (fun w hw => length_mem_naorSelectSeeds hw) (by simp [hi_bits]),
+      rw [BitString.listRow_flatten (fun w hw => length_mem_naorSelectSeeds hw) (by simp [hi_bits]),
         getD_naorSelectSeeds s flags bits seeds i hi_bits, hfi]
       simp only [↓reduceIte, BitString.listRow, Nat.zero_mul, List.drop_zero,
         List.take_left' (hseed_len _ hseed_mem)]
@@ -169,7 +169,8 @@ private theorem verifyTranscript_honest {generator : List Bool → List Bool} {s
       have hmem := length_mem_naorCommitSplit_true
         (r := BitString.listRow m 0 r) (hseeds.trans hbits_len.symm) hgen_len
       rw [← hbits_len, proverReply1_true_eq_flatten r (hseeds.trans hbits_len.symm) hgen_len,
-        listRow_flatten hmem (by simp [hi_bits]), getD_naorCommitSplit _ _ _ _ _ _ i hi_bits]
+        BitString.listRow_flatten hmem (by simp [hi_bits]),
+        getD_naorCommitSplit _ _ _ _ _ _ i hi_bits]
       have hrep : (List.replicate bits.length true).getD i false = true := by
         simp [List.getD, hi_bits]
       rw [hrep, naorCommitAt_true]
@@ -270,13 +271,6 @@ private theorem getD_append_right {u v : List Bool} {d i : ℕ} (hu : u.length =
   subst d
   simp [List.getD_eq_getElem?_getD, List.getElem?_append_right (Nat.le_add_right u.length i)]
 
-private theorem getD_listRow_of_lt {width row t : ℕ} {word : List Bool} (ht : t < width)
-    (hlen : row * width + t < word.length) :
-    (BitString.listRow width row word).getD t false = word.getD (row * width + t) false := by
-  have hdrop : t < (word.drop (row * width)).length := by simp only [List.length_drop]; omega
-  simp [BitString.listRow, List.getD_eq_getElem?_getD, List.getElem?_take_of_lt ht,
-    List.getElem?_append_left hdrop, List.getElem?_drop]
-
 private theorem satisfiable_of_verifyCopyBits {φ : CNF ℕ} {copy₀ copy₁ : List Bool}
     (hwidth : ∀ c ∈ φ, c.length ≤ 3)
     (h₀ : verifyCopyBits φ false copy₀ = true)
@@ -328,19 +322,19 @@ private theorem satisfiable_of_verifyCopyBits {φ : CNF ℕ} {copy₀ copy₁ : 
   have hkt : k * 8 + t < 8 * φ.length := by omega
   have hrow_act : BitString.listRow 8 k (activeTableFlags φ v) = clauseActiveRow φ v φ[k] := by
     unfold activeTableFlags
-    rw [listRow_flatten (by intro w hw; obtain ⟨_, _, rfl⟩ := List.mem_map.mp hw; simp)
+    rw [BitString.listRow_flatten (by intro w hw; obtain ⟨_, _, rfl⟩ := List.mem_map.mp hw; simp)
       (by simpa using hk)]
     simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hk]
   have hrow_tab : BitString.listRow 8 k (tableBits φ m) = clauseTableRow φ m φ[k] := by
     unfold tableBits
-    rw [listRow_flatten (by intro w hw; obtain ⟨_, _, rfl⟩ := List.mem_map.mp hw; simp)
+    rw [BitString.listRow_flatten (by intro w hw; obtain ⟨_, _, rfl⟩ := List.mem_map.mp hw; simp)
       (by simpa using hk)]
     simp [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hk]
   have hact_true : (activeTableFlags φ v).getD (k * 8 + t) false = true := by
-    rw [← getD_listRow_of_lt ht (by simpa using hkt), hrow_act, getD_clauseActiveRow φ v φ[k] ht]
+    rw [← BitString.getD_listRow (row := k) ht, hrow_act, getD_clauseActiveRow φ v φ[k] ht]
     simp [t]
   have htab_true := htab_eq (k * 8 + t) hkt hact_true
-  rw [← getD_listRow_of_lt ht (by simpa using hkt), hrow_tab,
+  rw [← BitString.getD_listRow (row := k) ht, hrow_tab,
     getD_clauseTableRow φ m φ[k] ht] at htab_true
   simp only [t, gmwBit0Of8_gmwActiveIdx, gmwBit1Of8_gmwActiveIdx,
     gmwBit2Of8_gmwActiveIdx] at htab_true
