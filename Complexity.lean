@@ -1245,6 +1245,7 @@ public import Complexity.Computability.WordRAM.Trace
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.Commitment
 public import Complexity.Crypto.Computational.Encryption.Basic
+public import Complexity.Crypto.Computational.Encryption.Circular
 public import Complexity.Crypto.Computational.Encryption.PolyTime
 public import Complexity.Crypto.Computational.GGM.Circuit
 public import Complexity.Crypto.Computational.GGM.Evaluation
@@ -1275,6 +1276,13 @@ public import Complexity.Crypto.Computational.Homomorphic.Circuit.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Efficiency
 public import Complexity.Crypto.Computational.Homomorphic.Evaluation
 public import Complexity.Crypto.Computational.Homomorphic.Evaluation.PolyTime
+public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Basic
+public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Bootstrapping
+public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Correctness
+public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Encoding
+public import Complexity.Crypto.Computational.Homomorphic.FixedKey.PolyTime
+public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Reduction
+public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid.Game
