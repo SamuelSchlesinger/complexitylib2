@@ -79,8 +79,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   [`edemaine/lean-trominoes`](https://github.com/edemaine/lean-trominoes) @6d5b36c1 (Apache-2.0),
   which is not a CSLib branch. The adapted files retain the source's copyright notice
   (lean-trominoes contributors) and credit Erik Demaine alongside the adaptation author in their
-  `Authors:` lines; confirm the attribution with him and submit the files with him,
-  and first coordinate with the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
+  `Authors:` lines; coordinate follow-up submissions and attribution with him,
+  alongside the CSLib algorithm-model work: Shreyas Srinivas's query-combinator
   programs (#685, and the register word-RAM models in his Algolean repository) and the merged
   query framework (#401), which
   count only lifted queries. A deeply embedded machine beneath such front ends answers, for the
@@ -118,6 +118,15 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   bound (`hStepsBound`) and a polynomial bound on the encoded intermediate run results
   (`hOutLen`); `transport_polyTime_of_le_const` derives both from a constant step bound. Uniform
   arbitrary-program dispatch and charged configuration selection remain separate.
+* **Typed RAM upstream core.** [CSLib #1158](https://github.com/leanprover/cslib/pull/1158) at
+  `beea60a15eddc91d93e92fa5af9fb965c351d0d5` proposes
+  `Cslib/Computability/Machines/RAM/Basic.lean`, in namespace `Cslib.RAM.Typed`.
+  This redesigns the local WordRAM/GenericRAM core with a register and word-addressed memory bank
+  per sort, `Fin (2 ^ w)` words, and absorbing halt/fault states. A halt retains the data without
+  choosing an output register; `RelSeries` run paths permit terminal padding. Before migrating
+  local clients, bridge their operation bases, input/output conventions and exact halting costs.
+  Algorithms, interpretation transfer, native simulations and time-class APIs remain separate
+  follow-ups. The existing local modules remain candidates, not copies of this submission.
 * **Encoded sparse memory.** `Computability/GenericRAM/SparseMemory/*` reuses Mathlib's `AList`
   with constant value type and the existing native `ComputableTidilyInO` equality, find and filter
   routines. Its certificates expose actual native TM witnesses, parameterized time/space bounds,
