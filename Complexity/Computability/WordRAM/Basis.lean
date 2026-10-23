@@ -20,11 +20,12 @@ multiplication [Andersson, Miltersen and Thorup][AnderssonMiltersenThorup1999]. 
 data-structure bounds can depend on this choice.
 
 A *basis* (`Cslib.WordRAM.Basis`) fixes these operations, as a circuit basis does: a signature of
-operation symbols with arities (`Cslib.Circuits.Signature`), and an interpretation of every symbol
-on natural numbers at each word size `w`. The machine itself, its registers, memory, control flow
-and overflow faults are the same for every basis; an operation whose value does not fit a word
-faults like any other. A basis also marks the operations that may depend on the word size, so that
-programs avoiding them run in the same way at every larger word size.
+operation symbols with arities (`Cslib.Circuits.Signature`), and the value of every symbol on
+natural numbers at each word size `w`, which may be undefined (`none`). The machine itself, its
+registers, memory, control flow and faults are the same for every basis; an operation faults
+when its value is undefined or does not fit a word. A basis also marks the operations that may
+depend on the word size, so that programs avoiding them run in the same way at every larger word
+size.
 
 Bases are compared by meaning-preserving maps of their operations (`Cslib.WordRAM.Basis.Hom`),
 built on `Cslib.Circuits.Signature.Hom`. A program over a basis runs instruction for instruction
@@ -36,7 +37,10 @@ over a larger one; `Cslib.WordRAM.Basis.restrict` gives the sub-bases of a basis
   meaning depends on the word size.
 * `Cslib.WordRAM.BinOp`, `Cslib.WordRAM.StandardOp`, `Cslib.WordRAM.Basis.standard`: the standard
   word-RAM operations: addition, subtraction, multiplication, bitwise operations and shifts as in
-  [Hagerup][Hagerup1998], together with division, remainder and the word size.
+  [Hagerup][Hagerup1998], together with division, remainder and the word size, with truncated
+  subtraction and Lean's division by zero.
+* `Cslib.WordRAM.BinOp.evalExact`, `Cslib.WordRAM.Basis.exact`: the same operations with their
+  exact values: subtraction below zero and division and remainder by zero are undefined.
 * `Cslib.WordRAM.Basis.Hom`: a map of bases that keeps the meaning of every operation.
 * `Cslib.WordRAM.Basis.restrict`: the sub-basis of the operations satisfying a predicate.
 * `Cslib.WordRAM.Basis.additive`, `Cslib.WordRAM.Basis.arithmetic`: addition and subtraction; and
@@ -67,9 +71,9 @@ namespace Cslib.WordRAM
 open Cslib.Circuits
 
 /-- A basis of word operations: a signature of operation symbols, the value of each operation at
-each word size, and the operations that may read the word size. An operation that does not read
-the word size has the same value at every word size. Whether a value fits a word is checked by the
-machine, not by the basis. -/
+each word size, `none` where it is undefined, and the operations that may read the word size. An
+operation that does not read the word size keeps each value that fits a word at every larger word
+size. Whether a value fits a word is checked by the machine, not by the basis. -/
 structure Basis extends Signature.{0} where
   /-- Operation symbols have decidable equality, so that programs do. -/
   [decEq : DecidableEq Op]
@@ -77,13 +81,18 @@ structure Basis extends Signature.{0} where
   ReadsWidth : Op → Prop
   /-- Whether an operation reads the word size is decidable. -/
   [decReadsWidth : DecidablePred ReadsWidth]
-  /-- The value of every operation at word size `w`. -/
-  interp : ℕ → Interpretation toSignature ℕ
-  /-- An operation that does not read the word size has the same value at every word size. -/
-  interp_eq_of_not_readsWidth (f : Op) (hf : ¬ReadsWidth f) (w w' : ℕ)
-    (args : Fin (Arity f) → ℕ) : interp w f args = interp w' f args
+  /-- The value of every operation at word size `w`, or `none` if it is undefined. -/
+  interp : ℕ → (f : Op) → (Fin (Arity f) → ℕ) → Option ℕ
+  /-- An operation that does not read the word size keeps each value that fits a word at every
+  larger word size. -/
+  interp_mono_of_not_readsWidth (f : Op) (hf : ¬ReadsWidth f) {w w' : ℕ} (hw : w ≤ w')
+    {args : Fin (Arity f) → ℕ} {v : ℕ} (h : interp w f args = some v) (hv : v < 2 ^ w) :
+    interp w' f args = some v
 
 attribute [instance] Basis.decEq Basis.decReadsWidth
+
+@[deprecated (since := "2026-10-23")]
+alias Basis.interp_eq_of_not_readsWidth := Basis.interp_mono_of_not_readsWidth
 
 /-! ## The standard basis -/
 
@@ -91,7 +100,7 @@ attribute [instance] Basis.decEq Basis.decReadsWidth
 inductive BinOp where
   /-- Addition. -/
   | add
-  /-- Truncated subtraction. -/
+  /-- Subtraction. -/
   | sub
   /-- Multiplication. -/
   | mul
@@ -142,9 +151,9 @@ def StandardOp.arity : StandardOp → ℕ
   | .width => 0
 
 /-- The value of a standard operation at word size `w`. -/
-def StandardOp.eval (w : ℕ) : (f : StandardOp) → (Fin f.arity → ℕ) → ℕ
-  | .bin f, x => f.eval (x (0 : Fin 2)) (x (1 : Fin 2))
-  | .width, _ => w
+def StandardOp.eval (w : ℕ) : (f : StandardOp) → (Fin f.arity → ℕ) → Option ℕ
+  | .bin f, x => some (f.eval (x (0 : Fin 2)) (x (1 : Fin 2)))
+  | .width, _ => some w
 
 /-- The standard word-RAM basis: addition, subtraction, multiplication, bitwise operations and
 shifts as in [Hagerup][Hagerup1998], together with division and remainder, and the word size, which
@@ -155,24 +164,74 @@ abbrev Basis.standard : Basis where
   Arity := StandardOp.arity
   ReadsWidth f := f = .width
   interp := StandardOp.eval
-  interp_eq_of_not_readsWidth f hf w w' args := by
+  interp_mono_of_not_readsWidth f hf {_ _} _ {_ _} h _ := by
     cases f with
-    | bin => rfl
+    | bin => exact h
     | width => exact absurd rfl hf
 
 theorem Basis.standard_op : Basis.standard.Op = StandardOp := rfl
 
 @[simp]
 theorem Basis.standard_interp_bin (w : ℕ) (f : BinOp) (x : Fin 2 → ℕ) :
-    Basis.standard.interp w (.bin f) x = f.eval (x 0) (x 1) := rfl
+    Basis.standard.interp w (.bin f) x = some (f.eval (x 0) (x 1)) := rfl
 
 @[simp]
 theorem Basis.standard_interp_width (w : ℕ) (x : Fin 0 → ℕ) :
-    Basis.standard.interp w .width x = w := rfl
+    Basis.standard.interp w .width x = some w := rfl
 
 @[simp]
 theorem Basis.standard_readsWidth (f : StandardOp) :
     Basis.standard.ReadsWidth f ↔ f = .width := Iff.rfl
+
+/-! ## The exact basis -/
+
+/-- The exact value of a binary operation on natural numbers: subtraction below zero, and
+division and remainder by zero, are undefined. Elsewhere it is `BinOp.eval`. -/
+@[simp]
+def BinOp.evalExact : BinOp → ℕ → ℕ → Option ℕ
+  | .add, x, y => some (x + y)
+  | .sub, x, y => if y ≤ x then some (x - y) else none
+  | .mul, x, y => some (x * y)
+  | .div, x, y => if y = 0 then none else some (x / y)
+  | .mod, x, y => if y = 0 then none else some (x % y)
+  | .and, x, y => some (x &&& y)
+  | .or, x, y => some (x ||| y)
+  | .xor, x, y => some (x ^^^ y)
+  | .shiftLeft, x, y => some (x <<< y)
+  | .shiftRight, x, y => some (x >>> y)
+
+/-- The exact value of a standard operation at word size `w`. -/
+def StandardOp.evalExact (w : ℕ) : (f : StandardOp) → (Fin f.arity → ℕ) → Option ℕ
+  | .bin f, x => f.evalExact (x (0 : Fin 2)) (x (1 : Fin 2))
+  | .width, _ => some w
+
+/-- The exact word-RAM basis: the operations of `Basis.standard`, where every operation computes
+its exact value, so that subtraction below zero and division and remainder by zero are undefined
+and fault. Only the word size reads the word size. The bounded-word RAM of
+[MIT–ULB CompGeom Group][Tromino2025] does not fault in these cases: it subtracts signed words, and
+its division and remainder by zero follow Lean's integer conventions `x / 0 = 0` and
+`x % 0 = x`. -/
+abbrev Basis.exact : Basis where
+  Op := StandardOp
+  Arity := StandardOp.arity
+  ReadsWidth f := f = .width
+  interp := StandardOp.evalExact
+  interp_mono_of_not_readsWidth f hf {_ _} _ {_ _} h _ := by
+    cases f with
+    | bin => exact h
+    | width => exact absurd rfl hf
+
+@[simp]
+theorem Basis.exact_interp_bin (w : ℕ) (f : BinOp) (x : Fin 2 → ℕ) :
+    Basis.exact.interp w (.bin f) x = f.evalExact (x 0) (x 1) := rfl
+
+@[simp]
+theorem Basis.exact_interp_width (w : ℕ) (x : Fin 0 → ℕ) :
+    Basis.exact.interp w .width x = some w := rfl
+
+@[simp]
+theorem Basis.exact_readsWidth (f : StandardOp) :
+    Basis.exact.ReadsWidth f ↔ f = .width := Iff.rfl
 
 /-! ## Maps of bases -/
 
@@ -181,8 +240,10 @@ size the image of every operation has the operation's value, and that sends an o
 marked as reading the word size to one not so marked. Programs over `B` then run instruction for
 instruction over `B'`. -/
 structure Basis.Hom (B B' : Basis) extends B.toSignature.Hom B'.toSignature where
-  /-- At each word size, the image of each operation has the operation's value. -/
-  preserves (w : ℕ) : toHom.Preserves (B.interp w) (B'.interp w)
+  /-- At each word size, the image of each operation, applied to arguments reindexed along
+  `Signature.Hom.arity_eq`, has the operation's value. -/
+  preserves (w : ℕ) (f : B.Op) (x : Fin (B.Arity f) → ℕ) :
+    B'.interp w (toHom f) (fun a => x (Fin.cast (toHom.arity_eq f) a)) = B.interp w f x
   /-- An operation whose image reads the word size reads it itself. -/
   readsWidth_of_map (f : B.Op) : B'.ReadsWidth (toHom f) → B.ReadsWidth f
 
@@ -200,18 +261,18 @@ theorem arity_map (φ : B.Hom B') (f : B.Op) : B'.Arity (φ.map f) = B.Arity f :
 the operation. -/
 theorem interp_map (φ : B.Hom B') (w : ℕ) (f : B.Op) (x : Fin (B.Arity f) → ℕ) :
     B'.interp w (φ.map f) (fun a => x (Fin.cast (φ.arity_map f) a)) = B.interp w f x :=
-  (φ.preserves w).interpret_eq f x
+  φ.preserves w f x
 
 /-- The identity map of a basis. -/
 protected def id (B : Basis) : B.Hom B where
   toHom := Signature.Hom.id _
-  preserves _ := ⟨fun _ _ => rfl⟩
+  preserves _ _ _ := rfl
   readsWidth_of_map _ h := h
 
 /-- The composition of maps of bases. -/
 def comp (ψ : B'.Hom B'') (φ : B.Hom B') : B.Hom B'' where
   toHom := ψ.toHom.comp φ.toHom
-  preserves w := (ψ.preserves w).comp (φ.preserves w)
+  preserves w f x := (ψ.preserves w (φ.toHom f) _).trans (φ.preserves w f x)
   readsWidth_of_map f h := φ.readsWidth_of_map f (ψ.readsWidth_of_map _ h)
 
 @[simp]
@@ -231,12 +292,12 @@ def Basis.restrict (B : Basis) (P : B.Op → Prop) : Basis where
   Arity f := B.Arity f.1
   ReadsWidth f := B.ReadsWidth f.1
   interp w f := B.interp w f.1
-  interp_eq_of_not_readsWidth f hf := B.interp_eq_of_not_readsWidth f.1 hf
+  interp_mono_of_not_readsWidth f hf := B.interp_mono_of_not_readsWidth f.1 hf
 
 /-- The inclusion of a sub-basis. -/
 def Basis.restrictHom (B : Basis) (P : B.Op → Prop) : (B.restrict P).Hom B where
   toHom := ⟨Subtype.val, fun _ => rfl⟩
-  preserves _ := ⟨fun _ _ => rfl⟩
+  preserves _ _ _ := rfl
   readsWidth_of_map _ h := h
 
 /-- Addition and truncated subtraction. -/
@@ -254,7 +315,7 @@ def Basis.arithmetic : Basis :=
 def Basis.additiveHomArithmetic : Basis.additive.Hom Basis.arithmetic where
   toHom := ⟨fun f => ⟨f.1, by rcases f with ⟨f, hf⟩; simp only [List.mem_cons] at hf ⊢; tauto⟩,
     fun _ => rfl⟩
-  preserves _ := ⟨fun _ _ => rfl⟩
+  preserves _ _ _ := rfl
   readsWidth_of_map _ h := h
 
 /-- The arithmetic operations are standard. -/

@@ -163,8 +163,11 @@ end Probe
 theorem Op.eval_modifies {w : ℕ} {o : Op B r} {x y : Data r} (h : o.eval w x = some y) :
     Modifies (Probe.writes (o.probes x)) x.mem y.mem := by
   cases o with
-  | const | alu =>
+  | const =>
     obtain ⟨_, rfl⟩ := Data.put_eq_some.mp h
+    exact Modifies.refl _ _
+  | alu =>
+    obtain ⟨_, -, -, rfl⟩ := Op.eval_alu_eq_some.mp h
     exact Modifies.refl _ _
   | copy | load => cases h; exact Modifies.refl _ _
   | store a s =>

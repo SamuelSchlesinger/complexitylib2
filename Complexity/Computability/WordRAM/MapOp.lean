@@ -95,7 +95,7 @@ theorem Code.size_mapOp (c : Code B r) : (c.mapOp φ).size = c.size := by
 @[simp]
 theorem Op.eval_mapOp (o : Op B r) (w : ℕ) (x : Data r) : (o.mapOp φ).eval w x = o.eval w x := by
   cases o with
-  | alu f d args => exact congrArg (x.put w d) (φ.interp_map w f (x.regs ∘ args))
+  | alu f d args => exact congrArg (·.bind (x.put w d)) (φ.interp_map w f (x.regs ∘ args))
   | _ => rfl
 
 /-- A translated data instruction reads the word size only if the instruction does. -/
