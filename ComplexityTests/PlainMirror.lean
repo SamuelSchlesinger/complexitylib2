@@ -6,6 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain.Calculus
 import Complexity.Tactic.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Plain.Calculus
+import Complexity.Computability.Complexity.Parameterized.PlainCalculus
 
 /-! Plain synthesis through generated rules, captured routines and preserved resource premises. -/
 
@@ -76,3 +78,21 @@ run_meta do
 
 example : ComputableInPolyTime (fun p : ℕ × List ℕ => p.2.any (fun x => decide (x = p.1)))
     (encPair encNat (encList encNat)) encBool := by polytime
+
+-- Independent time and space functions remain independent under composition.
+example {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {encC : γ ↪ List Bool} {f : β → γ} {g : α → β} {T₁ S₁ : α → ℕ} {T₂ S₂ : β → ℕ}
+    (hf : ComputableInO f encB encC T₂ S₂) (hg : ComputableInO g encA encB T₁ S₁) :
+    ComputableInO (f ∘ g) encA encC (fun a => T₁ a + T₂ (g a))
+      (fun a => S₁ a + S₂ (g a)) := hf.comp hg
+
+example : Cslib.Complexity.ComputableInFPTTime (fun n : ℕ => n + 1) encUnary encUnary id := by
+  have hn : ComputableInPolyTime (fun n : ℕ => n + 1) encUnary encUnary := by fun_prop
+  exact hn.computableInFPTTime id
+
+example {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {encC : γ ↪ List Bool} {f : α → β} {g : β → γ} {κA : α → ℕ} {κB : β → ℕ}
+    (hg : Cslib.Complexity.ComputableInFPTTime g encB encC κB)
+    (hf : Cslib.Complexity.ComputableInFPTTime f encA encB κA) {h : ℕ → ℕ}
+    (hκ : ∀ a, κB (f a) ≤ h (κA a)) :
+    Cslib.Complexity.ComputableInFPTTime (g ∘ f) encA encC κA := hg.comp hf hκ
