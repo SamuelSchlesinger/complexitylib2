@@ -68,6 +68,17 @@ theorem EncryptedWires.getD {n : ℕ} {sk bits : List Bool} {inputs : List (List
     List.get_eq_getElem] using
     h.get hi hi'
 
+/-- Selecting valid ciphertext wires preserves their width and plaintexts, with no key change.
+Output order and repetitions are exactly those of the index list. -/
+theorem EncryptedWires.select {n : ℕ} {sk bits : List Bool} {inputs : List (List Bool)}
+    (h : E.EncryptedWires ciphertextWidth n sk bits inputs) {outputs : List ℕ}
+    (houtputs : ∀ i ∈ outputs, i < bits.length) :
+    E.EncryptedWires ciphertextWidth n sk (Layered.select bits outputs)
+      (outputs.map (inputs.getD · [])) := by
+  simp only [EncryptedWires, Layered.select, List.forall₂_map_left_iff,
+    List.forall₂_map_right_iff, List.forall₂_same]
+  exact fun i hi => h.getD (houtputs i hi)
+
 /-- Fresh encryptions initialize the stronger invariant used after evaluation. -/
 theorem FreshInputs.encryptedWires (hE : E.Correct)
     (hwidth : E.FixedWidth secretWidth ciphertextWidth) {n : ℕ}
