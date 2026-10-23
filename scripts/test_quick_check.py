@@ -171,6 +171,34 @@ class QuickCheckTests(unittest.TestCase):
         with self.assertRaises(quick.FullCheck):
             quick.make_plan(self.root, parser=lambda *_: (_ for _ in ()).throw(quick.FullCheck("bad header")))
 
+    def test_tracked_nested_directory_symlink_falls_back(self):
+        self.write("Outside/Client.lean", "import Demo.Base\nexample : Nat := value\n")
+        (self.root / "Demo/Linked").symlink_to("../Outside", target_is_directory=True)
+        self.commit()
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        self.write("Demo/Base.lean", "def value : Bool := true\n")
+        with self.assertRaisesRegex(quick.FullCheck, "symlinked source"):
+            self.plan()
+
+    def test_library_root_directory_symlink_falls_back(self):
+        (self.root / "Demo").rename(self.root / "ActualDemo")
+        (self.root / "Demo").symlink_to("ActualDemo", target_is_directory=True)
+        self.commit()
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        with self.assertRaisesRegex(quick.FullCheck, "symlinked source"):
+            self.plan()
+
+    def test_overlapping_source_module_identities_fall_back(self):
+        with (self.root / "lakefile.toml").open("a") as f:
+            f.write('[[lean_lib]]\nname = "Base"\nsrcDir = "Demo"\n')
+        self.write("Demo/Base/Extra.lean", "def extra : Nat := 1\n")
+        self.write("DemoTests/Client.lean", "import Demo.Base.Extra\nexample : Nat := extra\n")
+        self.commit()
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        self.write("Demo/Base/Extra.lean", "def extra : Bool := true\n")
+        with self.assertRaisesRegex(quick.FullCheck, "overlapping library source"):
+            self.plan()
+
     def test_fallback_runs_default_check_without_quick_argument(self):
         with patch.object(quick, "make_plan", side_effect=quick.FullCheck("unsafe")), \
              patch.object(quick.subprocess, "run") as run:

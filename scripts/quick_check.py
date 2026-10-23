@@ -66,6 +66,7 @@ def source_modules(root: Path) -> tuple[dict[str, str], set[str], set[str]]:
     if not isinstance(libraries, list) or not libraries:
         raise FullCheck("no Lake libraries were discovered")
     modules: dict[str, str] = {}
+    physical_sources: set[Path] = set()
     aggregates: set[str] = set()
     roots: set[str] = set()
     allowed = {"name", "srcDir", "leanOptions", "allowNonModules"}
@@ -83,6 +84,10 @@ def source_modules(root: Path) -> tuple[dict[str, str], set[str], set[str]]:
         directory = source / relative
         if not aggregator.is_file() or not directory.is_dir():
             raise FullCheck(f"missing library root {name}")
+        # rglob does not descend through directory symlinks: reject them explicitly,
+        # including the library root, before trusting the discovered import graph.
+        if directory.is_symlink() or any(path.is_symlink() for path in directory.rglob("*")):
+            raise FullCheck("symlinked source directories/files need full checks")
         roots.add(name)
         aggregates.add(name)
         for path in [aggregator, *sorted(directory.rglob("*.lean"))]:
@@ -94,6 +99,9 @@ def source_modules(root: Path) -> tuple[dict[str, str], set[str], set[str]]:
             module = ".".join(parts)
             if module in modules:
                 raise FullCheck(f"ambiguous local module {module}")
+            if path.resolve() in physical_sources:
+                raise FullCheck("overlapping library source paths need full checks")
+            physical_sources.add(path.resolve())
             modules[module] = path.relative_to(root).as_posix()
     return modules, aggregates, roots
 
