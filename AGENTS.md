@@ -205,6 +205,14 @@ lake exe checkInitImports
 
 `scripts/check.sh` runs this sequence. CI runs the same checks.
 
+For the edit loop, `scripts/check.sh --quick [--base REF]` builds changed Lean modules and their
+transitive importing clients, then checks import aggregates. The comparison uses the merge base
+with local `origin/main` by default, including committed, staged, unstaged and untracked changes;
+it does not fetch. Quick mode skips the global test/lint/style/init-import gates and is not full
+validation. Non-Lean changes, deletions/renames, changed aggregates, unsupported layouts and
+ambiguous change/import analysis fall back to all six gates. Run the default command before
+submitting a PR; quick success does not satisfy that requirement.
+
 `lake exe mk_all` regenerates `Complexity.lean` after adding a file. New test files go in
 `ComplexityTests/` and must be imported from `ComplexityTests.lean`.
 
