@@ -50,6 +50,35 @@ example : ¬ComputableInSpace (id : List Bool → List Bool) encBits encBits fun
   rintro ⟨t, c, -, hl⟩
   simpa [encBits] using hl (List.replicate (c + 1) true)
 
+/-- The value condition separates `ComputableInSpace` from the transducer notion
+`ComputableInLogSpace`: the copy machine computes the identity in logarithmic space, but the
+identity is not computable within space `O(log n)` in the sense of `ComputableInSpace`. -/
+example : ComputableInLogSpace (id : List Bool → List Bool) encBits encBits ∧
+    ¬ComputableInSpace (id : List Bool → List Bool) encBits encBits
+      fun w => Nat.log2 w.length := by
+  refine ⟨⟨_, 0, computableInTimeAndSpace_id.mono (fun _ => le_rfl) fun _ => Nat.zero_le _⟩, ?_⟩
+  rintro ⟨t, c, -, hl⟩
+  have key (n : ℕ) : n * (n + 3) < 2 ^ (n + 2) := by
+    induction n with
+    | zero => norm_num
+    | succ m ih =>
+      rcases m with _ | _ | m
+      · norm_num
+      · norm_num
+      · rw [pow_succ]; nlinarith
+  have h := hl (List.replicate (2 ^ (c + 2)) true)
+  simp only [encBits, id, Function.Embedding.refl_apply, List.length_replicate,
+    Nat.log2_two_pow] at h
+  nlinarith [key c]
+
+/-- In the other direction, space `O(log n)` in the sense of `ComputableInSpace` is logarithmic
+space. -/
+example {α β : Type} {f : α → β} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
+    (h : ComputableInSpace f encIn encOut fun a => Nat.log2 (encIn a).length) :
+    ComputableInLogSpace f encIn encOut :=
+  let ⟨t, c, hc, _⟩ := h
+  ⟨t, c, hc⟩
+
 /-- The copy machine computes the identity within polynomial space. -/
 theorem id_computableInPolySpace :
     ComputableInPolySpace (id : List Bool → List Bool) encBits encBits :=
@@ -69,6 +98,13 @@ theorem id_computableInFPTTime (κ : List Bool → ℕ) :
 example (κ : List Bool → ℕ) :
     ComputableTidilyInFPTTime (id : List Bool → List Bool) encBits encBits κ :=
   (id_computableInFPTTime κ).tidy
+
+/-- A time bound alone suffices for fpt time: the space bound may be exponential. -/
+example (κ : List Bool → ℕ) :
+    ComputableInFPTTime (id : List Bool → List Bool) encBits encBits κ :=
+  ComputableInTimeAndSpace.computableInFPTTime (F := fun _ => 1) (c := 1)
+    (s := fun w => 2 ^ w.length)
+    (computableInTimeAndSpace_id.mono (fun w => by simp [encBits]) fun _ => Nat.zero_le _)
 
 /-! ### Classes through plain deciders -/
 
@@ -157,6 +193,13 @@ info: 'Turing.MultiTapeTM.computableInPolySpace_iff_computableTidilyInPolySpace'
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms computableInPolySpace_iff_computableTidilyInPolySpace
+
+/--
+info: 'Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInFPTTime' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms ComputableInTimeAndSpace.computableInFPTTime
 
 /--
 info: 'Cslib.Complexity.computableInFPTTime_iff_computableTidilyInFPTTime' depends on axioms:

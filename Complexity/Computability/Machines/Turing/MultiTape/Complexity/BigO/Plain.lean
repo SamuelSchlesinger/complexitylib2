@@ -30,8 +30,6 @@ Proofs switch between the notions with `Turing.MultiTapeTM.ComputableInO.tidy` a
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputesInTimeAndSpace.length_output_le`,
-  `Turing.MultiTapeTM.ComputableInTimeAndSpace.length_le`: the output is within the time bound.
 * `Turing.MultiTapeTM.ComputableInTimeAndSpace.computableTidilyInO`: a machine within time `t` and
   space `s` whose values fit in space `s` gives tidy computability within time `O(t)` and space
   `O(s)`.
@@ -45,33 +43,7 @@ Proofs switch between the notions with `Turing.MultiTapeTM.ComputableInO.tidy` a
 
 namespace Turing.MultiTapeTM
 
-/-! ### The output is within the time bound -/
-
-section Machine
-
-variable {k : ℕ} {Symbol State : Type*} {tm : MultiTapeTM k Symbol State}
-
-/-- A computation within `t` steps emits at most `t` symbols. -/
-theorem ComputesInTimeAndSpace.length_output_le {input output : List Symbol} {t s : ℕ}
-    (h : tm.ComputesInTimeAndSpace input output t s) : output.length ≤ t := by
-  obtain ⟨⟨u, hu, rfl⟩, ht, -⟩ := h
-  have ht := runsInTime_iff_halted.mp ht
-  have heq : tm.runFrom (tm.initCfg input) u = tm.runFrom (tm.initCfg input) t := by
-    rcases le_total u t with hut | htu
-    · exact (runFrom_eq_of_halt tm _ hut hu).symm
-    · exact runFrom_eq_of_halt tm _ htu ht
-  rw [heq]
-  simpa using tm.length_output_runFrom_le (tm.initCfg input) t
-
-end Machine
-
 variable {α β : Type*} {f : α → β} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
-
-/-- The encoded values of a computable function are within its time bound. -/
-theorem ComputableInTimeAndSpace.length_le {t s : α → ℕ}
-    (h : ComputableInTimeAndSpace f encIn encOut t s) (a : α) : (encOut (f a)).length ≤ t a :=
-  let ⟨_, _, _, _, htm⟩ := h
-  (htm a).length_output_le
 
 /-! ### Plain bounds are tidy bounds up to constants -/
 
