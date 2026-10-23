@@ -67,6 +67,24 @@ def height : Tree → ℕ
   | .leaf _ => 0
   | .node _ cs => (cs.map height).foldr max 0 + 1
 
+/-- Every child has strictly smaller height than its parent node. -/
+theorem height_lt_node_of_mem {m : ℕ} {cs : List Tree} {t : Tree} (ht : t ∈ cs) :
+    t.height < (node m cs).height := by
+  have hh : t.height ≤ (cs.map height).foldr max 0 := by
+    induction cs with
+    | nil => simp at ht
+    | cons u us ih =>
+      rcases List.mem_cons.mp ht with rfl | ht
+      · simp
+      · exact (ih ht).trans (by simp)
+  simp only [height]
+  omega
+
+/-- An indexed child has strictly smaller height than its parent node. -/
+theorem height_getElem_lt_node (m : ℕ) (cs : List Tree) (i : Fin cs.length) :
+    cs[i].height < (node m cs).height :=
+  height_lt_node_of_mem (List.getElem_mem i.isLt)
+
 /-- Structural storage in scalar slots, including the list representation: a leaf has a tag and
 a list reference; an internal node has a tag, minimum and child-list reference. Each list cell
 has a tag, an entry and a next link. A key is counted as one scalar, not by its bit length.

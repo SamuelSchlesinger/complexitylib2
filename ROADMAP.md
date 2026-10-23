@@ -1096,9 +1096,8 @@ provides reusable arithmetic. A focused API follow-up is to extract the duplicat
 `Schoolbook.value`/`Bounded` and `Difference.value`/`Bounded` into a shared
 `WordRAM/Multiword/Digits` module, letting Transfer, Bitwise and Shift import digit infrastructure
 without depending on multiplication.
-Likewise, move the generic child-height lemma duplicated in `Model` and
-`QueryProgram.child_height_lt` into `Algorithms/Lean/FusionTree/Tree`, for reuse by
-`Model.decode_rep` and `QueryProgram.exec_loop_height`.
+The shared child-height lemmas in `Algorithms/Lean/FusionTree/Tree` support both
+`Model.decode_rep` and `QueryProgram.exec_loop_height` without duplicate proofs.
 
 [Client resource contracts](Complexity/Foundations/Semantics/Stateful/CostHoare.lean) combine
 admissibility, postconditions and initial-state-dependent operation budgets. Their sequencing

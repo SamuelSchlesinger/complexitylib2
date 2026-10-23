@@ -53,13 +53,8 @@ theorem Done.stopped {q : ℕ} {ans : Option ℕ} {mem : ℕ → ℕ} {y : Data 
     (hy : Done q ans mem y) : ¬(Cond.lt zero active).Holds y := by
   simp [Cond.holds_lt, hy.zero_eq, hy.active_eq]
 
-/-- A child has strictly smaller height than its internal parent. -/
-theorem child_height_lt (m : ℕ) (cs : List Tree) (i : Fin cs.length) :
-    cs[i].height < (Lean.FusionTree.Tree.node m cs).height := by
-  have h := List.le_max_of_le' 0
-    (List.mem_map.mpr ⟨cs[i], List.getElem_mem i.isLt, rfl⟩) (le_refl cs[i].height)
-  simp only [Lean.FusionTree.Tree.height]
-  omega
+@[deprecated Lean.FusionTree.Tree.height_getElem_lt_node (since := "2026-10-23")]
+alias child_height_lt := Lean.FusionTree.Tree.height_getElem_lt_node
 
 private theorem descent_time_le {k h : ℕ} (hk : k < h) :
     201011 + (201022 * (k + 1) + 2) + 2 ≤ 201022 * (h + 1) + 2 := by
@@ -177,15 +172,16 @@ theorem exec_loop_height (h : ℕ) {w q p : ℕ} {t : Tree} {x : Data registers}
           hk k (List.mem_flatMap.mpr ⟨cs[i], List.getElem_mem i.isLt, hk'⟩)
         have hrchild : Rep (parameterWords w) cs[i] (childAddress p cs i) z.mem := by
           simpa only [hzm] using hc.2.2
+        have hheight := Tree.height_getElem_lt_node m cs i
         obtain ⟨y, hey, hy⟩ := ih cs[i].height
-          ((child_height_lt m cs i).trans_le hheight_bound) le_rfl
+          (hheight.trans_le hheight_bound) le_rfl
           hz hchild hschild hkchild hrchild (ha.child i)
         have hpred : (Lean.FusionTree.Tree.node m cs).predecessor q = cs[i].predecessor q := by
           rw [Lean.FusionTree.Tree.predecessor, hroute, ite_eq_right hr0,
             List.getElem?_eq_getElem i.isLt]
           rfl
         refine ⟨y, (hb.loop_iter hx.running hey).mono ?_, ?_⟩
-        · exact descent_time_le ((child_height_lt m cs i).trans_le hheight_bound)
+        · exact descent_time_le (hheight.trans_le hheight_bound)
         · simpa only [hpred, hzm] using hy
 
 /-- The traversal bound uses the actual tree height, including the final leaf visit. -/
