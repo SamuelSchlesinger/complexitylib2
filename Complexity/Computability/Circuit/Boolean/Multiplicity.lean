@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.FanInTwo
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Symmetric gates reading their wires with multiplicities

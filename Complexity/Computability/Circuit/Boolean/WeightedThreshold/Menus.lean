@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
+import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.Int.Interval
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring

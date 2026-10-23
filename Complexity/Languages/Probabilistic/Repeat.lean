@@ -10,6 +10,7 @@ module
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Probability.BitString.List
 public import Complexity.Probability.Product
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Bounded repetition of probabilistic programs

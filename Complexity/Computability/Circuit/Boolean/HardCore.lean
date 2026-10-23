@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.AtLeast
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Mathlib.Basic.Real.Basic
+import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Potential
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.Order.BigOperators.Group.Finset

@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.PCP.LocalTest
 public import Complexity.Foundations.BooleanAnalysis.HadamardTester
 public import Mathlib.Data.Fin.VecNotation
+import Mathlib.Algebra.BigOperators.Fin
 import Complexity.Foundations.Data.Finset.Expect
 import Complexity.Foundations.Data.Hamming
 import Mathlib.Algebra.Order.BigOperators.Expect

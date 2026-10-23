@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.AC0
 public import Complexity.Foundations.Data.BitString.Weight
+import Complexity.Foundations.Data.BitString.Parity.Weight
 import Complexity.Foundations.Data.Fin.Append
 import Mathlib.Data.Fintype.Fin
 
