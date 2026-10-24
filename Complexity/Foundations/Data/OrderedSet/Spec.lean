@@ -22,14 +22,6 @@ choose a representation or charge a computational cost.
 ## Main definitions
 
 * `Cslib.OrderedSet.Op`, `Cslib.OrderedSet.spec`: shared typed ordered-set interface and semantics.
-* `Cslib.OrderedSet.insertAll`, `Cslib.OrderedSet.firstTwo`: construction and adaptive
-  query clients.
-
-## Main results
-
-* `Cslib.OrderedSet.insertAll_run`: batch insertion unions the keys into the state and preserves
-  insertion order and duplicates in the operation history.
-* `Cslib.OrderedSet.firstTwo_run`: the selected query history depends on the minimum answer.
 
 ## References
 
@@ -68,36 +60,5 @@ abbrev spec (α : Type) [LinearOrder α] : Spec where
     | .insert x => (Insert.insert x s, ())
     | .minimum => (s, least s)
     | .successor x => (s, least (s.filter (x < ·)))
-
-/-- Insert a list in order, leaving representation and resource behavior to a realization. -/
-def insertAll : List α → (spec α).Client Unit
-  | [] => .pure ()
-  | x :: xs => .liftBind (.insert x) fun _ => insertAll xs
-
-/-- Batch insertion adds each key to the state, retaining every insertion in its original order. -/
-theorem insertAll_run (s : Finset α) (xs : List α) :
-    (spec α).runClient s (insertAll xs) = ((), s ∪ xs.toFinset, xs.map Op.insert) := by
-  induction xs generalizing s with
-  | nil =>
-    change ((), s, []) = ((), s ∪ ∅, [])
-    rw [Finset.union_empty]
-  | cons x xs ih =>
-    simp only [insertAll, Spec.runClient, spec, ih, List.toFinset_cons, List.map_cons]
-    simp [Finset.insert_union, Finset.union_insert]
-
-/-- Read the two smallest distinct keys. The successor argument comes from the minimum answer. -/
-def firstTwo : (spec α).Client (Option α × Option α) :=
-  .liftBind .minimum fun
-    | none => .pure (none, none)
-    | some x => .liftBind (.successor x) fun next => .pure (some x, next)
-
-/-- The chosen operation history visibly depends on whether the minimum query succeeded. -/
-theorem firstTwo_run (s : Finset α) :
-    (spec α).runClient s firstTwo =
-      match least s with
-      | none => ((none, none), s, [.minimum])
-      | some x => ((some x, least (s.filter (x < ·))), s, [.minimum, .successor x]) := by
-  simp only [firstTwo, Spec.runClient, spec]
-  cases least s <;> rfl
 
 end Cslib.OrderedSet

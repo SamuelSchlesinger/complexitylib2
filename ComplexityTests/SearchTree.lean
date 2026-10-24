@@ -8,6 +8,7 @@ module
 -- upstream: local-only (test driver)
 
 public import Complexity.Algorithms.Lean.SearchTree.Stateful
+public import ComplexityTests.OrderedSet
 
 /-!
 # Worked search-tree examples

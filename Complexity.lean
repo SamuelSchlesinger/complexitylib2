@@ -1707,6 +1707,7 @@ public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 public import Complexity.Foundations.Data.Nat.Primrec
 public import Complexity.Foundations.Data.Nat.Radix
 public import Complexity.Foundations.Data.OrderedSet
+public import Complexity.Foundations.Data.OrderedSet.Spec
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Polynomial.SignQueries
 public import Complexity.Foundations.Data.Seq.Computation
@@ -1740,7 +1741,6 @@ public import Complexity.Foundations.Semantics.Stateful.Composition
 public import Complexity.Foundations.Semantics.Stateful.CostHoare
 public import Complexity.Foundations.Semantics.Stateful.Hoare
 public import Complexity.Foundations.Semantics.Stateful.Module
-public import Complexity.Foundations.Semantics.Stateful.OrderedSet
 public import Complexity.Foundations.Semantics.Stateful.Realization
 public import Complexity.Foundations.Semantics.Stateful.Resource
 public import Complexity.Init

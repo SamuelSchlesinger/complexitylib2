@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.Lean.SearchTree.Cost
-public import Complexity.Foundations.Semantics.Stateful.OrderedSet
+public import Complexity.Foundations.Data.OrderedSet.Spec
 public import Complexity.Foundations.Semantics.Stateful.Resource
 
 /-!
