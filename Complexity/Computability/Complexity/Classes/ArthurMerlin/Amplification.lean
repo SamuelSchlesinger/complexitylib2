@@ -169,8 +169,7 @@ theorem IsMerlinArthurVerifier.repeatMajority {q p : Polynomial ℕ} {V : α × 
     omega
 
 /-- Error at most `2 ^ (-e(n)) ≤ 1 / 4` is error at most `1 / 3`. -/
-private theorem IsMerlinArthurVerifierWithErrorExponent.isMerlinArthurVerifier
-    {e q p : Polynomial ℕ}
+theorem IsMerlinArthurVerifierWithErrorExponent.isMerlinArthurVerifier {e q p : Polynomial ℕ}
     {V : α × List Bool → Bool} (h : IsMerlinArthurVerifierWithErrorExponent enc e q p V A)
     (he : ∀ n, 2 ≤ e.eval n) : IsMerlinArthurVerifier enc q p V A := fun a => by
   have h4 : 4 ≤ 2 ^ e.eval (enc a).length :=
@@ -326,8 +325,7 @@ theorem IsArthurMerlinVerifier.repeatMajority {p q : Polynomial ℕ} {V : α × 
     omega
 
 /-- Error at most `2 ^ (-e(n)) ≤ 1 / 4` is error at most `1 / 3`. -/
-private theorem IsArthurMerlinVerifierWithErrorExponent.isArthurMerlinVerifier
-    {e p q : Polynomial ℕ}
+theorem IsArthurMerlinVerifierWithErrorExponent.isArthurMerlinVerifier {e p q : Polynomial ℕ}
     {V : α × List Bool → Bool} (h : IsArthurMerlinVerifierWithErrorExponent enc e p q V A)
     (he : ∀ n, 2 ≤ e.eval n) : IsArthurMerlinVerifier enc p q V A := fun a => by
   have h4 : 4 ≤ 2 ^ e.eval (enc a).length :=

@@ -100,7 +100,7 @@ namespace ProofSystem
 instance : CoeFun (ProofSystem enc L) fun _ => List Bool → α := ⟨toFun⟩
 
 /-- **Soundness**: every word proves a member of `L`. -/
-private theorem mem (P : ProofSystem enc L) (π : List Bool) : P π ∈ L :=
+theorem mem (P : ProofSystem enc L) (π : List Bool) : P π ∈ L :=
   P.range_eq.subset ⟨π, rfl⟩
 
 /-- **Completeness**: every member of `L` has a proof. -/
@@ -268,7 +268,7 @@ theorem ofVerifier_frame_append (D : Decoder enc)
 
 /-- The proof system of a verifier is polynomially bounded: an instance `a` has a proof of length
 `2 * (enc a).length + 1 + p (enc a).length`. -/
-private theorem polynomiallyBounded_ofVerifier (D : Decoder enc)
+theorem polynomiallyBounded_ofVerifier (D : Decoder enc)
     (hV : ComputableInPolyTime V (encPair enc encBits) encBool)
     (hVL : IsVerifier enc p V L) {a₀ : α} (ha₀ : a₀ ∈ L) :
     (ofVerifier D hV hVL ha₀).PolynomiallyBounded := by

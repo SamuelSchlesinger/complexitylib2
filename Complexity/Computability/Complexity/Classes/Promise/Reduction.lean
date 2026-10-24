@@ -120,7 +120,7 @@ theorem PolyTimeReducible.trans (hXY : PolyTimeReducible encA encB X Y)
 
 /-- A promise problem reduces, by the identity, to any problem with more yes-instances and more
 no-instances: enlarging the promise can only make a problem harder. -/
-private theorem PolyTimeReducible.of_subset (hyes : Y.yes ⊆ Y'.yes) (hno : Y.no ⊆ Y'.no) :
+theorem PolyTimeReducible.of_subset (hyes : Y.yes ⊆ Y'.yes) (hno : Y.no ⊆ Y'.no) :
     PolyTimeReducible encB encB Y Y' :=
   ⟨id, ComputableInPolyTime.id', fun _ h => hyes h, fun _ h => hno h⟩
 
