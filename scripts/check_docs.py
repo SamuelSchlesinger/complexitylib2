@@ -252,21 +252,22 @@ def load_external_targets(docs):
     manifest_path = docs.parent / EXTERNAL_TARGETS_FILE
     if manifest_path.is_file():
         raw = json.loads(manifest_path.read_text())
-        pages = set(raw.get("pages", ()))
-        anchors = {rel: set(items) for rel, items in raw.get("anchors", {}).items()}
-        declarations = {
-            name: tuple(target)
-            for name, target in raw.get("declarations", {}).items()
-            if isinstance(target, list) and len(target) == 2
-        }
-        for rel, items in sorted(anchors.items()):
-            for item in sorted(items):
-                declarations.setdefault(item, (rel, item))
-        return {
-            "pages": pages,
-            "anchors": anchors,
-            "declarations": declarations,
-        }
+        if raw.get("source") == "published":
+            pages = set(raw.get("pages", ()))
+            anchors = {rel: set(items) for rel, items in raw.get("anchors", {}).items()}
+            declarations = {
+                name: tuple(target)
+                for name, target in raw.get("declarations", {}).items()
+                if isinstance(target, list) and len(target) == 2
+            }
+            for rel, items in sorted(anchors.items()):
+                for item in sorted(items):
+                    declarations.setdefault(item, (rel, item))
+            return {
+                "pages": pages,
+                "anchors": anchors,
+                "declarations": declarations,
+            }
     published_index = fetch_published_external_index()
     if published_index is None:
         return {"pages": set(), "anchors": {}, "declarations": {}}
@@ -274,8 +275,22 @@ def load_external_targets(docs):
 
 
 def rewrite_external_dependency_links(docs, index, external_pages):
+    manifest_path = docs.parent / EXTERNAL_TARGETS_FILE
+    has_published_manifest = False
+    legacy_local_pages = set()
+    legacy_local_anchors = {}
+    if manifest_path.is_file():
+        raw_manifest = json.loads(manifest_path.read_text())
+        if raw_manifest.get("source") == "published":
+            has_published_manifest = True
+        else:
+            legacy_local_pages = set(raw_manifest.get("pages", ()))
+            legacy_local_anchors = {
+                rel: set(items) for rel, items in raw_manifest.get("anchors", {}).items()
+            }
+
     published_targets = load_external_targets(docs)
-    valid_local_pages = set()
+    valid_local_pages = set(legacy_local_pages)
     for module in index.get("modules", {}):
         if module.split(".", 1)[0] in LOCAL_DOC_ROOTS:
             continue
@@ -284,7 +299,9 @@ def rewrite_external_dependency_links(docs, index, external_pages):
             valid_local_pages.add(rel)
 
     anchor_cache = {}
-    local_anchors_by_page = {rel: set() for rel in valid_local_pages}
+    local_anchors_by_page = {
+        rel: set(legacy_local_anchors.get(rel, ())) for rel in valid_local_pages
+    }
     for info in index.get("declarations", {}).values():
         doc_link = info.get("docLink", "")
         if not doc_link or doc_link.startswith(LOCAL_DECLARATION_PREFIXES):
@@ -398,14 +415,18 @@ def rewrite_external_dependency_links(docs, index, external_pages):
         if updated != text:
             page.write_text(updated)
 
-    manifest_path = docs.parent / EXTERNAL_TARGETS_FILE
-    if not manifest_path.is_file():
+    if not has_published_manifest:
         manifest_path.write_text(json.dumps({
+            "source": "published",
             "pages": sorted(published_targets["pages"]),
             "anchors": {
                 rel: sorted(anchors)
                 for rel, anchors in sorted(published_targets["anchors"].items())
                 if anchors
+            },
+            "declarations": {
+                name: list(target)
+                for name, target in sorted(published_targets["declarations"].items())
             },
         }, ensure_ascii=False, separators=(",", ":")))
 

@@ -393,6 +393,7 @@ class CheckOutputTests(unittest.TestCase):
 
     def test_check_output_rejects_broken_external_dependency_link_or_anchor(self):
         (self.docs.parent / check_docs.EXTERNAL_TARGETS_FILE).write_text(json.dumps({
+            "source": "published",
             "pages": ["Mathlib/Data/List.html"],
             "anchors": {"Mathlib/Data/List.html": ["List.map"]},
         }))
@@ -416,6 +417,65 @@ class CheckOutputTests(unittest.TestCase):
         )
         self.assert_failure(
             "Broken external dependency anchor in Complexity.html: Mathlib/Data/List.html#List.renamed"
+        )
+
+    def test_legacy_local_only_external_targets_manifest_is_upgraded_or_rejected(self):
+        legacy_manifest = self.docs.parent / check_docs.EXTERNAL_TARGETS_FILE
+        legacy_manifest.write_text(json.dumps({
+            "pages": [
+                "Mathlib/LinearAlgebra/Matrix/Defs.html",
+                "Mathlib/Tactic/TautoSet.html",
+            ],
+            "anchors": {
+                "Mathlib/LinearAlgebra/Matrix/Defs.html": ["Matrix.ofArray"],
+                "Mathlib/Tactic/TautoSet.html": ["Mathlib.Tactic.TautoSet.specialize_all"],
+            },
+        }))
+        self.published_index = {
+            "modules": {
+                "Mathlib.LinearAlgebra.Matrix.Defs": {},
+                "Mathlib.LinearAlgebra.Matrix.Array": {},
+                "Mathlib.Tactic.TautoSet": {},
+            },
+            "declarations": {
+                "Matrix.ofArray": {
+                    "docLink": "./Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray",
+                },
+            },
+        }
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray">ofArray</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all">specialize_all</a>',
+        )
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+
+        # Running check_output directly on an old-trimmed tree does not trust the legacy manifest.
+        with patch.object(
+            check_docs, "fetch_published_external_index", wraps=self.default_published_index
+        ) as fetch_mock:
+            self.assert_failure(
+                "Broken external dependency anchor in Complexity.html: "
+                "Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray"
+            )
+            self.assertEqual(fetch_mock.call_count, 1)
+
+        # Running trim_output then check_output on an old-trimmed tree fetches the published
+        # index, remaps/repairs the links, and upgrades the manifest to source="published".
+        with patch.object(
+            check_docs, "fetch_published_external_index", wraps=self.default_published_index
+        ) as fetch_mock:
+            check_docs.trim_output()
+            with redirect_stdout(io.StringIO()):
+                check_docs.check_output()
+            self.assertEqual(fetch_mock.call_count, 1)
+
+        upgraded = json.loads(legacy_manifest.read_text())
+        self.assertEqual(upgraded.get("source"), "published")
+        self.assertEqual(
+            self.page("Complexity").read_text(),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray">ofArray</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html">specialize_all</a>',
         )
 
     def test_trim_remaps_moved_and_falls_back_for_omitted_published_declarations(self):
@@ -610,6 +670,7 @@ class CheckGuideLinksTests(unittest.TestCase):
 
     def test_external_mathlib_links_and_anchors(self):
         (self.docs.parent / check_docs.EXTERNAL_TARGETS_FILE).write_text(json.dumps({
+            "source": "published",
             "pages": ["Mathlib/Data/Finset/Defs.html"],
             "anchors": {"Mathlib/Data/Finset/Defs.html": ["Finset"]},
         }))
