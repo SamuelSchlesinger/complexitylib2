@@ -1395,8 +1395,13 @@ space bounds. Further class-level work needs resource certificates for the actua
   transfers typed computations with finite working alphabets to the tidy multi-tape calculus
   under standard binary word encodings. The [polynomial-space bridge](Complexity/Computability/Machines/Turing/TM2/PolySpace.lean)
   transfers terminating computations with polynomially bounded stacks without a runtime bound.
-  Linear space overhead, sublinear work-space conventions and converse class comparisons remain
-  open;
+  The [reverse compiler](Complexity/Computability/Machines/Turing/TM2/Reverse/Bounds.lean)
+  constructs finite-alphabet stack machines with time
+  `n + (k + 1) * (t + 1) + o + 3` and total reachable stack length at most `n + s + o`, including
+  initialization and canonical cleanup. The [transfer API](Complexity/Computability/Machines/Turing/TM2/Reverse/Transfer.lean)
+  proves polynomial-time computation and PSPACE decision equivalence under the original binary
+  encodings, without polynomial runtime assumptions for space. Input storage adds linear space;
+  sublinear work-space comparisons and a linear-space forward simulation remain open;
 * Tree Evaluation: the [Cook–Mertz machine](Complexity/Computability/TreeEval/Space.lean)
   has a proved parameterized space bound on valid encoded instances and an
   `O(log n · log log n)` input-size space corollary on nontrivial instances (`1 ≤ ℓ` and
