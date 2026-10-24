@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Probabilistic.Oracle.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -88,10 +89,13 @@ theorem IsTidyOraclePPTOn.finiteStep [Fintype Operation] [Finite Control]
       | query channel next => rfl
   refine (IsTidyOraclePPTOn.finite_cases (tagEncoding := encFinite (Option Control))
     (tag := fun pair : ℕ × FiniteConfig k Bool Control Operation => pair.2.tapes.state)
-    (branch := branch) (by fun_prop) fun control => ?_).congr
+    (branch := branch)
+    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) fun control => ?_).congr
       fun pair State oracle s => by rw [hprogram]
   cases control with
-  | none => exact IsTidyOraclePPTOn.of_computableTidilyInPolyTime (by fun_prop)
+  | none =>
+    exact IsTidyOraclePPTOn.of_computableTidilyInPolyTime
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
   | some control =>
     apply (IsTidyOraclePPTOn.uniform_bool (encPair encUnary encFiniteConfig)).bind_with
     apply IsTidyOraclePPTOn.finite_cases
@@ -109,17 +113,20 @@ theorem IsTidyOraclePPTOn.finiteStep [Fintype Operation] [Finite Control]
             (spec := fun _ : Operation × List Bool => List Bool)
             (channel, (pair.1.2.channels channel).1)
           pure (pair.1.2.receive channel next (List.take pair.1.1 answer)))
-    · fun_prop
+    · exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
     · rintro ⟨inputSymbol, workSymbols, answerSymbols, bit⟩
       cases machine.tr control inputSymbol workSymbols answerSymbols bit with
       | step action symbol move =>
-        exact IsTidyOraclePPTOn.of_computableTidilyInPolyTime (by fun_prop)
+        exact IsTidyOraclePPTOn.of_computableTidilyInPolyTime
+          (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
       | query channel next =>
         have hreply := ((IsTidyOraclePPTOn.query_take channel).preprocess
           (input := encPair (encPair encUnary encFiniteConfig) encBool)
           (prepare := fun pair : (ℕ × FiniteConfig k Bool Control Operation) × Bool =>
-            ((pair.1.2.channels channel).1, pair.1.1)) (by fun_prop)).map_with
-          (f := fun pair answer => pair.1.2.receive channel next answer) (by fun_prop)
+            ((pair.1.2.channels channel).1, pair.1.1))
+          (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)).map_with
+          (f := fun pair answer => pair.1.2.receive channel next answer)
+          (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
         simpa only [Functor.map_map, bind_pure_comp] using hreply
 
 /-- Every clocked run of a finite-control oracle machine is a clean phase. The interpreter loop
@@ -133,10 +140,10 @@ theorem IsTidyOraclePPTOn.runOracle [Finite Operation] [Finite Control]
   obtain ⟨cf, hconfigurationSize⟩ :=
     length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Operation)
   let clock (word : List Bool) : ℕ := c * (word.length + 1) ^ d
-  have hclock : ComputableTidilyInPolyTime clock encBits encUnary := by
+  have hclock : ComputableInPolyTime clock encBits encUnary := by
     dsimp only [clock]
     fun_prop
-  have hstart : ComputableTidilyInPolyTime
+  have hstart : ComputableInPolyTime
       (fun word => FiniteConfig.init (k := k) (Oracle := Operation) machine.initial word)
       encBits encFiniteConfig := by fun_prop
   let step (word : List Bool) (cfg : FiniteConfig k Bool Control Operation) :
@@ -147,8 +154,8 @@ theorem IsTidyOraclePPTOn.runOracle [Finite Operation] [Finite Control]
       (fun pair => step pair.1 pair.2) :=
     (IsTidyOraclePPTOn.finiteStep machine).preprocess
       (prepare := fun pair : List Bool × FiniteConfig k Bool Control Operation =>
-        (clock pair.1, pair.2)) (by fun_prop)
-  have hloop := (IsTidyOraclePPTOn.iterateWith_spec hclock hstart hstep
+        (clock pair.1, pair.2)) (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+  have hloop := (IsTidyOraclePPTOn.iterateWith_spec hclock.tidy hstart.tidy hstep
     (fun word i cfg => FiniteConfig.SpaceBound word.length i (clock word) cfg)
     (fun word => FiniteConfig.spaceBound_init _ _ _)
     (by
@@ -174,9 +181,9 @@ theorem IsTidyOraclePPTOn.runOracle [Finite Operation] [Finite Control]
       (((PolyBounded.self.add hclock.polyBounded).add hclock.polyBounded).add (.const 1)))
     (fun word i cfg hi hcfg => (hconfigurationSize _ _ _ cfg hcfg).trans
       (Nat.mul_le_mul_left cf (by lia)))).1
-  refine (hloop.map (by fun_prop : ComputableTidilyInPolyTime
+  refine (hloop.map (by exact (by fun_prop : ComputableInPolyTime
     (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output)
-    encFiniteConfig encBits)).congr fun word State oracle s => ?_
+    encFiniteConfig encBits).tidy)).congr fun word State oracle s => ?_
   rw [← finiteRunFrom_take_runOracle]
   rfl
 
@@ -189,7 +196,7 @@ theorem IsOraclePPTOn.isTidyOraclePPTOn {α β : Type} {input : α ↪ List Bool
   obtain ⟨_, k, Control, _, machine, c, d, h⟩ := h
   exact IsTidyOraclePPTOn.iff_encoded.mpr
     (((IsTidyOraclePPTOn.runOracle machine c d).preprocess
-      (ComputableTidilyInPolyTime.encode input)).congr fun a State oracle s =>
+      (ComputableInPolyTime.encode input).tidy).congr fun a State oracle s =>
         (h a State oracle s).symm)
 
 /-- Strict oracle PPT certificates are exactly the clean polynomial-time realizations. -/
