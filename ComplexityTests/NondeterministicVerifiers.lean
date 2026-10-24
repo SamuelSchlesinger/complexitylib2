@@ -489,11 +489,11 @@ info: 'Turing.MultiTapeNTM.DecidesInTime.isVerifier' depends on axioms:
 #print axioms Turing.MultiTapeNTM.DecidesInTime.isVerifier
 
 /--
-info: 'Turing.MultiTapeNTM.computableTidilyInPolyTime_checkChoices' depends on axioms:
+info: 'Turing.MultiTapeNTM.computableInPolyTime_checkChoices' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.computableTidilyInPolyTime_checkChoices
+#print axioms Turing.MultiTapeNTM.computableInPolyTime_checkChoices
 
 /--
 info: 'Turing.MultiTapeNTM.accepts_of_runClosedCoins_choiceTable' depends on axioms:

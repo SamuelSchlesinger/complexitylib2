@@ -41,12 +41,12 @@ private theorem cost_polytime :
 
 /-- A one-bit local-search family can have costs requiring five bits. -/
 theorem wideCostFamily_mem_PLS : localOptRel (fun _ : Bool => 1) neighbor cost ∈ PLS encBool :=
-  localOptRel_mem_PLS (const 1) neighbor_polytime cost_polytime (by simp [neighbor])
+  localOptRel_mem_PLS (.of_tidy (const 1)) (.of_tidy neighbor_polytime) (.of_tidy cost_polytime) (by simp [neighbor])
 
 /-- The reduction preserves this family without restricting costs to the vertex width. -/
 theorem wideCostFamily_reduces :
     SearchReducible encBool encLocalOpt (localOptRel (fun _ : Bool => 1) neighbor cost) LocalOpt :=
-  localOptRel_searchReducible_LocalOpt (const 1) neighbor_polytime cost_polytime
+  localOptRel_searchReducible_LocalOpt (.of_tidy (const 1)) (.of_tidy neighbor_polytime) (.of_tidy cost_polytime)
     (by simp [neighbor])
 
 example : localOptRel (fun _ : Bool => 1) neighbor cost false [false] := by

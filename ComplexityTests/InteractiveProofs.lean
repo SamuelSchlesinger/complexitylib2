@@ -170,7 +170,7 @@ example : ComputableTidilyInPolySpace (fun w => BitString.increment (BitString.i
 
 -- A Boolean function computable within polynomial space decides a problem in `PSPACE`.
 example : {w : List Bool | w.headD false = true} ∈ PSPACE encBits :=
-  mem_PSPACE_of_computableTidilyInPolySpace (f := fun w => w.headD false)
+  mem_PSPACE_of_computableInPolySpace (f := fun w => w.headD false)
     (.of_polyTime (ComputableTidilyInPolyTime.headD false)) fun _ => Iff.rfl
 
 -- The seven codes of length `3` decode to the seven words of length at most `2`, each once.
@@ -333,11 +333,11 @@ example (P : Prover Unit) :
 #guard_msgs in
 #print axioms Interaction.computableTidilyInPolySpace_evaluate
 
-/-- info: 'Cslib.Complexity.Interaction.computableTidilyInPolySpace_countAccepts' depends on axioms: [propext,
+/-- info: 'Cslib.Complexity.Interaction.computableInPolySpace_countAccepts' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
 #guard_msgs in
-#print axioms Interaction.computableTidilyInPolySpace_countAccepts
+#print axioms Interaction.computableInPolySpace_countAccepts
 
 /-- info: 'Cslib.Complexity.GameTree.iterate_step_node' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

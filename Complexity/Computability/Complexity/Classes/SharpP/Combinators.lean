@@ -80,8 +80,8 @@ theorem acceptCount_allFalseVerifier (a : α) (n : ℕ) : acceptCount allFalseVe
 
 /-- `allFalseVerifier` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_allFalseVerifier {enc : α ↪ List Bool} :
-    ComputableTidilyInPolyTime allFalseVerifier (encPair enc encBits) encBool := by
+theorem computableInPolyTime_allFalseVerifier {enc : α ↪ List Bool} :
+    ComputableInPolyTime allFalseVerifier (encPair enc encBits) encBool := by
   unfold allFalseVerifier
   fun_prop
 

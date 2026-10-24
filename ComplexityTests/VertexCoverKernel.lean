@@ -148,11 +148,11 @@ info: 'Cslib.Complexity.VertexCover.length_encode_bussKernel_le' depends on axio
 #print axioms Cslib.Complexity.VertexCover.length_encode_bussKernel_le
 
 /--
-info: 'Cslib.Complexity.VertexCover.computableTidilyInPolyTime_bussKernel' depends on axioms:
+info: 'Cslib.Complexity.VertexCover.computableInPolyTime_bussKernel' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.VertexCover.computableTidilyInPolyTime_bussKernel
+#print axioms Cslib.Complexity.VertexCover.computableInPolyTime_bussKernel
 
 /--
 info: 'Cslib.Complexity.VertexCover.isKernelization_bussKernel' depends on axioms:

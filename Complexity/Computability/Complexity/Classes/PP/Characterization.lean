@@ -98,18 +98,20 @@ verifier accepts the members of the problem, and only them, on at least half of 
 strings. -/
 theorem mem_PP_iff_decidesByNonstrictMajority {A : Set α} :
     A ∈ PP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesByNonstrictMajority enc p V A := by
-  constructor
-  · intro hA
-    obtain ⟨p, V, hV, h⟩ := mem_PP_iff_tidy.mp (compl_mem_PP hA)
-    refine ⟨p, fun x => !V x, ComputableTidilyInPolyTime.bool_not.comp hV, ?_⟩
-    simpa using decidesByMajority_iff_decidesByNonstrictMajority_compl.1 h
-  · rintro ⟨p, V, hV, h⟩
-    have h' : DecidesByMajority enc p (fun x => !V x) Aᶜ := by
-      rw [decidesByMajority_iff_decidesByNonstrictMajority_compl]
-      simpa using h
-    simpa using compl_mem_PP ⟨p, _, .of_tidy (ComputableTidilyInPolyTime.bool_not.comp hV), h'⟩
+  have this : A ∈ PP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesByNonstrictMajority enc p V A := by
+    constructor
+    · intro hA
+      obtain ⟨p, V, hV, h⟩ := mem_PP_iff_tidy.mp (compl_mem_PP hA)
+      refine ⟨p, fun x => !V x, ComputableTidilyInPolyTime.bool_not.comp hV, ?_⟩
+      simpa using decidesByMajority_iff_decidesByNonstrictMajority_compl.1 h
+    · rintro ⟨p, V, hV, h⟩
+      have h' : DecidesByMajority enc p (fun x => !V x) Aᶜ := by
+        rw [decidesByMajority_iff_decidesByNonstrictMajority_compl]
+        simpa using h
+      simpa using compl_mem_PP ⟨p, _, .of_tidy (ComputableTidilyInPolyTime.bool_not.comp hV), h'⟩
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-! ### Reductions -/
 

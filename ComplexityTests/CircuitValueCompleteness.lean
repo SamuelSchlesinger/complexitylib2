@@ -107,10 +107,10 @@ example {α : Type} {enc : α ↪ List Bool} {f : α → Bool}
 #guard_msgs (whitespace := lax) in
 #print axioms CircuitValue.exists_uniformCircuits
 
-/-- info: 'Cslib.Complexity.CircuitValue.computableTidilyInPolyTime_tableauCode' depends on axioms:
+/-- info: 'Cslib.Complexity.CircuitValue.computableInPolyTime_tableauCode' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms CircuitValue.computableTidilyInPolyTime_tableauCode
+#print axioms CircuitValue.computableInPolyTime_tableauCode
 
 /-- info: 'Cslib.Complexity.CircuitValue.logSpaceComplete' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/

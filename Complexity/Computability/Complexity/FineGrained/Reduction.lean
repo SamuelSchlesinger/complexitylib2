@@ -103,16 +103,17 @@ with `μB (f a) ≤ c μA a + c`, then a decider for `B` within time `2 ^ (δ μ
 in the length of the encoded instance gives a decider for `A` within time `2 ^ (c δ μA a)` times a
 polynomial. -/
 theorem DecidableInExpTime.of_reduction {f : α → β}
-    (hf : ComputableTidilyInPolyTime f encA encB) (hfA : ∀ a, a ∈ A ↔ f a ∈ B) {c : ℕ}
+    (hf : ComputableInPolyTime f encA encB) (hfA : ∀ a, a ∈ A ↔ f a ∈ B) {c : ℕ}
     (hμ : ∀ a, μB (f a) ≤ c * μA a + c) {δ : ℝ} (hδ : 0 ≤ δ)
     (h : DecidableInExpTime B encB μB δ) : DecidableInExpTime A encA μA (c * δ) := by
+  have hf := hf.tidy
   obtain ⟨e, h⟩ := h
   obtain ⟨g, t, k, hg, hgB, ht⟩ := h.exists_computableTidilyInO
   obtain ⟨d, _, hf⟩ := hf.exists_degree
   have hfO := hf.inO
   obtain ⟨l, hl⟩ := hfO.length_le_time
   set K : ℝ := 1 + k * 2 ^ (δ * c) * (2 * l + 1) ^ e + k
-  refine .of_computableTidilyInO (hg.comp hfO) (fun a => (hfA a).trans (hgB (f a)))
+  refine Complexity.DecidableInExpTime.of_computableInO (hg.comp hfO) (fun a => (hfA a).trans (hgB (f a)))
     ⌈K⌉₊ (d * e + d) fun a => ?_
   show _ ≤ _
   set P : ℝ := ((encA a).length + 1) ^ d
@@ -166,7 +167,7 @@ theorem DecidableInExpTime.of_reduction {f : α → β}
 with `μB (f a) ≤ c μA a + c`, and `B` is decidable in subexponential time in `μB`, then `A` is
 decidable in subexponential time in `μA`. -/
 theorem DecidableInSubexpTime.of_reduction {f : α → β}
-    (hf : ComputableTidilyInPolyTime f encA encB) (hfA : ∀ a, a ∈ A ↔ f a ∈ B) {c : ℕ}
+    (hf : ComputableInPolyTime f encA encB) (hfA : ∀ a, a ∈ A ↔ f a ∈ B) {c : ℕ}
     (hμ : ∀ a, μB (f a) ≤ c * μA a + c) (h : DecidableInSubexpTime B encB μB) :
     DecidableInSubexpTime A encA μA := by
   intro δ hδ
@@ -181,7 +182,7 @@ of `B` exactly when `φ` is satisfiable, with `μB (f φ) ≤ k m + k`, then `B`
 subexponential time in `μB`: for some `δ > 0`, no decider runs within time `2 ^ (δ μB b)` times a
 polynomial in the length of the encoded instance. -/
 theorem ETH.not_decidableInSubexpTime_of_reduction (hETH : ETH) {f : CNF ℕ → β}
-    (hf : ComputableTidilyInPolyTime f encCNF encB)
+    (hf : ComputableInPolyTime f encCNF encB)
     (hfB : ∀ φ : CNF ℕ, (∀ c ∈ φ, c.length ≤ 3) → (f φ ∈ B ↔ φ ∈ SAT)) {k : ℕ}
     (hμ : ∀ φ : CNF ℕ, (∀ c ∈ φ, c.length ≤ 3) → μB (f φ) ≤ k * φ.length + k) :
     ¬DecidableInSubexpTime B encB μB := by
@@ -189,8 +190,8 @@ theorem ETH.not_decidableInSubexpTime_of_reduction (hETH : ETH) {f : CNF ℕ →
   -- formulas with a clause of more than three literals go to the image of the empty clause
   refine ETH_iff_not_decidableInSubexpTime_length.mp hETH
     (h.of_reduction (f := fun φ => if φ.all (fun c => decide (c.length ≤ 3)) then f φ
-      else f [[]]) (ComputableTidilyInPolyTime.ite' (computableTidilyInPolyTime_all_length_le 3)
-        hf (ComputableTidilyInPolyTime.const _)) (fun φ => ?_) (c := 2 * k) fun φ => ?_)
+      else f [[]]) (ComputableInPolyTime.ite' (computableInPolyTime_all_length_le 3)
+        hf (ComputableInPolyTime.const _)) (fun φ => ?_) (c := 2 * k) fun φ => ?_)
   · by_cases hφ : ∀ c ∈ φ, c.length ≤ 3
     · have hw : (φ.all fun c => decide (c.length ≤ 3)) = true := by simpa using hφ
       simp only [hw, ite_true, hfB φ hφ]

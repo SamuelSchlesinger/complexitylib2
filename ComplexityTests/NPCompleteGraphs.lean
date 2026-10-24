@@ -332,11 +332,11 @@ info: 'Cslib.Complexity.IndependentSet.toVertexCover_mem_iff' depends on axioms:
 #print axioms Cslib.Complexity.IndependentSet.toVertexCover_mem_iff
 
 /--
-info: 'Cslib.Complexity.IndependentSet.computableTidilyInPolyTime_toVertexCover' depends on axioms:
+info: 'Cslib.Complexity.IndependentSet.computableInPolyTime_toVertexCover' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.IndependentSet.computableTidilyInPolyTime_toVertexCover
+#print axioms Cslib.Complexity.IndependentSet.computableInPolyTime_toVertexCover
 
 /--
 info: 'Cslib.Complexity.VertexCover.mem_NP' depends on axioms:
@@ -373,11 +373,11 @@ info: 'Cslib.Complexity.SAT.toThreeColoring_mem_iff' depends on axioms:
 #print axioms Cslib.Complexity.SAT.toThreeColoring_mem_iff
 
 /--
-info: 'Cslib.Complexity.SAT.computableTidilyInPolyTime_toThreeColoring' depends on axioms:
+info: 'Cslib.Complexity.SAT.computableInPolyTime_toThreeColoring' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.computableTidilyInPolyTime_toThreeColoring
+#print axioms Cslib.Complexity.SAT.computableInPolyTime_toThreeColoring
 
 /--
 info: 'Cslib.Complexity.polyTimeReducible_ThreeSAT_ThreeColoring' depends on axioms:
@@ -408,11 +408,11 @@ info: 'Cslib.Complexity.SAT.toDirHamPath_mem_iff' depends on axioms:
 #print axioms Cslib.Complexity.SAT.toDirHamPath_mem_iff
 
 /--
-info: 'Cslib.Complexity.SAT.computableTidilyInPolyTime_toDirHamPath' depends on axioms:
+info: 'Cslib.Complexity.SAT.computableInPolyTime_toDirHamPath' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.computableTidilyInPolyTime_toDirHamPath
+#print axioms Cslib.Complexity.SAT.computableInPolyTime_toDirHamPath
 
 /--
 info: 'Cslib.Complexity.Graph.mem_DirHamCycle_cons_iff' depends on axioms:

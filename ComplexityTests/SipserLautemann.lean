@@ -5,6 +5,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
 
 /-!
 # Tests for the Sipser–Lautemann theorem
@@ -118,6 +119,8 @@ theorem noisyHead_mem_PiP_two : {x : List Bool | x.headD false = true} ∈ PiP 2
 theorem noisyHead_mem_PH : {x : List Bool | x.headD false = true} ∈ PH encBits :=
   BPP_subset_PH noisyHead_mem_BPP
 
+attribute [local fun_prop] ComputableInPolySpace.tidy in
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Direct `fun_prop` synthesis on the Sipser-Lautemann matrix verifier for `noisyHeadVerifier`.
 example : ComputableTidilyInPolyTime
     (verifier encBits (Polynomial.C 2) noisyHeadVerifier)

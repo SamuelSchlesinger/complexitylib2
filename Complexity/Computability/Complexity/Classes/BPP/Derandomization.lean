@@ -17,6 +17,7 @@ import Complexity.Computability.Circuit.Boolean.Substitution
 import Complexity.Computability.Complexity.Classes.BPP.Derandomization.Generator
 import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 import Complexity.Tactic.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 
 /-!
 # Derandomizing BPP from average-case hardness
@@ -37,7 +38,7 @@ Nisan–Wigderson generator for all `2 ^ ℓ` seeds of `ℓ = (2 ^ (8 c + 1) + 1
 majority. The generator uses the greedy design (`Cslib.Crypto.PRG.NisanWigderson.Design.greedy`)
 with blocks of `n = 4 c t` positions sharing at most `t - 1` of them, and the hard function on `n`
 bits, evaluated in time `2 ^ O(n)`. Both `2 ^ ℓ` and `2 ^ O(n)` are polynomial in `N`, so the
-algorithm runs in polynomial time (`Cslib.Complexity.computableTidilyInPolyTime_nwDecider`).
+algorithm runs in polynomial time (`Cslib.Complexity.computableInPolyTime_nwDecider`).
 
 For correctness, the verifier with the instance fixed is a circuit of polynomial size in its
 random string (`Cslib.Circuits.Boolean.PPoly.exists_of_polyTime`), and `t` is chosen so that
@@ -131,7 +132,7 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {c : ℕ}
     {α : Type} (enc : α ↪ List Bool) : BPP enc ⊆ P enc := by
   rintro A ⟨p, V, hV, hdec⟩
   obtain ⟨k, hL⟩ := mem_E_iff.1 hL
-  obtain ⟨g, hgL, hg⟩ := exists_computableTidilyInO_of_mem_DTIME hL
+  obtain ⟨g, hgL, hg⟩ := exists_computableInO_of_mem_DTIME hL
   have hslice (n : ℕ) : (fun y : Fin n → Bool => g (List.ofFn y)) = L.slice n := by
     funext y
     rw [Bool.eq_iff_iff, Language.slice_eq_true_iff, ← hgL]
@@ -168,9 +169,9 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {c : ℕ}
         fun x => le_of_eq ?_
       rw [← pow_add, ht]
       ring_nf
-    refine computableTidilyInPolyTime_nwDecider hV.tidy
-      (fun _ _ h => Nat.pow_le_pow_right two_pos (Nat.mul_le_mul_left k h)) hg ?_ ?_ ?_ ?_
-      (hbudget (b + 1)) ((hbudget (k * (c * 4))).mono fun x => le_of_eq ?_)
+    refine (computableInPolyTime_nwDecider hV
+      (fun _ _ h => Nat.pow_le_pow_right two_pos (Nat.mul_le_mul_left k h)) (.of_tidy hg) (.of_tidy ?_) (.of_tidy ?_) (.of_tidy ?_) (.of_tidy ?_)
+      (hbudget (b + 1)) ((hbudget (k * (c * 4))).mono fun x => le_of_eq ?_)).tidy
     · simp only [hseed]
       fun_prop
     · simp only [hblock]

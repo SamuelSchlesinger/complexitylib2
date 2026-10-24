@@ -134,13 +134,15 @@ theorem DecidesWithErrorExponent.decidesWithBoundedError {q p : Polynomial ℕ}
 `2 ^ (-q(n))`. -/
 theorem mem_BPP_iff_forall_decidesWithErrorExponent {A : Set α} :
     A ∈ BPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithErrorExponent enc q p V A := by
-  rw [mem_BPP_iff_tidy]
-  refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨12 * q * p, _,
-    computableTidilyInPolyTime_repeatMajority hV _ _, h.repeatMajority q⟩, fun h => ?_⟩
-  obtain ⟨p, V, hV, h⟩ := h 2
-  exact ⟨p, V, hV, h.decidesWithBoundedError fun _ => by simp⟩
+  have this : A ∈ BPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithErrorExponent enc q p V A := by
+    rw [mem_BPP_iff_tidy]
+    refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨12 * q * p, _,
+      (computableInPolyTime_repeatMajority (.of_tidy hV) _ _).tidy, h.repeatMajority q⟩, fun h => ?_⟩
+    obtain ⟨p, V, hV, h⟩ := h 2
+    exact ⟨p, V, hV, h.decidesWithBoundedError fun _ => by simp⟩
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-! ### Boolean closure of `BPP` -/
 

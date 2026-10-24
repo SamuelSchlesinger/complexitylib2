@@ -222,7 +222,7 @@ private theorem dualChunk_inSpace {n j : α → ℕ}
     (hn : ComputableTidilyInSpace n encIn encNat Bs)
     (hj : ComputableTidilyInSpace j encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => dualChunk tm C d (n x) (j x)) encIn encBits Bs := by
-  have hg := (Tableau.gateCode_inSpace tm (.of_tidy hn) (.of_tidy (timeBound_inSpace C d hin hn))
+  have hg := (Tableau.gateCode_inSpace tm (.of_tidy hn) (timeBound_inSpace C d hin (.of_tidy hn))
     hin
     (.of_tidy hj)).tidy
   have hframe : ComputableTidilyInSpace (fun g => frame (encGate g)) encGate encBits
@@ -237,7 +237,7 @@ private theorem dualChunk_inSpace {n j : α → ℕ}
 private theorem dualTrailer_inSpace {n : α → ℕ}
     (hn : ComputableTidilyInSpace n encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => (dualSpec tm C d).trailer (n x)) encIn encBits Bs := by
-  have hT := timeBound_inSpace C d hin hn
+  have hT := (timeBound_inSpace C d hin (.of_tidy hn)).tidy
   have ho : ComputableTidilyInSpace (fun x => Tableau.outWire k State (n x)
       (timeBound C d (n x))) encIn encNat Bs :=
     budget_natAdd (budget_natAdd (budget_natAdd hn (budget_const 2 hin))
@@ -277,9 +277,9 @@ theorem computableInLogSpace_dualTableauInstance :
   have hn := fst' (snd' hs)
   have hi := snd' (snd' hs)
   refine (dualSpec tm C d).computableInLogSpace
-    (encMonotoneCircuitValue_dualTableauInstance tm C d)
-    (numGates_inSpace (k := k) (State := State) hin (timeBound_inSpace C d hin hn))
-    (dualChunk_inSpace tm C d hin hn hi) (dualTrailer_inSpace tm C d hin hn) ?_
+    (.of_tidy (encMonotoneCircuitValue_dualTableauInstance tm C d))
+    (numGates_inSpace (k := k) (State := State) hin (timeBound_inSpace C d hin (.of_tidy hn)))
+    (.of_tidy (dualChunk_inSpace tm C d hin hn hi)) (dualTrailer_inSpace tm C d hin hn) ?_
   change PolynomiallyBounded fun n => Tableau.numGates k State (timeBound C d n)
   simp only [Tableau.numGates, Tableau.blockSize, Tableau.colStart, Tableau.gfStart,
     Tableau.globStart, Tableau.numCols, timeBound]

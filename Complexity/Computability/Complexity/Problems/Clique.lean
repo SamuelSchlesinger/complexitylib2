@@ -149,10 +149,10 @@ theorem isVerifier :
 
 /-- The `Clique` verifier is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_verifier :
-    ComputableTidilyInPolyTime verifier
+theorem computableInPolyTime_verifier :
+    ComputableInPolyTime verifier
       (encPair (encPair encGraph encNat) encBits) encBool :=
-  Graph.computableTidilyInPolyTime_verifySubset Graph.computableTidilyInPolyTime_adjBool
+  Graph.computableInPolyTime_verifySubset Graph.computableInPolyTime_adjBool
 
 /-- `Clique` belongs to `NP`. -/
 theorem mem_NP : Clique ∈ NP (encPair encGraph encNat) :=

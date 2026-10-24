@@ -206,37 +206,37 @@ def existsVerifier (enc : α ↪ List Bool) (ℓ m ρ ζ e : Polynomial ℕ) (W 
         ((m.eval (enc x.1).length + 2) * (m.eval (enc x.1).length + 1))))
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_trialVerifier {W : α × List Bool → Bool}
-    (hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool)
+theorem computableInPolyTime_trialVerifier {W : α × List Bool → Bool}
+    (hW : ComputableInPolyTime W (encPair enc encBits) encBool)
     {γ : Type} {input : γ ↪ List Bool} {a : γ → α} {u r seed block : γ → List Bool}
     {M level : γ → ℕ}
-    (ha : ComputableTidilyInPolyTime a input enc)
-    (hu : ComputableTidilyInPolyTime u input encBits)
-    (hr : ComputableTidilyInPolyTime r input encBits)
-    (hM : ComputableTidilyInPolyTime M input encUnary)
-    (hlevel : ComputableTidilyInPolyTime level input encUnary)
-    (hseed : ComputableTidilyInPolyTime seed input encBits)
-    (hblock : ComputableTidilyInPolyTime block input encBits) :
-    ComputableTidilyInPolyTime (fun x => trialVerifier W (a x) (u x) (r x) (M x) (level x)
+    (ha : ComputableInPolyTime a input enc)
+    (hu : ComputableInPolyTime u input encBits)
+    (hr : ComputableInPolyTime r input encBits)
+    (hM : ComputableInPolyTime M input encUnary)
+    (hlevel : ComputableInPolyTime level input encUnary)
+    (hseed : ComputableInPolyTime seed input encBits)
+    (hblock : ComputableInPolyTime block input encBits) :
+    ComputableInPolyTime (fun x => trialVerifier W (a x) (u x) (r x) (M x) (level x)
       (seed x) (block x)) input encBool := by
   unfold trialVerifier
   fun_prop
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_trialsVerifier {W : α × List Bool → Bool}
-    (hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool)
+theorem computableInPolyTime_trialsVerifier {W : α × List Bool → Bool}
+    (hW : ComputableInPolyTime W (encPair enc encBits) encBool)
     {γ : Type} {input : γ ↪ List Bool} {a : γ → α} {u r seeds y : γ → List Bool}
     {M Z T B : γ → ℕ}
-    (ha : ComputableTidilyInPolyTime a input enc)
-    (hu : ComputableTidilyInPolyTime u input encBits)
-    (hr : ComputableTidilyInPolyTime r input encBits)
-    (hseeds : ComputableTidilyInPolyTime seeds input encBits)
-    (hM : ComputableTidilyInPolyTime M input encUnary)
-    (hZ : ComputableTidilyInPolyTime Z input encUnary)
-    (hT : ComputableTidilyInPolyTime T input encUnary)
-    (hB : ComputableTidilyInPolyTime B input encUnary)
-    (hy : ComputableTidilyInPolyTime y input encBits) :
-    ComputableTidilyInPolyTime (fun x => trialsVerifier W (a x) (u x) (r x) (seeds x) (M x) (Z x)
+    (ha : ComputableInPolyTime a input enc)
+    (hu : ComputableInPolyTime u input encBits)
+    (hr : ComputableInPolyTime r input encBits)
+    (hseeds : ComputableInPolyTime seeds input encBits)
+    (hM : ComputableInPolyTime M input encUnary)
+    (hZ : ComputableInPolyTime Z input encUnary)
+    (hT : ComputableInPolyTime T input encUnary)
+    (hB : ComputableInPolyTime B input encUnary)
+    (hy : ComputableInPolyTime y input encBits) :
+    ComputableInPolyTime (fun x => trialsVerifier W (a x) (u x) (r x) (seeds x) (M x) (Z x)
       (T x) (B x) (y x)) input encBool := by
   unfold trialsVerifier
   fun_prop
@@ -384,31 +384,34 @@ theorem IsRandomParityRep.exists {ℓ m ρ ζ e : Polynomial ℕ} {W : α × Lis
 have a polynomial-time random parity representation at every prefix length `ℓ` with every error
 `2 ^ (-e)`. -/
 theorem exists_isRandomParityRep_alternation {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (ps : List (Polynomial ℕ)) :
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool) (ps : List (Polynomial ℕ)) :
     ∀ (q : Bool) (ℓ e : Polynomial ℕ), ∃ (ρ ζ : Polynomial ℕ) (W : α × List Bool → Bool),
-      ComputableTidilyInPolyTime W (encPair enc encBits) encBool ∧
+      ComputableInPolyTime W (encPair enc encBits) encBool ∧
       IsRandomParityRep enc ℓ e ρ ζ W fun a u =>
         Alternation q (ps.map fun p => p.eval (enc a).length) fun w => V (a, u ++ w) = true := by
-  induction ps with
-  | nil =>
-    intro q ℓ e
-    refine ⟨0, 0, _, by fun_prop, (isRandomParityRep_base ℓ e V).congr fun a u _ => ?_⟩
-    simp
-  | cons p ps ih =>
-    intro q ℓ e
-    cases q
-    · -- `∀ w, P (u ++ w)` is `¬∃ w, ¬P (u ++ w)`
-      obtain ⟨ρ, ζ, W, hW, h⟩ := ih true (ℓ + p) (e + p + 1)
-      refine ⟨_, _, _, computableTidilyInPolyTime_notVerifier _ _
-        (computableTidilyInPolyTime_existsVerifier ℓ p ρ (ζ + 1) e
-          (computableTidilyInPolyTime_notVerifier _ _ hW)), (h.not.exists.not).congr
+  have hV := hV.tidy
+  have this : ∀ (q : Bool) (ℓ e : Polynomial ℕ), ∃ (ρ ζ : Polynomial ℕ) (W : α × List Bool → Bool), ComputableTidilyInPolyTime W (encPair enc encBits) encBool ∧ IsRandomParityRep enc ℓ e ρ ζ W fun a u => Alternation q (ps.map fun p => p.eval (enc a).length) fun w => V (a, u ++ w) = true := by
+    induction ps with
+    | nil =>
+      intro q ℓ e
+      refine ⟨0, 0, _, by fun_prop, (isRandomParityRep_base ℓ e V).congr fun a u _ => ?_⟩
+      simp
+    | cons p ps ih =>
+      intro q ℓ e
+      cases q
+      · -- `∀ w, P (u ++ w)` is `¬∃ w, ¬P (u ++ w)`
+        obtain ⟨ρ, ζ, W, hW, h⟩ := ih true (ℓ + p) (e + p + 1)
+        refine ⟨_, _, _, computableTidilyInPolyTime_notVerifier _ _
+          (computableTidilyInPolyTime_existsVerifier ℓ p ρ (ζ + 1) e
+            (computableTidilyInPolyTime_notVerifier _ _ hW)), (h.not.exists.not).congr
+            fun a u _ => ?_⟩
+        simp only [List.map_cons, alternation_false_cons, List.append_assoc, not_exists, not_and,
+          not_not]
+      · obtain ⟨ρ, ζ, W, hW, h⟩ := ih false (ℓ + p) (e + p + 1)
+        refine ⟨_, _, _, computableTidilyInPolyTime_existsVerifier ℓ p ρ ζ e hW, h.exists.congr
           fun a u _ => ?_⟩
-      simp only [List.map_cons, alternation_false_cons, List.append_assoc, not_exists, not_and,
-        not_not]
-    · obtain ⟨ρ, ζ, W, hW, h⟩ := ih false (ℓ + p) (e + p + 1)
-      refine ⟨_, _, _, computableTidilyInPolyTime_existsVerifier ℓ p ρ ζ e hW, h.exists.congr
-        fun a u _ => ?_⟩
-      simp only [List.map_cons, alternation_true_cons, List.append_assoc]
+        simp only [List.map_cons, alternation_true_cons, List.append_assoc]
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-- Padding the witnesses of length `Z` to length `N ≥ Z` with `false`s keeps their number. -/
 private theorem acceptCount_padWitness (W : α × List Bool → Bool) (a : α) (r : List Bool) {Z N : ℕ}

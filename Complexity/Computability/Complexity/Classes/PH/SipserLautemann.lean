@@ -347,8 +347,10 @@ def verifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Bool 
 `verifier enc p V`. -/
 @[fun_prop]
 theorem verifier_polyTime {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) :
-    ComputableTidilyInPolyTime (verifier enc p V) (encPair enc encBits) encBool := by
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool) :
+    ComputableInPolyTime (verifier enc p V) (encPair enc encBits) encBool := by
+  have hV := hV.tidy
+  refine .of_tidy ?_
   unfold verifier shiftAccepts trialSeed shifts runs halfRuns
   fun_prop
 
@@ -452,7 +454,7 @@ theorem BPP_subset_SigmaP_two : BPP enc ⊆ SigmaP 2 enc := by
   rintro A ⟨p, V, hV, hA⟩
   exact ⟨[SipserLautemann.witnessPoly p, SipserLautemann.seedPoly p],
     SipserLautemann.verifier enc p V, rfl,
-    .of_tidy (SipserLautemann.verifier_polyTime hV.tidy),
+    (SipserLautemann.verifier_polyTime hV),
     SipserLautemann.isAlternatingVerifier_verifier hA⟩
 
 /-- **The Sipser–Gács–Lautemann theorem (`Π₂` form)**: every problem in `BPP` lies in `Π₂`,

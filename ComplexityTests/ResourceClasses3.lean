@@ -122,11 +122,11 @@ info: 'Cslib.Complexity.DecidesWithBoundedError.repeatMajority' depends on axiom
 #print axioms Cslib.Complexity.DecidesWithBoundedError.repeatMajority
 
 /--
-info: 'Cslib.Complexity.computableTidilyInPolyTime_repeatMajority' depends on axioms:
+info: 'Cslib.Complexity.computableInPolyTime_repeatMajority' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.computableTidilyInPolyTime_repeatMajority
+#print axioms Cslib.Complexity.computableInPolyTime_repeatMajority
 
 /--
 info: 'Cslib.Complexity.mem_BPP_iff_forall_decidesWithErrorExponent' depends on axioms:
@@ -143,11 +143,11 @@ info: 'Cslib.Complexity.DecidesWithOneSidedError.repeatAny' depends on axioms:
 #print axioms Cslib.Complexity.DecidesWithOneSidedError.repeatAny
 
 /--
-info: 'Cslib.Complexity.computableTidilyInPolyTime_repeatAny' depends on axioms:
+info: 'Cslib.Complexity.computableInPolyTime_repeatAny' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.computableTidilyInPolyTime_repeatAny
+#print axioms Cslib.Complexity.computableInPolyTime_repeatAny
 
 /--
 info: 'Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent' depends on axioms:

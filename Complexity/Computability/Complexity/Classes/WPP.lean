@@ -158,7 +158,7 @@ theorem FewP_subset_WPP : FewP enc ⊆ WPP enc :=
 /-- Subtraction of the target gives a zero test for WPP membership. -/
 theorem WPP_subset_CeqP : WPP enc ⊆ CeqP enc := by
   rintro A ⟨g, hg, f, hf, -, -, hA⟩
-  exact ⟨g - f, GapP.sub_mem' hg (mem_GapP_of_polyTime hf.tidy), fun a => by
+  exact ⟨g - f, GapP.sub_mem' hg (mem_GapP_of_polyTime hf), fun a => by
     simpa [sub_eq_zero] using hA a⟩
 
 /-- A WPP gap is nonzero exactly on members. -/
@@ -172,7 +172,7 @@ theorem WPP_subset_coCeqP : WPP enc ⊆ coCeqP enc := by
 theorem compl_mem_WPP (hA : A ∈ WPP enc) : Aᶜ ∈ WPP enc := by
   rw [mem_WPP_iff_tidy] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hr, hA⟩ := hA
-  refine ⟨f - g, GapP.sub_mem' (mem_GapP_of_polyTime hf) hg, f, hf, hn,
+  refine ⟨f - g, GapP.sub_mem' (mem_GapP_of_polyTime (.of_tidy hf)) hg, f, hf, hn,
     fun a => ?_, fun a => ?_⟩
   · rcases hr a with h | h <;> simp [h]
   · rcases hr a with h | h <;> simp [hA a, h, (hn a).symm]
@@ -216,14 +216,14 @@ theorem PolyTimeReducible.mem_WPP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ WPP encB) : A ∈ WPP enc := by
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨g, hg, f, hf, hn, hgr, hB⟩ := hB
-  exact ⟨g ∘ r, GapP.comp_mem hg hr.tidy, f ∘ r, hf.comp hr, fun a => hn _,
+  exact ⟨g ∘ r, GapP.comp_mem hg hr, f ∘ r, hf.comp hr, fun a => hn _,
     fun a => hgr _, fun a => (hAB a).trans (hB _)⟩
 
 /-- The complementary gap uses the same length-dependent target. -/
 theorem compl_mem_LWPP (hA : A ∈ LWPP enc) : Aᶜ ∈ LWPP enc := by
   rw [mem_LWPP_iff_tidy] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hr, hA⟩ := hA
-  have htarget := mem_GapP_of_polyTime (hf.comp (.encoding_length enc))
+  have htarget := mem_GapP_of_polyTime (.of_tidy (hf.comp (.encoding_length enc)))
   refine ⟨(fun a => f (enc a).length) - g, GapP.sub_mem' htarget hg,
     f, hf, hn, fun a => ?_, fun a => ?_⟩
   · rcases hr a with h | h <;> simp [h]
@@ -303,13 +303,13 @@ private theorem finsetTargetWitness {ι : Type*} (s : Finset ι) {g : α → ℤ
   have hF : ComputableTidilyInPolyTime F enc encIntBin := finset_prod_intBin s hf
   have hFn (a : α) : F a ≠ 0 := Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi a
   have hP : P ∈ GapP enc :=
-    finset_prod_mem_GapP s fun i hi => GapP.sub_mem' (mem_GapP_of_polyTime (hf i hi)) hg
+    finset_prod_mem_GapP s fun i hi => GapP.sub_mem' (mem_GapP_of_polyTime (.of_tidy (hf i hi))) hg
   have hP_zero {a : α} (hz : g a = 0) : P a = F a := by
     simp [P, F, hz]
   have hP_mem {a : α} (hmem : ∃ i ∈ s, g a = f i a) : P a = 0 := by
     obtain ⟨i, hi, hgi⟩ := hmem
     exact Finset.prod_eq_zero hi (by lia)
-  refine ⟨F - P, GapP.sub_mem' (mem_GapP_of_polyTime hF) hP, fun a => ?_, fun a => ?_⟩
+  refine ⟨F - P, GapP.sub_mem' (mem_GapP_of_polyTime (.of_tidy hF)) hP, fun a => ?_, fun a => ?_⟩
   · rcases hr a with hz | hmem
     · exact Or.inl (by simp [F, hP_zero hz])
     · exact Or.inr (by simp [F, hP_mem hmem])
@@ -332,10 +332,11 @@ and one of a fixed finite family of nonzero polynomial-time targets on `A` witne
 [Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018]). -/
 theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} {f : ι → α → ℤ}
     (hg : g ∈ GapP enc)
-    (hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin)
+    (hf : ∀ i ∈ s, ComputableInPolyTime (f i) enc encIntBin)
     (hn : ∀ i ∈ s, ∀ a, f i a ≠ 0)
     (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i a)
     (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i a) : A ∈ WPP enc := by
+  have hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin := by simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using hf
   obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg hf hn hr hA
   exact ⟨G, hG, _, .of_tidy (finset_prod_intBin s hf),
     fun a => Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi a, hR, hGA⟩
@@ -346,10 +347,11 @@ witnesses `A ∈ LWPP` (the fixed-`Finset` case of the product interpolation in
 [Hemaspaandra et al., Theorem 3.1][HemaspaandraEtAl2018]). -/
 theorem mem_LWPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} {f : ι → ℕ → ℤ}
     (hg : g ∈ GapP enc)
-    (hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) encUnary encIntBin)
+    (hf : ∀ i ∈ s, ComputableInPolyTime (f i) encUnary encIntBin)
     (hn : ∀ i ∈ s, ∀ n, f i n ≠ 0)
     (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i (enc a).length)
     (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i (enc a).length) : A ∈ LWPP enc := by
+  have hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) encUnary encIntBin := by simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using hf
   obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg
     (fun i hi => (hf i hi).comp (.encoding_length enc))
     (fun i hi a => hn i hi (enc a).length) hr hA
@@ -367,11 +369,13 @@ only on
 [Hemaspaandra et al., Section 3][HemaspaandraEtAl2018]. -/
 theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α → ℕ}
     (hg : g ∈ GapP enc)
-    (hf : ComputableTidilyInPolyTime f encUnary encIntBin)
+    (hf : ComputableInPolyTime f encUnary encIntBin)
     (hn : ∀ n, f n ≠ 0)
-    (hk : ComputableTidilyInPolyTime k enc encUnary)
+    (hk : ComputableInPolyTime k enc encUnary)
     (hr : ∀ a, g a = 0 ∨ g a = f (k a))
     (hA : ∀ a, a ∈ A ↔ g a = f (k a)) : A ∈ LWPP enc := by
+  have hf := hf.tidy
+  have hk := hk.tidy
   obtain ⟨p, hp⟩ := hk.polyBounded.exists_polynomial
   have hlt (a : α) : k a < p.eval (enc a).length + 1 := Nat.lt_succ_of_le (hp a)
   let bound (n : ℕ) : ℕ := p.eval n + 1
@@ -407,7 +411,7 @@ theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α �
       rw [List.nodup_range.erase_eq_filter]
       exact List.filter_congr fun i _ => by simp [bne, beq_eq_decide]
     simpa only [h, F, herase] using List.prod_map_erase f (List.mem_range.mpr (hlt a))
-  refine ⟨g * h, GapP.mul_mem hg (mem_GapP_of_polyTime hh), F, .of_tidy hF, hFn, fun a => ?_,
+  refine ⟨g * h, GapP.mul_mem hg (mem_GapP_of_polyTime (.of_tidy hh)), F, .of_tidy hF, hFn, fun a => ?_,
     fun a => ?_⟩
   · rcases hr a with hz | hfk
     · exact Or.inl (by simp [hz])
@@ -425,8 +429,8 @@ theorem PolyTimeReducible.mem_LWPP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ LWPP encB) : A ∈ LWPP enc := by
   obtain ⟨r, hr, hAB⟩ := polyTimeReducible_iff_tidy.mp h
   obtain ⟨g, hg, f, hf, hn, hgr, hB⟩ := hB
-  exact mem_LWPP_of_polyTime_index (GapP.comp_mem hg hr) hf.tidy hn
-    ((ComputableTidilyInPolyTime.encoding_length encB).comp hr)
+  exact mem_LWPP_of_polyTime_index (GapP.comp_mem hg (.of_tidy hr)) hf hn
+    (.of_tidy ((ComputableTidilyInPolyTime.encoding_length encB).comp hr))
     (fun a => hgr (r a)) (fun a => (hAB a).trans (hB (r a)))
 
 end Cslib.Complexity

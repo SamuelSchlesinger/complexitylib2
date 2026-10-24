@@ -16,6 +16,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 
 /-!
 # Kernelization
@@ -126,7 +127,7 @@ variable {α : Type} {enc : α ↪ List Bool} {κ : α → ℕ} {A : Set α}
 /-- Every kernelization of `(A, κ)` is an fpt-reduction from `(A, κ)` to itself. -/
 theorem IsKernelization.fptReducible {K : α → α} {g : ℕ → ℕ} (hK : IsKernelization enc κ A K g) :
     FPTReducible enc enc κ κ A A :=
-  .of_computableTidilyInPolyTime hK.polyTime.tidy hK.parameter_le fun a => (hK.mem_iff a).symm
+  FPTReducible.of_computableInPolyTime hK.polyTime.tidy hK.parameter_le fun a => (hK.mem_iff a).symm
 
 /-! ### Kernels give fixed-parameter tractability -/
 
@@ -151,7 +152,7 @@ theorem IsKernelization.mem_FPT {K : α → α} {g : ℕ → ℕ} (hK : IsKernel
     have h₁ := (htt' a).trans (Nat.le_mul_of_pos_right _ hP)
     rw [Nat.add_mul, Nat.one_mul]
     omega
-  exact mem_FPT_iff_computableTidilyInFPTTime.mpr ⟨dec ∘ K,
+  exact mem_FPT_iff_computableInFPTTime.mpr ⟨dec ∘ K,
     ⟨fun k => 1 + (c * (∑ j ∈ Finset.range (g k + 1), t j) + c), d,
       (hdec.comp hKd.inO).mono_le key key⟩,
     fun a => (hK.mem_iff a).symm.trans (hdecA (K a))⟩
@@ -225,7 +226,7 @@ theorem hasKernel_of_mem_FPT [Nonempty α] (hA : A ∈ FPT enc κ) : HasKernel e
         (ComputableTidilyInPolyTime.encode enc)).prod hN)
   have hr : ComputableTidilyInPolyTime r enc eOut := computableTidilyInPolyTime_universal.comp hin
   have hverdict : ComputableTidilyInPolyTime Diagonal.verdict eOut encBool :=
-    Diagonal.computableTidilyInO_verdict.computableTidilyInPolyTime
+    Diagonal.computableInO_verdict.tidy.computableTidilyInPolyTime
       (.of_forall_le 1 2 fun _ => by simp) (.of_forall_le 1 1 fun _ => by simp)
   have hK : ComputableTidilyInPolyTime K enc enc :=
     ComputableTidilyInPolyTime.ite' (hverdict.comp hr)

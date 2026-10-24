@@ -352,8 +352,8 @@ def test (N : Polynomial ℕ) (x : (Graph × Graph) × List Bool) : Bool :=
 
 /-- The test is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_test (N : Polynomial ℕ) :
-    ComputableTidilyInPolyTime (test N) (encPair (encPair encGraph encGraph) encBits) encBool := by
+theorem computableInPolyTime_test (N : Polynomial ℕ) :
+    ComputableInPolyTime (test N) (encPair (encPair encGraph encGraph) encBits) encBool := by
   unfold test check
   dsimp only
   fun_prop
@@ -514,7 +514,7 @@ theorem mem_AM : GraphNonIsomorphism ∈ AM (encPair encGraph encGraph) := by
     (ComputableTidilyInPolyTime.const 2).binary_mul'
       (ComputableTidilyInPolyTime.binary_factorial.comp
         ((ComputableTidilyInPolyTime.length_list encNat).comp
-          (Graph.computableTidilyInPolyTime_distinctVertices.comp
+          (Graph.computableInPolyTime_distinctVertices.tidy.comp
             (ComputableTidilyInPolyTime.fst encGraph encGraph))))
   -- the lengths
   have hlen (G₀ G₁ : Graph) :
@@ -545,7 +545,7 @@ theorem mem_AM : GraphNonIsomorphism ∈ AM (encPair encGraph encGraph) := by
     rw [hset, card_filter_check (by rw [hE]; omega) (by rw [hC]; omega)]
     rfl
   refine mem_AM_of_card_certifiedSet (N := N) (c := c) (R := test N)
-    (computableTidilyInPolyTime_test N) hK (fun a => by positivity) (fun a ha => ?_)
+    (computableInPolyTime_test N).tidy hK (fun a => by positivity) (fun a ha => ?_)
     fun a ha => ?_
   · obtain ⟨G₀, G₁⟩ := a
     dsimp only

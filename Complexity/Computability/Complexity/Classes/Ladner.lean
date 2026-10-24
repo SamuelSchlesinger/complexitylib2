@@ -337,7 +337,7 @@ theorem SAT_mem_P_of_reducible_of_tendsto (hR : PolyTimeReducible encCNF encBits
   -- the polynomial-time certificate of a round
   have hshrink : ComputableTidilyInPolyTime (shrink R N) encCNF encCNF := by
     have hH' : ComputableTidilyInPolyTime (fun p : CNF ℕ × ℕ => H p.2) (encPair encCNF encUnary)
-        encUnary := computableTidilyInPolyTime_H.comp (ComputableTidilyInPolyTime.snd _ _)
+        encUnary := computableInPolyTime_H.tidy.comp (ComputableTidilyInPolyTime.snd _ _)
     unfold shrink
     fun_prop
   -- the rounds preserve satisfiability and shorten the formula to below `N`

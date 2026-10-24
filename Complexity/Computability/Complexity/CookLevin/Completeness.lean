@@ -45,7 +45,7 @@ theorem SAT_npHard : NPHard encCNF SAT := by
   obtain ⟨c, d, ht⟩ := ht.exists_le
   have := Fintype.ofFinite State
   classical
-  refine ⟨reduce tm p c d enc, .of_tidy (computableTidilyInPolyTime_reduce tm p c d enc), fun a =>
+  refine ⟨reduce tm p c d enc, (computableInPolyTime_reduce tm p c d enc), fun a =>
     (reduce_mem_SAT_iff_of_computesTidily (s := s) hV ?_ a).symm⟩
   exact htm.mono (fun x => ht x) (fun _ => le_rfl)
 

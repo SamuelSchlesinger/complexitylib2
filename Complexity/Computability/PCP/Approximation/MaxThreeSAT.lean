@@ -253,7 +253,8 @@ variable [Fintype α]
 fixed list `pairs` is tested against its constraint table. -/
 @[fun_prop]
 theorem isPolyTime_toCNF :
-    ComputableTidilyInPolyTime (toCNF e pairs) (encoding (encPi (encPi encBool))) encCNF := by
+    ComputableInPolyTime (toCNF e pairs) (encoding (encPi (encPi encBool))) encCNF := by
+  refine .of_tidy ?_
   have hclause (p : α × α) : ComputableTidilyInPolyTime
       (fun d : Edge (α → α → Bool) => excludeClause e d.src d.dst p)
       (Edge.encoding (encPi (encPi encBool))) (encList (encPair encNat encBool)) := by
@@ -266,7 +267,7 @@ theorem isPolyTime_toCNF :
   have hedge : ComputableTidilyInPolyTime (edgeCNF e pairs)
       (Edge.encoding (encPi (encPi encBool))) encCNF :=
     mapFilterConst pairs (fun p _ => htest p) (fun p _ => hclause p)
-  exact flatMapWithInput (isPolyTime_edges id') (hedge.comp (snd _ _))
+  exact flatMapWithInput (isPolyTime_edges (.of_tidy id')).tidy (hedge.comp (snd _ _))
 
 end Cslib.PCP.Encoded.Graph
 
@@ -324,7 +325,7 @@ theorem polyTimeReducible_GapTwoCSP_GapThreeSAT {α : Type} [Fintype α] {k : �
   have hlen : pairs.length = Fintype.card α ^ 2 := by
     simp [pairs, Fintype.card_prod, sq]
   refine ⟨fun g => toThreeSAT (Graph.toCNF e pairs g),
-    .of_tidy (computableTidilyInPolyTime_toThreeSAT.comp (Graph.isPolyTime_toCNF e pairs)),
+    .of_tidy (computableInPolyTime_toThreeSAT.tidy.comp (Graph.isPolyTime_toCNF e pairs).tidy),
     fun g hg => ?_, fun g hg => ?_⟩
   · rw [yes_GapThreeSAT, mem_ThreeSAT_toThreeSAT_iff]
     exact Graph.satisfiable_toCNF e pairs (mem_yes_GapTwoCSP.1 hg)

@@ -50,11 +50,11 @@ variable {α : Type} {enc : α ↪ List Bool}
 
 /-- Compile fixed-width function families exactly on their prescribed input cubes. -/
 theorem exists_uniformCircuitCodes {n m : α → ℕ} {F : α × List Bool → List Bool}
-    (hn : ComputableTidilyInPolyTime n enc encUnary)
-    (hm : ComputableTidilyInPolyTime m enc encUnary)
-    (hF : ComputableTidilyInPolyTime F (encPair enc encBits) encBits)
+    (hn : ComputableInPolyTime n enc encUnary)
+    (hm : ComputableInPolyTime m enc encUnary)
+    (hF : ComputableInPolyTime F (encPair enc encBits) encBits)
     (hlen : ∀ a u, u.length = n a → (F (a, u)).length = m a) :
-    ∃ code : α → CircuitCode, ComputableTidilyInPolyTime code enc encCode ∧
+    ∃ code : α → CircuitCode, ComputableInPolyTime code enc encCode ∧
       ∀ a u, u.length = n a → evalCircuitOutputs (code a) u = F (a, u) := by
   obtain ⟨circuits, hcode, hsem⟩ := CircuitValue.exists_uniformCircuitFamily hn hm hF
   refine ⟨fun a => (circuits a).code, hcode, fun a u hu => ?_⟩
@@ -83,10 +83,12 @@ private theorem exists_endomorphismCodes {n : α → ℕ} {F : α × List Bool �
 
 /-- A uniform polynomial-time pigeonhole family reduces to the canonical circuit problem. -/
 theorem pigeonRel_searchReducible_Pigeon {n : α → ℕ} {F : α × List Bool → List Bool}
-    (hn : ComputableTidilyInPolyTime n enc encUnary)
-    (hF : ComputableTidilyInPolyTime F (encPair enc encBits) encBits)
+    (hn : ComputableInPolyTime n enc encUnary)
+    (hF : ComputableInPolyTime F (encPair enc encBits) encBits)
     (hlen : ∀ a u, u.length = n a → (F (a, u)).length = n a) :
     SearchReducible enc encPigeon (pigeonRel n F) Pigeon := by
+  have hn := hn.tidy
+  have hF := hF.tidy
   obtain ⟨code, hcode, hsem⟩ := exists_endomorphismCodes hn hF hlen
   apply SearchReducible.of_isTotalSearch isTotalSearch_Pigeon (hn.prod hcode) (snd enc encBits)
   intro a w hw
@@ -104,12 +106,15 @@ theorem pigeonRel_searchReducible_Pigeon {n : α → ℕ} {F : α × List Bool �
 /-- A uniform polynomial-time end-of-line family reduces to its circuit presentation. -/
 theorem endOfLineRel_searchReducible_EndOfLine {n : α → ℕ}
     {P S : α × List Bool → List Bool}
-    (hn : ComputableTidilyInPolyTime n enc encUnary)
-    (hP : ComputableTidilyInPolyTime P (encPair enc encBits) encBits)
-    (hS : ComputableTidilyInPolyTime S (encPair enc encBits) encBits)
+    (hn : ComputableInPolyTime n enc encUnary)
+    (hP : ComputableInPolyTime P (encPair enc encBits) encBits)
+    (hS : ComputableInPolyTime S (encPair enc encBits) encBits)
     (hP_len : ∀ a u, u.length = n a → (P (a, u)).length = n a)
     (hS_len : ∀ a u, u.length = n a → (S (a, u)).length = n a) :
     SearchReducible enc encEndOfLine (endOfLineRel n P S) EndOfLine := by
+  have hn := hn.tidy
+  have hP := hP.tidy
+  have hS := hS.tidy
   obtain ⟨cP, hcP, hPs⟩ := exists_endomorphismCodes hn hP hP_len
   obtain ⟨cS, hcS, hSs⟩ := exists_endomorphismCodes hn hS hS_len
   apply SearchReducible.of_isTotalSearch isTotalSearch_EndOfLine
@@ -127,12 +132,15 @@ theorem endOfLineRel_searchReducible_EndOfLine {n : α → ℕ}
 
 /-- A uniform polynomial-time undirected parity family reduces to its circuit presentation. -/
 theorem leafRel_searchReducible_Leaf {n : α → ℕ} {N₁ N₂ : α × List Bool → List Bool}
-    (hn : ComputableTidilyInPolyTime n enc encUnary)
-    (hN₁ : ComputableTidilyInPolyTime N₁ (encPair enc encBits) encBits)
-    (hN₂ : ComputableTidilyInPolyTime N₂ (encPair enc encBits) encBits)
+    (hn : ComputableInPolyTime n enc encUnary)
+    (hN₁ : ComputableInPolyTime N₁ (encPair enc encBits) encBits)
+    (hN₂ : ComputableInPolyTime N₂ (encPair enc encBits) encBits)
     (hN₁_len : ∀ a u, u.length = n a → (N₁ (a, u)).length = n a)
     (hN₂_len : ∀ a u, u.length = n a → (N₂ (a, u)).length = n a) :
     SearchReducible enc encLeaf (leafRel n N₁ N₂) Leaf := by
+  have hn := hn.tidy
+  have hN₁ := hN₁.tidy
+  have hN₂ := hN₂.tidy
   obtain ⟨c₁, hc₁, h₁⟩ := exists_endomorphismCodes hn hN₁ hN₁_len
   obtain ⟨c₂, hc₂, h₂⟩ := exists_endomorphismCodes hn hN₂ hN₂_len
   apply SearchReducible.of_isTotalSearch isTotalSearch_Leaf
@@ -184,11 +192,14 @@ private theorem exists_costCodes {n : α → ℕ} {C : α × List Bool → ℕ}
 Costs are encoded with leading zeros, so the comparison is unchanged. -/
 theorem localOptRel_searchReducible_LocalOpt {n : α → ℕ}
     {N : α × List Bool → List Bool} {C : α × List Bool → ℕ}
-    (hn : ComputableTidilyInPolyTime n enc encUnary)
-    (hN : ComputableTidilyInPolyTime N (encPair enc encBits) encBits)
-    (hC : ComputableTidilyInPolyTime C (encPair enc encBits) encNat)
+    (hn : ComputableInPolyTime n enc encUnary)
+    (hN : ComputableInPolyTime N (encPair enc encBits) encBits)
+    (hC : ComputableInPolyTime C (encPair enc encBits) encNat)
     (hlen : ∀ a u, u.length = n a → (N (a, u)).length = n a) :
     SearchReducible enc encLocalOpt (localOptRel n N C) LocalOpt := by
+  have hn := hn.tidy
+  have hN := hN.tidy
+  have hC := hC.tidy
   obtain ⟨cN, hcN, hNs⟩ := exists_endomorphismCodes hn hN hlen
   obtain ⟨cC, hcC, hCs⟩ := exists_costCodes hn hC
   apply SearchReducible.of_isTotalSearch isTotalSearch_LocalOpt
@@ -204,24 +215,24 @@ theorem localOptRel_searchReducible_LocalOpt {n : α → ℕ}
 theorem Pigeon_searchComplete : SearchComplete @PPP encPigeon Pigeon := by
   refine ⟨Pigeon_mem_PPP, fun _ enc R hR => ?_⟩
   obtain ⟨-, n, F, hn, hF, hlen, hred⟩ := mem_PPP_iff_tidy.mp hR
-  exact hred.trans (pigeonRel_searchReducible_Pigeon hn hF hlen)
+  exact hred.trans (pigeonRel_searchReducible_Pigeon (.of_tidy hn) (.of_tidy hF) hlen)
 
 /-- Circuit `EndOfLine` is complete for `PPAD` under polynomial-time search reductions. -/
 theorem EndOfLine_searchComplete : SearchComplete @PPAD encEndOfLine EndOfLine := by
   refine ⟨EndOfLine_mem_PPAD, fun _ enc R hR => ?_⟩
   obtain ⟨-, n, P, S, hn, hP, hS, hP_len, hS_len, hred⟩ := mem_PPAD_iff_tidy.mp hR
-  exact hred.trans (endOfLineRel_searchReducible_EndOfLine hn hP hS hP_len hS_len)
+  exact hred.trans (endOfLineRel_searchReducible_EndOfLine (.of_tidy hn) (.of_tidy hP) (.of_tidy hS) hP_len hS_len)
 
 /-- Circuit `Leaf` is complete for `PPA` under polynomial-time search reductions. -/
 theorem Leaf_searchComplete : SearchComplete @PPA encLeaf Leaf := by
   refine ⟨Leaf_mem_PPA, fun _ enc R hR => ?_⟩
   obtain ⟨-, n, N₁, N₂, hn, hN₁, hN₂, hN₁_len, hN₂_len, hred⟩ := mem_PPA_iff_tidy.mp hR
-  exact hred.trans (leafRel_searchReducible_Leaf hn hN₁ hN₂ hN₁_len hN₂_len)
+  exact hred.trans (leafRel_searchReducible_Leaf (.of_tidy hn) (.of_tidy hN₁) (.of_tidy hN₂) hN₁_len hN₂_len)
 
 /-- Circuit `LocalOpt` is complete for `PLS` under polynomial-time search reductions. -/
 theorem LocalOpt_searchComplete : SearchComplete @PLS encLocalOpt LocalOpt := by
   refine ⟨LocalOpt_mem_PLS, fun _ enc R hR => ?_⟩
   obtain ⟨-, n, N, C, hn, hN, hC, hlen, hred⟩ := mem_PLS_iff_tidy.mp hR
-  exact hred.trans (localOptRel_searchReducible_LocalOpt hn hN hC hlen)
+  exact hred.trans (localOptRel_searchReducible_LocalOpt (.of_tidy hn) (.of_tidy hN) (.of_tidy hC) hlen)
 
 end Cslib.Complexity

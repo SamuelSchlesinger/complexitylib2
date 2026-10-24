@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.Counting.OracleSpace
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
 
 /-! Clients for exact polynomial-space counting: zero-width certificates, a nonconstant verifier,
 negative integer outputs, composite and degenerate moduli, and word-oracle space bounds. -/
@@ -41,11 +42,11 @@ example : streamAcceptCount firstBit [] 4 = acceptCount firstBit [] 4 :=
 
 example : ComputableTidilyInPolySpace
     (fun w : List Bool => acceptCount firstBit w (w.length + 1)) encBits encNat :=
-  computableTidilyInPolySpace_acceptCount firstBit_polyTime (by fun_prop)
+  (computableInPolySpace_acceptCount (.of_tidy firstBit_polyTime) (.of_tidy (by fun_prop))).tidy
 
 example : ComputableTidilyInPolySpace
     (fun w : List Bool => acceptCount firstBit w 0) encBits encNat :=
-  computableTidilyInPolySpace_acceptCount firstBit_polyTime (.const 0)
+  (computableInPolySpace_acceptCount (.of_tidy firstBit_polyTime) (.of_tidy (.const 0))).tidy
 
 theorem power_mem : (fun w : List Bool => 2 ^ w.length) ∈ SharpP encBits := by
   simpa using SharpP.two_pow_mem (enc := encBits) Polynomial.X
@@ -92,10 +93,10 @@ example : ∃ g ∈ SharpP encBits, ∀ b : Bool, g [b] = 0 :=
   SharpP.exists_extension (enc := encBool) SharpP.zero_mem
 
 /--
-info: 'Cslib.Complexity.computableTidilyInPolySpace_acceptCount' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.computableInPolySpace_acceptCount' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms computableTidilyInPolySpace_acceptCount
+#print axioms computableInPolySpace_acceptCount
 /--
 info: 'Cslib.Complexity.SharpP.computableTidilyInPolySpace' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/

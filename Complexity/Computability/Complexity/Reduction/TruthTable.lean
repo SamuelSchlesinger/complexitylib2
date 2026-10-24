@@ -151,9 +151,11 @@ theorem PolyTimeTruthTableReducible.compl
 a computed unary batch of queries. -/
 theorem truthTable_mem_P {A : Set (α × ℕ)} {r : α → ℕ} {d : α × List Bool → Bool}
     (hA : A ∈ P (encPair encA encUnary))
-    (hr : ComputableTidilyInPolyTime r encA encUnary)
-    (hd : ComputableTidilyInPolyTime d (encPair encA encBits) encBool) :
+    (hr : ComputableInPolyTime r encA encUnary)
+    (hd : ComputableInPolyTime d (encPair encA encBits) encBool) :
     {a | d (a, truthTableAnswers A r a) = true} ∈ P encA := by
+  have hr := hr.tidy
+  have hd := hd.tidy
   classical
   obtain ⟨f, hf, hAf⟩ := mem_P_iff_tidy.mp hA
   have hans : ComputableTidilyInPolyTime
@@ -169,7 +171,7 @@ theorem PolyTimeTruthTableReducible.mem_P
   obtain ⟨r, q, d, hr, hq, hd, hL⟩ := h
   have hqB : q ⁻¹' B ∈ P (encPair encA encUnary) :=
     PolyTimeReducible.mem_P ⟨q, hq, fun _ => Iff.rfl⟩ hB
-  convert truthTable_mem_P hqB hr.tidy hd.tidy using 1
+  convert truthTable_mem_P hqB hr hd using 1
   ext a
   exact hL a
 

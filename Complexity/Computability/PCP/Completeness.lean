@@ -68,7 +68,7 @@ theorem NP_subset_PCP_log {Input : Type} (input : Input ↪ List Bool) :
         (encPair (encPair encBool (encPi encBool)) (encPair encBool (encPi encBool)))) encBool := by
     fun_prop
   exact Graph.mem_PCP_of_gapReduction (FinEnum.card (Fin 6) + 1)
-    encodeLabel decodeLabel decode_encodeLabel (isPolyTime_gapGraph hreduce.tidy) heval
+    encodeLabel decodeLabel decode_encodeLabel (isPolyTime_gapGraph hreduce) (.of_tidy heval)
     (fun x => wellFormed_gapGraph (reduce x))
     (fun x hx => (satisfiable_gapGraph_iff _).mpr ((hmem x).mp hx))
     (gap := gap) gap_pos

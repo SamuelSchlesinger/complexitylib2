@@ -106,7 +106,7 @@ theorem ParsimoniousReducible.trans (hfg : ParsimoniousReducible encA encB f g)
 theorem ParsimoniousReducible.mem_SharpP (hfg : ParsimoniousReducible encA encB f g)
     (hg : g ∈ SharpP encB) : f ∈ SharpP encA := by
   obtain ⟨r, hr, hfg⟩ := parsimoniousReducible_iff_tidy.mp hfg
-  have h := SharpP.comp_mem hg hr
+  have h := SharpP.comp_mem hg (.of_tidy hr)
   rwa [show g ∘ r = f from funext fun a => (hfg a).symm] at h
 
 /-- `#P`-hardness transfers along a parsimonious reduction. -/

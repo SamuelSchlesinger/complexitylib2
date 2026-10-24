@@ -25,7 +25,7 @@ private theorem head_mem_AWPP : {w : List Bool | w.headD false = true} ∈ AWPP 
   have hf : ComputableTidilyInPolyTime
       (fun w : List Bool => if w.headD false then (3 : ℤ) else 1) encBits encIntBin := by
     fun_prop
-  refine ⟨_, mem_GapP_of_polyTime hf, 2, fun w => ?_⟩
+  refine ⟨_, mem_GapP_of_polyTime (.of_tidy hf), 2, fun w => ?_⟩
   simp only [Set.mem_ofPred_eq]
   cases w.headD false <;> norm_num
 
@@ -46,7 +46,7 @@ private theorem head_mem_AWPP_exp : {w : List Bool | w.headD false = true} ∈ A
   have hf : ComputableTidilyInPolyTime
       (fun w : List Bool => if w.headD false then (2 : ℤ) ^ w.length else 0)
       encBits encIntBin := by fun_prop
-  refine ⟨_, mem_GapP_of_polyTime hf, Polynomial.X, fun w => ?_⟩
+  refine ⟨_, mem_GapP_of_polyTime (.of_tidy hf), Polynomial.X, fun w => ?_⟩
   have hp : 0 ≤ (2 : ℤ) ^ w.length := by positivity
   cases h : w.headD false <;> simp only [encBits_apply, Polynomial.eval_X, h,
     Bool.false_eq_true, ↓reduceIte, Set.mem_ofPred_eq]
@@ -79,7 +79,7 @@ private theorem head_mem_SBP : {w : List Bool | w.headD false = true} ∈ SBP en
   have hf : ComputableTidilyInPolyTime
       (fun w : List Bool => if w.headD false then 2 ^ w.length else 0) encBits encNat := by
     fun_prop
-  refine ⟨_, mem_SharpP_of_polyTime hf, fun w => 2 ^ w.length,
+  refine ⟨_, mem_SharpP_of_polyTime (.of_tidy hf), fun w => 2 ^ w.length,
     .of_tidy (ComputableTidilyInPolyTime.binary_two_pow.comp (.encoding_length encBits)),
     fun w => ?_⟩
   have hp : 0 < 2 ^ w.length := by positivity
@@ -109,7 +109,7 @@ private theorem head_mem_WPP_negative : {w : List Bool | w.headD false = true} �
   have hg : ComputableTidilyInPolyTime
       (fun w : List Bool => if w.headD false then f w else 0) encBits encIntBin := by fun_prop
   have hn (w : List Bool) : f w ≠ 0 := by simp [f]
-  refine ⟨_, mem_GapP_of_polyTime hg, f, .of_tidy hf, hn, fun w => ?_, fun w => ?_⟩
+  refine ⟨_, mem_GapP_of_polyTime (.of_tidy hg), f, .of_tidy hf, hn, fun w => ?_, fun w => ?_⟩
   · cases w.headD false <;> simp
   · simp only [Set.mem_ofPred_eq]
     cases w.headD false <;> simp [(hn w).symm]

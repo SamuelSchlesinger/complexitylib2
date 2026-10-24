@@ -94,16 +94,17 @@ theorem isVerifier :
 
 /-- The `ZeroOneIP` verifier is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_verifier :
-    ComputableTidilyInPolyTime verifier
+theorem computableInPolyTime_verifier :
+    ComputableInPolyTime verifier
       (encPair (encList (encPair (encList encNat) encNat)) encBits) encBool := by
+  refine .of_tidy ?_
   unfold verifier
   apply allWithInput (by fun_prop)
   fun_prop
 
 /-- `ZeroOneIP` belongs to `NP`. -/
 theorem mem_NP : ZeroOneIP ∈ NP (encList (encPair (encList encNat) encNat)) :=
-  ⟨Polynomial.X, verifier, .of_tidy computableTidilyInPolyTime_verifier, isVerifier⟩
+  ⟨Polynomial.X, verifier, computableInPolyTime_verifier, isVerifier⟩
 
 end ZeroOneIP
 
@@ -128,8 +129,8 @@ theorem toZeroOneIP_mem_iff (x : List ℕ × ℕ) : toZeroOneIP x ∈ ZeroOneIP 
 
 /-- The reduction to `ZeroOneIP` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_toZeroOneIP :
-    ComputableTidilyInPolyTime toZeroOneIP (encPair (encList encNat) encNat)
+theorem computableInPolyTime_toZeroOneIP :
+    ComputableInPolyTime toZeroOneIP (encPair (encList encNat) encNat)
       (encList (encPair (encList encNat) encNat)) := by
   unfold toZeroOneIP
   fun_prop
@@ -140,7 +141,7 @@ end SubsetSum
 theorem polyTimeReducible_SubsetSum_ZeroOneIP :
     PolyTimeReducible (encPair (encList encNat) encNat)
       (encList (encPair (encList encNat) encNat)) SubsetSum ZeroOneIP :=
-  ⟨SubsetSum.toZeroOneIP, .of_tidy SubsetSum.computableTidilyInPolyTime_toZeroOneIP,
+  ⟨SubsetSum.toZeroOneIP, SubsetSum.computableInPolyTime_toZeroOneIP,
     fun x => (SubsetSum.toZeroOneIP_mem_iff x).symm⟩
 
 /-- `ThreeSAT` reduces to `ZeroOneIP` in polynomial time, through Sipser's digit construction. -/

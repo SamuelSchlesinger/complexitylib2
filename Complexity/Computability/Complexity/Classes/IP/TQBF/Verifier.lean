@@ -314,7 +314,7 @@ private lemma opCont_pt (o : ArithQBF.Operator) :
   unfold opCont
   have hsample : IsOraclePPTOn (Operation := Unit) (encPair encStepData encBits) encUnary
       (fun pair : StepData × List Bool => ProbOracleComp.sample (sampleMod pair.1.modulus)) :=
-    (isPPTOn_sampleMod (by fun_prop)).isOraclePPTOn
+    (isPPTOn_sampleMod (.of_tidy (by fun_prop))).isOraclePPTOn
   exact IsOraclePPTOn.cond (opCheck_pt o) (hsample.map_with opNext_pt)
     ((ComputableTidilyInPolyTime.isOraclePPTOn (f := fun pair : StepData × List Bool =>
       reject pair.1) (by fun_prop)))
@@ -574,7 +574,7 @@ private lemma loopInput_pt : ComputableTidilyInPolyTime loopInput encQBF encLoop
 realizes it against every stateful prover. -/
 theorem isOraclePPTOn_verifier : IsOraclePPTOn encQBF encBool verifier := by
   unfold verifier
-  exact IsOraclePPTOn.cond computableTidilyInPolyTime_decide_closed
+  exact IsOraclePPTOn.cond computableInPolyTime_decide_closed.tidy
     ((isOraclePPTOn_loop.preprocess loopInput_pt).map (by fun_prop))
     (ComputableTidilyInPolyTime.isOraclePPTOn (f := fun _ : QBF ℕ => false) (const false))
 

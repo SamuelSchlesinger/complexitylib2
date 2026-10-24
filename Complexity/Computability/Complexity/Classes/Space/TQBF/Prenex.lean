@@ -51,7 +51,7 @@ which does not change the value (`Cslib.Logic.PL.QBF.eval_rounds_map_pair`).
 * `Cslib.Complexity.TQBF.eval_prenex`, `Cslib.Complexity.TQBF.closed_prenex`: the normal form of
   the formula of a game has its value and is closed.
 * `Cslib.Complexity.TQBF.prenexReduce_mem_TQBFCNF_iff`,
-  `Cslib.Complexity.TQBF.computableTidilyInPolyTime_prenexReduce`: the normal form is correct and
+  `Cslib.Complexity.TQBF.computableInPolyTime_prenexReduce`: the normal form is correct and
   polynomial-time.
 * `Cslib.Complexity.TQBFCNF_mem_PSPACE`, `Cslib.Complexity.TQBFCNF_pspaceHard`,
   `Cslib.Complexity.TQBFCNF_pspaceComplete`: `TQBFCNF` is `PSPACE`-complete.
@@ -86,11 +86,11 @@ variable {γ : Type} {encIn : γ ↪ List Bool}
 
 /-- Rounds of quantifiers are polynomial-time in the rounds and the body. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_rounds {ps : γ → List (ℕ × ℕ)} {φ : γ → QBF ℕ}
-    (hps : ComputableTidilyInPolyTime ps encIn (encList (encPair encNat encNat)))
-    (hφ : ComputableTidilyInPolyTime φ encIn encQBF) :
-    ComputableTidilyInPolyTime (fun x => QBF.rounds (ps x) (φ x)) encIn encQBF :=
-  computableTidilyInPolyTime_of_tokens
+theorem computableInPolyTime_rounds {ps : γ → List (ℕ × ℕ)} {φ : γ → QBF ℕ}
+    (hps : Turing.MultiTapeTM.ComputableInPolyTime ps encIn (encList (encPair encNat encNat)))
+    (hφ : Turing.MultiTapeTM.ComputableInPolyTime φ encIn encQBF) :
+    Turing.MultiTapeTM.ComputableInPolyTime (fun x => QBF.rounds (ps x) (φ x)) encIn encQBF :=
+  computableInPolyTime_of_tokens
     (l := fun x => (ps x).flatMap (fun p => [(QBF.Kind.ex, p.1), (QBF.Kind.all, p.2)]) ++
       (φ x).tokens) (by fun_prop) fun _ => QBF.tokens_rounds ..
 
@@ -238,10 +238,11 @@ theorem prenexReduce_mem_TQBFCNF_iff {kV : ℕ} {StateV : Type} [Fintype StateV]
   rfl
 
 /-- **The reduction of a game to `TQBFCNF` is polynomial-time.** -/
-theorem computableTidilyInPolyTime_prenexReduce {kV : ℕ} {StateV : Type} [Fintype StateV]
+theorem computableInPolyTime_prenexReduce {kV : ℕ} {StateV : Type} [Fintype StateV]
     [DecidableEq StateV] (tmV : MultiTapeTM kV Bool StateV) (cV dV : ℕ) :
-    ComputableTidilyInPolyTime (prenexReduce enc p tmV cV dV) enc encPrenexCNF := by
-  have htab := CookLevin.computableTidilyInPolyTime_tableau tmV
+    Turing.MultiTapeTM.ComputableInPolyTime (prenexReduce enc p tmV cV dV) enc encPrenexCNF := by
+  refine .of_tidy ?_
+  have htab := (CookLevin.computableInPolyTime_tableau tmV).tidy
   have hframe := bitsFrame enc
   have hp : ComputableTidilyInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
     (unary_eval p).comp (encoding_length enc)
@@ -252,7 +253,7 @@ theorem computableTidilyInPolyTime_prenexReduce {kV : ℕ} {StateV : Type} [Fint
   have hrelabel : ComputableTidilyInPolyTime (CNF.relabel (tabVar (k := kV) (State := StateV)))
       (encList (encList (encPair CookLevin.encVar encBool)))
       (encList (encList (encPair encNat encBool))) :=
-    (CNF.computableInPolyTime_relabel (.of_tidy computableTidilyInPolyTime_tabVar)).tidy
+    (CNF.computableInPolyTime_relabel computableInPolyTime_tabVar).tidy
   unfold prenexReduce gameTableau prenexPairs prenexMatrix gamePairs baseVars certLinkCNF
     encPrenexCNF encCNF
   fun_prop
@@ -279,7 +280,7 @@ theorem TQBFCNF_pspaceHard : PSPACEHard encPrenexCNF TQBFCNF := by
   have := Fintype.ofFinite StateV
   classical
   exact ⟨TQBF.prenexReduce enc p tmV cV dV,
-    .of_tidy (TQBF.computableTidilyInPolyTime_prenexReduce tmV cV dV),
+    (TQBF.computableInPolyTime_prenexReduce tmV cV dV),
     fun a => (h a).trans
       ((TQBF.gameReduce_mem_TQBF_iff (htmV.mono htV fun _ => le_rfl) a).symm.trans
         (TQBF.prenexReduce_mem_TQBFCNF_iff tmV cV dV a).symm)⟩

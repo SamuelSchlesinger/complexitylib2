@@ -78,24 +78,26 @@ theorem mem_SBP_iff_tidy : A ∈ SBP enc ↔
 
 /-- Replacing `(f, k)` by `(2f + 1, 2k + 1)` makes the threshold positive. -/
 theorem mem_SBP_iff_exists_pos_threshold : A ∈ SBP enc ↔
-    ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
+    ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧
       (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
-  rw [mem_SBP_iff_tidy]
-  constructor
-  · rintro ⟨f, hf, k, hk, hA⟩
-    refine ⟨f + f + 1, SharpP.add_mem (SharpP.add_mem hf hf) SharpP.one_mem,
-      fun a => k a + k a + 1, by fun_prop,
-      fun a => by positivity, fun a => ?_⟩
-    simp only [Pi.add_apply, Pi.one_apply]
+  have this : A ∈ SBP enc ↔ ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧ (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
+    rw [mem_SBP_iff_tidy]
     constructor
-    · intro ha
-      have := (hA a).1 ha
-      lia
-    · intro ha
-      have := (hA a).2 ha
-      lia
-  · rintro ⟨f, hf, k, hk, -, hA⟩
-    exact ⟨f, hf, k, hk, hA⟩
+    · rintro ⟨f, hf, k, hk, hA⟩
+      refine ⟨f + f + 1, SharpP.add_mem (SharpP.add_mem hf hf) SharpP.one_mem,
+        fun a => k a + k a + 1, by fun_prop,
+        fun a => by positivity, fun a => ?_⟩
+      simp only [Pi.add_apply, Pi.one_apply]
+      constructor
+      · intro ha
+        have := (hA a).1 ha
+        lia
+      · intro ha
+        have := (hA a).2 ha
+        lia
+    · rintro ⟨f, hf, k, hk, -, hA⟩
+      exact ⟨f, hf, k, hk, hA⟩
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-- Threshold one recognizes precisely the positive #P counts. -/
 theorem NP_subset_SBP : NP enc ⊆ SBP enc := by
@@ -132,7 +134,7 @@ theorem BPP_subset_SBP : BPP enc ⊆ SBP enc := by
 theorem SBP_subset_PP : SBP enc ⊆ PP enc := by
   rintro A ⟨f, hf, k, hk, hA⟩
   have hg := GapP.sub_mem' (SharpP.natCast_mem_GapP (SharpP.add_mem hf hf))
-    (SharpP.natCast_mem_GapP (mem_SharpP_of_polyTime hk.tidy))
+    (SharpP.natCast_mem_GapP (mem_SharpP_of_polyTime hk))
   refine mem_PP_iff_exists_GapP.mpr ⟨_, GapP.add_mem hg GapP.one_mem, fun a => ?_⟩
   change a ∈ A ↔ 0 < ((f a + f a : ℕ) : ℤ) - (k a : ℤ) + 1
   by_cases ha : a ∈ A
@@ -148,15 +150,15 @@ theorem PolyTimeReducible.mem_SBP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ SBP encB) : A ∈ SBP enc := by
   obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨f, hf, k, hk, hB⟩ := hB
-  exact ⟨f ∘ r, SharpP.comp_mem hf hr.tidy, k ∘ r, hk.comp hr, fun a => by
+  exact ⟨f ∘ r, SharpP.comp_mem hf hr, k ∘ r, hk.comp hr, fun a => by
     simpa only [Function.comp_apply, ← hAB a] using hB (r a)⟩
 
 /-- Normalize two positive thresholds by cross multiplication, then square and add the counts. -/
 theorem union_mem_SBP (hA : A ∈ SBP enc) (hB : B ∈ SBP enc) : A ∪ B ∈ SBP enc := by
   obtain ⟨f, hf, k, hk, hkpos, hA⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
   obtain ⟨g, hg, l, hl, hlpos, hB⟩ := mem_SBP_iff_exists_pos_threshold.mp hB
-  have hfl := SharpP.mul_mem hf (mem_SharpP_of_polyTime hl)
-  have hgk := SharpP.mul_mem hg (mem_SharpP_of_polyTime hk)
+  have hfl := SharpP.mul_mem hf (mem_SharpP_of_polyTime (.of_tidy hl))
+  have hgk := SharpP.mul_mem hg (mem_SharpP_of_polyTime (.of_tidy hk))
   refine ⟨_, SharpP.add_mem (SharpP.pow_mem hfl 2) (SharpP.pow_mem hgk 2),
     fun a => (k a * l a) ^ 2, by fun_prop, fun a => ?_⟩
   change (a ∈ A ∪ B → (k a * l a) ^ 2 ≤ (f a * l a) ^ 2 + (g a * k a) ^ 2) ∧
@@ -185,17 +187,19 @@ closure under input-dependent powers; see
 `Complexity/Computability/Complexity/Classes/SBP/Amplification.lean` for the uniform theorem.
 See [Watson, Section 1.1][Watson2012]. -/
 theorem exists_SBP_gap_pow (hA : A ∈ SBP enc) {m : ℕ} (hm : 0 < m) :
-    ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
+    ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧
       (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧
         (a ∉ A → 2 ^ m * f a < k a) := by
-  obtain ⟨f, hf, k, hk, hkpos, h⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
-  refine ⟨f ^ m, SharpP.pow_mem hf m, fun a => k a ^ m,
-    hk.binary_pow' (.const m), fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩
-  · intro ha
-    exact Nat.pow_le_pow_left ((h a).1 ha) m
-  · intro ha
-    simpa only [Pi.pow_apply, mul_pow] using
-      Nat.pow_lt_pow_left ((h a).2 ha) (Nat.ne_of_gt hm)
+  have this : ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧ (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 ^ m * f a < k a) := by
+    obtain ⟨f, hf, k, hk, hkpos, h⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
+    refine ⟨f ^ m, SharpP.pow_mem hf m, fun a => k a ^ m,
+      hk.binary_pow' (.const m), fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩
+    · intro ha
+      exact Nat.pow_le_pow_left ((h a).1 ha) m
+    · intro ha
+      simpa only [Pi.pow_apply, mul_pow] using
+        Nat.pow_lt_pow_left ((h a).2 ha) (Nat.ne_of_gt hm)
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-- Intersecting an SBP language with a BPP language preserves SBP.
 Square the SBP gap, amplify BPP beyond the exponential bound on that count,

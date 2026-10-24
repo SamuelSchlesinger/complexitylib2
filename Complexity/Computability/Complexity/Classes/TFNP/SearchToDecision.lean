@@ -260,7 +260,7 @@ def searchRel (φ : Logic.PL.CNF ℕ) (w : List Bool) : Prop :=
 
 /-- The search problem of `SAT` is in `FNP`. -/
 theorem searchRel_mem_FNP : searchRel ∈ FNP encCNF :=
-  mem_FNP_iff_exists_bounded.2 ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier,
+  mem_FNP_iff_exists_bounded.2 ⟨Polynomial.X, verifier, computableInPolyTime_verifier.tidy,
     fun _ _ => by simp [searchRel]⟩
 
 /-- The formulas with a solution in `SAT.searchRel` are the satisfiable ones. -/
@@ -276,7 +276,7 @@ theorem searchRel_mem_FPSearch_iff : searchRel ∈ FPSearch encCNF ↔ SAT ∈ P
   refine ⟨fun h => searchDomain_searchRel ▸ searchDomain_mem_P h, fun h => ?_⟩
   obtain ⟨D, hD, hSAT⟩ := mem_P_iff_tidy.mp h
   have hsearch : ComputableTidilyInPolyTime (search D) encCNF encBits :=
-    computableTidilyInPolyTime_search (D := fun _ => D) (hD.comp (snd _ _)) id'
+    (computableInPolyTime_search (D := fun _ => D) (.of_tidy (hD.comp (snd _ _))) (.of_tidy id')).tidy
   refine mem_FPSearch_iff_tidy.mpr
     ⟨searchRel_mem_FNP, fun φ => if D φ then some (search D φ) else none,
       cond hD ((optionSome encBits).comp hsearch) (const none), fun φ => ⟨fun w hw => ?_, ?_⟩⟩

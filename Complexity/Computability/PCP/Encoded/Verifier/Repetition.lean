@@ -132,13 +132,15 @@ theorem query_repeatedEdgeVerifier_lt (width repeats : ℕ)
   obtain ⟨i, _, hi⟩ := List.mem_flatMap.mp hindex
   exact query_edgeVerifier_lt width decode eval hg _ hi
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Repetition charges construction of every query, every extracted bit block, and every verdict. -/
 theorem polyTime_repeatedEdgeVerifier (width repeats : ℕ) (decode : (Fin width → Bool) → α)
     {enc : C ↪ List Bool} {alphabet : α ↪ List Bool} {eval : C → α → α → Bool}
-    (heval : ComputableTidilyInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
+    (heval : ComputableInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool) :
     (repeatedEdgeVerifier width repeats decode eval).PolyTime (encoding enc) := by
-  obtain ⟨_, hqueries, hverdict⟩ := polyTime_edgeVerifier width decode heval
+  have heval := heval.tidy
+  obtain ⟨_, hqueries, hverdict⟩ := polyTime_edgeVerifier width decode (.of_tidy heval)
   have hqueries := hqueries.tidy
   have hverdict := hverdict.tidy
   refine ⟨.of_tidy ?_, .of_tidy ?_, .of_tidy ?_⟩

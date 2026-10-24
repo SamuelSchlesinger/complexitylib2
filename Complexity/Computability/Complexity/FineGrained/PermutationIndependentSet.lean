@@ -364,7 +364,7 @@ for some $\delta > 0$, `ThreeColoring` is not decidable within time $2^{\delta |
 polynomial in the length of the encoded graph, for graphs with $|V|$ declared vertices. -/
 theorem ETH.not_decidableInSubexpTime_ThreeColoring_vertices (h : ETH) :
     ¬DecidableInSubexpTime ThreeColoring encGraph fun G => G.1.length :=
-  h.not_decidableInSubexpTime_of_reduction SAT.computableTidilyInPolyTime_toThreeColoring
+  h.not_decidableInSubexpTime_of_reduction SAT.computableInPolyTime_toThreeColoring.tidy
     (fun φ _ => SAT.toThreeColoring_mem_iff φ) (k := 93) fun φ hφ => by
       have := SAT.length_toThreeColoring_le hφ
       nlinarith
@@ -859,7 +859,7 @@ private theorem computableTidilyInPolyTime_adjBoolWithInput
     (hu : ComputableTidilyInPolyTime u encIn encNat)
     (hv : ComputableTidilyInPolyTime v encIn encNat) :
     ComputableTidilyInPolyTime (fun x => (G x).adjBool (u x) (v x)) encIn encBool :=
-  Graph.computableTidilyInPolyTime_adjBool.comp ((hG.prod hu).prod hv)
+  Graph.computableInPolyTime_adjBool.tidy.comp ((hG.prod hu).prod hv)
 
 @[fun_prop]
 private theorem computableTidilyInPolyTime_unary_div'
@@ -1308,7 +1308,7 @@ theorem decidableInExpTime_ThreeColoring_of_bpis {M : ℕ} (hM : 0 < M) {δ : �
   set E := dn + di + 2 * d + 2 * da + d_nd * e + 4
   set C₂ : ℝ := c * 2 ^ (5 * δ) * ((c_nd : ℝ) + 1) ^ e + c + 1
   set C₀ : ℝ := 3 + C₃ + (2 ^ K_M + 1 : ℝ) * (C₁ + C₂)
-  refine .of_computableTidilyInO hsearch
+  refine DecidableInExpTime.of_computableInO hsearch
     (fun H => (search_eq_true_iff (fun G => (hgB G).symm) H).symm) ⌈C₀⌉₊ E fun H => ?_
   set L := (encGraph H).length
   set N := H.1.length

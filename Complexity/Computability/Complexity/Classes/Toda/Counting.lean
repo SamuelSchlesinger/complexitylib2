@@ -145,16 +145,16 @@ def subsetTest (acc : List Bool → Bool) (K Z k : ℕ) (zs : List Bool) : Bool 
       BitString.wordLt (BitString.listRow Z i zs) (BitString.listRow Z (i + 1) zs)
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_subsetTest {γ : Type} {input : γ ↪ List Bool}
+theorem computableInPolyTime_subsetTest {γ : Type} {input : γ ↪ List Bool}
     {acc : γ → List Bool → Bool}
-    (hacc : ComputableTidilyInPolyTime (fun p : γ × List Bool => acc p.1 p.2)
+    (hacc : ComputableInPolyTime (fun p : γ × List Bool => acc p.1 p.2)
       (encPair input encBits) encBool)
     {K Z k : γ → ℕ} {zs : γ → List Bool}
-    (hK : ComputableTidilyInPolyTime K input encUnary)
-    (hZ : ComputableTidilyInPolyTime Z input encUnary)
-    (hk : ComputableTidilyInPolyTime k input encUnary)
-    (hzs : ComputableTidilyInPolyTime zs input encBits) :
-    ComputableTidilyInPolyTime (fun c => subsetTest (acc c) (K c) (Z c) (k c) (zs c)) input
+    (hK : ComputableInPolyTime K input encUnary)
+    (hZ : ComputableInPolyTime Z input encUnary)
+    (hk : ComputableInPolyTime k input encUnary)
+    (hzs : ComputableInPolyTime zs input encBits) :
+    ComputableInPolyTime (fun c => subsetTest (acc c) (K c) (Z c) (k c) (zs c)) input
       encBool := by
   unfold subsetTest
   fun_prop
@@ -260,11 +260,11 @@ def unaryTest (K : ℕ) (kb : List Bool) : Bool :=
     kb == List.replicate (kb.count true) true ++ List.replicate (K - kb.count true) false
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_unaryTest {γ : Type} {input : γ ↪ List Bool}
+theorem computableInPolyTime_unaryTest {γ : Type} {input : γ ↪ List Bool}
     {K : γ → ℕ} {kb : γ → List Bool}
-    (hK : ComputableTidilyInPolyTime K input encUnary)
-    (hkb : ComputableTidilyInPolyTime kb input encBits) :
-    ComputableTidilyInPolyTime (fun c => unaryTest (K c) (kb c)) input encBool := by
+    (hK : ComputableInPolyTime K input encUnary)
+    (hkb : ComputableInPolyTime kb input encBits) :
+    ComputableInPolyTime (fun c => unaryTest (K c) (kb c)) input encBool := by
   unfold unaryTest
   fun_prop
 
@@ -310,12 +310,12 @@ def coeffTest (K k : ℕ) (cb : List Bool) : Bool :=
   else (cb.take (K + 1 - k)).any fun b => b
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_coeffTest {γ : Type} {input : γ ↪ List Bool}
+theorem computableInPolyTime_coeffTest {γ : Type} {input : γ ↪ List Bool}
     {K k : γ → ℕ} {cb : γ → List Bool}
-    (hK : ComputableTidilyInPolyTime K input encUnary)
-    (hk : ComputableTidilyInPolyTime k input encUnary)
-    (hcb : ComputableTidilyInPolyTime cb input encBits) :
-    ComputableTidilyInPolyTime (fun c => coeffTest (K c) (k c) (cb c)) input encBool := by
+    (hK : ComputableInPolyTime K input encUnary)
+    (hk : ComputableInPolyTime k input encUnary)
+    (hcb : ComputableInPolyTime cb input encBits) :
+    ComputableInPolyTime (fun c => coeffTest (K c) (k c) (cb c)) input encBool := by
   unfold coeffTest
   fun_prop
 
@@ -522,15 +522,15 @@ theorem testBit_card_filter_sharpTest (accept : List Bool → List Bool → Bool
 variable {α : Type} {enc : α ↪ List Bool} {γ : Type} {input : γ ↪ List Bool}
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_countingTest {V : (α × List Bool) × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair (encPair enc encBits) encBits) encBool)
+theorem computableInPolyTime_countingTest {V : (α × List Bool) × List Bool → Bool}
+    (hV : ComputableInPolyTime V (encPair (encPair enc encBits) encBits) encBool)
     {a : γ → α} {K R Z : γ → ℕ} {w : γ → List Bool}
-    (ha : ComputableTidilyInPolyTime a input enc)
-    (hK : ComputableTidilyInPolyTime K input encUnary)
-    (hR : ComputableTidilyInPolyTime R input encUnary)
-    (hZ : ComputableTidilyInPolyTime Z input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encBits) :
-    ComputableTidilyInPolyTime (fun c => countingTest (fun r z => V ((a c, r), z)) (K c) (R c)
+    (ha : ComputableInPolyTime a input enc)
+    (hK : ComputableInPolyTime K input encUnary)
+    (hR : ComputableInPolyTime R input encUnary)
+    (hZ : ComputableInPolyTime Z input encUnary)
+    (hw : ComputableInPolyTime w input encBits) :
+    ComputableInPolyTime (fun c => countingTest (fun r z => V ((a c, r), z)) (K c) (R c)
       (Z c) (w c)) input encBool := by
   unfold countingTest
   fun_prop

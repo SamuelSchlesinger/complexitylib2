@@ -20,7 +20,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Op
 # Ladner's language in polynomial time and in NP
 
 The exponent function `Cslib.Complexity.Ladner.H` of Ladner's language is tidily computable in
-polynomial time on unary numbers (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_H`), and
+polynomial time on unary numbers (`Cslib.Complexity.Ladner.computableInPolyTime_H`), and
 Ladner's language is in `NP` (`Cslib.Complexity.Ladner.SATH_mem_NP`), with a verifier that reads
 the padded formula and evaluates it under the assignment the certificate describes.
 
@@ -36,9 +36,9 @@ value is polynomial in `n`, and the polynomial-time calculus certifies the compo
 The certificate rests on general tools: a total decoder for formulas
 (`Cslib.Complexity.cnfDecoder`, built from `Turing.MultiTapeTM.Decoder.nat` and
 `Turing.MultiTapeTM.Decoder.bool`), capped powers on unary numbers
-(`Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`), the universal function with its
+(`Cslib.Complexity.Ladner.computableInPolyTime_capPow`), the universal function with its
 number of steps in unary (`Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`), and
-the words by index (`Cslib.Complexity.Ladner.computableTidilyInPolyTime_word`). Decoding machine
+the words by index (`Cslib.Complexity.Ladner.computableInPolyTime_word`). Decoding machine
 descriptions and coding their input bits use the shared polynomial-time rules in
 `Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime`.
 
@@ -53,12 +53,12 @@ descriptions and coding their input bits use the shared polynomial-time rules in
 
 ## Main results
 
-* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_capPow`: capped powers in unary.
+* `Cslib.Complexity.Ladner.computableInPolyTime_capPow`: capped powers in unary.
 * `Cslib.Complexity.Ladner.mem_padSAT_iff`: membership in a padded language through `padCheck`.
-* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_padCheck`: `padCheck` is polynomial-time for a
+* `Cslib.Complexity.Ladner.computableInPolyTime_padCheck`: `padCheck` is polynomial-time for a
   polynomial-time exponent function.
 * `Cslib.Complexity.Ladner.hstepB_eq`: the search computes the step.
-* `Cslib.Complexity.Ladner.computableTidilyInPolyTime_H`: `H` is polynomial-time.
+* `Cslib.Complexity.Ladner.computableInPolyTime_H`: `H` is polynomial-time.
 * `Cslib.Complexity.Ladner.SATH_mem_NP`: Ladner's language is in `NP`.
 
 ## References
@@ -83,10 +83,10 @@ theorem decodeCNF_encCNF (φ : CNF ℕ) : decodeCNF (encCNF φ) = φ :=
   Complexity.cnfDecoder.decode_enc φ
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_decodeCNF :
-    ComputableTidilyInPolyTime decodeCNF encBits encCNF :=
-  let ⟨_, _, h⟩ := Complexity.cnfDecoder.computable
-  h.computableTidilyInPolyTime
+theorem computableInPolyTime_decodeCNF :
+    ComputableInPolyTime decodeCNF encBits encCNF :=
+  .of_tidy (let ⟨_, _, h⟩ := Complexity.cnfDecoder.computable
+  h.computableTidilyInPolyTime)
 
 /-! ### Capped powers -/
 
@@ -127,18 +127,21 @@ private theorem computableTidilyInPolyTime_capPow_pair :
   simpa only [iterate_min_mul, one_mul, capPow] using h
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_capPow {α : Type} {input : α ↪ List Bool}
-    {base exp cap : α → ℕ} (hbase : ComputableTidilyInPolyTime base input encUnary)
-    (hexp : ComputableTidilyInPolyTime exp input encUnary)
-    (hcap : ComputableTidilyInPolyTime cap input encUnary) :
-    ComputableTidilyInPolyTime (fun x => capPow (base x) (exp x) (cap x)) input encUnary :=
-  computableTidilyInPolyTime_capPow_pair.comp (hbase.prod (hexp.prod hcap))
+theorem computableInPolyTime_capPow {α : Type} {input : α ↪ List Bool}
+    {base exp cap : α → ℕ} (hbase : ComputableInPolyTime base input encUnary)
+    (hexp : ComputableInPolyTime exp input encUnary)
+    (hcap : ComputableInPolyTime cap input encUnary) :
+    ComputableInPolyTime (fun x => capPow (base x) (exp x) (cap x)) input encUnary := by
+  have hbase := hbase.tidy
+  have hexp := hexp.tidy
+  have hcap := hcap.tidy
+  exact .of_tidy (computableTidilyInPolyTime_capPow_pair.comp (hbase.prod (hexp.prod hcap)))
 
 /-! ### Words by index -/
 
 /-- The word with a given index is polynomial-time in the index in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_word : ComputableTidilyInPolyTime word encUnary encBits := by
+theorem computableInPolyTime_word : ComputableInPolyTime word encUnary encBits := by
   have h : word = fun j => (encNat (j + 1)).take ((encNat (j + 1)).length - 1) := by
     funext j
     simp [word, encNat_apply, List.dropLast_eq_take]
@@ -201,8 +204,9 @@ private theorem computableTidilyInPolyTime_idxOf_false_reverse :
 
 /-- Splitting a padded word is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_unpad :
-    ComputableTidilyInPolyTime unpad encBits (encPair encBits encUnary) := by
+theorem computableInPolyTime_unpad :
+    ComputableInPolyTime unpad encBits (encPair encBits encUnary) := by
+  refine .of_tidy ?_
   have hk := computableTidilyInPolyTime_idxOf_false_reverse
   unfold unpad
   fun_prop
@@ -218,12 +222,15 @@ private theorem computableTidilyInPolyTime_padCheckAt :
 /-- Reading the formula padded along a computed exponent function is polynomial-time. The
 exponent function may capture the input. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_padCheck {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_padCheck {α : Type} {input : α ↪ List Bool}
     {e : α → ℕ → ℕ} {y : α → List Bool}
-    (he : ComputableTidilyInPolyTime (fun p : α × ℕ => e p.1 p.2) (encPair input encUnary)
+    (he : ComputableInPolyTime (fun p : α × ℕ => e p.1 p.2) (encPair input encUnary)
       encUnary)
-    (hy : ComputableTidilyInPolyTime y input encBits) :
-    ComputableTidilyInPolyTime (fun x => padCheck (e x) (y x)) input (encOption encCNF) := by
+    (hy : ComputableInPolyTime y input encBits) :
+    ComputableInPolyTime (fun x => padCheck (e x) (y x)) input (encOption encCNF) := by
+  have he := he.tidy
+  have hy := hy.tidy
+  refine .of_tidy ?_
   have h := computableTidilyInPolyTime_padCheckAt
   unfold padCheck
   fun_prop
@@ -249,10 +256,10 @@ theorem bruteSAT_iff {n : ℕ} {φ : CNF ℕ} (h : 2 ^ ((encCNF φ).length + 1) 
     exact List.any_eq_true.mpr ⟨index w, List.mem_range.mpr (by omega), by rwa [word_index]⟩
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_bruteSAT {α : Type} {input : α ↪ List Bool}
-    {n : α → ℕ} {φ : α → CNF ℕ} (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hφ : ComputableTidilyInPolyTime φ input encCNF) :
-    ComputableTidilyInPolyTime (fun x => bruteSAT (n x) (φ x)) input encBool := by
+theorem computableInPolyTime_bruteSAT {α : Type} {input : α ↪ List Bool}
+    {n : α → ℕ} {φ : α → CNF ℕ} (hn : ComputableInPolyTime n input encUnary)
+    (hφ : ComputableInPolyTime φ input encCNF) :
+    ComputableInPolyTime (fun x => bruteSAT (n x) (φ x)) input encBool := by
   unfold bruteSAT
   fun_prop
 
@@ -335,12 +342,12 @@ theorem hstepB_eq (T : List ℕ) : hstepB T = Hstep T := by
 
 /-- The run of an indexed machine, with the number of steps in unary, is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_runIndexed {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_runIndexed {α : Type} {input : α ↪ List Bool}
     {i : α → ℕ} {w : α → List Bool} {t : α → ℕ}
-    (hi : ComputableTidilyInPolyTime i input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encBits)
-    (ht : ComputableTidilyInPolyTime t input encUnary) :
-    ComputableTidilyInPolyTime (fun x => runIndexed (i x) (w x) (t x)) input eOut := by
+    (hi : ComputableInPolyTime i input encUnary)
+    (hw : ComputableInPolyTime w input encBits)
+    (ht : ComputableInPolyTime t input encUnary) :
+    ComputableInPolyTime (fun x => runIndexed (i x) (w x) (t x)) input eOut := by
   unfold runIndexed
   fun_prop
 
@@ -376,8 +383,9 @@ theorem Htable_eq_iterate (n : ℕ) : Htable n = (fun T => T ++ [hstepB T])^[n] 
   | succ n ih => rw [Htable, Function.iterate_succ_apply', ← ih, hstepB_eq]
 
 /-- The tables of `H` are polynomial-time in their length, in unary. -/
-theorem computableTidilyInPolyTime_Htable :
-    ComputableTidilyInPolyTime Htable encUnary (encList encUnary) := by
+theorem computableInPolyTime_Htable :
+    ComputableInPolyTime Htable encUnary (encList encUnary) := by
+  refine .of_tidy ?_
   have hs := computableTidilyInPolyTime_hstepB
   have h := iterate (encIn := encUnary) (encState := encList encUnary) (count := fun n => n)
     (init := fun _ => []) (step := fun T => T ++ [hstepB T]) (by fun_prop) (by fun_prop)
@@ -395,8 +403,9 @@ theorem computableTidilyInPolyTime_Htable :
 
 /-- **`H` is polynomial-time** on unary numbers. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_H : ComputableTidilyInPolyTime H encUnary encUnary := by
-  have h := computableTidilyInPolyTime_hstepB.comp computableTidilyInPolyTime_Htable
+theorem computableInPolyTime_H : ComputableInPolyTime H encUnary encUnary := by
+  refine .of_tidy ?_
+  have h := computableTidilyInPolyTime_hstepB.comp computableInPolyTime_Htable.tidy
   have heq : hstepB ∘ Htable = H := funext fun n => hstepB_eq _
   rwa [heq] at h
 
@@ -411,7 +420,7 @@ private theorem computableTidilyInPolyTime_verifier :
     ComputableTidilyInPolyTime verifier (encPair encBits encBits) encBool := by
   have hH : ComputableTidilyInPolyTime (fun p : (List Bool × List Bool) × ℕ => H p.2)
       (encPair (encPair encBits encBits) encUnary) encUnary :=
-    computableTidilyInPolyTime_H.comp (snd _ _)
+    computableInPolyTime_H.tidy.comp (snd _ _)
   unfold verifier
   fun_prop
 

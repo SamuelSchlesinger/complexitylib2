@@ -44,7 +44,7 @@ machine within time `F (κA a) * (L + 1) ^ c` (`Cslib.Complexity.ComputableInFPT
 (`Cslib.Complexity.computableInFPTTime_iff_computableTidilyInFPTTime`), and proofs that compose
 reductions use it through `Cslib.Complexity.fptReducible_iff_tidy`. Polynomial-time
 reductions with a parameter bound are fpt-reductions
-(`Cslib.Complexity.FPTReducible.of_computableTidilyInPolyTime`). `FPT` and `XP` are closed under
+(`Cslib.Complexity.FPTReducible.of_computableInPolyTime`). `FPT` and `XP` are closed under
 fpt-reductions. As for `FPT`, the functions `F` and `h` are arbitrary, where the cited
 definitions require them to be computable.
 
@@ -412,53 +412,57 @@ private theorem decidableInTimeO_natCast_iff {A : Set α} {T : α → ℕ} :
       exact_mod_cast this
     exact ⟨g, hg.mono k ht' ht', hA⟩
   · rintro ⟨g, hg, hA⟩
-    exact DecidableInTimeO.of_computableTidilyInO hg hA fun _ => le_rfl
+    exact DecidableInTimeO.of_computableInO hg hA fun _ => le_rfl
 
 /-- **`FPT` in terms of fpt-time computability**: a problem is fixed-parameter tractable exactly
 when a Boolean function deciding it is tidily computable in fpt time. -/
-theorem mem_FPT_iff_computableTidilyInFPTTime {A : Set α} :
+theorem mem_FPT_iff_computableInFPTTime {A : Set α} :
     A ∈ FPT encA κ ↔
-      ∃ g : α → Bool, ComputableTidilyInFPTTime g encA encBool κ ∧ ∀ a, a ∈ A ↔ g a = true := by
-  have e : ∀ (f : ℕ → ℕ) (c : ℕ), (fun a => (f (κ a) : ℝ) * ((encA a).length + 1) ^ c) =
-      fun a => ((f (κ a) * ((encA a).length + 1) ^ c : ℕ) : ℝ) := fun f c => by
-    funext a
-    push_cast
-    rfl
-  constructor
-  · rintro ⟨f, c, h⟩
-    rw [e, decidableInTimeO_natCast_iff] at h
-    obtain ⟨g, hg, hA⟩ := h
-    exact ⟨g, ⟨f, c, hg⟩, hA⟩
-  · rintro ⟨g, ⟨f, c, hg⟩, hA⟩
-    refine ⟨f, c, ?_⟩
-    rw [e, decidableInTimeO_natCast_iff]
-    exact ⟨g, hg, hA⟩
+      ∃ g : α → Bool, ComputableInFPTTime g encA encBool κ ∧ ∀ a, a ∈ A ↔ g a = true := by
+  have this : A ∈ FPT encA κ ↔ ∃ g : α → Bool, ComputableTidilyInFPTTime g encA encBool κ ∧ ∀ a, a ∈ A ↔ g a = true := by
+    have e : ∀ (f : ℕ → ℕ) (c : ℕ), (fun a => (f (κ a) : ℝ) * ((encA a).length + 1) ^ c) =
+        fun a => ((f (κ a) * ((encA a).length + 1) ^ c : ℕ) : ℝ) := fun f c => by
+      funext a
+      push_cast
+      rfl
+    constructor
+    · rintro ⟨f, c, h⟩
+      rw [e, decidableInTimeO_natCast_iff] at h
+      obtain ⟨g, hg, hA⟩ := h
+      exact ⟨g, ⟨f, c, hg⟩, hA⟩
+    · rintro ⟨g, ⟨f, c, hg⟩, hA⟩
+      refine ⟨f, c, ?_⟩
+      rw [e, decidableInTimeO_natCast_iff]
+      exact ⟨g, hg, hA⟩
+  simpa only [computableInFPTTime_iff_computableTidilyInFPTTime] using this
 
 /-- **`XP` in terms of tidy computability.** -/
-theorem mem_XP_iff_exists_computableTidilyInO {A : Set α} :
-    A ∈ XP encA κ ↔ ∃ (g : α → Bool) (f e : ℕ → ℕ), ComputableTidilyInO g encA encBool
+theorem mem_XP_iff_exists_computableInO {A : Set α} :
+    A ∈ XP encA κ ↔ ∃ (g : α → Bool) (f e : ℕ → ℕ), ComputableInO g encA encBool
       (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a))
       (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) ∧ ∀ a, a ∈ A ↔ g a = true := by
-  have h : ∀ f e : ℕ → ℕ, (fun a => (f (κ a) : ℝ) * ((encA a).length + 1) ^ e (κ a)) =
-      fun a => ((f (κ a) * ((encA a).length + 1) ^ e (κ a) : ℕ) : ℝ) := fun f e => by
-    funext a
-    push_cast
-    rfl
-  constructor
-  · rintro ⟨f, e, hA⟩
-    rw [h, decidableInTimeO_natCast_iff] at hA
-    obtain ⟨g, hg, hA⟩ := hA
-    exact ⟨g, f, e, hg, hA⟩
-  · rintro ⟨g, f, e, hg, hA⟩
-    refine ⟨f, e, ?_⟩
-    rw [h, decidableInTimeO_natCast_iff]
-    exact ⟨g, hg, hA⟩
+  have this : A ∈ XP encA κ ↔ ∃ (g : α → Bool) (f e : ℕ → ℕ), ComputableTidilyInO g encA encBool (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) ∧ ∀ a, a ∈ A ↔ g a = true := by
+    have h : ∀ f e : ℕ → ℕ, (fun a => (f (κ a) : ℝ) * ((encA a).length + 1) ^ e (κ a)) =
+        fun a => ((f (κ a) * ((encA a).length + 1) ^ e (κ a) : ℕ) : ℝ) := fun f e => by
+      funext a
+      push_cast
+      rfl
+    constructor
+    · rintro ⟨f, e, hA⟩
+      rw [h, decidableInTimeO_natCast_iff] at hA
+      obtain ⟨g, hg, hA⟩ := hA
+      exact ⟨g, f, e, hg, hA⟩
+    · rintro ⟨g, f, e, hg, hA⟩
+      refine ⟨f, e, ?_⟩
+      rw [h, decidableInTimeO_natCast_iff]
+      exact ⟨g, hg, hA⟩
+  simpa only [computableInO_iff_computableTidilyInO] using this
 
 /-- **Bounded parameters.** For a parameter bounded by a constant, `FPT` is `P`. -/
 theorem FPT_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : FPT encA κ = P encA := by
   refine subset_antisymm (fun A hA => ?_) P_subset_FPT
   obtain ⟨g, ⟨f, c, hg⟩, hA⟩ :=
-    mem_FPT_iff_computableTidilyInFPTTime.mp (FPT_subset_FPT_of_le_comp (κ' := fun _ => 0)
+    mem_FPT_iff_computableInFPTTime.mp (FPT_subset_FPT_of_le_comp (κ' := fun _ => 0)
       (h := fun _ => K) hκ hA)
   exact ⟨g, .of_tidy <| hg.computableTidilyInPolyTime (.of_forall_le (f 0) c fun _ => le_rfl)
     (.of_forall_le (f 0) c fun _ => le_rfl), hA⟩
@@ -467,7 +471,7 @@ theorem FPT_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : FPT encA κ = P enc
 theorem XP_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : XP encA κ = P encA := by
   refine subset_antisymm (fun A hA => ?_) P_subset_XP
   obtain ⟨g, f, e, hg, hA⟩ :=
-    mem_XP_iff_exists_computableTidilyInO.mp (XP_subset_XP_of_le_comp (κ' := fun _ => 0)
+    mem_XP_iff_exists_computableInO.mp (XP_subset_XP_of_le_comp (κ' := fun _ => 0)
       (h := fun _ => K) hκ hA)
   exact ⟨g, .of_tidy <| hg.computableTidilyInPolyTime (.of_forall_le (f 0) (e 0) fun _ => le_rfl)
     (.of_forall_le (f 0) (e 0) fun _ => le_rfl), hA⟩
@@ -476,8 +480,8 @@ theorem XP_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : XP encA κ = P encA 
 
 /-- **`FPT` is closed under complement.** -/
 theorem compl_mem_FPT {A : Set α} (hA : A ∈ FPT encA κ) : Aᶜ ∈ FPT encA κ := by
-  obtain ⟨g, hg, hA⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hA
-  refine mem_FPT_iff_computableTidilyInFPTTime.mpr ⟨_, hg.ite
+  obtain ⟨g, hg, hA⟩ := mem_FPT_iff_computableInFPTTime.mp hA
+  refine mem_FPT_iff_computableInFPTTime.mpr ⟨_, hg.ite
     ((ComputableTidilyInPolyTime.const false).computableTidilyInFPTTime κ)
     ((ComputableTidilyInPolyTime.const true).computableTidilyInFPTTime κ), fun a => ?_⟩
   simp only [Set.mem_compl_iff, hA]
@@ -486,9 +490,9 @@ theorem compl_mem_FPT {A : Set α} (hA : A ∈ FPT encA κ) : Aᶜ ∈ FPT encA 
 /-- **`FPT` is closed under intersection.** -/
 theorem inter_mem_FPT {A B : Set α} (hA : A ∈ FPT encA κ) (hB : B ∈ FPT encA κ) :
     A ∩ B ∈ FPT encA κ := by
-  obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hA
-  obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hB
-  refine mem_FPT_iff_computableTidilyInFPTTime.mpr ⟨_, hg₁.ite hg₂
+  obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableInFPTTime.mp hA
+  obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableInFPTTime.mp hB
+  refine mem_FPT_iff_computableInFPTTime.mpr ⟨_, hg₁.ite hg₂
     ((ComputableTidilyInPolyTime.const false).computableTidilyInFPTTime κ), fun a => ?_⟩
   simp only [Set.mem_inter_iff, hA, hB]
   cases g₁ a <;> simp
@@ -496,19 +500,19 @@ theorem inter_mem_FPT {A B : Set α} (hA : A ∈ FPT encA κ) (hB : B ∈ FPT en
 /-- **`FPT` is closed under union.** -/
 theorem union_mem_FPT {A B : Set α} (hA : A ∈ FPT encA κ) (hB : B ∈ FPT encA κ) :
     A ∪ B ∈ FPT encA κ := by
-  obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hA
-  obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableTidilyInFPTTime.mp hB
-  refine mem_FPT_iff_computableTidilyInFPTTime.mpr ⟨_, hg₁.ite
+  obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableInFPTTime.mp hA
+  obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableInFPTTime.mp hB
+  refine mem_FPT_iff_computableInFPTTime.mpr ⟨_, hg₁.ite
     ((ComputableTidilyInPolyTime.const true).computableTidilyInFPTTime κ) hg₂, fun a => ?_⟩
   simp only [Set.mem_union, hA, hB]
   cases g₁ a <;> simp
 
 /-- **`XP` is closed under complement.** -/
 theorem compl_mem_XP {A : Set α} (hA : A ∈ XP encA κ) : Aᶜ ∈ XP encA κ := by
-  obtain ⟨g, f, e, hg, hA⟩ := mem_XP_iff_exists_computableTidilyInO.mp hA
+  obtain ⟨g, f, e, hg, hA⟩ := mem_XP_iff_exists_computableInO.mp hA
   have h := hg.ite (ComputableTidilyInO.const (encMid := encBool) false)
     (ComputableTidilyInO.const (encMid := encBool) true)
-  refine mem_XP_iff_exists_computableTidilyInO.mpr ⟨_, fun k => f k + 1, fun k => e k + 1,
+  refine mem_XP_iff_exists_computableInO.mpr ⟨_, fun k => f k + 1, fun k => e k + 1,
     h.mono_le (fun a => ?_) (fun a => ?_), fun a => ?_⟩
   rotate_left 2
   · simp only [Set.mem_compl_iff, hA]
@@ -571,10 +575,11 @@ theorem fptReducible_iff_tidy :
   rfl
 
 /-- **Polynomial-time reductions bounding the parameter are fpt-reductions.** -/
-theorem FPTReducible.of_computableTidilyInPolyTime {f : α → β}
-    (hf : ComputableTidilyInPolyTime f encA encB) {h : ℕ → ℕ} (hκ : ∀ a, κB (f a) ≤ h (κA a))
-    (hfA : ∀ a, a ∈ A ↔ f a ∈ B) : FPTReducible encA encB κA κB A B :=
-  ⟨f, ⟨(hf.computableTidilyInFPTTime κA).computableInFPTTime, h, hκ⟩, hfA⟩
+theorem FPTReducible.of_computableInPolyTime {f : α → β}
+    (hf : ComputableInPolyTime f encA encB) {h : ℕ → ℕ} (hκ : ∀ a, κB (f a) ≤ h (κA a))
+    (hfA : ∀ a, a ∈ A ↔ f a ∈ B) : FPTReducible encA encB κA κB A B := by
+  have hf := hf.tidy
+  exact ⟨f, ⟨(hf.computableTidilyInFPTTime κA).computableInFPTTime, h, hκ⟩, hfA⟩
 
 /-- Every parameterized problem reduces to itself by the identity. -/
 @[refl]
@@ -602,20 +607,20 @@ theorem FPTReducible.compl (h : FPTReducible encA encB κA κB A B) :
 /-- **`FPT` is closed under fpt-reductions.** -/
 theorem FPTReducible.mem_FPT (hAB : FPTReducible encA encB κA κB A B) (hB : B ∈ FPT encB κB) :
     A ∈ FPT encA κA :=
-  mem_FPT_iff_computableTidilyInFPTTime.mpr
+  mem_FPT_iff_computableInFPTTime.mpr
     (ManyOneReducibleBy.trans (C := {true}) (fun _ _ ⟨hf, _, hκ⟩ hg => hg.comp hf.tidy hκ)
-      hAB (mem_FPT_iff_computableTidilyInFPTTime.mp hB))
+      hAB (mem_FPT_iff_computableInFPTTime.mp hB))
 
 /-- **`XP` is closed under fpt-reductions.** -/
 theorem FPTReducible.mem_XP (hAB : FPTReducible encA encB κA κB A B) (hB : B ∈ XP encB κB) :
     A ∈ XP encA κA := by
   obtain ⟨f, ⟨⟨F₁, c₁, hf⟩, h, hκ⟩, hAB⟩ := fptReducible_iff_tidy.mp hAB
-  obtain ⟨g, F₂, e₂, hg, hB⟩ := mem_XP_iff_exists_computableTidilyInO.mp hB
+  obtain ⟨g, F₂, e₂, hg, hB⟩ := mem_XP_iff_exists_computableInO.mp hB
   obtain ⟨l, hgf⟩ := computableTidilyInO_comp
     (F₂' := fun k => ∑ j ∈ Finset.range (h k + 1), F₂ j)
     (E := fun k => ∑ j ∈ Finset.range (h k + 1), e₂ j) hg hf
     (fun a => le_sum_range_succ (hκ a)) fun a => le_sum_range_succ (hκ a)
-  exact mem_XP_iff_exists_computableTidilyInO.mpr ⟨g ∘ f,
+  exact mem_XP_iff_exists_computableInO.mpr ⟨g ∘ f,
     fun k => F₁ k + (∑ j ∈ Finset.range (h k + 1), F₂ j) *
       ((l + 1) * (F₁ k + 1)) ^ ∑ j ∈ Finset.range (h k + 1), e₂ j,
     fun k => c₁ + c₁ * ∑ j ∈ Finset.range (h k + 1), e₂ j, hgf,

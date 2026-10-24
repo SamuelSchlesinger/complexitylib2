@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.RepeatedTrials
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-! Clients of deterministic repetition without importing complexity-class definitions or
 amplification theorems. -/
@@ -54,7 +55,7 @@ example (trials width : Polynomial ℕ) :
     ComputableTidilyInPolyTime (fun x : List Bool × List Bool =>
       repeatVotes (trials.eval x.1.length) (width.eval x.1.length)
         (fun z => z.2.headD false) x) (encPair encBits encBits) encBits := by
-  apply computableTidilyInPolyTime_repeatVotes <;> fun_prop
+  apply computableInPolyTime_repeatVotes <;> fun_prop
 
 /-- The existing aggregation certificates are available without BPP or RP. -/
 example {α : Type} {enc : α ↪ List Bool} {V : α × List Bool → Bool}
@@ -62,7 +63,7 @@ example {α : Type} {enc : α ↪ List Bool} {V : α × List Bool → Bool}
     (trials width : Polynomial ℕ) :
     ComputableTidilyInPolyTime (repeatAny enc trials width V) (encPair enc encBits) encBool ∧
     ComputableTidilyInPolyTime (repeatMajority enc trials width V) (encPair enc encBits) encBool :=
-  ⟨computableTidilyInPolyTime_repeatAny hV _ _,
-    computableTidilyInPolyTime_repeatMajority hV _ _⟩
+  ⟨(computableInPolyTime_repeatAny (.of_tidy hV) _ _).tidy,
+    (computableInPolyTime_repeatMajority (.of_tidy hV) _ _).tidy⟩
 
 end ComplexityTests.RepeatedTrials

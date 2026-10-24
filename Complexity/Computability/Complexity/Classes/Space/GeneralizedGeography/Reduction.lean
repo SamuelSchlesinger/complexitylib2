@@ -60,7 +60,7 @@ mapped to a graph without arcs, where the first player loses
 * `Cslib.Complexity.GeneralizedGeography.updates_eq_getD_lastIdx`: a variable takes the value of
   its last quantifier.
 * `Cslib.Complexity.GeneralizedGeography.reduce_mem_iff`,
-  `Cslib.Complexity.GeneralizedGeography.computableTidilyInPolyTime_reduce`: the reduction is
+  `Cslib.Complexity.GeneralizedGeography.computableInPolyTime_reduce`: the reduction is
   correct and polynomial-time.
 * `Cslib.Complexity.polyTimeReducible_TQBFCNF_GeneralizedGeography`,
   `Cslib.Complexity.GeneralizedGeography_pspaceHard`: Generalized Geography is `PSPACE`-hard.
@@ -547,56 +547,61 @@ open ComputableTidilyInPolyTime
 variable {γ : Type} {encIn : γ ↪ List Bool}
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_topNode {j : γ → ℕ}
-    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => topNode (j x)) encIn encNat :=
-  unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 0 (j x)) _ _ by
-    fun_prop)
+theorem computableInPolyTime_topNode {j : γ → ℕ}
+    (hj : ComputableInPolyTime j encIn encUnary) :
+    ComputableInPolyTime (fun x => topNode (j x)) encIn encNat := by
+  have hj := hj.tidy
+  exact .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 0 (j x)) _ _ by
+    fun_prop))
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_valueNode {j : γ → ℕ} {b : γ → Bool}
-    (hj : ComputableTidilyInPolyTime j encIn encUnary)
-    (hb : ComputableTidilyInPolyTime b encIn encBool) :
-    ComputableTidilyInPolyTime (fun x => valueNode (j x) (b x)) encIn encNat :=
-  unary_to_binary.comp (show ComputableTidilyInPolyTime
-    (fun x => Nat.pair 1 (Nat.pair (j x) (b x).toNat)) _ _ by fun_prop)
+theorem computableInPolyTime_valueNode {j : γ → ℕ} {b : γ → Bool}
+    (hj : ComputableInPolyTime j encIn encUnary)
+    (hb : ComputableInPolyTime b encIn encBool) :
+    ComputableInPolyTime (fun x => valueNode (j x) (b x)) encIn encNat := by
+  have hj := hj.tidy
+  have hb := hb.tidy
+  exact .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime
+    (fun x => Nat.pair 1 (Nat.pair (j x) (b x).toNat)) _ _ by fun_prop))
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_bottomNode {j : γ → ℕ}
-    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => bottomNode (j x)) encIn encNat :=
-  unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 2 (j x)) _ _ by
-    fun_prop)
+theorem computableInPolyTime_bottomNode {j : γ → ℕ}
+    (hj : ComputableInPolyTime j encIn encUnary) :
+    ComputableInPolyTime (fun x => bottomNode (j x)) encIn encNat := by
+  have hj := hj.tidy
+  exact .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 2 (j x)) _ _ by
+    fun_prop))
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_clauseNode {i : γ → ℕ}
-    (hi : ComputableTidilyInPolyTime i encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => clauseNode (i x)) encIn encNat :=
-  unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 4 (i x)) _ _ by
-    fun_prop)
+theorem computableInPolyTime_clauseNode {i : γ → ℕ}
+    (hi : ComputableInPolyTime i encIn encUnary) :
+    ComputableInPolyTime (fun x => clauseNode (i x)) encIn encNat := by
+  have hi := hi.tidy
+  exact .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 4 (i x)) _ _ by
+    fun_prop))
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_diamondArcs {j : γ → ℕ}
-    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => diamondArcs (j x)) encIn
+theorem computableInPolyTime_diamondArcs {j : γ → ℕ}
+    (hj : ComputableInPolyTime j encIn encUnary) :
+    ComputableInPolyTime (fun x => diamondArcs (j x)) encIn
       (encList (encPair encNat encNat)) := by
   unfold diamondArcs
   fun_prop
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_lastIdx {xs : γ → List ℕ} {v : γ → ℕ}
-    (hxs : ComputableTidilyInPolyTime xs encIn (encList encNat))
-    (hv : ComputableTidilyInPolyTime v encIn encNat) :
-    ComputableTidilyInPolyTime (fun x => lastIdx (xs x) (v x)) encIn encUnary := by
+theorem computableInPolyTime_lastIdx {xs : γ → List ℕ} {v : γ → ℕ}
+    (hxs : ComputableInPolyTime xs encIn (encList encNat))
+    (hv : ComputableInPolyTime v encIn encNat) :
+    ComputableInPolyTime (fun x => lastIdx (xs x) (v x)) encIn encUnary := by
   unfold lastIdx
   fun_prop
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_literalArcs {xs : γ → List ℕ} {i : γ → ℕ}
-    {c : γ → Clause ℕ} (hxs : ComputableTidilyInPolyTime xs encIn (encList encNat))
-    (hi : ComputableTidilyInPolyTime i encIn encUnary)
-    (hc : ComputableTidilyInPolyTime c encIn (encList (encPair encNat encBool))) :
-    ComputableTidilyInPolyTime (fun x => literalArcs (xs x) (i x) (c x)) encIn
+theorem computableInPolyTime_literalArcs {xs : γ → List ℕ} {i : γ → ℕ}
+    {c : γ → Clause ℕ} (hxs : ComputableInPolyTime xs encIn (encList encNat))
+    (hi : ComputableInPolyTime i encIn encUnary)
+    (hc : ComputableInPolyTime c encIn (encList (encPair encNat encBool))) :
+    ComputableInPolyTime (fun x => literalArcs (xs x) (i x) (c x)) encIn
       (encList (encPair encNat encNat)) := by
   unfold literalArcs
   simp only [List.decide_mem_eq_any]
@@ -604,17 +609,17 @@ theorem computableTidilyInPolyTime_literalArcs {xs : γ → List ℕ} {i : γ �
 
 /-- The graph of a formula is polynomial-time in its quantified variables and its clauses. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_formulaGraph {xs : γ → List ℕ} {ψ : γ → CNF ℕ}
-    (hxs : ComputableTidilyInPolyTime xs encIn (encList encNat))
-    (hψ : ComputableTidilyInPolyTime ψ encIn encCNF) :
-    ComputableTidilyInPolyTime (fun x => formulaGraph (xs x) (ψ x)) encIn encGraph := by
+theorem computableInPolyTime_formulaGraph {xs : γ → List ℕ} {ψ : γ → CNF ℕ}
+    (hxs : ComputableInPolyTime xs encIn (encList encNat))
+    (hψ : ComputableInPolyTime ψ encIn encCNF) :
+    ComputableInPolyTime (fun x => formulaGraph (xs x) (ψ x)) encIn encGraph := by
   unfold formulaGraph formulaArcs encGraph
   unfold encCNF at hψ
   fun_prop
 
 /-- **The reduction is polynomial-time.** -/
-theorem computableTidilyInPolyTime_reduce :
-    ComputableTidilyInPolyTime reduce encPrenexCNF (encPair encGraph encNat) := by
+theorem computableInPolyTime_reduce :
+    ComputableInPolyTime reduce encPrenexCNF (encPair encGraph encNat) := by
   unfold reduce QBF.roundVars encPrenexCNF
   simp only [List.decide_mem_eq_any]
   unfold encCNF
@@ -630,7 +635,7 @@ open GeneralizedGeography Turing.MultiTapeTM
 [LichtensteinSipser1980]. -/
 theorem polyTimeReducible_TQBFCNF_GeneralizedGeography :
     PolyTimeReducible encPrenexCNF (encPair encGraph encNat) TQBFCNF GeneralizedGeography :=
-  ⟨reduce, .of_tidy computableTidilyInPolyTime_reduce, fun x => (reduce_mem_iff x).symm⟩
+  ⟨reduce, computableInPolyTime_reduce, fun x => (reduce_mem_iff x).symm⟩
 
 /-- **Generalized Geography is `PSPACE`-hard** [Sipser, Theorem 8.14][Sipser2013]
 [LichtensteinSipser1980]. -/

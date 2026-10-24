@@ -14,6 +14,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
 
 /-!
 # The Time-Bounded Kolmogorov Complexity Problem (`MINKT`)
@@ -251,6 +252,8 @@ theorem computableInPolyTime_check :
     ComputableInPolyTime check (encPair enc encBits) encBool :=
   .of_tidy computableTidilyInPolyTime_check
 
+attribute [local fun_prop] Turing.MultiTapeTM.ComputableInPolySpace.tidy in
+attribute [local fun_prop] Turing.MultiTapeTM.ComputableInPolyTime.tidy in
 /-- **`MINKT` is in `NP`** ([Ko][Ko1986]; [Hirahara][Hirahara2018]): a witness for `(x, 1^t, 1^s)`
 is a binary program `p` of length at most `s ≤ |(x, 1^t, 1^s)|`, verified in polynomial time by
 running the universal simulator for `t` steps (`check`). -/

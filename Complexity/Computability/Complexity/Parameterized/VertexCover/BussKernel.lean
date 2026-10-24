@@ -58,7 +58,7 @@ instance, with degrees and the capped target in unary.
 * `Cslib.Complexity.VertexCover.length_bussKernel_vertices_le`,
   `Cslib.Complexity.VertexCover.length_encode_bussKernel_le`: at most `k (k + 2)` vertices and
   encoded length at most `40 (k + 1) ^ 6`.
-* `Cslib.Complexity.VertexCover.computableTidilyInPolyTime_bussKernel`: the kernel is
+* `Cslib.Complexity.VertexCover.computableInPolyTime_bussKernel`: the kernel is
   polynomial-time.
 * `Cslib.Complexity.VertexCover.isKernelization_bussKernel`,
   `Cslib.Complexity.VertexCover_hasPolyKernel`: `VertexCover` has a polynomial kernel in the
@@ -462,101 +462,103 @@ namespace VertexCover.Buss
 open ComputableTidilyInPolyTime
 
 /-- Testing adjacency between computed vertices of a computed graph is polynomial-time. This is
-`Cslib.Complexity.Graph.computableTidilyInPolyTime_adjBool` in the compositional form that
+`Cslib.Complexity.Graph.computableInPolyTime_adjBool` in the compositional form that
 `fun_prop` uses. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_adjBool_comp {γ : Type} {enc : γ ↪ List Bool}
-    {G : γ → Graph} {u v : γ → ℕ} (hG : ComputableTidilyInPolyTime G enc encGraph)
-    (hu : ComputableTidilyInPolyTime u enc encNat) (hv : ComputableTidilyInPolyTime v enc encNat) :
-    ComputableTidilyInPolyTime (fun c => (G c).adjBool (u c) (v c)) enc encBool :=
-  Graph.computableTidilyInPolyTime_adjBool.comp ((hG.prod hu).prod hv)
+theorem computableInPolyTime_adjBool_comp {γ : Type} {enc : γ ↪ List Bool}
+    {G : γ → Graph} {u v : γ → ℕ} (hG : ComputableInPolyTime G enc encGraph)
+    (hu : ComputableInPolyTime u enc encNat) (hv : ComputableInPolyTime v enc encNat) :
+    ComputableInPolyTime (fun c => (G c).adjBool (u c) (v c)) enc encBool :=
+  Graph.computableInPolyTime_adjBool.comp ((hG.prod hu).prod hv)
 
 /-- Computing a degree is polynomial-time, with the degree in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_degree :
-    ComputableTidilyInPolyTime (fun p : Graph × ℕ => degree p.1 p.2)
+theorem computableInPolyTime_degree :
+    ComputableInPolyTime (fun p : Graph × ℕ => degree p.1 p.2)
       (encPair encGraph encNat) encUnary := by
   unfold degree
   fun_prop
 
 /-- Testing for a high vertex is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_isHigh :
-    ComputableTidilyInPolyTime (fun p : (Graph × ℕ) × ℕ => isHigh p.1 p.2)
+theorem computableInPolyTime_isHigh :
+    ComputableInPolyTime (fun p : (Graph × ℕ) × ℕ => isHigh p.1 p.2)
       (encPair (encPair encGraph encNat) encNat) encBool := by
   unfold isHigh
   fun_prop
 
 /-- Listing the high vertices is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_high :
-    ComputableTidilyInPolyTime high (encPair encGraph encNat) (encList encNat) := by
+theorem computableInPolyTime_high :
+    ComputableInPolyTime high (encPair encGraph encNat) (encList encNat) := by
   unfold high
   fun_prop
 
 /-- Listing the low vertices is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_low :
-    ComputableTidilyInPolyTime low (encPair encGraph encNat) (encList encNat) := by
+theorem computableInPolyTime_low :
+    ComputableInPolyTime low (encPair encGraph encNat) (encList encNat) := by
   unfold low
   fun_prop
 
 /-- Testing for an active vertex is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_isActive :
-    ComputableTidilyInPolyTime (fun p : (Graph × ℕ) × ℕ => isActive p.1 p.2)
+theorem computableInPolyTime_isActive :
+    ComputableInPolyTime (fun p : (Graph × ℕ) × ℕ => isActive p.1 p.2)
       (encPair (encPair encGraph encNat) encNat) encBool := by
   unfold isActive
   fun_prop
 
 /-- Listing the active vertices is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_active :
-    ComputableTidilyInPolyTime active (encPair encGraph encNat) (encList encNat) := by
+theorem computableInPolyTime_active :
+    ComputableInPolyTime active (encPair encGraph encNat) (encList encNat) := by
   unfold active
   fun_prop
 
 /-- The kernel target is computed in unary in polynomial time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_param :
-    ComputableTidilyInPolyTime param (encPair encGraph encNat) encUnary := by
+theorem computableInPolyTime_param :
+    ComputableInPolyTime param (encPair encGraph encNat) encUnary := by
   unfold param
   fun_prop
 
 /-- The number of kernel vertices is computed in unary in polynomial time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_numVertices :
-    ComputableTidilyInPolyTime numVertices (encPair encGraph encNat) encUnary := by
+theorem computableInPolyTime_numVertices :
+    ComputableInPolyTime numVertices (encPair encGraph encNat) encUnary := by
   unfold numVertices
   fun_prop
 
 /-- The tests of the kernel are polynomial-time. The capped target `cap x` is computed in unary
 and converted to binary to compare it with the binary target. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_accept :
-    ComputableTidilyInPolyTime accept (encPair encGraph encNat) encBool := by
+theorem computableInPolyTime_accept :
+    ComputableInPolyTime accept (encPair encGraph encNat) encBool := by
+  refine .of_tidy ?_
   unfold accept
   exact bool_and' (bool_and'
-    ((unary_to_binary.comp computableTidilyInPolyTime_cap).decide_eq' (snd _ _)) (by fun_prop))
+    ((unary_to_binary.comp computableInPolyTime_cap.tidy).decide_eq' (snd _ _)) (by fun_prop))
     (by fun_prop)
 
 /-- Listing the kernel edges is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_edges :
-    ComputableTidilyInPolyTime edges (encPair encGraph encNat)
+theorem computableInPolyTime_edges :
+    ComputableInPolyTime edges (encPair encGraph encNat)
       (encList (encPair encNat encNat)) := by
   unfold edges
   polytime
 
 /-- Building the kernel graph is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_graph :
-    ComputableTidilyInPolyTime graph (encPair encGraph encNat) encGraph := by
+theorem computableInPolyTime_graph :
+    ComputableInPolyTime graph (encPair encGraph encNat) encGraph := by
+  refine .of_tidy ?_
   have hV : ComputableTidilyInPolyTime (fun x : Graph × ℕ => List.range (numVertices x))
       (encPair encGraph encNat) (encList encNat) := by
     simpa only [Function.comp_def, List.map_id'] using
-      (map unary_to_binary).comp (range.comp computableTidilyInPolyTime_numVertices)
-  exact (hV.prod computableTidilyInPolyTime_edges).of_enc_eq fun _ => rfl
+      (map unary_to_binary).comp (range.comp computableInPolyTime_numVertices.tidy)
+  exact (hV.prod computableInPolyTime_edges.tidy).of_enc_eq fun _ => rfl
 
 end VertexCover.Buss
 
@@ -605,12 +607,13 @@ theorem length_encode_bussKernel_le (x : Graph × ℕ) :
 
 /-- **Buss's kernel is polynomial-time.** -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_bussKernel :
-    ComputableTidilyInPolyTime bussKernel (encPair encGraph encNat) (encPair encGraph encNat) := by
+theorem computableInPolyTime_bussKernel :
+    ComputableInPolyTime bussKernel (encPair encGraph encNat) (encPair encGraph encNat) := by
+  refine .of_tidy ?_
   unfold bussKernel
-  exact computableTidilyInPolyTime_accept.cond
-    (computableTidilyInPolyTime_graph.prod
-      (ComputableTidilyInPolyTime.unary_to_binary.comp computableTidilyInPolyTime_param))
+  exact computableInPolyTime_accept.tidy.cond
+    (computableInPolyTime_graph.tidy.prod
+      (ComputableTidilyInPolyTime.unary_to_binary.comp computableInPolyTime_param.tidy))
     (ComputableTidilyInPolyTime.const _)
 
 /-- Buss's kernel has target at most `k`, or `1`. -/
@@ -625,7 +628,7 @@ size bound `40 (k + 1) ^ 6`. -/
 theorem isKernelization_bussKernel :
     IsKernelization (encPair encGraph encNat) Prod.snd VertexCover bussKernel
       fun k => 40 * (k + 1) ^ 6 where
-  polyTime := computableTidilyInPolyTime_bussKernel.computableInPolyTime
+  polyTime := computableInPolyTime_bussKernel
   mem_iff := bussKernel_mem_iff
   length_le := length_encode_bussKernel_le
   parameter_le x := by

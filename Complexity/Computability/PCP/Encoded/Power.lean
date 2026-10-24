@@ -12,6 +12,7 @@ public import Complexity.Computability.PCP.Power.Complexity
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.PCP.Encoded.Constraints
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Executable powering after preprocessing
@@ -224,12 +225,12 @@ private theorem polytime_powerPreprocessEdge (eval : C → α → α → Bool) (
         (encPair alphabet alphabet))) encBool := by
     fun_prop
   have hwalk := rotationMap_killedPowRotWithInput hr T q (encFinEnum (Fin q))
-  have hrel := RegularConstraintGraph.isPolyTime_powerRelationWithInput
-    hr he T q (encFinEnum (Fin q))
+  have hrel := (RegularConstraintGraph.isPolyTime_powerRelationWithInput
+    (.of_tidy hr) (.of_tidy he) T q (encFinEnum (Fin q))).tidy
   unfold powerPreprocessEdge
   apply Edge.isPolyTime_mk
   · fun_prop
-  · exact isPolyTime_halfEdgeNumber.comp hwalk.fst'
+  · exact isPolyTime_halfEdgeNumber.tidy.comp hwalk.fst'
   · apply pi
     intro a
     apply pi
@@ -265,16 +266,20 @@ internal enumeration, so matching an ordinary graph expression never unfolds tha
 @[fun_prop]
 theorem isPolyTime_powerPreprocess [Finite D] [Finite α] {Input : Type} {input : Input ↪ List Bool}
     {graph : Input → Graph C} {eval : C → α → α → Bool} {rotate : ℕ × (ℕ × D) → ℕ × D}
-    (hgraph : ComputableTidilyInPolyTime graph input (encoding enc))
-    (hrotate : ComputableTidilyInPolyTime rotate
+    (hgraph : ComputableInPolyTime graph input (encoding enc))
+    (hrotate : ComputableInPolyTime rotate
       (encPair encUnary (encPair encUnary labelEncoding)) (encPair encUnary labelEncoding))
-    (heval : ComputableTidilyInPolyTime (fun p : C × (α × α) => eval p.1 p.2.1 p.2.2)
+    (heval : ComputableInPolyTime (fun p : C × (α × α) => eval p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool)
     (fallback : C) (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
     {output : (PowerAlphabet D α T → PowerAlphabet D α T → Bool) ↪ List Bool} :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun x => (graph x).powerPreprocess eval fallback rotate T q walks)
       input (encoding output) := by
+  have hgraph := hgraph.tidy
+  have hrotate := hrotate.tidy
+  have heval := heval.tidy
+  refine .of_tidy ?_
   classical
   let _ := Fintype.ofFinite D
   let _ := Fintype.ofFinite α
@@ -282,7 +287,7 @@ theorem isPolyTime_powerPreprocess [Finite D] [Finite α] {Input : Type} {input 
   have hconvert : ComputableTidilyInPolyTime
       (id : (PowerAlphabet D α T → PowerAlphabet D α T → Bool) → _)
       (encPi (encPi encBool)) output := .of_finite _
-  simpa only [mapConstraints_id, Function.comp_def] using isPolyTime_mapConstraints hp hconvert
+  simpa only [mapConstraints_id, Function.comp_def] using (isPolyTime_mapConstraints (.of_tidy hp) (.of_tidy hconvert)).tidy
 
 end Complexity
 

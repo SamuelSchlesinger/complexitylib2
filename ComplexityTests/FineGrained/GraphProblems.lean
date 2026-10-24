@@ -116,7 +116,7 @@ example : (SAT.toThreeColoring φ₁).1.length + (SAT.toThreeColoring φ₁).2.l
 
 /-- The subexponential time predicate holds for a trivial problem. -/
 example : DecidableInSubexpTime (∅ : Set Graph) encGraph fun G => G.1.length + G.2.length :=
-  fun δ hδ => .of_computableTidilyInO (ComputableTidilyInO.const false) (by simp) 1 1 fun G => by
+  fun δ hδ => DecidableInExpTime.of_computableInO (ComputableTidilyInO.const false) (by simp) 1 1 fun G => by
     have h₁ : (1 : ℝ) ≤ 2 ^ (δ * ((G.1.length + G.2.length : ℕ) : ℝ)) :=
       Real.one_le_rpow (by norm_num) (by positivity)
     have h₀ : (0 : ℝ) ≤ (encGraph G).length := Nat.cast_nonneg _
@@ -161,11 +161,11 @@ info: 'Cslib.Complexity.SAT.toSparseIndependentSet_mem_iff' depends on axioms:
 #print axioms Cslib.Complexity.SAT.toSparseIndependentSet_mem_iff
 
 /--
-info: 'Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseIndependentSet' depends on axioms:
+info: 'Cslib.Complexity.SAT.computableInPolyTime_toSparseIndependentSet' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseIndependentSet
+#print axioms Cslib.Complexity.SAT.computableInPolyTime_toSparseIndependentSet
 
 /--
 info: 'Cslib.Complexity.SAT.length_toSparseIndependentSet_le' depends on axioms:
@@ -256,11 +256,11 @@ info: 'Cslib.Complexity.SAT.toSparseHamCycle_mem_iff' depends on axioms:
 #print axioms Cslib.Complexity.SAT.toSparseHamCycle_mem_iff
 
 /--
-info: 'Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseHamCycle' depends on axioms:
+info: 'Cslib.Complexity.SAT.computableInPolyTime_toSparseHamCycle' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.computableTidilyInPolyTime_toSparseHamCycle
+#print axioms Cslib.Complexity.SAT.computableInPolyTime_toSparseHamCycle
 
 /--
 info: 'Cslib.Complexity.SAT.length_toSparseHamCycle_le' depends on axioms:

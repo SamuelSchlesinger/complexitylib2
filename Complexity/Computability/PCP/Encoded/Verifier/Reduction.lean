@@ -60,11 +60,13 @@ theorem polyTime_reductionVerifier {graph : Input → Graph C} (width repeats : 
     (decode : (Fin width → Bool) → α)
     {input : Input ↪ List Bool} {enc : C ↪ List Bool} {alphabet : α ↪ List Bool}
     {eval : C → α → α → Bool}
-    (hgraph : ComputableTidilyInPolyTime graph input (encoding enc))
-    (heval : ComputableTidilyInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
+    (hgraph : ComputableInPolyTime graph input (encoding enc))
+    (heval : ComputableInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool) :
     (reductionVerifier graph width repeats decode eval).PolyTime input := by
-  obtain ⟨hcoins, hqueries, hverdict⟩ := polyTime_repeatedEdgeVerifier width repeats decode heval
+  have hgraph := hgraph.tidy
+  have heval := heval.tidy
+  obtain ⟨hcoins, hqueries, hverdict⟩ := polyTime_repeatedEdgeVerifier width repeats decode (.of_tidy heval)
   exact ⟨hcoins.comp (.of_tidy hgraph),
     .of_tidy (hqueries.tidy.comp (by fun_prop)),
     .of_tidy (hverdict.tidy.comp (by fun_prop))⟩
@@ -76,8 +78,8 @@ theorem mem_PCP_of_gapReduction {graph : Input → Graph C} (width : ℕ)
     (hdecode : Function.LeftInverse decode encode)
     {input : Input ↪ List Bool} {enc : C ↪ List Bool} {alphabet : α ↪ List Bool}
     {eval : C → α → α → Bool}
-    (hgraph : ComputableTidilyInPolyTime graph input (encoding enc))
-    (heval : ComputableTidilyInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
+    (hgraph : ComputableInPolyTime graph input (encoding enc))
+    (heval : ComputableInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool)
     (hwellFormed : ∀ x, (graph x).WellFormed) {A : Set Input}
     (hcomplete : ∀ x ∈ A, ((graph x).toGraph eval).Satisfiable)
@@ -86,7 +88,7 @@ theorem mem_PCP_of_gapReduction {graph : Input → Graph C} (width : ℕ)
     A ∈ PCP (fun n => Nat.log 2 n + 1) (fun _ => 1) input := by
   obtain ⟨repeats, hrepeats⟩ := exists_pow_lt_of_lt_one (by norm_num : (0 : ℝ) < 1 / 2)
     (by linarith : 1 - gap / 2 < 1)
-  have hlength : ComputableTidilyInPolyTime (fun x => (graph x).edges.length)
+  have hlength : ComputableInPolyTime (fun x => (graph x).edges.length)
       input encUnary := by fun_prop
   obtain ⟨c, d, hbound⟩ := hlength.polyBounded_length.exists_le
   have hpoly : PolynomiallyBounded (fun n => c * (n + 1) ^ d) := by fun_prop

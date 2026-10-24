@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.EXP
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 
 /-! Timed deterministic reductions use the time-class API without importing padding.
 The exponential-time client uses the diagonal language, which is outside `P`. -/
@@ -17,7 +18,7 @@ example {α : Type} {enc : α ↪ List Bool} {t : ℕ → ℕ} {A : Set α}
     (hA : A ∈ DTIME enc t) :
     ComputableTidilyInO (indicator A) enc encBool (fun a => t (enc a).length)
       fun a => t (enc a).length :=
-  computableTidilyInO_indicator_of_mem_DTIME hA
+  (computableInO_indicator_of_mem_DTIME hA).tidy
 
 example {α : Type} {enc : α ↪ List Bool} {t : ℕ → ℕ} :
     DTIME enc (fun n => 2 * t n + 2) ⊆ DTIME enc t :=

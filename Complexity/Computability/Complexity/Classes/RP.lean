@@ -211,12 +211,14 @@ exactly when, for every polynomial `q`, it is decided in polynomial time with on
 most `2 ^ (-q(n))`. -/
 theorem mem_RP_iff_forall_decidesWithOneSidedErrorExponent {A : Set α} :
     A ∈ RP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithOneSidedErrorExponent enc q p V A := by
-  refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨q * p, _,
-    computableTidilyInPolyTime_repeatAny hV.tidy _ _, h.repeatAny q⟩, fun h => ?_⟩
-  obtain ⟨p, V, hV, h⟩ := h 1
-  exact ⟨p, V, .of_tidy hV, h.decidesWithOneSidedError fun _ => by simp⟩
+  have this : A ∈ RP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithOneSidedErrorExponent enc q p V A := by
+    refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨q * p, _,
+      (computableInPolyTime_repeatAny hV _ _).tidy, h.repeatAny q⟩, fun h => ?_⟩
+    obtain ⟨p, V, hV, h⟩ := h 1
+    exact ⟨p, V, .of_tidy hV, h.decidesWithOneSidedError fun _ => by simp⟩
+  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-- **`RP ⊆ BPP`** [Arora and Barak, Chapter 7][AroraBarak09]: two runs of a one-sided-error
 decider reject a member with probability at most `1 / 4`. -/

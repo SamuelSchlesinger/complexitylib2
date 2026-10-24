@@ -194,11 +194,11 @@ example : (([], []) : Graph) ∉ HamCycle :=
 /-! ### Axiom checks for headline theorems -/
 
 /--
-info: 'Cslib.Complexity.TSP.computableTidilyInPolyTime_tourLength' depends on axioms:
+info: 'Cslib.Complexity.TSP.computableInPolyTime_tourLength' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TSP.computableTidilyInPolyTime_tourLength
+#print axioms Cslib.Complexity.TSP.computableInPolyTime_tourLength
 
 /--
 info: 'Cslib.Complexity.TSP.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -207,11 +207,11 @@ info: 'Cslib.Complexity.TSP.isVerifier' depends on axioms: [propext, Classical.c
 #print axioms Cslib.Complexity.TSP.isVerifier
 
 /--
-info: 'Cslib.Complexity.TSP.computableTidilyInPolyTime_verifier' depends on axioms:
+info: 'Cslib.Complexity.TSP.computableInPolyTime_verifier' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TSP.computableTidilyInPolyTime_verifier
+#print axioms Cslib.Complexity.TSP.computableInPolyTime_verifier
 
 /--
 info: 'Cslib.Complexity.TSP.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -227,11 +227,11 @@ info: 'Cslib.Complexity.HamCycle.toTSP_mem_iff' depends on axioms:
 #print axioms Cslib.Complexity.HamCycle.toTSP_mem_iff
 
 /--
-info: 'Cslib.Complexity.HamCycle.computableTidilyInPolyTime_toTSP' depends on axioms:
+info: 'Cslib.Complexity.HamCycle.computableInPolyTime_toTSP' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HamCycle.computableTidilyInPolyTime_toTSP
+#print axioms Cslib.Complexity.HamCycle.computableInPolyTime_toTSP
 
 /--
 info: 'Cslib.Complexity.polyTimeReducible_HamCycle_TSP' depends on axioms:

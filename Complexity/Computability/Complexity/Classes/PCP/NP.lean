@@ -81,7 +81,8 @@ private theorem enum_coins (hV : V.PolyTime enc)
 /-- The complete address table charges every enumerated word and binary address. -/
 theorem isPolyTime_queryTable (hV : V.PolyTime enc)
     (hcoins : ∀ a, V.coins a ≤ c * (Nat.log 2 (enc a).length + 1)) :
-    ComputableTidilyInPolyTime V.queryTable enc (encList encNat) := by
+    ComputableInPolyTime V.queryTable enc (encList encNat) := by
+  refine .of_tidy ?_
   have he := enum_coins hV hcoins
   have hq := hV.2.1.tidy
   unfold queryTable
@@ -90,11 +91,12 @@ theorem isPolyTime_queryTable (hV : V.PolyTime enc)
 /-- Exhaustive verification is polynomial time for every table, including short inputs. -/
 theorem isPolyTime_tableVerifier (hV : V.PolyTime enc)
     (hcoins : ∀ a, V.coins a ≤ c * (Nat.log 2 (enc a).length + 1)) :
-    ComputableTidilyInPolyTime V.tableVerifier (encPair enc encBits) encBool := by
+    ComputableInPolyTime V.tableVerifier (encPair enc encBits) encBool := by
+  refine .of_tidy ?_
   have he := enum_coins hV hcoins
   have hq := hV.2.1.tidy
   have hv := hV.2.2.tidy
-  have ht := isPolyTime_queryTable hV hcoins
+  have ht := (isPolyTime_queryTable hV hcoins).tidy
   unfold tableVerifier
   polytime
 
@@ -151,10 +153,10 @@ theorem PCP_log_subset_NP (q : ℕ → ℕ) :
     PCP (fun n => Nat.log 2 n + 1) q enc ⊆ NP enc := by
   rintro A ⟨V, c, d, hV, hcoins, hqueries, hcomplete, hsound⟩
   obtain ⟨p, hlength⟩ :=
-    (PCPVerifier.isPolyTime_queryTable hV hcoins).polyBounded_length.exists_polynomial
+    (PCPVerifier.isPolyTime_queryTable hV hcoins).tidy.polyBounded_length.exists_polynomial
   have hbound (a : α) : (V.queryTable a).length ≤ p.eval (enc a).length := by
     exact (length_le_length_encList encNat (V.queryTable a)).trans (hlength a)
-  refine ⟨p, V.tableVerifier, .of_tidy (PCPVerifier.isPolyTime_tableVerifier hV hcoins),
+  refine ⟨p, V.tableVerifier, (PCPVerifier.isPolyTime_tableVerifier hV hcoins),
     fun a => ?_⟩
   constructor
   · intro ha
