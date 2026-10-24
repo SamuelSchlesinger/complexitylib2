@@ -66,7 +66,7 @@ example : (packedTournamentCircuit 1 1 2).depth ≤ 16 :=
 example (r : BitString 3) :
     (packedTournamentCircuit 1 2 0).eval interpretation (packRecords (fun _ => r)) = r := by
   simp [packedTournamentCircuit, tournamentCircuit, Circuit.balanced, List.ofFn_succ,
-    Circuit.eval_wiring, packRecords, Function.comp_def]
+    Circuit.eval_wiring, packRecords_comp (r := 1 + 2)]
 
 example : (packedTournamentCircuit 1 2 0).size = 0 ∧
     (packedTournamentCircuit 1 2 0).depth = 0 := by

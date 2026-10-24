@@ -231,7 +231,8 @@ theorem finalOutput_eq_lineBits (bits : K ≃+ BitString b) (scalar : Fin s ≃ 
     obtain ⟨⟨c, β⟩, rfl⟩ := finProdFinEquiv.surjective q'
     have h := congrFun ((hline (π.symm i) (π.symm i).isLt).2 c) β
     simp only [line, Equiv.apply_symm_apply] at h
-    simp only [finalOutput, Equiv.symm_apply_apply, sortedByLabel_rank π hlabel, lineBits]
+    simp only [finalOutput, lineBits, blocksEquiv_symm_apply, Equiv.symm_apply_apply,
+      sortedByLabel_rank π hlabel]
     exact h
 
 end Cslib.Circuits.Boolean.MassProduction.Scheduler

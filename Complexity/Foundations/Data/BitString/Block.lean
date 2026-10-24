@@ -13,27 +13,28 @@ public import Mathlib.Data.Fintype.Basic
 public import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
-# Blocks of bit strings
+# Blocks of bit strings and finite tuples
 
-A string of `m * k` bits is read as `m` consecutive blocks of `k` bits through `finProdFinEquiv`:
-bit `j` of block `i` is bit `finProdFinEquiv (i, j)` of the string (`BitString.block`). Cutting a
-string into its blocks is an equivalence `BitString (m * k) ≃ (Fin m → BitString k)`
-(`BitString.blocksEquiv`). The positions of the blocks (`BitString.blockBits`) are pairwise
-disjoint, and gluing two strings along the positions of one block takes that block from the first
-string and every other block from the second (`BitString.block_piecewise`).
+A tuple of `m * k` entries (in particular, a `BitString (m * k)`) is read as `m` consecutive
+blocks of `k` entries through `finProdFinEquiv`: entry `j` of block `i` is entry
+`finProdFinEquiv (i, j)` of the tuple (`BitString.block`). Cutting a tuple into its blocks is an
+equivalence `(Fin (m * k) → α) ≃ (Fin m → Fin k → α)` (`BitString.blocksEquiv`). The positions of
+the blocks (`BitString.blockBits`) are pairwise disjoint, and gluing two tuples along the
+positions of one block takes that block from the first tuple and every other block from the second
+(`BitString.block_piecewise`).
 
 ## Main definitions
 
-* `Cslib.BitString.block`: the `i`-th block of `k` bits of a string of `m * k` bits.
-* `Cslib.BitString.blocksEquiv`: cutting a string into its blocks; its inverse reads bit `p` of
-  the string in its block (`BitString.blocksEquiv_symm_apply`).
-* `Cslib.BitString.blockBits`: the positions of the bits of a block.
-* `Cslib.BitString.listBlock`: a block of a bit list (`BitString.listBlock_ofFn`).
+* `Cslib.BitString.block`: the `i`-th block of `k` entries of a tuple of `m * k` entries.
+* `Cslib.BitString.blocksEquiv`: cutting a tuple into its blocks; its inverse reads entry `p` of
+  the tuple in its block (`BitString.blocksEquiv_symm_apply`).
+* `Cslib.BitString.blockBits`: the positions of the entries of a block.
+* `Cslib.BitString.listBlock`: a block of a list (`BitString.listBlock_ofFn`).
 
 ## Main results
 
 * `Cslib.BitString.pairwiseDisjoint_blockBits`: blocks occupy disjoint positions.
-* `Cslib.BitString.block_piecewise`: gluing two strings along one block.
+* `Cslib.BitString.block_piecewise`: gluing two tuples along one block.
 -/
 
 @[expose] public section
@@ -42,20 +43,21 @@ namespace Cslib.BitString
 
 open Finset
 
-variable {m k : ℕ}
+variable {α : Type*} {m k : ℕ}
 
-/-- The `i`-th block of `k` consecutive bits of a string of `m` blocks. -/
-def block (x : BitString (m * k)) (i : Fin m) : BitString k :=
+/-- The `i`-th block of `k` consecutive entries of a tuple of `m` blocks. -/
+def block (x : Fin (m * k) → α) (i : Fin m) : Fin k → α :=
   fun j => x (finProdFinEquiv (i, j))
 
-/-- Bit `j` of block `i` is bit `finProdFinEquiv (i, j)` of the string. -/
-@[simp] theorem block_apply (x : BitString (m * k)) (i : Fin m) (j : Fin k) :
+/-- Entry `j` of block `i` is entry `finProdFinEquiv (i, j)` of the tuple. -/
+@[simp] theorem block_apply (x : Fin (m * k) → α) (i : Fin m) (j : Fin k) :
     block x i j = x (finProdFinEquiv (i, j)) :=
   rfl
 
-/-- Cutting a string of `m * k` bits into its `m` blocks of `k` bits. -/
+/-- Cutting a tuple of `m * k` entries into its `m` blocks of `k` entries. This is definitionally
+`(finProdFinEquiv.symm.arrowCongr (Equiv.refl α)).trans (Equiv.curry _ _ _)`. -/
 @[simps symm_apply]
-def blocksEquiv : BitString (m * k) ≃ (Fin m → BitString k) where
+def blocksEquiv : (Fin (m * k) → α) ≃ (Fin m → Fin k → α) where
   toFun := block
   invFun y p := y (finProdFinEquiv.symm p).1 (finProdFinEquiv.symm p).2
   left_inv x := funext fun p => by
@@ -66,12 +68,12 @@ def blocksEquiv : BitString (m * k) ≃ (Fin m → BitString k) where
       (finProdFinEquiv.symm (finProdFinEquiv (i, j))).2 = y i j
     rw [Equiv.symm_apply_apply]
 
-/-- `blocksEquiv` cuts a string into its blocks with `block`. -/
-@[simp] theorem blocksEquiv_apply (x : BitString (m * k)) : blocksEquiv x = block x :=
+/-- `blocksEquiv` cuts a tuple into its blocks with `block`. -/
+@[simp] theorem blocksEquiv_apply (x : Fin (m * k) → α) : blocksEquiv x = block x :=
   rfl
 
 /-- Cutting the concatenation of blocks into its blocks recovers them. -/
-@[simp] theorem block_blocksEquiv_symm (z : Fin m → BitString k) :
+@[simp] theorem block_blocksEquiv_symm (z : Fin m → Fin k → α) :
     block (blocksEquiv.symm z) = z :=
   blocksEquiv.apply_symm_apply z
 
@@ -92,7 +94,7 @@ theorem pairwiseDisjoint_blockBits (k : ℕ) :
 
 /-- Gluing `x` and `z` along the positions of block `i` takes block `i` from `x` and the other
 blocks from `z`. -/
-theorem block_piecewise (i : Fin m) (x z : BitString (m * k)) (j : Fin m) :
+theorem block_piecewise (i : Fin m) (x z : Fin (m * k) → α) (j : Fin m) :
     block ((blockBits k i).piecewise x z) j = if j = i then block x j else block z j := by
   funext b
   have hmem : finProdFinEquiv (j, b) ∈ blockBits k j := by simp [mem_blockBits]
@@ -102,11 +104,11 @@ theorem block_piecewise (i : Fin m) (x z : BitString (m * k)) (j : Fin m) :
   · have hmem' : finProdFinEquiv (j, b) ∉ blockBits k i := by simp [mem_blockBits, hj]
     simp only [block, hj, ↓reduceIte, Finset.piecewise_eq_of_notMem _ _ _ hmem']
 
-/-- Block `i` of `k` bits of a bit list: the `k` bits from position `i * k` on. -/
-def listBlock (k : ℕ) (z : List Bool) (i : ℕ) : List Bool := (z.drop (i * k)).take k
+/-- Block `i` of `k` entries of a list: the `k` entries from position `i * k` on. -/
+def listBlock (k : ℕ) (z : List α) (i : ℕ) : List α := (z.drop (i * k)).take k
 
-/-- Block `i` of the list of a bit string is the list of its block `i`. -/
-theorem listBlock_ofFn (z : BitString (m * k)) (i : Fin m) :
+/-- Block `i` of the list of a tuple is the list of its block `i`. -/
+theorem listBlock_ofFn (z : Fin (m * k) → α) (i : Fin m) :
     listBlock k (List.ofFn z) i = List.ofFn (block z i) := by
   have hi : (i + 1) * k ≤ m * k := Nat.mul_le_mul_right _ i.2
   refine List.ext_getElem (by

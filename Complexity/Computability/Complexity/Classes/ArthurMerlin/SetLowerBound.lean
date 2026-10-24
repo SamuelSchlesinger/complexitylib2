@@ -185,7 +185,6 @@ private theorem verifier_ofFn_append {N c m T : Polynomial ℕ} {ℓ : α → �
       BitString.LinearHash.affineHash (seedEquiv _ _ r) e = 0 := by
   simp only [verifier, Bool.and_eq_true, List.all_eq_true, List.mem_range]
   generalize (enc a).length = n at r e z ⊢
-  have hr := BitString.ofFn_eq_append r
   have hdrop : (List.ofFn r ++ (List.ofFn e ++ List.ofFn z)).drop
       (m.eval n * (5 * N.eval n + T.eval n) + m.eval n) = List.ofFn e ++ List.ofFn z :=
     List.drop_left' List.length_ofFn
@@ -199,12 +198,14 @@ private theorem verifier_ofFn_append {N c m T : Polynomial ℕ} {ℓ : α → �
     List.take_left' List.length_ofFn
   have hoffset : BitString.listRow (m.eval n) (5 * N.eval n + T.eval n) (List.ofFn r) =
       List.ofFn ((Fin.appendEquiv _ _).symm r).2 := by
-    rw [hr, BitString.listRow, Nat.mul_comm (5 * N.eval n + T.eval n),
+    rw [List.ofFn_add, BitString.listRow, Nat.mul_comm (5 * N.eval n + T.eval n),
       List.drop_left' List.length_ofFn, List.take_left' List.length_ofFn]
+    rfl
   have hhash : BitString.LinearHash.wordHash (m.eval n) (List.ofFn r) (List.ofFn e) =
       List.ofFn (BitString.LinearHash.hash
         (BitString.block ((Fin.appendEquiv _ _).symm r).1) e) := by
-    rw [BitString.LinearHash.wordHash_eq_ofFn, hr, BitString.ofList_ofFn_append]
+    rw [BitString.LinearHash.wordHash_eq_ofFn, List.ofFn_add, BitString.ofList_ofFn_append]
+    rfl
   rw [hdrop, hdrop', htake, List.take_left' List.length_ofFn, hhash, hoffset,
     ← BitString.ofFn_add, not_any_ofFn_eq_true_iff, and_assoc]
   refine and_congr ⟨fun h i => ?_, fun h i hi => ?_⟩ Iff.rfl
@@ -228,7 +229,7 @@ theorem exists_verifier_iff {N c m T : Polynomial ℕ} {ℓ : α → ℕ} {R : �
   rw [mem_image]
   constructor
   · rintro ⟨y, hy⟩
-    rw [BitString.ofFn_eq_append y, verifier_ofFn_append] at hy
+    rw [List.ofFn_add (f := y), verifier_ofFn_append] at hy
     obtain ⟨hrows, hpad, hzero⟩ := hy
     refine ⟨_, mem_filter.2 ⟨mem_univ _, fun i => mem_filter.2 ⟨mem_univ _, _, hrows i⟩, hpad⟩,
       hzero⟩
