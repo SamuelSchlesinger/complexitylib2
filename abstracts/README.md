@@ -1,6 +1,6 @@
 # Selected formal abstracts
 
-The catalogue promotes twelve major result groups. Each has a checked Lean abstract with the
+The catalogue promotes fourteen major result groups. Each has a checked Lean abstract with the
 definitions needed to understand its statement, a bridge to the library proof, and an audited
 dependency boundary. Some abstracts also allowlist a few library modules for foundational models
 (for example circuit signatures or oracle runs); each such abstract names them in its docstring, and
@@ -43,6 +43,8 @@ former paper/TeX index is retired; Git history retains its sources.
 | [Formula lower bounds: parity and Andreev](ComplexityAbstracts/FormulaBoundsAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/formula-bounds.pdf) | De Morgan formulas, literal leaves, explicit block indexing and finite quantitative bounds; no general-circuit lower bound. |
 | [One-way functions yield pseudorandom generators and adaptive functions](ComplexityAbstracts/CryptographyAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/cryptography.pdf) | Uniform probabilistic polynomial time with explicit native evaluators, negligible advantage and full stateful oracle semantics; asymptotic security, not a concrete implementation audit. |
 | [Haken: pigeonhole formulas require long resolution proofs](ComplexityAbstracts/ResolutionAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/resolution.pdf) | The non-onto pigeonhole formula and a line-based resolution rule, with bound 2^(floor(n/24)); proof size is not solver runtime. |
+| [Communication: disjointness and inner product resist randomness](ComplexityAbstracts/CommunicationAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/communication.pdf) | Shared randomness, per-input error at most one third and explicit linear bounds; exact deterministic equality records the final-answer convention. |
+| [Sipser–Gács–Lautemann: BPP lies in the second polynomial level](ComplexityAbstracts/SipserLautemannAbstract.lean) · [PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/sipser-lautemann.pdf) | Fair random bits, explicit quantifier blocks and total native polynomial-time tests. |
 
 ## Generate and review PDFs
 

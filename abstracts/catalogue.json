@@ -159,6 +159,30 @@
         "ComplexityTests.Abstracts.ResolutionAbstract.pigeonhole_satisfiable"
       ],
       "namespace": "ComplexityTests.Abstracts.ResolutionAbstract"
+    },
+    {
+      "id": "communication",
+      "title": "Communication: disjointness and inner product resist randomness",
+      "module": "ComplexityAbstracts.CommunicationAbstract",
+      "headline_theorems": [
+        "ComplexityAbstracts.CommunicationAbstract.disjointness_lower_bound",
+        "ComplexityAbstracts.CommunicationAbstract.innerProduct_lower_bound"
+      ],
+      "supporting_theorems": [
+        "ComplexityAbstracts.CommunicationAbstract.equality"
+      ],
+      "summary": "Disjointness and parity of intersection require linear communication even with shared randomness and bounded error.",
+      "scope": "Binary protocol trees, worst-case cost and error at most one third on every input pair; explicit finite bounds and the final-answer convention."
+    },
+    {
+      "id": "sipser-lautemann",
+      "title": "Sipser–Gács–Lautemann: BPP lies in the second polynomial level",
+      "module": "ComplexityAbstracts.SipserLautemannAbstract",
+      "headline_theorems": [
+        "ComplexityAbstracts.SipserLautemannAbstract.sipserLautemann"
+      ],
+      "summary": "Bounded-error randomized polynomial time admits both existential–universal and universal–existential polynomial descriptions.",
+      "scope": "Bit-string languages, fair independent random bits, correctness at least two thirds on every input, and total native polynomial-time tests; no derandomization assumption."
     }
   ]
 }

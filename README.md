@@ -57,6 +57,8 @@ the selection is not an exhaustive API reference.
 * [Formula lower bounds: parity and Andreev](abstracts/ComplexityAbstracts/FormulaBoundsAbstract.lean): Tree-shaped computation pays for repeated work: parity requires quadratic leaf size, and Andreev gives a stronger explicit bound.
 * [One-way functions yield pseudorandom generators and adaptive functions](abstracts/ComplexityAbstracts/CryptographyAbstract.lean): One-wayness yields pseudorandomness, from an extra output bit to functions secure against adaptive oracle queries.
 * [Haken: pigeonhole formulas require long resolution proofs](abstracts/ComplexityAbstracts/ResolutionAbstract.lean): The pigeonhole principle has short CNF statements but requires exponentially many resolution lines.
+* [Communication: disjointness and inner product resist randomness](abstracts/ComplexityAbstracts/CommunicationAbstract.lean): Both problems require linearly many communicated bits even with shared randomness and bounded error.
+* [Sipser–Gács–Lautemann: BPP lies in the second polynomial level](abstracts/ComplexityAbstracts/SipserLautemannAbstract.lean): Bounded-error polynomial time admits both existential–universal and universal–existential polynomial descriptions.
 
 ## Build and use
 
