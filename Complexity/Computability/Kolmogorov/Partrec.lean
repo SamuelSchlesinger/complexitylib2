@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Kolmogorov.Invariance
 public import Complexity.Computability.Kolmogorov.SelfDelimiting
+public import Complexity.Foundations.Data.Nat.Bits
 public import Mathlib.Computability.PartrecCode
 import Mathlib.Computability.Primrec.List
 
@@ -78,15 +79,6 @@ of a machine; time-bounded complexity for a machine model needs a universal mach
 namespace Cslib.Kolmogorov
 
 open Encodable Denumerable Nat.Partrec
-
-/-- Folding `Nat.bit` over a binary string, which inverts `Nat.bits` (`Nat.foldr_bit_bits`), is
-primitive recursive. -/
-theorem _root_.Primrec.list_foldr_nat_bit : Primrec fun l : List Bool => l.foldr Nat.bit 0 := by
-  have hbit : Primrec₂ fun (_ : List Bool) (bn : Bool × ℕ) => Nat.bit bn.1 bn.2 :=
-    Primrec₂.mk <| (Primrec.cond (Primrec.fst.comp Primrec.snd)
-      (Primrec.nat_double_succ.comp (Primrec.snd.comp Primrec.snd))
-      (Primrec.nat_double.comp (Primrec.snd.comp Primrec.snd))).of_eq fun _ => rfl
-  exact (Primrec.list_foldr Primrec.id (Primrec.const 0) hbit).of_eq fun _ => rfl
 
 /-- The decoder of the self-delimiting code is primitive recursive. -/
 theorem primrec_decodeSelfDelimiting : Primrec decodeSelfDelimiting := by

@@ -17,9 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
-import Mathlib.Data.Finset.Sort
 import Mathlib.Data.List.GetD
-import Mathlib.Data.Nat.Choose.Sum
 
 /-!
 # Counting the parities of a random string with one bit of a `#P` value
@@ -34,16 +32,16 @@ Toda's amplifier uses residues `0` modulo `2 ^ K` for even counts and `-1` for o
 This module uses the opposite sign: `0` for even counts and `+1` for odd counts. Negating our
 amplifier modulo `2 ^ K` recovers the `0`/`-1` convention. All subsequent counts and bit
 extraction here use the `+1` convention, from the binomial expansion of `(1 - 2) ^ c`
-(`Cslib.Complexity.Toda.sum_range_neg_two_pow_mul_choose`):
+(`Cslib.BitString.sum_range_neg_two_pow_mul_choose`):
 
 `[c odd] = ∑ i < c, (-2) ^ i * choose c (i + 1)`,
 
 whose terms with `i ≥ K` vanish modulo `2 ^ K`
-(`Cslib.Complexity.Toda.sum_range_neg_two_pow_mul_choose_zmod`). The coefficients `(-2) ^ i` are
+(`Cslib.BitString.sum_range_neg_two_pow_mul_choose_zmod`). The coefficients `(-2) ^ i` are
 replaced by naturals equal to them modulo `2 ^ K` (`Cslib.Complexity.Toda.parityCoeff`), and
 `choose (f r) k` counts the `k`-element sets of accepted witnesses, written as strictly
 increasing lists of `k` words for the lexicographic order
-(`Cslib.Complexity.Toda.card_filter_strictMono`, `Cslib.BitString.wordLt_ofFn_iff`). So
+(`Cslib.BitString.card_filter_strictMono`, `Cslib.BitString.wordLt_ofFn_iff`). So
 the words accepted by `Cslib.Complexity.Toda.countingTest` — a size `k ≤ K` in unary, one of
 `parityCoeff K (k - 1)` coefficient words, a random string `r` and a strictly increasing list of
 `k` accepted witnesses, padded with zero words — number
@@ -66,9 +64,6 @@ odd number of accepted witnesses (`Cslib.Complexity.Toda.testBit_card_filter_sha
 
 ## Main results
 
-* `Cslib.Complexity.Toda.sum_range_neg_two_pow_mul_choose_zmod`: the parity of `c` from binomial
-  coefficients, modulo `2 ^ K`.
-* `Cslib.Complexity.Toda.card_filter_strictMono`: strictly increasing tuples count subsets.
 * `Cslib.Complexity.Toda.cast_card_filter_countingTest`: the count is `G` modulo `2 ^ (R + 1)`.
 * `Cslib.Complexity.Toda.testBit_card_filter_sharpTest`: one bit says whether `2 G > 2 ^ R`.
 
@@ -82,54 +77,9 @@ odd number of accepted witnesses (`Cslib.Complexity.Toda.testBit_card_filter_sha
 
 namespace Cslib.Complexity.Toda
 
-open Finset Turing.MultiTapeTM
+open Finset BitString Turing.MultiTapeTM
 
 /-! ### Modulus amplification -/
-
-/-- **The parity of `c` from the binomial expansion of `(1 - 2) ^ c`**:
-`∑ i < c, (-2) ^ i * choose c (i + 1)` is `1` for odd `c` and `0` for even `c`. -/
-theorem sum_range_neg_two_pow_mul_choose (c : ℕ) :
-    ∑ i ∈ range c, (-2 : ℤ) ^ i * (c.choose (i + 1) : ℤ) = if Odd c then 1 else 0 := by
-  have hbin : ∑ i ∈ range (c + 1), (-2 : ℤ) ^ i * (c.choose i : ℤ) = (-1) ^ c := by
-    have := add_pow (-2 : ℤ) 1 c
-    simp only [one_pow, mul_one] at this
-    rw [show (-2 : ℤ) + 1 = -1 by norm_num] at this
-    rw [this]
-  rw [sum_range_succ'] at hbin
-  simp only [pow_zero, Nat.choose_zero_right, Nat.cast_one, mul_one] at hbin
-  have h : -2 * ∑ i ∈ range c, (-2 : ℤ) ^ i * (c.choose (i + 1) : ℤ) = (-1) ^ c - 1 := by
-    rw [mul_sum]
-    rw [← hbin]
-    simp only [pow_succ]
-    ring_nf
-  split
-  · rename_i hc
-    rw [hc.neg_one_pow] at h
-    linarith
-  · rename_i hc
-    rw [(Nat.not_odd_iff_even.1 hc).neg_one_pow, sub_self] at h
-    linarith
-
-/-- **The parity of `c` modulo `2 ^ K`**: only the first `K` binomial terms matter. -/
-theorem sum_range_neg_two_pow_mul_choose_zmod (c K : ℕ) :
-    ∑ i ∈ range K, (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) =
-      if Odd c then 1 else 0 := by
-  have hexact := congrArg (Int.cast : ℤ → ZMod (2 ^ K)) (sum_range_neg_two_pow_mul_choose c)
-  push_cast at hexact
-  rw [← hexact]
-  have hK : (-2 : ZMod (2 ^ K)) ^ K = 0 := by
-    have h2 : (2 : ZMod (2 ^ K)) ^ K = 0 := by
-      exact_mod_cast ZMod.natCast_self (2 ^ K)
-    rw [neg_pow, h2, mul_zero]
-  have h₁ : ∑ i ∈ range (K + c), (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) =
-      ∑ i ∈ range K, (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) := by
-    rw [sum_range_add]
-    simp [pow_add, hK]
-  have h₂ : ∑ i ∈ range (c + K), (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) =
-      ∑ i ∈ range c, (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) := by
-    rw [sum_range_add]
-    simp [Nat.choose_eq_zero_of_lt (by omega : c < c + _ + 1)]
-  rw [← h₁, ← h₂, Nat.add_comm]
 
 /-- Natural coefficients equal to `(-2) ^ i` modulo `2 ^ K`, for `i ≤ K`: `2 ^ i` for even `i`
 and `2 ^ K - 2 ^ i` for odd `i`. -/
@@ -183,43 +133,6 @@ private theorem testBit_two_mul_add_two_pow_sub_one {R G H : ℕ} (hG : G ≤ 2 
     simp [hq, hc]
 
 /-! ### Subsets as strictly increasing tuples -/
-
-/-- **Strictly increasing tuples count subsets**: the strictly increasing `k`-tuples of elements
-of `A` are as many as the `k`-element subsets of `A`. -/
-theorem card_filter_strictMono {β : Type*} [LinearOrder β] [Fintype β] (A : Finset β) (k : ℕ)
-    [DecidablePred fun g : Fin k → β => StrictMono g ∧ ∀ i, g i ∈ A] :
-    (univ.filter fun g : Fin k → β => StrictMono g ∧ ∀ i, g i ∈ A).card = (#A).choose k := by
-  classical
-  rw [← card_powersetCard]
-  refine card_bij (fun g _ => univ.image g) ?_ ?_ ?_
-  · intro g hg
-    simp only [mem_filter, mem_univ, true_and] at hg
-    rw [mem_powersetCard]
-    refine ⟨fun x hx => ?_, ?_⟩
-    · obtain ⟨i, -, rfl⟩ := mem_image.1 hx
-      exact hg.2 i
-    · rw [card_image_of_injective _ hg.1.injective, card_univ, Fintype.card_fin]
-  · intro g hg g' hg' h
-    simp only [mem_filter, mem_univ, true_and] at hg hg'
-    have hc : (univ.image g).card = k := by
-      rw [card_image_of_injective _ hg.1.injective, card_univ, Fintype.card_fin]
-    have h1 : g = (univ.image g).orderEmbOfFin hc :=
-      orderEmbOfFin_unique hc (fun i => mem_image_of_mem g (mem_univ i)) hg.1
-    have h2 : g' = (univ.image g).orderEmbOfFin hc :=
-      orderEmbOfFin_unique hc (fun i => h ▸ mem_image_of_mem g' (mem_univ i)) hg'.1
-    rw [h1, ← h2]
-  · intro s hs
-    rw [mem_powersetCard] at hs
-    refine ⟨s.orderEmbOfFin hs.2, ?_, image_orderEmbOfFin_univ s hs.2⟩
-    simp only [mem_filter, mem_univ, true_and]
-    exact ⟨(s.orderEmbOfFin hs.2).strictMono, fun i => hs.1 (orderEmbOfFin_mem s hs.2 i)⟩
-
-/-- A tuple increasing at every step is strictly increasing. -/
-private theorem strictMono_of_lt_succ {β : Type*} [Preorder β] {k : ℕ} {g : Fin k → β}
-    (h : ∀ (i : ℕ) (hi : i + 1 < k), g ⟨i, by omega⟩ < g ⟨i + 1, hi⟩) : StrictMono g := by
-  cases k with
-  | zero => exact fun i => i.elim0
-  | succ k => exact Fin.strictMono_iff_lt_succ.2 fun i => h i (by omega)
 
 /-- The `k`-subset test on `K` rows of `Z` bits: the first `k` rows are accepted by `acc` and
 strictly increasing, and the other rows are zero. -/

@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Finset.Card
+public import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Finset.Max
 import Mathlib.Tactic.Linarith
 
@@ -24,6 +25,8 @@ belong to both level sets; no injectivity or tie-breaking assumption is required
 
 * `Finset.exists_quantile`: select a pivot retaining the requested proportions on both sides.
 * `Finset.exists_median`: select a median pivot with at least half of the elements on each side.
+* `Fintype.exists_forall_card_filter_le_card_filter`: some value of a function on a finite type is
+  taken at least as often as any other.
 
 ## References
 
@@ -86,5 +89,20 @@ theorem exists_median (s : Finset α) (hs : s.Nonempty) (score : α → β) :
       (by linarith : (s.card : ℝ) ≤ 2 * ((s.filter fun x => score x ≤ score p).card : ℝ))
   · exact_mod_cast
       (by linarith : (s.card : ℝ) ≤ 2 * ((s.filter fun x => score p ≤ score x).card : ℝ))
+
+/-- **Plurality**: some value of a function on a finite type is taken at least as often as any
+other. -/
+theorem _root_.Fintype.exists_forall_card_filter_le_card_filter {ι α : Type*} [Fintype ι]
+    [Nonempty α] [DecidableEq α] (f : ι → α) : ∃ a, ∀ b, #{i | f i = b} ≤ #{i | f i = a} := by
+  rcases isEmpty_or_nonempty ι with h | ⟨⟨i₀⟩⟩
+  · exact ⟨Classical.arbitrary α, fun b ↦ by simp [univ_eq_empty]⟩
+  obtain ⟨i, -, hi⟩ := univ.exists_max_image (fun i ↦ #{j | f j = f i}) ⟨i₀, mem_univ _⟩
+  refine ⟨f i, fun b ↦ ?_⟩
+  by_cases hb : ∃ j, f j = b
+  · obtain ⟨j, rfl⟩ := hb
+    exact hi j (mem_univ _)
+  · simp only [not_exists] at hb
+    rw [filter_false_of_mem fun j _ ↦ hb j, Finset.card_empty]
+    exact Nat.zero_le _
 
 end Finset

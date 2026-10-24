@@ -11,14 +11,18 @@ public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Fintype.Pi
+public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Order.PiLex
 import Complexity.Foundations.Combinatorics.MajorityVote
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Prod
 import Mathlib.Data.List.GetD
+import Mathlib.Data.Nat.Choose.Sum
 import Mathlib.Logic.Equiv.Fin.Basic
+import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
 
@@ -57,6 +61,16 @@ represent sets of words.
 * `Cslib.BitString.card_filter_not_any`, `Cslib.BitString.card_filter_all`: the constant words.
 * `Cslib.BitString.ofFn_decide_lt`: the unary word of `k` bits `true` among `K`.
 * `Cslib.BitString.wordLt_ofFn_iff`: `wordLt` is the lexicographic order.
+* `Cslib.BitString.odd_prod_iff`, `Cslib.BitString.odd_one_add_prod_one_add`: parity of products
+  and the parity form of a disjunction.
+* `Cslib.BitString.card_filter_forall_apply_mem`: counting functions with restricted values on an
+  injective family of points.
+* `Cslib.BitString.two_pow_mul_card_filter_exists_le`: union bound for random strings.
+* `Cslib.BitString.sum_range_neg_two_pow_mul_choose`,
+  `Cslib.BitString.sum_range_neg_two_pow_mul_choose_zmod`: the parity of `c` from binomial
+  coefficients, over `ℤ` and modulo `2 ^ K`.
+* `Cslib.BitString.card_filter_strictMono`, `Cslib.BitString.strictMono_of_lt_succ`: strictly
+  increasing tuples count subsets.
 -/
 
 @[expose] public section
@@ -289,5 +303,159 @@ theorem card_filter_binaryValue_lt {n k : ℕ} (hk : k ≤ 2 ^ n) :
   · intro j hj
     obtain ⟨w, hw⟩ := exists_binaryValue_eq ((Finset.mem_range.mp hj).trans_le hk)
     exact ⟨w, by simpa [hw] using hj, hw⟩
+
+/-! ### Parity, subsets, and binomial amplification -/
+
+/-- A product of naturals is odd exactly when every factor is. -/
+theorem odd_prod_iff {ι : Type*} {s : Finset ι} (f : ι → ℕ) :
+    Odd (∏ j ∈ s, f j) ↔ ∀ j ∈ s, Odd (f j) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s ha ih => rw [Finset.prod_insert ha, Nat.odd_mul, ih, Finset.forall_mem_insert]
+
+/-- **The parity form of a disjunction**: `1 + ∏ⱼ (1 + cⱼ)` is odd exactly when some `cⱼ` is
+odd. -/
+theorem odd_one_add_prod_one_add {ι : Type*} [Fintype ι] (c : ι → ℕ) :
+    Odd (1 + ∏ j, (1 + c j)) ↔ ∃ j, Odd (c j) := by
+  rw [Nat.add_comm, Nat.odd_add_one, odd_prod_iff]
+  simp only [mem_univ, true_imp_iff, not_forall]
+  refine exists_congr fun j => ?_
+  rw [Nat.add_comm, Nat.odd_add_one, not_not]
+
+/-- The functions `s : ι → X` whose values at the `t` distinct points `f i` lie in `F`: `F` is
+chosen at those points and anything elsewhere. -/
+theorem card_filter_forall_apply_mem {ι X : Type*} [Fintype ι] [DecidableEq ι] [Fintype X]
+    [DecidableEq X] {t : ℕ} (f : Fin t → ι) (hf : Function.Injective f) (F : Finset X) :
+    (univ.filter fun s : ι → X => ∀ i, s (f i) ∈ F).card =
+      #F ^ t * Fintype.card X ^ (Fintype.card ι - t) := by
+  classical
+  have h : (univ.filter fun s : ι → X => ∀ i, s (f i) ∈ F) =
+      Fintype.piFinset fun j => if j ∈ Finset.image f univ then F else univ := by
+    ext s
+    simp only [mem_filter, mem_univ, true_and, Fintype.mem_piFinset]
+    constructor
+    · intro hs j
+      split
+      · rename_i hj
+        obtain ⟨i, -, rfl⟩ := Finset.mem_image.1 hj
+        exact hs i
+      · exact mem_univ _
+    · intro hs i
+      have := hs (f i)
+      rwa [ite_eq_left_iff.2 (fun h => absurd (Finset.mem_image_of_mem f (mem_univ i)) h)]
+        at this
+  rw [h, Fintype.card_piFinset]
+  simp only [apply_ite Finset.card, card_univ]
+  rw [Finset.prod_ite, Finset.prod_const, Finset.prod_const]
+  have himg : (univ.filter fun j => j ∈ Finset.image f univ) = Finset.image f univ := by
+    ext j; simp
+  have hcard : #(Finset.image f univ) = t := by
+    rw [Finset.card_image_of_injective _ hf, card_univ, Fintype.card_fin]
+  rw [himg, hcard, Finset.filter_not, himg, Finset.card_sdiff_of_subset (subset_univ _), hcard,
+    card_univ]
+
+/-- **The union bound for random strings**: if each `x` is bad for at most a `2 ^ (-e')` fraction
+of the random strings, some `x` of length `M` is bad for at most a `2 ^ (M - e')` fraction. -/
+theorem two_pow_mul_card_filter_exists_le {R M e' : ℕ}
+    {Bad : (Fin R → Bool) → (Fin M → Bool) → Prop}
+    [∀ r x, Decidable (Bad r x)]
+    (h : ∀ x, 2 ^ e' * (univ.filter fun r => Bad r x).card ≤ 2 ^ R) :
+    2 ^ e' * (univ.filter fun r => ∃ x, Bad r x).card ≤ 2 ^ M * 2 ^ R := by
+  classical
+  have hsub : (univ.filter fun r => ∃ x, Bad r x) ⊆
+      univ.biUnion fun x => univ.filter fun r => Bad r x := by
+    intro r hr
+    simp only [mem_filter, mem_univ, true_and] at hr
+    obtain ⟨x, hx⟩ := hr
+    exact mem_biUnion.2 ⟨x, mem_univ _, by simpa using hx⟩
+  calc 2 ^ e' * (univ.filter fun r => ∃ x, Bad r x).card
+      ≤ 2 ^ e' * ∑ x, (univ.filter fun r => Bad r x).card :=
+        Nat.mul_le_mul_left _ ((card_le_card hsub).trans card_biUnion_le)
+    _ = ∑ x : Fin M → Bool, 2 ^ e' * (univ.filter fun r => Bad r x).card := mul_sum ..
+    _ ≤ ∑ _x : Fin M → Bool, 2 ^ R := sum_le_sum fun x _ => h x
+    _ = 2 ^ M * 2 ^ R := by simp
+
+/-- **The parity of `c` from the binomial expansion of `(1 - 2) ^ c`**:
+`∑ i < c, (-2) ^ i * choose c (i + 1)` is `1` for odd `c` and `0` for even `c`. -/
+theorem sum_range_neg_two_pow_mul_choose (c : ℕ) :
+    ∑ i ∈ range c, (-2 : ℤ) ^ i * (c.choose (i + 1) : ℤ) = if Odd c then 1 else 0 := by
+  have hbin : ∑ i ∈ range (c + 1), (-2 : ℤ) ^ i * (c.choose i : ℤ) = (-1) ^ c := by
+    have := add_pow (-2 : ℤ) 1 c
+    simp only [one_pow, mul_one] at this
+    rw [show (-2 : ℤ) + 1 = -1 by norm_num] at this
+    rw [this]
+  rw [sum_range_succ'] at hbin
+  simp only [pow_zero, Nat.choose_zero_right, Nat.cast_one, mul_one] at hbin
+  have h : -2 * ∑ i ∈ range c, (-2 : ℤ) ^ i * (c.choose (i + 1) : ℤ) = (-1) ^ c - 1 := by
+    rw [mul_sum]
+    rw [← hbin]
+    simp only [pow_succ]
+    ring_nf
+  split
+  · rename_i hc
+    rw [hc.neg_one_pow] at h
+    linarith
+  · rename_i hc
+    rw [(Nat.not_odd_iff_even.1 hc).neg_one_pow, sub_self] at h
+    linarith
+
+/-- **The parity of `c` modulo `2 ^ K`**: only the first `K` binomial terms matter. -/
+theorem sum_range_neg_two_pow_mul_choose_zmod (c K : ℕ) :
+    ∑ i ∈ range K, (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) =
+      if Odd c then 1 else 0 := by
+  have hexact := congrArg (Int.cast : ℤ → ZMod (2 ^ K)) (sum_range_neg_two_pow_mul_choose c)
+  push_cast at hexact
+  rw [← hexact]
+  have hK : (-2 : ZMod (2 ^ K)) ^ K = 0 := by
+    have h2 : (2 : ZMod (2 ^ K)) ^ K = 0 := by
+      exact_mod_cast ZMod.natCast_self (2 ^ K)
+    rw [neg_pow, h2, mul_zero]
+  have h₁ : ∑ i ∈ range (K + c), (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) =
+      ∑ i ∈ range K, (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) := by
+    rw [sum_range_add]
+    simp [pow_add, hK]
+  have h₂ : ∑ i ∈ range (c + K), (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) =
+      ∑ i ∈ range c, (-2 : ZMod (2 ^ K)) ^ i * (c.choose (i + 1) : ZMod (2 ^ K)) := by
+    rw [sum_range_add]
+    simp [Nat.choose_eq_zero_of_lt (by omega : c < c + _ + 1)]
+  rw [← h₁, ← h₂, Nat.add_comm]
+
+/-- **Strictly increasing tuples count subsets**: the strictly increasing `k`-tuples of elements
+of `A` are as many as the `k`-element subsets of `A`. -/
+theorem card_filter_strictMono {β : Type*} [LinearOrder β] [Fintype β] (A : Finset β) (k : ℕ)
+    [DecidablePred fun g : Fin k → β => StrictMono g ∧ ∀ i, g i ∈ A] :
+    (univ.filter fun g : Fin k → β => StrictMono g ∧ ∀ i, g i ∈ A).card = (#A).choose k := by
+  classical
+  rw [← card_powersetCard]
+  refine card_bij (fun g _ => univ.image g) ?_ ?_ ?_
+  · intro g hg
+    simp only [mem_filter, mem_univ, true_and] at hg
+    rw [mem_powersetCard]
+    refine ⟨fun x hx => ?_, ?_⟩
+    · obtain ⟨i, -, rfl⟩ := mem_image.1 hx
+      exact hg.2 i
+    · rw [card_image_of_injective _ hg.1.injective, card_univ, Fintype.card_fin]
+  · intro g hg g' hg' h
+    simp only [mem_filter, mem_univ, true_and] at hg hg'
+    have hc : (univ.image g).card = k := by
+      rw [card_image_of_injective _ hg.1.injective, card_univ, Fintype.card_fin]
+    have h1 : g = (univ.image g).orderEmbOfFin hc :=
+      orderEmbOfFin_unique hc (fun i => mem_image_of_mem g (mem_univ i)) hg.1
+    have h2 : g' = (univ.image g).orderEmbOfFin hc :=
+      orderEmbOfFin_unique hc (fun i => h ▸ mem_image_of_mem g' (mem_univ i)) hg'.1
+    rw [h1, ← h2]
+  · intro s hs
+    rw [mem_powersetCard] at hs
+    refine ⟨s.orderEmbOfFin hs.2, ?_, image_orderEmbOfFin_univ s hs.2⟩
+    simp only [mem_filter, mem_univ, true_and]
+    exact ⟨(s.orderEmbOfFin hs.2).strictMono, fun i => hs.1 (orderEmbOfFin_mem s hs.2 i)⟩
+
+/-- A tuple increasing at every step is strictly increasing. -/
+theorem strictMono_of_lt_succ {β : Type*} [Preorder β] {k : ℕ} {g : Fin k → β}
+    (h : ∀ (i : ℕ) (hi : i + 1 < k), g ⟨i, by omega⟩ < g ⟨i + 1, hi⟩) : StrictMono g := by
+  cases k with
+  | zero => exact fun i => i.elim0
+  | succ k => exact Fin.strictMono_iff_lt_succ.2 fun i => h i (by omega)
 
 end Cslib.BitString
