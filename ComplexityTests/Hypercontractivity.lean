@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Foundations.Analysis.LpNormMeasure
 import Complexity.Foundations.BooleanAnalysis.Bonami
-import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNormMeasure
 
 /-! Instances, non-vacuity witnesses and axiom guards for hypercontractivity and the Bonami
 Lemma. -/
@@ -108,34 +108,34 @@ example (f : (ι → Bool) → ℝ) :
   lpNorm_eq_measureTheory_lpNorm two_pos f
 
 /--
-info: 'Cslib.BitString.lpNorm_equiv' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.lpNorm_equiv' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.lpNorm_equiv
+#print axioms Cslib.lpNorm_equiv
 
 /--
-info: 'Cslib.BitString.lpNorm_prod' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.lpNorm_prod' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.lpNorm_prod
+#print axioms Cslib.lpNorm_prod
 
 /--
-info: 'Cslib.BitString.lpNorm_subsingleton' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.lpNorm_subsingleton' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.lpNorm_subsingleton
+#print axioms Cslib.lpNorm_subsingleton
 
 /--
-info: 'Cslib.BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.lpNorm_eq_measureTheory_lpNorm_uniformOn' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn
+#print axioms Cslib.lpNorm_eq_measureTheory_lpNorm_uniformOn
 
 /--
-info: 'Cslib.BitString.lpNorm_eq_measureTheory_lpNorm' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.lpNorm_eq_measureTheory_lpNorm' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.lpNorm_eq_measureTheory_lpNorm
+#print axioms Cslib.lpNorm_eq_measureTheory_lpNorm
 
 /--
 info: 'Cslib.BitString.sq_add_sq_mul_sq_rpow_le' depends on axioms: [propext, Classical.choice, Quot.sound]

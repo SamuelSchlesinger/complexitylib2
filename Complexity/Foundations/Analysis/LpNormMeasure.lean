@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
+public import Complexity.Foundations.Analysis.LpNorm
 public import Cslib.Probability.PMF
 public import Mathlib.MeasureTheory.Function.LpSeminorm.Defs
 public import Mathlib.Probability.UniformOn
@@ -17,22 +17,22 @@ import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 /-!
 # Measure-theoretic bridge for finite `L^p` norms
 
-On a nonempty finite type `α` with measurable singletons and `0 < p`, `BitString.lpNorm p f` agrees
+On a nonempty finite type `α` with measurable singletons and `0 < p`, `Cslib.lpNorm p f` agrees
 with Mathlib's `MeasureTheory.lpNorm` with respect to both `ProbabilityTheory.uniformOn Set.univ`
-(`BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn`) and CSLib's
-`(Probability.PMF.uniformOfFintype α).toMeasure` (`BitString.lpNorm_eq_measureTheory_lpNorm`).
+(`Cslib.lpNorm_eq_measureTheory_lpNorm_uniformOn`) and CSLib's
+`(Probability.PMF.uniformOfFintype α).toMeasure` (`Cslib.lpNorm_eq_measureTheory_lpNorm`).
 
 ## Main results
 
-* `Cslib.BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn`: agreement with `MeasureTheory.lpNorm`
-  under `ProbabilityTheory.uniformOn Set.univ`.
-* `Cslib.BitString.lpNorm_eq_measureTheory_lpNorm`: agreement with `MeasureTheory.lpNorm` under
+* `Cslib.lpNorm_eq_measureTheory_lpNorm_uniformOn`: agreement with `MeasureTheory.lpNorm` under
+  `ProbabilityTheory.uniformOn Set.univ`.
+* `Cslib.lpNorm_eq_measureTheory_lpNorm`: agreement with `MeasureTheory.lpNorm` under
   `(Probability.PMF.uniformOfFintype α).toMeasure`.
 -/
 
 @[expose] public section
 
-namespace Cslib.BitString
+namespace Cslib
 
 open Finset
 open scoped BigOperators ENNReal
@@ -76,4 +76,4 @@ theorem lpNorm_eq_measureTheory_lpNorm {p : ℝ} (hp : 0 < p) (f : α → ℝ) :
     PMF.toMeasure_apply_singleton _ x (measurableSet_singleton x),
     Probability.PMF.uniformOfFintype_apply]
 
-end Cslib.BitString
+end Cslib

@@ -17,7 +17,7 @@ import Complexity.Foundations.Data.Finset.Expect
 
 The noise operator `T_ρ` (`BitString.noiseOp`) is a *hypercontraction*: it is a contraction not
 only of `L^2` but from `L^p` to `L^2` and from `L^2` to `L^q` for suitable `ρ` [Bonami1970]
-[O'Donnell, Chapter 9][ODonnell2014]. Writing `‖f‖_p` for the `L^p` norm (`BitString.lpNorm`),
+[O'Donnell, Chapter 9][ODonnell2014]. Writing `‖f‖_p` for the `L^p` norm (`Cslib.lpNorm`),
 this file proves:
 
 * the **Weak Two-Function Hypercontractivity Theorem**: for `0 ≤ r, s ≤ 1` and
