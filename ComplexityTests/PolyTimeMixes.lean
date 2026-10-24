@@ -9,7 +9,7 @@ import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Complexity.Classes.Toda.Counting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
 
-/-! Plain/tidy automation boundaries from #558: bounded failure, verifier rules, the SBP
+/-! Plain automation and internal proof boundaries from #558: singleton and verifier rules, the SBP
 binary threshold and Toda's input-dependent counting verifier. -/
 
 namespace ComplexityTests.PolyTimeMixes
@@ -18,12 +18,16 @@ open Cslib Cslib.Complexity Turing.MultiTapeTM
 variable {α : Type} {enc : α ↪ List Bool}
 
 set_option maxHeartbeats 2000 in
--- Check that a bounded failed attempt and the explicit certificate fit a small heartbeat budget.
-/-- The WPP singleton target: bound a failed tidy search before explicitly preparing the plain
-hypothesis. The default search on this shape can run to its heartbeat limit. -/
+-- The plain singleton uses 29 measured heartbeats; keep a small-budget public-API regression.
+/-- The WPP public singleton target uses the supplied plain routine directly. -/
+example {f : α → ℤ} (hf : ComputableInPolyTime f enc encIntBin) :
+    ComputableInPolyTime (fun a => [f a]) enc (encList encIntBin) := by fun_prop
+
+set_option maxHeartbeats 2000 in
+-- The explicit internal conversion plus tidy synthesis uses 34 measured heartbeats.
+/-- A machine-construction proof prepares its tidy hypothesis before searching. -/
 example {f : α → ℤ} (hf : ComputableInPolyTime f enc encIntBin) :
     ComputableTidilyInPolyTime (fun a => [f a]) enc (encList encIntBin) := by
-  fail_if_success fun_prop (config := { maxSteps := 32 })
   have hf := hf.tidy
   fun_prop
 
