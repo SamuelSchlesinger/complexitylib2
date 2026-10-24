@@ -17,6 +17,25 @@ open Cslib Cslib.Circuits Cslib.Circuits.Boolean Cslib.Crypto.Homomorphic
 open Cslib.Crypto.Homomorphic.GSW
 open Turing.MultiTapeTM
 
+-- A shifted partial product can be prepared for the carry-save reducer through plain APIs.
+example : ComputableInPolyTime (fun p : ℕ × ℕ =>
+    pairWithZeroCode (p.1 + p.1) p.1 (Modular.partialProductCode p.1 p.2))
+    (encPair encUnary encUnary) encCode :=
+  computableInPolyTime_pairWithZeroCode (by fun_prop) (by fun_prop)
+    Modular.computableInPolyTime_partialProductCode
+
+-- The reducer charges a runtime-supplied complete leaf list and a binary input arity.
+example : ComputableInPolyTime
+    (fun p : (ℕ × ℕ) × List (List (Op × List ℕ) × List ℕ) =>
+      sumPairsCode p.1.1 p.1.2 p.2)
+    (encPair (encPair encNat encUnary) (encList encCode)) encCode :=
+  computableInPolyTime_sumPairsCode
+    ((ComputableInPolyTime.fst encNat encUnary).comp
+      (ComputableInPolyTime.fst _ _))
+    ((ComputableInPolyTime.snd encNat encUnary).comp
+      (ComputableInPolyTime.fst _ _))
+    (ComputableInPolyTime.snd _ _)
+
 private def secret : List Bool := [true, false]
 -- Selected row is row 1. Its words are 3 and 2; secret 1 gives phase 1 (the lower tie).
 private def lowerTie : List Bool :=
@@ -122,6 +141,11 @@ example (n w : ℕ) :
  Quot.sound] -/
 #guard_msgs in
 #print axioms DecryptionCircuit.computableInPolyTime_code
+
+/-- info: 'Cslib.Circuits.Boolean.Modular.computableInPolyTime_innerProduct' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Modular.computableInPolyTime_innerProduct
 
 /-- info: 'Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit.layers_augment_le_depthBudget' depends on axioms: [propext,
  Classical.choice,

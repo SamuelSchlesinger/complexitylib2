@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Circuit.Boolean.Modular.InnerProduct
 import all Complexity.Computability.Circuit.Boolean.Modular.InnerProduct
 public import Complexity.Computability.Circuit.Boolean.Modular.Multiply.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -23,7 +25,7 @@ balanced sum. Binary wire numbers and every generated code list are charged.
 ## Main results
 
 * `Cslib.Circuits.Boolean.Modular.innerProductCode_eq_code`: exact raw and typed code agreement.
-* `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_innerProduct`: native generation.
+* `Cslib.Circuits.Boolean.Modular.computableInPolyTime_innerProduct`: native generation.
 -/
 
 public section
@@ -84,8 +86,8 @@ theorem innerProductCode_eq_code (k w : ℕ) :
   rfl
 
 /-- The full constructor is uniform in unary count and width. -/
-@[fun_prop] theorem computableTidilyInPolyTime_innerProduct :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (innerProduct p.1 p.2).code)
+@[fun_prop] theorem computableInPolyTime_innerProduct :
+    ComputableInPolyTime (fun p : ℕ × ℕ => (innerProduct p.1 p.2).code)
       (encPair encUnary encUnary) encCode := by
   have hw : ComputableTidilyInPolyTime (fun p : (ℕ × ℕ) × ℕ => p.1.2)
       (encPair (encPair encUnary encUnary) encUnary) encUnary := by fun_prop
@@ -112,14 +114,17 @@ theorem innerProductCode_eq_code (k w : ℕ) :
         p.1.2 (compCode (p.1.1 * p.1.2 + p.1.1 * p.1.2)
           (multiplyCode p.1.2) (innerProductInputsCode p.1.1 p.1.2 p.2)))
       (encPair (encPair encUnary encUnary) encUnary) encCode := by
-    apply computableTidilyInPolyTime_pairWithZeroCode (by fun_prop) hw
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_pairWithZeroCode (.of_tidy (by fun_prop)) (.of_tidy hw)
+    apply ComputableInPolyTime.of_tidy
     apply computableTidilyInPolyTime_compCode (by fun_prop) _ hin
     simpa only [multiplyCode_eq_code, Function.comp_def] using
-      computableTidilyInPolyTime_multiply.comp hw
-  have h := computableTidilyInPolyTime_sumPairsCode
-    (show ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 * p.2 + p.1 * p.2)
-      (encPair encUnary encUnary) encNat by fun_prop)
-    (snd _ _) (mapWith hleaf id' (range.comp (fst _ _)))
+      computableInPolyTime_multiply.tidy.comp hw
+  have h := computableInPolyTime_sumPairsCode
+    (show ComputableInPolyTime (fun p : ℕ × ℕ => p.1 * p.2 + p.1 * p.2)
+      (encPair encUnary encUnary) encNat from .of_tidy (by fun_prop))
+    (.of_tidy (snd _ _))
+    (.of_tidy (mapWith hleaf id' (range.comp (fst _ _))))
   simpa only [← innerProductCode_eq_code, innerProductCode, Function.comp_def] using h
 
 end Cslib.Circuits.Boolean.Modular

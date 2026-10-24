@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Circuit.Boolean.Modular.PartialProduct
 import all Complexity.Computability.Circuit.Boolean.Modular.PartialProduct
 public import Complexity.Computability.Circuit.Boolean.CodeTemplate
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -24,7 +26,7 @@ valid shift.
 ## Main results
 
 * `Cslib.Circuits.Boolean.Modular.partialProductCode_eq_code`: exact typed-circuit agreement.
-* `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_partialProductCode`: native generation.
+* `Cslib.Circuits.Boolean.Modular.computableInPolyTime_partialProductCode`: native generation.
 -/
 
 public section
@@ -80,9 +82,10 @@ theorem partialProductCode_eq_code (i : Fin w) :
   rfl
 
 /-- The full raw partial-product code is generated uniformly in unary width and shift. -/
-theorem computableTidilyInPolyTime_partialProductCode :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => partialProductCode p.1 p.2)
+theorem computableInPolyTime_partialProductCode :
+    ComputableInPolyTime (fun p : ℕ × ℕ => partialProductCode p.1 p.2)
       (encPair encUnary encUnary) encCode := by
+  apply ComputableInPolyTime.of_tidy
   have hw : ComputableTidilyInPolyTime (fun p : (ℕ × ℕ) × ℕ => p.1.1)
       (encPair (encPair encUnary encUnary) encUnary) encNat := by fun_prop
   have hi : ComputableTidilyInPolyTime (fun p : (ℕ × ℕ) × ℕ => p.1.2)

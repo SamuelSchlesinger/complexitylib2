@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Circuit.Boolean.Modular.Subtract
 import all Complexity.Computability.Circuit.Boolean.Modular.Subtract
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -23,7 +25,7 @@ wire references and output selectors are charged.
 ## Main results
 
 * `Cslib.Circuits.Boolean.Modular.subtractCode_eq_code`: exact generated code.
-* `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_subtract`: native constructor.
+* `Cslib.Circuits.Boolean.Modular.computableInPolyTime_subtract`: native constructor.
 -/
 
 public section
@@ -91,8 +93,9 @@ theorem subtractCode_eq_code (w : ℕ) : subtractCode w = (subtract w).code := b
   rfl
 
 /-- Full generation is polynomial-time in unary width, including binary gate and output indices. -/
-@[fun_prop] theorem computableTidilyInPolyTime_subtract :
-    ComputableTidilyInPolyTime (fun w => (subtract w).code) encUnary encCode := by
+@[fun_prop] theorem computableInPolyTime_subtract :
+    ComputableInPolyTime (fun w => (subtract w).code) encUnary encCode := by
+  apply ComputableInPolyTime.of_tidy
   have hn : ComputableTidilyInPolyTime (fun w : ℕ => w + w) encUnary encNat := by fun_prop
   have hr : ComputableTidilyInPolyTime (fun w : ℕ => ([], List.range w)) encUnary encCode :=
     by

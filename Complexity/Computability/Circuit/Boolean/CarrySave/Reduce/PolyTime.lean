@@ -12,6 +12,8 @@ import all Complexity.Computability.Circuit.Boolean.CarrySave.Reduce
 public import Complexity.Computability.Circuit.Boolean.CarrySave.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
 public import Complexity.Computability.Circuit.Boolean.BalancedCode
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -25,7 +27,7 @@ Input counts and references are binary, word widths unary, and all supplied leaf
 ## Main results
 
 * `Cslib.Circuits.Boolean.sumPairsCode_eq_code`: exact reduction and final-adder code.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_sumPairsCode`: uniform native generation.
+* `Cslib.Circuits.Boolean.computableInPolyTime_sumPairsCode`: uniform native generation.
 -/
 
 public section
@@ -79,23 +81,31 @@ private theorem computableTidilyInPolyTime_falseWordCode
     (replicate hw hn)
 
 /-- Pair generation charges all supplied leaf code. -/
-@[fun_prop] theorem computableTidilyInPolyTime_pairWithZeroCode
+@[fun_prop] theorem computableInPolyTime_pairWithZeroCode
     {α : Type} {enc : α ↪ List Bool} {n w : α → ℕ} {C : α → Code}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hw : ComputableTidilyInPolyTime w enc encUnary)
-    (hC : ComputableTidilyInPolyTime C enc encCode) :
-    ComputableTidilyInPolyTime (fun a => pairWithZeroCode (n a) (w a) (C a)) enc encCode := by
+    (hn : ComputableInPolyTime n enc encNat)
+    (hw : ComputableInPolyTime w enc encUnary)
+    (hC : ComputableInPolyTime C enc encCode) :
+    ComputableInPolyTime (fun a => pairWithZeroCode (n a) (w a) (C a)) enc encCode := by
+  have hn := hn.tidy
+  have hw := hw.tidy
+  have hC := hC.tidy
+  apply ComputableInPolyTime.of_tidy
   unfold pairWithZeroCode
   exact computableTidilyInPolyTime_appendCode hn hC
     (computableTidilyInPolyTime_falseWordCode hn hw)
 
 /-- The native generator charges the complete leaf list and both reduction stages. -/
-@[fun_prop] theorem computableTidilyInPolyTime_sumPairsCode
+@[fun_prop] theorem computableInPolyTime_sumPairsCode
     {α : Type} {enc : α ↪ List Bool} {n w : α → ℕ} {cs : α → List Code}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hw : ComputableTidilyInPolyTime w enc encUnary)
-    (hcs : ComputableTidilyInPolyTime cs enc (encList encCode)) :
-    ComputableTidilyInPolyTime (fun a => sumPairsCode (n a) (w a) (cs a)) enc encCode := by
+    (hn : ComputableInPolyTime n enc encNat)
+    (hw : ComputableInPolyTime w enc encUnary)
+    (hcs : ComputableInPolyTime cs enc (encList encCode)) :
+    ComputableInPolyTime (fun a => sumPairsCode (n a) (w a) (cs a)) enc encCode := by
+  have hn := hn.tidy
+  have hw := hw.tidy
+  have hcs := hcs.tidy
+  apply ComputableInPolyTime.of_tidy
   unfold sumPairsCode
   exact computableTidilyInPolyTime_compCode hn
     (computableTidilyInPolyTime_carryLookaheadAdd.comp hw)

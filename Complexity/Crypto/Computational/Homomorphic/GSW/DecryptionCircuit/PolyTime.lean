@@ -9,7 +9,8 @@ module
 
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit
 import all Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Circuit.Boolean.Modular.InnerProduct.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Modular.Subtract.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Layered.Compile.PolyTime
@@ -197,11 +198,11 @@ private theorem native_code :
   have hi : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Modular.innerProductCode p.1 p.2)
       (encPair encUnary encUnary) encCode := by
     simpa only [Modular.innerProductCode_eq_code] using
-      Modular.computableTidilyInPolyTime_innerProduct
+      Modular.computableInPolyTime_innerProduct.tidy
   have hs : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Modular.subtractCode p.2)
       (encPair encUnary encUnary) encCode := by
     simpa only [Modular.subtractCode_eq_code, Function.comp_def] using
-      Modular.computableTidilyInPolyTime_subtract.comp (snd _ _)
+      Modular.computableInPolyTime_subtract.tidy.comp (snd _ _)
   have hd := native_decoderCode.comp (snd encUnary encUnary)
   have hbody := computableTidilyInPolyTime_compCode hn hd
     (computableTidilyInPolyTime_compCode hn hs

@@ -11,6 +11,8 @@ public import Complexity.Computability.Circuit.Boolean.Modular.Multiply
 import all Complexity.Computability.Circuit.Boolean.Modular.Multiply
 public import Complexity.Computability.Circuit.Boolean.Modular.PartialProduct.PolyTime
 public import Complexity.Computability.Circuit.Boolean.CarrySave.Reduce.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -24,7 +26,7 @@ unary width. The output is the full existing circuit code, including unused fall
 ## Main results
 
 * `Cslib.Circuits.Boolean.Modular.multiplyCode_eq_code`: exact code agreement.
-* `Cslib.Circuits.Boolean.Modular.computableTidilyInPolyTime_multiply`: uniform native generation.
+* `Cslib.Circuits.Boolean.Modular.computableInPolyTime_multiply`: uniform native generation.
 -/
 
 public section
@@ -53,16 +55,18 @@ theorem multiplyCode_eq_code (w : ℕ) : multiplyCode w = (multiply w).code := b
   rfl
 
 /-- Generation is native polynomial-time in unary width, charging the complete binary code. -/
-@[fun_prop] theorem computableTidilyInPolyTime_multiply :
-    ComputableTidilyInPolyTime (fun w => (multiply w).code) encUnary encCode := by
+@[fun_prop] theorem computableInPolyTime_multiply :
+    ComputableInPolyTime (fun w => (multiply w).code) encUnary encCode := by
   have hl : ComputableTidilyInPolyTime (fun p : ℕ × ℕ =>
       pairWithZeroCode (p.1 + p.1) p.1 (partialProductCode p.1 p.2))
       (encPair encUnary encUnary) encCode := by
-    apply computableTidilyInPolyTime_pairWithZeroCode (by fun_prop) (by fun_prop)
-    exact computableTidilyInPolyTime_partialProductCode
-  have h := computableTidilyInPolyTime_sumPairsCode
-    (show ComputableTidilyInPolyTime (fun w : ℕ => w + w) encUnary encNat by fun_prop)
-    id' (mapWith hl id' range)
+    exact (computableInPolyTime_pairWithZeroCode
+      (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+      computableInPolyTime_partialProductCode).tidy
+  have h := computableInPolyTime_sumPairsCode
+    (show ComputableInPolyTime (fun w : ℕ => w + w) encUnary encNat from
+      .of_tidy (by fun_prop))
+    (.of_tidy id') (.of_tidy (mapWith hl id' range))
   simpa only [← multiplyCode_eq_code, multiplyCode] using h
 
 end Cslib.Circuits.Boolean.Modular
