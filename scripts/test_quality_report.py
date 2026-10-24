@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import pathlib
 import sys
 import tempfile
@@ -195,6 +196,15 @@ class OutputCheckTests(unittest.TestCase):
     def test_unchecked_reports_say_so(self) -> None:
         self.write(self.reference, "Complexity/A.olean", "changed")
         self.assertIn("not checked", self.check(self.copy, skip=True))
+
+    def test_outputs_of_deleted_modules_are_ignored(self) -> None:
+        def ilean(module: str, *imports: str) -> str:
+            return json.dumps({"module": module,
+                               "directImports": [[i, False, False, False] for i in imports]})
+        self.write(self.reference, "Complexity.ilean", ilean("Complexity", "Complexity.A"))
+        self.write(self.reference, "Complexity/A.ilean", ilean("Complexity.A", "Mathlib.Init"))
+        self.write(self.reference, "Complexity/Deleted.ilean", ilean("Complexity.Deleted"))
+        self.assertEqual(list(q.load_ileans(self.reference)), ["Complexity.A"])
 
 
 if __name__ == "__main__":
