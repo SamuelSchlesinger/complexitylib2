@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.EXP
+public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.MIP.OptimalProver
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Witness
@@ -15,7 +16,6 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
-import Complexity.Computability.Complexity.Classes.IP.Simulation
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
@@ -40,15 +40,17 @@ $$\mathsf{MIP}_2 \subseteq \mathsf{MIP} \subseteq \mathsf{NEXP}.$$
 1. **Multi-channel live replay (`Cslib.Complexity.MIP.aliveRun`, `Cslib.Complexity.MIP.accepts`)**:
    A tagged history `th : TaggedHistory` is a list of `(channel, (query, reply))` entries with
    channel index in `ℕ` (encoded in unary). Given input `x` and coin string `r` of length `t`,
-   `aliveRun M x r th` executes `M` for `t` steps, consuming `th` from the front whenever `M`
-   issues an oracle query `(op, m)` and checking that the entry matches `(op.val, m)`. By
-   `foldlWith_spec`, `accepts` is computable tidily in polynomial time.
-2. **Correspondence with deterministic prover families (`queryAcceptProb_eq_one_of_accepts`,
-   `queryAcceptProb_eq_ite_accepts_canonicalTrace`)**:
+   `aliveRun M x r th` specializes `Cslib.Complexity.Interaction.aliveRun` to execute `M` for `t`
+   steps, consuming `th` from the front whenever `M` issues an oracle query `(op, m)` and checking
+   that the entry matches `(op.val, m)`. By
+   `Cslib.Complexity.Interaction.computableTidilyInPolyTime_accepts`, `accepts` is computable tidily
+   in polynomial time.
+2. **Correspondence with deterministic prover families (`acceptFrom_eq_one_of_accepts`,
+   `acceptFrom_eq_ite_accepts_canonicalTrace`)**:
    Projecting a tagged history `th` onto prover `i`'s channel (`projHistory i th`) commutes with
    non-communicating state updates (`Function.update`). Hence `accepts M x r th = true` under
    projected histories valid for `D : Fin p → DetProver` implies
-   `queryAcceptProb (Prover.independent fun i => (D i).toProver) ... (coinProgram M t x r) = 1`,
+   `acceptFrom (Prover.independent fun i => (D i).toProver) ... (some (coinProgram M t x r)) = 1`,
    and conversely every deterministic prover family `D` has a canonical tagged history
    `canonicalTrace M t D ... r` of length at most `t` with queries and replies of length at most
    `t`.
@@ -96,7 +98,8 @@ and the arithmetization of `NEXP` verification tableaux) is not formalized here 
 
 namespace Cslib.Complexity
 
-open Cslib.Probability _root_.Turing _root_.Turing.MultiTapeTM _root_.Turing.MultiTapeMachine
+open Cslib.Probability Cslib.Complexity.Interaction
+open _root_.Turing _root_.Turing.MultiTapeTM _root_.Turing.MultiTapeMachine
 open ComputableTidilyInPolyTime
 open scoped ENNReal
 
@@ -104,17 +107,11 @@ namespace MIP
 
 /-! ### Tagged histories and per-prover projections -/
 
-/-- A single-prover history of `(query, reply)` word pairs. -/
-abbrev History := List (List Bool × List Bool)
-
 /-- A tagged query-reply entry `(channel, (query, reply))` with channel index in `ℕ`. -/
 abbrev TaggedEntry := ℕ × (List Bool × List Bool)
 
 /-- A multi-channel transcript of `(channel, (query, reply))` entries. -/
 abbrev TaggedHistory := List TaggedEntry
-
-/-- Encoding of single-prover histories. -/
-abbrev encHistory : History ↪ List Bool := encList (encPair encBits encBits)
 
 /-- Encoding of a tagged transcript entry, with the channel index in unary. -/
 abbrev encTaggedEntry : TaggedEntry ↪ List Bool :=
@@ -237,193 +234,36 @@ section Replay
 
 variable {p k : ℕ} {Control : Type} (M : MultiTapePTM k Bool Control (Fin p))
 
-variable (p k Control) in
-/-- State of a multi-channel live replay: configuration, remaining tagged history, and liveness. -/
-abbrev AliveState := MultiTapeMachine.FiniteConfig k Bool Control (Fin p) × TaggedHistory × Bool
-
-/-- The instruction of `M` in configuration `cfg` with coin `b`, unless halted. -/
-def instruction (cfg : MultiTapeMachine.FiniteConfig k Bool Control (Fin p)) (b : Bool) :
-    Option (MultiTapeMachine.Action k Bool Control (Fin p)) :=
-  cfg.tapes.state.map fun c =>
-    M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b
-
-/-- Answer a query on channel `op` from the remaining tagged history, checking both the channel
-index `op.val` and the query word `(s.1.channels op).1`, and truncating the reply to `t` bits. -/
-def answerFromHistory (t : ℕ) (op : Fin p) (next : Control) (s : AliveState p k Control) :
-    AliveState p k Control :=
-  if s.2.1.isEmpty then (s.1, s.2.1, false)
-  else if (s.2.1.headD (0, ([], []))).1 == op.val &&
-      (s.2.1.headD (0, ([], []))).2.1 == (s.1.channels op).1 then
-    (s.1.receive op next ((s.2.1.headD (0, ([], []))).2.2.take t), s.2.1.tail, true)
-  else (s.1, s.2.1, false)
-
-/-- Dispatch a live replay step by liveness and finite instruction tag. -/
-def taggedStep (t : ℕ) :
-    Bool × Option (MultiTapeMachine.Action k Bool Control (Fin p)) → AliveState p k Control →
-      AliveState p k Control
-  | (false, _), s => s
-  | (true, none), s => s
-  | (true, some (.step action symbol move)), s => (s.1.step action symbol move, s.2.1, true)
-  | (true, some (.query op next)), s => answerFromHistory t op next s
+/-- Whether a tagged entry `e` belongs to prover channel `op : Fin p`. -/
+def matchTaggedOp (op : Fin p) (e : TaggedEntry) : Bool :=
+  e.1 == op.val
 
 /-- One step of the multi-channel live replay of `M` with truncation bound `t` and coin `b`. -/
-def aliveStep (t : ℕ) (s : AliveState p k Control) (b : Bool) : AliveState p k Control :=
-  taggedStep t (s.2.2, instruction M s.1 b) s
+abbrev aliveStep (t : ℕ) (s : AliveState k Control (Fin p) TaggedEntry) (b : Bool) :
+    AliveState k Control (Fin p) TaggedEntry :=
+  Interaction.aliveStep matchTaggedOp Prod.snd M t s b
 
 /-- The multi-channel live replay of `M` on input `x` with coins `r` against tagged history `th`. -/
-def aliveRun (x r : List Bool) (th : TaggedHistory) : AliveState p k Control :=
-  r.foldl (aliveStep M r.length) (MultiTapeMachine.FiniteConfig.init M.initial x, th, true)
+abbrev aliveRun (x r : List Bool) (th : TaggedHistory) :
+    AliveState k Control (Fin p) TaggedEntry :=
+  Interaction.aliveRun matchTaggedOp Prod.snd M x r th
 
 /-- Whether `M` on input `x` with coins `r` accepts along tagged history `th`: the replay stays
 live, consumes the entire tagged history, and has output `[true]` after the clocked run. -/
-def accepts (x r : List Bool) (th : TaggedHistory) : Bool :=
-  (aliveRun M x r th).2.2 && (aliveRun M x r th).2.1.isEmpty &&
-    decide ((aliveRun M x r th).1.tapes.output = [true])
-
-variable [Finite Control]
-
-/-- Encoding of `AliveState p k Control`. -/
-noncomputable abbrev encAliveState : AliveState p k Control ↪ List Bool :=
-  encPair encFiniteConfig (encPair encTaggedHistory encBool)
-
-/-- Reading the current instruction of `M` is polynomial-time. -/
-theorem computableTidilyInPolyTime_instruction :
-    ComputableTidilyInPolyTime
-      (fun q : MultiTapeMachine.FiniteConfig k Bool Control (Fin p) × Bool =>
-        instruction M q.1 q.2)
-      (encPair encFiniteConfig encBool)
-      (encFinite (Option (MultiTapeMachine.Action k Bool Control (Fin p)))) := by
-  have hobs : ComputableTidilyInPolyTime
-      (fun q : MultiTapeMachine.FiniteConfig k Bool Control (Fin p) × Bool =>
-        (q.1.tapes.state, q.1.tapes.inputSymbol, q.1.tapes.workTapeSymbols, q.1.answerSymbols, q.2))
-      (encPair encFiniteConfig encBool)
-      (encPair (encFinite (Option Control)) (encPair (encFinEnum (Option Bool))
-        (encPair (encFinEnum (Fin k → Option Bool)) (encPair (encFinite (Fin p → Option Bool))
-          encBool)))) := by
-    fun_prop
-  exact ((of_finite fun obs : Option Control × Option Bool × (Fin k → Option Bool) ×
-      (Fin p → Option Bool) × Bool => obs.1.map fun c =>
-        M.tr c obs.2.1 obs.2.2.1 obs.2.2.2.1 obs.2.2.2.2).comp hobs).of_enc_eq fun _ => rfl
-
-/-- Answering a query on channel `op` from the tagged history is polynomial-time. -/
-theorem computableTidilyInPolyTime_answerFromHistory (op : Fin p) (next : Control) :
-    ComputableTidilyInPolyTime (fun q : (ℕ × AliveState p k Control) × Bool =>
-      answerFromHistory q.1.1 op next q.1.2)
-      (encPair (encPair encUnary encAliveState) encBool) encAliveState := by
-  unfold answerFromHistory
-  fun_prop
-
-/-- One step of the multi-channel live replay is polynomial-time. -/
-theorem computableTidilyInPolyTime_aliveStep :
-    ComputableTidilyInPolyTime (fun q : (ℕ × AliveState p k Control) × Bool =>
-      aliveStep M q.1.1 q.1.2 q.2)
-      (encPair (encPair encUnary encAliveState) encBool) encAliveState := by
-  unfold aliveStep
-  refine finite_cases (tag := fun q : (ℕ × AliveState p k Control) × Bool =>
-      (q.1.2.2.2, instruction M q.1.2.1 q.2))
-    (branch := fun tag q => taggedStep q.1.1 tag q.1.2)
-    (tagEncoding := encPair encBool (encFinite (Option (MultiTapeMachine.Action k Bool Control
-      (Fin p))))) ?_ ?_
-  · have h := computableTidilyInPolyTime_instruction M
-    fun_prop
-  · rintro ⟨_ | _, _ | (⟨action, symbol, move⟩ | ⟨op, next⟩)⟩
-    · exact (fst _ _).snd'
-    · exact (fst _ _).snd'
-    · exact (fst _ _).snd'
-    · exact (fst _ _).snd'
-    · simp only [taggedStep]
-      fun_prop
-    · exact computableTidilyInPolyTime_answerFromHistory op next
-
-omit [Finite Control] in
-/-- A step of `aliveStep` preserves `SpaceBound` and consumes a suffix of the tagged history. -/
-theorem aliveStep_spaceBound {n i t : ℕ} {th : TaggedHistory} {s : AliveState p k Control}
-    (hs : MultiTapeMachine.FiniteConfig.SpaceBound n i t s.1 ∧ s.2.1 <:+ th) (b : Bool) :
-    MultiTapeMachine.FiniteConfig.SpaceBound n (i + 1) t (aliveStep M t s b).1 ∧
-      (aliveStep M t s b).2.1 <:+ th := by
-  obtain ⟨cfg, rest, _ | _⟩ := s
-  · exact ⟨hs.1.mono le_rfl (by lia) le_rfl, hs.2⟩
-  · dsimp only at hs ⊢
-    obtain ⟨hspace, hsuffix⟩ := hs
-    rcases hst : cfg.tapes.state with _ | c
-    · simp only [aliveStep, instruction, hst, Option.map_none, taggedStep]
-      exact ⟨hspace.mono le_rfl (by lia) le_rfl, hsuffix⟩
-    · rcases htr : M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b with
-        ⟨action, symbol, move⟩ | ⟨op, next⟩
-      · simp only [aliveStep, instruction, hst, Option.map_some, htr, taggedStep]
-        exact ⟨hspace.step action symbol move, hsuffix⟩
-      · simp only [aliveStep, instruction, hst, Option.map_some, htr, taggedStep,
-          answerFromHistory]
-        cases rest with
-        | nil => exact ⟨hspace.mono le_rfl (by lia) le_rfl, hsuffix⟩
-        | cons e rest =>
-          simp only [List.isEmpty_cons, Bool.false_eq_true, ↓reduceIte, List.headD_cons,
-            List.tail_cons]
-          by_cases hcond : (e.1 == op.val && e.2.1 == (cfg.channels op).1) = true
-          · simp only [hcond, ↓reduceIte]
-            exact ⟨hspace.receive op next _ (List.length_take_le _ _),
-              (List.suffix_cons _ _).trans hsuffix⟩
-          · simp only [hcond]
-            exact ⟨hspace.mono le_rfl (by lia) le_rfl, hsuffix⟩
-
-/-- The multi-channel live replay `aliveRun` is polynomial-time. -/
-theorem computableTidilyInPolyTime_aliveRun :
-    ComputableTidilyInPolyTime (fun q : List Bool × List Bool × TaggedHistory =>
-      aliveRun M q.1 q.2.1 q.2.2)
-      (encPair encBits (encPair encBits encTaggedHistory)) encAliveState := by
-  obtain ⟨cf, hcf⟩ := length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Fin p)
-  unfold aliveRun
-  refine (foldlWith_spec (par := fun q : List Bool × List Bool × TaggedHistory => q.2.1.length)
-    (list := fun q => q.2.1)
-    (init := fun q => (MultiTapeMachine.FiniteConfig.init M.initial q.1, q.2.2, true))
-    (step := aliveStep M) (encP := encUnary) (encA := encBool) (encL := encBits)
-    (by fun_prop) (by fun_prop) (by fun_prop) (computableTidilyInPolyTime_aliveStep M)
-    (fun q consumed s => MultiTapeMachine.FiniteConfig.SpaceBound q.1.length consumed.length
-      q.2.1.length s.1 ∧ s.2.1 <:+ q.2.2)
-    (fun q => ⟨MultiTapeMachine.FiniteConfig.spaceBound_init _ _ _, List.suffix_refl _⟩)
-    (fun q consumed s b _ hs => by simpa using aliveStep_spaceBound M hs b)
-    (size := fun q => 2 * cf * (3 * (encPair encBits (encPair encBits encTaggedHistory) q).length +
-      1) + 2 * (encPair encBits (encPair encBits encTaggedHistory) q).length + 3)
-    (PolyBounded.of_forall_le (2 * cf * 3 + 2 * cf + 2 + 3) 1 fun q => by
-      simp only [pow_one]
-      nlinarith)
-    (fun q consumed s hprefix hs => ?_)).1
-  have hcfg := hcf _ _ _ _ hs.1
-  have hhist := Interaction.length_encList_le_of_suffix (enc := encTaggedEntry) hs.2
-  have hcons : consumed.length ≤ q.2.1.length := hprefix.length_le
-  simp only [encAliveState, length_encPair, encBool_apply, List.length_singleton, encBits_apply]
-    at hcfg hhist ⊢
-  have hcfg' := hcfg.trans (Nat.mul_le_mul_left cf (show q.1.length + consumed.length +
-    q.2.1.length + 1 ≤ 3 * (2 * q.1.length + 1 + (2 * q.2.1.length + 1 +
-      (encList encTaggedEntry q.2.2).length)) + 1 by lia))
-  nlinarith
+abbrev accepts (x r : List Bool) (th : TaggedHistory) : Bool :=
+  Interaction.accepts matchTaggedOp Prod.snd M x r th
 
 /-- Multi-channel replay acceptance is polynomial-time in the input, coins, and tagged history. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_accepts :
+theorem computableTidilyInPolyTime_accepts [Finite Control] :
     ComputableTidilyInPolyTime (fun q : List Bool × List Bool × TaggedHistory =>
       accepts M q.1 q.2.1 q.2.2)
-      (encPair encBits (encPair encBits encTaggedHistory)) encBool := by
-  have h := computableTidilyInPolyTime_aliveRun M
-  unfold accepts
-  fun_prop
+      (encPair encBits (encPair encBits encTaggedHistory)) encBool :=
+  Interaction.computableTidilyInPolyTime_accepts matchTaggedOp Prod.snd M
+    (fun op => by unfold matchTaggedOp; fun_prop) (snd _ _)
 
 /-! ### Correspondence between `accepts` and `coinProgram` against deterministic provers -/
 
-omit [Finite Control] in
-theorem aliveStep_of_false (t : ℕ) (cfg : MultiTapeMachine.FiniteConfig k Bool Control (Fin p))
-    (th : TaggedHistory) (b : Bool) :
-    aliveStep M t (cfg, th, false) b = (cfg, th, false) := rfl
-
-omit [Finite Control] in
-theorem foldl_aliveStep_false (t : ℕ) (l : List Bool)
-    (cfg : MultiTapeMachine.FiniteConfig k Bool Control (Fin p)) (th : TaggedHistory) :
-    l.foldl (aliveStep M t) (cfg, th, false) = (cfg, th, false) := by
-  induction l with
-  | nil => rfl
-  | cons b l ih => exact ih
-
-omit [Finite Control] in
 /-- **Soundness of a single `aliveStep`**: if `aliveStep M t (cfg, th, true) b` remains live and
 every prover channel's projection of `th` is valid for `D i` from `s i`, then `coinStep M t cfg b`
 against `Prover.independent (fun i => (D i).toProver)` transitions deterministically to the same
@@ -439,7 +279,8 @@ theorem aliveStep_sound (t : ℕ) (D : Fin p → DetProver)
       ((OracleComp.interpret (Prover.independent fun i => (D i).toProver).respond
         (coinStep M t cfg b)).run s) =
         PMF.pure ((aliveStep M t (cfg, th, true) b).1, s') := by
-  simp only [aliveStep, instruction, coinStep, MultiTapeMachine.finiteStep] at hlive ⊢
+  simp only [aliveStep, Interaction.aliveStep, instruction, coinStep,
+    MultiTapeMachine.finiteStep] at hlive ⊢
   rcases hs : cfg.tapes.state with _ | c
   · simp only [hs] at hlive ⊢
     refine ⟨s, hvalid, ?_⟩
@@ -452,7 +293,7 @@ theorem aliveStep_sound (t : ℕ) (D : Fin p → DetProver)
       refine ⟨s, hvalid, ?_⟩
       simp [taggedStep, OracleComp.interpret_pure, StateT.run_pure,
         Probability.PMF.monad_pure_eq_pure]
-    · simp only [htr, taggedStep, answerFromHistory] at hlive ⊢
+    · simp only [htr, taggedStep, answerFromHistory, matchTaggedOp] at hlive ⊢
       cases th with
       | nil => simp at hlive
       | cons e rest =>
@@ -483,7 +324,6 @@ theorem aliveStep_sound (t : ℕ) (D : Fin p → DetProver)
             rfl
         · simp [hmatch] at hlive
 
-omit [Finite Control] in
 /-- **Soundness of `foldl (aliveStep M t)`**: if the multi-channel replay over `l` stays live and
 `th` has valid projections for `D` from `s`, then `l.foldlM (coinStep M t) cfg` transitions
 deterministically to the final configuration of the replay. -/
@@ -523,22 +363,22 @@ theorem foldl_aliveStep_sound (t : ℕ) (D : Fin p → DetProver) (l : List Bool
     simp only [List.foldlM_cons, OracleComp.interpret_bind, StateT.run_bind,
       Probability.PMF.monad_bind_eq_bind, hrun₁, PMF.pure_bind, hrun₂]
 
-omit [Finite Control] in
 /-- **Soundness of `accepts`**: if `r.length = t`, `accepts M x r th = true`, and every prover's
 projection of `th` is valid for `D i` from `s i`, then `coinProgram M t x r` accepts with
 probability `1` against `D`. -/
-theorem queryAcceptProb_eq_one_of_accepts {x r : List Bool} {t : ℕ} (hr : r.length = t)
+theorem acceptFrom_eq_one_of_accepts {x r : List Bool} {t : ℕ} (hr : r.length = t)
     (D : Fin p → DetProver) (s : ∀ i : Fin p, (D i).State) (th : TaggedHistory)
     (hvalid : ∀ i : Fin p, (D i).ValidFrom (s i) (projHistory i.val th))
     (hacc : accepts M x r th = true) :
-    queryAcceptProb (Prover.independent fun i => (D i).toProver) s (coinProgram M t x r) = 1 := by
+    acceptFrom (Prover.independent fun i => (D i).toProver) s (some (coinProgram M t x r)) = 1 := by
   subst hr
-  simp only [accepts, aliveRun, Bool.and_eq_true] at hacc
+  simp only [accepts, Interaction.accepts, Interaction.aliveRun,
+    Bool.and_eq_true] at hacc
   obtain ⟨⟨hlive, _⟩, hout⟩ := hacc
   have hout' := of_decide_eq_true hout
   obtain ⟨s', _, hrun⟩ := foldl_aliveStep_sound M r.length D r
     (MultiTapeMachine.FiniteConfig.init M.initial x) th s hvalid hlive
-  simp only [queryAcceptProb, coinProgram, OracleComp.interpret_map, StateT.run_map,
+  simp only [acceptFrom, coinProgram, OracleComp.interpret_map, StateT.run_map,
     PMF.monad_map_eq_map, hrun, PMF.pure_map]
   simp [hout']
 
@@ -562,7 +402,6 @@ def canonicalTrace (t : ℕ) (D : Fin p → DetProver) :
         (op.val, (m, y)) ::
           canonicalTrace t D (cfg.receive op next y) (Function.update s op res.2) l
 
-omit [Finite Control] in
 /-- Every prover's projection of `canonicalTrace M t D cfg s l` is a valid history for the
 `t`-truncated deterministic prover `(D i).truncate t` starting from `s i`. -/
 theorem validFrom_canonicalTrace (t : ℕ) (D : Fin p → DetProver)
@@ -593,7 +432,6 @@ theorem validFrom_canonicalTrace (t : ℕ) (D : Fin p → DetProver)
             (Function.update s op ((D op).respond (cfg.channels op).1 (s op)).2)
           simpa only [Function.update_of_ne hi] using this
 
-omit [Finite Control] in
 /-- Running `foldl (aliveStep M t)` against `canonicalTrace M t D cfg s l` stays live, consumes the
 entire trace, and reaches the exact configuration produced by `l.foldlM (coinStep M t) cfg` against
 `D`. -/
@@ -611,8 +449,9 @@ theorem foldl_aliveStep_canonicalTrace (t : ℕ) (D : Fin p → DetProver)
       Probability.PMF.monad_pure_eq_pure]⟩
   | cons b l ih =>
     rcases hs : cfg.tapes.state with _ | c
-    · simp only [canonicalTrace, List.foldl_cons, List.foldlM_cons, aliveStep, instruction,
-        coinStep, MultiTapeMachine.finiteStep, hs, Option.map_none, taggedStep]
+    · simp only [canonicalTrace, List.foldl_cons, List.foldlM_cons, aliveStep,
+        Interaction.aliveStep, instruction, coinStep, MultiTapeMachine.finiteStep, hs,
+        Option.map_none, taggedStep]
       obtain ⟨cfg', s', hfold, hrun⟩ := ih cfg s
       refine ⟨cfg', s', hfold, ?_⟩
       simp only [OracleComp.interpret_bind, OracleComp.interpret_pure, StateT.run_bind,
@@ -620,23 +459,24 @@ theorem foldl_aliveStep_canonicalTrace (t : ℕ) (D : Fin p → DetProver)
         PMF.pure_bind, hrun]
     · rcases htr : M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b with
         ⟨action, symbol, move⟩ | ⟨op, next⟩
-      · simp only [canonicalTrace, List.foldl_cons, List.foldlM_cons, aliveStep, instruction,
-          coinStep, MultiTapeMachine.finiteStep, hs, Option.map_some, htr, taggedStep, map_pure,
-          pure_bind]
+      · simp only [canonicalTrace, List.foldl_cons, List.foldlM_cons, aliveStep,
+          Interaction.aliveStep, instruction, coinStep, MultiTapeMachine.finiteStep, hs,
+          Option.map_some, htr, taggedStep, map_pure, pure_bind]
         obtain ⟨cfg', s', hfold, hrun⟩ := ih (cfg.step action symbol move) s
         exact ⟨cfg', s', hfold, hrun⟩
-      · simp only [canonicalTrace, List.foldl_cons, List.foldlM_cons, aliveStep, instruction,
-          coinStep, MultiTapeMachine.finiteStep, hs, Option.map_some, htr, map_pure, pure_bind]
+      · simp only [canonicalTrace, List.foldl_cons, List.foldlM_cons, aliveStep,
+          Interaction.aliveStep, instruction, coinStep, MultiTapeMachine.finiteStep, hs,
+          Option.map_some, htr, map_pure, pure_bind]
         let m := (cfg.channels op).1
         let res := (D op).respond m (s op)
         let y := res.1.take t
-        have hstep : taggedStep t (true, some (.query op next))
+        have hstep : taggedStep matchTaggedOp Prod.snd t (true, some (.query op next))
             (cfg, (op.val, (m, y)) :: canonicalTrace M t D (cfg.receive op next y)
               (Function.update s op res.2) l, true) =
             (cfg.receive op next y,
               canonicalTrace M t D (cfg.receive op next y) (Function.update s op res.2) l,
               true) := by
-          simp [taggedStep, answerFromHistory, m, res, y, List.take_take]
+          simp [taggedStep, answerFromHistory, matchTaggedOp, m, res, y, List.take_take]
         rw [hstep]
         obtain ⟨cfg', s', hfold, hrun⟩ :=
           ih (cfg.receive op next y) (Function.update s op res.2)
@@ -654,26 +494,24 @@ theorem foldl_aliveStep_canonicalTrace (t : ℕ) (D : Fin p → DetProver)
           rfl
         rw [hq, PMF.pure_bind, hrun]
 
-omit [Finite Control] in
 /-- **Completeness of `accepts` via `canonicalTrace`**: for any `r` of length `t`, the acceptance
 probability of `coinProgram M t x r` against deterministic provers `D` is `1` if `accepts` holds on
 `canonicalTrace`, and `0` otherwise. -/
-theorem queryAcceptProb_eq_ite_accepts_canonicalTrace {x r : List Bool} {t : ℕ}
+theorem acceptFrom_eq_ite_accepts_canonicalTrace {x r : List Bool} {t : ℕ}
     (hr : r.length = t) (D : Fin p → DetProver) :
-    queryAcceptProb (Prover.independent fun i => (D i).toProver)
-      (Prover.independent fun i => (D i).toProver).init (coinProgram M t x r) =
+    acceptFrom (Prover.independent fun i => (D i).toProver)
+      (Prover.independent fun i => (D i).toProver).init (some (coinProgram M t x r)) =
       if accepts M x r
         (canonicalTrace M t D (MultiTapeMachine.FiniteConfig.init M.initial x)
           (fun i => (D i).init) r) then 1 else 0 := by
   subst hr
   obtain ⟨cfg', s', hfold, hrun⟩ := foldl_aliveStep_canonicalTrace M r.length D
     (MultiTapeMachine.FiniteConfig.init M.initial x) (fun i => (D i).init) r
-  simp only [queryAcceptProb, coinProgram, OracleComp.interpret_map, StateT.run_map,
-    PMF.monad_map_eq_map, accepts, aliveRun, hfold, List.isEmpty_nil, Bool.true_and, hrun,
-    PMF.pure_map]
+  simp only [acceptFrom, coinProgram, OracleComp.interpret_map, StateT.run_map,
+    PMF.monad_map_eq_map, accepts, Interaction.accepts, Interaction.aliveRun, hfold,
+    List.isEmpty_nil, Bool.true_and, hrun, PMF.pure_map]
   cases decide (cfg'.tapes.output = [true]) <;> simp
 
-omit [Finite Control] in
 /-- Size bounds on `canonicalTrace M t D cfg s l`: its length is at most `l.length`, every channel
 index is at most `p`, every query has length at most `i + l.length`, and every reply has length at
 most `t`. -/
@@ -867,9 +705,9 @@ theorem exists_detProver_of_checkCert {c d : ℕ} {x : List Bool} {cert : Cert}
     ∃ D : Fin p → DetProver,
       (cert.length : ℝ≥0∞) ≤
         ∑ f : Fin t → Bool,
-          queryAcceptProb (Prover.independent fun i => (D i).toProver)
+          acceptFrom (Prover.independent fun i => (D i).toProver)
             (Prover.independent fun i => (D i).toProver).init
-            (coinProgram M t x (List.ofFn f)) ∧
+            (some (coinProgram M t x (List.ofFn f))) ∧
       2 ^ t < 2 * cert.length := by
   set t := c * (x.length + 1) ^ d
   simp only [checkCert, Bool.and_eq_true, List.all_eq_true, beq_iff_eq, decide_eq_true_eq,
@@ -888,12 +726,12 @@ theorem exists_detProver_of_checkCert {c d : ℕ} {x : List Bool} {cert : Cert}
     obtain ⟨e₂, he₂, rfl⟩ := hh₂
     exact h3 e₁ he₁ e₂ he₂ i.val i.isLt
   have hprob_one : ∀ e ∈ cert,
-      queryAcceptProb (Prover.independent fun i => (D i).toProver)
+      acceptFrom (Prover.independent fun i => (D i).toProver)
         (Prover.independent fun i => (D i).toProver).init
-        (coinProgram M t x e.1) = 1 := by
+        (some (coinProgram M t x e.1)) = 1 := by
     intro e he
     obtain ⟨hlen, hacc⟩ := h1 e he
-    exact queryAcceptProb_eq_one_of_accepts M hlen D (fun i => (D i).init) e.2
+    exact acceptFrom_eq_one_of_accepts M hlen D (fun i => (D i).init) e.2
       (hvalid_cert e he) hacc
   have hnodup_fst : (cert.map Prod.fst).Nodup := by
     refine nodup_of_forall_countP_eq_one ?_
@@ -924,17 +762,17 @@ theorem exists_detProver_of_checkCert {c d : ℕ} {x : List Bool} {cert : Cert}
   calc (cert.length : ℝ≥0∞)
       = ∑ _f ∈ S, (1 : ℝ≥0∞) := by simp [hcard]
     _ ≤ ∑ f ∈ S,
-          queryAcceptProb (Prover.independent fun i => (D i).toProver)
+          acceptFrom (Prover.independent fun i => (D i).toProver)
             (Prover.independent fun i => (D i).toProver).init
-            (coinProgram M t x (List.ofFn f)) := by
+            (some (coinProgram M t x (List.ofFn f))) := by
         refine Finset.sum_le_sum fun f hf => ?_
         simp only [S, List.mem_toFinset, List.mem_map] at hf
         obtain ⟨e, he, rfl⟩ := hf
         rw [hofFn_toFin e he, hprob_one e he]
     _ ≤ ∑ f : Fin t → Bool,
-          queryAcceptProb (Prover.independent fun i => (D i).toProver)
+          acceptFrom (Prover.independent fun i => (D i).toProver)
             (Prover.independent fun i => (D i).toProver).init
-            (coinProgram M t x (List.ofFn f)) :=
+            (some (coinProgram M t x (List.ofFn f))) :=
         Finset.sum_le_univ_sum_of_nonneg fun _ => zero_le
 
 omit [Finite Control] in
@@ -1094,11 +932,11 @@ theorem MIP_subset_NEXP : MIP enc ⊆ NEXP enc := by
     constructor
     · intro ha
       obtain ⟨P, hP⟩ := hproto.complete a ha
-      have haccP := MIP.acceptProb_eq_sum M (hreal a) (Prover.independent P)
+      have haccP := acceptProb_eq_sum M (hreal a) (Prover.independent P)
       have hopt := MIP.exists_deterministic_prover_family
-        (fun r : Fin t → Bool => MIP.coinProgram M t x (List.ofFn r))
+        (fun r : Fin t → Bool => coinProgram M t x (List.ofFn r))
         (fun r => by
-          simpa only [MIP.coinFamily] using MIP.isBoundedComp_coinFamily M t x r)
+          simpa only [coinFamily] using MIP.isBoundedComp_coinFamily M t x r)
         (fun _ => 1) P
       simp only [one_mul] at hopt
       obtain ⟨D, hD⟩ := hopt
@@ -1110,28 +948,27 @@ theorem MIP_subset_NEXP : MIP enc ⊆ NEXP enc := by
           MIP.accepts M x (List.ofFn r) (traceOf (List.ofFn r))).card
       have hsumD :
           (∑ r : Fin t → Bool,
-            MIP.queryAcceptProb (Prover.independent fun i => (D i).toProver)
+            acceptFrom (Prover.independent fun i => (D i).toProver)
               (Prover.independent fun i => (D i).toProver).init
-              (MIP.coinProgram M t x (List.ofFn r))) =
+              (some (coinProgram M t x (List.ofFn r)))) =
             (goodCard : ℝ≥0∞) := by
         have hterm (r : Fin t → Bool) :
-            MIP.queryAcceptProb (Prover.independent fun i => (D i).toProver)
+            acceptFrom (Prover.independent fun i => (D i).toProver)
               (Prover.independent fun i => (D i).toProver).init
-              (MIP.coinProgram M t x (List.ofFn r)) =
+              (some (coinProgram M t x (List.ofFn r))) =
               if MIP.accepts M x (List.ofFn r) (traceOf (List.ofFn r)) then 1 else 0 :=
-          MIP.queryAcceptProb_eq_ite_accepts_canonicalTrace M List.length_ofFn D
+          MIP.acceptFrom_eq_ite_accepts_canonicalTrace M List.length_ofFn D
         simp only [hterm, goodCard, Finset.sum_boole]
       have hineq : (2 / 3 : ℝ≥0∞) ≤ (goodCard : ℝ≥0∞) / (2 ^ t : ℕ) := by
         calc (2 / 3 : ℝ≥0∞)
             ≤ acceptProb (verifier a) (Prover.independent P) := hP
           _ = (2 ^ t : ℝ≥0∞)⁻¹ * ∑ r : Fin t → Bool,
-                MIP.queryAcceptProb (Prover.independent P) (Prover.independent P).init
-                  (MIP.coinProgram M t x (List.ofFn r)) := by
-                simpa only [MIP.coinFamily] using haccP
+                acceptFrom (Prover.independent P) (Prover.independent P).init
+                  (some (coinProgram M t x (List.ofFn r))) := haccP
           _ ≤ (2 ^ t : ℝ≥0∞)⁻¹ * ∑ r : Fin t → Bool,
-                MIP.queryAcceptProb (Prover.independent fun i => (D i).toProver)
+                acceptFrom (Prover.independent fun i => (D i).toProver)
                   (Prover.independent fun i => (D i).toProver).init
-                  (MIP.coinProgram M t x (List.ofFn r)) :=
+                  (some (coinProgram M t x (List.ofFn r))) :=
                 mul_le_mul_right hD _
           _ = (goodCard : ℝ≥0∞) / (2 ^ t : ℕ) := by
                 rw [hsumD, ENNReal.div_eq_inv_mul, hcast]
@@ -1156,19 +993,19 @@ theorem MIP_subset_NEXP : MIP enc ⊆ NEXP enc := by
       obtain ⟨D, hsum_le, hlt⟩ := MIP.exists_detProver_of_checkCert M hcheck
       by_contra ha
       have hsound := hproto.sound a ha (fun i => (D i).toProver)
-      have haccD := MIP.acceptProb_eq_sum M (hreal a)
+      have haccD := acceptProb_eq_sum M (hreal a)
         (Prover.independent fun i => (D i).toProver)
       have hineq : (cert.length : ℝ≥0∞) / (2 ^ t : ℕ) ≤ (1 / 3 : ℝ≥0∞) := by
         calc (cert.length : ℝ≥0∞) / (2 ^ t : ℕ)
             = (2 ^ t : ℝ≥0∞)⁻¹ * (cert.length : ℝ≥0∞) := by
                 rw [ENNReal.div_eq_inv_mul, hcast]
           _ ≤ (2 ^ t : ℝ≥0∞)⁻¹ * ∑ r : Fin t → Bool,
-                MIP.queryAcceptProb (Prover.independent fun i => (D i).toProver)
+                acceptFrom (Prover.independent fun i => (D i).toProver)
                   (Prover.independent fun i => (D i).toProver).init
-                  (MIP.coinProgram M t x (List.ofFn r)) :=
+                  (some (coinProgram M t x (List.ofFn r))) :=
                 mul_le_mul_right hsum_le _
-          _ = acceptProb (verifier a) (Prover.independent fun i => (D i).toProver) := by
-                simpa only [MIP.coinFamily] using haccD.symm
+          _ = acceptProb (verifier a) (Prover.independent fun i => (D i).toProver) :=
+                haccD.symm
           _ ≤ 1 / 3 := hsound
       rw [show (1 / 3 : ℝ≥0∞) = ((1 : ℕ) : ℝ≥0∞) / ((3 : ℕ) : ℝ≥0∞) by norm_num,
         natCast_div_le_natCast_div_iff hpos (by norm_num)] at hineq

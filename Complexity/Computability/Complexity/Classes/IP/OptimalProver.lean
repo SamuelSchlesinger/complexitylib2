@@ -148,14 +148,15 @@ private theorem outcome_eq_ask_of_after_append_singleton {p : WordQueryComp Unit
 
 /-- The probability that the prover `P`, from its state `s`, makes what remains of a program
 accept; `0` when nothing remains. -/
-noncomputable def acceptFrom (P : Prover Unit) (s : P.State) :
-    Option (WordQueryComp Unit Bool) → ENNReal
+noncomputable def acceptFrom {Operation : Type} (P : Prover Operation) (s : P.State) :
+    Option (WordQueryComp Operation Bool) → ENNReal
   | none => 0
   | some p => ((OracleComp.interpret P.respond p).run s).map Prod.fst true
 
-@[simp] theorem acceptFrom_none (P : Prover Unit) (s : P.State) : acceptFrom P s none = 0 := rfl
+@[simp] theorem acceptFrom_none {Operation : Type} (P : Prover Operation) (s : P.State) :
+    acceptFrom P s none = 0 := rfl
 
-private theorem acceptFrom_pure (P : Prover Unit) (s : P.State) (b : Bool) :
+private theorem acceptFrom_pure {Operation : Type} (P : Prover Operation) (s : P.State) (b : Bool) :
     acceptFrom P s (some (pure b)) = if b then 1 else 0 := by
   simp only [acceptFrom, OracleComp.interpret_pure, StateT.run_pure,
     Probability.PMF.monad_pure_eq_pure, PMF.pure_map, PMF.pure_apply]

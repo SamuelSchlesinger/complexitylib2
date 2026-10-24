@@ -63,34 +63,38 @@ namespace Cslib.Complexity.Interaction
 
 open Cslib.Probability _root_.Turing _root_.Turing.MultiTapeMachine
 
-variable {k : ℕ} {Control : Type} (M : MultiTapePTM k Bool Control Unit)
+section CoinFixing
+
+variable {k : ℕ} {Control Operation : Type} [DecidableEq Operation]
+  (M : MultiTapePTM k Bool Control Operation)
 
 /-! ### Programs of fixed coins -/
 
 /-- One instruction of `M` with the coin `b`, its replies truncated to their first `t` bits. -/
-def coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Unit) (b : Bool) :
-    WordQueryComp Unit (FiniteConfig k Bool Control Unit) :=
+def coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Operation) (b : Bool) :
+    WordQueryComp Operation (FiniteConfig k Bool Control Operation) :=
   M.finiteStep (fun choices => choices <$> pure b)
     (fun op w => List.take t <$> OracleComp.query (op, w)) cfg
 
 /-- The verifier `M` on the input `x` with the coins `r`, one per instruction, its replies truncated
 to their first `t` bits; it accepts when its output is `[true]`. -/
-def coinProgram (t : ℕ) (x r : List Bool) : WordQueryComp Unit Bool :=
+def coinProgram (t : ℕ) (x r : List Bool) : WordQueryComp Operation Bool :=
   (fun cfg => decide (cfg.tapes.output = [true])) <$>
     r.foldlM (coinStep M t) (FiniteConfig.init M.initial x)
 
-section CoinFixing
+/-- The family of the programs of `t` coins. -/
+def coinFamily (t : ℕ) (x : List Bool) (r : Fin t → Bool) : WordQueryComp Operation Bool :=
+  coinProgram M t x (List.ofFn r)
 
-variable {S : Type} (oracle : Unit × List Bool → StateT S PMF (List Bool))
+variable {S : Type} (oracle : Operation × List Bool → StateT S PMF (List Bool))
 
 /-- The handler of the private coins and of the prover `o`. -/
 local notation "handler" o =>
   ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) o
 
 /-- An instruction with a fixed coin makes the requests of `coinStep`. -/
-private theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Control Unit)
-    (b : Bool)
-    (s : S) :
+private theorem run_interpret_finiteStep_pure (t : ℕ)
+    (cfg : FiniteConfig k Bool Control Operation) (b : Bool) (s : S) :
     (OracleComp.interpret (handler oracle) (M.finiteStep (fun choices => choices <$> pure b)
       (fun op w => List.take t <$> ProbOracleComp.query (op, w)) cfg)).run s =
       (OracleComp.interpret oracle (coinStep M t cfg b)).run s := by
@@ -107,8 +111,7 @@ private theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bo
 
 /-- Instructions with fixed coins make the requests of `coinStep`. -/
 private theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool)
-    (cfg : FiniteConfig k Bool Control Unit)
-    (s : S) :
+    (cfg : FiniteConfig k Bool Control Operation) (s : S) :
     (OracleComp.interpret (handler oracle) (r.foldlM (fun cfg b => M.finiteStep
       (fun choices => choices <$> pure b)
       (fun op w => List.take t <$> ProbOracleComp.query (op, w)) cfg) cfg)).run s =
@@ -121,9 +124,9 @@ private theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool)
 
 /-- An instruction drawing a fair coin averages the instructions with fixed coins. -/
 private theorem run_interpret_finiteStep_sample
-    (query : Unit → List Bool →
-      ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
-    (cfg : FiniteConfig k Bool Control Unit) (s : S) :
+    (query : Operation → List Bool →
+      ProbOracleComp (fun _ : Operation × List Bool => List Bool) (List Bool))
+    (cfg : FiniteConfig k Bool Control Operation) (s : S) :
     (OracleComp.interpret (handler oracle) (M.finiteStep
       (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) query cfg)).run s =
       (PMF.uniformOfFintype Bool).bind fun b =>
@@ -142,9 +145,9 @@ private theorem run_interpret_finiteStep_sample
 
 /-- A clocked loop drawing fair coins averages the loops with fixed coins. -/
 private theorem run_interpret_iterate_eq_coins
-    (query : Unit → List Bool →
-      ProbOracleComp (fun _ : Unit × List Bool => List Bool) (List Bool))
-    (n : ℕ) (cfg : FiniteConfig k Bool Control Unit) (s : S) :
+    (query : Operation → List Bool →
+      ProbOracleComp (fun _ : Operation × List Bool => List Bool) (List Bool))
+    (n : ℕ) (cfg : FiniteConfig k Bool Control Operation) (s : S) :
     (OracleComp.interpret (handler oracle) (OracleComp.iterate n (M.finiteStep
       (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) query)
         cfg)).run s =
@@ -178,20 +181,18 @@ theorem run_interpret_runOracle_eq_coins (t : ℕ) (x : List Bool) (s : S) :
   rw [OracleComp.interpret_map, StateT.run_map, run_interpret_foldlM_pure,
     _root_.PMF.monad_map_eq_map]
 
-end CoinFixing
-
 /-- **Acceptance averages over the coins.** If the verifier `V` is realized by the run of `M` under
 the clock `t`, then its acceptance probability against `P` averages the acceptance probabilities of
 the programs of fixed coins. -/
-theorem acceptProb_eq_sum {V : WordOracleComp Unit Bool} {t : ℕ} {x : List Bool}
-    (hV : ∀ (S : Type) (oracle : Unit × List Bool → StateT S PMF (List Bool)) s,
+theorem acceptProb_eq_sum {V : WordOracleComp Operation Bool} {t : ℕ} {x : List Bool}
+    (hV : ∀ (S : Type) (oracle : Operation × List Bool → StateT S PMF (List Bool)) s,
       (OracleComp.interpret
         (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
           (Turing.MultiTapeTM.encBool <$> V)).run s =
       (OracleComp.interpret
         (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
           (M.runOracle t x)).run s)
-    (P : Prover Unit) :
+    (P : Prover Operation) :
     acceptProb V P =
       (2 ^ t)⁻¹ * ∑ r : Fin t → Bool,
         acceptFrom P P.init (some (coinProgram M t x (List.ofFn r))) := by
@@ -215,6 +216,10 @@ theorem acceptProb_eq_sum {V : WordOracleComp Unit Bool} {t : ℕ} {x : List Boo
     _root_.PMF.monad_map_eq_map, PMF.map_comp, OracleComp.interpret_map, StateT.run_map,
     _root_.PMF.monad_map_eq_map, PMF.map_comp, Nat.cast_pow, Nat.cast_ofNat]
   rfl
+
+end CoinFixing
+
+variable {k : ℕ} {Control : Type} (M : MultiTapePTM k Bool Control Unit)
 
 /-! ### The replay -/
 
@@ -423,10 +428,6 @@ private theorem simulate_truncate (t : ℕ) (x r : List Bool) {h h' : History}
     · obtain ⟨rfl, hrest⟩ := hacc
       change (replayStep M t (cfg, rest) b).map _ = (replayStep M t (cfg, rest') b).map _
       rw [replayStep_truncate, hrest, ← replayStep_truncate]
-
-/-- The family of the programs of `t` coins. -/
-def coinFamily (t : ℕ) (x : List Bool) (r : Fin t → Bool) : WordQueryComp Unit Bool :=
-  coinProgram M t x (List.ofFn r)
 
 /-- **The programs of `t` coins form a bounded family**: at most `t` messages, each of length at
 most `t`, and only the first `t` bits of each reply matter. -/
