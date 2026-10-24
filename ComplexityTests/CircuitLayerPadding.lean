@@ -53,7 +53,7 @@ example : padTo 2 0 shared = shared := by decide +kernel
 example : eval [] (padTo 0 3 [[.copy (2 ^ 100)]]) = [false] := by decide +kernel
 
 -- The certificate is uniform in both unary parameters and the complete raw schedule.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × ℕ × List (List Node) => padTo p.1 p.2.1 p.2.2)
     (encPair encUnary (encPair encUnary (encList (encList encNode))))
     (encList (encList encNode)) := by fun_prop
@@ -71,10 +71,10 @@ info: 'Cslib.Circuits.Boolean.Layered.WellFormed.padTo' depends on axioms: [prop
 #print axioms WellFormed.padTo
 
 /--
-info: 'Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_padTo' depends on axioms:
+info: 'Cslib.Circuits.Boolean.Layered.computableInPolyTime_padTo' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_padTo
+#print axioms computableInPolyTime_padTo
 
 end ComplexityTests.CircuitLayerPadding
