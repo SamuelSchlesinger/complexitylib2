@@ -22,7 +22,10 @@ namespace ComplexityTests.Internal.DegreePrimitives
 open Lean Elab Command in
 run_cmd do
   for name in #[`Turing.MultiTapeTM.ComputableTidilyInPolyTime,
-      `Turing.MultiTapeTM.ComputableTidilyInO, `Turing.MultiTapeTM.ComputableTidilyInDegree] do
+      `Turing.MultiTapeTM.ComputableTidilyInO, `Turing.MultiTapeTM.ComputableTidilyInBigO,
+      `Turing.MultiTapeTM.ComputableTidilyInDegree, `Turing.MultiTapeTM.ComputableTidilyInSpace,
+      `Turing.MultiTapeTM.ComputableTidilyInPolySpace,
+      `Turing.MultiTapeTM.ComputableTidilyInLinearTimeAndSpace] do
     if (← getEnv).contains name then
       throwError "A higher tidy calculus was imported: {name}"
 
