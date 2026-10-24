@@ -548,6 +548,7 @@ public import Complexity.Computability.Complexity.Classes.BPP.Reduction
 public import Complexity.Computability.Complexity.Classes.BPP.WorstCaseHardness
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Closure
+public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Kadin
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.PH
 public import Complexity.Computability.Complexity.Classes.CeqP
 public import Complexity.Computability.Complexity.Classes.Constructible
