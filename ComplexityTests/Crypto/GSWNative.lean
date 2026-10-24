@@ -148,11 +148,11 @@ example : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
     (by fun_prop) (by fun_prop)
 
 -- Arbitrary malformed coins are also part of the deterministic input encoding.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × (List Bool × (Bool × SerializedCoins)) =>
       encryptWithCoinsSerialized p.1 p.1 (p.1 + 1) p.2.1 p.2.2.1 p.2.2.2)
     (encPair encUnary (encPair encBits (encPair encBool encSerializedCoins))) encBits :=
-  computableTidilyInPolyTime_encryptWithCoinsSerialized
+  computableInPolyTime_encryptWithCoinsSerialized
     (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
 
 -- The joint client preserves the sampled keys while encrypting under the generated public key.
