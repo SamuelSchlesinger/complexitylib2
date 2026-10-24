@@ -41,7 +41,8 @@ verifiers read disjoint parts of the certificate (`Cslib.Complexity.acceptCount_
 * `Cslib.Complexity.SharpP.comp_mem`, `Cslib.Complexity.GapP.comp_mem`: polynomial-time
   precomposition, preserving counts exactly.
 
-* `Cslib.Complexity.SharpP.of_polyTime_length`: polynomial-time unary certificate lengths suffice.
+* `Cslib.Complexity.mem_SharpP_of_polyTime_length`: polynomial-time unary certificate lengths
+  suffice.
 * `Cslib.Complexity.SharpP.add_mem`, `Cslib.Complexity.SharpP.mul_mem`: `#P` is closed under
   addition and multiplication.
 * `Cslib.Complexity.SharpP.one_mem`, `Cslib.Complexity.SharpP.add_one_mem`,
@@ -233,7 +234,7 @@ theorem sub_mem' {g₁ g₂ : α → ℤ} (h₁ : g₁ ∈ GapP enc) (h₂ : g�
 end GapP
 
 /-- A polynomial-time unary certificate length can be padded without changing the count. -/
-theorem SharpP.of_polyTime_length {V : α × List Bool → Bool} {r : α → ℕ}
+theorem mem_SharpP_of_polyTime_length {V : α × List Bool → Bool} {r : α → ℕ}
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
     (hr : ComputableTidilyInPolyTime r enc encUnary) :
     (fun a => acceptCount V a (r a)) ∈ SharpP enc := by
@@ -248,7 +249,7 @@ theorem SharpP.comp_mem {β : Type} {encB : β ↪ List Bool} {f : β → ℕ} {
     (hf : f ∈ SharpP encB) (hg : ComputableTidilyInPolyTime g enc encB) :
     f ∘ g ∈ SharpP enc := by
   obtain ⟨q, W, hW, hWB⟩ := mem_SharpP_iff_tidy.mp hf
-  have h := SharpP.of_polyTime_length
+  have h := mem_SharpP_of_polyTime_length
     (V := fun x => W (g x.1, x.2))
     (r := fun a => q.eval (encB (g a)).length) (by fun_prop) (by fun_prop)
   change (fun a => acceptCount W (g a) (q.eval (encB (g a)).length)) ∈ SharpP enc at h

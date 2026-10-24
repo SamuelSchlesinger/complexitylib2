@@ -34,7 +34,7 @@ union and reduction closure are immediate duals of the DP results.
 
 * `Cslib.Complexity.mem_DP_iff_diff`: differences of NP languages.
 * `Cslib.Complexity.inter_mem_DP`, `Cslib.Complexity.PolyTimeReducible.mem_DP`.
-* `Cslib.Complexity.NPComplete.prod_coNPComplete`: the product of any NP-complete language and
+* `Cslib.Complexity.NPComplete.dpComplete_prod`: the product of any NP-complete language and
   any coNP-complete language is DP-complete.
 
 ## References
@@ -95,7 +95,7 @@ theorem PolyTimeReducible.mem_DP {encB : β ↪ List Bool} {B : Set β}
 
 /-- An NP-complete problem paired with a coNP-complete problem is DP-complete. The two reductions
 are computed independently and their outputs are paired. -/
-theorem NPComplete.prod_coNPComplete {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+theorem NPComplete.dpComplete_prod {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {A : Set α} {B : Set β} (hA : NPComplete encA A) (hB : coNPComplete encB B) :
     DPComplete (encPair encA encB) (A ×ˢ B) := by
   constructor

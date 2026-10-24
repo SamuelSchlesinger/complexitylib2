@@ -64,7 +64,7 @@ example : ComputableTidilyInPolyTime (fun p : (Bool × ℕ) × List Bool =>
   polytime
 
 -- The table is the restriction of an actual finite PCP proof even for enormous addresses.
-example : ∃ proof, ∀ word, word.length = 1 → requireBit.Accepts (true, 2 ^ 100) proof word = true :=
+example : ∃ proof, ∀ word, word.length = 1 → requireBit.accepts (true, 2 ^ 100) proof word = true :=
   PCPVerifier.tableVerifier_sound (V := requireBit) _ [true] (by decide)
 
 private theorem requireBit_isPCPVerifier :
@@ -77,7 +77,7 @@ private theorem requireBit_isPCPVerifier :
   · rintro ⟨bit, address⟩ hbit
     refine ⟨List.replicate (address + 1) true, fun word _ => ?_⟩
     simp only [Set.mem_ofPred_eq] at hbit
-    simp [PCPVerifier.Accepts, PCPVerifier.answers, requireBit, hbit]
+    simp [PCPVerifier.accepts, PCPVerifier.answers, requireBit, hbit]
   · rintro ⟨bit, address⟩ hbit proof
     have hb : bit = false := Bool.eq_false_iff.mpr hbit
     subst bit
@@ -115,7 +115,7 @@ example (enc : Unit ↪ List Bool) : ComputableTidilyInPolyTime noQueries.tableV
   · refine ⟨?_, ?_, ?_⟩ <;> unfold noQueries <;> fun_prop
   · simp [noQueries]
 
-example : ∃ proof, ∀ word, word.length = 0 → noQueries.Accepts () proof word = true :=
+example : ∃ proof, ∀ word, word.length = 0 → noQueries.accepts () proof word = true :=
   PCPVerifier.tableVerifier_sound (V := noQueries) () [] (by decide)
 
 example {α : Type} (enc : α ↪ List Bool) :

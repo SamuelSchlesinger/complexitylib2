@@ -1525,10 +1525,10 @@ info: 'Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_parity' depends 
 #print axioms Cslib.Circuits.Boolean.Unbounded.pow_lt_size_of_computes_parity
 
 /--
-info: 'Cslib.Communication.parity_communication_lower_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Communication.not_solvesKW_parity' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Communication.parity_communication_lower_bound
+#print axioms Cslib.Communication.not_solvesKW_parity
 
 /--
 info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_majority' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -1567,10 +1567,10 @@ info: 'Cslib.Circuits.Boolean.AltFormula.exists_majority' depends on axioms: [pr
 #print axioms Cslib.Circuits.Boolean.AltFormula.exists_majority
 
 /--
-info: 'Cslib.Communication.strictMajority_communication_lower_bound' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Communication.not_solvesKW_strictMajority' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Communication.strictMajority_communication_lower_bound
+#print axioms Cslib.Communication.not_solvesKW_strictMajority
 
 /--
 info: 'Cslib.BitString.exists_mirror_set' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -3956,10 +3956,10 @@ info: 'Cslib.MCSP.eventually_mem' depends on axioms: [propext, Classical.choice,
 #print axioms Cslib.MCSP.eventually_mem
 
 /--
-info: 'Cslib.MCSP.eventually_exists_not_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.MCSP.eventually_exists_notMem' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.MCSP.eventually_exists_not_mem
+#print axioms Cslib.MCSP.eventually_exists_notMem
 
 /--
 info: 'Cslib.SuccinctMCSP.eventually_ofFunction_mem' depends on axioms: [propext, Classical.choice, Quot.sound]

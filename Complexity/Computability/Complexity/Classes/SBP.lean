@@ -132,7 +132,7 @@ theorem BPP_subset_SBP : BPP enc ⊆ SBP enc := by
 theorem SBP_subset_PP : SBP enc ⊆ PP enc := by
   rintro A ⟨f, hf, k, hk, hA⟩
   have hg := GapP.sub_mem' (SharpP.natCast_mem_GapP (SharpP.add_mem hf hf))
-    (SharpP.natCast_mem_GapP (SharpP.of_polyTime hk.tidy))
+    (SharpP.natCast_mem_GapP (mem_SharpP_of_polyTime hk.tidy))
   refine mem_PP_iff_exists_GapP.mpr ⟨_, GapP.add_mem hg GapP.one_mem, fun a => ?_⟩
   change a ∈ A ↔ 0 < ((f a + f a : ℕ) : ℤ) - (k a : ℤ) + 1
   by_cases ha : a ∈ A
@@ -155,8 +155,8 @@ theorem PolyTimeReducible.mem_SBP {encB : β ↪ List Bool} {B : Set β}
 theorem union_mem_SBP (hA : A ∈ SBP enc) (hB : B ∈ SBP enc) : A ∪ B ∈ SBP enc := by
   obtain ⟨f, hf, k, hk, hkpos, hA⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
   obtain ⟨g, hg, l, hl, hlpos, hB⟩ := mem_SBP_iff_exists_pos_threshold.mp hB
-  have hfl := SharpP.mul_mem hf (SharpP.of_polyTime hl)
-  have hgk := SharpP.mul_mem hg (SharpP.of_polyTime hk)
+  have hfl := SharpP.mul_mem hf (mem_SharpP_of_polyTime hl)
+  have hgk := SharpP.mul_mem hg (mem_SharpP_of_polyTime hk)
   refine ⟨_, SharpP.add_mem (SharpP.pow_mem hfl 2) (SharpP.pow_mem hgk 2),
     fun a => (k a * l a) ^ 2, by fun_prop, fun a => ?_⟩
   change (a ∈ A ∪ B → (k a * l a) ^ 2 ≤ (f a * l a) ^ 2 + (g a * k a) ^ 2) ∧

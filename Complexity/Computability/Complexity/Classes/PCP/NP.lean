@@ -105,12 +105,12 @@ private theorem mem_queryTable {a : α} {word : List Bool} {address : ℕ}
 
 /-- A genuine proof supplies a consistent table; trailing padding is never read. -/
 theorem tableVerifier_complete (a : α) (proof padding : List Bool)
-    (h : ∀ word, word.length = V.coins a → V.Accepts a proof word = true) :
+    (h : ∀ word, word.length = V.coins a → V.accepts a proof word = true) :
     V.tableVerifier (a, answers proof (V.queryTable a) ++ padding) = true := by
   apply List.all_eq_true.mpr
   intro word hword
   convert h word (BitString.mem_enumList.mp hword) using 2
-  unfold Accepts answers
+  unfold accepts answers
   congr 2
   apply List.map_congr_left
   intro address haddress
@@ -124,14 +124,14 @@ theorem tableVerifier_complete (a : α) (proof padding : List Bool)
 The expanded proof is only a mathematical witness; its length need not be polynomial. -/
 theorem tableVerifier_sound (a : α) (table : List Bool)
     (h : V.tableVerifier (a, table) = true) :
-    ∃ proof, ∀ word, word.length = V.coins a → V.Accepts a proof word = true := by
+    ∃ proof, ∀ word, word.length = V.coins a → V.accepts a proof word = true := by
   let addresses := V.queryTable a
   let proof := (List.range (addresses.sum + 1)).map fun address =>
     table.getD (addresses.idxOf address) false
   refine ⟨proof, fun word hword => ?_⟩
   have hw := List.all_eq_true.mp h word (BitString.mem_enumList.mpr hword)
   convert hw using 2
-  unfold Accepts answers
+  unfold accepts answers
   congr 2
   apply List.map_congr_left
   intro address haddress
@@ -170,7 +170,7 @@ theorem PCP_log_subset_NP (q : ℕ → ℕ) :
     by_contra ha
     obtain ⟨proof, hproof⟩ := PCPVerifier.tableVerifier_sound a table htable
     have hs := hsound a ha proof
-    have hc : acceptCount (fun x => V.Accepts x.1 proof x.2) a (V.coins a) =
+    have hc : acceptCount (fun x => V.accepts x.1 proof x.2) a (V.coins a) =
         2 ^ V.coins a := by
       simp [acceptCount, hproof]
     rw [hc] at hs

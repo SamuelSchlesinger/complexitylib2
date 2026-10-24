@@ -31,7 +31,7 @@ coordinates lead to the other layer by one flip. This gives bilateral density li
 `16 / n`, so Korten's adversary applies, and the logarithmic initial deficit keeps the exponent
 `1 / (d - 1)`: no protocol with `d` messages of `ε n ^ (1 / (d - 1))` bits solves the
 Karchmer–Wigderson game of strict majority on `n` bits for large `n`
-(`strictMajority_communication_lower_bound`). This extends the parity argument of Korten
+(`not_solvesKW_strictMajority`). This extends the parity argument of Korten
 [Korten2026].
 
 ## Main definitions
@@ -42,7 +42,7 @@ Karchmer–Wigderson game of strict majority on `n` bits for large `n`
 
 * `Cslib.Communication.RoundProtocol.not_solvesKW_strictMajority`: the bound with explicit
   constants.
-* `Cslib.Communication.strictMajority_communication_lower_bound`: the communication lower bound for
+* `Cslib.Communication.not_solvesKW_strictMajority`: the communication lower bound for
   strict majority.
 
 ## References
@@ -344,7 +344,7 @@ universe u in
 [Korten, Theorem 3][Korten2026]: for every `d ≥ 2` there is `ε > 0` such that, for all large `n`, no
 protocol with `d` messages from an alphabet of at most `2 ^ (ε n ^ (1 / (d - 1)))` letters solves
 the Karchmer–Wigderson game of strict majority on `n` bits. -/
-theorem strictMajority_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ rounds) :
+theorem not_solvesKW_strictMajority (rounds : ℕ) (hrounds : 2 ≤ rounds) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ {M : Type u} [Fintype M],
       (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ (ε * (n : ℝ) ^ (((rounds - 1 : ℕ) : ℝ)⁻¹)) →
         ∀ P : KWRoundProtocol (Fin n) M rounds, ¬ P.SolvesKW (strictMajority n) := by

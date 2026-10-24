@@ -68,8 +68,8 @@ example : ¬ (((uniformList 0).map (fun _ => true)) true).toReal ≤ 1 / 2 := by
 
 -- The same bridge applies directly to the library's nonadaptive PCP verifier contract.
 example {α : Type} (V : PCPVerifier α) (a : α) (proof : List Bool)
-    (h : (((uniformList (V.coins a)).map (V.Accepts a proof)) true).toReal ≤ 1 / 2) :
-    2 * acceptCount (fun p => V.Accepts p.1 proof p.2) a (V.coins a) ≤ 2 ^ V.coins a :=
+    (h : (((uniformList (V.coins a)).map (V.accepts a proof)) true).toReal ≤ 1 / 2) :
+    2 * acceptCount (fun p => V.accepts p.1 proof p.2) a (V.coins a) ≤ 2 ^ V.coins a :=
   (acceptCount_le_half_iff _ _ _).mpr h
 
 end ComplexityTests.VerifierProbability

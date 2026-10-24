@@ -64,7 +64,7 @@ theorem exists_SharpP_testBit_of_mem_PP {α : Type} {enc : α ↪ List Bool} {A 
   let count := fun a => acceptCount V a (p.eval (enc a).length)
   have hcount : count ∈ SharpP enc := ⟨p, V, hV, fun _ => rfl⟩
   have hshift : (fun a => 2 ^ p.eval (enc a).length - 1) ∈ SharpP enc :=
-    SharpP.of_polyTime ((ComputableTidilyInPolyTime.binary_two_pow.comp
+    mem_SharpP_of_polyTime ((ComputableTidilyInPolyTime.binary_two_pow.comp
       (by fun_prop : ComputableTidilyInPolyTime
         (fun a => p.eval (enc a).length) enc encUnary)).binary_sub' (.const 1))
   refine ⟨count + count + (fun a => 2 ^ p.eval (enc a).length - 1),

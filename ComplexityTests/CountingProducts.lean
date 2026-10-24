@@ -55,7 +55,7 @@ example : acceptCount (SharpP.indexedProductVerifier (fun _ : Unit => 2) (fun _ 
 def signedFactor (x : List Bool × ℕ) : ℤ := if x.2 = 0 then -2 else 3
 
 private theorem signedFactor_mem : signedFactor ∈ GapP (encPair encBits encUnary) :=
-  GapP.of_polyTime (f := signedFactor) (by unfold signedFactor; fun_prop)
+  mem_GapP_of_polyTime (f := signedFactor) (by unfold signedFactor; fun_prop)
 
 example : (fun w : List Bool => ∏ i ∈ range w.length, signedFactor (w, i)) ∈ GapP encBits :=
   GapP.prod_range_mem signedFactor_mem
@@ -68,9 +68,9 @@ def cancelFactor (x : List Bool × ℕ) : ℤ := if x.2 = 0 then -1 else 0
 
 private theorem cancelFactor_mem : cancelFactor ∈ GapP (encPair encBits encUnary) := by
   have h₁ : (fun x : List Bool × ℕ => if x.2 = 0 then (2 : ℕ) else 1) ∈
-      SharpP (encPair encBits encUnary) := SharpP.of_polyTime (by fun_prop)
+      SharpP (encPair encBits encUnary) := mem_SharpP_of_polyTime (by fun_prop)
   have h₂ : (fun x : List Bool × ℕ => if x.2 = 0 then (3 : ℕ) else 1) ∈
-      SharpP (encPair encBits encUnary) := SharpP.of_polyTime (by fun_prop)
+      SharpP (encPair encBits encUnary) := mem_SharpP_of_polyTime (by fun_prop)
   refine ⟨_, h₁, _, h₂, fun x => ?_⟩
   simp only [cancelFactor]
   split_ifs <;> norm_num

@@ -24,8 +24,8 @@ control certificate is separate from the branches' counting-class membership.
 
 ## Main results
 
-* `SharpP.of_polyTime`: polynomial-time binary natural functions are in #P.
-* `GapP.of_polyTime`: polynomial-time binary integer functions are in GapP.
+* `mem_SharpP_of_polyTime`: polynomial-time binary natural functions are in #P.
+* `mem_GapP_of_polyTime`: polynomial-time binary integer functions are in GapP.
 * `SharpP.ite_mem`, `GapP.ite_mem`: selection by a polynomial-time Boolean test.
 
 ## References
@@ -42,7 +42,7 @@ open Turing.MultiTapeTM
 variable {α : Type} {enc : α ↪ List Bool}
 
 /-- A polynomial-time function with binary natural output is a #P function. -/
-theorem SharpP.of_polyTime {f : α → ℕ} (hf : ComputableTidilyInPolyTime f enc encNat) :
+theorem mem_SharpP_of_polyTime {f : α → ℕ} (hf : ComputableTidilyInPolyTime f enc encNat) :
     f ∈ SharpP enc := by
   obtain ⟨p, hb⟩ := hf.polyBounded_length.exists_polynomial
   refine ⟨p, fun x => decide (BitString.binaryValue x.2 < f x.1), ?_, fun a => ?_⟩
@@ -58,10 +58,10 @@ theorem SharpP.of_polyTime {f : α → ℕ} (hf : ComputableTidilyInPolyTime f e
     exact (Nat.lt_size_self _).le.trans (Nat.pow_le_pow_right (by lia) hsize)
 
 /-- A polynomial-time function with binary integer output is a GapP function. -/
-theorem GapP.of_polyTime {f : α → ℤ} (hf : ComputableTidilyInPolyTime f enc encIntBin) :
+theorem mem_GapP_of_polyTime {f : α → ℤ} (hf : ComputableTidilyInPolyTime f enc encIntBin) :
     f ∈ GapP enc := by
-  have hp := SharpP.of_polyTime (ComputableTidilyInPolyTime.intBin_toNat.comp hf)
-  have hn := SharpP.of_polyTime
+  have hp := mem_SharpP_of_polyTime (ComputableTidilyInPolyTime.intBin_toNat.comp hf)
+  have hn := mem_SharpP_of_polyTime
     (ComputableTidilyInPolyTime.intBin_toNat.comp (ComputableTidilyInPolyTime.intBin_neg.comp hf))
   exact ⟨_, hp, _, hn, fun a => by simp only [Function.comp_apply]; lia⟩
 
@@ -73,9 +73,10 @@ theorem SharpP.ite_mem {c : α → Bool} {f g : α → ℕ}
     (hf : f ∈ SharpP enc) (hg : g ∈ SharpP enc) :
     (fun a => if c a then f a else g a) ∈ SharpP enc := by
   have htrue : (fun a => (c a).toNat) ∈ SharpP enc :=
-    SharpP.of_polyTime ((ComputableTidilyInPolyTime.of_finite Bool.toNat).comp hc)
+    mem_SharpP_of_polyTime ((ComputableTidilyInPolyTime.of_finite Bool.toNat).comp hc)
   have hfalse : (fun a => (!c a).toNat) ∈ SharpP enc :=
-    SharpP.of_polyTime ((ComputableTidilyInPolyTime.of_finite (fun b : Bool => (!b).toNat)).comp hc)
+    mem_SharpP_of_polyTime
+      ((ComputableTidilyInPolyTime.of_finite (fun b : Bool => (!b).toNat)).comp hc)
   convert SharpP.add_mem (SharpP.mul_mem htrue hf) (SharpP.mul_mem hfalse hg) using 1
   funext a
   cases h : c a <;> simp [h]

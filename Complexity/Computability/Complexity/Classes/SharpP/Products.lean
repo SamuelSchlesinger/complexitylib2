@@ -100,7 +100,7 @@ theorem prod_range_mem {f : α × ℕ → ℕ} {r : α → ℕ}
   have hk : ComputableTidilyInPolyTime k enc encUnary := by dsimp [k]; fun_prop
   have hW : ComputableTidilyInPolyTime W
       (encPair (encPair enc encUnary) encBits) encBool := by dsimp [W, width]; fun_prop
-  convert SharpP.of_polyTime_length (polyTime_indexedProductVerifier hr hk hW)
+  convert mem_SharpP_of_polyTime_length (polyTime_indexedProductVerifier hr hk hW)
     (ComputableTidilyInPolyTime.unary_mul.comp (hr.prod hk)) using 1
   ext a
   change _ = acceptCount (indexedProductVerifier r k W) a (r a * k a)
@@ -162,7 +162,7 @@ theorem GapP.prod_range_mem {g : α × ℕ → ℤ} {r : α → ℕ}
       (fun x : α × List Bool => (-1 : ℤ) ^ x.2.countP id)
       (encPair enc encBits) encIntBin := by fun_prop
   have hsum := GapP.sum_bits_mem
-    (GapP.mul_mem (GapP.of_polyTime hsign) (SharpP.natCast_mem_GapP hprod)) hr
+    (GapP.mul_mem (mem_GapP_of_polyTime hsign) (SharpP.natCast_mem_GapP hprod)) hr
   convert hsum using 1
   ext a
   rw [← Fin.prod_univ_eq_prod_range]

@@ -148,7 +148,7 @@ theorem setOf_le_mem_PP {f : α → ℕ} (hf : f ∈ SharpP enc) :
     {x : α × ℕ | x.2 ≤ f x.1} ∈ PP (encPair enc encNat) := by
   refine mem_PP_iff_exists_GapP.2 ⟨fun x => ((f x.1 + 1 : ℕ) : ℤ) - (x.2 : ℕ),
     ⟨_, SharpP.add_one_mem (SharpP.comp_mem hf (ComputableTidilyInPolyTime.fst enc encNat)), _,
-      SharpP.of_polyTime (ComputableTidilyInPolyTime.snd enc encNat), fun _ => rfl⟩,
+      mem_SharpP_of_polyTime (ComputableTidilyInPolyTime.snd enc encNat), fun _ => rfl⟩,
     fun x => ?_⟩
   simp only [Set.mem_ofPred_eq, sub_pos, Nat.cast_lt]
   omega

@@ -48,7 +48,7 @@ theorem joint_mem_LWPP : bitLanguage ∈ LWPP (encPair encBits encUnary) := by
   have hg : ComputableTidilyInPolyTime g (encPair encBits encUnary) encIntBin := by
     dsimp only [g]
     fun_prop
-  refine ⟨g, GapP.of_polyTime hg, target, .of_tidy target_polyTime, target_ne_zero, ?_, ?_⟩
+  refine ⟨g, mem_GapP_of_polyTime hg, target, .of_tidy target_polyTime, target_ne_zero, ?_, ?_⟩
   · intro x
     cases h : x.1.getD x.2 false <;> simp only [g, h] <;> simp
   · intro x
