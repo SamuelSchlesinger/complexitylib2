@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.P.WordRAM
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
+import Complexity.Tactic.PolyTime.Init
 
 /-!
 # Element distinctness is in `P`, through the word RAM (spike pilot, #739)
@@ -46,5 +47,11 @@ theorem nodup_mem_P : {l : Input | l.1.Nodup} ∈ Cslib.Complexity.P inputEncodi
     (Cslib.polynomiallyBounded_iff_le.mpr ⟨16, 1, fun n => by simp⟩)
     (PolyBounded.self.mono fun l => length_le_length_encList encNat l.1)
     (.of_eq fun _ => rfl) decidesInTime_nodup_additive
+
+/-- For comparison: a direct Turing-machine proof, for all lists of naturals, through the
+polynomial-time calculus (each entry's count is computed by a scan). -/
+theorem nodup_mem_P_direct : {l : List ℕ | l.Nodup} ∈ Cslib.Complexity.P (encList encNat) := by
+  refine ⟨fun l => l.all fun a => l.count a == 1, .of_tidy (by fun_prop), fun l => ?_⟩
+  simp [List.nodup_iff_count_eq_one]
 
 end Cslib.Algorithms.WordRAM.ElementDistinctness
