@@ -75,8 +75,8 @@ theorem ComputableInPolyTimeWithOracle.of_polyTimeReducible {A B : Set (List Boo
       ComputableTidilyInPolyTime.id' hhandler (ComputableTidilyInPolyTime.const ())
       (fun _ _ => True) (fun _ => trivial) (ComputableTidilyInPolyTime.const 1)
       (fun a request state _ result hresult => by
-        obtain ⟨r, hr, rfl⟩ := ProbOracleComp.mem_support_map hresult
-        obtain ⟨r', -, rfl⟩ := ProbOracleComp.mem_support_map hr
+        obtain ⟨r, hr, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hresult
+        obtain ⟨r', -, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hr
         exact ⟨trivial, List.length_take_le _ _, Nat.le_add_right _ _⟩)
     refine (hsub.map (ComputableTidilyInPolyTime.fst output (encFinEnum Unit))).congr
       fun a State oracle s => ?_

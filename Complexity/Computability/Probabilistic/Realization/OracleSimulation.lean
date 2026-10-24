@@ -144,7 +144,7 @@ theorem isPPTOn_run [Finite Operation] {input : α ↪ List Bool}
     (handler := fun a request state => ProbOracleComp.sample (handler a request state)) machine
     hword hcount hhandler.isOraclePPTOn hinitial invariant hinit hresources
     fun a request state hstate result hresult => hpreserve a request state hstate result
-      (ProbOracleComp.support_sample_subset _ hresult)).congr fun a _ _ _ => ?_).isPPTOn
+      ((ProbOracleComp.support_sample _).subset hresult)).congr fun a _ _ _ => ?_).isPPTOn
   rw [ProbOracleComp.sample_run_interpret]
 
 end Cslib.Probability.OracleSimulation

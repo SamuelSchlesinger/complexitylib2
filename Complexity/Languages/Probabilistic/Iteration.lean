@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Languages.Probabilistic.Basic
+public import Complexity.Languages.Probabilistic.Semantics
 public import Mathlib.Data.List.OfFn
 import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF.Event
@@ -31,7 +31,8 @@ uniform seeds. State types need not be finite. These are semantic laws; efficien
   through the loop.
 * `Cslib.OracleComp.interpret_iterate`: replacing every call by a program iterates the replaced
   steps.
-* `Cslib.ProbComp.iterate_invariant`: supported transitions preserve the final invariant.
+* `Cslib.OracleComp.iterate_invariant`: possible transitions preserve the final invariant.
+* `Cslib.ProbComp.iterate_invariant`: the same for supported transitions of closed programs.
 * `Cslib.ProbComp.iterate_failure_le`, `iterate_failure_toReal_le_mul`: local failure bounds
   accumulate additively across adaptive rounds.
 * `Cslib.ProbComp.eval_iterate_of_uniform`: exact evaluation from independent saved seeds.
@@ -110,6 +111,26 @@ theorem run_interpret_iterate {Hidden : Type v} {κ : Type w}
   | zero => simp
   | succ count ih => simp only [iterate_succ, interpret_bind, StateT.run_bind, ih]
 
+/-- An invariant indexed by the number of completed steps holds for every possible result of a
+bounded loop when every possible step preserves it. -/
+theorem iterate_invariant {possible : (q : ι) → Set (spec q)}
+    {step : State → OracleComp spec State} {count : ℕ} {initial : State}
+    (invariant : ℕ → State → Prop) (hbase : invariant 0 initial)
+    (hpreserve : ∀ i state, i < count → invariant i state →
+      ∀ next ∈ supportWith possible (step state), invariant (i + 1) next) :
+    ∀ state ∈ supportWith possible (iterate count step initial), invariant count state := by
+  induction count with
+  | zero =>
+    intro state hstate
+    exact (eq_of_mem_supportWith_pure hstate) ▸ hbase
+  | succ count ih =>
+    intro state hstate
+    rw [iterate_succ] at hstate
+    obtain ⟨middle, hmiddle, hstate⟩ := mem_supportWith_bind_iff.mp hstate
+    exact hpreserve count middle (Nat.lt_succ_self count)
+      (ih (fun i state hi => hpreserve i state (Nat.lt_succ_of_lt hi)) middle hmiddle)
+      state hstate
+
 end OracleComp
 
 namespace ProbComp
@@ -124,16 +145,9 @@ theorem iterate_invariant (count : ℕ) (step : State → ProbComp State) (initi
     (hpreserve : ∀ i < count, ∀ state, invariant i state →
       ∀ next ∈ (eval (step state)).support, invariant (i + 1) next) :
     ∀ state ∈ (eval (OracleComp.iterate count step initial)).support, invariant count state := by
-  have htrace (i : ℕ) (hi : i ≤ count) :
-      ∀ state ∈ (eval (OracleComp.iterate i step initial)).support, invariant i state := by
-    induction i with
-    | zero => simpa using hinit
-    | succ i ih =>
-      intro next hnext
-      rw [OracleComp.iterate_succ, eval_bind, PMF.mem_support_bind_iff] at hnext
-      obtain ⟨state, hstate, hnext⟩ := hnext
-      exact hpreserve i (by lia) state (ih (by lia) state hstate) next hnext
-  exact htrace count le_rfl
+  rw [support_eval]
+  exact OracleComp.iterate_invariant invariant hinit fun i state hi hstate next hnext =>
+    hpreserve i hi state hstate next (by rwa [support_eval])
 
 /-- Per-step failures of an invariant accumulate additively across an adaptive loop.
 The local bound is needed only at states where the preceding invariant holds. -/

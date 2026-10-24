@@ -164,13 +164,13 @@ theorem iterate_spec {initial : α → σ} {count : α → ℕ}
     (hstep : IsOraclePPTOn stateEncoding stateEncoding step)
     (invariant : α → ℕ → σ → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
-      ∀ next ∈ ProbOracleComp.support (step state), invariant a (i + 1) next)
+      ∀ next ∈ OracleComp.support (step state), invariant a (i + 1) next)
     {size : α → ℕ} (hsize : PolyBounded (fun a => (input a).length) size)
     (hbound : ∀ a i state, i ≤ count a → invariant a i state →
       (stateEncoding state).length ≤ size a) :
     IsOraclePPTOn input stateEncoding
         (fun a => OracleComp.iterate (count a) step (initial a)) ∧
-      ∀ a, ∀ state ∈ ProbOracleComp.support (OracleComp.iterate (count a) step (initial a)),
+      ∀ a, ∀ state ∈ OracleComp.support (OracleComp.iterate (count a) step (initial a)),
         invariant a (count a) state :=
   let h := IsTidyOraclePPTOn.iterate_spec hcount hinitial hstep.isTidyOraclePPTOn invariant hbase
     hpreserve hsize hbound
@@ -185,13 +185,13 @@ theorem iterateWith_spec {initial : α → σ} {count : α → ℕ}
       (fun pair => step pair.1 pair.2))
     (invariant : α → ℕ → σ → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
-      ∀ next ∈ ProbOracleComp.support (step a state), invariant a (i + 1) next)
+      ∀ next ∈ OracleComp.support (step a state), invariant a (i + 1) next)
     {size : α → ℕ} (hsize : PolyBounded (fun a => (input a).length) size)
     (hbound : ∀ a i state, i ≤ count a → invariant a i state →
       (stateEncoding state).length ≤ size a) :
     IsOraclePPTOn input stateEncoding
         (fun a => OracleComp.iterate (count a) (step a) (initial a)) ∧
-      ∀ a, ∀ state ∈ ProbOracleComp.support (OracleComp.iterate (count a) (step a) (initial a)),
+      ∀ a, ∀ state ∈ OracleComp.support (OracleComp.iterate (count a) (step a) (initial a)),
         invariant a (count a) state :=
   let h := IsTidyOraclePPTOn.iterateWith_spec hcount hinitial hstep.isTidyOraclePPTOn invariant
     hbase hpreserve hsize hbound
@@ -206,7 +206,7 @@ theorem iterateWith_of_bounded_growth {initial : α → σ} {count : α → ℕ}
     (hstep : IsOraclePPTOn (encPair input stateEncoding) stateEncoding
       (fun pair => step pair.1 pair.2))
     {growth : α → ℕ} (hpoly : PolyBounded (fun a => (input a).length) growth)
-    (hgrowth : ∀ a state, ∀ next ∈ ProbOracleComp.support (step a state),
+    (hgrowth : ∀ a state, ∀ next ∈ OracleComp.support (step a state),
       (stateEncoding next).length ≤ (stateEncoding state).length + growth a) :
     IsOraclePPTOn input stateEncoding
       (fun a => OracleComp.iterate (count a) (step a) (initial a)) :=
@@ -219,7 +219,7 @@ theorem iterate_of_bounded_growth {initial : α → σ} {count : α → ℕ}
     (hcount : ComputableTidilyInPolyTime count input encUnary)
     (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn stateEncoding stateEncoding step)
-    {growth : ℕ} (hgrowth : ∀ state, ∀ next ∈ ProbOracleComp.support (step state),
+    {growth : ℕ} (hgrowth : ∀ state, ∀ next ∈ OracleComp.support (step state),
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :
     IsOraclePPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) :=
   iterateWith_of_bounded_growth (step := fun _ => step) hcount hinitial

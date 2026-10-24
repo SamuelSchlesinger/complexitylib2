@@ -71,7 +71,7 @@ theorem IsOraclePPTOn.run_interpret_preprocess_open
     (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a request state, invariant a state →
-      ∀ result ∈ ProbOracleComp.support (handler a request state),
+      ∀ result ∈ OracleComp.support (handler a request state),
         invariant a result.2 ∧ result.1.length ≤ resources a request.2 ∧
         (stateEncoding result.2).length ≤ (stateEncoding state).length + resources a request.2) :
     IsOraclePPTOn input (encPair output stateEncoding) (fun a =>
@@ -148,8 +148,8 @@ theorem IsOraclePPTOn.interpret_bitQueries
     ComputableTidilyInPolyTime.id' hhandler (ComputableTidilyInPolyTime.const ())
     (fun _ _ => True) (fun _ => trivial) (ComputableTidilyInPolyTime.const 1)
     (fun a query state _ result hresult => by
-      obtain ⟨r, hr, rfl⟩ := ProbOracleComp.mem_support_map hresult
-      obtain ⟨r', -, rfl⟩ := ProbOracleComp.mem_support_map hr
+      obtain ⟨r, hr, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hresult
+      obtain ⟨r', -, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hr
       exact ⟨trivial, List.length_take_le _ _, Nat.le_add_right _ _⟩)
   refine (hsub.map (ComputableTidilyInPolyTime.fst output (encFinEnum Unit))).congr
     fun a State oracle s => ?_

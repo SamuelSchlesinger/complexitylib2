@@ -58,11 +58,11 @@ example (State : Type) (oracle : Unit → StateT State PMF Empty) (s : State) : 
 
 -- Possible results are read off the program's tree: every reply and every coin can occur.
 example (answer second repeated : Bool) :
-    (answer, second, repeated) ∈ ProbOracleComp.support randomized := by
+    (answer, second, repeated) ∈ OracleComp.support randomized := by
   simp [randomized]
 
 -- With an empty reply type a returned value is still possible, although no oracle exists.
-example : (1 : ℕ) ∈ ProbOracleComp.support (pure 1 : ProbOracleComp (fun _ : Unit => Empty) ℕ) := by
+example : (1 : ℕ) ∈ OracleComp.support (pure 1 : ProbOracleComp (fun _ : Unit => Empty) ℕ) := by
   simp
 
 -- Forgetting outputs cannot hide external calls; weakening the budget keeps it valid.

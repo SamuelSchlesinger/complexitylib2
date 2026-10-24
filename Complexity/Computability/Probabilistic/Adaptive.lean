@@ -73,7 +73,7 @@ theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
   have hloop := IsOraclePPTOn.iterate_spec hcount hinitial
     (hstep.isOraclePPTOn (Operation := Empty)) invariant hbase
     (fun a i state hi hstate next hnext => hpreserve a i state hi hstate next
-      (ProbOracleComp.support_sample_subset _ hnext)) hsize hbound
+      ((ProbOracleComp.support_sample _).subset hnext)) hsize hbound
   refine ⟨?_, fun a => ProbComp.iterate_invariant (count a) step (initial a)
     (invariant a) (hbase a)
     (fun i hi state hinvariant => hpreserve a i state hi hinvariant)⟩
@@ -100,7 +100,7 @@ theorem IsPPTOn.iterateWith_spec {initial : α → State} {count : α → ℕ}
   have hloop := IsOraclePPTOn.iterateWith_spec hcount hinitial
     (hstep.isOraclePPTOn (Operation := Empty)) invariant hbase
     (fun a i state hi hstate next hnext => hpreserve a i state hi hstate next
-      (ProbOracleComp.support_sample_subset _ hnext)) hsize hbound
+      ((ProbOracleComp.support_sample _).subset hnext)) hsize hbound
   refine ⟨?_, fun a => ProbComp.iterate_invariant (count a) (step a) (initial a)
     (invariant a) (hbase a)
     (fun i hi state hinvariant => hpreserve a i state hi hinvariant)⟩

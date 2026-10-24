@@ -397,7 +397,7 @@ private theorem length_encVState_push_le (st : VState) (entries : List Claim) (b
 
 /-- **Every step adds a bounded amount of storage**, polynomial in the input of the loop. -/
 theorem length_encVState_le_of_mem_support_step (I : LoopInput) (st : VState) {next : VState}
-    (h : next ∈ ProbOracleComp.support (step I st)) :
+    (h : next ∈ OracleComp.support (step I st)) :
     (encVState next).length ≤ (encVState st).length + (8 * claimBound I + 8) := by
   have : NeZero (I.1.2.1 + 1) := ⟨Nat.succ_ne_zero _⟩
   have hq : 0 < I.1.2.1 + 1 := Nat.succ_pos _
@@ -413,41 +413,41 @@ theorem length_encVState_le_of_mem_support_step (I : LoopInput) (st : VState) {n
     rcases hget : (decodeReply (I.1.2.1 + 1) I.1.2.2 word)[i]? with _ | a
     · exact hq
     · exact lt_of_mem_decodeReply (List.mem_of_getElem? hget)
-  have hbin (o : ArithQBF.Connective) (hnext : next ∈ ProbOracleComp.support
+  have hbin (o : ArithQBF.Connective) (hnext : next ∈ OracleComp.support
       (ask (I, st) >>= fun word => pure (binNext o (I, st) word))) :
       (encVState next).length ≤ (encVState st).length + (8 * claimBound I + 8) := by
-    obtain ⟨word, -, hword⟩ := ProbOracleComp.mem_support_bind hnext
-    rw [ProbOracleComp.eq_of_mem_support_pure hword]
+    obtain ⟨word, -, hword⟩ := OracleComp.mem_supportWith_bind_iff.mp hnext
+    rw [OracleComp.eq_of_mem_supportWith_pure hword]
     unfold binNext
     split_ifs
     · refine length_encVState_push_le st [_, _] true (by simp) ?_
       simp only [List.mem_cons, List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
       exact ⟨hnorm _ _ (hreply word 0), hnorm _ _ (hreply word 1)⟩
     · exact hrej
-  have hop (o : ArithQBF.Operator) (hnext : next ∈ ProbOracleComp.support
+  have hop (o : ArithQBF.Operator) (hnext : next ∈ OracleComp.support
       (ask (I, st) >>= opCont o (I, st))) :
       (encVState next).length ≤ (encVState st).length + (8 * claimBound I + 8) := by
-    obtain ⟨word, -, hword⟩ := ProbOracleComp.mem_support_bind hnext
+    obtain ⟨word, -, hword⟩ := OracleComp.mem_supportWith_bind_iff.mp hnext
     unfold opCont at hword
     split_ifs at hword
-    · obtain ⟨z, hz, rfl⟩ := ProbOracleComp.mem_support_map hword
+    · obtain ⟨z, hz, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hword
       refine length_encVState_push_le st [_] true (by simp) ?_
       simp only [List.mem_singleton, forall_eq]
       exact length_encClaim_map_le I _ (fun x => by split_ifs <;> exact Nat.mod_lt _ hq) _
         (hornerMod_lt _ _)
-    · rw [ProbOracleComp.eq_of_mem_support_pure hword]
+    · rw [OracleComp.eq_of_mem_supportWith_pure hword]
       exact hrej
   unfold step at h
   split_ifs at h with hactive
   · generalize hk : (st.1.headD (.top, 0)).1 = k at h
     cases k
-    · rw [ProbOracleComp.eq_of_mem_support_pure h]
+    · rw [OracleComp.eq_of_mem_supportWith_pure h]
       exact length_encVState_push_le st [] _ (by simp) (by simp)
-    · rw [ProbOracleComp.eq_of_mem_support_pure h]
+    · rw [OracleComp.eq_of_mem_supportWith_pure h]
       exact length_encVState_push_le st [] _ (by simp) (by simp)
-    · rw [ProbOracleComp.eq_of_mem_support_pure h]
+    · rw [OracleComp.eq_of_mem_supportWith_pure h]
       exact length_encVState_push_le st [] _ (by simp) (by simp)
-    · rw [ProbOracleComp.eq_of_mem_support_pure h]
+    · rw [OracleComp.eq_of_mem_supportWith_pure h]
       refine length_encVState_push_le st [_] true (by simp) ?_
       simp only [List.mem_singleton, forall_eq]
       exact hnorm _ _ (subMod_lt _ _)
@@ -456,7 +456,7 @@ theorem length_encVState_le_of_mem_support_step (I : LoopInput) (st : VState) {n
     · exact hop .ex h
     · exact hop .all h
     · exact hop .lin h
-  · rw [ProbOracleComp.eq_of_mem_support_pure h]
+  · rw [OracleComp.eq_of_mem_supportWith_pure h]
     omega
 
 /-! ### The machine in polynomial time -/

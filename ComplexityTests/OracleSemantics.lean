@@ -62,7 +62,8 @@ example (program : ProbComp Bool) :
   ProbComp.eval_eq_evalWith program
 
 example : (ProbComp.eval (ProbComp.unifFin 1)).support = Set.univ := by
-  rw [ProbComp.support_eval_eq_supportWith, ProbComp.unifFin, supportWith_query]
+  rw [ProbComp.support_eval]
+  exact supportWith_query _ 1
 
 /-- A program with a private coin and one external call. -/
 private noncomputable def coinThenQuery : ProbOracleComp (fun _ : Unit => Bool) Bool := do
@@ -70,9 +71,11 @@ private noncomputable def coinThenQuery : ProbOracleComp (fun _ : Unit => Bool) 
   let reply ← ProbOracleComp.query ()
   return coin && reply
 
--- Its possible results are the generic ones for all replies.
-example : ProbOracleComp.support coinThenQuery = supportWith (fun _ => Set.univ) coinThenQuery :=
-  ProbOracleComp.support_eq_supportWith coinThenQuery
+-- Its possible results are those for any coin and any reply.
+example : true ∈ support coinThenQuery := by
+  simp only [coinThenQuery, mem_supportWith_bind_iff, ProbOracleComp.support_sample,
+    ProbComp.eval_uniform]
+  exact ⟨true, by simp [PMF.mem_support_iff], true, by simp [ProbOracleComp.query], rfl⟩
 
 -- Its run is the generic run of the sum handler.
 example (oracle : (q : Unit) → StateT ℕ PMF Bool) (s : ℕ) :
