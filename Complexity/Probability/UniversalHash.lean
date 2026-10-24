@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.Collision
 public import Complexity.Probability.HashFamily
 public import Complexity.Probability.StatisticalDistance
+public import Mathlib.Algebra.BigOperators.Expect
 import Complexity.Probability.PMF.Map
 import Complexity.Probability.PMF.Expect
 
@@ -32,6 +33,11 @@ information-theoretic results; efficient sampling and evaluation require separat
 
 * `Cslib.Probability.isTwoUniversal_iff_isUniversalHash`: two-universality is
   `1 / |Output|`-universality.
+* `Cslib.Probability.IsDeltaUniversalHash.isTwoUniversal`: a `1 / |Output|`-Δ-universal family is
+  two-universal.
+* `Cslib.Probability.isTwoUniversal_uniformOfFintype_iff`,
+  `Cslib.Probability.IsTwoUniversal.expect_boole_le`: two-universality under a uniform seed as a
+  uniform expectation bound.
 * `Cslib.Probability.IsTwoUniversal.collision_with_set_le`: isolation by a union bound.
 * `Cslib.Probability.IsTwoUniversal.leftover_hash`: the strong leftover hash lemma.
 * `Cslib.Probability.IsTwoUniversal.leftover_hash_conditional`: extraction with side information.
@@ -55,7 +61,7 @@ Adapted from Probability/UniversalHash.lean on the cslib `crypto` branch at
 namespace Cslib.Probability
 
 open Cslib.Probability.PMF
-open scoped ENNReal
+open scoped BigOperators ENNReal
 
 variable {Seed Input Output : Type*} [Fintype Seed] [Finite Input] [Fintype Output]
 
@@ -81,6 +87,34 @@ theorem isTwoUniversal_iff_isUniversalHash [Nonempty Output] {seed : PMF Seed}
   · rw [← hinv]
     exact hhash.sum_ite_toReal_le
       (ENNReal.inv_ne_top.mpr (by exact_mod_cast Fintype.card_ne_zero)) hxy
+
+omit [Finite Input] in
+/-- A `1 / |Output|`-Δ-universal hash family is two-universal. -/
+theorem IsDeltaUniversalHash.isTwoUniversal [AddGroup Output] {seed : PMF Seed}
+    {hash : Seed → Input → Output}
+    (hh : IsDeltaUniversalHash seed hash (Fintype.card Output : ℝ≥0∞)⁻¹) :
+    IsTwoUniversal seed hash :=
+  isTwoUniversal_iff_isUniversalHash.mpr hh.isUniversalHash
+
+omit [Finite Input] in
+open Classical in
+/-- Under the uniform seed distribution, two-universality is equivalent to bounding the uniform
+expectation of the collision indicator of distinct inputs by `1 / |Output|`. -/
+theorem isTwoUniversal_uniformOfFintype_iff [Nonempty Seed] {hash : Seed → Input → Output} :
+    IsTwoUniversal (PMF.uniformOfFintype Seed) hash ↔
+      ∀ x y, x ≠ y → (𝔼 s, if hash s x = hash s y then (1 : ℝ) else 0) ≤
+        (Fintype.card Output : ℝ)⁻¹ := by
+  simp only [IsTwoUniversal, Fintype.expect_eq_sum_div_card, Finset.sum_div, ite_div, one_div,
+    zero_div, PMF.uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast]
+
+omit [Finite Input] in
+/-- Under the uniform seed distribution, two-universality bounds the uniform expectation of the
+collision indicator of distinct inputs by `1 / |Output|`. -/
+theorem IsTwoUniversal.expect_boole_le [Nonempty Seed] [DecidableEq Output]
+    {hash : Seed → Input → Output}
+    (hhash : IsTwoUniversal (PMF.uniformOfFintype Seed) hash) {x y : Input} (hxy : x ≠ y) :
+    (𝔼 s, if hash s x = hash s y then (1 : ℝ) else 0) ≤ (Fintype.card Output : ℝ)⁻¹ := by
+  convert isTwoUniversal_uniformOfFintype_iff.mp hhash x y hxy
 
 omit [Finite Input] in
 /-- An injective input representation preserves two-universality. -/

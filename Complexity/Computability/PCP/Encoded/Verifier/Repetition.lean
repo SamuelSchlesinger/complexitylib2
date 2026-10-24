@@ -98,11 +98,11 @@ theorem length_queries_repeatedEdgeVerifier (width repeats : ℕ)
 /-- Concatenating queries and slicing their answers preserves each individual check. -/
 theorem repeatedEdgeVerifier_accepts (width repeats : ℕ) (decode : (Fin width → Bool) → α)
     (eval : C → α → α → Bool) (g : Graph C) (proof random : List Bool) :
-    (repeatedEdgeVerifier width repeats decode eval).Accepts g proof random =
-      (List.range repeats).all (fun i => (edgeVerifier width decode eval).Accepts g proof
+    (repeatedEdgeVerifier width repeats decode eval).accepts g proof random =
+      (List.range repeats).all (fun i => (edgeVerifier width decode eval).accepts g proof
         (BitString.listRow (Nat.clog 2 g.edges.length) i random)) := by
   apply Bool.eq_iff_iff.mpr
-  simp only [PCPVerifier.Accepts, repeatedEdgeVerifier, List.all_eq_true]
+  simp only [PCPVerifier.accepts, repeatedEdgeVerifier, List.all_eq_true]
   refine forall_congr' fun i => forall_congr' fun hi => ?_
   have hrow := listRow_flatMap_range (2 * width)
     (fun i => PCPVerifier.answers proof ((edgeVerifier width decode eval).queries
@@ -118,7 +118,7 @@ theorem repeated_accepts_proofOfLabels (width repeats : ℕ) (encode : α → Fi
     (decode : (Fin width → Bool) → α) (hdecode : Function.LeftInverse decode encode)
     (eval : C → α → α → Bool) {g : Graph C} (hg : g.WellFormed) (labels : ℕ → α)
     (hsat : ∀ edge, (g.toGraph eval).Satisfies labels edge) (random : List Bool) :
-    (repeatedEdgeVerifier width repeats decode eval).Accepts g
+    (repeatedEdgeVerifier width repeats decode eval).accepts g
       (proofOfLabels width g.vertices encode labels) random = true := by
   rw [repeatedEdgeVerifier_accepts, List.all_eq_true]
   exact fun _ _ => accepts_proofOfLabels width encode decode hdecode eval hg labels hsat _
@@ -156,21 +156,21 @@ theorem acceptProb_repeatedEdgeVerifier (width repeats : ℕ)
     (decode : (Fin width → Bool) → α) (eval : C → α → α → Bool)
     (g : Graph C) (proof : List Bool) :
     ((BitString.uniformList (repeats * Nat.clog 2 g.edges.length)).map
-      (fun random => (repeatedEdgeVerifier width repeats decode eval).Accepts g proof random))
+      (fun random => (repeatedEdgeVerifier width repeats decode eval).accepts g proof random))
         true =
       (((BitString.uniformList (Nat.clog 2 g.edges.length)).map
-        (fun random => (edgeVerifier width decode eval).Accepts g proof random))
+        (fun random => (edgeVerifier width decode eval).accepts g proof random))
           true) ^ repeats := by
   simpa only [repeatedEdgeVerifier_accepts] using
     BitString.uniformList_all_listRow_true repeats (Nat.clog 2 g.edges.length)
-      (fun random => (edgeVerifier width decode eval).Accepts g proof random)
+      (fun random => (edgeVerifier width decode eval).accepts g proof random)
 
 /-- Repetition decreases acceptance geometrically in the graph's unsatisfiability gap. -/
 theorem acceptProb_repeatedEdgeVerifier_le (width repeats : ℕ)
     (decode : (Fin width → Bool) → α) (eval : C → α → α → Bool)
     (g : Graph C) (proof : List Bool) :
     (((BitString.uniformList (repeats * Nat.clog 2 g.edges.length)).map
-      (fun random => (repeatedEdgeVerifier width repeats decode eval).Accepts g proof random))
+      (fun random => (repeatedEdgeVerifier width repeats decode eval).accepts g proof random))
         true).toReal ≤ (1 - (g.toGraph eval).unsatVal / 2) ^ repeats := by
   rw [acceptProb_repeatedEdgeVerifier, ENNReal.toReal_pow]
   exact pow_le_pow_left₀ ENNReal.toReal_nonneg

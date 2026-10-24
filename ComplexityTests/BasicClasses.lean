@@ -198,11 +198,11 @@ info: 'Cslib.Complexity.PolyTimeReducible.mem_CeqP' depends on axioms:
 #print axioms Cslib.Complexity.PolyTimeReducible.mem_CeqP
 
 /--
-info: 'Cslib.Complexity.NPComplete.prod_coNPComplete' depends on axioms:
+info: 'Cslib.Complexity.NPComplete.dpComplete_prod' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NPComplete.prod_coNPComplete
+#print axioms Cslib.Complexity.NPComplete.dpComplete_prod
 
 /--
 info: 'Cslib.Complexity.SATUNSAT_dpComplete' depends on axioms:

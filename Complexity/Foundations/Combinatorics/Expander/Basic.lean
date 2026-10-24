@@ -43,11 +43,14 @@ characterization. `λ(G) ≤ 1` always, and `G` is a good expander when `λ(G)` 
 * `Cslib.RotationMap.neighbor`: the `i`-th neighbor of a vertex.
 * `Cslib.RotationMap.ofInvolutive`: the `1`-regular multigraph of an involution.
 * `Cslib.RotationMap.interedges`: the edges from one set of vertices to another, as darts.
+* `Cslib.RotationMap.edgeCount`: the number of edges from one vertex to another.
 * `Cslib.RotationMap.walk`: the walk operator.
 * `Cslib.RotationMap.spectralExpansion`: the spectral expansion `λ(G)`.
 
 ## Main results
 
+* `Cslib.RotationMap.card_interedges_comm`, `Cslib.RotationMap.edgeCount_comm`,
+  `Cslib.RotationMap.sum_edgeCount`: symmetry and degree sum of edge counts.
 * `Cslib.RotationMap.expect_expect_neighbor_comm`: every edge is seen once from each of its ends.
 * `Cslib.RotationMap.expect_walk`, `Cslib.RotationMap.expect_mul_walk_comm`,
   `Cslib.RotationMap.expect_walk_sq_le`: the walk operator preserves expectations, is
@@ -166,6 +169,37 @@ theorem card_interedges_add_card_interedges_compl [Fintype V] (S T : Finset V) :
     #(G.interedges S T) + #(G.interedges S Tᶜ) = #S * Fintype.card D := by
   simp only [interedges, mem_compl]
   rw [card_filter_add_card_filter_not, card_product, card_univ]
+
+/-- The number of edges of `G` from `v` to `u`, counted with multiplicity; `G.edgeCount v v` is the
+number of self-loops at `v`. -/
+def edgeCount (v u : V) : ℕ :=
+  #{i | G.neighbor v i = u}
+
+/-- `G.edgeCount v u` is the number of labels `i` with `G.neighbor v i = u`. -/
+theorem edgeCount_eq_card_filter (v u : V) : G.edgeCount v u = #{i | G.neighbor v i = u} :=
+  rfl
+
+/-- At most `|D|` edges join `v` to `u`. -/
+theorem edgeCount_le_card (v u : V) : G.edgeCount v u ≤ Fintype.card D :=
+  card_filter_le _ _
+
+/-- The edges of `G` from `v` to `u` are the darts between `{v}` and `{u}`. -/
+theorem card_interedges_singleton (v u : V) : #(G.interedges {v} {u}) = G.edgeCount v u := by
+  rw [interedges, edgeCount, singleton_product, filter_map, card_map]
+  congr 1
+  ext i
+  simp
+
+/-- Reversing the darts matches the edges from `v` to `u` with those from `u` to `v`. -/
+theorem edgeCount_comm (v u : V) : G.edgeCount v u = G.edgeCount u v := by
+  rw [← G.card_interedges_singleton, ← G.card_interedges_singleton, G.card_interedges_comm]
+
+/-- The edge multiplicities out of `v` sum to the degree `|D|`. -/
+@[simp]
+theorem sum_edgeCount [Fintype V] (v : V) : ∑ u, G.edgeCount v u = Fintype.card D := by
+  rw [← card_univ, card_eq_sum_card_fiberwise (f := G.neighbor v) (t := univ)
+    (fun _ _ ↦ mem_univ _)]
+  rfl
 
 end Interedges
 

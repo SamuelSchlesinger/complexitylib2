@@ -50,43 +50,43 @@ example : check.queries (mixed, [false, false]) = [0, 0] := by decide
 
 example : check.queries (mixed, [true, true]) = [0, 0] := by decide
 
-example : check.Accepts mixed [] [false, false] = false := by decide
+example : check.accepts mixed [] [false, false] = false := by decide
 
-example : check.Accepts mixed [] [true, true] = true := by decide
+example : check.accepts mixed [] [true, true] = true := by decide
 
-example : check.Accepts mixed [] (List.replicate 16 true) = true := by decide
+example : check.accepts mixed [] (List.replicate 16 true) = true := by decide
 
-example : check.Accepts (loop false) [] [] = false := by decide
+example : check.accepts (loop false) [] [] = false := by decide
 
-example : check.Accepts (⟨0, []⟩ : Graph Bool) [] [] = true := by decide
+example : check.accepts (⟨0, []⟩ : Graph Bool) [] [] = true := by decide
 
 example : repeatCheck.queries (mixed, [false, false, true, false, true, true]) =
     [0, 0, 0, 0, 0, 0] := by decide
 
-example : repeatCheck.Accepts mixed [] [true, false, true, true, false, false] = false := by decide
+example : repeatCheck.accepts mixed [] [true, false, true, true, false, false] = false := by decide
 
-example : repeatCheck.Accepts mixed [] [true, false, true, true, false, true] = true := by decide
+example : repeatCheck.accepts mixed [] [true, false, true, true, false, true] = true := by decide
 
 -- This is the complete random-word count, including the accepting fourth padding index.
-example : acceptCount (fun p => check.Accepts p.1 [] p.2) mixed 2 = 3 := by decide
+example : acceptCount (fun p => check.accepts p.1 [] p.2) mixed 2 = 3 := by decide
 
-example : acceptCount (fun p => repeatCheck.Accepts p.1 [] p.2) mixed 6 = 27 := by decide
+example : acceptCount (fun p => repeatCheck.accepts p.1 [] p.2) mixed 6 = 27 := by decide
 
-example : 2 * acceptCount (fun p => repeatCheck.Accepts p.1 [] p.2) mixed 6 ≤ 2 ^ 6 := by decide
+example : 2 * acceptCount (fun p => repeatCheck.accepts p.1 [] p.2) mixed 6 ≤ 2 ^ 6 := by decide
 
 example : (((BitString.uniformList 6).map
-    (fun random => repeatCheck.Accepts mixed [] random)) true).toReal = 27 / 64 := by
-  rw [uniformList_acceptCount_toReal (fun p => repeatCheck.Accepts p.1 [] p.2) mixed 6]
-  norm_num [show acceptCount (fun p => repeatCheck.Accepts p.1 [] p.2) mixed 6 = 27 by decide]
+    (fun random => repeatCheck.accepts mixed [] random)) true).toReal = 27 / 64 := by
+  rw [uniformList_acceptCount_toReal (fun p => repeatCheck.accepts p.1 [] p.2) mixed 6]
+  norm_num [show acceptCount (fun p => repeatCheck.accepts p.1 [] p.2) mixed 6 = 27 by decide]
 
 -- With a width-zero singleton alphabet, no proof bits are read; constraints are still checked.
 example : (Graph.repeatedEdgeVerifier 0 2 (fun _ => ()) (fun c (_ _ : Unit) => c)).queries
     (loop false, []) = [] := by decide
 
-example : (Graph.repeatedEdgeVerifier 0 2 (fun _ => ()) (fun c (_ _ : Unit) => c)).Accepts
+example : (Graph.repeatedEdgeVerifier 0 2 (fun _ => ()) (fun c (_ _ : Unit) => c)).accepts
     (loop false) [] [] = false := by decide
 
-example : (Graph.repeatedEdgeVerifier 1 0 decode eval).Accepts (loop false) [] [] = true := by
+example : (Graph.repeatedEdgeVerifier 1 0 decode eval).accepts (loop false) [] [] = true := by
   decide
 
 -- Packed labels recover all declared vertices and keep the order of distinct endpoint blocks.
@@ -95,15 +95,15 @@ example : Graph.proofOfLabels 1 3 encode (fun n => n == 1) = [false, true, false
 example : (Graph.edgeVerifier 1 decode (fun (_ : Unit) a b => a == b)).queries
     (⟨2, [⟨0, 1, ()⟩]⟩, []) = [0, 1] := by decide
 
-example : (Graph.edgeVerifier 1 decode (fun (_ : Unit) a b => a == b)).Accepts
+example : (Graph.edgeVerifier 1 decode (fun (_ : Unit) a b => a == b)).accepts
     ⟨2, [⟨0, 1, ()⟩]⟩ [false, true] [] = false := by decide
 
-example : (Graph.edgeVerifier 1 decode (fun (_ : Unit) a b => a == b)).Accepts
+example : (Graph.edgeVerifier 1 decode (fun (_ : Unit) a b => a == b)).accepts
     ⟨2, [⟨0, 1, ()⟩]⟩ [] [] = true := by decide
 
 example (proof : List Bool) :
     ((loop false).toGraph eval).unsatVal / 2 ≤
-      (((BitString.uniformList 0).map (fun random => check.Accepts
+      (((BitString.uniformList 0).map (fun random => check.accepts
         (loop false) proof random)) false).toReal :=
   Graph.unsatVal_div_two_le_rejectProb 1 decode eval (loop false) proof
 
@@ -177,6 +177,6 @@ example : ({true} : Set Bool) ∈ PCP (fun n => Nat.log 2 n + 1) (fun _ => 1) en
 
 /-- info: 27 -/
 #guard_msgs in
-#eval acceptCount (fun p => repeatCheck.Accepts p.1 [] p.2) mixed (repeatCheck.coins mixed)
+#eval acceptCount (fun p => repeatCheck.accepts p.1 [] p.2) mixed (repeatCheck.coins mixed)
 
 end ComplexityTests.PCPEncodedVerifier

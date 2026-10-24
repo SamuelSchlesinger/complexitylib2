@@ -22,11 +22,23 @@ private theorem xor_twoUniversal (seed : PMF Bool) : IsTwoUniversal seed xorHash
 example : IsTwoUniversal (PMF.pure false) xorHash := xor_twoUniversal _
 
 -- Choosing one of two coordinates is not injective; its collision bound can be tight.
-example : IsTwoUniversal (PMF.uniformOfFintype Bool)
-    (fun key (input : Bool × Bool) => if key then input.1 else input.2) := by
+private theorem coord_twoUniversal :
+    IsTwoUniversal (PMF.uniformOfFintype Bool)
+      (fun key (input : Bool × Bool) => if key then input.1 else input.2) := by
   rintro ⟨a, b⟩ ⟨c, d⟩ hne
   cases a <;> cases b <;> cases c <;> cases d <;>
     norm_num [Fintype.sum_bool, PMF.uniformOfFintype_apply] at *
+
+example : IsTwoUniversal (PMF.uniformOfFintype Bool)
+    (fun key (input : Bool × Bool) => if key then input.1 else input.2) :=
+  coord_twoUniversal
+
+open scoped BigOperators in
+example : (𝔼 key : Bool,
+    if (if key then (false, false).1 else (false, false).2) =
+        (if key then (true, false).1 else (true, false).2)
+      then (1 : ℝ) else 0) ≤ (Fintype.card Bool : ℝ)⁻¹ :=
+  coord_twoUniversal.expect_boole_le (by decide)
 
 example : (∑ key : Bool,
     if (if key then (false, false).1 else (false, false).2) =
@@ -73,5 +85,26 @@ example (side : PMF Bool) (source : Bool → PMF Bool) :
         (fun s => (PMF.uniformOfFintype Bool).map (s, ·))).map (info, ·))) ^ 2 ≤
       2 * ∑ info, (side info).toReal * collisionProbability (source info) := by
   simpa using (xor_twoUniversal (PMF.pure false)).leftover_hash_conditional_sq side source
+
+/--
+info: 'Cslib.Probability.IsDeltaUniversalHash.isTwoUniversal' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms IsDeltaUniversalHash.isTwoUniversal
+
+/--
+info: 'Cslib.Probability.isTwoUniversal_uniformOfFintype_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms isTwoUniversal_uniformOfFintype_iff
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.expect_boole_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms IsTwoUniversal.expect_boole_le
 
 end ComplexityTests.UniversalHash

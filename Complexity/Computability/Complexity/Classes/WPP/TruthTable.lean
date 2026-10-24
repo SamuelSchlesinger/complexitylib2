@@ -74,7 +74,7 @@ private theorem answerGap_mem {α : Type} {enc : α ↪ List Bool}
   have hp := GapP.prod_range_mem hs (hr.comp (.fst enc encBits))
   have hw : ComputableTidilyInPolyTime
       (fun x => if d x then (1 : ℤ) else 0) (encPair enc encBits) encIntBin := by fun_prop
-  exact GapP.sum_bits_mem (GapP.mul_mem (GapP.of_polyTime hw) hp) hr
+  exact GapP.sum_bits_mem (GapP.mul_mem (mem_GapP_of_polyTime hw) hp) hr
 
 private theorem answerGap_eq {α : Type} {A : Set (α × ℕ)} {g f : α × ℕ → ℤ}
     {r : α → ℕ} {d : α × List Bool → Bool}
@@ -128,7 +128,7 @@ theorem truthTable_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
   have hF (a) : (∏ i ∈ range (r a), f (a, i)) ≠ 0 :=
     prod_ne_zero_iff.mpr fun i _ => hn (a, i)
-  refine ⟨answerGap g f r d, answerGap_mem hg (GapP.of_polyTime hf) hr hd,
+  refine ⟨answerGap g f r d, answerGap_mem hg (mem_GapP_of_polyTime hf) hr hd,
     _, ComputableTidilyInPolyTime.intBin_prod_range hf hr, hF, ?_, ?_⟩
   · intro a
     rw [answerGap_eq hR hA]
@@ -155,7 +155,7 @@ theorem truthTable_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     apply ComputableTidilyInPolyTime.intBin_prod_range
       (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2)) <;> fun_prop
   have hp : ComputableTidilyInPolyTime (fun n => p.eval n + 1) encUnary encUnary := by fun_prop
-  apply mem_LWPP_of_indexed_targets (answerGap_mem hg (GapP.of_polyTime hF) hr hd)
+  apply mem_LWPP_of_indexed_targets (answerGap_mem hg (mem_GapP_of_polyTime hF) hr hd)
     hT.computableInPolyTime hp.computableInPolyTime
   · intro n k _
     exact prod_ne_zero_iff.mpr fun i _ => hn _

@@ -236,6 +236,7 @@ import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.KolmogorovCrypto
+import ComplexityTests.KolmogorovTimeBounded
 import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
 import ComplexityTests.ListBasicImports
@@ -341,6 +342,7 @@ import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PlainAutomationSupport
+import ComplexityTests.PlainLawfulBEq
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeBinaryWord
 import ComplexityTests.PolyTimeContracts

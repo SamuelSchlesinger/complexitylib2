@@ -241,29 +241,16 @@ theorem pi_sum_abs_sub_mean_ge_mul (p : ∀ i, PMF (α i)) (score : ∀ i, α i 
     ((pi p).toOuterMeasure {outcome | δ * ∑ i, ∑ a, (p i a).toReal * score i a ≤
       |∑ i, score i (outcome i) - ∑ i, ∑ a, (p i a).toReal * score i a|}).toReal ≤
         2 * Real.exp (-(δ ^ 2 * (∑ i, ∑ a, (p i a).toReal * score i a) / 3)) := by
-  set mean := ∑ i, ∑ a, (p i a).toReal * score i a with hmean_def
+  set mean := ∑ i, ∑ a, (p i a).toReal * score i a
   have hmean0 : 0 ≤ mean := mean_nonneg p score hscore
-  let upper : Set (∀ i, α i) := {outcome | (1 + δ) * mean ≤ ∑ i, score i (outcome i)}
-  let lower : Set (∀ i, α i) := {outcome | ∑ i, score i (outcome i) ≤ (1 - δ) * mean}
-  have hevent : {outcome : ∀ i, α i | δ * mean ≤ |∑ i, score i (outcome i) - mean|} =
-      upper ∪ lower := by
-    ext outcome
-    simp only [Set.mem_ofPred_eq, Set.mem_union, le_abs, upper, lower]
-    constructor <;> rintro (h | h)
-    · left; linarith
-    · right; linarith
-    · left; linarith
-    · right; linarith
-  rw [hevent]
-  have hunion := ENNReal.toReal_le_add
-    (measure_union_le (μ := (pi p).toOuterMeasure) upper lower)
-    (toOuterMeasure_ne_top _ _) (toOuterMeasure_ne_top _ _)
-  have hupper := pi_sum_ge_one_add_mul_of_le_one p score hscore le_rfl hδ hδ₁
-  have hlower := pi_sum_le_one_sub_mul p score hscore le_rfl hδ
+  have hunion := toOuterMeasure_abs_sub_ge_toReal_le (pi p)
+    (fun outcome => ∑ i, score i (outcome i)) mean (δ * mean)
+  simp only [show mean + δ * mean = (1 + δ) * mean by ring,
+    show mean - δ * mean = (1 - δ) * mean by ring] at hunion
   have hcmp : Real.exp (-(δ ^ 2 * mean / 2)) ≤ Real.exp (-(δ ^ 2 * mean / 3)) := by
     rw [Real.exp_le_exp, neg_le_neg_iff]
     exact div_le_div_of_nonneg_left (by positivity) (by norm_num) (by norm_num)
-  dsimp only [upper, lower] at hunion
-  linarith
+  linarith [pi_sum_ge_one_add_mul_of_le_one p score hscore le_rfl hδ hδ₁,
+    pi_sum_le_one_sub_mul p score hscore le_rfl hδ]
 
 end Cslib.Probability.PMF

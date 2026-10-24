@@ -94,7 +94,7 @@ example : (Graph.split ([0], []), Graph.splitVertex ([0], []) 0 0,
 /-! ### Hamiltonian cycles -/
 
 /-- A declared vertex without outgoing arcs rules out a directed Hamiltonian cycle. -/
-private theorem not_mem_DirHamCycle_of_sink {G : Graph} {v : ℕ} (hv : v ∈ G.1)
+private theorem notMem_DirHamCycle_of_sink {G : Graph} {v : ℕ} (hv : v ∈ G.1)
     (hsink : ∀ w, (v, w) ∉ G.2) : G ∉ DirHamCycle := by
   rintro ⟨p, -, hcov, -, hch⟩
   obtain ⟨A, B, rfl⟩ := List.append_of_mem ((hcov v).2 hv)
@@ -119,7 +119,7 @@ example : triangle.split ∈ HamCycle :=
 -- The directed path `0 → 1 → 2` has no Hamiltonian cycle, so neither has its split graph.
 example : path3.split ∉ HamCycle := by
   rw [Graph.split_mem_HamCycle_iff]
-  exact not_mem_DirHamCycle_of_sink (v := 2) (by decide) (by simp [path3])
+  exact notMem_DirHamCycle_of_sink (v := 2) (by decide) (by simp [path3])
 
 -- A directed 2-cycle: its split graph is a 6-cycle.
 example : Graph.split ([0, 1], [(0, 1), (1, 0)]) ∈ HamCycle :=
@@ -130,7 +130,7 @@ example : Graph.split ([0, 1], [(0, 1), (1, 0)]) ∈ HamCycle :=
 -- A single arc between two vertices gives a path, not a cycle.
 example : Graph.split ([0, 1], [(0, 1)]) ∉ HamCycle := by
   rw [Graph.split_mem_HamCycle_iff]
-  exact not_mem_DirHamCycle_of_sink (v := 1) (by decide) (by simp)
+  exact notMem_DirHamCycle_of_sink (v := 1) (by decide) (by simp)
 
 -- A single vertex is a directed Hamiltonian cycle exactly with a self-loop; the split graph is
 -- then a triangle, and otherwise a path on three vertices.
@@ -140,7 +140,7 @@ example : Graph.split ([0], [(0, 0)]) ∈ HamCycle :=
 
 example : Graph.split ([0], []) ∉ HamCycle := by
   rw [Graph.split_mem_HamCycle_iff]
-  exact not_mem_DirHamCycle_of_sink (v := 0) (by decide) (by simp)
+  exact notMem_DirHamCycle_of_sink (v := 0) (by decide) (by simp)
 
 -- The empty graph has no Hamiltonian cycle.
 example : Graph.split ([], []) ∉ HamCycle := by

@@ -78,7 +78,7 @@ def reg (t : Fin (d + 1)) (j : Fin d) : Fin (d + 1) := t + j.succ
 private theorem reg_ne (t : Fin (d + 1)) (j : Fin d) : reg t j ≠ t := by
   simp [reg, Fin.succ_ne_zero]
 
-theorem reg_injective (t : Fin (d + 1)) : Function.Injective (reg t) := by
+private theorem reg_injective (t : Fin (d + 1)) : Function.Injective (reg t) := by
   intro a b h
   simpa [reg] using h
 

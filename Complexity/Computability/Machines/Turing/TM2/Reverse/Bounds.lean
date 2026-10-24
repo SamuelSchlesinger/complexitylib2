@@ -23,14 +23,11 @@ The space estimates therefore apply independently of the source runtime.
 * `Turing.MultiTapeTM.ToTM2.reachable_stack_bound`: a bound on every target configuration.
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM.ToTM2
 
 noncomputable section
-
--- Mathlib's bundled configuration abbreviations are definitionally the concrete stack type.
-set_option backward.isDefEq.respectTransparency false
 
 variable {k : ℕ} {State : Type}
 
@@ -60,7 +57,7 @@ private theorem sum_stack (f : Stack k → ℕ) :
   simp [add_comm, add_assoc]
 
 /-- Stack storage at a source-step boundary, including the input and output. -/
-theorem totalStackLength_encode (d : Data k State) :
+private theorem totalStackLength_encode (d : Data k State) :
     totalStackLength (encode d) = d.input.left.length + d.input.right.length +
       (∑ i, ((d.work i).left.length + (d.work i).right.length)) + d.output.length := by
   rw [totalStackLength, sum_stack]
@@ -68,7 +65,7 @@ theorem totalStackLength_encode (d : Data k State) :
   omega
 
 /-- A native space bound controls every encoded source configuration. -/
-theorem totalStackLength_run_le (tm : MultiTapeTM k Bool State) {input output : List Bool}
+private theorem totalStackLength_run_le (tm : MultiTapeTM k Bool State) {input output : List Bool}
     {s : ℕ} (hc : tm.Computes input output) (hs : tm.RunsInSpace input s) (t : ℕ) :
     totalStackLength (encode (Data.run tm input t)) ≤ input.length + s + output.length := by
   rw [totalStackLength_encode]
@@ -78,7 +75,7 @@ theorem totalStackLength_run_le (tm : MultiTapeTM k Bool State) {input output : 
   omega
 
 /-- Auxiliary storage excludes the accumulated output. -/
-theorem auxiliaryLength_store (d : Data k State) :
+private theorem auxiliaryLength_store (d : Data k State) :
     auxiliaryLength (store d) = d.input.left.length + d.input.right.length +
       ∑ i, ((d.work i).left.length + (d.work i).right.length) := by
   have h := totalStackLength_encode d
@@ -86,7 +83,8 @@ theorem auxiliaryLength_store (d : Data k State) :
   simp only [encode, store, List.length_reverse, List.length_nil, Nat.add_zero] at h
   omega
 
-theorem auxiliaryLength_run_time_le (tm : MultiTapeTM k Bool State) (input : List Bool) (t : ℕ) :
+private theorem auxiliaryLength_run_time_le (tm : MultiTapeTM k Bool State)
+    (input : List Bool) (t : ℕ) :
     auxiliaryLength (store (Data.run tm input t)) ≤ input.length + k * (t + 1) := by
   rw [auxiliaryLength_store, Data.input_length_run]
   have hw := Data.sum_work_sides_run_add_eq_space tm input t
@@ -95,7 +93,7 @@ theorem auxiliaryLength_run_time_le (tm : MultiTapeTM k Bool State) (input : Lis
   omega
 
 /-- Once the source has halted, its raw output is the complete computed output. -/
-theorem output_run_of_halt (tm : MultiTapeTM k Bool State) {input output : List Bool}
+private theorem output_run_of_halt (tm : MultiTapeTM k Bool State) {input output : List Bool}
     (hc : tm.Computes input output) {t : ℕ} (ht : (Data.run tm input t).state = none) :
     (Data.run tm input t).output = output := by
   obtain ⟨u, hu, hout⟩ := hc
@@ -119,8 +117,17 @@ theorem reachable_stack_bound [Fintype State] (tm : MultiTapeTM k Bool State)
   · rw [iterate_encode tm input hu hi]
     exact totalStackLength_run_le tm hc hs i
   · have heq : i = (i - (u + 1)) + (u + 1) := by omega
-    rw [heq, Function.iterate_add_apply, Function.iterate_succ_apply',
-      iterate_encode tm input hu le_rfl, stepTotal_encode_halt tm _ hraw]
+    have hadd :
+        (TM2.stepTotal (machine tm.q₀ tm.tr).m)^[(i - (u + 1)) + (u + 1)]
+            (initList (machine tm.q₀ tm.tr) input) =
+          (TM2.stepTotal (machine tm.q₀ tm.tr).m)^[i - (u + 1)]
+            (TM2.stepTotal (machine tm.q₀ tm.tr).m
+              ((TM2.stepTotal (machine tm.q₀ tm.tr).m)^[u]
+                (initList (machine tm.q₀ tm.tr) input))) :=
+      (Function.iterate_add_apply _ (i - (u + 1)) (u + 1) _).trans
+        (congrArg (TM2.stepTotal (machine tm.q₀ tm.tr).m)^[i - (u + 1)]
+          (Function.iterate_succ_apply' _ u _))
+    rw [heq, hadd, iterate_encode tm input hu le_rfl, stepTotal_encode_halt tm _ hraw]
     exact (cleanup_stack_bound tm.q₀ tm.tr _ rfl _).trans (totalStackLength_run_le tm hc hs u)
 
 /-- A native computation is simulated with a linear clock, including clearing every auxiliary
@@ -141,7 +148,7 @@ def outputsInTime [Fintype State] (tm : MultiTapeTM k Bool State)
     ⟨some .clean, control d d.input.right.head? false, store d⟩
   have hstep : (machine tm.q₀ tm.tr).step (encode d) = some cfg := step_encode_halt tm d hd
   have hclean := cleanupEvals tm.q₀ tm.tr cfg rfl
-  have htail := evalsCons hstep hclean
+  have htail := StateTransition.EvalsToInTime.cons hstep hclean
   change StateTransition.EvalsToInTime (machine tm.q₀ tm.tr).step (encode d)
     (some (haltList (machine tm.q₀ tm.tr) (d.output.reverse.reverse ++ [])))
     (auxiliaryLength (store d) + d.output.reverse.length + 2 + 1) at htail
@@ -153,7 +160,7 @@ def outputsInTime [Fintype State] (tm : MultiTapeTM k Bool State)
   have hresult := StateTransition.EvalsToInTime.trans (machine tm.q₀ tm.tr).step
     u (auxiliaryLength (store d) + d.output.length + 3) _ _ _
     (prefixEvals tm input hu.2 le_rfl) htail'
-  refine evalsMono hresult ?_
+  refine hresult.mono ?_
   have ha := auxiliaryLength_run_time_le tm input u
   have hm : k * (u + 1) ≤ k * (t + 1) := Nat.mul_le_mul_left k (by omega)
   dsimp only [d] at *

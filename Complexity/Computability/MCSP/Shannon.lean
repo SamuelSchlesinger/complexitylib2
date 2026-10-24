@@ -33,15 +33,15 @@ and explicit arities:
 It also states the asymptotically sharp window, from cslib's Lupanov and Shannon bounds: for
 every `ε > 0` and all large `n`, every truth table is a yes-instance at threshold
 `(1 + ε) 2 ^ n / n` (`MCSP.eventually_mem`), and some truth table is a no-instance at threshold
-`2 ^ n / n` (`MCSP.eventually_exists_not_mem`).
+`2 ^ n / n` (`MCSP.eventually_exists_notMem`).
 
 Sizes count every AND, OR, NOT and constant gate.
 
 ## Main results
 
 * `Cslib.MCSP.mem_of_twelve_mul_le`, `Cslib.MCSP.ncard_setOf_mem_le`,
-  `Cslib.MCSP.exists_not_mem`: the explicit window.
-* `Cslib.MCSP.eventually_mem`, `Cslib.MCSP.eventually_exists_not_mem`: the sharp window.
+  `Cslib.MCSP.exists_notMem`: the explicit window.
+* `Cslib.MCSP.eventually_mem`, `Cslib.MCSP.eventually_exists_notMem`: the sharp window.
 
 ## References
 
@@ -230,7 +230,7 @@ theorem ncard_setOf_mem_le (hn : 16 ≤ n) :
 
 /-- For `n ≥ 16`, some truth table of a function on `n` inputs is a no-instance of MCSP at
 threshold `2 ^ n / (5 n)`. -/
-theorem exists_not_mem (hn : 16 ≤ n) : ∃ T : BitString (2 ^ n), ⟨n, T, 2 ^ n / (5 * n)⟩ ∉ MCSP := by
+theorem exists_notMem (hn : 16 ≤ n) : ∃ T : BitString (2 ^ n), ⟨n, T, 2 ^ n / (5 * n)⟩ ∉ MCSP := by
   by_contra! h
   have huniv : {T : BitString (2 ^ n) | ⟨n, T, 2 ^ n / (5 * n)⟩ ∈ MCSP} = Set.univ :=
     Set.eq_univ_of_forall h
@@ -253,7 +253,7 @@ theorem eventually_mem (ε : ℝ) (hε : 0 < ε) :
 
 /-- **Below the sharp window** [Shannon1949]. For all large `n`, some truth table of a function
 on `n` inputs is a no-instance of MCSP at threshold `2 ^ n / n`. -/
-theorem eventually_exists_not_mem :
+theorem eventually_exists_notMem :
     ∃ N : ℕ, ∀ n ≥ N, ∃ T : BitString (2 ^ n), ⟨n, T, 2 ^ n / n⟩ ∉ MCSP := by
   obtain ⟨N, hN⟩ := Shannon.lt_complexity
   refine ⟨N, fun n hn => ?_⟩

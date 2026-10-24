@@ -28,10 +28,7 @@ construction.
 ## Main results
 
 * `parameter_ge_eighty_one`: `81 ≤ M`.
-* `ceil_sqrt_max_le_two_sqrt`: `max (Nat.ceil (Real.sqrt M)) 16 ≤ 2 * Real.sqrt M` for `81 ≤ M`.
 * `parameter_epsilon_budget`: `max (Nat.ceil (Real.sqrt M)) 16 / M * 3 ^ (d + 1) ≤ 2`.
-* `parameter_epsilon_sqrt`:
-  `max (Nat.ceil (Real.sqrt M)) 16 / M ≤ 2 / Real.sqrt M ≤ 2 / 3 ^ (d + 1)`.
 
 ## References
 
@@ -54,7 +51,7 @@ theorem parameter_ge_eighty_one {d M : ℕ} (hd : 1 ≤ d) (hM : 9 ^ (d + 1) ≤
   exact le_trans (by norm_num) (hp.trans hM)
 
 /-- For `81 ≤ M`, `max (Nat.ceil (Real.sqrt M)) 16 ≤ 2 * Real.sqrt M` in `ℝ`. -/
-theorem ceil_sqrt_max_le_two_sqrt {M : ℕ} (hM : 81 ≤ M) :
+private theorem ceil_sqrt_max_le_two_sqrt {M : ℕ} (hM : 81 ≤ M) :
     (max (Nat.ceil (Real.sqrt (M : ℝ))) 16 : ℕ) ≤ 2 * Real.sqrt (M : ℝ) := by
   have hs : (9 : ℝ) ≤ Real.sqrt (M : ℝ) := by
     apply Real.le_sqrt_of_sq_le
@@ -87,24 +84,6 @@ theorem parameter_epsilon_budget {d M : ℕ} (hd : 1 ≤ d) (hM : 9 ^ (d + 1) �
     _ = 2 := by
       field_simp
       nlinarith [Real.sq_sqrt hpos.le]
-
-/-- If `1 ≤ d` and `9 ^ (d + 1) ≤ M`, then `max (Nat.ceil (Real.sqrt M)) 16 / M ≤ 2 / Real.sqrt M`
-and `2 / Real.sqrt M ≤ 2 / 3 ^ (d + 1)` in `ℝ`. -/
-theorem parameter_epsilon_sqrt {d M : ℕ} (hd : 1 ≤ d) (hM : 9 ^ (d + 1) ≤ M) :
-    ((max (Nat.ceil (Real.sqrt (M : ℝ))) 16 : ℕ) : ℝ) / M ≤
-      2 / Real.sqrt (M : ℝ) ∧
-      2 / Real.sqrt (M : ℝ) ≤ 2 / (3 : ℝ) ^ (d + 1) := by
-  have h81 := parameter_ge_eighty_one hd hM
-  have hpos : (0 : ℝ) < M := by exact_mod_cast (show 0 < M by omega)
-  have hspos := Real.sqrt_pos.mpr hpos
-  constructor
-  · calc
-      _ ≤ (2 * Real.sqrt (M : ℝ)) / M :=
-        div_le_div_of_nonneg_right (ceil_sqrt_max_le_two_sqrt h81) hpos.le
-      _ = 2 / Real.sqrt (M : ℝ) := by
-        field_simp
-        nlinarith [Real.sq_sqrt hpos.le]
-  · exact div_le_div_of_nonneg_left (by norm_num) (by positivity) (parameter_sqrt_lower hM)
 
 end Internal
 

@@ -56,8 +56,9 @@ other.
   vertices, and lift the walks from the image of a vertex.
 * `Cslib.RotationMap.mem_of_reachable`: a set closed under taking neighbors contains every vertex
   reachable from it.
-* `Cslib.RotationMap.preconnected_componentGraph`: the restriction to the vertices reachable from
-  a vertex is connected.
+* `Cslib.RotationMap.preconnected_componentGraph`, `Cslib.RotationMap.edgeCount_componentGraph`:
+  the restriction to the vertices reachable from a vertex is connected and preserves edge
+  multiplicities.
 
 ## References
 
@@ -231,6 +232,13 @@ theorem coe_neighbor_restrict (S : Set V) (hS : ∀ v ∈ S, ∀ i, G.neighbor v
     ((G.restrict S hS).neighbor v i : V) = G.neighbor v i :=
   rfl
 
+/-- A restriction of `G` has the same edge multiplicities as `G`. -/
+@[simp]
+theorem edgeCount_restrict [DecidableEq V] [Fintype D] (S : Set V)
+    (hS : ∀ v ∈ S, ∀ i, G.neighbor v i ∈ S) (v u : S) :
+    (G.restrict S hS).edgeCount v u = G.edgeCount v u := by
+  simp only [edgeCount, Subtype.ext_iff, coe_neighbor_restrict]
+
 end Restrict
 
 section Reachable
@@ -317,6 +325,13 @@ theorem componentHom_apply (s : V) (v : {v | G.toSimpleGraph.Reachable s v}) :
 /-- The connected component of a vertex is connected. -/
 theorem preconnected_componentGraph (s : V) : (G.componentGraph s).toSimpleGraph.Preconnected :=
   fun u v ↦ ((G.componentHom s).reachable_apply_iff Subtype.val_injective).1 (u.2.symm.trans v.2)
+
+/-- The connected component of `s` has the same edge multiplicities as `G`. -/
+@[simp]
+theorem edgeCount_componentGraph [DecidableEq V] [Fintype D] (s : V)
+    (v u : {v | G.toSimpleGraph.Reachable s v}) :
+    (G.componentGraph s).edgeCount v u = G.edgeCount v u :=
+  G.edgeCount_restrict _ _ v u
 
 end Reachable
 

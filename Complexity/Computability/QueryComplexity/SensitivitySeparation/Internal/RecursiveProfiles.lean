@@ -32,8 +32,6 @@ maximal number of single-bit flips of one input that change two distinct members
   `sideSensitivity F b`.
 * `jointSensitivity_le`: a uniform bound on the relevant joint sensitivities bounds
   `jointSensitivity F b`.
-* `jointSensitivityAt_le_left`: joint sensitivity is at most the sensitivity of the first predicate.
-* `jointSensitivity_one`: a family with a single member has joint profile `0`.
 
 ## References
 
@@ -139,22 +137,6 @@ theorem jointSensitivity_le {h : ℕ} {I : Type} [Fintype I]
   split_ifs with hx
   · exact hB q q' x hx.1 hx.2.1 hx.2.2
   · exact Nat.zero_le _
-
-/-- The joint sensitivity of `f` and `g` at `x` is at most `sensitivityAt f x`. -/
-theorem jointSensitivityAt_le_left {I : Type} [Fintype I]
-    (f g : (I → Bool) → Bool) (x : I → Bool) :
-    jointSensitivityAt f g x ≤ sensitivityAt f x := by
-  apply Finset.card_le_card
-  intro i hi
-  exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, (Finset.mem_filter.mp hi).2.1⟩
-
-/-- A family indexed by `Fin 1` has no two distinct indices, so its joint profile is `0`. -/
-theorem jointSensitivity_one {I : Type} [Fintype I]
-    (F : Fin 1 → (I → Bool) → Bool) (b : Bool) : jointSensitivity F b = 0 := by
-  apply Nat.eq_zero_of_le_zero
-  apply jointSensitivity_le
-  intro q q' x hqq _ _
-  exact False.elim (by omega)
 
 end Internal
 

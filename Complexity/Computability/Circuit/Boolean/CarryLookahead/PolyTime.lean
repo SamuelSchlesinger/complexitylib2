@@ -169,15 +169,6 @@ theorem computableInPolyTime_stepCode {α : Type} {enc : α ↪ List Bool}
     (computableInPolyTime_bundleCode (.of_tidy hn) (.of_tidy (const 1)) (.of_tidy (mapWith hp id'
       (range.comp hk))))).tidy
 
-private theorem code_wiring_id (k : ℕ) :
-    (Circuit.wiring signature (id : Fin k → Fin k)).code = ([], List.range k) := by
-  apply Prod.ext
-  · rfl
-  change List.ofFn (fun i : Fin k => i.val) = List.range k
-  apply List.ext_getElem (by simp)
-  intro i hi hj
-  simp
-
 /-- Generate any number of doubling rounds from unary width and round count. The native loop
 keeps the accumulated code and unary round counter, with polynomial intermediate encoded length. -/
 theorem computableInPolyTime_scan :
@@ -211,7 +202,7 @@ theorem computableInPolyTime_scan :
       (const (encMid := encUnary) 0).prod ((const (encMid := encList encGate) []).prod hr)
   have heq (k t : ℕ) : (next k)^[t] (init k) = (t, (scan k t).code) := by
     induction t with
-    | zero => simp [init, scan, code_wiring_id]
+    | zero => simp [init, scan]
     | succ t ih =>
       rw [Function.iterate_succ_apply' (f := next k), ih]
       simp only [next, stepCode_eq, compCode_code, scan]
@@ -397,7 +388,7 @@ private theorem computableTidilyInPolyTime_identityCode :
     ComputableTidilyInPolyTime
       (fun k => (Circuit.wiring signature (id : Fin k → Fin k)).code) encUnary encCode := by
   have h := (const (encMid := encList encGate) []).prod (unary_to_binary.map.comp range)
-  simpa only [code_wiring_id, Function.comp_def, List.map_id_fun', id_eq] using h
+  simpa only [Circuit.code_wiring_id, Function.comp_def, List.map_id_fun', id_eq] using h
 
 end CarryLookahead
 
@@ -436,12 +427,8 @@ theorem computableInPolyTime_carryLookaheadAdd :
       encUnary encCode := by
     have he (w : ℕ) : (Circuit.wiring signature (fun i : Fin w => i.castSucc)).code =
         ([], List.range w) := by
-      apply Prod.ext
-      · rfl
-      change List.ofFn (fun i : Fin w => i.val) = List.range w
-      apply List.ext_getElem (by simp)
-      intro i hi hj
-      simp
+      simpa using Circuit.code_wiring_eq_map (σ := signature)
+        (f := fun i : Fin w => i.castSucc) (g := id) fun _ => rfl
     have h := (const (encMid := encList encGate) []).prod (unary_to_binary.map.comp range)
     simpa only [he, Function.comp_def, List.map_id_fun', id_eq] using h
   have h := (computableInPolyTime_compCode (.of_tidy hn') (.of_tidy ho)

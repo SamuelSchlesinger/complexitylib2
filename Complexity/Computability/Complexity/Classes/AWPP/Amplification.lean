@@ -133,7 +133,7 @@ theorem majorityPolynomial_mem {α : Type} {enc : α ↪ List Bool} {g D : α �
       (fun x : α × List Bool => if r x.1 < ones x then (1 : ℕ) else 0)
       (encPair enc encBits) encNat := by fun_prop
   have hweight := GapP.mul_mem (GapP.mul_mem hg' hd')
-    (SharpP.natCast_mem_GapP (SharpP.of_polyTime htest))
+    (SharpP.natCast_mem_GapP (mem_SharpP_of_polyTime htest))
   have hsum := GapP.sum_bits_mem hweight
     (ComputableTidilyInPolyTime.unary_mul.comp ((ComputableTidilyInPolyTime.const 2).prod hr))
   convert hsum using 1

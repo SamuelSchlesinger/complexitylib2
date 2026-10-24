@@ -16,8 +16,7 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 Fixes the initial number `D` of predicate indices and records, for each level `n` of the tower
 (which has `D - n` indices left), the side and joint sensitivity profiles on each output side.
 Specializing the four recursive recurrences to a regular tournament with a good labeling yields the
-level-to-level recurrences of these profiles. The number of distinct lifted blocks at each level is
-also computed.
+level-to-level recurrences of these profiles.
 
 ## Main definitions
 
@@ -28,7 +27,6 @@ also computed.
 
 * `tower_four_recurrences`: the four linear recurrences relating the profiles at levels `n + 1` and
   `n`.
-* `towerBlocks_family_card`: at level `n` there are `k ^ n * Fintype.card K` distinct lifted blocks.
 
 ## References
 
@@ -108,21 +106,6 @@ theorem tower_four_recurrences {M r : ℕ} {I : Type} [Fintype I]
   have hcount : D - (n + 1) + 1 = D - n := by omega
   rw [hcount] at H
   exact H
-
-open scoped Classical in
-/-- If `0 < r` and the base blocks are nonempty and pairwise disjoint, then the lifted blocks at
-level `n` form exactly `k ^ n * Fintype.card K` distinct sets. -/
-theorem towerBlocks_family_card {k r : ℕ} {I K : Type} [Fintype K]
-    (blocks : K → Finset I) (hr : 0 < r) (hne : ∀ b, (blocks b).Nonempty)
-    (hd : Pairwise fun a b => Disjoint (blocks a) (blocks b)) (n : ℕ) :
-    (Finset.univ.image (towerBlocks (k := k) (r := r) blocks n)).card = k ^ n * Fintype.card K := by
-  have hinj : Function.Injective (towerBlocks (k := k) (r := r) blocks n) := by
-    intro a b hab
-    by_contra hneab
-    obtain ⟨i, hi⟩ := towerBlocks_nonempty blocks hr hne n a
-    exact Finset.disjoint_left.mp (towerBlocks_pairwise blocks hd n hneab) hi
-      (by simpa [← hab] using hi)
-  rw [Finset.card_image_of_injective _ hinj, Finset.card_univ, tower_block_index_card]
 
 end Internal
 

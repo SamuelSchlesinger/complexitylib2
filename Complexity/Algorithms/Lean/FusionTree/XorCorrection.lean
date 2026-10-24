@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.Lean.FusionTree.Correction
-public import Complexity.Foundations.Data.BitString.HighestDiff
+public import Complexity.Foundations.Data.Nat.Bitwise.HighestDiff
 import Batteries.Data.Nat.Bitwise.Lemmas
 
 /-!

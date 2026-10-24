@@ -22,7 +22,7 @@ def headTrue : Set (List Bool) := {w | w.headD false = true}
 
 theorem true_singleton_mem_headTrue : [true] ∈ headTrue := rfl
 
-theorem nil_not_mem_headTrue : [] ∉ headTrue := by simp [headTrue]
+theorem nil_notMem_headTrue : [] ∉ headTrue := by simp [headTrue]
 
 theorem headTrue_mem_P : headTrue ∈ P encBits :=
   ⟨fun w => w.headD false, .of_tidy (by fun_prop), fun _ => Iff.rfl⟩

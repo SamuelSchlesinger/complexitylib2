@@ -22,19 +22,13 @@ common sensitive coordinate at an input on which they take the same value.
 ## Main definitions
 
 * `ballPredicate`: the indicator of the union of radius-`R` Hamming balls around given centers.
-* `nearestDistance`: the Hamming distance from an input to the nearest center.
 
 ## Main results
 
-* `hammingDist_flip_eq_add_one`: flipping a coordinate where `x` agrees with `z` increases the
-  distance to `z` by exactly one.
-* `near_center_unique`: for centers more than `2 * (R + 1)` apart, at most one center lies within
-  distance `R + 1` of any input.
-* `ballPredicate_sensitivityAt_zero_le`: for such centers, the radius-`R` ball predicate has
-  sensitivity at most `R + 1` at every rejected input.
+* `ballPredicate_sensitivityAt_zero_le`: for centers more than `2 * (R + 1)` apart, the radius-`R`
+  ball predicate has sensitivity at most `R + 1` at every rejected input.
 * `ballPredicate_no_joint_zero`, `ballPredicate_no_joint_one`: for `R < S`, no one-bit flip
   changes both the radius-`R` and the radius-`S` predicates from a common value.
-* `ballPredicate_eq_nearestDistance`: the ball predicate is a threshold on `nearestDistance`.
 
 ## References
 
@@ -86,7 +80,7 @@ private theorem hammingDist_flip_le_add_one (x z : I → Bool) (i : I) :
 open scoped Classical in
 /-- If `x i = z i`, flipping coordinate `i` of `x` increases the Hamming distance to `z`
 by exactly one. -/
-theorem hammingDist_flip_eq_add_one (x z : I → Bool) (i : I) (hi : x i = z i) :
+private theorem hammingDist_flip_eq_add_one (x z : I → Bool) (i : I) (hi : x i = z i) :
     hammingDist (flip x {i}) z = hammingDist x z + 1 := by
   have h : (Finset.univ.filter fun j => flip x {i} j ≠ z j) =
       insert i (Finset.univ.filter fun j => x j ≠ z j) := by
@@ -138,7 +132,7 @@ private theorem ballPredicate_zero_flip [Fintype C] (centers : C → I → Bool)
 
 /-- If distinct centers are at Hamming distance greater than `2 * (R + 1)`, then any two
 centers within distance `R + 1` of the same input coincide. -/
-theorem near_center_unique (centers : C → I → Bool) (R : ℕ)
+private theorem near_center_unique (centers : C → I → Bool) (R : ℕ)
     (hsep : ∀ a b, a ≠ b → 2 * (R + 1) < hammingDist (centers a) (centers b))
     (x : I → Bool) {a b : C} (ha : hammingDist x (centers a) ≤ R + 1)
     (hb : hammingDist x (centers b) ≤ R + 1) : a = b := by
@@ -195,18 +189,6 @@ theorem ballPredicate_no_joint_one [Fintype C] (centers : C → I → Bool)
   have hd := hammingDist_flip_le_add_one x (centers c) i
   have ht := (ballPredicate_eq_true centers S (flip x {i})).2 ⟨c, by omega⟩
   simp_all
-
-/-- Minimum distance to the finite nonempty family of centers. -/
-def nearestDistance [Fintype C] [Nonempty C] (centers : C → I → Bool)
-    (x : I → Bool) : ℕ :=
-  Finset.univ.inf' Finset.univ_nonempty (fun c => hammingDist x (centers c))
-
-/-- For a nonempty family of centers, the radius-`R` ball predicate accepts `x` iff
-`nearestDistance centers x ≤ R`. -/
-theorem ballPredicate_eq_nearestDistance [Fintype C] [Nonempty C]
-    (centers : C → I → Bool) (R : ℕ) (x : I → Bool) :
-    ballPredicate centers R x = decide (nearestDistance centers x ≤ R) := by
-  simp [ballPredicate, nearestDistance, Finset.inf'_le_iff]
 
 end Internal
 

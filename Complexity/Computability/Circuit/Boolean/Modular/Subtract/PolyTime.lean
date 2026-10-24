@@ -47,20 +47,14 @@ private theorem notCode_eq {w : ℕ} (i : Fin w) :
 
 private theorem firstCode_eq (w : ℕ) :
     ([], List.range w) = (Circuit.wiring signature (Fin.castAdd w : Fin w → Fin (w + w))).code := by
-  apply Prod.ext
-  · rfl
-  · apply List.ext_getElem (by simp [Circuit.code, Circuit.wiring])
-    intro i hi hi'
-    simp [Circuit.code, Circuit.wiring]
+  simpa using (Circuit.code_wiring_eq_map (σ := signature)
+    (f := (Fin.castAdd w : Fin w → Fin (w + w))) (g := id) fun _ => rfl).symm
 
 private theorem outputCode_eq (w : ℕ) :
     ([], List.range w) =
       (Circuit.wiring signature (fun i : Fin w => i.castSucc)).code := by
-  apply Prod.ext
-  · rfl
-  · apply List.ext_getElem (by simp [Circuit.code, Circuit.wiring])
-    intro i hi hi'
-    simp [Circuit.code, Circuit.wiring]
+  simpa using (Circuit.code_wiring_eq_map (σ := signature)
+    (f := fun i : Fin w => i.castSucc) (g := id) fun _ => rfl).symm
 
 private def inputsCode (w : ℕ) : Code :=
   appendCode (w + w)

@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Projection
+public import Complexity.Foundations.Data.Nat.Bitwise.Projection
 import Batteries.Data.Nat.Bitwise.Lemmas
 
 /-!

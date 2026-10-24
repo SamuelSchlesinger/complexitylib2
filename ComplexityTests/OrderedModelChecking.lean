@@ -142,9 +142,9 @@ example : (9, [List.replicate 9 false]) ∉ queryLanguage vocabulary highBit := 
 
 /-- Well-shaped sizes zero and one are excluded by the ordered convention. -/
 example : (0, [ [] ]) ∉ queryLanguage vocabulary mixed :=
-  not_mem_queryLanguage_of_lt_two vocabulary (by decide) mixed
+  notMem_queryLanguage_of_lt_two vocabulary (by decide) mixed
 example : (1, [ [false] ]) ∉ queryLanguage vocabulary mixed :=
-  not_mem_queryLanguage_of_lt_two vocabulary (by decide) mixed
+  notMem_queryLanguage_of_lt_two vocabulary (by decide) mixed
 
 /-- Both a missing table and an incorrectly sized one are rejected. -/
 example : (3, []) ∉ queryLanguage vocabulary nested := fun h => absurd h.1 (by decide)

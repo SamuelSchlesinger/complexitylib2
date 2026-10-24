@@ -21,14 +21,8 @@ labeling of the regular cyclic tournament with `Nat.ceil (Real.sqrt M)` labels f
 
 ## Main results
 
-* `Tournament.goodLabeling_exists_of_power_bound`: a good labeling with `r` labels exists when
-  `0 < r`, `120 ≤ k * k` and `k ^ 16 < r ^ 104`.
-* `goodLabeling_exists`: every tournament on `2 * M ^ 2 + 1` vertices has a good labeling with `r`
-  labels when `3 ≤ M ≤ r ^ 2`.
 * `regular_goodLabeling_exists`: the regular cyclic tournament has a good labeling with
   `Nat.ceil (Real.sqrt M)` labels for `3 ≤ M`.
-* `GoodLabeling.good_on_subset`: the goodness property for target maps defined only on the
-  sixteen-element subset.
 
 ## References
 
@@ -63,7 +57,7 @@ private theorem labeled_edge_of_not_bad {n : ℕ} (A : (Fin k × Fin k) → Fin 
 
 /-- If `0 < r`, `120 ≤ k * k` and `k ^ 16 < r ^ 104`, then `T` admits a good labeling with `r`
 labels. -/
-theorem goodLabeling_exists_of_power_bound (hr : 0 < r) (hN : 120 ≤ k * k)
+private theorem goodLabeling_exists_of_power_bound (hr : 0 < r) (hN : 120 ≤ k * k)
     (hkr : k ^ 16 < r ^ 104) : Nonempty (GoodLabeling T r) := by
   have htotal : k ^ 16 * r ^ 16 * r ^ (k * k-120) < r ^ (k * k) := by
     calc
@@ -89,7 +83,7 @@ end Tournament
 
 /-- If `3 ≤ M` and `M ≤ r ^ 2`, then every tournament on `2 * M ^ 2 + 1` vertices admits a good
 labeling with `r` labels. -/
-theorem goodLabeling_exists {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r ^ 2)
+private theorem goodLabeling_exists {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r ^ 2)
     (T : Tournament (2 * M ^ 2 + 1)) : Nonempty (GoodLabeling T r) := by
   have hr : 0 < r := (Nat.pow_pos_iff.mp
     (lt_of_lt_of_le (show 0 < M by omega) hMr)).resolve_right (by omega)
@@ -103,21 +97,6 @@ theorem regular_goodLabeling_exists {M : ℕ} (hM : 3 ≤ M) :
       (Nat.ceil (Real.sqrt M))) :=
   goodLabeling_exists hM (le_ceil_sqrt_sq M) _
 
-namespace GoodLabeling
-
-/-- Goodness for targets defined on the subset: for every `I` with `I.card = 16` and every
-`m : I → Fin r` there is an edge `i → j` of `T` with `i, j ∈ I` and `A.label i j ≠ m ⟨j, hj⟩`. -/
-theorem good_on_subset {k r : ℕ} {T : Tournament k} (A : GoodLabeling T r)
-    (I : Finset (Fin k)) (hI : I.card = 16) (m : I → Fin r) :
-    ∃ i ∈ I, ∃ j, ∃ hj : j ∈ I,
-      T.Adj i j ∧ A.label i j ≠ m ⟨j,hj⟩ := by
-  obtain ⟨j,hj⟩ := Finset.card_pos.mp (show 0 < I.card by omega)
-  let m' : Fin k → Fin r := fun i => if hi : i ∈ I then m ⟨i,hi⟩ else m ⟨j,hj⟩
-  obtain ⟨a,ha,b,hb,hab,hne⟩ := A.good I hI m'
-  refine ⟨a,ha,b,hb,hab,?_⟩
-  simpa only [m', dite_eq_left hb] using hne
-
-end GoodLabeling
 end Internal
 
 end
