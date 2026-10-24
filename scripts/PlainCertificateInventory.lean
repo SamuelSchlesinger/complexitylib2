@@ -22,6 +22,10 @@ open Lean Meta Mathlib.Meta.FunProp
 
 namespace PlainCertificateInventory
 
+/-- Metadata/type-checking work is separate from the explicitly bounded tactic arms. -/
+def preprocessingContext (fileName : String) : Lean.Core.Context :=
+  { fileName, fileMap := default, options := Lean.maxHeartbeats.set {} 0, maxHeartbeats := 0 }
+
 def equivalences : Array (Name × Name × Name) := #[
   (`Turing.MultiTapeTM.ComputableTidilyInPolyTime, `Turing.MultiTapeTM.ComputableInPolyTime,
     `Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime),
@@ -137,7 +141,7 @@ def counterpartFits (name : Name) (type : Expr) (original : Option Name := none)
   let saved ← saveState
   try
     let proof ← mkConstWithFreshMVarLevels name
-    if ← isDefEq (← inferType proof) type then
+    if ← withReducible (isDefEq (← inferType proof) type) then
       checkWithKernel (← instantiateMVars proof)
       saved.restore
       return true
@@ -159,8 +163,9 @@ def counterpartFits (name : Name) (type : Expr) (original : Option Name := none)
       return ← isDefEq (← inferType proof) type
     saved.restore
     return success
-  catch _ =>
+  catch error =>
     saved.restore
+    if error.isMaxHeartbeat || error.isMaxRecDepth then throw error
     return false
 
 /-- Preserve every compatible counterpart, including duplicates and stronger existing targets. -/
@@ -205,8 +210,9 @@ def canonicalSubsumes (name : Name) (type : Expr) : MetaM Bool := do
       return ← isDefEq (← inferType proof) type
     saved.restore
     return success
-  catch _ =>
+  catch error =>
     saved.restore
+    if error.isMaxHeartbeat || error.isMaxRecDepth then throw error
     return false
 
 /-- The direct proof head, without guessing among arbitrary proof leaves. -/
@@ -358,36 +364,51 @@ def closure (reverse : Std.HashMap Name (List Name)) (seeds : Array Name) : Std.
 
 private def field (name : String) (value : String) : String × Json := (name, toJson value)
 
-/-- One search with fresh state; preprocessing and proof validation are outside its heartbeat cost. -/
-def search (env : Environment) (type : Expr) (budget : Nat) (forbidden : Std.HashSet Name := {}) : IO Json := do
+/-- Validate the resulting closed proof outside both the measured search clock and its cap. -/
+def validateSearchProof (type goal : Expr) (used : Nat) (forbidden : Std.HashSet Name) :
+    MetaM Json := do
+  let proof ← instantiateMVars goal
+  if proof.hasExprMVar then throwError "search left unresolved metavariables"
+  let leaked := (constants proof).filter forbidden.contains
+  unless leaked.isEmpty do throwError "held-out certificate leaked into proof: {leaked}"
+  checkWithKernel proof
+  unless ← isDefEq (← inferType proof) type do throwError "wrong search proof type"
+  return Json.mkObj [field "status" "success", ("heartbeats_raw", toJson used),
+    ("validation_max_heartbeats", toJson (← readThe Lean.Core.Context).maxHeartbeats),
+    ("proof_constants", toJson ((constants proof).map Name.toString))]
+
+/-- One search with fresh state. Only tactic execution runs in the capped context; validation
+retains the resulting meta/core state but runs in a separate uncapped context. -/
+def search (env : Environment) (type : Expr) (budget : Nat)
+    (forbidden : Std.HashSet Name := {}) : IO Json := do
   let opts := Lean.maxHeartbeats.set {} budget
-  let action : MetaM Json := do
+  let action : MetaM (Expr × Nat × Bool) := do
     let goal ← mkFreshExprMVar type
     let tacticCode ← `(tactic| fun_prop)
     let start ← IO.getNumHeartbeats
     let (goals, _) ← Lean.Elab.runTactic goal.mvarId! tacticCode
-    let used := (← IO.getNumHeartbeats) - start
-    unless goals.isEmpty do
-      return Json.mkObj [field "status" "failed", ("heartbeats_raw", toJson used)]
-    let proof ← instantiateMVars goal
-    if proof.hasExprMVar then throwError "search left unresolved metavariables"
-    let leaked := (constants proof).filter forbidden.contains
-    unless leaked.isEmpty do throwError "held-out certificate leaked into proof: {leaked}"
-    checkWithKernel proof
-    unless ← isDefEq (← inferType proof) type do throwError "wrong search proof type"
-    return Json.mkObj [field "status" "success", ("heartbeats_raw", toJson used),
-      ("proof_constants", toJson ((constants proof).map Name.toString))]
+    pure (goal, (← IO.getNumHeartbeats) - start, goals.isEmpty)
   let start ← IO.getNumHeartbeats
-  try
-    let context : Lean.Core.Context := {
-      fileName := "certificate-search"
-      fileMap := default
-      options := opts
-      maxHeartbeats := budget * 1000 }
-    Lean.Core.CoreM.toIO' (Lean.Meta.MetaM.run' action) context { env }
-  catch e =>
-    return Json.mkObj [field "status" "error", field "error" e.toString,
-      ("heartbeats_raw", toJson ((← IO.getNumHeartbeats) - start))]
+  let context : Lean.Core.Context := {
+    fileName := "certificate-search", fileMap := default,
+    options := opts, maxHeartbeats := budget * 1000 }
+  let attempt : Except String (((Expr × Nat × Bool) × Lean.Meta.State) × Lean.Core.State) ←
+    try pure (.ok (← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run action) context { env }))
+    catch error => pure (.error error.toString)
+  match attempt with
+  | .error message =>
+    return Json.mkObj [field "status" "error", field "error_stage" "search",
+      field "error" message, ("heartbeats_raw", toJson ((← IO.getNumHeartbeats) - start))]
+  | .ok (((goal, used, solved), metaState), coreState) =>
+    if !solved then
+      return Json.mkObj [field "status" "failed", ("heartbeats_raw", toJson used)]
+    try
+      Lean.Core.CoreM.toIO' (Lean.Meta.MetaM.run'
+        (validateSearchProof type goal used forbidden) {} metaState)
+        (preprocessingContext "certificate-validation") coreState
+    catch error =>
+      return Json.mkObj [field "status" "error", field "error_stage" "validation",
+        field "error" error.toString, ("heartbeats_raw", toJson used)]
 
 /-- Inspect a declaration without invoking its own proof as the benchmark. -/
 def describe (aliases : Std.HashSet Name) (index : CounterpartIndex)
@@ -399,12 +420,15 @@ def describe (aliases : Std.HashSet Name) (index : CounterpartIndex)
     catch _ => pure none
   let (ordinary, covered, lookupError) : Array Name × Array (Name × Name) × Option String ←
     if candidate.localPath.isSome || plain?.isNone then pure (#[], #[], none) else do
-      try
+      tryCatchRuntimeEx (do
         let plain := plain?.get!
         let ordinary ← findCounterparts index plain (some name)
         let covered ← coverageCounterparts coverage plain
-        pure (ordinary, covered, none)
-      catch error => pure (#[], #[], some (← error.toMessageData.toString))
+        pure (ordinary, covered, none)) (fun error => do
+          let message ← if error.isMaxHeartbeat then pure "counterpart lookup heartbeat exhaustion"
+            else if error.isMaxRecDepth then pure "counterpart lookup recursion exhaustion"
+            else error.toMessageData.toString
+          pure (#[], #[], some message))
   let counterparts := (Std.HashSet.ofArray (ordinary ++ covered.map (·.1))).toArray.qsort Name.lt
   let prop ← isProp type
   let env ← getEnv
@@ -475,12 +499,12 @@ unsafe def main (args : List String) : IO UInt32 := do
     unless moduleSet.contains env.header.moduleNames[idx.toNat]! do
       throw <| IO.userError s!"coverage example not in source inventory: {name}"
   let (boundary, _) ← Lean.Core.CoreM.toIO registrationBoundary
-    { fileName := "public-registration-boundary", fileMap := default } { env }
+    (preprocessingContext "public-registration-boundary") { env }
   let aliases := aliasNames env
   IO.eprintln s!"inventory: indexed {aliases.size} reducible tidy aliases"
   let normalize := expandAliases env aliases
   let (index, _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (counterpartIndex env moduleSet))
-    { fileName := "ordinary-counterparts", fileMap := default } { env }
+    (preprocessingContext "ordinary-counterparts") { env }
   let reverse := reverseDependencies env moduleSet
   IO.eprintln s!"inventory: indexed {reverse.size} reverse dependency targets"
   let mut candidates : Array Candidate := #[]
@@ -511,41 +535,52 @@ unsafe def main (args : List String) : IO UInt32 := do
   let mut count := 0
   for candidate in candidates do
     if limit != 0 && count >= limit then break
-    let ((type, info, counterparts), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe aliases index coverage candidate))
-      { fileName := "certificate-inventory", fileMap := default } { env }
-    let seeds := #[candidate.owner] ++ counterparts
-    let forbidden := closure reverse seeds
-    let heldout := exclude env forbidden
-    let mut fields := [("declaration", info), ("excluded_count", toJson forbidden.size)]
-    let prop := (info.getObjValAs? Bool "proposition").toOption.getD false
-    if !prop then
-      fields := fields ++ [field "status" "non_proposition"]
-    else
-      let tidy ← search heldout type budget forbidden
-      fields := fields ++ [("tidy_holdout", tidy)]
-      try
-        let (plain, _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (plainType (normalize type)))
-          { fileName := "certificate-transform", fileMap := default } { env }
-        let residual := tidyNames plain
-        if !residual.isEmpty then
-          fields := fields ++ [field "status" "unsupported_tidy", ("residual_tidy", toJson
-            (residual.map Name.toString))]
-        else
-          let plainResult ← search heldout plain budget forbidden
-          fields := fields ++ [field "status" "compared", ("plain_holdout", plainResult)]
-          if !counterparts.isEmpty then
-            fields := fields ++ [("tidy_registration", ← search env type budget),
-              ("plain_registration", ← search env plain budget),
-              field "registration_scope" "indexing/transport only; not holdout synthesis"]
-      catch e =>
-        let unsupported := (tidyNames (normalize type)).filter fun n =>
-          !equivalences.any (fun entry => entry.1 == n)
-        if !unsupported.isEmpty then
-          fields := fields ++ [field "status" "unsupported_tidy", ("residual_tidy", toJson
-            (unsupported.map Name.toString)), field "error" e.toString]
-        else
-          fields := fields ++ [field "status" "transform_error", field "error" e.toString]
-    handle.putStrLn (Json.mkObj fields).compress
+    let row ← try
+      let ((type, info, counterparts), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe aliases index coverage candidate))
+        (preprocessingContext "certificate-inventory") { env }
+      let seeds := #[candidate.owner] ++ counterparts
+      let forbidden := closure reverse seeds
+      let heldout := exclude env forbidden
+      let mut fields := [("declaration", info), ("excluded_count", toJson forbidden.size)]
+      let prop := (info.getObjValAs? Bool "proposition").toOption.getD false
+      if !prop then
+        fields := fields ++ [field "status" "non_proposition"]
+      else
+        let tidy ← search heldout type budget forbidden
+        fields := fields ++ [("tidy_holdout", tidy)]
+        try
+          let (plain, _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (plainType (normalize type)))
+            (preprocessingContext "certificate-transform") { env }
+          let residual := tidyNames plain
+          if !residual.isEmpty then
+            fields := fields ++ [field "status" "unsupported_tidy", ("residual_tidy", toJson
+              (residual.map Name.toString))]
+          else
+            let plainResult ← search heldout plain budget forbidden
+            fields := fields ++ [field "status" "compared", ("plain_holdout", plainResult)]
+            if !counterparts.isEmpty then
+              fields := fields ++ [("tidy_registration", ← search env type budget),
+                ("plain_registration", ← search env plain budget),
+                field "registration_scope" "indexing/transport only; not holdout synthesis"]
+        catch e =>
+          let unsupported := (tidyNames (normalize type)).filter fun n =>
+            !equivalences.any (fun entry => entry.1 == n)
+          if !unsupported.isEmpty then
+            fields := fields ++ [field "status" "unsupported_tidy", ("residual_tidy", toJson
+              (unsupported.map Name.toString)), field "error" e.toString]
+          else
+            fields := fields ++ [field "status" "transform_error", field "error" e.toString]
+      pure (Json.mkObj fields)
+    catch error =>
+      let module := env.getModuleIdxFor? candidate.owner |>.map fun idx =>
+        env.header.moduleNames[idx.toNat]!.toString
+      pure <| Json.mkObj [field "status" "preprocess_error", field "error" error.toString,
+        ("declaration", Json.mkObj [field "name" candidate.identity,
+          field "owner" candidate.owner.toString, ("local_path", toJson candidate.localPath),
+          ("module", toJson module), ("private", toJson (isPrivateName candidate.owner)),
+          ("proposition", Json.null), field "type" "", ("type_unavailable", toJson true),
+          ("counterparts", toJson (#[] : Array String))])]
+    handle.putStrLn row.compress
     handle.flush
     count := count + 1
   return 0

@@ -38,6 +38,13 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "counterpart lookup failed"):
             runner.validate_rows([{"inventory_total": 1, "limit": 0}, row])
 
+    def test_preprocessing_failure_is_accounted_without_a_search_claim(self):
+        row = record(status="preprocess_error", error="metadata failed")
+        summary = runner.validate_rows([{"inventory_total": 1, "limit": 0}, row])
+        self.assertTrue(summary["inventory_complete"])
+        self.assertEqual(summary["preprocess_errors"], 1)
+        self.assertEqual(summary["holdout_pairs"], {})
+
     def test_all_libraries_and_custom_srcdir(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -160,6 +167,20 @@ run_meta do
   unless (← resultHead boundHead) == Name.anonymous do
     throwError "bound proposition head must stay in a valid local context"
   let target := (← getConstInfo `ordinarySource).type
+  let heartbeatPropagated ← tryCatchRuntimeEx (do
+    let _ ← withTheReader Lean.Core.Context (fun ctx =>
+      {ctx with maxHeartbeats := 1, initHeartbeats := 0})
+      (counterpartFits `ordinaryWrong target)
+    pure false) (fun error => pure error.isMaxHeartbeat)
+  unless heartbeatPropagated do
+    throwError "lookup heartbeat exhaustion was silently treated as not-a-twin"
+  let recursionPropagated ← tryCatchRuntimeEx (do
+    let _ ← withTheReader Lean.Core.Context (fun ctx =>
+      {ctx with maxRecDepth := ctx.currRecDepth + 1})
+      (counterpartFits `ordinaryWrong target)
+    pure false) (fun error => pure error.isMaxRecDepth)
+  unless recursionPropagated do
+    throwError "lookup recursion exhaustion was silently treated as not-a-twin"
   let index : CounterpartIndex := ({} : CounterpartIndex).insert `OrdinaryProperty
     #[`ordinaryTwin, `ordinaryDuplicate, `ordinaryStronger, `ordinaryWrong]
   let counterparts ← findCounterparts index target
@@ -189,6 +210,14 @@ run_meta do
   unless (boundary.getObjValAs? String "status").toOption == some "boundary-not-met" do
     throwError "public tidy registrations were silently accepted"
   let type := mkApp (mkConst `TidyInventoryProperty) (mkConst `uniqueFunction)
+  let successful ← search (← getEnv) type 10
+  unless (successful.getObjValAs? String "status").toOption == some "success" &&
+      (successful.getObjValAs? Nat "validation_max_heartbeats").toOption == some 0 do
+    throwError "small-budget search did not validate outside its heartbeat cap: {successful}"
+  let rejected ← search (← getEnv) type 10 (.ofArray #[`isolated_source, `indirect_source])
+  unless (rejected.getObjValAs? String "error_stage").toOption == some "validation" do
+    throwError "proof-leak audit must remain enforced in separate validation: {rejected}"
+
   let leaf := Expr.letE `localRoutine type (mkConst `isolated_source) (mkConst `True.intro) true
   for depth in #[8, 16, 24] do
     let mut dag := leaf

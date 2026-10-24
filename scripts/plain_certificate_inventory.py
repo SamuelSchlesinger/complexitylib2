@@ -75,7 +75,8 @@ def annotate_sources(root: Path, sources: dict[str, Path], rows: list[dict]) -> 
             "source_declaration" if definition else "generated_helper")
         if definition:
             decl["source_path"], decl["source_definition"] = definition
-        decl["elaborated_type_sha256"] = hashlib.sha256(decl["type"].encode()).hexdigest()
+        decl["elaborated_type_sha256"] = (None if decl.get("type_unavailable") else
+                                             hashlib.sha256(decl["type"].encode()).hexdigest())
 
 
 def validate_rows(rows: list[dict]) -> dict:
@@ -98,8 +99,10 @@ def validate_rows(rows: list[dict]) -> dict:
             raise ValueError(f"counterpart lookup failed: {row['declaration']['name']}: "
                              f"{row['declaration']['counterpart_lookup_error']}")
         status = row["status"]
-        if status not in {"compared", "unsupported_tidy", "transform_error", "non_proposition"}:
+        if status not in {"compared", "unsupported_tidy", "transform_error", "non_proposition", "preprocess_error"}:
             raise ValueError(f"unknown status {status}")
+        if status == "preprocess_error" and not row.get("error"):
+            raise ValueError("preprocessing failure without an explicit error")
         statuses[status] += 1
         if "plain_registration" in row and "tidy_registration" in row:
             registration_pairs[(row["tidy_registration"]["status"],
@@ -118,7 +121,7 @@ def validate_rows(rows: list[dict]) -> dict:
         "inventory_total": header["inventory_total"], "records": len(records),
         "inventory_complete": len(records) == header["inventory_total"],
         "selected_total": selected, "selection_complete": len(records) == selected,
-        "statuses": dict(statuses),
+        "statuses": dict(statuses), "preprocess_errors": statuses["preprocess_error"],
         "registration_boundary": header.get("registration_boundary", {"status": "unknown"}),
         "holdout_pairs": {f"tidy:{a}/plain:{b}": n for (a, b), n in sorted(pairs.items())},
         "registration_probes": sum("plain_registration" in row for row in records),
