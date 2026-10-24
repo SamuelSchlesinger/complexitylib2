@@ -9,11 +9,16 @@ import Complexity.Computability.Probabilistic.QueryBounds
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-! Compositional strict oracle PPT: adaptive branches, stateful oracles, loops and boundaries. -/
 
 namespace ComplexityTests.OracleComposition
 
 open Cslib Cslib.Probability Turing Turing.MultiTapeTM
+
+-- Legacy probabilistic callback contracts retain clean witnesses inside these checked proofs.
+attribute [local fun_prop] ComputableInPolyTime.tidy
 
 /-! ### An adaptive branch with a stateful oracle -/
 
@@ -27,7 +32,15 @@ private noncomputable def adaptive (word : List Bool) : WordOracleComp Bool (Lis
 -- The certificate is found compositionally from the bounded-prefix query and the conditional.
 private theorem adaptive_isOraclePPTOn : IsOraclePPTOn encBits encBits adaptive := by
   unfold adaptive
-  fun_prop
+  apply IsOraclePPTOn.bind_with
+  · exact IsOraclePPTOn.query_take false ComputableInPolyTime.id'.tidy
+      (ComputableInPolyTime.const 1).tidy
+  · apply IsOraclePPTOn.ite
+    · exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
+    · exact IsOraclePPTOn.query_take true
+        (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+        (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+    · exact (ComputableInPolyTime.const []).tidy.isOraclePPTOn
 
 -- The same program has a clean realization, as every strict certificate does.
 example : IsTidyOraclePPTOn encBits encBits adaptive := adaptive_isOraclePPTOn.isTidyOraclePPTOn
@@ -73,12 +86,16 @@ private noncomputable def collectStep (bits : List Bool) : WordOracleComp Unit (
 example : IsOraclePPTOn encUnary encBits
     (fun n => OracleComp.iterate n collectStep []) := by
   refine IsOraclePPTOn.iterate_of_bounded_growth (count := fun n => n) (initial := fun _ => [])
-    ComputableTidilyInPolyTime.id' (.const []) (by unfold collectStep; fun_prop) (growth := 1) ?_
-  intro bits next hnext
-  obtain ⟨prefix_, hprefix, rfl⟩ := ProbOracleComp.mem_support_map hnext
-  obtain ⟨reply, _, rfl⟩ := ProbOracleComp.mem_support_map hprefix
-  simp only [encBits, Function.Embedding.coe_refl, id_eq, List.length_append]
-  exact Nat.add_le_add_left (List.length_take_le _ _) _
+    ComputableInPolyTime.id'.tidy (ComputableInPolyTime.const []).tidy ?_ (growth := 1) ?_
+  · unfold collectStep
+    exact (IsOraclePPTOn.query_take () ComputableInPolyTime.id'.tidy
+      (ComputableInPolyTime.const 1).tidy).map_with
+        (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+  · intro bits next hnext
+    obtain ⟨prefix_, hprefix, rfl⟩ := ProbOracleComp.mem_support_map hnext
+    obtain ⟨reply, _, rfl⟩ := ProbOracleComp.mem_support_map hprefix
+    simp only [encBits, Function.Embedding.coe_refl, id_eq, List.length_append]
+    exact Nat.add_le_add_left (List.length_take_le _ _) _
 
 /-! ### Failure boundaries -/
 
@@ -118,7 +135,8 @@ example : ¬ IsOraclePPTOn encUnary encBits (fun n => List.take 1 <$>
 -- A polynomial reply prefix is strict oracle PPT.
 example : IsOraclePPTOn encUnary encBits (fun n => List.take n <$>
     ProbOracleComp.query (spec := fun _ : Unit × List Bool => List Bool) ((), [])) := by
-  fun_prop
+  exact IsOraclePPTOn.query_take () (ComputableInPolyTime.const []).tidy
+    ComputableInPolyTime.id'.tidy
 
 -- Repeated doubling of retained state is not strict oracle PPT, even without any oracle call.
 example : ¬ IsOraclePPTOn (Operation := Unit) encUnary encBits
