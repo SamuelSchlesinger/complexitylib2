@@ -276,6 +276,58 @@ example : ComputableTidilyInPolyTime namedConditionalResult encBits encBits := b
     Lean.Elab.Tactic.evalTactic (← `(tactic|
       aesop (rule_sets := [-builtin, -default]) (add unsafe 100% tactic rawNamedOnly)))
 
+/-- A genuine plain eager premise starts its own nested certificate search. -/
+@[irreducible] def eagerLocalResult (word : List Bool) : List Bool := localImplicationResult word
+
+/-- The eager contract itself is plain and must remain registered. -/
+@[program_certificate h]
+theorem eagerLocal_plain (h : ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime eagerLocalResult encBits encBits := by
+  unfold eagerLocalResult
+  exact h
+
+example (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime eagerLocalResult encBits encBits := by
+  fail_if_success polytime
+  exact eagerLocal_plain (h rawOnlyReverseProbe_tidy)
+
+example (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime localImplicationResult encBits encBits)
+    (hf : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits) :
+    ComputableInPolyTime eagerLocalResult encBits encBits := by
+  fail_if_success (clear hf; polytime)
+  polytime
+
+-- Ordinary Aesop is not constrained by the scoped public-search policy.
+example (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  fail_if_success polytime
+  aesop (rule_sets := [PolyTime])
+
+-- A successful scoped search also restores the ordinary builtin descriptor.
+example (routine : List Bool → List Bool)
+    (hf : ComputableInPolyTime routine encBits encBits)
+    (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+      ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime routine encBits encBits ∧
+      ComputableInPolyTime localImplicationResult encBits encBits := by
+  constructor
+  · polytime
+  · aesop (rule_sets := [PolyTime])
+
+-- Catching an exception does not leave the copied builtin rule in the caller environment.
+example (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  run_tac do
+    try
+      Cslib.Tactic.PolyTime.Internal.withPlainRuleCache do
+        throwError "test scoped restoration"
+    catch _ => pure ()
+    Lean.Elab.Tactic.evalTactic (← `(tactic| aesop (rule_sets := [PolyTime])))
+
 -- An already supplied alias certificate is evidence, not a raw search request.
 example (routine : List Bool → List Bool) (h : RawAliasFull routine encBits encBits) :
     ComputableInPolyTime routine encBits encBits := by

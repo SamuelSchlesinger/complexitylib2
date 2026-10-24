@@ -357,6 +357,41 @@ private meta def plainGeneralTheorems (thms : GeneralTheorems) : MetaM GeneralTh
         values := node.values.filter fun rule => !blocked.contains rule.thmName
         pending := node.pending.filter fun entry => !blocked.contains entry.2.thmName } } }
 
+open Lean Meta in
+/-- Retain Aesop's local application alternatives and priority, excluding only rules which would
+start raw search from a plain goal. Adapted from `Aesop.BuiltinRules.applyHyps` (Jannis Limperg). -/
+meta def Internal.applyLocalCertificates : Aesop.RuleTac := fun input => input.goal.withContext do
+  let rawGoal ← try
+    pure ((← polytimePredicate (← input.goal.getType)) == ``ComputableTidilyInPolyTime)
+  catch _ => pure false
+  if rawGoal then return ← Aesop.BuiltinRules.applyHyps input
+  let mut applications := #[]
+  for decl in ← getLCtx do
+    if decl.isImplementationDetail || (← typeHasRawPremise decl.type) then continue
+    let saved ← saveState
+    try
+      applications := applications.push (← Aesop.BuiltinRules.applyHyp decl.fvarId input.goal
+        input.options.applyHypsTransparency)
+    catch _ => pure ()
+    finally saved.restore
+  return ⟨applications⟩
+
+open Lean Meta in
+/-- Project only the builtin local-application descriptor. Nested eager searches read this same
+scoped rule set; all rule identity, indexing, priority, simp and simproc data are retained. -/
+private meta def plainBuiltinEnvironment (env : Environment) : MetaM Environment := do
+  let (ext, _, _, _, _) ← Aesop.Frontend.getGlobalRuleSetData `builtin
+  let state := ext.getState env
+  let initial := (({} : Aesop.Index Aesop.UnsafeRuleInfo), ({} : Std.HashSet Aesop.RuleName))
+  let (index, matched) := state.unsafeRules.fold (init := initial) fun (index, matched) rule =>
+    let isTarget := rule.name.name == ``Aesop.BuiltinRules.applyHyps
+    let matched := if isTarget then matched.insert rule.name else matched
+    let rule := if isTarget then
+      { rule with tac := .ruleTac ``Internal.applyLocalCertificates } else rule
+    (index.add rule rule.indexingMode, matched)
+  unless matched.size == 1 do throwError "expected one builtin local-application rule"
+  return searchRuleState ext env fun state => { state with unsafeRules := index }
+
 open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
 /-- Classify global rules once for this tactic invocation. Aesop alternatives reuse these
 immutable answers; each backend still receives fresh rule tables and dynamic local evidence. -/
@@ -406,28 +441,10 @@ meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := d
     certificates.map fun key entries =>
       if key.1 == ``ComputableTidilyInPolyTime then entries
       else entries.filter fun (name, _) => !cache.getD name true
-  -- The cache and projected index are confined to this invocation.
+  let env ← plainBuiltinEnvironment env
+  -- The cache and projected rule sets are confined to this invocation.
   withEnv (rawPremiseCache.setState env { premises := cache, rawProperties := some rawProperties })
     action
-
-open Lean Meta in
-/-- Retain Aesop's local application alternatives and priority, excluding only rules which would
-start raw search from a plain goal. Adapted from `Aesop.BuiltinRules.applyHyps` (Jannis Limperg). -/
-meta def Internal.applyLocalCertificates : Aesop.RuleTac := fun input => input.goal.withContext do
-  let rawGoal ← try
-    pure ((← polytimePredicate (← input.goal.getType)) == ``ComputableTidilyInPolyTime)
-  catch _ => pure false
-  if rawGoal then return ← Aesop.BuiltinRules.applyHyps input
-  let mut applications := #[]
-  for decl in ← getLCtx do
-    if decl.isImplementationDetail || (← typeHasRawPremise decl.type) then continue
-    let saved ← saveState
-    try
-      applications := applications.push (← Aesop.BuiltinRules.applyHyp decl.fvarId input.goal
-        input.options.applyHypsTransparency)
-    catch _ => pure ()
-    finally saved.restore
-  return ⟨applications⟩
 
 open Lean Meta in
 /-- Apply an existing fact only when matching its conclusion determines every argument. -/
@@ -691,7 +708,6 @@ private meta def polytimeIterateAlternative : Lean.Elab.Tactic.TacticM Unit :=
 elab "polytime" : tactic => Internal.withPlainRuleCache do
   Lean.Elab.Tactic.evalTactic (← `(tactic| solve |
     aesop (config := { terminal := true, assumptionTransparency := .reducible })
-      (add unsafe 75% tactic Internal.applyLocalCertificates)
-      (erase Aesop.BuiltinRules.applyHyps) (rule_sets := [PolyTime])))
+      (rule_sets := [PolyTime])))
 
 end Cslib.Tactic.PolyTime
