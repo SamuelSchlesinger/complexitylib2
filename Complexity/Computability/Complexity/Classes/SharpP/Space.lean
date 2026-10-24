@@ -25,11 +25,17 @@ import Mathlib.Data.Nat.Size
 Enumerate certificates with a fixed-width binary counter and keep the number accepted in a
 binary accumulator. The exponentially many iterations reuse their workspace: a certificate of
 length `m` needs `m` cells and its acceptance count has at most `m + 1` bits. This is the usual
-polynomial-space simulation of counting [AroraBarak09]. The implementation generalizes the
-coin enumerator in `Cslib.Complexity.Interaction` to arbitrary polynomial-time verifiers.
+polynomial-space simulation of counting [AroraBarak09]. The interactive-proof simulation counts
+its accepting coins with the same counter (`Cslib.Complexity.Interaction.countAccepts`).
+
+## Main definitions
+
+* `Cslib.Complexity.acceptCountStep`: one round of the count: test, accumulate, advance the counter.
+* `Cslib.Complexity.streamAcceptCount`: the count obtained by running every value of the counter.
 
 ## Main results
 
+* `Cslib.Complexity.streamAcceptCount_eq_acceptCount`: the streaming count is `acceptCount`.
 * `Cslib.Complexity.computableTidilyInPolySpace_acceptCount`: count accepted certificates of a
   polynomial-time unary length, with binary output.
 * `Cslib.Complexity.SharpP.computableTidilyInPolySpace`: every #P function is computable within
@@ -50,27 +56,35 @@ open Cslib.BitString (increment lsbValue)
 
 variable {α : Type} {enc : α ↪ List Bool}
 
-private def countStep (V : α × List Bool → Bool) (s : α × List Bool × ℕ) :
-    α × List Bool × ℕ :=
+/-- One round of the streaming count of the certificates that `V` accepts: test the current
+certificate, add the verdict to the accumulator and advance the binary counter. -/
+def acceptCountStep (V : α × List Bool → Bool) (s : α × List Bool × ℕ) : α × List Bool × ℕ :=
   (s.1, increment s.2.1, s.2.2 + if V (s.1, s.2.1) then 1 else 0)
 
-private theorem iterate_countStep (V : α × List Bool → Bool) (a : α) (m j : ℕ) :
-    (countStep V)^[j] (a, List.replicate m false, 0) =
+/-- The number of certificates of length `t` that `V` accepts together with `a`, counted by running
+`acceptCountStep` over all `2 ^ t` values of a `t`-bit binary counter. It equals `acceptCount V a t`
+(`streamAcceptCount_eq_acceptCount`) and needs only the counter and the accumulator as workspace. -/
+def streamAcceptCount (V : α × List Bool → Bool) (a : α) (t : ℕ) : ℕ :=
+  ((acceptCountStep V)^[2 ^ t] (a, List.replicate t false, 0)).2.2
+
+private theorem iterate_acceptCountStep (V : α × List Bool → Bool) (a : α) (m j : ℕ) :
+    (acceptCountStep V)^[j] (a, List.replicate m false, 0) =
       (a, increment^[j] (List.replicate m false),
         ((Finset.range j).filter fun i => V (a, increment^[i] (List.replicate m false))).card) := by
   induction j with
   | zero => simp
   | succ j ih =>
     rw [Function.iterate_succ_apply', ih]
-    simp only [countStep, Function.iterate_succ_apply', Prod.mk.injEq, true_and]
+    simp only [acceptCountStep, Function.iterate_succ_apply', Prod.mk.injEq, true_and]
     rw [Finset.range_add_one, Finset.filter_insert]
     split_ifs with hacc
     · rw [Finset.card_insert_of_notMem (by simp)]
     · rfl
 
-private theorem countStep_eq_acceptCount (V : α × List Bool → Bool) (a : α) (t : ℕ) :
-    ((countStep V)^[2 ^ t] (a, List.replicate t false, 0)).2.2 = acceptCount V a t := by
-  rw [iterate_countStep, acceptCount]
+/-- The streaming count of accepted certificates is `acceptCount`. -/
+theorem streamAcceptCount_eq_acceptCount (V : α × List Bool → Bool) (a : α) (t : ℕ) :
+    streamAcceptCount V a t = acceptCount V a t := by
+  rw [streamAcceptCount, iterate_acceptCountStep, acceptCount]
   simp only
   refine Finset.card_bij'
     (fun i _ j => (increment^[i] (List.replicate t false)).getD j false)
@@ -130,9 +144,9 @@ theorem computableTidilyInPolySpace_acceptCount {V : α × List Bool → Bool} {
       (((ComputableTidilyInPolyTime.bitsReplicate false).comp hr).prod
         (ComputableTidilyInPolyTime.const 0))
   have hinc := ComputableTidilyInPolyTime.increment
-  have hstep : ComputableTidilyInPolyTime (countStep V)
+  have hstep : ComputableTidilyInPolyTime (acceptCountStep V)
       (encPair enc (encPair encBits encNat)) (encPair enc (encPair encBits encNat)) := by
-    unfold countStep
+    unfold acceptCountStep
     fun_prop
   have hlen := hr.polyBounded_length
   simp only [encUnary_apply, List.length_replicate] at hlen
@@ -142,8 +156,8 @@ theorem computableTidilyInPolySpace_acceptCount {V : α × List Bool → Bool} {
     (fun a j hj => ?_)
   · exact ((ComputableTidilyInPolySpace.of_polyTime
       ((ComputableTidilyInPolyTime.snd _ _).snd')).comp hit).congr
-        fun a => countStep_eq_acceptCount V a (r a)
-  · rw [iterate_countStep]
+        fun a => streamAcceptCount_eq_acceptCount V a (r a)
+  · rw [iterate_acceptCountStep]
     have hcard : ((Finset.range j).filter fun i =>
         V (a, increment^[i] (List.replicate (r a) false))).card ≤ 2 ^ r a :=
       (Finset.card_filter_le _ _).trans (by simpa using hj)
