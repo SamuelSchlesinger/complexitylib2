@@ -61,6 +61,13 @@ srcDir = "abstracts"
         self.assertFalse(summary["inventory_complete"])
         self.assertEqual(summary["inventory_total"], 5)
 
+    def test_explicit_delta_selection_is_not_full_coverage(self):
+        summary = runner.validate_rows([
+            {"inventory_total": 10, "selected_total": 2, "limit": 0}, record("a"), record("b")])
+        self.assertFalse(summary["inventory_complete"])
+        self.assertTrue(summary["selection_complete"])
+        self.assertEqual(summary["selected_total"], 2)
+
     def test_duplicates_cannot_fill_missing_rows(self):
         with self.assertRaisesRegex(ValueError, "duplicate"):
             runner.validate_rows([{"inventory_total": 2, "limit": 0}, record(), record()])
@@ -212,6 +219,14 @@ run_meta do
         assert any("localRoutine" in r["declaration"]["name"] for r in local)
         assert all(sum(r["declaration"]["type"].count(n) for n in
                        ("TidyInventoryProperty", "HiddenProperty")) >= 2 for r in local)
+        selection, selected = tmp / "selection.json", tmp / "selected.jsonl"
+        selection.write_text(json.dumps(["isolated_source"]))
+        subprocess.run([lean, "--run", str(root / runner.RUNNER), str(modules),
+                        str(selected), "20000", "0", str(selection)], cwd=root, env=env, check=True)
+        selected_rows = [json.loads(line) for line in selected.read_text().splitlines()]
+        selected_summary = runner.validate_rows(selected_rows)
+        assert selected_summary["selection_complete"] and not selected_summary["inventory_complete"]
+        assert len(selected_rows) == 2
         print("Native probes passed: contextual DAG memo, dense fan-in/closure, actual-module owners, four databases, private/local/alias capture")
 
 

@@ -88,6 +88,10 @@ structure Candidate where
   target : Expr
   localPath : Option String := none
 
+/-- Exact original identity, shared by full inventory and explicitly selected delta checks. -/
+def Candidate.identity (candidate : Candidate) : String :=
+  candidate.owner.toString ++ (candidate.localPath.map ("#" ++ ·)).getD ""
+
 /-- Contextual memo state is fresh for each owner declaration. Structural equality preserves
 binder names and annotations, unlike ordinary expression alpha-equivalence. -/
 structure LocalWalkState where
@@ -208,7 +212,7 @@ def describe (aliases : Std.HashSet Name) (candidate : Candidate) : MetaM (Expr 
   let prop ← isProp type
   let env ← getEnv
   let module := env.getModuleIdxFor? name |>.map fun i => env.header.moduleNames[i.toNat]!
-  let identity := name.toString ++ (candidate.localPath.map ("#" ++ ·)).getD ""
+  let identity := candidate.identity
   let row := [field "name" identity, field "owner" name.toString,
     ("local_path", toJson candidate.localPath), ("module", toJson (module.map Name.toString)), ("tidy_constants", toJson (heads.map Name.toString)),
     ("private", toJson (isPrivateName name)), ("proposition", toJson prop),
@@ -218,8 +222,22 @@ def describe (aliases : Std.HashSet Name) (candidate : Candidate) : MetaM (Expr 
 
 /-- Inventory all project declarations, not only attributes or hand-picked public examples. -/
 unsafe def main (args : List String) : IO UInt32 := do
-  let [moduleFile, outputFile, budgetText, limitText] := args
-    | throw <| IO.userError "expected MODULES OUTPUT HEARTBEAT_BUDGET LIMIT(0=all)"
+  let (moduleFile, outputFile, budgetText, limitText, selectionFile) ← match args with
+    | [a, b, c, d] => pure (a, b, c, d, none)
+    | [a, b, c, d, e] => pure (a, b, c, d, some e)
+    | _ => throw <| IO.userError "expected MODULES OUTPUT HEARTBEAT_BUDGET LIMIT [SELECTION_JSON]"
+  let selection ← match selectionFile with
+    | none => pure none
+    | some file => do
+      let parsed : Except String (Array String) :=
+        (Json.parse (← IO.FS.readFile file)).bind fromJson?
+      match parsed with
+      | .error message => throw <| IO.userError message
+      | .ok names =>
+        if names.isEmpty then throw <| IO.userError "empty explicit selection"
+        if (Std.HashSet.ofArray names).size != names.size then
+          throw <| IO.userError "duplicate explicit selection names"
+        pure (some names)
   let budget := budgetText.toNat?.getD 200000
   let limit := limitText.toNat?.getD 0
   initSearchPath (← findSysroot)
@@ -247,9 +265,17 @@ unsafe def main (args : List String) : IO UInt32 := do
       candidates := candidates ++ localCertificates normalize name value
   candidates := candidates.qsort fun a b =>
     Name.quickLt a.owner b.owner || (a.owner == b.owner && decide (a.localPath.getD "" < b.localPath.getD ""))
-  IO.eprintln s!"inventory: discovered {candidates.size} original/local/generated statements"
+  let inventoryTotal := candidates.size
+  if let some names := selection then
+    let known : Std.HashSet String := .ofArray (candidates.map Candidate.identity)
+    let missing := names.filter fun name => !known.contains name
+    unless missing.isEmpty do throw <| IO.userError s!"selected identities not found: {missing}"
+    let chosen : Std.HashSet String := .ofArray names
+    candidates := candidates.filter fun candidate => chosen.contains candidate.identity
+  IO.eprintln s!"inventory: discovered {inventoryTotal} statements; selecting {candidates.size}"
   let handle ← IO.FS.Handle.mk outputFile .write
-  handle.putStrLn (Json.mkObj [("inventory_total", toJson candidates.size),
+  handle.putStrLn (Json.mkObj [("inventory_total", toJson inventoryTotal),
+    ("selected_total", toJson candidates.size), ("selection", toJson selection),
     ("module_count", toJson mods.size), ("limit", toJson limit),
     ("heartbeat_budget", toJson budget),
     ("mirror_pairs", toJson (pairs.map fun (source, plain, module) =>

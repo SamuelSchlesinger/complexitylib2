@@ -84,7 +84,8 @@ def validate_rows(rows: list[dict]) -> dict:
     if not rows or "inventory_total" not in rows[0]:
         raise ValueError("missing inventory header")
     header, records = rows[0], rows[1:]
-    expected = min(header["inventory_total"], header["limit"] or header["inventory_total"])
+    selected = header.get("selected_total", header["inventory_total"])
+    expected = min(selected, header["limit"] or selected)
     if len(records) != expected:
         raise ValueError(f"truncated inventory: expected {expected}, got {len(records)}")
     names = [row["declaration"]["name"] for row in records]
@@ -92,11 +93,15 @@ def validate_rows(rows: list[dict]) -> dict:
         raise ValueError("duplicate certificate rows")
     statuses = Counter()
     pairs = Counter()
+    registration_pairs = Counter()
     for row in records:
         status = row["status"]
         if status not in {"compared", "unsupported_tidy", "transform_error", "non_proposition"}:
             raise ValueError(f"unknown status {status}")
         statuses[status] += 1
+        if "plain_registration" in row and "tidy_registration" in row:
+            registration_pairs[(row["tidy_registration"]["status"],
+                                row["plain_registration"]["status"])] += 1
         if status == "compared":
             for arm in ("tidy_holdout", "plain_holdout"):
                 attempt = row[arm]
@@ -110,9 +115,16 @@ def validate_rows(rows: list[dict]) -> dict:
     return {
         "inventory_total": header["inventory_total"], "records": len(records),
         "inventory_complete": len(records) == header["inventory_total"],
+        "selected_total": selected, "selection_complete": len(records) == selected,
         "statuses": dict(statuses),
         "holdout_pairs": {f"tidy:{a}/plain:{b}": n for (a, b), n in sorted(pairs.items())},
         "registration_probes": sum("plain_registration" in row for row in records),
+        "registration_pairs": {f"tidy:{a}/plain:{b}": n
+                               for (a, b), n in sorted(registration_pairs.items())},
+        "one_sided_holdouts": sum(n for (a, b), n in pairs.items()
+                                  if a == "success" and b != "success"),
+        "one_sided_registrations": sum(n for (a, b), n in registration_pairs.items()
+                                       if a == "success" and b != "success"),
         "holdout_pairs_by_role": {
             role: dict(Counter(
                 f"tidy:{r['tidy_holdout']['status']}/plain:{r['plain_holdout']['status']}"
@@ -131,11 +143,19 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--extra-import", action="append", default=[],
                         help="mirror sidecar module; built outputs must already be current")
+    parser.add_argument("--only-names", type=Path,
+                        help="JSON list of exact original identities for a disclosed delta check")
     parser.add_argument("--heartbeats", type=int, default=200000)
     parser.add_argument("--limit", type=int, default=0, help="debug subset; 0 inventories all")
     args = parser.parse_args()
     if args.limit < 0 or args.heartbeats <= 0:
         parser.error("limit must be nonnegative and heartbeat budget positive")
+    selection = None
+    if args.only_names:
+        selection = json.loads(args.only_names.read_text())
+        if (not isinstance(selection, list) or not selection or
+                not all(isinstance(n, str) for n in selection) or len(set(selection)) != len(selection)):
+            parser.error("--only-names must hold a nonempty JSON list of distinct identity strings")
     sources = discover_sources(ROOT)
     subprocess.run(["lake", "build", "--no-build", *LIBRARIES, CORE, *args.extra_import],
                    cwd=ROOT, check=True)
@@ -144,15 +164,19 @@ def main() -> int:
     for name in ("lean-toolchain", "lake-manifest.json", "lakefile.toml", RUNNER,
                  "scripts/plain_certificate_inventory.py"):
         identities[name] = digest(ROOT / name)
+    if args.only_names:
+        identities[str(args.only_names.resolve())] = digest(args.only_names)
     metadata = {
         "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                              text=True).strip(),
         "dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),
         "sources_sha256": identities, "extra_imports": args.extra_import,
+        "selection": selection,
         "pairing": "exact PlainMirror registry lookup; no inferred name rewrite",
         "scope": "all elaborated declarations and captured local certificates in the three libraries",
         "local_inventory_unit": "unique stored expression per owner/binder/source context; repeated DAG use is not a new certificate",
         "limitations": [
+            "Inventory/selection completion records coverage, never a claim of automation parity.",
             "Registered-rule probes test indexing/transport, not independent synthesis.",
             "A deliberately held-out isolated primitive need not be structurally synthesizable.",
             "Module import-all exposes private declarations; source-local attribute scopes are not replayed.",
@@ -162,12 +186,18 @@ def main() -> int:
     }
     raw_file = args.output.with_suffix(".attempts.jsonl")
     args.output.with_suffix(".metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+    raw_file.write_text("")  # Never relabel a previous run's rows after an early failure.
+    args.output.write_text(json.dumps({"metadata": metadata,
+        "summary": {"inventory_complete": False, "records": 0, "phase": "running"},
+        "errors": [], "header": {}, "records": []}, indent=2) + "\n")
     with tempfile.TemporaryDirectory(prefix="plain-certificate-inventory-") as td:
         module_file = Path(td) / "modules.txt"
         module_file.write_text("\n".join(sorted(set(sources) | set(args.extra_import))) + "\n")
-        process = subprocess.run(["lake", "env", "lean", "--run", RUNNER, str(module_file),
-                                  str(raw_file.resolve()), str(args.heartbeats), str(args.limit)],
-                                 cwd=ROOT, check=False)
+        command = ["lake", "env", "lean", "--run", RUNNER, str(module_file),
+                   str(raw_file.resolve()), str(args.heartbeats), str(args.limit)]
+        if args.only_names:
+            command.append(str(args.only_names.resolve()))
+        process = subprocess.run(command, cwd=ROOT, check=False)
     rows, errors = [], []
     for number, line in enumerate(raw_file.read_text().splitlines() if raw_file.exists() else [], 1):
         try:
