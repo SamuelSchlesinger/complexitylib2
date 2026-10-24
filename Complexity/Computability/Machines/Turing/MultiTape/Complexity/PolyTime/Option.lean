@@ -121,4 +121,10 @@ theorem optionGetDWithInput {α : Type}
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetDWithInput α β encA encB value
       fallback hvalue.tidy hfallback.tidy)
 
+/-- Construct an optional value while retaining the complete input encoding. -/
+@[fun_prop]
+theorem optionSome {α : Type} (enc : α ↪ List Bool) :
+    ComputableInPolyTime (some (α := α)) enc (encOption enc) :=
+  .of_tidy (ComputableTidilyInPolyTime.optionSome enc)
+
 end Turing.MultiTapeTM.ComputableInPolyTime
