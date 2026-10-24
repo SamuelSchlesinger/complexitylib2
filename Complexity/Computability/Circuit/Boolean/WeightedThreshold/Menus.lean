@@ -50,7 +50,7 @@ internal weights (`two_pow_lt_of_directionMenus_intWeight`, `two_pow_lt_of_direc
 * `Cslib.Circuits.Boolean.WeightedThreshold.MenuTable`,
   `Cslib.Circuits.Boolean.WeightedThreshold.trueMenuTable`,
   `Cslib.Circuits.Boolean.WeightedThreshold.menuHistory`: precomputed bias-menu threshold tables and
-  flattened block histories.
+  intermediate block histories.
 * `Cslib.Circuits.Boolean.WeightedThreshold.menuBlockDecomposition`: the `(d + g)`-block
   decomposition precomputing menu tables for a chosen subset of directions.
 

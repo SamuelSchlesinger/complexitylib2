@@ -24,8 +24,8 @@ pairs that a detector never produces.
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.Iteration.hitValue`: the state `K - index` steps after a checkpoint
-  payload.
+* `Cslib.Circuits.Boolean.Iteration.hitValue`: the state after `(BitVec.ofNat w K - index).toNat`
+  steps from a checkpoint payload (using the selector's out-of-range fallback above `K`).
 * `Cslib.Circuits.Boolean.Iteration.repeatedValue`: the prefix state at the time in `[lo, hi)`
   congruent to `T`.
 * `Cslib.Circuits.Boolean.Iteration.reconstruct`: the state determined by a pair of records.
@@ -143,8 +143,8 @@ private theorem synthesis_repeatedValue (s : Set (BooleanFunction n))
   apply (hidx.trans hsel).mono Set.Subset.rfl Set.Subset.rfl
   nlinarith [Nat.zero_le (K * n ^ 2), Nat.zero_le (K * n * w), Nat.zero_le (K * w ^ 2)]
 
-/-- Synthesizes `hitValue` by unfolding `K` steps of `c` from `payload` and selecting step
-`K - index`. -/
+/-- Synthesizes `hitValue` by unfolding `K` steps of `c` from `payload` and selecting the step at
+the unsigned value of `BitVec.ofNat w K - index x` (with the selector's out-of-range fallback). -/
 theorem synthesis_hitValue {a : ℕ} (s : Set (BooleanFunction a))
     (c : Circuit signature n n) (K : ℕ) (index : BitString a → BitVec w)
     (payload : BitString a → BitString n)
