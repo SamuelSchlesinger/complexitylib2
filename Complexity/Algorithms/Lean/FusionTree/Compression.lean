@@ -44,7 +44,7 @@ theorem approximateSketch_lt_iff_projectBits {r w : ℕ} (b m : Fin r → ℕ)
       projectBits (List.ofFn b) x < projectBits (List.ofFn b) y := by
   rw [approximateSketch_eq b m h hb hw, approximateSketch_eq b m h hb hw,
     projectBits_ofFn_eq_sum, projectBits_ofFn_eq_sum]
-  exact Cslib.BitString.sum_strictMono_lt_iff _ _ hs (fun _ _ hi => hi) _ _
+  exact Nat.sum_strictMono_lt_iff _ _ hs (fun _ _ hi => hi) _ _
 
 /-- Collision-free compression parameters exist for every nonempty set of distinct positions.
 The multiplier occupies at most `w + 2r⁴` bits, and every compressed word at most `2r⁴`.

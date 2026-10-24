@@ -21,9 +21,9 @@ natural-number arithmetic, independently of a machine word width or execution co
 
 ## Main results
 
-* `testBit_sum_two_pow`: the set bits of a sum of distinct powers of two.
-* `testBit_sum_injective`: injectively placed Boolean coefficients are recovered exactly.
-* `and_sum_two_pow`: masking by sparse positions is their Boolean-weighted sum.
+* `Nat.testBit_sum_two_pow`: the set bits of a sum of distinct powers of two.
+* `Nat.testBit_sum_injective`: injectively placed Boolean coefficients are recovered exactly.
+* `Nat.and_sum_two_pow`: masking by sparse positions is their Boolean-weighted sum.
 
 ## References
 
@@ -32,7 +32,7 @@ These extend Mathlib's finite-set/binary-digit correspondence.
 
 @[expose] public section
 
-namespace Cslib.BitString
+namespace Nat
 
 open Finset
 
@@ -111,4 +111,4 @@ theorem sum_strictMono_lt_iff {α : Type*} [Fintype α] [LinearOrder α]
     geomSum_lt_geomSum_iff_toColex_lt_toColex (by decide : 2 ≤ 2),
     Colex.toColex_image_lt_toColex_image hf, Colex.toColex_image_lt_toColex_image hg]
 
-end Cslib.BitString
+end Nat

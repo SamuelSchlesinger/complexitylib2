@@ -1564,6 +1564,7 @@ public import Complexity.Foundations.BooleanAnalysis.RelevantCoordinates
 public import Complexity.Foundations.BooleanAnalysis.SignApproximation
 public import Complexity.Foundations.BooleanAnalysis.Symmetrization
 public import Complexity.Foundations.Combinatorics.AffineDisperser
+public import Complexity.Foundations.Combinatorics.AffineDisperser.AffineSubspace
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Basic
 public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
@@ -1643,6 +1644,7 @@ public import Complexity.Foundations.Combinatorics.Sunflower.Pluck
 public import Complexity.Foundations.Control.Monad.IsMonadHom.StateT
 public import Complexity.Foundations.Control.Monad.Memoize
 public import Complexity.Foundations.Data.BiTape
+public import Complexity.Foundations.Data.BitString.Affine
 public import Complexity.Foundations.Data.BitString.AffineSubspace
 public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic

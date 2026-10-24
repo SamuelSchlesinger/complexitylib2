@@ -30,8 +30,6 @@ by significance. Prefix boundaries replace the low bits with fixed masks.
 
 ## Main results
 
-* `Nat.testBit_eq_false_of_width`: all bits at or above the word width vanish.
-* `Nat.shiftRight_le_shiftRight`: deleting a fixed number of low bits preserves weak order.
 * `highestDiff_spec`: distinct bounded words differ at their highest differing position.
 * `projectBits_lt`: a selected highest differing position preserves strict order.
 * `projectBits_ofFn_eq_sum`: the positional numeric value of a projection.
@@ -57,7 +55,7 @@ def highestDiff (w x y : ℕ) : ℕ :=
   (differingBits w x y).sup id
 
 /-- All bits at or above the word width of a bounded natural number vanish. -/
-theorem _root_.Nat.testBit_eq_false_of_width {w x i : ℕ} (hx : x < 2 ^ w) (hi : w ≤ i) :
+theorem _root_.Nat.testBit_eq_false_of_lt_two_pow {w x i : ℕ} (hx : x < 2 ^ w) (hi : w ≤ i) :
     x.testBit i = false :=
   Nat.testBit_eq_false_of_lt (hx.trans_le (Nat.pow_le_pow_right (by decide) hi))
 
@@ -71,8 +69,8 @@ private theorem differingBits_nonempty {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 
   by_cases hi : i < w
   · by_contra hbit
     exact h ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hi, hbit⟩⟩
-  · rw [Nat.testBit_eq_false_of_width hx (by omega),
-      Nat.testBit_eq_false_of_width hy (by omega)]
+  · rw [Nat.testBit_eq_false_of_lt_two_pow hx (by omega),
+      Nat.testBit_eq_false_of_lt_two_pow hy (by omega)]
 
 /-- The highest differing bit is below the word width and really differs. -/
 theorem highestDiff_mem {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
@@ -89,8 +87,8 @@ theorem testBit_eq_of_highestDiff_lt {w x y i : ℕ} (hx : x < 2 ^ w)
       Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hiw, hbit⟩
     have := Finset.le_sup (f := id) hmem
     exact (not_le_of_gt hi) this
-  · rw [Nat.testBit_eq_false_of_width hx (by omega),
-      Nat.testBit_eq_false_of_width hy (by omega)]
+  · rw [Nat.testBit_eq_false_of_lt_two_pow hx (by omega),
+      Nat.testBit_eq_false_of_lt_two_pow hy (by omega)]
 
 /-- Unequal bounded words differ at `highestDiff` and share all more significant bits. -/
 theorem highestDiff_spec {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
@@ -221,14 +219,14 @@ theorem _root_.Nat.shiftRight_le_shiftRight {x y : ℕ} (h : x ≤ y) (cut : ℕ
   simpa only [Nat.shiftRight_eq_div_pow] using Nat.div_le_div_right (c := 2 ^ cut) h
 
 /-- A prefix shared by the endpoints of an interval is shared by every word between them. -/
-theorem shiftRight_eq_of_between {x y z cut : ℕ} (hxy : x ≤ y) (hyz : y ≤ z)
+theorem _root_.Nat.shiftRight_eq_of_between {x y z cut : ℕ} (hxy : x ≤ y) (hyz : y ≤ z)
     (hprefix : x >>> cut = z >>> cut) : y >>> cut = x >>> cut := by
   have h₁ := Nat.shiftRight_le_shiftRight hxy cut
   have h₂ := Nat.shiftRight_le_shiftRight hyz cut
   omega
 
 /-- Equal prefixes imply agreement at all positions retained by the prefix. -/
-theorem testBit_eq_of_shiftRight_eq {x y cut : ℕ} (h : x >>> cut = y >>> cut)
+theorem _root_.Nat.testBit_eq_of_shiftRight_eq {x y cut : ℕ} (h : x >>> cut = y >>> cut)
     {b : ℕ} (hb : cut ≤ b) : x.testBit b = y.testBit b := by
   have hbit := congrArg (fun z : ℕ => z.testBit (b - cut)) h
   simpa only [Nat.testBit_shiftRight, Nat.add_sub_of_le hb] using hbit
@@ -305,7 +303,7 @@ theorem projectBits_le {positions : List ℕ} {x y : ℕ}
       first | omega | exact False.elim (Bool.noConfusion (hy.symm.trans (hb hx)))
 
 /-- Different prefixes compare in the same direction as the full words. -/
-theorem lt_iff_shiftRight_lt_of_ne {x y cut : ℕ} (hne : x >>> cut ≠ y >>> cut) :
+theorem _root_.Nat.lt_iff_shiftRight_lt_of_ne {x y cut : ℕ} (hne : x >>> cut ≠ y >>> cut) :
     x < y ↔ x >>> cut < y >>> cut := by
   constructor
   · intro h
@@ -323,7 +321,7 @@ theorem sketch_le_lowerBoundary {positions : Finset ℕ} {x q p : ℕ}
   rw [testBit_lowerBoundary]
   by_cases hpb : p < b
   · rw [ite_eq_left hpb]
-    exact (testBit_eq_of_shiftRight_eq hprefix (by omega)).symm.trans hb
+    exact (Nat.testBit_eq_of_shiftRight_eq hprefix (by omega)).symm.trans hb
   · rw [ite_eq_right hpb]
     have hbp : b < p := by
       by_contra h
@@ -343,7 +341,7 @@ theorem upperBoundary_le_sketch {positions : Finset ℕ} {x q p : ℕ}
   rw [testBit_upperBoundary] at hb
   by_cases hpb : p < b
   · rw [ite_eq_left hpb] at hb
-    exact (testBit_eq_of_shiftRight_eq hprefix (by omega)).trans hb
+    exact (Nat.testBit_eq_of_shiftRight_eq hprefix (by omega)).trans hb
   · rw [ite_eq_right hpb] at hb
     have heq : b = p := of_decide_eq_true hb
     subst b

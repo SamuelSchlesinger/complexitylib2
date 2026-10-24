@@ -8,9 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Data.BitString.AffineSubspace
+public import Complexity.Foundations.Data.BitString.Affine
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
-import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
 # Affine dispersers
@@ -21,14 +20,6 @@ nonconstant on the image of every injective affine map from `BitString d`
 Dispersers for dimension `d` are dispersers for every larger dimension
 (`Cslib.BitString.IsAffineDisperser.mono`), and no function is a disperser for dimension `0`
 (`Cslib.BitString.not_isAffineDisperser_zero`).
-
-Because the image of an injective affine map from `BitString d` is an affine subspace of
-`BitString n` of dimension `d` (`Cslib.BitString.IsAffine.finrank_direction_map_top`), any function
-nonconstant on every `d`-dimensional affine subspace is an affine disperser for dimension `d`
-(`Cslib.BitString.isAffineDisperser_of_forall_exists_ne`). This turns nonconstancy theorems stated
-with `AffineSubspace`, such as Ben-Sasson and Kopparty's, into affine dispersers. The converse,
-that every affine subspace of dimension `d` contains such an image, is not formalized here: Mathlib
-has no `Field Bool` instance, so a basis of the direction is not available over `Bool`.
 
 Affine dispersers exist for every dimension `d` with `n (d + 1) + 1 < 2 ^ d`
 (`Cslib.BitString.exists_isAffineDisperser`), for instance for `n = 100` and `d = 11`. There are at
@@ -49,8 +40,6 @@ fewer than the `2 ^ 2 ^ n` functions on `n` bits.
   `0`.
 * `Cslib.BitString.exists_isAffineDisperser`: affine dispersers exist for every dimension `d`
   with `n (d + 1) + 1 < 2 ^ d`.
-* `Cslib.BitString.isAffineDisperser_of_forall_exists_ne`: a function nonconstant on every affine
-  subspace of dimension `d` is an affine disperser for dimension `d`.
 
 ## References
 
@@ -62,7 +51,7 @@ fewer than the `2 ^ 2 ^ n` functions on `n` bits.
 
 namespace Cslib.BitString
 
-open Finset Module
+open Finset
 
 /-- `f` is an affine disperser for dimension `d`: it is nonconstant on the image of every
 injective affine map from `BitString d`. By `Cslib.BitString.IsAffine.finrank_direction_map_top`
@@ -144,19 +133,5 @@ theorem exists_isAffineDisperser {n d : ℕ} (h : n * (d + 1) + 1 < 2 ^ d) :
         _ = 2 ^ (n * (d + 1) + 1 + (2 ^ n - 2 ^ d)) := by rw [pow_add, pow_add, pow_one]; ring
         _ < 2 ^ 2 ^ n := Nat.pow_lt_pow_right (by norm_num) (by omega)
     omega
-
-/-- A function nonconstant on every affine subspace of `BitString n` of dimension `d` is an affine
-disperser for dimension `d`: the image of an injective affine map from `BitString d` is such a
-subspace. -/
-theorem isAffineDisperser_of_forall_exists_ne {n d : ℕ} {f : BitString n → Bool}
-    (h : ∀ A : AffineSubspace Bool (BitString n), finrank Bool A.direction = d →
-      ∃ x ∈ A, ∃ y ∈ A, f x ≠ f y) :
-    IsAffineDisperser f d := by
-  intro g hg hinj
-  obtain ⟨_, hx, _, hy, hne⟩ := h _
-    ((hg.finrank_direction_map_top hinj).trans (Module.finrank_fin_fun Bool))
-  obtain ⟨x, -, rfl⟩ := AffineSubspace.mem_map.1 hx
-  obtain ⟨y, -, rfl⟩ := AffineSubspace.mem_map.1 hy
-  exact ⟨x, y, hne⟩
 
 end Cslib.BitString

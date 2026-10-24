@@ -65,7 +65,8 @@ def mulColumn (x y j : ℕ) : ℕ := (mulColumnWord x y j).bitIndices.length
 
 /-- At most one row per input bit contributes to a column. -/
 theorem mulColumn_le {x w : ℕ} (hx : x < 2 ^ w) (y j : ℕ) : mulColumn x y j ≤ w := by
-  rw [mulColumn, ← sum_testBit_eq_length_bitIndices (lt_of_le_of_lt (mulColumnWord_le _ _ _) hx)]
+  rw [mulColumn, ← Nat.sum_testBit_eq_length_bitIndices
+    (lt_of_le_of_lt (mulColumnWord_le _ _ _) hx)]
   calc
     (∑ i ∈ range w, ((mulColumnWord x y j).testBit i).toNat) ≤ ∑ _i ∈ range w, 1 := by
       apply sum_le_sum

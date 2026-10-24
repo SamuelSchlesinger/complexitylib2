@@ -59,7 +59,7 @@ theorem guardMask_testBit (b n k : ℕ) :
     intro i j he
     exact Nat.mul_left_cancel (by omega) (Nat.add_left_cancel he)
   simpa only [guardMask_eq_sum, Bool.toNat_true, one_mul, true_and] using
-    testBit_sum_injective (Finset.range n) (fun i => b + (b + 1) * i)
+    Nat.testBit_sum_injective (Finset.range n) (fun i => b + (b + 1) * i)
       (fun _ _ _ _ he => hf he) (fun _ => true) k
 
 /-- Move each comparison's guard to the lowest bit of its radix field. -/
@@ -79,7 +79,7 @@ theorem guardFlags_eq {b n q : ℕ} (s : ℕ → ℕ)
   apply Bool.eq_iff_iff.mpr
   simp only [guardFlags, Nat.testBit_shiftRight, Nat.testBit_land, Bool.and_eq_true,
     guardMask_testBit, packRadix, ← pow_mul]
-  rw [testBit_sum_injective _ _ (fun _ _ _ _ he => hf he)]
+  rw [Nat.testBit_sum_injective _ _ (fun _ _ _ _ he => hf he)]
   constructor
   · rintro ⟨hd, i, hi, he⟩
     refine ⟨i, hi, ?_, Nat.add_left_cancel he⟩
