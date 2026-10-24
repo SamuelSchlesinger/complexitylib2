@@ -28,12 +28,12 @@ a certified unary size function.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_log_two`: compute the logarithm of a
+* `Turing.MultiTapeTM.ComputableInPolyTime.binary_log_two`: compute the logarithm of a
   binary natural, returning its unary value.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_log_two`: the unary-input version.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_log_const`, `.unary_clog_const`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_log_two`: the unary-input version.
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_log_const`, `.unary_clog_const`:
   floor and ceiling logarithms in any fixed base on unary counters.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow_clog_const`: a fixed factor raised to
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_pow_clog_const`: a fixed factor raised to
   a fixed-base ceiling logarithm, with unary output and complete intermediate-size bounds.
 
 ## References
@@ -43,11 +43,11 @@ a certified unary size function.
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- The base-two logarithm is polynomial-time on binary naturals, with its result in unary. -/
 @[fun_prop]
-theorem binary_log_two : ComputableTidilyInPolyTime (Nat.log 2) encNat encUnary := by
+theorem binary_log_two : ComputableInPolyTime (Nat.log 2) encNat encUnary := by
   have heq (n : ℕ) : (encNat n).length - 1 = Nat.log 2 n := by
     rw [encNat_apply, Nat.size_eq_bits_len]
     rcases n.eq_zero_or_pos with rfl | hn
@@ -62,20 +62,20 @@ theorem binary_log_two : ComputableTidilyInPolyTime (Nat.log 2) encNat encUnary 
 
 /-- The base-two logarithm is polynomial-time with both input and output in unary. -/
 @[fun_prop]
-theorem unary_log_two : ComputableTidilyInPolyTime (Nat.log 2) encUnary encUnary :=
+theorem unary_log_two : ComputableInPolyTime (Nat.log 2) encUnary encUnary :=
   binary_log_two.comp unary_to_binary
 
 /-- Fixed-base logarithms are polynomial-time on unary counters, including bases zero and one.
 The division loop maintains the logarithm identity and a linear bound on its complete state. -/
 @[fun_prop]
 theorem unary_log_const (base : ℕ) :
-    ComputableTidilyInPolyTime (Nat.log base) encUnary encUnary := by
+    ComputableInPolyTime (Nat.log base) encUnary encUnary := by
   rcases le_or_gt base 1 with hb | hb
-  · convert (const (encIn := encUnary) (encMid := encUnary) 0) using 1
+  · convert (const (encIn := encUnary) (encOut := encUnary) 0) using 1
     exact funext (Nat.log_of_left_le_one hb)
   let step (state : ℕ × ℕ) :=
     if base ≤ state.1 then (state.1 / base, state.2 + 1) else state
-  have hstep : ComputableTidilyInPolyTime step (encPair encUnary encUnary)
+  have hstep : ComputableInPolyTime step (encPair encUnary encUnary)
       (encPair encUnary encUnary) := by unfold step; fun_prop
   obtain ⟨hefficient, hspec⟩ := iterate_spec (count := id) (init := fun n => (n, 0))
     (encIn := encUnary) id' (by fun_prop) hstep
@@ -106,9 +106,9 @@ theorem unary_log_const (base : ℕ) :
 /-- Ceiling logarithms in any fixed base are polynomial-time on unary counters. -/
 @[fun_prop]
 theorem unary_clog_const (base : ℕ) :
-    ComputableTidilyInPolyTime (Nat.clog base) encUnary encUnary := by
+    ComputableInPolyTime (Nat.clog base) encUnary encUnary := by
   rcases le_or_gt base 1 with hb | hb
-  · convert (const (encIn := encUnary) (encMid := encUnary) 0) using 1
+  · convert (const (encIn := encUnary) (encOut := encUnary) 0) using 1
     exact funext (Nat.clog_of_left_le_one hb)
   have heq (n : ℕ) : Nat.clog base n =
       if n ≤ 1 then 0 else Nat.log base (n - 1) + 1 := by
@@ -123,7 +123,7 @@ theorem unary_clog_const (base : ℕ) :
       · apply Nat.succ_le_of_lt
         rw [Nat.lt_clog_iff_pow_lt hb]
         exact (Nat.pow_log_le_self base (by lia : n - 1 ≠ 0)).trans_lt (by lia)
-  convert (show ComputableTidilyInPolyTime
+  convert (show ComputableInPolyTime
     (fun n : ℕ => if n ≤ 1 then 0 else Nat.log base (n - 1) + 1) encUnary encUnary
       from by fun_prop) using 1
   exact funext heq
@@ -133,13 +133,13 @@ logarithm has a polynomial-time unary output in the caller's original encoding. 
 every intermediate power, including the initial one when the factor is zero. -/
 @[fun_prop]
 theorem unary_pow_clog_const {α : Type} {input : α ↪ List Bool} {size : α → ℕ}
-    (hsize : ComputableTidilyInPolyTime size input encUnary) (factor base : ℕ) :
-    ComputableTidilyInPolyTime (fun x => factor ^ Nat.clog base (size x)) input encUnary := by
-  suffices ComputableTidilyInPolyTime (fun n : ℕ => factor ^ Nat.clog base n)
+    (hsize : ComputableInPolyTime size input encUnary) (factor base : ℕ) :
+    ComputableInPolyTime (fun x => factor ^ Nat.clog base (size x)) input encUnary := by
+  suffices ComputableInPolyTime (fun n : ℕ => factor ^ Nat.clog base n)
       encUnary encUnary from this.comp hsize
   rcases le_or_gt base 1 with hb | hb
   · simpa only [Nat.clog_of_left_le_one hb, pow_zero] using
-      (const (encIn := encUnary) (encMid := encUnary) 1)
+      (const (encIn := encUnary) (encOut := encUnary) 1)
   obtain ⟨hefficient, hspec⟩ := iterate_spec (count := Nat.clog base) (init := fun _ => 1)
     (step := fun state => state * factor) (encIn := encUnary) (encState := encUnary)
     (unary_clog_const base) (by fun_prop) (by fun_prop)
@@ -155,4 +155,4 @@ theorem unary_pow_clog_const {α : Type} {input : α ↪ List Bool} {size : α �
         _ ≤ _ := Nat.pow_clog_le_pow_clog_mul_pow_clog hb _ (Nat.succ_ne_zero n))
   simpa only [hspec] using hefficient
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime
