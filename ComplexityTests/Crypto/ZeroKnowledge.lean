@@ -29,11 +29,10 @@ example (r : List Bool) (b : Bool) :
   naorVerify_naorCommit r b (by decide)
 
 -- Concrete soundness check for Naor's statistical binding bound.
--- (We do not attempt an unconditional `BitCommitmentScheme` instance: standard statistically
--- binding, computationally hiding commitments imply one-way functions, whose existence is open,
--- although this has not been shown for the weaker hiding notion of `BitCommitmentScheme`. Instead
--- we test `naorVerify` and `naorBindingProb` unconditionally and instantiate `naorBitCommitment`
--- from a PRG / OWF below.)
+-- (We do not attempt an unconditional `BitCommitmentScheme` instance: statistically binding,
+-- computationally hiding commitments against stateful PPT receivers imply one-way functions,
+-- whose existence is open. Instead we test `naorVerify` and `naorBindingProb` unconditionally
+-- and instantiate `naorBitCommitment` from a PRG / OWF below.)
 example (n : ℕ) :
     naorBindingProb tripleGen (fun k => 3 * k + 1) n ≤ (1 / 2 : ENNReal) ^ (n + 1) :=
   naorBindingProb_le_of_three_mul_add_one length_tripleGen n le_rfl
