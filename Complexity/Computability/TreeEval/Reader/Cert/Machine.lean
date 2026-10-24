@@ -24,7 +24,8 @@ simulating it has a resource certificate.
 
 ## Main results
 
-* `Cslib.TreeEval.Reader.machine_resourceCertificate`: the step machine simulating the read machine has a resource certificate.
+* `Cslib.TreeEval.Reader.machine_resourceCertificate`: the step machine simulating the read
+  machine has a resource certificate.
 
 ## References
 

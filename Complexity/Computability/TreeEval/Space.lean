@@ -19,8 +19,8 @@ is the length of the encoded instance. On nontrivial instances (`1 ≤ ℓ` and 
 and `2 ^ H` are at most `n`, so `ℓ, H < |n|` and `|ℓ| ≤ ||n||` (writing `|m|` for the binary length
 of `m`), which yields the headline input-size space bound `O(|n| · ||n||) = O(log n · log log n)`.
 
-The step machine simulating the read machine `Cslib.TreeEval.Reader.machine` has a resource certificate, its run on an
-instance halts with the value of the tree, and its states along the run, which follow the states
+The step machine simulating the read machine `Cslib.TreeEval.Reader.machine` has a resource certificate. Its run on
+an instance halts with the value of the tree, and its states along the run, which follow the states
 of the read machine together with the position of the head, stay within the space bound.
 
 ## Main definitions

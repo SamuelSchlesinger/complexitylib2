@@ -65,24 +65,24 @@ private theorem powMod_eq (a e m : ℕ) :
   rw [foldl_step, Cslib.BitString.binaryValue_reverse_bits]
 
 /-- Modular exponentiation with the modulus `m + 1`, which is positive. -/
-private theorem computableTidilyInPolyTime_powMod_succ :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ × ℕ => p.1 ^ p.2.1 % (p.2.2 + 1))
+private theorem computableInPolyTime_powMod_succ :
+    ComputableInPolyTime (fun p : ℕ × ℕ × ℕ => p.1 ^ p.2.1 % (p.2.2 + 1))
       (encPair encNat (encPair encNat encNat)) encNat := by
-  have hpar : ComputableTidilyInPolyTime (fun p : ℕ × ℕ × ℕ => (p.1, p.2.2 + 1))
+  have hpar : ComputableInPolyTime (fun p : ℕ × ℕ × ℕ => (p.1, p.2.2 + 1))
       (encPair encNat (encPair encNat encNat)) (encPair encNat encNat) := by
     fun_prop
-  have hlist : ComputableTidilyInPolyTime (fun p : ℕ × ℕ × ℕ => p.2.1.bits.reverse)
+  have hlist : ComputableInPolyTime (fun p : ℕ × ℕ × ℕ => p.2.1.bits.reverse)
       (encPair encNat (encPair encNat encNat)) encBits := by
     fun_prop
-  have hinit : ComputableTidilyInPolyTime (fun p : ℕ × ℕ × ℕ => 1 % (p.2.2 + 1))
+  have hinit : ComputableInPolyTime (fun p : ℕ × ℕ × ℕ => 1 % (p.2.2 + 1))
       (encPair encNat (encPair encNat encNat)) encNat := by
     fun_prop
-  have hstep : ComputableTidilyInPolyTime
+  have hstep : ComputableInPolyTime
       (fun q : ((ℕ × ℕ) × ℕ) × Bool => step q.1.1 q.1.2 q.2)
       (encPair (encPair (encPair encNat encNat) encNat) encBool) encNat := by
     unfold step
     fun_prop
-  have hfold := ComputableTidilyInPolyTime.foldlWith (encP := encPair encNat encNat)
+  have hfold := ComputableInPolyTime.foldlWith (encP := encPair encNat encNat)
     (encA := encBool) (encL := encBits) (encB := encNat) hpar hlist hinit hstep
     (B := fun p => (encPair encNat (encPair encNat encNat) p).length)
     (PolyBounded.self)
@@ -108,9 +108,9 @@ theorem ComputableInPolyTime.binary_powMod {α : Type} {input : α ↪ List Bool
     (hexponent : ComputableInPolyTime exponent input encNat)
     (hmodulus : ComputableInPolyTime modulus input encNat) (hpos : ∀ a, 0 < modulus a) :
     ComputableInPolyTime (fun a => base a ^ exponent a % modulus a) input encNat := by
-  have hpred : ComputableTidilyInPolyTime (fun a => modulus a - 1) input encNat :=
-    ComputableTidilyInPolyTime.binary_sub' hmodulus.tidy (ComputableTidilyInPolyTime.const 1)
-  have hcomp := BinaryPowMod.computableTidilyInPolyTime_powMod_succ.comp
+  have hpred : ComputableInPolyTime (fun a => modulus a - 1) input encNat :=
+    ComputableInPolyTime.binary_sub' hmodulus.tidy (ComputableInPolyTime.const 1)
+  have hcomp := BinaryPowMod.computableInPolyTime_powMod_succ.comp
     (hbase.tidy.prod (hexponent.tidy.prod hpred))
   refine ComputableInPolyTime.of_tidy ?_
   simpa only [Function.comp_def, Nat.sub_add_cancel (hpos _)] using hcomp

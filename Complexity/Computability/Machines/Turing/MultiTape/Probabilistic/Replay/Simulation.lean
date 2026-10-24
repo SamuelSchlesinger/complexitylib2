@@ -34,13 +34,13 @@ time in the encoded configuration plus one evaluation of `g` on the pending requ
 amount per instruction and every request is no longer than the clock
 (`Turing.MultiTapePTM.spaceBound_answerStep`, `Turing.MultiTapePTM.length_pendingRequest_le`).
 Iterating the instruction with a binary counter
-(`Turing.MultiTapeTM.ComputableTidilyInO.iterate`) therefore simulates a run of polynomial clock
+(`Turing.MultiTapeTM.ComputableInO.iterate`) therefore simulates a run of polynomial clock
 within polynomial space whenever `g` is computable within polynomial space
-(`Turing.MultiTapePTM.exists_computableTidilyInO_run`). The time is not bounded by a polynomial:
+(`Turing.MultiTapePTM.exists_computableInO_run`). The time is not bounded by a polynomial:
 it charges, for every instruction, the largest time of `g` on a word no longer than the clock
 (`Turing.MultiTapeTM.wordMax`). When `g` is polynomial-time, both the instruction and the clocked
-run are polynomial-time (`Turing.MultiTapePTM.computableTidilyInPolyTime_answerStep`,
-`Turing.MultiTapePTM.computableTidilyInPolyTime_run`).
+run are polynomial-time (`Turing.MultiTapePTM.computableInPolyTime_answerStep`,
+`Turing.MultiTapePTM.computableInPolyTime_run`).
 
 ## Main definitions
 
@@ -54,11 +54,11 @@ run are polynomial-time (`Turing.MultiTapePTM.computableTidilyInPolyTime_answerS
 * `Turing.MultiTapePTM.interpret_run_pure_false`: a coin-fixed run is an iteration of
   `answerStep`.
 * `Turing.MultiTapePTM.answerStep_inO`: the bounds of an instruction.
-* `Turing.MultiTapePTM.exists_computableTidilyInO_run`: a clocked run against an oracle computed
+* `Turing.MultiTapePTM.exists_computableInO_run`: a clocked run against an oracle computed
   within polynomial space is computable within polynomial space.
-* `Turing.MultiTapePTM.computableTidilyInPolyTime_answerStep`: an instruction against a
+* `Turing.MultiTapePTM.computableInPolyTime_answerStep`: an instruction against a
   polynomial-time oracle is polynomial-time.
-* `Turing.MultiTapePTM.computableTidilyInPolyTime_run`: a clocked run against a polynomial-time
+* `Turing.MultiTapePTM.computableInPolyTime_run`: a clocked run against a polynomial-time
   oracle is polynomial-time.
 
 ## References
@@ -198,7 +198,7 @@ private def observe (cfg : FiniteConfig k Bool Control Operation) :
 variable [Finite Control] [Fintype Operation]
 
 omit [DecidableEq Operation] in
-private theorem observe_pt : ComputableTidilyInPolyTime
+private theorem observe_pt : ComputableInPolyTime
     (observe (k := k) (Control := Control) (Operation := Operation)) encFiniteConfig
     (encPair (encFinite (Option Control)) (encPair (encFinEnum (Option Bool))
       (encPair (encFinEnum (Fin k → Option Bool)) (encFinite (Operation → Option Bool))))) := by
@@ -206,27 +206,27 @@ private theorem observe_pt : ComputableTidilyInPolyTime
   fun_prop
 
 omit [DecidableEq Operation] in
-private theorem instruction_pt : ComputableTidilyInPolyTime
+private theorem instruction_pt : ComputableInPolyTime
     (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.state.map fun control =>
       machine.tr control cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols false)
     encFiniteConfig (encFinite (Option (MultiTapeMachine.Action k Bool Control Operation))) :=
-  ((ComputableTidilyInPolyTime.of_finite fun obs : Option Control × Option Bool ×
+  ((ComputableInPolyTime.of_finite fun obs : Option Control × Option Bool ×
       (Fin k → Option Bool) × (Operation → Option Bool) => obs.1.map fun control =>
         machine.tr control obs.2.1 obs.2.2.1 obs.2.2.2 false).comp observe_pt).of_enc_eq
     fun _ => rfl
 
 omit [DecidableEq Operation] in
-theorem pendingQuery_pt : ComputableTidilyInPolyTime machine.pendingQuery encFiniteConfig
+theorem pendingQuery_pt : ComputableInPolyTime machine.pendingQuery encFiniteConfig
     (encFinite (Option (Operation × Control))) :=
-  ((ComputableTidilyInPolyTime.of_finite fun i : Option (MultiTapeMachine.Action k Bool Control
+  ((ComputableInPolyTime.of_finite fun i : Option (MultiTapeMachine.Action k Bool Control
       Operation) => match i with
     | some (.query op next) => some (op, next)
     | _ => none).comp machine.instruction_pt).of_enc_eq fun _ => rfl
 
 omit [DecidableEq Operation] in
-theorem localStep_pt : ComputableTidilyInPolyTime machine.localStep encFiniteConfig
+theorem localStep_pt : ComputableInPolyTime machine.localStep encFiniteConfig
     encFiniteConfig := by
-  refine ComputableTidilyInPolyTime.finite_cases
+  refine ComputableInPolyTime.finite_cases
     (tag := fun cfg : FiniteConfig k Bool Control Operation => (cfg.tapes.state.map fun control =>
       machine.tr control cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols false :
         Option (MultiTapeMachine.Action k Bool Control Operation)))
@@ -234,37 +234,37 @@ theorem localStep_pt : ComputableTidilyInPolyTime machine.localStep encFiniteCon
       | some (.step action symbol move) => cfg.step action symbol move
       | _ => cfg) machine.instruction_pt ?_
   rintro (_ | ⟨_, _, _⟩ | _)
-  · exact ComputableTidilyInPolyTime.id'
+  · exact ComputableInPolyTime.id'
   · fun_prop
-  · exact ComputableTidilyInPolyTime.id'
+  · exact ComputableInPolyTime.id'
 
 omit [DecidableEq Operation] in
-theorem pendingRequest_pt : ComputableTidilyInPolyTime machine.pendingRequest encFiniteConfig
+theorem pendingRequest_pt : ComputableInPolyTime machine.pendingRequest encFiniteConfig
     encBits := by
-  refine ComputableTidilyInPolyTime.finite_cases (tag := machine.pendingQuery)
+  refine ComputableInPolyTime.finite_cases (tag := machine.pendingQuery)
     (branch := fun q cfg => match q with
       | some (op, _) => (cfg.channels op).1
       | none => []) machine.pendingQuery_pt ?_
   rintro (_ | ⟨op, _⟩)
-  · exact ComputableTidilyInPolyTime.const _
+  · exact ComputableInPolyTime.const _
   · fun_prop
 
-theorem receiveBit_pt : ComputableTidilyInPolyTime machine.receiveBit
+theorem receiveBit_pt : ComputableInPolyTime machine.receiveBit
     (encPair encFiniteConfig encBool) encFiniteConfig := by
-  refine ComputableTidilyInPolyTime.finite_cases
+  refine ComputableInPolyTime.finite_cases
     (tag := fun p : FiniteConfig k Bool Control Operation × Bool => machine.pendingQuery p.1)
     (branch := fun q (p : FiniteConfig k Bool Control Operation × Bool) => match q with
       | some (op, next) => p.1.receive op next [p.2]
       | none => p.1)
-    (machine.pendingQuery_pt.comp (ComputableTidilyInPolyTime.fst encFiniteConfig encBool)) ?_
+    (machine.pendingQuery_pt.comp (ComputableInPolyTime.fst encFiniteConfig encBool)) ?_
   rintro (_ | ⟨op, next⟩)
-  · exact ComputableTidilyInPolyTime.fst _ _
-  · have hbit : ComputableTidilyInPolyTime (fun p : FiniteConfig k Bool Control Operation × Bool =>
+  · exact ComputableInPolyTime.fst _ _
+  · have hbit : ComputableInPolyTime (fun p : FiniteConfig k Bool Control Operation × Bool =>
         [p.2]) (encPair encFiniteConfig encBool) encBits :=
-      (ComputableTidilyInPolyTime.snd encFiniteConfig encBool).of_enc_eq fun p =>
+      (ComputableInPolyTime.snd encFiniteConfig encBool).of_enc_eq fun p =>
         (encBool_apply p.2).symm
-    exact ComputableTidilyInPolyTime.finiteConfig_receive
-      (ComputableTidilyInPolyTime.fst encFiniteConfig encBool) hbit op next
+    exact ComputableInPolyTime.finiteConfig_receive
+      (ComputableInPolyTime.fst encFiniteConfig encBool) hbit op next
 
 /-! ### Bounds -/
 
@@ -272,16 +272,16 @@ theorem receiveBit_pt : ComputableTidilyInPolyTime machine.receiveBit
 instruction takes polynomial time and space in the encoded configuration, plus the time and space
 of `g` on the pending request. -/
 theorem answerStep_inO {g : List Bool → Bool} {Tg Sg : List Bool → ℕ}
-    (hg : ComputableTidilyInO g encBits encBool Tg Sg) :
-    ∃ e, ComputableTidilyInO (machine.answerStep fun q => [g q.2]) encFiniteConfig
+    (hg : ComputableInO g encBits encBool Tg Sg) :
+    ∃ e, ComputableInO (machine.answerStep fun q => [g q.2]) encFiniteConfig
       encFiniteConfig
       (fun cfg => ((encFiniteConfig cfg).length + 1) ^ e + Tg (machine.pendingRequest cfg))
       (fun cfg => ((encFiniteConfig cfg).length + 1) ^ e + Sg (machine.pendingRequest cfg)) := by
-  have hcond : ComputableTidilyInPolyTime (fun cfg => (machine.pendingQuery cfg).isSome)
+  have hcond : ComputableInPolyTime (fun cfg => (machine.pendingQuery cfg).isSome)
       encFiniteConfig encBool :=
-    (ComputableTidilyInPolyTime.of_finite Option.isSome).comp machine.pendingQuery_pt
-  have hid : ComputableTidilyInPolyTime (fun cfg : FiniteConfig k Bool Control Operation => cfg)
-      encFiniteConfig encFiniteConfig := ComputableTidilyInPolyTime.id'
+    (ComputableInPolyTime.of_finite Option.isSome).comp machine.pendingQuery_pt
+  have hid : ComputableInPolyTime (fun cfg : FiniteConfig k Bool Control Operation => cfg)
+      encFiniteConfig encFiniteConfig := ComputableInPolyTime.id'
   obtain ⟨dc, _, hc⟩ := hcond.exists_degree
   obtain ⟨dr, _, hr⟩ := machine.pendingRequest_pt.exists_degree
   obtain ⟨dv, _, hv⟩ := machine.receiveBit_pt.exists_degree
@@ -339,12 +339,12 @@ polynomial space.** Against the oracle answering `[g w]` to a request `w`, where
 computable with space polynomial in the length of `w`, the run with every coin fixed to `false`
 under the clock `c * (n + 1) ^ d` is tidily computable from its input, within space polynomial in
 the length of the encoded input. -/
-theorem exists_computableTidilyInO_run [Finite Operation] {α : Type} {input : α ↪ List Bool}
+theorem exists_computableInO_run [Finite Operation] {α : Type} {input : α ↪ List Bool}
     {g : List Bool → Bool} {Tg Sg : List Bool → ℕ}
-    (hg : ComputableTidilyInO g encBits encBool Tg Sg) (hSg : PolyBounded List.length Sg)
+    (hg : ComputableInO g encBits encBool Tg Sg) (hSg : PolyBounded List.length Sg)
     (c d : ℕ) :
     ∃ T S, PolyBounded (fun a => (input a).length) S ∧
-      ComputableTidilyInO (fun a => OracleComp.interpret (m := Id) (fun q => [g q.2])
+      ComputableInO (fun a => OracleComp.interpret (m := Id) (fun q => [g q.2])
         (machine.run (pure false) (fun op word => OracleComp.query (op, word))
           (c * ((input a).length + 1) ^ d) (input a))) input encBits T S := by
   classical
@@ -355,19 +355,19 @@ theorem exists_computableTidilyInO_run [Finite Operation] {α : Type} {input : �
   obtain ⟨cg, dg, hSg⟩ := hSg.exists_le
   obtain ⟨cf, hcf⟩ := length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Operation)
   -- the clock in binary, the initial storage and the output
-  have hn : ComputableTidilyInPolyTime (fun a => c * ((input a).length + 1) ^ d) input encNat := by
-    have hlen : ComputableTidilyInPolyTime (fun a => (input a).length) input encUnary := by
+  have hn : ComputableInPolyTime (fun a => c * ((input a).length + 1) ^ d) input encNat := by
+    have hlen : ComputableInPolyTime (fun a => (input a).length) input encUnary := by
       fun_prop
-    exact (ComputableTidilyInPolyTime.unary_to_binary.comp
-      ((ComputableTidilyInPolyTime.unary_eval (Polynomial.C c * (Polynomial.X + 1) ^ d)).comp
+    exact (ComputableInPolyTime.unary_to_binary.comp
+      ((ComputableInPolyTime.unary_eval (Polynomial.C c * (Polynomial.X + 1) ^ d)).comp
         hlen)).of_enc_eq fun a => by simp
   obtain ⟨dn, _, hn⟩ := hn.exists_degree
-  have hinit : ComputableTidilyInPolyTime
+  have hinit : ComputableInPolyTime
       (fun a => FiniteConfig.init (k := k) (Oracle := Operation) machine.initial (input a))
       input encFiniteConfig :=
-    ComputableTidilyInPolyTime.finiteConfig_init (by fun_prop) _
+    ComputableInPolyTime.finiteConfig_init (by fun_prop) _
   obtain ⟨di, _, hinit⟩ := hinit.exists_degree
-  have hout : ComputableTidilyInPolyTime
+  have hout : ComputableInPolyTime
       (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output) encFiniteConfig
       encBits := by fun_prop
   obtain ⟨do', _, hout⟩ := hout.exists_degree
@@ -390,7 +390,7 @@ theorem exists_computableTidilyInO_run [Finite Operation] {α : Type} {input : �
         n a :=
     (machine.length_pendingRequest_le (hspace a i)).trans hi
   -- the iteration, with every request answered within the space of `g` on a short word
-  have hit := ComputableTidilyInO.iterate hn.inO hinit.inO hstep
+  have hit := ComputableInO.iterate hn.inO hinit.inO hstep
     (R := fun a => (B a + 1) ^ e + wordMax Tg (n a))
     (Q := fun a => (B a + 1) ^ e + cg * (n a + 1) ^ dg) (B := B)
     (fun a i hi => Nat.add_le_add (Nat.pow_le_pow_left (by have := hlen a hi; omega) e)
@@ -424,17 +424,17 @@ theorem exists_computableTidilyInO_run [Finite Operation] {α : Type} {input : �
 /-- **An instruction against a polynomial-time oracle is polynomial-time.** Against an oracle
 answering `[g w]` to a request `w`, with `g` polynomial-time, an instruction is polynomial-time in
 the encoded configuration: it either installs `g` of the pending request or is local. -/
-theorem computableTidilyInPolyTime_answerStep {g : List Bool → Bool}
-    (hg : ComputableTidilyInPolyTime g encBits encBool) :
-    ComputableTidilyInPolyTime (machine.answerStep fun q => [g q.2]) encFiniteConfig
+theorem computableInPolyTime_answerStep {g : List Bool → Bool}
+    (hg : ComputableInPolyTime g encBits encBool) :
+    ComputableInPolyTime (machine.answerStep fun q => [g q.2]) encFiniteConfig
       encFiniteConfig := by
-  have h : ComputableTidilyInPolyTime (fun cfg => if (machine.pendingQuery cfg).isSome then
+  have h : ComputableInPolyTime (fun cfg => if (machine.pendingQuery cfg).isSome then
       machine.receiveBit (cfg, g (machine.pendingRequest cfg)) else machine.localStep cfg)
       encFiniteConfig encFiniteConfig :=
-    ComputableTidilyInPolyTime.cond
-      ((ComputableTidilyInPolyTime.of_finite Option.isSome).comp machine.pendingQuery_pt)
+    ComputableInPolyTime.cond
+      ((ComputableInPolyTime.of_finite Option.isSome).comp machine.pendingQuery_pt)
       (machine.receiveBit_pt.comp
-        (ComputableTidilyInPolyTime.id'.prod (hg.comp machine.pendingRequest_pt)))
+        (ComputableInPolyTime.id'.prod (hg.comp machine.pendingRequest_pt)))
       machine.localStep_pt
   exact h.of_enc_eq fun cfg => by rw [answerStep_bit]
 
@@ -442,22 +442,22 @@ omit [Fintype Operation] in
 /-- **A clocked run against a polynomial-time oracle is polynomial-time.** Against the oracle
 answering `[g w]` to a request `w`, where `g` is polynomial-time, the run with every coin fixed to
 `false` under the clock `c * (n + 1) ^ d` is polynomial-time in the encoded input. -/
-theorem computableTidilyInPolyTime_run [Finite Operation] {α : Type} {input : α ↪ List Bool}
-    {g : List Bool → Bool} (hg : ComputableTidilyInPolyTime g encBits encBool) (c d : ℕ) :
-    ComputableTidilyInPolyTime (fun a => OracleComp.interpret (m := Id) (fun q => [g q.2])
+theorem computableInPolyTime_run [Finite Operation] {α : Type} {input : α ↪ List Bool}
+    {g : List Bool → Bool} (hg : ComputableInPolyTime g encBits encBool) (c d : ℕ) :
+    ComputableInPolyTime (fun a => OracleComp.interpret (m := Id) (fun q => [g q.2])
       (machine.run (pure false) (fun op word => OracleComp.query (op, word))
         (c * ((input a).length + 1) ^ d) (input a))) input encBits := by
   classical
   let _ := Fintype.ofFinite Operation
   obtain ⟨cf, hcf⟩ := length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Operation)
-  have hcount : ComputableTidilyInPolyTime (fun a => c * ((input a).length + 1) ^ d) input
+  have hcount : ComputableInPolyTime (fun a => c * ((input a).length + 1) ^ d) input
       encUnary :=
-    ((ComputableTidilyInPolyTime.unary_eval (Polynomial.C c * (Polynomial.X + 1) ^ d)).comp
-      (ComputableTidilyInPolyTime.encoding_length input)).of_enc_eq fun a => by simp
-  have hinit : ComputableTidilyInPolyTime
+    ((ComputableInPolyTime.unary_eval (Polynomial.C c * (Polynomial.X + 1) ^ d)).comp
+      (ComputableInPolyTime.encoding_length input)).of_enc_eq fun a => by simp
+  have hinit : ComputableInPolyTime
       (fun a => FiniteConfig.init (k := k) (Oracle := Operation) machine.initial (input a))
       input encFiniteConfig :=
-    ComputableTidilyInPolyTime.finiteConfig_init (by fun_prop) _
+    ComputableInPolyTime.finiteConfig_init (by fun_prop) _
   have hspace (a : α) (i : ℕ) : FiniteConfig.SpaceBound (input a).length i 1
       ((machine.answerStep fun q => [g q.2])^[i]
         (FiniteConfig.init machine.initial (input a))) := by
@@ -470,10 +470,10 @@ theorem computableTidilyInPolyTime_run [Finite Operation] {α : Type} {input : �
       (fun a => cf * ((input a).length + c * ((input a).length + 1) ^ d + 1 + 1)) :=
     PolyBounded.mono (PolyBounded.of_polynomiallyBounded (fun a => (input a).length)
       (bound := fun L => cf * (L + c * (L + 1) ^ d + 1 + 1)) (by fun_prop)) fun _ => le_rfl
-  have hit := ComputableTidilyInPolyTime.iterate hcount hinit
-    (machine.computableTidilyInPolyTime_answerStep hg) hbound fun a i hi =>
+  have hit := ComputableInPolyTime.iterate hcount hinit
+    (machine.computableInPolyTime_answerStep hg) hbound fun a i hi =>
       (hcf _ _ _ _ (hspace a i)).trans (Nat.mul_le_mul_left cf (by omega))
-  have hout : ComputableTidilyInPolyTime
+  have hout : ComputableInPolyTime
       (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output) encFiniteConfig
       encBits := by fun_prop
   exact (hout.comp hit).of_enc_eq fun a => by rw [interpret_run_pure_false]; rfl

@@ -49,10 +49,10 @@ the accepting code are polynomial-time.
 ## Main results
 
 * `Turing.MultiTapeNTM.viewStepB_iff`: the test decides `Turing.MultiTapeNTM.ViewStep`.
-* `Turing.MultiTapeNTM.computableTidilyInPolyTime_viewStepB`: the test is polynomial-time.
+* `Turing.MultiTapeNTM.computableInPolyTime_viewStepB`: the test is polynomial-time.
 * `Turing.MultiTapeNTM.accepts_iff_reflTransGen_codeStep`: acceptance is reachability of the
   accepting code.
-* `Turing.MultiTapeNTM.computableTidilyInPolyTime_codeEdge`: the edge test is polynomial-time.
+* `Turing.MultiTapeNTM.computableInPolyTime_codeEdge`: the edge test is polynomial-time.
 
 ## References
 
@@ -65,12 +65,12 @@ namespace Turing
 
 open MultiTapeTM
 
-namespace MultiTapeTM.ComputableTidilyInPolyTime
+namespace MultiTapeTM.ComputableInPolyTime
 
 /-- The output summary is polynomial-time on raw words. -/
 @[fun_prop]
 theorem outputClass :
-    ComputableTidilyInPolyTime MultiTapeNTM.outputClass encBits encBits := by
+    ComputableInPolyTime MultiTapeNTM.outputClass encBits encBits := by
   have h : MultiTapeNTM.outputClass = fun word : List Bool =>
       if decide (word = []) then [] else if decide (word = [true]) then [true] else [false] := by
     funext word
@@ -82,12 +82,12 @@ theorem outputClass :
 /-- Summarizing the output of a configuration is polynomial-time. -/
 @[fun_prop]
 theorem finiteCfg_summarizeOutput {k : ℕ} {State : Type} [Finite State] :
-    ComputableTidilyInPolyTime (FiniteCfg.summarizeOutput (k := k) (State := State)) encFiniteCfg
+    ComputableInPolyTime (FiniteCfg.summarizeOutput (k := k) (State := State)) encFiniteCfg
       encFiniteCfg := by
   unfold FiniteCfg.summarizeOutput
   fun_prop
 
-end MultiTapeTM.ComputableTidilyInPolyTime
+end MultiTapeTM.ComputableInPolyTime
 
 namespace MultiTapeNTM
 
@@ -110,8 +110,8 @@ theorem viewStepB_iff {finite next : FiniteCfg k Bool State} :
   · simp only [List.any_eq_true, decide_eq_true_eq, mem_actions]
 
 /-- **The step test is polynomial-time** in the encoded pair of views. -/
-theorem computableTidilyInPolyTime_viewStepB :
-    ComputableTidilyInPolyTime ntm.viewStepB (encPair encFiniteCfg encFiniteCfg) encBool := by
+theorem computableInPolyTime_viewStepB :
+    ComputableInPolyTime ntm.viewStepB (encPair encFiniteCfg encFiniteCfg) encBool := by
   classical
   -- branch on the finite key of the first view
   let key (views : FiniteCfg k Bool State × FiniteCfg k Bool State) :
@@ -126,22 +126,22 @@ theorem computableTidilyInPolyTime_viewStepB :
   have heq : ntm.viewStepB = fun views => branch (key views) views := by
     funext views
     rfl
-  have hfst := ComputableTidilyInPolyTime.fst (encFiniteCfg (k := k) (State := State))
+  have hfst := ComputableInPolyTime.fst (encFiniteCfg (k := k) (State := State))
     (encFiniteCfg (k := k) (State := State))
-  have hsnd := ComputableTidilyInPolyTime.snd (encFiniteCfg (k := k) (State := State))
+  have hsnd := ComputableInPolyTime.snd (encFiniteCfg (k := k) (State := State))
     (encFiniteCfg (k := k) (State := State))
   rw [heq]
-  refine ComputableTidilyInPolyTime.finite_cases
+  refine ComputableInPolyTime.finite_cases
     (tagEncoding := encPair (encFinite _) (encPair (encFinEnum _) (encFinEnum _))) ?_ fun tag => ?_
-  · exact (ComputableTidilyInPolyTime.finiteCfg_state.comp hfst).prod
-      ((ComputableTidilyInPolyTime.finiteCfg_inputSymbol.comp hfst).prod
-        (ComputableTidilyInPolyTime.finiteCfg_workTapeSymbols.comp hfst))
+  · exact (ComputableInPolyTime.finiteCfg_state.comp hfst).prod
+      ((ComputableInPolyTime.finiteCfg_inputSymbol.comp hfst).prod
+        (ComputableInPolyTime.finiteCfg_workTapeSymbols.comp hfst))
   · rcases tag with ⟨_ | state, symbol, work⟩
-    · exact ComputableTidilyInPolyTime.decide_eq' hsnd hfst
-    · refine ComputableTidilyInPolyTime.anyConst _ fun action _ => ?_
-      exact ComputableTidilyInPolyTime.decide_eq' hsnd
-        ((ComputableTidilyInPolyTime.finiteCfg_summarizeOutput.comp
-          (ComputableTidilyInPolyTime.finiteCfg_step action)).comp hfst)
+    · exact ComputableInPolyTime.decide_eq' hsnd hfst
+    · refine ComputableInPolyTime.anyConst _ fun action _ => ?_
+      exact ComputableInPolyTime.decide_eq' hsnd
+        ((ComputableInPolyTime.finiteCfg_summarizeOutput.comp
+          (ComputableInPolyTime.finiteCfg_step action)).comp hfst)
 
 /-! ### Codes of views -/
 
@@ -272,15 +272,15 @@ section Certificate
 variable {α : Type} {encA : α ↪ List Bool}
 
 /-- Reading the view of a computed code is polynomial-time. -/
-theorem computableTidilyInPolyTime_decodeView {code : α → List Bool}
-    (hcode : ComputableTidilyInPolyTime code encA encBits) :
-    ComputableTidilyInPolyTime (fun a => decodeView (k := k) (State := State) (code a)) encA
+theorem computableInPolyTime_decodeView {code : α → List Bool}
+    (hcode : ComputableInPolyTime code encA encBits) :
+    ComputableInPolyTime (fun a => decodeView (k := k) (State := State) (code a)) encA
       (encOption encFiniteCfg) := by
   simp only [decodeView_eq]
-  exact (ComputableTidilyInPolyTime.headD true |>.comp hcode).cond (.const none)
-    ((ComputableTidilyInPolyTime.optionSome _).comp
-      (ComputableTidilyInPolyTime.decodeFiniteCfg.comp (ComputableTidilyInPolyTime.unframe.comp
-      (ComputableTidilyInPolyTime.tail (encA := encBool) |>.comp hcode))))
+  exact (ComputableInPolyTime.headD true |>.comp hcode).cond (.const none)
+    ((ComputableInPolyTime.optionSome _).comp
+      (ComputableInPolyTime.decodeFiniteCfg.comp (ComputableInPolyTime.unframe.comp
+      (ComputableInPolyTime.tail (encA := encBool) |>.comp hcode))))
 
 /-- The edge test by cases on the decoded views and the tag of the second code. -/
 theorem codeEdge_eq (code next : List Bool) : ntm.codeEdge code next =
@@ -298,47 +298,47 @@ theorem codeEdge_eq (code next : List Bool) : ntm.codeEdge code next =
     · rfl
 
 /-- **The edge test of codes is polynomial-time.** -/
-theorem computableTidilyInPolyTime_codeEdge
-    {code next : α → List Bool} (hcode : ComputableTidilyInPolyTime code encA encBits)
-    (hnext : ComputableTidilyInPolyTime next encA encBits) :
-    ComputableTidilyInPolyTime (fun a => ntm.codeEdge (code a) (next a)) encA encBool := by
+theorem computableInPolyTime_codeEdge
+    {code next : α → List Bool} (hcode : ComputableInPolyTime code encA encBits)
+    (hnext : ComputableInPolyTime next encA encBits) :
+    ComputableInPolyTime (fun a => ntm.codeEdge (code a) (next a)) encA encBool := by
   classical
   simp only [codeEdge_eq]
-  have hfst := ComputableTidilyInPolyTime.fst encA (encFiniteCfg (k := k) (State := State))
-  have hsnd := ComputableTidilyInPolyTime.snd encA (encFiniteCfg (k := k) (State := State))
-  refine (computableTidilyInPolyTime_decodeView hcode).optionElimWithInput (.const false) ?_
-  refine ((ComputableTidilyInPolyTime.headD false).comp (hnext.comp hfst)).cond ?_ ?_
-  · exact ComputableTidilyInPolyTime.bool_and.comp
-      (((ComputableTidilyInPolyTime.of_finite fun state : Option State =>
-          decide (state = none)).comp (ComputableTidilyInPolyTime.finiteCfg_state.comp hsnd)).prod
-      (ComputableTidilyInPolyTime.decide_eq'
-        (ComputableTidilyInPolyTime.finiteCfg_output.comp hsnd) (.const [true])))
-  · refine (computableTidilyInPolyTime_decodeView (hnext.comp hfst)).optionElimWithInput
+  have hfst := ComputableInPolyTime.fst encA (encFiniteCfg (k := k) (State := State))
+  have hsnd := ComputableInPolyTime.snd encA (encFiniteCfg (k := k) (State := State))
+  refine (computableInPolyTime_decodeView hcode).optionElimWithInput (.const false) ?_
+  refine ((ComputableInPolyTime.headD false).comp (hnext.comp hfst)).cond ?_ ?_
+  · exact ComputableInPolyTime.bool_and.comp
+      (((ComputableInPolyTime.of_finite fun state : Option State =>
+          decide (state = none)).comp (ComputableInPolyTime.finiteCfg_state.comp hsnd)).prod
+      (ComputableInPolyTime.decide_eq'
+        (ComputableInPolyTime.finiteCfg_output.comp hsnd) (.const [true])))
+  · refine (computableInPolyTime_decodeView (hnext.comp hfst)).optionElimWithInput
       (.const false) ?_
-    exact ntm.computableTidilyInPolyTime_viewStepB.comp
-      ((hsnd.comp (ComputableTidilyInPolyTime.fst _ _)).prod (ComputableTidilyInPolyTime.snd _ _))
+    exact ntm.computableInPolyTime_viewStepB.comp
+      ((hsnd.comp (ComputableInPolyTime.fst _ _)).prod (ComputableInPolyTime.snd _ _))
 
 /-- The code of the initial view of a computed input is polynomial-time, for a polynomial-time
 width. -/
-theorem computableTidilyInPolyTime_viewCode_initView {width : α → ℕ} {word : α → List Bool}
-    (hwidth : ComputableTidilyInPolyTime width encA encUnary)
-    (hword : ComputableTidilyInPolyTime word encA encBits) :
-    ComputableTidilyInPolyTime (fun a => viewCode (width a) (ntm.initView (word a))) encA
+theorem computableInPolyTime_viewCode_initView {width : α → ℕ} {word : α → List Bool}
+    (hwidth : ComputableInPolyTime width encA encUnary)
+    (hword : ComputableInPolyTime word encA encBits) :
+    ComputableInPolyTime (fun a => viewCode (width a) (ntm.initView (word a))) encA
       encBits := by
-  have hinit := ComputableTidilyInPolyTime.finiteCfg_init (k := k) hword ntm.q₀
-  exact ComputableTidilyInPolyTime.bitsAppend (left := fun _ => [false]) (.const _)
-    (ComputableTidilyInPolyTime.bitsPadWord hwidth hinit.encoded)
+  have hinit := ComputableInPolyTime.finiteCfg_init (k := k) hword ntm.q₀
+  exact ComputableInPolyTime.bitsAppend (left := fun _ => [false]) (.const _)
+    (ComputableInPolyTime.bitsPadWord hwidth hinit.encoded)
 
 /-- The accepting code of a polynomial-time width is polynomial-time. -/
-theorem computableTidilyInPolyTime_acceptCode {width : α → ℕ}
-    (hwidth : ComputableTidilyInPolyTime width encA encUnary) :
-    ComputableTidilyInPolyTime (fun a => acceptCode (width a)) encA encBits := by
-  have hlength : ComputableTidilyInPolyTime (fun a => 2 * width a + 2) encA encUnary :=
-    ComputableTidilyInPolyTime.unary_add.comp
-      ((ComputableTidilyInPolyTime.unary_mul.comp
-        ((ComputableTidilyInPolyTime.const 2).prod hwidth)).prod
-        (ComputableTidilyInPolyTime.const 2))
-  exact (ComputableTidilyInPolyTime.bitsReplicate true).comp hlength
+theorem computableInPolyTime_acceptCode {width : α → ℕ}
+    (hwidth : ComputableInPolyTime width encA encUnary) :
+    ComputableInPolyTime (fun a => acceptCode (width a)) encA encBits := by
+  have hlength : ComputableInPolyTime (fun a => 2 * width a + 2) encA encUnary :=
+    ComputableInPolyTime.unary_add.comp
+      ((ComputableInPolyTime.unary_mul.comp
+        ((ComputableInPolyTime.const 2).prod hwidth)).prod
+        (ComputableInPolyTime.const 2))
+  exact (ComputableInPolyTime.bitsReplicate true).comp hlength
 
 end Certificate
 

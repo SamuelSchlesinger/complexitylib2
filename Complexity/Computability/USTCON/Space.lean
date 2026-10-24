@@ -20,8 +20,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 (`Cslib.USTCON.computableInLogSpace_decide`) [Reingold, Theorem 4.1][Reingold2008]
 [Arora and Barak, Section 21.4][AroraBarak09].
 
-The step machine simulating the read machine `Cslib.USTCON.Reader.machine` has a resource certificate within the space
-of its states and the position of its head (`Cslib.USTCON.Reader.machine_resourceCertificate`). It
+The step machine simulating the read machine `Cslib.USTCON.Reader.machine` has a resource certificate within
+the space of its states and the position of its head (`Cslib.USTCON.Reader.machine_resourceCertificate`). It
 computes the
 output of the read machine (`Turing.ReadMachine.computes_toStepMachine`), which halts on an encoded
 instance with the answer (`Cslib.USTCON.Reader.exists_run_eq`), and its states along the run are
