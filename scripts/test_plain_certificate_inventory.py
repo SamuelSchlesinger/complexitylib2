@@ -149,6 +149,20 @@ private theorem captured_source (f : ℕ → ℕ) (hf : TidyInventoryProperty f)
   have localRoutine : TidyInventoryProperty f := hf
   have hiddenRoutine : HiddenProperty f := localRoutine
   exact hiddenRoutine
+namespace Turing.MultiTapeTM
+@[fun_prop] def ComputableTidilyInPolyTime (f : ℕ → ℕ) : Prop := ∀ x, f x = f x
+@[fun_prop] def ComputableInPolyTime (f : ℕ → ℕ) : Prop := ∀ x, f x = f x
+theorem computableInPolyTime_iff_computableTidilyInPolyTime (f : ℕ → ℕ) :
+    ComputableInPolyTime f ↔ ComputableTidilyInPolyTime f := Iff.rfl
+@[fun_prop] theorem familyA : ComputableTidilyInPolyTime uniqueFunction := fun _ => rfl
+@[fun_prop] theorem familyB : ComputableTidilyInPolyTime uniqueFunction := fun _ => rfl
+theorem familyUnrelated : ComputableTidilyInPolyTime id := fun _ => rfl
+theorem familyDependent : ComputableTidilyInPolyTime uniqueFunction ∧ True :=
+  ⟨familyB, True.intro⟩
+@[fun_prop] theorem familyPlain : ComputableInPolyTime uniqueFunction := by
+  have _unrelated := familyUnrelated
+  exact familyA
+end Turing.MultiTapeTM
 universe u
 def OrdinaryProperty {α : Type u} (_f : α → α) : Prop := True
 theorem ordinarySource {α : Type} (f : α → α) : OrdinaryProperty f := True.intro
@@ -288,6 +302,36 @@ open Lean Meta PlainCertificateInventory
 run_meta do
   let env ← getEnv
   let modules : Std.HashSet Name := .ofArray #[`PlainInventoryProbe]
+  let reverse := reverseDependencies env modules
+  let productionIndex ← counterpartIndex env modules
+  let aliases := aliasNames env
+  let mut cache : CounterpartCache := {}
+  for name in #[`Turing.MultiTapeTM.familyA, `Turing.MultiTapeTM.familyB,
+      `Turing.MultiTapeTM.familyUnrelated] do
+    let candidate : Candidate := {owner := name, target := (← getConstInfo name).type}
+    cache := cache.insert name (← lookupCounterparts aliases productionIndex #[] candidate)
+  let some canonicalBody := (← getConstInfo `Turing.MultiTapeTM.familyPlain).value? true
+    | throwError "missing family counterpart body"
+  unless (constants canonicalBody).contains `Turing.MultiTapeTM.familyUnrelated do
+    throwError "unrelated-proof-leaf regression lost its actual provenance input"
+  let families := familyIndex env cache
+  unless families.members.size == 2 && !families.members.contains `Turing.MultiTapeTM.familyUnrelated do
+    throwError "family construction included an unrelated proof leaf or lost a sibling"
+  for (source, sibling) in #[( `Turing.MultiTapeTM.familyA, `Turing.MultiTapeTM.familyB),
+      (`Turing.MultiTapeTM.familyB, `Turing.MultiTapeTM.familyA)] do
+    let candidate : Candidate := {owner := source, target := (← getConstInfo source).type}
+    let checked ← familySources families candidate
+    unless checked == #[sibling] do
+      throwError "inverse family exclusions were asymmetric: {checked}"
+    let forbidden := closure reverse (#[source] ++ (cache.getD source {}).names ++ checked)
+    unless #[`Turing.MultiTapeTM.familyA, `Turing.MultiTapeTM.familyB,
+        `Turing.MultiTapeTM.familyPlain, `Turing.MultiTapeTM.familyDependent].all forbidden.contains do
+      throwError "family siblings/counterpart/indirect dependent were not excluded together"
+    if forbidden.contains `Turing.MultiTapeTM.familyUnrelated then
+      throwError "an unrelated ancestor was excluded"
+    let localCandidate := {candidate with localPath := some "local"}
+    unless (← familySources families localCandidate).isEmpty do
+      throwError "local capture exclusion semantics changed"
   let index ← counterpartIndex (← getEnv) modules #[`OrdinaryProperty]
   let target := (← getConstInfo `ordinarySource).type
   let found ← findCounterparts index target
@@ -297,7 +341,6 @@ run_meta do
     | throwError "ordinary proof provenance missing"
   unless (constants body).contains `ordinarySource do
     throwError "ordinary declaration proof reference lost"
-  let reverse := reverseDependencies env modules
   let incoming := reverse.getD `Mathlib.InventoryFixture.denseRoot []
   unless incoming.length == 1000 do throwError "lost dense dependency edges: {incoming.length}"
   let actual := closure reverse #[`Mathlib.InventoryFixture.denseRoot]
@@ -319,6 +362,18 @@ run_meta do
         rows = [json.loads(line) for line in output.read_text().splitlines()]
         runner.validate_rows(rows)
         records = rows[1:]
+        for row in records:
+            if row["declaration"].get("local_path"):
+                assert row["family_checked_sources"] == []
+                assert row["family_additional_seeds"] == []
+        family_names = {"Turing.MultiTapeTM.familyA", "Turing.MultiTapeTM.familyB"}
+        assert set(rows[0]["holdout_family_sources"]) == family_names
+        for row in records:
+            if row["declaration"]["name"] in family_names:
+                other = family_names - {row["declaration"]["name"]}
+                assert set(row["family_checked_sources"]) == other
+                assert set(row["family_additional_seeds"]) == other
+
         isolated = next(r for r in records if r["declaration"]["name"] == "isolated_source")
         assert isolated["tidy_holdout"]["status"] != "success", isolated
         assert isolated["excluded_count"] >= 2
@@ -329,7 +384,8 @@ run_meta do
         assert "Construction.scopedOnlyRule" not in boundary["global_tidy_fun_prop_rules"]
         assert any(rule[1] == "isolated_source" for rule in boundary["global_tidy_aesop_rules"])
         assert any(r["declaration"]["name"] == "hidden_source" for r in records)
-        local = [r for r in records if r["declaration"].get("local_path")]
+        local = [r for r in records if r["declaration"].get("local_path") and
+                 "captured_source" in r["declaration"]["owner"]]
         assert local and all(r["declaration"]["private"] for r in local)
         assert any("localRoutine" in r["declaration"]["name"] for r in local)
         assert all(sum(r["declaration"]["type"].count(n) for n in

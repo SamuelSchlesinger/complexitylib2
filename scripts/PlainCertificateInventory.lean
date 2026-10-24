@@ -410,26 +410,82 @@ def search (env : Environment) (type : Expr) (budget : Nat)
       return Json.mkObj [field "status" "error", field "error_stage" "validation",
         field "error" error.toString, ("heartbeats_raw", toJson used)]
 
+/-- Reusable typed lookup evidence; it never changes the environment or theorem registrations. -/
+structure CounterpartMatch where
+  ordinary : Array Name := #[]
+  covered : Array (Name × Name) := #[]
+  failure : Option String := none
+
+def CounterpartMatch.names (matchInfo : CounterpartMatch) : Array Name :=
+  (Std.HashSet.ofArray (matchInfo.ordinary ++ matchInfo.covered.map (·.1))).toArray.qsort Name.lt
+
+abbrev CounterpartCache := Std.HashMap Name CounterpartMatch
+
+def lookupCounterparts (aliases : Std.HashSet Name) (index : CounterpartIndex)
+    (coverage : Array Name) (candidate : Candidate) : MetaM CounterpartMatch := do
+  let plain? ← try pure (some (← plainType (expandAliases (← getEnv) aliases candidate.target)))
+    catch _ => pure none
+  if candidate.localPath.isSome || plain?.isNone then return {}
+  tryCatchRuntimeEx (do
+    let plain := plain?.get!
+    let ordinary ← findCounterparts index plain (some candidate.owner)
+    let covered ← coverageCounterparts coverage plain
+    pure {ordinary, covered}) (fun error => do
+        let message ← if error.isMaxHeartbeat then pure "counterpart lookup heartbeat exhaustion"
+          else if error.isMaxRecDepth then pure "counterpart lookup recursion exhaustion"
+          else error.toMessageData.toString
+        pure {failure := some message})
+
+/-- Only matched source statements sharing a counterpart with a direct tidy proof reference
+form a family. Arbitrary proof ancestors and unmatched declarations are never selected. -/
+structure FamilyIndex where
+  members : Std.HashMap Name (Array Name) := {}
+  provenance : Array Json := #[]
+
+def familyIndex (env : Environment) (cache : CounterpartCache) : FamilyIndex := Id.run do
+  let mut byTarget : Std.HashMap Name (Array Name) := {}
+  for (source, info) in cache.toArray do
+    if info.failure.isSome then continue
+    for target in info.names do
+      byTarget := byTarget.insert target ((byTarget.getD target #[]).push source)
+  let mut result : FamilyIndex := {}
+  for (target, sources) in byTarget.toArray.qsort (fun a b => Name.lt a.1 b.1) do
+    if sources.size < 2 then continue
+    let deps := ((env.find? target).bind (·.value? true)).map constants |>.getD #[]
+    let anchors := sources.filter deps.contains
+    if anchors.isEmpty then continue
+    let sources := sources.qsort Name.lt
+    result := {result with provenance := result.provenance.push <| Json.mkObj [
+      ("counterpart", toJson target.toString),
+      ("direct_tidy_anchors", toJson ((anchors.qsort Name.lt).map Name.toString)),
+      ("matched_source_pool", toJson (sources.map Name.toString))]}
+    for source in sources do
+      let members := Std.HashSet.ofArray (result.members.getD source #[] ++ sources)
+      result := {result with members := (result.members.insert source (members.toArray.qsort Name.lt))}
+  return result
+
+/-- A shared family is only a candidate pool: every additional sibling must directly prove the
+current tidy statement by kernel-checked application and assumptions. Local captures are unchanged. -/
+def familySources (families : FamilyIndex) (candidate : Candidate) : MetaM (Array Name) := do
+  if candidate.localPath.isSome then return #[]
+  let mut result := #[]
+  for sibling in families.members.getD candidate.owner #[] do
+    if sibling == candidate.owner then continue
+    if ← canonicalSubsumes sibling candidate.target then result := result.push sibling
+  return result
+
 /-- Inspect a declaration without invoking its own proof as the benchmark. -/
 def describe (aliases : Std.HashSet Name) (index : CounterpartIndex)
-    (coverage : Array Name) (candidate : Candidate) : MetaM (Expr × Json × Array Name) := do
+    (coverage : Array Name) (cache : CounterpartCache) (candidate : Candidate) :
+    MetaM (Expr × Json × Array Name) := do
   let name := candidate.owner
   let type := candidate.target
   let heads := tidyNames (expandAliases (← getEnv) aliases type)
-  let plain? ← try pure (some (← plainType (expandAliases (← getEnv) aliases type)))
-    catch _ => pure none
-  let (ordinary, covered, lookupError) : Array Name × Array (Name × Name) × Option String ←
-    if candidate.localPath.isSome || plain?.isNone then pure (#[], #[], none) else do
-      tryCatchRuntimeEx (do
-        let plain := plain?.get!
-        let ordinary ← findCounterparts index plain (some name)
-        let covered ← coverageCounterparts coverage plain
-        pure (ordinary, covered, none)) (fun error => do
-          let message ← if error.isMaxHeartbeat then pure "counterpart lookup heartbeat exhaustion"
-            else if error.isMaxRecDepth then pure "counterpart lookup recursion exhaustion"
-            else error.toMessageData.toString
-          pure (#[], #[], some message))
-  let counterparts := (Std.HashSet.ofArray (ordinary ++ covered.map (·.1))).toArray.qsort Name.lt
+  let matchInfo ← if candidate.localPath.isSome then lookupCounterparts aliases index coverage candidate
+    else pure (cache.getD name {})
+  let covered := matchInfo.covered
+  let lookupError := matchInfo.failure
+  let counterparts := matchInfo.names
   let prop ← isProp type
   let env ← getEnv
   let module := env.getModuleIdxFor? name |>.map fun i => env.header.moduleNames[i.toNat]!
@@ -517,6 +573,17 @@ unsafe def main (args : List String) : IO UInt32 := do
       candidates := candidates ++ localCertificates normalize name value
   candidates := candidates.qsort fun a b =>
     Name.quickLt a.owner b.owner || (a.owner == b.owner && decide (a.localPath.getD "" < b.localPath.getD ""))
+  let mut cache : CounterpartCache := {}
+  for candidate in candidates do
+    if candidate.localPath.isSome then continue
+    let info ← try
+      pure (← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run'
+        (lookupCounterparts aliases index coverage candidate))
+        (preprocessingContext "counterpart-family-lookup") {env}).1
+      catch error => pure {failure := some error.toString}
+    cache := cache.insert candidate.owner info
+  let families := familyIndex env cache
+  IO.eprintln s!"inventory: indexed {families.members.size} provenance-anchored family source statements"
   let inventoryTotal := candidates.size
   if let some names := selection then
     let known : Std.HashSet String := .ofArray (candidates.map Candidate.identity)
@@ -531,17 +598,25 @@ unsafe def main (args : List String) : IO UInt32 := do
     ("module_count", toJson mods.size), ("limit", toJson limit),
     ("heartbeat_budget", toJson budget), ("registration_boundary", boundary),
     ("coverage_declarations", toJson (coverage.map Name.toString)),
+    ("holdout_family_sources", toJson (((families.members.toArray.map (·.1)).qsort Name.lt).map Name.toString)),
+    ("holdout_family_provenance", Json.arr families.provenance),
     ("counterpart_lookup", toJson "ordinary elaborated declarations; whole-statement kernel matching or proof-provenance subsumption; all compatible targets excluded")]).compress
   let mut count := 0
   for candidate in candidates do
     if limit != 0 && count >= limit then break
     let row ← try
-      let ((type, info, counterparts), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe aliases index coverage candidate))
+      let ((type, info, counterparts), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe aliases index coverage cache candidate))
         (preprocessingContext "certificate-inventory") { env }
       let seeds := #[candidate.owner] ++ counterparts
-      let forbidden := closure reverse seeds
+      let baselineForbidden := closure reverse seeds
+      let (siblings, _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (familySources families candidate))
+        (preprocessingContext "holdout-family-subsumption") {env}
+      let additional := siblings.filter (!baselineForbidden.contains ·)
+      let forbidden := closure reverse (seeds ++ additional)
       let heldout := exclude env forbidden
-      let mut fields := [("declaration", info), ("excluded_count", toJson forbidden.size)]
+      let mut fields := [("declaration", info), ("excluded_count", toJson forbidden.size),
+        ("family_checked_sources", toJson (siblings.map Name.toString)),
+        ("family_additional_seeds", toJson (additional.map Name.toString))]
       let prop := (info.getObjValAs? Bool "proposition").toOption.getD false
       if !prop then
         fields := fields ++ [field "status" "non_proposition"]
