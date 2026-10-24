@@ -132,21 +132,12 @@ noncomputable def SchnorrImpersonator.rewind (k : ℕ → ℕ) (A : F.SchnorrImp
 
 /-! ### The exact bound -/
 
-/-- Binary digits, least significant first, read as a number (a private copy of the bridge in
-`Complexity/Computability/Complexity/Classes/Counting/Space.lean`). -/
-private theorem ofBits_eq_lsbValue (w : List Bool) : ofBits w = BitString.lsbValue w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    change Nat.bit b (ofBits w) = b.toNat + 2 * BitString.lsbValue w
-    rw [ih]
-    cases b <;> simp [Nat.bit, Nat.add_comm]
-
 /-- Distinct `k`-bit challenges are distinct modulo `q` when `2 ^ k ≤ q`. -/
 private theorem challenge_ne {q k : ℕ} (hkq : 2 ^ k ≤ q) {c c' : BitString k} (hc : c ≠ c') :
     (ofBits (List.ofFn c) : ZMod q) ≠ ofBits (List.ofFn c') := by
   intro h
-  rw [ZMod.natCast_eq_natCast_iff', ofBits_eq_lsbValue, ofBits_eq_lsbValue,
+  rw [ZMod.natCast_eq_natCast_iff', ofBits, ofBits, ← BitString.lsbValue_eq_foldr_bit,
+    ← BitString.lsbValue_eq_foldr_bit,
     Nat.mod_eq_of_lt ((BitString.lsbValue_lt _).trans_le (by simpa using hkq)),
     Nat.mod_eq_of_lt ((BitString.lsbValue_lt _).trans_le (by simpa using hkq))] at h
   exact hc (List.ofFn_injective (BitString.lsbValue_injective (by simp) h))

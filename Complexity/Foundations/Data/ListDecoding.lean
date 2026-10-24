@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Init
 public import Cslib.Foundations.Data.BitString
 public import Mathlib.Basic.Real.Basic
@@ -93,19 +94,16 @@ theorem card_candidates_le [DecidableEq α] (w : ι → β) : #(C.candidates w) 
 /-- The candidate named by the binary index `b` of `Nat.clog 2 L` bits, read least significant bit
 first: the `k`-th candidate for `w` if `b` spells a number `k < L`, and nothing otherwise. -/
 def decodeBits (w : ι → β) (b : BitString (Nat.clog 2 L)) : Option α :=
-  let k : Fin (2 ^ Nat.clog 2 L) := finFunctionFinEquiv (finTwoEquiv.symm ∘ b)
+  let k : Fin (2 ^ Nat.clog 2 L) := BitString.equivFin (Nat.clog 2 L) b
   if h : (k : ℕ) < L then some (C.decode w ⟨k, h⟩) else none
 
 /-- **Short index.** Every candidate is named by an index of `Nat.clog 2 L` bits. -/
 theorem exists_decodeBits_eq_some {w : ι → β} {x : α} (h : ∃ k, C.decode w k = x) :
     ∃ b : BitString (Nat.clog 2 L), C.decodeBits w b = some x := by
   obtain ⟨k, rfl⟩ := h
-  let k' : Fin (2 ^ Nat.clog 2 L) := Fin.castLE (Nat.le_pow_clog one_lt_two L) k
-  refine ⟨finTwoEquiv ∘ finFunctionFinEquiv.symm k', ?_⟩
-  have hk : finFunctionFinEquiv (finTwoEquiv.symm ∘ finTwoEquiv ∘ finFunctionFinEquiv.symm k') =
-      k' := by
-    rw [← Function.comp_assoc, Equiv.symm_comp_self, Function.id_comp, Equiv.apply_symm_apply]
-  simp only [decodeBits, hk, k', Fin.val_castLE, k.isLt, ↓reduceDIte]
+  refine ⟨BitString.indexBits k, ?_⟩
+  simp only [decodeBits, BitString.indexBits, Equiv.apply_symm_apply, Fin.val_castLE, k.isLt,
+    ↓reduceDIte]
 
 variable [Fintype ι] [DecidableEq β] {C}
 
