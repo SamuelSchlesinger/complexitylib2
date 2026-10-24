@@ -1185,6 +1185,22 @@ Jukna coverage below is an additional target beyond the V1 port:
   Boolean-matrix and subset-sum families are Δ-universal, and the
   [Carter–Wegman polynomial](Complexity/Probability/HashFamily/Polynomial.lean) and
   [multiply-shift](Complexity/Probability/HashFamily/MultiplyShift.lean) families are proved.
+  [Feistel networks and the Luby–Rackoff theorem](Complexity/Crypto/Protocols/Cipher/LubyRackoff.lean)
+  (#748, Boneh–Shoup Section 4.4 / Luby–Rackoff 1988) prove the `Q.choose 2 * ε + Q.choose 2 / |G|`
+  3-round adaptive CPA bound with Δ-universal Round 1
+  (`advantage_feistel3HashIdealGame_randomFunctionGame_le`), the `2 * Q.choose 2 / |G|`
+  uniform-random-round corollary (`advantage_feistel3RandomRoundsGame_randomFunctionGame_le`), the
+  3-round and 4-round PRF-to-Feistel hybrid bounds
+  (`advantage_feistel3KeyedGame_randomFunctionGame_le`,
+  `advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le`), and the 3-query
+  chosen-ciphertext attack against 3-round Feistel (`eval_feistel3_feistel3CCAAttack`, with the
+  equal-input sanity check `advantage_feistel3CCAAttack_self`, the finite positive gap
+  `(|Equiv.Perm (G × G)|)⁻¹ ≤ advantage` against the true bidirectional random-permutation game
+  `idealStrongGame` for `|G| ≥ 3` in `le_advantage_feistel3CCAAttack_idealStrongGame`, and the
+  separate exact `1 - |G|⁻¹` bound against the independent-table benchmark
+  `independentTableStrongGame` in `advantage_feistel3CCAAttack_independentTable`). Open in #748: a
+  quantitative nonnegligible CCA advantage lower bound against `idealStrongGame` as the block size
+  grows, and the 4-round information-theoretic bidirectional random-round collision bound.
   Open: the leftover hash lemma stated over `ε`-universal families, with `IsTwoUniversal` as its
   `1 / |Y|` case and the pseudoentropy clients updated, and Carter–Wegman MACs from Δ-universal
   hashing.

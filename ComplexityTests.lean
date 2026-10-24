@@ -119,6 +119,7 @@ import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
+import ComplexityTests.Crypto.LubyRackoff
 import ComplexityTests.Crypto.Lyubashevsky
 import ComplexityTests.Crypto.LyubashevskyNative
 import ComplexityTests.Crypto.MAC
