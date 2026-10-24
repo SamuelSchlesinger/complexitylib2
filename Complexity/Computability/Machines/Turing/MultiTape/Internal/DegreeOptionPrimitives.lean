@@ -40,4 +40,34 @@ theorem getD {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] (d : β
     ⟨c, fun a => ?_⟩⟩
   simpa using (htm a).length_output_le
 
+/-- Emit a single Boolean indicating whether the input contains a symbol. -/
+private def nonemptyT : Transducer Bool Bool where
+  q₀ := false
+  step q _ := (true, if q then [] else [true])
+  final q := if q then [] else [false]
+  length_step_le q _ := by cases q <;> simp
+  length_final_le q := by cases q <;> simp
+
+private lemma nonemptyT_run_true (w : List Bool) : nonemptyT.run true w = [] := by
+  induction w with
+  | nil => rfl
+  | cons b w ih =>
+    change [] ++ nonemptyT.run true w = []
+    simpa using ih
+
+/-- Whether a standard encoded option holds a value; the Boolean output has degree zero. -/
+theorem isSome (enc : β ↪ List Bool) :
+    ComputableInDegree (fun o : Option β => o.isSome) (encOption enc) encBool 1 0 := by
+  refine ⟨⟨fun o => 2 * (encOption enc o).length + 3, fun _ => 0,
+    ⟨3, fun _ => by simp only [pow_one]; omega⟩, DegreeBounded.const 0,
+    0, _, inferInstance, nonemptyT.toTM, fun o => ?_⟩,
+    ⟨1, fun o => by simp⟩⟩
+  have heq : encBool o.isSome = nonemptyT.run nonemptyT.q₀ (encOption enc o) := by
+    cases o with
+    | none => rfl
+    | some b =>
+      change [true] = [true] ++ nonemptyT.run true (enc b)
+      rw [nonemptyT_run_true, List.append_nil]
+  simpa only [heq] using nonemptyT.computesInTimeAndSpace_toTM (encOption enc o)
+
 end Turing.MultiTapeTM.ComputableInDegree
