@@ -316,6 +316,7 @@ import ComplexityTests.PlainIterationCutover
 import ComplexityTests.PlainProjection
 import ComplexityTests.PlainProviderCutover
 import ComplexityTests.PlainResourceBridge
+import ComplexityTests.PlainUnarySearchMembershipCutover
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
