@@ -69,8 +69,6 @@ theorem correct_fixedWidth_indCPA {E : Scheme} {secretWidth ciphertextWidth budg
       PolynomiallyBounded (fun n => 3 * secretWidth n + 1) ∧
       PolynomiallyBounded (fun n => ciphertextWidth n + 1) ∧
       Encryption.INDCPA (scheme D budget).keyGen (scheme D budget).encrypt := by
-  have hD := hD.tidy
-  have hbudget := hbudget.tidy
   exact ⟨correct D hE hwidth hboot budget, fixedWidth D hE hwidth hboot budget,
     (polynomiallyBounded_widths D hD).1, (polynomiallyBounded_widths D hD).2,
     indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length hbudget D⟩
@@ -91,11 +89,11 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
     (hevaluate : IsPPTOn
       (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
       encBits (fun p => E.evaluate p.1 p.2.1 p.2.2.1 p.2.2.2))
-    (hD : ComputableTidilyInPolyTime
+    (hD : ComputableInPolyTime
       (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
       encUnary (Boolean.encCircuit 1)) (hdepth : PolynomiallyBounded depth) :
     ∃ budget : ℕ → ℕ,
-      ComputableTidilyInPolyTime budget encUnary encUnary ∧
+      ComputableInPolyTime budget encUnary encUnary ∧
       (∀ n, depth n ≤ budget n) ∧
       (scheme D budget).Correct ∧
       (∀ n c, c.2.depth ≤ depth n → (scheme D budget).permitted n c) ∧
@@ -106,7 +104,7 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
       IsPPTOn encUnary (encPair encBits encBits) (scheme D budget).keyGen ∧
       IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
         (fun p => (scheme D budget).encrypt p.1 p.2.1 p.2.2) ∧
-      ComputableTidilyInPolyTime
+      ComputableInPolyTime
         (fun p : ℕ × List Bool × List Bool => (scheme D budget).decrypt p.1 p.2.1 p.2.2)
         (encPair encUnary (encPair encBits encBits)) encBool ∧
       IsPPTOn
@@ -118,13 +116,13 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
   have hbudget : ComputableTidilyInPolyTime budget encUnary encUnary := by
     dsimp only [budget]
     fun_prop
-  refine ⟨budget, hbudget, hmajorant, correct D hE hwidth hboot budget,
+  refine ⟨budget, .of_tidy hbudget, hmajorant, correct D hE hwidth hboot budget,
     (fun n c hc => hc.trans (hmajorant n)), fixedWidth D hE hwidth hboot budget,
     (polynomiallyBounded_widths D hD).1, (polynomiallyBounded_widths D hD).2,
     isPPTOn_scheme_keyGen hkeyGen hencrypt D budget (.of_tidy hbudget),
     isPPTOn_scheme_encrypt hencrypt D budget,
-    computableTidilyInPolyTime_scheme_decrypt D hD budget,
+    .of_tidy (computableInPolyTime_scheme_decrypt D hD budget),
     isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget hbudget,
-    indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length hbudget D⟩
+    indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length (.of_tidy hbudget) D⟩
 
 end Cslib.Crypto.Homomorphic.Leveled

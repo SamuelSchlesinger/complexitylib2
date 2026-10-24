@@ -250,15 +250,17 @@ theorem computableInPolyTime_preimageSearch_of_input {γ : Type} {encIn : γ ↪
 theorem computableInPolyTime_preimageSearch {D : ℕ × List Bool × List Bool → Bool}
     (hD : ComputableInPolyTime D encPreimagePrefix encBool) :
     ComputableInPolyTime (preimageSearch D) (encPair encUnary encBits) encBits :=
-  computableInPolyTime_preimageSearch_of_input (D := fun _ => D) (hD.comp (ComputableInPolyTime.snd _ _)) ComputableInPolyTime.id'
+  computableInPolyTime_preimageSearch_of_input (D := fun _ => D) (hD.comp
+    (ComputableInPolyTime.snd _ _)) ComputableInPolyTime.id'
 
 /-- **Inversion from the preimage-prefix problem.** If the preimage-prefix problem of `f` is in
 `P`, a deterministic polynomial-time algorithm, told the length of the input, finds a preimage of
 every image. -/
 theorem exists_inverse_of_preimagePrefix_mem_P (h : preimagePrefix f ∈ P encPreimagePrefix) :
     ∃ inverse : ℕ × List Bool → List Bool,
-      ComputableTidilyInPolyTime inverse (encPair encUnary encBits) encBits ∧
+      ComputableInPolyTime inverse (encPair encUnary encBits) encBits ∧
         ∀ x, f (inverse (x.length, f x)) = f x := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨D, hD, hDf⟩ := h
   exact ⟨preimageSearch D, (computableInPolyTime_preimageSearch hD).tidy,
     apply_preimageSearch hDf⟩
@@ -269,9 +271,10 @@ theorem exists_inverse_of_preimagePrefix_mem_P (h : preimagePrefix f ∈ P encPr
 told the length of the input, finds a preimage of every image, inverts with probability one. This
 is `Cslib.Crypto.not_oneWay_of_inverse` for an inverter certified on the pair encoding. -/
 theorem not_oneWay_of_lengthInverse (inverse : ℕ × List Bool → List Bool)
-    (hinverse : ComputableTidilyInPolyTime inverse (encPair encUnary encBits) encBits)
-    (h : ∀ x, f (inverse (x.length, f x)) = f x) : ¬ OneWay f :=
-  not_oneWay_of_inverse f (fun n y => inverse (n, y)) hinverse.isPPTOn.isPPT h
+    (hinverse : ComputableInPolyTime inverse (encPair encUnary encBits) encBits)
+    (h : ∀ x, f (inverse (x.length, f x)) = f x) : ¬ OneWay f := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hinverse
+  exact not_oneWay_of_inverse f (fun n y => inverse (n, y)) hinverse.isPPTOn.isPPT h
 
 /-- **One-way functions have hard preimage-prefix problems**: the preimage-prefix problem of a
 one-way function is not in `P`. -/

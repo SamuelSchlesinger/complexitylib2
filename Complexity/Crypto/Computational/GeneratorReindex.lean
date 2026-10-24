@@ -62,9 +62,12 @@ def parameter (length : ℕ → ℕ) (size : ℕ) : ℕ :=
 /-- Searching an efficient schedule up to an efficient unary input size is polynomial-time. -/
 @[program_certificate]
 theorem isPolyTime_parameter {α : Type} {input : α ↪ List Bool} {length : ℕ → ℕ} {size : α → ℕ}
-    (hlength : ComputableTidilyInPolyTime length encUnary encUnary)
-    (hsize : ComputableTidilyInPolyTime size input encUnary) :
-    ComputableTidilyInPolyTime (fun a => parameter length (size a)) input encUnary := by
+    (hlength : ComputableInPolyTime length encUnary encUnary)
+    (hsize : ComputableInPolyTime size input encUnary) :
+    ComputableInPolyTime (fun a => parameter length (size a)) input encUnary := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hlength
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hsize
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   unfold parameter
   polytime
 
@@ -104,10 +107,13 @@ def generate (length : ℕ → ℕ) (generator : ℕ → List Bool → List Bool
 
 /-- Generation composes bounded search, the supplied family, and padding. -/
 theorem isPolyTime_generate {length : ℕ → ℕ} {generator : ℕ → List Bool → List Bool}
-    (hlength : ComputableTidilyInPolyTime length encUnary encUnary)
-    (hgenerator : ComputableTidilyInPolyTime (fun a => generator a.1 a.2)
+    (hlength : ComputableInPolyTime length encUnary encUnary)
+    (hgenerator : ComputableInPolyTime (fun a => generator a.1 a.2)
       (encPair encUnary encBits) encBits) :
-    ComputableTidilyInPolyTime (generate length generator) encBits encBits := by
+    ComputableInPolyTime (generate length generator) encBits encBits := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hlength
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hgenerator
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   unfold generate
   polytime
 
@@ -188,7 +194,7 @@ theorem pseudorandomGenerator {length : ℕ → ℕ} {generator : ℕ → List B
     PseudorandomGenerator (generate length generator) (fun n => n + 1) := by
   have hlength := hlength.tidy
   have hgenerator := hgenerator.tidy
-  exact .of_indistinguishable (.of_tidy (isPolyTime_generate hlength hgenerator))
+  exact .of_indistinguishable (isPolyTime_generate (.of_tidy hlength) (.of_tidy hgenerator))
     (length_generate houtput) (fun _ => Nat.lt_succ_self _)
     (indistinguishable (.of_tidy hlength) hge (.of_tidy hgenerator) hsecure)
 

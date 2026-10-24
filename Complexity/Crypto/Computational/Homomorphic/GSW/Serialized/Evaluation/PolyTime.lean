@@ -83,7 +83,8 @@ theorem computableInPolyTime_decryptSerialized {secret ciphertext : α → List 
   have hsecret := hsecret.tidy
   have hciphertext := hciphertext.tidy
   refine .of_tidy ?_
-  have hvalue := (computableInPolyTime_decryptResidue (.of_tidy hn) (.of_tidy hw) (.of_tidy hsecret) (.of_tidy hciphertext)).tidy
+  have hvalue := (computableInPolyTime_decryptResidue (.of_tidy hn) (.of_tidy hw) (.of_tidy
+    hsecret) (.of_tidy hciphertext)).tidy
   have hq := binary_pow' (const 2) hw
   have hfour := binary_mul' (const 4) hvalue
   have htest : ComputableTidilyInPolyTime

@@ -127,13 +127,18 @@ theorem step_append (generator : List Bool → List Bool) {n : ℕ} (seed suffix
 prefix, so polynomial time follows without a length promise on the generator. -/
 theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
     {generator : α → List Bool → List Bool} {seedBits count : α → ℕ} {word : α → List Bool}
-    (hgenerator : ComputableTidilyInPolyTime (fun pair => generator pair.1 pair.2)
+    (hgenerator : ComputableInPolyTime (fun pair => generator pair.1 pair.2)
       (encPair input encBits) encBits)
-    (hseedBits : ComputableTidilyInPolyTime seedBits input encUnary)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hword : ComputableTidilyInPolyTime word input encBits) :
-    ComputableTidilyInPolyTime (fun a => iterate (generator a) (seedBits a) (count a) (word a))
+    (hseedBits : ComputableInPolyTime seedBits input encUnary)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => iterate (generator a) (seedBits a) (count a) (word a))
       input encBits := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hgenerator
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hseedBits
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hcount
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hword
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨c, d, hlength⟩ := hgenerator.polyBounded_length.exists_le
   have hpoly : PolyBounded (fun a => (input a).length)
       (fun a => c * (2 * (input a).length + seedBits a + 2) ^ d) :=

@@ -214,7 +214,8 @@ theorem isPPTOn_keyGenSerialized
   have hm := hm.tidy
   have hw := hw.tidy
   have hη := hη.tidy
-  have hsample := isPPTOn_sampleKeyInputsSerialized (.of_tidy hn) (.of_tidy hm) (.of_tidy hw) (.of_tidy hη)
+  have hsample := isPPTOn_sampleKeyInputsSerialized (.of_tidy hn) (.of_tidy hm) (.of_tidy hw)
+    (.of_tidy hη)
   unfold keyGenSerialized
   ppt
 

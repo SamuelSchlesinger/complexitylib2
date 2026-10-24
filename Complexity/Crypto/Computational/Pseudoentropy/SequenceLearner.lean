@@ -254,7 +254,7 @@ theorem exists_evaluator {Param : Type} {input : Param ↪ List Bool}
     (htest : IsPPTOn (encPair input (encList (encPair encBits encBool)))
       encBool (fun pair => test pair.1 pair.2)) :
     ∃ (c d : ℕ) (evaluate : List Bool → List Bool → Bool),
-      ComputableTidilyInPolyTime (fun pair => evaluate pair.1 pair.2)
+      ComputableInPolyTime (fun pair => evaluate pair.1 pair.2)
       (encPair encBits encBits) encBool ∧
       ∀ a {α : Type} (source : ProbComp α) (observe : α → List Bool) (truth : α → Bool)
           count width params state observation, observation.length ≤ width →
@@ -264,8 +264,9 @@ theorem exists_evaluator {Param : Type} {input : Param ↪ List Bool}
           ProbComp.eval (maskedSequencePredictor source observe truth
             (fun x => mask (signedPredict evaluate) params state (observe x, truth x))
             count (test a) observation) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨c, d, evaluate, hefficient, hrealize⟩ := SavedPrediction.exists_evaluator htest
-  refine ⟨c, d, evaluate, hefficient, ?_⟩
+  refine ⟨c, d, evaluate, hefficient.tidy, ?_⟩
   intro a α source observe truth count width params state observation hwidth
   simpa only [candidates, maskedSequencePredictor, maskedSample, bind_map_left, Functor.map_map,
     Function.comp_def, encBits, Function.Embedding.refl_apply] using

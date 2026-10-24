@@ -112,7 +112,8 @@ theorem isPPTOn_guessLink {n : α → ℕ} {state challengeCiphertext : α → L
   have hindex := hcontext.snd'.snd'.snd'.snd'.snd'
   have htarget := hpk.prod (ComputableTidilyInPolyTime.bitsReplicate false |>.comp
     (ComputableTidilyInPolyTime.length_bits.comp hpredecessor.snd'))
-  have hlinks := isPPTOn_spliceEncryptedKeyLink hencrypt (.of_tidy hn) (.of_tidy hbefore) (.of_tidy hpredecessor) (.of_tidy htarget)
+  have hlinks := isPPTOn_spliceEncryptedKeyLink hencrypt (.of_tidy hn) (.of_tidy hbefore)
+    (.of_tidy hpredecessor) (.of_tidy htarget)
     (.of_tidy hafter) (.of_tidy hindex) (.of_tidy hchallenge)
   have hpublic : ComputableTidilyInPolyTime
       (fun a => ((linkStateDecoder.decode (state a)).2.1 ++

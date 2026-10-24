@@ -65,14 +65,17 @@ efficient. All callbacks may capture the original input. -/
 theorem isPPTOn_selectPredictor {α : Type} {input : α ↪ List Bool}
     {count trials : α → ℕ} {source : α → ProbComp (List Bool × Bool)}
     {predict : α → ℕ → List Bool → ProbComp Bool} {observation : α → List Bool}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (htrials : ComputableTidilyInPolyTime trials input encUnary)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (htrials : ComputableInPolyTime trials input encUnary)
     (hsource : IsPPTOn input (encPair encBits encBool) source)
     (hpredict : IsPPTOn (encPair (encPair input encUnary) encBits)
       encBool (fun x => predict x.1.1 x.1.2 x.2))
-    (hobservation : ComputableTidilyInPolyTime observation input encBits) :
+    (hobservation : ComputableInPolyTime observation input encBits) :
     IsPPTOn input encBool (fun a =>
       selectPredictor (count a) (trials a) (source a) (predict a) (observation a)) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hcount
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at htrials
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hobservation
   have htrial := hpredict.preprocess
     (input := encPair (encPair input encUnary) (encPair encBits encBool))
     (prepare := fun x : (α × ℕ) × (List Bool × Bool) => (x.1, x.2.1)) (by fun_prop)
