@@ -123,7 +123,7 @@ theorem gateActivityFrom_zero (p : Program signature n g) :
 theorem gateActivity_le (p : Program signature n g) : gateActivity p ≤ g := by
   apply (gateActivity_le_iff p).mpr
   intro x
-  simpa only [Fintype.card_fin] using weight_le (p.eval interpretation x)
+  exact weight_le_length (p.eval interpretation x)
 
 /-- Restricting to the input-reading gates cannot increase activity. -/
 theorem inputActivity_le_gateActivity (p : Program signature n g) :

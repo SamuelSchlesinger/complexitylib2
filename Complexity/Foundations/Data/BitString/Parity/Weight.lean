@@ -8,14 +8,14 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.Parity
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 
 /-!
 # Parity and Hamming weight
 
 The parity of a bit string is the parity of its Hamming weight (`Cslib.parity_eq_decide_weight`),
 so parity is a symmetric Boolean function (`Cslib.isSymmetric_parity`). This bridge is kept apart
-from both `BitString.Parity` and `BitString.Weight`, so that neither of them imports the other.
+from both `BitString.Parity` and `BitString.Threshold`, so that neither of them imports the other.
 
 ## Main results
 

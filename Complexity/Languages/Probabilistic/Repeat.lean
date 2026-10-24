@@ -11,6 +11,7 @@ public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Probability.BitString.List
 public import Complexity.Probability.Product
 public import Complexity.Probability.IID
+import Complexity.Foundations.Data.BitString.Weight
 import Mathlib.Algebra.BigOperators.Fin
 
 /-!
@@ -186,12 +187,7 @@ theorem eval_countTrue (count : ℕ) (program : ProbComp Bool) :
   rw [OracleComp.countTrue, eval_map, eval_replicate, PMF.map_comp]
   congr 1
   funext bits
-  change (List.ofFn bits).count true = ∑ i, (bits i).toNat
-  induction count with
-  | zero => simp
-  | succ count ih =>
-    rw [List.ofFn_succ, List.count_cons, ih, Fin.sum_univ_succ]
-    cases bits 0 <;> simp [Nat.add_comm]
+  exact (BitString.count_true_ofFn bits).trans (BitString.weight_eq_sum_toNat bits)
 
 /-- Every supported result is bounded by the number of trials, including zero trials. -/
 theorem countTrue_le (count : ℕ) (program : ProbComp Bool) {successes : ℕ}

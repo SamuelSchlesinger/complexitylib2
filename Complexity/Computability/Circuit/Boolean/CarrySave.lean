@@ -509,8 +509,8 @@ theorem val_eval_weightCircuit (x : BitString k) :
       BitString.weight x := by
   set w := Nat.clog 2 (k + 1)
   have hlt : BitString.weight x < 2 ^ w :=
-    (BitString.weight_le x).trans_lt ((Fintype.card_fin k).trans_lt
-      ((Nat.lt_succ_self k).trans_le (Nat.le_pow_clog one_lt_two (k + 1))))
+    (BitString.weight_le_length x).trans_lt
+      ((Nat.lt_succ_self k).trans_le (Nat.le_pow_clog one_lt_two (k + 1)))
   have heval :
       ((BitString.equivFin w ((weightCircuit k).eval interpretation x) : Fin (2 ^ w)) : ℕ) <
         2 ^ w := (BitString.equivFin w ((weightCircuit k).eval interpretation x)).isLt

@@ -12,7 +12,7 @@ import Complexity.Foundations.Data.BitString.Enumeration
 import Complexity.Foundations.Data.BitString.List
 import Complexity.Foundations.Data.BitString.List.Binary
 import Complexity.Foundations.Data.BitString.Parity
-import Complexity.Foundations.Data.BitString.Weight
+import Complexity.Foundations.Data.BitString.Threshold
 
 /-! # Checked examples of the core bit-string API
 

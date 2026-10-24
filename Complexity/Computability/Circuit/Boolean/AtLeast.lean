@@ -9,7 +9,7 @@ module
 
 public import Cslib.Computability.Circuit.Boolean.Synthesis
 public import Cslib.Computability.Circuit.Boolean.Complexity
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
 import Mathlib.Algebra.Group.Nat.Defs

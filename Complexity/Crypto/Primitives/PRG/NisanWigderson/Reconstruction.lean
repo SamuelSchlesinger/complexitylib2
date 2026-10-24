@@ -9,7 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
-public import Complexity.Foundations.Data.ListDecoding
+public import Complexity.Foundations.Data.Code.ListDecoding
 import Complexity.Foundations.Data.Finset.Sampling
 
 /-!

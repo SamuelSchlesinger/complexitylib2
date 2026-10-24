@@ -13,58 +13,57 @@ public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Data.Fintype.Sum
 public import Mathlib.Data.Nat.Choose.Basic
 public import Mathlib.InformationTheory.Hamming
+import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Fintype.Powerset
 
 /-!
-# Hamming weight and symmetric Boolean functions
+# Hamming weight and binary Hamming balls
 
 The weight of a Boolean vector is its number of true coordinates (`BitString.weight`), Mathlib's
 Hamming norm with `false` as `0` (`BitString.weight_eq_hammingNorm`), so the Hamming distance of two
 bit strings is the weight of their sum (`BitString.hammingDist_eq_weight_add`)
-[MacWilliams and Sloane, Chapter 1][MacWilliamsSloane1977]. The threshold function
-`threshold n j` says that at least `j` of `n` bits are true, and majority (`majority`, at least
-half) and strict majority (`strictMajority`, more than half) are threshold functions. A Boolean
-function is *symmetric* when it depends only on the weight of its input
-(`BooleanFunction.IsSymmetric`), and then it factors through the weight
-(`BooleanFunction.IsSymmetric.exists_eq_comp_weight`) [Jukna, Chapter 1][Jukna2012].
+[MacWilliams and Sloane, Chapter 1][MacWilliamsSloane1977]. For `x : BitString n`, the weight is the
+number of `true` entries of `List.ofFn x` (`BitString.count_true_ofFn`) and is at most `n`
+(`BitString.weight_le_length`). The words of weight `k` in `BitString n` form the `k`-th layer of
+the cube (`BitString.weightLayer`), of size `n.choose k` (`BitString.card_weightLayer`), and the
+words of weight at most `e` form a Hamming ball of size `B(n, e) = ∑ j ∈ range (e + 1), n.choose j`
+(`BitString.ballSize`, `BitString.card_filter_weight_le`,
+`BitString.card_filter_weight_le_eq_ballSize`).
 
 ## Main definitions
 
-* `Cslib.BitString.weight`: the number of true coordinates, and `Cslib.BitString.weightLayer` the
-  strings of a given weight.
-* `Cslib.threshold`, `Cslib.majority`, `Cslib.strictMajority`: threshold functions.
-* `Cslib.BooleanFunction.IsSymmetric`: Boolean functions depending only on the weight.
+* `Cslib.BitString.weight`: the number of true coordinates.
+* `Cslib.BitString.weightLayer`: the strings of `n` bits of a given weight.
+* `Cslib.BitString.ballSize`: the size `∑ j ∈ range (e + 1), q.choose j` of the binary Hamming ball
+  of radius `e` in `BitString q`.
 
 ## Main results
 
 * `Cslib.BitString.weight_eq_hammingNorm`, `Cslib.BitString.hammingDist_eq_weight_add`: the
   weight is the Hamming norm.
-* `Cslib.BitString.monotone_weight`, `Cslib.monotone_threshold`: the weight and threshold
-  functions are monotone.
+* `Cslib.BitString.weight_le`, `Cslib.BitString.weight_le_length`: the weight is at most the number
+  of coordinates.
+* `Cslib.BitString.count_true_ofFn`: `(List.ofFn x).count true = weight x`.
+* `Cslib.BitString.monotone_weight`: the weight is monotone.
 * `Cslib.BitString.card_weightLayer`: there are `n.choose k` strings of `n` bits of weight `k`.
-* `Cslib.BitString.card_filter_weight_le`: the exact binomial-sum size of a Hamming ball.
+* `Cslib.BitString.card_filter_weight_le`, `Cslib.BitString.card_filter_weight_le_eq_ballSize`: the
+  exact binomial-sum size of a Hamming ball.
+* `Cslib.BitString.ballSize_succ_succ`: Pascal recurrence for Hamming-ball sizes.
 * `Cslib.BitString.card_image_le_sum_choose`: bound a finite family of words by a Hamming ball.
-* `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
-* `Cslib.BitString.strictMajorityOn`: strict majority on a finite set of voting indices.
-* `Cslib.le_card_ne_of_strictMajority_ne`: a wrong majority requires at least half wrong votes.
-* `Cslib.isSymmetric_threshold`: threshold functions are symmetric.
 
 ## References
 
 * [F. J. MacWilliams, N. J. A. Sloane, *The Theory of Error-Correcting Codes*]
   [MacWilliamsSloane1977]
-* [S. Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012]
 -/
 
 @[expose] public section
 
-namespace Cslib
+namespace Cslib.BitString
 
 open Finset
-
-namespace BitString
 
 variable {ι : Type*} [Fintype ι]
 
@@ -89,6 +88,10 @@ theorem hammingDist_eq_weight_add (x y : ι → Bool) : hammingDist x y = weight
 /-- The weight is at most the number of coordinates. -/
 theorem weight_le (x : ι → Bool) : weight x ≤ Fintype.card ι :=
   card_filter_le _ _
+
+/-- The weight of an `n`-bit string is at most `n`. -/
+theorem weight_le_length {n : ℕ} (x : BitString n) : weight x ≤ n := by
+  simpa using weight_le x
 
 /-- Complementary vectors have weights adding up to the number of coordinates. -/
 theorem weight_not_add (x : ι → Bool) :
@@ -117,6 +120,20 @@ theorem monotone_weight : Monotone (weight : (ι → Bool) → ℕ) := fun x y h
 @[simp] theorem weight_sum_elim {κ : Type*} [Fintype κ] (x : ι → Bool) (y : κ → Bool) :
     weight (Sum.elim x y) = weight x + weight y := by
   simp only [weight_eq_sum_toNat, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr]
+
+/-- Splitting off the first bit of a word `z : Fin (q + 1) → Bool` in its Hamming weight. -/
+theorem weight_cons_succ {q : ℕ} (z : Fin (q + 1) → Bool) :
+    weight z = (z 0).toNat + weight (fun i : Fin q => z i.succ) := by
+  simp only [weight_eq_sum_toNat, Fin.sum_univ_succ]
+
+/-- The number of `true` entries in `List.ofFn x` is the weight of `x`. -/
+@[simp] theorem count_true_ofFn {n : ℕ} (x : BitString n) :
+    (List.ofFn x).count true = weight x := by
+  induction n with
+  | zero => simp [weight]
+  | succ n ih =>
+    rw [List.ofFn_succ, List.count_cons, ih, weight_cons_succ]
+    cases x 0 <;> simp [Nat.add_comm]
 
 /-- Setting a false coordinate to true adds one to the weight. -/
 theorem weight_update_true [DecidableEq ι] {x : ι → Bool} {i : ι} (hi : x i = false) :
@@ -170,6 +187,45 @@ theorem card_filter_weight_le [DecidableEq ι] (e : ℕ) :
     (Finset.sum_card_fiberwise_eq_card_filter
       (Finset.univ : Finset (ι → Bool)) (Finset.range (e + 1)) weight).symm
 
+/-- Size `B(q, e) = ∑ j ∈ range (e + 1), q.choose j` of the Hamming ball of radius `e` in
+`{0, 1}^q`. -/
+def ballSize (q e : ℕ) : ℕ :=
+  ∑ j ∈ range (e + 1), q.choose j
+
+/-- The Hamming ball of any radius in the cube of dimension `0` has one point. -/
+@[simp]
+theorem ballSize_zero_left (e : ℕ) : ballSize 0 e = 1 := by
+  induction e with
+  | zero => simp [ballSize]
+  | succ e ih =>
+    rw [ballSize, sum_range_succ, Nat.choose_zero_succ, add_zero]
+    exact ih
+
+/-- The Hamming ball of radius `0` has one point. -/
+@[simp]
+theorem ballSize_zero_right (q : ℕ) : ballSize q 0 = 1 := by
+  simp [ballSize]
+
+/-- Hamming balls are nonempty: `0 < ballSize q e`. -/
+theorem ballSize_pos (q e : ℕ) : 0 < ballSize q e := by
+  rw [ballSize, sum_range_succ']
+  simp
+
+/-- Pascal recurrence `B(q + 1, e + 1) = B(q, e + 1) + B(q, e)` for Hamming-ball sizes. -/
+theorem ballSize_succ_succ (q e : ℕ) :
+    ballSize (q + 1) (e + 1) = ballSize q (e + 1) + ballSize q e := by
+  have h1 := sum_range_succ' (fun k => (q + 1).choose k) (e + 1)
+  have h2 := sum_range_succ' (fun k => q.choose k) (e + 1)
+  simp only [Nat.choose_zero_right, Nat.choose_succ_succ, Nat.succ_eq_add_one,
+    sum_add_distrib] at h1 h2
+  unfold ballSize
+  omega
+
+/-- The number of words `z : Fin q → Bool` of weight at most `e` equals `ballSize q e`. -/
+theorem card_filter_weight_le_eq_ballSize (q e : ℕ) :
+    #{z : Fin q → Bool | weight z ≤ e} = ballSize q e := by
+  simpa [ballSize] using card_filter_weight_le (ι := Fin q) e
+
 /-- The weight of `x` as a number of true coordinates. -/
 theorem weight_eq_card_subtype (x : ι → Bool) : weight x = Fintype.card {i // x i = true} :=
   (Fintype.card_subtype _).symm
@@ -212,159 +268,4 @@ theorem card_weightLayer (n k : ℕ) : #(weightLayer n k) = n.choose k := by
 theorem weightLayer_nonempty {n k : ℕ} (hk : k ≤ n) : (weightLayer n k).Nonempty :=
   card_pos.1 (by rw [card_weightLayer]; exact Nat.choose_pos hk)
 
-omit [Fintype ι] in
-/-- Strict majority of the coordinates in `s`, choosing `false` on a tie. -/
-def strictMajorityOn (s : Finset ι) (vote : ι → Bool) : Bool :=
-  decide (s.card / 2 < (s.filter fun i => vote i).card)
-
-omit [Fintype ι] in
-/-- If strict majority is wrong, at most half of the votes are correct. -/
-theorem card_filter_eq_le_half_of_strictMajorityOn_ne (s : Finset ι) (vote : ι → Bool)
-    (bit : Bool) (h : strictMajorityOn s vote ≠ bit) :
-    (s.filter fun i => vote i = bit).card ≤ s.card / 2 := by
-  have hsplit := card_filter_add_card_filter_not (s := s) (fun i => vote i = true)
-  cases bit with
-  | true => simpa [strictMajorityOn] using h
-  | false =>
-    simp only [Bool.not_eq_true] at hsplit
-    have : s.card / 2 < (s.filter fun i => vote i = true).card := by
-      simpa [strictMajorityOn] using h
-    lia
-
-omit [Fintype ι] in
-/-- A nonempty constant vote has its constant value. -/
-@[simp] theorem strictMajorityOn_const (s : Finset ι) (hs : s.Nonempty) (bit : Bool) :
-    strictMajorityOn s (fun _ => bit) = bit := by
-  cases bit <;> simp [strictMajorityOn, Nat.div_lt_self hs.card_pos (by decide : 1 < 2)]
-
-end BitString
-
-open BitString
-
-variable {n : ℕ}
-
-/-- The threshold function `Th^n_j` on `n` bits: whether at least `j` of them are true. -/
-def threshold (n j : ℕ) : BooleanFunction n :=
-  fun x => decide (j ≤ weight x)
-
-/-- The majority function on `n` bits: whether at least half of them are true, that is, the
-threshold function `Th^n_⌈n/2⌉`. -/
-def majority (n : ℕ) : BooleanFunction n :=
-  threshold n ((n + 1) / 2)
-
-/-- The strict majority function on `n` bits: whether more than half of them are true, so that a
-tie is false. It is the threshold function `Th^n_{⌊n/2⌋+1}`. -/
-def strictMajority (n : ℕ) : BooleanFunction n :=
-  threshold n (n / 2 + 1)
-
-/-- `threshold n j x` is the decision of `j ≤ weight x`. -/
-theorem threshold_apply (j : ℕ) (x : BitString n) : threshold n j x = decide (j ≤ weight x) :=
-  rfl
-
-/-- The threshold function `Th^n_j` is true exactly when at least `j` bits are true. -/
-theorem threshold_eq_true_iff {j : ℕ} {x : BitString n} :
-    threshold n j x = true ↔ j ≤ weight x := by
-  simp [threshold]
-
-/-- Threshold functions are monotone. -/
-theorem monotone_threshold (j : ℕ) : Monotone (threshold n j) := fun _ _ hxy => by
-  rw [threshold_apply, threshold_apply]
-  exact Bool.le_iff_imp.2 fun h =>
-    decide_eq_true ((of_decide_eq_true h).trans (monotone_weight hxy))
-
-/-- With cutoff `0`, the threshold function is the constant `true`. -/
-@[simp] theorem threshold_zero_right (x : BitString n) : threshold n 0 x = true :=
-  threshold_eq_true_iff.2 (Nat.zero_le _)
-
-/-- With a cutoff above `n`, the threshold function is the constant `false`. -/
-theorem threshold_eq_false_of_lt {j : ℕ} (h : n < j) (x : BitString n) :
-    threshold n j x = false := by
-  have : weight x ≤ n := by simpa using weight_le x
-  rw [← Bool.not_eq_true, threshold_eq_true_iff]
-  omega
-
-/-- With cutoff `1`, the threshold function is the disjunction. -/
-theorem threshold_one_right (x : BitString n) : threshold n 1 x = decide (∃ i, x i = true) := by
-  rw [Bool.eq_iff_iff, threshold_eq_true_iff, decide_eq_true_iff, weight, one_le_card,
-    filter_nonempty_iff]
-  simp
-
-/-- With cutoff `n`, the threshold function is the conjunction. -/
-theorem threshold_self (x : BitString n) : threshold n n x = decide (∀ i, x i = true) := by
-  have h : weight x ≤ n := by simpa using weight_le x
-  have key : #{i | x i = true} = n ↔ ({i | x i = true} : Finset (Fin n)) = univ := by
-    rw [← card_eq_iff_eq_univ, Fintype.card_fin]
-  rw [Bool.eq_iff_iff, threshold_eq_true_iff, decide_eq_true_iff,
-    show n ≤ weight x ↔ weight x = n by omega, weight, key, filter_eq_self]
-  simp
-
-/-- Majority is true exactly when at least `⌈n/2⌉ = (n + 1) / 2` bits are true. -/
-theorem majority_eq_true_iff {x : BitString n} :
-    majority n x = true ↔ (n + 1) / 2 ≤ weight x :=
-  threshold_eq_true_iff
-
-/-- Strict majority is true exactly when more than `n / 2` bits are true. -/
-theorem strictMajority_eq_true_iff {x : BitString n} :
-    strictMajority n x = true ↔ n / 2 < weight x :=
-  threshold_eq_true_iff
-
-/-- Strict majority is false exactly when at most `n / 2` bits are true. -/
-theorem strictMajority_eq_false_iff {x : BitString n} :
-    strictMajority n x = false ↔ weight x ≤ n / 2 := by
-  rw [← Bool.not_eq_true, strictMajority_eq_true_iff, not_lt]
-
-/-- Strict majority on all coordinates agrees with the finite-set operation. -/
-theorem strictMajority_eq_strictMajorityOn (x : BitString n) :
-    strictMajority n x = BitString.strictMajorityOn univ x := by
-  apply Bool.eq_iff_iff.mpr
-  simp [strictMajority_eq_true_iff, BitString.strictMajorityOn, weight]
-
-/-- If the strict majority of `n` bits is not `y`, at least `n - n / 2` differ from `y`. -/
-theorem le_card_ne_of_strictMajority_ne {x : BitString n} {y : Bool}
-    (h : strictMajority n x ≠ y) : n - n / 2 ≤ #{i | x i ≠ y} := by
-  rw [strictMajority_eq_strictMajorityOn] at h
-  have hcorrect := card_filter_eq_le_half_of_strictMajorityOn_ne univ x y h
-  have hsplit := card_filter_add_card_filter_not (s := univ) (fun i => x i = y)
-  simp only [card_univ, Fintype.card_fin] at hcorrect hsplit
-  lia
-
-/-- Strict majority of the negated bits is the negation of majority: fewer than half of the bits
-are true exactly when not at least half of them are. -/
-theorem strictMajority_not (x : BitString n) :
-    strictMajority n (fun i => !x i) = !majority n x := by
-  have h := weight_not x
-  have hle := weight_le x
-  simp only [Fintype.card_fin] at h hle
-  rw [Bool.eq_iff_iff, strictMajority_eq_true_iff, Bool.not_eq_true', ← Bool.not_eq_true,
-    majority_eq_true_iff, h]
-  omega
-
-namespace BooleanFunction
-
-/-- A Boolean function is *symmetric* when it depends only on the weight of its input. -/
-def IsSymmetric (f : BooleanFunction n) : Prop :=
-  ∀ x y, weight x = weight y → f x = f y
-
-/-- A symmetric function factors through the weight. -/
-theorem IsSymmetric.exists_eq_comp_weight {f : BooleanFunction n} (hf : f.IsSymmetric) :
-    ∃ a : ℕ → Bool, ∀ x, a (weight x) = f x := by
-  classical
-  refine ⟨fun w => decide (∃ x, weight x = w ∧ f x = true), fun x => Bool.eq_iff_iff.2 ?_⟩
-  simp only [decide_eq_true_eq]
-  exact ⟨fun ⟨y, hy, hfy⟩ => hf y x hy ▸ hfy, fun hx => ⟨x, rfl, hx⟩⟩
-
-end BooleanFunction
-
-/-- Threshold functions are symmetric. -/
-theorem isSymmetric_threshold (j : ℕ) : (threshold n j).IsSymmetric := fun x y h => by
-  simp only [threshold, h]
-
-/-- Majority is symmetric. -/
-theorem isSymmetric_majority : (majority n).IsSymmetric :=
-  isSymmetric_threshold _
-
-/-- Strict majority is symmetric. -/
-theorem isSymmetric_strictMajority : (strictMajority n).IsSymmetric :=
-  isSymmetric_threshold _
-
-end Cslib
+end Cslib.BitString

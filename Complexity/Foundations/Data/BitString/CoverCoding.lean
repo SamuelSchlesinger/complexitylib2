@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.Weight
-import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Cover's enumerative coding for weight-bounded Boolean words
@@ -20,17 +19,12 @@ Hamming weight at most `e` and indices below the Hamming-ball size
 
 ## Main definitions
 
-* `Cslib.BitString.ballSize`: the size `∑ j ∈ range (e + 1), q.choose j` of the binary Hamming ball
-  of radius `e` in `Fin q → Bool`.
 * `Cslib.BitString.coverRank`: Cover's lexicographic rank of a weight-bounded Boolean word.
 * `Cslib.BitString.coverDecode`: Cover's greedy threshold decoder recovering a word of weight at
   most `e` from its rank below `ballSize q e`.
 
 ## Main results
 
-* `Cslib.BitString.ballSize_succ_succ`: Pascal recurrence for Hamming-ball sizes.
-* `Cslib.BitString.card_filter_weight_le_eq_ballSize`: the number of words in `Fin q → Bool` of
-  weight at most `e` equals `ballSize q e`.
 * `Cslib.BitString.coverRank_lt_ballSize`, `Cslib.BitString.weight_coverDecode_le`,
   `Cslib.BitString.coverRank_coverDecode`, `Cslib.BitString.coverDecode_coverRank`: mutual inverse
   and weight bounds for Cover's enumerative coding.
@@ -47,45 +41,6 @@ Hamming weight at most `e` and indices below the Hamming-ball size
 namespace Cslib.BitString
 
 open Finset
-
-/-- Size `B(q, e) = ∑ j ∈ range (e + 1), q.choose j` of the Hamming ball of radius `e` in
-`{0, 1}^q`. -/
-def ballSize (q e : ℕ) : ℕ :=
-  ∑ j ∈ range (e + 1), q.choose j
-
-/-- The Hamming ball of any radius in the cube of dimension `0` has one point. -/
-@[simp]
-theorem ballSize_zero_left (e : ℕ) : ballSize 0 e = 1 := by
-  induction e with
-  | zero => simp [ballSize]
-  | succ e ih =>
-    rw [ballSize, sum_range_succ, Nat.choose_zero_succ, add_zero]
-    exact ih
-
-/-- The Hamming ball of radius `0` has one point. -/
-@[simp]
-theorem ballSize_zero_right (q : ℕ) : ballSize q 0 = 1 := by
-  simp [ballSize]
-
-/-- Hamming balls are nonempty: `0 < ballSize q e`. -/
-theorem ballSize_pos (q e : ℕ) : 0 < ballSize q e := by
-  rw [ballSize, sum_range_succ']
-  simp
-
-/-- Pascal recurrence `B(q + 1, e + 1) = B(q, e + 1) + B(q, e)` for Hamming-ball sizes. -/
-theorem ballSize_succ_succ (q e : ℕ) :
-    ballSize (q + 1) (e + 1) = ballSize q (e + 1) + ballSize q e := by
-  have h1 := sum_range_succ' (fun k => (q + 1).choose k) (e + 1)
-  have h2 := sum_range_succ' (fun k => q.choose k) (e + 1)
-  simp only [Nat.choose_zero_right, Nat.choose_succ_succ, Nat.succ_eq_add_one,
-    sum_add_distrib] at h1 h2
-  unfold ballSize
-  omega
-
-/-- The number of words `z : Fin q → Bool` of weight at most `e` equals `ballSize q e`. -/
-theorem card_filter_weight_le_eq_ballSize (q e : ℕ) :
-    #{z : Fin q → Bool | weight z ≤ e} = ballSize q e := by
-  simpa [ballSize] using card_filter_weight_le (ι := Fin q) e
 
 /-- Cover's lexicographic rank of a word `z : Fin q → Bool` among words of weight at most `e`. -/
 def coverRank : {q : ℕ} → ℕ → (Fin q → Bool) → ℕ
@@ -107,11 +62,6 @@ def coverDecode : (q e t : ℕ) → Fin q → Bool
     Fin.cases b (fun j =>
       if b then coverDecode q e (t - ballSize q (e + 1)) j
       else coverDecode q (e + 1) t j) i
-
-/-- Splitting off the first bit of a word `z : Fin (q + 1) → Bool` in its Hamming weight. -/
-theorem weight_cons_succ {q : ℕ} (z : Fin (q + 1) → Bool) :
-    weight z = (z 0).toNat + weight (fun i : Fin q => z i.succ) := by
-  simp only [weight_eq_sum_toNat, Fin.sum_univ_succ]
 
 /-- Every word `z : Fin q → Bool` of weight at most `e` has `coverRank e z < ballSize q e`. -/
 theorem coverRank_lt_ballSize {q : ℕ} (e : ℕ) (z : Fin q → Bool) (hz : weight z ≤ e) :

@@ -112,7 +112,7 @@ private theorem sum_signed_toNat (n w : ℕ) :
 theorem weight_signedLayer (x : BitString n) :
     weight (fun j : Fin n => decide (j.val % 2 = 1) ^^ threshold n (j + 1) x) =
       n / 2 + weight x % 2 := by
-  have h : weight x ≤ n := by simpa using weight_le x
+  have h := weight_le_length x
   rw [weight_eq_sum_toNat]
   simp only [threshold_apply]
   rw [Fin.sum_univ_eq_sum_range (fun j => (decide (j % 2 = 1) ^^ decide (j + 1 ≤ weight x)).toNat),

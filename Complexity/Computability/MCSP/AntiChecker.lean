@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.MCSP.Succinct
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 import Complexity.Computability.Circuit.Complexity
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Data.Nat.Choose.Bounds

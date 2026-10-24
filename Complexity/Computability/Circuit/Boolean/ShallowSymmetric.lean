@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Construction
+public import Complexity.Foundations.Data.BitString.Threshold
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds

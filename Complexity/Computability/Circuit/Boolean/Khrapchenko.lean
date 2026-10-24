@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.Parity
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 public import Complexity.Foundations.Data.Hamming
 public import Mathlib.Data.Nat.Log
 import Mathlib.Algebra.BigOperators.Fin

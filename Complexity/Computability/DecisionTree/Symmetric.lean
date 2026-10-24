@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.DecisionTree.Basic
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 
 /-!
 # Decision trees for symmetric functions
@@ -161,12 +161,12 @@ theorem complexity_eq_card_of_isSymmetric {f : BooleanFunction n} (hf : f.IsSymm
     (hnc : ¬ Function.IsConst f) : complexity f = n := by
   refine le_antisymm ((complexity_le_card f).trans_eq (Fintype.card_fin n)) ?_
   obtain ⟨g, hg⟩ := hf.exists_eq_comp_weight
-  have hw (x : BitString n) : weight x ≤ n := by simpa using weight_le x
   obtain ⟨x, y, hxy⟩ : ∃ x y, f x ≠ f y := by
     by_contra h
     push Not at h
     exact hnc h
-  obtain ⟨m, hm, hgm⟩ := exists_add_one_le_ne (g := g) (hw x) (hw y) (by rwa [hg, hg])
+  obtain ⟨m, hm, hgm⟩ := exists_add_one_le_ne (g := g) (weight_le_length x) (weight_le_length y)
+    (by rwa [hg, hg])
   refine le_complexity_iff.2 fun t ht => ?_
   simpa using card_le_depth_of_eval_eq_comp_card_filter t univ (fun _ => false) g m
     (fun z _ => by rw [ht z, ← hg z]; rfl) (by simpa using hm) hgm

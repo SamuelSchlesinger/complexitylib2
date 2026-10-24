@@ -107,6 +107,6 @@ theorem weight_eq_of_shiftTests {n : ℕ} {ι : Type*} [Fintype ι]
     rw [← Nat.cast_sum, sum_blockWeight] at h
     exact h
   exact hmod.eq_of_lt_of_lt
-    ((weight_le x).trans_lt (by simpa using hn)) (by omega)
+    ((weight_le_length x).trans_lt hn) (by omega)
 
 end Cslib.Circuits.Boolean.ShallowSymmetric

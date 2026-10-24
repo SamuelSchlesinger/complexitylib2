@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.AC0
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 import Complexity.Foundations.Data.BitString.Parity.Weight
 import Complexity.Foundations.Data.Fin.Append
 import Mathlib.Data.Fintype.Fin
@@ -189,7 +189,7 @@ theorem computes_parityCircuitOfMajority :
     Circuit.eval_mapOp (I := Unbounded.interpretation), Circuit.eval_oneGate, Circuit.eval_pi]
   simp only [single, interpretation_or, id]
   set c := BitString.weight x
-  have hc : c ≤ n := by simpa using BitString.weight_le x
+  have hc : c ≤ n := BitString.weight_le_length x
   rw [parity_eq_decide_weight, Bool.eq_iff_iff, decide_eq_true_iff, decide_eq_true_iff]
   constructor
   · rintro ⟨k, hk⟩
