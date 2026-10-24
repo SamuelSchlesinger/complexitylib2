@@ -90,7 +90,10 @@ theorem combinedGenerate_indistinguishable {pair : SamplablePair} {gap : ℕ →
           (saved.evaluate n)))
       (fun n => uniformList (size (saved.length n) (densityBound n) * common n + 1)) := by
   obtain ⟨choose, hchoose, hsecure⟩ := exists_secure_amplified_choice hpair saved bounds hgap
-  obtain ⟨hobservation, hdensity, hcommon, _, _⟩ := bounds
+  obtain ⟨hobservationPlain, hdensityPlain, hcommonPlain, _, _⟩ := bounds
+  have hobservation := hobservationPlain.tidy
+  have hdensity := hdensityPlain.tidy
+  have hcommon := hcommonPlain.tidy
   have hlength := saved.length_isPolyTime.tidy
   unfold combinedGenerate
   refine GeneratorXor.indistinguishable (choose := choose)

@@ -391,13 +391,13 @@ theorem lamportVerify_lamportSign (f : List Bool → List Bool) (n : ℕ)
 
 /-- Lamport's one-time digital signature scheme built from any polynomial-time function `f`. -/
 noncomputable def lamportScheme (f : List Bool → List Bool)
-    (hf : ComputableTidilyInPolyTime f encBits encBits) : SignatureScheme where
+    (hf : ComputableInPolyTime f encBits encBits) : SignatureScheme where
   keyGen := lamportKeyGen f
   sign := lamportSign
   verify := lamportVerify f
-  keyGen_ppt := isPPTOn_lamportKeyGen hf
+  keyGen_ppt := isPPTOn_lamportKeyGen hf.tidy
   sign_ppt := isPPTOn_lamportSign
-  verify_polyTime := .of_tidy (computableTidilyInPolyTime_lamportVerify hf)
+  verify_polyTime := .of_tidy (computableTidilyInPolyTime_lamportVerify hf.tidy)
   verify_sign := lamportVerify_lamportSign f
 
 /-! ### Security reduction for Lamport's one-time signature scheme -/
@@ -582,7 +582,7 @@ theorem isPPTOn_lamportSimKeys {f : List Bool → List Bool}
 uniformly sampled index `j < dyadicSize (2 * n)`. When `j < 2 * n`, embed `y` in slot `j` of a
 Lamport public key and run a one-time forger; otherwise return the empty word. -/
 noncomputable def lamportInverter (f : List Bool → List Bool)
-    (hf : ComputableTidilyInPolyTime f encBits encBits) (adversary : Forger)
+    (hf : ComputableInPolyTime f encBits encBits) (adversary : Forger)
     (n : ℕ) (y : List Bool) : ProbComp (List Bool) := do
   let j ← sampleDyadicIndex (2 * n)
   if j < 2 * n then do
@@ -597,8 +597,8 @@ noncomputable def lamportInverter (f : List Bool → List Bool)
 theorem isPPT_lamportInverter {f : List Bool → List Bool}
     (hf : ComputableTidilyInPolyTime f encBits encBits) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
-    IsPPT encBits (lamportInverter f hf adversary) := by
-  have hrun_base := (lamportScheme f hf).isPPTOn_run_oneTimeSigningOracle hadversary
+    IsPPT encBits (lamportInverter f (.of_tidy hf) adversary) := by
+  have hrun_base := (lamportScheme f (.of_tidy hf)).isPPTOn_run_oneTimeSigningOracle hadversary
   have hj : IsPPTOn (encPair encUnary encBits) encUnary
       (fun p : ℕ × List Bool => sampleDyadicIndex (2 * p.1)) :=
     isPPTOn_sampleDyadicIndex (by polytime)
@@ -609,7 +609,7 @@ theorem isPPT_lamportInverter {f : List Bool → List Bool}
       (fun r : ((ℕ × List Bool) × ℕ) × (List Bool × List Bool) => do
         let out ← (OracleComp.interpret
           (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
-            ((lamportScheme f hf).oneTimeSigningOracle r.2.2))
+            ((lamportScheme f (.of_tidy hf)).oneTimeSigningOracle r.2.2))
           (adversary r.1.1.1 r.2.1)).run []
         return (frames out.1.2).getD (r.1.2 / 2) []) := by
     have hprep : ComputableTidilyInPolyTime
@@ -652,7 +652,7 @@ theorem isPPT_lamportInverter {f : List Bool → List Bool}
           let keys ← lamportSimKeys f q.1.1 q.2 q.1.2
           let out ← (OracleComp.interpret
             (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
-              ((lamportScheme f hf).oneTimeSigningOracle keys.2))
+              ((lamportScheme f (.of_tidy hf)).oneTimeSigningOracle keys.2))
             (adversary q.1.1 keys.1)).run []
           return (frames out.1.2).getD (q.2 / 2) []
         else
@@ -674,11 +674,11 @@ private theorem ennreal_tsum_finsetSum {α ι : Type*} (s : Finset ι) (g : ι �
 /-- **Lamport's one-time signature theorem**: for any one-way function `f`, `lamportScheme f` is
 existentially unforgeable under one-time adaptive chosen-message attack (`OneTimeEUFCMA`). -/
 theorem OneWay.oneTimeEUFCMA_lamport {f : List Bool → List Bool} (hf : OneWay f) :
-    (lamportScheme f hf.polyTime.tidy).OneTimeEUFCMA := by
-  let S := lamportScheme f hf.polyTime.tidy
+    (lamportScheme f hf.polyTime).OneTimeEUFCMA := by
+  let S := lamportScheme f hf.polyTime
   apply SignatureScheme.OneTimeEUFCMA.of_negligible
   intro adversary hadversary
-  let inverter := lamportInverter f hf.polyTime.tidy adversary
+  let inverter := lamportInverter f hf.polyTime adversary
   have hinv_ppt : IsPPT encBits inverter := isPPT_lamportInverter hf.polyTime.tidy hadversary
   have hinv_neg := hf.inversion_negligible inverter hinv_ppt
   have htwo_poly : ComputableTidilyInPolyTime (fun n : ℕ => 2 * n) encUnary encUnary := by polytime
@@ -881,7 +881,7 @@ theorem OneWay.oneTimeEUFCMA_lamport {f : List Bool → List Bool} (hf : OneWay 
 /-- Any one-way function implies the existence of a one-time EUF-CMA secure signature scheme. -/
 theorem OneWay.exists_oneTimeSignature {f : List Bool → List Bool} (hf : OneWay f) :
     ∃ S : SignatureScheme, S.OneTimeEUFCMA :=
-  ⟨lamportScheme f hf.polyTime.tidy, hf.oneTimeEUFCMA_lamport⟩
+  ⟨lamportScheme f hf.polyTime, hf.oneTimeEUFCMA_lamport⟩
 
 /-- **Equivalence between one-way functions and one-time digital signatures**: a one-way function
 exists if and only if a one-time EUF-CMA secure uniform signature scheme exists. -/
