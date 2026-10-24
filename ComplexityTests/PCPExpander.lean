@@ -16,18 +16,18 @@ open Cslib Cslib.RotationMap Turing.MultiTapeTM
 
 namespace ComplexityTests.PCPExpander
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun index : ℕ => (⟨index % 1, Nat.mod_lt _ (by decide)⟩ : Fin 1))
     encUnary (encFinite (Fin 1)) :=
-  ComputableTidilyInPolyTime.unary_finMod (by decide) _
+  ComputableInPolyTime.unary_finMod (by decide) _
 
 -- The fixed finite output may use binary indices instead of the finite-rank encoding.
 example :
     let output : Fin 3 ↪ List Bool :=
       ⟨fun index => encNat index.val, fun _ _ h => Fin.val_injective (encNat.injective h)⟩
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun index : ℕ => (⟨index % 3, Nat.mod_lt _ (by decide)⟩ : Fin 3)) encUnary output :=
-  ComputableTidilyInPolyTime.unary_finMod (by decide) _
+  ComputableInPolyTime.unary_finMod (by decide) _
 
 private def base : RotationMap (Fin 16) (Fin 2) := .loops _ _
 
@@ -37,12 +37,12 @@ private def coordinates : Fin 16 ≃ (Fin 2 → Fin 2 × Fin 2) :=
       (finProdFinEquiv : Fin 2 × Fin 2 ≃ Fin 4).symm).trans
         (finTwoArrowEquiv (Fin 2 × Fin 2)).symm)
 
-example : ComputableTidilyInPolyTime (TowerTable.build base coordinates (by decide))
+example : ComputableInPolyTime (TowerTable.build base coordinates (by decide))
     encUnary (TowerTable.encoding (encFinite (Fin 2))) :=
   TowerTable.polytime_build base coordinates (by decide) _
 
 -- Equivalent call spellings and captured inputs use the same uniform certificate.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : Bool × ℕ => TowerTable.build base coordinates (by decide) (p.2 + 1))
     (encPair encBool encUnary) (TowerTable.encoding (encFinite (Fin 2))) := by
   have h := TowerTable.polytime_build base coordinates (by decide) (encFinite (Fin 2))
@@ -73,7 +73,7 @@ example (size : ℕ) (vertex : Fin (16 ^ (Nat.clog 16 size - 1 + 1))) (label : F
       (target.1.val, target.2) :=
   TowerTable.lookup_build base coordinates (Equiv.refl _) (by decide) size vertex label
 
-example : ComputableTidilyInPolyTime (TowerTable.rotateFamily base coordinates (by decide))
+example : ComputableInPolyTime (TowerTable.rotateFamily base coordinates (by decide))
     (encPair encUnary (encPair encUnary
       (encFinite ((Fin 16 × (Fin 2 × Fin 2)) ⊕ (Fin 16 × (Fin 2 × Fin 2))))))
     (encPair encUnary (encFinite ((Fin 16 × (Fin 2 × Fin 2)) ⊕
@@ -101,7 +101,7 @@ example (label : AffinePlaneFamilyLabel (ZMod 257) 257) :
     arithmeticExpanderRotate (1, 0, label) = (0, label) := rfl
 
 -- The positive-gap family itself has the uniform machine certificate, independently of size.
-example : ComputableTidilyInPolyTime arithmeticExpanderRotate
+example : ComputableInPolyTime arithmeticExpanderRotate
     (encPair encUnary (encPair encUnary
       (encFinite (AffinePlaneFamilyLabel (ZMod 257) 257))))
     (encPair encUnary (encFinite (AffinePlaneFamilyLabel (ZMod 257) 257))) :=
