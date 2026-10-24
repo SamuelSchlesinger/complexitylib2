@@ -1,17 +1,25 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 Bolton Bailey, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: Bolton Bailey, Samuel Schlesinger
 -/
 
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.BooleanAnalysis.Fourier
+public import Complexity.Foundations.Data.Code.Hadamard
 import Complexity.Foundations.Data.Finset.Expect
+import Mathlib.Tactic.Linarith
 
 /-!
-# Odd Boolean functions, folding, and projections of characters
+# The long code, odd Boolean functions, folding, and projections of characters
+
+The *long code* of a label `a : ι` is the dictator `r ↦ r a`, the evaluation `Function.eval a` on
+`ι → Bool` (`BitString.longCode`) [Arora and Barak, Chapter 22][AroraBarak09]. It is the Hadamard
+encoding of the unit vector of `a` (`BitString.longCode_eq_hadamardCode`), so a table within
+relative distance `1/4` of a long code determines its label
+(`BitString.eq_of_hammingDist_longCode_lt`).
 
 A Boolean function `B : (ι → Bool) → Bool` is *odd* (`BitString.IsOdd`) when complementing its
 input complements its output, `B (f + 1) = !B f`; in `±1` notation this is `F (-x) = -F x`, and
@@ -28,12 +36,15 @@ projects its frequency set: `chi T (f ∘ π) = chi (projectSet π T) f`
 
 ## Main definitions
 
+* `Cslib.BitString.longCode`: the long code of a label.
 * `Cslib.BitString.IsOdd`: odd (folded) Boolean functions.
 * `Cslib.BitString.foldTable`: folding a table around a coordinate.
 * `Cslib.BitString.projectSet`: the mod-2 projection of a set along a map.
 
 ## Main results
 
+* `Cslib.BitString.longCode_eq_hadamardCode`, `Cslib.BitString.eq_of_hammingDist_longCode_lt`: the
+  long code is a Hadamard code, and unique decoding of the long code.
 * `Cslib.BitString.isOdd_longCode`, `Cslib.BitString.isOdd_foldTable`: long codes and folded
   tables are odd.
 * `Cslib.BitString.IsOdd.fourierCoeff_empty`, `Cslib.BitString.IsOdd.fourierCoeff_of_even`: odd
@@ -42,6 +53,7 @@ projects its frequency set: `chi T (f ∘ π) = chi (projectSet π T) f`
 
 ## References
 
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 * [J. Håstad, *Some optimal inapproximability results*][Hastad2001]
 * [R. O'Donnell, *Analysis of Boolean Functions*][ODonnell2014]
 -/
@@ -53,9 +65,43 @@ open scoped BigOperators symmDiff
 
 namespace Cslib.BitString
 
-variable {α β γ : Type*}
+variable {ι α β γ : Type*}
 
-/-! ### The long code and odd functions -/
+/-! ### The long code -/
+
+/-- The **long code** of a label `a : ι`: the dictator `r ↦ r a` on `ι → Bool`, that is, the
+evaluation `Function.eval a` [Arora and Barak, Chapter 22][AroraBarak09]. It is the Hadamard
+encoding of the unit vector of `a` (`longCode_eq_hadamardCode`). -/
+def longCode (a : ι) : (ι → Bool) → Bool :=
+  Function.eval a
+
+/-- The long code of `a` reads the bit of `r` at `a`. -/
+@[simp]
+theorem longCode_apply (a : ι) (r : ι → Bool) : longCode a r = r a :=
+  rfl
+
+section Decoding
+
+variable [Fintype ι] [DecidableEq ι]
+
+/-- The long code of `a` is the Hadamard encoding of the unit vector of `a`. -/
+theorem longCode_eq_hadamardCode (a : ι) : longCode a = hadamardCode (Pi.single a true) := by
+  funext r
+  rw [hadamardCode_comm, hadamardCode_single, longCode_apply]
+
+/-- **Unique decoding of the long code**: a Boolean function within relative distance less than
+`1/4` of the long codes of `a` and of `b` forces `a = b`. -/
+theorem eq_of_hammingDist_longCode_lt {f : (ι → Bool) → Bool} {a b : ι}
+    (ha : (hammingDist f (longCode a) : ℝ) / 2 ^ Fintype.card ι < 1 / 4)
+    (hb : (hammingDist f (longCode b) : ℝ) / 2 ^ Fintype.card ι < 1 / 4) : a = b := by
+  rw [longCode_eq_hadamardCode] at ha hb
+  have h := congrFun (eq_of_hammingDist_hadamardCode_le (max_lt ha hb) (le_max_left _ _)
+    (le_max_right _ _)) a
+  simpa [Pi.single_apply, Bool.zero_eq_false] using h.symm
+
+end Decoding
+
+/-! ### Odd functions and folding -/
 
 /-- In `±1` notation, the long code `longCode x` is the singleton character `chi ℝ {x}`. -/
 theorem signVal_longCode (x : α) (f : α → Bool) :

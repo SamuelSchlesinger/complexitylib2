@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.Data.BitString.Sign
+public import Complexity.Foundations.Data.Code.Hadamard
 import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity

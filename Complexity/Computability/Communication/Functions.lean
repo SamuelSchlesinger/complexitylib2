@@ -201,7 +201,7 @@ theorem two_mul_card_dotProduct_eq_true_add [DecidableEq ι] (x : ι → Bool) :
     simp [zero_dotProduct]
   · have h := BitString.two_mul_hammingDist_hadamardCode hx
     rw [hammingDist] at h
-    simpa [BitString.hadamardCode_apply, zero_dotProduct,
+    simpa [zero_dotProduct,
       show ∀ b : Bool, ¬b = 0 ↔ b = true by decide] using h
 
 /-- The inner product is `true` on `2 ^ (k - 1) (2 ^ k - 1)` pairs of `k`-bit strings, in the form

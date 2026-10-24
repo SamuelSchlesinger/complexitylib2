@@ -171,14 +171,14 @@ example (v : inputGates (Program.empty : Program signature 0 0) → Bool) :
       (inputGates (Program.empty : Program signature 0 0)).card.choose j) ^ 2 :=
   two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode Program.empty
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
-    (fun _ _ => by simp [BitString.hadamardCode_apply, Bool.zero_eq_false])
+    (fun _ _ => by simp [Bool.zero_eq_false])
 
 example (v : Fin 0 → Bool) :
     1 ≤ (∑ j ∈ Finset.range (gateActivityFrom (Program.empty : Program signature 0 0) v + 1),
       Nat.choose 0 j) ^ 2 :=
   two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode Program.empty
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
-    (fun _ _ => by simp [BitString.hadamardCode_apply, Bool.zero_eq_false])
+    (fun _ _ => by simp [Bool.zero_eq_false])
 
 -- Concrete pending-bias simulation and state-space bounds on `negatePrior`.
 private theorem negatePrior_gateWeight_one_zero : gateWeight negatePrior 1 0 = -1 := by

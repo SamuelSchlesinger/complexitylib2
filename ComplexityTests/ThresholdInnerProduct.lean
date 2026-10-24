@@ -28,7 +28,7 @@ example {ι : Type*} [Fintype ι] (A : Finset (ι → Bool)) (b : Bool) :
 
 -- At dimension zero the entire product is a false rectangle of area one.
 example (x y : Fin 0 → Bool) : hadamardCode x y = false := by
-  simp [hadamardCode_apply, dotProduct, Bool.zero_eq_false]
+  simp [dotProduct, Bool.zero_eq_false]
 
 example : (Finset.univ : Finset (Fin 0 → Bool)).card *
     (Finset.univ : Finset (Fin 0 → Bool)).card = 1 := by decide
@@ -37,11 +37,11 @@ example : (Finset.univ : Finset (Fin 0 → Bool)).card *
     (Finset.univ : Finset (Fin 0 → Bool)).card ≤ 2 ^ 0 :=
   card_mul_le_two_pow_of_hadamardCode_eq
     (Finset.univ : Finset (Fin 0 → Bool)) Finset.univ false
-    (fun _ _ _ _ => by simp [hadamardCode_apply, dotProduct, Bool.zero_eq_false])
+    (fun _ _ _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 -- The zero vector times the full cube attains the rectangle bound at every dimension.
 example (n : ℕ) (y : Fin n → Bool) : hadamardCode 0 y = false := by
-  simp [hadamardCode_apply, Bool.zero_eq_false]
+  simp [Bool.zero_eq_false]
 
 example (n : ℕ) : ({0} : Finset (Fin n → Bool)).card *
     (Finset.univ : Finset (Fin n → Bool)).card = 2 ^ n := by simp
@@ -118,7 +118,7 @@ example : 1 ≤ (DecisionTree.leaf false :
   DecisionTree.two_pow_le_leafCount_sq_of_hadamardCode
     (DecisionTree.leaf false :
       DecisionTree (SeparableComparison (Fin 0 → Bool) (Fin 0 → Bool)) Bool)
-    (fun _ _ => by simp [hadamardCode_apply, dotProduct, Bool.zero_eq_false])
+    (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example {n : ℕ}
     (t : DecisionTree (SeparableComparison (Fin n → Bool) (Fin n → Bool)) Bool)

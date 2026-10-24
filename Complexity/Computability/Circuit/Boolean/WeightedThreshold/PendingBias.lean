@@ -9,7 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
-public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.Data.Code.Hadamard
 import Mathlib.Algebra.BigOperators.Fin
 
 /-!

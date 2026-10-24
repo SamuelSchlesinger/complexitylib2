@@ -144,21 +144,21 @@ example : (0 : ℝ) / 2 ≤ inputActivity (Program.empty : Program signature 0 0
       inputActivity (Program.empty : Program signature 0 0)) := by
   simpa using le_inputActivity_mul_logb_of_hadamardCode (Program.empty : Program signature 0 0)
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
-    (fun _ _ => by simp [hadamardCode_apply, dotProduct, Bool.zero_eq_false])
+    (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example : (0 : ℝ) / 2 ≤ gateActivity (Program.empty : Program signature 0 0) *
     Real.logb 2 (Real.exp 1 * 0 / gateActivity (Program.empty : Program signature 0 0)) := by
   simpa only [Fintype.card_fin, Nat.cast_zero] using
     le_gateActivity_mul_logb_of_hadamardCode (Program.empty : Program signature 0 0)
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
-    (fun _ _ => by simp [hadamardCode_apply, dotProduct, Bool.zero_eq_false])
+    (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example : gateActivity (Program.empty : Program signature 0 0) / Real.exp 1 *
     (2 : ℝ) ^ ((0 : ℝ) / (2 * gateActivity (Program.empty : Program signature 0 0))) ≤ 0 := by
   simpa only [Fintype.card_fin, Nat.cast_zero] using
     gateActivity_mul_rpow_le_of_hadamardCode (Program.empty : Program signature 0 0)
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
-    (fun _ _ => by simp [hadamardCode_apply, dotProduct, Bool.zero_eq_false])
+    (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example {n g : ℕ} {ι : Type u} [Fintype ι] (p : Program signature n g)
     (split : Fin n ≃ ι ⊕ ι) (readout : (Fin g → Bool) → Bool)
