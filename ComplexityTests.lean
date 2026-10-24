@@ -372,6 +372,7 @@ import ComplexityTests.QueryComplexity.Randomized
 import ComplexityTests.QueryComplexity.Sensitivity
 import ComplexityTests.RAMInput
 import ComplexityTests.Radix
+import ComplexityTests.RadixSpace
 import ComplexityTests.RandomOracle
 import ComplexityTests.RandomizedDisjointness
 import ComplexityTests.RationalHitting
