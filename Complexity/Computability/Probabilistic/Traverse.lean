@@ -73,24 +73,24 @@ theorem IsPPTOn.mapM {α β : Type} {input : α ↪ List Bool} {output : β ↪ 
     IsPPTOn (encList input) (encList output) (fun list => list.mapM program) := by
   obtain ⟨c, d, evaluate, hevaluate, _, hlaw⟩ := hprogram.exists_total_seeded_evaluator
   let budget (list : List α) := c * ((encList input list).length + 1) ^ d
-  have hencode : ComputableTidilyInPolyTime (encList input) (encList input) encBits :=
+  have hencode : ComputableInPolyTime (encList input) (encList input) encBits :=
     .of_eq fun _ => rfl
-  have hbudget : ComputableTidilyInPolyTime budget (encList input) encUnary := by
+  have hbudget : ComputableInPolyTime budget (encList input) encUnary := by
     dsimp only [budget]
     fun_prop
-  have hcount : ComputableTidilyInPolyTime (List.length (α := α))
+  have hcount : ComputableInPolyTime (List.length (α := α))
       (encList input) encUnary := by fun_prop
-  have hrun : ComputableTidilyInPolyTime (fun p : List α × List Bool =>
+  have hrun : ComputableInPolyTime (fun p : List α × List Bool =>
       p.1.zipIdx.map (fun q => evaluate q.1 (BitString.listRow (budget p.1) q.2 p.2)))
       (encPair (encList input) encBits) (encList output) := by
-    apply ComputableTidilyInPolyTime.mapWithInput
+    apply ComputableInPolyTime.mapWithInput
     · fun_prop
-    · exact hevaluate.comp (show ComputableTidilyInPolyTime
+    · exact (ComputableInPolyTime.of_tidy hevaluate).comp (show ComputableInPolyTime
         (fun p : (List α × List Bool) × (α × ℕ) =>
           (p.2.1, BitString.listRow (budget p.1.1) p.2.2 p.1.2))
         (encPair (encPair (encList input) encBits) (encPair input encUnary))
         (encPair input encBits) by fun_prop)
-  have hcoins := (ComputableTidilyInPolyTime.unary_mul.comp (hcount.prod hbudget)).sampleList
+  have hcoins := (ComputableInPolyTime.unary_mul.comp (hcount.prod hbudget)).sampleList
   apply (hcoins.map_with (f := fun list tape => list.zipIdx.map
     (fun q => evaluate q.1 (BitString.listRow (budget list) q.2 tape))) hrun).congr
   intro list
@@ -111,9 +111,9 @@ theorem IsPPTOn.mapMWith {α β γ : Type} {input : α ↪ List Bool}
     {element : β ↪ List Bool} {output : γ ↪ List Bool} {list : α → List β}
     {program : α → β → ProbComp γ}
     (hprogram : IsPPTOn (encPair input element) output (fun p => program p.1 p.2))
-    (hlist : ComputableTidilyInPolyTime list input (encList element)) :
+    (hlist : ComputableInPolyTime list input (encList element)) :
     IsPPTOn input (encList output) (fun a => (list a).mapM (program a)) := by
-  have hpairs : ComputableTidilyInPolyTime (fun a => (list a).map fun b => (a, b))
+  have hpairs : ComputableInPolyTime (fun a => (list a).map fun b => (a, b))
       input (encList (encPair input element)) := by fun_prop
   apply (hprogram.mapM.preprocess hpairs).congr
   intro a

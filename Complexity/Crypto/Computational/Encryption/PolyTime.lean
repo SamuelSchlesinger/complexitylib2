@@ -46,8 +46,8 @@ theorem isPPTOn_game {keyGen : ℕ → ProbComp (List Bool × List Bool)}
       (fun p => encrypt p.1 p.2.1 p.2.2))
     {adversary : Adversary} (hadversary : adversary.IsPPT)
     {α : Type} {input : α ↪ List Bool} {n : α → ℕ} {bit : α → Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbit : ComputableTidilyInPolyTime bit input encBool) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbit : ComputableInPolyTime bit input encBool) :
     IsPPTOn input encBool (fun a => game keyGen encrypt adversary (bit a) (n a)) := by
   have hchoose := hadversary.choose
   have hguess := hadversary.guess
@@ -63,7 +63,7 @@ theorem exists_keyLength_bound {keyGen : ℕ → ProbComp (List Bool × List Boo
       ∀ n keys, keys ∈ (ProbComp.eval (keyGen n)).support →
         keys.1.length + keys.2.length ≤ c * (n + 1) ^ d := by
   obtain ⟨c, d, hlength⟩ := hkeyGen.length_le
-  refine ⟨c, d, by fun_prop, fun n keys hkeys => ?_⟩
+  refine ⟨c, d, ComputableInPolyTime.tidy (by fun_prop), fun n keys hkeys => ?_⟩
   have hbound := hlength n keys hkeys
   simp only [length_encPair, encBits_apply, encUnary_apply, List.length_replicate] at hbound
   omega
