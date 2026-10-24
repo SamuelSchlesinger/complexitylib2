@@ -310,7 +310,10 @@ import ComplexityTests.PlainBasicCutover
 import ComplexityTests.PlainCalculus
 import ComplexityTests.PlainCodecCutover
 import ComplexityTests.PlainCoreBridge
+import ComplexityTests.PlainFunctionFamilyCutover
+import ComplexityTests.PlainIterationCutover
 import ComplexityTests.PlainProjection
+import ComplexityTests.PlainProviderCutover
 import ComplexityTests.PlainResourceBridge
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
