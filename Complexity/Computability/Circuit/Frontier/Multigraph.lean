@@ -203,17 +203,8 @@ theorem card_le_card_add_one_of_connected [Finite E] (h : G.toSimpleGraph.Connec
 /-! ### Mathlib's multigraphs -/
 
 /-- A multigraph as a Mathlib `Graph` whose vertex set and edge set are everything. -/
-def toGraph : Graph V E where
-  vertexSet := univ
-  edgeSet := univ
-  IsLink e x y := G.ends e = s(x, y)
-  isLink_symm _ _ := ⟨fun _ _ h => h.trans Sym2.eq_swap⟩
-  eq_or_eq_of_isLink_of_isLink _ _ _ _ _ h h' := by
-    rcases Sym2.eq_iff.mp (h.symm.trans h') with ⟨rfl, -⟩ | ⟨rfl, -⟩
-    · exact Or.inl rfl
-    · exact Or.inr rfl
-  edge_mem_iff_exists_isLink e := iff_of_true (mem_univ e) ⟨_, _, rfl⟩
-  left_mem_of_isLink _ _ _ _ := mem_univ _
+def toGraph : Graph V E :=
+  _root_.Cslib.Multigraph.toGraph G.ends
 
 @[simp] theorem toGraph_isLink {e : E} {x y : V} : G.toGraph.IsLink e x y ↔ G.ends e = s(x, y) :=
   Iff.rfl
@@ -227,30 +218,16 @@ def toGraph : Graph V E where
 /-- The incidence sets of a multigraph are those of Mathlib's `Graph`. -/
 @[simp] theorem incidenceSet_toGraph (v : V) : G.toGraph.incidenceSet v = G.incidenceSet v := by
   ext e
-  simp only [Graph.incidenceSet, Graph.Inc, toGraph_isLink, ends, Sym2.eq_iff, mem_ofPred_eq,
-    mem_incidenceSet]
-  constructor
-  · rintro ⟨y, ⟨h, -⟩ | ⟨-, h⟩⟩
-    · exact Or.inl h
-    · exact Or.inr h
-  · rintro (h | h)
-    · exact ⟨G.tgt e, Or.inl ⟨h, rfl⟩⟩
-    · exact ⟨G.src e, Or.inr ⟨rfl, h⟩⟩
+  rw [toGraph, _root_.Cslib.Multigraph.incidenceSet_toGraph]
+  simp [ends, mem_incidenceSet, or_congr eq_comm eq_comm]
 
 /-! ### Multigraphs given by their ends -/
 
 /-- The edge cuts are those of the multigraph given by the ends. -/
 @[simp] theorem coe_edgeCut_ends [Fintype V] [Fintype E] [DecidableEq V] (S : Finset V) :
     (_root_.Cslib.Multigraph.edgeCut G.ends S : Set E) = G.edgeCut S := by
-  ext e
-  simp only [Finset.mem_coe, _root_.Cslib.Multigraph.mem_edgeCut, Finset.mem_compl, ends,
-    Sym2.eq_iff, mem_edgeCut]
-  constructor
-  · rintro ⟨v, hv, w, hw, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩ <;> tauto
-  · intro h
-    by_cases hs : G.src e ∈ S
-    · exact ⟨_, hs, _, fun ht => h (iff_of_true hs ht), Or.inl ⟨rfl, rfl⟩⟩
-    · exact ⟨_, by tauto, _, hs, Or.inr ⟨rfl, rfl⟩⟩
+  rw [_root_.Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut, ← G.edgeCut_toGraph]
+  rfl
 
 /-- The incidences of the multigraph given by the ends are the incident edges other than
 self-loops. -/

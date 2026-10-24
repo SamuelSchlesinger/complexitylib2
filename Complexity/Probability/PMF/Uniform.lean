@@ -29,8 +29,12 @@ the overwritten string and the old part together determine `(a, b)`.
   uniform.
 * `Cslib.Probability.PMF.uniformOfFintype_bind_map_fst_equiv`,
   `Cslib.Probability.PMF.uniformOfFintype_bind_bind_fst_equiv`: resampling along an equivalence.
-* `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype`,
-  `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype_toReal`: the uniform probability of an
+* `Cslib.Probability.PMF.toOuterMeasure_uniformOfFinset`,
+  `Cslib.Probability.PMF.toOuterMeasure_uniformOfFinset_toReal`,
+  `Cslib.Probability.PMF.toMeasure_uniformOfFinset`,
+  `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype`,
+  `Cslib.Probability.PMF.toOuterMeasure_uniformOfFintype_toReal`,
+  `Cslib.Probability.PMF.toMeasure_uniformOfFintype`: the uniform probability of an
   event is the fraction of its members.
 -/
 
@@ -88,17 +92,48 @@ theorem uniformOfFintype_bind_bind_fst_equiv (e : α × β ≃ γ × δ) (f : γ
   simp only [PMF.bind_bind, PMF.bind_map]
   rfl
 
-omit [Fintype β] [Nonempty β] [Fintype γ] [Nonempty γ] [Finite δ] in
+end Uniform
+
+/-- The uniform distribution on a nonempty finite set gives an event the fraction of the set's
+members in the event, as an extended nonnegative real. -/
+theorem toOuterMeasure_uniformOfFinset (s : Finset α) (hs : s.Nonempty) (event : Set α)
+    [DecidablePred (· ∈ event)] :
+    (uniformOfFinset s hs).toOuterMeasure event =
+      (s.filter (· ∈ event)).card * (s.card : ℝ≥0∞)⁻¹ := by
+  rw [PMF.toOuterMeasure_apply, tsum_eq_sum (s := s)]
+  · simp only [Set.indicator_apply, uniformOfFinset_apply]
+    rw [← Finset.sum_filter,
+      Finset.sum_congr (g := fun _ => (s.card : ℝ≥0∞)⁻¹) rfl
+        fun x hx => by simp [Finset.mem_of_mem_filter x hx],
+      Finset.sum_const, nsmul_eq_mul]
+  · intro x hx
+    simp [Set.indicator_apply, uniformOfFinset_apply, hx]
+
+/-- The probability of an event under the uniform distribution on a nonempty finite set is the
+fraction of the set's members in the event. -/
+theorem toOuterMeasure_uniformOfFinset_toReal (s : Finset α) (hs : s.Nonempty) (event : Set α)
+    [DecidablePred (· ∈ event)] :
+    ((uniformOfFinset s hs).toOuterMeasure event).toReal =
+      (s.filter (· ∈ event)).card / s.card := by
+  rw [toOuterMeasure_uniformOfFinset, ENNReal.toReal_mul, ENNReal.toReal_inv,
+    ENNReal.toReal_natCast, ENNReal.toReal_natCast, div_eq_mul_inv]
+
+/-- The measure of a measurable event under the uniform distribution on a nonempty finite set is
+the fraction of the set's members in the event. -/
+theorem toMeasure_uniformOfFinset [MeasurableSpace α] (s : Finset α) (hs : s.Nonempty)
+    {event : Set α} [DecidablePred (· ∈ event)] (he : MeasurableSet event) :
+    (uniformOfFinset s hs).toMeasure event =
+      (s.filter (· ∈ event)).card * (s.card : ℝ≥0∞)⁻¹ := by
+  rw [PMF.toMeasure_apply_eq_toOuterMeasure_apply _ he, toOuterMeasure_uniformOfFinset]
+
 /-- The uniform distribution on a finite type gives an event the fraction of its members, as an
 extended nonnegative real. -/
-theorem toOuterMeasure_uniformOfFintype (event : Set α) [DecidablePred (· ∈ event)] :
+theorem toOuterMeasure_uniformOfFintype [Fintype α] [Nonempty α] (event : Set α)
+    [DecidablePred (· ∈ event)] :
     (uniformOfFintype α).toOuterMeasure event =
       (Finset.univ.filter (· ∈ event)).card * (Fintype.card α : ℝ≥0∞)⁻¹ := by
-  rw [PMF.toOuterMeasure_apply, tsum_fintype]
-  simp only [Set.indicator_apply, uniformOfFintype_apply]
-  rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
-
-end Uniform
+  simpa [uniformOfFintype] using
+    toOuterMeasure_uniformOfFinset Finset.univ Finset.univ_nonempty event
 
 /-- The probability of an event under the uniform distribution on a finite type is the fraction
 of its members. -/
@@ -106,7 +141,16 @@ theorem toOuterMeasure_uniformOfFintype_toReal [Fintype α] [Nonempty α] (event
     [DecidablePred (· ∈ event)] :
     ((uniformOfFintype α).toOuterMeasure event).toReal =
       (Finset.univ.filter (· ∈ event)).card / Fintype.card α := by
-  rw [toOuterMeasure_uniformOfFintype, ENNReal.toReal_mul, ENNReal.toReal_inv,
-    ENNReal.toReal_natCast, ENNReal.toReal_natCast, div_eq_mul_inv]
+  simpa [uniformOfFintype] using
+    toOuterMeasure_uniformOfFinset_toReal Finset.univ Finset.univ_nonempty event
+
+/-- The measure of a measurable event under the uniform distribution on a finite type is the
+fraction of its members. -/
+theorem toMeasure_uniformOfFintype [Fintype α] [Nonempty α] [MeasurableSpace α]
+    {event : Set α} [DecidablePred (· ∈ event)] (he : MeasurableSet event) :
+    (uniformOfFintype α).toMeasure event =
+      (Finset.univ.filter (· ∈ event)).card * (Fintype.card α : ℝ≥0∞)⁻¹ := by
+  simpa [uniformOfFintype] using
+    toMeasure_uniformOfFinset Finset.univ Finset.univ_nonempty he
 
 end Cslib.Probability.PMF
