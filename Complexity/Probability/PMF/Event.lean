@@ -19,11 +19,13 @@ complement have total probability one (`toOuterMeasure_toReal_add_compl`). Condi
 event's masses and divides them by its probability (`filter_apply_toReal`).
 
 After a random first stage, an event's probability is the average of its conditional
-probabilities (`toOuterMeasure_bind_toReal`). Failure bounds compose without independence: a
-randomized continuation fails because its precondition already failed or because it fails from a
-valid input (`toOuterMeasure_bind_failure_le`), and average bias turns into the probability of
-good first stages (`toOuterMeasure_rate_ge`). The real-valued masses of `true` and `false` under a
-Boolean distribution sum to one (`toReal_true_add_toReal_false`).
+probabilities (`toOuterMeasure_bind_toReal`). Failure and success bounds compose without
+independence: a randomized continuation fails because its precondition already failed or because
+it fails from a valid input (`toOuterMeasure_bind_failure_le`), lower bounds on a first stage and
+on its continuation from supported members multiply (`toOuterMeasure_bind_ge_mul`), and average
+bias turns into the probability of good first stages (`toOuterMeasure_rate_ge`). The real-valued
+masses of `true` and `false` under a Boolean distribution sum to one
+(`toReal_true_add_toReal_false`).
 
 ## Main results
 
@@ -35,7 +37,8 @@ Boolean distribution sum to one (`toReal_true_add_toReal_false`).
 * `Cslib.Probability.PMF.filter_apply_toReal`: conditioned masses.
 * `Cslib.Probability.PMF.toOuterMeasure_bind_toReal`: averaging over a first stage.
 * `Cslib.Probability.PMF.toOuterMeasure_bind_failure_le`,
-  `Cslib.Probability.PMF.toOuterMeasure_bind_failure_toReal_le`: composing failure bounds.
+  `Cslib.Probability.PMF.toOuterMeasure_bind_failure_toReal_le`,
+  `Cslib.Probability.PMF.toOuterMeasure_bind_ge_mul`: composing failure and success bounds.
 * `Cslib.Probability.PMF.toOuterMeasure_rate_ge`: average bias as the probability of good inputs.
 * `Cslib.Probability.PMF.toReal_true_add_toReal_false`,
   `Cslib.Probability.PMF.toReal_false_eq_one_sub`,
@@ -151,6 +154,31 @@ theorem toOuterMeasure_bind_failure_toReal_le (p : PMF α) (kernel : α → PMF 
     ⟨toOuterMeasure_ne_top p preᶜ, ENNReal.ofReal_ne_top⟩
   simpa only [ENNReal.toReal_add (toOuterMeasure_ne_top p preᶜ) ENNReal.ofReal_ne_top,
     ENNReal.toReal_ofReal herror] using ENNReal.toReal_mono hfinite h
+
+/-- If a first stage `p` lands in `pre` with probability at least `s₁` and for every supported
+`a ∈ pre` the continuation `kernel a` lands in `event` with probability at least `s₂`, then
+`p.bind kernel` lands in `event` with probability at least `s₁ * s₂`. -/
+theorem toOuterMeasure_bind_ge_mul (p : PMF α) (kernel : α → PMF β)
+    (pre : Set α) (event : Set β) {s₁ s₂ : ℝ} (hs₂ : 0 ≤ s₂)
+    (hp : s₁ ≤ (p.toOuterMeasure pre).toReal)
+    (hstep : ∀ a ∈ p.support, a ∈ pre → s₂ ≤ ((kernel a).toOuterMeasure event).toReal) :
+    s₁ * s₂ ≤ ((p.bind kernel).toOuterMeasure event).toReal := by
+  classical
+  have hle : p.toOuterMeasure pre * ENNReal.ofReal s₂ ≤ (p.bind kernel).toOuterMeasure event := by
+    rw [PMF.toOuterMeasure_bind_apply, PMF.toOuterMeasure_apply, ← ENNReal.tsum_mul_right]
+    refine ENNReal.tsum_le_tsum fun a => ?_
+    by_cases ha : a ∈ pre
+    · simp only [Set.indicator_of_mem ha]
+      by_cases hs : a ∈ p.support
+      · exact mul_le_mul_of_nonneg_left
+          ((ENNReal.ofReal_le_iff_le_toReal (toOuterMeasure_ne_top _ _)).mpr (hstep a hs ha))
+          zero_le
+      · have hz : p a = 0 := by simpa only [PMF.mem_support_iff, not_not] using hs
+        simp [hz]
+    · simp [Set.indicator_of_notMem ha]
+  have htoReal := ENNReal.toReal_mono (toOuterMeasure_ne_top _ _) hle
+  rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hs₂] at htoReal
+  exact (mul_le_mul_of_nonneg_right hp hs₂).trans htoReal
 
 /-- If a randomized test beats a threshold on average, at least its excess probability mass
 consists of inputs whose conditional acceptance probability reaches that threshold. -/
