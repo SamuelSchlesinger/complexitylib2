@@ -75,13 +75,13 @@ theorem one_le_walkLength : 1 ≤ walkLength := by
 
 /-- The chosen walk length matches the alphabet size and killing rate. -/
 theorem walkLength_eq :
-    walkLength = 4 * Fintype.card (Bool × (Fin 6 → Bool)) * (killRate - 1) := by
+    walkLength = 4 * Fintype.card SelectedAlphabet * (killRate - 1) := by
   rw [walkLength_def, killRate_def, card_alphabet_composeSelected]
   norm_num
 
 /-- The concrete killing rate pays for preprocessing and composition with a factor of two left. -/
 theorem gain :
-    2 ≤ Amplification.gain 840 (Fintype.card (Bool × (Fin 6 → Bool)))
+    2 ≤ Amplification.gain 840 (Fintype.card SelectedAlphabet)
         (Fintype.card (AffinePlaneFamilyLabel (ZMod 257) 257))
         walkLength killRate (1 - 9 / (400 * (257 : ℝ) ^ 16)) gap := by
   rw [card_affinePlaneFamilyLabel (ZMod.finEquiv 257).toEquiv.symm, card_alphabet_composeSelected,

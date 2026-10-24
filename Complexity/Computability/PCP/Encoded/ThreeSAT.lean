@@ -194,15 +194,15 @@ theorem toGraph_ofCNF (variableCount : ℕ) (φ : CNF ℕ) :
 /-- The exact graph interpretation retains the mathematical unsatisfied value. -/
 theorem unsatVal_ofCNF (variableCount : ℕ) (φ : CNF ℕ) :
     ((ofCNF variableCount φ).toGraph id).unsatVal = (ConstraintGraph.ofCNF φ).unsatVal := by
-  rw [toGraph_ofCNF, ConstraintGraph.unsatVal_comap_equiv,
-    ConstraintGraph.unsatVal_map _ (cnfVertexNumber_injective _)]
+  rw [toGraph_ofCNF, ConstraintGraph.unsatVal_comap_map_of_injective _
+    (cnfVertexNumber_injective _)]
 
 /-- For clauses of length at most three, the executable construction preserves satisfiability. -/
 theorem satisfiable_ofCNF_iff (variableCount : ℕ) (φ : CNF ℕ)
     (h3 : ∀ c ∈ φ, c.length ≤ 3) :
     ((ofCNF variableCount φ).toGraph id).Satisfiable ↔ φ.Satisfiable := by
-  rw [toGraph_ofCNF, ConstraintGraph.satisfiable_comap_iff _ (Equiv.surjective _),
-    ConstraintGraph.satisfiable_map _ (cnfVertexNumber_injective _)]
+  rw [toGraph_ofCNF, ConstraintGraph.satisfiable_comap_map_iff _
+    (cnfVertexNumber_injective _) (Equiv.surjective _)]
   exact ConstraintGraph.satisfiable_ofCNF_iff φ h3
 
 /-- Bounded variable names ensure every generated endpoint lies in the declared vertex range. -/

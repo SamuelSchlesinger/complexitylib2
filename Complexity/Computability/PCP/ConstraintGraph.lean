@@ -62,6 +62,9 @@ as is right: it is satisfied by every labelling.
 * `Cslib.PCP.ConstraintGraph.satisfiable_comap_iff`,
   `Cslib.PCP.ConstraintGraph.unsatVal_comap_equiv`: pulling back along a surjection preserves
   satisfiability, and along an equivalence the value.
+* `Cslib.PCP.ConstraintGraph.satisfiable_comap_map_iff`,
+  `Cslib.PCP.ConstraintGraph.unsatVal_comap_map_of_injective`: renaming the vertices injectively
+  and pulling back the edges preserves satisfiability and the value.
 * `Cslib.PCP.ConstraintGraph.satisfiable_reindex_iff`, `Cslib.PCP.ConstraintGraph.unsatVal_reindex`:
   renaming the vertices and the edges preserves satisfiability and the value.
 * `Cslib.PCP.ConstraintGraph.card_mul_unsatVal_add_le`,
@@ -349,6 +352,13 @@ theorem satisfiable_comap_iff {g : F → E} (hg : g.Surjective) :
   obtain ⟨f, rfl⟩ := hg e
   exact hσ f
 
+/-- Renaming the vertices injectively and pulling back the edges along a surjection preserves
+satisfiability. -/
+theorem satisfiable_comap_map_iff [Nonempty α] {W : Type*} {f : V → W} (hf : f.Injective)
+    {g : F → E} (hg : g.Surjective) :
+    ((G.map f).comap g).Satisfiable ↔ G.Satisfiable :=
+  (satisfiable_comap_iff _ hg).trans (G.satisfiable_map hf)
+
 variable [Fintype E] [Fintype F]
 
 /-- A labelling violates the edges of `G.comap g` whose images it violates in `G`. -/
@@ -375,6 +385,11 @@ theorem unsatFrac_comap_equiv (e : F ≃ E) (σ : V → α) :
 /-- **Renaming the edges along an equivalence preserves the value.** -/
 theorem unsatVal_comap_equiv (e : F ≃ E) : (G.comap e).unsatVal = G.unsatVal :=
   iInf_congr (G.unsatFrac_comap_equiv e)
+
+/-- **Renaming the vertices injectively and the edges along an equivalence preserves the value.** -/
+theorem unsatVal_comap_map_of_injective [Nonempty α] {W : Type*} {f : V → W} (hf : f.Injective)
+    (e : F ≃ E) : ((G.map f).comap e).unsatVal = G.unsatVal :=
+  (unsatVal_comap_equiv _ e).trans (G.unsatVal_map hf)
 
 end Comap
 

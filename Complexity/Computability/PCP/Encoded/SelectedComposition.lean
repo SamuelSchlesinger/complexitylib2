@@ -67,7 +67,7 @@ variable {width : ℕ}
 /-- Compile the selected tester and materialize the constraints over its 128-symbol alphabet. -/
 def composeSelectedTabulated (number : SelectedComposeSlot α ≃ Fin width)
     (coins : List (Fin 5 × Rand α)) (queries : List (Fin 6)) (g : Graph (α → α → Bool)) :
-    Graph ((Bool × (Fin 6 → Bool)) → (Bool × (Fin 6 → Bool)) → Bool) :=
+    Graph (SelectedAlphabet → SelectedAlphabet → Bool) :=
   SelectedHadamardTester.implementation.composeTabulated number coins queries g
 
 /-- The shared compiler charges the graph, every selected query, and the full output tables. -/

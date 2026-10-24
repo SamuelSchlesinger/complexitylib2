@@ -369,8 +369,8 @@ theorem unsatVal_compose_eq (hreal : impl.Realizes T) [Fintype R] [Fintype Q] [N
     ((compose impl number coins queries g).toGraph (composeEval impl)).unsatVal =
       (T.compose (g.toGraph id)).unsatVal := by
   rw [toGraph_compose impl hreal number coins queries g hcoins hqueries hmemCoins hmemQueries,
-    ConstraintGraph.unsatVal_comap_equiv,
-    ConstraintGraph.unsatVal_map _ (composeVertex_injective number Fin.val_injective)]
+    ConstraintGraph.unsatVal_comap_map_of_injective _
+      (composeVertex_injective number Fin.val_injective)]
 
 /-- Full executable composition preserves satisfiability. -/
 theorem satisfiable_compose_iff (hreal : impl.Realizes T)
@@ -385,8 +385,8 @@ theorem satisfiable_compose_iff (hreal : impl.Realizes T)
       (g.toGraph id).Satisfiable := by
   let := Fintype.ofFinite Q
   rw [toGraph_compose impl hreal number coins queries g hcoins hqueries hmemCoins hmemQueries,
-    ConstraintGraph.satisfiable_comap_iff _ (Equiv.surjective _),
-    ConstraintGraph.satisfiable_map _ (composeVertex_injective number Fin.val_injective),
+    ConstraintGraph.satisfiable_comap_map_iff _
+      (composeVertex_injective number Fin.val_injective) (Equiv.surjective _),
     AssignmentTester.satisfiable_compose_iff hcomplete hsound hδ]
 
 /-- Executable composition retains the mathematical tester’s quantitative gap bound. -/

@@ -22,6 +22,7 @@ binary-proof verifier, which additionally encodes labels and repeats its test.
 
 ## Main definitions
 
+* `Cslib.PCP.SelectedAlphabet`: the `128`-symbol answer alphabet `Bool × (Fin 6 → Bool)`.
 * `Cslib.PCP.HadamardTester.selectedAssignmentTester`: the six-query composition contract.
 * `Cslib.PCP.ConstraintGraph.composeSelected`: composition using that contract.
 
@@ -39,6 +40,11 @@ binary-proof verifier, which additionally encodes labels and repeats its test.
 @[expose] public section
 
 namespace Cslib.PCP
+
+/-- The fixed `128`-symbol answer alphabet `Bool × (Fin 6 → Bool)` of composition with the
+selected six-query Hadamard assignment tester: one proof bit and six claimed query answers. -/
+abbrev SelectedAlphabet : Type :=
+  Bool × (Fin 6 → Bool)
 
 namespace HadamardTester
 
@@ -78,7 +84,7 @@ variable {V E α : Type*} [Fintype α] [DecidableEq α] (G : ConstraintGraph V E
 /-- Compose with one randomly selected Hadamard check per local test. -/
 noncomputable def composeSelected :
     ConstraintGraph (ComposePos V E α ⊕ E × (Fin 5 × Rand α))
-      ((E × (Fin 5 × Rand α)) × Fin 6) (Bool × (Fin 6 → Bool)) :=
+      ((E × (Fin 5 × Rand α)) × Fin 6) SelectedAlphabet :=
   selectedAssignmentTester.compose G
 
 /-- Quantitative perfect completeness of selected composition. -/
@@ -100,7 +106,7 @@ theorem satisfiable_composeSelected_iff [Finite E] [Nonempty α] :
     sound_selectedAssignmentTester (by norm_num) G
 
 /-- The selected composition alphabet stores one symbol and six claimed answers. -/
-theorem card_alphabet_composeSelected : Fintype.card (Bool × (Fin 6 → Bool)) = 128 := by
+theorem card_alphabet_composeSelected : Fintype.card SelectedAlphabet = 128 := by
   norm_num
 
 /-- The auxiliary tables are shared across the five checks; only the coin vertices are repeated. -/

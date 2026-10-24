@@ -351,8 +351,7 @@ theorem unsatVal_preprocess_eq [Fintype D] (labels : List D)
       (g.regularPreprocess eval fallback family).toConstraintGraph.unsatVal := by
   obtain ⟨e, he⟩ := g.toGraph_preprocess eval fallback truth family rotate hrotate
     htruth labels hlabels hmem
-  rw [he, ConstraintGraph.unsatVal_comap_equiv,
-    ConstraintGraph.unsatVal_map _ (halfEdgeNumber_fin_injective _)]
+  rw [he, ConstraintGraph.unsatVal_comap_map_of_injective _ (halfEdgeNumber_fin_injective _)]
 
 include hrotate htruth in
 /-- The existing Dinur gap estimate applies to the exact executable preprocessing output. -/
@@ -375,8 +374,8 @@ theorem satisfiable_preprocess_iff [Fintype D] [Nonempty D] (labels : List D)
       (g.toGraph eval).Satisfiable := by
   obtain ⟨e, he⟩ := g.toGraph_preprocess eval fallback truth family rotate hrotate
     htruth labels hlabels hmem
-  rw [he, ConstraintGraph.satisfiable_comap_iff _ e.surjective,
-    ConstraintGraph.satisfiable_map _ (halfEdgeNumber_fin_injective _)]
+  rw [he, ConstraintGraph.satisfiable_comap_map_iff _ (halfEdgeNumber_fin_injective _)
+    e.surjective]
   exact (g.toGraph eval).satisfiable_preprocessWith_iff
     (g.preprocessExpanders eval fallback family μ hgap) hμ
 

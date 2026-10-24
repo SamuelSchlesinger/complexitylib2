@@ -198,7 +198,7 @@ variable {V : Type*} {E : Type u} {α D : Type*} [Fintype E] [DecidableEq V]
 then compose with the selected six-query tester. -/
 noncomputable def amplifyWith (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
     ConstraintGraph (Amplification.Vertex D E α T q) (Amplification.Edge D E α T q)
-      (Bool × (Fin 6 → Bool)) :=
+      SelectedAlphabet :=
   ((G.preprocessWith X).power T q).toConstraintGraph.composeSelected
 
 variable [Fintype α] [DecidableEq α] [Nonempty α] [Nonempty D] {T q : ℕ} [NeZero q]
@@ -315,40 +315,40 @@ namespace Cslib.PCP.ConstraintGraph.Amplification
 open HadamardTester
 
 variable {D : Type} [Fintype D] [DecidableEq D] {μ : ℝ}
-  (X : (G : FinConstraintGraph.{u} (Bool × (Fin 6 → Bool))) →
+  (X : (G : FinConstraintGraph.{u} SelectedAlphabet) →
     letI := Classical.decEq G.V
     G.graph.PreprocessExpanders D μ)
 
 /-- The amplification round on bundled finite graphs. Supplying rotations separately for each
 input permits executable clients to retain their own cloud and vertex numberings. -/
 noncomputable def round (T q : ℕ) [NeZero q]
-    (G : FinConstraintGraph.{u} (Bool × (Fin 6 → Bool))) :
-    FinConstraintGraph.{u} (Bool × (Fin 6 → Bool)) :=
+    (G : FinConstraintGraph.{u} SelectedAlphabet) :
+    FinConstraintGraph.{u} SelectedAlphabet :=
   letI := Classical.decEq G.V
-  ⟨Vertex D G.E (Bool × (Fin 6 → Bool)) T q, Edge D G.E (Bool × (Fin 6 → Bool)) T q,
+  ⟨Vertex D G.E SelectedAlphabet T q, Edge D G.E SelectedAlphabet T q,
     G.graph.amplifyWith (X G) T q⟩
 
 /-- A supplied expander construction and parameters with enough gain give an amplifier. The
 result is mathematical; the encoded implementation and running time need separate certificates. -/
 noncomputable def amplifier [Nonempty D] (T q : ℕ) [NeZero q] (hμ : μ < 1) (hq : 2 ≤ q)
-    (hT : T = 4 * Fintype.card (Bool × (Fin 6 → Bool)) * (q - 1))
+    (hT : T = 4 * Fintype.card SelectedAlphabet * (q - 1))
     {γ : ℝ} (hγ : 0 < γ) (hγ₁ : γ ≤ 1)
-    (hgain : 2 ≤ gain 840 (Fintype.card (Bool × (Fin 6 → Bool))) (Fintype.card D) T q μ γ) :
-    Amplifier.{u} (Bool × (Fin 6 → Bool)) :=
+    (hgain : 2 ≤ gain 840 (Fintype.card SelectedAlphabet) (Fintype.card D) T q μ γ) :
+    Amplifier.{u} SelectedAlphabet :=
   have hT₁ : 1 ≤ T := by
     rw [hT]
     exact Nat.mul_pos (Nat.mul_pos (by decide) Fintype.card_pos) (by lia)
   { toFun := round X T q
-    factor := vertexFactor (Fintype.card D) (Fintype.card (Bool × (Fin 6 → Bool))) T q +
-      edgeFactor (Fintype.card D) (Fintype.card (Bool × (Fin 6 → Bool))) T q
+    factor := vertexFactor (Fintype.card D) (Fintype.card SelectedAlphabet) T q +
+      edgeFactor (Fintype.card D) (Fintype.card SelectedAlphabet) T q
     gap := γ
     gap_pos := hγ
     gap_le_one := hγ₁
     card_vertices_le G :=
-      (card_vertices (D := D) (E := G.E) (α := Bool × (Fin 6 → Bool)) T q).trans_le
+      (card_vertices (D := D) (E := G.E) (α := SelectedAlphabet) T q).trans_le
         (Nat.mul_le_mul_right _ (Nat.le_add_right _ _))
     card_edges_le G :=
-      (card_edges (D := D) (E := G.E) (α := Bool × (Fin 6 → Bool)) T q).trans_le
+      (card_edges (D := D) (E := G.E) (α := SelectedAlphabet) T q).trans_le
         (Nat.mul_le_mul_right _ (Nat.le_add_left _ _))
     satisfiable_iff G :=
       letI := Classical.decEq G.V
