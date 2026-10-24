@@ -41,8 +41,8 @@ def Frame.equiv : Frame ≃ ℕ × Fin 4 × Bool × Fin 3 where
   right_inv _ := rfl
 
 /-- The encoding of frames. -/
-noncomputable def encFrame : Frame ↪ List Bool :=
-  encOfEquiv Frame.equiv (encPair encNat (encFinite (Fin 4 × Bool × Fin 3)))
+def encFrame : Frame ↪ List Bool :=
+  encOfEquiv Frame.equiv (encPair encNat (encFinEnum (Fin 4 × Bool × Fin 3)))
 
 /-- A mode as an option. -/
 def Mode.equiv : Mode ≃ Option (Bool × Fin 3) where
@@ -55,10 +55,10 @@ def Mode.equiv : Mode ≃ Option (Bool × Fin 3) where
   left_inv m := by cases m <;> rfl
   right_inv o := by rcases o with _ | ⟨_, _⟩ <;> rfl
 
-instance : Finite Mode := Finite.of_equiv _ Mode.equiv.symm
+instance : FinEnum Mode := FinEnum.ofEquiv _ Mode.equiv
 
 /-- The encoding of modes. -/
-noncomputable def encMode : Mode ↪ List Bool := encFinite Mode
+def encMode : Mode ↪ List Bool := encFinEnum Mode
 
 /-- The control state as a tuple: a tag, two naturals and a list. -/
 def Ctl.toTuple : Ctl → Fin 7 × ℕ × ℕ × List ℕ
@@ -75,11 +75,11 @@ theorem Ctl.toTuple_injective : Function.Injective Ctl.toTuple := by
   cases c <;> cases c' <;> simp_all [Ctl.toTuple]
 
 /-- The encoding of tuples of control states. -/
-noncomputable abbrev encCtlTuple : Fin 7 × ℕ × ℕ × List ℕ ↪ List Bool :=
-  encPair (encFinite (Fin 7)) (encPair encNat (encPair encNat (encList encNat)))
+abbrev encCtlTuple : Fin 7 × ℕ × ℕ × List ℕ ↪ List Bool :=
+  encPair (encFinEnum (Fin 7)) (encPair encNat (encPair encNat (encList encNat)))
 
 /-- The encoding of control states. -/
-noncomputable def encCtl : Ctl ↪ List Bool :=
+def encCtl : Ctl ↪ List Bool :=
   ⟨fun c => encCtlTuple c.toTuple, encCtlTuple.injective.comp Ctl.toTuple_injective⟩
 
 /-- The encoding of registers. -/
@@ -100,12 +100,12 @@ theorem State.toTuple_injective : Function.Injective State.toTuple := by
   rw [Ctl.toTuple_injective hc]
 
 /-- The encoding of tuples of states. -/
-noncomputable abbrev encTuple : Tuple ↪ List Bool :=
+abbrev encTuple : Tuple ↪ List Bool :=
   encPair (encPair (encPair encNat (encPair encNat encNat)) encRegs)
     (encPair (encPair (encList encFrame) encMode) encCtlTuple)
 
 /-- **The encoding of states.** -/
-noncomputable def encState : State ↪ List Bool :=
+def encState : State ↪ List Bool :=
   ⟨fun s => encTuple s.toTuple, encTuple.injective.comp State.toTuple_injective⟩
 
 @[simp] theorem encState_apply (s : State) : encState s = encTuple s.toTuple := rfl

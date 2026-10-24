@@ -43,11 +43,11 @@ namespace Cslib.USTCON.Reader
 open Turing MultiTapeTM ComputableTidilyInSpace Cslib.RotationMap Cslib.Reachability.Reingold
 
 /-- The encoding of the inputs of a step: the tuple and the bit read. -/
-noncomputable abbrev encStepIn : Tuple × Bool ↪ List Bool :=
+abbrev encStepIn : Tuple × Bool ↪ List Bool :=
   encPair encTuple encBool
 
 /-- **The space budget of a step**: the length of the encoded tuple and bit. -/
-noncomputable def stepBudget (y : Tuple × Bool) : ℕ :=
+def stepBudget (y : Tuple × Bool) : ℕ :=
   (encStepIn y).length
 
 private theorem len_le_stepBudget : (fun y => (encStepIn y).length) ≼ stepBudget :=
@@ -256,10 +256,10 @@ within work space linear in their number. -/
 private theorem labelOfNat_inSpace :
     ComputableTidilyInSpace labelOfNat encNat encLab fun w => (encNat w).length := by
   have hfold := of_inO (ComputableTidilyInO.foldl_bits_finite
-    (encFinite (ZMod numLabels × ZMod numLabels)) modStep (0, 1))
+    (encFinEnum (ZMod numLabels × ZMod numLabels)) modStep (0, 1))
   have h := hfold.of_encIn_eq (α' := ℕ) (encIn' := encNat) Nat.bits fun w ↦ by
     rw [encNat_apply, encBits_apply]
-  have h' := budget_comp_linear (of_finite (encIn := encFinite (ZMod numLabels × ZMod numLabels))
+  have h' := budget_comp_linear (of_finite (encIn := encFinEnum (ZMod numLabels × ZMod numLabels))
     (encB := encLab) fun p : ZMod numLabels × ZMod numLabels ↦ labelOfZMod p.1) h
   exact (h'.weaken (.const 0 _)).of_enc_eq fun w ↦ by rw [labelOfNat_eq]
 
@@ -441,7 +441,7 @@ private theorem stepT_inSpace : ComputableTidilyInSpace stepT encStepIn (encPair
         done))))))))
   refine h.of_enc_eq fun y ↦ ?_
   obtain ⟨⟨⟨ctl, cnt⟩, ⟨⟨n, s, t⟩, d, l⟩, ⟨c, w, j⟩, v, low, fr⟩, b⟩ := y
-  congr 1
+  apply congrArg (encPair encTuple encBits)
   cases ctl
   case eval =>
     by_cases hfr : fr = []
@@ -465,7 +465,7 @@ private theorem stepT_inSpace : ComputableTidilyInSpace stepT encStepIn (encPair
 /-! ### On states -/
 
 /-- **The space budget of a state**: the length of its encoded tuple with a bit. -/
-noncomputable def stateBudget (q : State) : ℕ :=
+def stateBudget (q : State) : ℕ :=
   stepBudget (q.toTuple, false)
 
 private theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget

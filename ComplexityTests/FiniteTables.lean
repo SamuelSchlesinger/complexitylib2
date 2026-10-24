@@ -71,6 +71,8 @@ example {Index Value : Type} [Fintype Index] [DecidableEq Index]
       (encPair (encPi enc) enc) (encPi enc) := by fun_prop
 
 -- Unary ranks are bounded for each fixed finite type; no efficient growing enumeration is claimed.
+example (tag : Fin 7) : (encFinEnum (Fin 7) tag).length < 7 := by
+  simpa using length_encFinEnum_lt tag
 example (tag : Fin 7) : (encFinite (Fin 7) tag).length < 7 := by
   simpa using length_encFinite_lt tag
 

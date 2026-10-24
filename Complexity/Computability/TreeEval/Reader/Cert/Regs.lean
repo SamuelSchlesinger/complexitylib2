@@ -32,7 +32,7 @@ namespace Reader
 open Turing MultiTapeTM ComputableTidilyInSpace
 
 /-- The encoding of register indices. -/
-noncomputable abbrev encReg : Fin 3 ↪ List Bool := encFinite (Fin 3)
+abbrev encReg : Fin 3 ↪ List Bool := encFinEnum (Fin 3)
 
 variable {α : Type} {encIn : α ↪ List Bool} {Bs : α → ℕ}
 

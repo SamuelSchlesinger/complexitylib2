@@ -50,14 +50,12 @@ local notation "Alphabet" => (Bool × (Fin 6 → Bool))
 local notation "Constraint" => (Alphabet → Alphabet → Bool)
 local notation "Label" => RotationMap.AffinePlaneFamilyLabel (ZMod 257) 257
 
-/-- Concrete bit enumeration, registered locally for the complete arithmetic amplifier. -/
-local instance instFinEnumBool : FinEnum Bool := FinEnum.ofList [false, true] (by decide)
-
 /-- Concrete enumeration of the arithmetic expander's fixed field. -/
 local instance instFinEnumZMod257 : FinEnum (ZMod 257) :=
   FinEnum.ofEquiv (Fin 257) (ZMod.finEquiv 257).toEquiv.symm
 
-attribute [local instance] Cslib.PCP.HadamardTester.Rand.finEnum SelectedComposeSlot.finEnum
+attribute [local instance] HadamardTester.instFinEnumBool
+  Cslib.PCP.HadamardTester.Rand.finEnum SelectedComposeSlot.finEnum
 
 /-- Complete normalized rounds with fixed arithmetic expanders and fixed numerical parameters. -/
 @[irreducible]
@@ -74,7 +72,7 @@ theorem isPolyTime_arithmeticAmplify {Input : Type} {input : Input ↪ List Bool
     (hwellFormed : ∀ x, (graph x).WellFormed) :
     ComputableTidilyInPolyTime (fun x => arithmeticAmplify (graph x))
       input (encoding (encPi (encPi encBool))) := by
-  have hcost := RotationMap.polytime_arithmeticExpanderRotate (encFinite Label)
+  have hcost := RotationMap.polytime_arithmeticExpanderRotate (encFinEnum Label)
   unfold arithmeticAmplify
   exact isPolyTime_amplifyIter_clog hgraph hwellFormed RotationMap.arithmeticExpander
     RotationMap.arithmeticExpanderRotate RotationMap.arithmeticExpanderRotate_eq hcost

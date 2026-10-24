@@ -102,7 +102,7 @@ theorem isPolyTime_powerRelationWithInput
       · simpa only [check, ite_eq_right hi] using (const (encIn := enc) true)
     have htest : ComputableTidilyInPolyTime
         (fun p : PowerInput P W D α T q × Fin T => check p.1 p.2)
-        (encPair enc (encFinite (Fin T))) encBool :=
+        (encPair enc (encFinEnum (Fin T))) encBool :=
       (snd _ _).finite_cases fun i => (hcheck i).comp (fst _ _)
     exact allWithInput (const (List.finRange T)) htest
   exact ((snd _ _).fst'.snd').finite_cases hbranch

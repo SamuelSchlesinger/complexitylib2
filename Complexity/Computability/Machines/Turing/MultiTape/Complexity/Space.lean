@@ -132,7 +132,7 @@ theorem computableTidilyInPolyTime_viewStepB :
     (encFiniteCfg (k := k) (State := State))
   rw [heq]
   refine ComputableTidilyInPolyTime.finite_cases
-    (tagEncoding := encPair (encFinite _) (encPair (encFinite _) (encFinite _))) ?_ fun tag => ?_
+    (tagEncoding := encPair (encFinite _) (encPair (encFinEnum _) (encFinEnum _))) ?_ fun tag => ?_
   · exact (ComputableTidilyInPolyTime.finiteCfg_state.comp hfst).prod
       ((ComputableTidilyInPolyTime.finiteCfg_inputSymbol.comp hfst).prod
         (ComputableTidilyInPolyTime.finiteCfg_workTapeSymbols.comp hfst))

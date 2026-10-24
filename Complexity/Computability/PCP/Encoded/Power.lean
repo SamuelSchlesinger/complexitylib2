@@ -208,7 +208,7 @@ private theorem polytime_powerPreprocessEdge (eval : C → α → α → Bool) (
       (fun p : Graph C × ((ℕ × Bool) × PowerLabel D T q) =>
         p.1.powerPreprocessEdge eval fallback rotate T q p.2)
       (encPair (encoding enc) (encPair (encPair encUnary encBool)
-        (encPair (encPi (encFinite (PreprocessLabel D))) (encPi (encFinite (Fin q))))))
+        (encPair (encPi (encFinite (PreprocessLabel D))) (encPi (encFinEnum (Fin q))))))
       (Edge.encoding (encPi (encPi encBool))) := by
   have hr : ComputableTidilyInPolyTime
       (fun p : Graph C × ((ℕ × Bool) × PreprocessLabel D) =>
@@ -224,9 +224,9 @@ private theorem polytime_powerPreprocessEdge (eval : C → α → α → Bool) (
         (encPair (encPair encUnary encBool) (encFinite (PreprocessLabel D)))
         (encPair alphabet alphabet))) encBool := by
     fun_prop
-  have hwalk := rotationMap_killedPowRotWithInput hr T q (encFinite (Fin q))
+  have hwalk := rotationMap_killedPowRotWithInput hr T q (encFinEnum (Fin q))
   have hrel := RegularConstraintGraph.isPolyTime_powerRelationWithInput
-    hr he T q (encFinite (Fin q))
+    hr he T q (encFinEnum (Fin q))
   unfold powerPreprocessEdge
   apply Edge.isPolyTime_mk
   · fun_prop
@@ -253,7 +253,7 @@ private theorem polytime_powerPreprocess (eval : C → α → α → Bool) (fall
   have hdarts : ComputableTidilyInPolyTime
       (fun g : Graph C => g.halfEdges.product walks) (encoding enc)
       (encList (encPair (encPair encUnary encBool)
-        (encPair (encPi (encFinite (PreprocessLabel D))) (encPi (encFinite (Fin q)))))) := by
+        (encPair (encPi (encFinite (PreprocessLabel D))) (encPi (encFinEnum (Fin q)))))) := by
     unfold List.product
     fun_prop
   unfold powerPreprocess

@@ -37,7 +37,7 @@ example : ComputableTidilyInPolyTime
 example {α : Type} (input : α ↪ List Bool) (cfg : α → Config)
     (hcfg : ComputableTidilyInPolyTime cfg input encFiniteConfig) :
     ComputableTidilyInPolyTime (fun a => (cfg a).tapes.inputSymbol) input
-      (encFinite (Option Bool)) := by fun_prop
+      (encFinEnum (Option Bool)) := by fun_prop
 
 -- A different input encoding uses its existing conversion certificate; no program rewrite.
 example : ComputableTidilyInPolyTime (FiniteConfig.init (k := 2) (Oracle := Fin 2) (0 : Fin 2))

@@ -93,7 +93,7 @@ example : ComputableTidilyInPolyTime
     (Graph.compose (numberSlots boolAlphabet).2 boolCoins queries)
     (Graph.encoding (encPi (encPi encBool)))
     (Graph.encoding (encPair (encPi (encPi encBool))
-      (encPair (encFinite (Rand Bool)) (encFinite Query)))) := by fun_prop
+      (encPair (encFinite (Rand Bool)) (encFinEnum Query)))) := by fun_prop
 
 -- The composed descriptors normalize to fixed tables over the 17-query answer alphabet.
 example : ComputableTidilyInPolyTime

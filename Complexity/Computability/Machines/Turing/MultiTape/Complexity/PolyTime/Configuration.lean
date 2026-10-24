@@ -92,22 +92,22 @@ theorem finiteCfg_output : ComputableTidilyInPolyTime (FiniteCfg.output (k := k)
 /-- Observe the read-only input, including both blank boundary cells. -/
 @[fun_prop]
 theorem finiteCfg_inputSymbol : ComputableTidilyInPolyTime
-    (FiniteCfg.inputSymbol (k := k) (State := State)) encFiniteCfg (encFinite (Option Bool)) := by
+    (FiniteCfg.inputSymbol (k := k) (State := State)) encFiniteCfg (encFinEnum (Option Bool)) := by
   have hlist : ComputableTidilyInPolyTime
       (fun cfg : FiniteCfg k Bool State => none :: cfg.input.map some)
-      encFiniteCfg (encList (encFinite (Option Bool))) := by
+      encFiniteCfg (encList (encFinEnum (Option Bool))) := by
     have hsome : ComputableTidilyInPolyTime (some (α := Bool))
-        encBool (encFinite (Option Bool)) := of_finite _
+        encBool (encFinEnum (Option Bool)) := of_finite _
     exact (const none).cons' ((map hsome).comp (bitsToList.comp finiteCfg_input))
   simpa only [Function.comp_def, List.getD_eq_getElem?_getD,
     ← FiniteCfg.inputSymbol_eq_getD] using
-    (listGetD (encA := encFinite (Option Bool)) none).comp (hlist.prod finiteCfg_inputPos)
+    (listGetD (encA := encFinEnum (Option Bool)) none).comp (hlist.prod finiteCfg_inputPos)
 
 /-- Observe all work heads as a single fixed finite value. -/
 @[fun_prop]
 theorem finiteCfg_workTapeSymbols : ComputableTidilyInPolyTime
     (FiniteCfg.workTapeSymbols (k := k) (State := State)) encFiniteCfg
-      (encFinite (Fin k → Option Bool)) := by
+      (encFinEnum (Fin k → Option Bool)) := by
   have hheads : ComputableTidilyInPolyTime
       (fun cfg : FiniteCfg k Bool State => fun tape => (cfg.workTapes tape).head)
       encFiniteCfg (encPi (encOption encBool)) := by fun_prop

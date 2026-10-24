@@ -70,8 +70,8 @@ example : ComputableTidilyInPolyTime
     (fun p : (Bool → Bool → Bool) × (Fin 5 × Rand Bool) × Fin 6 =>
       Encoded.SelectedHadamardTester.query p.1 p.2.1 p.2.2)
     (encPair (encPi (encPi encBool))
-      (encPair (encFinite (Fin 5 × Rand Bool)) (encFinite (Fin 6))))
-    (encFinite (Pos Bool)) := by fun_prop
+      (encPair (encFinite (Fin 5 × Rand Bool)) (encFinEnum (Fin 6))))
+    (encFinEnum (Pos Bool)) := by fun_prop
 
 example : ComputableTidilyInPolyTime
     (fun p : (Bool → Bool → Bool) × (Fin 5 × Rand Bool) × (Fin 6 → Bool) =>

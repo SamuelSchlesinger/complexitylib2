@@ -385,8 +385,8 @@ theorem PWithSharpPOracle_subset_PWithPPOracle : PWithSharpPOracle enc ⊆ PWith
       exact (isOraclePPTOn_search (u := unframe) (N := fun w => r.eval w.length + 1)
         (by fun_prop) (by fun_prop)).map_with hlast
     have hhandler : IsOraclePPTOn
-        (encPair enc (encPair (encPair (encFinite Unit) encBits) (encFinite Unit)))
-        (encPair encBits (encFinite Unit))
+        (encPair enc (encPair (encPair (encFinEnum Unit) encBits) (encFinEnum Unit)))
+        (encPair encBits (encFinEnum Unit))
         (fun pair : α × (Unit × List Bool) × Unit => (fun reply => (reply, ())) <$>
           OracleComp.interpret ProbOracleComp.query (bitQuery r pair.2.1)) :=
       (hG.preprocess (prepare := fun pair : α × (Unit × List Bool) × Unit => pair.2.1.2)
@@ -402,7 +402,7 @@ theorem PWithSharpPOracle_subset_PWithPPOracle : PWithSharpPOracle enc ⊆ PWith
         rw [bitQuery, OracleComp.interpret_map] at hreply
         obtain ⟨lo, -, rfl⟩ := ProbOracleComp.mem_support_map hreply
         exact ⟨trivial, by simp, Nat.le_add_right _ _⟩)
-    refine (hsub.map (ComputableTidilyInPolyTime.fst encBool (encFinite Unit))).congr
+    refine (hsub.map (ComputableTidilyInPolyTime.fst encBool (encFinEnum Unit))).congr
       fun a State oracle s => ?_
     congr 2
     rw [OracleComp.interpret_interpret, OracleComp.interpret_interpret]

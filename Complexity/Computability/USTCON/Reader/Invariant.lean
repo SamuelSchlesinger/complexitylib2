@@ -307,13 +307,13 @@ theorem inv_run (k : ℕ) : Inv I (machine.run I.encode k).state := by
 /-! ### The size of the states -/
 
 /-- The encoded labels of a list, each by its rank. -/
-private theorem length_encList_finite_le {α : Type} [Finite α] (l : List α) :
-    (encList (encFinite α) l).length ≤ l.length * (2 * Nat.card α + 1) := by
+private theorem length_encList_finEnum_le {α : Type} [FinEnum α] (l : List α) :
+    (encList (encFinEnum α) l).length ≤ l.length * (2 * Nat.card α + 1) := by
   rw [length_encList]
   induction l with
   | nil => simp
   | cons a l ih =>
-    have := length_encFinite_lt a
+    have := length_encFinEnum_lt a
     simp only [List.map_cons, List.sum_cons, List.length_cons]
     nlinarith
 
@@ -371,12 +371,12 @@ private theorem length_encState_le_of_bounds {q : State} (hb : Bounds I q) :
     rw [length_encNat_eq_size, ← hT]; exact size_le_of_le_pow hb.c
   have h₁₁ : (encNat q.w).length ≤ 65 * (4168 * a + 136240) + 1 := by
     rw [length_encNat_eq_size, ← hT]; exact size_le_of_le_pow hb.w
-  have h₁₂ : (encCtl q.ctl).length ≤ 10 := card_ctl ▸ (length_encFinite_lt _).le
+  have h₁₂ : (encCtl q.ctl).length ≤ 10 := card_ctl ▸ (length_encFinEnum_lt _).le
   have h₁₃ : (encList encLab q.ev.lower).length ≤ (16 * a + 525) * (2 * Nat.card Label + 1) :=
-    (length_encList_finite_le _).trans (Nat.mul_le_mul_right _ (by have := hb.lower; omega))
+    (length_encList_finEnum_le _).trans (Nat.mul_le_mul_right _ (by have := hb.lower; omega))
   have h₁₄ : (encList encFrame q.ev.frames).length ≤
       (16 * a + 525) * (2 * Nat.card (ReingoldPc × Label) + 1) :=
-    (length_encList_finite_le _).trans (Nat.mul_le_mul_right _ (by have := hb.frames; omega))
+    (length_encList_finEnum_le _).trans (Nat.mul_le_mul_right _ (by have := hb.frames; omega))
   rw [natCard_label] at h₁₃
   rw [card_frame] at h₁₄
   refine (length_encState_le q).trans ?_

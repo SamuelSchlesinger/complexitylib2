@@ -152,7 +152,7 @@ theorem computableTidilyInPolyTime_indexStep [Finite State]
     have hview : ComputableTidilyInPolyTime (fun p : Storage k State × ℕ =>
         (state, p.1.tapes.inputSymbol, p.1.tapes.workTapeSymbols)) encIn
         (encPair (encFinite State)
-          (encPair (encFinite (Option Bool)) (encFinite (Fin k → Option Bool)))) := by fun_prop
+          (encPair (encFinEnum (Option Bool)) (encFinEnum (Fin k → Option Bool)))) := by fun_prop
     have hactions : ComputableTidilyInPolyTime (fun p : Storage k State × ℕ =>
         localActions machine (state, p.1.tapes.inputSymbol, p.1.tapes.workTapeSymbols))
         encIn (encList (encFinite (Turing.Action k Bool State))) :=

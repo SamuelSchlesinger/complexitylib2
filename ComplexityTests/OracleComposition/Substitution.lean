@@ -44,7 +44,7 @@ private theorem run_cached (n : ℕ) (request : Unit × List Bool)
 -- The cache is certified from the memoization contract and the bounded-prefix query.
 private theorem cached_isOraclePPTOn : IsOraclePPTOn
     (encPair encUnary
-      (encPair (encPair (encFinite Unit) encBits) (encList (encPair encBits encBits))))
+      (encPair (encPair (encFinEnum Unit) encBits) (encList (encPair encBits encBits))))
     (encPair encBits (encList (encPair encBits encBits)))
     (fun pair => cached pair.1 pair.2.1 pair.2.2) := by
   unfold cached
@@ -143,7 +143,7 @@ private theorem run_double (n : ℕ) (request : Unit × List Bool) (state : List
 
 -- Each doubling call is strict oracle PPT in its caller, request and state.
 example : IsOraclePPTOn
-    (encPair encUnary (encPair (encPair (encFinite Unit) encBits) encBits))
+    (encPair encUnary (encPair (encPair (encFinEnum Unit) encBits) encBits))
     (encPair encBits encBits) (fun pair => double pair.1 pair.2.1 pair.2.2) := by
   unfold double
   fun_prop

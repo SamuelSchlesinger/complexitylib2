@@ -46,14 +46,14 @@ private theorem rotateLoops_eq (n : ℕ) (v : Fin n) (d : Unit) :
 
 private theorem polytime_rotateLoops :
     ComputableTidilyInPolyTime rotateLoops
-      (encPair encUnary (encPair encUnary (encFinite Unit)))
-      (encPair encUnary (encFinite Unit)) := by
+      (encPair encUnary (encPair encUnary (encFinEnum Unit)))
+      (encPair encUnary (encFinEnum Unit)) := by
   unfold rotateLoops
   fun_prop
 
 private theorem polytime_unitEval : ComputableTidilyInPolyTime
     (fun p : Bool × (Unit × Unit) => unitEval p.1 p.2.1 p.2.2)
-      (encPair encBool (encPair (encFinite Unit) (encFinite Unit))) encBool := by
+      (encPair encBool (encPair (encFinEnum Unit) (encFinEnum Unit))) encBool := by
   unfold unitEval
   fun_prop
 

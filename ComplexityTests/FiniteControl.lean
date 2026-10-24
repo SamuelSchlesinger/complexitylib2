@@ -52,7 +52,15 @@ example {α Index Value : Type} [Fintype Index] {input : α ↪ List Bool}
 -- A different encoding of the same index type uses the same lookup rule.
 example : ComputableTidilyInPolyTime
     (fun pair : (Bool → List Bool) × Bool => pair.1 pair.2)
-    (encPair (encPi encBits) (encFinite Bool)) encBits := by polytime
+    (encPair (encPi encBits) (encFinEnum Bool)) encBits := by polytime
+
+/-- info: [true, true] -/
+#guard_msgs in
+#eval encFinEnum (Fin 3) 2
+
+/-- info: [true] -/
+#guard_msgs in
+#eval encFinEnum (Option Bool) (some true)
 
 -- Computed update and lookup preserve unbounded words in all unselected entries.
 example : ComputableTidilyInPolyTime

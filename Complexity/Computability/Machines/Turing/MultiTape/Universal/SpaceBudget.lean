@@ -676,6 +676,10 @@ lemma final_time' (c N t L P E : ℕ) (hP : P ≤ L) (hE : E ≤ L) :
     _ ≤ 20 * ((t + 1) * Z) := by omega
     _ = 20 * ((t + 1) * (N + 1) ^ 2 * Y) := by ring
 
+local instance : FinEnum InState :=
+  FinEnum.ofList [.descMarker, .descBit, .marker, .bit, .digitMarker, .digit, .steps]
+    fun q => by cases q <;> decide
+
 /-- **The universal machine within a space budget.** The budgeted universal function is tidily
 computable within space linear in the bound `budgetSpace` on the states of its fold, by the
 multi-pass fold of the in-place universal machine with the budget test at the end of each pass.
@@ -685,7 +689,7 @@ public theorem computableTidilyInTimeAndSpace_budgetedUniversal : ∃ c,
       (fun i => c * ((i.2.2.1 + 1) * ((eInS i).length + 1) ^ 2 * (budgetSpace i + 1) ^ 3))
       (fun i => c * (budgetSpace i + 1)) := by
   refine Exists.elim (ComputableTidilyInTimeAndSpace.multiPassFold_translate inTr
-    (encQ := encFinite InState) foldInitS_inO foldNextS_inO
+    (encQ := encFinEnum InState) foldInitS_inO foldNextS_inO
     (const (encIn := eSSt) (encMid := encBits) ([] : List Bool)) foldEndS_inO foldContS_inO
     foldFinishS_inO (passes := fun i => i.2.2.1 - 1) (g := budgetedUniversal) (encOut := eOut) ?_ ?_
     (tMax := fun i => 9 * (budgetSpace i + 1) ^ 3)

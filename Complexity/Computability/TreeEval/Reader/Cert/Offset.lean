@@ -189,8 +189,8 @@ private theorem bodyLength_inSpace :
 /-! ### Frames -/
 
 /-- The encoding of tuples of frames. -/
-noncomputable abbrev encFrameTuple : ℕ × Fin 4 × Bool × Fin 3 ↪ List Bool :=
-  encPair encNat (encFinite (Fin 4 × Bool × Fin 3))
+abbrev encFrameTuple : ℕ × Fin 4 × Bool × Fin 3 ↪ List Bool :=
+  encPair encNat (encFinEnum (Fin 4 × Bool × Fin 3))
 
 theorem encFrame_apply (fr : Frame) : encFrame fr = encFrameTuple (Frame.equiv fr) := rfl
 
@@ -198,14 +198,14 @@ theorem encFrame_apply (fr : Frame) : encFrame fr = encFrameTuple (Frame.equiv f
 theorem frameFinite_inSpace {β : Type} {encB : β ↪ List Bool} (g : Fin 4 × Bool × Fin 3 → β) :
     ComputableTidilyInSpace (fun fr : Frame => g (Frame.equiv fr).2) encFrame encB
       fun fr => (encFrame fr).length := by
-  have h := budget_finite (encC := encB) g (snd encNat (encFinite (Fin 4 × Bool × Fin 3)))
+  have h := budget_finite (encC := encB) g (snd encNat (encFinEnum (Fin 4 × Bool × Fin 3)))
   exact h.of_encIn_eq Frame.equiv fun _ => rfl
 
 /-- The round of a frame. -/
 theorem round_inSpace :
     ComputableTidilyInSpace (fun fr : Frame => fr.round) encFrame encNat
       fun fr => (encFrame fr).length :=
-  (fst encNat (encFinite (Fin 4 × Bool × Fin 3))).of_encIn_eq Frame.equiv fun _ => rfl
+  (fst encNat (encFinEnum (Fin 4 × Bool × Fin 3))).of_encIn_eq Frame.equiv fun _ => rfl
 
 /-! ### The offset of the node at the path of a stack -/
 
