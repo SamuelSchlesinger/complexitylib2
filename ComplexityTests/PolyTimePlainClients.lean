@@ -9,6 +9,8 @@ import Complexity.Computability.Circuit.Boolean.EvaluationTime
 import Complexity.Crypto.Computational.Signature
 import Complexity.Crypto.Computational.MAC
 import ComplexityTests.PolyTimePlainDriver
+import Complexity.Crypto.Computational.GGM.Evaluation
+import Complexity.Tactic.PPT
 
 /-! Plain client goals use imported public certificates, without automatic tidy-goal lowering.
 A separate rule set exercises the production named lookup with no compositional search rule. -/
@@ -104,5 +106,49 @@ example {α : Type} {enc : α ↪ List Bool} (count : α → ℕ) (init : α →
   fail_if_success (clear hstep; polytime)
   fail_if_success (clear hgrowth; polytime)
   polytime
+
+
+-- The original captured-step interface passed the baseline driver and must remain available.
+example {α : Type} {enc : α ↪ List Bool} (count : α → ℕ) (init : α → List Bool)
+    (step : α → List Bool → List Bool) (growth : α → ℕ)
+    (hcount : ComputableInPolyTime count enc encUnary)
+    (hinit : ComputableInPolyTime init enc encBits)
+    (hstep : ComputableInPolyTime (fun p : α × List Bool => step p.1 p.2)
+      (encPair enc encBits) encBits)
+    (hpoly : PolyBounded (fun a => (enc a).length) growth)
+    (hgrowth : ∀ a word, (step a word).length ≤ word.length + growth a) :
+    ComputableInPolyTime (fun a => (step a)^[count a] (init a)) enc encBits := by
+  fail_if_success (clear hstep; polytime)
+  fail_if_success (clear hpoly; polytime)
+  fail_if_success (clear hgrowth; polytime)
+  polytime
+
+-- The captured fold keeps arbitrary element/state encodings and its original list interfaces.
+example {γ α β : Type} (input : γ ↪ List Bool) (element : α ↪ List Bool)
+    (stateEncoding : β ↪ List Bool) (listEncoding : List α ↪ List Bool)
+    [ListEncoding element listEncoding] [SizedListEncoding element listEncoding]
+    (list : γ → List α) (initial : γ → β) (step : γ → β → α → β)
+    (hlist : ComputableInPolyTime list input listEncoding)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hstep : ComputableInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+      (encPair (encPair input stateEncoding) element) stateEncoding)
+    (growth : γ → ℕ) (hpoly : PolyBounded (fun x => (input x).length) growth)
+    (hgrowth : ∀ x state value, value ∈ list x →
+      (stateEncoding (step x state value)).length ≤ (stateEncoding state).length + growth x) :
+    ComputableInPolyTime (fun x => (list x).foldl (step x) (initial x)) input stateEncoding := by
+  fail_if_success (clear hstep; polytime)
+  fail_if_success (clear hgrowth; polytime)
+  polytime
+
+-- Actual GGM evaluation consumes a plain generator after sampling, with the same original script.
+example (sample : List Bool → Cslib.ProbComp (List Bool))
+    (generator : List Bool → List Bool)
+    (hsample : Cslib.Probability.IsPPTOn encBits encBits sample)
+    (hgenerator : ComputableInPolyTime generator encBits encBits) :
+    Cslib.Probability.IsPPTOn encBits encBits (fun path => do
+      let seed ← sample path
+      pure (Cslib.Crypto.GGM.eval generator seed path)) := by
+  fail_if_success (clear hgenerator; ppt)
+  ppt
 
 end ComplexityTests.PolyTimePlainClients
