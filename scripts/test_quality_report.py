@@ -193,6 +193,14 @@ class OutputCheckTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.check(self.reference, current=False)
 
+    def test_stale_root_output_is_refused(self) -> None:
+        for directory in (self.reference, self.copy):
+            self.write(directory, "Complexity.ilean", "root")
+        self.write(self.copy, "Complexity.ilean", "stale root")
+        self.assertEqual(q.output_differences(self.copy, self.reference), ["Complexity.ilean"])
+        with self.assertRaises(SystemExit):
+            self.check(self.copy)
+
     def test_unchecked_reports_say_so(self) -> None:
         self.write(self.reference, "Complexity/A.olean", "changed")
         self.assertIn("not checked", self.check(self.copy, skip=True))
