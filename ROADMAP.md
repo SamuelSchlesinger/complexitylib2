@@ -1152,11 +1152,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   `ε ≤ 1/N + √ε'` and HVZK ⇒ eavesdropping security are proved for
   [identification from Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Identification.lean)
   and [Schnorr identification](Complexity/Crypto/Protocols/SigmaProtocol/SchnorrIdentification.lean).
-  Open: a discrete-log assumption for a group family with native polynomial-time operations,
-  efficiency of the reductions and the asymptotic security of Schnorr identification, and
-  Fiat–Shamir/Schnorr signatures in the random-oracle model with the forking bound of
-  Theorem 19.16. Strict PPT samples bit strings but not `ZMod q` exactly, so those bounds will
-  carry explicit statistical-distance terms.
+  The [discrete-log assumption](Complexity/Crypto/Computational/DiscreteLog.lean) is stated for
+  a family of prime-order groups with plain polynomial-time operations, instantiated by
+  [Schnorr groups](Complexity/Crypto/Computational/DiscreteLog/SchnorrGroup.lean), and
+  [Schnorr identification](Complexity/Crypto/Computational/SchnorrIdentification.lean) is secure
+  against direct attacks by uniform strict PPT impersonators under it. Open: security against
+  eavesdropping in the strict-PPT model, where simulating transcripts needs approximately uniform
+  `ZMod q` samples and hence an explicit statistical-distance term, and Fiat–Shamir/Schnorr
+  signatures in the random-oracle model with the forking bound of Theorem 19.16.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should

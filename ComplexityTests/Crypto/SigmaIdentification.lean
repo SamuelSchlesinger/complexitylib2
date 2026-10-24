@@ -76,8 +76,9 @@ theorem succProbability_knower :
 probability at least `1 - 1 / 11`. -/
 example : (10 / 11 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (2 : ZMod 11))
     (fun α u => α • (2 : ZMod 11) = u) (knower.rewind (linearExtract ι))) := by
-  have h := sq_sub_le_oneWayGame_rewind (schnorr_specialSoundness (ι := ι) (g := (2 : ZMod 11)))
-    (schnorrKeyGen 2) knower
+  have h := sq_sub_le_oneWayGame_rewind
+    ((schnorr_specialSoundness (ι := ι) (g := (2 : ZMod 11))).specialSoundOn (schnorrKeyGen 2))
+    knower
   rw [succProbability_knower, ZMod.card] at h
   norm_num at h ⊢
   exact h
