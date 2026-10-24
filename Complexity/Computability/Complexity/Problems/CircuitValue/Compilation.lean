@@ -100,9 +100,9 @@ private theorem exists_uniformOutputBits {α : Type} {enc : α ↪ List Bool}
       (encPair enc encUnary) encUnary := by
     polytime
   refine ⟨cs, ?_, ?_, ?_⟩
-  · have h := computableTidilyInPolyTime_prefixCode hprefix
-      (ComputableTidilyInPolyTime.unary_to_binary.comp (hn.comp
-        (ComputableTidilyInPolyTime.fst enc encUnary))) (hcode.comp hlength)
+  · have h := (computableInPolyTime_prefixCode (.of_tidy hprefix)
+      (.of_tidy (ComputableTidilyInPolyTime.unary_to_binary.comp (hn.comp
+        (ComputableTidilyInPolyTime.fst enc encUnary)))) (.of_tidy (hcode.comp hlength))).tidy
     exact h.of_enc_eq fun p => by
       rw [show (cs p.1 p.2).code = _ from code_prefixCircuit _ _]
       rfl
@@ -162,8 +162,9 @@ theorem exists_uniformCircuitFamily {α : Type} {enc : α ↪ List Bool}
     apply List.ext_getElem (by simp)
     intro i hi hj
     simp
-  have hcompiled := computableTidilyInPolyTime_bundleCode
-    (ComputableTidilyInPolyTime.unary_to_binary.comp hn) hblock hlist
+  have hcompiled := (computableInPolyTime_bundleCode
+    (.of_tidy (ComputableTidilyInPolyTime.unary_to_binary.comp hn)) (.of_tidy hblock) (.of_tidy
+      hlist)).tidy
   refine ⟨circuits, hcompiled.of_enc_eq (fun a => ?_), fun a x j => ?_⟩
   · change encCode (circuits a).code = encCode
       (bundleCode (n a) (bits a 0).size ((List.range (m a)).map (fun j => (bits a j).code)))

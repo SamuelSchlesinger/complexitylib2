@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.CarrySave.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-! Native construction of actual carry-save codes, including empty words, bit order,
 overflow and a composition with two independently generated three-to-two reducers. -/
@@ -43,9 +44,9 @@ theorem composed_generator : ComputableTidilyInPolyTime
     (fun w => ((csa4to2 w).comp (twice3to2 w)).code) encUnary encCode := by
   have hw := unary_to_binary
   have hn : ComputableTidilyInPolyTime (fun w : ℕ => w + (w + w)) encUnary encNat := by fun_prop
-  have h := computableTidilyInPolyTime_compCode hn computableTidilyInPolyTime_csa4to2
-    (computableTidilyInPolyTime_appendCode hn computableTidilyInPolyTime_csa3to2
-      computableTidilyInPolyTime_csa3to2)
+  have h := (computableInPolyTime_compCode (.of_tidy hn) computableInPolyTime_csa4to2
+    (computableInPolyTime_appendCode (.of_tidy hn) computableInPolyTime_csa3to2
+      computableInPolyTime_csa3to2)).tidy
   simpa only [appendCode_code, compCode_code, twice3to2] using h
 
 /-- info: 'Cslib.Circuits.Boolean.csa3to2Code_eq_code' depends on axioms:

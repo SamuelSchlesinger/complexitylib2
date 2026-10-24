@@ -23,7 +23,7 @@ wire) followed by the input bits.
 
 The circuit value problem is in `P` (`Cslib.Complexity.CircuitValue.mem_P`): the decider
 evaluates the gate list with the polynomial-time evaluator
-`Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`. Ladner showed that it is
+`Cslib.Circuits.Boolean.computableInPolyTime_evalOutput`. Ladner showed that it is
 `P`-complete under logarithmic-space reductions [Ladner1975]; this is proved in
 `Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean`
 (`Cslib.Complexity.CircuitValue.logSpaceComplete`).
@@ -85,6 +85,7 @@ private theorem eval_eq_evalOutput (x : Σ n, Circuit signature n 1 × BitString
   rw [Circuit.eval_eq_evalOutput]
   rfl
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Evaluating a circuit on an input is polynomial-time, on the encoding `encCircuitValue`. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_eval :

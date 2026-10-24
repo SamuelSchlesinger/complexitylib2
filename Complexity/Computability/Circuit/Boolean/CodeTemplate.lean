@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.Formula
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Uniform instantiation of fixed Boolean formula templates
@@ -26,7 +27,7 @@ finite encoding of circuits at a fixed width. Variable-size families of instance
 ## Main results
 
 * `Cslib.Circuits.Boolean.formulaCode_eq_code`: exact agreement with typed instantiation.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_formulaCode`: instantiate a fixed formula
+* `Cslib.Circuits.Boolean.computableInPolyTime_formulaCode`: instantiate a fixed formula
   at efficiently computed input wires.
 -/
 
@@ -56,16 +57,19 @@ theorem formulaCode_eq_code {n m : ℕ} (F : Formula signature m) (wires : Fin m
 
 /-- A fixed formula's full instantiated code is polynomial-time in the target input count and
 its selected binary wire numbers. This is uniform in every target width and reference. -/
-theorem computableTidilyInPolyTime_formulaCode {α : Type} {enc : α ↪ List Bool}
+theorem computableInPolyTime_formulaCode {α : Type} {enc : α ↪ List Bool}
     {n : α → ℕ} {m : ℕ} (F : Formula signature m) {wires : α → Fin m → ℕ}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hwires : ∀ i, ComputableTidilyInPolyTime (fun a => wires a i) enc encNat) :
-    ComputableTidilyInPolyTime (fun a => formulaCode (n a) F (wires a)) enc encCode := by
+    (hn : ComputableInPolyTime n enc encNat)
+    (hwires : ∀ i, ComputableInPolyTime (fun a => wires a i) enc encNat) :
+    ComputableInPolyTime (fun a => formulaCode (n a) F (wires a)) enc encCode := by
+  refine .of_tidy ?_
+  have hn := hn.tidy
+  have hwires := fun i => (hwires i).tidy
   induction F with
   | input i => exact (const []).prod ((hwires i).cons' (const []))
   | gate op args ih =>
-    exact computableTidilyInPolyTime_compCode hn
-      (const (Circuit.oneGate (σ := signature) op id).code)
-      (computableTidilyInPolyTime_appendCodes hn (ofFn (fun i => ih i)))
+    exact (computableInPolyTime_compCode (.of_tidy hn)
+      (.of_tidy (const (Circuit.oneGate (σ := signature) op id).code))
+      (computableInPolyTime_appendCodes (.of_tidy hn) (.of_tidy (ofFn (fun i => ih i))))).tidy
 
 end Cslib.Circuits.Boolean

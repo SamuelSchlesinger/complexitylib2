@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.CodeSubstitution
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Prefix-hardwiring clients
@@ -58,6 +59,7 @@ example : prefixCode [] 0 ([], []) = ([(.const false, []), (.const true, [])], [
 example : prefixCode [false, true] 0 ([], [0, 1, 0]) =
     ([(.const false, []), (.const true, [])], [0, 1, 0]) := by decide +kernel
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Input counts use binary encodings; the certificate does not enumerate all input wires.
 example : ComputableTidilyInPolyTime
     (fun p : (List Bool × ℕ) × (List (Op × List ℕ) × List ℕ) => prefixCode p.1.1 p.1.2 p.2)
@@ -70,11 +72,11 @@ info: 'Cslib.Circuits.Boolean.eval_prefixCircuit' depends on axioms: [propext, C
 #print axioms Cslib.Circuits.Boolean.eval_prefixCircuit
 
 /--
-info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_prefixCode' depends on axioms: [propext,
+info: 'Cslib.Circuits.Boolean.computableInPolyTime_prefixCode' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
 -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_prefixCode
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_prefixCode
 
 end ComplexityTests.CodeSubstitution

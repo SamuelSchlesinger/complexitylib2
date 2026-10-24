@@ -104,7 +104,8 @@ theorem computableTidilyInPolyTime_decrypt
     (hc : ComputableTidilyInPolyTime ciphertext input encBits) :
     ComputableTidilyInPolyTime (fun a => decrypt D (n a) (sk a) (ciphertext a))
       input encBool :=
-  Boolean.computableTidilyInPolyTime_evalCircuit (hD.comp hn) (hsk.bitsAppend hc)
+  (Boolean.computableInPolyTime_evalCircuit (.of_tidy (hD.comp hn)) (.of_tidy (hsk.bitsAppend
+    hc))).tidy
 
 variable (hevaluate : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
@@ -126,7 +127,7 @@ theorem isPPTOn_evaluateCircuit {inputCount : α → ℕ}
     IsPPTOn input (encList encBits)
       (fun a => evaluateCircuit D (n a) (pk a) (encryptedKey a) (inputs a)
         (inputCount a) (code a)) := by
-  have hdepth := Boolean.computableTidilyInPolyTime_depthCode hcount hcode
+  have hdepth := (Boolean.computableInPolyTime_depthCode (.of_tidy hcount) (.of_tidy hcode)).tidy
   have hrepeats : ComputableTidilyInPolyTime
       (fun a => 2 * Boolean.depthCode (inputCount a) (code a)) input encUnary := by fun_prop
   exact Scheme.isPPTOn_evaluateCircuit D hencrypt hevaluate hD hn

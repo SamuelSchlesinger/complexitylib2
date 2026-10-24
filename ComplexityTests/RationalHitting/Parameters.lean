@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger, Karn Seth
 -/
 
 import Complexity.Computability.Circuit.Rational.Runtime.Parameters
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Polynomial-time parameters of the rational hitting list
@@ -52,48 +53,61 @@ example (n s : ℕ) : 2 * CyclotomicRing.degree (Parameters.exponent n s) =
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => generatorParameters p.1 p.2)
     (encPair encUnary encUnary)
     (encPair encUnary (encPair encUnary (encPair encUnary (encPair encUnary
-      (encPair encUnary encUnary))))) := computableTidilyInPolyTime_generatorParameters
+      (encPair encUnary encUnary))))) := computableInPolyTime_generatorParameters.tidy
 
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (hittingList p.1 p.2).dimension)
-    (encPair encUnary encUnary) encUnary := computableTidilyInPolyTime_hittingList_dimension
+    (encPair encUnary encUnary) encUnary := computableInPolyTime_hittingList_dimension.tidy
 
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (hittingList p.1 p.2).dimension)
-    (encPair encUnary encUnary) encNat := computableTidilyInPolyTime_hittingList_dimension_binary
+    (encPair encUnary encUnary) encNat := computableInPolyTime_hittingList_dimension_binary.tidy
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- The registered certificates compose under `fun_prop`, here on the shifted input of the final
 -- generator.
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × ℕ => Parameters.gridSize (p.1 + 1) (p.2 + 1)) (encPair encUnary encUnary)
     encUnary := by
-  fun_prop
+  apply ComputableInPolyTime.tidy
+  apply computableInPolyTime_gridSize <;> exact .of_tidy (by fun_prop)
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × ℕ => Parameters.truncation (p.1 + 1) (p.2 + 1) *
       CyclotomicRing.degree (Parameters.exponent (p.1 + 1) (p.2 + 1)))
     (encPair encUnary encUnary) encUnary := by
+  have ht : ComputableTidilyInPolyTime
+      (fun p : ℕ × ℕ => Parameters.truncation (p.1 + 1) (p.2 + 1))
+      (encPair encUnary encUnary) encUnary := by
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_truncation <;> exact .of_tidy (by fun_prop)
+  have hd : ComputableTidilyInPolyTime
+      (fun p : ℕ × ℕ => CyclotomicRing.degree (Parameters.exponent (p.1 + 1) (p.2 + 1)))
+      (encPair encUnary encUnary) encUnary := by
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_degree <;> exact .of_tidy (by fun_prop)
   fun_prop
 
 /-! ### Axioms of the headline certificates -/
 
 /--
-info: 'Cslib.Circuits.Rational.computableTidilyInPolyTime_generatorParameters' depends on axioms:
+info: 'Cslib.Circuits.Rational.computableInPolyTime_generatorParameters' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Rational.computableTidilyInPolyTime_generatorParameters
+#print axioms Cslib.Circuits.Rational.computableInPolyTime_generatorParameters
 
 /--
-info: 'Cslib.Circuits.Rational.computableTidilyInPolyTime_hittingList_dimension' depends on axioms:
+info: 'Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Rational.computableTidilyInPolyTime_hittingList_dimension
+#print axioms Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension
 
 /--
-info: 'Cslib.Circuits.Rational.computableTidilyInPolyTime_hittingList_dimension_binary' depends on axioms:
+info: 'Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension_binary' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Rational.computableTidilyInPolyTime_hittingList_dimension_binary
+#print axioms Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension_binary
 
 end ComplexityTests.RationalHitting.Parameters

@@ -9,8 +9,10 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.DepthTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Polynomial-time circuit depths
@@ -23,8 +25,8 @@ converting it to unary, so a large invalid index is charged only its binary enco
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_wireDepthsCode`: compute the entire table.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_depthCode`: compute the maximum depth of
+* `Cslib.Circuits.Boolean.computableInPolyTime_wireDepthsCode`: compute the entire table.
+* `Cslib.Circuits.Boolean.computableInPolyTime_depthCode`: compute the maximum depth of
   the designated outputs, including their binary lookups.
 
 ## References
@@ -85,12 +87,15 @@ private theorem computableTidilyInPolyTime_depthStep :
 /-- Compute all wire depths, charging every unary depth and list delimiter. The gate code may
 be malformed, and its wire indices retain their binary encoding. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_wireDepthsCode {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_wireDepthsCode {α : Type} {input : α ↪ List Bool}
     {inputCount : α → ℕ} {gates : α → List (Op × List ℕ)}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hgates : ComputableTidilyInPolyTime gates input (encList encGate)) :
-    ComputableTidilyInPolyTime (fun a => wireDepthsCode (inputCount a) (gates a))
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (hgates : ComputableInPolyTime gates input (encList encGate)) :
+    ComputableInPolyTime (fun a => wireDepthsCode (inputCount a) (gates a))
       input (encList encUnary) := by
+  have hn := hn.tidy
+  have hgates := hgates.tidy
+  refine .of_tidy ?_
   have hcount := (length_list encGate).comp hgates
   have hnPoly : PolyBounded (fun a => (input a).length) inputCount := by
     simpa only [encUnary_apply, List.length_replicate] using hn.polyBounded_length
@@ -111,12 +116,15 @@ theorem computableTidilyInPolyTime_wireDepthsCode {α : Type} {input : α ↪ Li
 /-- Compute the designated-output maximum. Both construction of the table and every binary
 output lookup are charged; no validity or promised-depth hypothesis is needed. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_depthCode {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_depthCode {α : Type} {input : α ↪ List Bool}
     {inputCount : α → ℕ} {code : α → List (Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hcode : ComputableTidilyInPolyTime code input encCode) :
-    ComputableTidilyInPolyTime (fun a => depthCode (inputCount a) (code a)) input encUnary := by
-  have htable := computableTidilyInPolyTime_wireDepthsCode hn hcode.fst'
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (hcode : ComputableInPolyTime code input encCode) :
+    ComputableInPolyTime (fun a => depthCode (inputCount a) (code a)) input encUnary := by
+  have hn := hn.tidy
+  have hcode := hcode.tidy
+  refine .of_tidy ?_
+  have htable := (computableInPolyTime_wireDepthsCode (.of_tidy hn) (.of_tidy hcode.fst')).tidy
   have hcount := (length_list encGate).comp hcode.fst'
   have hbound : PolyBounded (fun a => (input a).length) (fun a => (code a).1.length) := by
     simpa only [encUnary_apply, List.length_replicate, Function.comp_def] using

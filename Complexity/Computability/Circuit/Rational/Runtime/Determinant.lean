@@ -21,7 +21,7 @@ import Mathlib.Data.List.GetD
 `Rational.DeterminantAlgorithm.determinant` runs the stages of Bird's division-free determinant on
 dense tables whose dimension is part of the type. This file restates the same staged algorithm as
 an ordinary program on lists of rows, `Rational.detRows`, whose dimension is the number of rows,
-and certifies that it is computable tidily in polynomial time on multi-tape Turing machines over
+and certifies that it is computable in polynomial time on multi-tape Turing machines over
 framed lists of binary sign-magnitude integers (`Rational.detRows_polytime`). Missing entries read
 as `0` and extra entries are ignored.
 
@@ -52,8 +52,8 @@ encoding, and, following the original development, for the stages of the dense t
 * `Rational.intBits_rowEntry_stagesRows_le`: the stage bound in bit length.
 * `Rational.DeterminantAlgorithm.stages_power_bound`: the stage bound for dense tables.
 * `Rational.length_encList_stagesRows_le`: encoded length bound on intermediate stage tables.
-* `Rational.computableTidilyInPolyTime_stagesRows`, `Rational.detRows_polytime`: `stagesRows` and
-  `detRows` are computable tidily in polynomial time over `encList (encList encIntBin)`.
+* `Rational.computableInPolyTime_stagesRows`, `Rational.detRows_polytime`: `stagesRows` and
+  `detRows` are computable in polynomial time over `encList (encList encIntBin)`.
 
 ## References
 
@@ -574,30 +574,37 @@ variable {α : Type} {encIn : α ↪ List Bool}
 
 /-- Matrix entry lookup on a list of rows is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_rowEntry {rows : α → List (List ℤ)} {i j : α → ℕ}
-    (hrows : ComputableTidilyInPolyTime rows encIn (encList (encList encIntBin)))
-    (hi : ComputableTidilyInPolyTime i encIn encUnary)
-    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => rowEntry (rows x) (i x) (j x)) encIn encIntBin :=
-  (listGetD (encA := encIntBin) 0).comp
-    (((listGetD (encA := encList encIntBin) []).comp (hrows.prod hi)).prod hj)
+theorem computableInPolyTime_rowEntry {rows : α → List (List ℤ)} {i j : α → ℕ}
+    (hrows : ComputableInPolyTime rows encIn (encList (encList encIntBin)))
+    (hi : ComputableInPolyTime i encIn encUnary)
+    (hj : ComputableInPolyTime j encIn encUnary) :
+    ComputableInPolyTime (fun x => rowEntry (rows x) (i x) (j x)) encIn encIntBin := by
+  have hrows := hrows.tidy
+  have hi := hi.tidy
+  have hj := hj.tidy
+  exact .of_tidy ((listGetD (encA := encIntBin) 0).comp
+    (((listGetD (encA := encList encIntBin) []).comp (hrows.prod hi)).prod hj))
 
 /-- Tabulating a `d × d` matrix of binary integers from a unary dimension is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_tabulateRows {d : α → ℕ} {g : α → ℕ → ℕ → ℤ}
-    (hd : ComputableTidilyInPolyTime d encIn encUnary)
-    (hg : ComputableTidilyInPolyTime (fun p : (α × ℕ) × ℕ => g p.1.1 p.1.2 p.2)
+theorem computableInPolyTime_tabulateRows {d : α → ℕ} {g : α → ℕ → ℕ → ℤ}
+    (hd : ComputableInPolyTime d encIn encUnary)
+    (hg : ComputableInPolyTime (fun p : (α × ℕ) × ℕ => g p.1.1 p.1.2 p.2)
       (encPair (encPair encIn encUnary) encUnary) encIntBin) :
-    ComputableTidilyInPolyTime (fun x => tabulateRows (d x) (g x))
-      encIn (encList (encList encIntBin)) :=
-  mapWithInput (range.comp hd) (mapWithInput (range.comp (hd.comp (fst encIn encUnary))) hg)
+    ComputableInPolyTime (fun x => tabulateRows (d x) (g x))
+      encIn (encList (encList encIntBin)) := by
+  have hd := hd.tidy
+  have hg := hg.tidy
+  exact .of_tidy (mapWithInput (range.comp hd) (mapWithInput (range.comp (hd.comp (fst encIn
+    encUnary))) hg))
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Padding or truncating a list of rows to a square table is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_squareRows :
-    ComputableTidilyInPolyTime squareRows
+theorem computableInPolyTime_squareRows :
+    ComputableInPolyTime squareRows
       (encList (encList encIntBin)) (encList (encList encIntBin)) :=
-  computableTidilyInPolyTime_tabulateRows (length_list _) (by fun_prop)
+  (computableInPolyTime_tabulateRows (.of_tidy (length_list _)) (.of_tidy (by fun_prop)))
 
 @[fun_prop]
 private theorem dropUnary_list {β : Type} {encB : β ↪ List Bool} {l : α → List β} {n : α → ℕ}
@@ -606,57 +613,70 @@ private theorem dropUnary_list {β : Type} {encB : β ↪ List Bool} {l : α →
     ComputableTidilyInPolyTime (fun x => (l x).drop (n x)) encIn (encList encB) :=
   (dropUnary (encA := encB)).comp (hl.prod hn)
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Computing the diagonal terms summed in one Bird stage is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_traceTerms {A F : α → List (List ℤ)} {i : α → ℕ}
-    (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
-    (hF : ComputableTidilyInPolyTime F encIn (encList (encList encIntBin)))
-    (hi : ComputableTidilyInPolyTime i encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => traceTerms (A x) (F x) (i x))
+theorem computableInPolyTime_traceTerms {A F : α → List (List ℤ)} {i : α → ℕ}
+    (hA : ComputableInPolyTime A encIn (encList (encList encIntBin)))
+    (hF : ComputableInPolyTime F encIn (encList (encList encIntBin)))
+    (hi : ComputableInPolyTime i encIn encUnary) :
+    ComputableInPolyTime (fun x => traceTerms (A x) (F x) (i x))
       encIn (encList encIntBin) := by
+  have hA := hA.tidy
+  have hF := hF.tidy
+  have hi := hi.tidy
+  refine .of_tidy ?_
   unfold traceTerms; fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Computing the product terms summed in one Bird stage is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_productTerms {A F : α → List (List ℤ)} {i j : α → ℕ}
-    (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
-    (hF : ComputableTidilyInPolyTime F encIn (encList (encList encIntBin)))
-    (hi : ComputableTidilyInPolyTime i encIn encUnary)
-    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => productTerms (A x) (F x) (i x) (j x))
+theorem computableInPolyTime_productTerms {A F : α → List (List ℤ)} {i j : α → ℕ}
+    (hA : ComputableInPolyTime A encIn (encList (encList encIntBin)))
+    (hF : ComputableInPolyTime F encIn (encList (encList encIntBin)))
+    (hi : ComputableInPolyTime i encIn encUnary)
+    (hj : ComputableInPolyTime j encIn encUnary) :
+    ComputableInPolyTime (fun x => productTerms (A x) (F x) (i x) (j x))
       encIn (encList encIntBin) := by
+  have hA := hA.tidy
+  have hF := hF.tidy
+  have hi := hi.tidy
+  have hj := hj.tidy
+  refine .of_tidy ?_
   unfold productTerms; fun_prop
 
 /-- Computing one entry of a Bird stage is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_stepEntryRows {A F : α → List (List ℤ)} {i j : α → ℕ}
-    (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
-    (hF : ComputableTidilyInPolyTime F encIn (encList (encList encIntBin)))
-    (hi : ComputableTidilyInPolyTime i encIn encUnary)
-    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => stepEntryRows (A x) (F x) (i x) (j x))
+theorem computableInPolyTime_stepEntryRows {A F : α → List (List ℤ)} {i j : α → ℕ}
+    (hA : ComputableInPolyTime A encIn (encList (encList encIntBin)))
+    (hF : ComputableInPolyTime F encIn (encList (encList encIntBin)))
+    (hi : ComputableInPolyTime i encIn encUnary)
+    (hj : ComputableInPolyTime j encIn encUnary) :
+    ComputableInPolyTime (fun x => stepEntryRows (A x) (F x) (i x) (j x))
       encIn encIntBin := by
   unfold stepEntryRows; fun_prop
 
 /-- One Bird stage on lists of rows is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_stepRows :
-    ComputableTidilyInPolyTime (fun p : List (List ℤ) × List (List ℤ) => stepRows p.1 p.2)
+theorem computableInPolyTime_stepRows :
+    ComputableInPolyTime (fun p : List (List ℤ) × List (List ℤ) => stepRows p.1 p.2)
       (encPair (encList (encList encIntBin)) (encList (encList encIntBin)))
       (encList (encList encIntBin)) :=
-  computableTidilyInPolyTime_tabulateRows (by fun_prop) (by fun_prop)
+  computableInPolyTime_tabulateRows (by fun_prop) (by fun_prop)
 
 /-- Iterating `k` Bird stages on a list of rows is polynomial-time for a unary stage count `k`. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_stagesRows {A : α → List (List ℤ)} {k : α → ℕ}
-    (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
-    (hk : ComputableTidilyInPolyTime k encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => stagesRows (A x) (k x))
-      encIn (encList (encList encIntBin)) :=
-  iterateWith hA hk (computableTidilyInPolyTime_squareRows.comp hA)
-    computableTidilyInPolyTime_stepRows
+theorem computableInPolyTime_stagesRows {A : α → List (List ℤ)} {k : α → ℕ}
+    (hA : ComputableInPolyTime A encIn (encList (encList encIntBin)))
+    (hk : ComputableInPolyTime k encIn encUnary) :
+    ComputableInPolyTime (fun x => stagesRows (A x) (k x))
+      encIn (encList (encList encIntBin)) := by
+  have hA := hA.tidy
+  have hk := hk.tidy
+  exact .of_tidy (iterateWith hA hk (computableInPolyTime_squareRows.tidy.comp hA)
+    computableInPolyTime_stepRows.tidy
     (polyBounded_stageTableBound hA.polyBounded_length hk.polyBounded)
-    fun x _ hi => length_encList_stagesRows_le (A x) hi
+    fun x _ hi => length_encList_stagesRows_le (A x) hi)
 
 lemma detRows_eq_ite (A : List (List ℤ)) :
     detRows A =
@@ -670,12 +690,12 @@ lemma detRows_eq_ite (A : List (List ℤ)) :
       rw [Bool.eq_false_iff, ne_eq, List.isEmpty_iff]; intro hA; simp [hA] at h
     simp [hne]
 
-/-- The staged division-free integer determinant `detRows` is computable tidily in polynomial
+/-- The staged division-free integer determinant `detRows` is computable in polynomial
 time on lists of rows of binary sign-magnitude integers. -/
 @[fun_prop]
 theorem detRows_polytime :
-    ComputableTidilyInPolyTime detRows (encList (encList encIntBin)) encIntBin := by
-  have h : ComputableTidilyInPolyTime
+    ComputableInPolyTime detRows (encList (encList encIntBin)) encIntBin := by
+  have h : ComputableInPolyTime
       (fun A : List (List ℤ) =>
         if A.isEmpty then 1
         else (-1) ^ (A.length - 1) * rowEntry (stagesRows A (A.length - 1)) 0 0)

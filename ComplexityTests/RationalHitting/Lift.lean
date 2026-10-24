@@ -150,10 +150,12 @@ open Turing MultiTapeTM MultiTapeTM.ComputableTidilyInPolyTime
 example : (encList encIntBin (coeffRow 2 3)).length ≤ coeffRowBound (encIntBin 2).length 3 :=
   length_encList_coeffRow_le 2 le_rfl
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime (fun p : ℤ × ℕ => coeffRow p.1 p.2)
     (encPair encIntBin encUnary) (encList encIntBin) := by
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime (fun p : (ℕ × ℕ) × (ℤ × ℤ) =>
     testRows p.1.1 p.1.2 p.2.1 p.2.2)
     (encPair (encPair encUnary encUnary) (encPair encIntBin encIntBin))
@@ -166,7 +168,7 @@ example : ComputableTidilyInPolyTime
     (encPair encUnary (encPair encUnary (encPair encUnary (encPair encUnary
       (encPair encUnary (encPair encUnary encUnary))))))
     (encList (encList (encList encIntBin))) :=
-  liftRows_polytime
+  liftRows_polytime.tidy
 
 /-! ### Axioms -/
 
@@ -241,11 +243,11 @@ Classical.choice, Quot.sound]
 #print axioms length_encList_coeffRow_le
 
 /--
-info: 'Cslib.Circuits.Rational.computableTidilyInPolyTime_liftRows' depends on axioms: [propext,
+info: 'Cslib.Circuits.Rational.computableInPolyTime_liftRows' depends on axioms: [propext,
 Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_liftRows
+#print axioms computableInPolyTime_liftRows
 
 /--
 info: 'Cslib.Circuits.Rational.liftRows_polytime' depends on axioms: [propext, Classical.choice,

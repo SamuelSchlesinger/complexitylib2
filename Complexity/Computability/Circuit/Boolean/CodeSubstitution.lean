@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
 public import Complexity.Computability.Circuit.Boolean.Substitution
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -31,7 +32,7 @@ polynomial time, with `n` in binary and all wire numbers in binary.
 
 * `Cslib.Circuits.Boolean.code_prefixCircuit`: the raw and typed constructions agree.
 * `Cslib.Circuits.Boolean.eval_prefixCircuit`: hardwiring preserves evaluation.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_prefixCode`: constructor efficiency.
+* `Cslib.Circuits.Boolean.computableInPolyTime_prefixCode`: constructor efficiency.
 
 ## References
 
@@ -179,12 +180,16 @@ theorem evalOutputs_prefixCode {n m : ℕ} (r : List Bool)
 open Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 /-- Rewriting one wire is polynomial-time even when wire numbers and `n` are binary. -/
-@[fun_prop] theorem computableTidilyInPolyTime_prefixWire {α : Type}
+@[fun_prop] theorem computableInPolyTime_prefixWire {α : Type}
     {encIn : α ↪ List Bool} {r : α → List Bool} {n i : α → ℕ}
-    (hr : ComputableTidilyInPolyTime r encIn encBits)
-    (hn : ComputableTidilyInPolyTime n encIn encNat)
-    (hi : ComputableTidilyInPolyTime i encIn encNat) :
-    ComputableTidilyInPolyTime (fun a => prefixWire (r a) (n a) (i a)) encIn encNat := by
+    (hr : ComputableInPolyTime r encIn encBits)
+    (hn : ComputableInPolyTime n encIn encNat)
+    (hi : ComputableInPolyTime i encIn encNat) :
+    ComputableInPolyTime (fun a => prefixWire (r a) (n a) (i a)) encIn encNat := by
+  have hr := hr.tidy
+  have hn := hn.tidy
+  have hi := hi.tidy
+  refine .of_tidy ?_
   have hlen : ComputableTidilyInPolyTime (fun a => (r a).length) encIn encNat :=
     unary_to_binary.comp (length_bits.comp hr)
   have hbit : ComputableTidilyInPolyTime (fun a => (r a).getD (i a) false) encIn encBool :=
@@ -192,14 +197,19 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
   unfold prefixWire
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Construct hardwired raw codes in polynomial time, with binary live-input and wire counts. -/
-@[fun_prop] theorem computableTidilyInPolyTime_prefixCode {α : Type}
+@[fun_prop] theorem computableInPolyTime_prefixCode {α : Type}
     {encIn : α ↪ List Bool} {r : α → List Bool} {n : α → ℕ}
     {code : α → List (Op × List ℕ) × List ℕ}
-    (hr : ComputableTidilyInPolyTime r encIn encBits)
-    (hn : ComputableTidilyInPolyTime n encIn encNat)
-    (hcode : ComputableTidilyInPolyTime code encIn encCode) :
-    ComputableTidilyInPolyTime (fun a => prefixCode (r a) (n a) (code a)) encIn encCode := by
+    (hr : ComputableInPolyTime r encIn encBits)
+    (hn : ComputableInPolyTime n encIn encNat)
+    (hcode : ComputableInPolyTime code encIn encCode) :
+    ComputableInPolyTime (fun a => prefixCode (r a) (n a) (code a)) encIn encCode := by
+  have hr := hr.tidy
+  have hn := hn.tidy
+  have hcode := hcode.tidy
+  refine .of_tidy ?_
   let encP := encPair encBits encNat
   have hwire : ComputableTidilyInPolyTime
       (fun p : (List Bool × ℕ) × ℕ => prefixWire p.1.1 p.1.2 p.2)

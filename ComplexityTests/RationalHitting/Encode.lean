@@ -90,25 +90,33 @@ example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 % p.2)
 example : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Nat.gcd p.1 p.2)
     (encPair encNat encNat) encNat := binary_gcd
 
-example : ComputableTidilyInPolyTime encodeNat encNat encBits := encodeNat_polytime
+example : ComputableTidilyInPolyTime encodeNat encNat encBits := encodeNat_polytime.tidy
 
 example : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => encodeRat (Rat.divInt p.1 p.2))
-    (encPair encIntBin encIntBin) encBits := encodeDivInt_polytime
+    (encPair encIntBin encIntBin) encBits := encodeDivInt_polytime.tidy
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × ℕ => encodeNat (Nat.gcd (p.1 / p.2) (p.1 % p.2)))
     (encPair encNat encNat) encBits := by
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : ℤ × ℤ => encodeRat (Rat.divInt (p.1 + p.2) (p.1 * p.2 - 1)))
     (encPair encIntBin encIntBin) encBits := by
-  fun_prop
+  apply ComputableInPolyTime.tidy
+  apply encodeDivInt_polytime' <;> exact .of_tidy (by fun_prop)
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : ℤ × ℤ =>
       encodeNat (Nat.gcd p.1.natAbs p.2.natAbs) ++ encodeRat (Rat.divInt p.1 p.2))
     (encPair encIntBin encIntBin) encBits := by
+  have hrat := encodeDivInt_polytime.tidy
+  have hnat : ComputableTidilyInPolyTime
+      (fun p : ℤ × ℤ => encodeNat (Nat.gcd p.1.natAbs p.2.natAbs))
+      (encPair encIntBin encIntBin) encBits := by fun_prop
   fun_prop
 
 /-! ### Axioms of the headline certificates -/

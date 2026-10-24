@@ -92,8 +92,8 @@ private theorem computableTidilyInPolyTime_falseWordCode
   have hC := hC.tidy
   apply ComputableInPolyTime.of_tidy
   unfold pairWithZeroCode
-  exact computableTidilyInPolyTime_appendCode hn hC
-    (computableTidilyInPolyTime_falseWordCode hn hw)
+  exact (computableInPolyTime_appendCode (.of_tidy hn) (.of_tidy hC)
+    (.of_tidy (computableTidilyInPolyTime_falseWordCode hn hw))).tidy
 
 /-- The native generator charges the complete leaf list and both reduction stages. -/
 @[fun_prop] theorem computableInPolyTime_sumPairsCode
@@ -107,10 +107,10 @@ private theorem computableTidilyInPolyTime_falseWordCode
   have hcs := hcs.tidy
   apply ComputableInPolyTime.of_tidy
   unfold sumPairsCode
-  exact computableTidilyInPolyTime_compCode hn
-    (computableTidilyInPolyTime_carryLookaheadAdd.comp hw)
-    (computableTidilyInPolyTime_balancedCode hn
-      (computableTidilyInPolyTime_csa4to2.comp hw)
-      (computableTidilyInPolyTime_falseWordCode hn (by fun_prop)) hcs)
+  exact (computableInPolyTime_compCode (.of_tidy hn)
+    (.of_tidy (computableInPolyTime_carryLookaheadAdd.tidy.comp hw))
+    (computableInPolyTime_balancedCode (.of_tidy hn)
+      (.of_tidy (computableInPolyTime_csa4to2.tidy.comp hw))
+      (.of_tidy (computableTidilyInPolyTime_falseWordCode hn (by fun_prop))) (.of_tidy hcs))).tidy
 
 end Cslib.Circuits.Boolean

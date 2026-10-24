@@ -73,7 +73,8 @@ theorem encodeNat_eq (a : ℕ) :
 /-- Self-delimiting binary encoding of a binary natural is computable in polynomial time. -/
 @[fun_prop, program_certificate]
 theorem encodeNat_polytime :
-    ComputableTidilyInPolyTime encodeNat encNat encBits := by
+    ComputableInPolyTime encodeNat encNat encBits := by
+  refine .of_tidy ?_
   have h : ComputableTidilyInPolyTime
       (fun a : ℕ => List.replicate a.bits.length true ++ false :: a.bits) encNat encBits := by
     fun_prop
@@ -82,8 +83,8 @@ theorem encodeNat_polytime :
 /-- Self-delimiting binary encoding of a computed binary natural. -/
 @[fun_prop, program_certificate]
 theorem encodeNat_polytime' {α : Type} {input : α ↪ List Bool} {f : α → ℕ}
-    (hf : ComputableTidilyInPolyTime f input encNat) :
-    ComputableTidilyInPolyTime (fun a => encodeNat (f a)) input encBits :=
+    (hf : ComputableInPolyTime f input encNat) :
+    ComputableInPolyTime (fun a => encodeNat (f a)) input encBits :=
   encodeNat_polytime.comp hf
 
 /-- Reduced numerator magnitude of `Rat.divInt a b` for `b ≠ 0`. -/
@@ -163,8 +164,9 @@ attribute [local irreducible] encodeNat encodeRat
 computable in polynomial time. -/
 @[fun_prop, program_certificate]
 theorem encodeDivInt_polytime :
-    ComputableTidilyInPolyTime (fun p : ℤ × ℤ => encodeRat (Rat.divInt p.1 p.2))
+    ComputableInPolyTime (fun p : ℤ × ℤ => encodeRat (Rat.divInt p.1 p.2))
       (encPair encIntBin encIntBin) encBits := by
+  refine .of_tidy ?_
   have ha0 : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => decide (p.1 = 0))
       (encPair encIntBin encIntBin) encBool :=
     ComputableTidilyInPolyTime.intBin_isZero.comp (ComputableTidilyInPolyTime.fst _ _)
@@ -193,15 +195,15 @@ theorem encodeDivInt_polytime :
       (encPair encIntBin encIntBin) encNat :=
     hb0.ite_decide (.const 1) (by fun_prop)
   have h := hsign.bitsCons
-    ((encodeNat_polytime.comp hnum).bitsAppend (encodeNat_polytime.comp hden))
+    ((encodeNat_polytime.tidy.comp hnum).bitsAppend (encodeNat_polytime.tidy.comp hden))
   exact h.of_enc_eq fun p => congrArg encBits (encodeRat_divInt p.1 p.2)
 
 /-- Encode the reduced rational quotient of two computed binary integers. -/
 @[fun_prop, program_certificate]
 theorem encodeDivInt_polytime' {α : Type} {input : α ↪ List Bool} {num den : α → ℤ}
-    (hnum : ComputableTidilyInPolyTime num input encIntBin)
-    (hden : ComputableTidilyInPolyTime den input encIntBin) :
-    ComputableTidilyInPolyTime (fun a => encodeRat (Rat.divInt (num a) (den a))) input encBits :=
+    (hnum : ComputableInPolyTime num input encIntBin)
+    (hden : ComputableInPolyTime den input encIntBin) :
+    ComputableInPolyTime (fun a => encodeRat (Rat.divInt (num a) (den a))) input encBits :=
   encodeDivInt_polytime.comp (hnum.prod hden)
 
 end Cslib.Circuits.Rational

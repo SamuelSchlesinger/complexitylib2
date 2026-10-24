@@ -117,7 +117,7 @@ theorem innerProductCode_eq_code (k w : ℕ) :
     apply ComputableInPolyTime.tidy
     apply computableInPolyTime_pairWithZeroCode (.of_tidy (by fun_prop)) (.of_tidy hw)
     apply ComputableInPolyTime.of_tidy
-    apply computableTidilyInPolyTime_compCode (by fun_prop) _ hin
+    apply (computableInPolyTime_compCode (.of_tidy (by fun_prop)) (.of_tidy _) (.of_tidy hin)).tidy
     simpa only [multiplyCode_eq_code, Function.comp_def] using
       computableInPolyTime_multiply.tidy.comp hw
   have h := computableInPolyTime_sumPairsCode

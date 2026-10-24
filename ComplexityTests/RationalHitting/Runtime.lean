@@ -64,18 +64,18 @@ example {n s : ℕ} (hn : 1 ≤ n) (hs : 1 ≤ s) :
 
 example :
     ComputableTidilyInPolyTime parseInput encBits (encOption (encPair encUnary encUnary)) :=
-  parseInput_polytime
+  parseInput_polytime.tidy
 
 example :
     ComputableTidilyInPolyTime (fun p : ℕ × ℕ => encodeOutput (hittingList p.1 p.2))
       (encPair encUnary encUnary) encBits :=
-  hittingList_polytime
+  hittingList_polytime.tidy
 
 example : ComputableTidilyInPolyTime hittingGenerator encBits encBits :=
-  hittingGenerator_polytime
+  hittingGenerator_polytime.tidy
 
 example :
-    ComputableTidilyInPolyTime hittingGenerator encBits encBits ∧
+    ComputableInPolyTime hittingGenerator encBits encBits ∧
       ∀ n s : ℕ, 1 ≤ n → 1 ≤ s →
         hittingGenerator (inputWord n s) = encodeOutput (hittingList n s) ∧
           (hittingList n s).dimension ≤ 256 * (n + s + 1) ^ 10 ∧

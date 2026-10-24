@@ -103,17 +103,21 @@ theorem subtractCode_eq_code (w : ℕ) : subtractCode w = (subtract w).code := b
         (const (encMid := encList encGate) []).prod (unary_to_binary.map.comp range)
   have hnot : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => notCode p.1 p.2)
       (encPair encUnary encUnary) encCode := by
-    apply computableTidilyInPolyTime_formulaCode _ (by fun_prop)
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_formulaCode _ (.of_tidy (by fun_prop))
     intro i
+    apply ComputableInPolyTime.of_tidy
     change ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + p.2) _ encNat
     fun_prop
   have ht : ComputableTidilyInPolyTime (fun w : ℕ => ([(Op.const true, [])], [w + w]))
       encUnary encCode := (const _).prod (hn.cons' (const []))
-  have hi := computableTidilyInPolyTime_appendCode hn
-    (computableTidilyInPolyTime_appendCode hn hr
-      (computableTidilyInPolyTime_appendCodes hn (mapWith hnot id' range))) ht
-  have h := computableTidilyInPolyTime_compCode hn hr
-    (computableTidilyInPolyTime_compCode hn computableTidilyInPolyTime_carryLookahead hi)
+  have hi := (computableInPolyTime_appendCode (.of_tidy hn)
+    (computableInPolyTime_appendCode (.of_tidy hn) (.of_tidy hr)
+      (computableInPolyTime_appendCodes (.of_tidy hn) (.of_tidy (mapWith hnot id' range))))
+        (.of_tidy ht)).tidy
+  have h := (computableInPolyTime_compCode (.of_tidy hn) (.of_tidy hr)
+    (computableInPolyTime_compCode (.of_tidy hn) computableInPolyTime_carryLookahead (.of_tidy
+      hi))).tidy
   simp_rw [← subtractCode_eq_code]
   change ComputableTidilyInPolyTime (fun w => compCode (w + w) ([], List.range w)
     (compCode (w + w) (carryLookahead w).code (inputsCode w))) encUnary encCode

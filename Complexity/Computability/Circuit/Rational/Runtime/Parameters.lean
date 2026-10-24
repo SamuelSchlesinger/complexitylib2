@@ -10,8 +10,10 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Rational hitting lists: polynomial-time parameters
@@ -42,16 +44,16 @@ input, and registered with `fun_prop`.
 * `Cslib.Circuits.Rational.Parameters.ambientDimension_eq`,
   `Cslib.Circuits.Rational.Parameters.degree_eq`: the ambient dimension and the cyclotomic degree in
   certifiable form.
-* `Cslib.Circuits.Rational.computableTidilyInPolyTime_exponent`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_ambientDimension`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_truncation`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_gridSize`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_matrixDimension` and their companions: unary
+* `Cslib.Circuits.Rational.computableInPolyTime_exponent`,
+  `Cslib.Circuits.Rational.computableInPolyTime_ambientDimension`,
+  `Cslib.Circuits.Rational.computableInPolyTime_truncation`,
+  `Cslib.Circuits.Rational.computableInPolyTime_gridSize`,
+  `Cslib.Circuits.Rational.computableInPolyTime_matrixDimension` and their companions: unary
   certificates for every parameter.
-* `Cslib.Circuits.Rational.computableTidilyInPolyTime_generatorParameters`: all parameters at
+* `Cslib.Circuits.Rational.computableInPolyTime_generatorParameters`: all parameters at
   once, from unary `(n, s)`.
-* `Cslib.Circuits.Rational.computableTidilyInPolyTime_hittingList_dimension`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_hittingList_dimension_binary`: the common
+* `Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension`,
+  `Cslib.Circuits.Rational.computableInPolyTime_hittingList_dimension_binary`: the common
   dimension of the hitting list, in unary and in binary.
 
 ## References
@@ -102,109 +104,114 @@ variable {α : Type} {input : α ↪ List Bool} {n s : α → ℕ}
 
 /-- The number of matrices in a lifted tuple, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_w (hn : ComputableTidilyInPolyTime n input encUnary) :
-    ComputableTidilyInPolyTime (fun a => Parameters.w (n a)) input encUnary := by
+theorem computableInPolyTime_w (hn : ComputableInPolyTime n input encUnary) :
+    ComputableInPolyTime (fun a => Parameters.w (n a)) input encUnary := by
   unfold Parameters.w
   fun_prop
 
 /-- The rank bound, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_rankBound (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => Parameters.rankBound (s a)) input encUnary := by
+theorem computableInPolyTime_rankBound (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => Parameters.rankBound (s a)) input encUnary := by
   unfold Parameters.rankBound
   fun_prop
 
 /-- The dimension allowance, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_delta (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => Parameters.delta (n a) (s a)) input encUnary := by
+theorem computableInPolyTime_delta (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => Parameters.delta (n a) (s a)) input encUnary := by
   unfold Parameters.delta
   fun_prop
 
 /-- The rank expansion threshold, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_threshold (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => threshold (n a) (s a)) input encUnary := by
+theorem computableInPolyTime_threshold (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => threshold (n a) (s a)) input encUnary := by
   unfold threshold
   fun_prop
 
 /-- The exponent, the binary logarithm of the threshold, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_exponent (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => Parameters.exponent (n a) (s a)) input encUnary := by
-  change ComputableTidilyInPolyTime (fun a => Nat.log 2 (threshold (n a) (s a))) input encUnary
+theorem computableInPolyTime_exponent (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => Parameters.exponent (n a) (s a)) input encUnary := by
+  change ComputableInPolyTime (fun a => Nat.log 2 (threshold (n a) (s a))) input encUnary
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The ambient dimension, in unary, by repeated doubling up to the ceiling logarithm. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_ambientDimension
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => Parameters.ambientDimension (n a) (s a))
+theorem computableInPolyTime_ambientDimension
+    (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => Parameters.ambientDimension (n a) (s a))
       input encUnary := by
+  have hn := hn.tidy
+  have hs := hs.tidy
+  refine .of_tidy ?_
   simp only [Parameters.ambientDimension_eq]
   exact unary_pow_clog_const (by fun_prop) 2 2
 
 /-- The cyclotomic degree, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_degree (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => CyclotomicRing.degree (Parameters.exponent (n a) (s a)))
+theorem computableInPolyTime_degree (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => CyclotomicRing.degree (Parameters.exponent (n a) (s a)))
       input encUnary := by
   simp only [Parameters.degree_eq]
   fun_prop
 
 /-- The number of retained columns, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_truncation (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => Parameters.truncation (n a) (s a)) input encUnary := by
+theorem computableInPolyTime_truncation (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => Parameters.truncation (n a) (s a)) input encUnary := by
   unfold Parameters.truncation
   fun_prop
 
 /-- The grid side length, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_gridSize (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime (fun a => Parameters.gridSize (n a) (s a)) input encUnary := by
+theorem computableInPolyTime_gridSize (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime (fun a => Parameters.gridSize (n a) (s a)) input encUnary := by
   unfold Parameters.gridSize
   fun_prop
 
 /-- The matrix dimension of the generator, in unary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_matrixDimension
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hs : ComputableTidilyInPolyTime s input encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_matrixDimension
+    (hn : ComputableInPolyTime n input encUnary)
+    (hs : ComputableInPolyTime s input encUnary) :
+    ComputableInPolyTime
       (fun a => Generator.matrixDimension (Parameters.exponent (n a) (s a))) input encUnary := by
-  change ComputableTidilyInPolyTime (fun a => Parameters.ambientDimension (n a) (s a) *
+  change ComputableInPolyTime (fun a => Parameters.ambientDimension (n a) (s a) *
     CyclotomicRing.degree (Parameters.exponent (n a) (s a))) input encUnary
   fun_prop
 
 /-- All generator parameters, in unary, from `n` and `s` in unary. -/
-theorem computableTidilyInPolyTime_generatorParameters :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => generatorParameters p.1 p.2)
+theorem computableInPolyTime_generatorParameters :
+    ComputableInPolyTime (fun p : ℕ × ℕ => generatorParameters p.1 p.2)
       (encPair encUnary encUnary)
       (encPair encUnary (encPair encUnary (encPair encUnary (encPair encUnary
         (encPair encUnary encUnary))))) := by
-  have hn := fst encUnary encUnary
-  have hs := snd encUnary encUnary
+  have hn := ComputableInPolyTime.fst encUnary encUnary
+  have hs := ComputableInPolyTime.snd encUnary encUnary
   unfold generatorParameters
   fun_prop
 
 /-- The common dimension of the hitting list, in unary, from `n` and `s` in unary. -/
-theorem computableTidilyInPolyTime_hittingList_dimension :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (hittingList p.1 p.2).dimension)
+theorem computableInPolyTime_hittingList_dimension :
+    ComputableInPolyTime (fun p : ℕ × ℕ => (hittingList p.1 p.2).dimension)
       (encPair encUnary encUnary) encUnary :=
-  computableTidilyInPolyTime_matrixDimension (fst encUnary encUnary) (snd encUnary encUnary)
+  computableInPolyTime_matrixDimension (ComputableInPolyTime.fst encUnary encUnary)
+    (ComputableInPolyTime.snd encUnary encUnary)
 
 /-- The common dimension of the hitting list, in binary, from `n` and `s` in unary. -/
-theorem computableTidilyInPolyTime_hittingList_dimension_binary :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (hittingList p.1 p.2).dimension)
+theorem computableInPolyTime_hittingList_dimension_binary :
+    ComputableInPolyTime (fun p : ℕ × ℕ => (hittingList p.1 p.2).dimension)
       (encPair encUnary encUnary) encNat :=
-  unary_to_binary.comp computableTidilyInPolyTime_hittingList_dimension
+  .of_tidy (unary_to_binary.comp computableInPolyTime_hittingList_dimension.tidy)
 
 end Cslib.Circuits.Rational

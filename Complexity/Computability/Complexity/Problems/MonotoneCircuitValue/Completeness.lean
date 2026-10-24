@@ -222,7 +222,9 @@ private theorem dualChunk_inSpace {n j : α → ℕ}
     (hn : ComputableTidilyInSpace n encIn encNat Bs)
     (hj : ComputableTidilyInSpace j encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => dualChunk tm C d (n x) (j x)) encIn encBits Bs := by
-  have hg := Tableau.gateCode_inSpace tm hn (timeBound_inSpace C d hin hn) hin hj
+  have hg := (Tableau.gateCode_inSpace tm (.of_tidy hn) (.of_tidy (timeBound_inSpace C d hin hn))
+    hin
+    (.of_tidy hj)).tidy
   have hframe : ComputableTidilyInSpace (fun g => frame (encGate g)) encGate encBits
       fun g => (encGate g).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))
@@ -239,8 +241,9 @@ private theorem dualTrailer_inSpace {n : α → ℕ}
   have ho : ComputableTidilyInSpace (fun x => Tableau.outWire k State (n x)
       (timeBound C d (n x))) encIn encNat Bs :=
     budget_natAdd (budget_natAdd (budget_natAdd hn (budget_const 2 hin))
-      (budget_natMul hT (Tableau.blockSize_inSpace (k := k) (State := State) hT hin)))
-      (budget_natAdd (Tableau.gfStart_inSpace (k := k) (State := State) hT hin)
+      (budget_natMul hT (Tableau.blockSize_inSpace (k := k) (State := State) (.of_tidy hT)
+        hin).tidy))
+      (budget_natAdd (Tableau.gfStart_inSpace (k := k) (State := State) (.of_tidy hT) hin).tidy
         (budget_const _ hin))
   have hr : ComputableTidilyInSpace (fun x => Monotone.railWire true
       (Tableau.outWire k State (n x) (timeBound C d (n x)))) encIn encNat Bs :=

@@ -10,10 +10,12 @@ module
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Foundations.Data.BitString.List
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Mathlib.Data.List.GetD
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Evaluating circuits in polynomial time
@@ -26,8 +28,8 @@ circuits exactly as `Cslib.Circuits.Circuit.eval` does (`Cslib.Circuits.Circuit.
 It is total: an argument or a wire missing from a malformed list reads a default value.
 
 For De Morgan circuits, `evalCode` is computable in polynomial time on the binary encoding of
-gate lists (`Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalCode`), so is reading an output
-wire given by its binary number (`Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`).
+gate lists (`Cslib.Circuits.Boolean.computableInPolyTime_evalCode`), so is reading an output
+wire given by its binary number (`Cslib.Circuits.Boolean.computableInPolyTime_evalOutput`).
 These are certificates for the `fun_prop` calculus of tidy polynomial-time computations; the
 evaluators of `Complexity.Computability.Circuit.Evaluation` carry no runtime bound. Each gate is
 evaluated by two lookups at wire numbers, which are capped at the number of values computed so far
@@ -56,10 +58,10 @@ generation, input preparation, binary wire lookup and evaluation are all include
   `Cslib.Circuits.Boolean.evalOutput`.
 * `Cslib.Circuits.Circuit.eval_ofList_eq_evalOutput`: typed evaluation on an arbitrary input list
   uses the padded or truncated input word.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalCode`,
-  `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`: evaluation of De Morgan gate lists
+* `Cslib.Circuits.Boolean.computableInPolyTime_evalCode`,
+  `Cslib.Circuits.Boolean.computableInPolyTime_evalOutput`: evaluation of De Morgan gate lists
   is polynomial-time.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalCircuit`: evaluating an efficiently
+* `Cslib.Circuits.Boolean.computableInPolyTime_evalCircuit`: evaluating an efficiently
   generated typed circuit on an efficiently generated input list is polynomial-time.
 
 ## References
@@ -230,14 +232,16 @@ private theorem computableTidilyInPolyTime_step :
 /-- **Polynomial-time evaluation** of De Morgan gate lists, for input bits and a gate list in the
 binary encoding `encGate`, both computed in polynomial time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_evalCode {γ : Type} {encIn : γ ↪ List Bool}
+theorem computableInPolyTime_evalCode {γ : Type} {encIn : γ ↪ List Bool}
     {x : γ → List Bool} {gates : γ → List (Op × List ℕ)}
-    (hx : ComputableTidilyInPolyTime x encIn encBits)
-    (hgates : ComputableTidilyInPolyTime gates encIn (encList encGate)) :
-    ComputableTidilyInPolyTime (fun a => evalCode interpretation false (x a) (gates a))
-      encIn encBits :=
-  foldl_of_bounded_growth hgates hx computableTidilyInPolyTime_step (growth := 1)
-    fun _ _ => by simp
+    (hx : ComputableInPolyTime x encIn encBits)
+    (hgates : ComputableInPolyTime gates encIn (encList encGate)) :
+    ComputableInPolyTime (fun a => evalCode interpretation false (x a) (gates a))
+      encIn encBits := by
+  have hx := hx.tidy
+  have hgates := hgates.tidy
+  exact .of_tidy (foldl_of_bounded_growth hgates hx computableTidilyInPolyTime_step (growth := 1)
+    fun _ _ => by simp)
 
 /-- The value of wire `o` after evaluating the De Morgan gate list `gates` on the input bits `x`:
 on the code of a circuit and the number of an output wire, the value of that output
@@ -254,13 +258,17 @@ theorem _root_.Cslib.Circuits.Circuit.eval_eq_evalOutput (c : Circuit signature 
 /-- **Polynomial-time evaluation** of an output of a De Morgan gate list, for input bits, a gate
 list in the binary encoding `encGate` and a binary wire number, all computed in polynomial time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_evalOutput {γ : Type} {encIn : γ ↪ List Bool}
+theorem computableInPolyTime_evalOutput {γ : Type} {encIn : γ ↪ List Bool}
     {x : γ → List Bool} {gates : γ → List (Op × List ℕ)} {o : γ → ℕ}
-    (hx : ComputableTidilyInPolyTime x encIn encBits)
-    (hgates : ComputableTidilyInPolyTime gates encIn (encList encGate))
-    (ho : ComputableTidilyInPolyTime o encIn encNat) :
-    ComputableTidilyInPolyTime (fun a => evalOutput (x a) (gates a) (o a)) encIn encBool :=
-  listGetD_binary false (computableTidilyInPolyTime_evalCode hx hgates) ho
+    (hx : ComputableInPolyTime x encIn encBits)
+    (hgates : ComputableInPolyTime gates encIn (encList encGate))
+    (ho : ComputableInPolyTime o encIn encNat) :
+    ComputableInPolyTime (fun a => evalOutput (x a) (gates a) (o a)) encIn encBool := by
+  have hx := hx.tidy
+  have hgates := hgates.tidy
+  have ho := ho.tidy
+  exact .of_tidy (listGetD_binary false (computableInPolyTime_evalCode (.of_tidy hx) (.of_tidy
+    hgates)).tidy ho)
 
 /-- Evaluate a typed circuit on an arbitrary bit list by padding or truncating to its input
 arity. The output wire is read from the circuit's code at the specified output position. -/
@@ -275,13 +283,16 @@ theorem _root_.Cslib.Circuits.Circuit.eval_ofList_eq_evalOutput
 /-- Evaluate an efficiently computed typed circuit on any efficiently computed bit list.
 No length premise is needed: missing inputs are `false`, and inputs past the circuit's arity
 are ignored. The certificate charges circuit generation, input padding and all evaluation. -/
-@[fun_prop] theorem computableTidilyInPolyTime_evalCircuit {γ : Type}
+@[fun_prop] theorem computableInPolyTime_evalCircuit {γ : Type}
     {encIn : γ ↪ List Bool} {c : γ → Σ n, Circuit signature n 1} {x : γ → List Bool}
-    (hc : ComputableTidilyInPolyTime c encIn (encCircuit 1))
-    (hx : ComputableTidilyInPolyTime x encIn encBits) :
-    ComputableTidilyInPolyTime
+    (hc : ComputableInPolyTime c encIn (encCircuit 1))
+    (hx : ComputableInPolyTime x encIn encBits) :
+    ComputableInPolyTime
       (fun a => (c a).2.eval interpretation (BitString.ofList (c a).1 (x a)) 0)
       encIn encBool := by
+  have hc := hc.tidy
+  have hx := hx.tidy
+  refine .of_tidy ?_
   have hview : ComputableTidilyInPolyTime
       (fun C : Σ n, Circuit signature n 1 => (C.1, C.2.code))
       (encCircuit 1) (encPair encUnary encCode) := .of_eq fun _ => rfl
@@ -290,7 +301,8 @@ are ignored. The certificate charges circuit generation, input padding and all e
   have hpad := bitsTakeWithInput (hx.bitsAppend ((bitsReplicate false).comp hn)) hn
   have houtput := listGetD_binary (encA := encNat) 0 hparts.snd'.snd' (const 0)
   simpa only [Circuit.eval_ofList_eq_evalOutput, Fin.val_zero, Function.comp_def] using
-    computableTidilyInPolyTime_evalOutput hpad hparts.snd'.fst' houtput
+    (computableInPolyTime_evalOutput (.of_tidy hpad) (.of_tidy hparts.snd'.fst') (.of_tidy
+      houtput)).tidy
 
 end Boolean
 

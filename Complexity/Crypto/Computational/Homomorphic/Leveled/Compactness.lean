@@ -100,7 +100,7 @@ theorem exists_decrypt_circuits :
       (fun p : ℕ × List Bool × List Bool => decrypt D p.1 p.2.1 p.2.2)
       (encPair encUnary (encPair encBits encBits)) encBool := by
     apply computableTidilyInPolyTime_decrypt D hD <;> fun_prop
-  obtain ⟨L, hL, hdecryptL⟩ := Boolean.PPoly.exists_of_polyTime hdecrypt
+  obtain ⟨L, hL, hdecryptL⟩ := Boolean.PPoly.exists_of_polyTime (.of_tidy hdecrypt)
   obtain ⟨c, p, hp, hc⟩ := Boolean.mem_PPoly_iff_exists_circuits.mp hL
   let K := fun n => 3 * secretWidth n + 1
   let C := fun n => ciphertextWidth n + 1
