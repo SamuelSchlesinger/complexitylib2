@@ -10,6 +10,7 @@ module
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Foundations.Data.BitString.List
 public import Cslib.Computability.Circuit.Boolean.Basic
+import Complexity.Languages.Probabilistic.Traverse
 
 /-!
 # Homomorphic encryption on bit strings
@@ -116,15 +117,8 @@ def encryptBits (n : ℕ) (pk bits : List Bool) : ProbComp (List (List Bool)) :=
 /-- Bitwise encryption has exactly the pointwise fresh-encryption support. -/
 theorem mem_support_encryptBits_iff (n : ℕ) (pk bits : List Bool) (inputs : List (List Bool)) :
     inputs ∈ (ProbComp.eval (E.encryptBits n pk bits)).support ↔
-      E.FreshInputs n pk bits inputs := by
-  induction bits generalizing inputs with
-  | nil => cases inputs <;> simp [encryptBits, FreshInputs]
-  | cons b bits ih =>
-    cases inputs with
-    | nil => simp [encryptBits, FreshInputs, List.mapM_cons]
-    | cons c inputs =>
-      simp only [encryptBits, FreshInputs, PMF.mem_support_iff] at ih
-      simp [encryptBits, FreshInputs, List.mapM_cons, ih, and_comm]
+      E.FreshInputs n pk bits inputs :=
+  ProbComp.mem_support_mapM_iff (E.encrypt n pk) bits inputs
 
 end Scheme
 
