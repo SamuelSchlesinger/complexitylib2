@@ -21,9 +21,9 @@ This umbrella module re-exports the multiprover interactive proof development:
   `MIP₂` and `MIP`, closure under polynomial-time many-one reductions (`PolyTimeReducible.mem_MIP₂`,
   `PolyTimeReducible.mem_MIP`), and the embeddings `IP ⊆ MIP₂ ⊆ MIP`.
   The number of provers is constant for each language.
-* `Complexity.Computability.Complexity.Classes.MIP.OptimalProver`: coin-fixing for multi-channel
-  oracle machines (`MIP.acceptProb_eq_sum`), coordinatewise presampling and deterministic prover
-  optimality (`MIP.exists_deterministic_prover_family`), and pairwise history consistency
+* `Complexity.Computability.Complexity.Classes.MIP.OptimalProver`: coordinatewise presampling and
+  deterministic prover optimality (`MIP.exists_deterministic_prover_family`) using generic
+  multi-channel coin-fixing (`Interaction.acceptProb_eq_sum`), and pairwise history consistency
   (`MIP.consistentHist`, `MIP.DetProver.ValidFrom.consistentHist`,
   `MIP.validFrom_candidateProver`).
 * `Complexity.Computability.Complexity.Classes.MIP.NEXP`: polynomial-time multi-channel transcript

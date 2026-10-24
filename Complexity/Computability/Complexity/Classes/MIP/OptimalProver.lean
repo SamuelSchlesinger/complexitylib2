@@ -8,24 +8,18 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.MIP.Defs
-public import Complexity.Computability.Complexity.Classes.IP.OptimalProver
-public import Complexity.Computability.Machines.Turing.MultiTape.FiniteConfiguration
-public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
-public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Oracle
-public import Complexity.Probability.BitString
-import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
-import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryTake
+public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
 
 /-!
-# Multi-channel coin fixing and deterministic prover optimality for `MIP`
+# Deterministic prover optimality and history consistency for `MIP`
 
 Fixing the private coins of a multi-channel probabilistic oracle Turing machine `M` running under
 clock `t` yields a finite family of deterministic multi-channel query programs
-`Cslib.Complexity.MIP.coinProgram M t x r : WordQueryComp Oracle Bool`. Averaging over uniform
-`t`-bit coin strings reproduces `M.runOracle t x` against any stateful multi-channel oracle, and in
-particular against `Prover.independent P`.
+`Cslib.Complexity.Interaction.coinProgram M t x r : WordQueryComp Oracle Bool`, and averaging over
+uniform `t`-bit coin strings reproduces `M.runOracle t x` against any stateful multi-channel oracle
+(`Cslib.Complexity.Interaction.acceptProb_eq_sum`), in particular against `Prover.independent P`.
 
-Furthermore, for any bounded family of multi-channel query programs, any independent family of
+For any bounded family of multi-channel query programs, any independent family of
 stateful randomized provers `P : ι → Prover Unit` can be replaced by an independent family of
 deterministic stateful provers `D : ι → DetProver` without decreasing the expected acceptance
 probability (`Cslib.Complexity.MIP.exists_deterministic_prover_family`). We establish this by
@@ -41,8 +35,6 @@ histories is realizable by a deterministic prover if and only if it is pairwise 
 
 ## Main definitions
 
-* `Cslib.Complexity.MIP.coinStep`, `Cslib.Complexity.MIP.coinProgram`,
-  `Cslib.Complexity.MIP.coinFamily`: multi-channel fixed-coin verifier programs.
 * `Cslib.Complexity.MIP.IsBoundedComp`: depth and query/reply length bounds on a
   `WordQueryComp ι α`.
 * `Cslib.Complexity.MIP.TreeStrategy`, `Cslib.Complexity.MIP.presampleTree`: finite-depth
@@ -52,8 +44,8 @@ histories is realizable by a deterministic prover if and only if it is pairwise 
 
 ## Main results
 
-* `Cslib.Complexity.MIP.acceptProb_eq_sum`: verifier acceptance probability averages over fixed
-  coin strings.
+* `Cslib.Complexity.MIP.isBoundedComp_coinFamily`: fixed-coin verifier programs form a bounded
+  multi-channel family.
 * `Cslib.Complexity.MIP.exists_deterministic_prover_family`: deterministic provers are optimal for
   multiprover interactive proofs.
 * `Cslib.Complexity.MIP.DetProver.ValidFrom.consistentHist`,
@@ -76,166 +68,6 @@ open _root_.Turing _root_.Turing.MultiTapeMachine _root_.Turing.MultiTapeTM
 open scoped ENNReal
 
 variable {k : ℕ} {Control Oracle ι α β : Type}
-
-/-! ### Multi-channel programs of fixed coins -/
-
-section CoinFixing
-
-variable [DecidableEq Oracle] (M : MultiTapePTM k Bool Control Oracle)
-
-/-- One instruction of `M` with the fixed coin `b`, truncating any oracle reply to `t` bits. -/
-def coinStep (t : ℕ) (cfg : FiniteConfig k Bool Control Oracle) (b : Bool) :
-    WordQueryComp Oracle (FiniteConfig k Bool Control Oracle) :=
-  M.finiteStep (fun choices => choices <$> pure b)
-    (fun op w => List.take t <$> OracleComp.query (op, w)) cfg
-
-/-- The verifier `M` on input `x` with fixed coins `r`, truncating replies to `t` bits and
-accepting when the output tape is `[true]`. -/
-def coinProgram (t : ℕ) (x r : List Bool) : WordQueryComp Oracle Bool :=
-  (fun cfg => decide (cfg.tapes.output = [true])) <$>
-    r.foldlM (coinStep M t) (FiniteConfig.init M.initial x)
-
-/-- The family of `t`-coin multi-channel programs on input `x`. -/
-def coinFamily (t : ℕ) (x : List Bool) (r : Fin t → Bool) : WordQueryComp Oracle Bool :=
-  coinProgram M t x (List.ofFn r)
-
-variable {S : Type} (oracle : Oracle × List Bool → StateT S PMF (List Bool))
-
-local notation "handler" o =>
-  ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) o
-
-/-- An instruction with a fixed coin makes the requests of `coinStep`. -/
-private theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Control Oracle)
-    (b : Bool)
-    (s : S) :
-    (OracleComp.interpret (handler oracle) (M.finiteStep (fun choices => choices <$> pure b)
-      (fun op w => List.take t <$> ProbOracleComp.query (op, w)) cfg)).run s =
-      (OracleComp.interpret oracle (coinStep M t cfg b)).run s := by
-  unfold coinStep MultiTapeMachine.finiteStep
-  cases cfg.tapes.state with
-  | none => rfl
-  | some c =>
-    simp only [map_pure, pure_bind]
-    cases M.tr c cfg.tapes.inputSymbol cfg.tapes.workTapeSymbols cfg.answerSymbols b with
-    | step => rfl
-    | query op next =>
-      simp only [bind_map_left, OracleComp.interpret_bind, ProbOracleComp.interpret_query,
-        OracleComp.interpret_query, OracleComp.interpret_pure]
-
-/-- Instructions with fixed coins make the requests of `coinStep`. -/
-private theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool)
-    (cfg : FiniteConfig k Bool Control Oracle)
-    (s : S) :
-    (OracleComp.interpret (handler oracle) (r.foldlM (fun cfg b => M.finiteStep
-      (fun choices => choices <$> pure b)
-      (fun op w => List.take t <$> ProbOracleComp.query (op, w)) cfg) cfg)).run s =
-      (OracleComp.interpret oracle (r.foldlM (coinStep M t) cfg)).run s := by
-  induction r generalizing cfg s with
-  | nil => rfl
-  | cons b r ih =>
-    simp only [List.foldlM_cons, OracleComp.interpret_bind, StateT.run_bind,
-      run_interpret_finiteStep_pure, ih]
-
-/-- An instruction drawing a fair coin averages the instructions with fixed coins. -/
-private theorem run_interpret_finiteStep_sample
-    (query : Oracle → List Bool →
-      ProbOracleComp (fun _ : Oracle × List Bool => List Bool) (List Bool))
-    (cfg : FiniteConfig k Bool Control Oracle) (s : S) :
-    (OracleComp.interpret (handler oracle) (M.finiteStep
-      (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) query cfg)).run s =
-      (PMF.uniformOfFintype Bool).bind fun b =>
-        (OracleComp.interpret (handler oracle) (M.finiteStep (fun choices => choices <$> pure b)
-          query cfg)).run s := by
-  unfold MultiTapeMachine.finiteStep
-  cases cfg.tapes.state with
-  | none =>
-    simp only [OracleComp.interpret_pure, StateT.run_pure, Probability.PMF.monad_pure_eq_pure,
-      PMF.bind_const]
-  | some c =>
-    simp only [map_pure, pure_bind, bind_map_left, OracleComp.interpret_bind, StateT.run_bind,
-      MultiTapePTM.run_interpret_sample_uniform_bool, Probability.PMF.monad_bind_eq_bind,
-      PMF.bind_map]
-    rfl
-
-/-- A clocked loop drawing fair coins averages the loops with fixed coins. -/
-private theorem run_interpret_iterate_eq_coins
-    (query : Oracle → List Bool →
-      ProbOracleComp (fun _ : Oracle × List Bool => List Bool) (List Bool))
-    (n : ℕ) (cfg : FiniteConfig k Bool Control Oracle) (s : S) :
-    (OracleComp.interpret (handler oracle) (OracleComp.iterate n (M.finiteStep
-      (fun choices => choices <$> ProbOracleComp.sample (ProbComp.uniform Bool)) query)
-        cfg)).run s =
-      (BitString.uniformList n).bind fun r =>
-        (OracleComp.interpret (handler oracle) (r.foldlM (fun cfg b => M.finiteStep
-          (fun choices => choices <$> pure b) query cfg) cfg)).run s := by
-  induction n generalizing cfg s with
-  | zero => simp
-  | succ n ih =>
-    rw [OracleComp.iterate_succ_bind, OracleComp.interpret_bind, StateT.run_bind,
-      Probability.PMF.monad_bind_eq_bind, run_interpret_finiteStep_sample,
-      BitString.uniformList_succ, PMF.bind_bind, PMF.bind_bind]
-    congr 1
-    funext b
-    simp only [ih, PMF.bind_map, Function.comp_def, List.foldlM_cons, OracleComp.interpret_bind,
-      StateT.run_bind, Probability.PMF.monad_bind_eq_bind]
-    exact PMF.bind_comm _ _ _
-
-/-- **The multi-channel run averages the programs of fixed coins** against every stateful oracle. -/
-private theorem run_interpret_runOracle_eq_coins (t : ℕ) (x : List Bool) (s : S) :
-    (OracleComp.interpret (handler oracle) (M.runOracle t x)).run s =
-      (BitString.uniformList t).bind fun r =>
-        (OracleComp.interpret oracle ((fun cfg => cfg.tapes.output) <$>
-          r.foldlM (coinStep M t) (FiniteConfig.init M.initial x))).run s := by
-  rw [← MultiTapePTM.finiteRunFrom_take_runOracle, MultiTapeMachine.finiteRunFrom,
-    OracleComp.interpret_map, StateT.run_map, run_interpret_iterate_eq_coins,
-    _root_.PMF.monad_map_eq_map, PMF.map_bind]
-  congr 1
-  funext r
-  rw [OracleComp.interpret_map, StateT.run_map, run_interpret_foldlM_pure,
-    _root_.PMF.monad_map_eq_map]
-
-/-- Acceptance of a deterministic `WordQueryComp Oracle Bool` against `P : Prover Oracle` from
-state `s`. -/
-noncomputable def queryAcceptProb (P : Prover Oracle) (s : P.State)
-    (p : WordQueryComp Oracle Bool) : ℝ≥0∞ :=
-  ((OracleComp.interpret P.respond p).run s).map Prod.fst true
-
-/-- **Acceptance averages over the coins.** If a multi-channel verifier `V` is realized by `M`
-under clock `t`, then its acceptance probability against `P` is the uniform average over `r` of
-`queryAcceptProb P P.init (coinFamily M t x r)`. -/
-theorem acceptProb_eq_sum {V : WordOracleComp Oracle Bool} {t : ℕ} {x : List Bool}
-    (hV : ∀ (S : Type) (oracle : Oracle × List Bool → StateT S PMF (List Bool)) s,
-      (OracleComp.interpret
-        (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-          (encBool <$> V)).run s =
-      (OracleComp.interpret
-        (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-          (M.runOracle t x)).run s)
-    (P : Prover Oracle) :
-    acceptProb V P =
-      (2 ^ t)⁻¹ * ∑ r : Fin t → Bool, queryAcceptProb P P.init (coinFamily M t x r) := by
-  have h := congrArg (fun μ => μ.map (fun z => decide (z.1 = [true])) true)
-    (hV P.State P.respond P.init)
-  rw [OracleComp.interpret_map, StateT.run_map, run_interpret_runOracle_eq_coins,
-    _root_.PMF.monad_map_eq_map, PMF.map_comp] at h
-  have hl : acceptProb V P = ((OracleComp.interpret (ProbOracleComp.handler
-      (fun n => StateT.lift (ProbComp.unifOracle n)) P.respond) V).run P.init).map
-        ((fun z => decide (z.1 = [true])) ∘ fun p => (encBool p.1, p.2))
-          true := by
-    rw [acceptProb]
-    congr 2
-    funext z
-    obtain ⟨_ | _, _⟩ := z <;> rfl
-  rw [hl, h, PMF.map_bind, BitString.uniformList, PMF.bind_map, PMF.bind_apply, tsum_fintype,
-    Finset.mul_sum]
-  refine Finset.sum_congr rfl fun r _ => ?_
-  rw [PMF.uniformOfFintype_apply, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin,
-    Function.comp_apply, coinFamily, coinProgram, queryAcceptProb, OracleComp.interpret_map,
-    StateT.run_map, _root_.PMF.monad_map_eq_map, PMF.map_comp, OracleComp.interpret_map,
-    StateT.run_map, _root_.PMF.monad_map_eq_map, PMF.map_comp, Nat.cast_pow, Nat.cast_ofNat]
-  rfl
-
-end CoinFixing
 
 /-! ### Bounded multi-channel query programs -/
 
@@ -766,21 +598,23 @@ theorem exists_deterministic_prover_family [Finite ι] [DecidableEq ι] {γ : Ty
     {L d : ℕ} (F : γ → WordQueryComp ι Bool) (hF : ∀ c, IsBoundedComp L d (F c))
     (w : γ → ℝ≥0∞) (P : ι → Prover Unit) :
     ∃ D : ι → DetProver,
-      ∑ c, w c * queryAcceptProb (Prover.independent P) (Prover.independent P).init (F c) ≤
-        ∑ c, w c * queryAcceptProb (Prover.independent fun i => (D i).toProver)
-          (Prover.independent fun i => (D i).toProver).init (F c) := by
+      ∑ c, w c * acceptFrom (Prover.independent P) (Prover.independent P).init (some (F c)) ≤
+        ∑ c, w c * acceptFrom (Prover.independent fun i => (D i).toProver)
+          (Prover.independent fun i => (D i).toProver).init (some (F c)) := by
   cases nonempty_fintype ι
   let queries := (BitString.shortWords L).toList
   let μ := piPresample P L queries (fun _ => d) (Prover.independent P).init
   let g (f : ι → Sigma TreeStrategy) : ℝ≥0∞ :=
     ∑ c, w c * ((OracleComp.interpret (Prover.independent (fun _ : ι => treeProver)).respond
       (F c)).run f).map Prod.fst true
-  have hsum : ∑ c, w c * queryAcceptProb (Prover.independent P) (Prover.independent P).init (F c) =
+  have hsum : ∑ c, w c *
+      acceptFrom (Prover.independent P) (Prover.independent P).init (some (F c)) =
       ∑' f, μ f * g f := by
-    have hc (c : γ) : queryAcceptProb (Prover.independent P) (Prover.independent P).init (F c) =
+    have hc (c : γ) :
+        acceptFrom (Prover.independent P) (Prover.independent P).init (some (F c)) =
         ∑' f, μ f * ((OracleComp.interpret (Prover.independent (fun _ : ι => treeProver)).respond
           (F c)).run f).map Prod.fst true := by
-      unfold queryAcceptProb
+      dsimp only [acceptFrom, Functor.map]
       rw [run_eq_bind_piPresample (hF c) P (fun _ => d) (fun _ => le_rfl)
         (Prover.independent P).init, PMF.bind_apply]
     simp only [hc, ← ENNReal.tsum_mul_left]
@@ -824,23 +658,23 @@ abbrev DetProver.truncate (L : ℕ) (D : DetProver) : DetProver where
 
 /-- Truncating the replies of deterministic provers to `L` bits preserves the exact output of any
 `L`-bounded query program. -/
-theorem queryAcceptProb_truncate_eq [DecidableEq ι] {p : WordQueryComp ι Bool} {L k : ℕ}
+theorem acceptFrom_truncate_eq [DecidableEq ι] {p : WordQueryComp ι Bool} {L k : ℕ}
     (hp : IsBoundedComp L k p) (D : ι → DetProver) (s : ∀ i, (D i).State) :
-    queryAcceptProb (Prover.independent fun i => ((D i).truncate L).toProver) s p =
-      queryAcceptProb (Prover.independent fun i => (D i).toProver) s p := by
+    acceptFrom (Prover.independent fun i => ((D i).truncate L).toProver) s (some p) =
+      acceptFrom (Prover.independent fun i => (D i).toProver) s (some p) := by
   induction hp generalizing s with
   | pure k b => rfl
   | @liftBind k q next _ htake _ ih =>
     obtain ⟨i₀, m⟩ := q
-    change queryAcceptProb (Prover.independent fun i => ((D i).truncate L).toProver) s
-        (OracleComp.query (i₀, m) >>= next) =
-      queryAcceptProb (Prover.independent fun i => (D i).toProver) s
-        (OracleComp.query (i₀, m) >>= next)
-    simp only [queryAcceptProb, OracleComp.interpret_bind, OracleComp.interpret_query,
+    change acceptFrom (Prover.independent fun i => ((D i).truncate L).toProver) s
+        (some (OracleComp.query (i₀, m) >>= next)) =
+      acceptFrom (Prover.independent fun i => (D i).toProver) s
+        (some (OracleComp.query (i₀, m) >>= next))
+    simp only [acceptFrom, OracleComp.interpret_bind, OracleComp.interpret_query,
       StateT.run_bind, Probability.PMF.monad_bind_eq_bind,
       DetProver.toProver, DetProver.truncate, StateT.run_mk, PMF.pure_map, PMF.pure_bind]
     rw [(htake ((D i₀).respond m (s i₀)).1).symm]
-    simpa only [queryAcceptProb, DetProver.toProver, DetProver.truncate, StateT.run_mk,
+    simpa only [acceptFrom, DetProver.toProver, DetProver.truncate, StateT.run_mk,
       PMF.pure_map] using
       ih ((D i₀).respond m (s i₀)).1 (Function.update s i₀ ((D i₀).respond m (s i₀)).2)
 

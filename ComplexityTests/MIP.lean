@@ -104,10 +104,10 @@ info: 'Cslib.Complexity.IsInteractiveProof.isMultiproverProof_singleOracle' depe
 #guard_msgs in
 #print axioms PolyTimeReducible.mem_MIP
 
-/-- info: 'Cslib.Complexity.MIP.acceptProb_eq_sum' depends on axioms:
+/-- info: 'Cslib.Complexity.Interaction.acceptProb_eq_sum' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms MIP.acceptProb_eq_sum
+#print axioms Interaction.acceptProb_eq_sum
 
 /-- info: 'Cslib.Complexity.MIP.exists_deterministic_prover_family' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

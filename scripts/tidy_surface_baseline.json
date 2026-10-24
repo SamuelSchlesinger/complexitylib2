@@ -27,7 +27,7 @@
  "Complexity/Computability/Complexity/Classes/IP/Simulation.lean": 2,
  "Complexity/Computability/Complexity/Classes/IP/TQBF/Words.lean": 12,
  "Complexity/Computability/Complexity/Classes/Ladner/PolyTime.lean": 9,
- "Complexity/Computability/Complexity/Classes/MIP/NEXP.lean": 9,
+ "Complexity/Computability/Complexity/Classes/MIP/NEXP.lean": 5,
  "Complexity/Computability/Complexity/Classes/NP.lean": 1,
  "Complexity/Computability/Complexity/Classes/NP/GuessVerify.lean": 1,
  "Complexity/Computability/Complexity/Classes/NP/Nondeterministic.lean": 1,
