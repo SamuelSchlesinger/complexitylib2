@@ -164,13 +164,13 @@ example : MultiTapeTM.ComputableInLinearTimeAndSpace
   MultiTapePTM.computableInLinearTimeAndSpace_runClosedCoins writeForever
 
 -- A functional client can rearrange arguments and preprocess the supplied tape by automation.
-example : MultiTapeTM.ComputableTidilyInPolyTime
+example : MultiTapeTM.ComputableInPolyTime
     (fun p : List Bool × List Bool => writeForever.runClosedCoins (false :: p.2) p.1)
     (MultiTapeTM.encPair MultiTapeTM.encBits MultiTapeTM.encBits) MultiTapeTM.encBits := by
   fun_prop
 
 -- Both runtime inputs matter: the scanner stops at the end of its virtual input.
-example : MultiTapeTM.ComputableTidilyInPolyTime
+example : MultiTapeTM.ComputableInPolyTime
     (fun p : List Bool × List Bool => MultiTapePTM.uniformListMachine.runClosedCoins p.1 p.2)
     (MultiTapeTM.encPair MultiTapeTM.encBits MultiTapeTM.encBits) MultiTapeTM.encBits := by
   polytime
@@ -181,5 +181,9 @@ example : MultiTapePTM.uniformListMachine.runClosedCoins [false, true, false] [t
 example : MultiTapePTM.uniformListMachine.runClosedCoins [false, true, false] [] = [] := by rfl
 
 example : MultiTapePTM.uniformListMachine.runClosedCoins [] [true, false] = [] := by rfl
+
+run_meta do
+  if (← Lean.getEnv).contains `Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins then
+    throwError "retired replay rule remains"
 
 end ComplexityTests.CoinTape
