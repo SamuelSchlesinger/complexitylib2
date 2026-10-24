@@ -108,11 +108,11 @@ theorem polytime_rotateFamily [Finite D] (H : RotationMap (Fin b) D)
       have hinl : ComputableInPolyTime (Sum.inl : (Fin b × (D × D)) → _)
           slot edge := .of_finite _
       exact hbound.ite_decide (hcall.fst'.prod (hinl.comp hcall.snd'))
-        (hvertex.prod (ComputableInPolyTime.const (encMid := edge) (Sum.inl choice)))
+        (hvertex.prod (ComputableInPolyTime.const (encOut := edge) (Sum.inl choice)))
     | inr choice =>
       exact hbound.ite_decide
-        (hvertex.prod (ComputableInPolyTime.const (encMid := edge) (Sum.inr choice)))
-        (hvertex.prod (ComputableInPolyTime.const (encMid := edge) (Sum.inr choice)))
+        (hvertex.prod (ComputableInPolyTime.const (encOut := edge) (Sum.inr choice)))
+        (hvertex.prod (ComputableInPolyTime.const (encOut := edge) (Sum.inr choice)))
   exact hlabel.finite_cases hbranches
 
 end Efficiency

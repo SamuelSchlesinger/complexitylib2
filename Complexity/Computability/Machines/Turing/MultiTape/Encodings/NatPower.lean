@@ -22,7 +22,7 @@ without ever writing `2 ^ n` in unary.
 ## Main results
 
 * `Turing.MultiTapeTM.encNat_two_pow`: the binary digits of `2 ^ n`.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.two_pow_length`: `2 ^ (encIn a).length` is linear.
+* `Turing.MultiTapeTM.ComputableInDegree.two_pow_length`: `2 ^ (encIn a).length` is linear.
 -/
 
 @[expose] public section
@@ -53,11 +53,11 @@ theorem twoPowT_run (w : List Bool) :
     rw [Transducer.run_cons, ih]
     rfl
 
-/-- **An exponential clock in binary.** `2 ^ (encIn a).length` is tidily computable in linear time
+/-- **An exponential clock in binary.** `2 ^ (encIn a).length` is computable in linear time
 and space, for every encoding of the input. -/
-theorem ComputableTidilyInDegree.two_pow_length {α : Type*} (encIn : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun a => 2 ^ (encIn a).length) encIn encNat 1 1 :=
-  Internal.normalizeDegree <| ComputableInDegree.of_linear
+theorem ComputableInDegree.two_pow_length {α : Type*} (encIn : α ↪ List Bool) :
+    ComputableInDegree (fun a => 2 ^ (encIn a).length) encIn encNat 1 1 :=
+  ComputableInDegree.of_linear
     (twoPowT.computableInLinearTimeAndSpace fun a => by
       rw [encNat_two_pow, twoPowT_run])
 
