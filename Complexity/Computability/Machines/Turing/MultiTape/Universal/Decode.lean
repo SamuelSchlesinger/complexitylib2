@@ -10,12 +10,14 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Complexity
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Decoding descriptions of machines
 
 Every word decodes to a description of a machine (`Turing.MultiTapeTM.Universal.descDecoder`):
 the decoder inverts the encoding `Turing.MultiTapeTM.Universal.eDesc` of descriptions, returns a
-description of polynomial encoded length on every other word, and is tidily computable within
+description of polynomial encoded length on every other word, and is computable within
 bounds of fixed degrees. It is assembled from the generic decoders of
 `Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder` along the fields of a
 description, its transitions, their keys and their actions.
@@ -32,7 +34,7 @@ to any length.
 
 * `Turing.MultiTapeTM.Universal.decodeDesc_eDesc`: decoding inverts the encoding.
 * `Turing.MultiTapeTM.Universal.decodeDesc_unframe_frame_append`: padded descriptions.
-* `Turing.MultiTapeTM.Universal.exists_computableTidilyInDegree_decodeDesc`: decoding is tidily
+* `Turing.MultiTapeTM.Universal.exists_computableInDegree_decodeDesc`: decoding is plainly
   computable within bounds of fixed degrees.
 -/
 
@@ -50,7 +52,11 @@ def signOf (q : Bool × Bool) : SignType := if q.1 then 0 else if q.2 then 1 els
 def signDecoder : Decoder encSign where
   decode w := signOf (w.isEmpty, w.headD false)
   decode_enc m := by cases m <;> rfl
-  computable := ⟨_, _, (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+  computable := by
+    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
+      let ⟨d, e, h⟩ := h
+      ⟨d, e, Internal.forgetDegree h⟩)
+    exact ⟨_, _, (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encSign) signOf).comp
       ((ComputableTidilyInDegree.isEmpty (enc₁ := encBool) (enc := encBits)).prod
         (ComputableTidilyInDegree.headD (enc₁ := encBool) (enc := encBits) false))⟩
@@ -92,10 +98,10 @@ theorem decodeDesc_unframe_frame_append (d : Desc) (pad : List Bool) :
     decodeDesc (unframe (frame (eDesc d) ++ pad)) = d := by
   rw [unframe_frame_append, decodeDesc_eDesc]
 
-/-- **Decoding is efficient.** It is tidily computable, and the decoded descriptions have
+/-- **Decoding is efficient.** It is computable, and the decoded descriptions have
 encoded length polynomial in the length of the word, within bounds of fixed degrees. -/
-theorem exists_computableTidilyInDegree_decodeDesc :
-    ∃ d e, ComputableTidilyInDegree decodeDesc encBits eDesc d e :=
+theorem exists_computableInDegree_decodeDesc :
+    ∃ d e, ComputableInDegree decodeDesc encBits eDesc d e :=
   descDecoder.computable
 
 end Universal

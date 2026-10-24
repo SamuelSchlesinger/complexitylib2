@@ -55,7 +55,7 @@ time and space; there is no unary expansion of the original number. -/
 theorem sizeUnary_inSpace : ComputableTidilyInSpace Nat.size encNat encUnary
     fun n => (encNat n).length := by
   have h : ComputableTidilyInDegree Nat.size encNat encUnary 1 1 :=
-    .of_linear (unaryLengthT.computableTidilyInLinearTimeAndSpace fun n => by
+    .of_linear (unaryLengthT.computableInLinearTimeAndSpace fun n => by
       rw [encUnary_apply, unaryLengthT_run, encNat_apply, Nat.size_eq_bits_len])
   exact of_inO h.inO_one
 

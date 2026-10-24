@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.NondeterministicQueryMachine
 import Mathlib.Data.List.GetD
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Framed native routines for nondeterministic query machines
 
@@ -32,8 +34,8 @@ namespace Turing.NondeterministicQueryMachine
 
 open MultiTapeTM QueryMachine.Simulation
 
-open ComputableTidilyInLinearTimeAndSpace in
-private theorem linearFlag : ComputableTidilyInLinearTimeAndSpace flagWord encBool encBits := by
+open ComputableInLinearTimeAndSpace in
+private theorem linearFlag : ComputableInLinearTimeAndSpace flagWord encBool encBits := by
   convert (of_eq (f := id) (encIn := encBool) (encMid := encBool) fun _ => rfl).ite
     ((const [true]).restrict _) ((const []).restrict _) using 1
   funext c
@@ -116,11 +118,13 @@ theorem exists_routines {α σ : Type} {enc : α ↪ List Bool} {encS : σ ↪ L
   choose TPN cPN hPN hlenPN using hpns
   obtain ⟨TC, cC, hC, -⟩ := passCont_inSpace hhalted false
   obtain ⟨TF, cF, hF, -⟩ := passFinish_inSpace haccept false
-  obtain ⟨cfr, hfr⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := id)
-    (encIn := encPass encS) (encOut := encFramed (encPass encS)) fun _ => rfl
-  obtain ⟨cuf, huf⟩ := ComputableTidilyInLinearTimeAndSpace.of_unframe (f := id)
-    (encIn := encFramed (encPass encS)) (encOut := encPass encS) fun s => by simp
-  obtain ⟨cfl, hfl⟩ := linearFlag
+  obtain ⟨cfr, hfr⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.of_frame (f := id)
+      (encIn := encPass encS) (encOut := encFramed (encPass encS)) fun _ => rfl)
+  obtain ⟨cuf, huf⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.of_unframe (f := id)
+      (encIn := encFramed (encPass encS)) (encOut := encPass encS) fun s => by simp)
+  obtain ⟨cfl, hfl⟩ := Internal.normalizeLinear linearFlag
   obtain ⟨cI', hI'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr
     hI.computableTidilyInTimeAndSpace
   obtain ⟨cN', hN'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr hN

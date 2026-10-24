@@ -9,6 +9,8 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # The encoding of options
 
@@ -40,8 +42,9 @@ public lemma encOption_some (a : α) : encOption enc (some a) = true :: enc a :=
 
 public instance : OptionEncoding enc (encOption enc) where
   none_eq := rfl
-  some := .of_cons_true fun _ => rfl
-  getD d := .of_isEmpty_ite d (fun o ho => by cases o <;> simp_all)
-    (.of_tail fun ⟨o, ho⟩ => by cases o <;> simp at ho ⊢)
+  some := (ComputableInLinearTimeAndSpace.of_cons_true fun _ => rfl)
+  getD d := (ComputableInLinearTimeAndSpace.of_isEmpty_ite d
+      (fun o ho => by cases o <;> simp_all)
+      (.of_tail fun ⟨o, ho⟩ => by cases o <;> simp at ho ⊢))
 
 end Turing.MultiTapeTM

@@ -48,9 +48,9 @@ namespace Turing.MultiTapeTM
 /-- A flag as a word: `[true]` if set, blank otherwise. -/
 @[expose] public def stepFlagWord (b : Bool) : List Bool := if b then [true] else []
 
-open ComputableTidilyInLinearTimeAndSpace in
+open ComputableInLinearTimeAndSpace in
 public lemma linear_stepFlagWord :
-    ComputableTidilyInLinearTimeAndSpace stepFlagWord encBool encBits := by
+    ComputableInLinearTimeAndSpace stepFlagWord encBool encBits := by
   convert (of_eq (f := id) (encIn := encBool) (encMid := encBool) fun _ => rfl).ite
     ((const [true]).restrict _) ((const []).restrict _) using 1
   funext c
@@ -195,19 +195,19 @@ variable {τ : Type} {enc : τ ↪ List Bool}
 /-- The value behind the recorded symbol. -/
 public lemma peek_snd : ComputableTidilyInO Prod.snd (encPeek enc) enc
     (fun p => (encPeek enc p).length) fun p => (encPeek enc p).length :=
-  of_linear (dropTwoT.computableTidilyInLinearTimeAndSpace fun p => by
+  of_linear (dropTwoT.computableInLinearTimeAndSpace fun p => by
     obtain ⟨_ | b, t⟩ := p <;> simp [peekWord, dropTwoT_run_two])
 
 /-- The recorded symbol. -/
 public lemma peek_fst : ComputableTidilyInO Prod.fst (encPeek enc) (encOption encBool)
     (fun p => (encPeek enc p).length) fun p => (encPeek enc p).length :=
-  of_linear (peekSymT.computableTidilyInLinearTimeAndSpace fun p => by
+  of_linear (peekSymT.computableInLinearTimeAndSpace fun p => by
     obtain ⟨_ | b, t⟩ := p <;> simp [peekWord, peekSymT_run_three])
 
 /-- No symbol recorded in front of a value. -/
 public lemma peek_none : ComputableTidilyInO (fun t => ((none : Option Bool), t)) enc (encPeek enc)
     (fun t => (enc t).length) fun t => (enc t).length :=
-  of_linear (slotT.computableTidilyInLinearTimeAndSpace fun t => by
+  of_linear (slotT.computableInLinearTimeAndSpace fun t => by
     cases h : enc t with
     | nil => simp [h, peekWord]
     | cons b w => simp [h, peekWord, slotT_run_some])

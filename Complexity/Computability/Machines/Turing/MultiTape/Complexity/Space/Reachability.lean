@@ -173,12 +173,12 @@ attribute [local fun_prop] ComputableTidilyInDegree.increment
 /-- The test for the word of all ones, in linear time. -/
 @[local fun_prop] private lemma all_deg :
     ComputableTidilyInDegree (fun u : List Bool => u.all id) encBits encBool 1 1 :=
-  of_linear (allT.computableTidilyInLinearTimeAndSpace fun u => by simp [allT_run])
+  of_linear (allT.computableInLinearTimeAndSpace fun u => by simp [allT_run])
 
 /-- The word of all zeros of width `w`, from `w` in unary, in linear time. -/
 @[local fun_prop] private lemma replicate_deg :
     ComputableTidilyInDegree (fun n => List.replicate n false) encUnary encBits 1 1 :=
-  of_linear (zeroT.computableTidilyInLinearTimeAndSpace fun n => by simp [zeroT_run])
+  of_linear (zeroT.computableInLinearTimeAndSpace fun n => by simp [zeroT_run])
 
 /-- Conjunction. -/
 @[local fun_prop] private lemma and_deg :
