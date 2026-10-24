@@ -62,13 +62,11 @@ theorem IsPPTOn.memoize {α Key Value : Type} [BEq Key] [LawfulBEq Key] {input :
     {keyEncoding : Key ↪ List Bool} {valueEncoding : Value ↪ List Bool}
     {compute : α → Key → ProbComp Value} {query : α → Key} {cache : α → List (Key × Value)}
     (hcompute : IsPPTOn input valueEncoding (fun a => compute a (query a)))
-    (hquery : ComputableTidilyInPolyTime query input keyEncoding)
-    (hcache : ComputableTidilyInPolyTime cache input
+    (hquery : ComputableInPolyTime query input keyEncoding)
+    (hcache : ComputableInPolyTime cache input
       (encList (encPair keyEncoding valueEncoding))) :
     IsPPTOn input (encPair valueEncoding (encList (encPair keyEncoding valueEncoding)))
       (fun a => memoize (compute a) (query a) (cache a)) := by
-  have hqueryPlain := ComputableInPolyTime.of_tidy hquery
-  have hcachePlain := ComputableInPolyTime.of_tidy hcache
   let found (a : α) := (cache a).find? (fun entry => query a == entry.1)
   have hfound : ComputableInPolyTime found input
       (encOption (encPair keyEncoding valueEncoding)) := by fun_prop
@@ -80,7 +78,7 @@ theorem IsPPTOn.memoize {α Key Value : Type} [BEq Key] [LawfulBEq Key] {input :
       (encPair valueEncoding (encList (encPair keyEncoding valueEncoding))) := by
     unfold finish
     fun_prop
-  refine (hcompute.map_with (f := finish) hpost.tidy).congr ?_
+  refine (hcompute.map_with (f := finish) hpost).congr ?_
   intro a
   rw [Cslib.memoize, lookup_eq_map_find]
   cases h : (cache a).find? (fun entry => query a == entry.1) <;>

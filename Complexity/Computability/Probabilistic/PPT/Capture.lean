@@ -45,14 +45,14 @@ open Turing.MultiTapeTM
 /-- Write efficiently computed input data before a probabilistic output, charging preparation. -/
 theorem IsPPTOn.prefix {α : Type} {input : α ↪ List Bool} {pre : α → List Bool}
     {program : α → ProbComp (List Bool)} (hprogram : IsPPTOn input encBits program)
-    (hprefix : ComputableTidilyInPolyTime pre input encBits) :
+    (hprefix : ComputableInPolyTime pre input encBits) :
     IsPPTOn input encBits (fun a => (pre a ++ ·) <$> program a) := by
   apply IsOraclePPTOn.isPPTOn
   have happend := ComputableInPolyTime.bitsAppend
     (ComputableInPolyTime.fst encBits encBits)
     (ComputableInPolyTime.snd encBits encBits)
   simpa only [ProbOracleComp.sample_map, Functor.map_map, Function.comp_def] using
-    ((hprogram.isOraclePPTOn (Operation := Empty)).pair hprefix).map happend.tidy
+    ((hprogram.isOraclePPTOn (Operation := Empty)).pair hprefix).map happend
 
 variable {α β γ : Type} {input : α ↪ List Bool} {left : β ↪ List Bool}
   {right : γ ↪ List Bool}
@@ -60,7 +60,7 @@ variable {α β γ : Type} {input : α ↪ List Bool} {left : β ↪ List Bool}
 /-- Retain efficiently computed input data beside a sampled result, using the existing encoding. -/
 @[fun_prop]
 theorem IsPPTOn.pair {program : α → ProbComp γ} {f : α → β}
-    (hprogram : IsPPTOn input right program) (hf : ComputableTidilyInPolyTime f input left) :
+    (hprogram : IsPPTOn input right program) (hf : ComputableInPolyTime f input left) :
     IsPPTOn input (encPair left right) (fun a => (fun b => (f a, b)) <$> program a) := by
   apply IsOraclePPTOn.isPPTOn
   simpa only [ProbOracleComp.sample_map] using
@@ -70,7 +70,7 @@ theorem IsPPTOn.pair {program : α → ProbComp γ} {f : α → β}
 theorem IsPPTOn.keep_input {program : α → ProbComp β}
     (hprogram : IsPPTOn input left program) :
     IsPPTOn input (encPair input left) (fun a => (fun b => (a, b)) <$> program a) :=
-  hprogram.pair ComputableInPolyTime.id'.tidy
+  hprogram.pair ComputableInPolyTime.id'
 
 /-- A monadic continuation may use both the caller's input and the sampled result. -/
 @[fun_prop]
@@ -86,7 +86,7 @@ theorem IsPPTOn.bind_with {first : α → ProbComp β} {second : α → β → P
 @[fun_prop]
 theorem IsPPTOn.map_with {program : α → ProbComp β} {f : α → β → γ}
     (hprogram : IsPPTOn input left program)
-    (hf : ComputableTidilyInPolyTime (fun pair => f pair.1 pair.2) (encPair input left) right) :
+    (hf : ComputableInPolyTime (fun pair => f pair.1 pair.2) (encPair input left) right) :
     IsPPTOn input right (fun a => f a <$> program a) := by
   simpa only [bind_pure_comp] using
     hprogram.bind_with (right := right) (second := fun a b => pure (f a b)) hf.isPPTOn
@@ -95,7 +95,7 @@ theorem IsPPTOn.map_with {program : α → ProbComp β} {f : α → β → γ}
 empty-channel specialization of oracle branch selection. -/
 @[fun_prop]
 theorem IsPPTOn.cond {condition : α → Bool} {yes no : α → ProbComp β}
-    (hcondition : ComputableTidilyInPolyTime condition input encBool)
+    (hcondition : ComputableInPolyTime condition input encBool)
     (hyes : IsPPTOn input left yes) (hno : IsPPTOn input left no) :
     IsPPTOn input left (fun a => if condition a then yes a else no a) := by
   apply IsOraclePPTOn.isPPTOn
@@ -106,7 +106,7 @@ theorem IsPPTOn.cond {condition : α → Bool} {yes no : α → ProbComp β}
 @[fun_prop]
 theorem IsPPTOn.ite {condition : α → Prop} [∀ a, Decidable (condition a)]
     {yes no : α → ProbComp β}
-    (hcondition : ComputableTidilyInPolyTime (fun a => decide (condition a)) input encBool)
+    (hcondition : ComputableInPolyTime (fun a => decide (condition a)) input encBool)
     (hyes : IsPPTOn input left yes) (hno : IsPPTOn input left no) :
     IsPPTOn input left (fun a => if condition a then yes a else no a) := by
   simpa only [decide_eq_true_eq] using hyes.cond hcondition hno

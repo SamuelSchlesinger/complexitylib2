@@ -60,8 +60,8 @@ The bound may depend on the original input and need not be computable: the proof
 computable polynomial majorant for the compiled loop clock. -/
 theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
     {step : State → ProbComp State}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsPPTOn stateEncoding stateEncoding step)
     (invariant : α → ℕ → State → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
@@ -86,8 +86,8 @@ theorem IsPPTOn.iterate_spec {initial : α → State} {count : α → ℕ}
 that input and the changing state; the client invariant describes only the changing state. -/
 theorem IsPPTOn.iterateWith_spec {initial : α → State} {count : α → ℕ}
     {step : α → State → ProbComp State}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsPPTOn (encPair input stateEncoding) stateEncoding (fun pair => step pair.1 pair.2))
     (invariant : α → ℕ → State → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
@@ -114,8 +114,8 @@ The joint step certificate charges the captured input, and the growth bound cove
 supported next state from every current state. -/
 theorem IsPPTOn.iterateWith_of_bounded_growth {initial : α → State} {count : α → ℕ}
     {step : α → State → ProbComp State}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsPPTOn (encPair input stateEncoding) stateEncoding (fun pair => step pair.1 pair.2))
     {growth : α → ℕ} (hpoly : PolyBounded (fun a => (input a).length) growth)
     (hgrowth : ∀ a state next, next ∈ (ProbComp.eval (step a state)).support →
@@ -124,8 +124,8 @@ theorem IsPPTOn.iterateWith_of_bounded_growth {initial : α → State} {count : 
   refine (IsPPTOn.iterateWith_spec hcount hinitial hstep
     (fun a i state => (stateEncoding state).length ≤
       (stateEncoding (initial a)).length + i * growth a)
-    (by simp) ?_ ((ComputableInPolyTime.of_tidy hinitial).polyBounded_length.add
-      ((ComputableInPolyTime.of_tidy hcount).polyBounded.mul hpoly)) ?_).1
+    (by simp) ?_ (hinitial.polyBounded_length.add
+      (hcount.polyBounded.mul hpoly)) ?_).1
   · intro a i state _ hstate next hnext
     simpa only [Nat.add_mul, Nat.one_mul, Nat.add_assoc] using
       (hgrowth a state next hnext).trans (Nat.add_le_add_right hstate _)
@@ -135,21 +135,21 @@ theorem IsPPTOn.iterateWith_of_bounded_growth {initial : α → State} {count : 
 /-- A strict PPT step with constant growth can be repeated a polynomial number of times. -/
 theorem IsPPTOn.iterate_of_bounded_growth {initial : α → State} {count : α → ℕ}
     {step : State → ProbComp State}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsPPTOn stateEncoding stateEncoding step)
     {growth : ℕ} (hgrowth : ∀ state next, next ∈ (ProbComp.eval (step state)).support →
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :
     IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) :=
   IsPPTOn.iterateWith_of_bounded_growth (step := fun _ => step) hcount hinitial
-    (hstep.preprocess (ComputableInPolyTime.snd input stateEncoding).tidy)
+    (hstep.preprocess (ComputableInPolyTime.snd input stateEncoding))
     (.const growth) (fun _ => hgrowth)
 
 /-- Iteration of a step that never increases its encoded state needs no extra size invariant. -/
 theorem IsPPTOn.iterate_of_length_le {initial : α → State} {count : α → ℕ}
     {step : State → ProbComp State}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsPPTOn stateEncoding stateEncoding step)
     (hshrink : ∀ state next, next ∈ (ProbComp.eval (step state)).support →
       (stateEncoding next).length ≤ (stateEncoding state).length) :

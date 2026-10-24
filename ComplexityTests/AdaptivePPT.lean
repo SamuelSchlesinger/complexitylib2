@@ -9,16 +9,11 @@ import Complexity.Probability.BitString.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Mathlib.Logic.Relation
 
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
-
 /-! Adaptive closed programs, invariant-based resource proofs and independent saved blocks. -/
 
 namespace ComplexityTests.AdaptivePPT
 
 open Cslib Cslib.Probability Turing.MultiTapeTM
-
--- Legacy probabilistic callback contracts retain clean witnesses inside these checked proofs.
-attribute [local fun_prop] ComputableInPolyTime.tidy
 
 example : BitString.listRows 3 2 [true, false, true] =
     [[true, false], [true, false], [false, false]] := by rfl
@@ -42,11 +37,7 @@ private noncomputable def grow (state : List Bool) : ProbComp (List Bool) := do
   let bit ← ProbComp.uniform Bool
   return bit :: state
 
-private theorem grow_ppt : IsPPTOn encBits encBits grow := by
-  unfold grow
-  simpa only [bind_pure_comp] using (isPPTOn_uniform_bool encBits).map_with
-    (right := encBits) (f := fun state bit => bit :: state)
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+private theorem grow_ppt : IsPPTOn encBits encBits grow := by unfold grow; ppt
 
 private theorem grow_length (state next : List Bool)
     (h : next ∈ (ProbComp.eval (grow state)).support) : next.length ≤ state.length + 1 := by
@@ -56,10 +47,9 @@ private theorem grow_length (state next : List Bool)
 
 -- A full functional client certifies a quadratic number of state-dependent transitions.
 example : IsPPTOn encUnary encBits (fun n => OracleComp.iterate (n * n) grow []) := by
-  exact IsPPTOn.iterate_of_bounded_growth
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-    (ComputableInPolyTime.const []).tidy grow_ppt (growth := 1)
-    (fun state next h => by simpa using grow_length state next h)
+  have hstep := grow_ppt
+  have hgrowth := grow_length
+  ppt
 
 -- A polynomial iteration count alone cannot certify an exponentially growing output.
 example : True := by
@@ -91,7 +81,7 @@ example (step : ℕ → List Bool → ProbComp (List Bool))
 -- An implicit binary graph is supplied by an efficient transition function. The loop contract
 -- certifies both its machine time and that every possible output is reachable from its input.
 example (neighbor : List Bool → Bool → List Bool)
-    (hefficient : ComputableTidilyInPolyTime (fun p : List Bool × Bool => neighbor p.1 p.2)
+    (hefficient : ComputableInPolyTime (fun p : List Bool × Bool => neighbor p.1 p.2)
       (encPair encBits encBool) encBits)
     (hsize : ∀ state bit, (neighbor state bit).length ≤ state.length) :
     let step (state : List Bool) : ProbComp (List Bool) := do
@@ -107,8 +97,7 @@ example (neighbor : List Bool → Bool → List Bool)
     let bit ← ProbComp.uniform Bool
     return neighbor state bit
   have hstep : IsPPTOn encBits encBits step := by dsimp only [step]; ppt
-  exact IsPPTOn.iterate_spec
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) ComputableInPolyTime.id'.tidy hstep
+  exact IsPPTOn.iterate_spec (by fun_prop) ComputableInPolyTime.id' hstep
     (fun start _ state => state.length ≤ start.length ∧
       Relation.ReflTransGen (fun a b => ∃ bit, neighbor a bit = b) start state)
     (fun _ => ⟨le_rfl, .refl⟩)
@@ -145,8 +134,7 @@ example : IsPPTOn encUnary encUnary
       (fun p => cappedStep p.1 p.2) := by
     unfold cappedStep
     ppt
-  exact IsPPTOn.iterateWith_spec (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hstep
+  exact IsPPTOn.iterateWith_spec (by fun_prop) (by fun_prop) hstep
     (fun limit _ state => state ≤ limit) (by simp)
     (by
       intro limit i state _ hstate next hnext
@@ -168,10 +156,7 @@ example (bound : List Bool → ℕ) (hsize : PolyBounded List.length bound)
     (hbound : ∀ word, word.length ≤ bound word) :
     IsPPTOn encBits encBits (fun word =>
       OracleComp.iterate word.length (fun state => pure state) word) := by
-  refine (IsPPTOn.iterate_spec
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-    (by exact (ComputableInPolyTime.id').tidy.isPPTOn)
+  refine (IsPPTOn.iterate_spec (by fun_prop) (by fun_prop) (by ppt)
     (fun word _ state => state = word) (by simp) ?_ hsize ?_).1
   · intro word i state _ hstate next hnext
     simpa [hstate] using hnext
@@ -196,12 +181,7 @@ private theorem sampledRows_spec :
     (by simp) ?_ (size := fun p => p.2 * (2 * (p.1.length + 1) + 1)) ?_ ?_
   · fun_prop
   · fun_prop
-  · simpa only [bind_pure_comp] using
-      (isPPTOn_uniform_bool (encPair (encPair encBits encUnary) (encList encBits))).map_with
-        (right := encList encBits)
-        (f := fun (pair : (List Bool × ℕ) × List (List Bool)) bit =>
-          (bit :: pair.1.1) :: pair.2)
-        (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+  · ppt
   · intro p i rows _ hrows next hnext
     simp only [ProbComp.eval_bind, ProbComp.eval_pure] at hnext
     obtain ⟨bit, _, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp hnext
