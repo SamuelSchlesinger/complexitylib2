@@ -168,4 +168,17 @@ info: 'Cslib.Complexity.VertexCover_hasPolyKernel' depends on axioms:
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.VertexCover_hasPolyKernel
 
+/-! ### Plain automation over the restated kernel certificates -/
+
+/-- Plain `fun_prop` composes the plain kernel certificates with plain hypotheses. -/
+example {γ : Type} {enc : γ ↪ List Bool} {x : γ → Graph × ℕ}
+    (hx : ComputableInPolyTime x enc (encPair encGraph encNat)) :
+    ComputableInPolyTime (fun c => high (x c)) enc (encList encNat) := by
+  fun_prop
+
+example {γ : Type} {enc : γ ↪ List Bool} {G : γ → Graph} {v : γ → ℕ}
+    (hG : ComputableInPolyTime G enc encGraph) (hv : ComputableInPolyTime v enc encNat) :
+    ComputableInPolyTime (fun c => degree (G c) (v c)) enc encUnary := by
+  fun_prop
+
 end ComplexityTests.VertexCoverKernel

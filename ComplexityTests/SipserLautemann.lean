@@ -214,4 +214,10 @@ info: 'Cslib.Complexity.BPP_subset_PH' depends on axioms: [propext, Classical.ch
 #guard_msgs in
 #print axioms Cslib.Complexity.BPP_subset_PH
 
+/-- Plain `fun_prop` uses the plain matrix-verifier certificate from a plain hypothesis. -/
+example {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool) :
+    ComputableInPolyTime (fun x => !verifier enc p V x) (encPair enc encBits) encBool := by
+  fun_prop
+
 end Cslib.Complexity.Tests.SipserLautemann
