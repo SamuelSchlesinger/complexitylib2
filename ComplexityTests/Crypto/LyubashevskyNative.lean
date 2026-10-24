@@ -46,3 +46,25 @@ example : ComputableInPolyTime lyubashevskyExtractWord encBits encBits :=
 depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms computableInPolyTime_lyubashevskyExtractWord
+
+-- The actual typed protocol extractor has the same negative response / positive challenge tail.
+example : List.ofFn (fun i : Fin 3 =>
+    lyubashevskyExtract 1 2 1 7 (0, 0) 0 (fun _ => false)
+      (some fun i => (i.val : ℤ)) (fun _ => true) (some fun i => 1 - (i.val : ℤ))
+      (finSumFinEquiv.symm i)) = [-1, 1, 1] := by
+  decide +kernel
+
+-- The named bridge applies even with no response coordinates or challenge coordinates.
+example (q : ℕ) :
+    lyubashevskyExtractWord (encLyubashevskyExtractInput
+      ((0, 0), (([], none), ([], none)))) =
+      encList encIntBin (List.ofFn (fun i : Fin 0 =>
+        lyubashevskyExtract 0 0 0 q (0, 0) 0 (fun _ => false) none
+          (fun _ => false) none (finSumFinEquiv.symm i))) := by
+  simpa using lyubashevskyExtractWord_eq_extract 0 0 0 q (0, 0) 0
+    (fun _ => false) none (fun _ => false) none
+
+/-- info: 'Cslib.Crypto.Protocols.SigmaProtocol.lyubashevskyExtractWord_eq_extract'
+depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms lyubashevskyExtractWord_eq_extract

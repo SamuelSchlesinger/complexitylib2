@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary.Decode
+public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
 import Complexity.Tactic.PolyTime
 
@@ -34,6 +35,8 @@ not a rewinding, knowledge-soundness or cryptographic security theorem.
 
 * `Cslib.Crypto.Protocols.SigmaProtocol.computableInPolyTime_lyubashevskyExtractWord`: all parsing,
   arithmetic, framing and output costs in one uniform plain certificate.
+* `Cslib.Crypto.Protocols.SigmaProtocol.lyubashevskyExtractWord_eq_extract`: exact agreement with
+  the typed protocol extractor for all dimensions, statements and commitments.
 -/
 
 @[expose] public section
@@ -159,5 +162,32 @@ theorem computableInPolyTime_lyubashevskyExtractWord :
     lyubashevskyExtractWord (encLyubashevskyExtractInput input) =
       encList encIntBin (lyubashevskyExtractList input) := by
   simp [lyubashevskyExtractWord]
+
+/-- Canonical vectors realize the actual typed extractor for every statement and commitment.
+The ignored statement dimensions and modulus do not need to be supplied to the word program. -/
+theorem lyubashevskyExtractList_eq_extract (n m k q : ℕ)
+    (y : Matrix (Fin n) (Fin m) (ZMod q) × Matrix (Fin n) (Fin k) (ZMod q))
+    (w : Fin n → ZMod q) (c : BitString k) (z : Option (Fin m → ℤ))
+    (c' : BitString k) (z' : Option (Fin m → ℤ)) :
+    lyubashevskyExtractList ((m, k),
+      ((List.ofFn c, z.map List.ofFn), (List.ofFn c', z'.map List.ofFn))) =
+      List.ofFn (fun i : Fin (m + k) =>
+        lyubashevskyExtract n m k q y w c z c' z' (finSumFinEquiv.symm i)) := by
+  rw [lyubashevskyExtractList_ofFn]
+  congr 1
+  funext i
+  cases i using Fin.addCases <;> simp [lyubashevskyExtract, lyubashevskyChallenge]
+
+/-- The complete word program agrees exactly with the named typed extractor, including absent
+responses and zero dimensions, without assuming acceptance of either conversation. -/
+theorem lyubashevskyExtractWord_eq_extract (n m k q : ℕ)
+    (y : Matrix (Fin n) (Fin m) (ZMod q) × Matrix (Fin n) (Fin k) (ZMod q))
+    (w : Fin n → ZMod q) (c : BitString k) (z : Option (Fin m → ℤ))
+    (c' : BitString k) (z' : Option (Fin m → ℤ)) :
+    lyubashevskyExtractWord (encLyubashevskyExtractInput ((m, k),
+      ((List.ofFn c, z.map List.ofFn), (List.ofFn c', z'.map List.ofFn)))) =
+      encList encIntBin (List.ofFn (fun i : Fin (m + k) =>
+        lyubashevskyExtract n m k q y w c z c' z' (finSumFinEquiv.symm i))) := by
+  rw [lyubashevskyExtractWord_enc, lyubashevskyExtractList_eq_extract n m k q y w]
 
 end Cslib.Crypto.Protocols.SigmaProtocol
