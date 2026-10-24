@@ -69,7 +69,7 @@ private meta def pptFunProp : TacticM Unit :=
     Cslib.Tactic.PolyTime.Internal.funPropWithPlainBoundary 128
 
 attribute [program_certificate]
-  Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn
+  Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn
   Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList
   isPPTOn_uniform_bool
   IsPPTOn.memoize
