@@ -513,8 +513,8 @@ private theorem pairVal_balancedFold_mod {β : Type*}
     (fun l₁ l₂ u v _ _ hu hv => by
       rw [hop, Nat.add_mod, hu, hv, ← Nat.add_mod, List.map_append, List.sum_append]) l
 
-/-- `weightPairCircuit k w` outputs a carry-save pair whose value modulo `2 ^ w` is the Hamming
-weight `BitString.weight x`. -/
+/-- `weightPairCircuit k w` outputs a carry-save pair whose value is congruent to the Hamming
+weight `BitString.weight x` modulo `2 ^ w`. -/
 theorem pairVal_eval_weightPairCircuit_mod (x : BitString k) :
     pairVal ((weightPairCircuit k w).eval interpretation x) % 2 ^ w =
       BitString.weight x % 2 ^ w := by
