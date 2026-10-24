@@ -64,6 +64,7 @@ theorem isPPTOn_evaluateCircuit (D : DecryptionCircuits E secretWidth ciphertext
     hcode)).tidy
   apply (isPPTOn_evaluateLayers D hencrypt hevaluate hD hn hpks heks hinputs
     hcompiled.fst').map_with
+  apply Turing.MultiTapeTM.ComputableInPolyTime.of_tidy
   apply ComputableTidilyInPolyTime.mapWithInput
     (hcompiled.snd'.comp (ComputableTidilyInPolyTime.fst _ _))
   exact ComputableTidilyInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)
