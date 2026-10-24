@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.DecisionTree.Basic
 public import Complexity.Foundations.BooleanAnalysis.Degree
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 
 /-!
 # The degree of a Boolean function

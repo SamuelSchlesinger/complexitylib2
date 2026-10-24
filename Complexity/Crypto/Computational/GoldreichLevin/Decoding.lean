@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 public import Complexity.Probability.PairwiseIndependent
 public import Complexity.Probability.Uniform
 public import Mathlib.Algebra.Ring.BooleanRing

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Foundations.Data.BitString.Weight
 import Complexity.Foundations.Data.Code.BerlekampWelch
 import Complexity.Foundations.Data.Code.Justesen
 import Complexity.Foundations.Data.Code.LocalDecoding
@@ -145,7 +146,7 @@ example (y x : Fin 2 → ZMod 5) (a : ZMod 5) :
 
 /-- There are `1 + 4 = 5` binary words of length four and weight at most one. -/
 example : #{x : Fin 4 → Bool | hammingNorm x ≤ 1} = 5 := by
-  rw [card_filter_hammingNorm_le_eq_sum_choose]
+  simp only [← BitString.weight_eq_hammingNorm, BitString.card_filter_weight_le]
   decide
 
 /-- **Justesen codes are asymptotically good, non-vacuously.** For every `s ≥ 1`, the Galois field

@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.QueryComplexity.OneSided
 public import Complexity.Foundations.Data.BitString.Parity
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 
 /-!
 # Query complexity measures of threshold functions and parity
@@ -107,7 +107,7 @@ namespace QueryComplexity
 certify the value `1`, and `n + 1 - j` false bits certify the value `0`. -/
 theorem certificateComplexityAt_threshold_le (x : BitString n) :
     certificateComplexityAt (threshold n j) x ≤ max j (n + 1 - j) := by
-  have hwy (y : BitString n) : weight y ≤ n := by simpa using weight_le y
+  have hwy := weight_le_length (n := n)
   by_cases hw : j ≤ weight x
   · obtain ⟨S, hS, hcard⟩ := exists_subset_card_eq (s := univ.filter fun i => x i = true)
       (n := j) (by rwa [← weight])

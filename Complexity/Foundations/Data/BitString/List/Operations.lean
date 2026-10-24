@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.List
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 public import Mathlib.Data.Matrix.Mul
 import Mathlib.Algebra.BigOperators.Fin
 

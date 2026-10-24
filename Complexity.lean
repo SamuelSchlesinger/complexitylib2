@@ -1649,6 +1649,7 @@ public import Complexity.Foundations.Data.BitString.ShortWords
 public import Complexity.Foundations.Data.BitString.Sign
 public import Complexity.Foundations.Data.BitString.Sparse
 public import Complexity.Foundations.Data.BitString.SumTree
+public import Complexity.Foundations.Data.BitString.Threshold
 public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.BitString.WordCount
@@ -1662,6 +1663,7 @@ public import Complexity.Foundations.Data.Code.HintDecoding
 public import Complexity.Foundations.Data.Code.Johnson
 public import Complexity.Foundations.Data.Code.Justesen
 public import Complexity.Foundations.Data.Code.Linear
+public import Complexity.Foundations.Data.Code.ListDecoding
 public import Complexity.Foundations.Data.Code.LocalDecoding
 public import Complexity.Foundations.Data.Code.LocalListDecoding
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
@@ -1679,7 +1681,6 @@ public import Complexity.Foundations.Data.Finset.Quantile
 public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Finset.SymmDiff
 public import Complexity.Foundations.Data.Hamming
-public import Complexity.Foundations.Data.HammingBound
 public import Complexity.Foundations.Data.List.Append
 public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.List.Basic
@@ -1688,7 +1689,6 @@ public import Complexity.Foundations.Data.List.Equiv
 public import Complexity.Foundations.Data.List.Fold
 public import Complexity.Foundations.Data.List.Lookup
 public import Complexity.Foundations.Data.List.OfFn
-public import Complexity.Foundations.Data.ListDecoding
 public import Complexity.Foundations.Data.Matrix.Binary
 public import Complexity.Foundations.Data.Matrix.Permanent
 public import Complexity.Foundations.Data.Matrix.TotallyRegular

@@ -1405,10 +1405,10 @@ info: 'Cslib.Circuits.Boolean.ModelChecking.exists_formula_realize_structure' de
 #print axioms Cslib.Circuits.Boolean.ModelChecking.exists_formula_realize_structure
 
 /--
-info: 'card_mul_sum_choose_le_of_two_mul_lt_hammingDist' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Code.card_mul_sum_choose_le_of_two_mul_lt_minDist' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms card_mul_sum_choose_le_of_two_mul_lt_hammingDist
+#print axioms Cslib.Code.card_mul_sum_choose_le_of_two_mul_lt_minDist
 
 /--
 info: 'Cslib.Circuits.Boolean.NC_subset_AC' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -1441,10 +1441,10 @@ info: 'Cslib.Logic.PL.CNF.sparsification' depends on axioms: [propext, Classical
 #print axioms Cslib.Logic.PL.CNF.sparsification
 
 /--
-info: 'exists_pow_le_card_mul_sum_choose_of_le_hammingDist' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Code.exists_le_minDist_and_pow_le_card_mul_sum_choose' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms exists_pow_le_card_mul_sum_choose_of_le_hammingDist
+#print axioms Cslib.Code.exists_le_minDist_and_pow_le_card_mul_sum_choose
 
 /--
 info: 'Cslib.Logic.PL.CNF.card_isolatedInputs_mul_two_rpow_le' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -1507,10 +1507,10 @@ info: 'Cslib.Logic.PL.CNF.two_pow_mul_min_le_of_any_eval_eq_parity' depends on a
 #print axioms Cslib.Logic.PL.CNF.two_pow_mul_min_le_of_any_eval_eq_parity
 
 /--
-info: 'exists_prod_le_card_mul_card_filter_hammingDist_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Code.exists_le_minDist_and_prod_le_card_mul_card_filter_hammingDist_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms exists_prod_le_card_mul_card_filter_hammingDist_lt
+#print axioms Cslib.Code.exists_le_minDist_and_prod_le_card_mul_card_filter_hammingDist_lt
 
 /--
 info: 'Cslib.Circuits.Boolean.Unbounded.two_rpow_lt_add_size_of_computes_parity' depends on axioms: [propext, Classical.choice, Quot.sound]

@@ -511,7 +511,7 @@ example :
 
 example (z : Fin 3 → Bool) :
     BitString.coverDecode 3 3 (BitString.coverRank 3 z) = z :=
-  BitString.coverDecode_coverRank z (by simpa using BitString.weight_le z)
+  BitString.coverDecode_coverRank z (BitString.weight_le_length z)
 
 example (t : ℕ) (ht : t < BitString.ballSize 3 2) :
     BitString.coverRank 2 (BitString.coverDecode 3 2 t) = t ∧

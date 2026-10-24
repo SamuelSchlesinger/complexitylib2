@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Communication.TopDown.Parity
 public import Complexity.Computability.Communication.TopDown.Majority
-public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Threshold
 public import Complexity.Computability.Circuit.Depth
 import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 

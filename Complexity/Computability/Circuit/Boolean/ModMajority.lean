@@ -103,7 +103,7 @@ theorem computes_modCircuitOfMajority [φ.Preserves Unbounded.interpretation I]
     Circuit.eval_mapOp (I := Unbounded.interpretation), Circuit.eval_oneGate, Circuit.eval_pi]
   simp only [single, interpretation_or, id]
   set c := BitString.weight x
-  have hc : c ≤ n := by simpa using BitString.weight_le x
+  have hc : c ≤ n := BitString.weight_le_length x
   rw [modGate, Bool.eq_iff_iff, decide_eq_true_iff, decide_eq_true_iff]
   change _ ↔ c % q ≠ 0
   constructor

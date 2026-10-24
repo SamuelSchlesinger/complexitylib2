@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.Code.Basic
-public import Complexity.Foundations.Data.ListDecoding
+public import Complexity.Foundations.Data.Code.ListDecoding
 import Complexity.Foundations.Data.Hamming
 import Mathlib.Algebra.Order.Chebyshev
 import Mathlib.Data.List.GetD

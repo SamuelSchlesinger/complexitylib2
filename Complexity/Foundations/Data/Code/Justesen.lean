@@ -35,7 +35,7 @@ Nonzero symbols at distinct positions have distinct Wozencraft encodings, since 
 determines `a` and then `u` (`Cslib.Code.wozencraft_inj`). Two distinct Reed–Solomon codewords
 differ at `s ≥ q - K` positions; the differences of their inner blocks there are `s` distinct
 nonzero binary words of length `2 * b`, at most `V(r) = ∑_{j ≤ r} C(2 * b, j)` of which have
-weight at most `r` (`Cslib.Code.card_filter_hammingNorm_le_eq_sum_choose`). So their Justesen
+weight at most `r` (`Cslib.BitString.card_filter_weight_le`). So their Justesen
 encodings are at distance at least `(q - K - V(r)) * (r + 1)` for every `r`
 (`Cslib.Code.le_minDist_justesenCode`), by the counting bound
 `Cslib.Code.sub_card_mul_le_sum_hammingNorm`.
@@ -105,13 +105,6 @@ theorem sub_card_mul_le_sum_hammingNorm {S : Finset σ} {g : σ → κ → β} (
     _ ≤ ∑ u ∈ S, hammingNorm (g u) := sum_le_sum_of_subset (filter_subset _ S)
 
 end Weights
-
-/-- **The size of a binary Hamming ball.** There are `∑_{j ≤ r} C(n, j)` binary words of length
-`n` and weight at most `r`. -/
-theorem card_filter_hammingNorm_le_eq_sum_choose {κ : Type*} [Fintype κ] [DecidableEq κ]
-    (r : ℕ) :
-    #{x : κ → Bool | hammingNorm x ≤ r} = ∑ j ∈ range (r + 1), (Fintype.card κ).choose j := by
-  simpa only [← BitString.weight_eq_hammingNorm] using BitString.card_filter_weight_le r
 
 /-- **A binomial estimate** for the size of a Hamming ball: `V * 4 ^ ℓ ≤ 4 ^ r * 5 ^ ℓ` for
 `V = ∑_{j ≤ r} C(ℓ, j)`, since `5 ^ ℓ = ∑_j C(ℓ, j) * 4 ^ (ℓ - j)`. -/
@@ -230,8 +223,8 @@ theorem le_minDist_justesenCode (φ : F ≃+ BitString b) (K r : ℕ) :
     exact Units.val_injective (wozencraft_inj φ hu h).1
   have hball : #{x : Fin 2 × Fin b → Bool | hammingNorm x ≤ r} =
       ∑ j ∈ range (r + 1), (2 * b).choose j := by
-    rw [card_filter_hammingNorm_le_eq_sum_choose, Fintype.card_prod, Fintype.card_fin,
-      Fintype.card_fin]
+    simp only [← BitString.weight_eq_hammingNorm, BitString.card_filter_weight_le,
+      Fintype.card_prod, Fintype.card_fin]
   have hweight := sub_card_mul_le_sum_hammingNorm hg r
   rw [hball] at hweight
   refine Nat.cast_le.2 ((Nat.mul_le_mul_right _ (Nat.sub_le_sub_right hS _)).trans
