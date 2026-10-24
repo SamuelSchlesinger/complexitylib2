@@ -419,6 +419,7 @@ import ComplexityTests.SpaceHierarchy
 import ComplexityTests.SparseLanguages
 import ComplexityTests.SparseMemory
 import ComplexityTests.StatefulRefinement
+import ComplexityTests.StepMachineResourceCertificate
 import ComplexityTests.SubbotovskayaAndreev
 import ComplexityTests.SynthesisBuilder
 import ComplexityTests.TFNP
