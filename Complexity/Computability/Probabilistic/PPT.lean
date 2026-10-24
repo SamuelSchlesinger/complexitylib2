@@ -100,7 +100,7 @@ theorem isPPTOn_iff_encoded : IsPPTOn input output program ↔
 
 end Cslib.Probability
 
-/-- Reuse a tidy deterministic machine as a fair-coin machine that ignores its sampled bits. -/
+/-- A deterministic polynomial-time certificate gives a fair-coin machine that ignores its bits. -/
 @[fun_prop]
 theorem Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn {α β : Type}
     {input : α ↪ List Bool} {output : β ↪ List Bool} {f : α → β}

@@ -125,10 +125,10 @@ theorem IsOraclePPTOn.memoize {Operation α Key Value : Type} [DecidableEq Opera
       (encPair input valueEncoding)
       (encPair valueEncoding (encList (encPair keyEncoding valueEncoding))) := by fun_prop
   refine (IsOraclePPTOn.cond (condition := fun a => (found a).isSome)
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-    hhit.tidy.isOraclePPTOn
+    (by fun_prop)
+    hhit.isOraclePPTOn
       (hcompute.map_with (f := fun a value => (value, (query a, value) :: cache a))
-      hmiss.tidy)).congr fun a _ _ _ => ?_
+      hmiss)).congr fun a _ _ _ => ?_
   have hlookup : (cache a).lookup (query a) = (found a).map Prod.snd := by
     simp only [found, List.lookup_eq_findSome?, List.find?_eq_findSome?_guard,
       List.map_findSome?]

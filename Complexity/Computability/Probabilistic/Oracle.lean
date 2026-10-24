@@ -135,7 +135,7 @@ end IsOraclePPTOn
 
 end Cslib.Probability
 
-/-- A tidy deterministic certificate also works in the presence of arbitrary external oracles. -/
+/-- A deterministic polynomial-time certificate also works with arbitrary external oracles. -/
 @[fun_prop]
 theorem Turing.MultiTapeTM.ComputableInPolyTime.isOraclePPTOn
     {Operation α β : Type} [DecidableEq Operation] [Finite Operation]
