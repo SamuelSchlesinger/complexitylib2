@@ -380,6 +380,7 @@ import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.RationalHitting.Point
 import ComplexityTests.RationalHitting.Runtime
 import ComplexityTests.ReductionClasses
+import ComplexityTests.RejectionSampling
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
 import ComplexityTests.RelativizedCounting
