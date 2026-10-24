@@ -37,7 +37,11 @@ machine's clock also bounds their number and length
 The classes relativize `P` and `NP` by this one substitution: `PWithOracle A enc` and
 `NPWithOracle A enc` are `Cslib.Complexity.P` and `Cslib.Complexity.NP` with
 `ComputableInPolyTime` replaced by `ComputableInPolyTimeWithOracle A`. Hence `NPWithOracle`
-uses verifiers with an oracle and certificates of exactly polynomial length.
+uses verifiers with an oracle and certificates of exactly polynomial length. When the oracle is a
+promise problem or an encoded class of oracles (`PWithSharpPOracle`, `PWithPPOracle`,
+`RPWithPromiseOracle`), `Cslib.Complexity.PolyTimeOracleProgram` asks for one deterministic
+polynomial-time oracle program whose function against every admissible oracle language satisfies a
+given specification.
 
 For a deterministic program and an answer function, `OracleComp.queriesWith` lists the requests
 made. Only their answers matter (`OracleComp.interpret_id_congr`), which is the locality on which
@@ -49,6 +53,8 @@ oracle constructions rest.
 * `Cslib.Complexity.WordQueryComp`: deterministic programs making word requests.
 * `Cslib.Complexity.languageOracle`: the replies of an oracle language.
 * `Cslib.Complexity.ComputableInPolyTimeWithOracle`: polynomial time relative to an oracle.
+* `Cslib.Complexity.PolyTimeOracleProgram`: one polynomial-time oracle program satisfying a
+  specification across every admissible oracle language.
 * `Cslib.Complexity.PWithOracle`, `Cslib.Complexity.NPWithOracle`: `P` and `NP` relative to an
   oracle language.
 
@@ -57,6 +63,9 @@ oracle constructions rest.
 * `Cslib.OracleComp.interpret_id_congr`: answers to requests that are not made do not matter.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTimeWithOracle`: polynomial time
   is polynomial time relative to every oracle.
+* `Cslib.Complexity.PolyTimeOracleProgram.of_polyTime`,
+  `Cslib.Complexity.PolyTimeOracleProgram.exists_computableInPolyTimeWithOracle`,
+  `Cslib.Complexity.PolyTimeOracleProgram.of_computableInPolyTimeWithOracle`.
 * `Cslib.Complexity.P_subset_PWithOracle`, `Cslib.Complexity.NP_subset_NPWithOracle`.
 
 ## References
@@ -180,6 +189,57 @@ theorem _root_.Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTim
     (h : ComputableTidilyInPolyTime f input output) (A : Set (List Bool)) :
     ComputableInPolyTimeWithOracle A f input output :=
   ⟨fun a => pure (f a), h.isOraclePPTOn, fun _ => rfl⟩
+
+/-- One deterministic polynomial-time oracle program whose function against every oracle language
+satisfying `Admissible` satisfies `Spec`. The program is fixed before the oracle language, so
+answers on words unconstrained by `Admissible` may be arbitrary. -/
+def PolyTimeOracleProgram (input : α ↪ List Bool) (output : β ↪ List Bool)
+    (Admissible : Set (List Bool) → Prop) (Spec : (α → β) → Prop) : Prop :=
+  ∃ program : α → WordQueryComp Unit β,
+    IsOraclePPTOn input output (fun a => OracleComp.interpret ProbOracleComp.query (program a)) ∧
+      ∀ A : Set (List Bool), Admissible A →
+        Spec (fun a => OracleComp.interpret (m := Id) (languageOracle A) (program a))
+
+/-- `ComputableInPolyTimeWithOracle` is `PolyTimeOracleProgram` for a single oracle language and a
+single target function. -/
+theorem computableInPolyTimeWithOracle_iff_polyTimeOracleProgram {A : Set (List Bool)}
+    {f : α → β} {input : α ↪ List Bool} {output : β ↪ List Bool} :
+    ComputableInPolyTimeWithOracle A f input output ↔
+      PolyTimeOracleProgram input output (· = A) (· = f) :=
+  exists_congr fun _ => and_congr_right fun _ =>
+    ⟨fun h _ hA => hA ▸ funext h, fun h a => congrFun (h A rfl) a⟩
+
+/-- A polynomial-time function makes no oracle request, so it satisfies `Spec` against every
+admissible oracle language whenever `g` does. -/
+theorem PolyTimeOracleProgram.of_polyTime {g : α → β} {input : α ↪ List Bool}
+    {output : β ↪ List Bool} {Admissible : Set (List Bool) → Prop} {Spec : (α → β) → Prop}
+    (hg : ComputableInPolyTime g input output) (hSpec : ∀ A, Admissible A → Spec g) :
+    PolyTimeOracleProgram input output Admissible Spec :=
+  ⟨fun a => pure (g a), hg.tidy.isOraclePPTOn, hSpec⟩
+
+/-- Evaluating a `PolyTimeOracleProgram` against any admissible oracle language `A` yields a
+function computable in polynomial time relative to `A` satisfying `Spec`. -/
+theorem PolyTimeOracleProgram.exists_computableInPolyTimeWithOracle
+    {input : α ↪ List Bool} {output : β ↪ List Bool}
+    {Admissible : Set (List Bool) → Prop} {Spec : (α → β) → Prop}
+    (h : PolyTimeOracleProgram input output Admissible Spec)
+    {A : Set (List Bool)} (hA : Admissible A) :
+    ∃ g : α → β, ComputableInPolyTimeWithOracle A g input output ∧ Spec g :=
+  let ⟨program, hprogram, hSpec⟩ := h
+  ⟨_, ⟨program, hprogram, fun _ => rfl⟩, hSpec A hA⟩
+
+/-- A function computable in polynomial time relative to a single oracle language `A` witnesses
+`PolyTimeOracleProgram` whenever `A` is the unique admissible oracle language. -/
+theorem PolyTimeOracleProgram.of_computableInPolyTimeWithOracle {A : Set (List Bool)}
+    {g : α → β} {input : α ↪ List Bool} {output : β ↪ List Bool}
+    {Admissible : Set (List Bool) → Prop} {Spec : (α → β) → Prop}
+    (hg : ComputableInPolyTimeWithOracle A g input output)
+    (hSpec : ∀ A', Admissible A' → A' = A ∧ Spec g) :
+    PolyTimeOracleProgram input output Admissible Spec := by
+  obtain ⟨program, hcert, hprogram⟩ := hg
+  refine ⟨program, hcert, fun A' hA' => ?_⟩
+  obtain ⟨rfl, h⟩ := hSpec A' hA'
+  simpa only [funext hprogram] using h
 
 /-- The problems decidable in polynomial time relative to the oracle language `A`, with respect to
 the encoding `enc` of instances: `Cslib.Complexity.P` with an oracle

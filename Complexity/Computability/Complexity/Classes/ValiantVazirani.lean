@@ -106,18 +106,16 @@ against every oracle language that solves the promise problem `Q` under the enco
 answers outside the promise are arbitrary. -/
 def RPWithPromiseOracle (Q : PromiseProblem β) (encQ : β ↪ List Bool) (enc : α ↪ List Bool) :
     Set (Set α) :=
-  {L | ∃ (p : Polynomial ℕ) (program : α × List Bool → WordQueryComp Unit Bool),
-    IsOraclePPTOn (encPair enc encBits) encBool
-        (fun x => OracleComp.interpret ProbOracleComp.query (program x)) ∧
-      ∀ A : Set (List Bool), Q.SolvedBy (fun b => decide (encQ b ∈ A)) →
-        DecidesWithOneSidedError enc p
-          (fun x => OracleComp.interpret (m := Id) (languageOracle A) (program x)) L}
+  {L | ∃ p : Polynomial ℕ,
+    PolyTimeOracleProgram (encPair enc encBits) encBool
+      (fun A => Q.SolvedBy (fun b => decide (encQ b ∈ A)))
+      (fun V => DecidesWithOneSidedError enc p V L)}
 
 /-- Every problem in `RP` is in `RP` relative to every promise problem: its algorithm makes no
 request. -/
 theorem RP_subset_RPWithPromiseOracle (Q : PromiseProblem β) (encQ : β ↪ List Bool)
-    (enc : α ↪ List Bool) : RP enc ⊆ RPWithPromiseOracle Q encQ enc := fun _ ⟨p, V, hV, h⟩ =>
-  ⟨p, fun x => pure (V x), hV.tidy.isOraclePPTOn, fun _ _ => h⟩
+    (enc : α ↪ List Bool) : RP enc ⊆ RPWithPromiseOracle Q encQ enc := fun _ ⟨p, _, hV, h⟩ =>
+  ⟨p, .of_polyTime hV fun _ _ => h⟩
 
 open Classical in
 /-- `RP` relative to a promise problem lies inside `RP` relative to every oracle language solving
@@ -125,8 +123,9 @@ the promise problem. -/
 theorem RPWithPromiseOracle_subset_RPWithOracle {Q : PromiseProblem β} {encQ : β ↪ List Bool}
     {A : Set (List Bool)} (hA : Q.SolvedBy fun b => decide (encQ b ∈ A))
     (enc : α ↪ List Bool) :
-    RPWithPromiseOracle Q encQ enc ⊆ RPWithOracle A enc := fun _ ⟨p, program, hprogram, h⟩ =>
-  ⟨p, _, ⟨program, hprogram, fun _ => rfl⟩, h A hA⟩
+    RPWithPromiseOracle Q encQ enc ⊆ RPWithOracle A enc := fun _ ⟨p, hL⟩ =>
+  let ⟨V, hV, hdec⟩ := hL.exists_computableInPolyTimeWithOracle hA
+  ⟨p, V, hV, hdec⟩
 
 /-! ### Asking every word of a list -/
 

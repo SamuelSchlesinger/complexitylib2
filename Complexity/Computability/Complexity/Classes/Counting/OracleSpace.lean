@@ -64,11 +64,9 @@ theorem exists_PP_extension {A : Set α} (hA : A ∈ PP enc) :
 /-- Polynomial time with a PP oracle is contained in polynomial space, including arbitrary
 oracle-instance encodings and arbitrary answers outside their image. -/
 theorem PWithPPOracle_subset_PSPACE : PWithPPOracle enc ⊆ PSPACE enc := by
-  intro L hL
-  obtain ⟨β, encβ, B, hB, program, hprogram, hL⟩ := hL
+  rintro L ⟨β, encβ, B, hB, hL⟩
   obtain ⟨A, hA, hext⟩ := exists_PP_extension hB
-  apply PWithOracle_subset_PSPACE_of_mem_PP hA
-  exact ⟨_, ⟨program, hprogram, fun _ => rfl⟩, hL A hext⟩
+  exact PWithOracle_subset_PSPACE_of_mem_PP hA (hL.exists_computableInPolyTimeWithOracle hext)
 
 /-- Polynomial time with a bit-by-bit #P oracle is contained in polynomial space. -/
 theorem PWithSharpPOracle_subset_PSPACE : PWithSharpPOracle enc ⊆ PSPACE enc :=

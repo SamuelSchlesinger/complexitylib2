@@ -89,10 +89,7 @@ oracle PPT on the encoding `enc` of instances, decides `L` against every oracle 
 the bits of `f`. Answers on words that are not codes are arbitrary. -/
 def PWithSharpPOracle (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ (β : Type) (encβ : β ↪ List Bool) (f : β → ℕ), f ∈ SharpP encβ ∧
-    ∃ program : α → WordQueryComp Unit Bool,
-      IsOraclePPTOn enc encBool (fun a => OracleComp.interpret ProbOracleComp.query (program a)) ∧
-        ∀ A : Set (List Bool), AnswersBits encβ f A →
-          ∀ a, a ∈ L ↔ OracleComp.interpret (m := Id) (languageOracle A) (program a) = true}
+    PolyTimeOracleProgram enc encBool (AnswersBits encβ f) (fun g => ∀ a, a ∈ L ↔ g a = true)}
 
 variable {enc : α ↪ List Bool} {L : Set α}
 
@@ -102,15 +99,13 @@ theorem mem_PWithOracle_bitGraph (hL : L ∈ PWithSharpPOracle enc) :
     ∃ (β : Type) (encβ : β ↪ List Bool) (f : β → ℕ), f ∈ SharpP encβ ∧
       L ∈ PWithOracle (bitGraph encβ f) enc := by
   classical
-  obtain ⟨β, encβ, f, hf, program, hprogram, h⟩ := hL
-  exact ⟨β, encβ, f, hf, _, ⟨program, hprogram, fun _ => rfl⟩,
-    h _ (answersBits_bitGraph encβ f)⟩
+  obtain ⟨β, encβ, f, hf, hL⟩ := hL
+  exact ⟨β, encβ, f, hf, hL.exists_computableInPolyTimeWithOracle (answersBits_bitGraph encβ f)⟩
 
 /-- **`P ⊆ P^#P`**: a polynomial-time decider makes no query. -/
 theorem P_subset_PWithSharpPOracle : P enc ⊆ PWithSharpPOracle enc := by
   rintro L ⟨g, hg, hL⟩
-  exact ⟨α, enc, 0, SharpP.zero_mem, fun a => pure (g a), hg.tidy.isOraclePPTOn,
-    fun _ _ a => hL a⟩
+  exact ⟨α, enc, 0, SharpP.zero_mem, .of_polyTime hg fun _ _ => hL⟩
 
 /-- **One bit of a `#P` value is in `P^#P`**: a problem decided by the bit at a polynomial
 position of a function in `#P` on its own instances is in `P^#P`. The program asks for that bit,
@@ -125,15 +120,7 @@ theorem mem_PWithSharpPOracle_of_testBit {f : α → ℕ} (hf : f ∈ SharpP enc
       (ComputableTidilyInPolyTime.id'.prod
         (ComputableTidilyInPolyTime.unary_to_binary.comp (f := fun n : ℕ => n)
           (g := fun a => p.eval (enc a).length) (by fun_prop)))
-  refine ⟨α, enc, f, hf, fun a => (fun reply => decide (reply = [true])) <$>
-    (List.take 1 <$> OracleComp.query ((), encPair enc encNat (a, p.eval (enc a).length))),
-    ?_, fun A hA a => ?_⟩
-  · simp only [OracleComp.interpret_map, OracleComp.interpret_query]
-    exact (IsOraclePPTOn.query_take () hq (limit := fun _ => 1) (by fun_prop)).map (by fun_prop)
-  · change a ∈ L ↔ decide (List.take 1 (languageOracle A
-      ((), encPair enc encNat (a, p.eval (enc a).length))) = [true]) = true
-    rw [languageOracle_apply, h a, ← hA a]
-    generalize encPair enc encNat (a, p.eval (enc a).length) = w
-    by_cases hm : w ∈ A <;> simp [hm]
+  exact ⟨α, enc, f, hf, .of_query (.of_tidy hq) fun A hA a =>
+    (h a).trans ((hA a (p.eval (enc a).length)).symm.trans decide_eq_true_iff.symm)⟩
 
 end Cslib.Complexity

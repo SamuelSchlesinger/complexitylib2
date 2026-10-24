@@ -12,8 +12,9 @@ public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Classes.Toda
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
-import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.Oracle.Closure
+import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 import Complexity.Computability.Complexity.Classes.PP.Characterization
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
@@ -101,10 +102,8 @@ instances, decides `L` against every oracle language containing the code `encβ 
 `b ∈ B`. Answers on words that are not codes are arbitrary. -/
 def PWithPPOracle (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ (β : Type) (encβ : β ↪ List Bool) (B : Set β), B ∈ PP encβ ∧
-    ∃ program : α → WordQueryComp Unit Bool,
-      IsOraclePPTOn enc encBool (fun a => OracleComp.interpret ProbOracleComp.query (program a)) ∧
-        ∀ A : Set (List Bool), (∀ b, encβ b ∈ A ↔ b ∈ B) →
-          ∀ a, a ∈ L ↔ OracleComp.interpret (m := Id) (languageOracle A) (program a) = true}
+    PolyTimeOracleProgram enc encBool (fun A => ∀ b, encβ b ∈ A ↔ b ∈ B)
+      (fun g => ∀ a, a ∈ L ↔ g a = true)}
 
 variable {enc : α ↪ List Bool} {L : Set α}
 
@@ -113,30 +112,23 @@ theorem P_subset_PWithPPOracle : P enc ⊆ PWithPPOracle enc := by
   rintro L ⟨g, hg, hL⟩
   have hempty : (∅ : Set α) ∈ PP enc :=
     BPP_subset_PP (P_subset_BPP ⟨fun _ => false, .const false, fun _ => by simp⟩)
-  exact ⟨α, enc, ∅, hempty, fun a => pure (g a), hg.tidy.isOraclePPTOn, fun _ _ a => hL a⟩
+  exact ⟨α, enc, ∅, hempty, .of_polyTime hg fun _ _ => hL⟩
 
 /-- **`PP ⊆ P^PP`**: the program asks the oracle about its instance, with one query. -/
 theorem PP_subset_PWithPPOracle : PP enc ⊆ PWithPPOracle enc := by
   classical
   intro L hL
-  refine ⟨α, enc, L, hL, fun a => (fun reply => decide (reply = [true])) <$>
-    (List.take 1 <$> OracleComp.query ((), enc a)), ?_, fun A hA a => ?_⟩
-  · simp only [OracleComp.interpret_map, OracleComp.interpret_query]
-    exact (IsOraclePPTOn.query_take () (ComputableTidilyInPolyTime.encode enc)
-      (limit := fun _ => 1) (by fun_prop)).map (by fun_prop)
-  · change a ∈ L ↔ decide (List.take 1 (languageOracle A ((), enc a)) = [true]) = true
-    rw [languageOracle_apply, ← hA a]
-    by_cases hm : enc a ∈ A <;> simp [hm]
+  exact ⟨α, enc, L, hL, .of_query (.of_tidy (ComputableTidilyInPolyTime.encode enc))
+    fun A hA a => (hA a).symm.trans decide_eq_true_iff.symm⟩
 
 /-- **`P^A ⊆ P^PP` for `A ∈ PP`**: a polynomial-time oracle program relative to a language in
 `PP` over words encoded as themselves decides its problem against every oracle agreeing with that
 language, since every word is a code. -/
 theorem PWithOracle_subset_PWithPPOracle {A : Set (List Bool)} (hA : A ∈ PP encBits) :
     PWithOracle A enc ⊆ PWithPPOracle enc := by
-  rintro L ⟨f, ⟨program, hcert, hprogram⟩, hL⟩
-  refine ⟨List Bool, encBits, A, hA, program, hcert, fun A' hA' a => ?_⟩
-  obtain rfl : A' = A := Set.ext fun w => hA' w
-  rw [hL a, hprogram a]
+  rintro L ⟨f, hf, hL⟩
+  exact ⟨List Bool, encBits, A, hA,
+    .of_computableInPolyTimeWithOracle hf fun A' hA' => ⟨Set.ext hA', hL⟩⟩
 
 /-- **`P^PP` lies in polynomial time relative to the codes of a `PP` problem**: against the image
 of its `PP` problem under the encoding, the program of a problem in `P^PP` decides it. -/
@@ -144,9 +136,9 @@ theorem exists_mem_PP_mem_PWithOracle_image (hL : L ∈ PWithPPOracle enc) :
     ∃ (β : Type) (encβ : β ↪ List Bool) (B : Set β), B ∈ PP encβ ∧
       L ∈ PWithOracle (encβ '' B) enc := by
   classical
-  obtain ⟨β, encβ, B, hB, program, hprogram, h⟩ := hL
-  exact ⟨β, encβ, B, hB, _, ⟨program, hprogram, fun _ => rfl⟩,
-    h _ fun _ => encβ.injective.mem_set_image⟩
+  obtain ⟨β, encβ, B, hB, hL⟩ := hL
+  exact ⟨β, encβ, B, hB,
+    hL.exists_computableInPolyTimeWithOracle fun _ => encβ.injective.mem_set_image⟩
 
 /-! ### Comparing with a `#P` value -/
 
@@ -442,6 +434,7 @@ theorem PWithSharpPOracle_subset_PWithPPOracle : PWithSharpPOracle enc ⊆ PWith
         cases bit
         · rfl
         · exact absurd rfl hq'
+    dsimp only
     rw [hL A' hA' a, OracleComp.interpret_interpret, hhandler]
 
 /-! ### Toda's theorem -/
