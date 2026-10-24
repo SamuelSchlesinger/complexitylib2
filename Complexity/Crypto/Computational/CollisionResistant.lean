@@ -21,14 +21,17 @@ import Complexity.Tactic.PPT
 /-!
 # Keyed collision-resistant hash families and compression functions
 
-In the uniform PPT model, an unkeyed deterministic function `H : List Bool → List Bool` cannot be
-collision-resistant against a family of PPT adversaries unless a collision can never be hardcoded:
-a fixed collision `(m₁, m₂)` exists whenever the domain is larger than the range, and a uniform
-algorithm could find it in constant time at any fixed input length or carry it as a constant.
-Standard uniform formulations therefore index a hash family `H : List Bool → List Bool → List Bool`
-by a public key `k ← {0, 1}^n` sampled uniformly at security parameter `n`; the adversary receives
-`(1^n, k)` and wins by outputting a pair `(m₁, m₂)` of valid inputs with `m₁ ≠ m₂` and
-`H k m₁ = H k m₂` ([BonehShoup2023], Sections 8.1–8.2; [KatzLindell2020], Section 5.1).
+In the uniform PPT model, an unkeyed deterministic function `H : List Bool → List Bool` with
+unrestricted inputs (`valid := fun _ _ => true`, or any domain predicate that accepts a fixed pair
+at every security parameter `n`) cannot be collision-resistant whenever a single colliding pair
+`(m₁, m₂)` exists, because one uniform algorithm can hardcode `(m₁, m₂)` as a constant and win for
+every `n`. (In the length-indexed compression setting `validCompressionInput n x :=
+(x.length == 2 * n)`, by contrast, a single hardcoded pair has fixed length and is valid at most at
+one parameter `n`.) Standard uniform formulations therefore index both compression and hash families
+`H : List Bool → List Bool → List Bool` by a public key `k ← {0, 1}^n` sampled uniformly at
+security parameter `n`; the adversary receives `(1^n, k)` and wins by outputting a pair `(m₁, m₂)`
+of valid inputs with `m₁ ≠ m₂` and `H k m₁ = H k m₂` ([BonehShoup2023], Sections 8.1–8.2;
+[KatzLindell2020], Section 5.1).
 
 Parameterizing the experiment by a validity predicate `valid : ℕ → List Bool → Bool` accommodates
 both fixed-input-length compression families (`validCompressionInput n x := (x.length == 2 * n)`,
