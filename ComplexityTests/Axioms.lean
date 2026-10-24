@@ -2013,10 +2013,10 @@ info: 'Cslib.RotationMap.spectralExpansion_eq_secondEigenvalue_of_nonneg' depend
 #print axioms Cslib.RotationMap.spectralExpansion_eq_secondEigenvalue_of_nonneg
 
 /--
-info: 'Cslib.RotationMap.spectralExpansion_le_one_sub_edgeExpansion_sq_div' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.RotationMap.spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.spectralExpansion_le_one_sub_edgeExpansion_sq_div
+#print axioms Cslib.RotationMap.spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div
 
 /--
 info: 'Cslib.Crypto.PRG.NisanWigderson.Design.nonempty_four_mul_sq' depends on axioms: [propext, Classical.choice, Quot.sound]

@@ -139,9 +139,9 @@ theorem reachable_input_iff {p q : Fin n × Fin n} :
   exact reachable_slotGraph_iff G _ Equiv.Perm.sameCycle_finRotate
 
 /-- At least half of the edges at every vertex of the regular rotation map are self-loops. -/
-theorem card_le_two_mul_card_filter_neighbor_input_eq (v : Fin n × Fin n) :
-    Fintype.card Label ≤ 2 * Finset.card {b | (input G).neighbor v b = v} :=
-  (slotGraph G (finRotate n)).card_le_two_mul_card_filter_neighbor_extendLabels_eq slotLabel
+theorem card_le_two_mul_edgeCount_input (v : Fin n × Fin n) :
+    Fintype.card Label ≤ 2 * (input G).edgeCount v v :=
+  (slotGraph G (finRotate n)).card_le_two_mul_edgeCount_extendLabels slotLabel
     (by rw [card_slotLabel, card_label]; norm_num) v
 
 end Input
@@ -213,7 +213,7 @@ over a slot `(t, w)` of `t`. -/
 theorem reachable_iff_exists_walk_of_le_two_pow {a : ℕ} (ha : n ≤ 2 ^ a) (s t : Fin n) :
     G.Reachable s t ↔ ∃ k : Fin (walkLength a) → Label,
       (((graph G a).pow (walkLength a)).neighbor (start s a) k).root.1 = t := by
-  have hloop := card_le_two_mul_card_filter_neighbor_input_eq G
+  have hloop := card_le_two_mul_edgeCount_input G
   have hV : Fintype.card (Fin n × Fin n) = n * n := by
     rw [Fintype.card_prod, Fintype.card_fin]
   have hℓ : 2 * Fintype.card (Fin n × Fin n) ^ 2 * Fintype.card Label ^ 2 *
