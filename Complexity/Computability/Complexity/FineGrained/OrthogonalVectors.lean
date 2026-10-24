@@ -13,6 +13,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -373,8 +374,8 @@ theorem exists_computableTidilyInO_stream {half : CNF ℕ → List ℕ}
   -- the start of the stream: the state and the number of rounds in unary
   obtain ⟨d₀, _, hp₀⟩ := (show ComputableTidilyInPolyTime (fun φ : CNF ℕ => ((φ, half φ), 0))
     encCNF encStreamState by fun_prop).exists_degree
-  obtain ⟨d₁, _, hp₁⟩ := (ComputableTidilyInPolyTime.unary_to_binary.comp
-    ((ComputableTidilyInPolyTime.length_list encNat).comp hhalf)).exists_degree
+  obtain ⟨d₁, _, hp₁⟩ :=
+    ((ComputableInPolyTime.length_list_binary encNat).tidy.comp hhalf).exists_degree
   have h := hstream.comp (hp₀.inO.prod (unary_two_pow hp₁.inO))
   -- the bounds
   obtain ⟨cv, dv, hV⟩ := hhalf.polyBounded_length.exists_le

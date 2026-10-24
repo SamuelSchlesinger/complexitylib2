@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.NP.Witness
 public import Mathlib.Combinatorics.SimpleGraph.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -186,7 +187,8 @@ theorem computableTidilyInPolyTime_verifySubset {rel : Graph → ℕ → ℕ →
       (encPair (encPair encGraph encNat) encBits) encBool := by
   refine computableTidilyInPolyTime_subsetVerifier (encγ := encNat)
     (by unfold encGraph; fun_prop) (bool_and' ?_ ?_)
-  · exact (unary_to_binary.comp ((length_list encNat).comp (snd _ _))).decide_eq' (by fun_prop)
+  · exact (((ComputableInPolyTime.length_list_binary encNat).tidy.comp (snd _ _)).decide_eq'
+      (by fun_prop))
   · apply allWithInput (snd _ _)
     apply allWithInput ((snd _ _).comp (fst _ _))
     have hproj : ComputableTidilyInPolyTime

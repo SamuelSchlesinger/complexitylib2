@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 public import Complexity.Computability.Circuit.Pi
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -219,7 +220,7 @@ theorem computableTidilyInPolyTime_appendCode {α : Type} {enc : α ↪ List Boo
     (hd : ComputableTidilyInPolyTime d enc encCode) :
     ComputableTidilyInPolyTime (fun a => appendCode (n a) (c a) (d a)) enc encCode := by
   have hlen : ComputableTidilyInPolyTime (fun a => (c a).1.length) enc encNat :=
-    unary_to_binary.comp ((length_list encGate).comp hc.fst')
+    (ComputableInPolyTime.length_list_binary encGate).tidy.comp hc.fst'
   have hshift := computableTidilyInPolyTime_shiftCode hn hlen hd
   exact (listAppend' hc.fst' hshift.fst').prod (listAppend' hc.snd' hshift.snd')
 
@@ -302,7 +303,7 @@ theorem computableTidilyInPolyTime_appendCodes {α : Type} {enc : α ↪ List Bo
   have hprefixGates := flatMapWithInput (encB := encGate)
     (f := fun (_ : α × ((List (Op × List ℕ) × List ℕ) × ℕ)) c => c.1)
     hprefix ((snd _ encCode).fst')
-  have hoffset := unary_to_binary.comp ((length_list encGate).comp hprefixGates)
+  have hoffset := (ComputableInPolyTime.length_list_binary encGate).tidy.comp hprefixGates
   have hshift := computableTidilyInPolyTime_shiftCode (hn.comp hpar) hoffset hentry.fst'
   have hgates := flatMapWithInput (encB := encGate)
     (f := fun a (q : (List (Op × List ℕ) × List ℕ) × ℕ) =>
@@ -485,9 +486,9 @@ theorem compCode_code {n m p : ℕ} (d : Circuit signature m p)
     (hi : ComputableTidilyInPolyTime i enc encNat) :
     ComputableTidilyInPolyTime (fun a => compCodeWire (n a) (c a) (i a)) enc encNat := by
   have houtputs : ComputableTidilyInPolyTime (fun a => (c a).2.length) enc encNat :=
-    unary_to_binary.comp ((length_list encNat).comp hc.snd')
+    (ComputableInPolyTime.length_list_binary encNat).tidy.comp hc.snd'
   have hgates : ComputableTidilyInPolyTime (fun a => (c a).1.length) enc encNat :=
-    unary_to_binary.comp ((length_list encGate).comp hc.fst')
+    (ComputableInPolyTime.length_list_binary encGate).tidy.comp hc.fst'
   have hlookup : ComputableTidilyInPolyTime (fun a => (c a).2.getD (i a) 0) enc encNat :=
     listGetD_binary 0 hc.snd' hi
   unfold compCodeWire

@@ -150,8 +150,7 @@ theorem exists_uniformCircuitFamily {α : Type} {enc : α ↪ List Bool}
   have hzero := hbits.comp ((ComputableTidilyInPolyTime.id' (encIn := enc)).prod
     (ComputableTidilyInPolyTime.const 0))
   have hblock : ComputableTidilyInPolyTime (fun a => (bits a 0).size) enc encNat := by
-    have h := ComputableTidilyInPolyTime.unary_to_binary.comp
-      ((ComputableTidilyInPolyTime.length_list encGate).comp hzero.fst')
+    have h := (ComputableInPolyTime.length_list_binary encGate).tidy.comp hzero.fst'
     convert h using 1
     funext a
     exact (Circuit.length_code_fst (bits a 0)).symm
