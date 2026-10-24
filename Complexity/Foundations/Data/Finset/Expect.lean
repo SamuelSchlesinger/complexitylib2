@@ -56,8 +56,10 @@ random tuple leaves its average unchanged (`Fintype.expect_expect_update`).
 * `Fintype.expect_comp_fst`, `Fintype.expect_comp_snd`, `Fintype.expect_comp_fst_snd_fst`: a
   function of some of the coordinates has the same average on the product.
 * `Fintype.expect_unique`, `Fintype.expect_bool`: averages on `Unique` types and `Bool`.
-* `Fintype.expect_add_left`, `Fintype.expect_expect_update`: translation and coordinate-resampling
-  invariance of uniform averages.
+* `Fintype.expect_add_left`, `Fintype.expect_expect_update`,
+  `Fintype.expect_comp_arrowCongr`, `Fintype.expect_sumElim`,
+  `Fintype.expect_restrict_coordinates`: translation, coordinate-resampling, coordinate-renaming,
+  disjoint-union splitting, and coordinate-restriction invariance of uniform averages.
 * `Fintype.expect_sub_expect_fiber`, `Fintype.expect_add_sq_of_expect_fiber_eq_zero`,
   `Fintype.exists_eq_add_expect_fiber_eq_zero`: orthogonal fiber decomposition of second moments on
   product types.
@@ -154,6 +156,32 @@ theorem expect_expect_update [DecidableEq ι] [Nonempty α] (F : (ι → α) →
         (Fintype.expect_prod_type (fun p : (ι → α) × α ↦ F (e p).1)).symm
     _ = 𝔼 p : (ι → α) × α, F p.1 := Fintype.expect_equiv e _ _ fun _ ↦ rfl
     _ = 𝔼 s, F s := Fintype.expect_comp_fst F
+
+/-- Renaming the coordinates preserves uniform averages over function types. -/
+theorem expect_comp_arrowCongr {κ : Type*} [Fintype κ] [DecidableEq ι] [DecidableEq κ]
+    (e : ι ≃ κ) (h : (κ → α) → M) : 𝔼 x : ι → α, h (fun j => x (e.symm j)) = 𝔼 y, h y :=
+  Fintype.expect_equiv (e.arrowCongr (Equiv.refl α)) _ _ fun _ => rfl
+
+/-- The uniform average on functions out of `ι ⊕ κ` is the iterated average over functions on `ι`
+and functions on `κ`. -/
+theorem expect_sumElim {κ : Type*} [Fintype κ] [DecidableEq ι] [DecidableEq κ]
+    (h : (ι ⊕ κ → α) → M) :
+    𝔼 x, h x = 𝔼 x₁ : ι → α, 𝔼 x₂ : κ → α, h (Sum.elim x₁ x₂) := by
+  rw [← Fintype.expect_prod_type fun y : (ι → α) × (κ → α) => h (Sum.elim y.1 y.2)]
+  exact Fintype.expect_equiv (Equiv.sumArrowEquivProdArrow ι κ α) _ _ fun x =>
+    congrArg h (Sum.elim_comp_inl_inr x).symm
+
+/-- Restricting a uniformly random function on `ι` to a subtype of coordinates gives a uniformly
+random function on the subtype. -/
+theorem expect_restrict_coordinates [DecidableEq ι] [Nonempty α] {p : ι → Prop} [DecidablePred p]
+    (f : ({i // p i} → α) → M) : (𝔼 x : ι → α, f (fun i => x i)) = 𝔼 x, f x := by
+  let e := Equiv.piEquivPiSubtypeProd p (fun _ => α)
+  rw [← Fintype.expect_equiv e.symm (fun z => f (fun i => e.symm z i)) _ (fun _ => rfl)]
+  rw [← univ_product_univ, expect_product]
+  have he (a : {i // p i} → α) (b : {i // ¬ p i} → α) :
+      (fun i : {i // p i} => e.symm (a, b) i) = a :=
+    congrArg Prod.fst (e.apply_symm_apply (a, b))
+  simp_rw [he, Fintype.expect_const]
 
 end Module
 

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Communication.TopDown.Adversary
 public import Complexity.Foundations.Data.BitString.Parity
+import Complexity.Foundations.Analysis.BernoulliInequality
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 
@@ -100,7 +101,7 @@ private theorem parity_isDensityLimit_four_div {n : ℕ} (hn : 4 ≤ n) (b : Boo
   have hn4 : (4 : ℝ) ≤ n := by exact_mod_cast hn
   have hp1 : (4 : ℝ) / n ≤ 1 := (div_le_one hnpos).mpr hn4
   apply parity_isDensityLimit (by positivity) hp1 _ b x
-  have ht := one_sub_pow_mul_one_add_mul_le_one hp1 n
+  have ht := Real.one_sub_pow_mul_one_add_mul_le_one hp1 n
   have hnp : (n : ℝ) * (4 / n) = 4 := by field_simp
   rw [hnp] at ht
   nlinarith

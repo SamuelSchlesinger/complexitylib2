@@ -9,7 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Existence
 public import Complexity.Foundations.Combinatorics.Expander.Tower
-import Complexity.Foundations.BooleanAnalysis.Bernoulli
+import Complexity.Foundations.Analysis.BernoulliInequality
 
 /-!
 # A base graph for the zig-zag tower
@@ -84,7 +84,7 @@ variable {t}
 theorem spectralExpansion_zigzagTowerBase_le_one_div_five (ht : 1440000 ≤ t) :
     (zigzagTowerBase t).spectralExpansion ≤ 1 / 5 := by
   refine (spectralExpansion_zigzagTowerBase_le t).trans ?_
-  have h := Cslib.BitString.one_sub_pow_mul_one_add_mul_le_one (p := 1 / 360000) (by norm_num) t
+  have h := Real.one_sub_pow_mul_one_add_mul_le_one (p := 1 / 360000) (by norm_num) t
   have ht' : (1440000 : ℝ) ≤ t := by exact_mod_cast ht
   have h₀ : 0 ≤ (1 - 1 / 360000 : ℝ) ^ t := pow_nonneg (by norm_num) t
   nlinarith

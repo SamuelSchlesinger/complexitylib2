@@ -56,6 +56,9 @@ over a mask of rate `p` (`BitString.bernoulliAverage_chi`).
 * `Cslib.BitString.noiseOp_eq_sum`, `Cslib.BitString.fourierCoeff_noiseOp`: the Fourier expansion
   of `T_ρ f` [O'Donnell, Proposition 2.47][ODonnell2014].
 * `Cslib.BitString.noiseOp_noiseOp`: the noise operators form a semigroup.
+* `Cslib.BitString.noiseOp_comp_arrowCongr`, `Cslib.BitString.noiseOp_of_isEmpty`: the noise
+  operator commutes with renaming the coordinates and is the identity on the cube over no
+  coordinates.
 * `Cslib.BitString.expect_mul_noiseOp_comm`: the noise operator is self-adjoint.
 * `Cslib.BitString.noiseStability_eq_sum`: the Fourier formula for the noise stability
   [O'Donnell, Theorem 2.49][ODonnell2014].
@@ -179,6 +182,20 @@ theorem noiseOp_noiseOp (ρ σ : ℝ) (f : (ι → Bool) → ℝ) :
     noiseOp ρ (noiseOp σ f) = noiseOp (ρ * σ) f :=
   fourierCoeff_injective <| funext fun S => by
     simp only [fourierCoeff_noiseOp, mul_pow, mul_assoc]
+
+/-- The noise operator commutes with renaming the coordinates. -/
+theorem noiseOp_comp_arrowCongr {κ : Type*} [Fintype κ] [DecidableEq κ] (e : ι ≃ κ) (ρ : ℝ)
+    (g : (κ → Bool) → ℝ) (x : ι → Bool) :
+    noiseOp ρ (fun y : ι → Bool => g fun j => y (e.symm j)) x =
+      noiseOp ρ g fun j => x (e.symm j) :=
+  bernoulliAverage_reindex e _ fun Q => g ((fun j => x (e.symm j)) + Q)
+
+/-- On the cube over no coordinates, a single point, the noise operator is the identity. -/
+theorem noiseOp_of_isEmpty [IsEmpty ι] (ρ : ℝ) (g : (ι → Bool) → ℝ) (x : ι → Bool) :
+    noiseOp ρ g x = g x := by
+  have h : (fun P : ι → Bool => g (x + P)) = fun _ => g x :=
+    funext fun P => congrArg g (Subsingleton.elim _ _)
+  rw [noiseOp, h, bernoulliAverage_const]
 
 /-- The correlation of `f` with `T_ρ g` is the sum of the products of the Fourier coefficients
 damped by `ρ ^ |S|`. -/

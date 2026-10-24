@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Mathlib.Algebra.Order.BigOperators.Expect
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 public import Mathlib.Data.Fintype.Pi
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
@@ -314,17 +315,6 @@ private theorem resample_update_not [DecidableEq ι] {s : ι → Bool} {i : ι} 
 
 variable [Fintype ι] [DecidableEq ι]
 
-/-- Restricting a uniform point of the cube to a set of coordinates gives a uniform pattern. -/
-theorem expect_restrict_coordinates {p : ι → Prop} [DecidablePred p]
-    (f : ({i // p i} → Bool) → ℝ) : (𝔼 x : ι → Bool, f (fun i => x i)) = 𝔼 x, f x := by
-  let e := Equiv.piEquivPiSubtypeProd p (fun _ => Bool)
-  rw [← Fintype.expect_equiv e.symm (fun z => f (fun i => e.symm z i)) _ (fun _ => rfl)]
-  rw [← univ_product_univ, expect_product]
-  have he (a : {i // p i} → Bool) (b : {i // ¬ p i} → Bool) :
-      (fun i : {i // p i} => e.symm (a, b) i) = a :=
-    congrArg Prod.fst (e.apply_symm_apply (a, b))
-  simp_rw [he, Fintype.expect_const]
-
 /-- The free-coordinate fiber counts exactly the full assignments in `X`
 whose unselected coordinates agree with `x`. -/
 theorem card_coordinateFiber (X : Finset (ι → Bool)) (s x : ι → Bool) :
@@ -370,7 +360,7 @@ lands in the set. -/
 theorem coordinateDensity_eq_expect (X : Finset (ι → Bool)) (s x : ι → Bool) :
     coordinateDensity X s x = 𝔼 y, if resample s x y ∈ X then (1 : ℝ) else 0 := by
   simp_rw [resample_eq_completePattern]
-  rw [expect_restrict_coordinates
+  rw [Fintype.expect_restrict_coordinates
     (fun z => if completePattern s x z ∈ X then (1 : ℝ) else 0)]
   simp [coordinateDensity, coordinateFiber, Fintype.expect_eq_sum_div_card]
 
@@ -416,7 +406,7 @@ uniform point. -/
 theorem coordinateMarginal_eq_expect_completePattern (f : (ι → Bool) → ℝ) (s : ι → Bool)
     (z : {i // s i = true} → Bool) :
     coordinateMarginal f s z = 𝔼 x, f (completePattern s x z) :=
-  (expect_restrict_coordinates (p := fun i => s i ≠ true)
+  (Fintype.expect_restrict_coordinates (p := fun i => s i ≠ true)
     (fun rest => f (fun i => if h : s i = true then z ⟨i, h⟩ else rest ⟨i, h⟩))).symm
 
 /-- The projection of `f` at `x` is its marginal at the selected coordinates of `x`. -/
@@ -438,7 +428,7 @@ marginal at a uniform pattern. -/
 theorem expect_comp_projectionAverage (f : (ι → Bool) → ℝ) (s : ι → Bool) (g : ℝ → ℝ) :
     (𝔼 x, g (projectionAverage f s x)) = 𝔼 z, g (coordinateMarginal f s z) := by
   simp_rw [projectionAverage_eq_coordinateMarginal]
-  exact expect_restrict_coordinates (fun z => g (coordinateMarginal f s z))
+  exact Fintype.expect_restrict_coordinates (fun z => g (coordinateMarginal f s z))
 
 /-- Projection preserves the uniform mean. -/
 theorem expect_projectionAverage (f : (ι → Bool) → ℝ) (s : ι → Bool) :
@@ -480,7 +470,7 @@ theorem projectionAverage_comp_completePattern (f : (ι → Bool) → ℝ) (s x 
       projectionAverage f (fun i => if h : s i = true then R ⟨i, h⟩ else true)
         (completePattern s x u) := by
   unfold projectionAverage
-  rw [← expect_restrict_coordinates (p := fun i => s i = true)]
+  rw [← Fintype.expect_restrict_coordinates (p := fun i => s i = true)]
   refine expect_congr rfl fun y _ => congrArg f (funext fun i => ?_)
   by_cases hs : s i = true <;> simp [completePattern, resample, hs]
 

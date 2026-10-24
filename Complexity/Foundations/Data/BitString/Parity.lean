@@ -52,7 +52,8 @@ it then takes each value on exactly half of the inputs (`card_filter_parityOn_eq
 * `Cslib.parityOn_union`, `Cslib.parityOn_sdiff`, `Cslib.parityOn_biUnion`: the parity of a
   disjoint union, set difference, and disjoint indexed union.
 * `Cslib.parityOn_symmDiff`: the parity of a symmetric difference.
-* `Cslib.parityOn_add`: parities are linear.
+* `Cslib.parityOn_add`, `Cslib.BitString.exists_eq_parityOn_iff`: the parities are the linear
+  Boolean functions.
 * `Cslib.parity_update_not`: flipping any bit flips the parity.
 * `Cslib.card_filter_parityOn_eq`, `Cslib.dens_filter_parityOn_eq`: the parity on a nonempty set
   takes each value on half of the inputs.
@@ -259,5 +260,38 @@ theorem not_isConst_parityOn (hs : s.Nonempty) (c : Bool) :
     ¬IsConst fun x => c ^^ parityOn s x := fun h => by
   obtain ⟨i, hi⟩ := hs
   exact not_dependsOn_parityOn hi c fun x y _ => h x y
+
+/-- **The linear Boolean functions are the parities**: a Boolean function turns sums of bit
+strings into the exclusive or of its values exactly when it is the parity of some set of
+coordinates [O'Donnell, Definition 1.28][ODonnell2014]. -/
+theorem BitString.exists_eq_parityOn_iff [Finite ι] {f : (ι → Bool) → Bool} :
+    (∃ S, f = parityOn S) ↔ ∀ x y, f (x + y) = (f x ^^ f y) := by
+  classical
+  have := Fintype.ofFinite ι
+  refine ⟨?_, fun hf => ?_⟩
+  · rintro ⟨S, rfl⟩
+    exact parityOn_add S
+  -- `a i` is the value of `f` at the unit vector of `i`.
+  set a : ι → Bool := fun i => f (Pi.single i true)
+  have hT (T : Finset ι) : f (fun j => decide (j ∈ T)) = parityOn T a := by
+    induction T using Finset.induction_on with
+    | empty =>
+      have h0 := hf 0 0
+      rw [add_zero, Bool.xor_self] at h0
+      simp only [notMem_empty, decide_false, parityOn_empty]
+      exact h0
+    | insert i T hi ih =>
+      have h : (fun j => decide (j ∈ insert i T)) =
+          Pi.single i true + fun j => decide (j ∈ T) := by
+        funext j
+        by_cases hj : j = i
+        · subst hj
+          simp [hi, Bool.add_eq_xor]
+        · simp [hj, Bool.add_eq_xor, Bool.zero_eq_false]
+      rw [h, hf, ih, parityOn_insert hi]
+  refine ⟨({i | a i = true} : Finset ι), funext fun x => ?_⟩
+  calc f x = f fun j => decide (j ∈ ({j | x j = true} : Finset ι)) := by simp
+    _ = parityOn {j | x j = true} a := hT _
+    _ = parityOn {i | a i = true} x := by simp only [parityOn, filter_filter, and_comm]
 
 end Cslib
