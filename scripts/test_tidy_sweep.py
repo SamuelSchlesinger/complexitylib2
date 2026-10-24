@@ -511,6 +511,24 @@ class CaptureTests(unittest.TestCase):
         self.assertFalse(p.convert(src.path, "M", 8, 9, "X", None, "tidy"))
         self.assertIn("captures", p.blockers["X"][0])
 
+    def test_dotted_bridge_spellings_are_checked(self) -> None:
+        """Thread 4366077232: notations `.of_tidy` and `.tidy` capture the inserted spellings
+        literally, so the conversion is not made and its declaration is deferred."""
+        sg = [[[0, 1]], 1]
+        for notation in ('local notation ".of_tidy" => (fun _ : Tidy => Plain.mk 5)\n',
+                         'local postfix:max ".tidy" => (fun _ : Plain => Tidy.mk 7)\n'):
+            text = notation + "def after : Tidy := X h\n"
+            p, src = fake_planner(text, {"X": {"m": "M", "sg": sg, "tidy": [POLY]}},
+                                  known={"Y"})
+            p.renames = {"X": "Y"}
+            self.assertTrue(p.bridge_spellings_captured(src), notation)
+            start = text.index("X h")
+            self.assertFalse(p.convert(src.path, "M", start, start + 1, "X", None, "tidy"))
+            self.assertEqual(p.files[src.path].replaces, [])
+            self.assertIn("captures", p.blockers["X"][0])
+        p, src = fake_planner("def after : Tidy := X h\n", {}, tokens={".", ".."})
+        self.assertFalse(p.bridge_spellings_captured(src))
+
     def test_imported_notation(self) -> None:
         """Reply 4365874664: `notation "bar" => (3 : Nat)` in a dependency."""
         text = "open N\ndef before : Nat := foo\ndef after : Nat := foo\n"

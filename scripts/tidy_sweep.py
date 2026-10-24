@@ -1383,9 +1383,16 @@ class Planner:
 
     def bridge_spellings_captured(self, src: SourceFile) -> bool:
         """Whether a token could capture the fixed spellings the rewrite inserts, the field
-        `.tidy` and the leading-dot `.of_tidy` of the plain predicates."""
-        return any(token_capture(word, " ", tokens) for word in ("tidy", "of_tidy")
-                   for tokens in (self.tokens, src.scopes.tokens))
+        `.tidy` and the leading-dot `.of_tidy` of the plain predicates: as identifiers, or
+        literally. At a `.` no identifier competes, so any token other than `.` that starts the
+        inserted text is read instead."""
+        for tokens in (self.tokens, src.scopes.tokens):
+            if any(token_capture(word, " ", tokens) for word in ("tidy", "of_tidy")):
+                return True
+            if any(token != "." and (spelling + " ").startswith(token)
+                   for spelling in (".tidy", ".of_tidy") for token in tokens.get(".", ())):
+                return True
+        return False
 
     def write_name(self, module: str, src: SourceFile, offset: int, target: str,
                    first: str | None = None, following: str = "") -> str | None:
