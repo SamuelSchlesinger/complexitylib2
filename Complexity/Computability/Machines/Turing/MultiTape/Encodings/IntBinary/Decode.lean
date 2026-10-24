@@ -53,10 +53,9 @@ theorem decodeIntBin_encIntBin (z : ℤ) : decodeIntBin (encIntBin z) = z := by
 @[fun_prop]
 theorem computableInPolyTime_decodeIntBin :
     ComputableInPolyTime decodeIntBin encBits encIntBin := by
-  apply ComputableInPolyTime.of_tidy
-  have hsign : ComputableTidilyInPolyTime (fun word : List Bool => word.headD false)
-      encBits encBool := ComputableTidilyInPolyTime.headD false
-  have hmag := Decoder.nat.computableTidilyInPolyTime.comp ComputableTidilyInPolyTime.bitsTail
-  exact ComputableTidilyInPolyTime.intBin_signMagnitude.comp (hsign.prod hmag)
+  have hsign : ComputableInPolyTime (fun word : List Bool => word.headD false)
+      encBits encBool := ComputableInPolyTime.headD false
+  have hmag := Decoder.nat.computableInPolyTime.comp ComputableInPolyTime.bitsTail
+  exact ComputableInPolyTime.intBin_signMagnitude.comp (hsign.prod hmag)
 
 end Turing.MultiTapeTM

@@ -14,7 +14,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
-import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Universal input coding and polynomial-time simulation
@@ -22,9 +22,9 @@ import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNo
 The universal function `Turing.MultiTapeTM.Universal.universal` runs a described machine on an
 input for a given number of steps. Its time and space are polynomial in the length of the
 description, of the input and of the number of steps written in unary
-(`Turing.MultiTapeTM.Universal.universal_bounds_unary`), so it is tidily computable in polynomial
+(`Turing.MultiTapeTM.Universal.universal_bounds_unary`), so it is plain computable in polynomial
 time when the number of steps is written in unary
-(`Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`). Written in binary, the
+(`Turing.MultiTapeTM.Universal.computableInPolyTime_universal`). Written in binary, the
 number of steps would be exponential in its length.
 
 The input-coding API translates bits to unary symbols (`false ↦ 0`, `true ↦ 1`) in linear time
@@ -39,16 +39,16 @@ single bit, independently of hierarchy theorems and Ladner's language.
 
 ## Main results
 
-* `Turing.MultiTapeTM.Universal.computableTidilyInDegree_map_eBit`: input symbols in linear time
+* `Turing.MultiTapeTM.Universal.computableInDegree_map_eBit`: input symbols in linear time
   and output size.
-* `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_decodeDesc`,
-  `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_map_eBit`,
-  `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_eBit`: polynomial-time description
+* `Turing.MultiTapeTM.Universal.computableInPolyTime_decodeDesc`,
+  `Turing.MultiTapeTM.Universal.computableInPolyTime_map_eBit`,
+  `Turing.MultiTapeTM.Universal.computableInPolyTime_eBit`: polynomial-time description
   decoding and bit coding.
 
 * `Turing.MultiTapeTM.Universal.universal_bounds_unary`: the time and space of the universal
   function, polynomially in the length of its input with the number of steps in unary.
-* `Turing.MultiTapeTM.Universal.computableTidilyInPolyTime_universal`: the universal function,
+* `Turing.MultiTapeTM.Universal.computableInPolyTime_universal`: the universal function,
   with its number of steps in unary, is polynomial-time.
 
 ## References
@@ -60,7 +60,7 @@ single bit, independently of hierarchy theorems and Ladner's language.
 
 namespace Turing.MultiTapeTM.Universal
 
-open ComputableTidilyInPolyTime
+open ComputableInPolyTime
 
 /-! ### The symbols of the input -/
 
@@ -121,32 +121,31 @@ theorem symbolsT_run (x : List Bool) :
       rfl
 
 /-- The input as symbols, in linear time and space. -/
-theorem computableTidilyInDegree_map_eBit :
-    ComputableTidilyInDegree (fun x : List Bool => x.map eBit) encBits (encList encUnary) 1 1 :=
-  (ComputableTidilyInDegree.of_linear (encIn := encTrueDoubled)
+theorem computableInDegree_map_eBit :
+    ComputableInDegree (fun x : List Bool => x.map eBit) encBits (encList encUnary) 1 1 :=
+  (ComputableInDegree.of_linear (encIn := encTrueDoubled)
     (symbolsT.computableInLinearTimeAndSpace fun x => (symbolsT_run x).symm)).comp
-    (ComputableTidilyInDegree.of_linear (encIn := encBits) (encMid := encTrueDoubled) (f := id)
+    (ComputableInDegree.of_linear (encIn := encBits) (encMid := encTrueDoubled) (f := id)
       (trueDoubleT.computableInLinearTimeAndSpace fun x => (trueDoubleT_run x).symm))
 
 
 /-- Decoding a machine description is polynomial-time in the input word. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_decodeDesc :
-    ComputableTidilyInPolyTime decodeDesc encBits eDesc :=
+theorem computableInPolyTime_decodeDesc :
+    ComputableInPolyTime decodeDesc encBits eDesc :=
   let ⟨_, _, h⟩ := exists_computableInDegree_decodeDesc
-  let h : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree h
-  h.computableTidilyInPolyTime
+  h.computableInPolyTime
 
 /-- The input of a machine as symbols is linear. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_map_eBit :
-    ComputableTidilyInPolyTime (fun w : List Bool => w.map eBit) encBits (encList encUnary) :=
-  computableTidilyInDegree_map_eBit.computableTidilyInPolyTime
+theorem computableInPolyTime_map_eBit :
+    ComputableInPolyTime (fun w : List Bool => w.map eBit) encBits (encList encUnary) :=
+  computableInDegree_map_eBit.computableInPolyTime
 
 /-- The coding of bits as symbols is a finite computation. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_eBit :
-    ComputableTidilyInPolyTime (fun b : Bool => eBit b) encBool encUnary :=
+theorem computableInPolyTime_eBit :
+    ComputableInPolyTime (fun b : Bool => eBit b) encBool encUnary :=
   of_finite _
 
 /-! ### Simulation with a unary clock -/
@@ -208,16 +207,16 @@ theorem universal_bounds_unary (i : Desc × List ℕ × ℕ) :
 /-- **The universal function with a unary clock is polynomial-time**: written in unary, the number
 of steps counts towards the length of the input. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_universal :
-    ComputableTidilyInPolyTime universal
+theorem computableInPolyTime_universal :
+    ComputableInPolyTime universal
       (encPair eDesc (encPair (encList encUnary) encUnary)) eOut := by
-  have hconv : ComputableTidilyInPolyTime (fun i : Desc × List ℕ × ℕ => i)
+  have hconv : ComputableInPolyTime (fun i : Desc × List ℕ × ℕ => i)
       (encPair eDesc (encPair (encList encUnary) encUnary)) eIn := by
     have : (fun i : Desc × List ℕ × ℕ => i) = fun i => (i.1, i.2.1, i.2.2) := rfl
     rw [this]
     fun_prop
   obtain ⟨d, e, hdeg⟩ := hconv.exists_degree
-  exact (computableTidilyInO_universal.comp hdeg.inO).computableTidilyInPolyTime
+  exact (computableInO_universal.comp hdeg.inO).computableInPolyTime
     ((PolyBounded.of_forall_le 1 d fun _ => by simp).add
       (PolyBounded.of_forall_le 100025 8 fun i => (universal_bounds_unary i).1))
     ((PolyBounded.of_forall_le 1 d fun _ => by simp).add

@@ -129,11 +129,13 @@ theorem IsComputable.comp {f : β → γ} {g : α → β} (hf : IsComputable f e
 
 /-- The identity is computable. -/
 theorem isComputable_id (enc : α ↪ List Bool) : IsComputable id enc enc :=
-  (ComputableTidilyInDegree.of_eq fun _ => rfl).isComputable
+  let ⟨⟨_, _, _, _, h⟩, _⟩ := ComputableInDegree.of_eq (encIn := enc) (fun _ => rfl)
+  h.isComputable
 
 /-- Functions on finite types are computable. -/
 theorem IsComputable.of_finite [Finite α] (f : α → β) : IsComputable f encIn encMid :=
-  (ComputableTidilyInDegree.of_finite f).isComputable
+  let ⟨⟨_, _, _, _, h⟩, _⟩ := ComputableInDegree.of_finite (encIn := encIn) (encMid := encMid) f
+  h.isComputable
 
 /-- Pairs of computable functions are computable. -/
 theorem IsComputable.prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
