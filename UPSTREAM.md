@@ -115,7 +115,9 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   encoded scalar primitives, with caller-selected configuration encoding and unrestricted
   input-dependent bounds. Its forgetful bridge reuses `IsComputable`; polynomiality is a separate
   bound property. `GenericRAM/Native/Nat` supplies a checked bounded-natural addition model;
-  `WordRAM/Native` certifies checked standard addition with unary width and binary operands.
+  `WordRAM/Native` supplies complete polynomial-time `NativePrimitives` bundles for
+  `Basis.standard`, `Basis.additive`, `Basis.arithmetic`, and `Basis.exact` (plus restricted
+  sub-bases and homomorphic preimages) with unary width and binary operands (#489).
   Both reuse Christian Reitwiessner's native arithmetic/encoding calculus.
   `GenericRAM/Simulation/{Finite,Turing,Run}` combine these per-symbol certificates with sparse
   memory and finite control to simulate single steps and clocked multi-step runs of any fixed
