@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Circuit.Boolean.Tableau.Layout
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # The uniform tableau circuit of a multi-tape machine

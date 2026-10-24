@@ -9,7 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain
 public import Complexity.Crypto.Computational.Homomorphic.BitEncryption
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Append
 import Complexity.Probability.PMF
 
 /-!

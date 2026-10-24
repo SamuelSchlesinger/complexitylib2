@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Probabilistic.PPT.Capture
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Fold
 import Mathlib.Data.Fintype.Basic
 
 /-!

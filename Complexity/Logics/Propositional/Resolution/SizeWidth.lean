@@ -9,7 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Counting
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 /-!

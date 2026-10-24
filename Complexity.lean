@@ -1646,9 +1646,13 @@ public import Complexity.Foundations.Data.Finset.Sampling
 public import Complexity.Foundations.Data.Finset.SymmDiff
 public import Complexity.Foundations.Data.Hamming
 public import Complexity.Foundations.Data.HammingBound
+public import Complexity.Foundations.Data.List.Append
 public import Complexity.Foundations.Data.List.BalancedFold
 public import Complexity.Foundations.Data.List.Basic
+public import Complexity.Foundations.Data.List.Counting
 public import Complexity.Foundations.Data.List.Equiv
+public import Complexity.Foundations.Data.List.Fold
+public import Complexity.Foundations.Data.List.Lookup
 public import Complexity.Foundations.Data.List.OfFn
 public import Complexity.Foundations.Data.ListDecoding
 public import Complexity.Foundations.Data.Matrix.Binary

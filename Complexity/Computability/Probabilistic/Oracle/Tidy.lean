@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Fold
 import Mathlib.Data.Fintype.Basic
 
 /-!
