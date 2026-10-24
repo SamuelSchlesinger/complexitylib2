@@ -1957,10 +1957,12 @@ LONG_LINE = "line longer than 100 characters after rewriting"
 
 
 def long_lines(old: str, new: str, limit: int = 100) -> list[int]:
-    """The 1-based lines of `new` longer than `limit` that are not lines of `old`."""
+    """The 1-based lines of `new` with code, longer than `limit`, that are not lines of `old`
+    (comment-only lines, such as `#guard_msgs` text, are left out)."""
     before = set(old.split("\n"))
+    code = masks(new)[0].split("\n")
     return [i for i, line in enumerate(new.split("\n"), 1)
-            if len(line) > limit and line not in before]
+            if len(line) > limit and line not in before and code[i - 1].strip()]
 
 
 def spells(token: str, name: str) -> bool:

@@ -257,6 +257,8 @@ class EditTests(unittest.TestCase):
         old = "a\n" + "x" * 120 + "\nshort\n"
         new = "a\n" + "x" * 120 + "\n" + "y" * 101 + "\n"
         self.assertEqual(t.long_lines(old, new), [3])
+        # Comment-only lines, such as `#guard_msgs` text, are not reported.
+        self.assertEqual(t.long_lines("", "/--\ninfo: '" + "x" * 120 + "'\n-/\n"), [])
 
     def test_regions_transform_their_edited_text(self) -> None:
         text = "a := X\nb"
