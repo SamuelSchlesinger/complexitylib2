@@ -20,7 +20,7 @@ States, symbols and moves are encoded in unary (`Turing.MultiTapeTM.encUnary`), 
 the work tapes as integers (`Turing.MultiTapeTM.encInt`), the position of the input head in binary
 (`Turing.MultiTapeTM.encNat`), and a structure as the framed tuple of its fields.
 
-Reading, writing and moving on a zipper are tidily computable in linear time and space. A step of
+Reading, writing and moving on a zipper are plain computable in linear time and space. A step of
 the simulation (`Turing.MultiTapeTM.Universal.step_inO`) takes space linear in the length `L` of
 the encoded context (the description, the input and the configuration), and time
 `(K + E + p + 1) * (L + 1) ^ 2` for `K` work tapes, `E` transitions and the input head at `p`:
@@ -34,7 +34,7 @@ finding the input symbol counts down from `p`.
 
 ## Main results
 
-* `Turing.MultiTapeTM.Universal.step_inO`: a step is tidily computable within the time `stepTime`
+* `Turing.MultiTapeTM.Universal.step_inO`: a step is plain computable within the time `stepTime`
   and linear space.
 -/
 
@@ -111,7 +111,7 @@ public abbrev eCfgFields : Option ℕ × ℕ × List Tape ↪ List Bool :=
     eCfg c = eCfgFields (c.state, c.inputPos, c.workTapes) := rfl
 
 /-- The state of a configuration, in linear time. -/
-public lemma state_inO : ComputableTidilyInO SCfg.state eCfg eSym (fun c => (eCfg c).length)
+public lemma state_inO : ComputableInO SCfg.state eCfg eSym (fun c => (eCfg c).length)
     fun c => (eCfg c).length :=
   .of_linear (.of_unframe fun c => by simp [eCfg_apply])
 
@@ -119,51 +119,51 @@ public lemma state_inO : ComputableTidilyInO SCfg.state eCfg eSym (fun c => (eCf
 
 section Tape
 
-open ComputableTidilyInDegree
+open ComputableInDegree
 
-lemma tapeFields_deg : ComputableTidilyInDegree (fun t : Tape => (t.head, t.left, t.right)) eTape
+lemma tapeFields_deg : ComputableInDegree (fun t : Tape => (t.head, t.left, t.right)) eTape
     eTapeFields 1 1 :=
   of_eq fun _ => rfl
 
-@[fun_prop] lemma tapeMk_deg : ComputableTidilyInDegree
+@[fun_prop] lemma tapeMk_deg : ComputableInDegree
     (fun p : ℤ × List (Option ℕ) × List (Option ℕ) => Tape.mk p.1 p.2.1 p.2.2) eTapeFields eTape
     1 1 :=
   of_eq fun _ => rfl
 
-@[fun_prop] lemma tapeHead_deg : ComputableTidilyInDegree Tape.head eTape encInt 1 1 :=
+@[fun_prop] lemma tapeHead_deg : ComputableInDegree Tape.head eTape encInt 1 1 :=
   tapeFields_deg.fst'
 
-@[fun_prop] lemma tapeLeft_deg : ComputableTidilyInDegree Tape.left eTape (encList eSym) 1 1 :=
+@[fun_prop] lemma tapeLeft_deg : ComputableInDegree Tape.left eTape (encList eSym) 1 1 :=
   tapeFields_deg.snd'.fst'
 
-@[fun_prop] lemma tapeRight_deg : ComputableTidilyInDegree Tape.right eTape (encList eSym) 1 1 :=
+@[fun_prop] lemma tapeRight_deg : ComputableInDegree Tape.right eTape (encList eSym) 1 1 :=
   tapeFields_deg.snd'.snd'
 
 /-- The symbol under the head. -/
-@[fun_prop] lemma read_deg : ComputableTidilyInDegree Tape.read eTape eSym 1 1 := by
+@[fun_prop] lemma read_deg : ComputableInDegree Tape.read eTape eSym 1 1 := by
   unfold Tape.read
   fun_prop (disch := lia)
 
 /-- Writing under the head. -/
-@[fun_prop] lemma write_deg : ComputableTidilyInDegree (fun p : Tape × Option ℕ => p.1.write p.2)
+@[fun_prop] lemma write_deg : ComputableInDegree (fun p : Tape × Option ℕ => p.1.write p.2)
     (encPair eTape eSym) eTape 1 1 := by
   unfold Tape.write
   fun_prop (disch := lia)
 
 /-- A right move. -/
 @[fun_prop] lemma movePos_deg :
-    ComputableTidilyInDegree (fun t : Tape => t.move .pos) eTape eTape 1 1 := by
+    ComputableInDegree (fun t : Tape => t.move .pos) eTape eTape 1 1 := by
   simp only [Tape.move]
   fun_prop (disch := lia)
 
 /-- A left move. -/
 @[fun_prop] lemma moveNeg_deg :
-    ComputableTidilyInDegree (fun t : Tape => t.move .neg) eTape eTape 1 1 := by
+    ComputableInDegree (fun t : Tape => t.move .neg) eTape eTape 1 1 := by
   simp only [Tape.move]
   fun_prop (disch := lia)
 
 /-- Moving the head. -/
-@[fun_prop] lemma move_deg : ComputableTidilyInDegree (fun p : Tape × SignType => p.1.move p.2)
+@[fun_prop] lemma move_deg : ComputableInDegree (fun p : Tape × SignType => p.1.move p.2)
     (encPair eTape encSign) eTape 1 1 := by
   have ht := fst eTape encSign
   have hm := snd eTape encSign
@@ -176,9 +176,9 @@ lemma tapeFields_deg : ComputableTidilyInDegree (fun t : Tape => (t.head, t.left
   rcases m with _ | _ | _ <;> rfl
 
 /-- Applying an action to a work tape: write, then move. -/
-@[fun_prop] lemma apply_deg : ComputableTidilyInDegree (fun p : Tape × TapeAct =>
+@[fun_prop] lemma apply_deg : ComputableInDegree (fun p : Tape × TapeAct =>
     p.1.apply p.2) (encPair eTape eTA) eTape 1 1 := by
-  convert (show ComputableTidilyInDegree (fun p : Tape × TapeAct =>
+  convert (show ComputableInDegree (fun p : Tape × TapeAct =>
     (if p.2.1.isSome then p.1.write (p.2.1.getD none) else p.1).move p.2.2)
     (encPair eTape eTA) eTape 1 1 by fun_prop (disch := first | apply le_refl | lia)) using 1
   funext ⟨t, w, m⟩
@@ -205,11 +205,11 @@ lemma foldl_applyStep (ts : List Tape) (as : List TapeAct) (acc : List Tape) :
     | nil => simp [applyStep, ih, applyTapes, applyTapes_nil_right]
     | cons a as => simp [applyStep, ih, applyTapes]
 
-lemma applyStep_deg : ComputableTidilyInDegree
+lemma applyStep_deg : ComputableInDegree
     (fun q : (List TapeAct × List Tape) × Tape => applyStep q.1 q.2)
     (encPair (encPair (encList eTA) (encList eTape)) eTape)
     (encPair (encList eTA) (encList eTape)) 1 1 := by
-  convert (show ComputableTidilyInDegree (fun q : (List TapeAct × List Tape) × Tape =>
+  convert (show ComputableInDegree (fun q : (List TapeAct × List Tape) × Tape =>
     (q.1.1.tail, q.1.2 ++ [if q.1.1.isEmpty then q.2 else q.2.apply (q.1.1.headD (none, 0))]))
     (encPair (encPair (encList eTA) (encList eTape)) eTape)
     (encPair (encList eTA) (encList eTape)) 1 1 by
@@ -278,12 +278,12 @@ lemma length_read_le (t : Tape) : (eSym t.read).length ≤ (eTape t).length := b
 
 /-! ### All work tapes -/
 
-open ComputableTidilyInO
+open ComputableInO
 
 /-- Applying actions to the work tapes, within time the number of work tapes times the length of
 the arguments, and linear space. -/
 public theorem applyTapes_inO :
-    ComputableTidilyInO (fun p : List Tape × List TapeAct => applyTapes p.1 p.2)
+    ComputableInO (fun p : List Tape × List TapeAct => applyTapes p.1 p.2)
       (encPair (encList eTape) (encList eTA)) (encList eTape)
       (fun p => (p.1.length + 1) * ((encPair (encList eTape) (encList eTA) p).length + 1))
       fun p => (encPair (encList eTape) (encList eTA) p).length := by
@@ -325,7 +325,7 @@ public theorem applyTapes_inO :
 /-- The symbols under the heads of the work tapes, within time the number of work tapes times
 their length, and linear space. -/
 public theorem reads_inO :
-    ComputableTidilyInO (fun ts : List Tape => ts.map Tape.read) (encList eTape) (encList eSym)
+    ComputableInO (fun ts : List Tape => ts.map Tape.read) (encList eTape) (encList eSym)
       (fun ts => (ts.length + 1) * ((encList eTape ts).length + 1))
       fun ts => (encList eTape ts).length := by
   have hmap (ts : List Tape) : (encList eSym (ts.map fun t => t.read)).length ≤
@@ -362,7 +362,7 @@ lemma inputSymbol_eq (x : List ℕ) (p : ℕ) : inputSymbol x p =
 /-- The symbol at a position of the input, given in binary, within time the position times the
 square of the length of the arguments, and linear space. -/
 public theorem inputSymbol_inO :
-    ComputableTidilyInO (fun q : List ℕ × ℕ => inputSymbol q.1 q.2)
+    ComputableInO (fun q : List ℕ × ℕ => inputSymbol q.1 q.2)
       (encPair (encList encUnary) encNat) eSym
       (fun q => (q.2 + 1) * ((encPair (encList encUnary) encNat q).length + 1) ^ 2)
       fun q => (encPair (encList encUnary) encNat q).length := by
@@ -372,14 +372,14 @@ public theorem inputSymbol_inO :
       (encList encUnary (List.tail^[k] q.1)).length ≤ (encList encUnary q.1).length := by
     rw [List.tail_iterate]
     exact SizedListEncoding.length_drop_le (encA := encUnary) _ _
-  have hiter := iterate (natPred.comp hp) hx (ComputableTidilyInDegree.tail (enc₁ := encUnary)
+  have hiter := iterate (natPred.comp hp) hx (ComputableInDegree.tail (enc₁ := encUnary)
     (enc := encList encUnary)).inO_one (R := fun q => (encList encUnary q.1).length)
     (Q := fun q => (encList encUnary q.1).length) (B := fun q => (encList encUnary q.1).length)
     (fun q k _ => hdrop q k) (fun q k _ => hdrop q k) fun q k _ => hdrop q k
-  have hsym := ((ComputableTidilyInDegree.isEmpty (enc₁ := encUnary)).inO_one.comp_linear
-    hiter).ite (const none) ((ComputableTidilyInDegree.optionSome (enc₁ := encUnary)
+  have hsym := ((ComputableInDegree.isEmpty (enc₁ := encUnary)).inO_one.comp_linear
+    hiter).ite (const none) ((ComputableInDegree.optionSome (enc₁ := encUnary)
       (enc := eSym)).inO_one.comp_linear
-        ((ComputableTidilyInDegree.headD (enc₁ := encUnary) 0).inO_one.comp_linear hiter))
+        ((ComputableInDegree.headD (enc₁ := encUnary) 0).inO_one.comp_linear hiter))
   refine (((natIsZero.comp_linear hp).ite (const none) hsym).mono 64 (fun q => ?_)
     fun q => ?_).of_enc_eq fun q => by
       rw [inputSymbol_eq]; simp only [Function.comp_apply, decide_eq_true_eq]
@@ -400,19 +400,19 @@ public theorem inputSymbol_inO :
 
 /-- Moving the input head, given in binary. -/
 public theorem moveInput_inO :
-    ComputableTidilyInO (fun q : ℕ × Option ℕ × SignType => moveInput q.1 q.2.1 q.2.2)
+    ComputableInO (fun q : ℕ × Option ℕ × SignType => moveInput q.1 q.2.1 q.2.2)
       (encPair encNat (encPair eSym encSign)) encNat
       (fun q => ((encPair encNat (encPair eSym encSign) q).length + 1) ^ 2)
       fun q => (encPair encNat (encPair eSym encSign) q).length + 1 := by
   have hp := fst encNat (encPair eSym encSign)
   have ha := (snd encNat (encPair eSym encSign)).fst'
   have hm := (snd encNat (encPair eSym encSign)).snd'
-  have hsign (s : SignType) := (ComputableTidilyInDegree.of_finite (encIn := encSign)
+  have hsign (s : SignType) := (ComputableInDegree.of_finite (encIn := encSign)
     (encMid := encBool) fun m : SignType => decide (m = s)).inO_one.comp_linear hm
-  have hright := (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+  have hright := (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encBool) fun b : Bool × Bool => b.1 || b.2).inO_one.comp_linear
       ((natIsZero.comp_linear hp).prod
-        ((ComputableTidilyInDegree.isSome encUnary).inO_one.comp_linear ha))
+        ((ComputableInDegree.isSome encUnary).inO_one.comp_linear ha))
   refine (((hsign .zero).ite hp ((hsign .neg).ite (natPred.comp hp)
     (hright.ite (natSucc.comp hp) hp))).mono 8 (fun q => ?_) fun q => ?_).of_enc_eq
     fun ⟨p, a, m⟩ => ?_
@@ -529,7 +529,7 @@ end Lengths
 
 /-- A part of a step within the time `wTime` and linear space. -/
 abbrev WPart {β : Type} (f : WCtx → β) (enc : β ↪ List Bool) : Prop :=
-  ComputableTidilyInO f eWCtx enc wTime fun c => (eWCtx c).length
+  ComputableInO f eWCtx enc wTime fun c => (eWCtx c).length
 
 lemma le_wTime (c : WCtx) : (eWCtx c).length + 1 ≤ wTime c :=
   (Nat.le_self_pow two_ne_zero _).trans (by
@@ -537,7 +537,7 @@ lemma le_wTime (c : WCtx) : (eWCtx c).length + 1 ≤ wTime c :=
 
 /-- One step of the simulation without the input, within the time `wTime` and linear space. -/
 public theorem stepWith_inO :
-    ComputableTidilyInO (fun c : WCtx => stepWith c.1.1 c.1.2 c.2) eWCtx (encPair eCfg eSym)
+    ComputableInO (fun c : WCtx => stepWith c.1.1 c.1.2 c.2) eWCtx (encPair eCfg eSym)
       wTime fun c => (eWCtx c).length := by
   -- the parts of the context
   have hd := (fst (encPair eDesc eCfg) eSym).fst'
@@ -561,7 +561,7 @@ public theorem stepWith_inO :
     (snd (encPair eDesc eCfg) eSym).mono 1 (fun c => by
       have := le_wTime c; dsimp only [eWCtx] at *; omega) fun c => by dsimp only [eWCtx]; omega
   have hkey : WPart wKey eKey := by
-    refine ((((ComputableTidilyInDegree.getD (enc₁ := encUnary) 0).inO_one.comp_linear
+    refine ((((ComputableInDegree.getD (enc₁ := encUnary) 0).inO_one.comp_linear
       hf.fst').prod (hsym.prod hreads)).mono 4 (fun c => ?_) fun c => ?_).of_enc_eq
       fun _ => rfl
     all_goals
@@ -614,7 +614,7 @@ public theorem stepWith_inO :
       dsimp only [eWCtx, Function.comp_apply] at *
       omega
   -- the action and the new configuration
-  have hact := (((ComputableTidilyInDegree.getD (enc₁ := encPair eKey eAct)
+  have hact := (((ComputableInDegree.getD (enc₁ := encPair eKey eAct)
     (enc := encOption (encPair eKey eAct)) defaultEntry).inO_one.comp_linear hfound).snd').of_enc_eq
     (encOut := encPair encSign (encPair (encList eTA) (encPair eSym eSym)))
     (g := fun c => ((wAct c).inputTape, (wAct c).workTapes, (wAct c).output,
@@ -669,8 +669,8 @@ public theorem stepWith_inO :
     (g := fun c : WCtx => (⟨none, c.1.2.inputPos, c.1.2.workTapes⟩ : SCfg)) fun _ => rfl).prod
       (const (encMid := eSym) none))
   have hidle := hc.prod (const (encMid := eSym) none)
-  refine ((((ComputableTidilyInDegree.isSome encUnary).inO_one.comp_linear hf.fst').ite
-    (((ComputableTidilyInDegree.isSome (encPair eKey eAct)).inO_one.comp_linear hfound).ite
+  refine ((((ComputableInDegree.isSome encUnary).inO_one.comp_linear hf.fst').ite
+    (((ComputableInDegree.isSome (encPair eKey eAct)).inO_one.comp_linear hfound).ite
       hlive hhalt) hidle).mono 16 (fun c => ?_) fun c => ?_).of_enc_eq fun c => ?_
   · have := le_wTime c
     dsimp only [eWCtx, Function.comp_apply] at *
@@ -710,7 +710,7 @@ lemma le_stepTime_ctx (c : Ctx) : (eCtx c).length + 1 ≤ stepTime c :=
 /-- One step of the simulation, on contexts, within the time `stepTime` and linear space: the
 symbol under the input head, and the step without the input. -/
 public theorem step_inO :
-    ComputableTidilyInO (fun c : Ctx => step c.1.1 c.1.2 c.2) eCtx (encPair eCfg eSym)
+    ComputableInO (fun c : Ctx => step c.1.1 c.1.2 c.2) eCtx (encPair eCfg eSym)
       stepTime fun c => (eCtx c).length := by
   have hd := (fst (encPair eDesc (encList encUnary)) eCfg).fst'
   have hx := (fst (encPair eDesc (encList encUnary)) eCfg).snd'

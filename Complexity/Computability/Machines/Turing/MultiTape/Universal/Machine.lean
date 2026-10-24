@@ -21,7 +21,7 @@ that many steps and whether it has halted by then. One machine computes it for e
 machine, whatever its number of work tapes, states and symbols
 (`Turing.MultiTapeTM.Universal.universal_desc`).
 
-It is tidily computable within time `O((t + 1) * stepBound D N t)` for `t` steps, a description of
+It is plain computable within time `O((t + 1) * stepBound D N t)` for `t` steps, a description of
 length `D` and an input of encoded length `N` (`Turing.MultiTapeTM.Universal.stepBound`), and space
 `O(runBound D N t + log t)`: the simulation iterates a step, counting down `t` in binary, and keeps
 the description, the input, the configuration and the output so far.
@@ -32,7 +32,7 @@ the description, the input, the configuration and the output so far.
 
 ## Main results
 
-* `Turing.MultiTapeTM.Universal.computableTidilyInO_universal`: the time and space of the universal
+* `Turing.MultiTapeTM.Universal.computableInO_universal`: the time and space of the universal
   function.
 * `Turing.MultiTapeTM.Universal.universal_desc`: on descriptions of machines, it returns their
   output.
@@ -66,17 +66,17 @@ lemma round_iterate (d : Desc) (x : List ℕ) (k : ℕ) :
   | zero => rfl
   | succ k ih => rw [Function.iterate_succ_apply', ih, Function.iterate_succ_apply']; rfl
 
-open ComputableTidilyInO
+open ComputableInO
 
 /-- A round, within the time of a step and linear space. -/
-lemma round_inO : ComputableTidilyInO round eRun eRun (fun s => stepTime s.1 + (eRun s).length)
+lemma round_inO : ComputableInO round eRun eRun (fun s => stepTime s.1 + (eRun s).length)
     fun s => (eRun s).length := by
   have hctx := fst eCtx (encList encUnary)
   have hout := snd eCtx (encList encUnary)
   have hstep := step_inO.comp hctx
-  have hnewout := ((ComputableTidilyInDegree.isSome encUnary).inO_one.comp_linear
-    hstep.snd').ite ((ComputableTidilyInDegree.snoc encUnary).inO_one.comp_linear
-      (hout.prod ((ComputableTidilyInDegree.getD (enc₁ := encUnary) 0).inO_one.comp_linear
+  have hnewout := ((ComputableInDegree.isSome encUnary).inO_one.comp_linear
+    hstep.snd').ite ((ComputableInDegree.snoc encUnary).inO_one.comp_linear
+      (hout.prod ((ComputableInDegree.getD (enc₁ := encUnary) 0).inO_one.comp_linear
         hstep.snd'))) hout
   refine (((hctx.fst'.prod hstep.fst').prod hnewout).mono 8 (fun s => ?_)
     fun s => ?_).of_enc_eq fun s => ?_
@@ -105,11 +105,11 @@ lemma length_blanks (k : ℕ) : (encList eTape (List.replicate k Tape.blank)).le
     omega
 
 /-- `n` blank work tapes, within time quadratic and space linear in `n`. -/
-lemma blanks_inO : ComputableTidilyInO (fun n => List.replicate n Tape.blank) encUnary
+lemma blanks_inO : ComputableInO (fun n => List.replicate n Tape.blank) encUnary
     (encList eTape) (fun n => (n + 1) ^ 2) fun n => n + 1 := by
-  have hstep := ((ComputableTidilyInDegree.snoc eTape).comp
-    ((ComputableTidilyInDegree.fst (encList eTape) encBool).prod
-      (ComputableTidilyInDegree.const Tape.blank))).inO_one
+  have hstep := ((ComputableInDegree.snoc eTape).comp
+    ((ComputableInDegree.fst (encList eTape) encBool).prod
+      (ComputableInDegree.const Tape.blank))).inO_one
   have hacc (n i : ℕ) : (((List.replicate n true).take i).foldl
       (fun acc _ => acc ++ [Tape.blank]) []) = List.replicate (min i n) Tape.blank := by
     rw [List.foldl_const, iterate_snoc_blank, List.length_take, List.length_replicate]
@@ -130,11 +130,11 @@ lemma blanks_inO : ComputableTidilyInO (fun n => List.replicate n Tape.blank) en
 
 /-- The initial configuration, within time quadratic and space linear in the length of the
 description. -/
-public lemma init_inO : ComputableTidilyInO init eDesc eCfg (fun d => ((eDesc d).length + 1) ^ 2)
+public lemma init_inO : ComputableInO init eDesc eCfg (fun d => ((eDesc d).length + 1) ^ 2)
     fun d => (eDesc d).length + 1 := by
   have hf := (of_linear (.of_eq (f := fun d : Desc => (d.tapes, d.q₀, d.table)) (encIn := eDesc)
     (encMid := encPair encUnary (encPair encUnary (encList (encPair eKey eAct)))) fun _ => rfl))
-  have hq := (ComputableTidilyInDegree.optionSome (enc₁ := encUnary) (enc := eSym)).inO_one
+  have hq := (ComputableInDegree.optionSome (enc₁ := encUnary) (enc := eSym)).inO_one
     |>.comp_linear hf.snd'.fst'
   have ht := blanks_inO.comp hf.fst'
   refine ((hq.prod ((const (encMid := encNat) 1).prod ht)).mono 4 (fun d => ?_)
@@ -172,8 +172,8 @@ lemma universal_eq (i : Desc × List ℕ × ℕ) : universal i =
 /-- **The time and space of the universal function**, for a description of length `D`, an input of
 encoded length `N` and `t` steps: time `O((t + 1) * (stepBound D N t + runBound D N t))` and space
 `O(runBound D N t)`, plus terms in the length of the encoded input. -/
-public theorem computableTidilyInO_universal :
-    ComputableTidilyInO universal eIn eOut
+public theorem computableInO_universal :
+    ComputableInO universal eIn eOut
       (fun i => (i.2.2 + 1) * (stepBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 +
         runBound (descLen i.1) (encList encUnary i.2.1).length i.2.2 +
           ((encNat i.2.2).length + 1) ^ 2) + ((eIn i).length + 1) ^ 2)
@@ -201,8 +201,8 @@ public theorem computableTidilyInO_universal :
     fun i k hk => by
       show (eRun (round^[k] (((i.1, i.2.1), init i.1), []))).length ≤ _
       exact length_eRun_le i.1 i.2.1 hk
-  have hhalted := (ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encBool)
-    (fun b : Bool => !b)).inO_one.comp_linear ((ComputableTidilyInDegree.isSome encUnary).inO_one
+  have hhalted := (ComputableInDegree.of_finite (encIn := encBool) (encMid := encBool)
+    (fun b : Bool => !b)).inO_one.comp_linear ((ComputableInDegree.isSome encUnary).inO_one
       |>.comp_linear (state_inO.comp_linear hiter.fst'.snd'))
   refine ((hiter.snd'.prod hhalted).mono 16 (fun i => ?_) fun i => ?_).of_enc_eq fun i => ?_
   · have h₁ : (eDesc i.1).length ≤ (eIn i).length := length_le_encPair_left _ _ i
