@@ -92,7 +92,7 @@ def PolyTimeReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (X : P
 
 /-- Reductions of promise problems with a reduction computable tidily in polynomial time, the form
 in which proofs build reductions. -/
-theorem polyTimeReducible_iff_tidy : PolyTimeReducible encA encB X Y ↔
+private theorem polyTimeReducible_iff_tidy : PolyTimeReducible encA encB X Y ↔
     ∃ f : α → β, ComputableTidilyInPolyTime f encA encB ∧ Set.MapsTo f X.yes Y.yes ∧
       Set.MapsTo f X.no Y.no := by
   simp only [PolyTimeReducible, computableInPolyTime_iff_computableTidilyInPolyTime]
@@ -120,7 +120,7 @@ theorem PolyTimeReducible.trans (hXY : PolyTimeReducible encA encB X Y)
 
 /-- A promise problem reduces, by the identity, to any problem with more yes-instances and more
 no-instances: enlarging the promise can only make a problem harder. -/
-theorem PolyTimeReducible.of_subset (hyes : Y.yes ⊆ Y'.yes) (hno : Y.no ⊆ Y'.no) :
+private theorem PolyTimeReducible.of_subset (hyes : Y.yes ⊆ Y'.yes) (hno : Y.no ⊆ Y'.no) :
     PolyTimeReducible encB encB Y Y' :=
   ⟨id, ComputableInPolyTime.id', fun _ h => hyes h, fun _ h => hno h⟩
 

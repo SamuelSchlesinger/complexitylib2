@@ -113,11 +113,11 @@ def powerStructure (a : EncodedStructure) (B : ℕ) : v.powerLanguage.Structure 
       (x 0 : ℕ) < a.1 ^ v.arity i ∧ (v.table a (v.symbol i)).getD (x 0 : ℕ) false = true
     | 2, () => x 0 < x 1
 
-theorem relMap_powerLt (a : EncodedStructure) (B : ℕ) (x : Fin 2 → Fin B) :
+private theorem relMap_powerLt (a : EncodedStructure) (B : ℕ) (x : Fin 2 → Fin B) :
     (v.powerStructure a B).RelMap v.powerLt x ↔ x 0 < x 1 :=
   Iff.rfl
 
-theorem relMap_powerIsElem (a : EncodedStructure) (B : ℕ) (x : Fin 1 → Fin B) :
+private theorem relMap_powerIsElem (a : EncodedStructure) (B : ℕ) (x : Fin 1 → Fin B) :
     (v.powerStructure a B).RelMap v.powerIsElem x ↔ (x 0 : ℕ) < a.1 :=
   Iff.rfl
 
@@ -126,7 +126,7 @@ theorem relMap_powerInTable (a : EncodedStructure) (B : ℕ) (i : Fin v.count)
     (v.powerStructure a B).RelMap (v.powerInTable i) x ↔ (x 0 : ℕ) < a.1 ^ v.arity i :=
   Iff.rfl
 
-theorem relMap_powerTableBit (a : EncodedStructure) (B : ℕ) (i : Fin v.count)
+private theorem relMap_powerTableBit (a : EncodedStructure) (B : ℕ) (i : Fin v.count)
     (x : Fin 1 → Fin B) :
     (v.powerStructure a B).RelMap (v.powerTableBit i) x ↔
       (x 0 : ℕ) < a.1 ^ v.arity i ∧ (v.table a (v.symbol i)).getD (x 0 : ℕ) false = true :=
@@ -149,7 +149,7 @@ element of the linear order. -/
 def isMinVarFormula {α : Type*} (p : α) : (L.sum ESO.orderLanguage).Formula α :=
   ∀' ∼(ltRel.boundedFormula₂ &0 (.var (.inl p)))
 
-theorem relMap_ltRel {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
+private theorem relMap_ltRel {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
     (x : Fin 2 → M) :
     @RelMap (L.sum ESO.orderLanguage) M
       (@sumStructure _ _ M _
@@ -157,14 +157,15 @@ theorem relMap_ltRel {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
       ltRel x ↔ e (x 0) < e (x 1) :=
   Iff.rfl
 
-theorem realize_ltVarFormula {α : Type*} {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
+private theorem realize_ltVarFormula {α : Type*} {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
     (val : α → M) (p q : α) :
     (letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e);
       (ltVarFormula (L := L) p q).Realize val) ↔ e (val p) < e (val q) := by
   let _ := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e)
   simp [ltVarFormula, Formula.Realize, relMap_ltRel]
 
-theorem realize_isMinVarFormula {α : Type*} {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
+private theorem realize_isMinVarFormula {α : Type*} {M : Type} [L.Structure M] {n : ℕ}
+    (e : M ≃ Fin n)
     (val : α → M) (p : α) :
     (letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e);
       (isMinVarFormula (L := L) p).Realize val) ↔ (e (val p) : ℕ) = 0 := by
@@ -213,7 +214,7 @@ noncomputable def powerInterpretation :
     | 1, .inr (.inr idx) => v.powerTableBitFormula k har idx
     | 2, () => powerLtFormula k
 
-theorem realize_highZeroFormula {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
+private theorem realize_highZeroFormula {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
     (a : ℕ) (ha : a ≤ k) (x : Fin k → M) :
     (letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e);
       (highZeroFormula (L := L) k a).Realize (fun p : Fin 1 × Fin k => x p.2)) ↔
@@ -222,7 +223,7 @@ theorem realize_highZeroFormula {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ 
   simp only [highZeroFormula, Formula.realize_iInf, realize_isMinVarFormula e, Subtype.forall]
   exact (tupleIndex_lt_pow_iff ha (e ∘ x)).symm
 
-theorem realize_powerLtFormula {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
+private theorem realize_powerLtFormula {M : Type} [L.Structure M] {n : ℕ} (e : M ≃ Fin n)
     (x y : Fin k → M) :
     (letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2) (ESO.orderRelOfEquiv e);
       (powerLtFormula (L := L) k).Realize

@@ -90,7 +90,7 @@ theorem computableTidilyInPolyTime_decodeCNF :
 
 /-! ### Capped powers -/
 
-theorem min_min_mul (a b c : ℕ) : min (min a c * b) c = min (a * b) c := by
+private theorem min_min_mul (a b c : ℕ) : min (min a c * b) c = min (a * b) c := by
   rcases le_total a c with h | h
   · rw [min_eq_left h]
   · rw [min_eq_right h]
@@ -99,7 +99,7 @@ theorem min_min_mul (a b c : ℕ) : min (min a c * b) c = min (a * b) c := by
     · rw [min_eq_right (Nat.le_mul_of_pos_right c hb),
         min_eq_right (h.trans (Nat.le_mul_of_pos_right a hb))]
 
-theorem iterate_min_mul (b c e a : ℕ) :
+private theorem iterate_min_mul (b c e a : ℕ) :
     (fun x => min (x * b) c)^[e] (min a c) = min (a * b ^ e) c := by
   induction e generalizing a with
   | zero => simp
@@ -111,7 +111,7 @@ def capPow (b e c : ℕ) : ℕ := min (b ^ e) c
 
 /-- **Capped powers in unary.** `min (b ^ e) c` is polynomial-time on unary numbers: multiplying
 `e` times and capping at `c` never holds a number larger than the input. -/
-theorem computableTidilyInPolyTime_capPow_pair :
+private theorem computableTidilyInPolyTime_capPow_pair :
     ComputableTidilyInPolyTime (fun p : ℕ × ℕ × ℕ => capPow p.1 p.2.1 p.2.2)
       (encPair encUnary (encPair encUnary encUnary)) encUnary := by
   have h := iterateWith (encIn := encPair encUnary (encPair encUnary encUnary))
@@ -194,7 +194,7 @@ theorem mem_padSAT_iff {e : ℕ → ℕ} {y : List Bool} :
   simp only [padCheck_eq_some_iff, padSAT, Set.mem_ofPred_eq]
   exact ⟨fun ⟨φ, hφ, h⟩ => ⟨φ, h, hφ⟩, fun ⟨φ, h, hφ⟩ => ⟨φ, hφ, h⟩⟩
 
-theorem computableTidilyInPolyTime_idxOf_false_reverse :
+private theorem computableTidilyInPolyTime_idxOf_false_reverse :
     ComputableTidilyInPolyTime (fun y : List Bool => y.reverse.idxOf false) encBits encUnary :=
   idxOfWithInput (encA := encBool) (list := fun y : List Bool => y.reverse)
     (value := fun _ => false) (bitsToList.comp bitsReverse) (const false)
@@ -208,7 +208,7 @@ theorem computableTidilyInPolyTime_unpad :
   fun_prop
 
 /-- Reading the formula padded with a given exponent is polynomial-time. -/
-theorem computableTidilyInPolyTime_padCheckAt :
+private theorem computableTidilyInPolyTime_padCheckAt :
     ComputableTidilyInPolyTime (fun p : List Bool × ℕ => padCheckAt p.1 p.2)
       (encPair encBits encUnary) (encOption encCNF) := by
   have henc : ComputableTidilyInPolyTime (fun φ => encCNF φ) encCNF encBits := encode encCNF
@@ -300,7 +300,7 @@ def hstepB (T : List ℕ) : ℕ :=
     (List.range T.length).all fun j => agreesB T i j).getD (Nat.log 2 (Nat.log 2 T.length))
 
 /-- The least index below `m` passing a test, or `m`, as a search over `List.range m`. -/
-theorem find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
+private theorem find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
     ((List.range m).find? p).getD m = sInf {i | i = m ∨ p i = true} := by
   set v := ((List.range m).find? p).getD m with hv
   have hmem : v ∈ {i | i = m ∨ p i = true} ∧ ∀ i < v, i ∉ {i | i = m ∨ p i = true} := by
@@ -344,13 +344,13 @@ theorem computableTidilyInPolyTime_runIndexed {α : Type} {input : α ↪ List B
   unfold runIndexed
   fun_prop
 
-theorem computableTidilyInPolyTime_memB :
+private theorem computableTidilyInPolyTime_memB :
     ComputableTidilyInPolyTime (fun p : List ℕ × List Bool => memB p.1 p.2)
       (encPair (encList encUnary) encBits) encBool := by
   unfold memB
   fun_prop
 
-theorem computableTidilyInPolyTime_agreesB :
+private theorem computableTidilyInPolyTime_agreesB :
     ComputableTidilyInPolyTime (fun p : (List ℕ × ℕ) × ℕ => agreesB p.1.1 p.1.2 p.2)
       (encPair (encPair (encList encUnary) encUnary) encUnary) encBool := by
   have hm := computableTidilyInPolyTime_memB
@@ -358,7 +358,7 @@ theorem computableTidilyInPolyTime_agreesB :
   fun_prop
 
 /-- The step of the exponent function is polynomial-time in its table. -/
-theorem computableTidilyInPolyTime_hstepB :
+private theorem computableTidilyInPolyTime_hstepB :
     ComputableTidilyInPolyTime hstepB (encList encUnary) encUnary := by
   have ha := computableTidilyInPolyTime_agreesB
   have hall : ComputableTidilyInPolyTime
@@ -407,7 +407,7 @@ assignment the certificate describes. -/
 noncomputable def verifier (x : List Bool × List Bool) : Bool :=
   (padCheck H x.1).elim false fun φ => SAT.verifier (φ, x.2)
 
-theorem computableTidilyInPolyTime_verifier :
+private theorem computableTidilyInPolyTime_verifier :
     ComputableTidilyInPolyTime verifier (encPair encBits encBits) encBool := by
   have hH : ComputableTidilyInPolyTime (fun p : (List Bool × List Bool) × ℕ => H p.2)
       (encPair (encPair encBits encBits) encUnary) encUnary :=
@@ -416,7 +416,7 @@ theorem computableTidilyInPolyTime_verifier :
   fun_prop
 
 /-- Padding a certificate with `false` does not change the assignment it describes. -/
-theorem assignment_append_replicate (φ : CNF ℕ) (w : List Bool) (k : ℕ) :
+private theorem assignment_append_replicate (φ : CNF ℕ) (w : List Bool) (k : ℕ) :
     SAT.assignment φ (w ++ List.replicate k false) = SAT.assignment φ w := by
   funext v
   simp only [SAT.assignment, List.getD_eq_getElem?_getD, List.getElem?_append]

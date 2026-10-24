@@ -63,7 +63,8 @@ open Finset Function Module
 variable {ι : Type*}
 
 /-- Flipping a bit of `T` negates the character of `T`. -/
-theorem chi_update_not_of_mem {R : Type*} [CommRing R] [DecidableEq ι] {T : Finset ι} {i : ι}
+private theorem chi_update_not_of_mem {R : Type*} [CommRing R] [DecidableEq ι] {T : Finset ι}
+    {i : ι}
     (hi : i ∈ T) (x : ι → Bool) : chi R T (update x i (!x i)) = -chi R T x := by
   have h := chi_update_of_mem (R := R) hi x (x i)
   rw [update_eq_self] at h
@@ -152,7 +153,7 @@ theorem signedAdjacency_signedAdjacency (S : Finset ι) (v : (ι → Bool) → �
 /-- The eigenspaces of the signed adjacency operator along a nonempty `S` for `√|S|` and `-√|S|`
 together span all functions on the cube: `v` is `1 / (2√|S|)` times the difference of
 `(A + √|S|) v` and `(A - √|S|) v`. -/
-theorem eigenspace_sup_eigenspace_signedAdjacency {S : Finset ι} (hS : S.Nonempty) :
+private theorem eigenspace_sup_eigenspace_signedAdjacency {S : Finset ι} (hS : S.Nonempty) :
     (signedAdjacency S).eigenspace √(#S : ℝ) ⊔ (signedAdjacency S).eigenspace (-√(#S : ℝ)) = ⊤ := by
   set A := signedAdjacency S
   set c : ℝ := √(#S : ℝ)
@@ -177,7 +178,7 @@ variable [Fintype ι]
 
 /-- One of the eigenspaces of the signed adjacency operator along a nonempty `S` for `±√|S|` has
 dimension at least half the number of points of the cube. -/
-theorem exists_abs_eq_sqrt_two_pow_le_two_mul_finrank {S : Finset ι} (hS : S.Nonempty) :
+private theorem exists_abs_eq_sqrt_two_pow_le_two_mul_finrank {S : Finset ι} (hS : S.Nonempty) :
     ∃ μ : ℝ, |μ| = √(#S : ℝ) ∧
       2 ^ Fintype.card ι ≤ 2 * finrank ℝ ((signedAdjacency S).eigenspace μ) := by
   have h := Submodule.finrank_add_le_finrank_add_finrank

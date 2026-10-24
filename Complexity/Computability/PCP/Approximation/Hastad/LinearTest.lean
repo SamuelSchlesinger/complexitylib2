@@ -206,7 +206,7 @@ theorem sum_spectralWeight_le_one (k : ℕ) (A : (α → Bool) → Bool) :
 
 /-- Low-degree terms in the Cauchy–Schwarz bound are controlled by the collision probability of the
 spectral decoding distributions along `π`. -/
-theorem sum_lowDegree_fourierCoeff_sq_le (π : β → γ) (k : ℕ)
+private theorem sum_lowDegree_fourierCoeff_sq_le (π : β → γ) (k : ℕ)
     (B : (γ → Bool) → Bool) (A : (β → Bool) → Bool) :
     (∑ T ∈ univ.filter (fun T : Finset β => #T < k ∧ projectSet π T ≠ ∅),
       fourierCoeff (fun g => signVal (A g)) T ^ 2 *

@@ -143,16 +143,16 @@ theorem computableTidilyInPolyTime_hashCNF :
 
 /-- The selector ranges over the dyadic range of `φ.vars.length + 2`: the least power of two
 above it. -/
-theorem two_pow_hashBits (φ : CNF ℕ) :
+private theorem two_pow_hashBits (φ : CNF ℕ) :
     2 ^ hashBits φ = Probability.dyadicSize (φ.vars.length + 2) :=
   rfl
 
 /-- `2 ^ hashBits φ` is at most twice `φ.vars.length + 3`. -/
-theorem two_pow_hashBits_le (φ : CNF ℕ) : 2 ^ hashBits φ ≤ 2 * (φ.vars.length + 3) :=
+private theorem two_pow_hashBits_le (φ : CNF ℕ) : 2 ^ hashBits φ ≤ 2 * (φ.vars.length + 3) :=
   (two_pow_hashBits φ).trans_le (Probability.dyadicSize_le _)
 
 /-- Every number of equations up to `φ.vars.length + 2` can be selected. -/
-theorem lt_two_pow_hashBits (φ : CNF ℕ) : φ.vars.length + 2 < 2 ^ hashBits φ :=
+private theorem lt_two_pow_hashBits (φ : CNF ℕ) : φ.vars.length + 2 < 2 ^ hashBits φ :=
   (two_pow_hashBits φ).symm ▸ Probability.lt_dyadicSize _
 
 private theorem binaryValue_take_hashBits (φ : CNF ℕ) (r : List Bool) :
@@ -191,7 +191,7 @@ theorem eval_stepClauses (σ : Var → Bool) (bit : Bool) (next prev x : Var) :
 
 /-- The clauses of one equation hold exactly when the auxiliary variables start at the offset,
 follow the steps, and end at `false`. -/
-theorem eval_rowClauses (σ : Var → Bool) (vars : List ℕ) (i : ℕ) (row : List Bool)
+private theorem eval_rowClauses (σ : Var → Bool) (vars : List ℕ) (i : ℕ) (row : List Bool)
     (offset : Bool) :
     (rowClauses vars i row offset).eval σ = true ↔
       σ (.inr (i, 0)) = offset ∧ σ (.inr (i, vars.length)) = false ∧
@@ -206,7 +206,7 @@ theorem eval_rowClauses (σ : Var → Bool) (vars : List ℕ) (i : ℕ) (row : L
   exact h j hj
 
 /-- The `i`-th row read by `hashCNF`, for `i < k`, is the `i`-th block of the padded word. -/
-theorem mem_zipIdx_listRows {k width : ℕ} {w row : List Bool} {i : ℕ} :
+private theorem mem_zipIdx_listRows {k width : ℕ} {w row : List Bool} {i : ℕ} :
     (row, i) ∈ (BitString.listRows k width w).zipIdx ↔
       ∃ hi : i < k,
         row = List.ofFn (BitString.block (BitString.ofList (k * width) w) ⟨i, hi⟩) := by
@@ -230,7 +230,7 @@ def offset (k width : ℕ) (w : List Bool) : BitString k :=
 
 /-- The equations hold exactly when, for each `i < k`, the auxiliary variables of the `i`-th
 equation start at its offset, follow its coefficients, and end at `false`. -/
-theorem eval_hashCNF (σ : Var → Bool) (vars : List ℕ) (k : ℕ) (w : List Bool) :
+private theorem eval_hashCNF (σ : Var → Bool) (vars : List ℕ) (k : ℕ) (w : List Bool) :
     (hashCNF vars k w).eval σ = true ↔ ∀ i : Fin k,
       σ (.inr (i, 0)) = offset k vars.length w i ∧ σ (.inr (i, vars.length)) = false ∧
         ∀ (j : ℕ) (hj : j < vars.length), σ (.inr (i, j + 1)) =
@@ -254,7 +254,7 @@ theorem eval_hashCNF (σ : Var → Bool) (vars : List ℕ) (k : ℕ) (w : List B
 
 /-- A sequence that starts at `c` and adds `f j` at each step `j < n` holds `c + ∑ j' < j, f j'`
 up to step `n`. -/
-theorem eq_add_sum_of_step {z f : ℕ → Bool} {c : Bool} {n : ℕ} (h0 : z 0 = c)
+private theorem eq_add_sum_of_step {z f : ℕ → Bool} {c : Bool} {n : ℕ} (h0 : z 0 = c)
     (hstep : ∀ j < n, z (j + 1) = (z j ^^ f j)) :
     ∀ j ≤ n, z j = c + ∑ j' ∈ Finset.range j, f j' := by
   intro j hj
@@ -277,7 +277,7 @@ def auxValue (vars : List ℕ) (k : ℕ) (w : List Bool) (σ : ℕ → Bool) (i 
     if h : j' < vars.length then matrix k vars.length w i ⟨j', h⟩ && σ vars[j'] else false
 
 /-- After all terms, the auxiliary value is the `i`-th coordinate of the hash. -/
-theorem auxValue_length (vars : List ℕ) (k : ℕ) (w : List Bool) (σ : ℕ → Bool)
+private theorem auxValue_length (vars : List ℕ) (k : ℕ) (w : List Bool) (σ : ℕ → Bool)
     (i : Fin k) :
     auxValue vars k w σ i vars.length =
       affineHash (matrix k vars.length w, offset k vars.length w) (point vars σ) i := by
@@ -287,7 +287,7 @@ theorem auxValue_length (vars : List ℕ) (k : ℕ) (w : List Bool) (σ : ℕ �
 
 /-- In a satisfying assignment of the equations, the auxiliary variables hold the forced
 values. -/
-theorem eq_auxValue_of_eval {σ : Var → Bool} {vars : List ℕ} {k : ℕ} {w : List Bool}
+private theorem eq_auxValue_of_eval {σ : Var → Bool} {vars : List ℕ} {k : ℕ} {w : List Bool}
     (h : (hashCNF vars k w).eval σ = true) (i : Fin k) {j : ℕ} (hj : j ≤ vars.length) :
     σ (.inr (i, j)) = auxValue vars k w (σ ∘ .inl) i j := by
   obtain ⟨h0, -, hs⟩ := (eval_hashCNF σ vars k w).1 h i
@@ -295,7 +295,7 @@ theorem eq_auxValue_of_eval {σ : Var → Bool} {vars : List ℕ} {k : ℕ} {w :
   simp only [hs j hj, hj, dite_true, Function.comp_apply]
 
 /-- A satisfying assignment of the equations hashes its point to zero. -/
-theorem hash_point_eq_zero_of_eval {σ : Var → Bool} {vars : List ℕ} {k : ℕ} {w : List Bool}
+private theorem hash_point_eq_zero_of_eval {σ : Var → Bool} {vars : List ℕ} {k : ℕ} {w : List Bool}
     (h : (hashCNF vars k w).eval σ = true) :
     affineHash (matrix k vars.length w, offset k vars.length w) (point vars (σ ∘ .inl)) = 0 := by
   funext i
@@ -304,7 +304,7 @@ theorem hash_point_eq_zero_of_eval {σ : Var → Bool} {vars : List ℕ} {k : �
 
 /-- An assignment of the original variables whose point hashes to zero extends, by the forced
 auxiliary values, to a satisfying assignment of the equations. -/
-theorem eval_hashCNF_extend {vars : List ℕ} {k : ℕ} {w : List Bool} {σ : ℕ → Bool}
+private theorem eval_hashCNF_extend {vars : List ℕ} {k : ℕ} {w : List Bool} {σ : ℕ → Bool}
     (h : affineHash (matrix k vars.length w, offset k vars.length w) (point vars σ) = 0) :
     (hashCNF vars k w).eval (Sum.elim σ fun p =>
       if hp : p.1 < k then auxValue vars k w σ ⟨p.1, hp⟩ p.2 else false) = true := by
@@ -321,7 +321,7 @@ theorem eval_hashCNF_extend {vars : List ℕ} {k : ℕ} {w : List Bool} {σ : �
 /-! ### Variables of the reduced formula -/
 
 /-- The clauses of a step only mention its three variables. -/
-theorem mem_vars_stepClauses {bit : Bool} {next prev x u : Var}
+private theorem mem_vars_stepClauses {bit : Bool} {next prev x u : Var}
     (h : u ∈ (stepClauses bit next prev x).vars) : u = next ∨ u = prev ∨ u = x := by
   cases bit <;> simp only [stepClauses, CNF.vars, Bool.false_eq_true, ite_false, ite_true,
     List.flatten_cons, List.flatten_nil, List.map_append, List.map_cons, List.map_nil,
@@ -329,7 +329,7 @@ theorem mem_vars_stepClauses {bit : Bool} {next prev x u : Var}
 
 /-- Every variable of the `i`-th equation is an original variable among `vars`, or an auxiliary
 variable `inr (i, j)` with `j ≤ vars.length`. -/
-theorem mem_vars_rowClauses {vars : List ℕ} {i : ℕ} {row : List Bool} {c : Bool} {u : Var}
+private theorem mem_vars_rowClauses {vars : List ℕ} {i : ℕ} {row : List Bool} {c : Bool} {u : Var}
     (h : u ∈ (rowClauses vars i row c).vars) :
     (∃ v ∈ vars, u = .inl v) ∨ ∃ j ≤ vars.length, u = .inr (i, j) := by
   simp only [rowClauses, CNF.mem_vars, List.mem_cons, List.mem_flatMap] at h
@@ -348,7 +348,7 @@ theorem mem_vars_rowClauses {vars : List ℕ} {i : ℕ} {row : List Bool} {c : B
 
 /-- Every variable of the equations is an original variable among `vars`, or an auxiliary
 variable `inr (i, j)` with `i < k` and `j ≤ vars.length`. -/
-theorem mem_vars_hashCNF {vars : List ℕ} {k : ℕ} {w : List Bool} {u : Var}
+private theorem mem_vars_hashCNF {vars : List ℕ} {k : ℕ} {w : List Bool} {u : Var}
     (h : u ∈ (hashCNF vars k w).vars) :
     (∃ v ∈ vars, u = .inl v) ∨ ∃ i < k, ∃ j ≤ vars.length, u = .inr (i, j) := by
   simp only [hashCNF, CNF.mem_vars, List.mem_flatMap] at h
@@ -362,7 +362,7 @@ theorem mem_vars_hashCNF {vars : List ℕ} {k : ℕ} {w : List Bool} {u : Var}
 
 /-- **Soundness.** A satisfying assignment of the reduced formula restricts to one of `φ`: the
 equations only add constraints. -/
-theorem satisfiable_of_satisfiable_reduceWith {φ : CNF ℕ} {k : ℕ} {w : List Bool}
+private theorem satisfiable_of_satisfiable_reduceWith {φ : CNF ℕ} {k : ℕ} {w : List Bool}
     (h : (reduceWith φ k w).Satisfiable) : φ.Satisfiable := by
   obtain ⟨τ, hτ⟩ := h
   simp only [reduceWith, CNF.eval_relabel, CNF.eval_append, Bool.and_eq_true] at hτ
@@ -379,7 +379,7 @@ open Classical in
 noncomputable def solutions (φ : CNF ℕ) : Finset (BitString φ.vars.length) :=
   Finset.univ.filter fun x => ∃ σ : ℕ → Bool, φ.eval σ = true ∧ point φ.vars σ = x
 
-theorem mem_solutions {φ : CNF ℕ} {x : BitString φ.vars.length} :
+private theorem mem_solutions {φ : CNF ℕ} {x : BitString φ.vars.length} :
     x ∈ solutions φ ↔ ∃ σ : ℕ → Bool, φ.eval σ = true ∧ point φ.vars σ = x := by
   simp [solutions]
 
@@ -452,28 +452,29 @@ theorem reduceWith_mem_USAT {φ : CNF ℕ} {k : ℕ} {w : List Bool}
 
 /-- The number of equations isolating a solution with probability at least `3 / 16`: with `s`
 solutions, `2 ^ (log₂ s + 2)` lies between `2 s` and `4 s`. -/
-noncomputable def goodRows (φ : CNF ℕ) : ℕ := Nat.log 2 (solutions φ).card + 2
+private noncomputable def goodRows (φ : CNF ℕ) : ℕ := Nat.log 2 (solutions φ).card + 2
 
 /-- A satisfiable formula has a solution. -/
-theorem solutions_nonempty {φ : CNF ℕ} (hφ : φ.Satisfiable) : (solutions φ).Nonempty :=
+private theorem solutions_nonempty {φ : CNF ℕ} (hφ : φ.Satisfiable) : (solutions φ).Nonempty :=
   let ⟨σ, hσ⟩ := hφ
   ⟨_, mem_solutions.2 ⟨σ, hσ, rfl⟩⟩
 
 /-- `2 ^ goodRows φ` is at most four times the number of solutions. -/
-theorem two_pow_goodRows_le {φ : CNF ℕ} (hφ : φ.Satisfiable) :
+private theorem two_pow_goodRows_le {φ : CNF ℕ} (hφ : φ.Satisfiable) :
     2 ^ goodRows φ ≤ 4 * (solutions φ).card := by
   have := Nat.pow_log_le_self 2 (solutions_nonempty hφ).card_pos.ne'
   rw [goodRows, pow_add]
   omega
 
 /-- `2 ^ goodRows φ` is at least twice the number of solutions. -/
-theorem two_mul_card_solutions_le (φ : CNF ℕ) : 2 * (solutions φ).card ≤ 2 ^ goodRows φ := by
+private theorem two_mul_card_solutions_le (φ : CNF ℕ) : 2 *
+    (solutions φ).card ≤ 2 ^ goodRows φ := by
   have := Nat.lt_pow_succ_log_self (b := 2) (by decide) (solutions φ).card
   rw [goodRows, pow_add, pow_succ] at *
   omega
 
 /-- At most `2 ^ φ.vars.length` solutions need at most `φ.vars.length + 2` equations. -/
-theorem goodRows_le (φ : CNF ℕ) : goodRows φ ≤ φ.vars.length + 2 := by
+private theorem goodRows_le (φ : CNF ℕ) : goodRows φ ≤ φ.vars.length + 2 := by
   have hcard : (solutions φ).card ≤ 2 ^ φ.vars.length :=
     (Finset.card_le_univ _).trans_eq (by simp)
   have := Nat.log_mono_right (b := 2) hcard
@@ -482,13 +483,13 @@ theorem goodRows_le (φ : CNF ℕ) : goodRows φ ≤ φ.vars.length + 2 := by
   omega
 
 /-- The selector bits can select `goodRows φ` equations. -/
-theorem goodRows_lt_two_pow_hashBits (φ : CNF ℕ) : goodRows φ < 2 ^ hashBits φ :=
+private theorem goodRows_lt_two_pow_hashBits (φ : CNF ℕ) : goodRows φ < 2 ^ hashBits φ :=
   (goodRows_le φ).trans_lt (lt_two_pow_hashBits φ)
 
 open Classical in
 /-- **The Valiant–Vazirani lemma for the formula**: with `goodRows φ` random equations, exactly
 one solution of a satisfiable `φ` satisfies them with probability at least `3 / 16`. -/
-theorem three_sixteenths_le_dens {φ : CNF ℕ} (hφ : φ.Satisfiable) :
+private theorem three_sixteenths_le_dens {φ : CNF ℕ} (hφ : φ.Satisfiable) :
     3 / 16 ≤ Finset.dens (Finset.univ.filter
       fun p : (Fin (goodRows φ) → BitString φ.vars.length) × BitString (goodRows φ) =>
         Isolates φ p) := by
@@ -502,7 +503,7 @@ theorem three_sixteenths_le_dens {φ : CNF ℕ} (hφ : φ.Satisfiable) :
 open Classical in
 /-- The density bound in integers: at least `3 / 16` of the `2 ^ (k * n + k)` seeds isolate a
 solution. -/
-theorem three_mul_two_pow_le_card_isolates {φ : CNF ℕ} (hφ : φ.Satisfiable) :
+private theorem three_mul_two_pow_le_card_isolates {φ : CNF ℕ} (hφ : φ.Satisfiable) :
     3 * 2 ^ (goodRows φ * φ.vars.length + goodRows φ) ≤
       16 * (Finset.univ.filter fun p :
         (Fin (goodRows φ) → BitString φ.vars.length) × BitString (goodRows φ) =>
@@ -551,13 +552,13 @@ theorem offset_take (k width : ℕ) (w : List Bool) :
   rw [ite_eq_left (by omega)]
 
 /-- The coefficients of a word of exactly `k * width + k` bits are its first blocks. -/
-theorem matrix_ofFn_append {k width : ℕ} (a : BitString (k * width)) (b : BitString k) :
+private theorem matrix_ofFn_append {k width : ℕ} (a : BitString (k * width)) (b : BitString k) :
     matrix k width (List.ofFn (Fin.append a b)) = BitString.blocksEquiv a := by
   rw [matrix, List.ofFn_fin_append, BitString.ofList_ofFn_append]
   rfl
 
 /-- The offsets of a word of exactly `k * width + k` bits are its last `k` bits. -/
-theorem offset_ofFn_append {k width : ℕ} (a : BitString (k * width)) (b : BitString k) :
+private theorem offset_ofFn_append {k width : ℕ} (a : BitString (k * width)) (b : BitString k) :
     offset k width (List.ofFn (Fin.append a b)) = b := by
   rw [offset, List.ofFn_fin_append, List.drop_left' (by simp), BitString.ofList_ofFn]
 
@@ -583,7 +584,7 @@ open Classical in
 /-- The random words of length `m` for which the reduction outputs a uniquely satisfiable formula
 are at least `3 / (16 * 2 ^ hashBits φ)` of all words, once `m` covers the selector bits and
 the coefficients and offsets of `goodRows φ` equations. -/
-theorem three_mul_two_pow_le_card {φ : CNF ℕ} (hφ : φ.Satisfiable) {m : ℕ}
+private theorem three_mul_two_pow_le_card {φ : CNF ℕ} (hφ : φ.Satisfiable) {m : ℕ}
     (hm : hashBits φ + (goodRows φ * φ.vars.length + goodRows φ) ≤ m) :
     3 * 2 ^ m ≤ 16 * 2 ^ hashBits φ *
       (Finset.univ.filter fun r : Fin m → Bool => reduce (φ, List.ofFn r) ∈ USAT).card := by
@@ -638,7 +639,7 @@ coefficients and offsets of up to `φ.vars.length + 2` equations of `φ.vars.len
 def randomBits (φ : CNF ℕ) : ℕ := hashBits φ + (φ.vars.length + 2) * (φ.vars.length + 1)
 
 /-- The selector reads at most `φ.vars.length + 2` bits. -/
-theorem hashBits_le (φ : CNF ℕ) : hashBits φ ≤ φ.vars.length + 2 :=
+private theorem hashBits_le (φ : CNF ℕ) : hashBits φ ≤ φ.vars.length + 2 :=
   Nat.succ_le_of_lt (Nat.log_lt_self 2 (by omega))
 
 /-- The reduction reads at most `(φ.vars.length + 2) ^ 2` random bits. -/

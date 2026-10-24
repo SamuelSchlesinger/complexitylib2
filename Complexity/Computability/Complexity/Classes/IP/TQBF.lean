@@ -78,18 +78,18 @@ variable {S : Type}
 noncomputable def verdict (I : LoopInput) (st : VState) (n : ℕ) : WordOracleComp Unit Bool :=
   (fun st => st.2.2) <$> OracleComp.iterate n (Machine.step I) st
 
-theorem verdict_succ (I : LoopInput) (st : VState) (n : ℕ) :
+private theorem verdict_succ (I : LoopInput) (st : VState) (n : ℕ) :
     verdict I st (n + 1) = Machine.step I st >>= fun st' => verdict I st' n := by
   rw [verdict, OracleComp.iterate_succ_bind, map_bind]
   rfl
 
 /-- After a failed check the machine stays put and rejects. -/
-theorem verdict_of_ok_eq_false (I : LoopInput) {st : VState} (h : st.2.2 = false) (n : ℕ) :
+private theorem verdict_of_ok_eq_false (I : LoopInput) {st : VState} (h : st.2.2 = false) (n : ℕ) :
     verdict I st n = pure false := by
   rw [verdict, OracleComp.iterate_eq_pure _ _ _ (by simp [Machine.step, h]), map_pure, h]
 
 /-- Without tokens the machine stays put and accepts when every check passed. -/
-theorem verdict_nil (I : LoopInput) (St : List Claim) (n : ℕ) :
+private theorem verdict_nil (I : LoopInput) (St : List Claim) (n : ℕ) :
     verdict I ([], St, true) n = pure true := by
   rw [verdict, OracleComp.iterate_eq_pure _ _ _ (by simp [Machine.step]), map_pure]
 
@@ -399,7 +399,7 @@ section Formula
 variable (ψ : QBF ℕ)
 
 /-- The variables of a formula are linearized by the machine. -/
-theorem mem_linVars {ψ : QBF ℕ} {v : ℕ} (hv : v ∈ ψ.vars) : v ∈ linVars ψ := by
+private theorem mem_linVars {ψ : QBF ℕ} {v : ℕ} (hv : v ∈ ψ.vars) : v ∈ linVars ψ := by
   unfold linVars
   induction ψ with
   | var w => simp_all [QBF.vars, QBF.tokens]
@@ -426,22 +426,22 @@ theorem mem_linVars {ψ : QBF ℕ} {v : ℕ} (hv : v ∈ ψ.vars) : v ∈ linVar
 /-- The arithmetic formula checked by the machine on `ψ`. -/
 def arithOf : ArithQBF ℕ := ψ.arithmetize (linVars ψ)
 
-theorem modOf_loopInput : modOf (loopInput ψ) = modulus ψ :=
+private theorem modOf_loopInput : modOf (loopInput ψ) = modulus ψ :=
   Nat.sub_add_cancel (prime_modulus ψ).1.one_lt.le
 
 local instance : Fact (modOf (loopInput ψ)).Prime := ⟨modOf_loopInput ψ ▸ (prime_modulus ψ).1⟩
 
-theorem one_lt_modOf : 1 < modOf (loopInput ψ) :=
+private theorem one_lt_modOf : 1 < modOf (loopInput ψ) :=
   (Fact.out (p := (modOf (loopInput ψ)).Prime)).one_lt
 
-theorem vars_arithOf {w : ℕ} (hw : w ∈ (arithOf ψ).vars) : w ∈ (loopInput ψ).1.1 :=
+private theorem vars_arithOf {w : ℕ} (hw : w ∈ (arithOf ψ).vars) : w ∈ (loopInput ψ).1.1 :=
   (QBF.mem_vars_arithmetize hw).elim mem_linVars id
 
-theorem maxRoundDegree_arithOf : (arithOf ψ).maxRoundDegree ≤ (loopInput ψ).1.2.2 := by
+private theorem maxRoundDegree_arithOf : (arithOf ψ).maxRoundDegree ≤ (loopInput ψ).1.2.2 := by
   refine (QBF.maxRoundDegree_arithmetize_le fun v hv => mem_linVars hv).trans (le_of_eq ?_)
   rw [loopInput, degreeBound, QBF.length_tokens]
 
-theorem tokens_arithOf : (arithOf ψ).tokens = (loopInput ψ).2 := by
+private theorem tokens_arithOf : (arithOf ψ).tokens = (loopInput ψ).2 := by
   rw [arithOf, QBF.tokens_arithmetize]
   rfl
 
@@ -473,7 +473,7 @@ theorem acceptProb_verifier_eq (hψ : ψ.Closed) (P : Prover Unit) :
   rfl
 
 /-- The samples of the protocol give every residue probability at most `2 / p`. -/
-theorem eval_samplerOf_le (I : LoopInput) (z : ZMod (modOf I)) :
+private theorem eval_samplerOf_le (I : LoopInput) (z : ZMod (modOf I)) :
     ProbComp.eval (samplerOf I) z ≤ 2 / modOf I := by
   rw [samplerOf, ProbComp.eval_map, PMF.map_apply, tsum_eq_single z.val]
   · split_ifs
@@ -583,7 +583,7 @@ private theorem getD_decoded {p : ℕ} [NeZero p] (D : ℕ) (L : List (ZMod p)) 
 
 variable (ψ : QBF ℕ)
 
-theorem one_le_degree : 1 ≤ (loopInput ψ).1.2.2 := by
+private theorem one_le_degree : 1 ≤ (loopInput ψ).1.2.2 := by
   have : 0 < ψ.tokens.length := List.length_pos_of_ne_nil (QBF.tokens_ne_nil ψ)
   simp only [loopInput, degreeBound]
   omega

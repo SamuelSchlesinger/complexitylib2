@@ -219,7 +219,7 @@ private theorem interpret_searchQuery (u : List Bool) (s : ℕ × ℕ) :
 open Classical in
 /-- Against an oracle containing the code of `(u, k)` exactly when `k ≤ F`, a round of the search
 is `BinarySearch.step F`. -/
-theorem interpret_id_searchQuery {F : ℕ} {A : Set (List Bool)} {u : List Bool}
+private theorem interpret_id_searchQuery {F : ℕ} {A : Set (List Bool)} {u : List Bool}
     (hA : ∀ k, encPair encBits encNat (u, k) ∈ A ↔ k ≤ F) (s : ℕ × ℕ) :
     OracleComp.interpret (m := Id) (languageOracle A) (searchQuery u s) =
       BinarySearch.step F s := by
@@ -322,7 +322,8 @@ def bitQuery (r : Polynomial ℕ) (q : Unit × List Bool) : WordQueryComp Unit (
 open Classical in
 /-- Against an oracle agreeing with `{(b, k) | k ≤ f b}` on codes, `bitQuery` answers bit `i`
 of `f b` to the code of `(b, i)`, when `f b ≤ 2 ^ r (|encβ b|)`. -/
-theorem interpret_id_bitQuery {β : Type} {encβ : β ↪ List Bool} {f : β → ℕ} {r : Polynomial ℕ}
+private theorem interpret_id_bitQuery {β : Type} {encβ : β ↪ List Bool} {f : β → ℕ}
+    {r : Polynomial ℕ}
     (hr : ∀ b, f b ≤ 2 ^ r.eval (encβ b).length) {A : Set (List Bool)}
     (hA : ∀ x : β × ℕ, encPair encβ encNat x ∈ A ↔ x.2 ≤ f x.1) (b : β) (i : ℕ) :
     OracleComp.interpret (m := Id) (languageOracle A) (bitQuery r ((), encPair encβ encNat (b, i)))

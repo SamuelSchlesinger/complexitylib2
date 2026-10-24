@@ -97,7 +97,7 @@ zeros, a one, then `w`. -/
 def encodeWord (L : ℕ) (w : List Bool) : List Bool :=
   List.replicate (L - w.length) false ++ true :: w
 
-theorem idxOf_true_replicate_false_append (n : ℕ) (w : List Bool) :
+private theorem idxOf_true_replicate_false_append (n : ℕ) (w : List Bool) :
     (List.replicate n false ++ true :: w).idxOf true = n := by
   induction n with
   | zero => simp
@@ -105,25 +105,26 @@ theorem idxOf_true_replicate_false_append (n : ℕ) (w : List Bool) :
     rw [List.replicate_succ, List.cons_append, List.idxOf_cons_ne _ (by simp), ih]
 
 /-- Decoding inverts coding. -/
-theorem decodeWord_encodeWord (L : ℕ) (w : List Bool) : decodeWord (encodeWord L w) = w := by
+private theorem decodeWord_encodeWord (L : ℕ) (w : List Bool) : decodeWord
+    (encodeWord L w) = w := by
   rw [decodeWord, encodeWord, idxOf_true_replicate_false_append, List.drop_append]
   simp
 
-theorem length_encodeWord {L : ℕ} {w : List Bool} (hw : w.length ≤ L) :
+private theorem length_encodeWord {L : ℕ} {w : List Bool} (hw : w.length ≤ L) :
     (encodeWord L w).length = L + 1 := by
   simp only [encodeWord, List.length_append, List.length_replicate, List.length_cons]
   lia
 
-theorem true_mem_encodeWord (L : ℕ) (w : List Bool) : true ∈ encodeWord L w := by
+private theorem true_mem_encodeWord (L : ℕ) (w : List Bool) : true ∈ encodeWord L w := by
   simp [encodeWord]
 
-theorem length_decodeWord_le {L : ℕ} {u : List Bool} (hu : u.length = L + 1) :
+private theorem length_decodeWord_le {L : ℕ} {u : List Bool} (hu : u.length = L + 1) :
     (decodeWord u).length ≤ L := by
   simp only [decodeWord, List.length_drop]
   lia
 
 /-- A word with a `true` is its first `true` preceded by zeros and followed by its decoding. -/
-theorem eq_replicate_append_decodeWord : ∀ {u : List Bool}, true ∈ u →
+private theorem eq_replicate_append_decodeWord : ∀ {u : List Bool}, true ∈ u →
     u = List.replicate (u.idxOf true) false ++ true :: decodeWord u
   | b :: u, h => by
     cases b
@@ -136,7 +137,8 @@ theorem eq_replicate_append_decodeWord : ∀ {u : List Bool}, true ∈ u →
     · simp [decodeWord]
 
 /-- Coding inverts decoding on the words of length `L + 1` with a `true`. -/
-theorem encodeWord_decodeWord {L : ℕ} {u : List Bool} (hu : u.length = L + 1) (ht : true ∈ u) :
+private theorem encodeWord_decodeWord {L : ℕ} {u : List Bool} (hu : u.length = L + 1)
+    (ht : true ∈ u) :
     encodeWord L (decodeWord u) = u := by
   have h := eq_replicate_append_decodeWord ht
   have hlen := congrArg List.length h
@@ -155,7 +157,7 @@ def lastCode (u : List Bool) : Bool := decide (u = List.replicate (L + 1) true)
 /-- The number of codes, and of the words of length at most `L`. -/
 def codeCount : ℕ := 2 ^ (L + 1) - 1
 
-theorem iterate_firstCode (i : ℕ) :
+private theorem iterate_firstCode (i : ℕ) :
     increment^[i] (firstCode L) = increment^[i + 1] (List.replicate (L + 1) false) := by
   rw [Function.iterate_succ_apply]
   rfl
@@ -163,14 +165,14 @@ theorem iterate_firstCode (i : ℕ) :
 variable {L}
 
 /-- The `i`-th code has value `i + 1` and length `L + 1`. -/
-theorem lsbValue_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
+private theorem lsbValue_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     lsbValue (increment^[i] (firstCode L)) = i + 1 ∧
       (increment^[i] (firstCode L)).length = L + 1 := by
   rw [iterate_firstCode]
   exact BitString.iterate_increment (L + 1) (i + 1) (by simp only [codeCount] at hi; lia)
 
 /-- The last code is the `codeCount L`-th. -/
-theorem lastCode_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
+private theorem lastCode_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     lastCode L (increment^[i] (firstCode L)) = decide (i + 1 = codeCount L) := by
   obtain ⟨hv, hl⟩ := lsbValue_iterate_firstCode hi
   have hall := BitString.lsbValue_replicate_true (L + 1)
@@ -185,7 +187,7 @@ theorem lastCode_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     simp only [codeCount] at h
     lia
 
-theorem true_mem_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
+private theorem true_mem_iterate_firstCode {i : ℕ} (hi : i < codeCount L) :
     true ∈ increment^[i] (firstCode L) := by
   by_contra h
   have := BitString.lsbValue_eq_zero_of_true_not_mem h
@@ -211,7 +213,7 @@ theorem image_decodeWord_iterate_firstCode :
     rw [iterate_firstCode, Nat.sub_add_cancel hpos, ← hlen, BitString.iterate_increment_lsbValue,
       decodeWord_encodeWord]
 
-theorem injOn_decodeWord_iterate_firstCode :
+private theorem injOn_decodeWord_iterate_firstCode :
     Set.InjOn (fun i => decodeWord (increment^[i] (firstCode L))) (range (codeCount L)) := by
   intro i hi j hj h
   simp only [coe_range, Set.mem_Iio] at hi hj
@@ -275,7 +277,7 @@ section PolyTime
 open _root_.Turing _root_.Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 /-- Decoding a word is polynomial-time. -/
-theorem computableTidilyInPolyTime_decodeWord :
+private theorem computableTidilyInPolyTime_decodeWord :
     ComputableTidilyInPolyTime decodeWord encBits encBits := by
   have hidx : ComputableTidilyInPolyTime (fun u : List Bool => u.idxOf true + 1) encBits
       encUnary := by
@@ -286,7 +288,7 @@ theorem computableTidilyInPolyTime_decodeWord :
   exact bitsDropWithInput id' hidx
 
 /-- Decoding a history is polynomial-time. -/
-theorem computableTidilyInPolyTime_decodeHistory :
+private theorem computableTidilyInPolyTime_decodeHistory :
     ComputableTidilyInPolyTime decodeHistory (encList (encPair encBits encBits)) encHistory := by
   have hd := computableTidilyInPolyTime_decodeWord
   unfold decodeHistory
@@ -318,7 +320,8 @@ def evaluate (a : α) : ℕ :=
   ((evalStep enc M fuel)^[evalTime fuel a] (a, [], none)).2.2.getD 0
 
 /-- The evaluation keeps its instance and runs the game-tree evaluator. -/
-theorem iterate_evalStep (a : α) (st : List (GameTree.Frame (List Bool)) × Option ℕ) (j : ℕ) :
+private theorem iterate_evalStep (a : α) (st : List (GameTree.Frame (List Bool)) × Option ℕ)
+    (j : ℕ) :
     (evalStep enc M fuel)^[j] (a, st) = (a, (GameTree.step (fuel a) (2 ^ fuel a)
       (firstCode (fuel a)) increment (lastCode (fuel a))
         (leafValue (coinFamily M (fuel a) (enc a))))^[j] st) := by
@@ -342,7 +345,7 @@ theorem evaluate_eq (a : α) :
   rw [gameTree_value_eq _ (by simp), decodeHistory_nil]
 
 /-- Returning a value into the stack, with its explicit cases. -/
-def returnStep (L cap : ℕ) (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
+private def returnStep (L cap : ℕ) (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
     List (GameTree.Frame (List Bool)) × Option ℕ :=
   if st.isEmpty then (st, some v)
   else
@@ -353,7 +356,7 @@ def returnStep (L cap : ℕ) (st : List (GameTree.Frame (List Bool))) (v : ℕ) 
     else ((f.1, increment f.2.1, f.2.2.1, max f.2.2.2 v) :: st.tail, none)
 
 /-- A value returned into the stack, by `returnStep`. -/
-theorem step_some_eq (L cap : ℕ) (leaf : List (List Bool × List Bool) → ℕ)
+private theorem step_some_eq (L cap : ℕ) (leaf : List (List Bool × List Bool) → ℕ)
     (st : List (GameTree.Frame (List Bool))) (v : ℕ) :
     GameTree.step L cap (firstCode L) increment (lastCode L) leaf (st, some v) =
       returnStep L cap st v := by
@@ -373,7 +376,7 @@ theorem step_none_eq (L cap : ℕ) (leaf : List (List Bool × List Bool) → ℕ
       pushStep L st (min cap (leaf (GameTree.history st))) := rfl
 
 /-- One step of the evaluation, as a case distinction calling the leaf value once. -/
-theorem evalStep_eq (s : EvalState α) : evalStep enc M fuel s =
+private theorem evalStep_eq (s : EvalState α) : evalStep enc M fuel s =
     if s.2.2.isSome then (s.1, returnStep (fuel s.1) (2 ^ fuel s.1) s.2.1 (s.2.2.getD 0))
     else (s.1, pushStep (fuel s.1) s.2.1 (min (2 ^ fuel s.1)
       (leafValue (coinFamily M (fuel s.1) (enc s.1)) (GameTree.history s.2.1)))) := by
@@ -433,7 +436,7 @@ variable {enc fuel} (hfuel : ComputableTidilyInPolyTime fuel enc encUnary)
 include hfuel
 
 /-- Returning a value into the stack is polynomial-time. -/
-theorem computableTidilyInPolyTime_returnStep :
+private theorem computableTidilyInPolyTime_returnStep :
     ComputableTidilyInPolyTime (fun s : EvalState α =>
       (s.1, returnStep (fuel s.1) (2 ^ fuel s.1) s.2.1 (s.2.2.getD 0)))
       (encEvalState enc) (encEvalState enc) := by
@@ -443,7 +446,7 @@ theorem computableTidilyInPolyTime_returnStep :
   fun_prop
 
 /-- Pushing a frame is polynomial-time. -/
-theorem computableTidilyInPolyTime_pushStep :
+private theorem computableTidilyInPolyTime_pushStep :
     ComputableTidilyInPolyTime (fun p : EvalState α × ℕ =>
       (p.1.1, pushStep (fuel p.1.1) p.1.2.1 p.2))
       (encPair (encEvalState enc) encNat) (encEvalState enc) := by
@@ -453,7 +456,7 @@ theorem computableTidilyInPolyTime_pushStep :
   fun_prop
 
 /-- **The leaf value within polynomial space**: the count of accepting coins, capped. -/
-theorem computableTidilyInPolySpace_leaf [Finite Control] [Inhabited α] :
+private theorem computableTidilyInPolySpace_leaf [Finite Control] [Inhabited α] :
     ComputableTidilyInPolySpace (fun s : EvalState α => min (2 ^ fuel s.1)
       (leafValue (coinFamily M (fuel s.1) (enc s.1)) (GameTree.history s.2.1)))
       (encEvalState enc) encNat := by
@@ -474,7 +477,7 @@ theorem computableTidilyInPolySpace_leaf [Finite Control] [Inhabited α] :
   simp only [leafValue, countAccepts_eq_accepted]
 
 /-- **A step of the evaluation within polynomial space.** -/
-theorem computableTidilyInPolySpace_evalStep [Finite Control] [Inhabited α] :
+private theorem computableTidilyInPolySpace_evalStep [Finite Control] [Inhabited α] :
     ComputableTidilyInPolySpace (evalStep enc M fuel) (encEvalState enc) (encEvalState enc) := by
   have hcond : ComputableTidilyInPolyTime (fun s : EvalState α => s.2.2.isSome)
       (encEvalState enc) encBool := by fun_prop

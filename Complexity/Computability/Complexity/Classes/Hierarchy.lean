@@ -192,7 +192,7 @@ theorem computableTidilyInO_verdict :
 /-- The numeric core of the resources of the diagonal: for an input of length `n`, a decoded
 description of encoded length `D`, encoded symbols of length `N`, a clock `J ≥ 1` and a result of
 encoded length `E`, everything is within `K * M ^ 5 * J ^ 3` steps and `K * M ^ 5 * J` cells. -/
-theorem bounds_aux {n A D N J L I E cD cO M K : ℕ} (hJ : 1 ≤ J)
+private theorem bounds_aux {n A D N J L I E cD cO M K : ℕ} (hJ : 1 ≤ J)
     (hD : D ≤ cD * (A + 1)) (hN : N ≤ 3 * n) (hL : L = n + 1) (hI : I = 2 * D + 1 + (2 * N + 1 + L))
     (hM : M = cD * (A + 1) + A + 4 * n + 2) (hK : K = 100100 + 44100 * (cO + 1) ^ 2)
     (hE : E ≤ cO * (A + (n + n) + (runBound D N J + I) + 1)) :

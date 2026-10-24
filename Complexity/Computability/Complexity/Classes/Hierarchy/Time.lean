@@ -87,7 +87,7 @@ open Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal Filter
 namespace Diagonal
 
 /-- The space of the universal run grows with the number of steps. -/
-theorem runBound_le_succ (D N J : ℕ) : runBound D N J ≤ runBound D N (J + 1) := by
+private theorem runBound_le_succ (D N J : ℕ) : runBound D N J ≤ runBound D N (J + 1) := by
   simp only [runBound, ctxBound, cfgBound, tapeBound]
   gcongr <;> omega
 
@@ -95,7 +95,7 @@ theorem runBound_le_succ (D N J : ℕ) : runBound D N J ≤ runBound D N (J + 1)
 decoding time `A` linear in `n`, a decoded description of encoded length `D`, encoded symbols of
 length `N`, a clock `J` of `L` binary digits and a result of encoded length `E`, everything is
 within `K * (n + 1) ^ 5 * (J + 1) ^ 3` steps and cells. -/
-theorem clockedBounds_aux (cA cD cO C₂ : ℕ) : ∃ K, ∀ {n A D N J L I E : ℕ},
+private theorem clockedBounds_aux (cA cD cO C₂ : ℕ) : ∃ K, ∀ {n A D N J L I E : ℕ},
     A ≤ cA * (n + 1) → D ≤ cD * (n + A + 1) → N ≤ 3 * n → (L + 1) ^ 2 ≤ C₂ * (J + 1) →
     I = 2 * D + 1 + (2 * N + 1 + L) →
     E ≤ cO * (n + A + (n + J) + (runBound D N J + I) + 1) →

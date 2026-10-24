@@ -152,7 +152,7 @@ noncomputable def honest : Query V F → StateT Unit PMF (List F) :=
   fun q s => PMF.pure (honestReply q, s)
 
 /-- Against the honest prover, the verifier accepts every true claim with certainty. -/
-theorem run_honest_verify (e : ArithQBF V) (r : V → F) (s : Unit) :
+private theorem run_honest_verify (e : ArithQBF V) (r : V → F) (s : Unit) :
     runWith honest (verify sampler e r (e.eval r)) s = PMF.pure (true, s) := by
   induction e generalizing r with
   | var v => simp only [verify, ArithQBF.eval_var, decide_true, ProbOracleComp.runWith_pure]

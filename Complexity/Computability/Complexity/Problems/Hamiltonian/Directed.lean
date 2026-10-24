@@ -123,7 +123,7 @@ private theorem mem_diamondDetours {φ : CNF ℕ} {d : Diamond.Detour} :
     exact ⟨(φ[j], j), List.mem_zipIdx_iff_getElem?.2 (by simp [hj]), l, hl, rfl⟩
 
 /-- The diamond graph is well formed: the detours across slot `j` all belong to clause `j`. -/
-theorem wellFormed_diamondDetours (φ : CNF ℕ) :
+private theorem wellFormed_diamondDetours (φ : CNF ℕ) :
     Diamond.WellFormed φ.vars.length (fun _ => φ.length) φ.length (diamondDetours φ) where
   clause_lt d hd := by
     obtain ⟨j, hj, l, hl, rfl⟩ := mem_diamondDetours.1 hd
@@ -182,7 +182,7 @@ namespace SAT
 /-! ### Polynomial-time reductions -/
 
 /-- The detours of the diamond graph are computable in polynomial time. -/
-theorem computableTidilyInPolyTime_diamondDetours :
+private theorem computableTidilyInPolyTime_diamondDetours :
     ComputableTidilyInPolyTime diamondDetours encCNF (encList Diamond.encDetour) := by
   have hvars := computableTidilyInPolyTime_vars
   unfold diamondDetours
