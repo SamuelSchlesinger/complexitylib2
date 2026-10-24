@@ -29,31 +29,31 @@ polynomial bound on the complete encoded output. The operations are total on emp
 ## Main results
 
 * `Turing.MultiTapeTM.ofBits_reverse`: agreement of the two binary-word conventions.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBinaryValue`: binary-valued word decoding.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsLow`: fixed-width low-order binary digits.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsToList`, `.listToBits`: encoding conversion.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFlatten`: concatenate computed raw words.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapToBitsWithInput`: concatenate captured
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsBinaryValue`: binary-valued word decoding.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsLow`: fixed-width low-order binary digits.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsToList`, `.listToBits`: encoding conversion.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsFlatten`: concatenate computed raw words.
+* `Turing.MultiTapeTM.ComputableInPolyTime.flatMapToBitsWithInput`: concatenate captured
   words over a framed list.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsFrame`, `.bitsPadWord`: self-delimiting
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsFrame`, `.bitsPadWord`: self-delimiting
   framing and bounded padding, including arbitrary encoded inputs and overlong words.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsGetElem?`: optional lookup in raw bits.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapToBitsWithInput`, `.bitsFilterWithInput`,
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsGetElem?`: optional lookup in raw bits.
+* `Turing.MultiTapeTM.ComputableInPolyTime.mapToBitsWithInput`, `.bitsFilterWithInput`,
   `.bitsAnyWithInput`, `.bitsAllWithInput`, `.bitsFoldlWithInput`, `.bitsZipWithInput`:
   compositional bit operations.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsStrictMajority`, `.bitsSingle`, `.bitsSingles`,
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsStrictMajority`, `.bitsSingle`, `.bitsSingles`,
   `.bitsXorSelected`, `.bitsXorWithInput`: finite-mask algorithms.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsCountPWithInput`, `.bitsCountWithInput`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsCountPWithInput`, `.bitsCountWithInput`:
   unary counts under captured predicates or computed labels.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsNonpositiveMarginWithInput`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsNonpositiveMarginWithInput`:
   compare the correct-vote count with the word length.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList`: output-bounded enumeration.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsBoundedBinaryValue`: capped binary decoding
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsEnumList`: output-bounded enumeration.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsBoundedBinaryValue`: capped binary decoding
   to unary, with every intermediate accumulator bounded by the supplied cap.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsReplicate`: repeat a fixed bit.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsWordLt`: lexicographic word comparison.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsRowWithInput`: read one fixed-width row.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsRowsWithInput`: read a runtime number of rows.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsReplicate`: repeat a fixed bit.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsWordLt`: lexicographic word comparison.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsRowWithInput`: read one fixed-width row.
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsRowsWithInput`: read a runtime number of rows.
 
 ## References
 
@@ -81,17 +81,17 @@ theorem length_encList_enumList (count : ℕ) :
   simp [encList, Cslib.BitString.enumList, List.length_flatMap, List.map_map,
     Function.comp_def]
 
-namespace ComputableTidilyInPolyTime
+namespace ComputableInPolyTime
 
 /-- Frame the existing input encoding, charging every delimiter. -/
 @[fun_prop]
 theorem bitsFrame {α : Type} (enc : α ↪ List Bool) :
-    ComputableTidilyInPolyTime (fun a => frame (enc a)) enc encBits :=
+    ComputableInPolyTime (fun a => frame (enc a)) enc encBits :=
   .of_linear (.of_frame fun _ => rfl)
 
 /-- Saturating binary decoding to unary is polynomial time on arbitrary input words. -/
 @[fun_prop]
-theorem bitsBoundedBinaryValue : ComputableTidilyInPolyTime
+theorem bitsBoundedBinaryValue : ComputableInPolyTime
     (fun p : ℕ × List Bool => Cslib.BitString.boundedBinaryValue p.1 p.2)
     (encPair encUnary encBits) encUnary := by
   apply foldlWith (encA := encBool) (encL := encBits) (encP := encUnary)
@@ -109,17 +109,17 @@ theorem bitsBoundedBinaryValue : ComputableTidilyInPolyTime
 @[fun_prop]
 theorem bitsBoundedBinaryValueWithInput {α : Type} {input : α ↪ List Bool}
     {cap : α → ℕ} {word : α → List Bool}
-    (hcap : ComputableTidilyInPolyTime cap input encUnary)
-    (hword : ComputableTidilyInPolyTime word input encBits) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.boundedBinaryValue (cap a) (word a))
+    (hcap : ComputableInPolyTime cap input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => Cslib.BitString.boundedBinaryValue (cap a) (word a))
       input encUnary := bitsBoundedBinaryValue.comp (hcap.prod hword)
 
 /-- Convert a binary value to unary under a computed unary bound. -/
 theorem binary_to_unary_bounded {α : Type} {input : α ↪ List Bool} {value bound : α → ℕ}
-    (hvalue : ComputableTidilyInPolyTime value input encNat)
-    (hbound : ComputableTidilyInPolyTime bound input encUnary)
+    (hvalue : ComputableInPolyTime value input encNat)
+    (hbound : ComputableInPolyTime bound input encUnary)
     (hle : ∀ a, value a ≤ bound a) :
-    ComputableTidilyInPolyTime value input encUnary := by
+    ComputableInPolyTime value input encUnary := by
   have h := bitsBoundedBinaryValueWithInput hbound (bitsReverse.comp hvalue.encoded)
   convert h using 1
   funext a
@@ -128,11 +128,11 @@ theorem binary_to_unary_bounded {α : Type} {input : α ↪ List Bool} {value bo
 
 /-- Convert a raw bit string to the framed list encoding. -/
 @[fun_prop]
-theorem bitsToList : ComputableTidilyInPolyTime (fun l => l) encBits (encList encBool) := by
+theorem bitsToList : ComputableInPolyTime (fun l => l) encBits (encList encBool) := by
   have h := foldl_of_bounded_growth (encA := encBool) (encL := encBits)
     (step := fun acc bit => acc ++ [bit]) (init := fun _ => [])
     (id' (encIn := encBits)) (const [])
-    (show ComputableTidilyInPolyTime (fun p : List Bool × Bool => p.1 ++ [p.2])
+    (show ComputableInPolyTime (fun p : List Bool × Bool => p.1 ++ [p.2])
       (encPair (encList encBool) encBool) (encList encBool) by fun_prop)
     (growth := 3) (fun _ _ => by simp)
   simpa only [List.foldl_append_eq_append, List.nil_append, List.flatten_eq_flatMap,
@@ -142,18 +142,18 @@ theorem bitsToList : ComputableTidilyInPolyTime (fun l => l) encBits (encList en
 @[fun_prop]
 theorem bitsGetElem? {α : Type} {input : α ↪ List Bool}
     {list : α → List Bool} {index : α → ℕ}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (hindex : ComputableTidilyInPolyTime index input encUnary) :
-    ComputableTidilyInPolyTime (fun x => (list x)[index x]?) input (encOption encBool) :=
+    (hlist : ComputableInPolyTime list input encBits)
+    (hindex : ComputableInPolyTime index input encUnary) :
+    ComputableInPolyTime (fun x => (list x)[index x]?) input (encOption encBool) :=
   getElem? hlist hindex
 
 /-- Remove the framing from a list of bits. -/
 @[fun_prop]
-theorem listToBits : ComputableTidilyInPolyTime (fun l => l) (encList encBool) encBits := by
+theorem listToBits : ComputableInPolyTime (fun l => l) (encList encBool) encBits := by
   have h := foldl_of_bounded_growth (encA := encBool)
     (step := fun acc bit => acc ++ [bit]) (init := fun _ => [])
     (id' (encIn := encList encBool)) (const [])
-    (show ComputableTidilyInPolyTime (fun p : List Bool × Bool => p.1 ++ [p.2])
+    (show ComputableInPolyTime (fun p : List Bool × Bool => p.1 ++ [p.2])
       (encPair encBits encBool) encBits by fun_prop)
     (growth := 1) (fun _ _ => by simp)
   simpa only [List.foldl_append_eq_append, List.nil_append, List.flatten_eq_flatMap,
@@ -162,7 +162,7 @@ theorem listToBits : ComputableTidilyInPolyTime (fun l => l) (encList encBool) e
 /-- Repeat a fixed bit a unary number of times. -/
 @[fun_prop]
 theorem bitsReplicate (bit : Bool) :
-    ComputableTidilyInPolyTime (fun n => List.replicate n bit) encUnary encBits := by
+    ComputableInPolyTime (fun n => List.replicate n bit) encUnary encBits := by
   have h (n : ℕ) : (List.cons bit)^[n] [] = List.replicate n bit := by
     induction n with
     | zero => rfl
@@ -175,17 +175,17 @@ variable {α : Type} {input : α ↪ List Bool}
 /-- Concatenate computed raw words, fixing the intermediate list encoding before proof search. -/
 @[fun_prop]
 theorem bitsFlatten {words : α → List (List Bool)}
-    (hwords : ComputableTidilyInPolyTime words input (encList encBits)) :
-    ComputableTidilyInPolyTime (fun a => (words a).flatten) input encBits := by
+    (hwords : ComputableInPolyTime words input (encList encBits)) :
+    ComputableInPolyTime (fun a => (words a).flatten) input encBits := by
   simpa only [Function.comp_def, List.map_id_fun', id_eq] using
     listToBits.comp ((flatten encBool).comp ((map bitsToList).comp hwords))
 
 /-- Self-delimiting padding uses ordinary framing and unary arithmetic. -/
 @[fun_prop]
 theorem bitsPadWord {bound : α → ℕ} {word : α → List Bool}
-    (hbound : ComputableTidilyInPolyTime bound input encUnary)
-    (hword : ComputableTidilyInPolyTime word input encBits) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.padWord (bound a) (word a))
+    (hbound : ComputableInPolyTime bound input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => Cslib.BitString.padWord (bound a) (word a))
       input encBits := by
   unfold Cslib.BitString.padWord
   fun_prop
@@ -194,10 +194,10 @@ theorem bitsPadWord {bound : α → ℕ} {word : α → List Bool}
 @[fun_prop]
 theorem mapToBitsWithInput {β : Type} {enc : β ↪ List Bool} {list : α → List β}
     {f : α → β → Bool}
-    (hlist : ComputableTidilyInPolyTime list input (encList enc))
-    (hf : ComputableTidilyInPolyTime (fun p : α × β => f p.1 p.2)
+    (hlist : ComputableInPolyTime list input (encList enc))
+    (hf : ComputableInPolyTime (fun p : α × β => f p.1 p.2)
       (encPair input enc) encBool) :
-    ComputableTidilyInPolyTime (fun a => (list a).map (f a)) input encBits :=
+    ComputableInPolyTime (fun a => (list a).map (f a)) input encBits :=
   listToBits.comp (mapWithInput hlist hf)
 
 /-- Concatenate captured raw bit strings over a framed list. The complete intermediate words
@@ -205,10 +205,10 @@ and their framing are charged before concatenation. Apply this rule explicitly: 
 raw and framed `flatMap` outputs makes existing enumeration proof search exceed its limit. -/
 theorem flatMapToBitsWithInput {β : Type} {enc : β ↪ List Bool} {list : α → List β}
     {f : α → β → List Bool}
-    (hlist : ComputableTidilyInPolyTime list input (encList enc))
-    (hf : ComputableTidilyInPolyTime (fun p : α × β => f p.1 p.2)
+    (hlist : ComputableInPolyTime list input (encList enc))
+    (hf : ComputableInPolyTime (fun p : α × β => f p.1 p.2)
       (encPair input enc) encBits) :
-    ComputableTidilyInPolyTime (fun a => (list a).flatMap (f a)) input encBits := by
+    ComputableInPolyTime (fun a => (list a).flatMap (f a)) input encBits := by
   simpa only [List.flatten_eq_flatMap, List.flatMap_map, id_eq] using
     bitsFlatten (mapWithInput hlist hf)
 
@@ -216,9 +216,9 @@ theorem flatMapToBitsWithInput {β : Type} {enc : β ↪ List Bool} {list : α �
 charges every output bit, including leading zero digits. -/
 @[fun_prop]
 theorem bitsLow {width value : α → ℕ}
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hvalue : ComputableTidilyInPolyTime value input encNat) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.lowBits (width a) (value a))
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hvalue : ComputableInPolyTime value input encNat) :
+    ComputableInPolyTime (fun a => Cslib.BitString.lowBits (width a) (value a))
       input encBits := by
   unfold Cslib.BitString.lowBits
   exact mapToBitsWithInput (range.comp hwidth) (by fun_prop)
@@ -226,36 +226,36 @@ theorem bitsLow {width value : α → ℕ}
 /-- Map a captured Boolean operation over a raw bit string. -/
 @[fun_prop]
 theorem bitsMapWithInput {list : α → List Bool} {f : α → Bool → Bool}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (hf : ComputableTidilyInPolyTime (fun p : α × Bool => f p.1 p.2)
+    (hlist : ComputableInPolyTime list input encBits)
+    (hf : ComputableInPolyTime (fun p : α × Bool => f p.1 p.2)
       (encPair input encBool) encBool) :
-    ComputableTidilyInPolyTime (fun a => (list a).map (f a)) input encBits :=
+    ComputableInPolyTime (fun a => (list a).map (f a)) input encBits :=
   mapToBitsWithInput (bitsToList.comp hlist) hf
 
 /-- Filter a raw bit string with a predicate that may capture its original input. -/
 @[fun_prop]
 theorem bitsFilterWithInput {list : α → List Bool} {test : α → Bool → Bool}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
+    (hlist : ComputableInPolyTime list input encBits)
+    (htest : ComputableInPolyTime (fun p : α × Bool => test p.1 p.2)
       (encPair input encBool) encBool) :
-    ComputableTidilyInPolyTime (fun a => (list a).filter (test a)) input encBits :=
+    ComputableInPolyTime (fun a => (list a).filter (test a)) input encBits :=
   listToBits.comp (filterWithInput (bitsToList.comp hlist) htest)
 
 /-- Count predicate matches in a raw bit string, including a captured input. -/
 @[fun_prop]
 theorem bitsCountPWithInput {list : α → List Bool} {test : α → Bool → Bool}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
+    (hlist : ComputableInPolyTime list input encBits)
+    (htest : ComputableInPolyTime (fun p : α × Bool => test p.1 p.2)
       (encPair input encBool) encBool) :
-    ComputableTidilyInPolyTime (fun x => (list x).countP (test x)) input encUnary :=
+    ComputableInPolyTime (fun x => (list x).countP (test x)) input encUnary :=
   countPWith htest id' hlist
 
 /-- Count occurrences of a computed bit in a raw bit string. -/
 @[fun_prop]
 theorem bitsCountWithInput {list : α → List Bool} {value : α → Bool}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (hvalue : ComputableTidilyInPolyTime value input encBool) :
-    ComputableTidilyInPolyTime (fun x => (list x).count (value x)) input encUnary := by
+    (hlist : ComputableInPolyTime list input encBits)
+    (hvalue : ComputableInPolyTime value input encBool) :
+    ComputableInPolyTime (fun x => (list x).count (value x)) input encUnary := by
   simp only [List.count_eq_countP]
   apply countPWith (encA := encBool) (test := fun p : α × Bool => p.2 == value p.1)
     (hpar := id') (hlist := hlist)
@@ -264,38 +264,38 @@ theorem bitsCountWithInput {list : α → List Bool} {value : α → Bool}
 /-- Test whether any bit satisfies a captured predicate. -/
 @[fun_prop]
 theorem bitsAnyWithInput {list : α → List Bool} {test : α → Bool → Bool}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
+    (hlist : ComputableInPolyTime list input encBits)
+    (htest : ComputableInPolyTime (fun p : α × Bool => test p.1 p.2)
       (encPair input encBool) encBool) :
-    ComputableTidilyInPolyTime (fun a => (list a).any (test a)) input encBool :=
+    ComputableInPolyTime (fun a => (list a).any (test a)) input encBool :=
   anyWithEncoding htest id' hlist
 
 /-- Test whether every bit satisfies a captured predicate. -/
 @[fun_prop]
 theorem bitsAllWithInput {list : α → List Bool} {test : α → Bool → Bool}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2)
+    (hlist : ComputableInPolyTime list input encBits)
+    (htest : ComputableInPolyTime (fun p : α × Bool => test p.1 p.2)
       (encPair input encBool) encBool) :
-    ComputableTidilyInPolyTime (fun a => (list a).all (test a)) input encBool :=
+    ComputableInPolyTime (fun a => (list a).all (test a)) input encBool :=
   allWithEncoding htest id' hlist
 
 /-- A Boolean fold has constant-sized state, so no separate state bound is needed. -/
 @[fun_prop]
 theorem bitsFoldlWithInput (op : Bool → Bool → Bool) {list : α → List Bool} {init : α → Bool}
-    (hlist : ComputableTidilyInPolyTime list input encBits)
-    (hinit : ComputableTidilyInPolyTime init input encBool) :
-    ComputableTidilyInPolyTime (fun a => (list a).foldl op (init a)) input encBool :=
+    (hlist : ComputableInPolyTime list input encBits)
+    (hinit : ComputableInPolyTime init input encBool) :
+    ComputableInPolyTime (fun a => (list a).foldl op (init a)) input encBool :=
   foldl' (encA := encBool) hlist hinit (of_finite (fun p : Bool × Bool => op p.1 p.2))
     (.const 1) (fun _ _ _ => by simp)
 
 /-- Apply a fixed Boolean operation pointwise, stopping at the shorter word. -/
 @[fun_prop]
 theorem bitsZipWith (op : Bool → Bool → Bool) :
-    ComputableTidilyInPolyTime (fun p : List Bool × List Bool => p.1.zipWith op p.2)
+    ComputableInPolyTime (fun p : List Bool × List Bool => p.1.zipWith op p.2)
       (encPair encBits encBits) encBits := by
-  have hop : ComputableTidilyInPolyTime (fun p : Bool × Bool => op p.1 p.2)
+  have hop : ComputableInPolyTime (fun p : Bool × Bool => op p.1 p.2)
       (encPair encBool encBool) encBool := of_finite _
-  have h : ComputableTidilyInPolyTime (fun p : List Bool × List Bool =>
+  have h : ComputableInPolyTime (fun p : List Bool × List Bool =>
       (List.range (min p.1.length p.2.length)).map
         (fun i => op (p.1.getD i false) (p.2.getD i false)))
       (encPair encBits encBits) encBits := by fun_prop
@@ -309,14 +309,14 @@ theorem bitsZipWith (op : Bool → Bool → Bool) :
 /-- Pointwise operations on computed words, with both intermediate encodings fixed. -/
 @[fun_prop]
 theorem bitsZipWithInput (op : Bool → Bool → Bool) {left right : α → List Bool}
-    (hleft : ComputableTidilyInPolyTime left input encBits)
-    (hright : ComputableTidilyInPolyTime right input encBits) :
-    ComputableTidilyInPolyTime (fun a => (left a).zipWith op (right a)) input encBits :=
+    (hleft : ComputableInPolyTime left input encBits)
+    (hright : ComputableInPolyTime right input encBits) :
+    ComputableInPolyTime (fun a => (left a).zipWith op (right a)) input encBits :=
   (bitsZipWith op).comp (hleft.prod hright)
 
 /-- Strict majority uses filtering, length, unary multiplication and comparison. -/
 @[fun_prop]
-theorem bitsStrictMajority : ComputableTidilyInPolyTime Cslib.BitString.listStrictMajority
+theorem bitsStrictMajority : ComputableInPolyTime Cslib.BitString.listStrictMajority
     encBits encBool := by
   unfold Cslib.BitString.listStrictMajority
   fun_prop
@@ -324,8 +324,8 @@ theorem bitsStrictMajority : ComputableTidilyInPolyTime Cslib.BitString.listStri
 /-- Strict majority of computed votes fixes the intermediate raw-word encoding. -/
 @[fun_prop]
 theorem bitsStrictMajorityWithInput {votes : α → List Bool}
-    (hvotes : ComputableTidilyInPolyTime votes input encBits) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listStrictMajority (votes a))
+    (hvotes : ComputableInPolyTime votes input encBits) :
+    ComputableInPolyTime (fun a => Cslib.BitString.listStrictMajority (votes a))
       input encBool :=
   bitsStrictMajority.comp hvotes
 
@@ -333,16 +333,16 @@ theorem bitsStrictMajorityWithInput {votes : α → List Bool}
 @[fun_prop]
 theorem bitsNonpositiveMarginWithInput
     {votes : α → List Bool} {truth : α → Bool}
-    (hvotes : ComputableTidilyInPolyTime votes input encBits)
-    (htruth : ComputableTidilyInPolyTime truth input encBool) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listNonpositiveMargin (votes a) (truth a))
+    (hvotes : ComputableInPolyTime votes input encBits)
+    (htruth : ComputableInPolyTime truth input encBool) :
+    ComputableInPolyTime (fun a => Cslib.BitString.listNonpositiveMargin (votes a) (truth a))
       input encBool := by
   unfold Cslib.BitString.listNonpositiveMargin
   fun_prop
 
 /-- Generate one coordinate mask from its unary width and index. -/
 @[fun_prop]
-theorem bitsSingle : ComputableTidilyInPolyTime
+theorem bitsSingle : ComputableInPolyTime
     (fun p : ℕ × ℕ => Cslib.BitString.listSingle p.1 p.2)
     (encPair encUnary encUnary) encBits := by
   unfold Cslib.BitString.listSingle
@@ -350,20 +350,20 @@ theorem bitsSingle : ComputableTidilyInPolyTime
 
 /-- Generate all coordinate masks, charging for their quadratic total size. -/
 @[fun_prop]
-theorem bitsSingles : ComputableTidilyInPolyTime Cslib.BitString.listSingles
+theorem bitsSingles : ComputableInPolyTime Cslib.BitString.listSingles
     encUnary (encList encBits) := by
   unfold Cslib.BitString.listSingles
   fun_prop
 
 /-- Sum selected rows with a shrinking selector and an accumulator that never grows. -/
 @[fun_prop]
-theorem bitsXorSelected : ComputableTidilyInPolyTime
+theorem bitsXorSelected : ComputableInPolyTime
     (fun p : ℕ × List Bool × List (List Bool) =>
       Cslib.BitString.listXorSelected p.1 p.2.1 p.2.2)
     (encPair encUnary (encPair encBits (encList encBits))) encBits := by
   let advance (state : List Bool × List Bool) (row : List Bool) :=
     (state.1.tail, if state.1.headD false then state.2.zipWith Bool.xor row else state.2)
-  have hfold : ComputableTidilyInPolyTime
+  have hfold : ComputableInPolyTime
       (fun p : ℕ × List Bool × List (List Bool) =>
         p.2.2.foldl advance (p.2.1, List.replicate p.1 false))
       (encPair encUnary (encPair encBits (encList encBits))) (encPair encBits encBits) := by
@@ -381,14 +381,14 @@ theorem bitsXorSelected : ComputableTidilyInPolyTime
 /-- Enumerate words only when their complete encoded size is polynomially bounded.
 This does not claim polynomial time in the number of enumerated bits. -/
 theorem bitsEnumList {count : α → ℕ}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hcount : ComputableInPolyTime count input encUnary)
     {size : ℕ → ℕ} (hsize : Cslib.PolynomiallyBounded size)
     (hbudget : ∀ a, 2 ^ count a * (2 * count a + 1) ≤ size (input a).length) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.enumList (count a))
+    ComputableInPolyTime (fun a => Cslib.BitString.enumList (count a))
       input (encList encBits) := by
   let extend (values : List (List Bool)) :=
     values.flatMap (fun word => [false :: word, true :: word])
-  have hstep : ComputableTidilyInPolyTime extend (encList encBits) (encList encBits) := by
+  have hstep : ComputableInPolyTime extend (encList encBits) (encList encBits) := by
     unfold extend
     fun_prop
   have hiterate (n : ℕ) : extend^[n] [[]] = Cslib.BitString.enumList n := by
@@ -405,10 +405,10 @@ theorem bitsEnumList {count : α → ℕ}
 /-- Read a row of a computed word, including the cost of padding a short word. -/
 @[fun_prop]
 theorem bitsRowWithInput {width row : α → ℕ} {word : α → List Bool}
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hrow : ComputableTidilyInPolyTime row input encUnary)
-    (hword : ComputableTidilyInPolyTime word input encBits) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listRow (width a) (row a) (word a))
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hrow : ComputableInPolyTime row input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => Cslib.BitString.listRow (width a) (row a) (word a))
       input encBits := by
   unfold Cslib.BitString.listRow
   fun_prop
@@ -416,10 +416,10 @@ theorem bitsRowWithInput {width row : α → ℕ} {word : α → List Bool}
 /-- Extract rows from a word with polynomial-time unary dimensions. -/
 @[fun_prop]
 theorem bitsRowsWithInput {count width : α → ℕ} {word : α → List Bool}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hword : ComputableTidilyInPolyTime word input encBits) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listRows (count a) (width a) (word a))
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => Cslib.BitString.listRows (count a) (width a) (word a))
       input (encList encBits) := by
   unfold Cslib.BitString.listRows
   fun_prop
@@ -428,9 +428,9 @@ theorem bitsRowsWithInput {count width : α → ℕ} {word : α → List Bool}
 @[fun_prop]
 theorem bitsXorWithInput {α : Type} {input : α ↪ List Bool}
     {width : α → ℕ} {words : α → List (List Bool)}
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hwords : ComputableTidilyInPolyTime words input (encList encBits)) :
-    ComputableTidilyInPolyTime (fun a => Cslib.BitString.listXor (width a) (words a))
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hwords : ComputableInPolyTime words input (encList encBits)) :
+    ComputableInPolyTime (fun a => Cslib.BitString.listXor (width a) (words a))
       input encBits := by
   unfold Cslib.BitString.listXor
   fun_prop
@@ -439,9 +439,9 @@ theorem bitsXorWithInput {α : Type} {input : α ↪ List Bool}
 /-- Lexicographic comparison of equal-length words is polynomial-time. -/
 @[fun_prop]
 theorem bitsWordLt {α : Type} {input : α ↪ List Bool} {x y : α → List Bool}
-    (hx : ComputableTidilyInPolyTime x input encBits)
-    (hy : ComputableTidilyInPolyTime y input encBits) :
-    ComputableTidilyInPolyTime (fun c => Cslib.BitString.wordLt (x c) (y c)) input encBool := by
+    (hx : ComputableInPolyTime x input encBits)
+    (hy : ComputableInPolyTime y input encBits) :
+    ComputableInPolyTime (fun c => Cslib.BitString.wordLt (x c) (y c)) input encBool := by
   unfold Cslib.BitString.wordLt
   fun_prop
 
@@ -449,9 +449,9 @@ theorem bitsWordLt {α : Type} {input : α ↪ List Bool} {x y : α → List Boo
 /-- Decode arbitrary most-significant-first bit words to binary naturals. -/
 @[fun_prop]
 theorem bitsBinaryValue :
-    ComputableTidilyInPolyTime Cslib.BitString.binaryValue encBits encNat := by
+    ComputableInPolyTime Cslib.BitString.binaryValue encBits encNat := by
   simpa only [Function.comp_def, ofBits_reverse] using bitsToNat.comp bitsReverse
 
-end ComputableTidilyInPolyTime
+end ComputableInPolyTime
 
 end Turing.MultiTapeTM
