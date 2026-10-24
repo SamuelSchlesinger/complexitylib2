@@ -148,6 +148,9 @@ abbrev OrdinaryAlias {α : Type u} (f : α → α) : Prop := OrdinaryProperty f
 theorem aliasTwin {α : Type} (f : α → α) : OrdinaryAlias f := ordinarySource f
 attribute [aesop safe apply] isolated_source
 run_meta do
+  let boundHead := Expr.forallE `P (.sort .zero) (.bvar 0) .default
+  unless (← resultHead boundHead) == Name.anonymous do
+    throwError "bound proposition head must stay in a valid local context"
   let target := (← getConstInfo `ordinarySource).type
   let index : CounterpartIndex := ({} : CounterpartIndex).insert `OrdinaryProperty
     #[`ordinaryTwin, `ordinaryDuplicate, `ordinaryStronger, `ordinaryWrong]

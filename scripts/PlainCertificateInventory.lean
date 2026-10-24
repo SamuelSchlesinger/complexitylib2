@@ -107,12 +107,11 @@ def expandAliases (env : Environment) (aliases : Std.HashSet Name) (e : Expr) : 
 Proof references are evidence, never a generated-name convention or registration authority. -/
 abbrev CounterpartIndex := Std.HashMap Name (Array Name)
 
-partial def resultHead (type : Expr) : MetaM Name := do
-  match type with
-  | .forallE _ _ body _ => resultHead body
-  | .letE _ _ value body _ => resultHead (body.instantiate1 value)
-  | .mdata _ body => resultHead body
-  | _ => return (← withReducible (whnf type)).getAppFn.constName?.getD .anonymous
+partial def resultHead (type : Expr) : MetaM Name :=
+  forallTelescope type fun _ body => do
+    let body ← withReducible (whnf body)
+    if body.isForall then resultHead body else
+      return body.getAppFn.constName?.getD .anonymous
 
 def counterpartIndex (env : Environment) (modules : Std.HashSet Name)
     (plainPredicates : Array Name := equivalences.map (·.2.1)) : MetaM CounterpartIndex := do
