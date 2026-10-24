@@ -117,6 +117,25 @@ example : ComputableInPolyTime rawOnlyReverseProbe encBits encBits := by
   fail_if_success polytime
   exact .of_tidy rawOnlyReverseProbe_tidy
 
+-- An already supplied alias certificate is evidence, not a raw search request.
+example (routine : List Bool → List Bool) (h : RawAliasFull routine encBits encBits) :
+    ComputableInPolyTime routine encBits encBits := by
+  polytime
+
+/-- The reverse conversion likewise uses only an existing local plain certificate. -/
+abbrev PlainAliasFull {α β : Type*} (f : α → β)
+    (input : α ↪ List Bool) (output : β ↪ List Bool) : Prop :=
+  ComputableInPolyTime f input output
+
+example (routine : List Bool → List Bool) (h : PlainAliasFull routine encBits encBits) :
+    ComputableTidilyInPolyTime routine encBits encBits := by
+  polytime
+
+-- Local conversions do not install a global proof or unfilter later searches.
+example : ComputableInPolyTime rawOnlyReverseProbe encBits encBits := by
+  fail_if_success polytime
+  exact .of_tidy rawOnlyReverseProbe_tidy
+
 /-- Ordinary plain contracts remain a supported transition source. -/
 @[irreducible] def RoutineContract (f : List Bool → List Bool) : Prop :=
   ComputableInPolyTime f encBits encBits
