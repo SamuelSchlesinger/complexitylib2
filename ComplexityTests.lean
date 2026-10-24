@@ -245,6 +245,7 @@ import ComplexityTests.NPCompleteness
 import ComplexityTests.NPExistsAppend
 import ComplexityTests.NPWitness
 import ComplexityTests.NatBits
+import ComplexityTests.NativeCertificatePlain
 import ComplexityTests.NativeProducts
 import ComplexityTests.NaturalProofs
 import ComplexityTests.NegligibleSqrt
