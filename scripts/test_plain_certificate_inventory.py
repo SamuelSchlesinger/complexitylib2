@@ -109,6 +109,21 @@ private theorem captured_source (f : ℕ → ℕ) (hf : TidyInventoryProperty f)
   have localRoutine : TidyInventoryProperty f := hf
   exact localRoutine
 run_meta do
+  let type := mkApp (mkConst `TidyInventoryProperty) (mkConst `uniqueFunction)
+  let leaf := Expr.letE `localRoutine type (mkConst `isolated_source) (mkConst `True.intro) true
+  for depth in #[8, 16, 24] do
+    let mut dag := leaf
+    for _ in [:depth] do dag := .app dag dag
+    let (certificates, stats) := localCertificatesWithStats id `ownerA dag
+    unless certificates.size == 1 && stats.visits == depth + 3 do
+      throwError "shared DAG was revisited as a tree: {stats.visits} visits at depth {depth}"
+  let underTwoBinders := Expr.app (.lam `left (mkConst `Nat) leaf .default)
+    (.lam `right (mkConst `Nat) leaf .default)
+  unless (localCertificates id `ownerA underTwoBinders).size == 2 do
+    throwError "distinct binder contexts were merged"
+  let otherOwner := localCertificates id `ownerB leaf
+  unless otherOwner.size == 1 && otherOwner.all (fun c => c.owner == `ownerB) do
+    throwError "different owner declarations were merged"
   let bad : Std.HashSet Name := .ofArray #[`blocked]
   let entry : GeneralTheorem := { (default : GeneralTheorem) with thmName := `blocked }
   let node : Lean.Meta.RefinedDiscrTree.Trie GeneralTheorem := {
@@ -166,7 +181,7 @@ run_meta do
         assert local and all(r["declaration"]["private"] for r in local)
         assert any("localRoutine" in r["declaration"]["name"] for r in local)
         assert all(r["declaration"]["type"].count("TidyInventoryProperty") >= 2 for r in local)
-        print("Native probes passed: four databases, lazy leaves, indirect exclusion, private/local capture")
+        print("Native probes passed: contextual DAG memo, distinct owners/binders, four databases, private/local/alias capture")
 
 
 if __name__ == "__main__":
