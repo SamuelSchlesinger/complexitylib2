@@ -8,8 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
@@ -831,3 +833,123 @@ theorem zipIdx {α : Type} (enc : α ↪ List Bool) :
     fun_prop
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-! ### Plain polynomial-time automation -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Test whether any list element satisfies a predicate that captures the original input. -/
+@[fun_prop]
+theorem anyWithInput {α : Type}
+    {γ : Type}
+    {encA : α ↪ List Bool}
+    {encIn : γ ↪ List Bool}
+    {test : γ → α → Bool}
+    {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (htest : ComputableInPolyTime (fun (p : γ × α) => test p.1 p.2)
+  (encPair encIn encA) encBool) :
+    ComputableInPolyTime (fun (x : γ) => (list x).any (test x)) encIn
+  encBool :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWithInput α γ encA encIn test list
+      hlist.tidy htest.tidy)
+
+/-- Reverse a raw bit string using an accumulator that grows by one bit per step. -/
+@[fun_prop]
+theorem bitsReverse :
+    ComputableInPolyTime List.reverse encBits
+  encBits :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsReverse
+
+/-- The encoded input length, computed in unary by reading the input word. -/
+@[fun_prop]
+theorem encoding_length {α : Type}
+    (enc : α ↪ List Bool) :
+    ComputableInPolyTime
+  (fun (a : α) => ((enc : α → List Bool) a).length) enc encUnary :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.encoding_length α enc)
+
+/-- Filter with a predicate that captures the original input. -/
+@[fun_prop]
+theorem filterWithInput {α : Type}
+    {γ : Type}
+    {encA : α ↪ List Bool}
+    {encIn : γ ↪ List Bool}
+    {test : γ → α → Bool}
+    {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (htest : ComputableInPolyTime (fun (p : γ × α) => test p.1 p.2)
+  (encPair encIn encA) encBool) :
+    ComputableInPolyTime (fun (x : γ) => List.filter (test x) (list x))
+  encIn (encList encA) :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.filterWithInput α γ encA encIn test
+      list hlist.tidy htest.tidy)
+
+/-- Concatenate lists computed jointly from the original input and each list element.
+Like `mapWithInput`, this is a composition rule for `fun_prop`. -/
+@[fun_prop]
+theorem flatMapWithInput {α : Type}
+    {β : Type}
+    {γ : Type}
+    {encA : α ↪ List Bool}
+    {encB : β ↪ List Bool}
+    {encIn : γ ↪ List Bool}
+    {f : γ → α → List β}
+    {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (hf : ComputableInPolyTime (fun (p : γ × α) => f p.1 p.2)
+  (encPair encIn encA) (encList encB)) :
+    ComputableInPolyTime (fun (x : γ) => List.flatMap (f x) (list x))
+  encIn (encList encB) :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWithInput α β γ encA encB encIn
+      f list hlist.tidy hf.tidy)
+
+/-- Read an optional head in any list encoding, without an inhabitant of the element type. -/
+@[fun_prop]
+theorem head? {α : Type}
+    (enc : α ↪ List Bool)
+    {encL : List α ↪ List Bool}
+    [_inst3 : ListEncoding enc encL] :
+    ComputableInPolyTime List.head? encL
+  (encOption enc) :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.head? α enc encL _inst3)
+
+/-- Read the head of any list encoding with a fixed fallback. -/
+@[fun_prop]
+theorem headD {α : Type}
+    {encA : α ↪ List Bool}
+    {encL : List α ↪ List Bool}
+    [_inst3 : ListEncoding encA encL]
+    (fallback : α) :
+    ComputableInPolyTime (fun (list : List α) => list.headD fallback)
+  encL encA :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.headD α encA encL _inst3 fallback)
+
+/-- Length of a raw bit string. -/
+@[fun_prop]
+theorem length_bits :
+    ComputableInPolyTime (fun (l : List Bool) => l.length)
+  encBits encUnary :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.length_bits
+
+/-- Map a function that also uses the original input. A single joint certificate in the input
+and list element makes the cost uniform across all elements. The list certificate is supplied
+first so that `fun_prop` can infer its element encoding before checking the body. -/
+@[fun_prop]
+theorem mapWithInput {α : Type}
+    {β : Type}
+    {γ : Type}
+    {encA : α ↪ List Bool}
+    {encB : β ↪ List Bool}
+    {encIn : γ ↪ List Bool}
+    {f : γ → α → β}
+    {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (hf : ComputableInPolyTime (fun (p : γ × α) => f p.1 p.2)
+  (encPair encIn encA) encB) :
+    ComputableInPolyTime (fun (x : γ) => List.map (f x) (list x)) encIn
+  (encList encB) :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput α β γ encA encB encIn f
+      list hlist.tidy hf.tidy)
+
+end Turing.MultiTapeTM.ComputableInPolyTime

@@ -8,12 +8,14 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.ParityP
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Foundations.Data.BitString.List
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.Order.PiLex
 public import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
@@ -545,5 +547,20 @@ theorem computableTidilyInPolyTime_sharpTest {V : (α × List Bool) × List Bool
       input encBool := by
   unfold sharpTest
   fun_prop
+
+
+/-- Toda's counting verifier has a plain polynomial-time certificate with the same captured
+input, two unary width parameters and word encoding as its machine-construction certificate. -/
+@[fun_prop]
+theorem computableInPolyTime_sharpTest {V : (α × List Bool) × List Bool → Bool}
+    (hV : ComputableInPolyTime V (encPair (encPair enc encBits) encBits) encBool)
+    {a : γ → α} {R Z : γ → ℕ} {w : γ → List Bool}
+    (ha : ComputableInPolyTime a input enc)
+    (hR : ComputableInPolyTime R input encUnary)
+    (hZ : ComputableInPolyTime Z input encUnary)
+    (hw : ComputableInPolyTime w input encBits) :
+    ComputableInPolyTime (fun c => sharpTest (fun r z => V ((a c, r), z)) (R c) (Z c) (w c))
+      input encBool :=
+  .of_tidy (computableTidilyInPolyTime_sharpTest hV.tidy ha.tidy hR.tidy hZ.tidy hw.tidy)
 
 end Cslib.Complexity.Toda

@@ -8,12 +8,14 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Foundations.Data.BitString.List.Operations
 public import Complexity.Foundations.Data.BitString.List.Binary
 public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Data.BitString.WordCount
 public import Complexity.Computability.BitString.Padding
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -455,3 +457,24 @@ theorem bitsBinaryValue :
 end ComputableTidilyInPolyTime
 
 end Turing.MultiTapeTM
+
+/-! ### Plain polynomial-time automation -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Test whether any bit satisfies a captured predicate. -/
+@[fun_prop]
+theorem bitsAnyWithInput {α : Type}
+    {input : α ↪ List Bool}
+    {list : α → List Bool}
+    {test : α → Bool → Bool}
+    (hlist : ComputableInPolyTime list input encBits)
+    (htest : ComputableInPolyTime (fun (p : α × Bool) => test p.1 p.2)
+  (encPair input encBool)
+  encBool) :
+    ComputableInPolyTime (fun (a : α) => (list a).any (test a)) input
+  encBool :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsAnyWithInput α input list test
+      hlist.tidy htest.tidy)
+
+end Turing.MultiTapeTM.ComputableInPolyTime

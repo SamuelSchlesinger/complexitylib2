@@ -1,0 +1,76 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import Complexity.Computability.Complexity.Classes.Toda.Counting
+
+/-! Direct clients of the ordinary plain rules. Disabling transitions here ensures a missing
+plain operation cannot be hidden by the legacy tidy-to-plain transition. -/
+
+open Turing.MultiTapeTM
+
+namespace ComplexityTests.PlainAutomationSupport
+
+example : ComputableInPolyTime (fun values : List Bool => values.headD false)
+    encBits encBool := by
+  exact ComputableInPolyTime.headD false
+
+-- Membership and captured filtering work as written, rather than through a rewritten scan.
+example : ComputableInPolyTime
+    (fun p : List ℕ × List ℕ => p.1.filter fun x => decide (x ∉ p.2))
+    (encPair (encList encNat) (encList encNat)) (encList encNat) := by
+  simp only [decide_not]
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+example : ComputableInPolyTime
+    (fun G : List ℕ × List (ℕ × ℕ) => G.1.flatMap fun u =>
+      (G.1.filter fun v => decide (u ≠ v ∧ (u, v) ∉ G.2 ∧ (v, u) ∉ G.2)).map fun v => (u, v))
+    (encPair (encList encNat) (encList (encPair encNat encNat)))
+    (encList (encPair encNat encNat)) := by
+  simp only [Bool.decide_and, decide_not]
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+-- The exponent is unary; the binary output may have length linear in that unary input.
+example {α : Type} {enc : α ↪ List Bool} {k : α → ℕ}
+    (hk : ComputableInPolyTime k enc encNat) (q : Polynomial ℕ) :
+    ComputableInPolyTime (fun a => 3 * (k a * 2 ^ q.eval (enc a).length)) enc encNat := by
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+-- Raw bits and framed Boolean lists retain distinct input certificates.
+example {α : Type} {enc : α ↪ List Bool} (values : α → List Bool) (test : α → Bool → Bool)
+    (hvalues : ComputableInPolyTime values enc encBits)
+    (htest : ComputableInPolyTime (fun p : α × Bool => test p.1 p.2)
+      (encPair enc encBool) encBool) :
+    ComputableInPolyTime (fun a => (values a).any (test a)) enc encBool := by
+  fail_if_success (clear hvalues; fun_prop (config := { maxTransitionDepth := 0 }))
+  fail_if_success (clear htest; fun_prop (config := { maxTransitionDepth := 0 }))
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+example {α : Type} {enc : α ↪ List Bool} (values : α → List Bool) (test : α → Bool → Bool)
+    (hvalues : ComputableInPolyTime values enc (encList encBool))
+    (htest : ComputableInPolyTime (fun p : α × Bool => test p.1 p.2)
+      (encPair enc encBool) encBool) :
+    ComputableInPolyTime (fun a => (values a).any (test a)) enc encBool := by
+  exact ComputableInPolyTime.anyWithInput hvalues htest
+
+-- The domain endpoint keeps its complete deterministic callback and unary parameter contracts.
+example {α : Type} {enc : α ↪ List Bool} {V : (α × List Bool) × List Bool → Bool}
+    (hV : ComputableInPolyTime V (encPair (encPair enc encBits) encBits) encBool)
+    (R Z : Polynomial ℕ) :
+    ComputableInPolyTime (fun x : α × List Bool =>
+      Cslib.Complexity.Toda.sharpTest (fun r z => V ((x.1, r), z)) (R.eval (enc x.1).length)
+        (Z.eval (enc x.1).length) x.2) (encPair enc encBits) encBool := by
+  apply Cslib.Complexity.Toda.computableInPolyTime_sharpTest hV
+  · exact ComputableInPolyTime.fst enc encBits
+  · exact (ComputableInPolyTime.unary_eval R).comp
+      ((ComputableInPolyTime.encoding_length enc).comp (ComputableInPolyTime.fst enc encBits))
+  · exact (ComputableInPolyTime.unary_eval Z).comp
+      ((ComputableInPolyTime.encoding_length enc).comp (ComputableInPolyTime.fst enc encBits))
+  · exact ComputableInPolyTime.snd enc encBits
+
+end ComplexityTests.PlainAutomationSupport
