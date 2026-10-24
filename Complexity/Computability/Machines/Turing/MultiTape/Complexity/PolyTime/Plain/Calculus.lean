@@ -3327,23 +3327,7 @@ theorem zipIdx
 
 end Turing.MultiTapeTM.ComputableInPolyTime
 
-namespace Turing.MultiTapeTM.EncodingEquiv
 
-/-- Polynomial-time computability does not depend on the encodings, up to equivalence. -/
-theorem computableInPolyTime_iff.{u_1, u_2}
-    {α : Type u_1}
-    {β : Type u_2}
-    {encIn encIn' : α ↪ List Bool}
-    {encOut encOut' : β ↪ List Bool}
-    (hIn : EncodingEquiv encIn encIn')
-    (hOut : EncodingEquiv encOut encOut')
-    {f : α → β} :
-    ComputableInPolyTime f encIn encOut ↔
-      ComputableInPolyTime f encIn' encOut' := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @EncodingEquiv.computableTidilyInPolyTime_iff α β encIn encIn' encOut encOut' hIn hOut f
-
-end Turing.MultiTapeTM.EncodingEquiv
 
 attribute [fun_prop] computableInPolyTime_succ
 attribute [fun_prop] ComputableInPolyTime.fstWithEncoding

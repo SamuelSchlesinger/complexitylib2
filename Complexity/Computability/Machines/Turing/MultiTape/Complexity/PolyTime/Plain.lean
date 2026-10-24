@@ -225,10 +225,6 @@ theorem polyBounded_length {f : α → β} (h : ComputableInPolyTime f encIn enc
     PolyBounded (fun a => (encIn a).length) fun a => (encMid (f a)).length :=
   h.tidy.polyBounded_length
 
-theorem comp {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
-    (hg : ComputableInPolyTime g encIn encMid) : ComputableInPolyTime (f ∘ g) encIn encOut :=
-  .of_tidy (hf.tidy.comp hg.tidy)
-
 theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
     {enc₂ : β₂ ↪ List Bool} {enc : β₁ × β₂ ↪ List Bool} [PairEncoding enc₁ enc₂ enc]
     {f : α → β₁} {g : α → β₂} (hf : ComputableInPolyTime f encIn enc₁)

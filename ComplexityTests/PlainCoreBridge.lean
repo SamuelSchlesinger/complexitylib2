@@ -33,3 +33,14 @@ example {α β γ : Type*} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
   obtain ⟨T, hT, ht⟩ := ht
   obtain ⟨S, hS, hs⟩ := hs
   exact Internal.forgetPolyTime hT hS (h.mono ht hs)
+
+example {α β : Type*} {encA encA' : α ↪ List Bool} {encB encB' : β ↪ List Bool}
+    (hA : EncodingEquiv encA encA') (hB : EncodingEquiv encB encB') {f : α → β}
+    (hf : ComputableInPolyTime f encA encB) : ComputableInPolyTime f encA' encB' :=
+  (EncodingEquiv.computableInPolyTime_iff hA hB).mp hf
+
+example {α : Type*} {encA encB encC : α ↪ List Bool}
+    (hAB : EncodingEquiv encA encB) (hBC : EncodingEquiv encB encC) :
+    EncodingEquiv encA encC := hAB.trans hBC
+
+example {α : Type*} (enc : α ↪ List Bool) : EncodingEquiv enc enc := .refl enc
