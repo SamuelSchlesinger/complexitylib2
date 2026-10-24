@@ -14,7 +14,7 @@ import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Counting
 import Mathlib.Data.List.GetD
 
 /-!

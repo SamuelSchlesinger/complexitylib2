@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.TreeEval.Basic
 public import Mathlib.Data.List.OfFn
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Append
 
 /-!
 # Bit encodings of Tree Evaluation instances
