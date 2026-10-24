@@ -23,7 +23,7 @@ time and space.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.eq`: equality, for any encoding.
+* `Turing.MultiTapeTM.ComputableInDegree.eq`: equality, for any encoding.
 * successor, predecessor and zero test in unary, and adding one or subtracting one on integers.
 -/
 
@@ -38,19 +38,19 @@ namespace Turing.MultiTapeTM
 @[simp]
 public lemma encUnary_apply (n : ℕ) : encUnary n = List.replicate n true := rfl
 
-namespace ComputableTidilyInDegree
+namespace ComputableInDegree
 
-public theorem unary_succ : ComputableTidilyInDegree (· + 1) encUnary encUnary 1 1 :=
+public theorem unary_succ : ComputableInDegree (· + 1) encUnary encUnary 1 1 :=
   .of_linear (.of_cons_true fun n => by simp [List.replicate_succ])
 
-public theorem unary_pred : ComputableTidilyInDegree (· - 1) encUnary encUnary 1 1 :=
+public theorem unary_pred : ComputableInDegree (· - 1) encUnary encUnary 1 1 :=
   .of_linear (.of_tail fun n => by cases n <;> simp [List.replicate_succ])
 
 public theorem unary_isZero :
-    ComputableTidilyInDegree (fun n => decide (n = 0)) encUnary encBool 1 1 :=
+    ComputableInDegree (fun n => decide (n = 0)) encUnary encBool 1 1 :=
   .of_linear (.of_isEmpty fun n => by cases n <;> simp [List.replicate_succ])
 
-end ComputableTidilyInDegree
+end ComputableInDegree
 
 /-! ### Integers -/
 
@@ -121,10 +121,10 @@ lemma run_copy (T : Transducer Bool (Fin 3)) (hT : ∀ b, T.step 2 b = (2, [b]))
 
 end EncInt
 
-namespace ComputableTidilyInDegree
+namespace ComputableInDegree
 
 open EncInt in
-public theorem int_succ : ComputableTidilyInDegree (· + 1) encInt encInt 1 1 := by
+public theorem int_succ : ComputableInDegree (· + 1) encInt encInt 1 1 := by
   refine .of_linear (succT.computableInLinearTimeAndSpace fun z => ?_)
   have hc := run_copy succT (fun b => by cases b <;> rfl) rfl
   rcases z with n | _ | n
@@ -134,7 +134,7 @@ public theorem int_succ : ComputableTidilyInDegree (· + 1) encInt encInt 1 1 :=
     simp [hc, List.replicate_succ]
 
 open EncInt in
-public theorem int_pred : ComputableTidilyInDegree (· - 1) encInt encInt 1 1 := by
+public theorem int_pred : ComputableInDegree (· - 1) encInt encInt 1 1 := by
   refine .of_linear (predT.computableInLinearTimeAndSpace fun z => ?_)
   have hc := run_copy predT (fun b => by cases b <;> rfl) rfl
   rcases z with (_ | n) | n
@@ -142,7 +142,7 @@ public theorem int_pred : ComputableTidilyInDegree (· - 1) encInt encInt 1 1 :=
   · simp [hc]
   · simp [hc, List.replicate_succ]
 
-end ComputableTidilyInDegree
+end ComputableInDegree
 
 /-! ### Equality -/
 
@@ -170,10 +170,10 @@ public lemma foldl_result (l r : List Bool) (ok : Bool) :
 
 end EqWords
 
-namespace ComputableTidilyInDegree
+namespace ComputableInDegree
 
 /-- A step of comparing words. -/
-public theorem eqWordsStep : ComputableTidilyInDegree (fun q : (List Bool × Bool) × Bool =>
+public theorem eqWordsStep : ComputableInDegree (fun q : (List Bool × Bool) × Bool =>
     EqWords.step q.1 q.2) (encPair (encPair encBits encBool) encBool) (encPair encBits encBool)
     1 1 := by
   -- the rest of the second word, and the facts it is compared by
@@ -189,7 +189,7 @@ public theorem eqWordsStep : ComputableTidilyInDegree (fun q : (List Bool × Boo
 
 /-- The result of comparing words, from the state after the last step. -/
 public theorem eqWordsResult :
-    ComputableTidilyInDegree (fun s : List Bool × Bool => s.2 && s.1.isEmpty)
+    ComputableInDegree (fun s : List Bool × Bool => s.2 && s.1.isEmpty)
       (encPair encBits encBool) encBool 1 0 :=
   ((of_finite (encIn := encPair encBool encBool) (encMid := encBool)
     fun t : Bool × Bool => t.1 && t.2).comp ((snd encBits encBool).prod
@@ -197,9 +197,9 @@ public theorem eqWordsResult :
 
 /-- Equality of words. -/
 public theorem eqWords :
-    ComputableTidilyInDegree (fun p : List Bool × List Bool => decide (p.1 = p.2))
+    ComputableInDegree (fun p : List Bool × List Bool => decide (p.1 = p.2))
       (encPair encBits encBits) encBool 2 0 := by
-  have hfold := ComputableTidilyInDegree.foldl' (encA := encBool) (encL := encBits)
+  have hfold := ComputableInDegree.foldl' (encA := encBool) (encL := encBits)
     (encB := encPair encBits encBool) (fst encBits encBits)
     ((snd encBits encBits).prod (const true)) eqWordsStep
     (B := fun p => 2 * (encPair encBits encBits p).length + 2)
@@ -211,22 +211,22 @@ public theorem eqWords :
       simp only [encPair_apply, encBits_apply, encBool_apply, List.length_append, length_frame,
         List.length_drop, List.length_singleton]
       omega)
-  have h : ComputableTidilyInDegree (_ ∘ _) _ encBool 2 0 := (eqWordsResult.comp hfold).mono
+  have h : ComputableInDegree (_ ∘ _) _ encBool 2 0 := (eqWordsResult.comp hfold).mono
   convert h using 1
   funext p
   simpa using (EqWords.foldl_result p.1 p.2 true).symm
 
 /-- Equality, for any encoding. -/
 public theorem eq {α : Type} [DecidableEq α] (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun p : α × α => decide (p.1 = p.2)) (encPair enc enc) encBool
+    ComputableInDegree (fun p : α × α => decide (p.1 = p.2)) (encPair enc enc) encBool
       2 0 := by
-  have h : ComputableTidilyInDegree (_ ∘ _) _ encBool 2 0 := (eqWords.comp (of_eq
+  have h : ComputableInDegree (_ ∘ _) _ encBool 2 0 := (eqWords.comp (of_eq
     (f := fun p : α × α => (enc p.1, enc p.2)) (encIn := encPair enc enc)
     (encMid := encPair encBits encBits) fun _ => rfl)).mono
   convert h using 1
   funext p
   simp [enc.injective.eq_iff]
 
-end ComputableTidilyInDegree
+end ComputableInDegree
 
 end Turing.MultiTapeTM

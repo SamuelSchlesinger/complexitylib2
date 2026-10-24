@@ -18,20 +18,20 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 
 `n !` is computable in binary from `n` in unary in polynomial time, by multiplying `1, 2, …, n`:
 each factor has at most `n` bits, so the running product grows by at most `n` bits per step
-(`Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldlWith_of_bounded_growth`).
+(`Turing.MultiTapeTM.ComputableInPolyTime.foldlWith_of_bounded_growth`).
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_factorial`: `n !` in binary.
+* `Turing.MultiTapeTM.ComputableInPolyTime.binary_factorial`: `n !` in binary.
 -/
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- `n !` in binary, from `n` in unary, by multiplying `1, 2, …, n`. -/
 @[fun_prop]
-theorem binary_factorial : ComputableTidilyInPolyTime Nat.factorial encUnary encNat := by
+theorem binary_factorial : ComputableInPolyTime Nat.factorial encUnary encNat := by
   have hfold (n : ℕ) : (List.range n).foldl (fun acc i => acc * (i + 1)) 1 = n.factorial := by
     induction n with
     | zero => rfl
@@ -43,7 +43,7 @@ theorem binary_factorial : ComputableTidilyInPolyTime Nat.factorial encUnary enc
     (init := fun _ => 1) (step := fun (_ : ℕ) acc i => acc * (i + 1))
     id' range (const 1)
     (binary_mul' ((snd _ _).comp (fst _ _))
-      (computableTidilyInPolyTime_succ.comp (unary_to_binary.comp (snd _ _)))) (growth := id)
+      (binary_add.comp ((unary_to_binary.comp (snd _ _)).prod (const 1)))) (growth := id)
     (PolyBounded.of_forall_le 1 1 fun n => by simp)
     (fun n acc i hi => by
       rw [encNat_apply, encNat_apply, Nat.size_eq_bits_len, Nat.size_eq_bits_len, id]
@@ -53,4 +53,4 @@ theorem binary_factorial : ComputableTidilyInPolyTime Nat.factorial encUnary enc
       omega)
   simpa only [hfold] using h
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime

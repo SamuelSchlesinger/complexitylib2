@@ -16,8 +16,9 @@ public import Cslib.Foundations.Data.Fin.Tuple
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
-import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
-import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial
 import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Basic
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
@@ -416,6 +417,59 @@ theorem ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace {α β : 
   rw [e₁, e₂]
   exact Nat.add_le_add this (by generalize 4 * k * k = m; omega)
 
+
+/-- `f` is tidily computable within time `O(T a)` and space `O(S a)` on the input `a`, and its
+encoded value has length `O(S a)`. -/
+public def ComputableTidilyInO {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
+  ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut (fun a => c * (T a + 1))
+    (fun a => c * (S a + 1)) ∧ ∀ a, (encOut (f a)).length ≤ c * (S a + 1)
+
+
+/-- `f` is tidily computable within time `O(T a)` and space `O(S a)` on the input `a`. Unlike
+`Turing.MultiTapeTM.ComputableTidilyInO`, nothing is said of the length of the encoded value. -/
+public def ComputableTidilyInBigO {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
+  ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut (fun a => c * (T a + 1))
+    fun a => c * (S a + 1)
+
+/-- `f` is tidily computable within time and space bounded by polynomials of degree `d` in the
+length of the encoded input, and its encoded values have length bounded by a polynomial of
+degree `e`. -/
+public def ComputableTidilyInDegree {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (d e : ℕ) : Prop :=
+  (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
+    DegreeBounded (fun a => (encIn a).length) s d ∧
+    ComputableTidilyInTimeAndSpace f encIn encOut t s) ∧
+  DegreeBounded (fun a => (encIn a).length) (fun a => (encOut (f a)).length) e
+
+
+/-- `f` is tidily computable within time and space bounded by a polynomial in the length of the
+encoded input. -/
+public def ComputableTidilyInPolyTime {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) : Prop :=
+  ∃ t s, PolyBounded (fun a => (encIn a).length) t ∧ PolyBounded (fun a => (encIn a).length) s ∧
+    ComputableTidilyInTimeAndSpace f encIn encOut t s
+
+
+
+-- Transitional registration while the remaining topic providers are being cut over.
+attribute [fun_prop] ComputableTidilyInPolyTime
+
+
+
+/-- `f` is tidily computable within some time and within space polynomially bounded in the length
+of the encoded input. -/
+public def ComputableTidilyInPolySpace {α β : Type} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) : Prop :=
+  ∃ T S, PolyBounded (fun a => (encIn a).length) S ∧ ComputableTidilyInO f encIn encOut T S
+
+/-- `f` is tidily computable within space `O(S a)` on the input `a`, and its encoded value has
+length `O(S a)`, in some time. -/
+public def ComputableTidilyInSpace {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (S : α → ℕ) : Prop :=
+  ∃ T, ComputableTidilyInO f encIn encOut T S
+
 end Turing.MultiTapeTM
 
 namespace Turing.MultiTapeTM.Internal
@@ -446,8 +500,9 @@ end Turing.MultiTapeTM.Internal
 namespace Turing.MultiTapeTM.Internal
 
 /-- Normalization preserves both cost degree `d` and the independent encoded-output degree `e`,
-including degree zero. This is a private machine witness, not a public tidy certificate. -/
-private theorem normalizeDegree {α β : Type*} {f : α → β}
+including degree zero. This raw construction operation has no automatic proof-search
+registration. -/
+public theorem normalizeDegree {α β : Type*} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {d e : ℕ}
     (h : ComputableInDegree f encIn encOut d e) :
     (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
@@ -459,8 +514,9 @@ private theorem normalizeDegree {α β : Type*} {f : α → β}
   exact ⟨⟨_, _, ((ht.smul 2).add (hs.smul 3)).add_const c,
     (hs.add_const 1).smul c, hc⟩, ho⟩
 
-/-- Forget a normalized degree witness while preserving its output-growth certificate. -/
-private theorem forgetDegree {α β : Type*} {f : α → β}
+/-- Forget a normalized degree witness while preserving its output-growth certificate.
+This raw construction operation has no automatic proof-search registration. -/
+public theorem forgetDegree {α β : Type*} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {d e : ℕ}
     (h : (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
       DegreeBounded (fun a => (encIn a).length) s d ∧
@@ -470,8 +526,9 @@ private theorem forgetDegree {α β : Type*} {f : α → β}
   obtain ⟨⟨t, s, ht, hs, h⟩, ho⟩ := h
   exact ⟨⟨t, s, ht, hs, h.computableInTimeAndSpace⟩, ho⟩
 
-/-- Normalize a common linear bound, absorbing cleanup in an explicit constant. -/
-private theorem normalizeLinear {α β : Type*} {f : α → β}
+/-- Normalize a common linear bound, absorbing cleanup in an explicit constant.
+This raw construction operation has no automatic proof-search registration. -/
+public theorem normalizeLinear {α β : Type*} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
     (h : ComputableInLinearTimeAndSpace f encIn encOut) :
     ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
@@ -545,5 +602,39 @@ private theorem forgetBigO {α β : Type*} {f : α → β}
     ComputableInBigO f encIn encOut T S := by
   obtain ⟨c, h⟩ := h
   exact ⟨c, h.computableInTimeAndSpace⟩
+
+/-- Normalize charged bounds while preserving the independent time and workspace bounds and
+encoded-output charge. This witness operation is not registered for automated search. -/
+public theorem normalizeO {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ}
+    (h : ComputableInO f encIn encOut T S) : ComputableTidilyInO f encIn encOut T S := by
+  obtain ⟨c, h, hl⟩ := h
+  obtain ⟨d, hd⟩ := normalizeBigO ⟨c, h⟩
+  refine ⟨d + c, hd.mono (fun a => ?_) (fun a => ?_), fun a => (hl a).trans ?_⟩ <;>
+    exact Nat.mul_le_mul_right _ (by omega)
+
+/-- Forget a charged raw witness without changing its time, workspace, or output bound. -/
+public theorem forgetO {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ}
+    (h : ComputableTidilyInO f encIn encOut T S) : ComputableInO f encIn encOut T S := by
+  obtain ⟨c, h, hl⟩ := h
+  exact ⟨c, h.computableInTimeAndSpace, hl⟩
+
+/-- Charged plain and raw witnesses express the same independent asymptotic bounds. -/
+public theorem plainO_iff_raw {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ} :
+    ComputableInO f encIn encOut T S ↔ ComputableTidilyInO f encIn encOut T S :=
+  ⟨normalizeO, forgetO⟩
+
+/-- Polynomial plain and raw witnesses agree; normalization remains proof-local. -/
+public theorem plainPolyTime_iff_raw {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} :
+    ComputableInPolyTime f encIn encOut ↔ ComputableTidilyInPolyTime f encIn encOut := by
+  constructor
+  · intro h
+    obtain ⟨t, s, ht, hs, h⟩ := normalizePolyTime h
+    exact ⟨_, _, .of_polynomiallyBounded _ ht, .of_polynomiallyBounded _ hs, h⟩
+  · rintro ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, h⟩
+    exact ⟨T, S, hT, hS, h.computableInTimeAndSpace.mono ht hs⟩
 
 end Turing.MultiTapeTM.Internal

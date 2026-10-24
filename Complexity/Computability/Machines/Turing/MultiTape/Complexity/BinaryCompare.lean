@@ -18,27 +18,27 @@ linear in the value `a` and work space linear in the lengths of the binary encod
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInO.natSub`: truncated subtraction in binary.
-* `Turing.MultiTapeTM.ComputableTidilyInO.natLt`: the strict order in binary.
+* `Turing.MultiTapeTM.ComputableInO.natSub`: truncated subtraction in binary.
+* `Turing.MultiTapeTM.ComputableInO.natLt`: the strict order in binary.
 -/
 
 @[expose] public section
 
 namespace Turing.MultiTapeTM
 
-namespace ComputableTidilyInO
+namespace ComputableInO
 
 theorem iterate_sub_one (k n : ℕ) : (· - 1)^[k] n = n - k := Nat.pred_iterate n k
 
 /-- **Truncated subtraction in binary**, `b - a` from `(a, b)`. -/
 public theorem natSub :
-    ComputableTidilyInO (fun p : ℕ × ℕ => p.2 - p.1) (encPair encNat encNat) encNat
+    ComputableInO (fun p : ℕ × ℕ => p.2 - p.1) (encPair encNat encNat) encNat
       (fun p => (p.1 + 1) * ((encPair encNat encNat p).length + 1) ^ 2)
       fun p => (encPair encNat encNat p).length + 1 := by
-  have hfst : ComputableTidilyInO (fun p : ℕ × ℕ => p.1) (encPair encNat encNat) encNat
+  have hfst : ComputableInO (fun p : ℕ × ℕ => p.1) (encPair encNat encNat) encNat
       (fun p => (encPair encNat encNat p).length) fun p => (encPair encNat encNat p).length :=
     fst encNat encNat
-  have hsnd : ComputableTidilyInO (fun p : ℕ × ℕ => p.2) (encPair encNat encNat) encNat
+  have hsnd : ComputableInO (fun p : ℕ × ℕ => p.2) (encPair encNat encNat) encNat
       (fun p => (encPair encNat encNat p).length) fun p => (encPair encNat encNat p).length :=
     snd encNat encNat
   have hle (p : ℕ × ℕ) (k : ℕ) : (encNat ((· - 1)^[k] p.2)).length ≤ (encNat p.2).length := by
@@ -57,12 +57,12 @@ public theorem natSub :
 
 /-- **The strict order in binary.** -/
 public theorem natLt :
-    ComputableTidilyInO (fun p : ℕ × ℕ => decide (p.1 < p.2)) (encPair encNat encNat) encBool
+    ComputableInO (fun p : ℕ × ℕ => decide (p.1 < p.2)) (encPair encNat encNat) encBool
       (fun p => (p.1 + 1) * ((encPair encNat encNat p).length + 1) ^ 2)
       fun p => (encPair encNat encNat p).length + 1 := by
-  have hnot : ComputableTidilyInO (fun b : Bool => !b) encBool encBool
+  have hnot : ComputableInO (fun b : Bool => !b) encBool encBool
       (fun b => (encBool b).length) fun b => (encBool b).length :=
-    (ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encBool) _).inO_one
+    (ComputableInDegree.of_finite (encIn := encBool) (encMid := encBool) _).inO_one
   have h := hnot.comp (natIsZero.comp natSub)
   refine (h.mono 4 (fun p => ?_) fun p => ?_).of_enc_eq fun p => ?_
   · have := length_encNat_mono (Nat.sub_le p.2 p.1)
@@ -80,6 +80,6 @@ public theorem natLt :
     congr 1
     by_cases h : p.1 < p.2 <;> simp [h] <;> omega
 
-end ComputableTidilyInO
+end ComputableInO
 
 end Turing.MultiTapeTM

@@ -23,8 +23,8 @@ the second factor shifted by the digits read, adding the shifted factor for ever
 
 ## Main results
 
-* `Turing.MultiTapeTM.computableTidilyInDegree_add`: addition in quadratic time and space.
-* `Turing.MultiTapeTM.computableTidilyInDegree_mul`: multiplication in cubic time and space.
+* `Turing.MultiTapeTM.computableInDegree_add`: addition in quadratic time and space.
+* `Turing.MultiTapeTM.computableInDegree_mul`: multiplication in cubic time and space.
 -/
 
 namespace Turing.MultiTapeTM
@@ -96,14 +96,14 @@ lemma length_foldl_addStep (l : List Bool) (s : Bool × List Bool × List Bool) 
 
 end NatAdd
 
-open NatAdd ComputableTidilyInDegree
+open NatAdd ComputableInDegree
 
-/-- **Addition is tidily computable in quadratic time and space**, in the binary encoding. -/
-public theorem computableTidilyInDegree_add :
-    ComputableTidilyInDegree (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat 2 1 := by
+/-- **Addition is computable in quadratic time and space**, in the binary encoding. -/
+public theorem computableInDegree_add :
+    ComputableInDegree (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat 2 1 := by
   let encS := encPair encBool (encPair encBits encBits)
   -- a round of the first fold
-  have hstep : ComputableTidilyInDegree (fun p : _ × Bool => addStep p.1 p.2)
+  have hstep : ComputableInDegree (fun p : _ × Bool => addStep p.1 p.2)
       (encPair encS encBool) encS 1 1 := by
     have hs := fst encS encBool
     have hr := hs.snd'.fst'
@@ -132,7 +132,7 @@ public theorem computableTidilyInDegree_add :
       encNat_apply, List.length_take, List.length_nil] at h₁ h₂ ⊢
     omega
   -- the second fold adds the carry to the rest of the second summand
-  have hfin : ComputableTidilyInDegree (fun s : Bool × List Bool × List Bool =>
+  have hfin : ComputableInDegree (fun s : Bool × List Bool × List Bool =>
       succFinish (s.2.1.foldl succStep (s.1, s.2.2))) encS encBits 2 1 := by
     have hs := of_eq (encIn := encS) (encMid := encS) (f := id) fun _ => rfl
     refine ((of_linear linear_succFinish).comp (foldl' (encL := encBits) (encB := encAcc)
@@ -179,13 +179,13 @@ lemma size_le_of_le {x n : ℕ} (i : ℕ) (h : x ≤ 2 ^ i * n) : x.size ≤ i +
 end NatMul
 
 open NatMul in
-/-- **Multiplication is tidily computable in cubic time and space**, in the binary encoding. -/
-public theorem computableTidilyInDegree_mul :
-    ComputableTidilyInDegree (fun p : ℕ × ℕ => p.1 * p.2) (encPair encNat encNat) encNat 3 1 := by
+/-- **Multiplication is computable in cubic time and space**, in the binary encoding. -/
+public theorem computableInDegree_mul :
+    ComputableInDegree (fun p : ℕ × ℕ => p.1 * p.2) (encPair encNat encNat) encNat 3 1 := by
   let encS := encPair encNat encNat
-  have hadd := computableTidilyInDegree_add
+  have hadd := computableInDegree_add
   -- a round of the fold
-  have hstep : ComputableTidilyInDegree (fun p : (ℕ × ℕ) × Bool => mulStep p.1 p.2)
+  have hstep : ComputableInDegree (fun p : (ℕ × ℕ) × Bool => mulStep p.1 p.2)
       (encPair encS encBool) encS 2 1 := by
     have hs := fst encS encBool
     exact (((snd encS encBool).ite ((hadd.comp hs).restrict _) (hs.fst'.restrict _)).prod
@@ -197,7 +197,7 @@ public theorem computableTidilyInDegree_mul :
     ((const 0).prod (snd encNat encNat)) hstep
     (B := fun p => 3 * (encPair encNat encNat p).length + 1)
     ((DegreeBounded.self.smul 3).add_const 1) fun p i hi => ?_
-  · have h : ComputableTidilyInDegree (_ ∘ _) _ encNat 3 1 := ((fst encNat encNat).comp hfold).mono
+  · have h : ComputableInDegree (_ ∘ _) _ encNat 3 1 := ((fst encNat encNat).comp hfold).mono
     convert h using 1
     funext p
     simp [foldl_mulStep]

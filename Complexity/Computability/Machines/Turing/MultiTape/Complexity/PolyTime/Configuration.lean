@@ -23,10 +23,10 @@ of its eventual oracle-substitution theorem need no configuration bookkeeping.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.finiteCfg_step`: execute a fixed native action.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.finiteConfig_step`, `.finiteConfig_receive`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.finiteCfg_step`: execute a fixed native action.
+* `Turing.MultiTapeTM.ComputableInPolyTime.finiteConfig_step`, `.finiteConfig_receive`:
   local transitions and channel reset with a computed reply.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.finiteConfig_init`: initialize finite storage.
+* `Turing.MultiTapeTM.ComputableInPolyTime.finiteConfig_init`: initialize finite storage.
 
 ## References
 
@@ -36,7 +36,7 @@ Adapts Computability/Probabilistic/Configuration.lean on the cslib `crypto` bran
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 open Cslib.Turing MultiTapeMachine
 
@@ -46,17 +46,17 @@ variable {k : ℕ} {State α : Type} [Finite State] {input : α ↪ List Bool}
 @[fun_prop]
 theorem finiteCfg_mk {word : α → List Bool} {state : α → Option State}
     {position : ∀ a, Fin ((word a).length + 2)} {work : α → Fin k → BiTape Bool}
-    {output : α → List Bool} (hword : ComputableTidilyInPolyTime word input encBits)
-    (hstate : ComputableTidilyInPolyTime state input (encFinite (Option State)))
-    (hposition : ComputableTidilyInPolyTime (fun a => (position a).val) input encUnary)
-    (hwork : ComputableTidilyInPolyTime work input (encPi (encBiTape encBool)))
-    (houtput : ComputableTidilyInPolyTime output input encBits) :
-    ComputableTidilyInPolyTime (fun a =>
+    {output : α → List Bool} (hword : ComputableInPolyTime word input encBits)
+    (hstate : ComputableInPolyTime state input (encFinite (Option State)))
+    (hposition : ComputableInPolyTime (fun a => (position a).val) input encUnary)
+    (hwork : ComputableInPolyTime work input (encPi (encBiTape encBool)))
+    (houtput : ComputableInPolyTime output input encBits) :
+    ComputableInPolyTime (fun a =>
       (⟨word a, state a, position a, work a, output a⟩ : FiniteCfg k Bool State))
       input encFiniteCfg :=
   (hword.prod (hstate.prod (hposition.prod (hwork.prod houtput)))).of_enc_eq (fun _ => rfl)
 
-private theorem finiteCfg_parts : ComputableTidilyInPolyTime
+private theorem finiteCfg_parts : ComputableInPolyTime
     (fun cfg : FiniteCfg k Bool State =>
       (cfg.input, cfg.state, cfg.inputPos.val, cfg.workTapes, cfg.output)) encFiniteCfg
     (encPair encBits (encPair (encFinite (Option State))
@@ -64,39 +64,39 @@ private theorem finiteCfg_parts : ComputableTidilyInPolyTime
 
 /-- Read the stored input word. -/
 @[fun_prop]
-theorem finiteCfg_input : ComputableTidilyInPolyTime (FiniteCfg.input (k := k) (State := State))
+theorem finiteCfg_input : ComputableInPolyTime (FiniteCfg.input (k := k) (State := State))
     encFiniteCfg encBits := finiteCfg_parts.fst'
 
 /-- Read the finite control. -/
 @[fun_prop]
-theorem finiteCfg_state : ComputableTidilyInPolyTime (FiniteCfg.state (k := k) (State := State))
+theorem finiteCfg_state : ComputableInPolyTime (FiniteCfg.state (k := k) (State := State))
     encFiniteCfg (encFinite (Option State)) := finiteCfg_parts.snd'.fst'
 
 /-- Read the input head's unary position. -/
 @[fun_prop]
-theorem finiteCfg_inputPos : ComputableTidilyInPolyTime
+theorem finiteCfg_inputPos : ComputableInPolyTime
     (fun cfg : FiniteCfg k Bool State => cfg.inputPos.val) encFiniteCfg encUnary :=
   finiteCfg_parts.snd'.snd'.fst'
 
 /-- Read the complete family of work tapes. -/
 @[fun_prop]
-theorem finiteCfg_workTapes : ComputableTidilyInPolyTime
+theorem finiteCfg_workTapes : ComputableInPolyTime
     (FiniteCfg.workTapes (k := k) (State := State)) encFiniteCfg (encPi (encBiTape encBool)) :=
   finiteCfg_parts.snd'.snd'.snd'.fst'
 
 /-- Read all accumulated output. -/
 @[fun_prop]
-theorem finiteCfg_output : ComputableTidilyInPolyTime (FiniteCfg.output (k := k) (State := State))
+theorem finiteCfg_output : ComputableInPolyTime (FiniteCfg.output (k := k) (State := State))
     encFiniteCfg encBits := finiteCfg_parts.snd'.snd'.snd'.snd'
 
 /-- Observe the read-only input, including both blank boundary cells. -/
 @[fun_prop]
-theorem finiteCfg_inputSymbol : ComputableTidilyInPolyTime
+theorem finiteCfg_inputSymbol : ComputableInPolyTime
     (FiniteCfg.inputSymbol (k := k) (State := State)) encFiniteCfg (encFinEnum (Option Bool)) := by
-  have hlist : ComputableTidilyInPolyTime
+  have hlist : ComputableInPolyTime
       (fun cfg : FiniteCfg k Bool State => none :: cfg.input.map some)
       encFiniteCfg (encList (encFinEnum (Option Bool))) := by
-    have hsome : ComputableTidilyInPolyTime (some (α := Bool))
+    have hsome : ComputableInPolyTime (some (α := Bool))
         encBool (encFinEnum (Option Bool)) := of_finite _
     exact (const none).cons' ((map hsome).comp (bitsToList.comp finiteCfg_input))
   simpa only [Function.comp_def, List.getD_eq_getElem?_getD,
@@ -105,10 +105,10 @@ theorem finiteCfg_inputSymbol : ComputableTidilyInPolyTime
 
 /-- Observe all work heads as a single fixed finite value. -/
 @[fun_prop]
-theorem finiteCfg_workTapeSymbols : ComputableTidilyInPolyTime
+theorem finiteCfg_workTapeSymbols : ComputableInPolyTime
     (FiniteCfg.workTapeSymbols (k := k) (State := State)) encFiniteCfg
       (encFinEnum (Fin k → Option Bool)) := by
-  have hheads : ComputableTidilyInPolyTime
+  have hheads : ComputableInPolyTime
       (fun cfg : FiniteCfg k Bool State => fun tape => (cfg.workTapes tape).head)
       encFiniteCfg (encPi (encOption encBool)) := by fun_prop
   exact (of_finite id).comp hheads
@@ -116,9 +116,9 @@ theorem finiteCfg_workTapeSymbols : ComputableTidilyInPolyTime
 /-- Clamped native input-head movement is efficient on the stored unary position. -/
 @[fun_prop]
 theorem moveInputPos {word : α → List Bool} {position : ∀ a, Fin ((word a).length + 2)}
-    (hword : ComputableTidilyInPolyTime word input encBits)
-    (hposition : ComputableTidilyInPolyTime (fun a => (position a).val) input encUnary)
-    (move : SignType) : ComputableTidilyInPolyTime
+    (hword : ComputableInPolyTime word input encBits)
+    (hposition : ComputableInPolyTime (fun a => (position a).val) input encUnary)
+    (move : SignType) : ComputableInPolyTime
       (fun a => (Turing.moveInputPos (position a) move).val) input encUnary := by
   cases move with
   | neg =>
@@ -141,7 +141,7 @@ theorem moveInputPos {word : α → List Bool} {position : ∀ a, Fin ((word a).
 
 /-- Execute a fixed ordinary native action, including all retained storage. -/
 @[fun_prop]
-theorem finiteCfg_step (action : Action k Bool State) : ComputableTidilyInPolyTime
+theorem finiteCfg_step (action : Action k Bool State) : ComputableInPolyTime
     (fun cfg : FiniteCfg k Bool State => cfg.step action) encFiniteCfg encFiniteCfg := by
   unfold FiniteCfg.step
   fun_prop
@@ -149,8 +149,8 @@ theorem finiteCfg_step (action : Action k Bool State) : ComputableTidilyInPolyTi
 /-- Initialize with the native input-head convention and blank work tapes. -/
 @[fun_prop]
 theorem finiteCfg_init {word : α → List Bool}
-    (hword : ComputableTidilyInPolyTime word input encBits) (state : State) :
-    ComputableTidilyInPolyTime (fun a => FiniteCfg.init (k := k) state (word a))
+    (hword : ComputableInPolyTime word input encBits) (state : State) :
+    ComputableInPolyTime (fun a => FiniteCfg.init (k := k) state (word a))
       input encFiniteCfg := by
   apply finiteCfg_mk hword (const _)
   · simpa using (const (encIn := input) (encMid := encUnary) 1)
@@ -163,34 +163,34 @@ variable {Oracle : Type} [Fintype Oracle]
 @[fun_prop]
 theorem finiteConfig_mk {tapes : α → FiniteCfg k Bool State}
     {channels : α → Oracle → List Bool × BiTape Bool}
-    (htapes : ComputableTidilyInPolyTime tapes input encFiniteCfg)
-    (hchannels : ComputableTidilyInPolyTime channels input
+    (htapes : ComputableInPolyTime tapes input encFiniteCfg)
+    (hchannels : ComputableInPolyTime channels input
       (encPi (encPair encBits (encBiTape encBool)))) :
-    ComputableTidilyInPolyTime (fun a => (⟨tapes a, channels a⟩ : FiniteConfig k Bool State Oracle))
+    ComputableInPolyTime (fun a => (⟨tapes a, channels a⟩ : FiniteConfig k Bool State Oracle))
       input encFiniteConfig := (htapes.prod hchannels).of_enc_eq (fun _ => rfl)
 
-private theorem finiteConfig_parts : ComputableTidilyInPolyTime
+private theorem finiteConfig_parts : ComputableInPolyTime
     (fun cfg : FiniteConfig k Bool State Oracle => (cfg.tapes, cfg.channels)) encFiniteConfig
     (encPair encFiniteCfg (encPi (encPair encBits (encBiTape encBool)))) := of_eq fun _ => rfl
 
 /-- Read the ordinary finite storage. -/
 @[fun_prop]
-theorem finiteConfig_tapes : ComputableTidilyInPolyTime
+theorem finiteConfig_tapes : ComputableInPolyTime
     (FiniteConfig.tapes (k := k) (State := State) (Oracle := Oracle))
     encFiniteConfig encFiniteCfg := finiteConfig_parts.fst'
 
 /-- Read all query buffers and answer tapes. -/
 @[fun_prop]
-theorem finiteConfig_channels : ComputableTidilyInPolyTime
+theorem finiteConfig_channels : ComputableInPolyTime
     (FiniteConfig.channels (k := k) (State := State) (Oracle := Oracle)) encFiniteConfig
     (encPi (encPair encBits (encBiTape encBool))) := finiteConfig_parts.snd'
 
 /-- Observe every answer head as a single fixed finite value. -/
 @[fun_prop]
-theorem finiteConfig_answerSymbols : ComputableTidilyInPolyTime
+theorem finiteConfig_answerSymbols : ComputableInPolyTime
     (FiniteConfig.answerSymbols (k := k) (State := State) (Oracle := Oracle)) encFiniteConfig
       (encFinite (Oracle → Option Bool)) := by
-  have hheads : ComputableTidilyInPolyTime
+  have hheads : ComputableInPolyTime
       (fun cfg : FiniteConfig k Bool State Oracle => fun channel => (cfg.channels channel).2.head)
       encFiniteConfig (encPi (encOption encBool)) := by fun_prop
   exact (of_finite id).comp hheads
@@ -198,7 +198,7 @@ theorem finiteConfig_answerSymbols : ComputableTidilyInPolyTime
 /-- Execute a fixed local action, including all pending requests and stored answers. -/
 @[fun_prop]
 theorem finiteConfig_step (action : Action k Bool State) (symbol : Oracle → Option Bool)
-    (move : Oracle → SignType) : ComputableTidilyInPolyTime
+    (move : Oracle → SignType) : ComputableInPolyTime
       (fun cfg : FiniteConfig k Bool State Oracle => cfg.step action symbol move)
       encFiniteConfig encFiniteConfig := by
   unfold FiniteConfig.step
@@ -207,11 +207,11 @@ theorem finiteConfig_step (action : Action k Bool State) (symbol : Oracle → Op
 /-- Install a computed reply, clear its selected request and retain all other channels. -/
 @[fun_prop]
 theorem finiteConfig_receive [DecidableEq Oracle] {cfg : α → FiniteConfig k Bool State Oracle}
-    {answer : α → List Bool} (hcfg : ComputableTidilyInPolyTime cfg input encFiniteConfig)
-    (hanswer : ComputableTidilyInPolyTime answer input encBits) (channel : Oracle) (next : State) :
-    ComputableTidilyInPolyTime (fun a => (cfg a).receive channel next (answer a))
+    {answer : α → List Bool} (hcfg : ComputableInPolyTime cfg input encFiniteConfig)
+    (hanswer : ComputableInPolyTime answer input encBits) (channel : Oracle) (next : State) :
+    ComputableInPolyTime (fun a => (cfg a).receive channel next (answer a))
       input encFiniteConfig := by
-  have hframed : ComputableTidilyInPolyTime answer input (encList encBool) :=
+  have hframed : ComputableInPolyTime answer input (encList encBool) :=
     bitsToList.comp hanswer
   unfold FiniteConfig.receive
   fun_prop
@@ -219,11 +219,11 @@ theorem finiteConfig_receive [DecidableEq Oracle] {cfg : α → FiniteConfig k B
 /-- Initialize every channel with an empty request and blank answer tape. -/
 @[fun_prop]
 theorem finiteConfig_init {word : α → List Bool}
-    (hword : ComputableTidilyInPolyTime word input encBits) (state : State) :
-    ComputableTidilyInPolyTime
+    (hword : ComputableInPolyTime word input encBits) (state : State) :
+    ComputableInPolyTime
       (fun a => FiniteConfig.init (k := k) (Oracle := Oracle) state (word a))
       input encFiniteConfig := by
   unfold FiniteConfig.init
   fun_prop
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime

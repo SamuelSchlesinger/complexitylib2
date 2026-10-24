@@ -305,8 +305,8 @@ private theorem doubledTransducer_run (l : List Bool) :
 
 /-- Doubling the bits with framing markers uses linear work space. -/
 theorem doubled_inSpace :
-    ComputableTidilyInSpace doubled encBits encBits fun l => (encBits l).length :=
-  ComputableTidilyInSpace.of_inO (.of_linear
+    ComputableInSpace doubled encBits encBits fun l => (encBits l).length :=
+  ComputableInSpace.of_inO (.of_linear
     (doubledTransducer.computableInLinearTimeAndSpace fun l =>
       (doubledTransducer_run l).symm))
 
