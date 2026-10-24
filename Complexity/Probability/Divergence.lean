@@ -10,13 +10,11 @@ module
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.StatisticalDistance
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
-public import Mathlib.MeasureTheory.Measure.TotalVariation.Defs
-import Complexity.Probability.PairwiseIndependent
 import Complexity.Probability.Pinsker
 import Complexity.Probability.PMF.Expect
 import Complexity.Probability.PMF.Map
+import Complexity.Probability.Product
 import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
-import Mathlib.MeasureTheory.Measure.TotalVariation.Basic
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 
 /-!
@@ -56,8 +54,6 @@ Divergences are in nats and entropies in bits, so the bridges divide by `log 2`.
   equality exactly for independent pairs
   (`Cslib.Probability.PMF.entropy_eq_entropy_map_fst_add_entropy_map_snd_iff`).
 * `Cslib.Probability.PMF.conditionalEntropy_le_entropy_map_snd`: conditioning reduces entropy.
-* `Cslib.Probability.PMF.dist_eq_tvDist_toMeasure_div_two`: statistical distance is half of
-  `tvDist`.
 * `Cslib.Probability.PMF.ofReal_two_mul_dist_sq_le_klDiv`,
   `Cslib.Probability.PMF.dist_le_sqrt_toReal_klDiv_div_two`: Pinsker's inequality.
 
@@ -268,12 +264,6 @@ end Gibbs
 
 section MutualInformation
 
-/-- The mass of an independent pair is the product of the masses of its components. -/
-private theorem bind_map_prodMk_apply (p : PMF α) (q : PMF β) (pair : α × β) :
-    (p.bind fun a => q.map (a, ·)) pair = p pair.1 * q pair.2 := by
-  simp only [PMF.map, Function.comp_def]
-  exact bind_pair_apply p (fun _ => q) pair.1 pair.2
-
 /-- A joint law is supported where the product of its marginals is. -/
 private theorem support_subset_bind_map_prodMk (joint : PMF (α × β)) :
     joint.support ⊆
@@ -371,73 +361,14 @@ section Pinsker
 
 variable [Fintype α]
 
-/-- Statistical distance is the probability gap on the event where `p` exceeds `q`. -/
-theorem dist_eq_sum_filter_lt (p q : PMF α) :
-    dist p q = ∑ a ∈ Finset.univ.filter (fun a => (q a).toReal < (p a).toReal),
-      ((p a).toReal - (q a).toReal) := by
-  rw [dist_eq, Finset.sum_filter]
-  have hsum : ∑ a, ((p a).toReal - (q a).toReal) = 0 := by
-    rw [Finset.sum_sub_distrib, sum_toReal, sum_toReal, sub_self]
-  have habs (a : α) : |(p a).toReal - (q a).toReal| =
-      2 * (if (q a).toReal < (p a).toReal then (p a).toReal - (q a).toReal else 0) -
-        ((p a).toReal - (q a).toReal) := by
-    split_ifs with h
-    · rw [abs_of_pos (sub_pos.mpr h)]; ring
-    · rw [abs_of_nonpos (sub_nonpos.mpr (not_lt.mp h))]; ring
-  simp only [habs, Finset.sum_sub_distrib, hsum, ← Finset.mul_sum]
-  ring
-
-omit [Fintype α] in
-/-- The probability of an event under a PMF measure is the sum of its masses. -/
-private theorem measureReal_toMeasure_eq_sum [MeasurableSpace α] [MeasurableSingletonClass α]
-    (r : PMF α) (event : Finset α) :
-    r.toMeasure.real (event : Set α) = ∑ a ∈ event, (r a).toReal := by
-  rw [measureReal_def, PMF.toMeasure_apply_finset,
-    ENNReal.toReal_sum (fun a _ => PMF.apply_ne_top r a)]
-
-/-- Statistical distance is half of Mathlib's total variation distance `tvDist` of the PMF
-measures. -/
-theorem dist_eq_tvDist_toMeasure_div_two [MeasurableSpace α] [MeasurableSingletonClass α]
-    (p q : PMF α) : dist p q = tvDist p.toMeasure q.toMeasure / 2 := by
-  classical
-  let below : Finset α := Finset.univ.filter fun a => (p a).toReal ≤ (q a).toReal
-  have hbelow : (↑below : Set α)ᶜ = ↑(Finset.univ.filter
-      fun a => (q a).toReal < (p a).toReal) := by
-    ext a; simp [below]
-  have hhahn : IsHahnDecomposition p.toMeasure q.toMeasure below := by
-    have hle (μ ν : PMF α) (t : Set α) (ht : ∀ a ∈ t, (μ a).toReal ≤ (ν a).toReal) :
-        μ.toMeasure t ≤ ν.toMeasure t := by
-      rw [PMF.toMeasure_apply_fintype, PMF.toMeasure_apply_fintype]
-      refine Finset.sum_le_sum fun a _ => ?_
-      by_cases ha : a ∈ t
-      · simpa [ha] using (ENNReal.toReal_le_toReal (PMF.apply_ne_top _ _)
-          (PMF.apply_ne_top _ _)).mp (ht a ha)
-      · simp [ha]
-    refine ⟨(Set.to_countable _).measurableSet, Measure.le_iff'.mpr fun t => ?_,
-      Measure.le_iff'.mpr fun t => ?_⟩
-    · rw [Measure.restrict_apply' (Set.to_countable _).measurableSet,
-        Measure.restrict_apply' (Set.to_countable _).measurableSet]
-      exact hle p q _ fun a ha => by simpa [below] using ha.2
-    · rw [Measure.restrict_apply' (Set.to_countable _).measurableSet,
-        Measure.restrict_apply' (Set.to_countable _).measurableSet, hbelow]
-      exact hle q p _ fun a ha => (Finset.mem_filter.mp (Finset.mem_coe.mp ha.2)).2.le
-  rw [hhahn.tvDist_eq, probReal_compl_eq_one_sub (μ := p.toMeasure) hhahn.measurableSet,
-    probReal_compl_eq_one_sub (μ := q.toMeasure) hhahn.measurableSet,
-    dist_eq_sum_filter_lt, Finset.sum_sub_distrib, ← measureReal_toMeasure_eq_sum p,
-    ← measureReal_toMeasure_eq_sum q, ← hbelow,
-    probReal_compl_eq_one_sub (μ := p.toMeasure) hhahn.measurableSet,
-    probReal_compl_eq_one_sub (μ := q.toMeasure) hhahn.measurableSet]
-  ring
-
 /-- **Pinsker's inequality** for finite distributions: twice the squared statistical distance
 is at most the Kullback–Leibler divergence, in nats. -/
 theorem ofReal_two_mul_dist_sq_le_klDiv [MeasurableSpace α] [MeasurableSingletonClass α]
     (p q : PMF α) : ENNReal.ofReal (2 * dist p q ^ 2) ≤ klDiv p.toMeasure q.toMeasure := by
-  have h := ofReal_two_mul_sq_measureReal_sub_le_klDiv (μ := p.toMeasure) (ν := q.toMeasure)
-    (s := ↑(Finset.univ.filter fun a => (q a).toReal < (p a).toReal))
-    ((Set.to_countable _).measurableSet)
-  rwa [measureReal_toMeasure_eq_sum, measureReal_toMeasure_eq_sum, ← Finset.sum_sub_distrib,
-    ← dist_eq_sum_filter_lt] at h
+  rw [dist_eq_tvDist_toMeasure_div_two,
+    show 2 * (tvDist p.toMeasure q.toMeasure / 2) ^ 2 =
+      tvDist p.toMeasure q.toMeasure ^ 2 / 2 by ring]
+  exact ofReal_tvDist_sq_div_two_le_klDiv p.toMeasure q.toMeasure
 
 /-- **Pinsker's inequality** with a finite-sum divergence. -/
 theorem two_mul_dist_sq_le_sum_mul_log_div {p q : PMF α} (h : p.support ⊆ q.support) :

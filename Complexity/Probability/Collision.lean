@@ -91,8 +91,8 @@ theorem collisionProbability_prod [Finite α] [Finite β] (p : PMF α) (q : PMF 
       collisionProbability p * collisionProbability q := by
   let := Fintype.ofFinite α
   let := Fintype.ofFinite β
-  simp only [collisionProbability_eq_sum, Fintype.sum_prod_type, PMF.map, Function.comp_def,
-    bind_pair_apply, ENNReal.toReal_mul, mul_pow, ← Finset.mul_sum, ← Finset.sum_mul]
+  simp only [collisionProbability_eq_sum, Fintype.sum_prod_type, bind_map_prodMk_apply,
+    ENNReal.toReal_mul, mul_pow, ← Finset.mul_sum, ← Finset.sum_mul]
 
 /-- A bound on each individual mass also bounds the probability of a collision. -/
 theorem collisionProbability_le_of_mass_le (p : PMF α) {bound : ℝ}

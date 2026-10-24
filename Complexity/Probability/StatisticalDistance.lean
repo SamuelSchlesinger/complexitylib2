@@ -9,13 +9,18 @@ module
 
 public import Cslib.Probability.StatisticalDistance
 public import Complexity.Probability.PMF
+public import Mathlib.MeasureTheory.Measure.TotalVariation.Defs
 import Complexity.Probability.PMF.Event
+import Complexity.Probability.PMF.Map
+import Mathlib.MeasureTheory.Measure.TotalVariation.Basic
 
 /-!
 # Statistical distance with public side information
 
 Revealing a shared sample makes the joint distance exactly the average conditional distance.
-Its square is bounded by the corresponding average squared distance.
+Its square is bounded by the corresponding average squared distance. Statistical distance is the
+probability gap on the event where one distribution exceeds the other, and half of Mathlib's
+total variation distance `tvDist` of the induced measures.
 These statements reuse the upstream finite-PMF metric and its enumeration instances.
 
 ## Main results
@@ -28,6 +33,9 @@ These statements reuse the upstream finite-PMF metric and its enumeration instan
 * `Cslib.Probability.PMF.dist_bind_left_le_of_le`: uniform distance bound across a `PMF.bind`
   mixture.
 * `Cslib.Probability.PMF.dist_uniformOfFintype_bool`: statistical distance from uniform on `Bool`.
+* `Cslib.Probability.PMF.dist_eq_sum_filter_lt`: statistical distance as the excess on `{p > q}`.
+* `Cslib.Probability.PMF.dist_eq_tvDist_toMeasure_div_two`: statistical distance is half of
+  `tvDist`.
 
 ## References
 
@@ -74,7 +82,7 @@ theorem dist_bind_pair [Fintype α] [Fintype β] (p : PMF α) (f g : α → PMF 
     dist (p.bind (fun a => (f a).map (a, ·)))
         (p.bind (fun a => (g a).map (a, ·))) =
       ∑ a, (p a).toReal * dist (f a) (g a) := by
-  simp only [dist_eq, Fintype.sum_prod_type, PMF.map, Function.comp_def, bind_pair_apply,
+  simp only [dist_eq, Fintype.sum_prod_type, bind_map_prodMk_apply,
     ENNReal.toReal_mul, ← mul_sub, abs_mul, abs_of_nonneg ENNReal.toReal_nonneg,
     ← Finset.mul_sum, Finset.sum_div, mul_div_assoc]
 
@@ -158,5 +166,71 @@ theorem dist_uniformOfFintype_bool (p : PMF Bool) :
   have hfalse : |(p false).toReal - 2⁻¹| = |(p true).toReal - 2⁻¹| := by
     rw [show (p false).toReal - 2⁻¹ = -((p true).toReal - 2⁻¹) by linarith, abs_neg]
   linarith
+
+section TotalVariation
+
+open MeasureTheory ProbabilityTheory
+
+variable [Fintype α]
+
+/-- Statistical distance is the probability gap on the event where `p` exceeds `q`. -/
+theorem dist_eq_sum_filter_lt (p q : PMF α) :
+    dist p q = ∑ a ∈ Finset.univ.filter (fun a => (q a).toReal < (p a).toReal),
+      ((p a).toReal - (q a).toReal) := by
+  rw [dist_eq, Finset.sum_filter]
+  have hsum : ∑ a, ((p a).toReal - (q a).toReal) = 0 := by
+    rw [Finset.sum_sub_distrib, sum_toReal, sum_toReal, sub_self]
+  have habs (a : α) : |(p a).toReal - (q a).toReal| =
+      2 * (if (q a).toReal < (p a).toReal then (p a).toReal - (q a).toReal else 0) -
+        ((p a).toReal - (q a).toReal) := by
+    split_ifs with h
+    · rw [abs_of_pos (sub_pos.mpr h)]; ring
+    · rw [abs_of_nonpos (sub_nonpos.mpr (not_lt.mp h))]; ring
+  simp only [habs, Finset.sum_sub_distrib, hsum, ← Finset.mul_sum]
+  ring
+
+omit [Fintype α] in
+/-- The probability of an event under a PMF measure is the sum of its masses. -/
+private theorem measureReal_toMeasure_eq_sum [MeasurableSpace α] [MeasurableSingletonClass α]
+    (r : PMF α) (event : Finset α) :
+    r.toMeasure.real (event : Set α) = ∑ a ∈ event, (r a).toReal := by
+  rw [measureReal_def, PMF.toMeasure_apply_finset,
+    ENNReal.toReal_sum (fun a _ => PMF.apply_ne_top r a)]
+
+/-- Statistical distance is half of Mathlib's total variation distance `tvDist` of the PMF
+measures. -/
+theorem dist_eq_tvDist_toMeasure_div_two [MeasurableSpace α] [MeasurableSingletonClass α]
+    (p q : PMF α) : dist p q = tvDist p.toMeasure q.toMeasure / 2 := by
+  classical
+  let below : Finset α := Finset.univ.filter fun a => (p a).toReal ≤ (q a).toReal
+  have hbelow : (↑below : Set α)ᶜ = ↑(Finset.univ.filter
+      fun a => (q a).toReal < (p a).toReal) := by
+    ext a; simp [below]
+  have hhahn : IsHahnDecomposition p.toMeasure q.toMeasure below := by
+    have hle (μ ν : PMF α) (t : Set α) (ht : ∀ a ∈ t, (μ a).toReal ≤ (ν a).toReal) :
+        μ.toMeasure t ≤ ν.toMeasure t := by
+      rw [PMF.toMeasure_apply_fintype, PMF.toMeasure_apply_fintype]
+      refine Finset.sum_le_sum fun a _ => ?_
+      by_cases ha : a ∈ t
+      · simpa [ha] using (ENNReal.toReal_le_toReal (PMF.apply_ne_top _ _)
+          (PMF.apply_ne_top _ _)).mp (ht a ha)
+      · simp [ha]
+    refine ⟨(Set.to_countable _).measurableSet, Measure.le_iff'.mpr fun t => ?_,
+      Measure.le_iff'.mpr fun t => ?_⟩
+    · rw [Measure.restrict_apply' (Set.to_countable _).measurableSet,
+        Measure.restrict_apply' (Set.to_countable _).measurableSet]
+      exact hle p q _ fun a ha => by simpa [below] using ha.2
+    · rw [Measure.restrict_apply' (Set.to_countable _).measurableSet,
+        Measure.restrict_apply' (Set.to_countable _).measurableSet, hbelow]
+      exact hle q p _ fun a ha => (Finset.mem_filter.mp (Finset.mem_coe.mp ha.2)).2.le
+  rw [hhahn.tvDist_eq, probReal_compl_eq_one_sub (μ := p.toMeasure) hhahn.measurableSet,
+    probReal_compl_eq_one_sub (μ := q.toMeasure) hhahn.measurableSet,
+    dist_eq_sum_filter_lt, Finset.sum_sub_distrib, ← measureReal_toMeasure_eq_sum p,
+    ← measureReal_toMeasure_eq_sum q, ← hbelow,
+    probReal_compl_eq_one_sub (μ := p.toMeasure) hhahn.measurableSet,
+    probReal_compl_eq_one_sub (μ := q.toMeasure) hhahn.measurableSet]
+  ring
+
+end TotalVariation
 
 end Cslib.Probability.PMF

@@ -201,8 +201,8 @@ theorem entropy_bind_pair [Fintype α] [Finite β] (p : PMF α) (kernel : α →
     entropy (p.bind (fun a => (kernel a).map (a, ·))) =
       entropy p + ∑ a, (p a).toReal * entropy (kernel a) := by
   let := Fintype.ofFinite β
-  simp only [entropy_eq_sum, Fintype.sum_prod_type, PMF.map, Function.comp_def,
-    bind_pair_apply, ENNReal.toReal_mul, Real.negMulLog_mul, Finset.sum_add_distrib,
+  simp only [entropy_eq_sum, Fintype.sum_prod_type, bind_map_prodMk_apply,
+    ENNReal.toReal_mul, Real.negMulLog_mul, Finset.sum_add_distrib,
     ← Finset.sum_mul, ← Finset.mul_sum, sum_toReal, one_mul, add_div, Finset.sum_div,
     mul_div_assoc]
 
