@@ -65,7 +65,7 @@ at length `|y|` (`Cslib.HardnessEncoding.encodedProgram_eq`).
 namespace Cslib.HardnessEncoding
 
 open Finset Polynomial Cslib.AffineDisperser Cslib.Circuits Cslib.Circuits.Boolean
-open Cslib.BitString (listXor)
+open Cslib.BitString (bitEquiv bitEquiv_symm_false bitEquiv_symm_true listXor)
 
 /-! ### The program -/
 
@@ -139,7 +139,7 @@ private theorem exists_modulusBits_eq {w : ℕ} (hw : w ≠ 0) :
     intro h
     have := polyOfCode_leastIrreducibleCode hw (le_refl (2 ^ (w + 1)))
     rw [h, polyOfCode_zero] at this
-    exact (irreducible_leastIrreducible hw).ne_zero this.symm
+    exact (irreducible_leastIrreducible w).ne_zero this.symm
   obtain ⟨l, hl⟩ := exists_bits_eq_append_true hne
   refine ⟨l, hl, ?_⟩
   have := natDegree_polyOfBits_append_true l
@@ -329,9 +329,9 @@ private theorem fieldOfBits_drop_take (hw : w ≠ 0) {M : ℕ} {y : List Bool}
     {Y : BitString (M * w + w)}
     (hY : ∀ k, Y k = y.getD k false) (i : Fin M) :
     fieldOfBits (𝔅 hw) ((y.drop (i * w)).take w) =
-      pointOfBits (BinaryField.equivBits hw) (fun k => Y (Fin.castAdd w k)) i := by
+      pointOfBits (BinaryField.equivBits hw).toEquiv (fun k => Y (Fin.castAdd w k)) i := by
   rw [fieldOfBits_basis, pointOfBits]
-  congr 1
+  apply congrArg (BinaryField.equivBits hw).symm
   funext j
   rw [BitString.block_apply, hY, Fin.val_castAdd, finProdFinEquiv_apply_val,
     List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_take,
@@ -389,7 +389,9 @@ theorem encodedProgram_eq {L : Language Bool} {gL : List Bool → Bool}
     rw [ldeVal, BitString.length_listXor]
   rw [hardnessEncode, drop_take_eq_ofFn hY hle, traceBit_eq hw0 hlen,
     fieldOfBits_ldeVal hw (by omega) hgL]
-  congr 3
+  apply congrArg (· ⬝ᵥ _)
+  apply congrArg (BinaryField.equivBits hw0)
+  apply congrArg (truthTableExtension _ _)
   funext i
   have hi : ((List.range M).map fun i =>
       (y.drop (i * (4 * blockLength M y.length))).take (4 * blockLength M y.length)).getD i [] =

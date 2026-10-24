@@ -23,7 +23,7 @@ import Mathlib.FieldTheory.Finiteness
 
 Let `F` be a finite field whose elements are written as `b` bits through an additive bijection
 `φ : F ≃+ BitString b`, so that `F` has `q = 2 ^ b` elements; every field of characteristic two with
-`2 ^ b` elements has such a bijection (`Cslib.LineCode.nonempty_addEquiv_bitString`). The *Justesen
+`2 ^ b` elements has such a bijection (`Cslib.nonempty_addEquiv_bitString`). The *Justesen
 code* [Justesen1972], [GuruswamiRudraSudan2019] of outer dimension `K` concatenates the Reed–Solomon
 code of dimension `K` whose evaluation points are the `q - 1` nonzero elements `u` of `F` with inner
 codes that vary with the position: the symbol `a` at the position `u` becomes the `2 * b` bits of

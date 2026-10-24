@@ -1602,7 +1602,6 @@ public import Complexity.Foundations.Combinatorics.FunctionalGraph.Spectrum
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
-public import Complexity.Foundations.Combinatorics.LineCode.Field
 public import Complexity.Foundations.Combinatorics.LineCode.HighRate
 public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Monomial
 public import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
@@ -1657,6 +1656,7 @@ public import Complexity.Foundations.Data.BitString.SumTree
 public import Complexity.Foundations.Data.BitString.Uhlig
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Foundations.Data.BitString.WordCount
+public import Complexity.Foundations.Data.BitString.ZModTwo
 public import Complexity.Foundations.Data.Code.Basic
 public import Complexity.Foundations.Data.Code.BerlekampWelch
 public import Complexity.Foundations.Data.Code.Concatenation
@@ -1721,6 +1721,7 @@ public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape
 public import Complexity.Foundations.FieldTheory.Finite.BinaryField
 public import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
+public import Complexity.Foundations.FieldTheory.Finite.Subfield
 public import Complexity.Foundations.FieldTheory.Finite.UnitSum
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.GroupTheory.Perm.Fin

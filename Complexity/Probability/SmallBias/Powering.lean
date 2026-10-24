@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.SmallBias
-import Complexity.Foundations.Combinatorics.LineCode.Field
 import Complexity.Foundations.Data.Finset.Expect
+import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.Algebra.Polynomial.Roots
 
 /-!
@@ -138,9 +138,9 @@ theorem isSmallBias_powering :
 theorem exists_isSmallBias_uniformOfFintype_map (n : ℕ) {m : ℕ} (hm : m ≠ 0) :
     ∃ g : BitString (2 * m) → BitString n,
       IsSmallBias ((n - 1 : ℕ) / 2 ^ m : ℝ) ((PMF.uniformOfFintype _).map g) := by
-  obtain ⟨F, _, _, _, hF⟩ := LineCode.exists_field_card_eq_two_pow hm
+  obtain ⟨F, _, _, _, hF⟩ := exists_field_card_eq_two_pow hm
   classical
-  obtain ⟨bits⟩ := LineCode.nonempty_addEquiv_bitString hF
+  obtain ⟨bits⟩ := nonempty_addEquiv_bitString hF
   let e : BitString (2 * m) ≃ F × F :=
     ((Equiv.arrowCongr (finCongr (two_mul m)) (Equiv.refl Bool)).trans
       ((Equiv.arrowCongr finSumFinEquiv.symm (Equiv.refl Bool)).trans

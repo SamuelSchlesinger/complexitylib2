@@ -57,8 +57,6 @@ that its trace is nonzero, while a constant function would have zero cube sum.
   Claim 7.4].
 * `Cslib.AffineDisperser.exists_traceSym_ne`: `traceSym` is nonconstant on affine subspaces of
   dimension greater than `r * max (r + 1) s + r * (r + 1) + n * t + n * r / t`.
-* `Cslib.AffineDisperser.card_subfield_le`: proper subfields of a field with `2 ^ n` elements have
-  at most `2 ^ (n / 2)` elements.
 
 ## References
 
@@ -176,41 +174,7 @@ private theorem exists_subset_card_eq_mul_sum_le {ι : Type*} (S : Finset ι) (d
     add_mul]
   omega
 
-variable {F : Type*} [Field F] [Finite F]
-
-/-- A proper subfield `K` of a finite field `F` satisfies `|K| ^ 2 ≤ |F|`. -/
-theorem card_sq_le_of_ne_top {K : Subfield F} (hK : K ≠ ⊤) : Nat.card K ^ 2 ≤ Nat.card F := by
-  rw [Module.natCard_eq_pow_finrank (K := K) (V := F)]
-  refine Nat.pow_le_pow_right Nat.card_pos ?_
-  by_contra h
-  have h1 : finrank K F = 1 := by
-    have := Module.finrank_pos (R := K) (M := F)
-    omega
-  apply hK
-  have hbij : Function.Bijective (Subtype.val : K → F) :=
-    Subtype.val_injective.bijective_of_nat_card_le
-      (by rw [Module.natCard_eq_pow_finrank (K := K) (V := F), h1, pow_one])
-  exact eq_top_iff.2 fun x _ => by
-    obtain ⟨y, rfl⟩ := hbij.2 x
-    exact y.2
-
-variable [Algebra (ZMod 2) F]
-
-/-- In a field with `2 ^ n` elements every proper subfield has at most `2 ^ (n / 2)` elements. -/
-theorem card_subfield_le {n : ℕ} (hn : finrank (ZMod 2) F = n) (K : Subfield F) (hK : K ≠ ⊤) :
-    Nat.card K ≤ 2 ^ (n / 2) := by
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
-  cases nonempty_fintype F
-  have : CharP K 2 := K.subtype.charP Subtype.val_injective 2
-  have : Fintype K := Fintype.ofFinite K
-  obtain ⟨e, -, he⟩ := FiniteField.card K 2
-  have hF : Nat.card F = 2 ^ n := by
-    rw [Module.natCard_eq_pow_finrank (K := ZMod 2) (V := F), Nat.card_zmod, hn]
-  have hsq := card_sq_le_of_ne_top hK
-  rw [Nat.card_eq_fintype_card (α := K), he, hF, ← pow_mul] at hsq
-  rw [Nat.card_eq_fintype_card (α := K), he]
-  exact Nat.pow_le_pow_right two_pos
-    (by have := (Nat.pow_le_pow_iff_right (by norm_num : 1 < 2)).1 hsq; omega)
+variable {F : Type*} [Field F] [Finite F] [Algebra (ZMod 2) F]
 
 /-- **Ben-Sasson and Kopparty's symmetric-power function** on `r` blocks of a field `F`
 [BenSassonKopparty2012, Theorem 7.3]: the trace of `μ` times the `t`-th elementary symmetric

@@ -13,6 +13,7 @@ public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Primes
 public import Mathlib.Algebra.BigOperators.Fin
+import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.Data.List.Nodup
 
 /-!

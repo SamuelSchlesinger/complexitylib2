@@ -9,13 +9,12 @@ module
 
 public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser
+public import Complexity.Foundations.Data.BitString.ZModTwo
 public import Cslib.Foundations.Data.BitString
-public import Complexity.Foundations.Data.BitString.Sign
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 public import Mathlib.LinearAlgebra.Basis.Defs
 import Mathlib.Algebra.Module.ZMod
-import Mathlib.FieldTheory.Finite.Basic
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Basic
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
@@ -29,18 +28,15 @@ coordinate `x (pos (i, j))` on the vector `b j` of an `𝔽₂`-basis `b` of `F`
 (`Cslib.AffineDisperser.readField`), and the output is the trace as a bit
 (`Cslib.AffineDisperser.traceSymBits`).
 
-Bits form the two-element field (Mathlib's `BooleanRing Bool`), so the affine subspaces of the
-cube `BitString N` are Mathlib's `AffineSubspace Bool (BitString N)`. Reading field elements is
-`𝔽₂`-linear and forgets only the `N - r n` unread bits, so it maps an affine subspace of
-dimension `d` onto one of dimension at least `d - (N - r n)`, and
-`Cslib.AffineDisperser.exists_traceSym_ne` transfers to bit strings
+Bits form the two-element field (Mathlib's `BooleanRing Bool`), identified with `ZMod 2` by
+`Cslib.BitString.bitEquiv`, so the affine subspaces of the cube `BitString N` are Mathlib's
+`AffineSubspace Bool (BitString N)`. Reading field elements is `𝔽₂`-linear and forgets only the
+`N - r n` unread bits, so it maps an affine subspace of dimension `d` onto one of dimension at
+least `d - (N - r n)`, and `Cslib.AffineDisperser.exists_traceSym_ne` transfers to bit strings
 (`Cslib.AffineDisperser.exists_traceSymBits_ne`).
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.bitEquiv`: the ring isomorphism `ZMod 2 ≃+* Bool`, which is Mathlib's
-  `ZMod.ringEquivOfPrime` (`Cslib.AffineDisperser.bitEquiv_eq_ringEquivOfPrime`); its inverse is
-  `Cslib.BitString.bitVal (ZMod 2)`.
 * `Cslib.AffineDisperser.readField`: `r` field elements read from a bit string.
 * `Cslib.AffineDisperser.traceSymBits`: `traceSym` on bit strings.
 
@@ -59,34 +55,7 @@ dimension `d` onto one of dimension at least `d - (N - r n)`, and
 
 namespace Cslib.AffineDisperser
 
-open Module
-
-/-- The two-element field `𝔽₂ = ZMod 2` as bits: the unique ring isomorphism `ZMod 2 ≃+* Bool`. -/
-def bitEquiv : ZMod 2 ≃+* Bool where
-  toFun c := decide (c = 1)
-  invFun a := (a.toNat : ZMod 2)
-  left_inv := by decide
-  right_inv := by decide
-  map_mul' := by decide
-  map_add' := by decide
-
-/-- `bitEquiv` is Mathlib's `ZMod.ringEquivOfPrime` for the two-element field `Bool`, as a
-computable definition. -/
-theorem bitEquiv_eq_ringEquivOfPrime :
-    bitEquiv = ZMod.ringEquivOfPrime Bool Nat.prime_two (by simp) :=
-  RingEquiv.toRingHom_injective (RingHom.ext_zmod _ _)
-
-/-- `bitEquiv.symm` reads a bit as `0` or `1`, as `Cslib.BitString.bitVal` does. -/
-theorem bitEquiv_symm_apply (b : Bool) : bitEquiv.symm b = BitString.bitVal (ZMod 2) b := by
-  cases b <;> rfl
-
-/-- `bitEquiv.symm` reads the bit `false` as `0`. -/
-@[simp]
-theorem bitEquiv_symm_false : bitEquiv.symm false = 0 := rfl
-
-/-- `bitEquiv.symm` reads the bit `true` as `1`. -/
-@[simp]
-theorem bitEquiv_symm_true : bitEquiv.symm true = 1 := rfl
+open BitString Module
 
 variable {F : Type*} [Field F] [Algebra (ZMod 2) F] {ι : Type*} [Fintype ι] {r N : ℕ}
 

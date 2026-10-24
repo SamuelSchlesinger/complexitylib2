@@ -4,11 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Foundations.Combinatorics.LineCode.Field
 import Complexity.Foundations.Data.Code.BerlekampWelch
 import Complexity.Foundations.Data.Code.Justesen
 import Complexity.Foundations.Data.Code.LocalDecoding
 import Complexity.Foundations.Data.Code.Sudan
+import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.Data.ZMod.Basic
 import Mathlib.FieldTheory.Finite.Basic
 import Mathlib.FieldTheory.Finite.GaloisField
@@ -160,7 +160,7 @@ example {s : ℕ} (hs : 1 ≤ s) :
   let _ : Fintype (GaloisField 2 (16 * s)) := Fintype.ofFinite _
   have hcard : Fintype.card (GaloisField 2 (16 * s)) = 2 ^ (16 * s) := by
     rw [Fintype.card_eq_nat_card, GaloisField.card 2 _ (by omega)]
-  obtain ⟨φ⟩ := LineCode.nonempty_addEquiv_bitString hcard
+  obtain ⟨φ⟩ := nonempty_addEquiv_bitString hcard
   exact ⟨inferInstance, inferInstance, φ, (justesenCode_asymptoticallyGood hs φ).2.2.2⟩
 
 /-! ### Axioms of the headline theorems -/

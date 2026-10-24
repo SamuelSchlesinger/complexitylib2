@@ -8,8 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
-public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
+public import Complexity.Foundations.FieldTheory.Finite.BinaryField
 public import Mathlib.RingTheory.AdjoinRoot
 import Mathlib.Data.List.GetD
 
@@ -57,7 +56,7 @@ an exhaustive search over codes finds the irreducible polynomial of least code
 
 namespace Cslib.AffineDisperser
 
-open Polynomial
+open BitString Polynomial
 
 /-- The binary polynomial with coefficient list `l`, constant term first. -/
 noncomputable def polyOfBits : List Bool → (ZMod 2)[X]
@@ -426,7 +425,7 @@ theorem polyOfCode_leastIrreducibleCode {B p : ℕ} (hp : p ≠ 0) (hB : 2 ^ (p 
   have hfind :
       (List.range B).find? (fun m => Nat.log 2 m == p && isIrreducibleCode m) = some m := by
     rw [List.find?_eq_some_iff_getElem]
-    refine ⟨(hP m).2 ⟨hm3 ▸ irreducible_leastIrreducible hp, hm3 ▸ natDegree_leastIrreducible hp⟩,
+    refine ⟨(hP m).2 ⟨hm3 ▸ irreducible_leastIrreducible p, hm3 ▸ natDegree_leastIrreducible hp⟩,
       m, by simp; omega, by simp, fun j hj => ?_⟩
     rw [List.getElem_range, Bool.not_eq_true']
     by_contra h
