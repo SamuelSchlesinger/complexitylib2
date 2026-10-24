@@ -15,6 +15,8 @@ import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Folds behind a finite-state translator
 
@@ -317,8 +319,9 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold_translate {Q E σ γ
   have hsnd := ComputableTidilyInO.snd encQ encS
   obtain ⟨cI, hI, -⟩ := hpre.comp hinit
   obtain ⟨cN, hN, -⟩ := ComputableTidilyInO.lift (encQ := encQ) tr hnext
-  obtain ⟨cE, hE⟩ := ComputableTidilyInLinearTimeAndSpace.const (α := (Q × σ) × Bool)
-    (encIn := encPair (encPair encQ encS) encBool) (encMid := encBits) []
+  obtain ⟨cE, hE⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.const (α := (Q × σ) × Bool)
+      (encIn := encPair (encPair encQ encS) encBool) (encMid := encBits) [])
   obtain ⟨cPE, hPE, -⟩ := hpassEmit.comp hsnd
   obtain ⟨cPN, hPN, -⟩ := hpre.comp (hpassEnd.comp hsnd)
   obtain ⟨cC, hC, -⟩ := hcont.comp hsnd

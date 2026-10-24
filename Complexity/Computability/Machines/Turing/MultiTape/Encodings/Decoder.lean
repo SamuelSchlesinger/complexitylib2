@@ -158,7 +158,7 @@ theorem framesT_run (w : List Bool) :
 /-- **Splitting a word into framed words is linear.** -/
 theorem computableTidilyInDegree_frames :
     ComputableTidilyInDegree frames encBits (encList encBits) 1 1 :=
-  .of_linear (framesT.computableTidilyInLinearTimeAndSpace fun w => (framesT_run w).symm)
+  .of_linear (framesT.computableInLinearTimeAndSpace fun w => (framesT_run w).symm)
 
 /-! ### Binary digits -/
 
@@ -259,7 +259,7 @@ def unary : Decoder encUnary where
     apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
       let ⟨d, e, h⟩ := h
       ⟨d, e, Internal.forgetDegree h⟩)
-    exact ⟨1, 1, .of_linear (Transducer.computableTidilyInLinearTimeAndSpace
+    exact ⟨1, 1, .of_linear (Transducer.computableInLinearTimeAndSpace
       (τ := ⟨(), fun _ _ => ((), [true]), fun _ => [], fun _ _ => by simp, fun _ => by simp⟩)
       fun w => by induction w <;> simp_all [List.replicate_succ])⟩
 
@@ -273,7 +273,7 @@ def nat : Decoder encNat where
       let ⟨d, e, h⟩ := h
       ⟨d, e, Internal.forgetDegree h⟩)
     have hd : ComputableTidilyInPolyTime (fun w : List Bool => w.dropWhile (!·)) encBits encBits :=
-      .of_linear (dropFalsesT.computableTidilyInLinearTimeAndSpace fun w =>
+      .of_linear (dropFalsesT.computableInLinearTimeAndSpace fun w =>
         (dropFalsesT_run w).symm)
     have h : ComputableTidilyInPolyTime (fun w : List Bool => (w.reverse.dropWhile (!·)).reverse)
         encBits encBits := by

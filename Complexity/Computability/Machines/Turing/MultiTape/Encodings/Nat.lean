@@ -89,36 +89,36 @@ public abbrev encAcc : Bool × List Bool ↪ List Bool := encPair encBool encBit
 public lemma length_encAcc (p : Bool × List Bool) : (encAcc p).length = p.2.length + 3 := by
   simp
 
-open ComputableTidilyInLinearTimeAndSpace
+open ComputableInLinearTimeAndSpace
 
 /-- A round is tidily computable in linear time and space. -/
 public lemma linear_succStep :
-    ComputableTidilyInLinearTimeAndSpace (fun p => succStep p.1 p.2)
+    ComputableInLinearTimeAndSpace (fun p => succStep p.1 p.2)
       (encPair encAcc encBool) encAcc := by
-  have hacc : ComputableTidilyInLinearTimeAndSpace Prod.fst (encPair encAcc encBool) encAcc :=
-    Internal.normalizeLinear (PairEncoding.fst encBool)
-  have hcarry : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.1.1)
+  have hacc : ComputableInLinearTimeAndSpace Prod.fst (encPair encAcc encBool) encAcc :=
+    (PairEncoding.fst encBool)
+  have hcarry : ComputableInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.1.1)
       (encPair encAcc encBool) encBool :=
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
-      Internal.normalizeLinear (PairEncoding.fst encBits)).comp hacc
-  have hdigit : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.2)
+    (show ComputableInLinearTimeAndSpace _ _ _ from
+      (PairEncoding.fst encBits)).comp hacc
+  have hdigit : ComputableInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.2)
       (encPair encAcc encBool) encBool :=
-    Internal.normalizeLinear (PairEncoding.snd encAcc)
-  have hdigits : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.1.2)
+    (PairEncoding.snd encAcc)
+  have hdigits : ComputableInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.1.2)
       (encPair encAcc encBool) encBits :=
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
-      Internal.normalizeLinear (PairEncoding.snd encBool)).comp hacc
-  have hand : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool =>
+    (show ComputableInLinearTimeAndSpace _ _ _ from
+      (PairEncoding.snd encBool)).comp hacc
+  have hand : ComputableInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool =>
       p.1.1 && p.2) (encPair encAcc encBool) encBool := by
     convert hdigit.ite (hcarry.restrict _) ((const false).restrict _) using 1
     funext p
     cases p.2 <;> simp
-  have hnot : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => !p.1.1)
+  have hnot : ComputableInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => !p.1.1)
       (encPair encAcc encBool) encBool := by
     convert hcarry.ite ((const false).restrict _) ((const true).restrict _) using 1
     funext p
     cases p.1.1 <;> rfl
-  have hxor : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool =>
+  have hxor : ComputableInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool =>
       p.1.1 ^^ p.2) (encPair encAcc encBool) encBool := by
     convert hdigit.ite (hnot.restrict _) (hcarry.restrict _) using 1
     funext p
@@ -127,13 +127,13 @@ public lemma linear_succStep :
 
 /-- The final carry digit is appended in linear time and space. -/
 public lemma linear_succFinish :
-    ComputableTidilyInLinearTimeAndSpace succFinish encAcc encBits := by
-  have hdigits : ComputableTidilyInLinearTimeAndSpace Prod.snd encAcc encBits :=
-    Internal.normalizeLinear (PairEncoding.snd encBool)
-  have happend : ComputableTidilyInLinearTimeAndSpace (fun p => p.2 ++ [true]) encAcc encBits :=
+    ComputableInLinearTimeAndSpace succFinish encAcc encBits := by
+  have hdigits : ComputableInLinearTimeAndSpace Prod.snd encAcc encBits :=
+    (PairEncoding.snd encBool)
+  have happend : ComputableInLinearTimeAndSpace (fun p => p.2 ++ [true]) encAcc encBits :=
     hdigits.append (const (encMid := encBool) true) (encOut := encBits) fun _ => rfl
-  have hcarry : ComputableTidilyInLinearTimeAndSpace Prod.fst encAcc encBool :=
-    Internal.normalizeLinear (PairEncoding.fst encBits)
+  have hcarry : ComputableInLinearTimeAndSpace Prod.fst encAcc encBool :=
+    (PairEncoding.fst encBits)
   exact hcarry.ite (happend.restrict _) (hdigits.restrict _)
 
 end NatSucc
@@ -144,11 +144,12 @@ open NatSucc in
 public theorem computableTidilyInTimeAndSpace_succ :
     ∃ c, ComputableTidilyInTimeAndSpace (· + 1) encNat encNat
       (fun n => c * ((encNat n).length + 1) ^ 2) (fun n => c * ((encNat n).length + 1)) := by
-  obtain ⟨cl, hlist⟩ := ComputableTidilyInLinearTimeAndSpace.of_eq (f := Nat.bits)
-    (encIn := encNat) (encMid := encBits) fun _ => rfl
-  obtain ⟨ci, hinit⟩ := ComputableTidilyInLinearTimeAndSpace.const (encIn := encNat)
-    (encMid := encAcc) (true, [])
-  obtain ⟨cs, hstep⟩ := linear_succStep
+  obtain ⟨cl, hlist⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.of_eq (f := Nat.bits)
+      (encIn := encNat) (encMid := encBits) fun _ => rfl)
+  obtain ⟨ci, hinit⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.const (encIn := encNat) (encMid := encAcc) (true, []))
+  obtain ⟨cs, hstep⟩ := Internal.normalizeLinear linear_succStep
   -- the bounds of a round and of the state of the fold
   have hlen (n i : ℕ) : (((n.bits.take i).foldl succStep (true, [])).2).length ≤ n.bits.length := by
     rw [length_foldl_succStep]
@@ -166,7 +167,7 @@ public theorem computableTidilyInTimeAndSpace_succ :
     (fun n i _ => Nat.mul_le_mul_left cs (by simp; have := hlen n i; omega))
     (fun n i _ => Nat.mul_le_mul_left cs (by simp; have := hlen n i; omega))
     (fun n i hi => by simp [length_foldl_succStep]; omega)
-  obtain ⟨cg, hfinish⟩ := linear_succFinish
+  obtain ⟨cg, hfinish⟩ := Internal.normalizeLinear linear_succFinish
   -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
   obtain ⟨cc, h⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfinish hfold
   obtain ⟨k, S, _, tm, htm⟩ := h

@@ -56,16 +56,16 @@ lemma streamEmit_append_finalDigit (c : Bool) (l : List Bool) :
       List.take_length] at h ⊢
     cases c <;> cases b <;> simp_all [incr, carry, sumDigit]
 
-open ComputableTidilyInLinearTimeAndSpace in
+open ComputableInLinearTimeAndSpace in
 /-- The parts of a round, on the carry and a digit, in linear time and space. -/
 lemma linear_parts :
-    ComputableTidilyInLinearTimeAndSpace carry (encPair encBool encBool) encBool ∧
-      ComputableTidilyInLinearTimeAndSpace sumDigit (encPair encBool encBool) encBool := by
-  have hc : ComputableTidilyInLinearTimeAndSpace Prod.fst (encPair encBool encBool) encBool :=
-    Internal.normalizeLinear (PairEncoding.fst encBool)
-  have hd : ComputableTidilyInLinearTimeAndSpace Prod.snd (encPair encBool encBool) encBool :=
-    Internal.normalizeLinear (PairEncoding.snd encBool)
-  have hnot : ComputableTidilyInLinearTimeAndSpace (fun p : Bool × Bool => !p.1)
+    ComputableInLinearTimeAndSpace carry (encPair encBool encBool) encBool ∧
+      ComputableInLinearTimeAndSpace sumDigit (encPair encBool encBool) encBool := by
+  have hc : ComputableInLinearTimeAndSpace Prod.fst (encPair encBool encBool) encBool :=
+    (PairEncoding.fst encBool)
+  have hd : ComputableInLinearTimeAndSpace Prod.snd (encPair encBool encBool) encBool :=
+    (PairEncoding.snd encBool)
+  have hnot : ComputableInLinearTimeAndSpace (fun p : Bool × Bool => !p.1)
       (encPair encBool encBool) encBool := by
     convert hc.ite ((const false).restrict _) ((const true).restrict _) using 1
     funext ⟨a, b⟩
@@ -78,8 +78,8 @@ lemma linear_parts :
     funext ⟨a, b⟩
     cases a <;> cases b <;> rfl
 
-open ComputableTidilyInLinearTimeAndSpace in
-lemma linear_finalDigit : ComputableTidilyInLinearTimeAndSpace finalDigit encBool encBits := by
+open ComputableInLinearTimeAndSpace in
+lemma linear_finalDigit : ComputableInLinearTimeAndSpace finalDigit encBool encBits := by
   convert (of_eq (f := id) (encIn := encBool) (encMid := encBool) fun _ => rfl).ite
     ((const [true]).restrict _) ((const []).restrict _) using 1
   funext c
@@ -94,8 +94,10 @@ public theorem computableTidilyInTimeAndSpace_succ_stream :
     ∃ c, ComputableTidilyInTimeAndSpace (· + 1) encNat encNat
       (fun n => c * ((encNat n).length + 1)) (fun _ => c) := by
   obtain ⟨cI, hI⟩ := computableInTimeAndSpace_of_const (encIn := encNat) (encOut := encBool) true
-  obtain ⟨⟨cN, hN⟩, ⟨cE, hE⟩⟩ := linear_parts
-  obtain ⟨cF, hF⟩ := linear_finalDigit
+  obtain ⟨hN, hE⟩ := linear_parts
+  obtain ⟨cN, hN⟩ := Internal.normalizeLinear hN
+  obtain ⟨cE, hE⟩ := Internal.normalizeLinear hE
+  obtain ⟨cF, hF⟩ := Internal.normalizeLinear linear_finalDigit
   have hpair (p : Bool × Bool) : (encPair encBool encBool p).length = 4 := by simp
   obtain ⟨c, h⟩ := ComputableTidilyInTimeAndSpace.streamFold (g := (· + 1)) (encOut := encNat)
     digitReader (fun b => [b])

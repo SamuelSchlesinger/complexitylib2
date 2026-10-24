@@ -64,10 +64,8 @@ public lemma length_le_encPair_right (enc₁ : α ↪ List Bool) (enc₂ : β �
   rw [length_encPair]; omega
 
 public instance : PairEncoding enc₁ enc₂ (encPair enc₁ enc₂) where
-  fst := Internal.forgetLinear
-    (ComputableTidilyInLinearTimeAndSpace.of_unframe fun p => by simp)
-  snd := Internal.forgetLinear
-    (ComputableTidilyInLinearTimeAndSpace.of_dropFrame fun p => by simp)
+  fst := (ComputableInLinearTimeAndSpace.of_unframe fun p => by simp)
+  snd := (ComputableInLinearTimeAndSpace.of_dropFrame fun p => by simp)
   pair := fun {_ encIn f g t s} hf hg => by
     have hfO : ComputableInBigO f encIn enc₁ t s :=
       ⟨1, hf.mono (fun _ => by simp) (fun _ => by simp)⟩
@@ -75,8 +73,9 @@ public instance : PairEncoding enc₁ enc₂ (encPair enc₁ enc₂) where
       ⟨1, hg.mono (fun _ => by simp) (fun _ => by simp)⟩
     obtain ⟨cf, hf⟩ := Internal.normalizeBigO hfO
     obtain ⟨cg, hg⟩ := Internal.normalizeBigO hgO
-    obtain ⟨c₀, hframe⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := id)
-      (encIn := enc₁) (encOut := encFramed enc₁) fun _ => rfl
+    obtain ⟨c₀, hframe⟩ := Internal.normalizeLinear
+      (ComputableInLinearTimeAndSpace.of_frame (f := id)
+        (encIn := enc₁) (encOut := encFramed enc₁) fun _ => rfl)
     -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
     obtain ⟨c₁, hf'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hframe hf
     obtain ⟨k, h⟩ := hf'.append hg (encOut := encPair enc₁ enc₂) (g := fun x => (f x, g x))

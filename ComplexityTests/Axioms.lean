@@ -4685,11 +4685,11 @@ info: 'Turing.MultiTapeTM.PairEncoding.exists_prepare' depends on axioms:
 #print axioms Turing.MultiTapeTM.PairEncoding.exists_prepare
 
 /--
-info: 'Turing.MultiTapePTM.computableTidilyInLinearTimeAndSpace_runClosedCoins' depends on axioms:
+info: 'Turing.MultiTapePTM.computableInLinearTimeAndSpace_runClosedCoins' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapePTM.computableTidilyInLinearTimeAndSpace_runClosedCoins
+#print axioms Turing.MultiTapePTM.computableInLinearTimeAndSpace_runClosedCoins
 
 /--
 info: 'Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins' depends on axioms:

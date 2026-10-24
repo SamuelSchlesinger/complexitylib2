@@ -132,9 +132,9 @@ public theorem length_le_time {f : α → β} (h : ComputableTidilyInO f encIn e
   let ⟨c, hc, _⟩ := h
   ⟨c, hc.length_le⟩
 
-public theorem of_linear {f : α → β} (h : ComputableTidilyInLinearTimeAndSpace f encIn encMid) :
+public theorem of_linear {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn encMid) :
     ComputableTidilyInO f encIn encMid (fun a => (encIn a).length) fun a => (encIn a).length :=
-  let ⟨c, hc⟩ := h
+  let ⟨c, hc⟩ := Internal.normalizeLinear h
   ⟨c, hc, hc.length_le⟩
 
 public theorem comp {f : β → γ} {g : α → β} {T₂ S₂ : β → ℕ}

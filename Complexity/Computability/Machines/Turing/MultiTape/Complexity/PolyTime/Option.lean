@@ -43,7 +43,7 @@ variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
 @[fun_prop]
 theorem optionSome (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (some (α := α)) enc (encOption enc) :=
-  of_linear (Internal.normalizeLinear OptionEncoding.some)
+  of_linear OptionEncoding.some
 
 /-- Test whether a computed option contains a value, without requiring a default value. -/
 @[fun_prop]

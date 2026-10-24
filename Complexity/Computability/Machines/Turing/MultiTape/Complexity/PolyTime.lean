@@ -138,9 +138,9 @@ public theorem polyBounded_length {f : α → β} (h : ComputableTidilyInPolyTim
   let ⟨_, _, ht, _, hf⟩ := h
   ht.mono hf.length_le
 
-public theorem of_linear {f : α → β} (h : ComputableTidilyInLinearTimeAndSpace f encIn encMid) :
+public theorem of_linear {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn encMid) :
     ComputableTidilyInPolyTime f encIn encMid :=
-  let ⟨c, hc⟩ := h
+  let ⟨c, hc⟩ := Internal.normalizeLinear h
   ⟨_, _, .of_forall_le c 1 (fun _ => by simp), .of_forall_le c 1 (fun _ => by simp), hc⟩
 
 public theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInPolyTime f encMid encOut)

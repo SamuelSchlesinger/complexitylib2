@@ -124,9 +124,9 @@ theorem symbolsT_run (x : List Bool) :
 theorem computableTidilyInDegree_map_eBit :
     ComputableTidilyInDegree (fun x : List Bool => x.map eBit) encBits (encList encUnary) 1 1 :=
   (ComputableTidilyInDegree.of_linear (encIn := encTrueDoubled)
-    (symbolsT.computableTidilyInLinearTimeAndSpace fun x => (symbolsT_run x).symm)).comp
+    (symbolsT.computableInLinearTimeAndSpace fun x => (symbolsT_run x).symm)).comp
     (ComputableTidilyInDegree.of_linear (encIn := encBits) (encMid := encTrueDoubled) (f := id)
-      (trueDoubleT.computableTidilyInLinearTimeAndSpace fun x => (trueDoubleT_run x).symm))
+      (trueDoubleT.computableInLinearTimeAndSpace fun x => (trueDoubleT_run x).symm))
 
 
 /-- Decoding a machine description is polynomial-time in the input word. -/

@@ -51,15 +51,12 @@ public lemma encList_cons (a : α) (l : List α) :
     encList enc (a :: l) = frame (enc a) ++ encList enc l := rfl
 
 public instance : ListEncoding enc (encList enc) where
-  headD d := Internal.forgetLinear
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+  headD d := (show ComputableInLinearTimeAndSpace _ _ _ from
       .of_isEmpty_ite d (fun l hl => by cases l <;> simp_all)
     (.of_unframe fun ⟨l, hl⟩ => by cases l <;> simp at hl ⊢))
-  tail := Internal.forgetLinear
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+  tail := (show ComputableInLinearTimeAndSpace _ _ _ from
       .of_dropFrame fun l => by cases l <;> simp [dropFrame])
-  isEmpty := Internal.forgetLinear
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+  isEmpty := (show ComputableInLinearTimeAndSpace _ _ _ from
       .of_isEmpty fun l => by cases l <;> simp)
 
 /-- Lists of Booleans encoded as themselves. -/
@@ -69,15 +66,12 @@ public instance : ListEncoding enc (encList enc) where
 public lemma encBits_apply (l : List Bool) : encBits l = l := rfl
 
 public instance : ListEncoding encBool encBits where
-  headD d := Internal.forgetLinear
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+  headD d := (show ComputableInLinearTimeAndSpace _ _ _ from
       .of_isEmpty_ite d (fun l hl => by simp_all)
     (.of_take_one fun ⟨l, hl⟩ => by cases l; exacts [by simp at hl, rfl]))
-  tail := Internal.forgetLinear
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+  tail := (show ComputableInLinearTimeAndSpace _ _ _ from
       .of_tail fun _ => rfl)
-  isEmpty := Internal.forgetLinear
-    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+  isEmpty := (show ComputableInLinearTimeAndSpace _ _ _ from
       .of_isEmpty fun _ => rfl)
 
 end Turing.MultiTapeTM

@@ -13,6 +13,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Strea
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Multi-pass folds of tidily computable functions
 
@@ -50,8 +52,8 @@ and then applies `passEnd`. -/
 /-- The flag after a pass: `[true]` if another pass follows, blank otherwise. -/
 @[expose] public def flagWord (b : Bool) : List Bool := if b then [true] else []
 
-open ComputableTidilyInLinearTimeAndSpace in
-lemma linear_flagWord : ComputableTidilyInLinearTimeAndSpace flagWord encBool encBits := by
+open ComputableInLinearTimeAndSpace in
+lemma linear_flagWord : ComputableInLinearTimeAndSpace flagWord encBool encBits := by
   convert (of_eq (f := id) (encIn := encBool) (encMid := encBool) fun _ => rfl).ite
     ((const [true]).restrict _) ((const []).restrict _) using 1
   funext c
@@ -126,11 +128,13 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold {α σ : Type u} {γ
       (fun x => c * (sI x + sF (passState (init x) next passEnd (elems x) (passes x + 1)) +
         sMax x + lMax x + 1)) := by
   -- the parts, on framed states
-  obtain ⟨cfr, hfr⟩ := ComputableTidilyInLinearTimeAndSpace.of_frame (f := id) (encIn := encS)
-    (encOut := encFramed encS) fun _ => rfl
-  obtain ⟨cuf, huf⟩ := ComputableTidilyInLinearTimeAndSpace.of_unframe (f := id)
-    (encIn := encFramed encS) (encOut := encS) fun s => by simp
-  obtain ⟨cfl, hfl⟩ := linear_flagWord
+  obtain ⟨cfr, hfr⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.of_frame (f := id) (encIn := encS)
+      (encOut := encFramed encS) fun _ => rfl)
+  obtain ⟨cuf, huf⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.of_unframe (f := id)
+      (encIn := encFramed encS) (encOut := encS) fun s => by simp)
+  obtain ⟨cfl, hfl⟩ := Internal.normalizeLinear linear_flagWord
   -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
   obtain ⟨cI, hI'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr hinit
   obtain ⟨cN, hN'⟩ := ComputableTidilyInTimeAndSpace.comp_linear hfr hnext

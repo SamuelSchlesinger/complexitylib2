@@ -27,7 +27,7 @@ The final tidy normalization clears the working storage and restores all heads.
 
 ## Main results
 
-* `Turing.MultiTapePTM.computableTidilyInLinearTimeAndSpace_runClosedCoins`: deterministic replay
+* `Turing.MultiTapePTM.computableInLinearTimeAndSpace_runClosedCoins`: deterministic replay
   has a uniform linear time and space bound in the encoded pair length.
 
 ## References
@@ -202,9 +202,9 @@ end Replay
 /-- Running a fixed machine on a supplied pair of coins and input is tidily computable in linear
 time and space. The bound charges input preparation, every supplied coin, and final cleanup;
 it does not assume that the source machine halts. -/
-theorem computableTidilyInLinearTimeAndSpace_runClosedCoins [Finite State]
+theorem computableInLinearTimeAndSpace_runClosedCoins [Finite State]
     (machine : MultiTapePTM k Bool State) :
-    ComputableTidilyInLinearTimeAndSpace
+    ComputableInLinearTimeAndSpace
       (fun p : List Bool × List Bool => machine.runClosedCoins p.1 p.2)
       (encPair encBits encBits) encBits := by
   obtain ⟨r, PrepareState, _, prepare, c, hp⟩ :=
@@ -247,10 +247,7 @@ theorem computableTidilyInLinearTimeAndSpace_runClosedCoins [Finite State]
     · exact (MultiTapeNTM.RunPath.ofDeterministic (Replay.compile machine prepare)
         ((Replay.compile machine prepare).initCfg (encPair encBits encBits p))
         (time p)).space_le_mul_time_add_one.trans hs
-  obtain ⟨d, htidy⟩ := hraw.exists_computableTidilyInTimeAndSpace
-  refine ⟨(d + 5) * (b + 1), htidy.mono (fun p => ?_) (fun p => ?_)⟩ <;>
-    dsimp only [size] <;>
-    nlinarith [Nat.zero_le (d * b * (encPair encBits encBits p).length)]
+  exact ⟨b, hraw⟩
 
 /-- The ordinary functional polynomial-time API can invoke saved-coin replay directly. -/
 @[fun_prop] theorem computableTidilyInPolyTime_runClosedCoins [Finite State]
@@ -258,6 +255,6 @@ theorem computableTidilyInLinearTimeAndSpace_runClosedCoins [Finite State]
     ComputableTidilyInPolyTime
       (fun p : List Bool × List Bool => machine.runClosedCoins p.1 p.2)
       (encPair encBits encBits) encBits :=
-  .of_linear (computableTidilyInLinearTimeAndSpace_runClosedCoins machine)
+  .of_linear (computableInLinearTimeAndSpace_runClosedCoins machine)
 
 end Turing.MultiTapePTM

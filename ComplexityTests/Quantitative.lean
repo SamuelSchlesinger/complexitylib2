@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
-import Complexity.Crypto.Computational.GGM.Evaluation
+module
+
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Reverse
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
+public import Complexity.Crypto.Computational.GGM.Evaluation
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -15,6 +19,8 @@ Resource bounds survive composition, ordinary functional spellings and streaming
 -/
 
 open Turing.MultiTapeTM
+
+public section
 
 namespace ComplexityTests.Quantitative
 
@@ -150,11 +156,11 @@ example : (∃ c, ComputableTidilyInTimeAndSpace (fun l : List Bool =>
       l.foldl (fun acc b => acc ++ [b]) []) encBits encBits
       (fun l => c * (l.length + 1) ^ 2) (fun l => c * (l.length + 1))) ∧
       ∀ l : List Bool, (l.foldl (fun acc b => acc ++ [b]) []).length = l.length := by
-  have hstep : ComputableTidilyInLinearTimeAndSpace
+  have hstep : ComputableInLinearTimeAndSpace
       (fun p : List Bool × Bool => p.1 ++ [p.2]) (encPair encBits encBool) encBits :=
     (PairEncoding.fst (enc₁ := encBits) encBool).append
       (PairEncoding.snd (enc₂ := encBool) encBits) (fun _ => rfl)
-  obtain ⟨k, hk⟩ := hstep
+  obtain ⟨k, hk⟩ := Internal.normalizeLinear hstep
   obtain ⟨⟨c, h⟩, hpost⟩ := hk.foldl_bits_stream_sum_spec (step := fun acc b => acc ++ [b]) []
     (fun _ i state => state.length = i) (by simp)
     (by intro l i hi state hs; simpa using hs)
@@ -201,15 +207,15 @@ example : ∃ c, ComputableTidilyInTimeAndSpace (fun l => l.foldl resetStep []) 
       have hg := hgrowth state b
       simpa only [List.foldl_cons, List.length_cons] using (show
         (l.foldl resetStep (resetStep state b)).length ≤ state.length + (l.length + 1) by lia)
-  have happend : ComputableTidilyInLinearTimeAndSpace
+  have happend : ComputableInLinearTimeAndSpace
       (fun p : List Bool × Bool => p.1 ++ [false]) (encPair encBits encBool) encBits :=
     (PairEncoding.fst (enc₁ := encBits) encBool).append
-      (ComputableTidilyInLinearTimeAndSpace.const (encMid := encBool) false) (fun _ => rfl)
-  have hstep : ComputableTidilyInLinearTimeAndSpace
+      (ComputableInLinearTimeAndSpace.const (encMid := encBool) false) (fun _ => rfl)
+  have hstep : ComputableInLinearTimeAndSpace
       (fun p : List Bool × Bool => resetStep p.1 p.2) (encPair encBits encBool) encBits :=
     (PairEncoding.snd (enc₂ := encBool) encBits).ite
-      (ComputableTidilyInLinearTimeAndSpace.const []) (happend.restrict _)
-  obtain ⟨k, hk⟩ := hstep
+      (ComputableInLinearTimeAndSpace.const []) (happend.restrict _)
+  obtain ⟨k, hk⟩ := Internal.normalizeLinear hstep
   obtain ⟨c, h⟩ := hk.foldl_bits_stream_sum (step := resetStep) []
     (R := fun l i => (3 * k + 2) * (((l.take i).foldl resetStep []).length + 1))
     (Q := fun l => k * (2 * l.length + 3)) (B := List.length)

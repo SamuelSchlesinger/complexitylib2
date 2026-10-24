@@ -40,3 +40,17 @@ example (D : Decoder encNat) : ComputableInPolyTime D.decode encBits encNat :=
 run_meta do
   if (← Lean.getEnv).contains `Turing.MultiTapeTM.Decoder.computableTidilyInPolyTime then
     throwError "the superseded decoder certificate remains"
+
+
+example {α β γ : Type*} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {encC : γ ↪ List Bool} {f : β → γ} {g : α → β}
+    (hf : ComputableInLinearTimeAndSpace f encB encC)
+    (hg : ComputableInLinearTimeAndSpace g encA encB) :
+    ComputableInLinearTimeAndSpace (f ∘ g) encA encC := hf.comp hg
+
+example : ComputableInLinearTimeAndSpace frame encBits encBits :=
+  .of_frame fun _ => rfl
+
+run_meta do
+  if (← Lean.getEnv).contains `Turing.MultiTapeTM.ComputableTidilyInLinearTimeAndSpace then
+    throwError "the superseded tidy Linear predicate remains"

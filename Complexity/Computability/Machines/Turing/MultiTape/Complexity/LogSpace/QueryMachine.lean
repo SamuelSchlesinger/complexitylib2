@@ -257,7 +257,7 @@ theorem passNext_inSpace
       (encPair (encPass encS') encBool) (encOption encBool)
       fun p => (encPair (encPass encS') encBool p).length :=
     budget_comp_lin
-      (of_inO (.of_linear (Internal.normalizeLinear OptionEncoding.some))) (.refl _) hb
+      (of_inO (.of_linear OptionEncoding.some)) (.refl _) hb
   exact budget_prod hs (budget_prod hsucc (budget_ite heq hsome hfd))
 
 section EndOfPass

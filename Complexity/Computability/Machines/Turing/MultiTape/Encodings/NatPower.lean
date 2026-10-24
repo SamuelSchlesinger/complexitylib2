@@ -56,7 +56,7 @@ theorem twoPowT_run (w : List Bool) :
 and space, for every encoding of the input. -/
 theorem ComputableTidilyInDegree.two_pow_length {α : Type*} (encIn : α ↪ List Bool) :
     ComputableTidilyInDegree (fun a => 2 ^ (encIn a).length) encIn encNat 1 1 :=
-  .of_linear (twoPowT.computableTidilyInLinearTimeAndSpace fun a => by
+  .of_linear (twoPowT.computableInLinearTimeAndSpace fun a => by
     rw [encNat_two_pow, twoPowT_run])
 
 end Turing.MultiTapeTM

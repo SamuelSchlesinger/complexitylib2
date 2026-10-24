@@ -96,9 +96,9 @@ lemma BigO.pair {α α₁ α₂ : Type u} {encIn : α ↪ List Bool} {t s : α �
 
 /-- A function tidily computable in linear time and space. -/
 lemma BigO.of_linear {f : α → β} {encOut : β ↪ List Bool}
-    (h : ComputableTidilyInLinearTimeAndSpace f encIn encOut) :
+    (h : ComputableInLinearTimeAndSpace f encIn encOut) :
     BigO f encIn encOut (fun a => (encIn a).length) (fun a => (encIn a).length) :=
-  h
+  Internal.normalizeLinear h
 
 end BigO
 
@@ -178,24 +178,24 @@ lemma bigO_foldStep (hLE : ListEncoding encA encL) (hBA : PairEncoding encB encA
     BigO (foldStep step a₀ b₀) encO encO
       (fun o => (encO o).length + roundCost step a₀ b₀ encS ts o)
       (fun o => (encO o).length + roundCost step a₀ b₀ encS ss o) := by
-  have hfst : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hSE.fst)
-  have hsnd : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hSE.snd)
-  have hsomeLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hOE.some)
-  have htailLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hLE.tail)
-  have hisEmptyLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hLE.isEmpty)
-  have hheadLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hLE.headD a₀)
-  have hgetLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hOE.getD ([], b₀))
+  have hfst : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hSE.fst)
+  have hsnd : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hSE.snd)
+  have hsomeLinear : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hOE.some)
+  have htailLinear : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hLE.tail)
+  have hisEmptyLinear : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hLE.isEmpty)
+  have hheadLinear : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hLE.headD a₀)
+  have hgetLinear : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hOE.getD ([], b₀))
   -- the operations on the state, all in linear time and space
   have hlist := hfst.comp (hgetLinear)
   have htail := BigO.of_linear (htailLinear.comp hlist)
-  obtain ⟨c₁, h₁⟩ := hisEmptyLinear.comp hlist
+  obtain ⟨c₁, h₁⟩ := Internal.normalizeLinear (hisEmptyLinear.comp hlist)
   -- the argument of `step`, the next state, and the next state wrapped in `some`
   have harg := BigO.pair hBA (.of_linear (hsnd.comp (hgetLinear)))
     (.of_linear ((hheadLinear).comp hlist))
@@ -213,8 +213,9 @@ lemma bigO_foldStep (hLE : ListEncoding encA encL) (hBA : PairEncoding encB encA
     (s' := fun o => (encO o).length + ss (arg a₀ b₀ o) + (encS (next step a₀ b₀ o)).length)
     (fun o => by simp only [Function.comp_apply, next, arg]; omega)
     (fun o => by simp only [Function.comp_apply, next, arg]; omega)
-  obtain ⟨c₂, h₂⟩ := ComputableTidilyInLinearTimeAndSpace.const (encIn := encO) (encMid := encO)
-    (none : Option (List α × β))
+  obtain ⟨c₂, h₂⟩ := Internal.normalizeLinear
+    (ComputableInLinearTimeAndSpace.const (encIn := encO) (encMid := encO)
+      (none : Option (List α × β)))
   obtain ⟨c₃, h₃⟩ := hsome
   obtain ⟨k, hk⟩ := ComputableTidilyInTimeAndSpace.ite h₁ (h₂.restrict _) (h₃.restrict _)
   refine ⟨c₁ + c₂ + c₃ + k, hk.mono (fun o => ?_) (fun o => ?_)⟩ <;>
@@ -298,12 +299,12 @@ public theorem ComputableTidilyInTimeAndSpace.foldl {γ α β : Type u} {encIn :
     have := Nat.mul_le_mul_left ci (Nat.add_le_add_right hsup 1)
     ring_nf at this ⊢
     omega
-  have hsomeLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear hOE.some
-  have hsnd : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear hSE.snd
-  have hgetInitLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
-    Internal.normalizeLinear (hOE.getD ([], init x₀))
+  have hsomeLinear : ComputableInLinearTimeAndSpace _ _ _ :=
+    hOE.some
+  have hsnd : ComputableInLinearTimeAndSpace _ _ _ :=
+    hSE.snd
+  have hgetInitLinear : ComputableInLinearTimeAndSpace _ _ _ :=
+    (hOE.getD ([], init x₀))
   -- the initial state
   have hstart := (BigO.of_linear hsomeLinear).comp
     (BigO.pair hSE (.of_computable hlist) (.of_computable hinit)) (m := lMax)

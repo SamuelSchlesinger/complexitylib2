@@ -33,7 +33,8 @@ example {α : Type u} {β : Type v} {f : α → β} {encIn : α ↪ List Bool}
 example {α : Type u} {β : Type v} {f : α → β} {encIn : α ↪ List Bool}
     {encOut : β ↪ List Bool} :
     ComputableInLinearTimeAndSpace f encIn encOut ↔
-      ComputableTidilyInLinearTimeAndSpace f encIn encOut :=
+      (∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
+        (fun a => c * ((encIn a).length + 1)) (fun a => c * ((encIn a).length + 1))) :=
   ⟨Internal.normalizeLinear, Internal.forgetLinear⟩
 
 example {α : Type u} {β : Type v} {f : α → β} {encIn : α ↪ List Bool}

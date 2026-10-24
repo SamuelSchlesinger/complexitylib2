@@ -42,9 +42,8 @@ public lemma encOption_some (a : α) : encOption enc (some a) = true :: enc a :=
 
 public instance : OptionEncoding enc (encOption enc) where
   none_eq := rfl
-  some := Internal.forgetLinear (ComputableTidilyInLinearTimeAndSpace.of_cons_true fun _ => rfl)
-  getD d := Internal.forgetLinear
-    (ComputableTidilyInLinearTimeAndSpace.of_isEmpty_ite d
+  some := (ComputableInLinearTimeAndSpace.of_cons_true fun _ => rfl)
+  getD d := (ComputableInLinearTimeAndSpace.of_isEmpty_ite d
       (fun o ho => by cases o <;> simp_all)
       (.of_tail fun ⟨o, ho⟩ => by cases o <;> simp at ho ⊢))
 
