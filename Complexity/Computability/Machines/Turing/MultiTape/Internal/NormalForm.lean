@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.ResourceFacts
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
@@ -41,11 +42,6 @@ open Cslib
 
 variable {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
   {encOut : γ ↪ List Bool}
-
-private theorem space_linear {k : ℕ} {Symbol State : Type*} {tm : MultiTapeTM k Symbol State}
-    {input output : List Symbol} {t s : ℕ} (h : tm.ComputesInTimeAndSpace input output t s) :
-    tm.ComputesInTimeAndSpace input output t (k * t + k) :=
-  ⟨h.1, h.2.1, runsInSpace_of_halted (runsInTime_iff_halted.mp h.2.1) (tm.space_linear _ t)⟩
 
 /-- Absorb an additive constant into the factor of `n + 1`. -/
 private theorem le_mul_succ {u A B C n : ℕ} (h : u ≤ A * (n + 1) + B) (hC : A + B ≤ C) :
@@ -99,7 +95,7 @@ private theorem independentBounds {f : α → β} {T S : α → ℕ}
     set s := min (c * (S a + 1)) (k * t + k) with hs
     have hrun : tm.ComputesInTimeAndSpace (encIn a) (encMid (f a)) t s := by
       rcases min_cases (c * (S a + 1)) (k * t + k) with ⟨he, -⟩ | ⟨he, -⟩ <;> rw [hs, he]
-      exacts [htm a, space_linear (htm a)]
+      exacts [htm a, (htm a).space_linear]
     refine (hrun.computesTidily_tidy Bool.false_ne_true).mono ?_ ?_
     · -- time: `2 t + 3 s + O(1)` with `s ≤ k t + k`
       have h₁ : s ≤ k * t + k := min_le_right _ _

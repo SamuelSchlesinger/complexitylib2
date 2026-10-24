@@ -8,6 +8,10 @@ module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 -- vendored: move pure degree bounds to ResourceBounds.Degree and add direct plain certificates.
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeComposition
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeClosure
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
@@ -48,15 +52,7 @@ namespace Turing.MultiTapeTM
 
 universe u
 
-namespace DegreeBounded
 
-variable {α β : Type*} {size : α → ℕ} {u v : α → ℕ} {d d₁ d₂ : ℕ}
-
-public theorem polyBounded (h : DegreeBounded size u d) : PolyBounded size u :=
-  let ⟨c, hu⟩ := h
-  .of_forall_le c d hu
-
-end DegreeBounded
 
 /-! ### Tidy computability with bounds of given degrees -/
 
@@ -269,35 +265,6 @@ public theorem isEmpty {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
 
 end ComputableTidilyInDegree
 
-namespace ComputableInDegree
 
-variable {α β : Type*} {f : α → β} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
-  {d e d' e' : ℕ}
-
-/-- Increasing either degree retains the same realizing machine. -/
-public theorem mono (h : ComputableInDegree f encIn encOut d e)
-    (hd : d ≤ d' := by first | decide | omega) (he : e ≤ e' := by first | decide | omega) :
-    ComputableInDegree f encIn encOut d' e' :=
-  let ⟨⟨t, s, ht, hs, hf⟩, hl⟩ := h
-  ⟨⟨t, s, ht.mono_deg hd, hs.mono_deg hd, hf⟩, hl.mono_deg he⟩
-
-/-- Exact time and workspace bounds of degree `d` also bound the output length in degree `d`. -/
-public theorem of_bounds {t s : α → ℕ}
-    (ht : DegreeBounded (fun a => (encIn a).length) t d)
-    (hs : DegreeBounded (fun a => (encIn a).length) s d)
-    (hf : ComputableInTimeAndSpace f encIn encOut t s) :
-    ComputableInDegree f encIn encOut d d :=
-  ⟨⟨t, s, ht, hs, hf⟩, ht.mono hf.length_le⟩
-
-/-- Fixed time and workspace degrees give plain polynomial-time computability, including degree
-zero. Encoded output is bounded separately and is not charged to workspace. -/
-public theorem computableInPolyTime (h : ComputableInDegree f encIn encOut d e) :
-    ComputableInPolyTime f encIn encOut := by
-  obtain ⟨⟨_, _, ht, hs, h⟩, _⟩ := h
-  obtain ⟨T, hT, ht⟩ := ht.polyBounded
-  obtain ⟨S, hS, hs⟩ := hs.polyBounded
-  exact ⟨T, S, hT, hS, h.mono ht hs⟩
-
-end ComputableInDegree
 
 end Turing.MultiTapeTM
