@@ -31,14 +31,14 @@ def tidyNames (e : Expr) : Array Name :=
 
 /-- Reducible aliases that reach a tidy notion, including transitively hidden predicate names. -/
 def aliasNames (env : Environment) : Std.HashSet Name := Id.run do
-  let mut reverse : Std.HashMap Name (Array Name) := {}
+  let mut reverse : Std.HashMap Name (List Name) := {}
   let mut todo : Array Name := #[]
   for (name, ci) in env.constants.toList do
     if !(tidyNames (.const name [])).isEmpty then todo := todo.push name
     if getReducibilityStatusCore env name == .reducible then
       if let some value := ci.value? then
         for dep in constants value do
-          reverse := reverse.insert dep ((reverse.getD dep #[]).push name)
+          reverse := reverse.insert dep ((reverse.getD dep []).cons name)
   let mut seen : Std.HashSet Name := {}
   let mut aliases : Std.HashSet Name := {}
   while !todo.isEmpty do
@@ -46,7 +46,7 @@ def aliasNames (env : Environment) : Std.HashSet Name := Id.run do
     todo := todo.pop
     if seen.contains name then continue
     seen := seen.insert name
-    for aliasName in reverse.getD name #[] do
+    for aliasName in reverse.getD name [] do
       if (tidyNames (.const aliasName [])).isEmpty then aliases := aliases.insert aliasName
       todo := todo.push aliasName
   return aliases
@@ -133,7 +133,8 @@ partial def walkLocal (normalize : Expr → Expr) (owner : Name) (e : Expr) (con
 /-- Local certificates plus a deterministic unique-contextual-node visit count for regressions. -/
 def localCertificatesWithStats (normalize : Expr → Expr) (owner : Name) (e : Expr) :
     Array Candidate × LocalWalkState :=
-  (walkLocal normalize owner e 0 "body" id).run {}
+  if (tidyNames (normalize e)).isEmpty then (#[], {}) else
+    (walkLocal normalize owner e 0 "body" id).run {}
 
 /-- Close every unique local certificate over its actual enclosing parameters and lets. -/
 def localCertificates (normalize : Expr → Expr) (owner : Name) (e : Expr) : Array Candidate :=
@@ -142,17 +143,17 @@ def localCertificates (normalize : Expr → Expr) (owner : Name) (e : Expr) : Ar
 /-- Reverse proof/body dependencies of project declarations. Imported upstream declarations cannot
 refer to project certificates. Type dependencies count too, conservatively. -/
 def reverseDependencies (env : Environment) (modules : Std.HashSet Name) :
-    Std.HashMap Name (Array Name) := Id.run do
-  let mut result : Std.HashMap Name (Array Name) := {}
+    Std.HashMap Name (List Name) := Id.run do
+  let mut result : Std.HashMap Name (List Name) := {}
   for (name, ci) in env.constants.toList do
     let some idx := env.getModuleIdxFor? name | continue
     unless modules.contains env.header.moduleNames[idx.toNat]! do continue
     let deps := constants ci.type ++ ((ci.value? true).map constants).getD #[]
-    for dep in deps do result := result.insert dep ((result.getD dep #[]).push name)
+    for dep in deps do result := result.insert dep (name :: result.getD dep [])
   return result
 
 /-- Exclude every rule whose existing proof can recover the held-out certificate. -/
-def closure (reverse : Std.HashMap Name (Array Name)) (seeds : Array Name) : Std.HashSet Name :=
+def closure (reverse : Std.HashMap Name (List Name)) (seeds : Array Name) : Std.HashSet Name :=
   Id.run do
     let mut seen : Std.HashSet Name := {}
     let mut todo := seeds
@@ -161,7 +162,7 @@ def closure (reverse : Std.HashMap Name (Array Name)) (seeds : Array Name) : Std
       todo := todo.pop
       if seen.contains n then continue
       seen := seen.insert n
-      todo := todo ++ reverse.getD n #[]
+      todo := todo ++ (reverse.getD n []).toArray
     return seen
 
 private def field (name : String) (value : String) : String × Json := (name, toJson value)

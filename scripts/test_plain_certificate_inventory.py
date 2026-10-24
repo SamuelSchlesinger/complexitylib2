@@ -107,7 +107,8 @@ theorem hidden_source : HiddenProperty uniqueFunction := isolated_source
 private theorem captured_source (f : ℕ → ℕ) (hf : TidyInventoryProperty f) :
     TidyInventoryProperty f := by
   have localRoutine : TidyInventoryProperty f := hf
-  exact localRoutine
+  have hiddenRoutine : HiddenProperty f := localRoutine
+  exact hiddenRoutine
 run_meta do
   let type := mkApp (mkConst `TidyInventoryProperty) (mkConst `uniqueFunction)
   let leaf := Expr.letE `localRoutine type (mkConst `isolated_source) (mkConst `True.intro) true
@@ -117,6 +118,10 @@ run_meta do
     let (certificates, stats) := localCertificatesWithStats id `ownerA dag
     unless certificates.size == 1 && stats.visits == depth + 3 do
       throwError "shared DAG was revisited as a tree: {stats.visits} visits at depth {depth}"
+  let withoutTidy := Expr.letE `value (mkConst `Nat) (mkNatLit 0) (mkConst `True.intro) true
+  let (noneFound, zeroWalk) := localCertificatesWithStats id `irrelevant withoutTidy
+  unless noneFound.isEmpty && zeroWalk.visits == 0 do
+    throwError "irrelevant proof body should not need local-certificate traversal"
   let underTwoBinders := Expr.app (.lam `left (mkConst `Nat) leaf .default)
     (.lam `right (mkConst `Nat) leaf .default)
   unless (localCertificates id `ownerA underTwoBinders).size == 2 do
@@ -151,11 +156,14 @@ run_meta do
     unless state.theorems.tries[0]!.values.isEmpty &&
         state.theorems.tries[0]!.pending.isEmpty do
       throwError "lazy/evaluated general database exclusion failed"
-  let reverse := ({} : Std.HashMap Name (Array Name)).insert `blocked #[`dependent]
-    |>.insert `dependent #[`transitive]
+  let reverse := ({} : Std.HashMap Name (List Name)).insert `blocked [`dependent]
+    |>.insert `dependent [`transitive]
   unless (closure reverse #[`blocked]).contains `transitive do
     throwError "indirect exclusion failed"
 """
+    fixture += "\nnamespace Mathlib.InventoryFixture\ntheorem denseRoot : True := True.intro\n"
+    fixture += "".join(f"theorem denseNode{i} : True := denseRoot\n" for i in range(1000))
+    fixture += "end Mathlib.InventoryFixture\n"
     with tempfile.TemporaryDirectory(prefix="plain-inventory-native-") as td:
         tmp = Path(td)
         lib = tmp / "lib"
@@ -166,6 +174,28 @@ run_meta do
         (tmp / "PlainInventoryProbe.lean").write_text(fixture)
         subprocess.run([lean, "-o", str(lib / "PlainInventoryProbe.olean"),
                         "PlainInventoryProbe.lean"], cwd=tmp, env=env, check=True)
+        checker = r"""
+import scripts.PlainCertificateInventory
+import PlainInventoryProbe
+open Lean Meta PlainCertificateInventory
+run_meta do
+  let env ← getEnv
+  let modules : Std.HashSet Name := .ofArray #[`PlainInventoryProbe]
+  let reverse := reverseDependencies env modules
+  let incoming := reverse.getD `Mathlib.InventoryFixture.denseRoot []
+  unless incoming.length == 1000 do throwError "lost dense dependency edges: {incoming.length}"
+  let actual := closure reverse #[`Mathlib.InventoryFixture.denseRoot]
+  unless actual.size == 1001 do throwError "wrong closure size: {actual.size}"
+  for i in [:1000] do
+    unless actual.contains (`Mathlib.InventoryFixture ++ s!"denseNode{i}".toName) do
+      throwError "lost dependent {i}"
+  for dependent in reverse.getD `True [] do
+    let some idx := env.getModuleIdxFor? dependent | throwError "unclassified dependency"
+    unless env.header.moduleNames[idx.toNat]! == `PlainInventoryProbe do
+      throwError "indexed an upstream owner instead of a project dependent"
+"""
+        (tmp / "CheckDense.lean").write_text(checker)
+        subprocess.run([lean, "CheckDense.lean"], cwd=tmp, env=env, check=True)
         modules, output = tmp / "modules.txt", tmp / "rows.jsonl"
         modules.write_text("PlainInventoryProbe\n")
         subprocess.run([lean, "--run", str(root / runner.RUNNER), str(modules),
@@ -180,8 +210,9 @@ run_meta do
         local = [r for r in records if r["declaration"].get("local_path")]
         assert local and all(r["declaration"]["private"] for r in local)
         assert any("localRoutine" in r["declaration"]["name"] for r in local)
-        assert all(r["declaration"]["type"].count("TidyInventoryProperty") >= 2 for r in local)
-        print("Native probes passed: contextual DAG memo, distinct owners/binders, four databases, private/local/alias capture")
+        assert all(sum(r["declaration"]["type"].count(n) for n in
+                       ("TidyInventoryProperty", "HiddenProperty")) >= 2 for r in local)
+        print("Native probes passed: contextual DAG memo, dense fan-in/closure, actual-module owners, four databases, private/local/alias capture")
 
 
 if __name__ == "__main__":
