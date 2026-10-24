@@ -121,10 +121,14 @@ def validate_rows(rows: list[dict]) -> dict:
         "registration_probes": sum("plain_registration" in row for row in records),
         "registration_pairs": {f"tidy:{a}/plain:{b}": n
                                for (a, b), n in sorted(registration_pairs.items())},
-        "one_sided_holdouts": sum(n for (a, b), n in pairs.items()
+        "tidy_only_holdout_success": sum(n for (a, b), n in pairs.items()
                                   if a == "success" and b != "success"),
-        "one_sided_registrations": sum(n for (a, b), n in registration_pairs.items()
-                                       if a == "success" and b != "success"),
+        "tidy_only_registration_success": sum(n for (a, b), n in registration_pairs.items()
+                                               if a == "success" and b != "success"),
+        "plain_only_holdout_success": sum(n for (a, b), n in pairs.items()
+                                           if b == "success" and a != "success"),
+        "plain_only_registration_success": sum(n for (a, b), n in registration_pairs.items()
+                                                if b == "success" and a != "success"),
         "holdout_pairs_by_role": {
             role: dict(Counter(
                 f"tidy:{r['tidy_holdout']['status']}/plain:{r['plain_holdout']['status']}"
