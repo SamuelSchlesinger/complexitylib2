@@ -1146,6 +1146,7 @@ public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Computability.PCP.SelectedComposition
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.Probabilistic.Adaptive
+public import Complexity.Computability.Probabilistic.BoundedUniform
 public import Complexity.Computability.Probabilistic.CenteredBinomial
 public import Complexity.Computability.Probabilistic.CoinTape
 public import Complexity.Computability.Probabilistic.Finite
@@ -1726,6 +1727,7 @@ public import Complexity.Foundations.Semantics.Stateful.Resource
 public import Complexity.Init
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
+public import Complexity.Languages.Probabilistic.BoundedUniform
 public import Complexity.Languages.Probabilistic.CenteredBinomial
 public import Complexity.Languages.Probabilistic.Concentration
 public import Complexity.Languages.Probabilistic.Forking

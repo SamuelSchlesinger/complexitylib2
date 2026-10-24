@@ -34,6 +34,7 @@ import ComplexityTests.BooleanAnalysisDecisionTree
 import ComplexityTests.BooleanAnalysisExamples
 import ComplexityTests.BooleanHierarchyClosure
 import ComplexityTests.BooleanHierarchyPH
+import ComplexityTests.BoundedUniform
 import ComplexityTests.Broadcast
 import ComplexityTests.CNF
 import ComplexityTests.CNFPolyTime
