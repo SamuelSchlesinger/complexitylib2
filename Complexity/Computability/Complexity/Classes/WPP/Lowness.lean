@@ -22,11 +22,18 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 # Oracle lowness of SPP, LWPP, and WPP
 
 This module formalizes the oracle lowness hierarchy for the gap-definable counting classes `SPP`,
-`LWPP`, and `WPP` from [Fenner, Fortnow and Kurtz, Section 5][FennerFortnowKurtz1994]:
+`LWPP`, and `WPP` following [Fenner, Fortnow and Kurtz, Section 5][FennerFortnowKurtz1994]:
 
-* **Relativized gap-definable classes (`SPPWithOracle`, `LWPPWithOracle`, `WPPWithOracle`,
-  `CeqPWithOracle`):** decision classes defined from `GapPWithOracle A enc` by the same exact
-  target conditions as their unrelativized counterparts (`SPP`, `LWPP`, `WPP`, `CeqP`).
+* **Relativized gap-definable classes (`SPPWithOracle`, `LWPPWithFixedTarget`,
+  `WPPWithFixedTarget`, `CeqPWithOracle`):** `SPPWithOracle` and `CeqPWithOracle` relativize `SPP`
+  and `C=P` via `GapPWithOracle A enc`. For `LWPP` and `WPP`, `LWPPWithFixedTarget` and
+  `WPPWithFixedTarget` relativize the counting gap (`g ∈ GapPWithOracle A enc`) while keeping the
+  target function `f` in unrelativized `FP` (`ComputableInPolyTime f encUnary encIntBin` and
+  `ComputableInPolyTime f enc encIntBin`), matching the fixed-target relativization caveat noted in
+  [Fenner, Fortnow and Kurtz, Section 5 (following Definition 5.13)][FennerFortnowKurtz1994]:
+  eliminating an oracle from the `GapPWithOracle A` gap does not eliminate oracle queries from an
+  `FP^A` target function. Target-relativized `LWPP^A` and `WPP^A` with `FP^A` targets are not
+  defined or claimed here.
 * **Exact integer-weighted oracle replay (`acceptWeight_exact`, `generalWeightedReplay`,
   `GapP.generalWeightedReplay_mem`, `generalWeightedReplay_eq_exact`):** when the true-branch
   weight at each step equals a per-instance denominator `D a` on true oracle answers and `0` on
@@ -34,41 +41,45 @@ This module formalizes the oracle lowness hierarchy for the gap-definable counti
   collapses to the single deterministic path following the oracle, contributing `(D a) ^ (T a)` on
   accepting runs and `0` on rejecting runs.
 * **`SPP` is low for `GapP` (`GapPWithOracle_eq_GapP_of_mem_SPP`,
-  [Fenner–Fortnow–Kurtz, Theorem 5.4][FennerFortnowKurtz1994]):** an `SPP` oracle has a `0`/`1`
+  [Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]):** an `SPP` oracle has a `0`/`1`
   characteristic `GapP` function (`D a = 1`), so `GapPWithOracle A enc = GapP enc`. Hence `SPP` is
-  low for `SPP`, `LWPP`, `WPP`, `C=P`, and `PP` (in particular `SPP^SPP = SPP`).
+  low for `SPP`, `C=P`, and `PP` (`SPP^SPP = SPP`, `C=P^SPP = C=P`, `PP^SPP = PP`), and low for the
+  fixed-target wide-gap classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`.
 * **`LWPP` scaling simulation and lowness (`exists_mul_mem_GapP_of_mem_LWPP`,
-  [Fenner–Fortnow–Kurtz, Lemma 5.5 and Theorem 5.6][FennerFortnowKurtz1994]):** for an `LWPP`
-  oracle with length-dependent nonzero target `f : ℕ → ℤ`, multiplying the oracle's gap on query
-  `w` by the product of `f i` over all `i ≤ τ(|a|)` with `i ≠ |w|` normalizes every query of length
-  at most the clock `τ(|a|)` to the common length-dependent denominator
-  `D(|a|) = ∏_{i ≤ τ(|a|)} f(i)`. Summing over witnesses shows that every `h ∈ GapPWithOracle A enc`
-  can be scaled by a nonzero polynomial-time length-dependent factor `S(|a|)` into `GapP enc`.
-  Hence `LWPP` is low for `LWPP`, `WPP`, `C=P`, and `PP` (in particular `LWPP^LWPP = LWPP` and
-  `WPP^LWPP = WPP`).
+  [Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]):** for an `LWPP` oracle with
+  length-dependent nonzero target `f : ℕ → ℤ`, multiplying the oracle's gap on query `w` by the
+  product of `f i` over all `i ≤ τ(|a|)` with `i ≠ |w|` normalizes every query of length at most
+  the clock `τ(|a|)` to the common length-dependent denominator `D(|a|) = ∏_{i ≤ τ(|a|)} f(i)`.
+  Summing over witnesses shows that every `h ∈ GapPWithOracle A enc` can be scaled by a nonzero
+  polynomial-time length-dependent factor `S(|a|)` into `GapP enc`. Hence `LWPP` is low for `C=P`
+  and `PP` (`C=P^LWPP = C=P`, `PP^LWPP = PP`) and low for the fixed-target wide-gap classes
+  `LWPPWithFixedTarget` and `WPPWithFixedTarget`.
 * **`WPP` is low for `PP` (`PPWithOracle_eq_PP_of_mem_WPP`):** follows from `WPP ⊆ AWPP`
   (`WPP_subset_AWPP`) and `AWPP` lowness for `PP` (`PPWithOracle_eq_PP_of_mem_AWPP`).
 
 All results use the library's strict polynomial-time adaptive word-oracle verifier model; no
-nondeterministic oracle-machine counting characterization is claimed.
+nondeterministic oracle-machine counting characterization or `FP^A`-target wide-gap relativization
+is claimed.
 
 ## Main definitions
 
 * `Cslib.Complexity.SPPWithOracle`: `0`/`1` characteristic gaps in `GapPWithOracle`.
-* `Cslib.Complexity.LWPPWithOracle`: wide gaps in `GapPWithOracle` with a unary-length target.
-* `Cslib.Complexity.WPPWithOracle`: wide gaps in `GapPWithOracle` with an instance-dependent target.
+* `Cslib.Complexity.LWPPWithFixedTarget`: wide gaps in `GapPWithOracle` with an unrelativized
+  polynomial-time unary-length target.
+* `Cslib.Complexity.WPPWithFixedTarget`: wide gaps in `GapPWithOracle` with an unrelativized
+  polynomial-time instance-dependent target.
 * `Cslib.Complexity.CeqPWithOracle`: zero sets of `GapPWithOracle` functions.
 * `Cslib.Complexity.generalWeightedReplay`: finite oracle replay with a general integer denominator.
 
 ## Main results
 
 * `Cslib.Complexity.SPP_subset_SPPWithOracle`,
-  `Cslib.Complexity.LWPP_subset_LWPPWithOracle`,
-  `Cslib.Complexity.WPP_subset_WPPWithOracle`,
+  `Cslib.Complexity.LWPP_subset_LWPPWithFixedTarget`,
+  `Cslib.Complexity.WPP_subset_WPPWithFixedTarget`,
   `Cslib.Complexity.CeqP_subset_CeqPWithOracle`,
   `Cslib.Complexity.SPPWithOracle_eq_SPP`,
-  `Cslib.Complexity.LWPPWithOracle_eq_LWPP`,
-  `Cslib.Complexity.WPPWithOracle_eq_WPP`,
+  `Cslib.Complexity.LWPPWithFixedTarget_eq_LWPP`,
+  `Cslib.Complexity.WPPWithFixedTarget_eq_WPP`,
   `Cslib.Complexity.CeqPWithOracle_eq_CeqP`: base inclusions and `P`-oracle eliminations.
 * `Cslib.Complexity.acceptWeight_exact`, `Cslib.Complexity.acceptWeight_exact_of_forall`:
   exact algebraic collapse of `acceptWeight` when untaken branches have weight zero.
@@ -77,13 +88,13 @@ nondeterministic oracle-machine counting characterization is claimed.
   `generalWeightedReplay`.
 * `Cslib.Complexity.GapPWithOracle_eq_GapP_of_mem_SPP`,
   `Cslib.Complexity.SPPWithOracle_eq_SPP_of_mem_SPP`,
-  `Cslib.Complexity.LWPPWithOracle_eq_LWPP_of_mem_SPP`,
-  `Cslib.Complexity.WPPWithOracle_eq_WPP_of_mem_SPP`,
+  `Cslib.Complexity.LWPPWithFixedTarget_eq_LWPP_of_mem_SPP`,
+  `Cslib.Complexity.WPPWithFixedTarget_eq_WPP_of_mem_SPP`,
   `Cslib.Complexity.CeqPWithOracle_eq_CeqP_of_mem_SPP`,
   `Cslib.Complexity.PPWithOracle_eq_PP_of_mem_SPP`.
 * `Cslib.Complexity.exists_mul_mem_GapP_of_mem_LWPP`,
-  `Cslib.Complexity.LWPPWithOracle_eq_LWPP_of_mem_LWPP`,
-  `Cslib.Complexity.WPPWithOracle_eq_WPP_of_mem_LWPP`,
+  `Cslib.Complexity.LWPPWithFixedTarget_eq_LWPP_of_mem_LWPP`,
+  `Cslib.Complexity.WPPWithFixedTarget_eq_WPP_of_mem_LWPP`,
   `Cslib.Complexity.CeqPWithOracle_eq_CeqP_of_mem_LWPP`,
   `Cslib.Complexity.PPWithOracle_eq_PP_of_mem_LWPP`.
 * `Cslib.Complexity.PPWithOracle_eq_PP_of_mem_WPP`.
@@ -91,7 +102,7 @@ nondeterministic oracle-machine counting characterization is claimed.
 ## References
 
 * [S. Fenner, L. Fortnow, S. Kurtz, *Gap-definable counting classes*][FennerFortnowKurtz1994],
-  Section 5 (Theorem 5.4, Lemma 5.5, Theorem 5.6).
+  Section 5 (including Definition 5.13 and the fixed-target relativization discussion).
 * [S. Fenner, L. Fortnow, S. Kurtz, L. Li, *An Oracle Builder's Toolkit*][FennerEtAl2003],
   Section 6.
 * [S. Fenner, *PP-Lowness and a Simple Definition of AWPP*][Fenner2003].
@@ -119,19 +130,20 @@ function belongs to `GapPWithOracle A enc`
 def SPPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ g ∈ GapPWithOracle A enc, (∀ a, g a = 0 ∨ g a = 1) ∧ ∀ a, a ∈ L ↔ g a = 1}
 
-/-- Length-dependent wide-gap polynomial time relative to a language oracle `A`: languages
-witnessed by a `GapPWithOracle A enc` function taking `0` on nonmembers and a nonzero
-polynomial-time unary-length target `f (|enc a|)` on members
-[Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994]. -/
-def LWPPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
+/-- Length-dependent wide-gap polynomial time relative to a language oracle `A` with an
+unrelativized `FP` target: languages witnessed by a `GapPWithOracle A enc` function taking `0` on
+nonmembers and a nonzero polynomial-time unary-length target `f (|enc a|)` (computable without `A`)
+on members [Fenner, Fortnow and Kurtz, Section 5][FennerFortnowKurtz1994]. -/
+def LWPPWithFixedTarget (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ g ∈ GapPWithOracle A enc, ∃ f : ℕ → ℤ, ComputableInPolyTime f encUnary encIntBin ∧
     (∀ n, f n ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f (enc a).length) ∧
     ∀ a, a ∈ L ↔ g a = f (enc a).length}
 
-/-- Wide-gap polynomial time relative to a language oracle `A`: languages witnessed by a
-`GapPWithOracle A enc` function taking `0` on nonmembers and a nonzero polynomial-time target
-`f a` on members [Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994]. -/
-def WPPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
+/-- Wide-gap polynomial time relative to a language oracle `A` with an unrelativized `FP` target:
+languages witnessed by a `GapPWithOracle A enc` function taking `0` on nonmembers and a nonzero
+polynomial-time target `f a` (computable without `A`) on members
+[Fenner, Fortnow and Kurtz, Section 5][FennerFortnowKurtz1994]. -/
+def WPPWithFixedTarget (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ g ∈ GapPWithOracle A enc, ∃ f : α → ℤ, ComputableInPolyTime f enc encIntBin ∧
     (∀ a, f a ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f a) ∧ ∀ a, a ∈ L ↔ g a = f a}
 
@@ -145,14 +157,14 @@ theorem SPP_subset_SPPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) 
     SPP enc ⊆ SPPWithOracle A enc := fun _ ⟨g, hg, hr, hL⟩ =>
   ⟨g, GapP_subset_GapPWithOracle A enc hg, hr, hL⟩
 
-/-- Ordinary `LWPP` verifiers can ignore every oracle. -/
-theorem LWPP_subset_LWPPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
-    LWPP enc ⊆ LWPPWithOracle A enc := fun _ ⟨g, hg, f, hf, hn, hr, hL⟩ =>
+/-- Ordinary `LWPP` verifiers can ignore every oracle in `LWPPWithFixedTarget`. -/
+theorem LWPP_subset_LWPPWithFixedTarget (A : Set (List Bool)) (enc : α ↪ List Bool) :
+    LWPP enc ⊆ LWPPWithFixedTarget A enc := fun _ ⟨g, hg, f, hf, hn, hr, hL⟩ =>
   ⟨g, GapP_subset_GapPWithOracle A enc hg, f, hf, hn, hr, hL⟩
 
-/-- Ordinary `WPP` verifiers can ignore every oracle. -/
-theorem WPP_subset_WPPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
-    WPP enc ⊆ WPPWithOracle A enc := fun _ ⟨g, hg, f, hf, hn, hr, hL⟩ =>
+/-- Ordinary `WPP` verifiers can ignore every oracle in `WPPWithFixedTarget`. -/
+theorem WPP_subset_WPPWithFixedTarget (A : Set (List Bool)) (enc : α ↪ List Bool) :
+    WPP enc ⊆ WPPWithFixedTarget A enc := fun _ ⟨g, hg, f, hf, hn, hr, hL⟩ =>
   ⟨g, GapP_subset_GapPWithOracle A enc hg, f, hf, hn, hr, hL⟩
 
 /-- Ordinary `C=P` verifiers can ignore every oracle. -/
@@ -165,15 +177,15 @@ theorem SPPWithOracle_eq_SPP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
     SPPWithOracle A enc = SPP enc := by
   simp only [SPPWithOracle, GapPWithOracle_eq_GapP hA, SPP]
 
-/-- A polynomial-time oracle adds no `LWPP` languages. -/
-theorem LWPPWithOracle_eq_LWPP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
-    LWPPWithOracle A enc = LWPP enc := by
-  simp only [LWPPWithOracle, GapPWithOracle_eq_GapP hA, LWPP]
+/-- A polynomial-time oracle adds no `LWPPWithFixedTarget` languages. -/
+theorem LWPPWithFixedTarget_eq_LWPP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
+    LWPPWithFixedTarget A enc = LWPP enc := by
+  simp only [LWPPWithFixedTarget, GapPWithOracle_eq_GapP hA, LWPP]
 
-/-- A polynomial-time oracle adds no `WPP` languages. -/
-theorem WPPWithOracle_eq_WPP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
-    WPPWithOracle A enc = WPP enc := by
-  simp only [WPPWithOracle, GapPWithOracle_eq_GapP hA, WPP]
+/-- A polynomial-time oracle adds no `WPPWithFixedTarget` languages. -/
+theorem WPPWithFixedTarget_eq_WPP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
+    WPPWithFixedTarget A enc = WPP enc := by
+  simp only [WPPWithFixedTarget, GapPWithOracle_eq_GapP hA, WPP]
 
 /-- A polynomial-time oracle adds no `C=P` languages. -/
 theorem CeqPWithOracle_eq_CeqP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
@@ -353,7 +365,7 @@ theorem generalWeightedReplay_eq_exact {k : ℕ} {Control : Type}
       (FiniteConfig.init machine.initial (input a))).tapes.output at hout
   simpa only [generalWeightedReplay, p, hout] using h
 
-/-! ### `SPP` oracle lowness (Fenner–Fortnow–Kurtz 1994, Theorem 5.4) -/
+/-! ### `SPP` oracle lowness (Fenner–Fortnow–Kurtz 1994, Section 5) -/
 
 private theorem sharpPWithOracle_mem_GapP_of_mem_SPP (hA : A ∈ SPP encBits)
     {c : α → ℕ} (hc : c ∈ SharpPWithOracle A enc) :
@@ -400,7 +412,7 @@ private theorem sharpPWithOracle_mem_GapP_of_mem_SPP (hA : A ∈ SPP encBits)
   simp only [r, hF_eval, hc_eq a, acceptCount, card_filter, Nat.cast_sum, Nat.cast_ite,
     Nat.cast_one, Nat.cast_zero]
 
-/-- **`SPP` is low for `GapP`** ([Fenner–Fortnow–Kurtz, Theorem 5.4][FennerFortnowKurtz1994]):
+/-- **`SPP` is low for `GapP`** ([Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]):
 every `SPP` oracle can be simulated exactly with unit denominator in `GapP`. -/
 theorem GapPWithOracle_eq_GapP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
     GapPWithOracle A enc = GapP enc := by
@@ -413,38 +425,40 @@ theorem GapPWithOracle_eq_GapP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪
   exact hg a
 
 /-- **`SPP` is self-low** (`SPP^SPP = SPP`,
-[Fenner–Fortnow–Kurtz, Corollary 5.7][FennerFortnowKurtz1994]). -/
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
 theorem SPPWithOracle_eq_SPP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
     SPPWithOracle A enc = SPP enc := by
   simp only [SPPWithOracle, GapPWithOracle_eq_GapP_of_mem_SPP hA, SPP]
 
-/-- **`SPP` is low for `LWPP`** (`LWPP^SPP = LWPP`,
-[Fenner–Fortnow–Kurtz, Theorem 5.4][FennerFortnowKurtz1994]). -/
-theorem LWPPWithOracle_eq_LWPP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
-    LWPPWithOracle A enc = LWPP enc := by
-  simp only [LWPPWithOracle, GapPWithOracle_eq_GapP_of_mem_SPP hA, LWPP]
+/-- **`SPP` is low for fixed-target `LWPP`** (`LWPPWithFixedTarget A enc = LWPP enc` for
+`A ∈ SPP encBits`, where the outer target `f : ℕ → ℤ` is computable without `A`;
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
+theorem LWPPWithFixedTarget_eq_LWPP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
+    LWPPWithFixedTarget A enc = LWPP enc := by
+  simp only [LWPPWithFixedTarget, GapPWithOracle_eq_GapP_of_mem_SPP hA, LWPP]
 
-/-- **`SPP` is low for `WPP`** (`WPP^SPP = WPP`,
-[Fenner–Fortnow–Kurtz, Theorem 5.4][FennerFortnowKurtz1994]). -/
-theorem WPPWithOracle_eq_WPP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
-    WPPWithOracle A enc = WPP enc := by
-  simp only [WPPWithOracle, GapPWithOracle_eq_GapP_of_mem_SPP hA, WPP]
+/-- **`SPP` is low for fixed-target `WPP`** (`WPPWithFixedTarget A enc = WPP enc` for
+`A ∈ SPP encBits`, where the outer target `f : α → ℤ` is computable without `A`;
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
+theorem WPPWithFixedTarget_eq_WPP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
+    WPPWithFixedTarget A enc = WPP enc := by
+  simp only [WPPWithFixedTarget, GapPWithOracle_eq_GapP_of_mem_SPP hA, WPP]
 
 /-- **`SPP` is low for `C=P`** (`C=P^SPP = C=P`,
-[Fenner–Fortnow–Kurtz, Theorem 5.4][FennerFortnowKurtz1994]). -/
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
 theorem CeqPWithOracle_eq_CeqP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
     CeqPWithOracle A enc = CeqP enc := by
   simp only [CeqPWithOracle, GapPWithOracle_eq_GapP_of_mem_SPP hA, CeqP]
 
 /-- **`SPP` is low for `PP`** (`PP^SPP = PP`,
-[Fenner–Fortnow–Kurtz, Theorem 5.4][FennerFortnowKurtz1994]). -/
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
 theorem PPWithOracle_eq_PP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ List Bool) :
     PPWithOracle A enc = PP enc := by
   ext L
   rw [mem_PPWithOracle_iff_exists_GapPWithOracle, GapPWithOracle_eq_GapP_of_mem_SPP hA,
     mem_PP_iff_exists_GapP]
 
-/-! ### `LWPP` scaling simulation and oracle lowness (FFK94, Lemma 5.5 and Theorem 5.6) -/
+/-! ### `LWPP` scaling simulation and oracle lowness (FFK94, Section 5) -/
 
 private theorem prod_map_ne_zero {γ : Type*} {f : γ → ℤ} {l : List γ}
     (h : ∀ x ∈ l, f x ≠ 0) : (l.map f).prod ≠ 0 := by
@@ -563,7 +577,7 @@ private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ 
     Nat.cast_one, Nat.cast_zero]
 
 /-- **`LWPP` scaling simulation for `GapPWithOracle`**
-([Fenner–Fortnow–Kurtz, Lemma 5.5][FennerFortnowKurtz1994]): for every `LWPP` oracle `A` and
+([Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]): for every `LWPP` oracle `A` and
 every `h ∈ GapPWithOracle A enc`, there is a nonzero polynomial-time unary-length scaling function
 `S : ℕ → ℤ` such that `a ↦ S (|enc a|) * h a` belongs to `GapP enc`. -/
 theorem exists_mul_mem_GapP_of_mem_LWPP (hA : A ∈ LWPP encBits) {h : α → ℤ}
@@ -587,11 +601,12 @@ theorem exists_mul_mem_GapP_of_mem_LWPP (hA : A ∈ LWPP encBits) {h : α → �
   rw [hh_eq a]
   ring
 
-/-- **`LWPP` is self-low** (`LWPP^LWPP = LWPP`,
-[Fenner–Fortnow–Kurtz, Theorem 5.6][FennerFortnowKurtz1994]). -/
-theorem LWPPWithOracle_eq_LWPP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α ↪ List Bool) :
-    LWPPWithOracle A enc = LWPP enc := by
-  apply Set.Subset.antisymm ?_ (LWPP_subset_LWPPWithOracle A enc)
+/-- **`LWPP` is low for fixed-target `LWPP`** (`LWPPWithFixedTarget A enc = LWPP enc` for
+`A ∈ LWPP encBits`, where the outer target `f : ℕ → ℤ` is computable without `A`;
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
+theorem LWPPWithFixedTarget_eq_LWPP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α ↪ List Bool) :
+    LWPPWithFixedTarget A enc = LWPP enc := by
+  apply Set.Subset.antisymm ?_ (LWPP_subset_LWPPWithFixedTarget A enc)
   rintro L ⟨g, hg, f, hf, hfn, hrange, hL⟩
   obtain ⟨S, hS, hSn, hSg⟩ := exists_mul_mem_GapP_of_mem_LWPP hA hg
   refine ⟨fun a => S (enc a).length * g a, hSg, fun n => S n * f n,
@@ -603,11 +618,12 @@ theorem LWPPWithOracle_eq_LWPP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α �
   · rw [hL a]
     exact (mul_right_inj' (hSn (enc a).length)).symm
 
-/-- **`LWPP` is low for `WPP`** (`WPP^LWPP = WPP`,
-[Fenner–Fortnow–Kurtz, Theorem 5.6][FennerFortnowKurtz1994]). -/
-theorem WPPWithOracle_eq_WPP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α ↪ List Bool) :
-    WPPWithOracle A enc = WPP enc := by
-  apply Set.Subset.antisymm ?_ (WPP_subset_WPPWithOracle A enc)
+/-- **`LWPP` is low for fixed-target `WPP`** (`WPPWithFixedTarget A enc = WPP enc` for
+`A ∈ LWPP encBits`, where the outer target `f : α → ℤ` is computable without `A`;
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
+theorem WPPWithFixedTarget_eq_WPP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α ↪ List Bool) :
+    WPPWithFixedTarget A enc = WPP enc := by
+  apply Set.Subset.antisymm ?_ (WPP_subset_WPPWithFixedTarget A enc)
   rintro L ⟨g, hg, f, hf, hfn, hrange, hL⟩
   obtain ⟨S, hS, hSn, hSg⟩ := exists_mul_mem_GapP_of_mem_LWPP hA hg
   refine ⟨fun a => S (enc a).length * g a, hSg, fun a => S (enc a).length * f a,
@@ -620,7 +636,7 @@ theorem WPPWithOracle_eq_WPP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α ↪
     exact (mul_right_inj' (hSn (enc a).length)).symm
 
 /-- **`LWPP` is low for `C=P`** (`C=P^LWPP = C=P`,
-[Fenner–Fortnow–Kurtz, Theorem 5.6][FennerFortnowKurtz1994]). -/
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
 theorem CeqPWithOracle_eq_CeqP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α ↪ List Bool) :
     CeqPWithOracle A enc = CeqP enc := by
   apply Set.Subset.antisymm ?_ (CeqP_subset_CeqPWithOracle A enc)
@@ -637,7 +653,7 @@ theorem PPWithOracle_eq_PP_of_mem_WPP (hA : A ∈ WPP encBits) (enc : α ↪ Lis
   PPWithOracle_eq_PP_of_mem_AWPP (WPP_subset_AWPP hA) enc
 
 /-- **`LWPP` is low for `PP`** (`PP^LWPP = PP`,
-[Fenner–Fortnow–Kurtz, Theorem 5.6][FennerFortnowKurtz1994]). -/
+[Fenner–Fortnow–Kurtz, Section 5][FennerFortnowKurtz1994]). -/
 theorem PPWithOracle_eq_PP_of_mem_LWPP (hA : A ∈ LWPP encBits) (enc : α ↪ List Bool) :
     PPWithOracle A enc = PP enc :=
   PPWithOracle_eq_PP_of_mem_WPP (LWPP_subset_WPP hA) enc

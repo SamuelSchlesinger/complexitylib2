@@ -49,11 +49,11 @@ example : GapPWithOracle (∅ : Set (List Bool)) encBits = GapP encBits :=
 example : SPPWithOracle (Set.univ : Set (List Bool)) encBits = SPP encBits :=
   SPPWithOracle_eq_SPP_of_mem_SPP univ_mem_SPP encBits
 
-example : LWPPWithOracle (Set.univ : Set (List Bool)) encBits = LWPP encBits :=
-  LWPPWithOracle_eq_LWPP_of_mem_SPP univ_mem_SPP encBits
+example : LWPPWithFixedTarget (Set.univ : Set (List Bool)) encBits = LWPP encBits :=
+  LWPPWithFixedTarget_eq_LWPP_of_mem_SPP univ_mem_SPP encBits
 
-example : WPPWithOracle (Set.univ : Set (List Bool)) encBits = WPP encBits :=
-  WPPWithOracle_eq_WPP_of_mem_SPP univ_mem_SPP encBits
+example : WPPWithFixedTarget (Set.univ : Set (List Bool)) encBits = WPP encBits :=
+  WPPWithFixedTarget_eq_WPP_of_mem_SPP univ_mem_SPP encBits
 
 example : CeqPWithOracle (Set.univ : Set (List Bool)) encBits = CeqP encBits :=
   CeqPWithOracle_eq_CeqP_of_mem_SPP univ_mem_SPP encBits
@@ -61,11 +61,11 @@ example : CeqPWithOracle (Set.univ : Set (List Bool)) encBits = CeqP encBits :=
 example : PPWithOracle (Set.univ : Set (List Bool)) encBits = PP encBits :=
   PPWithOracle_eq_PP_of_mem_SPP univ_mem_SPP encBits
 
-example : LWPPWithOracle (Set.univ : Set (List Bool)) encBits = LWPP encBits :=
-  LWPPWithOracle_eq_LWPP_of_mem_LWPP univ_mem_LWPP encBits
+example : LWPPWithFixedTarget (Set.univ : Set (List Bool)) encBits = LWPP encBits :=
+  LWPPWithFixedTarget_eq_LWPP_of_mem_LWPP univ_mem_LWPP encBits
 
-example : WPPWithOracle (Set.univ : Set (List Bool)) encBits = WPP encBits :=
-  WPPWithOracle_eq_WPP_of_mem_LWPP univ_mem_LWPP encBits
+example : WPPWithFixedTarget (Set.univ : Set (List Bool)) encBits = WPP encBits :=
+  WPPWithFixedTarget_eq_WPP_of_mem_LWPP univ_mem_LWPP encBits
 
 example : CeqPWithOracle (Set.univ : Set (List Bool)) encBits = CeqP encBits :=
   CeqPWithOracle_eq_CeqP_of_mem_LWPP univ_mem_LWPP encBits
@@ -107,15 +107,15 @@ example : ∃ S : ℕ → ℤ, ComputableInPolyTime S encUnary encIntBin ∧
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.SPPWithOracle_eq_SPP_of_mem_SPP
 
-/-- info: 'Cslib.Complexity.LWPPWithOracle_eq_LWPP_of_mem_SPP' depends on axioms:
+/-- info: 'Cslib.Complexity.LWPPWithFixedTarget_eq_LWPP_of_mem_SPP' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.LWPPWithOracle_eq_LWPP_of_mem_SPP
+#print axioms Cslib.Complexity.LWPPWithFixedTarget_eq_LWPP_of_mem_SPP
 
-/-- info: 'Cslib.Complexity.WPPWithOracle_eq_WPP_of_mem_SPP' depends on axioms:
+/-- info: 'Cslib.Complexity.WPPWithFixedTarget_eq_WPP_of_mem_SPP' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.WPPWithOracle_eq_WPP_of_mem_SPP
+#print axioms Cslib.Complexity.WPPWithFixedTarget_eq_WPP_of_mem_SPP
 
 /-- info: 'Cslib.Complexity.CeqPWithOracle_eq_CeqP_of_mem_SPP' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
@@ -132,15 +132,15 @@ example : ∃ S : ℕ → ℤ, ComputableInPolyTime S encUnary encIntBin ∧
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.exists_mul_mem_GapP_of_mem_LWPP
 
-/-- info: 'Cslib.Complexity.LWPPWithOracle_eq_LWPP_of_mem_LWPP' depends on axioms:
+/-- info: 'Cslib.Complexity.LWPPWithFixedTarget_eq_LWPP_of_mem_LWPP' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.LWPPWithOracle_eq_LWPP_of_mem_LWPP
+#print axioms Cslib.Complexity.LWPPWithFixedTarget_eq_LWPP_of_mem_LWPP
 
-/-- info: 'Cslib.Complexity.WPPWithOracle_eq_WPP_of_mem_LWPP' depends on axioms:
+/-- info: 'Cslib.Complexity.WPPWithFixedTarget_eq_WPP_of_mem_LWPP' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.WPPWithOracle_eq_WPP_of_mem_LWPP
+#print axioms Cslib.Complexity.WPPWithFixedTarget_eq_WPP_of_mem_LWPP
 
 /-- info: 'Cslib.Complexity.CeqPWithOracle_eq_CeqP_of_mem_LWPP' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

@@ -494,10 +494,12 @@ WPP and LWPP, using an arbitrary polynomial-time Boolean combiner on a uniform b
 queries ([WPP.TruthTable](Complexity/Computability/Complexity/Classes/WPP/TruthTable.lean)).
 Query lengths and unary query counts may vary at fixed input length; LWPP normalizes both.
 Adaptive WPP closure and UP-oracle containment are not claimed by this result.
-Oracle lowness of SPP (`GapPWithOracle_eq_GapP_of_mem_SPP`, hence lowness for `SPP`, `LWPP`,
-`WPP`, `C=P`, and `PP`), LWPP (`exists_mul_mem_GapP_of_mem_LWPP`, hence lowness for `LWPP`, `WPP`,
-`C=P`, and `PP`), and WPP (`PPWithOracle_eq_PP_of_mem_WPP`) is proved in
-[WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean).
+Oracle lowness of SPP (`GapPWithOracle_eq_GapP_of_mem_SPP`, hence lowness for `SPP`, `C=P`, `PP`,
+and the unrelativized-`FP`-target classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), LWPP
+(`exists_mul_mem_GapP_of_mem_LWPP`, hence lowness for `C=P`, `PP`, and the unrelativized-`FP`-target
+classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), and WPP (`PPWithOracle_eq_PP_of_mem_WPP`)
+is proved in [WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean);
+target-relativized `LWPP^A` / `WPP^A` definitions and lowness with `FP^A` targets are not claimed.
 PP is closed under polynomial-time truth-table reductions (Fortnow–Reingold), hence under
 intersection, union, difference, symmetric difference (Beigel–Reingold–Spielman) and
 polynomial-time bounded quantifiers ([PP.TruthTable](Complexity/Computability/Complexity/Classes/PP/TruthTable.lean)).
@@ -505,8 +507,8 @@ The proof uses Newman's sign-approximating polynomial on GapP. P is closed under
 reductions. Closure of PP under adaptive polynomial-time Turing reductions (`P^PP = PP`) would
 give `PH ⊆ PP` by Toda's theorem; it is open and not claimed.
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (both threshold #SAT and MAJSAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
-permanent completeness and Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
-collapse.
+permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
+collapse, and target-relativized WPP/LWPP oracle classes with `FP^A` targets.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP

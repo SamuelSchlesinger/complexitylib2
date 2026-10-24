@@ -42,7 +42,8 @@ symmetric difference), we prove two robustness properties from
 
 Full polynomial-family multiple-target robustness (`Poly-LWPP = LWPP` and `Poly-WPP = WPP`),
 with no computability assumption on the accepting index, is proved in `WPP.Robustness`.
-Oracle lowness of `WPP` and `LWPP` is separate.
+Oracle lowness of `SPP`, `LWPP`, and `WPP` (including fixed-target `LWPPWithFixedTarget` and
+`WPPWithFixedTarget` lowness with unrelativized `FP` targets) is proved in `WPP.Lowness`.
 
 ## Main definitions
 
