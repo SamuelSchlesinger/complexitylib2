@@ -4286,10 +4286,10 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_equivNat' depends on ax
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.int_equivNat
 
 /--
-info: 'Turing.computableTidilyInPolyTime_windowList' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.computableInPolyTime_windowList' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.computableTidilyInPolyTime_windowList
+#print axioms Turing.computableInPolyTime_windowList
 
 /--
 info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_featureIndex' depends on axioms: [propext, Classical.choice, Quot.sound]
