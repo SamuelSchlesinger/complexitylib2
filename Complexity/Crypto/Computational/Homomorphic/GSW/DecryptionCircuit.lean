@@ -80,8 +80,7 @@ private theorem inputCiphertext_apply (x : BitString (inputWidth n w))
   have hp : (i.val * w + k.val) * ((n + 1) * w) + j.val * w + l.val = p.val := by
     simp only [p, finProdFinEquiv, Equiv.coe_fn_mk, Fin.val_mk]
     ring
-  rw [hp, List.getD_eq_getElem _ _ (by simp), List.getElem_ofFn]
-  rfl
+  rw [hp, List.getD_eq_getElem _ _ (by simp), List.getElem_ofFn, sndBits_apply]
 
 /-- The selected row is the last binary digit of the leading expanded-secret coordinate. -/
 private def selectedRow (n w : ℕ) (hw : 0 < w) : Fin (n + 1) × Fin w :=
@@ -120,7 +119,7 @@ private theorem append_comp_productInputs (x : BitString (inputWidth n w)) (hw :
     x ∘ productInputs n w hw = Fin.append (fstBits x) (rowTail x hw) := by
   funext i
   refine Fin.addCases (fun j => ?_) (fun j => ?_) i
-  · simp only [Function.comp_apply, productInputs, Fin.append_left]; rfl
+  · simp only [Function.comp_apply, productInputs, Fin.append_left, fstBits_apply]
   · simp only [Function.comp_apply, productInputs, Fin.append_right, rowTail]
     exact (inputCiphertext_apply x 0 (finProdFinEquiv.symm j).1.succ
       ⟨w - 1, by omega⟩ (finProdFinEquiv.symm j).2).symm

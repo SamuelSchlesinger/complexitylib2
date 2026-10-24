@@ -433,14 +433,14 @@ theorem pairVal_eval_bitPairCircuit_mod (j : Fin k) (x : BitString k) :
     have hsnd : sndBits ((bitPairCircuit k (w + 1) j).eval interpretation x) =
         fun _ => false := by
       funext i
-      simp [bitPairCircuit, sndBits, interpretation, -Fin.natAdd_eq_addNat]
+      simp [bitPairCircuit, interpretation, -Fin.natAdd_eq_addNat]
     rw [hsnd, val_equivFin_false, add_zero, val_equivFin_eq_sum, Fin.sum_univ_succ]
     have h0 : fstBits ((bitPairCircuit k (w + 1) j).eval interpretation x) 0 = x j := by
-      simp [bitPairCircuit, fstBits, -Fin.natAdd_eq_addNat]
+      simp [bitPairCircuit, -Fin.natAdd_eq_addNat]
     have hsucc : ∀ i : Fin w,
         fstBits ((bitPairCircuit k (w + 1) j).eval interpretation x) i.succ = false := fun i => by
-      simp [bitPairCircuit, fstBits, interpretation, -Fin.natAdd_eq_addNat]
-    simp [h0, hsucc]
+      simp [bitPairCircuit, interpretation, -Fin.natAdd_eq_addNat]
+    simp [h0, hsucc, -fstBits_apply]
 
 @[simp] theorem size_bitPairCircuit (j : Fin k) : (bitPairCircuit k w j).size = 1 :=
   rfl

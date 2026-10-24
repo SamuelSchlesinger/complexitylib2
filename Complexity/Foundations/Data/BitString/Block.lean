@@ -54,7 +54,8 @@ def block (x : Fin (m * k) → α) (i : Fin m) : Fin k → α :=
     block x i j = x (finProdFinEquiv (i, j)) :=
   rfl
 
-/-- Cutting a tuple of `m * k` entries into its `m` blocks of `k` entries. -/
+/-- Cutting a tuple of `m * k` entries into its `m` blocks of `k` entries. This is definitionally
+`(finProdFinEquiv.symm.arrowCongr (Equiv.refl α)).trans (Equiv.curry _ _ _)`. -/
 @[simps symm_apply]
 def blocksEquiv : (Fin (m * k) → α) ≃ (Fin m → Fin k → α) where
   toFun := block

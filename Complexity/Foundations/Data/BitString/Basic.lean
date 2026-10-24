@@ -42,7 +42,8 @@ Boolean functions, are combined with `^^`.
 * `Cslib.BitString.val_equivFin_cons`: a new first bit is the least significant binary digit.
 * `Cslib.BitString.val_equivFin_succ`, `Cslib.BitString.decide_equivFin_le_succ`: numbering and
   comparing words by their highest bit.
-* `Cslib.BitString.fstBits_append`, `Cslib.BitString.sndBits_append`,
+* `Cslib.BitString.fstBits_apply`, `Cslib.BitString.sndBits_apply`,
+  `Cslib.BitString.fstBits_append`, `Cslib.BitString.sndBits_append`,
   `Cslib.BitString.append_fstBits_sndBits`: splitting and reassembling an appended word.
 * `Cslib.BitString.indexBits_injective`: distinct finite indices have distinct encodings.
 * `Cslib.BitString.add_self`, `Cslib.BitString.add_cancel_left`,
@@ -117,6 +118,16 @@ def fstBits {a b : ℕ} (x : BitString (a + b)) : BitString a :=
 /-- The last `b` bits of an `(a + b)`-bit word. -/
 def sndBits {a b : ℕ} (x : BitString (a + b)) : BitString b :=
   ((Fin.appendEquiv a b).symm x).2
+
+/-- Bit `i` of `fstBits x` is bit `Fin.castAdd b i` of `x`. -/
+@[simp] theorem fstBits_apply {a b : ℕ} (x : BitString (a + b)) (i : Fin a) :
+    fstBits x i = x (Fin.castAdd b i) :=
+  rfl
+
+/-- Bit `i` of `sndBits x` is bit `Fin.natAdd a i` of `x`. -/
+@[simp] theorem sndBits_apply {a b : ℕ} (x : BitString (a + b)) (i : Fin b) :
+    sndBits x i = x (Fin.natAdd a i) :=
+  rfl
 
 /-- The first `a` bits of `Fin.append u v` are `u`. -/
 @[simp] theorem fstBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
