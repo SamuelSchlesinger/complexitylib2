@@ -31,7 +31,8 @@ is not automatically a strict PPT operation.
 
 The sampling and external interfaces form the sum `unifSpec ⊕ₒ spec` of
 `Complexity/Languages/Probabilistic/Sum.lean`: `sample` is its left embedding
-(`sample_eq_liftLeft`) and `handler` its sum handler (`handler_eq_sumHandler`).
+(`sample_eq_liftLeft`) and `handler` is an abbreviation of its sum handler `OracleComp.sumHandler`,
+so the rules of `sumHandler` apply to it.
 
 ## Main results
 
@@ -88,30 +89,11 @@ theorem isMonadHom_sample : IsMonadHom ProbComp (ProbOracleComp spec) (sample (s
 def query (q : Query) : ProbOracleComp spec (spec q) := OracleComp.query (Sum.inr q)
 
 /-- Combine the two handlers. In particular, memoizing `oracle` does not memoize `random`.
-This is the sum handler of `unifSpec ⊕ₒ spec` (`handler_eq_sumHandler`), with its own case
-equations. -/
-def handler {m : Type → Type v} (random : (n : ℕ) → m (Fin (n + 1)))
+This is the sum handler `OracleComp.sumHandler` of `unifSpec ⊕ₒ spec`. -/
+abbrev handler {m : Type → Type v} (random : (n : ℕ) → m (Fin (n + 1)))
     (oracle : (q : Query) → m (spec q)) :
-    (q : ℕ ⊕ Query) → m (probOracleSpec spec q)
-  | .inl n => random n
-  | .inr q => oracle q
-
-/-- The combined handler is the sum handler of the sampling and external interfaces. -/
-theorem handler_eq_sumHandler {m : Type → Type v} (random : (n : ℕ) → m (Fin (n + 1)))
-    (oracle : (q : Query) → m (spec q)) :
-    handler random oracle = OracleComp.sumHandler random oracle := by
-  funext q
-  cases q <;> rfl
-
-/-- Interpretation distributes over the sampling and external components of a program handler. -/
-theorem interpret_handler {Query' : Type} {spec' : Query' → Type}
-    {m : Type → Type v} [Monad m] (target : (q : Query') → m (spec' q))
-    (random : (k : ℕ) → OracleComp spec' (Fin (k + 1)))
-    (oracle : (q : Query) → OracleComp spec' (spec q)) :
-    (fun q => OracleComp.interpret target (handler random oracle q)) =
-      handler (fun k => OracleComp.interpret target (random k))
-        (fun q => OracleComp.interpret target (oracle q)) := by
-  simp only [handler_eq_sumHandler, OracleComp.interpret_sumHandler]
+    (q : ℕ ⊕ Query) → m (probOracleSpec spec q) :=
+  OracleComp.sumHandler random oracle
 
 variable {m : Type → Type v} [Monad m] [LawfulMonad m]
 
@@ -126,7 +108,7 @@ variable {m : Type → Type v} [Monad m] [LawfulMonad m]
     (oracle : (q : Query) → m (spec q)) (program : ProbComp α) :
     OracleComp.interpret (handler random oracle) (sample program) =
       OracleComp.interpret random program := by
-  rw [handler_eq_sumHandler, sample_eq_liftLeft, OracleComp.interpret_sumHandler_liftLeft]
+  rw [sample_eq_liftLeft, OracleComp.interpret_sumHandler_liftLeft]
 
 /-- Sampling preserves ordinary functional sequencing before any interpretation. -/
 @[simp] theorem sample_bind (program : ProbComp α) (next : α → ProbComp β) :
@@ -182,7 +164,7 @@ theorem eval_interpret (oracle : (q : Query) → ProbComp (spec q))
     ProbComp.eval (OracleComp.interpret (handler ProbComp.unifFin oracle) program) =
       OracleComp.interpret (handler ProbComp.unifOracle (fun q => ProbComp.eval (oracle q)))
         program := by
-  simp only [ProbComp.eval, OracleComp.interpret_interpret, interpret_handler,
+  simp only [ProbComp.eval, OracleComp.interpret_interpret, OracleComp.interpret_sumHandler,
     ProbComp.unifFin, OracleComp.interpret_query]
 
 /-- Evaluating closed stateful handlers commutes with interpreting the whole oracle program.

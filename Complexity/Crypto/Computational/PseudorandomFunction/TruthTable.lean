@@ -109,11 +109,11 @@ theorem isOraclePPTOn_queryTable : IsOraclePPTOn (encList encBits) encBits query
     cases words with
     | nil =>
       simp only [queryTableStep, List.isEmpty_nil, ite_true] at hnext
-      rw [ProbOracleComp.eq_of_mem_support_pure hnext]
+      rw [OracleComp.eq_of_mem_supportWith_pure hnext]
       simp
     | cons word words =>
       simp only [queryTableStep, List.isEmpty_cons, Bool.false_eq_true, ite_false] at hnext
-      obtain ⟨reply, -, rfl⟩ := ProbOracleComp.mem_support_map hnext
+      obtain ⟨reply, -, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hnext
       simp only [length_encPair, encBits_apply, List.length_append, List.length_singleton,
         List.tail_cons, length_encList, List.map_cons, List.sum_cons]
       omega

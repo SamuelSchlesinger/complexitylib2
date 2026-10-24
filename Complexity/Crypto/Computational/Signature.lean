@@ -566,11 +566,11 @@ theorem isOraclePPT_limitToOneQuery {bound : ℕ → ℕ → ℕ}
     intro caller request state _ result hresult
     unfold oneTimeFilterHandler at hresult
     split_ifs at hresult with hstate
-    · have heq := ProbOracleComp.eq_of_mem_support_pure hresult
+    · have heq := OracleComp.eq_of_mem_supportWith_pure hresult
       subst heq
       simp [encBool_apply]
-    · obtain ⟨sig, hsig, rfl⟩ := ProbOracleComp.mem_support_map hresult
-      obtain ⟨rawSig, _, rfl⟩ := ProbOracleComp.mem_support_map hsig
+    · obtain ⟨sig, hsig, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hresult
+      obtain ⟨rawSig, _, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hsig
       refine ⟨trivial, ?_, ?_⟩
       · exact (List.length_take_le _ _).trans (by lia)
       · simp [encBool_apply]

@@ -226,7 +226,7 @@ theorem interpret_prob_eq_memoize_map {Value Key' Value' : Type} [Finite Value]
   have houtput := congrArg (PMF.map Prod.fst) hrun
   simp only [PMF.map_comp, Function.comp_def, represent, List.map_nil] at houtput
   rw [← houtput]
-  simpa only [OracleComp.interpret_interpret, interpret_handler, interpret_sample,
+  simpa only [OracleComp.interpret_interpret, OracleComp.interpret_sumHandler, interpret_sample,
     ProbComp.unifFin, OracleComp.interpret_query, OracleComp.interpret_map, interpret_query,
     PMF.monad_map_eq_map, PMF.pure_map] using interpret_prob_eq_memoize distribution
       (OracleComp.interpret (handler (fun n => sample (ProbComp.unifFin n))

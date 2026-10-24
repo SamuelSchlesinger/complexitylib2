@@ -425,7 +425,7 @@ private theorem run_limitToOneQuery_eq_oneTimeSigningOracle (M : MACScheme)
         (M.oneTimeSigningOracle sk)) prog).run []) := by
   rw [ProbComp.eval_map, ProbOracleComp.eval_run_interpret, ProbOracleComp.eval_run_interpret,
     ProbOracleComp.run_interpret_run_interpret, PMF.map_comp]
-  exact ProbOracleComp.run_interpret_map_state_of_invariant
+  have key := ProbOracleComp.run_interpret_map_state_of_invariant
     (oracle := fun q (state : Bool × List (List Bool)) =>
       ((OracleComp.interpret
         (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifOracle k))
@@ -504,6 +504,7 @@ private theorem run_limitToOneQuery_eq_oneTimeSigningOracle (M : MACScheme)
         rw [List.isEmpty_iff.mp hq]
         simp [List.take_of_length_le (hbound msg tag htag)])
     prog (false, []) rfl
+  exact key
 
 /-- Full EUF-CMA security implies one-time EUF-CMA security for any `MACScheme`. -/
 theorem EUFCMA.oneTimeEUFCMA {M : MACScheme} (h : M.EUFCMA) : M.OneTimeEUFCMA := by
@@ -964,8 +965,8 @@ theorem isOraclePPT_macToPrfDistinguisher {adversary : Forger}
       (fun _ _ => True) (fun _ => trivial) (by polytime)
     intro caller request queried _ result hresult
     unfold macLogHandler at hresult
-    obtain ⟨tag, htag, rfl⟩ := ProbOracleComp.mem_support_map hresult
-    obtain ⟨rawTag, _, rfl⟩ := ProbOracleComp.mem_support_map htag
+    obtain ⟨tag, htag, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hresult
+    obtain ⟨rawTag, _, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp htag
     refine ⟨trivial, ?_, ?_⟩
     · exact (List.length_take_le _ _).trans (by lia)
     · simp only [encList_cons, List.length_append, length_frame, encBits_apply]

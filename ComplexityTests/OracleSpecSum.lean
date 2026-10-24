@@ -39,7 +39,7 @@ example :
 example (spec : Bool → Type) (random : (n : ℕ) → Option (Fin (n + 1)))
     (oracle : (q : Bool) → Option (spec q)) :
     ProbOracleComp.handler random oracle = OracleComp.sumHandler random oracle :=
-  ProbOracleComp.handler_eq_sumHandler random oracle
+  rfl
 
 example (program : ProbComp Bool) :
     ProbOracleComp.sample (spec := fun _ : Bool => Bool) program = OracleComp.liftLeft program :=

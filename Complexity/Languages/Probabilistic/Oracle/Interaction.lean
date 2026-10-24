@@ -71,7 +71,6 @@ theorem runWith_eq_runWith_sumHandler (program : ProbOracleComp spec α) (s : St
     runWith oracle program s =
       OracleComp.runWith (OracleComp.sumHandler (fun n => StateT.lift (ProbComp.unifOracle n))
         oracle) program s := by
-  rw [runWith, handler_eq_sumHandler]
   rfl
 
 /-- Against a memoryless oracle, the run is `OracleComp.evalWith` of the uniform handler on the
