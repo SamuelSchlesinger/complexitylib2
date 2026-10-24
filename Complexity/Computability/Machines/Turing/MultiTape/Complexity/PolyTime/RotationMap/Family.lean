@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.TowerTable.Family
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Tower
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite

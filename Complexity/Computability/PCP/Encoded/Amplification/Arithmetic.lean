@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.PCP.Encoded.Amplification.Iteration
 public import Complexity.Computability.PCP.Encoded.SelectedComposition.Enumeration
 public import Complexity.Computability.PCP.Amplification.Arithmetic
-public import Complexity.Foundations.Combinatorics.Expander.TowerTable.Family
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.TowerTable.Family
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Family
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 
