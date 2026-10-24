@@ -164,6 +164,40 @@ example (family : List Bool → List Bool → List Bool) :
     sampleBitStringQuery sampleBitStringForge
   simpa only [ProbComp.eval_uniform] using BitString.LinearHash.isDeltaUniversalHash 2 2
 
+/-- Constant (insecure) PRF family that ignores its key and echoes the query word (so on the fixed
+nonce `List.replicate n false` it always returns `0ⁿ`). -/
+def insecureZeroFamily (_key query : List Bool) : List Bool := query
+
+-- Concrete semantic check: under `insecureZeroFamily`, `prfPadDist` collapses to a point mass.
+theorem prfPadDist_insecureZeroFamily (n : ℕ) :
+    prfPadDist insecureZeroFamily n =
+      PMF.pure (BitString.ofList n (List.replicate n false)) :=
+  PMF.map_const (BitString.uniformList n) (BitString.ofList n (List.replicate n false))
+
+-- Concrete semantic check: a pad test that checks whether the pad equals the fixed all-false pad
+-- succeeds with probability `1` in `prfRealGame` against `insecureZeroFamily`.
+example :
+    ProbComp.eval
+      (prfRealGame insecureZeroFamily
+        (prfPadDistinguisher fun k (r : BitString k) =>
+          pure (decide (r = BitString.ofList k (List.replicate k false)))) 2)
+      true = 1 := by
+  rw [eval_prfRealGame_prfPadDistinguisher, prfPadDist_insecureZeroFamily]
+  simp
+
+-- Concrete semantic check: when the PRF pad is fixed (`insecureZeroFamily`) and the hash is
+-- `fun _ _ => 0`, a forger querying `fun _ => false` and forging `(fun _ => true, pad)` wins
+-- `prfOneTimeGame` with certainty (`PMF.pure true`).
+example :
+    prfOneTimeGame (PMF.pure ()) insecureZeroFamily 2
+      (fun (_ : Unit) (_ : BitString 2) => (0 : BitString 2))
+      (OneTimeForger.ofProbComp sampleBitStringQuery sampleBitStringForge) =
+      PMF.pure true := by
+  rw [prfOneTimeGame, maskedOneTimeGame_eq_bind_padDistinguisher, prfPadDist_insecureZeroFamily]
+  simp only [padDistinguisher, OneTimeForger.ofProbComp, sampleBitStringQuery, sampleBitStringForge,
+    sign, verify, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.pure_bind, ProbComp.eval_pure]
+  congr 1
+
 /--
 info: 'Cslib.Crypto.Protocols.CarterWegman.maskedOneTimeGame_toReal_le_add_advantage' depends on axioms:
 [propext, Classical.choice, Quot.sound]
