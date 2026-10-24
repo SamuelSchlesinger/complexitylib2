@@ -103,6 +103,146 @@ theorem not_eufCMA_trivialMACScheme :
     ¬ trivialMACScheme.EUFCMA :=
   fun h => not_oneTimeEUFCMA_trivialMACScheme h.oneTimeEUFCMA
 
+/-- The trivial MAC scheme is not SUF-CMA secure. -/
+theorem not_sufCMA_trivialMACScheme :
+    ¬ trivialMACScheme.SUFCMA :=
+  fun h => not_eufCMA_trivialMACScheme h.eufCma
+
+/-! ### Separating fresh-message (`EUFCMA`) and fresh-pair (`SUFCMA`) freshness -/
+
+/-- Randomized MAC scheme whose `sign` algorithm samples a uniform 1-bit tag and whose `verify`
+algorithm accepts any 1-bit tag. Because each message has two distinct valid tags `[false]` and
+`[true]`, querying a message and flipping the returned tag bit produces a fresh valid `(msg, tag)`
+pair on a previously queried message. -/
+noncomputable def randomizedTagMACScheme : MACScheme where
+  keyGen _ := pure []
+  sign _ _ := BitString.sampleList 1
+  verify _ _ tag := tag.length == 1
+  keyGen_ppt := by ppt
+  sign_ppt := by ppt
+  verify_polyTime := .of_tidy (by polytime)
+  verify_sign := by
+    intro _ _ _ _ _ tag htag
+    rw [BitString.eval_sampleList] at htag
+    simp [BitString.length_of_mem_support_uniformList htag]
+
+/-- Adaptive forger that queries the `n`-bit message `0^n`, receives a 1-bit tag `tag`, and outputs
+`(0^n, [!tag.headD false])`—a new valid tag on the previously signed message `0^n`. -/
+def sameMessageNewTagForger : Forger :=
+  fun n _ =>
+    (fun tag => (List.replicate n false, [!tag.headD false])) <$>
+      (List.take 1 <$> ProbOracleComp.query ((), List.replicate n false))
+
+/-- `sameMessageNewTagForger` is uniformly strict oracle-PPT. -/
+theorem isOraclePPT_sameMessageNewTagForger :
+    IsOraclePPT (encPair encBits encBits) sameMessageNewTagForger := by
+  have hq : IsOraclePPTOn (encPair encUnary encBits) encBits
+      (fun p : ℕ × List Bool =>
+        List.take 1 <$> ProbOracleComp.query ((), List.replicate p.1 false)) :=
+    IsOraclePPTOn.query_take () (by polytime) (by polytime)
+  unfold sameMessageNewTagForger
+  exact (hq.map_with (by polytime)).isOraclePPT
+
+/-- In the fresh-message `eufCmaGame`, `sameMessageNewTagForger` always loses (`PMF.pure false`)
+because its forgery message `0^n` was previously queried to the signing oracle. -/
+theorem eval_eufCmaGame_randomizedTagMACScheme_sameMessageNewTagForger (n : ℕ) :
+    ProbComp.eval (randomizedTagMACScheme.eufCmaGame sameMessageNewTagForger n) =
+      PMF.pure false := by
+  simp only [MACScheme.eufCmaGame, randomizedTagMACScheme, sameMessageNewTagForger,
+    Functor.map_map, OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query,
+    ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure, PMF.pure_bind, PMF.bind_map,
+    Function.comp_def]
+  dsimp only [StateT.run, MACScheme.signingOracle]
+  simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind]
+  have hcongr : PMF.bind (ProbComp.eval (BitString.sampleList 1))
+      (fun tag : List Bool =>
+        PMF.pure (((List.replicate n false).length == n) &&
+          !([List.replicate n false].contains (List.replicate n false)) &&
+          ([!(tag.take 1).headD false].length == 1))) =
+      PMF.bind (ProbComp.eval (BitString.sampleList 1)) (fun _ => PMF.pure false) := by
+    refine PMF.bind_congr_on_support _ _ _ fun tag _ => ?_
+    simp
+  rw [hcongr, PMF.bind_const]
+
+/-- In the strong fresh-pair `sufCmaGame`, `sameMessageNewTagForger` always wins (`PMF.pure true`)
+because for every 1-bit tag `[b]` returned by the randomized signer, the output pair
+`(0^n, [!b])` is valid and distinct from the recorded pair `(0^n, [b])`. -/
+theorem eval_sufCmaGame_randomizedTagMACScheme_sameMessageNewTagForger (n : ℕ) :
+    ProbComp.eval (randomizedTagMACScheme.sufCmaGame sameMessageNewTagForger n) =
+      PMF.pure true := by
+  simp only [MACScheme.sufCmaGame, randomizedTagMACScheme, sameMessageNewTagForger,
+    Functor.map_map, OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query,
+    ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure, PMF.pure_bind, PMF.bind_map,
+    Function.comp_def]
+  dsimp only [StateT.run, MACScheme.signingPairOracle]
+  simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind]
+  have hcongr : PMF.bind (ProbComp.eval (BitString.sampleList 1))
+      (fun tag : List Bool =>
+        PMF.pure (((List.replicate n false).length == n) &&
+          !([(List.replicate n false, tag)].contains
+            (List.replicate n false, [!(tag.take 1).headD false])) &&
+          ([!(tag.take 1).headD false].length == 1))) =
+      PMF.bind (ProbComp.eval (BitString.sampleList 1)) (fun _ => PMF.pure true) := by
+    refine PMF.bind_congr_on_support _ _ _ fun tag htag => ?_
+    rw [BitString.eval_sampleList] at htag
+    have hlen : tag.length = 1 := BitString.length_of_mem_support_uniformList htag
+    obtain ⟨b, rfl⟩ := List.length_eq_one_iff.mp hlen
+    cases b <;> simp
+  rw [hcongr, PMF.bind_const]
+
+/-- On `sameMessageNewTagForger`, the EUF-CMA success probability is `0` while the SUF-CMA success
+probability is `1`, strictly separating the two freshness predicates. -/
+theorem succProbability_eufCma_lt_sufCma_sameMessageNewTagForger (n : ℕ) :
+    Game.succProbability
+        (ProbComp.eval (randomizedTagMACScheme.eufCmaGame sameMessageNewTagForger n)) <
+      Game.succProbability
+        (ProbComp.eval (randomizedTagMACScheme.sufCmaGame sameMessageNewTagForger n)) := by
+  rw [eval_eufCmaGame_randomizedTagMACScheme_sameMessageNewTagForger,
+    eval_sufCmaGame_randomizedTagMACScheme_sameMessageNewTagForger]
+  simp [Game.succProbability]
+
+/--
+info: 'Cslib.Crypto.MACScheme.succProbability_eufCmaGame_le_sufCmaGame' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.MACScheme.succProbability_eufCmaGame_le_sufCmaGame
+
+/--
+info: 'Cslib.Crypto.MACScheme.SUFCMA.eufCma' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.MACScheme.SUFCMA.eufCma
+
+/--
+info: 'Cslib.Crypto.MACScheme.sufCma_iff_eufCma_of_unique_tag' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.MACScheme.sufCma_iff_eufCma_of_unique_tag
+
+/--
+info: 'Cslib.Crypto.eval_sufCmaGame_prfMAC' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.eval_sufCmaGame_prfMAC
+
+/--
+info: 'Cslib.Crypto.succProbability_sufCmaGame_prfMAC_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.succProbability_sufCmaGame_prfMAC_le
+
+/--
+info: 'Cslib.Crypto.PseudorandomFunction.sufCma_prfMAC' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.PseudorandomFunction.sufCma_prfMAC
+
 /--
 info: 'Cslib.Crypto.MACScheme.EUFCMA.oneTimeEUFCMA' depends on axioms:
 [propext, Classical.choice, Quot.sound]
