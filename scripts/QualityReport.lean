@@ -208,6 +208,8 @@ unsafe def run (libDir : System.FilePath) (pairs : Option String := none) : IO U
       else #[base]
     let parts ← readModuleDataParts paths
     let some (exportedData, r0) := parts[0]? | throw <| IO.userError s!"cannot read {base}"
+    unless exportedData.isModule == split do
+      throw <| IO.userError s!"incomplete split module outputs for {base}"
     let some (fullData, r2) := parts[if split then 2 else 0]? |
       throw <| IO.userError s!"cannot read private data of {base}"
     regions := regions ++ #[r0, r2]

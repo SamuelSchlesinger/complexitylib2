@@ -671,7 +671,8 @@ def tidy_usage_report(lib: Library, prefixes: tuple[str, ...] = TIDY_INTERNAL_PR
         rel = path.relative_to(ROOT).as_posix()
         if any(rel.startswith(p) for p in prefixes):
             continue
-        signals = tidy_source_signals(path.read_text(),
+        text = path.read_text()
+        signals = tidy_source_signals(text,
                                       public_tidy_names | private_tidy_names[module],
                                       known_suffixes)
         private = private_by_module[module] if metadata else None
@@ -682,6 +683,8 @@ def tidy_usage_report(lib: Library, prefixes: tuple[str, ...] = TIDY_INTERNAL_PR
                   "bridge_occurrences": len(signals["bridges"])}
         rows.append({"module": module, "path": rel,
                      "role": module_role(module) if metadata else "guide", "counts": counts,
+                     "mentions_tidy": bool(re.search(r"Tidily|IsTidy|\.(?:of_)?tidy\b",
+                                                       masks(text)[1])),
                      "private_tidy_declarations": private, **signals})
     keys = ("public_tidy_statements", "private_tidy_declarations",
             "local_tidy_fun_prop", "bridge_occurrences")
@@ -701,8 +704,7 @@ def tidy_usage_report(lib: Library, prefixes: tuple[str, ...] = TIDY_INTERNAL_PR
                   "scanned_files": len(sources), "build_dir": str(lib.build_dir)}
     return {"provenance": provenance, "internal_prefixes": list(prefixes), "report_only": True,
             "totals": {k: sum(r["counts"][k] or 0 for r in rows) for k in keys},
-            "files_mentioning_tidy": sum(bool(re.search(r"Tidily|IsTidy|\.(?:of_)?tidy\b",
-                masks((ROOT / r["path"]).read_text())[1])) for r in rows),
+            "files_mentioning_tidy": sum(r["mentions_tidy"] for r in rows),
             "modules": rows,
             "notes": ["The prefixes are a proposed measurement boundary, not S3 exemptions.",
                 "Public counts use S3's declaration/type rule only for library modules, but "

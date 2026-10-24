@@ -4,6 +4,12 @@
 This never compares or writes a baseline, rejects a count, or changes S3's allowlist. It reuses
 quality_report's declaration metadata, freshness checks and source masks. Counts are report-only;
 the proposed Internal/** prefixes are measurement parameters, not approved exemptions.
+
+Usage: python3 scripts/check_tidy_usage.py --json /tmp/tidy-usage.json
+To reproduce the issue's older broad Machines measurement boundary, pass
+--internal-prefix Complexity/Computability/Machines/ (this grants no exemption).
+Use TIDY_USAGE_NATIVE=1 python3 -B -m unittest discover -s scripts -p test_tidy_usage.py
+to check both classic and split Lean metadata readers as well as the lexical regressions.
 """
 
 from __future__ import annotations

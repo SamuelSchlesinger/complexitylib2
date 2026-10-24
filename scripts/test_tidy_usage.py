@@ -130,6 +130,12 @@ class NativeMetadataTests(unittest.TestCase):
                                      capture_output=True)
             self.assertNotEqual(failure.returncode, 0)
             self.assertIn("incomplete split module outputs", failure.stderr)
+            # Both missing parts must not be misread as a valid classic module either.
+            (root / "Split.olean.private").unlink()
+            failure = subprocess.run(cmd, cwd=q.ROOT, input="Split\n", text=True,
+                                     capture_output=True)
+            self.assertNotEqual(failure.returncode, 0)
+            self.assertIn("incomplete split module outputs", failure.stderr)
 
 
 if __name__ == "__main__":
