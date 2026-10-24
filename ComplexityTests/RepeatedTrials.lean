@@ -58,7 +58,7 @@ example (trials width : Polynomial ℕ) :
 
 /-- The existing aggregation certificates are available without BPP or RP. -/
 example {α : Type} {enc : α ↪ List Bool} {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool)
     (trials width : Polynomial ℕ) :
     ComputableTidilyInPolyTime (repeatAny enc trials width V) (encPair enc encBits) encBool ∧
     ComputableTidilyInPolyTime (repeatMajority enc trials width V) (encPair enc encBits) encBool :=
