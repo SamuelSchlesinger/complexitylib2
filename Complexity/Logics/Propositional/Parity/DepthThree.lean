@@ -36,9 +36,9 @@ have weight at least `μ` (`CNF.card_filter_le_sum_inv_critWidth_mul_two_rpow_le
 `ℓ` variables is critical for at most `ℓ 2 ^ (n - ℓ)` pairs of an input and a direction
 (`CNF.card_filter_critical_prod_le`), and `t ↦ t 2 ^ (1 / t)` is convex and decreasing up to
 `log 2`, so the shortest critical clauses of the inputs of weight below `μ ≤ n log 2` number at
-least `μ 2 ^ (n / μ) / 2 ^ n` per input. So an OR of `m` formulas with `K` distinct clauses
-computing a function with `s` isolated true inputs has
-`s min (2 ^ μ) (μ 2 ^ (n / μ)) ≤ 2 ^ n (m + K)` (`CNF.card_isolatedInputs_mul_min_le`). With
+least `μ 2 ^ (n / μ) / 2 ^ n` per input (`CNF.mul_two_rpow_div_le_two_pow_mul_sum_critWidth`). So
+an OR of `m` formulas with `K` distinct clauses computing a function with `s` isolated true inputs
+has `s min (2 ^ μ) (μ 2 ^ (n / μ)) ≤ 2 ^ n (m + K)` (`CNF.card_isolatedInputs_mul_min_le`). With
 Paturi, Pudlák and Zane's `μ = √n + (log₂ n) / 4`, both `2 ^ μ` and `μ 2 ^ (n / μ)` are at least
 `n ^ (1 / 4) 2 ^ √n` (`CNF.card_isolatedInputs_mul_rpow_mul_two_rpow_sqrt_le`), so ORs of formulas
 in conjunctive normal form for the parity of `n ≥ 4` bits have `m + K ≥ n ^ (1 / 4) 2 ^ (√n - 1)`
@@ -55,6 +55,8 @@ inputs are isolated too, and need as many formulas and terms
 * `Cslib.Logic.PL.CNF.two_rpow_le_length_of_any_eval_eq_parity`,
   `Cslib.Logic.PL.CNF.exists_any_eval_eq_parity`: parity is an OR of `2 ^ (n / k - 1)` but no
   fewer formulas of width `k`, when `k` divides `n`.
+* `Cslib.Logic.PL.CNF.mul_two_rpow_div_le_two_pow_mul_sum_critWidth`: per-input critical-width
+  exponential weight bound for an input of weight at most `μ`.
 * `Cslib.Logic.PL.CNF.card_isolatedInputs_mul_min_le`,
   `Cslib.Logic.PL.CNF.card_isolatedInputs_mul_rpow_mul_two_rpow_sqrt_le`: ORs of formulas need
   `n ^ (1 / 4) 2 ^ √n / 2 ^ n` formulas and clauses per isolated true input.
@@ -248,6 +250,90 @@ private theorem card_mul_mul_two_rpow_inv_le_sum {ι : Type*} (s : Finset ι) (t
         rw [← mul_sum, sum_sub_distrib, sum_add_distrib, sum_const, nsmul_eq_mul, ← mul_sum]
     _ ≤ _ := sum_le_sum htan
 
+/-- For an input `x` of critical-width weight `∑ᵢ 1 / ℓᵢ ≤ μ` (with `0 < μ ≤ n log 2`), the
+weighted critical-clause sum `∑ᵢ 1 / (ℓᵢ 2 ^ (n - ℓᵢ))` is at least `μ 2 ^ (n / μ) / 2 ^ n`. -/
+theorem CNF.mul_two_rpow_div_le_two_pow_mul_sum_critWidth
+    {μ : ℝ} (hμ : 0 < μ) (hμn : μ ≤ n * Real.log 2)
+    {φ : CNF (Fin n)} {x : BitString n}
+    (hcrit : ∀ i, ∃ c ∈ φ, CNF.Critical x c i)
+    (hw : ∑ i, 1 / (φ.critWidth x i : ℝ) ≤ μ) :
+    μ * 2 ^ (n / μ) ≤
+      2 ^ n * ∑ i : Fin n, 1 / ((φ.critWidth x i : ℝ) * 2 ^ (n - φ.critWidth x i)) := by
+  have hn0 : (0 : ℝ) < n :=
+    (mul_pos_iff_of_pos_right (by positivity : 0 < Real.log 2)).1 (hμ.trans_le hμn)
+  have hpos : ∀ i, 0 < φ.critWidth x i := fun i => CNF.critWidth_pos (hcrit i)
+  have hle : ∀ i, φ.critWidth x i ≤ n := fun i => by
+    obtain ⟨c, -, -, hc⟩ := CNF.exists_critical_card_eq_critWidth (hcrit i)
+    rw [← hc]
+    exact (card_le_univ _).trans_eq (Fintype.card_fin n)
+  have htan := card_mul_mul_two_rpow_inv_le_sum (univ : Finset (Fin n))
+    (fun i => 1 / (φ.critWidth x i : ℝ)) (fun i _ => by
+      have := hpos i
+      positivity) (a := μ / n) (by positivity)
+    (by rw [div_le_iff₀ hn0]; linarith)
+    (by rw [card_univ, Fintype.card_fin, mul_div_cancel₀ _ hn0.ne']; exact hw)
+  rw [card_univ, Fintype.card_fin] at htan
+  have hterm : ∀ i : Fin n,
+      1 / (φ.critWidth x i : ℝ) * 2 ^ (1 / (1 / (φ.critWidth x i : ℝ))) =
+        2 ^ n * (1 / ((φ.critWidth x i : ℝ) * 2 ^ (n - φ.critWidth x i))) := fun i => by
+    have h2 : (2 : ℝ) ^ n = 2 ^ φ.critWidth x i * 2 ^ (n - φ.critWidth x i) := by
+      rw [← pow_add, Nat.add_sub_cancel' (hle i)]
+    have hp : (0 : ℝ) < φ.critWidth x i := by exact_mod_cast hpos i
+    simp only [one_div_one_div, Real.rpow_natCast, h2]
+    field_simp
+  calc μ * 2 ^ (n / μ) = n * (μ / n) * 2 ^ (1 / (μ / n)) := by
+        rw [mul_div_cancel₀ _ hn0.ne', one_div_div]
+    _ ≤ _ := htan
+    _ = 2 ^ n * ∑ i : Fin n, 1 / ((φ.critWidth x i : ℝ) * 2 ^ (n - φ.critWidth x i)) := by
+        rw [mul_sum]
+        exact sum_congr rfl fun i _ => hterm i
+
+/-- For any set `P` of input–direction pairs `(x, i)` where `F x ∈ Fs` has a clause critical for `i`
+at `x`, the critical-width weights `1 / (ℓ(x, i) 2 ^ (n - ℓ(x, i)))` sum to at most the number of
+distinct clauses (as sets of literals) across `Fs`: the pairs sharing a shortest critical clause of
+width `v` number at most `v 2 ^ (n - v)` (`CNF.card_filter_critical_prod_le`). -/
+private theorem sum_inv_critWidth_mul_two_pow_le_card_clauses
+    {Fs : List (CNF (Fin n))} {P : Finset (BitString n × Fin n)}
+    {F : BitString n → CNF (Fin n)} (hF : ∀ p ∈ P, F p.1 ∈ Fs)
+    (hcrit : ∀ p ∈ P, ∃ c ∈ F p.1, CNF.Critical p.1 c p.2) :
+    (∑ p ∈ P,
+      1 / (((F p.1).critWidth p.1 p.2 : ℝ) * 2 ^ (n - (F p.1).critWidth p.1 p.2))) ≤
+      #(Fs.flatten.map List.toFinset).toFinset := by
+  have hcl : ∀ p ∈ P, ∃ c ∈ F p.1, CNF.Critical p.1 c p.2 ∧
+      (c.map Prod.fst).toFinset.card = (F p.1).critWidth p.1 p.2 := fun p hp =>
+    CNF.exists_critical_card_eq_critWidth (hcrit p hp)
+  choose! cl hclF hclc hclw using hcl
+  have hvars (c : Clause (Fin n)) : (c.map Prod.fst).toFinset = c.toFinset.image Prod.fst := by
+    ext
+    simp
+  have hmaps : ∀ p ∈ P, (cl p).toFinset ∈ (Fs.flatten.map List.toFinset).toFinset := fun p hp =>
+    List.mem_toFinset.2 (List.mem_map.2 ⟨cl p, List.mem_flatten.2 ⟨F p.1, hF p hp, hclF p hp⟩, rfl⟩)
+  rw [← sum_fiberwise_of_maps_to hmaps]
+  refine (sum_le_sum fun C _ => ?_).trans_eq (by rw [sum_const, nsmul_eq_mul, mul_one])
+  rcases ({p ∈ P | (cl p).toFinset = C} : Finset _).eq_empty_or_nonempty with he | ⟨p₀, hp₀⟩
+  · rw [he, sum_empty]
+    norm_num
+  obtain ⟨hp₀P, hp₀C⟩ := mem_filter.1 hp₀
+  set v := ((cl p₀).map Prod.fst).toFinset.card
+  have hℓ : ∀ p ∈ ({p ∈ P | (cl p).toFinset = C} : Finset _),
+      (F p.1).critWidth p.1 p.2 = v := fun p hp => by
+    obtain ⟨hpP, hpC⟩ := mem_filter.1 hp
+    rw [← hclw p hpP, hvars, hpC, ← hp₀C, ← hvars]
+  have hv : 0 < v := by
+    rw [← hℓ p₀ hp₀]
+    exact CNF.critWidth_pos (hcrit p₀ hp₀P)
+  have hfib : #{p ∈ P | (cl p).toFinset = C} ≤ v * 2 ^ (n - v) := by
+    refine (card_le_card fun p hp => ?_).trans (CNF.card_filter_critical_prod_le (cl p₀))
+    obtain ⟨hpP, hpC⟩ := mem_filter.1 hp
+    refine mem_filter.2 ⟨mem_univ _, (CNF.critical_congr fun l => ?_).1 (hclc p hpP)⟩
+    rw [← List.mem_toFinset, ← List.mem_toFinset (l := cl p₀), hpC, hp₀C]
+  rw [sum_congr rfl fun p hp => show
+      1 / (((F p.1).critWidth p.1 p.2 : ℝ) * 2 ^ (n - (F p.1).critWidth p.1 p.2)) =
+        1 / ((v : ℝ) * 2 ^ (n - v)) by rw [hℓ p hp],
+    sum_const, nsmul_eq_mul, mul_one_div,
+    div_le_one (mul_pos (Nat.cast_pos.2 hv) (by positivity))]
+  exact_mod_cast hfib
+
 /-- **ORs of formulas in conjunctive normal form need many gates per isolated true input**, by the
 argument of [Paturi, Pudlák and Zane, Theorem 6][PaturiPudlakZane1999]: if an OR of `m` formulas
 with `K` distinct clauses (as sets of literals) computes `g`, then each isolated true input of `g`
@@ -277,8 +363,6 @@ theorem CNF.card_isolatedInputs_mul_min_le {μ : ℝ} (hμ : 0 < μ) (hμn : μ 
   set S₁ := S.filter fun x => μ ≤ w x
   set S₂ := S.filter fun x => ¬ μ ≤ w x
   set Cl := (Fs.flatten.map List.toFinset).toFinset
-  have hn0 : (0 : ℝ) < n :=
-    (mul_pos_iff_of_pos_right (by positivity : 0 < Real.log 2)).1 (hμ.trans_le hμn)
   -- inputs of weight at least `μ`: each formula has few solutions of large weight
   have h₁ : (#S₁ : ℝ) * 2 ^ μ ≤ Fs.length * 2 ^ n := by
     set A : CNF (Fin n) → Finset (BitString n) := fun φ =>
@@ -300,76 +384,27 @@ theorem CNF.card_isolatedInputs_mul_min_le {μ : ℝ} (hμ : 0 < μ) (hμn : μ 
   -- inputs of weight below `μ`: their shortest critical clauses are many
   have h₂ : (#S₂ : ℝ) * (μ * 2 ^ (n / μ)) ≤ #Cl * 2 ^ n := by
     set P := S₂ ×ˢ (univ : Finset (Fin n))
-    have hcl : ∀ p ∈ P, ∃ c ∈ F p.1, CNF.Critical p.1 c p.2 ∧
-        (c.map Prod.fst).toFinset.card = (F p.1).critWidth p.1 p.2 := fun p hp =>
-      CNF.exists_critical_card_eq_critWidth (hcrit p.1 (mem_filter.1 (mem_product.1 hp).1).1 p.2)
-    choose! cl hclF hclc hclw using hcl
-    set ℓ : BitString n × Fin n → ℕ := fun p => (F p.1).critWidth p.1 p.2
-    set wt : BitString n × Fin n → ℝ := fun p => 1 / ((ℓ p : ℝ) * 2 ^ (n - ℓ p))
-    have hvars (c : Clause (Fin n)) : (c.map Prod.fst).toFinset = c.toFinset.image Prod.fst := by
-      ext
-      simp
-    -- the weights of the pairs whose shortest critical clause is `C` sum to at most one
-    have hmaps : ∀ p ∈ P, (cl p).toFinset ∈ Cl := fun p hp => by
-      have hxS := (mem_filter.1 (mem_product.1 hp).1).1
-      exact List.mem_toFinset.2 (List.mem_map.2 ⟨cl p, List.mem_flatten.2 ⟨F p.1, hF p.1 hxS,
-        hclF p hp⟩, rfl⟩)
-    have ha : ∑ p ∈ P, wt p ≤ #Cl := by
-      rw [← sum_fiberwise_of_maps_to hmaps]
-      refine (sum_le_sum fun C _ => ?_).trans_eq (by rw [sum_const, nsmul_eq_mul, mul_one])
-      rcases ({p ∈ P | (cl p).toFinset = C} : Finset _).eq_empty_or_nonempty with he | ⟨p₀, hp₀⟩
-      · rw [he, sum_empty]
-        norm_num
-      obtain ⟨hp₀P, hp₀C⟩ := mem_filter.1 hp₀
-      set v := ((cl p₀).map Prod.fst).toFinset.card
-      have hℓ : ∀ p ∈ ({p ∈ P | (cl p).toFinset = C} : Finset _), ℓ p = v := fun p hp => by
-        obtain ⟨hpP, hpC⟩ := mem_filter.1 hp
-        rw [show ℓ p = ((cl p).map Prod.fst).toFinset.card from (hclw p hpP).symm, hvars,
-          hpC, ← hp₀C, ← hvars]
-      have hv : 0 < v := by
-        rw [← hℓ p₀ hp₀]
-        exact CNF.critWidth_pos (hcrit p₀.1 (mem_filter.1 (mem_product.1 hp₀P).1).1 p₀.2)
-      have hfib : #{p ∈ P | (cl p).toFinset = C} ≤ v * 2 ^ (n - v) := by
-        refine (card_le_card fun p hp => ?_).trans (CNF.card_filter_critical_prod_le (cl p₀))
-        obtain ⟨hpP, hpC⟩ := mem_filter.1 hp
-        refine mem_filter.2 ⟨mem_univ _, (CNF.critical_congr fun l => ?_).1 (hclc p hpP)⟩
-        rw [← List.mem_toFinset, ← List.mem_toFinset (l := cl p₀), hpC, hp₀C]
-      rw [sum_congr rfl fun p hp => show wt p = 1 / ((v : ℝ) * 2 ^ (n - v)) by
-        simp only [wt, hℓ p hp], sum_const, nsmul_eq_mul, mul_one_div,
-        div_le_one (by positivity)]
-      exact_mod_cast hfib
-    -- each input of weight below `μ` contributes `μ 2 ^ (n / μ) / 2 ^ n`
-    have hb : ∀ x ∈ S₂, μ * 2 ^ (n / μ) ≤ 2 ^ n * ∑ i, wt (x, i) := fun x hx => by
-      obtain ⟨hxS, hxw⟩ := mem_filter.1 hx
-      have hpos : ∀ i, 0 < (F x).critWidth x i := fun i => CNF.critWidth_pos (hcrit x hxS i)
-      have hle : ∀ i, (F x).critWidth x i ≤ n := fun i => by
-        obtain ⟨c, -, -, hc⟩ := CNF.exists_critical_card_eq_critWidth (hcrit x hxS i)
-        rw [← hc]
-        exact (card_le_univ _).trans_eq (Fintype.card_fin n)
-      have htan := card_mul_mul_two_rpow_inv_le_sum (univ : Finset (Fin n))
-        (fun i => 1 / ((F x).critWidth x i : ℝ)) (fun i _ => by
-          have := hpos i
-          positivity) (a := μ / n) (by positivity)
-        (by rw [div_le_iff₀ hn0]; linarith)
-        (by rw [card_univ, Fintype.card_fin, mul_div_cancel₀ _ hn0.ne']; exact (not_le.1 hxw).le)
-      rw [card_univ, Fintype.card_fin] at htan
-      have hterm : ∀ i, 1 / ((F x).critWidth x i : ℝ) * 2 ^ (1 / (1 / ((F x).critWidth x i : ℝ))) =
-          2 ^ n * wt (x, i) := fun i => by
-        have h2 : (2 : ℝ) ^ n = 2 ^ (F x).critWidth x i * 2 ^ (n - (F x).critWidth x i) := by
-          rw [← pow_add, Nat.add_sub_cancel' (hle i)]
-        have hp : (0 : ℝ) < (F x).critWidth x i := by exact_mod_cast hpos i
-        simp only [wt, ℓ, one_div_one_div, Real.rpow_natCast, h2]
-        field_simp
-      calc μ * 2 ^ (n / μ) = n * (μ / n) * 2 ^ (1 / (μ / n)) := by
-            rw [mul_div_cancel₀ _ hn0.ne', one_div_div]
-        _ ≤ _ := htan
-        _ = 2 ^ n * ∑ i, wt (x, i) := by
-            rw [mul_sum]
-            exact sum_congr rfl fun i _ => hterm i
+    have ha :
+        (∑ p ∈ P,
+          1 / (((F p.1).critWidth p.1 p.2 : ℝ) * 2 ^ (n - (F p.1).critWidth p.1 p.2))) ≤ #Cl :=
+      sum_inv_critWidth_mul_two_pow_le_card_clauses
+        (fun p hp => hF p.1 (mem_filter.1 (mem_product.1 hp).1).1)
+        (fun p hp => hcrit p.1 (mem_filter.1 (mem_product.1 hp).1).1 p.2)
+    have hb : ∀ x ∈ S₂, μ * 2 ^ (n / μ) ≤
+        2 ^ n * ∑ i, 1 / (((F x).critWidth x i : ℝ) * 2 ^ (n - (F x).critWidth x i)) :=
+      fun x hx => by
+        obtain ⟨hxS, hxw⟩ := mem_filter.1 hx
+        have hwx := (not_le.1 hxw).le
+        dsimp only [w] at hwx
+        exact CNF.mul_two_rpow_div_le_two_pow_mul_sum_critWidth hμ hμn (hcrit x hxS) hwx
     calc (#S₂ : ℝ) * (μ * 2 ^ (n / μ)) = ∑ _x ∈ S₂, μ * 2 ^ (n / μ) := by
           rw [sum_const, nsmul_eq_mul]
-      _ ≤ ∑ x ∈ S₂, 2 ^ n * ∑ i, wt (x, i) := sum_le_sum hb
-      _ = 2 ^ n * ∑ p ∈ P, wt p := by rw [← mul_sum, sum_product]
+      _ ≤ ∑ x ∈ S₂,
+          2 ^ n * ∑ i, 1 / (((F x).critWidth x i : ℝ) * 2 ^ (n - (F x).critWidth x i)) :=
+        sum_le_sum hb
+      _ = 2 ^ n *
+          ∑ p ∈ P, 1 / (((F p.1).critWidth p.1 p.2 : ℝ) * 2 ^ (n - (F p.1).critWidth p.1 p.2)) :=
+        by rw [← mul_sum, sum_product]
       _ ≤ 2 ^ n * #Cl := by gcongr
       _ = #Cl * 2 ^ n := mul_comm _ _
   -- the isolated true inputs split into the two kinds

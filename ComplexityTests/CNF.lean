@@ -17,7 +17,7 @@ import Complexity.Computability.Complexity.Problems.SAT
 
 namespace ComplexityTests.CNF
 
-open Cslib.Logic.PL Cslib.Complexity
+open Cslib.Logic Cslib.Logic.PL Cslib.Complexity
 
 /-- `(x₀ ∨ ¬x₁) ∧ x₁`. -/
 def φ : CNF ℕ := [[(0, true), (1, false)], [(1, true)]]
@@ -94,5 +94,17 @@ example : (QBF.ex 0 (.and (.var 0) (.not (.var 0)))).eval (fun _ => true) = fals
 /-- A closed formula has the same value under every assignment. -/
 example (σ : ℕ → Bool) : θ.eval σ = true :=
   (QBF.eval_eq_of_closed (by decide) σ (fun _ => false)).trans (by decide)
+
+/-- CSLib logical operator typeclasses (`⊤`, `⊥`, `¬`, `∧`, `∨`, `→`, `↔`, `⋀`) on `QBF`. -/
+example : (⊤ : QBF ℕ) = .top := rfl
+example : (⊥ : QBF ℕ) = .bot := rfl
+example (ψ : QBF ℕ) : (¬ψ) = ψ.not := rfl
+example (ψ χ : QBF ℕ) : (ψ ∧ χ) = ψ.and χ := rfl
+example (ψ χ : QBF ℕ) : (ψ ∨ χ) = ψ.or χ := rfl
+example (ψ χ : QBF ℕ) : (ψ → χ) = ψ.imp χ := rfl
+example (ψ χ : QBF ℕ) : (ψ ↔ χ) = ψ.iff χ := rfl
+example (ψs : List (QBF ℕ)) : QBF.conj ψs = ⋀ψs := QBF.conj_eq_finiteAnd ψs
+example : θ = .all 0 (.ex 1 (.var 0 ↔ .var 1)) := rfl
+example : (⋀([⊤, ¬⊥, ⊥ → ⊤] : List (QBF ℕ))).eval (fun _ => false) = true := rfl
 
 end ComplexityTests.CNF
