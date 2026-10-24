@@ -150,7 +150,8 @@ def counterpartFits (name : Name) (type : Expr) (original : Option Name := none)
     let success ← forallTelescopeReducing type fun xs body => do
       let goal ← mkFreshExprMVar body
       let goals ← goal.mvarId!.applyConst name
-      for goal in goals do goal.assumption
+      for goal in goals do
+        unless ← goal.isAssigned do goal.assumption
       let proof ← instantiateMVars goal
       if proof.hasExprMVar then return false
       let proof ← mkLambdaFVars xs proof
@@ -195,7 +196,8 @@ def canonicalSubsumes (name : Name) (type : Expr) : MetaM Bool := do
     let success ← forallTelescopeReducing type fun xs body => do
       let goal ← mkFreshExprMVar body
       let goals ← goal.mvarId!.applyConst name
-      for goal in goals do goal.assumption
+      for goal in goals do
+        unless ← goal.isAssigned do goal.assumption
       let proof ← instantiateMVars goal
       if proof.hasExprMVar then return false
       let proof ← mkLambdaFVars xs proof

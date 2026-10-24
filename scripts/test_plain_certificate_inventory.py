@@ -149,6 +149,7 @@ theorem ordinaryTwin {α : Type} (f : α → α) : OrdinaryProperty f := ordinar
 theorem ordinaryDuplicate {α : Type} (f : α → α) : OrdinaryProperty f := ordinarySource f
 theorem ordinaryStronger {α : Type u} (f : α → α) : OrdinaryProperty f := True.intro
 theorem ordinaryWrong {α : Type} (f : α → α) (_h : False) : OrdinaryProperty f := True.intro
+theorem implicitBinderCanonical {n : ℕ} (_h : n = n) : True := True.intro
 theorem specificSource : OrdinaryProperty (id : ℕ → ℕ) := True.intro
 theorem checkedCoverageSpecific : OrdinaryProperty (id : ℕ → ℕ) := ordinaryStronger id
 abbrev OrdinaryAlias {α : Type u} (f : α → α) : Prop := OrdinaryProperty f
@@ -171,6 +172,8 @@ run_meta do
   let specific := (← getConstInfo `specificSource).type
   unless (← findCounterparts index specific).isEmpty do
     throwError "generic rule was misclassified as counterpart of a particular primitive"
+  unless ← canonicalSubsumes `implicitBinderCanonical (← getConstInfo `implicitBinderCanonical).type do
+    throwError "canonical application did not prune implicit goals assigned by earlier assumptions"
   let covered ← coverageCounterparts #[`checkedCoverageSpecific] specific
   unless covered == #[(`ordinaryStronger, `checkedCoverageSpecific)] do
     throwError "explicit checked coverage did not verify the direct canonical reference: {covered}"
