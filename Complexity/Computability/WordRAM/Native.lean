@@ -81,7 +81,7 @@ library's polynomial-time calculus.
 namespace Cslib.WordRAM
 
 open Cslib.GenericRAM
-open Turing.MultiTapeTM Turing.MultiTapeTM.ComputableTidilyInPolyTime
+open Turing.MultiTapeTM Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- Binary encodings for word values and addresses, with the runtime word width encoded in unary. -/
 def Basis.encoding (B : Basis) : B.genericModel.Encoding :=
@@ -90,14 +90,13 @@ def Basis.encoding (B : Basis) : B.genericModel.Encoding :=
 /-- Check whether a computed natural result fits a runtime unary width `w`, returning `none` on
 overflow. -/
 private theorem checkFits_polyTime {k : ℕ} {val : ℕ × (Fin k → ℕ) → ℕ}
-    (hval : ComputableTidilyInPolyTime val (encPair encUnary (encPi encNat)) encNat) :
+    (hval : ComputableInPolyTime val (encPair encUnary (encPi encNat)) encNat) :
     ComputableInPolyTime
       (fun p : ℕ × (Fin k → ℕ) => if decide (Fits p.1 (val p)) then some (val p) else none)
       (encPair encUnary (encPi encNat)) (encOption encNat) := by
   have hpow := binary_two_pow.comp (fst encUnary (encPi encNat (Index := Fin k)))
   simp only [fits_iff, decide_eq_true_eq]
-  exact .of_tidy <|
-    (binary_lt' hval hpow).ite_decide ((optionSome encNat).comp hval) (const none)
+  exact (binary_lt' hval hpow).ite_decide ((optionSome encNat).comp hval) (const none)
 
 /-- A literal is checked against `2 ^ w` at every unary-encoded runtime width `w`. -/
 @[fun_prop, program_certificate]
@@ -107,8 +106,7 @@ theorem checkedConstant_polyTime (B : Basis) (c : ℕ) :
   change ComputableInPolyTime
     (fun w : ℕ => if decide (c < 2 ^ w) then some c else none) encUnary (encOption encNat)
   simp only [decide_eq_true_eq]
-  exact .of_tidy <|
-    (binary_lt' (const c) binary_two_pow).ite_decide (const (some c)) (const none)
+  exact (binary_lt' (const c) binary_two_pow).ite_decide (const (some c)) (const none)
 
 /-- Both word-RAM register tests (`eq` and `lt`) are polynomial-time at every encoded width. -/
 @[fun_prop, program_certificate]
@@ -121,32 +119,32 @@ theorem evalTest_polyTime (B : Basis) (t : Bool) :
   · change ComputableInPolyTime
       (fun p : ℕ × (Fin 2 → ℕ) => some (decide (p.2 0 = p.2 1)))
       (encPair encUnary (encPi encNat (Index := Fin 2))) (encOption encBool)
-    exact .of_tidy <| (optionSome encBool).comp ((decide_eq encNat).comp (hx.prod hy))
+    exact (optionSome encBool).comp ((decide_eq encNat).comp (hx.prod hy))
   · change ComputableInPolyTime
       (fun p : ℕ × (Fin 2 → ℕ) => some (decide (p.2 0 < p.2 1)))
       (encPair encUnary (encPi encNat (Index := Fin 2))) (encOption encBool)
-    exact .of_tidy <| (optionSome encBool).comp (binary_lt' hx hy)
+    exact (optionSome encBool).comp (binary_lt' hx hy)
 
 /-- Word-RAM address extraction is the total identity into `Option ℕ`. -/
 @[fun_prop, program_certificate]
 theorem address_polyTime (B : Basis) :
     ComputableInPolyTime (fun p => B.genericModel.address p.1 p.2)
       (encPair encUnary encNat) (encOption encNat) :=
-  .of_tidy <| (optionSome encNat).comp (snd encUnary encNat)
+  (optionSome encNat).comp (snd encUnary encNat)
 
 /-- Copies, loads, stores and halts move existing words without an extra range check. -/
 @[fun_prop, program_certificate]
 theorem validMove_polyTime (B : Basis) :
     ComputableInPolyTime (fun p => B.genericModel.validMove p.1 p.2)
       (encPair encUnary encNat) encBool :=
-  .of_tidy (const true)
+  (const true)
 
 /-- Control labels in `WordRAM` are unbounded natural numbers validated at instruction fetch. -/
 @[fun_prop, program_certificate]
 theorem validPC_polyTime (B : Basis) :
     ComputableInPolyTime (fun p => B.genericModel.validPC p.1 p.2)
       (encPair encUnary encNat) encBool :=
-  .of_tidy (const true)
+  (const true)
 
 /-- Left shift fits a `w`-bit word if and only if shifting by `min w y` fits, and when it fits
 both shifts produce the same word. This avoids materializing `x <<< y` when `y > w`. -/
@@ -180,7 +178,7 @@ theorem checkedAdd_polyTime :
 noncomputable def checkedAddCertificate :
     GenericRAM.NativeCertificate (Basis.standard.genericModel.checkedOp (.bin .add))
       (encPair encUnary (encPi encNat)) (encOption encNat) :=
-  .ofPolyTime checkedAdd_polyTime.tidy
+  .ofPolyTime checkedAdd_polyTime
 
 /-- Every binary operation in `Basis.standard` has a polynomial-time checked implementation. -/
 @[fun_prop, program_certificate]
@@ -190,23 +188,23 @@ theorem checkedBinOp_polyTime (f : BinOp) :
   have hw := fst encUnary (encPi encNat (Index := Fin 2))
   have hx := (pi_apply encNat (0 : Fin 2)).comp (snd encUnary (encPi encNat))
   have hy := (pi_apply encNat (1 : Fin 2)).comp (snd encUnary (encPi encNat))
-  have hwp := hw.computableInPolyTime
-  have hxp := hx.computableInPolyTime
-  have hyp := hy.computableInPolyTime
+  have hwp := hw
+  have hxp := hx
+  have hyp := hy
   cases f
   · exact checkedAdd_polyTime
   · exact checkFits_polyTime (binary_sub' hx hy)
   · exact checkFits_polyTime (binary_mul' hx hy)
   · exact checkFits_polyTime (binary_div' hx hy)
   · exact checkFits_polyTime (binary_mod' hx hy)
-  · exact checkFits_polyTime (ComputableInPolyTime.binary_and' hxp hyp).tidy
-  · exact checkFits_polyTime (ComputableInPolyTime.binary_or' hxp hyp).tidy
-  · exact checkFits_polyTime (ComputableInPolyTime.binary_xor' hxp hyp).tidy
+  · exact checkFits_polyTime (ComputableInPolyTime.binary_and' hxp hyp)
+  · exact checkFits_polyTime (ComputableInPolyTime.binary_or' hxp hyp)
+  · exact checkFits_polyTime (ComputableInPolyTime.binary_xor' hxp hyp)
   · have h := checkFits_polyTime
-      (binary_mul' hx (binary_two_pow.comp (ComputableInPolyTime.binary_min_unary' hwp hyp).tidy))
-    refine .of_tidy (h.tidy.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
+      (binary_mul' hx (binary_two_pow.comp (ComputableInPolyTime.binary_min_unary' hwp hyp)))
+    refine (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
     exact checkedShiftLeft_eq w (x 0) (x 1)
-  · exact checkFits_polyTime (ComputableInPolyTime.binary_shiftRight' hxp hyp).tidy
+  · exact checkFits_polyTime (ComputableInPolyTime.binary_shiftRight' hxp hyp)
 
 /-- Reading the word size in `Basis.standard` is polynomial-time. -/
 @[fun_prop, program_certificate]
@@ -237,19 +235,19 @@ theorem checkedExactOp_polyTime (op : StandardOp) :
     have hy := (pi_apply encNat (1 : Fin 2)).comp (snd encUnary (encPi encNat))
     cases f
     · exact checkedBinOp_polyTime .add
-    · have h := (binary_le' hy hx).ite_decide (checkedBinOp_polyTime .sub).tidy (const none)
-      refine .of_tidy (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
+    · have h := (binary_le' hy hx).ite_decide (checkedBinOp_polyTime .sub) (const none)
+      refine (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
       by_cases hle : x 1 ≤ x 0 <;>
         simp [Model.checkedOp, Basis.genericModel, StandardOp.evalExact, StandardOp.eval, hle]
     · exact checkedBinOp_polyTime .mul
     · have h := ((decide_eq encNat).comp (hy.prod (const 0))).ite_decide
-        (const none) (checkedBinOp_polyTime .div).tidy
-      refine .of_tidy (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
+        (const none) (checkedBinOp_polyTime .div)
+      refine (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
       by_cases hz : x 1 = 0 <;>
         simp [Model.checkedOp, Basis.genericModel, StandardOp.evalExact, StandardOp.eval, hz]
     · have h := ((decide_eq encNat).comp (hy.prod (const 0))).ite_decide
-        (const none) (checkedBinOp_polyTime .mod).tidy
-      refine .of_tidy (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
+        (const none) (checkedBinOp_polyTime .mod)
+      refine (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
       by_cases hz : x 1 = 0 <;>
         simp [Model.checkedOp, Basis.genericModel, StandardOp.evalExact, StandardOp.eval, hz]
     · exact checkedBinOp_polyTime .and
@@ -266,14 +264,14 @@ theorem Basis.Hom.checkedOp_polyTime {B B' : Basis} (φ : B.Hom B')
     (op : B.Op) :
     ComputableInPolyTime (B.genericModel.checkedOp op)
       (encPair encUnary (encPi encNat)) (encOption encNat) := by
-  have hargs : ComputableTidilyInPolyTime
+  have hargs : ComputableInPolyTime
       (fun (p : ℕ × (Fin (B.Arity op) → ℕ)) (a : Fin (B'.Arity (φ.map op))) =>
         p.2 (Fin.cast (φ.arity_map op) a))
       (encPair encUnary (encPi encNat)) (encPi encNat) :=
     pi fun a => (pi_apply encNat (Fin.cast (φ.arity_map op) a)).comp
       (snd encUnary (encPi encNat))
-  have h := (hop (φ.map op)).tidy.comp ((fst encUnary (encPi encNat)).prod hargs)
-  refine .of_tidy (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
+  have h := (hop (φ.map op)).comp ((fst encUnary (encPi encNat)).prod hargs)
+  refine (h.of_enc_eq fun ⟨w, x⟩ => congrArg (encOption encNat) ?_)
   simp only [Function.comp_apply, Model.checkedOp, Basis.genericModel, φ.interp_map]
 
 /-- Restricting a basis preserves polynomial-time checked-operation certificates definitionally. -/
@@ -295,12 +293,12 @@ def Basis.nativePrimitivesOfPolyTime (B : Basis)
       ComputableInPolyTime (B.genericModel.checkedOp op)
         (encPair encUnary (encPi encNat)) (encOption encNat)) :
     B.genericModel.NativePrimitives B.encoding where
-  constant c := .ofPolyTime (checkedConstant_polyTime B c).tidy
-  operation op := .ofPolyTime (hop op).tidy
-  test t := .ofPolyTime (evalTest_polyTime B t).tidy
-  address := .ofPolyTime (address_polyTime B).tidy
-  validMove := .ofPolyTime (validMove_polyTime B).tidy
-  validPC := .ofPolyTime (validPC_polyTime B).tidy
+  constant c := .ofPolyTime (checkedConstant_polyTime B c)
+  operation op := .ofPolyTime (hop op)
+  test t := .ofPolyTime (evalTest_polyTime B t)
+  address := .ofPolyTime (address_polyTime B)
+  validMove := .ofPolyTime (validMove_polyTime B)
+  validPC := .ofPolyTime (validPC_polyTime B)
 
 /-- Every primitive certificate in `Basis.nativePrimitivesOfPolyTime` has polynomial resource
 bounds. -/
@@ -309,12 +307,12 @@ theorem Basis.nativePrimitivesOfPolyTime_isPolynomial (B : Basis)
       ComputableInPolyTime (B.genericModel.checkedOp op)
         (encPair encUnary (encPi encNat)) (encOption encNat)) :
     (B.nativePrimitivesOfPolyTime hop).IsPolynomial where
-  constant c := NativeCertificate.ofPolyTime_isPolynomial (checkedConstant_polyTime B c).tidy
-  operation op := NativeCertificate.ofPolyTime_isPolynomial (hop op).tidy
-  test t := NativeCertificate.ofPolyTime_isPolynomial (evalTest_polyTime B t).tidy
-  address := NativeCertificate.ofPolyTime_isPolynomial (address_polyTime B).tidy
-  validMove := NativeCertificate.ofPolyTime_isPolynomial (validMove_polyTime B).tidy
-  validPC := NativeCertificate.ofPolyTime_isPolynomial (validPC_polyTime B).tidy
+  constant c := NativeCertificate.ofPolyTime_isPolynomial (checkedConstant_polyTime B c)
+  operation op := NativeCertificate.ofPolyTime_isPolynomial (hop op)
+  test t := NativeCertificate.ofPolyTime_isPolynomial (evalTest_polyTime B t)
+  address := NativeCertificate.ofPolyTime_isPolynomial (address_polyTime B)
+  validMove := NativeCertificate.ofPolyTime_isPolynomial (validMove_polyTime B)
+  validPC := NativeCertificate.ofPolyTime_isPolynomial (validPC_polyTime B)
 
 /-- Complete native scalar primitive bundle for `Basis.standard`. -/
 def Basis.standard.nativePrimitives :
@@ -410,7 +408,7 @@ theorem transport_inO (enc : B.genericModel.Encoding) (N : B.genericModel.Native
         FiniteState.runTime enc N p.toGeneric (steps a, (cfg a, initState a)))
       (fun a => cSteps.space a + (cCfg.space a + cInit.space a) +
         FiniteState.runSpace enc N p.toGeneric (steps a, (cfg a, initState a))) :=
-  .of_tidy (transportCertificate enc N p cSteps cCfg cInit hden hExec).computes
+  (transportCertificate enc N p cSteps cCfg cInit hden hExec).computes
 
 /-- Automatic `ComputableInPolyTime` transport corollary from `WordRAM.Executes`. -/
 theorem transport_polyTime (enc : B.genericModel.Encoding)
@@ -430,7 +428,7 @@ theorem transport_polyTime (enc : B.genericModel.Encoding)
       (FiniteState.resultEncoding enc
         (FiniteState.run (cfg a) p.toGeneric j (initState a))).length ≤ bound a) :
     ComputableInPolyTime f ei enc.value :=
-  .of_tidy <| FiniteState.transport_polyTime enc N p.toGeneric cSteps cCfg cInit
+  FiniteState.transport_polyTime enc N p.toGeneric cSteps cCfg cInit
     (fun a => by
       obtain ⟨m, hm, hex⟩ := hExec a
       rw [hden a]
@@ -452,7 +450,7 @@ theorem transport_polyTime_of_le_const (enc : B.genericModel.Encoding)
     (hSteps : cSteps.IsPolynomial) (hCfg : cCfg.IsPolynomial) (hInit : cInit.IsPolynomial)
     (K : ℕ) (hStepsLe : ∀ a, steps a ≤ K) :
     ComputableInPolyTime f ei enc.value :=
-  .of_tidy <| FiniteState.transport_polyTime_of_le_const enc N p.toGeneric cSteps cCfg cInit
+  FiniteState.transport_polyTime_of_le_const enc N p.toGeneric cSteps cCfg cInit
     (fun a => by
       obtain ⟨m, hm, hex⟩ := hExec a
       rw [hden a]
