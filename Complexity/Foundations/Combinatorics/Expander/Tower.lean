@@ -128,6 +128,13 @@ theorem zigzagTower_succ (n : ℕ) :
     zigzagTower H e (n + 1) = (((zigzagTower H e n).pow 2).relabel e.symm).zigzag H :=
   rfl
 
+/-- The rotation map of each graph of the tower is that of the square of the previous one
+zig-zagged with the base graph. -/
+theorem rot_zigzagTower_succ (n : ℕ) (v : ZigzagTowerVertex B n) (k : B) (i j : D) :
+    (zigzagTower H e (n + 1)).rot ((v, k), (i, j)) =
+      ((((zigzagTower H e n).pow 2).relabel e.symm).zigzag H).rot ((v, k), (i, j)) :=
+  rfl
+
 variable [Fintype B] [Fintype D]
 
 /-- **The zig-zag tower is a family of expanders**: if `c ^ 2 + λ(H) + λ(H) ^ 2 ≤ c`, then every

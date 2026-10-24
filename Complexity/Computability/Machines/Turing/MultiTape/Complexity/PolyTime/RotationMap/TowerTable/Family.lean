@@ -76,10 +76,8 @@ theorem contract_eq {m n : ℕ} (G : RotationMap (Fin m) (D × D))
   have hdecode : finSlotDecode (m := m) (vertex, label.1) =
       if hindex : vertex.val + n * label.1.val < m then
         some (⟨vertex.val + n * label.1.val, hindex⟩ : Fin m) else none := rfl
-  unfold contract contractFin RotationMap.contract contractRot
-  dsimp only
-  rw [hdecode]
-  simp only [hlength]
+  unfold contract contractFin
+  simp only [rot_contract, hdecode, hlength]
   split <;> rename_i hindex
   · simp only [hlookup ⟨vertex.val + n * label.1.val, hindex⟩ label.2]
     simp only [contractDart, finSlotEncode]

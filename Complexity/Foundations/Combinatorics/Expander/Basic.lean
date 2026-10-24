@@ -56,6 +56,8 @@ characterization. `λ(G) ≤ 1` always, and `G` is a good expander when `λ(G)` 
 * `Cslib.RotationMap.expect_walk_pow_sq_le_spectralExpansion_pow_mul`: walks of length `t` multiply
   the second moment of a function of expectation zero by at most `λ(G) ^ (2 t)`.
 * `Cslib.RotationMap.spectralExpansion_le_one`: `λ(G) ≤ 1`.
+* `Cslib.RotationMap.spectralExpansion_eq_of_walk_eq`: two regular multigraphs with the same walk
+  operator have the same spectral expansion.
 
 ## References
 
@@ -106,6 +108,12 @@ point of `f` carries a self-loop. -/
 def ofInvolutive (f : V → V) (hf : Function.Involutive f) : RotationMap V Unit where
   rot p := (f p.1, p.2)
   rot_involutive p := Prod.ext (hf p.1) rfl
+
+/-- The rotation map of the multigraph of an involution `f` applies `f` to the vertex. -/
+@[simp]
+theorem rot_ofInvolutive (f : V → V) (hf : Function.Involutive f) (p : V × Unit) :
+    (ofInvolutive f hf).rot p = (f p.1, p.2) :=
+  rfl
 
 /-- The neighbor of `v` in the multigraph of an involution `f` is `f v`. -/
 @[simp]
@@ -366,6 +374,13 @@ theorem spectralExpansion_eq_zero_of_subsingleton [Subsingleton V] : G.spectralE
       _ = 0 := hf
   refine le_antisymm (spectralExpansion_le le_rfl fun f hf ↦ ?_) G.spectralExpansion_nonneg
   simp [h (G.expect_walk_eq_zero hf)]
+
+variable {G} in
+/-- Two regular multigraphs on the same vertices with the same walk operator have the same
+spectral expansion, whatever their edge labels. -/
+theorem spectralExpansion_eq_of_walk_eq {E : Type*} [Fintype E] {H : RotationMap V E}
+    (h : G.walk = H.walk) : G.spectralExpansion = H.spectralExpansion := by
+  simp only [spectralExpansion, h]
 
 end SpectralExpansion
 

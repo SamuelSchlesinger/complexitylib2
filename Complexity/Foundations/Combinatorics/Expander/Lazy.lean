@@ -56,7 +56,33 @@ random walk on `G`. -/
 def lazy (G : RotationMap V D) : RotationMap V (D ⊕ D) :=
   G.addLoops D
 
-variable (G : RotationMap V D) [Fintype D]
+variable (G : RotationMap V D)
+
+/-- The rotation map of `G.lazy` on an original edge of `G`. -/
+@[simp]
+theorem rot_lazy_inl (v : V) (i : D) :
+    G.lazy.rot (v, .inl i) = Prod.map id Sum.inl (G.rot (v, i)) :=
+  rfl
+
+/-- The rotation map of `G.lazy` on a lazy self-loop. -/
+@[simp]
+theorem rot_lazy_inr (v : V) (i : D) :
+    G.lazy.rot (v, .inr i) = (v, .inr i) :=
+  rfl
+
+/-- The neighbors in `G.lazy` along the original edges of `G`. -/
+@[simp]
+theorem neighbor_lazy_inl (v : V) (i : D) :
+    G.lazy.neighbor v (.inl i) = G.neighbor v i :=
+  rfl
+
+/-- The lazy edges of `G.lazy` are self-loops. -/
+@[simp]
+theorem neighbor_lazy_inr (v : V) (i : D) :
+    G.lazy.neighbor v (.inr i) = v :=
+  rfl
+
+variable [Fintype D]
 
 /-- The walk operator of the lazy graph is `(1 + G.walk) / 2`. -/
 theorem walk_lazy_apply [Nonempty D] (f : V → ℝ) (v : V) :

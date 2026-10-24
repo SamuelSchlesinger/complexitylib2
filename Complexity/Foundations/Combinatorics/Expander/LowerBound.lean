@@ -67,6 +67,11 @@ def complete (V : Type*) : RotationMap V V where
   rot := Prod.swap
   rot_involutive := Prod.swap_swap
 
+/-- The rotation map of the complete graph swaps the vertex and the label. -/
+@[simp]
+theorem rot_complete (p : V × V) : (complete V).rot p = p.swap :=
+  rfl
+
 /-- The `u`-th neighbor of every vertex in the complete graph is `u`. -/
 @[simp]
 theorem neighbor_complete (v u : V) : (complete V).neighbor v u = u :=

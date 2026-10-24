@@ -75,26 +75,20 @@ theorem slotRotN_val (I : USTCONInstance) (v : Fin I.n × Fin I.n) (b : Label) :
   by_cases h₁ : b = slotLabel (.inl ())
   · subst h₁
     rw [ite_eq_left rfl, hrot]
-    by_cases hadj : I.adj v₁ v₂ = true
-    · simp [slotGraph, union, ofInvolutive, slotSwap, hadj, slotVal]
-    · simp [slotGraph, union, ofInvolutive, slotSwap, hadj, slotVal]
+    by_cases hadj : I.adj v₁ v₂ = true <;> simp [slotSwap, hadj, slotVal]
   by_cases h₂ : b = slotLabel (.inr ((), (), false))
   · subst h₂
     rw [ite_eq_right hne₁, ite_eq_left rfl, hrot]
-    simp only [slotGraph, rot_union_inr, rot_tensor, rot_loops, rot_ofPerms_false, Prod.map,
-      slotVal, id, val_finRotate]
+    simp only [rot_slotGraph_inr_false, Prod.map, slotVal, id, val_finRotate]
     congr 3
   by_cases h₃ : b = slotLabel (.inr ((), (), true))
   · subst h₃
     rw [ite_eq_right hne₂, ite_eq_right hne₃, ite_eq_left rfl, hrot]
-    simp only [slotGraph, rot_union_inr, rot_tensor, rot_loops, rot_ofPerms_true, Prod.map,
-      slotVal, id, val_finRotate_symm]
+    simp only [rot_slotGraph_inr_true, Prod.map, slotVal, id, val_finRotate_symm]
     congr 3
-  rw [ite_eq_right h₁, ite_eq_right h₂, ite_eq_right h₃]
-  have hnone : decodeLabel slotLabel b = none := by
-    rw [decodeLabel_eq_none_iff]
-    rintro (⟨⟩ | ⟨⟨⟩, ⟨⟩, _ | _⟩) h <;> simp_all
-  simp [input, extendLabels, hnone, Prod.map]
+  rw [ite_eq_right h₁, ite_eq_right h₂, ite_eq_right h₃, input,
+    rot_extendLabels_of_forall_ne _ _ _ (by rintro (⟨⟩ | ⟨⟨⟩, ⟨⟩, _ | _⟩) h <;> simp_all)]
+  rfl
 
 /-! ### Runs without output -/
 

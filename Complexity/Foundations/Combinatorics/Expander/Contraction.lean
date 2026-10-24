@@ -89,11 +89,26 @@ def contract (G : RotationMap V D) : RotationMap W (I × D) where
 
 variable (G : RotationMap V D)
 
+/-- The rotation map of `contract encode decode h G` decodes the slot, rotates in `G`, and
+re-encodes the resulting vertex, leaving an unoccupied slot as a self-loop. -/
+theorem rot_contract (p : W × (I × D)) :
+    (contract encode decode h G).rot p =
+      (decode (p.1, p.2.1)).elim p fun v => contractDart encode (G.rot (v, p.2.2)) :=
+  rfl
+
+include h in
+/-- On an occupied slot `contractDart encode p`, the rotation map of `contract encode decode h G`
+rotates `p` in `G` and re-encodes the resulting dart. -/
+@[simp]
+theorem rot_contract_contractDart (p : V × D) :
+    (contract encode decode h G).rot (contractDart encode p) = contractDart encode (G.rot p) :=
+  contractRot_contractDart encode decode h G.rot p
+
 /-- The neighbor of an occupied slot is the image of its original neighbor. -/
 theorem neighbor_contract (v : V) (d : D) :
     (contract encode decode h G).neighbor (encode v).1 ((encode v).2, d) =
       (encode (G.neighbor v d)).1 :=
-  congrArg Prod.fst (contractRot_contractDart encode decode h G.rot (v, d))
+  congrArg Prod.fst (rot_contract_contractDart encode decode h G (v, d))
 
 include h in
 /-- Distinct original darts remain distinct after moving the slot into the label. -/

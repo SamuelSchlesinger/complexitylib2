@@ -236,7 +236,7 @@ private theorem rotationEdges_represents {V : Type} (vertices : ℕ)
     change (rotate (vertices, (eV.symm p.1).val, p.2)).1 = _
     rw [hrotate]
     simp [RegularConstraintGraph.toConstraintGraph, RegularConstraintGraph.unconstrained,
-      RotationMap.neighbor, RotationMap.reindex, RotationMap.reindexRot, hnumber]
+      RotationMap.neighbor_def, hnumber]
   · intro p a b
     simp [edge, htruth, RegularConstraintGraph.toConstraintGraph,
       RegularConstraintGraph.unconstrained]
@@ -305,7 +305,7 @@ theorem toGraph_preprocess [DecidableEq α] (htruth : ∀ a b, eval truth a b = 
     (RotationMap.loops (Fin n) Unit) (fun _ _ => rfl) eV number hnumber
   have hreindex : (RotationMap.loops (Fin n) Unit).reindex eV =
       RotationMap.loops (Fin g.edges.length × Bool) Unit := by
-    ext p <;> simp [RotationMap.reindex, RotationMap.reindexRot, RotationMap.loops]
+    ext p <;> simp
   have hloopedges : rotationEdges (fun p : ℕ × ℕ × Unit => p.2) [()] n =
       (List.range n).map (fun v => (v, v)) := by
     simp only [rotationEdges, List.map_cons, List.map_nil]
