@@ -32,11 +32,7 @@ largest over the rounds actually run.
 
 namespace Turing.MultiTapeTM
 
-/-- `f` is tidily computable within space `O(S a)` on the input `a`, and its encoded value has
-length `O(S a)`, in some time. -/
-def ComputableTidilyInSpace {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
-    (encOut : β ↪ List Bool) (S : α → ℕ) : Prop :=
-  ∃ T, ComputableTidilyInO f encIn encOut T S
+
 
 namespace ComputableTidilyInSpace
 

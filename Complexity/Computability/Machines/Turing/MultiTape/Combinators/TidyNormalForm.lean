@@ -16,7 +16,7 @@ public import Cslib.Foundations.Data.Fin.Tuple
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
-import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial
 import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
@@ -418,6 +418,21 @@ theorem ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace {α β : 
   exact Nat.add_le_add this (by generalize 4 * k * k = m; omega)
 
 
+/-- `f` is tidily computable within time `O(T a)` and space `O(S a)` on the input `a`, and its
+encoded value has length `O(S a)`. -/
+public def ComputableTidilyInO {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
+  ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut (fun a => c * (T a + 1))
+    (fun a => c * (S a + 1)) ∧ ∀ a, (encOut (f a)).length ≤ c * (S a + 1)
+
+
+/-- `f` is tidily computable within time `O(T a)` and space `O(S a)` on the input `a`. Unlike
+`Turing.MultiTapeTM.ComputableTidilyInO`, nothing is said of the length of the encoded value. -/
+public def ComputableTidilyInBigO {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
+  ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut (fun a => c * (T a + 1))
+    fun a => c * (S a + 1)
+
 /-- `f` is tidily computable within time and space bounded by polynomials of degree `d` in the
 length of the encoded input, and its encoded values have length bounded by a polynomial of
 degree `e`. -/
@@ -441,6 +456,19 @@ public def ComputableTidilyInPolyTime {α β : Type*} (f : α → β) (encIn : �
 -- Transitional registration while the remaining topic providers are being cut over.
 attribute [fun_prop] ComputableTidilyInPolyTime
 
+
+
+/-- `f` is tidily computable within some time and within space polynomially bounded in the length
+of the encoded input. -/
+public def ComputableTidilyInPolySpace {α β : Type} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) : Prop :=
+  ∃ T S, PolyBounded (fun a => (encIn a).length) S ∧ ComputableTidilyInO f encIn encOut T S
+
+/-- `f` is tidily computable within space `O(S a)` on the input `a`, and its encoded value has
+length `O(S a)`, in some time. -/
+public def ComputableTidilyInSpace {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (S : α → ℕ) : Prop :=
+  ∃ T, ComputableTidilyInO f encIn encOut T S
 
 end Turing.MultiTapeTM
 
@@ -595,5 +623,39 @@ private theorem forgetBigO {α β : Type*} {f : α → β}
     ComputableInBigO f encIn encOut T S := by
   obtain ⟨c, h⟩ := h
   exact ⟨c, h.computableInTimeAndSpace⟩
+
+/-- Normalize charged bounds while preserving the independent time and workspace bounds and
+encoded-output charge. This witness operation is not registered for automated search. -/
+public theorem normalizeO {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ}
+    (h : ComputableInO f encIn encOut T S) : ComputableTidilyInO f encIn encOut T S := by
+  obtain ⟨c, h, hl⟩ := h
+  obtain ⟨d, hd⟩ := normalizeBigO ⟨c, h⟩
+  refine ⟨d + c, hd.mono (fun a => ?_) (fun a => ?_), fun a => (hl a).trans ?_⟩ <;>
+    exact Nat.mul_le_mul_right _ (by omega)
+
+/-- Forget a charged raw witness without changing its time, workspace, or output bound. -/
+public theorem forgetO {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ}
+    (h : ComputableTidilyInO f encIn encOut T S) : ComputableInO f encIn encOut T S := by
+  obtain ⟨c, h, hl⟩ := h
+  exact ⟨c, h.computableInTimeAndSpace, hl⟩
+
+/-- Charged plain and raw witnesses express the same independent asymptotic bounds. -/
+public theorem plainO_iff_raw {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ} :
+    ComputableInO f encIn encOut T S ↔ ComputableTidilyInO f encIn encOut T S :=
+  ⟨normalizeO, forgetO⟩
+
+/-- Polynomial plain and raw witnesses agree; normalization remains proof-local. -/
+public theorem plainPolyTime_iff_raw {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} :
+    ComputableInPolyTime f encIn encOut ↔ ComputableTidilyInPolyTime f encIn encOut := by
+  constructor
+  · intro h
+    obtain ⟨t, s, ht, hs, h⟩ := normalizePolyTime h
+    exact ⟨_, _, .of_polynomiallyBounded _ ht, .of_polynomiallyBounded _ hs, h⟩
+  · rintro ⟨t, s, ⟨T, hT, ht⟩, ⟨S, hS, hs⟩, h⟩
+    exact ⟨T, S, hT, hS, h.computableInTimeAndSpace.mono ht hs⟩
 
 end Turing.MultiTapeTM.Internal

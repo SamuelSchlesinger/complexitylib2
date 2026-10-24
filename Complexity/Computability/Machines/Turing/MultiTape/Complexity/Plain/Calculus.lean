@@ -53,45 +53,6 @@ attribute [fun_prop] ComputableInO
 
 namespace Turing.MultiTapeTM.ComputableInO
 
-/-- Append two computed lists with the stated encodings and resource bounds. -/
-theorem append
-    {α β γ δ : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {encOut : γ ↪ List Bool}
-    {T₁ T₂ S₁ S₂ : α → ℕ}
-    {enc₂ : δ ↪ List Bool}
-    {f₁ : α → β}
-    {f₂ : α → δ}
-    {g : α → γ}
-    (h₁ : ComputableInO f₁ encIn encMid T₁ S₁)
-    (h₂ : ComputableInO f₂ encIn enc₂ T₂ S₂)
-    (hg : ∀ (x : α),
-  (encOut : γ → List Bool) (g x) =
-    (encMid : β → List Bool) (f₁ x) ++ (enc₂ : δ → List Bool) (f₂ x)) :
-    ComputableInO g encIn encOut (fun (x : α) => T₁ x + T₂ x)
-      fun (x : α) => S₁ x + S₂ x := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.append α β γ δ encIn encMid encOut T₁ T₂ S₁ S₂ enc₂ f₁ f₂ g h₁ h₂
-    hg
-
-/-- Compose two computations with the stated independent resource bounds. -/
-theorem comp
-    {α β γ : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {encOut : γ ↪ List Bool}
-    {T₁ S₁ : α → ℕ}
-    {f : β → γ}
-    {g : α → β}
-    {T₂ S₂ : β → ℕ}
-    (hf : ComputableInO f encMid encOut T₂ S₂)
-    (hg : ComputableInO g encIn encMid T₁ S₁) :
-    ComputableInO (f ∘ g) encIn encOut (fun (a : α) => T₁ a + T₂ (g a))
-      fun (a : α) => S₁ a + S₂ (g a) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.comp α β γ encIn encMid encOut T₁ S₁ f g T₂ S₂ hf hg
-
 /-- A function of bit words computed within given bounds is computed by the same machine on encoded
 instances. -/
 theorem comp_enc
@@ -107,232 +68,6 @@ theorem comp_enc
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.comp_enc α β encOut f T S h enc
 
-/-- A function computed within the length of its encoded value, after one computed within `T` and
-`S`, is computed within `T` and `S`. -/
-theorem comp_linear
-    {α β γ : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {encOut : γ ↪ List Bool}
-    {T₁ S₁ : α → ℕ}
-    {f : β → γ}
-    {g : α → β}
-    (hf : ComputableInO f encMid encOut
-  (fun (b : β) => ((encMid : β → List Bool) b).length) fun (b : β) =>
-  ((encMid : β → List Bool) b).length)
-    (hg : ComputableInO g encIn encMid T₁ S₁) :
-    ComputableInO (f ∘ g) encIn encOut T₁ S₁ := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.comp_linear α β γ encIn encMid encOut T₁ S₁ f g hf hg
-
-/-- Bounds polynomial in the length of the encoded input give polynomial time. -/
-theorem computableInPolyTime
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {f : α → β}
-    (h : ComputableInO f encIn encMid T S)
-    (hT : PolyBounded (fun (a : α) => ((encIn : α → List Bool) a).length) T)
-    (hS : PolyBounded (fun (a : α) => ((encIn : α → List Bool) a).length) S) :
-    ComputableInPolyTime f encIn encMid := by
-  simp only [
-    computableInPolyTime_iff_computableTidilyInPolyTime,
-    computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.computableTidilyInPolyTime α β encIn encMid T S f h hT hS
-
-/-- Compute a fixed value with the stated resource budget. -/
-theorem const
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    (b : β) :
-    ComputableInO (fun (_x : α) => b) encIn encMid
-      (fun (a : α) => ((encIn : α → List Bool) a).length) fun (a : α) =>
-      ((encIn : α → List Bool) a).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.const α β encIn encMid b
-
-/-- Equality, for any encoding. -/
-theorem eq
-    {α : Type}
-    [inst_1 : DecidableEq α]
-    (enc : α ↪ List Bool) :
-    ComputableInO (fun (p : α × α) => Decidable.decide (p.1 = p.2))
-      (encPair enc enc) encBool
-      (fun (p : α × α) =>
-        (((enc : α → List Bool) p.1).length + 1) *
-          (((enc : α → List Bool) p.1).length + ((enc : α → List Bool) p.2).length + 1))
-      fun (p : α × α) => ((encPair enc enc : α × α → List Bool) p).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.eq α inst_1 enc
-
-/-- Equality of words, within the length of the first word times the length of both, and linear
-space. -/
-theorem eqWords :
-    ComputableInO
-      (fun (p : List Bool × List Bool) => Decidable.decide (p.1 = p.2))
-      (encPair encBits encBits)
-      encBool
-      (fun (p : List Bool × List Bool) => (p.1.length + 1) * (p.1.length + p.2.length + 1))
-      fun (p : List Bool × List Bool) => p.1.length + p.2.length + 1 := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.eqWords
-
-/-- The elements of `list x` passing the test `t` with the parameter `par x`. -/
-theorem filterWith
-    {γ α π : Type}
-    {encIn : γ ↪ List Bool}
-    {enc : α ↪ List Bool}
-    {encP : π ↪ List Bool}
-    {par : γ → π}
-    {list : γ → List α}
-    {Tp Tl Sp Sl : γ → ℕ}
-    {t : π × α → Bool}
-    {Tt St : π × α → ℕ}
-    (ht : ComputableInO t (encPair encP enc)
-  encBool Tt St)
-    (hpar : ComputableInO par encIn encP Tp Sp)
-    (hlist : ComputableInO list encIn (encList enc) Tl Sl) :
-    ComputableInO
-      (fun (x : γ) => List.filter (fun (a : α) => t (par x, a)) (list x)) encIn
-      (encList enc)
-      (fun (x : γ) =>
-        ((encIn : γ → List Bool) x).length + Tp x + Tl x +
-          ((list x).length + 1) *
-            (((encP : π → List Bool) (par x)).length +
-                ((encList enc : List α → List Bool) (list x)).length +
-              listMax (fun (a : α) => Tt (par x, a)) (list x)))
-      fun (x : γ) =>
-      ((encIn : γ → List Bool) x).length + Sp x + Sl x +
-            ((encP : π → List Bool) (par x)).length +
-          ((encList enc : List α → List Bool) (list x)).length +
-        listMax (fun (a : α) => St (par x, a)) (list x) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.filterWith γ α π encIn enc encP par list Tp Tl Sp Sl t Tt St ht
-    hpar hlist
-
-/-- The first element of `list x` passing the test `t` with the parameter `par x`. -/
-theorem findWith
-    {γ α π : Type}
-    {encIn : γ ↪ List Bool}
-    {enc : α ↪ List Bool}
-    {encP : π ↪ List Bool}
-    {par : γ → π}
-    {list : γ → List α}
-    {Tp Tl Sp Sl : γ → ℕ}
-    {t : π × α → Bool}
-    {Tt St : π × α → ℕ}
-    (ht : ComputableInO t (encPair encP enc)
-  encBool Tt St)
-    (hpar : ComputableInO par encIn encP Tp Sp)
-    (hlist : ComputableInO list encIn (encList enc) Tl Sl) :
-    ComputableInO
-      (fun (x : γ) => List.find? (fun (a : α) => t (par x, a)) (list x)) encIn
-      (encOption enc)
-      (fun (x : γ) =>
-        ((encIn : γ → List Bool) x).length + Tp x + Tl x +
-          ((list x).length + 1) *
-            (((encP : π → List Bool) (par x)).length +
-                ((encList enc : List α → List Bool) (list x)).length +
-              listMax (fun (a : α) => Tt (par x, a)) (list x)))
-      fun (x : γ) =>
-      ((encIn : γ → List Bool) x).length + Sp x + Sl x +
-            ((encP : π → List Bool) (par x)).length +
-          ((encList enc : List α → List Bool) (list x)).length +
-        listMax (fun (a : α) => St (par x, a)) (list x) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.findWith γ α π encIn enc encP par list Tp Tl Sp Sl t Tt St ht hpar
-    hlist
-
-/-- **Left folds within given bounds.** If every round is within the time `R x` and the space
-`Q x`, and every state has length at most `B x`, a fold takes the time of the list and of the
-initial state, plus `R x`, `B x` and the length of the encoded list for every round, and the
-space
-of the list and of the initial state, plus `Q x`, `B x` and the length of the encoded list once. -/
-theorem foldl
-    {γ α β : Type}
-    {encIn : γ ↪ List Bool}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {encL : List α ↪ List Bool}
-    [inst_1 : ListEncoding encA encL]
-    [hS : SizedListEncoding encA encL]
-    {list : γ → List α}
-    {init : γ → β}
-    {step : β → α → β}
-    {Tl Ti Sl Si R Q B : γ → ℕ}
-    {Ts Ss : β × α → ℕ}
-    (hlist : ComputableInO list encIn encL Tl Sl)
-    (hinit : ComputableInO init encIn encB Ti Si)
-    (hstep : ComputableInO (fun (p : β × α) => step p.1 p.2)
-  (encPair encB encA) encB Ts Ss)
-    (hround : ∀ (x : γ) (i : ℕ) (hi : i < (list x).length),
-  Ts (List.foldl step (init x) (List.take i (list x)), (list x)[i]) ≤ R x)
-    (hspace : ∀ (x : γ) (i : ℕ) (hi : i < (list x).length),
-  Ss (List.foldl step (init x) (List.take i (list x)), (list x)[i]) ≤ Q x)
-    (hstate : ∀ (x : γ),
-  ∀ i ≤ (list x).length,
-    ((encB : β → List Bool) (List.foldl step (init x) (List.take i (list x)))).length ≤
-      B x) :
-    ComputableInO (fun (x : γ) => List.foldl step (init x) (list x))
-      encIn encB
-      (fun (x : γ) =>
-        Tl x + Ti x +
-          ((list x).length + 1) *
-            (R x + B x + ((encL : List α → List Bool) (list x)).length))
-      fun (x : γ) => Sl x + Si x + Q x + B x + ((encL : List α → List Bool) (list x)).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.foldl γ α β encIn encA encB encL inst_1 hS list init step Tl Ti Sl
-    Si R Q B Ts Ss hlist hinit hstep hround hspace hstate
-
-/-- **Left folds with a parameter, within given bounds.** The step may depend on a parameter
-`par x`, which is kept in the state. -/
-theorem foldlWith
-    {γ α β π : Type}
-    {encIn : γ ↪ List Bool}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {encL : List α ↪ List Bool}
-    {encP : π ↪ List Bool}
-    [inst_1 : ListEncoding encA encL]
-    [hS : SizedListEncoding encA encL]
-    {par : γ → π}
-    {list : γ → List α}
-    {init : γ → β}
-    {step : π → β → α → β}
-    {Tp Tl Ti Sp Sl Si R Q B : γ → ℕ}
-    {Ts Ss : (π × β) × α → ℕ}
-    (hpar : ComputableInO par encIn encP Tp Sp)
-    (hlist : ComputableInO list encIn encL Tl Sl)
-    (hinit : ComputableInO init encIn encB Ti Si)
-    (hstep : ComputableInO (fun (p : (π × β) × α) => step p.1.1 p.1.2 p.2)
-  (encPair (encPair encP encB) encA) encB Ts Ss)
-    (hround : ∀ (x : γ) (i : ℕ) (hi : i < (list x).length),
-  Ts ((par x, List.foldl (step (par x)) (init x) (List.take i (list x))), (list x)[i]) ≤
-    R x)
-    (hspace : ∀ (x : γ) (i : ℕ) (hi : i < (list x).length),
-  Ss ((par x, List.foldl (step (par x)) (init x) (List.take i (list x))), (list x)[i]) ≤
-    Q x)
-    (hstate : ∀ (x : γ),
-  ∀ i ≤ (list x).length,
-    ((encB : β → List Bool)
-          (List.foldl (step (par x)) (init x) (List.take i (list x)))).length ≤
-      B x) :
-    ComputableInO
-      (fun (x : γ) => List.foldl (step (par x)) (init x) (list x)) encIn encB
-      (fun (x : γ) =>
-        Tp x + Tl x + Ti x +
-          ((list x).length + 1) *
-            (R x + B x + ((encP : π → List Bool) (par x)).length +
-              ((encL : List α → List Bool) (list x)).length))
-      fun (x : γ) =>
-      Sp x + Sl x + Si x + Q x + B x + ((encP : π → List Bool) (par x)).length +
-        ((encL : List α → List Bool) (list x)).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.foldlWith γ α β π encIn encA encB encL encP inst_1 hS par list init
-    step Tp Tl Ti Sp Sl Si R Q B Ts Ss hpar hlist hinit hstep hround hspace hstate
-
 /-- A fold with a fixed finite state type takes linear time and constant work space. The constant
 may depend on the state type, its encoding and the transition function; this is not a uniform
 bound
@@ -347,33 +82,6 @@ theorem foldl_bits_finite
       encBits enc List.length fun (_x : List Bool) => 0 := by
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.foldl_bits_finite σ inst_1 enc step init
-
-/-- The first projection of the framed encoding of pairs. -/
-theorem fst
-    {β₁ β₂ : Type}
-    (enc₁ : β₁ ↪ List Bool)
-    (enc₂ : β₂ ↪ List Bool) :
-    ComputableInO Prod.fst (encPair enc₁ enc₂) enc₁
-      (fun (p : β₁ × β₂) =>
-        ((encPair enc₁ enc₂ : β₁ × β₂ → List Bool) p).length)
-      fun (p : β₁ × β₂) =>
-      ((encPair enc₁ enc₂ : β₁ × β₂ → List Bool) p).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.fst β₁ β₂ enc₁ enc₂
-
-/-- The first component of a pair computed within bounds. -/
-theorem fst'
-    {α : Type}
-    {encIn : α ↪ List Bool}
-    {T S : α → ℕ}
-    {β₁ β₂ : Type}
-    {enc₁ : β₁ ↪ List Bool}
-    {enc₂ : β₂ ↪ List Bool}
-    {f : α → β₁ × β₂}
-    (h : ComputableInO f encIn (encPair enc₁ enc₂) T S) :
-    ComputableInO (fun (x : α) => (f x).1) encIn enc₁ T S := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.fst' α encIn T S β₁ β₂ enc₁ enc₂ f h
 
 /-- Extracting the left summand as an option has linear time and space bounds. -/
 theorem getLeft?
@@ -425,24 +133,6 @@ theorem inr
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.inr α β left right
 
-/-- Choose between two computed values using a computed Boolean condition. -/
-theorem ite
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {encC : Bool ↪ List Bool}
-    {c : α → Bool}
-    {f g : α → β}
-    {Tc Tf Tg Sc Sf Sg : α → ℕ}
-    (hc : ComputableInO c encIn encC Tc Sc)
-    (hf : ComputableInO f encIn encMid Tf Sf)
-    (hg : ComputableInO g encIn encMid Tg Sg) :
-    ComputableInO (fun (x : α) => if c x = Bool.true then f x else g x)
-      encIn encMid (fun (x : α) => Tc x + if c x = Bool.true then Tf x else Tg x)
-      fun (x : α) => Sc x + if c x = Bool.true then Sf x else Sg x := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.ite α β encIn encMid encC c f g Tc Tf Tg Sc Sf Sg hc hf hg
-
 /-- **Iterating `n x` times, with `n x` in binary.** If the rounds are within the time `R x` and
 the space `Q x`, and the iterates have length at most `B x`, the iteration takes the time of the
 counter and of the start, plus `R x`, `B x` and the square of the length of the counter for
@@ -486,30 +176,6 @@ theorem lengthUnary :
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.lengthUnary
 
-/-- The encoded values are within the space bound. -/
-theorem length_le
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {f : α → β}
-    (h : ComputableInO f encIn encMid T S) :
-    ∃ (c : ℕ), ∀ (a : α), ((encMid : β → List Bool) (f a)).length ≤ c * (S a + 1) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.length_le α β encIn encMid T S f h
-
-/-- The encoded values are within the time bound. -/
-theorem length_le_time
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {f : α → β}
-    (h : ComputableInO f encIn encMid T S) :
-    ∃ (c : ℕ), ∀ (a : α), ((encMid : β → List Bool) (f a)).length ≤ c * (T a + 1) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.length_le_time α β encIn encMid T S f h
-
 /-- **The lifted step is computable**, within the bounds of the inner step on the emitted
 event, if any, plus the length of its input. -/
 theorem lift
@@ -541,74 +207,6 @@ theorem lift
         (tr.step p.1.1 p.2).2.elim 0 fun (e : E) => S (p.1.2, e) := by
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.lift Q E σ inst_1 inst_2 encQ encE encS next T S tr h
-
-/-- Mapping `f` with the parameter `par x` over `list x`. -/
-theorem mapWith
-    {γ α β π : Type}
-    {encIn : γ ↪ List Bool}
-    {enc : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {encP : π ↪ List Bool}
-    {par : γ → π}
-    {list : γ → List α}
-    {Tp Tl Sp Sl : γ → ℕ}
-    {f : π × α → β}
-    {Tf Sf : π × α → ℕ}
-    (hf : ComputableInO f (encPair encP enc) encB Tf Sf)
-    (hpar : ComputableInO par encIn encP Tp Sp)
-    (hlist : ComputableInO list encIn (encList enc) Tl Sl) :
-    ComputableInO
-      (fun (x : γ) => List.map (fun (a : α) => f (par x, a)) (list x)) encIn
-      (encList encB)
-      (fun (x : γ) =>
-        ((encIn : γ → List Bool) x).length + Tp x + Tl x +
-          ((list x).length + 1) *
-            (((encP : π → List Bool) (par x)).length +
-                  ((encList enc : List α → List Bool) (list x)).length +
-                ((encList encB : List β → List Bool)
-                    (List.map (fun (a : α) => f (par x, a)) (list x))).length +
-              listMax (fun (a : α) => Tf (par x, a)) (list x)))
-      fun (x : γ) =>
-      ((encIn : γ → List Bool) x).length + Sp x + Sl x +
-              ((encP : π → List Bool) (par x)).length +
-            ((encList enc : List α → List Bool) (list x)).length +
-          ((encList encB : List β → List Bool)
-              (List.map (fun (a : α) => f (par x, a)) (list x))).length +
-        listMax (fun (a : α) => Sf (par x, a)) (list x) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.mapWith γ α β π encIn enc encB encP par list Tp Tl Sp Sl f Tf Sf hf
-    hpar hlist
-
-/-- Weakening the bounds, up to a constant factor. -/
-theorem mono
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {f : α → β}
-    {T' S' : α → ℕ}
-    (h : ComputableInO f encIn encMid T S)
-    (k : ℕ)
-    (hT : ∀ (a : α), T a ≤ k * (T' a + 1))
-    (hS : ∀ (a : α), S a ≤ k * (S' a + 1)) :
-    ComputableInO f encIn encMid T' S' := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.mono α β encIn encMid T S f T' S' h k hT hS
-
-/-- Weakening the bounds. -/
-theorem mono_le
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {f : α → β}
-    {T' S' : α → ℕ}
-    (h : ComputableInO f encIn encMid T S)
-    (hT : ∀ (a : α), T a ≤ T' a)
-    (hS : ∀ (a : α), S a ≤ S' a) :
-    ComputableInO f encIn encMid T' S' := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.mono_le α β encIn encMid T S f T' S' h hT hS
 
 /-- **Addition in binary**, within linear work space. -/
 theorem natAdd :
@@ -717,54 +315,6 @@ theorem ofFn
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.ofFn α Value input enc count values T S hvalues
 
-/-- A function computed on another encoding of its input, with the same words. -/
-theorem of_encIn_eq
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {α' : Type}
-    {encIn' : α' ↪ List Bool}
-    {f : α → β}
-    (e : α' → α)
-    (hf : ComputableInO f encIn encMid T S)
-    (henc : ∀ (a : α'), (encIn' : α' → List Bool) a = (encIn : α → List Bool) (e a)) :
-    ComputableInO (fun (a : α') => f (e a)) encIn' encMid
-      (fun (a : α') => T (e a)) fun (a : α') => S (e a) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.of_encIn_eq α β encIn encMid T S α' encIn' f e hf henc
-
-/-- A function whose encoded values are those of a function computable within the bounds. -/
-theorem of_enc_eq
-    {α β γ : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {encOut : γ ↪ List Bool}
-    {T S : α → ℕ}
-    {f : α → β}
-    {g : α → γ}
-    (hf : ComputableInO f encIn encMid T S)
-    (h : ∀ (x : α), (encOut : γ → List Bool) (g x) = (encMid : β → List Bool) (f x)) :
-    ComputableInO g encIn encOut T S := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.of_enc_eq α β γ encIn encMid encOut T S f g hf h
-
-/-- A function on the encoding of its input through an equivalence. -/
-theorem of_equiv
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {α' : Type}
-    (e : α' ≃ α)
-    {f : α → β}
-    (hf : ComputableInO f encIn encMid T S) :
-    ComputableInO (fun (a : α') => f ((e : α' → α) a))
-      (encOfEquiv e encIn) encMid (fun (a : α') => T ((e : α' → α) a))
-      fun (a : α') => S ((e : α' → α) a) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.of_equiv α β encIn encMid T S α' e f hf
-
 /-- Eliminate an option while retaining the input. The conservative bound charges two option
 computations even on the `none` branch; it charges only the selected handler. -/
 theorem optionElimWithInput
@@ -792,25 +342,6 @@ theorem optionElimWithInput
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.optionElimWithInput α β γ encA encB encC value fallback body Tv Sv
     Tnone Snone Tbody Sbody hvalue hfallback hbody
-
-/-- Compute a pair from its two component computations. -/
-theorem pair
-    {α β₁ β₂ : Type}
-    {encIn : α ↪ List Bool}
-    {enc₁ : β₁ ↪ List Bool}
-    {enc₂ : β₂ ↪ List Bool}
-    {T₁ T₂ S₁ S₂ : α → ℕ}
-    {enc : β₁ × β₂ ↪ List Bool}
-    [hP : PairEncoding enc₁ enc₂ enc]
-    {f : α → β₁}
-    {g : α → β₂}
-    (hf : ComputableInO f encIn enc₁ T₁ S₁)
-    (hg : ComputableInO g encIn enc₂ T₂ S₂) :
-    ComputableInO (fun (x : α) => (f x, g x)) encIn enc
-      (fun (x : α) => T₁ x + T₂ x) fun (x : α) =>
-      S₁ x + S₂ x + ((enc : β₁ × β₂ → List Bool) (f x, g x)).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.pair α β₁ β₂ encIn enc₁ enc₂ T₁ T₂ S₁ S₂ enc hP f g hf hg
 
 /-- Construct a finite tuple from arbitrary resource certificates for its entries. -/
 theorem pi
@@ -881,65 +412,6 @@ theorem pi_update
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.pi_update Index Value inst_1 inst_2 enc i
 
-/-- Pairing with the framed encoding of pairs. -/
-theorem prod
-    {α β₁ β₂ : Type}
-    {encIn : α ↪ List Bool}
-    {enc₁ : β₁ ↪ List Bool}
-    {enc₂ : β₂ ↪ List Bool}
-    {T₁ T₂ S₁ S₂ : α → ℕ}
-    {f : α → β₁}
-    {g : α → β₂}
-    (hf : ComputableInO f encIn enc₁ T₁ S₁)
-    (hg : ComputableInO g encIn enc₂ T₂ S₂) :
-    ComputableInO (fun (x : α) => (f x, g x)) encIn
-      (encPair enc₁ enc₂) (fun (x : α) => T₁ x + T₂ x) fun (x : α) =>
-      S₁ x + S₂ x := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.prod α β₁ β₂ encIn enc₁ enc₂ T₁ T₂ S₁ S₂ f g hf hg
-
-/-- The second projection of the framed encoding of pairs. -/
-theorem snd
-    {β₁ β₂ : Type}
-    (enc₁ : β₁ ↪ List Bool)
-    (enc₂ : β₂ ↪ List Bool) :
-    ComputableInO Prod.snd (encPair enc₁ enc₂) enc₂
-      (fun (p : β₁ × β₂) =>
-        ((encPair enc₁ enc₂ : β₁ × β₂ → List Bool) p).length)
-      fun (p : β₁ × β₂) =>
-      ((encPair enc₁ enc₂ : β₁ × β₂ → List Bool) p).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.snd β₁ β₂ enc₁ enc₂
-
-/-- The second component of a pair computed within bounds. -/
-theorem snd'
-    {α : Type}
-    {encIn : α ↪ List Bool}
-    {T S : α → ℕ}
-    {β₁ β₂ : Type}
-    {enc₁ : β₁ ↪ List Bool}
-    {enc₂ : β₂ ↪ List Bool}
-    {f : α → β₁ × β₂}
-    (h : ComputableInO f encIn (encPair enc₁ enc₂) T S) :
-    ComputableInO (fun (x : α) => (f x).2) encIn enc₂ T S := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.snd' α encIn T S β₁ β₂ enc₁ enc₂ f h
-
-/-- A function into the encoding of its values through an equivalence. -/
-theorem to_equiv
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {β' : Type}
-    (e : β' ≃ β)
-    {f : α → β}
-    (hf : ComputableInO f encIn encMid T S) :
-    ComputableInO (fun (a : α) => (e.symm : β → β') (f a)) encIn
-      (encOfEquiv e encMid) T S := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.to_equiv α β encIn encMid T S β' e f hf
-
 /-- **`2 ^ n` in unary**, by doubling `n` times, within time `O((n + 1) * 2 ^ n)` and space
 `O(2 ^ n)`. -/
 theorem unary_two_pow :
@@ -947,21 +419,6 @@ theorem unary_two_pow :
       encUnary (fun (n : ℕ) => (n + 1) * 2 ^ n) fun (n : ℕ) => 2 ^ n := by
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.unary_two_pow
-
-/-- Weakening the bounds, up to constant factors. -/
-theorem weaken
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {T S : α → ℕ}
-    {f : α → β}
-    {T' S' : α → ℕ}
-    (h : ComputableInO f encIn encMid T S)
-    (hT : BigOLe T T')
-    (hS : BigOLe S S') :
-    ComputableInO f encIn encMid T' S' := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.weaken α β encIn encMid T S f T' S' h hT hS
 
 end Turing.MultiTapeTM.ComputableInO
 

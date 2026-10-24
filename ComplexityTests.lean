@@ -315,6 +315,7 @@ import ComplexityTests.PlainDegreeFoldCutover
 import ComplexityTests.PlainDegreeProviderCutover
 import ComplexityTests.PlainFunctionFamilyCutover
 import ComplexityTests.PlainIterationCutover
+import ComplexityTests.PlainOProviderCutover
 import ComplexityTests.PlainPolySpaceProviderCutover
 import ComplexityTests.PlainProjection
 import ComplexityTests.PlainProviderCutover

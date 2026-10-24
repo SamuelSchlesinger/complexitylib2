@@ -39,11 +39,7 @@ proofs use one shared raw witness normalization, retaining its encoded-output bo
 namespace Turing.MultiTapeTM
 
 -- Staged raw predicate: central internalization is owned by the S1 integration, not this batch.
-/-- `f` is tidily computable within some time and within space polynomially bounded in the length
-of the encoded input. -/
-def ComputableTidilyInPolySpace {α β : Type} (f : α → β) (encIn : α ↪ List Bool)
-    (encOut : β ↪ List Bool) : Prop :=
-  ∃ T S, PolyBounded (fun a => (encIn a).length) S ∧ ComputableTidilyInO f encIn encOut T S
+
 
 private theorem rawPolySpace {α β : Type} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
