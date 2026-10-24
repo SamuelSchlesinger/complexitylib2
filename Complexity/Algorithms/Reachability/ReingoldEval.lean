@@ -355,6 +355,7 @@ private theorem exists_iterate_call (k : ℕ) :
     exact exists_iterate_zig₀_of_call H e G 0
       (fun _ _ _ _ ↦ ⟨1, rfl⟩) (fun _ _ _ _ ↦ ⟨1, rfl⟩)
   | succ k ih =>
+    -- a rotation of level `k + 1` pushes a frame and evaluates the level
     have hcall₀ := exists_iterate_call_succ H e G k ih.2.2 .call₀ .zag₀ (.inl ⟨rfl, rfl⟩)
     have hcall₁ := exists_iterate_call_succ H e G k ih.2.2 .call₁ .zag₁ (.inr ⟨rfl, rfl⟩)
     exact ⟨hcall₀, hcall₁, exists_iterate_zig₀_of_call H e G (k + 1) hcall₀ hcall₁⟩

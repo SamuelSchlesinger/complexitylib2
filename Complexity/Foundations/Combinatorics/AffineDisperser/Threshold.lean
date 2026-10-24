@@ -114,6 +114,7 @@ private theorem explicitThreshold_le_add (N : ℕ) (hT1 : 1 ≤ N / (Nat.log 2 N
   have hn : n = (selectBelow T (primesIoc L (4 * L))).prod := fieldDegree_eq_prod N
   have hnT : n ≤ T := hn ▸ prod_selectBelow_le hT1 _
   have hrn : r * n ≤ N := numBlocks_mul_le N
+  -- the terms of the threshold
   have hwaste : N - r * n < n := by
     have h1 := Nat.mod_add_div' N n
     have h2 := Nat.mod_lt N hn0
@@ -189,7 +190,9 @@ private theorem eventually_four_mul_numBlocks_le :
   filter_upwards [tendsto_log_two_atTop.eventually_ge_atTop (ℓ₁ + 3 * L₂ + 3)] with N hN
   set ℓ := Nat.log 2 N
   have hpow := hℓ₁ ℓ (by omega)
-  have hN0 : N ≠ 0 := by rintro rfl; simp [ℓ] at hN
+  have hN0 : N ≠ 0 := by
+    rintro rfl
+    simp [ℓ] at hN
   have hNℓ : 2 ^ ℓ ≤ N := Nat.pow_log_le_self 2 hN0
   set L := primeBound N
   have hL : L = ℓ / 3 := rfl
@@ -198,15 +201,19 @@ private theorem eventually_four_mul_numBlocks_le :
   set r := numBlocks N
   have hn0 : 0 < n := Nat.pos_of_ne_zero (fieldDegree_ne_zero N)
   have hn : n = (selectBelow T (primesIoc L (4 * L))).prod := fieldDegree_eq_prod N
+  -- the number of blocks is small
   have hps : ∀ p ∈ primesIoc L (4 * L), 0 < p ∧ p ≤ 4 * L := fun p hp => by
     obtain ⟨-, h2, h3⟩ := mem_primesIoc.1 hp
     exact ⟨h3.pos, h2⟩
   rcases prod_le_or_lt_mul_prod_selectBelow T hps with hP | hTn
-  · rw [← hn] at hP
+  · -- every prime in `(L, 4 L]` is chosen
+    rw [← hn] at hP
     exact four_mul_numBlocks_le_of_prod_le (hL₂ L (by omega)) hP
-  · rw [← hn] at hTn
+  · -- the greedy choice stops within a factor `4 L` of its budget
+    rw [← hn] at hTn
+    have h1 : N < (ℓ + 1) ^ 2 * (T + 1) := Nat.lt_mul_div_succ N (by positivity)
     have h2 : N < (ℓ + 1) ^ 2 * (4 * L) * n :=
-      calc N < (ℓ + 1) ^ 2 * (T + 1) := Nat.lt_mul_div_succ N (by positivity)
+      calc N < (ℓ + 1) ^ 2 * (T + 1) := h1
         _ ≤ (ℓ + 1) ^ 2 * (4 * L * n) := Nat.mul_le_mul_left _ hTn
         _ = (ℓ + 1) ^ 2 * (4 * L) * n := by ring
     have hrlt : r < (ℓ + 1) ^ 2 * (4 * L) := (Nat.div_lt_iff_lt_mul hn0).2 h2
@@ -216,7 +223,9 @@ private theorem eventually_four_mul_numBlocks_le :
       have : (ℓ + 1) ^ 2 * (2 * (ℓ + 1)) = 2 * (ℓ + 1) ^ 3 := by ring
       omega
     calc 4 * ((ℓ + 1) * (r * (r + 1)))
-        ≤ 4 * ((ℓ + 1) * (2 * (ℓ + 1) ^ 3 * (2 * (ℓ + 1) ^ 3))) := by gcongr; omega
+        ≤ 4 * ((ℓ + 1) * (2 * (ℓ + 1) ^ 3 * (2 * (ℓ + 1) ^ 3))) := by
+          gcongr
+          omega
       _ = 16 * (ℓ + 1) ^ 7 := by ring
       _ ≤ 2 ^ ℓ := hpow
       _ ≤ N := hNℓ
@@ -229,7 +238,9 @@ theorem eventually_explicitThreshold_le :
   filter_upwards [eventually_four_mul_numBlocks_le,
     tendsto_log_two_atTop.eventually_ge_atTop (ℓ₁ + 1)] with N hkey hN
   set ℓ := Nat.log 2 N
-  have hN0 : N ≠ 0 := by rintro rfl; simp [ℓ] at hN
+  have hN0 : N ≠ 0 := by
+    rintro rfl
+    simp [ℓ] at hN
   have hNℓ : 2 ^ ℓ ≤ N := Nat.pow_log_le_self 2 hN0
   have hsq : (ℓ + 1) ^ 2 ≤ 2 ^ ℓ := by simpa using hℓ₁ ℓ (by omega)
   set L := primeBound N
@@ -241,6 +252,7 @@ theorem eventually_explicitThreshold_le :
   have hT1 : 1 ≤ T := (Nat.one_le_div_iff (by positivity)).2 (hsq.trans hNℓ)
   have hthr := explicitThreshold_le_add N hT1
   set r := numBlocks N
+  -- assembling the bound
   have hA : (ℓ + 1) * T ≤ N / (ℓ + 1) := hT ▸ Nat.mul_div_le _ _
   have hB : (ℓ + 1) * (N / (L + 1)) ≤ 3 * N :=
     calc (ℓ + 1) * (N / (L + 1)) ≤ 3 * (L + 1) * (N / (L + 1)) :=

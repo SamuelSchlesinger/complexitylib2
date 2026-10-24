@@ -246,6 +246,7 @@ private theorem comp_eq_X_pow_card_sub_X [Fintype F] {P Q : F[X]}
     (hker : ∀ x, Q.eval (P.eval x) = 0) :
     P.comp Q = X ^ Fintype.card F - X := by
   have hq1 : 1 < Fintype.card F := Fintype.one_lt_card
+  -- `Q ∘ P = X ^ q - X`
   have hQP : Q.comp P = X ^ Fintype.card F - X := by
     have hmon : IsMonicOfDegree (Q.comp P) (Fintype.card F) :=
       ⟨by rw [natDegree_comp, hdeg], hQm.comp hPm hPdeg⟩
@@ -258,6 +259,7 @@ private theorem comp_eq_X_pow_card_sub_X [Fintype F] {P Q : F[X]}
     refine eq_zero_of_natDegree_lt_card_of_eval_eq_zero _ (f := id) Function.injective_id
       (fun x => by simp [eval_comp, hker x, FiniteField.pow_card])
       (hmon.natDegree_sub_lt hq1.ne_bot hX)
+  -- hence `P ∘ Q = X ^ q - X`
   have h1 : (P.comp Q).comp P = (X ^ Fintype.card F - X : F[X]).comp P := by
     rw [comp_assoc, hQP, hP.comp_sub, ← expand_eq_comp_X_pow,
       FiniteField.Polynomial.expand_card, comp_X, sub_comp, X_pow_comp, X_comp]
@@ -281,7 +283,9 @@ theorem exists_isLinearized_range_eq [Finite F] (W : Submodule (ZMod 2) F) :
   have hcard : Fintype.card F = 2 ^ finrank (ZMod 2) F := by
     rw [Module.card_eq_pow_finrank (K := ZMod 2) (V := F), ZMod.card]
   have hdn : finrank (ZMod 2) W ≤ finrank (ZMod 2) F := Submodule.finrank_le W
+  -- the kernel-subspace polynomial `P` of `W`
   obtain ⟨P, hP, hPm, hPdeg, hkerP⟩ := exists_isLinearized_ker_eq W
+  -- `Q` is the kernel-subspace polynomial of the image of `P`
   have hK' : finrank (ZMod 2) (LinearMap.range hP.toLinearMap) =
       finrank (ZMod 2) F - finrank (ZMod 2) W := by
     have := LinearMap.finrank_range_add_finrank_ker hP.toLinearMap
@@ -290,6 +294,7 @@ theorem exists_isLinearized_range_eq [Finite F] (W : Submodule (ZMod 2) F) :
   obtain ⟨Q, hQ, hQm, hQdeg₀, hkerQ⟩ := exists_isLinearized_ker_eq (LinearMap.range hP.toLinearMap)
   have hQdeg : Q.natDegree = 2 ^ (finrank (ZMod 2) F - finrank (ZMod 2) W) := hK' ▸ hQdeg₀
   refine ⟨Q, hQ, hQm, hQdeg, ?_⟩
+  -- `P ∘ Q = X ^ q - X`
   have hPQ : P.comp Q = X ^ Fintype.card F - X :=
     comp_eq_X_pow_card_sub_X hP hPm hQm (hPdeg ▸ pow_ne_zero _ two_ne_zero)
       (by rw [hQdeg, hPdeg, ← pow_add, hcard, Nat.sub_add_cancel hdn]) fun x => by
@@ -298,12 +303,17 @@ theorem exists_isLinearized_range_eq [Finite F] (W : Submodule (ZMod 2) F) :
   have hrange : ∀ x, Q.eval x ∈ W := fun x => by
     rw [← hkerP, LinearMap.mem_ker, IsLinearized.toLinearMap_apply, ← eval_comp, hPQ]
     simp [FiniteField.pow_card]
+  -- the image of `Q` is all of `W`, by counting
+  have hle : LinearMap.range hQ.toLinearMap ≤ W := by
+    rintro _ ⟨x, rfl⟩
+    exact hrange x
   have heq : LinearMap.range hQ.toLinearMap = W := by
-    refine Submodule.eq_of_le_of_finrank_eq (by rintro _ ⟨x, rfl⟩; exact hrange x) ?_
+    refine Submodule.eq_of_le_of_finrank_eq hle ?_
     have := LinearMap.finrank_range_add_finrank_ker hQ.toLinearMap
     rw [hkerQ] at this
     omega
-  refine fun y => ⟨fun hy => ?_, fun ⟨x, hx⟩ => hx ▸ hrange x⟩
+  intro y
+  refine ⟨fun hy => ?_, fun ⟨x, hx⟩ => hx ▸ hrange x⟩
   rw [← heq] at hy
   obtain ⟨x, rfl⟩ := hy
   exact ⟨x, rfl⟩
@@ -531,7 +541,8 @@ private theorem linearizedEval_pow_eq_mul_of_gap [Finite F] {n d ρ : ℕ} [NeZe
         have : j - (k : ZMod n) = ((ρ + (j.val - (n - d) - 1) : ℕ) : ZMod n) := by
           rw [sub_eq_iff_eq_add, ← Nat.cast_add]
           conv_lhs => rw [← ZMod.natCast_zmod_val j]
-          congr 1; omega
+          congr 1
+          omega
         rw [this, hall _ (by omega)]
         exact zero_pow (pow_ne_zero _ two_ne_zero)
       rw [haj, hbj, mul_zero, sub_zero]
@@ -587,6 +598,7 @@ theorem exists_coeffPattern [Finite F] {n s : ℕ} [NeZero n] (hn : finrank (ZMo
   rw [hd] at hQdeg hsW ⊢
   rw [hn] at hQdeg
   have hdn : d ≤ n := hd ▸ hn ▸ Submodule.finrank_le W
+  -- the coefficient vector of `Q`
   let a : ZMod n → F := fun j => Q.coeff (2 ^ j.val)
   have hQa : ∀ x, Q.eval x = linearizedEval a x :=
     hQ.eval_eq_linearizedEval (hQdeg ▸ Nat.pow_lt_pow_right (by norm_num) (by omega))
@@ -597,24 +609,32 @@ theorem exists_coeffPattern [Finite F] {n s : ℕ} [NeZero n] (hn : finrank (ZMo
     intro c hc1 hcd
     simp only [a, ZMod.val_cast_of_lt (show n - d + c < n by omega)]
     exact coeff_eq_zero_of_natDegree_lt (hQdeg ▸ Nat.pow_lt_pow_right (by norm_num) (by omega))
+  -- the kernel of `Q` has `2 ^ (n - d)` elements
   set S : Finset F := Finset.univ.filter fun x => Q.eval x = 0 with hSdef
   have hScard : S.card = 2 ^ (n - d) := by
     have hrange : LinearMap.range hQ.toLinearMap = W := by
-      ext y; rw [LinearMap.mem_range, hQW y]; rfl
+      ext y
+      rw [LinearMap.mem_range, hQW y]
+      rfl
     have hker : finrank (ZMod 2) (LinearMap.ker hQ.toLinearMap) = n - d := by
       have := LinearMap.finrank_range_add_finrank_ker hQ.toLinearMap
-      rw [hrange, hd, hn] at this; omega
+      rw [hrange, hd, hn] at this
+      omega
     have h1 := Module.card_eq_pow_finrank (K := ZMod 2) (V := LinearMap.ker hQ.toLinearMap)
     rw [ZMod.card, hker] at h1
     rw [← h1, hSdef, ← Fintype.card_subtype]
     exact Fintype.card_congr (Equiv.subtypeEquivRight fun x => by simp)
   have hSzero : ∀ x ∈ S, linearizedEval a x = 0 := fun x hx =>
     hQa x ▸ (Finset.mem_filter.1 hx).2
-  refine ⟨a, fun x => (hQW _).2 ⟨x, hQa x⟩,
-    ⟨hdn, hlead ▸ one_ne_zero, hcan, coeffPattern_zero_ne hn hdn hlead hcan hScard.ge hSzero,
-      coeffPattern_gap hn hs hd hsW ?_ hlead hcan hScard.ge hSzero⟩⟩
-  intro y hy
-  obtain ⟨x, rfl⟩ := (hQW y).1 hy
-  exact ⟨x, (hQa x).symm⟩
+  have hmemW : ∀ x, linearizedEval a x ∈ W := fun x =>
+    (hQW _).2 ⟨x, hQa x⟩
+  refine ⟨a, hmemW, ⟨hdn, hlead ▸ one_ne_zero, hcan, ?_, ?_⟩⟩
+  · -- the constant coefficient is nonzero
+    exact coeffPattern_zero_ne hn hdn hlead hcan hScard.ge hSzero
+  · -- the gap property
+    refine coeffPattern_gap hn hs hd hsW ?_ hlead hcan hScard.ge hSzero
+    intro y hy
+    obtain ⟨x, rfl⟩ := (hQW y).1 hy
+    exact ⟨x, (hQa x).symm⟩
 
 end Cslib
