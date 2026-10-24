@@ -1155,6 +1155,16 @@ Jukna coverage below is an additional target beyond the V1 port:
   and [Buss's polynomial kernel for vertex cover](Complexity/Computability/Complexity/Parameterized/VertexCover/BussKernel.lean)
   (#270) are proved; develop strongly uniform variants and the W hierarchy.
   The long-term coverage table identifies the broader class families.
+* **Universal hashing (#640, track D).** Proved (#663): one definition each of
+  [`ε`-universal and `ε`-Δ-universal](Complexity/Probability/HashFamily.lean) families;
+  pairwise independent families are
+  [universal and Δ-universal](Complexity/Probability/PairwiseIndependentHash/Universal.lean), the
+  Boolean-matrix and subset-sum families are Δ-universal, and the
+  [Carter–Wegman polynomial](Complexity/Probability/HashFamily/Polynomial.lean) and
+  [multiply-shift](Complexity/Probability/HashFamily/MultiplyShift.lean) families are proved.
+  Open: the leftover hash lemma stated over `ε`-universal families, with `IsTwoUniversal` as its
+  `1 / |Y|` case and the pseudoentropy clients updated, and Carter–Wegman MACs from Δ-universal
+  hashing.
 * **Sigma protocols, Schnorr identification and Fiat–Shamir (#581).** Boneh–Shoup Chapter 19.
   The exact algebraic core is proved:
   [Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Basic.lean) with explicit

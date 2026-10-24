@@ -194,6 +194,7 @@ import ComplexityTests.GoldreichLevin
 import ComplexityTests.Halting
 import ComplexityTests.HardCore
 import ComplexityTests.HardnessAmplification
+import ComplexityTests.HashFamily
 import ComplexityTests.HashedParity
 import ComplexityTests.Hastad
 import ComplexityTests.HastadSharp

@@ -31,7 +31,8 @@ modulus; no prime-modulus hypothesis is needed.
 
 * `Cslib.BitString.SubsetSum.uniform_hash_sub`: distinct words give a uniform difference.
 * `Cslib.BitString.SubsetSum.collision_probability`: the exact collision probability.
-* `Cslib.BitString.SubsetSum.isTwoUniversal`: the binary subset-sum family is two-universal.
+* `Cslib.BitString.SubsetSum.isDeltaUniversalHash`, `Cslib.BitString.SubsetSum.isTwoUniversal`: the
+  binary subset-sum family is `1 / |G|`-Δ-universal, hence universal.
 * `Cslib.BitString.SubsetSum.dist_hashRows_le`: many independent binary rows with one public seed.
 
 ## References
@@ -48,7 +49,7 @@ The proof reuses the finite-group uniformity lemmas in `Probability.Uniform`.
 namespace Cslib.BitString.SubsetSum
 
 open Cslib.Probability Cslib.Probability.PMF
-open scoped BigOperators
+open scoped BigOperators ENNReal
 
 variable {ι G : Type*} [Fintype ι] [AddCommGroup G]
 
@@ -100,10 +101,15 @@ theorem collision_probability (x y : ι → Bool) (hxy : x ≠ y) :
   simpa only [eq_comm (a := (0 : G)), sub_eq_zero, PMF.uniformOfFintype_apply,
     ENNReal.toReal_inv, ENNReal.toReal_natCast] using h
 
-open Classical in
-/-- Uniform group weights form a two-universal family on binary words. -/
+/-- Uniform group weights form a `1 / |G|`-Δ-universal family on binary words: the difference
+of two hashes is uniform. -/
+theorem isDeltaUniversalHash :
+    IsDeltaUniversalHash (PMF.uniformOfFintype (ι → G)) hash (Fintype.card G : ℝ≥0∞)⁻¹ :=
+  IsDeltaUniversalHash.of_map_sub_eq_uniform fun x y hxy => uniform_hash_sub x y hxy
+
+/-- Uniform group weights form a universal family on binary words. -/
 theorem isTwoUniversal : IsTwoUniversal (PMF.uniformOfFintype (ι → G)) hash :=
-  fun x y hxy => (collision_probability (G := G) x y hxy).le
+  isTwoUniversal_iff_isUniversalHash.mpr isDeltaUniversalHash.isUniversalHash
 
 /-- Apply the same public weights to every binary row. -/
 def hashRows {κ : Type*} (weights : ι → G) (inputs : κ → ι → Bool) : κ → G :=

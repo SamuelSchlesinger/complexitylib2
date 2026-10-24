@@ -1872,6 +1872,9 @@ public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
 public import Complexity.Probability.Forking
 public import Complexity.Probability.Guessing
+public import Complexity.Probability.HashFamily
+public import Complexity.Probability.HashFamily.MultiplyShift
+public import Complexity.Probability.HashFamily.Polynomial
 public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.IID
 public import Complexity.Probability.Isolation
@@ -1891,6 +1894,7 @@ public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.Shift
 public import Complexity.Probability.PairwiseIndependentHash.Toeplitz
+public import Complexity.Probability.PairwiseIndependentHash.Universal
 public import Complexity.Probability.Pinsker
 public import Complexity.Probability.Product
 public import Complexity.Probability.Quantile
