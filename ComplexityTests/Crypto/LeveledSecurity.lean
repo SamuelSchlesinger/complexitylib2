@@ -119,7 +119,7 @@ private theorem encrypt_ppt : IsPPTOn (encPair encUnary (encPair encBits encBool
   ppt
 
 @[fun_prop]
-private theorem stateBit_poly : ComputableTidilyInPolyTime stateBit encBits encBool := by
+private theorem stateBit_poly : ComputableInPolyTime stateBit encBits encBool := by
   have hcontext := publicKeyDecoder.computableTidilyInPolyTime
   dsimp only [encPublicKey] at hcontext
   have hpk := (ComputableTidilyInPolyTime.listGetD
@@ -162,7 +162,7 @@ example {E : Scheme} (hsecure : Encryption.INDCPA E.keyGen E.encrypt)
     {width budget secretWidth ciphertextWidth : ℕ → ℕ}
     (hwidth : ∀ n keys, keys ∈ (ProbComp.eval (E.keyGen n)).support →
       keys.2.length = width n)
-    (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary)
+    (hbudget : ComputableInPolyTime budget encUnary encUnary)
     (D : DecryptionCircuits E secretWidth ciphertextWidth) :
     Encryption.INDCPA (scheme D budget).keyGen (scheme D budget).encrypt :=
   indCPA_scheme hsecure hkeyGen hencrypt hwidth hbudget D

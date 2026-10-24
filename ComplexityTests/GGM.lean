@@ -20,22 +20,19 @@ example : GGM.eval (fun seed => seed ++ seed.reverse ++ [true]) [false, true] [t
 example (query : List Bool) : GGM.eval (fun _ => [true]) [] query = [] := by
   exact List.length_eq_zero_iff.mp (Nat.eq_zero_of_le_zero (GGM.length_eval_le _ [] query))
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Duplicating the seed is a concrete efficient generator, though it is not pseudorandom.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : List Bool × List Bool => GGM.eval (fun seed => seed ++ seed) p.1 p.2)
     (encPair encBits encBits) encBits := by fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- A shrinking expansion is allowed: efficiency does not require a PRG or a length hypothesis.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : List Bool × List Bool => GGM.eval List.tail p.1 p.2)
     (encPair encBits encBits) encBits := by fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 example (generator : List Bool → List Bool)
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits) :
-    ComputableTidilyInPolyTime
+    (hgenerator : ComputableInPolyTime generator encBits encBits) :
+    ComputableInPolyTime
       (fun p : List Bool × List Bool => GGM.eval generator p.1 (p.2 ++ p.2))
       (encPair encBits encBits) encBits := by fun_prop
 
@@ -44,7 +41,6 @@ example : IsPPTOn (encPair encUnary encBits) (encPair encBits GGM.cacheEncoding)
     (fun pair => GGM.frontierOracle (fun seed => seed ++ seed) pair.1 (pair.1 + 1)
       pair.2.reverse [(pair.2, pair.2)]) := by fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- The ordinary monadic spelling exposes no machine or tape-layout details.
 example : IsPPTOn (encPair encUnary encBits) (encPair encBits GGM.cacheEncoding)
     (fun pair => if pair.2.length = pair.1 then do
@@ -129,11 +125,11 @@ example : ProbComp.eval (GGM.expansionGame List.tail (BitString.sampleList 2) si
 
 -- Every certified sampler and adaptive adversary compose through the complete-game contract.
 example {generator : List Bool → List Bool} {sample : ℕ → ProbComp (List Bool)}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
+    (hg : ComputableInPolyTime generator encBits encBits)
     (hs : IsPPTOn encUnary encBits sample) {adversary : OracleDistinguisher}
     (ha : IsOraclePPT encBool adversary) : IsPPTOn encUnary encBool
       (fun n => GGM.expansionGame generator (sample n) adversary n (n + 1)) :=
-  GGM.isPPTOn_expansionGame (.of_tidy hg) hs (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) ha
+  GGM.isPPTOn_expansionGame hg hs (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) ha
 
 -- Saved challenges may be short, oversized or absent, and the requested depth may exceed width.
 example {adversary : OracleDistinguisher} (ha : IsOraclePPT encBool adversary) :

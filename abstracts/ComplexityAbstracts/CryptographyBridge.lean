@@ -173,7 +173,7 @@ theorem stretch {g : List Bool → List Bool}
     (htarget : PolyTime target unaryEncoding unaryEncoding) (hgreater : ∀ n, n < target n) :
     ∃ g' : List Bool → List Bool, PseudorandomGenerator g' target :=
   ⟨_, generator_iff.mpr ((generator_iff.mp hg).amplify target
-    (polyTime_iff.mp htarget) hgreater)⟩
+    (.of_tidy (polyTime_iff.mp htarget)) hgreater)⟩
 
 abbrev OracleResponse : Sum ℕ (Unit × List Bool) → Type :=
   Cslib.probOracleSpec (fun _ : Unit × List Bool => List Bool)
