@@ -114,16 +114,8 @@ theorem isPolyTime_generate {α : Type} {input : α ↪ List Bool}
     (hseed : ComputableInPolyTime seed input encBits) :
     ComputableInPolyTime (fun a => generate (n a) (sourceBits a) (observationBound a)
       (densityBound a) (index a) (evaluate a) (seed a)) input encBits := by
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hn
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hsource
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hobservation
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hdensity
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hindex
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hevaluate
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hseed
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   unfold generate
-  polytime
+  apply ThreeSource.isPolyTime_generate <;> fun_prop
 
 attribute [program_certificate] isPolyTime_generate
 
@@ -136,12 +128,9 @@ theorem isPolyTime_generate_of_realization {pair : SamplablePair} (saved : pair.
       (observationBound input.1.1) (densityBound input.1.1) input.1.2
       (saved.evaluate input.1.1) input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits := by
-  have hobservation := hobservation.tidy
-  have hdensity := hdensity.tidy
-  refine .of_tidy ?_
-  have hlength := saved.length_isPolyTime.tidy
-  have hevaluate := saved.efficient.tidy
-  apply isPolyTime_generate <;> polytime
+  have hlength := saved.length_isPolyTime
+  have hevaluate := saved.efficient
+  apply isPolyTime_generate <;> fun_prop
 
 /-- The advertised lengths give strict expansion for every entry, even an inaccurate guess. -/
 theorem seedLength_lt_outputLength (n sourceBits observationBound densityBound index : ℕ) :

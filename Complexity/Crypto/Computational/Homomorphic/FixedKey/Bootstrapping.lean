@@ -84,7 +84,7 @@ theorem fullyHomomorphic {E : Scheme} {secretWidth ciphertextWidth : ℕ → ℕ
   ⟨correct D hE hwidth hboot, fun _ _ => trivial, fixedWidth D hE hwidth hboot,
     (polynomiallyBounded_widths D hD).1, (polynomiallyBounded_widths D hD).2,
     polynomiallyBounded_decryptionSize D hD, isPPTOn_scheme_keyGen hkeyGen hencrypt D,
-    isPPTOn_scheme_encrypt hencrypt D, .of_tidy (computableInPolyTime_scheme_decrypt D hD),
+    isPPTOn_scheme_encrypt hencrypt D, computableInPolyTime_scheme_decrypt D hD,
     isPPTOn_scheme_evaluate hencrypt D hD hevaluate,
     indCPA_scheme D hsecure hcircular hkeyGen hencrypt hwidth.secret_length⟩
 

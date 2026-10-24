@@ -216,9 +216,10 @@ theorem HasGap.extract_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ}
   have hnumerator := hnumerator.tidy
   have hdensity := hdensity.tidy
   apply hpair.indexed_extracted_advantage_negligible realization choose seed hash test htest
-    hcandidates
+    (.of_tidy hcandidates)
     (ExtractionSchedule.isPolyTime_count (.of_tidy (by fun_prop))
-      realization.length_isPolyTime (.of_tidy hslack)).tidy hnumerator hdensity hchoose hvalid hhash
+      realization.length_isPolyTime (.of_tidy hslack)) (.of_tidy hnumerator)
+    (.of_tidy hdensity) hchoose hvalid hhash
     (slack := fun n => ExtractionSchedule.slack n (realization.length n) (inverseSlack n))
     (fun _ => Nat.cast_nonneg _)
   apply negligible_of_eventually_le ExtractionSchedule.error_negligible

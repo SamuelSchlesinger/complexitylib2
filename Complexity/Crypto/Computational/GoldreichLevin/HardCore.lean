@@ -159,7 +159,7 @@ theorem eval_paddedPrediction (f : List Bool → List Bool) (adversary : Disting
 PPT reductions handle even and odd seed lengths; no length-dependent adversary is chosen. -/
 theorem padded_hardCore {f : List Bool → List Bool} (hf : OneWay f) :
     HardCore (paddedFunction f) paddedPredicate := by
-  apply HardCore.of_unpredictable polyTime_paddedPredicate.tidy
+  apply HardCore.of_unpredictable polyTime_paddedPredicate
   intro adversary hPPT
   have heven := negligible_parityPrediction hf _ (isPPT_paddedPredictor hPPT 0)
   have hodd := negligible_parityPrediction hf _ (isPPT_paddedPredictor hPPT 1)

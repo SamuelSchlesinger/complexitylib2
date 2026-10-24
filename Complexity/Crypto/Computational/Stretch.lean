@@ -133,6 +133,18 @@ theorem isPPT_reduction {generator : List Bool → List Bool} {count : ℕ → �
     IsPPT encBool (reduction generator count adversary) := by
   have hgenerator := hgenerator.tidy
   have hcount := hcount.tidy
+  have hiterate {β : Type} {encode : β ↪ List Bool}
+      {generator : β → List Bool → List Bool} {seedBits count : β → ℕ}
+      {word : β → List Bool}
+      (hgenerator : ComputableTidilyInPolyTime (fun pair => generator pair.1 pair.2)
+        (encPair encode encBits) encBits)
+      (hseedBits : ComputableTidilyInPolyTime seedBits encode encUnary)
+      (hcount : ComputableTidilyInPolyTime count encode encUnary)
+      (hword : ComputableTidilyInPolyTime word encode encBits) :
+      ComputableTidilyInPolyTime
+        (fun a => iterate (generator a) (seedBits a) (count a) (word a)) encode encBits :=
+    (polyTime_iterate (.of_tidy hgenerator) (.of_tidy hseedBits)
+      (.of_tidy hcount) (.of_tidy hword)).tidy
   unfold reduction hop
   ppt
 
@@ -160,6 +172,18 @@ theorem isPPT_test {α : Type} {input : α ↪ List Bool}
   have hseedBits := hseedBits.tidy
   have hcount := hcount.tidy
   have hchallenge := hchallenge.tidy
+  have hiterate {β : Type} {encode : β ↪ List Bool}
+      {generator : β → List Bool → List Bool} {seedBits count : β → ℕ}
+      {word : β → List Bool}
+      (hgenerator : ComputableTidilyInPolyTime (fun pair => generator pair.1 pair.2)
+        (encPair encode encBits) encBits)
+      (hseedBits : ComputableTidilyInPolyTime seedBits encode encUnary)
+      (hcount : ComputableTidilyInPolyTime count encode encUnary)
+      (hword : ComputableTidilyInPolyTime word encode encBits) :
+      ComputableTidilyInPolyTime
+        (fun a => iterate (generator a) (seedBits a) (count a) (word a)) encode encBits :=
+    (polyTime_iterate (.of_tidy hgenerator) (.of_tidy hseedBits)
+      (.of_tidy hcount) (.of_tidy hword)).tidy
   unfold test reduction hop
   ppt
 
