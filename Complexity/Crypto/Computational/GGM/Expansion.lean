@@ -115,7 +115,7 @@ argument may depend on the caller's captured input, including the entire initial
 theorem isPPTOn_expansionOracle {α : Type} {input : α ↪ List Bool}
     {generator : List Bool → List Bool} {sample : α → ProbComp (List Bool)}
     {width depth : α → ℕ} {query : α → List Bool} {cache : α → Cache}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
     (hsample : IsPPTOn input encBits sample)
     (hwidth : ComputableInPolyTime width input encUnary)
     (hdepth : ComputableInPolyTime depth input encUnary)
@@ -123,7 +123,7 @@ theorem isPPTOn_expansionOracle {α : Type} {input : α ↪ List Bool}
     (hcache : ComputableInPolyTime cache input cacheEncoding) :
     IsPPTOn input (encPair encBits cacheEncoding) (fun a =>
       expansionOracle generator (sample a) (width a) (depth a) (query a) (cache a)) := by
-  have heval := computableInPolyTime_eval (.of_tidy hgenerator)
+  have heval := computableInPolyTime_eval hgenerator
   unfold expansionOracle cacheEncoding
   fun_prop
 
@@ -132,7 +132,7 @@ sampler. The public local contracts account for the clock, replies and full cach
 theorem isPPTOn_expansionGame {Caller : Type} {input : Caller ↪ List Bool}
     {generator : List Bool → List Bool} {sample : Caller → ProbComp (List Bool)}
     {width depth : Caller → ℕ}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
     (hsample : IsPPTOn input encBits sample)
     (hwidth : ComputableInPolyTime width input encUnary)
     (hdepth : ComputableInPolyTime depth input encUnary)

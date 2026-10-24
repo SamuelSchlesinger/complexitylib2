@@ -126,18 +126,14 @@ theorem step_append (generator : List Bool → List Bool) {n : ℕ} (seed suffix
 prefix, so polynomial time follows without a length promise on the generator. -/
 theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
     {generator : α → List Bool → List Bool} {seedBits count : α → ℕ} {word : α → List Bool}
-    (hgenerator : ComputableTidilyInPolyTime (fun pair => generator pair.1 pair.2)
+    (hgenerator : ComputableInPolyTime (fun pair => generator pair.1 pair.2)
       (encPair input encBits) encBits)
-    (hseedBits : ComputableTidilyInPolyTime seedBits input encUnary)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hword : ComputableTidilyInPolyTime word input encBits) :
-    ComputableTidilyInPolyTime (fun a => iterate (generator a) (seedBits a) (count a) (word a))
+    (hseedBits : ComputableInPolyTime seedBits input encUnary)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => iterate (generator a) (seedBits a) (count a) (word a))
       input encBits := by
-  have hgeneratorPlain := ComputableInPolyTime.of_tidy hgenerator
-  have hseedBitsPlain := ComputableInPolyTime.of_tidy hseedBits
-  have hcountPlain := ComputableInPolyTime.of_tidy hcount
-  have hwordPlain := ComputableInPolyTime.of_tidy hword
-  obtain ⟨c, d, hlength⟩ := hgeneratorPlain.polyBounded_length.exists_le
+  obtain ⟨c, d, hlength⟩ := hgenerator.polyBounded_length.exists_le
   have hpoly : PolyBounded (fun a => (input a).length)
       (fun a => c * (2 * (input a).length + seedBits a + 2) ^ d) :=
     ComputableInPolyTime.polyBounded (by fun_prop)
@@ -151,7 +147,6 @@ theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
       h.trans (Nat.mul_le_mul_left c (Nat.pow_le_pow_left (by lia) d))
     simp only [List.length_append, List.length_drop]
     lia
-  apply ComputableInPolyTime.tidy
   unfold iterate step
   polytime
 
@@ -164,9 +159,9 @@ theorem polyTime_stretch {generator : List Bool → List Bool} {count : ℕ → 
     ComputableTidilyInPolyTime (stretch generator count) encBits encBits := by
   have hgeneratorPlain := ComputableInPolyTime.of_tidy hgenerator
   have hcountPlain := ComputableInPolyTime.of_tidy hcount
+  apply ComputableInPolyTime.tidy
   unfold stretch
-  apply polyTime_iterate
-  all_goals exact ComputableInPolyTime.tidy (by fun_prop)
+  polytime
 
 /-! ### Quantitative cumulative-time and workspace certificates -/
 

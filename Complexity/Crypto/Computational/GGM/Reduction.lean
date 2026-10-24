@@ -86,7 +86,7 @@ theorem sampleGame_replicate (generator : List Bool → List Bool) (sample : Pro
 The shared interpreter accounts for list consumption, cache lookup and tree evaluation. -/
 theorem isPPTOn_sampleGame {Caller : Type} {input : Caller ↪ List Bool}
     {generator : List Bool → List Bool}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
     {width depth : Caller → ℕ} {values : Caller → List (List Bool)}
     (hwidth : ComputableInPolyTime width input encUnary)
     (hdepth : ComputableInPolyTime depth input encUnary)
@@ -121,7 +121,7 @@ noncomputable def levelTest (generator : List Bool → List Bool) (adversary : O
 computed. No semantic query-bound hypothesis is needed for this efficiency certificate. -/
 theorem isPPTOn_levelTest {Caller : Type} {input : Caller ↪ List Bool}
     {generator : List Bool → List Bool}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
     {width depth count : Caller → ℕ} {challenge : Caller → List Bool}
     (hwidth : ComputableInPolyTime width input encUnary)
     (hdepth : ComputableInPolyTime depth input encUnary)
@@ -165,7 +165,7 @@ noncomputable def reduction (generator : List Bool → List Bool) (adversary : O
 
 /-- Efficient generation and an efficient query budget give one uniform PPT reduction. -/
 theorem isPPT_reduction {generator : List Bool → List Bool}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
     {adversary : OracleDistinguisher}
     (hadversary : IsOraclePPT encBool adversary) {count : ℕ → ℕ}
     (hcount : ComputableInPolyTime count encUnary encUnary) :
