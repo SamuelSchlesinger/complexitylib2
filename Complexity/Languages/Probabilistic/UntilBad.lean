@@ -22,12 +22,12 @@ accepts with the first handler at most as often as with the second, plus the pro
 reaching a bad state ([BonehShoup2023], Theorem 4.7, the difference lemma), with no bound on the
 program's number of calls (`IdenticalUntilBad.bind_apply_le`).
 
-The probability of reaching a bad state is bounded by summing over the calls: if each call from a
-good state turns bad with probability at most `budget s`, and each call raises the budget by at
-most `δ`, then a program making at most `n` calls reaches a bad state with probability at most
-`n · budget s + C(n, 2) · δ` (`toOuterMeasure_bad_le`). This is the union bound for a growing
-collision set, such as a random oracle that is programmed at points that may already be
-defined.
+The probability of reaching a bad state is bounded by summing over the calls: if each call `q`
+from a good state turns bad with probability at most `cost q · budget s`, and each call raises the
+budget by at most `δ`, then a program making at most `n` calls, whose calls cost at most `k`,
+reaches a bad state with probability at most `k · (budget s + n · δ)` (`toOuterMeasure_bad_le`).
+This is the union bound for a growing collision set, such as a random oracle that is programmed,
+at some calls only, at points that may already be defined.
 
 ## Main definitions
 
@@ -138,30 +138,31 @@ theorem bind_apply_le (h : IdenticalUntilBad first second bad) (program : Oracle
 
 end IdenticalUntilBad
 
-/-- **The accumulated probability of a bad state.** If each call from a good state turns bad with
-probability at most `budget s` and raises the budget by at most `δ`, a program making at most `n`
-calls from a good state reaches a bad state with probability at most
-`n · budget s + C(n, 2) · δ`. -/
+/-- **The accumulated probability of a bad state.** Let each call `q` from a good state turn bad
+with probability at most `cost q · budget s`, and raise the budget by at most `δ`. Then a program
+making at most `n` calls, whose calls cost at most `k`, reaches a bad state from a good state with
+probability at most `k · (budget s + n · δ)`. -/
 theorem toOuterMeasure_bad_le {handler : (q : ι) → StateT σ PMF (spec q)} {bad : σ → Prop}
-    (budget : σ → ℝ≥0∞) (δ : ℝ≥0∞)
-    (hstep : ∀ q s, ¬bad s → (handler q s).toOuterMeasure {x | bad x.2} ≤ budget s)
+    (cost : ι → ℕ) (budget : σ → ℝ≥0∞) (δ : ℝ≥0∞)
+    (hstep : ∀ q s, ¬bad s → (handler q s).toOuterMeasure {x | bad x.2} ≤ cost q * budget s)
     (hgrow : ∀ q s, ¬bad s → ∀ x ∈ (handler q s).support, ¬bad x.2 →
       budget x.2 ≤ budget s + δ)
-    {program : OracleComp spec α} {n : ℕ} (hn : IsQueryBounded program n) {s : σ}
-    (hs : ¬bad s) :
+    {program : OracleComp spec α} {n k : ℕ} (hn : IsQueryBounded program n)
+    (hk : IsCostBounded cost program k) {s : σ} (hs : ¬bad s) :
     ((interpret handler program).run s).toOuterMeasure {x | bad x.2} ≤
-      n * budget s + n.choose 2 * δ := by
-  induction hn generalizing s with
+      k * (budget s + n * δ) := by
+  induction hn generalizing s k with
   | pure a n =>
     rw [show (interpret handler (PFunctor.FreeM.pure a)).run s = PMF.pure (a, s) from rfl,
       PMF.toOuterMeasure_pure_apply, ite_eq_right (show (a, s) ∉ {x : α × σ | bad x.2} from hs)]
     exact zero_le
   | liftBind q cont n _ ih =>
     classical
+    obtain ⟨hle, hcont⟩ := IsCostBounded.liftBind_iff.mp hk
     change ((handler q s).bind fun y => (interpret handler (cont y.1)).run y.2).toOuterMeasure
       {x | bad x.2} ≤ _
     rw [PMF.toOuterMeasure_bind_apply]
-    set K : ℝ≥0∞ := n * (budget s + δ) + n.choose 2 * δ
+    set K : ℝ≥0∞ := (k - cost q : ℕ) * (budget s + δ + n * δ)
     have hterm (y : spec q × σ) : (handler q s) y *
         ((interpret handler (cont y.1)).run y.2).toOuterMeasure {x | bad x.2} ≤
         (handler q s) y * ({x : spec q × σ | bad x.2}.indicator 1 y + K) := by
@@ -173,7 +174,7 @@ theorem toOuterMeasure_bad_le {handler : (q : ι) → StateT σ PMF (spec q)} {b
           exact (Probability.PMF.toOuterMeasure_le_one _ _).trans le_self_add
         · have : y ∉ {x : spec q × σ | bad x.2} := hy
           rw [Set.indicator_of_notMem this, zero_add]
-          refine (ih y.1 hy).trans ?_
+          refine (ih y.1 (hcont y.1) hy).trans ?_
           simp only [K]
           gcongr
           exact hgrow q s hs y hmem hy
@@ -190,9 +191,14 @@ theorem toOuterMeasure_bad_le {handler : (q : ι) → StateT σ PMF (spec q)} {b
           by_cases hy : y ∈ {x : spec q × σ | bad x.2}
           · rw [Set.indicator_of_mem hy, Set.indicator_of_mem hy, Pi.one_apply, mul_one]
           · rw [Set.indicator_of_notMem hy, Set.indicator_of_notMem hy, mul_zero]
-      _ ≤ budget s + K := add_le_add (hstep q s hs) le_rfl
-      _ = (n + 1 : ℕ) * budget s + (n + 1).choose 2 * δ := by
-          simp only [K, Nat.choose_succ_succ', Nat.choose_one_right, Nat.cast_add, Nat.cast_one]
-          ring
+      _ ≤ cost q * (budget s + (n + 1 : ℕ) * δ) +
+            (k - cost q : ℕ) * (budget s + (n + 1 : ℕ) * δ) := by
+          refine add_le_add ((hstep q s hs).trans ?_) (le_of_eq ?_)
+          · gcongr
+            exact le_self_add
+          · simp only [K, Nat.cast_add, Nat.cast_one]
+            ring
+      _ = k * (budget s + (n + 1 : ℕ) * δ) := by
+          rw [← add_mul, ← Nat.cast_add, Nat.add_sub_cancel' hle]
 
 end Cslib.OracleComp
