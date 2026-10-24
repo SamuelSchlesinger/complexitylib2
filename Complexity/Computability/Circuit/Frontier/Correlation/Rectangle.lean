@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Frontier.AverageCase
-public import Complexity.Foundations.Data.BitString.QuadraticForm
+public import Complexity.Foundations.BooleanAnalysis.QuadraticForm
 public import Mathlib.Algebra.Field.ZMod
 import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
 import Mathlib.Algebra.Order.Chebyshev

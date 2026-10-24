@@ -115,9 +115,9 @@ variable {V E α : Type*} [Fintype E] [DecidableEq V] (G : ConstraintGraph V E �
 /-- **The amplification round** [Dinur, Theorem 4.1][Dinur2005]: preprocessing with the
 non-explicit family of expanders `RotationMap.expanderFamily`, then powering along killed walks
 truncated at `T` steps and killed at rate `q`, then composition back to the alphabet
-`Bool × (Fin 6 → Bool)`. -/
+`SelectedAlphabet`. -/
 noncomputable def amplify (T q : ℕ) [NeZero q] [Fintype α] [DecidableEq α] :
-    ConstraintGraph (AmplifyVertex E α T q) (AmplifyEdge E α T q) (Bool × (Fin 6 → Bool)) :=
+    ConstraintGraph (AmplifyVertex E α T q) (AmplifyEdge E α T q) SelectedAlphabet :=
   G.amplifyWith (.ofFamily G expanderFamily) T q
 
 variable [Fintype α] [DecidableEq α] [Nonempty α] {T q : ℕ} [NeZero q]
@@ -206,7 +206,7 @@ open ConstraintGraph
 
 /-- The fixed alphabet `Σ₀` of selected composition: one bit and six claimed answers. -/
 abbrev Alphabet : Type :=
-  Bool × (Fin 6 → Bool)
+  SelectedAlphabet
 
 /-- The fixed alphabet has `128` symbols. -/
 theorem card_alphabet : Fintype.card Alphabet = 128 :=

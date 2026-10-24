@@ -103,7 +103,7 @@ theorem DensityRectangle.select_left_message {M : Type*} [Fintype M]
   rcases hl with hl | hl
   · apply hselect X (Subset.refl _) hX (by linarith) r hr (hrp.trans hpmono)
     intro x hx
-    exact (hl x hx).mono_deficit hr.le (by linarith [hrp.trans hpmono]) hkmono
+    exact (hl x hx).mono_right hr.le (by linarith [hrp.trans hpmono]) hkmono
   · let q := 32768 * k * r
     have hqpos : 0 < q := by dsimp [q]; positivity
     have hqp : q ≤ p' :=
@@ -112,6 +112,6 @@ theorem DensityRectangle.select_left_message {M : Type*} [Fintype M]
       (show q ≤ 1 / 2 by linarith) hl
     apply hselect Z hZX hZ (by linarith) q hqpos hqp
     intro z hz
-    exact (hlim z hz).mono_deficit hqpos.le (by linarith) hkk
+    exact (hlim z hz).mono_right hqpos.le (by linarith) hkk
 
 end Cslib.Communication

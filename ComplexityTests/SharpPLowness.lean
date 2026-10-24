@@ -22,7 +22,7 @@ def headTrue : Set (List Bool) := {w | w.headD false = true}
 
 theorem true_singleton_mem_headTrue : [true] ∈ headTrue := rfl
 
-theorem nil_not_mem_headTrue : [] ∉ headTrue := by simp [headTrue]
+theorem nil_notMem_headTrue : [] ∉ headTrue := by simp [headTrue]
 
 theorem headTrue_mem_P : headTrue ∈ P encBits :=
   ⟨fun w => w.headD false, .of_tidy (by fun_prop), fun _ => Iff.rfl⟩
@@ -101,7 +101,71 @@ example : ModPWithOracle 5 headTrue encBits = ModP 5 encBits :=
 example : ParityPWithOracle headTrue encBits = ParityP encBits :=
   ParityPWithOracle_eq_ParityP_of_mem_FewP headTrue_mem_FewP encBits
 
+open Classical in
+example : (fun q => if q ∈ headTrue then 1 else 0) + (fun _ => 2) ∈
+    SharpPWithOracle headTrue encBits :=
+  SharpPWithOracle.add_mem (indicator_mem_SharpPWithOracle_self headTrue)
+    (SharpPWithOracle.natCast_mem 2)
+
+open Classical in
+example : (fun q => if q ∈ headTrue then 1 else 0) * (fun _ => 2) ∈
+    SharpPWithOracle headTrue encBits :=
+  SharpPWithOracle.mul_mem (indicator_mem_SharpPWithOracle_self headTrue)
+    (SharpPWithOracle.natCast_mem 2)
+
+open Classical in
+example : ∃ f ∈ SharpPWithOracle headTrue encBits,
+    ∀ q, (f q : ℤ) % 3 = (if q ∈ headTrue then (1 : ℤ) else 0) % 3 :=
+  GapPWithOracle.exists_SharpPWithOracle_emod (indicator_mem_GapPWithOracle_self headTrue)
+    (by decide)
+
+open Classical in
+example : headTrue ∈ ModPWithOracle 3 headTrue encBits :=
+  (mem_ModPWithOracle_iff_exists_GapPWithOracle (by decide)).mpr
+    ⟨fun q => if q ∈ headTrue then (1 : ℤ) else 0,
+      indicator_mem_GapPWithOracle_self headTrue,
+      fun q => by by_cases hq : q ∈ headTrue <;> simp [hq]⟩
+
+open Classical in
+example : headTrueᶜ ∈ coModPWithOracle 3 headTrue encBits :=
+  (mem_coModPWithOracle_iff_exists_GapPWithOracle (by decide)).mpr
+    ⟨fun q => if q ∈ headTrue then (1 : ℤ) else 0,
+      indicator_mem_GapPWithOracle_self headTrue,
+      fun q => by by_cases hq : q ∈ headTrue <;> simp [hq]⟩
+
 /-! ### Axiom guards for headline theorems -/
+
+/-- info: 'Cslib.Complexity.SharpPWithOracle.add_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.SharpPWithOracle.add_mem
+
+/-- info: 'Cslib.Complexity.SharpPWithOracle.mul_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.Complexity.SharpPWithOracle.mul_mem
+
+/--
+info: 'Cslib.Complexity.GapPWithOracle.exists_SharpPWithOracle_emod' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.GapPWithOracle.exists_SharpPWithOracle_emod
+
+/--
+info: 'Cslib.Complexity.mem_ModPWithOracle_iff_exists_GapPWithOracle' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.mem_ModPWithOracle_iff_exists_GapPWithOracle
+
+/--
+info: 'Cslib.Complexity.mem_coModPWithOracle_iff_exists_GapPWithOracle' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Complexity.mem_coModPWithOracle_iff_exists_GapPWithOracle
 
 /--
 info: 'Cslib.Complexity.SharpP.encoded_comp_mem_of_computableInPolyTimeWithOracle' depends on axioms: [propext,

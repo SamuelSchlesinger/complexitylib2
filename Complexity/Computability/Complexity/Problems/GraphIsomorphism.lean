@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.Graph
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Data.List.GetD
 
 /-!
 # Graph isomorphism
@@ -25,10 +26,10 @@ the vertices (`Cslib.Complexity.Graph.vertexEquiv`), and `Graph.adjIndex` reads 
 positions. Two graphs are isomorphic exactly when a bijection of positions preserves `adjIndex`
 (`mem_GraphIsomorphism_iff`).
 
-`GraphIsomorphism ∈ NP`: a certificate lists, for each position `i` of the first graph, a block of
-bits whose first set bit selects a position of the second graph, and the verifier checks that the
-selected positions form an injective map preserving adjacency between graphs with equally many
-vertices.
+`GraphIsomorphism ∈ NP`: a certificate encodes an ordering of the second graph's declared vertices
+in unary blocks (`Cslib.Complexity.Graph.decodeVertexList`), and the verifier checks that it lists
+every declared vertex of the second graph once (`Cslib.Complexity.Graph.verifyOrdering`), has as
+many vertices as the first graph, and preserves adjacency.
 
 ## Main definitions
 
@@ -129,128 +130,82 @@ namespace GraphIsomorphism
 
 /-! ### Verification -/
 
-/-- The position of the second graph selected by a certificate `w` for position `i` of the first,
-for graphs with `n` distinct vertices: the first `j < n` with bit `i * n + j` of `w` set, or `0`
-when there is none. -/
-def image (n : ℕ) (w : List Bool) (i : ℕ) : ℕ :=
-  ((List.range n).filter fun j => w.getD (i * n + j) false).headD 0
-
-theorem image_lt {n : ℕ} (w : List Bool) (i : ℕ) (hn : 0 < n) : image n w i < n := by
-  unfold image
-  cases h : (List.range n).filter (fun j => w.getD (i * n + j) false) with
-  | nil => exact hn
-  | cons j l =>
-    have : j ∈ (List.range n).filter (fun j => w.getD (i * n + j) false) :=
-      h ▸ List.mem_cons_self
-    simpa using (List.mem_filter.1 this).1
-
-/-- A block with exactly one set bit selects its position. -/
-theorem image_eq {n : ℕ} {w : List Bool} {i c : ℕ} (hc : c < n)
-    (hw : ∀ j < n, w.getD (i * n + j) false = decide (j = c)) : image n w i = c := by
-  unfold image
-  rw [List.filter_congr (fun j hj => hw j (List.mem_range.1 hj)), List.filter_eq,
-    List.count_eq_one_of_mem List.nodup_range (List.mem_range.2 hc), List.replicate_one]
-  rfl
-
-/-- The test of positions `i` and `i'` of `G` under the certificate `w`: their selected positions
-are distinct when they are, and adjacent in `H` exactly when they are adjacent in `G`. -/
-def pairTest (G H : Graph) (w : List Bool) (i i' : ℕ) : Bool :=
-  (decide (i = i') ||
-      decide (image G.distinctVertices.length w i ≠ image G.distinctVertices.length w i')) &&
-    G.adjIndex i i' ==
-      H.adjIndex (image G.distinctVertices.length w i) (image G.distinctVertices.length w i')
-
-/-- Accept a certificate when the graphs have equally many distinct vertices and the selected
-positions form an injective map preserving adjacency. -/
-def verifier (x : (Graph × Graph) × List Bool) : Bool :=
-  decide (x.1.2.distinctVertices.length = x.1.1.distinctVertices.length) &&
-    (List.range x.1.1.distinctVertices.length).all fun i =>
-      (List.range x.1.1.distinctVertices.length).all fun i' => pairTest x.1.1 x.1.2 x.2 i i'
-
-@[fun_prop]
-theorem computableTidilyInPolyTime_image {γ : Type} {input : γ ↪ List Bool} {n i : γ → ℕ}
-    {w : γ → List Bool} (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encBits)
-    (hi : ComputableTidilyInPolyTime i input encUnary) :
-    ComputableTidilyInPolyTime (fun x => image (n x) (w x) (i x)) input encUnary := by
-  unfold image
-  fun_prop
-
-@[fun_prop]
-theorem computableTidilyInPolyTime_pairTest {γ : Type} {input : γ ↪ List Bool} {G H : γ → Graph}
-    {w : γ → List Bool} {i i' : γ → ℕ} (hG : ComputableTidilyInPolyTime G input encGraph)
-    (hH : ComputableTidilyInPolyTime H input encGraph)
-    (hw : ComputableTidilyInPolyTime w input encBits)
-    (hi : ComputableTidilyInPolyTime i input encUnary)
-    (hi' : ComputableTidilyInPolyTime i' input encUnary) :
-    ComputableTidilyInPolyTime (fun x => pairTest (G x) (H x) (w x) (i x) (i' x)) input
-      encBool := by
-  have hn : ComputableTidilyInPolyTime (fun x => (G x).distinctVertices.length) input encUnary :=
-    (length_list encNat).comp (Graph.computableTidilyInPolyTime_distinctVertices.comp hG)
-  unfold pairTest
-  fun_prop
+/-- Accept a certificate when the decoded ordering of the second graph's declared vertices has as
+many vertices as the first graph and preserves adjacency. -/
+def verifier : (Graph × Graph) × List Bool → Bool :=
+  Graph.verifyOrdering (fun x => x.2.1) fun x p =>
+    decide (p.length = x.1.distinctVertices.length) &&
+      (List.range x.1.distinctVertices.length).all fun i =>
+        (List.range x.1.distinctVertices.length).all fun j =>
+          x.2.adjBool (p.getD i 0) (p.getD j 0) == x.1.adjIndex i j
 
 /-- The verifier is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_verifier :
     ComputableTidilyInPolyTime verifier (encPair (encPair encGraph encGraph) encBits) encBool := by
-  unfold verifier
-  fun_prop
+  have hadj : ∀ {γ : Type} {enc : γ ↪ List Bool} {H : γ → Graph} {u v : γ → ℕ},
+      ComputableTidilyInPolyTime H enc encGraph →
+      ComputableTidilyInPolyTime u enc encNat →
+      ComputableTidilyInPolyTime v enc encNat →
+      ComputableTidilyInPolyTime (fun x => (H x).adjBool (u x) (v x)) enc encBool :=
+    fun hH hu hv => Graph.computableTidilyInPolyTime_adjBool.comp ((hH.prod hu).prod hv)
+  refine Graph.computableTidilyInPolyTime_verifyOrdering (by unfold encGraph; fun_prop)
+    (bool_and'
+      (((length_list encNat).comp (snd _ _)).decide_eq'
+        ((length_list encNat).comp (by fun_prop))) ?_)
+  refine allWithInput (by fun_prop) (allWithInput (by fun_prop) ?_)
+  exact bool_beq.comp ((hadj (by fun_prop) (by fun_prop) (by fun_prop)).prod
+    (Graph.computableTidilyInPolyTime_adjIndex (by fun_prop) (by fun_prop) (by fun_prop)))
 
 /-- `verifier` is a verifier for `GraphIsomorphism` with certificates whose length is the square
 of the length of the encoded pair of graphs. -/
 theorem isVerifier :
     IsVerifier (encPair encGraph encGraph) (Polynomial.X ^ 2) verifier GraphIsomorphism := by
-  rintro ⟨G, H⟩
-  simp only [Polynomial.eval_pow, Polynomial.eval_X]
-  rw [mem_GraphIsomorphism_iff]
-  have hnL : G.distinctVertices.length ≤ (encPair encGraph encGraph (G, H)).length := by
-    have := G.length_distinctVertices_le
-    simp only [length_encPair]
-    omega
-  set L := (encPair encGraph encGraph (G, H)).length
-  set n := G.distinctVertices.length
-  constructor
-  · rintro ⟨σ, hσ⟩
-    have hcard : H.distinctVertices.length = n := (Fin.equiv_iff_eq.1 ⟨σ⟩).symm
-    let f : ℕ → ℕ := fun i => if h : i < n then σ ⟨i, h⟩ else 0
-    have hfσ : ∀ i (h : i < n), f i = σ ⟨i, h⟩ := fun i h => by simp [f, h]
-    have hf : ∀ i < n, f i < n := fun i h => (hfσ i h).trans_lt
-      (lt_of_lt_of_eq (σ ⟨i, h⟩).isLt hcard)
-    let w := (List.range (L ^ 2)).map fun k => decide (k < n * n ∧ f (k / n) = k % n)
-    refine ⟨w, by simp [w], ?_⟩
-    have himage : ∀ i < n, image n w i = f i := fun i hi => image_eq (hf i hi) fun j hj => by
-      have hk : i * n + j < n * n := by nlinarith
-      have hkL : i * n + j < L ^ 2 := lt_of_lt_of_le hk (by nlinarith)
-      have hdiv : (i * n + j) / n = i := by
-        rw [Nat.add_comm, Nat.add_mul_div_right _ _ (by omega), Nat.div_eq_of_lt hj, zero_add]
-      have hmod : (i * n + j) % n = j := by
-        rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hj]
-      simp only [w, List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hkL,
-        Option.map_some, Option.getD_some, hk, true_and, hdiv, hmod, eq_comm (a := f i)]
-    simp only [verifier, pairTest, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
-      List.mem_range, Bool.or_eq_true, beq_iff_eq]
-    refine ⟨hcard, fun i hi i' hi' => ⟨?_, ?_⟩⟩ <;>
-      rw [himage i hi, himage i' hi', hfσ i hi, hfσ i' hi']
-    · by_cases hii : i = i'
-      · exact Or.inl hii
-      · exact Or.inr fun h => hii (by simpa using σ.injective (Fin.ext h))
-    · exact (hσ ⟨i, hi⟩ ⟨i', hi'⟩).symm
-  · rintro ⟨w, -, hw⟩
-    simp only [verifier, pairTest, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
-      List.mem_range, Bool.or_eq_true, beq_iff_eq] at hw
-    obtain ⟨hcard, hpair⟩ := hw
-    let g : Fin n → Fin H.distinctVertices.length := fun i =>
-      ⟨image n w i, hcard ▸ image_lt w i (Nat.zero_lt_of_lt i.isLt)⟩
-    have hg : Function.Injective g := by
-      intro i i' h
-      by_contra hii
-      rcases (hpair i i.isLt i' i'.isLt).1 with h' | h'
-      · exact hii (Fin.ext h')
-      · exact h' (congrArg Fin.val h)
-    have hbij : Function.Bijective g :=
-      (Fintype.bijective_iff_injective_and_card g).2 ⟨hg, by simp [hcard, n]⟩
-    exact ⟨Equiv.ofBijective g hbij, fun i i' => ((hpair i i.isLt i' i'.isLt).2).symm⟩
+  have hmem (x : Graph × Graph) : x ∈ GraphIsomorphism ↔
+      ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ x.2.1) ∧
+        p.length = x.1.distinctVertices.length ∧
+        ∀ i < x.1.distinctVertices.length, ∀ j < x.1.distinctVertices.length,
+          x.2.adjBool (p.getD i 0) (p.getD j 0) = x.1.adjIndex i j := by
+    obtain ⟨G, H⟩ := x
+    constructor
+    · rintro ⟨φ⟩
+      let f : Fin G.distinctVertices.length → ℕ := fun i => φ (G.vertexEquiv i)
+      have hf : Function.Injective f :=
+        Subtype.val_injective.comp (φ.injective.comp G.vertexEquiv.injective)
+      refine ⟨List.ofFn f, List.nodup_ofFn.2 hf, fun v => ⟨?_, ?_⟩, List.length_ofFn,
+        fun i hi j hj => ?_⟩
+      · rintro hv
+        obtain ⟨i, rfl⟩ := List.mem_ofFn.1 hv
+        exact (φ (G.vertexEquiv i)).2
+      · intro hv
+        exact List.mem_ofFn.2 ⟨G.vertexEquiv.symm (φ.symm ⟨v, hv⟩), by simp [f]⟩
+      · rw [List.getD_eq_getElem _ _ (by simpa using hi),
+          List.getD_eq_getElem _ _ (by simpa using hj), List.getElem_ofFn, List.getElem_ofFn]
+        rw [Bool.eq_iff_iff, H.adjBool_eq_true_iff,
+          ← Graph.induced_adj_vertexEquiv G ⟨i, hi⟩ ⟨j, hj⟩]
+        exact φ.map_adj_iff
+    · rintro ⟨p, hnd, hcov, hlen, hadj⟩
+      let e : Fin G.distinctVertices.length ≃ {v // v ∈ H.1} :=
+        (finCongr hlen.symm).trans ((hnd.getEquiv _).trans (Equiv.subtypeEquivRight hcov))
+      refine ⟨⟨G.vertexEquiv.symm.trans e, fun {u v} => ?_⟩⟩
+      obtain ⟨i, rfl⟩ := G.vertexEquiv.surjective u
+      obtain ⟨j, rfl⟩ := G.vertexEquiv.surjective v
+      simp only [Equiv.trans_apply, Equiv.symm_apply_apply]
+      rw [Graph.induced_adj_vertexEquiv, Graph.induced_adj, ← H.adjBool_eq_true_iff,
+        ← hadj i i.isLt j j.isLt, List.getD_eq_getElem _ _ (i.isLt.trans_eq hlen.symm),
+        List.getD_eq_getElem _ _ (j.isLt.trans_eq hlen.symm)]
+      rfl
+  have hset : GraphIsomorphism =
+      {x : Graph × Graph | ∃ p : List ℕ, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ x.2.1) ∧
+        p.length = x.1.distinctVertices.length ∧
+        ∀ i < x.1.distinctVertices.length, ∀ j < x.1.distinctVertices.length,
+          x.2.adjBool (p.getD i 0) (p.getD j 0) = x.1.adjIndex i j} :=
+    Set.ext hmem
+  rw [hset]
+  refine Graph.isVerifier_verifyOrdering
+    (fun x => x.2.length_vertices_le_encGraph.trans (by simp only [length_encPair]; omega))
+    fun x p => ?_
+  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, List.mem_range, beq_iff_eq]
 
 /-- **`GraphIsomorphism ∈ NP`.** -/
 theorem mem_NP : GraphIsomorphism ∈ NP (encPair encGraph encGraph) :=

@@ -46,9 +46,7 @@ theorem mem_PSPACE_of_tm2 {α αΓ βΓ : Type} [Finite αΓ] [Finite βΓ]
     (h : TM2Computable ea eb f) [∀ k, Finite (h.tm.Γ k)]
     (ha : Function.Injective ea) (hb : Function.Injective eb)
     {space : α → ℕ} (hspace : PolyBounded (fun a => (ea a).length) space)
-    (hstacks : ∀ a i k,
-      (((TM2.stepTotal h.tm.m)^[i]
-        (initList h.tm (List.map h.inputAlphabet.symm (ea a)))).stk k).length ≤ space a)
+    (hstacks : h.StacksBounded space)
     (hA : ∀ a, a ∈ A ↔ f a = true) :
     A ∈ PSPACE ((⟨ea, ha⟩ : α ↪ List αΓ).trans (encList (encFinite αΓ))) := by
   have hf := h.computableTidilyInPolySpace ha hb hspace hstacks

@@ -74,7 +74,7 @@ theorem exists_AWPP_queryWeights {α : Type} {enc : α ↪ List Bool} {A : Set (
   let H : α × List Bool → ℤ := fun x => H₀ x * (2 : ℤ) ^ padding x
   have hH : H ∈ GapP (encPair enc encBits) := by
     convert GapP.mul_mem hH₀
-      (SharpP.natCast_mem_GapP (SharpP.of_polyTime hpow)) using 1
+      (SharpP.natCast_mem_GapP (mem_SharpP_of_polyTime hpow)) using 1
     ext x
     simp [H]
   refine ⟨H, hH, fun a => 12 * e a * p.eval (T a), by fun_prop, fun a w => ?_⟩

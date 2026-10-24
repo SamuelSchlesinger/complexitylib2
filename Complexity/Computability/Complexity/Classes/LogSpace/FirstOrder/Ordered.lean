@@ -79,7 +79,7 @@ theorem mem_queryLanguage {a : EncodedStructure} [Fact (2 ≤ a.1)]
   exact and_congr_right fun _ => ⟨fun ⟨_, h⟩ => h, fun h => ⟨Fact.out, h⟩⟩
 
 /-- Universes smaller than the standard ordered convention are rejected. -/
-theorem not_mem_queryLanguage_of_lt_two {a : EncodedStructure} (hn : a.1 < 2)
+theorem notMem_queryLanguage_of_lt_two {a : EncodedStructure} (hn : a.1 < 2)
     (φ : (language L).Sentence) : a ∉ queryLanguage v φ :=
   fun h => (Nat.not_le_of_gt hn) h.2.choose
 
@@ -291,7 +291,7 @@ theorem queryLanguage_mem_L (φ : (language L).Sentence) :
     · rw [ite_eq_left (Nat.lt_of_not_ge hn)] at hreachGuard
       refine ⟨(F, regs₁), hreach₁.trans hreachGuard, ?_, hB₁⟩
       rw [hrej]
-      simp [not_mem_queryLanguage_of_lt_two v (Nat.lt_of_not_ge hn) φ]
+      simp [notMem_queryLanguage_of_lt_two v (Nat.lt_of_not_ge hn) φ]
   · rw [ite_eq_right hwf] at hreach₁
     refine ⟨(F, regs₁), hreach₁, ?_, hB₁⟩
     rw [hrej]

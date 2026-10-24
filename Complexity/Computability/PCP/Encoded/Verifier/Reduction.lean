@@ -114,7 +114,7 @@ theorem mem_PCP_of_gapReduction {graph : Input → Graph C} (width : ℕ)
   · intro x hx proof
     apply (acceptCount_le_half_iff _ _ _).mpr
     change (((BitString.uniformList (repeats * Nat.clog 2 (graph x).edges.length)).map
-      (fun random => (repeatedEdgeVerifier width repeats decode eval).Accepts
+      (fun random => (repeatedEdgeVerifier width repeats decode eval).accepts
         (graph x) proof random)) true).toReal ≤ 1 / 2
     rw [acceptProb_repeatedEdgeVerifier, ENNReal.toReal_pow]
     have h := acceptProb_edgeVerifier_le width decode eval (graph x) proof

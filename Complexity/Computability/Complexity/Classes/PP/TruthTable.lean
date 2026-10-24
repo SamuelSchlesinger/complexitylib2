@@ -197,7 +197,7 @@ private theorem ppTruthTableGap_mem {M r : α → ℕ} {g : α × ℕ → ℤ} {
   have hp := GapP.prod_range_mem hs (hr.comp (.fst enc encBits))
   have hw : ComputableTidilyInPolyTime
       (fun x => if d x then (1 : ℤ) else -1) (encPair enc encBits) encIntBin := by fun_prop
-  exact GapP.sum_bits_mem (GapP.mul_mem (GapP.of_polyTime hw) hp) hr
+  exact GapP.sum_bits_mem (GapP.mul_mem (mem_GapP_of_polyTime hw) hp) hr
 
 private theorem ppWordWeight_eq_prod_univ (M r : α → ℕ) (g : α × ℕ → ℤ) (a : α)
     (w : Fin (r a) → Bool) :

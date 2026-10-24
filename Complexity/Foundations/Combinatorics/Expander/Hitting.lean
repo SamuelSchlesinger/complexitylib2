@@ -146,10 +146,8 @@ theorem expect_ite_mem_walk_sq_le [Nonempty D] {B C : Finset V} {μ : ℝ} (hB :
     have h := expect_mul_sq_le_sq_mul_sq univ (fun v => if v ∈ C then (1 : ℝ) else 0) x
     have h₁ : 𝔼 v, (if v ∈ C then (1 : ℝ) else 0) * x v = α :=
       expect_congr rfl fun v _ => by by_cases hv : v ∈ C <;> simp [hv, hx]
-    have h₂ : 𝔼 v, (if v ∈ C then (1 : ℝ) else 0) ^ 2 = dens C := by
-      simpa only [ite_pow, one_pow, zero_pow (by decide : 2 ≠ 0),
-        filter_mem_eq_inter, univ_inter] using
-        (Fintype.expect_boole (𝕜 := ℝ) fun v => v ∈ C)
+    have h₂ : 𝔼 v, (if v ∈ C then (1 : ℝ) else 0) ^ 2 = dens C :=
+      Fintype.expect_boole_mem_sq C
     rwa [h₁, h₂] at h
   -- the walk operator is `(1 - λ)` times the average plus an operator of norm at most `λ`
   set y : V → ℝ := fun v => G.walk x v - (1 - ℓ) * α
@@ -188,9 +186,7 @@ theorem expect_ite_mem_walk_sq_le [Nonempty D] {B C : Finset V} {μ : ℝ} (hB :
   refine Fintype.expect_add_sq_le (by linarith) zero_le_one hμ hℓ₀
     (expect_nonneg fun _ _ => sq_nonneg _) ?_ ?_ |>.trans_eq (by ring)
   · calc 𝔼 v, (if v ∈ B then α else 0) ^ 2 = dens B * α ^ 2 := by
-          have hBavg : (𝔼 v, if v ∈ B then (1 : ℝ) else 0) = dens B := by
-            simpa using (Fintype.expect_boole (𝕜 := ℝ) fun v => v ∈ B)
-          rw [← hBavg, expect_mul]
+          rw [← Fintype.expect_boole_mem B, expect_mul]
           exact expect_congr rfl fun v _ => by split_ifs <;> simp
       _ ≤ μ * (μ * 𝔼 v, x v ^ 2) := by
           have := expect_nonneg (s := (univ : Finset V)) fun v _ => sq_nonneg (x v)
@@ -230,10 +226,8 @@ theorem dens_filter_forall_walkAt_mem_le [Nonempty D] {B : ℕ → Finset V} {μ
     | zero =>
       intro B hB
       simp only [weightedWalk_zero, pow_zero, mul_zero, one_mul]
-      calc 𝔼 v, (if v ∈ B 0 then (1 : ℝ) else 0) ^ 2 = dens (B 0) := by
-            simpa only [ite_pow, one_pow, zero_pow (by decide : 2 ≠ 0),
-              filter_mem_eq_inter, univ_inter] using
-              (Fintype.expect_boole (𝕜 := ℝ) fun v => v ∈ B 0)
+      calc 𝔼 v, (if v ∈ B 0 then (1 : ℝ) else 0) ^ 2 = dens (B 0) :=
+            Fintype.expect_boole_mem_sq (B 0)
         _ ≤ μ := hB 0
     | succ t ih =>
       intro B hB
@@ -264,10 +258,8 @@ theorem dens_filter_forall_walkAt_mem_le [Nonempty D] {B : ℕ → Finset V} {μ
       · simp [hv]
       · simp only [hv, ↓reduceIte, zero_mul]
         exact (hsupp t B v hv).symm
-  have h₂ : 𝔼 v, (if v ∈ B 0 then (1 : ℝ) else 0) ^ 2 = dens (B 0) := by
-    simpa only [ite_pow, one_pow, zero_pow (by decide : 2 ≠ 0),
-      filter_mem_eq_inter, univ_inter] using
-      (Fintype.expect_boole (𝕜 := ℝ) fun v => v ∈ B 0)
+  have h₂ : 𝔼 v, (if v ∈ B 0 then (1 : ℝ) else 0) ^ 2 = dens (B 0) :=
+    Fintype.expect_boole_mem_sq (B 0)
   rw [h₁, h₂] at hCS
   have hbound : (𝔼 v, G.weightedWalk t h v) ^ 2 ≤ (μ * c ^ t) ^ 2 :=
     hCS.trans <| (mul_le_mul (hB 0) (hmoment t B hB) (expect_nonneg fun _ _ => sq_nonneg _)

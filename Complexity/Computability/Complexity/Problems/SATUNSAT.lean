@@ -39,6 +39,6 @@ def SATUNSAT : Set (CNF ℕ × CNF ℕ) := SAT ×ˢ UNSAT
 
 /-- SAT–UNSAT is DP-complete with the product of the library's CNF encodings. -/
 theorem SATUNSAT_dpComplete : DPComplete (encPair encCNF encCNF) SATUNSAT :=
-  CookLevin.SAT_npComplete.prod_coNPComplete CookLevin.UNSAT_coNPComplete
+  CookLevin.SAT_npComplete.dpComplete_prod CookLevin.UNSAT_coNPComplete
 
 end Cslib.Complexity

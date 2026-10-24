@@ -54,8 +54,8 @@ example : base.spectralExpansion ≤ 1 / 5 :=
 
 -- The regular rotation map of any simple graph has at least half self-loops at every vertex.
 example {n : ℕ} (G : SimpleGraph (Fin n)) [DecidableRel G.Adj] (v : Fin n × Fin n) :
-    Fintype.card Label ≤ 2 * Finset.card {b | (input G).neighbor v b = v} :=
-  card_le_two_mul_card_filter_neighbor_input_eq G v
+    Fintype.card Label ≤ 2 * (input G).edgeCount v v :=
+  card_le_two_mul_edgeCount_input G v
 
 -- The connected component of a vertex satisfies the connectivity hypothesis of the spectral gap.
 example {n : ℕ} (G : SimpleGraph (Fin n)) [DecidableRel G.Adj] (s : Fin n × Fin n) :

@@ -11,7 +11,7 @@ public import Complexity.Computability.Circuit.Frontier.Rectangle
 public import Mathlib.Analysis.Asymptotics.Defs
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Complexity.Foundations.Data.BitString.Agree
-import Complexity.Foundations.Data.BitString.Hoeffding
+import Complexity.Foundations.Combinatorics.Hoeffding
 import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Order.Interval.Finset.Nat

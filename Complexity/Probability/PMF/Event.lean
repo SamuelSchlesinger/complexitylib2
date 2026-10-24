@@ -31,6 +31,9 @@ masses of `true` and `false` under a Boolean distribution sum to one
 
 * `Cslib.Probability.PMF.toOuterMeasure_ne_top`, `Cslib.Probability.PMF.toOuterMeasure_le_one`:
   events have probability at most one.
+* `Cslib.Probability.PMF.toOuterMeasure_abs_sub_ge_le`,
+  `Cslib.Probability.PMF.toOuterMeasure_abs_sub_ge_toReal_le`: two-sided tail bounds from upper
+  and lower tails.
 * `Cslib.Probability.PMF.toOuterMeasure_apply_toReal`,
   `Cslib.Probability.PMF.toOuterMeasure_toReal_add_compl`,
   `Cslib.Probability.PMF.toOuterMeasure_toReal_pos_iff`: real-valued event probabilities.
@@ -67,6 +70,26 @@ theorem toOuterMeasure_ne_top (p : PMF α) (event : Set α) : p.toOuterMeasure e
 theorem toOuterMeasure_le_one (p : PMF α) (event : Set α) : p.toOuterMeasure event ≤ 1 := by
   rw [PMF.toOuterMeasure_apply, ← p.tsum_coe]
   exact ENNReal.tsum_le_tsum (fun a => Set.indicator_apply_le (fun _ => le_rfl))
+
+/-- The event that `f a` deviates from `m` by at least `ε` is covered by the upper tail
+`m + ε ≤ f a` and the lower tail `f a ≤ m - ε`. -/
+theorem toOuterMeasure_abs_sub_ge_le (p : PMF α) (f : α → ℝ) (m ε : ℝ) :
+    p.toOuterMeasure {a | ε ≤ |f a - m|} ≤
+      p.toOuterMeasure {a | m + ε ≤ f a} + p.toOuterMeasure {a | f a ≤ m - ε} := by
+  refine (MeasureTheory.measure_mono (μ := p.toOuterMeasure) fun a ha => ?_).trans
+    (MeasureTheory.measure_union_le _ _)
+  rcases le_abs.mp (show ε ≤ |f a - m| from ha) with h | h
+  · exact Or.inl (add_comm m ε ▸ le_sub_iff_add_le.mp h)
+  · exact Or.inr (le_sub_comm.mp (neg_sub (f a) m ▸ h))
+
+/-- In real-valued probabilities, the two-sided tail `ε ≤ |f a - m|` is bounded by the sum of
+the upper tail `m + ε ≤ f a` and the lower tail `f a ≤ m - ε`. -/
+theorem toOuterMeasure_abs_sub_ge_toReal_le (p : PMF α) (f : α → ℝ) (m ε : ℝ) :
+    (p.toOuterMeasure {a | ε ≤ |f a - m|}).toReal ≤
+      (p.toOuterMeasure {a | m + ε ≤ f a}).toReal +
+        (p.toOuterMeasure {a | f a ≤ m - ε}).toReal :=
+  ENNReal.toReal_le_add (toOuterMeasure_abs_sub_ge_le p f m ε)
+    (toOuterMeasure_ne_top _ _) (toOuterMeasure_ne_top _ _)
 
 open Classical in
 /-- Event probabilities on finite spaces are sums of the masses of their members. -/

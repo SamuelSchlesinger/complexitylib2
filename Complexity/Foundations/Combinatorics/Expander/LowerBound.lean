@@ -107,7 +107,7 @@ theorem div_le_sq_spectralExpansion (G : RotationMap V D) (hV : 2 ≤ Fintype.ca
   -- the test functions `δ_u - 1 / N`, of expectation zero
   set f : V → V → ℝ := fun u v => (if v = u then 1 else 0) - 1 / N with hfdef
   -- the number of edges from `v` to `u`
-  set a : V → V → ℝ := fun v u => (#{i | G.neighbor v i = u} : ℝ) with hadef
+  set a : V → V → ℝ := fun v u => (G.edgeCount v u : ℝ) with hadef
   have hf_exp (u : V) : 𝔼 v, f u v = 0 := by
     rw [Fintype.expect_eq_sum_div_card]
     simp only [hfdef, sum_sub_distrib, sum_ite_eq', mem_univ, ite_true, sum_const, card_univ,
@@ -126,15 +126,12 @@ theorem div_le_sq_spectralExpansion (G : RotationMap V D) (hV : 2 ≤ Fintype.ca
     ring
   have hwalk (u v : V) : G.walk (f u) v = a v u / d - 1 / N := by
     rw [walk_apply, Fintype.expect_eq_sum_div_card]
-    simp only [hfdef, hadef, sum_sub_distrib, sum_boole, sum_const, card_univ, nsmul_eq_mul]
+    simp only [hfdef, hadef, edgeCount, sum_sub_distrib, sum_boole, sum_const, card_univ,
+      nsmul_eq_mul]
     rw [← hd]
     field_simp
   have ha_sum (v : V) : ∑ u, a v u = d := by
-    simp only [hadef]
-    rw [hd, ← card_univ, card_eq_sum_card_fiberwise (f := G.neighbor v) (t := univ)
-      (fun _ _ => mem_univ _)]
-    push_cast
-    rfl
+    simp only [hadef, ← Nat.cast_sum, G.sum_edgeCount, hd]
   have ha_sq (v u : V) : a v u ≤ a v u ^ 2 := by
     simp only [hadef]
     exact_mod_cast Nat.le_self_pow two_ne_zero _

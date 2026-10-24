@@ -15,14 +15,11 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 This file develops the elementary interface for `flip`, `sensitivity` and `blockSensitivity`:
 algebraic identities for flipping blocks (including on product index sets), upper and lower
 bound principles for the maxima defining sensitivity and block sensitivity, and the existence
-of inputs and block families attaining these maxima. It also shows that every nonconstant
-function has positive sensitivity.
+of block families attaining block sensitivity. It also shows that every nonconstant function
+has positive sensitivity.
 
 ## Main results
 
-* `flip_flip`: flipping the same block twice is the identity.
-* `flip_insert`: for `i ∉ B`, flipping `insert i B` is flipping `B` and then `{i}`.
-* `exists_sensitivityAt_eq`: the sensitivity of `f` is attained at some input.
 * `le_blockSensitivityAt_of_family`: an indexed family of pairwise disjoint nonempty sensitive
   blocks at `x` bounds `blockSensitivityAt f x` from below by its size.
 * `exists_blockSensitivityAt_family`: the block sensitivity at `x` is attained by a family of
@@ -62,14 +59,9 @@ theorem flip_singleton_other (x : I → Bool) {i j : I} (h : j ≠ i) :
     flip x {i} j = x j := by
   simp [flip_apply, h]
 
-/-- Flipping the same block twice gives back the original input. -/
-@[simp] theorem flip_flip (x : I → Bool) (B : Finset I) : flip (flip x B) B = x := by
-  funext i
-  by_cases h : i ∈ B <;> simp [flip_apply, h]
-
 open scoped Classical in
 /-- For `i ∉ B`, flipping `insert i B` equals flipping `B` and then `{i}`. -/
-theorem flip_insert (x : I → Bool) (i : I) (B : Finset I) (hi : i ∉ B) :
+private theorem flip_insert (x : I → Bool) (i : I) (B : Finset I) (hi : i ∉ B) :
     flip x (insert i B) = flip (flip x B) {i} := by
   funext j
   by_cases hji : j = i
@@ -125,29 +117,15 @@ theorem sensitivity_le (f : (I → Bool) → Bool) {n : ℕ}
   Finset.sup_le fun x _ => h x
 
 /-- `sensitivityAt f x = 0` iff no single-coordinate flip changes the value `f x`. -/
-theorem sensitivityAt_eq_zero_iff (f : (I → Bool) → Bool) (x : I → Bool) :
+private theorem sensitivityAt_eq_zero_iff (f : (I → Bool) → Bool) (x : I → Bool) :
     sensitivityAt f x = 0 ↔ ∀ i, f (flip x {i}) = f x := by
   simp [sensitivityAt, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
-
-open scoped Classical in
-/-- The sensitivity of `f` is attained: some input `x` has
-`sensitivityAt f x = sensitivity f`. -/
-theorem exists_sensitivityAt_eq (f : (I → Bool) → Bool) :
-    ∃ x, sensitivityAt f x = sensitivity f := by
-  obtain ⟨x, _, hx⟩ := Finset.exists_mem_eq_sup
-    (Finset.univ : Finset (I → Bool)) (by simp) (sensitivityAt f)
-  exact ⟨x, hx.symm⟩
 
 open scoped Classical in
 /-- The block sensitivity at any input is at most `blockSensitivity f`. -/
 theorem blockSensitivityAt_le_blockSensitivity (f : (I → Bool) → Bool) (x : I → Bool) :
     blockSensitivityAt f x ≤ blockSensitivity f :=
   Finset.le_sup (Finset.mem_univ x)
-
-/-- If `blockSensitivityAt f x ≤ n` for every input `x`, then `blockSensitivity f ≤ n`. -/
-theorem blockSensitivity_le (f : (I → Bool) → Bool) {n : ℕ}
-    (h : ∀ x, blockSensitivityAt f x ≤ n) : blockSensitivity f ≤ n :=
-  Finset.sup_le fun x _ => h x
 
 open scoped Classical in
 /-- Every family of pairwise disjoint nonempty blocks, each of whose flips changes `f x`,

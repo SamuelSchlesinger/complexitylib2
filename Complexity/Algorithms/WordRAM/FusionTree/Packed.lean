@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Packing
+public import Complexity.Foundations.Data.Nat.Bitwise.Packing
 public import Complexity.Computability.WordRAM.Structured
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Tactic.Ring

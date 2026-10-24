@@ -279,8 +279,7 @@ theorem unsatVal_degreeReduce [DecidableEq α] [Nonempty α] [Fintype D]
         (g.cloudFamily eval fallback family)).toConstraintGraph.unsatVal := by
   classical
   rw [toGraph_degreeReduce g eval fallback family rotate hrotate labels hlabels hmem,
-    ConstraintGraph.unsatVal_comap_equiv,
-    ConstraintGraph.unsatVal_map _ (halfEdgeNumber_fin_injective _)]
+    ConstraintGraph.unsatVal_comap_map_of_injective _ (halfEdgeNumber_fin_injective _)]
 
 include hrotate in
 /-- The executable output has exactly the satisfiability of the mathematical degree reduction. -/
@@ -291,8 +290,8 @@ theorem satisfiable_degreeReduce_iff [DecidableEq α] [Nonempty α]
         (g.cloudFamily eval fallback family)).toConstraintGraph.Satisfiable := by
   classical
   rw [toGraph_degreeReduce g eval fallback family rotate hrotate labels hlabels hmem,
-    ConstraintGraph.satisfiable_comap_iff _ (Equiv.surjective _),
-    ConstraintGraph.satisfiable_map _ (halfEdgeNumber_fin_injective _)]
+    ConstraintGraph.satisfiable_comap_map_iff _ (halfEdgeNumber_fin_injective _)
+      (Equiv.surjective _)]
 
 include hrotate in
 /-- The uniform spectral bound transfers through the computed cloud enumeration, so the existing

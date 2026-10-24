@@ -9,8 +9,8 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Complexity.Logics.Propositional.CNF.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import Complexity.Logics.Propositional.CNF.PolyTime
 
 /-!
 # SAT belongs to NP
@@ -28,10 +28,16 @@ Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
 ## Main definitions
 
 * `Cslib.Complexity.cnfDecoder`: the total decoder of formulas, along `encCNF`.
+* `Cslib.Complexity.SAT.encOccurrence`: encoding of a literal occurrence for natural-number
+  variables.
 
 ## Main results
 
 * `Cslib.Complexity.SAT.computableTidilyInPolyTime_verifier`: the verifier is polynomial-time.
+* `Cslib.Complexity.SAT.computableInPolyTime_distinctVars`,
+  `Cslib.Complexity.SAT.computableInPolyTime_numVars`,
+  `Cslib.Complexity.SAT.computableInPolyTime_occurrences`: distinct variables, their unary count,
+  and literal occurrences for natural-number variables.
 * `Cslib.Complexity.SAT.computableTidilyInPolyTime_clause_length`,
   `Cslib.Complexity.SAT.computableTidilyInPolyTime_length`,
   `Cslib.Complexity.SAT.computableTidilyInPolyTime_vars_length`: literal, clause and
@@ -63,6 +69,29 @@ open ComputableTidilyInPolyTime
 theorem computableTidilyInPolyTime_vars :
     ComputableTidilyInPolyTime (CNF.vars (V := ℕ)) encCNF (encList encNat) :=
   (CNF.computableInPolyTime_vars encNat).tidy
+
+/-- Listing the distinct variables in order of first occurrence is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_distinctVars :
+    ComputableInPolyTime (CNF.distinctVars (V := ℕ)) encCNF (encList encNat) :=
+  CNF.computableInPolyTime_distinctVars encNat
+
+/-- The number of distinct variables of a formula, in unary, is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_numVars :
+    ComputableInPolyTime (CNF.numVars (V := ℕ)) encCNF encUnary :=
+  CNF.computableInPolyTime_numVars encNat
+
+/-- Encoding of a literal occurrence: unary clause and position indices with a binary-numbered
+literal. -/
+abbrev encOccurrence : Occurrence ℕ ↪ List Bool :=
+  Cslib.Logic.PL.encOccurrence encNat
+
+/-- Enumerating the literal occurrences of a CNF formula is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_occurrences :
+    ComputableInPolyTime (occurrences (V := ℕ)) encCNF (encList encOccurrence) :=
+  Cslib.Logic.PL.computableInPolyTime_occurrences encNat
 
 /-- The number of literals of a polynomial-time clause, in unary, is polynomial-time. -/
 @[fun_prop]

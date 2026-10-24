@@ -40,6 +40,8 @@ Adapts Computability/Probabilistic/Memoize.lean on the cslib `crypto` branch at
 
 namespace Cslib.ProbOracleComp
 
+open OracleComp
+
 variable {Query Key Value : Type} {spec : Query → Type} [BEq Key]
 
 /-- A possible result of a cached call is either a hit, leaving the cache unchanged, or a possible
@@ -54,10 +56,11 @@ theorem mem_support_memoize (compute : Key → ProbOracleComp spec Value) (key :
   cases hlookup : cache.lookup key with
   | some value =>
     simp only [hlookup] at hresult
-    exact .inl ⟨by rw [eq_of_mem_support_pure hresult], by rw [eq_of_mem_support_pure hresult]⟩
+    exact .inl ⟨by rw [eq_of_mem_supportWith_pure hresult],
+      by rw [eq_of_mem_supportWith_pure hresult]⟩
   | none =>
     simp only [hlookup, bind_pure_comp] at hresult
-    obtain ⟨value, hvalue, rfl⟩ := mem_support_map hresult
+    obtain ⟨value, hvalue, rfl⟩ := mem_supportWith_map_iff.mp hresult
     exact .inr ⟨rfl, hvalue, rfl⟩
 
 open Turing.MultiTapeTM in

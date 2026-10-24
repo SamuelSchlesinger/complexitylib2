@@ -41,7 +41,7 @@ example : {w : List Bool | w.tail.headD false = true} ∈ US encBits :=
 
 /-- FP counts may be exponentially large: the output encoding is binary. -/
 example : (fun w : List Bool => 2 ^ w.length) ∈ SharpP encBits :=
-  SharpP.of_polyTime (ComputableTidilyInPolyTime.binary_two_pow.comp (.encoding_length encBits))
+  mem_SharpP_of_polyTime (ComputableTidilyInPolyTime.binary_two_pow.comp (.encoding_length encBits))
 
 private def target (n : ℕ) : ℤ := -(2 ^ n : ℤ)
 
@@ -59,7 +59,7 @@ private theorem head_mem_LWPP : {w : List Bool | w.headD false = true} ∈ LWPP 
   have hgap : ComputableTidilyInPolyTime
       (fun w : List Bool => if w.headD false then target w.length else 0) encBits encIntBin := by
     fun_prop
-  refine ⟨_, GapP.of_polyTime hgap, target, .of_tidy target_poly, target_ne_zero,
+  refine ⟨_, mem_GapP_of_polyTime hgap, target, .of_tidy target_poly, target_ne_zero,
     fun w => ?_, fun w => ?_⟩
   · cases w.headD false <;> simp
   · change (w.headD false = true) ↔ _
@@ -230,18 +230,18 @@ info: 'Cslib.Complexity.PolyTimeReducible.mem_US' depends on axioms:
 #print axioms Cslib.Complexity.PolyTimeReducible.mem_US
 
 /--
-info: 'Cslib.Complexity.SharpP.of_polyTime' depends on axioms:
+info: 'Cslib.Complexity.mem_SharpP_of_polyTime' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SharpP.of_polyTime
+#print axioms Cslib.Complexity.mem_SharpP_of_polyTime
 
 /--
-info: 'Cslib.Complexity.GapP.of_polyTime' depends on axioms:
+info: 'Cslib.Complexity.mem_GapP_of_polyTime' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.GapP.of_polyTime
+#print axioms Cslib.Complexity.mem_GapP_of_polyTime
 
 /--
 info: 'Cslib.Complexity.SPP_subset_LWPP' depends on axioms:

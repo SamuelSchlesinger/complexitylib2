@@ -50,7 +50,7 @@ Adapted from the cslib `crypto` branch at
 
 namespace Cslib.Crypto.SavedPrediction
 
-open Probability BitString Turing.MultiTapeTM
+open ProbComp Probability BitString Turing.MultiTapeTM
 
 /-- Finite data needed to reuse one coordinate predictor on arbitrary observations. -/
 structure Description where

@@ -291,11 +291,11 @@ theorem lineSums_eval_recoveryCircuit (scalar : Fin s ≃ {c : K // c ≠ 0})
     congr 2
     funext y
     obtain ⟨⟨i, k⟩, rfl⟩ := finProdFinEquiv.surjective y
-    simp only [Function.comp_apply, Equiv.symm_apply_apply, Fin.append_left, hMapply, metadata,
-      targetBits, htargets]
+    simp only [Function.comp_apply, Fin.append_left, hMapply, metadata,
+      targetBits, blocksEquiv_symm_apply, Equiv.symm_apply_apply, htargets]
   have hLapply (i : Fin t) (j : Fin s) (k : Fin (ℓ * b)) :
       L (finProdFinEquiv (i, finProdFinEquiv (j, k))) = pointBits bits (point i j) k := by
-    simp only [hL, lineBits, Equiv.symm_apply_apply, hpoint]
+    simp only [hL, lineBits, blocksEquiv_symm_apply, Equiv.symm_apply_apply, hpoint]
   -- Stage three.
   have hkey (i : Fin t) (j : Fin s) :
       substitute (Sum.inl ∘ incidenceKey t p w ℓ b s copies (finProdFinEquiv (i, j))) W =

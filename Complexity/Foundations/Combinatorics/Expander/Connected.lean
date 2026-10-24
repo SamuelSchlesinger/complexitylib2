@@ -86,7 +86,7 @@ theorem interedges_compl_nonempty (hG : G.toSimpleGraph.Preconnected) {S : Finse
 
 /-- If at least half of the edges at every vertex are self-loops, the walk operator is positive
 semidefinite: `0 ≤ 𝔼 v, f v * G.walk f v` for every `f`. -/
-theorem expect_mul_walk_nonneg (hG : ∀ v, Fintype.card D ≤ 2 * #{i | G.neighbor v i = v})
+theorem expect_mul_walk_nonneg (hG : ∀ v, Fintype.card D ≤ 2 * G.edgeCount v v)
     (f : V → ℝ) : 0 ≤ 𝔼 v, f v * G.walk f v := by
   -- a self-loop contributes `f v ^ 2`, any other edge at least `-(f v ^ 2 + f w ^ 2) / 2`
   set g : V → V → ℝ := fun v w ↦ if w = v then f v ^ 2 else -(f v ^ 2 + f w ^ 2) / 2 with hg
@@ -122,6 +122,7 @@ theorem expect_mul_walk_nonneg (hG : ∀ v, Fintype.card D ≤ 2 * #{i | G.neigh
     rw [card_univ] at hcard
     have hle : (#{i | ¬G.neighbor v i = v} : ℝ) ≤ #{i | G.neighbor v i = v} := by
       have := hG v
+      rw [edgeCount] at this
       exact_mod_cast (by omega : #{i | ¬G.neighbor v i = v} ≤ #{i | G.neighbor v i = v})
     nlinarith [sq_nonneg (f v)]
   calc (0 : ℝ) ≤ 𝔼 v, 𝔼 i, (if G.neighbor v i = v then f v ^ 2 else -f v ^ 2) :=
@@ -139,7 +140,7 @@ walk operator positive semidefinite, so that the second eigenvalue is `λ(G)`. C
 graph, whose walk is positive semidefinite by construction
 (`spectralExpansion_lazy_le_of_mul_card_le_card_interedges_compl`). -/
 theorem spectralExpansion_le_of_preconnected
-    (hloop : ∀ v, Fintype.card D ≤ 2 * #{i | G.neighbor v i = v})
+    (hloop : ∀ v, Fintype.card D ≤ 2 * G.edgeCount v v)
     (hconn : G.toSimpleGraph.Preconnected) :
     G.spectralExpansion ≤ 1 - 1 / (2 * Fintype.card V ^ 2 * Fintype.card D ^ 2) := by
   rcases subsingleton_or_nontrivial V with hV | hV

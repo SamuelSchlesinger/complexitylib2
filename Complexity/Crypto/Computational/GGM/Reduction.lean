@@ -157,7 +157,7 @@ theorem levelTest_gap (generator : List Bool → List Bool) (adversary : OracleD
 dyadic ranges, and unused indices reject. The query budget is a fixed function of the parameter. -/
 noncomputable def reduction (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
     (count : ℕ → ℕ) : Distinguisher := fun n challenge => do
-  let depth ← sampleDyadicIndex n
+  let depth ← ProbComp.sampleDyadicIndex n
   if depth < n then levelTest generator adversary n depth (count n) challenge else pure false
 
 /-- Efficient generation and an efficient query budget give one uniform PPT reduction. -/
@@ -194,7 +194,7 @@ theorem reduction_gap (generator : List Bool → List Bool) (adversary : OracleD
     (lt_dyadicSize n).le (dyadicSize (count n))
     (fun depth hdepth =>
       levelTest_gap generator adversary n depth (count n) hdepth hqueries)
-  simpa only [eval_bind_sampleDyadicIndex_guard, PMF.monad_bind_eq_bind,
+  simpa only [ProbComp.eval_bind_sampleDyadicIndex_guard, PMF.monad_bind_eq_bind,
     hybridGame_zero, hybridGame_self] using h
 
 /-- The real/ideal PRF advantage is the reduction's generator advantage times the two sampling

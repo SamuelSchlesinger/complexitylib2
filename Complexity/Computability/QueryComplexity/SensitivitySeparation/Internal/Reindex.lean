@@ -13,9 +13,8 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 # Superquadratic sensitivity separation: reindex
 
 Transport `reindex e f` of a Boolean function `f` along an equivalence `e : I ≃ J` of coordinate
-types. Sensitivity and block sensitivity, both pointwise and global, are invariant under reindexing,
-which allows functions on structured coordinate types to be moved onto an ordinary finite Boolean
-cube.
+types. Global sensitivity and pointwise block sensitivity are invariant under reindexing, which
+allows functions on structured coordinate types to be moved onto an ordinary finite Boolean cube.
 
 ## Main definitions
 
@@ -23,12 +22,9 @@ cube.
 
 ## Main results
 
-* `sensitivityAt_reindex`: the sensitivity of `reindex e f` at `x` equals the sensitivity of `f` at
-  `fun i => x (e i)`.
 * `sensitivity_reindex`: `sensitivity (reindex e f) = sensitivity f`.
 * `blockSensitivityAt_reindex`: the block sensitivity of `reindex e f` at `x` equals the block
   sensitivity of `f` at `fun i => x (e i)`.
-* `blockSensitivity_reindex`: `blockSensitivity (reindex e f) = blockSensitivity f`.
 
 ## References
 
@@ -68,7 +64,7 @@ private theorem flip_reindex_singleton (e : I ≃ J) (x : J → Bool) (i : I) :
   simpa using flip_reindex e x {i}
 
 /-- Reindexing along `e` and then along `e.symm` recovers the original function. -/
-@[simp] theorem reindex_symm (e : I ≃ J) (f : (I → Bool) → Bool) :
+private theorem reindex_symm (e : I ≃ J) (f : (I → Bool) → Bool) :
     reindex e.symm (reindex e f) = f := by
   funext x
   simp [reindex]
@@ -78,7 +74,7 @@ variable [Fintype I] [Fintype J]
 
 /-- The sensitivity of `reindex e f` at `x` equals the sensitivity of `f` at the pullback
 `fun i => x (e i)`. -/
-theorem sensitivityAt_reindex (e : I ≃ J) (f : (I → Bool) → Bool) (x : J → Bool) :
+private theorem sensitivityAt_reindex (e : I ≃ J) (f : (I → Bool) → Bool) (x : J → Bool) :
     sensitivityAt (reindex e f) x = sensitivityAt f (fun i => x (e i)) := by
   have hs : (Finset.univ.filter fun j =>
       reindex e f (flip x {j}) ≠ reindex e f x).map e.symm.toEmbedding =
@@ -135,21 +131,6 @@ theorem blockSensitivityAt_reindex (e : I ≃ J) (f : (I → Bool) → Bool)
   · have h := blockSensitivityAt_le_reindex e.symm (reindex e f) (fun i => x (e i))
     simpa only [Equiv.apply_symm_apply, reindex_symm] using h
   · exact blockSensitivityAt_le_reindex e f x
-
-/-- Reindexing preserves block sensitivity:
-`blockSensitivity (reindex e f) = blockSensitivity f`. -/
-theorem blockSensitivity_reindex (e : I ≃ J) (f : (I → Bool) → Bool) :
-    blockSensitivity (reindex e f) = blockSensitivity f := by
-  apply Nat.le_antisymm
-  · apply blockSensitivity_le
-    intro x
-    rw [blockSensitivityAt_reindex]
-    exact blockSensitivityAt_le_blockSensitivity f _
-  · apply blockSensitivity_le
-    intro x
-    have h := blockSensitivityAt_le_blockSensitivity (reindex e f) (fun j => x (e.symm j))
-    rw [blockSensitivityAt_reindex] at h
-    simpa only [Equiv.symm_apply_apply] using h
 
 end Finite
 end Internal

@@ -82,11 +82,7 @@ theorem equationCoeff_eq (constraint : α → α → Bool) :
 
 /-- Run the existing five checks, supplying the executable quadratic coefficients. -/
 def localTest (constraint : α → α → Bool) : LocalTest (Pos α) (Rand α) Query Bool :=
-  ((blrTest _).map fun y => .inr (.inl y)).and <|
-    ((blrTest _).map fun z => .inr (.inr z)).and <|
-    ((tensorTest _).map (Sum.elim (fun y => .inr (.inl y)) fun z => .inr (.inr z))).and <|
-    ((equationTest (equationCoeff constraint) equationRhs).map fun z => .inr (.inr z)).and <|
-    (inputTest α).map (Sum.elim .inl fun y => .inr (.inl y))
+  Cslib.PCP.HadamardTester.test (equationCoeff constraint)
 
 /-- Equality of the entire test transfers its existing completeness and soundness theorems. -/
 theorem localTest_eq (constraint : α → α → Bool) :
@@ -100,7 +96,8 @@ def query (constraint : α → α → Bool) (coins : Rand α) (i : Query) : Pos 
 /-- The Boolean acceptance decision on the symbols claimed at the seventeen queries. -/
 def accepts (constraint : α → α → Bool) (coins : Rand α) (answers : Query → Bool) : Bool :=
   @decide ((localTest constraint).Accepts coins answers) (by
-    unfold localTest LocalTest.and LocalTest.map blrTest tensorTest equationTest inputTest
+    unfold localTest Cslib.PCP.HadamardTester.test LocalTest.and LocalTest.map
+      blrTest tensorTest equationTest inputTest
     infer_instance)
 
 /-- Every computed position is the position specified by the mathematical assignment tester. -/

@@ -12,7 +12,7 @@ intervals have uniform certificates with runtime-varying budgets. -/
 
 namespace ComplexityTests.BoundedUniform
 
-open Cslib Cslib.Probability Turing.MultiTapeTM
+open Cslib Cslib.ProbComp Cslib.Probability Turing.MultiTapeTM
 open scoped ENNReal NNReal
 
 example (attempts : ℕ) :
@@ -94,7 +94,7 @@ example {radius dimension attempts : ℕ} {out : Option (List ℤ)}
   length_enc_sampleIntegerBox h
 
 /--
-info: 'Cslib.Probability.sampleIntegerBox_test_error_le' depends on axioms:
+info: 'Cslib.ProbComp.sampleIntegerBox_test_error_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

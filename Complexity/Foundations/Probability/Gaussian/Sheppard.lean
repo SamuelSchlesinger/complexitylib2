@@ -6,13 +6,12 @@ Authors: Samuel Schlesinger
 
 module
 -- upstream: candidate (Mathlib, a new file `Mathlib/Probability/Distributions/Gaussian/`
--- `Sheppard.lean`; `InnerProductGeometry.angle_eq_two_mul_arctan` to
--- `Mathlib/Geometry/Euclidean/Angle/Unoriented/Basic.lean`)
+-- `Sheppard.lean`)
 
 public import Complexity.Init
-public import Mathlib.Geometry.Euclidean.Angle.Unoriented.Basic
+public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
+public import Complexity.Foundations.MeasureTheory.Constructions.BorelSpace.Order
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 import Complexity.Foundations.Probability.Gaussian.Multivariate
 import Complexity.Foundations.Probability.Gaussian.Real
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
@@ -53,11 +52,8 @@ The event that `t` lies between `x` and `y`, the lower one strictly below `t`, i
 * `ProbabilityTheory.gaussianReal_prod_setOf_abs_le_mul_abs`: the planar angle law.
 * `ProbabilityTheory.gaussianReal_prod_setOf_abs_le_mul_abs_of_ne_zero`: the planar angle law for
   centered Gaussians of any variances.
-* `InnerProductGeometry.angle_eq_two_mul_arctan`: the half-angle formula for vectors of equal norm.
 * `ProbabilityTheory.measureReal_stdGaussian_mem_uIoc_le_arctan`,
   `ProbabilityTheory.measureReal_stdGaussian_mem_uIoc_le_angle`: Sheppard's bound.
-* `measurableSet_setOf_mem_uIoc`: the event that a threshold lies between two measurable
-  functions is measurable.
 
 ## References
 
@@ -69,46 +65,6 @@ The event that `t` lies between `x` and `y`, the lower one strictly below `t`, i
 
 open MeasureTheory Real Set
 open scoped NNReal ENNReal RealInnerProductSpace Interval
-
-/-- The event that a threshold lies between two measurable real functions is measurable. -/
-theorem measurableSet_setOf_mem_uIoc {Ω : Type*} [MeasurableSpace Ω] {f g : Ω → ℝ}
-    (hf : Measurable f) (hg : Measurable g) (t : ℝ) : MeasurableSet {ω | t ∈ Ι (f ω) (g ω)} := by
-  simp only [mem_uIoc, ofPred_or, ofPred_and]
-  exact ((measurableSet_lt hf measurable_const).inter (measurableSet_le measurable_const hg)).union
-    ((measurableSet_lt hg measurable_const).inter (measurableSet_le measurable_const hf))
-
-namespace InnerProductGeometry
-
-variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
-
-/-- **The half-angle formula.** Two vectors of equal norm whose sum is nonzero make the angle
-`2 arctan (‖v - u‖ / ‖u + v‖)`. -/
-theorem angle_eq_two_mul_arctan {u v : V} (huv : ‖u‖ = ‖v‖) (hne : u + v ≠ 0) :
-    angle u v = 2 * arctan (‖v - u‖ / ‖u + v‖) := by
-  have hr : 0 < ‖u‖ := by
-    refine norm_pos_iff.2 fun hu => hne ?_
-    rw [hu, norm_zero, eq_comm, norm_eq_zero] at huv
-    rw [hu, huv, add_zero]
-  set c := ⟪u, v⟫ / (‖u‖ * ‖u‖) with hc
-  have hinner : ⟪u, v⟫ = c * ‖u‖ ^ 2 := by
-    rw [hc, sq, div_mul_cancel₀ _ (by positivity)]
-  have hsub : ‖v - u‖ = √(2 * ‖u‖ ^ 2) * √(1 - c) := by
-    rw [← sqrt_mul (by positivity), ← sqrt_sq (norm_nonneg (v - u)), norm_sub_sq_real,
-      real_inner_comm, hinner, ← huv]
-    ring_nf
-  have hadd : ‖u + v‖ = √(2 * ‖u‖ ^ 2) * √(1 + c) := by
-    rw [← sqrt_mul (by positivity), ← sqrt_sq (norm_nonneg (u + v)), norm_add_sq_real, hinner,
-      ← huv]
-    ring_nf
-  have hc1 : -1 < c := by
-    have h : 0 < ‖u + v‖ := norm_pos_iff.2 hne
-    rw [hadd] at h
-    have := (mul_pos_iff_of_pos_left (sqrt_pos.2 (by positivity))).1 h
-    linarith [sqrt_pos.1 this]
-  rw [hsub, hadd, mul_div_mul_left _ _ (sqrt_pos.2 (by positivity)).ne',
-    ← arccos_eq_two_mul_arctan hc1, angle, ← huv]
-
-end InnerProductGeometry
 
 namespace ProbabilityTheory
 

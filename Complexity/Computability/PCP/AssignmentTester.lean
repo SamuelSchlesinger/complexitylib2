@@ -73,7 +73,8 @@ distance (`HadamardTester.exists_inputDist_div_le_unsatFrac`).
 * `Cslib.PCP.HadamardTester.blrTest`, `Cslib.PCP.HadamardTester.tensorTest`,
   `Cslib.PCP.HadamardTester.equationTest`, `Cslib.PCP.HadamardTester.inputTest`: the checks of the
   tester, as local tests.
-* `Cslib.PCP.hadamardTester`: the assignment tester of a constraint.
+* `Cslib.PCP.HadamardTester.test`, `Cslib.PCP.hadamardTester`: the five-check conjunction and the
+  assignment tester of a constraint.
 * `Cslib.PCP.HadamardTester.inputDist`: the distance of the tables of a proof from the long codes
   of labels.
 * `Cslib.PCP.HadamardTester.honestProof`: the proof of satisfying labels.
@@ -463,6 +464,18 @@ private def linTable (π : Pos α → Bool) : (Fin 2 × α → Bool) → Bool :=
 private def quadTable (π : Pos α → Bool) : ((Fin 2 × α) × (Fin 2 × α) → Bool) → Bool :=
   fun z ↦ π (.inr (.inr z))
 
+/-- The five checks of the Hadamard assignment tester on independent random strings, parameterized
+by the coefficient table of the quadratic equations so that mathematical and executable constraints
+share the same definition. -/
+def test (coeff : ((Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2) →
+    (Fin 2 × α) × (Fin 2 × α) → Bool) :
+    LocalTest (Pos α) (Rand α) Query Bool :=
+  ((blrTest _).map fun y ↦ .inr (.inl y)).and <|
+    ((blrTest _).map fun z ↦ .inr (.inr z)).and <|
+    ((tensorTest _).map (Sum.elim (fun y ↦ .inr (.inl y)) fun z ↦ .inr (.inr z))).and <|
+    ((equationTest coeff equationRhs).map fun z ↦ .inr (.inr z)).and <|
+    (inputTest α).map (Sum.elim .inl fun y ↦ .inr (.inl y))
+
 end HadamardTester
 
 open HadamardTester
@@ -475,11 +488,7 @@ the linear and on the quadratic table, the tensor test, the equation test for th
 equations of `C`, and the input test; it accepts when all five accept. -/
 noncomputable def hadamardTester (C : α → α → Prop) :
     LocalTest (Pos α) (Rand α) Query Bool :=
-  ((blrTest _).map fun y ↦ .inr (.inl y)).and <|
-    ((blrTest _).map fun z ↦ .inr (.inr z)).and <|
-    ((tensorTest _).map (Sum.elim (fun y ↦ .inr (.inl y)) fun z ↦ .inr (.inr z))).and <|
-    ((equationTest (equationCoeff C) equationRhs).map fun z ↦ .inr (.inr z)).and <|
-    (inputTest α).map (Sum.elim .inl fun y ↦ .inr (.inl y))
+  HadamardTester.test (equationCoeff C)
 
 namespace HadamardTester
 
@@ -632,7 +641,7 @@ theorem passes_honestProof {σ : Fin 2 → α} (hσ : C (σ 0) (σ 1))
     (by rw [acceptProb_equationTest, equationTestAcceptance_hadamardCode
       (forall_hadamardCode_tensor_equationCoeff_iff.2 ⟨σ, hσ, rfl⟩)])
   obtain ⟨ω₁, ω₂, ω₃, ω₄, b, r, y⟩ := ω
-  simp only [hadamardTester, LocalTest.passes_and, LocalTest.passes_map]
+  simp only [hadamardTester, test, LocalTest.passes_and, LocalTest.passes_map]
   refine ⟨h₁ _ _ ω₁, h₁ _ _ ω₂, ?_, h₄ ω₄, ?_⟩
   · rw [Sum.comp_elim]
     exact h₃ ω₃

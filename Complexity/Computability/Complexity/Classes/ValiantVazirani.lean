@@ -167,9 +167,9 @@ private theorem isOraclePPTOn_queryAny :
     rw [interpret_queryAnyStep] at hnext
     obtain ⟨words, acc⟩ := state
     cases words with
-    | nil => rw [ProbOracleComp.eq_of_mem_support_pure hnext]; simp
+    | nil => rw [OracleComp.eq_of_mem_supportWith_pure hnext]; simp
     | cons word words =>
-      obtain ⟨reply, -, rfl⟩ := ProbOracleComp.mem_support_map hnext
+      obtain ⟨reply, -, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hnext
       simp only [length_encPair, encBool_apply, List.length_singleton, List.tail_cons,
         length_encList, List.map_cons, List.sum_cons]
       omega

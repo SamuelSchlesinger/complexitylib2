@@ -285,4 +285,13 @@ theorem decide_eq' {α : Type}
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_eq' α β encA encB _inst4 left
       right hleft.tidy hright.tidy)
 
+/-- Lawful Boolean equality compares computed values through their common encoding. -/
+@[fun_prop]
+theorem beq {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    [BEq β] [LawfulBEq β] {left right : α → β}
+    (hleft : ComputableInPolyTime left encA encB)
+    (hright : ComputableInPolyTime right encA encB) :
+    ComputableInPolyTime (fun x => left x == right x) encA encBool :=
+  .of_tidy (hleft.tidy.beq hright.tidy)
+
 end Turing.MultiTapeTM.ComputableInPolyTime

@@ -72,7 +72,7 @@ theorem pow_mem_polyTime {f : α → ℕ} {r : α → ℕ} (hf : f ∈ SharpP en
   obtain ⟨p, V, hV, hf⟩ := mem_SharpP_iff_tidy.mp hf
   let k : α → ℕ := fun a => p.eval (enc a).length
   have hk : ComputableTidilyInPolyTime k enc encUnary := by dsimp [k]; fun_prop
-  convert SharpP.of_polyTime_length (polyTime_powerVerifier hr hk hV)
+  convert mem_SharpP_of_polyTime_length (polyTime_powerVerifier hr hk hV)
     (ComputableTidilyInPolyTime.unary_mul.comp (hr.prod hk)) using 1
   ext a
   change f a ^ r a = acceptCount (powerVerifier r k V) a (r a * k a)

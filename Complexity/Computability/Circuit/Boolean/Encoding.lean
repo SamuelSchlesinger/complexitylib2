@@ -63,6 +63,8 @@ logarithmically many bits.
 * `Cslib.Circuits.Program.IsCodeFrom.getElem`, `Cslib.Circuits.Program.isCodeFrom_of_getElem`:
   elementwise characterization of `Program.IsCodeFrom`.
 * `Cslib.Circuits.Circuit.code_injective`: coding is injective.
+* `Cslib.Circuits.Circuit.code_wiring`, `Cslib.Circuits.Circuit.code_wiring_eq_map`,
+  `Cslib.Circuits.Circuit.code_wiring_id`: serialized codes of pure wirings.
 * `Cslib.Circuits.Boolean.le_length_encCircuit`: the encoding is at least as long as the number of
   inputs.
 
@@ -377,6 +379,29 @@ theorem code_injective : Function.Injective (code : Circuit σ n m → _) := fun
 /-- The code of a circuit lists one entry per gate. -/
 @[simp] theorem length_code_fst (c : Circuit σ n m) : c.code.1.length = c.size :=
   Program.length_code _
+
+/-! ### Wiring serialization -/
+
+/-- The serialized code of a pure wiring `Circuit.wiring σ f` has no gate lines and output wire
+indices `(f j).val`. -/
+theorem code_wiring (f : Fin m → Fin n) :
+    (wiring σ f).code = ([], List.ofFn fun j => (f j).val) := rfl
+
+/-- When `(f j).val = g j.val` for every output wire `j`, the serialized output list of
+`Circuit.wiring σ f` is `(List.range m).map g`. -/
+theorem code_wiring_eq_map {f : Fin m → Fin n} {g : ℕ → ℕ}
+    (h : ∀ j : Fin m, (f j).val = g j.val) :
+    (wiring σ f).code = ([], (List.range m).map g) := by
+  simp only [code_wiring, Prod.mk.injEq, true_and]
+  exact List.ext_getElem (by simp) fun i hi₁ hi₂ => by
+    simp only [List.getElem_ofFn, List.getElem_map, List.getElem_range]
+    exact h ⟨i, by simpa using hi₁⟩
+
+/-- The serialized code of the identity wiring on `n` wires is `([], List.range n)`. -/
+@[simp] theorem code_wiring_id :
+    (wiring σ (_root_.id : Fin n → Fin n)).code = ([], List.range n) := by
+  simpa using
+    code_wiring_eq_map (σ := σ) (f := (_root_.id : Fin n → Fin n)) (g := _root_.id) fun _ => rfl
 
 end Circuit
 

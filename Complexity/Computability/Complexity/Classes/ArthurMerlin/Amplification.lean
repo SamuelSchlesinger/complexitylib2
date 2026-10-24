@@ -548,8 +548,9 @@ theorem mem_AM_of_exists {B : Set (α × List Bool)} (hB : B ∈ AM (encPair enc
         VB ((a, List.ofFn ((Fin.appendEquiv _ _).symm y).1),
           List.ofFn r ++ List.ofFn ((Fin.appendEquiv _ _).symm y).2) := by
     rw [List.drop_left' List.length_ofFn, List.take_left' List.length_ofFn,
-      BitString.ofFn_eq_append y, List.take_left' List.length_ofFn, ← List.append_assoc,
+      List.ofFn_add, List.take_left' List.length_ofFn, ← List.append_assoc,
       List.drop_left' (by simp)]
+    rfl
   simp only [hsplit]
   -- the error bounds of the pairs, at the length of the encoded instance
   have herr (w : BitString (p.eval (enc a).length)) :

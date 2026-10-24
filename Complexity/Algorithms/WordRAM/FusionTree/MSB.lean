@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.PackedCount
+public import Complexity.Foundations.Data.Nat.Bitwise.PackedCount
 public import Complexity.Algorithms.Lean.FusionTree.Multiplier
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.Nat.Sqrt
@@ -125,7 +125,7 @@ theorem powerFlags_eq {s z : ℕ} (hz : z < 2 ^ s) :
     intro i j h
     apply Fin.ext
     exact Nat.eq_of_mul_eq_mul_left (by omega) (Nat.add_left_cancel h)
-  rw [powerFlags, guards_eq, positionMask, Cslib.BitString.and_sum_two_pow _ hinj]
+  rw [powerFlags, guards_eq, positionMask, Nat.and_sum_two_pow _ hinj]
   simp only [guardedDifference_guard hz, Nat.shiftRight_eq_div_pow]
   have he : (∑ i : Fin s,
       (decide (2 ^ i.val ≤ z)).toNat * 2 ^ (s + (s + 1) * i.val)) =
@@ -408,7 +408,7 @@ theorem clusterSummary_testBit {s x i : ℕ} (hs : 0 < s) (hx : x < 2 ^ (s * s))
     (clusterSummary s x).testBit i = decide (x / 2 ^ (s * i) % 2 ^ s ≠ 0) := by
   rw [clusterSummary_eq hs]
   apply Bool.eq_iff_iff.mpr
-  rw [testBit_sum_injective _ _ (fun _ _ _ _ h => Fin.ext h)]
+  rw [Nat.testBit_sum_injective _ _ (fun _ _ _ _ h => Fin.ext h)]
   simp only [Finset.mem_univ, true_and, decide_eq_true_eq]
   constructor
   · rintro ⟨j, hj, he⟩

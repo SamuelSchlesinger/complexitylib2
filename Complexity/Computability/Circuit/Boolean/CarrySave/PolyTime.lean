@@ -172,21 +172,13 @@ private theorem csa4to2FirstIn_val (w : ℕ) (i : Fin (w + (w + w))) :
 
 private theorem code_csa4to2FirstIn (w : ℕ) :
     (Circuit.wiring signature (csa4to2FirstIn w)).code = ([], List.range (w + (w + w))) := by
-  apply Prod.ext
-  · rfl
-  · apply List.ext_getElem (by simp [Circuit.code, Circuit.wiring])
-    intro i hi hi'
-    simp [Circuit.code, Circuit.wiring, csa4to2FirstIn_val]
+  simpa using Circuit.code_wiring_eq_map (σ := signature) (g := id) (csa4to2FirstIn_val w)
 
 private theorem code_csa4to2LastIn (w : ℕ) :
     (Circuit.wiring signature
       (Fin.natAdd (w + w) ∘ Fin.natAdd w : Fin w → Fin ((w + w) + (w + w)))).code =
-      ([], (List.range w).map (fun i => (w + w) + (w + i))) := by
-  apply Prod.ext
-  · rfl
-  · apply List.ext_getElem (by simp [Circuit.code, Circuit.wiring])
-    intro i hi hi'
-    simp [Circuit.code, Circuit.wiring, Nat.add_comm]
+      ([], (List.range w).map (fun i => (w + w) + (w + i))) :=
+  Circuit.code_wiring_eq_map fun i => by simp [Nat.add_comm]
 
 /-- Generate the existing two-layer carry-save reducer, including all input wiring. -/
 def csa4to2Code (w : ℕ) : List (Op × List ℕ) × List ℕ :=

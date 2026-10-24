@@ -24,14 +24,15 @@ or encryption-security property is asserted. Native runtime is certified separat
 
 ## Main definitions
 
-* `sampleCenteredBinomial`: subtract two independently sampled Boolean counts.
+* `Cslib.ProbComp.sampleCenteredBinomial`: subtract two independently sampled Boolean counts.
 
 ## Main results
 
-* `eval_sampleCenteredBinomial`: the exact two-word distribution.
-* `eval_sampleCenteredBinomial_eq_map`: the same law from one word of `2 * η` bits.
-* `mem_support_sampleCenteredBinomial_iff`: support is exactly the closed integer interval.
-* `map_neg_eval_sampleCenteredBinomial`: negation preserves the distribution.
+* `Cslib.ProbComp.eval_sampleCenteredBinomial`: the exact two-word distribution.
+* `Cslib.ProbComp.eval_sampleCenteredBinomial_eq_map`: the same law from one word of `2 * η` bits.
+* `Cslib.ProbComp.mem_support_sampleCenteredBinomial_iff`: support is exactly the closed integer
+  interval.
+* `Cslib.ProbComp.map_neg_eval_sampleCenteredBinomial`: negation preserves the distribution.
 
 ## References
 
@@ -41,7 +42,9 @@ or encryption-security property is asserted. Native runtime is certified separat
 
 @[expose] public section
 
-namespace Cslib.Probability
+namespace Cslib.ProbComp
+
+open Probability
 
 /-- Subtract the true counts of two independent blocks of `η` fair bits. -/
 noncomputable def sampleCenteredBinomial (η : ℕ) : ProbComp ℤ := do
@@ -110,4 +113,4 @@ theorem map_neg_eval_sampleCenteredBinomial (η : ℕ) :
     PMF.pure_map, neg_sub]
   rw [PMF.bind_comm]
 
-end Cslib.Probability
+end Cslib.ProbComp

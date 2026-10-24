@@ -53,10 +53,15 @@ This module completes the unsigned and signed counting oracle-lowness characteri
   `GapP^A = GapP` (equivalently `SPP^A = SPP`) if and only if `A ∈ SPP`, and every `FewP` oracle is
   low for `GapP`, `SPP`, `LWPPWithFixedTarget`, `WPPWithFixedTarget`, `C=P`, and `PP`.
 * **Relativized modular counting classes (`ModPWithOracle`, `coModPWithOracle`,
-  `ParityPWithOracle`) and `SPP` / `FewP` / `UP ∩ coUP` lowness:** `UP ∩ coUP` is low for
-  `ModPWithOracle k` and `coModPWithOracle k` at every modulus `k : ℕ`, while for every positive
-  modulus `0 < k`, `SPP` (and hence `FewP`) is low for `ModPWithOracle k`, `coModPWithOracle k`,
-  and `ParityPWithOracle` via `GapPWithOracle_eq_GapP_of_mem_SPP` and `mem_ModP_iff_exists_GapP`.
+  `ParityPWithOracle`), their `GapPWithOracle` residue characterizations, and `SPP` / `FewP` /
+  `UP ∩ coUP` lowness:** for every positive modulus `0 < k`, `GapPWithOracle` functions have
+  congruent `SharpPWithOracle` representatives (`GapPWithOracle.exists_SharpPWithOracle_emod`), so
+  `ModPWithOracle k` and `coModPWithOracle k` are characterized by nonzero and zero residues of
+  `GapPWithOracle` functions (`mem_ModPWithOracle_iff_exists_GapPWithOracle`,
+  `mem_coModPWithOracle_iff_exists_GapPWithOracle`). `UP ∩ coUP` is low for `ModPWithOracle k` and
+  `coModPWithOracle k` at every modulus `k : ℕ`, while for `0 < k`, `SPP` (and hence `FewP`) is low
+  for `ModPWithOracle k`, `coModPWithOracle k`, and `ParityPWithOracle` via
+  `GapPWithOracle_eq_GapP_of_mem_SPP` and `mem_ModP_iff_exists_GapP`.
 
 All results use the library's strict polynomial-time adaptive word-oracle verifier model; no
 nondeterministic oracle-machine counting characterization or `FP^A`-threshold `SBP` relativization
@@ -99,7 +104,10 @@ is claimed.
   `Cslib.Complexity.forall_SPPWithOracle_eq_SPP_iff`,
   `Cslib.Complexity.iUnion_GapPWithOracle_SPP`,
   `Cslib.Complexity.iUnion_SPPWithOracle_SPP`.
-* `Cslib.Complexity.ModPWithOracle_eq_ModP_of_mem_UP_of_mem_coUP`,
+* `Cslib.Complexity.GapPWithOracle.exists_SharpPWithOracle_emod`,
+  `Cslib.Complexity.mem_ModPWithOracle_iff_exists_GapPWithOracle`,
+  `Cslib.Complexity.mem_coModPWithOracle_iff_exists_GapPWithOracle`,
+  `Cslib.Complexity.ModPWithOracle_eq_ModP_of_mem_UP_of_mem_coUP`,
   `Cslib.Complexity.ModPWithOracle_eq_ModP_of_mem_SPP`,
   `Cslib.Complexity.coModPWithOracle_eq_coModP_of_mem_SPP`,
   `Cslib.Complexity.ParityPWithOracle_eq_ParityP_of_mem_SPP`,
@@ -933,6 +941,50 @@ theorem mem_coModPWithOracle {L : Set α} :
 theorem compl_mem_coModPWithOracle {L : Set α} :
     Lᶜ ∈ coModPWithOracle k A enc ↔ L ∈ ModPWithOracle k A enc := by simp [coModPWithOracle]
 
+/-- Constant functions belong to `SharpPWithOracle A enc`. -/
+theorem SharpPWithOracle.natCast_mem (n : ℕ) : (n : α → ℕ) ∈ SharpPWithOracle A enc :=
+  SharpP_subset_SharpPWithOracle A enc (SharpP.natCast_mem n)
+
+/-- A positive fixed modulus admits a `SharpPWithOracle` count with the same residue as any
+`GapPWithOracle` function. The modulus is fixed before the input, so scaling by `k - 1` uses
+`SharpPWithOracle` constant multiplication. -/
+theorem GapPWithOracle.exists_SharpPWithOracle_emod {g : α → ℤ}
+    (hg : g ∈ GapPWithOracle A enc) (hk : 0 < k) :
+    ∃ f ∈ SharpPWithOracle A enc, ∀ a, (f a : ℤ) % k = g a % k := by
+  obtain ⟨f₁, h₁, f₂, h₂, hg⟩ := hg
+  refine ⟨f₁ + (fun _ => k - 1) * f₂,
+    SharpPWithOracle.add_mem h₁
+      (SharpPWithOracle.mul_mem (SharpPWithOracle.natCast_mem (k - 1)) h₂),
+    fun a => ?_⟩
+  have heq : ((f₁ a + (k - 1) * f₂ a : ℕ) : ℤ) =
+      (f₁ a : ℤ) - f₂ a + k * f₂ a := by
+    rw [Nat.cast_add, Nat.cast_mul, Nat.cast_sub (by lia : 1 ≤ k)]
+    push_cast
+    ring
+  change ((f₁ a + (k - 1) * f₂ a : ℕ) : ℤ) % k = g a % k
+  rw [heq, hg a, Int.add_mul_emod_self_left]
+
+/-- For a positive fixed modulus, nonzero residues of `GapPWithOracle` functions define
+`ModPWithOracle`. -/
+theorem mem_ModPWithOracle_iff_exists_GapPWithOracle (hk : 0 < k) {L : Set α} :
+    L ∈ ModPWithOracle k A enc ↔ ∃ g ∈ GapPWithOracle A enc, ∀ a, a ∈ L ↔ g a % k ≠ 0 := by
+  constructor
+  · rintro ⟨f, hf, hL⟩
+    exact ⟨fun a => (f a : ℤ), SharpPWithOracle.natCast_mem_GapPWithOracle hf,
+      fun a => by simpa only [← Int.natCast_emod, ne_eq, Int.natCast_eq_zero] using hL a⟩
+  · rintro ⟨g, hg, hL⟩
+    obtain ⟨f, hf, hfg⟩ := GapPWithOracle.exists_SharpPWithOracle_emod hg hk
+    refine ⟨f, hf, fun a => ?_⟩
+    rw [hL a, ← hfg a]
+    simp only [← Int.natCast_emod, ne_eq, Int.natCast_eq_zero]
+
+/-- For a positive fixed modulus, zero residues of `GapPWithOracle` functions define
+`coModPWithOracle`. -/
+theorem mem_coModPWithOracle_iff_exists_GapPWithOracle (hk : 0 < k) {L : Set α} :
+    L ∈ coModPWithOracle k A enc ↔ ∃ g ∈ GapPWithOracle A enc, ∀ a, a ∈ L ↔ g a % k = 0 :=
+  (mem_ModPWithOracle_iff_exists_GapPWithOracle hk).trans
+    (exists_forall_mem_compl_iff fun _ _ => not_not)
+
 /-- Modulo two, nonzero residue is oddness: `ModPWithOracle 2 A enc = ParityPWithOracle A enc`. -/
 theorem ModPWithOracle_two (A : Set (List Bool)) (enc : α ↪ List Bool) :
     ModPWithOracle 2 A enc = ParityPWithOracle A enc := by
@@ -997,14 +1049,10 @@ theorem ParityPWithOracle_eq_ParityP_of_mem_UP_of_mem_coUP
 theorem ModPWithOracle_eq_ModP_of_mem_SPP (hk : 0 < k) (hA : A ∈ SPP encBits)
     (enc : α ↪ List Bool) :
     ModPWithOracle k A enc = ModP k enc := by
-  apply Set.Subset.antisymm ?_ (ModP_subset_ModPWithOracle k A enc)
-  rintro L ⟨f, hf, hL⟩
-  have hg_or : (fun a => (f a : ℤ)) ∈ GapPWithOracle A enc :=
-    ⟨f, hf, 0, SharpP_subset_SharpPWithOracle A enc SharpP.zero_mem, fun _ => by simp⟩
-  have hg : (fun a => (f a : ℤ)) ∈ GapP enc :=
-    GapPWithOracle_eq_GapP_of_mem_SPP hA enc ▸ hg_or
-  refine (mem_ModP_iff_exists_GapP hk).mpr ⟨fun a => (f a : ℤ), hg, fun a => ?_⟩
-  simpa only [← Int.natCast_emod, ne_eq, Int.natCast_eq_zero] using hL a
+  ext L
+  rw [mem_ModPWithOracle_iff_exists_GapPWithOracle hk,
+    GapPWithOracle_eq_GapP_of_mem_SPP hA enc,
+    mem_ModP_iff_exists_GapP hk]
 
 /-- **`SPP` is low for `coModP k`** for every positive modulus `0 < k`. -/
 theorem coModPWithOracle_eq_coModP_of_mem_SPP (hk : 0 < k) (hA : A ∈ SPP encBits)

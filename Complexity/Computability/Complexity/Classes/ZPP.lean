@@ -172,14 +172,12 @@ private theorem card_filter_drop (m k : ℕ) (P : List Bool → Prop) [Decidable
 /-- A prefix of the right length is a random string of that length. -/
 private theorem exists_ofFn_eq_take {m k : ℕ} (r : Fin (m + k) → Bool) :
     ∃ u : Fin m → Bool, List.ofFn u = (List.ofFn r).take m :=
-  ⟨((Fin.appendEquiv m k).symm r).1, by
-    rw [BitString.ofFn_eq_append r, List.take_left' List.length_ofFn]⟩
+  ⟨_, by rw [List.ofFn_add, List.take_left' List.length_ofFn]⟩
 
 /-- A suffix of the right length is a random string of that length. -/
 private theorem exists_ofFn_eq_drop {m k : ℕ} (r : Fin (m + k) → Bool) :
     ∃ v : Fin k → Bool, List.ofFn v = (List.ofFn r).drop m :=
-  ⟨((Fin.appendEquiv m k).symm r).2, by
-    rw [BitString.ofFn_eq_append r, List.drop_left' List.length_ofFn]⟩
+  ⟨_, by rw [List.ofFn_add, List.drop_left' List.length_ofFn]⟩
 
 /-! ### `RP ∩ coRP ⊆ ZPP` -/
 

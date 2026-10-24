@@ -509,11 +509,8 @@ theorem size_carryLookaheadFinish_le (w : ℕ) :
 /-- The replacement finishing stage preserves every carry-save value modulo `2^w`. -/
 theorem pairVal_eval_carryLookaheadFinish_mod {w : ℕ} (p : BitString (w + w)) :
     pairVal ((carryLookaheadFinish w).eval interpretation p) % 2 ^ w = pairVal p % 2 ^ w := by
-  have hp : Fin.append (BitString.fstBits p) (BitString.sndBits p) = p := by
-    ext i
-    induction i using Fin.addCases <;>
-      simp only [BitString.fstBits, BitString.sndBits, Fin.append_left, Fin.append_right,
-        Function.comp_apply]
+  have hp : Fin.append (BitString.fstBits p) (BitString.sndBits p) = p :=
+    BitString.append_fstBits_sndBits p
   have h := val_eval_carryLookaheadAdd (BitString.fstBits p) (BitString.sndBits p)
   rw [hp] at h
   simp only [carryLookaheadFinish, Circuit.eval_append, Circuit.eval_comp, Circuit.eval_wiring]

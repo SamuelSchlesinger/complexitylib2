@@ -172,12 +172,12 @@ theorem proofLabels_proofOfLabels (width vertices : ℕ)
 /-- The verdict checks the labels determined by the proof at the selected edge. -/
 theorem edgeVerifier_accepts (width : ℕ) (decode : (Fin width → Bool) → α)
     (eval : C → α → α → Bool) (g : Graph C) (proof random : List Bool) :
-    (edgeVerifier width decode eval).Accepts g proof random =
+    (edgeVerifier width decode eval).accepts g proof random =
       (g.sampleEdge random).elim true (fun edge =>
         eval edge.constraint (proofLabels width decode proof edge.src)
           (proofLabels width decode proof edge.dst)) := by
   cases h : g.sampleEdge random <;>
-    simp [PCPVerifier.Accepts, edgeVerifier, h, Edge.proofVerdict_answers, proofLabels]
+    simp [PCPVerifier.accepts, edgeVerifier, h, Edge.proofVerdict_answers, proofLabels]
 
 /-- A single check always uses two blocks, retaining ignored dummy queries on padding indices. -/
 @[simp]
@@ -211,7 +211,7 @@ theorem accepts_proofOfLabels (width : ℕ) (encode : α → Fin width → Bool)
     (decode : (Fin width → Bool) → α) (hdecode : Function.LeftInverse decode encode)
     (eval : C → α → α → Bool) {g : Graph C} (hg : g.WellFormed) (labels : ℕ → α)
     (hsat : ∀ edge, (g.toGraph eval).Satisfies labels edge) (random : List Bool) :
-    (edgeVerifier width decode eval).Accepts g
+    (edgeVerifier width decode eval).accepts g
       (proofOfLabels width g.vertices encode labels) random = true := by
   rw [edgeVerifier_accepts]
   cases h : g.sampleEdge random with

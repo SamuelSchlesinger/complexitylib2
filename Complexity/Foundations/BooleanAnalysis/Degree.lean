@@ -177,7 +177,7 @@ private theorem signSpan_le_ker_fourierCoeffₗ {S : Finset ι} (hS : D < #S) :
     rintro rfl
     exact absurd hT (not_le.2 hS)
   change fourierCoeff (chi ℝ T) S = 0
-  simp only [fourierCoeff, expect_chi_mul_chi, hTS, ↓reduceIte]
+  simp only [fourierCoeff_chi, hTS, ↓reduceIte]
 
 /-- A function of total degree at most `D` has no Fourier weight on sets of more than `D`
 coordinates. -/

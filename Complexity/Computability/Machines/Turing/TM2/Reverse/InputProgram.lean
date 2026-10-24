@@ -23,7 +23,7 @@ public import Complexity.Computability.Machines.Turing.TM2.Reverse.Representatio
 * `Turing.MultiTapeTM.ToTM2.stepAux_finish`: emit an optional bit and restore boundary control.
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM.ToTM2
 

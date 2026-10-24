@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.FirstOrder.Ordered.Packing
-public import Complexity.Foundations.Data.BitString.SumTree
+public import Complexity.Foundations.Data.Nat.Bitwise.SumTree
 import Mathlib.Tactic.Linarith
 
 /-!

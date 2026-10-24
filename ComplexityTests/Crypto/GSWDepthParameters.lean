@@ -14,7 +14,7 @@ augmented decryption circuit fits the budget or assume security of an insecure f
 
 namespace ComplexityTests.GSWDepthParameters
 
-open Cslib Cslib.Crypto Cslib.Probability Cslib.Crypto.Homomorphic.GSW
+open Cslib Cslib.Crypto Cslib.ProbComp Cslib.Probability Cslib.Crypto.Homomorphic.GSW
 open Turing.MultiTapeTM
 
 -- Zero is included; neither the dimensions, noise nor depth collapses to an empty case.

@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.SumOfTerms
 public import Complexity.Computability.Circuit.Arithmetic.Waring.Basic
 public import Complexity.Foundations.Data.MvPolynomial.Catalecticant
 public import Mathlib.Data.Nat.Choose.Central
+import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 import Complexity.Foundations.LinearAlgebra.Rank
 import Mathlib.Data.Finsupp.Indicator
 import Mathlib.Data.Finset.Powerset

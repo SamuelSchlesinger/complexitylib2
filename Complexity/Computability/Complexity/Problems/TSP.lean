@@ -52,7 +52,7 @@ with fewer than three vertices have no Hamiltonian cycle and are mapped to a fix
 * `Cslib.Complexity.encTSP`, `Cslib.Complexity.TSP.dist`, `Cslib.Complexity.TSP.tourLength`,
   `Cslib.Complexity.TSP`.
 * `Cslib.Complexity.TSP.verifier`.
-* `Cslib.Complexity.HamCycle.cities`, `Cslib.Complexity.HamCycle.toTSP`.
+* `Cslib.Complexity.HamCycle.toTSP`.
 
 ## Main results
 
@@ -212,26 +212,17 @@ namespace HamCycle
 
 /-! ### The reduction from Hamiltonian cycles -/
 
-/-- The cities of `HamCycle.toTSP G`: the distinct declared vertices of `G`, in the order of their
-first occurrences. -/
-def cities (G : Graph) : List ℕ := G.distinctVertices
-
 /-- The reduction from `HamCycle` to `TSP` [Papadimitriou, Section 9.3][Papadimitriou94]: the
 cities are the distinct declared vertices, at distance `1` when they are adjacent and `2`
 otherwise, and the budget is the number `n` of cities. When `n < 3` the graph has no Hamiltonian
 cycle, and the reduction returns the no-instance of one city at distance `1` from itself with
 budget `0`. -/
 def toTSP (G : Graph) : List (List ℕ) × ℕ :=
-  if (cities G).length < 3 then ([[1]], 0)
-  else ((cities G).map fun u => (cities G).map fun v => if G.adjBool u v then 1 else 2,
-    (cities G).length)
-
-/-- The cities of `G` are its declared vertices. -/
-private theorem mem_cities {G : Graph} {v : ℕ}
-    : v ∈ cities G ↔ v ∈ G.1 := Graph.mem_distinctVertices
-
-/-- The cities of `G` are distinct. -/
-private theorem nodup_cities (G : Graph) : (cities G).Nodup := G.nodup_distinctVertices
+  if G.distinctVertices.length < 3 then ([[1]], 0)
+  else
+    (G.distinctVertices.map fun u =>
+      G.distinctVertices.map fun v => if G.adjBool u v then 1 else 2,
+    G.distinctVertices.length)
 
 private theorem dist_map {V : List ℕ} {G : Graph} {i j : ℕ} (hi : i < V.length)
     (hj : j < V.length) :
@@ -288,13 +279,14 @@ private theorem getD_lt {l : List ℕ} {n : ℕ} (hn : 0 < n) (hl : ∀ a ∈ l,
 distance matrix has a closed tour of length at most the number of cities. -/
 theorem toTSP_mem_iff (G : Graph) : toTSP G ∈ TSP ↔ G ∈ HamCycle := by
   rw [mem_HamCycle_iff]
-  have hVnd := nodup_cities G
-  have hmemV : ∀ v, v ∈ cities G ↔ v ∈ G.1 := fun v => mem_cities
-  have hlenV : ∀ q : List ℕ, q.Nodup → (∀ v, v ∈ q ↔ v ∈ G.1) → q.length = (cities G).length :=
+  have hVnd := G.nodup_distinctVertices
+  have hmemV : ∀ v, v ∈ G.distinctVertices ↔ v ∈ G.1 := fun _ => Graph.mem_distinctVertices
+  have hlenV :
+      ∀ q : List ℕ, q.Nodup → (∀ v, v ∈ q ↔ v ∈ G.1) → q.length = G.distinctVertices.length :=
     fun q hq hcov =>
       ((List.perm_ext_iff_of_nodup hq hVnd).2 fun v => (hcov v).trans (hmemV v).symm).length_eq
   unfold toTSP
-  generalize cities G = V at hVnd hmemV hlenV ⊢
+  generalize G.distinctVertices = V at hVnd hmemV hlenV ⊢
   split_ifs with hn
   · constructor
     · rintro ⟨p, hp, hlen⟩
@@ -390,12 +382,12 @@ theorem toTSP_mem_iff (G : Graph) : toTSP G ∈ TSP ↔ G ∈ HamCycle := by
 and the distances and the budget are written in binary. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_toTSP : ComputableTidilyInPolyTime toTSP encGraph encTSP := by
-  have hV : ComputableTidilyInPolyTime cities encGraph (encList encNat) :=
+  have hV : ComputableTidilyInPolyTime Graph.distinctVertices encGraph (encList encNat) :=
     Graph.computableTidilyInPolyTime_distinctVertices
-  have hn : ComputableTidilyInPolyTime (fun G => (cities G).length) encGraph encUnary :=
-    (length_list _).comp hV
+  have hn : ComputableTidilyInPolyTime (fun G : Graph => G.distinctVertices.length) encGraph
+      encUnary := (length_list _).comp hV
   have hrow : ComputableTidilyInPolyTime
-      (fun p : Graph × ℕ => (cities p.1).map fun v => if p.1.adjBool p.2 v then 1 else 2)
+      (fun p : Graph × ℕ => p.1.distinctVertices.map fun v => if p.1.adjBool p.2 v then 1 else 2)
       (encPair encGraph encNat) (encList encNat) :=
     mapWithInput (hV.comp (fst _ _))
       (cond Graph.computableTidilyInPolyTime_adjBool (const 1) (const 2))

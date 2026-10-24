@@ -15,6 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Data.List.GetD
 import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
@@ -39,7 +40,12 @@ This module holds the tools these problems share:
   their positions enumerate the declared vertices (`Cslib.Complexity.Graph.vertexEquiv`);
 * explicit verifiers with fixed certificate lengths write numbers in unary blocks of a certificate
   (`Cslib.Complexity.unaryBlocks`): each number, at most `m`, gets its own block of `m` bits, and
-  it is read back by counting the set bits of its block (`Cslib.Complexity.countP_unaryBlocks`).
+  it is read back by counting the set bits of its block (`Cslib.Complexity.countP_unaryBlocks`);
+* a vertex ordering problem, such as Hamiltonian path/cycle, TSP or graph isomorphism, is verified
+  by decoding a list of vertices from unary blocks of a certificate
+  (`Cslib.Complexity.Graph.decodeVertexList`) and checking that it lists every vertex of the target
+  list without repetitions (`Cslib.Complexity.Graph.enumeratesBool`,
+  `Cslib.Complexity.Graph.verifyOrdering`).
 
 ## Main definitions
 
@@ -50,6 +56,8 @@ This module holds the tools these problems share:
 * `Cslib.Complexity.Graph.distinctVertices`, `Cslib.Complexity.Graph.vertexEquiv`: the declared
   vertices without repetitions and their enumeration by positions.
 * `Cslib.Complexity.unaryBlocks`: numbers written in unary blocks of a certificate.
+* `Cslib.Complexity.Graph.enumeratesBool`, `Cslib.Complexity.Graph.decodeVertexList`,
+  `Cslib.Complexity.Graph.verifyOrdering`: verifying orderings of a vertex list.
 
 ## Main results
 
@@ -61,6 +69,10 @@ This module holds the tools these problems share:
 * `Cslib.Complexity.Graph.length_vertices_le_encGraph`: a graph has no more declared vertices than
   the length of its encoding.
 * `Cslib.Complexity.countP_unaryBlocks`: counting the set bits of a block reads its number.
+* `Cslib.Complexity.Graph.exists_decodeVertexList_eq`,
+  `Cslib.Complexity.Graph.isVerifier_verifyOrdering`,
+  `Cslib.Complexity.Graph.computableTidilyInPolyTime_verifyOrdering`: the ordering verifier is a
+  polynomial-time verifier with quadratic certificate length.
 
 ## References
 
@@ -169,7 +181,7 @@ def adjBool (G : Graph) (u v : ℕ) : Bool :=
 @[simp]
 theorem adjBool_eq_true_iff (G : Graph) (u v : ℕ) :
     G.adjBool u v = true ↔ G.toSimpleGraph.Adj u v := by
-  simp [adjBool, toSimpleGraph, SimpleGraph.fromRel_adj]
+  simp [adjBool, toSimpleGraph_adj]
 
 @[simp]
 theorem adjBool_eq_false_iff (G : Graph) (u v : ℕ) :
@@ -306,5 +318,141 @@ theorem countP_unaryBlocks {m N a : ℕ} {f : ℕ → ℕ} (hf : f a ≤ m) (hN 
   have hmod : (m * a + c) % m = c := by rw [Nat.mul_add_mod, Nat.mod_eq_of_lt hc]
   simp only [unaryBlocks, List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hlt,
     Option.map_some, Option.getD_some, hdiv, hmod]
+
+/-! ### Ordering verification -/
+
+namespace Graph
+
+/-- Executable test that `p` lists every vertex of `V` exactly once and nothing else. -/
+def enumeratesBool (V p : List ℕ) : Bool :=
+  (V.all fun v => p.any fun u => decide (u = v)) &&
+    (p.all fun u => V.any fun v => decide (v = u)) &&
+    p.zipIdx.all fun e => decide (p.idxOf e.1 = e.2)
+
+/-- `enumeratesBool V p` holds exactly when `p` lists the members of `V` without repetition. -/
+theorem enumeratesBool_eq_true_iff {V p : List ℕ} :
+    enumeratesBool V p = true ↔ p.Nodup ∧ ∀ v, v ∈ p ↔ v ∈ V := by
+  have hnodup : (∀ e ∈ p.zipIdx, p.idxOf e.1 = e.2) ↔ p.Nodup := by
+    constructor
+    · intro h
+      rw [List.nodup_iff_injective_get]
+      rintro ⟨i, hi⟩ ⟨j, hj⟩ hij
+      simp only [List.get_eq_getElem] at hij
+      have hi' : p.idxOf p[i] = i := h (p[i], i) (List.mem_zipIdx_iff_getElem?.2 (by simp))
+      have hj' : p.idxOf p[j] = j := h (p[j], j) (List.mem_zipIdx_iff_getElem?.2 (by simp))
+      rw [hij] at hi'
+      exact Fin.ext (hi'.symm.trans hj')
+    · intro hnd e he
+      obtain ⟨hlt, heq⟩ := List.getElem?_eq_some_iff.1 (List.mem_zipIdx_iff_getElem?.1 he)
+      rw [← heq, hnd.idxOf_getElem]
+  simp only [enumeratesBool, Bool.and_eq_true, List.all_eq_true, List.any_eq_true,
+    decide_eq_true_eq, hnodup]
+  constructor
+  · rintro ⟨⟨hV, hp⟩, hnd⟩
+    refine ⟨hnd, fun v => ⟨fun hv => ?_, fun hv => ?_⟩⟩
+    · obtain ⟨u, hu, rfl⟩ := hp v hv
+      exact hu
+    · obtain ⟨u, hu, rfl⟩ := hV v hv
+      exact hu
+  · rintro ⟨hnd, hmem⟩
+    exact ⟨⟨fun v hv => ⟨v, (hmem v).2 hv, rfl⟩, fun u hu => ⟨u, (hmem u).1 hu, rfl⟩⟩, hnd⟩
+
+/-- The list of vertices described by a certificate `w`, for a vertex list `V` of length `m`: `w`
+is read as blocks of `m` bits, one for each distinct vertex of `V`, and the block numbered `a`
+names the entry of `V` whose position is its number of set bits, or `0` if there is none. -/
+def decodeVertexList (V : List ℕ) (w : List Bool) : List ℕ :=
+  (List.range V.dedup.length).map fun a =>
+    V.getD ((List.range V.length).countP fun c => w.getD (V.length * a + c) false) 0
+
+/-- Every list of the distinct vertices of `V`, each listed once, is described by a certificate
+of length `n ^ 2`, for every `n` at least the length of `V`. -/
+theorem exists_decodeVertexList_eq {V p : List ℕ} (hp : p.Nodup) (hpV : ∀ v, v ∈ p ↔ v ∈ V)
+    {n : ℕ} (hn : V.length ≤ n) : ∃ w : List Bool, w.length = n ^ 2 ∧ decodeVertexList V w = p := by
+  have hlen : p.length = V.dedup.length :=
+    ((List.perm_ext_iff_of_nodup hp (List.nodup_dedup V)).2 fun v => by
+      rw [List.mem_dedup]
+      exact hpV v).length_eq
+  have hle : V.dedup.length ≤ V.length := (List.dedup_sublist V).length_le
+  refine ⟨unaryBlocks V.length (n ^ 2) fun a => V.idxOf (p.getD a 0), length_unaryBlocks ..,
+    List.ext_getElem (by simp [decodeVertexList, hlen]) fun a ha ha' => ?_⟩
+  have hidx : V.idxOf p[a] < V.length := List.idxOf_lt_length_iff.2 ((hpV _).1 (List.getElem_mem _))
+  have hcount := countP_unaryBlocks (N := n ^ 2) (f := fun a => V.idxOf (p.getD a 0)) (a := a)
+    (by rw [List.getD_eq_getElem _ _ ha']; exact hidx.le)
+    (calc V.length * (a + 1) ≤ n * n := Nat.mul_le_mul hn (by omega)
+      _ = n ^ 2 := (sq n).symm)
+  simp only [decodeVertexList, List.getElem_map, List.getElem_range]
+  rw [hcount, List.getD_eq_getElem _ _ ha', List.getD_eq_getElem _ _ hidx,
+    List.getElem_idxOf hidx]
+
+/-- Verify a vertex ordering problem: decode a list of vertices from the certificate
+(`decodeVertexList`), check that it lists every vertex of `V x` exactly once, and test it with
+`check`. -/
+def verifyOrdering {α : Type} (V : α → List ℕ) (check : α → List ℕ → Bool)
+    (x : α × List Bool) : Bool :=
+  let p := decodeVertexList (V x.1) x.2
+  enumeratesBool (V x.1) p && check x.1 p
+
+/-- `verifyOrdering` verifies the existence of an ordering of the vertices satisfying `P`, with
+certificates of length `n ^ 2` for instances of encoded length `n`, as long as `check` decides
+`P` and the vertex list is not longer than the encoded instance. -/
+theorem isVerifier_verifyOrdering {α : Type} {enc : α ↪ List Bool} {V : α → List ℕ}
+    {check : α → List ℕ → Bool} {P : α → List ℕ → Prop}
+    (hV : ∀ a, (V a).length ≤ (enc a).length) (hcheck : ∀ a p, check a p = true ↔ P a p) :
+    IsVerifier enc (Polynomial.X ^ 2) (verifyOrdering V check)
+      {a | ∃ p, p.Nodup ∧ (∀ v, v ∈ p ↔ v ∈ V a) ∧ P a p} := by
+  intro a
+  simp only [Set.mem_ofPred_eq, Polynomial.eval_pow, Polynomial.eval_X, verifyOrdering,
+    Bool.and_eq_true, enumeratesBool_eq_true_iff, hcheck]
+  constructor
+  · rintro ⟨p, hnd, hmem, hP⟩
+    obtain ⟨w, hw, hdec⟩ := exists_decodeVertexList_eq hnd hmem (hV a)
+    exact ⟨w, hw, by rw [hdec]; exact ⟨⟨hnd, hmem⟩, hP⟩⟩
+  · rintro ⟨w, -, ⟨hnd, hmem⟩, hP⟩
+    exact ⟨_, hnd, hmem, hP⟩
+
+/-- Testing whether a list lists every vertex of another exactly once is polynomial-time. -/
+private theorem computableTidilyInPolyTime_enumeratesBool :
+    ComputableTidilyInPolyTime (fun x : List ℕ × List ℕ => enumeratesBool x.1 x.2)
+      (encPair (encList encNat) (encList encNat)) encBool := by
+  unfold enumeratesBool
+  fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_enumeratesBool
+
+/-- Decoding a list of vertices from a certificate is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_decodeVertexList :
+    ComputableTidilyInPolyTime (fun x : List ℕ × List Bool => decodeVertexList x.1 x.2)
+      (encPair (encList encNat) encBits) (encList encNat) := by
+  have hn : ComputableTidilyInPolyTime (fun x : List ℕ × List Bool => x.1.dedup.length)
+      (encPair (encList encNat) encBits) encUnary := by
+    simp only [← List.card_toFinset, ← length_selectDistinct_replicate]
+    have := bitsReplicate true
+    fun_prop
+  have hblock : ComputableTidilyInPolyTime
+      (fun q : (List ℕ × List Bool) × ℕ =>
+        (List.range q.1.1.length).countP fun c => q.1.2.getD (q.1.1.length * q.2 + c) false)
+      (encPair (encPair (encList encNat) encBits) encUnary) encUnary := by
+    fun_prop
+  unfold decodeVertexList
+  fun_prop
+
+/-- `verifyOrdering` is polynomial-time whenever the vertex list and the test `check` are. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_verifyOrdering {α : Type} {enc : α ↪ List Bool}
+    {V : α → List ℕ} {check : α → List ℕ → Bool}
+    (hV : ComputableTidilyInPolyTime V enc (encList encNat))
+    (hcheck : ComputableTidilyInPolyTime (fun q : α × List ℕ => check q.1 q.2)
+      (encPair enc (encList encNat)) encBool) :
+    ComputableTidilyInPolyTime (verifyOrdering V check) (encPair enc encBits) encBool := by
+  have hV' : ComputableTidilyInPolyTime (fun x : α × List Bool => V x.1) (encPair enc encBits)
+      (encList encNat) := hV.comp (fst _ _)
+  have hp : ComputableTidilyInPolyTime (fun x : α × List Bool => decodeVertexList (V x.1) x.2)
+      (encPair enc encBits) (encList encNat) :=
+    computableTidilyInPolyTime_decodeVertexList.comp (hV'.prod (snd _ _))
+  exact (computableTidilyInPolyTime_enumeratesBool.comp (hV'.prod hp)).bool_and'
+    (hcheck.comp ((fst _ _).prod hp))
+
+end Graph
 
 end Cslib.Complexity

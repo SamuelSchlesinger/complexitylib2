@@ -148,7 +148,7 @@ theorem setOf_le_mem_PP {f : α → ℕ} (hf : f ∈ SharpP enc) :
     {x : α × ℕ | x.2 ≤ f x.1} ∈ PP (encPair enc encNat) := by
   refine mem_PP_iff_exists_GapP.2 ⟨fun x => ((f x.1 + 1 : ℕ) : ℤ) - (x.2 : ℕ),
     ⟨_, SharpP.add_one_mem (SharpP.comp_mem hf (ComputableTidilyInPolyTime.fst enc encNat)), _,
-      SharpP.of_polyTime (ComputableTidilyInPolyTime.snd enc encNat), fun _ => rfl⟩,
+      mem_SharpP_of_polyTime (ComputableTidilyInPolyTime.snd enc encNat), fun _ => rfl⟩,
     fun x => ?_⟩
   simp only [Set.mem_ofPred_eq, sub_pos, Nat.cast_lt]
   omega
@@ -271,14 +271,14 @@ theorem isOraclePPTOn_search {input : α ↪ List Bool} {u : α → List Bool} {
         (ComputableTidilyInPolyTime.snd input (encPair encNat encUnary)))
   have hpreserve (a : α) (i : ℕ) (s : ℕ × ℕ) (hi : i < N a)
       (hinv : s.2 = N a - i ∧ s.1 + 2 ^ s.2 ≤ 2 ^ N a) (next : ℕ × ℕ)
-      (hnext : next ∈ ProbOracleComp.support
+      (hnext : next ∈ OracleComp.support
         (OracleComp.interpret ProbOracleComp.query (searchQuery (u a) s))) :
       next.2 = N a - (i + 1) ∧ next.1 + 2 ^ next.2 ≤ 2 ^ N a := by
     obtain ⟨hs, hlo⟩ := hinv
     have hs0 : s.2 ≠ 0 := by omega
     rw [interpret_searchQuery] at hnext
     simp only [hs0, ↓reduceIte, Functor.map_map] at hnext
-    obtain ⟨reply, -, rfl⟩ := ProbOracleComp.mem_support_map hnext
+    obtain ⟨reply, -, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hnext
     obtain ⟨j, hj⟩ : ∃ j, s.2 = j + 1 := ⟨s.2 - 1, by omega⟩
     rw [hj, pow_succ] at hlo
     refine ⟨by simp only; omega, ?_⟩
@@ -390,9 +390,9 @@ theorem PWithSharpPOracle_subset_PWithPPOracle : PWithSharpPOracle enc ⊆ PWith
       ComputableTidilyInPolyTime.id' hhandler (ComputableTidilyInPolyTime.const ())
       (fun _ _ => True) (fun _ => trivial) (ComputableTidilyInPolyTime.const 1)
       (fun a request state _ result hresult => by
-        obtain ⟨reply, hreply, rfl⟩ := ProbOracleComp.mem_support_map hresult
+        obtain ⟨reply, hreply, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hresult
         rw [bitQuery, OracleComp.interpret_map] at hreply
-        obtain ⟨lo, -, rfl⟩ := ProbOracleComp.mem_support_map hreply
+        obtain ⟨lo, -, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hreply
         exact ⟨trivial, by simp, Nat.le_add_right _ _⟩)
     refine (hsub.map (ComputableTidilyInPolyTime.fst encBool (encFinEnum Unit))).congr
       fun a State oracle s => ?_

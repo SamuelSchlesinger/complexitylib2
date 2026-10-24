@@ -23,13 +23,13 @@ adversary then shows that no protocol with `d + 1` messages of `m` bits solves t
 Karchmer–Wigderson game of parity once `16 (32768 · 194 ^ d (m + 1)) ^ d ≤ n`
 (`RoundProtocol.not_solvesKW_parity`), so protocols with `d` messages need
 `Ω(n ^ (1 / (d - 1)))` bits [Korten, Theorem 3][Korten2026]
-(`parity_communication_lower_bound`).
+(`not_solvesKW_parity`).
 
 ## Main results
 
 * `Cslib.Communication.RoundProtocol.not_solvesKW_parity`: the bound with explicit
   constants.
-* `Cslib.Communication.parity_communication_lower_bound`: Korten's lower bound.
+* `Cslib.Communication.not_solvesKW_parity`: Korten's lower bound.
 
 ## References
 
@@ -47,7 +47,7 @@ private theorem parity_class_nonempty_deficit {n : ℕ} (hn : 0 < n) (b : Bool) 
     (univ.filter fun x : Fin n → Bool => parity n x = b).Nonempty ∧
       uniformDeficit (univ.filter fun x : Fin n → Bool => parity n x = b) ≤ 1 := by
   let X := univ.filter (fun x : Fin n → Bool => parity n x = b)
-  have hbal := expect_half_of_flip (parity n) ⟨0, hn⟩
+  have hbal := expect_ite_eq_one_half_of_update_not (parity n) ⟨0, hn⟩
     (fun x => parity_update_not x _) b
   have hratio : (X.card : ℝ) / (2 : ℝ) ^ n = 1 / 2 := by
     simpa only [Fintype.expect_eq_sum_div_card, sum_boole, Fintype.card_fun,
@@ -73,7 +73,7 @@ private theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : 
         (univ.filter fun z : Fin n → Bool => parity n z = b) P x then 1 else 0 := by
     by_cases h : ∃ i, P i = true
     · obtain ⟨i, hi⟩ := h
-      have hd := coordinateDensity_half_of_flip (parity n) i
+      have hd := coordinateDensity_filter_eq_one_half_of_update_not (parity n) i
         (fun x => parity_update_not x i) P x hi b
       simp only [hd]
       norm_num [show ∃ j, P j = true from ⟨i, hi⟩]
@@ -179,7 +179,7 @@ universe u in
 `d ≥ 2` there is `ε > 0` such that, for all large `n`, no protocol with `d` messages from an
 alphabet of at most `2 ^ (ε n ^ (1 / (d - 1)))` letters solves the Karchmer–Wigderson game of parity
 on `n` bits. -/
-theorem parity_communication_lower_bound (rounds : ℕ) (hrounds : 2 ≤ rounds) :
+theorem not_solvesKW_parity (rounds : ℕ) (hrounds : 2 ≤ rounds) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ {M : Type u} [Fintype M],
       (Fintype.card M : ℝ) ≤ (2 : ℝ) ^ (ε * (n : ℝ) ^ (((rounds - 1 : ℕ) : ℝ)⁻¹)) →
         ∀ P : KWRoundProtocol (Fin n) M rounds, ¬ P.SolvesKW (parity n) := by

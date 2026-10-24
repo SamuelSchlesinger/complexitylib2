@@ -9,10 +9,12 @@ module
 
 public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
+public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
@@ -27,18 +29,28 @@ exactly-one constraints. They apply to empty lists and lists with repeated varia
 requires a polynomial-time renaming function, but does not require injectivity; injectivity is
 needed separately when transferring satisfiability.
 
+## Main definitions
+
+* `Cslib.Logic.PL.encOccurrence`: encoding of a literal occurrence.
+
 ## Main results
 
 * `Cslib.Logic.PL.Clause.computableInPolyTime_impLits`,
-  `.computableTidilyInPolyTime_imp`: implication clauses.
+  `Cslib.Logic.PL.Clause.computableInPolyTime_imp`: implication clauses.
 * `Cslib.Logic.PL.Clause.computableInPolyTime_relabel`,
   `Cslib.Logic.PL.CNF.computableInPolyTime_relabel`: renaming variables.
 * `Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne`: exactly-one constraints.
-* `Cslib.Logic.PL.CNF.computableInPolyTime_vars`: listing variable occurrences.
+* `Cslib.Logic.PL.CNF.computableInPolyTime_vars`,
+  `Cslib.Logic.PL.CNF.computableInPolyTime_distinctVars`,
+  `Cslib.Logic.PL.computableInPolyTime_occurrences`: listing variable occurrences, distinct
+  variables and literal occurrences.
 * `Cslib.Logic.PL.Clause.computableInPolyTime_length`,
   `Cslib.Logic.PL.CNF.computableInPolyTime_length`,
-  `Cslib.Logic.PL.CNF.computableInPolyTime_vars_length`: clause, formula and
-  variable-occurrence counts in unary.
+  `Cslib.Logic.PL.CNF.computableInPolyTime_vars_length`,
+  `Cslib.Logic.PL.CNF.computableInPolyTime_numVars`: clause, formula, variable-occurrence and
+  distinct-variable counts in unary.
+* `Cslib.Logic.PL.CNF.computableInPolyTime_eval_bitsAssignment`: evaluating a formula under a
+  numbered assignment.
 * `Cslib.Logic.PL.CNF.isPolyTime_compact`: compact unary indices for arbitrary variable names.
 
 ## References
@@ -130,6 +142,64 @@ theorem CNF.computableInPolyTime_vars_length {α : Type} {input : α ↪ List Bo
     ComputableInPolyTime (fun a => (φ a).vars.length) input encUnary := by
   have hφ := hφ.tidy
   exact .of_tidy ((length encV).comp ((PL.CNF.computableInPolyTime_vars encV).tidy.comp hφ))
+
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+/-- Listing the distinct variables of a formula in order of first occurrence is
+polynomial-time. -/
+@[fun_prop]
+theorem CNF.computableInPolyTime_distinctVars [DecidableEq V] (enc : V ↪ List Bool) :
+    ComputableInPolyTime (CNF.distinctVars (V := V))
+      (encList (encList (encPair enc encBool))) (encList enc) := by
+  have hrep : ComputableTidilyInPolyTime (fun n => List.replicate n true) encUnary encBits :=
+    of_linear (.of_eq fun _ => rfl)
+  refine .of_tidy ?_
+  unfold CNF.distinctVars Cslib.Complexity.selectDistinct
+  fun_prop
+
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+/-- The number of distinct variables of a formula, in unary, is polynomial-time. -/
+@[fun_prop]
+theorem CNF.computableInPolyTime_numVars [DecidableEq V] (enc : V ↪ List Bool) :
+    ComputableInPolyTime (CNF.numVars (V := V))
+      (encList (encList (encPair enc encBool))) encUnary := by
+  have e : (CNF.numVars (V := V)) = fun φ => φ.distinctVars.length :=
+    funext fun φ => (CNF.length_distinctVars φ).symm
+  rw [e]
+  refine .of_tidy ?_
+  fun_prop
+
+/-- Encoding of a literal occurrence: unary clause and position indices with an encoded literal. -/
+def encOccurrence (enc : V ↪ List Bool) : Occurrence V ↪ List Bool :=
+  encPair encUnary (encPair encUnary (encPair enc encBool))
+
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+/-- Enumerating the literal occurrences of a CNF formula is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_occurrences (enc : V ↪ List Bool) :
+    ComputableInPolyTime (occurrences (V := V))
+      (encList (encList (encPair enc encBool))) (encList (encOccurrence enc)) := by
+  refine .of_tidy ?_
+  unfold occurrences encOccurrence
+  fun_prop
+
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+/-- Evaluating a formula under the assignment numbered by `i` on a list of variables is
+polynomial-time. -/
+@[fun_prop]
+theorem CNF.computableInPolyTime_eval_bitsAssignment [DecidableEq V] (enc : V ↪ List Bool) :
+    ComputableInPolyTime
+      (fun p : (CNF V × List V) × ℕ => p.1.1.eval (bitsAssignment p.1.2 p.2))
+      (encPair (encPair (encList (encList (encPair enc encBool))) (encList enc)) encNat)
+      encBool := by
+  have e : (fun p : (CNF V × List V) × ℕ => p.1.1.eval (bitsAssignment p.1.2 p.2)) =
+      fun p => p.1.1.eval fun v => p.2.bits.getD (p.1.2.idxOf v) false := by
+    funext p
+    congr 1
+    funext v
+    exact bitsAssignment_eq_getD ..
+  rw [e]
+  refine .of_tidy ?_
+  fun_prop [CNF.eval, Clause.eval, Literal.eval]
 
 /-- Construct the clause requiring at least one listed variable to hold. -/
 @[fun_prop]

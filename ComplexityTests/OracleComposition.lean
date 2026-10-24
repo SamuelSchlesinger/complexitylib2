@@ -75,8 +75,8 @@ example : IsOraclePPTOn encUnary encBits
   refine IsOraclePPTOn.iterate_of_bounded_growth (count := fun n => n) (initial := fun _ => [])
     ComputableTidilyInPolyTime.id' (.const []) (by unfold collectStep; fun_prop) (growth := 1) ?_
   intro bits next hnext
-  obtain ⟨prefix_, hprefix, rfl⟩ := ProbOracleComp.mem_support_map hnext
-  obtain ⟨reply, _, rfl⟩ := ProbOracleComp.mem_support_map hprefix
+  obtain ⟨prefix_, hprefix, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hnext
+  obtain ⟨reply, _, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hprefix
   simp only [encBits, Function.Embedding.coe_refl, id_eq, List.length_append]
   exact Nat.add_le_add_left (List.length_take_le _ _) _
 

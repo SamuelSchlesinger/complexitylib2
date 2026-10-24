@@ -17,8 +17,8 @@ import Mathlib.Tactic.Ring
 Iterates the recursive construction `n` times, starting from a base family indexed by its number of
 predicates. Each level consumes one predicate index, adds a factor `Fin k × Fin r` to the
 coordinates, and lifts the base sensitive blocks along rows. The file computes the sizes of the
-coordinate and block index types and of the lifted blocks, and shows that nestedness, rejection of
-the all-false input, and acceptance after flipping a block propagate up the tower.
+coordinate and block index types, and shows that nestedness, rejection of the all-false input, and
+acceptance after flipping a block propagate up the tower.
 
 ## Main definitions
 
@@ -31,7 +31,6 @@ the all-false input, and acceptance after flipping a block propagate up the towe
 ## Main results
 
 * `tower_coordinates_card`: there are `(k * r) ^ n * Fintype.card I` coordinates at level `n`.
-* `towerBlocks_card`: lifted blocks have `r ^ n` times the base block size.
 * `towerBlocks_pairwise`: pairwise disjoint base blocks lift to pairwise disjoint blocks.
 * `towerFamily_nested`: nestedness of the base family propagates up the tower.
 * `towerFamily_zero`: rejection of the all-false input propagates up the tower.
@@ -126,20 +125,6 @@ theorem tower_block_index_card {k : ℕ} {K : Type} [Fintype K] (n : ℕ) :
   | succ n ih =>
     change Fintype.card (Fin k × TowerBlockIndex k K n) = _
     simp only [Fintype.card_prod, Fintype.card_fin, ih, pow_succ]
-    ring
-
-/-- If every base block has `L` elements, then every lifted block at level `n` has `r ^ n * L`
-elements. -/
-theorem towerBlocks_card {k r : ℕ} {I K : Type} (blocks : K → Finset I)
-    (L : ℕ) (hL : ∀ b, (blocks b).card = L) (n : ℕ) (b : TowerBlockIndex k K n) :
-    (towerBlocks (r := r) blocks n b).card = r ^ n * L := by
-  induction n with
-  | zero =>
-    change (blocks b).card = r ^ 0 * L
-    simpa only [pow_zero, one_mul] using hL b
-  | succ n ih =>
-    change (rowLift b.1 (towerBlocks blocks n b.2)).card = _
-    rw [rowLift_card, ih]
     ring
 
 /-- If `0 < r` and every base block is nonempty, then every lifted block is nonempty. -/

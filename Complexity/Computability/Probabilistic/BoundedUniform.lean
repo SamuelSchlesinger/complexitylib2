@@ -36,7 +36,7 @@ Failure remains in the certified program's output.
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM
+open ProbComp Turing.MultiTapeTM
 
 /-- Unary bounds and attempt counts give a uniform strict PPT sampler, including its failure
 result and every stored attempt. -/

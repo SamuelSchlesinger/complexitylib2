@@ -11,6 +11,8 @@ public import Complexity.Languages.Probabilistic.QueryCount
 public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Probability.Product
 
+import Complexity.Languages.Probabilistic.Semantics
+
 /-!
 # Lazy sampling of random functions
 

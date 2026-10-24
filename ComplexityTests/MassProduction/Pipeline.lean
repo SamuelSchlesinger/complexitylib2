@@ -87,7 +87,8 @@ theorem exists_isScheduler {K : Type*} [Field K] [Fintype K] [DecidableEq K] {�
     funext i
     apply (pointEquiv bits).symm_apply_eq.mpr
     funext k
-    simp only [targetBits, Equiv.symm_apply_apply, pointEquiv_apply]
+    simp only [targetBits, blocksEquiv_symm_apply, Function.comp_apply, Equiv.symm_apply_apply,
+      pointEquiv_apply]
   obtain ⟨sched, hsched⟩ := Interpretation.IsComplete.exists_computes (I := interpretation)
     fun y => lineBits bits (fun j => (scalar j : K)) (decode y) (directions (decode y))
   refine ⟨sched, fun targets => ⟨directions targets, (hdirections targets).1,

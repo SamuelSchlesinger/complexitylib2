@@ -51,8 +51,8 @@ reductions (`Cslib.Complexity.PolyTimeReducible.mem_P`). Since `SAT` is `NP`-com
 (`Cslib.Complexity.CookLevin.SAT_npComplete`), `SAT ∈ P` gives `P = NP`
 (`Cslib.Complexity.Ladner.P_eq_NP_of_SAT_mem_P`). The unconditional
 forms are `Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P` and
-`Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH`; the theorem keeps `P ≠ NP` as an explicit
-hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`).
+`Cslib.Complexity.Ladner.P_eq_NP_of_npComplete_SATH`; the theorem keeps `P ≠ NP` as an explicit
+hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_npComplete`).
 
 ## Main definitions
 
@@ -74,10 +74,10 @@ hypothesis (`Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`).
   tends to infinity, then `SAT ∈ P`.
 * Unconditionally, `SATH` is in `NP` (`Cslib.Complexity.Ladner.SATH_mem_NP`), in `P` only if `SAT`
   is (`Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P`), `NP`-hard only if `SAT ∈ P`
-  (`Cslib.Complexity.Ladner.SAT_mem_P_of_NPHard_SATH`), and in `P` or `NP`-complete only if
+  (`Cslib.Complexity.Ladner.SAT_mem_P_of_npHard_SATH`), and in `P` or `NP`-complete only if
   `P = NP` (`Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P`,
-  `Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH`).
-* `Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete`: **Ladner's theorem**, under the
+  `Cslib.Complexity.Ladner.P_eq_NP_of_npComplete_SATH`).
+* `Cslib.Complexity.Ladner.exists_NP_not_P_not_npComplete`: **Ladner's theorem**, under the
   hypothesis `P ≠ NP`.
 
 ## References
@@ -376,7 +376,7 @@ theorem SAT_mem_P_of_reducible_of_tendsto (hR : PolyTimeReducible encCNF encBits
 
 /-- **If `SATH` is `NP`-hard, then `SAT` is in `P`**: either `SATH` is in `P`, and the first hole
 applies, or `H` tends to infinity, and the second hole applies to the reduction of `SAT`. -/
-theorem SAT_mem_P_of_NPHard_SATH (h : NPHard encBits SATH) : SAT ∈ P encCNF := by
+theorem SAT_mem_P_of_npHard_SATH (h : NPHard encBits SATH) : SAT ∈ P encCNF := by
   by_cases hP : SATH ∈ P encBits
   · exact SAT_mem_P_of_SATH_mem_P hP
   · exact SAT_mem_P_of_reducible_of_tendsto (h encCNF SAT SAT.mem_NP) (tendsto_H_of_notMem_P hP)
@@ -389,9 +389,9 @@ theorem P_eq_NP_of_SATH_mem_P (h : SATH ∈ P encBits) {α : Type} (enc : α ↪
   P_eq_NP_of_SAT_mem_P (SAT_mem_P_of_SATH_mem_P h) enc
 
 /-- If Ladner's language is `NP`-complete, then `P = NP`. -/
-theorem P_eq_NP_of_NPComplete_SATH (h : NPComplete encBits SATH) {α : Type}
+theorem P_eq_NP_of_npComplete_SATH (h : NPComplete encBits SATH) {α : Type}
     (enc : α ↪ List Bool) : P enc = NP enc :=
-  P_eq_NP_of_SAT_mem_P (SAT_mem_P_of_NPHard_SATH h.2) enc
+  P_eq_NP_of_SAT_mem_P (SAT_mem_P_of_npHard_SATH h.2) enc
 
 /-- If `P ≠ NP`, Ladner's language is not in `P`. -/
 theorem SATH_notMem_P {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
@@ -399,16 +399,16 @@ theorem SATH_notMem_P {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc
   fun hP => h (P_eq_NP_of_SATH_mem_P hP enc)
 
 /-- If `P ≠ NP`, Ladner's language is not `NP`-complete. -/
-theorem not_NPComplete_SATH {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
+theorem not_npComplete_SATH {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
     ¬NPComplete encBits SATH :=
-  fun hC => h (P_eq_NP_of_NPComplete_SATH hC enc)
+  fun hC => h (P_eq_NP_of_npComplete_SATH hC enc)
 
 /-- **Ladner's theorem.** If `P ≠ NP` (for some encoding of instances), some problem in `NP` is
 neither in `P` nor `NP`-complete: Ladner's language `SATH` [Arora and Barak, Theorem
 3.3][AroraBarak09]. -/
-theorem exists_NP_not_P_not_NPComplete {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
+theorem exists_NP_not_P_not_npComplete {α : Type} {enc : α ↪ List Bool} (h : P enc ≠ NP enc) :
     ∃ L : Set (List Bool), L ∈ NP encBits ∧ L ∉ P encBits ∧ ¬NPComplete encBits L :=
-  ⟨SATH, SATH_mem_NP, SATH_notMem_P h, not_NPComplete_SATH h⟩
+  ⟨SATH, SATH_mem_NP, SATH_notMem_P h, not_npComplete_SATH h⟩
 
 end Ladner
 

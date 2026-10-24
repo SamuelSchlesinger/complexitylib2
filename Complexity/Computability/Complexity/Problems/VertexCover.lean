@@ -12,6 +12,7 @@ public import Mathlib.Combinatorics.SimpleGraph.VertexCover
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
@@ -43,7 +44,8 @@ first-order interpretations.
 ## Main definitions
 
 * `Cslib.Complexity.VertexCover`.
-* `Cslib.Complexity.VertexCover.verifier`.
+* `Cslib.Complexity.VertexCover.isUncoveredEdge`, `Cslib.Complexity.VertexCover.uncoveredEdges`,
+  `Cslib.Complexity.VertexCover.isCover`, `Cslib.Complexity.VertexCover.verifier`.
 * `Cslib.Complexity.IndependentSet.toVertexCover`.
 * `Cslib.Complexity.Graph.vertexCoverNum`: the vertex cover number.
 
@@ -57,7 +59,8 @@ first-order interpretations.
   number of distinct declared vertices minus the independence number.
 * `Cslib.Complexity.IndependentSet.computableTidilyInPolyTime_toVertexCover`: the reduction is
   polynomial-time, with targets in binary.
-* `Cslib.Complexity.VertexCover.isVerifier`, `Cslib.Complexity.VertexCover.mem_NP`:
+* `Cslib.Complexity.VertexCover.isCover_eq_true_iff`,
+  `Cslib.Complexity.VertexCover.isVerifier`, `Cslib.Complexity.VertexCover.mem_NP`:
   `VertexCover ∈ NP (encPair encGraph encNat)`.
 * `Cslib.Complexity.polyTimeReducible_IndependentSet_VertexCover`,
   `Cslib.Complexity.VertexCover_npHard`, `Cslib.Complexity.VertexCover_npComplete`:
@@ -194,14 +197,81 @@ end IndependentSet
 
 namespace VertexCover
 
+/-- Whether the edge `e` joins two distinct declared vertices of `G` and neither endpoint is in
+`C`. -/
+def isUncoveredEdge (G : Graph) (C : List ℕ) (e : ℕ × ℕ) : Bool :=
+  decide (e.1 ∈ G.1) && decide (e.2 ∈ G.1) &&
+    decide (e.1 ≠ e.2) && !decide (e.1 ∈ C) && !decide (e.2 ∈ C)
+
+/-- The edges of `G` between distinct declared vertices with neither endpoint in `C`. -/
+def uncoveredEdges (G : Graph) (C : List ℕ) : List (ℕ × ℕ) :=
+  G.2.filter (isUncoveredEdge G C)
+
+/-- Whether `C` covers every edge of `G` between declared vertices. -/
+def isCover (G : Graph) (C : List ℕ) : Bool :=
+  (uncoveredEdges G C).isEmpty
+
+theorem isUncoveredEdge_eq_true_iff {G : Graph} {C : List ℕ} {e : ℕ × ℕ} :
+    isUncoveredEdge G C e = true ↔
+      e.1 ∈ G.1 ∧ e.2 ∈ G.1 ∧ e.1 ≠ e.2 ∧ e.1 ∉ C ∧ e.2 ∉ C := by
+  simp [isUncoveredEdge, and_assoc]
+
+theorem mem_uncoveredEdges_iff {G : Graph} {C : List ℕ} {e : ℕ × ℕ} :
+    e ∈ uncoveredEdges G C ↔
+      e ∈ G.2 ∧ e.1 ∈ G.1 ∧ e.2 ∈ G.1 ∧ e.1 ≠ e.2 ∧ e.1 ∉ C ∧ e.2 ∉ C := by
+  rw [uncoveredEdges, List.mem_filter, isUncoveredEdge_eq_true_iff]
+
+/-- `isCover G C` holds exactly when every edge between declared vertices of `G` has an endpoint in
+`C`. -/
+theorem isCover_eq_true_iff {G : Graph} {C : List ℕ} :
+    isCover G C = true ↔
+      ∀ u ∈ G.1, ∀ v ∈ G.1, G.toSimpleGraph.Adj u v → u ∈ C ∨ v ∈ C := by
+  simp only [isCover, uncoveredEdges, List.isEmpty_iff, List.filter_eq_nil_iff,
+    isUncoveredEdge_eq_true_iff, Graph.toSimpleGraph_adj, not_and, not_not, Prod.forall]
+  constructor
+  · rintro h u hu v hv ⟨huv, he | he⟩
+    · by_cases huC : u ∈ C
+      · exact Or.inl huC
+      · exact Or.inr (h u v he hu hv huv huC)
+    · by_cases hvC : v ∈ C
+      · exact Or.inr hvC
+      · exact Or.inl (h v u he hv hu huv.symm hvC)
+  · intro h u v he hu hv huv huC
+    exact (h u hu v hv ⟨huv, Or.inl he⟩).resolve_left huC
+
+/-- Testing whether an edge is uncovered is polynomial-time. -/
+private theorem computableTidilyInPolyTime_isUncoveredEdge :
+    ComputableTidilyInPolyTime
+      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => isUncoveredEdge p.1.1 p.1.2 p.2)
+      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool := by
+  unfold isUncoveredEdge encGraph
+  fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_isUncoveredEdge
+
+/-- Listing the uncovered edges is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_uncoveredEdges :
+    ComputableTidilyInPolyTime (fun p : Graph × List ℕ => uncoveredEdges p.1 p.2)
+      (encPair encGraph (encList encNat)) (encList (encPair encNat encNat)) := by
+  have hE : ComputableTidilyInPolyTime (fun p : Graph × List ℕ => p.1.2)
+      (encPair encGraph (encList encNat)) (encList (encPair encNat encNat)) := by
+    unfold encGraph
+    fun_prop
+  exact filterWithInput hE computableTidilyInPolyTime_isUncoveredEdge
+
+/-- Testing whether `C` is a cover of `G` is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_isCover :
+    ComputableTidilyInPolyTime (fun p : Graph × List ℕ => isCover p.1 p.2)
+      (encPair encGraph (encList encNat)) encBool :=
+  (listIsEmpty' (encPair encNat encNat)).comp computableTidilyInPolyTime_uncoveredEdges
+
 /-- The verifier for `VertexCover`, a subset verifier (`Cslib.Complexity.subsetVerifier`): select
 distinct declared vertices by the certificate mask, check that their count equals `k`, and check
-that every edge between declared vertices has a selected endpoint. -/
+that every edge between declared vertices has a selected endpoint (`isCover`). -/
 def verifier : (Graph × ℕ) × List Bool → Bool :=
-  subsetVerifier (fun x => x.1.1) fun y =>
-    decide (y.2.length = y.1.2) && y.1.1.1.all fun u => y.1.1.1.all fun v =>
-      !(y.1.1.adjBool u v && !y.2.any (fun w => decide (w = u)) &&
-        !y.2.any (fun w => decide (w = v)))
+  subsetVerifier (fun x => x.1.1) fun y => decide (y.2.length = y.1.2) && isCover y.1.1 y.2
 
 /-- `VertexCover.verifier` verifies `VertexCover` with certificates as long as the encoded
 instance. -/
@@ -217,36 +287,18 @@ theorem isVerifier :
       simp only [Polynomial.eval_X, length_encPair]
       omega)
     fun x l hl _ => ?_
-  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.not_eq_true',
-    Bool.and_eq_false_iff, Bool.not_eq_false', List.any_eq_true, exists_eq_right,
-    Graph.adjBool_eq_false_iff, List.mem_toFinset, List.toFinset_card_of_nodup hl]
-  refine and_comm.trans (and_congr_left' ⟨fun h u hu v hv huv => ?_, fun h u hu v hv => ?_⟩)
-  · rcases h u hu v hv with (h | h) | h
-    · exact (h huv).elim
-    · exact Or.inl h
-    · exact Or.inr h
-  · by_cases huv : x.1.toSimpleGraph.Adj u v
-    · exact (h u hu v hv huv).elim (fun h => Or.inl (Or.inr h)) Or.inr
-    · exact Or.inl (Or.inl huv)
+  simp only [Bool.and_eq_true, decide_eq_true_eq, isCover_eq_true_iff, List.mem_toFinset,
+    List.toFinset_card_of_nodup hl, and_comm]
 
 /-- The `VertexCover` verifier is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_verifier :
     ComputableTidilyInPolyTime verifier (encPair (encPair encGraph encNat) encBits) encBool := by
-  have hV : ComputableTidilyInPolyTime (fun y : (Graph × ℕ) × List ℕ => y.1.1.1)
-      (encPair (encPair encGraph encNat) (encList encNat)) (encList encNat) := by
-    unfold encGraph
-    fun_prop
-  have hproj : ComputableTidilyInPolyTime
-      (fun p : (((Graph × ℕ) × List ℕ) × ℕ) × ℕ => ((p.1.1.1.1, p.1.2), p.2))
-      (encPair (encPair (encPair (encPair encGraph encNat) (encList encNat)) encNat) encNat)
-      (encPair (encPair encGraph encNat) encNat) := by fun_prop
-  have hadj := Graph.computableTidilyInPolyTime_adjBool.comp hproj
   refine computableTidilyInPolyTime_subsetVerifier (encγ := encNat) (by unfold encGraph; fun_prop)
-    (bool_and' ?_ (allWithInput hV (allWithInput (hV.comp (fst _ _)) ?_)))
-  · exact (((ComputableInPolyTime.length_list_binary encNat).tidy.comp (snd _ _)).decide_eq'
-      (by fun_prop))
-  · fun_prop
+    (bool_and' ?_ (computableTidilyInPolyTime_isCover.comp
+      (((fst _ _).comp (fst _ _)).prod (snd _ _))))
+  exact (((ComputableInPolyTime.length_list_binary encNat).tidy.comp (snd _ _)).decide_eq'
+    (by fun_prop))
 
 /-- `VertexCover` belongs to `NP`. -/
 theorem mem_NP : VertexCover ∈ NP (encPair encGraph encNat) :=

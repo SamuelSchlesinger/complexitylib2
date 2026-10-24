@@ -54,7 +54,7 @@ theorem SharpP.sum_bits_mem {f : α × List Bool → ℕ} {r : α → ℕ}
   let W : α × List Bool → Bool := fun x => V ((x.1, x.2.take (r x.1)), x.2.drop (r x.1))
   have hq : ComputableTidilyInPolyTime q enc encUnary := by dsimp [q]; fun_prop
   have hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool := by dsimp [W]; fun_prop
-  convert SharpP.of_polyTime_length hW (ComputableTidilyInPolyTime.unary_add.comp (hr.prod hq))
+  convert mem_SharpP_of_polyTime_length hW (ComputableTidilyInPolyTime.unary_add.comp (hr.prod hq))
     using 1
   ext a
   change _ = acceptCount W a (r a + q a)
@@ -172,8 +172,9 @@ theorem GapP.pow_mem_polyTime {g : α → ℤ} {r : α → ℕ} (hg : g ∈ GapP
   have hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool := by dsimp [V]; fun_prop
   have hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool := by dsimp [W]; fun_prop
   have hlength := ComputableTidilyInPolyTime.unary_mul.comp (hr.prod hk)
-  refine ⟨_, SharpP.of_polyTime_length (SignedProduct.polyTime_verifier hr hk hV hW false) hlength,
-    _, SharpP.of_polyTime_length (SignedProduct.polyTime_verifier hr hk hV hW true) hlength,
+  refine ⟨_,
+    mem_SharpP_of_polyTime_length (SignedProduct.polyTime_verifier hr hk hV hW false) hlength,
+    _, mem_SharpP_of_polyTime_length (SignedProduct.polyTime_verifier hr hk hV hW true) hlength,
     fun a => ?_⟩
   change g a ^ r a =
     (acceptCount (SignedProduct.verifier r k V W false) a (r a * k a) : ℤ) -

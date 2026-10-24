@@ -96,7 +96,7 @@ theorem isDeltaUniversalHash (n m : ℕ) :
 /-- Uniform Boolean matrices are a universal hash family, including zero-width outputs. -/
 theorem isTwoUniversal (n m : ℕ) :
     IsTwoUniversal (PMF.uniformOfFintype (Fin m → BitString n)) hash :=
-  isTwoUniversal_iff_isUniversalHash.mpr (isDeltaUniversalHash n m).isUniversalHash
+  (isDeltaUniversalHash n m).isTwoUniversal
 
 /-- Any initial block of a uniform matrix is itself uniform. Unused rows may remain public. -/
 private theorem uniform_prefix {n m count : ℕ} (h : m ≤ count) :

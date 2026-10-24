@@ -23,18 +23,15 @@ source action, which may write, move heads and emit a bit while halting.
 * `Turing.MultiTapeTM.ToTM2.prefixEvals`: the same correspondence with Mathlib's partial clock.
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM.ToTM2
 
 noncomputable section
 
--- Mathlib's bundled `FinTM2.Cfg` unfolds to the concrete simulator configuration type.
-set_option backward.isDefEq.respectTransparency false
-
 variable {k : ℕ} {State : Type} [Fintype State]
 
-theorem stepTotal_encode (tm : MultiTapeTM k Bool State) (d : Data k State)
+private theorem stepTotal_encode (tm : MultiTapeTM k Bool State) (d : Data k State)
     {q : State} (hq : d.state = some q) :
     TM2.stepTotal (program tm.q₀ tm.tr) (encode d) = encode (Data.totalStep tm d) :=
   Option.some.inj (step_encode tm d hq)
@@ -51,9 +48,16 @@ theorem iterate_encode (tm : MultiTapeTM k Bool State) (input : List Bool) {t : 
     (TM2.stepTotal (program tm.q₀ tm.tr))^[i] (initList (machine tm.q₀ tm.tr) input) =
       encode (Data.run tm input i) := by
   induction i with
-  | zero => exact (encode_init tm input).symm
+  | zero =>
+    rw [Data.run_zero]
+    exact (encode_init tm input).symm
   | succ i ih =>
-    rw [Function.iterate_succ_apply', ih (by omega)]
+    have hstep :
+        (TM2.stepTotal (program tm.q₀ tm.tr))^[i + 1] (initList (machine tm.q₀ tm.tr) input) =
+          TM2.stepTotal (program tm.q₀ tm.tr)
+            ((TM2.stepTotal (program tm.q₀ tm.tr))^[i] (initList (machine tm.q₀ tm.tr) input)) :=
+      Function.iterate_succ_apply' _ i _
+    rw [hstep, ih (by omega)]
     have hn : (Data.run tm input i).state ≠ none := by
       rw [Data.state_run]
       exact ht.not_halted (by omega)
@@ -62,14 +66,16 @@ theorem iterate_encode (tm : MultiTapeTM k Bool State) (input : List Bool) {t : 
     | some q => rw [stepTotal_encode tm _ hq, Data.run_succ]
 
 /-- The partial clock retains a successor throughout each source execution prefix. -/
-theorem partial_iterate_encode (tm : MultiTapeTM k Bool State) (input : List Bool)
+private theorem partial_iterate_encode (tm : MultiTapeTM k Bool State) (input : List Bool)
     {t : ℕ} (ht : tm.HaltsAt (tm.initCfg input) t) {i : ℕ} (hi : i ≤ t) :
     (fun c => c.bind (machine tm.q₀ tm.tr).step)^[i]
       (some (initList (machine tm.q₀ tm.tr) input)) = some (encode (Data.run tm input i)) := by
   induction i with
-  | zero => exact congrArg some (encode_init tm input).symm
+  | zero =>
+    rw [Data.run_zero]
+    exact congrArg some (encode_init tm input).symm
   | succ i ih =>
-    rw [Function.iterate_succ_apply', ih (by omega), Option.bind_some]
+    rw [Function.iterate_succ_apply', ih (by omega)]
     have hn : (Data.run tm input i).state ≠ none := by
       rw [Data.state_run]
       exact ht.not_halted (by omega)

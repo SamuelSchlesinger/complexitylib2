@@ -134,7 +134,7 @@ theorem IsOraclePPT.run_interpret_preprocess_open {External Caller State : Type}
     (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a request state, invariant a state →
-      ∀ result ∈ ProbOracleComp.support (handler a request state),
+      ∀ result ∈ OracleComp.support (handler a request state),
         invariant a result.2 ∧ result.1.length ≤ resources a request.2 ∧
         (stateEncoding result.2).length ≤ (stateEncoding state).length + resources a request.2) :
     IsOraclePPTOn input (encPair output stateEncoding) (fun a =>

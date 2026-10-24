@@ -492,11 +492,11 @@ theorem toThreeColoring_mem_iff (φ : CNF ℕ) : toThreeColoring φ ∈ ThreeCol
     refine satisfiable_of_coloring (c := c) fun e he => ?_
     obtain ⟨h₁, h₂⟩ := mem_endpoints he
     refine ⟨hadj _ h₁ _ h₂ ?_, hlt _ h₁, hlt _ h₂⟩
-    simp only [toThreeColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
+    simp only [toThreeColoring, Graph.toSimpleGraph_adj]
     exact ⟨ne_of_mem_coloringEdges he, Or.inl he⟩
   · rintro ⟨σ, hσ⟩
     refine ⟨gadgetColoring φ σ, fun v _ => gadgetColoring_lt v, fun u _ v _ huv => ?_⟩
-    · simp only [toThreeColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj] at huv
+    · simp only [toThreeColoring, Graph.toSimpleGraph_adj] at huv
       rcases huv.2 with h | h
       · exact gadgetColoring_ne hσ _ h
       · exact (gadgetColoring_ne hσ _ h).symm
@@ -597,7 +597,7 @@ private theorem mem_kColoringEdges {m : ℕ} {φ : CNF ℕ} {e : ℕ × ℕ} :
     · exact Or.inr ⟨r, hr, Or.inr ⟨r', hr', rfl⟩⟩
 
 /-- The rank of `x` among the natural numbers outside `S`. -/
-private theorem card_filter_not_mem_lt {S : Finset ℕ} {n x : ℕ}
+private theorem card_filter_notMem_lt {S : Finset ℕ} {n x : ℕ}
     (hS : S ⊆ Finset.range (n + 3)) (hcard : S.card = n) (hx : x ∉ S) (hxlt : x < n + 3) :
     ((Finset.range x).filter (· ∉ S)).card < 3 := by
   have htot := Finset.card_filter_add_card_filter_not (s := Finset.range (n + 3)) (· ∈ S)
@@ -613,7 +613,7 @@ private theorem card_filter_not_mem_lt {S : Finset ℕ} {n x : ℕ}
   rw [Finset.card_insert_of_notMem (by simp)] at this
   omega
 
-private theorem card_filter_not_mem_strictMono {S : Finset ℕ} {x y : ℕ} (hx : x ∉ S)
+private theorem card_filter_notMem_strictMono {S : Finset ℕ} {x y : ℕ} (hx : x ∉ S)
     (hxy : x < y) :
     ((Finset.range x).filter (· ∉ S)).card < ((Finset.range y).filter (· ∉ S)).card := by
   refine Finset.card_lt_card ((Finset.ssubset_iff_of_subset
@@ -628,7 +628,7 @@ theorem toKColoring_mem_iff (m : ℕ) (φ : CNF ℕ) :
   rw [mem_KColoring_iff]
   have hadj_of : ∀ {e : ℕ × ℕ}, e ∈ kColoringEdges m φ → e.1 ≠ e.2 →
       (toKColoring m φ).toSimpleGraph.Adj e.1 e.2 := fun he hne => by
-    simp only [toKColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
+    simp only [toKColoring, Graph.toSimpleGraph_adj]
     exact ⟨hne, Or.inl he⟩
   have hU : ∀ {r v : ℕ}, v ∈ (coloringEdges φ).flatMap (fun e => [e.1, e.2]) →
       universalVertex r ≠ v := fun hv h => by
@@ -675,11 +675,11 @@ theorem toKColoring_mem_iff (m : ℕ) (φ : CNF ℕ) :
     obtain ⟨h₁, h₂⟩ := mem_endpoints he
     obtain ⟨hne, hlt₁, hlt₂⟩ := hE e (mem_kColoringEdges.2 (Or.inl he))
       (ne_of_mem_coloringEdges he)
-    refine ⟨fun h => ?_, card_filter_not_mem_lt hSsub hcard (hnot h₁) hlt₁,
-      card_filter_not_mem_lt hSsub hcard (hnot h₂) hlt₂⟩
+    refine ⟨fun h => ?_, card_filter_notMem_lt hSsub hcard (hnot h₁) hlt₁,
+      card_filter_notMem_lt hSsub hcard (hnot h₂) hlt₂⟩
     rcases Nat.lt_or_gt_of_ne hne with h' | h'
-    · exact (card_filter_not_mem_strictMono (hnot h₁) h').ne h
-    · exact (card_filter_not_mem_strictMono (hnot h₂) h').ne h.symm
+    · exact (card_filter_notMem_strictMono (hnot h₁) h').ne h
+    · exact (card_filter_notMem_strictMono (hnot h₂) h').ne h.symm
   · rintro ⟨σ, hσ⟩
     let c : ℕ → ℕ := fun v => if v.unpair.1 = 3 then 3 + v.unpair.2 else gadgetColoring φ σ v
     have hcU : ∀ r, c (universalVertex r) = 3 + r := fun r => by simp [c, universalVertex]
@@ -710,7 +710,7 @@ theorem toKColoring_mem_iff (m : ℕ) (φ : CNF ℕ) :
       rcases hv with rfl | rfl
       · exact (hEc e he).2.1
       · exact (hEc e he).2.2
-    · simp only [toKColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj] at huv
+    · simp only [toKColoring, Graph.toSimpleGraph_adj] at huv
       rcases huv.2 with h | h
       · exact (hEc _ h).1
       · exact (hEc _ h).1.symm

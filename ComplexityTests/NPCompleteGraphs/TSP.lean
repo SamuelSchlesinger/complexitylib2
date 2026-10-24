@@ -44,7 +44,7 @@ example : ComputableTidilyInPolyTime
   fun_prop
 
 /-- Non-membership in `TSP`, checked over the permutations of the cities. -/
-private theorem not_mem_TSP {x : List (List ℕ) × ℕ}
+private theorem notMem_TSP {x : List (List ℕ) × ℕ}
     (h : ∀ p ∈ (List.range x.1.length).permutations', x.2 < TSP.tourLength x.1 p) :
     x ∉ TSP := fun ⟨p, hp, hlen⟩ =>
   absurd hlen (Nat.not_le.2 (h p (List.mem_permutations'.2 hp)))
@@ -84,16 +84,16 @@ example : TSP.tourLength [[3], []] [0, 1] = 0 := rfl
 /-! ### Membership in `TSP` -/
 
 example : (square, 4) ∈ TSP := ⟨[0, 1, 2, 3], by decide, by decide⟩
-example : (square, 3) ∉ TSP := not_mem_TSP (by decide)
+example : (square, 3) ∉ TSP := notMem_TSP (by decide)
 example : (oneWay, 3) ∈ TSP := ⟨[0, 1, 2], by decide, by decide⟩
-example : (oneWay, 2) ∉ TSP := not_mem_TSP (by decide)
+example : (oneWay, 2) ∉ TSP := notMem_TSP (by decide)
 
 -- The matrix without rows is a yes-instance, through the empty tour.
 example : (([] : List (List ℕ)), 0) ∈ TSP := ⟨[], by decide, by decide⟩
 
 -- One city: the tour pays the diagonal entry.
 example : ([[0]], 0) ∈ TSP := ⟨[0], by decide, by decide⟩
-example : ([[1]], 0) ∉ TSP := not_mem_TSP (by decide)
+example : ([[1]], 0) ∉ TSP := notMem_TSP (by decide)
 
 -- Ragged matrices: missing entries read `0`, so here every tour has length `0`.
 example : ([[3], []], 0) ∈ TSP := ⟨[0, 1], by decide, by decide⟩
@@ -103,7 +103,7 @@ example : ([[3], []], 0) ∈ TSP := ⟨[0, 1], by decide, by decide⟩
 private def ragged : List (List ℕ) := [[0, 2], [1], [7, 7, 7]]
 
 example : (ragged, 8) ∈ TSP := ⟨[0, 2, 1], by decide, by decide⟩
-example : (ragged, 7) ∉ TSP := not_mem_TSP (by decide)
+example : (ragged, 7) ∉ TSP := notMem_TSP (by decide)
 
 -- The budget is a natural number of any size; the binary encoding stays short.
 example : (square, 2 ^ 100) ∈ TSP := ⟨[0, 1, 2, 3], by decide, by decide⟩
@@ -165,13 +165,13 @@ example : c4 ∈ HamCycle := (HamCycle.toTSP_mem_iff c4).1 ⟨[0, 1, 2, 3], by d
 -- The path on four vertices has no Hamiltonian cycle: every tour pays `2` for a missing edge.
 private def p4 : Graph := ([0, 1, 2, 3], [(0, 1), (1, 2), (2, 3)])
 
-example : p4 ∉ HamCycle := fun h => not_mem_TSP (by decide) ((HamCycle.toTSP_mem_iff p4).2 h)
+example : p4 ∉ HamCycle := fun h => notMem_TSP (by decide) ((HamCycle.toTSP_mem_iff p4).2 h)
 
 -- Cities are the distinct declared vertices in the order of their first occurrences; labels
 -- need not be contiguous, and self-loops are ignored.
 private def triangle : Graph := ([10, 20, 10, 30], [(10, 20), (20, 30), (30, 10), (10, 10)])
 
-example : HamCycle.cities triangle = [10, 20, 30] := by decide
+example : triangle.distinctVertices = [10, 20, 30] := by decide
 example : HamCycle.toTSP triangle = ([[2, 1, 1], [1, 2, 1], [1, 1, 2]], 3) := by decide
 example : triangle ∈ HamCycle :=
   (HamCycle.toTSP_mem_iff triangle).1 ⟨[0, 1, 2], by decide, by decide⟩
@@ -181,15 +181,15 @@ private def detour : Graph := ([0, 1, 2], [(0, 1), (1, 2), (2, 7), (7, 0)])
 
 example : HamCycle.toTSP detour = ([[2, 1, 2], [1, 2, 1], [2, 1, 2]], 3) := by decide
 example : detour ∉ HamCycle :=
-  fun h => not_mem_TSP (by decide) ((HamCycle.toTSP_mem_iff detour).2 h)
+  fun h => notMem_TSP (by decide) ((HamCycle.toTSP_mem_iff detour).2 h)
 
 -- Graphs with fewer than three distinct vertices map to a fixed no-instance.
 example : HamCycle.toTSP ([0, 1, 0], [(0, 1)]) = ([[1]], 0) := by decide
 example : HamCycle.toTSP ([], []) = ([[1]], 0) := by decide
 example : (([0, 1, 0], [(0, 1)]) : Graph) ∉ HamCycle :=
-  fun h => not_mem_TSP (by decide) ((HamCycle.toTSP_mem_iff _).2 h)
+  fun h => notMem_TSP (by decide) ((HamCycle.toTSP_mem_iff _).2 h)
 example : (([], []) : Graph) ∉ HamCycle :=
-  fun h => not_mem_TSP (by decide) ((HamCycle.toTSP_mem_iff _).2 h)
+  fun h => notMem_TSP (by decide) ((HamCycle.toTSP_mem_iff _).2 h)
 
 /-! ### Axiom checks for headline theorems -/
 

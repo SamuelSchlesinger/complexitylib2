@@ -18,6 +18,8 @@ stack, and resets finite control. Existing output is retained as a suffix.
 
 ## Main definitions
 
+* `StateTransition.EvalsToInTime.cons`, `.mono`: prepend one transition or enlarge the
+  clock of a bounded partial execution.
 * `Turing.MultiTapeTM.ToTM2.auxiliaryLength`: storage discarded by cleanup.
 * `Turing.MultiTapeTM.ToTM2.totalStackLength`: storage on all stacks, including input and output.
 
@@ -31,7 +33,29 @@ stack, and resets finite control. Existing output is retained as a suffix.
 * [C. Papadimitriou, *Computational Complexity*, Chapter 2][Papadimitriou94]
 -/
 
-@[expose] public section
+public section
+
+namespace StateTransition.EvalsToInTime
+
+/-- Prepend one transition to a bounded execution. -/
+def cons {α : Type} {f : α → Option α} {a b c : α} {n : ℕ}
+    (hs : f a = some b) (h : EvalsToInTime f b (some c) n) :
+    EvalsToInTime f a (some c) (n + 1) where
+  steps := h.steps + 1
+  evals_in_steps := by
+    rw [Function.iterate_succ_apply]
+    change (flip bind f)^[h.steps] (f a) = some c
+    rw [hs]
+    exact h.evals_in_steps
+  steps_le_m := Nat.add_le_add_right h.steps_le_m 1
+
+/-- Increase the clock of a bounded execution. -/
+def mono {α : Type} {f : α → Option α} {a c : α} {m n : ℕ}
+    (h : EvalsToInTime f a (some c) m) (hmn : m ≤ n) :
+    EvalsToInTime f a (some c) n :=
+  ⟨h.toEvalsTo, h.steps_le_m.trans hmn⟩
+
+end StateTransition.EvalsToInTime
 
 namespace Turing.MultiTapeTM.ToTM2
 
@@ -40,14 +64,14 @@ noncomputable section
 variable {k : ℕ} {State : Type}
 
 /-- Exactly the stacks other than the two output stacks are discarded. -/
-@[simp] theorem mem_auxiliaries (s : Stack k) :
+@[simp] private theorem mem_auxiliaries (s : Stack k) :
     s ∈ auxiliaries k ↔ s ≠ .output ∧ s ≠ .reversed := by
   cases s with
   | work i b => cases b <;> simp [auxiliaries]
   | _ => simp [auxiliaries]
 
 /-- Each auxiliary is popped exactly once in a cleanup round. -/
-theorem auxiliaries_nodup (k : ℕ) : (auxiliaries k).Nodup := by
+private theorem auxiliaries_nodup (k : ℕ) : (auxiliaries k).Nodup := by
   have hp : List.Pairwise (Function.onFun List.Disjoint
       (fun i : Fin k => [Stack.work i false, Stack.work i true])) (List.finRange k) := by
     apply (List.nodup_finRange k).imp
@@ -56,7 +80,7 @@ theorem auxiliaries_nodup (k : ℕ) : (auxiliaries k).Nodup := by
   simpa [auxiliaries, List.nodup_append, List.nodup_flatMap, List.disjoint_left] using hp
 
 /-- Pop each named stack once; the list is assumed duplicate-free when used operationally. -/
-def poppedStore (ss : List (Stack k)) (store : ∀ s : Stack k, List (Alphabet s)) :
+private def poppedStore (ss : List (Stack k)) (store : ∀ s : Stack k, List (Alphabet s)) :
     ∀ s : Stack k, List (Alphabet s) :=
   fun s => if s ∈ ss then (store s).tail else store s
 
@@ -80,7 +104,7 @@ private theorem any_update (s : Stack k) (ss : List (Stack k))
     simp only [List.any_cons, Function.update_of_ne (Ne.symm h.1), ih h.2]
 
 /-- The straight-line discard statement records whether a stack was nonempty before popping. -/
-theorem stepAux_discard (ss : List (Stack k)) (hss : ss.Nodup)
+private theorem stepAux_discard (ss : List (Stack k)) (hss : ss.Nodup)
     (next : Statement k State) (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)) :
     TM2.stepAux (ss.foldr discard next) v store =
       TM2.stepAux next
@@ -101,7 +125,7 @@ def auxiliaryLength (store : ∀ s : Stack k, List (Alphabet s)) : ℕ :=
   ∑ s : Stack k, if s ∈ auxiliaries k then (store s).length else 0
 
 /-- Total stack storage, counting both output stacks and all auxiliary stacks. -/
-def totalStackLength (cfg : TM2.Cfg (Alphabet (k := k)) Label (Control k State)) : ℕ :=
+@[expose] def totalStackLength (cfg : TM2.Cfg (Alphabet (k := k)) Label (Control k State)) : ℕ :=
   ∑ s : Stack k, (cfg.stk s).length
 
 /-- Every stack contributes exactly once to the storage accounting. -/
@@ -119,11 +143,11 @@ theorem totalStackLength_eq (cfg : TM2.Cfg (Alphabet (k := k)) Label (Control k 
     _ = _ := by simp [auxiliaryLength, Finset.sum_add_distrib]
 
 /-- Whether a cleanup round encounters a nonempty auxiliary stack. -/
-def auxiliaryBusy (store : ∀ s : Stack k, List (Alphabet s)) : Bool :=
+private def auxiliaryBusy (store : ∀ s : Stack k, List (Alphabet s)) : Bool :=
   (auxiliaries k).any (fun s => (store s).head?.isSome)
 
 /-- A round pops all auxiliaries, preserving both output stacks. -/
-theorem stepAux_clean (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)) :
+private theorem stepAux_clean (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)) :
     TM2.stepAux clean v store =
       ⟨some (if auxiliaryBusy store then .clean else .reverse),
         { v with busy := auxiliaryBusy store }, poppedStore (auxiliaries k) store⟩ := by
@@ -137,17 +161,17 @@ theorem stepAux_clean (v : Control k State) (store : ∀ s : Stack k, List (Alph
     simp only [hf, Bool.cond_false, Bool.false_eq_true, ↓reduceIte]
 
 /-- No auxiliary is busy precisely when all of them are empty. -/
-theorem auxiliaryBusy_eq_false_iff (store : ∀ s : Stack k, List (Alphabet s)) :
+private theorem auxiliaryBusy_eq_false_iff (store : ∀ s : Stack k, List (Alphabet s)) :
     auxiliaryBusy store = false ↔ ∀ s ∈ auxiliaries k, store s = [] := by
   simp [auxiliaryBusy, List.any_eq_false]
 
 /-- Zero auxiliary storage is equivalent to emptiness of every auxiliary stack. -/
-theorem auxiliaryLength_eq_zero_iff (store : ∀ s : Stack k, List (Alphabet s)) :
+private theorem auxiliaryLength_eq_zero_iff (store : ∀ s : Stack k, List (Alphabet s)) :
     auxiliaryLength store = 0 ↔ ∀ s ∈ auxiliaries k, store s = [] := by
   simp [auxiliaryLength, Finset.sum_eq_zero_iff]
 
 /-- Popping auxiliary stacks cannot increase their total length. -/
-theorem auxiliaryLength_popped_le (store : ∀ s : Stack k, List (Alphabet s)) :
+private theorem auxiliaryLength_popped_le (store : ∀ s : Stack k, List (Alphabet s)) :
     auxiliaryLength (poppedStore (auxiliaries k) store) ≤ auxiliaryLength store := by
   apply Finset.sum_le_sum
   intro s hs
@@ -157,7 +181,7 @@ theorem auxiliaryLength_popped_le (store : ∀ s : Stack k, List (Alphabet s)) :
   · simp [h]
 
 /-- A busy round strictly decreases auxiliary storage. -/
-theorem auxiliaryLength_popped_lt (store : ∀ s : Stack k, List (Alphabet s))
+private theorem auxiliaryLength_popped_lt (store : ∀ s : Stack k, List (Alphabet s))
     (hb : auxiliaryBusy store = true) :
     auxiliaryLength (poppedStore (auxiliaries k) store) < auxiliaryLength store := by
   have hex : ∃ s, s ∈ auxiliaries k ∧ store s ≠ [] := by
@@ -177,7 +201,7 @@ theorem auxiliaryLength_popped_lt (store : ∀ s : Stack k, List (Alphabet s))
     omega
 
 /-- A quiet round leaves every stack unchanged. -/
-theorem poppedStore_eq_of_not_busy (store : ∀ s : Stack k, List (Alphabet s))
+private theorem poppedStore_eq_of_not_busy (store : ∀ s : Stack k, List (Alphabet s))
     (hb : auxiliaryBusy store = false) : poppedStore (auxiliaries k) store = store := by
   funext s
   by_cases h : s ∈ auxiliaries k
@@ -188,7 +212,7 @@ variable [Fintype State] (q₀ : State)
     (transition : State → Option Bool → (Fin k → Option Bool) → Turing.Action k Bool State)
 
 /-- Reversal transfers one symbol, or resets finite control and halts on the empty stack. -/
-theorem stepAux_reverse (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)) :
+private theorem stepAux_reverse (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)) :
     TM2.stepAux (program q₀ transition .reverse) v store =
       match store .reversed with
       | [] => ⟨none, initialControl q₀, Function.update store .reversed []⟩
@@ -202,7 +226,7 @@ theorem stepAux_reverse (v : Control k State) (store : ∀ s : Stack k, List (Al
     rfl
 
 /-- When the auxiliaries are empty, the last reversal step has the canonical halting shape. -/
-theorem stepAux_reverse_nil (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s))
+private theorem stepAux_reverse_nil (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s))
     (ha : ∀ s ∈ auxiliaries k, store s = []) (hr : store .reversed = []) :
     TM2.stepAux (program q₀ transition .reverse) v store =
       haltList (machine q₀ transition) (store .output) := by
@@ -217,26 +241,8 @@ theorem stepAux_reverse_nil (v : Control k State) (store : ∀ s : Stack k, List
   | reversed => simp [machine]
   | work i b => simp [machine, ha (.work i b) (by simp)]
 
-/-- Prepend one actual transition to a bounded cleanup execution. -/
-def evalsCons {α : Type} {f : α → Option α} {a b c : α} {n : ℕ}
-    (hs : f a = some b) (h : StateTransition.EvalsToInTime f b (some c) n) :
-    StateTransition.EvalsToInTime f a (some c) (n + 1) where
-  steps := h.steps + 1
-  evals_in_steps := by
-    rw [Function.iterate_succ_apply]
-    change (flip bind f)^[h.steps] (f a) = some c
-    rw [hs]
-    exact h.evals_in_steps
-  steps_le_m := Nat.add_le_add_right h.steps_le_m 1
-
-/-- Increase the clock of a bounded cleanup execution. -/
-def evalsMono {α : Type} {f : α → Option α} {a c : α} {m n : ℕ}
-    (h : StateTransition.EvalsToInTime f a (some c) m) (hmn : m ≤ n) :
-    StateTransition.EvalsToInTime f a (some c) n :=
-  ⟨h.toEvalsTo, h.steps_le_m.trans hmn⟩
-
 /-- Reversal preserves already populated output, which becomes a suffix of the final word. -/
-def reverseEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s))
+private def reverseEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s))
     (ha : ∀ s ∈ auxiliaries k, store s = []) :
     StateTransition.EvalsToInTime (TM2.step (program q₀ transition))
       ⟨some .reverse, v, store⟩
@@ -251,7 +257,7 @@ def reverseEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet 
       exact congrArg some (stepAux_reverse_nil q₀ transition v store ha hr)
     change StateTransition.EvalsToInTime _ _
       (some (haltList (machine q₀ transition) (store .output))) 1
-    exact evalsCons hs (StateTransition.EvalsToInTime.refl _ _)
+    exact .cons hs (.refl _ _)
   | cons b bs =>
     let store' := Function.update (Function.update store .reversed bs) .output (b :: store .output)
     have ha' : ∀ s ∈ auxiliaries k, store' s = [] := by
@@ -274,12 +280,12 @@ def reverseEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet 
       List.append_assoc (α := Bool) bs.reverse [b] (store .output)
     rw [hw]
     change StateTransition.EvalsToInTime _ _ _ (bs.length + 1 + 1)
-    exact evalsCons hs hrec
+    exact .cons hs hrec
 termination_by (store .reversed).length
 decreasing_by simp_wf; rw [hr]; exact Nat.lt_succ_self _
 
 /-- Cleanup reaches the canonical halting configuration within a linear number of TM2 steps. -/
-def cleanEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)) :
+private def cleanEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)) :
     StateTransition.EvalsToInTime (TM2.step (program q₀ transition))
       ⟨some .clean, v, store⟩
       (some (haltList (machine q₀ transition)
@@ -293,7 +299,8 @@ def cleanEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)
       change some (TM2.stepAux clean v store) = _
       rw [stepAux_clean, hb, poppedStore_eq_of_not_busy store hb]
       rfl
-    exact evalsMono (evalsCons hs (reverseEvals q₀ transition _ store ha)) (by omega)
+    exact (StateTransition.EvalsToInTime.cons hs (reverseEvals q₀ transition _ store ha)).mono
+      (by omega)
   | true =>
     let store' := poppedStore (auxiliaries k) store
     have hrev : store' .reversed = store .reversed := by simp [store', poppedStore]
@@ -306,7 +313,7 @@ def cleanEvals (v : Control k State) (store : ∀ s : Stack k, List (Alphabet s)
     have hrec := cleanEvals { v with busy := true } store'
     rw [hrev, hout] at hrec
     have hlt := auxiliaryLength_popped_lt store hb
-    exact evalsMono (evalsCons hs hrec) (by dsimp only [store'] at *; omega)
+    exact (StateTransition.EvalsToInTime.cons hs hrec).mono (by dsimp only [store'] at *; omega)
 termination_by auxiliaryLength store
 decreasing_by exact auxiliaryLength_popped_lt store hb
 
@@ -321,7 +328,7 @@ def cleanupEvals (cfg : (machine q₀ transition).Cfg) (hl : cfg.l = some .clean
     exact cleanEvals q₀ transition v store
 
 /-- Auxiliary storage depends only on auxiliary stacks. -/
-theorem auxiliaryLength_congr {store store' : ∀ s : Stack k, List (Alphabet s)}
+private theorem auxiliaryLength_congr {store store' : ∀ s : Stack k, List (Alphabet s)}
     (h : ∀ s ∈ auxiliaries k, store' s = store s) :
     auxiliaryLength store' = auxiliaryLength store := by
   apply Finset.sum_congr rfl
@@ -332,7 +339,7 @@ theorem auxiliaryLength_congr {store store' : ∀ s : Stack k, List (Alphabet s)
 
 omit [Fintype State] in
 /-- Discarding a round cannot increase total storage. -/
-theorem totalStackLength_clean_le (v : Control k State)
+private theorem totalStackLength_clean_le (v : Control k State)
     (store : ∀ s : Stack k, List (Alphabet s)) :
     totalStackLength (TM2.stepAux clean v store) ≤ totalStackLength ⟨some .clean, v, store⟩ := by
   rw [stepAux_clean, totalStackLength_eq, totalStackLength_eq]
@@ -346,7 +353,7 @@ theorem totalStackLength_clean_le (v : Control k State)
     (Nat.add_le_add_right (auxiliaryLength_popped_le store) _) _
 
 /-- Reversal transfers symbols between the two output stacks without increasing storage. -/
-theorem totalStackLength_reverse (v : Control k State)
+private theorem totalStackLength_reverse (v : Control k State)
     (store : ∀ s : Stack k, List (Alphabet s)) :
     totalStackLength (TM2.stepAux (program q₀ transition .reverse) v store) =
       totalStackLength ⟨some .reverse, v, store⟩ := by
@@ -375,7 +382,7 @@ theorem totalStackLength_reverse (v : Control k State)
     omega
 
 /-- A cleanup or halted configuration remains in these phases and cannot gain stack storage. -/
-theorem cleanup_step (cfg : TM2.Cfg (Alphabet (k := k)) Label (Control k State))
+private theorem cleanup_step (cfg : TM2.Cfg (Alphabet (k := k)) Label (Control k State))
     (hl : cfg.l ≠ some .run) :
     (TM2.stepTotal (program q₀ transition) cfg).l ≠ some .run ∧
       totalStackLength (TM2.stepTotal (program q₀ transition) cfg) ≤ totalStackLength cfg := by

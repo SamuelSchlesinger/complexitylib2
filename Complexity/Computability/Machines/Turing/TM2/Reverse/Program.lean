@@ -24,6 +24,7 @@ reversing the output and resetting the control to Mathlib's canonical `haltList`
 
 ## Main definitions
 
+* `Turing.TM2.selectList`, `Turing.TM2.select`: finite case analysis in a TM2 statement.
 * `Turing.MultiTapeTM.ToTM2.machine`: the finite-alphabet stack machine.
 * `Turing.MultiTapeTM.ToTM2.program`: its running, cleanup and output-reversal phases.
 
@@ -32,7 +33,47 @@ reversing the output and resetting the control to Mathlib's canonical `haltList`
 * [C. Papadimitriou, *Computational Complexity*, Chapter 2][Papadimitriou94]
 -/
 
-@[expose] public section
+public section
+
+namespace Turing.TM2
+
+open Stmt
+
+variable {K : Type} {Γ : K → Type} {Λ State : Type}
+
+/-- Finite case analysis compiles an arbitrary table on finite control to a fixed statement. -/
+def selectList [DecidableEq State] (values : List State)
+    (table : State → Stmt Γ Λ State) : Stmt Γ Λ State :=
+  values.foldr (fun value rest => branch (fun state => decide (state = value)) (table value) rest)
+    halt
+
+theorem stepAux_selectList [DecidableEq State] [DecidableEq K]
+    (values : List State) (table : State → Stmt Γ Λ State)
+    (state : State) (store : ∀ s, List (Γ s)) (h : state ∈ values) :
+    stepAux (selectList values table) state store = stepAux (table state) state store := by
+  induction values with
+  | nil => simp at h
+  | cons value values ih =>
+    simp only [selectList, List.foldr_cons, stepAux]
+    by_cases heq : state = value
+    · subst value
+      simp
+    · simp only [heq, decide_false, Bool.cond_false]
+      exact ih (List.mem_of_ne_of_mem heq h)
+
+open scoped Classical in
+/-- A table on a finite type uses only finitely many branches. -/
+noncomputable def select [Fintype State] (table : State → Stmt Γ Λ State) : Stmt Γ Λ State :=
+  selectList (Finset.univ.toList) table
+
+theorem stepAux_select [Fintype State] [DecidableEq K]
+    (table : State → Stmt Γ Λ State)
+    (state : State) (store : ∀ s, List (Γ s)) :
+    stepAux (select table) state store = stepAux (table state) state store := by
+  classical
+  exact stepAux_selectList _ _ _ _ (by simp)
+
+end Turing.TM2
 
 namespace Turing.MultiTapeTM.ToTM2
 
@@ -44,19 +85,20 @@ variable {k : ℕ} {State : Type}
 inductive Stack (k : ℕ) where
   | input | before | output | reversed
   | work (tape : Fin k) (right : Bool)
-  deriving DecidableEq, Fintype
+  deriving @[expose] DecidableEq, @[expose] Fintype
 
 /-- Work stacks store blank cells explicitly; the input and output alphabets are binary. -/
 abbrev Alphabet : Stack k → Type
   | .work _ _ => Option Bool
   | _ => Bool
 
-instance (s : Stack k) : Fintype (Alphabet s) := by cases s <;> unfold Alphabet <;> infer_instance
+instance (s : Stack k) : Fintype (Alphabet s) := by
+  cases s <;> unfold Alphabet <;> infer_instance
 
 /-- The three phases have no unbounded counters in their control. -/
 inductive Label where
   | run | clean | reverse
-  deriving DecidableEq
+  deriving @[expose] DecidableEq
 
 instance : Fintype Label := ⟨{.run, .clean, .reverse}, by intro l; cases l <;> simp⟩
 
@@ -72,57 +114,26 @@ instance : Fintype Label := ⟨{.run, .clean, .reverse}, by intro l; cases l <;>
   symbol : Option Bool
   /-- Whether the current cleanup round found a nonempty auxiliary stack. -/
   busy : Bool
-  deriving Fintype
+  deriving @[expose] Fintype
 
 /-- Initial finite control, also restored before halting. -/
-def initialControl (q : State) : Control k State := ⟨some q, false, fun _ => none, none, false⟩
+@[expose] def initialControl (q : State) : Control k State :=
+  ⟨some q, false, fun _ => none, none, false⟩
 
 /-- A statement over the compiler's stack alphabets, phases and finite control. -/
-abbrev Statement (k : ℕ) (State : Type) := TM2.Stmt (Alphabet (k := k)) Label (Control k State)
+abbrev Statement (k : ℕ) (State : Type) :=
+  TM2.Stmt (Alphabet (k := k)) Label (Control k State)
 
 open TM2.Stmt
 
-variable {K : Type} {Γ : K → Type} {Λ : Type}
-
-/-- Finite case analysis compiles an arbitrary table on finite control to a fixed statement. -/
-def selectList [DecidableEq State] (values : List State)
-    (table : State → TM2.Stmt Γ Λ State) : TM2.Stmt Γ Λ State :=
-  values.foldr (fun value rest => branch (fun state => decide (state = value)) (table value) rest)
-    halt
-
-theorem stepAux_selectList [DecidableEq State] [DecidableEq K]
-    {Γ : K → Type} {Λ : Type} (values : List State) (table : State → TM2.Stmt Γ Λ State)
-    (state : State) (store : ∀ s, List (Γ s)) (h : state ∈ values) :
-    TM2.stepAux (selectList values table) state store = TM2.stepAux (table state) state store := by
-  induction values with
-  | nil => simp at h
-  | cons value values ih =>
-    simp only [selectList, List.foldr_cons, TM2.stepAux]
-    by_cases heq : state = value
-    · subst value
-      simp
-    · simp only [heq, decide_false, Bool.cond_false]
-      exact ih (List.mem_of_ne_of_mem heq h)
-
-open scoped Classical in
-/-- A table on a finite type uses only finitely many branches. -/
-def select [Fintype State] (table : State → TM2.Stmt Γ Λ State) : TM2.Stmt Γ Λ State :=
-  selectList (Finset.univ.toList) table
-
-theorem stepAux_select [Fintype State] [DecidableEq K]
-    {Γ : K → Type} {Λ : Type} (table : State → TM2.Stmt Γ Λ State)
-    (state : State) (store : ∀ s, List (Γ s)) :
-    TM2.stepAux (select table) state store = TM2.stepAux (table state) state store := by
-  classical
-  exact stepAux_selectList _ _ _ _ (by simp)
-
 /-- Write the current work cell, retaining the old value when no write is requested. -/
-def writeWork (i : Fin k) (write : Option (Option Bool)) (next : Statement k State) :
+@[expose] def writeWork (i : Fin k) (write : Option (Option Bool)) (next : Statement k State) :
     Statement k State :=
   load (fun v => { v with head := Function.update v.head i (write.getD (v.head i)) }) next
 
 /-- Moving a work head transfers its old current cell to the opposite stack. -/
-def moveWork (i : Fin k) (direction : SignType) (next : Statement k State) : Statement k State :=
+@[expose] def moveWork (i : Fin k) (direction : SignType) (next : Statement k State) :
+    Statement k State :=
   match direction with
   | .zero => next
   | .neg => push (.work i true) (fun v => v.head i)
@@ -133,12 +144,12 @@ def moveWork (i : Fin k) (direction : SignType) (next : Statement k State) : Sta
         next)
 
 /-- A fixed native work-tape action is a bounded straight-line stack statement. -/
-def workAction (i : Fin k) (action : Option (Option Bool) × SignType)
+@[expose] def workAction (i : Fin k) (action : Option (Option Bool) × SignType)
     (next : Statement k State) : Statement k State :=
   writeWork i action.1 (moveWork i action.2 next)
 
 /-- Move the bounded read-only input head. Empty stacks detect the two boundaries. -/
-def moveInput (direction : SignType) (next : Statement k State) : Statement k State :=
+@[expose] def moveInput (direction : SignType) (next : Statement k State) : Statement k State :=
   match direction with
   | .zero => next
   | .neg => branch (fun v => v.atLeft) next
@@ -152,7 +163,7 @@ def moveInput (direction : SignType) (next : Statement k State) : Statement k St
           (push .before (fun v => v.symbol.getD false) next) next))
 
 /-- A source step updates every work tape, the input head, output and control. -/
-def action (a : Turing.Action k Bool State) : Statement k State :=
+@[expose] def action (a : Turing.Action k Bool State) : Statement k State :=
   (List.finRange k).foldr (fun i next => workAction i (a.workTapes i) next)
     (moveInput a.inputTape
       (a.output.elim id (fun b => push .reversed (fun _ => b))
@@ -160,25 +171,25 @@ def action (a : Turing.Action k Bool State) : Statement k State :=
           (goto (fun _ => .run)))))
 
 /-- Stacks discarded before output reversal. -/
-def auxiliaries (k : ℕ) : List (Stack k) :=
+@[expose] def auxiliaries (k : ℕ) : List (Stack k) :=
   [.input, .before] ++ (List.finRange k).flatMap (fun i => [.work i false, .work i true])
 
 /-- Discard one cell from each auxiliary stack and remember whether any was nonempty. -/
-def discard (s : Stack k) (next : Statement k State) : Statement k State :=
+@[expose] def discard (s : Stack k) (next : Statement k State) : Statement k State :=
   pop s (fun v a => { v with busy := v.busy || a.isSome }) next
 
 /-- A cleanup round either reduces auxiliary storage or advances to output reversal. -/
-def clean : Statement k State :=
+@[expose] def clean : Statement k State :=
   load (fun v => { v with busy := false })
     ((auxiliaries k).foldr discard
       (branch (fun v => v.busy) (goto (fun _ => .clean)) (goto (fun _ => .reverse))))
 
 /-- The fixed program has finite control and a finite alphabet on every stack. -/
-def program [Fintype State] (q₀ : State)
+@[expose] def program [Fintype State] (q₀ : State)
     (transition : State → Option Bool → (Fin k → Option Bool) → Turing.Action k Bool State) :
     Label → Statement k State
   | .run => peek .input (fun v a => { v with symbol := a })
-      (select fun v => match v.state with
+      (TM2.select fun v => match v.state with
         | none => goto (fun _ => .clean)
         | some q => action (transition q (if v.atLeft then none else v.symbol) v.head))
   | .clean => clean

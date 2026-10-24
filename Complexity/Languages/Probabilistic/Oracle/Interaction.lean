@@ -21,10 +21,11 @@ and the final oracle state, with fresh fair samples for the private coins, and
 A prover of an interactive proof is such an oracle; `Cslib.Complexity.Prover.run` is the case of
 word queries and replies (`Cslib.Complexity.Prover.run_eq_runWith`).
 
-`runWith` is the instance of the generic `OracleComp.runWith` whose handler is the sum of the
-lifted uniform handler and `oracle` (`runWith_eq_runWith_sumHandler`). Against a memoryless oracle
-it is `OracleComp.evalWith` of the sum of the uniform handler and the oracle, with the state
-unchanged (`runWith_lift`).
+`runWith` is the instance of the generic `OracleComp.runWith` whose handler draws private samples
+freshly and answers external calls by `oracle`; that handler is the sum of the lifted uniform
+handler and `oracle` (`runWith_eq_runWith_sumHandler`). Against a memoryless oracle it is
+`OracleComp.evalWith` of the sum of the uniform handler and the oracle, with the state unchanged
+(`runWith_lift`). Its structural rules are those of `OracleComp.runWith`.
 
 ## Main definitions
 
@@ -97,7 +98,7 @@ theorem acceptProbWith_lift (h : (q : Query) → PMF (spec q)) (program : ProbOr
 
 /-- A pure program returns its value and leaves the oracle state unchanged. -/
 @[simp] theorem runWith_pure (a : α) (s : State) : runWith oracle (pure a) s = PMF.pure (a, s) :=
-  OracleComp.run_interpret_pure _ _ _
+  OracleComp.runWith_pure _ _ _
 
 /-- Running `program >>= next` runs `program`, then runs `next` at its result from the oracle
 state it reached. -/
@@ -105,17 +106,17 @@ state it reached. -/
     (s : State) :
     runWith oracle (program >>= next) s =
       (runWith oracle program s).bind fun x => runWith oracle (next x.1) x.2 :=
-  OracleComp.run_interpret_bind _ _ _ _
+  OracleComp.runWith_bind _ _ _ _
 
 /-- Mapping `f` over a program maps it over the result and keeps the final oracle state. -/
 @[simp] theorem runWith_map (f : α → β) (program : ProbOracleComp spec α) (s : State) :
     runWith oracle (f <$> program) s = (runWith oracle program s).map (Prod.map f id) :=
-  OracleComp.run_interpret_map _ _ _ _
+  OracleComp.runWith_map _ _ _ _
 
 /-- A single external call is answered by the oracle from the current state. -/
 @[simp] theorem runWith_query (q : Query) (s : State) :
     runWith oracle (query (spec := spec) q) s = oracle q s :=
-  OracleComp.run_interpret_query _ (Sum.inr q) _
+  OracleComp.runWith_query _ (Sum.inr q) _
 
 /-- A private sample has the law of the sampled program and leaves the oracle state unchanged. -/
 @[simp] theorem runWith_sample (program : ProbComp α) (s : State) :

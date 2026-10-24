@@ -49,7 +49,7 @@ Adapted from the cslib `crypto` branch at
 
 namespace Cslib.Crypto.Pseudoentropy.SamplablePair
 
-open Probability Probability.PMF BitString Boosting Filter Turing.MultiTapeTM
+open ProbComp Probability Probability.PMF BitString Boosting Filter Turing.MultiTapeTM
 
 /-- All tests in a uniformly efficient polynomial-size family eventually admit dense soft masks
 with small distinguishing gap whenever their density is valid. The common eventual threshold

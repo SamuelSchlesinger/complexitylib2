@@ -73,7 +73,7 @@ All are polynomial-time in their unary or binary inputs.
 
 namespace Cslib.Complexity.QBFProtocol
 
-open Cslib.Logic.PL Polynomial Turing.MultiTapeTM Cslib.Probability
+open Cslib.Logic.PL Polynomial Turing.MultiTapeTM Cslib.Probability Cslib.ProbComp
 open scoped ENNReal
 
 /-! ### Arithmetic modulo `p` -/

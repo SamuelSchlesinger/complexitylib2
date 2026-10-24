@@ -123,7 +123,7 @@ theorem mem_AWPP_of_polyTime_exponent {g : α → ℤ} {r : α → ℕ}
   obtain ⟨p, hle⟩ := hr.polyBounded.exists_polynomial
   have hs : ComputableTidilyInPolyTime
       (fun a => 2 ^ (p.eval (enc a).length - r a)) enc encNat := by fun_prop
-  have hsG := SharpP.natCast_mem_GapP (SharpP.of_polyTime hs)
+  have hsG := SharpP.natCast_mem_GapP (mem_SharpP_of_polyTime hs)
   refine ⟨_, GapP.mul_mem hg hsG, p, fun a => ?_⟩
   have he : (2 : ℤ) ^ p.eval (enc a).length =
       (2 : ℤ) ^ r a * (2 : ℤ) ^ (p.eval (enc a).length - r a) := by

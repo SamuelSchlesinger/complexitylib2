@@ -56,7 +56,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   finite-alphabet `FinTM2`, including canonical `haltList` cleanup, with linear time overhead and
   total stack length at most input length plus native work space plus output length.
   `Reverse/Transfer` proves polynomial-time and PSPACE equivalence under the original binary
-  encodings; `TM2/Recoding` supplies the word conversions without decoding the typed embeddings.
+  encodings; `PolyTime/List` supplies the word conversions and `TM2/Recoding` transfers TM2
+  computations across them without decoding the typed embeddings.
   These comparisons do not preserve sublinear work-space conventions.
 * **Probabilistic programs.** Coordinate the shared `PFunctor.FreeM` API with #1086–#1089 and
   typed oracles with #1129. The copied PMF blocks have their own markers and removal instructions
@@ -200,13 +201,13 @@ agreement during upstream review.
 | `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
 | `Computability/Circuit/{Unfolding,MapOp}`, `Computability/Circuit/Encoding/MapOp` | Consider integrating into `Circuit/Formula`, `Circuit/Program`, and `Circuit/Encoding`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
-| `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
+| `Foundations/Data/BitString/{Agree,Block}` | Add to CSLib's `Foundations/Data/BitString`. |
 | `Foundations/Data/List/{Fold,Lookup,Counting,Append}` | Fold invariants, lookup and register-file bounds, predicate counts, and append identities including unary headers; `Basic` reexports these topics. Consider Mathlib's `Data/List/GetD` and `Data/List/Basic`. |
-| `Foundations/Relation/RelatesWithinSteps` | `Function.iterate_trans` and bounded reachability helpers; consider Mathlib's `Logic/Function/Iterate` and `Logic/Relation`. |
+| `Foundations/Relation/RelatesWithinSteps` | Bounded reachability helpers; consider Mathlib's `Logic/Relation`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
-| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317). |
+| `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicTransform,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317). |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
-| `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
+| `Foundations/Combinatorics/{FiniteCover,Hoeffding,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
 | `Foundations/Data/Matrix/Permanent` | Mathlib candidate: Laplace expansion of the permanent along row and column 0, beside `LinearAlgebra/Matrix/Permanent` (mirroring `Matrix.det_succ_row_zero`). |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |
@@ -297,8 +298,8 @@ Proof hygiene). This list records earlier changes that had no mechanical success
     `NEXP_eq_EXP_of_NEXP_subset_SigmaP`.
   - `Hastad.lean`: `hastadSATProb` and its three lemmas, `hastadGraphSATProb`, and
     `hastadGraphSATProb_eq_add_hastadGraphLinearCorr`. The SAT conjuncts were dropped from
-    `hastadGraphProb_longCode_of_satisfies` and `hastad_gapLabelCover_dichotomy`, keeping their
-    names.
+    `hastadGraphProb_longCode_of_satisfies` (now `graphLinearProb_longCode_of_satisfies`) and
+    `hastad_gapLabelCover_dichotomy` (now `gapLabelCover_dichotomy`).
   - The conditional sumset-extractor frontier layer (#391), whose extractor-family hypothesis was
     never discharged: `Circuit/Frontier/Extractor.lean` and `Complexity/FrontierExtractor.lean`
     (whole modules), and the decimal restatements
@@ -316,8 +317,8 @@ Proof hygiene). This list records earlier changes that had no mechanical success
     lemmas moved to `Cslib.BitString` in `Foundations/BooleanAnalysis/LongCode` (`IsFolded`
     became `IsOdd`), and `Hastad/ExactThreeDistinct` merged into
     `PCP/Approximation/MaxExactThreeSAT`, keeping its declaration names; imports of the deleted
-    module path must be updated. `hastad_gapLabelCover_dichotomy` now chooses `η` before the label
-    sets, keeping its name.
+    module path must be updated. `hastad_gapLabelCover_dichotomy` (now `gapLabelCover_dichotomy`)
+    now chooses `η` before the label sets.
   - Follow-up #390 (same date and policy): the rest of the `ACC0.lean` Williams scaffolding,
     `SymPlusCircuit` and its API, `evalMask` and its lemmas, `zetaTransform`, `fastZeta`,
     `fastZeta_eq_zetaTransform`, `parity_mem_EXP`, `parity_mem_NEXP`,

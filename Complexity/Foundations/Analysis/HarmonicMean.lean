@@ -43,7 +43,8 @@ arithmetic mean (`Cslib.harmonicMean_le_expect`).
   `Cslib.expect_harmonicMean_le`: monotonicity, concavity, comparison with the arithmetic mean, and
   Jensen's inequality.
 * `Cslib.harmonicMean_light_fraction_le`: reciprocal-density Markov bound for small entries.
-* `Cslib.harmonicMean_pair`: two-point harmonic mean decomposition on `Bool × α`.
+* `Cslib.harmonicMean_pair`, `Cslib.harmonicMean_bool`: two-point harmonic mean decomposition on
+  `Bool × α` and on `Bool`.
 
 ## References
 
@@ -271,6 +272,14 @@ theorem harmonicMean_pair {f : Bool → α → ℝ} (hf : ∀ b x, 0 ≤ f b x) 
   have hsum := add_pos (hp false) (hp true)
   field_simp [(hp false).ne', (hp true).ne', hsum.ne']
   simpa only [one_div, add_comm] using (div_self hsum.ne').symm
+
+/-- The harmonic mean on `Bool` of `a` at `false` and `b` at `true` is `2 a b / (a + b)`. -/
+theorem harmonicMean_bool {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) :
+    harmonicMean (fun x : Bool => if x then b else a) = 2 * a * b / (a + b) := by
+  rw [← harmonicMean_equiv (Equiv.prodPUnit Bool : Bool × Unit ≃ Bool)]
+  have h := harmonicMean_pair (α := Unit) (f := fun x _ => if x then b else a)
+    fun x _ => by cases x <;> assumption
+  simpa only [Equiv.prodPUnit_apply, Bool.false_eq_true, ↓reduceIte, harmonicMean_const] using h
 
 end
 

@@ -43,21 +43,13 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 private theorem code_wiring_left (n : ℕ) :
     (Circuit.wiring signature (Fin.castAdd n : Fin n → Fin (n + n))).code =
       ([], List.range n) := by
-  change ([], List.ofFn (fun i : Fin n => i.val)) = ([], List.range n)
-  congr 1
-  apply List.ext_getElem (by simp)
-  intro i hi hi'
-  simp
+  simpa using Circuit.code_wiring_eq_map (σ := signature)
+    (f := (Fin.castAdd n : Fin n → Fin (n + n))) (g := id) fun _ => rfl
 
 private theorem code_wiring_right (n : ℕ) :
     (Circuit.wiring signature (Fin.natAdd n : Fin n → Fin (n + n))).code =
-      ([], (List.range n).map (fun i => n + i)) := by
-  change ([], List.ofFn (fun i : Fin n => n + i.val)) =
-    ([], (List.range n).map (fun i => n + i))
-  congr 1
-  apply List.ext_getElem (by simp)
-  intro i hi hi'
-  simp
+      ([], (List.range n).map (fun i => n + i)) :=
+  Circuit.code_wiring_eq_map fun _ => rfl
 
 private def augmentCode (n : ℕ) (code : List (Op × List ℕ) × List ℕ) :
     List (Op × List ℕ) × List ℕ :=

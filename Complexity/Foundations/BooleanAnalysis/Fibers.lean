@@ -36,9 +36,9 @@ patterns on `s` (`coordinateMarginal`).
 The min-entropy deficit of a nonempty set `X` of points is `|ι| - log₂ |X|` (`uniformDeficit`).
 Conditioning on the coordinates outside `s` does not increase the average deficit
 [Korten, Lemma 4][Korten2026] (`expect_uniformDeficit_coordinateFiber`), so by Markov's inequality
-most points of `X` have fibers of small deficit (`coordinateFiber_good_probability`). By the
-pigeonhole principle, a map from `X` to at most `2 ^ m` values has a nonempty fiber of deficit at
-most `m` more than that of `X` (`exists_uniformDeficit_fiber_le`). The density of `X` relative to
+most points of `X` have fibers of small deficit (`le_expect_uniformDeficit_coordinateFiber_le`). By
+the pigeonhole principle, a map from `X` to at most `2 ^ m` values has a nonempty fiber of deficit
+at most `m` more than that of `X` (`exists_uniformDeficit_fiber_le`). The density of `X` relative to
 the uniform distribution (`uniformDensity`) connects deficits to the pointwise bounds of the
 light-patterns lemma.
 
@@ -57,18 +57,20 @@ light-patterns lemma.
 ## Main results
 
 * `Cslib.BitString.expect_uniformDeficit_coordinateFiber`: Korten's entropy lemma.
-* `Cslib.BitString.coordinateFiber_good_probability`: most fibers have small deficit.
+* `Cslib.BitString.le_expect_uniformDeficit_coordinateFiber_le`: most fibers have small deficit.
 * `Cslib.BitString.exists_uniformDeficit_fiber_le`: pigeonhole for deficits.
 * `Cslib.BitString.uniformMass_le_rpow`, `Cslib.BitString.uniformDensity_le_rpow`: a deficit
   bound bounds the uniform probability mass and density pointwise.
 * `Cslib.BitString.coordinateDensity_eq_expect`: the density of a fiber is the probability
   that resampling the coordinates in `s` lands in the set.
-* `Cslib.BitString.projectionAverage_eq_coordinateMarginal`,
+* `Cslib.BitString.projectionAverage_eq_expect_piecewise`,
+  `Cslib.BitString.projectionAverage_eq_coordinateMarginal`,
   `Cslib.BitString.expect_projectionAverage`, `Cslib.BitString.expect_resample`: the
   two projections agree, and projecting or resampling preserves the mean.
-* `Cslib.BitString.expect_half_of_flip`,
-  `Cslib.BitString.coordinateDensity_half_of_flip`: a Boolean function that flips with a
-  coordinate is true on half of the cube, and on half of every fiber that frees the coordinate.
+* `Cslib.BitString.expect_ite_eq_one_half_of_update_not`,
+  `Cslib.BitString.coordinateDensity_filter_eq_one_half_of_update_not`: a Boolean function that
+  flips with a coordinate is true on half of the cube, and on half of every fiber that frees the
+  coordinate.
 
 ## References
 
@@ -249,7 +251,7 @@ def completePattern {ι : Type*} (s x : ι → Bool)
 
 /-- Replace selected coordinates of `x` by those of `y`. -/
 def resample {ι : Type*} (s x y : ι → Bool) : ι → Bool :=
-  fun i => if s i then y i else x i
+  Set.piecewise {i | s i = true} y x
 
 /-- The fiber of `X` over the bits of `x` outside `s`, represented on the
 selected-coordinate cube. This is Korten's `X_{x,S}` inside its own subcube. -/
@@ -281,6 +283,10 @@ section Gluing
 
 variable {ι : Type*}
 
+/-- Evaluating `resample` at a coordinate selects from `y` when `s i` holds and `x` otherwise. -/
+@[simp] theorem resample_apply (s x y : ι → Bool) (i : ι) :
+    resample s x y i = if s i then y i else x i := rfl
+
 /-- Resampling no coordinates leaves the point unchanged. -/
 @[simp] theorem resample_false (x y : ι → Bool) : resample (fun _ => false) x y = x := rfl
 
@@ -311,7 +317,7 @@ private theorem resample_update_not [DecidableEq ι] {s : ι → Bool} {i : ι} 
   by_cases hj : j = i
   · subst hj
     simp [resample, hi]
-  · simp [resample, Function.update_of_ne hj]
+  · simp [resample, Set.piecewise, Function.update_of_ne hj]
 
 variable [Fintype ι] [DecidableEq ι]
 
@@ -401,6 +407,14 @@ theorem projectionAverage_const_mul (a : ℝ) (f : (ι → Bool) → ℝ) (s x :
     projectionAverage (fun y => a * f y) s x = a * projectionAverage f s x :=
   (mul_expect _ _ _).symm
 
+/-- The projection of `f` to `selected` is the uniform expectation over `Finset.piecewise`. -/
+theorem projectionAverage_eq_expect_piecewise (f : (ι → Bool) → ℝ) (selected x : ι → Bool) :
+    projectionAverage f selected x =
+      𝔼 y, f ((univ.filter fun i => selected i = true).piecewise x y) := by
+  unfold projectionAverage
+  refine expect_congr rfl fun y _ => congrArg f (funext fun i => ?_)
+  by_cases h : selected i = true <;> simp [resample, Set.piecewise, h]
+
 /-- The marginal of `f` at a pattern is the average of `f` at the completions of the pattern by a
 uniform point. -/
 theorem coordinateMarginal_eq_expect_completePattern (f : (ι → Bool) → ℝ) (s : ι → Bool)
@@ -472,7 +486,7 @@ theorem projectionAverage_comp_completePattern (f : (ι → Bool) → ℝ) (s x 
   unfold projectionAverage
   rw [← Fintype.expect_restrict_coordinates (p := fun i => s i = true)]
   refine expect_congr rfl fun y _ => congrArg f (funext fun i => ?_)
-  by_cases hs : s i = true <;> simp [completePattern, resample, hs]
+  by_cases hs : s i = true <;> simp [completePattern, resample, Set.piecewise, hs]
 
 end Projection
 
@@ -547,7 +561,7 @@ theorem expect_uniformDeficit_coordinateFiber {ι : Type*} [Fintype ι] [Decidab
 
 /-- For every fixed set of free coordinates, a uniform point of `X` yields
 a fiber of deficit at most `64*k` with probability at least `63/64`. -/
-theorem coordinateFiber_good_probability {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem le_expect_uniformDeficit_coordinateFiber_le {ι : Type*} [Fintype ι] [DecidableEq ι]
     (X : Finset (ι → Bool)) (hX : X.Nonempty) (s : ι → Bool)
     {k : ℝ} (hk : 0 < k) (hdef : uniformDeficit X ≤ k) :
     63 / 64 ≤ 𝔼 x ∈ X, if uniformDeficit (coordinateFiber X s x) ≤ 64 * k then
@@ -573,8 +587,8 @@ theorem coordinateFiber_good_probability {ι : Type*} [Fintype ι] [DecidableEq 
 /-! ### Functions that flip with a coordinate -/
 
 /-- A Boolean function that flips with one coordinate is true on half of the cube. -/
-theorem expect_half_of_flip {ι : Type*} [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool)
-    (i : ι) (hf : ∀ x, f (Function.update x i (!x i)) = !f x) (b : Bool) :
+theorem expect_ite_eq_one_half_of_update_not {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (f : (ι → Bool) → Bool) (i : ι) (hf : ∀ x, f (Function.update x i (!x i)) = !f x) (b : Bool) :
     (𝔼 x, if f x = b then (1 : ℝ) else 0) = 1 / 2 := by
   let flip (x : ι → Bool) := Function.update x i (!x i)
   have hinv : Function.Involutive flip := fun x => by simp [flip]
@@ -590,13 +604,13 @@ theorem expect_half_of_flip {ι : Type*} [Fintype ι] [DecidableEq ι] (f : (ι 
 
 /-- A Boolean function that flips with the coordinate `i` is true on half of every fiber over a
 set of coordinates containing `i`. -/
-theorem coordinateDensity_half_of_flip {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem coordinateDensity_filter_eq_one_half_of_update_not {ι : Type*} [Fintype ι] [DecidableEq ι]
     (f : (ι → Bool) → Bool) (i : ι) (hf : ∀ x, f (Function.update x i (!x i)) = !f x)
     (P x : ι → Bool) (hi : P i = true) (b : Bool) :
     coordinateDensity (univ.filter fun z => f z = b) P x = 1 / 2 := by
   rw [coordinateDensity_eq_expect]
   simp only [mem_filter, mem_univ, true_and]
-  exact expect_half_of_flip (fun y => f (resample P x y)) i
+  exact expect_ite_eq_one_half_of_update_not (fun y => f (resample P x y)) i
     (fun y => by rw [resample_update_not hi, hf]) b
 
 end Cslib.BitString

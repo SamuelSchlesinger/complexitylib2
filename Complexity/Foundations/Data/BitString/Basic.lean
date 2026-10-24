@@ -42,6 +42,9 @@ Boolean functions, are combined with `^^`.
 * `Cslib.BitString.val_equivFin_cons`: a new first bit is the least significant binary digit.
 * `Cslib.BitString.val_equivFin_succ`, `Cslib.BitString.decide_equivFin_le_succ`: numbering and
   comparing words by their highest bit.
+* `Cslib.BitString.fstBits_apply`, `Cslib.BitString.sndBits_apply`,
+  `Cslib.BitString.fstBits_append`, `Cslib.BitString.sndBits_append`,
+  `Cslib.BitString.append_fstBits_sndBits`: splitting and reassembling an appended word.
 * `Cslib.BitString.indexBits_injective`: distinct finite indices have distinct encodings.
 * `Cslib.BitString.add_self`, `Cslib.BitString.add_cancel_left`,
   `Cslib.BitString.add_cancel_right`: every bit string is its own negative.
@@ -110,11 +113,21 @@ theorem val_equivFin_eq_sum (x : BitString n) :
 
 /-- The first `a` bits of an `(a + b)`-bit word. -/
 def fstBits {a b : ℕ} (x : BitString (a + b)) : BitString a :=
-  x ∘ Fin.castAdd b
+  ((Fin.appendEquiv a b).symm x).1
 
 /-- The last `b` bits of an `(a + b)`-bit word. -/
 def sndBits {a b : ℕ} (x : BitString (a + b)) : BitString b :=
-  x ∘ Fin.natAdd a
+  ((Fin.appendEquiv a b).symm x).2
+
+/-- Bit `i` of `fstBits x` is bit `Fin.castAdd b i` of `x`. -/
+@[simp] theorem fstBits_apply {a b : ℕ} (x : BitString (a + b)) (i : Fin a) :
+    fstBits x i = x (Fin.castAdd b i) :=
+  rfl
+
+/-- Bit `i` of `sndBits x` is bit `Fin.natAdd a i` of `x`. -/
+@[simp] theorem sndBits_apply {a b : ℕ} (x : BitString (a + b)) (i : Fin b) :
+    sndBits x i = x (Fin.natAdd a i) :=
+  rfl
 
 /-- The first `a` bits of `Fin.append u v` are `u`. -/
 @[simp] theorem fstBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
@@ -125,6 +138,11 @@ def sndBits {a b : ℕ} (x : BitString (a + b)) : BitString b :=
 @[simp] theorem sndBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
     sndBits (Fin.append u v) = v :=
   funext fun i => Fin.append_right u v i
+
+/-- Appending the first `a` bits and last `b` bits of an `(a + b)`-bit word recovers it. -/
+@[simp] theorem append_fstBits_sndBits {a b : ℕ} (x : BitString (a + b)) :
+    Fin.append (fstBits x) (sndBits x) = x :=
+  (Fin.appendEquiv a b).apply_symm_apply x
 
 /-- Comparing words of `n + 1` bits: `x ≤ y` when the last bit of `x` is below that of `y`, or when
 they are equal and `x ≤ y` on the first `n` bits. -/

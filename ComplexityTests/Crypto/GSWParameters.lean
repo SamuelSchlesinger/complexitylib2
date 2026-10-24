@@ -16,7 +16,7 @@ checks supply no decision-LWE hardness or bootstrappability claim.
 
 namespace ComplexityTests.GSWParameters
 
-open Cslib Cslib.Crypto Cslib.Probability Cslib.Crypto.Homomorphic.GSW
+open Cslib Cslib.Crypto Cslib.ProbComp Cslib.Probability Cslib.Crypto.Homomorphic.GSW
 open Turing.MultiTapeTM
 open scoped NNReal
 

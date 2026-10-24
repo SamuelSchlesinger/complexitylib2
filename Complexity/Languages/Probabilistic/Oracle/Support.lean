@@ -9,7 +9,6 @@ module
 
 public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.Iteration
-public import Complexity.Languages.Probabilistic.Semantics
 
 import Complexity.Languages.Probabilistic.Oracle.Simulation
 
@@ -17,31 +16,23 @@ import Complexity.Languages.Probabilistic.Oracle.Simulation
 # Possible results of randomized oracle programs
 
 A result of a program with private coins is possible when some private samples and some replies
-to its external queries lead to it: `ProbOracleComp.support` is the set of results at the leaves
-of the program's tree of calls. Every stateful execution returns only possible results
-(`mem_support_of_mem`). When every reply type is nonempty, every possible result is returned by
-some stateful execution (`mem_support_iff_exists`): an oracle that answers its first call with a
-chosen reply realizes each path. Invariants of adaptive loops quantify over possible results, so
-they remain valid for every shared oracle and every reply length.
-
-`support` is the instance of the generic `OracleComp.supportWith` in which every reply is possible
-(`support_eq_supportWith`).
-
-## Main definitions
-
-* `Cslib.ProbOracleComp.support`: the results at the leaves of the program's tree of calls.
+to its external queries lead to it: it lies in `OracleComp.support program`, the results at the
+leaves of the program's tree of calls. That is the generic support of
+`Languages/Probabilistic/Semantics.lean`, and the rules of `OracleComp.supportWith` apply to it.
+Private samples range over the support of the closed program (`support_sample`). Every stateful
+execution returns only possible results (`mem_support_of_mem`). When every reply type is nonempty,
+every possible result is returned by some stateful execution (`mem_support_iff_exists`): an oracle
+that answers its first call with a chosen reply realizes each path. Invariants of adaptive loops
+(`OracleComp.iterate_invariant`) quantify over possible results, so they remain valid for every
+shared oracle and every reply length.
 
 ## Main results
 
-* `Cslib.ProbOracleComp.support_eq_supportWith`: `support` is `OracleComp.supportWith` of all
-  replies.
-* `Cslib.ProbOracleComp.mem_support_bind_iff`: a possible result of a sequence is a possible result
-  of a continuation at a possible intermediate result.
+* `Cslib.ProbOracleComp.supportWith_query`: an external query may return any possible reply.
 * `Cslib.ProbOracleComp.support_sample`: private samples range over the closed program's support.
+* `Cslib.ProbOracleComp.mem_support_of_mem`: stateful executions return possible results.
 * `Cslib.ProbOracleComp.mem_support_iff_exists`: with nonempty reply types, the possible results
   are the results of stateful executions.
-* `Cslib.ProbOracleComp.iterate_invariant`: an invariant preserved by every possible step holds
-  for every possible result of a bounded loop.
 
 ## References
 
@@ -59,106 +50,33 @@ open OracleComp
 
 variable {Query α β : Type} {spec : Query → Type}
 
-/-- The results of `program` for some private samples and some replies to its external queries:
-the results at the leaves of its tree of calls. -/
-def support : ProbOracleComp spec α → Set α
-  | .pure a => {a}
-  | .liftBind _ cont => ⋃ a, support (cont a)
-
-/-- The possible results are the generic `OracleComp.supportWith` with every reply possible. -/
-theorem support_eq_supportWith (program : ProbOracleComp spec α) :
-    support program = OracleComp.supportWith (fun _ => Set.univ) program := by
-  induction program with
-  | pure a => rfl
-  | liftBind q cont ih =>
-    change ⋃ a, support (cont a) = ⋃ a ∈ Set.univ, OracleComp.supportWith _ (cont a)
-    simp only [ih, Set.mem_univ, Set.iUnion_true]
-
-/-- A returned value is the only possible result. -/
-@[simp] theorem support_pure (a : α) : support (pure a : ProbOracleComp spec α) = {a} := rfl
-
 /-- A returned value is the only possible result. -/
 theorem eq_of_mem_support_pure {a result : α}
-    (h : result ∈ support (pure a : ProbOracleComp spec α)) : result = a := h
-
-/-- A possible result of a sequence is a possible result of a continuation at a possible
-intermediate result. -/
-@[simp] theorem mem_support_bind_iff {program : ProbOracleComp spec α}
-    {next : α → ProbOracleComp spec β} {result : β} :
-    result ∈ support (program >>= next) ↔ ∃ a ∈ support program, result ∈ support (next a) := by
-  induction program with
-  | pure a => simp [support]
-  | liftBind q cont ih =>
-    change result ∈ ⋃ b, support (cont b >>= next) ↔ ∃ a ∈ ⋃ b, support (cont b), _
-    simp only [Set.mem_iUnion, ih]
-    constructor
-    · rintro ⟨b, a, ha, h⟩
-      exact ⟨a, ⟨b, ha⟩, h⟩
-    · rintro ⟨a, ⟨b, ha⟩, h⟩
-      exact ⟨b, a, ha, h⟩
-
-/-- A possible result of a sequence comes from a possible first result. -/
-theorem mem_support_bind {program : ProbOracleComp spec α} {next : α → ProbOracleComp spec β}
-    {result : β} (h : result ∈ support (program >>= next)) :
-    ∃ a ∈ support program, result ∈ support (next a) :=
-  mem_support_bind_iff.mp h
-
-/-- A possible mapped result is the image of a possible result. -/
-@[simp] theorem mem_support_map_iff {program : ProbOracleComp spec α} {f : α → β} {result : β} :
-    result ∈ support (f <$> program) ↔ ∃ a ∈ support program, f a = result := by
-  rw [← bind_pure_comp, mem_support_bind_iff]
-  simp [eq_comm]
+    (h : result ∈ support (pure a : ProbOracleComp spec α)) : result = a :=
+  eq_of_mem_supportWith_pure h
 
 /-- A possible mapped result is the image of a possible result. -/
 theorem mem_support_map {program : ProbOracleComp spec α} {f : α → β} {result : β}
     (h : result ∈ support (f <$> program)) : ∃ a ∈ support program, f a = result :=
-  mem_support_map_iff.mp h
+  mem_supportWith_map_iff.mp h
 
-/-- An external query may return any reply. -/
-@[simp] theorem support_query (q : Query) : support (query (spec := spec) q) = Set.univ :=
-  Set.eq_univ_of_forall fun a => Set.mem_iUnion.mpr ⟨a, rfl⟩
+/-- An external query may return any of its possible replies. -/
+@[simp] theorem supportWith_query (possible : (q : ℕ ⊕ Query) → Set (probOracleSpec spec q))
+    (q : Query) : supportWith possible (query (spec := spec) q) = possible (.inr q) :=
+  OracleComp.supportWith_query possible (.inr q)
 
 /-- Private samples range over the support of the closed program. -/
 @[simp] theorem support_sample (program : ProbComp α) :
     support (sample (spec := spec) program) = (ProbComp.eval program).support := by
-  induction program using OracleComp.induction with
-  | pure a => simp [ProbComp.eval]
-  | query_bind n cont ih =>
-    have hquery : sample (spec := spec) (OracleComp.query n) = OracleComp.query (Sum.inl n) :=
-      OracleComp.interpret_query _ _
-    have hsample : support (OracleComp.query (spec := probOracleSpec spec) (Sum.inl n)) =
-        Set.univ :=
-      Set.eq_univ_of_forall fun a => Set.mem_iUnion.mpr ⟨a, rfl⟩
-    have heval : (ProbComp.eval (OracleComp.query (spec := unifSpec) n)).support = Set.univ := by
-      rw [show OracleComp.query (spec := unifSpec) n = ProbComp.unifFin n from rfl,
-        ProbComp.eval_unifFin]
-      exact Set.eq_univ_of_forall fun a => by simp
-    ext result
-    rw [sample_bind, hquery, ProbComp.eval_bind, PMF.mem_support_bind_iff, mem_support_bind_iff,
-      hsample, heval]
-    simp only [Set.mem_univ, true_and, ih]
-
-/-- Private samples can only return results in the support of the closed program. -/
-theorem support_sample_subset (program : ProbComp α) :
-    support (sample (spec := spec) program) ⊆ (ProbComp.eval program).support :=
-  (support_sample program).subset
+  rw [sample_eq_liftLeft, support_liftLeft, ProbComp.support_eval]
 
 /-- A result supported by one stateful execution is possible. -/
 theorem mem_support_of_mem {program : ProbOracleComp spec α} {State : Type}
     (oracle : (q : Query) → StateT State PMF (spec q)) {s s' : State} {result : α}
     (h : (result, s') ∈ ((OracleComp.interpret
       (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle) program).run s).support) :
-    result ∈ support program := by
-  induction program using OracleComp.induction generalizing s s' with
-  | pure a =>
-    simp only [run_interpret_pure, Probability.PMF.monad_pure_eq_pure,
-      PMF.mem_support_pure_iff, Prod.mk.injEq] at h
-    exact h.1
-  | query_bind q cont ih =>
-    simp only [interpret_bind, OracleComp.interpret_query, StateT.run_bind,
-      Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff] at h
-    obtain ⟨⟨a, middle⟩, -, h⟩ := h
-    exact Set.mem_iUnion.mpr ⟨a, ih a h⟩
+    result ∈ support program :=
+  mem_supportWith_of_mem_support_runWith _ (fun _ _ _ _ _ => Set.mem_univ _) h
 
 /-- When every reply type is nonempty, the possible results of a program are exactly the results
 of its stateful executions. -/
@@ -174,10 +92,10 @@ theorem mem_support_iff_exists [hne : ∀ q, Nonempty (spec q)] {program : ProbO
   induction program with
   | pure a =>
     refine ⟨Unit, fun q _ => PMF.pure (Classical.choice (hne q), ()), (), (), ?_⟩
-    rw [eq_of_mem_support_pure h]
+    rw [eq_of_mem_supportWith_pure h]
     exact (PMF.mem_support_pure_iff _ _).mpr rfl
   | liftBind q cont ih =>
-    obtain ⟨a, ha⟩ := Set.mem_iUnion.mp h
+    obtain ⟨a, -, ha⟩ := Set.mem_iUnion₂.mp h
     obtain ⟨State, oracle, s, s', hrun⟩ := ih a ha
     have hrun' {S : Type} (oracle : (q : Query) → StateT S PMF (spec q)) (state : S) :
         (OracleComp.interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
@@ -207,24 +125,5 @@ theorem mem_support_iff_exists [hne : ∀ q, Nonempty (spec q)] {program : ProbO
         simp [first]
       · rw [← hlift, PMF.mem_support_map_iff]
         exact ⟨(result, s'), hrun, rfl⟩
-
-/-- An invariant indexed by the number of completed steps holds for every possible result of a
-bounded loop when every possible step preserves it. -/
-theorem iterate_invariant {σ : Type} {step : σ → ProbOracleComp spec σ} {count : ℕ}
-    {initial : σ} (invariant : ℕ → σ → Prop) (hbase : invariant 0 initial)
-    (hpreserve : ∀ i state, i < count → invariant i state →
-      ∀ next ∈ support (step state), invariant (i + 1) next) :
-    ∀ state ∈ support (OracleComp.iterate count step initial), invariant count state := by
-  induction count with
-  | zero =>
-    intro state hstate
-    exact (eq_of_mem_support_pure hstate) ▸ hbase
-  | succ count ih =>
-    intro state hstate
-    rw [OracleComp.iterate_succ] at hstate
-    obtain ⟨middle, hmiddle, hstate⟩ := mem_support_bind hstate
-    exact hpreserve count middle (Nat.lt_succ_self count)
-      (ih (fun i state hi => hpreserve i state (Nat.lt_succ_of_lt hi)) middle hmiddle)
-      state hstate
 
 end Cslib.ProbOracleComp

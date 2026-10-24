@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SubsetSum.Mask
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
+public import Complexity.Logics.Propositional.CNF.ModelCount
 import Complexity.Computability.Complexity.Problems.SubsetSum.Digits
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -27,9 +28,9 @@ significant first); the `NP`-hardness proved here is for this encoding and is no
 and the verifier adds the selected numbers in binary.
 
 Sipser's reduction from 3SAT [Sipser, Theorem 7.56][Sipser2013] gives each of the `n` variables
-of a formula, numbered by first occurrence (`ThreeSAT.distinctVars`), and each of its `m` clauses
-a digit position. Each variable has two literal numbers, with digit one at the position of the
-variable and at the positions of the clauses containing the literal (`ThreeSAT.literalDigits`);
+of a formula, numbered by first occurrence (`Cslib.Logic.PL.CNF.distinctVars`), and each of its `m`
+clauses a digit position. Each variable has two literal numbers, with digit one at the position of
+the variable and at the positions of the clauses containing the literal (`ThreeSAT.literalDigits`);
 each clause has two slack numbers with digit one at its position only. The target has digit one
 at every variable position and three at every clause position. At each position, all numbers
 together have at most five digits one, so no subfamily produces carries in any base above five
@@ -44,7 +45,7 @@ by both of its literal numbers. Formulas with a clause of more than three litera
 ## Main definitions
 
 * `Cslib.Complexity.SubsetSum`, `Cslib.Complexity.SubsetSum.verifier`.
-* `Cslib.Complexity.ThreeSAT.distinctVars`, `Cslib.Complexity.ThreeSAT.literalDigits`,
+* `Cslib.Complexity.ThreeSAT.literalDigits`,
   `Cslib.Complexity.ThreeSAT.digitNumbers`, `Cslib.Complexity.ThreeSAT.digitTarget`.
 * `Cslib.Complexity.ThreeSAT.toSubsetSum`: Sipser's reduction.
 
@@ -152,19 +153,15 @@ namespace ThreeSAT
 
 /-! ### The digit construction -/
 
-/-- The variables of `φ` in order of first occurrence, each once. -/
-def distinctVars (φ : CNF ℕ) : List ℕ :=
-  (φ.vars.zipIdx.filter fun p => φ.vars.idxOf p.1 == p.2).map Prod.fst
-
 /-- Whether clause `j` of `φ` contains the literal of sign `b` of variable number `i` of
-`distinctVars φ`. -/
+`φ.distinctVars`. -/
 def covers (φ : CNF ℕ) (i : ℕ) (b : Bool) (j : ℕ) : Bool :=
-  (φ.getD j []).any fun l => (distinctVars φ).idxOf l.1 == i && l.2 == b
+  (φ.getD j []).any fun l => φ.distinctVars.idxOf l.1 == i && l.2 == b
 
 /-- The digit positions of the number of a literal: the position `i` of its variable, and the
-position `(distinctVars φ).length + j` of every clause `j` containing it. -/
+position `φ.distinctVars.length + j` of every clause `j` containing it. -/
 def literalDigits (φ : CNF ℕ) (i : ℕ) (b : Bool) : List ℕ :=
-  i :: ((List.range φ.length).filter (covers φ i b)).map ((distinctVars φ).length + ·)
+  i :: ((List.range φ.length).filter (covers φ i b)).map (φ.distinctVars.length + ·)
 
 /-- The number whose base-8 digits are one at the positions `ps` and zero elsewhere, for distinct
 positions. -/
@@ -173,16 +170,16 @@ def octal (ps : List ℕ) : ℕ := (ps.map (8 ^ ·)).sum
 /-- The numbers of the digit construction: two literal numbers for each variable, and two slack
 numbers with the single digit of each clause. -/
 def digitNumbers (φ : CNF ℕ) : List ℕ :=
-  ((List.range (distinctVars φ).length).flatMap fun i =>
+  ((List.range φ.distinctVars.length).flatMap fun i =>
       [octal (literalDigits φ i true), octal (literalDigits φ i false)]) ++
     (List.range φ.length).flatMap fun j =>
-      [8 ^ ((distinctVars φ).length + j), 8 ^ ((distinctVars φ).length + j)]
+      [8 ^ (φ.distinctVars.length + j), 8 ^ (φ.distinctVars.length + j)]
 
 /-- The target of the digit construction: digit one at each variable position and digit three at
 each clause position. -/
 def digitTarget (φ : CNF ℕ) : ℕ :=
-  ((List.range (distinctVars φ).length).map (8 ^ ·)).sum +
-    ((List.range φ.length).map fun j => 3 * 8 ^ ((distinctVars φ).length + j)).sum
+  ((List.range φ.distinctVars.length).map (8 ^ ·)).sum +
+    ((List.range φ.length).map fun j => 3 * 8 ^ (φ.distinctVars.length + j)).sum
 
 /-- Sipser's reduction from `ThreeSAT` to `SubsetSum`: the digit construction for formulas whose
 clauses have at most three literals, and an instance without solutions otherwise. -/
@@ -197,33 +194,13 @@ open Finset
 
 variable {φ : CNF ℕ}
 
-/-- Every variable of `φ` is listed in `distinctVars φ`. -/
-theorem mem_distinctVars_of_mem_vars {v : ℕ} (hv : v ∈ φ.vars) : v ∈ distinctVars φ := by
-  have hlt : φ.vars.idxOf v < φ.vars.length := List.idxOf_lt_length_iff.2 hv
-  simp only [distinctVars, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
-    beq_iff_eq, Prod.exists, exists_and_right, exists_eq_right]
-  exact ⟨φ.vars.idxOf v, ⟨by simp [hlt], rfl⟩⟩
-
 private theorem getD_eq_getElem {j : ℕ} (hj : j < φ.length) : φ.getD j [] = φ[j] := by
   rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj, Option.getD_some]
 
-/-- `distinctVars φ` lists each variable once. -/
-theorem nodup_distinctVars : (distinctVars φ).Nodup := by
-  have hzip : φ.vars.zipIdx.Nodup := by
-    rw [List.Nodup, List.pairwise_iff_getElem]
-    intro i j hi hj hij h
-    have := congrArg Prod.snd h
-    simp only [List.getElem_zipIdx, Nat.zero_add] at this
-    lia
-  refine (hzip.filter _).map_on ?_
-  rintro ⟨u, i⟩ hu ⟨v, j⟩ hv (rfl : u = v)
-  simp only [List.mem_filter, beq_iff_eq] at hu hv
-  rw [← hu.2, ← hv.2]
-
-/-- The variable of every literal of `φ` is listed in `distinctVars φ`. -/
+/-- The variable of every literal of `φ` is listed in `φ.distinctVars`. -/
 private theorem mem_distinctVars_of_mem {j : ℕ} {l : Literal ℕ} (hl : l ∈ φ.getD j []) :
-    l.1 ∈ distinctVars φ := by
-  refine mem_distinctVars_of_mem_vars ?_
+    l.1 ∈ φ.distinctVars := by
+  refine CNF.mem_distinctVars.2 ?_
   rcases Nat.lt_or_ge j φ.length with hj | hj
   · rw [getD_eq_getElem hj] at hl
     exact List.mem_map.2 ⟨l, List.mem_flatten.2 ⟨_, List.getElem_mem hj, hl⟩, rfl⟩
@@ -231,9 +208,9 @@ private theorem mem_distinctVars_of_mem {j : ℕ} {l : Literal ℕ} (hl : l ∈ 
     simp at hl
 
 /-- Clause `j` covers the literal number `(i, b)` when it contains a literal of sign `b` whose
-variable is number `i` of `distinctVars φ`. -/
+variable is number `i` of `φ.distinctVars`. -/
 theorem covers_eq_true_iff {i : ℕ} {b : Bool} {j : ℕ} :
-    covers φ i b j = true ↔ ∃ l ∈ φ.getD j [], (distinctVars φ).idxOf l.1 = i ∧ l.2 = b := by
+    covers φ i b j = true ↔ ∃ l ∈ φ.getD j [], φ.distinctVars.idxOf l.1 = i ∧ l.2 = b := by
   simp [covers]
 
 /-- A clause covers at most as many literal numbers as it has literals. -/
@@ -241,7 +218,7 @@ private theorem card_filter_covers_le (A : Finset (ℕ × Bool)) (j : ℕ) :
     #{a ∈ A | covers φ a.1 a.2 j} ≤ (φ.getD j []).length := by
   classical
   calc #{a ∈ A | covers φ a.1 a.2 j}
-      ≤ #(((φ.getD j []).map fun l => ((distinctVars φ).idxOf l.1, l.2)).toFinset) := by
+      ≤ #(((φ.getD j []).map fun l => (φ.distinctVars.idxOf l.1, l.2)).toFinset) := by
         refine card_le_card fun a ha => ?_
         obtain ⟨l, hl, hi, hb⟩ := covers_eq_true_iff.1 (mem_filter.1 ha).2
         exact List.mem_toFinset.2 (List.mem_map.2 ⟨l, hl, by rw [hi, hb]⟩)
@@ -258,7 +235,7 @@ private theorem card_filter_fst_le (A : Finset (ℕ × Bool)) (i : ℕ) : #{a �
 /-- The positions of the digits one of a literal number. -/
 private theorem mem_literalDigits {i : ℕ} {b : Bool} {p : ℕ} :
     p ∈ literalDigits φ i b ↔
-      p = i ∨ ∃ j < φ.length, covers φ i b j = true ∧ p = (distinctVars φ).length + j := by
+      p = i ∨ ∃ j < φ.length, covers φ i b j = true ∧ p = φ.distinctVars.length + j := by
   simp only [literalDigits, List.mem_cons, List.mem_map, List.mem_filter, List.mem_range]
   constructor
   · rintro (h | ⟨j, ⟨hj, hc⟩, rfl⟩)
@@ -268,7 +245,7 @@ private theorem mem_literalDigits {i : ℕ} {b : Bool} {p : ℕ} :
     · exact Or.inl h
     · exact Or.inr ⟨j, ⟨hj, hc⟩, rfl⟩
 
-private theorem nodup_literalDigits {i : ℕ} (hi : i < (distinctVars φ).length) (b : Bool) :
+private theorem nodup_literalDigits {i : ℕ} (hi : i < φ.distinctVars.length) (b : Bool) :
     (literalDigits φ i b).Nodup := by
   refine List.nodup_cons.2 ⟨fun h => ?_, ((List.nodup_range).filter _).map
     (fun _ _ h => Nat.add_left_cancel h)⟩
@@ -280,11 +257,11 @@ abbrev Item : Type := (ℕ × Bool) ⊕ (ℕ × Bool)
 
 /-- The digit positions of an item. -/
 private def itemDigits (φ : CNF ℕ) : Item → List ℕ :=
-  Sum.elim (fun a => literalDigits φ a.1 a.2) fun c => [(distinctVars φ).length + c.1]
+  Sum.elim (fun a => literalDigits φ a.1 a.2) fun c => [φ.distinctVars.length + c.1]
 
 /-- The items of the digit construction, in the order of `digitNumbers`. -/
 private def items (φ : CNF ℕ) : List Item :=
-  ((List.range (distinctVars φ).length).flatMap fun i => [.inl (i, true), .inl (i, false)]) ++
+  ((List.range φ.distinctVars.length).flatMap fun i => [.inl (i, true), .inl (i, false)]) ++
     (List.range φ.length).flatMap fun j => [.inr (j, true), .inr (j, false)]
 
 private theorem digitNumbers_eq_map : digitNumbers φ = (items φ).map fun x => octal
@@ -293,7 +270,7 @@ private theorem digitNumbers_eq_map : digitNumbers φ = (items φ).map fun x => 
 
 /-- All items, as a finite set. -/
 private def itemSet (φ : CNF ℕ) : Finset Item :=
-  (range (distinctVars φ).length ×ˢ univ).disjSum (range φ.length ×ˢ univ)
+  (range φ.distinctVars.length ×ˢ univ).disjSum (range φ.length ×ˢ univ)
 
 private theorem mem_items {x : Item} : x ∈ items φ ↔ x ∈ itemSet φ := by
   rcases x with ⟨i, b⟩ | ⟨j, c⟩
@@ -321,19 +298,19 @@ private theorem octal_itemDigits {x : Item} (hx : x ∈ itemSet φ) :
   · simp [itemDigits]
 
 private theorem itemCol_subset {x : Item} (hx : x ∈ itemSet φ) :
-    itemCol φ x ⊆ range ((distinctVars φ).length + φ.length) := by
+    itemCol φ x ⊆ range (φ.distinctVars.length + φ.length) := by
   intro p hp
   rw [itemCol, List.mem_toFinset] at hp
   rw [mem_range]
   rcases x with a | c
-  · have ha : a.1 < (distinctVars φ).length := by simpa [itemSet] using hx
+  · have ha : a.1 < φ.distinctVars.length := by simpa [itemSet] using hx
     rcases mem_literalDigits.1 hp with rfl | ⟨j, hj, -, rfl⟩ <;> lia
   · have hc : c.1 < φ.length := by simpa [itemSet] using hx
     simp only [itemDigits, Sum.elim_inr, List.mem_singleton] at hp
     lia
 
 /-- Membership of a variable position in the digits of a literal number. -/
-private theorem mem_itemCol_inl_of_lt {a : ℕ × Bool} {i : ℕ} (hi : i < (distinctVars φ).length) :
+private theorem mem_itemCol_inl_of_lt {a : ℕ × Bool} {i : ℕ} (hi : i < φ.distinctVars.length) :
     i ∈ itemCol φ (.inl a) ↔ a.1 = i := by
   rw [itemCol, List.mem_toFinset, itemDigits, Sum.elim_inl]
   refine ⟨fun h => ?_, fun h => mem_literalDigits.2 (Or.inl h.symm)⟩
@@ -342,9 +319,9 @@ private theorem mem_itemCol_inl_of_lt {a : ℕ × Bool} {i : ℕ} (hi : i < (dis
   · lia
 
 /-- Membership of a clause position in the digits of a literal number. -/
-private theorem mem_itemCol_inl_clause {a : ℕ × Bool} (ha : a.1 < (distinctVars φ).length) {j : ℕ}
+private theorem mem_itemCol_inl_clause {a : ℕ × Bool} (ha : a.1 < φ.distinctVars.length) {j : ℕ}
     (hj : j < φ.length) :
-    (distinctVars φ).length + j ∈ itemCol φ (.inl a) ↔ covers φ a.1 a.2 j = true := by
+    φ.distinctVars.length + j ∈ itemCol φ (.inl a) ↔ covers φ a.1 a.2 j = true := by
   rw [itemCol, List.mem_toFinset, itemDigits, Sum.elim_inl, mem_literalDigits]
   constructor
   · rintro (h | ⟨j', -, hc, h⟩)
@@ -353,7 +330,7 @@ private theorem mem_itemCol_inl_clause {a : ℕ × Bool} (ha : a.1 < (distinctVa
   · exact fun h => Or.inr ⟨j, hj, h, rfl⟩
 
 private theorem mem_itemCol_inr {c : ℕ × Bool} {p : ℕ} :
-    p ∈ itemCol φ (.inr c) ↔ p = (distinctVars φ).length + c.1 := by
+    p ∈ itemCol φ (.inr c) ↔ p = φ.distinctVars.length + c.1 := by
   simp [itemCol, itemDigits]
 
 /-- Column counts split into literal numbers and slack numbers. -/
@@ -368,8 +345,8 @@ private theorem card_filter_disjSum (A B : Finset (ℕ × Bool)) (p : ℕ) :
 /-- The target as a number with base-8 digits: one at variable positions, three at clause
 positions. -/
 private theorem digitTarget_eq :
-    digitTarget φ = ∑ p ∈ range ((distinctVars φ).length + φ.length),
-      (if p < (distinctVars φ).length then 1 else 3) * 8 ^ p := by
+    digitTarget φ = ∑ p ∈ range (φ.distinctVars.length + φ.length),
+      (if p < φ.distinctVars.length then 1 else 3) * 8 ^ p := by
   have hlist (n : ℕ) (f : ℕ → ℕ) : ((List.range n).map f).sum = ∑ i ∈ range n, f i := by
     rw [sum_eq_multiset_sum, range_val, Multiset.range, Multiset.map_coe, Multiset.sum_coe]
   rw [sum_range_add, digitTarget, hlist, hlist]
@@ -378,41 +355,41 @@ private theorem digitTarget_eq :
   · exact sum_congr rfl fun j _ => by simp
 
 /-- **Size of the digit construction.** Every number has at most
-`(distinctVars φ).length + φ.length` base-8 digits, that is, three binary digits per variable and
+`φ.distinctVars.length + φ.length` base-8 digits, that is, three binary digits per variable and
 per clause. -/
 theorem lt_of_mem_digitNumbers {a : ℕ} (ha : a ∈ digitNumbers φ) :
-    a < 8 ^ ((distinctVars φ).length + φ.length) := by
+    a < 8 ^ (φ.distinctVars.length + φ.length) := by
   classical
   rw [digitNumbers_eq_map] at ha
   obtain ⟨x, hx, rfl⟩ := List.mem_map.1 ha
   have hx' := mem_items.1 hx
   calc octal (itemDigits φ x)
-      = ∑ p ∈ range ((distinctVars φ).length + φ.length),
+      = ∑ p ∈ range (φ.distinctVars.length + φ.length),
           (if p ∈ itemCol φ x then 1 else 0) * 8 ^ p := by
         simp only [ite_mul, one_mul, zero_mul]
         rw [← sum_filter, filter_mem_eq_inter, inter_eq_right.2 (itemCol_subset hx'),
           octal_itemDigits hx']
     _ < _ := Nat.sum_range_mul_pow_lt fun p _ => by split <;> lia
 
-/-- The target has at most `(distinctVars φ).length + φ.length` base-8 digits. -/
-theorem digitTarget_lt : digitTarget φ < 8 ^ ((distinctVars φ).length + φ.length) := by
+/-- The target has at most `φ.distinctVars.length + φ.length` base-8 digits. -/
+theorem digitTarget_lt : digitTarget φ < 8 ^ (φ.distinctVars.length + φ.length) := by
   rw [digitTarget_eq]
   exact Nat.sum_range_mul_pow_lt fun p _ => by split <;> lia
 
 /-- The count at a variable position. -/
 private theorem card_filter_var {A B : Finset (ℕ × Bool)} {i : ℕ}
-    (hi : i < (distinctVars φ).length) :
+    (hi : i < φ.distinctVars.length) :
     #{x ∈ A.disjSum B | i ∈ itemCol φ x} = #{a ∈ A | a.1 = i} := by
   rw [card_filter_disjSum]
   simp_rw [mem_itemCol_inl_of_lt hi, mem_itemCol_inr]
-  have hB : ({c ∈ B | i = (distinctVars φ).length + c.1} : Finset (ℕ × Bool)) = ∅ :=
+  have hB : ({c ∈ B | i = φ.distinctVars.length + c.1} : Finset (ℕ × Bool)) = ∅ :=
     filter_false_of_mem fun c _ => by lia
   rw [hB, card_empty, Nat.add_zero]
 
 /-- The count at a clause position. -/
 private theorem card_filter_clause {A B : Finset (ℕ × Bool)}
-    (hA : A ⊆ range (distinctVars φ).length ×ˢ univ) {j : ℕ} (hj : j < φ.length) :
-    #{x ∈ A.disjSum B | (distinctVars φ).length + j ∈ itemCol φ x} =
+    (hA : A ⊆ range φ.distinctVars.length ×ˢ univ) {j : ℕ} (hj : j < φ.length) :
+    #{x ∈ A.disjSum B | φ.distinctVars.length + j ∈ itemCol φ x} =
       #{a ∈ A | covers φ a.1 a.2 j} + #{c ∈ B | c.1 = j} := by
   rw [card_filter_disjSum,
     filter_congr fun a ha => mem_itemCol_inl_clause (by simpa using (mem_product.1 (hA ha)).1) hj]
@@ -431,28 +408,28 @@ slack numbers `B` so that each variable position holds one chosen literal number
 position three chosen numbers. -/
 theorem digit_mem_SubsetSum_iff_counts (hφ : ∀ c ∈ φ, c.length ≤ 3) :
     (digitNumbers φ, digitTarget φ) ∈ SubsetSum ↔
-      ∃ A ⊆ range (distinctVars φ).length ×ˢ (univ : Finset Bool),
+      ∃ A ⊆ range φ.distinctVars.length ×ˢ (univ : Finset Bool),
         ∃ B ⊆ range φ.length ×ˢ (univ : Finset Bool),
-          (∀ i < (distinctVars φ).length, #{a ∈ A | a.1 = i} = 1) ∧
+          (∀ i < φ.distinctVars.length, #{a ∈ A | a.1 = i} = 1) ∧
             ∀ j < φ.length, #{a ∈ A | covers φ a.1 a.2 j} + #{c ∈ B | c.1 = j} = 3 := by
   classical
-  have hT : ∀ p < (distinctVars φ).length + φ.length,
-      (if p < (distinctVars φ).length then 1 else 3) < 8 := fun p _ => by split <;> lia
-  have hU : ∀ p < (distinctVars φ).length + φ.length, #{x ∈ itemSet φ | p ∈ itemCol φ x} < 8 := by
+  have hT : ∀ p < φ.distinctVars.length + φ.length,
+      (if p < φ.distinctVars.length then 1 else 3) < 8 := fun p _ => by split <;> lia
+  have hU : ∀ p < φ.distinctVars.length + φ.length, #{x ∈ itemSet φ | p ∈ itemCol φ x} < 8 := by
     refine forall_lt_add_iff.2 ⟨fun i hi => ?_, fun j hj => ?_⟩
     · rw [itemSet, card_filter_var hi]
       exact (card_filter_fst_le _ _).trans_lt (by lia)
     · rw [itemSet, card_filter_clause subset_rfl hj]
       have h₁ := card_filter_covers_le (φ := φ)
-        (range (distinctVars φ).length ×ˢ (univ : Finset Bool)) j
+        (range φ.distinctVars.length ×ˢ (univ : Finset Bool)) j
       rw [getD_eq_getElem hj] at h₁
       have h₂ := hφ _ (List.getElem_mem hj)
       have h₃ := card_filter_fst_le (range φ.length ×ˢ (univ : Finset Bool)) j
       lia
-  have hcounts {A B : Finset (ℕ × Bool)} (hA : A ⊆ range (distinctVars φ).length ×ˢ univ) :
-      (∀ p < (distinctVars φ).length + φ.length, #{x ∈ A.disjSum B | p ∈ itemCol φ x} =
-        if p < (distinctVars φ).length then 1 else 3) ↔
-      (∀ i < (distinctVars φ).length, #{a ∈ A | a.1 = i} = 1) ∧
+  have hcounts {A B : Finset (ℕ × Bool)} (hA : A ⊆ range φ.distinctVars.length ×ˢ univ) :
+      (∀ p < φ.distinctVars.length + φ.length, #{x ∈ A.disjSum B | p ∈ itemCol φ x} =
+        if p < φ.distinctVars.length then 1 else 3) ↔
+      (∀ i < φ.distinctVars.length, #{a ∈ A | a.1 = i} = 1) ∧
         ∀ j < φ.length, #{a ∈ A | covers φ a.1 a.2 j} + #{c ∈ B | c.1 = j} = 3 := by
     rw [forall_lt_add_iff]
     refine and_congr (forall₂_congr fun i hi => ?_) (forall₂_congr fun j hj => ?_)
@@ -478,9 +455,9 @@ theorem digit_mem_SubsetSum_iff_counts (hφ : ∀ c ∈ φ, c.length ≤ 3) :
 satisfiable: the chosen literal numbers are the true literals, and slack numbers fill each clause
 position up to three. -/
 theorem counts_iff_satisfiable (hφ : ∀ c ∈ φ, c.length ≤ 3) :
-    (∃ A ⊆ range (distinctVars φ).length ×ˢ (univ : Finset Bool),
+    (∃ A ⊆ range φ.distinctVars.length ×ˢ (univ : Finset Bool),
       ∃ B ⊆ range φ.length ×ˢ (univ : Finset Bool),
-        (∀ i < (distinctVars φ).length, #{a ∈ A | a.1 = i} = 1) ∧
+        (∀ i < φ.distinctVars.length, #{a ∈ A | a.1 = i} = 1) ∧
           ∀ j < φ.length, #{a ∈ A | covers φ a.1 a.2 j} + #{c ∈ B | c.1 = j} = 3) ↔
       φ.Satisfiable := by
   classical
@@ -489,7 +466,7 @@ theorem counts_iff_satisfiable (hφ : ∀ c ∈ φ, c.length ≤ 3) :
     -- Each variable position holds the number of exactly one of its literals.
     have hnot : ∀ i, (i, false) ∈ A → (i, true) ∉ A := by
       intro i hf ht
-      have hi : i < (distinctVars φ).length := mem_range.1 (mem_product.1 (hA ht)).1
+      have hi : i < φ.distinctVars.length := mem_range.1 (mem_product.1 (hA ht)).1
       have h₂ : 2 ≤ #{a ∈ A | a.1 = i} := by
         calc 2 = #({(i, true), (i, false)} : Finset (ℕ × Bool)) := by simp
           _ ≤ _ := card_le_card fun a ha => by
@@ -497,7 +474,7 @@ theorem counts_iff_satisfiable (hφ : ∀ c ∈ φ, c.length ≤ 3) :
             rcases ha with rfl | rfl <;> simpa
       have := hvar i hi
       lia
-    refine ⟨fun v => decide (((distinctVars φ).idxOf v, true) ∈ A),
+    refine ⟨fun v => decide ((φ.distinctVars.idxOf v, true) ∈ A),
       (CNF.eval_eq_true_iff _ _).2 fun c hc => ?_⟩
     obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hc
     -- Some literal number of the clause is chosen, since slack numbers fill at most two.
@@ -517,9 +494,9 @@ theorem counts_iff_satisfiable (hφ : ∀ c ∈ φ, c.length ≤ 3) :
     · exact decide_eq_true haA
   · rintro ⟨σ, hσ⟩
     -- Choose the true literal of each variable, then fill each clause position with slack.
-    set b : ℕ → Bool := fun i => σ ((distinctVars φ).getD i 0) with hb
-    set A : Finset (ℕ × Bool) := (range (distinctVars φ).length).image fun i => (i, b i) with hA
-    have hmemA : ∀ a, a ∈ A ↔ a.1 < (distinctVars φ).length ∧ a.2 = b a.1 := by
+    set b : ℕ → Bool := fun i => σ (φ.distinctVars.getD i 0) with hb
+    set A : Finset (ℕ × Bool) := (range φ.distinctVars.length).image fun i => (i, b i) with hA
+    have hmemA : ∀ a, a ∈ A ↔ a.1 < φ.distinctVars.length ∧ a.2 = b a.1 := by
       rintro ⟨i, c⟩
       simp only [hA, mem_image, mem_range, Prod.mk.injEq]
       constructor
@@ -546,9 +523,9 @@ theorem counts_iff_satisfiable (hφ : ∀ c ∈ φ, c.length ≤ 3) :
         obtain ⟨l, hl, hσl⟩ := (Clause.eval_eq_true_iff _ _).1
           ((CNF.eval_eq_true_iff _ _).1 hσ _ (List.getElem_mem hj))
         have hl' : l ∈ φ.getD j [] := by rwa [getD_eq_getElem hj]
-        have hidx : (distinctVars φ).idxOf l.1 < (distinctVars φ).length :=
+        have hidx : φ.distinctVars.idxOf l.1 < φ.distinctVars.length :=
           List.idxOf_lt_length_iff.2 (mem_distinctVars_of_mem hl')
-        refine card_pos.2 ⟨((distinctVars φ).idxOf l.1, l.2), mem_filter.2 ⟨(hmemA _).2
+        refine card_pos.2 ⟨(φ.distinctVars.idxOf l.1, l.2), mem_filter.2 ⟨(hmemA _).2
           ⟨hidx, ?_⟩, covers_eq_true_iff.2 ⟨l, hl', rfl, rfl⟩⟩⟩
         simp only [hb, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hidx,
           List.getElem_idxOf hidx, Option.getD_some, hσl]
@@ -591,14 +568,7 @@ private theorem eight_pow : ComputableTidilyInPolyTime (fun p : ℕ => 8 ^ p) en
   rw [h]
   fun_prop
 
-attribute [local fun_prop] eight_pow
-
-/-- Listing the distinct variables is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_distinctVars :
-    ComputableTidilyInPolyTime distinctVars encCNF (encList encNat) := by
-  unfold distinctVars
-  fun_prop
+attribute [local fun_prop] eight_pow ComputableInPolyTime.tidy
 
 /-- Testing whether a clause contains a literal is polynomial-time. -/
 @[fun_prop]
@@ -606,8 +576,6 @@ theorem computableTidilyInPolyTime_covers :
     ComputableTidilyInPolyTime
       (fun p : ((CNF ℕ × ℕ) × Bool) × ℕ => covers p.1.1.1 p.1.1.2 p.1.2 p.2)
       (encPair (encPair (encPair encCNF encUnary) encBool) encUnary) encBool := by
-  have hvars := computableTidilyInPolyTime_distinctVars
-  unfold encCNF at hvars
   unfold covers encCNF
   apply anyWithInput (encA := encPair encNat encBool)
   · exact (listGetD (encA := encList (encPair encNat encBool)) []).comp
