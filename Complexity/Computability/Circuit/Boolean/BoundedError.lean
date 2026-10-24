@@ -51,7 +51,7 @@ variable {n p : ℕ}
 
 /-- If `g` is a threshold of copies of `F` with hardwired random strings, its complexity is at
 most that of the copies and of the threshold. -/
-theorem complexity_le_of_eq_threshold {m j : ℕ} (F : BooleanFunction (n + p))
+private theorem complexity_le_of_eq_threshold {m j : ℕ} (F : BooleanFunction (n + p))
     (g : BooleanFunction n) (ω : Fin m → Fin p → Bool)
     (h : ∀ x, g x = threshold m j fun i => F (Fin.append x (ω i))) :
     complexity interpretation (single g) ≤
@@ -71,7 +71,7 @@ theorem complexity_le_of_eq_threshold {m j : ℕ} (F : BooleanFunction (n + p))
 /-- **Adleman's theorem**, for one input length, on a set of inputs. If, for every `x ∈ S`, at
 least two thirds of the random strings `r` have `F (x ++ r) = g x`, then some function agreeing
 with `g` on `S` has circuits of size `O(n (C(F) + n))`. -/
-theorem exists_complexity_le_of_boundedError (S : Set (Fin n → Bool))
+private theorem exists_complexity_le_of_boundedError (S : Set (Fin n → Bool))
     (F : BooleanFunction (n + p)) (g : BooleanFunction n)
     (h : ∀ x ∈ S, 2 * 2 ^ p ≤
       3 * (univ.filter fun r : Fin p → Bool => F (Fin.append x r) = g x).card) :
@@ -122,7 +122,7 @@ theorem complexity_le_of_boundedError (F : BooleanFunction (n + p)) (g : Boolean
 every `x ∈ S` with `g x = true`, at least half of the random strings `r` have `F (x ++ r) = true`,
 and for every `x ∈ S` with `g x = false` none has, then some function agreeing with `g` on `S` has
 circuits of size `O(n (C(F) + n))`. -/
-theorem exists_complexity_le_of_oneSidedError (S : Set (Fin n → Bool))
+private theorem exists_complexity_le_of_oneSidedError (S : Set (Fin n → Bool))
     (F : BooleanFunction (n + p)) (g : BooleanFunction n)
     (h₁ : ∀ x ∈ S, g x = true →
       2 ^ p ≤ 2 * (univ.filter fun r : Fin p → Bool => F (Fin.append x r) = true).card)
