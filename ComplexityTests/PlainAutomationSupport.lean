@@ -92,4 +92,24 @@ example {α : Type} {input : α ↪ List Bool} (bound : α → ℕ) (word : α �
   fail_if_success (clear hword; fun_prop (config := { maxTransitionDepth := 0 }))
   fun_prop (config := { maxTransitionDepth := 0 })
 
+
+-- These are the actual Seed polynomial and Stretch slicing obligations from the library gate.
+example (c d : ℕ) : ComputableInPolyTime (fun n : ℕ => c * (n + 1) ^ d)
+    encUnary encUnary := by
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+example (target : ℕ → ℕ) (htarget : ComputableInPolyTime target encUnary encUnary) :
+    ComputableInPolyTime (fun p : ℕ × List Bool => p.2.take (target p.1))
+      (encPair encUnary encBits) encBits := by
+  fail_if_success (clear htarget; fun_prop (config := { maxTransitionDepth := 0 }))
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+-- A fixed power certificate must not become a uniform unary runtime-exponent certificate.
+example : True := by
+  fail_if_success
+    have : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ^ p.2)
+        (encPair encUnary encUnary) encUnary := by
+      fun_prop (config := { maxTransitionDepth := 0 })
+  trivial
+
 end ComplexityTests.PlainAutomationSupport

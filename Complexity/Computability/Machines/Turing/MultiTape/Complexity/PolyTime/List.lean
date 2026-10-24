@@ -874,6 +874,19 @@ theorem bitsReverse :
   encBits :=
   .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsReverse
 
+/-- Take a computed unary number of bits from a computed bit string. -/
+@[fun_prop]
+theorem bitsTakeWithInput {γ : Type}
+    {encIn : γ ↪ List Bool}
+    {list : γ → List Bool}
+    {count : γ → ℕ}
+    (hlist : ComputableInPolyTime list encIn encBits)
+    (hcount : ComputableInPolyTime count encIn encUnary) :
+    ComputableInPolyTime (fun (x : γ) => List.take (count x) (list x))
+  encIn encBits :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsTakeWithInput γ encIn list count
+      hlist.tidy hcount.tidy)
+
 /-- The encoded input length, computed in unary by reading the input word. -/
 @[fun_prop]
 theorem encoding_length {α : Type}
