@@ -341,6 +341,7 @@ import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeMixes
 import ComplexityTests.PolyTimePlain
+import ComplexityTests.PolyTimePlainClients
 import ComplexityTests.PolyTimePlainDriver
 import ComplexityTests.PolyTimeScans
 import ComplexityTests.PolyTimeSearch
