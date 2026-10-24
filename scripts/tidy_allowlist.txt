@@ -1,0 +1,27 @@
+# The raw machine constructions that may state tidy computability publicly: finite controls,
+# tape routing, blank-work-tape restoration, exact-time TM/PTM composition. One path per line.
+# Source: #608 (https://github.com/cslib-community/complexitylib/issues/608#issuecomment-6376743596),
+# checked at main cded1fc9. Exact paths only; mixed modules need declaration-level handling.
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/Append.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/Comp.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/CopyWord.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/Foldl.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/Ite.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/IterateWhile.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/MultiPass.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/Reverse.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/StepMachine.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/StreamFold.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/TidyNormalForm.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/TidyZeroSpace.lean
+Complexity/Computability/Machines/Turing/MultiTape/Combinators/Transducer.lean
+Complexity/Computability/Machines/Turing/MultiTape/Plumbing/InputFromTape.lean
+Complexity/Computability/Machines/Turing/MultiTape/Plumbing/OnWords.lean
+Complexity/Computability/Machines/Turing/MultiTape/Plumbing/OutputToTape.lean
+Complexity/Computability/Machines/Turing/MultiTape/Plumbing/Tidy/Basic.lean
+Complexity/Computability/Machines/Turing/MultiTape/Plumbing/Tidy/Defs.lean
+Complexity/Computability/Machines/Turing/MultiTape/Plumbing/Tidy/Run.lean
+Complexity/Computability/Machines/Turing/MultiTape/Probabilistic/RunsWords.lean
+Complexity/Computability/Machines/Turing/MultiTape/Probabilistic/Tidy.lean
+Complexity/Computability/Machines/Turing/MultiTape/Probabilistic/Tidy/Redirect.lean
+Complexity/Computability/Machines/Turing/MultiTape/Probabilistic/IterateWhile.lean

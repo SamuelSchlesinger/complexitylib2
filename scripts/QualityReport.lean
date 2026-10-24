@@ -9,9 +9,10 @@ import Lean
 /-!
 # Declaration data for `scripts/quality_report.py`
 
-Run as `lake env lean --run scripts/QualityReport.lean <lib-dir> < modules.txt`, with one module
-name per line on standard input. For every module it reads the three parts of the built `.olean`
-(exported, server and private) without importing them, and prints one JSON line per constant:
+Run as `lake env lean --run scripts/QualityReport.lean <lib-dir> [<pairs>] < modules.txt`, with one
+module name per line on standard input. For every module it reads the three parts of the built
+`.olean` (exported, server and private) without importing them, and prints one JSON line per
+constant:
 
 * `n`, `m`: the constant and its module;
 * `k`: its kind in the private part (`def`, `thm`, `induct`, `ctor`, `rec`, `opaque`, `quot`,
@@ -20,10 +21,25 @@ name per line on standard input. For every module it reads the three parts of th
   exposed as an `axiom`, and an exposed definition as a `def`;
 * `doc`: whether it has a docstring (Markdown, Verso or `@[inherit_doc]`);
 * `tidy`: the constants named `ComputableTidily…`, `ComputesTidily…` or `IsTidy…` in its type;
+  `tb`: those in its exposed body, for an exported definition;
 * `u`: for an exported constant, the other constants of the same module that its exported
   statement or exposed body mentions (these cannot become private while it stays public);
 * `r`: its declaration range `[line, column, endLine, endColumn, selLine, selColumn, selEndLine,
   selEndColumn]`, with 1-based lines and code-point columns, when one is recorded.
+
+An optional second argument, comma-separated `tidy=plain` pairs of predicate names (used by
+`scripts/tidy_sweep.py`), adds two fields. `ph`, for an exported constant: a hash of its type with
+universe parameters renamed positionally and each listed tidy or plain predicate replaced by its
+plain one, so that a statement and its plain transport hash alike. `sg`, for a constant whose type
+mentions a listed tidy predicate: `[[[binderInfo, flag], ...], flag]` for the leading binders and
+the conclusion, with binder info `0` explicit, `1` implicit, `2` strict implicit, `3` instance, and
+flag `1` when the type is an application of a listed tidy predicate, `2` when it mentions a tidy
+constant otherwise, and `0` when it mentions none.
+
+Run as `lake env lean --run scripts/QualityReport.lean --names <module>...`, it instead prints
+every name the given modules and their transitive imports export (constants and `export`
+aliases), one per line, then a line `--tokens--` and the parser tokens they declare (global and
+scoped notations, syntax and macros), for the name resolution of `scripts/tidy_sweep.py`.
 
 It then prints `{"dup": [...], "k": ...}` lines grouping exported constants of different modules
 whose types are alpha-equivalent (`k = "thm"`), or whose types and exposed bodies are
@@ -83,7 +99,44 @@ def normalize (c : ConstantInfo) (e : Expr) : Expr :=
   let us := c.levelParams.length.fold (fun i _ acc => acc.push (Level.param (.num `u i))) #[]
   e.instantiateLevelParams c.levelParams us.toList
 
-unsafe def run (libDir : System.FilePath) : IO Unit := do
+/-- Replace each predicate of `canon` by its plain counterpart, without universe levels. -/
+def canonicalize (canon : NameMap Name) (e : Expr) : Expr :=
+  e.replace fun
+    | .const n _ => (canon.find? n).map (Expr.const · [])
+    | _ => none
+
+/-- `1` for an application of a listed tidy predicate, `2` for another mention of a tidy constant,
+`0` otherwise. -/
+def tidyFlag (preds : NameSet) (t : Expr) : Nat :=
+  match t.consumeMData.getAppFn with
+  | .const n _ => if preds.contains n then 1 else if t.getUsedConstants.any isTidy then 2 else 0
+  | _ => if t.getUsedConstants.any isTidy then 2 else 0
+
+def binderCode : BinderInfo → Nat
+  | .default => 0
+  | .implicit => 1
+  | .strictImplicit => 2
+  | .instImplicit => 3
+
+/-- The flags of the leading binders and of the conclusion of a type. -/
+partial def signature (preds : NameSet) (e : Expr) (acc : Array Json := #[]) : Json :=
+  match e with
+  | .forallE _ t b bi => signature preds b (acc.push (toJson #[binderCode bi, tidyFlag preds t]))
+  | .mdata _ b => signature preds b acc
+  | _ => Json.arr #[Json.arr acc, toJson (tidyFlag preds e)]
+
+/-- Parse `tidy=plain,…` into the map sending both names to the plain one. -/
+def parseCanon (arg : String) : NameMap Name × NameSet := Id.run do
+  let mut canon : NameMap Name := {}
+  let mut preds : NameSet := {}
+  for pair in arg.splitOn "," do
+    if let [tidy, plain] := pair.splitOn "=" then
+      canon := (canon.insert tidy.toName plain.toName).insert plain.toName plain.toName
+      preds := preds.insert tidy.toName
+  return (canon, preds)
+
+unsafe def run (libDir : System.FilePath) (pairs : Option String := none) : IO Unit := do
+  let (canon, preds) := parseCanon (pairs.getD "")
   let stdin ← IO.getStdin
   let stdout ← IO.getStdout
   let mut theorems : Std.HashMap Expr (Array (String × Name)) := {}
@@ -115,11 +168,21 @@ unsafe def run (libDir : System.FilePath) : IO Unit := do
         | some ec => ec.type.getUsedConstants
         | none => #[]
       let uses := uses.filter (fun n => n != c.name && sameModule.contains n) |>.toList.eraseDups
-      stdout.putStrLn <| Json.compress <| Json.mkObj [
+      let tidyBody := match e with
+        | some (.defnInfo v) => v.value.getUsedConstants.filter isTidy |>.map Name.toString
+        | _ => #[]
+      let mut row : List (String × Json) := [
         ("n", c.name.toString), ("m", mod), ("k", kindOf c), ("e", (e.map kindOf).getD ""),
-        ("doc", docs.contains c.name), ("tidy", toJson tidy),
+        ("doc", docs.contains c.name), ("tidy", toJson tidy), ("tb", toJson tidyBody),
         ("u", toJson (uses.map (·.toString))),
         ("r", (ranges.find? c.name).map rangeJson |>.getD .null)]
+      if pairs.isSome then
+        if let some ec := e then
+          let hash := (canonicalize canon (normalize ec ec.type)).hash
+          row := row ++ [("ph", toJson (toString hash))]
+        if c.type.getUsedConstants.any preds.contains then
+          row := row ++ [("sg", signature preds c.type)]
+      stdout.putStrLn <| Json.compress <| Json.mkObj row
       if let some ec := e then
         unless c.name.isInternalDetail do
           match c, ec with
@@ -139,7 +202,46 @@ unsafe def run (libDir : System.FilePath) : IO Unit := do
   -- Keep the regions reachable until every expression has been used.
   if regions.isEmpty then stdout.flush
 
+/-- Print the exported constants and `export` aliases of `roots` and their transitive imports,
+found through the search path that `lake env` sets, then `--tokens--` and their parser tokens. -/
+unsafe def names (roots : List Name) : IO Unit := do
+  initSearchPath (← findSysroot)
+  let stdout ← IO.getStdout
+  let mut seen : NameSet := {}
+  let mut todo := roots.toArray
+  -- The mapped regions stay alive until the end of the program.
+  let mut regions : Array CompactedRegion := #[]
+  let mut tokens : Std.HashSet String := {}
+  while h : todo.size > 0 do
+    let mod := todo.back
+    todo := todo.pop
+    if seen.contains mod then continue
+    seen := seen.insert mod
+    let (data, region) ← readModuleData (← findOLean mod)
+    regions := regions.push region
+    for i in data.imports do
+      unless seen.contains i.module do todo := todo.push i.module
+    for n in data.constNames do
+      unless n.isInternalDetail do stdout.putStrLn n.toString
+    for (ext, es) in data.entries do
+      if ext == `Lean.aliasExtension then
+        for e in es do
+          stdout.putStrLn (unsafeCast e : Name × Name).1.toString
+      if ext == `Lean.Parser.parserExtension then
+        for e in es do
+          let entry :=
+            match (unsafeCast e : ScopedEnvExtension.Entry Parser.ParserExtension.OLeanEntry) with
+            | .global a => a
+            | .scoped _ a => a
+          if let .token t := entry then tokens := tokens.insert t
+  stdout.putStrLn "--tokens--"
+  for t in tokens do stdout.putStrLn t
+  if regions.isEmpty then stdout.flush
+
 end ComplexityScripts.QualityReport
 
 unsafe def main (args : List String) : IO Unit :=
-  ComplexityScripts.QualityReport.run (args.headD ".lake/build/lib/lean")
+  if args.head? == some "--names" then
+    ComplexityScripts.QualityReport.names (args.drop 1 |>.map String.toName)
+  else
+    ComplexityScripts.QualityReport.run (args.headD ".lake/build/lib/lean") args[1]?

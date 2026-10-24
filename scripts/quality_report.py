@@ -398,13 +398,35 @@ def check_outputs(build_dir: Path, skip: bool, current=lake_outputs_current,
     return "checked identical to the current outputs of `lake build --no-build`"
 
 
-def load_ileans(build_dir: Path) -> dict[str, dict]:
+ROOT_IMPORT = re.compile(r"^(?:public\s+)?(?:meta\s+)?import\s+(\S+)", re.M)
+
+
+def listed_modules(text: str) -> list[str]:
+    """The modules a root source file imports."""
+    return ROOT_IMPORT.findall(text)
+
+
+def load_ileans(build_dir: Path, missing: list[str] | None = None) -> dict[str, dict]:
     """The `.ilean` data of the modules the three libraries' roots import, by module name.
 
     A long-lived build directory keeps the outputs of modules that were since deleted or moved,
     and `lake build --no-build` does not notice them, so modules are found by following imports
     from the roots rather than by listing files. Every root and every module they import must have
-    one; a missing file means the build is incomplete. The roots themselves are left out."""
+    one; a missing file means the build is incomplete. The roots themselves are left out.
+
+    Given a list `missing`, the build may be partial instead (for a tree that does not build
+    completely): the modules are those the roots' source files import, and the ones without an
+    `.ilean` file are appended to `missing`."""
+    if missing is not None:
+        ileans = {}
+        for root in ROOTS:
+            for module in listed_modules(source_path(root).read_text()):
+                path = build_dir / (module.replace(".", "/") + ".ilean")
+                if path.is_file():
+                    ileans[module] = json.loads(path.read_text())
+                else:
+                    missing.append(module)
+        return ileans
     ileans, todo = {}, [(root, None) for root in ROOTS]
     while todo:
         module, importer = todo.pop()
@@ -422,8 +444,12 @@ def load_ileans(build_dir: Path) -> dict[str, dict]:
     return ileans
 
 
-def load_constants(build_dir: Path, modules: list[str]) -> tuple[dict[str, dict], list[dict]]:
-    out = run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", str(build_dir)],
+def load_constants(build_dir: Path, modules: list[str], pairs: str | None = None
+                   ) -> tuple[dict[str, dict], list[dict]]:
+    """Constants of `modules`; `pairs` (`tidy=plain,…`) adds the fields that
+    `scripts/tidy_sweep.py` reads (see `scripts/QualityReport.lean`)."""
+    out = run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", str(build_dir)]
+              + ([pairs] if pairs else []),
               input="\n".join(modules) + "\n", capture_output=True).stdout
     constants, duplicates = {}, []
     for line in out.splitlines():
@@ -463,10 +489,11 @@ class Source:
 class Library:
     """Build outputs and sources of the three libraries, loaded lazily where possible."""
 
-    def __init__(self, build_dir: Path):
-        self.ileans = load_ileans(build_dir)
+    def __init__(self, build_dir: Path, pairs: str | None = None,
+                 missing: list[str] | None = None):
+        self.ileans = load_ileans(build_dir, missing)
         self.modules = sorted(m for m in self.ileans if m.startswith("Complexity."))
-        self.constants, self.duplicate_rows = load_constants(build_dir, self.modules)
+        self.constants, self.duplicate_rows = load_constants(build_dir, self.modules, pairs)
         self.sources: dict[str, Source] = {}
 
     def source(self, module: str) -> Source:
