@@ -29,11 +29,16 @@ open scoped ENNReal
 
 instance : Fact (Nat.Prime 3) := ⟨by decide⟩
 
-/-- The affine maps `ZMod 3 → ZMod 3` are `1 / 3`-universal and `1 / 3`-Δ-universal. -/
+/-- The affine maps `ZMod 3 → ZMod 3` are `1 / 3`-universal, two-universal, and
+`1 / 3`-Δ-universal. -/
 example : IsUniversalHash
     (PMF.uniformOfFintype (Matrix (Fin 1) (Fin 1) (ZMod 3) × (Fin 1 → ZMod 3))) affineHash
     (Fintype.card (Fin 1 → ZMod 3) : ℝ≥0∞)⁻¹ :=
   isPairwiseIndependentHash_affineHash.isUniversalHash
+
+example : IsTwoUniversal
+    (PMF.uniformOfFintype (Matrix (Fin 1) (Fin 1) (ZMod 3) × (Fin 1 → ZMod 3))) affineHash :=
+  isPairwiseIndependentHash_affineHash.isTwoUniversal
 
 example : IsDeltaUniversalHash
     (PMF.uniformOfFintype (Matrix (Fin 1) (Fin 1) (ZMod 3) × (Fin 1 → ZMod 3)))
@@ -123,6 +128,13 @@ example : (Finset.univ.filter fun b => multiplyShift 4 2 b 3 = multiplyShift 4 2
 example : IsUniversalHash (PMF.uniformOfFintype (Fin (2 ^ (4 - 1)))) (multiplyShift 4 2)
     (2 / 2 ^ 2) :=
   isUniversalHash_multiplyShift (by norm_num) (by norm_num)
+
+/--
+info: 'Cslib.Probability.IsPairwiseIndependentHash.isTwoUniversal' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms IsPairwiseIndependentHash.isTwoUniversal
 
 /--
 info: 'Cslib.Probability.IsPairwiseIndependentHash.isDeltaUniversalHash' depends on axioms:

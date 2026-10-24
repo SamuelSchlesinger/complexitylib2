@@ -22,11 +22,23 @@ private theorem xor_twoUniversal (seed : PMF Bool) : IsTwoUniversal seed xorHash
 example : IsTwoUniversal (PMF.pure false) xorHash := xor_twoUniversal _
 
 -- Choosing one of two coordinates is not injective; its collision bound can be tight.
-example : IsTwoUniversal (PMF.uniformOfFintype Bool)
-    (fun key (input : Bool × Bool) => if key then input.1 else input.2) := by
+private theorem coord_twoUniversal :
+    IsTwoUniversal (PMF.uniformOfFintype Bool)
+      (fun key (input : Bool × Bool) => if key then input.1 else input.2) := by
   rintro ⟨a, b⟩ ⟨c, d⟩ hne
   cases a <;> cases b <;> cases c <;> cases d <;>
     norm_num [Fintype.sum_bool, PMF.uniformOfFintype_apply] at *
+
+example : IsTwoUniversal (PMF.uniformOfFintype Bool)
+    (fun key (input : Bool × Bool) => if key then input.1 else input.2) :=
+  coord_twoUniversal
+
+open scoped BigOperators in
+example : (𝔼 key : Bool,
+    if (if key then (false, false).1 else (false, false).2) =
+        (if key then (true, false).1 else (true, false).2)
+      then (1 : ℝ) else 0) ≤ (Fintype.card Bool : ℝ)⁻¹ :=
+  coord_twoUniversal.expect_boole_le (by decide)
 
 example : (∑ key : Bool,
     if (if key then (false, false).1 else (false, false).2) =

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Probability.PMF.Event
 import Complexity.Probability.BitString.LinearHash
 import Complexity.Probability.BoundedDifferences
+import Complexity.Probability.Concentration
 import Complexity.Probability.MinEntropy.Flat
 import Complexity.Probability.MinEntropy.LeftoverHash
 
@@ -166,6 +167,13 @@ private theorem hasBoundedDifferences_distinct {γ : Type*} [DecidableEq γ] (n 
   rw [abs_sub_le_iff]
   constructor <;> linarith
 
+-- By linearity of expectation under `pi`, `n` fair coins have mean `n / 2` heads.
+example (n : ℕ) :
+    ∑ y, ((pi fun _ : Fin n => uniformOfFintype Bool) y).toReal * heads n y = n / 2 := by
+  refine (sum_pi_mul_sum_eq (fun _ : Fin n => uniformOfFintype Bool)
+    (fun _ b => if b then (1 : ℝ) else 0)).trans ?_
+  simp [div_eq_mul_inv]
+
 -- A fair-coin instance: the number of heads exceeds its mean by `ε` with probability at most
 -- `exp (-2 ε² / n)`.
 example (n : ℕ) {ε : ℝ} (hε : 0 ≤ ε) :
@@ -275,6 +283,13 @@ info: 'Cslib.Probability.HasBoundedDifferences.pi_le_mean_sub' depends on axioms
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.HasBoundedDifferences.pi_le_mean_sub
+
+/--
+info: 'Cslib.Probability.PMF.sum_pi_mul_sum_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.sum_pi_mul_sum_eq
 
 /--
 info: 'Cslib.Probability.HasBoundedDifferences.pi_abs_sub_mean_ge' depends on axioms:

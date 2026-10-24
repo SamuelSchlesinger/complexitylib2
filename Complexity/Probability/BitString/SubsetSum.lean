@@ -109,7 +109,7 @@ theorem isDeltaUniversalHash :
 
 /-- Uniform group weights form a universal family on binary words. -/
 theorem isTwoUniversal : IsTwoUniversal (PMF.uniformOfFintype (ι → G)) hash :=
-  isTwoUniversal_iff_isUniversalHash.mpr isDeltaUniversalHash.isUniversalHash
+  isDeltaUniversalHash.isTwoUniversal
 
 /-- Apply the same public weights to every binary row. -/
 def hashRows {κ : Type*} (weights : ι → G) (inputs : κ → ι → Bool) : κ → G :=
