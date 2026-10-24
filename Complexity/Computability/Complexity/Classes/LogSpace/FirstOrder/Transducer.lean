@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Output
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Output
 public import Complexity.Logics.FirstOrder.Interpretation.Rank
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # The domain-counting interpretation transducer

@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.IndependentSet
-public import Complexity.Foundations.Data.List.Basic
 
 /-!
 # Generalized Geography

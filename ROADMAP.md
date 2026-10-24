@@ -1443,7 +1443,7 @@ space bounds. Further class-level work needs resource certificates for the actua
 * Reingold's theorem: [USTCON ∈ L and SL = L](Complexity/Computability/Complexity/Classes/LogSpace/USTCON.lean)
   are proved for the adjacency-matrix encoding (with `SL` defined by logspace many-one reducibility
   to `USTCON`, completeness of `USTCON` for `SL` and `L`, and the unary-header injectivity lemma
-  shared with `TreeEval` in [List/Basic.lean](Complexity/Foundations/Data/List/Basic.lean)); a
+  shared with `TreeEval` in [List/Append.lean](Complexity/Foundations/Data/List/Append.lean)); a
   symmetric-Turing-machine model of `SL` and an edge-list variant of `USTCON` by a logspace
   reduction remain;
 * Native [NL = coNL](Complexity/Computability/Complexity/Classes/LogSpace/Complement.lean) is

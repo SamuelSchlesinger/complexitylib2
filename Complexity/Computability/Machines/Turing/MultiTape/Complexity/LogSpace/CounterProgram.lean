@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Bit
-import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.List.GetD
 
 /-!
