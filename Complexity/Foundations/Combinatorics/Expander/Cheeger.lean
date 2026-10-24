@@ -18,7 +18,8 @@ import Mathlib.Algebra.QuadraticDiscriminant
 The edge expansion `h(G)` of a regular graph measures combinatorially how well it is connected: it
 is the least number of edges leaving a set of at most half of the vertices, per vertex of the set.
 Its spectral counterpart is the gap `1 - λ₂(G)` between the two largest eigenvalues of the walk
-operator. The **discrete Cheeger inequality**
+operator (`walkEuclidean_eigenvalues_zero`, `secondEigenvalue_eq_walkEuclidean_eigenvalues_one`).
+The **discrete Cheeger inequality**
 [Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]
 [Arora and Barak, Section 21.2][AroraBarak09] says that the two agree up to a square: for a
 `d`-regular graph,
@@ -30,7 +31,8 @@ The edge expansion `h(G)` (`edgeExpansion`) is normalized as in
 `e(S, Sᶜ) / |S|` over the nonempty sets `S` of at most half of the vertices, where `e(S, Sᶜ)` counts
 the edges between `S` and its complement; [Arora and Barak, Section 21.2][AroraBarak09] divides it
 by `d`. The second eigenvalue `λ₂(G)` (`secondEigenvalue`) is the supremum of the Rayleigh quotient
-`𝔼 f · G.walk f / 𝔼 f²` over the nonzero functions `f` of expectation zero. It lies between `-λ(G)`
+`𝔼 f · G.walk f / 𝔼 f²` over the nonzero functions `f` of expectation zero
+(`secondEigenvalue_eq_orthogonalWalk_eigenvalues_zero`). It lies between `-λ(G)`
 and `λ(G)`, and equals the spectral expansion `λ(G)` when the walk operator is positive
 semidefinite. Both are defined without spectral theory and used through their characterizations
 `secondEigenvalue_le_iff` and `le_edgeExpansion_iff`; on fewer than two vertices both are `0` by

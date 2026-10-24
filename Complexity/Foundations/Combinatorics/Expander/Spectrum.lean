@@ -26,8 +26,8 @@ expansion `λ(G)` (`spectralExpansion`) and the second eigenvalue `λ₂(G)` (`s
 which are defined in `Expander.Basic` and `Expander.Cheeger` without spectral theory, agree with the
 eigenvalue quantities they name:
 
-* `λ(G)` is the maximum absolute value of the eigenvalues of `G.orthogonalWalk`
-  (`spectralExpansion_eq_ciSup_abs_eigenvalues`).
+* `λ(G)` is the operator norm of `G.orthogonalWalk` (`spectralExpansion_eq_norm_orthogonalWalk`)
+  and the maximum absolute value of its eigenvalues (`spectralExpansion_eq_ciSup_abs_eigenvalues`).
 * When `V` has at least two vertices, `λ₂(G)` is the maximum eigenvalue of `G.orthogonalWalk`
   (`secondEigenvalue_eq_ciSup_eigenvalues`, `secondEigenvalue_eq_orthogonalWalk_eigenvalues_zero`).
 * On the full space `EuclideanSpace ℝ V`, every eigenvalue of `G.walkEuclidean` lies in `[-1, 1]`
@@ -49,6 +49,8 @@ eigenvalue quantities they name:
   `G.walkEuclidean` and `G.orthogonalWalk` are symmetric.
 * `Cslib.RotationMap.mem_orthogonalSubmodule_iff`: `WithLp.toLp 2 f ∈ orthogonalSubmodule V`
   iff `𝔼 v, f v = 0`.
+* `Cslib.RotationMap.spectralExpansion_eq_norm_orthogonalWalk`: `λ(G)` is the operator norm of
+  `G.orthogonalWalk`.
 * `Cslib.RotationMap.abs_orthogonalWalk_eigenvalues_le`,
   `Cslib.RotationMap.orthogonalWalk_eigenvalues_le_secondEigenvalue`: every eigenvalue of
   `G.orthogonalWalk` has absolute value at most `λ(G)` and is at most `λ₂(G)`.
@@ -140,7 +142,7 @@ theorem walkEuclidean_mem_orthogonalSubmodule {x : EuclideanSpace ℝ V}
 
 /-- The restriction of `G.walkEuclidean` to the subspace `orthogonalSubmodule V` of functions of
 expectation zero. -/
-noncomputable def orthogonalWalk : Module.End ℝ (orthogonalSubmodule V) :=
+noncomputable def orthogonalWalk : orthogonalSubmodule V →ₗ[ℝ] orthogonalSubmodule V :=
   G.walkEuclidean.restrict fun _ hx ↦ G.walkEuclidean_mem_orthogonalSubmodule hx
 
 /-- Coercing `G.orthogonalWalk u` to `EuclideanSpace ℝ V` applies `G.walkEuclidean` to `u`. -/
@@ -152,6 +154,16 @@ theorem coe_orthogonalWalk (u : orthogonalSubmodule V) :
 /-- The restricted walk operator `G.orthogonalWalk` is symmetric. -/
 theorem isSymmetric_orthogonalWalk : G.orthogonalWalk.IsSymmetric :=
   G.isSymmetric_walkEuclidean.restrict_invariant _
+
+/-- The spectral expansion `λ(G)` is the operator norm of the restricted walk operator
+`G.orthogonalWalk` on `orthogonalSubmodule V`. -/
+theorem spectralExpansion_eq_norm_orthogonalWalk :
+    G.spectralExpansion = ‖G.orthogonalWalk.toContinuousLinearMap‖ :=
+  le_antisymm
+    (ContinuousLinearMap.opNorm_le_bound _ (norm_nonneg G.orthogonalWalk.toContinuousLinearMap)
+      (ContinuousLinearMap.le_opNorm G.orthogonalWalk.toContinuousLinearMap))
+    (ContinuousLinearMap.opNorm_le_bound _ G.spectralExpansion_nonneg
+      (ContinuousLinearMap.le_opNorm _))
 
 section SpectralDecomposition
 

@@ -31,11 +31,15 @@ fixes constants, preserves expectations, is self-adjoint for the uniform inner p
 `𝔼 v, f v * g v` and does not increase `𝔼 v, f v ^ 2`.
 
 The spectral expansion `λ(G)` [Arora and Barak, Section 21.1][AroraBarak09] is the operator norm of
-the walk operator on the functions orthogonal to the constants: the smallest `c ≥ 0` with
+the walk operator on the functions orthogonal to the constants
+(`spectralExpansion_eq_norm_orthogonalWalk`): the smallest `c ≥ 0` with
 `𝔼 v, G.walk f v ^ 2 ≤ c ^ 2 * 𝔼 v, f v ^ 2` for all `f` of expectation zero
-(`spectralExpansion_le_iff`). It is the largest absolute value of an eigenvalue of the walk operator
-on such functions, but no spectral theory is needed here: everything below is proved from this
-characterization. `λ(G) ≤ 1` always, and `G` is a good expander when `λ(G)` is small.
+(`spectralExpansion_le_iff`), or with `|𝔼 v, f v * G.walk f v| ≤ c * 𝔼 v, f v ^ 2`
+(`spectralExpansion_le_iff_abs_expect_mul_walk_le`, `spectralExpansion_eq_ciSup`). It is the
+largest absolute value of an eigenvalue of the walk operator on such functions
+(`spectralExpansion_eq_ciSup_abs_eigenvalues`), but no spectral theory is needed here: everything
+below is proved from these characterizations. `λ(G) ≤ 1` always, and `G` is a good expander when
+`λ(G)` is small.
 
 ## Main definitions
 
@@ -56,6 +60,7 @@ characterization. `λ(G) ≤ 1` always, and `G` is a good expander when `λ(G)` 
   `Cslib.RotationMap.expect_walk_sq_le`: the walk operator preserves expectations, is
   self-adjoint and does not increase the second moment.
 * `Cslib.RotationMap.spectralExpansion_le_iff`,
+  `Cslib.RotationMap.abs_expect_mul_walk_le`,
   `Cslib.RotationMap.spectralExpansion_le_iff_abs_expect_mul_walk_le`,
   `Cslib.RotationMap.spectralExpansion_eq_ciSup`: the second-moment and Rayleigh-quotient
   characterizations of `λ(G)`.
@@ -306,7 +311,8 @@ section SpectralExpansion
 variable [Fintype V] [Fintype D]
 
 /-- The **spectral expansion** `λ(G)`: the operator norm, for the Euclidean norm, of the walk
-operator on the functions orthogonal to the constants [Arora and Barak, Section 21.1][AroraBarak09].
+operator on the functions orthogonal to the constants (`spectralExpansion_eq_norm_orthogonalWalk`)
+[Arora and Barak, Section 21.1][AroraBarak09].
 As the walk operator is self-adjoint, this is the supremum of the absolute Rayleigh quotient
 `|𝔼 v, f v * G.walk f v| / 𝔼 v, f v ^ 2` over the nonzero functions `f` of expectation zero
 (`spectralExpansion_le_iff_abs_expect_mul_walk_le`, `spectralExpansion_eq_ciSup`) and the largest
@@ -442,8 +448,9 @@ theorem spectralExpansion_le_of_abs_expect_mul_walk_le {c : ℝ} (hc : 0 ≤ c)
     refine le_of_mul_le_mul_left ?_ (show 0 < 2 * c by positivity)
     linarith
 
-/-- For `f` of expectation zero, `|𝔼 v, f v * G.walk f v| ≤ λ(G) * 𝔼 v, f v ^ 2`. -/
-private theorem abs_expect_mul_walk_le_spectralExpansion_mul {f : V → ℝ} (hf : 𝔼 v, f v = 0) :
+/-- For `f` of expectation zero, the correlation `𝔼 v, f v * G.walk f v` is at most `λ(G)` times
+the second moment of `f` in absolute value. -/
+theorem abs_expect_mul_walk_le {f : V → ℝ} (hf : 𝔼 v, f v = 0) :
     |𝔼 v, f v * G.walk f v| ≤ G.spectralExpansion * 𝔼 v, f v ^ 2 := by
   have := G.spectralExpansion_nonneg
   refine abs_le_of_sq_le_sq ?_ (by positivity)
@@ -459,7 +466,7 @@ function `f` of expectation zero. -/
 theorem spectralExpansion_le_iff_abs_expect_mul_walk_le {c : ℝ} (hc : 0 ≤ c) :
     G.spectralExpansion ≤ c ↔
       ∀ f : V → ℝ, 𝔼 v, f v = 0 → |𝔼 v, f v * G.walk f v| ≤ c * 𝔼 v, f v ^ 2 := by
-  refine ⟨fun hG f hf ↦ (abs_expect_mul_walk_le_spectralExpansion_mul hf).trans ?_,
+  refine ⟨fun hG f hf ↦ (abs_expect_mul_walk_le hf).trans ?_,
     spectralExpansion_le_of_abs_expect_mul_walk_le hc⟩
   gcongr
 
@@ -473,7 +480,7 @@ theorem spectralExpansion_eq_ciSup :
   have hle (f : {f : V → ℝ // 𝔼 v, f v = 0 ∧ f ≠ 0}) :
       |𝔼 v, f.1 v * G.walk f.1 v| / 𝔼 v, f.1 v ^ 2 ≤ G.spectralExpansion :=
     div_le_of_le_mul₀ (expect_nonneg fun _ _ ↦ sq_nonneg _) G.spectralExpansion_nonneg
-      (abs_expect_mul_walk_le_spectralExpansion_mul f.2.1)
+      (abs_expect_mul_walk_le f.2.1)
   refine le_antisymm ?_ (Real.iSup_le hle G.spectralExpansion_nonneg)
   refine spectralExpansion_le_of_abs_expect_mul_walk_le (Real.iSup_nonneg fun _ ↦ by positivity)
     fun f hf ↦ ?_
