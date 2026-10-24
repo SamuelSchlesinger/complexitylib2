@@ -98,26 +98,6 @@ def nodeAt : {h : ℕ} → Tree d ℓ h → List (Fin d) → Node d ℓ
 @[simp] theorem nodeAt_node_cons (f : Gate d ℓ) (c : Fin d → Tree d ℓ h) (j : Fin d)
     (P : List (Fin d)) : (node f c).nodeAt (j :: P) = (c j).nodeAt P := rfl
 
-/-- Leaves are at depth `h`. -/
-theorem length_of_nodeAt_leaf {U : Tree d ℓ h} {P : List (Fin d)} {v : Fin ℓ → Bool}
-    (hP : U.nodeAt P = .leaf v) : P.length = h := by
-  induction U generalizing P with
-  | leaf => rcases P with _ | ⟨_, P⟩ <;> simp_all [nodeAt]
-  | node f c ih =>
-    rcases P with _ | ⟨j, P⟩
-    · simp [nodeAt] at hP
-    · simpa using ih j hP
-
-/-- Gates are at depth less than `h`. -/
-theorem length_lt_of_nodeAt_gate {U : Tree d ℓ h} {P : List (Fin d)} {f : Gate d ℓ}
-    (hP : U.nodeAt P = .gate f) : P.length < h := by
-  induction U generalizing P with
-  | leaf => rcases P with _ | ⟨_, P⟩ <;> simp_all [nodeAt]
-  | node g c ih =>
-    rcases P with _ | ⟨j, P⟩
-    · simp
-    · simpa using ih j hP
-
 /-- A binary instance as an instance of fan-in `2`, with child `0` on the left. -/
 def ofBinary : {h : ℕ} → TreeEval.Tree ℓ h → Tree 2 ℓ h
   | _, .leaf v => leaf v

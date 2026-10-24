@@ -14,8 +14,8 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 
 This file counts the child positions read by a single row clause: the `r` target children of its own
 row together with one labeled gate child for each out-neighbour. These two sets are disjoint because
-tournaments are loopless, so for a regular tournament on `2 * M ^ 2 + 1` vertices every row clause
-reads exactly `r + M ^ 2` children.
+tournaments are loopless, so the clause of row `i` reads `r + d` children, where `d` is the
+outdegree of `i`.
 
 ## Main definitions
 
@@ -23,10 +23,8 @@ reads exactly `r + M ^ 2` children.
 
 ## Main results
 
-* `rowChildren_disjoint`: the target positions and the gate positions of a row are disjoint.
 * `rowChildren_card`: the clause of row `i` reads `r + d` children, where `d` is the outdegree of
   `i`.
-* `regular_rowChildren_card`: in a regular tournament every row clause reads `r + M ^ 2` children.
 
 ## References
 
@@ -54,7 +52,7 @@ def rowChildren {k r : ℕ} (T : Tournament k) (label : Fin k → Fin k → Fin 
 open scoped Classical in
 /-- The target positions `(i, c)` of row `i` are disjoint from its gate positions `(j, label i j)`
 for the out-neighbours `j` of `i`. -/
-theorem rowChildren_disjoint {k r : ℕ} (T : Tournament k)
+private theorem rowChildren_disjoint {k r : ℕ} (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (i : Fin k) :
     Disjoint (Finset.univ.image fun c => (i, c))
       ((Finset.univ.filter (T.Adj i)).image fun j => (j, label i j)) := by
@@ -75,14 +73,6 @@ theorem rowChildren_card {k r : ℕ} (T : Tournament k)
   rw [Finset.card_image_of_injective _ (fun _ _ h => congrArg Prod.snd h)]
   rw [Finset.card_image_of_injective _ (fun _ _ h => congrArg Prod.fst h)]
   simp
-
-/-- In a regular tournament on `2 * M ^ 2 + 1` vertices, every row clause reads exactly `r + M ^ 2`
-child positions. -/
-theorem regular_rowChildren_card {M r : ℕ} (T : RegularTournament M)
-    (label : Fin (2 * M ^ 2 + 1) → Fin (2 * M ^ 2 + 1) → Fin r)
-    (i : Fin (2 * M ^ 2 + 1)) :
-    (rowChildren T.toTournament label i).card = r + M ^ 2 := by
-  rw [rowChildren_card, T.outdegree]
 
 end Internal
 
