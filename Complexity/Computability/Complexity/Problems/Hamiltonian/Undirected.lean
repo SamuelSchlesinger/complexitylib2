@@ -588,7 +588,7 @@ theorem polyTimeReducible_DirHamCycle_HamCycle :
 theorem HamPath_npHard : NPHard (encPair encGraph (encPair encNat encNat)) HamPath :=
   DirHamPath_npHard.trans polyTimeReducible_DirHamPath_HamPath
 
-/-- **`HamPath` is NP-complete.** -/
+/-- **`HamPath` is NP-complete** [Sipser, Theorem 7.55][Sipser2013]. -/
 theorem HamPath_npComplete : NPComplete (encPair encGraph (encPair encNat encNat)) HamPath :=
   ⟨HamPath.mem_NP, HamPath_npHard⟩
 
@@ -596,7 +596,7 @@ theorem HamPath_npComplete : NPComplete (encPair encGraph (encPair encNat encNat
 theorem HamCycle_npHard : NPHard encGraph HamCycle :=
   DirHamCycle_npHard.trans polyTimeReducible_DirHamCycle_HamCycle
 
-/-- **`HamCycle` is NP-complete.** -/
+/-- **`HamCycle` is NP-complete** [Karp1972]. -/
 theorem HamCycle_npComplete : NPComplete encGraph HamCycle :=
   ⟨HamCycle.mem_NP, HamCycle_npHard⟩
 

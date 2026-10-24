@@ -97,12 +97,14 @@ theorem median_apply_eq_majority (f g h : ι → Bool) (i : ι) :
   have key : ∀ a b : Bool, (a && a || a && b || b && a) = a := by decide
   exact key (f i) (g i)
 
+/-- The median is symmetric in its first two arguments. -/
 theorem median_swap_left (f g h : ι → Bool) : median f g h = median g f h := by
   funext i
   have key : ∀ a b c : Bool, (a && b || b && c || c && a) = (b && a || a && c || c && b) := by
     decide
   exact key (f i) (g i) (h i)
 
+/-- The median is symmetric in its last two arguments. -/
 theorem median_swap_right (f g h : ι → Bool) : median f g h = median f h g := by
   funext i
   have key : ∀ a b c : Bool, (a && b || b && c || c && a) = (a && c || c && b || b && a) := by

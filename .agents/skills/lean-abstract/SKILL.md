@@ -47,6 +47,9 @@ This requirement applies transitively: an alias or wrapper around an internal de
 - **Prefer ordinary types and quantifiers**: Prefer functions, `List`, `Fin n → α`, quantifiers, membership, and equalities over custom interfaces, typeclasses, or implementation-specific dependent records.
 - **Use `Fin n → α` for homogeneous tuples**: For more than two homogeneous components, prefer `Fin n → α` over nested cross products, with short descriptive aliases for indices.
 - **Explicit encodings**: When a theorem depends on a binary encoding (such as `encCNF` or binary tree encodings), either spell out the encoding combinators (`frame`, `encodePair`, `encodeList`, `Nat.bits`) directly in the abstract or explicitly allow the foundational encoding module. When packaging an encoding function `encodeX : X → List Bool` into an embedding `def encX : X ↪ List Bool := ⟨encodeX, encodeX_injective⟩`, declare `theorem encodeX_injective : Function.Injective encodeX := Bridge.encodeX_injective` as a local `theorem` before `def encX`: `#check_abstract` traverses the `value?` of non-theorem `def`s and stops at `theorem` proof boundaries, and `scripts/abstract_to_tex.py` elides undocumented `*_injective` helper theorems following a definition block (and only those).
+- **Share foundations, keep semantics visible**: Use the small audited `ComplexityAbstracts.Encoding` and `ComplexityAbstracts.Computation` modules for common serialization and polynomial-time conventions. Keep complexity-class, game and problem definitions in each abstract. Import every used foundation explicitly, allow it in `#check_abstract`, and list the complete foundation import closure in the catalogue entry's `foundations`. The renderer includes these definitions in each standalone PDF and once at the end of the combined catalogue.
+- **Lead with the mathematics**: Put encoding and machine representation details in a `## Representation details` module-doc section. The renderer moves that section and its following declarations to an appendix, ending at the next level-two section. Do not put headline or selected supporting theorems there. Explain every resource-significant convention in the main text, including unary versus binary sizes, uniformity and clock semantics. Moving a definition does not excuse hiding its meaning.
+- **Migrate clients to canonical names**: Extract shared definitions without deprecated aliases and update all in-repository clients, following `AGENTS.md`.
 - **State plain machine bounds where possible**: `Complexitylib` uses `ComputableTidilyInPolyTime` internally for compositional closure (`@[fun_prop]`), and proves it equivalent to plain upstream `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength` with `Cslib.PolynomiallyBounded`. Using the plain upstream notion in the abstract lets a reader verify the theorem statement without needing to inspect tidy-machine invariants.
 
 ---
@@ -78,7 +81,7 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
 
 - Explain unfamiliar `Mathlib` or `Cslib` predicates (e.g., `Nat.bits`, `Function.Embedding`, `Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength`) by their mathematical meaning before naming the Lean symbol.
 - State totality, halting, and answer-preservation guarantees explicitly when describing reductions or verifiers.
-- In the module docstring (`/-! # ... -/`), explain that a reader only needs to inspect the definitions and theorem statements in `*Abstract.lean` to verify that the formalization proves the intended mathematical claim; Lean verifies the proofs through `*Bridge.lean` and `#check_abstract` audits the dependency boundary.
+- In the module docstring (`/-! # ... -/`), explain that a reader only needs to inspect the definitions and theorem statements in `*Abstract.lean` and its displayed shared foundations to verify that the formalization proves the intended mathematical claim; Lean verifies the proofs through `*Bridge.lean` and `#check_abstract` audits the dependency boundary.
 
 ---
 
@@ -117,9 +120,9 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
 
 Consult these concrete implementations in `abstracts/ComplexityAbstracts/`:
 
-- **Pattern A (Unfolded types, zero `Complexity.*` dependencies)**:
+- **Pattern A (Unfolded types, shared audited foundations)**:
   [CookLevinAbstract.lean](../../../abstracts/ComplexityAbstracts/CookLevinAbstract.lean) and [CookLevinBridge.lean](../../../abstracts/ComplexityAbstracts/CookLevinBridge.lean) (`SAT` and `ExactThreeSAT` are `NP`-complete, `UNSAT` is `coNP`-complete).
-- **Pattern B (Fresh `inductive` syntax + polymorphic `Presentation` / `Laws`, zero `Complexity.*` dependencies)**:
+- **Pattern B (Fresh `inductive` syntax + polymorphic `Presentation` / `Laws`, shared audited foundations)**:
   [TQBFAbstract.lean](../../../abstracts/ComplexityAbstracts/TQBFAbstract.lean) and [TQBFBridge.lean](../../../abstracts/ComplexityAbstracts/TQBFBridge.lean) (`TQBF` is `PSPACE`-complete).
 - **Pattern A reusing another bridge**:
   [SubsetSumAbstract.lean](../../../abstracts/ComplexityAbstracts/SubsetSumAbstract.lean) and [SubsetSumBridge.lean](../../../abstracts/ComplexityAbstracts/SubsetSumBridge.lean) (`SubsetSum` is `NP`-complete with numbers in binary; the bridge reuses the plain `NP` transfer lemmas of `CookLevinBridge`).

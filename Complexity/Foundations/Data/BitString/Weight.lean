@@ -72,6 +72,7 @@ variable {ι : Type*} [Fintype ι]
 def weight (x : ι → Bool) : ℕ :=
   #{i | x i = true}
 
+/-- The weight is the sum of the bits read as `0` and `1`. -/
 theorem weight_eq_sum_toNat (x : ι → Bool) : weight x = ∑ i, (x i).toNat := by
   rw [weight, card_filter]
   exact sum_congr rfl fun i _ => by cases x i <;> rfl
@@ -85,6 +86,7 @@ theorem hammingDist_eq_weight_add (x y : ι → Bool) : hammingDist x y = weight
   rw [hammingDist_eq_hammingNorm, weight_eq_hammingNorm]
   exact congrArg hammingNorm (funext fun i => BooleanRing.sub_eq_add (x i) (y i))
 
+/-- The weight is at most the number of coordinates. -/
 theorem weight_le (x : ι → Bool) : weight x ≤ Fintype.card ι :=
   card_filter_le _ _
 
@@ -94,6 +96,7 @@ theorem weight_not_add (x : ι → Bool) :
   rw [weight, weight, add_comm]
   simpa using card_filter_add_card_filter_not (s := univ) (fun i => x i = true)
 
+/-- The weight of the complement is the number of coordinates minus the weight. -/
 theorem weight_not (x : ι → Bool) : weight (fun i => !x i) = Fintype.card ι - weight x := by
   have := weight_not_add x
   omega
@@ -110,6 +113,7 @@ theorem monotone_weight : Monotone (weight : (ι → Bool) → ℕ) := fun x y h
     have hxi : x i = true := (mem_filter.1 hi).2
     exact mem_filter.2 ⟨mem_univ i, le_antisymm (Bool.le_true _) (hxi ▸ hxy i)⟩
 
+/-- The weight of a vector on `ι ⊕ κ` glued from `x` and `y` is the sum of their weights. -/
 @[simp] theorem weight_sum_elim {κ : Type*} [Fintype κ] (x : ι → Bool) (y : κ → Bool) :
     weight (Sum.elim x y) = weight x + weight y := by
   simp only [weight_eq_sum_toNat, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr]
@@ -196,6 +200,7 @@ theorem card_image_le_sum_choose {α : Type*} (s : Finset α) (f : α → ι →
 def weightLayer (n k : ℕ) : Finset (BitString n) :=
   {x | weight x = k}
 
+/-- A string lies in the layer of weight `k` exactly when its weight is `k`. -/
 @[simp] theorem mem_weightLayer {n k : ℕ} {x : BitString n} : x ∈ weightLayer n k ↔ weight x = k :=
   by simp [weightLayer]
 
@@ -203,6 +208,7 @@ def weightLayer (n k : ℕ) : Finset (BitString n) :=
 theorem card_weightLayer (n k : ℕ) : #(weightLayer n k) = n.choose k := by
   rw [weightLayer, card_filter_weight_eq, Fintype.card_fin]
 
+/-- The layer of weight `k` of the cube of `n` bits is nonempty when `k ≤ n`. -/
 theorem weightLayer_nonempty {n k : ℕ} (hk : k ≤ n) : (weightLayer n k).Nonempty :=
   card_pos.1 (by rw [card_weightLayer]; exact Nat.choose_pos hk)
 
@@ -251,9 +257,11 @@ tie is false. It is the threshold function `Th^n_{⌊n/2⌋+1}`. -/
 def strictMajority (n : ℕ) : BooleanFunction n :=
   threshold n (n / 2 + 1)
 
+/-- `threshold n j x` is the decision of `j ≤ weight x`. -/
 theorem threshold_apply (j : ℕ) (x : BitString n) : threshold n j x = decide (j ≤ weight x) :=
   rfl
 
+/-- The threshold function `Th^n_j` is true exactly when at least `j` bits are true. -/
 theorem threshold_eq_true_iff {j : ℕ} {x : BitString n} :
     threshold n j x = true ↔ j ≤ weight x := by
   simp [threshold]
@@ -290,14 +298,17 @@ theorem threshold_self (x : BitString n) : threshold n n x = decide (∀ i, x i 
     show n ≤ weight x ↔ weight x = n by omega, weight, key, filter_eq_self]
   simp
 
+/-- Majority is true exactly when at least `⌈n/2⌉ = (n + 1) / 2` bits are true. -/
 theorem majority_eq_true_iff {x : BitString n} :
     majority n x = true ↔ (n + 1) / 2 ≤ weight x :=
   threshold_eq_true_iff
 
+/-- Strict majority is true exactly when more than `n / 2` bits are true. -/
 theorem strictMajority_eq_true_iff {x : BitString n} :
     strictMajority n x = true ↔ n / 2 < weight x :=
   threshold_eq_true_iff
 
+/-- Strict majority is false exactly when at most `n / 2` bits are true. -/
 theorem strictMajority_eq_false_iff {x : BitString n} :
     strictMajority n x = false ↔ weight x ≤ n / 2 := by
   rw [← Bool.not_eq_true, strictMajority_eq_true_iff, not_lt]
@@ -348,9 +359,11 @@ end BooleanFunction
 theorem isSymmetric_threshold (j : ℕ) : (threshold n j).IsSymmetric := fun x y h => by
   simp only [threshold, h]
 
+/-- Majority is symmetric. -/
 theorem isSymmetric_majority : (majority n).IsSymmetric :=
   isSymmetric_threshold _
 
+/-- Strict majority is symmetric. -/
 theorem isSymmetric_strictMajority : (strictMajority n).IsSymmetric :=
   isSymmetric_threshold _
 

@@ -24,6 +24,12 @@ simulating it is tidy.
 ## Main results
 
 * `Cslib.TreeEval.Reader.tidy_machine`: the step machine simulating the read machine is tidy.
+
+## References
+
+* [J. Cook and I. Mertz, *Tree Evaluation is in Space O(log n · log log n)*][CookMertz2024]
+* [O. Goldreich, *On the Cook–Mertz Tree Evaluation procedure*][Goldreich2024TreeEval],
+  Algorithm 1, which the machine runs.
 -/
 
 @[expose] public section

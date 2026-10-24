@@ -53,8 +53,8 @@ namespace Cslib.Complexity
 
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α} {k : ℕ}
 
-/-- For a fixed modulus `k`, languages recognized by a nonzero residue of a `#P` count. The
-standard modular counting classes use `k ≥ 2`. -/
+/-- For a fixed modulus `k`, languages recognized by a nonzero residue of a `#P` count
+[Fortnow, Classification 4.7][Fortnow1997]. The standard modular counting classes use `k ≥ 2`. -/
 def ModP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ f a % k ≠ 0}
 

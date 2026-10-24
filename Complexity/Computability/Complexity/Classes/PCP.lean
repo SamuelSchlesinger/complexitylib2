@@ -114,7 +114,8 @@ def IsPCPVerifier (enc : α ↪ List Bool) (r q : ℕ → ℕ) (V : PCPVerifier 
 
 /-- The class `PCP(r, q)` with respect to the encoding `enc` of instances: the problems with a
 polynomial-time verifier using `O(r n)` random bits and `O(q n)` queries on instances whose
-encoding has length `n`. -/
+encoding has length `n` [Arora and Safra][AroraSafra1998],
+[Arora and Barak, Chapter 11][AroraBarak09]. -/
 def PCP (r q : ℕ → ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (V : PCPVerifier α) (c d : ℕ), V.PolyTime enc ∧
     IsPCPVerifier enc (fun n => c * r n) (fun n => d * q n) V A}

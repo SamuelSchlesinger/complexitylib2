@@ -56,6 +56,10 @@ counting them is the method of Nechiporuk.
 * `Cslib.BitString.PartialAssignment.Agrees`: an input agrees with a partial assignment.
 * `Cslib.BitString.PartialAssignment.free`, `Cslib.BitString.PartialAssignment.support`: the free
   and the fixed coordinates.
+* `Cslib.BitString.PartialAssignment.assign`, `Cslib.BitString.PartialAssignment.unassign`: fix the
+  coordinates of a set to the values of a word, and free the coordinates of a set.
+* `Cslib.BitString.PartialAssignment.outside`: the partial assignment fixing the coordinates
+  outside a set to the values of a word.
 * `Cslib.BitString.PartialAssignment.Extends`, `Cslib.BitString.PartialAssignment.extensions`,
   `Cslib.BitString.PartialAssignment.withFree`: extensions, and partial assignments with `ℓ` free
   coordinates.
@@ -111,6 +115,7 @@ variable {ι : Type*} {ρ : PartialAssignment ι} {i j : ι} {b : Bool}
 def empty : PartialAssignment ι :=
   fun _ => none
 
+/-- The partial assignment fixing nothing leaves every coordinate free. -/
 @[simp] theorem empty_apply (i : ι) : (empty : PartialAssignment ι) i = none :=
   rfl
 
@@ -118,9 +123,11 @@ def empty : PartialAssignment ι :=
 def fill (ρ : PartialAssignment ι) (x : ι → Bool) : ι → Bool :=
   fun i => (ρ i).getD (x i)
 
+/-- At a coordinate left free by `ρ`, `ρ.fill x` takes the bit of `x`. -/
 @[simp] theorem fill_of_eq_none (hi : ρ i = none) (x : ι → Bool) : ρ.fill x i = x i := by
   simp [fill, hi]
 
+/-- At a coordinate that `ρ` fixes to `b`, `ρ.fill x` is `b`. -/
 @[simp] theorem fill_of_eq_some (hi : ρ i = some b) (x : ι → Bool) : ρ.fill x i = b := by
   simp [fill, hi]
 
@@ -138,6 +145,7 @@ def fill (ρ : PartialAssignment ι) (x : ι → Bool) : ι → Bool :=
 def Agrees (ρ : PartialAssignment ι) (x : ι → Bool) : Prop :=
   ∀ i b, ρ i = some b → x i = b
 
+/-- Agreement with a partial assignment of finitely many coordinates is decidable. -/
 instance [Fintype ι] (ρ : PartialAssignment ι) (x : ι → Bool) : Decidable (ρ.Agrees x) :=
   inferInstanceAs (Decidable (∀ i b, ρ i = some b → x i = b))
 
@@ -152,6 +160,7 @@ theorem agrees_iff_fill_eq {x : ι → Bool} : ρ.Agrees x ↔ ρ.fill x = x := 
 theorem agrees_fill (ρ : PartialAssignment ι) (x : ι → Bool) : ρ.Agrees (ρ.fill x) :=
   fun _ _ hi => fill_of_eq_some hi x
 
+/-- Every input agrees with the partial assignment fixing nothing. -/
 @[simp] theorem agrees_empty (x : ι → Bool) : (empty : PartialAssignment ι).Agrees x :=
   fun _ _ h => by simp at h
 
@@ -216,14 +225,17 @@ theorem fill_update_of_eq_none (hi : ρ i = none) (x : ι → Bool) (c : Bool) :
 def assign (ρ : PartialAssignment ι) (S : Finset ι) (a : ι → Bool) : PartialAssignment ι :=
   S.piecewise (fun i => some (a i)) ρ
 
+/-- `ρ.assign S a` fixes each coordinate of `S` to its value in `a`. -/
 @[simp] theorem assign_of_mem {S : Finset ι} (hi : i ∈ S) (a : ι → Bool) :
     ρ.assign S a i = some (a i) :=
   piecewise_eq_of_mem _ _ _ hi
 
+/-- `ρ.assign S a` agrees with `ρ` outside `S`. -/
 @[simp] theorem assign_of_notMem {S : Finset ι} (hi : i ∉ S) (a : ι → Bool) :
     ρ.assign S a i = ρ i :=
   piecewise_eq_of_notMem _ _ _ hi
 
+/-- Fixing the coordinates of `S` twice keeps the values of the second assignment. -/
 @[simp] theorem assign_assign (ρ : PartialAssignment ι) (S : Finset ι) (a b : ι → Bool) :
     (ρ.assign S a).assign S b = ρ.assign S b :=
   piecewise_idem_right _ _ _ _
@@ -240,12 +252,15 @@ theorem assign_eq_self {S : Finset ι} {a : ι → Bool} (h : ∀ i ∈ S, ρ i 
 def unassign (ρ : PartialAssignment ι) (S : Finset ι) : PartialAssignment ι :=
   S.piecewise empty ρ
 
+/-- `ρ.unassign S` leaves the coordinates of `S` free. -/
 @[simp] theorem unassign_of_mem {S : Finset ι} (hi : i ∈ S) : ρ.unassign S i = none :=
   piecewise_eq_of_mem _ _ _ hi
 
+/-- `ρ.unassign S` agrees with `ρ` outside `S`. -/
 @[simp] theorem unassign_of_notMem {S : Finset ι} (hi : i ∉ S) : ρ.unassign S i = ρ i :=
   piecewise_eq_of_notMem _ _ _ hi
 
+/-- Freeing no coordinates changes nothing. -/
 @[simp] theorem unassign_empty (ρ : PartialAssignment ι) : ρ.unassign ∅ = ρ :=
   piecewise_empty _ _
 
@@ -253,6 +268,8 @@ def unassign (ρ : PartialAssignment ι) (S : Finset ι) : PartialAssignment ι 
 def outside (Y : Finset ι) (z : ι → Bool) : PartialAssignment ι :=
   fun j => if j ∈ Y then none else some (z j)
 
+/-- Filling `x` from `outside Y z` takes the coordinates in `Y` from `x` and the others from
+`z`. -/
 @[simp] theorem fill_outside (Y : Finset ι) (z x : ι → Bool) :
     (outside Y z).fill x = Y.piecewise x z := by
   funext j
@@ -270,9 +287,11 @@ variable [Fintype ι]
 def free (ρ : PartialAssignment ι) : Finset ι :=
   {i | ρ i = none}
 
+/-- A coordinate is free in `ρ` exactly when `ρ` maps it to `none`. -/
 @[simp] theorem mem_free : i ∈ ρ.free ↔ ρ i = none := by
   simp [free]
 
+/-- The partial assignment fixing nothing leaves every coordinate free. -/
 @[simp] theorem free_empty : (empty : PartialAssignment ι).free = univ := by
   ext
   simp
@@ -285,9 +304,11 @@ def free (ρ : PartialAssignment ι) : Finset ι :=
 def support (ρ : PartialAssignment ι) : Finset ι :=
   {i | (ρ i).isSome}
 
+/-- A coordinate is in the support of `ρ` exactly when `ρ` fixes it. -/
 @[simp] theorem mem_support : i ∈ ρ.support ↔ (ρ i).isSome := by
   simp [support]
 
+/-- The partial assignment fixing nothing has empty support. -/
 @[simp] theorem support_empty : (empty : PartialAssignment ι).support = ∅ := by
   ext
   simp
@@ -311,9 +332,11 @@ theorem compl_free (ρ : PartialAssignment ι) : ρ.freeᶜ = ρ.support := by
   ext i
   simp [Option.isSome_iff_ne_none]
 
+/-- The coordinates outside the support are the free coordinates. -/
 theorem compl_support (ρ : PartialAssignment ι) : ρ.supportᶜ = ρ.free := by
   rw [← compl_free, compl_compl]
 
+/-- Fixing coordinate `i` removes it from the free coordinates. -/
 @[simp] theorem free_update (ρ : PartialAssignment ι) (i : ι) (b : Bool) :
     free (update ρ i (some b)) = ρ.free.erase i := by
   ext j
@@ -322,6 +345,7 @@ theorem compl_support (ρ : PartialAssignment ι) : ρ.supportᶜ = ρ.free := b
     simp
   · simp [hj]
 
+/-- Fixing the coordinates of `S` removes them from the free coordinates. -/
 @[simp] theorem free_assign (ρ : PartialAssignment ι) (S : Finset ι) (a : ι → Bool) :
     (ρ.assign S a).free = ρ.free \ S := by
   ext i
@@ -343,6 +367,7 @@ theorem unassign_union_assign {S Q : Finset ι} (hS : S ⊆ ρ.free) (a : ι →
   · by_cases hiQ : i ∈ Q <;> simp [hiS, hiQ, mem_free.1 (hS hiS)]
   · by_cases hiQ : i ∈ Q <;> simp [hiS, hiQ]
 
+/-- The free coordinates of `outside Y z` are exactly those of `Y`. -/
 @[simp] theorem free_outside (Y : Finset ι) (z : ι → Bool) : (outside Y z).free = Y := by
   ext j
   by_cases hj : j ∈ Y <;> simp [outside, hj]
@@ -364,11 +389,14 @@ information order on partial assignments; the order on `Option` in core is a dif
 def Extends (ρ' ρ : PartialAssignment ι) : Prop :=
   ∀ i b, ρ i = some b → ρ' i = some b
 
+/-- Extension of partial assignments of finitely many coordinates is decidable. -/
 instance [Fintype ι] (ρ' ρ : PartialAssignment ι) : Decidable (ρ'.Extends ρ) :=
   inferInstanceAs (Decidable (∀ i b, ρ i = some b → ρ' i = some b))
 
+/-- Every partial assignment extends itself. -/
 @[refl] theorem Extends.refl (ρ : PartialAssignment ι) : ρ.Extends ρ := fun _ _ h => h
 
+/-- Extension is transitive: an extension of an extension of `ρ` extends `ρ`. -/
 theorem Extends.trans {ρ ρ' ρ'' : PartialAssignment ι} (h₁ : ρ''.Extends ρ') (h₂ : ρ'.Extends ρ) :
     ρ''.Extends ρ :=
   fun i b h => h₁ i b (h₂ i b h)
@@ -422,6 +450,8 @@ theorem extends_assign {S : Finset ι} (hS : S ⊆ ρ.free) (a : ι → Bool) :
 def extensions (ρ₀ : PartialAssignment ι) (ℓ : ℕ) : Finset (PartialAssignment ι) :=
   {ρ | ρ.Extends ρ₀ ∧ #ρ.free = ℓ}
 
+/-- `ρ` is in `ρ₀.extensions ℓ` exactly when it extends `ρ₀` and leaves exactly `ℓ` coordinates
+free. -/
 @[simp] theorem mem_extensions {ρ₀ : PartialAssignment ι} {ℓ : ℕ} :
     ρ ∈ ρ₀.extensions ℓ ↔ ρ.Extends ρ₀ ∧ #ρ.free = ℓ := by
   simp [extensions]
@@ -532,6 +562,7 @@ nothing. -/
 abbrev withFree (ℓ : ℕ) : Finset (PartialAssignment ι) :=
   extensions empty ℓ
 
+/-- `ρ` is in `withFree ι ℓ` exactly when it leaves exactly `ℓ` coordinates free. -/
 theorem mem_withFree {ℓ : ℕ} : ρ ∈ withFree ι ℓ ↔ #ρ.free = ℓ := by
   simp
 
@@ -840,6 +871,8 @@ coordinates, the function that reads the coordinates in `Y` from its input and t
 def subfunctions (f : (ι → Bool) → Bool) (Y : Finset ι) : Finset ((ι → Bool) → Bool) :=
   univ.image fun z x => f (Y.piecewise x z)
 
+/-- `g` is a subfunction of `f` on `Y` exactly when, for some assignment `z`, `g` reads the
+coordinates in `Y` from its input and the others from `z` before applying `f`. -/
 @[simp] theorem mem_subfunctions {f g : (ι → Bool) → Bool} {Y : Finset ι} :
     g ∈ subfunctions f Y ↔ ∃ z, (fun x => f (Y.piecewise x z)) = g := by
   simp [subfunctions]

@@ -29,6 +29,11 @@ which is `O(|x|)`. Padded descriptions are short.
   description with the number of binary digits of the length of the word.
 * `Cslib.Complexity.Diagonal.computableTidilyInO_shortDesc`: shortness is decided within quadratic
   time and linear space.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Theorems 9.3 and 9.10][Sipser2013]:
+  the padded descriptions in the proofs of the hierarchy theorems.
 -/
 
 @[expose] public section

@@ -86,7 +86,7 @@ variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 /-- The problems decided by one deterministic machine within polynomial space, with respect to
 the encoding `enc`: a Boolean function deciding membership is computable (upstream
 `Turing.MultiTapeTM.ComputableInTimeAndSpace`) within some time and within space polynomially
-bounded in the length of the encoded instance. -/
+bounded in the length of the encoded instance [Sipser, Section 8.2][Sipser2013]. -/
 def PSPACE (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f : α → Bool, (∃ t s, PolyBounded (fun a => (enc a).length) s ∧
     ComputableInTimeAndSpace f enc encBool t s) ∧ ∀ a, a ∈ A ↔ f a = true}
@@ -124,7 +124,8 @@ theorem mem_PSPACE_iff_exists_mem_DSPACE {α : Type} {enc : α ↪ List Bool} {A
 /-- The problems decided by one nondeterministic machine within polynomial space, with respect to
 the encoding `enc` (`Turing.MultiTapeNTM.DecidesInSpace`): every computation path on `enc a`
 visits at most `s a` work-tape cells, for a polynomially bounded `s`, every branch halts, and
-`a ∈ A` exactly when some computation path halts with output `[true]`. -/
+`a ∈ A` exactly when some computation path halts with output `[true]`
+[Sipser, Section 8.2][Sipser2013]. -/
 def NPSPACE (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k Bool State)
     (s : α → ℕ), PolyBounded (fun a => (enc a).length) s ∧ ntm.DecidesInSpace enc A s}

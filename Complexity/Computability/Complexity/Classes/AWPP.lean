@@ -48,7 +48,8 @@ open Turing.MultiTapeTM
 
 variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 
-/-- A GapP ratio in `[0, 1]`, at least `2/3` on members and at most `1/3` otherwise. -/
+/-- A GapP ratio in `[0, 1]`, at least `2/3` on members and at most `1/3` otherwise, Fenner's
+characterization of AWPP [Fenner][Fenner2003]. -/
 def AWPP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ g ∈ GapP enc, ∃ p : Polynomial ℕ, ∀ a,
     (0 ≤ g a ∧ g a ≤ (2 : ℤ) ^ p.eval (enc a).length) ∧

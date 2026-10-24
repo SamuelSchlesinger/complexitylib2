@@ -22,6 +22,8 @@ by the selection argument; each estimate uses the independent trials in `countTr
 
 ## Main definitions
 
+* `Cslib.OracleComp.selectUpdate`: update the next index and the running best index and count.
+* `Cslib.OracleComp.selectStep`: estimate one candidate and update the running empirical maximum.
 * `Cslib.OracleComp.selectBest`: select an index by empirical success count.
 * `Cslib.OracleComp.selectFrom`, `.sampleBest`: select from a list or a sampled candidate pool.
 

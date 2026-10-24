@@ -56,6 +56,7 @@ theorem two_le_dyadicSize (bound : ℕ) : 2 ≤ dyadicSize bound := by
   have h : 0 < 2 ^ Nat.log 2 bound := by positivity
   lia
 
+/-- The sampling range `dyadicSize bound` is nonzero. -/
 instance (bound : ℕ) : NeZero (dyadicSize bound) := ⟨(dyadicSize_pos bound).ne'⟩
 
 /-- Every index at most the original bound lies in the dyadic range. -/

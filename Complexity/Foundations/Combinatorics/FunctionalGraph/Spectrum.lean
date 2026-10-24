@@ -130,9 +130,11 @@ theorem cycle_test_iff (x : α) (ℓ : ℕ) :
 noncomputable def cycleSpectrum : Finset ℕ :=
   Finset.univ.image (cycleLength f)
 
+/-- Every cycle length belongs to the cycle spectrum. -/
 theorem cycleLength_mem_cycleSpectrum (x : α) : cycleLength f x ∈ cycleSpectrum f :=
   Finset.mem_image_of_mem _ (Finset.mem_univ x)
 
+/-- Every element of the cycle spectrum is positive. -/
 theorem pos_of_mem_cycleSpectrum {ℓ : ℕ} (hℓ : ℓ ∈ cycleSpectrum f) : 0 < ℓ := by
   obtain ⟨y, -, rfl⟩ := Finset.mem_image.mp hℓ
   exact cycleLength_pos f y
@@ -162,10 +164,12 @@ section Perm
 
 variable {α : Type u} [Finite α] (f : α → α)
 
+/-- For an injective map, every state has transient depth zero. -/
 theorem transientDepth_eq_zero_of_injective (hf : Injective f) (x : α) :
     transientDepth f x = 0 :=
   (transientDepth_eq_zero_iff f x).mpr (hf.mem_periodicPts x)
 
+/-- For an injective map, the cycle length of `x` is the minimal period of `x`. -/
 theorem cycleLength_eq_minimalPeriod_of_injective (hf : Injective f) (x : α) :
     cycleLength f x = minimalPeriod f x := by
   simp [cycleLength, transientDepth_eq_zero_of_injective f hf]

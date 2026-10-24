@@ -63,7 +63,8 @@ variable {α : Type}
 open Classical in
 /-- **The parity operator `⊕·C`**: the problems `L` such that, for some `L' ∈ C` and polynomial
 `p`, `a ∈ L` exactly when an odd number of the strings `w` of length `p (enc a).length` have
-`(a, w) ∈ L'`. The problems of `C` are about pairs of an instance and a string. -/
+`(a, w) ∈ L'`. The problems of `C` are about pairs of an instance and a string
+[Toda][Toda1991]. -/
 def ParityOp (enc : α ↪ List Bool) (C : Set (Set (α × List Bool))) : Set (Set α) :=
   {L | ∃ (p : Polynomial ℕ), ∃ L' ∈ C,
     ∀ a, a ∈ L ↔ Odd (acceptCount (fun x => decide (x ∈ L')) a (p.eval (enc a).length))}
@@ -73,7 +74,7 @@ open Classical in
 polynomial `p`, membership in `L'` decides `L` with bounded error using random strings of length
 `p (enc a).length`: for every instance `a`, at least two thirds of the random strings `r` have
 `(a, r) ∈ L'` exactly when `a ∈ L`. The problems of `C` are about pairs of an instance and a
-string. -/
+string [Schöning][Schoening1989], [Toda][Toda1991]. -/
 def BPOp (enc : α ↪ List Bool) (C : Set (Set (α × List Bool))) : Set (Set α) :=
   {L | ∃ (p : Polynomial ℕ), ∃ L' ∈ C, DecidesWithBoundedError enc p (fun x => decide (x ∈ L')) L}
 

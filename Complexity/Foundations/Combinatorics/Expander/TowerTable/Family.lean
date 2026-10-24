@@ -21,6 +21,8 @@ names, including its return label. Polynomial machine certificates are supplied 
 
 ## Main definitions
 
+* `Cslib.RotationMap.TowerTable.contract`: contract the rows of a table to `size` vertices, with
+  self-loops at unoccupied slots.
 * `Cslib.RotationMap.TowerTable.rotateFamily`: the total program on every requested vertex count.
 * `Cslib.RotationMap.arithmeticExpanderRotate`: the concrete arithmetic instance.
 

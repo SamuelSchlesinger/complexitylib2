@@ -21,8 +21,13 @@ pure Lean computation in continuations is not charged as a machine instruction.
 ## Main definitions
 
 * `Spec`: stateful operation semantics with typed answers and admissibility.
+* `Spec.run`: the final state and typed observation trace of a history.
+* `Spec.ValidHistory`: each operation of a history is admissible in the state it reaches.
+* `Spec.totalCost`: state-dependent charges summed along a history.
+* `Spec.signature`: the polynomial functor of operations and their observation types.
 * `Spec.Client`: terminating, potentially infinitely branching adaptive clients.
 * `Spec.runClient`: mathematical interpretation with the selected operation history.
+* `eval`: the result and final state of a client, without its history.
 * `product`: independent abstract components; concrete independence is a realization obligation.
 
 ## Main results
@@ -73,8 +78,10 @@ def totalCost (charge : D.State → D.Op → Nat) (s : D.State) : List D.Op → 
   | [] => 0
   | o :: os => charge s o + totalCost charge (D.step s o).1 os
 
+/-- Running the empty history keeps the state and observes nothing. -/
 @[simp] theorem run_nil (s : D.State) : D.run s [] = (s, []) := rfl
 
+/-- The empty history costs nothing. -/
 @[simp] theorem totalCost_nil (charge : D.State → D.Op → Nat) (s : D.State) :
     D.totalCost charge s [] = 0 := rfl
 
@@ -163,6 +170,8 @@ variable {D : Spec.{u, v, w}} {α β : Type y}
 def eval (D : Spec.{u, v, w}) (p : D.Client α) (s : D.State) : α × D.State :=
   ((D.runClient s p).1, (D.runClient s p).2.1)
 
+/-- Evaluating `p.bind k` evaluates `p`, then the continuation `k` at its result from the state
+`p` reaches. -/
 theorem eval_bind (p : D.Client α) (k : α → D.Client β) (s : D.State) :
     eval D (p.bind k) s = eval D (k (eval D p s).1) (eval D p s).2 := by
   induction p generalizing s with

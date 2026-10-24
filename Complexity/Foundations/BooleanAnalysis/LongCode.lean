@@ -143,11 +143,13 @@ whose fiber in `T` under `π` has odd cardinality [Håstad][Hastad2001]. -/
 def projectSet (π : β → γ) (T : Finset β) : Finset γ :=
   univ.filter fun y => Odd #{x ∈ T | π x = y}
 
+/-- `y` lies in the mod-2 projection of `T` exactly when its fiber in `T` has odd cardinality. -/
 @[simp]
 theorem mem_projectSet {π : β → γ} {T : Finset β} {y : γ} :
     y ∈ projectSet π T ↔ Odd #{x ∈ T | π x = y} := by
   simp [projectSet]
 
+/-- The mod-2 projection of the empty set is empty. -/
 @[simp]
 theorem projectSet_empty (π : β → γ) : projectSet π ∅ = ∅ := by
   ext y
@@ -161,6 +163,7 @@ theorem exists_mem_of_mem_projectSet {π : β → γ} {T : Finset β} {y : γ}
   obtain ⟨x, hx⟩ := card_pos.1 hpos
   exact ⟨x, (mem_filter.1 hx).1, (mem_filter.1 hx).2⟩
 
+/-- The mod-2 projection of `T` along `π` is contained in the image `T.image π`. -/
 theorem projectSet_subset_image (π : β → γ) (T : Finset β) :
     projectSet π T ⊆ T.image π := fun y hy => by
   obtain ⟨x, hx, rfl⟩ := exists_mem_of_mem_projectSet hy

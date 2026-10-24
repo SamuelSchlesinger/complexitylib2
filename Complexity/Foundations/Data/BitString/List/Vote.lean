@@ -47,10 +47,12 @@ def listVoteMargin (votes : List Bool) (truth : Bool) : ℝ :=
 /-- A correct prediction contributes one to the margin; an incorrect prediction subtracts one. -/
 def signedVote (vote truth : Bool) : ℝ := if vote = truth then 1 else -1
 
+/-- Each vote contributes `±1` to the margin: `|signedVote vote truth| = 1`. -/
 @[simp] theorem abs_signedVote (vote truth : Bool) : |signedVote vote truth| = 1 := by
   unfold signedVote
   split <;> norm_num
 
+/-- The empty vote list has margin zero. -/
 @[simp] theorem listVoteMargin_nil (truth : Bool) : listVoteMargin [] truth = 0 := by
   simp [listVoteMargin]
 

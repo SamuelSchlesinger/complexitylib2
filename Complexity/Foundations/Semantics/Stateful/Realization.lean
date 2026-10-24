@@ -61,6 +61,8 @@ namespace Realization
 
 variable {exec : Execution D C τ} (R : Realization D exec)
 
+/-- From related states, a client whose history is admissible has a native execution that returns
+the specified result and ends in a state related to the specified final state. -/
 theorem run (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
     (hv : D.ValidHistory s (D.runClient s p).2.2) :
     ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
@@ -74,6 +76,8 @@ theorem run (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
     obtain ⟨c'', traces, hes, hrs⟩ := ih (D.step s o).2 hr' hv.2
     exact ⟨c'', trace :: traces, .call he hes, hrs⟩
 
+/-- From related states, every native execution of a client whose history is admissible returns
+the specified result and ends in a state related to the specified final state. -/
 theorem correct_client {p : D.Client α} {s : D.State} {c c' : C} {a : α}
     {traces : List τ} (hr : R.rep s c) (hv : D.ValidHistory s (D.runClient s p).2.2)
     (he : Executes exec p c a c' traces) :

@@ -51,7 +51,8 @@ open Turing.MultiTapeTM
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α}
 
 /-- A language in NP with a polynomial bound on the number of accepting certificates on every
-input. The bound is in the encoded input length, not in the certificate length. -/
+input [Allender and Rubinstein][AllenderRubinstein1988]. The bound is in the encoded input length,
+not in the certificate length. -/
 def FewP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f ∈ SharpP enc, ∃ p : Polynomial ℕ,
     (∀ a, f a ≤ p.eval (enc a).length) ∧ ∀ a, a ∈ A ↔ 0 < f a}

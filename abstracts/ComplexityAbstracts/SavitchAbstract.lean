@@ -18,8 +18,9 @@ by trying possible midpoints and checking the two halves in turn, reusing storag
 calls. The deterministic computation may take far longer, but its memory remains polynomial.
 
 The statement concerns binary multi-tape machines on encoded inputs. Every nondeterministic
-branch halts, and every computation prefix obeys its space bound; read-only input and write-only
-output are not charged. We state equality of the polynomial-space classes, rather than the fully
+branch terminates (a stuck branch rejects), and every computation prefix obeys its space bound.
+Read-only input and write-only output are not charged. We state equality of the polynomial-space
+classes, rather than the fully
 parameterized quadratic-space simulation bound.
 
 Lean checks the transfer through the bridge, and `#check_abstract` audits the public dependencies.
@@ -56,14 +57,14 @@ def DecidesInSpace {α : Type} {k : ℕ} {State : Type}
     ∀ a, ∃ t, M.RunsInTime (enc a) t
 
 /-- Nondeterministic polynomial space, with one fixed finite-state machine and all branches
-halting; the space bound holds along every computation prefix, including rejecting branches. -/
+terminating; the space bound holds along every computation prefix, including rejecting branches. -/
 def NPSPACE {α : Type} (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (k : ℕ) (State : Type) (_ : Finite State) (M : Turing.MultiTapeNTM k Bool State)
     (s : α → ℕ), (∃ b : ℕ → ℕ, Cslib.PolynomiallyBounded b ∧ ∀ a, s a ≤ b (enc a).length) ∧
     DecidesInSpace M enc A s}
 
 /-- Savitch's equality of polynomial-space classes. Every nondeterministic computation
-prefix obeys its space bound, and every branch halts (a stuck branch rejects). This does not
+prefix obeys its space bound, and every branch terminates (a stuck branch rejects). This does not
 assert the fully parameterized `NSPACE(s) ⊆ DSPACE(s²)` theorem. -/
 theorem savitch {α : Type} (enc : α ↪ List Bool) : NPSPACE enc = PSPACE enc :=
   SavitchBridge.savitch enc

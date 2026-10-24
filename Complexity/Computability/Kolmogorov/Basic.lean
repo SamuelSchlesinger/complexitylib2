@@ -295,6 +295,8 @@ theorem map_produces_iff {f : α → β} {M : DescriptionMethod α} {p : List Bo
   simp only [produces_iff_exists_mem_runFor, mem_map_runFor_iff]
   exact ⟨fun ⟨t, x, hx, hy⟩ => ⟨x, ⟨t, hx⟩, hy⟩, fun ⟨x, ⟨t, hx⟩, hy⟩ => ⟨t, x, hx, hy⟩⟩
 
+/-- Mapping `f` over the outputs does not increase complexity: `f x` has complexity under
+`M.map f` at most that of `x` under `M`. -/
 theorem ecomplexity_map_le (f : α → β) (M : DescriptionMethod α) (x : α) :
     (M.map f).ecomplexity (f x) ≤ M.ecomplexity x :=
   le_iInf₂ fun _ hp => ecomplexity_le_length (map_produces_iff.mpr ⟨x, hp, rfl⟩)
@@ -303,6 +305,8 @@ theorem etimeBoundedComplexity_map_le (f : α → β) (M : DescriptionMethod α)
     (M.map f).etimeBoundedComplexity t (f x) ≤ M.etimeBoundedComplexity t x :=
   le_iInf₂ fun _ hp => etimeBoundedComplexity_le_length (mem_map_runFor_iff.mpr ⟨x, hp, rfl⟩)
 
+/-- Mapping an injective `f` over the outputs preserves complexity: `f x` has the same
+complexity under `M.map f` as `x` under `M`. -/
 theorem ecomplexity_map_eq_of_injective {f : α → β} (hf : Function.Injective f)
     (M : DescriptionMethod α) (x : α) :
     (M.map f).ecomplexity (f x) = M.ecomplexity x :=

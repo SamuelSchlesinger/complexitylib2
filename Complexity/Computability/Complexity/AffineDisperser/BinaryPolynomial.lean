@@ -293,6 +293,8 @@ private theorem mk_polyOfBits_one (l : List Bool) :
   · rw [List.length_append, List.length_singleton, List.length_concat, List.take_succ_cons]
     simp [bitEquiv_symm_true]
 
+/-- For a coefficient list `g = l ++ [true]` with top coefficient one, `modBits g f` is congruent
+to `f` modulo the polynomial of `g`: both have the same image in `AdjoinRoot (polyOfBits g)`. -/
 theorem mk_polyOfBits_modBits (l f : List Bool) :
     AdjoinRoot.mk (polyOfBits (l ++ [true])) (polyOfBits (modBits (l ++ [true]) f)) =
       AdjoinRoot.mk (polyOfBits (l ++ [true])) (polyOfBits f) := by
@@ -354,6 +356,8 @@ def isIrreducibleCode (m : ℕ) : Bool :=
   decide (2 ≤ m) && (List.range m).all fun d =>
     decide (d < 2) || decide (Nat.log 2 m / 2 < Nat.log 2 d) || (modBits d.bits m.bits).any id
 
+/-- **Trial division decides irreducibility**: `isIrreducibleCode m` holds exactly when the binary
+polynomial with code `m` is irreducible. -/
 theorem isIrreducibleCode_iff (m : ℕ) :
     isIrreducibleCode m = true ↔ Irreducible (polyOfCode m) := by
   unfold isIrreducibleCode

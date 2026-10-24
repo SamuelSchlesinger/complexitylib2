@@ -42,22 +42,36 @@ abbrev Instance := Σ n : ℕ,
   {adj : Fin n → Fin n → Bool //
     (∀ a b, adj a b = adj b a) ∧ (∀ a, adj a a = false)} × Fin n × Fin n
 
+/-- The number of vertices of an instance. -/
+def Instance.vertexCount (I : Instance) : ℕ := I.1
+
+/-- The symmetric, zero-diagonal adjacency matrix of an instance. -/
+def Instance.adjacency (I : Instance) : Fin I.vertexCount → Fin I.vertexCount → Bool :=
+  I.2.1.val
+
+/-- The source vertex. Its existence ensures that the vertex count is positive. -/
+def Instance.source (I : Instance) : Fin I.vertexCount := I.2.2.1
+
+/-- The target vertex. -/
+def Instance.target (I : Instance) : Fin I.vertexCount := I.2.2.2
+
 /-- The graph determined by the adjacency matrix. -/
-def graph (I : Instance) : SimpleGraph (Fin I.1) where
-  Adj a b := I.2.1.val a b = true
+def graph (I : Instance) : SimpleGraph (Fin I.vertexCount) where
+  Adj a b := I.adjacency a b = true
   symm.symm a b h := (I.2.1.property.1 b a).trans h
-  loopless.irrefl a h := by simp only [I.2.1.property.2 a, Bool.false_eq_true] at h
+  loopless.irrefl a h := by simp only [Instance.adjacency, I.2.1.property.2 a,
+    Bool.false_eq_true] at h
 
 /-- Undirected s–t connectivity: a finite walk connects the distinguished vertices. -/
-def USTCON : Set Instance := {I | (graph I).Reachable I.2.2.1 I.2.2.2}
+def USTCON : Set Instance := {I | (graph I).Reachable I.source I.target}
 
-/-- Unary vertex count, source and target, separated by zero bits, followed by the matrix
-row by row. Vertex indices range below `n`, so division and remainder select valid entries. -/
+/-- Encode the unary header `1^n 0 1^s 0 1^t 0`, then the adjacency matrix row by row.
+`List.ofFn` lists coordinates in increasing order; flattening the list of rows gives exactly
+`n²` matrix bits. This is the same binary encoding used by the machine theorem. -/
 def encode (I : Instance) : List Bool :=
-  List.replicate I.1 true ++ false :: (List.replicate I.2.2.1.val true ++ false ::
-    (List.replicate I.2.2.2.val true ++ false :: List.ofFn (fun i : Fin (I.1 * I.1) =>
-      I.2.1.val ⟨i.val / I.1, Nat.div_lt_of_lt_mul i.isLt⟩
-        ⟨i.val % I.1, Nat.mod_lt _ (Nat.pos_of_ne_zero (fun h => by simpa [h] using i.isLt))⟩)))
+  List.replicate I.vertexCount true ++ false :: (List.replicate I.source.val true ++ false ::
+    (List.replicate I.target.val true ++ false ::
+      (List.ofFn fun row => List.ofFn (I.adjacency row)).flatten))
 
 theorem encode_injective : Function.Injective encode := USTCONBridge.encode_injective
 
@@ -81,7 +95,7 @@ theorem ustcon_mem_l : USTCON ∈ L encInstance := USTCONBridge.ustcon_mem_l
 
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.USTCONAbstract`:
-15 root declarations, 74 dependencies checked
+18 root declarations, 68 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.USTCONAbstract

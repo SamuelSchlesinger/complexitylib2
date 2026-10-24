@@ -13,6 +13,7 @@ import Complexity.Crypto.Computational.GoldreichLevin.HardCore
 import Complexity.Crypto.Computational.Stretch
 import Complexity.Crypto.Computational.OneWayToPRF
 import Complexity.Computability.Probabilistic.CoinTape
+import Complexity.Languages.Probabilistic.Oracle.Interaction
 import Complexity.Tactic.PPT
 
 /-! # Bridge for uniform cryptographic constructions
@@ -178,25 +179,18 @@ abbrev OracleResponse : Sum ℕ (Unit × List Bool) → Type :=
   Cslib.probOracleSpec (fun _ : Unit × List Bool => List Bool)
 
 abbrev OracleProgram (β : Type) :=
-  (PFunctor.mk (Sum ℕ (Unit × List Bool)) OracleResponse).FreeM β
+  Cslib.ProbOracleComp (fun _ : Unit × List Bool => List Bool) β
 
 noncomputable def execute {State β : Type} (program : OracleProgram β)
     (oracle : Unit × List Bool → StateT State PMF (List Bool)) (s : State) : PMF (β × State) :=
-  (PFunctor.FreeM.liftM (P := ⟨Sum ℕ (Unit × List Bool), OracleResponse⟩)
-    (fun q => match q with
-    | .inl n => StateT.lift (Cslib.Probability.PMF.uniformOfFintype (Fin (n + 1)))
-    | .inr request => oracle request) program).run s
+  ProbOracleComp.runWith oracle program s
 
 theorem execute_eq {State β : Type} (program : OracleProgram β)
     (oracle : Unit × List Bool → StateT State PMF (List Bool)) (s : State) :
     execute program oracle s =
       (OracleComp.interpret
         (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-          program).run s := by
-  unfold execute OracleComp.interpret
-  congr 2
-  funext q
-  cases q <;> rfl
+          program).run s := rfl
 
 def OraclePPT (program : ℕ → List Bool → OracleProgram Bool) : Prop :=
   ∃ (k : ℕ) (Control : Type) (_ : Finite Control)
@@ -222,30 +216,35 @@ theorem oraclePPT_iff {program : ℕ → List Bool → OracleProgram Bool} :
 
 noncomputable def evaluateOracle {β : Type} (program : OracleProgram β)
     (oracle : List Bool → List Bool) : PMF β :=
-  PFunctor.FreeM.liftM (P := ⟨Sum ℕ (Unit × List Bool), OracleResponse⟩)
-    (fun q => match q with
-    | .inl n => Cslib.Probability.PMF.uniformOfFintype (Fin (n + 1))
-    | .inr request => PMF.pure (oracle request.2)) program
+  (ProbOracleComp.runWith
+    (fun request => StateT.lift (PMF.pure (oracle request.2))) program ()).map Prod.fst
 
 theorem evaluateOracle_eq {β : Type} (program : OracleProgram β)
     (oracle : List Bool → List Bool) :
     evaluateOracle program oracle = OracleComp.interpret
       (ProbOracleComp.handler ProbComp.unifOracle (fun request => PMF.pure (oracle request.2)))
         program := by
-  unfold evaluateOracle OracleComp.interpret
-  congr 1
-  funext q
-  cases q <;> rfl
+  have hlift : ProbOracleComp.handler (fun n => StateT.lift (σ := Unit) (ProbComp.unifOracle n))
+      (fun request : Unit × List Bool => StateT.lift (PMF.pure (oracle request.2))) =
+      (fun q => StateT.lift
+        (ProbOracleComp.handler ProbComp.unifOracle (fun request => PMF.pure (oracle request.2))
+          q)) := by
+    funext q
+    cases q <;> rfl
+  simp only [evaluateOracle, ProbOracleComp.runWith, hlift, OracleComp.run_interpret_lift]
+  simp only [PMF.monad_map_eq_map, PMF.map_comp]
+  exact PMF.map_id _
 
 noncomputable def realPRF (family : List Bool → List Bool → List Bool)
-    (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool :=
-  (uniformBits n).bind fun key => evaluateOracle (adversary n [])
+    (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool := do
+  let key ← uniformBits n
+  evaluateOracle (adversary n [])
     (fun query => if query.length = n then family key query else [])
 
-noncomputable def idealPRF (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool :=
-  (Cslib.Probability.PMF.uniformOfFintype ((Fin n → Bool) → Fin n → Bool)).bind
-    fun table => evaluateOracle (adversary n []) (fun query =>
-      if query.length = n then List.ofFn (table fun i => query.getD i.val false) else [])
+noncomputable def idealPRF (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool := do
+  let table ← Cslib.Probability.PMF.uniformOfFintype ((Fin n → Bool) → Fin n → Bool)
+  evaluateOracle (adversary n []) (fun query =>
+    if query.length = n then List.ofFn (table fun i => query.getD i.val false) else [])
 
 def PseudorandomFunction (family : List Bool → List Bool → List Bool) : Prop :=
   PolyTime (fun p : List Bool × List Bool => family p.1 p.2)

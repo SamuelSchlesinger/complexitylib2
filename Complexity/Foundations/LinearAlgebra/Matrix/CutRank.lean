@@ -37,9 +37,12 @@ columns. Cut ranks of a symmetric matrix are symmetric under complementation.
 
 ## Main definitions
 
-* `Matrix.blockRank M S T`: the rank of the block of `M` with rows `S` and columns `T`.
-* `Matrix.cutRank M X`: the rank of the block of `M` with rows `X` and columns `Xᶜ`.
-* `Matrix.extendBlock f g R`: the square matrix carrying `R` on the rows `f` and the columns `g`.
+* `Matrix.blockRank`: the block rank `M.blockRank S T`, the rank of the block of `M` with rows `S`
+  and columns `T`.
+* `Matrix.cutRank`: the cut rank `M.cutRank X`, the rank of the block of `M` with rows `X` and
+  columns `Xᶜ`.
+* `Matrix.extendBlock`: the square matrix `extendBlock f g R` carrying `R` on the rows `f` and the
+  columns `g`.
 
 ## Main results
 
@@ -293,14 +296,19 @@ section ExtendBlock
 
 variable {α : Type*} [Zero α] {f : κ → ι} {g : κ' → ι}
 
+/-- For injective `f` and `g`, the entry of `extendBlock f g R` at `(f a, g b)` is `R a b`. -/
 theorem extendBlock_apply_apply (hf : Function.Injective f) (hg : Function.Injective g)
     (R : Matrix κ κ' α) (a : κ) (b : κ') : extendBlock f g R (f a) (g b) = R a b := by
   simp only [extendBlock, of_apply, hf.extend_apply, hg.extend_apply]
 
+/-- For injective `f` and `g`, the block of `extendBlock f g R` on the rows `f` and the columns
+`g` is `R`. -/
 theorem submatrix_extendBlock (hf : Function.Injective f) (hg : Function.Injective g)
     (R : Matrix κ κ' α) : (extendBlock f g R).submatrix f g = R :=
   Matrix.ext fun a b => extendBlock_apply_apply hf hg R a b
 
+/-- `extendBlock f g R` vanishes at `(i, j)` when `i` is not in the range of `f` or `j` is not in
+the range of `g`. -/
 theorem extendBlock_eq_zero (R : Matrix κ κ' α) {i j : ι} (h : i ∉ Set.range f ∨ j ∉ Set.range g) :
     extendBlock f g R i j = 0 := by
   classical

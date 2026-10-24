@@ -2,6 +2,7 @@ import ComplexityTests.AWPPAmplification
 import ComplexityTests.AWPPLowness
 import ComplexityTests.Abstracts.All
 import ComplexityTests.Abstracts.CheckTests
+import ComplexityTests.Abstracts.InputLayouts
 import ComplexityTests.AdaptivePPT
 import ComplexityTests.Advice
 import ComplexityTests.AffineController
@@ -22,11 +23,13 @@ import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BipartiteMatching
+import ComplexityTests.BitString
 import ComplexityTests.BitStringProjection
 import ComplexityTests.BitStringRows
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
+import ComplexityTests.BooleanAnalysisExamples
 import ComplexityTests.BooleanHierarchyClosure
 import ComplexityTests.BooleanHierarchyPH
 import ComplexityTests.Broadcast
@@ -43,6 +46,7 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitLayerPadding
 import ComplexityTests.CircuitLayering
+import ComplexityTests.CircuitMaterialize
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CircuitValueCompleteness
 import ComplexityTests.ClassClosure
@@ -55,6 +59,7 @@ import ComplexityTests.CodeComposition
 import ComplexityTests.CodeSubstitution
 import ComplexityTests.CoinTape
 import ComplexityTests.CombinatorialBounds
+import ComplexityTests.CombinatoricsExamples
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
 import ComplexityTests.CommunicationComplexity3
@@ -86,9 +91,11 @@ import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.FixedKeySecurity
+import ComplexityTests.Crypto.Forking
 import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
 import ComplexityTests.Crypto.GSWDecryption
+import ComplexityTests.Crypto.GSWDecryptionCircuit
 import ComplexityTests.Crypto.GSWDepthParameters
 import ComplexityTests.Crypto.GSWEvaluation
 import ComplexityTests.Crypto.GSWHiding
@@ -104,6 +111,7 @@ import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
+import ComplexityTests.Crypto.MAC
 import ComplexityTests.Crypto.MerkleDamgard
 import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
@@ -147,6 +155,7 @@ import ComplexityTests.FirstOrderConstants
 import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
+import ComplexityTests.FoundationsExamples
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
 import ComplexityTests.FrontierRectangleImports
@@ -429,6 +438,7 @@ import ComplexityTests.VanEmdeBoasRAM
 import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
+import ComplexityTests.WPPLowness
 import ComplexityTests.WPPRobustness
 import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided

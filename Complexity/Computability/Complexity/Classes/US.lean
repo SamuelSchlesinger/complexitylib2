@@ -38,7 +38,8 @@ namespace Cslib.Complexity
 
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α}
 
-/-- Exactly one accepting witness, with no ambiguity restriction on no-instances. -/
+/-- Exactly one accepting witness, with no ambiguity restriction on no-instances
+[Blass and Gurevich][BlassGurevich1982]. -/
 def US (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f ∈ SharpP enc, ∀ a, a ∈ A ↔ f a = 1}
 

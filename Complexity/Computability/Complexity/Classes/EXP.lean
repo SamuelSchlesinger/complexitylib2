@@ -69,7 +69,7 @@ open Turing Turing.MultiTapeTM Filter
 variable {α : Type*} {enc : α ↪ List Bool} {A : Set α}
 
 /-- The problems decidable within time `O(2 ^ n ^ k)` for some `k`, on instances whose encoding
-under `enc` has length `n`. -/
+under `enc` has length `n` [Arora and Barak, Section 2.6][AroraBarak09]. -/
 def EXP (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, DTIME enc fun n => 2 ^ n ^ k
 
 theorem mem_EXP_iff : A ∈ EXP enc ↔ ∃ k, A ∈ DTIME enc fun n => 2 ^ n ^ k :=
@@ -83,7 +83,8 @@ theorem mem_E_iff : A ∈ E enc ↔ ∃ k, A ∈ DTIME enc fun n => 2 ^ (k * n) 
   Set.mem_iUnion
 
 /-- The problems decidable by a nondeterministic machine within time `O(2 ^ n ^ k)` for some `k`,
-on instances whose encoding under `enc` has length `n`. -/
+on instances whose encoding under `enc` has length `n`
+[Arora and Barak, Section 2.6][AroraBarak09]. -/
 def NEXP (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, NTIME enc fun n => 2 ^ n ^ k
 
 theorem mem_NEXP_iff : A ∈ NEXP enc ↔ ∃ k, A ∈ NTIME enc fun n => 2 ^ n ^ k :=
@@ -131,10 +132,12 @@ theorem NE_subset_NEXP : NE enc ⊆ NEXP enc := fun _ hA =>
 theorem NP_subset_NEXP {α : Type} {enc : α ↪ List Bool} : NP enc ⊆ NEXP enc :=
   NP_subset_NE.trans NE_subset_NEXP
 
+/-- **Linear exponential time is within nondeterministic linear exponential time.** -/
 theorem E_subset_NE : E enc ⊆ NE enc := fun _ hA =>
   let ⟨k, hk⟩ := mem_E_iff.mp hA
   mem_NE_iff.mpr ⟨k, DTIME_subset_NTIME hk⟩
 
+/-- **Exponential time is within nondeterministic exponential time.** -/
 theorem EXP_subset_NEXP : EXP enc ⊆ NEXP enc := fun _ hA =>
   let ⟨k, hk⟩ := mem_EXP_iff.mp hA
   mem_NEXP_iff.mpr ⟨k, DTIME_subset_NTIME hk⟩

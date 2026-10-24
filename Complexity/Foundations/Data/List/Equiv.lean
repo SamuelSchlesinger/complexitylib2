@@ -21,8 +21,12 @@ the value at each index. Values need not be distinct: mapping a list retains eve
 ## Main definitions
 
 * `List.Enumeration`: an equivalence of positions together with its lookup law.
+* `List.Enumeration.ofNodup`, `List.Enumeration.range`, `List.Enumeration.singleton`: the
+  enumerations of a complete duplicate-free list, of `List.range n`, and of a singleton.
 * `List.Enumeration.map`, `List.Enumeration.prod`, `List.Enumeration.append`: compositional
   ordered enumerations.
+* `List.productIndexEquiv`: the positions of a list product as pairs of positions, with the right
+  coordinate varying fastest.
 * `List.Enumeration.reindex`: rename indices without changing the list.
 
 ## Main results

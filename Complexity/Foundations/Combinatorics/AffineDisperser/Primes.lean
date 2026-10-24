@@ -51,6 +51,7 @@ namespace Cslib.AffineDisperser
 def primesIoc (a b : ℕ) : List ℕ :=
   (List.range' (a + 1) (b - a)).filter Nat.Prime
 
+/-- `p` is in `primesIoc a b` exactly when `p` is a prime with `a < p ≤ b`. -/
 theorem mem_primesIoc {a b p : ℕ} : p ∈ primesIoc a b ↔ a < p ∧ p ≤ b ∧ p.Prime := by
   simp only [primesIoc, List.mem_filter, List.mem_range'_1, decide_eq_true_eq]
   constructor
@@ -59,6 +60,7 @@ theorem mem_primesIoc {a b p : ℕ} : p ∈ primesIoc a b ↔ a < p ∧ p ≤ b 
   · rintro ⟨h1, h2, hp⟩
     exact ⟨⟨by omega, by omega⟩, hp⟩
 
+/-- `primesIoc a b` has no duplicates. -/
 theorem nodup_primesIoc (a b : ℕ) : (primesIoc a b).Nodup :=
   List.Nodup.filter _ List.nodup_range'
 
@@ -68,6 +70,7 @@ def selectBelow : ℕ → List ℕ → List ℕ
   | _, [] => []
   | T, p :: ps => if p ≤ T then p :: selectBelow (T / p) ps else selectBelow T ps
 
+/-- The greedy choice is a sublist of `ps`. -/
 theorem selectBelow_sublist (T : ℕ) (ps : List ℕ) : (selectBelow T ps).Sublist ps := by
   induction ps generalizing T with
   | nil => exact List.Sublist.slnil
@@ -119,6 +122,7 @@ theorem prod_le_or_lt_mul_prod_selectBelow {B : ℕ} (T : ℕ) {ps : List ℕ}
         _ ≤ B := hp.2
         _ ≤ B * (selectBelow T ps).prod := Nat.le_mul_of_pos_right _ hpos
 
+/-- The product of `primesIoc a b` is the product of the primes in the interval `[a + 1, b]`. -/
 theorem prod_primesIoc (a b : ℕ) :
     (primesIoc a b).prod = ∏ p ∈ Finset.Ico (a + 1) (b + 1) with p.Prime, p := by
   rw [Nat.Ico_eq_range', Finset.prod_eq_multiset_prod, Finset.filter_val,

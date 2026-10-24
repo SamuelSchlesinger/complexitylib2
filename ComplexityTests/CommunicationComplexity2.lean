@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Computability.Communication.Amplification
 import Complexity.Computability.Communication.Discrepancy
 import Complexity.Computability.Communication.Functions
 import Complexity.Computability.Communication.Newman
@@ -11,8 +12,8 @@ import Complexity.Probability.PMF
 
 /-!
 Regression clients for randomized communication complexity: public- and private-coin protocols,
-the averaging argument, Newman's theorem, the weighted area bound, the discrepancy bound, and the
-`Ω(n)` lower bound for the inner product.
+amplification by majority, the averaging argument, Newman's theorem, the weighted area bound, the
+discrepancy bound, and the `Ω(n)` lower bound for the inner product.
 -/
 
 open Cslib Cslib.Communication Finset
@@ -160,6 +161,35 @@ private theorem solves_eqPublicCoin₂ (n : ℕ) :
 example (n : ℕ) : PublicCoin.ecomplexityFun (1 / 4) (equality : BitString n → BitString n → Bool)
     ≤ 3 :=
   (PublicCoin.ecomplexity_le_depth (solves_eqPublicCoin₂ n)).trans (depth_eqPublicCoin₂ n)
+
+/-! ### Amplification by majority -/
+
+/-- The strict majority of `2 r` independent runs of the two-parity protocol errs with probability
+at most `(4 * (1 / 4) * (3 / 4)) ^ r = (3 / 4) ^ r`. -/
+private theorem solves_amplify_eqPublicCoin₂ (n r : ℕ) :
+    ((eqPublicCoin₂ n).amplify r).Solves ((3 / 4) ^ r) (fun x y b => equality x y = b)
+      Set.univ Set.univ := by
+  have h := (solves_eqPublicCoin₂ n).amplify (by norm_num) r
+  rwa [show (4 * (1 / 4) * (1 - 1 / 4) : ℝ) = 3 / 4 by norm_num] at h
+
+-- The `2 r` runs of three bits send at most `6 r` bits.
+example (n r : ℕ) : ((eqPublicCoin₂ n).amplify r).depth ≤ 2 * r * 3 :=
+  PublicCoin.depth_amplify_le (c := 3) (depth_eqPublicCoin₂ n) r
+
+-- Equality with error `(3 / 4) ^ r` costs at most `6 r` bits.
+example (n r : ℕ) :
+    PublicCoin.ecomplexityFun ((3 / 4) ^ r) (equality : BitString n → BitString n → Bool) ≤
+      2 * r * 3 :=
+  (PublicCoin.ecomplexity_le_depth (solves_amplify_eqPublicCoin₂ n r)).trans
+    (PublicCoin.depth_amplify_le (c := 3) (depth_eqPublicCoin₂ n) r)
+
+-- Eight runs, `r = 4`, bring the error `(3 / 4) ^ 4 = 81 / 256` below `1 / 3`, with `24` bits for
+-- every input length.
+example (n : ℕ) :
+    PublicCoin.ecomplexityFun (1 / 3) (equality : BitString n → BitString n → Bool) ≤ 24 :=
+  (PublicCoin.ecomplexity_le_depth ((solves_amplify_eqPublicCoin₂ n 4).mono (by norm_num)
+    subset_rfl subset_rfl)).trans
+    ((PublicCoin.depth_amplify_le (c := 3) (depth_eqPublicCoin₂ n) 4).trans (by norm_num))
 
 example : Protocol.ecomplexityFun (equality : BitString 3 → BitString 3 → Bool) = 4 :=
   ecomplexity_equality (by decide)
@@ -328,5 +358,19 @@ on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms PrivateCoin.le_two_mul_ecomplexityFun_dotProduct_add_three
+
+/--
+info: 'Cslib.Communication.PublicCoin.Solves.amplify' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PublicCoin.Solves.amplify
+
+/--
+info: 'Cslib.Communication.PublicCoin.depth_amplify_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms PublicCoin.depth_amplify_le
 
 end CommunicationComplexity2Tests

@@ -33,7 +33,14 @@ from a single known value by Newton iteration (`Cslib.Code.henselValue_eq`).
 
 ## Main definitions
 
+* `Cslib.Code.Sudan.monomialsUpTo`: the monomials of bounded weighted degree and bounded
+  `Y`-degree.
 * `Cslib.Code.Sudan.interpMatrix`: the interpolation matrix on a set of monomials.
+* `Cslib.Code.Sudan.coeffsOf`: the coefficients on a set of monomials given by a vector indexed by
+  its enumeration.
+* `Cslib.Code.Sudan.kernelVecUpTo`: the kernel vector of the interpolation matrix on the monomials
+  of `Y`-degree at most `j`.
+* `Cslib.Code.Sudan.interpolantCoeffs`: the coefficients of the first nonzero kernel vector.
 * `Cslib.Code.Sudan.interpolant`: an interpolant of least `Y`-degree, by elimination.
 
 ## Main results

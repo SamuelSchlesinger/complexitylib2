@@ -21,7 +21,7 @@ import Complexity.Logics.Propositional.CNF.PolyTime
 
 `SubsetSum` is the set of pairs `(a, t)` of a list `a` of natural numbers, possibly with
 repetitions, and a target `t` such that some sub-multiset of `a` sums to `t` [Sipser, Section
-7.4][Sipser2013]. All numbers are encoded in binary (`Turing.MultiTapeTM.encNat`, digits least
+7.3][Sipser2013]. All numbers are encoded in binary (`Turing.MultiTapeTM.encNat`, digits least
 significant first); the `NP`-hardness proved here is for this encoding and is not strong
 `NP`-hardness. A certificate is a mask selecting entries of `a` (`Cslib.Complexity.maskSelect`),
 and the verifier adds the selected numbers in binary.
@@ -77,7 +77,8 @@ namespace Cslib.Complexity
 open Cslib.Logic.PL Turing.MultiTapeTM ComputableTidilyInPolyTime
 open scoped List
 
-/-- The instances `(a, t)` of subset sum: some sub-multiset of the numbers `a` sums to `t`. -/
+/-- The instances `(a, t)` of subset sum: some sub-multiset of the numbers `a` sums to `t`
+[Karp1972], [Sipser, Chapter 7][Sipser2013]. -/
 def SubsetSum : Set (List ℕ × ℕ) := {x | ∃ s ≤ (x.1 : Multiset ℕ), s.sum = x.2}
 
 theorem mem_SubsetSum {x : List ℕ × ℕ} :
@@ -677,7 +678,8 @@ theorem polyTimeReducible_ThreeSAT_SubsetSum :
 theorem SubsetSum_npHard : NPHard (encPair (encList encNat) encNat) SubsetSum :=
   ThreeSAT_npHard.trans polyTimeReducible_ThreeSAT_SubsetSum
 
-/-- **Subset sum is NP-complete**, with the numbers and the target in binary. -/
+/-- **Subset sum is NP-complete**, with the numbers and the target in binary [Karp1972],
+[Sipser, Theorem 7.56][Sipser2013]. -/
 theorem SubsetSum_npComplete : NPComplete (encPair (encList encNat) encNat) SubsetSum :=
   ⟨SubsetSum.mem_NP, SubsetSum_npHard⟩
 

@@ -28,6 +28,12 @@ prime and the round of the top frame together. On the states the machine reaches
 ## Main results
 
 * `Cslib.TreeEval.Reader.stepT_inSpace`: the step within the budget.
+
+## References
+
+* [J. Cook and I. Mertz, *Tree Evaluation is in Space O(log n · log log n)*][CookMertz2024]
+* [O. Goldreich, *On the Cook–Mertz Tree Evaluation procedure*][Goldreich2024TreeEval],
+  Algorithm 1, which the machine runs.
 -/
 
 @[expose] public section

@@ -44,6 +44,8 @@ private theorem bodyLength_add_tableLength_le (ℓ d : ℕ) :
 def pathStep (ℓ : ℕ) (s : ℕ × ℕ) (b : Bool) : ℕ × ℕ :=
   if s.1 = 0 then s else (s.1 - 1, s.2 + tableLength ℓ + if b then bodyLength ℓ (s.1 - 1) else 0)
 
+/-- **The offset as a fold over the path**: folding `pathStep ℓ` over `P` from the height `d` and
+the sum `acc` gives the height `d - P.length` and the sum `acc + pathOffset ℓ d P`. -/
 theorem foldl_pathStep (ℓ : ℕ) (P : List Bool) :
     ∀ d acc, P.foldl (pathStep ℓ) (d, acc) = (d - P.length, acc + pathOffset ℓ d P) := by
   induction P with

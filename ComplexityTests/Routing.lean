@@ -7,18 +7,21 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.Routing
 import Complexity.Computability.Circuit.Evaluation
 import Complexity.Foundations.Data.BitString.Basic
+import ComplexityTests.CircuitMaterialize
 
 /-!
 # Two-sort routing clients
 
 Check computed restoration keys, repeated requests, fixed output positions, empty fields,
 aliased selectors, and exact weighted costs. Exhaustive checks test destination semantics,
-header preservation and restoration-key ordering against the original input.
+header preservation and restoration-key ordering against the original input. They evaluate the
+materialized circuit, which `materialize_eq` proves equal to the original.
 -/
 
 namespace ComplexityTests.Routing
 
 open Cslib Cslib.Circuits Cslib.Circuits.Boolean broadcastCircuit Finset
+open ComplexityTests.CircuitMaterialize
 
 private def key : Fin 1 → Fin 3 := ![0]
 private def order : Circuit signature 3 2 :=
@@ -98,7 +101,7 @@ example : (routeCircuit (Fin.elim0 : Fin 0 → Fin 1) 0
 private def checkAll {h k o : ℕ} (key : Fin k → Fin h) (tag : Fin h)
     (order : Circuit signature h o) (depth width : ℕ) : Bool :=
   let count := BitonicSort.arity depth
-  let circuit := routeCircuit key tag order depth width
+  let circuit := materialize (routeCircuit key tag order depth width)
   let records := List.finRange count
   (List.finRange (2 ^ (count * (h + width)))).all fun raw =>
     let x := (BitString.equivFin (count * (h + width))).symm raw

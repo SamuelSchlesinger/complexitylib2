@@ -96,7 +96,8 @@ def tourLength (D : List (List ℕ)) (p : List ℕ) : ℕ :=
 end TSP
 
 /-- The traveling salesman problem: the distance matrices `D` with a budget `b` such that some
-closed tour visiting each city `0, …, D.length - 1` exactly once has length at most `b`. -/
+closed tour visiting each city `0, …, D.length - 1` exactly once has length at most `b`
+[Papadimitriou, Section 9.3][Papadimitriou94]. -/
 def TSP : Set (List (List ℕ) × ℕ) :=
   {x | ∃ p : List ℕ, p.Perm (List.range x.1.length) ∧ TSP.tourLength x.1 p ≤ x.2}
 
@@ -412,7 +413,7 @@ theorem polyTimeReducible_HamCycle_TSP : PolyTimeReducible encGraph encTSP HamCy
 theorem TSP_npHard : NPHard encTSP TSP :=
   HamCycle_npHard.trans polyTimeReducible_HamCycle_TSP
 
-/-- `TSP` is `NP`-complete. -/
+/-- **`TSP` is NP-complete** [Papadimitriou, Section 9.3][Papadimitriou94]. -/
 theorem TSP_npComplete : NPComplete encTSP TSP :=
   ⟨TSP.mem_NP, TSP_npHard⟩
 

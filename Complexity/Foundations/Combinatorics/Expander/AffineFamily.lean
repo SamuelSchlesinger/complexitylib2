@@ -30,6 +30,8 @@ complete tables in time polynomial in the vertex count, rather than in its bit l
 ## Main definitions
 
 * `Cslib.RotationMap.affinePlaneTowerBaseNumbering`: number the eight field coordinates.
+* `Cslib.RotationMap.AffinePlaneFamilyLabel`: the fixed labels of the contracted lazy arithmetic
+  tower.
 * `Cslib.RotationMap.affinePlaneFamily`: contract the arithmetic tower to each requested size.
 * `Cslib.RotationMap.arithmeticExpander`: the concrete family over `ZMod 257`.
 * `Cslib.RotationMap.arithmeticExpanderFamily`: its interpretation on arbitrary finite types.

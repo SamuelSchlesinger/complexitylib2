@@ -43,6 +43,7 @@ deciding either `USAT` or `SAT` does (`solvedBy_USAT`, `solvedBy_SAT`). `Promise
 
 ## References
 
+* [A. Blass, Y. Gurevich, *On the unique satisfiability problem*][BlassGurevich1982]
 * [L. G. Valiant, V. V. Vazirani, *NP is as easy as detecting unique
   solutions*][ValiantVazirani1986]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
@@ -55,7 +56,8 @@ namespace Cslib.Complexity
 open Cslib.Logic.PL PromiseProblem
 
 /-- The uniquely satisfiable formulas: some assignment satisfies the formula, and every satisfying
-assignment agrees with it on every variable of the formula. -/
+assignment agrees with it on every variable of the formula
+[Blass and Gurevich][BlassGurevich1982]. -/
 def USAT : Set (CNF ℕ) :=
   {φ | ∃ σ : ℕ → Bool, φ.eval σ = true ∧
     ∀ τ : ℕ → Bool, φ.eval τ = true → ∀ v ∈ φ.vars, τ v = σ v}

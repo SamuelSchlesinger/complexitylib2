@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Probability.Divergence
 import Complexity.Probability.Shearer
+import Complexity.Probability.Pinsker
 
 /-! Kullback–Leibler divergence, Gibbs and Pinsker, subadditivity, Han and Shearer: concrete
 instances, satisfiable hypotheses, a strict case and axiom guards. -/

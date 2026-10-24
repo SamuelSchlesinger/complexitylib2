@@ -80,9 +80,11 @@ theorem bitEquiv_eq_ringEquivOfPrime :
 theorem bitEquiv_symm_apply (b : Bool) : bitEquiv.symm b = BitString.bitVal (ZMod 2) b := by
   cases b <;> rfl
 
+/-- `bitEquiv.symm` reads the bit `false` as `0`. -/
 @[simp]
 theorem bitEquiv_symm_false : bitEquiv.symm false = 0 := rfl
 
+/-- `bitEquiv.symm` reads the bit `true` as `1`. -/
 @[simp]
 theorem bitEquiv_symm_true : bitEquiv.symm true = 1 := rfl
 

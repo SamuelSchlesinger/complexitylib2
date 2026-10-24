@@ -21,8 +21,14 @@ in `Computability/Machines/Turing/MultiTape/Complexity/PolyTime/RotationMap/Towe
 ## Main definitions
 
 * `Cslib.RotationMap.TowerTable`: complete rotation tables with fixed edge labels.
+* `Cslib.RotationMap.TowerTable.lookup`: read a rotation from a table, defaulting out of range.
+* `Cslib.RotationMap.TowerTable.Valid`: every stored neighbor is a row of the table.
+* `Cslib.RotationMap.TowerTable.initial`: the table of the squared fixed base.
+* `Cslib.RotationMap.TowerTable.nextRow`: a row of the next square-and-zig-zag level.
 * `Cslib.RotationMap.TowerTable.next`: construct the next square-and-zig-zag level.
 * `Cslib.RotationMap.TowerTable.build`: build the first level large enough for a requested size.
+* `Cslib.RotationMap.TowerTable.numberedIndex`: the arithmetic numbering of the vertices of the
+  zig-zag tower.
 
 ## Main results
 
@@ -80,9 +86,11 @@ def build (H : RotationMap (Fin b) D) (e : Fin b ≃ (Fin 2 → D × D))
     (hb : 0 < b) (size : ℕ) : TowerTable D :=
   (next H e hb)^[Nat.clog b size - 1] (initial H)
 
+/-- The initial table has one row for each of the `b` base vertices. -/
 @[simp] theorem length_initial (H : RotationMap (Fin b) D) : (initial H).length = b :=
   List.length_ofFn
 
+/-- The next level has `b` rows for each row of the table. -/
 @[simp] theorem length_next (H : RotationMap (Fin b) D) (e : Fin b ≃ (Fin 2 → D × D))
     (hb : 0 < b) (table : TowerTable D) : (next H e hb table).length = table.length * b := by
   simp [next]

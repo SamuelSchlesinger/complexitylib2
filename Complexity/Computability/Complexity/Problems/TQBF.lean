@@ -193,6 +193,7 @@ def encQBF : QBF ℕ ↪ List Bool :=
   ⟨fun φ => encList TQBF.encToken φ.tokens,
     fun _ _ h => QBF.tokens_injective ((encList TQBF.encToken).injective h)⟩
 
+/-- A formula is encoded as the list of its framed tokens in prefix order. -/
 theorem encQBF_apply (φ : QBF ℕ) : encQBF φ = encList TQBF.encToken φ.tokens := rfl
 
 /-- Every node takes at least three bits. -/
@@ -207,9 +208,12 @@ theorem three_mul_length_tokens_le (φ : QBF ℕ) : 3 * φ.tokens.length ≤ (en
 
 /-! ### True closed formulas -/
 
-/-- **The true closed quantified Boolean formulas** over variables numbered by natural numbers. -/
+/-- **The true closed quantified Boolean formulas** over variables numbered by natural numbers
+[Sipser, Section 8.3][Sipser2013], [Arora and Barak, Section 4.2][AroraBarak09]. -/
 def TQBF : Set (QBF ℕ) := {φ | φ.Closed ∧ φ.eval (fun _ => false) = true}
 
+/-- A formula is in `TQBF` exactly when it is closed and true under the assignment
+`fun _ => false`. -/
 theorem mem_TQBF {φ : QBF ℕ} : φ ∈ TQBF ↔ φ.Closed ∧ φ.eval (fun _ => false) = true := Iff.rfl
 
 /-- A closed formula is in `TQBF` exactly when it is true under some, equivalently every,

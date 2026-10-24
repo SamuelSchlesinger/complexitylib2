@@ -1,0 +1,36 @@
+# The Complexitylib guide: narrative documentation written with Verso, whose Lean examples are
+# checked against the library. A separate project, like ../docbuild, so the library itself takes
+# no Verso dependency. Inherits ../lean-toolchain. Build with: scripts/guide.sh
+name = "guide"
+version = "0.1.0"
+reservoir = false
+packagesDir = "../.lake/packages"
+defaultTargets = ["guide"]
+# As in ../lakefile.toml: share build outputs, here Verso's and the generator's, between checkouts.
+enableArtifactCache = true
+restoreAllArtifacts = true
+
+[leanOptions]
+autoImplicit = false
+
+[[require]]
+name = "complexitylib"
+path = ".."
+
+# Verso's tag for the library's Lean version; scripts/check_docs.py checks that they agree.
+[[require]]
+name = "verso"
+git = "https://github.com/leanprover/verso"
+rev = "v4.36.0-rc1"
+
+[[lean_lib]]
+name = "ComplexityGuide"
+# The chapters do not use the module system, but they import Mathlib, whose package sets
+# `requiresModuleSystem`.
+allowNonModules = true
+# Warnings in the chapters fail the build. (`lake build --wfail` would also fail on Verso's own.)
+leanOptions = {warningAsError = true}
+
+[[lean_exe]]
+name = "guide"
+root = "ComplexityGuideMain"

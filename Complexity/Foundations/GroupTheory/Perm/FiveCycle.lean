@@ -55,19 +55,24 @@ namespace IsFiveCycle
 
 variable {σ τ : Perm α}
 
+/-- A five-cycle has cycle type `{5}`. -/
 theorem cycleType (h : IsFiveCycle σ) : σ.cycleType = {5} :=
   h
 
+/-- A five-cycle is not the identity. -/
 theorem ne_one (h : IsFiveCycle σ) : σ ≠ 1 := by
   rintro rfl
   simpa using h.cycleType
 
+/-- The inverse of a five-cycle is a five-cycle. -/
 theorem inv (h : IsFiveCycle σ) : IsFiveCycle σ⁻¹ := by
   rwa [IsFiveCycle, cycleType_inv]
 
+/-- `σ⁻¹` is a five-cycle exactly when `σ` is. -/
 @[simp] theorem inv_iff : IsFiveCycle σ⁻¹ ↔ IsFiveCycle σ :=
   ⟨by simpa using inv (σ := σ⁻¹), inv⟩
 
+/-- A five-cycle has sign `1`. -/
 theorem sign (h : IsFiveCycle σ) : sign σ = 1 := by
   rw [Equiv.Perm.sign_of_cycleType, h.cycleType]
   rfl
@@ -76,6 +81,7 @@ theorem sign (h : IsFiveCycle σ) : sign σ = 1 := by
 theorem mem_alternatingGroup (h : IsFiveCycle σ) : σ ∈ alternatingGroup α :=
   Perm.mem_alternatingGroup.mpr h.sign
 
+/-- A conjugate `ρ * σ * ρ⁻¹` of a five-cycle is a five-cycle. -/
 theorem conj (h : IsFiveCycle σ) (ρ : Perm α) : IsFiveCycle (ρ * σ * ρ⁻¹) := by
   rwa [IsFiveCycle, cycleType_conj]
 

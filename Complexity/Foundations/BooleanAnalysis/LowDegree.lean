@@ -96,30 +96,37 @@ theorem monomial_mul [DecidableEq ι] (S T : Finset ι) :
   simp only [Pi.mul_apply, monomial_apply, mem_union, or_imp, forall_and]
   split_ifs <;> simp_all
 
+/-- The monomial of the empty set is the constant `1`. -/
 @[simp] theorem monomial_empty : monomial R (∅ : Finset ι) = 1 := by
   funext x
   simp [monomial]
 
+/-- The monomial of a single coordinate `i` is the bit at `i`, read in `R`. -/
 theorem monomial_singleton (i : ι) : monomial R {i} = fun x => bitVal R (x i) := by
   funext x
   simp [monomial]
 
+/-- The monomial of a set of at most `D` coordinates has degree at most `D`. -/
 theorem monomial_mem_lowDegree {S : Finset ι} {D : ℕ} (hS : #S ≤ D) :
     monomial R S ∈ lowDegree R ι D :=
   Submodule.subset_span ⟨S, hS, rfl⟩
 
+/-- The functions of degree at most `D` have degree at most `E` when `D ≤ E`. -/
 theorem lowDegree_mono {D E : ℕ} (hDE : D ≤ E) : lowDegree R ι D ≤ lowDegree R ι E :=
   Submodule.span_mono (Set.image_mono fun _ hS => le_trans hS hDE)
 
+/-- The constant function `1` has degree at most `D`, for every `D`. -/
 theorem one_mem_lowDegree (D : ℕ) : (1 : (ι → Bool) → R) ∈ lowDegree R ι D := by
   rw [← monomial_empty]
   exact monomial_mem_lowDegree (by simp)
 
+/-- A constant function has degree at most `D`, for every `D`. -/
 theorem const_mem_lowDegree (D : ℕ) (c : R) : (fun _ : ι → Bool => c) ∈ lowDegree R ι D := by
   convert Submodule.smul_mem _ c (one_mem_lowDegree (R := R) (ι := ι) D) using 1
   funext x
   simp
 
+/-- The bit at a coordinate `i`, read in `R`, has degree at most `1`. -/
 theorem bitVal_mem_lowDegree (i : ι) :
     (fun x : ι → Bool => bitVal R (x i)) ∈ lowDegree R ι 1 :=
   monomial_singleton (R := R) i ▸ monomial_mem_lowDegree (by simp)
@@ -134,10 +141,12 @@ theorem lowDegree_mul_le (a b : ℕ) :
   rw [monomial_mul]
   exact monomial_mem_lowDegree ((card_union_le S T).trans (Nat.add_le_add hS hT))
 
+/-- The product of functions of degrees at most `a` and `b` has degree at most `a + b`. -/
 theorem mul_mem_lowDegree {a b : ℕ} {f g : (ι → Bool) → R} (hf : f ∈ lowDegree R ι a)
     (hg : g ∈ lowDegree R ι b) : f * g ∈ lowDegree R ι (a + b) :=
   lowDegree_mul_le a b (Submodule.mul_mem_mul hf hg)
 
+/-- The `k`-th power of a function of degree at most `a` has degree at most `k * a`. -/
 theorem pow_mem_lowDegree {a : ℕ} {f : (ι → Bool) → R} (hf : f ∈ lowDegree R ι a) (k : ℕ) :
     f ^ k ∈ lowDegree R ι (k * a) := by
   induction k with
@@ -146,6 +155,7 @@ theorem pow_mem_lowDegree {a : ℕ} {f : (ι → Bool) → R} (hf : f ∈ lowDeg
     rw [pow_succ, Nat.succ_mul]
     exact mul_mem_lowDegree ih hf
 
+/-- A product over `s` of functions of degree at most `a` has degree at most `#s * a`. -/
 theorem prod_mem_lowDegree {α : Type*} (s : Finset α) {a : ℕ} {f : α → (ι → Bool) → R}
     (hf : ∀ i ∈ s, f i ∈ lowDegree R ι a) : ∏ i ∈ s, f i ∈ lowDegree R ι (#s * a) := by
   classical
@@ -156,10 +166,12 @@ theorem prod_mem_lowDegree {α : Type*} (s : Finset α) {a : ℕ} {f : α → (�
     exact mul_mem_lowDegree (hf i (mem_insert_self i s))
       (ih fun j hj => hf j (mem_insert_of_mem hj))
 
+/-- A sum of functions of degree at most `a` has degree at most `a`. -/
 theorem sum_mem_lowDegree {α : Type*} (s : Finset α) {a : ℕ} {f : α → (ι → Bool) → R}
     (hf : ∀ i ∈ s, f i ∈ lowDegree R ι a) : ∑ i ∈ s, f i ∈ lowDegree R ι a :=
   Submodule.sum_mem _ hf
 
+/-- If `f` has degree at most `a`, so does `1 - f`. -/
 theorem one_sub_mem_lowDegree {a : ℕ} {f : (ι → Bool) → R} (hf : f ∈ lowDegree R ι a) :
     1 - f ∈ lowDegree R ι a :=
   Submodule.sub_mem _ (one_mem_lowDegree a) hf

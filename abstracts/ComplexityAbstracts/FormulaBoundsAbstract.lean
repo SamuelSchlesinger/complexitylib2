@@ -62,15 +62,36 @@ noncomputable def minimumLeaves {n : ℕ} (f : (Fin n → Bool) → Bool) : ℕ 
 def parity (n : ℕ) (x : Fin n → Bool) : Bool :=
   decide ((Finset.univ.filter fun i => x i = true).card % 2 = 1)
 
-/-- The binary number represented by a word, with coordinate zero least significant. -/
+/-- The binary number represented by a word, with coordinate zero least significant:
+the value is `∑ i, (if bits i then 1 else 0) * 2^i`. -/
 def tableIndex (n : ℕ) : (Fin n → Bool) ≃ Fin (2 ^ n) :=
   (Equiv.arrowCongr (Equiv.refl (Fin n)) finTwoEquiv.symm).trans finFunctionFinEquiv
 
-/-- Andreev's function: the first `2^b` bits are a truth table; the next `b*m` bits form `b`
-blocks whose parities address that table. The table is part of the input, not a hardwired oracle. -/
+/-- The address is the ordinary binary value, with bit zero least significant. -/
+theorem tableIndex_val {b : ℕ} (bits : Fin b → Bool) :
+    (tableIndex b bits).val = ∑ i : Fin b, (if bits i then 1 else 0) * 2 ^ i.val :=
+  FormulaBoundsBridge.tableIndex_val bits
+
+/-- The first `2^b` input bits form the truth table, in address order. -/
+def tableInput {b m : ℕ} (x : Fin (2 ^ b + b * m) → Bool) : Fin (2 ^ b) → Bool :=
+  fun i => x (Fin.castAdd (b * m) i)
+
+/-- The remaining input is `b` consecutive blocks of `m` bits. Block `j`, position `t`, is
+input position `2^b + m*j + t`. -/
+def blockInput {b m : ℕ} (x : Fin (2 ^ b + b * m) → Bool) (j : Fin b) : Fin m → Bool :=
+  fun t => x (Fin.natAdd (2 ^ b) (finProdFinEquiv (j, t)))
+
+/-- Reading block `j` at position `t` reads exactly the indicated flat input coordinate. -/
+theorem blockInput_eq {b m : ℕ} (x : Fin (2 ^ b + b * m) → Bool) (j : Fin b) (t : Fin m)
+    (i : Fin (2 ^ b + b * m)) (hi : i.val = 2 ^ b + m * j.val + t.val) :
+    blockInput x j t = x i :=
+  FormulaBoundsBridge.blockInput_eq x j t i hi
+
+/-- Andreev's function reads the truth-table entry addressed by the `b` block parities.
+The table is part of the input, not a hardwired oracle. Its bit at address zero is used when
+there are no blocks (`b = 0`), or when every block is empty (`m = 0`). -/
 def andreev (b m : ℕ) (x : Fin (2 ^ b + b * m) → Bool) : Bool :=
-  x (Fin.castAdd (b * m) (tableIndex b fun j =>
-    parity m fun t => x (Fin.natAdd (2 ^ b) (finProdFinEquiv (j, t)))))
+  tableInput x (tableIndex b fun j => parity m (blockInput x j))
 
 /-- **Spira.** Balancing preserves the function and bounds AND/OR depth by four times the
 ceiling logarithm of the original leaf count. For a constant expression the bound is zero. -/
@@ -130,8 +151,8 @@ theorem andreev_lower_bound :
         144 * b ^ 2 * (Nat.log 2 b + 2) ^ 3 * minimumLeaves (andreev b m) ^ 2 :=
   FormulaBoundsBridge.andreev_lower_bound
 
-/-- info: abstract audit passed for `ComplexityTests.Abstracts.FormulaBoundsAbstract`: 17 root
-declarations, 115 dependencies checked -/
+/-- info: abstract audit passed for `ComplexityTests.Abstracts.FormulaBoundsAbstract`: 21 root
+declarations, 119 dependencies checked -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.FormulaBoundsAbstract allowing [
   Complexity.Computability.Circuit.Formula

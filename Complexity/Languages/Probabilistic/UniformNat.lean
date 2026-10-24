@@ -53,6 +53,7 @@ open BitString
 noncomputable def sampleBinaryNat (width : ℕ) : ProbComp ℕ :=
   binaryValue <$> BitString.sampleList width
 
+/-- With width zero the sampler returns `0` without sampling. -/
 @[simp] theorem sampleBinaryNat_zero : sampleBinaryNat 0 = pure 0 := rfl
 
 /-- The sampled value is exactly uniform below `2 ^ width`, including width zero. -/

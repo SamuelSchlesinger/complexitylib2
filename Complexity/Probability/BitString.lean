@@ -47,6 +47,7 @@ open Probability
 noncomputable def uniformList (n : ℕ) : PMF (List Bool) :=
   (PMF.uniformOfFintype (Fin n → Bool)).map List.ofFn
 
+/-- The uniform distribution on words of `0` bits is the point mass at the empty word. -/
 @[simp] theorem uniformList_zero : uniformList 0 = PMF.pure [] := by
   simp [uniformList, PMF.map, Function.comp_def]
 

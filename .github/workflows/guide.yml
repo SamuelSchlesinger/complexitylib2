@@ -1,0 +1,51 @@
+name: Guide
+
+# Checks the Verso guide (guide/) in pull requests that change it and uploads the rendered pages
+# for review. Building the guide elaborates every chapter, which checks its Lean examples against
+# the library. The library's outputs come from the remote build cache, so a run compiles Verso and
+# links the guide's generator but does not build the library. The nightly API documentation
+# workflow builds the guide from `main` and publishes it, which also catches library changes that
+# break an example.
+on:
+  pull_request:
+    paths:
+      - "guide/**"
+      - "scripts/guide.sh"
+      - "scripts/check_docs.py"
+      - "lean-toolchain"
+      - ".github/workflows/guide.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guide:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # scripts/cache/get.sh looks for the nearest ancestor whose outputs `main` CI uploaded.
+          fetch-depth: 100
+      # Only installs Lean; the guide does not use the Actions cache, which Lean CI fills.
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: "false"
+          build: "false"
+          test: "false"
+          lint: "false"
+          use-github-cache: "false"
+          use-mathlib-cache: "false"
+      - name: Download build outputs
+        run: scripts/cache/get.sh
+      - name: Build the guide
+        run: scripts/guide.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guide
+          path: guide/.lake/build/site/html-multi
+          if-no-files-found: error
