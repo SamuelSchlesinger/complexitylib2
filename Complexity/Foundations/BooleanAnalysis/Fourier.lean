@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.Parity
+public import Complexity.Foundations.Data.BitString.Sign
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Powerset
@@ -49,7 +50,6 @@ coefficient on the circle, so the name is meant to be used qualified.
 
 ## Main definitions
 
-* `Cslib.BitString.signVal`: a bit as a real sign, `false ↦ 1` and `true ↦ -1`.
 * `Cslib.BitString.chi`: the character of a set of coordinates, with values in a commutative ring,
   and `Cslib.BitString.chiChar` the same as an additive character.
 * `Cslib.BitString.fourierCoeff`: the Fourier coefficient of a real function on the cube, and
@@ -87,45 +87,9 @@ open scoped BigOperators
 
 variable {ι R : Type*}
 
-/-- A bit read as a real sign: `false ↦ 1` and `true ↦ -1`. -/
-def signVal (b : Bool) : ℝ :=
-  if b then -1 else 1
-
-@[simp] theorem signVal_false : signVal false = 1 := rfl
-
-@[simp] theorem signVal_true : signVal true = -1 := rfl
-
-@[simp] theorem signVal_not (b : Bool) : signVal (!b) = -signVal b := by
-  cases b <;> simp
-
-/-- A sign squares to one. -/
-theorem signVal_mul_self (b : Bool) : signVal b * signVal b = 1 := by
-  cases b <;> simp
-
-/-- A sign has absolute value one. -/
-@[simp] theorem abs_signVal (b : Bool) : |signVal b| = 1 := by
-  cases b <;> simp
-
-/-- The product of two signs records whether the bits agree. -/
-theorem signVal_mul_signVal (a b : Bool) : signVal a * signVal b = if a = b then 1 else -1 := by
-  cases a <;> cases b <;> simp
-
-/-- The sign of an exclusive or is the product of the signs. -/
-@[simp] theorem signVal_xor (a b : Bool) : signVal (a ^^ b) = signVal a * signVal b := by
-  cases a <;> cases b <;> simp
-
-/-- The real sign of a bit as a power of `-1`. -/
-theorem signVal_eq_neg_one_pow (b : Bool) : signVal b = (-1) ^ b.toNat := by
-  cases b <;> simp
-
 section CommRing
 
 variable [CommRing R]
-
-/-- The sign `(-1) ^ b` of an exclusive or is the product of the signs. -/
-theorem neg_one_pow_toNat_xor (a b : Bool) :
-    (-1 : R) ^ (a ^^ b).toNat = (-1) ^ a.toNat * (-1) ^ b.toNat := by
-  cases a <;> cases b <;> simp
 
 variable (R) in
 /-- The character of a set `S` of coordinates, with values in a commutative ring `R`: the product

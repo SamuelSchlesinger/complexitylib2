@@ -1606,6 +1606,7 @@ public import Complexity.Foundations.Data.BitString.Propagation
 public import Complexity.Foundations.Data.BitString.QuadraticForm
 public import Complexity.Foundations.Data.BitString.Selection
 public import Complexity.Foundations.Data.BitString.ShortWords
+public import Complexity.Foundations.Data.BitString.Sign
 public import Complexity.Foundations.Data.BitString.Sparse
 public import Complexity.Foundations.Data.BitString.SumTree
 public import Complexity.Foundations.Data.BitString.Uhlig
