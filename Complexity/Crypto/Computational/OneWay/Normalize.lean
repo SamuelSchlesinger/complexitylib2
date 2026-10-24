@@ -105,7 +105,8 @@ Both evaluation and this unary output-length function are uniformly polynomial t
 theorem OneWay.exists_fixedOutputLength {f : List Bool → List Bool} (hf : OneWay f) :
     ∃ (g : List Bool → List Bool) (length : ℕ → ℕ), OneWay g ∧
       (∀ input, (g input).length = length input.length) ∧
-      ComputableTidilyInPolyTime length encUnary encUnary := by
+      ComputableInPolyTime length encUnary encUnary := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨c, d, hsize⟩ := hf.polyTime.polyBounded_length.exists_le
   let bound (n : ℕ) := c * (n + 1) ^ d
   have hbound : ComputableTidilyInPolyTime bound encUnary encUnary := by

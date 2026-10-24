@@ -83,11 +83,13 @@ include hkeyGen hencrypt in
 encoded input. No correctness or output-width premise is used to bound the sampled keys. -/
 @[fun_prop]
 theorem isPPTOn_generateKeyChain
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary) :
     IsPPTOn input
       (encPair (encList (encPair encBits encBits)) (encList (encList encBits)))
       (fun a => E.generateKeyChain (n a) (depth a)) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hn
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hdepth
   apply (isPPTOn_generateKeys hkeyGen (.of_tidy hn) (.of_tidy hdepth)).bind_with
   simpa only [bind_pure_comp] using (isPPTOn_encryptKeyLinks hencrypt
     (.of_tidy (show ComputableTidilyInPolyTime

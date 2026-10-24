@@ -173,7 +173,8 @@ theorem SamplablePair.HasGap.extract_indexed_word_labels {pair : SamplablePair} 
         (outputBits := fun input : ℕ × ℕ => outputBits input.1 input.2)
         (fun input : ℕ × ℕ => test input.1 input.2) htest
         (.of_tidy (by fun_prop)) (.of_tidy houtput))
-      (.of_tidy hcandidates) (.of_tidy hslack) (.of_tidy hnumerator) (.of_tidy hdensity) hchoose hvalid
+      (.of_tidy hcandidates) (.of_tidy hslack) (.of_tidy hnumerator) (.of_tidy hdensity) hchoose
+        hvalid
       (fun n i => by simpa only [ProbComp.eval_uniform, ofList_ofFn] using
         LinearHash.isTwoUniversal_flat (count n) (outputBits n i)) hbudget
     apply h.congr

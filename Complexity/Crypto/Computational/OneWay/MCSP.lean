@@ -304,7 +304,8 @@ theorem isOraclePPT_mcspDistinguisher (d : ℕ)
   apply IsOraclePPTOn.isOraclePPT
   exact IsOraclePPTOn.bind_with
     (isOraclePPTOn_queryTable.preprocess (computableInPolyTime_tableQueries d).tidy)
-    ((isPPTOn_mcspRun (.of_tidy hV)).preprocess (computableInPolyTime_tableInstance d).tidy).isOraclePPTOn
+    ((isPPTOn_mcspRun (.of_tidy hV)).preprocess (computableInPolyTime_tableInstance
+      d).tidy).isOraclePPTOn
 
 /-! ### The advantage of the distinguisher -/
 

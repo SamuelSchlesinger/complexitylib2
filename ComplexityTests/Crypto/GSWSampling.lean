@@ -148,10 +148,12 @@ example : ProbComp.eval (decodeCoins 1 1 6 <$> sampleCoinsSerialized 1 1 6) =
 -- Every dimension grows with the input; the modulus itself is not encoded in unary.
 example : IsPPTOn encUnary encSerializedKeyInputs
     (fun size => sampleKeyInputsSerialized size size size size) :=
-  isPPTOn_sampleKeyInputsSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+  isPPTOn_sampleKeyInputsSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy
+    (by fun_prop)) (.of_tidy (by fun_prop))
 
 example : IsPPTOn encUnary encSerializedCoins (fun size => sampleCoinsSerialized size size size) :=
-  isPPTOn_sampleCoinsSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+  isPPTOn_sampleCoinsSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+    fun_prop))
 
 /--
 info: 'Cslib.Crypto.Homomorphic.GSW.keyGen_encrypt_correct' depends on axioms:

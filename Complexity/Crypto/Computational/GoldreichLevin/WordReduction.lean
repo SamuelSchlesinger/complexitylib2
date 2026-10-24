@@ -219,7 +219,11 @@ theorem exists_word_reduction (f : List Bool → List Bool) (adversary : Disting
       ∀ degree n, |Pr[parityPredictionGame f adversary n] - 1 / 2| ≤
         1 / (precision degree n : ℝ) +
           8 * Pr[inversionGame f (wordInverter f evaluate c d degree) n] := by
-  have this : ∃ (c d : ℕ) (evaluate : (ℕ × List Bool) → List Bool → Bool), ComputableTidilyInPolyTime (fun p : (ℕ × List Bool) × List Bool => evaluate p.1 p.2) (encPair (encPair encUnary encBits) encBits) encBool ∧ ∀ degree n, |Pr[parityPredictionGame f adversary n] - 1 / 2| ≤ 1 / (precision degree n : ℝ) + 8 * Pr[inversionGame f (wordInverter f evaluate c d degree) n] := by
+  have this : ∃ (c d : ℕ) (evaluate : (ℕ × List Bool) → List Bool → Bool),
+    ComputableTidilyInPolyTime (fun p : (ℕ × List Bool) × List Bool => evaluate p.1 p.2) (encPair
+    (encPair encUnary encBits) encBits) encBool ∧ ∀ degree n, |Pr[parityPredictionGame f
+    adversary n] - 1 / 2| ≤ 1 / (precision degree n : ℝ) + 8 * Pr[inversionGame f (wordInverter f
+    evaluate c d degree) n] := by
     obtain ⟨c, d, evaluate, hefficient, hrealize⟩ := hPPT.on.exists_seeded_evaluator
     exact ⟨c, d, evaluate, hefficient, fun degree n =>
       word_prediction_advantage_le f adversary evaluate c d

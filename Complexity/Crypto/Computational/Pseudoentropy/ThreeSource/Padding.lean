@@ -49,13 +49,17 @@ open Probability BitString Turing.MultiTapeTM Filter
 
 /-- The entire grid fits one efficient increasing seed-length schedule. -/
 theorem exists_common_seedLength {sourceBits observationBound densityBound : ℕ → ℕ}
-    (hsource : ComputableTidilyInPolyTime sourceBits encUnary encUnary)
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary) :
-    ∃ common : ℕ → ℕ, ComputableTidilyInPolyTime common encUnary encUnary ∧
+    (hsource : ComputableInPolyTime sourceBits encUnary encUnary)
+    (hobservation : ComputableInPolyTime observationBound encUnary encUnary)
+    (hdensity : ComputableInPolyTime densityBound encUnary encUnary) :
+    ∃ common : ℕ → ℕ, ComputableInPolyTime common encUnary encUnary ∧
       StrictMono common ∧ (∀ n, n + 1 ≤ common n) ∧
       ∀ n index, index < size (sourceBits n) (densityBound n) →
         seedLength n (sourceBits n) (observationBound n) (densityBound n) index ≤ common n := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hsource
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hobservation
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hdensity
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   have hsize := (isPolyTime_size (.of_tidy hsource) (.of_tidy hdensity)).tidy.polynomiallyBounded
   have hseed : ComputableTidilyInPolyTime (fun input => seedLength input.1 (sourceBits input.1)
       (observationBound input.1) (densityBound input.1) input.2)
@@ -105,7 +109,8 @@ theorem isPolyTime_paddedGenerate {pair : SamplablePair} (saved : pair.SeedReali
   have hcommon := hcommon.tidy
   refine .of_tidy ?_
   have hlength := saved.length_isPolyTime.tidy
-  have hgenerate := (isPolyTime_generate_of_realization saved (.of_tidy hobservation) (.of_tidy hdensity)).tidy
+  have hgenerate := (isPolyTime_generate_of_realization saved (.of_tidy hobservation) (.of_tidy
+    hdensity)).tidy
   unfold paddedGenerate
   apply GeneratorPadding.isPolyTime_generate
   · apply isPolyTime_seedLength <;> fun_prop

@@ -65,9 +65,10 @@ open Probability Turing.MultiTapeTM
 /-- A sampler's PPT certificate supplies an efficiently computed bound on every possible
 public observation. Impossible values in its finite observation type need no size bound. -/
 theorem exists_observationBound (pair : SamplablePair) :
-    ∃ bound : ℕ → ℕ, ComputableTidilyInPolyTime bound encUnary encUnary ∧
+    ∃ bound : ℕ → ℕ, ComputableInPolyTime bound encUnary encUnary ∧
       ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
         (pair.encode n observation).length ≤ bound n := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   have hsample : IsPPTOn encUnary encBits (fun n => Prod.fst <$> pair.sample n) := by
     have hefficient := pair.efficient
     ppt

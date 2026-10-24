@@ -89,10 +89,11 @@ theorem HardCore.unpredictable {f : List Bool → List Bool} {predicate : List B
 
 /-- Establish a hard-core predicate from efficient evaluation and negligible prediction bias. -/
 theorem HardCore.of_unpredictable {f : List Bool → List Bool} {predicate : List Bool → Bool}
-    (hp : ComputableTidilyInPolyTime predicate encBits encBool)
+    (hp : ComputableInPolyTime predicate encBits encBool)
     (h : ∀ adversary : Distinguisher, IsPPT encBool adversary →
-      Negligible (predictionAdvantage f predicate adversary)) : HardCore f predicate :=
-      ⟨.of_tidy hp, h⟩
+      Negligible (predictionAdvantage f predicate adversary)) : HardCore f predicate := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hp
+  exact ⟨.of_tidy hp, h⟩
 
 /-- The prediction experiment is a uniform PPT program when its ingredients are efficient. -/
 @[program_certificate]
