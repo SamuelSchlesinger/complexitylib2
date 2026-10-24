@@ -35,6 +35,9 @@ directly, and computational definitions over infinite sample spaces can reuse th
 
 * `Cslib.Crypto.Game.Indistinguishable.of_reduction`: preserve admissibility and transfer security
   with a polynomial loss and negligible error.
+* `Cslib.Crypto.Game.advantage_le_of_apply_le`, `Cslib.Crypto.Game.advantage_bind_le`: bound
+  real-valued distinguishing advantage from mutual acceptance-probability bounds or across a common
+  first-stage distribution.
 
 ## References
 
@@ -238,6 +241,62 @@ theorem Indistinguishable.of_reduction {SourceAdversary TargetAdversary : Type*}
 /-- As a real number, the success probability is the real-valued probability of `true`. -/
 @[simp] theorem coe_succProbability (game : Game) :
     (succProbability game : ℝ) = (game true).toReal := rfl
+
+open scoped ENNReal in
+/-- Mutual upper bounds on the two acceptance probabilities bound the real-valued advantage. -/
+theorem advantage_le_of_apply_le {game1 game2 : Game} {B : ℝ≥0∞} (hB : B ≠ ⊤)
+    (h1 : game1 true ≤ game2 true + B) (h2 : game2 true ≤ game1 true + B) :
+    (advantage game1 game2 : ℝ) ≤ B.toReal := by
+  rw [coe_advantage, coe_succProbability, coe_succProbability]
+  have ht1 := ENNReal.toReal_mono (ENNReal.add_ne_top.mpr ⟨PMF.apply_ne_top _ _, hB⟩) h1
+  have ht2 := ENNReal.toReal_mono (ENNReal.add_ne_top.mpr ⟨PMF.apply_ne_top _ _, hB⟩) h2
+  rw [ENNReal.toReal_add (PMF.apply_ne_top _ _) hB] at ht1 ht2
+  exact abs_sub_le_iff.mpr ⟨sub_le_iff_le_add'.mpr ht1, sub_le_iff_le_add'.mpr ht2⟩
+
+open scoped ENNReal in
+/-- Averaging two families of games over a common first stage preserves any uniform real-valued
+advantage bound. -/
+theorem advantage_bind_le {α : Type*} (d : PMF α) (game1 game2 : α → Game) {ε : ℝ}
+    (h : ∀ a, (advantage (game1 a) (game2 a) : ℝ) ≤ ε) :
+    (advantage (d.bind game1) (d.bind game2) : ℝ) ≤ ε := by
+  have hε0 : 0 ≤ ε := by
+    obtain ⟨a, -⟩ := d.support_nonempty
+    exact (NNReal.coe_nonneg _).trans (h a)
+  have h1 (a : α) : game1 a true ≤ game2 a true + ENNReal.ofReal ε := by
+    have ha := h a
+    rw [coe_advantage, coe_succProbability, coe_succProbability] at ha
+    have hle : (game1 a true).toReal ≤ (game2 a true).toReal + ε :=
+      sub_le_iff_le_add'.mp (abs_sub_le_iff.mp ha).1
+    have hof := ENNReal.ofReal_le_ofReal hle
+    rwa [ENNReal.ofReal_add ENNReal.toReal_nonneg hε0,
+      ENNReal.ofReal_toReal (PMF.apply_ne_top _ _),
+      ENNReal.ofReal_toReal (PMF.apply_ne_top _ _)] at hof
+  have h2 (a : α) : game2 a true ≤ game1 a true + ENNReal.ofReal ε := by
+    have ha := h a
+    rw [coe_advantage, coe_succProbability, coe_succProbability] at ha
+    have hle : (game2 a true).toReal ≤ (game1 a true).toReal + ε :=
+      sub_le_iff_le_add'.mp (abs_sub_le_iff.mp ha).2
+    have hof := ENNReal.ofReal_le_ofReal hle
+    rwa [ENNReal.ofReal_add ENNReal.toReal_nonneg hε0,
+      ENNReal.ofReal_toReal (PMF.apply_ne_top _ _),
+      ENNReal.ofReal_toReal (PMF.apply_ne_top _ _)] at hof
+  have hsum1 : (d.bind game1) true ≤ (d.bind game2) true + ENNReal.ofReal ε := by
+    rw [PMF.bind_apply, PMF.bind_apply]
+    calc ∑' a, d a * game1 a true
+        ≤ ∑' a, d a * (game2 a true + ENNReal.ofReal ε) :=
+          ENNReal.tsum_le_tsum fun a => mul_le_mul_of_nonneg_left (h1 a) zero_le
+      _ = (∑' a, d a * game2 a true) + ENNReal.ofReal ε := by
+          simp only [mul_add, ENNReal.tsum_add, ENNReal.tsum_mul_right, d.tsum_coe, one_mul]
+  have hsum2 : (d.bind game2) true ≤ (d.bind game1) true + ENNReal.ofReal ε := by
+    rw [PMF.bind_apply, PMF.bind_apply]
+    calc ∑' a, d a * game2 a true
+        ≤ ∑' a, d a * (game1 a true + ENNReal.ofReal ε) :=
+          ENNReal.tsum_le_tsum fun a => mul_le_mul_of_nonneg_left (h2 a) zero_le
+      _ = (∑' a, d a * game1 a true) + ENNReal.ofReal ε := by
+          simp only [mul_add, ENNReal.tsum_add, ENNReal.tsum_mul_right, d.tsum_coe, one_mul]
+  have hadv := advantage_le_of_apply_le ENNReal.ofReal_ne_top hsum1 hsum2
+  rwa [ENNReal.toReal_ofReal hε0] at hadv
+
 
 end Game
 end Cslib.Crypto
