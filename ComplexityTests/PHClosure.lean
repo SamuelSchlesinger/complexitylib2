@@ -32,6 +32,13 @@ example (q : Bool) (P Q : List Bool → Prop) :
       Alternation q [1, 0, 2] P ∧ Alternation q [2, 1, 0] Q :=
   alternation_splitAlternatingBlocks [(1, 2), (0, 1), (2, 0)] q P Q
 
+example (ps : List (Polynomial ℕ × Polynomial ℕ)) :
+    ComputableInPolyTime
+      (fun w : List Bool =>
+        splitAlternatingBlocks (ps.map fun pq => (pq.1.eval w.length, pq.2.eval w.length)) w)
+      encBits (encPair encBits encBits) :=
+  computableInPolyTime_splitAlternatingBlocks ps (.of_tidy (.encoding_length encBits)) .id'
+
 private theorem true_in_P : ({true} : Set Bool) ∈ P encBool :=
   ⟨id, ComputableInPolyTime.id', fun _ => Iff.rfl⟩
 
@@ -50,6 +57,13 @@ example : ({true} ∩ {false} : Set Bool) ∈ PiP 2 encBool :=
 /-- info: 'Cslib.Complexity.alternation_splitAlternatingBlocks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms alternation_splitAlternatingBlocks
+/--
+info: 'Cslib.Complexity.computableInPolyTime_splitAlternatingBlocks' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms computableInPolyTime_splitAlternatingBlocks
 /-- info: 'Cslib.Complexity.inter_mem_SigmaP' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms inter_mem_SigmaP
