@@ -11,6 +11,9 @@ import Complexity.Tactic.PolyTime
 
 open Turing.MultiTapeTM
 
+-- Client modules can isolate the production certificate lookup from the standard rule set.
+declare_aesop_rule_sets [PolyTimePlainNamedOnly]
+
 example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 &&& p.2)
     (encPair encNat encNat) encNat := by fun_prop
 
@@ -47,5 +50,32 @@ example (B : Cslib.WordRAM.Basis) (c : ℕ) :
     ComputableInPolyTime (checkedNamedConstant B c c) encUnary (encOption encNat) := by
   fail_if_success fun_prop
   polytime
+
+end PlainDriverTests
+
+namespace PlainDriverTests
+
+-- A globally registered raw certificate is not a plain search fallback.
+@[irreducible] def rawOnlyReverse (word : List Bool) : List Bool := word.reverse
+
+@[fun_prop] theorem rawOnlyReverse_tidy :
+    ComputableTidilyInPolyTime rawOnlyReverse encBits encBits := by
+  unfold rawOnlyReverse
+  fun_prop
+
+end PlainDriverTests
+
+namespace PlainDriverTests
+
+-- An ordinary plain-to-plain transition must remain available to the driver.
+@[irreducible] def RoutineContract (f : List Bool → List Bool) : Prop :=
+  ComputableInPolyTime f encBits encBits
+
+attribute [fun_prop] RoutineContract
+
+@[fun_prop] theorem RoutineContract.computable {f : List Bool → List Bool}
+    (hf : RoutineContract f) : ComputableInPolyTime f encBits encBits := by
+  unfold RoutineContract at hf
+  exact hf
 
 end PlainDriverTests

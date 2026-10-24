@@ -24,10 +24,9 @@ public import Complexity.Tactic.PolyTime.Init
 
 Adapted from the cslib `crypto` branch: named certificates are tried before their implementations
 are unfolded. `fun_prop` handles composition; Aesop chooses loop rules and uses local growth
-contracts. Every rule proves the tidy machine predicate, with fixed machines and polynomial
-bounds across all encoded inputs. A plain `Turing.MultiTapeTM.ComputableInPolyTime` goal is
-reduced to the tidy predicate, and plain hypotheses are restated tidily, so plain statements use
-the same search. Unknown algorithms still require certificates.
+contracts. Plain and internal tidy goals use separate rules, with fixed machines and polynomial
+bounds across all encoded inputs. Plain search applies plain statements directly; it does not
+lower a goal or restate its hypotheses tidily. Unknown algorithms still require certificates.
 
 ## Main definitions
 
@@ -45,10 +44,61 @@ namespace Cslib.Tactic.PolyTime
 
 open Turing.MultiTapeTM
 
--- Prefer plain certificates before the transitional raw-construction fallback. A safe bridge
--- would consume a plain goal before its named-certificate alternatives can be considered.
-attribute [aesop unsafe 5% apply (rule_sets := [PolyTime])] ComputableInPolyTime.of_tidy
-attribute [aesop safe forward (rule_sets := [PolyTime])] ComputableInPolyTime.tidy
+-- These plain rules keep the public search in its own predicate. Their machine proofs may use
+-- tidy witnesses, but the search never installs a transition between the two goal families.
+private theorem plainBitsAppend {α : Type} {encIn : α ↪ List Bool} {f g : α → List Bool}
+    (hf : ComputableInPolyTime f encIn encBits) (hg : ComputableInPolyTime g encIn encBits) :
+    ComputableInPolyTime (fun a => f a ++ g a) encIn encBits :=
+  .of_tidy (ComputableTidilyInPolyTime.bitsAppend hf.tidy hg.tidy)
+
+private theorem plainBitsCons {α : Type} {encIn : α ↪ List Bool}
+    {f : α → Bool} {g : α → List Bool}
+    (hf : ComputableInPolyTime f encIn encBool) (hg : ComputableInPolyTime g encIn encBits) :
+    ComputableInPolyTime (fun a => f a :: g a) encIn encBits :=
+  .of_tidy (ComputableTidilyInPolyTime.bitsCons hf.tidy hg.tidy)
+
+private theorem plainListAppend {α β : Type} {encIn : α ↪ List Bool} {enc : β ↪ List Bool}
+    {f g : α → List β} (hf : ComputableInPolyTime f encIn (encList enc))
+    (hg : ComputableInPolyTime g encIn (encList enc)) :
+    ComputableInPolyTime (fun a => f a ++ g a) encIn (encList enc) :=
+  .of_tidy (ComputableTidilyInPolyTime.listAppend' hf.tidy hg.tidy)
+
+private theorem plainListCons {α β : Type} {encIn : α ↪ List Bool} {enc : β ↪ List Bool}
+    {f : α → β} {g : α → List β} (hf : ComputableInPolyTime f encIn enc)
+    (hg : ComputableInPolyTime g encIn (encList enc)) :
+    ComputableInPolyTime (fun a => f a :: g a) encIn (encList enc) :=
+  .of_tidy (ComputableTidilyInPolyTime.cons' hf.tidy hg.tidy)
+
+@[aesop safe apply (rule_sets := [PolyTime])]
+private theorem plainBoolNot {α : Type} {encIn : α ↪ List Bool} {f : α → Bool}
+    (hf : ComputableInPolyTime f encIn encBool) :
+    ComputableInPolyTime (fun a => !(f a)) encIn encBool :=
+  ComputableInPolyTime.bool_not.comp hf
+
+@[aesop unsafe 75% apply (rule_sets := [PolyTime])]
+private theorem plainPiApply {α Index Value : Type} [Fintype Index]
+    {input : α ↪ List Bool} {enc : Value ↪ List Bool} {indexEncoding : Index ↪ List Bool}
+    {values : α → Index → Value} {index : α → Index}
+    (hvalues : ComputableInPolyTime values input (encPi enc))
+    (hindex : ComputableInPolyTime index input indexEncoding) :
+    ComputableInPolyTime (fun a => values a (index a)) input enc :=
+  .of_tidy (ComputableTidilyInPolyTime.pi_apply' hvalues.tidy hindex.tidy)
+
+@[aesop unsafe 80% apply (rule_sets := [PolyTime])]
+private theorem plainFstWithEncoding {α β γ : Type} {encA : α ↪ List Bool}
+    {encB : β ↪ List Bool} {encC : γ ↪ List Bool} {output : α ↪ List Bool} {f : γ → α × β}
+    (hf : ComputableInPolyTime f encC (encPair encA encB))
+    (h : ComputableInPolyTime (fun a => a) encA output) :
+    ComputableInPolyTime (fun p => (f p).1) encC output := h.comp hf.fst'
+
+@[aesop unsafe 80% apply (rule_sets := [PolyTime])]
+private theorem plainSndWithEncoding {α β γ : Type} {encA : α ↪ List Bool}
+    {encB : β ↪ List Bool} {encC : γ ↪ List Bool} {output : β ↪ List Bool} {f : γ → α × β}
+    (hf : ComputableInPolyTime f encC (encPair encA encB))
+    (h : ComputableInPolyTime (fun a => a) encB output) :
+    ComputableInPolyTime (fun p => (f p).2) encC output := h.comp hf.snd'
+
+attribute [aesop safe apply (rule_sets := [PolyTime])] ComputableInPolyTime.of_finite
 
 -- A fixed finite input type admits a lookup machine for any fixed encodings. This does not
 -- certify a uniform family whose input type grows with a runtime parameter.
@@ -143,28 +193,127 @@ open Lean Meta Elab Tactic in
 private meta def polytimeConstruct (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
   withMainContext do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
-    unless target.isAppOf ``ComputableTidilyInPolyTime do
-      throwError "expected a polynomial-time goal"
+    let predicate ← polytimePredicate target
+    let plain := predicate == ``ComputableInPolyTime
     let rawBits := target.getAppArgs[4]!.isConstOf ``encBits
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let rule ← lambdaTelescope program fun _ body => do
       if body.isAppOf ``HAppend.hAppend || body.isAppOf ``List.append then
-        return if rawBits then ``ComputableTidilyInPolyTime.bitsAppend
+        return if plain then (if rawBits then ``plainBitsAppend else ``plainListAppend)
+          else if rawBits then ``ComputableTidilyInPolyTime.bitsAppend
           else ``ComputableTidilyInPolyTime.listAppend'
       if body.isAppOf ``List.cons then
-        return if rawBits then ``ComputableTidilyInPolyTime.bitsCons
+        return if plain then (if rawBits then ``plainBitsCons else ``plainListCons)
+          else if rawBits then ``ComputableTidilyInPolyTime.bitsCons
           else ``ComputableTidilyInPolyTime.cons'
-      if body.isAppOf ``Prod.mk then return ``ComputableTidilyInPolyTime.prod
+      if body.isAppOf ``Prod.mk then return predicate ++ `prod
       throwError "expected a constructor"
     guard <| liftMetaTactic fun goal => goal.applyConst rule
+
+open Lean Meta Elab Tactic in
+/-- Restate known local certificates in the goal's family. This introduces proof facts only;
+it never changes the goal or searches the other calculus. -/
+@[aesop safe -30 tactic (rule_sets := [PolyTime])]
+private meta def polytimeKnownFacts : TacticM Unit := withMainContext do
+  let mut goal ← getMainGoal
+  let predicate ← polytimePredicate (← goal.getType)
+  let (source, conversion) := if predicate == ``ComputableInPolyTime then
+      (``ComputableTidilyInPolyTime, ``ComputableInPolyTime.of_tidy)
+    else (``ComputableInPolyTime, ``ComputableInPolyTime.tidy)
+  let mut added := false
+  for h in ← getLCtx do
+    unless h.isImplementationDetail do
+      let type := (← instantiateMVars h.type).consumeMData
+      if type.isAppOf source && !type.hasExprMVar then
+        let proof ← mkAppM conversion #[h.toExpr]
+        let type ← inferType proof
+        let found ← (← getLCtx).anyM fun other => isDefEq other.type type
+        unless found do
+          let (_, next) ← goal.note (← mkFreshUserName `knownCertificate) proof
+          goal := next
+          added := true
+  unless added do throwError "no new known certificate"
+  replaceMainGoal [goal]
+
+open Lean Meta Mathlib.Meta.FunProp in
+/-- Retain ordinary transitions while excluding those that require raw construction predicates.
+Both evaluated entries and lazy entries must be removed from this per-search tree. -/
+private meta def plainTransitions (thms : GeneralTheorems) : MetaM GeneralTheorems := do
+  let mut names : Std.HashSet Name := {}
+  for node in thms.theorems.tries do
+    for rule in node.values do names := names.insert rule.thmName
+    for (_, rule) in node.pending do names := names.insert rule.thmName
+  let mut blocked : Std.HashSet Name := {}
+  for name in names do
+    let raw ← forallTelescope (← getConstInfo name).type fun xs _ => xs.anyM fun x => do
+      let type ← inferType x
+      return (type.find? fun e => match e with
+        | .const n _ => n.toString.startsWith "Turing.MultiTapeTM.ComputableTidily" ||
+          n.toString.startsWith "Turing.MultiTapeTM.ComputesTidily"
+        | _ => false).isSome
+    if raw then blocked := blocked.insert name
+  return { thms with theorems := { thms.theorems with
+    tries := thms.theorems.tries.map fun node =>
+      { node with
+        values := node.values.filter fun rule => !blocked.contains rule.thmName
+        pending := node.pending.filter fun entry => !blocked.contains entry.2.thmName } } }
+
+open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
+/-- Use the standard `fun_prop` frontend's context and discharger with a local transition tree.
+The normal transition depth remains available for ordinary plain-to-plain implications. -/
+private meta def polytimePlainFunProp : TacticM Unit := withMainContext do
+  let goal ← getMainGoal
+  let target ← goal.getType
+  let disch : Expr → MetaM (Option Expr) := fun e => do
+    tacticToDischarge (← `(tactic| first | with_reducible assumption | infer_param)) e
+  let ctx : Mathlib.Meta.FunProp.Context := { config := { maxSteps := 256 }, disch }
+  let env ← getEnv
+  let state : Mathlib.Meta.FunProp.State := {
+    morTheorems := morTheoremsExt.getState env
+    transitionTheorems := ← plainTransitions (transitionTheoremsExt.getState env) }
+  let (result, state) ← (funProp target ctx).run state
+  let some result := result | throwError "no compositional plain certificate: {state.msgLog}"
+  goal.assign result.proof
+  replaceMainGoal []
+
+open Lean Meta Elab Tactic in
+/-- An explicit raw construction goal may use a plain certificate and its existing PT normal
+form. The nested search stays in the plain calculus; this rule never applies to a plain goal. -/
+@[aesop unsafe 70% tactic (rule_sets := [PolyTime])]
+private meta def polytimeRawFromPlain : TacticM Unit := withMainContext do
+  let goal ← getMainGoal
+  let target := (← instantiateMVars (← goal.getType)).consumeMData
+  unless target.isAppOf ``ComputableTidilyInPolyTime do
+    throwError "expected an internal raw polynomial-time goal"
+  -- Do not launch a second search for every unresolved construction atom. A real plain
+  -- certificate for this program head must be indexed before entering the plain backend.
+  let key ← Cslib.Tactic.efficiencyKey target
+  let plainKey := (``ComputableInPolyTime, key.2.1, key.2.2)
+  let named := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD plainKey #[]
+  let functions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1 ``ComputableInPolyTime
+  unless !named.isEmpty || !functions.isEmpty do
+    throwError "no indexed plain certificate for this internal raw goal"
+  let rawNamed := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD key #[]
+  let rawFunctions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1
+    ``ComputableTidilyInPolyTime
+  unless rawNamed.isEmpty && rawFunctions.isEmpty do
+    throwError "an existing raw certificate family already handles this program"
+  replaceMainGoal (← goal.applyConst ``ComputableInPolyTime.tidy)
+  evalTactic (← `(tactic| solve |
+    aesop (config := { terminal := true, assumptionTransparency := .reducible })
+      (rule_sets := [PolyTime])))
 
 open Lean Meta Elab Tactic in
 /-- Let compositional certificates finish a goal before trying loop specifications. -/
 private meta def polytimeFunProp : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
-    discard <| polytimePredicate (← getMainTarget)
+    let predicate ← polytimePredicate (← getMainTarget)
+    -- Plain search uses plain lemmas, never a transition to a raw construction predicate.
     -- A failed compositional attempt must leave time for the specification rules.
-    evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 256 })))
+    if predicate == ``ComputableInPolyTime then
+      polytimePlainFunProp
+    else
+      evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 256 })))
 
 /-- Expose a negated guard to loop rules when compositional proof search needs their help. -/
 @[aesop unsafe 80% apply (rule_sets := [PolyTime])]
@@ -198,19 +347,47 @@ theorem foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
     ComputableTidilyInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
   ComputableTidilyInPolyTime.foldl_of_bounded_growth hlist hinit hstep hgrowth
 
+/-- Fix a raw bit list's encoding and expose the two growth cases before proof search. -/
+private theorem plain_foldl_bits_rule {γ β : Type} {encIn : γ ↪ List Bool} {encB : β ↪ List Bool}
+    {list : γ → List Bool} {init : γ → β} {step : β → Bool → β}
+    (hlist : ComputableInPolyTime list encIn encBits)
+    (hinit : ComputableInPolyTime init encIn encB)
+    (hstep : ComputableInPolyTime (fun pair : β × Bool => step pair.1 pair.2)
+      (encPair encB encBool) encB) {growth : ℕ}
+    (hgrowth : ∀ state, (encB (step state false)).length ≤ (encB state).length + growth ∧
+      (encB (step state true)).length ≤ (encB state).length + growth) :
+    ComputableInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
+  .of_tidy (ComputableTidilyInPolyTime.foldl_of_bounded_growth hlist.tidy hinit.tidy hstep.tidy
+    (fun state bit => by cases bit; exacts [(hgrowth state).1, (hgrowth state).2]))
+
+/-- Fix a framed list's encoding before proof search infers the element encoding. -/
+private theorem plain_foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
+    {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {list : γ → List α} {init : γ → β} {step : β → α → β}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (hinit : ComputableInPolyTime init encIn encB)
+    (hstep : ComputableInPolyTime (fun pair : β × α => step pair.1 pair.2)
+      (encPair encB encA) encB) {growth : ℕ}
+    (hgrowth : ∀ state value, (encB (step state value)).length ≤ (encB state).length + growth) :
+    ComputableInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
+  .of_tidy (ComputableTidilyInPolyTime.foldl_of_bounded_growth
+    hlist.tidy hinit.tidy hstep.tidy hgrowth)
+
 open Lean Meta Elab Tactic in
 /-- Resolve the traversed list's encoding before certifying the step. Try a nonincreasing state
 bound first, committing to it only after its growth obligation has been proved. -/
 private meta def polytimeFold (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
-    unless target.isAppOf ``ComputableTidilyInPolyTime do
-      throwError "expected a polynomial-time goal"
+    let predicate ← polytimePredicate target
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let isFold ← lambdaTelescope program fun _ body => pure (body.isAppOf ``List.foldl)
     unless isFold do throwError "expected a list fold"
     guard do
-      for rule in [``foldl_bits_rule, ``foldl_list_rule] do
+      let rules := if predicate == ``ComputableInPolyTime then
+        [``plain_foldl_bits_rule, ``plain_foldl_list_rule]
+        else [``foldl_bits_rule, ``foldl_list_rule]
+      for rule in rules do
         let saved ← saveState
         try
           liftMetaTactic fun goal => goal.applyConst rule
@@ -227,18 +404,30 @@ private meta def polytimeFold (guard : TacticM Unit → TacticM Unit) : TacticM 
         catch _ => saved.restore
       throwError "no supported list encoding"
 
+/-- The plain iteration rule retains the same constant additive growth contract. -/
+private theorem plainIterate {α β : Type} {encIn : α ↪ List Bool} {encState : β ↪ List Bool}
+    {count : α → ℕ} {init : α → β} {step : β → β}
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime step encState encState)
+    {growth : ℕ} (hgrowth : ∀ state, (encState (step state)).length ≤
+      (encState state).length + growth) :
+    ComputableInPolyTime (fun x => step^[count x] (init x)) encIn encState :=
+  .of_tidy (ComputableTidilyInPolyTime.iterate_of_bounded_growth
+    hcount.tidy hinit.tidy hstep.tidy hgrowth)
+
 open Lean Meta Elab Tactic in
 /-- Apply the bounded-growth iteration rule once the goal is seen to be an iteration. -/
 private meta def polytimeIterate (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
   withMainContext do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
-    unless target.isAppOf ``ComputableTidilyInPolyTime do
-      throwError "expected a polynomial-time goal"
+    let predicate ← polytimePredicate target
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let isIter ← lambdaTelescope program fun _ body => pure (body.isAppOf ``Nat.iterate)
     unless isIter do throwError "expected an iteration"
     guard <| liftMetaTactic fun goal =>
-      goal.applyConst ``ComputableTidilyInPolyTime.iterate_of_bounded_growth
+      goal.applyConst (if predicate == ``ComputableInPolyTime then ``plainIterate
+        else ``ComputableTidilyInPolyTime.iterate_of_bounded_growth)
 
 attribute [aesop safe apply (rule_sets := [PolyTime])] Nat.le_refl
 
