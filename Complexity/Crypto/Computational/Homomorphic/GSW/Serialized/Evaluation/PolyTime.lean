@@ -20,8 +20,8 @@ raw words, without shape, noise, support or security assumptions.
 
 ## Main results
 
-* `computableTidilyInPolyTime_decryptSerialized`: the actual total raw-word decryption test.
-* `computableTidilyInPolyTime_nandSerialized`: the complete actual NAND ciphertext computation.
+* `computableInPolyTime_decryptSerialized`: the actual total raw-word decryption test.
+* `computableInPolyTime_nandSerialized`: the complete actual NAND ciphertext computation.
 
 ## References
 
@@ -38,13 +38,18 @@ variable {α : Type} {input : α ↪ List Bool} {n w i k j : α → ℕ}
 
 /-- Compute the selected phase uniformly from every pair of raw secret and ciphertext words. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_decryptResidue {secret ciphertext : α → List Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encUnary)
-    (hsecret : ComputableTidilyInPolyTime secret input encBits)
-    (hciphertext : ComputableTidilyInPolyTime ciphertext input encBits) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_decryptResidue {secret ciphertext : α → List Bool}
+    (hn : ComputableInPolyTime n input encUnary)
+    (hw : ComputableInPolyTime w input encUnary)
+    (hsecret : ComputableInPolyTime secret input encBits)
+    (hciphertext : ComputableInPolyTime ciphertext input encBits) :
+    ComputableInPolyTime
       (fun a => decryptResidue (n a) (w a) (secret a) (ciphertext a)) input encNat := by
+  have hn := hn.tidy
+  have hw := hw.tidy
+  have hsecret := hsecret.tidy
+  have hciphertext := hciphertext.tidy
+  refine .of_tidy ?_
   have hterm : ComputableTidilyInPolyTime
       (fun p : α × ℕ => Matrix.binaryEntry (n p.1 + 1) (w p.1) (ciphertext p.1)
         (w p.1 - 1) (p.2 + 1) * Matrix.binaryEntry (n p.1) (w p.1) (secret p.1) 0 p.2)
@@ -66,14 +71,20 @@ theorem computableTidilyInPolyTime_decryptResidue {secret ciphertext : α → Li
 
 /-- The total decoder is polynomial-time on the complete inputs, including malformed words. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_decryptSerialized {secret ciphertext : α → List Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encUnary)
-    (hsecret : ComputableTidilyInPolyTime secret input encBits)
-    (hciphertext : ComputableTidilyInPolyTime ciphertext input encBits) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_decryptSerialized {secret ciphertext : α → List Bool}
+    (hn : ComputableInPolyTime n input encUnary)
+    (hw : ComputableInPolyTime w input encUnary)
+    (hsecret : ComputableInPolyTime secret input encBits)
+    (hciphertext : ComputableInPolyTime ciphertext input encBits) :
+    ComputableInPolyTime
       (fun a => decryptSerialized (n a) (w a) (secret a) (ciphertext a)) input encBool := by
-  have hvalue := computableTidilyInPolyTime_decryptResidue hn hw hsecret hciphertext
+  have hn := hn.tidy
+  have hw := hw.tidy
+  have hsecret := hsecret.tidy
+  have hciphertext := hciphertext.tidy
+  refine .of_tidy ?_
+  have hvalue := (computableInPolyTime_decryptResidue (.of_tidy hn) (.of_tidy hw) (.of_tidy
+    hsecret) (.of_tidy hciphertext)).tidy
   have hq := binary_pow' (const 2) hw
   have hfour := binary_mul' (const 4) hvalue
   have htest : ComputableTidilyInPolyTime
@@ -86,16 +97,24 @@ theorem computableTidilyInPolyTime_decryptSerialized {secret ciphertext : α →
 
 /-- Compute one actual NAND residue, keeping the complete binary sum before signed reduction. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_nandEntry {left right : α → List Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encUnary)
-    (hleft : ComputableTidilyInPolyTime left input encBits)
-    (hright : ComputableTidilyInPolyTime right input encBits)
-    (hi : ComputableTidilyInPolyTime i input encUnary)
-    (hk : ComputableTidilyInPolyTime k input encUnary)
-    (hj : ComputableTidilyInPolyTime j input encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_nandEntry {left right : α → List Bool}
+    (hn : ComputableInPolyTime n input encUnary)
+    (hw : ComputableInPolyTime w input encUnary)
+    (hleft : ComputableInPolyTime left input encBits)
+    (hright : ComputableInPolyTime right input encBits)
+    (hi : ComputableInPolyTime i input encUnary)
+    (hk : ComputableInPolyTime k input encUnary)
+    (hj : ComputableInPolyTime j input encUnary) :
+    ComputableInPolyTime
       (fun a => nandEntry (n a) (w a) (left a) (right a) (i a) (k a) (j a)) input encNat := by
+  have hn := hn.tidy
+  have hw := hw.tidy
+  have hleft := hleft.tidy
+  have hright := hright.tidy
+  have hi := hi.tidy
+  have hk := hk.tidy
+  have hj := hj.tidy
+  refine .of_tidy ?_
   have hterm : ComputableTidilyInPolyTime
       (fun p : α × ℕ =>
         if (left p.1).getD ((i p.1 * w p.1 + k p.1) * ((n p.1 + 1) * w p.1) + p.2) false
@@ -119,15 +138,21 @@ theorem computableTidilyInPolyTime_nandEntry {left right : α → List Bool}
     intBin_emodNat' (intBin_sub' (intBin_natCast.comp hgadget) (intBin_natCast.comp hsum))
       (binary_pow' (const 2) hw)
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Compute the full square ciphertext with a single uniform native polynomial clock. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_nandSerialized {left right : α → List Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encUnary)
-    (hleft : ComputableTidilyInPolyTime left input encBits)
-    (hright : ComputableTidilyInPolyTime right input encBits) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_nandSerialized {left right : α → List Bool}
+    (hn : ComputableInPolyTime n input encUnary)
+    (hw : ComputableInPolyTime w input encUnary)
+    (hleft : ComputableInPolyTime left input encBits)
+    (hright : ComputableInPolyTime right input encBits) :
+    ComputableInPolyTime
       (fun a => nandSerialized (n a) (w a) (left a) (right a)) input encBits := by
+  have hn := hn.tidy
+  have hw := hw.tidy
+  have hleft := hleft.tidy
+  have hright := hright.tidy
+  refine .of_tidy ?_
   unfold nandSerialized
   apply flatMapToBitsWithInput (range.comp (by fun_prop))
   apply flatMapToBitsWithInput (range.comp (by fun_prop))
