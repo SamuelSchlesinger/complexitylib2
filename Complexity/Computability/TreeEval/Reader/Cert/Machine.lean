@@ -13,9 +13,9 @@ public import Complexity.Computability.Machines.ReadMachine.Tidy
 /-!
 # The Tree Evaluation read machine within its space budget
 
-The halting test, the address and the step of `Cslib.TreeEval.Reader.machine` are tidily computable
+The halting test, the address and the step of `Cslib.TreeEval.Reader.machine` are computable
 within the space budget `Cslib.TreeEval.Reader.stateBudget` of its states, and the step machine
-simulating it is tidy.
+simulating it has a resource certificate.
 
 ## Main definitions
 
@@ -23,7 +23,7 @@ simulating it is tidy.
 
 ## Main results
 
-* `Cslib.TreeEval.Reader.tidy_machine`: the step machine simulating the read machine is tidy.
+* `Cslib.TreeEval.Reader.machine_resourceCertificate`: the step machine simulating the read machine has a resource certificate.
 
 ## References
 
@@ -38,30 +38,30 @@ namespace Cslib.TreeEval
 
 namespace Reader
 
-open Turing MultiTapeTM ComputableTidilyInSpace Iter
+open Turing MultiTapeTM ComputableInSpace Iter
 
 /-- The tuple with the bit `false`, as an input of a step. -/
 theorem pairFalse_inSpace :
-    ComputableTidilyInSpace (fun x : Tuple => (x, false)) encTuple encStepInT
+    ComputableInSpace (fun x : Tuple => (x, false)) encTuple encStepInT
       fun x => stepBudget (x, false) :=
   ReadMachine.pairFalse_inSpace fun x => by simp only [stepBudget, encStepInT]; omega
 
 /-- A function of the tuple with the bit `false` within the budget of the step. -/
 private theorem onTuple {β : Type} {encB : β ↪ List Bool} {f : Tuple × Bool → β}
-    (h : ComputableTidilyInSpace f encStepInT encB stepBudget) :
-    ComputableTidilyInSpace (fun x : Tuple => f (x, false)) encTuple encB
+    (h : ComputableInSpace f encStepInT encB stepBudget) :
+    ComputableInSpace (fun x : Tuple => f (x, false)) encTuple encB
       fun x => stepBudget (x, false) :=
   ReadMachine.comp_pairFalse_inSpace (fun x => by simp only [stepBudget, encStepInT]; omega) h
 
 /-- **The halting test** on tuples. -/
 private theorem haltT_inSpace :
-    ComputableTidilyInSpace haltT encTuple encBool fun x => stepBudget (x, false) :=
+    ComputableInSpace haltT encTuple encBool fun x => stepBudget (x, false) :=
   onTuple (budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = 6)) tag_inSpace)
 
 /-- The offset of the node at the path of a stack. -/
 private theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
-    (hst : ComputableTidilyInSpace st encStepInT (encList encFrame) stepBudget) :
-    ComputableTidilyInSpace (fun y => offsetT y.1 (st y)) encStepInT encNat stepBudget := by
+    (hst : ComputableInSpace st encStepInT (encList encFrame) stepBudget) :
+    ComputableInSpace (fun y => offsetT y.1 (st y)) encStepInT encNat stepBudget := by
   have hdirs := budget_comp dirs_inSpace hst (.const_mul 64 ((length_le hst).add (.const 1 _)))
   have harg := budget_prod (budget_prod ell_inSpace height_inSpace) hdirs
   have hpo := budget_comp pathOffset_inSpace harg (.const_mul (2 ^ 30)
@@ -73,15 +73,15 @@ private theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
 
 /-- **The address** on tuples. -/
 private theorem addrT_inSpace :
-    ComputableTidilyInSpace addrT encTuple (encOption encNat) fun x => stepBudget (x, false) := by
-  have hsome {n : Tuple × Bool → ℕ} (hn : ComputableTidilyInSpace n encStepInT encNat stepBudget) :
-      ComputableTidilyInSpace (fun y => some (n y)) encStepInT (encOption encNat) stepBudget :=
-    budget_comp_linear (of_inO (ComputableTidilyInDegree.optionSome (enc₁ := encNat)).inO_one) hn
+    ComputableInSpace addrT encTuple (encOption encNat) fun x => stepBudget (x, false) := by
+  have hsome {n : Tuple × Bool → ℕ} (hn : ComputableInSpace n encStepInT encNat stepBudget) :
+      ComputableInSpace (fun y => some (n y)) encStepInT (encOption encNat) stepBudget :=
+    budget_comp_linear (of_inO (ComputableInDegree.optionSome (enc₁ := encNat)).inO_one) hn
   have ht (k : Fin 7) :=
     budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = k)) tag_inSpace
-  have hadd {a b : Tuple × Bool → ℕ} (ha : ComputableTidilyInSpace a encStepInT encNat stepBudget)
-      (hb : ComputableTidilyInSpace b encStepInT encNat stepBudget) :
-      ComputableTidilyInSpace (fun y => a y + b y) encStepInT encNat stepBudget :=
+  have hadd {a b : Tuple × Bool → ℕ} (ha : ComputableInSpace a encStepInT encNat stepBudget)
+      (hb : ComputableInSpace b encStepInT encNat stepBudget) :
+      ComputableInSpace (fun y => a y + b y) encStepInT encNat stepBudget :=
     budget_comp_lin natAdd linear_succ (budget_prod ha hb)
   have h := budget_ite (ht 0) (hsome n₁_inSpace)
     (budget_ite (ht 1) (hsome (hadd (succ_inSpace ell_inSpace) n₁_inSpace))
@@ -100,17 +100,17 @@ private theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = ste
     (x, false) := by
   simp [stepBudget, encBool_apply]
 
-private theorem halt_inSpace : ComputableTidilyInSpace machine.halt encState encBool stateBudget :=
+private theorem halt_inSpace : ComputableInSpace machine.halt encState encBool stateBudget :=
   (haltT_inSpace.of_encIn_eq State.toTuple fun _ => rfl).of_enc_eq fun s => by
     rw [haltT_toTuple]
 
-private theorem addr_inSpace : ComputableTidilyInSpace machine.addr encState (encOption encNat)
+private theorem addr_inSpace : ComputableInSpace machine.addr encState (encOption encNat)
     stateBudget :=
   (addrT_inSpace.of_encIn_eq State.toTuple fun _ => rfl).of_enc_eq fun s => by
     rw [addrT_toTuple]; rfl
 
 private theorem step_inSpace :
-    ComputableTidilyInSpace (fun p : State × Bool => machine.step p.1 p.2)
+    ComputableInSpace (fun p : State × Bool => machine.step p.1 p.2)
       (encPair encState encBool) (encPair encState encBits) fun p => stateBudget p.1 := by
   have h := stepT_inSpace.of_encIn_eq (fun p : State × Bool => (p.1.toTuple, p.2)) fun p => by
     rw [encPair_apply, encPair_apply, encState_apply]
@@ -118,15 +118,18 @@ private theorem step_inSpace :
   · simp only [stateBudget, stepBudget_bool]; exact le_rfl
   · rw [stepT_toTuple, encPair_apply, encPair_apply, encState_apply]
 
-/-- **The step machine simulating the read machine is tidy**, within the space of its states
+/-- **The step machine simulating the read machine has a resource certificate**, within the space
+of its states
 together with the position of its head. -/
-theorem tidy_machine : ∃ T, machine.toStepMachine.Tidy (encPair encState encNat)
+theorem machine_resourceCertificate : ∃ T, machine.toStepMachine.ResourceCertificate
+    (encPair encState encNat)
     (ReadMachine.stateT encState T stateBudget) (ReadMachine.stateS encState stateBudget) := by
-  obtain ⟨T₁, h₁⟩ := halt_inSpace
-  obtain ⟨T₂, h₂⟩ := addr_inSpace
-  obtain ⟨T₃, h₃⟩ := step_inSpace
+  obtain ⟨T₁, h₁⟩ := halt_inSpace.exists_inO
+  obtain ⟨T₂, h₂⟩ := addr_inSpace.exists_inO
+  obtain ⟨T₃, h₃⟩ := step_inSpace.exists_inO
   let T : State → ℕ := fun s => T₁ s + T₂ s + T₃ (s, false) + T₃ (s, true)
-  exact ⟨T, ReadMachine.tidy_toStepMachine (h₁.mono_le (fun s => by simp only [T]; omega)
+  exact ⟨T, ReadMachine.toStepMachine_resourceCertificate
+    (h₁.mono_le (fun s => by simp only [T]; omega)
     fun _ => le_rfl) (h₂.mono_le (fun s => by simp only [T]; omega) fun _ => le_rfl)
     (h₃.mono_le (fun p => by rcases p with ⟨s, _ | _⟩ <;> simp only [T] <;> omega)
       fun _ => le_rfl)⟩
