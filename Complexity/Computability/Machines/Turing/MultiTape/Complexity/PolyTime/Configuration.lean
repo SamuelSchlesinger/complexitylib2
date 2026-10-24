@@ -153,7 +153,7 @@ theorem finiteCfg_init {word : α → List Bool}
     ComputableInPolyTime (fun a => FiniteCfg.init (k := k) state (word a))
       input encFiniteCfg := by
   apply finiteCfg_mk hword (const _)
-  · simpa using (const (encIn := input) (encMid := encUnary) 1)
+  · simpa using (const (encIn := input) (encOut := encUnary) 1)
   · exact const _
   · exact const _
 
