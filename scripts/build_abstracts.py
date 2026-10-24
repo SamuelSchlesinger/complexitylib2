@@ -13,6 +13,7 @@ from urllib.parse import quote
 import xml.etree.ElementTree as ET
 
 import abstract_to_tex as render
+from proof_lengths import command_starts, signature_end
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,6 +125,40 @@ def declaration_line(text, name):
     return matches[0]
 
 
+def selected_statement(text, name):
+    """The named theorem's source statement through its type: everything before its proof.
+
+    It is read from the whole source file by declaration line and command boundary, separately
+    from the docstring sections that the display is rendered from.
+    """
+    start = 0
+    for _ in range(declaration_line(text, name) - 1):
+        start = text.index("\n", start) + 1
+    start += len(text[start:]) - len(text[start:].lstrip(" \t"))
+    syntax = _lean_code(text)
+    end = next((command for command in command_starts(syntax) if command > start), len(text))
+    try:
+        return text[start:start + signature_end(syntax[start:end])[0]].rstrip()
+    except ValueError as error:
+        raise ValueError(f"{name}: {error}") from error
+
+
+def check_selected_statements(text, sections, names):
+    """Require every selected statement to be displayed in full in the main presentation.
+
+    The comparison ignores whitespace, so it is independent of layout but not of content.
+    """
+    selected, displayed = {name.rsplit(".", 1)[-1] for name in names}, {}
+    for item in render.split_sections(sections)[0]:
+        displayed.update(displayed_code(item, selected)[1])
+    if missing := sorted(selected - displayed.keys()):
+        raise ValueError(f"Selected statements must be in the main presentation: {missing}")
+    for name in names:
+        shown = render.declaration_body(displayed[name.rsplit(".", 1)[-1]])
+        if shown.split() != selected_statement(text, name).split():
+            raise ValueError(f"Selected statement is not displayed in full: {name}")
+
+
 def entry_foundations(entry, root=ROOT):
     """Require the manifest to name exactly the source's imported foundation closure."""
     listed = entry.get("foundations", [])
@@ -174,7 +209,6 @@ def load_catalogue(manifest, root=ROOT):
                 r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", namespace):
             raise ValueError(f"Invalid abstract namespace: {namespace}")
         text = source.read_text()
-        main_sections, _ = render.split_sections(render.parse_abstract(text)[2])
         declared, contexts = _namespace_contexts(text)
         if namespace not in declared:
             raise ValueError(f"Abstract namespace {namespace} is not declared in {source}")
@@ -196,13 +230,7 @@ def load_catalogue(manifest, root=ROOT):
                 raise ValueError(f"Headline is outside namespace {namespace}: {name}")
             if not re.match(r"\s*(?:theorem|lemma)\s", text.splitlines()[line - 1]):
                 raise ValueError(f"Selected headline is not a theorem: {name}")
-        main_theorems = set(re.findall(
-            r"^\s*(?:theorem|lemma)\s+([^\s:{(]+)",
-            "\n\n".join(_lean_code(item["code"]) for item in main_sections), re.MULTILINE))
-        outside_main = {name.rsplit(".", 1)[-1] for name in [*headlines, *supporting]} - main_theorems
-        if outside_main:
-            raise ValueError(f"Selected statements must be in the main presentation: "
-                             f"{sorted(outside_main)}")
+        check_selected_statements(text, render.parse_abstract(text)[2], [*headlines, *supporting])
         entry_foundations(entry, root)
     return entries
 
@@ -232,21 +260,25 @@ def highlighted_line(line):
     return "".join(pieces)
 
 
+def displayed_code(item, selected=None):
+    """An item's displayed code, and its displayed theorem signatures by name."""
+    kept, displayed = [], {}
+    for block in render.display_blocks(item["code"], is_undocumented_tail=item["kind"] == "section"):
+        theorem = render.theorem_name(block)
+        if not theorem or selected is None or theorem in selected:
+            kept.append(block)
+            if theorem:
+                displayed[theorem] = block
+    return "\n\n".join(kept), displayed
+
+
 def render_sections(sections, selected=None):
     """Display all definitions, and either all theorem signatures or an explicit selection."""
-    lines, displayed = [], set()
+    lines, displayed = [], {}
     for item in sections:
         item_lines = []
-        code = render.clean_code_for_display(item["code"],
-                                             is_undocumented_tail=item["kind"] == "section")
-        kept = []
-        for block in re.split(r"\n\s*\n", code):
-            theorem = render.theorem_name(block)
-            if not theorem or selected is None or theorem in selected:
-                kept.append(block)
-                if theorem:
-                    displayed.add(theorem)
-        code = "\n\n".join(kept).strip()
+        code, shown = displayed_code(item, selected)
+        displayed.update(shown)
         if item["kind"] == "decl" and item["code"].strip() and not code:
             continue
         heading = render.section_heading(item)
@@ -332,12 +364,8 @@ def render_entry(entry, repository, sha, dirty, root=ROOT, *, include_foundation
     lines.extend([r"\begin{quote}\small " + render.escape_tex_prose(entry["summary"]) +
                   r"\par\emph{Scope.} " + render.escape_tex_prose(entry["scope"]) +
                   r"\end{quote}", "", *render.render_tex_intro(intro), ""])
+    check_selected_statements(text, sections, displayed_names)
     selected = {name.rsplit(".", 1)[-1] for name in displayed_names}
-    main, _ = render.split_sections(sections)
-    _, displayed = render_sections(main, selected)
-    if displayed != selected:
-        raise ValueError("Selected statements were not rendered in the main presentation: "
-                         f"{sorted(selected - displayed)}")
     lines.append(render_sections(render.presentation_sections(sections), selected)[0])
     modules = entry_foundations(entry, root)
     if modules:
@@ -400,7 +428,8 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
         raise ValueError("A clean source checkout is required for publication")
     if not shutil.which("latexmk"):
         raise ValueError("latexmk is required (see abstracts/README.md for TeX dependencies)")
-    inputs = {Path(manifest), root / "scripts/build_abstracts.py", root / "scripts/abstract_to_tex.py"}
+    inputs = {Path(manifest), *(root / "scripts" / name for name in
+                                ("build_abstracts.py", "abstract_to_tex.py", "proof_lengths.py"))}
     all_foundations = []
     for entry in entries:
         source = module_source_path(entry["module"], root)

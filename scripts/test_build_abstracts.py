@@ -298,6 +298,60 @@ class BuildAbstractsTests(unittest.TestCase):
         self.assertIn("a" * 40 + "/abstracts/ComplexityAbstracts/ExampleAbstract.lean", rendered)
         self.assertIn(r"\textcolor{leanblue}", rendered)
 
+    def test_selected_statement_with_bindings_is_displayed_in_full(self):
+        """Issue #699: statements with `let` bindings and `:=` in comments or strings keep
+        their full type, blank lines in proofs do not leak them, and an adjacent definition
+        is displayed."""
+        statement = ("theorem chosen :\n    let width := value + 1 -- an `:=` in a comment\n"
+                     '    let label := "a := b"\n    width = 1 ∧ label = label')
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace(
+            "theorem chosen : value = 0 := rfl",
+            statement + " := by\n  simp\n\n  -- proofTailMarker\n  exact proofMarker\n"
+                        "def adjacentMarker : Nat := 3"))
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+        self.assertEqual(build.selected_statement(source.read_text(),
+                                                  self.entry["headline_theorems"][0]), statement)
+        rendered = build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+        for marker in ("width = 1", "label = label", "adjacent"):
+            self.assertIn(marker, rendered)
+        for marker in ("TailMarker", "proofMarker", "simp"):
+            self.assertNotIn(marker, rendered)
+
+    def test_multiline_absolute_value_statement_is_checked_in_full(self):
+        """#716 review: `Eq\n    |x| |x|` was cut at `Eq`, and the check accepted it."""
+        source = build.module_source_path(self.entry["module"], self.root)
+        for statement in ("theorem chosen (x : Int) : Eq\n    |x| |x|",
+                          "theorem chosen (x : Int) : Eq (|x|)\n    |x|",
+                          "theorem chosen (x : Int) : (fun y : Int => y = y)\n    |x|"):
+            with self.subTest(statement=statement):
+                source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                                 statement + " := rfl"))
+                self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+                self.assertEqual(build.selected_statement(
+                    source.read_text(), self.entry["headline_theorems"][0]), statement)
+                rendered = build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+                self.assertIn(statement.splitlines()[-1].strip(), rendered)
+        source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                         "theorem chosen : ∀ n : Nat, n = n\n  |0 => rfl\n"
+                                         "  |_ => rfl"))
+        with self.assertRaisesRegex(ValueError, "chosen: Ambiguous"):
+            build.load_catalogue(self.manifest, self.root)
+
+    def test_truncated_statement_fails_the_coverage_check(self):
+        """Issue #699: a name-only check accepted `theorem chosen : let n` as rendered."""
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                         "theorem chosen : let n := 1; n = value + 1 := by rfl"))
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+        # The former renderer ended every statement at its first top-level `:=`.
+        with patch.object(build.render, "strip_theorem_proof",
+                          side_effect=lambda block: block.split(":=", 1)[0].rstrip()):
+            with self.assertRaisesRegex(ValueError, "not displayed in full: .*chosen"):
+                build.load_catalogue(self.manifest, self.root)
+            with self.assertRaisesRegex(ValueError, "not displayed in full: .*chosen"):
+                build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+
     def test_attributed_unselected_theorems_do_not_leak_docs_or_proofs(self):
         sections = [{"kind": "decl", "doc": "Unselected compatibility helper.",
                      "code": '@[deprecated (since := "2026-10-23")]\n'
@@ -305,7 +359,7 @@ class BuildAbstractsTests(unittest.TestCase):
                     {"kind": "decl", "doc": "Selected result.",
                      "code": "@[simp]\ntheorem chosen : True := Bridge.chosen"}]
         output, displayed = build.render_sections(sections, {"chosen"})
-        self.assertEqual(displayed, {"chosen"})
+        self.assertEqual(displayed, {"chosen": "@[simp]\ntheorem chosen : True"})
         self.assertNotIn("helper", output)
         self.assertNotIn("Bridge", output)
         self.assertIn("chosen", output)
@@ -370,7 +424,11 @@ class BuildAbstractsTests(unittest.TestCase):
                       result["documents"][0]["headlines"][0]["url"])
         self.assertIn({"path": "abstracts/ComplexityAbstracts/ExampleBridge.lean",
                        "sha256": build.digest(bridge)}, result["inputs"])
-        self.assertEqual(len(result["inputs"]), 5)
+        # The renderer's command and statement scanner is part of the rendering source.
+        self.assertIn({"path": "scripts/proof_lengths.py",
+                       "sha256": build.digest(self.root / "scripts/proof_lengths.py")},
+                      result["inputs"])
+        self.assertEqual(len(result["inputs"]), 6)
 
     def test_relative_manifest_and_output_paths_record_relative_inputs(self):
         def fake_pdf(tex):

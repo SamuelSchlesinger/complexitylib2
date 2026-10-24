@@ -112,7 +112,12 @@ Start each conceptual block's docstring (`/-- ... -/` or `/-! ... -/`) with a co
    python3 scripts/abstract_to_tex.py abstracts/ComplexityAbstracts/<Topic>Abstract.lean --format markdown
    python3 scripts/abstract_to_tex.py abstracts/ComplexityAbstracts/<Topic>Abstract.lean --format tex
    python3 -m unittest discover -s scripts -p "test_abstract_to_tex.py" -v
+   python3 -B scripts/build_abstracts.py --check
    ```
+   The renderer separates declarations at unindented Lean commands, not blank lines, using the
+   statement scanner shared with `scripts/proof_lengths.py`. It fails rather than omit unrecognized
+   unindented text after a theorem, and `--check` requires each selected statement to be displayed
+   in full.
 
 ---
 

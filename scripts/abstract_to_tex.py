@@ -7,7 +7,8 @@ from pathlib import Path
 import re
 import sys
 
-from proof_lengths import CHAR_LITERAL
+from proof_lengths import (COMMAND, COMMAND_PREFIX, MODIFIERS, command_starts, masks,
+                           signature_end)
 
 
 UNICODE_TO_TEX_MATH = {
@@ -117,49 +118,7 @@ TEX_SPECIAL_CODE = {
 
 def lean_code(text: str) -> str:
     """Mask comments and literals, preserving source positions and line numbers."""
-    result, index, depth = list(text), 0, 0
-    while index < len(text):
-        if depth:
-            if text.startswith("/-", index):
-                depth += 1
-                width = 2
-            elif text.startswith("-/", index):
-                depth -= 1
-                width = 2
-            else:
-                width = 1
-        elif text.startswith("/-", index):
-            depth, width = 1, 2
-        elif text.startswith("--", index):
-            end = text.find("\n", index)
-            width = (len(text) if end < 0 else end) - index
-        elif text[index] == "'" and (literal := CHAR_LITERAL.match(text, index)):
-            width = len(literal.group())
-        elif text[index] == '"' or (text[index] == "r" and re.match(r'r#+"', text[index:])):
-            raw = re.match(r'r(#+)"', text[index:])
-            if raw:
-                close = '"' + raw.group(1)
-                end = text.find(close, index + len(raw.group()))
-                width = (len(text) if end < 0 else end + len(close)) - index
-            else:
-                end = index + 1
-                while end < len(text):
-                    if text[end] == "\\":
-                        end += 2
-                    elif text[end] == '"':
-                        end += 1
-                        break
-                    else:
-                        end += 1
-                width = end - index
-        else:
-            index += 1
-            continue
-        for offset in range(index, min(index + width, len(text))):
-            if text[offset] != "\n":
-                result[offset] = " "
-        index += width
-    return "".join(result)
+    return masks(text)[1]
 
 
 def module_source_path(module: str, root: Path) -> Path:
@@ -276,20 +235,49 @@ def presentation_sections(sections: list[dict]) -> list[dict]:
     return main + appendix
 
 
+# Text at column 0 that can continue a declaration after its body begins.
+DECLARATION_CONTINUATION = re.compile(
+    r"\||where\b|termination_by\b|decreasing_by\b|deriving\b|[)\]}⟩⦄]")
+
+
+def split_commands(code: str) -> list[str]:
+    """Split Lean source into its top-level commands at keyword boundaries, not blank lines.
+
+    Text before the first command stays with it. Comments that begin at column 0 between two
+    commands move with the command that follows them.
+    """
+    comments_masked, syntax = masks(code)
+    cuts = [0]
+    for start in command_starts(syntax)[1:]:
+        cut = start
+        line = code.find("\n", len(comments_masked[:start].rstrip())) + 1
+        while 0 < line < start:
+            if not code[line].isspace():
+                cut = line
+                break
+            line = code.find("\n", line) + 1
+        cuts.append(cut)
+    blocks = (code[start:end].strip() for start, end in zip(cuts, [*cuts[1:], len(code)]))
+    return [block for block in blocks if block]
+
+
 def strip_theorem_proof(block: str) -> str:
-    """Strip the proof body after the top-level `:=` of a theorem declaration."""
-    depth = 0
-    i = 0
-    while i < len(block) - 1:
-        ch = block[i]
-        if ch in "([{":
-            depth += 1
-        elif ch in ")]}":
-            depth = max(0, depth - 1)
-        elif depth == 0 and block[i : i + 2] == ":=":
-            return block[:i].rstrip()
-        i += 1
-    return block.rstrip()
+    """Keep a theorem's attributes and complete statement, omitting its proof.
+
+    The statement ends at the shared scanner's proof `:=` (or `where`/equation clauses), so
+    assignments in `let`/`have` bindings, brackets, comments and strings are kept. Fails rather
+    than omit top-level text after the theorem that the command scanner does not recognize.
+    """
+    masked = lean_code(block)
+    try:
+        end, body = signature_end(masked)
+    except ValueError as error:
+        raise ValueError(f"{theorem_name(block)}: {error}") from error
+    for line in masked[body:].splitlines()[1:]:
+        if line[:1].strip() and not DECLARATION_CONTINUATION.match(line):
+            raise ValueError(f"Unrecognized top-level command after theorem "
+                             f"{theorem_name(block)}: {line.strip()[:60]}")
+    return block[:end].rstrip()
 
 
 INJECTIVITY_HELPER_RE = re.compile(
@@ -299,9 +287,13 @@ INJECTIVITY_HELPER_RE = re.compile(
 
 
 def declaration_body(block: str) -> str:
-    """Skip leading Lean attributes without interpreting their quoted strings as syntax."""
+    """Skip leading comments, `… in` prefix commands and attributes, without interpreting
+    comments or quoted strings as syntax."""
     masked = lean_code(block)
     pos = len(masked) - len(masked.lstrip())
+    for command in COMMAND.finditer(masked):
+        if command.start() > pos and COMMAND_PREFIX.search(masked[:command.start()].rstrip()):
+            pos = command.start()
     while masked.startswith("@[", pos):
         depth, end = 1, pos + 2
         while end < len(masked) and depth:
@@ -315,34 +307,38 @@ def declaration_body(block: str) -> str:
     return block[pos:]
 
 
+THEOREM_RE = re.compile(MODIFIERS + r"(?:theorem|lemma)\s+([^\s:{(\[⦃]+)")
+
+
 def theorem_name(block: str):
-    match = re.match(r"(?:private\s+)?(?:theorem|lemma)\s+([^\s:{(]+)", declaration_body(block))
+    match = THEOREM_RE.match(declaration_body(block))
     return match.group(1) if match else None
 
 
-def clean_code_for_display(code: str, is_undocumented_tail: bool = False) -> str:
-    """Keep definitions and theorem signatures while eliding proof bodies.
+def display_blocks(code: str, is_undocumented_tail: bool = False) -> list[str]:
+    """Return a code section's displayed commands: definitions, and theorem signatures
+    without their proofs.
 
     The only declarations omitted are undocumented `*_injective` helper theorems that follow a
     definition block or a section docstring: they are the injectivity glue for packaging an
     encoding as an embedding (see the lean-abstract skill). Every other theorem keeps its
     signature.
     """
-    blocks = re.split(r"\n\s*\n", code.strip())
     kept = []
-    for idx, block in enumerate(blocks):
-        block = block.strip()
-        if not block:
-            continue
-        if INJECTIVITY_HELPER_RE.match(declaration_body(block)) and (idx > 0 or is_undocumented_tail):
+    for index, block in enumerate(split_commands(code)):
+        if INJECTIVITY_HELPER_RE.match(declaration_body(block)) and (index or is_undocumented_tail):
             continue
         if theorem_name(block):
             kept.append(strip_theorem_proof(block))
         else:
             # Replace inline proof terms `, by ...⟩` inside structure constructors with `, _⟩`
-            cleaned = re.sub(r",\s*by\s+[^⟩]+⟩", ", _⟩", block)
-            kept.append(cleaned)
-    return "\n\n".join(kept).strip()
+            kept.append(re.sub(r",\s*by\s+[^⟩]+⟩", ", _⟩", block))
+    return kept
+
+
+def clean_code_for_display(code: str, is_undocumented_tail: bool = False) -> str:
+    """Join a code section's displayed commands (see `display_blocks`)."""
+    return "\n\n".join(display_blocks(code, is_undocumented_tail))
 
 
 def escape_tex_code_line(line: str) -> str:
