@@ -1,0 +1,777 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+module
+-- upstream: candidate
+
+public import Complexity.Languages.Probabilistic.Simulation
+public import Complexity.Probability.BitString.LinearHash
+public import Complexity.Probability.BitString.SubsetSum
+public import Complexity.Probability.HashFamily
+public import Complexity.Probability.HashFamily.Polynomial
+public import Complexity.Probability.PairwiseIndependentHash.Universal
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Uniform
+
+/-!
+# Carter–Wegman message authentication codes from Δ-universal hashing
+
+Wegman and Carter [WegmanCarter1981] observed that an `ε`-almost-Δ-universal (`ε`-DUF / `ε`-AXU)
+hash family `hash : K → M → Y` into a finite additive group `Y`
+(`Cslib.Probability.IsDeltaUniversalHash`) yields an unconditional message authentication code when
+each hash digest `hash k m` is masked by a uniform one-time pad `r ∈ Y`:
+
+* **Signing (`sign`)**: `sign hash k r m = hash k m + r`.
+* **Verification (`verify`)**: `verify hash k r m t = decide (hash k m + r = t)`.
+
+For every fixed hash key `k` and message `m`, left addition by `hash k m` is a bijection on `Y`, so
+a uniform pad `r ← PMF.uniformOfFintype Y` makes the tag `t = hash k m + r` uniformly distributed
+on `Y` and independent of `k`, with `r = -hash k m + t` (`map_sign_eq_uniform`,
+`bind_uniform_sign`). After seeing `(m, t)`, any forgery attempt `(m', t')` with `m' ≠ m`
+verifies under `r = -hash k m + t` if and only if
+
+`hash k m' - hash k m = t' - t` (`verify_neg_add_eq_true_iff`).
+
+Since the adversary's view `(m, t)` is independent of `k`, `IsDeltaUniversalHash seed hash ε`
+bounds the probability of this difference equation over `k ← seed` by at most `ε`
+([BonehShoup2023], Section 7.4, Theorem 7.3).
+
+This module formalizes:
+
+1. **Algebraic and resampling properties (`sign`, `verify`, `map_sign_eq_uniform`,
+   `bind_uniform_sign`)** over any finite additive group `Y`.
+2. **Zero-query forgery (`zeroQueryGame`, `zeroQueryGame_apply_true`)**: without a signing query,
+   any forgery attempt succeeds with probability at most (and in fact equal to) `1 / |Y|`.
+3. **Adaptive one-time EUF-CMA and SUF-CMA security (`OneTimeForger`, `oneTimeGame`,
+   `oneTimeStrongGame`, `oneTimeStrongGame_eq_oneTimeGame`, `oneTimeGame_le`,
+   `oneTimeStrongGame_le`)**: because each `(k, r, m)` admits a unique valid tag, strong
+   unforgeability (`(m', t') ≠ (m, t)`) and ordinary unforgeability (`m' ≠ m`) coincide and are
+   bounded by `ε` ([BonehShoup2023], Theorem 7.3).
+4. **Adaptive multi-query issued-counter / issued-slot Carter–Wegman MAC (`CounterForger`,
+   `counterSlotGame`, `counterGame`, `counterStrongGame`, `counterStrongGame_eq_counterSlotGame`,
+   `counterSlotGame_le`, `counterGame_le`, `counterStrongGame_le`)**: when each signing query draws
+   an independent uniform pad `r_i ← PMF.uniformOfFintype Y` (recorded at counter index `i`), the
+   entire adaptive query transcript is independent of the hash key `k`, so any adaptive `OracleComp`
+   forger (making any number of queries) targeting an issued counter index `idx < pads.length` has
+   forgery probability at most `ε` under issued-slot message freshness (`counterSlotGame`),
+   issued-counter global message freshness (`counterGame`), and issued-slot strong pair freshness
+   (`counterStrongGame`), with zero degradation in the number of queries [WegmanCarter1981].
+   Unissued counter indices (`pads[idx]? = none`) are rejected (`false`), so zero-query success in
+   the issued-counter games is `0` (whereas the standalone `zeroQueryGame` has success `1 / |Y|`);
+   a fresh-counter experiment that accepts unissued nonces against fresh pads is separate scope.
+5. **Arbitrary-pad hybrid decomposition (`maskedOneTimeGame`, `padDistinguisher`,
+   `maskedOneTimeGame_toReal_le`)**: replacing the uniform pad `r ← PMF.uniformOfFintype Y` with
+   any pad distribution `padDist : PMF Y` bounds the real forgery probability by `ε.toReal` plus
+   the distinguishing advantage of `padDistinguisher` between `padDist` and
+   `PMF.uniformOfFintype Y` ([BonehShoup2023], Theorem 7.4). Connecting `padDist` to a computational
+   PRF security game is left as follow-up work.
+6. **Concrete instantiations** for Carter–Wegman polynomial hashing (`xpolyHash`, bound
+   `(ℓ + 1) / |F|`), Boolean-matrix linear hashing (`BitString.LinearHash.hash`, bound `2⁻ᵐ`),
+   subset-sum hashing (`BitString.SubsetSum.hash`, bound `1 / |G|`), and pairwise independent
+   hash families (`IsPairwiseIndependentHash`, bound `1 / |Y|`).
+
+## Main definitions
+
+* `Cslib.Crypto.Protocols.CarterWegman.sign`, `Cslib.Crypto.Protocols.CarterWegman.verify`:
+  Carter–Wegman tag generation and verification.
+* `Cslib.Crypto.Protocols.CarterWegman.zeroQueryGame`: zero-query forgery experiment.
+* `Cslib.Crypto.Protocols.CarterWegman.OneTimeForger`,
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame`,
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame`: adaptive one-time EUF-CMA and SUF-CMA
+  experiments.
+* `Cslib.Crypto.Protocols.CarterWegman.CounterForger`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterSlotGame`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterGame`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterStrongGame`: adaptive multi-query issued-counter
+  Carter–Wegman experiments.
+* `Cslib.Crypto.Protocols.CarterWegman.maskedOneTimeGame`,
+  `Cslib.Crypto.Protocols.CarterWegman.padDistinguisher`: arbitrary-pad one-time Carter–Wegman
+  experiment and its induced pad distinguisher.
+
+## Main results
+
+* `Cslib.Crypto.Protocols.CarterWegman.zeroQueryGame_apply_true`: exact `1 / |Y|` zero-query
+  forgery probability.
+* `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_eq_oneTimeGame`,
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_le`: Boneh–Shoup Theorem 7.3 (`≤ ε`).
+* `Cslib.Crypto.Protocols.CarterWegman.counterStrongGame_eq_counterSlotGame`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterSlotGame_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterGame_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterStrongGame_le`: multi-query issued-counter
+  Carter–Wegman security (`≤ ε`).
+* `Cslib.Crypto.Protocols.CarterWegman.maskedOneTimeGame_toReal_le`: arbitrary-pad hybrid bound.
+* `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_xpolyHash_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterGame_xpolyHash_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_linearHash_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterGame_linearHash_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_subsetSum_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterGame_subsetSum_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_of_isPairwiseIndependentHash_le`,
+  `Cslib.Crypto.Protocols.CarterWegman.counterGame_of_isPairwiseIndependentHash_le`.
+
+## References
+
+* [M. N. Wegman, J. L. Carter, *New Hash Functions and Their Use in Authentication and Set
+  Equality*][WegmanCarter1981]
+* [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
+  Version 0.6][BonehShoup2023], Section 7.4 (Theorems 7.3 and 7.4).
+-/
+
+@[expose] public section
+
+namespace Cslib.Crypto.Protocols.CarterWegman
+
+open Cslib.Probability Cslib.Probability.PMF
+open scoped ENNReal
+
+/-! ### Core Carter–Wegman signing, verification, and pad resampling -/
+
+section Core
+
+variable {K M Y : Type*} [AddGroup Y]
+
+/-- Carter–Wegman tag generation ([WegmanCarter1981]; [BonehShoup2023], Section 7.4):
+mask the hash digest `hash k m` by adding the pad `r`. -/
+def sign (hash : K → M → Y) (k : K) (r : Y) (m : M) : Y :=
+  hash k m + r
+
+/-- Carter–Wegman tag verification: check whether `hash k m + r = t`. -/
+def verify [DecidableEq Y] (hash : K → M → Y) (k : K) (r : Y) (m : M) (t : Y) : Bool :=
+  decide (hash k m + r = t)
+
+@[simp]
+theorem verify_eq_true_iff [DecidableEq Y] (hash : K → M → Y) (k : K) (r : Y) (m : M) (t : Y) :
+    verify hash k r m t = true ↔ hash k m + r = t :=
+  decide_eq_true_iff
+
+@[simp]
+theorem verify_sign [DecidableEq Y] (hash : K → M → Y) (k : K) (r : Y) (m : M) :
+    verify hash k r m (sign hash k r m) = true := by
+  simp [sign, verify]
+
+/-- Every valid tag for `(k, r, m)` equals `sign hash k r m`. -/
+theorem eq_sign_of_verify_eq_true [DecidableEq Y] {hash : K → M → Y} {k : K} {r : Y} {m : M}
+    {t : Y} (h : verify hash k r m t = true) :
+    t = sign hash k r m :=
+  ((verify_eq_true_iff hash k r m t).mp h).symm
+
+/-- Solving for the pad `r` from a message–tag pair `(m, t)`:
+`sign hash k r m = t ↔ r = -hash k m + t`. -/
+theorem sign_eq_iff_eq_neg_add (hash : K → M → Y) (k : K) (r : Y) (m : M) (t : Y) :
+    sign hash k r m = t ↔ r = -hash k m + t :=
+  ⟨fun h => by rw [← h, sign, neg_add_cancel_left],
+    fun h => by rw [h, sign, add_neg_cancel_left]⟩
+
+/-- After observing tag `t = hash k m + r` (so `r = -hash k m + t`), a candidate pair `(m', t')`
+verifies if and only if `hash k m' - hash k m = t' - t`. -/
+theorem verify_neg_add_eq_true_iff [DecidableEq Y] (hash : K → M → Y) (k : K) (m m' : M)
+    (t t' : Y) :
+    verify hash k (-hash k m + t) m' t' = true ↔ hash k m' - hash k m = t' - t := by
+  rw [verify_eq_true_iff, ← add_assoc, ← sub_eq_add_neg, eq_sub_iff_add_eq.symm]
+
+/-- Boolean form of `verify_neg_add_eq_true_iff`. -/
+theorem verify_neg_add_decide [DecidableEq Y] (hash : K → M → Y) (k : K) (m m' : M)
+    (t t' : Y) :
+    verify hash k (-hash k m + t) m' t' = decide (hash k m' - hash k m = t' - t) :=
+  Bool.eq_iff_iff.mpr (by rw [verify_neg_add_eq_true_iff, decide_eq_true_iff])
+
+/-- Because `(k, r, m)` determines a unique valid tag `sign hash k r m`, pair freshness
+`(m', t') ≠ (m, sign hash k r m)` and message freshness `m' ≠ m` agree on all verifying pairs. -/
+theorem decide_ne_pair_and_verify_eq [DecidableEq M] [DecidableEq Y]
+    (hash : K → M → Y) (k : K) (r : Y) (m : M) (p : M × Y) :
+    (decide (p ≠ (m, sign hash k r m)) && verify hash k r p.1 p.2) =
+      (decide (p.1 ≠ m) && verify hash k r p.1 p.2) := by
+  rcases p with ⟨m', t'⟩
+  by_cases hv : verify hash k r m' t' = true
+  · have ht : t' = sign hash k r m' := eq_sign_of_verify_eq_true hv
+    subst ht
+    by_cases hm : m' = m <;> simp [hm, hv]
+  · simp [Bool.eq_false_iff.mpr hv]
+
+/-- For a uniform pad `r ← PMF.uniformOfFintype Y`, the tag `sign hash k r m` is uniformly
+distributed on `Y` for every `k` and `m`. -/
+theorem map_sign_eq_uniform [Fintype Y] [Nonempty Y] (hash : K → M → Y) (k : K) (m : M) :
+    (PMF.uniformOfFintype Y).map (sign hash k · m) = PMF.uniformOfFintype Y :=
+  PMF.uniformOfFintype_map_equiv (Equiv.addLeft (hash k m))
+
+/-- **Pad-to-tag change of variables**: sampling a uniform pad `r ← PMF.uniformOfFintype Y` and
+passing `(sign hash k r m, r)` to a continuation `f` is identical to sampling a uniform tag
+`t ← PMF.uniformOfFintype Y` and reconstructing `r = -hash k m + t`. -/
+theorem bind_uniform_sign {α : Type*} [Fintype Y] [Nonempty Y] (hash : K → M → Y) (k : K) (m : M)
+    (f : Y → Y → PMF α) :
+    ((PMF.uniformOfFintype Y).bind fun r => f (sign hash k r m) r) =
+      (PMF.uniformOfFintype Y).bind fun t => f t (-hash k m + t) := by
+  conv_rhs => rw [← PMF.uniformOfFintype_map_equiv (Equiv.addLeft (hash k m))]
+  rw [PMF.bind_map]
+  congr 1
+  funext r
+  simp [sign, neg_add_cancel_left]
+
+/-- Under `IsDeltaUniversalHash seed hash ε`, for any fixed `(m, t)` and candidate `(m', t')`,
+the probability over `k ← seed` that `m' ≠ m` and `(m', t')` verifies against the reconstructed
+pad `-hash k m + t` is at most `ε`. -/
+private theorem seed_bind_verify_neg_add_le [DecidableEq M] [DecidableEq Y]
+    {seed : PMF K} {hash : K → M → Y} {ε : ℝ≥0∞}
+    (hh : IsDeltaUniversalHash seed hash ε) (m m' : M) (t t' : Y) :
+    (seed.bind fun k =>
+      PMF.pure (decide (m' ≠ m) && verify hash k (-hash k m + t) m' t')) true ≤ ε := by
+  by_cases hm : m' = m
+  · simp [hm]
+  · have h_eq : (seed.bind fun k =>
+        PMF.pure (decide (m' ≠ m) && verify hash k (-hash k m + t) m' t')) true =
+        seed.toOuterMeasure {k | hash k m' - hash k m = t' - t} := by
+      rw [PMF.bind_apply, PMF.toOuterMeasure_apply]
+      refine tsum_congr fun k => ?_
+      rw [decide_eq_true hm, Bool.true_and, verify_neg_add_decide]
+      by_cases hk : hash k m' - hash k m = t' - t <;> simp [hk]
+    rw [h_eq]
+    exact hh m' m hm (t' - t)
+
+end Core
+
+/-! ### Zero-query forgery experiment -/
+
+section ZeroQuery
+
+variable {K M Y : Type} [AddGroup Y] [Fintype Y] [Nonempty Y] [DecidableEq Y]
+
+/-- The zero-query forgery experiment: sample `k ← seed`, `r ← PMF.uniformOfFintype Y`, and
+`(m', t') ← forger`, and check whether `verify hash k r m' t' = true`. -/
+noncomputable def zeroQueryGame (seed : PMF K) (hash : K → M → Y) (forger : PMF (M × Y)) :
+    PMF Bool := do
+  let k ← seed
+  let r ← PMF.uniformOfFintype Y
+  let p ← forger
+  return verify hash k r p.1 p.2
+
+/-- Without any signing query, every forgery distribution `forger : PMF (M × Y)` succeeds with
+probability **exactly** `1 / |Y|`, regardless of the hash family `hash` or key distribution
+`seed`. -/
+theorem zeroQueryGame_apply_true (seed : PMF K) (hash : K → M → Y) (forger : PMF (M × Y)) :
+    zeroQueryGame seed hash forger true = (Fintype.card Y : ℝ≥0∞)⁻¹ := by
+  dsimp only [zeroQueryGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  refine bind_apply_of_forall seed fun k => ?_
+  rw [PMF.bind_comm (PMF.uniformOfFintype Y) forger]
+  refine bind_apply_of_forall forger fun ⟨m', t'⟩ => ?_
+  have h1 : ((PMF.uniformOfFintype Y).bind fun r => PMF.pure (verify hash k r m' t')) =
+      (PMF.uniformOfFintype Y).map (fun t => decide (t = t')) := by
+    conv_rhs => rw [← map_sign_eq_uniform hash k m']
+    rw [PMF.map_comp]
+    rfl
+  rw [h1, PMF.map_apply, tsum_eq_single t']
+  · simp [PMF.uniformOfFintype_apply]
+  · intro t ht
+    simp [ht]
+
+end ZeroQuery
+
+/-! ### Adaptive one-time Carter–Wegman EUF-CMA and SUF-CMA (Boneh–Shoup Theorem 7.3) -/
+
+section OneTime
+
+variable {K M Y : Type} [AddGroup Y] [Fintype Y] [Nonempty Y] [DecidableEq M] [DecidableEq Y]
+
+/-- An adaptive one-time forger against a Carter–Wegman MAC:
+it chooses a signing query `m ← query`, receives its tag `t = sign hash k r m`, and outputs a
+candidate forgery `(m', t') ← forge m t`. -/
+structure OneTimeForger (M Y : Type) where
+  /-- Distribution of the single signing query `m`. -/
+  query : PMF M
+  /-- Forgery distribution given the queried message `m` and its tag `t`. -/
+  forge : M → Y → PMF (M × Y)
+
+/-- The adaptive one-time EUF-CMA experiment ([BonehShoup2023], Section 7.4, Theorem 7.3):
+the forger wins if `m' ≠ m` and `verify hash k r m' t' = true`. -/
+noncomputable def oneTimeGame (seed : PMF K) (hash : K → M → Y) (forger : OneTimeForger M Y) :
+    PMF Bool := do
+  let k ← seed
+  let r ← PMF.uniformOfFintype Y
+  let m ← forger.query
+  let p ← forger.forge m (sign hash k r m)
+  return (decide (p.1 ≠ m) && verify hash k r p.1 p.2)
+
+/-- The adaptive one-time SUF-CMA (strong unforgeability) experiment:
+the forger wins if `(m', t') ≠ (m, sign hash k r m)` and `verify hash k r m' t' = true`. -/
+noncomputable def oneTimeStrongGame (seed : PMF K) (hash : K → M → Y)
+    (forger : OneTimeForger M Y) : PMF Bool := do
+  let k ← seed
+  let r ← PMF.uniformOfFintype Y
+  let m ← forger.query
+  let t := sign hash k r m
+  let p ← forger.forge m t
+  return (decide (p ≠ (m, t)) && verify hash k r p.1 p.2)
+
+/-- Strong unforgeability and ordinary unforgeability coincide for the one-time Carter–Wegman MAC,
+because each `(k, r, m)` admits a unique valid tag. -/
+theorem oneTimeStrongGame_eq_oneTimeGame (seed : PMF K) (hash : K → M → Y)
+    (forger : OneTimeForger M Y) :
+    oneTimeStrongGame seed hash forger = oneTimeGame seed hash forger := by
+  dsimp only [oneTimeStrongGame, oneTimeGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  congr 1; funext k; congr 1; funext r; congr 1; funext m; congr 1; funext p
+  rw [decide_ne_pair_and_verify_eq]
+
+/-- Reformulation of `oneTimeGame` via `bind_uniform_sign`: the queried message `m`, uniform tag
+`t`, and candidate forgery `p = (m', t')` are sampled independently of the hash key `k`, which is
+drawn last to test `verify hash k (-hash k m + t) m' t'`. -/
+theorem oneTimeGame_eq_bind_uniform (seed : PMF K) (hash : K → M → Y)
+    (forger : OneTimeForger M Y) :
+    oneTimeGame seed hash forger =
+      forger.query.bind fun m =>
+        (PMF.uniformOfFintype Y).bind fun t =>
+          (forger.forge m t).bind fun p =>
+            seed.bind fun k =>
+              PMF.pure (decide (p.1 ≠ m) && verify hash k (-hash k m + t) p.1 p.2) := by
+  dsimp only [oneTimeGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  have h1 (k : K) :
+      ((PMF.uniformOfFintype Y).bind fun r =>
+        forger.query.bind fun m =>
+          (forger.forge m (sign hash k r m)).bind fun p =>
+            PMF.pure (decide (p.1 ≠ m) && verify hash k r p.1 p.2)) =
+      (forger.query.bind fun m =>
+        (PMF.uniformOfFintype Y).bind fun t =>
+          (forger.forge m t).bind fun p =>
+            PMF.pure (decide (p.1 ≠ m) && verify hash k (-hash k m + t) p.1 p.2)) := by
+    rw [PMF.bind_comm (PMF.uniformOfFintype Y) forger.query]
+    congr 1
+    funext m
+    exact bind_uniform_sign hash k m fun t r =>
+      (forger.forge m t).bind fun p =>
+        PMF.pure (decide (p.1 ≠ m) && verify hash k r p.1 p.2)
+  simp only [h1]
+  rw [PMF.bind_comm seed forger.query]
+  congr 1; funext m
+  rw [PMF.bind_comm seed (PMF.uniformOfFintype Y)]
+  congr 1; funext t
+  rw [PMF.bind_comm seed (forger.forge m t)]
+
+/-- **One-time Carter–Wegman EUF-CMA security** ([BonehShoup2023], Section 7.4, Theorem 7.3;
+[WegmanCarter1981]): if `hash` is `ε`-almost-Δ-universal under `seed`
+(`IsDeltaUniversalHash seed hash ε`), then every adaptive one-time forger succeeds with
+probability at most `ε`. -/
+theorem oneTimeGame_le {seed : PMF K} {hash : K → M → Y} {ε : ℝ≥0∞}
+    (hh : IsDeltaUniversalHash seed hash ε) (forger : OneTimeForger M Y) :
+    oneTimeGame seed hash forger true ≤ ε := by
+  rw [oneTimeGame_eq_bind_uniform, PMF.bind_apply]
+  refine tsum_mul_le_of_forall_le forger.query fun m => ?_
+  rw [PMF.bind_apply]
+  refine tsum_mul_le_of_forall_le (PMF.uniformOfFintype Y) fun t => ?_
+  rw [PMF.bind_apply]
+  refine tsum_mul_le_of_forall_le (forger.forge m t) fun p => ?_
+  exact seed_bind_verify_neg_add_le hh m p.1 t p.2
+
+/-- **One-time Carter–Wegman SUF-CMA security**: under `IsDeltaUniversalHash seed hash ε`, every
+adaptive one-time forger has strong-forgery probability at most `ε`. -/
+theorem oneTimeStrongGame_le {seed : PMF K} {hash : K → M → Y} {ε : ℝ≥0∞}
+    (hh : IsDeltaUniversalHash seed hash ε) (forger : OneTimeForger M Y) :
+    oneTimeStrongGame seed hash forger true ≤ ε := by
+  rw [oneTimeStrongGame_eq_oneTimeGame]
+  exact oneTimeGame_le hh forger
+
+end OneTime
+
+/-! ### Adaptive multi-query issued-counter Carter–Wegman MAC -/
+
+section Counter
+
+variable {K M Y : Type} [AddGroup Y]
+
+/-- An adaptive multi-query forger against an issued-counter Carter–Wegman MAC:
+it draws private coins `s ← coins`, makes any number of adaptive signing queries `m : M` via
+`OracleComp (fun _ : M => Y)` (receiving `t_i = sign hash k r_i m_i` under a fresh pad `r_i` for
+the `i`-th query), and outputs a target issued counter index `idx : ℕ`, message `m' : M`, and tag
+`t' : Y`. -/
+structure CounterForger (M Y : Type) where
+  /-- Type of the forger's private coins. -/
+  Coins : Type
+  /-- Distribution of the forger's private coins. -/
+  coins : PMF Coins
+  /-- Adaptive oracle program outputting `(idx, m', t')`. -/
+  forge : Coins → OracleComp (fun _ : M => Y) (ℕ × M × Y)
+
+/-- Real counter Carter–Wegman signing handler: on query `m`, sample a fresh pad
+`r ← PMF.uniformOfFintype Y`, append `(m, r)` to the pad log, and return `sign hash k r m`. -/
+noncomputable def counterRealHandler [Fintype Y] [Nonempty Y] (hash : K → M → Y) (k : K) (m : M) :
+    StateT (List (M × Y)) PMF Y := fun pads => do
+  let r ← PMF.uniformOfFintype Y
+  return (sign hash k r m, pads ++ [(m, r)])
+
+/-- Simulated key-independent tag handler: on query `m`, sample a fresh uniform tag
+`t ← PMF.uniformOfFintype Y`, append `(m, t)` to the message–tag transcript, and return `t`. -/
+noncomputable def counterSimHandler [Fintype Y] [Nonempty Y] (m : M) :
+    StateT (List (M × Y)) PMF Y := fun tr => do
+  let t ← PMF.uniformOfFintype Y
+  return (t, tr ++ [(m, t)])
+
+/-- Reconstruct the pad log `[(m_i, -hash k m_i + t_i)]` from a message–tag transcript
+`[(m_i, t_i)]`. -/
+def transcriptToPads (hash : K → M → Y) (k : K) (tr : List (M × Y)) : List (M × Y) :=
+  tr.map fun p => (p.1, -hash k p.1 + p.2)
+
+/-- Running any adaptive `OracleComp` program against `counterRealHandler hash k` from
+`transcriptToPads hash k tr` has the exact distribution of running it against the key-independent
+`counterSimHandler` from `tr` and applying `transcriptToPads hash k` to the final transcript. -/
+theorem run_interpret_counterRealHandler {α : Type} [Fintype Y] [Nonempty Y] (hash : K → M → Y)
+    (k : K) (prog : OracleComp (fun _ : M => Y) α) (tr : List (M × Y)) :
+    (OracleComp.interpret (counterRealHandler hash k) prog).run (transcriptToPads hash k tr) =
+      ((OracleComp.interpret counterSimHandler prog).run tr).map
+        (fun x => (x.1, transcriptToPads hash k x.2)) := by
+  refine (OracleComp.run_interpret_map_state counterSimHandler (counterRealHandler hash k)
+    (transcriptToPads hash k) (fun m s => ?_) prog tr).symm
+  dsimp only [counterSimHandler, counterRealHandler, PMF.monad_bind_eq_bind,
+    PMF.monad_pure_eq_pure, StateT.pure]
+  rw [PMF.map_bind]
+  symm
+  simpa only [PMF.bind_pure, PMF.pure_map, Function.comp_def, transcriptToPads, List.map_append,
+    List.map_cons, List.map_nil] using
+    bind_uniform_sign hash k m fun t r =>
+      PMF.pure (t, transcriptToPads hash k s ++ [(m, r)])
+
+variable [DecidableEq M] [DecidableEq Y]
+
+/-- Issued-slot message-freshness verification predicate on a pad log `pads`: the target counter
+`idx` was issued (`pads[idx]? = some (m_idx, r_idx)`, returning `false` on unissued indices),
+`m' ≠ m_idx`, and `verify hash k r_idx m' t' = true`. -/
+def checkCounterSlot (hash : K → M → Y) (k : K) (pads : List (M × Y))
+    (out : ℕ × M × Y) : Bool :=
+  match pads[out.1]? with
+  | none => false
+  | some (m_idx, r_idx) => decide (out.2.1 ≠ m_idx) && verify hash k r_idx out.2.1 out.2.2
+
+/-- Issued-counter global-message-freshness EUF-CMA verification predicate on a pad log `pads`:
+the target counter `idx` was issued (`pads[idx]? = some (_, r_idx)`, returning `false` on unissued
+indices), `m'` was never queried in any issued slot (`!(pads.map Prod.fst).contains m'`), and
+`verify hash k r_idx m' t' = true`. -/
+def checkCounterEUF (hash : K → M → Y) (k : K) (pads : List (M × Y))
+    (out : ℕ × M × Y) : Bool :=
+  match pads[out.1]? with
+  | none => false
+  | some (_, r_idx) =>
+    !(pads.map Prod.fst).contains out.2.1 && verify hash k r_idx out.2.1 out.2.2
+
+/-- Issued-slot strong SUF-CMA verification predicate on a pad log `pads`: the target counter `idx`
+was issued (`pads[idx]? = some (m_idx, r_idx)`, returning `false` on unissued indices), the pair
+`(m', t')` differs from the pair `(m_idx, sign hash k r_idx m_idx)` issued at counter `idx`, and
+`verify hash k r_idx m' t' = true`. -/
+def checkCounterSUF (hash : K → M → Y) (k : K) (pads : List (M × Y))
+    (out : ℕ × M × Y) : Bool :=
+  match pads[out.1]? with
+  | none => false
+  | some (m_idx, r_idx) =>
+    decide ((out.2.1, out.2.2) ≠ (m_idx, sign hash k r_idx m_idx)) &&
+      verify hash k r_idx out.2.1 out.2.2
+
+/-- Issued-slot SUF-CMA and issued-slot EUF-CMA checks are identical on every pad log and
+output. -/
+theorem checkCounterSUF_eq_checkCounterSlot (hash : K → M → Y) (k : K) (pads : List (M × Y))
+    (out : ℕ × M × Y) :
+    checkCounterSUF hash k pads out = checkCounterSlot hash k pads out := by
+  dsimp only [checkCounterSUF, checkCounterSlot]
+  cases pads[out.1]? with
+  | none => rfl
+  | some p => exact decide_ne_pair_and_verify_eq hash k p.2 p.1 out.2
+
+/-- Issued-counter global message freshness implies issued-slot message freshness at the target
+counter `idx`. -/
+theorem checkCounterEUF_imp_checkCounterSlot (hash : K → M → Y) (k : K) (pads : List (M × Y))
+    (out : ℕ × M × Y) :
+    checkCounterEUF hash k pads out = true → checkCounterSlot hash k pads out = true := by
+  dsimp only [checkCounterEUF, checkCounterSlot]
+  cases hget : pads[out.1]? with
+  | none => simp
+  | some p =>
+    simp only [Bool.and_eq_true, Bool.not_eq_true', List.contains_eq_mem, decide_eq_false_iff_not,
+      List.mem_map, decide_eq_true_iff]
+    rintro ⟨hnotmem, hv⟩
+    refine ⟨fun heq => hnotmem ⟨p, List.mem_of_getElem? hget, heq.symm⟩, hv⟩
+
+variable [Fintype Y] [Nonempty Y]
+
+/-- The issued-slot EUF-CMA experiment for the counter Carter–Wegman MAC (unissued indices `idx`
+are rejected). -/
+noncomputable def counterSlotGame (seed : PMF K) (hash : K → M → Y)
+    (forger : CounterForger M Y) : PMF Bool := do
+  let k ← seed
+  let s ← forger.coins
+  let res ← (OracleComp.interpret (counterRealHandler hash k) (forger.forge s)).run []
+  return checkCounterSlot hash k res.2 res.1
+
+/-- The issued-counter global-message-freshness EUF-CMA experiment for the counter Carter–Wegman
+MAC (unissued indices `idx` are rejected). -/
+noncomputable def counterGame (seed : PMF K) (hash : K → M → Y)
+    (forger : CounterForger M Y) : PMF Bool := do
+  let k ← seed
+  let s ← forger.coins
+  let res ← (OracleComp.interpret (counterRealHandler hash k) (forger.forge s)).run []
+  return checkCounterEUF hash k res.2 res.1
+
+/-- The issued-slot strong SUF-CMA experiment for the counter Carter–Wegman MAC (unissued indices
+`idx` are rejected). -/
+noncomputable def counterStrongGame (seed : PMF K) (hash : K → M → Y)
+    (forger : CounterForger M Y) : PMF Bool := do
+  let k ← seed
+  let s ← forger.coins
+  let res ← (OracleComp.interpret (counterRealHandler hash k) (forger.forge s)).run []
+  return checkCounterSUF hash k res.2 res.1
+
+/-- Issued-slot strong unforgeability (`counterStrongGame`) and issued-slot EUF-CMA
+(`counterSlotGame`) have identical outcome distributions. -/
+theorem counterStrongGame_eq_counterSlotGame (seed : PMF K) (hash : K → M → Y)
+    (forger : CounterForger M Y) :
+    counterStrongGame seed hash forger = counterSlotGame seed hash forger := by
+  dsimp only [counterStrongGame, counterSlotGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  congr 1; funext k; congr 1; funext s; congr 1; funext res
+  rw [checkCounterSUF_eq_checkCounterSlot]
+
+/-- Issued-counter global-message-freshness EUF-CMA success probability is at most issued-slot
+EUF-CMA success probability. -/
+theorem counterGame_le_counterSlotGame (seed : PMF K) (hash : K → M → Y)
+    (forger : CounterForger M Y) :
+    counterGame seed hash forger true ≤ counterSlotGame seed hash forger true := by
+  dsimp only [counterGame, counterSlotGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  refine bind_apply_mono_on_support seed true fun k _ => ?_
+  refine bind_apply_mono_on_support forger.coins true fun s _ => ?_
+  refine bind_apply_mono_on_support
+    ((OracleComp.interpret (counterRealHandler hash k) (forger.forge s)).run []) true fun res _ =>
+      ?_
+  by_cases h : checkCounterEUF hash k res.2 res.1 = true
+  · rw [h, checkCounterEUF_imp_checkCounterSlot hash k res.2 res.1 h]
+  · simp [Bool.eq_false_iff.mpr h]
+
+/-- **Multi-query issued-slot Carter–Wegman security** ([WegmanCarter1981];
+[BonehShoup2023], Section 7.4): under `IsDeltaUniversalHash seed hash ε`, every adaptive
+multi-query forger succeeds in `counterSlotGame` with probability at most `ε`, with zero
+degradation in the number of signing queries. -/
+theorem counterSlotGame_le {seed : PMF K} {hash : K → M → Y} {ε : ℝ≥0∞}
+    (hh : IsDeltaUniversalHash seed hash ε) (forger : CounterForger M Y) :
+    counterSlotGame seed hash forger true ≤ ε := by
+  dsimp only [counterSlotGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  have hrun (k : K) (s : forger.Coins) :
+      (((OracleComp.interpret (counterRealHandler hash k) (forger.forge s)).run []).bind fun res =>
+        PMF.pure (checkCounterSlot hash k res.2 res.1)) =
+      (((OracleComp.interpret counterSimHandler (forger.forge s)).run []).bind fun res =>
+        PMF.pure (checkCounterSlot hash k (transcriptToPads hash k res.2) res.1)) := by
+    have h := run_interpret_counterRealHandler hash k (forger.forge s) []
+    simp only [transcriptToPads, List.map_nil] at h
+    rw [h, PMF.bind_map]
+    rfl
+  simp only [hrun]
+  rw [PMF.bind_comm seed forger.coins]
+  rw [PMF.bind_apply]
+  refine tsum_mul_le_of_forall_le forger.coins fun s => ?_
+  rw [PMF.bind_comm seed ((OracleComp.interpret counterSimHandler (forger.forge s)).run [])]
+  rw [PMF.bind_apply]
+  refine tsum_mul_le_of_forall_le ((OracleComp.interpret counterSimHandler (forger.forge s)).run [])
+    fun ⟨⟨idx, m', t'⟩, tr⟩ => ?_
+  dsimp only [checkCounterSlot, transcriptToPads]
+  simp only [List.getElem?_map]
+  cases tr[idx]? with
+  | none => simp
+  | some p =>
+    exact seed_bind_verify_neg_add_le hh p.1 m' p.2 t'
+
+/-- **Multi-query issued-counter Carter–Wegman EUF-CMA security**: under
+`IsDeltaUniversalHash seed hash ε`, every adaptive multi-query forger has issued-counter EUF-CMA
+forgery probability at most `ε`. -/
+theorem counterGame_le {seed : PMF K} {hash : K → M → Y} {ε : ℝ≥0∞}
+    (hh : IsDeltaUniversalHash seed hash ε) (forger : CounterForger M Y) :
+    counterGame seed hash forger true ≤ ε :=
+  (counterGame_le_counterSlotGame seed hash forger).trans (counterSlotGame_le hh forger)
+
+/-- **Multi-query issued-slot Carter–Wegman SUF-CMA security**: under
+`IsDeltaUniversalHash seed hash ε`, every adaptive multi-query forger has issued-slot SUF-CMA
+forgery probability at most `ε`. -/
+theorem counterStrongGame_le {seed : PMF K} {hash : K → M → Y} {ε : ℝ≥0∞}
+    (hh : IsDeltaUniversalHash seed hash ε) (forger : CounterForger M Y) :
+    counterStrongGame seed hash forger true ≤ ε := by
+  rw [counterStrongGame_eq_counterSlotGame]
+  exact counterSlotGame_le hh forger
+
+end Counter
+
+/-! ### Pseudorandom-pad hybrid decomposition (Boneh–Shoup Theorem 7.4) -/
+
+section MaskedPad
+
+variable {K M Y : Type} [AddGroup Y] [DecidableEq M] [DecidableEq Y]
+
+/-- The one-time Carter–Wegman experiment with an arbitrary pad distribution `padDist : PMF Y`
+(such as a pseudorandom function output `F(k₂, nonce)`). -/
+noncomputable def maskedOneTimeGame (seed : PMF K) (padDist : PMF Y) (hash : K → M → Y)
+    (forger : OneTimeForger M Y) : PMF Bool := do
+  let k ← seed
+  let r ← padDist
+  let m ← forger.query
+  let p ← forger.forge m (sign hash k r m)
+  return (decide (p.1 ≠ m) && verify hash k r p.1 p.2)
+
+/-- The strong one-time Carter–Wegman experiment with an arbitrary pad distribution
+`padDist : PMF Y`. -/
+noncomputable def maskedOneTimeStrongGame (seed : PMF K) (padDist : PMF Y) (hash : K → M → Y)
+    (forger : OneTimeForger M Y) : PMF Bool := do
+  let k ← seed
+  let r ← padDist
+  let m ← forger.query
+  let t := sign hash k r m
+  let p ← forger.forge m t
+  return (decide (p ≠ (m, t)) && verify hash k r p.1 p.2)
+
+@[simp]
+theorem maskedOneTimeGame_uniform [Fintype Y] [Nonempty Y] (seed : PMF K) (hash : K → M → Y)
+    (forger : OneTimeForger M Y) :
+    maskedOneTimeGame seed (PMF.uniformOfFintype Y) hash forger =
+      oneTimeGame seed hash forger :=
+  rfl
+
+theorem maskedOneTimeStrongGame_eq_maskedOneTimeGame (seed : PMF K) (padDist : PMF Y)
+    (hash : K → M → Y) (forger : OneTimeForger M Y) :
+    maskedOneTimeStrongGame seed padDist hash forger =
+      maskedOneTimeGame seed padDist hash forger := by
+  dsimp only [maskedOneTimeStrongGame, maskedOneTimeGame, PMF.monad_bind_eq_bind,
+    PMF.monad_pure_eq_pure]
+  congr 1; funext k; congr 1; funext r; congr 1; funext m; congr 1; funext p
+  rw [decide_ne_pair_and_verify_eq]
+
+/-- The induced pad distinguisher `Y → PMF Bool` that samples `k ← seed`, simulates the one-time
+Carter–Wegman experiment using the supplied pad `r : Y`, and outputs `true` iff the forger
+produces a valid forgery. -/
+noncomputable def padDistinguisher (seed : PMF K) (hash : K → M → Y)
+    (forger : OneTimeForger M Y) (r : Y) : PMF Bool := do
+  let k ← seed
+  let m ← forger.query
+  let p ← forger.forge m (sign hash k r m)
+  return (decide (p.1 ≠ m) && verify hash k r p.1 p.2)
+
+/-- `maskedOneTimeGame` is equivalent to sampling `r ← padDist` and running
+`padDistinguisher seed hash forger r`. -/
+theorem maskedOneTimeGame_eq_bind_padDistinguisher (seed : PMF K) (padDist : PMF Y)
+    (hash : K → M → Y) (forger : OneTimeForger M Y) :
+    maskedOneTimeGame seed padDist hash forger =
+      padDist.bind (padDistinguisher seed hash forger) :=
+  PMF.bind_comm seed padDist _
+
+/-- **Pseudorandom-pad Carter–Wegman bound** ([BonehShoup2023], Section 7.4, Theorem 7.4):
+if `hash` is `ε`-almost-Δ-universal (`ε ≠ ⊤`), then the real-valued forgery probability under any
+pad distribution `padDist : PMF Y` is bounded by `ε.toReal` plus the distinguishing gap of
+`padDistinguisher` between `padDist` and `PMF.uniformOfFintype Y`. -/
+theorem maskedOneTimeGame_toReal_le [Fintype Y] [Nonempty Y] {seed : PMF K} {hash : K → M → Y}
+    {ε : ℝ≥0∞} (hh : IsDeltaUniversalHash seed hash ε) (hε : ε ≠ ⊤) (padDist : PMF Y)
+    (forger : OneTimeForger M Y) :
+    (maskedOneTimeGame seed padDist hash forger true).toReal ≤
+      ε.toReal +
+        |((padDist.bind (padDistinguisher seed hash forger)) true).toReal -
+          (((PMF.uniformOfFintype Y).bind (padDistinguisher seed hash forger)) true).toReal| := by
+  have hunif : (PMF.uniformOfFintype Y).bind (padDistinguisher seed hash forger) =
+      oneTimeGame seed hash forger :=
+    (maskedOneTimeGame_eq_bind_padDistinguisher seed (PMF.uniformOfFintype Y) hash forger).symm
+  have hle : (oneTimeGame seed hash forger true).toReal ≤ ε.toReal :=
+    ENNReal.toReal_mono hε (oneTimeGame_le hh forger)
+  rw [maskedOneTimeGame_eq_bind_padDistinguisher, hunif]
+  linarith [le_abs_self (((padDist.bind (padDistinguisher seed hash forger)) true).toReal -
+    (oneTimeGame seed hash forger true).toReal)]
+
+end MaskedPad
+
+/-! ### Concrete Carter–Wegman instantiations -/
+
+section Instantiations
+
+/-- **Polynomial Carter–Wegman one-time MAC (`xpolyHash`)** ([BonehShoup2023], Section 7.4.1):
+over a finite field `F`, authenticating messages of length at most `ℓ` via `xpolyHash` has
+adaptive one-time EUF-CMA (and SUF-CMA) forgery probability at most `(ℓ + 1) / |F|`. -/
+theorem oneTimeGame_xpolyHash_le {F : Type} [Field F] [Fintype F] [DecidableEq F] (ℓ : ℕ)
+    (forger : OneTimeForger {m : List F // m.length ≤ ℓ} F) :
+    oneTimeGame (PMF.uniformOfFintype F)
+      (fun k (m : {m : List F // m.length ≤ ℓ}) => xpolyHash k m) forger true ≤
+      (ℓ + 1) / Fintype.card F :=
+  oneTimeGame_le (isDeltaUniversalHash_xpolyHash ℓ) forger
+
+/-- **Polynomial Carter–Wegman multi-query issued-counter MAC (`xpolyHash`)**:
+authenticating messages of length at most `ℓ` via `xpolyHash` with fresh pads per query has
+adaptive multi-query issued-counter EUF-CMA forgery probability at most `(ℓ + 1) / |F|`. -/
+theorem counterGame_xpolyHash_le {F : Type} [Field F] [Fintype F] [DecidableEq F] (ℓ : ℕ)
+    (forger : CounterForger {m : List F // m.length ≤ ℓ} F) :
+    counterGame (PMF.uniformOfFintype F)
+      (fun k (m : {m : List F // m.length ≤ ℓ}) => xpolyHash k m) forger true ≤
+      (ℓ + 1) / Fintype.card F :=
+  counterGame_le (isDeltaUniversalHash_xpolyHash ℓ) forger
+
+/-- **Polynomial Carter–Wegman multi-query issued-slot strong unforgeability (`xpolyHash`)**. -/
+theorem counterStrongGame_xpolyHash_le {F : Type} [Field F] [Fintype F] [DecidableEq F] (ℓ : ℕ)
+    (forger : CounterForger {m : List F // m.length ≤ ℓ} F) :
+    counterStrongGame (PMF.uniformOfFintype F)
+      (fun k (m : {m : List F // m.length ≤ ℓ}) => xpolyHash k m) forger true ≤
+      (ℓ + 1) / Fintype.card F :=
+  counterStrongGame_le (isDeltaUniversalHash_xpolyHash ℓ) forger
+
+/-- **Boolean-matrix Carter–Wegman one-time MAC (`BitString.LinearHash.hash`)**:
+hashing `n`-bit messages to `m`-bit tags with a uniform Boolean matrix has adaptive one-time
+forgery probability at most `2⁻ᵐ`. -/
+theorem oneTimeGame_linearHash_le (n m : ℕ)
+    (forger : OneTimeForger (BitString n) (BitString m)) :
+    oneTimeGame (PMF.uniformOfFintype (Fin m → BitString n))
+      BitString.LinearHash.hash forger true ≤ ((2 : ℝ≥0∞) ^ m)⁻¹ := by
+  simpa only [BitString.card, Nat.cast_pow, Nat.cast_ofNat] using
+    oneTimeGame_le (BitString.LinearHash.isDeltaUniversalHash n m) forger
+
+/-- **Boolean-matrix Carter–Wegman multi-query issued-counter MAC (`BitString.LinearHash.hash`)**:
+adaptive multi-query issued-counter EUF-CMA forgery probability is at most `2⁻ᵐ`. -/
+theorem counterGame_linearHash_le (n m : ℕ)
+    (forger : CounterForger (BitString n) (BitString m)) :
+    counterGame (PMF.uniformOfFintype (Fin m → BitString n))
+      BitString.LinearHash.hash forger true ≤ ((2 : ℝ≥0∞) ^ m)⁻¹ := by
+  simpa only [BitString.card, Nat.cast_pow, Nat.cast_ofNat] using
+    counterGame_le (BitString.LinearHash.isDeltaUniversalHash n m) forger
+
+/-- **Boolean-matrix Carter–Wegman multi-query issued-slot strong unforgeability
+(`BitString.LinearHash.hash`)**. -/
+theorem counterStrongGame_linearHash_le (n m : ℕ)
+    (forger : CounterForger (BitString n) (BitString m)) :
+    counterStrongGame (PMF.uniformOfFintype (Fin m → BitString n))
+      BitString.LinearHash.hash forger true ≤ ((2 : ℝ≥0∞) ^ m)⁻¹ := by
+  simpa only [BitString.card, Nat.cast_pow, Nat.cast_ofNat] using
+    counterStrongGame_le (BitString.LinearHash.isDeltaUniversalHash n m) forger
+
+/-- **Subset-sum Carter–Wegman one-time MAC (`BitString.LinearHash` / `BitString.SubsetSum.hash`)**:
+hashing binary words `ι → Bool` into a finite additive abelian group `G` via uniform subset-sum
+weights has adaptive one-time forgery probability at most `1 / |G|`. -/
+theorem oneTimeGame_subsetSum_le {ι G : Type} [Fintype ι] [DecidableEq ι]
+    [AddCommGroup G] [Fintype G] [DecidableEq G]
+    (forger : OneTimeForger (ι → Bool) G) :
+    oneTimeGame (PMF.uniformOfFintype (ι → G)) BitString.SubsetSum.hash forger true ≤
+      (Fintype.card G : ℝ≥0∞)⁻¹ :=
+  oneTimeGame_le BitString.SubsetSum.isDeltaUniversalHash forger
+
+/-- **Subset-sum Carter–Wegman multi-query issued-counter MAC (`BitString.SubsetSum.hash`)**:
+adaptive multi-query issued-counter EUF-CMA forgery probability is at most `1 / |G|`. -/
+theorem counterGame_subsetSum_le {ι G : Type} [Fintype ι] [DecidableEq ι]
+    [AddCommGroup G] [Fintype G] [DecidableEq G]
+    (forger : CounterForger (ι → Bool) G) :
+    counterGame (PMF.uniformOfFintype (ι → G)) BitString.SubsetSum.hash forger true ≤
+      (Fintype.card G : ℝ≥0∞)⁻¹ :=
+  counterGame_le BitString.SubsetSum.isDeltaUniversalHash forger
+
+/-- **Pairwise-independent Carter–Wegman one-time MAC**: any pairwise independent hash family
+`hash : K → M → Y` into a finite additive group `Y` has adaptive one-time forgery probability at
+most `1 / |Y|`. -/
+theorem oneTimeGame_of_isPairwiseIndependentHash_le {K M Y : Type} [Fintype K] [Nonempty K]
+    [AddGroup Y] [Fintype Y] [Nonempty Y] [DecidableEq M] [DecidableEq Y] {hash : K → M → Y}
+    (hh : IsPairwiseIndependentHash hash) (forger : OneTimeForger M Y) :
+    oneTimeGame (PMF.uniformOfFintype K) hash forger true ≤ (Fintype.card Y : ℝ≥0∞)⁻¹ :=
+  oneTimeGame_le hh.isDeltaUniversalHash forger
+
+/-- **Pairwise-independent Carter–Wegman multi-query issued-counter MAC**: any pairwise independent
+hash family `hash : K → M → Y` has adaptive multi-query issued-counter forgery probability at most
+`1 / |Y|`. -/
+theorem counterGame_of_isPairwiseIndependentHash_le {K M Y : Type} [Fintype K] [Nonempty K]
+    [AddGroup Y] [Fintype Y] [Nonempty Y] [DecidableEq M] [DecidableEq Y] {hash : K → M → Y}
+    (hh : IsPairwiseIndependentHash hash) (forger : CounterForger M Y) :
+    counterGame (PMF.uniformOfFintype K) hash forger true ≤ (Fintype.card Y : ℝ≥0∞)⁻¹ :=
+  counterGame_le hh.isDeltaUniversalHash forger
+
+end Instantiations
+
+end Cslib.Crypto.Protocols.CarterWegman
