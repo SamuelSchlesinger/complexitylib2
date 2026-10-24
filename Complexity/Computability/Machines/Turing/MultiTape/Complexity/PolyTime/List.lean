@@ -840,6 +840,21 @@ end Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
 
+/-- Enumerate the naturals below a unary bound, keeping the elements unary. -/
+@[fun_prop]
+theorem range : ComputableInPolyTime List.range encUnary (encList encUnary) :=
+  .of_tidy ComputableTidilyInPolyTime.range
+
+/-- Test every list element with a predicate that captures the complete original input. -/
+@[fun_prop]
+theorem allWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (htest : ComputableInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableInPolyTime (fun x => (list x).all (test x)) encIn encBool :=
+  .of_tidy (ComputableTidilyInPolyTime.allWithInput hlist.tidy htest.tidy)
+
 /-- Test whether any list element satisfies a predicate that captures the original input. -/
 @[fun_prop]
 theorem anyWithInput {α : Type}
