@@ -417,6 +417,16 @@ def check_output():
 API_DOCS_URL = "https://www.cslib.io/complexitylib/"
 
 
+def expected_abstract_paths():
+    catalogue_path = ROOT / "abstracts/catalogue.json"
+    if not catalogue_path.is_file():
+        return {"abstracts/catalogue.pdf"}
+    catalogue = json.loads(catalogue_path.read_text())
+    return {"abstracts/catalogue.pdf"} | {
+        f"abstracts/{entry['id']}.pdf" for entry in catalogue.get("entries", [])
+    }
+
+
 def check_guide_links():
     docs = ROOT / "docbuild/.lake/build/doc"
     pages = sorted((ROOT / "guide/.lake/build/site/html-multi").rglob("*.html"))
@@ -426,9 +436,21 @@ def check_guide_links():
     links = set()
     for page in pages:
         links.update(html.unescape(target) for target in link.findall(page.read_text()))
+    abstract_paths = expected_abstract_paths()
+    abstracts_staged = (docs / "abstracts").is_dir()
     for target in sorted(links):
         path, _, fragment = target.partition("#")
-        file = docs / (unquote(path) or "index.html")
+        rel_path = unquote(path) or "index.html"
+        if rel_path.startswith("abstracts/"):
+            require(rel_path in abstract_paths,
+                    f"Guide links to an unknown formal abstract: {path}")
+            require(not fragment,
+                    f"Guide links to a formal abstract with an unexpected anchor: {target}")
+            if abstracts_staged:
+                require((docs / rel_path).is_file(),
+                        f"Guide links to a missing documentation page: {path}")
+            continue
+        file = docs / rel_path
         require(file.is_file(), f"Guide links to a missing documentation page: {path}")
         if fragment:
             if file not in anchors:

@@ -173,8 +173,8 @@ Run `python3 -B scripts/build_abstracts.py --check` to check the selection. The 
 PDFs** workflow generates individual PDFs and a combined catalogue with source digests, revision
 provenance and exact declaration links. Inspect its rendered pages and links before integration,
 recording the artifact/run and source revisions. Local generation is supported; see
-[the build guide](abstracts/README.md). The `formal-abstracts` release publishes the latest main
-build. Generated TeX and PDFs stay untracked; the former paper/TeX index has been retired.
+[the build guide](abstracts/README.md). The documentation site publishes the latest main
+build under `https://www.cslib.io/complexitylib/abstracts/`. Generated TeX and PDFs stay untracked; the former paper/TeX index has been retired.
 
 ## Upstreaming
 

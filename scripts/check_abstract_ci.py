@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Require authoritative exact-source Lean CI before a formal-abstract release write.
+"""Require authoritative exact-source CI and provenance before publishing formal-abstract PDFs.
 
 Use the workflow-file endpoint, not a check name or a success-filtered run list. The
 largest workflow run_number selects the latest run; its current run_attempt must
 have completed successfully. A previous green attempt never overrides a rerun.
-Only push/main validation from this repository counts, including on manual retries
-of the *publication* job. This script performs GET requests only.
+Only push/main validation from this repository counts. When --download-dir is given,
+also require the exact-source Formal abstract PDFs run, download its immutable
+run-attempt artifact, and verify provenance.json and every PDF's SHA-256 digest.
 
-Source: the two codebase reviews recorded in issue #432, and GitHub's REST API:
+Source: the two codebase reviews recorded in issue #432, issue #673, and GitHub's REST API:
 https://docs.github.com/en/rest/actions/workflow-runs
 https://docs.github.com/en/actions/reference/workflows-and-actions/variables
 """
@@ -15,9 +16,12 @@ https://docs.github.com/en/actions/reference/workflows-and-actions/variables
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -27,6 +31,10 @@ from urllib.parse import urlencode
 WORKFLOW_FILE = "lean_action_ci.yml"
 WORKFLOW_PATH = f".github/workflows/{WORKFLOW_FILE}"
 WORKFLOW_NAME = "Lean Action CI"
+
+ABSTRACTS_WORKFLOW_FILE = "abstracts.yml"
+ABSTRACTS_WORKFLOW_PATH = f".github/workflows/{ABSTRACTS_WORKFLOW_FILE}"
+ABSTRACTS_WORKFLOW_NAME = "Formal abstract PDFs"
 
 
 class Rejected(RuntimeError):
@@ -49,6 +57,16 @@ def gh_get(endpoint: str, *, paginate: bool = False):
     return json.loads(result.stdout)
 
 
+def gh_download_artifact(repository: str, run_id: int, artifact_name: str, destination: Path) -> None:
+    command = [
+        "gh", "run", "download", str(run_id),
+        "--repo", repository,
+        "--name", artifact_name,
+        "--dir", str(destination),
+    ]
+    subprocess.run(command, check=True, capture_output=True, text=True, timeout=120)
+
+
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise Rejected(message)
@@ -58,22 +76,36 @@ def positive(value) -> bool:
     return type(value) is int and value > 0
 
 
-def check_identity(run: dict, repository: str, sha: str, workflow_id: int) -> None:
-    require(run.get("head_sha") == sha, "Lean run source SHA mismatch")
+def check_identity(
+    run: dict,
+    repository: str,
+    sha: str,
+    workflow_id: int,
+    workflow_path: str = WORKFLOW_PATH,
+    label: str = "Lean",
+) -> None:
+    require(run.get("head_sha") == sha, f"{label} run source SHA mismatch")
     require(run.get("event") == "push" and run.get("head_branch") == "main",
-            "Lean run is not a push to main")
-    require(run.get("workflow_id") == workflow_id, "Wrong Lean workflow ID")
-    require(run.get("path", "").split("@", 1)[0] == WORKFLOW_PATH, "Wrong Lean workflow path")
+            f"{label} run is not a push to main")
+    require(run.get("workflow_id") == workflow_id, f"Wrong {label} workflow ID")
+    require(run.get("path", "").split("@", 1)[0] == workflow_path, f"Wrong {label} workflow path")
     repo, head = run.get("repository", {}), run.get("head_repository", {})
     require(repo.get("full_name") == repository and head.get("full_name") == repository,
-            "Lean run repository mismatch")
+            f"{label} run repository mismatch")
     require(positive(repo.get("id")) and repo.get("id") == head.get("id"),
-            "Lean run head is from another repository")
+            f"{label} run head is from another repository")
     require(all(positive(run.get(field)) for field in ("id", "run_number", "run_attempt")),
-            "Malformed Lean run identity")
+            f"Malformed {label} run identity")
 
 
-def latest_run(api, repository: str, sha: str, workflow_id: int) -> dict:
+def latest_run(
+    api,
+    repository: str,
+    sha: str,
+    workflow_id: int,
+    workflow_path: str = WORKFLOW_PATH,
+    label: str = "Lean",
+) -> dict:
     query = urlencode({"head_sha": sha, "event": "push", "branch": "main", "per_page": 100})
     pages = api(f"repos/{repository}/actions/workflows/{workflow_id}/runs?{query}", paginate=True)
     require(isinstance(pages, list) and bool(pages), "Malformed workflow-run pages")
@@ -84,45 +116,61 @@ def latest_run(api, repository: str, sha: str, workflow_id: int) -> dict:
     require(all(page.get("total_count") == len(runs) for page in pages),
             "Incomplete or changing workflow-run listing")
     if not runs:
-        raise Pending("No exact-source Lean push/main run exists")
+        raise Pending(f"No exact-source {label} push/main run exists")
     for run in runs:
-        check_identity(run, repository, sha, workflow_id)
+        check_identity(run, repository, sha, workflow_id, workflow_path, label)
     require(len({run["id"] for run in runs}) == len(runs), "Duplicate workflow runs")
     require(len({run["run_number"] for run in runs}) == len(runs), "Ambiguous latest workflow run")
     return max(runs, key=lambda run: run["run_number"])
 
 
-def check_once(repository: str, sha: str, *, api=gh_get) -> dict:
+def check_workflow_once(
+    repository: str,
+    sha: str,
+    workflow_file: str = WORKFLOW_FILE,
+    workflow_path: str = WORKFLOW_PATH,
+    workflow_name: str = WORKFLOW_NAME,
+    label: str = "Lean",
+    *,
+    api=gh_get,
+    require_current_main: bool = True,
+) -> dict:
     require(bool(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository)),
             "Invalid repository")
     require(bool(re.fullmatch(r"[0-9a-f]{40}", sha)), "Invalid source SHA")
-    main = api(f"repos/{repository}/git/ref/heads/main")
-    require(main.get("ref") == "refs/heads/main" and main.get("object", {}).get("sha") == sha,
-            "Artifact source is no longer current main")
-    workflow = api(f"repos/{repository}/actions/workflows/{WORKFLOW_FILE}")
-    require(workflow.get("path") == WORKFLOW_PATH and workflow.get("name") == WORKFLOW_NAME
+    if require_current_main:
+        main = api(f"repos/{repository}/git/ref/heads/main")
+        require(main.get("ref") == "refs/heads/main" and main.get("object", {}).get("sha") == sha,
+                "Artifact source is no longer current main")
+    workflow = api(f"repos/{repository}/actions/workflows/{workflow_file}")
+    require(workflow.get("path") == workflow_path and workflow.get("name") == workflow_name
             and workflow.get("state") == "active" and positive(workflow.get("id")),
-            "Authoritative Lean workflow is missing, disabled or changed")
+            f"Authoritative {label} workflow is missing, disabled or changed")
     workflow_id = workflow["id"]
-    selected = latest_run(api, repository, sha, workflow_id)
+    selected = latest_run(api, repository, sha, workflow_id, workflow_path, label)
     # A run-list response can lag the latest rerun. GET the run, not a historical
     # /attempts/{number} endpoint, before accepting its current conclusion.
     current = api(f"repos/{repository}/actions/runs/{selected['id']}")
-    check_identity(current, repository, sha, workflow_id)
+    check_identity(current, repository, sha, workflow_id, workflow_path, label)
     require(current["id"] == selected["id"] and current["run_number"] == selected["run_number"]
-            and current["run_attempt"] >= selected["run_attempt"], "Lean run changed identity")
+            and current["run_attempt"] >= selected["run_attempt"], f"{label} run changed identity")
     if current.get("status") != "completed":
-        raise Pending(f"Lean run {current['id']} attempt {current['run_attempt']} is not complete")
+        raise Pending(f"{label} run {current['id']} attempt {current['run_attempt']} is not complete")
     require(current.get("conclusion") == "success",
-            f"Lean run {current['id']} attempt {current['run_attempt']} did not succeed")
+            f"{label} run {current['id']} attempt {current['run_attempt']} did not succeed")
     # Do not accept an older success if another run/rerun appeared during the read.
-    latest = latest_run(api, repository, sha, workflow_id)
+    latest = latest_run(api, repository, sha, workflow_id, workflow_path, label)
     require((latest["id"], latest["run_attempt"], latest.get("status"), latest.get("conclusion"))
             == (current["id"], current["run_attempt"], "completed", "success"),
-            "Lean validation changed while checking; retry publication")
-    main = api(f"repos/{repository}/git/ref/heads/main")
-    require(main.get("object", {}).get("sha") == sha, "Main changed while checking Lean CI")
+            f"{label} validation changed while checking; retry publication")
+    if require_current_main:
+        main = api(f"repos/{repository}/git/ref/heads/main")
+        require(main.get("object", {}).get("sha") == sha, f"Main changed while checking {label} CI")
     return current
+
+
+def check_once(repository: str, sha: str, *, api=gh_get) -> dict:
+    return check_workflow_once(repository, sha, api=api, require_current_main=True)
 
 
 def wait_for_success(repository: str, sha: str, wait_seconds: float, *, api=gh_get,
@@ -139,21 +187,119 @@ def wait_for_success(repository: str, sha: str, wait_seconds: float, *, api=gh_g
             sleep(min(30, remaining))
 
 
+def verify_provenance(directory: Path, repository: str, sha: str) -> dict:
+    root = Path(directory).resolve()
+    prov_path = root / "provenance.json"
+    require(prov_path.is_file(), "Missing provenance.json in abstract artifact")
+    source = json.loads(prov_path.read_text(encoding="utf-8"))
+    require(isinstance(source, dict), "Malformed provenance.json")
+    require(source.get("source_sha") == sha, "Source SHA mismatch")
+    require(source.get("repository") == repository, "Repository mismatch")
+    require(source.get("event") == "push" and source.get("ref") == "refs/heads/main",
+            "Not a main build")
+    require(source.get("source_dirty") is False, "Artifact was built from modified sources")
+    catalogue = source.get("catalogue")
+    docs = source.get("documents")
+    require(isinstance(catalogue, dict) and isinstance(docs, list) and bool(docs),
+            "Malformed document inventory in provenance.json")
+    documents = [catalogue, *docs]
+    expected_pdfs = set()
+    for document in documents:
+        require(isinstance(document, dict) and isinstance(document.get("pdf"), str)
+                and isinstance(document.get("pdf_sha256"), str),
+                "Malformed document entry in provenance.json")
+        name = document["pdf"]
+        require(bool(re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*\.pdf", name)),
+                f"Invalid PDF filename in provenance.json: {name}")
+        expected_pdfs.add(name)
+    actual_pdfs = {p.name for p in root.glob("*.pdf")}
+    require(actual_pdfs == expected_pdfs, "PDF inventory mismatch")
+    require({p.name for p in root.iterdir()} == expected_pdfs | {"provenance.json"},
+            "Unexpected files in abstract artifact")
+    for document in documents:
+        pdf = (root / document["pdf"]).resolve()
+        require(pdf.parent == root and pdf.is_file() and not pdf.is_symlink(), "Invalid PDF path")
+        digest = hashlib.sha256(pdf.read_bytes()).hexdigest()
+        require(digest == document["pdf_sha256"], f"PDF digest mismatch for {document['pdf']}")
+    return source
+
+
+def download_verified_abstracts(
+    repository: str,
+    sha: str,
+    output_dir: Path,
+    wait_seconds: float,
+    *,
+    api=gh_get,
+    downloader=gh_download_artifact,
+    clock=time.monotonic,
+    sleep=time.sleep,
+) -> tuple[dict, dict]:
+    deadline = clock() + wait_seconds
+    while True:
+        try:
+            lean_run = check_workflow_once(
+                repository, sha,
+                WORKFLOW_FILE, WORKFLOW_PATH, WORKFLOW_NAME, "Lean",
+                api=api, require_current_main=False,
+            )
+            abstracts_run = check_workflow_once(
+                repository, sha,
+                ABSTRACTS_WORKFLOW_FILE, ABSTRACTS_WORKFLOW_PATH, ABSTRACTS_WORKFLOW_NAME,
+                "Abstracts",
+                api=api, require_current_main=False,
+            )
+            break
+        except Pending as error:
+            remaining = deadline - clock()
+            if remaining <= 0:
+                raise
+            print(f"{error}; waiting for exact-source validation", flush=True)
+            sleep(min(30, remaining))
+    artifact_name = f"formal-abstracts-{sha}-{abstracts_run['run_attempt']}"
+    dest = Path(output_dir)
+    staging = dest.parent / f".{dest.name}-staging"
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir(parents=True, exist_ok=True)
+    try:
+        downloader(repository, abstracts_run["id"], artifact_name, staging)
+        verify_provenance(staging, repository, sha)
+        if dest.exists():
+            shutil.rmtree(dest)
+        staging.rename(dest)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
+    return lean_run, abstracts_run
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", ""))
     parser.add_argument("--sha", default=os.environ.get("GITHUB_SHA", ""))
     parser.add_argument("--wait-seconds", type=float, default=0)
+    parser.add_argument("--download-dir", type=Path, default=None,
+                        help="download and verify the formal-abstracts artifact into this directory")
     args = parser.parse_args()
     try:
         require(0 <= args.wait_seconds <= 1200, "Wait must be between zero and 1200 seconds")
-        run = wait_for_success(args.repository, args.sha, args.wait_seconds)
+        if args.download_dir is not None:
+            lean_run, abstracts_run = download_verified_abstracts(
+                args.repository, args.sha, args.download_dir, args.wait_seconds,
+            )
+            print(f"Lean validation: https://github.com/{args.repository}/actions/runs/{lean_run['id']} "
+                  f"attempt {lean_run['run_attempt']} succeeded for {args.sha}")
+            print(f"Abstracts artifact: https://github.com/{args.repository}/actions/runs/{abstracts_run['id']} "
+                  f"attempt {abstracts_run['run_attempt']} verified in {args.download_dir}")
+        else:
+            run = wait_for_success(args.repository, args.sha, args.wait_seconds)
+            print(f"Lean validation: https://github.com/{args.repository}/actions/runs/{run['id']} "
+                  f"attempt {run['run_attempt']} succeeded for {args.sha}")
     except (Rejected, subprocess.SubprocessError, OSError, ValueError, KeyError, TypeError,
             AttributeError) as error:
         print(f"Abstract publication denied: {error}", file=sys.stderr)
         return 1
-    print(f"Lean validation: https://github.com/{args.repository}/actions/runs/{run['id']} "
-          f"attempt {run['run_attempt']} succeeded for {args.sha}")
     return 0
 
 

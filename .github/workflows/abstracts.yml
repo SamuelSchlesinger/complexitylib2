@@ -10,6 +10,7 @@ on:
       - "lakefile.toml"
       - "scripts/abstract_to_tex.py"
       - "scripts/build_abstracts.py"
+      - "scripts/proof_lengths.py"
       - "scripts/test_abstract*.py"
       - "scripts/test_build_abstracts.py"
       - "scripts/check_abstract_ci.py"
@@ -20,16 +21,16 @@ on:
 permissions:
   contents: read
 
+# A new run for a pull request cancels that pull request's superseded run. Every other run uses
+# its own run id so each `main` push builds and uploads the artifact consumed by `docs.yml`.
 concurrency:
-  group: abstracts-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: abstracts-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    outputs:
-      artifact-id: ${{ steps.artifact.outputs.artifact-id }}
     env:
       # What pdflatex reads: Libertine, newtxmath, Inconsolata (zi4) and mweights from
       # texlive-fonts-extra; tcolorbox, enumitem, xurl and titlesec from texlive-latex-extra;
@@ -102,7 +103,7 @@ jobs:
             abstracts/build/*.pdf
             abstracts/build/provenance.json
           if-no-files-found: error
-          retention-days: 30
+          retention-days: ${{ github.ref == 'refs/heads/main' && 90 || 30 }}
       - name: Link the source-pinned review artifact
         env:
           ARTIFACT_URL: ${{ steps.artifact.outputs.artifact-url }}
@@ -121,98 +122,3 @@ jobs:
                   summary.write(f"PR base: `{source['pull_request_base_sha']}`\n\n")
               summary.write("Inspect rendered pages and source links before integration.\n")
           PY
-
-  publish:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    permissions:
-      contents: write
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Require the PDF build's immutable artifact ID
-        env:
-          ARTIFACT_ID: ${{ needs.build.outputs.artifact-id }}
-        run: '[[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]]'
-      - uses: actions/download-artifact@v4
-        with:
-          artifact-ids: ${{ needs.build.outputs.artifact-id }}
-          merge-multiple: true
-          path: abstract-artifact
-      - name: Publish PDFs for the current main revision
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          # Only this helper may issue release mutations. Recheck the current
-          # run/attempt and main before every write, including asset deletion.
-          publish() {
-            python3 -B scripts/check_abstract_ci.py
-            gh release "$@" --repo "$GITHUB_REPOSITORY"
-          }
-          current_main=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
-          if [ "$current_main" != "$GITHUB_SHA" ]; then
-            echo "A newer main revision exists; its workflow will publish the PDFs." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          python3 -B - <<'PY'
-          import hashlib
-          import json
-          import os
-          from pathlib import Path
-
-          root = Path("abstract-artifact")
-          source = json.loads((root / "provenance.json").read_text())
-          assert source["source_sha"] == os.environ["GITHUB_SHA"], "Source SHA mismatch"
-          assert source["repository"] == os.environ["GITHUB_REPOSITORY"], "Repository mismatch"
-          assert source["event"] == "push" and source["ref"] == "refs/heads/main", "Not a main build"
-          assert not source["source_dirty"], "Artifact was built from modified sources"
-          documents = [source["catalogue"], *source["documents"]]
-          assert {p.name for p in root.glob("*.pdf")} == {d["pdf"] for d in documents}, "PDF inventory mismatch"
-          for document in documents:
-              pdf = root / document["pdf"]
-              assert pdf.parent == root, "Invalid PDF path"
-              assert hashlib.sha256(pdf.read_bytes()).hexdigest() == document["pdf_sha256"], "PDF digest mismatch"
-          repository = os.environ["GITHUB_REPOSITORY"]
-          Path("release-notes.md").write_text(
-              "Generated Lean formal abstracts from main; this is not a source release.\n\n"
-              f"Source: [{source['source_sha']}](https://github.com/{repository}/commit/{source['source_sha']})\n\n"
-              f"Build: {source['run_url']}\n\n"
-              "Download catalogue.pdf, the individual topic PDFs and provenance.json. "
-              "The fixed tag is a download anchor; provenance identifies the exact source revision.\n"
-          )
-          PY
-          # Lean CI runs independently. Reuse its authoritative push/main result
-          # for this exact source; never accept a PR merge or an older green SHA.
-          python3 -B scripts/check_abstract_ci.py --wait-seconds 1200
-          if ! gh release view formal-abstracts --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            publish create formal-abstracts \
-              --target "$GITHUB_SHA" --prerelease --latest=false \
-              --title "Formal abstracts (generated from main)" --notes-file release-notes.md
-          fi
-          # Retired topics must not linger as apparent members of the current catalogue.
-          gh release view formal-abstracts --repo "$GITHUB_REPOSITORY" \
-            --json assets --jq '.assets[].name' > release-assets.txt
-          while IFS= read -r asset; do
-            case "$asset" in
-              *.pdf)
-                if [ ! -f "abstract-artifact/$asset" ]; then
-                  publish delete-asset formal-abstracts "$asset" --yes
-                fi
-                ;;
-            esac
-          done < release-assets.txt
-          current_main=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
-          if [ "$current_main" != "$GITHUB_SHA" ]; then
-            exit 0
-          fi
-          publish upload formal-abstracts --clobber \
-            abstract-artifact/*.pdf abstract-artifact/provenance.json
-          publish edit formal-abstracts \
-            --prerelease --latest=false --title "Formal abstracts (generated from main)" \
-            --notes-file release-notes.md
-          echo "[Latest catalogue PDF](https://github.com/$GITHUB_REPOSITORY/releases/download/formal-abstracts/catalogue.pdf)" >> "$GITHUB_STEP_SUMMARY"

@@ -1,13 +1,13 @@
-"""Exact-source CI policy and release-command boundary regressions (issue #432)."""
+"""Exact-source CI policy, provenance verification and workflow boundary regressions (#432, #673)."""
 
 import contextlib
+import hashlib
 import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import tempfile
-import textwrap
 import unittest
 from unittest.mock import patch
 
@@ -31,11 +31,20 @@ def run(**changes):
     return result
 
 
+def abstracts_run(**changes):
+    return run(
+        id=202, run_number=30, workflow_id=8, path=gate.ABSTRACTS_WORKFLOW_PATH, **changes,
+    )
+
+
 class API:
-    def __init__(self, runs=None):
+    def __init__(self, runs=None, abstract_runs=None):
         self.runs = [run()] if runs is None else runs
+        self.abstract_runs = [abstracts_run()] if abstract_runs is None else abstract_runs
         self.workflow = {"id": 7, "path": gate.WORKFLOW_PATH,
                          "name": gate.WORKFLOW_NAME, "state": "active"}
+        self.abstracts_workflow = {"id": 8, "path": gate.ABSTRACTS_WORKFLOW_PATH,
+                                   "name": gate.ABSTRACTS_WORKFLOW_NAME, "state": "active"}
         self.listings = []
         self.current = None
         self.main_reads = []
@@ -48,12 +57,21 @@ class API:
                 "ref": "refs/heads/main", "object": {"sha": SHA}}
         if endpoint.endswith("/" + gate.WORKFLOW_FILE):
             return self.workflow
+        if endpoint.endswith("/" + gate.ABSTRACTS_WORKFLOW_FILE):
+            return self.abstracts_workflow
         if "/workflows/7/runs?" in endpoint:
             if self.listings:
                 return self.listings.pop(0)
             return [{"total_count": len(self.runs), "workflow_runs": self.runs}]
+        if "/workflows/8/runs?" in endpoint:
+            return [{"total_count": len(self.abstract_runs), "workflow_runs": self.abstract_runs}]
         if "/actions/runs/" in endpoint:
-            return self.current or next(r for r in self.runs if endpoint.endswith(str(r["id"])))
+            if self.current is not None and endpoint.endswith(str(self.current["id"])):
+                return self.current
+            if self.current is not None and len(self.runs) == 1 and endpoint.endswith(str(self.runs[0]["id"])):
+                return self.current
+            all_runs = [*self.runs, *self.abstract_runs]
+            return next(r for r in all_runs if endpoint.endswith(str(r["id"])))
         raise AssertionError(f"Unexpected API request: {endpoint}")
 
 
@@ -162,7 +180,7 @@ class ExactSourceTests(unittest.TestCase):
         for reads in [[stale], [{"ref": "refs/heads/main", "object": {"sha": SHA}}, stale]]:
             api = API()
             api.main_reads = reads
-            with self.assertRaises(gate.Rejected):
+            with self.subTest(reads=reads), self.assertRaises(gate.Rejected):
                 self.check(api)
 
     def test_pending_wait_is_bounded_and_failure_does_not_wait(self):
@@ -209,106 +227,188 @@ class ExactSourceTests(unittest.TestCase):
         self.assertEqual(command[command.index("--hostname") + 1], "github.com")
 
 
-# This fake replaces only GitHub's API/release CLI at the process boundary. The
-# real workflow shell, provenance verifier and check_abstract_ci.py all execute.
+def write_fixture_artifact(directory: Path, *, sha: str = SHA, repository: str = REPOSITORY,
+                           event: str = "push", ref: str = "refs/heads/main",
+                           dirty: bool = False, tamper_pdf: bool = False,
+                           extra_file: str | None = None) -> None:
+    cat = directory / "catalogue.pdf"
+    doc = directory / "cook-levin.pdf"
+    cat.write_bytes(b"%PDF-catalogue")
+    doc.write_bytes(b"%PDF-cook-levin")
+    cat_digest = hashlib.sha256(cat.read_bytes()).hexdigest()
+    doc_digest = hashlib.sha256(doc.read_bytes()).hexdigest()
+    if tamper_pdf:
+        doc.write_bytes(b"%PDF-tampered")
+    if extra_file:
+        (directory / extra_file).write_bytes(b"extra")
+    provenance = {
+        "source_sha": sha,
+        "repository": repository,
+        "event": event,
+        "ref": ref,
+        "source_dirty": dirty,
+        "run_url": "https://example.com/build",
+        "catalogue": {"pdf": "catalogue.pdf", "pdf_sha256": cat_digest},
+        "documents": [{"id": "cook-levin", "pdf": "cook-levin.pdf", "pdf_sha256": doc_digest}],
+    }
+    (directory / "provenance.json").write_text(json.dumps(provenance))
+
+
+class DownloadAndProvenanceTests(unittest.TestCase):
+    def test_download_verified_abstracts_succeeds_and_populates_destination(self):
+        api = API()
+        downloads = []
+
+        def fake_downloader(repository, run_id, artifact_name, destination):
+            downloads.append((repository, run_id, artifact_name))
+            write_fixture_artifact(destination)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "abstracts"
+            lean_r, abs_r = gate.download_verified_abstracts(
+                REPOSITORY, SHA, dest, 0, api=api, downloader=fake_downloader,
+            )
+            self.assertEqual(lean_r["id"], 101)
+            self.assertEqual(abs_r["id"], 202)
+            self.assertEqual(downloads, [(REPOSITORY, 202, f"formal-abstracts-{SHA}-1")])
+            self.assertTrue((dest / "catalogue.pdf").is_file())
+            self.assertTrue((dest / "cook-levin.pdf").is_file())
+            self.assertTrue((dest / "provenance.json").is_file())
+
+    def test_download_waits_for_pending_abstracts_or_lean_run(self):
+        api = API(
+            runs=[run(status="in_progress", conclusion=None)],
+            abstract_runs=[abstracts_run(run_attempt=2, status="in_progress", conclusion=None)],
+        )
+        now = [0.0]
+
+        def finish(seconds):
+            now[0] += seconds
+            api.runs = [run()]
+            api.abstract_runs = [abstracts_run(run_attempt=2)]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "abstracts"
+            _, abs_r = gate.download_verified_abstracts(
+                REPOSITORY, SHA, dest, 60, api=api,
+                downloader=lambda _r, _id, _name, d: write_fixture_artifact(d),
+                clock=lambda: now[0], sleep=finish,
+            )
+            self.assertEqual(abs_r["run_attempt"], 2)
+            self.assertEqual(now[0], 30)
+
+    def test_provenance_and_digest_mismatches_reject_and_leave_no_unverified_output(self):
+        cases = {
+            "wrong sha": {"sha": "b" * 40},
+            "wrong repo": {"repository": "fork/repo"},
+            "pull request": {"event": "pull_request"},
+            "wrong ref": {"ref": "refs/heads/feature"},
+            "dirty source": {"dirty": True},
+            "tampered pdf": {"tamper_pdf": True},
+            "unexpected file": {"extra_file": "retired.pdf"},
+        }
+        for label, kwargs in cases.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
+                dest = Path(tmp) / "abstracts"
+                with self.assertRaises(gate.Rejected):
+                    gate.download_verified_abstracts(
+                        REPOSITORY, SHA, dest, 0, api=API(),
+                        downloader=lambda _r, _id, _name, d, kw=kwargs: write_fixture_artifact(d, **kw),
+                    )
+                self.assertFalse(dest.exists())
+
+
 FAKE_GH = r'''#!/usr/bin/env python3
-import json, os, pathlib, sys
+import json, os, pathlib, shutil, sys
 root = pathlib.Path(os.environ["FAKE_ROOT"])
 config = json.loads((root / "config.json").read_text())
 args = sys.argv[1:]
 if args[0] == "api":
     endpoint = next(a for a in args if a.startswith("repos/"))
     if endpoint.endswith("git/ref/heads/main"):
-        if "--jq" in args:
-            print(config["sha"])
-        else:
-            print(json.dumps({"ref": "refs/heads/main", "object": {"sha": config["sha"]}}))
+        print(json.dumps({"ref": "refs/heads/main", "object": {"sha": config["sha"]}}))
     elif endpoint.endswith("/lean_action_ci.yml"):
-        counter = root / "counter"
-        n = int(counter.read_text()) + 1 if counter.exists() else 1
-        counter.write_text(str(n))
-        print(json.dumps(config["workflow"]))
+        print(json.dumps(config["lean_workflow"]))
+    elif endpoint.endswith("/abstracts.yml"):
+        print(json.dumps(config["abstracts_workflow"]))
+    elif "/workflows/7/runs?" in endpoint:
+        print(json.dumps([{"total_count": 1, "workflow_runs": [config["lean_run"]]}]))
+    elif "/workflows/8/runs?" in endpoint:
+        print(json.dumps([{"total_count": 1, "workflow_runs": [config["abstracts_run"]]}]))
+    elif endpoint.endswith("/actions/runs/101"):
+        print(json.dumps(config["lean_run"]))
+    elif endpoint.endswith("/actions/runs/202"):
+        print(json.dumps(config["abstracts_run"]))
     else:
-        run = config["run"]
-        if int((root / "counter").read_text()) >= config["deny_at"]:
-            run["conclusion"] = "failure"
-        if "/workflows/7/runs?" in endpoint:
-            print(json.dumps([{"total_count": 1, "workflow_runs": [run]}]))
-        elif "/actions/runs/" in endpoint:
-            print(json.dumps(run))
-        else:
-            raise SystemExit("Unexpected API: " + endpoint)
-elif args[:2] == ["release", "view"]:
-    if "--json" in args:
-        print("retired.pdf" if config["retired"] else "")
-    elif not config["exists"]:
-        raise SystemExit(1)
+        raise SystemExit("Unexpected API: " + endpoint)
+elif args[:2] == ["run", "download"]:
+    run_id = args[2]
+    name = args[args.index("--name") + 1]
+    dest = pathlib.Path(args[args.index("--dir") + 1])
+    (root / "downloads").write_text(json.dumps({"run_id": run_id, "name": name}))
+    for src in (root / "artifact-src").iterdir():
+        shutil.copy2(src, dest / src.name)
 else:
-    with (root / "writes").open("a") as f:
-        f.write(json.dumps(args) + "\n")
+    raise SystemExit("Unexpected gh command: " + " ".join(args))
 '''
 
 
 class WorkflowBoundaryTests(unittest.TestCase):
-    def test_each_release_mutation_is_guarded_by_real_api_policy(self):
+    def test_abstracts_workflow_is_read_only_and_never_publishes_releases(self):
         workflow = (ROOT / ".github/workflows/abstracts.yml").read_text()
-        shell = textwrap.dedent(workflow.split("      - name: Publish PDFs for the current main revision", 1)[1]
-                                .split("        run: |\n", 1)[1])
+        self.assertIn("  pull_request:\n", workflow)
+        self.assertIn('- "scripts/proof_lengths.py"', workflow)
+        self.assertIn("permissions:\n  contents: read", workflow)
+        self.assertNotIn("contents: write", workflow)
+        self.assertNotIn("\n  publish:\n", workflow)
+        self.assertNotIn("gh release", workflow)
+        self.assertIn("name: formal-abstracts-${{ github.sha }}-${{ github.run_attempt }}", workflow)
+        self.assertIn("abstracts/build/*.pdf", workflow)
+        self.assertIn("abstracts/build/provenance.json", workflow)
+        for rel in ("README.md", "AGENTS.md", "CONTRIBUTING.md", "abstracts/README.md",
+                    "guide/ComplexityGuide.lean", ".github/workflows/docs.yml"):
+            text = (ROOT / rel).read_text()
+            self.assertNotIn("releases/download/formal-abstracts", text)
+            self.assertIn("https://www.cslib.io/complexitylib/abstracts/", text)
+
+    def test_cli_download_dir_boundary_with_fake_gh(self):
         cases = [
-            (False, False, 1, []),   # Initial wait rejects failed validation.
-            (False, False, 2, []),   # Recheck before release creation.
-            (True, True, 2, []),     # Recheck before retiring an asset.
-            (True, False, 2, []),    # Recheck before overwriting assets.
-            (True, False, 3, ["upload"]),  # Failure between upload and release edit.
-            (False, True, 999, ["create", "delete-asset", "upload", "edit"]),
+            ("lean_failed", {"lean_run": run(conclusion="failure")}, False),
+            ("abstracts_failed", {"abstracts_run": abstracts_run(conclusion="failure")}, False),
+            ("tampered_pdf", {"tamper_pdf": True}, False),
+            ("success", {}, True),
         ]
-        for exists, retired, deny_at, expected in cases:
-            with self.subTest(exists=exists, retired=retired, deny_at=deny_at), tempfile.TemporaryDirectory() as tmp:
+        for label, overrides, ok in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 (root / "bin").mkdir()
                 gh = root / "bin/gh"
                 gh.write_text(FAKE_GH)
                 gh.chmod(0o755)
-                (root / "scripts").mkdir()
-                (root / "scripts/check_abstract_ci.py").write_bytes((ROOT / "scripts/check_abstract_ci.py").read_bytes())
-                artifact = root / "abstract-artifact"
-                artifact.mkdir()
-                pdf = artifact / "catalogue.pdf"
-                pdf.write_bytes(b"%PDF-test")
-                import hashlib
-                source = {"source_sha": SHA, "repository": REPOSITORY, "event": "push",
-                          "ref": "refs/heads/main", "source_dirty": False, "run_url": "https://example.com/build",
-                          "catalogue": {"pdf": pdf.name, "pdf_sha256": hashlib.sha256(pdf.read_bytes()).hexdigest()},
-                          "documents": []}
-                (artifact / "provenance.json").write_text(json.dumps(source))
+                src = root / "artifact-src"
+                src.mkdir()
+                write_fixture_artifact(src, tamper_pdf=overrides.get("tamper_pdf", False))
+                api = API()
                 (root / "config.json").write_text(json.dumps({
-                    "sha": SHA, "run": run(), "workflow": API().workflow,
-                    "exists": exists, "retired": retired, "deny_at": deny_at}))
+                    "sha": SHA,
+                    "lean_workflow": api.workflow,
+                    "abstracts_workflow": api.abstracts_workflow,
+                    "lean_run": overrides.get("lean_run", run()),
+                    "abstracts_run": overrides.get("abstracts_run", abstracts_run(run_attempt=2)),
+                }))
+                dest = root / "doc/abstracts"
                 env = {**os.environ, "PATH": str(root / "bin") + os.pathsep + os.environ["PATH"],
-                       "FAKE_ROOT": tmp, "GITHUB_REPOSITORY": REPOSITORY, "GITHUB_SHA": SHA,
-                       "GITHUB_STEP_SUMMARY": str(root / "summary")}
-                result = subprocess.run(["bash", "-c", shell], cwd=root, env=env,
-                                        capture_output=True, text=True, timeout=20)
-                writes = root / "writes"
-                actual = [json.loads(line)[1] for line in writes.read_text().splitlines()] if writes.exists() else []
-                self.assertEqual(actual, expected, result.stderr)
-                self.assertEqual(result.returncode == 0, deny_at == 999, result.stderr)
-
-    def test_permissions_events_and_immutable_artifact_selection(self):
-        workflow = (ROOT / ".github/workflows/abstracts.yml").read_text()
-        build, publish = workflow.split("  publish:\n")
-        self.assertIn("  pull_request:\n", build)
-        self.assertNotIn("contents: write", build)
-        self.assertIn("permissions:\n  contents: read", build)
-        self.assertIn("if: github.event_name == 'push' && github.ref == 'refs/heads/main'", publish)
-        self.assertIn("contents: write\n      actions: read", publish)
-        self.assertIn("artifact-id: ${{ steps.artifact.outputs.artifact-id }}", build)
-        self.assertIn("artifact-ids: ${{ needs.build.outputs.artifact-id }}", publish)
-        self.assertIn('[[ "$ARTIFACT_ID" =~ ^[0-9]+$ ]]', publish)
-        self.assertNotIn("github.run_attempt", publish)
-        for mutation in ["create", "delete-asset", "upload", "edit"]:
-            self.assertIn("publish " + mutation, publish)
-            self.assertNotIn("gh release " + mutation, publish)
+                       "FAKE_ROOT": tmp, "GITHUB_REPOSITORY": REPOSITORY, "GITHUB_SHA": SHA}
+                result = subprocess.run(
+                    ["python3", "-B", str(Path(gate.__file__).resolve()),
+                     "--download-dir", str(dest)],
+                    cwd=root, env=env, capture_output=True, text=True, timeout=20,
+                )
+                self.assertEqual(result.returncode == 0, ok, result.stderr)
+                self.assertEqual((dest / "catalogue.pdf").is_file(), ok)
+                if ok:
+                    recorded = json.loads((root / "downloads").read_text())
+                    self.assertEqual(recorded, {"run_id": "202", "name": f"formal-abstracts-{SHA}-2"})
 
 
 if __name__ == "__main__":
