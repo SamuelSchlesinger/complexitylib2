@@ -25,6 +25,8 @@ The construction uses exact certificate lengths and polynomial-time bit-string s
 
 ## Main results
 
+* `computableInPolyTime_splitAlternatingBlocks`: polynomial-time certificate for splitting paired
+  certificate blocks.
 * `inter_mem_SigmaP`, `union_mem_SigmaP`: closure of each existential level.
 * `inter_mem_PiP`, `union_mem_PiP`: closure of each universal level.
 * `compl_mem_PH`, `inter_mem_PH`, `union_mem_PH`, `diff_mem_PH`: Boolean closure of the hierarchy.
@@ -104,22 +106,29 @@ theorem alternation_splitAlternatingBlocks (ns : List (ℕ × ℕ)) (q : Bool)
 
 /-- Splitting paired blocks is polynomial-time when their lengths are fixed polynomials of a
 computed unary size. -/
-private theorem computableTidilyInPolyTime_splitAlternatingBlocks {γ : Type}
+theorem computableInPolyTime_splitAlternatingBlocks {γ : Type}
     {encIn : γ ↪ List Bool} (ps : List (Polynomial ℕ × Polynomial ℕ)) {N : γ → ℕ}
-    (hN : ComputableTidilyInPolyTime N encIn encUnary) {W : γ → List Bool}
-    (hW : ComputableTidilyInPolyTime W encIn encBits) :
-    ComputableTidilyInPolyTime
+    (hN : ComputableInPolyTime N encIn encUnary) {W : γ → List Bool}
+    (hW : ComputableInPolyTime W encIn encBits) :
+    ComputableInPolyTime
       (fun x => splitAlternatingBlocks (ps.map fun pq => (pq.1.eval (N x), pq.2.eval (N x)))
         (W x)) encIn (encPair encBits encBits) := by
-  induction ps generalizing W with
-  | nil => exact .const ([], [])
-  | cons pq ps ih =>
-    have hp := (ComputableTidilyInPolyTime.unary_eval pq.1).comp hN
-    have hq := (ComputableTidilyInPolyTime.unary_eval pq.2).comp hN
-    have ht := ih (hW.bitsDropWithInput (ComputableTidilyInPolyTime.unary_add.comp
-      (hp.prod hq)))
-    exact ((hW.bitsTakeWithInput hp).bitsAppend ht.fst').prod
-      (((hW.bitsDropWithInput hp).bitsTakeWithInput hq).bitsAppend ht.snd')
+  have key : ∀ {W : γ → List Bool},
+      ComputableTidilyInPolyTime W encIn encBits →
+      ComputableTidilyInPolyTime
+        (fun x => splitAlternatingBlocks (ps.map fun pq => (pq.1.eval (N x), pq.2.eval (N x)))
+          (W x)) encIn (encPair encBits encBits) := by
+    induction ps with
+    | nil => intro _ _; exact .const ([], [])
+    | cons pq ps ih =>
+      intro W hW
+      have hp := (ComputableTidilyInPolyTime.unary_eval pq.1).comp hN.tidy
+      have hq := (ComputableTidilyInPolyTime.unary_eval pq.2).comp hN.tidy
+      have ht := ih (hW.bitsDropWithInput (ComputableTidilyInPolyTime.unary_add.comp
+        (hp.prod hq)))
+      exact ((hW.bitsTakeWithInput hp).bitsAppend ht.fst').prod
+        (((hW.bitsDropWithInput hp).bitsTakeWithInput hq).bitsAppend ht.snd')
+  exact .of_tidy (key hW.tidy)
 
 variable {α : Type} {enc : α ↪ List Bool}
 
@@ -161,8 +170,8 @@ private theorem exists_inter_verifier {q : Bool} {k : ℕ} {A B : Set α}
   · simp [hp, hq]
   · have hn : ComputableTidilyInPolyTime (fun x : α × List Bool => (enc x.1).length)
         (encPair enc encBits) encUnary := by fun_prop
-    have hs := computableTidilyInPolyTime_splitAlternatingBlocks (ps.zip qs) hn
-      (ComputableTidilyInPolyTime.snd enc encBits)
+    have hs := (computableInPolyTime_splitAlternatingBlocks (ps.zip qs) hn.computableInPolyTime
+      (ComputableTidilyInPolyTime.snd enc encBits).computableInPolyTime).tidy
     exact .of_tidy <|
       (hV.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.fst')).bool_and'
         (hW.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.snd'))

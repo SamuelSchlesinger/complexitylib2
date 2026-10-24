@@ -121,23 +121,6 @@ private theorem computableTidilyInPolyTime_shiftVerifier (p : Polynomial ℕ)
     (bitsAppend (fst _ _).snd' (bitsTakeWithInput (snd _ _) hn))).prod
     (bitsDropWithInput (snd _ _) hn))
 
-private theorem computableTidilyInPolyTime_splitAlternatingBlocks' {γ : Type}
-    {encIn : γ ↪ List Bool} (ps : List (Polynomial ℕ × Polynomial ℕ)) {N : γ → ℕ}
-    (hN : ComputableTidilyInPolyTime N encIn encUnary) {W : γ → List Bool}
-    (hW : ComputableTidilyInPolyTime W encIn encBits) :
-    ComputableTidilyInPolyTime
-      (fun x => splitAlternatingBlocks (ps.map fun pq => (pq.1.eval (N x), pq.2.eval (N x)))
-        (W x)) encIn (encPair encBits encBits) := by
-  induction ps generalizing W with
-  | nil => exact .const ([], [])
-  | cons pq ps ih =>
-    have hp := (ComputableTidilyInPolyTime.unary_eval pq.1).comp hN
-    have hq := (ComputableTidilyInPolyTime.unary_eval pq.2).comp hN
-    have ht := ih (hW.bitsDropWithInput (ComputableTidilyInPolyTime.unary_add.comp
-      (hp.prod hq)))
-    exact ((hW.bitsTakeWithInput hp).bitsAppend ht.fst').prod
-      (((hW.bitsDropWithInput hp).bitsTakeWithInput hq).bitsAppend ht.snd')
-
 /-- `R : α → List Bool → Prop` is verified at `(b, k)` on prefixes `s` of length `q |enc a|` by a
 polynomial-time alternating verifier whose certificate block lengths are polynomials in
 `|enc a|`. -/
@@ -211,7 +194,8 @@ private theorem and (h₁ : OnSliceAlt enc b k q R₁) (h₂ : OnSliceAlt enc b 
         (fun x : (α × List Bool) × List Bool => (enc x.1.1).length)
         (encPair (encPair enc encBits) encBits) encUnary :=
       (encoding_length enc).comp (fst _ _).fst'
-    have hs := computableTidilyInPolyTime_splitAlternatingBlocks' pqs hn (snd _ _)
+    have hs := (computableInPolyTime_splitAlternatingBlocks pqs
+      hn.computableInPolyTime (snd _ _).computableInPolyTime).tidy
     exact .of_tidy <|
       (hV.tidy.comp ((fst _ _).prod hs.fst')).bool_and'
         (hW.tidy.comp ((fst _ _).prod hs.snd'))
