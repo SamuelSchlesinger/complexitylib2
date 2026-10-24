@@ -48,8 +48,6 @@ says that spectral expanders are edge expanders [Arora and Barak, Section 21.2][
   expectations plus the correlation of the centered functions.
 * `Cslib.RotationMap.sq_expect_mul_walk_pow_sub_le`: the mixing lemma for functions and walks of
   any length.
-* `Cslib.RotationMap.abs_expect_mul_walk_le`: `|𝔼 f · G.walk f| ≤ λ(G) 𝔼 f²` for `f` of
-  expectation zero.
 * `Cslib.RotationMap.abs_card_interedges_sub_le`,
   `Cslib.RotationMap.abs_card_interedges_sub_le_mul_sqrt`: the expander mixing lemma.
 * `Cslib.RotationMap.le_card_interedges_compl_of_expect_mul_walk_le`,
@@ -128,19 +126,6 @@ theorem sq_expect_mul_walk_pow_sub_le (t : ℕ) (f g : V → ℝ) :
     _ = _ := by ring
 
 end Mixing
-
-/-- For `f` of expectation zero, the correlation `𝔼 v, f v * G.walk f v` is at most `λ(G)` times
-the second moment of `f` in absolute value. -/
-theorem abs_expect_mul_walk_le {f : V → ℝ} (hf : 𝔼 v, f v = 0) :
-    |𝔼 v, f v * G.walk f v| ≤ G.spectralExpansion * 𝔼 v, f v ^ 2 := by
-  have := G.spectralExpansion_nonneg
-  refine abs_le_of_sq_le_sq ?_ (by positivity)
-  calc
-    _ ≤ (𝔼 v, f v ^ 2) * 𝔼 v, G.walk f v ^ 2 := expect_mul_sq_le_sq_mul_sq _ _ _
-    _ ≤ (𝔼 v, f v ^ 2) * (G.spectralExpansion ^ 2 * 𝔼 v, f v ^ 2) := by
-      gcongr
-      exact expect_walk_sq_le_spectralExpansion_sq_mul hf
-    _ = _ := by ring
 
 section Sets
 

@@ -57,6 +57,10 @@ example {V D : Type*} [Fintype V] [Fintype D] (G : RotationMap V D) :
       ⨆ f : {f : V → ℝ // 𝔼 v, f v = 0 ∧ f ≠ 0}, |𝔼 v, f.1 v * G.walk f.1 v| / 𝔼 v, f.1 v ^ 2 :=
   G.spectralExpansion_eq_ciSup
 
+example {V D : Type*} [Fintype V] [Fintype D] (G : RotationMap V D) :
+    G.spectralExpansion = ‖G.orthogonalWalk.toContinuousLinearMap‖ :=
+  G.spectralExpansion_eq_norm_orthogonalWalk
+
 -- On `Fin 4`, `EuclideanSpace ℝ (Fin 4)` has dimension 4; the top eigenvalue of `walkEuclidean`
 -- on the complete graph is `1` and the second eigenvalue is `0`.
 private theorem finrank_fin4 : Module.finrank ℝ (EuclideanSpace ℝ (Fin 4)) = 4 := by
@@ -73,6 +77,13 @@ example :
   have h := completeFour.abs_secondEigenvalue_le_spectralExpansion
   rw [spectralExpansion_completeFour, abs_nonpos_iff] at h
   exact h
+
+/--
+info: 'Cslib.RotationMap.abs_expect_mul_walk_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.abs_expect_mul_walk_le
 
 /--
 info: 'Cslib.RotationMap.spectralExpansion_le_of_abs_expect_mul_walk_le' depends on axioms:
@@ -129,6 +140,13 @@ info: 'Cslib.RotationMap.isSymmetric_orthogonalWalk' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RotationMap.isSymmetric_orthogonalWalk
+
+/--
+info: 'Cslib.RotationMap.spectralExpansion_eq_norm_orthogonalWalk' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RotationMap.spectralExpansion_eq_norm_orthogonalWalk
 
 /--
 info: 'Cslib.RotationMap.abs_orthogonalWalk_eigenvalues_le' depends on axioms:
