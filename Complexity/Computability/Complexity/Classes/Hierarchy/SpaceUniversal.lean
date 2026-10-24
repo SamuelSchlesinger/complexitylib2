@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.InPlace
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 

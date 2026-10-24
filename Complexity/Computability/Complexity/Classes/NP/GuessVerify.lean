@@ -66,9 +66,10 @@ theorem IsVerifier.exists_decidesInTime
   -- guess a certificate of the required length, then verify it
   let program (a : α) : ProbComp Bool :=
     (fun w => V (a, w)) <$> BitString.sampleList (p.eval (enc a).length)
-  have hcount : ComputableTidilyInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval p).comp (ComputableTidilyInPolyTime.encoding_length enc)
-  have hprogram : IsPPTOn enc encBool program := hcount.sampleList.map_with hV
+  have hcount : ComputableInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
+    (ComputableInPolyTime.unary_eval p).comp (ComputableInPolyTime.encoding_length enc)
+  have hprogram : IsPPTOn enc encBool program :=
+    hcount.sampleList.map_with (ComputableInPolyTime.of_tidy hV)
   obtain ⟨k, State, hfinite, machine, c, d, heval, hhalt⟩ := hprogram.exists_halting_machine
   refine ⟨k, State, hfinite, machine, c, d, fun a => ?_, fun _ => machine.exists_step_toNTM⟩
   have htime : machine.toNTM.RunsInTime (enc a) (c * ((enc a).length + 1) ^ d) :=

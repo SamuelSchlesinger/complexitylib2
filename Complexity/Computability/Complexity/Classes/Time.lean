@@ -214,12 +214,14 @@ theorem computableTidilyInO_indicator_of_mem_DTIME {A : Set α} {t : ℕ → ℕ
     (h : A ∈ DTIME enc t) :
     ComputableTidilyInO (indicator A) enc encBool (fun a => t (enc a).length)
       fun a => t (enc a).length := by
+  apply Internal.normalizeO
   obtain ⟨c₁, c₂, s, hA⟩ := h
   obtain ⟨g, hg, hgA⟩ := decidableInTimeAndSpace_iff.mp hA
   obtain ⟨c, hg⟩ := hg.exists_space_linear
   obtain ⟨d, hg⟩ := hg.exists_computableTidilyInTimeAndSpace
   rw [indicator_eq_iff.mpr hgA]
-  refine .of_bounds hg ((2 + 3 * c) * (c₁ + c₂) + 3 * c + d + d * (c * (c₁ + c₂) + c + 1) + 1)
+  refine .of_bounds hg.computableInTimeAndSpace
+    ((2 + 3 * c) * (c₁ + c₂) + 3 * c + d + d * (c * (c₁ + c₂) + c + 1) + 1)
     (fun a => ?_) (fun a => ?_) fun a => ?_
   · set T := t (enc a).length
     have hu : c₁ * T + c₂ ≤ (c₁ + c₂) * (T + 1) := by nlinarith
@@ -250,7 +252,9 @@ theorem preimage_mem_DTIME {B : Set β} {t' t : ℕ → ℕ} {g : α → β} {T 
     (hB : B ∈ DTIME encB t') (hg : ComputableTidilyInO g enc encB T S)
     (ht : ∀ a, T a + t' (encB (g a)).length ≤ C * t (enc a).length + C) :
     g ⁻¹' B ∈ DTIME enc t := by
-  have h := (computableTidilyInO_indicator_of_mem_DTIME hB).comp hg
+  have h := Internal.normalizeO
+    ((Internal.forgetO (computableTidilyInO_indicator_of_mem_DTIME hB)).comp
+      (Internal.forgetO hg))
   have hset : g ⁻¹' B = {a | (indicator B ∘ g) a = true} := by
     ext a
     simp [indicator]
@@ -420,10 +424,11 @@ theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : 
     -- sample a random string and run the verifier on it
     let program (a : α) : ProbComp Bool :=
       (fun w => V (a, w)) <$> BitString.sampleList (p.eval (enc a).length)
-    have hcount : ComputableTidilyInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
-      (ComputableTidilyInPolyTime.unary_eval p).comp
-        (ComputableTidilyInPolyTime.encoding_length enc)
-    have hprogram : IsPPTOn enc encBool program := hcount.sampleList.map_with hV
+    have hcount : ComputableInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
+      (ComputableInPolyTime.unary_eval p).comp
+        (ComputableInPolyTime.encoding_length enc)
+    have hprogram : IsPPTOn enc encBool program :=
+      hcount.sampleList.map_with (ComputableInPolyTime.of_tidy hV)
     obtain ⟨k, State, hfinite, machine, c, d, heval, hhalt⟩ := hprogram.exists_halting_machine
     refine ⟨d, c * 2 ^ d, c, k, State, hfinite, machine,
       MultiTapePTM.DecidesWithBoundedErrorInTime.mono (t := fun a => c * ((enc a).length + 1) ^ d)
@@ -437,12 +442,13 @@ theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : 
     -- replay the coins
     refine ⟨Polynomial.C c₁ * Polynomial.X ^ d + Polynomial.C c₂,
       fun x => decide (machine.runClosedCoins x.2 (enc x.1) = [true]),
-      ComputableTidilyInPolyTime.decide_eq'
-        ((MultiTapePTM.computableTidilyInPolyTime_runClosedCoins machine).comp
-          ((ComputableTidilyInPolyTime.snd enc encBits).prod
-            ((ComputableTidilyInPolyTime.of_eq (encMid := encBits) fun _ => rfl).comp
-              (ComputableTidilyInPolyTime.fst enc encBits))))
-        (ComputableTidilyInPolyTime.const [true]), fun a => ?_⟩
+      ComputableInPolyTime.tidy (ComputableInPolyTime.decide_eq'
+        ((ComputableInPolyTime.of_tidy
+          (MultiTapePTM.computableTidilyInPolyTime_runClosedCoins machine)).comp
+          ((ComputableInPolyTime.snd enc encBits).prod
+            ((ComputableInPolyTime.of_eq (encOut := encBits) fun _ => rfl).comp
+              (ComputableInPolyTime.fst enc encBits))))
+        (ComputableInPolyTime.const [true])), fun a => ?_⟩
     have heval : (Polynomial.C c₁ * Polynomial.X ^ d + Polynomial.C c₂).eval (enc a).length =
         c₁ * (enc a).length ^ d + c₂ := by
       simp

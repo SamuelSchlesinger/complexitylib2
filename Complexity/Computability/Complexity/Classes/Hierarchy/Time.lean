@@ -233,7 +233,8 @@ theorem computableTidilyInO_timeDiagonal {J : ℕ → ℕ} (hJ : TimeConstructib
   have hsym := Universal.computableInDegree_map_eBit.inO_one
   have hclock := Internal.forgetO hJ.computableTidilyInO
   have hU := computableInO_universal.comp (hdesc.prod (hsym.prod hclock))
-  have h := (Internal.forgetO computableTidilyInO_shortDesc).ite ((Internal.forgetO computableTidilyInO_verdict).comp hU)
+  have h := (Internal.forgetO computableTidilyInO_shortDesc).ite
+    ((Internal.forgetO computableTidilyInO_verdict).comp hU)
     (ComputableInO.const (encMid := encBool) false)
   obtain ⟨cD, hcD⟩ := hdesc.length_le
   obtain ⟨cO, hcO⟩ := hU.length_le

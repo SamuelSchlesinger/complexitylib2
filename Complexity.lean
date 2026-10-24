@@ -838,6 +838,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Tid
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain

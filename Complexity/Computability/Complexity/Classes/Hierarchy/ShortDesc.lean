@@ -51,14 +51,15 @@ theorem shortDesc_eq_decide (x : List Bool) :
 theorem computableTidilyInO_shortDesc :
     ComputableTidilyInO shortDesc encBits encBool (fun x => (x.length + 1) ^ 2)
       fun x => x.length + 1 := by
-  have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
-    ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
-  have ha := ComputableTidilyInDegree.unary_succ.inO_one.comp
-    (ComputableTidilyInO.lengthUnary.comp hu)
-  have hb := ComputableTidilyInO.lengthUnary.comp
-    (ComputableTidilyInO.lengthNat.of_enc_eq (encOut := encBits)
+  apply Internal.normalizeO
+  have hu : ComputableInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
+    ComputableInO.of_linear (.of_unframe fun _ => rfl)
+  have ha := ComputableInDegree.unary_succ.inO_one.comp
+    (ComputableInO.lengthUnary.comp hu)
+  have hb := ComputableInO.lengthUnary.comp
+    (ComputableInO.lengthNat.of_enc_eq (encOut := encBits)
       (g := fun x : List Bool => encNat x.length) fun _ => rfl)
-  have h := ComputableTidilyInO.unaryLe.comp (ha.prod hb)
+  have h := ComputableInO.unaryLe.comp (ha.prod hb)
   refine (h.mono 64 (fun x => ?_) fun x => ?_).of_enc_eq fun x => ?_
   · have h₁ := length_unframe_le x
     have h₂ := Universal.length_encNat_le x.length

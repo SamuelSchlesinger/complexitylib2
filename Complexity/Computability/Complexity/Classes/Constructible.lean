@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.SpaceInTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
@@ -54,139 +55,25 @@ any hierarchy theorem. Unary word length is supplied by the quantitative API
 
 namespace Turing.MultiTapeTM
 
-/-- The binary digits of `m` are logarithmic: `2 ^ (encNat m).length ≤ 2 * (m + 1)`. -/
-theorem two_pow_length_encNat_le (m : ℕ) : 2 ^ (encNat m).length ≤ 2 * (m + 1) := by
-  rw [encNat_apply, Nat.size_eq_bits_len]
-  rcases Nat.eq_zero_or_pos m with rfl | hm
-  · simp
-  · have h₁ : 2 ^ (m.size - 1) ≤ m := Nat.lt_size.mp (by
-      have := Nat.size_pos.mpr hm
-      omega)
-    have h₂ : 1 ≤ m.size := Nat.size_pos.mpr hm
-    rw [show m.size = (m.size - 1) + 1 by omega, pow_succ]
-    omega
-
-/-- Every power of the number of binary digits of `m` is `O(m + 1)`. -/
-theorem exists_pow_length_encNat_le (d : ℕ) :
-    ∃ C, ∀ m, ((encNat m).length + 1) ^ d ≤ C * (m + 1) := by
-  obtain ⟨C, hC⟩ := Cslib.PolynomiallyBounded.exists_le_mul_two_pow (p := fun L => (L + 1) ^ d)
-    (by fun_prop)
-  refine ⟨2 * C, fun m => (hC _).trans ?_⟩
-  calc C * 2 ^ (encNat m).length ≤ C * (2 * (m + 1)) :=
-        Nat.mul_le_mul_left _ (two_pow_length_encNat_le m)
-    _ = 2 * C * (m + 1) := by ring
-
-/-! ### Lengths and comparisons, computed -/
-
 namespace ComputableTidilyInO
 
-/-- The length of a bit word in binary, by a binary counter, within quadratic time and linear
-space. -/
+/-- A normalized witness for the binary length counter, within quadratic time and linear space. -/
 theorem lengthNat : ComputableTidilyInO (fun l : List Bool => l.length) encBits encNat
-    (fun l => (l.length + 1) ^ 2) fun l => l.length + 1 := by
-  obtain ⟨C, hC⟩ := exists_pow_length_encNat_le 2
-  have hstep := natSucc.comp (fst encNat encBool)
-  have hlen (x : List Bool) (i : ℕ) :
-      (List.take i x).foldl (fun n _ => n + 1) 0 = min i x.length := by
-    simp [List.foldl_const]
-  have h := foldl (encA := encBool) (encL := encBits) (encB := encNat) (list := id)
-    (init := fun _ => 0) (step := fun n _ => n + 1) (of_linear (.of_eq fun _ => rfl)) (const 0)
-    hstep (R := fun x => (C + 3) * (x.length + 1)) (Q := fun x => 3 * (x.length + 1))
-    (B := fun x => x.length)
-    (fun x i hi => by
-      simp only [id] at hi ⊢
-      rw [hlen]
-      have h₁ := hC (min i x.length)
-      have h₂ := Universal.length_encNat_le (min i x.length)
-      have h₃ : C * (min i x.length + 1) ≤ C * (x.length + 1) :=
-        Nat.mul_le_mul_left _ (by omega)
-      have e : (C + 3) * (x.length + 1) = C * (x.length + 1) + 3 * (x.length + 1) := by ring
-      simp only [length_encPair, encBool_apply, List.length_singleton]
-      omega)
-    (fun x i hi => by
-      simp only [id] at hi ⊢
-      rw [hlen]
-      have h₂ := Universal.length_encNat_le (min i x.length)
-      simp only [length_encPair, encBool_apply, List.length_singleton]
-      omega)
-    (fun x i hi => by
-      simp only [id] at hi ⊢
-      rw [hlen]
-      exact (Universal.length_encNat_le _).trans (Nat.min_le_right _ _))
-  refine (h.mono (C + 16) (fun x => ?_) fun x => ?_).of_enc_eq fun x => ?_
-  · simp only [id, encBits_apply]
-    nlinarith
-  · simp only [id, encBits_apply]
-    nlinarith
-  · simp [List.foldl_const]
+    (fun l => (l.length + 1) ^ 2) fun l => l.length + 1 :=
+  Internal.normalizeO ComputableInO.lengthNat
 
-/-- The comparison of unary numbers, by counting down, within quadratic time and linear space. -/
+/-- A normalized witness for unary comparison, within quadratic time and linear space. -/
 theorem unaryLe : ComputableTidilyInO (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))
     (encPair encUnary encUnary) encBool (fun p => ((encPair encUnary encUnary p).length + 1) ^ 2)
-    fun p => (encPair encUnary encUnary p).length + 1 := by
-  have hstep := (ComputableTidilyInDegree.unary_pred.inO_one).comp (fst encUnary encBool)
-  have hrep (a b : ℕ) : (List.replicate b true).foldl (fun n _ => n - 1) a = a - b := by
-    induction b generalizing a with
-    | zero => rfl
-    | succ b ih => rw [List.replicate_succ, List.foldl_cons, ih]; omega
-  have h := foldl (encA := encBool) (encL := encBits) (encB := encUnary)
-    (list := fun p : ℕ × ℕ => List.replicate p.2 true) (init := fun p => p.1)
-    (step := fun n _ => n - 1)
-    ((of_linear (.of_eq (f := fun n => List.replicate n true) (encIn := encUnary)
-      (encMid := encBits) fun _ => rfl)).comp (snd encUnary encUnary))
-    (fst encUnary encUnary) hstep
-    (R := fun p => 3 * ((encPair encUnary encUnary p).length + 1))
-    (Q := fun p => 3 * ((encPair encUnary encUnary p).length + 1))
-    (B := fun p => (encPair encUnary encUnary p).length)
-    (fun p i hi => by
-      rw [List.take_replicate, hrep]
-      simp only [length_encPair, encUnary_apply, List.length_replicate,
-        encBool_apply, List.length_singleton]
-      omega)
-    (fun p i hi => by
-      rw [List.take_replicate, hrep]
-      simp only [length_encPair, encUnary_apply, List.length_replicate,
-        encBool_apply, List.length_singleton]
-      omega)
-    (fun p i hi => by
-      rw [List.take_replicate, hrep]
-      simp only [length_encPair, encUnary_apply, List.length_replicate]
-      omega)
-  have hz := (ComputableTidilyInDegree.unary_isZero.inO_one).comp_linear h
-  refine (hz.mono 16 (fun p => ?_) fun p => ?_).of_enc_eq fun p => ?_
-  · simp only [length_encPair, encUnary_apply, List.length_replicate,
-      encBits_apply]
-    nlinarith
-  · simp only [length_encPair, encUnary_apply, List.length_replicate,
-      encBits_apply]
-    omega
-  · simp only [Function.comp_apply, hrep, Nat.sub_eq_zero_iff_le]
+    fun p => (encPair encUnary encUnary p).length + 1 :=
+  Internal.normalizeO ComputableInO.unaryLe
 
 end ComputableTidilyInO
 
-/-- **From binary to unary**, by counting down: within time `O((n + 1) ^ 3)` and space `O(n)`. -/
+/-- A normalized binary-to-unary witness, within cubic time and linear space. -/
 theorem ComputableTidilyInO.natToUnary : ComputableTidilyInO (fun n : ℕ => n) encNat encUnary
-    (fun n => (n + 1) ^ 3) fun n => n := by
-  have hiter (n : ℕ) : (· + 1)^[n] 0 = n := by
-    induction n with
-    | zero => rfl
-    | succ n ih => rw [Function.iterate_succ_apply', ih]
-  have h := ComputableTidilyInO.iterate (n := fun n : ℕ => n) (init := fun _ => 0)
-    (step := (· + 1)) (encIn := encNat) (encB := encUnary)
-    (ComputableTidilyInO.of_linear (.of_eq fun _ => rfl)) (ComputableTidilyInO.const 0)
-    ComputableTidilyInDegree.unary_succ.inO_one (R := fun n => n) (Q := fun n => n)
-    (B := fun n => n)
-    (fun n k hk => by simp only [hiter, encUnary_apply, List.length_replicate]; exact hk)
-    (fun n k hk => by simp only [hiter, encUnary_apply, List.length_replicate]; exact hk)
-    (fun n k hk => by simp only [hiter, encUnary_apply, List.length_replicate]; exact hk)
-  refine (h.of_enc_eq fun n => by rw [hiter]).mono 8 (fun n => ?_) fun n => ?_
-  all_goals
-    have := Universal.length_encNat_le n
-    have h₁ : (n + 1) ^ 2 ≤ (n + 1) ^ 3 := Nat.pow_le_pow_right (by omega) (by omega)
-    have h₂ : n + 1 ≤ (n + 1) ^ 2 := Nat.le_self_pow (by norm_num) _
-    have h₃ := Nat.pow_le_pow_left (show (encNat n).length + 1 ≤ n + 1 by omega) 2
-  · nlinarith
-  · omega
+    (fun n => (n + 1) ^ 3) fun n => n :=
+  Internal.normalizeO ComputableInO.natToUnary
 
 end Turing.MultiTapeTM
 
@@ -207,6 +94,7 @@ def TimeConstructible (t : ℕ → ℕ) : Prop :=
 theorem TimeConstructible.computableTidilyInO {t : ℕ → ℕ} (ht : TimeConstructible t) :
     ComputableTidilyInO (fun x : List Bool => t x.length) encBits encNat (fun x => t x.length)
       fun x => t x.length := by
+  apply Internal.normalizeO
   obtain ⟨c, s, h⟩ := ht
   obtain ⟨k, h⟩ := ComputableInTimeAndSpace.exists_space_linear h
   obtain ⟨d, h⟩ := h.exists_computableTidilyInTimeAndSpace
@@ -224,7 +112,8 @@ theorem TimeConstructible.computableTidilyInO {t : ℕ → ℕ} (ht : TimeConstr
         d * (k * c) * (T + 1) + d * (k + 1) * (T + 1) := by ring
     have := Nat.le_mul_of_pos_right (d * (k + 1)) (show 0 < T + 1 by omega)
     omega
-  refine .of_bounds h ((2 + 3 * k) * c + 3 * k + d + d * (k * c + k + 1) + 1) (fun x => ?_)
+  refine .of_bounds h.computableInTimeAndSpace
+    ((2 + 3 * k) * c + 3 * k + d + d * (k * c + k + 1) + 1) (fun x => ?_)
     (fun x => ?_) fun x => (length_encNat_le _).trans ?_
   · simp only [encBits_apply]
     exact (ht _).trans (Nat.mul_le_mul_right _ (by omega))
@@ -250,7 +139,8 @@ theorem TimeConstructible.of_computableTidilyInO {t : ℕ → ℕ} {T S : List B
 
 /-- `2 ^ n` is time-constructible: its binary digits are `n` zeros followed by a one. -/
 theorem timeConstructible_two_pow : TimeConstructible (2 ^ ·) :=
-  .of_computableTidilyInO 1 (ComputableTidilyInDegree.two_pow_length encBits).inO_one
+  .of_computableTidilyInO 1 (Internal.normalizeO
+    (Internal.forgetDegree (ComputableTidilyInDegree.two_pow_length encBits)).inO_one)
     (s := fun n => n) (fun x => by
       simp only [encBits_apply]
       have := Nat.lt_two_pow_self (n := x.length)
@@ -274,11 +164,12 @@ theorem TimeConstructible.succ_mul_of_computableTidilyInO {f : ℕ → ℕ} {T :
       fun x => S x.length)
     (hT : ∀ x, T x ≤ c * ((x.length + 1) * f x.length) + c) (hn : ∀ n, n ≤ f n) :
     TimeConstructible fun n => (n + 1) * f n := by
-  have hlen := ComputableTidilyInO.natSucc.comp ComputableTidilyInO.lengthNat
-  have h := computableTidilyInDegree_mul.inO.comp (hlen.prod hf)
+  have hlen := ComputableInO.natSucc.comp ComputableInO.lengthNat
+  have h := computableInDegree_mul.inO.comp (hlen.prod (Internal.forgetO hf))
   obtain ⟨C, hC⟩ := exists_pow_length_encNat_le 3
   obtain ⟨C₂, hC₂⟩ := exists_pow_length_encNat_le 2
-  refine .of_computableTidilyInO (150 * C + C₂ + c + 10) h (fun x => ?_) (s := fun n =>
+  refine .of_computableTidilyInO (150 * C + C₂ + c + 10) (Internal.normalizeO h)
+    (fun x => ?_) (s := fun n =>
     n + 1 + ((encNat n).length + 1) + S n + (2 * (encNat (n + 1)).length + 1 +
       (encNat (f n)).length + 1) ^ 3) fun x => ?_
   · simp only [Function.comp_apply, length_encPair]
@@ -326,10 +217,10 @@ theorem TimeConstructible.succ_mul {f : ℕ → ℕ} (hf : TimeConstructible f) 
 
 /-- `(n + 1) ^ 2` is time-constructible. -/
 theorem timeConstructible_succ_sq : TimeConstructible fun n => (n + 1) ^ 2 := by
-  have hlen := ComputableTidilyInO.natSucc.comp ComputableTidilyInO.lengthNat
+  have hlen := ComputableInO.natSucc.comp ComputableInO.lengthNat
   obtain ⟨C₂, hC₂⟩ := exists_pow_length_encNat_le 2
   have h := TimeConstructible.succ_mul_of_computableTidilyInO (f := fun n => n + 1)
-    (S := fun n => n + 1 + ((encNat n).length + 1)) (C₂ + 2) hlen (fun x => by
+    (S := fun n => n + 1 + ((encNat n).length + 1)) (C₂ + 2) (Internal.normalizeO hlen) (fun x => by
       have := hC₂ x.length
       have e : (C₂ + 2) * ((x.length + 1) * (x.length + 1)) =
           C₂ * ((x.length + 1) * (x.length + 1)) + 2 * ((x.length + 1) * (x.length + 1)) := by
@@ -365,8 +256,9 @@ theorem SpaceConstructible.computableTidilyInO {s : ℕ → ℕ} (hs : SpaceCons
       fun x => s x.length := by
   obtain ⟨c, t, h⟩ := hs
   obtain ⟨d, h⟩ := ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace h
-  refine ⟨_, .of_bounds h (d * (c + 1) + 1) (T := fun x => 2 * t x.length +
-    3 * (c * s x.length + c) + d) (fun x => ?_) (fun x => ?_) fun x => ?_⟩
+  refine ⟨_, Internal.normalizeO (ComputableInO.of_bounds h.computableInTimeAndSpace
+    (d * (c + 1) + 1) (T := fun x => 2 * t x.length +
+    3 * (c * s x.length + c) + d) (fun x => ?_) (fun x => ?_) fun x => ?_)⟩
   · exact (Nat.le_succ _).trans (Nat.le_mul_of_pos_left _ (by omega))
   · dsimp only [encBits_apply]
     nlinarith
@@ -399,7 +291,8 @@ theorem spaceConstructible_id : SpaceConstructible fun n => n :=
 
 /-- `n + 1` is space-constructible. -/
 theorem spaceConstructible_succ : SpaceConstructible fun n => n + 1 :=
-  .of_computableTidilyInO 2 (ComputableTidilyInO.natSucc.comp ComputableTidilyInO.lengthNat)
+  .of_computableTidilyInO 2 (Internal.normalizeO
+    (ComputableInO.natSucc.comp ComputableInO.lengthNat))
     fun x => by have := Universal.length_encNat_le x.length; omega
 
 /-- Constant bounds are space-constructible, in zero space. -/

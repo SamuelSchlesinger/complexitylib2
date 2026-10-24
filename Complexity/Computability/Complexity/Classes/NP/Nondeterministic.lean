@@ -74,14 +74,16 @@ table. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_checkChoices (ntm : MultiTapeNTM k Bool State) :
     ComputableTidilyInPolyTime (ntm.checkChoices enc) (encPair enc encBits) encBool := by
-  have hswap : ComputableTidilyInPolyTime (fun x : α × List Bool => (x.2, enc x.1))
+  apply ComputableInPolyTime.tidy
+  have hswap : ComputableInPolyTime (fun x : α × List Bool => (x.2, enc x.1))
       (encPair enc encBits) (encPair encBits encBits) :=
-    (ComputableTidilyInPolyTime.snd enc encBits).prod
-      ((ComputableTidilyInPolyTime.of_eq (encMid := encBits) fun _ => rfl).comp
-        (ComputableTidilyInPolyTime.fst enc encBits))
-  exact ComputableTidilyInPolyTime.decide_eq'
-    ((MultiTapePTM.computableTidilyInPolyTime_runClosedCoins ntm.choiceTable).comp hswap)
-    (ComputableTidilyInPolyTime.const [true])
+    (ComputableInPolyTime.snd enc encBits).prod
+      ((ComputableInPolyTime.of_eq (encOut := encBits) fun _ => rfl).comp
+        (ComputableInPolyTime.fst enc encBits))
+  exact ComputableInPolyTime.decide_eq'
+    ((ComputableInPolyTime.of_tidy
+      (MultiTapePTM.computableTidilyInPolyTime_runClosedCoins ntm.choiceTable)).comp hswap)
+    (ComputableInPolyTime.const [true])
 
 /-- **Accepting computations as certificates of any sufficient length.** If `ntm` decides `A`
 within `t`, then `a ∈ A` exactly when some certificate of length `L` encodes an accepting
