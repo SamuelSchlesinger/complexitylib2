@@ -103,9 +103,9 @@ theorem clauseEvalBits_eq_eval {c : Clause ℕ} (hc : c.length ≤ 3) (σ : ℕ 
       (σ (c.getD 2 (0, false)).1) = c.eval σ := by
   rcases c with _ | ⟨⟨v₀, p₀⟩, _ | ⟨⟨v₁, p₁⟩, _ | ⟨⟨v₂, p₂⟩, _ | ⟨_, _⟩⟩⟩⟩
   · rfl
-  · simp [clauseEvalBits, Clause.eval, Literal.eval]
-  · simp [clauseEvalBits, Clause.eval, Literal.eval]
-  · simp [clauseEvalBits, Clause.eval, Literal.eval, Bool.or_assoc]
+  · simp [clauseEvalBits]
+  · simp [clauseEvalBits]
+  · simp [clauseEvalBits, Bool.or_assoc]
   · simp only [List.length_cons] at hc; omega
 
 /-- Look up the bit for variable `v` in `vec` at its first occurrence in `φ.vars`, returning

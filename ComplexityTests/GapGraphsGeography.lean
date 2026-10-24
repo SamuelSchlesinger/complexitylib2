@@ -67,7 +67,7 @@ private def satFormula : CNF ℕ := [[(0, true), (0, true), (0, true)]]
 private theorem satFormula_mem_yes : satFormula ∈ (GapExactThreeSAT s₀).yes := by
   rw [yes_GapExactThreeSAT]
   refine ⟨fun c hc => by simp [satFormula] at hc; simp [hc], fun _ => true, ?_⟩
-  simp [satFormula, CNF.eval, Clause.eval, Literal.eval]
+  simp [satFormula]
 
 private theorem contradiction_mem_no :
     GapExactThreeSAT.contradiction ∈ (GapExactThreeSAT s₀).no := by

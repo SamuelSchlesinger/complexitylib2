@@ -112,7 +112,7 @@ def contradiction : CNF ℕ :=
 /-- Every assignment falsifies half of the clauses of `contradiction`. -/
 theorem unsatVal_contradiction : contradiction.unsatVal = 1 / 2 := by
   have hcount (σ : ℕ → Bool) : contradiction.countUnsat σ = 1 := by
-    cases h : σ 0 <;> simp [contradiction, CNF.countUnsat, Clause.eval, Literal.eval, h]
+    cases h : σ 0 <;> simp [contradiction, CNF.countUnsat, h]
   have hlen : contradiction.length = 2 := rfl
   refine le_antisymm ?_ ((CNF.le_unsatVal_iff _).2 fun σ => ?_)
   · simpa [hcount, hlen] using contradiction.unsatVal_le fun _ => false
@@ -255,7 +255,7 @@ theorem Clause.isExactThreeDistinct_iff {c : Clause V} :
 private theorem Literal.if_eval_eq_zero_one (l : Literal V) (σ : V → Bool) :
     (if l.eval σ then (0 : ℝ) else 1) = (1 - signVal l.2 * signVal (σ l.1)) / 2 := by
   rcases l with ⟨v, b⟩
-  cases b <;> cases h : σ v <;> simp [Literal.eval, signVal, h]
+  cases b <;> cases h : σ v <;> simp [signVal, h]
 
 /-- A clause `l :: c` is falsified iff both `l` and `c` are falsified. -/
 private theorem Clause.if_eval_cons_eq_mul (l : Literal V) (c : Clause V) (σ : V → Bool) :

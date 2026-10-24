@@ -314,7 +314,7 @@ example (φ : CNF ℕ) (hφ : φ = [[(0, true)], [(0, false)]]) :
   have h : 0 < (ConstraintGraph.ofCNF ([[(0, true)], [(0, false)]] : CNF ℕ)).unsatVal := by
     rw [ConstraintGraph.unsatVal_pos_iff, ConstraintGraph.satisfiable_ofCNF_iff _ (by simp)]
     rintro ⟨σ, hσ⟩
-    simp [CNF.eval, Clause.eval, Literal.eval] at hσ
+    simp at hσ
   exact lt_of_lt_of_le (by positivity) (ConstraintGraph.le_unsatVal_preprocess_expanderFamily _)
 
 /-- Dinur's gap theorem applies: the gap graph of an unsatisfiable formula has value at least the
@@ -323,7 +323,7 @@ example :
     Dinur.gap ≤ (Dinur.gapGraph ([[((), true)], [((), false)]] : CNF Unit)).graph.unsatVal := by
   refine Dinur.gap_le_unsatVal_gapGraph _ (by simp) ?_
   rintro ⟨σ, hσ⟩
-  cases h : σ () <;> simp_all [CNF.eval, Clause.eval, Literal.eval]
+  cases h : σ () <;> simp_all
 
 end PCP
 

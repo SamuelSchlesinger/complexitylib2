@@ -115,7 +115,7 @@ private theorem unsatVal_contradiction : contradiction.unsatVal = 1 / 2 := by
   · rw [h1]
     norm_num [contradiction]
   refine contradiction.le_unsatVal_iff.2 fun σ => ?_
-  cases h : σ 0 <;> simp [contradiction, CNF.countUnsat, Clause.eval, Literal.eval, h]
+  cases h : σ 0 <;> simp [contradiction, CNF.countUnsat, h]
 
 /-- The gap problem of the hardness theorem has a no-instance. -/
 example : contradiction ∈ (GapThreeSAT (1 - 1 / (3 * 2 ^ 77))).no := by

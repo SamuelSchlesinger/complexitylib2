@@ -81,9 +81,20 @@ def CNF.Satisfiable (φ : CNF V) : Prop := ∃ σ : V → Bool, φ.eval σ = tru
 
 /-! ### Semantics -/
 
-@[simp] theorem Literal.eval_eq_true_iff (σ : V → Bool) (v : V) (b : Bool) :
-    Literal.eval σ (v, b) = true ↔ σ v = b := by
+/-- The value of a literal `(v, b)`: whether `v` has the value `b`. -/
+@[simp] theorem Literal.eval_mk (σ : V → Bool) (v : V) (b : Bool) :
+    Literal.eval σ (v, b) = (σ v == b) := rfl
+
+/-- A literal holds when its variable has its polarity. -/
+@[simp] theorem Literal.eval_eq_true_iff (σ : V → Bool) (l : Literal V) :
+    Literal.eval σ l = true ↔ σ l.1 = l.2 := by
   simp [Literal.eval]
+
+/-- Negating a literal negates its value. -/
+@[simp] theorem Literal.eval_negate (σ : V → Bool) (l : Literal V) :
+    Literal.eval σ (Std.Sat.Literal.negate l) = !Literal.eval σ l := by
+  obtain ⟨v, b⟩ := l
+  cases b <;> simp [Std.Sat.Literal.negate]
 
 /-- A clause holds when some literal does. -/
 theorem Clause.eval_eq_true_iff (σ : V → Bool) (c : Clause V) :
