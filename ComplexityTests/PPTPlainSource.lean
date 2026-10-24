@@ -138,6 +138,24 @@ example (callback : List Bool → List Bool) (h : RawAliasFull callback encBits 
     IsPPTOn encBits encBits (consume callback) := by
   ppt
 
+/-- A future function rule may also hide its construction premise behind a full alias. -/
+@[irreducible] def aliasPure (callback : List Bool → List Bool) (word : List Bool) :
+    ProbComp (List Bool) := pure (callback word)
+
+/-- This explicit construction theorem remains usable, but is not a public search fallback. -/
+@[fun_prop] theorem aliasPure_raw {callback : List Bool → List Bool}
+    (hcallback : RawAliasFull callback encBits encBits) :
+    IsPPTOn encBits encBits (aliasPure callback) := by
+  unfold aliasPure
+  exact hcallback.isPPTOn
+
+example : IsPPTOn encBits encBits (aliasPure rawOnlyReverse) := by
+  fail_if_success ppt
+  exact aliasPure_raw rawOnlyReverse_tidy
+
+example : IsPPTOn encBits encBits (aliasPure rawOnlyReverse) := by
+  fun_prop
+
 /-- An opaque plain contract is a legitimate source of a nested deterministic certificate. -/
 @[irreducible] def PlainContract (callback : List Bool → List Bool) : Prop :=
   ComputableInPolyTime callback encBits encBits
