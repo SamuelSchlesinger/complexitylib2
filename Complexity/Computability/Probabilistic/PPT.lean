@@ -9,6 +9,8 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Probability.PMF.Event
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 
@@ -44,7 +46,7 @@ control type, as the upstream tidy calculus does, instead of imposing a separate
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn`: deterministic certificates lift to PPT.
+* `Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn`: deterministic certificates lift to PPT.
 * `Cslib.Probability.IsPPTOn.length_le`: every supported encoded output is polynomially bounded.
 -/
 
@@ -110,3 +112,12 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn {α β : Type}
   refine ⟨k, State, hfinite, Turing.MultiTapePTM.ofDeterministic machine, c, d, fun a => ?_⟩
   rw [Cslib.ProbComp.eval_pure, PMF.pure_map, Turing.MultiTapePTM.eval_runClosed_ofDeterministic]
   exact congrArg PMF.pure ((hmachine a).mono (ht a) le_rfl).runFrom_initCfg.2.symm
+
+/-- A plain deterministic polynomial-time certificate gives a fair-coin machine that ignores
+its sampled bits, with the same encoded result distribution. -/
+@[fun_prop]
+theorem Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn {α β : Type}
+    {input : α ↪ List Bool} {output : β ↪ List Bool} {f : α → β}
+    (h : ComputableInPolyTime f input output) :
+    Cslib.Probability.IsPPTOn input output (fun a => pure (f a)) :=
+  h.tidy.isPPTOn
