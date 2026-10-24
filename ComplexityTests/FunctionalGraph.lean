@@ -27,9 +27,8 @@ open Cslib Cslib.FunctionalGraph Function
 (`transientDepth = 1`). -/
 private def toZero : Fin 2 → Fin 2 := fun _ => 0
 
-private theorem transientDepth_toZero_zero : transientDepth toZero 0 = 0 := by
-  have h0 : (0 : Fin 2) ∈ periodicPts toZero := mk_mem_periodicPts one_pos rfl
-  exact (transientDepth_eq_zero_iff toZero 0).mpr h0
+private theorem transientDepth_toZero_zero : transientDepth toZero 0 = 0 :=
+  transientDepth_eq_zero_of_mem_periodicPts toZero (mk_mem_periodicPts one_pos rfl)
 
 private theorem transientDepth_toZero_one : transientDepth toZero 1 = 1 := by
   have h0 : toZero^[1] 1 ∈ periodicPts toZero := mk_mem_periodicPts one_pos rfl
@@ -278,11 +277,11 @@ info: 'Cslib.FunctionalGraph.exists_short_forest_edge' depends on axioms:
 #print axioms exists_short_forest_edge
 
 /--
-info: 'Cslib.FunctionalGraph.forest_edges_merge' depends on axioms:
+info: 'Cslib.FunctionalGraph.forest_edge_interior_inj' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms forest_edges_merge
+#print axioms forest_edge_interior_inj
 
 /--
 info: 'Cslib.FunctionalGraph.forest_edge_last_injective' depends on axioms:

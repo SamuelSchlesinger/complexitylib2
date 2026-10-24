@@ -203,6 +203,11 @@ theorem iterate_mem_periodicPts_iff (x : α) (t : ℕ) :
     transientDepth f x = 0 ↔ x ∈ periodicPts f := by
   simpa using (iterate_mem_periodicPts_iff f x 0).symm
 
+/-- For a periodic state, the transient depth is zero. -/
+theorem transientDepth_eq_zero_of_mem_periodicPts {x : α} (hx : x ∈ periodicPts f) :
+    transientDepth f x = 0 :=
+  (transientDepth_eq_zero_iff f x).mpr hx
+
 /-- The transient depth is less than the number of states. -/
 theorem transientDepth_lt_card [Fintype α] (x : α) : transientDepth f x < Fintype.card α := by
   obtain ⟨t, ht, hp, _⟩ := exists_first_visit f (· ∈ periodicPts f) x
@@ -210,7 +215,7 @@ theorem transientDepth_lt_card [Fintype α] (x : α) : transientDepth f x < Fint
   exact ((iterate_mem_periodicPts_iff f x t).mp hp).trans_lt ht
 
 /-- Advancing `t` steps lowers the transient depth by `t`, truncated at zero. -/
-theorem transientDepth_iterate (x : α) (t : ℕ) :
+@[simp] theorem transientDepth_iterate (x : α) (t : ℕ) :
     transientDepth f (f^[t] x) = transientDepth f x - t := by
   apply Nat.le_antisymm
   · apply (iterate_mem_periodicPts_iff f (f^[t] x) _).mp
@@ -223,6 +228,11 @@ theorem transientDepth_iterate (x : α) (t : ℕ) :
 /-- The cycle length of `x`: the minimal period of its eventual cycle. -/
 noncomputable def cycleLength (x : α) : ℕ :=
   minimalPeriod f (f^[transientDepth f x] x)
+
+/-- For a periodic state, the cycle length is the minimal period. -/
+theorem cycleLength_eq_minimalPeriod_of_mem_periodicPts {x : α} (hx : x ∈ periodicPts f) :
+    cycleLength f x = minimalPeriod f x := by
+  simp [cycleLength, transientDepth_eq_zero_of_mem_periodicPts f hx]
 
 /-- The cycle length is positive. -/
 theorem cycleLength_pos (x : α) : 0 < cycleLength f x :=

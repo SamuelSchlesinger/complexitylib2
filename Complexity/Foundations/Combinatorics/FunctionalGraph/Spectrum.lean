@@ -89,10 +89,6 @@ section Fintype
 
 variable {α : Type u} [Fintype α] (f : α → α)
 
-/-- The cycle length from any state is at most the cardinality of the state space. -/
-theorem cycleLength_le_card (x : α) : cycleLength f x ≤ Fintype.card α :=
-  (Nat.le_add_left _ _).trans (transientDepth_add_cycleLength_le_card f x)
-
 /-- **Spectrum reduction.** Every exponent `T` at least `Fintype.card α` can be replaced by
 `Fintype.card α + (T - Fintype.card α) % cycleLength f x`. -/
 theorem iterate_eq_card_add_mod (x : α) {T : ℕ} (hT : Fintype.card α ≤ T) :
@@ -106,25 +102,13 @@ theorem iterate_eq_card_add_mod (x : α) {T : ℕ} (hT : Fintype.card α ≤ T) 
   have := Nat.mod_add_div (T - Fintype.card α) (cycleLength f x)
   omega
 
-/-- The reduced exponent is strictly below `2 * Fintype.card α`. -/
-theorem card_add_mod_lt (x : α) (T : ℕ) :
-    Fintype.card α + T % cycleLength f x < 2 * Fintype.card α := by
-  have := Nat.mod_lt T (cycleLength_pos f x)
-  have := cycleLength_le_card f x
-  omega
-
-/-- After `Fintype.card α` steps every state lies on its cycle, whose minimal period is
-`cycleLength f x`. -/
-theorem minimalPeriod_iterate_card (x : α) :
-    minimalPeriod f (f^[Fintype.card α] x) = cycleLength f x :=
-  minimalPeriod_iterate f x (transientDepth_lt_card f x).le
-
 /-- **The cycle-length divisibility test.** `f^[Fintype.card α + ℓ] x = f^[Fintype.card α] x`
 holds iff `cycleLength f x ∣ ℓ`. -/
 theorem cycle_test_iff (x : α) (ℓ : ℕ) :
     f^[Fintype.card α + ℓ] x = f^[Fintype.card α] x ↔ cycleLength f x ∣ ℓ := by
   rw [show Fintype.card α + ℓ = ℓ + Fintype.card α by omega, iterate_add_apply,
-    ← minimalPeriod_iterate_card f x, ← isPeriodicPt_iff_minimalPeriod_dvd]
+    ← minimalPeriod_iterate f x (transientDepth_lt_card f x).le,
+    ← isPeriodicPt_iff_minimalPeriod_dvd]
   rfl
 
 /-- The finite set of distinct cycle lengths of `f`. -/
@@ -168,12 +152,12 @@ variable {α : Type u} [Finite α] (f : α → α)
 /-- For an injective map, every state has transient depth zero. -/
 theorem transientDepth_eq_zero_of_injective (hf : Injective f) (x : α) :
     transientDepth f x = 0 :=
-  (transientDepth_eq_zero_iff f x).mpr (hf.mem_periodicPts x)
+  transientDepth_eq_zero_of_mem_periodicPts f (hf.mem_periodicPts x)
 
 /-- For an injective map, the cycle length of `x` is the minimal period of `x`. -/
 theorem cycleLength_eq_minimalPeriod_of_injective (hf : Injective f) (x : α) :
-    cycleLength f x = minimalPeriod f x := by
-  simp [cycleLength, transientDepth_eq_zero_of_injective f hf]
+    cycleLength f x = minimalPeriod f x :=
+  cycleLength_eq_minimalPeriod_of_mem_periodicPts f (hf.mem_periodicPts x)
 
 /-- For an injective map, `f^[ℓ] x = x` holds iff `cycleLength f x ∣ ℓ`. -/
 theorem injective_cycle_test_iff (hf : Injective f) (x : α) (ℓ : ℕ) :
@@ -234,45 +218,10 @@ state `canonicalCycle f x` iff `a + canonicalTime f x ≡ T [MOD cycleLength f x
 theorem iterate_eq_canonical_iff (x : α) {T : ℕ} (hT : transientDepth f x ≤ T) (a : ℕ) :
     f^[T] x = f^[a] (canonicalCycle f x) ↔
       a + canonicalTime f x ≡ T [MOD cycleLength f x] := by
-  set κ := canonicalTime f x
-  set ℓ := cycleLength f x
-  set c := canonicalCycle f x
-  have hcκ : f^[κ] x = c := canonicalTime_spec f x
-  have hcper : minimalPeriod f c = ℓ := by
-    have h := minimalPeriod_at_periodic_iterate f x (t := κ)
-      (by rw [hcκ]; exact canonicalCycle_periodic f x)
-    rwa [hcκ] at h
-  have hℓ : 0 < ℓ := cycleLength_pos f x
-  have hTper : IsPeriodicPt f ℓ (f^[T] x) := by
-    have h := (isPeriodicPt_cycleLength f x).apply_iterate (T - transientDepth f x)
-    rwa [← iterate_add_apply, Nat.sub_add_cancel hT] at h
-  have hκle : κ ≤ ℓ * κ + T := (Nat.le_mul_of_pos_left κ hℓ).trans (Nat.le_add_right _ _)
-  have hrep : f^[T] x = f^[ℓ * κ + T - κ] c := by
-    rw [← hcκ, ← iterate_add_apply, Nat.sub_add_cancel hκle, iterate_add_apply]
-    exact ((hTper.mul_const κ).eq).symm
-  have hcp : IsPeriodicPt f ℓ c := hcper ▸ isPeriodicPt_minimalPeriod f c
-  have hiff : ∀ i j : ℕ, f^[i] c = f^[j] c ↔ i ≡ j [MOD ℓ] := by
-    intro i j
-    rw [← hcp.iterate_mod_apply i, ← hcp.iterate_mod_apply j]
-    constructor
-    · intro he
-      exact iterate_injOn_Iio_minimalPeriod
-        (show i % ℓ < minimalPeriod f c by rw [hcper]; exact Nat.mod_lt _ hℓ)
-        (show j % ℓ < minimalPeriod f c by rw [hcper]; exact Nat.mod_lt _ hℓ) he
-    · intro he
-      exact congrArg (fun k => f^[k] c) he
-  have hshift : ℓ * κ + T ≡ T [MOD ℓ] := by
-    simp [Nat.ModEq, Nat.add_mod]
-  rw [hrep, hiff]
-  constructor
-  · intro h
-    have h' := h.add_right κ
-    rw [Nat.sub_add_cancel hκle] at h'
-    exact h'.symm.trans hshift
-  · intro h
-    apply Nat.ModEq.add_right_cancel' κ
-    rw [Nat.sub_add_cancel hκle]
-    exact hshift.trans h.symm
+  rw [← canonicalTime_spec f x, ← iterate_add_apply,
+    iterate_eq_iterate_iff_modEq f x hT
+      ((transientDepth_le_canonicalTime f x).trans (Nat.le_add_left _ _)),
+    Nat.ModEq.comm]
 
 end PhaseIdentities
 

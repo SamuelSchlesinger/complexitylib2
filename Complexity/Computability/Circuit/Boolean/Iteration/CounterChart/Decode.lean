@@ -99,7 +99,7 @@ theorem phaseDistance_hit (hf : Function.Injective f) (j : Fin R) (y : BitVec n)
     rw [← ht, cycleLength_iterate]
   have hp := chart_ofNat_toNat ((phase_lt f y).le.trans (cycleLength_le_words f y))
   have hz : transientDepth f (chart.first j) = 0 :=
-    (transientDepth_eq_zero_iff f _).mpr (hf.mem_periodicPts _)
+    transientDepth_eq_zero_of_mem_periodicPts f (hf.mem_periodicPts _)
   have hd : (chart.phaseDistance j (BitVec.ofNat (chartWidth n) (phase f y))).toNat =
       cyclicDistance f (chart.first j) y := by
     rw [chart.phaseDistance_toNat j _ (by rw [hp, ← hl]; exact phase_lt f y), hp]

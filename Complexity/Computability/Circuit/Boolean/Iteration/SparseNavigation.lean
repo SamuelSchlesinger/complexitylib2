@@ -89,7 +89,7 @@ theorem cycleLabelDistance_toNat (f : BitVec n → BitVec n) (hf : Function.Inje
   have he : (BitVec.ofNat (chartWidth n) (cycleLength f x)).toNat = cycleLength f x :=
     chart_ofNat_toNat (cycleLength_le_words f x)
   have hdepth : transientDepth f x = 0 :=
-    (transientDepth_eq_zero_iff f x).mpr (hf.mem_periodicPts x)
+    transientDepth_eq_zero_of_mem_periodicPts f (hf.mem_periodicPts x)
   simp only [cycleLabelDistance, wordCycleLabel, labelPhase_labelBits, labelLength_labelBits]
   rw [toNat_subtractResidues _ _ _ (by rw [hp, he, ← hl]; exact phase_lt f y)
     (by rw [hp, he]; exact phase_lt f x), hp, hp, he]
@@ -101,7 +101,7 @@ theorem cycleLabelVisits_first (f : BitVec n → BitVec n) (hf : Function.Inject
     f^[d] x = y ∧ (∀ j < d, f^[j] x ≠ y) ∧ d < 2 ^ n := by
   have hc := (exists_iterate_eq_iff_canonicalCycle_eq f x y (hf.mem_periodicPts y)).mp hr
   have hdepth : transientDepth f x = 0 :=
-    (transientDepth_eq_zero_iff f x).mpr (hf.mem_periodicPts x)
+    transientDepth_eq_zero_of_mem_periodicPts f (hf.mem_periodicPts x)
   have hd : cyclicDistance f x y < 2 ^ n :=
     (Nat.mod_lt _ (cycleLength_pos f x)).trans_le (cycleLength_le_words f x)
   have hwide : cyclicDistance f x y < 2 ^ (n + 1) :=
@@ -118,14 +118,12 @@ theorem cycleLabelVisits_period (f : BitVec n → BitVec n) (hf : Function.Injec
     (x y : BitVec n) :
     (visitSchedulePeriod (cycleLabelVisits (wordCycleLabel f x) (wordCycleLabel f y))).toNat =
       Function.minimalPeriod f y := by
-  have hdepth : transientDepth f y = 0 :=
-    (transientDepth_eq_zero_iff f y).mpr (hf.mem_periodicPts y)
   have hwide : cycleLength f y < 2 ^ (n + 1) :=
     (cycleLength_le_words f y).trans_lt (Nat.pow_lt_pow_right (by decide) (by lia))
   simp only [visitSchedulePeriod, cycleLabelVisits, Fin.append_right, word_getLsbD,
     wordCycleLabel, labelLength_labelBits, BitVec.toNat_setWidth]
-  rw [chart_ofNat_toNat (cycleLength_le_words f y), Nat.mod_eq_of_lt hwide]
-  simp only [cycleLength, hdepth, Function.iterate_zero_apply]
+  rw [chart_ofNat_toNat (cycleLength_le_words f y), Nat.mod_eq_of_lt hwide,
+    cycleLength_eq_minimalPeriod_of_mem_periodicPts f (hf.mem_periodicPts y)]
 
 theorem cycleLabelVisits_spec (f : BitVec n → BitVec n) (hf : Function.Injective f)
     (x y : BitVec n) (t : ℕ) :

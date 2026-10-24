@@ -73,7 +73,7 @@ noncomputable def checkpointHull (H : Finset α) : Finset α :=
 
 /-- A state lies in the checkpoint hull exactly when it is `f^[t] h` for some `h ∈ H` and
 `t ≤ transientDepth f h`. -/
-theorem mem_checkpointHull (H : Finset α) (x : α) :
+@[simp] theorem mem_checkpointHull (H : Finset α) (x : α) :
     x ∈ checkpointHull f H ↔ ∃ h ∈ H, ∃ t ≤ transientDepth f h, f^[t] h = x := by
   classical
   simp only [checkpointHull, Finset.mem_biUnion, Finset.mem_image, Finset.mem_range,
@@ -155,40 +155,40 @@ noncomputable def forestMarks (H : Finset α) : Finset α :=
   H ∪ (forestRoots f H ∪ forestBranches f H)
 
 /-- The forest sources are exactly the hull states of positive transient depth. -/
-theorem mem_forestSources (H : Finset α) (x : α) :
+@[simp] theorem mem_forestSources (H : Finset α) (x : α) :
     x ∈ forestSources f H ↔ x ∈ checkpointHull f H ∧ 0 < transientDepth f x := by
   classical
   exact Finset.mem_filter
 
 /-- The children of `x` are exactly the hull states of positive transient depth that `f` maps
 to `x`. -/
-theorem mem_forestChildren (H : Finset α) (x y : α) :
+@[simp] theorem mem_forestChildren (H : Finset α) (x y : α) :
     y ∈ forestChildren f H x ↔ y ∈ checkpointHull f H ∧
       0 < transientDepth f y ∧ f y = x := by
   classical
   simp only [forestChildren, Finset.mem_filter, mem_forestSources, and_assoc]
 
 /-- The forest roots are exactly the hull states of transient depth zero. -/
-theorem mem_forestRoots (H : Finset α) (x : α) :
+@[simp] theorem mem_forestRoots (H : Finset α) (x : α) :
     x ∈ forestRoots f H ↔ x ∈ checkpointHull f H ∧ transientDepth f x = 0 := by
   classical
   simp only [forestRoots, Finset.mem_sdiff, mem_forestSources]
   lia
 
 /-- The forest leaves are exactly the hull states with no children. -/
-theorem mem_forestLeaves (H : Finset α) (x : α) :
+@[simp] theorem mem_forestLeaves (H : Finset α) (x : α) :
     x ∈ forestLeaves f H ↔ x ∈ checkpointHull f H ∧ (forestChildren f H x).card = 0 := by
   classical
   exact Finset.mem_filter
 
 /-- The forest branches are exactly the hull states with at least two children. -/
-theorem mem_forestBranches (H : Finset α) (x : α) :
+@[simp] theorem mem_forestBranches (H : Finset α) (x : α) :
     x ∈ forestBranches f H ↔ x ∈ checkpointHull f H ∧ 2 ≤ (forestChildren f H x).card := by
   classical
   exact Finset.mem_filter
 
 /-- A state is marked exactly when it is a checkpoint, a forest root, or a forest branch. -/
-theorem mem_forestMarks (H : Finset α) (x : α) :
+@[simp] theorem mem_forestMarks (H : Finset α) (x : α) :
     x ∈ forestMarks f H ↔ x ∈ H ∨ x ∈ forestRoots f H ∨ x ∈ forestBranches f H := by
   classical
   simp only [forestMarks, Finset.mem_union]

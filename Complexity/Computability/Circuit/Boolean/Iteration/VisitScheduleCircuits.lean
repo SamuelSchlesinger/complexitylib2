@@ -101,9 +101,7 @@ theorem minimal_period_circuit (c : Circuit signature n n) (L : ℕ)
     by_cases hy : x ∈ Function.periodicPts f
     · have htrue := (hc x).mpr hy
       simp only [htrue, ite_true]
-      have hμ := (transientDepth_eq_zero_iff f x).mpr hy
-      have hperiod : cycleLength f x = Function.minimalPeriod f x := by
-        simp only [cycleLength, hμ, Function.iterate_zero_apply]
+      have hperiod := cycleLength_eq_minimalPeriod_of_mem_periodicPts f hy
       have hbound : cycleLength f x < 2 ^ (n + 1) := by
         have hle := cycleLength_le_two_pow f x
         have hpow : 2 ^ (n + 1) = 2 * 2 ^ n := by rw [pow_succ']

@@ -22,7 +22,7 @@ most `2 * L` (`forest_hull_partition`).
 
 Because unmarked vertices in the hull have at most one transient hull predecessor
 (`forestPredecessor_unique`), two compressed edges cannot merge in their interiors
-(`forest_edges_merge`), so each compressed edge is uniquely identified by its last predecessor
+(`forest_edge_interior_inj`), so each compressed edge is uniquely identified by its last predecessor
 `f^[d - 1] x` before its upper endpoint (`forest_edge_last_injective`).
 
 ## Main definitions
@@ -36,7 +36,7 @@ Because unmarked vertices in the hull have at most one transient hull predecesso
   unique.
 * `Cslib.FunctionalGraph.exists_short_forest_edge`: every non-root mark has a compressed edge of
   length at most `2 * L`.
-* `Cslib.FunctionalGraph.forest_edges_merge`: interiors of compressed edges are disjoint.
+* `Cslib.FunctionalGraph.forest_edge_interior_inj`: interiors of compressed edges are disjoint.
 * `Cslib.FunctionalGraph.forest_edge_last_injective`: the last predecessor `f^[d - 1] x` uniquely
   identifies `(x, d)`.
 * `Cslib.FunctionalGraph.forest_hull_partition`: every state in `checkpointHull f H` is either a
@@ -131,7 +131,7 @@ theorem exists_short_forest_edge {L : ℕ} (_hL : 0 < L)
   exact Nat.find_min hex hid ⟨hi, him⟩
 
 /-- Interiors of compressed edges are disjoint, including their starting marks. -/
-theorem forest_edges_merge {x y : α} {d e : ℕ}
+theorem forest_edge_interior_inj {x y : α} {d e : ℕ}
     (hx : IsForestEdge f H x d) (hy : IsForestEdge f H y e)
     {i j : ℕ} (hi : i < d) (hj : j < e) (he : f^[i] x = f^[j] y) :
     x = y ∧ i = j := by
@@ -161,7 +161,7 @@ theorem forest_edges_merge {x y : α} {d e : ℕ}
 theorem forest_edge_last_injective {x y : α} {d e : ℕ}
     (hx : IsForestEdge f H x d) (hy : IsForestEdge f H y e)
     (he : f^[d - 1] x = f^[e - 1] y) : x = y ∧ d = e := by
-  have h := forest_edges_merge f H hx hy (by have := hx.pos; lia) (by have := hy.pos; lia) he
+  have h := forest_edge_interior_inj f H hx hy (by have := hx.pos; lia) (by have := hy.pos; lia) he
   exact ⟨h.1, by have := hx.pos; have := hy.pos; lia⟩
 
 /-- Every hull point is marked or belongs to a short compressed edge. -/
