@@ -260,7 +260,7 @@ def searchRel (φ : Logic.PL.CNF ℕ) (w : List Bool) : Prop :=
 
 /-- The search problem of `SAT` is in `FNP`. -/
 theorem searchRel_mem_FNP : searchRel ∈ FNP encCNF :=
-  mem_FNP_iff_exists_bounded.2 ⟨Polynomial.X, verifier, computableInPolyTime_verifier.tidy,
+  mem_FNP_iff_exists_bounded.2 ⟨Polynomial.X, verifier, computableInPolyTime_verifier,
     fun _ _ => by simp [searchRel]⟩
 
 /-- The formulas with a solution in `SAT.searchRel` are the satisfiable ones. -/

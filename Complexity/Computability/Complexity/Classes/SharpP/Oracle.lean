@@ -76,7 +76,7 @@ def GapPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (α → 
 /-- Ordinary counting verifiers can ignore every oracle. -/
 theorem SharpP_subset_SharpPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     SharpP enc ⊆ SharpPWithOracle A enc := fun _ ⟨p, V, hV, hf⟩ =>
-  ⟨p, V, hV.tidy.computableInPolyTimeWithOracle A, hf⟩
+  ⟨p, V, hV.computableInPolyTimeWithOracle A, hf⟩
 
 /-- Ordinary gap functions can ignore every oracle. -/
 theorem GapP_subset_GapPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :

@@ -372,6 +372,7 @@ private theorem computableTidilyInPolyTime_root (k : ℕ) :
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem computableTidilyInPolyTime_rounds (M : ℕ) :
     ComputableTidilyInPolyTime (rounds M) encCNF encNat := by
+  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
   have h := unary_div_const M
   unfold rounds
   fun_prop
@@ -553,7 +554,7 @@ theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K 
   set E := dn + di + 3 * d + 2 * e + 3
   set C₂ : ℝ := c * 2 ^ δ * ((c₁ : ℝ) + 1) ^ e + c + 1
   set C₀ : ℝ := 2 + 5 * (C₁ + C₂)
-  refine DecidableInExpTime.of_computableInO h (fun φ => Iff.rfl) ⌈C₀⌉₊ E fun φ => ?_
+  refine DecidableInExpTime.of_computableInO (.of_tidy h) (fun φ => Iff.rfl) ⌈C₀⌉₊ E fun φ => ?_
   set L := (encCNF φ).length
   set N := φ.numVars
   set P := (L + 1) ^ E
@@ -759,7 +760,7 @@ theorem exists_decidableInExpTime_numVars_of_length (k : ℕ) {ε : ℝ} (hε : 
     · rintro ⟨hw, hs⟩
       exact ⟨hw, (Sparsify.search_eq_true_iff hK hα hkK hLB hgsat hw).mp hs⟩
   rw [heq]
-  exact (hsearch.inter (computableInPolyTime_all_length_le k).tidy (by positivity)).mono
+  exact (hsearch.inter (computableInPolyTime_all_length_le k) (by positivity)).mono
     (by linarith)
 
 /-- **Subexponential time in the clauses gives subexponential time in the variables**

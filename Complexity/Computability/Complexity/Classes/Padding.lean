@@ -190,7 +190,8 @@ theorem NTIME_subset_iUnion_DTIME_of_NP_subset_P (hNP : NP encBits ⊆ P encBits
       by nlinarith
     rw [Nat.mul_assoc]
     exact Nat.mul_le_mul_left _ this
-  refine Set.mem_iUnion.mpr ⟨d + 1, hpre ▸ preimage_mem_DTIME (C := (c' + 2) ^ d + 1) hd hg
+  refine Set.mem_iUnion.mpr ⟨d + 1, hpre ▸ preimage_mem_DTIME (C := (c' + 2) ^ d + 1) hd
+    (.of_tidy hg)
     fun a => ?_⟩
   rw [encBits_apply, hlen]
   set n := (enc a).length

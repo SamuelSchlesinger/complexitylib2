@@ -53,6 +53,78 @@ namespace Cslib.HardnessEncoding
 
 open Turing.MultiTapeTM ComputableTidilyInPolyTime Cslib.AffineDisperser
 
+/-! Tidy views of the plain certificates of `AffineDisperser`, for tidy `fun_prop` below. -/
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_getD_list
+    {α γ : Type} {input : α ↪ List Bool}
+    {enc : List γ ↪ List Bool} {L : α → List (List γ)} {i : α → ℕ}
+    (hL : ComputableTidilyInPolyTime L input (encList enc))
+    (hi : ComputableTidilyInPolyTime i input encUnary) (d : List γ) :
+    ComputableTidilyInPolyTime (fun a => (L a).getD (i a) d) input enc :=
+  (ComputableInPolyTime.tidy (AffineDisperser.computableInPolyTime_getD_list (.of_tidy hL)
+      (.of_tidy hi) d))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_tableEntry
+    {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {u w : α → ℕ}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (hu : ComputableTidilyInPolyTime u input encUnary)
+    (hw : ComputableTidilyInPolyTime w input encUnary) :
+    ComputableTidilyInPolyTime (fun a => tableEntry (tab a) (u a) (w a)) input encBits :=
+  (ComputableInPolyTime.tidy (AffineDisperser.computableInPolyTime_tableEntry (.of_tidy htab)
+      (.of_tidy hu) (.of_tidy hw)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_fieldMul'
+    {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {a b : α → List Bool}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (ha : ComputableTidilyInPolyTime a input encBits)
+    (hb : ComputableTidilyInPolyTime b input encBits) :
+    ComputableTidilyInPolyTime (fun x => fieldMul (tab x) (a x) (b x)) input encBits :=
+  (ComputableInPolyTime.tidy (AffineDisperser.computableInPolyTime_fieldMul' (.of_tidy htab)
+      (.of_tidy ha) (.of_tidy hb)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_powerPred'
+    {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {y : α → List Bool} {k : α → ℕ}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (hy : ComputableTidilyInPolyTime y input encBits)
+    (hk : ComputableTidilyInPolyTime k input encUnary) :
+    ComputableTidilyInPolyTime (fun x => powerPred (tab x) (y x) (k x)) input encBits :=
+  (ComputableInPolyTime.tidy (AffineDisperser.computableInPolyTime_powerPred' (.of_tidy htab)
+      (.of_tidy hy) (.of_tidy hk)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_esymmCoords'
+    {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {t : α → ℕ} {zs : α → List (List Bool)}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (ht : ComputableTidilyInPolyTime t input encUnary)
+    (hzs : ComputableTidilyInPolyTime zs input (encList encBits)) :
+    ComputableTidilyInPolyTime (fun x => esymmCoords (tab x) (t x) (zs x)) input encBits :=
+  (ComputableInPolyTime.tidy (AffineDisperser.computableInPolyTime_esymmCoords' (.of_tidy htab)
+      (.of_tidy ht) (.of_tidy hzs)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_traceVector'
+    {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} (htab : ComputableTidilyInPolyTime tab input encTable) :
+    ComputableTidilyInPolyTime (fun x => traceVector (tab x)) input encBits :=
+  (ComputableInPolyTime.tidy (AffineDisperser.computableInPolyTime_traceVector' (.of_tidy htab)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_traceBit'
+    {α : Type} {input : α ↪ List Bool}
+    {τ a : α → List Bool} (hτ : ComputableTidilyInPolyTime τ input encBits)
+    (ha : ComputableTidilyInPolyTime a input encBits) :
+    ComputableTidilyInPolyTime (fun x => traceBit (τ x) (a x)) input encBool :=
+  (ComputableInPolyTime.tidy (AffineDisperser.computableInPolyTime_traceBit' (.of_tidy hτ)
+      (.of_tidy ha)))
+
 /-! ### Field arithmetic -/
 
 /-- The multiplication table of the power basis, from the coefficient list of the modulus. -/
@@ -62,6 +134,17 @@ private theorem computableTidilyInPolyTime_powerMulTable :
   have := computableInPolyTime_powerTable.tidy
   fun_prop
 
+private theorem computableTidilyInPolyTime_fieldInv' {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {w : α → ℕ} {y : α → List Bool}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (hw : ComputableTidilyInPolyTime w input encUnary)
+    (hy : ComputableTidilyInPolyTime y input encBits) :
+    ComputableTidilyInPolyTime (fun x => fieldInv (tab x) (w x) (y x)) input encBits := by
+  unfold fieldInv
+  fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_fieldInv'
+
 /-- Inverses in coordinates, as a composition rule. -/
 @[fun_prop]
 theorem computableInPolyTime_fieldInv' {α : Type} {input : α ↪ List Bool}
@@ -69,9 +152,8 @@ theorem computableInPolyTime_fieldInv' {α : Type} {input : α ↪ List Bool}
     (htab : ComputableInPolyTime tab input encTable)
     (hw : ComputableInPolyTime w input encUnary)
     (hy : ComputableInPolyTime y input encBits) :
-    ComputableInPolyTime (fun x => fieldInv (tab x) (w x) (y x)) input encBits := by
-  unfold fieldInv
-  fun_prop
+    ComputableInPolyTime (fun x => fieldInv (tab x) (w x) (y x)) input encBits :=
+  .of_tidy (computableTidilyInPolyTime_fieldInv' htab.tidy hw.tidy hy.tidy)
 
 /-- The parameters of a Lagrange numerator: the table, the width, the node and the point. -/
 private abbrev encLagrangePar : (List (List (List Bool)) × ℕ) × (List Bool × List Bool) ↪
@@ -117,6 +199,21 @@ private theorem computableTidilyInPolyTime_lagrangeNum : ComputableTidilyInPolyT
   unfold lagrangeNum
   exact h
 
+private theorem computableTidilyInPolyTime_lagrangeNum' {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {w : α → ℕ} {E : α → List (List Bool)}
+    {a t : α → List Bool}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (hw : ComputableTidilyInPolyTime w input encUnary)
+    (hE : ComputableTidilyInPolyTime E input (encList encBits))
+    (ha : ComputableTidilyInPolyTime a input encBits)
+    (ht : ComputableTidilyInPolyTime t input encBits) :
+    ComputableTidilyInPolyTime (fun x => lagrangeNum (tab x) (w x) (E x) (a x) (t x)) input
+      encBits := by
+  simpa only [Function.comp_def] using
+    computableTidilyInPolyTime_lagrangeNum.comp (((htab.prod hw).prod hE).prod (ha.prod ht))
+
+attribute [local fun_prop] computableTidilyInPolyTime_lagrangeNum'
+
 /-- The Lagrange numerator, as a composition rule. -/
 @[fun_prop]
 theorem computableInPolyTime_lagrangeNum' {α : Type} {input : α ↪ List Bool}
@@ -128,15 +225,23 @@ theorem computableInPolyTime_lagrangeNum' {α : Type} {input : α ↪ List Bool}
     (ha : ComputableInPolyTime a input encBits)
     (ht : ComputableInPolyTime t input encBits) :
     ComputableInPolyTime (fun x => lagrangeNum (tab x) (w x) (E x) (a x) (t x)) input
+      encBits :=
+  .of_tidy (computableTidilyInPolyTime_lagrangeNum' htab.tidy hw.tidy hE.tidy ha.tidy ht.tidy)
+
+private theorem computableTidilyInPolyTime_lagrangeVal' {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {w : α → ℕ} {E : α → List (List Bool)}
+    {a t : α → List Bool}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (hw : ComputableTidilyInPolyTime w input encUnary)
+    (hE : ComputableTidilyInPolyTime E input (encList encBits))
+    (ha : ComputableTidilyInPolyTime a input encBits)
+    (ht : ComputableTidilyInPolyTime t input encBits) :
+    ComputableTidilyInPolyTime (fun x => lagrangeVal (tab x) (w x) (E x) (a x) (t x)) input
       encBits := by
-  have htab := htab.tidy
-  have hw := hw.tidy
-  have hE := hE.tidy
-  have ha := ha.tidy
-  have ht := ht.tidy
-  refine .of_tidy ?_
-  simpa only [Function.comp_def] using
-    computableTidilyInPolyTime_lagrangeNum.comp (((htab.prod hw).prod hE).prod (ha.prod ht))
+  unfold lagrangeVal
+  fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_lagrangeVal'
 
 /-- A Lagrange basis polynomial at a point, as a composition rule. -/
 @[fun_prop]
@@ -149,9 +254,8 @@ theorem computableInPolyTime_lagrangeVal' {α : Type} {input : α ↪ List Bool}
     (ha : ComputableInPolyTime a input encBits)
     (ht : ComputableInPolyTime t input encBits) :
     ComputableInPolyTime (fun x => lagrangeVal (tab x) (w x) (E x) (a x) (t x)) input
-      encBits := by
-  unfold lagrangeVal
-  fun_prop
+      encBits :=
+  .of_tidy (computableTidilyInPolyTime_lagrangeVal' htab.tidy hw.tidy hE.tidy ha.tidy ht.tidy)
 
 /-- The input of a term: the table, the width, the block length and the number of blocks; the
 nodes and the coordinates of the point; and the accepted input. -/
@@ -190,6 +294,23 @@ private theorem computableTidilyInPolyTime_termVal : ComputableTidilyInPolyTime
   unfold termVal
   exact h
 
+private theorem computableTidilyInPolyTime_termVal' {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {w b M : α → ℕ} {E xs : α → List (List Bool)}
+    {z : α → List Bool}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (hw : ComputableTidilyInPolyTime w input encUnary)
+    (hb : ComputableTidilyInPolyTime b input encUnary)
+    (hM : ComputableTidilyInPolyTime M input encUnary)
+    (hE : ComputableTidilyInPolyTime E input (encList encBits))
+    (hxs : ComputableTidilyInPolyTime xs input (encList encBits))
+    (hz : ComputableTidilyInPolyTime z input encBits) :
+    ComputableTidilyInPolyTime (fun x => termVal (tab x) (w x) (b x) (M x) (E x) (xs x) (z x))
+      input encBits := by
+  simpa only [Function.comp_def] using computableTidilyInPolyTime_termVal.comp
+    ((((htab.prod hw).prod hb).prod hM).prod ((hE.prod hxs).prod hz))
+
+attribute [local fun_prop] computableTidilyInPolyTime_termVal'
+
 /-- A term of the extension, as a composition rule. -/
 @[fun_prop]
 theorem computableInPolyTime_termVal' {α : Type} {input : α ↪ List Bool}
@@ -203,17 +324,24 @@ theorem computableInPolyTime_termVal' {α : Type} {input : α ↪ List Bool}
     (hxs : ComputableInPolyTime xs input (encList encBits))
     (hz : ComputableInPolyTime z input encBits) :
     ComputableInPolyTime (fun x => termVal (tab x) (w x) (b x) (M x) (E x) (xs x) (z x))
+      input encBits :=
+  .of_tidy (computableTidilyInPolyTime_termVal' htab.tidy hw.tidy hb.tidy hM.tidy hE.tidy hxs.tidy hz.tidy)
+
+private theorem computableTidilyInPolyTime_ldeVal' {α : Type} {input : α ↪ List Bool}
+    {tab : α → List (List (List Bool))} {w b M : α → ℕ} {E pts xs : α → List (List Bool)}
+    (htab : ComputableTidilyInPolyTime tab input encTable)
+    (hw : ComputableTidilyInPolyTime w input encUnary)
+    (hb : ComputableTidilyInPolyTime b input encUnary)
+    (hM : ComputableTidilyInPolyTime M input encUnary)
+    (hE : ComputableTidilyInPolyTime E input (encList encBits))
+    (hpts : ComputableTidilyInPolyTime pts input (encList encBits))
+    (hxs : ComputableTidilyInPolyTime xs input (encList encBits)) :
+    ComputableTidilyInPolyTime (fun x => ldeVal (tab x) (w x) (b x) (M x) (E x) (pts x) (xs x))
       input encBits := by
-  have htab := htab.tidy
-  have hw := hw.tidy
-  have hb := hb.tidy
-  have hM := hM.tidy
-  have hE := hE.tidy
-  have hxs := hxs.tidy
-  have hz := hz.tidy
-  refine .of_tidy ?_
-  simpa only [Function.comp_def] using computableTidilyInPolyTime_termVal.comp
-    ((((htab.prod hw).prod hb).prod hM).prod ((hE.prod hxs).prod hz))
+  unfold ldeVal
+  fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_ldeVal'
 
 /-- **The low-degree extension at a point is polynomial-time**, as a composition rule. -/
 @[fun_prop]
@@ -227,9 +355,8 @@ theorem computableInPolyTime_ldeVal' {α : Type} {input : α ↪ List Bool}
     (hpts : ComputableInPolyTime pts input (encList encBits))
     (hxs : ComputableInPolyTime xs input (encList encBits)) :
     ComputableInPolyTime (fun x => ldeVal (tab x) (w x) (b x) (M x) (E x) (pts x) (xs x))
-      input encBits := by
-  unfold ldeVal
-  fun_prop
+      input encBits :=
+  .of_tidy (computableTidilyInPolyTime_ldeVal' htab.tidy hw.tidy hb.tidy hM.tidy hE.tidy hpts.tidy hxs.tidy)
 
 /-! ### The padded program -/
 
@@ -261,14 +388,19 @@ private theorem polyBounded_two_pow_mul_padLength (c : ℕ) :
   rw [encUnary_apply, List.length_replicate] at this
   omega
 
-/-- The length parameter is polynomial-time. -/
-@[fun_prop]
-theorem computableInPolyTime_padLength :
-    ComputableInPolyTime padLength (encPair encBits encUnary) encUnary := by
-  refine .of_tidy ?_
+private theorem computableTidilyInPolyTime_padLength :
+    ComputableTidilyInPolyTime padLength (encPair encBits encUnary) encUnary := by
   unfold padLength
   have := unary_log_two
   fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_padLength
+
+/-- The length parameter is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_padLength :
+    ComputableInPolyTime padLength (encPair encBits encUnary) encUnary :=
+  .of_tidy (computableTidilyInPolyTime_padLength)
 
 /-- **The padded program is polynomial-time**, for any function `gL` on bit words computable in
 time `2 ^ O(n)`: every loop runs over at most `p ^ O(1)` elements for the padding `p`, the modulus
@@ -356,7 +488,7 @@ theorem encodedLanguage_mem_E {L : Language Bool} (hL : (L : Set (List Bool)) �
   obtain ⟨k, hk⟩ := mem_E_iff.1 hL
   obtain ⟨gL, hgL, hgLO⟩ := exists_computableInO_of_mem_DTIME hk
   have h := setOf_mem_E_of_computableInPolyTime_pad
-    (computableInPolyTime_paddedProgram M (.of_tidy hgLO))
+    (computableInPolyTime_paddedProgram M hgLO)
   have hset : (encodedLanguage L M : Set (List Bool)) =
       {y | paddedProgram M gL (y, 2 ^ y.length) = true} := by
     ext y

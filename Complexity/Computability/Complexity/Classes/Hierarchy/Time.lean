@@ -325,7 +325,7 @@ theorem setOf_timeDiagonal_notMem_DTIME {f J : ℕ → ℕ}
 `O((n + 1) ^ 5 * (J n + 1) ^ 3)`. -/
 theorem setOf_timeDiagonal_mem_DTIME {J : ℕ → ℕ} (hJ : TimeConstructible J) :
     {x | timeDiagonal J x = true} ∈ DTIME encBits fun n => (n + 1) ^ 5 * (J n + 1) ^ 3 :=
-  setOf_mem_DTIME_of_computableInO (computableInO_timeDiagonal hJ).tidy
+  setOf_mem_DTIME_of_computableInO (computableInO_timeDiagonal hJ)
     (t := fun n => (n + 1) ^ 5 * (J n + 1) ^ 3) fun _ => le_rfl
 
 /-! ### The time hierarchy theorem -/

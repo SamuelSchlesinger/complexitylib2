@@ -15,6 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fo
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 
 /-!
 # The words of `TQBF`
@@ -331,8 +332,8 @@ theorem image_TQBF_mem_PSPACE : encQBF '' TQBF ∈ PSPACE encBits := by
   obtain ⟨e, he⟩ := exists_computableInO_evaluate
   obtain ⟨dc, _, hc⟩ := isCode_pt.tidy.exists_degree
   obtain ⟨dd, _, hd⟩ := decodeQBF_pt.tidy.exists_degree
-  have h := hc.inO.ite (he.comp hd.inO) (ComputableTidilyInO.const false)
-  refine mem_PSPACE_of_computableInO (h.mono_le (T' := _) (S' := fun w =>
+  have h := hc.inO.ite (he.tidy.comp hd.inO) (ComputableTidilyInO.const false)
+  refine mem_PSPACE_of_computableInO (.of_tidy <| h.mono_le (T' := _) (S' := fun w =>
       (w.length + 1) ^ dc + ((w.length + 1) ^ dd +
         (w.length + (encQBF .bot).length + 1) ^ e + w.length)) (fun _ => le_rfl) fun w => ?_) ?_
     fun w => ?_

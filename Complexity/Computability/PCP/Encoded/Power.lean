@@ -197,6 +197,7 @@ section Complexity
 variable [Fintype D] [DecidableEq D] [Fintype α] [DecidableEq α]
   {enc : C ↪ List Bool} {alphabet : α ↪ List Bool} {labelEncoding : D ↪ List Bool}
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem polytime_powerPreprocessEdge (eval : C → α → α → Bool) (fallback : C)
     (rotate : ℕ × (ℕ × D) → ℕ × D)
     (hrotate : ComputableTidilyInPolyTime rotate
@@ -215,21 +216,26 @@ private theorem polytime_powerPreprocessEdge (eval : C → α → α → Bool) (
         p.1.preprocessRotation fallback rotate p.2)
       (encPair (encoding enc) (encPair (encPair encUnary encBool)
         (encFinite (PreprocessLabel D))))
-      (encPair (encPair encUnary encBool) (encFinite (PreprocessLabel D))) := by
-    fun_prop
+      (encPair (encPair encUnary encBool) (encFinite (PreprocessLabel D))) :=
+    ComputableInPolyTime.tidy (isPolyTime_preprocessRotation (.of_tidy (.fst _ _))
+      (.of_tidy (.snd _ _)) (.of_tidy hrotate) fallback)
   have he : ComputableTidilyInPolyTime
       (fun p : Graph C × (((ℕ × Bool) × PreprocessLabel D) × (α × α)) =>
         p.1.preprocessRelation eval fallback p.2.1 p.2.2.1 p.2.2.2)
       (encPair (encoding enc) (encPair
         (encPair (encPair encUnary encBool) (encFinite (PreprocessLabel D)))
-        (encPair alphabet alphabet))) encBool := by
-    fun_prop
+        (encPair alphabet alphabet))) encBool :=
+    ComputableInPolyTime.tidy (isPolyTime_preprocessRelation (.of_tidy (.fst _ _))
+      (.of_tidy ((ComputableTidilyInPolyTime.snd _ _).fst')) (.of_tidy heval)
+      (.of_tidy ((ComputableTidilyInPolyTime.snd _ _).snd'.fst'))
+      (.of_tidy ((ComputableTidilyInPolyTime.snd _ _).snd'.snd')) fallback)
   have hwalk := rotationMap_killedPowRotWithInput hr T q (encFinEnum (Fin q))
   have hrel := (RegularConstraintGraph.isPolyTime_powerRelationWithInput
     (.of_tidy hr) (.of_tidy he) T q (encFinEnum (Fin q))).tidy
   unfold powerPreprocessEdge
-  apply Edge.isPolyTime_mk
-  · fun_prop
+  refine ComputableInPolyTime.tidy (Edge.isPolyTime_mk (.of_tidy ?_) (.of_tidy ?_) (.of_tidy ?_))
+  · have := isPolyTime_halfEdgeNumber.tidy
+    fun_prop
   · exact isPolyTime_halfEdgeNumber.tidy.comp hwalk.fst'
   · apply pi
     intro a
@@ -238,6 +244,7 @@ private theorem polytime_powerPreprocessEdge (eval : C → α → α → Bool) (
     simpa only [RegularConstraintGraph.powerInputEncoding, Function.comp_def] using
       hrel.comp ((fst _ _).prod ((snd _ _).prod (const (a, b))))
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Construct the entire output truth tables, charging every rotation, constraint lookup,
 opinion table, copied graph, edge record and list delimiter. All finite parameters are fixed. -/
 private theorem polytime_powerPreprocess (eval : C → α → α → Bool) (fallback : C)
@@ -254,10 +261,13 @@ private theorem polytime_powerPreprocess (eval : C → α → α → Bool) (fall
       (fun g : Graph C => g.halfEdges.product walks) (encoding enc)
       (encList (encPair (encPair encUnary encBool)
         (encPair (encPi (encFinite (PreprocessLabel D))) (encPi (encFinEnum (Fin q)))))) := by
+    have := (isPolyTime_halfEdges (enc := enc) (.of_tidy .id')).tidy
     unfold List.product
     fun_prop
   unfold powerPreprocess
-  apply isPolyTime_mk (by fun_prop)
+  refine ComputableInPolyTime.tidy (isPolyTime_mk (.of_tidy ?_) (.of_tidy ?_))
+  · have := (isPolyTime_edges (enc := enc) (.of_tidy .id')).tidy
+    fun_prop
   exact mapWithInput hdarts hedge
 
 omit [Fintype D] [Fintype α] [DecidableEq D] in

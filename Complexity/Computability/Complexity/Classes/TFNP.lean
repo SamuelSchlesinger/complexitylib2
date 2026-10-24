@@ -260,7 +260,8 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- **Domains of `FNP` relations are in `NP`**: a solution, framed and padded, is a certificate. -/
 theorem searchDomain_mem_NP (hR : R ∈ FNP enc) : searchDomain R ∈ NP enc := by
   obtain ⟨⟨p, hp⟩, V, hV, hR⟩ := mem_FNP_iff_tidy.mp hR
-  exact mem_NP_of_witness (encW := encBits) ⟨fun w => w, fun _ => rfl, id'.exists_degree⟩ hV
+  exact mem_NP_of_witness (encW := encBits) ⟨fun w => w, fun _ => rfl, id'.exists_degree⟩
+    (.of_tidy hV)
     (fun a w => (hR a w).symm) fun a w h => ⟨w, h, hp a w h⟩
 
 /-- The search problem of a verifier: the certificates of the prescribed length that it accepts. -/

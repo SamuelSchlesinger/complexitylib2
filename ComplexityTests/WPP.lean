@@ -83,7 +83,7 @@ private theorem twoTargetGap_poly :
 example : {w : List Bool | w.headD false = true} ∈ LWPP encBits := by
   refine mem_LWPP_of_finset_targets (Finset.univ : Finset Bool)
     (mem_GapP_of_polyTime (.of_tidy twoTargetGap_poly))
-    (fun b _ => twoTargets_poly b)
+    (fun b _ => .of_tidy (twoTargets_poly b))
     (fun b _ => twoTargets_ne_zero b)
     (fun w => ?_) (fun w => ?_)
   · unfold twoTargetGap twoTargets
@@ -103,7 +103,7 @@ example : {w : List Bool | w.headD false = true} ∈ LWPP encBits := by
 example : {w : List Bool | w.headD false = true} ∈ WPP encBits := by
   refine mem_WPP_of_finset_targets (Finset.univ : Finset Bool)
     (mem_GapP_of_polyTime (.of_tidy twoTargetGap_poly))
-    (fun b _ => (twoTargets_poly b).comp (.encoding_length encBits))
+    (fun b _ => .of_tidy ((twoTargets_poly b).comp (.encoding_length encBits)))
     (fun b _ w => twoTargets_ne_zero b w.length)
     (fun w => ?_) (fun w => ?_)
   · unfold twoTargetGap twoTargets

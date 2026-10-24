@@ -109,21 +109,25 @@ example (proof : List Bool) :
   Graph.unsatVal_div_two_le_rejectProb 1 decode eval (loop false) proof
 
 -- Ordinary expressions preserve the raw and framed random-word encodings.
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : Graph Bool × List Bool => p.1.sampleEdge p.2)
     (encPair (Graph.encoding encBool) encBits) (encOption (Edge.encoding encBool)) := by
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : Graph Bool × List Bool => let graph := p.1; graph.sampleEdge p.2)
     (encPair (Graph.encoding encBool) encBits) (encOption (Edge.encoding encBool)) := by
   polytime
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : Graph Bool × List Bool => p.1.sampleEdge p.2)
     (encPair (Graph.encoding encBool) encBits) (encOption (Edge.encoding encBool)) := by
   polytime
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : Graph Bool × List Bool => let graph := p.1; graph.sampleEdge p.2)
     (encPair (Graph.encoding encBool) encBits) (encOption (Edge.encoding encBool)) := by
@@ -135,14 +139,16 @@ example : ComputableTidilyInPolyTime
     (fun p : Graph Bool × List Bool => p.1.sampleEdge p.2)
     (encPair (Graph.encoding encBool) (encList encBool))
       (encOption (Edge.encoding encBool)) := by
-  apply Graph.isPolyTime_sampleEdge (by fun_prop)
+  refine ComputableInPolyTime.tidy (Graph.isPolyTime_sampleEdge (.of_tidy (by fun_prop))
+    (.of_tidy ?_))
   exact ComputableTidilyInPolyTime.listToBits.comp (by fun_prop)
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example {C α : Type} (enc : C ↪ List Bool) (alphabet : α ↪ List Bool)
     (decoder : (Fin 2 → Bool) → α) (evaluator : C → α → α → Bool)
-    (heval : ComputableTidilyInPolyTime (fun p : C × α × α => evaluator p.1 p.2.1 p.2.2)
+    (heval : ComputableInPolyTime (fun p : C × α × α => evaluator p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool) :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : Edge C × List Bool => p.1.proofVerdict 2 decoder evaluator p.2)
       (encPair (Edge.encoding enc) encBits) encBool := by
   fail_if_success solve | clear heval; fun_prop

@@ -62,7 +62,7 @@ example : {x | diagonal x = true} ∈ NEXP encBits ∧ {x | diagonal x = true} �
 /-- The diagonal problem is decided within time `O(2 ^ (4 n))`, by its tidy machine. -/
 theorem setOf_diagonal_mem_DTIME :
     {x | diagonal x = true} ∈ DTIME encBits fun n => 2 ^ (4 * n) :=
-  setOf_mem_DTIME_of_computableInO computableInO_diagonal.tidy fun _ => le_rfl
+  setOf_mem_DTIME_of_computableInO computableInO_diagonal fun _ => le_rfl
 
 /-- A deterministic machine is a nondeterministic one: the diagonal problem, outside `P`, is in
 `NTIME (2 ^ (4 n))`. -/

@@ -645,7 +645,7 @@ theorem IP_subset_PSPACE (enc : α ↪ List Bool) : IP enc ⊆ PSPACE enc := by
     exact (ComputableTidilyInPolySpace.of_polyTime hpost).comp
       ((ComputableTidilyInPolySpace.of_polyTime hcap).prod
         (computableTidilyInPolySpace_evaluate M hfuel))
-  refine mem_PSPACE_of_computableInPolySpace hdec fun a => ?_
+  refine mem_PSPACE_of_computableInPolySpace (.of_tidy hdec) fun a => ?_
   rw [mem_iff_two_pow_lt_value (fun a S oracle s => hreal a S oracle s) hA a, evaluate_eq,
     decide_eq_true_iff]
 

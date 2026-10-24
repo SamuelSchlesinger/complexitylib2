@@ -131,7 +131,9 @@ theorem majorityPolynomial_mem {α : Type} {enc : α ↪ List Bool} {g D : α �
   have hd' := GapP.pow_mem_polyTime (GapP.comp_mem (GapP.sub_mem' hD hg) (.fst enc encBits)) hz
   have htest : ComputableInPolyTime
       (fun x : α × List Bool => if r x.1 < ones x then (1 : ℕ) else 0)
-      (encPair enc encBits) encNat := by fun_prop
+      (encPair enc encBits) encNat :=
+    .of_tidy (ComputableTidilyInPolyTime.ite_decide (ComputableTidilyInPolyTime.unary_lt' hR.tidy
+      hones.tidy) (.const 1) (.const 0))
   have hweight := GapP.mul_mem (GapP.mul_mem hg' hd')
     (SharpP.natCast_mem_GapP (mem_SharpP_of_polyTime htest))
   have hsum := GapP.sum_bits_mem hweight

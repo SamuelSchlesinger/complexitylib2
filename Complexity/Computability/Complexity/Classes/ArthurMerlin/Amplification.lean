@@ -118,6 +118,8 @@ def merlinArthurRepeat (enc : α ↪ List Bool) (q r p : Polynomial ℕ) (V : α
 theorem computableInPolyTime_merlinArthurRepeat {V : α × List Bool → Bool}
     (hV : ComputableInPolyTime V (encPair enc encBits) encBool) (q r p : Polynomial ℕ) :
     ComputableInPolyTime (merlinArthurRepeat enc q r p V) (encPair enc encBits) encBool := by
+  have hV := hV.tidy
+  refine .of_tidy ?_
   unfold merlinArthurRepeat repeatMajority repeatVotes
   fun_prop
 
@@ -233,6 +235,8 @@ def arthurMerlinRepeat (enc : α ↪ List Bool) (r p q : Polynomial ℕ) (V : α
 theorem computableInPolyTime_arthurMerlinRepeat {V : α × List Bool → Bool}
     (hV : ComputableInPolyTime V (encPair enc encBits) encBool) (r p q : Polynomial ℕ) :
     ComputableInPolyTime (arthurMerlinRepeat enc r p q V) (encPair enc encBits) encBool := by
+  have hV := hV.tidy
+  refine .of_tidy ?_
   unfold arthurMerlinRepeat
   fun_prop
 
@@ -534,7 +538,7 @@ theorem mem_AM_of_exists {B : Set (α × List Bool)} (hB : B ∈ AM (encPair enc
       x.2.take ((pB.comp L).eval (enc x.1).length) ++
         x.2.drop ((pB.comp L).eval (enc x.1).length + p.eval (enc x.1).length)), ?_,
     fun a => ?_⟩
-  · exact .of_tidy <| hVB.comp (((ComputableTidilyInPolyTime.fst _ _).prod
+  · exact .of_tidy <| hVB.tidy.comp (((ComputableTidilyInPolyTime.fst _ _).prod
       (ComputableTidilyInPolyTime.bitsTakeWithInput
         (ComputableTidilyInPolyTime.bitsDropWithInput (.snd _ _) hP) hp)).prod
       (ComputableTidilyInPolyTime.bitsAppend

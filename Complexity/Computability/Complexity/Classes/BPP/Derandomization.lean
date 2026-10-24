@@ -169,17 +169,22 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {c : ℕ}
         fun x => le_of_eq ?_
       rw [← pow_add, ht]
       ring_nf
+    have hseedO : ComputableTidilyInPolyTime seed enc encUnary := by
+      simp only [hseed]
+      fun_prop
+    have hblockO : ComputableTidilyInPolyTime block enc encUnary := by
+      simp only [hblock]
+      fun_prop
+    have hoverlapO : ComputableTidilyInPolyTime overlap enc encUnary := by
+      simp only [hoverlap]
+      fun_prop
+    have houtO : ComputableTidilyInPolyTime out enc encUnary := by
+      simp only [hout]
+      fun_prop
     refine (computableInPolyTime_nwDecider hV
-      (fun _ _ h => Nat.pow_le_pow_right two_pos (Nat.mul_le_mul_left k h)) (.of_tidy hg) (.of_tidy ?_) (.of_tidy ?_) (.of_tidy ?_) (.of_tidy ?_)
+      (fun _ _ h => Nat.pow_le_pow_right two_pos (Nat.mul_le_mul_left k h)) hg (.of_tidy hseedO)
+      (.of_tidy hblockO) (.of_tidy hoverlapO) (.of_tidy houtO)
       (hbudget (b + 1)) ((hbudget (k * (c * 4))).mono fun x => le_of_eq ?_)).tidy
-    · simp only [hseed]
-      fun_prop
-    · simp only [hblock]
-      fun_prop
-    · simp only [hoverlap]
-      fun_prop
-    · simp only [hout]
-      fun_prop
     · simp only [hblock]
       ring_nf
   · -- correctness on the instance `x`

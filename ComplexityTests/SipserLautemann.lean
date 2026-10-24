@@ -122,7 +122,8 @@ theorem noisyHead_mem_PH : {x : List Bool | x.headD false = true} ∈ PH encBits
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Direct `fun_prop` synthesis on the Sipser-Lautemann matrix verifier for `noisyHeadVerifier`.
-example : ComputableTidilyInPolyTime
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+example : ComputableInPolyTime
     (verifier encBits (Polynomial.C 2) noisyHeadVerifier)
     (encPair encBits encBits) encBool := by
   fun_prop

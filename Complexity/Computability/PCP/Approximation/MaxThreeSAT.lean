@@ -255,6 +255,10 @@ fixed list `pairs` is tested against its constraint table. -/
 theorem isPolyTime_toCNF :
     ComputableInPolyTime (toCNF e pairs) (encoding (encPi (encPi encBool))) encCNF := by
   refine .of_tidy ?_
+  have hsrc := (Edge.isPolyTime_src (enc := encPi (encPi encBool))
+    (edge := fun d : Edge (α → α → Bool) => d) (.of_tidy .id')).tidy
+  have hdst := (Edge.isPolyTime_dst (enc := encPi (encPi encBool))
+    (edge := fun d : Edge (α → α → Bool) => d) (.of_tidy .id')).tidy
   have hclause (p : α × α) : ComputableTidilyInPolyTime
       (fun d : Edge (α → α → Bool) => excludeClause e d.src d.dst p)
       (Edge.encoding (encPi (encPi encBool))) (encList (encPair encNat encBool)) := by
@@ -263,6 +267,8 @@ theorem isPolyTime_toCNF :
   have htest (p : α × α) : ComputableTidilyInPolyTime
       (fun d : Edge (α → α → Bool) => !d.constraint p.1 p.2)
       (Edge.encoding (encPi (encPi encBool))) encBool := by
+    have hconstraint := (Edge.isPolyTime_constraint (enc := encPi (encPi encBool))
+      (edge := fun d : Edge (α → α → Bool) => d) (.of_tidy .id')).tidy
     fun_prop
   have hedge : ComputableTidilyInPolyTime (edgeCNF e pairs)
       (Edge.encoding (encPi (encPi encBool))) encCNF :=

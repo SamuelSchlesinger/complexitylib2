@@ -134,6 +134,7 @@ open ComputableTidilyInPolyTime in
 /-- The initial state is computed in polynomial time. -/
 private theorem computableTidilyInPolyTime_init
     : ComputableTidilyInPolyTime init encCNF encState := by
+  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
   unfold init
   fun_prop
 
@@ -256,6 +257,6 @@ theorem KSAT_eq_inter (k : ℕ) {B : Set (CNF ℕ)} (hB : KSAT k ⊆ B) (hBSAT :
 in the length of the encoded formula, on formulas with `n` variables. -/
 theorem KSAT_decidableInExpTime_one (k : ℕ) : DecidableInExpTime (KSAT k) encCNF CNF.numVars 1 := by
   rw [KSAT_eq_inter k (KSAT_subset_SAT k) le_rfl]
-  exact SAT_decidableInExpTime_one.inter (computableInPolyTime_all_length_le k).tidy zero_le_one
+  exact SAT_decidableInExpTime_one.inter (computableInPolyTime_all_length_le k) zero_le_one
 
 end Cslib.Complexity

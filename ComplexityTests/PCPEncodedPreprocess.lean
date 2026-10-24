@@ -125,7 +125,8 @@ example : ComputableTidilyInPolyTime (Graph.preprocess false true rotateReflecti
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- The same ordinary functional spelling uses the shared compositional API.
-example : ComputableTidilyInPolyTime (fun g : Graph Bool =>
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+example : ComputableInPolyTime (fun g : Graph Bool =>
       let reduced := g.degreeReduce false rotateReflection [()]
       (reduced.addTrivial (some (false, true))
         (Graph.rotationEdges rotateReflection [()] reduced.vertices)).addLoops

@@ -371,6 +371,16 @@ theorem computableInPolyTime_gameFormula {k : ℕ} {State : Type} [Fintype State
     (l := fun x => (List.range (w x)).flatMap (roundTokens (w x)) ++
       (baseFormula (tab x) (w x)).tokens) (by fun_prop) fun _ => tokens_gameFormula ..
 
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_gameFormula
+    {k : ℕ} {State : Type} [Fintype State]
+    {tab : γ → CNF (CookLevin.Var k State)} {w : γ → ℕ}
+    (htab : ComputableTidilyInPolyTime tab encIn
+      (encList (encList (encPair CookLevin.encVar encBool))))
+    (hw : ComputableTidilyInPolyTime w encIn encUnary) :
+    ComputableTidilyInPolyTime (fun x => gameFormula (tab x) (w x)) encIn encQBF :=
+  (ComputableInPolyTime.tidy (computableInPolyTime_gameFormula (.of_tidy htab) (.of_tidy hw)))
+
 /-- **The reduction of a game is polynomial-time.** -/
 theorem computableInPolyTime_gameReduce {kV : ℕ} {StateV : Type} [Fintype StateV]
     [DecidableEq StateV] (tmV : MultiTapeTM kV Bool StateV) (cV dV : ℕ) :

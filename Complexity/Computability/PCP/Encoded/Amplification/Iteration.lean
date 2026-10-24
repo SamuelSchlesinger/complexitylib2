@@ -97,6 +97,11 @@ theorem isPolyTime_amplifyIter_clog {Input : Type} {input : Input ↪ List Bool}
       _ ≤ _ := Nat.mul_le_mul_left _ (Nat.le_add_left _ _)
   have heval :=
     (isPolyTime_constraintTableEval (α := SelectedAlphabet) (encPair encBool (encPi encBool))).tidy
+  have hedges := (isPolyTime_edges (graph := fun g : Graph Constraint => g)
+    (enc := encPi (encPi encBool)) (.of_tidy .id')).tidy
+  have hamplify := ComputableInPolyTime.tidy (isPolyTime_amplify (graph := id) (eval := id)
+    (alphabet := encPair encBool (encPi encBool)) (.of_tidy .id') (.of_tidy hcost)
+    (.of_tidy heval) fallback T q walks number coins queries)
   unfold amplifyIter
   apply ComputableTidilyInPolyTime.iterate (by fun_prop) hgraph (by fun_prop)
     (polyBounded_iterationSize_clog (.of_tidy hgraph) factor descriptorBound)

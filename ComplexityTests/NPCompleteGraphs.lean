@@ -54,28 +54,28 @@ example : PolyTimeReducible encCNF (encPair encGraph (encPair encNat encNat)) Th
 
 /-! ### Compositional `fun_prop` synthesis -/
 
-example : ComputableTidilyInPolyTime IndependentSet.toVertexCover (encPair encGraph encNat)
+example : ComputableInPolyTime IndependentSet.toVertexCover (encPair encGraph encNat)
     (encPair encGraph encNat) := by
   fun_prop
 
-example : ComputableTidilyInPolyTime VertexCover.verifier
+example : ComputableInPolyTime VertexCover.verifier
     (encPair (encPair encGraph encNat) encBits) encBool := by
   fun_prop
 
-example : ComputableTidilyInPolyTime (KColoring.verifier 3) (encPair encGraph encBits) encBool := by
+example : ComputableInPolyTime (KColoring.verifier 3) (encPair encGraph encBits) encBool := by
   fun_prop
 
-example : ComputableTidilyInPolyTime SAT.toThreeColoring encCNF encGraph := by fun_prop
+example : ComputableInPolyTime SAT.toThreeColoring encCNF encGraph := by fun_prop
 
-example : ComputableTidilyInPolyTime (SAT.toKColoring 2) encCNF encGraph := by fun_prop
+example : ComputableInPolyTime (SAT.toKColoring 2) encCNF encGraph := by fun_prop
 
-example : ComputableTidilyInPolyTime SAT.toDirHamPath encCNF
+example : ComputableInPolyTime SAT.toDirHamPath encCNF
     (encPair encGraph (encPair encNat encNat)) := by
   fun_prop
 
-example : ComputableTidilyInPolyTime SAT.toDirHamCycle encCNF encGraph := by fun_prop
+example : ComputableInPolyTime SAT.toDirHamCycle encCNF encGraph := by fun_prop
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun φ => IndependentSet.toVertexCover (SAT.toIndependentSet φ))
     encCNF (encPair encGraph encNat) := by
   fun_prop

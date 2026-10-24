@@ -607,6 +607,6 @@ open GeneralizedGeography Turing.MultiTapeTM
 /-- **Generalized Geography is in `PSPACE`** [Sipser, Theorem 8.14][Sipser2013]: it is a game of
 polynomially many moves whose winning condition is polynomial-time. -/
 theorem GeneralizedGeography_mem_PSPACE : GeneralizedGeography ∈ PSPACE (encPair encGraph encNat) :=
-  isGameVerifier_verifier.mem_PSPACE computableInPolyTime_verifier.tidy
+  isGameVerifier_verifier.mem_PSPACE computableInPolyTime_verifier
 
 end Cslib.Complexity

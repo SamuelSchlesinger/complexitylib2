@@ -271,14 +271,14 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Every problem in `P` is in `P` relative to every oracle. -/
 theorem P_subset_PWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     P enc ⊆ PWithOracle A enc := fun _ ⟨f, hf, h⟩ =>
-  ⟨f, hf.tidy.computableInPolyTimeWithOracle A, h⟩
+  ⟨f, hf.computableInPolyTimeWithOracle A, h⟩
 
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Every problem in `NP` is in `NP` relative to every oracle. -/
 theorem NP_subset_NPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     NP enc ⊆ NPWithOracle A enc := fun _ ⟨p, V, hV, h⟩ =>
-  ⟨p, V, hV.tidy.computableInPolyTimeWithOracle A, h⟩
+  ⟨p, V, hV.computableInPolyTimeWithOracle A, h⟩
 
 end Complexity
 

@@ -203,6 +203,7 @@ private theorem length_freeVarStep_le (stack : List (List ℕ)) (t : QBF.Kind ×
 /-- **Closedness is decided in polynomial time.** -/
 theorem computableInPolyTime_decide_closed :
     Turing.MultiTapeTM.ComputableInPolyTime (fun φ : QBF ℕ => decide φ.Closed) encQBF encBool := by
+  have htokens := computableInPolyTime_tokens.tidy
   refine .of_tidy ?_
   simp only [← QBF.isClosed_tokens]
   unfold QBF.isClosed

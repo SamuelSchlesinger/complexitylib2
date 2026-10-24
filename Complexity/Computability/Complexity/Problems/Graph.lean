@@ -256,12 +256,13 @@ theorem isVerifier_verifySubset {rel : Graph → ℕ → ℕ → Bool} {P : Grap
     · exact Or.inl huv
     · exact Or.inr ((hrel x.1 u v huv).2 (h hu hv huv))
 
-@[fun_prop]
 private theorem bool_or' {α : Type} {encA : α ↪ List Bool} {left right : α → Bool}
     (hleft : ComputableTidilyInPolyTime left encA encBool)
     (hright : ComputableTidilyInPolyTime right encA encBool) :
     ComputableTidilyInPolyTime (fun a => left a || right a) encA encBool :=
   bool_or.comp (hleft.prod hright)
+
+attribute [local fun_prop] bool_or'
 
 /-- `verifySubset` is computable in polynomial time whenever the pairwise test `rel` is. -/
 @[fun_prop]

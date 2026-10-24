@@ -72,7 +72,8 @@ example (A : Set (List Bool)) : (Set.univ : Set (List Bool)) ∈ PWithOracle A e
 /-- A deterministic computation is polynomial time relative to an oracle, with a certificate. -/
 example (A : Set (List Bool)) :
     ComputableInPolyTimeWithOracle A (fun _ : List Bool => false) encBits encBool :=
-  (ComputableTidilyInPolyTime.const false).computableInPolyTimeWithOracle A
+  (ComputableInPolyTime.of_tidy
+    (ComputableTidilyInPolyTime.const false)).computableInPolyTimeWithOracle A
 
 /-- `fun_prop` lifts polynomial-time certificates to every oracle. -/
 example (A : Set (List Bool)) :

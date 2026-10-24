@@ -178,7 +178,7 @@ theorem setOf_spaceDiagonal_mem_DSPACE {G : ℕ → ℕ} (hG : SpaceConstructibl
     (hn : ∀ n, n ≤ G n) : {x | spaceDiagonal G x = true} ∈ DSPACE encBits G := by
   obtain ⟨T, c, hc, -⟩ := computableInO_spaceDiagonal hG
   refine mem_DSPACE_iff.mpr ⟨2 * c, 2 * c, _, decidableInTimeAndSpace_iff.mpr
-    ⟨spaceDiagonal G, hc.computableInTimeAndSpace.mono (fun _ => le_rfl) fun x => ?_,
+    ⟨spaceDiagonal G, hc.mono (fun _ => le_rfl) fun x => ?_,
       fun x => Iff.rfl⟩⟩
   have := hn x.length
   simp only [encBits_apply]

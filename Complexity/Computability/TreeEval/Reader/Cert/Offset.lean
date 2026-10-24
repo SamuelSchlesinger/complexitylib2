@@ -244,7 +244,7 @@ theorem dirs_inSpace :
       have hl₀ : (fun q => (encPair (encList encBool) encFrame q).length) ≼
           fun q => 2 * ((encPair (encList encBool) encFrame q).length + 1) := .of_le fun _ => by omega
       have hd := budget_comp (frameFinite_inSpace (encB := encBool)
-        fun y : Fin 4 × Bool × Fin 3 => y.1.val % 2 == 1)
+        fun y : Fin 4 × Bool × Fin 3 => y.1.val % 2 == 1).tidy
         ((snd (encList encBool) encFrame).weaken hl₀) (.of_le fun x => by
           simp only [length_encPair]; omega)
       have hc : ComputableTidilyInSpace (fun p : Bool × List Bool => p.1 :: p.2)

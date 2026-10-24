@@ -29,7 +29,7 @@ along the linear-time map from unary numbers to words of ones stays in exponenti
 example : (fun n : ℕ => List.replicate n true) ⁻¹' {x | diagonal x = true} ∈ EXP encUnary := by
   obtain ⟨k, hk⟩ := mem_EXP_iff.mp setOf_diagonal_mem_EXP
   refine mem_EXP_iff.mpr ⟨k + 1, preimage_mem_DTIME (C := 2) hk
-    (ComputableTidilyInO.of_linear (.of_eq fun _ => rfl)) fun n => ?_⟩
+    (.of_tidy (ComputableTidilyInO.of_linear (.of_eq fun _ => rfl))) fun n => ?_⟩
   simp only [encUnary_apply, encBits_apply, List.length_replicate]
   have h₁ : n < 2 ^ n ^ (k + 1) := Nat.lt_two_pow_self.trans_le
     (Nat.pow_le_pow_right (by norm_num) (Nat.le_self_pow (by omega) n))

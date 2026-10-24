@@ -146,8 +146,6 @@ theorem preprocessRelation_eq_true [DecidableEq α] (g : Graph C)
 variable {enc : C ↪ List Bool} {labelEncoding : D ↪ List Bool}
   {dartEncoding : PreprocessLabel D ↪ List Bool}
 
-attribute [local fun_prop] ComputableInPolySpace.tidy in
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- A fixed finite dart label selects a branch; each branch charges the runtime graph and vertex.
 The numerical rotation certificate is joint in size, vertex and edge label. -/
 private theorem polytime_preprocessRotation [Finite D] (fallback : C)
@@ -171,8 +169,10 @@ private theorem polytime_preprocessRotation [Finite D] (fallback : C)
           (fun p : Graph C × ((ℕ × Bool) × PreprocessLabel D) =>
             p.1.cloudRotation fallback rotate (p.2.1, d))
           (encPair (encoding enc) (encPair (encPair encUnary encBool) dartEncoding))
-          (encPair (encPair encUnary encBool) labelEncoding) := by
-        fun_prop
+          (encPair (encPair encUnary encBool) labelEncoding) :=
+        ComputableInPolyTime.tidy (isPolyTime_cloudRotation (.of_tidy (.fst _ _))
+          (.of_tidy ((ComputableTidilyInPolyTime.snd _ _).fst'.prod (.const d)))
+          (.of_tidy hrotate) fallback)
       have hlabel : ComputableTidilyInPolyTime
           (fun d : D => (Sum.inl (Sum.inl (Sum.inr d)) : PreprocessLabel D))
           labelEncoding dartEncoding := .of_finite _
@@ -182,6 +182,8 @@ private theorem polytime_preprocessRotation [Finite D] (fallback : C)
             rotate (2 * p.1.edges.length, halfEdgeNumber p.2.1, d))
           (encPair (encoding enc) (encPair (encPair encUnary encBool) dartEncoding))
           (encPair encUnary labelEncoding) := by
+        have hedges := (isPolyTime_edges (enc := enc) (.of_tidy .id')).tidy
+        have hnumber := isPolyTime_halfEdgeNumber.tidy
         fun_prop
       have hlabel : ComputableTidilyInPolyTime
           (fun d : D => (Sum.inl (Sum.inr d) : PreprocessLabel D))

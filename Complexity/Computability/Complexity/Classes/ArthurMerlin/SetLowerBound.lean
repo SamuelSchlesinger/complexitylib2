@@ -165,6 +165,9 @@ theorem computableInPolyTime_verifier {N c m T : Polynomial ℕ} {ℓ : α → �
     {R : α × List Bool → Bool} (hℓ : ComputableInPolyTime ℓ enc encUnary)
     (hR : ComputableInPolyTime R (encPair enc encBits) encBool) :
     ComputableInPolyTime (verifier enc N c m T ℓ R) (encPair enc encBits) encBool := by
+  have hℓ := hℓ.tidy
+  have hR := hR.tidy
+  refine .of_tidy ?_
   unfold verifier
   dsimp only
   fun_prop
@@ -344,10 +347,10 @@ theorem SBP_subset_AM : SBP enc ⊆ AM enc := by
     exact ⟨fun ⟨_, h⟩ => h, fun h => ⟨fun _ => false, h⟩⟩
   refine mem_AM_of_card_certifiedSet (N := s) (c := 0)
     (R := fun x => W (x.1, x.2.take (s.eval (enc x.1).length)))
-    (hW.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod
+    (.of_tidy (hW.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod
       (ComputableTidilyInPolyTime.bitsTakeWithInput (.snd enc encBits)
         (((ComputableTidilyInPolyTime.unary_eval s).comp
-          (ComputableTidilyInPolyTime.encoding_length enc)).comp (.fst enc encBits)))))
+          (ComputableTidilyInPolyTime.encoding_length enc)).comp (.fst enc encBits))))))
     hk hkpos (fun a ha => ?_) fun a ha => ?_
   · rw [hcount]
     exact (hA a).1 ha

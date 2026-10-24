@@ -173,7 +173,7 @@ theorem DecidableInTimeO.inter {p : α → Bool} (hp : ComputableInPolyTime p en
   have h := hp.inO.ite hg (ComputableTidilyInO.const false)
   refine ⟨d + 1, DecidableInTimeO.mono (T := fun a => ((((enc a).length + 1) ^ d +
     if p a then t a else (enc a).length : ℕ) : ℝ))
-    (Complexity.DecidableInTimeO.of_computableInO h (fun a => ?_) fun a => le_rfl) (c + 2)
+    (Complexity.DecidableInTimeO.of_computableInO (.of_tidy h) (fun a => ?_) fun a => le_rfl) (c + 2)
     (fun a => ?_) fun a => ?_⟩
   · simp only [Set.mem_inter_iff, Set.mem_ofPred_eq, hgB]
     cases p a <;> simp

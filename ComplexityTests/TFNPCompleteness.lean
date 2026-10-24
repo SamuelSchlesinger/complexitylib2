@@ -17,9 +17,9 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 -- One uniform constructor handles every identity cube, including the zero-dimensional cube.
 example : ∃ code : ℕ → CircuitCode,
-    ComputableTidilyInPolyTime code encUnary encCode ∧
+    ComputableInPolyTime code encUnary encCode ∧
       ∀ n u, u.length = n → evalCircuitOutputs (code n) u = u :=
-  exists_uniformCircuitCodes id' id' (snd encUnary encBits) (fun _ _ h => h)
+  exists_uniformCircuitCodes (.of_tidy id') (.of_tidy id') (.of_tidy (snd encUnary encBits)) (fun _ _ h => h)
 
 -- Each canonical search problem has the advertised class and reduction quantifiers.
 example : SearchComplete @PPP encPigeon Pigeon := Pigeon_searchComplete

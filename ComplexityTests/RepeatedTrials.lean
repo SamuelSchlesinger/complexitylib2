@@ -52,7 +52,7 @@ example {α : Type} (trials width : ℕ) (V : α × List Bool → Bool) (a : α)
 
 /-- Polynomial-time certification composes through input-dependent dimensions. -/
 example (trials width : Polynomial ℕ) :
-    ComputableTidilyInPolyTime (fun x : List Bool × List Bool =>
+    ComputableInPolyTime (fun x : List Bool × List Bool =>
       repeatVotes (trials.eval x.1.length) (width.eval x.1.length)
         (fun z => z.2.headD false) x) (encPair encBits encBits) encBits := by
   apply computableInPolyTime_repeatVotes <;> fun_prop

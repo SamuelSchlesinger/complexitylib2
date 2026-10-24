@@ -66,7 +66,7 @@ def PPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :
 /-- An ordinary PP verifier can ignore every oracle. -/
 theorem PP_subset_PPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     PP enc ⊆ PPWithOracle A enc := fun _ ⟨p, V, hV, hL⟩ =>
-  ⟨p, V, hV.tidy.computableInPolyTimeWithOracle A, hL⟩
+  ⟨p, V, hV.computableInPolyTimeWithOracle A, hL⟩
 
 /-- A polynomial-time oracle adds no PP languages. -/
 theorem PPWithOracle_eq_PP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
@@ -95,7 +95,7 @@ theorem mem_PPWithOracle_iff_exists_GapPWithOracle {L : Set α} :
     let W₂ := andVerifier (fun a => q.eval (enc a).length) V₂ allFalseVerifier
     have hfalse : ComputableInPolyTimeWithOracle A (allFalseVerifier (α := α))
         (encPair enc encBits) encBool :=
-      computableInPolyTime_allFalseVerifier.tidy.computableInPolyTimeWithOracle A
+      computableInPolyTime_allFalseVerifier.computableInPolyTimeWithOracle A
     have hW₁ : ComputableInPolyTimeWithOracle A W₁ (encPair enc encBits) encBool :=
       computableInPolyTimeWithOracle_andVerifier (.of_tidy (by fun_prop)) h₁ hfalse
     have hW₂ : ComputableInPolyTimeWithOracle A W₂ (encPair enc encBits) encBool :=

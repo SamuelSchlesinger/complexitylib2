@@ -93,6 +93,48 @@ open Turing Turing.MultiTapeTM Turing.MultiTapeTM.Universal Cslib.Logic.PL
 
 namespace Ladner
 
+/-! Tidy views of the plain certificates of `Ladner.PolyTime`, for tidy `fun_prop` below. -/
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_capPow
+    {α : Type} {input : α ↪ List Bool}
+    {base exp cap : α → ℕ} (hbase : ComputableTidilyInPolyTime base input encUnary)
+    (hexp : ComputableTidilyInPolyTime exp input encUnary)
+    (hcap : ComputableTidilyInPolyTime cap input encUnary) :
+    ComputableTidilyInPolyTime (fun x => capPow (base x) (exp x) (cap x)) input encUnary :=
+  (ComputableInPolyTime.tidy (Ladner.computableInPolyTime_capPow (.of_tidy hbase) (.of_tidy hexp)
+      (.of_tidy hcap)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_padCheck
+    {α : Type} {input : α ↪ List Bool}
+    {e : α → ℕ → ℕ} {y : α → List Bool}
+    (he : ComputableTidilyInPolyTime (fun p : α × ℕ => e p.1 p.2) (encPair input encUnary)
+      encUnary)
+    (hy : ComputableTidilyInPolyTime y input encBits) :
+    ComputableTidilyInPolyTime (fun x => padCheck (e x) (y x)) input (encOption encCNF) :=
+  (ComputableInPolyTime.tidy (Ladner.computableInPolyTime_padCheck (.of_tidy he) (.of_tidy hy)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_H :
+    ComputableTidilyInPolyTime H encUnary encUnary :=
+  (ComputableInPolyTime.tidy (Ladner.computableInPolyTime_H))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_unpad :
+    ComputableTidilyInPolyTime unpad encBits (encPair encBits encUnary) :=
+  (ComputableInPolyTime.tidy (Ladner.computableInPolyTime_unpad))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_decodeCNF :
+    ComputableTidilyInPolyTime decodeCNF encBits encCNF :=
+  (ComputableInPolyTime.tidy (Ladner.computableInPolyTime_decodeCNF))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_word :
+    ComputableTidilyInPolyTime word encUnary encBits :=
+  (ComputableInPolyTime.tidy (Ladner.computableInPolyTime_word))
+
 /-- If `SAT` is in `P`, then `P = NP` for every encoding of instances. -/
 theorem P_eq_NP_of_SAT_mem_P (h : SAT ∈ P encCNF) {α : Type} (enc : α ↪ List Bool) :
     P enc = NP enc :=

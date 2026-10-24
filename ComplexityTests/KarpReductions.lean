@@ -44,25 +44,25 @@ example : NPHard (encPair encGraph encNat) Clique :=
 
 /-! ### Compositional `fun_prop` synthesis -/
 
-example : ComputableTidilyInPolyTime toThreeSAT encCNF encCNF := by fun_prop
+example : ComputableInPolyTime toThreeSAT encCNF encCNF := by fun_prop
 
-example : ComputableTidilyInPolyTime ThreeSAT.verifier (encPair encCNF encBits) encBool := by
+example : ComputableInPolyTime ThreeSAT.verifier (encPair encCNF encBits) encBool := by
   fun_prop
 
-example : ComputableTidilyInPolyTime SAT.toIndependentSet encCNF (encPair encGraph encNat) := by
+example : ComputableInPolyTime SAT.toIndependentSet encCNF (encPair encGraph encNat) := by
   fun_prop
 
 example : ComputableTidilyInPolyTime Graph.compl encGraph encGraph := by fun_prop
 
-example : ComputableTidilyInPolyTime IndependentSet.verifier
+example : ComputableInPolyTime IndependentSet.verifier
     (encPair (encPair encGraph encNat) encBits) encBool := by
   fun_prop
 
-example : ComputableTidilyInPolyTime Clique.verifier
+example : ComputableInPolyTime Clique.verifier
     (encPair (encPair encGraph encNat) encBits) encBool := by
   fun_prop
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun φ : CNF ℕ => let x := SAT.toIndependentSet φ; (x.1.compl, x.2))
     encCNF (encPair encGraph encNat) := by
   fun_prop

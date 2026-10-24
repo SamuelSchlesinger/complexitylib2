@@ -600,11 +600,14 @@ def paddedMIP (c d : ℕ) : Set (List Bool) :=
 
 variable [Finite Control]
 
-/-- `checkCert` is computable tidily in polynomial time. -/
+/-- `checkCert` is computable in polynomial time. -/
 @[fun_prop]
 theorem computableInPolyTime_checkCert (c d : ℕ) :
     Turing.MultiTapeTM.ComputableInPolyTime (fun q : List Bool × Cert => checkCert M c d q.1 q.2)
       (encPair encBits encCert) encBool := by
+  have haccepts := (computableInPolyTime_accepts M).tidy
+  have hproj := computableInPolyTime_projHistory.tidy
+  have hconsistent := computableInPolyTime_consistentHist.tidy
   refine .of_tidy ?_
   have ht : ComputableTidilyInPolyTime
       (fun q : List Bool × Cert => c * (q.1.length + 1) ^ d)

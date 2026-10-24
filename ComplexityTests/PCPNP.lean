@@ -112,7 +112,7 @@ example : noQueries.tableVerifier ((), []) = true := by decide
 
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
-example (enc : Unit ↪ List Bool) : ComputableTidilyInPolyTime noQueries.tableVerifier
+example (enc : Unit ↪ List Bool) : ComputableInPolyTime noQueries.tableVerifier
     (encPair enc encBits) encBool := by
   apply PCPVerifier.isPolyTime_tableVerifier (c := 0)
   · refine ⟨?_, ?_, ?_⟩ <;> unfold noQueries <;> fun_prop

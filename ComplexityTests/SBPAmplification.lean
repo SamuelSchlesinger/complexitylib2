@@ -57,20 +57,20 @@ example (r : ℕ) : acceptCount (SharpP.powerVerifier (fun _ : Unit => r + 1) (f
 
 /-- One pair of witnesses achieves a gap growing with the input length. -/
 example : ∃ f ∈ SharpP encBits, ∃ k : List Bool → ℕ,
-    ComputableTidilyInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
+    ComputableInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
       (w ∈ language → k w ≤ f w) ∧ (w ∉ language → 2 ^ (w.length + 1) * f w < k w) :=
   exists_SBP_gap_pow_polyBounded language_mem (fun w => w.length + 1)
     (PolyBounded.self.add (.const 1))
 
 /-- A zero requested exponent still has a strict nonmember inequality and positive threshold. -/
 example : ∃ f ∈ SharpP encBits, ∃ k : List Bool → ℕ,
-    ComputableTidilyInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
+    ComputableInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
       (w ∈ language → k w ≤ f w) ∧ (w ∉ language → 2 ^ (0 : ℕ) * f w < k w) :=
   exists_SBP_gap_pow_polyBounded language_mem (fun _ => 0) (.const 0)
 
 /-- A noncomputable requested rate can be handled by fixed dominating polynomial repetition. -/
 example (S : Set (List Bool)) : ∃ f ∈ SharpP encBits, ∃ k : List Bool → ℕ,
-    ComputableTidilyInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
+    ComputableInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
       let r := @ite ℕ (w ∈ S) (Classical.propDecidable _) w.length 0
       (w ∈ language → k w ≤ f w) ∧ (w ∉ language → 2 ^ r * f w < k w) := by
   classical

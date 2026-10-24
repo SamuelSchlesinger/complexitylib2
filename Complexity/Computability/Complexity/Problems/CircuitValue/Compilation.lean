@@ -90,7 +90,7 @@ private theorem exists_uniformOutputBits {α : Type} {enc : α ↪ List Bool}
       (∀ a j, j ≤ m a → (cs a j).size = (cs a 0).size) ∧
       ∀ a j (x : Fin (n a) → Bool),
         (cs a j).eval interpretation x 0 = (F (a, List.ofFn x)).getD j false := by
-  obtain ⟨circuits, hcode, hcorrect⟩ := exists_uniformCircuits (polytime_outputBit hF)
+  obtain ⟨circuits, hcode, hcorrect⟩ := exists_uniformCircuits (.of_tidy (polytime_outputBit hF))
   let cs (a : α) (j : ℕ) : Circuit signature (n a) 1 :=
     prefixCircuit (bitPrefix enc m a j)
       (circuits ((bitPrefix enc m a j).length + n a))
@@ -102,7 +102,7 @@ private theorem exists_uniformOutputBits {α : Type} {enc : α ↪ List Bool}
   refine ⟨cs, ?_, ?_, ?_⟩
   · have h := (computableInPolyTime_prefixCode (.of_tidy hprefix)
       (.of_tidy (ComputableTidilyInPolyTime.unary_to_binary.comp (hn.comp
-        (ComputableTidilyInPolyTime.fst enc encUnary)))) (.of_tidy (hcode.comp hlength))).tidy
+        (ComputableTidilyInPolyTime.fst enc encUnary)))) (hcode.comp (.of_tidy hlength))).tidy
     exact h.of_enc_eq fun p => by
       rw [show (cs p.1 p.2).code = _ from code_prefixCircuit _ _]
       rfl

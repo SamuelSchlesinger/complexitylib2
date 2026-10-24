@@ -58,24 +58,20 @@ theorem ofSlices_mem_P {f : ∀ n, BitString n → Bool}
     (hf : ComputableInPolyTime
       (fun x : List Bool => f x.length (BitString.ofList x.length x)) encBits encBool) :
     (Language.ofSlices f : Set (List Bool)) ∈ P encBits := by
-  have hf := hf.tidy
-  exact ⟨_, .of_tidy hf, mem_ofSlices_iff f⟩
+  exact ⟨_, hf, mem_ofSlices_iff f⟩
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- **`Language.ofSlices f` is in `P`** if and only if its list evaluator
-`fun x => f x.length (BitString.ofList x.length x)` is tidily computable in polynomial time. -/
+`fun x => f x.length (BitString.ofList x.length x)` is computable in polynomial time. -/
 theorem ofSlices_mem_P_iff {f : ∀ N, BitString N → Bool} :
     (Language.ofSlices f : Set (List Bool)) ∈ P encBits ↔
       ComputableInPolyTime
         (fun x : List Bool => f x.length (BitString.ofList x.length x)) encBits encBool := by
-  have this : (Language.ofSlices f : Set (List Bool)) ∈ P encBits ↔ ComputableTidilyInPolyTime (fun x : List Bool => f x.length (BitString.ofList x.length x)) encBits encBool := by
-    constructor
-    · rintro ⟨g, hg, hiff⟩
-      have heq : (fun x : List Bool => f x.length (BitString.ofList x.length x)) = g := by
-        funext x
-        exact Bool.eq_iff_iff.mpr ((mem_ofSlices_iff f x).symm.trans (hiff x))
-      exact heq ▸ hg.tidy
-    · exact ofSlices_mem_P
-  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
+  constructor
+  · rintro ⟨g, hg, hiff⟩
+    have heq : (fun x : List Bool => f x.length (BitString.ofList x.length x)) = g := by
+      funext x
+      exact Bool.eq_iff_iff.mpr ((mem_ofSlices_iff f x).symm.trans (hiff x))
+    exact heq ▸ hg
+  · exact ofSlices_mem_P
 
 end Cslib.Complexity

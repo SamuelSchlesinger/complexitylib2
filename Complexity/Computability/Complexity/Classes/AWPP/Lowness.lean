@@ -165,7 +165,8 @@ theorem PPWithOracle_eq_PP_of_mem_AWPP (hA : A ∈ AWPP encBits) (enc : α ↪ L
   have hT : ComputableTidilyInPolyTime T enc encUnary := by dsimp [T]; fun_prop
   let e : α → ℕ := fun a => r a + T a + 4
   have he : ComputableTidilyInPolyTime e enc encUnary := by dsimp [e]; fun_prop
-  obtain ⟨H, hH, R, hR, hweights⟩ := exists_AWPP_queryWeights hA hT he
+  obtain ⟨H, hH, R, hR, hweights⟩ := exists_AWPP_queryWeights hA (.of_tidy hT) (.of_tidy he)
+  have hR := hR.tidy
   let input : α × List Bool → List Bool := encPair enc encBits
   let T' : α × List Bool → ℕ := fun x => T x.1
   let R' : α × List Bool → ℕ := fun x => R x.1

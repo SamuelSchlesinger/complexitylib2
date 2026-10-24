@@ -112,15 +112,34 @@ def reduce (x : CNF ℕ × List Bool) : CNF ℕ :=
 
 /-! ### Polynomial time -/
 
+private theorem computableTidilyInPolyTime_stepClauses :
+    ComputableTidilyInPolyTime (fun p : Bool × Var × Var × Var =>
+      stepClauses p.1 p.2.1 p.2.2.1 p.2.2.2)
+      (encPair encBool (encPair encVar (encPair encVar encVar)))
+      (encList (encList (encPair encVar encBool))) := by
+  unfold stepClauses encVar
+  fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_stepClauses
+
 /-- Building the clauses of one step is polynomial-time. -/
 @[fun_prop]
 theorem computableInPolyTime_stepClauses :
     ComputableInPolyTime (fun p : Bool × Var × Var × Var =>
       stepClauses p.1 p.2.1 p.2.2.1 p.2.2.2)
       (encPair encBool (encPair encVar (encPair encVar encVar)))
+      (encList (encList (encPair encVar encBool))) :=
+  .of_tidy (computableTidilyInPolyTime_stepClauses)
+
+private theorem computableTidilyInPolyTime_rowClauses :
+    ComputableTidilyInPolyTime (fun p : List ℕ × ℕ × List Bool × Bool =>
+      rowClauses p.1 p.2.1 p.2.2.1 p.2.2.2)
+      (encPair (encList encNat) (encPair encUnary (encPair encBits encBool)))
       (encList (encList (encPair encVar encBool))) := by
-  unfold stepClauses encVar
+  unfold rowClauses encVar
   fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_rowClauses
 
 /-- Building the clauses of one equation is polynomial-time. -/
 @[fun_prop]
@@ -128,18 +147,25 @@ theorem computableInPolyTime_rowClauses :
     ComputableInPolyTime (fun p : List ℕ × ℕ × List Bool × Bool =>
       rowClauses p.1 p.2.1 p.2.2.1 p.2.2.2)
       (encPair (encList encNat) (encPair encUnary (encPair encBits encBool)))
+      (encList (encList (encPair encVar encBool))) :=
+  .of_tidy (computableTidilyInPolyTime_rowClauses)
+
+private theorem computableTidilyInPolyTime_hashCNF :
+    ComputableTidilyInPolyTime (fun p : List ℕ × ℕ × List Bool => hashCNF p.1 p.2.1 p.2.2)
+      (encPair (encList encNat) (encPair encUnary encBits))
       (encList (encList (encPair encVar encBool))) := by
-  unfold rowClauses encVar
+  unfold hashCNF
   fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_hashCNF
 
 /-- Building all equations is polynomial-time, with the number of equations in unary. -/
 @[fun_prop]
 theorem computableInPolyTime_hashCNF :
     ComputableInPolyTime (fun p : List ℕ × ℕ × List Bool => hashCNF p.1 p.2.1 p.2.2)
       (encPair (encList encNat) (encPair encUnary encBits))
-      (encList (encList (encPair encVar encBool))) := by
-  unfold hashCNF
-  fun_prop
+      (encList (encList (encPair encVar encBool))) :=
+  .of_tidy (computableTidilyInPolyTime_hashCNF)
 
 /-- The selector ranges over the dyadic range of `φ.vars.length + 2`: the least power of two
 above it. -/

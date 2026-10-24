@@ -142,9 +142,7 @@ info: 'Cslib.Circuits.Boolean.evalAdvice_familyAdvice' depends on axioms: [prope
 #print axioms Cslib.Circuits.Boolean.evalAdvice_familyAdvice
 
 /--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
+info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice

@@ -224,7 +224,7 @@ theorem mem_RP_iff_forall_decidesWithOneSidedErrorExponent {A : Set α} :
 decider reject a member with probability at most `1 / 4`. -/
 theorem RP_subset_BPP : RP enc ⊆ BPP enc := fun _ hA => by
   obtain ⟨p, V, hV, h⟩ := mem_RP_iff_forall_decidesWithOneSidedErrorExponent.1 hA 2
-  exact ⟨p, V, .of_tidy hV, h.decidesWithErrorExponent.decidesWithBoundedError fun _ => by simp⟩
+  exact ⟨p, V, hV, h.decidesWithErrorExponent.decidesWithBoundedError fun _ => by simp⟩
 
 /-- **`coRP ⊆ BPP`**: `BPP` is closed under complement. -/
 theorem coRP_subset_BPP : coRP enc ⊆ BPP enc := fun A hA => by

@@ -561,6 +561,7 @@ def toHamPath (x : Graph × ℕ × ℕ) : Graph × ℕ × ℕ :=
 theorem toHamPath_mem_iff (x : Graph × ℕ × ℕ) : toHamPath x ∈ HamPath ↔ x ∈ DirHamPath :=
   Graph.split_mem_HamPath_iff x.1 x.2.1 x.2.2
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The reduction `DirHamPath.toHamPath` is polynomial-time. -/
 @[fun_prop]
 theorem computableInPolyTime_toHamPath :

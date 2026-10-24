@@ -254,6 +254,11 @@ theorem computableInPolyTime_prenexReduce {kV : ℕ} {StateV : Type} [Fintype St
       (encList (encList (encPair CookLevin.encVar encBool)))
       (encList (encList (encPair encNat encBool))) :=
     (CNF.computableInPolyTime_relabel computableInPolyTime_tabVar).tidy
+  have htabVar := (computableInPolyTime_tabVar (k := kV) (State := StateV)).tidy
+  have hcertVar := (CookLevin.computableInPolyTime_cert (k := kV) (State := StateV)).tidy
+  have hcert : ComputableTidilyInPolyTime (fun q : ℕ × ℕ => certVar q.1 q.2)
+      (encPair encUnary encUnary) encNat :=
+    (computableInPolyTime_certVar (.of_tidy (.fst _ _)) (.of_tidy (.snd _ _))).tidy
   unfold prenexReduce gameTableau prenexPairs prenexMatrix gamePairs baseVars certLinkCNF
     encPrenexCNF encCNF
   fun_prop
@@ -265,7 +270,7 @@ end TQBF
 /-- `TQBFCNF` is in `PSPACE`: writing the formula is polynomial-time. -/
 theorem TQBFCNF_mem_PSPACE : TQBFCNF ∈ PSPACE encPrenexCNF :=
   PolyTimeReducible.mem_PSPACE
-    ⟨fun x => QBF.rounds x.1 (QBF.ofCNF x.2), .of_tidy (by unfold encPrenexCNF encCNF; fun_prop),
+    ⟨fun x => QBF.rounds x.1 (QBF.ofCNF x.2), by unfold encPrenexCNF encCNF; fun_prop,
       fun _ => Iff.rfl⟩
     TQBF_mem_PSPACE
 
@@ -275,7 +280,7 @@ normal form. -/
 theorem TQBFCNF_pspaceHard : PSPACEHard encPrenexCNF TQBFCNF := by
   intro α enc A hA
   obtain ⟨p, V, hV, h⟩ := exists_isGameVerifier_of_mem_PSPACE hA
-  obtain ⟨tV, sV, htV, -, kV, StateV, hfiniteV, tmV, htmV⟩ := hV
+  obtain ⟨tV, sV, htV, -, kV, StateV, hfiniteV, tmV, htmV⟩ := hV.tidy
   obtain ⟨cV, dV, htV⟩ := htV.exists_le
   have := Fintype.ofFinite StateV
   classical

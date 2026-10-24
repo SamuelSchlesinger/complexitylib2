@@ -112,7 +112,7 @@ theorem BPP_subset_SBP : BPP enc ⊆ SBP enc := by
   intro A hA
   obtain ⟨p, V, hV, hA⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hA 2
   have hf : (fun a => acceptCount V a (p.eval (enc a).length)) ∈ SharpP enc :=
-    ⟨p, V, .of_tidy hV, fun _ => rfl⟩
+    ⟨p, V, hV, fun _ => rfl⟩
   refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 3) hf,
     fun a => 2 * 2 ^ p.eval (enc a).length,
     by fun_prop, fun a => ?_⟩
@@ -157,8 +157,8 @@ theorem PolyTimeReducible.mem_SBP {encB : β ↪ List Bool} {B : Set β}
 theorem union_mem_SBP (hA : A ∈ SBP enc) (hB : B ∈ SBP enc) : A ∪ B ∈ SBP enc := by
   obtain ⟨f, hf, k, hk, hkpos, hA⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
   obtain ⟨g, hg, l, hl, hlpos, hB⟩ := mem_SBP_iff_exists_pos_threshold.mp hB
-  have hfl := SharpP.mul_mem hf (mem_SharpP_of_polyTime (.of_tidy hl))
-  have hgk := SharpP.mul_mem hg (mem_SharpP_of_polyTime (.of_tidy hk))
+  have hfl := SharpP.mul_mem hf (mem_SharpP_of_polyTime hl)
+  have hgk := SharpP.mul_mem hg (mem_SharpP_of_polyTime hk)
   refine ⟨_, SharpP.add_mem (SharpP.pow_mem hfl 2) (SharpP.pow_mem hgk 2),
     fun a => (k a * l a) ^ 2, by fun_prop, fun a => ?_⟩
   change (a ∈ A ∪ B → (k a * l a) ^ 2 ≤ (f a * l a) ^ 2 + (g a * k a) ^ 2) ∧
@@ -193,7 +193,7 @@ theorem exists_SBP_gap_pow (hA : A ∈ SBP enc) {m : ℕ} (hm : 0 < m) :
   have this : ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧ (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 ^ m * f a < k a) := by
     obtain ⟨f, hf, k, hk, hkpos, h⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
     refine ⟨f ^ m, SharpP.pow_mem hf m, fun a => k a ^ m,
-      hk.binary_pow' (.const m), fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩
+      hk.tidy.binary_pow' (.const m), fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩
     · intro ha
       exact Nat.pow_le_pow_left ((h a).1 ha) m
     · intro ha
@@ -201,6 +201,7 @@ theorem exists_SBP_gap_pow (hA : A ∈ SBP enc) {m : ℕ} (hm : 0 < m) :
         Nat.pow_lt_pow_left ((h a).2 ha) (Nat.ne_of_gt hm)
   simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Intersecting an SBP language with a BPP language preserves SBP.
 Square the SBP gap, amplify BPP beyond the exponential bound on that count,
 and multiply counts. This is an elementary consequence of counting closure and
@@ -211,7 +212,7 @@ theorem inter_mem_SBP_of_mem_BPP (hA : A ∈ SBP enc) (hB : B ∈ BPP enc) :
   obtain ⟨p, hp⟩ := SharpP.exists_le_two_pow hf
   obtain ⟨q, V, hV, hB⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.mp hB (p + 2)
   let c a := acceptCount V a (q.eval (enc a).length)
-  have hc : c ∈ SharpP enc := ⟨q, V, .of_tidy hV, fun _ => rfl⟩
+  have hc : c ∈ SharpP enc := ⟨q, V, hV, fun _ => rfl⟩
   refine ⟨_, SharpP.mul_mem (SharpP.natCast_mem 4) (SharpP.mul_mem hf hc),
     fun a => 3 * (k a * 2 ^ q.eval (enc a).length),
     .of_tidy (by fun_prop), fun a => ?_⟩

@@ -66,7 +66,7 @@ private theorem univ_mem_SBP_zero : (Set.univ : Set (List Bool)) ∈ SBP encBits
 example : (Set.univ : Set (List Bool)) ∈ PP encBits := SBP_subset_PP univ_mem_SBP_zero
 
 example : ∃ f ∈ SharpP encBits, ∃ k : List Bool → ℕ,
-    ComputableTidilyInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧
+    ComputableInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧
     ∀ w, (w ∈ (Set.univ : Set (List Bool)) → k w ≤ f w) ∧
       (w ∉ (Set.univ : Set (List Bool)) → 2 * f w < k w) :=
   mem_SBP_iff_exists_pos_threshold.mp univ_mem_SBP_zero
@@ -141,7 +141,7 @@ example : {w : List Bool | w.headD false = true} ∆ {w | w.tail.headD false = t
 
 /-- The repetition count is a theorem parameter, independent of the input. -/
 example (m : ℕ) (hm : 0 < m) : ∃ f ∈ SharpP encBits, ∃ k : List Bool → ℕ,
-    ComputableTidilyInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
+    ComputableInPolyTime k encBits encNat ∧ (∀ w, 0 < k w) ∧ ∀ w,
       (w.headD false = true → k w ≤ f w) ∧ (w.headD false ≠ true → 2 ^ m * f w < k w) :=
   exists_SBP_gap_pow head_mem_SBP hm
 

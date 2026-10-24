@@ -72,7 +72,7 @@ theorem TQBF_pspaceHard : PSPACEHard encQBF TQBF := by
   obtain ⟨k, State, hfinite, ntm, s, hs, hA⟩ := PSPACE_subset_NPSPACE hA
   obtain ⟨c, d, hcd⟩ := hs.exists_le
   obtain ⟨tV, sV, htV, -, kV, StateV, hfiniteV, tmV, htmV⟩ :=
-    TQBF.computableInPolyTime_edgeTest.tidy (enc := enc) (ntm := ntm) (c := c) (d := d)
+    (TQBF.computableInPolyTime_edgeTest (enc := enc) (ntm := ntm) (c := c) (d := d)).tidy
   obtain ⟨cV, dV, htV⟩ := htV.exists_le
   have := Fintype.ofFinite StateV
   classical

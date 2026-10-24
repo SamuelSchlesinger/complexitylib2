@@ -64,9 +64,11 @@ variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 function deciding it is tidily computable within some time and within space polynomial in the
 length of the encoded instance. -/
 theorem mem_PSPACE_iff_computableInO : A ∈ PSPACE enc ↔ ∃ (f : α → Bool) (T S : α → ℕ),
-    Turing.MultiTapeTM.ComputableInO f enc encBool T S ∧ PolyBounded (fun a => (enc a).length) S ∧
+    ComputableInO f enc encBool T S ∧ PolyBounded (fun a => (enc a).length) S ∧
       ∀ a, a ∈ A ↔ f a = true := by
-  have this : A ∈ PSPACE enc ↔ ∃ (f : α → Bool) (T S : α → ℕ), ComputableTidilyInO f enc encBool T S ∧ PolyBounded (fun a => (enc a).length) S ∧ ∀ a, a ∈ A ↔ f a = true := by
+  have this : A ∈ PSPACE enc ↔ ∃ (f : α → Bool) (T S : α → ℕ),
+      ComputableTidilyInO f enc encBool T S ∧ PolyBounded (fun a => (enc a).length) S ∧
+        ∀ a, a ∈ A ↔ f a = true := by
     constructor
     · rintro ⟨f, ⟨t, s, hs, hf⟩, hA⟩
       obtain ⟨c, hc⟩ := ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace hf
@@ -85,9 +87,10 @@ attribute [local fun_prop] Turing.MultiTapeTM.ComputableInPolySpace.tidy in
 deciding it is tidily computable within space polynomial in the length of the encoded instance
 (`Turing.MultiTapeTM.ComputableTidilyInPolySpace`). -/
 theorem mem_PSPACE_iff_computableInPolySpace : A ∈ PSPACE enc ↔
-    ∃ f : α → Bool, Turing.MultiTapeTM.ComputableInPolySpace f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true := by
-  have this : A ∈ PSPACE enc ↔ ∃ f : α → Bool, ComputableTidilyInPolySpace f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true := by
-    rw [mem_PSPACE_iff_computableInO]
+    ∃ f : α → Bool, ComputableInPolySpace f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true := by
+  have this : A ∈ PSPACE enc ↔
+      ∃ f : α → Bool, ComputableTidilyInPolySpace f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true := by
+    simp only [mem_PSPACE_iff_computableInO, computableInO_iff_computableTidilyInO]
     constructor
     · rintro ⟨f, T, S, hf, hS, hA⟩
       exact ⟨f, ⟨T, S, hS, hf⟩, hA⟩
@@ -97,7 +100,7 @@ theorem mem_PSPACE_iff_computableInPolySpace : A ∈ PSPACE enc ↔
 
 /-- A Boolean function computable within polynomial space decides a problem in `PSPACE`. -/
 theorem mem_PSPACE_of_computableInPolySpace {f : α → Bool}
-    (hf : Turing.MultiTapeTM.ComputableInPolySpace f enc encBool) (hA : ∀ a, a ∈ A ↔ f a = true) :
+    (hf : ComputableInPolySpace f enc encBool) (hA : ∀ a, a ∈ A ↔ f a = true) :
     A ∈ PSPACE enc :=
   mem_PSPACE_iff_computableInPolySpace.mpr ⟨f, hf, hA⟩
 
@@ -107,8 +110,8 @@ attribute [local fun_prop] Turing.MultiTapeTM.ComputableInPolyTime.tidy in
 theorem compl_mem_PSPACE (hA : A ∈ PSPACE enc) : Aᶜ ∈ PSPACE enc := by
   obtain ⟨f, T, S, hf, hS, hA⟩ := mem_PSPACE_iff_computableInO.mp hA
   have hnot := (ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encBool)
-    Bool.not).inO_one.comp_linear hf
-  refine mem_PSPACE_iff_computableInO.mpr ⟨_, T, S, hnot, hS, fun a => ?_⟩
+    Bool.not).inO_one.comp_linear hf.tidy
+  refine mem_PSPACE_iff_computableInO.mpr ⟨_, T, S, .of_tidy hnot, hS, fun a => ?_⟩
   simp [hA a]
 
 open scoped symmDiff
@@ -121,8 +124,8 @@ theorem inter_mem_PSPACE {B : Set α} (hA : A ∈ PSPACE enc) (hB : B ∈ PSPACE
   obtain ⟨f, hf, hA⟩ := mem_PSPACE_iff_computableInPolySpace.mp hA
   obtain ⟨g, hg, hB⟩ := mem_PSPACE_iff_computableInPolySpace.mp hB
   exact mem_PSPACE_of_computableInPolySpace
-    ((ComputableTidilyInPolySpace.of_polyTime ComputableTidilyInPolyTime.bool_and).comp
-      (hf.prod hg))
+    (.of_tidy ((ComputableTidilyInPolySpace.of_polyTime ComputableTidilyInPolyTime.bool_and).comp
+      (hf.tidy.prod hg.tidy)))
     fun a => by simp [hA a, hB a]
 
 /-- `PSPACE` as a Boolean subalgebra of `Set α`. -/
@@ -161,7 +164,7 @@ theorem PolyTimeReducible.mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : 
   obtain ⟨g, hg, hAB⟩ := h
   obtain ⟨f, T, S, hf, hS, hB⟩ := mem_PSPACE_iff_computableInO.mp hB
   obtain ⟨Tg, Sg, hSg, hgO⟩ := ComputableTidilyInPolySpace.of_polyTime hg.tidy
-  exact mem_PSPACE_iff_computableInO.mpr ⟨f ∘ g, _, _, hf.comp hgO,
+  exact mem_PSPACE_iff_computableInO.mpr ⟨f ∘ g, _, _, .of_tidy (hf.tidy.comp hgO),
     hSg.add (hS.comp hg.polyBounded_length), fun a => (hAB a).trans (hB (g a))⟩
 
 /-- The edges of the graph on words of width `n + 1` whose reachability within two steps from the
@@ -206,7 +209,7 @@ decides at depth `1`, reusing the space of the decider of `B` for every candidat
 (`Cslib.Reachability.computableTidilyInO_savitch`). -/
 theorem setOf_exists_mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set (β × List Bool)}
     {ℓ : β → ℕ} (hB : B ∈ PSPACE (encPair encB encBits))
-    (hℓ : Turing.MultiTapeTM.ComputableInPolyTime ℓ encB encUnary) :
+    (hℓ : ComputableInPolyTime ℓ encB encUnary) :
     {x | ∃ w : List Bool, w.length = ℓ x ∧ (x, w) ∈ B} ∈ PSPACE encB := by
   have hℓ := hℓ.tidy
   obtain ⟨f, T, S, hf, hS, hB⟩ := mem_PSPACE_iff_computableInO.mp hB
@@ -239,7 +242,7 @@ theorem setOf_exists_mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set (
   obtain ⟨Tg, Sg, hSg, hgO⟩ := ComputableTidilyInPolySpace.of_polyTime hg
   obtain ⟨Tc, Sc, hSc, hcO⟩ := ComputableTidilyInPolySpace.of_polyTime hc
   obtain ⟨Te, Se, hSe, heO⟩ := ComputableTidilyInPolySpace.of_polyTime he
-  have hedge := hcO.ite (hf.comp hgO) heO
+  have hedge := hcO.ite (hf.tidy.comp hgO) heO
   -- the arguments of Savitch's algorithm
   have hin : ComputableTidilyInPolyTime
       (fun x => (x, ℓ x + 1, 1, List.replicate (ℓ x + 1) false, List.replicate (ℓ x + 1) true))
@@ -268,7 +271,7 @@ theorem setOf_exists_mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set (
       fun x => cE * (2 * (encB x).length + 3 * ℓ x + 6) ^ dE :=
     PolyBounded.comp (size' := id) (v := fun n => cE * n ^ dE)
       (PolyBounded.of_polynomiallyBounded (bound := fun n => cE * n ^ dE) id (by fun_prop)) hG
-  refine mem_PSPACE_iff_computableInO.mpr ⟨_, _, _, h, ?_, fun x => ?_⟩
+  refine mem_PSPACE_iff_computableInO.mpr ⟨_, _, _, .of_tidy h, ?_, fun x => ?_⟩
   · refine (((hSi.add ((PolyBounded.const 2).mul (hℓ'.add (.const 3)))).add .self).add
       hpow).mono fun x => ?_
     have hmax : Cslib.Reachability.edgeMax (fun q : β × List Bool × List Bool =>

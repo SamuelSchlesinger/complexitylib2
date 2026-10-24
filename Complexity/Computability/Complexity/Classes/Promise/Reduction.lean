@@ -355,7 +355,7 @@ theorem PromiseP_subset_PromiseBPP : PromiseP enc ⊆ PromiseBPP enc :=
 
 theorem PromiseRP_subset_PromiseNP : PromiseRP enc ⊆ PromiseNP enc := by
   rintro Q ⟨p, V, hV, h⟩
-  exact mem_PromiseNP_iff.2 ⟨p, V, hV.tidy, h.exists_certificate⟩
+  exact mem_PromiseNP_iff.2 ⟨p, V, hV, h.exists_certificate⟩
 
 /-- A counted verifier's uniform rejection probability is its rejected fraction of all words. -/
 private theorem uniformList_rejectCount_toReal (V : α × List Bool → Bool) (a : α) (n : ℕ) :
@@ -591,7 +591,7 @@ theorem PolyTimeReducible.mem_PromiseP (h : PolyTimeReducible encA encB X Y)
     (hY : Y ∈ PromiseP encB) : X ∈ PromiseP encA := by
   obtain ⟨f, hf, hyes, hno⟩ := polyTimeReducible_iff_tidy.mp h
   obtain ⟨g, hg, hgyes, hgno⟩ := mem_PromiseP_iff.1 hY
-  exact mem_PromiseP_iff.2 ⟨g ∘ f, hg.comp hf, fun a ha => hgyes _ (hyes ha),
+  exact mem_PromiseP_iff.2 ⟨g ∘ f, hg.comp (.of_tidy hf), fun a ha => hgyes _ (hyes ha),
     fun a ha => hgno _ (hno ha)⟩
 
 /-- A reduction of promise problems restricts to a polynomial-time reduction between the problems

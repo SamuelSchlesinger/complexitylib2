@@ -54,7 +54,6 @@ Problems in `P` have kernels of constant size (`Cslib.Complexity.hasPolyKernel_o
 
 ## Main results
 
-* `Cslib.Complexity.isKernelization_iff_tidy`: kernelizations with a tidy polynomial-time map.
 * `Cslib.Complexity.IsKernelization.fptReducible`: every kernelization is an fpt-reduction from the
   problem to itself.
 * `Cslib.Complexity.HasKernel.mem_FPT`, `Cslib.Complexity.hasKernel_of_mem_FPT`,
@@ -106,15 +105,6 @@ polynomially bounded size bound. -/
 def HasPolyKernel (enc : α ↪ List Bool) (κ : α → ℕ) (A : Set α) : Prop :=
   ∃ (K : α → α) (g : ℕ → ℕ), PolynomiallyBounded g ∧ IsKernelization enc κ A K g
 
-/-- `Cslib.Complexity.IsKernelization` with a tidy polynomial-time kernelization, for proofs that
-compose machines. -/
-theorem isKernelization_iff_tidy {enc : α ↪ List Bool} {κ : α → ℕ} {A : Set α} {K : α → α}
-    {g : ℕ → ℕ} : IsKernelization enc κ A K g ↔ ComputableTidilyInPolyTime K enc enc ∧
-      (∀ a, K a ∈ A ↔ a ∈ A) ∧ (∀ a, (enc (K a)).length ≤ g (κ a)) ∧
-        ∀ a, κ (K a) ≤ g (κ a) :=
-  ⟨fun h => ⟨h.polyTime.tidy, h.mem_iff, h.length_le, h.parameter_le⟩,
-    fun ⟨h₁, h₂, h₃, h₄⟩ => ⟨.of_tidy h₁, h₂, h₃, h₄⟩⟩
-
 theorem HasPolyKernel.hasKernel {enc : α ↪ List Bool} {κ : α → ℕ} {A : Set α}
     (h : HasPolyKernel enc κ A) : HasKernel enc κ A :=
   let ⟨K, g, _, hK⟩ := h
@@ -127,7 +117,7 @@ variable {α : Type} {enc : α ↪ List Bool} {κ : α → ℕ} {A : Set α}
 /-- Every kernelization of `(A, κ)` is an fpt-reduction from `(A, κ)` to itself. -/
 theorem IsKernelization.fptReducible {K : α → α} {g : ℕ → ℕ} (hK : IsKernelization enc κ A K g) :
     FPTReducible enc enc κ κ A A :=
-  FPTReducible.of_computableInPolyTime hK.polyTime.tidy hK.parameter_le fun a => (hK.mem_iff a).symm
+  FPTReducible.of_computableInPolyTime hK.polyTime hK.parameter_le fun a => (hK.mem_iff a).symm
 
 /-! ### Kernels give fixed-parameter tractability -/
 
@@ -153,8 +143,9 @@ theorem IsKernelization.mem_FPT {K : α → α} {g : ℕ → ℕ} (hK : IsKernel
     rw [Nat.add_mul, Nat.one_mul]
     omega
   exact mem_FPT_iff_computableInFPTTime.mpr ⟨dec ∘ K,
-    ⟨fun k => 1 + (c * (∑ j ∈ Finset.range (g k + 1), t j) + c), d,
-      (hdec.comp hKd.inO).mono_le key key⟩,
+    ComputableInO.computableInFPTTime
+      (F := fun k => 1 + (c * (∑ j ∈ Finset.range (g k + 1), t j) + c)) (c := d)
+      (.of_tidy ((hdec.comp hKd.inO).mono_le key key)),
     fun a => (hK.mem_iff a).symm.trans (hdecA (K a))⟩
 
 /-- **A decidable problem with a kernel is fixed-parameter tractable.** -/

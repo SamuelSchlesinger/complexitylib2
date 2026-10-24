@@ -15,6 +15,7 @@ public import Complexity.Computability.Complexity.Classes.Space.Closure
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -172,7 +173,7 @@ theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
     (Q := fun n => (B n + 2) * (B n + 1))
     (R := fun n => ((B n + 1) * (B n + B n + 1) + L + 1) ^ 2 + cE * (2 * L + 3 * B n + 3) ^ dE)
     (by fun_prop) (by simp only [B]; fun_prop) (by simp only [B]; fun_prop)
-  have hmem := setOf_mem_DTIME_of_computableInO h
+  have hmem := setOf_mem_DTIME_of_computableInO (.of_tidy h)
     (t := fun n => cT * (n + 1) ^ dT + 2 ^ ((B n + 2) * (B n + 1)) *
       (((B n + 1) * (B n + B n + 1) + L + 1) ^ 2 + cE * (2 * L + 3 * B n + 3) ^ dE))
     fun a => by

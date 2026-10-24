@@ -106,7 +106,11 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 theorem computableInPolyTime_repeatMajority {V : α × List Bool → Bool}
     (hV : ComputableInPolyTime V (encPair enc encBits) encBool) (r p : Polynomial ℕ) :
     ComputableInPolyTime (repeatMajority enc r p V) (encPair enc encBits) encBool := by
-  have hV := hV.tidy
+  have hV' := hV.tidy
+  have hvotes : ComputableTidilyInPolyTime
+      (fun x => repeatVotes (2 * r.eval (enc x.1).length) (p.eval (enc x.1).length) V x)
+      (encPair enc encBits) encBits :=
+    (computableInPolyTime_repeatVotes hV (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy
   refine .of_tidy ?_
   unfold repeatMajority
   fun_prop
@@ -136,7 +140,11 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 theorem computableInPolyTime_repeatAny {V : α × List Bool → Bool}
     (hV : ComputableInPolyTime V (encPair enc encBits) encBool) (q p : Polynomial ℕ) :
     ComputableInPolyTime (repeatAny enc q p V) (encPair enc encBits) encBool := by
-  have hV := hV.tidy
+  have hV' := hV.tidy
+  have hvotes : ComputableTidilyInPolyTime
+      (fun x => repeatVotes (q.eval (enc x.1).length) (p.eval (enc x.1).length) V x)
+      (encPair enc encBits) encBits :=
+    (computableInPolyTime_repeatVotes hV (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy
   refine .of_tidy ?_
   unfold repeatAny
   fun_prop

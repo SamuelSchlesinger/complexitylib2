@@ -29,18 +29,20 @@ example : IsVerifier encTSP (Polynomial.X ^ 2) TSP.verifier TSP := TSP.isVerifie
 
 /-! ### Compositional `fun_prop` synthesis -/
 
-example : ComputableTidilyInPolyTime HamCycle.toTSP encGraph encTSP := by fun_prop
+example : ComputableInPolyTime HamCycle.toTSP encGraph encTSP := by fun_prop
 
-example : ComputableTidilyInPolyTime TSP.verifier (encPair encTSP encBits) encBool := by fun_prop
+example : ComputableInPolyTime TSP.verifier (encPair encTSP encBits) encBool := by fun_prop
 
-example : ComputableTidilyInPolyTime (fun x : List (List ℕ) × List ℕ => TSP.tourLength x.1 x.2)
+example : ComputableInPolyTime (fun x : List (List ℕ) × List ℕ => TSP.tourLength x.1 x.2)
     (encPair (encList (encList encNat)) (encList encNat)) encNat := by
   fun_prop
 
 -- Tour lengths compose with the binary comparison and sum certificates.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun x : (List (List ℕ) × List ℕ) × ℕ => decide (TSP.tourLength x.1.1 x.1.2 + x.2 ≤ x.2 * 2))
     (encPair (encPair (encList (encList encNat)) (encList encNat)) encNat) encBool := by
+  have htour := TSP.computableInPolyTime_tourLength.tidy
+  refine .of_tidy ?_
   fun_prop
 
 /-- Non-membership in `TSP`, checked over the permutations of the cities. -/

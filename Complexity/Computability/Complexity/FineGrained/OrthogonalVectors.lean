@@ -267,6 +267,7 @@ theorem computableInPolyTime_clauseVector :
     funext s
     simp only [clauseVector, satisfiesOn, bitsAssignment_eq_getD, List.idxOf_lt_length_iff]
   rw [e]
+  refine .of_tidy ?_
   unfold encStreamState encCNF
   fun_prop
 
@@ -462,6 +463,7 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 theorem computableInPolyTime_firstVars :
     ComputableInPolyTime firstVars encCNF (encList encNat) := by
+  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
   refine .of_tidy ?_
   have h : ComputableTidilyInPolyTime (fun φ => (φ.distinctVars.reverse.drop
       (φ.distinctVars.length - φ.distinctVars.length / 2)).reverse)
@@ -479,6 +481,7 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 theorem computableInPolyTime_secondVars :
     ComputableInPolyTime secondVars encCNF (encList encNat) := by
+  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
   refine .of_tidy ?_
   exact (dropUnary (encA := encNat)).comp (SAT.computableInPolyTime_distinctVars.tidy.prod
     (show ComputableTidilyInPolyTime (fun φ => φ.distinctVars.length / 2) encCNF
@@ -501,11 +504,11 @@ theorem exists_computableInO_toOV : ∃ e, ComputableInO toOV encCNF encOV
     (fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e)
     fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e := by
   have this : ∃ e, ComputableTidilyInO toOV encCNF encOV (fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e) fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e := by
-    obtain ⟨e₁, h₁⟩ := OV.exists_computableInO_stream OV.computableInPolyTime_firstVars.tidy
+    obtain ⟨e₁, h₁⟩ := OV.exists_computableInO_stream OV.computableInPolyTime_firstVars
       OV.length_firstVars_le (wrap := fun v => ((frame v).map fun b => [true, b]).flatten)
       (by fun_prop) [false]
-    obtain ⟨e₂, h₂⟩ := OV.exists_computableInO_stream OV.computableInPolyTime_secondVars.tidy
-      OV.length_secondVars_le (wrap := frame) (bitsFrame encBits) []
+    obtain ⟨e₂, h₂⟩ := OV.exists_computableInO_stream OV.computableInPolyTime_secondVars
+      OV.length_secondVars_le (wrap := frame) (.of_tidy (bitsFrame encBits)) []
     have hfm (l : List (List Bool)) (g : Bool → List Bool) :
         l.flatten.flatMap g = (l.map (·.flatMap g)).flatten := by
       induction l with
@@ -515,7 +518,7 @@ theorem exists_computableInO_toOV : ∃ e, ComputableInO toOV encCNF encOV
       induction L with
       | nil => rfl
       | cons v L ih => rw [encList_cons, ih]; rfl
-    have h := h₁.append h₂ (g := toOV) (encOut := encOV) fun φ => by
+    have h := h₁.tidy.append h₂.tidy (g := toOV) (encOut := encOV) fun φ => by
       rw [encOV, encPair_apply, hencList, hencList]
       simp only [toOV, encBits_apply, List.append_nil]
       rw [frame, hfm, List.map_map]
@@ -546,7 +549,7 @@ theorem DecidableInTimeO.decidableInExpTime_SAT {ε : ℝ} (hε : 0 < ε) {e : �
     DecidableInExpTime SAT encCNF CNF.numVars (1 - min ε 1 / 2) := by
   obtain ⟨g, t, c, hg, hgOV, ht⟩ := h.exists_computableTidilyInO
   obtain ⟨E, hred⟩ := exists_computableInO_toOV
-  refine DecidableInExpTime.of_computableInO (hg.comp hred) (fun φ => by
+  refine DecidableInExpTime.of_computableInO (.of_tidy (hg.comp hred.tidy)) (fun φ => by
     rw [← toOV_mem_OV_iff]
     exact hgOV _) (3 + 9 * c) (E + e) fun φ => ?_
   set ε₀ := min ε 1
@@ -635,7 +638,7 @@ theorem OVH_of_SETH (h : SETH) : OVH := by
   obtain ⟨k, hk⟩ := h _ hδ
   refine hk ?_
   rw [KSAT_eq_inter k (KSAT_subset_SAT k) le_rfl]
-  refine hSAT.inter (computableInPolyTime_all_length_le k).tidy ?_
+  refine hSAT.inter (computableInPolyTime_all_length_le k) ?_
   have : min ε 1 / 2 ≤ 1 / 2 := div_le_div_of_nonneg_right (min_le_right ε 1) zero_le_two
   linarith
 

@@ -97,7 +97,7 @@ alphabet and finitely many states. -/
 theorem decidableInPolyTime_of_mem_NP (h : A ∈ NP enc) :
     MultiTapeNTM.DecidableInPolyTime A enc := by
   obtain ⟨p, V, hV, hA⟩ := h
-  obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ := hA.exists_decidesInTime hV.tidy
+  obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ := hA.exists_decidesInTime hV
   exact ⟨_, .of_forall_le c d fun _ => le_rfl, k, State, hfinite, machine.toNTM, hdecides⟩
 
 end Cslib.Complexity

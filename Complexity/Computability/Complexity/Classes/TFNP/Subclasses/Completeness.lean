@@ -77,8 +77,9 @@ private theorem exists_endomorphismCodes {n : α → ℕ} {F : α × List Bool �
     (hlen : ∀ a u, u.length = n a → (F (a, u)).length = n a) :
     ∃ code : α → CircuitCode, ComputableTidilyInPolyTime code enc encCode ∧
       ∀ a u, u.length = n a → evalCircuitCode (n a) (code a) u = F (a, u) := by
-  obtain ⟨code, hcode, hsem⟩ := exists_uniformCircuitCodes hn hn hF hlen
-  refine ⟨code, hcode, fun a u hu => ?_⟩
+  obtain ⟨code, hcode, hsem⟩ := exists_uniformCircuitCodes (.of_tidy hn) (.of_tidy hn)
+    (.of_tidy hF) hlen
+  refine ⟨code, hcode.tidy, fun a u hu => ?_⟩
   rw [evalCircuitCode, hsem a u hu, padBits_of_length_eq (hlen a u hu)]
 
 /-- A uniform polynomial-time pigeonhole family reduces to the canonical circuit problem. -/
@@ -90,7 +91,8 @@ theorem pigeonRel_searchReducible_Pigeon {n : α → ℕ} {F : α × List Bool �
   have hn := hn.tidy
   have hF := hF.tidy
   obtain ⟨code, hcode, hsem⟩ := exists_endomorphismCodes hn hF hlen
-  apply SearchReducible.of_isTotalSearch isTotalSearch_Pigeon (hn.prod hcode) (snd enc encBits)
+  apply SearchReducible.of_isTotalSearch isTotalSearch_Pigeon (.of_tidy (hn.prod hcode))
+    (.of_tidy (snd enc encBits))
   intro a w hw
   change pigeonRel (fun a => n a) (fun p => evalCircuitCode (n p.1) (code p.1) p.2) a w at hw
   obtain ⟨hw, h⟩ := hw
@@ -118,7 +120,7 @@ theorem endOfLineRel_searchReducible_EndOfLine {n : α → ℕ}
   obtain ⟨cP, hcP, hPs⟩ := exists_endomorphismCodes hn hP hP_len
   obtain ⟨cS, hcS, hSs⟩ := exists_endomorphismCodes hn hS hS_len
   apply SearchReducible.of_isTotalSearch isTotalSearch_EndOfLine
-    (hn.prod (hcP.prod hcS)) (snd enc encBits)
+    (.of_tidy (hn.prod (hcP.prod hcS))) (.of_tidy (snd enc encBits))
   intro a u hw
   let P' (p : α × List Bool) := evalCircuitCode (n p.1) (cP p.1) p.2
   let S' (p : α × List Bool) := evalCircuitCode (n p.1) (cS p.1) p.2
@@ -144,7 +146,7 @@ theorem leafRel_searchReducible_Leaf {n : α → ℕ} {N₁ N₂ : α × List Bo
   obtain ⟨c₁, hc₁, h₁⟩ := exists_endomorphismCodes hn hN₁ hN₁_len
   obtain ⟨c₂, hc₂, h₂⟩ := exists_endomorphismCodes hn hN₂ hN₂_len
   apply SearchReducible.of_isTotalSearch isTotalSearch_Leaf
-    (hn.prod (hc₁.prod hc₂)) (snd enc encBits)
+    (.of_tidy (hn.prod (hc₁.prod hc₂))) (.of_tidy (snd enc encBits))
   intro a u hw
   let N₁' (p : α × List Bool) := evalCircuitCode (n p.1) (c₁ p.1) p.2
   let N₂' (p : α × List Bool) := evalCircuitCode (n p.1) (c₂ p.1) p.2
@@ -184,8 +186,9 @@ private theorem exists_costCodes {n : α → ℕ} {C : α × List Bool → ℕ}
       exact hb
     simp only [binaryWord, List.length_append, List.length_replicate, List.length_reverse]
     omega
-  obtain ⟨code, hcode, hsem⟩ := exists_uniformCircuitCodes hn hm hword hword_len
-  refine ⟨code, hcode, fun a u hu => ?_⟩
+  obtain ⟨code, hcode, hsem⟩ := exists_uniformCircuitCodes (.of_tidy hn) (.of_tidy hm)
+    (.of_tidy hword) hword_len
+  refine ⟨code, hcode.tidy, fun a u hu => ?_⟩
   rw [hsem a u hu, binaryValue_binaryWord]
 
 /-- A uniform polynomial-time local-search family reduces to the canonical circuit problem.
@@ -203,7 +206,7 @@ theorem localOptRel_searchReducible_LocalOpt {n : α → ℕ}
   obtain ⟨cN, hcN, hNs⟩ := exists_endomorphismCodes hn hN hlen
   obtain ⟨cC, hcC, hCs⟩ := exists_costCodes hn hC
   apply SearchReducible.of_isTotalSearch isTotalSearch_LocalOpt
-    (hn.prod (hcN.prod hcC)) (snd enc encBits)
+    (.of_tidy (hn.prod (hcN.prod hcC))) (.of_tidy (snd enc encBits))
   intro a u hw
   change u.length = n a ∧
     binaryValue (evalCircuitOutputs (cC a) u) ≤

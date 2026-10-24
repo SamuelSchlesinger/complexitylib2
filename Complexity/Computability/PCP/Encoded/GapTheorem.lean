@@ -70,11 +70,10 @@ theorem isPolyTime_gapGraph {V Input : Type} [DecidableEq V]
     ComputableInPolyTime (fun x => gapGraph (formula x)) input
       (Graph.encoding (encPi (encPi encBool))) := by
   have hformula := hformula.tidy
-  refine .of_tidy ?_
   unfold gapGraph
   apply Graph.isPolyTime_arithmeticAmplify
-  · exact (Graph.isPolyTime_composeSelectedEnumerated
-      (Graph.isPolyTime_ofCompactCNF (.of_tidy ((CNF.isPolyTime_to3CNF enc).tidy.comp hformula)))).tidy
+  · exact Graph.isPolyTime_composeSelectedEnumerated
+      (Graph.isPolyTime_ofCompactCNF (.of_tidy ((CNF.isPolyTime_to3CNF enc).tidy.comp hformula)))
   · exact fun x => (Graph.wellFormed_ofCompactCNF (formula x).to3CNF).composeSelectedEnumerated
 
 /-- Every output edge has endpoints in the declared finite vertex range. -/

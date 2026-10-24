@@ -807,11 +807,11 @@ info: 'Cslib.Logic.ESO.Definable.queryLanguage_mem_NP' depends on axioms:
 #print axioms Cslib.Logic.ESO.Definable.queryLanguage_mem_NP
 
 /--
-info: 'Cslib.Logic.ESO.Sentence.Layout.computableTidilyInPolyTime_verifier' depends on axioms:
+info: 'Cslib.Logic.ESO.Sentence.Layout.computableInPolyTime_verifier' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.ESO.Sentence.Layout.computableTidilyInPolyTime_verifier
+#print axioms Cslib.Logic.ESO.Sentence.Layout.computableInPolyTime_verifier
 
 /--
 info: 'Cslib.Complexity.SAT.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -5358,33 +5358,25 @@ info: 'Cslib.Complexity.CookLevin.computableInPolyTime_inputClauses' depends on 
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_inputClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_readClauses' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_readClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_readClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_stepClauses' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_stepClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_stepClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_tableau' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_tableau' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_tableau
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_reduce' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_reduce' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_reduce

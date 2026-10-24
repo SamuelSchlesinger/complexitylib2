@@ -51,9 +51,9 @@ example : ComputableTidilyInPolySpace
 theorem power_mem : (fun w : List Bool => 2 ^ w.length) ∈ SharpP encBits := by
   simpa using SharpP.two_pow_mem (enc := encBits) Polynomial.X
 
-example : ComputableTidilyInPolySpace (fun w : List Bool => -((2 ^ w.length : ℕ) : ℤ))
+example : ComputableInPolySpace (fun w : List Bool => -((2 ^ w.length : ℕ) : ℤ))
     encBits encIntBin :=
-  GapP.computableTidilyInPolySpace (GapP.neg_mem (SharpP.natCast_mem_GapP power_mem))
+  GapP.computableInPolySpace (GapP.neg_mem (SharpP.natCast_mem_GapP power_mem))
 
 example (k : ℕ) : {w : List Bool | 2 ^ w.length % k ≠ 0} ∈ PSPACE encBits :=
   ModP_subset_PSPACE k ⟨_, power_mem, fun _ => Iff.rfl⟩
@@ -98,15 +98,15 @@ info: 'Cslib.Complexity.computableInPolySpace_acceptCount' depends on axioms: [p
 #guard_msgs in
 #print axioms computableInPolySpace_acceptCount
 /--
-info: 'Cslib.Complexity.SharpP.computableTidilyInPolySpace' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.SharpP.computableInPolySpace' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms SharpP.computableTidilyInPolySpace
+#print axioms SharpP.computableInPolySpace
 /--
-info: 'Cslib.Complexity.GapP.computableTidilyInPolySpace' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.GapP.computableInPolySpace' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms GapP.computableTidilyInPolySpace
+#print axioms GapP.computableInPolySpace
 /--
 info: 'Cslib.Complexity.PP_subset_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/

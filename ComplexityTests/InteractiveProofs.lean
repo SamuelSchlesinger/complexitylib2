@@ -171,7 +171,7 @@ example : ComputableTidilyInPolySpace (fun w => BitString.increment (BitString.i
 -- A Boolean function computable within polynomial space decides a problem in `PSPACE`.
 example : {w : List Bool | w.headD false = true} ∈ PSPACE encBits :=
   mem_PSPACE_of_computableInPolySpace (f := fun w => w.headD false)
-    (.of_polyTime (ComputableTidilyInPolyTime.headD false)) fun _ => Iff.rfl
+    (.of_polyTime (.of_tidy (ComputableTidilyInPolyTime.headD false))) fun _ => Iff.rfl
 
 -- The seven codes of length `3` decode to the seven words of length at most `2`, each once.
 example : (List.range (Interaction.codeCount 2)).map (fun i =>

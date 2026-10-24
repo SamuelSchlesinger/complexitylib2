@@ -116,7 +116,8 @@ example : (SAT.toThreeColoring φ₁).1.length + (SAT.toThreeColoring φ₁).2.l
 
 /-- The subexponential time predicate holds for a trivial problem. -/
 example : DecidableInSubexpTime (∅ : Set Graph) encGraph fun G => G.1.length + G.2.length :=
-  fun δ hδ => DecidableInExpTime.of_computableInO (ComputableTidilyInO.const false) (by simp) 1 1 fun G => by
+  fun δ hδ => DecidableInExpTime.of_computableInO (.of_tidy (ComputableTidilyInO.const false))
+    (by simp) 1 1 fun G => by
     have h₁ : (1 : ℝ) ≤ 2 ^ (δ * ((G.1.length + G.2.length : ℕ) : ℝ)) :=
       Real.one_le_rpow (by norm_num) (by positivity)
     have h₀ : (0 : ℝ) ≤ (encGraph G).length := Nat.cast_nonneg _
@@ -134,7 +135,7 @@ example (h : ETH) :
 /-- Under `ETH`, 3SAT is not decidable in subexponential time in the number of clauses: the
 identity is a reduction of linear size. -/
 example (h : ETH) : ¬DecidableInSubexpTime ThreeSAT encCNF List.length :=
-  h.not_decidableInSubexpTime_of_reduction (f := id) ComputableTidilyInPolyTime.id'
+  h.not_decidableInSubexpTime_of_reduction (f := id) (.of_tidy ComputableTidilyInPolyTime.id')
     (fun φ hφ => ⟨fun h => h.2, fun h' => ⟨hφ, h'⟩⟩) (k := 1) fun φ _ => by simp
 
 /-! ### Axioms -/

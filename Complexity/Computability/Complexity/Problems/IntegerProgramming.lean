@@ -97,6 +97,7 @@ theorem isVerifier :
 theorem computableInPolyTime_verifier :
     ComputableInPolyTime verifier
       (encPair (encList (encPair (encList encNat) encNat)) encBits) encBool := by
+  have hmask := (computableInPolyTime_maskSelect encNat).tidy
   refine .of_tidy ?_
   unfold verifier
   apply allWithInput (by fun_prop)

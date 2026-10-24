@@ -288,6 +288,7 @@ theorem _root_.Cslib.Logic.PL.Occurrence.computableInPolyTime_conflict :
   unfold Occurrence.Conflict encOccurrence Cslib.Logic.PL.encOccurrence
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Karp's reduction `toIndependentSet` is computable in polynomial time. -/
 @[fun_prop]
 theorem computableInPolyTime_toIndependentSet :

@@ -505,6 +505,7 @@ theorem toThreeColoring_mem_iff (φ : CNF ℕ) : toThreeColoring φ ∈ ThreeCol
 
 /-! ### Polynomial-time reduction -/
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The reduction `toThreeColoring` is computable in polynomial time: vertex labels are computed in
 unary from clause, position and first-occurrence indices, then converted to binary. -/
 @[fun_prop]

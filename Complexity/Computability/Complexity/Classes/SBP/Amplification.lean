@@ -52,7 +52,7 @@ theorem exists_SBP_gap_pow_polyTime (hA : A ∈ SBP enc) {r : α → ℕ}
   have this : ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧ (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 ^ r a * f a < k a) := by
     obtain ⟨f, hf, k, hk, hkpos, h⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
     refine ⟨_, SharpP.pow_mem_polyTime hf (.of_tidy hr), fun a => k a ^ r a,
-      hk.binary_pow' hr, fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩
+      hk.tidy.binary_pow' hr, fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩
     · intro ha
       exact Nat.pow_le_pow_left ((h a).1 ha) (r a)
     · intro ha

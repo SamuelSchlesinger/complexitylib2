@@ -389,6 +389,7 @@ open ComputableTidilyInPolyTime in
 /-- The initial state of the search is computed in polynomial time. -/
 private theorem computableTidilyInPolyTime_init :
     ComputableTidilyInPolyTime init (encPair encGraph encNat) encState := by
+  have hcap := computableInPolyTime_cap.tidy
   unfold init
   fun_prop
 
@@ -396,6 +397,7 @@ open ComputableTidilyInPolyTime in
 /-- The number `2 ^ cap x` of paths is computed in binary in polynomial time. -/
 private theorem computableTidilyInPolyTime_count :
     ComputableTidilyInPolyTime (fun x => 2 ^ cap x) (encPair encGraph encNat) encNat := by
+  have hcap := computableInPolyTime_cap.tidy
   fun_prop
 
 open ComputableTidilyInPolyTime in

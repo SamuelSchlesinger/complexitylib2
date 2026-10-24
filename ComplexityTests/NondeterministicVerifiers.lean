@@ -235,7 +235,7 @@ guessing `[true]`. -/
 example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePTM k Bool State),
     machine.toNTM.Accepts [] := by
   obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ :=
-    IsVerifier.exists_decidesInTime (enc := encBits) (p := 1) (A := Set.univ) polyTime_headD
+    IsVerifier.exists_decidesInTime (enc := encBits) (p := 1) (A := Set.univ) (.of_tidy polyTime_headD)
       fun _ => ⟨fun _ => ⟨[true], by simp, rfl⟩, fun _ => trivial⟩
   exact ⟨k, State, hfinite, machine, ((hdecides []).2).mp trivial⟩
 
@@ -244,7 +244,7 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePT
 example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePTM k Bool State),
     ¬machine.toNTM.Accepts [] := by
   obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ :=
-    IsVerifier.exists_decidesInTime (enc := encBits) (p := 0) (A := ∅) polyTime_headD
+    IsVerifier.exists_decidesInTime (enc := encBits) (p := 0) (A := ∅) (.of_tidy polyTime_headD)
       fun _ => by simp
   exact ⟨k, State, hfinite, machine, fun h => ((hdecides []).2).mpr h⟩
 
@@ -253,7 +253,7 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePT
     machine.toNTM.Accepts [] := by
   obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ :=
     IsVerifier.exists_decidesInTime (enc := encBits) (p := 0) (A := Set.univ)
-      (ComputableTidilyInPolyTime.const true) fun _ => by simp
+      (.of_tidy (ComputableTidilyInPolyTime.const true)) fun _ => by simp
   exact ⟨k, State, hfinite, machine, ((hdecides []).2).mp trivial⟩
 
 /-- The guessing decider of the rejecting verifier rejects the empty instance, although every
@@ -263,7 +263,7 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePT
       ∀ input (cfg : Cfg k Bool State input), ∃ cfg', machine.toNTM.Step cfg cfg' := by
   obtain ⟨k, State, hfinite, machine, c, d, hdecides, htotal⟩ :=
     IsVerifier.exists_decidesInTime (enc := encBits) (p := 0) (A := ∅)
-      (ComputableTidilyInPolyTime.const false) fun _ => by simp
+      (.of_tidy (ComputableTidilyInPolyTime.const false)) fun _ => by simp
   exact ⟨k, State, hfinite, machine, _, fun h => ((hdecides []).2).mpr h, (hdecides []).1,
     htotal⟩
 
@@ -276,12 +276,14 @@ example : MultiTapeNTM.DecidableInPolyTime {a : Bool × ℕ | a.1 = true}
 
 /-! ### Checking encoded accepting computations -/
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- A fixed machine's checker is inferred under any encoding of instances. -/
 example {k : ℕ} {State α : Type} [Finite State] (ntm : MultiTapeNTM k Bool State)
     (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (ntm.checkChoices enc) (encPair enc encBits) encBool := by
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Checker inference composes with ordinary projections and a runtime guard. -/
 example {k : ℕ} {State α : Type} [Finite State] (ntm : MultiTapeNTM k Bool State)
     (enc : α ↪ List Bool) :

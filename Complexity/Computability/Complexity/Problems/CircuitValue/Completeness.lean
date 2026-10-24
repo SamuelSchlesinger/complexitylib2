@@ -242,10 +242,10 @@ theorem computableInLogSpace_tableauInstance :
   have hs := (ComputableTidilyInSpace.fst encWState encBool).weaken hin
   have hn := fst' (snd' hs)
   have hi := snd' (snd' hs)
-  refine (tableauSpec tm C d).computableInLogSpace (.of_tidy (tableauSpec_output tm C d))
+  refine (tableauSpec tm C d).computableInLogSpace (tableauSpec_output tm C d)
     (numGates_inSpace (k := k) (State := State) hin (timeBound_inSpace C d hin (.of_tidy hn)))
     (.of_tidy (gateChunk_inSpace tm C d hin hn hi))
-    (trailer_inSpace (k := k) (State := State) C d hin hn) ?_
+    (.of_tidy (trailer_inSpace (k := k) (State := State) C d hin hn)) ?_
   change PolynomiallyBounded fun n => numGates k State (timeBound C d n)
   simp only [numGates, blockSize, colStart, gfStart, globStart, numCols, timeBound]
   fun_prop

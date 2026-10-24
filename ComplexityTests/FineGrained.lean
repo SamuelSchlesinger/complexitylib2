@@ -108,11 +108,11 @@ example : satExponent 3 ≤ satExponent 4 := satExponent_mono (by norm_num)
 
 /-- A trivial problem is decidable within linear time, in either form. -/
 example : DecidableInTimeO (∅ : Set (CNF ℕ)) encCNF fun φ => (encCNF φ).length :=
-  DecidableInTimeO.of_computableInO (ComputableTidilyInO.const false) (by simp) fun _ => le_rfl
+  DecidableInTimeO.of_computableInO (.of_tidy (ComputableTidilyInO.const false)) (by simp) fun _ => le_rfl
 
 example : (∅ : Set (CNF ℕ)) ∈ DTIME encCNF id :=
   mem_DTIME_iff_decidableInTimeO.mpr
-    (DecidableInTimeO.of_computableInO (ComputableTidilyInO.const false) (by simp) fun _ => le_rfl)
+    (DecidableInTimeO.of_computableInO (.of_tidy (ComputableTidilyInO.const false)) (by simp) fun _ => le_rfl)
 
 /-- The hypotheses in terms of the exponents. -/
 example : ETH ↔ 0 < satExponent 3 := ETH_iff_satExponent_pos

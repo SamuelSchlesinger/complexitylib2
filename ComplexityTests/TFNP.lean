@@ -29,7 +29,7 @@ private theorem emptyRel_mem_TFNP : emptyRel ∈ TFNP encBits :=
   ⟨emptyRel_mem_FNP, fun _ => ⟨[], rfl⟩⟩
 
 private theorem emptyRel_mem_FPSearch : emptyRel ∈ FPSearch encBits :=
-  mem_FPSearch_of_total emptyRel_mem_FNP (ComputableTidilyInPolyTime.const []) fun _ => rfl
+  mem_FPSearch_of_total emptyRel_mem_FNP (.of_tidy (ComputableTidilyInPolyTime.const [])) fun _ => rfl
 
 example : searchDomain emptyRel = Set.univ :=
   isTotalSearch_iff_searchDomain_eq_univ.1 emptyRel_mem_TFNP.2
@@ -122,8 +122,8 @@ example : PolyTimeReducible encBits encBits (searchDomain emptyRel) (searchDomai
 
 /-- A reduction to the total `emptyRel` needs only the one-way condition on solutions. -/
 example : SearchReducible encBits encBits emptyRel emptyRel :=
-  .of_isTotalSearch emptyRel_mem_TFNP.2 ComputableTidilyInPolyTime.id'
-    (ComputableTidilyInPolyTime.const []) fun _ _ _ => rfl
+  .of_isTotalSearch emptyRel_mem_TFNP.2 (.of_tidy ComputableTidilyInPolyTime.id')
+    (.of_tidy (ComputableTidilyInPolyTime.const [])) fun _ _ _ => rfl
 
 /-- **A complete problem.** `emptyRel` is complete for the total problems solvable in polynomial
 time: such a problem reduces to it by solving the instance in the map back. -/
@@ -131,8 +131,8 @@ example : SearchComplete (fun {α : Type} (enc : α ↪ List Bool) => TFNP enc �
     encBits emptyRel := by
   refine ⟨⟨emptyRel_mem_TFNP, emptyRel_mem_FPSearch⟩, fun _ enc R ⟨hR, hR'⟩ => ?_⟩
   obtain ⟨g, hg, hgR⟩ := exists_total_of_mem_FPSearch hR' hR.2
-  exact .of_isTotalSearch emptyRel_mem_TFNP.2 (ComputableTidilyInPolyTime.const [])
-    (hg.comp (ComputableTidilyInPolyTime.fst enc encBits)) fun a _ _ => hgR a
+  exact .of_isTotalSearch emptyRel_mem_TFNP.2 (.of_tidy (ComputableTidilyInPolyTime.const []))
+    (hg.comp (.of_tidy (ComputableTidilyInPolyTime.fst enc encBits))) fun a _ _ => hgR a
 
 /-! ### `SAT` -/
 
@@ -193,8 +193,8 @@ example : Leaf (1, notCode1, idCode1) [true] :=
 private theorem emptyRel_searchReducible_EndOfLine :
     SearchReducible encBits encEndOfLine emptyRel EndOfLine :=
   .of_isTotalSearch isTotalSearch_EndOfLine
-    (ComputableTidilyInPolyTime.const (0, ([], []), ([], [])))
-    (ComputableTidilyInPolyTime.const []) fun _ _ _ => rfl
+    (.of_tidy (ComputableTidilyInPolyTime.const (0, ([], []), ([], []))))
+    (.of_tidy (ComputableTidilyInPolyTime.const [])) fun _ _ _ => rfl
 
 example : emptyRel ∈ PPAD encBits :=
   emptyRel_searchReducible_EndOfLine.mem_PPAD emptyRel_mem_FNP EndOfLine_mem_PPAD

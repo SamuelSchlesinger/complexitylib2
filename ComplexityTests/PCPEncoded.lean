@@ -85,7 +85,7 @@ example : ComputableTidilyInPolyTime (fun g : Graph Bool =>
 
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
-example : ComputableTidilyInPolyTime (fun p : Bool × Graph Bool =>
+example : ComputableInPolyTime (fun p : Bool × Graph Bool =>
     let g := p.2.addLoops true
     g.checkEdge equalityOrTrue true false [p.1, false] 0)
     (encPair encBool (Graph.encoding encBool)) encBool := by
@@ -99,9 +99,9 @@ attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 example {C α : Type} (enc : C ↪ List Bool) (alphabet : α ↪ List Bool)
     (eval : C → α → α → Bool) (fallback : C) (label : α)
-    (heval : ComputableTidilyInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
+    (heval : ComputableInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool) :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : Graph C × List α × ℕ =>
         p.1.checkEdge eval fallback label p.2.1 (p.2.2 + 1))
       (encPair (Graph.encoding enc) (encPair (encList alphabet) encUnary)) encBool := by
@@ -168,7 +168,7 @@ example : (Graph.mk 0 ([] : List (Edge Bool))).cloudRotation false rotateReflect
 
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : Graph Bool × ((ℕ × Bool) × Bool) =>
       p.1.cloudRotation false rotateReflection p.2)
     (encPair (Graph.encoding encBool) (encPair (encPair encUnary encBool) encBool))

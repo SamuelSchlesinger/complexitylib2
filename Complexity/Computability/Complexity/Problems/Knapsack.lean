@@ -91,6 +91,8 @@ theorem isVerifier : IsVerifier encKnapsack Polynomial.X verifier Knapsack := by
 @[fun_prop]
 theorem computableInPolyTime_verifier :
     ComputableInPolyTime verifier (encPair encKnapsack encBits) encBool := by
+  have hmask := (computableInPolyTime_maskSelect (encPair encNat encNat)).tidy
+  refine .of_tidy ?_
   unfold verifier
   fun_prop
 

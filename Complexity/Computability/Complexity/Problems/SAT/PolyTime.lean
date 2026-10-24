@@ -142,11 +142,11 @@ theorem computableInPolyTime_clause :
       (encPair (encPair encCNF encBits) (encList (encPair encNat encBool))) encBool := by
   fun_prop [Clause.eval, Literal.eval, assignment]
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The SAT verifier is polynomial-time, including on certificates of arbitrary length. -/
 @[fun_prop]
 theorem computableInPolyTime_verifier :
     ComputableInPolyTime verifier (encPair encCNF encBits) encBool := by
+  have hclause := computableInPolyTime_clause.tidy
   refine .of_tidy ?_
   fun_prop [verifier, CNF.eval]
 

@@ -74,7 +74,8 @@ example (table : Bool → Bool → Bool) : (encPi (encPi encBool) table).length 
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Table lookup is itself certified for runtime table and both runtime symbols.
-example : ComputableTidilyInPolyTime
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+example : ComputableInPolyTime
     (fun p : (Bool → Bool → Bool) × Bool × Bool => p.1 p.2.1 p.2.2)
     (encPair (encPi (encPi encBool)) (encPair encBool encBool)) encBool := by
   fun_prop

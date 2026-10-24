@@ -350,10 +350,36 @@ def test (N : Polynomial ℕ) (x : (Graph × Graph) × List Bool) : Bool :=
       (x.2.take (N.eval (encPair encGraph encGraph x.1).length))
       (x.2.drop (N.eval (encPair encGraph encGraph x.1).length))
 
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_adjIndex
+    {γ : Type} {input : γ ↪ List Bool} {G : γ → Graph}
+    {i j : γ → ℕ} (hG : ComputableTidilyInPolyTime G input encGraph)
+    (hi : ComputableTidilyInPolyTime i input encUnary)
+    (hj : ComputableTidilyInPolyTime j input encUnary) :
+    ComputableTidilyInPolyTime (fun x => (G x).adjIndex (i x) (j x)) input encBool :=
+  (ComputableInPolyTime.tidy (Graph.computableInPolyTime_adjIndex (.of_tidy hG) (.of_tidy hi)
+      (.of_tidy hj)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_image
+    {γ : Type} {input : γ ↪ List Bool} {n i : γ → ℕ}
+    {w : γ → List Bool} (hn : ComputableTidilyInPolyTime n input encUnary)
+    (hw : ComputableTidilyInPolyTime w input encBits)
+    (hi : ComputableTidilyInPolyTime i input encUnary) :
+    ComputableTidilyInPolyTime (fun x => GraphIsomorphism.image (n x) (w x) (i x)) input encUnary :=
+  (ComputableInPolyTime.tidy (GraphIsomorphism.computableInPolyTime_image (.of_tidy hn)
+      (.of_tidy hw) (.of_tidy hi)))
+
+@[local fun_prop]
+private theorem computableTidilyInPolyTime_distinctVertices :
+    ComputableTidilyInPolyTime Graph.distinctVertices encGraph (encList encNat) :=
+  (ComputableInPolyTime.tidy (Graph.computableInPolyTime_distinctVertices))
+
 /-- The test is polynomial-time. -/
 @[fun_prop]
 theorem computableInPolyTime_test (N : Polynomial ℕ) :
     ComputableInPolyTime (test N) (encPair (encPair encGraph encGraph) encBits) encBool := by
+  refine .of_tidy ?_
   unfold test check
   dsimp only
   fun_prop
@@ -545,7 +571,7 @@ theorem mem_AM : GraphNonIsomorphism ∈ AM (encPair encGraph encGraph) := by
     rw [hset, card_filter_check (by rw [hE]; omega) (by rw [hC]; omega)]
     rfl
   refine mem_AM_of_card_certifiedSet (N := N) (c := c) (R := test N)
-    (computableInPolyTime_test N).tidy hK (fun a => by positivity) (fun a ha => ?_)
+    (computableInPolyTime_test N) (.of_tidy hK) (fun a => by positivity) (fun a ha => ?_)
     fun a ha => ?_
   · obtain ⟨G₀, G₁⟩ := a
     dsimp only

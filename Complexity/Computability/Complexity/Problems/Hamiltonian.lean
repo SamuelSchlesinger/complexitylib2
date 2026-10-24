@@ -489,7 +489,8 @@ private theorem computableTidilyInPolyTime_pathCheck {r : Graph → ℕ → ℕ 
   simp only [← List.head?_reverse]
   exact bool_and' (bool_and' (((head? encNat).comp hp).decide_eq' hs)
       (((head? encNat).comp ((listReverse encNat).comp hp)).decide_eq' ht))
-    (Graph.computableInPolyTime_chainBool (.of_tidy (hr.comp hproj)) (.of_tidy hp)).tidy
+    (ComputableInPolyTime.tidy
+      (Graph.computableInPolyTime_chainBool (.of_tidy (hr.comp hproj)) (.of_tidy hp)))
 
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
@@ -505,7 +506,8 @@ private theorem computableTidilyInPolyTime_cycleCheck {r : Graph → ℕ → ℕ
       (encPair (encPair (encPair encGraph (encList encNat)) encNat) encNat)
       (encPair (encPair encGraph encNat) encNat) := by
     fun_prop
-  exact (Graph.computableInPolyTime_cycleChainBool (.of_tidy (hr.comp hproj)) (.of_tidy (snd _ _))).tidy
+  exact ComputableInPolyTime.tidy
+    (Graph.computableInPolyTime_cycleChainBool (.of_tidy (hr.comp hproj)) (.of_tidy (snd _ _)))
 
 namespace DirHamPath
 

@@ -610,6 +610,7 @@ theorem computableInPolyTime_octal :
   unfold octal
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The numbers of the digit construction are computed in polynomial time. -/
 @[fun_prop]
 theorem computableInPolyTime_digitNumbers :

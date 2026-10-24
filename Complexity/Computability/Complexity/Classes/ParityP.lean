@@ -154,9 +154,9 @@ theorem mem_ParityP_iff_exists_SharpP :
   rw [mem_ParityP]
   constructor
   · rintro ⟨p, V, hV, h⟩
-    exact ⟨_, ⟨p, V, .of_tidy hV, fun _ => rfl⟩, h⟩
+    exact ⟨_, ⟨p, V, hV, fun _ => rfl⟩, h⟩
   · rintro ⟨f, ⟨p, V, hV, hf⟩, h⟩
-    exact ⟨p, V, hV.tidy, fun a => by rw [h a, hf a]⟩
+    exact ⟨p, V, hV, fun a => by rw [h a, hf a]⟩
 
 /-- **`⊕P` is closed under complement**: `succVerifier` accepts one more string. -/
 theorem compl_mem_ParityP (hL : L ∈ ParityP enc) : Lᶜ ∈ ParityP enc := by
@@ -170,7 +170,7 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- **`P ⊆ ⊕P`**: a decider accepts the empty string or nothing. -/
 theorem P_subset_ParityP : P enc ⊆ ParityP enc := by
   rintro L ⟨f, hf, h⟩
-  refine mem_ParityP.2 ⟨0, fun x => f x.1, hf.tidy.comp (.fst enc encBits), fun a => ?_⟩
+  refine mem_ParityP.2 ⟨0, fun x => f x.1, .of_tidy (hf.tidy.comp (.fst enc encBits)), fun a => ?_⟩
   rw [h a, Polynomial.eval_zero]
   cases hfa : f a <;> simp [acceptCount, hfa]
 
