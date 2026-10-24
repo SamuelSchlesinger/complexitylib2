@@ -18,7 +18,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 
 The levels `Σₖ` and `Πₖ` of the polynomial hierarchy are defined like `NP`
 (`Cslib.Complexity.NP`), through polynomial-time verifiers, now with `k` alternating quantifiers
-over certificates [Arora and Barak, Definition 5.4][AroraBarak09], [Wrathall][Wrathall1976]:
+over certificates [Arora and Barak, Definition 5.3][AroraBarak09], [Wrathall][Wrathall1976]:
 `A ∈ SigmaP k enc` when there are polynomials `p₁, …, pₖ` and a function
 `V : α × List Bool → Bool`, computable in polynomial time on inputs
 `encPair enc encBits (a, w) = frame (enc a) ++ w`, such that
@@ -190,7 +190,7 @@ theorem isAlternatingVerifier_true_singleton {p : Polynomial ℕ} :
 
 /-- The level `Σₖ` of the polynomial hierarchy, with respect to the encoding `enc` of instances:
 the problems verified in polynomial time through `k` alternating blocks of polynomially long
-certificates, the first existential [Arora and Barak, Definition 5.4][AroraBarak09],
+certificates, the first existential [Arora and Barak, Definition 5.3][AroraBarak09],
 [Wrathall][Wrathall1976]. -/
 def SigmaP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
@@ -199,7 +199,7 @@ def SigmaP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
 
 /-- The level `Πₖ` of the polynomial hierarchy, with respect to the encoding `enc` of instances:
 the problems verified in polynomial time through `k` alternating blocks of polynomially long
-certificates, the first universal [Arora and Barak, Definition 5.4][AroraBarak09],
+certificates, the first universal [Arora and Barak, Definition 5.3][AroraBarak09],
 [Wrathall][Wrathall1976]. -/
 def PiP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
@@ -207,7 +207,7 @@ def PiP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
       IsAlternatingVerifier enc false ps V A}
 
 /-- The polynomial hierarchy: the union of the levels `Σₖ` [Stockmeyer][Stockmeyer1976],
-[Arora and Barak, Definition 5.4][AroraBarak09]. -/
+[Arora and Barak, Definition 5.3][AroraBarak09]. -/
 def PH (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, SigmaP k enc
 
 variable {k : ℕ}
