@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.QueryCount
 public import Complexity.Probability.Forking
 import Complexity.Languages.Probabilistic.Presample
@@ -33,7 +33,7 @@ stateful handler follow from properties of single calls
 (`runWithAnswers_run_interpret_invariant`).
 Answering queries from `q` presampled uniform answers has the law of answering them uniformly as
 they come, when the program asks at most `q` queries: this is the presampling theorem
-`ProbOracleComp.HasQueryBounds.eval_presample` (`interpret_uniform_eq`, and
+`OracleComp.IsQueryBounded.run_interpret_presample` (`interpret_uniform_eq`, and
 `run_interpret_countingUniform_eq` when the queries are also counted). Hence the general forking
 lemma (`Probability.Forking.le_add_sqrt_fork`) bounds the probability that the program, with
 uniform answers, validly names a query by `q / |H| + √(q · frk)` (`le_add_sqrt_fork`).
@@ -245,15 +245,13 @@ private theorem eval_replicate_uniform [Fintype H] [Nonempty H] (q : ℕ) :
 
 /-- The lazy law of uniform answers is the law of `q` presampled uniform answers, for a program
 asking at most `q` queries: an instance of the presampling theorem
-`ProbOracleComp.HasQueryBounds.eval_presample`. -/
+`ProbOracleComp.IsQueryBounded.eval_presample`. -/
 theorem interpret_uniform_eq [Fintype H] [Nonempty H] (default : H)
-    (program : OracleComp (fun _ : Query => H) α) {size : Query → ℕ} {q maxSize : ℕ}
-    (hq : (interpret (fun q => ProbOracleComp.query (spec := fun _ : Query => H) q)
-      program).HasQueryBounds size q maxSize) :
+    (program : OracleComp (fun _ : Query => H) α) {q : ℕ} (hq : program.IsQueryBounded q) :
     interpret (fun _ => PMF.uniformOfFintype H) program =
       (PMF.uniformOfFintype (Fin q → H)).map fun h =>
         (runWithAnswers default program (List.ofFn h)).1 := by
-  have hp := hq.eval_presample (ProbComp.uniform H) default
+  have hp := hq.probOracleComp.eval_presample (ProbComp.uniform H) default
     (fun v _ s => (pure (v, s) : ProbComp (H × Unit))) ()
   rw [eval_run_uniform, ProbComp.eval_bind, eval_replicate_uniform] at hp
   simp only [eval_run_withSampleList, PMF.bind_map, Function.comp_def] at hp
@@ -312,14 +310,13 @@ private theorem eval_run_counting [Fintype H] [Nonempty H]
 /-- Counting variant of `interpret_uniform_eq`: answering uniformly as queries come, and counting
 them, has the law of running on `q` presampled uniform answers and counting the queries made. -/
 theorem run_interpret_countingUniform_eq [Fintype H] [Nonempty H] (default : H)
-    (program : OracleComp (fun _ : Query => H) α) {size : Query → ℕ} {q maxSize : ℕ}
-    (hq : (interpret (fun q => ProbOracleComp.query (spec := fun _ : Query => H) q)
-      program).HasQueryBounds size q maxSize) (count : ℕ) :
+    (program : OracleComp (fun _ : Query => H) α) {q : ℕ} (hq : program.IsQueryBounded q)
+    (count : ℕ) :
     (interpret countingUniform program).run count =
       (PMF.uniformOfFintype (Fin q → H)).map fun h =>
         ((runWithAnswers default program (List.ofFn h)).1,
           count + (runWithAnswers default program (List.ofFn h)).2.length) := by
-  have hp := hq.eval_presample (ProbComp.uniform H) default
+  have hp := hq.probOracleComp.eval_presample (ProbComp.uniform H) default
     (fun v _ n => (pure (v, n + 1) : ProbComp (H × ℕ))) count
   rw [eval_run_counting, ProbComp.eval_bind, eval_replicate_uniform] at hp
   simp only [eval_run_withSampleList_count, PMF.bind_map, Function.comp_def] at hp
@@ -362,9 +359,7 @@ made when they are answered uniformly as they come, then forking it succeeds wit
 `frk` such that `acc ≤ q / |H| + √(q · frk)`. -/
 theorem le_add_sqrt_fork (first : PMF S)
     (program : S → OracleComp (fun _ : Query => H) (Option ℕ × β)) (default : H)
-    {size : Query → ℕ} {q maxSize : ℕ}
-    (hq : ∀ s, (interpret (fun q => ProbOracleComp.query (spec := fun _ : Query => H) q)
-      (program s)).HasQueryBounds size q maxSize) :
+    {q : ℕ} (hq : ∀ s, (program s).IsQueryBounded q) :
     ((do
       let s ← first
       let run ← (interpret countingUniform (program s)).run 0

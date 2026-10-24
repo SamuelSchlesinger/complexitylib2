@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Oracle
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle.QueryCount
 
 /-!
 # External query bounds from the machine clock
@@ -121,13 +121,24 @@ theorem query_bounds_runFrom (machine : MultiTapePTM k Symbol Control Operation)
 /-- From blank channels, the same clock bounds external calls and every request length. -/
 theorem query_bounds_runOracle (machine : MultiTapePTM k Symbol Control Operation)
     (fuel : ℕ) (input : List Symbol) :
-    ProbOracleComp.HasQueryBounds (machine.runOracle fuel input)
-      (fun request => request.2.length) fuel fuel := by
-  intro State oracle s s' output transcript h
-  simpa using query_bounds_runFrom machine (fun op word => (op, word))
-    (fun request => request.2.length) (by intros; exact le_rfl) oracle fuel
-    (machine.initialConfig input) 0 (by simp [initialConfig])
-    s s' [] transcript output (by simp) h
+    (machine.runOracle fuel input).IsQueryBounded fuel ∧
+      (machine.runOracle fuel input).QueriesSatisfy fun request => request.2.length ≤ fuel := by
+  have hrun (State : Type) (oracle : Operation × List Symbol → StateT State PMF (List Symbol))
+      (s s' : State) (output : List Symbol)
+      (transcript : OracleComp.Transcript (fun _ : Operation × List Symbol => List Symbol))
+      (h : (output, s', transcript) ∈ ((OracleComp.interpret
+        (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
+          (OracleComp.withTranscript oracle)) (machine.runOracle fuel input)).run
+            (s, [])).support) :
+      transcript.length ≤ fuel ∧ ∀ entry ∈ transcript, entry.1.2.length ≤ fuel := by
+    simpa using query_bounds_runFrom machine (fun op word => (op, word))
+      (fun request => request.2.length) (by intros; exact le_rfl) oracle fuel
+      (machine.initialConfig input) 0 (by simp [initialConfig])
+      s s' [] transcript output (by simp) h
+  exact ⟨ProbOracleComp.isQueryBounded_of_length_transcript_le fun State oracle s s' output
+      transcript h => (hrun State oracle s s' output transcript h).1,
+    ProbOracleComp.queriesSatisfy_of_forall_mem_transcript fun State oracle s s' output
+      transcript h => (hrun State oracle s s' output transcript h).2⟩
 
 /-- Agreement with a native configuration up to truncating each channel's reply to `limit`
 symbols. -/

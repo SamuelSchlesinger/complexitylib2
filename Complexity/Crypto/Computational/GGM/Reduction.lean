@@ -69,9 +69,8 @@ private theorem expansionOracle_sample (generator : List Bool → List Bool)
 
 /-- A list with one independent expansion per possible query gives exactly the online game. -/
 theorem sampleGame_replicate (generator : List Bool → List Bool) (sample : ProbComp (List Bool))
-    (adversary : OracleDistinguisher) (n depth count maxSize : ℕ)
-    (hqueries : ProbOracleComp.HasQueryBounds (adversary n []) (fun request => request.2.length)
-      count maxSize) :
+    (adversary : OracleDistinguisher) (n depth count : ℕ)
+    (hqueries : (adversary n []).IsQueryBounded count) :
     ProbComp.eval (OracleComp.replicate count sample >>= sampleGame generator adversary n depth) =
       ProbComp.eval (expansionGame generator sample adversary n depth) := by
   have h := hqueries.eval_presample sample []
@@ -139,9 +138,7 @@ theorem isPPTOn_levelTest {Caller : Type} {input : Caller ↪ List Bool}
 /-- The single-challenge test captures the signed gap of adjacent GGM levels. Its loss is the
 dyadic sampling range for the query budget, including padding coordinates. -/
 theorem levelTest_gap (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
-    (n depth count maxSize : ℕ) (hdepth : depth < n)
-    (hqueries : ProbOracleComp.HasQueryBounds (adversary n []) (fun request => request.2.length)
-      count maxSize) :
+    (n depth count : ℕ) (hdepth : depth < n) (hqueries : (adversary n []).IsQueryBounded count) :
     (Game.succProbability (ProbComp.eval (hybridGame generator adversary n depth)) : ℝ) -
         Game.succProbability (ProbComp.eval (hybridGame generator adversary n (depth + 1))) =
       (dyadicSize count : ℝ) *
@@ -153,7 +150,7 @@ theorem levelTest_gap (generator : List Bool → List Bool) (adversary : OracleD
   have h := sequenceTest_gap (BitString.sampleList (2 * n))
     (generator <$> BitString.sampleList n) count (sampleGame generator adversary n depth)
   simpa only [sampleGame_replicate generator _ adversary n depth count
-    maxSize hqueries, expansionGame_generated generator adversary n depth hdepth,
+    hqueries, expansionGame_generated generator adversary n depth hdepth,
     expansionGame_uniform generator adversary n depth hdepth] using h
 
 /-- Choose a level uniformly and run its single-challenge reduction. Both random choices use
@@ -179,9 +176,7 @@ theorem isPPT_reduction {generator : List Bool → List Bool}
 /-- The GGM reduction preserves the full real/ideal signed gap up to the product of the two
 dyadic sampling ranges. This statement is exact, including the zero-width game. -/
 theorem reduction_gap (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
-    (count : ℕ → ℕ) (n maxSize : ℕ)
-    (hqueries : ProbOracleComp.HasQueryBounds (adversary n []) (fun request => request.2.length)
-      (count n) maxSize) :
+    (count : ℕ → ℕ) (n : ℕ) (hqueries : (adversary n []).IsQueryBounded (count n)) :
     (Game.succProbability (ProbComp.eval (prfRealGame (eval generator) adversary n)) : ℝ) -
         (Game.succProbability (ProbComp.eval (prfIdealGame adversary n)) : ℝ) =
       (dyadicSize n : ℝ) * dyadicSize (count n) *
@@ -198,16 +193,14 @@ theorem reduction_gap (generator : List Bool → List Bool) (adversary : OracleD
       levelTest generator adversary n depth (count n))) n (dyadicSize n)
     (lt_dyadicSize n).le (dyadicSize (count n))
     (fun depth hdepth =>
-      levelTest_gap generator adversary n depth (count n) maxSize hdepth hqueries)
+      levelTest_gap generator adversary n depth (count n) hdepth hqueries)
   simpa only [eval_bind_sampleDyadicIndex_guard, PMF.monad_bind_eq_bind,
     hybridGame_zero, hybridGame_self] using h
 
 /-- The real/ideal PRF advantage is the reduction's generator advantage times the two sampling
 ranges. The loss is polynomial whenever the query budget is polynomial. -/
 theorem reduction_advantage (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
-    (count : ℕ → ℕ) (n maxSize : ℕ)
-    (hqueries : ProbOracleComp.HasQueryBounds (adversary n []) (fun request => request.2.length)
-      (count n) maxSize) :
+    (count : ℕ → ℕ) (n : ℕ) (hqueries : (adversary n []).IsQueryBounded (count n)) :
     Game.advantage (ProbComp.eval (prfRealGame (eval generator) adversary n))
         (ProbComp.eval (prfIdealGame adversary n)) =
       dyadicSize n * dyadicSize (count n) *
@@ -218,7 +211,7 @@ theorem reduction_advantage (generator : List Bool → List Bool) (adversary : O
             reduction generator adversary count n)) := by
   apply NNReal.eq
   rw [NNReal.coe_mul, NNReal.coe_mul, NNReal.coe_natCast, NNReal.coe_natCast,
-    Game.coe_advantage, Game.coe_advantage, reduction_gap generator adversary count n maxSize
+    Game.coe_advantage, Game.coe_advantage, reduction_gap generator adversary count n
       hqueries, abs_mul, abs_mul, Nat.abs_cast, Nat.abs_cast]
 
 end Cslib.Crypto.GGM

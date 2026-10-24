@@ -81,18 +81,14 @@ private noncomputable def adaptive : ProbOracleComp (fun _ : Bool => Bool) (Bool
     return (first, second)
   else return (first, coin)
 
-private theorem adaptive_queryBounds :
-    ProbOracleComp.HasQueryBounds adaptive (fun _ => 1) 2 1 := by
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.query false _ le_rfl)
-  intro first
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.sample _ _ _)
-  intro coin
+private theorem adaptive_queryBounds : adaptive.IsQueryBounded 2 := by
+  refine (ProbOracleComp.IsQueryBounded.query false).bind (m := 1) fun first =>
+    ((ProbOracleComp.IsQueryBounded.sample _).bind (m := 1) fun coin => ?_).mono (by norm_num)
   cases first with
-  | false => exact (ProbOracleComp.HasQueryBounds.pure _ _ _).mono (by decide) le_rfl
+  | false => exact OracleComp.IsCostBounded.pure _ _
   | true =>
-    apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 0) (.query (true ^^ coin) _ le_rfl)
-    intro second
-    exact .pure _ _ _
+    exact ((ProbOracleComp.IsQueryBounded.query (true ^^ coin)).bind fun second =>
+      OracleComp.IsCostBounded.pure _ 0).mono (by norm_num)
 
 -- Two saved independent bits reproduce online sampling, including the correlated final state.
 example (state : List Bool) :

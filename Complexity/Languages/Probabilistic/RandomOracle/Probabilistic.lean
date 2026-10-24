@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.RandomOracle
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle.QueryCount
 import Complexity.Languages.Probabilistic.Oracle.Simulation
 
 /-!
@@ -75,7 +75,7 @@ private theorem run_interpret_memoize_transcript_prob (distribution : Query → 
 Preassigned entries are retained regardless of the sampling distribution's support. -/
 theorem memoize_cache_bounds_prob (distribution : Query → PMF Value)
     (program : ProbOracleComp (fun _ : Query => Value) α) (size : Query → ℕ) (calls maxSize : ℕ)
-    (hqueries : ProbOracleComp.HasQueryBounds program size calls maxSize)
+    (hcalls : program.IsQueryBounded calls) (hsize : program.QueriesSatisfy (size · ≤ maxSize))
     (cache cache' : List (Query × Value)) (result : α)
     (h : (result, cache') ∈ ((OracleComp.interpret
       (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (memoize distribution))
@@ -89,12 +89,12 @@ theorem memoize_cache_bounds_prob (distribution : Query → PMF Value)
   cases heq
   obtain ⟨hcount, hentries⟩ := run_interpret_memoize_transcript_prob distribution program cache
     state.1 result state.2 hstate
-  obtain ⟨hcalls, hsize⟩ := hqueries _ (memoize distribution) cache state.1 result state.2 hstate
-  refine ⟨hcount.trans (Nat.add_le_add_left hcalls _), ?_⟩
+  refine ⟨hcount.trans (Nat.add_le_add_left
+    (hcalls.length_transcript_le (memoize distribution) hstate) _), ?_⟩
   intro entry hentry
   rcases hentries entry hentry with h | ⟨hseen, hsupport⟩
   · exact Or.inl h
-  · exact Or.inr ⟨hsize _ hseen, hsupport⟩
+  · exact Or.inr ⟨hsize.forall_mem_transcript (memoize distribution) hstate _ hseen, hsupport⟩
 
 /-- List memoization implements the mathematical random oracle for clients with private samples,
 retaining the result and represented final cache even over infinite query domains. -/

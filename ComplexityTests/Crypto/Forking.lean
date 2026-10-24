@@ -46,14 +46,8 @@ def askOnce (_ : Unit) : OracleComp (fun _ : Unit => Bool) (Option ℕ × Bool) 
   return (some 0, a)
 
 /-- `askOnce` asks one query. -/
-theorem askOnce_queries (s : Unit) :
-    (OracleComp.interpret (fun q => ProbOracleComp.query (spec := fun _ : Unit => Bool) q)
-      (askOnce s)).HasQueryBounds (fun _ => 0) 1 0 := by
-  have h := (ProbOracleComp.HasQueryBounds.query (Response := fun _ : Unit => Bool) ()
-    (fun _ => 0) le_rfl).bind fun a =>
-      ProbOracleComp.HasQueryBounds.pure (Response := fun _ : Unit => Bool) (some 0, a)
-        (fun _ => 0) 0
-  simpa [askOnce] using h
+theorem askOnce_queries (s : Unit) : (askOnce s).IsQueryBounded 1 :=
+  (OracleComp.IsCostBounded.query ()).bind fun a => OracleComp.IsCostBounded.pure (some 0, a) 0
 
 /-- Forking `askOnce`, which always names its query, succeeds with probability at least
 `1 / 4`. -/

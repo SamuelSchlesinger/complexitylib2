@@ -143,15 +143,11 @@ example : IsPPT encBool (GGM.reduction (fun seed => seed ++ seed)
   GGM.isPPT_reduction (by fun_prop) (by fun_prop) (by fun_prop)
 
 -- The semantic sibling client has a bound on its external calls, including its private coin.
-private theorem siblings_queryBounds (n : ℕ) :
-    ProbOracleComp.HasQueryBounds (siblings n []) (fun request => request.2.length) 2 1 := by
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 2) (.sample _ _ _)
-  intro coin
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.query ((), [coin]) _ (by simp))
-  intro first
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 0) (.query ((), [!coin]) _ (by simp))
-  intro second
-  exact .pure _ _ _
+private theorem siblings_queryBounds (n : ℕ) : (siblings n []).IsQueryBounded 2 :=
+  ((ProbOracleComp.IsQueryBounded.sample _).bind fun coin =>
+    (ProbOracleComp.IsQueryBounded.query ((), [coin])).bind fun first =>
+      (ProbOracleComp.IsQueryBounded.query ((), [!coin])).bind fun second =>
+        OracleComp.IsCostBounded.pure _ 0).mono (by norm_num)
 
 -- The exact reduction loss applies to this randomized two-query client without a PPT premise.
 example (generator : List Bool → List Bool) :
@@ -163,7 +159,7 @@ example (generator : List Bool → List Bool) :
             GGM.reduction generator siblings (fun _ => 2) 1))
           (ProbComp.eval (BitString.sampleList 2 >>=
             GGM.reduction generator siblings (fun _ => 2) 1)) :=
-  GGM.reduction_advantage generator siblings (fun _ => 2) 1 1 (siblings_queryBounds 1)
+  GGM.reduction_advantage generator siblings (fun _ => 2) 1 (siblings_queryBounds 1)
 
 -- Any PRG, including the strict zero-width convention, supplies the full adaptive PRF contract.
 example {generator : List Bool → List Bool} {length : ℕ → ℕ}

@@ -366,7 +366,9 @@ public theorem ComputesTidily.iterateWhile {tm : MultiTapePTM k Bool State Opera
       Probability.PMF.monad_pure_eq_pure, PMF.mem_support_pure_iff, Prod.mk.injEq] at hp
     obtain ⟨rfl, -⟩ := hp
     have hmidInv := ProbOracleComp.iterate_invariant inv ⟨hbase, by simp⟩
-      (fun n p hn hp p' ⟨_, oracle', st, st', hp'⟩ => (hpres n hn p hp _ oracle' st st' p' hp').1)
+      (fun n p hn hp p' hp' => by
+        obtain ⟨_, oracle', st, st', hp'⟩ := ProbOracleComp.mem_support_iff_exists.mp hp'
+        exact (hpres n hn p hp _ oracle' st st' p' hp').1)
       mid (ProbOracleComp.mem_support_of_mem oracle hmid)
     exact ⟨rfl, hlength r le_rfl mid.2 hmidInv.1⟩
   have hinner (out : List Bool) := (hloop out).seq_pure_right
