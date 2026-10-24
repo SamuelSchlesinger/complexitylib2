@@ -7,7 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.Products
+public import Complexity.Foundations.Combinatorics.Expander.Zigzag
 public import Complexity.Foundations.Combinatorics.Expander.Power
 public import Complexity.Foundations.Combinatorics.Expander.ReingoldVertex
 

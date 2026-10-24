@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.PCP.Power
-public import Complexity.Foundations.Combinatorics.Expander.Walk.WithInput
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Walk
 
 /-!
 # Executable constraints for killed-walk powering

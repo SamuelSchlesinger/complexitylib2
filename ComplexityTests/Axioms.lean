@@ -2573,12 +2573,6 @@ info: 'Cslib.RotationMap.card_zigzagTowerVertex_of_equiv' depends on axioms: [pr
 #print axioms Cslib.RotationMap.card_zigzagTowerVertex_of_equiv
 
 /--
-info: 'Cslib.RotationMap.spectralExpansion_zigzagTowerBase_le_one_div_five' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.spectralExpansion_zigzagTowerBase_le_one_div_five
-
-/--
 info: 'Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
