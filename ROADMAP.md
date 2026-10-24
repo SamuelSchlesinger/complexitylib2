@@ -1153,6 +1153,16 @@ Jukna coverage below is an additional target beyond the V1 port:
   eavesdropping attacks, and Fiat–Shamir/Schnorr signatures in the random-oracle model with the
   forking bound of Theorem 19.16. Strict PPT samples bit strings but not `ZMod q` exactly, so
   those bounds will carry explicit statistical-distance terms.
+* **Lattice Sigma protocols and post-quantum signatures (#640, track B).** Proved (#645): the
+  [SIS hypothesis](Complexity/Crypto/Computational/SIS/Basic.lean) for power-of-two moduli, exact
+  [box rejection sampling](Complexity/Probability/RejectionSampling.lean),
+  [Sigma protocols with aborts](Complexity/Crypto/Protocols/SigmaProtocol/Abort.lean), and
+  [Lyubashevsky identification](Complexity/Crypto/Protocols/SigmaProtocol/Lyubashevsky.lean) with
+  completeness up to aborts and its exact abort probability, special soundness extracting a short
+  integer solution of `[A | T]`, and exact zero knowledge up to aborts. Open: Fiat–Shamir with
+  aborts and its signatures (after track A's random-oracle Fiat–Shamir), strict-PPT samplers for
+  integer boxes, identification security under SIS, general moduli, module SIS and module
+  lattices toward Dilithium-style schemes.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
