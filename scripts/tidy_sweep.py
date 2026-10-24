@@ -60,6 +60,7 @@ Declarations, statements and references come from `scripts/quality_report.py` an
 from __future__ import annotations
 
 import argparse
+import bisect
 import difflib
 import json
 import re
@@ -353,6 +354,9 @@ class Model:
         qr.collect_references(self.lib, self.decls, self.owners)
         qr.classify(self.decls)
         self.allowlist = allowlist
+        out = qr.run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", "--names",
+                      *qr.ROOTS], capture_output=True).stdout
+        self.names = set(out.split())
         self._users: dict[str, list[tuple[str, list]]] | None = None
         self._known: set[str] | None = None
 
@@ -364,15 +368,22 @@ class Model:
                 for ref, _, info in self.lib.references(module):
                     for usage in info["usages"]:
                         self._users[ref].append((module, usage))
+            self._by_last = defaultdict(list)
+            for ref in self._users:
+                self._by_last[ref.rsplit(".", 1)[-1]].append(ref)
         return self._users.get(name, [])
+
+    def referenced_by_last(self, last: str) -> list[str]:
+        """The referenced constants whose last component is `last`."""
+        self.users("")
+        return self._by_last.get(last, [])
 
     @property
     def known(self) -> set[str]:
-        """Every constant name the build defines or references, for name resolution."""
+        """Every public constant and alias the three libraries can see (their import closure),
+        with the constants they define, for name resolution."""
         if self._known is None:
-            self._known = set(self.constants)
-            for module in self.lib.ileans:
-                self._known.update(ref for ref, _, _ in self.lib.references(module))
+            self._known = self.names | {n for n, c in self.constants.items() if c["e"]}
         return self._known
 
 
@@ -656,7 +667,9 @@ def collapse(text: str) -> str:
 
 SCOPE_COMMAND = re.compile(
     r"^(?P<mods>(?:@\[[^\]\n]*\]\s*)?(?:(?:public|private|noncomputable|protected|meta)\s+)*)"
-    r"(?P<kw>namespace|section|end|open|mutual)\b(?P<rest>[^\n]*)", re.M)
+    r"(?P<kw>namespace|section|end|open|mutual|variable|export)\b", re.M)
+NOTATION_NAME = re.compile(
+    r"^(?:@\[[^\]\n]*\]\s*)?(?:(?:local|scoped)\s+)?(?:notation3?|syntax|macro)\b[^\n]*", re.M)
 
 
 def namespaces_of(names) -> set[str]:
@@ -669,64 +682,147 @@ def namespaces_of(names) -> set[str]:
     return out
 
 
-class Scopes:
-    """The current namespace and opened namespaces at each offset of a masked source."""
+@dataclass(frozen=True)
+class Open:
+    """An opened namespace: all of it, only the names `only` (`open N (x y)`), or all but the
+    names `hiding`."""
+    namespace: str
+    only: frozenset[str] | None = None
+    hiding: frozenset[str] = frozenset()
 
-    def __init__(self, mask: str, namespaces: set[str]):
-        self.points: list[tuple[int, str, tuple[str, ...]]] = [(0, "", ())]
-        self.once: list[tuple[int, int, tuple[str, ...]]] = []
-        stack: list[tuple[str, str, list[str]]] = []
-        starts = [m.start() for m in qr.COMMAND_START.finditer(mask)] + [len(mask)]
-        for match in SCOPE_COMMAND.finditer(mask):
-            kw, rest = match["kw"], match["rest"].split()
-            namespace = ".".join(n for k, n, _ in stack if k == "namespace" and n)
-            opens = [o for _, _, os in stack for o in os]
-            if kw == "namespace" and rest:
-                stack.append(("namespace", rest[0], []))
-            elif kw in ("section", "mutual"):
-                stack.append((kw, rest[0] if rest and kw == "section" else "", []))
-            elif kw == "end":
-                if stack:
-                    stack.pop()
-            elif kw == "open":
-                one_shot = bool(rest) and rest[-1] == "in"
-                words = [w for w in (rest[:-1] if one_shot else rest)
-                         if w not in ("scoped", "hiding", "renaming", "→", "private")
-                         and not w.startswith("(") and IDENT.fullmatch(w)]
-                resolved = []
-                for word in words:
-                    prefixes = [".".join(namespace.split(".")[:i])
-                                for i in range(len(namespace.split(".")), -1, -1)] if namespace \
-                        else [""]
-                    found = [p + "." + word if p else word for p in prefixes + opens + resolved
-                             if (p + "." + word if p else word) in namespaces]
-                    resolved += found or [word]
-                if one_shot:
-                    after = next((s for s in starts if s > match.end()), len(mask))
-                    following = next((s for s in starts if s > after), len(mask))
-                    self.once.append((match.start(), following, tuple(resolved)))
-                    continue
-                if not stack:
-                    stack.append(("file", "", []))
-                stack[-1][2].extend(resolved)
-            namespace = ".".join(n for k, n, _ in stack if k == "namespace" and n)
-            opens = [o for _, _, os in stack for o in os]
-            self.points.append((match.end(), namespace, tuple(opens)))
 
-    def at(self, offset: int) -> tuple[str, tuple[str, ...]]:
-        namespace, opens = "", ()
-        for point, ns, os in self.points:
-            if point > offset:
+@dataclass(frozen=True)
+class Scope:
+    namespace: str
+    opens: tuple[Open, ...] = ()
+    aliases: frozenset[str] = frozenset()  # short names from `open … renaming` and `export`
+    variables: frozenset[str] = frozenset()  # names bound by `variable` commands
+
+
+def binder_names(text: str) -> set[str]:
+    """The names bound by the top-level binder groups of a `variable` command (masked)."""
+    names, i = set(), 0
+    while i < len(text):
+        if text[i] in "([{⦃":
+            close = match_bracket(text, i)
+            if close < 0:
                 break
-            namespace, opens = ns, os
-        extra = tuple(o for start, end, os in self.once if start <= offset < end for o in os)
-        return namespace, opens + extra
+            inner = text[i + 1:close]
+            colon = find_top_level(inner, 0, len(inner), ":")
+            if colon >= 0:
+                names.update(inner[:colon].split())
+            elif text[i] != "[":
+                names.update(inner.split())
+            i = close + 1
+        else:
+            i += 1
+    return {n for n in names if IDENT.fullmatch(n) and n != "_"}
+
+
+class Scopes:
+    """The namespace, opened namespaces, aliases and section variables at each offset of a
+    masked source, and the identifier-like tokens its notations and macros declare."""
+
+    def __init__(self, mask: str, namespaces: set[str], text: str | None = None):
+        self.points: list[tuple[int, Scope]] = [(0, Scope(""))]
+        self.once: list[tuple[int, int, tuple[Open, ...], frozenset[str]]] = []
+        # frames: [kind, name, opens, aliases, variables]
+        stack: list[list] = [["file", "", [], set(), set()]]
+        starts = [m.start() for m in qr.COMMAND_START.finditer(mask)] + [len(mask)]
+        self.notation: set[str] = set()
+        for m in NOTATION_NAME.finditer(text if text is not None else mask):
+            self.notation.update(re.findall(r'"([^\W\d][\w\'.]*)"', m[0]))
+
+        def namespace() -> str:
+            return ".".join(f[1] for f in stack if f[0] == "namespace" and f[1])
+
+        def resolve(word: str, earlier: list[Open]) -> list[str]:
+            ns = namespace()
+            parts = ns.split(".") if ns else []
+            prefixes = [".".join(parts[:i]) for i in range(len(parts), -1, -1)]
+            prefixes += [o.namespace for f in stack for o in f[2]]
+            prefixes += [o.namespace for o in earlier]
+            found = [p + "." + word if p else word for p in prefixes
+                     if (p + "." + word if p else word) in namespaces]
+            return list(dict.fromkeys(found)) or [word]
+
+        for match in SCOPE_COMMAND.finditer(mask):
+            kw = match["kw"]
+            end = next((x for x in starts if x > match.start()), len(mask))
+            rest = mask[match.end():end]
+            words = rest.split()
+            if kw == "namespace" and words:
+                stack.append(["namespace", words[0], [], set(), set()])
+            elif kw in ("section", "mutual"):
+                stack.append([kw, words[0] if words and kw == "section" else "", [], set(),
+                              set()])
+            elif kw == "end":
+                if len(stack) > 1:
+                    stack.pop()
+            elif kw == "variable":
+                stack[-1][4].update(binder_names(rest))
+            elif kw in ("open", "export"):
+                one_shot = bool(words) and words[-1] == "in"
+                body = " ".join(words[:-1] if one_shot else words)
+                opens, aliases = self.parse_open(body, resolve, kw == "export")
+                if one_shot:
+                    following = next((x for x in starts if x > end), len(mask))
+                    self.once.append((match.start(), following, tuple(opens),
+                                      frozenset(aliases)))
+                    continue
+                stack[-1][2].extend(opens)
+                stack[-1][3].update(aliases)
+            self.points.append((match.end(), Scope(
+                namespace(), tuple(o for f in stack for o in f[2]),
+                frozenset().union(*(f[3] for f in stack)),
+                frozenset().union(*(f[4] for f in stack)))))
+        self.offsets = [point for point, _ in self.points]
+
+    @staticmethod
+    def parse_open(body: str, resolve, export: bool) -> tuple[list[Open], set[str]]:
+        """The namespaces an `open` (or `export`) command makes visible, and the short names it
+        introduces as aliases. `open scoped` opens no names."""
+        words = body.replace("(", " ( ").replace(")", " ) ").replace(",", " ").split()
+        if not words or words[0] == "scoped":
+            return [], set()
+        if words[0] == "private":
+            words = words[1:]
+        if "renaming" in words:
+            pairs = words[words.index("renaming") + 1:]
+            return [], {pairs[i + 2] for i in range(len(pairs) - 2) if pairs[i + 1] == "→"}
+        if "hiding" in words:
+            k = words.index("hiding")
+            return [Open(ns, hiding=frozenset(words[k + 1:]))
+                    for w in words[:k] for ns in resolve(w, [])], set()
+        if "(" in words:
+            k = words.index("(")
+            names = frozenset(w for w in words[k + 1:] if w != ")")
+            opens = [Open(ns, only=names) for w in words[:k] for ns in resolve(w, [])]
+            return ([] if export else opens), (set(names) if export else set())
+        opens: list[Open] = []
+        for w in words:  # a later name may be relative to an earlier one
+            opens += [Open(ns) for ns in resolve(w, opens)]
+        return opens, set()
+
+    def at(self, offset: int) -> Scope:
+        i = bisect.bisect_right(self.offsets, offset) - 1
+        scope = self.points[i][1] if i >= 0 else Scope("")
+        for start, end, opens, aliases in self.once:
+            if start <= offset < end:
+                scope = Scope(scope.namespace, scope.opens + opens, scope.aliases | aliases,
+                              scope.variables)
+        return scope
+
+    def chain(self, offset: int) -> list[str]:
+        """The enclosing namespaces, innermost first, ending with the root `""`."""
+        ns = self.at(offset).namespace
+        parts = ns.split(".") if ns else []
+        return [".".join(parts[:i]) for i in range(len(parts), -1, -1)]
 
     def prefixes(self, offset: int) -> list[str]:
-        """Namespaces a written name may be relative to, innermost first (`""` is the root)."""
-        namespace, opens = self.at(offset)
-        parts = namespace.split(".") if namespace else []
-        return [".".join(parts[:i]) for i in range(len(parts), -1, -1)] + list(opens)
+        """Namespaces a written name may be relative to, innermost first (`""` is the root);
+        selective opens count as whole ones (an over-approximation)."""
+        return self.chain(offset) + [o.namespace for o in self.at(offset).opens]
 
 
 def written_name(target: str, prefixes: list[str], known: set[str]) -> str:
@@ -1009,7 +1105,7 @@ class SourceFile:
     @property
     def scopes(self) -> Scopes:
         if self._scopes is None:
-            self._scopes = Scopes(self.mask, self._namespaces)
+            self._scopes = Scopes(self.mask, self._namespaces, self.text)
         return self._scopes
 
     def at(self, line: int, column16: int) -> int:
@@ -1078,6 +1174,7 @@ class Planner:
         self.deferred: dict[str, list[str]] = {}
         self._refs: dict[str, list[Ref]] = {}
         self._locals: dict[tuple[str, int, int], set[str]] = {}
+        self._decl_spans: dict[str, list[tuple[int, int]]] = {}
         self.reset()
 
     def reset(self) -> None:
@@ -1158,9 +1255,11 @@ class Planner:
         """Identifiers of the declaration (or command) around `offset` that are not references
         to constants: binders, local hypotheses, tactic names. A written name whose first
         component is one of them could be captured by a local."""
-        ranges = self.model.lib.ileans.get(module, {}).get("decls", {}).values()
-        span = next(((src.at(r[0], r[1]), src.at(r[2], r[3])) for r in ranges
-                     if src.at(r[0], r[1]) <= offset < src.at(r[2], r[3])), None)
+        if module not in self._decl_spans:
+            ranges = self.model.lib.ileans.get(module, {}).get("decls", {}).values()
+            self._decl_spans[module] = [(src.at(r[0], r[1]), src.at(r[2], r[3]))
+                                        for r in ranges]
+        span = next(((a, b) for a, b in self._decl_spans[module] if a <= offset < b), None)
         if span is None:
             starts = src.commands + [len(src.mask)]
             start = max([s for s in starts if s <= offset], default=0)
@@ -1178,44 +1277,83 @@ class Planner:
         return self._locals[key]
 
     def resolves(self, module: str, src: SourceFile, offset: int, written: str) -> set[str]:
-        """What `written` (without `@`) can denote at `offset`: constants reached through the
-        enclosing namespaces and the opened namespaces, private constants of the module, and a
-        local of the same name (as `"<local>"`)."""
-        names = self.known | self.privates.get(module, set())
+        """Everything `written` (without `@`) might denote at `offset`, over-approximated:
+        constants reached through the enclosing namespaces and every opened namespace (selective
+        and hiding opens counted whole), private constants of the module, and `"<local>"` when
+        its first component is a local binder, a section variable, an alias from
+        `open … renaming` or `export`, or a notation token. Names come from the whole import
+        closure, not only the referenced ones."""
+        privates = self.privates.get(module, set())
+
+        def exists(name: str) -> bool:
+            return name in self.known or name in privates
         if written.startswith("_root_."):
-            return {written[len("_root_."):]} & names
-        hits = {p + "." + written if p else written for p in src.scopes.prefixes(offset)}
-        out = hits & names
-        if written.split(".")[0] in self.local_names(module, src, offset):
+            return {written[len("_root_."):]} if exists(written[len("_root_."):]) else set()
+        scope = src.scopes.at(offset)
+        out = {h for p in src.scopes.prefixes(offset)
+               for h in [p + "." + written if p else written] if exists(h)}
+        first = written.split(".")[0]
+        if first in self.local_names(module, src, offset) or first in scope.variables \
+                or first in scope.aliases or first in src.scopes.notation:
             out.add("<local>")
         return out
+
+    def reachable(self, src: SourceFile, offset: int, written: str, target: str) -> bool:
+        """Whether Lean surely looks `written` up as `target` at `offset`: through `_root_`, an
+        enclosing namespace, or an open that is not selective or hiding it."""
+        if written.startswith("_root_."):
+            return written[len("_root_."):] == target
+        if any((p + "." + written if p else written) == target for p in src.scopes.chain(offset)):
+            return True
+        first = written.split(".")[0]
+        return any(o.namespace + "." + written == target and first not in o.hiding
+                   and (o.only is None or written in o.only) for o in src.scopes.at(offset).opens)
+
+    def write_name(self, module: str, src: SourceFile, offset: int, target: str,
+                   first: str | None = None) -> str | None:
+        """The shortest written form of `target` that Lean surely resolves to it, and to nothing
+        else, at `offset` (`first` is tried before the suffixes), or None."""
+        parts = target.split(".")
+        candidates = [first] + [".".join(parts[-k:]) for k in range(1, len(parts) + 1)]
+        for candidate in candidates + ["_root_." + target]:
+            if candidate and self.reachable(src, offset, candidate, target) \
+                    and self.resolves(module, src, offset, candidate) == {target}:
+                return candidate
+        return None
 
     def written(self, module: str, src: SourceFile, start: int, end: int, old: str, new: str
                 ) -> tuple[str | None, str]:
         """The text replacing the reference to `old` at `[start, end)` by one to `new`, or None
-        and the reason it cannot be written."""
+        and the reason it cannot be written.
+
+        Field and leading-dot notation resolve through the type of the receiver or the expected
+        type, which may be an abbreviation with declarations of its own, so their binding is not
+        established by names alone. They are kept only when the last component is unchanged and
+        the namespace changes with the tidy predicate itself (`ComputableTidilyInPolyTime.comp`
+        → `ComputableInPolyTime.comp`), the type at the site being restated alike. Otherwise a
+        leading-dot reference becomes an explicit name, and a field reference is not
+        rewritten."""
         token = src.text[start:end]
         if not spells(token, old):
             return None, f"the reference span `{token}` does not spell `{old}`"
         if old == new:
             return token, ""
         leading = token.startswith(".")
-        if leading or (start and src.text[start - 1] == "."):  # leading-dot or field notation
-            last = new.rsplit(".", 1)[-1]
-            if old.rsplit(".", 1)[-1] == last:
+        if leading or (start and src.text[start - 1] == "."):
+            if old.rsplit(".", 1)[-1] == new.rsplit(".", 1)[-1] \
+                    and namespace_of(new) == plain_name(namespace_of(old)) != namespace_of(old):
                 return token, ""
-            if namespace_of(old) == namespace_of(new) and "." not in token.lstrip("."):
-                return ("." if leading else "") + last, ""
-            return None, "dot notation on a declaration whose namespace changes"
+            if leading:
+                name = self.write_name(module, src, start, new)
+                if name is not None:
+                    return name, ""
+            return None, "field notation whose new binding cannot be established"
         at = "@" if token.startswith("@") else ""
-        candidates = [renamed_token(token.removeprefix("@"), old, new)]
-        parts = new.split(".")
-        candidates += [".".join(parts[-k:]) for k in range(1, len(parts) + 1)]
-        candidates.append("_root_." + new)
-        for candidate in candidates:
-            if candidate and self.resolves(module, src, start, candidate) == {new}:
-                return at + candidate, ""
-        return None, f"no written form of `{new}` resolves to it here"
+        name = self.write_name(module, src, start, new,
+                               renamed_token(token.removeprefix("@"), old, new))
+        if name is None:
+            return None, f"no written form of `{new}` surely resolves to it here"
+        return at + name, ""
 
     # Declarations.
 
@@ -1286,7 +1424,32 @@ class Planner:
         written = sum(1 for x in a["sig_refs"] if x.name in BY_TIDY)
         if not written or self.hidden_tidy(entry.name, src, dt, a["sig_refs"]):
             a["defer"].append("tidy predicate from a `variable` command or notation")
+        if not a["defer"] and entry.target != entry.name:
+            a["defer"] += self.captures(entry.name, entry.target)[:1]
         return a
+
+    def captures(self, old: str, new: str) -> list[str]:
+        """References to other constants that the new name `new` could capture: a written name
+        that would also resolve to `new` from its position, or a field or leading-dot reference
+        with the same last component (its binding depends on a type the text does not show)."""
+        out = []
+        for other in self.model.referenced_by_last(new.rsplit(".", 1)[-1]):
+            if other in (old, new):
+                continue
+            for module, u in self.model.users(other):
+                path = qr.source_path(module)
+                src = self.source(path)
+                start, end = src.at(u[0], u[1]), src.at(u[2], u[3])
+                token = src.text[start:end].removeprefix("@")
+                if token.startswith("_root_."):
+                    continue
+                dotted = token.startswith(".") or (start and src.text[start - 1] == ".")
+                if dotted or any((p + "." + token if p else token) == new
+                                 for p in src.scopes.prefixes(start)):
+                    out.append(f"the new name `{new}` could capture `{token}` "
+                               f"(`{other}`) at {self.where(path, start)}")
+                    return out
+        return out
 
     def defer(self, name: str, a: dict | None) -> None:
         """A declaration left tidy in this batch; references to it stay unchanged."""
@@ -1423,9 +1586,11 @@ class Planner:
             problems.append("tidy hypothesis from a `variable` command or notation")
         if problems:
             return None, problems
-        prefixes = src.scopes.prefixes(dt.start)
-        iffs = ", ".join(written_name(n.iff, prefixes, self.known)
-                         for n in self.notions_of(entry.name))
+        iffs = [self.write_name(self.model.decls[entry.name]["module"], src, dt.assign, n.iff)
+                for n in self.notions_of(entry.name)]
+        if None in iffs:
+            return None, ["no written form of the plain ↔ tidy equivalence resolves here"]
+        iffs = ", ".join(iffs)
         body_column = column(src.text, dt.assign + 2)
         indent = line_indent(src.text, dt.sel_start)
         args = (body_column, indent, hyps, conclusion, simple, iffs)
@@ -1897,6 +2062,11 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"unknown area {area}; choose from {', '.join(AREA_ORDER)}")
     if args.command == "rewrite" and len(args.area) != 1:
         parser.error("rewrite needs exactly one --area")
+    if args.diff and args.verify:
+        parser.error("--diff previews without building; --verify rewrites and builds, so "
+                     "choose one")
+    if args.diff and args.command != "rewrite":
+        parser.error("--diff is a rewrite option")
     if args.command == "rewrite" and args.no_build_check:
         parser.error("rewrite edits at the recorded reference spans, so it needs current build "
                      "outputs; --no-build-check is only for report")

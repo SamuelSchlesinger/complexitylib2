@@ -9,6 +9,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from collections import defaultdict
 from types import SimpleNamespace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -76,11 +77,11 @@ class NameTests(unittest.TestCase):
                 "theorem a : True := trivial\n\nend Cslib.Logic\n\nopen Foo in\n"
                 "theorem b : True := trivial\n\ntheorem c : True := trivial\n")
         scopes = t.Scopes(masks(text)[1], t.namespaces_of([POLY + ".map", "Foo.x"]))
-        namespace, opens = scopes.at(text.index("theorem a"))
-        self.assertEqual(namespace, "Cslib.Logic")
-        self.assertEqual(opens, ("Turing.MultiTapeTM", POLY))
-        self.assertEqual(scopes.at(text.index("theorem b")), ("", ("Foo",)))
-        self.assertEqual(scopes.at(text.index("theorem c")), ("", ()))
+        scope = scopes.at(text.index("theorem a"))
+        self.assertEqual(scope.namespace, "Cslib.Logic")
+        self.assertEqual([o.namespace for o in scope.opens], ["Turing.MultiTapeTM", POLY])
+        self.assertEqual(scopes.at(text.index("theorem b")).opens, (t.Open("Foo"),))
+        self.assertEqual(scopes.at(text.index("theorem c")), t.Scope(""))
         self.assertEqual(scopes.prefixes(text.index("theorem a"))[:3],
                          ["Cslib.Logic", "Cslib", ""])
 
@@ -302,7 +303,7 @@ class WrapTests(unittest.TestCase):
 
 def fake_source(text: str, namespaces: set[str]) -> t.SourceFile:
     src = object.__new__(t.SourceFile)
-    src.path = t.ROOT / "Fake.lean"
+    src.path = t.qr.source_path("M")
     src.text = text
     src.code, src.mask = masks(text)
     src.lines = text.split("\n")
@@ -327,6 +328,7 @@ def fake_planner(text: str, constants: dict, known=(), privates=None, refs=()):
     p.sources = {src.path: src}
     p._refs = {"M": [t.Ref(n, a, b, None) for n, a, b in refs]}
     p._locals = {}
+    p._decl_spans = {}
     p.deferred = {}
     p.batch = {}
     p.reset()
@@ -334,7 +336,8 @@ def fake_planner(text: str, constants: dict, known=(), privates=None, refs=()):
 
 
 class ConvertTests(unittest.TestCase):
-    def convert(self, text: str, sg, at: str = "X") -> tuple[str, str]:
+    def convert(self, text: str, sg, at: str | None = None) -> tuple[str, str]:
+        at = at or (".X" if ".X" in text else "X")
         p, src = fake_planner(text, {"X": {"m": "M", "sg": sg, "tidy": [POLY]}},
                               known={"Y"})
         p.renames = {"X": "Y"}
@@ -366,8 +369,9 @@ class ConvertTests(unittest.TestCase):
         start = src.text.index(".of_foo")
         self.assertTrue(p.convert(src.path, "M", start, start + 7, "N.of_foo", None, "tidy"))
         fe = p.files[src.path]
+        # The new name is written explicitly: see `ResolutionTests.test_dot_notation`.
         self.assertEqual(t.render(src.text, fe.replaces, fe.wraps, 0, len(src.text)),
-                         "  exact .of_bar (.of_tidy hc)")
+                         "  exact N.of_bar (.of_tidy hc)")
         self.assertTrue(t.spells(".of_foo", "N.of_foo"))
 
     def test_unconvertible_sites_stay_unchanged(self) -> None:
@@ -375,7 +379,7 @@ class ConvertTests(unittest.TestCase):
         blocks the referenced declaration, which is then deferred."""
         cases = [("  map X", [[[0, 0]], 1], "partial"),
                  ("  simp [X]", [[[0, 0]], 1], "lemma list"),
-                 ("  exact .X a", [[[0, 0]], 1], "dot notation"),
+                 ("  exact .X a", [[[0, 0]], 1], "leading-dot"),
                  ("  X a", [[[0, 2]], 1], "binders"),
                  ("  X a", [[[1, 1], [0, 0]], 1], "implicit"),
                  # The argument is tidy, but the conclusion is not a bare predicate.
@@ -436,6 +440,80 @@ class ResolutionTests(unittest.TestCase):
         self.assertTrue(t.spells("@MultiTapeTM.ComputableTidilyInPolyTime", POLY))
         self.assertFalse(t.spells("TidilyInPolyTime", POLY))
         self.assertFalse(t.spells("", POLY))
+
+
+class CaptureTests(unittest.TestCase):
+    """Review 5636433742: section variables, aliases, notations, selective opens and the types
+    behind dot notation can capture a written name."""
+
+    def written(self, text: str, token: str, old: str, new: str, known=(), nth: int = 0):
+        start = -1
+        for _ in range(nth + 1):
+            start = text.index(token, start + 1)
+        p, src = fake_planner(text, {old: {"m": "M"}, new: {"m": "M"}}, known,
+                              refs=[(old, start, start + len(token))])
+        return p.written("M", src, start, start + len(token), old, new)[0]
+
+    def test_section_variables(self) -> None:
+        text = ("open N\n\nsection\n\nvariable (bar : Nat)\n\ndef before : Nat := foo\n\n"
+                "end\n\ndef later : Nat := foo\n")
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar"), "N.bar")
+        # Outside the section the variable no longer binds `bar`.
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=1), "bar")
+        self.assertEqual(t.binder_names(" {α : Type} (a b : ℕ) [Fintype α] [h : DecidableEq α]"),
+                         {"α", "a", "b", "h"})
+
+    def test_aliases_and_notations(self) -> None:
+        for prefix in ("open M renaming baz → bar\n", "export M (bar)\n",
+                       'local notation "bar" => 0\n'):
+            text = prefix + "open N\n\ndef d : Nat := foo\n"
+            self.assertEqual(self.written(text, "foo", "N.foo", "N.bar"), "N.bar", prefix)
+
+    def test_opens_that_do_not_surely_make_the_target_visible(self) -> None:
+        for line in ("open N (foo)", "open N hiding bar", "open scoped N"):
+            text = line + "\n\ndef d : Nat := N.foo\n"
+            self.assertEqual(self.written(text, "N.foo", "N.foo", "N.bar"), "N.bar", line)
+        # A selective open that lists the new name makes it visible.
+        text = "open N (foo bar)\n\ndef d : Nat := foo\n"
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=1), "bar")
+        text = "open N (foo)\n\ndef d : Nat := foo\n"
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=1), "N.bar")
+
+    def test_names_outside_the_references_capture_too(self) -> None:
+        # `M.bar` exists in the import closure although nothing here refers to it.
+        text = "open M N\n\ndef d : Nat := foo\n"
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", known={"M.bar"}), "N.bar")
+
+    def test_new_names_must_not_capture_other_references(self) -> None:
+        text = "open A B\n\ndef d : Nat := x + B.x + n.x\n"
+        spans = {"x ": "B.x", "B.x": "B.x", "x\n": "Nat.x"}
+        usages = defaultdict(list)
+        for token, name in spans.items():
+            start = text.index(token) if token != "x\n" else text.index("n.x") + 2
+            usages[name].append(("M", [2, start - text.index("def"), 2,
+                                       start - text.index("def") + len(token.strip())]))
+        p, src = fake_planner(text, {"A.y": {"m": "M"}}, known={"B.x", "Nat.x"})
+        p.model.users = lambda name: usages.get(name, [])
+        p.model.referenced_by_last = lambda last: [n for n in usages if n.endswith("." + last)]
+        # Renaming `A.y` to `A.x` would make the bare `x` (now `B.x`) ambiguous.
+        found = p.captures("A.y", "A.x")
+        self.assertEqual(len(found), 1)
+        self.assertIn("could capture `x` (`B.x`)", found[0])
+        # Without the bare and dotted references, the qualified `B.x` is safe.
+        usages["B.x"] = usages["B.x"][1:]
+        del usages["Nat.x"]
+        self.assertEqual(p.captures("A.y", "A.x"), [])
+
+    def test_dot_notation(self) -> None:
+        # `abbrev W := Nat` with `W.bar`: `.bar` and `x.bar` would select `W.bar`, not `Nat.bar`.
+        known = {"W", "W.bar"}
+        self.assertEqual(self.written("def a : W := .foo\n", ".foo", "Nat.foo", "Nat.bar",
+                                      known), "Nat.bar")
+        self.assertIsNone(self.written("def a := (0 : W).foo\n", "foo", "Nat.foo", "Nat.bar",
+                                       known))
+        # The tidy predicate's own namespace follows the restated type at the site.
+        self.assertEqual(self.written("example := hf.comp hg\n", "comp", POLY + ".comp",
+                                      PLAIN + ".comp"), "comp")
 
 
 class VerificationTests(unittest.TestCase):
@@ -503,11 +581,13 @@ class VerificationTests(unittest.TestCase):
                 contextlib.redirect_stderr(io.StringIO()) as err:
             for argv in (["rewrite", "--area", "Logics", "--stub-failures"],
                          ["rewrite", "--area", "Logics", "--no-build-check"],
+                         ["rewrite", "--area", "Logics", "--diff", "p.patch", "--verify"],
                          ["report", "--registry", str(pathlib.Path(tmp) / "missing.json")]):
                 with self.assertRaises(SystemExit, msg=argv) as raised:
                     t.main(argv)
                 self.assertEqual(raised.exception.code, 2)
         self.assertIn("--no-build-check is only for report", err.getvalue())
+        self.assertIn("--diff previews without building", err.getvalue())
         self.assertIn("registry file not found", err.getvalue())
 
 

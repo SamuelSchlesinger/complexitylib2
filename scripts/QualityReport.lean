@@ -36,6 +36,10 @@ the conclusion, with binder info `0` explicit, `1` implicit, `2` strict implicit
 flag `1` when the type is an application of a listed tidy predicate, `2` when it mentions a tidy
 constant otherwise, and `0` when it mentions none.
 
+Run as `lake env lean --run scripts/QualityReport.lean --names <module>...`, it instead prints
+every name the given modules and their transitive imports export: constants and `export` aliases,
+one per line, for the name resolution of `scripts/tidy_sweep.py`.
+
 It then prints `{"dup": [...], "k": ...}` lines grouping exported constants of different modules
 whose types are alpha-equivalent (`k = "thm"`), or whose types and exposed bodies are
 (`k = "def"`). Universe parameters are renamed positionally before comparing.
@@ -197,7 +201,36 @@ unsafe def run (libDir : System.FilePath) (pairs : Option String := none) : IO U
   -- Keep the regions reachable until every expression has been used.
   if regions.isEmpty then stdout.flush
 
+/-- Print the exported constants and `export` aliases of `roots` and their transitive imports,
+found through the search path that `lake env` sets. -/
+unsafe def names (roots : List Name) : IO Unit := do
+  initSearchPath (← findSysroot)
+  let stdout ← IO.getStdout
+  let mut seen : NameSet := {}
+  let mut todo := roots.toArray
+  -- The mapped regions stay alive until the end of the program.
+  let mut regions : Array CompactedRegion := #[]
+  while h : todo.size > 0 do
+    let mod := todo.back
+    todo := todo.pop
+    if seen.contains mod then continue
+    seen := seen.insert mod
+    let (data, region) ← readModuleData (← findOLean mod)
+    regions := regions.push region
+    for i in data.imports do
+      unless seen.contains i.module do todo := todo.push i.module
+    for n in data.constNames do
+      unless n.isInternalDetail do stdout.putStrLn n.toString
+    for (ext, es) in data.entries do
+      if ext == `Lean.aliasExtension then
+        for e in es do
+          stdout.putStrLn (unsafeCast e : Name × Name).1.toString
+  if regions.isEmpty then stdout.flush
+
 end ComplexityScripts.QualityReport
 
 unsafe def main (args : List String) : IO Unit :=
-  ComplexityScripts.QualityReport.run (args.headD ".lake/build/lib/lean") args[1]?
+  if args.head? == some "--names" then
+    ComplexityScripts.QualityReport.names (args.drop 1 |>.map String.toName)
+  else
+    ComplexityScripts.QualityReport.run (args.headD ".lake/build/lib/lean") args[1]?
