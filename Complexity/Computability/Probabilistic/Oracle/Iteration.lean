@@ -11,6 +11,7 @@ public import Complexity.Computability.Probabilistic.Oracle.Tidy
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.IterateWhile
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.Oracle.Support
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
@@ -91,15 +92,15 @@ theorem iterate_spec {initial : α → σ} {count : α → ℕ}
   let body (pair : ℕ × σ) : WordOracleComp Operation (List Bool) :=
     if pair.1 = 0 then pure [] else (fun next => encode (pair.1 - 1, next)) <$> step pair.2
   have hbody : IsTidyOraclePPTOn encode encBits body := by
-    apply ite (ComputableTidilyInPolyTime.decide_eq'
-      (ComputableTidilyInPolyTime.fst encUnary stateEncoding) (.const 0))
-    · exact of_computableTidilyInPolyTime (.const [])
-    · apply (hstep.preprocess (ComputableTidilyInPolyTime.snd encUnary stateEncoding)).map_with
-      exact (ComputableTidilyInPolyTime.encode encode).comp
-        ((ComputableTidilyInPolyTime.unary_sub.comp
-          (((ComputableTidilyInPolyTime.fst encUnary stateEncoding).comp
-            (ComputableTidilyInPolyTime.fst encode stateEncoding)).prod (.const 1))).prod
-          (ComputableTidilyInPolyTime.snd encode stateEncoding))
+    apply ite (ComputableInPolyTime.decide_eq'
+      (ComputableInPolyTime.fst encUnary stateEncoding) (.const 0)).tidy
+    · exact of_computableTidilyInPolyTime (ComputableInPolyTime.const []).tidy
+    · apply (hstep.preprocess (ComputableInPolyTime.snd encUnary stateEncoding).tidy).map_with
+      exact ((ComputableInPolyTime.encode encode).comp
+        ((ComputableInPolyTime.unary_sub.comp
+          (((ComputableInPolyTime.fst encUnary stateEncoding).comp
+            (ComputableInPolyTime.fst encode stateEncoding)).prod (.const 1))).prod
+          (ComputableInPolyTime.snd encode stateEncoding))).tidy
   obtain ⟨_, kB, Body, hfiniteB, machine, cB, dB, hmachine⟩ := hbody
   let wordStep : List Bool → WordOracleComp Operation (List Bool) :=
     Function.extend encode body (fun _ => pure [])
@@ -115,17 +116,20 @@ theorem iterate_spec {initial : α → σ} {count : α → ℕ}
       rw [hwordStep]
       simp only [body, Nat.add_one_ne_zero, ↓reduceIte, Nat.add_sub_cancel]) c count state
   obtain ⟨tp, _, htp, _, kp, Prepare, hfiniteP, prepare, hprepare⟩ :=
-    (ComputableTidilyInPolyTime.encode encode).comp (hcount.prod hinitial)
+    ((ComputableInPolyTime.encode encode).comp
+      ((ComputableInPolyTime.of_tidy hcount).prod
+        (ComputableInPolyTime.of_tidy hinitial))).tidy
   let bound (a : α) : ℕ := 2 * count a + 1 + size a
   let roundTime (a : α) : ℕ := cB * (bound a + 1) ^ dB
   let loopTime (a : α) : ℕ := (count a + 1) * (roundTime a + 10 * bound a + 23) + 8 * bound a + 17
   have hboundPoly : PolyBounded (fun a => (input a).length) bound :=
-    ((PolyBounded.const 2).mul hcount.polyBounded |>.add (.const 1)).add hsize
+    ((PolyBounded.const 2).mul (ComputableInPolyTime.of_tidy hcount).polyBounded
+      |>.add (.const 1)).add hsize
   have hroundPoly : PolyBounded (fun a => (input a).length) roundTime :=
     PolyBounded.comp (size' := id) (v := fun n => cB * (n + 1) ^ dB)
       (.of_forall_le cB dB fun _ => le_rfl) hboundPoly
   have hloopPoly : PolyBounded (fun a => (input a).length) loopTime :=
-    (((hcount.polyBounded.add (.const 1)).mul
+    ((((ComputableInPolyTime.of_tidy hcount).polyBounded.add (.const 1)).mul
       ((hroundPoly.add ((PolyBounded.const 10).mul hboundPoly)).add (.const 23))).add
         ((PolyBounded.const 8).mul hboundPoly)).add (.const 17)
   have hfinal : IsTidyOraclePPTOn input encode
@@ -176,7 +180,7 @@ theorem iterate_spec {initial : α → σ} {count : α → ℕ}
     rw [pure_bind, hstart, hloop] at hcomp
     simpa only [Functor.map_map] using hcomp
   simpa only [Functor.map_map, id_map'] using
-    hfinal.map (ComputableTidilyInPolyTime.snd encUnary stateEncoding)
+    hfinal.map (ComputableInPolyTime.snd encUnary stateEncoding).tidy
 
 /-- The loop body may capture the original input. The joint step certificate charges for both
 that input and the changing state; the client invariant describes only the changing state. -/
@@ -201,8 +205,8 @@ theorem iterateWith_spec {initial : α → σ} {count : α → ℕ}
   let packedStep (pair : α × σ) : WordOracleComp Operation (α × σ) :=
     (fun next => (pair.1, next)) <$> step pair.1 pair.2
   have hpacked := (iterate_spec (step := packedStep) hcount
-    (ComputableTidilyInPolyTime.id'.prod hinitial)
-    (hstep.pair (ComputableTidilyInPolyTime.fst input stateEncoding))
+    (ComputableInPolyTime.id'.prod (ComputableInPolyTime.of_tidy hinitial)).tidy
+    (hstep.pair (ComputableInPolyTime.fst input stateEncoding).tidy)
     (fun a i pair => pair.1 = a ∧ invariant a i pair.2) (fun a => ⟨rfl, hbase a⟩)
     (by
       rintro a i ⟨captured, state⟩ hi ⟨rfl, hstate⟩ next hnext
@@ -215,7 +219,7 @@ theorem iterateWith_spec {initial : α → σ} {count : α → ℕ}
       simp only [length_encPair]
       have := hbound captured i state hi hstate
       lia)).1
-  refine (hpacked.map (ComputableTidilyInPolyTime.snd input stateEncoding)).congr ?_
+  refine (hpacked.map (ComputableInPolyTime.snd input stateEncoding).tidy).congr ?_
   intro a State oracle s
   rw [OracleComp.iterate_map (count a) (step a) packedStep (fun state => (a, state))
     (fun _ => rfl) (initial a)]
@@ -237,7 +241,8 @@ theorem iterateWith_of_bounded_growth {initial : α → σ} {count : α → ℕ}
   refine (iterateWith_spec hcount hinitial hstep
     (fun a i state => (stateEncoding state).length ≤
       (stateEncoding (initial a)).length + i * growth a)
-    (by simp) ?_ (hinitial.polyBounded_length.add (hcount.polyBounded.mul hpoly)) ?_).1
+    (by simp) ?_ ((ComputableInPolyTime.of_tidy hinitial).polyBounded_length.add
+      ((ComputableInPolyTime.of_tidy hcount).polyBounded.mul hpoly)) ?_).1
   · intro a i state _ hstate next hnext
     simpa only [Nat.add_mul, Nat.one_mul, Nat.add_assoc] using
       (hgrowth a state next hnext).trans (Nat.add_le_add_right hstate _)

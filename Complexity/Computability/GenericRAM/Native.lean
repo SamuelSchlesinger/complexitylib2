@@ -85,14 +85,15 @@ def IsPolynomial (c : NativeCertificate f encIn encMid) : Prop :=
 /-- Derive the existing native polynomial-time predicate, for use by its compositional calculus. -/
 theorem polyTime (c : NativeCertificate f encIn encMid) (h : c.IsPolynomial) :
     ComputableTidilyInPolyTime f encIn encMid :=
-  c.computes.computableTidilyInPolyTime h.1 h.2
+  ((Internal.forgetO c.computes).computableInPolyTime h.1 h.2).tidy
 
 /-- Compose implementations, charging the second bound at the first result. -/
 def comp (d : NativeCertificate g encMid encOut) (c : NativeCertificate f encIn encMid) :
     NativeCertificate (g ∘ f) encIn encOut where
   time a := c.time a + d.time (f a)
   space a := c.space a + d.space (f a)
-  computes := d.computes.comp c.computes
+  computes := Internal.normalizeO ((Internal.forgetO d.computes).comp
+    (Internal.forgetO c.computes))
 
 /-- Composing polynomial certificates preserves polynomiality in the original input encoding. -/
 theorem comp_isPolynomial (d : NativeCertificate g encMid encOut)
@@ -108,11 +109,11 @@ def ofTimeAndSpace {t s : α → ℕ}
     NativeCertificate f encIn encMid where
   time := t
   space a := s a + t a
-  computes := .of_bounds h 1 (fun _ => by simp)
+  computes := Internal.normalizeO (.of_bounds h.computableInTimeAndSpace 1 (fun _ => by simp)
     (fun _ => by simp; omega) (fun a => by
       have := h.length_le a
       simp only [one_mul]
-      omega)
+      omega))
 
 /-- Arbitrary-bound certificates impose exactly native computability, not an efficiency
 assumption. Polynomial resource bounds remain a separate property. -/
