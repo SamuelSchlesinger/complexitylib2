@@ -53,7 +53,7 @@ theorem GGM.pseudorandomFunction_of_indistinguishable {generator : List Bool →
     (hlength : ∀ seed, (generator seed).length = 2 * seed.length)
     (hsecure : ComputationallyIndistinguishable (generatorEnsemble generator)
       (fun n => BitString.uniformList (2 * n))) : PseudorandomFunction (GGM.eval generator) := by
-  refine ⟨.of_tidy (computableTidilyInPolyTime_eval hgenerator), fun key query _ =>
+  refine ⟨computableInPolyTime_eval (.of_tidy hgenerator), fun key query _ =>
     length_eval (fun seed => by rw [hlength]) key query, ?_⟩
   intro adversary hadversary
   obtain ⟨c, d, hqueries⟩ := hadversary.query_bounds

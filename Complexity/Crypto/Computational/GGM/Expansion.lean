@@ -123,7 +123,7 @@ theorem isPPTOn_expansionOracle {α : Type} {input : α ↪ List Bool}
     (hcache : ComputableTidilyInPolyTime cache input cacheEncoding) :
     IsPPTOn input (encPair encBits cacheEncoding) (fun a =>
       expansionOracle generator (sample a) (width a) (depth a) (query a) (cache a)) := by
-  have heval := computableTidilyInPolyTime_eval hgenerator
+  have heval := computableInPolyTime_eval (.of_tidy hgenerator)
   unfold expansionOracle cacheEncoding
   fun_prop
 
