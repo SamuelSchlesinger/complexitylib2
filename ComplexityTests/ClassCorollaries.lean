@@ -138,11 +138,11 @@ info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_BPP' depends on axioms:
 #print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_BPP
 
 /--
-info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime' depends on
+info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.computableInPolyTime' depends on
   axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime
+#print axioms Cslib.Complexity.ComputableInPolyTimeWithOracle.computableInPolyTime
 
 /--
 info: 'Cslib.Complexity.PWithOracle_eq_P' depends on axioms:

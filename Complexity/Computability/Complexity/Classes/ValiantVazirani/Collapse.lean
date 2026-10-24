@@ -19,7 +19,7 @@ By the Valiant–Vazirani theorem [Valiant and Vazirani][ValiantVazirani1986], [
 Section 17.4][AroraBarak09], every problem in `NP` is in `RP` relative to every language solving
 `PromiseUSAT` (`Cslib.Complexity.NP_subset_RPWithPromiseOracle_PromiseUSAT`). An oracle decided
 in polynomial time adds nothing to randomized polynomial time: its queries are answered by
-running its decider (`Cslib.Complexity.ComputableInPolyTimeWithOracle.computableTidilyInPolyTime`),
+running its decider (`Cslib.Complexity.ComputableInPolyTimeWithOracle.computableInPolyTime`),
 so `RP^A = RP` for `A ∈ P` (`Cslib.Complexity.RPWithOracle_eq_RP`). Hence, if `PromiseUSAT` has a
 polynomial-time solver, then `NP = RP`, for every encoding of instances
 (`Cslib.Complexity.NP_eq_RP_of_PromiseUSAT_mem_PromiseP`). In particular `USAT ∈ P` implies
@@ -62,7 +62,7 @@ variable {α β : Type} {A : Set (List Bool)}
 theorem RPWithOracle_eq_RP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
     RPWithOracle A enc = RP enc :=
   Set.Subset.antisymm
-    (fun _ ⟨p, V, hV, hL⟩ => ⟨p, V, .of_tidy (hV.computableTidilyInPolyTime hA), hL⟩)
+    (fun _ ⟨p, V, hV, hL⟩ => ⟨p, V, hV.computableInPolyTime hA, hL⟩)
     (RP_subset_RPWithOracle A enc)
 
 open Classical in

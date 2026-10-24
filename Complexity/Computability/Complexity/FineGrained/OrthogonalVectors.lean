@@ -547,7 +547,8 @@ theorem DecidableInTimeO.decidableInExpTime_SAT {ε : ℝ} (hε : 0 < ε) {e : �
     (h : DecidableInTimeO OV encOV
       fun p => ((p.1.length + p.2.length : ℕ) : ℝ) ^ (2 - ε) * (OV.dim p + 1) ^ e) :
     DecidableInExpTime SAT encCNF CNF.numVars (1 - min ε 1 / 2) := by
-  obtain ⟨g, t, c, hg, hgOV, ht⟩ := h.exists_computableTidilyInO
+  obtain ⟨g, t, c, hg, hgOV, ht⟩ := h.exists_computableInO
+  have hg := hg.tidy
   obtain ⟨E, hred⟩ := exists_computableInO_toOV
   refine DecidableInExpTime.of_computableInO (.of_tidy (hg.comp hred.tidy)) (fun φ => by
     rw [← toOV_mem_OV_iff]

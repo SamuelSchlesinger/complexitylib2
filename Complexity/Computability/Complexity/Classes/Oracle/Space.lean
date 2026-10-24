@@ -29,7 +29,7 @@ The run is simulated instruction by instruction, answering each query with the d
 the request, which is no longer than the clock
 (`Turing.MultiTapePTM.exists_computableTidilyInO_run`).
 So the space is polynomial, while the time charges the decider of `A` once per instruction
-(`Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableTidilyInO`,
+(`Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableInO`,
 `Cslib.Complexity.PWithOracle_subset_PSPACE`).
 
 For `NP` relative to `A`, `Cslib.Complexity.mem_PSPACE_of_isVerifier` and
@@ -39,10 +39,10 @@ bounded existential quantification (`Cslib.Complexity.setOf_exists_mem_PSPACE`).
 ## Main results
 
 * `Cslib.Complexity.exists_computableInO_of_mem_PSPACE`,
-  `Cslib.Complexity.mem_PSPACE_of_computableInO`: `PSPACE` in terms of tidy computability
-  within explicit bounds.
+  `Cslib.Complexity.mem_PSPACE_of_computableInO`: `PSPACE` in terms of computability within
+  explicit bounds.
 * `Cslib.Complexity.mem_PSPACE_of_isVerifier`: certificate search within polynomial space.
-* `Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableTidilyInO`: polynomial time
+* `Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableInO`: polynomial time
   relative to an oracle in `PSPACE` is within polynomial space.
 * `Cslib.Complexity.PWithOracle_subset_PSPACE`, `Cslib.Complexity.NPWithOracle_subset_PSPACE`.
 
@@ -97,12 +97,12 @@ theorem mem_PSPACE_of_isVerifier {p : Polynomial ℕ} {V : α × List Bool → B
 
 open Classical in
 /-- **Oracle polynomial time within polynomial space.** Relative to an oracle language in
-`PSPACE`, a function computable in polynomial time relative to it is tidily computable within
-space polynomial in the length of the encoded input. -/
-theorem ComputableInPolyTimeWithOracle.exists_computableTidilyInO {A : Set (List Bool)}
+`PSPACE`, a function computable in polynomial time relative to it is computable within space
+polynomial in the length of the encoded input. -/
+theorem ComputableInPolyTimeWithOracle.exists_computableInO {A : Set (List Bool)}
     {f : α → β} {output : β ↪ List Bool} (hA : A ∈ PSPACE encBits)
     (hf : ComputableInPolyTimeWithOracle A f enc output) :
-    ∃ T S, PolyBounded (fun a => (enc a).length) S ∧ ComputableTidilyInO f enc output T S := by
+    ∃ T S, PolyBounded (fun a => (enc a).length) S ∧ ComputableInO f enc output T S := by
   obtain ⟨TA, SA, hSA, g, hg, hgA⟩ := exists_computableInO_of_mem_PSPACE hA
   have hg' : g = fun w => decide (w ∈ A) := funext fun w =>
     Bool.eq_iff_iff.mpr ⟨fun h => decide_eq_true ((hgA w).mpr h),
@@ -112,22 +112,22 @@ theorem ComputableInPolyTimeWithOracle.exists_computableTidilyInO {A : Set (List
   obtain ⟨k, m, machine, c, d, hrun⟩ := hcert.exists_fin_run_pure_false
   obtain ⟨T, S, hS, h⟩ := machine.exists_computableTidilyInO_run (input := enc) hg.tidy
     (by simpa [encBits] using hSA) c d
-  refine ⟨T, S, hS, h.of_enc_eq fun a => ?_⟩
+  refine ⟨T, S, hS, .of_tidy <| h.of_enc_eq fun a => ?_⟩
   rw [← hprogram a, ← hrun a (languageOracle A)]
   rfl
 
 /-- **`P` relative to an oracle in `PSPACE` is within `PSPACE`.** -/
 theorem PWithOracle_subset_PSPACE {A : Set (List Bool)} (hA : A ∈ PSPACE encBits) :
     PWithOracle A enc ⊆ PSPACE enc := fun _ ⟨_, hf, hL⟩ =>
-  let ⟨_, _, hS, h⟩ := hf.exists_computableTidilyInO hA
-  mem_PSPACE_of_computableInO (.of_tidy h) hS hL
+  let ⟨_, _, hS, h⟩ := hf.exists_computableInO hA
+  mem_PSPACE_of_computableInO h hS hL
 
 /-- **`NP` relative to an oracle in `PSPACE` is within `PSPACE`** [Arora and Barak, Theorem
 3.7][AroraBarak09]: the verifier runs within polynomial space, and its certificates are searched
 within polynomial space. -/
 theorem NPWithOracle_subset_PSPACE {A : Set (List Bool)} (hA : A ∈ PSPACE encBits) :
     NPWithOracle A enc ⊆ PSPACE enc := fun _ ⟨_, _, hV, hL⟩ =>
-  let ⟨_, _, hS, h⟩ := hV.exists_computableTidilyInO hA
-  mem_PSPACE_of_isVerifier (.of_tidy h) hS hL
+  let ⟨_, _, hS, h⟩ := hV.exists_computableInO hA
+  mem_PSPACE_of_isVerifier h hS hL
 
 end Cslib.Complexity

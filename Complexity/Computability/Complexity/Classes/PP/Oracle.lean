@@ -72,7 +72,7 @@ theorem PP_subset_PPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
 theorem PPWithOracle_eq_PP (hA : A ∈ P encBits) (enc : α ↪ List Bool) :
     PPWithOracle A enc = PP enc :=
   Set.Subset.antisymm (fun _ ⟨p, V, hV, hL⟩ =>
-    ⟨p, V, .of_tidy (hV.computableTidilyInPolyTime hA), hL⟩) (PP_subset_PPWithOracle A enc)
+    ⟨p, V, hV.computableInPolyTime hA, hL⟩) (PP_subset_PPWithOracle A enc)
 
 /-- Relativized PP is exactly positivity of a relativized gap function. For the reverse direction,
 two counts are padded to a common certificate length and selected with one extra bit. -/

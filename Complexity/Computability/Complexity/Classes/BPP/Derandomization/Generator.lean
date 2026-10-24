@@ -39,7 +39,7 @@ bounds on `2 ^ ℓ` and on `T n` as functions of the instance:
   time and space `O(t n)` (`Cslib.Complexity.exists_computableInO_of_mem_DTIME`);
 * such a decider, applied to words cut to a computed length `n`, runs in polynomial time when
   `T n` is polynomially bounded
-  (`Turing.MultiTapeTM.ComputableTidilyInO.computableTidilyInPolyTime_take`);
+  (`Turing.MultiTapeTM.ComputableInO.computableInPolyTime_take`);
 * the greedy design of `Cslib.Crypto.PRG.NisanWigderson.greedyMasks` is a loop over the `2 ^ ℓ`
   masks of length `ℓ` that keeps at most one more mask per step
   (`Cslib.Crypto.PRG.NisanWigderson.computableInPolyTime_greedyMasks`);
@@ -61,9 +61,9 @@ generator for each of the `2 ^ ℓ` seeds and takes the strict majority of the a
 
 * `Cslib.Complexity.exists_computableInO_of_mem_DTIME`: deterministic time classes have
   tidy deciders within the same time bound, up to constant factors.
-* `Turing.MultiTapeTM.ComputableTidilyInO.computableTidilyInPolyTime_take`: evaluation of a
+* `Turing.MultiTapeTM.ComputableInO.computableInPolyTime_take`: evaluation of a
   function computable in time `T n` on words of polynomially bounded `T n`.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsEnumList_of_polyBounded`: enumeration of the
+* `Turing.MultiTapeTM.ComputableInPolyTime.bitsEnumList_of_polyBounded`: enumeration of the
   words of a computed length `ℓ` when `2 ^ ℓ` is polynomially bounded.
 * `Cslib.Crypto.PRG.NisanWigderson.computableInPolyTime_greedyMasks`,
   `Cslib.Crypto.PRG.NisanWigderson.computableInPolyTime_listGenerator`: the greedy design
@@ -124,17 +124,20 @@ end Cslib.Complexity
 
 namespace Turing.MultiTapeTM
 
-/-- **Evaluation on short words.** Let `g` be tidily computable within time and space `O(T n)` on
-words of length `n`, for a monotone `T`. Then cutting a word to a computed length `cut x` and
-applying `g` is polynomial-time in the pair of `x` and the word, provided `T (cut x)` is
-polynomially bounded in the length of `x`. -/
-theorem ComputableTidilyInO.computableTidilyInPolyTime_take {γ : Type} {encIn : γ ↪ List Bool}
+/-- **Evaluation on short words.** Let `g` be computable within time and space `O(T n)` on words
+of length `n`, for a monotone `T`. Then cutting a word to a computed length `cut x` and applying
+`g` is polynomial-time in the pair of `x` and the word, provided `T (cut x)` is polynomially
+bounded in the length of `x`. -/
+theorem ComputableInO.computableInPolyTime_take {γ : Type} {encIn : γ ↪ List Bool}
     {g : List Bool → Bool} {T : ℕ → ℕ} (hT : Monotone T)
-    (hg : ComputableTidilyInO g encBits encBool (fun y => T y.length) fun y => T y.length)
-    {cut : γ → ℕ} (hcut : ComputableTidilyInPolyTime cut encIn encUnary)
+    (hg : ComputableInO g encBits encBool (fun y => T y.length) fun y => T y.length)
+    {cut : γ → ℕ} (hcut : ComputableInPolyTime cut encIn encUnary)
     (hbound : PolyBounded (fun x => (encIn x).length) fun x => T (cut x)) :
-    ComputableTidilyInPolyTime (fun p : γ × List Bool => g (p.2.take (cut p.1)))
+    ComputableInPolyTime (fun p : γ × List Bool => g (p.2.take (cut p.1)))
       (encPair encIn encBits) encBool := by
+  have hg := hg.tidy
+  have hcut := hcut.tidy
+  refine .of_tidy ?_
   have h₁ : ComputableTidilyInPolyTime (fun p : γ × List Bool => p.2.take (cut p.1))
       (encPair encIn encBits) encBits := by
     have := hcut.comp (ComputableTidilyInPolyTime.fst encIn encBits)
@@ -152,20 +155,23 @@ theorem ComputableTidilyInO.computableTidilyInPolyTime_take {γ : Type} {encIn :
     (ht.add hs).add (hfst.mono fun p => hT (List.length_take_le _ _))
   exact (hg.comp h₁).computableTidilyInPolyTime hpoly hpoly
 
-namespace ComputableTidilyInPolyTime
+namespace ComputableInPolyTime
 
 variable {γ : Type} {encIn : γ ↪ List Bool}
 
+open ComputableTidilyInPolyTime in
 /-- Enumerate the words of a computed length `count x` when `2 ^ count x` is polynomially
 bounded. -/
 theorem bitsEnumList_of_polyBounded {count : γ → ℕ}
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
+    (hcount : ComputableInPolyTime count encIn encUnary)
     (hbudget : PolyBounded (fun x => (encIn x).length) fun x => 2 ^ count x) :
-    ComputableTidilyInPolyTime (fun x => Cslib.BitString.enumList (count x)) encIn
+    ComputableInPolyTime (fun x => Cslib.BitString.enumList (count x)) encIn
       (encList encBits) := by
+  have hcount := hcount.tidy
+  refine .of_tidy ?_
   obtain ⟨c, d, h⟩ := hbudget.exists_le
-  refine bitsEnumList hcount (size := fun n => 3 * (c * (n + 1) ^ d) ^ 2) (by fun_prop)
-    fun x => ?_
+  refine ComputableTidilyInPolyTime.bitsEnumList hcount
+    (size := fun n => 3 * (c * (n + 1) ^ d) ^ 2) (by fun_prop) fun x => ?_
   have h₁ : 2 * count x + 1 ≤ 3 * 2 ^ count x := by
     have := Nat.lt_two_pow_self (n := count x)
     omega
@@ -175,7 +181,7 @@ theorem bitsEnumList_of_polyBounded {count : γ → ℕ}
     _ ≤ 3 * (c * ((encIn x).length + 1) ^ d) ^ 2 :=
         Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (h x) 2)
 
-end ComputableTidilyInPolyTime
+end ComputableInPolyTime
 
 end Turing.MultiTapeTM
 
@@ -231,7 +237,8 @@ theorem computableInPolyTime_greedyMasks {seed block overlap : γ → ℕ}
   unfold greedyMasks
   refine foldlWith_of_bounded_growth (encA := encBits) (par := fun x => (block x, overlap x))
     (step := fun p kept w => greedyStep p.1 p.2 kept w) (growth := fun x => 2 * seed x + 1)
-    (hblock.prod hoverlap) (bitsEnumList_of_polyBounded hseed hbudget) (.const [])
+    (hblock.prod hoverlap)
+    (ComputableInPolyTime.bitsEnumList_of_polyBounded (.of_tidy hseed) hbudget).tidy (.const [])
     computableTidilyInPolyTime_greedyStep
     ((hseed.polyBounded.mul (.const 2)).add (.const 1) |>.mono fun x => by simp [Nat.mul_comm])
     fun x kept w hw => ?_
@@ -260,9 +267,9 @@ theorem computableInPolyTime_listGenerator {g : List Bool → Bool} {T : ℕ →
   have hmasks := hmasks.tidy
   have hseed := hseed.tidy
   refine .of_tidy ?_
-  have heval := hg.computableTidilyInPolyTime_take hT
-    (hblock.comp (fst encIn encBits)) (hbudget.comp (PolyBounded.self.mono fun p => by
-      simp [length_frame]; omega))
+  have heval := (ComputableInO.computableInPolyTime_take hT (.of_tidy hg)
+    (.of_tidy (hblock.comp (fst encIn encBits))) (hbudget.comp (PolyBounded.self.mono fun p => by
+      simp [length_frame]; omega))).tidy
   have hread : ComputableTidilyInPolyTime (fun p : γ × List Bool => restrictMask p.2 (seed p.1))
       (encPair encIn encBits) encBits :=
     computableTidilyInPolyTime_restrictMask.comp
@@ -332,6 +339,6 @@ theorem computableInPolyTime_nwDecider {V : α × List Bool → Bool} {g : List 
   exact bitsStrictMajorityWithInput (mapToBitsWithInput
     (f := fun x z => V (x, listGenerator g (block x)
       ((greedyMasks (seed x) (block x) (overlap x)).take (out x)) z))
-    (bitsEnumList_of_polyBounded hseed hseedBudget) hvote)
+    (ComputableInPolyTime.bitsEnumList_of_polyBounded (.of_tidy hseed) hseedBudget).tidy hvote)
 
 end Cslib.Complexity

@@ -381,11 +381,11 @@ info: 'Cslib.Complexity.NPWithOracle_subset_PSPACE' depends on axioms:
 #print axioms Cslib.Complexity.NPWithOracle_subset_PSPACE
 
 /--
-info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableTidilyInO' depends on axioms:
+info: 'Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableInO' depends on axioms:
   [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableTidilyInO
+#print axioms Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableInO
 
 /--
 info: 'Cslib.Complexity.mem_PSPACE_of_isVerifier' depends on axioms:

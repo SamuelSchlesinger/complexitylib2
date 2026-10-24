@@ -429,23 +429,25 @@ theorem computableInPolyTime_paddedProgram (M : ℕ) {gL : List Bool → Bool} {
   -- the enumerations
   have hE : ComputableTidilyInPolyTime (fun x => BitString.enumList (blockLength M (padLength x)))
       (encPair encBits encUnary) (encList encBits) :=
-    bitsEnumList_of_polyBounded hb ((polyBounded_two_pow_mul_padLength 1).mono fun x => by
-      rw [one_mul]
-      exact Nat.pow_le_pow_right (by norm_num) (hbℓ x))
+    (ComputableInPolyTime.bitsEnumList_of_polyBounded (.of_tidy hb)
+      ((polyBounded_two_pow_mul_padLength 1).mono fun x => by
+        rw [one_mul]
+        exact Nat.pow_le_pow_right (by norm_num) (hbℓ x))).tidy
   have hMb : ComputableTidilyInPolyTime (fun x => M * blockLength M (padLength x))
       (encPair encBits encUnary) encUnary := by
     fun_prop
   have hEn : ComputableTidilyInPolyTime
       (fun x => BitString.enumList (M * blockLength M (padLength x)))
       (encPair encBits encUnary) (encList encBits) :=
-    bitsEnumList_of_polyBounded hMb ((polyBounded_two_pow_mul_padLength 1).mono fun x => by
-      rw [one_mul]
-      exact Nat.pow_le_pow_right (by norm_num) (hMbℓ x))
+    (ComputableInPolyTime.bitsEnumList_of_polyBounded (.of_tidy hMb)
+      ((polyBounded_two_pow_mul_padLength 1).mono fun x => by
+        rw [one_mul]
+        exact Nat.pow_le_pow_right (by norm_num) (hMbℓ x))).tidy
   -- the queries to the decider
-  have htest := hgL.computableTidilyInPolyTime_take
-    (fun _ _ h => Nat.pow_le_pow_right two_pos (Nat.mul_le_mul_left k h)) hMb
-    ((polyBounded_two_pow_mul_padLength k).mono fun x =>
-      Nat.pow_le_pow_right (by norm_num) (Nat.mul_le_mul_left k (hMbℓ x)))
+  have htest := (ComputableInO.computableInPolyTime_take
+    (fun _ _ h => Nat.pow_le_pow_right two_pos (Nat.mul_le_mul_left k h)) (.of_tidy hgL)
+    (.of_tidy hMb) ((polyBounded_two_pow_mul_padLength k).mono fun x =>
+      Nat.pow_le_pow_right (by norm_num) (Nat.mul_le_mul_left k (hMbℓ x)))).tidy
   have hpts : ComputableTidilyInPolyTime
       (fun x => (BitString.enumList (M * blockLength M (padLength x))).filter
         fun z => gL (z.take (M * blockLength M (padLength x))))

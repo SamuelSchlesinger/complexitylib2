@@ -54,7 +54,7 @@ values:
   `2 ^ ((t + 1) * (2 * t + 1))` steps, with at most `t` frames of `O(t)` bits each
   (`Cslib.Complexity.Interaction.length_encEvalState_iterate_le`), so it computes `W` within
   polynomial space (`Cslib.Complexity.Interaction.evaluate_eq`,
-  `Cslib.Complexity.Interaction.computableTidilyInPolySpace_evaluate`), in exponential time.
+  `Cslib.Complexity.Interaction.computableInPolySpace_evaluate`), in exponential time.
 
 The converse inclusion `PSPACE ⊆ IP`, and so `IP = PSPACE`, is not formalized here.
 
@@ -71,7 +71,7 @@ The converse inclusion `PSPACE ⊆ IP`, and so `IP = PSPACE`, is not formalized 
   words.
 * `Cslib.Complexity.Interaction.gameTree_value_eq`: the value is the value of the game tree.
 * `Cslib.Complexity.Interaction.evaluate_eq`: the evaluation computes the value.
-* `Cslib.Complexity.Interaction.computableTidilyInPolySpace_evaluate`: within polynomial space.
+* `Cslib.Complexity.Interaction.computableInPolySpace_evaluate`: within polynomial space.
 * `Cslib.Complexity.mem_iff_two_pow_lt_value`: the value decides the problem.
 * `Cslib.Complexity.IP_subset_PSPACE`: `IP ⊆ PSPACE`.
 
@@ -526,9 +526,13 @@ theorem length_encEvalState_iterate_le (a : α) (j : ℕ) :
   simp only [encEvalState, length_encPair]
   nlinarith
 
+omit hfuel in
 /-- **The evaluation within polynomial space.** -/
-theorem computableTidilyInPolySpace_evaluate [Finite Control] [Inhabited α] :
-    ComputableTidilyInPolySpace (evaluate enc M fuel) enc encNat := by
+theorem computableInPolySpace_evaluate [Finite Control] [Inhabited α]
+    (hfuel : ComputableInPolyTime fuel enc encUnary) :
+    ComputableInPolySpace (evaluate enc M fuel) enc encNat := by
+  have hfuel := hfuel.tidy
+  refine .of_tidy ?_
   have hn : ComputableTidilyInPolyTime (evalTime fuel) enc encNat := by
     have hexp : ComputableTidilyInPolyTime (fun a => (fuel a + 1) * (2 * fuel a + 1)) enc
         encUnary := by
@@ -644,7 +648,7 @@ theorem IP_subset_PSPACE (enc : α ↪ List Bool) : IP enc ⊆ PSPACE enc := by
           (ComputableTidilyInPolyTime.snd _ _))
     exact (ComputableTidilyInPolySpace.of_polyTime hpost).comp
       ((ComputableTidilyInPolySpace.of_polyTime hcap).prod
-        (computableTidilyInPolySpace_evaluate M hfuel))
+        (computableInPolySpace_evaluate M (.of_tidy hfuel)).tidy)
   refine mem_PSPACE_of_computableInPolySpace (.of_tidy hdec) fun a => ?_
   rw [mem_iff_two_pow_lt_value (fun a S oracle s => hreal a S oracle s) hA a, evaluate_eq,
     decide_eq_true_iff]

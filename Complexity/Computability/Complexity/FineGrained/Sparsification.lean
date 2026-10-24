@@ -744,7 +744,8 @@ theorem exists_decidableInExpTime_numVars_of_length (k : ℕ) {ε : ℝ} (hε : 
     exact_mod_cast h₁.trans h₃
   refine ⟨Sparsify.occBound K α, fun δ hδ h => ?_⟩
   obtain ⟨e, h⟩ := h
-  obtain ⟨g, t, c, hg, hgA, ht⟩ := h.exists_computableTidilyInO
+  obtain ⟨g, t, c, hg, hgA, ht⟩ := h.exists_computableInO
+  have hg := hg.tidy
   have hgsat : ∀ ψ : CNF ℕ, (∀ c ∈ ψ, c.length ≤ k) → (g ψ = true ↔ ψ.Satisfiable) :=
     fun ψ hψ => by
       rw [← hgA]

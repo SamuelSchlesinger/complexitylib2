@@ -127,7 +127,8 @@ theorem computableInO_spaceDiagonal {G : ℕ → ℕ} (hG : SpaceConstructible G
       ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
     have hdesc := hdec.inO.comp hu
     have hsym := Universal.computableTidilyInDegree_map_eBit.inO_one
-    obtain ⟨TG, hGb⟩ := hG.computableTidilyInO
+    obtain ⟨TG, hGb⟩ := hG.computableInO
+    have hGb := hGb.tidy
     have hGu := ComputableTidilyInO.natToUnary.comp hGb
     have hclock := ((ComputableTidilyInDegree.two_pow_length encUnary).inO_one.comp_linear
       hGu).of_enc_eq (encOut := encNat) (g := fun x : List Bool => 2 ^ G x.length) fun x => by

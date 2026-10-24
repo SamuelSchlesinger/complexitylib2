@@ -400,7 +400,8 @@ private theorem decidableInTimeO_natCast_iff {A : Set α} {T : α → ℕ} :
       ∃ g : α → Bool, ComputableTidilyInO g encA encBool T T ∧ ∀ a, a ∈ A ↔ g a = true := by
   constructor
   · intro h
-    obtain ⟨g, t, k, hg, hA, ht⟩ := h.exists_computableTidilyInO
+    obtain ⟨g, t, k, hg, hA, ht⟩ := h.exists_computableInO
+    have hg := hg.tidy
     have ht' : ∀ a, t a ≤ k * (T a + 1) := fun a => by
       have : (t a : ℝ) ≤ ((k * (T a + 1) : ℕ) : ℝ) := by
         push_cast

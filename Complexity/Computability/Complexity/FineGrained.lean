@@ -61,7 +61,7 @@ The negation of `ETH` is `Cslib.Complexity.DecidableInSubexpTime`: decidability 
 
 * `Cslib.Complexity.mem_DTIME_iff_decidableInTimeO`: `DTIME` is `DecidableInTimeO` for bounds in
   the length of the encoded instance.
-* `Cslib.Complexity.DecidableInTimeO.exists_computableTidilyInO`,
+* `Cslib.Complexity.DecidableInTimeO.exists_computableInO`,
   `Cslib.Complexity.DecidableInTimeO.of_computableInO`: deciders within time `O(T)` are tidy
   deciders within time `O(T)`, which compose.
 * `Cslib.Complexity.DecidableInTimeO.inter`: restricting to a set decided in polynomial time.
@@ -131,17 +131,17 @@ section Machines
 
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α} {T : α → ℝ}
 
-/-- A decider within time `O(T)` is a tidy decider within time and space `O(t)`, for a bound `t`
+/-- A decider within time `O(T)` is a decider within time and space `O(t)`, for a bound `t`
 within `O(T)`. -/
-theorem DecidableInTimeO.exists_computableTidilyInO (h : DecidableInTimeO A enc T) :
-    ∃ (g : α → Bool) (t : α → ℕ) (c : ℕ), ComputableTidilyInO g enc encBool t t ∧
+theorem DecidableInTimeO.exists_computableInO (h : DecidableInTimeO A enc T) :
+    ∃ (g : α → Bool) (t : α → ℕ) (c : ℕ), ComputableInO g enc encBool t t ∧
       (∀ a, a ∈ A ↔ g a = true) ∧ ∀ a, (t a : ℝ) ≤ c * T a + c := by
   obtain ⟨c, t, s, ht, h⟩ := h
   obtain ⟨g, hg, hA⟩ := decidableInTimeAndSpace_iff.mp h
   obtain ⟨k, hg⟩ := ComputableInTimeAndSpace.exists_space_linear hg
   obtain ⟨d, hg⟩ := ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace hg
-  refine ⟨g, t, c, ComputableTidilyInO.of_bounds hg (2 + 3 * k + d + d * k + d) (fun a => ?_)
-    (fun a => ?_) (fun a => ?_), hA, ht⟩
+  refine ⟨g, t, c, .of_tidy <| ComputableTidilyInO.of_bounds hg (2 + 3 * k + d + d * k + d)
+    (fun a => ?_) (fun a => ?_) (fun a => ?_), hA, ht⟩
   all_goals
     have e : (2 + 3 * k + d + d * k + d) * (t a + 1) = 2 * t a + 3 * (k * t a + k) + d +
         (2 + d * t a + d * (k * t a + k + 1) + d * t a) := by ring
@@ -168,12 +168,13 @@ theorem DecidableInTimeO.inter {p : α → Bool} (hp : ComputableInPolyTime p en
     ∃ e : ℕ, DecidableInTimeO ({a | p a = true} ∩ B) enc
       fun a => (if p a = true then T a else 0) + ((enc a).length + 1) ^ e := by
   have hp := hp.tidy
-  obtain ⟨g, t, c, hg, hgB, ht⟩ := hB.exists_computableTidilyInO
+  obtain ⟨g, t, c, hg, hgB, ht⟩ := hB.exists_computableInO
+  have hg := hg.tidy
   obtain ⟨d, _, hp⟩ := hp.exists_degree
   have h := hp.inO.ite hg (ComputableTidilyInO.const false)
   refine ⟨d + 1, DecidableInTimeO.mono (T := fun a => ((((enc a).length + 1) ^ d +
     if p a then t a else (enc a).length : ℕ) : ℝ))
-    (Complexity.DecidableInTimeO.of_computableInO (.of_tidy h) (fun a => ?_) fun a => le_rfl) (c + 2)
+    (DecidableInTimeO.of_computableInO (.of_tidy h) (fun a => ?_) fun a => le_rfl) (c + 2)
     (fun a => ?_) fun a => ?_⟩
   · simp only [Set.mem_inter_iff, Set.mem_ofPred_eq, hgB]
     cases p a <;> simp

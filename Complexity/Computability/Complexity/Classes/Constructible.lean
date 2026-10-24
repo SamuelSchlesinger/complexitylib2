@@ -70,10 +70,11 @@ def TimeConstructible (t : ℕ → ℕ) : Prop :=
   ∃ c : ℕ, ∃ s : ℕ → ℕ, ComputableInTimeAndSpaceOfLength (fun x : List Bool => t x.length) encBits
     encNat (fun n => c * t n + c) s
 
-/-- A time-constructible bound is computed tidily within time and space `O(t n)`. -/
-theorem TimeConstructible.computableTidilyInO {t : ℕ → ℕ} (ht : TimeConstructible t) :
-    ComputableTidilyInO (fun x : List Bool => t x.length) encBits encNat (fun x => t x.length)
+/-- A time-constructible bound is computed within time and space `O(t n)`. -/
+theorem TimeConstructible.computableInO {t : ℕ → ℕ} (ht : TimeConstructible t) :
+    ComputableInO (fun x : List Bool => t x.length) encBits encNat (fun x => t x.length)
       fun x => t x.length := by
+  refine .of_tidy ?_
   obtain ⟨c, s, h⟩ := ht
   obtain ⟨k, h⟩ := ComputableInTimeAndSpace.exists_space_linear h
   obtain ⟨d, h⟩ := h.exists_computableTidilyInTimeAndSpace
@@ -193,7 +194,7 @@ theorem TimeConstructible.succ_mul_of_computableInO {f : ℕ → ℕ} {T : List 
 /-- If `f` is time-constructible and `n ≤ f n`, then so is `(n + 1) * f n`. -/
 theorem TimeConstructible.succ_mul {f : ℕ → ℕ} (hf : TimeConstructible f) (hn : ∀ n, n ≤ f n) :
     TimeConstructible fun n => (n + 1) * f n :=
-  TimeConstructible.succ_mul_of_computableInO 1 (.of_tidy hf.computableTidilyInO) (fun x => by
+  TimeConstructible.succ_mul_of_computableInO 1 hf.computableInO (fun x => by
     have : f x.length ≤ (x.length + 1) * f x.length := Nat.le_mul_of_pos_left _ (by omega)
     omega) hn
 
@@ -234,13 +235,13 @@ def SpaceConstructible (s : ℕ → ℕ) : Prop :=
   ∃ c : ℕ, ∃ t : ℕ → ℕ, ComputableInTimeAndSpaceOfLength (fun x : List Bool => s x.length) encBits
     encNat t fun n => c * s n + c
 
-/-- A space-constructible bound is computed tidily within space `O(s n)`, within some time. -/
-theorem SpaceConstructible.computableTidilyInO {s : ℕ → ℕ} (hs : SpaceConstructible s) :
-    ∃ T, ComputableTidilyInO (fun x : List Bool => s x.length) encBits encNat T
+/-- A space-constructible bound is computed within space `O(s n)`, within some time. -/
+theorem SpaceConstructible.computableInO {s : ℕ → ℕ} (hs : SpaceConstructible s) :
+    ∃ T, ComputableInO (fun x : List Bool => s x.length) encBits encNat T
       fun x => s x.length := by
   obtain ⟨c, t, h⟩ := hs
   obtain ⟨d, h⟩ := ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace h
-  refine ⟨_, .of_bounds h (d * (c + 1) + 1) (T := fun x => 2 * t x.length +
+  refine ⟨_, .of_tidy <| .of_bounds h (d * (c + 1) + 1) (T := fun x => 2 * t x.length +
     3 * (c * s x.length + c) + d) (fun x => ?_) (fun x => ?_) fun x => ?_⟩
   · exact (Nat.le_succ _).trans (Nat.le_mul_of_pos_left _ (by omega))
   · dsimp only [encBits_apply]

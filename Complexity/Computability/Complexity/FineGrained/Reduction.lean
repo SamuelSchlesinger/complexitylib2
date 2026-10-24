@@ -109,7 +109,8 @@ theorem DecidableInExpTime.of_reduction {f : α → β}
     (h : DecidableInExpTime B encB μB δ) : DecidableInExpTime A encA μA (c * δ) := by
   have hf := hf.tidy
   obtain ⟨e, h⟩ := h
-  obtain ⟨g, t, k, hg, hgB, ht⟩ := h.exists_computableTidilyInO
+  obtain ⟨g, t, k, hg, hgB, ht⟩ := h.exists_computableInO
+  have hg := hg.tidy
   obtain ⟨d, _, hf⟩ := hf.exists_degree
   have hfO := hf.inO
   obtain ⟨l, hl⟩ := hfO.length_le_time

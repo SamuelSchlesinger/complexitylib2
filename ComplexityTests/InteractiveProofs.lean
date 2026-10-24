@@ -327,11 +327,12 @@ example (P : Prover Unit) :
 #guard_msgs in
 #print axioms Interaction.evaluate_eq
 
-/-- info: 'Cslib.Complexity.Interaction.computableTidilyInPolySpace_evaluate' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
-#print axioms Interaction.computableTidilyInPolySpace_evaluate
+/--
+info: 'Cslib.Complexity.Interaction.computableInPolySpace_evaluate' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Interaction.computableInPolySpace_evaluate
 
 /-- info: 'Cslib.Complexity.Interaction.computableInPolySpace_countAccepts' depends on axioms: [propext,
  Classical.choice,

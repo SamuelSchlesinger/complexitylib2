@@ -126,7 +126,8 @@ then a decider on its output. -/
 theorem IsKernelization.mem_FPT {K : α → α} {g : ℕ → ℕ} (hK : IsKernelization enc κ A K g)
     {t : ℕ → ℕ} (hA : A ∈ DTIME enc t) : A ∈ FPT enc κ := by
   obtain ⟨dec, tt, c, hdec, hdecA, htt⟩ :=
-    (mem_DTIME_iff_decidableInTimeO.mp hA).exists_computableTidilyInO
+    (mem_DTIME_iff_decidableInTimeO.mp hA).exists_computableInO
+  have hdec := hdec.tidy
   obtain ⟨d, _, hKd⟩ := hK.polyTime.tidy.exists_degree
   have htt' : ∀ a, tt (K a) ≤ c * (∑ j ∈ Finset.range (g (κ a) + 1), t j) + c := fun a => by
     have h₁ : tt (K a) ≤ c * t (enc (K a)).length + c := by exact_mod_cast htt (K a)
