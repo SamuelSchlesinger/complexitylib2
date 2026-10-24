@@ -121,6 +121,7 @@ import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
 import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature
+import ComplexityTests.Crypto.UntilBad
 import ComplexityTests.Crypto.ZeroKnowledge
 import ComplexityTests.CyclicFeedback
 import ComplexityTests.DataStructure

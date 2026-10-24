@@ -20,7 +20,10 @@ the two interpretations of any program give the same probability to every outcom
 final state (`IdenticalUntilBad.run_apply`). Consequently, an experiment that continues the run
 accepts with the first handler at most as often as with the second, plus the probability of
 reaching a bad state ([BonehShoup2023], Theorem 4.7, the difference lemma), with no bound on the
-program's number of calls (`IdenticalUntilBad.bind_apply_le`).
+program's number of calls (`IdenticalUntilBad.bind_apply_le`). Both handlers reach a bad state with
+the same probability (`IdenticalUntilBad.bad_eq`), so the two acceptance probabilities differ by
+at most that probability (`IdenticalUntilBad.abs_sub_le`), and the bad event may be bounded in
+whichever run is easier.
 
 The probability of reaching a bad state is bounded by summing over the calls: if each call `q`
 from a good state turns bad with probability at most `cost q · budget s`, and each call raises the
@@ -37,6 +40,9 @@ at some calls only, at points that may already be defined.
 
 * `Cslib.OracleComp.IdenticalUntilBad.run_apply`: equal outcome probabilities at good states.
 * `Cslib.OracleComp.IdenticalUntilBad.bind_apply_le`: the difference lemma.
+* `Cslib.OracleComp.IdenticalUntilBad.bad_eq`, `Cslib.OracleComp.IdenticalUntilBad.abs_sub_le`:
+  the bad event has the same probability under both handlers, and the two-sided difference
+  lemma.
 * `Cslib.OracleComp.toOuterMeasure_bad_le`: the accumulated probability of a bad state.
 
 ## References
@@ -135,6 +141,63 @@ theorem bind_apply_le (h : IdenticalUntilBad first second bad) (program : Oracle
   · have hgood : x ∉ {x : α × σ | bad x.2} := hx
     rw [Set.indicator_of_notMem hgood, add_zero, show x = (x.1, x.2) from rfl,
       h.run_apply program s x.1 x.2 hx]
+
+/-- Identical until bad is symmetric. -/
+theorem symm (h : IdenticalUntilBad first second bad) : IdenticalUntilBad second first bad where
+  agree q s hs a s' hs' := (h.agree q s hs a s' hs').symm
+  absorb_first := h.absorb_second
+  absorb_second := h.absorb_first
+
+/-- A run gives the bad states and the good states total probability one. -/
+private theorem toOuterMeasure_bad_add_good (p : PMF (α × σ)) :
+    p.toOuterMeasure {x | bad x.2} + p.toOuterMeasure {x | ¬bad x.2} = 1 := by
+  classical
+  simp only [PMF.toOuterMeasure_apply]
+  rw [← ENNReal.tsum_add, ← p.tsum_coe]
+  refine tsum_congr fun x => ?_
+  by_cases hx : bad x.2
+  · rw [Set.indicator_of_mem (show x ∈ {x : α × σ | bad x.2} from hx),
+      Set.indicator_of_notMem (show x ∉ {x : α × σ | ¬bad x.2} from fun h => h hx), add_zero]
+  · rw [Set.indicator_of_notMem (show x ∉ {x : α × σ | bad x.2} from hx),
+      Set.indicator_of_mem (show x ∈ {x : α × σ | ¬bad x.2} from hx), zero_add]
+
+/-- Handlers that agree until a bad state reach a bad state with the same probability. -/
+theorem bad_eq (h : IdenticalUntilBad first second bad) (program : OracleComp spec α) (s : σ) :
+    ((interpret first program).run s).toOuterMeasure {x | bad x.2} =
+      ((interpret second program).run s).toOuterMeasure {x | bad x.2} := by
+  have hgood : ((interpret first program).run s).toOuterMeasure {x | ¬bad x.2} =
+      ((interpret second program).run s).toOuterMeasure {x | ¬bad x.2} := by
+    simp only [PMF.toOuterMeasure_apply]
+    refine tsum_congr fun x => ?_
+    by_cases hx : bad x.2
+    · rw [Set.indicator_of_notMem (show x ∉ {x : α × σ | ¬bad x.2} from fun h => h hx),
+        Set.indicator_of_notMem (show x ∉ {x : α × σ | ¬bad x.2} from fun h => h hx)]
+    · rw [Set.indicator_of_mem (show x ∈ {x : α × σ | ¬bad x.2} from hx),
+        Set.indicator_of_mem (show x ∈ {x : α × σ | ¬bad x.2} from hx),
+        show x = (x.1, x.2) from rfl, h.run_apply program s x.1 x.2 hx]
+  have hfirst := toOuterMeasure_bad_add_good (bad := bad) ((interpret first program).run s)
+  have hsecond := toOuterMeasure_bad_add_good (bad := bad) ((interpret second program).run s)
+  rw [hgood] at hfirst
+  exact (ENNReal.add_left_inj (Probability.PMF.toOuterMeasure_ne_top _ _)).mp
+    (hfirst.trans hsecond.symm)
+
+/-- **The difference lemma, two-sided** ([BonehShoup2023], Theorem 4.7): any experiment continuing
+the run of a program accepts with probabilities, under the two handlers, that differ by at most the
+probability of reaching a bad state, which is the same under both. -/
+theorem abs_sub_le (h : IdenticalUntilBad first second bad) (program : OracleComp spec α)
+    (s : σ) {β : Type} (next : α × σ → PMF β) (b : β) :
+    |(((interpret first program).run s).bind next b).toReal -
+        (((interpret second program).run s).bind next b).toReal| ≤
+      (((interpret first program).run s).toOuterMeasure {x | bad x.2}).toReal := by
+  have hle := h.bind_apply_le program s next b
+  have hle' := h.symm.bind_apply_le program s next b
+  rw [← h.bad_eq] at hle'
+  have hbad := Probability.PMF.toOuterMeasure_ne_top ((interpret first program).run s)
+    {x | bad x.2}
+  have h1 := ENNReal.toReal_mono (ENNReal.add_ne_top.mpr ⟨PMF.apply_ne_top _ _, hbad⟩) hle
+  have h2 := ENNReal.toReal_mono (ENNReal.add_ne_top.mpr ⟨PMF.apply_ne_top _ _, hbad⟩) hle'
+  rw [ENNReal.toReal_add (PMF.apply_ne_top _ _) hbad] at h1 h2
+  exact abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩
 
 end IdenticalUntilBad
 
