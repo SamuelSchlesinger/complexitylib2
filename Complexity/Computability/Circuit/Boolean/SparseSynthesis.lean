@@ -205,7 +205,9 @@ private theorem parameters_spec {P q p h c : ℕ} (hq : 32 * (P + 1) ≤ q)
   have hq2h : q * 32 * h ≤ q ^ 2 * h := Nat.mul_le_mul_right h hq2
   have hk : (q + 1) * h ≤ p - h := by
     have : (q + 1) * h + h = q * h + 2 * h := by ring
-    have : q * h + 2 * h ≤ q * 32 * h := by nlinarith
+    have : q * h + 2 * h ≤ q * 32 * h := by
+      calc q * h + 2 * h = (q + 2) * h := by ring
+        _ ≤ q * 32 * h := Nat.mul_le_mul_right h (by omega)
     omega
   have hkl : (q + 1) * h + (p - h) = p + q * h := by
     have : (q + 1) * h = q * h + h := by ring
@@ -214,7 +216,7 @@ private theorem parameters_spec {P q p h c : ℕ} (hq : 32 * (P + 1) ≤ q)
     obtain ⟨r, rfl⟩ : ∃ r, q = r + 2 := ⟨q - 2, by omega⟩
     rw [Nat.add_sub_cancel]
     have key : ((r + 2 + 1) * h + 1) * r + h ≤ (r + 2) ^ 2 * h := by
-      nlinarith [Nat.le_mul_of_pos_right r hh1]
+      nlinarith only [Nat.le_mul_of_pos_right r hh1]
     omega
   have hat : p + h ≤ q * h * (q + 1) := by
     have e₁ : q * h * (q + 1) = q ^ 2 * h + q * h := by ring
@@ -222,30 +224,30 @@ private theorem parameters_spec {P q p h c : ℕ} (hq : 32 * (P + 1) ≤ q)
     have h₁ : q ^ 2 + h ≤ q * h := by
       obtain ⟨r, rfl⟩ : ∃ r, q = r + 1 := ⟨q - 1, by omega⟩
       have : r * (2 * (r + 1)) ≤ r * h := Nat.mul_le_mul_left r hh
-      nlinarith
+      nlinarith only [this, hq]
     omega
   have hJ : 4 * ((q + 1) * h) + 5 + c * h ≤ p - h := by
     have e₁ : (c + 4 * q + 6) * h = q ^ 2 * h := by rw [hcq]
     have e₂ : (c + 4 * q + 6) * h = c * h + 4 * (q * h) + 6 * h := by ring
     have e₃ : 4 * ((q + 1) * h) = 4 * (q * h) + 4 * h := by ring
     omega
-  have hcpos : 0 < c := by nlinarith
+  have hcpos : 0 < c := by nlinarith only [hcq, hq]
   refine ⟨hhp, hqh, hk, hkl, hK, hat, hJ, by omega, Nat.mul_pos hcpos hh1, ?_, ?_⟩
   · obtain ⟨r, rfl⟩ : ∃ r, q = r + 2 := ⟨q - 2, by omega⟩
     rw [Nat.add_sub_cancel]
-    nlinarith
+    nlinarith only [hq]
   · have h₁ : 2 * P * p ≤ 2 * P * (q ^ 2 * (h + 1)) := Nat.mul_le_mul_left _ hhi.le
     have h₂ : 2 * P * q ^ 2 ≤ P * q * h := by
       have := Nat.mul_le_mul_left (P * q) hh
-      nlinarith
-    have h₃ : (2 * P + 1) * (4 * q + 6) ≤ 11 * (P + 1) * q := by nlinarith
+      nlinarith only [this]
+    have h₃ : (2 * P + 1) * (4 * q + 6) ≤ 11 * (P + 1) * q := by nlinarith only [hq]
     have e₁ : (2 * P + 1) * (c * h) + (2 * P + 1) * (4 * q + 6) * h =
         (2 * P + 1) * q ^ 2 * h := by
       rw [← hcq]
       ring
     have h₄ : 12 * (P + 1) * q * h ≤ q ^ 2 * h :=
-      Nat.mul_le_mul_right h (by nlinarith)
-    nlinarith
+      Nat.mul_le_mul_right h (by nlinarith only [hq])
+    nlinarith only [h₁, h₂, h₃, e₁, h₄, hh]
 
 /-- **The parameters.** Let `q ≥ 32 (P + 1)`, `h ≥ 2 q` and `q ^ 2 h ≤ p < q ^ 2 (h + 1)`. Take
 `k = (q + 1) h` column bits and `l = p - h` row bits, chunks of `K = q - 2` columns in sparse
