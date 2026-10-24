@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.PCP.ConstraintGraph
 public import Complexity.Logics.Propositional.CNF
 public import Mathlib.Data.Fintype.Prod
-import Mathlib.Data.Fintype.Fin
+import Complexity.Logics.Propositional.CNF.UnsatVal
 
 /-!
 # From 3-SAT to constraint graphs
@@ -67,27 +67,6 @@ to have at most three literals.
 @[expose] public section
 
 open Finset
-
-namespace Cslib.Logic.PL
-
-variable {V : Type*}
-
-/-- The number of falsified clauses, counted by their positions in the formula. -/
-theorem CNF.countUnsat_eq_card (σ : V → Bool) (φ : CNF V) :
-    φ.countUnsat σ = #{j : Fin φ.length | φ[j].eval σ = false} := by
-  have key (p : Clause V → Bool) (l : CNF V) :
-      l.countP p = #{j : Fin l.length | p l[j] = true} := by
-    induction l with
-    | nil => simp
-    | cons a l ih =>
-      change _ = #{j : Fin (l.length + 1) | p (a :: l)[j] = true}
-      rw [List.countP_cons, ih, Fin.card_filter_univ_succ', add_comm]
-      simp only [Fin.getElem_fin, Fin.val_zero, List.getElem_cons_zero, Fin.val_succ,
-        List.getElem_cons_succ]
-      congr
-  simp [countUnsat, key]
-
-end Cslib.Logic.PL
 
 namespace Cslib.PCP
 

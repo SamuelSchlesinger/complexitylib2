@@ -30,6 +30,9 @@ with clauses of width at most three that is satisfiable exactly when the origina
 
 * `Cslib.Logic.PL.CNF.length_le_three_of_mem_to3CNF`: every clause has at most three literals.
 * `Cslib.Logic.PL.CNF.satisfiable_to3CNF`: splitting preserves satisfiability.
+* `Cslib.Logic.PL.CNF.length_to3CNF`,
+  `Cslib.Logic.PL.CNF.countUnsat_comp_inl_le_countUnsat_to3CNF`: splitting replaces a clause of
+  width `w ≥ 3` by `w - 2` clauses and keeps every falsified clause falsified.
 
 ## References
 
@@ -187,5 +190,71 @@ theorem CNF.satisfiable_to3CNF (φ : CNF V) : φ.to3CNF.Satisfiable ↔ φ.Satis
       · change (Clause.relabel Sum.inl (carry :: rest)).eval τ = true
         rw [Clause.eval_relabel]
         exact hc
+
+/-- The chain for a clause `carry :: rest` has `rest.length - 1` clauses, and at least one. -/
+private theorem Clause.length_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Literal W)
+    (rest : Clause W) :
+    (Clause.splitAux fresh j carry rest).length = max 1 (rest.length - 1) := by
+  induction j, carry, rest using Clause.splitAux.induct fresh with
+  | case1 j carry b c d rest ih =>
+    rw [Clause.splitAux, List.length_cons, ih]
+    simp only [List.length_cons]
+    omega
+  | case2 j carry rest hrest =>
+    rw [Clause.splitAux]
+    · match rest, hrest with
+      | [], _ | [_], _ | [_, _], _ => simp
+      | _ :: _ :: _ :: _, hrest => exact absurd rfl (hrest _ _ _ _)
+    · exact hrest
+
+/-- Splitting a clause of width `w` gives `w - 2` clauses, and at least one. -/
+private theorem Clause.length_split3 (fresh : ℕ → W) (j : ℕ) (c : Clause W) :
+    (Clause.split3 fresh j c).length = max 1 (c.length - 2) := by
+  cases c with
+  | nil => rfl
+  | cons carry rest =>
+    rw [Clause.split3, Clause.length_splitAux, List.length_cons]
+    rfl
+
+/-- The number of clauses after splitting. -/
+theorem CNF.length_to3CNF (φ : CNF V) :
+    φ.to3CNF.length = (φ.map fun c => max 1 (c.length - 2)).sum := by
+  rw [CNF.to3CNF, List.length_flatMap]
+  conv_rhs => rw [← List.zipIdx_map_fst 0 φ, List.map_map]
+  congr 1
+  refine List.map_congr_left fun x _ => ?_
+  rw [Clause.length_split3, Function.comp_apply, Clause.length_relabel]
+
+private theorem countP_le_sum_map {α : Type*} {p : α → Bool} {f : α → ℕ} {l : List α}
+    (h : ∀ x ∈ l, p x = true → 1 ≤ f x) : l.countP p ≤ (l.map f).sum := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    rw [List.countP_cons, List.map_cons, List.sum_cons]
+    have := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
+    by_cases hp : p a = true
+    · have := h a List.mem_cons_self hp
+      simp only [hp, ite_true]
+      omega
+    · simp only [hp, Bool.false_eq_true, ite_false]
+      omega
+
+/-- **Splitting keeps falsified clauses falsified**: an assignment of the split formula falsifies
+at least as many clauses as its restriction to the original variables falsifies in the original
+formula. -/
+theorem CNF.countUnsat_comp_inl_le_countUnsat_to3CNF (φ : CNF V) (τ : V ⊕ (ℕ × ℕ) → Bool) :
+    φ.countUnsat (τ ∘ Sum.inl) ≤ φ.to3CNF.countUnsat τ := by
+  have hφ : φ.countUnsat (τ ∘ Sum.inl) =
+      φ.zipIdx.countP fun x => !x.1.eval (τ ∘ Sum.inl) := by
+    rw [CNF.countUnsat]
+    conv_lhs => rw [← List.zipIdx_map_fst 0 φ]
+    rw [List.countP_map]
+    rfl
+  rw [hφ, CNF.countUnsat, CNF.to3CNF, List.countP_flatMap]
+  refine countP_le_sum_map fun x _ hx => Nat.one_le_iff_ne_zero.2 fun h0 => ?_
+  have h := Clause.eval_of_eval_split3 _ τ 0 _
+    (CNF.countUnsat_eq_zero_iff.1 (show CNF.countUnsat τ _ = 0 from h0))
+  rw [Clause.eval_relabel] at h
+  simp [h] at hx
 
 end Cslib.Logic.PL
