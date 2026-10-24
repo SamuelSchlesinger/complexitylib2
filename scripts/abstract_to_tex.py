@@ -443,6 +443,16 @@ def render_tex_intro(intro: str) -> list[str]:
     return lines
 
 
+def render_tex_paragraphs(text: str) -> list[str]:
+    """Render docstring prose into complete LaTeX paragraphs, preserving blank-line boundaries."""
+    paragraphs = []
+    for block in re.split(r"\n\s*\n", text.strip()):
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        if lines:
+            paragraphs.append(escape_tex_prose(" ".join(lines)))
+    return paragraphs
+
+
 def render_tex(title: str, intro: str, sections: list[dict]) -> str:
     lines = [f"\\subsection{{{escape_tex_prose(title)}}}", "", *render_tex_intro(intro), ""]
     for item in presentation_sections(sections):
@@ -451,14 +461,20 @@ def render_tex(title: str, intro: str, sections: list[dict]) -> str:
             m = re.match(r"^##\s*([^\n]+)\n?(.*)", doc, re.DOTALL)
             if m:
                 heading = escape_tex_prose(m.group(1).strip())
-                rest = escape_tex_prose(m.group(2).strip())
+                paragraphs = render_tex_paragraphs(m.group(2))
                 lines.append(f"\\subsubsection*{{{heading}}}")
-                if rest:
-                    lines.extend(["", rest])
+                for paragraph in paragraphs:
+                    lines.extend(["", paragraph])
             else:
-                lines.append(escape_tex_prose(doc))
+                for index, paragraph in enumerate(render_tex_paragraphs(doc)):
+                    if index:
+                        lines.append("")
+                    lines.append(paragraph)
         else:
-            lines.append(escape_tex_prose(doc))
+            for index, paragraph in enumerate(render_tex_paragraphs(doc)):
+                if index:
+                    lines.append("")
+                lines.append(paragraph)
         code = clean_code_for_display(item["code"], is_undocumented_tail=(item["kind"] == "section"))
         if code:
             code_lines = [escape_tex_code_line(l) for l in code.splitlines()]
