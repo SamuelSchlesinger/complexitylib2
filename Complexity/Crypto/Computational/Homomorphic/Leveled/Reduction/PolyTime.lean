@@ -48,7 +48,9 @@ theorem isPPTOn_publicKeyGame (bit : Bool) :
       (fun p => publicKeyGame E adversary bit p.1 p.2) := by
   have hchoose := hadversary.choose
   have hguess := hadversary.guess
-  have hpublic := (ComputableTidilyInPolyTime.snd encUnary encPublicKey).encoded
+  have hpublic := (ComputableInPolyTime.snd encUnary encPublicKey).encoded
+  have hfirst := hchoose.preprocess
+    (ComputableInPolyTime.fst encUnary encPublicKey) hpublic
   unfold publicKeyGame
   dsimp only [encPublicKey] at hpublic ⊢
   ppt
@@ -57,7 +59,7 @@ theorem isPPTOn_publicKeyGame (bit : Bool) :
 saved state charged. The supported-width hypothesis is needed only for the semantic proof. -/
 theorem isPPT_zeroLinkAdversary
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) E.keyGen)
-    {depth : ℕ → ℕ} (hdepth : ComputableTidilyInPolyTime depth encUnary encUnary) :
+    {depth : ℕ → ℕ} (hdepth : ComputableInPolyTime depth encUnary encUnary) :
     (zeroLinkAdversary E depth adversary).IsPPT := by
   have hchoose := hadversary.choose
   have hguess := hadversary.guess
@@ -66,8 +68,8 @@ theorem isPPT_zeroLinkAdversary
       (fun p => (zeroLinkAdversary E depth adversary).choose p.1 p.2)
     dsimp only [zeroLinkAdversary]
     have hrest := (hkeyGen.preprocess
-      (ComputableTidilyInPolyTime.fst encUnary encBits)).replicate
-        (hdepth.comp (ComputableTidilyInPolyTime.fst encUnary encBits))
+      (ComputableInPolyTime.fst encUnary encBits)).replicate
+        (hdepth.comp (ComputableInPolyTime.fst encUnary encBits))
     apply hrest.bind_with
     have hlinks : IsPPTOn
         (encPair (encPair encUnary encBits) (encList (encPair encBits encBits)))
@@ -75,7 +77,7 @@ theorem isPPT_zeroLinkAdversary
         (fun p => E.encryptZeroKeyLinks p.1.1 ((p.1.2, (p.2.headD ([], [])).2) :: p.2)) := by
       apply Scheme.isPPTOn_encryptZeroKeyLinks hencrypt <;> fun_prop
     apply hlinks.bind_with
-    have hpublic : ComputableTidilyInPolyTime
+    have hpublic : ComputableInPolyTime
         (fun p : ((ℕ × List Bool) × List (List Bool × List Bool)) ×
           List (List (List Bool)) => (p.1.1.2 :: p.1.2.map Prod.fst, p.2))
         (encPair (encPair (encPair encUnary encBits) (encList (encPair encBits encBits)))

@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.Homomorphic.Circuit
 public import Complexity.Computability.Circuit.Boolean.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Circuit.Boolean.CodeComposition
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -77,11 +78,14 @@ private theorem computableTidilyInPolyTime_augmentCode {α : Type} {enc : α ↪
     (hn : ComputableTidilyInPolyTime n enc encUnary)
     (hcode : ComputableTidilyInPolyTime code enc encCode) :
     ComputableTidilyInPolyTime (fun a => augmentCode (n a) (code a)) enc encCode := by
-  have hnBinary := unary_to_binary.comp hn
-  have hindices : ComputableTidilyInPolyTime (fun a => List.range (n a))
+  have hnPlain := ComputableInPolyTime.of_tidy hn
+  have hcodePlain := ComputableInPolyTime.of_tidy hcode
+  apply ComputableInPolyTime.tidy
+  have hnBinary := ComputableInPolyTime.unary_to_binary.comp hnPlain
+  have hindices : ComputableInPolyTime (fun a => List.range (n a))
       enc (encList encNat) := by
     simpa only [Function.comp_def, List.map_id'] using
-      unary_to_binary.map.comp (range.comp hn)
+      ComputableInPolyTime.unary_to_binary.map.comp (ComputableInPolyTime.range.comp hnPlain)
   unfold augmentCode
   fun_prop
 
@@ -91,12 +95,14 @@ all gates, wire indices and output references are read and written through `encC
     ComputableTidilyInPolyTime
       (fun D : Σ n, Circuit signature n 1 => ⟨D.1 + D.1, augmentNand D.2⟩)
       (encCircuit 1) (encCircuit 1) := by
-  have hview : ComputableTidilyInPolyTime
+  apply ComputableInPolyTime.tidy
+  have hview : ComputableInPolyTime
       (fun D : Σ n, Circuit signature n 1 => (D.1, D.2.code))
       (encCircuit 1) (encPair encUnary encCode) := .of_eq fun _ => rfl
   have hn := hview.fst'
-  have hcode := computableTidilyInPolyTime_augmentCode hn hview.snd'
-  have hcount : ComputableTidilyInPolyTime (fun D : Σ n, Circuit signature n 1 => D.1 + D.1)
+  have hcode := ComputableInPolyTime.of_tidy
+    (computableTidilyInPolyTime_augmentCode hn.tidy hview.snd'.tidy)
+  have hcount : ComputableInPolyTime (fun D : Σ n, Circuit signature n 1 => D.1 + D.1)
       (encCircuit 1) encUnary := by fun_prop
   exact (hcount.prod hcode).of_enc_eq (fun D => by
     simp only [encCircuit_apply, code_augmentNand])

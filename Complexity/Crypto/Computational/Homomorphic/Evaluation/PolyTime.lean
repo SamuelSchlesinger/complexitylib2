@@ -43,27 +43,27 @@ theorem isPPTOn_evaluateCircuit (D : DecryptionCircuits E secretWidth ciphertext
     (hevaluate : IsPPTOn
       (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
       encBits (fun p => E.evaluate p.1 p.2.1 p.2.2.1 p.2.2.2))
-    (hD : ComputableTidilyInPolyTime
+    (hD : ComputableInPolyTime
       (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
       encUnary (Boolean.encCircuit 1))
     {α : Type} {input : α ↪ List Bool} {n inputCount : α → ℕ}
     {publicKeys inputs : α → List (List Bool)}
     {encryptedKeys : α → List (List (List Bool))}
     {code : α → List (Boolean.Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpks : ComputableTidilyInPolyTime publicKeys input (encList encBits))
-    (heks : ComputableTidilyInPolyTime encryptedKeys input (encList (encList encBits)))
-    (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits))
-    (hcount : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hcode : ComputableTidilyInPolyTime code input Boolean.encCode) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpks : ComputableInPolyTime publicKeys input (encList encBits))
+    (heks : ComputableInPolyTime encryptedKeys input (encList (encList encBits)))
+    (hinputs : ComputableInPolyTime inputs input (encList encBits))
+    (hcount : ComputableInPolyTime inputCount input encUnary)
+    (hcode : ComputableInPolyTime code input Boolean.encCode) :
     IsPPTOn input (encList encBits)
       (fun a => evaluateCircuit D (n a) (publicKeys a) (encryptedKeys a) (inputs a)
         (inputCount a) (code a)) := by
-  have hcompiled := Boolean.Layered.computableTidilyInPolyTime_compile hcount hcode
+  have hcompiled := Boolean.Layered.computableInPolyTime_compile hcount hcode
   apply (isPPTOn_evaluateLayers D hencrypt hevaluate hD hn hpks heks hinputs
     hcompiled.fst').map_with
-  apply ComputableTidilyInPolyTime.mapWithInput
-    (hcompiled.snd'.comp (ComputableTidilyInPolyTime.fst _ _))
-  exact ComputableTidilyInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)
+  apply ComputableInPolyTime.mapWithInput
+    (hcompiled.snd'.comp (ComputableInPolyTime.fst _ _))
+  exact ComputableInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)
 
 end Cslib.Crypto.Homomorphic.Scheme

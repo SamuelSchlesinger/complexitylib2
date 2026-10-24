@@ -176,14 +176,14 @@ private theorem observe_ppt : IsPPTOn
     (encPair encUnary (encPair (encList encBits) (encList (encList encBits)))) encBool
     (fun p => observe p.1 p.2) := by
   unfold observe
-  apply ComputableTidilyInPolyTime.isPPTOn
-  apply ComputableTidilyInPolyTime.bitsGetDWithInput
-  · apply (ComputableTidilyInPolyTime.listGetD
+  apply ComputableInPolyTime.isPPTOn
+  apply ComputableInPolyTime.bitsGetDWithInput
+  · apply (ComputableInPolyTime.listGetD
       (encA := encBits) (encL := encList encBits) []).comp
       (g := fun p : ℕ × (List (List Bool) × List (List (List Bool))) =>
         (p.2.2.getD 0 [], 1))
-    apply ComputableTidilyInPolyTime.prod
-    · apply (ComputableTidilyInPolyTime.listGetD
+    apply ComputableInPolyTime.prod
+    · apply (ComputableInPolyTime.listGetD
         (encA := encList encBits) (encL := encList (encList encBits)) []).comp
         (g := fun p : ℕ × (List (List Bool) × List (List (List Bool))) => (p.2.2, 0))
       fun_prop

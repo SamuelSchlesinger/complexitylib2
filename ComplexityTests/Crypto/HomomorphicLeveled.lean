@@ -238,10 +238,10 @@ example : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
     (fun p => Leveled.encrypt tagged p.1 p.2.1 p.2.2) := by
   apply Leveled.isPPTOn_encrypt encrypt_ppt <;> fun_prop
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × List Bool × List Bool => Leveled.decrypt decryptionCircuits p.1 p.2.1 p.2.2)
     (encPair encUnary (encPair encBits encBits)) encBool := by
-  apply Leveled.computableTidilyInPolyTime_decrypt decryptionCircuits circuits_poly <;> fun_prop
+  apply Leveled.computableInPolyTime_decrypt decryptionCircuits circuits_poly <;> fun_prop
 
 example : IsPPTOn
     (encPair encUnary (encPair encUnary
@@ -289,11 +289,11 @@ info: 'Cslib.Crypto.Homomorphic.Leveled.isPPTOn_keyGen' depends on axioms:
 #print axioms Leveled.isPPTOn_keyGen
 
 /--
-info: 'Cslib.Crypto.Homomorphic.Leveled.computableTidilyInPolyTime_decrypt' depends on axioms:
+info: 'Cslib.Crypto.Homomorphic.Leveled.computableInPolyTime_decrypt' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Leveled.computableTidilyInPolyTime_decrypt
+#print axioms Leveled.computableInPolyTime_decrypt
 
 /--
 info: 'Cslib.Crypto.Homomorphic.Leveled.isPPTOn_evaluate' depends on axioms:

@@ -31,7 +31,7 @@ are polynomially bounded as a consequence of the generator certificate.
 
 * `Cslib.Crypto.Homomorphic.FixedKey.isPPTOn_keyGen`: generate the fixed public artifact.
 * `Cslib.Crypto.Homomorphic.FixedKey.isPPTOn_encrypt`: encrypt after total artifact decoding.
-* `Cslib.Crypto.Homomorphic.FixedKey.computableTidilyInPolyTime_decrypt`: execute decryption.
+* `Cslib.Crypto.Homomorphic.FixedKey.computableInPolyTime_decrypt`: execute decryption.
 * `Cslib.Crypto.Homomorphic.FixedKey.isPPTOn_evaluate`: evaluate the complete circuit uniformly.
 * `Cslib.Crypto.Homomorphic.FixedKey.polynomiallyBounded_widths`: bound both unchanged widths.
 * `Cslib.Crypto.Homomorphic.FixedKey.polynomiallyBounded_decryptionSize`: bound circuit size.
@@ -59,39 +59,39 @@ include hkeyGen hencrypt in
 The key generator has no circuit-size or depth parameter. -/
 @[fun_prop]
 theorem isPPTOn_keyGen
-    (hn : ComputableTidilyInPolyTime n input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary) :
     IsPPTOn input (encPair encBits encBits) (fun a => keyGen E (n a)) := by
   apply (hkeyGen.preprocess hn).bind_with
   have hbits := Scheme.isPPTOn_encryptBits hencrypt
-    (show ComputableTidilyInPolyTime
+    (show ComputableInPolyTime
       (fun p : α × (List Bool × List Bool) => n p.1)
       (encPair input (encPair encBits encBits)) encUnary by fun_prop)
-    (ComputableTidilyInPolyTime.snd _ _).fst'
-    (ComputableTidilyInPolyTime.snd _ _).snd'
+    (ComputableInPolyTime.snd _ _).fst'
+    (ComputableInPolyTime.snd _ _).snd'
   simpa only [bind_pure_comp] using hbits.map_with
-    (show ComputableTidilyInPolyTime
+    (show ComputableInPolyTime
       (fun p : (α × (List Bool × List Bool)) × List (List Bool) =>
         (encPublicKey (p.1.2.1, p.2), p.1.2.2))
       (encPair (encPair input (encPair encBits encBits)) (encList encBits))
       (encPair encBits encBits) from
-      (((ComputableTidilyInPolyTime.fst _ _).snd'.fst'.prod
-        (ComputableTidilyInPolyTime.snd _ _)).encoded).prod
-          (ComputableTidilyInPolyTime.fst _ _).snd'.snd')
+      (((ComputableInPolyTime.fst _ _).snd'.fst'.prod
+        (ComputableInPolyTime.snd _ _)).encoded).prod
+          (ComputableInPolyTime.fst _ _).snd'.snd')
 
 include hencrypt in
 /-- Decode any public word and encrypt under the decoded base public key. -/
 @[fun_prop]
 theorem isPPTOn_encrypt {bit : α → Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hbit : ComputableTidilyInPolyTime bit input encBool) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hbit : ComputableInPolyTime bit input encBool) :
     IsPPTOn input encBits (fun a => encrypt E (n a) (pk a) (bit a)) := by
-  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.comp hpk
   exact hencrypt.preprocess (hn.prod (hpublic.fst'.prod hbit))
 
 variable {secretWidth ciphertextWidth : ℕ → ℕ}
   (D : DecryptionCircuits E secretWidth ciphertextWidth)
-  (hD : ComputableTidilyInPolyTime
+  (hD : ComputableInPolyTime
     (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
     encUnary (Boolean.encCircuit 1))
 
@@ -99,13 +99,13 @@ include hD in
 /-- Execute the generated decryption circuit on every encoded secret and ciphertext, with
 the circuit evaluator's total padding and truncation conventions. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_decrypt
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hsk : ComputableTidilyInPolyTime sk input encBits)
-    (hc : ComputableTidilyInPolyTime ciphertext input encBits) :
-    ComputableTidilyInPolyTime (fun a => decrypt D (n a) (sk a) (ciphertext a))
+theorem computableInPolyTime_decrypt
+    (hn : ComputableInPolyTime n input encUnary)
+    (hsk : ComputableInPolyTime sk input encBits)
+    (hc : ComputableInPolyTime ciphertext input encBits) :
+    ComputableInPolyTime (fun a => decrypt D (n a) (sk a) (ciphertext a))
       input encBool :=
-  Boolean.computableTidilyInPolyTime_evalCircuit (hD.comp hn) (hsk.bitsAppend hc)
+  Boolean.computableInPolyTime_evalCircuit (hD.comp hn) (hsk.bitsAppend hc)
 
 variable (hevaluate : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
@@ -118,21 +118,21 @@ encrypted evaluator. Both binary indices and all copied artifact data are charge
 theorem isPPTOn_evaluateCircuit {inputCount : α → ℕ}
     {encryptedKey inputs : α → List (List Bool)}
     {code : α → List (Boolean.Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hek : ComputableTidilyInPolyTime encryptedKey input (encList encBits))
-    (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits))
-    (hcount : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hcode : ComputableTidilyInPolyTime code input Boolean.encCode) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hek : ComputableInPolyTime encryptedKey input (encList encBits))
+    (hinputs : ComputableInPolyTime inputs input (encList encBits))
+    (hcount : ComputableInPolyTime inputCount input encUnary)
+    (hcode : ComputableInPolyTime code input Boolean.encCode) :
     IsPPTOn input (encList encBits)
       (fun a => evaluateCircuit D (n a) (pk a) (encryptedKey a) (inputs a)
         (inputCount a) (code a)) := by
-  have hdepth := Boolean.computableTidilyInPolyTime_depthCode hcount hcode
-  have hrepeats : ComputableTidilyInPolyTime
+  have hdepth := Boolean.computableInPolyTime_depthCode hcount hcode
+  have hrepeats : ComputableInPolyTime
       (fun a => 2 * Boolean.depthCode (inputCount a) (code a)) input encUnary := by fun_prop
   exact Scheme.isPPTOn_evaluateCircuit D hencrypt hevaluate hD hn
-    (ComputableTidilyInPolyTime.replicate hrepeats hpk)
-    (ComputableTidilyInPolyTime.replicate hrepeats hek) hinputs hcount hcode
+    (ComputableInPolyTime.replicate hrepeats hpk)
+    (ComputableInPolyTime.replicate hrepeats hek) hinputs hcount hcode
 
 include hencrypt hevaluate hD in
 /-- One uniform native certificate evaluates all finite circuits under the same public artifact.
@@ -140,25 +140,25 @@ It charges the complete encoded circuit and inputs without any correctness or wi
 @[fun_prop]
 theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
     {inputs : α → List (List Bool)}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hc : ComputableTidilyInPolyTime c input (Boolean.encCircuit 1))
-    (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits)) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hc : ComputableInPolyTime c input (Boolean.encCircuit 1))
+    (hinputs : ComputableInPolyTime inputs input (encList encBits)) :
     IsPPTOn input encBits (fun a => evaluate D (n a) (pk a) (c a) (inputs a)) := by
-  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
-  have hview : ComputableTidilyInPolyTime
+  have hpublic := publicKeyDecoder.computableInPolyTime.comp hpk
+  have hview : ComputableInPolyTime
       (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
   have hparts := hview.comp hc
   exact (isPPTOn_evaluateCircuit hencrypt D hD hevaluate hn hpublic.fst' hpublic.snd'
-    hinputs hparts.fst' hparts.snd').map (ComputableTidilyInPolyTime.headD [])
+    hinputs hparts.fst' hparts.snd').map (ComputableInPolyTime.headD [])
 
 include hD in
 /-- Unary input arity in the emitted decryption circuit bounds both unchanged widths
 polynomially in the security parameter. No separate width-computability premise is needed. -/
 theorem polynomiallyBounded_widths :
     PolynomiallyBounded secretWidth ∧ PolynomiallyBounded ciphertextWidth := by
-  have hview : ComputableTidilyInPolyTime
+  have hview : ComputableInPolyTime
       (fun c : Σ m, Circuit Boolean.signature m 1 => (c.1, c.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
   have htotal : PolynomiallyBounded (fun n => secretWidth n + ciphertextWidth n) :=
@@ -170,11 +170,11 @@ include hD in
 /-- A uniform native circuit generator also bounds the number of decryption gates. -/
 theorem polynomiallyBounded_decryptionSize :
     PolynomiallyBounded (fun n => (D.circuit n).size) := by
-  have hview : ComputableTidilyInPolyTime
+  have hview : ComputableInPolyTime
       (fun c : Σ m, Circuit Boolean.signature m 1 => (c.1, c.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
   have hlength : PolynomiallyBounded (fun n => (D.circuit n).code.1.length) :=
-    ((ComputableTidilyInPolyTime.length_list Boolean.encGate).comp
+    ((ComputableInPolyTime.length_list Boolean.encGate).comp
       (hview.snd'.fst'.comp hD)).polynomiallyBounded
   exact hlength.mono_of_le (fun n => (Circuit.length_code_fst (D.circuit n)).ge)
 
@@ -196,11 +196,11 @@ theorem isPPTOn_scheme_encrypt :
 include hD in
 /-- The constructed scheme's actual decryption algorithm is total polynomial time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_scheme_decrypt :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_scheme_decrypt :
+    ComputableInPolyTime
       (fun p : ℕ × List Bool × List Bool => (scheme D).decrypt p.1 p.2.1 p.2.2)
       (encPair encUnary (encPair encBits encBits)) encBool := by
-  apply computableTidilyInPolyTime_decrypt D hD <;> fun_prop
+  apply computableInPolyTime_decrypt D hD <;> fun_prop
 
 include hencrypt hevaluate hD in
 /-- The constructed scheme's actual evaluator is strict PPT uniformly in the full circuit. -/

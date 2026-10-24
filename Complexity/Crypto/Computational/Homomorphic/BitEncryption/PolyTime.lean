@@ -47,10 +47,10 @@ include hencrypt
 /-- Encrypt the mixed word, preserving its length even when the unary cut exceeds it. -/
 @[fun_prop]
 theorem isPPTOn_encryptBitsHybrid
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hbits : ComputableTidilyInPolyTime bits input encBits)
-    (hcut : ComputableTidilyInPolyTime cut input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hbits : ComputableInPolyTime bits input encBits)
+    (hcut : ComputableInPolyTime cut input encUnary) :
     IsPPTOn input (encList encBits)
       (fun a => E.encryptBitsHybrid (n a) (pk a) (bits a) (cut a)) := by
   apply isPPTOn_encryptBits hencrypt hn hpk
@@ -59,15 +59,15 @@ theorem isPPTOn_encryptBitsHybrid
 /-- Copy the full supplied ciphertext between independently encrypted zero and original words. -/
 @[fun_prop]
 theorem isPPTOn_spliceEncryptedBit
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hbefore : ComputableTidilyInPolyTime before input encUnary)
-    (hafter : ComputableTidilyInPolyTime after input encBits)
-    (hchallenge : ComputableTidilyInPolyTime challenge input encBits) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hbefore : ComputableInPolyTime before input encUnary)
+    (hafter : ComputableInPolyTime after input encBits)
+    (hchallenge : ComputableInPolyTime challenge input encBits) :
     IsPPTOn input (encList encBits)
       (fun a => E.spliceEncryptedBit (n a) (pk a) (before a) (after a) (challenge a)) := by
   have hfront := isPPTOn_encryptBits hencrypt hn hpk
-    (show ComputableTidilyInPolyTime (fun a => List.replicate (before a) false)
+    (show ComputableInPolyTime (fun a => List.replicate (before a) false)
       input encBits by fun_prop)
   have hback := isPPTOn_encryptBits hencrypt hn hpk hafter
   unfold spliceEncryptedBit

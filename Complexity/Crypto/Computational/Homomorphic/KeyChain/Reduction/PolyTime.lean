@@ -55,11 +55,11 @@ include hkeyGen in
 @[fun_prop]
 theorem isPPTOn_chooseLinkAt {n beforeCount afterCount bitIndex : α → ℕ}
     {challengePk : α → List Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbefore : ComputableTidilyInPolyTime beforeCount input encUnary)
-    (hafter : ComputableTidilyInPolyTime afterCount input encUnary)
-    (hindex : ComputableTidilyInPolyTime bitIndex input encUnary)
-    (hpk : ComputableTidilyInPolyTime challengePk input encBits) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbefore : ComputableInPolyTime beforeCount input encUnary)
+    (hafter : ComputableInPolyTime afterCount input encUnary)
+    (hindex : ComputableInPolyTime bitIndex input encUnary)
+    (hpk : ComputableInPolyTime challengePk input encBits) :
     IsPPTOn input (encPair (encPair encBool encBool) encBits)
       (fun a => E.chooseLinkAt (n a) (beforeCount a) (afterCount a) (bitIndex a)
         (challengePk a)) := by
@@ -68,9 +68,9 @@ theorem isPPTOn_chooseLinkAt {n beforeCount afterCount bitIndex : α → ℕ}
   have hback := hkey.replicate hafter
   unfold chooseLinkAt
   apply hfront.bind_with
-  apply (hkey.preprocess (ComputableTidilyInPolyTime.fst _ _)).bind_with
-  apply (hback.preprocess (ComputableTidilyInPolyTime.fst _ _).fst').bind_with
-  have hstate : ComputableTidilyInPolyTime
+  apply (hkey.preprocess (ComputableInPolyTime.fst _ _)).bind_with
+  apply (hback.preprocess (ComputableInPolyTime.fst _ _).fst').bind_with
+  have hstate : ComputableInPolyTime
       (fun p : ((α × List (List Bool × List Bool)) × (List Bool × List Bool)) ×
         List (List Bool × List Bool) =>
         (true, p.1.1.2, p.1.2, challengePk p.1.1.1, p.2, bitIndex p.1.1.1))
@@ -80,8 +80,8 @@ theorem isPPTOn_chooseLinkAt {n beforeCount afterCount bitIndex : α → ℕ}
     fun_prop
   apply IsPPTOn.ite
   · fun_prop
-  · apply ComputableTidilyInPolyTime.isPPTOn
-    apply ComputableTidilyInPolyTime.prod
+  · apply ComputableInPolyTime.isPPTOn
+    apply ComputableInPolyTime.prod
     · fun_prop
     · exact hstate.encoded
   · ppt
@@ -90,23 +90,23 @@ include hencrypt htest in
 /-- The guessing stage is native strict PPT on every saved string, including malformed ones. -/
 @[fun_prop]
 theorem isPPTOn_guessLink {n : α → ℕ} {state challengeCiphertext : α → List Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hstate : ComputableTidilyInPolyTime state input encBits)
-    (hchallenge : ComputableTidilyInPolyTime challengeCiphertext input encBits) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hstate : ComputableInPolyTime state input encBits)
+    (hchallenge : ComputableInPolyTime challengeCiphertext input encBits) :
     IsPPTOn input encBool
       (fun a => E.guessLink test (n a) (state a) (challengeCiphertext a)) := by
-  have hcontext := linkStateDecoder.computableInPolyTime.tidy.comp hstate
+  have hcontext := linkStateDecoder.computableInPolyTime.comp hstate
   dsimp only [encLinkState] at hcontext
   have hbefore := hcontext.snd'.fst'
   have hpredecessor := hcontext.snd'.snd'.fst'
   have hpk := hcontext.snd'.snd'.snd'.fst'
   have hafter := hcontext.snd'.snd'.snd'.snd'.fst'
   have hindex := hcontext.snd'.snd'.snd'.snd'.snd'
-  have htarget := hpk.prod (ComputableTidilyInPolyTime.bitsReplicate false |>.comp
-    (ComputableTidilyInPolyTime.length_bits.comp hpredecessor.snd'))
+  have htarget := hpk.prod (ComputableInPolyTime.bitsReplicate false |>.comp
+    (ComputableInPolyTime.length_bits.comp hpredecessor.snd'))
   have hlinks := isPPTOn_spliceEncryptedKeyLink hencrypt hn hbefore hpredecessor htarget
     hafter hindex hchallenge
-  have hpublic : ComputableTidilyInPolyTime
+  have hpublic : ComputableInPolyTime
       (fun a => ((linkStateDecoder.decode (state a)).2.1 ++
         (linkStateDecoder.decode (state a)).2.2.1 ::
         ((linkStateDecoder.decode (state a)).2.2.2.1,
@@ -116,7 +116,7 @@ theorem isPPTOn_guessLink {n : α → ℕ} {state challengeCiphertext : α → L
   unfold guessLink
   apply IsPPTOn.cond hcontext.fst'
   · apply hlinks.bind_with
-    exact htest.preprocess (show ComputableTidilyInPolyTime
+    exact htest.preprocess (show ComputableInPolyTime
       (fun p : α × List (List (List Bool)) => (n p.1,
         ((linkStateDecoder.decode (state p.1)).2.1 ++
           (linkStateDecoder.decode (state p.1)).2.2.1 ::
@@ -125,18 +125,18 @@ theorem isPPTOn_guessLink {n : α → ℕ} {state challengeCiphertext : α → L
           (linkStateDecoder.decode (state p.1)).2.2.2.2.1).map Prod.fst, p.2))
       (encPair input (encList (encList encBits)))
       (encPair encUnary (encPair (encList encBits) (encList (encList encBits)))) by
-        exact (hn.comp (ComputableTidilyInPolyTime.fst _ _)).prod
-          ((hpublic.comp (ComputableTidilyInPolyTime.fst _ _)).prod
-            (ComputableTidilyInPolyTime.snd _ _)))
+        exact (hn.comp (ComputableInPolyTime.fst _ _)).prod
+          ((hpublic.comp (ComputableInPolyTime.fst _ _)).prod
+            (ComputableInPolyTime.snd _ _)))
   · ppt
 
 include hkeyGen hencrypt htest
 
 /-- Efficient unary index families give one admissible chosen-message adversary. -/
 theorem isPPT_linkAdversaryAt {beforeCount afterCount bitIndex : ℕ → ℕ}
-    (hbefore : ComputableTidilyInPolyTime beforeCount encUnary encUnary)
-    (hafter : ComputableTidilyInPolyTime afterCount encUnary encUnary)
-    (hindex : ComputableTidilyInPolyTime bitIndex encUnary encUnary) :
+    (hbefore : ComputableInPolyTime beforeCount encUnary encUnary)
+    (hafter : ComputableInPolyTime afterCount encUnary encUnary)
+    (hindex : ComputableInPolyTime bitIndex encUnary encUnary) :
     (E.linkAdversaryAt beforeCount afterCount bitIndex test).IsPPT := by
   constructor
   · change IsPPTOn (encPair encUnary encBits) (encPair (encPair encBool encBool) encBits)
@@ -146,8 +146,8 @@ theorem isPPT_linkAdversaryAt {beforeCount afterCount bitIndex : ℕ → ℕ}
 
 /-- Uniform dyadic link and bit selection remains strict PPT, including rejected padding. -/
 theorem isPPT_linkAdversary {depth capacity : ℕ → ℕ}
-    (hdepth : ComputableTidilyInPolyTime depth encUnary encUnary)
-    (hcapacity : ComputableTidilyInPolyTime capacity encUnary encUnary) :
+    (hdepth : ComputableInPolyTime depth encUnary encUnary)
+    (hcapacity : ComputableInPolyTime capacity encUnary encUnary) :
     (E.linkAdversary depth capacity test).IsPPT := by
   constructor
   · change IsPPTOn (encPair encUnary encBits) (encPair (encPair encBool encBool) encBits)

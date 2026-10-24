@@ -50,7 +50,7 @@ theorem negligible_publicKeyChainHybrid {E : Scheme}
     {width depth : ℕ → ℕ}
     (hwidth : ∀ n keys, keys ∈ (ProbComp.eval (E.keyGen n)).support →
       keys.2.length = width n)
-    (hdepth : ComputableTidilyInPolyTime depth encUnary encUnary)
+    (hdepth : ComputableInPolyTime depth encUnary encUnary)
     {test : ℕ → (List (List Bool) × List (List (List Bool))) → ProbComp Bool}
     (htest : IsPPTOn
       (encPair encUnary (encPair (encList encBits) (encList (encList encBits)))) encBool
@@ -65,10 +65,12 @@ theorem negligible_publicKeyChainHybrid {E : Scheme}
     have h := hbound n keys hkeys
     rw [hwidth n keys hkeys] at h
     exact (Nat.le_add_left _ _).trans h
-  have hred := isPPT_linkAdversary hkeyGen hencrypt htest hdepth hcapacity
+  have hred := isPPT_linkAdversary hkeyGen hencrypt htest hdepth
+    (ComputableInPolyTime.of_tidy hcapacity)
   have hpoly : PolynomiallyBounded (fun n => dyadicSize (depth n) * dyadicSize (capacity n)) := by
     have hd : PolynomiallyBounded depth := hdepth.polynomiallyBounded
-    have hc : PolynomiallyBounded capacity := hcapacity.polynomiallyBounded
+    have hc : PolynomiallyBounded capacity :=
+      (ComputableInPolyTime.of_tidy hcapacity).polynomiallyBounded
     fun_prop
   have hneg := (hsecure _ hred).polynomiallyBounded_mul hpoly
   refine negligible_of_le hneg (fun n => ?_)

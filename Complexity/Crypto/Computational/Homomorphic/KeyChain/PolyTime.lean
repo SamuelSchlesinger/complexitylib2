@@ -50,8 +50,8 @@ include hkeyGen in
 /-- Generate an efficiently computed unary number of keys using bounded repetition. -/
 @[fun_prop]
 theorem isPPTOn_generateKeys
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary) :
     IsPPTOn input (encList (encPair encBits encBits))
       (fun a => E.generateKeys (n a) (depth a)) := by
   exact (hkeyGen.preprocess hn).replicate (by fun_prop)
@@ -60,16 +60,16 @@ include hencrypt in
 /-- Encrypt every adjacent secret-key link, including all copied public keys and key bits. -/
 @[fun_prop]
 theorem isPPTOn_encryptKeyLinks
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hkeys : ComputableTidilyInPolyTime keys input (encList (encPair encBits encBits))) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hkeys : ComputableInPolyTime keys input (encList (encPair encBits encBits))) :
     IsPPTOn input (encList (encList encBits))
       (fun a => E.encryptKeyLinks (n a) (keys a)) := by
   apply IsPPTOn.mapMWith
     (element := encPair (encPair encBits encBits) (encPair encBits encBits))
   · apply isPPTOn_encryptBits hencrypt <;> fun_prop
-  · exact (ComputableTidilyInPolyTime.zip (encPair encBits encBits)
+  · exact (ComputableInPolyTime.zip (encPair encBits encBits)
       (encPair encBits encBits)).comp
-        (hkeys.prod ((ComputableTidilyInPolyTime.tail
+        (hkeys.prod ((ComputableInPolyTime.tail
           (encA := encPair encBits encBits)).comp hkeys))
 
 include hkeyGen hencrypt in
@@ -77,16 +77,16 @@ include hkeyGen hencrypt in
 encoded input. No correctness or output-width premise is used to bound the sampled keys. -/
 @[fun_prop]
 theorem isPPTOn_generateKeyChain
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary) :
     IsPPTOn input
       (encPair (encList (encPair encBits encBits)) (encList (encList encBits)))
       (fun a => E.generateKeyChain (n a) (depth a)) := by
   apply (isPPTOn_generateKeys hkeyGen hn hdepth).bind_with
   simpa only [bind_pure_comp] using (isPPTOn_encryptKeyLinks hencrypt
-    (show ComputableTidilyInPolyTime
+    (show ComputableInPolyTime
       (fun p : α × List (List Bool × List Bool) => n p.1)
       (encPair input (encList (encPair encBits encBits))) encUnary by fun_prop)
-    (ComputableTidilyInPolyTime.snd _ _)).pair (ComputableTidilyInPolyTime.snd _ _)
+    (ComputableInPolyTime.snd _ _)).pair (ComputableInPolyTime.snd _ _)
 
 end Cslib.Crypto.Homomorphic.Scheme

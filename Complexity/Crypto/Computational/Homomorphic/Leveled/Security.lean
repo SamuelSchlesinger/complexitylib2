@@ -53,7 +53,7 @@ variable {E : Scheme}
     (fun p => E.encrypt p.1 p.2.1 p.2.2))
   {width budget : ℕ → ℕ}
   (hwidth : ∀ n keys, keys ∈ (ProbComp.eval (E.keyGen n)).support → keys.2.length = width n)
-  (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary)
+  (hbudget : ComputableInPolyTime budget encUnary encUnary)
 
 include hsecure hkeyGen hencrypt hwidth hbudget
 
@@ -64,11 +64,11 @@ theorem publicKey_indistinguishable_zero :
       (fun n => (ProbComp.eval (keyGen E n (budget n))).map Prod.fst)
       (fun n => (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) 0)).map encPublicKey) := by
   intro adversary hadversary
-  have hpublic := (ComputableTidilyInPolyTime.snd encUnary encPublicKey).encoded
+  have hpublic := (ComputableInPolyTime.snd encUnary encPublicKey).encoded
   have htest : IsPPTOn (encPair encUnary encPublicKey) encBool
       (fun p => adversary p.1 (encPublicKey p.2)) :=
     hadversary.preprocess (by fun_prop) hpublic
-  have hdepth : ComputableTidilyInPolyTime (fun n => 2 * budget n) encUnary encUnary := by
+  have hdepth : ComputableInPolyTime (fun n => 2 * budget n) encUnary encUnary := by
     fun_prop
   have h := Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth hdepth
     (test := fun n artifact => adversary n (encPublicKey artifact)) htest
@@ -81,7 +81,7 @@ Both adversary stages are uniform strict PPT, with arbitrary polynomial saved st
 theorem indCPA_keyGen :
     Encryption.INDCPA (fun n => keyGen E n (budget n)) (encrypt E) := by
   let depth := fun n => 2 * budget n
-  have hdepth : ComputableTidilyInPolyTime depth encUnary encUnary := by
+  have hdepth : ComputableInPolyTime depth encUnary encUnary := by
     dsimp only [depth]
     fun_prop
   let zero (bit : Bool) (adversary : Encryption.Adversary) (n : ℕ) : Game :=

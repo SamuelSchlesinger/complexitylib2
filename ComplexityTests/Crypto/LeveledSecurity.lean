@@ -120,25 +120,25 @@ private theorem encrypt_ppt : IsPPTOn (encPair encUnary (encPair encBits encBool
   ppt
 
 @[fun_prop]
-private theorem stateBit_poly : ComputableTidilyInPolyTime stateBit encBits encBool := by
-  have hcontext := publicKeyDecoder.computableInPolyTime.tidy
+private theorem stateBit_poly : ComputableInPolyTime stateBit encBits encBool := by
+  have hcontext := publicKeyDecoder.computableInPolyTime
   dsimp only [encPublicKey] at hcontext
-  have hpk := (ComputableTidilyInPolyTime.listGetD
+  have hpk := (ComputableInPolyTime.listGetD
     (encA := encBits) (encL := encList encBits) []).comp
-      (hcontext.fst'.prod (ComputableTidilyInPolyTime.const 0))
-  have hfirst := (ComputableTidilyInPolyTime.bitsGetD false).comp
-    (hpk.prod (ComputableTidilyInPolyTime.const 0))
-  have hlink := (ComputableTidilyInPolyTime.listGetD
+      (hcontext.fst'.prod (ComputableInPolyTime.const 0))
+  have hfirst := (ComputableInPolyTime.bitsGetD false).comp
+    (hpk.prod (ComputableInPolyTime.const 0))
+  have hlink := (ComputableInPolyTime.listGetD
     (encA := encList encBits) (encL := encList (encList encBits)) []).comp
-      (hcontext.snd'.prod (ComputableTidilyInPolyTime.const 0))
-  have hct := (ComputableTidilyInPolyTime.listGetD
+      (hcontext.snd'.prod (ComputableInPolyTime.const 0))
+  have hct := (ComputableInPolyTime.listGetD
     (encA := encBits) (encL := encList encBits) []).comp
-      (hlink.prod (ComputableTidilyInPolyTime.const 1))
-  have hnonce := (ComputableTidilyInPolyTime.bitsGetD false).comp
-    (hct.prod (ComputableTidilyInPolyTime.const 2))
+      (hlink.prod (ComputableInPolyTime.const 1))
+  have hnonce := (ComputableInPolyTime.bitsGetD false).comp
+    (hct.prod (ComputableInPolyTime.const 2))
   unfold stateBit
   simpa only [Function.comp_def] using
-    ComputableTidilyInPolyTime.bool_xor.comp (hfirst.prod hnonce)
+    ComputableInPolyTime.bool_xor.comp (hfirst.prod hnonce)
 
 private theorem adversary_ppt : adversary.IsPPT := by
   constructor <;> dsimp only [adversary] <;> ppt
@@ -163,7 +163,7 @@ example {E : Scheme} (hsecure : Encryption.INDCPA E.keyGen E.encrypt)
     {width budget secretWidth ciphertextWidth : ℕ → ℕ}
     (hwidth : ∀ n keys, keys ∈ (ProbComp.eval (E.keyGen n)).support →
       keys.2.length = width n)
-    (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary)
+    (hbudget : ComputableInPolyTime budget encUnary encUnary)
     (D : DecryptionCircuits E secretWidth ciphertextWidth) :
     Encryption.INDCPA (scheme D budget).keyGen (scheme D budget).encrypt :=
   indCPA_scheme hsecure hkeyGen hencrypt hwidth hbudget D

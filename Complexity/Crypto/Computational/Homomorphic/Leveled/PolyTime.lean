@@ -33,7 +33,7 @@ generated circuit, so no separate runtime assumption on the base decryption func
 
 * `Cslib.Crypto.Homomorphic.Leveled.isPPTOn_keyGen`: uniform generation in the parameter and budget.
 * `Cslib.Crypto.Homomorphic.Leveled.isPPTOn_encrypt`: fresh tagged encryption.
-* `Cslib.Crypto.Homomorphic.Leveled.computableTidilyInPolyTime_decrypt`: total tagged decryption.
+* `Cslib.Crypto.Homomorphic.Leveled.computableInPolyTime_decrypt`: total tagged decryption.
 * `Cslib.Crypto.Homomorphic.Leveled.isPPTOn_evaluate`: uniform evaluation of the complete circuit.
 * `Cslib.Crypto.Homomorphic.Leveled.polynomiallyBounded_widths`: polynomial secret-key and
   ciphertext widths follow from the native decryption-circuit generator.
@@ -53,18 +53,18 @@ variable {α : Type} {input : α ↪ List Bool}
 
 /-- Serialize public projections and two secret endpoints, including the complete output words. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_keyPair {depth : α → ℕ}
+theorem computableInPolyTime_keyPair {depth : α → ℕ}
     {keys : α → List (List Bool × List Bool)} {links : α → List (List (List Bool))}
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary)
-    (hkeys : ComputableTidilyInPolyTime keys input (encList (encPair encBits encBits)))
-    (hlinks : ComputableTidilyInPolyTime links input (encList (encList encBits))) :
-    ComputableTidilyInPolyTime (fun a => keyPair (depth a) (keys a) (links a))
+    (hdepth : ComputableInPolyTime depth input encUnary)
+    (hkeys : ComputableInPolyTime keys input (encList (encPair encBits encBits)))
+    (hlinks : ComputableInPolyTime links input (encList (encList encBits))) :
+    ComputableInPolyTime (fun a => keyPair (depth a) (keys a) (links a))
       input (encPair encBits encBits) := by
-  have hpublic := ((ComputableTidilyInPolyTime.fst encBits encBits).map.comp hkeys).prod hlinks
-  have hfirst := (ComputableTidilyInPolyTime.listGetD
+  have hpublic := ((ComputableInPolyTime.fst encBits encBits).map.comp hkeys).prod hlinks
+  have hfirst := (ComputableInPolyTime.listGetD
     (encA := encPair encBits encBits) ([], [])).comp
-      (hkeys.prod (ComputableTidilyInPolyTime.const 0))
-  have hlast := (ComputableTidilyInPolyTime.listGetD
+      (hkeys.prod (ComputableInPolyTime.const 0))
+  have hlast := (ComputableInPolyTime.listGetD
     (encA := encPair encBits encBits) ([], [])).comp (hkeys.prod hdepth)
   exact hpublic.encoded.prod (hfirst.snd'.prod hlast.snd').encoded
 
@@ -78,46 +78,46 @@ include hkeyGen hencrypt in
 /-- The key sampler has one native clock uniform in both unary parameters. -/
 @[fun_prop]
 theorem isPPTOn_keyGen
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbudget : ComputableTidilyInPolyTime budget input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbudget : ComputableInPolyTime budget input encUnary) :
     IsPPTOn input (encPair encBits encBits) (fun a => keyGen E (n a) (budget a)) := by
   apply (Scheme.isPPTOn_generateKeyChain hkeyGen hencrypt hn
-    (show ComputableTidilyInPolyTime (fun a => 2 * budget a) input encUnary by fun_prop)).map_with
-  apply computableTidilyInPolyTime_keyPair <;> fun_prop
+    (show ComputableInPolyTime (fun a => 2 * budget a) input encUnary by fun_prop)).map_with
+  apply computableInPolyTime_keyPair <;> fun_prop
 
 include hencrypt in
 /-- Decode every public word, encrypt under its initial key, and add the fresh tag. -/
 @[fun_prop]
 theorem isPPTOn_encrypt {bit : α → Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hbit : ComputableTidilyInPolyTime bit input encBool) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hbit : ComputableInPolyTime bit input encBool) :
     IsPPTOn input encBits (fun a => encrypt E (n a) (pk a) (bit a)) := by
-  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
-  have hfirst := (ComputableTidilyInPolyTime.listGetD (encA := encBits) []).comp
-    (hpublic.fst'.prod (ComputableTidilyInPolyTime.const 0))
+  have hpublic := publicKeyDecoder.computableInPolyTime.comp hpk
+  have hfirst := (ComputableInPolyTime.listGetD (encA := encBits) []).comp
+    (hpublic.fst'.prod (ComputableInPolyTime.const 0))
   exact (hencrypt.preprocess (hn.prod (hfirst.prod hbit))).map (by fun_prop)
 
 variable {secretWidth ciphertextWidth : ℕ → ℕ}
   (D : DecryptionCircuits E secretWidth ciphertextWidth)
-  (hD : ComputableTidilyInPolyTime
+  (hD : ComputableInPolyTime
     (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
     encUnary (Boolean.encCircuit 1))
 
 include hD in
 /-- Decryption is polynomial time on every encoded input and contains no budget parameter. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_decrypt
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hsk : ComputableTidilyInPolyTime sk input encBits)
-    (hc : ComputableTidilyInPolyTime ciphertext input encBits) :
-    ComputableTidilyInPolyTime (fun a => decrypt D (n a) (sk a) (ciphertext a))
+theorem computableInPolyTime_decrypt
+    (hn : ComputableInPolyTime n input encUnary)
+    (hsk : ComputableInPolyTime sk input encBits)
+    (hc : ComputableInPolyTime ciphertext input encBits) :
+    ComputableInPolyTime (fun a => decrypt D (n a) (sk a) (ciphertext a))
       input encBool := by
-  have hendpoints := secretKeyDecoder.computableInPolyTime.tidy.comp hsk
-  have hhead := (ComputableTidilyInPolyTime.headD (encA := encBool) false).comp hc
+  have hendpoints := secretKeyDecoder.computableInPolyTime.comp hsk
+  have hhead := (ComputableInPolyTime.headD (encA := encBool) false).comp hc
   have hsecret := hhead.cond hendpoints.snd' hendpoints.fst'
-  exact Boolean.computableTidilyInPolyTime_evalCircuit (hD.comp hn)
-    (hsecret.bitsAppend (ComputableTidilyInPolyTime.bitsTail.comp hc))
+  exact Boolean.computableInPolyTime_evalCircuit (hD.comp hn)
+    (hsecret.bitsAppend (ComputableInPolyTime.bitsTail.comp hc))
 
 variable (hevaluate : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
@@ -129,25 +129,25 @@ include hencrypt hevaluate hD in
 theorem isPPTOn_evaluateCircuit {inputCount : α → ℕ}
     {publicKeys inputs : α → List (List Bool)} {links : α → List (List (List Bool))}
     {code : α → List (Boolean.Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbudget : ComputableTidilyInPolyTime budget input encUnary)
-    (hpks : ComputableTidilyInPolyTime publicKeys input (encList encBits))
-    (hlinks : ComputableTidilyInPolyTime links input (encList (encList encBits)))
-    (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits))
-    (hcount : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hcode : ComputableTidilyInPolyTime code input Boolean.encCode) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbudget : ComputableInPolyTime budget input encUnary)
+    (hpks : ComputableInPolyTime publicKeys input (encList encBits))
+    (hlinks : ComputableInPolyTime links input (encList (encList encBits)))
+    (hinputs : ComputableInPolyTime inputs input (encList encBits))
+    (hcount : ComputableInPolyTime inputCount input encUnary)
+    (hcode : ComputableInPolyTime code input Boolean.encCode) :
     IsPPTOn input (encList encBits)
       (fun a => evaluateCircuit D (n a) (budget a) (publicKeys a) (links a) (inputs a)
         (inputCount a) (code a)) := by
-  have hcompiled := Boolean.Layered.computableTidilyInPolyTime_compile hcount hcode
-  have hpadded := Boolean.Layered.computableTidilyInPolyTime_padTo hcount
-    (show ComputableTidilyInPolyTime (fun a => 2 * budget a) input encUnary by fun_prop)
+  have hcompiled := Boolean.Layered.computableInPolyTime_compile hcount hcode
+  have hpadded := Boolean.Layered.computableInPolyTime_padTo hcount
+    (show ComputableInPolyTime (fun a => 2 * budget a) input encUnary by fun_prop)
     hcompiled.fst'
   apply (Scheme.isPPTOn_evaluateLayers D hencrypt hevaluate hD hn hpks hlinks hinputs
     hpadded).map_with
-  apply ComputableTidilyInPolyTime.mapWithInput
-    (hcompiled.snd'.comp (ComputableTidilyInPolyTime.fst _ _))
-  exact ComputableTidilyInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)
+  apply ComputableInPolyTime.mapWithInput
+    (hcompiled.snd'.comp (ComputableInPolyTime.fst _ _))
+  exact ComputableInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)
 
 include hencrypt hevaluate hD in
 /-- The actual scheme evaluator is strict PPT, including on malformed artifacts and on circuits
@@ -155,23 +155,23 @@ outside the chosen depth budget. The native certificate charges the complete cir
 @[fun_prop]
 theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
     {inputs : α → List (List Bool)}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbudget : ComputableTidilyInPolyTime budget input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hc : ComputableTidilyInPolyTime c input (Boolean.encCircuit 1))
-    (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits)) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbudget : ComputableInPolyTime budget input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hc : ComputableInPolyTime c input (Boolean.encCircuit 1))
+    (hinputs : ComputableInPolyTime inputs input (encList encBits)) :
     IsPPTOn input encBits
       (fun a => evaluate D (n a) (budget a) (pk a) (c a) (inputs a)) := by
-  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
-  have hview : ComputableTidilyInPolyTime
+  have hpublic := publicKeyDecoder.computableInPolyTime.comp hpk
+  have hview : ComputableInPolyTime
       (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
   have hparts := hview.comp hc
   apply (isPPTOn_evaluateCircuit hencrypt D hD hevaluate hn hbudget
-    ((ComputableTidilyInPolyTime.listTail encBits).comp hpublic.fst') hpublic.snd'
-    (ComputableTidilyInPolyTime.bitsTail.map.comp hinputs) hparts.fst' hparts.snd').map
-  exact ComputableTidilyInPolyTime.bitsCons (by fun_prop)
-    (ComputableTidilyInPolyTime.headD [])
+    ((ComputableInPolyTime.listTail encBits).comp hpublic.fst') hpublic.snd'
+    (ComputableInPolyTime.bitsTail.map.comp hinputs) hparts.fst' hparts.snd').map
+  exact ComputableInPolyTime.bitsCons (by fun_prop)
+    (ComputableInPolyTime.headD [])
 
 include hD in
 /-- The circuit generator emits its input arity in unary. Its native runtime certificate
@@ -180,7 +180,7 @@ of the depth budget. No separate polynomial-width assumption is needed. -/
 theorem polynomiallyBounded_widths :
     PolynomiallyBounded (fun n => 3 * secretWidth n + 1) ∧
       PolynomiallyBounded (fun n => ciphertextWidth n + 1) := by
-  have hview : ComputableTidilyInPolyTime
+  have hview : ComputableInPolyTime
       (fun c : Σ m, Circuit Boolean.signature m 1 => (c.1, c.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
   have htotal : PolynomiallyBounded (fun n => secretWidth n + ciphertextWidth n) :=
@@ -195,7 +195,7 @@ include hkeyGen hencrypt in
 /-- Substitute an efficiently computed unary depth budget into the constructed key generator. -/
 @[fun_prop]
 theorem isPPTOn_scheme_keyGen (budget : ℕ → ℕ)
-    (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary) :
+    (hbudget : ComputableInPolyTime budget encUnary encUnary) :
     IsPPTOn encUnary (encPair encBits encBits) (scheme D budget).keyGen :=
   isPPTOn_keyGen hkeyGen hencrypt (by fun_prop) hbudget
 
@@ -210,17 +210,17 @@ theorem isPPTOn_scheme_encrypt (budget : ℕ → ℕ) :
 include hD in
 /-- The constructed decryption algorithm and its polynomial clock are independent of the budget. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_scheme_decrypt (budget : ℕ → ℕ) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_scheme_decrypt (budget : ℕ → ℕ) :
+    ComputableInPolyTime
       (fun p : ℕ × List Bool × List Bool => (scheme D budget).decrypt p.1 p.2.1 p.2.2)
       (encPair encUnary (encPair encBits encBits)) encBool := by
-  apply computableTidilyInPolyTime_decrypt D hD <;> fun_prop
+  apply computableInPolyTime_decrypt D hD <;> fun_prop
 
 include hencrypt hevaluate hD in
 /-- An efficient unary budget yields one uniform certificate for the constructed evaluator. -/
 @[fun_prop]
 theorem isPPTOn_scheme_evaluate (budget : ℕ → ℕ)
-    (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary) :
+    (hbudget : ComputableInPolyTime budget encUnary encUnary) :
     IsPPTOn
       (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
       encBits (fun p => (scheme D budget).evaluate p.1 p.2.1 p.2.2.1 p.2.2.2) := by

@@ -56,19 +56,19 @@ include hencrypt
 /-- Encrypt all bits of an efficiently computed word, charging repeated copies of the key. -/
 @[fun_prop]
 theorem isPPTOn_encryptBits
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hbits : ComputableTidilyInPolyTime bits input encBits) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hbits : ComputableInPolyTime bits input encBits) :
     IsPPTOn input (encList encBits) (fun a => E.encryptBits (n a) (pk a) (bits a)) := by
   apply IsPPTOn.mapMWith (element := encBool)
-  · exact hencrypt.preprocess (show ComputableTidilyInPolyTime
+  · exact hencrypt.preprocess (show ComputableInPolyTime
       (fun p : α × Bool => (n p.1, pk p.1, p.2))
       (encPair input encBool) (encPair encUnary (encPair encBits encBool)) by fun_prop)
-  · exact ComputableTidilyInPolyTime.bitsToList.comp hbits
+  · exact ComputableInPolyTime.bitsToList.comp hbits
 
 variable {secretWidth ciphertextWidth : ℕ → ℕ}
   (D : DecryptionCircuits E secretWidth ciphertextWidth)
-  (hD : ComputableTidilyInPolyTime
+  (hD : ComputableInPolyTime
     (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
     encUnary (Boolean.encCircuit 1))
   {encryptedKey : α → List (List Bool)} {first second : α → List Bool}
@@ -79,50 +79,51 @@ include hevaluate hD
 construction. No refresh algorithm or refresh runtime bound is assumed. -/
 @[fun_prop]
 theorem isPPTOn_refresh
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hek : ComputableTidilyInPolyTime encryptedKey input (encList encBits))
-    (hc : ComputableTidilyInPolyTime bits input encBits) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hek : ComputableInPolyTime encryptedKey input (encList encBits))
+    (hc : ComputableInPolyTime bits input encBits) :
     IsPPTOn input encBits (fun a => refresh D (n a) (pk a) (encryptedKey a) (bits a)) := by
   apply (isPPTOn_encryptBits hencrypt hn hpk hc).bind_with
   have hparameter := hn.comp
-    (ComputableTidilyInPolyTime.fst input (encList encBits))
+    (ComputableInPolyTime.fst input (encList encBits))
   have hcircuit := hD.comp hparameter
-  exact hevaluate.preprocess (show ComputableTidilyInPolyTime
+  exact hevaluate.preprocess (show ComputableInPolyTime
     (fun p : α × List (List Bool) =>
       (n p.1, pk p.1, ⟨_, D.circuit (n p.1)⟩, encryptedKey p.1 ++ p.2))
     (encPair input (encList encBits))
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))) by
-    exact hparameter.prod ((hpk.comp (ComputableTidilyInPolyTime.fst _ _)).prod
+    exact hparameter.prod ((hpk.comp (ComputableInPolyTime.fst _ _)).prod
       (hcircuit.prod (by fun_prop))))
 
 /-- NAND refresh is strict PPT. The certificate constructs the augmented circuit and charges
 both bit-encryption traversals and both copies of the encrypted secret key. -/
 @[fun_prop]
 theorem isPPTOn_refreshNand
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hek : ComputableTidilyInPolyTime encryptedKey input (encList encBits))
-    (hfirst : ComputableTidilyInPolyTime first input encBits)
-    (hsecond : ComputableTidilyInPolyTime second input encBits) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hek : ComputableInPolyTime encryptedKey input (encList encBits))
+    (hfirst : ComputableInPolyTime first input encBits)
+    (hsecond : ComputableInPolyTime second input encBits) :
     IsPPTOn input encBits
       (fun a => refreshNand D (n a) (pk a) (encryptedKey a) (first a) (second a)) := by
   apply (isPPTOn_encryptBits hencrypt hn hpk hfirst).bind_with
   have hsecond' : IsPPTOn (encPair input (encList encBits)) (encList encBits)
       (fun p : α × List (List Bool) => E.encryptBits (n p.1) (pk p.1) (second p.1)) :=
     (isPPTOn_encryptBits hencrypt hn hpk hsecond).preprocess
-      (ComputableTidilyInPolyTime.fst _ _)
+      (ComputableInPolyTime.fst _ _)
   apply hsecond'.bind_with
   have hparameter := hn.comp
-    ((ComputableTidilyInPolyTime.fst (encPair input (encList encBits)) (encList encBits)).fst')
-  have haug := (computableTidilyInPolyTime_augmentNand.comp hD).comp hparameter
-  exact hevaluate.preprocess (show ComputableTidilyInPolyTime
+    ((ComputableInPolyTime.fst (encPair input (encList encBits)) (encList encBits)).fst')
+  have haug := ((ComputableInPolyTime.of_tidy
+    computableTidilyInPolyTime_augmentNand).comp hD).comp hparameter
+  exact hevaluate.preprocess (show ComputableInPolyTime
     (fun p : (α × List (List Bool)) × List (List Bool) =>
       (n p.1.1, pk p.1.1, ⟨_, augmentNand (D.circuit (n p.1.1))⟩,
         (encryptedKey p.1.1 ++ p.1.2) ++ (encryptedKey p.1.1 ++ p.2)))
     (encPair (encPair input (encList encBits)) (encList encBits))
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))) by
     exact hparameter.prod ((hpk.comp
-      ((ComputableTidilyInPolyTime.fst _ _).fst')).prod (haug.prod (by fun_prop))))
+      ((ComputableInPolyTime.fst _ _).fst')).prod (haug.prod (by fun_prop))))
 
 end Cslib.Crypto.Homomorphic.Scheme

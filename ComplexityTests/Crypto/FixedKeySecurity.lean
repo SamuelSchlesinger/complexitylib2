@@ -29,14 +29,14 @@ private def readSelf (_ : ℕ) (word : List Bool) : ProbComp Bool :=
   pure (((FixedKey.publicKeyDecoder.decode word).2.headD []).headD false)
 
 private theorem readSelf_ppt : IsPPT encBool readSelf := by
-  have hdecode := FixedKey.publicKeyDecoder.computableInPolyTime.tidy
+  have hdecode := FixedKey.publicKeyDecoder.computableInPolyTime
   dsimp only [FixedKey.encPublicKey, Encryption.encCircularPublicKey] at hdecode
-  have hread : ComputableTidilyInPolyTime
+  have hread : ComputableInPolyTime
       (fun word => ((FixedKey.publicKeyDecoder.decode word).2.headD []).headD false)
       encBits encBool :=
-    (ComputableTidilyInPolyTime.headD (encA := encBool) (encL := encBits) false).comp
-      ((ComputableTidilyInPolyTime.headD (encA := encBits) []).comp hdecode.snd')
-  exact hread.isPPTOn.preprocess (ComputableTidilyInPolyTime.snd encUnary encBits)
+    (ComputableInPolyTime.headD (encA := encBool) (encL := encBits) false).comp
+      ((ComputableInPolyTime.headD (encA := encBits) []).comp hdecode.snd')
+  exact hread.isPPTOn.preprocess (ComputableInPolyTime.snd encUnary encBits)
 
 private theorem eval_readSelf (real : Bool) (n : ℕ) :
     distinguishingGame
@@ -69,18 +69,18 @@ private def readJoint (_ : ℕ) (word : List Bool) : ProbComp Bool :=
   pure (artifact.1.headD false ^^ (artifact.2.headD []).headD false)
 
 private theorem readJoint_ppt : IsPPT encBool readJoint := by
-  have hdecode := FixedKey.publicKeyDecoder.computableInPolyTime.tidy
+  have hdecode := FixedKey.publicKeyDecoder.computableInPolyTime
   dsimp only [FixedKey.encPublicKey, Encryption.encCircularPublicKey] at hdecode
-  have hpublic := (ComputableTidilyInPolyTime.headD (encA := encBool)
+  have hpublic := (ComputableInPolyTime.headD (encA := encBool)
     (encL := encBits) false).comp hdecode.fst'
-  have hcipher := (ComputableTidilyInPolyTime.headD (encA := encBool)
+  have hcipher := (ComputableInPolyTime.headD (encA := encBool)
     (encL := encBits) false).comp
-    ((ComputableTidilyInPolyTime.headD (encA := encBits) []).comp hdecode.snd')
-  have hread : ComputableTidilyInPolyTime
+    ((ComputableInPolyTime.headD (encA := encBits) []).comp hdecode.snd')
+  have hread : ComputableInPolyTime
       (fun word => (FixedKey.publicKeyDecoder.decode word).1.headD false ^^
         ((FixedKey.publicKeyDecoder.decode word).2.headD []).headD false)
       encBits encBool := by fun_prop
-  exact hread.isPPTOn.preprocess (ComputableTidilyInPolyTime.snd encUnary encBits)
+  exact hread.isPPTOn.preprocess (ComputableInPolyTime.snd encUnary encBits)
 
 private theorem eval_masked (real : Bool) (n : ℕ) :
     ProbComp.eval (Encryption.circularPublicKey maskedKeyGen maskedEncrypt real n) =
