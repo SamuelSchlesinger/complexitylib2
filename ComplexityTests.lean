@@ -344,6 +344,7 @@ import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeBinaryWord
 import ComplexityTests.PolyTimeContracts
+import ComplexityTests.PolyTimeEncodedProjection
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeMixes
 import ComplexityTests.PolyTimePlain
