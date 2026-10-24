@@ -152,7 +152,7 @@ theorem computableTidilyInPolyTime_all_and :
       (fun pair : (List Bool × List Bool) × Bool => pair.1.1.all id && pair.2)
       (encPair (encPair encBits encBits) encBool) encBool := by
   have hall : ComputableTidilyInPolyTime (fun x : List Bool => x.all id) encBits encBool :=
-    (ComputableTidilyInDegree.of_linear (allTrue.computableTidilyInLinearTimeAndSpace fun x => by
+    (ComputableTidilyInDegree.of_linear (allTrue.computableInLinearTimeAndSpace fun x => by
       rw [allTrue_run]; simp [encBits, allTrue])).computableTidilyInPolyTime
   have hand : ComputableTidilyInPolyTime (fun q : Bool × Bool => q.1 && q.2)
       (encPair encBool encBool) encBool :=
