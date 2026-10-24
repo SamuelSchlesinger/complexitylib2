@@ -8,6 +8,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.WordPredicates
 
 /-!
 # Direct degree certificates for option encoding machines
@@ -19,6 +20,7 @@ tidy degree, polynomial-time, or linear closure rule is used.
 
 @[expose] public section
 namespace Turing.MultiTapeTM.ComputableInDegree
+open Internal.WordPredicates
 
 variable {β : Type*} {enc₁ : β ↪ List Bool}
 
@@ -39,21 +41,6 @@ theorem getD {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] (d : β
     k, Q, hfin, tm, fun a => (htm a).computesInTimeAndSpace⟩,
     ⟨c, fun a => ?_⟩⟩
   simpa using (htm a).length_output_le
-
-/-- Emit a single Boolean indicating whether the input contains a symbol. -/
-private def nonemptyT : Transducer Bool Bool where
-  q₀ := false
-  step q _ := (true, if q then [] else [true])
-  final q := if q then [] else [false]
-  length_step_le q _ := by cases q <;> simp
-  length_final_le q := by cases q <;> simp
-
-private lemma nonemptyT_run_true (w : List Bool) : nonemptyT.run true w = [] := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    change [] ++ nonemptyT.run true w = []
-    simpa using ih
 
 /-- Whether a standard encoded option holds a value; the Boolean output has degree zero. -/
 theorem isSome (enc : β ↪ List Bool) :
