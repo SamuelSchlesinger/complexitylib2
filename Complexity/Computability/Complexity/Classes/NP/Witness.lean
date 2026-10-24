@@ -145,10 +145,9 @@ theorem isVerifier_witnessVerifier (D : Decoder encW) {check : α × β → Bool
 theorem computableTidilyInPolyTime_witnessVerifier (D : Decoder encW) {check : α × β → Bool}
     (hcheck : ComputableTidilyInPolyTime check (encPair enc encW) encBool) :
     ComputableTidilyInPolyTime (witnessVerifier D check) (encPair enc encBits) encBool := by
-  obtain ⟨_, _, hD⟩ := D.computable
   have hdecode : ComputableTidilyInPolyTime (fun x : α × List Bool => D.decode (unframe x.2))
       (encPair enc encBits) encW :=
-    hD.computableTidilyInPolyTime.comp (unframe.comp (snd enc encBits))
+    D.computableInPolyTime.tidy.comp (unframe.comp (snd enc encBits))
   exact bool_and' (decide_eq' (bitsAppend ((bitsFrame encW).comp hdecode)
     (dropFrame.comp (snd enc encBits))) (snd enc encBits))
     (hcheck.comp ((fst enc encBits).prod hdecode))

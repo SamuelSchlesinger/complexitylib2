@@ -73,8 +73,7 @@ theorem exists_mem_P_solvedBy_of_mem_PromiseP {Q : PromiseProblem β} {encQ : β
     (D : Decoder encQ) (hQ : Q ∈ PromiseP encQ) :
     ∃ A ∈ P encBits, Q.SolvedBy fun b => decide (encQ b ∈ A) := by
   obtain ⟨f, hf, hsolve⟩ := mem_PromiseP_iff.1 hQ
-  obtain ⟨_, _, hD⟩ := D.computable
-  refine ⟨{w | f (D.decode w) = true}, ⟨_, .of_tidy (hf.comp hD.computableTidilyInPolyTime),
+  refine ⟨{w | f (D.decode w) = true}, ⟨_, hf.computableInPolyTime.comp D.computableInPolyTime,
     fun _ => Iff.rfl⟩, ?_⟩
   simpa [D.decode_enc] using hsolve
 

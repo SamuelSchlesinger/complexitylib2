@@ -85,8 +85,7 @@ theorem decodeCNF_encCNF (φ : CNF ℕ) : decodeCNF (encCNF φ) = φ :=
 @[fun_prop]
 theorem computableTidilyInPolyTime_decodeCNF :
     ComputableTidilyInPolyTime decodeCNF encBits encCNF :=
-  let ⟨_, _, h⟩ := Complexity.cnfDecoder.computable
-  h.computableTidilyInPolyTime
+  Complexity.cnfDecoder.computableInPolyTime.tidy
 
 /-! ### Capped powers -/
 
