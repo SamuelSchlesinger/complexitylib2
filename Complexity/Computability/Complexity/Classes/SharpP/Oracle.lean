@@ -41,6 +41,10 @@ eliminates every polynomial-time decidable oracle. Oracle lowness for other clas
   `Cslib.Complexity.GapPWithOracle_eq_GapP`: eliminate an oracle in P.
 * `Cslib.Complexity.computableInPolyTimeWithOracle_andVerifier`,
   `Cslib.Complexity.computableInPolyTimeWithOracle_selectVerifier`: reuse verifier combinators.
+* `Cslib.Complexity.SharpPWithOracle.add_mem`,
+  `Cslib.Complexity.SharpPWithOracle.mul_mem`,
+  `Cslib.Complexity.SharpPWithOracle.natCast_mem_GapPWithOracle`: additive and multiplicative
+  closure of `SharpPWithOracle` and embedding into `GapPWithOracle`.
 
 ## References
 
@@ -115,5 +119,55 @@ theorem computableInPolyTimeWithOracle_selectVerifier {V₀ V₁ : α × List Bo
       (g := fun x : α × List Bool => (x.1, x.2.tail)))
     (by fun_prop)).map_with (g := fun x b => if x.2.headD false then b.2 else b.1)
       (output := encBool) (by fun_prop)
+
+namespace SharpPWithOracle
+
+/-- The zero function is in `SharpPWithOracle A enc`. -/
+theorem zero_mem : (0 : α → ℕ) ∈ SharpPWithOracle A enc :=
+  SharpP_subset_SharpPWithOracle A enc SharpP.zero_mem
+
+/-- **`SharpPWithOracle` is closed under addition**: the first bit of a certificate chooses the
+verifier, and the bits that the chosen verifier does not read must be `false`. -/
+theorem add_mem {f₁ f₂ : α → ℕ} (h₁ : f₁ ∈ SharpPWithOracle A enc)
+    (h₂ : f₂ ∈ SharpPWithOracle A enc) :
+    f₁ + f₂ ∈ SharpPWithOracle A enc := by
+  obtain ⟨p₁, V₁, hV₁, hf₁⟩ := h₁
+  obtain ⟨p₂, V₂, hV₂, hf₂⟩ := h₂
+  have hfalse : ComputableInPolyTimeWithOracle A (allFalseVerifier (α := α))
+      (encPair enc encBits) encBool :=
+    computableTidilyInPolyTime_allFalseVerifier.computableInPolyTimeWithOracle A
+  refine ⟨p₁ + p₂ + 1, selectVerifier
+      (andVerifier (fun a => p₁.eval (enc a).length) V₁ allFalseVerifier)
+      (andVerifier (fun a => p₂.eval (enc a).length) V₂ allFalseVerifier),
+    computableInPolyTimeWithOracle_selectVerifier
+      (computableInPolyTimeWithOracle_andVerifier (by fun_prop) hV₁ hfalse)
+      (computableInPolyTimeWithOracle_andVerifier (by fun_prop) hV₂ hfalse),
+    fun a => ?_⟩
+  have e₁ := acceptCount_andVerifier_allFalseVerifier (fun a => p₁.eval (enc a).length) V₁ a
+    (p₂.eval (enc a).length)
+  have e₂ := acceptCount_andVerifier_allFalseVerifier (fun a => p₂.eval (enc a).length) V₂ a
+    (p₁.eval (enc a).length)
+  rw [Nat.add_comm (p₂.eval _)] at e₂
+  rw [Pi.add_apply, hf₁ a, hf₂ a, Polynomial.eval_add, Polynomial.eval_add, Polynomial.eval_one,
+    acceptCount_selectVerifier, e₁, e₂]
+
+/-- **`SharpPWithOracle` is closed under multiplication**: the two verifiers read disjoint parts of
+the certificate. -/
+theorem mul_mem {f₁ f₂ : α → ℕ} (h₁ : f₁ ∈ SharpPWithOracle A enc)
+    (h₂ : f₂ ∈ SharpPWithOracle A enc) :
+    f₁ * f₂ ∈ SharpPWithOracle A enc := by
+  obtain ⟨p₁, V₁, hV₁, hf₁⟩ := h₁
+  obtain ⟨p₂, V₂, hV₂, hf₂⟩ := h₂
+  refine ⟨p₁ + p₂, andVerifier (fun a => p₁.eval (enc a).length) V₁ V₂,
+    computableInPolyTimeWithOracle_andVerifier (by fun_prop) hV₁ hV₂,
+    fun a => ?_⟩
+  rw [Pi.mul_apply, hf₁ a, hf₂ a, Polynomial.eval_add, acceptCount_andVerifier]
+
+/-- A function in `SharpPWithOracle`, cast to the integers, is in `GapPWithOracle`. -/
+theorem natCast_mem_GapPWithOracle {f : α → ℕ} (hf : f ∈ SharpPWithOracle A enc) :
+    (fun a => (f a : ℤ)) ∈ GapPWithOracle A enc :=
+  ⟨f, hf, 0, zero_mem, fun _ => by simp⟩
+
+end SharpPWithOracle
 
 end Cslib.Complexity
