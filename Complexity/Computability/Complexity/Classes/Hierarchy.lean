@@ -12,6 +12,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Resou
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
@@ -260,10 +262,21 @@ run and the test. -/
 theorem computableTidilyInO_diagonal :
     ComputableTidilyInO diagonal encBits encBool (fun x => 2 ^ (4 * x.length))
       fun x => 2 ^ (2 * x.length) := by
-  obtain ⟨dd, ed, hdec⟩ := exists_computableTidilyInDegree_decodeDesc
-  have hu : ComputableTidilyInDegree unframe encBits encBits 1 1 :=
-    .of_linear (.of_unframe fun _ => rfl)
-  have hdesc := (hdec.comp hu).inO
+  obtain ⟨dd, ed, hdec⟩ := exists_computableInDegree_decodeDesc
+  have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
+    ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
+  -- the framed description is no longer than the input
+  have hle (x : List Bool) :
+      x.length + ((unframe x).length + 1) ^ dd ≤ 2 * ((x.length + 1) ^ max 1 dd + 1) := by
+    have h₁ : ((unframe x).length + 1) ^ dd ≤ (x.length + 1) ^ max 1 dd :=
+      (Nat.pow_le_pow_left (Nat.succ_le_succ (length_unframe_le x)) _).trans
+        (Nat.pow_le_pow_right (Nat.succ_pos _) (le_max_right 1 dd))
+    have h₂ : x.length ≤ (x.length + 1) ^ max 1 dd :=
+      (Nat.le_succ _).trans (Nat.le_self_pow (by omega) _)
+    omega
+  have hdesc : ComputableTidilyInO (decodeDesc ∘ unframe) encBits eDesc
+      (fun x => (x.length + 1) ^ max 1 dd) fun x => (x.length + 1) ^ max 1 dd :=
+    (hdec.inO.tidy.comp hu).mono 2 hle hle
   have hsym := Universal.computableTidilyInDegree_map_eBit.inO_one
   have hclock := (ComputableTidilyInDegree.two_pow_length encBits).inO_one
   have hpre := hdesc.prod (hsym.prod hclock)
@@ -274,7 +287,7 @@ theorem computableTidilyInO_diagonal :
   obtain ⟨cO, hcO⟩ := hU.length_le
   -- one power of two absorbs every polynomial factor
   obtain ⟨C, hC⟩ := PolynomiallyBounded.exists_le_mul_two_pow
-    (p := fun n => (cD * ((n + 1) ^ max 1 (1 * dd) + 1) + (n + 1) ^ max 1 (1 * dd) + 4 * n + 2) ^ 5)
+    (p := fun n => (cD * ((n + 1) ^ max 1 dd + 1) + (n + 1) ^ max 1 dd + 4 * n + 2) ^ 5)
     (by fun_prop)
   set K := 100100 + 44100 * (cO + 1) ^ 2 with hK
   have hbounds (x : List Bool) := by
