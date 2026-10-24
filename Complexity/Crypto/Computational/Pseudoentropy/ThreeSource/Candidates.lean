@@ -74,23 +74,23 @@ section Lengths
 
 variable {α : Type} {input : α ↪ List Bool}
   {n sourceBits observationBound densityBound index : α → ℕ}
-  (hn : ComputableTidilyInPolyTime n input encUnary)
-  (hsource : ComputableTidilyInPolyTime sourceBits input encUnary)
-  (hobservation : ComputableTidilyInPolyTime observationBound input encUnary)
-  (hdensity : ComputableTidilyInPolyTime densityBound input encUnary)
-  (hindex : ComputableTidilyInPolyTime index input encUnary)
+  (hn : ComputableInPolyTime n input encUnary)
+  (hsource : ComputableInPolyTime sourceBits input encUnary)
+  (hobservation : ComputableInPolyTime observationBound input encUnary)
+  (hdensity : ComputableInPolyTime densityBound input encUnary)
+  (hindex : ComputableInPolyTime index input encUnary)
 
 include hn hsource hobservation hdensity hindex
 
 /-- The exact input size is uniformly available in unary. -/
-theorem isPolyTime_seedLength : ComputableTidilyInPolyTime
+theorem isPolyTime_seedLength : ComputableInPolyTime
     (fun a => seedLength (n a) (sourceBits a) (observationBound a) (densityBound a) (index a))
     input encUnary := by
   unfold seedLength
   polytime
 
 /-- The exact output size is uniformly available in unary. -/
-theorem isPolyTime_outputLength : ComputableTidilyInPolyTime
+theorem isPolyTime_outputLength : ComputableInPolyTime
     (fun a => outputLength (n a) (sourceBits a) (observationBound a) (densityBound a) (index a))
     input encUnary := by
   unfold outputLength
@@ -104,16 +104,24 @@ attribute [program_certificate] isPolyTime_seedLength isPolyTime_outputLength
 theorem isPolyTime_generate {α : Type} {input : α ↪ List Bool}
     {n sourceBits observationBound densityBound index : α → ℕ}
     {evaluate : α → List Bool → List Bool × Bool} {seed : α → List Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hsource : ComputableTidilyInPolyTime sourceBits input encUnary)
-    (hobservation : ComputableTidilyInPolyTime observationBound input encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound input encUnary)
-    (hindex : ComputableTidilyInPolyTime index input encUnary)
-    (hevaluate : ComputableTidilyInPolyTime (fun a => evaluate a.1 a.2)
+    (hn : ComputableInPolyTime n input encUnary)
+    (hsource : ComputableInPolyTime sourceBits input encUnary)
+    (hobservation : ComputableInPolyTime observationBound input encUnary)
+    (hdensity : ComputableInPolyTime densityBound input encUnary)
+    (hindex : ComputableInPolyTime index input encUnary)
+    (hevaluate : ComputableInPolyTime (fun a => evaluate a.1 a.2)
       (encPair input encBits) (encPair encBits encBool))
-    (hseed : ComputableTidilyInPolyTime seed input encBits) :
-    ComputableTidilyInPolyTime (fun a => generate (n a) (sourceBits a) (observationBound a)
+    (hseed : ComputableInPolyTime seed input encBits) :
+    ComputableInPolyTime (fun a => generate (n a) (sourceBits a) (observationBound a)
       (densityBound a) (index a) (evaluate a) (seed a)) input encBits := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hn
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hsource
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hobservation
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hdensity
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hindex
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hevaluate
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hseed
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   unfold generate
   polytime
 

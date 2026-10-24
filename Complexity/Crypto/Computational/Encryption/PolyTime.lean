@@ -60,9 +60,10 @@ and secret key material on every supported execution. No width function is assum
 theorem exists_keyLength_bound {keyGen : ℕ → ProbComp (List Bool × List Bool)}
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen) :
     ∃ c d : ℕ,
-      ComputableTidilyInPolyTime (fun n => c * (n + 1) ^ d) encUnary encUnary ∧
+      ComputableInPolyTime (fun n => c * (n + 1) ^ d) encUnary encUnary ∧
       ∀ n keys, keys ∈ (ProbComp.eval (keyGen n)).support →
         keys.1.length + keys.2.length ≤ c * (n + 1) ^ d := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨c, d, hlength⟩ := hkeyGen.length_le
   refine ⟨c, d, by fun_prop, fun n keys hkeys => ?_⟩
   have hbound := hlength n keys hkeys

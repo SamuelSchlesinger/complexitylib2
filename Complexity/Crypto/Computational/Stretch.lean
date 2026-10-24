@@ -303,11 +303,11 @@ theorem loss_polynomial {count : ℕ → ℕ}
 The choice is supplied only in the proof; each reduction receives its index as ordinary input. -/
 theorem indexed_indistinguishable {generator : ℕ → ℕ → List Bool → List Bool}
     {seedBits count choose : ℕ → ℕ}
-    (hgenerator : ComputableTidilyInPolyTime
+    (hgenerator : ComputableInPolyTime
       (fun input => generator input.1.1 input.1.2 input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits)
-    (hseedBits : ComputableTidilyInPolyTime seedBits encUnary encUnary)
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
+    (hseedBits : ComputableInPolyTime seedBits encUnary encUnary)
+    (hcount : ComputableInPolyTime count encUnary encUnary)
     (hsecure : ∀ adversary : ℕ → ℕ → List Bool → ProbComp Bool,
       IsPPTOn (encPair (encPair encUnary encUnary) encBits)
         encBool (fun input => adversary input.1.1 input.1.2 input.2) →
@@ -325,6 +325,9 @@ theorem indexed_indistinguishable {generator : ℕ → ℕ → List Bool → Lis
             (fun word => ProbComp.eval (adversary n (choose n) word)))
         ((uniformList (seedBits n + count n)).bind
           (fun word => ProbComp.eval (adversary n (choose n) word)))) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hgenerator
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hseedBits
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hcount
   intro adversary hadversary
   let reduction := fun n index =>
     test (generator n index) (seedBits n) (count n) (adversary n index)
@@ -381,9 +384,10 @@ open Probability BitString Turing.MultiTapeTM
 /-- Amplify a one-bit PRG to any efficiently computed, strictly larger output length. -/
 theorem PseudorandomGenerator.amplify {generator : List Bool → List Bool}
     (hgenerator : PseudorandomGenerator generator (fun n => n + 1))
-    (target : ℕ → ℕ) (htarget : ComputableTidilyInPolyTime target encUnary encUnary)
+    (target : ℕ → ℕ) (htarget : ComputableInPolyTime target encUnary encUnary)
     (hstretch : ∀ n, n < target n) :
     PseudorandomGenerator (PRGStretch.stretch generator (fun n => target n - n)) target := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at htarget
   have hcount : ComputableTidilyInPolyTime (fun n => target n - n) encUnary encUnary := by polytime
   have h := PRGStretch.pseudorandomGenerator hgenerator (.of_tidy hcount) (fun n => by
     have := hstretch n
@@ -397,9 +401,10 @@ theorem PseudorandomGenerator.amplify {generator : List Bool → List Bool}
 theorem PseudorandomGenerator.truncate {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hgenerator : PseudorandomGenerator generator length)
     (target : ℕ → ℕ)
-    (htarget : ComputableTidilyInPolyTime target encUnary encUnary)
+    (htarget : ComputableInPolyTime target encUnary encUnary)
     (hle : ∀ n, target n ≤ length n) (hstretch : ∀ n, n < target n) :
     PseudorandomGenerator (fun seed => (generator seed).take (target seed.length)) target := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at htarget
   have hpoly := hgenerator.polyTime.tidy
   refine PseudorandomGenerator.of_indistinguishable (.of_tidy (by polytime)) ?_ hstretch ?_
   · intro seed

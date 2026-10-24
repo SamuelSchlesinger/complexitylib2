@@ -113,7 +113,8 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
     (fun p => encryptSerialized (Parameters.dimension p.1) (Parameters.samples p.1)
       (Parameters.width p.1) p.2.1 p.2.2) :=
-  isPPTOn_encryptSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+  isPPTOn_encryptSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+    fun_prop))
     (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
 
 -- No separate encryption-efficiency, security-of-encryption, or zero-noise premise is supplied.

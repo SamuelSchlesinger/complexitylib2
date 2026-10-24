@@ -139,7 +139,8 @@ example {generator : List Bool → List Bool} {sample : ℕ → ProbComp (List B
 example {adversary : OracleDistinguisher} (ha : IsOraclePPT encBool adversary) :
     IsPPTOn (encPair encUnary (encList encBits)) encBool (fun pair =>
       GGM.sampleGame List.tail adversary pair.1 (pair.1 + 1) pair.2) :=
-  GGM.isPPTOn_sampleGame (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) ha
+  GGM.isPPTOn_sampleGame (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+    fun_prop)) (.of_tidy (by fun_prop)) ha
 
 -- The complete reduction has a concrete certificate without any cryptographic premise.
 example : IsPPT encBool (GGM.reduction (fun seed => seed ++ seed)

@@ -215,7 +215,8 @@ theorem isPPTOn_test {α : Type} {input : α ↪ List Bool}
     (p.1, generate (count p.1) (seedBits p.1) (outputBits p.1)
       (fun j coins => if j = index p.1 then challenge p.1 else generator p.1 j coins) p.2))
   apply ComputableTidilyInPolyTime.prod (by fun_prop)
-  apply (isPolyTime_generate (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy ?_) (.of_tidy (by fun_prop))).tidy
+  apply (isPolyTime_generate (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+    fun_prop)) (.of_tidy ?_) (.of_tidy (by fun_prop))).tidy
   have hgen := hgenerator.comp
     (encIn := encPair (encPair (encPair input encBits) encUnary) encBits)
     (g := fun p : ((α × List Bool) × ℕ) × List Bool => ((p.1.1.1, p.1.2), p.2))

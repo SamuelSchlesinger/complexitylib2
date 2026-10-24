@@ -369,20 +369,20 @@ theorem exists_evaluator {Param : Type} {input : Param ↪ List Bool} {output : 
     (htest : IsPPTOn (encPair input (encList (encPair output encBool)))
       encBool (fun pair => test pair.1 pair.2)) :
     ∃ (c d : ℕ) (predict : List Bool → List Bool → Bool),
-      ComputableTidilyInPolyTime (fun pair => predict pair.1 pair.2)
+      ComputableInPolyTime (fun pair => predict pair.1 pair.2)
         (encPair encBits encBits) encBool ∧
       ∀ a replacement original count width observation, (output observation).length ≤ width →
         ProbComp.eval ((fun code => predict code (output observation)) <$>
           sample output (input a) replacement original count c d width) =
           ProbComp.eval (bitPredictor (fun trial =>
             sequenceTest replacement original count (test a) (observation, trial))) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨c, d, raw, hefficient, hrealize⟩ := htest.exists_padded_bool_coin_evaluator
   refine ⟨c, d, evaluate raw, (isPolyTime_evaluate (.of_tidy hefficient)).tidy, ?_⟩
   intro a replacement original count width observation hwidth
   apply eval_sample output (input a) replacement original count c d width (test a) raw
     (fun values budget hbudget => hrealize (a, values) budget hbudget) observation hwidth
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Saving context and coins is strict PPT whenever the sources and numerical bounds are. -/
 theorem isPPTOn_splice {Param : Type} {input : Param ↪ List Bool} {output : α ↪ List Bool}
     {base : Param → List Bool} {replacement original : Param → ProbComp (α × Bool)}
@@ -403,7 +403,12 @@ theorem isPPTOn_splice {Param : Type} {input : Param ↪ List Bool} {output : α
   have hwidth := hwidth.tidy
   have htrial := htrial.tidy
   unfold splice
-  ppt
+  apply (hreplacement.replicate hbefore).bind_with
+  apply ((horiginal.preprocess
+    (ComputableTidilyInPolyTime.fst input (encList (encPair output encBool)))).replicate
+      (hafter.comp (ComputableTidilyInPolyTime.fst input
+        (encList (encPair output encBool))))).bind_with
+  apply isPPTOn_save c d <;> exact .of_tidy (by fun_prop)
 
 attribute [program_certificate] isPPTOn_splice
 

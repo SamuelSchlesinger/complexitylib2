@@ -200,12 +200,14 @@ theorem isPPTOn_sequenceTest {Param : Type} {input : Param ↪ List Bool} {sampl
     {test : Param → List α → ProbComp Bool} {challenge : Param → α}
     (hreplacement : IsPPTOn input sample replacement)
     (horiginal : IsPPTOn input sample original)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hcount : ComputableInPolyTime count input encUnary)
     (htest : IsPPTOn (encPair input (encList sample)) encBool
       (fun pair => test pair.1 pair.2))
-    (hchallenge : ComputableTidilyInPolyTime challenge input sample) :
+    (hchallenge : ComputableInPolyTime challenge input sample) :
     IsPPTOn input encBool
       (fun a => sequenceTest (replacement a) (original a) (count a) (test a) (challenge a)) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hcount
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hchallenge
   unfold sequenceTest
   ppt
 

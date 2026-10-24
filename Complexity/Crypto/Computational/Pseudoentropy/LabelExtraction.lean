@@ -66,11 +66,11 @@ theorem HasGap.indexed_extracted_advantage_negligible {pair : SamplablePair} {ga
         (fun input => extractLabels (seed input.1.1 input.1.2) (hash input.1.1 input.1.2)
           input.2 >>= test input.1.1 input.1.2))
     {candidates count densityBound : ℕ → ℕ} {numerator : ℕ → ℕ → ℕ} {slack : ℕ → ℝ}
-    (hcandidates : ComputableTidilyInPolyTime candidates encUnary encUnary)
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
-    (hnumerator : ComputableTidilyInPolyTime (fun input => numerator input.1 input.2)
+    (hcandidates : ComputableInPolyTime candidates encUnary encUnary)
+    (hcount : ComputableInPolyTime count encUnary encUnary)
+    (hnumerator : ComputableInPolyTime (fun input => numerator input.1 input.2)
       (encPair encUnary encUnary) encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
+    (hdensity : ComputableInPolyTime densityBound encUnary encUnary)
     (hchoose : ∀ᶠ n in atTop, choose n < candidates n)
     (hvalid : ∀ᶠ n in atTop, 0 < numerator n (choose n) ∧
       numerator n (choose n) ≤ dyadicSize (densityBound n) ∧
@@ -92,6 +92,10 @@ theorem HasGap.indexed_extracted_advantage_negligible {pair : SamplablePair} {ga
       ((extractLabelsIdeal ((fun value => pair.encode n value.1) <$>
         pair.latentSample n) (count n) (seed n (choose n))).bind
           (fun output => ProbComp.eval (test n (choose n) output)))) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hcandidates
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hcount
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hnumerator
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hdensity
   classical
   let error := fun n =>
     2 * Real.exp (-2 * slack n ^ 2 / (count n * (realization.length n + n + 2 : ℕ) ^ 2)) +
@@ -115,7 +119,8 @@ theorem HasGap.indexed_extracted_advantage_negligible {pair : SamplablePair} {ga
     polytime
   have hgap (n : ℕ) : 0 < inverseGap n := by
     exact Nat.mul_pos (dyadicSize_pos _) (Nat.pow_pos (by lia))
-  have hmasks := hpair.eventually_exists_indexed_mask reduced htest (.of_tidy hcandidates) (.of_tidy hcount)
+  have hmasks := hpair.eventually_exists_indexed_mask reduced htest (.of_tidy hcandidates)
+    (.of_tidy hcount)
     (.of_tidy hnumerator) (.of_tidy hdensity) (.of_tidy hinverseGap) hgap
   have hbound : PolynomiallyBounded
       (fun n => 2 * inverseGap n * dyadicSize (densityBound n)) := by

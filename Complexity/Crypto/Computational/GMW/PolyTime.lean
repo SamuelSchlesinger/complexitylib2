@@ -714,7 +714,8 @@ private theorem isPPTOn_runTwoRound_honest {α Caller : Type} {enc : α ↪ List
     (reply1 := fun p => honestReply1 generator (m p.1) (φ p.1) (coins p.1) p.2)
     (reply2 := fun p => honestReply2 (s p.1) (φ p.1) (coins p.1) p.2)
     (bound := fun c => (coins c).1.length * m c + (coins c).1.length * (s c + 1))
-    (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+    (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+      fun_prop))
     (fun c q => by dsimp only [honestReply1]; exact (List.length_take_le _ _).trans (by omega))
     (fun c q => by dsimp only [honestReply2]; rw [length_proverReply2_any]; omega)
 

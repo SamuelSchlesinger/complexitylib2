@@ -57,10 +57,12 @@ include hencrypt
 /-- Encrypt every zero link, using the actual length of each supplied secret key. -/
 @[fun_prop]
 theorem isPPTOn_encryptZeroKeyLinks
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hkeys : ComputableTidilyInPolyTime keys input (encList (encPair encBits encBits))) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hkeys : ComputableInPolyTime keys input (encList (encPair encBits encBits))) :
     IsPPTOn input (encList (encList encBits))
       (fun a => E.encryptZeroKeyLinks (n a) (keys a)) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hn
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hkeys
   apply IsPPTOn.mapMWith
     (element := encPair (encPair encBits encBits) (encPair encBits encBits))
   · apply isPPTOn_encryptBits hencrypt <;> fun_prop
@@ -141,7 +143,8 @@ theorem isPPTOn_encryptKeyLinkHybrid
       input (encList (encPair encBits encBits)) by fun_prop))
   have hmiddle := isPPTOn_encryptBitsHybrid hencrypt (.of_tidy hn)
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => (next a).1) input encBits by fun_prop))
-    (.of_tidy (show ComputableTidilyInPolyTime (fun a => (predecessor a).2) input encBits by fun_prop)) (.of_tidy hcut)
+    (.of_tidy (show ComputableTidilyInPolyTime (fun a => (predecessor a).2) input encBits by
+      fun_prop)) (.of_tidy hcut)
   have hback := isPPTOn_encryptZeroKeyLinks hencrypt hn
     (show ComputableTidilyInPolyTime (fun a => next a :: after a)
       input (encList (encPair encBits encBits)) by fun_prop)
@@ -174,7 +177,8 @@ theorem isPPTOn_spliceEncryptedKeyLink
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => before a ++ [predecessor a])
       input (encList (encPair encBits encBits)) by fun_prop))
   have hmiddle := isPPTOn_spliceEncryptedBit hencrypt (.of_tidy hn)
-    (.of_tidy (show ComputableTidilyInPolyTime (fun a => (next a).1) input encBits by fun_prop)) (.of_tidy hcut)
+    (.of_tidy (show ComputableTidilyInPolyTime (fun a => (next a).1) input encBits by fun_prop))
+      (.of_tidy hcut)
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => (predecessor a).2.drop (cut a + 1))
       input encBits by fun_prop)) (.of_tidy hchallenge)
   have hback := isPPTOn_encryptZeroKeyLinks hencrypt hn
