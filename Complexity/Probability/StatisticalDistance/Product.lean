@@ -10,18 +10,23 @@ module
 public import Complexity.Init
 public import Complexity.Probability.StatisticalDistance
 public import Complexity.Probability.Product
+public import Complexity.Probability.IID
 
 /-!
 # Statistical distance of independent products
 
 Replacing independent coordinates costs at most the sum of their individual distances. The same
 bound holds when the coordinates are conditionally independent given a shared public sample:
-the sample is drawn once and remains visible on both sides.
+the sample is drawn once and remains visible on both sides. For `k` independent draws from one
+law, replacing the law costs at most `k` times its distance; this is the statistical hop that
+replaces approximately sampled values by exactly sampled ones.
 
 ## Main results
 
 * `Cslib.Probability.PMF.dist_pi_le_sum`: distance between products is at most the sum of distances.
 * `Cslib.Probability.PMF.dist_bind_pair_pi_le_sum`: retain the shared public sample in that bound.
+* `Cslib.Probability.PMF.dist_iid_le`: `k` independent draws are at distance at most `k` times the
+  distance of one draw.
 
 ## References
 
@@ -98,5 +103,14 @@ theorem dist_bind_pair_pi_le_sum [DecidableEq ι] {Seed : Type*} [Fintype Seed] 
     _ = _ := by
       simp only [Finset.mul_sum, dist_bind_pair]
       exact Finset.sum_comm
+
+/-- **Independent draws.** `k` independent draws from `μ` and from `ν` are at statistical distance
+at most `k` times the distance between `μ` and `ν`. -/
+theorem dist_iid_le {β : Type*} [Fintype β] (μ ν : PMF β) (k : ℕ) :
+    dist (iid μ k) (iid ν k) ≤ k * dist μ ν := by
+  classical
+  rw [iid_eq_pi, iid_eq_pi]
+  refine (dist_pi_le_sum _ _).trans ?_
+  simp
 
 end Cslib.Probability.PMF
