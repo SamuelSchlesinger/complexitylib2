@@ -139,11 +139,12 @@ noncomputable def henselValue (Q : F[X][Y]) (τ a : F) (d : ℕ) : F :=
 
 omit [Fintype F] [DecidableEq F] in
 /-- Substituting a polynomial of degree at most `d` into `Q(X + τ, Y)` gives degree at most `D`
-when the monomials of `Q` have `(1, d)`-weighted degree at most `D`. -/
+when `Q` has `(1, d)`-weighted degree at most `D`. -/
 private theorem natDegree_shiftEval_le {d D : ℕ} {Q : F[X][Y]}
-    (hQ : ∀ a b, (Q.coeff b).coeff a ≠ 0 → a + d * b ≤ D) (τ : F) {A : F[X]}
+    (hQ : Sudan.WeightedDegreeLE d D Q) (τ : F) {A : F[X]}
     (hA : A.natDegree ≤ d) : (shiftEval Q τ A).natDegree ≤ D := by
-  refine Sudan.natDegree_eval_le_of_weighted hA fun a b hab => ?_
+  refine (Sudan.WeightedDegreeLE.natDegree_eval_le ?_ hA)
+  intro a b hab
   rw [coeff_map] at hab
   have hQb : Q.coeff b ≠ 0 := fun h => hab (by simp [h])
   have ha : a ≤ (Q.coeff b).natDegree := by
@@ -153,12 +154,12 @@ private theorem natDegree_shiftEval_le {d D : ℕ} {Q : F[X][Y]}
   have := hQ _ b (leadingCoeff_ne_zero.2 hQb)
   omega
 
-/-- **One Newton step.** Let `Q(X, P(X)) = 0` with `P` of degree at most `d`, let the monomials of
-`Q` have `(1, d)`-weighted degree at most `D < |F|`, and let `λ = ∂Q/∂Y (τ, P(τ)) ≠ 0`. If `A` has
+/-- **One Newton step.** Let `Q(X, P(X)) = 0` with `P` of degree at most `d`, let `Q` have
+`(1, d)`-weighted degree at most `D < |F|`, and let `λ = ∂Q/∂Y (τ, P(τ)) ≠ 0`. If `A` has
 degree at most `k < d` and agrees with `P(X + τ)` below degree `k + 1`, then the Newton step
 returns the coefficient of `X ^ (k + 1)` in `P(X + τ)`. -/
 theorem henselCoeff_eq {d D : ℕ} {Q : F[X][Y]}
-    (hQ : ∀ a b, (Q.coeff b).coeff a ≠ 0 → a + d * b ≤ D) (hD : D < Fintype.card F)
+    (hQ : Sudan.WeightedDegreeLE d D Q) (hD : D < Fintype.card F)
     {P : F[X]} (hQP : Q.eval P = 0) {τ : F}
     (hlam : (derivative Q).evalEval τ (P.eval τ) ≠ 0) {A : F[X]} {k : ℕ} (hk : k < d)
     (hA : A.natDegree ≤ k) (hAP : ∀ i ≤ k, A.coeff i = (taylor τ P).coeff i) :
@@ -211,10 +212,10 @@ theorem henselCoeff_eq {d D : ℕ} {Q : F[X][Y]}
   rw [henselCoeff, hS, neg_neg, mul_div_cancel_left₀ _ hlam]
 
 /-- **Newton iteration recovers a simple root.** Let `Q(X, P(X)) = 0` with `P` of degree at most
-`d`, let the monomials of `Q` have `(1, d)`-weighted degree at most `D < |F|`, and let
+`d`, let `Q` have `(1, d)`-weighted degree at most `D < |F|`, and let
 `∂Q/∂Y (τ, P(τ)) ≠ 0`. Then Newton iteration from the hint `P(τ)` returns `P(0)`. -/
 theorem henselValue_eq {d D : ℕ} {Q : F[X][Y]}
-    (hQ : ∀ a b, (Q.coeff b).coeff a ≠ 0 → a + d * b ≤ D) (hD : D < Fintype.card F)
+    (hQ : Sudan.WeightedDegreeLE d D Q) (hD : D < Fintype.card F)
     {P : F[X]} (hP : P.natDegree ≤ d) (hQP : Q.eval P = 0) {τ : F}
     (hlam : (derivative Q).evalEval τ (P.eval τ) ≠ 0) :
     henselValue Q τ (P.eval τ) d = P.eval 0 := by
@@ -277,10 +278,6 @@ theorem card_hintDecode_ne_le {α w : ι → F} {d D : ℕ} (hα : Function.Inje
   have hQ := Sudan.isInterpolant_interpolant α w hd hn
   obtain ⟨S, hQS, hS0, hSdeg⟩ := Sudan.exists_eq_mul_eval_ne_zero hα hQ
     (fun Q' hQ' => Sudan.natDegree_interpolant_le α w hd hn hQ') hP hagree
-  have hwd : ∀ a b, ((Sudan.interpolant α w d D).coeff b).coeff a ≠ 0 → a + d * b ≤ D :=
-    fun a b hab => by
-      have := hQ.weightedDegree_le a b hab
-      rwa [Nat.add_sub_cancel] at this
   have hQP : (Sudan.interpolant α w d D).eval P = 0 := by
     rw [hQS, eval_mul, eval_sub, eval_X, eval_C, sub_self, zero_mul]
   have hsub : ({τ | hintDecode α w d D τ (P.eval τ) ≠ P.eval 0} : Finset F) ⊆
@@ -288,7 +285,7 @@ theorem card_hintDecode_ne_le {α w : ι → F} {d D : ℕ} (hα : Function.Inje
     intro τ hτ
     rw [Multiset.mem_toFinset, mem_roots hS0, IsRoot.def]
     by_contra hne
-    refine (mem_filter.1 hτ).2 (henselValue_eq hwd hD hP hQP ?_)
+    refine (mem_filter.1 hτ).2 (henselValue_eq hQ.weightedDegree_le hD hP hQP ?_)
     rw [hQS, derivative_mul, derivative_sub, derivative_X, derivative_C, sub_zero, one_mul,
       evalEval_add, evalEval_mul, evalEval_sub, evalEval_X, evalEval_C, sub_self, zero_mul,
       add_zero, ← eval_eval_eq_evalEval]

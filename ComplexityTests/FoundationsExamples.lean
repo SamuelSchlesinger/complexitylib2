@@ -87,7 +87,7 @@ private def word5 : Fin 5 → ZMod 5 := ![1, 2, 3, 0, 1]
 
 -- Six monomials of `(1, 1)`-weighted degree at most `2` exceed the five points, so elimination
 -- yields a Sudan interpolant.
-example : Sudan.IsInterpolant pts5 word5 (1 + 1) 2 (Sudan.interpolant pts5 word5 1 2) :=
+example : Sudan.IsInterpolant pts5 word5 1 2 (Sudan.interpolant pts5 word5 1 2) :=
   Sudan.isInterpolant_interpolant pts5 word5 le_rfl (by decide)
 
 -- Moreover `2 < 5`, and `X + 1` agrees with the word at three points, more than `D = 2`. So the
