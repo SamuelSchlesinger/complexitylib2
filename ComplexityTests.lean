@@ -364,6 +364,7 @@ import ComplexityTests.RationalHitting.Lift
 import ComplexityTests.RationalHitting.Parameters
 import ComplexityTests.RationalHitting.Point
 import ComplexityTests.RationalHitting.Runtime
+import ComplexityTests.RawConstructionAdapters
 import ComplexityTests.ReductionClasses
 import ComplexityTests.Reingold
 import ComplexityTests.Relativization
