@@ -17,7 +17,7 @@ The association list is encoded as a list of encoded address/value pairs. Equali
 search and filtering are implemented by the existing native multitape-machine calculus. No
 memory operation is an oracle. Bounds depend on encoded address lengths, rather than allocating
 space up to the numeric address. The cost functions are asymptotic bound expressions for
-`ComputableTidilyInO`, not exact native step counts: one finite machine and a constant factor
+`ComputableInO`, not exact native step counts: one finite machine and a constant factor
 work for all inputs, for each fixed choice of address and value encodings.
 
 ## Main definitions
@@ -37,7 +37,7 @@ work for all inputs, for each fixed choice of address and value encodings.
 ## References
 
 Uses Mathlib's association lists and Christian Reitwiessner's encoded native multitape-machine
-calculus (`ComputableTidilyInO.eq`, `findWith`, and `filterWith`).
+calculus (`ComputableInO.eq`, `findWith`, and `filterWith`).
 -/
 
 @[expose] public section
@@ -45,7 +45,7 @@ calculus (`ComputableTidilyInO.eq`, `findWith`, and `filterWith`).
 namespace Cslib.GenericRAM.SparseMemory
 
 open Turing.MultiTapeTM
-open ComputableTidilyInO
+open ComputableInO
 
 variable {Address Value : Type}
 variable (encA : Address ↪ List Bool) (encV : Value ↪ List Bool)
@@ -207,22 +207,22 @@ theorem scanSpace_le_linear (q : Address × SparseMemory Address Value) :
 variable [DecidableEq Address]
 
 private theorem compare_inO :
-    ComputableTidilyInO (fun q : Address × (Address × Value) => decide (q.1 = q.2.1))
+    ComputableInO (fun q : Address × (Address × Value) => decide (q.1 = q.2.1))
       (encPair encA (encPair encA encV)) encBool (compareTime encA encV)
       (compareSpace encA encV) := by
-  have h := (ComputableTidilyInO.eq encA).comp
+  have h := (ComputableInO.eq encA).comp
     ((fst encA (encPair encA encV)).prod (snd encA (encPair encA encV)).fst')
   convert h using 1 <;> funext q <;> simp [compareTime, compareSpace, two_mul]
 
 /-- A native multitape machine searches the finite store, with parameterized time and space. -/
 theorem find_inO :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : Address × SparseMemory Address Value =>
         (entries q.2).find? (fun e => decide (q.1 = e.1)))
       (queryEncoding encA encV) (encOption (encPair encA encV))
       (scanTime encA encV) (scanSpace encA encV) := by
   have hpar := fst encA (encoding encA encV)
-  have hlist : ComputableTidilyInO (fun q : Address × SparseMemory Address Value => entries q.2)
+  have hlist : ComputableInO (fun q : Address × SparseMemory Address Value => entries q.2)
       (queryEncoding encA encV) (encList (encPair encA encV))
       (fun q => (queryEncoding encA encV q).length)
       (fun q => (queryEncoding encA encV q).length) :=
@@ -233,15 +233,15 @@ theorem find_inO :
 
 /-- Filtering implements erasure using the same parameterized scan bounds. -/
 theorem erase_entries_inO :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : Address × SparseMemory Address Value =>
         (entries q.2).filter (fun e => decide (q.1 ≠ e.1)))
       (queryEncoding encA encV) (encList (encPair encA encV))
       (scanTime encA encV) (scanSpace encA encV) := by
-  have hnot := (ComputableTidilyInDegree.of_finite (encIn := encBool)
+  have hnot := (ComputableInDegree.of_finite (encIn := encBool)
     (encMid := encBool) Bool.not).inO_one
   have hcmp := hnot.comp_linear (compare_inO encA encV)
-  have hlist : ComputableTidilyInO (fun q : Address × SparseMemory Address Value => entries q.2)
+  have hlist : ComputableInO (fun q : Address × SparseMemory Address Value => entries q.2)
       (queryEncoding encA encV) (encList (encPair encA encV))
       (fun q => (queryEncoding encA encV q).length)
       (fun q => (queryEncoding encA encV q).length) :=
@@ -264,14 +264,14 @@ def writeSpace (q : (Address × Value) × SparseMemory Address Value) : ℕ :=
 
 /-- Native TM implementation of insertion/replacement, including all argument preparation. -/
 theorem insert_inO :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : (Address × Value) × SparseMemory Address Value => q.2.insert q.1.1 q.1.2)
       (writeEncoding encA encV) (encoding encA encV)
       (writeTime encA encV) (writeSpace encA encV) := by
   have hb := fst (encPair encA encV) (encoding encA encV)
   have hs := snd (encPair encA encV) (encoding encA encV)
   have hf := (erase_entries_inO encA encV).comp (hb.fst'.prod hs)
-  have hc := (ComputableTidilyInDegree.cons (encPair encA encV)).inO_one.comp_linear
+  have hc := (ComputableInDegree.cons (encPair encA encV)).inO_one.comp_linear
     (hb.prod hf)
   have hout := hc.of_enc_eq (g := fun q => q.2.insert q.1.1 q.1.2)
     (encOut := encoding encA encV) (fun q => by
@@ -281,7 +281,7 @@ theorem insert_inO :
 
 omit [DecidableEq Address] in
 private theorem readResult_inO :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : Option (Address × Value) × Value => (q.1.map Prod.snd).getD q.2)
       (encPair (encOption (encPair encA encV)) encV) encV
       (fun q => (encPair (encOption (encPair encA encV)) encV q).length)
@@ -295,8 +295,8 @@ private theorem readResult_inO :
     | some e => exact isEmptyElim e
   · obtain ⟨e⟩ := h
     have ho := fst (encOption (encPair encA encV)) encV
-    have ht := (ComputableTidilyInDegree.isSome (encPair encA encV)).inO_one.comp_linear ho
-    have hv := ((ComputableTidilyInDegree.getD (enc₁ := encPair encA encV) e).inO_one
+    have ht := (ComputableInDegree.isSome (encPair encA encV)).inO_one.comp_linear ho
+    have hv := ((ComputableInDegree.getD (enc₁ := encPair encA encV) e).inO_one
       |>.comp_linear ho).snd'
     have hr := (ht.ite hv hd).mono
       (T' := fun q => (encPair (encOption (encPair encA encV)) encV q).length)
@@ -321,7 +321,7 @@ def readSpace (q : (Address × SparseMemory Address Value) × Value) : ℕ :=
 
 /-- Native TM implementation of total memory reads, uniform also in the default value. -/
 theorem read_inO :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : (Address × SparseMemory Address Value) × Value => read q.2 q.1.1 q.1.2)
       (readEncoding encA encV) encV (readTime encA encV) (readSpace encA encV) := by
   have hf := (find_inO encA encV).comp (fst (queryEncoding encA encV) encV)
@@ -333,7 +333,7 @@ theorem read_inO :
 
 /-- A cubic-time, linear-space specialization of the parameterized write certificate. -/
 theorem insert_inO_cube :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : (Address × Value) × SparseMemory Address Value => q.2.insert q.1.1 q.1.2)
       (writeEncoding encA encV) (encoding encA encV)
       (fun q => ((writeEncoding encA encV q).length + 1) ^ 3)
@@ -357,7 +357,7 @@ theorem insert_inO_cube :
 
 /-- A cubic-time, linear-space specialization of the parameterized read certificate. -/
 theorem read_inO_cube :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : (Address × SparseMemory Address Value) × Value => read q.2 q.1.1 q.1.2)
       (readEncoding encA encV) encV
       (fun q => ((readEncoding encA encV q).length + 1) ^ 3)
@@ -381,19 +381,19 @@ theorem read_inO_cube :
 /-- Polynomial-time writes are a corollary of the native parameterized certificate. -/
 @[fun_prop]
 theorem insert_polytime :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun q : (Address × Value) × SparseMemory Address Value => q.2.insert q.1.1 q.1.2)
       (writeEncoding encA encV) (encoding encA encV) :=
-  (insert_inO_cube encA encV).computableTidilyInPolyTime
+  (insert_inO_cube encA encV).computableInPolyTime
     (.of_forall_le 1 3 (by simp)) .self
 
 /-- Polynomial-time reads are uniform in the queried address, store, and default value. -/
 @[fun_prop]
 theorem read_polytime :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun q : (Address × SparseMemory Address Value) × Value => read q.2 q.1.1 q.1.2)
       (readEncoding encA encV) encV :=
-  (read_inO_cube encA encV).computableTidilyInPolyTime
+  (read_inO_cube encA encV).computableInPolyTime
     (.of_forall_le 1 3 (by simp)) .self
 
 /-- Writing preserves maximum key length up to the newly supplied address. -/
