@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (design prototype for #643; not for merge)
 
-public import Complexity.Crypto.Protocols.Interactive.Basic
+public import Complexity.Computability.Interactive.Basic
 
 /-!
 # Security of interactive reductions (design prototype)
@@ -33,7 +33,7 @@ Proof systems, arguments and proofs of knowledge are the reductions to the trivi
 
 @[expose] public section
 
-namespace Cslib.Crypto.Protocols.Interactive
+namespace Cslib.Interactive
 
 open scoped ENNReal
 open Spec
@@ -138,4 +138,4 @@ def Reduction.HVZK (W : World oP oV) (R : Reduction oP oV s StmtIn WitIn StmtOut
     Prop :=
   ∀ x w, relIn x w → CloseTo ((W.eval (R.run x w)).map Prod.fst) (ProbComp.eval (Sim x)) ε
 
-end Cslib.Crypto.Protocols.Interactive
+end Cslib.Interactive

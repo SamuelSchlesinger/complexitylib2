@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (design prototype for #643; not for merge)
 
-public import Complexity.Crypto.Protocols.Interactive.Sequential
+public import Complexity.Computability.Interactive.Sequential
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.MvPolynomial.Degrees
 public import Mathlib.Algebra.Polynomial.Eval.Defs
@@ -33,7 +33,7 @@ sum of the per-round errors, and no step of the composed protocol is reasoned ab
 
 @[expose] public section
 
-namespace Cslib.Crypto.Protocols.Interactive.Sumcheck
+namespace Cslib.Interactive.Sumcheck
 
 open scoped ENNReal
 open Spec
@@ -163,4 +163,4 @@ theorem proof_sound (hP : ∀ j, P.degreeOf j ≤ d) :
   simp only [PerChallenge.sum, add_zero, Finset.sum_const, Finset.card_range, nsmul_eq_mul] at h
   exact h
 
-end Cslib.Crypto.Protocols.Interactive.Sumcheck
+end Cslib.Interactive.Sumcheck

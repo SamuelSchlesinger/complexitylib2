@@ -39,7 +39,7 @@ the output law.
 
 @[expose] public section
 
-namespace Cslib.Crypto.Protocols.Interactive
+namespace Cslib.Interactive
 
 open scoped ENNReal
 
@@ -255,4 +255,4 @@ def World.plain : World emptySpec emptySpec where
 
 end Execution
 
-end Cslib.Crypto.Protocols.Interactive
+end Cslib.Interactive

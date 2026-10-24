@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (design prototype for #643; not for merge)
 
-public import Complexity.Crypto.Protocols.Interactive.Security
+public import Complexity.Computability.Interactive.Security
 import Complexity.Probability.PMF
 
 /-!
@@ -22,7 +22,7 @@ strategies, without casts.
 
 @[expose] public section
 
-namespace Cslib.Crypto.Protocols.Interactive
+namespace Cslib.Interactive
 
 open scoped ENNReal
 open Spec
@@ -193,4 +193,4 @@ theorem Verifier.RbrSound.sound {s : Spec} {StmtIn StmtOut : Type}
   rw [toOuterMeasure_bind_pure (g := fun r : Transcript s × α => (r.1, V.outputOn x r.1, r.2))]
   exact rbrFrom_le s V.samplers ε (S x) _ (hround x) (hinit x hx) st
 
-end Cslib.Crypto.Protocols.Interactive
+end Cslib.Interactive

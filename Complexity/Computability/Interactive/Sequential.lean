@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (design prototype for #643; not for merge)
 
-public import Complexity.Crypto.Protocols.Interactive.Plain
+public import Complexity.Computability.Interactive.Plain
 
 /-!
 # Sequential composition of interactive reductions (design prototype)
@@ -24,7 +24,7 @@ compiles them once (Fiat–Shamir, BCS).
 
 @[expose] public section
 
-namespace Cslib.Crypto.Protocols.Interactive
+namespace Cslib.Interactive
 
 open scoped ENNReal
 open Spec
@@ -473,4 +473,4 @@ theorem PerChallenge.sum_iterate (ε : ℕ → PerChallenge (fun _ => ℝ≥0∞
 
 end Plain
 
-end Cslib.Crypto.Protocols.Interactive
+end Cslib.Interactive
