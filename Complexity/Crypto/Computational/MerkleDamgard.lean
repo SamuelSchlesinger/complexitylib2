@@ -18,7 +18,7 @@ import Complexity.Tactic.PPT
 
 Given a keyed `2n → n` collision-resistant compression family
 `h : List Bool → List Bool → List Bool`, the Merkle–Damgård transform ([BonehShoup2023],
-Section 8.2, Construction 8.1 and Theorem 8.3) constructs a collision-resistant hash family on
+Section 8.4, Construction 8.1 and Theorem 8.3) constructs a collision-resistant hash family on
 arbitrary-length messages by iterating `h k` over a sequence of `n`-bit blocks starting from a
 fixed `n`-bit initialization vector `0^n`.
 
@@ -50,10 +50,12 @@ We formalize the transform and its collision-extraction reduction at two levels:
 
 ## Main definitions
 
+* `Cslib.Crypto.padOrTake`: fixed-width bit-string normalization to exact length `n`.
 * `Cslib.Crypto.merkleDamgardChain`: block-level iterated compression
   `blocks.foldl (fun acc b => h k (acc ++ b)) iv`.
-* `Cslib.Crypto.chainTrace`, `Cslib.Crypto.extractChainCollision`: polynomial-time backward scan
-  extracting a `2n`-bit compression collision from colliding block chains.
+* `Cslib.Crypto.chainTraceStep`, `Cslib.Crypto.chainTrace`,
+  `Cslib.Crypto.extractChainCollision`: polynomial-time backward scan extracting a `2n`-bit
+  compression collision from colliding block chains.
 * `Cslib.Crypto.mdEndBlock`, `Cslib.Crypto.mdDataBlock`, `Cslib.Crypto.mdBlocks`: suffix-free
   `n`-bit block encoding of arbitrary bit strings.
 * `Cslib.Crypto.merkleDamgard`, `Cslib.Crypto.extractMerkleDamgardCollision`: domain-extended
@@ -69,6 +71,7 @@ We formalize the transform and its collision-extraction reduction at two levels:
   collision extraction lemmas.
 * `Cslib.Crypto.CompressionFamily.collisionResistantOn_merkleDamgardChain`: collision resistance
   for any polynomial-time suffix-free block encoding.
+* `Cslib.Crypto.mdBlocks_suffix_iff`: suffix-freeness of `mdBlocks n` for `n ≥ 2`.
 * `Cslib.Crypto.isCollision_extractMerkleDamgardCollision`: deterministic collision extraction for
   `merkleDamgard`.
 * `Cslib.Crypto.CompressionFamily.collisionResistant_merkleDamgard`,
@@ -78,7 +81,7 @@ We formalize the transform and its collision-extraction reduction at two levels:
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023],
-  Section 8.2 (Construction 8.1 and Theorem 8.3).
+  Section 8.4 (Construction 8.1 and Theorem 8.3).
 * [J. Katz, Y. Lindell, *Introduction to Modern Cryptography*][KatzLindell2020], Section 5.2.
 -/
 
@@ -116,6 +119,7 @@ private theorem computableTidilyInPolyTime_padOrTake
   polytime
 
 /-- Normalizing a word to unary length `n` is computable in plain polynomial time. -/
+@[program_certificate]
 theorem computableInPolyTime_padOrTake :
     ComputableInPolyTime (fun p : ℕ × List Bool => padOrTake p.1 p.2)
       (encPair encUnary encBits) encBits :=
@@ -193,7 +197,7 @@ def chainTrace (h : List Bool → List Bool → List Bool) (k iv : List Bool)
 theorem chainTrace_nil (h : List Bool → List Bool → List Bool) (k iv : List Bool) :
     chainTrace h k iv [] = (iv, []) := rfl
 
-theorem chainTrace_concat (h : List Bool → List Bool → List Bool) (k iv : List Bool)
+private theorem chainTrace_concat (h : List Bool → List Bool → List Bool) (k iv : List Bool)
     (blocks : List (List Bool)) (b : List Bool) :
     chainTrace h k iv (blocks ++ [b]) =
       chainTraceStep h k (chainTrace h k iv blocks) b :=
@@ -201,7 +205,7 @@ theorem chainTrace_concat (h : List Bool → List Bool → List Bool) (k iv : Li
 
 /-- On valid `k.length`-bit chains, the first component of `chainTrace` agrees with
 `merkleDamgardChain`. -/
-theorem fst_chainTrace_eq_merkleDamgardChain {h : List Bool → List Bool → List Bool}
+private theorem fst_chainTrace_eq_merkleDamgardChain {h : List Bool → List Bool → List Bool}
     {k iv : List Bool} {blocks : List (List Bool)}
     (hlen : ∀ x, x.length = 2 * k.length → (h k x).length = k.length)
     (hiv : iv.length = k.length)
@@ -221,7 +225,7 @@ theorem fst_chainTrace_eq_merkleDamgardChain {h : List Bool → List Bool → Li
 
 /-- Appending a `k.length`-bit block `b` to a valid chain prepends the final compression input
 `merkleDamgardChain h k iv blocks ++ b` to the recorded trace. -/
-theorem snd_chainTrace_concat_of_length {h : List Bool → List Bool → List Bool}
+private theorem snd_chainTrace_concat_of_length {h : List Bool → List Bool → List Bool}
     {k iv : List Bool} {blocks : List (List Bool)} {b : List Bool}
     (hlen : ∀ x, x.length = 2 * k.length → (h k x).length = k.length)
     (hiv : iv.length = k.length)
@@ -293,6 +297,7 @@ private theorem computableTidilyInPolyTime_chainTrace
   lia
 
 /-- Computing `chainTrace` is polynomial-time for any polynomial-time compression function `h`. -/
+@[program_certificate]
 theorem computableInPolyTime_chainTrace
     {h : List Bool → List Bool → List Bool}
     (hh : ComputableInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)
@@ -344,6 +349,7 @@ private theorem computableTidilyInPolyTime_extractChainCollision
 
 /-- Extracting a compression collision from two block chains is computable in plain polynomial
 time. -/
+@[program_certificate]
 theorem computableInPolyTime_extractChainCollision
     {h : List Bool → List Bool → List Bool}
     (hh : ComputableInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)
@@ -360,7 +366,7 @@ theorem computableInPolyTime_extractChainCollision
 /-- Stepping `extractChainCollision` from the right on two non-empty valid chains: if the final
 compression inputs `x₁` and `x₂` differ, return `(x₁, x₂)`; otherwise peel the final blocks and
 continue on the prefixes `bs₁` and `bs₂`. -/
-theorem extractChainCollision_concat_of_length {h : List Bool → List Bool → List Bool}
+private theorem extractChainCollision_concat_of_length {h : List Bool → List Bool → List Bool}
     {k iv : List Bool} {bs₁ bs₂ : List (List Bool)} {b₁ b₂ : List Bool}
     (hlen : ∀ x, x.length = 2 * k.length → (h k x).length = k.length)
     (hiv : iv.length = k.length)
@@ -567,14 +573,14 @@ theorem length_mdDataBlock (n : ℕ) (b : Bool) : (mdDataBlock n b).length = n :
   simp only [mdDataBlock, List.length_take, List.length_cons, List.length_replicate]
   omega
 
-theorem length_of_mem_mdBlocks {n : ℕ} {msg : List Bool} {b : List Bool}
+private theorem length_of_mem_mdBlocks {n : ℕ} {msg : List Bool} {b : List Bool}
     (hb : b ∈ mdBlocks n msg) : b.length = n := by
   simp only [mdBlocks, List.mem_cons, List.mem_map] at hb
   rcases hb with rfl | ⟨bit, _, rfl⟩
   · exact length_mdEndBlock n
   · exact length_mdDataBlock n bit
 
-theorem mdEndBlock_ne_mdDataBlock {n : ℕ} (hn : 1 ≤ n) (b : Bool) :
+private theorem mdEndBlock_ne_mdDataBlock {n : ℕ} (hn : 1 ≤ n) (b : Bool) :
     mdEndBlock n ≠ mdDataBlock n b := by
   cases n with
   | zero => omega
@@ -583,13 +589,13 @@ theorem mdEndBlock_ne_mdDataBlock {n : ℕ} (hn : 1 ≤ n) (b : Bool) :
     have hhead := congrArg List.head? h
     simp [mdEndBlock, mdDataBlock, List.replicate_succ] at hhead
 
-theorem mdEndBlock_not_mem_map_mdDataBlock {n : ℕ} (hn : 1 ≤ n) (msg : List Bool) :
+private theorem mdEndBlock_not_mem_map_mdDataBlock {n : ℕ} (hn : 1 ≤ n) (msg : List Bool) :
     mdEndBlock n ∉ msg.map (mdDataBlock n) := by
   rw [List.mem_map]
   rintro ⟨b, _, hb⟩
   exact mdEndBlock_ne_mdDataBlock hn b hb.symm
 
-theorem mdDataBlock_injective {n : ℕ} (hn : 2 ≤ n) :
+private theorem mdDataBlock_injective {n : ℕ} (hn : 2 ≤ n) :
     Function.Injective (mdDataBlock n) := by
   rcases n with _ | _ | m
   · omega
@@ -616,7 +622,7 @@ theorem mdBlocks_suffix_iff {n : ℕ} (hn : 2 ≤ n) {m₁ m₂ : List Bool} :
   · rintro rfl
     exact List.suffix_refl _
 
-theorem not_suffix_mdBlocks {n : ℕ} (hn : 2 ≤ n) {m₁ m₂ : List Bool} (hne : m₁ ≠ m₂) :
+private theorem not_suffix_mdBlocks {n : ℕ} (hn : 2 ≤ n) {m₁ m₂ : List Bool} (hne : m₁ ≠ m₂) :
     ¬ (mdBlocks n m₁ <:+ mdBlocks n m₂) :=
   mt (mdBlocks_suffix_iff hn).mp hne
 
@@ -656,6 +662,7 @@ private theorem computableTidilyInPolyTime_mdBlocks
 
 /-- Encoding a bit string into `n`-bit Merkle–Damgård blocks is computable in plain polynomial
 time. -/
+@[program_certificate]
 theorem computableInPolyTime_mdBlocks :
     ComputableInPolyTime (fun p : ℕ × List Bool => mdBlocks p.1 p.2)
       (encPair encUnary encBits) (encList encBits) :=
@@ -678,7 +685,7 @@ theorem length_merkleDamgard {h : List Bool → List Bool → List Bool}
 
 /-- On every key `k` and message `msg`, `merkleDamgard h k msg` agrees with the first component of
 `chainTrace`. -/
-theorem merkleDamgard_eq_fst_chainTrace {h : List Bool → List Bool → List Bool}
+private theorem merkleDamgard_eq_fst_chainTrace {h : List Bool → List Bool → List Bool}
     {k msg : List Bool}
     (hlen : ∀ x, x.length = 2 * k.length → (h k x).length = k.length) :
     merkleDamgard h k msg =
@@ -707,6 +714,7 @@ private theorem computableTidilyInPolyTime_merkleDamgard
 
 /-- Evaluating `merkleDamgard h` is computable in plain polynomial time whenever `h` is computable
 in polynomial time and compresses `2n`-bit inputs to `n`-bit digests. -/
+@[program_certificate]
 theorem computableInPolyTime_merkleDamgard
     {h : List Bool → List Bool → List Bool}
     (hh : ComputableInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)
@@ -725,6 +733,7 @@ def extractMerkleDamgardCollision (h : List Bool → List Bool → List Bool)
 
 /-- Extracting a `2n`-bit compression collision from a `merkleDamgard h` collision is computable
 in plain polynomial time. -/
+@[program_certificate]
 theorem computableInPolyTime_extractMerkleDamgardCollision
     {h : List Bool → List Bool → List Bool}
     (hh : ComputableInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)

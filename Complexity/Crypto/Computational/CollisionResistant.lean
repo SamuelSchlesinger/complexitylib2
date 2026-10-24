@@ -51,7 +51,11 @@ families (`valid := fun _ _ => true`).
 
 * `Cslib.Crypto.isPPTOn_collisionGame`, `Cslib.Crypto.isPPT_collisionGame`: strict PPT certificates
   for the collision experiment.
-* `Cslib.Crypto.CollisionResistantOn.of_extract`: deterministic polynomial-time collision
+* `Cslib.Crypto.CollisionResistantOn.negligible`,
+  `Cslib.Crypto.CollisionResistantOn.of_negligible`: equivalence with negligible collision-finding
+  probability.
+* `Cslib.Crypto.succProbability_collisionGame_le_of_extract`,
+  `Cslib.Crypto.CollisionResistantOn.of_extract`: deterministic polynomial-time collision
   extraction transfers collision resistance between hash families.
 * `Cslib.Crypto.CollisionResistantOn.mono`: restricting the valid input domain preserves collision
   resistance.
@@ -61,7 +65,7 @@ families (`valid := fun _ _ => true`).
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023],
-  Sections 8.1–8.2.
+  Section 8.1.
 * [J. Katz, Y. Lindell, *Introduction to Modern Cryptography*][KatzLindell2020], Section 5.1.
 -/
 
@@ -89,6 +93,7 @@ theorem isCollision_eq_true_iff {H : List Bool → List Bool → List Bool}
       valid n m₁ = true ∧ valid n m₂ = true ∧ m₁ ≠ m₂ ∧ H k m₁ = H k m₂ := by
   simp only [isCollision, Bool.and_eq_true, bne_iff_ne, beq_iff_eq, and_assoc]
 
+/-- Collision testing is symmetric in the two candidate messages. -/
 theorem isCollision_comm (H : List Bool → List Bool → List Bool)
     (valid : ℕ → List Bool → Bool) (n : ℕ) (k m₁ m₂ : List Bool) :
     isCollision H valid n k m₁ m₂ = isCollision H valid n k m₂ m₁ := by
@@ -128,6 +133,7 @@ private theorem computableTidilyInPolyTime_isCollision
 
 /-- Testing whether `(m₁, m₂)` is a valid collision is polynomial-time when `H` and `valid` are
 polynomial-time. -/
+@[program_certificate]
 theorem computableInPolyTime_isCollision
     {H : List Bool → List Bool → List Bool} {valid : ℕ → List Bool → Bool}
     (hH : ComputableInPolyTime (fun p : List Bool × List Bool => H p.1 p.2)
