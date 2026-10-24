@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.GenericRAM.SparseMemory.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Native Turing-machine certificates for sparse memory
@@ -45,7 +46,7 @@ calculus (`ComputableTidilyInO.eq`, `findWith`, and `filterWith`).
 namespace Cslib.GenericRAM.SparseMemory
 
 open Turing.MultiTapeTM
-open ComputableTidilyInO
+open ComputableInO
 
 variable {Address Value : Type}
 variable (encA : Address ↪ List Bool) (encV : Value ↪ List Bool)
@@ -207,10 +208,10 @@ theorem scanSpace_le_linear (q : Address × SparseMemory Address Value) :
 variable [DecidableEq Address]
 
 private theorem compare_inO :
-    ComputableTidilyInO (fun q : Address × (Address × Value) => decide (q.1 = q.2.1))
+    ComputableInO (fun q : Address × (Address × Value) => decide (q.1 = q.2.1))
       (encPair encA (encPair encA encV)) encBool (compareTime encA encV)
       (compareSpace encA encV) := by
-  have h := (ComputableTidilyInO.eq encA).comp
+  have h := (ComputableInO.eq encA).comp
     ((fst encA (encPair encA encV)).prod (snd encA (encPair encA encV)).fst')
   convert h using 1 <;> funext q <;> simp [compareTime, compareSpace, two_mul]
 
@@ -221,8 +222,9 @@ theorem find_inO :
         (entries q.2).find? (fun e => decide (q.1 = e.1)))
       (queryEncoding encA encV) (encOption (encPair encA encV))
       (scanTime encA encV) (scanSpace encA encV) := by
+  apply Internal.normalizeO
   have hpar := fst encA (encoding encA encV)
-  have hlist : ComputableTidilyInO (fun q : Address × SparseMemory Address Value => entries q.2)
+  have hlist : ComputableInO (fun q : Address × SparseMemory Address Value => entries q.2)
       (queryEncoding encA encV) (encList (encPair encA encV))
       (fun q => (queryEncoding encA encV q).length)
       (fun q => (queryEncoding encA encV q).length) :=
@@ -238,10 +240,11 @@ theorem erase_entries_inO :
         (entries q.2).filter (fun e => decide (q.1 ≠ e.1)))
       (queryEncoding encA encV) (encList (encPair encA encV))
       (scanTime encA encV) (scanSpace encA encV) := by
-  have hnot := (ComputableTidilyInDegree.of_finite (encIn := encBool)
+  apply Internal.normalizeO
+  have hnot := (ComputableInDegree.of_finite (encIn := encBool)
     (encMid := encBool) Bool.not).inO_one
   have hcmp := hnot.comp_linear (compare_inO encA encV)
-  have hlist : ComputableTidilyInO (fun q : Address × SparseMemory Address Value => entries q.2)
+  have hlist : ComputableInO (fun q : Address × SparseMemory Address Value => entries q.2)
       (queryEncoding encA encV) (encList (encPair encA encV))
       (fun q => (queryEncoding encA encV q).length)
       (fun q => (queryEncoding encA encV q).length) :=
@@ -268,10 +271,11 @@ theorem insert_inO :
       (fun q : (Address × Value) × SparseMemory Address Value => q.2.insert q.1.1 q.1.2)
       (writeEncoding encA encV) (encoding encA encV)
       (writeTime encA encV) (writeSpace encA encV) := by
+  apply Internal.normalizeO
   have hb := fst (encPair encA encV) (encoding encA encV)
   have hs := snd (encPair encA encV) (encoding encA encV)
-  have hf := (erase_entries_inO encA encV).comp (hb.fst'.prod hs)
-  have hc := (ComputableTidilyInDegree.cons (encPair encA encV)).inO_one.comp_linear
+  have hf := (Internal.forgetO (erase_entries_inO encA encV)).comp (hb.fst'.prod hs)
+  have hc := (ComputableInDegree.cons (encPair encA encV)).inO_one.comp_linear
     (hb.prod hf)
   have hout := hc.of_enc_eq (g := fun q => q.2.insert q.1.1 q.1.2)
     (encOut := encoding encA encV) (fun q => by
@@ -281,7 +285,7 @@ theorem insert_inO :
 
 omit [DecidableEq Address] in
 private theorem readResult_inO :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : Option (Address × Value) × Value => (q.1.map Prod.snd).getD q.2)
       (encPair (encOption (encPair encA encV)) encV) encV
       (fun q => (encPair (encOption (encPair encA encV)) encV q).length)
@@ -295,8 +299,8 @@ private theorem readResult_inO :
     | some e => exact isEmptyElim e
   · obtain ⟨e⟩ := h
     have ho := fst (encOption (encPair encA encV)) encV
-    have ht := (ComputableTidilyInDegree.isSome (encPair encA encV)).inO_one.comp_linear ho
-    have hv := ((ComputableTidilyInDegree.getD (enc₁ := encPair encA encV) e).inO_one
+    have ht := (ComputableInDegree.isSome (encPair encA encV)).inO_one.comp_linear ho
+    have hv := ((ComputableInDegree.getD (enc₁ := encPair encA encV) e).inO_one
       |>.comp_linear ho).snd'
     have hr := (ht.ite hv hd).mono
       (T' := fun q => (encPair (encOption (encPair encA encV)) encV q).length)
@@ -324,7 +328,8 @@ theorem read_inO :
     ComputableTidilyInO
       (fun q : (Address × SparseMemory Address Value) × Value => read q.2 q.1.1 q.1.2)
       (readEncoding encA encV) encV (readTime encA encV) (readSpace encA encV) := by
-  have hf := (find_inO encA encV).comp (fst (queryEncoding encA encV) encV)
+  apply Internal.normalizeO
+  have hf := (Internal.forgetO (find_inO encA encV)).comp (fst (queryEncoding encA encV) encV)
   have hd := snd (queryEncoding encA encV) encV
   have h := (readResult_inO encA encV).comp_linear (hf.prod hd)
   convert h using 1 <;> first | rfl |
@@ -338,7 +343,8 @@ theorem insert_inO_cube :
       (writeEncoding encA encV) (encoding encA encV)
       (fun q => ((writeEncoding encA encV q).length + 1) ^ 3)
       (fun q => (writeEncoding encA encV q).length) := by
-  apply (insert_inO encA encV).mono 40
+  apply Internal.normalizeO
+  apply (Internal.forgetO (insert_inO encA encV)).mono 40
   · intro q
     have hq : (queryEncoding encA encV (q.1.1, q.2)).length ≤
         (writeEncoding encA encV q).length := by
@@ -362,7 +368,8 @@ theorem read_inO_cube :
       (readEncoding encA encV) encV
       (fun q => ((readEncoding encA encV q).length + 1) ^ 3)
       (fun q => (readEncoding encA encV q).length) := by
-  apply (read_inO encA encV).mono 40
+  apply Internal.normalizeO
+  apply (Internal.forgetO (read_inO encA encV)).mono 40
   · intro q
     have hq : (queryEncoding encA encV q.1).length ≤ (readEncoding encA encV q).length := by
       simp only [readEncoding, length_encPair]
@@ -384,8 +391,8 @@ theorem insert_polytime :
     ComputableTidilyInPolyTime
       (fun q : (Address × Value) × SparseMemory Address Value => q.2.insert q.1.1 q.1.2)
       (writeEncoding encA encV) (encoding encA encV) :=
-  (insert_inO_cube encA encV).computableTidilyInPolyTime
-    (.of_forall_le 1 3 (by simp)) .self
+  ((Internal.forgetO (insert_inO_cube encA encV)).computableInPolyTime
+    (.of_forall_le 1 3 (by simp)) .self).tidy
 
 /-- Polynomial-time reads are uniform in the queried address, store, and default value. -/
 @[fun_prop]
@@ -393,8 +400,8 @@ theorem read_polytime :
     ComputableTidilyInPolyTime
       (fun q : (Address × SparseMemory Address Value) × Value => read q.2 q.1.1 q.1.2)
       (readEncoding encA encV) encV :=
-  (read_inO_cube encA encV).computableTidilyInPolyTime
-    (.of_forall_le 1 3 (by simp)) .self
+  ((Internal.forgetO (read_inO_cube encA encV)).computableInPolyTime
+    (.of_forall_le 1 3 (by simp)) .self).tidy
 
 /-- Writing preserves maximum key length up to the newly supplied address. -/
 theorem maxKeyLength_insert_le (a : Address) (v : Value) (s : SparseMemory Address Value) :
