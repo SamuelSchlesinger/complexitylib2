@@ -136,7 +136,7 @@ example : ∃ x : Fin 2 → Bool,
     (by simp only [one_div, tensorTestAcceptance_hadamardCode]; norm_num)
     (by rw [equationTestAcceptance_hadamardCode (by simp)]; norm_num)
   refine ⟨x, by simpa using hx, ?_⟩
-  simpa [hadamardCode_tensor_single] using he ()
+  simpa using he ()
 
 /-! ### Random masks -/
 

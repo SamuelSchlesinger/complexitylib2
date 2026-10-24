@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.DecisionTree.Separable
-public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.Data.Code.Hadamard
 public import Complexity.Foundations.Data.Nat.Choose.Real
 import Complexity.Foundations.BooleanAnalysis.HadamardRectangles
 import Mathlib.Tactic.Positivity

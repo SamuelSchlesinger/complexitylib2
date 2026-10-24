@@ -196,7 +196,8 @@ noncomputable def tensorTestAcceptance (f : (ι → Bool) → Bool) (g : (ι × 
 probability one. -/
 @[simp] theorem tensorTestAcceptance_hadamardCode (x : ι → Bool) :
     tensorTestAcceptance (hadamardCode x) (hadamardCode (tensor x x)) = 1 := by
-  simp [tensorTestAcceptance, hadamardCode_tensor_tensor]
+  simp only [tensorTestAcceptance, selfCorrect_hadamardCode, hadamardCode_tensor_tensor]
+  simp
 
 /-- **Soundness of the tensor test**: if `f` and `g` are within relative distances `ε` and `ε'`
 of the encodings of `x` and of `w`, and the test accepts with probability more than
@@ -259,7 +260,8 @@ with probability one. -/
 theorem equationTestAcceptance_hadamardCode {A : κ → ι → Bool} {b : κ → Bool} {w : ι → Bool}
     (h : ∀ e, hadamardCode w (A e) = b e) :
     equationTestAcceptance (hadamardCode w) A b = 1 := by
-  simp [equationTestAcceptance, hadamardCode_transpose, h]
+  simp only [equationTestAcceptance, selfCorrect_hadamardCode, hadamardCode_transpose, h]
+  simp
 
 /-- **Soundness of the equation test**: if `g` is within relative distance `ε` of the encoding of
 `w`, and the test accepts with probability more than `1/2 + 2ε`, then `w` solves the

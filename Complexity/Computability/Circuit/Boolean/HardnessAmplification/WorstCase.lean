@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.HardnessAmplification.Stages
-public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.Data.Code.Hadamard
 public import Complexity.Foundations.Data.Code.Concatenation
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
 import Complexity.Foundations.Data.BitString.Basic

@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Activity
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
-public import Complexity.Foundations.BooleanAnalysis.Hadamard
+public import Complexity.Foundations.Data.Code.Hadamard
 import Complexity.Computability.DecisionTree.InnerProduct
 
 /-!
