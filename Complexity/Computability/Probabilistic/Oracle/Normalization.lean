@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Clean realizations of arbitrary oracle PPT certificates
@@ -91,7 +92,7 @@ theorem IsTidyOraclePPTOn.finiteStep [Fintype Operation] [Finite Control]
     (branch := branch) (by fun_prop) fun control => ?_).congr
       fun pair State oracle s => by rw [hprogram]
   cases control with
-  | none => exact IsTidyOraclePPTOn.of_computableTidilyInPolyTime (by fun_prop)
+  | none => exact IsTidyOraclePPTOn.of_computableInPolyTime (by fun_prop)
   | some control =>
     apply (IsTidyOraclePPTOn.uniform_bool (encPair encUnary encFiniteConfig)).bind_with
     apply IsTidyOraclePPTOn.finite_cases
@@ -113,7 +114,7 @@ theorem IsTidyOraclePPTOn.finiteStep [Fintype Operation] [Finite Control]
     · rintro ⟨inputSymbol, workSymbols, answerSymbols, bit⟩
       cases machine.tr control inputSymbol workSymbols answerSymbols bit with
       | step action symbol move =>
-        exact IsTidyOraclePPTOn.of_computableTidilyInPolyTime (by fun_prop)
+        exact IsTidyOraclePPTOn.of_computableInPolyTime (by fun_prop)
       | query channel next =>
         have hreply := ((IsTidyOraclePPTOn.query_take channel).preprocess
           (input := encPair (encPair encUnary encFiniteConfig) encBool)
@@ -133,10 +134,12 @@ theorem IsTidyOraclePPTOn.runOracle [Finite Operation] [Finite Control]
   obtain ⟨cf, hconfigurationSize⟩ :=
     length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Operation)
   let clock (word : List Bool) : ℕ := c * (word.length + 1) ^ d
-  have hclock : ComputableTidilyInPolyTime clock encBits encUnary := by
+  have hclock : ComputableInPolyTime clock encBits encUnary := by
     dsimp only [clock]
     fun_prop
-  have hstart : ComputableTidilyInPolyTime
+  have hclockPoly : PolyBounded (fun word => (encBits word).length) clock := by
+    simpa only [encUnary_apply, List.length_replicate] using hclock.polyBounded_length
+  have hstart : ComputableInPolyTime
       (fun word => FiniteConfig.init (k := k) (Oracle := Operation) machine.initial word)
       encBits encFiniteConfig := by fun_prop
   let step (word : List Bool) (cfg : FiniteConfig k Bool Control Operation) :
@@ -171,10 +174,10 @@ theorem IsTidyOraclePPTOn.runOracle [Finite Operation] [Finite Control]
             hcfg.receive channel control _ (List.length_take_le _ _))
     (size := fun word => cf * (word.length + clock word + clock word + 1))
     ((PolyBounded.const cf).mul
-      (((PolyBounded.self.add hclock.polyBounded).add hclock.polyBounded).add (.const 1)))
+      (((PolyBounded.self.add hclockPoly).add hclockPoly).add (.const 1)))
     (fun word i cfg hi hcfg => (hconfigurationSize _ _ _ cfg hcfg).trans
       (Nat.mul_le_mul_left cf (by lia)))).1
-  refine (hloop.map (by fun_prop : ComputableTidilyInPolyTime
+  refine (hloop.map (by fun_prop : ComputableInPolyTime
     (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output)
     encFiniteConfig encBits)).congr fun word State oracle s => ?_
   rw [← finiteRunFrom_take_runOracle]
@@ -189,7 +192,8 @@ theorem IsOraclePPTOn.isTidyOraclePPTOn {α β : Type} {input : α ↪ List Bool
   obtain ⟨_, k, Control, _, machine, c, d, h⟩ := h
   exact IsTidyOraclePPTOn.iff_encoded.mpr
     (((IsTidyOraclePPTOn.runOracle machine c d).preprocess
-      (ComputableTidilyInPolyTime.encode input)).congr fun a State oracle s =>
+      (ComputableInPolyTime.of_eq (encOut := encBits) (f := input) fun _ => rfl)).congr
+        fun a State oracle s =>
         (h a State oracle s).symm)
 
 /-- Strict oracle PPT certificates are exactly the clean polynomial-time realizations. -/
