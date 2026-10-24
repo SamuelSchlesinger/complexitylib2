@@ -14,6 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Native parsimonious guess-and-verify machines
 
@@ -56,8 +58,8 @@ theorem exists_guess_machine (enc : α ↪ List Bool) (p : Polynomial ℕ) :
           (BitString.enumList (p.eval (enc a).length)) := by
   have hprepare : ComputableTidilyInPolyTime
       (fun a => p.eval (enc a).length) enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval p).comp
-      (ComputableTidilyInPolyTime.encoding_length enc)
+    ((ComputableInPolyTime.unary_eval p).comp
+      (ComputableInPolyTime.encoding_length enc)).tidy
   obtain ⟨t, s, ht, _, k, State, hfinite, initializer, hi⟩ := hprepare
   obtain ⟨c, d, ht⟩ := ht.exists_le
   let prepareClock : Polynomial ℕ := C c * (X + 1) ^ d
@@ -119,7 +121,7 @@ theorem exists_framedGuess_machine (enc : α ↪ List Bool) (p : Polynomial ℕ)
             (fun word => encPair enc encBits (a, word))) := by
   obtain ⟨ks, State, hfinite, source, sourceClock, hnon, hs⟩ := exists_guess_machine enc p
   have hframe : ComputableTidilyInPolyTime (fun a => frame (enc a)) enc encBits :=
-    .of_linear (.of_frame fun _ => rfl)
+    (ComputableInPolyTime.of_linear (.of_frame fun _ => rfl)).tidy
   obtain ⟨t, s, ht, _, ki, InitState, hfinite', initializer, hi⟩ := hframe
   obtain ⟨c, d, ht⟩ := ht.exists_le
   let prepare := initializer.extendTapes (Fin.castAddEmb ks)

@@ -195,10 +195,10 @@ theorem rotationMap_killedPowRotWithInput (T q : ℕ) [NeZero q] (signal : Fin q
       (encPair input (encPair vertex (encPair (encPi label) (encPi signal))))
       (encPair vertex (encPair (encPi label) (encPi signal))) := by
     have hprefix : ComputableInPolyTime
-        (fun k : Fin T → D => Fin.take _ (RotationMap.killTime_le c) k)
+        (fun k : Fin T → D => Fin.take _ (killTime_le c) k)
         (encPi label) (encPi label) :=
-      pi fun i : Fin (RotationMap.killTime c) =>
-        pi_apply label (⟨i.val, i.isLt.trans_le (RotationMap.killTime_le c)⟩ : Fin T)
+      pi fun i : Fin (killTime c) =>
+        pi_apply label (⟨i.val, i.isLt.trans_le (killTime_le c)⟩ : Fin T)
     have hwalk : ComputableInPolyTime
         (fun p : P × (V × ((Fin T → D) × (Fin T → Fin q))) =>
           RotationMap.powRotWithInput rotate (killTime c)

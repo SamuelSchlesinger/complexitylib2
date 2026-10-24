@@ -15,7 +15,7 @@ public import Complexity.Tactic.PolyTime.Init
 /-!
 # Binary list length in polynomial time
 
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.length_list` computes the length of a framed list in
+`Turing.MultiTapeTM.ComputableInPolyTime.length_list` computes the length of a framed list in
 unary (`encUnary`), the representation required by bounded loops and `List.range`. Verifiers and
 reductions that compare a list length against a binary parameter or add it to binary wire and
 vertex indices instead need the length in the binary natural encoding `encNat`. Composing
@@ -38,7 +38,7 @@ encoding. -/
 @[fun_prop, aesop safe -30 apply (rule_sets := [PolyTime])]
 theorem length_list_binary {α : Type} (enc : α ↪ List Bool) :
     ComputableInPolyTime (fun l : List α => l.length) (encList enc) encNat :=
-  .of_tidy (ComputableTidilyInPolyTime.unary_to_binary.comp (.length_list enc))
+  unary_to_binary.comp (.length_list enc)
 
 /-- Length of a computed framed list in binary (`encNat`), fixing the intermediate list encoding for
 proof search. -/

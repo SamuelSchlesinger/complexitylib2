@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PreparePair
@@ -250,11 +251,12 @@ theorem computableInLinearTimeAndSpace_runClosedCoins [Finite State]
   exact ⟨b, hraw⟩
 
 /-- The ordinary functional polynomial-time API can invoke saved-coin replay directly. -/
-@[fun_prop] theorem computableTidilyInPolyTime_runClosedCoins [Finite State]
+@[fun_prop] theorem computableInPolyTime_runClosedCoins [Finite State]
     (machine : MultiTapePTM k Bool State) :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : List Bool × List Bool => machine.runClosedCoins p.1 p.2)
       (encPair encBits encBits) encBits :=
-  .of_linear (computableInLinearTimeAndSpace_runClosedCoins machine)
+  ComputableInPolyTime.of_linear
+    (computableInLinearTimeAndSpace_runClosedCoins machine)
 
 end Turing.MultiTapePTM
