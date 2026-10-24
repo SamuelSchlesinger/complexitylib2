@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Oracle.Interaction
+public import Complexity.Languages.Probabilistic.Sum
 
 /-!
 # Public-coin interactive oracle reductions
@@ -39,7 +40,6 @@ by structural recursion on its list of rounds, so concatenated protocols compute
 
 ## Main definitions
 
-* `Cslib.OracleSpec.sum` (notation `⊕ₒ`, scoped in `Interactive`), `Interactive.emptySpec`.
 * `Interactive.OracleInterface`, `Interactive.Round`, `Interactive.Spec`.
 * `Interactive.Spec.Transcript`, `Interactive.Spec.PerChallenge`, `Interactive.Spec.MsgQuery`.
 * `Interactive.ProverStrategy`, `Interactive.Prover`, `Interactive.Verifier`,
@@ -57,18 +57,6 @@ by structural recursion on its list of rounds, so concatenated protocols compute
 namespace Cslib.Interactive
 
 open scoped ENNReal
-
-/-! ### Oracle specifications -/
-
-/-- The disjoint union of two oracle interfaces. -/
-abbrev _root_.Cslib.OracleSpec.sum {ι₁ ι₂ : Type} (spec₁ : OracleSpec ι₁)
-    (spec₂ : OracleSpec ι₂) : OracleSpec (ι₁ ⊕ ι₂) :=
-  Sum.elim spec₁ spec₂
-
-@[inherit_doc] scoped infixr:65 " ⊕ₒ " => Cslib.OracleSpec.sum
-
-/-- The interface without queries, for parties that use no oracle. -/
-abbrev emptySpec : OracleSpec Empty := fun q => q.elim
 
 /-! ### Messages and rounds -/
 
@@ -224,9 +212,8 @@ from the transcript. -/
 def Verifier.output {s : Spec} {StmtIn StmtOut : Type} (V : Verifier oV s StmtIn StmtOut)
     (x : StmtIn) (τ : Transcript s) : ProbOracleComp (oP ⊕ₒ oV) (Option StmtOut) :=
   OracleComp.interpret
-    (fun q => match q with
-      | .inl q => ProbOracleComp.query (spec := oP ⊕ₒ oV) (.inr q)
-      | .inr q => pure (Transcript.answer s τ q))
+    (OracleComp.sumHandler (fun q => ProbOracleComp.query (spec := oP ⊕ₒ oV) (.inr q))
+      fun q => pure (Transcript.answer s τ q))
     (V.decide x (Transcript.challenges s τ))
 
 /-- Run the verifier against any (possibly malicious) prover strategy with result type `α`: the
@@ -261,12 +248,10 @@ noncomputable def World.eval (W : World oP oV) {α : Type} (program : ProbOracle
   (ProbOracleComp.runWith W.impl program W.init).map Prod.fst
 
 /-- The plain model: no oracles. -/
-def World.plain : World emptySpec emptySpec where
+def World.plain : World OracleSpec.empty OracleSpec.empty where
   State := Unit
   init := ()
-  impl
-    | .inl e => e.elim
-    | .inr e => e.elim
+  impl := OracleComp.sumHandler (fun e => e.elim) fun e => e.elim
 
 end Execution
 

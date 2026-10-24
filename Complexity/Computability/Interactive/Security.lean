@@ -108,11 +108,12 @@ def Verifier.Sound (W : World oP oV) (V : Verifier oV s StmtIn StmtOut)
 strategy, ending with an output witness, makes the verifier output a statement for which that
 witness is valid, the extractor `E` recovers a valid input witness from the statement, the
 transcript and the output witness, except with probability `ε`. -/
-def Verifier.KnowledgeSound (V : Verifier emptySpec s StmtIn StmtOut)
+def Verifier.KnowledgeSound (V : Verifier OracleSpec.empty s StmtIn StmtOut)
     (relIn : StmtIn → WitIn → Prop) (relOut : StmtOut → WitOut → Prop)
     (E : StmtIn → Transcript s → WitOut → WitIn) (ε : ℝ≥0∞) : Prop :=
-  ∀ x (P : ProbOracleComp emptySpec (ProverStrategy (ProbOracleComp emptySpec) s WitOut)),
-    (World.plain.eval (V.execute (oP := emptySpec) x P)).toOuterMeasure
+  ∀ x (P : ProbOracleComp OracleSpec.empty
+      (ProverStrategy (ProbOracleComp OracleSpec.empty) s WitOut)),
+    (World.plain.eval (V.execute (oP := OracleSpec.empty) x P)).toOuterMeasure
       {r | (∃ x', r.2.1 = some x' ∧ relOut x' r.2.2) ∧ ¬ relIn x (E x r.1 r.2.2)} ≤ ε
 
 /-! ### Round-by-round soundness -/
@@ -150,17 +151,15 @@ def RbrFrom : (s : Spec) → PerChallenge ProbComp s → PerChallenge (fun _ => 
       ∀ c : C, RbrFrom s smp.2 ε.2 (fun p => S (some (c, p))) (fun τ => wins (c, τ))
 
 /-- The output of a verifier without oracles on a complete transcript. -/
-noncomputable def Verifier.outputOn (V : Verifier emptySpec s StmtIn StmtOut) (x : StmtIn)
+noncomputable def Verifier.outputOn (V : Verifier OracleSpec.empty s StmtIn StmtOut) (x : StmtIn)
     (τ : Transcript s) : Option StmtOut :=
   OracleComp.interpret (m := Id)
-    (fun q => match q with
-      | .inl e => e.elim
-      | .inr q => Transcript.answer s τ q)
+    (OracleComp.sumHandler (fun e => e.elim) (Transcript.answer s τ))
     (V.decide x (Transcript.challenges s τ))
 
 /-- Round-by-round soundness in the plain model with per-round errors `ε`: some state function is
 false on the empty prefix of every `x ∉ langIn` and satisfies the round-by-round condition. -/
-def Verifier.RbrSound (V : Verifier emptySpec s StmtIn StmtOut) (langIn : Set StmtIn)
+def Verifier.RbrSound (V : Verifier OracleSpec.empty s StmtIn StmtOut) (langIn : Set StmtIn)
     (langOut : Set StmtOut) (ε : PerChallenge (fun _ => ℝ≥0∞) s) : Prop :=
   ∃ S : StmtIn → Prefix s → Prop, (∀ x ∉ langIn, ¬ S x (Prefix.empty s)) ∧
     ∀ x, RbrFrom s V.samplers ε (S x) fun τ => ∃ x' ∈ langOut, V.outputOn x τ = some x'
@@ -170,7 +169,7 @@ def Verifier.RbrSound (V : Verifier emptySpec s StmtIn StmtOut) (langIn : Set St
 /-- Honest-verifier zero knowledge with statistical error `ε` (perfect for `ε = 0`), in the plain
 model: on every `(x, w)` in `relIn`, the simulator's transcript law is `ε`-close to the honest
 one. -/
-def Reduction.HVZK (R : Reduction emptySpec emptySpec s StmtIn WitIn StmtOut WitOut)
+def Reduction.HVZK (R : Reduction OracleSpec.empty OracleSpec.empty s StmtIn WitIn StmtOut WitOut)
     (relIn : StmtIn → WitIn → Prop) (Sim : StmtIn → ProbComp (Transcript s)) (ε : ℝ≥0∞) :
     Prop :=
   ∀ x w, relIn x w →

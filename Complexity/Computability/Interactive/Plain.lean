@@ -42,28 +42,25 @@ open scoped ENNReal
 open Spec
 
 /-- The law of a program without external oracles: its private coins are fair. -/
-noncomputable def plainLaw {α : Type} (p : ProbOracleComp emptySpec α) : PMF α :=
+noncomputable def plainLaw {α : Type} (p : ProbOracleComp OracleSpec.empty α) : PMF α :=
   OracleComp.interpret (ProbOracleComp.handler ProbComp.unifOracle fun e => e.elim) p
 
 /-- The law of a joint program in the plain model. -/
-private noncomputable def runLaw {α : Type} (p : ProbOracleComp (emptySpec ⊕ₒ emptySpec) α) :
-    PMF α :=
-  OracleComp.interpret (ProbOracleComp.handler ProbComp.unifOracle fun q => match q with
-    | .inl e => e.elim
-    | .inr e => e.elim) p
+private noncomputable def runLaw {α : Type}
+    (p : ProbOracleComp (OracleSpec.empty ⊕ₒ OracleSpec.empty) α) : PMF α :=
+  OracleComp.interpret (ProbOracleComp.handler ProbComp.unifOracle
+    (OracleComp.sumHandler (fun e => e.elim) fun e => e.elim)) p
 
-private theorem plain_eval {α : Type} (p : ProbOracleComp (emptySpec ⊕ₒ emptySpec) α) :
+private theorem plain_eval {α : Type}
+    (p : ProbOracleComp (OracleSpec.empty ⊕ₒ OracleSpec.empty) α) :
     World.plain.eval p = runLaw p := by
   have h := OracleComp.run_interpret_stateless (m := PMF) (State := Unit)
-    (ProbOracleComp.handler ProbComp.unifOracle fun q => match q with
-      | .inl e => e.elim
-      | .inr e => e.elim) p ()
+    (ProbOracleComp.handler ProbComp.unifOracle
+      (OracleComp.sumHandler (fun e => e.elim) fun e => e.elim)) p ()
   have hh : (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
       World.plain.impl) =
       fun q s => (fun a => (a, s)) <$> ProbOracleComp.handler ProbComp.unifOracle
-        (fun q => match q with
-          | .inl e => e.elim
-          | .inr e => e.elim) q := by
+        (OracleComp.sumHandler (fun e => e.elim) fun e => e.elim) q := by
     funext q s
     rcases q with n | e | e
     · rfl
@@ -73,8 +70,8 @@ private theorem plain_eval {α : Type} (p : ProbOracleComp (emptySpec ⊕ₒ emp
   erw [hh, h]
   exact (PMF.map_comp _ _ _).trans (PMF.map_id _)
 
-private theorem runLaw_liftProver {α : Type} (p : ProbOracleComp emptySpec α) :
-    runLaw (liftProver (oV := emptySpec) p) = plainLaw p := by
+private theorem runLaw_liftProver {α : Type} (p : ProbOracleComp OracleSpec.empty α) :
+    runLaw (liftProver (oV := OracleSpec.empty) p) = plainLaw p := by
   rw [runLaw, liftProver, OracleComp.interpret_interpret, plainLaw]
   congr 1
   funext q
@@ -85,34 +82,36 @@ private theorem runLaw_liftProver {α : Type} (p : ProbOracleComp emptySpec α) 
 
 /-- A returned value has a point law. -/
 @[simp] theorem plainLaw_pure {α : Type} (a : α) :
-    plainLaw (pure a : ProbOracleComp emptySpec α) = PMF.pure a := rfl
+    plainLaw (pure a : ProbOracleComp OracleSpec.empty α) = PMF.pure a := rfl
 
 /-- Sequencing is `PMF.bind`. -/
-@[simp] theorem plainLaw_bind {α β : Type} (p : ProbOracleComp emptySpec α)
-    (f : α → ProbOracleComp emptySpec β) :
+@[simp] theorem plainLaw_bind {α β : Type} (p : ProbOracleComp OracleSpec.empty α)
+    (f : α → ProbOracleComp OracleSpec.empty β) :
     plainLaw (p >>= f) = (plainLaw p).bind fun a => plainLaw (f a) :=
   OracleComp.interpret_bind _ _ _
 
 /-- Postprocessing is `PMF.map`. -/
-@[simp] theorem plainLaw_map {α β : Type} (f : α → β) (p : ProbOracleComp emptySpec α) :
+@[simp] theorem plainLaw_map {α β : Type} (f : α → β) (p : ProbOracleComp OracleSpec.empty α) :
     plainLaw (f <$> p) = (plainLaw p).map f :=
   OracleComp.interpret_map _ _ _
 
 /-- Embedded sampling has the law of the sampled program. -/
 @[simp] theorem plainLaw_sample {α : Type} (p : ProbComp α) :
-    plainLaw (ProbOracleComp.sample (spec := emptySpec) p) = ProbComp.eval p :=
+    plainLaw (ProbOracleComp.sample (spec := OracleSpec.empty) p) = ProbComp.eval p :=
   ProbOracleComp.interpret_sample _ _ _
 
 private theorem runLaw_pure {α : Type} (a : α) :
-    runLaw (pure a : ProbOracleComp (emptySpec ⊕ₒ emptySpec) α) = PMF.pure a := rfl
+    runLaw (pure a : ProbOracleComp (OracleSpec.empty ⊕ₒ OracleSpec.empty) α) = PMF.pure a := rfl
 
-private theorem runLaw_bind {α β : Type} (p : ProbOracleComp (emptySpec ⊕ₒ emptySpec) α)
-    (f : α → ProbOracleComp (emptySpec ⊕ₒ emptySpec) β) :
+private theorem runLaw_bind {α β : Type}
+    (p : ProbOracleComp (OracleSpec.empty ⊕ₒ OracleSpec.empty) α)
+    (f : α → ProbOracleComp (OracleSpec.empty ⊕ₒ OracleSpec.empty) β) :
     runLaw (p >>= f) = (runLaw p).bind fun a => runLaw (f a) :=
   OracleComp.interpret_bind _ _ _
 
 private theorem runLaw_map {α β : Type} (f : α → β)
-    (p : ProbOracleComp (emptySpec ⊕ₒ emptySpec) α) : runLaw (f <$> p) = (runLaw p).map f :=
+    (p : ProbOracleComp (OracleSpec.empty ⊕ₒ OracleSpec.empty) α) :
+    runLaw (f <$> p) = (runLaw p).map f :=
   OracleComp.interpret_map _ _ _
 
 /-- A program whose queries are answered deterministically has a point law. -/
@@ -130,9 +129,9 @@ private theorem interpret_pure_handler {ι : Type} {spec : OracleSpec ι} {α : 
     exact ih (f q)
 
 private theorem runLaw_output {s : Spec} {StmtIn StmtOut : Type}
-    (V : Verifier emptySpec s StmtIn StmtOut)
+    (V : Verifier OracleSpec.empty s StmtIn StmtOut)
     (x : StmtIn) (τ : Transcript s) :
-    runLaw (V.output (oP := emptySpec) x τ) = PMF.pure (V.outputOn x τ) := by
+    runLaw (V.output (oP := OracleSpec.empty) x τ) = PMF.pure (V.outputOn x τ) := by
   rw [runLaw, Verifier.output, OracleComp.interpret_interpret, Verifier.outputOn]
   rw [← interpret_pure_handler]
   congr 1
@@ -154,9 +153,9 @@ private theorem toOuterMeasure_bind_pure {α β : Type} (p : PMF α) (g : α →
 /-- **The law of an execution in the plain model**: run the prover's strategy against the
 challenge samplers, then apply the verifier's decision to the transcript. -/
 theorem World.plain_eval_execute {s : Spec} {StmtIn StmtOut α : Type}
-    (V : Verifier emptySpec s StmtIn StmtOut) (x : StmtIn)
-    (P : ProbOracleComp emptySpec (ProverStrategy (ProbOracleComp emptySpec) s α)) :
-    World.plain.eval (V.execute (oP := emptySpec) x P) =
+    (V : Verifier OracleSpec.empty s StmtIn StmtOut) (x : StmtIn)
+    (P : ProbOracleComp OracleSpec.empty (ProverStrategy (ProbOracleComp OracleSpec.empty) s α)) :
+    World.plain.eval (V.execute (oP := OracleSpec.empty) x P) =
       (plainLaw (P >>= runStrategy s V.samplers)).map fun r => (r.1, V.outputOn x r.1, r.2) := by
   rw [plain_eval]
   simp only [Verifier.execute, runLaw_bind, runLaw_liftProver, runLaw_output, runLaw_pure,
@@ -167,7 +166,7 @@ theorem World.plain_eval_execute {s : Spec} {StmtIn StmtOut α : Type}
 private theorem rbrFrom_le : ∀ (s : Spec) (smp : PerChallenge ProbComp s)
     (ε : PerChallenge (fun _ => ℝ≥0∞) s) (S : Prefix s → Prop) (wins : Transcript s → Prop),
     RbrFrom s smp ε S wins → ¬ S (Prefix.empty s) →
-    ∀ {α : Type} (st : ProverStrategy (ProbOracleComp emptySpec) s α),
+    ∀ {α : Type} (st : ProverStrategy (ProbOracleComp OracleSpec.empty) s α),
       (plainLaw (runStrategy s smp st)).toOuterMeasure {r | wins r.1} ≤ PerChallenge.sum s ε
   | [], _, _, _, wins, h, hS, _, st => by
     have hw : ¬ wins () := h hS
@@ -211,10 +210,10 @@ private theorem rbrFrom_le : ∀ (s : Spec) (smp : PerChallenge ProbComp s)
 
 /-- **Round-by-round soundness implies soundness**, with the sum of the per-round errors. -/
 theorem Verifier.RbrSound.sound {s : Spec} {StmtIn StmtOut : Type}
-    {V : Verifier emptySpec s StmtIn StmtOut} {langIn : Set StmtIn}
+    {V : Verifier OracleSpec.empty s StmtIn StmtOut} {langIn : Set StmtIn}
     {langOut : Set StmtOut} {ε : PerChallenge (fun _ => ℝ≥0∞) s}
     (h : V.RbrSound langIn langOut ε) :
-    V.Sound (oP := emptySpec) World.plain langIn langOut (PerChallenge.sum s ε) := by
+    V.Sound (oP := OracleSpec.empty) World.plain langIn langOut (PerChallenge.sum s ε) := by
   obtain ⟨S, hinit, hround⟩ := h
   intro x hx α P
   rw [World.plain_eval_execute, PMF.toOuterMeasure_map_apply, plainLaw_bind]

@@ -28,8 +28,9 @@ abbrev coinSpec : Spec := [.verifier Bool]
 def rel : Bool → Unit → Prop := fun x _ => x = true
 
 /-- The verifier sends a fair coin `c` and both parties continue with the claim `x || c`. -/
-noncomputable def coinStep : Reduction emptySpec emptySpec coinSpec Bool Unit Bool Unit where
-  prover x _ := pure (show Bool → ProbOracleComp emptySpec (Bool × Unit) from
+noncomputable def coinStep :
+    Reduction OracleSpec.empty OracleSpec.empty coinSpec Bool Unit Bool Unit where
+  prover x _ := pure (show Bool → ProbOracleComp OracleSpec.empty (Bool × Unit) from
     fun c => pure (x || c, ()))
   verifier :=
     { samplers := (ProbComp.uniform Bool, ())
@@ -62,7 +63,7 @@ theorem coinStep_rbrSound :
 
 /-- The coin round is sound with error `1 / 2`, by round-by-round soundness. -/
 theorem coinStep_sound :
-    coinStep.verifier.Sound (oP := emptySpec) World.plain (language rel) (language rel)
+    coinStep.verifier.Sound (oP := OracleSpec.empty) World.plain (language rel) (language rel)
       (1 / 2) := by
   simpa [PerChallenge.sum] using coinStep_rbrSound.sound
 
@@ -73,7 +74,7 @@ example : (coinStep.append coinStep).Complete World.plain rel rel 0 := by
 /-- Two coin rounds in sequence are sound with error `1`, by composition of round-by-round
 soundness; the composed errors are concatenated. -/
 example :
-    (coinStep.append coinStep).verifier.Sound (oP := emptySpec) World.plain (language rel)
+    (coinStep.append coinStep).verifier.Sound (oP := OracleSpec.empty) World.plain (language rel)
       (language rel) (1 / 2 + 1 / 2) := by
   have h := (coinStep_rbrSound.append coinStep_rbrSound).sound
   simp only [PerChallenge.sum_append, PerChallenge.sum, add_zero] at h

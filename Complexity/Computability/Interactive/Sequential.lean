@@ -129,20 +129,16 @@ variable {ιP ιV : Type} {oP : OracleSpec ιP} {oV : OracleSpec ιV} {s₁ s₂
 /-- Lift a decision on `s₁` to the composition. -/
 def liftDecisionLeft {α : Type} (s₁ s₂ : Spec) :
     OracleComp (oV ⊕ₒ msgSpec s₁) α → OracleComp (oV ⊕ₒ msgSpec (s₁ ++ s₂)) α :=
-  OracleComp.interpret fun q => match q with
-    | .inl q => OracleComp.query (spec := oV ⊕ₒ msgSpec (s₁ ++ s₂)) (.inl q)
-    | .inr q => OracleComp.interpret
-        (fun q' => OracleComp.query (spec := oV ⊕ₒ msgSpec (s₁ ++ s₂)) (.inr q'))
-        (liftMsgLeft s₁ s₂ q)
+  OracleComp.interpret <| OracleComp.sumHandler
+    (fun q => OracleComp.query (spec := oV ⊕ₒ msgSpec (s₁ ++ s₂)) (.inl q))
+    fun q => OracleComp.liftRight (liftMsgLeft s₁ s₂ q)
 
 /-- Lift a decision on `s₂` to the composition. -/
 def liftDecisionRight {α : Type} (s₁ s₂ : Spec) :
     OracleComp (oV ⊕ₒ msgSpec s₂) α → OracleComp (oV ⊕ₒ msgSpec (s₁ ++ s₂)) α :=
-  OracleComp.interpret fun q => match q with
-    | .inl q => OracleComp.query (spec := oV ⊕ₒ msgSpec (s₁ ++ s₂)) (.inl q)
-    | .inr q => OracleComp.interpret
-        (fun q' => OracleComp.query (spec := oV ⊕ₒ msgSpec (s₁ ++ s₂)) (.inr q'))
-        (liftMsgRight s₁ s₂ q)
+  OracleComp.interpret <| OracleComp.sumHandler
+    (fun q => OracleComp.query (spec := oV ⊕ₒ msgSpec (s₁ ++ s₂)) (.inl q))
+    fun q => OracleComp.liftRight (liftMsgRight s₁ s₂ q)
 
 /-- Sequential composition of verifiers: the second decides on the first one's output. -/
 def Verifier.append (V₁ : Verifier oV s₁ S₁ S₂) (V₂ : Verifier oV s₂ S₂ S₃) :
@@ -209,19 +205,17 @@ private theorem interpret_liftMsgRight : ∀ (s₁ s₂ : Spec) (τ : Transcript
 
 
 /-- The answers to the verifier's queries from a transcript, in the plain model. -/
-private def answerAll (s : Spec) (τ : Transcript s) :
-    (q : Empty ⊕ MsgQuery s) → (emptySpec ⊕ₒ msgSpec s) q
-  | .inl e => e.elim
-  | .inr q => Transcript.answer s τ q
+private abbrev answerAll (s : Spec) (τ : Transcript s) :
+    (q : Empty ⊕ MsgQuery s) → (OracleSpec.empty ⊕ₒ msgSpec s) q :=
+  OracleComp.sumHandler (m := Id) (fun e : Empty => e.elim) (Transcript.answer s τ)
 
-private theorem outputOn_eq (V : Verifier emptySpec s₁ S₁ S₂) (x : S₁) (τ : Transcript s₁) :
+private theorem outputOn_eq (V : Verifier OracleSpec.empty s₁ S₁ S₂) (x : S₁) (τ : Transcript s₁) :
     V.outputOn x τ = OracleComp.interpret (m := Id) (answerAll s₁ τ)
-      (V.decide x (Transcript.challenges s₁ τ)) := by
-  rw [Verifier.outputOn]
-  congr 1
+      (V.decide x (Transcript.challenges s₁ τ)) :=
+  rfl
 
 private theorem interpret_liftDecisionLeft {α : Type} (τ : Transcript (s₁ ++ s₂))
-    (p : OracleComp (emptySpec ⊕ₒ msgSpec s₁) α) :
+    (p : OracleComp (OracleSpec.empty ⊕ₒ msgSpec s₁) α) :
     OracleComp.interpret (m := Id) (answerAll (s₁ ++ s₂) τ) (liftDecisionLeft s₁ s₂ p) =
       OracleComp.interpret (m := Id) (answerAll s₁ (Transcript.split s₁ s₂ τ).1) p := by
   rw [liftDecisionLeft]
@@ -234,7 +228,7 @@ private theorem interpret_liftDecisionLeft {α : Type} (τ : Transcript (s₁ ++
     exact interpret_liftMsgLeft s₁ s₂ τ q
 
 private theorem interpret_liftDecisionRight {α : Type} (τ : Transcript (s₁ ++ s₂))
-    (p : OracleComp (emptySpec ⊕ₒ msgSpec s₂) α) :
+    (p : OracleComp (OracleSpec.empty ⊕ₒ msgSpec s₂) α) :
     OracleComp.interpret (m := Id) (answerAll (s₁ ++ s₂) τ) (liftDecisionRight s₁ s₂ p) =
       OracleComp.interpret (m := Id) (answerAll s₂ (Transcript.split s₁ s₂ τ).2) p := by
   rw [liftDecisionRight]
@@ -247,7 +241,8 @@ private theorem interpret_liftDecisionRight {α : Type} (τ : Transcript (s₁ +
     exact interpret_liftMsgRight s₁ s₂ τ q
 
 /-- The composed verifier's output is the second verifier's output on the first one's. -/
-theorem outputOn_append (V₁ : Verifier emptySpec s₁ S₁ S₂) (V₂ : Verifier emptySpec s₂ S₂ S₃)
+theorem outputOn_append (V₁ : Verifier OracleSpec.empty s₁ S₁ S₂)
+    (V₂ : Verifier OracleSpec.empty s₂ S₂ S₃)
     (x : S₁) (τ : Transcript (s₁ ++ s₂)) :
     (V₁.append V₂).outputOn x τ =
       (V₁.outputOn x (Transcript.split s₁ s₂ τ).1).bind
@@ -334,8 +329,8 @@ private theorem rbrFrom_append : ∀ (s₁ s₂ : Spec) (smp₁ : PerChallenge P
 
 
 /-- **Round-by-round soundness composes**, with the concatenated per-round errors. -/
-theorem Verifier.RbrSound.append {V₁ : Verifier emptySpec s₁ S₁ S₂}
-    {V₂ : Verifier emptySpec s₂ S₂ S₃} {L₁ : Set S₁} {L₂ : Set S₂} {L₃ : Set S₃}
+theorem Verifier.RbrSound.append {V₁ : Verifier OracleSpec.empty s₁ S₁ S₂}
+    {V₂ : Verifier OracleSpec.empty s₂ S₂ S₃} {L₁ : Set S₁} {L₂ : Set S₂} {L₃ : Set S₃}
     {ε₁ : PerChallenge (fun _ => ℝ≥0∞) s₁} {ε₂ : PerChallenge (fun _ => ℝ≥0∞) s₂}
     (h₁ : V₁.RbrSound L₁ L₂ ε₁) (h₂ : V₂.RbrSound L₂ L₃ ε₂) :
     (V₁.append V₂).RbrSound L₁ L₃ (PerChallenge.append s₁ s₂ ε₁ ε₂) := by
@@ -374,9 +369,9 @@ end Rbr
 
 section Plain
 
-variable {R₁ : Reduction emptySpec emptySpec s₁ S₁ W₁ S₂ W₂}
-  {R₂ : Reduction emptySpec emptySpec s₂ S₂ W₂ S₃ W₃}
-  {V₁ : Verifier emptySpec s₁ S₁ S₂} {V₂ : Verifier emptySpec s₂ S₂ S₃}
+variable {R₁ : Reduction OracleSpec.empty OracleSpec.empty s₁ S₁ W₁ S₂ W₂}
+  {R₂ : Reduction OracleSpec.empty OracleSpec.empty s₂ S₂ W₂ S₃ W₃}
+  {V₁ : Verifier OracleSpec.empty s₁ S₁ S₂} {V₂ : Verifier OracleSpec.empty s₂ S₂ S₃}
   {rel₁ : S₁ → W₁ → Prop} {rel₂ : S₂ → W₂ → Prop} {rel₃ : S₃ → W₃ → Prop}
   {L₁ : Set S₁} {L₂ : Set S₂} {L₃ : Set S₃} {ε₁ ε₂ : ℝ≥0∞}
 
@@ -384,7 +379,7 @@ variable {R₁ : Reduction emptySpec emptySpec s₁ S₁ W₁ S₂ W₂}
 the transcript, at the statement the first verifier outputs, then the input witness from the first
 half. The default intermediate statement `y₀` is used only when the first verifier rejects, when
 the composed verifier rejects too. -/
-noncomputable def Verifier.extractAppend (V₁ : Verifier emptySpec s₁ S₁ S₂)
+noncomputable def Verifier.extractAppend (V₁ : Verifier OracleSpec.empty s₁ S₁ S₂)
     (E₁ : S₁ → Transcript s₁ → W₂ → W₁) (E₂ : S₂ → Transcript s₂ → W₃ → W₂) (y₀ : S₂) :
     S₁ → Transcript (s₁ ++ s₂) → W₃ → W₁ := fun x τ w₃ =>
   E₁ x (Transcript.split s₁ s₂ τ).1
@@ -424,8 +419,8 @@ def ProverStrategy.bindLeaf {m : Type → Type} [Monad m] {α β : Type} :
 
 /-- Running a strategy continued by an effect at its end: the effect sees the transcript. -/
 theorem plainLaw_bindLeaf_run : ∀ (s : Spec) (smp : PerChallenge ProbComp s) {α β : Type}
-    (st : ProverStrategy (ProbOracleComp emptySpec) s α)
-    (f : Transcript s → α → ProbOracleComp emptySpec β),
+    (st : ProverStrategy (ProbOracleComp OracleSpec.empty) s α)
+    (f : Transcript s → α → ProbOracleComp OracleSpec.empty β),
     plainLaw (ProverStrategy.bindLeaf s st f >>= runStrategy s smp) =
       (plainLaw (runStrategy s smp st)).bind fun r => (plainLaw (f r.1 r.2)).map fun b => (r.1, b)
   | [], _, _, _, a, f => by
@@ -474,8 +469,9 @@ def ProverStrategy.split {m : Type → Type} [Monad m] {α : Type} :
 /-- Running a composed strategy runs the first part, then the continuation on its result. -/
 theorem plainLaw_run_append : ∀ (s₁ s₂ : Spec) (smp₁ : PerChallenge ProbComp s₁)
     (smp₂ : PerChallenge ProbComp s₂) {α β : Type}
-    (st : ProverStrategy (ProbOracleComp emptySpec) s₁ α)
-    (next : α → ProbOracleComp emptySpec (ProverStrategy (ProbOracleComp emptySpec) s₂ β)),
+    (st : ProverStrategy (ProbOracleComp OracleSpec.empty) s₁ α)
+    (next : α → ProbOracleComp OracleSpec.empty
+      (ProverStrategy (ProbOracleComp OracleSpec.empty) s₂ β)),
     plainLaw (ProverStrategy.append s₁ s₂ st next >>=
         runStrategy (s₁ ++ s₂) (PerChallenge.append s₁ s₂ smp₁ smp₂)) =
       (plainLaw (runStrategy s₁ smp₁ st)).bind fun r₁ =>
@@ -515,7 +511,7 @@ theorem plainLaw_run_append : ∀ (s₁ s₂ : Spec) (smp₁ : PerChallenge Prob
 /-- Running any strategy for `s₁ ++ s₂` runs its split: the first part, then the rest. -/
 theorem plainLaw_run_split : ∀ (s₁ s₂ : Spec) (smp₁ : PerChallenge ProbComp s₁)
     (smp₂ : PerChallenge ProbComp s₂) {α : Type}
-    (st : ProverStrategy (ProbOracleComp emptySpec) (s₁ ++ s₂) α),
+    (st : ProverStrategy (ProbOracleComp OracleSpec.empty) (s₁ ++ s₂) α),
     plainLaw (runStrategy (s₁ ++ s₂) (PerChallenge.append s₁ s₂ smp₁ smp₂) st) =
       (plainLaw (runStrategy s₁ smp₁ (ProverStrategy.split s₁ s₂ st))).bind fun r₁ =>
         (plainLaw (runStrategy s₂ smp₂ r₁.2)).map
@@ -572,8 +568,9 @@ section Compose
 
 /-- The honest run of a composed reduction runs the first reduction, then the second on the
 first prover's output. -/
-private theorem plainLaw_run_reductionAppend (R₁ : Reduction emptySpec emptySpec s₁ S₁ W₁ S₂ W₂)
-    (R₂ : Reduction emptySpec emptySpec s₂ S₂ W₂ S₃ W₃) (x : S₁) (w : W₁) :
+private theorem plainLaw_run_reductionAppend
+    (R₁ : Reduction OracleSpec.empty OracleSpec.empty s₁ S₁ W₁ S₂ W₂)
+    (R₂ : Reduction OracleSpec.empty OracleSpec.empty s₂ S₂ W₂ S₃ W₃) (x : S₁) (w : W₁) :
     plainLaw ((R₁.append R₂).prover x w >>=
         runStrategy (s₁ ++ s₂) (R₁.append R₂).verifier.samplers) =
       (plainLaw (R₁.prover x w >>= runStrategy s₁ R₁.verifier.samplers)).bind fun r₁ =>
@@ -586,8 +583,8 @@ private theorem plainLaw_run_reductionAppend (R₁ : Reduction emptySpec emptySp
   simp only [plainLaw_bind]
 
 /-- **Completeness errors add up under sequential composition.** -/
-theorem Reduction.Complete.append {R₁ : Reduction emptySpec emptySpec s₁ S₁ W₁ S₂ W₂}
-    {R₂ : Reduction emptySpec emptySpec s₂ S₂ W₂ S₃ W₃}
+theorem Reduction.Complete.append {R₁ : Reduction OracleSpec.empty OracleSpec.empty s₁ S₁ W₁ S₂ W₂}
+    {R₂ : Reduction OracleSpec.empty OracleSpec.empty s₂ S₂ W₂ S₃ W₃}
     {rel₁ : S₁ → W₁ → Prop} {rel₂ : S₂ → W₂ → Prop} {rel₃ : S₃ → W₃ → Prop} {ε₁ ε₂ : ℝ≥0∞}
     (h₁ : R₁.Complete World.plain rel₁ rel₂ ε₁) (h₂ : R₂.Complete World.plain rel₂ rel₃ ε₂) :
     (R₁.append R₂).Complete World.plain rel₁ rel₃ (ε₁ + ε₂) := by
@@ -608,9 +605,10 @@ theorem Reduction.Complete.append {R₁ : Reduction emptySpec emptySpec s₁ S�
 
 /-- A run against a composed verifier is a run of the split strategy against the first, then
 of its continuation against the second. -/
-private theorem plainLaw_run_verifierAppend (V₁ : Verifier emptySpec s₁ S₁ S₂)
-    (V₂ : Verifier emptySpec s₂ S₂ S₃) {α : Type}
-    (P : ProbOracleComp emptySpec (ProverStrategy (ProbOracleComp emptySpec) (s₁ ++ s₂) α)) :
+private theorem plainLaw_run_verifierAppend (V₁ : Verifier OracleSpec.empty s₁ S₁ S₂)
+    (V₂ : Verifier OracleSpec.empty s₂ S₂ S₃) {α : Type}
+    (P : ProbOracleComp OracleSpec.empty
+      (ProverStrategy (ProbOracleComp OracleSpec.empty) (s₁ ++ s₂) α)) :
     plainLaw (P >>= runStrategy (s₁ ++ s₂) (V₁.append V₂).samplers) =
       (plainLaw ((ProverStrategy.split s₁ s₂ ·) <$> P >>= runStrategy s₁ V₁.samplers)).bind
         fun r₁ => (plainLaw (runStrategy s₂ V₂.samplers r₁.2)).map
@@ -622,11 +620,11 @@ private theorem plainLaw_run_verifierAppend (V₁ : Verifier emptySpec s₁ S₁
 
 /-- **Soundness errors add up under sequential composition**, through the intermediate
 language. -/
-theorem Verifier.Sound.append {V₁ : Verifier emptySpec s₁ S₁ S₂}
-    {V₂ : Verifier emptySpec s₂ S₂ S₃} {L₁ : Set S₁} {L₂ : Set S₂} {L₃ : Set S₃}
-    {ε₁ ε₂ : ℝ≥0∞} (h₁ : V₁.Sound (oP := emptySpec) World.plain L₁ L₂ ε₁)
-    (h₂ : V₂.Sound (oP := emptySpec) World.plain L₂ L₃ ε₂) :
-    (V₁.append V₂).Sound (oP := emptySpec) World.plain L₁ L₃ (ε₁ + ε₂) := by
+theorem Verifier.Sound.append {V₁ : Verifier OracleSpec.empty s₁ S₁ S₂}
+    {V₂ : Verifier OracleSpec.empty s₂ S₂ S₃} {L₁ : Set S₁} {L₂ : Set S₂} {L₃ : Set S₃}
+    {ε₁ ε₂ : ℝ≥0∞} (h₁ : V₁.Sound (oP := OracleSpec.empty) World.plain L₁ L₂ ε₁)
+    (h₂ : V₂.Sound (oP := OracleSpec.empty) World.plain L₂ L₃ ε₂) :
+    (V₁.append V₂).Sound (oP := OracleSpec.empty) World.plain L₁ L₃ (ε₁ + ε₂) := by
   intro x hx α P
   have hl₁ := h₁ x hx _ ((ProverStrategy.split s₁ s₂ ·) <$> P)
   rw [World.plain_eval_execute, PMF.toOuterMeasure_map_apply] at hl₁ ⊢
@@ -656,8 +654,8 @@ theorem Verifier.Sound.append {V₁ : Verifier emptySpec s₁ S₁ S₂}
 /-- **Straight-line extractors compose**, with the sum of the knowledge errors. The first
 verifier's knowledge soundness is applied to a prover that simulates the second phase with the
 public samplers. -/
-theorem Verifier.KnowledgeSound.append {V₁ : Verifier emptySpec s₁ S₁ S₂}
-    {V₂ : Verifier emptySpec s₂ S₂ S₃}
+theorem Verifier.KnowledgeSound.append {V₁ : Verifier OracleSpec.empty s₁ S₁ S₂}
+    {V₂ : Verifier OracleSpec.empty s₂ S₂ S₃}
     {rel₁ : S₁ → W₁ → Prop} {rel₂ : S₂ → W₂ → Prop} {rel₃ : S₃ → W₃ → Prop} {ε₁ ε₂ : ℝ≥0∞}
     {E₁ : S₁ → Transcript s₁ → W₂ → W₁} {E₂ : S₂ → Transcript s₂ → W₃ → W₂}
     (h₁ : V₁.KnowledgeSound rel₁ rel₂ E₁ ε₁)
@@ -687,7 +685,8 @@ theorem Verifier.KnowledgeSound.append {V₁ : Verifier emptySpec s₁ S₁ S₂
     · exact Or.inr ⟨y, hy, ⟨x'', hy₂, hrel⟩, h⟩
   refine le_trans (MeasureTheory.measure_mono hsub)
     (le_trans (MeasureTheory.measure_union_le _ _) (add_le_add ?_ ?_))
-  · let P₁ : ProbOracleComp emptySpec (ProverStrategy (ProbOracleComp emptySpec) s₁ W₂) :=
+  · let P₁ : ProbOracleComp OracleSpec.empty
+        (ProverStrategy (ProbOracleComp OracleSpec.empty) s₁ W₂) :=
       (ProverStrategy.split s₁ s₂ ·) <$> P >>= fun st₁ => ProverStrategy.bindLeaf s₁ st₁
         fun τ₁ st₂ => (fun r₂ => E₂ ((V₁.outputOn x τ₁).getD y₀) r₂.1 r₂.2) <$>
           runStrategy s₂ V₂.samplers st₂
@@ -766,18 +765,20 @@ variable {T U : Type}
 
 /-- The reduction without rounds is perfectly complete. -/
 theorem Reduction.id_complete (rel : T → U → Prop) :
-    (Reduction.id (oP := emptySpec) (oV := emptySpec)).Complete World.plain rel rel 0 := by
+    (Reduction.id (oP := OracleSpec.empty) (oV := OracleSpec.empty)).Complete World.plain rel rel
+      0 := by
   intro x w hxw
   rw [Reduction.run, World.plain_eval_execute, PMF.toOuterMeasure_map_apply]
   simp only [Reduction.id, runStrategy, bind_pure_comp, map_pure, plainLaw_pure,
-    Verifier.outputOn, Sum.elim_inl, OracleComp.interpret_pure, not_and, Set.preimage_ofPred_eq,
+    Verifier.outputOn, OracleComp.interpret_pure, not_and, Set.preimage_ofPred_eq,
     PMF.toOuterMeasure_pure_apply, Set.mem_ofPred_eq, hxw, not_true_eq_false, imp_false,
     nonpos_iff_eq_zero, ite_eq_right_iff, one_ne_zero, not_not]
   rfl
 
 /-- The reduction without rounds is round-by-round sound without error. -/
 theorem Reduction.id_rbrSound (L : Set T) :
-    (Reduction.id (oP := emptySpec) (oV := emptySpec) (W := U)).verifier.RbrSound L L () := by
+    (Reduction.id (oP := OracleSpec.empty) (oV := OracleSpec.empty) (W := U)).verifier.RbrSound
+      L L () := by
   refine ⟨fun x _ => x ∈ L, fun x hx => hx, fun x hS ⟨x', hx', hout⟩ => hS ?_⟩
   have : x = x' := Option.some.inj hout
   exact this ▸ hx'
@@ -787,7 +788,8 @@ end Identity
 section Plain
 
 variable {s : ℕ → Spec} {S W : ℕ → Type}
-  {R : (i : ℕ) → Reduction emptySpec emptySpec (s i) (S i) (W i) (S (i + 1)) (W (i + 1))}
+  {R : (i : ℕ) →
+    Reduction OracleSpec.empty OracleSpec.empty (s i) (S i) (W i) (S (i + 1)) (W (i + 1))}
 
 /-- **Iterated completeness**: if every stage `R i` with `i < k` is complete from `rel i` to
 `rel (i + 1)` with error `ε i`, the first `k` stages are complete from `rel 0` to `rel k` with
