@@ -58,9 +58,11 @@ variable {Query : Type u} {spec : OracleSpec.{u, v} Query} {α β : Type v}
 def replicate (count : ℕ) (program : OracleComp spec α) : OracleComp spec (List α) :=
   (List.replicate count ()).mapM (fun _ => program)
 
+/-- Zero runs return the empty list. -/
 @[simp] theorem replicate_zero (program : OracleComp spec α) :
     replicate 0 program = pure [] := rfl
 
+/-- `count + 1` runs make one run, then `count` more, and list its result first. -/
 theorem replicate_succ (count : ℕ) (program : OracleComp spec α) :
     replicate (count + 1) program = program >>= fun first =>
       List.cons first <$> replicate count program := by

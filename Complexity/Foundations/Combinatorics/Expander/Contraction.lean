@@ -25,6 +25,7 @@ vertex counts. Quotient/remainder indexing also contracts `Fin m` to `Fin n` whe
 
 ## Main definitions
 
+* `Cslib.RotationMap.contractDart`: move the slot of a represented vertex into its edge label.
 * `Cslib.RotationMap.contractRot`: the functional rotation program.
 * `Cslib.RotationMap.contract`: contraction with self-loops in unoccupied slots.
 * `Cslib.RotationMap.finSlotEncode`, `Cslib.RotationMap.finSlotDecode`: executable indexing.

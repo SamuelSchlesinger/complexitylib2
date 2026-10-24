@@ -16,11 +16,12 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 
 `Knapsack` is the decision version of the 0-1 knapsack problem: given items, each with a weight
 and a value, a capacity and a goal, some sub-multiset of the items has total weight at most the
-capacity and total value at least the goal [Karp1972]. All numbers are encoded in binary
+capacity and total value at least the goal [GareyJohnson1979]. All numbers are encoded in binary
 (`encNat`); the verifier compares the sums in binary (`ComputableTidilyInPolyTime.binary_le`).
 
 Giving every number of a subset sum instance equal weight and value, and taking the target as
-both capacity and goal, reduces `SubsetSum` to `Knapsack`.
+both capacity and goal, reduces `SubsetSum` to `Knapsack`. Karp's KNAPSACK [Karp1972] is the
+subset sum form of the problem.
 
 ## Main definitions
 
@@ -39,6 +40,7 @@ both capacity and goal, reduces `SubsetSum` to `Knapsack`.
 ## References
 
 * [R. M. Karp, *Reducibility among combinatorial problems*][Karp1972]
+* [M. R. Garey and D. S. Johnson, *Computers and Intractability*][GareyJohnson1979]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -51,7 +53,7 @@ open scoped List
 
 /-- Instances `(items, capacity, goal)` of the 0-1 knapsack problem, items given as
 `(weight, value)`: some sub-multiset of the items has total weight at most the capacity and total
-value at least the goal. -/
+value at least the goal [Garey and Johnson][GareyJohnson1979]. -/
 def Knapsack : Set (List (ℕ × ℕ) × ℕ × ℕ) :=
   {x | ∃ s ≤ (x.1 : Multiset (ℕ × ℕ)),
     (s.map Prod.fst).sum ≤ x.2.1 ∧ x.2.2 ≤ (s.map Prod.snd).sum}
@@ -137,7 +139,8 @@ theorem polyTimeReducible_SubsetSum_Knapsack :
 theorem Knapsack_npHard : NPHard encKnapsack Knapsack :=
   SubsetSum_npHard.trans polyTimeReducible_SubsetSum_Knapsack
 
-/-- **The 0-1 knapsack problem is NP-complete**, with all numbers in binary. -/
+/-- **The 0-1 knapsack problem is NP-complete**, with all numbers in binary
+[Garey and Johnson][GareyJohnson1979]. -/
 theorem Knapsack_npComplete : NPComplete encKnapsack Knapsack :=
   ⟨Knapsack.mem_NP, Knapsack_npHard⟩
 

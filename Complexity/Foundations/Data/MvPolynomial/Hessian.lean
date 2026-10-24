@@ -50,15 +50,18 @@ noncomputable def gradient (x : ι → R) (p : MvPolynomial ι R) : ι → R :=
 noncomputable def hessian (x : ι → R) (p : MvPolynomial ι R) : Matrix ι ι R :=
   fun i j => eval x (pderiv i (pderiv j p))
 
+/-- The Hessian of a sum is the sum of the Hessians. -/
 @[simp] theorem hessian_add (x : ι → R) (p q : MvPolynomial ι R) :
     hessian x (p + q) = hessian x p + hessian x q := by
   ext i j
   simp [hessian]
 
+/-- A constant polynomial has zero Hessian. -/
 @[simp] theorem hessian_C (x : ι → R) (c : R) : hessian x (C c) = 0 := by
   ext i j
   simp [hessian]
 
+/-- A variable has zero Hessian. -/
 @[simp] theorem hessian_X (x : ι → R) (i : ι) : hessian x (X i) = 0 := by
   classical
   ext j k

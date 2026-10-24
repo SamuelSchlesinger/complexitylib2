@@ -167,14 +167,18 @@ def stepT (y : Tuple × Bool) : Tuple × List Bool :=
       ({ fr with phase := 2 } :: x.stack.tail) (.call true (fr.target + 1)) runCtl, [])
   else (x, [])
 
+/-- On the tuple of a state, `haltT` is the halting test of `machine`. -/
 theorem haltT_toTuple (s : State) : haltT s.toTuple = machine.halt s := by
   obtain ⟨_, _, _, _, _, _, c⟩ := s
   cases c <;> rfl
 
+/-- On the tuple of a state, `addrT` is the address `addr` of the state. -/
 theorem addrT_toTuple (s : State) : addrT s.toTuple = addr s := by
   obtain ⟨_, _, _, _, _, _, c⟩ := s
   cases c <;> rfl
 
+/-- On the tuple of a state, `stepT` is the step of `machine`: it gives the tuple of the next
+state and the same output. -/
 theorem stepT_toTuple (s : State) (b : Bool) :
     stepT (s.toTuple, b) = ((machine.step s b).1.toTuple, (machine.step s b).2) := by
   obtain ⟨e, h, p, R, st, m, c⟩ := s

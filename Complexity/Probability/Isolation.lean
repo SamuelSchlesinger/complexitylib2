@@ -72,6 +72,8 @@ def setWeight (val : W → G) (w : U → W) (S : Finset U) : G := ∑ i ∈ S, v
 def minWeightSets (val : W → G) (w : U → W) (F : Finset (Finset U)) : Finset (Finset U) :=
   F.filter fun S => ∀ T ∈ F, setWeight val w S ≤ setWeight val w T
 
+/-- `S` is a set of minimum weight in `F` exactly when `S ∈ F` and no set of `F` has smaller
+weight. -/
 theorem mem_minWeightSets {val : W → G} {w : U → W} {F : Finset (Finset U)}
     {S : Finset U} :
     S ∈ minWeightSets val w F ↔ S ∈ F ∧ ∀ T ∈ F, setWeight val w S ≤ setWeight val w T :=

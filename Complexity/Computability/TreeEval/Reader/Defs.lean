@@ -30,6 +30,12 @@ register `2`.
 
 * `Cslib.TreeEval.Reader.State`: the states of the machine.
 * `Cslib.TreeEval.Reader.machine`: the machine.
+
+## References
+
+* [J. Cook and I. Mertz, *Tree Evaluation is in Space O(log n · log log n)*][CookMertz2024]
+* [O. Goldreich, *On the Cook–Mertz Tree Evaluation procedure*][Goldreich2024TreeEval],
+  Algorithm 1, which the machine runs.
 -/
 
 @[expose] public section

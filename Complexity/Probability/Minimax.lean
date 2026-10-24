@@ -261,6 +261,7 @@ def ofStdSimplex (p : StdSimplex ℝ I) : PMF I :=
     rw [← ENNReal.ofReal_sum_of_nonneg fun i _ => p.weights_nonneg i, p.total_of_fintype,
       ENNReal.ofReal_one])
 
+/-- The probability of `i` under `ofStdSimplex p` is the weight of `i` in `p`. -/
 @[simp] theorem toReal_ofStdSimplex (p : StdSimplex ℝ I) (i : I) :
     (ofStdSimplex p i).toReal = p.weights i :=
   ENNReal.toReal_ofReal (p.weights_nonneg i)
@@ -274,10 +275,12 @@ noncomputable def toStdSimplex (μ : PMF I) : StdSimplex ℝ I where
     rw [Finsupp.sum_fintype _ _ (by simp)]
     simpa using sum_toReal μ
 
+/-- The weight of `i` in `toStdSimplex μ` is the probability of `i`, as a real number. -/
 @[simp] theorem weights_toStdSimplex (μ : PMF I) (i : I) :
     (toStdSimplex μ).weights i = (μ i).toReal :=
   rfl
 
+/-- Passing from a distribution to the simplex and back returns the distribution. -/
 @[simp] theorem ofStdSimplex_toStdSimplex (μ : PMF I) : ofStdSimplex (toStdSimplex μ) = μ :=
   PMF.ext fun i => by
     rw [← ENNReal.ofReal_toReal (PMF.apply_ne_top μ i), ← weights_toStdSimplex]

@@ -59,7 +59,7 @@ namespace Cslib.Complexity
 open Circuits Circuits.Boolean Turing.MultiTapeTM
 
 /-- **The monotone circuit value problem**: the monotone circuits with one output, each with an
-input of its arity, whose output on that input is true. -/
+input of its arity, whose output on that input is true [Goldschlager1977]. -/
 def MonotoneCircuitValue : Set (Σ n, Circuit Monotone.signature n 1 × BitString n) :=
   {x | x.2.1.eval Monotone.interpretation x.2.2 0 = true}
 

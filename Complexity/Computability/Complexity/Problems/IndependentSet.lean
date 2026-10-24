@@ -87,7 +87,8 @@ def encGraph : Graph ↪ List Bool :=
 in either direction. -/
 def Graph.toSimpleGraph (G : Graph) : SimpleGraph ℕ := SimpleGraph.fromRel fun u v => (u, v) ∈ G.2
 
-/-- The graphs with an independent set of `m` of their vertices. -/
+/-- The graphs with an independent set of `m` of their vertices
+[Arora and Barak, Section 2.4][AroraBarak09]. -/
 def IndependentSet : Set (Graph × ℕ) :=
   {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧ x.1.toSimpleGraph.IsNIndepSet x.2 S}
 
@@ -501,7 +502,7 @@ theorem polyTimeReducible_SAT_IndependentSet :
 theorem IndependentSet_npHard : NPHard (encPair encGraph encNat) IndependentSet :=
   CookLevin.SAT_npHard.trans polyTimeReducible_SAT_IndependentSet
 
-/-- **`IndependentSet` is NP-complete.** -/
+/-- **`IndependentSet` is NP-complete** [Arora and Barak, Section 2.4][AroraBarak09]. -/
 theorem IndependentSet_npComplete : NPComplete (encPair encGraph encNat) IndependentSet :=
   ⟨IndependentSet.mem_NP, IndependentSet_npHard⟩
 

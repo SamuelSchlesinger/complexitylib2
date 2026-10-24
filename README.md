@@ -90,6 +90,20 @@ Open `http://localhost:8000` to browse and search. The **API documentation** wor
 A manual run on another branch produces an `api-docs` artifact instead; serve it by replacing
 the directory argument above with the extracted artifact directory.
 
+The [guide](guide/ComplexityGuide.lean) introduces the library area by area, with Lean examples
+that are checked against the library whenever the guide is built. It is written with
+[Verso](https://github.com/leanprover/verso) in a separate `guide` project. To build and preview it:
+
+```bash
+scripts/guide.sh
+python3 -m http.server --bind 127.0.0.1 --directory guide/.lake/build/site/html-multi
+```
+
+The first build compiles Verso and links the guide's generator, which takes a few minutes. The
+**API documentation** workflow publishes the guide from `main` with the API documentation, at
+[/guide/](https://www.cslib.io/complexitylib/guide/). The **Guide** workflow builds
+pull requests that change the guide and uploads the pages as a `guide` artifact.
+
 This is the canonical CSLib-based Complexitylib. The renamed historical
 [pre-CSLib implementation](https://github.com/SamuelSchlesinger/complexitylib-v1) remains available
 with archival pending; it has a different API, and some developments remain to be ported. The temporary

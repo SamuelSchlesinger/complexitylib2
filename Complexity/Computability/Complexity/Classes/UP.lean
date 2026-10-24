@@ -47,7 +47,7 @@ open Turing.MultiTapeTM
 variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 
 /-- Unambiguous polynomial time: some `#P` function is bounded by one everywhere and is one
-exactly on the language. -/
+exactly on the language [Papadimitriou][Papadimitriou94]. -/
 def UP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f ∈ SharpP enc, (∀ a, f a ≤ 1) ∧ ∀ a, a ∈ A ↔ f a = 1}
 

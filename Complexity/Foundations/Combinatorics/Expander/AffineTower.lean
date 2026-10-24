@@ -28,7 +28,11 @@ degree and time polynomial in the bit length of a vertex name remain separate ta
 
 ## Main definitions
 
+* `Cslib.RotationMap.AffinePlaneTowerBaseVertex`: the eight field coordinates of a vertex of the
+  arithmetic base.
 * `Cslib.RotationMap.affinePlaneTowerBase`: the arithmetic base on eight field coordinates.
+* `Cslib.RotationMap.affinePlaneTowerBaseEquiv`: the regrouping of the base's coordinates into
+  pairs of pairs of its edge labels.
 * `Cslib.RotationMap.affinePlaneTower`: the tower built from it.
 
 ## Main results

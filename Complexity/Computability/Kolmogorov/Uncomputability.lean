@@ -103,15 +103,11 @@ of `p` by at most a constant: the description method running `g` is partial recu
 universal method is at most a constant worse than it. -/
 theorem exists_complexity_universal_le_length_add {g : List Bool → ℕ} (hg : Computable g) :
     ∃ c : ℕ, ∀ p, universal.complexity (g p) ≤ p.length + c := by
-  let M : DescriptionMethod ℕ := ⟨fun p => Computation.pure (g p)⟩
-  have hM : M.IsPartrec := ⟨fun p => Part.some (g p), hg, fun p x => by
-    change x ∈ Computation.pure _ ↔ _
-    rw [Computation.mem_pure_iff, Part.mem_some_iff]⟩
-  obtain ⟨c, hc⟩ := isAdditivelyOptimal_universal.exists_ecomplexity_le M hM
+  obtain ⟨c, hc⟩ := exists_ecomplexity_universal_le_of_partrec_eval (M := literal) Partrec.some
+    (fun p x => by rw [literal_produces, Part.mem_some_iff, eq_comm]) hg
   refine ⟨c, fun p => ?_⟩
-  have h := (hc (g p)).trans
-    (add_le_add_left (ecomplexity_le_length (M := M) (Computation.ret_mem _)) _)
-  rw [← natCast_complexity_universal] at h
+  have h := hc p
+  rw [ecomplexity_literal, ← natCast_complexity_universal] at h
   exact_mod_cast h
 
 /-- `K(x) ≤ log₂ x + O(1)`: a number is described by its binary representation, of length
@@ -128,23 +124,10 @@ method. -/
 theorem exists_complexity_universal_comp_le {f : ℕ → ℕ} (hf : Computable f) :
     ∃ c : ℕ, ∀ x, universal.complexity (f x) ≤ universal.complexity x + c := by
   obtain ⟨F, hF, hU⟩ := isPartrec_universal
-  let M : DescriptionMethod ℕ := ⟨fun p => (universal.run p).map f⟩
-  have hM : M.IsPartrec := by
-    refine ⟨fun p => (F p).map f, hF.map (hf.comp Computable.snd).to₂, fun p y => ?_⟩
-    change y ∈ (universal.run p).map f ↔ _
-    rw [Part.mem_map_iff]
-    constructor
-    · intro h
-      obtain ⟨x, hx, rfl⟩ := Computation.exists_of_mem_map h
-      exact ⟨x, (hU p x).mp hx, rfl⟩
-    · rintro ⟨x, hx, rfl⟩
-      exact Computation.mem_map f ((hU p x).mpr hx)
-  obtain ⟨c, hc⟩ := isAdditivelyOptimal_universal.exists_ecomplexity_le M hM
+  obtain ⟨c, hc⟩ := exists_ecomplexity_universal_le_of_partrec_eval hF hU hf
   refine ⟨c, fun x => ?_⟩
-  obtain ⟨p, hp, hlen⟩ := exists_length_eq_ecomplexity (ecomplexity_universal_ne_top x)
-  have h := (hc (f x)).trans
-    (add_le_add_left (ecomplexity_le_length (M := M) (Computation.mem_map f hp)) _)
-  rw [hlen, ← natCast_complexity_universal, ← natCast_complexity_universal] at h
+  have h := hc x
+  rw [← natCast_complexity_universal, ← natCast_complexity_universal] at h
   exact_mod_cast h
 
 /-! ### Uncomputability -/

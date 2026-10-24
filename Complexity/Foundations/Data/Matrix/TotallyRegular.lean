@@ -105,6 +105,7 @@ theorem IsTotallyRegular.transpose (hA : A.IsTotallyRegular) : Aᵀ.IsTotallyReg
     rw [← transpose_submatrix, det_transpose]
     exact hA k g f hg hf
 
+/-- The transpose of `A` is totally regular exactly when `A` is. -/
 theorem transpose_isTotallyRegular_iff (A : Matrix m n R) :
     Aᵀ.IsTotallyRegular ↔ A.IsTotallyRegular :=
   ⟨IsTotallyRegular.transpose, IsTotallyRegular.transpose⟩
@@ -114,6 +115,7 @@ theorem IsTotallyRegular.reindex (hA : A.IsTotallyRegular) (em : m ≃ m') (en :
     (A.reindex em en).IsTotallyRegular :=
   hA.submatrix em.symm.injective en.symm.injective
 
+/-- A reindexing of `A` along equivalences is totally regular exactly when `A` is. -/
 theorem reindex_isTotallyRegular (A : Matrix m n R) (em : m ≃ m') (en : n ≃ n') :
     (A.reindex em en).IsTotallyRegular ↔ A.IsTotallyRegular :=
   ⟨fun hA => by simpa using hA.reindex em.symm en.symm, fun hA => hA.reindex em en⟩
@@ -157,6 +159,7 @@ variable {F : Type*} [Field F]
 def cauchy (x : m → F) (y : n → F) : Matrix m n F :=
   of fun i j => (x i - y j)⁻¹
 
+/-- The entry of the Cauchy matrix at `(i, j)` is `(x i - y j)⁻¹`. -/
 @[simp] theorem cauchy_apply (x : m → F) (y : n → F) (i : m) (j : n) :
     cauchy x y i j = (x i - y j)⁻¹ :=
   rfl

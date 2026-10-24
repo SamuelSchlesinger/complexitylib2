@@ -63,6 +63,7 @@ def decodeSelfDelimiting (q : List Bool) : List Bool × List Bool :=
   ((r.drop k).take n, (r.drop k).drop n)
 
 
+/-- The decoder inverts the code: it splits `selfDelimitingCode p ++ q` back into `p` and `q`. -/
 @[simp]
 theorem decodeSelfDelimiting_selfDelimitingCode_append (p q : List Bool) :
     decodeSelfDelimiting (selfDelimitingCode p ++ q) = (p, q) := by

@@ -52,6 +52,8 @@ that vanish in every coordinate below `i`. -/
 def pivotSpace (V : Submodule K (Fin r → M)) (i : Fin r) : Submodule K M :=
   (V ⊓ ⨅ j : Fin r, ⨅ (_ : j < i), LinearMap.ker (LinearMap.proj j)).map (LinearMap.proj i)
 
+/-- `y` lies in the `i`-th pivot space of `V` exactly when some `v ∈ V` vanishing in every
+coordinate below `i` has `v i = y`. -/
 theorem mem_pivotSpace {V : Submodule K (Fin r → M)} {i : Fin r} {y : M} :
     y ∈ pivotSpace V i ↔ ∃ v ∈ V, (∀ j < i, v j = 0) ∧ v i = y := by
   simp [pivotSpace, Submodule.mem_iInf, and_assoc]

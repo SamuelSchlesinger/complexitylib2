@@ -13,7 +13,10 @@ import Complexity.Computability.Circuit.Boolean.BarringtonClass
 namespace ComplexityTests.Abstracts.BarringtonBridge
 
 /-- A nonuniform NC¹ language has a polynomial-size De Morgan circuit at each input length,
-with depth at most a constant times `floor(log₂ n)+1`. Every gate, constants included, costs one. -/
+with depth at most a constant times `floor(log₂ n)+1`. Every gate, constants included, costs one.
+Here `L : Language Bool` is a set of finite bit strings. `L.slice n x` tests whether the word
+`List.ofFn x` belongs to `L`; `single` makes that Boolean the sole circuit output, and `Computes`
+requires agreement on every input. -/
 def InNC1 (L : Language Bool) : Prop :=
   ∃ (c : ℕ) (size : ℕ → ℕ), Cslib.PolynomiallyBounded size ∧ ∀ n,
     ∃ C : Cslib.Circuits.Circuit Cslib.Circuits.Boolean.signature n 1,
@@ -24,7 +27,8 @@ def InNC1 (L : Language Bool) : Prop :=
 /-- A width-five permutation program reads one input bit per instruction, selects one of two
 permutations, and multiplies the selected permutations in instruction order. The elementary
 `MonoidProgram` model is explicitly allowed; it is a list of `(position, selection function)`
-instructions. Its length is polynomial and its final permutation is tested against a set. -/
+instructions. Its length is polynomial. Both the program and the acceptance set may depend on
+input length; acceptance tests the entire final permutation. -/
 def HasWidthFivePrograms (L : Language Bool) : Prop :=
   ∃ size : ℕ → ℕ, Cslib.PolynomiallyBounded size ∧ ∀ n,
     ∃ (P : Cslib.BranchingPrograms.MonoidProgram (Fin n) Bool (Equiv.Perm (Fin 5)))

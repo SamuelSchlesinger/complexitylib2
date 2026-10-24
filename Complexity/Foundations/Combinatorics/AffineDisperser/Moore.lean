@@ -61,6 +61,7 @@ variable {F : Type*} [Field F]
 def mooreMatrix {k : ℕ} (u : Fin k → F) : Matrix (Fin k) (Fin k) F :=
   Matrix.of fun l m => u l ^ 2 ^ (m : ℕ)
 
+/-- Entry `(l, m)` of the Moore matrix is `u l ^ 2 ^ m`. -/
 @[simp]
 theorem mooreMatrix_apply {k : ℕ} (u : Fin k → F) (l m : Fin k) :
     mooreMatrix u l m = u l ^ 2 ^ (m : ℕ) :=

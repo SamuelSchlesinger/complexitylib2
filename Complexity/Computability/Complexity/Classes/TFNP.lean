@@ -169,19 +169,19 @@ end Basic
 /-- The search problems in `FNP` with respect to the encoding `enc` of instances: relations that
 are polynomially balanced, every solution of `a` having length at most `p (enc a).length` for a
 polynomial `p`, and decided by a polynomial-time function of the instance and the candidate
-solution. -/
+solution [Papadimitriou, Section 10.3][Papadimitriou94]. -/
 def FNP (enc : α ↪ List Bool) : Set (α → List Bool → Prop) :=
   {R | (∃ p : Polynomial ℕ, ∀ a w, R a w → w.length ≤ p.eval (enc a).length) ∧
     ∃ V : α × List Bool → Bool, ComputableInPolyTime V (encPair enc encBits) encBool ∧
       ∀ a w, R a w ↔ V (a, w) = true}
 
 /-- The search problems in `FNP` solved by a polynomial-time function, Papadimitriou's class `FP`
-of search problems. -/
+of search problems [Papadimitriou, Section 10.3][Papadimitriou94]. -/
 def FPSearch (enc : α ↪ List Bool) : Set (α → List Bool → Prop) :=
   {R | R ∈ FNP enc ∧ ∃ f : α → Option (List Bool),
     ComputableInPolyTime f enc (encOption encBits) ∧ SolvesSearch R f}
 
-/-- The total search problems in `FNP`. -/
+/-- The total search problems in `FNP` [Megiddo and Papadimitriou][MegiddoPapadimitriou1991]. -/
 def TFNP (enc : α ↪ List Bool) : Set (α → List Bool → Prop) :=
   {R | R ∈ FNP enc ∧ IsTotalSearch R}
 
@@ -211,8 +211,10 @@ theorem mem_FPSearch_iff_tidy : R ∈ FPSearch enc ↔ R ∈ FNP enc ∧ ∃ f :
 
 theorem mem_TFNP : R ∈ TFNP enc ↔ R ∈ FNP enc ∧ IsTotalSearch R := Iff.rfl
 
+/-- Every search problem in `FPSearch` is in `FNP`. -/
 theorem FPSearch_subset_FNP : FPSearch enc ⊆ FNP enc := fun _ h => h.1
 
+/-- Every search problem in `TFNP` is in `FNP`. -/
 theorem TFNP_subset_FNP : TFNP enc ⊆ FNP enc := fun _ h => h.1
 
 /-- **`FNP` with the length bound in the verifier.** A relation is in `FNP` exactly when it holds

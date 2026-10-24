@@ -105,12 +105,14 @@ open scoped Classical in
 noncomputable def pluckNormalForm (p : ℕ) (F : Finset (Finset α)) : Finset (Finset α) :=
   if hp : 2 ≤ p then (exists_relatesInSteps_not_containsSunflower hp F).choose else F
 
+/-- For `2 ≤ p`, the normal form of `F` is reached from `F` in at most `F.card` plucks. -/
 theorem relatesInSteps_pluckNormalForm (hp : 2 ≤ p) (F : Finset (Finset α)) :
     ∃ m ≤ F.card, RelatesInSteps (Pluck p) F (pluckNormalForm p F) m := by
   simp only [pluckNormalForm, hp, dite_true]
   obtain ⟨m, hm, hG, -⟩ := (exists_relatesInSteps_not_containsSunflower hp F).choose_spec
   exact ⟨m, hm, hG⟩
 
+/-- For `2 ≤ p`, the normal form contains no sunflower with `p` petals. -/
 theorem not_containsSunflower_pluckNormalForm (hp : 2 ≤ p) (F : Finset (Finset α)) :
     ¬ContainsSunflower p (pluckNormalForm p F) := by
   simp only [pluckNormalForm, hp, dite_true]
@@ -133,6 +135,7 @@ theorem exists_subset_of_relatesInSteps_pluck (hp : 2 ≤ p) {m : ℕ}
     obtain ⟨u, hu, hut⟩ := h.exists_subset hp ht
     exact ⟨u, hu, hut.trans hts⟩
 
+/-- If every set of `F` has size at most `w`, so does every set of its normal form. -/
 theorem forall_card_le_pluckNormalForm (hF : ∀ s ∈ F, s.card ≤ w) :
     ∀ t ∈ pluckNormalForm p F, t.card ≤ w := by
   by_cases hp : 2 ≤ p
@@ -140,6 +143,7 @@ theorem forall_card_le_pluckNormalForm (hF : ∀ s ∈ F, s.card ≤ w) :
     exact forall_card_le_of_relatesInSteps_pluck hp h hF
   · simpa only [pluckNormalForm, hp, dite_false] using hF
 
+/-- Every set of `F` contains a set of its normal form. -/
 theorem exists_subset_of_mem_pluckNormalForm {s : Finset α} (hs : s ∈ F) :
     ∃ t ∈ pluckNormalForm p F, t ⊆ s := by
   by_cases hp : 2 ≤ p

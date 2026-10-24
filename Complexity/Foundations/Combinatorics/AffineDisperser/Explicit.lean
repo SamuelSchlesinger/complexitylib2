@@ -52,6 +52,16 @@ dispersers known: Li's dispersers work for dimension `O(log N)` [Li2023].
 
 ## Main definitions
 
+* `Cslib.AffineDisperser.Explicit.degreePrime`: the `j`-th prime of the field degree on `N` bits.
+* `Cslib.AffineDisperser.Explicit.numBlocks`: the number of blocks `r = ⌊N / n⌋`.
+* `Cslib.AffineDisperser.Explicit.symDegree`: the degree `t = ⌊log₂ N⌋ + 1` of the elementary
+  symmetric polynomial.
+* `Cslib.AffineDisperser.Explicit.subfieldExp`: the subfield exponent `s = ⌊n / (L + 1)⌋`.
+* `Cslib.AffineDisperser.ExplicitField`: the field `𝔽_{2 ^ n}` of the explicit disperser on `N`
+  bits.
+* `Cslib.AffineDisperser.ExplicitMonomial`: the monomials indexing the basis of
+  `ExplicitField N`.
+* `Cslib.AffineDisperser.explicitBasis`: the monomial basis of `ExplicitField N`.
 * `Cslib.AffineDisperser.explicitDisperser`: the explicit function on `N` bits.
 * `Cslib.AffineDisperser.explicitThreshold`: the dimension threshold `d(N)`.
 
@@ -107,26 +117,33 @@ def symDegree (N : ℕ) : ℕ :=
 def subfieldExp (N : ℕ) : ℕ :=
   fieldDegree N / (primeBound N + 1)
 
+/-- Every member of `degreePrimes N` is a prime in `(L, 4 L]`. -/
 theorem prime_of_mem_degreePrimes {N p : ℕ} (hp : p ∈ degreePrimes N) :
     primeBound N < p ∧ p ≤ 4 * primeBound N ∧ p.Prime :=
   mem_primesIoc.1 ((selectBelow_sublist _ _).subset hp)
 
+/-- The primes in `degreePrimes N` are distinct. -/
 theorem nodup_degreePrimes (N : ℕ) : (degreePrimes N).Nodup :=
   (nodup_primesIoc _ _).sublist (selectBelow_sublist _ _)
 
+/-- Each `degreePrime N j` is prime. -/
 theorem degreePrime_prime (N : ℕ) (j : Fin (degreePrimes N).length) : (degreePrime N j).Prime :=
   (prime_of_mem_degreePrimes (List.get_mem _ j)).2.2
 
+/-- Distinct indices give distinct primes: `degreePrime N` is injective. -/
 theorem degreePrime_injective (N : ℕ) : Function.Injective (degreePrime N) :=
   (nodup_degreePrimes N).injective_get
 
+/-- The field degree is the product of the list `degreePrimes N`. -/
 theorem fieldDegree_eq_prod (N : ℕ) : fieldDegree N = (degreePrimes N).prod := by
   rw [fieldDegree, ← List.prod_ofFn]
   exact congrArg List.prod (List.ofFn_get _)
 
+/-- The field degree is nonzero. -/
 theorem fieldDegree_ne_zero (N : ℕ) : fieldDegree N ≠ 0 :=
   Finset.prod_ne_zero_iff.2 fun j _ => (degreePrime_prime N j).ne_zero
 
+/-- The `r` blocks of `n` bits fit in the input: `r n ≤ N`. -/
 theorem numBlocks_mul_le (N : ℕ) : numBlocks N * fieldDegree N ≤ N :=
   Nat.div_mul_le_self N _
 
@@ -166,6 +183,7 @@ within a block are numbered in the mixed-radix order of `finPiFinEquiv`. -/
 def explicitPos (N : ℕ) (q : Fin (numBlocks N) × ExplicitMonomial N) : Fin N :=
   Fin.castLE (numBlocks_mul_le N) (finProdFinEquiv (q.1, finPiFinEquiv q.2))
 
+/-- Distinct coordinates are read from distinct input positions: `explicitPos N` is injective. -/
 theorem explicitPos_injective (N : ℕ) : Function.Injective (explicitPos N) := by
   intro q q' h
   have h' := Fin.castLE_injective _ h

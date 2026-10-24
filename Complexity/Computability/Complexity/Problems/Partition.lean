@@ -52,7 +52,7 @@ namespace Cslib.Complexity
 open Turing.MultiTapeTM ComputableTidilyInPolyTime
 open scoped List
 
-/-- The lists of natural numbers that split into two sub-multisets with equal sums. -/
+/-- The lists of natural numbers that split into two sub-multisets with equal sums [Karp1972]. -/
 def Partition : Set (List ℕ) := {l | ∃ s t : Multiset ℕ, s + t = l ∧ s.sum = t.sum}
 
 /-- A partition is a sub-multiset holding half of the total sum. -/
@@ -152,7 +152,7 @@ theorem polyTimeReducible_SubsetSum_Partition :
 theorem Partition_npHard : NPHard (encList encNat) Partition :=
   SubsetSum_npHard.trans polyTimeReducible_SubsetSum_Partition
 
-/-- **Partition is NP-complete**, with the numbers in binary. -/
+/-- **Partition is NP-complete**, with the numbers in binary [Karp1972]. -/
 theorem Partition_npComplete : NPComplete (encList encNat) Partition :=
   ⟨Partition.mem_NP, Partition_npHard⟩
 

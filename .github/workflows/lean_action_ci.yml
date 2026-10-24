@@ -8,13 +8,18 @@ on:
   merge_group:
   workflow_dispatch:
 
-# A new run for a pull request cancels that pull request's superseded run. Every other run is
-# alone in a group named by its run id: runs that share a group replace each other while pending
-# even without `cancel-in-progress`, and `main` pushes, merge-queue groups and manual runs must
-# all complete. The merge queue requires `ci-checks`, and each `main` run uploads the remote cache
-# and gates the formal-abstract PDFs (scripts/check_abstract_ci.py).
+# A new run for a pull request cancels that pull request's superseded run. Push runs on `main`
+# share `lean-ci-main` without `cancel-in-progress`: the active `main` run finishes and uploads the
+# `.lake` and remote caches, while intermediate `main` pushes are replaced by the latest `main` tip
+# while pending (which is also the only revision `abstracts.yml` and `scripts/check_abstract_ci.py`
+# publish). Merge-queue groups and manual runs each use their own run id so all of them complete.
 concurrency:
-  group: lean-ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  group: >-
+    lean-ci-${{
+      github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) ||
+      github.event_name == 'push' && github.ref == 'refs/heads/main' && 'main' ||
+      github.run_id
+    }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

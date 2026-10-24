@@ -50,6 +50,7 @@ namespace Cslib.BitString
 always has the declared width: high digits are truncated and absent digits are `false`. -/
 def lowBits (width value : ℕ) : List Bool := (List.range width).map value.testBit
 
+/-- `lowBits width value` has `width` digits. -/
 @[simp] theorem length_lowBits (width value : ℕ) : (lowBits width value).length = width := by
   simp [lowBits]
 
@@ -129,6 +130,7 @@ theorem binaryValue_replicate_false_append (n : ℕ) (word : List Bool) :
 leading zeros; it has width `w` when `a < 2 ^ w` (`length_binaryWord`). -/
 def binaryWord (w a : ℕ) : List Bool := List.replicate (w - a.bits.length) false ++ a.bits.reverse
 
+/-- The word of width `w` representing `a` has `w` bits when `a < 2 ^ w`. -/
 theorem length_binaryWord {w a : ℕ} (ha : a < 2 ^ w) : (binaryWord w a).length = w := by
   have : a.bits.length ≤ w := by
     rw [Nat.size_eq_bits_len]
@@ -136,6 +138,7 @@ theorem length_binaryWord {w a : ℕ} (ha : a < 2 ^ w) : (binaryWord w a).length
   simp only [binaryWord, List.length_append, List.length_replicate, List.length_reverse]
   omega
 
+/-- The word `binaryWord w a` represents `a`, whatever the width `w`. -/
 @[simp] theorem binaryValue_binaryWord (w a : ℕ) : binaryValue (binaryWord w a) = a := by
   rw [binaryWord, binaryValue_replicate_false_append, binaryValue_reverse_bits]
 

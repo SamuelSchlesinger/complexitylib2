@@ -116,10 +116,12 @@ def fstBits {a b : ℕ} (x : BitString (a + b)) : BitString a :=
 def sndBits {a b : ℕ} (x : BitString (a + b)) : BitString b :=
   x ∘ Fin.natAdd a
 
+/-- The first `a` bits of `Fin.append u v` are `u`. -/
 @[simp] theorem fstBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
     fstBits (Fin.append u v) = u :=
   funext fun i => Fin.append_left u v i
 
+/-- The last `b` bits of `Fin.append u v` are `v`. -/
 @[simp] theorem sndBits_append {a b : ℕ} (u : BitString a) (v : BitString b) :
     sndBits (Fin.append u v) = v :=
   funext fun i => Fin.append_right u v i
@@ -161,9 +163,11 @@ variable {ι : Type*}
 @[simp] protected theorem add_self (x : ι → Bool) : x + x = 0 :=
   funext fun i => Bool.xor_self (x i)
 
+/-- Adding `x` twice cancels: `x + (x + y) = y`. -/
 @[simp] protected theorem add_cancel_left (x y : ι → Bool) : x + (x + y) = y := by
   rw [← add_assoc, BitString.add_self, zero_add]
 
+/-- Adding `y` twice cancels: `x + y + y = x`. -/
 @[simp] protected theorem add_cancel_right (x y : ι → Bool) : x + y + y = x := by
   rw [add_assoc, BitString.add_self, add_zero]
 

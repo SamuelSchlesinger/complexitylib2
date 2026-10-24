@@ -66,8 +66,10 @@ def read (tape : BiTape Symbol) : ℤ → Option Symbol
   | .ofNat (position + 1) => tape.right.read position
   | .negSucc position => tape.left.read position
 
+/-- Reading at displacement `0` is reading the head. -/
 @[simp] lemma read_zero (tape : BiTape Symbol) : tape.read 0 = tape.head := rfl
 
+/-- The empty tape reads blank at every displacement. -/
 @[simp] lemma read_nil (position : ℤ) : (nil : BiTape Symbol).read position = none := by
   cases position with
   | ofNat position => cases position <;> simp [read, nil]
@@ -165,17 +167,22 @@ theorem spaceUsed_step_le (tape : BiTape Symbol) (action : Option (Option Symbol
     | exact spaceUsed_move _ .right
     | simp
 
+/-- Writing the current head symbol leaves the tape unchanged. -/
 @[simp] lemma write_head_self (tape : BiTape Symbol) : tape.write tape.head = tape := rfl
 
+/-- The tape loaded with a word has the first symbol of the word, if any, under its head. -/
 @[simp] lemma head_mk₁ (l : List Symbol) : (mk₁ l).head = l.head? := by
   cases l <;> rfl
 
+/-- The tape loaded with a word is empty to the left of its head. -/
 @[simp] lemma left_mk₁ (l : List Symbol) : (mk₁ l).left = ∅ := by
   cases l <;> rfl
 
+/-- The tape loaded with a word stores the rest of the word to the right of its head. -/
 @[simp] lemma right_mk₁ (l : List Symbol) : (mk₁ l).right = StackTape.mapSome l.tail := by
   cases l <;> rfl
 
+/-- Moving left on the tape loaded with `l` and writing `a` gives the tape loaded with `a :: l`. -/
 @[simp] lemma write_moveLeft_mk₁ (a : Symbol) (l : List Symbol) :
     (mk₁ l).moveLeft.write (some a) = mk₁ (a :: l) := by
   cases l with
@@ -192,65 +199,84 @@ def equivTape : BiTape Symbol ≃ _root_.Turing.Tape (Option Symbol) where
   left_inv tape := by cases tape; simp
   right_inv tape := by cases tape; simp
 
+/-- `equivTape` preserves the head symbol. -/
 @[simp] lemma head_equivTape (tape : BiTape Symbol) : (equivTape tape).head = tape.head := rfl
 
+/-- The left side of `equivTape tape` is the `ListBlank` of the left side of `tape`. -/
 @[simp] lemma left_equivTape (tape : BiTape Symbol) :
     (equivTape tape).left = StackTape.equivListBlank tape.left := rfl
 
+/-- The right side of `equivTape tape` is the `ListBlank` of the right side of `tape`. -/
 @[simp] lemma right_equivTape (tape : BiTape Symbol) :
     (equivTape tape).right = StackTape.equivListBlank tape.right := rfl
 
+/-- The inverse of `equivTape` preserves the head symbol. -/
 @[simp] lemma head_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) :
     (equivTape.symm tape).head = tape.head := rfl
 
+/-- The left side of `equivTape.symm tape` is the stack tape of the left side of `tape`. -/
 @[simp] lemma left_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) :
     (equivTape.symm tape).left = StackTape.equivListBlank.symm tape.left := rfl
 
+/-- The right side of `equivTape.symm tape` is the stack tape of the right side of `tape`. -/
 @[simp] lemma right_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) :
     (equivTape.symm tape).right = StackTape.equivListBlank.symm tape.right := rfl
 
+/-- `equivTape` sends the empty tape to the blank Mathlib tape. -/
 @[simp] lemma equivTape_nil : equivTape (nil : BiTape Symbol) = default := rfl
 
+/-- The inverse of `equivTape` sends the blank Mathlib tape to the empty tape. -/
 @[simp] lemma equivTape_symm_default :
     equivTape.symm (default : _root_.Turing.Tape (Option Symbol)) = nil := rfl
 
+/-- `equivTape` sends the tape loaded with a word `l` to Mathlib's `Tape.mk₁ (l.map some)`. -/
 @[simp] lemma equivTape_mk₁ (l : List Symbol) :
     equivTape (mk₁ l) = _root_.Turing.Tape.mk₁ (l.map some) := by
   cases l <;> rfl
 
+/-- The inverse of `equivTape` sends Mathlib's `Tape.mk₁ (l.map some)` to the tape loaded
+with `l`. -/
 @[simp] lemma equivTape_symm_mk₁ (l : List Symbol) :
     equivTape.symm (_root_.Turing.Tape.mk₁ (l.map some)) = mk₁ l := by
   apply equivTape.injective
   simp
 
+/-- `equivTape` commutes with writing. -/
 @[simp] lemma equivTape_write (tape : BiTape Symbol) (a : Option Symbol) :
     equivTape (tape.write a) = (equivTape tape).write a := rfl
 
+/-- The inverse of `equivTape` commutes with writing. -/
 @[simp] lemma equivTape_symm_write (tape : _root_.Turing.Tape (Option Symbol)) (a : Option Symbol) :
     equivTape.symm (tape.write a) = (equivTape.symm tape).write a := rfl
 
+/-- `equivTape` turns `moveLeft` into Mathlib's move to the left. -/
 @[simp] lemma equivTape_moveLeft (tape : BiTape Symbol) :
     equivTape tape.moveLeft = (equivTape tape).move .left := by
   simp [equivTape, moveLeft, _root_.Turing.Tape.move]
 
+/-- `equivTape` turns `moveRight` into Mathlib's move to the right. -/
 @[simp] lemma equivTape_moveRight (tape : BiTape Symbol) :
     equivTape tape.moveRight = (equivTape tape).move .right := by
   simp [equivTape, moveRight, _root_.Turing.Tape.move]
 
+/-- `equivTape` commutes with moving the head in either direction. -/
 @[simp] lemma equivTape_move (tape : BiTape Symbol) (d : _root_.Turing.Dir) :
     equivTape (tape.move d) = (equivTape tape).move d := by
   cases d <;> simp [move]
 
+/-- The inverse of `equivTape` commutes with moving the head in either direction. -/
 @[simp] lemma equivTape_symm_move (tape : _root_.Turing.Tape (Option Symbol))
     (d : _root_.Turing.Dir) :
     equivTape.symm (tape.move d) = (equivTape.symm tape).move d := by
   apply equivTape.injective
   simp
 
+/-- `equivTape` commutes with an optional head move, where `none` leaves the tape in place. -/
 @[simp] lemma equivTape_optionMove (tape : BiTape Symbol) (d : Option _root_.Turing.Dir) :
     equivTape (tape.optionMove d) = d.elim (equivTape tape) (fun d => (equivTape tape).move d) := by
   cases d <;> simp [optionMove]
 
+/-- Reading the Mathlib tape at `i` is reading the tape at displacement `i`. -/
 @[simp] lemma nth_equivTape (tape : BiTape Symbol) (i : ℤ) :
     (equivTape tape).nth i = tape.read i := by
   cases i with
@@ -259,6 +285,7 @@ def equivTape : BiTape Symbol ≃ _root_.Turing.Tape (Option Symbol) where
   | negSucc n =>
     simp [read, _root_.Turing.Tape.nth]
 
+/-- Reading `equivTape.symm tape` at displacement `i` is reading `tape` at `i`. -/
 @[simp] lemma read_equivTape_symm (tape : _root_.Turing.Tape (Option Symbol)) (i : ℤ) :
     (equivTape.symm tape).read i = tape.nth i := by
   rw [← nth_equivTape (equivTape.symm tape) i, equivTape.apply_symm_apply]

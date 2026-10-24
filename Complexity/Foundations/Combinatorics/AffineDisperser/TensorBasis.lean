@@ -176,6 +176,7 @@ noncomputable def prodPowBasis (hm : Pairwise (Nat.Coprime on m)) (hE : finrank 
     rw [Fintype.card_pi, hE]
     simp)
 
+/-- The basis vector of `prodPowBasis` at exponents `J` is the monomial `∏ᵢ αᵢ ^ Jᵢ`. -/
 @[simp]
 theorem prodPowBasis_apply (hm : Pairwise (Nat.Coprime on m)) (hE : finrank K E = ∏ i, m i)
     (hα : ∀ i, (minpoly K (α i)).natDegree = m i) (J : (i : ι) → Fin (m i)) :

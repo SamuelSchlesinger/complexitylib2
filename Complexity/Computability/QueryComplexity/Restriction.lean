@@ -22,6 +22,11 @@ definitionally, so the generic restriction operations apply without conversions.
 * `Cslib.QueryComplexity.fill_restrict`: filling a coordinate certificate is a piecewise input.
 * `Cslib.QueryComplexity.forces_iff_forall_fill`: a forcing assignment makes the restricted
   function constant.
+
+## References
+
+* [H. Buhrman, R. de Wolf, *Complexity measures and decision tree complexity:
+  a survey*][BuhrmanDeWolf2002]
 -/
 
 @[expose] public section

@@ -399,14 +399,26 @@ def check_outputs(build_dir: Path, skip: bool, current=lake_outputs_current,
 
 
 def load_ileans(build_dir: Path) -> dict[str, dict]:
-    ileans = {}
+    """The `.ilean` data of the modules the three libraries' roots import, by module name.
+
+    A long-lived build directory keeps the outputs of modules that were since deleted or moved,
+    and `lake build --no-build` does not notice them, so modules are found by following imports
+    from the roots rather than by listing files. Every root and every module they import must have
+    one; a missing file means the build is incomplete. The roots themselves are left out."""
+    ileans, todo = {}, [(root, None) for root in ROOTS]
+    while todo:
+        module, importer = todo.pop()
+        if module in ileans:
+            continue
+        path = build_dir / (module.replace(".", "/") + ".ilean")
+        if not path.is_file():
+            sys.exit(f"{path} is missing ({'imported by ' + importer if importer else 'a root'}); "
+                     "run `lake build " + " ".join(ROOTS) + "` first")
+        ileans[module] = json.loads(path.read_text())
+        todo.extend((i[0], module) for i in ileans[module]["directImports"]
+                    if i[0].split(".")[0] in ROOTS)
     for root in ROOTS:
-        for path in sorted((build_dir / root).rglob("*.ilean")):
-            data = json.loads(path.read_text())
-            ileans[data["module"]] = data
-    if not ileans:
-        sys.exit(f"no .ilean files under {build_dir}; run "
-                 "`lake build Complexity ComplexityTests ComplexityAbstracts` first")
+        del ileans[root]
     return ileans
 
 

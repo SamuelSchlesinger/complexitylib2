@@ -39,7 +39,12 @@ elimination organized for straight-line evaluation, as needed to count its gates
 
 * `Cslib.LinearAlgebra.firstFlags`: the indicator of the first nonzero entry.
 * `Cslib.LinearAlgebra.firstNonzero`: the first nonzero entry of a vector, as a value.
+* `Cslib.LinearAlgebra.rowValues`: the values `a ⬝ N i` of a row on the vectors of the family.
+* `Cslib.LinearAlgebra.pivotVec`: the pivot vector, the member of the family at the first nonzero
+  row value, or zero.
 * `Cslib.LinearAlgebra.kernelStep`: process one row.
+* `Cslib.LinearAlgebra.kernelBasisUpTo`: process the first `k` rows, starting from the unit
+  vectors.
 * `Cslib.LinearAlgebra.kernelBasis`: process all rows, starting from the unit vectors.
 * `Cslib.LinearAlgebra.kernelVec`: the first nonzero vector of the final family.
 

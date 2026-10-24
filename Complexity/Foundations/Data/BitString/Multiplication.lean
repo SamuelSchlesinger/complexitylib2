@@ -24,6 +24,8 @@ bounded carries normalize them to the product bits.
 
 * `Cslib.BitString.mulColumnWord`: the contributing rows of one multiplication column.
 * `Cslib.BitString.mulColumn`: its number of contributing rows.
+* `Cslib.BitString.mulPrefix`: the weighted sum `∑ j < k, mulColumn x y j * 2 ^ j` of the columns
+  below `k`.
 * `Cslib.BitString.mulCarry`: the actual carry entering a column.
 
 ## Main results
@@ -156,6 +158,7 @@ private theorem mulPrefix_eq_mul {x y w k : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ 
 /-- The carry entering column `k`, constructed from the actual lower columns. -/
 def mulCarry (x y k : ℕ) : ℕ := mulPrefix x y k / 2 ^ k
 
+/-- No carry enters column `0`. -/
 @[simp] theorem mulCarry_zero (x y : ℕ) : mulCarry x y 0 = 0 := by simp [mulCarry, mulPrefix]
 
 private theorem mulCarry_succ (x y k : ℕ) :

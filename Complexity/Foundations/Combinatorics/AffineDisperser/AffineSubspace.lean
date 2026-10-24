@@ -77,11 +77,13 @@ def IsAffine.linearMap {g : V → W} (hg : IsAffine g) : V →ₗ[Bool] W where
     · change g ((1 : Bool) • x) + g 0 = (1 : Bool) • (g x + g 0)
       rw [one_smul, one_smul]
 
+/-- The linear part of `g` sends `x` to `g x + g 0`. -/
 @[simp]
 theorem IsAffine.linearMap_apply {g : V → W} (hg : IsAffine g) (x : V) :
     hg.linearMap x = g x + g 0 :=
   rfl
 
+/-- The linear part of an injective map that is affine over `𝔽₂` is injective. -/
 theorem IsAffine.linearMap_injective {g : V → W} (hg : IsAffine g)
     (hinj : Function.Injective g) : Function.Injective hg.linearMap := fun x y h => by
   rw [hg.linearMap_apply, hg.linearMap_apply, add_left_inj] at h
@@ -98,6 +100,7 @@ def IsAffine.toAffineMap {g : V → W} (hg : IsAffine g) : V →ᵃ[Bool] W wher
     rw [vadd_eq_add, vadd_eq_add, h, hg.linearMap_apply]
     abel
 
+/-- As a function, the Mathlib affine map of `g` is `g` itself. -/
 @[simp]
 theorem IsAffine.coe_toAffineMap {g : V → W} (hg : IsAffine g) : ⇑hg.toAffineMap = g :=
   rfl

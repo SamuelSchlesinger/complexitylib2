@@ -36,6 +36,11 @@ offset `pathOffset`, which a machine can recompute from the path alone.
 * `Cslib.TreeEval.Tree.getElem_body_pathOffset`: the bits of the node at a path, read off the body
   at its offset; `Cslib.TreeEval.Tree.getElem_body_gate` and `Cslib.TreeEval.Tree.getElem_body_leaf`
   for gates and leaves.
+
+## References
+
+* [S. Cook, P. McKenzie, D. Wehr, M. Braverman and R. Santhanam, *Pebbles and branching programs
+  for tree evaluation*][CMWBS2012] introduce the problem, with gates given by their tables.
 -/
 
 @[expose] public section
@@ -128,19 +133,12 @@ def header (ℓ h : ℕ) : List Bool :=
 @[simp] theorem length_header (ℓ h : ℕ) : (header ℓ h).length = ℓ + h + 2 := by
   simp [header]; omega
 
-/-- A unary block of `true` bits followed by `false` determines both its length and the remaining
-suffix. -/
-theorem replicate_true_append_inj {n n' : ℕ} {b b' : List Bool}
-    (h : List.replicate n true ++ false :: b = List.replicate n' true ++ false :: b') :
-    n = n' ∧ b = b' :=
-  List.replicate_true_append_false_inj h
-
 /-- The header determines the value length and the height. -/
 theorem header_append_inj {ℓ' h' : ℕ} {b b' : List Bool}
     (e : header ℓ h ++ b = header ℓ' h' ++ b') : ℓ = ℓ' ∧ h = h' ∧ b = b' := by
   simp only [header, List.append_assoc, List.cons_append, List.nil_append] at e
-  obtain ⟨h₁, e⟩ := replicate_true_append_inj e
-  exact ⟨h₁, replicate_true_append_inj e⟩
+  obtain ⟨h₁, e⟩ := List.replicate_true_append_false_inj e
+  exact ⟨h₁, List.replicate_true_append_false_inj e⟩
 
 /-- The encoding of an instance: its header, then its body. -/
 def encode (T : Tree ℓ h) : List Bool := header ℓ h ++ T.body

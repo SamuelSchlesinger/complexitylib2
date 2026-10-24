@@ -40,6 +40,7 @@ reduction and `NP`-completeness are proved in `CookLevin/`.
 
 ## References
 
+* [R. M. Karp, *Reducibility among combinatorial problems*][Karp1972]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -49,7 +50,8 @@ namespace Cslib.Complexity
 
 open Cslib.Logic.PL Turing.MultiTapeTM
 
-/-- The satisfiable CNF formulas over variables numbered by natural numbers. -/
+/-- The satisfiable CNF formulas over variables numbered by natural numbers [Karp1972],
+[Arora and Barak, Section 2.3][AroraBarak09]. -/
 def SAT : Set (CNF ℕ) := {φ | φ.Satisfiable}
 
 theorem mem_SAT {φ : CNF ℕ} : φ ∈ SAT ↔ φ.Satisfiable := Iff.rfl

@@ -24,6 +24,8 @@ is not automatically a strict PPT operation.
 
 ## Main definitions
 
+* `Cslib.probOracleSpec`: the disjoint sum of the finite-uniform sampling requests and the
+  external queries of `spec`.
 * `Cslib.ProbOracleComp`: the sum of the uniform sampling and external oracle interfaces.
 * `Cslib.ProbOracleComp.sample`, `.query`: closed sampling and typed external calls.
 * `Cslib.ProbOracleComp.handler`: combine handlers without introducing another interpreter.

@@ -81,10 +81,12 @@ def runStages {β : Type v} (step : ℕ → β → β) : ℕ → β → β
   | 0, b => b
   | k + 1, b => step k (runStages step k b)
 
+/-- Running no stages leaves the state unchanged. -/
 @[simp]
 theorem runStages_zero {β : Type v} (step : ℕ → β → β) (b : β) :
     runStages step 0 b = b := rfl
 
+/-- Running `k + 1` stages runs the first `k` and then stage `k`. -/
 @[simp]
 theorem runStages_succ {β : Type v} (step : ℕ → β → β) (k : ℕ) (b : β) :
     runStages step (k + 1) b = step k (runStages step k b) := rfl
@@ -202,6 +204,7 @@ end Scan
 def correctionStep (d i : ℕ) (v : α) : α :=
   if d ≤ i then f v else v
 
+/-- Running `k` correction stages applies `f` exactly `k - d` times. -/
 theorem correction_run (d k : ℕ) (v : α) :
     runStages (correctionStep f d) k v = f^[k - d] v := by
   induction k with
@@ -313,6 +316,7 @@ end Period
 def walkStep (r i : ℕ) (v : α) : α :=
   if i < r then f v else v
 
+/-- Running `k` cycle-walk stages applies `f` exactly `min r k` times. -/
 theorem walk_run (r k : ℕ) (v : α) :
     runStages (walkStep f r) k v = f^[min r k] v := by
   induction k with

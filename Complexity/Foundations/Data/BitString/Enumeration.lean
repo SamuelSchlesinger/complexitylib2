@@ -71,6 +71,7 @@ theorem nodup_enum (k : ℕ) : (enum k).Nodup := by
 /-- The binary enumeration represented by ordinary lists, in the same order. -/
 def enumList (count : ℕ) : List (List Bool) := (enum count).map List.ofFn
 
+/-- The only word of length `0` is the empty list. -/
 @[simp] theorem enumList_zero : enumList 0 = [[]] := rfl
 
 /-- Extend every shorter string by both possible first bits. -/

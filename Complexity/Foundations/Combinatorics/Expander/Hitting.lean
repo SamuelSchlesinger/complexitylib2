@@ -83,10 +83,13 @@ noncomputable def weightedWalk : ℕ → (ℕ → V → ℝ) → V → ℝ
   | 0, h => h 0
   | t + 1, h => h 0 * G.walk (weightedWalk t fun i => h (i + 1))
 
+/-- The weighted walk of length `0` is the weight `h 0`. -/
 @[simp]
 theorem weightedWalk_zero (h : ℕ → V → ℝ) : G.weightedWalk 0 h = h 0 :=
   rfl
 
+/-- The weighted walk of length `t + 1` multiplies by `h 0` after a step of the walk operator
+applied to the weighted walk of length `t` of the shifted weights. -/
 theorem weightedWalk_succ (t : ℕ) (h : ℕ → V → ℝ) :
     G.weightedWalk (t + 1) h = h 0 * G.walk (G.weightedWalk t fun i => h (i + 1)) :=
   rfl

@@ -25,6 +25,8 @@ bits with `false` and ignores excess bits, including when a dimension or the wid
 
 * `Cslib.Matrix.toBinary`, `Cslib.Matrix.ofBinary`: fixed-width row-major encoding and total
   decoding.
+* `Cslib.Matrix.binaryEntry`: the number read from the entry bits at an arbitrary row and
+  column of a word, with missing bits `false`.
 * `Cslib.Matrix.encBinary`: the injective encoding of matrices with fixed dimensions and width.
 
 ## Main results

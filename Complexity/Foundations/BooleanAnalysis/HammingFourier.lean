@@ -140,12 +140,15 @@ theorem noiseDist_zero (f g : (ι → Bool) → Bool) :
     noiseDist 0 f g = (𝔼 x, signVal (f x) - 𝔼 x, signVal (g x)) ^ 2 / 4 := by
   rw [noiseDist_eq_noiseStability, zero_pow two_ne_zero, noiseStability_zero, expect_sub_distrib]
 
+/-- The noise distance is nonnegative. -/
 theorem noiseDist_nonneg (ρ : ℝ) (f g : (ι → Bool) → Bool) : 0 ≤ noiseDist ρ f g :=
   expect_nonneg fun _ _ => div_nonneg (sq_nonneg _) zero_le_four
 
+/-- The noise distance is symmetric. -/
 theorem noiseDist_comm (ρ : ℝ) (f g : (ι → Bool) → Bool) : noiseDist ρ f g = noiseDist ρ g f := by
   simp only [noiseDist, ← neg_sub (noiseOp ρ (fun y => signVal (f y)) _), neg_sq]
 
+/-- A Boolean function is at noise distance zero from itself. -/
 @[simp] theorem noiseDist_self (ρ : ℝ) (f : (ι → Bool) → Bool) : noiseDist ρ f f = 0 := by
   simp [noiseDist]
 
@@ -227,6 +230,7 @@ Hamming distance. This is a definition, not an instance, since it depends on `ρ
 noncomputable abbrev noiseMetricSpace {ρ : ℝ} (hρ : ρ ≠ 0) : MetricSpace ((ι → Bool) → Bool) :=
   MetricSpace.induced (noiseEmbedding ρ) (noiseEmbedding_injective hρ) inferInstance
 
+/-- The distance in `noiseMetricSpace` is the square root `√D_ρ` of the noise distance. -/
 theorem noiseMetricSpace_dist {ρ : ℝ} (hρ : ρ ≠ 0) (f g : (ι → Bool) → Bool) :
     (noiseMetricSpace hρ).dist f g = √(noiseDist ρ f g) :=
   dist_noiseEmbedding ρ f g

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check documentation pins and generated module/search coverage (Python 3.11+)."""
+"""Check documentation pins, module/search coverage and the guide's links (Python 3.11+)."""
 
 import argparse
 from contextlib import closing
@@ -22,26 +22,41 @@ def require(condition, message):
         raise ValueError(message)
 
 
+LOCKED_KEYS = ("type", "url", "rev", "subDir")
+
+
+def check_project(project, label, generator_name, root_packages, toolchain):
+    """Check a documentation project that shares the library's toolchain and package checkouts."""
+    manifest = json.loads((ROOT / project / "lake-manifest.json").read_text())
+    packages = {p["name"].strip("«»"): p for p in manifest["packages"]}
+    for package in root_packages:
+        locked = packages.get(package["name"])
+        require(locked is not None, f"{label} lockfile omits {package['name']}")
+        for key in LOCKED_KEYS:
+            require(package.get(key) == locked.get(key),
+                    f"{label} lockfile differs for {package['name']}: {key}")
+    require((ROOT / project / "lean-toolchain").read_text().strip() == toolchain,
+            f"{label} toolchain differs from the library")
+    config = tomllib.loads((ROOT / project / "lakefile.toml").read_text())
+    generator = next(p for p in config["require"] if p["name"] == generator_name)
+    require(generator["rev"] == toolchain.rsplit(":", 1)[-1],
+            f"{generator_name} tag must match the Lean version")
+    require(packages[generator_name]["inputRev"] == generator["rev"],
+            f"{label} lockfile has a stale {generator_name} tag")
+    return packages
+
+
 def check_config():
     root_manifest = json.loads((ROOT / "lake-manifest.json").read_text())
-    docs_manifest = json.loads((ROOT / "docbuild/lake-manifest.json").read_text())
-    docs_packages = {p["name"].strip("«»"): p for p in docs_manifest["packages"]}
-    for package in root_manifest["packages"]:
-        locked = docs_packages.get(package["name"])
-        require(locked is not None, f"Documentation lockfile omits {package['name']}")
-        for key in ("type", "url", "rev", "subDir"):
-            require(package.get(key) == locked.get(key),
-                    f"Documentation lockfile differs for {package['name']}: {key}")
-
     toolchain = (ROOT / "lean-toolchain").read_text().strip()
-    require((ROOT / "docbuild/lean-toolchain").read_text().strip() == toolchain,
-            "Documentation toolchain differs from the library")
-    config = tomllib.loads((ROOT / "docbuild/lakefile.toml").read_text())
-    generator = next(p for p in config["require"] if p["name"] == "doc-gen4")
-    version = toolchain.rsplit(":", 1)[-1]
-    require(generator["rev"] == version, "doc-gen4 tag must match the Lean version")
-    require(docs_packages["doc-gen4"]["inputRev"] == generator["rev"],
-            "Documentation lockfile has a stale doc-gen4 tag")
+    docs_packages = check_project("docbuild", "Documentation", "doc-gen4",
+                                  root_manifest["packages"], toolchain)
+    guide_packages = check_project("guide", "Guide", "verso", root_manifest["packages"], toolchain)
+    # Both projects check out their packages into the library's .lake/packages.
+    for name in sorted(docs_packages.keys() & guide_packages.keys()):
+        for key in LOCKED_KEYS:
+            require(docs_packages[name].get(key) == guide_packages[name].get(key),
+                    f"Guide and documentation lockfiles differ for {name}: {key}")
     require((ROOT / "docbuild/docs/references.bib").read_bytes()
             == (ROOT / "references.bib").read_bytes(),
             "Documentation bibliography differs from references.bib")
@@ -129,10 +144,38 @@ def check_output():
     print(f"Documentation covers {len(sources)} modules and representative theorem search entries.")
 
 
+# Where the guide links declarations (guide/ComplexityGuide/ApiDocs.lean).
+API_DOCS_URL = "https://www.cslib.io/complexitylib/"
+
+
+def check_guide_links():
+    docs = ROOT / "docbuild/.lake/build/doc"
+    pages = sorted((ROOT / "guide/.lake/build/site/html-multi").rglob("*.html"))
+    require(pages, "Missing guide output")
+    link = re.compile(r'href="' + re.escape(API_DOCS_URL) + r'([^"]*)"')
+    anchors = {}
+    links = set()
+    for page in pages:
+        links.update(html.unescape(target) for target in link.findall(page.read_text()))
+    for target in sorted(links):
+        path, _, fragment = target.partition("#")
+        file = docs / (unquote(path) or "index.html")
+        require(file.is_file(), f"Guide links to a missing documentation page: {path}")
+        if fragment:
+            if file not in anchors:
+                ids = re.findall(r'id="([^"]*)"', file.read_text())
+                anchors[file] = {html.unescape(i) for i in ids}
+            require(unquote(fragment) in anchors[file],
+                    f"Guide links to a missing documentation anchor: {target}")
+    print(f"The guide's {len(links)} links into the documentation resolve.")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config-only", action="store_true",
                         help="check pins before invoking Lake; do not require built documentation")
+    parser.add_argument("--guide", action="store_true",
+                        help="also check the built guide's links into the built documentation")
     args = parser.parse_args()
     try:
         check_config()
@@ -140,6 +183,8 @@ def main():
             print("Documentation configuration is consistent.")
         else:
             check_output()
+            if args.guide:
+                check_guide_links()
     except (OSError, ValueError, KeyError, StopIteration, sqlite3.Error) as error:
         parser.exit(1, f"Documentation check failed: {error}\n")
 

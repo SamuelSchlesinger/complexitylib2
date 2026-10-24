@@ -54,6 +54,7 @@ noncomputable def maxTransientDepth : ℕ := Finset.univ.sup (transientDepth f)
 /-- The least common multiple `λ` of all cycle lengths. -/
 noncomputable def cyclePeriod : ℕ := Finset.univ.lcm (cycleLength f)
 
+/-- The least common multiple of all cycle lengths is positive. -/
 theorem cyclePeriod_pos : 0 < cyclePeriod f := by
   apply Nat.pos_of_ne_zero
   intro h

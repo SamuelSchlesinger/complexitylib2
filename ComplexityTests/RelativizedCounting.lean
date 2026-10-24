@@ -41,6 +41,19 @@ example (A : Set (List Bool)) : A ∈ PPWithOracle A encBits := by
   simp only [Polynomial.eval_zero, pow_zero, acceptCount_zero, queryVerifier]
   by_cases hw : w ∈ A <;> simp [hw]
 
+/-- The complement of every oracle: the negated query accepts the single empty witness exactly
+off the oracle. -/
+example (A : Set (List Bool)) : Aᶜ ∈ PPWithOracle A encBits := by
+  refine ⟨0, fun x => !queryVerifier A x,
+    (queryVerifier_polyTime A).map ComputableTidilyInPolyTime.bool_not, fun w => ?_⟩
+  simp only [Polynomial.eval_zero, pow_zero, acceptCount_zero, queryVerifier]
+  by_cases hw : w ∈ A <;> simp [hw]
+
+/-- A problem in `PP` without the oracle, the empty word, is in `PP` relative to every oracle. -/
+example (A : Set (List Bool)) : {w : List Bool | w.isEmpty = true} ∈ PPWithOracle A encBits :=
+  PP_subset_PPWithOracle A encBits ⟨0, fun x => x.1.isEmpty, by fun_prop, fun w => by
+    cases w <;> simp [acceptCount_zero]⟩
+
 example : queryCount {w | w = [true]} [true] = 1 ∧
     queryCount {w | w = [true]} [false] = 0 := by
   simp [queryCount, acceptCount_zero, queryVerifier]

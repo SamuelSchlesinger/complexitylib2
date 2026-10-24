@@ -16,6 +16,53 @@ ABSTRACTS_DIR = ROOT / "abstracts/ComplexityAbstracts"
 
 
 class AbstractToTexTests(unittest.TestCase):
+    def test_representation_sections_move_after_results_without_losing_code(self):
+        sample = """/-! # Title
+An abstract.
+-/
+namespace Example
+universe u
+/-! ## Representation details
+The exact delimiter convention.
+-/
+/-- A delimiter. -/
+def delimiter : Bool := false
+/-! A continuation of the representation explanation. -/
+def serial : List Bool := [delimiter]
+/-! ## Main result -/
+/-- The result. -/
+theorem headline : serial = [false] := rfl
+/-! ## Representation details -/
+/-- A second representation detail. -/
+def extra : Nat := 2
+end Example
+"""
+        title, intro, sections = abstract_to_tex.parse_abstract(sample)
+        for renderer in (abstract_to_tex.render_markdown, abstract_to_tex.render_tex):
+            with self.subTest(renderer=renderer.__name__):
+                output = renderer(title, intro, sections)
+                self.assertIn("universe u", output)
+                self.assertLess(output.index("headline"), output.index("Appendix:"))
+                self.assertLess(output.index("Appendix:"), output.index("def delimiter"))
+                self.assertLess(output.index("def serial"), output.index("def extra"))
+                self.assertEqual(output.count("def delimiter"), 1)
+                self.assertIn("continuation of the representation", output)
+                self.assertNotIn("rfl", output)
+
+    def test_undocumented_declarations_are_not_silently_omitted(self):
+        sample = "/-! # Title\nIntro.\n-/\nnamespace Example\ndef first := 1\nend Example\n"
+        output = abstract_to_tex.render_markdown(*abstract_to_tex.parse_abstract(sample))
+        self.assertIn("def first := 1", output)
+
+    def test_lean_scanner_preserves_primed_identifiers_beside_character_literals(self):
+        text = "def result := f' 'a'\ndef quote := '\"'\nnamespace Real\n"
+        masked = abstract_to_tex.lean_code(text)
+        self.assertIn("f'", masked)
+        self.assertNotIn("'a'", masked)
+        self.assertNotIn("\"", masked)
+        self.assertIn("namespace Real", masked)
+        self.assertEqual(len(masked), len(text))
+
     def test_all_abstracts_render_markdown_and_tex(self):
         expected_theorems = {
             "CookLevinAbstract.lean": [
@@ -75,6 +122,30 @@ class AbstractToTexTests(unittest.TestCase):
             abstract_to_tex.escape_tex_prose(prose),
             r"Check \texttt{x ** y} and \textbf{bold} text.",
         )
+
+    def test_attributed_theorems_strip_proofs_and_injectivity_helpers(self):
+        attribute = '@[deprecated (since := "2026-10-23")]\n'
+        sample = "def encX := f\n\n" + attribute + (
+            "theorem encX_injective : Function.Injective encX := Bridge.proof\n\n") + attribute + (
+            "lemma visible : P := Bridge.other_proof")
+        output = abstract_to_tex.clean_code_for_display(sample)
+        self.assertNotIn("encX_injective", output)
+        self.assertNotIn("Bridge.", output)
+        self.assertIn("lemma visible : P", output)
+        self.assertEqual(abstract_to_tex.theorem_name(attribute + "theorem selected : P := proof"),
+                         "selected")
+
+    def test_wrapped_prose_is_one_paragraph_and_citation_keys_allow_whitespace(self):
+        output = abstract_to_tex.render_tex_intro(
+            "A machine has read-only input and write-only\noutput, with a polynomial bound.\n\n"
+            "A separate paragraph.\n## References\n"
+            "* [A. Author, *A paper*]\n  [Reference2026]\n")
+        self.assertEqual(output[0],
+                         "A machine has read-only input and write-only output, with a polynomial bound.")
+        self.assertEqual(output[1], "A separate paragraph.")
+        self.assertIn(r"\item{} A. Author, \emph{A paper} {\footnotesize (Reference2026)}", output)
+        self.assertEqual(abstract_to_tex.escape_tex_prose("[A title]\n[Reference2026]"),
+                         r"A title {\footnotesize (Reference2026)}")
 
     def test_only_injectivity_helpers_are_elided(self):
         sample = (

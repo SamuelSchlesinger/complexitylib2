@@ -6,17 +6,20 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.DuplicateFlags
 import Complexity.Foundations.Data.BitString.Basic
+import ComplexityTests.CircuitMaterialize
 
 /-!
 # Duplicate detection clients
 
 Compare the circuit with a direct search through the original input, including unsorted keys,
-repeated complete records, arbitrary key selectors, empty keys and singleton arrays.
+repeated complete records, arbitrary key selectors, empty keys and singleton arrays. The
+exhaustive check evaluates the materialized circuit, which `materialize_eq` proves equal to the
+original.
 -/
 
 namespace ComplexityTests.DuplicateFlags
 
-open Cslib Cslib.Circuits Cslib.Circuits.Boolean
+open Cslib Cslib.Circuits Cslib.Circuits.Boolean ComplexityTests.CircuitMaterialize
 
 example {r k : ℕ} (key : Fin k → Fin r) (d : ℕ)
     (x : BitString (BitonicSort.arity d * r)) (i : Fin (BitonicSort.arity d)) :
@@ -29,7 +32,7 @@ example {r k : ℕ} (key : Fin k → Fin r) (d : ℕ)
 /-- info: true -/
 #guard_msgs in
 #eval
-  let c := duplicateFlagsCircuit (![2, 0] : Fin 2 → Fin 3) 2
+  let c := materialize (duplicateFlagsCircuit (![2, 0] : Fin 2 → Fin 3) 2)
   (List.finRange 4096).all fun raw =>
     let x := (BitString.equivFin 12).symm raw
     let rows : Fin 4 → BitString 3 := directProductInput x

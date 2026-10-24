@@ -49,7 +49,7 @@ variable {α : Type*} {enc : α ↪ List Bool} {A : Set α}
 
 /-- The problems decidable within space `O(s n)`, that is `c₁ * s n + c₂` for constants `c₁` and
 `c₂`, on instances whose encoding under `enc` has length `n`, by a machine with a binary alphabet
-and finitely many states, within some time bound of `n`. -/
+and finitely many states, within some time bound of `n` [Sipser, Definition 8.2][Sipser2013]. -/
 def DSPACE (enc : α ↪ List Bool) (s : ℕ → ℕ) : Set (Set α) :=
   {A | ∃ c₁ c₂ : ℕ, ∃ t : ℕ → ℕ,
     DecidableInTimeAndSpace A enc (fun a => t (enc a).length) fun a => c₁ * s (enc a).length + c₂}

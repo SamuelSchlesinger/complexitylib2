@@ -62,11 +62,13 @@ namespace Cslib.FunctionalGraph
 universe u
 variable {α : Type u} [Finite α] (f : α → α) (H : Finset α)
 
+/-- The cycle entry `f^[transientDepth f x] x` of a hull state `x` is marked. -/
 theorem forest_cycle_entry_mem {x : α} (hx : x ∈ checkpointHull f H) :
     f^[transientDepth f x] x ∈ forestMarks f H := by
   apply forestRoot_mem_marks f H (checkpointHull_iterate f H hx le_rfl)
   rw [transientDepth_iterate, Nat.sub_self]
 
+/-- For a hull state `x` and `i < transientDepth f x`, the state `f^[i] x` is a forest source. -/
 theorem forest_iterate_mem_sources {x : α} (hx : x ∈ checkpointHull f H)
     {i : ℕ} (hi : i < transientDepth f x) : f^[i] x ∈ forestSources f H := by
   apply (mem_forestSources f H _).mpr
@@ -87,6 +89,7 @@ structure IsForestEdge (x : α) (d : ℕ) : Prop where
   /-- No intermediate vertex is a refined mark. -/
   interior : ∀ i, 0 < i → i < d → f^[i] x ∉ forestMarks f H
 
+/-- Every state `f^[i] x` with `i < d` on a compressed edge is a forest source. -/
 theorem IsForestEdge.source {x : α} {d : ℕ} (h : IsForestEdge f H x d)
     {i : ℕ} (hi : i < d) : f^[i] x ∈ forestSources f H :=
   forest_iterate_mem_sources f H (forestMarks_subset_hull f H h.start_mem) (hi.trans_le h.le_depth)
@@ -247,6 +250,7 @@ theorem forest_reaches_through_edge {a h : α} {d i t : ℕ}
         · exact ha.interior (i + 1) (by lia) hi
       exact ih (by lia) hpred
 
+/-- A state of positive transient depth that is reachable from a hull state lies in the hull. -/
 theorem forest_transient_reachable_mem {x y : α} (hx : x ∈ checkpointHull f H)
     (hy : 0 < transientDepth f y) (hr : ∃ t, f^[t] x = y) : y ∈ checkpointHull f H := by
   obtain ⟨t, ht⟩ := hr

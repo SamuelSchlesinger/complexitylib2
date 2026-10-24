@@ -77,7 +77,7 @@ namespace Cslib.Complexity
 open Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 /-- The graphs with a vertex cover of `k` of their vertices: `k` declared vertices meeting every
-edge between two declared vertices. -/
+edge between two declared vertices [Karp1972]. -/
 def VertexCover : Set (Graph × ℕ) :=
   {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧
     (x.1.toSimpleGraph.induce {v | v ∈ x.1.1}).IsVertexCover {v | ↑v ∈ S} ∧ S.card = x.2}
@@ -251,7 +251,7 @@ theorem polyTimeReducible_IndependentSet_VertexCover :
 theorem VertexCover_npHard : NPHard (encPair encGraph encNat) VertexCover :=
   IndependentSet_npHard.trans polyTimeReducible_IndependentSet_VertexCover
 
-/-- **`VertexCover` is NP-complete.** -/
+/-- **`VertexCover` is NP-complete** [Karp1972]. -/
 theorem VertexCover_npComplete : NPComplete (encPair encGraph encNat) VertexCover :=
   ⟨VertexCover.mem_NP, VertexCover_npHard⟩
 

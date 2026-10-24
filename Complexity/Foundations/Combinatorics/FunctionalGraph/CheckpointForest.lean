@@ -66,27 +66,33 @@ open scoped BigOperators
 universe u
 variable {α : Type u} [Finite α] (f : α → α)
 
+open scoped Classical in
 /-- Follow each checkpoint in `H` along its orbit up to its first periodic point. -/
-noncomputable def checkpointHull (H : Finset α) : Finset α := by
-  classical
-  exact H.biUnion fun h => (Finset.range (transientDepth f h + 1)).image fun t => f^[t] h
+noncomputable def checkpointHull (H : Finset α) : Finset α :=
+  H.biUnion fun h => (Finset.range (transientDepth f h + 1)).image fun t => f^[t] h
 
+/-- A state lies in the checkpoint hull exactly when it is `f^[t] h` for some `h ∈ H` and
+`t ≤ transientDepth f h`. -/
 theorem mem_checkpointHull (H : Finset α) (x : α) :
     x ∈ checkpointHull f H ↔ ∃ h ∈ H, ∃ t ≤ transientDepth f h, f^[t] h = x := by
   classical
   simp only [checkpointHull, Finset.mem_biUnion, Finset.mem_image, Finset.mem_range,
     Nat.lt_succ_iff]
 
+/-- Every checkpoint lies in the checkpoint hull. -/
 theorem subset_checkpointHull (H : Finset α) : H ⊆ checkpointHull f H := by
   intro h hh
   exact (mem_checkpointHull f H h).mpr ⟨h, hh, 0, Nat.zero_le _, rfl⟩
 
+/-- The checkpoint hull is monotone in the checkpoint set. -/
 theorem checkpointHull_subset_of_subset {H₁ H₂ : Finset α} (h : H₁ ⊆ H₂) :
     checkpointHull f H₁ ⊆ checkpointHull f H₂ := by
   intro x hx
   obtain ⟨a, ha, t, ht, rfl⟩ := (mem_checkpointHull f H₁ x).mp hx
   exact (mem_checkpointHull f H₂ _).mpr ⟨a, h ha, t, ht, rfl⟩
 
+/-- The checkpoint hull contains the orbit of each of its states up to that state's transient
+depth. -/
 theorem checkpointHull_iterate (H : Finset α) {x : α} (hx : x ∈ checkpointHull f H)
     {t : ℕ} (ht : t ≤ transientDepth f x) : f^[t] x ∈ checkpointHull f H := by
   obtain ⟨h, hh, d, hd, rfl⟩ := (mem_checkpointHull f H x).mp hx
@@ -94,6 +100,7 @@ theorem checkpointHull_iterate (H : Finset α) {x : α} (hx : x ∈ checkpointHu
   apply (mem_checkpointHull f H _).mpr
   exact ⟨h, hh, t + d, by lia, Function.iterate_add_apply _ _ _ _⟩
 
+/-- The checkpoint hull contains the successor of each of its transient states. -/
 theorem checkpointHull_step (H : Finset α) {x : α} (hx : x ∈ checkpointHull f H)
     (ht : 0 < transientDepth f x) : f x ∈ checkpointHull f H := by
   simpa only [Function.iterate_one, Function.id_def] using
@@ -117,68 +124,76 @@ private theorem checkpointHull_predecessor (H : Finset α) {x : α}
       show t - 1 + 1 = t by lia]
     exact he
 
+open scoped Classical in
 /-- Sources of the forest edges after cutting outgoing edges at periodic vertices. -/
-noncomputable def forestSources (H : Finset α) : Finset α := by
-  classical
-  exact (checkpointHull f H).filter fun x => 0 < transientDepth f x
+noncomputable def forestSources (H : Finset α) : Finset α :=
+  (checkpointHull f H).filter fun x => 0 < transientDepth f x
 
+open scoped Classical in
 /-- Predecessors of `x` in `forestSources f H`. -/
-noncomputable def forestChildren (H : Finset α) (x : α) : Finset α := by
-  classical
-  exact (forestSources f H).filter fun y => f y = x
+noncomputable def forestChildren (H : Finset α) (x : α) : Finset α :=
+  (forestSources f H).filter fun y => f y = x
 
+open scoped Classical in
 /-- Periodic vertices in `checkpointHull f H` (the roots of the cut forest). -/
-noncomputable def forestRoots (H : Finset α) : Finset α := by
-  classical
-  exact checkpointHull f H \ forestSources f H
+noncomputable def forestRoots (H : Finset α) : Finset α :=
+  checkpointHull f H \ forestSources f H
 
+open scoped Classical in
 /-- Vertices of `checkpointHull f H` with no predecessor in `forestSources f H`. -/
-noncomputable def forestLeaves (H : Finset α) : Finset α := by
-  classical
-  exact (checkpointHull f H).filter fun x => (forestChildren f H x).card = 0
+noncomputable def forestLeaves (H : Finset α) : Finset α :=
+  (checkpointHull f H).filter fun x => (forestChildren f H x).card = 0
 
+open scoped Classical in
 /-- Vertices of `checkpointHull f H` with at least two predecessors in `forestSources f H`. -/
-noncomputable def forestBranches (H : Finset α) : Finset α := by
-  classical
-  exact (checkpointHull f H).filter fun x => 2 ≤ (forestChildren f H x).card
+noncomputable def forestBranches (H : Finset α) : Finset α :=
+  (checkpointHull f H).filter fun x => 2 ≤ (forestChildren f H x).card
 
+open scoped Classical in
 /-- The refined mark set consisting of `H`, the forest roots, and the branching vertices. -/
-noncomputable def forestMarks (H : Finset α) : Finset α := by
-  classical
-  exact H ∪ (forestRoots f H ∪ forestBranches f H)
+noncomputable def forestMarks (H : Finset α) : Finset α :=
+  H ∪ (forestRoots f H ∪ forestBranches f H)
 
+/-- The forest sources are exactly the hull states of positive transient depth. -/
 theorem mem_forestSources (H : Finset α) (x : α) :
     x ∈ forestSources f H ↔ x ∈ checkpointHull f H ∧ 0 < transientDepth f x := by
   classical
   exact Finset.mem_filter
 
+/-- The children of `x` are exactly the hull states of positive transient depth that `f` maps
+to `x`. -/
 theorem mem_forestChildren (H : Finset α) (x y : α) :
     y ∈ forestChildren f H x ↔ y ∈ checkpointHull f H ∧
       0 < transientDepth f y ∧ f y = x := by
   classical
   simp only [forestChildren, Finset.mem_filter, mem_forestSources, and_assoc]
 
+/-- The forest roots are exactly the hull states of transient depth zero. -/
 theorem mem_forestRoots (H : Finset α) (x : α) :
     x ∈ forestRoots f H ↔ x ∈ checkpointHull f H ∧ transientDepth f x = 0 := by
   classical
   simp only [forestRoots, Finset.mem_sdiff, mem_forestSources]
   lia
 
+/-- The forest leaves are exactly the hull states with no children. -/
 theorem mem_forestLeaves (H : Finset α) (x : α) :
     x ∈ forestLeaves f H ↔ x ∈ checkpointHull f H ∧ (forestChildren f H x).card = 0 := by
   classical
   exact Finset.mem_filter
 
+/-- The forest branches are exactly the hull states with at least two children. -/
 theorem mem_forestBranches (H : Finset α) (x : α) :
     x ∈ forestBranches f H ↔ x ∈ checkpointHull f H ∧ 2 ≤ (forestChildren f H x).card := by
   classical
   exact Finset.mem_filter
 
+/-- A state is marked exactly when it is a checkpoint, a forest root, or a forest branch. -/
 theorem mem_forestMarks (H : Finset α) (x : α) :
     x ∈ forestMarks f H ↔ x ∈ H ∨ x ∈ forestRoots f H ∨ x ∈ forestBranches f H := by
   classical
   simp only [forestMarks, Finset.mem_union]
 
+/-- Every leaf of the checkpoint hull belongs to `H`. -/
 theorem forestLeaves_subset (H : Finset α) : forestLeaves f H ⊆ H := by
   classical
   intro x hx
@@ -216,18 +231,22 @@ theorem forestBranches_roots_le_leaves (H : Finset α) :
     (forestSources f H).card + (forestLeaves f H).card at hsum
   lia
 
+/-- Every checkpoint is marked. -/
 theorem subset_forestMarks (H : Finset α) : H ⊆ forestMarks f H := by
   classical
   exact Finset.subset_union_left
 
+/-- Every forest root is marked. -/
 theorem forestRoots_subset_marks (H : Finset α) : forestRoots f H ⊆ forestMarks f H := by
   classical
   exact Finset.subset_union_left.trans Finset.subset_union_right
 
+/-- Every forest branch is marked. -/
 theorem forestBranches_subset_marks (H : Finset α) : forestBranches f H ⊆ forestMarks f H := by
   classical
   exact Finset.subset_union_right.trans Finset.subset_union_right
 
+/-- Every marked state lies in the checkpoint hull. -/
 theorem forestMarks_subset_hull (H : Finset α) : forestMarks f H ⊆ checkpointHull f H := by
   classical
   exact Finset.union_subset (subset_checkpointHull f H)
@@ -243,6 +262,7 @@ theorem forestMarks_card (H : Finset α) : (forestMarks f H).card ≤ 2 * H.card
   have hleaves := Finset.card_le_card (forestLeaves_subset f H)
   lia
 
+/-- A hull state of transient depth zero is marked. -/
 theorem forestRoot_mem_marks (H : Finset α) {x : α} (hx : x ∈ checkpointHull f H)
     (hd : transientDepth f x = 0) : x ∈ forestMarks f H := by
   classical

@@ -43,7 +43,9 @@ namespace Cslib.Complexity
 
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α}
 
-/-- `C=P`, the zero sets of integer-valued `GapP` functions. -/
+/-- `C=P`, the zero sets of integer-valued `GapP` functions
+[Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994],
+[Fortnow, Classification 4.5][Fortnow1997]. -/
 def CeqP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ g ∈ GapP enc, ∀ a, a ∈ A ↔ g a = 0}
 

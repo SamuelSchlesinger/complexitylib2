@@ -79,7 +79,7 @@ def IsVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Boo
   ∀ a, a ∈ A ↔ ∃ w : List Bool, w.length = p.eval (enc a).length ∧ V (a, w) = true
 
 /-- The problems with polynomial-time verifiers and polynomially long certificates, with respect to
-the encoding `enc` of instances. -/
+the encoding `enc` of instances [Arora and Barak, Definition 2.1][AroraBarak09]. -/
 def NP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsVerifier enc p V A}
@@ -137,7 +137,7 @@ theorem IsVerifier.guard {c : α → Bool} (h : IsVerifier enc p V A) :
 
 end Padding
 
-/-- The problems whose complements are in `NP`. -/
+/-- The problems whose complements are in `NP` [Arora and Barak, Section 2.6][AroraBarak09]. -/
 def coNP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ NP enc}
 
 theorem mem_coNP {enc : α ↪ List Bool} {A : Set α} : A ∈ coNP enc ↔ Aᶜ ∈ NP enc := Iff.rfl

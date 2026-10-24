@@ -201,5 +201,125 @@ class CheckOutputTests(unittest.TestCase):
         self.assert_failure("Missing theorem anchor: Cslib.Complexity.CookLevin.SAT_npComplete")
 
 
+class CheckGuideLinksTests(unittest.TestCase):
+    page = "Complexity/Reduction.html"
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        root_patch = patch.object(check_docs, "ROOT", self.root)
+        root_patch.start()
+        self.addCleanup(root_patch.stop)
+        self.docs = self.root / "docbuild/.lake/build/doc"
+        self.guide = self.root / "guide/.lake/build/site/html-multi"
+        (self.docs / "Complexity").mkdir(parents=True)
+        (self.docs / "index.html").write_text("")
+        (self.docs / self.page).write_text(
+            '<div class="decl" id="Cslib.Complexity.NPComplete"></div>'
+            '<div class="decl" id="Cslib.«term_&lt;=p_»"></div>')
+        self.guide.mkdir(parents=True)
+
+    def link(self, target):
+        return f'<a href="{check_docs.API_DOCS_URL}{target}">x</a>'
+
+    def check(self, *targets):
+        (self.guide / "index.html").write_text("".join(map(self.link, targets)))
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_guide_links()
+
+    def assert_failure(self, message, *targets):
+        with self.assertRaises(ValueError) as error:
+            self.check(*targets)
+        self.assertEqual(str(error.exception), message)
+
+    def test_existing_pages_and_anchors_pass(self):
+        self.check("", f"{self.page}#Cslib.Complexity.NPComplete",
+                   f"{self.page}#Cslib.«term_&lt;=p_»")
+
+    def test_missing_page(self):
+        self.assert_failure("Guide links to a missing documentation page: Complexity/Gone.html",
+                            "Complexity/Gone.html#Cslib.Complexity.NPComplete")
+
+    def test_missing_anchor(self):
+        self.assert_failure(
+            f"Guide links to a missing documentation anchor: {self.page}#Cslib.Complexity.NP",
+            f"{self.page}#Cslib.Complexity.NP")
+
+    def test_missing_guide(self):
+        (self.guide).rmdir()
+        with self.assertRaises(ValueError) as error:
+            check_docs.check_guide_links()
+        self.assertEqual(str(error.exception), "Missing guide output")
+
+
+class CheckConfigTests(unittest.TestCase):
+    """The guide and the API documentation share the library's toolchain and package checkouts."""
+
+    toolchain = "leanprover/lean4:v4.36.0-rc1"
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        root_patch = patch.object(check_docs, "ROOT", self.root)
+        root_patch.start()
+        self.addCleanup(root_patch.stop)
+        bibliography = "@book{AroraBarak09,\n}\n"
+        (self.root / "references.bib").write_text(bibliography)
+        (self.root / "docbuild/docs").mkdir(parents=True)
+        (self.root / "docbuild/docs/references.bib").write_text(bibliography)
+        (self.root / "guide").mkdir()
+        self.manifests = {
+            "": [self.package("cslib", "a")],
+            "docbuild": [self.package("doc-gen4", "d", "v4.36.0-rc1"), self.package("cslib", "a"),
+                         self.package("MD4Lean", "m")],
+            "guide": [self.package("verso", "v", "v4.36.0-rc1"), self.package("cslib", "a"),
+                      self.package("MD4Lean", "m")],
+        }
+        self.generators = {"docbuild": "doc-gen4", "guide": "verso"}
+        for project, generator in self.generators.items():
+            (self.root / project / "lean-toolchain").write_text(self.toolchain + "\n")
+            (self.root / project / "lakefile.toml").write_text(
+                f'[[require]]\nname = "{generator}"\nrev = "v4.36.0-rc1"\n')
+        (self.root / "lean-toolchain").write_text(self.toolchain + "\n")
+
+    @staticmethod
+    def package(name, rev, input_rev="main"):
+        return {"name": name, "type": "git", "url": f"https://example.com/{name}", "rev": rev,
+                "inputRev": input_rev, "subDir": None}
+
+    def check(self):
+        for project, packages in self.manifests.items():
+            (self.root / project / "lake-manifest.json").write_text(
+                json.dumps({"packages": packages}))
+        check_docs.check_config()
+
+    def assert_failure(self, message):
+        with self.assertRaises(ValueError) as error:
+            self.check()
+        self.assertEqual(str(error.exception), message)
+
+    def test_consistent_projects_pass(self):
+        self.check()
+
+    def test_guide_lockfile_follows_the_library(self):
+        self.manifests["guide"][1]["rev"] = "b"
+        self.assert_failure("Guide lockfile differs for cslib: rev")
+
+    def test_verso_tag_follows_the_toolchain(self):
+        (self.root / "guide/lakefile.toml").write_text(
+            '[[require]]\nname = "verso"\nrev = "v4.35.0"\n')
+        self.assert_failure("verso tag must match the Lean version")
+
+    def test_guide_lockfile_has_a_current_verso_tag(self):
+        self.manifests["guide"][0]["inputRev"] = "v4.35.0"
+        self.assert_failure("Guide lockfile has a stale verso tag")
+
+    def test_shared_packages_agree(self):
+        self.manifests["guide"][2]["rev"] = "n"
+        self.assert_failure("Guide and documentation lockfiles differ for MD4Lean: rev")
+
+
 if __name__ == "__main__":
     unittest.main()

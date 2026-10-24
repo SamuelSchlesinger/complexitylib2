@@ -53,16 +53,20 @@ variable {ι : Type*} [DecidableEq ι] {T U : Finset ι} {x : ι → Bool} {i : 
 def flipOn (T : Finset ι) (x : ι → Bool) : ι → Bool :=
   fun i => if i ∈ T then !x i else x i
 
+/-- `flipOn T x` is `x` with its bits at the positions in `T` replaced by their negations. -/
 theorem flipOn_eq_piecewise (T : Finset ι) (x : ι → Bool) :
     flipOn T x = T.piecewise (fun i => !x i) x :=
   rfl
 
+/-- At a position in `T`, `flipOn T x` has the negated bit of `x`. -/
 theorem flipOn_apply_of_mem (h : i ∈ T) : flipOn T x i = !x i := by
   simp [flipOn, h]
 
+/-- At a position outside `T`, `flipOn T x` has the bit of `x`. -/
 theorem flipOn_apply_of_notMem (h : i ∉ T) : flipOn T x i = x i := by
   simp [flipOn, h]
 
+/-- Flipping at no positions changes nothing. -/
 @[simp] theorem flipOn_empty (x : ι → Bool) : flipOn ∅ x = x := by
   funext i
   simp [flipOn]
@@ -76,6 +80,8 @@ theorem flipOn_apply_of_notMem (h : i ∉ T) : flipOn T x i = x i := by
     simp [flipOn]
   · simp [flipOn, h]
 
+/-- Flipping at `T` and at `U` gives the same bit at any position `i` that lies in `T` exactly
+when it lies in `U`. -/
 theorem flipOn_apply_eq_of_iff (h : i ∈ T ↔ i ∈ U) : flipOn T x i = flipOn U x i := by
   by_cases hi : i ∈ T
   · rw [flipOn_apply_of_mem hi, flipOn_apply_of_mem (h.mp hi)]
@@ -86,6 +92,7 @@ theorem flipOn_apply_eq_of_iff (h : i ∈ T ↔ i ∈ U) : flipOn T x i = flipOn
   funext i
   by_cases h : i ∈ T <;> simp [flipOn, h]
 
+/-- Flipping at a fixed set of positions is an involution. -/
 theorem flipOn_involutive (T : Finset ι) : Function.Involutive (flipOn T) :=
   flipOn_flipOn T
 
@@ -98,6 +105,8 @@ any one bit changes the value of `g`. -/
 def isolatedInputs (g : (ι → Bool) → Bool) (b : Bool) : Finset (ι → Bool) :=
   {x | g x = b ∧ ∀ i, g (Function.update x i !x i) = !b}
 
+/-- `x` is an isolated input of `g` with value `b` exactly when `g x = b` and flipping any one bit
+of `x` gives the value `!b`. -/
 @[simp] theorem mem_isolatedInputs :
     x ∈ isolatedInputs g b ↔ g x = b ∧ ∀ i, g (Function.update x i !x i) = !b := by
   simp [isolatedInputs]

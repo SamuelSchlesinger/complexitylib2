@@ -44,6 +44,7 @@ relabelling and the Cook–Levin theorem proves that `ThreeSAT` is `NP`-complete
 
 ## References
 
+* [R. M. Karp, *Reducibility among combinatorial problems*][Karp1972]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -53,7 +54,8 @@ namespace Cslib.Complexity
 
 open Cslib.Logic.PL Turing.MultiTapeTM ComputableTidilyInPolyTime
 
-/-- The satisfiable formulas whose clauses have at most three literals. -/
+/-- The satisfiable formulas whose clauses have at most three literals [Karp1972],
+[Arora and Barak, Section 2.3.1][AroraBarak09]. -/
 def ThreeSAT : Set (CNF ℕ) := {φ | (∀ c ∈ φ, c.length ≤ 3) ∧ φ.Satisfiable}
 
 /-- An injective numbering of the variables of a split formula: original variables at even
@@ -74,6 +76,8 @@ theorem splitVarToNat_injective : Function.Injective splitVarToNat := by
 /-- The reduction from `SAT` to `ThreeSAT`: split the clauses, then number the variables. -/
 def toThreeSAT (φ : CNF ℕ) : CNF ℕ := φ.to3CNF.relabel splitVarToNat
 
+/-- **Correctness of the reduction**: `toThreeSAT φ` is in `ThreeSAT` exactly when `φ` is in
+`SAT`. -/
 theorem mem_ThreeSAT_toThreeSAT_iff (φ : CNF ℕ) : toThreeSAT φ ∈ ThreeSAT ↔ φ ∈ SAT := by
   refine ⟨fun h => ?_, fun h => ⟨fun c hc => ?_, ?_⟩⟩
   · exact (CNF.satisfiable_to3CNF φ).1 ((CNF.satisfiable_relabel splitVarToNat_injective _).1 h.2)
@@ -194,7 +198,7 @@ theorem polyTimeReducible_SAT_ThreeSAT : PolyTimeReducible encCNF encCNF SAT Thr
 theorem ThreeSAT_npHard : NPHard encCNF ThreeSAT :=
   CookLevin.SAT_npHard.trans polyTimeReducible_SAT_ThreeSAT
 
-/-- **3SAT is NP-complete.** -/
+/-- **3SAT is NP-complete** [Karp1972]. -/
 theorem ThreeSAT_npComplete : NPComplete encCNF ThreeSAT :=
   ⟨ThreeSAT.mem_NP, ThreeSAT_npHard⟩
 

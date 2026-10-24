@@ -83,10 +83,10 @@ theorem answersBits_bitGraph (encβ : β ↪ List Bool) (f : β → ℕ) :
   (encPair encβ encNat).injective.mem_set_image
 
 open Classical in
-/-- **`P^#P`**: the problems `L` such that, for some type `β` with encoding `encβ` and some
-`f ∈ SharpP encβ`, one deterministic oracle program, strict oracle PPT on the encoding `enc` of
-instances, decides `L` against every oracle language answering the bits of `f`. Answers on
-words that are not codes are arbitrary. -/
+/-- **`P^#P`** [Arora and Barak, Chapter 17][AroraBarak09]: the problems `L` such that, for some
+type `β` with encoding `encβ` and some `f ∈ SharpP encβ`, one deterministic oracle program, strict
+oracle PPT on the encoding `enc` of instances, decides `L` against every oracle language answering
+the bits of `f`. Answers on words that are not codes are arbitrary. -/
 def PWithSharpPOracle (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ (β : Type) (encβ : β ↪ List Bool) (f : β → ℕ), f ∈ SharpP encβ ∧
     ∃ program : α → WordQueryComp Unit Bool,

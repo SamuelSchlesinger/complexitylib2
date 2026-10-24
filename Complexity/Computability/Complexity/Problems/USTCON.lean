@@ -213,7 +213,8 @@ end USTCONInstance
 def encUSTCON : USTCONInstance ↪ List Bool :=
   ⟨USTCONInstance.encode, USTCONInstance.encode_injective⟩
 
-/-- **Undirected `s`–`t` connectivity**: the instances in which `t` is reachable from `s`. -/
+/-- **Undirected `s`–`t` connectivity**: the instances in which `t` is reachable from `s`
+[Arora and Barak, Section 21.4][AroraBarak09], [Reingold][Reingold2008]. -/
 def USTCON : Set USTCONInstance :=
   {I | I.graph.Reachable I.s I.t}
 

@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Moore
 public import Mathlib.RingTheory.Trace.Defs
+import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
 import Mathlib.Algebra.CharP.Lemmas
 import Mathlib.FieldTheory.Finite.Polynomial
 import Mathlib.FieldTheory.Finite.Trace
@@ -34,12 +35,11 @@ The proof follows [BenSassonKopparty2012]. Parametrize `Yᵢ` by its image-subsp
 (`Cslib.AffineDisperser.CoeffPattern`) we choose `τ` so that every `Mᵢ[τᵢ]` is triangular with
 nonzero diagonal while for every rotation `ρ ≠ 0` some `Mᵢ[τᵢ - ρ]` has a zero row
 [BenSassonKopparty2012, Claims 6.2 and 6.3]. That coefficient is then `μ ∏ᵢ per(Mᵢ[τᵢ]) ≠ 0`,
-and a reduced polynomial with a nonzero coefficient is a nonzero function.
+and a reduced polynomial with a nonzero coefficient is a nonzero function
+(`FiniteField.eq_zero_of_forall_sum_mul_prod_pow_eq_zero`).
 
 ## Main results
 
-* `Cslib.AffineDisperser.eq_zero_of_forall_sum_mul_prod_pow_eq_zero`: distinct reduced monomial
-  functions over a finite field are linearly independent.
 * `Cslib.AffineDisperser.exists_trace_mul_prod_det_mooreMatrix_ne_zero`: the theorem above.
 
 ## References
@@ -49,65 +49,11 @@ and a reduced polynomial with a nonzero coefficient is a nonzero function.
 
 @[expose] public section
 
-universe u
-
 namespace Cslib.AffineDisperser
 
 open Module
 
 variable {F : Type*} [Field F]
-
-/-- `eq_zero_of_forall_sum_mul_prod_pow_eq_zero` with the variables in the universe of `F`. -/
-private theorem eq_zero_of_forall_sum_mul_prod_pow_eq_zero_aux {F : Type u} [Field F] [Fintype F]
-    {σ : Type u} {T : Type*} [Fintype σ] [Fintype T]
-    (e : T → σ → ℕ) (he : Function.Injective e) (hlt : ∀ t v, e t v < Fintype.card F)
-    (C : T → F) (h : ∀ x : σ → F, ∑ t, C t * ∏ v, x v ^ e t v = 0) (t : T) : C t = 0 := by
-  classical
-  let m : T → σ →₀ ℕ := fun t => Finsupp.equivFunOnFinite.symm (e t)
-  have hm : Function.Injective m := fun t t' htt' =>
-    he (by simpa [m] using congrArg (⇑) htt')
-  let p : MvPolynomial σ F := ∑ t, MvPolynomial.monomial (m t) (C t)
-  have heval : ∀ x, MvPolynomial.eval x p = ∑ t, C t * ∏ v, x v ^ e t v := fun x => by
-    simp only [p, map_sum, MvPolynomial.eval_monomial]
-    refine Finset.sum_congr rfl fun t _ => ?_
-    rw [Finsupp.prod_fintype _ _ fun v => pow_zero _]
-    rfl
-  have hp : p = 0 := by
-    refine MvPolynomial.eq_zero_of_eval_eq_zero σ F p (fun x => by rw [heval]; exact h x) ?_
-    rw [MvPolynomial.mem_restrictDegree]
-    intro s hs v
-    obtain ⟨t', -, ht'⟩ := Finset.mem_biUnion.1 (MvPolynomial.support_sum hs)
-    have := MvPolynomial.support_monomial_subset ht'
-    rw [Finset.mem_singleton] at this
-    subst this
-    have := hlt t' v
-    simp only [m, Finsupp.equivFunOnFinite_symm_apply_apply]
-    omega
-  have := congrArg (fun q : MvPolynomial σ F => q.coeff (m t)) hp
-  simp only [p, MvPolynomial.coeff_sum, MvPolynomial.coeff_monomial] at this
-  rw [Finset.sum_eq_single t] at this
-  · simpa using this
-  · intro t' _ ht'
-    rw [ite_eq_right_iff]
-    exact fun h => absurd (hm h) ht'
-  · simp
-
-/-- **Reduced monomials are independent**: over a finite field `F`, if a combination
-`∑ₜ Cₜ ∏ᵥ xᵥ ^ eₜᵥ` of monomials with pairwise distinct exponent vectors, all exponents below
-`|F|`, vanishes at every point, then all coefficients vanish. -/
-theorem eq_zero_of_forall_sum_mul_prod_pow_eq_zero {F : Type u} [Field F] [Fintype F]
-    {σ T : Type*} [Fintype σ] [Fintype T]
-    (e : T → σ → ℕ) (he : Function.Injective e) (hlt : ∀ t v, e t v < Fintype.card F)
-    (C : T → F) (h : ∀ x : σ → F, ∑ t, C t * ∏ v, x v ^ e t v = 0) (t : T) : C t = 0 := by
-  let eσ : σ ≃ ULift.{u} (Fin (Fintype.card σ)) := (Fintype.equivFin σ).trans Equiv.ulift.symm
-  refine eq_zero_of_forall_sum_mul_prod_pow_eq_zero_aux (fun t v => e t (eσ.symm v))
-    (fun t t' htt' => he (funext fun v => by simpa using congrFun htt' (eσ v)))
-    (fun t v => hlt t _) C (fun x => ?_) t
-  have key : ∀ t, ∏ v, (x ∘ eσ) v ^ e t v = ∏ v, x v ^ e t (eσ.symm v) := fun t =>
-    Fintype.prod_equiv eσ _ _ fun v => by simp
-  have := h (x ∘ eσ)
-  simp_rw [key] at this
-  exact this
 
 /-! ### Choosing the monomial -/
 
@@ -425,7 +371,7 @@ theorem exists_trace_mul_prod_det_mooreMatrix_ne_zero {ι : Type*} [Fintype ι] 
   -- every coefficient vanishes, since reduced monomials are independent
   have hC : ∀ τ', C τ' = 0 := by
     intro τ'
-    refine eq_zero_of_forall_sum_mul_prod_pow_eq_zero (σ := Σ i, Fin (k i))
+    refine FiniteField.eq_zero_of_forall_sum_mul_prod_pow_eq_zero (σ := Σ i, Fin (k i))
       (fun τ' v => 2 ^ (τ' v.1 v.2).val) ?_ ?_ C (fun x => ?_) τ'
     · intro τ₁ τ₂ h
       funext i l

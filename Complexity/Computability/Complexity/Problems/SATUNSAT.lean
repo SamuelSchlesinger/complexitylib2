@@ -33,7 +33,8 @@ namespace Cslib.Complexity
 
 open Turing.MultiTapeTM Cslib.Logic.PL
 
-/-- Pairs of a satisfiable CNF formula and an unsatisfiable CNF formula. -/
+/-- Pairs of a satisfiable CNF formula and an unsatisfiable CNF formula
+[Papadimitriou, Chapter 17][Papadimitriou94]. -/
 def SATUNSAT : Set (CNF ℕ × CNF ℕ) := SAT ×ˢ UNSAT
 
 /-- SAT–UNSAT is DP-complete with the product of the library's CNF encodings. -/

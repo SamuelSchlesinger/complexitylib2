@@ -44,7 +44,8 @@ open scoped symmDiff
 
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α}
 
-/-- Small-gap polynomial time: a GapP function is one on members and zero on nonmembers. -/
+/-- Small-gap polynomial time: a GapP function is one on members and zero on nonmembers
+[Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994], [Fortnow, Classification 4.4][Fortnow1997]. -/
 def SPP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f ∈ GapP enc, (∀ a, f a = 0 ∨ f a = 1) ∧ ∀ a, a ∈ A ↔ f a = 1}
 

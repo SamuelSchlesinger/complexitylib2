@@ -47,12 +47,15 @@ noncomputable def hessianResidualRank (point : ι → K) (target : MvPolynomial 
   ⨅ coefficients : κ → K,
     ((hessian point target - ∑ i, coefficients i • hessian point (sources i)).rank : ℕ∞)
 
+/-- The minimum residual Hessian rank is at most the rank of the residual for any choice of
+coefficients. -/
 theorem hessianResidualRank_le (point : ι → K) (target : MvPolynomial ι K)
     (sources : κ → MvPolynomial ι K) (coefficients : κ → K) :
     hessianResidualRank point target sources ≤
       (hessian point target - ∑ i, coefficients i • hessian point (sources i)).rank :=
   iInf_le _ coefficients
 
+/-- The minimum residual Hessian rank is finite. -/
 @[simp] theorem hessianResidualRank_ne_top (point : ι → K) (target : MvPolynomial ι K)
     (sources : κ → MvPolynomial ι K) : hessianResidualRank point target sources ≠ ⊤ :=
   ENat.iInf_natCast_ne_top.mpr ⟨0⟩

@@ -189,6 +189,8 @@ theorem exists_solves_depth_eq_ecomplexity (h : ∃ p : Protocol X Y Z, p.Solves
     (fun p : {p : Protocol X Y Z // p.Solves R A B} => (p.1.depth : ℕ∞))
   exact ⟨p, hp, hmin⟩
 
+/-- Upper bounds on communication complexity: `R` has communication complexity at most `k` on
+`A × B` exactly when some protocol of depth at most `k` solves it. -/
 theorem ecomplexity_le_iff {k : ℕ} :
     ecomplexity R A B ≤ k ↔ ∃ p : Protocol X Y Z, p.Solves R A B ∧ p.depth ≤ k := by
   constructor
@@ -228,10 +230,14 @@ theorem solves_univ_iff : p.Solves (fun x y z => f x y = z) Set.univ Set.univ �
 theorem ecomplexityFun_le_depth (hp : p.run = f) : ecomplexityFun f ≤ p.depth :=
   ecomplexity_le_depth (solves_univ_iff.mpr hp)
 
+/-- Computing `f` has communication complexity at most `k` exactly when some protocol of depth at
+most `k` computes `f`. -/
 theorem ecomplexityFun_le_iff {k : ℕ} :
     ecomplexityFun f ≤ k ↔ ∃ p : Protocol X Y Z, p.run = f ∧ p.depth ≤ k := by
   simp only [ecomplexityFun, ecomplexity_le_iff, solves_univ_iff]
 
+/-- Lower bounds on the communication complexity of `f` are lower bounds on the depth of every
+protocol computing `f`, including when there is none. -/
 theorem le_ecomplexityFun_iff {k : ℕ∞} :
     k ≤ ecomplexityFun f ↔ ∀ p : Protocol X Y Z, p.run = f → k ≤ p.depth := by
   simp only [ecomplexityFun, le_ecomplexity_iff, solves_univ_iff]

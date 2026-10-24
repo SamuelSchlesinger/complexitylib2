@@ -96,6 +96,7 @@ structure AnswersCorrect (n c : ℕ) (a : ℕ → Prop) : Prop where
   /-- A level with mean cell size at most `1 / 8` answers no. -/
   not_apply_of_le : ∀ j ≤ n, 8 * c ≤ 2 ^ j → ¬ a j
 
+/-- Correctness of decidable answers is decidable. -/
 instance : Decidable (AnswersCorrect n c a) :=
   decidable_of_iff ((a 0 ↔ 0 < c) ∧ (∀ j ≤ n, 8 * 2 ^ j ≤ c → a j) ∧
     ∀ j ≤ n, 8 * c ≤ 2 ^ j → ¬ a j)
@@ -198,6 +199,7 @@ element of `S` to the target `y j`. -/
 def hashAnswer (ω : ∀ j : Fin (n + 1), Fin (2 * r) → ι j) (j : ℕ) : Prop :=
   ∃ hj : j < n + 1, r < #{k | y j ∈ S.image (h j (ω ⟨j, hj⟩ k))}
 
+/-- The answers from hashing are decidable. -/
 instance (ω : ∀ j : Fin (n + 1), Fin (2 * r) → ι j) : DecidablePred (hashAnswer h y S ω) :=
   fun _ => inferInstanceAs (Decidable (∃ _, _))
 

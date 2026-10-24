@@ -258,6 +258,7 @@ variables in order of first occurrence, that are no longer than the encoded form
 def searchRel (φ : Logic.PL.CNF ℕ) (w : List Bool) : Prop :=
   w.length ≤ (encCNF φ).length ∧ verifier (φ, w) = true
 
+/-- The search problem of `SAT` is in `FNP`. -/
 theorem searchRel_mem_FNP : searchRel ∈ FNP encCNF :=
   mem_FNP_iff_exists_bounded.2 ⟨Polynomial.X, verifier, computableTidilyInPolyTime_verifier,
     fun _ _ => by simp [searchRel]⟩

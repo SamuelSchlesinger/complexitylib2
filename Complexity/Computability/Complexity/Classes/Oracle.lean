@@ -164,7 +164,7 @@ theorem interpret_languageOracle_congr {A B : Set (List Bool)} (program : WordQu
 /-- `f` is computable in polynomial time relative to the oracle language `A`: a deterministic
 word-query program computes `f` against `A`, and one finite machine under one polynomial clock
 realizes the program against every stateful oracle, charging request construction and reply
-access. -/
+access. This is the oracle Turing machine of [Arora and Barak, Section 3.4][AroraBarak09]. -/
 @[fun_prop]
 def ComputableInPolyTimeWithOracle (A : Set (List Bool)) (f : α → β) (input : α ↪ List Bool)
     (output : β ↪ List Bool) : Prop :=
@@ -182,7 +182,8 @@ theorem _root_.Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTim
   ⟨fun a => pure (f a), h.isOraclePPTOn, fun _ => rfl⟩
 
 /-- The problems decidable in polynomial time relative to the oracle language `A`, with respect to
-the encoding `enc` of instances: `Cslib.Complexity.P` with an oracle. -/
+the encoding `enc` of instances: `Cslib.Complexity.P` with an oracle
+[Arora and Barak, Section 3.4][AroraBarak09]. -/
 def PWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ f : α → Bool, ComputableInPolyTimeWithOracle A f enc encBool ∧ ∀ a, a ∈ L ↔ f a = true}
 
@@ -192,7 +193,8 @@ theorem mem_PWithOracle {A : Set (List Bool)} {enc : α ↪ List Bool} {L : Set 
   Iff.rfl
 
 /-- The problems with verifiers computable in polynomial time relative to the oracle language `A`
-and polynomially long certificates: `Cslib.Complexity.NP` with an oracle. -/
+and polynomially long certificates: `Cslib.Complexity.NP` with an oracle
+[Arora and Barak, Section 3.4][AroraBarak09]. -/
 def NPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTimeWithOracle A V (encPair enc encBits) encBool ∧ IsVerifier enc p V L}

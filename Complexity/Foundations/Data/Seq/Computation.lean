@@ -34,10 +34,12 @@ namespace Computation
 
 variable {α β : Type*} {s : Computation α} {f : α → Computation β} {a a' : α} {b : β} {m n : ℕ}
 
+/-- A pure computation has its result after any number of steps. -/
 @[simp]
 theorem runFor_pure (a : α) (n : ℕ) : (pure a).runFor n = some a :=
   rfl
 
+/-- The nonterminating computation has no result after any number of steps. -/
 @[simp]
 theorem runFor_empty (n : ℕ) : (empty α).runFor n = none :=
   rfl
@@ -46,9 +48,11 @@ theorem runFor_empty (n : ℕ) : (empty α).runFor n = none :=
 theorem mem_runFor_of_le (h : m ≤ n) (ha : a ∈ s.runFor m) : a ∈ s.runFor n :=
   s.le_stable h ha
 
+/-- A result available after `n` steps is a result of the computation. -/
 theorem mem_of_mem_runFor (h : a ∈ s.runFor n) : a ∈ s :=
   ⟨n, h.symm⟩
 
+/-- `a` is a result of `s` exactly when it is available after some number of steps. -/
 theorem mem_iff_exists_mem_runFor : a ∈ s ↔ ∃ n, a ∈ s.runFor n :=
   ⟨fun ⟨n, h⟩ => ⟨n, h.symm⟩, fun ⟨_, h⟩ => mem_of_mem_runFor h⟩
 
@@ -91,6 +95,8 @@ theorem runFor_map (f : α → β) (s : Computation α) (n : ℕ) :
   change Option.casesOn (s n) none (some ∘ f) = Option.map f (s n)
   cases s n <;> rfl
 
+/-- If `a` is available from `s` after `n` steps, then `f a` is available from `s.map f` after `n`
+steps. -/
 theorem mem_runFor_map (f : α → β) (h : a ∈ s.runFor n) : f a ∈ (s.map f).runFor n := by
   rw [runFor_map, Option.mem_def.mp h]
   rfl

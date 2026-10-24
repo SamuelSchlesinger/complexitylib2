@@ -128,10 +128,13 @@ def hammingEdges (A B : Finset (∀ i, β i)) : Finset ((∀ i, β i) × ∀ i, 
 
 variable {A B : Finset (∀ i, β i)}
 
+/-- A pair is an edge between `A` and `B` exactly when its first entry is in `A`, its second entry
+is in `B`, and they are at Hamming distance one. -/
 @[simp] theorem mem_hammingEdges {e : (∀ i, β i) × ∀ i, β i} :
     e ∈ hammingEdges A B ↔ e.1 ∈ A ∧ e.2 ∈ B ∧ hammingDist e.1 e.2 = 1 := by
   simp [hammingEdges, and_assoc]
 
+/-- There are as many edges from `A` to `B` as from `B` to `A`. -/
 theorem card_hammingEdges_comm (A B : Finset (∀ i, β i)) :
     #(hammingEdges A B) = #(hammingEdges B A) :=
   card_bij (fun e _ => e.swap) (fun e he => by simp_all [hammingDist_comm])

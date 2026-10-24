@@ -61,6 +61,7 @@ namespace IsGrading
 
 variable {E F : Finset (V × V)} {D : ℕ} {g : V → ℕ}
 
+/-- A grading of the edges `E` grades every subset `F ⊆ E`. -/
 theorem mono (hg : IsGrading E D g) (hF : F ⊆ E) : IsGrading F D g :=
   ⟨hg.1, fun e he => hg.2 e (hF he)⟩
 
