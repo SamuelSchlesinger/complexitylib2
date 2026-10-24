@@ -88,19 +88,9 @@ private theorem plainPiApply {α Index Value : Type} [Fintype Index]
     ComputableInPolyTime (fun a => values a (index a)) input enc :=
   .of_tidy (ComputableTidilyInPolyTime.pi_apply' hvalues.tidy hindex.tidy)
 
-@[aesop unsafe 80% apply (rule_sets := [PolyTime])]
-private theorem plainFstWithEncoding {α β γ : Type} {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool} {encC : γ ↪ List Bool} {output : α ↪ List Bool} {f : γ → α × β}
-    (hf : ComputableInPolyTime f encC (encPair encA encB))
-    (h : ComputableInPolyTime (fun a => a) encA output) :
-    ComputableInPolyTime (fun p => (f p).1) encC output := h.comp hf.fst'
-
-@[aesop unsafe 80% apply (rule_sets := [PolyTime])]
-private theorem plainSndWithEncoding {α β γ : Type} {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool} {encC : γ ↪ List Bool} {output : β ↪ List Bool} {f : γ → α × β}
-    (hf : ComputableInPolyTime f encC (encPair encA encB))
-    (h : ComputableInPolyTime (fun a => a) encB output) :
-    ComputableInPolyTime (fun p => (f p).2) encC output := h.comp hf.snd'
+-- Fix the pair-valued function before selecting its component encoding conversion.
+attribute [aesop unsafe 80% apply (rule_sets := [PolyTime])]
+  ComputableInPolyTime.fstWithEncoding ComputableInPolyTime.sndWithEncoding
 
 attribute [aesop safe apply (rule_sets := [PolyTime])] ComputableInPolyTime.of_finite
 
