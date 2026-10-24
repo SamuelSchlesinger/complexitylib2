@@ -86,9 +86,9 @@ theorem isPPTOn_encryptKeyLinksHybrid
   have hfront := isPPTOn_encryptKeyLinks hencrypt (.of_tidy hn)
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => (keys a).take (cut a + 1))
       input (encList (encPair encBits encBits)) by fun_prop))
-  have hback := isPPTOn_encryptZeroKeyLinks hencrypt hn
-    (show ComputableTidilyInPolyTime (fun a => (keys a).drop (cut a))
-      input (encList (encPair encBits encBits)) by fun_prop)
+  have hback := isPPTOn_encryptZeroKeyLinks hencrypt (.of_tidy hn)
+    (.of_tidy (show ComputableTidilyInPolyTime (fun a => (keys a).drop (cut a))
+      input (encList (encPair encBits encBits)) by fun_prop))
   unfold encryptKeyLinksHybrid
   ppt
 
@@ -145,9 +145,9 @@ theorem isPPTOn_encryptKeyLinkHybrid
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => (next a).1) input encBits by fun_prop))
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => (predecessor a).2) input encBits by
       fun_prop)) (.of_tidy hcut)
-  have hback := isPPTOn_encryptZeroKeyLinks hencrypt hn
-    (show ComputableTidilyInPolyTime (fun a => next a :: after a)
-      input (encList (encPair encBits encBits)) by fun_prop)
+  have hback := isPPTOn_encryptZeroKeyLinks hencrypt (.of_tidy hn)
+    (.of_tidy (show ComputableTidilyInPolyTime (fun a => next a :: after a)
+      input (encList (encPair encBits encBits)) by fun_prop))
   unfold encryptKeyLinkHybrid
   ppt
 
@@ -181,9 +181,9 @@ theorem isPPTOn_spliceEncryptedKeyLink
       (.of_tidy hcut)
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => (predecessor a).2.drop (cut a + 1))
       input encBits by fun_prop)) (.of_tidy hchallenge)
-  have hback := isPPTOn_encryptZeroKeyLinks hencrypt hn
-    (show ComputableTidilyInPolyTime (fun a => next a :: after a)
-      input (encList (encPair encBits encBits)) by fun_prop)
+  have hback := isPPTOn_encryptZeroKeyLinks hencrypt (.of_tidy hn)
+    (.of_tidy (show ComputableTidilyInPolyTime (fun a => next a :: after a)
+      input (encList (encPair encBits encBits)) by fun_prop))
   unfold spliceEncryptedKeyLink
   ppt
 

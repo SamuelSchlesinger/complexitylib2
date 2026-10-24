@@ -114,6 +114,20 @@ theorem isPolyTime_generate {length : ℕ → ℕ} {generator : ℕ → List Boo
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hlength
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hgenerator
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
+  have hparameter : ComputableTidilyInPolyTime
+      (fun seed : List Bool => parameter length seed.length) encBits encUnary :=
+    (isPolyTime_parameter (.of_tidy hlength) (.of_tidy (by fun_prop))).tidy
+  have hpadded : ComputableTidilyInPolyTime (fun seed : List Bool =>
+      GeneratorPadding.generate (length (parameter length seed.length)) seed.length
+        (generator (parameter length seed.length)) seed) encBits encBits :=
+    (GeneratorPadding.isPolyTime_generate (α := List Bool) (input := encBits)
+      (generator := fun seed => generator (parameter length seed.length))
+      (.of_tidy (by fun_prop))
+      (.of_tidy (by fun_prop))
+      (.of_tidy (hgenerator.comp
+        ((hparameter.comp (ComputableTidilyInPolyTime.fst encBits encBits)).prod
+          (ComputableTidilyInPolyTime.snd encBits encBits))))
+      (.of_tidy (by fun_prop))).tidy
   unfold generate
   polytime
 

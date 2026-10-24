@@ -55,10 +55,9 @@ example : IsPPTOn encBits encBits (fun word => do
     pure (seed ++ word)) := by
   ppt
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- A standard cryptographic client: generate a key, then follow the original GGM path.
 example (generator : List Bool → List Bool)
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits) :
+    (hgenerator : ComputableInPolyTime generator encBits encBits) :
     IsPPTOn encBits encBits (fun path => do
       let seed ← BitString.sampleList path.length
       pure (Crypto.GGM.eval generator seed path)) := by

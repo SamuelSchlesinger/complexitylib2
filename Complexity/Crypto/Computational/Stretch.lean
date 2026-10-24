@@ -123,6 +123,7 @@ noncomputable def reduction (generator : List Bool → List Bool) (count : ℕ �
   hop generator count adversary n i challenge
 
 -- The tactic composes a sampled index, a conditional sample, and the supplied distinguisher.
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The reduction's complete efficiency proof uses the public programming interface. -/
 @[program_certificate]
 theorem isPPT_reduction {generator : List Bool → List Bool} {count : ℕ → ℕ}
@@ -130,6 +131,8 @@ theorem isPPT_reduction {generator : List Bool → List Bool} {count : ℕ → �
     (hcount : ComputableInPolyTime count encUnary encUnary)
     (hadversary : IsPPT encBool adversary) :
     IsPPT encBool (reduction generator count adversary) := by
+  have hgenerator := hgenerator.tidy
+  have hcount := hcount.tidy
   unfold reduction hop
   ppt
 
@@ -138,6 +141,7 @@ noncomputable def test (generator : List Bool → List Bool) (seedBits count : �
     (adversary : List Bool → ProbComp Bool) (challenge : List Bool) : ProbComp Bool :=
   reduction generator (fun _ => count) (fun _ => adversary) seedBits challenge
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Captured parameters, generator code, and the adversary compose through the public tactics. -/
 @[program_certificate]
 theorem isPPT_test {α : Type} {input : α ↪ List Bool}
@@ -152,6 +156,10 @@ theorem isPPT_test {α : Type} {input : α ↪ List Bool}
     (hchallenge : ComputableInPolyTime challenge input encBits) :
     IsPPTOn input encBool
       (fun a => test (generator a) (seedBits a) (count a) (adversary a) (challenge a)) := by
+  have hgenerator := hgenerator.tidy
+  have hseedBits := hseedBits.tidy
+  have hcount := hcount.tidy
+  have hchallenge := hchallenge.tidy
   unfold test reduction hop
   ppt
 

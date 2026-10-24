@@ -98,8 +98,10 @@ theorem isPPTOn_evaluateNode
       else E.encrypt (n a) (pk a) (node a).code.1.2) := by
     apply IsPPTOn.cond hcode.fst'.fst'
     · apply IsPPTOn.cond hcode.fst'.snd'
-      · exact isPPTOn_refreshNand hencrypt hevaluate D hD hn hpk hek hfirst hsecond
-      · exact isPPTOn_refresh hencrypt hevaluate D hD hn hpk hek hfirst
+      · exact isPPTOn_refreshNand hencrypt hevaluate D hD (.of_tidy hn) (.of_tidy hpk)
+          (.of_tidy hek) (.of_tidy hfirst) (.of_tidy hsecond)
+      · exact isPPTOn_refresh hencrypt hevaluate D hD (.of_tidy hn) (.of_tidy hpk)
+          (.of_tidy hek) (.of_tidy hfirst)
     · exact hencrypt.preprocess (hn.prod (hpk.prod hcode.fst'.snd'))
   have hcap := (computableTidilyInPolyTime_decryptionArity D hD).comp hn
   have hbounded := hraw.map_with (f := fun a ciphertext =>
@@ -158,7 +160,8 @@ theorem isPPTOn_evaluateLayerStep
     (heks.prod hstate.fst')
   have hlayer := (ComputableTidilyInPolyTime.listGetD
     (encA := encList Boolean.Layered.encNode) []).comp (hlayers.prod hstate.fst')
-  exact (isPPTOn_evaluateLayer D hencrypt hevaluate hD hn hpk hek hstate.snd' hlayer).pair
+  exact (isPPTOn_evaluateLayer D hencrypt hevaluate hD (.of_tidy hn) (.of_tidy hpk) (.of_tidy hek)
+    (.of_tidy hstate.snd') (.of_tidy hlayer)).pair
     (show ComputableTidilyInPolyTime (fun a => (state a).1 + 1) input encUnary by fun_prop)
 
 include hencrypt hevaluate hD in

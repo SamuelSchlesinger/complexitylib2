@@ -74,27 +74,22 @@ example (params : Parameters) :
       State.Bounded params.clock params.codeBound state :=
   run_bounded _ _ _ _
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun word : List Bool => (⟨false, word.length, [word]⟩ : State)) encBits State.encoding := by
   polytime
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun word : List Bool => ({ State.initial with predictors := [word] }).threshold)
     (encList encBool) encUnary := by fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun word : List Bool => (⟨word.length, 1, word.length, 0, word.length + 1⟩ : Parameters))
     encBits Parameters.encoding := by polytime
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : Parameters × State => p.1.confidence + p.2.threshold)
     (encPair Parameters.encoding State.encoding) encUnary := by fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- These are the same functional loop with different input encodings and parameter spellings.
 example : IsPPTOn encBits State.encoding (fun word =>
     run (fun code observation => listStrictMajority (code ++ observation)) (pure (word, true))
@@ -102,17 +97,15 @@ example : IsPPTOn encBits State.encoding (fun word =>
       { confidence := word.length + 1, densityNumerator := 0, densityBound := 0,
         rateBound := 0, codeBound := word.length }) := by ppt
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : IsPPTOn (encList encBool) State.encoding (fun word => do
     let params : Parameters := ⟨word.length + 1, 0, 0, 0, word.length⟩
     run (fun code observation => listStrictMajority (code ++ observation)) (pure (word, true))
       (fun state => do return word.take (state.threshold + 1)) params) := by ppt
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Unknown parameter computation must remain an explicit obligation.
 example (params : List Bool → Parameters)
-    (hparams : ComputableTidilyInPolyTime params encBits Parameters.encoding) :
-    ComputableTidilyInPolyTime (fun word => (params word).codeBound) encBits encUnary := by
+    (hparams : ComputableInPolyTime params encBits Parameters.encoding) :
+    ComputableInPolyTime (fun word => (params word).codeBound) encBits encUnary := by
   fail_if_success (clear hparams; fun_prop)
   fun_prop
 

@@ -68,8 +68,8 @@ theorem isPPTOn_evaluateCircuit (D : DecryptionCircuits E secretWidth ciphertext
   have hcode := hcode.tidy
   have hcompiled := (Boolean.Layered.computableInPolyTime_compile (.of_tidy hcount) (.of_tidy
     hcode)).tidy
-  apply (isPPTOn_evaluateLayers D hencrypt hevaluate hD hn hpks heks hinputs
-    hcompiled.fst').map_with
+  apply (isPPTOn_evaluateLayers D hencrypt hevaluate hD (.of_tidy hn) (.of_tidy hpks)
+    (.of_tidy heks) (.of_tidy hinputs) (.of_tidy hcompiled.fst')).map_with
   apply ComputableTidilyInPolyTime.mapWithInput
     (hcompiled.snd'.comp (ComputableTidilyInPolyTime.fst _ _))
   exact ComputableTidilyInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)
