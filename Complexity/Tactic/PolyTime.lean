@@ -260,7 +260,9 @@ open Lean in
 private meta structure PlainRuleCache where
   premises : Std.HashMap Name Bool := {}
   rawProperties : Option (Std.HashSet Name) := none
-  deriving Inhabited
+
+/-- Empty per-invocation classification state. -/
+private meta instance : Inhabited PlainRuleCache := ⟨{}⟩
 
 open Lean in
 private meta initialize rawPremiseCache : EnvExtension PlainRuleCache ←
@@ -367,6 +369,8 @@ meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := d
         if let .decl name := rule.thmOrigin then names := names.insert name
   for (_, rules) in (lambdaTheoremsExt.getState env).theorems do
     for rule in rules do names := names.insert rule.thmName
+  for (_, entries) in (Cslib.Tactic.certificateExt.getState env) do
+    for (name, _) in entries do names := names.insert name
   for rules in #[morTheoremsExt.getState env, transitionTheoremsExt.getState env] do
     for node in rules.theorems.tries do
       for rule in node.values do names := names.insert rule.thmName
@@ -396,7 +400,13 @@ meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := d
         | none => true
       return if mayUseRaw && (← isRawProperty decl.funPropName) then
         names.insert decl.funPropName else names
-  -- The cache is confined to this `withEnv`; unrelated tactics and later declarations see none.
+  -- Named certificate lookup is independent of FunProp's rule tables. Keep eager obligations
+  -- and explicit raw construction entries, but do not introduce raw premises in public search.
+  let env := searchRuleState Cslib.Tactic.certificateExt env fun certificates =>
+    certificates.map fun key entries =>
+      if key.1 == ``ComputableTidilyInPolyTime then entries
+      else entries.filter fun (name, _) => !cache.getD name true
+  -- The cache and projected index are confined to this invocation.
   withEnv (rawPremiseCache.setState env { premises := cache, rawProperties := some rawProperties })
     action
 

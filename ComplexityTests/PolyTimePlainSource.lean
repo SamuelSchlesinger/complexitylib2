@@ -204,6 +204,78 @@ example (routine : ℕ → List Bool → List Bool)
   fail_if_success (clear hf; polytime)
   polytime
 
+/-- A named result is opaque to generic decomposition. -/
+@[irreducible] def namedConditionalResult (word : List Bool) : List Bool := rawOnlyReverseProbe word
+
+/-- The explicit conditional API is valid, but cannot initiate raw search in plain automation. -/
+@[program_certificate h]
+theorem namedConditional_plain (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits) :
+    ComputableInPolyTime namedConditionalResult encBits encBits := by
+  unfold namedConditionalResult
+  exact .of_tidy h
+
+example : ComputableInPolyTime namedConditionalResult encBits encBits := by
+  fail_if_success polytime
+  exact namedConditional_plain rawOnlyReverseProbe_tidy
+
+example : ComputableInPolyTime namedConditionalResult encBits encBits := by
+  fail_if_success polytime
+  fun_prop
+
+/-- A separate named target isolates the full-arity alias variant. -/
+@[irreducible] def namedAliasResult (word : List Bool) : List Bool := rawOnlyReverseProbe word
+
+/-- Alias normalization also applies to named certificate premises. -/
+@[program_certificate h]
+theorem namedAlias_plain (h : RawAliasFull rawOnlyReverseProbe encBits encBits) :
+    ComputableInPolyTime namedAliasResult encBits encBits := by
+  unfold namedAliasResult
+  exact .of_tidy h
+
+example : ComputableInPolyTime namedAliasResult encBits encBits := by
+  fail_if_success polytime
+  exact namedAlias_plain rawOnlyReverseProbe_tidy
+
+/-- The matching raw construction key must retain its conditional certificate. -/
+@[program_certificate h]
+theorem namedConditional_raw (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits) :
+    ComputableTidilyInPolyTime namedConditionalResult encBits encBits := by
+  unfold namedConditionalResult
+  exact h
+
+/-- This ordinary plain certificate has a genuine eager callback obligation. -/
+@[irreducible] def safeNamedResult (routine : List Bool → List Bool) (word : List Bool) :
+    List Bool := routine word
+
+/-- Production named lookup must retain ordinary plain premises and their eager contract. -/
+@[program_certificate h]
+theorem safeNamed_plain {routine : List Bool → List Bool}
+    (h : ComputableInPolyTime routine encBits encBits) :
+    ComputableInPolyTime (safeNamedResult routine) encBits encBits := by
+  unfold safeNamedResult
+  exact h
+
+private meta def plainNamedOnly : Aesop.RuleTac :=
+  Cslib.Tactic.applyCertificates ``ComputableInPolyTime
+
+private meta def rawNamedOnly : Aesop.RuleTac :=
+  Cslib.Tactic.applyCertificates ``ComputableTidilyInPolyTime
+
+example (routine : List Bool → List Bool)
+    (h : ComputableInPolyTime routine encBits encBits) :
+    ComputableInPolyTime (safeNamedResult routine) encBits encBits := by
+  fail_if_success (clear h; polytime)
+  fail_if_success aesop
+  run_tac Cslib.Tactic.PolyTime.Internal.withPlainRuleCache do
+    Lean.Elab.Tactic.evalTactic (← `(tactic|
+      aesop (rule_sets := [-builtin, -default]) (add unsafe 100% tactic plainNamedOnly)))
+
+example : ComputableTidilyInPolyTime namedConditionalResult encBits encBits := by
+  fail_if_success aesop
+  run_tac Cslib.Tactic.PolyTime.Internal.withPlainRuleCache do
+    Lean.Elab.Tactic.evalTactic (← `(tactic|
+      aesop (rule_sets := [-builtin, -default]) (add unsafe 100% tactic rawNamedOnly)))
+
 -- An already supplied alias certificate is evidence, not a raw search request.
 example (routine : List Bool → List Bool) (h : RawAliasFull routine encBits encBits) :
     ComputableInPolyTime routine encBits encBits := by
