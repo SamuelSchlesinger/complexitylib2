@@ -4692,11 +4692,11 @@ info: 'Turing.MultiTapePTM.computableInLinearTimeAndSpace_runClosedCoins' depend
 #print axioms Turing.MultiTapePTM.computableInLinearTimeAndSpace_runClosedCoins
 
 /--
-info: 'Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins' depends on axioms:
+info: 'Turing.MultiTapePTM.computableInPolyTime_runClosedCoins' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapePTM.computableTidilyInPolyTime_runClosedCoins
+#print axioms Turing.MultiTapePTM.computableInPolyTime_runClosedCoins
 
 /--
 info: 'Cslib.Probability.IsPPTOn.exists_polyTime_coin_evaluator' depends on axioms:

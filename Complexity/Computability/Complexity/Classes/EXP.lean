@@ -170,14 +170,16 @@ theorem setOf_mem_E_of_computableTidilyInPolyTime_pad {Ψ : List Bool × ℕ →
   -- the problem decided by `Ψ`, within polynomial time
   have hB : {x | Ψ x = true} ∈ DTIME (encPair encBits encUnary) fun n => c * (n + 1) ^ d :=
     setOf_mem_DTIME_of_computableTidilyInO (T := fun x => t x + s x) (S := fun x => t x + s x)
-      (.of_bounds h 1 (fun _ => by omega) (fun _ => by omega)
-        fun x => (h.length_le x).trans (by omega)) hcd
+      (Internal.normalizeO (ComputableInO.of_bounds h.computableInTimeAndSpace 1
+        (fun _ => by omega) (fun _ => by omega)
+        fun x => (h.length_le x).trans (by omega))) hcd
   -- the padding `y ↦ (y, 2 ^ |y|)`
   have hgO : ComputableTidilyInO (fun y : List Bool => (y, 2 ^ y.length)) encBits
       (encPair encBits encUnary) (fun y => 3 * 4 ^ y.length) fun y => 3 * 4 ^ y.length := by
-    have h₁ := (ComputableTidilyInO.of_linear
+    apply Internal.normalizeO
+    have h₁ := (ComputableInO.of_linear
       (.of_eq (f := fun y : List Bool => y) (encMid := encBits) fun _ => rfl)).prod
-      (ComputableTidilyInO.unary_two_pow.comp ComputableTidilyInO.lengthUnary)
+      (ComputableInO.unary_two_pow.comp ComputableInO.lengthUnary)
     have hbound : ∀ y : List Bool, y.length + (y.length + (y.length + 1) * 2 ^ y.length) ≤
         3 * 4 ^ y.length := fun y => by
       have h2 : y.length + 1 ≤ 2 ^ y.length := Nat.lt_two_pow_self

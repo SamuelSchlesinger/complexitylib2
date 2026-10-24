@@ -81,8 +81,7 @@ theorem computableTidilyInPolyTime_checkChoices (ntm : MultiTapeNTM k Bool State
       ((ComputableInPolyTime.of_eq (encOut := encBits) fun _ => rfl).comp
         (ComputableInPolyTime.fst enc encBits))
   exact ComputableInPolyTime.decide_eq'
-    ((ComputableInPolyTime.of_tidy
-      (MultiTapePTM.computableTidilyInPolyTime_runClosedCoins ntm.choiceTable)).comp hswap)
+    ((MultiTapePTM.computableInPolyTime_runClosedCoins ntm.choiceTable).comp hswap)
     (ComputableInPolyTime.const [true])
 
 /-- **Accepting computations as certificates of any sufficient length.** If `ntm` decides `A`
