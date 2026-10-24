@@ -108,8 +108,9 @@ def Complete (R : X → Y → Prop) : Prop :=
 
 /-- Special soundness ([BonehShoup2023], Definition 19.4): `extract` returns a witness for any
 statement from two accepting conversations with a common commitment and distinct challenges.
-Extracted witnesses live in a type `W` with a relation `R` of their own, usually the prover's
-witnesses and relation; a different `W` expresses relaxed special soundness. -/
+The extracted witness has a type `W` and a relation `R` of its own. Usually these are the
+prover's witness type and relation; lattice-based protocols extract a witness of a relaxed
+relation instead. -/
 def SpecialSoundness {W : Type*} (R : W → Y → Prop) (extract : Y → T → C → Z → C → Z → W) :
     Prop :=
   ∀ y t c z c' z', c ≠ c' → P.Accepts y t c z → P.Accepts y t c' z' →

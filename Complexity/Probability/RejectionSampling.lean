@@ -12,9 +12,6 @@ public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Int.Interval
 public import Mathlib.Algebra.Order.Group.Int
 
-import Mathlib.Algebra.Order.BigOperators.Group.Finset
-
-
 /-!
 # Rejection sampling of a translated uniform distribution
 
@@ -74,6 +71,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 def intBox (ι : Type*) [Fintype ι] [DecidableEq ι] (γ : ℕ) : Finset (ι → ℤ) :=
   Fintype.piFinset fun _ => Finset.Icc (-(γ : ℤ)) γ
 
+/-- A vector lies in the box `[-γ, γ]^ι` when each coordinate has absolute value at most `γ`. -/
 @[simp]
 theorem mem_intBox {γ : ℕ} {z : ι → ℤ} : z ∈ intBox ι γ ↔ ∀ i, |z i| ≤ γ := by
   simp only [intBox, Fintype.mem_piFinset, Finset.mem_Icc, abs_le]
@@ -82,9 +80,11 @@ theorem mem_intBox {γ : ℕ} {z : ι → ℤ} : z ∈ intBox ι γ ↔ ∀ i, |
 instance (γ : ℕ) : DecidablePred (· ∈ intBox ι γ) := fun _ =>
   decidable_of_iff _ mem_intBox.symm
 
+/-- Every box contains the zero vector. -/
 theorem zero_mem_intBox (γ : ℕ) : (0 : ι → ℤ) ∈ intBox ι γ := by
   simp
 
+/-- Every box is nonempty, so it supports a uniform distribution. -/
 theorem intBox_nonempty (γ : ℕ) : (intBox ι γ).Nonempty :=
   ⟨0, zero_mem_intBox γ⟩
 
@@ -94,6 +94,7 @@ theorem card_intBox (γ : ℕ) : (intBox ι γ).card = (2 * γ + 1) ^ Fintype.ca
   congr 1
   omega
 
+/-- Boxes grow with their radius. -/
 theorem intBox_mono {γ γ' : ℕ} (h : γ ≤ γ') : intBox ι γ ⊆ intBox ι γ' := fun z hz => by
   simp only [mem_intBox] at hz ⊢
   exact fun i => (hz i).trans (by exact_mod_cast h)
