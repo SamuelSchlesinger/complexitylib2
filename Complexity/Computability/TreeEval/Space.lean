@@ -19,7 +19,7 @@ is the length of the encoded instance. On nontrivial instances (`1 ≤ ℓ` and 
 and `2 ^ H` are at most `n`, so `ℓ, H < |n|` and `|ℓ| ≤ ||n||` (writing `|m|` for the binary length
 of `m`), which yields the headline input-size space bound `O(|n| · ||n||) = O(log n · log log n)`.
 
-The step machine simulating the read machine `Cslib.TreeEval.Reader.machine` is tidy, its run on an
+The step machine simulating the read machine `Cslib.TreeEval.Reader.machine` has a resource certificate, its run on an
 instance halts with the value of the tree, and its states along the run, which follow the states
 of the read machine together with the position of the head, stay within the space bound.
 
@@ -67,7 +67,7 @@ length `ℓ` and height `H` is computable from its encoding in space
 theorem computableInSpace_eval : ∃ t, ComputableInBigO
     (fun I : Instance => List.ofFn I.tree.eval) encInstance encBits t
     fun I => spaceBound I.ell I.height + (encNat ((encInstance I).length + 1)).length := by
-  obtain ⟨T, hT⟩ := tidy_machine
+  obtain ⟨T, hT⟩ := machine_resourceCertificate
   have hc (I : Instance) :
       machine.toStepMachine.Computes (encInstance I) (List.ofFn I.tree.eval) := by
     obtain ⟨n, s, hrun, hhalt⟩ := exists_run_eq I.tree
@@ -78,8 +78,7 @@ theorem computableInSpace_eval : ∃ t, ComputableInBigO
   let tS := ReadMachine.stateT encState T stateBudget
   let tMax (I : Instance) : ℕ := ∑ i ∈ Finset.range (rounds I + 1),
     tS (machine.toStepMachine.run (encInstance I) i).state
-  refine ⟨_, ComputableTidilyInBigO.computableInBigO <|
-    (hT.computableTidilyInTimeAndSpace (fun I : Instance => List.ofFn I.tree.eval)
+  refine ⟨_, (hT.computableInBigO (fun I : Instance => List.ofFn I.tree.eval)
     rounds hr (fun I => by rw [encBits_apply, ho]) (tMax := tMax)
     (sMax := fun I => 5 * 2 ^ 12 * spaceBound I.ell I.height +
       2 * (encNat ((encInstance I).length + 1)).length + 6) fun I i hi => ⟨?_, ?_⟩).weaken
@@ -95,7 +94,7 @@ theorem computableInSpace_eval : ∃ t, ComputableInBigO
     have hs : (encState (machine.run (encInstance I) j).state).length ≤
         stateBudget (machine.run (encInstance I) j).state := by
       simp only [stateBudget, stepBudget, encStepInT, length_encPair, encState_apply]; omega
-    have hp := ComputableTidilyInO.length_encNat_mono hpos
+    have hp := ComputableInO.length_encNat_mono hpos
     simp only [ReadMachine.stateS, length_encPair]
     change _ + 2 * (2 * (encState (machine.run (encInstance I) j).state).length + 1 + _) + 4 ≤ _
     omega
@@ -121,7 +120,7 @@ theorem spaceBound_add_length_le_log_mul_log_log {I : Instance}
   have hℓL : I.ell < L := ell_lt_length_encNat_length_encInstance hH
   have hHL : I.height < L := height_lt_length_encNat_length_encInstance hℓ
   have hℓM : (encNat I.ell).length ≤ M :=
-    ComputableTidilyInO.length_encNat_mono hℓL.le
+    ComputableInO.length_encNat_mono hℓL.le
   have hsp : spaceBound I.ell I.height ≤ (2 * L) * (2 * M) := by
     rw [spaceBound]
     exact Nat.mul_le_mul (by omega) (by omega)

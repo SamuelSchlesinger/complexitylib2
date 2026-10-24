@@ -30,7 +30,7 @@ namespace Cslib.TreeEval
 
 namespace Reader
 
-open Turing MultiTapeTM ComputableTidilyInSpace
+open Turing MultiTapeTM ComputableInSpace
 
 /-- The encoding of register indices. -/
 abbrev encReg : Fin 3 ↪ List Bool := encFinEnum (Fin 3)
@@ -42,9 +42,6 @@ theorem get_inSpace {R : α → Regs} {t : α → Fin 3}
     (hR : ComputableInSpace R encIn encRegs Bs)
     (ht : ComputableInSpace t encIn encReg Bs) :
     ComputableInSpace (fun x => (R x).get (t x)) encIn (encList encNat) Bs := by
-  have hR := hR.tidy
-  have ht := ht.tidy
-  refine .of_tidy ?_
   have h₀ := fst' hR
   have h₁ := fst' (snd' hR)
   have h₂ := snd' (snd' hR)
@@ -61,10 +58,6 @@ theorem set_inSpace {R : α → Regs} {t : α → Fin 3} {l : α → List ℕ}
     (ht : ComputableInSpace t encIn encReg Bs)
     (hl : ComputableInSpace l encIn (encList encNat) Bs) :
     ComputableInSpace (fun x => (R x).set (t x) (l x)) encIn encRegs Bs := by
-  have hR := hR.tidy
-  have ht := ht.tidy
-  have hl := hl.tidy
-  refine .of_tidy ?_
   have h₀ := fst' hR
   have h₁ := fst' (snd' hR)
   have h₂ := snd' (snd' hR)
@@ -79,7 +72,7 @@ theorem set_inSpace {R : α → Regs} {t : α → Fin 3} {l : α → List ℕ}
 
 private theorem length_mulMod_le (p a v : ℕ) :
     (encNat (mulMod p a v)).length ≤ (encNat p).length + (encNat a).length + (encNat v).length :=
-  (ComputableTidilyInO.length_encNat_mono (Nat.mod_le _ _)).trans
+  (ComputableInO.length_encNat_mono (Nat.mod_le _ _)).trans
     ((length_encNat_mul_le a v).trans (by omega))
 
 private theorem length_encList_map_mulMod_le (p a : ℕ) (l : List ℕ) :
@@ -103,14 +96,9 @@ theorem scale_inSpace {p a : α → ℕ} {R : α → Regs} {r : α → Fin 3}
     (hB : (fun x => ((R x).get (r x)).length * ((encNat (p x)).length + (encNat (a x)).length))
       ≼ Bs) :
     ComputableInSpace (fun x => (R x).scale (p x) (r x) (a x)) encIn encRegs Bs := by
-  have hp := hp.tidy
-  have ha := ha.tidy
-  have hR := hR.tidy
-  have hr := hr.tidy
-  refine .of_tidy ?_
-  have hl := (get_inSpace (.of_tidy hR) (.of_tidy hr)).tidy
+  have hl := get_inSpace hR hr
   have hpa := budget_prod hp ha
-  have hf : ComputableTidilyInSpace (fun q : (ℕ × ℕ) × ℕ => mulMod q.1.1 q.1.2 q.2)
+  have hf : ComputableInSpace (fun q : (ℕ × ℕ) × ℕ => mulMod q.1.1 q.1.2 q.2)
       (encPair (encPair encNat encNat) encNat) encNat
       fun q => (encPair (encPair encNat encNat) encNat q).length + 1 := by
     have hl₀ : (fun q => (encPair (encPair encNat encNat) encNat q).length) ≼
@@ -119,7 +107,7 @@ theorem scale_inSpace {p a : α → ℕ} {R : α → Regs} {r : α → Fin 3}
     have h₂ := (snd (encPair encNat encNat) encNat).weaken hl₀
     exact budget_comp_linear mulMod_inSpace.tidy (budget_prod (fst' h₁) (budget_prod (snd' h₁) h₂))
   have hmap := mapWith hf hpa hl
-  have hmap' : ComputableTidilyInSpace (fun x => ((R x).get (r x)).map (mulMod (p x) (a x)))
+  have hmap' : ComputableInSpace (fun x => ((R x).get (r x)).map (mulMod (p x) (a x)))
       encIn (encList encNat) Bs := by
     refine hmap.weaken ?_
     have hlen := length_le hl
@@ -210,11 +198,11 @@ private theorem length_subElem_le (p c v a : ℕ) :
     := by
   rcases Nat.eq_zero_or_pos p with rfl | hp
   · simp [addMod, negMod]
-  · have := ComputableTidilyInO.length_encNat_mono (Nat.mod_lt (v + negMod p (mulMod p c a)) hp).le
+  · have := ComputableInO.length_encNat_mono (Nat.mod_lt (v + negMod p (mulMod p c a)) hp).le
     simp only [addMod]; omega
 
 private theorem subStep_inSpace :
-    ComputableTidilyInSpace (fun q : ((ℕ × ℕ × List ℕ) × ℕ × List ℕ) × ℕ => subStep q.1 q.2)
+    ComputableInSpace (fun q : ((ℕ × ℕ × List ℕ) × ℕ × List ℕ) × ℕ => subStep q.1 q.2)
       (encPair encSubState encNat) encSubState
       fun q => 64 * ((encPair encSubState encNat q).length + 1) := by
   have hl : (fun q => (encPair encSubState encNat q).length) ≼
@@ -228,13 +216,13 @@ private theorem subStep_inSpace :
   have hj := fst' (snd' hs)
   have hout := snd' (snd' hs)
   have ha := budget_comp_lin getD (linear_mul _) (budget_prod hacc hj)
-  have hm := budget_comp_linear mulMod_inSpace.tidy (budget_prod hp (budget_prod hc ha))
-  have hn := budget_comp_linear negMod_inSpace.tidy (budget_prod hp hm)
-  have he := budget_comp_linear addMod_inSpace.tidy (budget_prod hp (budget_prod hv hn))
-  have hsnoc : ComputableTidilyInSpace (fun p : List ℕ × ℕ => p.1 ++ [p.2])
+  have hm := budget_comp_linear mulMod_inSpace (budget_prod hp (budget_prod hc ha))
+  have hn := budget_comp_linear negMod_inSpace (budget_prod hp hm)
+  have he := budget_comp_linear addMod_inSpace (budget_prod hp (budget_prod hv hn))
+  have hsnoc : ComputableInSpace (fun p : List ℕ × ℕ => p.1 ++ [p.2])
       (encPair (encList encNat) encNat) (encList encNat)
       fun p => (encPair (encList encNat) encNat p).length :=
-    of_inO (ComputableTidilyInDegree.snoc encNat).inO_one
+    of_inO (ComputableInDegree.snoc encNat).inO_one
   have happ := budget_comp_linear hsnoc (budget_prod hout he)
   have hsucc := budget_comp_lin natSucc linear_succ hj
   exact budget_prod hpar (budget_prod hsucc happ)
@@ -253,7 +241,7 @@ private theorem length_encList_mapIdx_le (l : List ℕ) (f : ℕ → ℕ → ℕ
 
 /-- **The register with `c` times the sums subtracted**, from `((p, c, acc), r)`. -/
 private theorem subtractList_inSpace :
-    ComputableTidilyInSpace
+    ComputableInSpace
       (fun q : (ℕ × ℕ × List ℕ) × List ℕ => (q.2.foldl subStep (q.1, 0, [])).2.2)
       (encPair encSubPar (encList encNat)) (encList encNat)
       fun q => 8192 * ((encPair encSubPar (encList encNat) q).length +
@@ -335,41 +323,19 @@ theorem subtractSums_inSpace {p c : α → ℕ} {t : α → Fin 3} {acc : α →
 theorem mapEqOne_inSpace :
     ComputableInSpace (fun l : List ℕ => l.map (· == 1)) (encList encNat) encBits
       fun l => 64 * ((encList encNat l).length + 1) := by
-  have this : ComputableTidilyInSpace (fun l : List ℕ => l.map (· == 1)) (encList encNat) encBits
-      fun l => 64 * ((encList encNat l).length + 1) := by
-    have hstep : ComputableTidilyInSpace (fun q : List Bool × ℕ => q.1 ++ [q.2 == 1])
-        (encPair encBits encNat) encBits fun q => 8 * ((encPair encBits encNat q).length + 1) := by
-      have hl : (fun q => (encPair encBits encNat q).length) ≼
-          fun q => 4 * ((encPair encBits encNat q).length + 1) := .of_le fun _ => by omega
-      have he := budget_comp_linear natEq (budget_prod ((snd encBits encNat).weaken hl)
-        (budget_const (encB := encNat) 1 hl))
-      have h := ComputableTidilyInSpace.append ((fst encBits encNat).weaken hl) he
-        (g := fun q : List Bool × ℕ => q.1 ++ [q.2 == 1]) (encD := encBits) fun q => by
-          cases hq : q.2 == 1 <;> simp_all [encBits_apply, encBool_apply]
-      exact h.weaken (.of_le fun _ => by omega)
-    have hlen (l : List ℕ) (i : ℕ) (hi : i ≤ l.length) :
-        (encBits ((l.take i).foldl (fun acc v => acc ++ [v == 1]) [])).length ≤
-          (encList encNat l).length := by
-      have hf (m : List ℕ) (acc : List Bool) :
-          (m.foldl (fun acc v => acc ++ [v == 1]) acc) = acc ++ m.map (· == 1) := by
-        induction m generalizing acc with
-        | nil => simp
-        | cons v m ih => simp [ih]
-      rw [hf, encBits_apply, List.nil_append, List.length_map]
-      have := List.length_take_le' i l
-      have := length_le_length_encList encNat l
-      omega
-    have h := foldl (encL := encList encNat) (list := fun l : List ℕ => l)
-      (init := fun _ => ([] : List Bool)) (step := fun acc v => acc ++ [v == 1])
-      (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl))) (budget_const [] (.refl _)) hstep
-      (Q := fun l => 8 * (3 * (encList encNat l).length + 2))
-      (B := fun l => (encList encNat l).length)
-      (fun l i hi => by
-        have h₁ := hlen l i hi.le
-        have h₂ := length_le_encList_of_mem encNat (List.getElem_mem hi)
-        rw [length_encPair]; dsimp only; omega)
-      (fun l i hi => hlen l i hi)
-    refine h.mono_le (fun l => by omega) |>.of_enc_eq fun l => ?_
+  have hstep : ComputableInSpace (fun q : List Bool × ℕ => q.1 ++ [q.2 == 1])
+      (encPair encBits encNat) encBits fun q => 8 * ((encPair encBits encNat q).length + 1) := by
+    have hl : (fun q => (encPair encBits encNat q).length) ≼
+        fun q => 4 * ((encPair encBits encNat q).length + 1) := .of_le fun _ => by omega
+    have he := budget_comp_linear natEq (budget_prod ((snd encBits encNat).weaken hl)
+      (budget_const (encB := encNat) 1 hl))
+    have h := ComputableInSpace.append ((fst encBits encNat).weaken hl) he
+      (g := fun q : List Bool × ℕ => q.1 ++ [q.2 == 1]) (encD := encBits) fun q => by
+        cases hq : q.2 == 1 <;> simp_all [encBits_apply, encBool_apply]
+    exact h.weaken (.of_le fun _ => by omega)
+  have hlen (l : List ℕ) (i : ℕ) (hi : i ≤ l.length) :
+      (encBits ((l.take i).foldl (fun acc v => acc ++ [v == 1]) [])).length ≤
+        (encList encNat l).length := by
     have hf (m : List ℕ) (acc : List Bool) :
         (m.foldl (fun acc v => acc ++ [v == 1]) acc) = acc ++ m.map (· == 1) := by
       induction m generalizing acc with

@@ -30,15 +30,15 @@ namespace Cslib.TreeEval
 
 namespace Reader
 
-open Turing MultiTapeTM ComputableTidilyInSpace
+open Turing MultiTapeTM ComputableInSpace
 
 /-- The projections of a triple. -/
 private theorem proj3 :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.1) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => q.1) encNat3 encNat
       (fun q => (encNat3 q).length) ∧
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.2.1) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => q.2.1) encNat3 encNat
       (fun q => (encNat3 q).length) ∧
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.2.2) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => q.2.2) encNat3 encNat
       (fun q => (encNat3 q).length) :=
   ⟨fst _ _, fst' (snd _ _), snd' (snd _ _)⟩
 
@@ -113,27 +113,24 @@ theorem powMod_le {p a : ℕ} {k : ℕ} (hk : k ≤ p - 2) : powMod p a k ≤ p 
 theorem unitInv_inSpace :
     ComputableInSpace (fun q : ℕ × ℕ => unitInv q.1 q.2) (encPair encNat encNat) encNat
       fun q => (encPair encNat encNat q).length := by
-  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ => unitInv q.1 q.2) (encPair encNat encNat)
-      encNat fun q => (encPair encNat encNat q).length := by
-    have hp := fst encNat encNat
-    have hstep : ComputableTidilyInSpace powStep encNat3 encNat3 fun q => (encNat3 q).length := by
-      obtain ⟨hp, ha, hacc⟩ := proj3
-      exact budget_prod hp (budget_prod ha
-        (budget_comp_linear mulMod_inSpace.tidy (budget_prod hp (budget_prod hacc ha))))
-    have hinit := budget_prod hp (budget_prod (budget_comp_lin natSucc linear_succ (snd _ _))
-      (budget_comp_lin natMod (linear_mul _) (budget_prod (budget_const 1 (.refl _)) hp)))
-    have hn := budget_comp_lin natPred linear_succ (budget_comp_lin natPred linear_succ hp)
-    refine (snd' (snd' (budget_iterate hn hinit hstep (fun q k hk => ?_)
-      (.of_le_linear 4 8 fun q => le_rfl)))).of_enc_eq fun q => by rw [iterate_powStep]; rfl
-    rw [iterate_powStep]
-    have h₁ := ComputableTidilyInO.length_encNat_mono (powMod_le (p := q.1) (a := q.2 + 1)
-      (k := k) (by omega))
-    have h₂ := length_encNat_add_le_add q.1 1
-    have h₃ := length_encNat_add_le_add q.2 1
-    have h₄ : (encNat 1).length = 1 := rfl
-    simp only [length_encPair] at h₁ h₂ h₃ ⊢
-    omega
-  simpa only [computableInSpace_iff_computableTidilyInSpace] using this
+  have hp := fst encNat encNat
+  have hstep : ComputableInSpace powStep encNat3 encNat3 fun q => (encNat3 q).length := by
+    obtain ⟨hp, ha, hacc⟩ := proj3
+    exact budget_prod hp (budget_prod ha
+      (budget_comp_linear mulMod_inSpace (budget_prod hp (budget_prod hacc ha))))
+  have hinit := budget_prod hp (budget_prod (budget_comp_lin natSucc linear_succ (snd _ _))
+    (budget_comp_lin natMod (linear_mul _) (budget_prod (budget_const 1 (.refl _)) hp)))
+  have hn := budget_comp_lin natPred linear_succ (budget_comp_lin natPred linear_succ hp)
+  refine (snd' (snd' (budget_iterate hn hinit hstep (fun q k hk => ?_)
+    (.of_le_linear 4 8 fun q => le_rfl)))).of_enc_eq fun q => by rw [iterate_powStep]; rfl
+  rw [iterate_powStep]
+  have h₁ := ComputableInO.length_encNat_mono (powMod_le (p := q.1) (a := q.2 + 1)
+    (k := k) (by omega))
+  have h₂ := length_encNat_add_le_add q.1 1
+  have h₃ := length_encNat_add_le_add q.2 1
+  have h₄ : (encNat 1).length = 1 := rfl
+  simp only [length_encPair] at h₁ h₂ h₃ ⊢
+  omega
 
 end Reader
 

@@ -33,7 +33,7 @@ namespace Cslib.TreeEval
 
 namespace Reader
 
-open Turing MultiTapeTM ComputableTidilyInSpace
+open Turing MultiTapeTM ComputableInSpace
 
 /-! ### Half of a weight, over a counter -/
 
@@ -63,7 +63,7 @@ private theorem length_chi_le (p : ℕ) (b : Bool) (x : ℕ) :
     · have : chi 0 false x = 1 := by simp [chi, addMod, negMod]
       rw [this]; simp
     · simp [chi]
-  · have := ComputableTidilyInO.length_encNat_mono
+  · have := ComputableInO.length_encNat_mono
       (show chi p b x ≤ p by cases b <;> exact (Nat.mod_lt _ hp).le)
     omega
 
@@ -107,11 +107,11 @@ private theorem length_halfStep_le (p k o : ℕ) (x : List ℕ) (j : ℕ) :
     rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, smul_eq_mul, mul_one] at h₁
     omega
   · rcases j with _ | j
-    · have := ComputableTidilyInO.length_encNat_mono (Nat.mod_le 1 p)
+    · have := ComputableInO.length_encNat_mono (Nat.mod_le 1 p)
       simp only [Function.iterate_zero, id_eq]
       have h₁ : (encNat 1).length = 1 := rfl
       omega
-    · have := ComputableTidilyInO.length_encNat_mono
+    · have := ComputableInO.length_encNat_mono
         (show (halfStep^[j + 1] (((p, k, o), x), 0, 1 % p)).2.2 ≤ p by
           rw [Function.iterate_succ_apply', iterate_halfStep]
           simp only [halfStep, mulMod]
@@ -123,7 +123,7 @@ private abbrev encHalf : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ ↪ Lis
   encPair (encPair encNat3 (encList encNat)) (encPair encNat encNat)
 
 private theorem halfStep_inSpace :
-    ComputableTidilyInSpace halfStep encHalf encHalf fun s => (encHalf s).length + 1 := by
+    ComputableInSpace halfStep encHalf encHalf fun s => (encHalf s).length + 1 := by
   have hl : (fun s => (encHalf s).length) ≼ fun s => (encHalf s).length + 1 :=
     .of_le fun _ => by omega
   have hpar := (fst (encPair encNat3 (encList encNat)) (encPair encNat encNat)).weaken hl
@@ -151,7 +151,7 @@ private abbrev encHalfIn : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ ↪ List Boo
 
 /-- **Half of a weight**, from `(((p, k, o), x), n)`. -/
 private theorem half_inSpace :
-    ComputableTidilyInSpace
+    ComputableInSpace
       (fun h : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ => (halfStep^[h.2] (h.1, 0, 1 % h.1.1.1)).2.2)
       encHalfIn encNat fun h => 256 * ((encHalfIn h).length + h.2 + 1) := by
   have hl : (fun h => (encHalfIn h).length) ≼ fun h => 64 * ((encHalfIn h).length + h.2 + 1) :=
