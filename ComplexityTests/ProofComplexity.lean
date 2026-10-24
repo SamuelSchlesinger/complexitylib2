@@ -84,7 +84,7 @@ example : ∃ P : ProofSystem encCNF SAT, P.PolynomiallyBounded :=
 private def bitsDecoder : Decoder encBits where
   decode := id
   decode_enc _ := rfl
-  computable := ⟨1, 1, .of_eq fun _ => rfl⟩
+  computable := Decoder.bits.computable
 
 private theorem isVerifier_univ :
     IsVerifier encBits 0 (fun _ => true) (Set.univ : Set (List Bool)) := by
