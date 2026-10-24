@@ -1465,6 +1465,7 @@ public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.PseudorandomFunction.RandomOracle
 public import Complexity.Crypto.Computational.PseudorandomFunction.TruthTable
 public import Complexity.Crypto.Computational.PseudorandomGenerator
+public import Complexity.Crypto.Computational.SIS.Basic
 public import Complexity.Crypto.Computational.SchnorrIdentification
 public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Stretch
@@ -1488,11 +1489,13 @@ public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 public import Complexity.Crypto.Protocols.Cipher.EvenMansour
+public import Complexity.Crypto.Protocols.SigmaProtocol.Abort
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
 public import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.SigmaProtocol.Linear
+public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle

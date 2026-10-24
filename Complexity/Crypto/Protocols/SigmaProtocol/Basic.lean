@@ -28,7 +28,9 @@ exact statements about a single protocol.
 
 Each property carries its algorithm explicitly. `SpecialSoundness R extract` says that the
 deterministic `extract` computes a witness from any two accepting conversations that share a
-commitment and have distinct challenges, for every statement, with or without a witness.
+commitment and have distinct challenges, for every statement, with or without a witness. The
+extracted witness may have its own type and relation, as in lattice-based protocols, where
+extraction yields a short solution of a relaxed relation rather than a prover's witness.
 `SpecialHVZK R simulate` says that the simulator, given a statement and a challenge, always
 outputs accepting conversations, and that for each witness-statement pair and *each* fixed
 challenge its output has exactly the law of the honest commitment and response. With a uniform
@@ -105,8 +107,12 @@ def Complete (R : X → Y → Prop) : Prop :=
   ∀ x y, R x y → ∀ c, ∀ tz ∈ (P.transcript x y c).support, P.Accepts y tz.1 c tz.2
 
 /-- Special soundness ([BonehShoup2023], Definition 19.4): `extract` returns a witness for any
-statement from two accepting conversations with a common commitment and distinct challenges. -/
-def SpecialSoundness (R : X → Y → Prop) (extract : Y → T → C → Z → C → Z → X) : Prop :=
+statement from two accepting conversations with a common commitment and distinct challenges.
+The extracted witness has a type `W` and a relation `R` of its own. Usually these are the
+prover's witness type and relation; lattice-based protocols extract a witness of a relaxed
+relation instead. -/
+def SpecialSoundness {W : Type*} (R : W → Y → Prop) (extract : Y → T → C → Z → C → Z → W) :
+    Prop :=
   ∀ y t c z c' z', c ≠ c' → P.Accepts y t c z → P.Accepts y t c' z' →
     R (extract y t c z c' z') y
 
@@ -126,7 +132,8 @@ theorem Complete.mono (h : P.Complete R) (hR : ∀ x y, R' x y → R x y) : P.Co
   fun x y hxy => h x y (hR x y hxy)
 
 /-- A witness extractor for a relation is one for every larger relation. -/
-theorem SpecialSoundness.mono {extract : Y → T → C → Z → C → Z → X}
+theorem SpecialSoundness.mono {W : Type*} {R R' : W → Y → Prop}
+    {extract : Y → T → C → Z → C → Z → W}
     (h : P.SpecialSoundness R extract) (hR : ∀ x y, R x y → R' x y) :
     P.SpecialSoundness R' extract :=
   fun y t c z c' z' hc hz hz' => hR _ _ (h y t c z c' z' hc hz hz')
@@ -145,7 +152,8 @@ theorem Complete.accepts_of_mem_support_commit (h : P.Complete R) {x : X} {y : Y
   h x y hxy c _ ((PMF.mem_support_map_iff _ _ _).mpr ⟨ts, hts, rfl⟩)
 
 /-- Special soundness certifies that the statement has a witness. -/
-theorem SpecialSoundness.exists_witness {extract : Y → T → C → Z → C → Z → X}
+theorem SpecialSoundness.exists_witness {W : Type*} {R : W → Y → Prop}
+    {extract : Y → T → C → Z → C → Z → W}
     (h : P.SpecialSoundness R extract) {y : Y} {t : T} {c c' : C} {z z' : Z} (hc : c ≠ c')
     (hz : P.Accepts y t c z) (hz' : P.Accepts y t c' z') : ∃ x, R x y :=
   ⟨_, h y t c z c' z' hc hz hz'⟩
