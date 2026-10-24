@@ -212,6 +212,7 @@ import ComplexityTests.Hypercontractivity
 import ComplexityTests.InductiveCounting
 import ComplexityTests.IntBinaryDecode
 import ComplexityTests.IntBinaryDiv
+import ComplexityTests.Interactive
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
 import ComplexityTests.Iteration

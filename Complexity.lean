@@ -819,6 +819,10 @@ public import Complexity.Computability.GenericRAM.Simulation.Run
 public import Complexity.Computability.GenericRAM.Simulation.Turing
 public import Complexity.Computability.GenericRAM.SparseMemory.Basic
 public import Complexity.Computability.GenericRAM.SparseMemory.Turing
+public import Complexity.Computability.Interactive.Basic
+public import Complexity.Computability.Interactive.Plain
+public import Complexity.Computability.Interactive.Security
+public import Complexity.Computability.Interactive.Sequential
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
 public import Complexity.Computability.Kolmogorov.Depth
