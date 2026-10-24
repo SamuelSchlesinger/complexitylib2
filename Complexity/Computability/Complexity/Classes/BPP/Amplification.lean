@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.RepeatedTrials
-public import Complexity.Computability.Complexity.Reduction.ManyOne
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.SharpP
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString

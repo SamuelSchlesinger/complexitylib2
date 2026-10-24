@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.UP
+public import Complexity.Foundations.Order.BooleanSubalgebra
 public import Mathlib.Data.Nat.Prime.Defs
 import Mathlib.FieldTheory.Finite.Basic
 

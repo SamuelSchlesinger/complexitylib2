@@ -9,7 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.ZPP
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
+import Complexity.Computability.Complexity.Reduction.ManyOne
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

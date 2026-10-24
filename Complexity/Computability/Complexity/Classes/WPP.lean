@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.FewP
 public import Complexity.Computability.Complexity.Classes.SPP
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.SPP.FewP
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

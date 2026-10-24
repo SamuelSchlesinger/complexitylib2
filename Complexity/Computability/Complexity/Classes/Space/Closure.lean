@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.Space.Savitch
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.AWPP
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Mathlib.Data.Rat.Cast.Order
 
 /-!

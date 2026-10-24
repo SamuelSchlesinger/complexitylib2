@@ -8,8 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.PH
-public import Complexity.Computability.Complexity.Reduction.ManyOne
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+public import Complexity.Foundations.Order.BooleanSubalgebra
+import Complexity.Computability.Complexity.Reduction.ManyOne
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 

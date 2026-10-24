@@ -8,8 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.ParityP
-public import Complexity.Computability.Complexity.Reduction.ManyOne
-public import Mathlib.Data.Set.SymmDiff
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
 
 /-!

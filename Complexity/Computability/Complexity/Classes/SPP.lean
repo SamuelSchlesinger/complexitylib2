@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.UP
 public import Complexity.Computability.Complexity.Classes.CeqP
+public import Complexity.Foundations.Order.BooleanSubalgebra
 
 /-!
 # Small-gap polynomial time

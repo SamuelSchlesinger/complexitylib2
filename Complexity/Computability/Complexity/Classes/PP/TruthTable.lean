@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.PP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Reduction.TruthTable
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.PP.Characterization
 import Complexity.Computability.Complexity.Classes.SharpP.Products
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
