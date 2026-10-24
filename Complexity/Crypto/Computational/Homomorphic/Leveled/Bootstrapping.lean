@@ -121,8 +121,8 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
     (polynomiallyBounded_widths D hD).1, (polynomiallyBounded_widths D hD).2,
     isPPTOn_scheme_keyGen hkeyGen hencrypt D budget (.of_tidy hbudget),
     isPPTOn_scheme_encrypt hencrypt D budget,
-    .of_tidy (computableInPolyTime_scheme_decrypt D hD budget),
-    isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget hbudget,
+    computableInPolyTime_scheme_decrypt D hD budget,
+    isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget (.of_tidy hbudget),
     indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length (.of_tidy hbudget) D⟩
 
 end Cslib.Crypto.Homomorphic.Leveled

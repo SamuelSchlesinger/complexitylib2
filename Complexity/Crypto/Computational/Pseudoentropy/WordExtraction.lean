@@ -145,48 +145,47 @@ theorem SamplablePair.HasGap.extract_indexed_word_labels {pair : SamplablePair} 
     (htest : IsPPTOn (encPair (encPair encUnary encUnary)
       (encPair (encList encBits) (encPair encBits encBits)))
       encBool (fun input => test input.1.1 input.1.2 input.2)) :
-    let count := by
+    let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
+    Negligible (fun n => Game.advantage
+      (ProbComp.eval (do
+        let samples ← OracleComp.replicate (count n) (pair.sample n)
+        let result ← extractWordLabels (count n) (outputBits n (choose n)) samples
+        test n (choose n) result))
+      (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
+        (outputBits n (choose n)) >>= test n (choose n)))) := by
   have hcandidates := hcandidates.tidy
   have houtput := houtput.tidy
   have hslack := hslack.tidy
   have hnumerator := hnumerator.tidy
   have hdensity := hdensity.tidy
-  exact fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
-      Negligible (fun n => Game.advantage
-        (ProbComp.eval (do
-          let samples ← OracleComp.replicate (count n) (pair.sample n)
-          let result ← extractWordLabels (count n) (outputBits n (choose n)) samples
-          test n (choose n) result))
-        (ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
-          (outputBits n (choose n)) >>= test n (choose n)))) := by
-    let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
-    have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=
-      (ExtractionSchedule.isPolyTime_count (.of_tidy (by fun_prop))
-        realization.length_isPolyTime (.of_tidy hslack)).tidy
-    have h := hpair.extract_indexed_labels realization choose
-      (inverseSlack := inverseSlack)
-      (fun n i => ProbComp.uniform (BitString (outputBits n i * count n)))
-      (fun n i seed bits => LinearHash.hash
-        (blocksEquiv (m := outputBits n i) (k := count n) seed) (ofList (count n) bits))
-      (fun n i result => test n i (result.1, List.ofFn result.2.1, List.ofFn result.2.2))
-      (isPPTOn_extractedWordTest (count := fun input : ℕ × ℕ => count input.1)
-        (outputBits := fun input : ℕ × ℕ => outputBits input.1 input.2)
-        (fun input : ℕ × ℕ => test input.1 input.2) htest
-        (.of_tidy (by fun_prop)) (.of_tidy houtput))
-      (.of_tidy hcandidates) (.of_tidy hslack) (.of_tidy hnumerator) (.of_tidy hdensity) hchoose
-        hvalid
-      (fun n i => by simpa only [ProbComp.eval_uniform, ofList_ofFn] using
-        LinearHash.isTwoUniversal_flat (count n) (outputBits n i)) hbudget
-    apply h.congr
-    intro n
-    have hpublic : ProbComp.eval ((fun value => pair.encode n value.1) <$>
-        pair.latentSample n) = ProbComp.eval (Prod.fst <$> pair.sample n) := by
-      simp only [ProbComp.eval_map, pair.eval_latentSample, pair.eval_sample, PMF.map_comp,
-        Function.comp_def]
-    simp only [count, ProbComp.eval_bind, eval_extractWordLabels,
-      eval_extractWordLabelsIdeal, PMF.bind_map, Function.comp_def, extractLabelsIdeal,
-      ProbComp.eval_replicate_congr hpublic
-        (ExtractionSchedule.count n (realization.length n) (inverseSlack n))]
+  let count := fun n => ExtractionSchedule.count n (realization.length n) (inverseSlack n)
+  have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=
+    (ExtractionSchedule.isPolyTime_count (.of_tidy (by fun_prop))
+      realization.length_isPolyTime (.of_tidy hslack)).tidy
+  have h := hpair.extract_indexed_labels realization choose
+    (inverseSlack := inverseSlack)
+    (fun n i => ProbComp.uniform (BitString (outputBits n i * count n)))
+    (fun n i seed bits => LinearHash.hash
+      (blocksEquiv (m := outputBits n i) (k := count n) seed) (ofList (count n) bits))
+    (fun n i result => test n i (result.1, List.ofFn result.2.1, List.ofFn result.2.2))
+    (isPPTOn_extractedWordTest (count := fun input : ℕ × ℕ => count input.1)
+      (outputBits := fun input : ℕ × ℕ => outputBits input.1 input.2)
+      (fun input : ℕ × ℕ => test input.1 input.2) htest
+      (.of_tidy (by fun_prop)) (.of_tidy houtput))
+    (.of_tidy hcandidates) (.of_tidy hslack) (.of_tidy hnumerator) (.of_tidy hdensity) hchoose
+      hvalid
+    (fun n i => by simpa only [ProbComp.eval_uniform, ofList_ofFn] using
+      LinearHash.isTwoUniversal_flat (count n) (outputBits n i)) hbudget
+  apply h.congr
+  intro n
+  have hpublic : ProbComp.eval ((fun value => pair.encode n value.1) <$>
+      pair.latentSample n) = ProbComp.eval (Prod.fst <$> pair.sample n) := by
+    simp only [ProbComp.eval_map, pair.eval_latentSample, pair.eval_sample, PMF.map_comp,
+      Function.comp_def]
+  simp only [count, ProbComp.eval_bind, eval_extractWordLabels,
+    eval_extractWordLabelsIdeal, PMF.bind_map, Function.comp_def, extractLabelsIdeal,
+    ProbComp.eval_replicate_congr hpublic
+      (ExtractionSchedule.count n (realization.length n) (inverseSlack n))]
 
 open Filter in
 /-- Computational label extraction as two ordinary word programs. The client supplies the

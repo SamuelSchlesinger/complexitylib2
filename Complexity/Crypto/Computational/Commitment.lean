@@ -90,7 +90,7 @@ theorem OneWay.exists_pseudorandomGenerator_three_mul {f : List Bool → List Bo
       PseudorandomGenerator generator (fun n => 3 * n + 1) := by
   obtain ⟨g, hg⟩ := hf.exists_pseudorandomGenerator
   have htarget : ComputableTidilyInPolyTime (fun n => 3 * n + 1) encUnary encUnary := by fun_prop
-  exact ⟨_, hg.amplify (fun n => 3 * n + 1) htarget (fun n => by lia)⟩
+  exact ⟨_, hg.amplify (fun n => 3 * n + 1) (.of_tidy htarget) (fun n => by lia)⟩
 
 /-! ### Naor bit commitment -/
 
@@ -718,6 +718,9 @@ theorem computableInPolyTime_naorMaskBits {α : Type} {input : α ↪ List Bool}
     (hbits : ComputableInPolyTime bits input encBits) :
     ComputableInPolyTime (fun a => naorMaskBits (openFlags a) (bits a))
       input encBits := by
+  have hopen := hopen.tidy
+  have hbits := hbits.tidy
+  refine .of_tidy ?_
   have h : (fun a => naorMaskBits (openFlags a) (bits a)) =
       fun a => (List.range (bits a).length).map
         (fun i => ((openFlags a)[i]?.getD false) && ((bits a)[i]?.getD false)) := by
@@ -790,6 +793,13 @@ theorem computableInPolyTime_naorCommitSplit {α : Type} {input : α ↪ List Bo
     ComputableInPolyTime
       (fun a => naorCommitSplit generator (r a) (openFlags a) (bits a) (seeds a) (pads a))
       input (encList encBits) := by
+  have hg := hg.tidy
+  have hr := hr.tidy
+  have hopen := hopen.tidy
+  have hbits := hbits.tidy
+  have hseeds := hseeds.tidy
+  have hpads := hpads.tidy
+  refine .of_tidy ?_
   have h : (fun a => naorCommitSplit generator (r a) (openFlags a) (bits a) (seeds a) (pads a)) =
       fun a => (List.range (bits a).length).map (fun i =>
         naorCommitAt generator (r a) ((openFlags a)[i]?.getD false) ((bits a)[i]?.getD false)
@@ -797,7 +807,9 @@ theorem computableInPolyTime_naorCommitSplit {α : Type} {input : α ↪ List Bo
     funext a
     simp only [naorCommitSplit_eq_map, List.getD_eq_getElem?_getD]
   rw [h]
-  fun_prop
+  apply ComputableTidilyInPolyTime.mapWithInput (encA := encUnary) (by fun_prop)
+  apply ComputableInPolyTime.tidy
+  apply computableInPolyTime_naorCommitAt (.of_tidy hg) <;> exact .of_tidy (by fun_prop)
 
 /-- When the unopened pads are drawn independently from `BitString.sampleList m`, the distribution
 of `naorCommitSplit` depends only on the masked bits `naorMaskBits openFlags bits`. -/
@@ -962,6 +974,11 @@ theorem computableInPolyTime_naorSelectSeeds {α : Type} {input : α ↪ List Bo
     ComputableInPolyTime
       (fun a => naorSelectSeeds (s a) (openFlags a) (bits a) (seeds a))
       input (encList encBits) := by
+  have hs := hs.tidy
+  have hopen := hopen.tidy
+  have hbits := hbits.tidy
+  have hseeds := hseeds.tidy
+  refine .of_tidy ?_
   have h : (fun a => naorSelectSeeds (s a) (openFlags a) (bits a) (seeds a)) =
       fun a => (List.range (bits a).length).map (fun i =>
         if (openFlags a)[i]?.getD false then
