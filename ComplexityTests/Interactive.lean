@@ -80,7 +80,9 @@ example :
   exact h
 
 /-- Iterated coin rounds are complete, by iterated composition. -/
-example (k : ℕ) : (Reduction.iterate (fun _ => coinStep) k).Complete World.plain rel rel 0 := by
+example (k : ℕ) :
+    (Reduction.iterate (s := fun _ => coinSpec) (S := fun _ => Bool) (W := fun _ => Unit)
+      (fun _ => coinStep) k).Complete World.plain rel rel 0 := by
   simpa using Reduction.Complete.iterate (rel := fun _ => rel) (ε := fun _ => 0) k
     fun _ _ => coinStep_complete
 

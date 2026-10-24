@@ -20,15 +20,23 @@ Exact security notions for a reduction from a relation `relIn` to a relation `re
   and the prover's witness is valid for it.
 * `Verifier.Sound W V langIn langOut ε`: on every `x ∉ langIn`, every prover strategy makes the
   verifier output a statement of `langOut` with probability at most `ε`.
-* `Verifier.KnowledgeSound W V relIn relOut E ε`: the straight-line extractor `E` recovers a valid
-  input witness from the transcript and the prover's output witness, except with probability `ε`.
+* `Verifier.KnowledgeSound V relIn relOut E ε`: in the plain model, the straight-line extractor
+  `E` recovers a valid input witness from the transcript and the prover's output witness, except
+  with probability `ε`.
 * `Verifier.RbrSound V langIn langOut ε`: round-by-round soundness in the plain model, with an
   error for every challenge round, through a state function on transcript prefixes.
-* `Reduction.HVZK W R relIn Sim ε`: the simulator's transcripts are `ε`-close in statistical
-  distance to honest ones.
+* `Reduction.HVZK R relIn Sim ε`: in the plain model, the simulator's transcripts are `ε`-close
+  in statistical distance to honest ones.
 
-Proof systems, arguments and proofs of knowledge are the reductions to the trivial relation
-`Interactive.Accept`, with output language `Set.univ`. Extractors and simulators are named
+Interactive proofs and interactive oracle proofs are the reductions to the trivial relation
+`Interactive.Accept`, with output language `Set.univ`. `Verifier.Sound` quantifies over all
+prover strategies, with no query or time bound, so it is the information-theoretic notion in every
+world; arguments and query-bounded soundness in oracle worlds are separate notions.
+`Verifier.KnowledgeSound` is straight-line extraction from the transcript, as for interactive
+oracle proofs; proofs of knowledge in the sense of Bellare and Goldreich, whose extractors rewind
+the prover, are a different notion. Knowledge soundness and zero knowledge are stated in the plain
+model: in an oracle world the extractor would need the prover's queries and the simulator the
+oracle's view, which these definitions do not provide. Extractors and simulators are named
 arguments, so a property cannot hold vacuously through an unconstrained existential. Their
 efficiency is a separate layer.
 
@@ -89,21 +97,22 @@ def Reduction.Complete (W : World oP oV) (R : Reduction oP oV s StmtIn WitIn Stm
     (W.eval (R.run x w)).toOuterMeasure
       {r | ¬ (r.2.1 = some r.2.2.1 ∧ relOut r.2.2.1 r.2.2.2)} ≤ ε
 
-/-- Soundness with error `ε`, against every prover strategy. -/
+/-- Soundness with error `ε`, against every prover strategy. Provers are not bounded in time or
+in oracle queries, so this is information-theoretic soundness in every world. -/
 def Verifier.Sound (W : World oP oV) (V : Verifier oV s StmtIn StmtOut)
     (langIn : Set StmtIn) (langOut : Set StmtOut) (ε : ℝ≥0∞) : Prop :=
   ∀ x ∉ langIn, ∀ (α : Type) (P : ProbOracleComp oP (ProverStrategy (ProbOracleComp oP) s α)),
     (W.eval (V.execute x P)).toOuterMeasure {r | ∃ x' ∈ langOut, r.2.1 = some x'} ≤ ε
 
-/-- Straight-line knowledge soundness with error `ε`: whenever a prover strategy, ending with an
-output witness, makes the verifier output a statement for which that witness is valid, the
-extractor `E` recovers a valid input witness from the statement, the transcript and the output
-witness, except with probability `ε`. -/
-def Verifier.KnowledgeSound (W : World oP oV) (V : Verifier oV s StmtIn StmtOut)
+/-- Straight-line knowledge soundness with error `ε`, in the plain model: whenever a prover
+strategy, ending with an output witness, makes the verifier output a statement for which that
+witness is valid, the extractor `E` recovers a valid input witness from the statement, the
+transcript and the output witness, except with probability `ε`. -/
+def Verifier.KnowledgeSound (V : Verifier emptySpec s StmtIn StmtOut)
     (relIn : StmtIn → WitIn → Prop) (relOut : StmtOut → WitOut → Prop)
     (E : StmtIn → Transcript s → WitOut → WitIn) (ε : ℝ≥0∞) : Prop :=
-  ∀ x (P : ProbOracleComp oP (ProverStrategy (ProbOracleComp oP) s WitOut)),
-    (W.eval (V.execute x P)).toOuterMeasure
+  ∀ x (P : ProbOracleComp emptySpec (ProverStrategy (ProbOracleComp emptySpec) s WitOut)),
+    (World.plain.eval (V.execute (oP := emptySpec) x P)).toOuterMeasure
       {r | (∃ x', r.2.1 = some x' ∧ relOut x' r.2.2) ∧ ¬ relIn x (E x r.1 r.2.2)} ≤ ε
 
 /-! ### Round-by-round soundness -/
@@ -158,11 +167,13 @@ def Verifier.RbrSound (V : Verifier emptySpec s StmtIn StmtOut) (langIn : Set St
 
 /-! ### Zero knowledge -/
 
-/-- Honest-verifier zero knowledge with statistical error `ε` (perfect for `ε = 0`): on every
-`(x, w)` in `relIn`, the simulator's transcript law is `ε`-close to the honest one. -/
-def Reduction.HVZK (W : World oP oV) (R : Reduction oP oV s StmtIn WitIn StmtOut WitOut)
+/-- Honest-verifier zero knowledge with statistical error `ε` (perfect for `ε = 0`), in the plain
+model: on every `(x, w)` in `relIn`, the simulator's transcript law is `ε`-close to the honest
+one. -/
+def Reduction.HVZK (R : Reduction emptySpec emptySpec s StmtIn WitIn StmtOut WitOut)
     (relIn : StmtIn → WitIn → Prop) (Sim : StmtIn → ProbComp (Transcript s)) (ε : ℝ≥0∞) :
     Prop :=
-  ∀ x w, relIn x w → CloseTo ((W.eval (R.run x w)).map Prod.fst) (ProbComp.eval (Sim x)) ε
+  ∀ x w, relIn x w →
+    CloseTo ((World.plain.eval (R.run x w)).map Prod.fst) (ProbComp.eval (Sim x)) ε
 
 end Cslib.Interactive

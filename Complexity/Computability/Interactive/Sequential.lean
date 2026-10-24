@@ -660,9 +660,9 @@ theorem Verifier.KnowledgeSound.append {V₁ : Verifier emptySpec s₁ S₁ S₂
     {V₂ : Verifier emptySpec s₂ S₂ S₃}
     {rel₁ : S₁ → W₁ → Prop} {rel₂ : S₂ → W₂ → Prop} {rel₃ : S₃ → W₃ → Prop} {ε₁ ε₂ : ℝ≥0∞}
     {E₁ : S₁ → Transcript s₁ → W₂ → W₁} {E₂ : S₂ → Transcript s₂ → W₃ → W₂}
-    (h₁ : V₁.KnowledgeSound (oP := emptySpec) World.plain rel₁ rel₂ E₁ ε₁)
-    (h₂ : V₂.KnowledgeSound (oP := emptySpec) World.plain rel₂ rel₃ E₂ ε₂) (y₀ : S₂) :
-    (V₁.append V₂).KnowledgeSound (oP := emptySpec) World.plain rel₁ rel₃
+    (h₁ : V₁.KnowledgeSound rel₁ rel₂ E₁ ε₁)
+    (h₂ : V₂.KnowledgeSound rel₂ rel₃ E₂ ε₂) (y₀ : S₂) :
+    (V₁.append V₂).KnowledgeSound rel₁ rel₃
       (V₁.extractAppend E₁ E₂ y₀) (ε₁ + ε₂) := by
   intro x P
   rw [World.plain_eval_execute, PMF.toOuterMeasure_map_apply, plainLaw_run_verifierAppend]
@@ -736,34 +736,36 @@ end Compose
 
 /-! ### Iteration -/
 
-/-- `k` repetitions of the rounds `s`. -/
-def iterSpec (s : Spec) : ℕ → Spec
+/-- The rounds of the stages `s 0`, …, `s (k - 1)`, in order. -/
+def iterSpec (s : ℕ → Spec) : ℕ → Spec
   | 0 => []
-  | k + 1 => iterSpec s k ++ s
+  | k + 1 => iterSpec s k ++ s k
 
 /-- The reduction without rounds that keeps the statement and the witness. -/
 def Reduction.id {S W : Type} : Reduction oP oV [] S W S W where
   prover x w := pure (x, w)
   verifier := { samplers := (), decide := fun x _ => pure (some x) }
 
-/-- Run the reductions `R 0`, …, `R (k - 1)` in sequence. -/
-def Reduction.iterate {s : Spec} {S W : Type} (R : ℕ → Reduction oP oV s S W S W) :
-    (k : ℕ) → Reduction oP oV (iterSpec s k) S W S W
+/-- Run the stages `R 0`, …, `R (k - 1)` in sequence. Stage `i` has its own rounds `s i` and
+reduces statements of type `S i` with witnesses `W i` to those of stage `i + 1`. -/
+def Reduction.iterate {s : ℕ → Spec} {S W : ℕ → Type}
+    (R : (i : ℕ) → Reduction oP oV (s i) (S i) (W i) (S (i + 1)) (W (i + 1))) :
+    (k : ℕ) → Reduction oP oV (iterSpec s k) (S 0) (W 0) (S k) (W k)
   | 0 => Reduction.id
   | k + 1 => (Reduction.iterate R k).append (R k)
 
-/-- Repeat per-round errors. -/
-def PerChallenge.iterate {s : Spec} (ε : ℕ → PerChallenge (fun _ => ℝ≥0∞) s) :
+/-- Concatenate per-round errors of the stages. -/
+def PerChallenge.iterate {s : ℕ → Spec} (ε : (i : ℕ) → PerChallenge (fun _ => ℝ≥0∞) (s i)) :
     (k : ℕ) → PerChallenge (fun _ => ℝ≥0∞) (iterSpec s k)
   | 0 => ()
-  | k + 1 => PerChallenge.append (iterSpec s k) s (PerChallenge.iterate ε k) (ε k)
+  | k + 1 => PerChallenge.append (iterSpec s k) (s k) (PerChallenge.iterate ε k) (ε k)
 
-section Plain
+section Identity
 
-variable {s : Spec} {S W : Type} {R : ℕ → Reduction emptySpec emptySpec s S W S W}
+variable {T U : Type}
 
 /-- The reduction without rounds is perfectly complete. -/
-theorem Reduction.id_complete (rel : S → W → Prop) :
+theorem Reduction.id_complete (rel : T → U → Prop) :
     (Reduction.id (oP := emptySpec) (oV := emptySpec)).Complete World.plain rel rel 0 := by
   intro x w hxw
   rw [Reduction.run, World.plain_eval_execute, PMF.toOuterMeasure_map_apply]
@@ -771,16 +773,23 @@ theorem Reduction.id_complete (rel : S → W → Prop) :
   rfl
 
 /-- The reduction without rounds is round-by-round sound without error. -/
-theorem Reduction.id_rbrSound (L : Set S) :
-    (Reduction.id (oP := emptySpec) (oV := emptySpec) (W := W)).verifier.RbrSound L L () := by
+theorem Reduction.id_rbrSound (L : Set T) :
+    (Reduction.id (oP := emptySpec) (oV := emptySpec) (W := U)).verifier.RbrSound L L () := by
   refine ⟨fun x _ => x ∈ L, fun x hx => hx, fun x hS ⟨x', hx', hout⟩ => hS ?_⟩
   have : x = x' := Option.some.inj hout
   exact this ▸ hx'
 
-/-- **Iterated completeness**: if every step `R i` is complete from `rel i` to `rel (i + 1)` with
-error `ε i` for `i < k`, the first `k` steps are complete from `rel 0` to `rel k` with the sum of
-the errors. -/
-theorem Reduction.Complete.iterate {rel : ℕ → S → W → Prop} {ε : ℕ → ℝ≥0∞} (k : ℕ)
+end Identity
+
+section Plain
+
+variable {s : ℕ → Spec} {S W : ℕ → Type}
+  {R : (i : ℕ) → Reduction emptySpec emptySpec (s i) (S i) (W i) (S (i + 1)) (W (i + 1))}
+
+/-- **Iterated completeness**: if every stage `R i` with `i < k` is complete from `rel i` to
+`rel (i + 1)` with error `ε i`, the first `k` stages are complete from `rel 0` to `rel k` with
+the sum of the errors. -/
+theorem Reduction.Complete.iterate {rel : (i : ℕ) → S i → W i → Prop} {ε : ℕ → ℝ≥0∞} (k : ℕ)
     (h : ∀ i < k, (R i).Complete World.plain (rel i) (rel (i + 1)) (ε i)) :
     (Reduction.iterate R k).Complete World.plain (rel 0) (rel k) (∑ i ∈ Finset.range k, ε i) := by
   induction k with
@@ -791,18 +800,19 @@ theorem Reduction.Complete.iterate {rel : ℕ → S → W → Prop} {ε : ℕ �
     rw [Finset.sum_range_succ]
     exact (ih fun i hi => h i (by omega)).append (h k (by omega))
 
-/-- **Iterated round-by-round soundness**, with the per-round errors of the steps in order. -/
-theorem Verifier.RbrSound.iterate {L : ℕ → Set S} {ε : ℕ → PerChallenge (fun _ => ℝ≥0∞) s}
-    (k : ℕ) (h : ∀ i < k, (R i).verifier.RbrSound (L i) (L (i + 1)) (ε i)) :
+/-- **Iterated round-by-round soundness**, with the per-round errors of the stages in order. -/
+theorem Verifier.RbrSound.iterate {L : (i : ℕ) → Set (S i)}
+    {ε : (i : ℕ) → PerChallenge (fun _ => ℝ≥0∞) (s i)} (k : ℕ)
+    (h : ∀ i < k, (R i).verifier.RbrSound (L i) (L (i + 1)) (ε i)) :
     (Reduction.iterate R k).verifier.RbrSound (L 0) (L k) (PerChallenge.iterate ε k) := by
   induction k with
   | zero => exact Reduction.id_rbrSound (L 0)
   | succ k ih => exact (ih fun i hi => h i (by omega)).append (h k (by omega))
 
-/-- The total error of repeated per-round errors. -/
-theorem PerChallenge.sum_iterate (ε : ℕ → PerChallenge (fun _ => ℝ≥0∞) s) (k : ℕ) :
+/-- The total error of the stages' concatenated per-round errors. -/
+theorem PerChallenge.sum_iterate (ε : (i : ℕ) → PerChallenge (fun _ => ℝ≥0∞) (s i)) (k : ℕ) :
     PerChallenge.sum (iterSpec s k) (PerChallenge.iterate ε k) =
-      ∑ i ∈ Finset.range k, PerChallenge.sum s (ε i) := by
+      ∑ i ∈ Finset.range k, PerChallenge.sum (s i) (ε i) := by
   induction k with
   | zero => rfl
   | succ k ih =>

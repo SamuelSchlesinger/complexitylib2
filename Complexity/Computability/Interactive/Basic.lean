@@ -15,8 +15,7 @@ public import Complexity.Languages.Probabilistic.Oracle.Interaction
 An interactive reduction from a relation `R₁` to a relation `R₂` is a public-coin protocol in which
 a prover convinces a verifier, who holds a statement of `R₁`, to output a statement of `R₂`, and
 whose prover outputs a witness for it [Ben-Sasson, Chiesa and Spooner][BenSassonChiesaSpooner2016].
-Interactive proofs, arguments, interactive oracle proofs and proofs of knowledge are the
-reductions to acceptance.
+Interactive proofs and interactive oracle proofs are the reductions to acceptance.
 
 A protocol is described by its rounds (`Interactive.Spec`, a list of `Interactive.Round`s). In a
 prover round the prover sends a message, which the verifier only accesses through the message's
