@@ -47,6 +47,29 @@ class CheckOutputTests(unittest.TestCase):
             self.index["declarations"][name] = {"docLink": "./Complexity/Current.html#" + name}
         self.write(self.page("Complexity.Current"), "\n".join(
             f'<div id="{name}"></div>' for name in self.index["declarations"]))
+        self.published_index = None
+        pub_patch = patch.object(
+            check_docs, "fetch_published_external_index", side_effect=self.default_published_index
+        )
+        pub_patch.start()
+        self.addCleanup(pub_patch.stop)
+
+    def default_published_index(self):
+        if self.published_index is not None:
+            return self.published_index
+        declarations = dict(self.index.get("declarations", {}))
+        for module in self.index.get("modules", {}):
+            if module.split(".", 1)[0] in check_docs.LOCAL_DOC_ROOTS:
+                continue
+            page = self.page(module)
+            if page.is_file():
+                rel = module.replace(".", "/") + ".html"
+                for anchor in check_docs.page_anchors(page):
+                    declarations.setdefault(anchor, {"docLink": f"./{rel}#{anchor}"})
+        return {
+            "modules": dict(self.index.get("modules", {})),
+            "declarations": declarations,
+        }
 
     def write(self, path, text=""):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -395,6 +418,136 @@ class CheckOutputTests(unittest.TestCase):
             "Broken external dependency anchor in Complexity.html: Mathlib/Data/List.html#List.renamed"
         )
 
+    def test_trim_remaps_moved_and_falls_back_for_omitted_published_declarations(self):
+        self.index["modules"]["Mathlib.LinearAlgebra.Matrix.Defs"] = {
+            "importedBy": ["Complexity.Current"],
+            "url": "./Mathlib/LinearAlgebra/Matrix/Defs.html",
+        }
+        self.index["modules"]["Mathlib.Tactic.TautoSet"] = {
+            "importedBy": ["Complexity.Current"],
+            "url": "./Mathlib/Tactic/TautoSet.html",
+        }
+        self.index["declarations"]["Matrix.ofArray"] = {
+            "docLink": "./Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray",
+            "kind": "def",
+        }
+        self.index["declarations"]["Mathlib.Tactic.TautoSet.specialize_all"] = {
+            "docLink": "./Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all",
+            "kind": "def",
+        }
+        self.write(
+            self.page("Mathlib.LinearAlgebra.Matrix.Defs"),
+            '<div id="Matrix.ofArray"></div>',
+        )
+        self.write(
+            self.page("Mathlib.Tactic.TautoSet"),
+            '<div id="Mathlib.Tactic.TautoSet.specialize_all"></div>',
+        )
+        self.published_index = {
+            "modules": {
+                "Mathlib.LinearAlgebra.Matrix.Defs": {},
+                "Mathlib.LinearAlgebra.Matrix.Array": {},
+                "Mathlib.Tactic.TautoSet": {},
+            },
+            "declarations": {
+                "Matrix.ofArray": {
+                    "docLink": "./Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray",
+                },
+            },
+        }
+        self.write(
+            self.page("Complexity"),
+            '<a href="./Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray">ofArray</a> '
+            '<a href="./Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all">specialize_all</a>',
+        )
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+
+        check_docs.trim_output()
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_output()
+
+        self.assertEqual(
+            self.page("Complexity").read_text(),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray">ofArray</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html">specialize_all</a>',
+        )
+
+    def test_check_output_rejects_local_only_or_unremapped_published_anchor(self):
+        self.index["modules"]["Mathlib.LinearAlgebra.Matrix.Defs"] = {}
+        self.index["modules"]["Mathlib.Tactic.TautoSet"] = {}
+        self.write(
+            self.page("Mathlib.LinearAlgebra.Matrix.Defs"),
+            '<div id="Matrix.ofArray"></div>',
+        )
+        self.write(
+            self.page("Mathlib.Tactic.TautoSet"),
+            '<div id="Mathlib.Tactic.TautoSet.specialize_all"></div>',
+        )
+        self.write(self.module_data("Mathlib.LinearAlgebra.Matrix.Defs"), "{}")
+        self.write(self.module_data("Mathlib.Tactic.TautoSet"), "{}")
+        self.published_index = {
+            "modules": {
+                "Mathlib.LinearAlgebra.Matrix.Defs": {},
+                "Mathlib.LinearAlgebra.Matrix.Array": {},
+                "Mathlib.Tactic.TautoSet": {},
+            },
+            "declarations": {
+                "Matrix.ofArray": {
+                    "docLink": "./Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray",
+                },
+            },
+        }
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray">stale moved</a>',
+        )
+        self.assert_failure(
+            "Broken external dependency anchor in Complexity.html: "
+            "Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray"
+        )
+
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all">omitted</a>',
+        )
+        self.assert_failure(
+            "Broken external dependency anchor in Complexity.html: "
+            "Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all"
+        )
+
+    def test_url_query_preservation_and_api_docs_dependency_normalization(self):
+        self.index["modules"]["Mathlib.Data.List"] = {
+            "importedBy": ["Complexity.Current"], "url": "./Mathlib/Data/List.html",
+        }
+        self.index["declarations"]["List.map"] = {
+            "docLink": "./Mathlib/Data/List.html#List.map", "kind": "def",
+        }
+        self.write(self.page("Mathlib.Data.List"), '<div id="List.map"></div>')
+        self.write(
+            self.page("Complexity"),
+            '<a href="./Mathlib/Data/List.html?foo=1#List.map">rel query</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?bar=2#List.map">abs mathlib query</a> '
+            f'<a href="{check_docs.API_DOCS_URL}Mathlib/Data/List.html?baz=3#List.map">api docs dep</a>',
+        )
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+
+        check_docs.trim_output()
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_output()
+
+        self.assertEqual(
+            self.page("Complexity").read_text(),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?foo=1#List.map">rel query</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?bar=2#List.map">abs mathlib query</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?baz=3#List.map">api docs dep</a>',
+        )
+
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.API_DOCS_URL}Mathlib/Data/List.html">unrewritten api docs dep</a>',
+        )
+        self.assert_failure("Broken internal link in Complexity.html: Mathlib/Data/List.html")
+
 
 class CheckGuideLinksTests(unittest.TestCase):
     page = "Complexity/Reduction.html"
@@ -414,6 +567,9 @@ class CheckGuideLinksTests(unittest.TestCase):
             '<div class="decl" id="Cslib.Complexity.NPComplete"></div>'
             '<div class="decl" id="Cslib.«term_&lt;=p_»"></div>')
         self.guide.mkdir(parents=True)
+        pub_patch = patch.object(check_docs, "fetch_published_external_index", return_value=None)
+        pub_patch.start()
+        self.addCleanup(pub_patch.stop)
 
     def link(self, target):
         return f'<a href="{check_docs.API_DOCS_URL}{target}">x</a>'
