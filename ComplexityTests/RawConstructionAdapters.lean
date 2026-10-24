@@ -45,3 +45,12 @@ example {α β γ : Type u} {encIn : α ↪ List Bool} {enc₁ : β ↪ List Boo
       (fun a => c * (t₁ a + t₂ a + 1))
       (fun a => c * (s₁ a + s₂ a + (enc (f a, g a)).length + 1)) :=
   ComputableTidilyInTimeAndSpace.pair hf hg
+
+-- Ordinary imports expose one shared polynomial-space construction operation.
+example {α : Type u} {β : Type v} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
+    (h : ComputableInPolySpace f encIn encOut) :
+    ∃ (t : α → ℕ) (s : ℕ → ℕ), Cslib.PolynomiallyBounded s ∧
+      ComputableTidilyInTimeAndSpace f encIn encOut t (fun a => s (encIn a).length) ∧
+      ∀ a, (encOut (f a)).length ≤ s (encIn a).length :=
+  Internal.normalizePolySpace h
