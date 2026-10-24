@@ -309,6 +309,7 @@ import ComplexityTests.Parameterized
 import ComplexityTests.PlainCalculus
 import ComplexityTests.PlainCoreBridge
 import ComplexityTests.PlainProjection
+import ComplexityTests.PlainResourceBridge
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata

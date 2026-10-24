@@ -10,6 +10,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -718,11 +719,6 @@ end ComputableTidilyInO
     (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
   ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut (fun a => c * (T a + 1))
     fun a => c * (S a + 1)
-
-/-- `f` is computable within time `O(T a)` and space `O(S a)` on the input `a`. -/
-@[expose] public def ComputableInBigO {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
-    (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
-  ∃ c, ComputableInTimeAndSpace f encIn encOut (fun a => c * (T a + 1)) fun a => c * (S a + 1)
 
 section BigO
 

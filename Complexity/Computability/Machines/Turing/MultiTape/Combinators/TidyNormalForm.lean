@@ -17,6 +17,8 @@ public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
 import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Basic
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Mathlib.Algebra.BigOperators.Fin
@@ -438,5 +440,110 @@ private theorem forgetPolyTime {α β : Type*} {f : α → β}
       (fun a => t (encIn a).length) (fun a => s (encIn a).length)) :
     ComputableInPolyTime f encIn encOut :=
   ⟨t, s, ht, hs, h.computableInTimeAndSpace⟩
+
+end Turing.MultiTapeTM.Internal
+
+namespace Turing.MultiTapeTM.Internal
+
+/-- Normalization preserves both cost degree `d` and the independent encoded-output degree `e`,
+including degree zero. This is a private machine witness, not a public tidy certificate. -/
+private theorem normalizeDegree {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {d e : ℕ}
+    (h : ComputableInDegree f encIn encOut d e) :
+    (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
+      DegreeBounded (fun a => (encIn a).length) s d ∧
+      ComputableTidilyInTimeAndSpace f encIn encOut t s) ∧
+    DegreeBounded (fun a => (encIn a).length) (fun a => (encOut (f a)).length) e := by
+  obtain ⟨⟨t, s, ht, hs, h⟩, ho⟩ := h
+  obtain ⟨c, hc⟩ := h.exists_computableTidilyInTimeAndSpace
+  exact ⟨⟨_, _, ((ht.smul 2).add (hs.smul 3)).add_const c,
+    (hs.add_const 1).smul c, hc⟩, ho⟩
+
+/-- Forget a normalized degree witness while preserving its output-growth certificate. -/
+private theorem forgetDegree {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {d e : ℕ}
+    (h : (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
+      DegreeBounded (fun a => (encIn a).length) s d ∧
+      ComputableTidilyInTimeAndSpace f encIn encOut t s) ∧
+      DegreeBounded (fun a => (encIn a).length) (fun a => (encOut (f a)).length) e) :
+    ComputableInDegree f encIn encOut d e := by
+  obtain ⟨⟨t, s, ht, hs, h⟩, ho⟩ := h
+  exact ⟨⟨t, s, ht, hs, h.computableInTimeAndSpace⟩, ho⟩
+
+/-- Normalize a common linear bound, absorbing cleanup in an explicit constant. -/
+private theorem normalizeLinear {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
+    (h : ComputableInLinearTimeAndSpace f encIn encOut) :
+    ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
+      (fun a => c * ((encIn a).length + 1)) (fun a => c * ((encIn a).length + 1)) := by
+  obtain ⟨k, h⟩ := h
+  obtain ⟨c, hc⟩ := h.exists_computableTidilyInTimeAndSpace
+  refine ⟨5 * k + c + c * (k + 1), hc.mono ?_ ?_⟩
+  · intro a
+    have hpos : 1 ≤ (encIn a).length + 1 := by omega
+    have hconst := Nat.mul_le_mul_left c hpos
+    have hnonneg : 0 ≤ c * (k + 1) * ((encIn a).length + 1) := Nat.zero_le _
+    nlinarith
+  · intro a
+    have hpos : 1 ≤ (encIn a).length + 1 := by omega
+    have hconst := Nat.mul_le_mul_left c hpos
+    have hnonneg : 0 ≤ (5 * k + c) * ((encIn a).length + 1) := Nat.zero_le _
+    nlinarith
+
+/-- Forget a normalized linear witness. -/
+private theorem forgetLinear {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
+    (h : ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
+      (fun a => c * ((encIn a).length + 1)) (fun a => c * ((encIn a).length + 1))) :
+    ComputableInLinearTimeAndSpace f encIn encOut := by
+  obtain ⟨c, h⟩ := h
+  exact ⟨c, h.computableInTimeAndSpace⟩
+
+/-- Normalize one realizing machine at independent bounds. Taking the minimum of its two space
+bounds preserves time `O(T)` and space `O(S)` without charging the encoded output. -/
+private theorem normalizeBigO {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ}
+    (h : ComputableInBigO f encIn encOut T S) :
+    ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
+      (fun a => c * (T a + 1)) (fun a => c * (S a + 1)) := by
+  obtain ⟨c, k, State, hfinite, tm, htm⟩ := h
+  have hmin : ComputableInTimeAndSpace f encIn encOut (fun a => c * (T a + 1))
+      (fun a => min (c * (S a + 1)) (k * (c * (T a + 1)) + k)) := by
+    refine ⟨k, State, hfinite, tm, fun a => ?_⟩
+    dsimp only
+    rcases min_cases (c * (S a + 1)) (k * (c * (T a + 1)) + k) with ⟨he, -⟩ | ⟨he, -⟩
+    · rw [he]
+      exact htm a
+    · rw [he]
+      exact (htm a).space_linear
+  obtain ⟨d, hd⟩ := hmin.exists_computableTidilyInTimeAndSpace
+  let A := 2 * c + 3 * k * c + 3 * k + d
+  let B := d * c + d
+  refine ⟨A + B, hd.mono (fun a => ?_) (fun a => ?_)⟩
+  · calc
+      _ ≤ 2 * (c * (T a + 1)) + 3 * (k * (c * (T a + 1)) + k) + d := by
+        gcongr
+        exact min_le_right _ _
+      _ ≤ A * (T a + 1) := by
+        dsimp [A]
+        nlinarith [Nat.zero_le ((3 * k + d) * T a)]
+      _ ≤ (A + B) * (T a + 1) := Nat.mul_le_mul_right _ (Nat.le_add_right _ _)
+  · calc
+      _ ≤ d * (c * (S a + 1) + 1) := by
+        gcongr
+        exact min_le_left _ _
+      _ ≤ B * (S a + 1) := by
+        dsimp [B]
+        nlinarith [Nat.zero_le (d * S a)]
+      _ ≤ (A + B) * (S a + 1) := Nat.mul_le_mul_right _ (Nat.le_add_left _ _)
+
+/-- Forget a normalized witness at the same independent bounds. -/
+private theorem forgetBigO {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ}
+    (h : ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
+      (fun a => c * (T a + 1)) (fun a => c * (S a + 1))) :
+    ComputableInBigO f encIn encOut T S := by
+  obtain ⟨c, h⟩ := h
+  exact ⟨c, h.computableInTimeAndSpace⟩
 
 end Turing.MultiTapeTM.Internal

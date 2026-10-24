@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
-import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
+public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 
 /-!
 # Polynomial time on plain machines
@@ -105,46 +105,9 @@ open Cslib
 
 /-! ### Time bounds space -/
 
-section Machine
 
-variable {k : ℕ} {Symbol State : Type*} {tm : MultiTapeTM k Symbol State}
-
-/-- A computation within `t` steps needs no separate space bound: it visits at most `k t + k`
-work-tape cells. -/
-theorem ComputesInTimeAndSpace.space_linear {input output : List Symbol} {t s : ℕ}
-    (h : tm.ComputesInTimeAndSpace input output t s) :
-    tm.ComputesInTimeAndSpace input output t (k * t + k) :=
-  ⟨h.1, h.2.1, runsInSpace_of_halted (runsInTime_iff_halted.mp h.2.1) (tm.space_linear _ t)⟩
-
-/-- A computation within `t` steps emits at most `t` symbols. -/
-theorem ComputesInTimeAndSpace.length_output_le {input output : List Symbol} {t s : ℕ}
-    (h : tm.ComputesInTimeAndSpace input output t s) : output.length ≤ t := by
-  obtain ⟨⟨u, hu, rfl⟩, ht, -⟩ := h
-  have ht := runsInTime_iff_halted.mp ht
-  have heq : tm.runFrom (tm.initCfg input) u = tm.runFrom (tm.initCfg input) t := by
-    rcases le_total u t with hut | htu
-    · exact (runFrom_eq_of_halt tm _ hut hu).symm
-    · exact runFrom_eq_of_halt tm _ htu ht
-  rw [heq]
-  simpa using tm.length_output_runFrom_le (tm.initCfg input) t
-
-end Machine
 
 variable {α β : Type*} {f : α → β} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
-
-/-- A function computable within time `t` is computable within time `t` and space `c t + c`, for
-a constant `c`: the number of work tapes of the machine. -/
-theorem ComputableInTimeAndSpace.exists_space_linear {t s : α → ℕ}
-    (h : ComputableInTimeAndSpace f encIn encOut t s) :
-    ∃ c, ComputableInTimeAndSpace f encIn encOut t fun a => c * t a + c :=
-  let ⟨k, State, hfinite, tm, htm⟩ := h
-  ⟨k, k, State, hfinite, tm, fun a => (htm a).space_linear⟩
-
-/-- The encoded values of a function computable within time `t` have length at most `t`. -/
-theorem ComputableInTimeAndSpace.length_le {t s : α → ℕ}
-    (h : ComputableInTimeAndSpace f encIn encOut t s) (a : α) : (encOut (f a)).length ≤ t a :=
-  let ⟨_, _, _, _, htm⟩ := h
-  (htm a).length_output_le
 
 /-- The indicator of `A` is the Boolean function that is `true` exactly on `A`. -/
 theorem indicator_eq_iff {A : Set α} {g : α → Bool} :
