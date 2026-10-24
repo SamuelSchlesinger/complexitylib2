@@ -736,8 +736,8 @@ def Program.ReadsWidth (p : Program B r) : Prop := ∃ i ∈ p, i.ReadsWidth
 instance (p : Program B r) : Decidable p.ReadsWidth :=
   inferInstanceAs (Decidable (∃ i ∈ p, i.ReadsWidth))
 
-/-- A data instruction that does not read the word width evaluates identically at any larger
-width. -/
+/-- A successful evaluation of a data instruction that does not read the word width gives the same
+result at any larger width. -/
 theorem Op.eval_mono_width {w w' : ℕ} {o : Op B r} {x y : Data r} (ho : ¬o.ReadsWidth)
     (h : o.eval w x = some y) (hw : w ≤ w') : o.eval w' x = some y := by
   cases o with

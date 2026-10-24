@@ -32,7 +32,7 @@ MIT 6.851 Spring 2021 lecture 12 notes,
 * `clusterMask`, `clusterMarkers`, `compressionShift`, `compressionMultiplier`: cluster mask,
   nonzero-cluster markers, shift and multiplier for compressing cluster markers.
 * `clusterSummary`: compress the nonzero-cluster markers by multiplication.
-* `msb`, `clusterSize`, `widthMSB`: two-stage MSB expression, cluster width `√w` and width-`w` MSB.
+* `msb`, `clusterSize`, `widthMSB`: two-stage MSB expression, cluster width `⌈√w⌉` and width-`w` MSB.
 * `powerStageValues`, `clusterStageValues`: virtual-register intermediate values for the
   power-of-two and cluster stages.
 
