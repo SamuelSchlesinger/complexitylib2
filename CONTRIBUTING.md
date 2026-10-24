@@ -102,10 +102,16 @@ Maintainers decide scope and acceptance, and arrange the independent API and cor
 required by [AGENTS.md](AGENTS.md#review-cycle). Contributors need not install a maintainer's
 agent tooling to submit a change.
 
-Run `scripts/check.sh` for the six project checks. The test suite audits the axiom dependencies
-of every declaration stored in imported `Complexity` modules; the named headline checks remain
-readable regression tests. This trusts the compiled Lean artifacts and permits `Classical.choice`;
-it does not certify efficient computation or agreement with a textbook statement.
+Run `scripts/build.sh [Lake build arguments]` for a build or `scripts/check.sh` for the six project
+checks; both attempt cache restoration first. Before the first MCP elaboration/build in a
+checkout, and after changing branches or pins, run `scripts/cache/ensure.sh`. The command is
+shared by all agent clients. See the [cache guide](scripts/cache/README.md#automatic-restoration)
+for retries and intentional opt-out.
+
+The test suite audits the axiom dependencies of every declaration stored in imported `Complexity`
+modules; the named headline checks remain readable regression tests. This trusts the compiled Lean
+artifacts and permits `Classical.choice`; it does not certify efficient computation or agreement
+with a textbook statement.
 
 For concurrent local validation, choose a thread budget for the shared host, for example
 `LEAN_NUM_THREADS=2 scripts/check.sh`. Lean's
@@ -118,11 +124,13 @@ the root checkout and, when `<branch>` exists only on `origin`, checks it out tr
 forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
 heuristic check for non-terminal bare `simp` calls in candidate modules).
 
-The helper hard-links package sources by default, but copies root and dependency build caches
-with independent files, including symlink targets. Do not edit shared package sources; use
-`--copy-cslib` or `--copy-packages` when those sources must change. Seeding preserves existing
-destination caches and does not repair worktrees created with shared dependency caches by an
-older helper; use a fresh worktree for isolated validation.
+The helper links `.lake/packages` by default to a read-only, pin-keyed shared directory
+(`.worktrees/.shared/packages-cslib-<rev>`, created on a pin change and never updated in place),
+copies root build/config caches with independent files, and runs `scripts/cache/ensure.sh`
+(`scripts/cache/get.sh`) before the first build. It never points a worktree at the primary checkout
+and refuses targets or symlinks that do. Use `--copy-cslib` (which copies `cslib` writably while
+sharing other packages) or `--copy-packages` when package sources must change. Seeding preserves
+existing destination caches.
 
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
 an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.
