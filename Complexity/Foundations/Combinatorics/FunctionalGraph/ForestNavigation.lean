@@ -105,7 +105,7 @@ theorem forestAnchor_unique {y a₁ a₂ : α} (hy : y ∈ checkpointHull f H)
       · simpa only [Function.iterate_zero_apply] using hiy₁
       · exact (hedge₁.interior i₁ hipos hi₁ (hiy₁.symm ▸ hm₂)).elim
     · obtain ⟨i₂, hi₂, hiy₂⟩ := forest_segment_contains_of_depth f H hedge₂ hy hdepth₂ he₂
-      exact (forest_edges_merge f H hedge₁ hedge₂ hi₁ hi₂ (hiy₁.trans hiy₂.symm)).1
+      exact (forest_edge_interior_inj f H hedge₁ hedge₂ hi₁ hi₂ (hiy₁.trans hiy₂.symm)).1
 
 /-- All eligible keys are safe on hull points; selection need not choose the first key. -/
 theorem forest_anchor_contains {y a : α} (hy : y ∈ checkpointHull f H)

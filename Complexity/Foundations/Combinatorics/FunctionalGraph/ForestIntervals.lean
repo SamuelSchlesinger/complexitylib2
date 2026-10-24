@@ -73,7 +73,7 @@ def forestTrace (f : α → α) (x : α) (k : ℕ) : List α :=
   List.length_iterate f x k
 
 /-- A state lies on the trace of length `k` exactly when it is `f^[i] x` for some `i < k`. -/
-theorem mem_forestTrace (f : α → α) (x y : α) (k : ℕ) :
+@[simp] theorem mem_forestTrace (f : α → α) (x y : α) (k : ℕ) :
     y ∈ forestTrace f x k ↔ ∃ i < k, f^[i] x = y := by
   simpa only [forestTrace, eq_comm] using List.mem_iterate (f := f) (a := x) (n := k) (b := y)
 
@@ -100,7 +100,7 @@ theorem forestPath_injective : Function.Injective (forestPath f) := by
 
 /-- A state lies on the root path of `x` exactly when it is `f^[i] x` for some
 `i ≤ transientDepth f x`. -/
-theorem mem_forestPath (x y : α) :
+@[simp] theorem mem_forestPath (x y : α) :
     y ∈ forestPath f x ↔ ∃ i ≤ transientDepth f x, f^[i] x = y := by
   simp only [forestPath, List.mem_reverse, mem_forestTrace, Nat.lt_succ_iff]
 
@@ -201,7 +201,7 @@ noncomputable def forestDescendantRanks (x : α) : Finset (Fin (Fintype.card α)
 
 /-- A rank is a descendant rank of `x` exactly when it is the rank of a state whose root path
 extends that of `x`. -/
-theorem mem_forestDescendantRanks (x : α) (r : Fin (Fintype.card α)) :
+@[simp] theorem mem_forestDescendantRanks (x : α) (r : Fin (Fintype.card α)) :
     r ∈ forestDescendantRanks f x ↔
       ∃ y, forestPath f x <+: forestPath f y ∧ forestRank f y = r := by
   classical

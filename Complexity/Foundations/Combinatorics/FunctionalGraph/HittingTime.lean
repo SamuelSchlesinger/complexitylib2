@@ -42,7 +42,6 @@ The state type may live in any universe; it is finite, and representatives use a
 
 ## Main results
 
-* `Cslib.FunctionalGraph.iterate_eq_iterate_iff_modEq`: equality past the transient.
 * `Cslib.FunctionalGraph.iterate_eq_iterate_phase`: states past the transient by phase.
 * `Cslib.FunctionalGraph.phase_iterate`: iterating shifts the phase.
 * `Cslib.FunctionalGraph.cyclic_first_hit`: the first hit of a periodic target.
@@ -70,38 +69,12 @@ open Function
 universe u
 variable {α : Type u} [Finite α] (f : α → α)
 
-/-- Past the transient, two times give the same state exactly when they agree modulo the cycle
-length. -/
-theorem iterate_eq_iterate_iff_modEq (x : α) {a b : ℕ}
-    (ha : transientDepth f x ≤ a) (hb : transientDepth f x ≤ b) :
-    f^[a] x = f^[b] x ↔ a ≡ b [MOD cycleLength f x] := by
-  set μ := transientDepth f x
-  set ell := cycleLength f x
-  have hp := isPeriodicPt_cycleLength f x
-  have hreduce {c : ℕ} (hc : μ ≤ c) : f^[c] x = f^[(c - μ) % ell] (f^[μ] x) := by
-    rw [hp.iterate_mod_apply, ← iterate_add_apply, Nat.sub_add_cancel hc]
-  have hi := iterate_eq_iterate_iff_of_lt_minimalPeriod (f := f) (x := f^[μ] x)
-    (m := (a - μ) % ell) (n := (b - μ) % ell)
-    (Nat.mod_lt _ (cycleLength_pos f x)) (Nat.mod_lt _ (cycleLength_pos f x))
-  rw [hreduce ha, hreduce hb, hi]
-  constructor
-  · intro h
-    simpa only [Nat.sub_add_cancel ha, Nat.sub_add_cancel hb] using
-      (show (a - μ) ≡ (b - μ) [MOD ell] from h).add_right μ
-  · intro h
-    exact h.sub ha hb Nat.ModEq.rfl
-
 /-- Every state of the orbit of a periodic state lies on its cycle. -/
 theorem iterate_mem_cycleSet {x : α} (hx : x ∈ periodicPts f) (j : ℕ) : f^[j] x ∈ cycleSet f x := by
-  rw [mem_cycleSet_iff, (transientDepth_eq_zero_iff f x).mpr hx, iterate_zero_apply]
+  rw [mem_cycleSet_iff, transientDepth_eq_zero_of_mem_periodicPts f hx, iterate_zero_apply]
   exact iterate_mem_periodicOrbit hx j
 
 variable [LinearOrder α]
-
-/-- The canonical time is at least the transient depth. -/
-theorem transientDepth_le_canonicalTime (x : α) : transientDepth f x ≤ canonicalTime f x := by
-  rw [← iterate_mem_periodicPts_iff, canonicalTime_spec]
-  exact canonicalCycle_periodic f x
 
 /-- The phase cancels the time of the first visit to the representative. -/
 theorem phase_add_canonicalTime_modEq (x : α) :
@@ -139,7 +112,7 @@ theorem phase_eq_of_iterate_eq_canonicalCycle (x : α) {t : ℕ}
   rw [hm]
 
 /-- Iterating shifts the phase by the number of steps. -/
-theorem phase_iterate (x : α) (t : ℕ) :
+@[simp] theorem phase_iterate (x : α) (t : ℕ) :
     phase f (f^[t] x) = (phase f x + t) % cycleLength f x := by
   set y := f^[t] x
   set b := canonicalTime f y
@@ -196,7 +169,7 @@ theorem cyclic_first_hit (x y : α) (hy : y ∈ periodicPts f)
     exact ((Nat.mod_modEq _ _).symm.add_right d).trans hsum
   have hyrepr : y = f^[phase f y] (canonicalCycle f x) := by
     have h := iterate_eq_iterate_phase f y (t := 0)
-      (by rw [(transientDepth_eq_zero_iff f y).mpr hy])
+      (by rw [transientDepth_eq_zero_of_mem_periodicPts f hy])
     simpa only [Nat.add_zero, Nat.mod_eq_of_lt (phase_lt f y), iterate_zero_apply, ← hc] using h
   constructor
   · rw [iterate_eq_iterate_phase f x (by omega), hend, Nat.mod_eq_of_lt hphase, ← hyrepr]

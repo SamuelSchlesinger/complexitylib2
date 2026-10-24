@@ -26,8 +26,8 @@ open Cslib Cslib.Circuits Cslib.FunctionalGraph Function
 -- The identity map: every state is periodic of period one, with one distinct power.
 example (x : Fin 3) : transientDepth id x = 0 ∧ cycleLength id x = 1 := by
   have hx : x ∈ periodicPts (id : Fin 3 → Fin 3) := mk_mem_periodicPts one_pos rfl
-  refine ⟨(transientDepth_eq_zero_iff _ x).mpr hx, ?_⟩
-  simp [cycleLength, (transientDepth_eq_zero_iff _ x).mpr hx]
+  refine ⟨transientDepth_eq_zero_of_mem_periodicPts _ hx, ?_⟩
+  simp [cycleLength_eq_minimalPeriod_of_mem_periodicPts _ hx]
 
 -- The constant map onto `0` on `Fin 2`: state `1` has transient depth one.
 private def toZero : Fin 2 → Fin 2 := fun _ => 0
