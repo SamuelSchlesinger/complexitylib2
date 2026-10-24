@@ -40,11 +40,16 @@ by structural recursion on its list of rounds, so concatenated protocols compute
 
 ## Main definitions
 
-* `Interactive.OracleInterface`, `Interactive.Round`, `Interactive.Spec`.
-* `Interactive.Spec.Transcript`, `Interactive.Spec.PerChallenge`, `Interactive.Spec.MsgQuery`.
+* `Interactive.OracleInterface`, `Interactive.OracleInterface.full`,
+  `Interactive.OracleInterface.coord`, `Interactive.Round`, `Interactive.Round.Message`,
+  `Interactive.Spec`.
+* `Interactive.Spec.Transcript`, `Interactive.Spec.PerChallenge`, `Interactive.Spec.Challenges`,
+  `Interactive.Spec.Transcript.challenges`, `Interactive.Spec.MsgQuery`,
+  `Interactive.Spec.MsgResponse`, `Interactive.Spec.msgSpec`, `Interactive.Spec.Transcript.answer`.
 * `Interactive.ProverStrategy`, `Interactive.Prover`, `Interactive.Verifier`,
   `Interactive.Reduction`.
-* `Interactive.runStrategy`, `Interactive.Verifier.execute`, `Interactive.Reduction.run`.
+* `Interactive.liftProver`, `Interactive.runStrategy`, `Interactive.Verifier.output`,
+  `Interactive.Verifier.execute`, `Interactive.Reduction.run`.
 * `Interactive.World`, `Interactive.World.eval`, `Interactive.World.plain`.
 
 ## References

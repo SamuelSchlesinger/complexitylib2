@@ -86,6 +86,7 @@ def signedAdjacency (S : Finset ι) : Module.End ℝ ((ι → Bool) → ℝ) whe
     simp only [Pi.smul_apply, smul_eq_mul, RingHom.id_apply, mul_sum]
     exact sum_congr rfl fun _ _ => mul_left_comm _ _ _
 
+/-- Pointwise evaluation of the signed adjacency operator `signedAdjacency S`. -/
 theorem signedAdjacency_apply (S : Finset ι) (v : (ι → Bool) → ℝ) (x : ι → Bool) :
     signedAdjacency S v x = ∑ i ∈ S, chi ℝ {j ∈ S | j < i} x * v (update x i (!x i)) :=
   rfl

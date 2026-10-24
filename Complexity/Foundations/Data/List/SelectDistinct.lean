@@ -49,6 +49,8 @@ selection describes a set. -/
 def selectDistinct (l : List γ) (w : List Bool) : List γ :=
   (l.zipIdx.filter fun e => w.getD e.2 false && decide (l.idxOf e.1 = e.2)).map Prod.fst
 
+/-- An entry `v` belongs to `selectDistinct l w` iff `v ∈ l` and the mask bit at the first
+occurrence `l.idxOf v` is `true`. -/
 theorem mem_selectDistinct {l : List γ} {w : List Bool} {v : γ} :
     v ∈ selectDistinct l w ↔ v ∈ l ∧ w.getD (l.idxOf v) false = true := by
   simp only [selectDistinct, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
@@ -60,6 +62,7 @@ theorem mem_selectDistinct {l : List γ} {w : List Bool} {v : γ} :
     have hlt : l.idxOf v < l.length := List.idxOf_lt_length_iff.2 hv
     exact ⟨v, l.idxOf v, ⟨by simp [hlt], hw, rfl⟩, rfl⟩
 
+/-- `selectDistinct l w` contains no duplicate entries. -/
 theorem nodup_selectDistinct (l : List γ) (w : List Bool) : (selectDistinct l w).Nodup := by
   have hzip : l.zipIdx.Nodup := by
     rw [List.Nodup, List.pairwise_iff_getElem]

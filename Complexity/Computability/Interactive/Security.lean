@@ -45,7 +45,8 @@ efficiency is a separate layer.
 * `Interactive.language`, `Interactive.Accept`, `Interactive.CloseTo`.
 * `Interactive.Reduction.Complete`, `Interactive.Verifier.Sound`,
   `Interactive.Verifier.KnowledgeSound`.
-* `Interactive.Prefix`, `Interactive.RbrFrom`, `Interactive.Verifier.RbrSound`.
+* `Interactive.Prefix`, `Interactive.Prefix.empty`, `Interactive.PerChallenge.sum`,
+  `Interactive.RbrFrom`, `Interactive.Verifier.outputOn`, `Interactive.Verifier.RbrSound`.
 * `Interactive.Reduction.HVZK`.
 
 ## References

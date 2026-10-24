@@ -47,9 +47,9 @@ association-list cache `Cache α = List (α × α)`:
 
 ## Main definitions
 
-* `Cslib.RandomPermutation.PermQuery`, `PermOracleSpec`, `evalPerm`, `liftForward`, `liftBoolProd`:
-  bidirectional permutation queries, oracle specification, deterministic evaluation, and query
-  liftings.
+* `Cslib.RandomPermutation.PermQuery`, `PermQuery.ofBoolProd`, `PermOracleSpec`, `evalPerm`,
+  `liftForward`, `liftBoolProd`: bidirectional permutation queries, oracle specification,
+  deterministic evaluation, and query liftings.
 * `Cslib.RandomPermutation.Cache`, `invLookup`, `AgreesWith`, `IsPartialBijection`, `extPerms`,
   `unusedDomain`, `unusedRange`: partial bijection caches and extension sets.
 * `Cslib.RandomPermutation.answer`, `complete`, `forgetfulAnswer`: exact and forgetful lazy
@@ -102,9 +102,11 @@ def evalPerm {α : Type} (π : Equiv.Perm α) : PermQuery α → α
   | .forward x => π x
   | .inverse y => π.symm y
 
+/-- Evaluating `evalPerm π` on a forward query `.forward x` applies `π` to `x`. -/
 @[simp] theorem evalPerm_forward {α : Type} (π : Equiv.Perm α) (x : α) :
     evalPerm π (.forward x) = π x := rfl
 
+/-- Evaluating `evalPerm π` on an inverse query `.inverse y` applies `π.symm` to `y`. -/
 @[simp] theorem evalPerm_inverse {α : Type} (π : Equiv.Perm α) (y : α) :
     evalPerm π (.inverse y) = π.symm y := rfl
 
@@ -139,9 +141,11 @@ def PermQuery.ofBoolProd {α : Type} : Bool × α → PermQuery α
   | (false, x) => .forward x
   | (true, y) => .inverse y
 
+/-- Tag `false` converts `(false, x)` into the forward query `.forward x`. -/
 @[simp] theorem PermQuery.ofBoolProd_false {α : Type} (x : α) :
     PermQuery.ofBoolProd (false, x) = .forward x := rfl
 
+/-- Tag `true` converts `(true, y)` into the inverse query `.inverse y`. -/
 @[simp] theorem PermQuery.ofBoolProd_true {α : Type} (y : α) :
     PermQuery.ofBoolProd (true, y) = .inverse y := rfl
 
@@ -175,14 +179,17 @@ variable {α : Type} [DecidableEq α]
 def invLookup (cache : Cache α) (y : α) : Option α :=
   (cache.map Prod.swap).lookup y
 
+/-- Inverse lookup in the empty cache returns `none`. -/
 @[simp] theorem invLookup_nil (y : α) : invLookup ([] : Cache α) y = none := rfl
 
+/-- Unfolding `invLookup` on a non-empty cache `e :: cache`. -/
 theorem invLookup_cons (e : α × α) (cache : Cache α) (y : α) :
     invLookup (e :: cache) y =
       match y == e.2 with
       | true => some e.1
       | false => invLookup cache y := rfl
 
+/-- If `cache.lookup x = some y`, then the pair `(x, y)` belongs to `cache`. -/
 theorem mem_of_lookup_eq_some {cache : Cache α} {x y : α} (h : cache.lookup x = some y) :
     (x, y) ∈ cache := by
   induction cache with
@@ -200,6 +207,7 @@ theorem mem_of_lookup_eq_some {cache : Cache α} {x y : α} (h : cache.lookup x 
       rw [hxe] at h
       exact List.mem_cons_of_mem e (ih h)
 
+/-- If `invLookup cache y = some x`, then the pair `(x, y)` belongs to `cache`. -/
 theorem mem_of_invLookup_eq_some {cache : Cache α} {y x : α} (h : invLookup cache y = some x) :
     (x, y) ∈ cache := by
   have hswap := mem_of_lookup_eq_some h
@@ -209,6 +217,8 @@ theorem mem_of_invLookup_eq_some {cache : Cache α} {y x : α} (h : invLookup ca
   obtain ⟨rfl, rfl⟩ := Prod.mk.inj heq
   exact hmem
 
+/-- Forward lookup of `x` in `cache` returns `none` iff no entry in `cache` has first component
+`x`. -/
 theorem lookup_eq_none_iff {cache : Cache α} {x : α} :
     cache.lookup x = none ↔ ∀ e ∈ cache, e.1 ≠ x := by
   induction cache with
@@ -223,6 +233,8 @@ theorem lookup_eq_none_iff {cache : Cache α} {x : α} :
       have hx : e.1 ≠ x := Ne.symm (beq_eq_false_iff_ne.mp hxe)
       simp [hx, ih]
 
+/-- Inverse lookup of `y` in `cache` returns `none` iff no entry in `cache` has second component
+`y`. -/
 theorem invLookup_eq_none_iff {cache : Cache α} {y : α} :
     invLookup cache y = none ↔ ∀ e ∈ cache, e.2 ≠ y := by
   induction cache with
@@ -241,30 +253,37 @@ theorem invLookup_eq_none_iff {cache : Cache α} {y : α} :
 def AgreesWith (cache : Cache α) (π : Equiv.Perm α) : Prop :=
   ∀ e ∈ cache, π e.1 = e.2
 
+/-- Decidability of `AgreesWith cache π`. -/
 instance decidableAgreesWith (cache : Cache α) (π : Equiv.Perm α) :
     Decidable (AgreesWith cache π) :=
   inferInstanceAs (Decidable (∀ e ∈ cache, π e.1 = e.2))
 
 omit [DecidableEq α] in
+/-- Every permutation agrees with the empty cache. -/
 @[simp] theorem agreesWith_nil (π : Equiv.Perm α) : AgreesWith ([] : Cache α) π :=
   fun _ h => False.elim (List.not_mem_nil h)
 
 omit [DecidableEq α] in
+/-- A permutation `π` agrees with `e :: cache` iff `π e.1 = e.2` and `π` agrees with `cache`. -/
 @[simp] theorem agreesWith_cons (e : α × α) (cache : Cache α) (π : Equiv.Perm α) :
     AgreesWith (e :: cache) π ↔ π e.1 = e.2 ∧ AgreesWith cache π :=
   List.forall_mem_cons
 
+/-- If `π` agrees with `cache` and `cache.lookup x = some y`, then `π x = y`. -/
 theorem AgreesWith.apply_of_lookup_eq_some {cache : Cache α} {π : Equiv.Perm α}
     (hπ : AgreesWith cache π) {x y : α} (h : cache.lookup x = some y) :
     π x = y :=
   hπ (x, y) (mem_of_lookup_eq_some h)
 
+/-- If `π` agrees with `cache` and `invLookup cache y = some x`, then `π.symm y = x`. -/
 theorem AgreesWith.symm_apply_of_invLookup_eq_some {cache : Cache α} {π : Equiv.Perm α}
     (hπ : AgreesWith cache π) {y x : α} (h : invLookup cache y = some x) :
     π.symm y = x := by
   have hxy := hπ (x, y) (mem_of_invLookup_eq_some h)
   exact π.symm_apply_eq.mpr hxy.symm
 
+/-- If `π` agrees with `cache` and `x` is not in the domain of `cache`, then `π x` is not in the
+range of `cache`. -/
 theorem AgreesWith.invLookup_apply_eq_none {cache : Cache α} {π : Equiv.Perm α}
     (hπ : AgreesWith cache π) {x : α} (hx : cache.lookup x = none) :
     invLookup cache (π x) = none := by
@@ -273,6 +292,8 @@ theorem AgreesWith.invLookup_apply_eq_none {cache : Cache α} {π : Equiv.Perm �
   have h1 : π e.1 = π x := (hπ e he).trans heq
   exact lookup_eq_none_iff.mp hx e he (π.injective h1)
 
+/-- If `π` agrees with `cache` and `y` is not in the range of `cache`, then `π.symm y` is not in
+the domain of `cache`. -/
 theorem AgreesWith.lookup_symm_apply_eq_none {cache : Cache α} {π : Equiv.Perm α}
     (hπ : AgreesWith cache π) {y : α} (hy : invLookup cache y = none) :
     cache.lookup (π.symm y) = none := by
@@ -282,6 +303,8 @@ theorem AgreesWith.lookup_symm_apply_eq_none {cache : Cache α} {π : Equiv.Perm
     rw [← hπ e he, heq, Equiv.apply_symm_apply]
   exact invLookup_eq_none_iff.mp hy e he h1
 
+/-- Post-composing a permutation agreeing with `cache` by `Equiv.swap (π x) y` extends agreement
+to `(x, y) :: cache` when `x` and `y` are fresh. -/
 theorem AgreesWith.trans_swap_of_lookup_eq_none {cache : Cache α} {π : Equiv.Perm α}
     (hπ : AgreesWith cache π) {x y : α} (hx : cache.lookup x = none)
     (hy : invLookup cache y = none) :
@@ -294,6 +317,8 @@ theorem AgreesWith.trans_swap_of_lookup_eq_none {cache : Cache α} {π : Equiv.P
   have hne2 : e.2 ≠ y := invLookup_eq_none_iff.mp hy e he
   simp [hπ e he, Equiv.swap_apply_of_ne_of_ne hne1 hne2]
 
+/-- Pre-composing a permutation agreeing with `cache` by `Equiv.swap (π.symm y) x` extends
+agreement to `(x, y) :: cache` when `x` and `y` are fresh. -/
 theorem AgreesWith.swap_trans_of_invLookup_eq_none {cache : Cache α} {π : Equiv.Perm α}
     (hπ : AgreesWith cache π) {x y : α} (hx : cache.lookup x = none)
     (hy : invLookup cache y = none) :
@@ -312,9 +337,12 @@ def IsPartialBijection (cache : Cache α) : Prop :=
   ∃ π : Equiv.Perm α, AgreesWith cache π
 
 omit [DecidableEq α] in
+/-- The empty cache is a partial bijection, witnessed by the identity permutation. -/
 theorem isPartialBijection_nil : IsPartialBijection ([] : Cache α) :=
   ⟨1, agreesWith_nil 1⟩
 
+/-- Extending a partial bijection `cache` with a fresh domain element `x` and fresh range element
+`y` yields a partial bijection. -/
 theorem IsPartialBijection.cons_of_lookup_eq_none {cache : Cache α}
     (h : IsPartialBijection cache) {x y : α} (hx : cache.lookup x = none)
     (hy : invLookup cache y = none) :
@@ -340,32 +368,41 @@ def unusedRange (cache : Cache α) : Finset α :=
 def extPerms (cache : Cache α) : Finset (Equiv.Perm α) :=
   Finset.univ.filter fun π => AgreesWith cache π
 
+/-- An element `x` belongs to `unusedDomain cache` iff `cache.lookup x = none`. -/
 @[simp] theorem mem_unusedDomain_iff {cache : Cache α} {x : α} :
     x ∈ unusedDomain cache ↔ cache.lookup x = none := by
   simp [unusedDomain]
 
+/-- An element `y` belongs to `unusedRange cache` iff `invLookup cache y = none`. -/
 @[simp] theorem mem_unusedRange_iff {cache : Cache α} {y : α} :
     y ∈ unusedRange cache ↔ invLookup cache y = none := by
   simp [unusedRange]
 
+/-- A permutation `π` belongs to `extPerms cache` iff `AgreesWith cache π`. -/
 @[simp] theorem mem_extPerms_iff {cache : Cache α} {π : Equiv.Perm α} :
     π ∈ extPerms cache ↔ AgreesWith cache π := by
   simp [extPerms]
 
+/-- Every permutation extends the empty cache. -/
 @[simp] theorem extPerms_nil : extPerms ([] : Cache α) = Finset.univ := by
   ext π
   simp
 
+/-- The extension finset `extPerms cache` is nonempty iff `cache` is a partial bijection. -/
 theorem extPerms_nonempty_iff {cache : Cache α} :
     (extPerms cache).Nonempty ↔ IsPartialBijection cache := by
   simp [Finset.Nonempty, IsPartialBijection]
 
+/-- When `cache` is a partial bijection and `x` is outside its domain, `unusedRange cache` is
+nonempty. -/
 theorem IsPartialBijection.unusedRange_nonempty {cache : Cache α}
     (h : IsPartialBijection cache) {x : α} (hx : cache.lookup x = none) :
     (unusedRange cache).Nonempty := by
   obtain ⟨π, hπ⟩ := h
   exact ⟨π x, mem_unusedRange_iff.mpr (hπ.invLookup_apply_eq_none hx)⟩
 
+/-- When `cache` is a partial bijection and `y` is outside its range, `unusedDomain cache` is
+nonempty. -/
 theorem IsPartialBijection.unusedDomain_nonempty {cache : Cache α}
     (h : IsPartialBijection cache) {y : α} (hy : invLookup cache y = none) :
     (unusedDomain cache).Nonempty := by

@@ -49,12 +49,14 @@ def ofComplInf {α : Type*} [BooleanAlgebra α] (s : Set α)
   supClosed' _ hx _ hy := by
     simpa only [compl_inf, compl_compl] using hcompl (hinf (hcompl hx) (hcompl hy))
 
+/-- The underlying set of `ofComplInf s hbot hcompl hinf` is `s`. -/
 @[simp]
 theorem coe_ofComplInf {α : Type*} [BooleanAlgebra α] (s : Set α)
     (hbot : ⊥ ∈ s) (hcompl : ∀ ⦃x⦄, x ∈ s → xᶜ ∈ s)
     (hinf : ∀ ⦃x y⦄, x ∈ s → y ∈ s → x ⊓ y ∈ s) :
     (ofComplInf s hbot hcompl hinf : Set α) = s := rfl
 
+/-- Membership in `ofComplInf s hbot hcompl hinf` is membership in `s`. -/
 @[simp]
 theorem mem_ofComplInf {α : Type*} [BooleanAlgebra α] {s : Set α}
     {hbot : ⊥ ∈ s} {hcompl : ∀ ⦃x⦄, x ∈ s → xᶜ ∈ s}

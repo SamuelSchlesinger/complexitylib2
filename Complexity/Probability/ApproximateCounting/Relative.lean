@@ -47,8 +47,7 @@ with probability at most `2 ^ (-t)`.
   `Cslib.Probability.ApproximateCounting.one_sub_inv_two_pow_le_dens_filter_relativeHashEstimate`:
   the relative estimate lies between `#S` and `(1 + 1 / p) #S` except with probability at most
   `(n + 1) (8 / 9) ^ r`, and so with probability at least `1 - 2 ^ (-t)` for `r = 6 (n + 1 + t)`.
-* `Cslib.Probability.ApproximateCounting`:
-  `one_sub_inv_two_pow_le_dens_filter_affineRelativeHashEstimate` gives the same for a set of
+* `one_sub_inv_two_pow_le_dens_filter_affineRelativeHashEstimate`: gives the same for a set of
   vectors in `(ZMod 2) ^ m`, with `7 p` copies and affine hash families.
 
 ## References
