@@ -3,50 +3,54 @@
 
 Usage: python3 scripts/tidy_sweep.py report [--area AREA]... [--json OUT] [--markdown OUT]
        python3 scripts/tidy_sweep.py rewrite --area AREA [--diff OUT | --verify [--rounds N]]
-       python3 scripts/tidy_sweep.py stub-registry [--output FILE]
-Common options: [--registry FILE] [--allowlist FILE] [--build-dir DIR] [--no-build-check]
+Common options: [--registry FILE] [--allowlist FILE] [--build-dir DIR]; report also accepts
+[--no-build-check] and [--no-plan].
 
-Tidy computability is a proof device: outside the raw machine constructions of the allowlist
-(`scripts/tidy_allowlist.txt`, from #608), no public statement should mention it. Every public
-declaration outside the allowlist whose statement (its type, or the exposed body of a definition)
-mentions a tidy predicate falls in one case of the S2 design
+Plain computability is the API and tidy computability is how the machine layer proves it: outside
+the raw machine constructions of the allowlist (`scripts/tidy_allowlist.txt`, from #608), no
+public statement should mention a tidy notion. Every public declaration outside the allowlist
+whose statement (its type, or the exposed body of a definition) mentions a tidy predicate falls
+in one case of the S2 design
 (https://github.com/cslib-community/complexitylib/issues/456#issuecomment-6376748411):
 
-1. a theorem with a registered plain twin (`--registry`): proofs that become plain use the twin;
+1. a theorem with a committed plain twin: proofs that become plain use the twin, and the
+   original is left for S1/S3 to internalize;
 2. any other theorem: it is renamed `computableTidily…` → `computable…` (the target name must be
    free) and restated with the plain predicates;
 3. a definition, instance or structure field: it is listed for a hand-written plain redefinition.
 
-A declaration that fits none of these is *unclassifiable*: it mentions a tidy notion without a
-same-bound plain equivalence, is a plain/tidy bridge or a deprecated alias, or its target name is
-taken (a collision). `report` prints the classification with per-area counts (#587's areas) and
-each area's rewrite plan, without writing anything.
+The twin of a tidy theorem is the public plain theorem named by its plain rename (`exact` when its
+statement is the syntactic plain transport, `by name` otherwise, for instance a broader canonical
+rule). `--registry` adds pairs from a migration script: a JSON array of
+`{"original": name, "plain": name, "module": module}` objects, validated strictly. A declaration
+that fits none of the cases is *unclassifiable*: it mentions a tidy notion without a same-bound
+plain equivalence, is a plain/tidy bridge or a deprecated alias, or its target name is taken (a
+collision). `report` prints the classification with per-area counts (#587's areas) and each
+area's rewrite plan, without writing anything.
 
 `rewrite --area AREA` restates the area's case 2 declarations and rewrites every reference to them
 in the three libraries, at the exact ranges recorded in the `.ilean` files (full names, names
-relative to namespaces and `open`s, dot notation), and in comments and READMEs. A declaration is
-*deferred* (left tidy) when its statement names another tidy declaration, gets a tidy hypothesis
-from a `variable` command, or is written inside a tidy namespace. A restated proof is *translated*
-when every tidy declaration it names has a plain counterpart (a twin or a restated lemma): those
-names are replaced in place. Otherwise it is *wrapped*: the old proof runs on tidy hypotheses
-(`have h := h.tidy`) and its conclusion is converted (`refine .of_tidy ?_`); statements that are
-not a bare predicate are transported with `simpa only [<plain ↔ tidy>]`. A reference from a proof
-that stays tidy keeps its old type: the application becomes `(lemma args).tidy`, with `.of_tidy`
-around tidy arguments, and references to case 1 originals stay. `.of_tidy (x.tidy)` round trips
-are then removed. Whatever cannot be done mechanically is listed as manual work.
+relative to namespaces and `open`s, dot notation), and in comments and READMEs. No edit is made
+at a span whose text does not spell the referenced constant, and a replacement name is written
+only if it resolves to its target, and nothing else, from its position (namespaces, `open`s,
+private names of the module, local binders); `rewrite` therefore needs current build outputs.
 
-With `--verify`, the three libraries are built after the rewrite, repeatedly: a translated proof
-that fails is wrapped instead, and a wrapped proof or a client declaration that fails (typically
-a tidy `fun_prop` that used a restated `@[fun_prop]` lemma) is preceded by
-`attribute [local fun_prop] ComputableInPolyTime.tidy in`. Remaining failures are reported. With
-`--stub-failures` (measurement only, never commit the result), proofs that still fail become
-`sorry`, so that later rounds reach the modules downstream of them. `--diff` writes the plan as a
+A declaration is *deferred* (left tidy, with its references unchanged) when its statement names
+another tidy declaration, gets a tidy hypothesis from a `variable` command, or is written inside
+a tidy namespace, and when a reference to it cannot be converted completely. A restated proof is
+*translated* when every tidy declaration it names has a plain counterpart (a twin or a restated
+lemma): those names are replaced in place. Otherwise it is *wrapped*: the old proof runs on tidy
+hypotheses (`have h := h.tidy`) and its conclusion is converted (`refine .of_tidy ?_`);
+statements that are not a bare predicate are transported with `simpa only [<plain ↔ tidy>]`. A
+reference from a proof that stays tidy keeps its old type: the application becomes
+`(lemma args).tidy`, with `.of_tidy` around tidy arguments; references to case 1 originals stay
+there, and the plan counts them. `.of_tidy (x.tidy)` round trips are then removed.
+
+With `--verify`, the three libraries are built strictly (`--wfail --iofail`) after the rewrite; a
+translated proof that fails is wrapped instead and the build repeated. Failures that remain, such
+as a tidy `fun_prop` that relied on a lemma the batch made plain, mark plain-calculus gaps: they
+are reported, the status is `failed` and the exit code nonzero. `--diff` writes the plan as a
 patch instead of rewriting files.
-
-The registry is a JSON array of `{"original": name, "plain": name, "module": module}` objects, the
-format of #608's `#mirror_pairs`. Until S1 lands, `scripts/tidy_mirror_registry.json` is a stub,
-written by `stub-registry`: the existing declarations whose name is the plain rename of a tidy
-theorem and whose statement is its plain transport.
 
 Declarations, statements and references come from `scripts/quality_report.py` and
 `scripts/QualityReport.lean`, which read the build outputs of
@@ -71,7 +75,6 @@ import quality_report as qr  # noqa: E402
 from proof_lengths import masks  # noqa: E402
 
 ALLOWLIST = ROOT / "scripts/tidy_allowlist.txt"
-REGISTRY = ROOT / "scripts/tidy_mirror_registry.json"
 TM = "Turing.MultiTapeTM."
 
 
@@ -138,20 +141,75 @@ def load_allowlist(path: Path) -> set[str]:
 
 
 def load_registry(path: Path | None) -> dict[str, str]:
-    """original → plain twin, from a JSON array of `{"original", "plain", "module"}` objects (the
-    output of #608's `#mirror_pairs`), or an object holding it under `"pairs"`."""
-    if path is None or not path.exists():
+    """original → plain twin, from a migration script's JSON: an array of
+    `{"original": name, "plain": name, "module": module}` objects (`module` optional), or an
+    object whose only key `"pairs"` holds that array. Malformed or ambiguous input is an error:
+    a missing file, other keys, empty or blank names, an entry whose names agree, or two entries
+    giving one original different twins."""
+    if path is None:
         return {}
-    data = json.loads(path.read_text())
+    if not path.is_file():
+        raise ValueError(f"{path}: registry file not found")
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as error:
+        raise ValueError(f"{path}: not JSON ({error})") from None
     if isinstance(data, dict):
-        data = data.get("pairs", [])
-    registry = {}
-    for row in data:
-        if not (isinstance(row, dict) and isinstance(row.get("original"), str)
-                and isinstance(row.get("plain"), str)):
-            raise ValueError(f"{path}: malformed registry entry {row!r}")
-        registry[row["original"]] = row["plain"]
+        if set(data) != {"pairs"}:
+            raise ValueError(f"{path}: expected an array of pairs or an object with exactly the "
+                             f"key \"pairs\", found keys {sorted(data)}")
+        data = data["pairs"]
+    if not isinstance(data, list):
+        raise ValueError(f"{path}: expected an array of pairs")
+    registry: dict[str, str] = {}
+    for i, row in enumerate(data):
+        where = f"{path}: entry {i}"
+        if not isinstance(row, dict):
+            raise ValueError(f"{where}: expected an object, found {row!r}")
+        if set(row) - {"original", "plain", "module"} or not {"original", "plain"} <= set(row):
+            raise ValueError(f"{where}: expected the keys original, plain and optionally module, "
+                             f"found {sorted(row)}")
+        for key in row:
+            value = row[key]
+            if not isinstance(value, str) or not value or value != value.strip() \
+                    or any(c.isspace() for c in value):
+                raise ValueError(f"{where}: `{key}` must be a nonempty name, found {value!r}")
+        original, plain = row["original"], row["plain"]
+        if original == plain:
+            raise ValueError(f"{where}: `{original}` is its own twin")
+        if registry.get(original, plain) != plain:
+            raise ValueError(f"{where}: `{original}` has two twins, `{registry[original]}` and "
+                             f"`{plain}`")
+        registry[original] = plain
     return registry
+
+
+def discover_twins(constants: dict[str, dict]) -> dict[str, tuple[str, str]]:
+    """The committed plain twins: for each public tidy theorem of the supported notions, the
+    public theorem named by its plain rename whose statement mentions no tidy constant. The kind
+    is `exact` when that statement is the syntactic plain transport and `by name` otherwise (for
+    instance a broader canonical rule, which S1 checks)."""
+    out = {}
+    for name, const in constants.items():
+        if const["k"] != "thm" or not const["e"] or not const.get("tidy") or name in BRIDGES:
+            continue
+        if any(t not in BY_TIDY for t in const["tidy"]):
+            continue
+        twin = plain_name(name)
+        other = constants.get(twin)
+        if twin != name and other and other["k"] == "thm" and other["e"] \
+                and not other.get("tidy"):
+            out[name] = (twin, "exact" if other.get("ph") == const.get("ph") else "by name")
+    return out
+
+
+def twin_map(constants: dict[str, dict], registry: dict[str, str]
+             ) -> dict[str, tuple[str, str]]:
+    """Discovered twins, overridden by explicit registry pairs."""
+    twins = discover_twins(constants)
+    for original, plain in registry.items():
+        twins[original] = (plain, "registry")
+    return twins
 
 
 # --- Classification -----------------------------------------------------------------------------
@@ -166,6 +224,7 @@ class Entry:
     case: str  # "1", "2", "3" or "unclassifiable"
     reason: str = ""
     target: str = ""  # the twin (case 1) or the new name (case 2)
+    twin: str = ""  # case 1: `exact`, `by name` or `registry`
     notions: list[str] = field(default_factory=list)
     unsupported: list[str] = field(default_factory=list)
     body_only: bool = False  # mentions tidy only in its exposed body
@@ -186,8 +245,8 @@ def decl_kind(decl: dict) -> str:
     return "definition"
 
 
-def classify_decl(decl: dict, const: dict, registry: dict[str, str], constants: dict[str, dict],
-                  private_names: dict[str, set[str]]) -> Entry:
+def classify_decl(decl: dict, const: dict, twins: dict[str, tuple[str, str]],
+                  constants: dict[str, dict], private_names: dict[str, set[str]]) -> Entry:
     """The S2 case of one public declaration whose statement mentions a tidy constant."""
     name = decl["name"]
     tidy = sorted(set(const.get("tidy", [])) | set(const.get("tb", [])))
@@ -211,30 +270,30 @@ def classify_decl(decl: dict, const: dict, registry: dict[str, str], constants: 
             f"`{t}`" for t in entry.unsupported)
     elif entry.kind != "theorem":
         entry.case = "3"
-    elif name in registry:
-        twin = registry[name]
-        entry.target = twin
+    elif name in twins:
+        twin, kind = twins[name]
+        entry.target, entry.twin = twin, kind
         if twin not in constants:
             entry.reason, entry.detail = "registered twin missing", f"`{twin}` is not built"
+        elif constants[twin].get("tidy"):
+            entry.reason, entry.detail = "registered twin missing", f"`{twin}` is tidy"
         else:
             entry.case = "1"
             if constants[twin].get("ph") != const.get("ph"):
                 entry.warnings.append("the twin's statement is not the syntactic plain "
-                                      "transport (checked only up to definitional equality "
-                                      "by S1)")
+                                      "transport; proofs that use it are checked by the build")
     else:
         target = plain_name(name)
         entry.target = target
         taken = target in constants or target in private_names.get(decl["module"], set())
         if target != name and taken:
             existing = constants.get(target)
-            same = existing is not None and existing.get("ph") == const.get("ph")
             entry.collision = {
                 "target": target, "module": existing["m"] if existing else decl["module"],
-                "equivalent": same, "private": existing is None or not existing["e"]}
+                "private": existing is None or not existing["e"]}
             entry.reason = "collision"
-            entry.detail = ("the target has the plain statement but is not a registered twin"
-                            if same else "the target exists with another statement")
+            entry.detail = ("the target is private" if existing is None or not existing["e"]
+                            else "the target is not a public plain theorem")
         else:
             entry.case = "2"
     return entry
@@ -251,7 +310,7 @@ def private_by_module(constants: dict[str, dict]) -> dict[str, set[str]]:
     return out
 
 
-def classify_all(model: "Model", registry: dict[str, str]) -> list[Entry]:
+def classify_all(model: "Model", twins: dict[str, tuple[str, str]]) -> list[Entry]:
     entries = []
     privates = private_by_module(model.constants)
     for name, decl in sorted(model.decls.items()):
@@ -260,14 +319,13 @@ def classify_all(model: "Model", registry: dict[str, str]) -> list[Entry]:
             continue
         if "Complexity/" + decl["path"] in model.allowlist:
             continue
-        entries.append(classify_decl(decl, const, registry, model.constants, privates))
+        entries.append(classify_decl(decl, const, twins, model.constants, privates))
     targets = Counter(e.target for e in entries if e.case == "2" and e.target != e.name)
     for e in entries:
         if e.case == "2" and e.target != e.name and targets[e.target] > 1:
             e.case, e.reason = "unclassifiable", "collision"
             e.detail = "another declaration renames to the same target"
-            e.collision = {"target": e.target, "module": e.module, "equivalent": False,
-                           "private": False}
+            e.collision = {"target": e.target, "module": e.module, "private": False}
     return entries
 
 
@@ -341,11 +399,14 @@ def summary(entries: list[Entry]) -> dict:
 def markdown_report(report: dict, limit: int = 40) -> str:
     s = report["summary"]
     dirty = " with uncommitted changes" if report["dirty"] else ""
+    twins = ", ".join(f"{n} {k}" for k, n in sorted(report["twins"].items())) or "none"
+    registry = (f" (`{report['registry']}`: {report['registry_size']} pairs)"
+                if report["registry"] else "")
     out = [f"Revision `{report['revision']}`{dirty}; build outputs {report['outputs']}. "
-           f"Allowlist: {report['allowlist_size']} modules. "
-           f"Registry: {report['registry_size']} pairs (`{report['registry']}`).", "",
+           f"Allowlist: {report['allowlist_size']} modules. Plain twins of tidy theorems: "
+           f"{twins}{registry}.", "",
            "### Public declarations whose statement mentions a tidy predicate", "",
-           "| Area | Total | (1) Registered twin | (2) Rename and restate | "
+           "| Area | Total | (1) Plain twin | (2) Rename and restate | "
            "(3) Definition or field | Unclassifiable |", "|---|--:|--:|--:|--:|--:|"]
     for area, c in list(s["areas"].items()) + [("Total", s["total"])]:
         out.append(f"| {area} | {c.get('total', 0):,} | {c.get('1', 0):,} | {c.get('2', 0):,} | "
@@ -355,12 +416,10 @@ def markdown_report(report: dict, limit: int = 40) -> str:
     collisions = [e for e in report["entries"] if e["collision"]]
     if collisions:
         out += ["", "### Collisions", "",
-                "| Declaration | Target | Target module | Same plain statement |",
-                "|---|---|---|---|"]
+                "| Declaration | Target | Target module | Why |", "|---|---|---|---|"]
         for e in collisions[:limit]:
             c = e["collision"]
-            out.append(f"| `{e['name']}` | `{c['target']}` | `{c['module']}` | "
-                       f"{'yes' if c['equivalent'] else 'no'} |")
+            out.append(f"| `{e['name']}` | `{c['target']}` | `{c['module']}` | {e['detail']} |")
         if len(collisions) > limit:
             out.append(f"| … {len(collisions) - limit} more in the JSON report | | | |")
     unsupported = Counter(t for e in report["entries"] for t in e["unsupported"])
@@ -998,33 +1057,42 @@ class FileEdits:
 
 
 class Planner:
-    """The edits of one area's batch: case 2 declarations restated and renamed, their clients
-    converted, and case 1 twins used in translated proofs."""
+    """The edits of one area's batch: case 2 declarations restated and renamed, the references
+    to them converted, and case 1 twins used in proofs that become plain.
 
-    def __init__(self, model: Model, entries: list[Entry], registry: dict[str, str], area: str,
-                 force_wrap: frozenset[str] = frozenset(),
-                 force_bridge: frozenset[tuple[str, str]] = frozenset(),
-                 stub: frozenset[tuple[str, str]] = frozenset()):
+    No edit is made at a span whose text does not spell the referenced constant, and a
+    replacement is written only when it resolves to its intended target, and nothing else, from
+    its position. A declaration with a reference that cannot be converted completely is deferred
+    (left tidy), so that skipped references stay unchanged."""
+
+    def __init__(self, model: Model, entries: list[Entry], twins: dict[str, str], area: str,
+                 force_wrap: frozenset[str] = frozenset()):
         self.model, self.area, self.force_wrap = model, area, force_wrap
-        self.force_bridge, self.stub = force_bridge, stub
         self.entries = {e.name: e for e in entries}
         self.batch = {e.name: e for e in entries if e.area == area and e.case == "2"}
-        self.renames = {name: e.target for name, e in self.batch.items()}
-        self.twins = {o: p for o, p in registry.items() if p in model.constants}
-        self.files: dict[Path, FileEdits] = defaultdict(FileEdits)
+        self.twins = {o: p for o, p in twins.items() if p in model.constants}
+        self.privates = private_by_module(model.constants)
+        self.known = model.known | {e.target for e in self.batch.values()}
+        self.namespaces = namespaces_of(self.known)
         self.sources: dict[Path, SourceFile] = {}
+        self.deferred: dict[str, list[str]] = {}
+        self._refs: dict[str, list[Ref]] = {}
+        self._locals: dict[tuple[str, int, int], set[str]] = {}
+        self.reset()
+
+    def reset(self) -> None:
+        """Forget the edits of a planning pass."""
+        self.renames = {n: e.target for n, e in self.batch.items() if n not in self.deferred}
+        self.files: dict[Path, FileEdits] = defaultdict(FileEdits)
         self.manual: list[Manual] = []
         self.decls: dict[str, dict] = {}
         self.spans: dict[str, list[tuple[int, int, str]]] = defaultdict(list)
         self.needs: dict[str, dict[str, bool]] = defaultdict(dict)
-        self.sites = Counter()
+        self.sites: Counter = Counter()
+        self.twin_refs: Counter = Counter()
         self.imports: list[tuple[str, str, bool]] = []
-        self.known = model.known | set(self.renames.values())
-        self.namespaces = namespaces_of(self.known)
+        self.blockers: dict[str, list[str]] = defaultdict(list)
         self.round_trips = 0
-        self.deferred: dict[str, list[str]] = {}
-        self.bridged: list[str] = []
-        self.stubbed: list[str] = []
 
     # Sources and references.
 
@@ -1034,13 +1102,15 @@ class Planner:
         return self.sources[path]
 
     def refs(self, module: str) -> list[Ref]:
-        src = self.source(qr.source_path(module))
-        out = []
-        for name, _, info in self.model.lib.references(module):
-            for u in info["usages"]:
-                out.append(Ref(name, src.at(u[0], u[1]), src.at(u[2], u[3]),
-                               u[4] if len(u) == 5 else None))
-        return out
+        if module not in self._refs:
+            src = self.source(qr.source_path(module))
+            out = []
+            for name, _, info in self.model.lib.references(module):
+                for u in info["usages"]:
+                    out.append(Ref(name, src.at(u[0], u[1]), src.at(u[2], u[3]),
+                                   u[4] if len(u) == 5 else None))
+            self._refs[module] = sorted(out, key=lambda x: x.start)
+        return self._refs[module]
 
     def ref_kind(self, name: str) -> str:
         owner = qr.owner_of(name, self.model.owners) or name
@@ -1070,6 +1140,9 @@ class Planner:
         self.manual.append(Manual(str(path.relative_to(ROOT)), src.line_of(offset), decl or "",
                                   kind, detail))
 
+    def where(self, path: Path, offset: int) -> str:
+        return f"{path.relative_to(ROOT)}:{self.source(path).line_of(offset)}"
+
     def need(self, module: str, constant: str, public: bool) -> None:
         defining = self.model.constants.get(constant, {}).get("m")
         if defining and defining != module:
@@ -1081,56 +1154,109 @@ class Planner:
 
     # Names.
 
-    def rename_at(self, src: SourceFile, start: int, end: int, old: str, new: str) -> str | None:
-        """The written form of `new` replacing the reference to `old` at `start`."""
+    def local_names(self, module: str, src: SourceFile, offset: int) -> set[str]:
+        """Identifiers of the declaration (or command) around `offset` that are not references
+        to constants: binders, local hypotheses, tactic names. A written name whose first
+        component is one of them could be captured by a local."""
+        ranges = self.model.lib.ileans.get(module, {}).get("decls", {}).values()
+        span = next(((src.at(r[0], r[1]), src.at(r[2], r[3])) for r in ranges
+                     if src.at(r[0], r[1]) <= offset < src.at(r[2], r[3])), None)
+        if span is None:
+            starts = src.commands + [len(src.mask)]
+            start = max([s for s in starts if s <= offset], default=0)
+            span = (start, min(s for s in starts if s > offset) if offset < len(src.mask)
+                    else len(src.mask))
+        key = (module, *span)
+        if key not in self._locals:
+            refs = [(x.start, x.end) for x in self.refs(module)
+                    if span[0] <= x.start < span[1]]
+            names = set()
+            for match in IDENT.finditer(src.mask, *span):
+                if not any(a <= match.start() < b for a, b in refs):
+                    names.add(match[0].split(".")[0])
+            self._locals[key] = names - KEYWORDS
+        return self._locals[key]
+
+    def resolves(self, module: str, src: SourceFile, offset: int, written: str) -> set[str]:
+        """What `written` (without `@`) can denote at `offset`: constants reached through the
+        enclosing namespaces and the opened namespaces, private constants of the module, and a
+        local of the same name (as `"<local>"`)."""
+        names = self.known | self.privates.get(module, set())
+        if written.startswith("_root_."):
+            return {written[len("_root_."):]} & names
+        hits = {p + "." + written if p else written for p in src.scopes.prefixes(offset)}
+        out = hits & names
+        if written.split(".")[0] in self.local_names(module, src, offset):
+            out.add("<local>")
+        return out
+
+    def written(self, module: str, src: SourceFile, start: int, end: int, old: str, new: str
+                ) -> tuple[str | None, str]:
+        """The text replacing the reference to `old` at `[start, end)` by one to `new`, or None
+        and the reason it cannot be written."""
         token = src.text[start:end]
+        if not spells(token, old):
+            return None, f"the reference span `{token}` does not spell `{old}`"
         if old == new:
-            return token
-        if start and src.text[start - 1] == ".":  # field or leading-dot notation
-            if old.rsplit(".", 1)[-1] == new.rsplit(".", 1)[-1]:
-                return token
-            if old.rsplit(".", 1)[0] == new.rsplit(".", 1)[0] and "." not in token:
-                return new.rsplit(".", 1)[-1]
-            return None
-        candidate = renamed_token(token, old, new)
-        if candidate is not None and not candidate.lstrip("@").startswith("_root_."):
-            return candidate
+            return token, ""
+        leading = token.startswith(".")
+        if leading or (start and src.text[start - 1] == "."):  # leading-dot or field notation
+            last = new.rsplit(".", 1)[-1]
+            if old.rsplit(".", 1)[-1] == last:
+                return token, ""
+            if namespace_of(old) == namespace_of(new) and "." not in token.lstrip("."):
+                return ("." if leading else "") + last, ""
+            return None, "dot notation on a declaration whose namespace changes"
         at = "@" if token.startswith("@") else ""
-        return at + written_name(new, src.scopes.prefixes(start), self.known)
+        candidates = [renamed_token(token.removeprefix("@"), old, new)]
+        parts = new.split(".")
+        candidates += [".".join(parts[-k:]) for k in range(1, len(parts) + 1)]
+        candidates.append("_root_." + new)
+        for candidate in candidates:
+            if candidate and self.resolves(module, src, start, candidate) == {new}:
+                return at + candidate, ""
+        return None, f"no written form of `{new}` resolves to it here"
 
     # Declarations.
 
     def plan(self) -> "Planner":
         analyses = {name: self.analyse_decl(self.batch[name]) for name in sorted(self.batch)}
+        for name, a in analyses.items():
+            if a is None:
+                self.deferred[name] = ["declaration range missing"]
+            elif a["defer"]:
+                self.deferred[name] = list(a["defer"])
+        while True:
+            self.defer_statements(analyses)
+            self.reset()
+            for name in sorted(self.renames):
+                self.plan_decl(self.batch[name], analyses[name])
+            for name in sorted(self.renames):
+                self.plan_clients(name)
+            if not self.blockers:
+                break
+            for name, reasons in self.blockers.items():
+                self.deferred[name] = sorted(set(reasons))
+        for name in sorted(self.deferred):
+            self.defer(name, analyses.get(name))
+        self.plan_comments()
+        self.plan_imports()
+        return self
+
+    def defer_statements(self, analyses: dict) -> None:
+        """Defer, to a fixed point, the declarations whose statements name deferred ones."""
         changed = True
-        while changed:  # a statement naming a deferred declaration is deferred too
+        while changed:
             changed = False
             for name, a in analyses.items():
                 if name in self.deferred or a is None:
                     continue
-                reasons = list(a["defer"]) + [
-                    f"statement names deferred `{x.name}`" for x in a["sig_refs"]
-                    if (qr.owner_of(x.name, self.model.owners) or x.name) in self.deferred]
+                reasons = [f"statement names deferred `{x.name}`" for x in a["sig_refs"]
+                           if (qr.owner_of(x.name, self.model.owners) or x.name)
+                           in self.deferred]
                 if reasons:
                     self.deferred[name] = reasons
                     changed = True
-        for name, a in analyses.items():
-            if a is None:
-                self.deferred.setdefault(name, ["declaration range missing"])
-        for name in self.deferred:
-            self.renames.pop(name, None)
-        for name in sorted(self.batch):
-            if name in self.deferred:
-                self.defer(name, analyses[name])
-            else:
-                self.plan_decl(self.batch[name], analyses[name])
-        for name in sorted(self.renames):
-            self.plan_clients(name)
-        self.plan_bridges()
-        self.plan_stubs()
-        self.plan_comments()
-        self.plan_imports()
-        return self
 
     def analyse_decl(self, entry: Entry) -> dict | None:
         """Parse a declaration and find what prevents restating it."""
@@ -1148,8 +1274,11 @@ class Planner:
         a = {"module": module, "path": path, "src": src, "dt": dt, "start": start, "end": end,
              "sig_refs": [x for x in refs if x.start < split],
              "proof_refs": [x for x in refs if x.start >= split], "defer": []}
-        if entry.target != entry.name and renamed_token(
-                src.text[sel_start:sel_end], entry.name, entry.target) is None:
+        token = src.text[sel_start:sel_end]
+        if not spells(token, entry.name):
+            a["defer"].append(f"the declaration range `{token}` does not spell its name")
+        elif entry.target != entry.name and renamed_token(token, entry.name,
+                                                          entry.target) is None:
             a["defer"].append("name written inside a tidy namespace")
         for x in a["sig_refs"]:
             if self.ref_kind(x.name) in ("bridge", "tidy"):
@@ -1159,51 +1288,6 @@ class Planner:
             a["defer"].append("tidy predicate from a `variable` command or notation")
         return a
 
-    def plan_bridges(self) -> None:
-        """Let the tidy `fun_prop` calls of the declarations in `force_bridge` use the restated
-        (plain) certificates: `attribute [local fun_prop] ComputableInPolyTime.tidy in`."""
-        notions = {n for name in self.renames for n in self.notions_of(name)}
-        for module, name in sorted(self.force_bridge):
-            ranges = self.model.lib.ileans.get(module, {}).get("decls", {})
-            path = qr.source_path(module)
-            src = self.source(path)
-            if name.startswith("line:"):
-                start = src.starts[command_start_line(src, int(name[5:]))]
-            elif name in ranges:
-                start = src.at(ranges[name][0], ranges[name][1])
-            else:
-                continue
-            if name in self.batch:
-                own = set(self.notions_of(name))
-            else:
-                own = notions
-            lines = "".join(
-                f"attribute [local fun_prop] "
-                f"{written_name(n.to_tidy, src.scopes.prefixes(start), self.known)} in\n"
-                for n in sorted(own, key=lambda n: n.tidy))
-            self.files[path].replaces.append(Replace(start, start, lines))
-            for n in own:
-                self.need(module, n.to_tidy, False)
-            self.bridged.append(name)
-
-    def plan_stubs(self) -> None:
-        """Measurement only (`--stub-failures`): replace the proofs of `stub` by `sorry`, so that
-        a build reaches the modules downstream of them."""
-        for module, name in sorted(self.stub):
-            ranges = self.model.lib.ileans.get(module, {}).get("decls", {})
-            if name not in ranges:
-                continue
-            path = qr.source_path(module)
-            src, r = self.source(path), ranges[name]
-            start, end = src.at(r[0], r[1]), src.at(r[2], r[3])
-            assign = find_top_level(src.mask, src.at(r[6], r[7]), end, ":=")
-            if assign < 0:
-                continue
-            fe = self.files[path]
-            fe.regions = [g for g in fe.regions if not (g.start >= start and g.end <= end)]
-            fe.regions.append(Region(assign + 2, end, lambda _: " by\n  sorry", name))
-            self.stubbed.append(name)
-
     def defer(self, name: str, a: dict | None) -> None:
         """A declaration left tidy in this batch; references to it stay unchanged."""
         decl = self.model.decls[name]
@@ -1211,73 +1295,85 @@ class Planner:
         self.decls[name] = {"name": name, "target": self.batch[name].target,
                             "path": str(path.relative_to(ROOT)),
                             "line": decl["range"][0] if decl["range"] else 0,
-                            "mode": "deferred", "blocking": [],
-                            "issues": self.deferred[name]}
+                            "mode": "deferred", "blocking": [], "issues": self.deferred[name]}
         for reason in self.deferred[name]:
             self.note(path, a["start"] if a else 0, name, "deferred", reason)
 
     def plan_decl(self, entry: Entry, a: dict) -> None:
         module, path, src, dt = a["module"], a["path"], a["src"], a["dt"]
         start, end, sig_refs, proof_refs = a["start"], a["end"], a["sig_refs"], a["proof_refs"]
-        fe = self.files[path]
         info = {"name": entry.name, "target": entry.target, "path": str(path.relative_to(ROOT)),
                 "line": src.line_of(start), "mode": "manual", "blocking": [], "issues": []}
         self.decls[entry.name] = info
         self.spans[module].append((start, end, entry.name))
-
-        def issue(kind: str, detail: str = "", offset: int = start) -> None:
-            info["issues"].append(kind)
-            self.note(path, offset, entry.name, kind, detail)
-
+        replaces: list[Replace] = []
         if entry.target != entry.name:
             token = src.text[dt.sel_start:dt.sel_end]
-            fe.replaces.append(Replace(dt.sel_start, dt.sel_end,
-                                       renamed_token(token, entry.name, entry.target)))
+            replaces.append(Replace(dt.sel_start, dt.sel_end,
+                                    renamed_token(token, entry.name, entry.target)))
         for x in sig_refs:
             if self.ref_kind(x.name) in ("pred", "renamed", "twin"):
-                new = self.rename_at(src, x.start, x.end, x.name, self.new_name(x.name))
+                new, why = self.written(module, src, x.start, x.end, x.name,
+                                        self.new_name(x.name))
                 if new is None:
-                    issue("statement reference in dot notation", x.name, x.start)
-                    continue
-                fe.replaces.append(Replace(x.start, x.end, new))
-                self.need(module, self.new_name(x.name), True)
+                    self.blockers[entry.name].append(
+                        f"{self.where(path, x.start)}: statement reference: {why}")
+                    return
+                replaces.append(Replace(x.start, x.end, new))
         doc = src.text[start:dt.sel_start]
         if TIDY_WORD.search(doc.split("-/")[0] if "/--" in doc else ""):
-            issue("docstring mentions tidiness (review wording)")
+            info["issues"].append("docstring mentions tidiness (review wording)")
+            self.note(path, start, entry.name, "docstring mentions tidiness (review wording)")
         info["blocking"] = sorted({x.name for x in proof_refs
                                    if self.ref_kind(x.name) in ("bridge", "tidy")
                                    and x.name != entry.name})
-        wrap, problems = self.wrap_plan(entry, src, dt, sig_refs)
+        translation = []
         if not info["blocking"] and entry.name not in self.force_wrap and dt.assign >= 0:
+            for x in proof_refs:
+                if self.ref_kind(x.name) in ("pred", "renamed", "twin"):
+                    new, _ = self.written(module, src, x.start, x.end, x.name,
+                                          self.new_name(x.name))
+                    if new is None:
+                        translation = None
+                        break
+                    translation.append((x, new))
+        wrap, problems = self.wrap_plan(entry, src, dt, sig_refs)
+        if translation is not None and not info["blocking"] \
+                and entry.name not in self.force_wrap and dt.assign >= 0:
             info["mode"] = "translate"
         elif wrap is not None:
             info["mode"] = "wrap"
         else:
-            for problem in problems:
-                issue("cannot wrap the proof", problem)
-            if not info["blocking"] and dt.assign >= 0:
-                info["mode"] = "translate"
+            self.blockers[entry.name].append(
+                f"{self.where(path, start)}: cannot wrap the proof: " + "; ".join(problems))
+            return
+        fe = self.files[path]
+        fe.replaces += replaces
+        for x in sig_refs:
+            if self.ref_kind(x.name) in ("pred", "renamed", "twin"):
+                self.need(module, self.new_name(x.name), True)
+        if info["mode"] == "translate":
+            for x, new in translation:
+                if new != src.text[x.start:x.end]:
+                    fe.replaces.append(Replace(x.start, x.end, new))
+                if self.ref_kind(x.name) == "twin":
+                    self.twin_refs["redirected"] += 1
+                    self.need(module, self.new_name(x.name), False)
             return
         for x in proof_refs:
             kind = self.ref_kind(x.name)
-            if info["mode"] == "translate" and kind in ("pred", "renamed", "twin"):
-                new = self.rename_at(src, x.start, x.end, x.name, self.new_name(x.name))
-                if new is None:
-                    issue("proof reference in dot notation to a renamed twin", x.name, x.start)
-                elif new != src.text[x.start:x.end]:
-                    fe.replaces.append(Replace(x.start, x.end, new))
-                if kind == "twin":
-                    self.need(module, self.new_name(x.name), False)
-            elif info["mode"] == "wrap" and kind == "renamed" and x.name != entry.name:
+            if kind == "twin":
+                self.twin_refs["kept on the original"] += 1
+            elif kind == "renamed" and x.name != entry.name:
                 if x.name in self.renames:
                     self.convert(path, module, x.start, x.end, x.name, entry.name, "tidy")
                 else:
-                    issue("generated constant of a restated declaration", x.name, x.start)
-        if info["mode"] == "wrap":
-            fe.regions.append(Region(dt.assign + 2, end, wrap, entry.name))
-            for notion in self.notions_of(entry.name):
-                self.need(module, notion.of_tidy, False)
-                self.need(module, notion.iff, False)
+                    self.blockers[entry.name].append(
+                        f"{self.where(path, x.start)}: names generated constant `{x.name}`")
+        fe.regions.append(Region(dt.assign + 2, end, wrap, entry.name))
+        for notion in self.notions_of(entry.name):
+            self.need(module, notion.of_tidy, False)
+            self.need(module, notion.iff, False)
 
     def hidden_tidy(self, name: str, src: SourceFile, dt: DeclText, sig_refs: list[Ref]) -> bool:
         """Whether the statement has more tidy binders or conclusions than are written."""
@@ -1356,65 +1452,73 @@ class Planner:
             self.convert(path, module, start, end, name, u[4] if len(u) == 5 else None, context)
 
     def convert(self, path: Path, module: str, start: int, end: int, old: str,
-                decl: str | None, context: str) -> None:
+                decl: str | None, context: str) -> bool:
         """Rename a reference to a restated declaration; in a proof that stays tidy, keep the
         site's old type with `.tidy` around the application and `.of_tidy` around tidy
-        arguments."""
-        src, fe = self.source(path), self.files[path]
+        arguments. The edits are made only when the whole conversion is supported; otherwise
+        `old` is blocked (and will be deferred), and the site stays unchanged."""
+        src = self.source(path)
         new = self.renames[old]
-        token = src.text[start:end]
-        written = self.rename_at(src, start, end, old, new)
-        self.sites[context] += 1
-        if written is None:
-            self.note(path, start, decl, "reference in dot notation", f"`{token}`")
-            return
-        if written != token:
+        written, why = self.written(module, src, start, end, old, new)
+        wraps: list[Wrap] = []
+        if written is not None and context == "tidy":
+            why, wraps = self.convert_site(src, start, end, old)
+        if written is None or why:
+            self.blockers[old].append(f"{self.where(path, start)}: {why}")
+            return False
+        fe = self.files[path]
+        if written != src.text[start:end]:
             fe.replaces.append(Replace(start, end, written))
-        if context != "tidy":
-            return
-        problem = self.convert_site(src, fe, start, end, old)
-        if problem:
-            self.note(path, start, decl, "reference kept tidy", f"`{token}`: {problem}")
-        else:
+        fe.wraps += wraps
+        self.sites[context] += 1
+        if wraps:
             for notion in self.notions_of(old):
                 self.need(module, notion.of_tidy, False)
+        return True
 
-    def convert_site(self, src: SourceFile, fe: FileEdits, start: int, end: int,
-                     old: str) -> str | None:
+    def convert_site(self, src: SourceFile, start: int, end: int, old: str
+                     ) -> tuple[str, list[Wrap]]:
+        """The wraps that keep the old type of the application of `old` at `start`, or the
+        reason it cannot be converted (and no wraps)."""
         sg = self.model.constants.get(old, {}).get("sg")
         if not sg:
-            return None
+            return "", []
         binders, conclusion = sg
         mask = src.mask
         opener = enclosing_opener(mask, start)
         if opener >= 0 and mask[opener] == "[" and LEMMA_LIST_TACTIC.search(
                 mask[mask.rfind("\n", 0, opener) + 1:opener]):
-            return "used in a tactic lemma list"
+            return "used in a tactic lemma list", []
         explicit_all = src.text[start:end].startswith("@") or (start and mask[start - 1] == "@")
         site_start = start - 1 if start and mask[start - 1] == "@" else start
         positions = [i for i, (bi, _) in enumerate(binders) if explicit_all or bi == 0]
         if not explicit_all and any(flag and bi != 0 for bi, flag in binders):
-            return "implicit tidy hypothesis"
-        if start and mask[start - 1] == ".":
+            return "implicit tidy hypothesis", []
+        if conclusion == 2:
+            return "conclusion is not a bare tidy predicate", []
+        if src.text[start:end].startswith("."):
+            if conclusion:  # the expected type changes with the conclusion
+                return "leading-dot notation", []
+        elif start and mask[start - 1] == ".":
             before = mask[start - 2] if start >= 2 else " "
             if before.isspace() or before in OPENERS or before in "<|$,":
-                return "leading-dot notation"
+                return "leading-dot notation", []
             site_start = receiver_start(mask, start - 1)
             if not positions or binders[positions[0]][1]:
-                return "dot notation on a tidy receiver"
+                return "dot notation on a tidy receiver", []
             positions = positions[1:]
         named: list[tuple[int, int]] = []
         args = parse_args(mask, end, len(mask), len(positions), line_indent(mask, start), named)
         if len(args) < len(positions):
-            return f"partial application ({len(args)} of {len(positions)} explicit arguments)"
+            return (f"partial application ({len(args)} of {len(positions)} explicit "
+                    "arguments)"), []
+        wraps = []
         for (a, b), i in zip(args, positions):
             if binders[i][1] == 2:
-                return "tidy hypothesis under binders"
+                return "tidy hypothesis under binders", []
             if binders[i][1] == 1:
-                fe.wraps.append(Wrap(a, b, "(.of_tidy ", ")", start))
+                wraps.append(Wrap(a, b, "(.of_tidy ", ")", start))
         site_end = max([end] + [b for _, b in args + named])
-        if conclusion == 2:
-            return "conclusion is not a bare tidy predicate"
         if conclusion == 1:
             left = site_start - 1
             while left >= 0 and mask[left] in " \t\n":
@@ -1423,12 +1527,12 @@ class Planner:
             while right < len(mask) and mask[right] in " \t\n":
                 right += 1
             if left >= 0 and mask[left] == "(" and match_bracket(mask, left) == right:
-                fe.wraps.append(Wrap(left, right + 1, "", ".tidy", site_start))
+                wraps.append(Wrap(left, right + 1, "", ".tidy", site_start))
             elif not args and site_start == start and IDENT.fullmatch(src.text[start:end]):
-                fe.wraps.append(Wrap(start, end, "", ".tidy", site_start))
+                wraps.append(Wrap(start, end, "", ".tidy", site_start))
             else:
-                fe.wraps.append(Wrap(site_start, site_end, "(", ").tidy", site_start))
-        return None
+                wraps.append(Wrap(site_start, site_end, "(", ").tidy", site_start))
+        return "", wraps
 
     # Documentation.
 
@@ -1550,19 +1654,22 @@ class Planner:
         kinds = Counter(m.kind for m in self.manual)
         return {"area": self.area, "declarations": len(self.batch), "modes": dict(modes),
                 "manual": dict(kinds.most_common()), "sites": dict(self.sites),
-                "imports": [list(i) for i in self.imports], "bridged": sorted(self.bridged),
-                "stubbed": sorted(self.stubbed)}
+                "twin_references": dict(self.twin_refs),
+                "imports": [list(i) for i in self.imports]}
 
 
-def command_start_line(src: SourceFile, line: int) -> int:
-    """The first line of the docstring and attributes above the 0-based `line`."""
-    while line > 0:
-        above, above_mask = src.lines[line - 1], src.mask.split("\n")[line - 1]
-        if above.strip() and (not above_mask.strip() or above_mask.lstrip().startswith("@[")):
-            line -= 1
-        else:
-            break
-    return line
+def spells(token: str, name: str) -> bool:
+    """Whether `token`, the text at a reference span, writes `name`: the name itself or a suffix
+    of it on a component boundary, possibly after `@`, `_root_.` or the `.` of leading-dot
+    notation (a field name after a receiver's `.` is such a suffix too)."""
+    bare = token.removeprefix("@").removeprefix("_root_.")
+    if bare.startswith(".") and not bare.startswith(".."):
+        bare = bare[1:]
+    return bool(bare) and (name == bare or name.endswith("." + bare))
+
+
+def namespace_of(name: str) -> str:
+    return name.rsplit(".", 1)[0] if "." in name else ""
 
 
 def enclosing_opener(mask: str, pos: int) -> int:
@@ -1618,9 +1725,18 @@ def plan_markdown(plan: dict, limit: int = 40) -> str:
                        f"{m['detail']} |")
         if len(plan["manual"]) > limit:
             out.append(f"| … {len(plan['manual']) - limit} more in the JSON report | | | | |")
+    if s.get("twin_references"):
+        out.append("References to case 1 originals in restated proofs: " + ", ".join(
+            f"{n} {k}" for k, n in sorted(s["twin_references"].items())) + ".")
     if plan.get("build"):
         b = plan["build"]
-        out += ["", f"Build: {b['status']}. Declarations failing: {len(b['failing'])}."]
+        errors = [d for d in b["diagnostics"] if d["level"] == "error"]
+        out += ["", f"**Strict build: {b['status'].upper()}** (round {b['round']}, Lake exit "
+                f"code {b['exit_code']}, {len(errors)} errors). Restated declarations failing: "
+                f"{len(b['failing'])}; other declarations with errors: "
+                f"{len({d['decl'] for d in b['client_errors']})}."]
+        for d in errors[:limit]:
+            out.append(f"* `{d['path']}:{d['line']}` `{d['decl']}`: {d['message'][:160]}")
     return "\n".join(out)
 
 
@@ -1665,74 +1781,55 @@ def declaration_at(text: str, line: int) -> str:
     return ""
 
 
-def command_line(text: str, line: int) -> int:
-    """The 1-based line where the command containing a 1-based line starts."""
-    mask = masks(text)[1]
-    offset = sum(len(x) + 1 for x in text.split("\n")[:line - 1])
-    starts = [m.start() for m in qr.COMMAND_START.finditer(mask) if m.start() <= offset]
-    return text.count("\n", 0, starts[-1]) + 1 if starts else line
+STRICT = ("--wfail", "--iofail")  # warnings fail the build, as in CI
 
 
-def lake_build(targets: list[str]) -> tuple[int, str]:
-    proc = subprocess.run(["lake", "build", *targets], cwd=ROOT, text=True,
-                          capture_output=True)
+def lake_build(targets: list[str], runner=subprocess.run) -> tuple[int, str]:
+    proc = runner(["lake", "build", *STRICT, *targets], cwd=ROOT, text=True,
+                  capture_output=True)
     return proc.returncode, proc.stdout + proc.stderr
 
 
-def rewrite(model: Model, entries: list[Entry], registry: dict[str, str], area: str,
-            verify: bool, rounds: int, stub_failures: bool = False
-            ) -> tuple[Planner, dict | None]:
-    """Write the area's rewrite. With `verify`, build the three libraries and retry, up to
-    `rounds` times: a translated proof that fails is wrapped, and a wrapped proof or a client
-    declaration that fails gets a local plain → tidy `fun_prop` transition. With
-    `stub_failures` (measurement only), proofs that still fail become `sorry`, so that the next
-    round reaches the modules downstream of them."""
+def rewrite(model: Model, entries: list[Entry], twins: dict[str, str], area: str,
+            verify: bool, rounds: int, build=lake_build) -> tuple[Planner, dict | None]:
+    """Write the area's rewrite into the checkout. With `verify`, build the three libraries
+    strictly and, up to `rounds` times, wrap the translated proofs that fail and rebuild.
+    Remaining failures are reported, never patched over."""
     originals: dict[Path, str] = {}
     force: set[str] = set()
-    bridge: set[tuple[str, str]] = set()
-    stub: set[tuple[str, str]] = set()
-    build, history = None, []
+    result, history = None, []
     for round_ in range(1, rounds + 1):
         for path, text in originals.items():  # plan against the sources of the build
             path.write_text(text, encoding="utf-8")
-        planner = Planner(model, entries, registry, area, frozenset(force),
-                          frozenset(bridge), frozenset(stub)).plan()
+        planner = Planner(model, entries, twins, area, frozenset(force)).plan()
         texts = planner.render()
         for path, text in texts.items():
             originals.setdefault(path, planner.source(path).text)
             path.write_text(text, encoding="utf-8")
         if not verify:
             return planner, None
-        targets = list(qr.ROOTS)
-        code, output = lake_build(targets)
-        build = check_build(planner, texts, output, code, round_, targets)
-        history.append({k: build[k] for k in ("round", "status", "failing", "forced_wrap",
-                                              "failing_clients")})
-        retry = {d for d in build["failing"] if planner.decls.get(d, {}).get("mode")
-                 == "translate"}
-        wrapped = {(planner.model.decls[d]["module"], d) for d in build["failing"]
-                   if planner.decls.get(d, {}).get("mode") == "wrap"}
-        clients = {tuple(c) for c in build["failing_clients"]}
-        new_bridges = (wrapped | clients) - bridge
-        new_stubs = {x for x in (wrapped | clients) & bridge if not x[1].startswith("line:")
-                     } - stub if stub_failures else set()
-        if not (retry or new_bridges or new_stubs) or round_ == rounds:
+        code, output = build(list(qr.ROOTS))
+        result = check_build(planner, texts, output, code, round_)
+        history.append({k: result[k] for k in ("round", "status", "failing", "forced_wrap")})
+        retry = {d for d in result["failing"]
+                 if planner.decls.get(d, {}).get("mode") == "translate"}
+        if not retry or round_ == rounds:
             break
         force |= retry
-        bridge |= new_bridges
-        stub |= new_stubs
-    if build is not None:
-        build["history"] = history
-    return planner, build
+    result["history"] = history
+    return planner, result
 
 
-def check_build(planner: Planner, texts: dict[Path, str], output: str, code: int, round_: int,
-                targets: list[str]) -> dict:
+def check_build(planner: Planner, texts: dict[Path, str], output: str, code: int,
+                round_: int) -> dict:
+    """The outcome of a strict build: `passed` only when Lake succeeded and reported no error.
+    Errors are attributed to the restated declarations (`failing`) or to other declarations
+    (`client_errors`)."""
     by_written = {}
     for name, info in planner.decls.items():
         by_written[(info["path"], name.rsplit(".", 1)[-1])] = name
         by_written[(info["path"], info["target"].rsplit(".", 1)[-1])] = name
-    failing, clients, failing_clients, problems = set(), [], set(), []
+    failing, clients, problems = set(), [], []
     for d in diagnostics(output):
         path = ROOT / d["path"]
         text = texts.get(path) or (path.read_text() if path.exists() else "")
@@ -1745,27 +1842,12 @@ def check_build(planner: Planner, texts: dict[Path, str], output: str, code: int
             failing.add(decl)
             planner.decls[decl].setdefault("errors", []).append(d["message"])
         elif d["level"] == "error":
-            module = module_of(path)
-            names = [n for n in planner.model.lib.ileans.get(module, {}).get("decls", {})
-                     if header and qr.matches(n, header)]
-            if len(names) == 1:
-                failing_clients.add((module, names[0]))
-                item["decl"] = names[0]
-            elif text:
-                at = command_line(text, d["line"]) - 1
-                block = text.split("\n")[at:min(at + 3, d["line"])]
-                original = planner.source(path).lines if path in texts else text.split("\n")
-                hits = [i for i in range(len(original))
-                        if original[i:i + len(block)] == block]
-                if len(hits) == 1:
-                    failing_clients.add((module, f"line:{hits[0]}"))
             clients.append(item)
         problems.append(item)
-    return {"round": round_, "targets": targets, "status": "passed" if code == 0 else "failed",
-            "failing": sorted(failing), "client_errors": clients,
-            "failing_clients": sorted(failing_clients), "diagnostics": problems,
-            "forced_wrap": sorted(planner.force_wrap),
-            "bridged": sorted(planner.bridged), "stubbed": sorted(planner.stubbed)}
+    errors = any(d["level"] == "error" for d in problems)
+    return {"round": round_, "status": "passed" if code == 0 and not errors else "failed",
+            "exit_code": code, "failing": sorted(failing), "client_errors": clients,
+            "diagnostics": problems, "forced_wrap": sorted(planner.force_wrap)}
 
 
 def unified_diff(planner: Planner) -> str:
@@ -1777,21 +1859,9 @@ def unified_diff(planner: Planner) -> str:
     return "".join(out)
 
 
-def stub_registry(model: Model) -> list[dict]:
-    """Existing plain twins: for each tidy theorem, the declaration named by its plain rename
-    whose statement is its plain transport."""
-    pairs = []
-    for name, const in sorted(model.constants.items()):
-        if const["k"] != "thm" or not const["e"] or not const.get("tidy"):
-            continue
-        if any(t not in BY_TIDY for t in const["tidy"]) or name in BRIDGES:
-            continue
-        twin = plain_name(name)
-        other = model.constants.get(twin)
-        if twin != name and other and other["e"] and other.get("ph") == const.get("ph") \
-                and not other.get("tidy"):
-            pairs.append({"original": name, "plain": twin, "module": const["m"]})
-    return pairs
+def exit_status(plans: list[dict]) -> int:
+    """Nonzero when a verified rewrite did not build."""
+    return int(any(p["build"] is not None and p["build"]["status"] != "passed" for p in plans))
 
 
 # --- Command line -------------------------------------------------------------------------------
@@ -1803,26 +1873,23 @@ def entry_json(e: Entry) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=("report", "rewrite", "stub-registry"))
+    parser.add_argument("command", choices=("report", "rewrite"))
     parser.add_argument("--area", action="append", default=[],
                         help="restrict to an area of #587 (repeatable for report)")
-    parser.add_argument("--registry", type=Path, default=REGISTRY)
+    parser.add_argument("--registry", type=Path,
+                        help="extra original → twin pairs from a migration script (JSON)")
     parser.add_argument("--allowlist", type=Path, default=ALLOWLIST)
     parser.add_argument("--build-dir", type=Path, default=qr.DEFAULT_BUILD_DIR)
-    parser.add_argument("--no-build-check", action="store_true")
+    parser.add_argument("--no-build-check", action="store_true",
+                        help="report only: do not check that the build outputs are current")
     parser.add_argument("--json", type=Path, help="write the full report as JSON")
     parser.add_argument("--markdown", type=Path, help="write the report as Markdown")
     parser.add_argument("--no-plan", action="store_true", help="report: skip rewrite plans")
     parser.add_argument("--verify", action="store_true",
-                        help="rewrite: build the touched modules and wrap failing translations")
+                        help="rewrite: build strictly, wrap failing translations, report the rest")
     parser.add_argument("--diff", type=Path,
                         help="rewrite: write a unified diff of the plan instead of the files")
-    parser.add_argument("--rounds", type=int, default=6)
-    parser.add_argument("--stub-failures", action="store_true",
-                        help="rewrite --verify, measurement only: replace proofs that still "
-                        "fail by `sorry` to reach downstream modules (never commit the result)")
-    parser.add_argument("--output", type=Path, default=REGISTRY,
-                        help="stub-registry: where to write the registry")
+    parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--limit", type=int, default=40, help="rows per Markdown table")
     args = parser.parse_args(argv)
     for area in args.area:
@@ -1830,37 +1897,41 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"unknown area {area}; choose from {', '.join(AREA_ORDER)}")
     if args.command == "rewrite" and len(args.area) != 1:
         parser.error("rewrite needs exactly one --area")
+    if args.command == "rewrite" and args.no_build_check:
+        parser.error("rewrite edits at the recorded reference spans, so it needs current build "
+                     "outputs; --no-build-check is only for report")
+    try:
+        registry = load_registry(args.registry)
+    except ValueError as error:
+        parser.error(str(error))
     outputs = qr.check_outputs(args.build_dir, args.no_build_check)
     model = Model(args.build_dir, load_allowlist(args.allowlist))
-    if args.command == "stub-registry":
-        pairs = stub_registry(model)
-        args.output.write_text(json.dumps(pairs, indent=1) + "\n")
-        print(f"wrote {len(pairs)} pairs to {args.output}")
-        return 0
-    registry = load_registry(args.registry)
-    entries = classify_all(model, registry)
+    twins = twin_map(model.constants, registry)
+    entries = classify_all(model, twins)
     shown = [e for e in entries if not args.area or e.area in args.area]
     revision = qr.run(["git", "rev-parse", "HEAD"], capture_output=True).stdout.strip()
     dirty = bool(qr.run(["git", "status", "--porcelain", "--", "Complexity", "ComplexityTests",
                          "abstracts"], capture_output=True).stdout.strip())
     report = {"revision": revision, "dirty": dirty, "outputs": outputs,
-              "allowlist_size": len(model.allowlist), "registry": str(args.registry),
+              "allowlist_size": len(model.allowlist),
+              "registry": str(args.registry) if args.registry else None,
               "registry_size": len(registry),
+              "twins": dict(Counter(kind for _, kind in twins.values())),
               "registry_problems": registry_problems(registry, model.constants),
               "summary": summary(shown), "entries": [entry_json(e) for e in shown]}
+    plain_twins = {o: p for o, (p, _) in twins.items()}
     plans = []
     if args.command == "rewrite" and args.diff:
-        planner = Planner(model, entries, registry, args.area[0]).plan()
+        planner = Planner(model, entries, plain_twins, args.area[0]).plan()
         args.diff.write_text(unified_diff(planner))
         plans.append((planner, None))
     elif args.command == "rewrite":
-        planner, build = rewrite(model, entries, registry, args.area[0], args.verify,
-                                 args.rounds, args.stub_failures)
-        plans.append((planner, build))
+        plans.append(rewrite(model, entries, plain_twins, args.area[0], args.verify,
+                             args.rounds))
     elif not args.no_plan:
         for area in args.area or AREA_ORDER:
             if any(e.area == area and e.case == "2" for e in entries):
-                planner = Planner(model, entries, registry, area).plan()
+                planner = Planner(model, entries, plain_twins, area).plan()
                 planner.render()
                 plans.append((planner, None))
     report["plans"] = [{"summary": p.summary(), "round_trips": p.round_trips,
@@ -1875,7 +1946,7 @@ def main(argv: list[str] | None = None) -> int:
         print(text)
     if args.json:
         args.json.write_text(json.dumps(report, indent=1, ensure_ascii=False) + "\n")
-    return 0
+    return exit_status(report["plans"])
 
 
 if __name__ == "__main__":

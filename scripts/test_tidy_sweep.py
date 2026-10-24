@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import pathlib
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import tidy_sweep as t  # noqa: E402
@@ -83,8 +86,8 @@ class NameTests(unittest.TestCase):
 
 
 class ClassificationTests(unittest.TestCase):
-    def classify(self, d: dict, c: dict, registry=None, constants=None, private=None):
-        return t.classify_decl(d, c, registry or {}, constants or {d["name"]: c}, private or {})
+    def classify(self, d: dict, c: dict, twins=None, constants=None, private=None):
+        return t.classify_decl(d, c, twins or {}, constants or {d["name"]: c}, private or {})
 
     def test_case_two_renames_and_checks_the_target(self) -> None:
         e = self.classify(decl("A.computableTidilyInPolyTime_x"), const())
@@ -94,25 +97,31 @@ class ClassificationTests(unittest.TestCase):
 
     def test_collisions(self) -> None:
         c = const(ph="1")
+        # A target that still states tidy computability is not a twin.
         constants = {"A.computableTidilyInPolyTime_x": c,
-                     "A.computableInPolyTime_x": const(tidy=(), ph="2")}
+                     "A.computableInPolyTime_x": const(ph="2")}
         e = self.classify(decl("A.computableTidilyInPolyTime_x"), c, constants=constants)
         self.assertEqual((e.case, e.reason), ("unclassifiable", "collision"))
-        self.assertFalse(e.collision["equivalent"])
-        constants["A.computableInPolyTime_x"]["ph"] = "1"
-        e = self.classify(decl("A.computableTidilyInPolyTime_x"), c, constants=constants)
-        self.assertTrue(e.collision["equivalent"])
         # A private declaration of the same module blocks the name as well.
         e = self.classify(decl("A.computableTidilyInPolyTime_y"), c,
                           private={"Complexity.M": {"A.computableInPolyTime_y"}})
-        self.assertEqual(e.reason, "collision")
+        self.assertEqual((e.reason, e.detail), ("collision", "the target is private"))
 
-    def test_registered_twin_is_case_one(self) -> None:
-        c = const(ph="5")
-        constants = {POLY + ".map": c, PLAIN + ".map": const(tidy=(), ph="5")}
-        e = self.classify(decl(POLY + ".map"), c, {POLY + ".map": PLAIN + ".map"}, constants)
-        self.assertEqual((e.case, e.target, e.warnings), ("1", PLAIN + ".map", []))
-        e = self.classify(decl(POLY + ".map"), c, {POLY + ".map": "Missing.twin"}, constants)
+    def test_committed_plain_twins(self) -> None:
+        original = const(ph="5")
+        constants = {POLY + ".map": original, PLAIN + ".map": const(tidy=(), ph="5"),
+                     POLY + ".comp": original, PLAIN + ".comp": const(tidy=(), ph="6"),
+                     POLY + ".fst": original, PLAIN + ".fst": const(ph="5"),
+                     POLY + ".snd": original, PLAIN + ".snd": const(tidy=(), e="")}
+        twins = t.discover_twins(constants)
+        self.assertEqual(twins, {POLY + ".map": (PLAIN + ".map", "exact"),
+                                 POLY + ".comp": (PLAIN + ".comp", "by name")})
+        e = self.classify(decl(POLY + ".comp"), original, twins, constants)
+        self.assertEqual((e.case, e.target, e.twin), ("1", PLAIN + ".comp", "by name"))
+        self.assertEqual(len(e.warnings), 1)
+        twins = t.twin_map(constants, {POLY + ".fst": "Missing.twin"})
+        self.assertEqual(twins[POLY + ".fst"], ("Missing.twin", "registry"))
+        e = self.classify(decl(POLY + ".fst"), original, twins, constants)
         self.assertEqual(e.reason, "registered twin missing")
 
     def test_unclassifiable_reasons(self) -> None:
@@ -134,23 +143,54 @@ class ClassificationTests(unittest.TestCase):
         e = self.classify(decl("A.S.polyTime", role="member"), const())
         self.assertEqual((e.case, e.kind), ("3", "structure field"))
 
-    def test_registry_formats(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            path = pathlib.Path(tmp) / "r.json"
-            path.write_text(json.dumps([{"original": "a", "plain": "b", "module": "M"}]))
-            self.assertEqual(t.load_registry(path), {"a": "b"})
-            path.write_text(json.dumps({"pairs": [{"original": "c", "plain": "d"}]}))
-            self.assertEqual(t.load_registry(path), {"c": "d"})
-            path.write_text(json.dumps([{"original": "c"}]))
-            with self.assertRaises(ValueError):
-                t.load_registry(path)
-            self.assertEqual(t.load_registry(pathlib.Path(tmp) / "missing.json"), {})
-
     def test_allowlist_ignores_comments(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = pathlib.Path(tmp) / "a.txt"
             path.write_text("# header\nA/B.lean\n\nC.lean  # note\n")
             self.assertEqual(t.load_allowlist(path), {"A/B.lean", "C.lean"})
+
+
+class RegistryTests(unittest.TestCase):
+    """Review 5635891057: malformed or ambiguous registry input is an error."""
+
+    def load(self, data) -> dict:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "r.json"
+            path.write_text(data if isinstance(data, str) else json.dumps(data))
+            return t.load_registry(path)
+
+    def test_valid_shapes(self) -> None:
+        self.assertEqual(self.load([{"original": "a", "plain": "b", "module": "M"}]), {"a": "b"})
+        self.assertEqual(self.load({"pairs": [{"original": "c", "plain": "d"}]}), {"c": "d"})
+        # Repeating a pair is harmless.
+        self.assertEqual(self.load([{"original": "a", "plain": "b"}] * 2), {"a": "b"})
+        self.assertEqual(t.load_registry(None), {})
+
+    def test_malformed_input_is_rejected(self) -> None:
+        cases = {
+            "misspelled key": {"pair": [{"original": "a", "plain": "b"}]},
+            "extra key": {"pairs": [], "version": 1},
+            "not an array": {"pairs": {"a": "b"}},
+            "scalar": "3",
+            "not JSON": "[{",
+            "missing plain": [{"original": "a"}],
+            "unknown entry key": [{"original": "a", "plain": "b", "kind": "x"}],
+            "empty name": [{"original": "", "plain": "b"}],
+            "blank name": [{"original": "a", "plain": " b"}],
+            "non-string": [{"original": "a", "plain": 3}],
+            "entry not an object": [["a", "b"]],
+            "own twin": [{"original": "a", "plain": "a"}],
+            "conflicting twins": [{"original": "o", "plain": "p"},
+                                  {"original": "o", "plain": "q"}],
+        }
+        for label, data in cases.items():
+            with self.assertRaises(ValueError, msg=label):
+                self.load(data)
+
+    def test_a_requested_file_must_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, "not found"):
+                t.load_registry(pathlib.Path(tmp) / "missing.json")
 
 
 class ParsingTests(unittest.TestCase):
@@ -260,41 +300,215 @@ class WrapTests(unittest.TestCase):
         self.assertIsNone(t.reindent([" a"], -2))
 
 
-class ConvertTests(unittest.TestCase):
-    def planner(self, sg) -> t.Planner:
-        p = object.__new__(t.Planner)
-        p.model = type("M", (), {"constants": {"X": {"sg": sg}}})()
-        return p
+def fake_source(text: str, namespaces: set[str]) -> t.SourceFile:
+    src = object.__new__(t.SourceFile)
+    src.path = t.ROOT / "Fake.lean"
+    src.text = text
+    src.code, src.mask = masks(text)
+    src.lines = text.split("\n")
+    src.starts = [0]
+    for line in src.lines:
+        src.starts.append(src.starts[-1] + len(line) + 1)
+    src.commands = [m.start() for m in t.qr.COMMAND_START.finditer(src.mask)]
+    src._namespaces, src._scopes = namespaces, None
+    return src
 
-    def convert(self, text: str, sg, at: str = "X") -> tuple[str, str | None]:
-        src = object.__new__(t.SourceFile)
-        src.text, src.mask = text, masks(text)[1]
-        fe = t.FileEdits()
+
+def fake_planner(text: str, constants: dict, known=(), privates=None, refs=()):
+    """A planner over one source `Fake.lean` (module `M`) without a build."""
+    p = object.__new__(t.Planner)
+    p.model = SimpleNamespace(constants=constants, owners={},
+                              lib=SimpleNamespace(ileans={}))
+    p.known = set(known) | set(constants)
+    p.privates = privates or {}
+    p.twins, p.force_wrap = {}, frozenset()
+    p.namespaces = t.namespaces_of(p.known)
+    src = fake_source(text, p.namespaces)
+    p.sources = {src.path: src}
+    p._refs = {"M": [t.Ref(n, a, b, None) for n, a, b in refs]}
+    p._locals = {}
+    p.deferred = {}
+    p.batch = {}
+    p.reset()
+    return p, src
+
+
+class ConvertTests(unittest.TestCase):
+    def convert(self, text: str, sg, at: str = "X") -> tuple[str, str]:
+        p, src = fake_planner(text, {"X": {"m": "M", "sg": sg, "tidy": [POLY]}},
+                              known={"Y"})
+        p.renames = {"X": "Y"}
         start = text.index(at)
-        problem = self.planner(sg).convert_site(src, fe, start, start + len(at), "X")
-        return t.render(text, fe.replaces, fe.wraps, 0, len(text)), problem
+        p.convert(src.path, "M", start, start + len(at), "X", None, "tidy")
+        fe = p.files[src.path]
+        blocked = "; ".join(p.blockers.get("X", []))
+        return t.render(text, fe.replaces, fe.wraps, 0, len(text)), blocked
 
     def test_application_keeps_its_old_type(self) -> None:
         sg = [[[1, 0], [0, 0], [0, 1]], 1]  # {V} (enc) (hc : tidy) : tidy
         self.assertEqual(self.convert("  exact X enc hc", sg),
-                         ("  exact (X enc (.of_tidy hc)).tidy", None))
+                         ("  exact (Y enc (.of_tidy hc)).tidy", ""))
         self.assertEqual(self.convert("  exact (X enc hc).comp g", sg)[0],
-                         "  exact (X enc (.of_tidy hc)).tidy.comp g")
+                         "  exact (Y enc (.of_tidy hc)).tidy.comp g")
         self.assertEqual(self.convert("  X (V := ℕ) enc hc", sg)[0],
-                         "  (X (V := ℕ) enc (.of_tidy hc)).tidy")
+                         "  (Y (V := ℕ) enc (.of_tidy hc)).tidy")
 
     def test_constants_and_dot_chains(self) -> None:
         self.assertEqual(self.convert("  exact X.comp h", [[[1, 0]], 1])[0],
-                         "  exact X.tidy.comp h")
+                         "  exact Y.tidy.comp h")
 
-    def test_unconvertible_sites(self) -> None:
-        sg = [[[0, 0]], 1]
-        self.assertIn("partial", self.convert("  map X", sg)[1])
-        self.assertIn("lemma list", self.convert("  simp [X]", sg)[1])
-        self.assertIn("leading-dot", self.convert("  exact .X a", sg, "X")[1])
-        self.assertIn("binders", self.convert("  X a", [[[0, 2]], 1])[1])
-        self.assertIn("implicit", self.convert("  X a", [[[1, 1], [0, 0]], 1])[1])
-        self.assertIn("bare", self.convert("  X a", [[[0, 0]], 2])[1])
+    def test_leading_dot_with_a_plain_conclusion(self) -> None:
+        # `.of_foo h : DecidableInExpTime …`: the expected type does not change, so only the
+        # tidy argument is converted. The `.ilean` span includes the leading dot.
+        p, src = fake_planner("  exact .of_foo hc", {"N.of_foo": {"m": "M",
+                              "sg": [[[0, 1]], 0], "tidy": [POLY]}}, known={"N.of_bar"})
+        p.renames = {"N.of_foo": "N.of_bar"}
+        start = src.text.index(".of_foo")
+        self.assertTrue(p.convert(src.path, "M", start, start + 7, "N.of_foo", None, "tidy"))
+        fe = p.files[src.path]
+        self.assertEqual(t.render(src.text, fe.replaces, fe.wraps, 0, len(src.text)),
+                         "  exact .of_bar (.of_tidy hc)")
+        self.assertTrue(t.spells(".of_foo", "N.of_foo"))
+
+    def test_unconvertible_sites_stay_unchanged(self) -> None:
+        """Review 5635891057: a skipped call keeps its text (no rename, no partial wraps) and
+        blocks the referenced declaration, which is then deferred."""
+        cases = [("  map X", [[[0, 0]], 1], "partial"),
+                 ("  simp [X]", [[[0, 0]], 1], "lemma list"),
+                 ("  exact .X a", [[[0, 0]], 1], "dot notation"),
+                 ("  X a", [[[0, 2]], 1], "binders"),
+                 ("  X a", [[[1, 1], [0, 0]], 1], "implicit"),
+                 # The argument is tidy, but the conclusion is not a bare predicate.
+                 ("  X hc", [[[0, 1]], 2], "bare"),
+                 # The first argument converts, the second cannot.
+                 ("  X hc hd", [[[0, 1], [0, 2]], 1], "binders")]
+        for text, sg, reason in cases:
+            out, blocked = self.convert(text, sg)
+            self.assertEqual(out, text, text)
+            self.assertIn(reason, blocked, text)
+
+
+class ResolutionTests(unittest.TestCase):
+    """Review 5635891057: a replacement must denote its target from where it is written, and a
+    stale span is never edited."""
+
+    TEXT = ("namespace A\n\nopen Turing.MultiTapeTM\n\n"
+            "theorem t (f : ℕ → ℕ) : ComputableTidilyInPolyTime f e e := sorry\n\nend A\n")
+
+    def written(self, text: str, token: str, old: str, new: str, known=(), privates=None,
+                refs=()):
+        p, src = fake_planner(text, {old: {"m": "M"}, new: {"m": "M"}}, known, privates, refs)
+        start = text.index(token)
+        return p.written("M", src, start, start + len(token), old, new)
+
+    def test_a_shadowing_declaration_forces_a_longer_name(self) -> None:
+        # `A.ComputableInPolyTime` would capture a bare `ComputableInPolyTime` inside `A`.
+        written, _ = self.written(self.TEXT, "ComputableTidilyInPolyTime", POLY, PLAIN,
+                                  known={"A.ComputableInPolyTime"})
+        self.assertEqual(written, PLAIN)
+        written, _ = self.written(self.TEXT, "ComputableTidilyInPolyTime", POLY, PLAIN)
+        self.assertEqual(written, "ComputableInPolyTime")
+
+    def test_private_names_of_the_module_shadow_too(self) -> None:
+        written, _ = self.written(self.TEXT, "ComputableTidilyInPolyTime", POLY, PLAIN,
+                                  privates={"M": {"A.ComputableInPolyTime"}})
+        self.assertEqual(written, PLAIN)
+
+    def test_local_binders_shadow_short_names(self) -> None:
+        text = ("namespace B\n\ntheorem t (map : ℕ) : True := by\n  exact Old.map\n\nend B\n")
+        start = text.index("Old.map")
+        refs = [("Old.map", start, start + len("Old.map"))]
+        written, _ = self.written(text, "Old.map", "Old.map", "B.map", refs=refs)
+        self.assertEqual(written, "B.map")  # `map` alone is the binder
+
+    def test_root_prefix_when_every_suffix_is_ambiguous(self) -> None:
+        known = {"A.Turing.MultiTapeTM.ComputableInPolyTime", "A.ComputableInPolyTime",
+                 "A.MultiTapeTM.ComputableInPolyTime"}
+        written, _ = self.written(self.TEXT, "ComputableTidilyInPolyTime", POLY, PLAIN, known)
+        self.assertEqual(written, "_root_." + PLAIN)
+
+    def test_stale_spans_are_not_edited(self) -> None:
+        text = "theorem t : True := completelyUnrelated\n"
+        written, why = self.written(text, "completelyUnrelated", POLY, PLAIN)
+        self.assertIsNone(written)
+        self.assertIn("does not spell", why)
+        self.assertTrue(t.spells("ComputableTidilyInPolyTime", POLY))
+        self.assertTrue(t.spells("@MultiTapeTM.ComputableTidilyInPolyTime", POLY))
+        self.assertFalse(t.spells("TidilyInPolyTime", POLY))
+        self.assertFalse(t.spells("", POLY))
+
+
+class VerificationTests(unittest.TestCase):
+    """Review 5635891057: verification is strict, reports failures and exits nonzero."""
+
+    def test_builds_are_strict(self) -> None:
+        calls = []
+
+        def runner(cmd, **_):
+            calls.append(cmd)
+            return SimpleNamespace(returncode=1, stdout="", stderr="")
+        self.assertEqual(t.lake_build(["Complexity"], runner)[0], 1)
+        self.assertEqual(calls, [["lake", "build", "--wfail", "--iofail", "Complexity"]])
+
+    def check(self, output: str, code: int) -> dict:
+        planner = SimpleNamespace(decls={}, force_wrap=frozenset())
+        return t.check_build(planner, {}, output, code, 1)
+
+    def test_status_is_passed_only_without_errors(self) -> None:
+        self.assertEqual(self.check("", 0)["status"], "passed")
+        self.assertEqual(self.check("", 1)["status"], "failed")
+        error = "error: Complexity/Nope.lean:3:0: unknown identifier 'x'\n"
+        self.assertEqual(self.check(error, 0)["status"], "failed")
+        sorry = "warning: Complexity/Nope.lean:3:8: declaration uses `sorry`\n"
+        self.assertEqual(self.check(sorry, 1)["status"], "failed")
+
+    def test_rewrite_writes_reports_and_fails_honestly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "M.lean"
+            path.write_text("old\n")
+
+            class FakePlanner:
+                def __init__(self, *args):
+                    self.decls, self.force_wrap = {}, frozenset()
+
+                def plan(self):
+                    return self
+
+                def render(self):
+                    return {path: "new\n"}
+
+                def source(self, _):
+                    return SimpleNamespace(text="old\n")
+
+            def build(_):
+                return 1, "warning: Complexity/M.lean:1:8: declaration uses `sorry`\n"
+            original = t.Planner
+            t.Planner = FakePlanner
+            try:
+                _, result = t.rewrite(None, [], {}, "Logics", True, 3, build)
+            finally:
+                t.Planner = original
+            self.assertEqual(path.read_text(), "new\n")
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(len(result["history"]), 1)
+            plans = [{"build": result}]
+            self.assertEqual(t.exit_status(plans), 1)
+            self.assertIn("FAILED", t.plan_markdown({"summary": {
+                "area": "Logics", "declarations": 0, "modes": {}, "sites": {}, "imports": [],
+                "manual": {}}, "manual": [], "build": result}))
+            self.assertEqual(t.exit_status([{"build": None}]), 0)
+
+    def test_measurement_stubs_and_unchecked_rewrites_are_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, \
+                contextlib.redirect_stderr(io.StringIO()) as err:
+            for argv in (["rewrite", "--area", "Logics", "--stub-failures"],
+                         ["rewrite", "--area", "Logics", "--no-build-check"],
+                         ["report", "--registry", str(pathlib.Path(tmp) / "missing.json")]):
+                with self.assertRaises(SystemExit, msg=argv) as raised:
+                    t.main(argv)
+                self.assertEqual(raised.exception.code, 2)
+        self.assertIn("--no-build-check is only for report", err.getvalue())
+        self.assertIn("registry file not found", err.getvalue())
 
 
 class BuildOutputTests(unittest.TestCase):
@@ -312,7 +526,6 @@ class BuildOutputTests(unittest.TestCase):
         text = ("theorem a : True := by\n  trivial\n\n/-- doc\nmore -/\n"
                 "theorem b : True := trivial\n")
         self.assertEqual([t.declaration_at(text, n) for n in (2, 4, 6)], ["a", "b", "b"])
-        self.assertEqual(t.command_line(text, 7), 6)
         self.assertTrue(t.CONSEQUENCE.search("❌️ Docstring on `#guard_msgs` does not match"))
 
     def test_module_paths(self) -> None:
