@@ -9,6 +9,8 @@ module
 
 public import Complexity.Computability.Interactive.Sequential
 import Complexity.Probability.PMF
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Uniform
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.MvPolynomial.Degrees
 public import Mathlib.Algebra.Polynomial.Eval.Defs
