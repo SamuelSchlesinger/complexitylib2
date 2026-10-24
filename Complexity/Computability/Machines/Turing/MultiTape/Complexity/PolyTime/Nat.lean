@@ -8,8 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Mathlib.Algebra.Polynomial.Eval.Defs
 public import Mathlib.Data.Nat.Pairing
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 import Mathlib.Data.Nat.Size
@@ -200,3 +202,24 @@ theorem unary_to_binary : ComputableTidilyInPolyTime (fun n : ℕ => n) encUnary
   simpa [List.foldl_const] using h
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-! ### Plain polynomial-time automation -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Addition of unary naturals, by concatenating their encodings. -/
+@[fun_prop]
+theorem unary_add :
+    ComputableInPolyTime (fun (p : ℕ × ℕ) => p.1 + p.2)
+  (encPair encUnary encUnary)
+  encUnary :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_add
+
+/-- Evaluate a fixed polynomial on unary naturals, with its result also in unary. -/
+@[fun_prop]
+theorem unary_eval (p : Polynomial ℕ) :
+    ComputableInPolyTime (fun (x : ℕ) => Polynomial.eval x p)
+  encUnary encUnary :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_eval p)
+
+end Turing.MultiTapeTM.ComputableInPolyTime

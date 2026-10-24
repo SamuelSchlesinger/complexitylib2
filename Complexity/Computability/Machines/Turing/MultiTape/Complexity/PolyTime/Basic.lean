@@ -8,7 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Mathlib.Algebra.Polynomial.Eval.Defs
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Basic polynomial-time rules
@@ -239,3 +241,48 @@ theorem decide_ne [DecidableEq β] {left right : α → β}
     bool_not.comp (hleft.decide_eq' hright)
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-! ### Plain polynomial-time automation -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Boolean conjunction is polynomial-time in the standard Boolean encoding. -/
+@[fun_prop]
+theorem bool_and :
+    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 && p.2)
+  (encPair encBool encBool)
+  encBool :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_and
+
+/-- Boolean negation is polynomial-time in the standard Boolean encoding. -/
+@[fun_prop]
+theorem bool_not :
+    ComputableInPolyTime Bool.not encBool
+  encBool :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_not
+
+/-- Boolean disjunction is polynomial-time in the standard Boolean encoding. -/
+@[fun_prop]
+theorem bool_or :
+    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 || p.2)
+  (encPair encBool encBool)
+  encBool :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bool_or
+
+/-- Compare computed values for equality, inferring their common encoding from the arguments. -/
+@[fun_prop]
+theorem decide_eq' {α : Type}
+    {β : Type}
+    {encA : α ↪ List Bool}
+    {encB : β ↪ List Bool}
+    [_inst4 : DecidableEq β]
+    {left : α → β}
+    {right : α → β}
+    (hleft : ComputableInPolyTime left encA encB)
+    (hright : ComputableInPolyTime right encA encB) :
+    ComputableInPolyTime
+  (fun (x : α) => Decidable.decide (left x = right x)) encA encBool :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_eq' α β encA encB _inst4 left
+      right hleft.tidy hright.tidy)
+
+end Turing.MultiTapeTM.ComputableInPolyTime

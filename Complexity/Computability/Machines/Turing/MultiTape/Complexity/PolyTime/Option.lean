@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 
 /-!
@@ -99,3 +101,24 @@ theorem optionElimWithInput {γ : Type} {encC : γ ↪ List Bool}
     cases value a <;> rfl
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-! ### Plain polynomial-time automation -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Read a computed option with a computed fallback, using their shared value encoding. -/
+@[fun_prop]
+theorem optionGetDWithInput {α : Type}
+    {β : Type}
+    {encA : α ↪ List Bool}
+    {encB : β ↪ List Bool}
+    {value : α → Option β}
+    {fallback : α → β}
+    (hvalue : ComputableInPolyTime value encA (encOption encB))
+    (hfallback : ComputableInPolyTime fallback encA encB) :
+    ComputableInPolyTime (fun (a : α) => (value a).getD (fallback a))
+  encA encB :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionGetDWithInput α β encA encB value
+      fallback hvalue.tidy hfallback.tidy)
+
+end Turing.MultiTapeTM.ComputableInPolyTime
