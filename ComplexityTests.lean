@@ -311,6 +311,7 @@ import ComplexityTests.PlainBinaryProviderCutover
 import ComplexityTests.PlainCalculus
 import ComplexityTests.PlainCodecCutover
 import ComplexityTests.PlainCoreBridge
+import ComplexityTests.PlainDegreeFoldCutover
 import ComplexityTests.PlainDegreeProviderCutover
 import ComplexityTests.PlainFunctionFamilyCutover
 import ComplexityTests.PlainIterationCutover

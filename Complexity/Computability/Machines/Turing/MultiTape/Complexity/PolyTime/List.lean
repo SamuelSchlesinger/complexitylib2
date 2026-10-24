@@ -102,7 +102,7 @@ theorem bitsCons {head : γ → Bool} {tail : γ → List Bool}
 @[fun_prop]
 theorem headD {encL : List α ↪ List Bool} [ListEncoding encA encL] (fallback : α) :
     ComputableInPolyTime (fun list => list.headD fallback) encL encA :=
-  (Internal.forgetDegree (ComputableTidilyInDegree.headD fallback)).computableInPolyTime
+  (ComputableInDegree.headD fallback).computableInPolyTime
 
 /-- Read a computed framed list's head, inferring the element encoding from the list before
 composing with a later field projection. -/
@@ -116,7 +116,7 @@ theorem listHeadDWithInput {list : γ → List α} (fallback : α)
 @[fun_prop]
 theorem tail {encL : List α ↪ List Bool} [ListEncoding encA encL] :
     ComputableInPolyTime (List.tail (α := α)) encL encL :=
-  (Internal.forgetDegree (ComputableTidilyInDegree.tail (enc₁ := encA))).computableInPolyTime
+  (ComputableInDegree.tail (enc₁ := encA)).computableInPolyTime
 
 /-- Test emptiness without decoding a list element or requiring a default value. -/
 @[fun_prop]
@@ -169,14 +169,14 @@ theorem bitsReverseWithInput {word : γ → List Bool}
 theorem cons (enc : α ↪ List Bool) :
     ComputableInPolyTime (fun p : α × List α => p.1 :: p.2)
       (encPair enc (encList enc)) (encList enc) :=
-  (Internal.forgetDegree (ComputableTidilyInDegree.cons enc)).computableInPolyTime
+  (ComputableInDegree.cons enc).computableInPolyTime
 
 /-- Concatenating two framed lists is polynomial-time. -/
 @[fun_prop]
 theorem listAppend (enc : α ↪ List Bool) :
     ComputableInPolyTime (fun p : List α × List α => p.1 ++ p.2)
       (encPair (encList enc) (encList enc)) (encList enc) :=
-  (Internal.forgetDegree (ComputableTidilyInDegree.listAppend enc)).computableInPolyTime
+  (ComputableInDegree.listAppend enc).computableInPolyTime
 
 /-- Prepend computed data. The result encoding determines the element encoding before
 `fun_prop` searches for the two component certificates. -/
@@ -224,10 +224,9 @@ theorem findWith {test : π × α → Bool} {par : γ → π} {list : γ → Lis
     ComputableInPolyTime (fun x => (list x).find? fun a => test (par x, a))
       encIn (encOption encA) := by
   obtain ⟨d, e, htest⟩ := htest.exists_degree
-  have htest := Internal.normalizeDegree htest
-  exact (Internal.forgetDegree (ComputableTidilyInDegree.findWith htest
-    (ComputableTidilyInDegree.fst encP (encList encA))
-    (ComputableTidilyInDegree.snd encP (encList encA)))).computableInPolyTime.comp
+  exact (ComputableInDegree.findWith htest
+    (ComputableInDegree.fst encP (encList encA))
+    (ComputableInDegree.snd encP (encList encA))).computableInPolyTime.comp
       (hpar.prod hlist)
 
 /-- Search with a predicate that captures the original input. -/
@@ -248,10 +247,9 @@ theorem filterWith {test : π × α → Bool} {par : γ → π} {list : γ → L
     ComputableInPolyTime (fun x => (list x).filter fun a => test (par x, a))
       encIn (encList encA) := by
   obtain ⟨d, e, htest⟩ := htest.exists_degree
-  have htest := Internal.normalizeDegree htest
-  exact (Internal.forgetDegree (ComputableTidilyInDegree.filterWith htest
-    (ComputableTidilyInDegree.fst encP (encList encA))
-    (ComputableTidilyInDegree.snd encP (encList encA)))).computableInPolyTime.comp
+  exact (ComputableInDegree.filterWith htest
+    (ComputableInDegree.fst encP (encList encA))
+    (ComputableInDegree.snd encP (encList encA))).computableInPolyTime.comp
       (hpar.prod hlist)
 
 /-- Filter with a predicate that captures the original input. -/
@@ -278,10 +276,9 @@ theorem mapWith {f : π × α → β} {par : γ → π} {list : γ → List α}
     ComputableInPolyTime (fun x => (list x).map fun a => f (par x, a))
       encIn (encList encB) := by
   obtain ⟨d, e, hf⟩ := hf.exists_degree
-  have hf := Internal.normalizeDegree hf
-  exact (Internal.forgetDegree (ComputableTidilyInDegree.mapWith hf
-    (ComputableTidilyInDegree.fst encP (encList encA))
-    (ComputableTidilyInDegree.snd encP (encList encA)))).computableInPolyTime.comp
+  exact (ComputableInDegree.mapWith hf
+    (ComputableInDegree.fst encP (encList encA))
+    (ComputableInDegree.snd encP (encList encA))).computableInPolyTime.comp
       (hpar.prod hlist)
 
 /-- Map a function that also uses the original input. A single joint certificate in the input
@@ -343,7 +340,7 @@ private theorem length_encList_flatten_le (enc : α ↪ List Bool) (l : List (Li
 theorem flatten (enc : α ↪ List Bool) :
     ComputableInPolyTime List.flatten (encList (encList enc)) (encList enc) := by
   have h := foldl' (list := id) (step := fun acc a => acc ++ a) id' (const [])
-    (Internal.forgetDegree (ComputableTidilyInDegree.listAppend enc)).computableInPolyTime
+    (ComputableInDegree.listAppend enc).computableInPolyTime
     (B := fun l => (encList (encList enc) l).length) .self (fun l i _ => by
       rw [foldl_append, List.nil_append]
       exact (length_encList_flatten_le enc (l.take i)).trans
@@ -401,7 +398,7 @@ theorem length (enc : α ↪ List Bool) {encL : List α ↪ List Bool} [ListEnco
     ComputableInPolyTime (fun l : List α => l.length) encL encUnary := by
   have h := foldl' (encA := enc) (encL := encL) (list := id)
     (step := fun n _ => n + 1) id' (const 0)
-    ((Internal.forgetDegree ComputableTidilyInDegree.unary_succ).computableInPolyTime.comp
+    ((ComputableInDegree.unary_succ).computableInPolyTime.comp
       (fst encUnary enc))
     (B := fun l => (encL l).length) .self (fun l i _ => by
       simpa [List.foldl_const] using (Nat.min_le_right i l.length).trans
@@ -485,8 +482,7 @@ theorem range : ComputableInPolyTime List.range encUnary (encList encUnary) := b
     induction n with
     | zero => rfl
     | succ n ih => simp [List.replicate_succ', List.foldl_append, ih, List.range_succ]
-  have hstep := (Internal.forgetDegree
-    (ComputableTidilyInDegree.snoc encUnary)).computableInPolyTime.comp
+  have hstep := (ComputableInDegree.snoc encUnary).computableInPolyTime.comp
     ((fst (encList encUnary) encBool).prod
       ((length encUnary).comp (fst (encList encUnary) encBool)))
   have h := foldl' (encA := encBool) (encL := encBits)
@@ -618,7 +614,7 @@ theorem idxOf [DecidableEq α] (enc : α ↪ List Bool) :
     ComputableInPolyTime (fun p : List α × α => p.1.idxOf p.2)
       (encPair (encList enc) enc) encUnary := by
   have hsucc : ComputableInPolyTime (· + 1) encUnary encUnary :=
-    (Internal.forgetDegree ComputableTidilyInDegree.unary_succ).computableInPolyTime
+    (ComputableInDegree.unary_succ).computableInPolyTime
   have hstep : ComputableInPolyTime
       (fun q : (α × (Bool × ℕ)) × α => idxStep q.1.1 q.1.2 q.2)
       (encPair (encPair enc (encPair encBool encUnary)) enc) (encPair encBool encUnary) := by

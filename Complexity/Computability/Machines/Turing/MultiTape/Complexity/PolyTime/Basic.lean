@@ -190,11 +190,7 @@ theorem bool_beq : ComputableInPolyTime (fun p : Bool × Bool => p.1 == p.2)
 theorem decide_eq [DecidableEq α] (enc : α ↪ List Bool) :
     ComputableInPolyTime (fun p : α × α => decide (p.1 = p.2))
       (encPair enc enc) encBool :=
-  by
-    obtain ⟨⟨_, _, ht, hs, h⟩, _⟩ := ComputableTidilyInDegree.eq enc
-    obtain ⟨T, hT, ht⟩ := ht.polyBounded
-    obtain ⟨S, hS, hs⟩ := hs.polyBounded
-    exact ⟨T, S, hT, hS, (h.mono ht hs).computableInTimeAndSpace⟩
+  (ComputableInDegree.eq enc).computableInPolyTime
 
 /-- Compare computed values for equality, inferring their common encoding from the arguments. -/
 @[fun_prop]

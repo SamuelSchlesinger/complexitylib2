@@ -74,22 +74,22 @@ theorem int_natCast_sub :
 /-- Shift a signed unary integer one cell to the right. -/
 @[fun_prop]
 theorem int_succ : ComputableInPolyTime (fun z : ℤ => z + 1) encInt encInt :=
-  (Internal.forgetDegree ComputableTidilyInDegree.int_succ).computableInPolyTime
+  (ComputableInDegree.int_succ).computableInPolyTime
 
 /-- Shift a signed unary integer one cell to the left. -/
 @[fun_prop]
 theorem int_pred : ComputableInPolyTime (fun z : ℤ => z - 1) encInt encInt :=
-  (Internal.forgetDegree ComputableTidilyInDegree.int_pred).computableInPolyTime
+  (ComputableInDegree.int_pred).computableInPolyTime
 
 /-- Test whether a signed unary integer is positive. -/
 @[fun_prop]
 theorem int_pos : ComputableInPolyTime (fun z : ℤ => decide (0 < z)) encInt encBool :=
-  (Internal.forgetDegree ComputableTidilyInDegree.int_pos).computableInPolyTime
+  (ComputableInDegree.int_pos).computableInPolyTime
 
 /-- Test whether a signed unary integer is negative. -/
 @[fun_prop]
 theorem int_neg : ComputableInPolyTime (fun z : ℤ => decide (z < 0)) encInt encBool :=
-  (Internal.forgetDegree ComputableTidilyInDegree.int_neg).computableInPolyTime
+  (ComputableInDegree.int_neg).computableInPolyTime
 
 private def intTail : ℤ → ℕ
   | .ofNat n => n

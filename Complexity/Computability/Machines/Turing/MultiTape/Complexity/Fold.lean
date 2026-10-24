@@ -12,7 +12,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 
 /-!
-# Left folds with bounds of given degrees
+# Plain left folds with bounds of given degrees
 
 `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.foldl` asks for bounds on the arguments of the
 step function and on the intermediate states paired with the rest of the list. For list encodings
@@ -20,7 +20,7 @@ whose elements, suffixes and lengths are bounded by the encoded list (`SizedList
 framed encodings of pairs and options, only a bound on the intermediate states is left.
 
 A fold whose step also needs a fixed parameter, such as a key to look up, keeps the parameter in its
-state (`Turing.MultiTapeTM.ComputableTidilyInDegree.foldlWith`).
+state (`Turing.MultiTapeTM.ComputableInDegree.foldlWith`).
 
 ## Main definitions
 
@@ -29,9 +29,9 @@ state (`Turing.MultiTapeTM.ComputableTidilyInDegree.foldlWith`).
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.foldl'`: left folds, with the degree of a round
+* `Turing.MultiTapeTM.ComputableInDegree.foldl'`: left folds, with the degree of a round
   plus the degree of the number of rounds.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.foldlWith`: the same, with a parameter.
+* `Turing.MultiTapeTM.ComputableInDegree.foldlWith`: the same, with a parameter.
 -/
 
 namespace Turing.MultiTapeTM
@@ -60,22 +60,22 @@ public instance : SizedListEncoding encBool encBits where
 /-- **Left folds with bounds of given degrees.** If the list has output degree `eL`, the states have
 length of degree `b`, and a round has degree `dS`, a fold takes time of degree
 `eL + max 1 dS * max b eL`: at most `O(n ^ eL)` rounds, on arguments of length `O(n ^ max b eL)`. -/
-public theorem ComputableTidilyInDegree.foldl' {γ α β : Type} {encIn : γ ↪ List Bool}
+public theorem ComputableInDegree.foldl' {γ α β : Type} {encIn : γ ↪ List Bool}
     {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encL : List α ↪ List Bool}
     [ListEncoding encA encL] [hS : SizedListEncoding encA encL]
     {list : γ → List α} {init : γ → β} {step : β → α → β} {dL eL dI eI dS eS b : ℕ}
-    (hlist : ComputableTidilyInDegree list encIn encL dL eL)
-    (hinit : ComputableTidilyInDegree init encIn encB dI eI)
-    (hstep : ComputableTidilyInDegree (fun p : β × α => step p.1 p.2) (encPair encB encA) encB
+    (hlist : ComputableInDegree list encIn encL dL eL)
+    (hinit : ComputableInDegree init encIn encB dI eI)
+    (hstep : ComputableInDegree (fun p : β × α => step p.1 p.2) (encPair encB encA) encB
       dS eS)
     {B : γ → ℕ} (hB : DegreeBounded (fun x => (encIn x).length) B b)
     (hstates : ∀ x, ∀ i ≤ (list x).length,
       (encB (((list x).take i).foldl step (init x))).length ≤ B x) :
-    ComputableTidilyInDegree (fun x => (list x).foldl step (init x)) encIn encB
+    ComputableInDegree (fun x => (list x).foldl step (init x)) encIn encB
       (max (max dL dI) (eL + max 1 dS * max b eL)) b := by
-  obtain ⟨⟨t₁, s₁, ht₁, hs₁, h₁⟩, hl⟩ := hlist
-  obtain ⟨⟨t₂, s₂, ht₂, hs₂, h₂⟩, -⟩ := hinit
-  obtain ⟨⟨tS, sS, ⟨ct, htS⟩, ⟨cs, hsS⟩, hS'⟩, -⟩ := hstep
+  obtain ⟨⟨t₁, s₁, ht₁, hs₁, h₁⟩, hl⟩ := Internal.normalizeDegree hlist
+  obtain ⟨⟨t₂, s₂, ht₂, hs₂, h₂⟩, -⟩ := Internal.normalizeDegree hinit
+  obtain ⟨⟨tS, sS, ⟨ct, htS⟩, ⟨cs, hsS⟩, hS'⟩, -⟩ := Internal.normalizeDegree hstep
   set a := max b eL
   set D := max 1 dS * a
   -- the arguments of a round and the states with the rest of the list
@@ -125,35 +125,36 @@ public theorem ComputableTidilyInDegree.foldl' {γ α β : Type} {encIn : γ ↪
     have hs := hs₁.add_max hs₂
     refine ⟨⟨_, _, ((ht.mono_deg hd₀).add ((hlen.mul ((hround.add (hlMax.mono_deg haD)).add_const
       1)).mono_deg hd₁)).smul c, ((((hs.mono_deg hd₀).add (hround.mono_deg (by omega))).add
-        (hlMax.mono_deg (by omega))).add_const 1).smul c, h⟩, hB.mono fun x => ?_⟩
+        (hlMax.mono_deg (by omega))).add_const 1).smul c,
+      h.computableInTimeAndSpace⟩, hB.mono fun x => ?_⟩
     simpa using hstates x _ le_rfl
 
 /-- **Left folds with a parameter, with bounds of given degrees.** The step may depend on a
 parameter `par x`, which is kept in the state. -/
-public theorem ComputableTidilyInDegree.foldlWith {γ α β π : Type} {encIn : γ ↪ List Bool}
+public theorem ComputableInDegree.foldlWith {γ α β π : Type} {encIn : γ ↪ List Bool}
     {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encL : List α ↪ List Bool}
     {encP : π ↪ List Bool} [ListEncoding encA encL] [SizedListEncoding encA encL]
     {par : γ → π} {list : γ → List α} {init : γ → β} {step : π → β → α → β}
     {dP eP dL eL dI eI dS eS b : ℕ}
-    (hpar : ComputableTidilyInDegree par encIn encP dP eP)
-    (hlist : ComputableTidilyInDegree list encIn encL dL eL)
-    (hinit : ComputableTidilyInDegree init encIn encB dI eI)
-    (hstep : ComputableTidilyInDegree (fun p : (π × β) × α => step p.1.1 p.1.2 p.2)
+    (hpar : ComputableInDegree par encIn encP dP eP)
+    (hlist : ComputableInDegree list encIn encL dL eL)
+    (hinit : ComputableInDegree init encIn encB dI eI)
+    (hstep : ComputableInDegree (fun p : (π × β) × α => step p.1.1 p.1.2 p.2)
       (encPair (encPair encP encB) encA) encB dS eS)
     {B : γ → ℕ} (hB : DegreeBounded (fun x => (encIn x).length) B b)
     (hstates : ∀ x, ∀ i ≤ (list x).length,
       (encB (((list x).take i).foldl (step (par x)) (init x))).length ≤ B x) :
-    ComputableTidilyInDegree (fun x => (list x).foldl (step (par x)) (init x)) encIn encB
+    ComputableInDegree (fun x => (list x).foldl (step (par x)) (init x)) encIn encB
       (max (max dL (max dP dI)) (eL + max 1 dS * max (max eP b) eL)) b := by
   -- fold over the state `(par x, acc)`, keeping the parameter unchanged
   -- vendored: use core's fold homomorphism law for the captured-parameter identity.
   have heq (l : List α) (s : π × β) :
       l.foldl (fun s a => (s.1, step s.1 s.2 a)) s = (s.1, l.foldl (step s.1) s.2) :=
     List.foldl_hom (fun acc => (s.1, acc)) (fun _ _ => rfl)
-  have hfold := ComputableTidilyInDegree.foldl' (encB := encPair encP encB) hlist
+  have hfold := ComputableInDegree.foldl' (encB := encPair encP encB) hlist
     (hpar.prod hinit) (step := fun s a => (s.1, step s.1 s.2 a))
-    (((ComputableTidilyInDegree.fst encP encB).comp
-      (ComputableTidilyInDegree.fst (encPair encP encB) encA)).prod hstep)
+    (((ComputableInDegree.fst encP encB).comp
+      (ComputableInDegree.fst (encPair encP encB) encA)).prod hstep)
     (B := fun x => 2 * (encP (par x)).length + 1 + B x)
     ((((hpar.2.mono_deg (le_max_left eP b)).smul 2).add_const 1).add
       (hB.mono_deg (le_max_right eP b)))
@@ -162,7 +163,7 @@ public theorem ComputableTidilyInDegree.foldlWith {γ α β π : Type} {encIn : 
       rw [heq]
       simp only [length_encPair]
       omega)
-  have h := (ComputableTidilyInDegree.snd encP encB).comp hfold
+  have h := (ComputableInDegree.snd encP encB).comp hfold
   have hf : (Prod.snd ∘ fun x => (list x).foldl (fun s a => (s.1, step s.1 s.2 a))
       (par x, init x)) = fun x => (list x).foldl (step (par x)) (init x) := by
     funext x

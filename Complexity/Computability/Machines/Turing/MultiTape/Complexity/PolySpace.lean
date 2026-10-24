@@ -137,7 +137,7 @@ theorem iterate [Inhabited β] {n : α → ℕ} {init : α → β} {step : β �
     (hstate : ∀ a, ∀ k ≤ n a, (encOut (step^[k] (init a))).length ≤ B a) :
     ComputableInPolySpace (fun a => step^[n a] (init a)) encIn encOut := by
   obtain ⟨dn, _, hn'⟩ := hn.exists_degree
-  have hn' : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree hn'
+  have hn' : ComputableInDegree _ _ _ _ _ := Internal.normalizeDegree hn'
   obtain ⟨Ti, Si, hSi, hinit⟩ := rawPolySpace hinit
   obtain ⟨Ts, Ss, hSs, hstep⟩ := rawPolySpace hstep
   obtain ⟨cs, ds, hSs⟩ := hSs.exists_le
@@ -201,9 +201,9 @@ private theorem incrementT_run (w : List Bool) :
 /-- **The binary counter in linear time.** -/
 theorem ComputableInDegree.increment :
     ComputableInDegree Cslib.BitString.increment encBits encBits 1 1 :=
-  Internal.forgetDegree (ComputableTidilyInDegree.of_linear
+  ComputableInDegree.of_linear
     (incrementT.computableInLinearTimeAndSpace fun w => by
-    rw [show incrementT.q₀ = true from rfl, incrementT_run]; rfl))
+    rw [show incrementT.q₀ = true from rfl, incrementT_run]; rfl)
 
 /-- The binary counter in polynomial time. -/
 @[fun_prop]

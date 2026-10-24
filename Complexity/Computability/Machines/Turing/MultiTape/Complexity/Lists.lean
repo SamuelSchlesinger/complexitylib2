@@ -15,17 +15,17 @@ import Mathlib.Tactic.Linarith
 # List operations with bounds of given degrees
 
 Operations on lists encoded by `Turing.MultiTapeTM.encList`, with explicit degrees
-(`Turing.MultiTapeTM.ComputableTidilyInDegree`): adding an element at either end and concatenation
+(`Turing.MultiTapeTM.ComputableInDegree`): adding an element at either end and concatenation
 in linear time; finding the first element that passes a test and keeping the elements that pass a
 test, one degree above the test; and dropping a number of elements in quadratic time. The tests may
 depend on a parameter.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.cons`, `.snoc`, `.listAppend`.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.findWith`: the first element passing a test.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.filterWith`: the elements passing a test.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.dropUnary`: dropping a number of elements, given
+* `Turing.MultiTapeTM.ComputableInDegree.cons`, `.snoc`, `.listAppend`.
+* `Turing.MultiTapeTM.ComputableInDegree.findWith`: the first element passing a test.
+* `Turing.MultiTapeTM.ComputableInDegree.filterWith`: the elements passing a test.
+* `Turing.MultiTapeTM.ComputableInDegree.dropUnary`: dropping a number of elements, given
   in unary.
 -/
 
@@ -72,19 +72,19 @@ public lemma length_encList_le (enc : α ↪ List Bool) (l : List α) {b : ℕ}
     simp only [encList_cons, List.length_append, length_frame, List.length_cons]
     nlinarith
 
-namespace ComputableTidilyInDegree
+namespace ComputableInDegree
 
 variable {γ : Type} {encIn : γ ↪ List Bool}
 
 /-- Adding an element in front: the identity on encoded words. -/
 public theorem cons (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun p : α × List α => p.1 :: p.2) (encPair enc (encList enc))
+    ComputableInDegree (fun p : α × List α => p.1 :: p.2) (encPair enc (encList enc))
       (encList enc) 1 1 :=
   of_eq fun _ => rfl
 
 /-- Adding an element at the end. -/
 public theorem snoc (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun p : List α × α => p.1 ++ [p.2]) (encPair (encList enc) enc)
+    ComputableInDegree (fun p : List α × α => p.1 ++ [p.2]) (encPair (encList enc) enc)
       (encList enc) 1 1 :=
   ((fst (encList enc) enc).append ((of_linear
     (ComputableInLinearTimeAndSpace.of_frame (f := id) (encIn := enc)
@@ -93,7 +93,7 @@ public theorem snoc (enc : α ↪ List Bool) :
 
 /-- Concatenation. -/
 public theorem listAppend (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun p : List α × List α => p.1 ++ p.2)
+    ComputableInDegree (fun p : List α × List α => p.1 ++ p.2)
       (encPair (encList enc) (encList enc)) (encList enc) 1 1 :=
   ((fst (encList enc) (encList enc)).append (snd (encList enc) (encList enc))
     fun _ => by simp).mono
@@ -113,10 +113,10 @@ public lemma foldl_findStep (t : π × α → Bool) (p : π) (l : List α) (acc 
 /-- The first element of `list x` passing the test `t` with the parameter `par x`, for a list of
 linear size. -/
 public theorem findWith {t : π × α → Bool} {par : γ → π} {list : γ → List α}
-    (ht : ComputableTidilyInDegree t (encPair encP enc) encBool dt et)
-    (hpar : ComputableTidilyInDegree par encIn encP dP eP)
-    (hlist : ComputableTidilyInDegree list encIn (encList enc) dL 1) :
-    ComputableTidilyInDegree (fun x => (list x).find? fun a => t (par x, a)) encIn
+    (ht : ComputableInDegree t (encPair encP enc) encBool dt et)
+    (hpar : ComputableInDegree par encIn encP dP eP)
+    (hlist : ComputableInDegree list encIn (encList enc) dL 1) :
+    ComputableInDegree (fun x => (list x).find? fun a => t (par x, a)) encIn
       (encOption enc) (max (max dL dP) (1 + max 1 dt * max 1 eP)) 1 := by
   -- the step, as a function of `((p, acc), a)`
   have hq := fst (encPair encP (encOption enc)) enc
@@ -127,7 +127,7 @@ public theorem findWith {t : π × α → Bool} {par : γ → π} {list : γ →
   have h := hisSome.ite (hq.snd'.restrict _) ((ht.comp (hq.fst'.prod hel)).ite
     (((optionSome (enc₁ := enc)).comp hel).restrict _) ((const none).restrict _) |>.restrict _)
   simp only [max_self, Nat.one_mul, Nat.mul_one] at h
-  have hstep : ComputableTidilyInDegree (fun q : (π × Option α) × α => findStep t q.1.1 q.1.2 q.2)
+  have hstep : ComputableInDegree (fun q : (π × Option α) × α => findStep t q.1.1 q.1.2 q.2)
       (encPair (encPair encP (encOption enc)) enc) (encOption enc) (max 1 dt) 1 := by
     convert h.mono (d' := max 1 dt) (e' := 1) using 1
     funext ⟨⟨p, acc⟩, a⟩
@@ -166,17 +166,17 @@ public lemma length_encList_filter_le (enc : α ↪ List Bool) (f : α → Bool)
 /-- The elements of `list x` passing the test `t` with the parameter `par x`, for a list of linear
 size. -/
 public theorem filterWith {t : π × α → Bool} {par : γ → π} {list : γ → List α}
-    (ht : ComputableTidilyInDegree t (encPair encP enc) encBool dt et)
-    (hpar : ComputableTidilyInDegree par encIn encP dP eP)
-    (hlist : ComputableTidilyInDegree list encIn (encList enc) dL 1) :
-    ComputableTidilyInDegree (fun x => (list x).filter fun a => t (par x, a)) encIn
+    (ht : ComputableInDegree t (encPair encP enc) encBool dt et)
+    (hpar : ComputableInDegree par encIn encP dP eP)
+    (hlist : ComputableInDegree list encIn (encList enc) dL 1) :
+    ComputableInDegree (fun x => (list x).filter fun a => t (par x, a)) encIn
       (encList enc) (max (max dL dP) (1 + max 1 dt * max 1 eP)) 1 := by
   have hq := fst (encPair encP (encList enc)) enc
   have hel := snd (encPair encP (encList enc)) enc
   have h := (ht.comp (hq.fst'.prod hel)).ite (((snoc enc).comp (hq.snd'.prod hel)).restrict _)
     (hq.snd'.restrict _)
   simp only [max_self, Nat.one_mul, Nat.mul_one] at h
-  have hstep : ComputableTidilyInDegree
+  have hstep : ComputableInDegree
       (fun q : (π × List α) × α => filterStep t q.1.1 q.1.2 q.2)
       (encPair (encPair encP (encList enc)) enc) (encList enc) (max 1 dt) 1 := by
     convert h.mono (d' := max 1 dt) (e' := 1) using 1
@@ -195,7 +195,7 @@ public theorem filterWith {t : π × α → Bool} {par : γ → π} {list : γ �
 
 /-- Dropping the first `n` elements, with `n` in unary. -/
 public theorem dropUnary (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun p : List α × ℕ => p.1.drop p.2)
+    ComputableInDegree (fun p : List α × ℕ => p.1.drop p.2)
       (encPair (encList enc) encUnary) (encList enc) 2 1 := by
   have hrep (l : List α) (n : ℕ) : (List.replicate n true).foldl (fun acc _ => acc.tail) l =
       l.drop n := by
@@ -228,10 +228,10 @@ public lemma foldl_mapStep {β : Type} (f : π × α → β) (p : π) (l : List 
 /-- Mapping `f` with the parameter `par x` over `list x`, for a parameter and a list of linear
 size. -/
 public theorem mapWith {β : Type} {encB : β ↪ List Bool} {f : π × α → β} {par : γ → π}
-    {list : γ → List α} {df ef : ℕ} (hf : ComputableTidilyInDegree f (encPair encP enc) encB df ef)
-    (hpar : ComputableTidilyInDegree par encIn encP dP 1)
-    (hlist : ComputableTidilyInDegree list encIn (encList enc) dL 1) :
-    ComputableTidilyInDegree (fun x => (list x).map fun a => f (par x, a)) encIn
+    {list : γ → List α} {df ef : ℕ} (hf : ComputableInDegree f (encPair encP enc) encB df ef)
+    (hpar : ComputableInDegree par encIn encP dP 1)
+    (hlist : ComputableInDegree list encIn (encList enc) dL 1) :
+    ComputableInDegree (fun x => (list x).map fun a => f (par x, a)) encIn
       (encList encB) (max (max dL dP) (1 + max 1 (max df ef) * (ef + 1))) (ef + 1) := by
   obtain ⟨c, hcd⟩ := hf.2
   -- a bound on the encoded images of the elements
@@ -271,7 +271,7 @@ public theorem mapWith {β : Type} {encB : β ↪ List Bool} {f : π × α → �
 
 /-- Truncated subtraction of unary numbers. -/
 public theorem unary_sub :
-    ComputableTidilyInDegree (fun p : ℕ × ℕ => p.1 - p.2) (encPair encUnary encUnary)
+    ComputableInDegree (fun p : ℕ × ℕ => p.1 - p.2) (encPair encUnary encUnary)
       encUnary 2 1 := by
   have hrep (a b : ℕ) : (List.replicate b true).foldl (fun n _ => n - 1) a = a - b := by
     induction b generalizing a with
@@ -293,7 +293,7 @@ public theorem unary_sub :
 
 /-- The minimum of unary numbers. -/
 public theorem unary_min :
-    ComputableTidilyInDegree (fun p : ℕ × ℕ => min p.1 p.2) (encPair encUnary encUnary)
+    ComputableInDegree (fun p : ℕ × ℕ => min p.1 p.2) (encPair encUnary encUnary)
       encUnary 2 1 := by
   convert (unary_sub.comp ((fst encUnary encUnary).prod unary_sub)).mono (d' := 2) (e' := 1)
     using 1
@@ -301,13 +301,13 @@ public theorem unary_min :
   simp only [Function.comp_apply]
   omega
 
-lemma int_head : ComputableTidilyInDegree (fun z : ℤ => ((encInt z).take 1).headD false)
+lemma int_head : ComputableInDegree (fun z : ℤ => ((encInt z).take 1).headD false)
     encInt encBool 1 1 :=
   ((headD (enc₁ := encBool) false).comp
     (of_linear (.of_take_one (f := fun z : ℤ => (encInt z).take 1) (encOut := encBits)
       fun _ => rfl))).mono
 
-lemma int_tailEmpty : ComputableTidilyInDegree (fun z : ℤ => (encInt z).tail.isEmpty)
+lemma int_tailEmpty : ComputableInDegree (fun z : ℤ => (encInt z).tail.isEmpty)
     encInt encBool 1 1 :=
   ((isEmpty (enc₁ := encBool)).comp
     (of_linear (.of_tail (f := fun z : ℤ => (encInt z).tail) (encOut := encBits)
@@ -315,7 +315,7 @@ lemma int_tailEmpty : ComputableTidilyInDegree (fun z : ℤ => (encInt z).tail.i
 
 /-- Whether an integer is positive. -/
 public theorem int_pos :
-    ComputableTidilyInDegree (fun z : ℤ => decide (0 < z)) encInt encBool 1 0 := by
+    ComputableInDegree (fun z : ℤ => decide (0 < z)) encInt encBool 1 0 := by
   convert ((of_finite (encIn := encPair encBool encBool) (encMid := encBool)
     (fun t : Bool × Bool => !t.1 && !t.2)).comp (int_head.prod int_tailEmpty)).mono
       (d' := 1) (e' := 0) using 1
@@ -324,14 +324,14 @@ public theorem int_pos :
 
 /-- Whether an integer is negative. -/
 public theorem int_neg :
-    ComputableTidilyInDegree (fun z : ℤ => decide (z < 0)) encInt encBool 1 1 := by
+    ComputableInDegree (fun z : ℤ => decide (z < 0)) encInt encBool 1 1 := by
   convert int_head using 1
   funext z
   rcases z with n | n <;> simp
 
 /-- Whether an option holds a value. -/
 public theorem isSome (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun o : Option α => o.isSome) (encOption enc) encBool 1 0 := by
+    ComputableInDegree (fun o : Option α => o.isSome) (encOption enc) encBool 1 0 := by
   convert ((of_finite (encIn := encBool) (encMid := encBool) (fun b : Bool => !b)).comp
     (of_linear (.of_isEmpty (encIn := encOption enc) (f := fun o : Option α => o.isNone)
       fun o => by cases o <;> simp))).mono (d' := 1) (e' := 0) using 1
@@ -340,7 +340,7 @@ public theorem isSome (enc : α ↪ List Bool) :
 
 /-- The length of a list, in unary. -/
 public theorem length (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun l : List α => l.length) (encList enc) encUnary 2 1 := by
+    ComputableInDegree (fun l : List α => l.length) (encList enc) encUnary 2 1 := by
   have hfold := foldl' (encL := encList enc) (encB := encUnary) (list := id)
     (init := fun _ => 0) (step := fun n _ => n + 1) (of_eq fun _ => rfl) (const 0)
     (unary_succ.comp (fst encUnary enc)) (B := fun l => (encList enc l).length) .self
@@ -354,7 +354,7 @@ public theorem length (enc : α ↪ List Bool) :
 
 /-- A list of `n` copies of an element. -/
 public theorem replicate (enc : α ↪ List Bool) :
-    ComputableTidilyInDegree (fun p : ℕ × α => List.replicate p.1 p.2) (encPair encUnary enc)
+    ComputableInDegree (fun p : ℕ × α => List.replicate p.1 p.2) (encPair encUnary enc)
       (encList enc) 3 2 := by
   have h (a : α) (m : List Bool) (acc : List α) :
       m.foldl (fun acc _ => acc ++ [a]) acc = acc ++ List.replicate m.length a := by
@@ -383,6 +383,6 @@ public theorem replicate (enc : α ↪ List Bool) :
   rw [h]
   simp
 
-end ComputableTidilyInDegree
+end ComputableInDegree
 
 end Turing.MultiTapeTM
