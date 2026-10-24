@@ -75,8 +75,10 @@ time-bounded Kolmogorov complexities `Cslib.Kolmogorov.plain` (`K`) and
   $K^t(x) \le |x| + c$ whenever $t(|x|) \ge |x| + 1$ ([Liu and Pass, Fact 2.1][LiuPass2020] under
   the multi-tape output convention).
 * `Cslib.Kolmogorov.plain_le_timeBounded`,
-  `Cslib.Kolmogorov.exists_ecomplexity_universal_le_timeBounded`: $K(x) \le K^t(x)$ against both
-  `plain` (`universalTM.ecomplexity`) and `DescriptionMethod.universal.ecomplexity`.
+  `Cslib.Kolmogorov.exists_ecomplexity_universal_le_timeBounded`: the direct comparison
+  `plain x ≤ timeBounded t x` (`universalTM.ecomplexity`), and for any computable decoder
+  `dec : List Bool → ℕ`, the Partrec comparison
+  `DescriptionMethod.universal.ecomplexity (dec x) ≤ timeBounded t x + c`.
 * `Cslib.Kolmogorov.encard_setOf_timeBounded_lt`,
   `Cslib.Kolmogorov.exists_length_eq_le_timeBounded`,
   `Cslib.Kolmogorov.two_pow_lt_ncard_setOf_length_eq_le_timeBounded_add`: counting and

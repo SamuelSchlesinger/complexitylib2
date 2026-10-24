@@ -19,8 +19,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Op
 # The Time-Bounded Kolmogorov Complexity Problem (`MINKT`)
 
 This module defines the time-bounded Kolmogorov complexity decision problem `Cslib.Kolmogorov.MINKT`
-and its fixed-parameter counterpart `Cslib.Kolmogorov.MINKTAt`, proves that both lie in `NP`, and
-defines Hirahara's promise problem `Cslib.Kolmogorov.GapMINKT`.
+and its fixed-parameter counterpart `Cslib.Kolmogorov.MINKTAt`, proves that `MINKT` lies in `NP`
+(and that `MINKTAt t s` lies in `NP` whenever `t` and `s` are computable in polynomial time in
+unary), and defines Hirahara's promise problem `Cslib.Kolmogorov.GapMINKT`.
 
 ## Threshold conventions (#798 Decision D4)
 
@@ -30,7 +31,7 @@ decision problem are provided and bridged:
 * **Thresholds in the instance (`Cslib.Kolmogorov.MINKT`):**
   An instance `i : MINKT.Instance` consists of a binary string `i.string`, a time bound `i.time`,
   and a size threshold `i.size`, encoded by `MINKT.enc` as `x` followed by `1^time` and `1^size` in
-  unary ([Ko][Ko1986]; [Hirahara, Definition 3.6][Hirahara2018]). The instance belongs to `MINKT`
+  unary ([Ko][Ko1986]; [Hirahara, Definition II.4][Hirahara2018]). The instance belongs to `MINKT`
   when `universalTM.etimeBoundedComplexity i.time i.string ≤ i.size`.
 * **Fixed-function thresholds (`Cslib.Kolmogorov.MINKTAt t s`):**
   For time and size threshold functions `t s : ℕ → ℕ`, `MINKTAt t s : Set (List Bool)` is the
@@ -47,7 +48,7 @@ decision problem are provided and bridged:
 * `Cslib.Kolmogorov.MINKT.check`: polynomial-time witness check for `MINKT`.
 * `Cslib.Kolmogorov.MINKTAt`: fixed-threshold language `{x | timeBounded t x ≤ s x.length}`.
 * `Cslib.Kolmogorov.GapMINKT`: Hirahara's promise problem `GapMINKT[σ, τ]`
-  ([Hirahara, Definition 3.6][Hirahara2018]).
+  ([Hirahara, Definition II.6][Hirahara2018]).
 
 ## Main results
 
@@ -80,7 +81,7 @@ open Cslib.Complexity DescriptionMethod
 namespace MINKT
 
 /-- An instance of `MINKT`: a target binary string `string`, a step bound `time`, and a program size
-threshold `size` ([Ko][Ko1986]; [Hirahara, Definition 3.6][Hirahara2018]; Decision D4). -/
+threshold `size` ([Ko][Ko1986]; [Hirahara, Definition II.4][Hirahara2018]; Decision D4). -/
 structure Instance where
   /-- The target binary string `x`. -/
   string : List Bool
@@ -93,7 +94,7 @@ structure Instance where
 end MINKT
 
 /-- **The Minimum Time-Bounded Kolmogorov Complexity Problem (`MINKT`)**
-([Ko][Ko1986]; [Hirahara, Definition 3.6][Hirahara2018]; Decision D4): the set of instances
+([Ko][Ko1986]; [Hirahara, Definition II.4][Hirahara2018]; Decision D4): the set of instances
 `(x, t, s)` such that some binary program of length at most `s` outputs `x` within `t` steps under
 `universalTM`. -/
 def MINKT : Set MINKT.Instance :=
@@ -109,7 +110,7 @@ def Instance.equivTuple : Instance ≃ List Bool × (ℕ × ℕ) where
   right_inv p := by rcases p with ⟨_, _, _⟩; rfl
 
 /-- Standard encoding of `MINKT.Instance`: the string `x`, followed by `1^time` and `1^size` in
-unary ([Ko][Ko1986]; [Hirahara, Definition 3.6][Hirahara2018]; Decision D4). -/
+unary ([Ko][Ko1986]; [Hirahara, Definition II.4][Hirahara2018]; Decision D4). -/
 def enc : Instance ↪ List Bool :=
   Instance.equivTuple.toEmbedding.trans (encPair encBits (encPair encUnary encUnary))
 
@@ -351,12 +352,12 @@ end MINKTAt
 namespace GapMINKT
 
 /-- The yes-instances of `GapMINKT`: instances `(x, t, s)` with $K^t(x) \le s$
-([Hirahara, Definition 3.6][Hirahara2018]). -/
+([Hirahara, Definition II.6][Hirahara2018]). -/
 def yes : Set MINKT.Instance :=
   MINKT
 
 /-- The raw no-instances of `GapMINKT[σ, τ]`: instances `(x, t, s)` with
-$K^{\tau(|x|, t)}(x) > \sigma(|x|, s)$ ([Hirahara, Definition 3.6][Hirahara2018]). -/
+$K^{\tau(|x|, t)}(x) > \sigma(|x|, s)$ ([Hirahara, Definition II.6][Hirahara2018]). -/
 def no (σ τ : ℕ → ℕ → ℕ) : Set MINKT.Instance :=
   {i | (σ i.string.length i.size : ℕ∞) <
     universalTM.etimeBoundedComplexity (τ i.string.length i.time) i.string}
@@ -371,7 +372,7 @@ theorem mem_no_iff {σ τ : ℕ → ℕ → ℕ} {i : MINKT.Instance} :
   Iff.rfl
 
 /-- When $\sigma(n, s) \ge s$ and $\tau(n, t) \ge t$ (as required in
-[Hirahara, Definition 3.6][Hirahara2018]), `GapMINKT.yes` and `GapMINKT.no σ τ` are disjoint. -/
+[Hirahara, Definition II.6][Hirahara2018]), `GapMINKT.yes` and `GapMINKT.no σ τ` are disjoint. -/
 theorem disjoint_yes_no {σ τ : ℕ → ℕ → ℕ}
     (hσ : ∀ n s, s ≤ σ n s) (hτ : ∀ n t, t ≤ τ n t) :
     Disjoint yes (no σ τ) := by
@@ -392,7 +393,7 @@ theorem no_id_eq_compl : no (fun _ s => s) (fun _ t => t) = MINKTᶜ := by
 
 end GapMINKT
 
-/-- **Hirahara's `GapMINKT` promise problem** ([Hirahara, Definition 3.6][Hirahara2018]):
+/-- **Hirahara's `GapMINKT` promise problem** ([Hirahara, Definition II.6][Hirahara2018]):
 yes-instances are `MINKT`, and no-instances are those in `GapMINKT.no σ τ \ MINKT` (which equals
 `GapMINKT.no σ τ` whenever `s ≤ σ n s` and `t ≤ τ n t`, see `GapMINKT.no_eq`). -/
 def GapMINKT (σ τ : ℕ → ℕ → ℕ) : PromiseProblem MINKT.Instance where
