@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Foundations.Combinatorics.LineCode.Field
 import Complexity.Foundations.Combinatorics.LineCode.HighRate
 import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
+import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
 import Mathlib.FieldTheory.Finite.GaloisField
 
 /-!
@@ -148,11 +149,11 @@ info: 'Cslib.LineCode.HighRate.sum_prod_add_mul_pow_eq_zero' depends on axioms:
 #print axioms sum_prod_add_mul_pow_eq_zero
 
 /--
-info: 'Cslib.LineCode.HighRate.linearIndependent_prod_pow' depends on axioms:
+info: 'FiniteField.linearIndependent_prod_pow' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms linearIndependent_prod_pow
+#print axioms FiniteField.linearIndependent_prod_pow
 
 /--
 info: 'Cslib.LineCode.exists_card_info_eq_of_linearIndependent' depends on axioms:

@@ -1676,6 +1676,7 @@ public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape
 public import Complexity.Foundations.FieldTheory.Finite.BinaryField
+public import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
 public import Complexity.Foundations.FieldTheory.Finite.UnitSum
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.GroupTheory.Perm.Fin

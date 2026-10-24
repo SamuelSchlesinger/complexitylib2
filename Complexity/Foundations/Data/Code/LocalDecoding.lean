@@ -9,7 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
 public import Complexity.Foundations.Data.Code.ReedMuller
-import Complexity.Foundations.Combinatorics.LineCode.HighRate.Monomial
+import Complexity.Foundations.FieldTheory.Finite.UnitSum
 import Complexity.Foundations.Combinatorics.LineCode.Line
 import Mathlib.Algebra.Polynomial.BigOperators
 
@@ -79,28 +79,19 @@ in `c` of degree at most the total degree of `P`. -/
 private theorem exists_natDegree_le_and_eval_eq (P : MvPolynomial (Fin m) F) (x v : Fin m → F) :
     ∃ g : Polynomial F, g.natDegree ≤ P.totalDegree ∧
       ∀ c : F, g.eval c = MvPolynomial.eval (x + c • v) P := by
-  let line : Fin m → Polynomial F := fun i => Polynomial.C (x i) + Polynomial.C (v i) * Polynomial.X
-  refine ⟨MvPolynomial.eval₂ Polynomial.C line P, ?_, fun c => ?_⟩
-  · rw [MvPolynomial.eval₂_eq']
-    refine Polynomial.natDegree_sum_le_of_forall_le _ _ fun s hs => ?_
-    refine (Polynomial.natDegree_C_mul_le _ _).trans ((Polynomial.natDegree_prod_le _ _).trans ?_)
-    calc ∑ i, (line i ^ s i).natDegree ≤ ∑ i, s i := by
-          refine sum_le_sum fun i _ => (Polynomial.natDegree_pow_le).trans ?_
-          refine (Nat.mul_le_mul_left _ ?_).trans (mul_one _).le
-          rw [Polynomial.natDegree_C_add]
-          exact (Polynomial.natDegree_C_mul_le _ _).trans Polynomial.natDegree_X_le
-      _ = s.sum fun _ e => e := (Finsupp.sum_fintype s (fun _ e => e) fun _ => rfl).symm
-      _ ≤ P.totalDegree := MvPolynomial.le_totalDegree hs
-  · have hC : (Polynomial.evalRingHom c).comp Polynomial.C = RingHom.id F :=
-      RingHom.ext fun a => Polynomial.eval_C
-    rw [← Polynomial.coe_evalRingHom, MvPolynomial.eval₂_comp_left, hC]
-    change MvPolynomial.eval₂ _ _ P = MvPolynomial.eval₂ (RingHom.id F) _ P
-    congr 1
-    funext i
-    simp only [Function.comp_apply, line, Polynomial.coe_evalRingHom, Polynomial.eval_add,
-      Polynomial.eval_C, Polynomial.eval_mul, Polynomial.eval_X, Pi.add_apply, Pi.smul_apply,
-      smul_eq_mul]
-    rw [mul_comm]
+  refine ⟨MvPolynomial.eval₂ Polynomial.C
+    (fun i => Polynomial.C (v i) * Polynomial.X + Polynomial.C (x i)) P,
+    FiniteField.natDegree_eval₂_line_le P v x, fun c => ?_⟩
+  have hC : (Polynomial.evalRingHom c).comp Polynomial.C = RingHom.id F :=
+    RingHom.ext fun a => Polynomial.eval_C
+  rw [← Polynomial.coe_evalRingHom, MvPolynomial.eval₂_comp_left, hC]
+  change MvPolynomial.eval₂ _ _ P = MvPolynomial.eval₂ (RingHom.id F) _ P
+  congr 1
+  funext i
+  simp only [Function.comp_apply, Polynomial.coe_evalRingHom, Polynomial.eval_add,
+    Polynomial.eval_C, Polynomial.eval_mul, Polynomial.eval_X, Pi.add_apply, Pi.smul_apply,
+    smul_eq_mul]
+  rw [add_comm, mul_comm]
 
 omit [Fintype F] in
 /-- **Restriction to a line.** The restriction `t ↦ f (x + t • v)` of a codeword `f` of the
@@ -120,7 +111,7 @@ theorem sum_add_smul_eq_zero_of_mem_reedMuller (hd : d + 1 < Fintype.card F)
     ∑ c : F, f (x + c • v) = 0 := by
   obtain ⟨g, hg, hgeval⟩ := exists_natDegree_le_eval_eq_of_mem_reedMuller hf x v
   simp only [← hgeval]
-  exact HighRate.sum_eval_eq_zero_of_natDegree_lt g (by omega)
+  exact FiniteField.sum_eval_eq_zero_of_natDegree_lt (g := g) (by omega)
 
 variable [DecidableEq F]
 
