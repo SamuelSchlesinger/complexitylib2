@@ -1229,10 +1229,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   - the compositional structure of libzk (Shelat's IETF draft) as a composition of these
     components, stated as theory without concrete ciphersuites.
 * **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
-  collision-resistant hash families and Merkle–Damgård (#678), and universal hashing (#663).
-  Open: Luby–Rackoff (three Feistel rounds over a PRF give a PRP, four give a strong PRP), strongly
-  unforgeable MACs and Carter–Wegman MACs from Δ-universal hashing, the Naor–Reingold PRF from the
-  decisional Diffie–Hellman assumption, and Even–Mansour in the ideal-permutation model.
+  collision-resistant hash families and Merkle–Damgård (#678), universal hashing (#663), and the
+  Even–Mansour cipher in the ideal-permutation model (algebraic permutations, one-query secrecy,
+  one-sided query security, 2-query breaks when omitting either whitening key, and the Boneh–Shoup
+  Theorem 4.10 bad-key transcript intersection bound `2 * Q_e * Q_π / |G|`, #761).
+  Open: lazy-sampled bidirectional random-permutation coupling connecting the Even–Mansour bad-key
+  intersection bound to full two-sided `Game.advantage`, Luby–Rackoff (three Feistel rounds over a
+  PRF give a PRP, four give a strong PRP), strongly unforgeable MACs and Carter–Wegman MACs from
+  Δ-universal hashing, and the Naor–Reingold PRF from the decisional Diffie–Hellman assumption.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
