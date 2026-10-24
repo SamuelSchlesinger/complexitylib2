@@ -188,8 +188,11 @@ theorem weight_inSpace :
     ComputableInSpace (fun w : (ℕ × ℕ × ℕ) × List ℕ × List ℕ =>
         weight w.1.1 w.1.2.1 w.1.2.2 w.2.1 w.2.2)
       encWeightIn encNat fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := by
-  have this : ComputableTidilyInSpace (fun w : (ℕ × ℕ × ℕ) × List ℕ × List ℕ => weight w.1.1 w.1.2.1 w.1.2.2 w.2.1 w.2.2) encWeightIn encNat fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := by
-    have hl : (fun w => (encWeightIn w).length) ≼ fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1)
+  have this : ComputableTidilyInSpace
+      (fun w : (ℕ × ℕ × ℕ) × List ℕ × List ℕ => weight w.1.1 w.1.2.1 w.1.2.2 w.2.1 w.2.2)
+      encWeightIn encNat fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := by
+    have hl : (fun w => (encWeightIn w).length) ≼ fun w => 64 *
+        ((encWeightIn w).length + w.1.2.1 + 1)
       := .of_le fun _ => by omega
     have hℓle : (fun w : (ℕ × ℕ × ℕ) × List ℕ × List ℕ => w.1.2.1) ≼
         fun w => 64 * ((encWeightIn w).length + w.1.2.1 + 1) := .of_le fun _ => by omega

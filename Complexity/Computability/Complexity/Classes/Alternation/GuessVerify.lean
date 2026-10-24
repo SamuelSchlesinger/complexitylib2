@@ -187,7 +187,8 @@ variable {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × Li
 Stockmeyer][ChandraKozenStockmeyer1981]: a problem with a polynomial-time game verifier is decided
 in polynomial time by the guess-then-verify machine, which writes the moves of the two players,
 alternately, and then runs the verifier. -/
-theorem IsGameVerifier.mem_AP (hV : Turing.MultiTapeTM.ComputableInPolyTime V (encPair enc encBits) encBool)
+theorem IsGameVerifier.mem_AP
+    (hV : Turing.MultiTapeTM.ComputableInPolyTime V (encPair enc encBits) encBool)
     (h : IsGameVerifier enc p V A) : A ∈ AP enc := by
   have hV := hV.tidy
   -- the number of moves, and the word prepared on tape `B`

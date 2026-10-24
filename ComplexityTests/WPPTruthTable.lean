@@ -39,7 +39,8 @@ theorem target_ne_zero (n : ℕ) : target n ≠ 0 := by
 theorem oracle_mem_LWPP : oracle ∈ LWPP encBits := by
   let g (w : List Bool) : ℤ := if w.getD 0 false then target w.length else 0
   have hg : ComputableTidilyInPolyTime g encBits encIntBin := by dsimp [g]; fun_prop
-  refine ⟨g, mem_GapP_of_polyTime (.of_tidy hg), target, .of_tidy polyTime_target, target_ne_zero, ?_, ?_⟩
+  refine ⟨g, mem_GapP_of_polyTime (.of_tidy hg), target, .of_tidy polyTime_target, target_ne_zero, ?_,
+    ?_⟩
   · intro w
     dsimp [g]
     split_ifs <;> simp
@@ -87,7 +88,8 @@ example : language ∈ LWPP encBits :=
   truthTable_mem_LWPP joint_mem_LWPP (.of_tidy polyTime_count) (.of_tidy polyTime_combine)
 
 example : language ∈ WPP encBits :=
-  truthTable_mem_WPP (LWPP_subset_WPP joint_mem_LWPP) (.of_tidy polyTime_count) (.of_tidy polyTime_combine)
+  truthTable_mem_WPP (LWPP_subset_WPP joint_mem_LWPP) (.of_tidy polyTime_count)
+    (.of_tidy polyTime_combine)
 
 example : count [true, false] = 2 ∧ count [false, true] = 0 := by decide
 

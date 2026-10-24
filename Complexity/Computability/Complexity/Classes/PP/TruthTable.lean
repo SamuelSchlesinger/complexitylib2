@@ -193,7 +193,8 @@ private theorem ppTruthTableGap_mem {M r : α → ℕ} {g : α × ℕ → ℤ} {
       else
         newmanAmp (M x.1.1) (r x.1.1 + 1) (-g (x.1.1, x.2))) ∈
       GapP (encPair (encPair enc encBits) encUnary) :=
-    GapP.ite_mem (.of_tidy (by fun_prop)) (GapP.comp_mem hpos (.of_tidy hq)) (GapP.comp_mem hneg (.of_tidy hq))
+    GapP.ite_mem (.of_tidy (by fun_prop)) (GapP.comp_mem hpos (.of_tidy hq))
+      (GapP.comp_mem hneg (.of_tidy hq))
   have hp := GapP.prod_range_mem hs (.of_tidy (hr.comp (.fst enc encBits)))
   have hw : ComputableTidilyInPolyTime
       (fun x => if d x then (1 : ℤ) else -1) (encPair enc encBits) encIntBin := by fun_prop

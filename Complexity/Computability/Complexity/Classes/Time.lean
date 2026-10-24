@@ -183,8 +183,8 @@ private theorem exists_le_length (enc : α ↪ List Bool) (S : α → ℕ) :
   exact ⟨fun n => (hfin n).toFinset.sup S, fun a =>
     Finset.le_sup (f := S) ((hfin _).mem_toFinset.mpr rfl)⟩
 
-/-- A Boolean function, tidily computable within a time bound of the length of the encoded
-instance, decides a problem within that time. -/
+/-- A Boolean function, computable within a time bound of the length of the encoded instance,
+decides a problem within that time. -/
 theorem setOf_mem_DTIME_of_computableInO {enc : α ↪ List Bool} {f : α → Bool}
     {T S : α → ℕ} {t : ℕ → ℕ} (h : Turing.MultiTapeTM.ComputableInO f enc encBool T S)
     (hT : ∀ a, T a ≤ t (enc a).length) : {a | f a = true} ∈ DTIME enc t := by
@@ -211,13 +211,14 @@ theorem DTIME_mono_of_le_mul_add {t₁ t₂ : ℕ → ℕ} {C : ℕ} (h : ∀ n,
   rw [Nat.mul_add, ← Nat.mul_assoc] at this
   omega
 
-/-- A problem in `DTIME enc t` is decided by a machine tidily computing its indicator within time
+/-- A problem in `DTIME enc t` is decided by a machine computing its indicator within time
 and space `O(t n)`, on instances whose encoding has length `n`. -/
 theorem computableInO_indicator_of_mem_DTIME {A : Set α} {t : ℕ → ℕ}
     (h : A ∈ DTIME enc t) :
     Turing.MultiTapeTM.ComputableInO (indicator A) enc encBool (fun a => t (enc a).length)
       fun a => t (enc a).length := by
-  have this : ComputableTidilyInO (indicator A) enc encBool (fun a => t (enc a).length) fun a => t (enc a).length := by
+  have this : ComputableTidilyInO (indicator A) enc encBool (fun a => t (enc a).length) fun a => t
+      (enc a).length := by
     obtain ⟨c₁, c₂, s, hA⟩ := h
     obtain ⟨g, hg, hgA⟩ := decidableInTimeAndSpace_iff.mp hA
     obtain ⟨c, hg⟩ := hg.exists_space_linear

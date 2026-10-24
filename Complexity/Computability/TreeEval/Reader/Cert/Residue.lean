@@ -46,7 +46,8 @@ private theorem proj3 :
 theorem addMod_inSpace :
     ComputableInSpace (fun q : ℕ × ℕ × ℕ => addMod q.1 q.2.1 q.2.2) encNat3 encNat
       fun q => (encNat3 q).length := by
-  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => addMod q.1 q.2.1 q.2.2) encNat3 encNat fun q => (encNat3 q).length := by
+  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => addMod q.1 q.2.1 q.2.2) encNat3 encNat
+      fun q => (encNat3 q).length := by
     obtain ⟨hp, ha, hb⟩ := proj3
     exact budget_comp_lin natMod (linear_mul _)
       (budget_prod (budget_comp_lin natAdd linear_succ (budget_prod ha hb)) hp)
@@ -56,7 +57,8 @@ theorem addMod_inSpace :
 theorem mulMod_inSpace :
     ComputableInSpace (fun q : ℕ × ℕ × ℕ => mulMod q.1 q.2.1 q.2.2) encNat3 encNat
       fun q => (encNat3 q).length := by
-  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => mulMod q.1 q.2.1 q.2.2) encNat3 encNat fun q => (encNat3 q).length := by
+  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => mulMod q.1 q.2.1 q.2.2) encNat3 encNat
+      fun q => (encNat3 q).length := by
     obtain ⟨hp, ha, hb⟩ := proj3
     exact budget_comp_lin natMod (linear_mul _)
       (budget_prod (budget_comp_lin natMul (linear_mul _) (budget_prod ha hb)) hp)
@@ -66,7 +68,8 @@ theorem mulMod_inSpace :
 theorem negMod_inSpace :
     ComputableInSpace (fun q : ℕ × ℕ => negMod q.1 q.2) (encPair encNat encNat) encNat
       fun q => (encPair encNat encNat q).length := by
-  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ => negMod q.1 q.2) (encPair encNat encNat) encNat fun q => (encPair encNat encNat q).length := by
+  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ => negMod q.1 q.2) (encPair encNat encNat)
+      encNat fun q => (encPair encNat encNat q).length := by
     have hp := fst encNat encNat
     have hm := budget_comp_lin natMod (linear_mul _) (budget_prod (snd encNat encNat) hp)
     exact budget_comp_lin natMod (linear_mul _)
@@ -78,7 +81,9 @@ theorem chi_inSpace :
     ComputableInSpace (fun q : (ℕ × ℕ) × Bool => chi q.1.1 q.2 q.1.2)
       (encPair (encPair encNat encNat) encBool) encNat
       fun q => (encPair (encPair encNat encNat) encBool q).length := by
-  have this : ComputableTidilyInSpace (fun q : (ℕ × ℕ) × Bool => chi q.1.1 q.2 q.1.2) (encPair (encPair encNat encNat) encBool) encNat fun q => (encPair (encPair encNat encNat) encBool q).length := by
+  have this : ComputableTidilyInSpace (fun q : (ℕ × ℕ) × Bool => chi q.1.1 q.2 q.1.2)
+      (encPair (encPair encNat encNat) encBool) encNat fun q =>
+      (encPair (encPair encNat encNat) encBool q).length := by
     have hpx := fst (encPair encNat encNat) encBool
     have hp := fst' hpx
     have hmod := budget_comp_lin natMod (linear_mul _) (budget_prod (snd' hpx) hp)
@@ -108,7 +113,8 @@ theorem powMod_le {p a : ℕ} {k : ℕ} (hk : k ≤ p - 2) : powMod p a k ≤ p 
 theorem unitInv_inSpace :
     ComputableInSpace (fun q : ℕ × ℕ => unitInv q.1 q.2) (encPair encNat encNat) encNat
       fun q => (encPair encNat encNat q).length := by
-  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ => unitInv q.1 q.2) (encPair encNat encNat) encNat fun q => (encPair encNat encNat q).length := by
+  have this : ComputableTidilyInSpace (fun q : ℕ × ℕ => unitInv q.1 q.2) (encPair encNat encNat)
+      encNat fun q => (encPair encNat encNat q).length := by
     have hp := fst encNat encNat
     have hstep : ComputableTidilyInSpace powStep encNat3 encNat3 fun q => (encNat3 q).length := by
       obtain ⟨hp, ha, hacc⟩ := proj3

@@ -356,9 +356,15 @@ theorem computableInLogSpace {β : Type} {encOut : β ↪ List Bool} {g : List B
       encBits fun p => wBudget p.1)
     (hpoly : PolynomiallyBounded S.numChunks) :
     ComputableInLogSpace g (encFramed encBits) encOut := by
-  have hN : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.numChunks p.1.2.1) encStepIn encNat fun p => wBudget p.1 := by simpa only [computableInSpace_iff_computableTidilyInSpace] using hN
-  have hC : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.chunk p.1.2.1 p.1.2.2) encStepIn encBits fun p => wBudget p.1 := by simpa only [computableInSpace_iff_computableTidilyInSpace] using hC
-  have hT : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.trailer p.1.2.1) encStepIn encBits fun p => wBudget p.1 := by simpa only [computableInSpace_iff_computableTidilyInSpace] using hT
+  have hN : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.numChunks p.1.2.1) encStepIn
+      encNat fun p => wBudget p.1 := by simpa only [computableInSpace_iff_computableTidilyInSpace]
+    using hN
+  have hC : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.chunk p.1.2.1 p.1.2.2)
+      encStepIn encBits fun p => wBudget p.1 := by simpa only
+    [computableInSpace_iff_computableTidilyInSpace] using hC
+  have hT : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.trailer p.1.2.1) encStepIn
+      encBits fun p => wBudget p.1 := by simpa only [computableInSpace_iff_computableTidilyInSpace]
+    using hT
   obtain ⟨T, hT'⟩ := tidy_machine hN hC hT
   have hc (w : List Bool) : S.machine.toStepMachine.Computes (encFramed encBits w)
       (encOut (g w)) := by

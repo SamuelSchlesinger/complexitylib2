@@ -331,7 +331,7 @@ private theorem pow_le_pow_of_le {x a b : ℕ} (hx : 1 ≤ x) (hab : a ≤ b) : 
   Nat.pow_le_pow_right hx hab
 
 /-- **The evaluator in polynomial space.** On a formula whose encoding has length `L`, the
-evaluator is tidily computable within time `O(2 ^ L * (L + 1) ^ e)` and space `O((L + 1) ^ e)`, for
+evaluator is computable within time `O(2 ^ L * (L + 1) ^ e)` and space `O((L + 1) ^ e)`, for
 some fixed `e`. The space charges the input, the stack of at most `L` frames, each storing a token
 and a suffix of the tokens, the value, the flag, the counter of the `2 ^ L` rounds in binary, and
 the polynomial space of a step; the time charges every round
@@ -339,7 +339,9 @@ the polynomial space of a step; the time charges every round
 theorem exists_computableInO_evaluate : ∃ e, ComputableInO evaluate encQBF encBool
     (fun φ => 2 ^ (encQBF φ).length * ((encQBF φ).length + 1) ^ e)
     fun φ => ((encQBF φ).length + 1) ^ e := by
-  have this : ∃ e, ComputableTidilyInO evaluate encQBF encBool (fun φ => 2 ^ (encQBF φ).length * ((encQBF φ).length + 1) ^ e) fun φ => ((encQBF φ).length + 1) ^ e := by
+  have this : ∃ e, ComputableTidilyInO evaluate encQBF encBool
+      (fun φ => 2 ^ (encQBF φ).length * ((encQBF φ).length + 1) ^ e) fun φ =>
+      ((encQBF φ).length + 1) ^ e := by
     obtain ⟨d, e, hstep⟩ := computableInPolyTime_step.tidy.exists_degree
     obtain ⟨d₀, e₀, hinit⟩ := init_pt.exists_degree
     obtain ⟨d₁, e₁, hans⟩ := answer_pt.exists_degree

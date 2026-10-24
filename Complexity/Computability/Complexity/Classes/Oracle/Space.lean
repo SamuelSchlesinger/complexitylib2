@@ -65,13 +65,15 @@ variable {α β : Type} {enc : α ↪ List Bool}
 length of the encoded instance. -/
 theorem exists_computableInO_of_mem_PSPACE {L : Set α} (hL : L ∈ PSPACE enc) :
     ∃ T S, PolyBounded (fun a => (enc a).length) S ∧
-      ∃ f : α → Bool, Turing.MultiTapeTM.ComputableInO f enc encBool T S ∧ ∀ a, a ∈ L ↔ f a = true :=
+      ∃ f : α → Bool, Turing.MultiTapeTM.ComputableInO f enc encBool T S ∧ ∀ a, a ∈ L ↔ f a =
+        true :=
   let ⟨f, T, S, hf, hS, hL⟩ := mem_PSPACE_iff_computableInO.mp hL
   ⟨T, S, hS, f, hf, hL⟩
 
 /-- A decider within polynomial space puts a problem in `PSPACE`. -/
 theorem mem_PSPACE_of_computableInO {L : Set α} {f : α → Bool} {T S : α → ℕ}
-    (hf : Turing.MultiTapeTM.ComputableInO f enc encBool T S) (hS : PolyBounded (fun a => (enc a).length) S)
+    (hf : Turing.MultiTapeTM.ComputableInO f enc encBool T S)
+      (hS : PolyBounded (fun a => (enc a).length) S)
     (hL : ∀ a, a ∈ L ↔ f a = true) : L ∈ PSPACE enc :=
   mem_PSPACE_iff_computableInO.mpr ⟨f, T, S, hf, hS, hL⟩
 
@@ -81,12 +83,14 @@ theorem mem_PSPACE_of_computableInO {L : Set α} {f : α → Bool} {T S : α →
 polynomial space and certificates of polynomial length is in `PSPACE`, by closure of `PSPACE` under
 polynomially bounded existential quantification (`Cslib.Complexity.setOf_exists_mem_PSPACE`). -/
 theorem mem_PSPACE_of_isVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool} {L : Set α}
-    {T S : α × List Bool → ℕ} (hV : Turing.MultiTapeTM.ComputableInO V (encPair enc encBits) encBool T S)
+    {T S : α × List Bool → ℕ}
+      (hV : Turing.MultiTapeTM.ComputableInO V (encPair enc encBits) encBool T S)
     (hS : PolyBounded (fun x => (encPair enc encBits x).length) S) (hL : IsVerifier enc p V L) :
     L ∈ PSPACE enc := by
   have hB : {x | V x = true} ∈ PSPACE (encPair enc encBits) :=
     mem_PSPACE_of_computableInO hV hS fun _ => Iff.rfl
-  have hℓ : Turing.MultiTapeTM.ComputableInPolyTime (fun a : α => p.eval (enc a).length) enc encUnary :=
+  have hℓ : Turing.MultiTapeTM.ComputableInPolyTime (fun a : α => p.eval (enc a).length) enc
+      encUnary :=
     (Turing.MultiTapeTM.ComputableInPolyTime.unary_eval p).comp (.encoding_length enc)
   have hEq : L = {x | ∃ w : List Bool, w.length = p.eval (enc x).length ∧
       (x, w) ∈ {x : α × List Bool | V x = true}} :=

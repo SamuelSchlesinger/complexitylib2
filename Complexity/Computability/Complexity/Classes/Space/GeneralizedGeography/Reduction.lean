@@ -551,7 +551,8 @@ theorem computableInPolyTime_topNode {j : γ → ℕ}
     (hj : ComputableInPolyTime j encIn encUnary) :
     ComputableInPolyTime (fun x => topNode (j x)) encIn encNat := by
   have hj := hj.tidy
-  exact .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 0 (j x)) _ _ by
+  exact .of_tidy
+    (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 0 (j x)) _ _ by
     fun_prop))
 
 @[fun_prop]
@@ -569,7 +570,8 @@ theorem computableInPolyTime_bottomNode {j : γ → ℕ}
     (hj : ComputableInPolyTime j encIn encUnary) :
     ComputableInPolyTime (fun x => bottomNode (j x)) encIn encNat := by
   have hj := hj.tidy
-  exact .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 2 (j x)) _ _ by
+  exact .of_tidy
+    (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 2 (j x)) _ _ by
     fun_prop))
 
 @[fun_prop]
@@ -577,7 +579,8 @@ theorem computableInPolyTime_clauseNode {i : γ → ℕ}
     (hi : ComputableInPolyTime i encIn encUnary) :
     ComputableInPolyTime (fun x => clauseNode (i x)) encIn encNat := by
   have hi := hi.tidy
-  exact .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 4 (i x)) _ _ by
+  exact .of_tidy
+    (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun x => Nat.pair 4 (i x)) _ _ by
     fun_prop))
 
 @[fun_prop]

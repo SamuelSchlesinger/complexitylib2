@@ -281,7 +281,8 @@ theorem computableInPolyTime_relabel {γ : Type} {input : γ ↪ List Bool} {G :
     (hkeys : ComputableInPolyTime keys input (encList encUnary)) :
     ComputableInPolyTime (fun x => relabel (G x) (keys x)) input encBits := by
   have hn : ComputableInPolyTime (fun x => (G x).distinctVertices.length) input encUnary :=
-    (ComputableInPolyTime.length_list encNat).comp (Graph.computableInPolyTime_distinctVertices.comp hG)
+    (ComputableInPolyTime.length_list encNat).comp
+      (Graph.computableInPolyTime_distinctVertices.comp hG)
   unfold relabel
   simp only [List.flatMap_def]
   fun_prop

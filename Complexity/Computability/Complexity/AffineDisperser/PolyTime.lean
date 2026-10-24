@@ -324,7 +324,8 @@ theorem computableInPolyTime_codeBound :
     unfold codeBound
     have := ComputableInPolyTime.binary_two_pow
     fun_prop
-  exact ComputableInPolyTime.binary_to_unary_bounded hvalue (bound := fun N => 2 * (N + 1) * (N + 1)) (by fun_prop)
+  exact ComputableInPolyTime.binary_to_unary_bounded hvalue
+    (bound := fun N => 2 * (N + 1) * (N + 1)) (by fun_prop)
     codeBound_le
 
 /-! ### The multiplication table -/
@@ -398,7 +399,8 @@ theorem computableInPolyTime_monomialBit_explicit' {α : Type} {input : α ↪ L
   have hu := hu.tidy
   have hw := hw.tidy
   have hv := hv.tidy
-  exact .of_tidy (computableTidilyInPolyTime_monomialBit_explicit.comp (((hN.prod hu).prod hw).prod hv))
+  exact .of_tidy
+    (computableTidilyInPolyTime_monomialBit_explicit.comp (((hN.prod hu).prod hw).prod hv))
 
 /-- `computableInPolyTime_monomialBit_explicit'` for tidy `fun_prop` inside proofs. -/
 private theorem computableTidilyInPolyTime_monomialBit_explicit' {α : Type}
@@ -639,8 +641,8 @@ private theorem computableTidilyInPolyTime_explicitDisperserProgram :
       (computableInPolyTime_symDegree.tidy.comp length_bits)).prod id')
 
 /-- **The explicit affine disperser is computable in polynomial time**: on a bit list `x` of length
-`N`, the value `explicitDisperser N x` is computed by a tidy multi-tape machine in time polynomial
-in `N`. The certificate charges the whole computation: the parameters, the exhaustive searches for
+`N`, the value `explicitDisperser N x` is computed by a multi-tape machine in time polynomial in
+`N`. The certificate charges the whole computation: the parameters, the exhaustive searches for
 the irreducible polynomials by trial division, the remainders of the powers of `X`, the
 multiplication table, and every field operation of `traceSym 1 r t`. -/
 theorem computableInPolyTime_explicitDisperser :

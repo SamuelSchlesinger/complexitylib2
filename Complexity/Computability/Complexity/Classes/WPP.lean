@@ -53,7 +53,7 @@ Oracle lowness of `SPP`, `LWPP`, and `WPP` (including fixed-target `LWPPWithFixe
 
 ## Main results
 
-* `mem_WPP`, `mem_LWPP`: membership through a tidy target machine.
+* `mem_WPP`, `mem_LWPP`: membership through a polynomial-time target.
 * `SPP_subset_LWPP`, `LWPP_subset_WPP`, `UP_subset_LWPP`, `UP_subset_WPP`,
   `coUP_subset_LWPP`, `coUP_subset_WPP`, `FewP_subset_LWPP`, `FewP_subset_WPP`,
   `WPP_subset_CeqP`, `WPP_subset_coCeqP`.
@@ -323,7 +323,8 @@ theorem mem_WPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ} 
     (hn : ∀ i ∈ s, ∀ a, f i a ≠ 0)
     (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i a)
     (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i a) : A ∈ WPP enc := by
-  have hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin := by simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using hf
+  have hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) enc encIntBin := by simpa only
+    [computableInPolyTime_iff_computableTidilyInPolyTime] using hf
   obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg hf hn hr hA
   exact ⟨G, hG, _, .of_tidy (finset_prod_intBin s hf),
     fun a => Finset.prod_ne_zero_iff.mpr fun i hi => hn i hi a, hR, hGA⟩
@@ -338,7 +339,8 @@ theorem mem_LWPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ}
     (hn : ∀ i ∈ s, ∀ n, f i n ≠ 0)
     (hr : ∀ a, g a = 0 ∨ ∃ i ∈ s, g a = f i (enc a).length)
     (hA : ∀ a, a ∈ A ↔ ∃ i ∈ s, g a = f i (enc a).length) : A ∈ LWPP enc := by
-  have hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) encUnary encIntBin := by simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using hf
+  have hf : ∀ i ∈ s, ComputableTidilyInPolyTime (f i) encUnary encIntBin := by simpa only
+    [computableInPolyTime_iff_computableTidilyInPolyTime] using hf
   obtain ⟨G, hG, hR, hGA⟩ := finsetTargetWitness s hg
     (fun i hi => (hf i hi).comp (.encoding_length enc))
     (fun i hi a => hn i hi (enc a).length) hr hA

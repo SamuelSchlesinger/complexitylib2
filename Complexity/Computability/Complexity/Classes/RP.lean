@@ -206,7 +206,9 @@ theorem mem_RP_iff_forall_decidesWithOneSidedErrorExponent {A : Set α} :
     A ∈ RP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithOneSidedErrorExponent enc q p V A := by
-  have this : A ∈ RP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithOneSidedErrorExponent enc q p V A := by
+  have this : A ∈ RP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithOneSidedErrorExponent
+      enc q p V A := by
     refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨q * p, _,
       (computableInPolyTime_repeatAny hV _ _).tidy, h.repeatAny q⟩, fun h => ?_⟩
     obtain ⟨p, V, hV, h⟩ := h 1

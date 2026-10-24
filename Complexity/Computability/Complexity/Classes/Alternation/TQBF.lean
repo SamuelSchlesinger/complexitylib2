@@ -354,7 +354,8 @@ variable {γ : Type} {encIn : γ ↪ List Bool}
 theorem computableInPolyTime_roundTokens {w i : γ → ℕ}
     (hw : Turing.MultiTapeTM.ComputableInPolyTime w encIn encUnary)
     (hi : Turing.MultiTapeTM.ComputableInPolyTime i encIn encUnary) :
-    Turing.MultiTapeTM.ComputableInPolyTime (fun x => roundTokens (w x) (i x)) encIn (encList encToken) := by
+    Turing.MultiTapeTM.ComputableInPolyTime (fun x => roundTokens (w x) (i x)) encIn
+      (encList encToken) := by
   unfold roundTokens
   fun_prop
 
@@ -388,7 +389,8 @@ theorem computableInPolyTime_gameReduce {kV : ℕ} {StateV : Type} [Fintype Stat
   have htab := CookLevin.computableInPolyTime_tableau tmV
   have hframe := Turing.MultiTapeTM.ComputableInPolyTime.bitsFrame enc
   have hp : Turing.MultiTapeTM.ComputableInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
-    (Turing.MultiTapeTM.ComputableInPolyTime.unary_eval p).comp (Turing.MultiTapeTM.ComputableInPolyTime.encoding_length enc)
+    (Turing.MultiTapeTM.ComputableInPolyTime.unary_eval p).comp
+      (Turing.MultiTapeTM.ComputableInPolyTime.encoding_length enc)
   unfold gameReduce
   fun_prop
 

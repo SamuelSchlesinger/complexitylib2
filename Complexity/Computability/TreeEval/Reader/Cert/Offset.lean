@@ -201,7 +201,8 @@ theorem encFrame_apply (fr : Frame) : encFrame fr = encFrameTuple (Frame.equiv f
 theorem frameFinite_inSpace {β : Type} {encB : β ↪ List Bool} (g : Fin 4 × Bool × Fin 3 → β) :
     ComputableInSpace (fun fr : Frame => g (Frame.equiv fr).2) encFrame encB
       fun fr => (encFrame fr).length := by
-  have this : ComputableTidilyInSpace (fun fr : Frame => g (Frame.equiv fr).2) encFrame encB fun fr => (encFrame fr).length := by
+  have this : ComputableTidilyInSpace (fun fr : Frame => g (Frame.equiv fr).2) encFrame encB
+      fun fr => (encFrame fr).length := by
     have h := budget_finite (encC := encB) g (snd encNat (encFinEnum (Fin 4 × Bool × Fin 3)))
     exact h.of_encIn_eq Frame.equiv fun _ => rfl
   simpa only [computableInSpace_iff_computableTidilyInSpace] using this
@@ -210,7 +211,8 @@ theorem frameFinite_inSpace {β : Type} {encB : β ↪ List Bool} (g : Fin 4 × 
 theorem round_inSpace :
     ComputableInSpace (fun fr : Frame => fr.round) encFrame encNat
       fun fr => (encFrame fr).length := by
-  have this : ComputableTidilyInSpace (fun fr : Frame => fr.round) encFrame encNat fun fr => (encFrame fr).length :=
+  have this : ComputableTidilyInSpace (fun fr : Frame => fr.round) encFrame encNat fun fr =>
+      (encFrame fr).length :=
     (fst encNat (encFinEnum (Fin 4 × Bool × Fin 3))).of_encIn_eq Frame.equiv fun _ => rfl
   simpa only [computableInSpace_iff_computableTidilyInSpace] using this
 
@@ -235,14 +237,17 @@ private theorem length_encList_bools (l : List Bool) :
 theorem dirs_inSpace :
     ComputableInSpace (fun st : List Frame => st.foldl (fun acc fr => fr.dir :: acc) [])
       (encList encFrame) (encList encBool) fun st => 64 * ((encList encFrame st).length + 1) := by
-  have this : ComputableTidilyInSpace (fun st : List Frame => st.foldl (fun acc fr => fr.dir :: acc) []) (encList encFrame) (encList encBool) fun st => 64 * ((encList encFrame st).length + 1) := by
+  have this : ComputableTidilyInSpace
+      (fun st : List Frame => st.foldl (fun acc fr => fr.dir :: acc) []) (encList encFrame)
+      (encList encBool) fun st => 64 * ((encList encFrame st).length + 1) := by
     have hl : (fun st => (encList encFrame st).length) ≼
         fun st => 8 * ((encList encFrame st).length + 1) := .of_le fun _ => by omega
     have hstep : ComputableTidilyInSpace (fun q : List Bool × Frame => q.2.dir :: q.1)
         (encPair (encList encBool) encFrame) (encList encBool)
         fun q => 2 * ((encPair (encList encBool) encFrame q).length + 1) := by
       have hl₀ : (fun q => (encPair (encList encBool) encFrame q).length) ≼
-          fun q => 2 * ((encPair (encList encBool) encFrame q).length + 1) := .of_le fun _ => by omega
+          fun q => 2 * ((encPair (encList encBool) encFrame q).length + 1) := .of_le fun _ => by
+            omega
       have hd := budget_comp (frameFinite_inSpace (encB := encBool)
         fun y : Fin 4 × Bool × Fin 3 => y.1.val % 2 == 1).tidy
         ((snd (encList encBool) encFrame).weaken hl₀) (.of_le fun x => by
@@ -316,13 +321,16 @@ theorem pathOffset_inSpace :
       (encPair (encPair encNat encNat) (encList encBool)) encNat
       fun q => 2 ^ 30 * (q.1.1 + q.1.2 +
         (encPair (encPair encNat encNat) (encList encBool) q).length + 1) := by
-  have this : ComputableTidilyInSpace (fun q : (ℕ × ℕ) × List Bool => pathOffset q.1.1 q.1.2 q.2) (encPair (encPair encNat encNat) (encList encBool)) encNat fun q => 2 ^ 30 * (q.1.1 + q.1.2 + (encPair (encPair encNat encNat) (encList encBool) q).length + 1) := by
+  have this : ComputableTidilyInSpace (fun q : (ℕ × ℕ) × List Bool => pathOffset q.1.1 q.1.2 q.2)
+      (encPair (encPair encNat encNat) (encList encBool)) encNat fun q => 2 ^ 30 *
+      (q.1.1 + q.1.2 + (encPair (encPair encNat encNat) (encList encBool) q).length + 1) := by
     have hl : (fun q => (encPair (encPair encNat encNat) (encList encBool) q).length) ≼
         fun q => 2 ^ 22 * (q.1.1 + q.1.2 +
           (encPair (encPair encNat encNat) (encList encBool) q).length + 1) :=
       .of_le fun _ => by omega
     have hld := (fst (encPair encNat encNat) (encList encBool)).weaken hl
-    have hinit := budget_prod (fst' hld) (budget_prod (snd' hld) (budget_const (encB := encNat) 0 hl))
+    have hinit := budget_prod (fst' hld)
+      (budget_prod (snd' hld) (budget_const (encB := encNat) 0 hl))
     have hstate (q : (ℕ × ℕ) × List Bool) (j : ℕ) :
         (encNat3 ((q.2.take j).foldl pathStep' (q.1.1, q.1.2, 0))).length ≤
           8 * (q.1.1 + q.1.2 + 1) := by

@@ -100,7 +100,9 @@ theorem mem_PP_iff_decidesByNonstrictMajority {A : Set α} :
     A ∈ PP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesByNonstrictMajority enc p V A := by
-  have this : A ∈ PP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesByNonstrictMajority enc p V A := by
+  have this : A ∈ PP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesByNonstrictMajority enc p
+      V A := by
     constructor
     · intro hA
       obtain ⟨p, V, hV, h⟩ := mem_PP.mp (compl_mem_PP hA)

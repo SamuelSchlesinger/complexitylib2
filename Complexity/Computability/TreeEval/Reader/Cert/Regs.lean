@@ -324,16 +324,19 @@ theorem subtractSums_inSpace {p c : α → ℕ} {t : α → Fin 3} {acc : α →
   have hacc := hacc.tidy
   have hR := hR.tidy
   refine .of_tidy ?_
-  have harg := budget_prod (budget_prod hp (budget_prod hc hacc)) (get_inSpace (.of_tidy hR) (.of_tidy ht)).tidy
+  have harg := budget_prod (budget_prod hp (budget_prod hc hacc))
+    (get_inSpace (.of_tidy hR) (.of_tidy ht)).tidy
   have hsub := budget_comp subtractList_inSpace harg (by
     refine .const_mul 8192 (((length_le harg).add hB).add (.const 1 _)))
-  exact (set_inSpace (.of_tidy hR) (.of_tidy ht) (.of_tidy hsub)).tidy.of_enc_eq fun x => by rw [subtractSums_eq]
+  exact (set_inSpace (.of_tidy hR) (.of_tidy ht) (.of_tidy hsub)).tidy.of_enc_eq fun x => by rw
+    [subtractSums_eq]
 
 /-- **The bits of a register**, `l.map (· == 1)`, encoded as themselves. -/
 theorem mapEqOne_inSpace :
     ComputableInSpace (fun l : List ℕ => l.map (· == 1)) (encList encNat) encBits
       fun l => 64 * ((encList encNat l).length + 1) := by
-  have this : ComputableTidilyInSpace (fun l : List ℕ => l.map (· == 1)) (encList encNat) encBits fun l => 64 * ((encList encNat l).length + 1) := by
+  have this : ComputableTidilyInSpace (fun l : List ℕ => l.map (· == 1)) (encList encNat) encBits
+      fun l => 64 * ((encList encNat l).length + 1) := by
     have hstep : ComputableTidilyInSpace (fun q : List Bool × ℕ => q.1 ++ [q.2 == 1])
         (encPair encBits encNat) encBits fun q => 8 * ((encPair encBits encNat q).length + 1) := by
       have hl : (fun q => (encPair encBits encNat q).length) ≼

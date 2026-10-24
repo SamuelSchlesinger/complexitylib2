@@ -66,7 +66,8 @@ theorem polyTime_reductionVerifier {graph : Input → Graph C} (width repeats : 
     (reductionVerifier graph width repeats decode eval).PolyTime input := by
   have hgraph := hgraph.tidy
   have heval := heval.tidy
-  obtain ⟨hcoins, hqueries, hverdict⟩ := polyTime_repeatedEdgeVerifier width repeats decode (.of_tidy heval)
+  obtain ⟨hcoins, hqueries, hverdict⟩ := polyTime_repeatedEdgeVerifier width repeats decode
+    (.of_tidy heval)
   exact ⟨hcoins.comp (.of_tidy hgraph),
     .of_tidy (hqueries.tidy.comp (by fun_prop)),
     .of_tidy (hverdict.tidy.comp (by fun_prop))⟩

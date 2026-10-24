@@ -105,7 +105,8 @@ theorem inter_mem_PWithOracle {L₁ L₂ : Set α} (h₁ : L₁ ∈ PWithOracle 
     (h₂ : L₂ ∈ PWithOracle A enc) : L₁ ∩ L₂ ∈ PWithOracle A enc := by
   obtain ⟨f₁, hf₁, hL₁⟩ := h₁
   obtain ⟨f₂, hf₂, hL₂⟩ := h₂
-  refine ⟨fun a => f₁ a && f₂ a, (hf₁.prod hf₂).map (g := fun p => p.1 && p.2) (.of_tidy (by fun_prop)),
+  refine ⟨fun a => f₁ a && f₂ a, (hf₁.prod hf₂).map (g := fun p => p.1 && p.2)
+    (.of_tidy (by fun_prop)),
     fun a => ?_⟩
   rw [Set.mem_inter_iff, hL₁ a, hL₂ a, Bool.and_eq_true]
 
@@ -114,7 +115,8 @@ theorem union_mem_PWithOracle {L₁ L₂ : Set α} (h₁ : L₁ ∈ PWithOracle 
     (h₂ : L₂ ∈ PWithOracle A enc) : L₁ ∪ L₂ ∈ PWithOracle A enc := by
   obtain ⟨f₁, hf₁, hL₁⟩ := h₁
   obtain ⟨f₂, hf₂, hL₂⟩ := h₂
-  refine ⟨fun a => f₁ a || f₂ a, (hf₁.prod hf₂).map (g := fun p => p.1 || p.2) (.of_tidy (by fun_prop)),
+  refine ⟨fun a => f₁ a || f₂ a, (hf₁.prod hf₂).map (g := fun p => p.1 || p.2)
+    (.of_tidy (by fun_prop)),
     fun a => ?_⟩
   rw [Set.mem_union, hL₁ a, hL₂ a, Bool.or_eq_true]
 
@@ -187,7 +189,8 @@ private theorem replayStepFactor_mem_SharpP [Finite Control] [Finite Operation]
       (fun x : (α × List Bool) × ℕ => x.1.2.getD x.2 false)
       (encPair (encPair enc encBits) encUnary) encBool := by fun_prop
   exact SharpP.ite_mem (.of_tidy hquery)
-    (SharpP.ite_mem (.of_tidy hbit) (SharpP.comp_mem hYes (.of_tidy hreq)) (SharpP.comp_mem hNo (.of_tidy hreq)))
+    (SharpP.ite_mem (.of_tidy hbit) (SharpP.comp_mem hYes (.of_tidy hreq))
+      (SharpP.comp_mem hNo (.of_tidy hreq)))
     (SharpP.ite_mem (.of_tidy hbit) SharpP.zero_mem SharpP.one_mem)
 
 private theorem replayPathCount_mem_SharpP [Finite Control] [Finite Operation]

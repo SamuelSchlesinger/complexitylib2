@@ -100,7 +100,7 @@ theorem TimeConstructible.computableInO {t : ℕ → ℕ} (ht : TimeConstructibl
     exact (hs _).trans (Nat.mul_le_mul_right _ (by omega))
   · exact (Nat.le_succ _).trans (Nat.le_mul_of_pos_left _ (by omega))
 
-/-- A tidy computation of `t n` in binary within time `O(t n)` makes `t` time-constructible. -/
+/-- A computation of `t n` in binary within time `O(t n)` makes `t` time-constructible. -/
 theorem TimeConstructible.of_computableInO {t : ℕ → ℕ} {T S : List Bool → ℕ} {s : ℕ → ℕ}
     (c : ℕ) (h : ComputableInO (fun x : List Bool => t x.length) encBits encNat T S)
     (hT : ∀ x, T x ≤ c * t x.length + c) (hS : ∀ x, S x ≤ s x.length) : TimeConstructible t := by
@@ -257,7 +257,7 @@ theorem TimeConstructible.spaceConstructible {t : ℕ → ℕ} (ht : TimeConstru
   exact ⟨k * c + k, fun n => c * t n + c, ComputableInTimeAndSpace.mono h (fun _ => le_rfl)
     fun x => by dsimp only; nlinarith⟩
 
-/-- A tidy computation of `s n` in binary within space `O(s n)` makes `s` space-constructible:
+/-- A computation of `s n` in binary within space `O(s n)` makes `s` space-constructible:
 it halts within a time bound of `n`, its number of configurations. -/
 theorem SpaceConstructible.of_computableInO {s : ℕ → ℕ} {T S : List Bool → ℕ} (c : ℕ)
     (h : ComputableInO (fun x : List Bool => s x.length) encBits encNat T S)

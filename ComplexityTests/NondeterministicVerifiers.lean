@@ -235,7 +235,8 @@ guessing `[true]`. -/
 example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapePTM k Bool State),
     machine.toNTM.Accepts [] := by
   obtain ⟨k, State, hfinite, machine, c, d, hdecides, -⟩ :=
-    IsVerifier.exists_decidesInTime (enc := encBits) (p := 1) (A := Set.univ) (.of_tidy polyTime_headD)
+    IsVerifier.exists_decidesInTime (enc := encBits) (p := 1) (A := Set.univ)
+      (.of_tidy polyTime_headD)
       fun _ => ⟨fun _ => ⟨[true], by simp, rfl⟩, fun _ => trivial⟩
   exact ⟨k, State, hfinite, machine, ((hdecides []).2).mp trivial⟩
 

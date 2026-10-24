@@ -150,7 +150,8 @@ theorem exists_mem_PiP_of_mem_SigmaP_succ {k : ℕ} {A : Set α} (hA : A ∈ Sig
         (computableInPolyTime_truncateBlocks ps
           (.of_tidy ((ComputableTidilyInPolyTime.encoding_length enc).comp
             ((ComputableTidilyInPolyTime.fst _ _).comp hfst)))
-          (.of_tidy ((ComputableTidilyInPolyTime.encoding_length _).comp hfst)) (.of_tidy (.snd _ _))).tidy))
+          (.of_tidy ((ComputableTidilyInPolyTime.encoding_length _).comp hfst))
+            (.of_tidy (.snd _ _))).tidy))
   · exact (alternation_truncateBlocks (hle y) (P := fun w => V (y.1, y.2 ++ w) = true)).symm
 
 end Cslib.Complexity

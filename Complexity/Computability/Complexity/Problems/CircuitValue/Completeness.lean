@@ -189,7 +189,8 @@ omit [DecidableEq State] in
 theorem numGates_inSpace {T : α → ℕ} (hT : ComputableInSpace T encIn encNat Bs) :
     ComputableInSpace (fun x => numGates k State (T x)) encIn encNat Bs := by
   have hT := hT.tidy
-  exact .of_tidy (budget_natAdd (budget_const 2 hin) (budget_natMul (budget_natAdd hT (budget_const 1 hin))
+  exact .of_tidy
+    (budget_natAdd (budget_const 2 hin) (budget_natMul (budget_natAdd hT (budget_const 1 hin))
     (blockSize_inSpace (k := k) (State := State) (.of_tidy hT) hin).tidy))
 
 private theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs)
@@ -289,7 +290,9 @@ theorem exists_uniformCircuits {α : Type} {enc : α ↪ List Bool} {f : α → 
       ComputableInPolyTime (fun n => (circuits n).code) encUnary encCode ∧
       ∀ a, (circuits (enc a).length).eval interpretation (fun i => (enc a)[i]) 0 = f a := by
   have hf := hf.tidy
-  have this : ∃ circuits : (n : ℕ) → Circuit signature n 1, ComputableTidilyInPolyTime (fun n => (circuits n).code) encUnary encCode ∧ ∀ a, (circuits (enc a).length).eval interpretation (fun i => (enc a)[i]) 0 = f a := by
+  have this : ∃ circuits : (n : ℕ) → Circuit signature n 1, ComputableTidilyInPolyTime
+      (fun n => (circuits n).code) encUnary encCode ∧ ∀ a, (circuits (enc a).length).eval
+      interpretation (fun i => (enc a)[i]) 0 = f a := by
     obtain ⟨t, s, ht, -, tapes, Control, hfin, machine, hmachine⟩ := hf
     have := Fintype.ofFinite Control
     classical

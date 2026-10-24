@@ -202,7 +202,8 @@ theorem computableInPolyTime_verifier :
     unfold encTSP
     exact (snd _ _).comp (fst _ _)
   have hlen := computableInPolyTime_tourLength.tidy.comp (hD.prod (snd _ (encList encNat)))
-  exact (Graph.computableInPolyTime_verifyOrdering (.of_tidy hV) (.of_tidy (binary_le' hlen hb))).tidy
+  exact (Graph.computableInPolyTime_verifyOrdering (.of_tidy hV)
+    (.of_tidy (binary_le' hlen hb))).tidy
 
 /-- `TSP` belongs to `NP`. -/
 theorem mem_NP : TSP ∈ NP encTSP :=

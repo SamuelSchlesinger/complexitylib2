@@ -41,7 +41,8 @@ example : {w : List Bool | w.tail.headD false = true} ∈ US encBits :=
 
 /-- FP counts may be exponentially large: the output encoding is binary. -/
 example : (fun w : List Bool => 2 ^ w.length) ∈ SharpP encBits :=
-  mem_SharpP_of_polyTime (.of_tidy (ComputableTidilyInPolyTime.binary_two_pow.comp (.encoding_length encBits)))
+  mem_SharpP_of_polyTime
+    (.of_tidy (ComputableTidilyInPolyTime.binary_two_pow.comp (.encoding_length encBits)))
 
 private def target (n : ℕ) : ℤ := -(2 ^ n : ℤ)
 

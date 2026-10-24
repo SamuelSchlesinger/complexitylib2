@@ -213,7 +213,9 @@ theorem mem_FNP_iff_exists_bounded : R ∈ FNP enc ↔
     ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
         ∀ a w, R a w ↔ w.length ≤ p.eval (enc a).length ∧ V (a, w) = true := by
-  have this : R ∈ FNP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ ∀ a w, R a w ↔ w.length ≤ p.eval (enc a).length ∧ V (a, w) = true := by
+  have this : R ∈ FNP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ ∀ a w, R a w ↔ w.length ≤ p.eval
+      (enc a).length ∧ V (a, w) = true := by
     rw [mem_FNP]
     constructor
     · rintro ⟨⟨p, hp⟩, V, hV, hR⟩

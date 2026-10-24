@@ -175,7 +175,8 @@ namespace Diagonal
 theorem computableInO_verdict :
     ComputableInO verdict eOut encBool (fun r => ((eOut r).length + 1) ^ 2)
       fun r => (eOut r).length := by
-  have this : ComputableTidilyInO verdict eOut encBool (fun r => ((eOut r).length + 1) ^ 2) fun r => (eOut r).length := by
+  have this : ComputableTidilyInO verdict eOut encBool (fun r => ((eOut r).length + 1) ^ 2) fun r =>
+      (eOut r).length := by
     have heq := (ComputableTidilyInO.eq (encList encUnary)).comp
       ((ComputableTidilyInO.fst (encList encUnary) encBool).prod
         (ComputableTidilyInO.const (encMid := encList encUnary) [eBit true]))
@@ -263,7 +264,8 @@ run and the test. -/
 theorem computableInO_diagonal :
     ComputableInO diagonal encBits encBool (fun x => 2 ^ (4 * x.length))
       fun x => 2 ^ (2 * x.length) := by
-  have this : ComputableTidilyInO diagonal encBits encBool (fun x => 2 ^ (4 * x.length)) fun x => 2 ^ (2 * x.length) := by
+  have this : ComputableTidilyInO diagonal encBits encBool (fun x => 2 ^ (4 * x.length))
+      fun x => 2 ^ (2 * x.length) := by
     obtain ⟨dd, ed, hdec⟩ := exists_computableTidilyInDegree_decodeDesc
     have hu : ComputableTidilyInDegree unframe encBits encBits 1 1 :=
       .of_linear (.of_unframe fun _ => rfl)
@@ -278,7 +280,8 @@ theorem computableInO_diagonal :
     obtain ⟨cO, hcO⟩ := hU.length_le
     -- one power of two absorbs every polynomial factor
     obtain ⟨C, hC⟩ := PolynomiallyBounded.exists_le_mul_two_pow
-      (p := fun n => (cD * ((n + 1) ^ max 1 (1 * dd) + 1) + (n + 1) ^ max 1 (1 * dd) + 4 * n + 2) ^ 5)
+      (p := fun n => (cD * ((n + 1) ^ max 1 (1 * dd) + 1) + (n + 1) ^ max 1 (1 * dd) + 4 * n + 2) ^
+        5)
       (by fun_prop)
     set K := 100100 + 44100 * (cO + 1) ^ 2 with hK
     have hbounds (x : List Bool) := by

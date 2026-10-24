@@ -242,7 +242,8 @@ private theorem computableTidilyInPolyTime_verifier {f : α × List Bool → CNF
       (encPair (encPair enc encBits) encCNF) encBool := by
     have hn' := hn.comp (fst (encPair enc encBits) encCNF)
     exact (computableInPolyTime_evalAdvice (.of_tidy ((unary_eval S).comp hn'))
-      (.of_tidy ((unary_eval W).comp hn')) (.of_tidy (bitsTakeWithInput (fst _ _).snd' ((unary_eval P).comp hn')))
+      (.of_tidy ((unary_eval W).comp hn'))
+        (.of_tidy (bitsTakeWithInput (fst _ _).snd' ((unary_eval P).comp hn')))
       (.of_tidy ((encode encCNF).comp (snd _ _)))).tidy
   exact SAT.computableInPolyTime_verifier.tidy.comp
     (hφ.prod (SAT.computableInPolyTime_search (.of_tidy hD) (.of_tidy hφ)).tidy)
@@ -381,7 +382,8 @@ theorem PolyTimeReducible.exists_mem_PPoly {β : Type} {encB : β ↪ List Bool}
         (encPair encBits enc) encUnary :=
       (encoding_length enc).comp (snd _ _)
     exact (computableInPolyTime_evalAdvice (.of_tidy ((unary_eval S).comp hn))
-      (.of_tidy ((unary_eval W).comp hn)) (.of_tidy (fst _ _)) (.of_tidy ((encode encB).comp (hf.tidy.comp (snd _ _))))).tidy
+      (.of_tidy ((unary_eval W).comp hn)) (.of_tidy (fst _ _))
+        (.of_tidy ((encode encB).comp (hf.tidy.comp (snd _ _))))).tidy
   obtain ⟨M, hM, hgM⟩ := PPoly.exists_of_polyTime (.of_tidy hg)
   let α_adv : ℕ → List Bool := fun n => familyAdvice (N.eval n) (S.eval n) C
   have hα : PolynomiallyBounded fun n => (α_adv n).length := by
@@ -449,7 +451,8 @@ theorem mem_PPoly_of_exists_frame_append
         (encPair encBits encBits) encBits :=
       bitsTakeWithInput (snd _ _) ((unary_eval p).comp hn)
     exact (computableInPolyTime_evalAdvice (.of_tidy ((unary_eval S).comp hn))
-      (.of_tidy ((unary_eval W).comp hn)) (.of_tidy hu) (.of_tidy (bitsAppend ((bitsFrame encBits).comp hx) hw))).tidy
+      (.of_tidy ((unary_eval W).comp hn)) (.of_tidy hu)
+        (.of_tidy (bitsAppend ((bitsFrame encBits).comp hx) hw))).tidy
   let D : Language Bool := {z : List Bool | ∃ w : List Bool, w.length = p.eval z.length ∧
     V (z, w) = true}
   have hD : D ∈ PPoly := hNP D ⟨p, V, .of_tidy hV, fun _ => Iff.rfl⟩

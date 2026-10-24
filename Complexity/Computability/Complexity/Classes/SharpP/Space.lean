@@ -178,7 +178,8 @@ theorem SharpP.computableInPolySpace {f : α → ℕ} (hf : f ∈ SharpP enc) :
     Turing.MultiTapeTM.ComputableInPolySpace f enc encNat := by
   refine .of_tidy ?_
   obtain ⟨p, V, hV, hf⟩ := mem_SharpP.mp hf
-  exact (computableInPolySpace_acceptCount hV (.of_tidy (by fun_prop))).tidy.congr fun a => (hf a).symm
+  exact (computableInPolySpace_acceptCount hV (.of_tidy (by fun_prop))).tidy.congr fun a =>
+    (hf a).symm
 
 /-- Every GapP function is computable in polynomial space with binary sign-magnitude output. -/
 theorem GapP.computableInPolySpace {g : α → ℤ} (hg : g ∈ GapP enc) :

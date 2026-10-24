@@ -224,7 +224,8 @@ theorem FNP_subset_FPSearch_of_NP_subset_P
   refine mem_FPSearch.mpr
     ⟨mem_FNP.mpr ⟨⟨p, hp⟩, V, hV, hRV⟩, fun a => if V (a, prefixSearchRun V D n a) then
     some (prefixSearchRun V D n a) else none, ?_, fun a => ?_⟩
-  · exact .of_tidy (cond (hV.tidy.comp (id'.prod hrun)) ((optionSome encBits).comp hrun) (const none))
+  · exact .of_tidy
+      (cond (hV.tidy.comp (id'.prod hrun)) ((optionSome encBits).comp hrun) (const none))
   · have hcorrect := rel_prefixSearchRun hRV (fun a u => (hDR (a, u)).symm) hp (a := a)
     constructor
     · intro w hw
@@ -276,7 +277,8 @@ theorem searchRel_mem_FPSearch_iff : searchRel ∈ FPSearch encCNF ↔ SAT ∈ P
   refine ⟨fun h => searchDomain_searchRel ▸ searchDomain_mem_P h, fun h => ?_⟩
   obtain ⟨D, hD, hSAT⟩ := mem_P.mp h
   have hsearch : ComputableTidilyInPolyTime (search D) encCNF encBits :=
-    (computableInPolyTime_search (D := fun _ => D) (.of_tidy (hD.tidy.comp (snd _ _))) (.of_tidy id')).tidy
+    (computableInPolyTime_search (D := fun _ => D) (.of_tidy (hD.tidy.comp (snd _ _)))
+      (.of_tidy id')).tidy
   refine mem_FPSearch.mpr
     ⟨searchRel_mem_FNP, fun φ => if D φ then some (search D φ) else none,
       .of_tidy (cond hD.tidy ((optionSome encBits).comp hsearch) (const none)),

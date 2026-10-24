@@ -45,7 +45,8 @@ bit-length `n : α → ℕ` is computable in polynomial time in unary (`encUnary
 neighbor, successor, predecessor or cost maps are computable in polynomial time on pairs
 `encPair enc encBits` (with costs in binary `encNat`), in the sense of
 `Turing.MultiTapeTM.ComputableInPolyTime`. By pulling a family back along the instance map of a
-search reduction, each class is closed under `SearchReducible` across arbitrary encoded instance types
+search reduction, each class is closed under `SearchReducible` across arbitrary encoded instance
+  types
 (`SearchReducible.mem_PLS`, `.mem_PPP`, `.mem_PPAD`, `.mem_PPA`).
 
 The canonical circuit-presented problems `LocalOpt`, `Pigeon`, `EndOfLine` and `Leaf`, whose
@@ -668,7 +669,8 @@ theorem PPAD_subset_PPA : PPAD enc ⊆ PPA enc := by
     unfold ppadToPpaN₂ isActiveNonZero
     fun_prop
   exact mem_PPA.mpr
-    ⟨hR, fun a => n a + 1, ppadToPpaN₁ n P S, ppadToPpaN₂ n P S, (.of_tidy hn'), (.of_tidy hN₁), (.of_tidy hN₂),
+    ⟨hR, fun a => n a + 1, ppadToPpaN₁ n P S, ppadToPpaN₂ n P S, (.of_tidy hn'), (.of_tidy hN₁),
+      (.of_tidy hN₂),
       fun a _ hw => length_ppadToPpaN₁ (hP_len a) (hS_len a) hw,
       fun _ _ hw => length_ppadToPpaN₂ hw,
       hred.trans (endOfLineRel_searchReducible_leafRel hP_len hS_len)⟩

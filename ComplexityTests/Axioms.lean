@@ -820,9 +820,10 @@ info: 'Cslib.Complexity.SAT.isVerifier' depends on axioms: [propext, Classical.c
 #print axioms Cslib.Complexity.SAT.isVerifier
 
 /--
-info: 'Cslib.Complexity.SAT.computableInPolyTime_verifier' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.SAT.computableInPolyTime_verifier' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.SAT.computableInPolyTime_verifier
 
 /--
@@ -4082,7 +4083,8 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_to_binary' depends on
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_to_binary
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_parameters' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_parameters' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_parameters
@@ -4286,67 +4288,78 @@ info: 'Turing.computableTidilyInPolyTime_windowList' depends on axioms: [propext
 #print axioms Turing.computableTidilyInPolyTime_windowList
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_featureIndex' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_featureIndex' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_featureIndex
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_inPos' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_inPos' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_inPos
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_head' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_head' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_head
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_cell' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_cell' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_cell
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_holds' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_holds' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_holds
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_cert' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_cert' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_cert
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_index' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_index' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_index
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_relabel' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_relabel
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_initClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_initClauses' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_initClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_acceptClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_acceptClauses' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_acceptClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_sitClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_sitClauses' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_sitClauses
@@ -4439,7 +4452,8 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyConst' depends on axioms
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyConst
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_oneHotClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_oneHotClauses' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_oneHotClauses
@@ -5358,27 +5372,31 @@ info: 'Cslib.Complexity.CookLevin.computableInPolyTime_inputClauses' depends on 
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_inputClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_readClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_readClauses' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_readClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_stepClauses' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_stepClauses' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_stepClauses
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_tableau' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_tableau' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_tableau
 
 /--
-info: 'Cslib.Complexity.CookLevin.computableInPolyTime_reduce' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.CookLevin.computableInPolyTime_reduce' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CookLevin.computableInPolyTime_reduce
 
 /--

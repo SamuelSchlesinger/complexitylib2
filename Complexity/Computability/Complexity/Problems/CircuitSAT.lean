@@ -402,8 +402,9 @@ private theorem computableTidilyInPolyTime_circuitGates :
 
 /-- Building the circuit of a formula is polynomial-time, from the encoding `encCNF` of formulas
 to the binary encoding `encCircuit 1` of circuits. -/
-private theorem computableTidilyInPolyTime_toCircuit :
-    ComputableTidilyInPolyTime toCircuit encCNF (encCircuit 1) := by
+private theorem computableInPolyTime_toCircuit :
+    ComputableInPolyTime toCircuit encCNF (encCircuit 1) := by
+  refine .of_tidy ?_
   have hg := computableTidilyInPolyTime_circuitGates
   have hs := computableTidilyInPolyTime_circuitSteps
   have hvars := SAT.computableInPolyTime_vars.tidy
@@ -419,7 +420,7 @@ private theorem computableTidilyInPolyTime_toCircuit :
 
 /-- **`SAT` reduces to `CircuitSAT`** in polynomial time. -/
 theorem polyTimeReducible_CircuitSAT : PolyTimeReducible encCNF (encCircuit 1) SAT CircuitSAT :=
-  ⟨toCircuit, .of_tidy computableTidilyInPolyTime_toCircuit,
+  ⟨toCircuit, computableInPolyTime_toCircuit,
     fun φ => (toCircuit_mem_CircuitSAT_iff φ).symm⟩
 
 end SAT

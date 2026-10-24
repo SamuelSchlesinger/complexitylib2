@@ -412,7 +412,8 @@ theorem countAccepts_eq_accepted (q : α × History) :
 number of coins computed in polynomial time. -/
 theorem computableInPolySpace_countAccepts [Finite Control]
     (hfuel : Turing.MultiTapeTM.ComputableInPolyTime fuel enc encUnary) :
-    Turing.MultiTapeTM.ComputableInPolySpace (countAccepts MUnit enc fuel) (encPair enc encHistory) encNat := by
+    Turing.MultiTapeTM.ComputableInPolySpace (countAccepts MUnit enc fuel) (encPair enc encHistory)
+      encNat := by
   have hfuel := hfuel.tidy
   refine .of_tidy ?_
   have hfuel' : ComputableTidilyInPolyTime (fun q : α × History => fuel q.1)

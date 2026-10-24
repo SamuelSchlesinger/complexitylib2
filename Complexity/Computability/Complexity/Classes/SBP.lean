@@ -73,7 +73,8 @@ theorem mem_SBP : A ∈ SBP enc ↔ ∃ f ∈ SharpP enc, ∃ k : α → ℕ, Co
 theorem mem_SBP_iff_exists_pos_threshold : A ∈ SBP enc ↔
     ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧
       (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
-  have this : A ∈ SBP enc ↔ ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧ (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
+  have this : A ∈ SBP enc ↔ ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
+      (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
     rw [mem_SBP]
     constructor
     · rintro ⟨f, hf, k, hk, hA⟩
@@ -183,7 +184,8 @@ theorem exists_SBP_gap_pow (hA : A ∈ SBP enc) {m : ℕ} (hm : 0 < m) :
     ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧
       (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧
         (a ∉ A → 2 ^ m * f a < k a) := by
-  have this : ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧ (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 ^ m * f a < k a) := by
+  have this : ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
+      (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 ^ m * f a < k a) := by
     obtain ⟨f, hf, k, hk, hkpos, h⟩ := mem_SBP_iff_exists_pos_threshold.mp hA
     refine ⟨f ^ m, SharpP.pow_mem hf m, fun a => k a ^ m,
       hk.tidy.binary_pow' (.const m), fun a => pow_pos (hkpos a) _, fun a => ⟨?_, ?_⟩⟩

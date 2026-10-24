@@ -28,7 +28,8 @@ example : (fun _ : List Bool => (0 : ℤ) ^ (0 : ℕ)) ∈ GapP encBits :=
 example : (fun w : List Bool => -(2 : ℤ) ^ w.length) ∈ GapP encBits := by
   have hneg : (fun _ : List Bool × List Bool => (-1 : ℤ)) ∈ GapP (encPair encBits encBits) :=
     GapP.neg_mem GapP.one_mem
-  convert GapP.sum_bits_mem hneg (.of_tidy (ComputableTidilyInPolyTime.encoding_length encBits)) using 1
+  convert GapP.sum_bits_mem hneg (.of_tidy (ComputableTidilyInPolyTime.encoding_length encBits))
+    using 1
   ext w
   rw [Finset.sum_const, Finset.card_univ, Fintype.card_fun, Fintype.card_bool,
     Fintype.card_fin]

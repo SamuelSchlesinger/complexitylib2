@@ -29,7 +29,8 @@ private theorem emptyRel_mem_TFNP : emptyRel ∈ TFNP encBits :=
   ⟨emptyRel_mem_FNP, fun _ => ⟨[], rfl⟩⟩
 
 private theorem emptyRel_mem_FPSearch : emptyRel ∈ FPSearch encBits :=
-  mem_FPSearch_of_total emptyRel_mem_FNP (.of_tidy (ComputableTidilyInPolyTime.const [])) fun _ => rfl
+  mem_FPSearch_of_total emptyRel_mem_FNP (.of_tidy (ComputableTidilyInPolyTime.const [])) fun _ =>
+    rfl
 
 example : searchDomain emptyRel = Set.univ :=
   isTotalSearch_iff_searchDomain_eq_univ.1 emptyRel_mem_TFNP.2

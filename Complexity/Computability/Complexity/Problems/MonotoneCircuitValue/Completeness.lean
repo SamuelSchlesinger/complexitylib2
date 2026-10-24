@@ -279,7 +279,8 @@ theorem computableInLogSpace_dualTableauInstance :
   refine (dualSpec tm C d).computableInLogSpace
     (encMonotoneCircuitValue_dualTableauInstance tm C d)
     (numGates_inSpace (k := k) (State := State) hin (timeBound_inSpace C d hin (.of_tidy hn)))
-    (.of_tidy (dualChunk_inSpace tm C d hin hn hi)) (.of_tidy (dualTrailer_inSpace tm C d hin hn)) ?_
+    (.of_tidy (dualChunk_inSpace tm C d hin hn hi)) (.of_tidy (dualTrailer_inSpace tm C d hin hn))
+      ?_
   change PolynomiallyBounded fun n => Tableau.numGates k State (timeBound C d n)
   simp only [Tableau.numGates, Tableau.blockSize, Tableau.colStart, Tableau.gfStart,
     Tableau.globStart, Tableau.numCols, timeBound]

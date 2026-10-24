@@ -297,7 +297,8 @@ theorem isVerifier :
 theorem computableInPolyTime_verifier :
     ComputableInPolyTime verifier (encPair (encPair encGraph encNat) encBits) encBool := by
   refine .of_tidy ?_
-  refine (computableInPolyTime_subsetVerifier (encγ := encNat) (.of_tidy (by unfold encGraph; fun_prop))
+  refine (computableInPolyTime_subsetVerifier (encγ := encNat)
+    (.of_tidy (by unfold encGraph; fun_prop))
     (.of_tidy (bool_and' ?_ (computableInPolyTime_isCover.tidy.comp
       (((fst _ _).comp (fst _ _)).prod (snd _ _)))))).tidy
   exact (((ComputableInPolyTime.length_list_binary encNat).tidy.comp (snd _ _)).decide_eq'

@@ -78,7 +78,8 @@ example : reduced.WellFormed :=
 
 example : ComputableTidilyInPolyTime (Graph.degreeReduce false rotateReflection [()])
     (Graph.encoding encBool) (Graph.encoding (encOption (encPair encBool encBool))) :=
-  (Graph.isPolyTime_degreeReduce false [()] rotateReflection (.of_tidy isPolyTime_rotateReflection)).tidy
+  (Graph.isPolyTime_degreeReduce false [()] rotateReflection
+    (.of_tidy isPolyTime_rotateReflection)).tidy
 
 example : (reduced.toGraph (Graph.degreeReduceEval constraintEval)).unsatVal =
     ((exampleGraph.toGraph constraintEval).degreeReduce
@@ -120,7 +121,8 @@ example : preprocessed.WellFormed :=
 
 example : ComputableTidilyInPolyTime (Graph.preprocess false true rotateReflection [()])
     (Graph.encoding encBool) (Graph.encoding (encOption (encPair encBool encBool))) :=
-  (Graph.isPolyTime_preprocess false true rotateReflection [()] (.of_tidy isPolyTime_rotateReflection)).tidy
+  (Graph.isPolyTime_preprocess false true rotateReflection [()]
+    (.of_tidy isPolyTime_rotateReflection)).tidy
 
 attribute [local fun_prop] ComputableInPolySpace.tidy in
 attribute [local fun_prop] ComputableInPolyTime.tidy in
@@ -269,7 +271,8 @@ private theorem isPolyTime_tablePreprocess : ComputableTidilyInPolyTime tablePre
   have hdegreeEval := (Graph.isPolyTime_degreeReduceEval
     (eval := fun table : Bool → Bool → Bool => table) (.of_tidy heval)).tidy
   have hpre := (Graph.isPolyTime_preprocess (enc := encPi (encPi encBool))
-    (fun (_ _ : Bool) => false) (fun _ _ => true) rotateReflection [()] (.of_tidy isPolyTime_rotateReflection)).tidy
+    (fun (_ _ : Bool) => false) (fun _ _ => true) rotateReflection [()]
+      (.of_tidy isPolyTime_rotateReflection)).tidy
   exact (Graph.isPolyTime_tabulateConstraints (.of_tidy hdegreeEval)).tidy.comp hpre
 
 example : ComputableTidilyInPolyTime (fun g => tablePreprocess (tablePreprocess g))

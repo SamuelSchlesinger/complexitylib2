@@ -308,7 +308,9 @@ theorem exists_computableInO_stream {half : CNF ℕ → List ℕ}
       fun φ => 2 ^ (half φ).length * ((encCNF φ).length + 1) ^ e := by
   have hhalf := hhalf.tidy
   have hwrap := hwrap.tidy
-  have this : ∃ e, ComputableTidilyInO (fun φ => ((halfVectors φ (half φ)).map wrap).flatten ++ fin) encCNF encBits (fun φ => 2 ^ (half φ).length * ((encCNF φ).length + 1) ^ e) fun φ => 2 ^ (half φ).length * ((encCNF φ).length + 1) ^ e := by
+  have this : ∃ e, ComputableTidilyInO (fun φ => ((halfVectors φ (half φ)).map wrap).flatten ++ fin)
+      encCNF encBits (fun φ => 2 ^ (half φ).length * ((encCNF φ).length + 1) ^ e) fun φ => 2 ^
+      (half φ).length * ((encCNF φ).length + 1) ^ e := by
     -- the rounds
     obtain ⟨dN, _, ⟨tN, sN, ⟨cN, htN⟩, ⟨cN', hsN⟩, hN⟩, _⟩ :=
       (show ComputableTidilyInPolyTime (fun s : StreamState => (s.1, s.2 + 1)) encStreamState
@@ -429,7 +431,8 @@ theorem exists_computableInO_stream {half : CNF ℕ → List ℕ}
             ((encCNF φ).length + 1) ^ 3 := by
           rw [pow_succ' _ 2]
           exact Nat.mul_le_mul (by omega) (Nat.pow_le_pow_left (by omega) 2)
-        have h₇ : (encCNF φ).length + 1 ≤ ((encCNF φ).length + 1) ^ 3 := Nat.le_self_pow (by omega) _
+        have h₇ : (encCNF φ).length + 1 ≤ ((encCNF φ).length + 1) ^ 3 := Nat.le_self_pow (by omega)
+          _
         generalize (B (((φ, half φ), 0), 2 ^ (half φ).length) + 1) ^ D = X at h₁ ⊢
         generalize (Bb φ + 1) ^ D = Y at h₁ ⊢
         generalize ((encNat (half φ).length).length + 1) ^ 2 = K₂ at h₄ ⊢
@@ -457,7 +460,9 @@ theorem exists_computableInO_stream {half : CNF ℕ → List ℕ}
       simp only [Function.comp_apply] at this ⊢
       omega
     simp [halfVectors, Function.comp_def]
-  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime, computableInO_iff_computableTidilyInO] using this
+  simpa only
+    [computableInPolyTime_iff_computableTidilyInPolyTime, computableInO_iff_computableTidilyInO]
+    using this
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
@@ -503,7 +508,9 @@ a polynomial in the length of the encoded formula, on formulas with `n` variable
 theorem exists_computableInO_toOV : ∃ e, ComputableInO toOV encCNF encOV
     (fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e)
     fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e := by
-  have this : ∃ e, ComputableTidilyInO toOV encCNF encOV (fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e) fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e := by
+  have this : ∃ e, ComputableTidilyInO toOV encCNF encOV
+      (fun φ => 2 ^ (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e) fun φ => 2 ^
+      (φ.numVars - φ.numVars / 2) * ((encCNF φ).length + 1) ^ e := by
     obtain ⟨e₁, h₁⟩ := OV.exists_computableInO_stream OV.computableInPolyTime_firstVars
       OV.length_firstVars_le (wrap := fun v => ((frame v).map fun b => [true, b]).flatten)
       (by fun_prop) [false]

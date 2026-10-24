@@ -115,7 +115,8 @@ theorem DecidableInExpTime.of_reduction {f : α → β}
   have hfO := hf.inO
   obtain ⟨l, hl⟩ := hfO.length_le_time
   set K : ℝ := 1 + k * 2 ^ (δ * c) * (2 * l + 1) ^ e + k
-  refine Complexity.DecidableInExpTime.of_computableInO (.of_tidy (hg.comp hfO)) (fun a => (hfA a).trans (hgB (f a)))
+  refine Complexity.DecidableInExpTime.of_computableInO (.of_tidy (hg.comp hfO))
+    (fun a => (hfA a).trans (hgB (f a)))
     ⌈K⌉₊ (d * e + d) fun a => ?_
   show _ ≤ _
   set P : ℝ := ((encA a).length + 1) ^ d

@@ -193,7 +193,9 @@ theorem mem_MA_iff_exists_forall_errorExponent :
     A ∈ MA enc ↔ ∃ q : Polynomial ℕ, ∀ e : Polynomial ℕ, ∃ (p : Polynomial ℕ)
       (V : α × List Bool → Bool), ComputableInPolyTime V (encPair enc encBits) encBool ∧
         IsMerlinArthurVerifierWithErrorExponent enc e q p V A := by
-  have this : A ∈ MA enc ↔ ∃ q : Polynomial ℕ, ∀ e : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsMerlinArthurVerifierWithErrorExponent enc e q p V A := by
+  have this : A ∈ MA enc ↔ ∃ q : Polynomial ℕ, ∀ e : Polynomial ℕ, ∃ (p : Polynomial ℕ)
+      (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      IsMerlinArthurVerifierWithErrorExponent enc e q p V A := by
     rw [mem_MA]
     refine ⟨fun ⟨q, p, V, hV, h⟩ => ⟨q, fun e => ⟨12 * e * p, _,
       (computableInPolyTime_merlinArthurRepeat hV _ _ _).tidy, h.repeatMajority e⟩⟩,
@@ -352,7 +354,9 @@ theorem mem_AM_iff_forall_errorExponent :
     A ∈ AM enc ↔ ∀ e : Polynomial ℕ, ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
         IsArthurMerlinVerifierWithErrorExponent enc e p q V A := by
-  have this : A ∈ AM enc ↔ ∀ e : Polynomial ℕ, ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsArthurMerlinVerifierWithErrorExponent enc e p q V A := by
+  have this : A ∈ AM enc ↔ ∀ e : Polynomial ℕ, ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      IsArthurMerlinVerifierWithErrorExponent enc e p q V A := by
     rw [mem_AM]
     refine ⟨fun ⟨p, q, V, hV, h⟩ e => ⟨12 * e * p, 12 * e * q, _,
       (computableInPolyTime_arthurMerlinRepeat hV _ _ _).tidy, h.repeatMajority e⟩, fun h => ?_⟩

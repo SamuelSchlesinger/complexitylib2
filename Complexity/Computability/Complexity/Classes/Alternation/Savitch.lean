@@ -296,7 +296,8 @@ noncomputable def savitchVerifier (x : α × List Bool) : Bool :=
 
 /-- The verifier of the midpoint game is polynomial-time. -/
 theorem computableInPolyTime_savitchVerifier :
-    Turing.MultiTapeTM.ComputableInPolyTime (savitchVerifier (enc := enc) ntm c d) (encPair enc encBits)
+    Turing.MultiTapeTM.ComputableInPolyTime (savitchVerifier (enc := enc) ntm c d)
+      (encPair enc encBits)
       encBool := by
   refine .of_tidy ?_
   have hwidth : ComputableTidilyInPolyTime (fun x : α × List Bool => ntm.codeWidth c d (enc x.1))
@@ -346,8 +347,10 @@ space. The game has `2 * ((W + 1) * W)` moves for the width `W` of the codes, pa
 polynomial number. -/
 theorem exists_isGameVerifier_of_mem_PSPACE (h : A ∈ PSPACE enc) :
     ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-      Turing.MultiTapeTM.ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsGameVerifier enc p V A := by
-  have this : ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsGameVerifier enc p V A := by
+      Turing.MultiTapeTM.ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsGameVerifier enc p
+        V A := by
+  have this : ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V
+      (encPair enc encBits) encBool ∧ IsGameVerifier enc p V A := by
     obtain ⟨k, State, _, ntm, s, hs, hA⟩ := PSPACE_subset_NPSPACE h
     obtain ⟨c, d, hcd⟩ := hs.exists_le
     -- the number of rounds of the game is polynomially bounded
@@ -387,7 +390,8 @@ theorem AP_eq_PSPACE : AP enc = PSPACE enc :=
 /-- **The problems with polynomial-time game verifiers are exactly those in `PSPACE`.** -/
 theorem mem_PSPACE_iff_exists_isGameVerifier : A ∈ PSPACE enc ↔
     ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-      Turing.MultiTapeTM.ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsGameVerifier enc p V A :=
+      Turing.MultiTapeTM.ComputableInPolyTime V (encPair enc encBits) encBool ∧ IsGameVerifier enc p
+        V A :=
   ⟨exists_isGameVerifier_of_mem_PSPACE, fun ⟨_, _, hV, h⟩ => h.mem_PSPACE hV⟩
 
 end Cslib.Complexity

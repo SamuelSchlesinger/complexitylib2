@@ -91,7 +91,8 @@ theorem exists_computableInO_of_mem_DTIME {A : Set (List Bool)} {t : ℕ → ℕ
     (h : A ∈ DTIME encBits t) :
     ∃ g : List Bool → Bool, (∀ y, y ∈ A ↔ g y = true) ∧
       ComputableInO g encBits encBool (fun y => t y.length) fun y => t y.length := by
-  have this : ∃ g : List Bool → Bool, (∀ y, y ∈ A ↔ g y = true) ∧ ComputableTidilyInO g encBits encBool (fun y => t y.length) fun y => t y.length := by
+  have this : ∃ g : List Bool → Bool, (∀ y, y ∈ A ↔ g y = true) ∧ ComputableTidilyInO g encBits
+      encBool (fun y => t y.length) fun y => t y.length := by
     obtain ⟨c₁, c₂, s, hA⟩ := h
     obtain ⟨g, hg, hgA⟩ := decidableInTimeAndSpace_iff.mp hA
     obtain ⟨c, hg⟩ := hg.exists_space_linear
@@ -249,8 +250,8 @@ theorem computableInPolyTime_greedyMasks {seed block overlap : γ → ℕ}
   · simp [length_encList, hw]
   · exact Nat.le_add_right _ _
 
-/-- **The generator on lists in polynomial time.** Let `g` be tidily computable within time and
-space `O(T n)` on words of length `n`, for a monotone `T`. With computed block size `block x`,
+/-- **The generator on lists in polynomial time.** Let `g` be computable within time and space
+`O(T n)` on words of length `n`, for a monotone `T`. With computed block size `block x`,
 masks `masks x` and seed `seed x`, the generator on lists is polynomial-time in `x` when
 `T (block x)` is polynomially bounded. -/
 theorem computableInPolyTime_listGenerator {g : List Bool → Bool} {T : ℕ → ℕ}
@@ -263,7 +264,10 @@ theorem computableInPolyTime_listGenerator {g : List Bool → Bool} {T : ℕ →
     (hbudget : PolyBounded (fun x => (encIn x).length) fun x => T (block x)) :
     ComputableInPolyTime (fun x => listGenerator g (block x) (masks x) (seed x)) encIn
       encBits := by
-  have hg : ComputableTidilyInO g encBits encBool (fun y => T y.length) fun y => T y.length := by simpa only [computableInO_iff_computableTidilyInO, computableInPolyTime_iff_computableTidilyInPolyTime] using hg
+  have hg : ComputableTidilyInO g encBits encBool (fun y => T y.length) fun y => T y.length := by
+    simpa only
+    [computableInO_iff_computableTidilyInO, computableInPolyTime_iff_computableTidilyInPolyTime]
+    using hg
   have hblock := hblock.tidy
   have hmasks := hmasks.tidy
   have hseed := hseed.tidy
@@ -300,7 +304,7 @@ def nwDecider (V : α × List Bool → Bool) (g : List Bool → Bool) (seed bloc
     V (x, listGenerator g (block x) ((greedyMasks (seed x) (block x) (overlap x)).take (out x)) z))
 
 /-- **The Nisan–Wigderson decider in polynomial time.** Let `V` be polynomial-time and let `g` be
-tidily computable within time and space `O(T n)` on words of length `n`, for a monotone `T`. With
+computable within time and space `O(T n)` on words of length `n`, for a monotone `T`. With
 polynomial-time unary parameters, `nwDecider` is polynomial-time when `2 ^ seed x` and
 `T (block x)` are polynomially bounded in the length of the instance. -/
 theorem computableInPolyTime_nwDecider {V : α × List Bool → Bool} {g : List Bool → Bool}
@@ -315,7 +319,10 @@ theorem computableInPolyTime_nwDecider {V : α × List Bool → Bool} {g : List 
     (hblockBudget : PolyBounded (fun x => (enc x).length) fun x => T (block x)) :
     ComputableInPolyTime (nwDecider V g seed block overlap out) enc encBool := by
   have hV := hV.tidy
-  have hg : ComputableTidilyInO g encBits encBool (fun y => T y.length) fun y => T y.length := by simpa only [computableInPolyTime_iff_computableTidilyInPolyTime, computableInO_iff_computableTidilyInO] using hg
+  have hg : ComputableTidilyInO g encBits encBool (fun y => T y.length) fun y => T y.length := by
+    simpa only
+    [computableInPolyTime_iff_computableTidilyInPolyTime, computableInO_iff_computableTidilyInO]
+    using hg
   have hseed := hseed.tidy
   have hblock := hblock.tidy
   have hoverlap := hoverlap.tidy
@@ -329,9 +336,11 @@ theorem computableInPolyTime_nwDecider {V : α × List Bool → Bool} {g : List 
       (encPair enc encBits) (encList encBits) :=
     listTakeWithInput
       (computableInPolyTime_greedyMasks (.of_tidy (hseed.comp (fst enc encBits)))
-        (.of_tidy (hblock.comp (fst enc encBits))) (.of_tidy (hoverlap.comp (fst enc encBits))) (hfst hseedBudget)).tidy
+        (.of_tidy (hblock.comp (fst enc encBits))) (.of_tidy (hoverlap.comp (fst enc encBits)))
+          (hfst hseedBudget)).tidy
       (hout.comp (fst enc encBits))
-  have hgen := (computableInPolyTime_listGenerator hT (.of_tidy hg) (.of_tidy (hblock.comp (fst enc encBits)))
+  have hgen :=
+    (computableInPolyTime_listGenerator hT (.of_tidy hg) (.of_tidy (hblock.comp (fst enc encBits)))
     (.of_tidy hmasks) (.of_tidy (snd enc encBits)) (hfst hblockBudget)).tidy
   have hvote : ComputableTidilyInPolyTime (fun p : α × List Bool => V (p.1,
       listGenerator g (block p.1) ((greedyMasks (seed p.1) (block p.1) (overlap p.1)).take

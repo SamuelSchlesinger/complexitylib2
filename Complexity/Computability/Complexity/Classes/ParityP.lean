@@ -134,7 +134,9 @@ variable {enc : α ↪ List Bool} {L : Set α}
 theorem mem_ParityP : L ∈ ParityP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
       ∀ a, a ∈ L ↔ Odd (acceptCount V a (p.eval (enc a).length)) := by
-  have this : L ∈ ParityP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ ∀ a, a ∈ L ↔ Odd (acceptCount V a (p.eval (enc a).length)) := by
+  have this : L ∈ ParityP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ ∀ a, a ∈ L ↔ Odd
+      (acceptCount V a (p.eval (enc a).length)) := by
     classical
     constructor
     · rintro ⟨p, L', ⟨f, hf, hL'⟩, h⟩

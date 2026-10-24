@@ -196,7 +196,7 @@ theorem consistentHistStep_suffix {h₂ : History} {s : History × Bool × Bool}
   · exact (List.tail_suffix s.1).trans hs
   · exact (List.tail_suffix s.1).trans hs
 
-/-- `consistentHist` is computable tidily in polynomial time. -/
+/-- `consistentHist` is computable in polynomial time. -/
 @[fun_prop]
 theorem computableInPolyTime_consistentHist :
     Turing.MultiTapeTM.ComputableInPolyTime (fun p : History × History => consistentHist p.1 p.2)
@@ -654,10 +654,11 @@ theorem computableInPolyTime_checkCert (c d : ℕ) :
     exact binary_lt' hpow (binary_mul' (const 2) hlen)
   exact bool_and' (bool_and' (bool_and' h1 h2) h3) h4
 
-/-- `checkPaddedCert` is computable tidily in polynomial time. -/
+/-- `checkPaddedCert` is computable in polynomial time. -/
 @[fun_prop]
 theorem computableInPolyTime_checkPaddedCert (c d : ℕ) :
-    Turing.MultiTapeTM.ComputableInPolyTime (checkPaddedCert M c d) (encPair encBits encCert) encBool := by
+    Turing.MultiTapeTM.ComputableInPolyTime (checkPaddedCert M c d) (encPair encBits encCert)
+      encBool := by
   refine .of_tidy ?_
   have hunframe : ComputableTidilyInPolyTime unframe encBits encBits :=
     .of_linear (.of_unframe fun _ => rfl)

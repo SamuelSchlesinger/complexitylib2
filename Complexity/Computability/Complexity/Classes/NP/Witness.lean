@@ -231,8 +231,10 @@ theorem computableInPolyTime_subsetVerifier {encγ : γ ↪ List Bool} {vs : α 
     (hvs : ComputableInPolyTime vs enc (encList encγ)) {check : α × List γ → Bool}
     (hcheck : ComputableInPolyTime check (encPair enc (encList encγ)) encBool) :
     ComputableInPolyTime (subsetVerifier vs check) (encPair enc encBits) encBool :=
-  hcheck.comp ((ComputableInPolyTime.fst enc encBits).prod ((computableInPolyTime_selectDistinct encγ).comp
-    ((hvs.comp (ComputableInPolyTime.fst enc encBits)).prod (ComputableInPolyTime.snd enc encBits))))
+  hcheck.comp
+    ((ComputableInPolyTime.fst enc encBits).prod ((computableInPolyTime_selectDistinct encγ).comp
+    ((hvs.comp (ComputableInPolyTime.fst enc encBits)).prod
+      (ComputableInPolyTime.snd enc encBits))))
 
 /-- **NP membership of subset problems.** If the candidates `vs a` and the check of the selected
 candidates are polynomial-time, and `check` decides `P a` on duplicate-free lists of candidates,

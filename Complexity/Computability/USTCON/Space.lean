@@ -64,7 +64,8 @@ theorem computableInBigO_decide : ∃ t, ComputableInBigO
   let tS := ReadMachine.stateT encState T stateBudget
   let tMax (I : USTCONInstance) : ℕ := ∑ i ∈ Finset.range (rounds I + 1),
     tS (machine.toStepMachine.run (encUSTCON I) i).state
-  refine ⟨_, ComputableTidilyInBigO.computableInBigO <| (hT.computableTidilyInTimeAndSpace (fun I : USTCONInstance ↦ decide (I ∈ USTCON))
+  refine ⟨_, ComputableTidilyInBigO.computableInBigO <|
+    (hT.computableTidilyInTimeAndSpace (fun I : USTCONInstance ↦ decide (I ∈ USTCON))
     rounds hr (fun I ↦ by rw [encBool_apply, ho]) (tMax := tMax)
     (sMax := fun I ↦ 6 * stateConst * (Nat.log2 (encUSTCON I).length + 2) +
       2 * (Nat.log2 (encUSTCON I).length + 2) + 12) fun I i hi ↦ ⟨?_, ?_⟩).weaken

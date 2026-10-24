@@ -18,9 +18,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.P
 # Polynomial-time construction of tableau clauses
 
 All clause families of the existing Cook–Levin tableau are polynomial-time functions of their
-input word and unary time/window bounds. Variables use
-`encVar`, so the certificates compose with `computableTidilyInPolyTime_relabel` to produce
-binary SAT instances.
+input word and unary time/window bounds. Variables use `encVar`, so the certificates compose with
+`Cslib.Complexity.CookLevin.computableInPolyTime_relabel` to produce binary SAT instances.
 
 The machine, its tape count and its finite state type are fixed. Traversals of tapes and
 situations therefore use fixed lists; the tape-cell window is enumerated from the input bound.

@@ -412,7 +412,7 @@ private theorem decidableInTimeO_natCast_iff {A : Set α} {T : α → ℕ} :
     exact DecidableInTimeO.of_computableInO (.of_tidy hg) hA fun _ => le_rfl
 
 /-- **`FPT` in terms of fpt-time computability**: a problem is fixed-parameter tractable exactly
-when a Boolean function deciding it is tidily computable in fpt time. -/
+when a Boolean function deciding it is computable in fpt time. -/
 theorem mem_FPT_iff_computableInFPTTime {A : Set α} :
     A ∈ FPT encA κ ↔
       ∃ g : α → Bool, ComputableInFPTTime g encA encBool κ ∧ ∀ a, a ∈ A ↔ g a = true := by
@@ -432,12 +432,14 @@ theorem mem_FPT_iff_computableInFPTTime {A : Set α} :
     rw [e, decidableInTimeO_natCast_iff]
     exact ⟨g, hg, hA⟩
 
-/-- **`XP` in terms of tidy computability.** -/
+/-- **`XP` in terms of computability within explicit bounds.** -/
 theorem mem_XP_iff_exists_computableInO {A : Set α} :
     A ∈ XP encA κ ↔ ∃ (g : α → Bool) (f e : ℕ → ℕ), ComputableInO g encA encBool
       (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a))
       (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) ∧ ∀ a, a ∈ A ↔ g a = true := by
-  have this : A ∈ XP encA κ ↔ ∃ (g : α → Bool) (f e : ℕ → ℕ), ComputableTidilyInO g encA encBool (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) ∧ ∀ a, a ∈ A ↔ g a = true := by
+  have this : A ∈ XP encA κ ↔ ∃ (g : α → Bool) (f e : ℕ → ℕ), ComputableTidilyInO g encA encBool
+      (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a))
+      (fun a => f (κ a) * ((encA a).length + 1) ^ e (κ a)) ∧ ∀ a, a ∈ A ↔ g a = true := by
     have h : ∀ f e : ℕ → ℕ, (fun a => (f (κ a) : ℝ) * ((encA a).length + 1) ^ e (κ a)) =
         fun a => ((f (κ a) * ((encA a).length + 1) ^ e (κ a) : ℕ) : ℝ) := fun f e => by
       funext a
@@ -470,7 +472,8 @@ theorem XP_eq_P_of_le {K : ℕ} (hκ : ∀ a, κ a ≤ K) : XP encA κ = P encA 
   obtain ⟨g, f, e, hg, hA⟩ :=
     mem_XP_iff_exists_computableInO.mp (XP_subset_XP_of_le_comp (κ' := fun _ => 0)
       (h := fun _ => K) hκ hA)
-  exact ⟨g, .of_tidy <| hg.tidy.computableTidilyInPolyTime (.of_forall_le (f 0) (e 0) fun _ => le_rfl)
+  exact ⟨g, .of_tidy <| hg.tidy.computableTidilyInPolyTime
+    (.of_forall_le (f 0) (e 0) fun _ => le_rfl)
     (.of_forall_le (f 0) (e 0) fun _ => le_rfl), hA⟩
 
 /-! ### Boolean closure -/
@@ -480,7 +483,8 @@ theorem compl_mem_FPT {A : Set α} (hA : A ∈ FPT encA κ) : Aᶜ ∈ FPT encA 
   obtain ⟨g, hg, hA⟩ := mem_FPT_iff_computableInFPTTime.mp hA
   refine mem_FPT_iff_computableInFPTTime.mpr ⟨_, hg.ite
     ((ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.const false)).computableInFPTTime κ)
-    ((ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.const true)).computableInFPTTime κ), fun a => ?_⟩
+    ((ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.const true)).computableInFPTTime κ),
+      fun a => ?_⟩
   simp only [Set.mem_compl_iff, hA]
   cases g a <;> simp
 
@@ -490,7 +494,8 @@ theorem inter_mem_FPT {A B : Set α} (hA : A ∈ FPT encA κ) (hB : B ∈ FPT en
   obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableInFPTTime.mp hA
   obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableInFPTTime.mp hB
   refine mem_FPT_iff_computableInFPTTime.mpr ⟨_, hg₁.ite hg₂
-    ((ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.const false)).computableInFPTTime κ), fun a => ?_⟩
+    ((ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.const false)).computableInFPTTime κ),
+      fun a => ?_⟩
   simp only [Set.mem_inter_iff, hA, hB]
   cases g₁ a <;> simp
 
@@ -500,7 +505,8 @@ theorem union_mem_FPT {A B : Set α} (hA : A ∈ FPT encA κ) (hB : B ∈ FPT en
   obtain ⟨g₁, hg₁, hA⟩ := mem_FPT_iff_computableInFPTTime.mp hA
   obtain ⟨g₂, hg₂, hB⟩ := mem_FPT_iff_computableInFPTTime.mp hB
   refine mem_FPT_iff_computableInFPTTime.mpr ⟨_, hg₁.ite
-    ((ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.const true)).computableInFPTTime κ) hg₂, fun a => ?_⟩
+    ((ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.const true)).computableInFPTTime κ)
+      hg₂, fun a => ?_⟩
   simp only [Set.mem_union, hA, hB]
   cases g₁ a <;> simp
 

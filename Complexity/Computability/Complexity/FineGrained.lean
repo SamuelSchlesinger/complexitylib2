@@ -62,8 +62,8 @@ The negation of `ETH` is `Cslib.Complexity.DecidableInSubexpTime`: decidability 
 * `Cslib.Complexity.mem_DTIME_iff_decidableInTimeO`: `DTIME` is `DecidableInTimeO` for bounds in
   the length of the encoded instance.
 * `Cslib.Complexity.DecidableInTimeO.exists_computableInO`,
-  `Cslib.Complexity.DecidableInTimeO.of_computableInO`: deciders within time `O(T)` are tidy
-  deciders within time `O(T)`, which compose.
+  `Cslib.Complexity.DecidableInTimeO.of_computableInO`: deciders within time `O(T)` are the
+  Boolean functions computable within time `O(T)`, which compose.
 * `Cslib.Complexity.DecidableInTimeO.inter`: restricting to a set decided in polynomial time.
 * `Cslib.Complexity.DecidableInExpTime.mono`: larger exponents allow more problems.
 * `Cslib.Complexity.ETH_iff_not_decidableInSubexpTime`.

@@ -98,7 +98,8 @@ example {α : Type} (enc : α ↪ List Bool) :
 PPT. -/
 example : IsOraclePPTOn encBits encNat (fun w => OracleComp.interpret ProbOracleComp.query
     (BinarySearch.search w (w.length + 1))) :=
-  BinarySearch.isOraclePPTOn_search (.of_tidy ComputableTidilyInPolyTime.id') (.of_tidy (by fun_prop))
+  BinarySearch.isOraclePPTOn_search (.of_tidy ComputableTidilyInPolyTime.id')
+    (.of_tidy (by fun_prop))
 
 example {α : Type} (enc : α ↪ List Bool) : PWithSharpPOracle enc ⊆ PWithPPOracle enc :=
   PWithSharpPOracle_subset_PWithPPOracle

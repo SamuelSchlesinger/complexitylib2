@@ -195,7 +195,8 @@ theorem computableInPolyTime_diamondGraph :
     ComputableInPolyTime diamondGraph encCNF encGraph :=
   (Diamond.computableInPolyTime_graph
     (.of_tidy ((length_list encNat).comp computableInPolyTime_vars.tidy))
-    (.of_tidy ((length_list _).comp (fst _ _))) (.of_tidy (length_list _)) (.of_tidy computableTidilyInPolyTime_diamondDetours))
+    (.of_tidy ((length_list _).comp (fst _ _))) (.of_tidy (length_list _))
+      (.of_tidy computableTidilyInPolyTime_diamondDetours))
 
 /-- The reduction `toDirHamPath` is computable in polynomial time. -/
 @[fun_prop]
@@ -217,7 +218,8 @@ theorem computableInPolyTime_toDirHamCycle :
     ComputableInPolyTime toDirHamCycle encCNF encGraph :=
   (Diamond.computableInPolyTime_cycleGraph
     (.of_tidy ((length_list encNat).comp computableInPolyTime_vars.tidy))
-    (.of_tidy ((length_list _).comp (fst _ _))) (.of_tidy (length_list _)) (.of_tidy computableTidilyInPolyTime_diamondDetours))
+    (.of_tidy ((length_list _).comp (fst _ _))) (.of_tidy (length_list _))
+      (.of_tidy computableTidilyInPolyTime_diamondDetours))
 
 end SAT
 

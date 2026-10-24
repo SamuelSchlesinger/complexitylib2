@@ -93,19 +93,22 @@ example : ∃ g ∈ SharpP encBits, ∀ b : Bool, g [b] = 0 :=
   SharpP.exists_extension (enc := encBool) SharpP.zero_mem
 
 /--
-info: 'Cslib.Complexity.computableInPolySpace_acceptCount' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.computableInPolySpace_acceptCount' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms computableInPolySpace_acceptCount
 /--
-info: 'Cslib.Complexity.SharpP.computableInPolySpace' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.SharpP.computableInPolySpace' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms SharpP.computableInPolySpace
 /--
-info: 'Cslib.Complexity.GapP.computableInPolySpace' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.GapP.computableInPolySpace' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms GapP.computableInPolySpace
 /--
 info: 'Cslib.Complexity.PP_subset_PSPACE' depends on axioms: [propext, Classical.choice, Quot.sound]

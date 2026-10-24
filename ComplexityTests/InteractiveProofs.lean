@@ -334,10 +334,11 @@ info: 'Cslib.Complexity.Interaction.computableInPolySpace_evaluate' depends on a
 #guard_msgs (whitespace := lax) in
 #print axioms Interaction.computableInPolySpace_evaluate
 
-/-- info: 'Cslib.Complexity.Interaction.computableInPolySpace_countAccepts' depends on axioms: [propext,
- Classical.choice,
- Quot.sound] -/
-#guard_msgs in
+/--
+info: 'Cslib.Complexity.Interaction.computableInPolySpace_countAccepts' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms Interaction.computableInPolySpace_countAccepts
 
 /-- info: 'Cslib.Complexity.GameTree.iterate_step_node' depends on axioms:

@@ -106,7 +106,8 @@ private theorem mem_SAT_toSAT (φ : CNF ℕ) : φ ∈ ThreeSAT ↔ toSAT φ ∈ 
 
 private theorem threeSAT_fptReducible_SAT :
     FPTReducible encCNF encCNF CNF.numVars CNF.numVars ThreeSAT SAT :=
-  FPTReducible.of_computableInPolyTime (.of_tidy toSAT_polyTime) (h := id) numVars_toSAT_le mem_SAT_toSAT
+  FPTReducible.of_computableInPolyTime (.of_tidy toSAT_polyTime) (h := id) numVars_toSAT_le
+    mem_SAT_toSAT
 
 /-- The reduction does not map the formula `x₀ ∧ (x₀ ∨ x₁ ∨ x₂ ∨ x₃)` to itself. -/
 example : toSAT [[(0, true)], [(0, true), (1, true), (2, true), (3, true)]] = [[]] := by decide

@@ -415,7 +415,9 @@ theorem exists_computableInO_search : ∃ e, ComputableInO search
     (encPair encGraph encNat) encBool
     (fun x => 2 ^ x.2 * ((encPair encGraph encNat x).length + 1) ^ e)
     fun x => 2 ^ x.2 * ((encPair encGraph encNat x).length + 1) ^ e := by
-  have this : ∃ e, ComputableTidilyInO search (encPair encGraph encNat) encBool (fun x => 2 ^ x.2 * ((encPair encGraph encNat x).length + 1) ^ e) fun x => 2 ^ x.2 * ((encPair encGraph encNat x).length + 1) ^ e := by
+  have this : ∃ e, ComputableTidilyInO search (encPair encGraph encNat) encBool
+      (fun x => 2 ^ x.2 * ((encPair encGraph encNat x).length + 1) ^ e) fun x => 2 ^ x.2 *
+      ((encPair encGraph encNat x).length + 1) ^ e := by
     obtain ⟨d, _, hstep⟩ := computableTidilyInPolyTime_step.exists_degree
     obtain ⟨d₀, _, hinit⟩ := computableTidilyInPolyTime_init.exists_degree
     obtain ⟨d₁, _, hcount⟩ := computableTidilyInPolyTime_count.exists_degree
@@ -486,7 +488,8 @@ a polynomial in the length of the encoded instance, for target cover size `k`. -
 theorem VertexCover_decidableInExpTime_one :
     DecidableInExpTime VertexCover (encPair encGraph encNat) Prod.snd 1 := by
   obtain ⟨e, h⟩ := VertexCover.exists_computableInO_search
-  refine DecidableInExpTime.of_computableInO h (fun x => (VertexCover.search_eq_true_iff x).symm) 1 e
+  refine DecidableInExpTime.of_computableInO h (fun x => (VertexCover.search_eq_true_iff x).symm) 1
+    e
     fun x => ?_
   rw [one_mul, Real.rpow_natCast]
   push_cast

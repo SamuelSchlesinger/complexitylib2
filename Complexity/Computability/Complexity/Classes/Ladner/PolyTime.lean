@@ -151,7 +151,8 @@ theorem computableInPolyTime_capPow {α : Type} {input : α ↪ List Bool}
 
 /-! ### Words by index -/
 
-private theorem computableTidilyInPolyTime_word : ComputableTidilyInPolyTime word encUnary encBits := by
+private theorem computableTidilyInPolyTime_word : ComputableTidilyInPolyTime word encUnary
+    encBits := by
   have h : word = fun j => (encNat (j + 1)).take ((encNat (j + 1)).length - 1) := by
     funext j
     simp [word, encNat_apply, List.dropLast_eq_take]

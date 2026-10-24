@@ -61,7 +61,8 @@ theorem shortDesc_eq_decide (x : List Bool) :
 theorem computableInO_shortDesc :
     ComputableInO shortDesc encBits encBool (fun x => (x.length + 1) ^ 2)
       fun x => x.length + 1 := by
-  have this : ComputableTidilyInO shortDesc encBits encBool (fun x => (x.length + 1) ^ 2) fun x => x.length + 1 := by
+  have this : ComputableTidilyInO shortDesc encBits encBool (fun x => (x.length + 1) ^ 2) fun x =>
+      x.length + 1 := by
     have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
       ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
     have ha := ComputableTidilyInDegree.unary_succ.inO_one.comp

@@ -375,7 +375,8 @@ theorem _root_.Cslib.Logic.Vocabulary.computableInPolyTime_table (r : Σ n, L.Re
     {a : γ → EncodedStructure} (ha : ComputableInPolyTime a encIn encStructure) :
     ComputableInPolyTime (fun x => v.table (a x) r) encIn encBits := by
   have ha := ha.tidy
-  exact .of_tidy ((listGetD (encA := encBits) []).comp (((snd encUnary (encList encBits)).comp ha).prod
+  exact .of_tidy
+    ((listGetD (encA := encBits) []).comp (((snd encUnary (encList encBits)).comp ha).prod
     (const (encMid := encUnary) (v.index r))))
 
 /-- The cardinality of the input, in unary. -/

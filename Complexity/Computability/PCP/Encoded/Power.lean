@@ -297,7 +297,8 @@ theorem isPolyTime_powerPreprocess [Finite D] [Finite α] {Input : Type} {input 
   have hconvert : ComputableTidilyInPolyTime
       (id : (PowerAlphabet D α T → PowerAlphabet D α T → Bool) → _)
       (encPi (encPi encBool)) output := .of_finite _
-  simpa only [mapConstraints_id, Function.comp_def] using (isPolyTime_mapConstraints (.of_tidy hp) (.of_tidy hconvert)).tidy
+  simpa only [mapConstraints_id, Function.comp_def] using
+    (isPolyTime_mapConstraints (.of_tidy hp) (.of_tidy hconvert)).tidy
 
 end Complexity
 

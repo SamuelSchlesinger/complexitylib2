@@ -559,7 +559,8 @@ abbrev encDetour : Detour ↪ List Bool :=
 @[fun_prop]
 theorem computableInPolyTime_topNode :
     ComputableInPolyTime (fun i => topNode i) encUnary encNat :=
-  .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun i => Nat.pair 0 i) _ _ by fun_prop))
+  .of_tidy (unary_to_binary.comp
+    (show ComputableTidilyInPolyTime (fun i => Nat.pair 0 i) _ _ by fun_prop))
 
 /-- The row nodes are computable in polynomial time from unary indices. -/
 @[fun_prop]
@@ -573,7 +574,8 @@ theorem computableInPolyTime_rowNode :
 @[fun_prop]
 theorem computableInPolyTime_clauseNode :
     ComputableInPolyTime (fun j => clauseNode j) encUnary encNat :=
-  .of_tidy (unary_to_binary.comp (show ComputableTidilyInPolyTime (fun j => Nat.pair 2 j) _ _ by fun_prop))
+  .of_tidy (unary_to_binary.comp
+    (show ComputableTidilyInPolyTime (fun j => Nat.pair 2 j) _ _ by fun_prop))
 
 /-- A diamond graph is computable in polynomial time from a layout computable in polynomial time,
 with the numbers of diamonds, slots and clauses in unary. -/

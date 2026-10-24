@@ -20,14 +20,14 @@ import Mathlib.Data.List.GetD
 A Boolean family `f : ∀ n, BitString n → Bool` determines the language `Language.ofSlices f` of bit
 lists `x` with `f x.length x = true`. Reading `x` through `BitString.ofList`, the language is in
 `Cslib.Complexity.P encBits` exactly when its list evaluator
-`fun x => f x.length (BitString.ofList x.length x)` is tidily computable in polynomial time.
+`fun x => f x.length (BitString.ofList x.length x)` is computable in polynomial time.
 
 ## Main results
 
 * `Cslib.Complexity.mem_ofSlices_iff`, `Cslib.Complexity.ofSlices_eq_setOf_ofList`: membership in
   `Language.ofSlices f` via `BitString.ofList`.
 * `Cslib.Complexity.ofSlices_mem_P_iff`: `Language.ofSlices f ∈ P encBits` if and only if its list
-  evaluator is tidily computable in polynomial time.
+  evaluator is computable in polynomial time.
 * `Cslib.Complexity.ofSlices_mem_P`: the sufficient direction.
 -/
 
@@ -52,8 +52,8 @@ theorem ofSlices_eq_setOf_ofList (f : ∀ N, BitString N → Bool) :
       {x : List Bool | f x.length (BitString.ofList x.length x) = true} :=
   Set.ext fun x => mem_ofSlices_iff f x
 
-/-- If `fun x => f x.length (BitString.ofList x.length x)` is tidily computable in polynomial time,
-then `Language.ofSlices f` belongs to `P encBits`. -/
+/-- If `fun x => f x.length (BitString.ofList x.length x)` is computable in polynomial time, then
+`Language.ofSlices f` belongs to `P encBits`. -/
 theorem ofSlices_mem_P {f : ∀ n, BitString n → Bool}
     (hf : ComputableInPolyTime
       (fun x : List Bool => f x.length (BitString.ofList x.length x)) encBits encBool) :

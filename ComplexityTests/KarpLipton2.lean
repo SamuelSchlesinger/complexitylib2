@@ -124,9 +124,10 @@ info: 'Cslib.Complexity.SAT.verifier_search' depends on axioms: [propext, Classi
 #print axioms Cslib.Complexity.SAT.verifier_search
 
 /--
-info: 'Cslib.Complexity.SAT.computableInPolyTime_search' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Complexity.SAT.computableInPolyTime_search' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.SAT.computableInPolyTime_search
 
 /--
@@ -142,9 +143,10 @@ info: 'Cslib.Circuits.Boolean.evalAdvice_familyAdvice' depends on axioms: [prope
 #print axioms Cslib.Circuits.Boolean.evalAdvice_familyAdvice
 
 /--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice
 
 /--

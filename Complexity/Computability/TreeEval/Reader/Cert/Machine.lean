@@ -45,7 +45,8 @@ open Turing MultiTapeTM ComputableTidilyInSpace Iter
 theorem pairFalse_inSpace :
     ComputableInSpace (fun x : Tuple => (x, false)) encTuple encStepInT
       fun x => stepBudget (x, false) := by
-  have this : ComputableTidilyInSpace (fun x : Tuple => (x, false)) encTuple encStepInT fun x => stepBudget (x, false) :=
+  have this : ComputableTidilyInSpace (fun x : Tuple => (x, false)) encTuple encStepInT fun x =>
+      stepBudget (x, false) :=
     ReadMachine.pairFalse_inSpace fun x => by simp only [stepBudget, encStepInT]; omega
   simpa only [computableInSpace_iff_computableTidilyInSpace] using this
 
@@ -69,7 +70,8 @@ private theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
   have harg := budget_prod (budget_prod ell_inSpace.tidy height_inSpace.tidy) hdirs
   have hpo := budget_comp pathOffset_inSpace.tidy harg (.const_mul (2 ^ 30)
     (((ell_le_stepBudget.add height_le_stepBudget).add (length_le harg)).add (.const 1 _)))
-  have h₂ := (succ_inSpace (succ_inSpace
+  have h₂ :=
+    (succ_inSpace (succ_inSpace
     (.of_tidy (budget_comp_lin natAdd linear_succ (budget_prod ell_inSpace.tidy height_inSpace.tidy))))).tidy
   refine (budget_comp_lin natAdd linear_succ (budget_prod h₂ hpo)).of_enc_eq fun y => ?_
   simp only [offsetT, path_eq_reverse, foldl_cons_dir, List.append_nil]
@@ -88,9 +90,9 @@ private theorem addrT_inSpace :
     budget_comp_lin natAdd linear_succ (budget_prod ha hb)
   have h := budget_ite (ht 0) (hsome n₁_inSpace.tidy)
     (budget_ite (ht 1) (hsome (hadd (succ_inSpace ell_inSpace).tidy n₁_inSpace.tidy))
-      (budget_ite (ht 4) (hsome (hadd (offsetT_inSpace stack_inSpace.tidy) n₁_inSpace.tidy))
-        (budget_ite (ht 5) (hsome (hadd (offsetT_inSpace rest_inSpace.tidy) n₁_inSpace.tidy))
-          (budget_const (encB := encOption encNat) none len_le_stepBudget))))
+    (budget_ite (ht 4) (hsome (hadd (offsetT_inSpace stack_inSpace.tidy) n₁_inSpace.tidy))
+      (budget_ite (ht 5) (hsome (hadd (offsetT_inSpace rest_inSpace.tidy) n₁_inSpace.tidy))
+        (budget_const (encB := encOption encNat) none len_le_stepBudget))))
   refine (onTuple h).of_enc_eq fun x => ?_
   simp only [addrT, decide_eq_true_eq]
 

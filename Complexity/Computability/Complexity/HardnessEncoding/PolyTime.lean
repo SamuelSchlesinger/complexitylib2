@@ -325,7 +325,8 @@ theorem computableInPolyTime_termVal' {α : Type} {input : α ↪ List Bool}
     (hz : ComputableInPolyTime z input encBits) :
     ComputableInPolyTime (fun x => termVal (tab x) (w x) (b x) (M x) (E x) (xs x) (z x))
       input encBits :=
-  .of_tidy (computableTidilyInPolyTime_termVal' htab.tidy hw.tidy hb.tidy hM.tidy hE.tidy hxs.tidy hz.tidy)
+  .of_tidy (computableTidilyInPolyTime_termVal' htab.tidy hw.tidy hb.tidy hM.tidy hE.tidy hxs.tidy
+    hz.tidy)
 
 private theorem computableTidilyInPolyTime_ldeVal' {α : Type} {input : α ↪ List Bool}
     {tab : α → List (List (List Bool))} {w b M : α → ℕ} {E pts xs : α → List (List Bool)}
@@ -356,7 +357,8 @@ theorem computableInPolyTime_ldeVal' {α : Type} {input : α ↪ List Bool}
     (hxs : ComputableInPolyTime xs input (encList encBits)) :
     ComputableInPolyTime (fun x => ldeVal (tab x) (w x) (b x) (M x) (E x) (pts x) (xs x))
       input encBits :=
-  .of_tidy (computableTidilyInPolyTime_ldeVal' htab.tidy hw.tidy hb.tidy hM.tidy hE.tidy hpts.tidy hxs.tidy)
+  .of_tidy (computableTidilyInPolyTime_ldeVal' htab.tidy hw.tidy hb.tidy hM.tidy hE.tidy hpts.tidy
+    hxs.tidy)
 
 /-! ### The padded program -/
 
@@ -410,7 +412,10 @@ theorem computableInPolyTime_paddedProgram (M : ℕ) {gL : List Bool → Bool} {
     (hgL : ComputableInO gL encBits encBool (fun y => 2 ^ (k * y.length))
       fun y => 2 ^ (k * y.length)) :
     ComputableInPolyTime (paddedProgram M gL) (encPair encBits encUnary) encBool := by
-  have hgL : ComputableTidilyInO gL encBits encBool (fun y => 2 ^ (k * y.length)) fun y => 2 ^ (k * y.length) := by simpa only [computableInO_iff_computableTidilyInO, computableInPolyTime_iff_computableTidilyInPolyTime] using hgL
+  have hgL : ComputableTidilyInO gL encBits encBool (fun y => 2 ^ (k * y.length)) fun y => 2 ^
+      (k * y.length) := by simpa only
+    [computableInO_iff_computableTidilyInO, computableInPolyTime_iff_computableTidilyInPolyTime]
+    using hgL
   refine .of_tidy ?_
   have hℓ := computableInPolyTime_padLength.tidy
   have hb : ComputableTidilyInPolyTime (fun x => blockLength M (padLength x))

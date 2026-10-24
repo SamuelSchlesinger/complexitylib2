@@ -124,9 +124,10 @@ info: 'Cslib.MCSP.exists_verifier_append' depends on axioms: [propext, Classical
 #print axioms Cslib.MCSP.exists_verifier_append
 
 /--
-info: 'Cslib.MCSP.computableInPolyTime_tableVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.MCSP.computableInPolyTime_tableVerifier' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
 -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Cslib.MCSP.computableInPolyTime_tableVerifier
 
 /--

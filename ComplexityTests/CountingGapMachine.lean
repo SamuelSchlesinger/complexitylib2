@@ -189,7 +189,8 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapeCT
   simpa only [encBits_apply, Polynomial.eval_C, Polynomial.eval_zero, Complexity.acceptCount_true,
     Nat.reducePow, pow_zero, Nat.cast_ofNat, Nat.cast_one, Int.reduceSub] using
     exists_verifier_difference_machine encBits (Polynomial.C 2) 0 (fun _ => true) (fun _ => true)
-      (.of_tidy (ComputableTidilyInPolyTime.const true)) (.of_tidy (ComputableTidilyInPolyTime.const true))
+      (.of_tidy (ComputableTidilyInPolyTime.const true))
+        (.of_tidy (ComputableTidilyInPolyTime.const true))
 
 -- Unequal all-false families still cancel to zero, without matching their witness lengths.
 example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapeCTM k Bool State)
@@ -200,7 +201,8 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (machine : MultiTapeCT
   simpa only [encBits_apply, Polynomial.eval_C, Polynomial.eval_zero, Complexity.acceptCount_false,
     Nat.cast_zero, sub_self] using
     exists_verifier_difference_machine encBits 0 (Polynomial.C 2) (fun _ => false) (fun _ => false)
-      (.of_tidy (ComputableTidilyInPolyTime.const false)) (.of_tidy (ComputableTidilyInPolyTime.const false))
+      (.of_tidy (ComputableTidilyInPolyTime.const false))
+        (.of_tidy (ComputableTidilyInPolyTime.const false))
 
 /--
 info: 'Turing.MultiTapeCTM.exists_signed_verifier_machine' depends on axioms:

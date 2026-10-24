@@ -61,8 +61,8 @@ variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 
 
 /-- **`PSPACE` in the quantitative calculus**: a problem is in `PSPACE` exactly when a Boolean
-function deciding it is tidily computable within some time and within space polynomial in the
-length of the encoded instance. -/
+function deciding it is computable within some time and within space polynomial in the length of
+the encoded instance. -/
 theorem mem_PSPACE_iff_computableInO : A ∈ PSPACE enc ↔ ∃ (f : α → Bool) (T S : α → ℕ),
     ComputableInO f enc encBool T S ∧ PolyBounded (fun a => (enc a).length) S ∧
       ∀ a, a ∈ A ↔ f a = true := by
@@ -84,8 +84,8 @@ theorem mem_PSPACE_iff_computableInO : A ∈ PSPACE enc ↔ ∃ (f : α → Bool
 
 attribute [local fun_prop] Turing.MultiTapeTM.ComputableInPolySpace.tidy in
 /-- **`PSPACE` within polynomial space**: a problem is in `PSPACE` exactly when a Boolean function
-deciding it is tidily computable within space polynomial in the length of the encoded instance
-(`Turing.MultiTapeTM.ComputableTidilyInPolySpace`). -/
+deciding it is computable within space polynomial in the length of the encoded instance
+(`Turing.MultiTapeTM.ComputableInPolySpace`). -/
 theorem mem_PSPACE_iff_computableInPolySpace : A ∈ PSPACE enc ↔
     ∃ f : α → Bool, ComputableInPolySpace f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true := by
   have this : A ∈ PSPACE enc ↔

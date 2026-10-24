@@ -150,11 +150,14 @@ length of the encoded formula, on formulas with `n` variables. -/
 theorem exists_computableInO_search : ∃ e, ComputableInO search encCNF encBool
     (fun φ => 2 ^ φ.numVars * ((encCNF φ).length + 1) ^ e)
     fun φ => 2 ^ φ.numVars * ((encCNF φ).length + 1) ^ e := by
-  have this : ∃ e, ComputableTidilyInO search encCNF encBool (fun φ => 2 ^ φ.numVars * ((encCNF φ).length + 1) ^ e) fun φ => 2 ^ φ.numVars * ((encCNF φ).length + 1) ^ e := by
+  have this : ∃ e, ComputableTidilyInO search encCNF encBool
+      (fun φ => 2 ^ φ.numVars * ((encCNF φ).length + 1) ^ e) fun φ => 2 ^ φ.numVars *
+      ((encCNF φ).length + 1) ^ e := by
     obtain ⟨d, _, hstep⟩ := computableTidilyInPolyTime_step.exists_degree
     obtain ⟨d₀, _, hinit⟩ := computableTidilyInPolyTime_init.exists_degree
     obtain ⟨d₁, _, hcount⟩ := computableTidilyInPolyTime_count.exists_degree
-    obtain ⟨d₂, _, hans⟩ := (show ComputableTidilyInPolyTime (fun s : State => s.2.2) encState encBool
+    obtain ⟨d₂, _, hans⟩ :=
+      (show ComputableTidilyInPolyTime (fun s : State => s.2.2) encState encBool
       by fun_prop).exists_degree
     obtain ⟨cv, dv, hvs⟩ :=
       SAT.computableInPolyTime_distinctVars.tidy.polyBounded_length.exists_le

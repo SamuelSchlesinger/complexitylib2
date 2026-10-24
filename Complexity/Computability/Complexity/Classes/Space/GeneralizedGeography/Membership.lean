@@ -565,7 +565,8 @@ theorem computableInPolyTime_verifier :
         (fun p : ((((Graph × ℕ) × List Bool) × Play) × List Bool) =>
           moverBits p.1.1.1.1.2.length p.1.2.2.1 p.2)
         encStep (encList encBool) :=
-      (computableInPolyTime_moverBits (.of_tidy (hB.comp hX)) (.of_tidy (by fun_prop)) (.of_tidy (snd _ _))).tidy
+      (computableInPolyTime_moverBits (.of_tidy (hB.comp hX)) (.of_tidy (by fun_prop))
+        (.of_tidy (snd _ _))).tidy
     have hpair : ComputableTidilyInPolyTime
         (fun p : ((((Graph × ℕ) × List Bool) × Play) × List Bool) =>
           ((p.1.1.1.1, p.1.2), moverBits p.1.1.1.1.2.length p.1.2.2.1 p.2))

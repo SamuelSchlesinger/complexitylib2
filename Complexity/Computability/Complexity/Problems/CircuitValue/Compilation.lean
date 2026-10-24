@@ -147,7 +147,9 @@ theorem exists_uniformCircuitFamily {α : Type} {enc : α ↪ List Bool}
   have hn := hn.tidy
   have hm := hm.tidy
   have hF := hF.tidy
-  have this : ∃ circuits : (a : α) → Circuit signature (n a) (m a), ComputableTidilyInPolyTime (fun a => (circuits a).code) enc encCode ∧ ∀ a (x : Fin (n a) → Bool) (j : Fin (m a)), (circuits a).eval interpretation x j = (F (a, List.ofFn x)).getD j.val false := by
+  have this : ∃ circuits : (a : α) → Circuit signature (n a) (m a), ComputableTidilyInPolyTime
+      (fun a => (circuits a).code) enc encCode ∧ ∀ a (x : Fin (n a) → Bool) (j : Fin (m a)),
+      (circuits a).eval interpretation x j = (F (a, List.ofFn x)).getD j.val false := by
     obtain ⟨bits, hbits, hsize, hsem⟩ := exists_uniformOutputBits hn hm hF
     let circuits (a : α) : Circuit signature (n a) (m a) :=
       Circuit.pi (fun j : Fin (m a) => bits a j.val)

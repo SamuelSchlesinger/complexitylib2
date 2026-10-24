@@ -521,7 +521,8 @@ private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ 
     (hD.comp (.encoding_length enc)).comp (.fst enc encBits)
   have hF : F ∈ GapP (encPair enc encBits) :=
     GapP.generalWeightedReplay_mem machine hinput_pt.computableInPolyTime
-      hT'_pt.computableInPolyTime (mem_GapP_of_polyTime (.of_tidy hD'_pt)) (GapP.comp_mem hH (.of_tidy (by fun_prop)))
+      hT'_pt.computableInPolyTime (mem_GapP_of_polyTime (.of_tidy hD'_pt))
+        (GapP.comp_mem hH (.of_tidy (by fun_prop)))
   have hsum : (fun a => ∑ w : Fin (r a) → Bool, F (a, List.ofFn w)) ∈ GapP enc :=
     GapP.sum_bits_mem hF (.of_tidy hr)
   refine ⟨S, hS, hSn, ?_⟩

@@ -62,7 +62,10 @@ theorem mem_FewP : A ∈ FewP enc ↔ ∃ (p q : Polynomial ℕ) (V : α × List
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
     (∀ a, acceptCount V a (p.eval (enc a).length) ≤ q.eval (enc a).length) ∧
     ∀ a, a ∈ A ↔ 0 < acceptCount V a (p.eval (enc a).length) := by
-  have this : A ∈ FewP enc ↔ ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ (∀ a, acceptCount V a (p.eval (enc a).length) ≤ q.eval (enc a).length) ∧ ∀ a, a ∈ A ↔ 0 < acceptCount V a (p.eval (enc a).length) := by
+  have this : A ∈ FewP enc ↔ ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
+      (∀ a, acceptCount V a (p.eval (enc a).length) ≤ q.eval (enc a).length) ∧ ∀ a, a ∈ A ↔ 0 <
+      acceptCount V a (p.eval (enc a).length) := by
     constructor
     · rintro ⟨f, ⟨p, V, hV, hf⟩, q, hle, hA⟩
       exact ⟨p, q, V, hV.tidy, fun a => hf a ▸ hle a, fun a => by rw [hA a, hf a]⟩

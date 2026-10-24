@@ -487,7 +487,8 @@ budget of the state. -/
 theorem step_inSpace :
     ComputableInSpace (fun p : State × Bool => machine.step p.1 p.2)
       (encPair encState encBool) (encPair encState encBits) fun p => stateBudget p.1 := by
-  have this : ComputableTidilyInSpace (fun p : State × Bool => machine.step p.1 p.2) (encPair encState encBool) (encPair encState encBits) fun p => stateBudget p.1 := by
+  have this : ComputableTidilyInSpace (fun p : State × Bool => machine.step p.1 p.2)
+      (encPair encState encBool) (encPair encState encBits) fun p => stateBudget p.1 := by
     have h := stepT_inSpace.of_encIn_eq (α' := State × Bool) (encIn' := encPair encState encBool)
       (fun p ↦ (p.1.toTuple, p.2)) fun _ ↦ rfl
     refine (h.mono_le fun p ↦ ?_).of_enc_eq fun _ ↦ rfl

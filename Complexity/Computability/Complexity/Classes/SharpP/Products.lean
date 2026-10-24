@@ -106,7 +106,8 @@ theorem prod_range_mem {f : α × ℕ → ℕ} {r : α → ℕ}
   have hk : ComputableTidilyInPolyTime k enc encUnary := by dsimp [k]; fun_prop
   have hW : ComputableTidilyInPolyTime W
       (encPair (encPair enc encUnary) encBits) encBool := by dsimp [W, width]; fun_prop
-  convert mem_SharpP_of_polyTime_length (polyTime_indexedProductVerifier (.of_tidy hr) (.of_tidy hk) (.of_tidy hW))
+  convert mem_SharpP_of_polyTime_length
+    (polyTime_indexedProductVerifier (.of_tidy hr) (.of_tidy hk) (.of_tidy hW))
     (.of_tidy (ComputableTidilyInPolyTime.unary_mul.comp (hr.prod hk))) using 1
   ext a
   change _ = acceptCount (indexedProductVerifier r k W) a (r a * k a)

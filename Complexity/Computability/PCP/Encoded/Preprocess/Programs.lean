@@ -258,7 +258,8 @@ theorem isPolyTime_preprocessRelation [Finite D] [DecidableEq α]
   have heval := heval.tidy
   have hleft := hleft.tidy
   have hright := hright.tidy
-  exact .of_tidy ((polytime_preprocessRelation (dartEncoding := dartEncoding) eval fallback heval).comp
+  exact .of_tidy
+    ((polytime_preprocessRelation (dartEncoding := dartEncoding) eval fallback heval).comp
     (hgraph.prod (hdart.prod (hleft.prod hright))))
 
 end Cslib.PCP.Encoded.Graph

@@ -64,7 +64,9 @@ theorem mem_GapP_of_polyTime {f : α → ℤ} (hf : ComputableInPolyTime f enc e
   have hf := hf.tidy
   have hp := mem_SharpP_of_polyTime (.of_tidy (ComputableTidilyInPolyTime.intBin_toNat.comp hf))
   have hn := mem_SharpP_of_polyTime
-    (.of_tidy (ComputableTidilyInPolyTime.intBin_toNat.comp (ComputableTidilyInPolyTime.intBin_neg.comp hf)))
+    (.of_tidy
+      (ComputableTidilyInPolyTime.intBin_toNat.comp
+      (ComputableTidilyInPolyTime.intBin_neg.comp hf)))
   exact ⟨_, hp, _, hn, fun a => by simp only [Function.comp_apply]; lia⟩
 
 /-- A polynomial-time Boolean test may select between two #P functions on the same input.

@@ -217,7 +217,8 @@ unary in polynomial time with `n ≤ f n`, then every problem decidable by a non
 within time `O(2 ^ f n)` is decidable deterministically within time `O(2 ^ (d * f n))` for some
 `d`. -/
 theorem NTIME_two_pow_subset_iUnion_DTIME_of_NP_subset_P (hNP : NP encBits ⊆ P encBits)
-    {f : ℕ → ℕ} (hf : Turing.MultiTapeTM.ComputableInPolyTime f encUnary encUnary) (hn : ∀ n, n ≤ f n) :
+    {f : ℕ → ℕ} (hf : Turing.MultiTapeTM.ComputableInPolyTime f encUnary encUnary)
+      (hn : ∀ n, n ≤ f n) :
     NTIME enc (fun n => 2 ^ f n) ⊆ ⋃ d, DTIME enc fun n => 2 ^ (d * f n) := by
   have hf := hf.tidy
   intro A hA
@@ -259,7 +260,8 @@ theorem NE_subset_E_of_NP_subset_P (hNP : NP encBits ⊆ P encBits) : NE enc ⊆
     NTIME_mono (fun n => Nat.pow_le_pow_right (by norm_num)
       (Nat.mul_le_mul_right n (Nat.le_succ k))) hk
   obtain ⟨d, hd⟩ := Set.mem_iUnion.mp (NTIME_two_pow_subset_iUnion_DTIME_of_NP_subset_P hNP
-    (f := fun n => (k + 1) * n) (.of_tidy (by fun_prop)) (fun n => Nat.le_mul_of_pos_left n (Nat.succ_pos k))
+    (f := fun n => (k + 1) * n) (.of_tidy (by fun_prop))
+      (fun n => Nat.le_mul_of_pos_left n (Nat.succ_pos k))
     hk')
   exact mem_E_iff.mpr ⟨d * (k + 1), by simpa only [Nat.mul_assoc] using hd⟩
 
@@ -271,7 +273,8 @@ theorem NEXP_subset_EXP_of_NP_subset_P (hNP : NP encBits ⊆ P encBits) : NEXP e
     NTIME_mono_of_eventually_le (Filter.eventually_atTop.mpr ⟨1, fun n hn =>
       Nat.pow_le_pow_right (by norm_num) (Nat.pow_le_pow_right hn (Nat.le_succ k))⟩) hk
   obtain ⟨d, hd⟩ := Set.mem_iUnion.mp (NTIME_two_pow_subset_iUnion_DTIME_of_NP_subset_P hNP
-    (.of_tidy (ComputableTidilyInPolyTime.unary_pow (k + 1))) (fun n => Nat.le_self_pow (by omega) n) hk')
+    (.of_tidy (ComputableTidilyInPolyTime.unary_pow (k + 1)))
+      (fun n => Nat.le_self_pow (by omega) n) hk')
   refine mem_EXP_iff.mpr ⟨k + 2, DTIME_mono_of_eventually_le (Filter.eventually_atTop.mpr
     ⟨d, fun n hn => Nat.pow_le_pow_right (by norm_num) ?_⟩) hd⟩
   rw [pow_succ' n (k + 1)]
@@ -298,8 +301,8 @@ open _root_.Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α : Type} {enc : α ↪ List Bool}
 
-/-- Pulling back a problem `B ∈ NP encBits` along a function `g : α → List Bool` computable tidily
-within time `O(T₀ (enc a).length)` places `g ⁻¹' B` in `NTIME enc (fun n => (T₀ n + 1) ^ d)` for
+/-- Pulling back a problem `B ∈ NP encBits` along a function `g : α → List Bool` computable within
+time `O(T₀ (enc a).length)` places `g ⁻¹' B` in `NTIME enc (fun n => (T₀ n + 1) ^ d)` for
 some `d`: a deterministic machine writes `g a` to a buffer tape and hands off to the halting
 fair-coin certificate verifier for `B`. -/
 theorem preimage_mem_NTIME_of_mem_NP {B : Set (List Bool)} {g : α → List Bool} {T₀ : ℕ → ℕ}

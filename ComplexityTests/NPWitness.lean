@@ -43,7 +43,8 @@ theorem isVerifier_even : IsVerifier encUnary (2 * Polynomial.X + 1)
   isVerifier_witnessVerifier Decoder.unary isHalf_iff fun _ m h => ⟨m, h, by simp; omega⟩
 
 example : {n | ∃ m, m + m = n} ∈ NP encUnary :=
-  mem_NP_of_witness Decoder.unary (p := Polynomial.X) (.of_tidy computableTidilyInPolyTime_isHalf) isHalf_iff
+  mem_NP_of_witness Decoder.unary (p := Polynomial.X) (.of_tidy computableTidilyInPolyTime_isHalf)
+    isHalf_iff
     fun _ m h => ⟨m, h, by simp; omega⟩
 
 -- In: the framed witness `2` for `4`, padded to the certificate length `2 * 4 + 1`.

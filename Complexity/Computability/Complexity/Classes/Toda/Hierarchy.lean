@@ -268,7 +268,8 @@ theorem computableInPolyTime_trialVerifier {W : α × List Bool → Bool}
     (hblock : ComputableInPolyTime block input encBits) :
     ComputableInPolyTime (fun x => trialVerifier W (a x) (u x) (r x) (M x) (level x)
       (seed x) (block x)) input encBool :=
-  .of_tidy (computableTidilyInPolyTime_trialVerifier hW.tidy ha.tidy hu.tidy hr.tidy hM.tidy hlevel.tidy hseed.tidy hblock.tidy)
+  .of_tidy (computableTidilyInPolyTime_trialVerifier hW.tidy ha.tidy hu.tidy hr.tidy hM.tidy
+    hlevel.tidy hseed.tidy hblock.tidy)
 
 private theorem computableTidilyInPolyTime_trialsVerifier {W : α × List Bool → Bool}
     (hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool)
@@ -306,7 +307,8 @@ theorem computableInPolyTime_trialsVerifier {W : α × List Bool → Bool}
     (hy : ComputableInPolyTime y input encBits) :
     ComputableInPolyTime (fun x => trialsVerifier W (a x) (u x) (r x) (seeds x) (M x) (Z x)
       (T x) (B x) (y x)) input encBool :=
-  .of_tidy (computableTidilyInPolyTime_trialsVerifier hW.tidy ha.tidy hu.tidy hr.tidy hseeds.tidy hM.tidy hZ.tidy hT.tidy hB.tidy hy.tidy)
+  .of_tidy (computableTidilyInPolyTime_trialsVerifier hW.tidy ha.tidy hu.tidy hr.tidy hseeds.tidy
+    hM.tidy hZ.tidy hT.tidy hB.tidy hy.tidy)
 
 private theorem computableTidilyInPolyTime_existsVerifier (ℓ m ρ ζ e : Polynomial ℕ)
     {W : α × List Bool → Bool} (hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool) :
@@ -457,7 +459,10 @@ theorem exists_isRandomParityRep_alternation {V : α × List Bool → Bool}
       IsRandomParityRep enc ℓ e ρ ζ W fun a u =>
         Alternation q (ps.map fun p => p.eval (enc a).length) fun w => V (a, u ++ w) = true := by
   have hV := hV.tidy
-  have this : ∀ (q : Bool) (ℓ e : Polynomial ℕ), ∃ (ρ ζ : Polynomial ℕ) (W : α × List Bool → Bool), ComputableTidilyInPolyTime W (encPair enc encBits) encBool ∧ IsRandomParityRep enc ℓ e ρ ζ W fun a u => Alternation q (ps.map fun p => p.eval (enc a).length) fun w => V (a, u ++ w) = true := by
+  have this : ∀ (q : Bool) (ℓ e : Polynomial ℕ), ∃ (ρ ζ : Polynomial ℕ) (W : α × List Bool → Bool),
+      ComputableTidilyInPolyTime W (encPair enc encBits) encBool ∧ IsRandomParityRep enc ℓ e ρ ζ W
+      fun a u => Alternation q (ps.map fun p => p.eval (enc a).length) fun w => V (a, u ++ w) =
+      true := by
     induction ps with
     | nil =>
       intro q ℓ e

@@ -74,7 +74,8 @@ theorem preprocess {f : β → γ} {g : α → β} (hf : ComputableInPolyTimeWit
 /-- Polynomial-time postprocessing of the result, which may also use the argument. -/
 theorem map_with {f : α → β} {g : α → β → γ}
     (hf : ComputableInPolyTimeWithOracle A f input middle)
-    (hg : Turing.MultiTapeTM.ComputableInPolyTime (fun pair => g pair.1 pair.2) (encPair input middle) output) :
+    (hg : Turing.MultiTapeTM.ComputableInPolyTime (fun pair => g pair.1 pair.2)
+      (encPair input middle) output) :
     ComputableInPolyTimeWithOracle A (fun a => g a (f a)) input output := by
   have hg := hg.tidy
   obtain ⟨program, hprogram, heq⟩ := hf
@@ -148,7 +149,8 @@ theorem mem_PWithOracle_self (A : Set (List Bool)) : A ∈ PWithOracle A encBits
 certificate. -/
 theorem PWithOracle_subset_NPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) :
     PWithOracle A enc ⊆ NPWithOracle A enc := fun _ ⟨f, hf, h⟩ =>
-  ⟨0, fun aw => f aw.1, hf.preprocess (.of_tidy (ComputableTidilyInPolyTime.fst enc encBits)), fun a => by
+  ⟨0, fun aw => f aw.1, hf.preprocess (.of_tidy (ComputableTidilyInPolyTime.fst enc encBits)),
+    fun a => by
     simp only [Polynomial.eval_zero, List.length_eq_zero_iff, exists_eq_left, h]⟩
 
 /-- **`P` relative to an oracle is closed under polynomial-time many-one reductions.** -/

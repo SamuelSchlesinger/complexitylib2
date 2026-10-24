@@ -136,7 +136,9 @@ theorem mem_BPP_iff_forall_decidesWithErrorExponent {A : Set α} :
     A ∈ BPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithErrorExponent enc q p V A := by
-  have this : A ∈ BPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithErrorExponent enc q p V A := by
+  have this : A ∈ BPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
+      ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithErrorExponent enc q p
+      V A := by
     rw [mem_BPP]
     refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨12 * q * p, _,
       (computableInPolyTime_repeatMajority hV _ _).tidy, h.repeatMajority q⟩, fun h => ?_⟩

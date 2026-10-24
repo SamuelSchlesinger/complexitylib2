@@ -79,7 +79,8 @@ theorem computableInPolyTime_tokens :
 
 /-- A formula is polynomial-time when its tokens are. -/
 theorem computableInPolyTime_of_tokens {f : γ → QBF ℕ} {l : γ → List (QBF.Kind × ℕ)}
-    (hl : Turing.MultiTapeTM.ComputableInPolyTime l encIn (encList encToken)) (h : ∀ x, (f x).tokens = l x) :
+    (hl : Turing.MultiTapeTM.ComputableInPolyTime l encIn (encList encToken))
+      (h : ∀ x, (f x).tokens = l x) :
     Turing.MultiTapeTM.ComputableInPolyTime f encIn encQBF := by
   have hl := hl.tidy
   exact .of_tidy (hl.of_enc_eq fun x => by rw [encQBF_apply, h])
@@ -177,7 +178,8 @@ theorem computableInPolyTime_lit {v : γ → ℕ} {b : γ → Bool}
 `Cslib.Complexity.encCNF`. -/
 @[fun_prop]
 theorem computableInPolyTime_ofCNF {φ : γ → CNF ℕ}
-    (hφ : Turing.MultiTapeTM.ComputableInPolyTime φ encIn (encList (encList (encPair encNat encBool)))) :
+    (hφ : Turing.MultiTapeTM.ComputableInPolyTime φ encIn
+      (encList (encList (encPair encNat encBool)))) :
     Turing.MultiTapeTM.ComputableInPolyTime (fun x => QBF.ofCNF (φ x)) encIn encQBF :=
   computableInPolyTime_of_tokens (l := fun x => (φ x).flatMap (fun c => (QBF.Kind.and, 0) ::
       (c.flatMap (fun l => (QBF.Kind.or, 0) :: (QBF.lit l.1 l.2).tokens) ++ [(QBF.Kind.bot, 0)])) ++
@@ -191,7 +193,8 @@ theorem computableInPolyTime_blockVar {kind i j : γ → ℕ}
     (hkind : Turing.MultiTapeTM.ComputableInPolyTime kind encIn encUnary)
     (hi : Turing.MultiTapeTM.ComputableInPolyTime i encIn encUnary)
     (hj : Turing.MultiTapeTM.ComputableInPolyTime j encIn encUnary) :
-    Turing.MultiTapeTM.ComputableInPolyTime (fun x => blockVar (kind x) (i x) (j x)) encIn encNat := by
+    Turing.MultiTapeTM.ComputableInPolyTime (fun x => blockVar (kind x) (i x) (j x)) encIn encNat :=
+      by
   have hkind := hkind.tidy
   have hi := hi.tidy
   have hj := hj.tidy
@@ -220,7 +223,8 @@ theorem computableInPolyTime_eqBlock {w k i k' i' : γ → ℕ}
     (hi : Turing.MultiTapeTM.ComputableInPolyTime i encIn encUnary)
     (hk' : Turing.MultiTapeTM.ComputableInPolyTime k' encIn encUnary)
     (hi' : Turing.MultiTapeTM.ComputableInPolyTime i' encIn encUnary) :
-    Turing.MultiTapeTM.ComputableInPolyTime (fun x => eqBlock (w x) (k x) (i x) (k' x) (i' x)) encIn encQBF := by
+    Turing.MultiTapeTM.ComputableInPolyTime (fun x => eqBlock (w x) (k x) (i x) (k' x) (i' x)) encIn
+      encQBF := by
   unfold eqBlock
   fun_prop
 
@@ -231,7 +235,8 @@ theorem computableInPolyTime_isBlock {w k i : γ → ℕ} {u : γ → List Bool}
     (hk : Turing.MultiTapeTM.ComputableInPolyTime k encIn encUnary)
     (hi : Turing.MultiTapeTM.ComputableInPolyTime i encIn encUnary)
     (hu : Turing.MultiTapeTM.ComputableInPolyTime u encIn encBits) :
-    Turing.MultiTapeTM.ComputableInPolyTime (fun x => isBlock (w x) (k x) (i x) (u x)) encIn encQBF := by
+    Turing.MultiTapeTM.ComputableInPolyTime (fun x => isBlock (w x) (k x) (i x) (u x)) encIn
+      encQBF := by
   unfold isBlock
   fun_prop
 
@@ -249,7 +254,8 @@ theorem computableInPolyTime_halves {w i : γ → ℕ}
 theorem computableInPolyTime_levelTokens {w i : γ → ℕ}
     (hw : Turing.MultiTapeTM.ComputableInPolyTime w encIn encUnary)
     (hi : Turing.MultiTapeTM.ComputableInPolyTime i encIn encUnary) :
-    Turing.MultiTapeTM.ComputableInPolyTime (fun x => levelTokens (w x) (i x)) encIn (encList encToken) := by
+    Turing.MultiTapeTM.ComputableInPolyTime (fun x => levelTokens (w x) (i x)) encIn
+      (encList encToken) := by
   unfold levelTokens
   fun_prop
 
@@ -275,7 +281,8 @@ theorem computableInPolyTime_savitchFormula {w d : γ → ℕ} {base : γ → QB
     (hbase : Turing.MultiTapeTM.ComputableInPolyTime base encIn encQBF)
     (hu : Turing.MultiTapeTM.ComputableInPolyTime u encIn encBits)
     (hv : Turing.MultiTapeTM.ComputableInPolyTime v encIn encBits) :
-    Turing.MultiTapeTM.ComputableInPolyTime (fun x => savitchFormula (w x) (d x) (base x) (u x) (v x)) encIn
+    Turing.MultiTapeTM.ComputableInPolyTime
+      (fun x => savitchFormula (w x) (d x) (base x) (u x) (v x)) encIn
       encQBF := by
   unfold savitchFormula
   fun_prop
@@ -295,7 +302,8 @@ private theorem computableTidilyInPolyTime_index_unary :
 /-- The numbering of the tableau variables by odd numbers, in binary. -/
 @[fun_prop]
 theorem computableInPolyTime_tabVar :
-    Turing.MultiTapeTM.ComputableInPolyTime (tabVar (k := k) (State := State)) CookLevin.encVar encNat := by
+    Turing.MultiTapeTM.ComputableInPolyTime (tabVar (k := k) (State := State)) CookLevin.encVar
+      encNat := by
   refine .of_tidy ?_
   have := computableTidilyInPolyTime_index_unary (k := k) (State := State)
   have h : ComputableTidilyInPolyTime (fun v => tabVar (k := k) (State := State) v)
@@ -360,7 +368,8 @@ theorem computableInPolyTime_width :
 /-- **The test of one step or none between codes is polynomial-time**, on the instance and the
 concatenation of the two codes. -/
 theorem computableInPolyTime_edgeTest :
-    Turing.MultiTapeTM.ComputableInPolyTime (edgeTest enc ntm c d) (encPair enc encBits) encBool := by
+    Turing.MultiTapeTM.ComputableInPolyTime (edgeTest enc ntm c d) (encPair enc encBits) encBool :=
+      by
   refine .of_tidy ?_
   have hw : ComputableTidilyInPolyTime (fun p : α × List Bool => width enc ntm c d p.1)
       (encPair enc encBits) encUnary :=
