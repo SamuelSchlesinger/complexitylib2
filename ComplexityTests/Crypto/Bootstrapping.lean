@@ -56,7 +56,7 @@ variable {E : Scheme} {secretWidth ciphertextWidth : ℕ → ℕ}
   (hevaluate : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
     encBits (fun p => E.evaluate p.1 p.2.1 p.2.2.1 p.2.2.2))
-  (hD : ComputableTidilyInPolyTime
+  (hD : ComputableInPolyTime
     (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
     encUnary (Boolean.encCircuit 1))
 
@@ -64,7 +64,7 @@ variable {E : Scheme} {secretWidth ciphertextWidth : ℕ → ℕ}
 -- All properties concern the same constructed scheme, with ordinary base IND-CPA only.
 example (P : ℕ → Prop) :
     ∃ budget : ℕ → ℕ,
-      ComputableTidilyInPolyTime budget encUnary encUnary ∧
+      ComputableInPolyTime budget encUnary encUnary ∧
       (∀ n, predicateDepth P n ≤ budget n) ∧
       (Leveled.scheme D budget).Correct ∧
       (∀ n c, c.2.depth ≤ predicateDepth P n → (Leveled.scheme D budget).permitted n c) ∧
@@ -75,7 +75,7 @@ example (P : ℕ → Prop) :
       IsPPTOn encUnary (encPair encBits encBits) (Leveled.scheme D budget).keyGen ∧
       IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
         (fun p => (Leveled.scheme D budget).encrypt p.1 p.2.1 p.2.2) ∧
-      ComputableTidilyInPolyTime
+      ComputableInPolyTime
         (fun p : ℕ × List Bool × List Bool => (Leveled.scheme D budget).decrypt p.1 p.2.1 p.2.2)
         (encPair encUnary (encPair encBits encBits)) encBool ∧
       IsPPTOn
@@ -87,7 +87,7 @@ example (P : ℕ → Prop) :
 
 -- An eventual degree-one bound cannot justify silently discarding the first 100 parameters.
 example : ∃ budget : ℕ → ℕ,
-    ComputableTidilyInPolyTime budget encUnary encUnary ∧
+    ComputableInPolyTime budget encUnary encUnary ∧
     1000000000000 ≤ budget 0 ∧
     (∀ n, spikedDepth n ≤ budget n) ∧
     (Leveled.scheme D budget).Correct ∧
@@ -109,7 +109,7 @@ example : tagged.Correct ∧ tagged.FixedWidth (fun _ => 1) (fun _ => 2) ∧
     IsPPTOn
       (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
       encBits (fun p => tagged.evaluate p.1 p.2.1 p.2.2.1 p.2.2.2) ∧
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun n => (⟨_, decryptionCircuits.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
       encUnary (Boolean.encCircuit 1) :=
   ⟨tagged_correct, tagged_width, tagged_bootstrappable, keyGen_ppt, encrypt_ppt,
@@ -125,7 +125,7 @@ example (P : ℕ → Prop) :
 -- One native decryption certificate works across all budgets and all input serializations.
 example : ∃ (time space : ℕ × List Bool × List Bool → ℕ) (bound : ℕ → ℕ),
     PolynomiallyBounded bound ∧
-    (∀ budget : ℕ → ℕ, ComputableTidilyInTimeAndSpace
+    (∀ budget : ℕ → ℕ, ComputableInTimeAndSpace
       (fun p : ℕ × List Bool × List Bool =>
         (Leveled.scheme decryptionCircuits budget).decrypt p.1 p.2.1 p.2.2)
       (encPair encUnary (encPair encBits encBits)) encBool time space) ∧
