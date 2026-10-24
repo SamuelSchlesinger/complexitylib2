@@ -507,4 +507,20 @@ theorem bitsZipWithInput (op : Bool → Bool → Bool) {α : Type} {input : α �
     ComputableInPolyTime (fun a => (left a).zipWith op (right a)) input encBits :=
   .of_tidy (ComputableTidilyInPolyTime.bitsZipWithInput op hleft.tidy hright.tidy)
 
+/-- Convert framed Boolean lists to raw words without changing their contents. -/
+@[fun_prop]
+theorem listToBits : ComputableInPolyTime (fun l => l) (encList encBool) encBits :=
+  .of_tidy ComputableTidilyInPolyTime.listToBits
+
+/-- Read a row of a computed word, charging padding and both computed unary indices. -/
+@[fun_prop]
+theorem bitsRowWithInput {α : Type} {input : α ↪ List Bool}
+    {width row : α → ℕ} {word : α → List Bool}
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hrow : ComputableInPolyTime row input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => Cslib.BitString.listRow (width a) (row a) (word a))
+      input encBits :=
+  .of_tidy (ComputableTidilyInPolyTime.bitsRowWithInput hwidth.tidy hrow.tidy hword.tidy)
+
 end Turing.MultiTapeTM.ComputableInPolyTime
