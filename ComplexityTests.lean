@@ -84,6 +84,7 @@ import ComplexityTests.CountingProducts
 import ComplexityTests.CountingSpace
 import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
+import ComplexityTests.Crypto.Commitment
 import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.GMWPointwise
