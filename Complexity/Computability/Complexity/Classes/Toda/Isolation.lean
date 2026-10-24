@@ -39,7 +39,7 @@ A *trial* sums the numbers `c x` over the strings `x` passing the test of some l
 seed; its parity is the parity of the number of `x` with `c x` odd that pass the test
 (`Finset.odd_sum_iff_odd_card_odd`). The trials are combined by the parity form of a
 disjunction: `1 + ∏ⱼ (1 + cⱼ)` is odd exactly when some `cⱼ` is
-(`Cslib.Complexity.Toda.odd_one_add_prod_one_add`). Running `4 (E + 1)` rounds, each with one
+(`Cslib.BitString.odd_one_add_prod_one_add`). Running `4 (E + 1)` rounds, each with one
 trial at every level `k ≤ M + 2`, the combined number is odd exactly when `S` is nonempty, unless
 some `c x` has the wrong parity or every round fails to isolate an element of `S`
 (`Cslib.Complexity.Toda.two_pow_mul_card_filter_not_odd_iff_le`). With `c x` depending on
@@ -54,7 +54,6 @@ first failure has probability at most `2 ^ M * 2 ^ (-(E + M + 1))`, the second a
 
 ## Main results
 
-* `Cslib.Complexity.Toda.odd_one_add_prod_one_add`: the parity form of a disjunction.
 * `Cslib.Complexity.Toda.hashesToZero_ofFn_iff`: the test is the affine hash hitting `0`.
 * `Cslib.Complexity.Toda.three_mul_two_pow_le_card_filter_card_eq_one`: isolation with
   probability at least `3 / 16`.
@@ -73,58 +72,7 @@ first failure has probability at most `2 ^ M * 2 ^ (-(E + M + 1))`, the second a
 
 namespace Cslib.Complexity.Toda
 
-open Finset Turing.MultiTapeTM
-
-/-! ### Counting words -/
-
-/-- A product of naturals is odd exactly when every factor is. -/
-theorem odd_prod_iff {ι : Type*} {s : Finset ι} (f : ι → ℕ) :
-    Odd (∏ j ∈ s, f j) ↔ ∀ j ∈ s, Odd (f j) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | insert a s ha ih => rw [Finset.prod_insert ha, Nat.odd_mul, ih, Finset.forall_mem_insert]
-
-/-- **The parity form of a disjunction**: `1 + ∏ⱼ (1 + cⱼ)` is odd exactly when some `cⱼ` is
-odd. -/
-theorem odd_one_add_prod_one_add {ι : Type*} [Fintype ι] (c : ι → ℕ) :
-    Odd (1 + ∏ j, (1 + c j)) ↔ ∃ j, Odd (c j) := by
-  rw [Nat.add_comm, Nat.odd_add_one, odd_prod_iff]
-  simp only [mem_univ, true_imp_iff, not_forall]
-  refine exists_congr fun j => ?_
-  rw [Nat.add_comm, Nat.odd_add_one, not_not]
-
-/-- The functions `s : ι → X` whose values at the `t` distinct points `f i` lie in `F`: `F` is
-chosen at those points and anything elsewhere. -/
-private theorem card_filter_forall_apply_mem {ι X : Type*} [Fintype ι] [DecidableEq ι] [Fintype X]
-    [DecidableEq X] {t : ℕ} (f : Fin t → ι) (hf : Function.Injective f) (F : Finset X) :
-    (univ.filter fun s : ι → X => ∀ i, s (f i) ∈ F).card =
-      #F ^ t * Fintype.card X ^ (Fintype.card ι - t) := by
-  classical
-  have h : (univ.filter fun s : ι → X => ∀ i, s (f i) ∈ F) =
-      Fintype.piFinset fun j => if j ∈ Finset.image f univ then F else univ := by
-    ext s
-    simp only [mem_filter, mem_univ, true_and, Fintype.mem_piFinset]
-    constructor
-    · intro hs j
-      split
-      · rename_i hj
-        obtain ⟨i, -, rfl⟩ := Finset.mem_image.1 hj
-        exact hs i
-      · exact mem_univ _
-    · intro hs i
-      have := hs (f i)
-      rwa [ite_eq_left_iff.2 (fun h => absurd (Finset.mem_image_of_mem f (mem_univ i)) h)]
-        at this
-  rw [h, Fintype.card_piFinset]
-  simp only [apply_ite Finset.card, card_univ]
-  rw [Finset.prod_ite, Finset.prod_const, Finset.prod_const]
-  have himg : (univ.filter fun j => j ∈ Finset.image f univ) = Finset.image f univ := by
-    ext j; simp
-  have hcard : #(Finset.image f univ) = t := by
-    rw [Finset.card_image_of_injective _ hf, card_univ, Fintype.card_fin]
-  rw [himg, hcard, Finset.filter_not, himg, Finset.card_sdiff_of_subset (subset_univ _), hcard,
-    card_univ]
+open Finset BitString Turing.MultiTapeTM
 
 /-! ### The Valiant–Vazirani test -/
 
@@ -246,27 +194,6 @@ private theorem two_pow_mul_thirteen_pow_le (E : ℕ) :
     2 ^ (E + 1) * 13 ^ (4 * (E + 1)) ≤ 16 ^ (4 * (E + 1)) := by
   rw [pow_mul, pow_mul, ← mul_pow]
   exact Nat.pow_le_pow_left (by norm_num) _
-
-/-- **The union bound for random strings**: if each `x` is bad for at most a `2 ^ (-e')` fraction
-of the random strings, some `x` of length `M` is bad for at most a `2 ^ (M - e')` fraction. -/
-private theorem two_pow_mul_card_filter_exists_le {R M e' : ℕ}
-    {Bad : (Fin R → Bool) → (Fin M → Bool) → Prop}
-    [∀ r x, Decidable (Bad r x)]
-    (h : ∀ x, 2 ^ e' * (univ.filter fun r => Bad r x).card ≤ 2 ^ R) :
-    2 ^ e' * (univ.filter fun r => ∃ x, Bad r x).card ≤ 2 ^ M * 2 ^ R := by
-  classical
-  have hsub : (univ.filter fun r => ∃ x, Bad r x) ⊆
-      univ.biUnion fun x => univ.filter fun r => Bad r x := by
-    intro r hr
-    simp only [mem_filter, mem_univ, true_and] at hr
-    obtain ⟨x, hx⟩ := hr
-    exact mem_biUnion.2 ⟨x, mem_univ _, by simpa using hx⟩
-  calc 2 ^ e' * (univ.filter fun r => ∃ x, Bad r x).card
-      ≤ 2 ^ e' * ∑ x, (univ.filter fun r => Bad r x).card :=
-        Nat.mul_le_mul_left _ ((card_le_card hsub).trans card_biUnion_le)
-    _ = ∑ x : Fin M → Bool, 2 ^ e' * (univ.filter fun r => Bad r x).card := mul_sum ..
-    _ ≤ ∑ _x : Fin M → Bool, 2 ^ R := sum_le_sum fun x _ => h x
-    _ = 2 ^ M * 2 ^ R := by simp
 
 /-- **The isolation step errs with probability at most `2 ^ (-E)`.** Let `c r x` be numbers
 whose parity says whether `x ∈ S`, except for at most a `2 ^ (-e')` fraction of the random

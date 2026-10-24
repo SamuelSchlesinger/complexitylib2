@@ -8,8 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.USTCON.Reader.Defs
-import Mathlib.Data.Nat.Bits
-import Mathlib.Data.Nat.Size
+import Complexity.Foundations.Data.Nat.Bits
 
 /-!
 # Correctness of the read machine for undirected connectivity
@@ -143,14 +142,6 @@ theorem readBit_of_addr_none {q : State} (h : addr q = none) :
 
 /-! ### The header -/
 
-/-- Halving a positive number removes one binary digit. -/
-theorem size_div_two_add_one {n : ℕ} (hn : n ≠ 0) : Nat.size (n / 2) + 1 = Nat.size n := by
-  have hpos := Nat.size_pos.2 (Nat.pos_of_ne_zero hn)
-  rw [← Nat.size_eq_bits_len, ← Nat.size_eq_bits_len, ← Nat.div2_val, Nat.div2_bits_eq_tail,
-    List.length_tail]
-  rw [← Nat.size_eq_bits_len] at hpos
-  omega
-
 /-- The state after the header: the number of vertices, the source and the target are counted,
 and the halvings start from the depth `524` and the walk length `136240`. -/
 def headerState (I : USTCONInstance) : State :=
@@ -215,7 +206,7 @@ private theorem reaches_size (q : State) (m d l : ℕ) :
       · rw [readBit_of_addr_none rfl]
         simp [step, hm.ne']
       · have h := ih (m / 2) (Nat.div_lt_self hm (by norm_num)) (d + 16) (l + 4168)
-        have hs := size_div_two_add_one hm.ne'
+        have hs := Nat.size_div_two_add_one hm.ne'
         have e₁ : d + 16 * Nat.size m = d + 16 + 16 * Nat.size (m / 2) := by rw [← hs]; ring
         have e₂ : l + 4168 * Nat.size m = l + 4168 + 4168 * Nat.size (m / 2) := by
           rw [← hs]; ring

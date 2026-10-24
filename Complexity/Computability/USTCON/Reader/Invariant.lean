@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.USTCON.Reader.Correct
 public import Complexity.Computability.USTCON.Reader.Encode
-import Mathlib.Data.Nat.Size
+import Complexity.Foundations.Data.Nat.Bits
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LinearSpaceArith
 
 /-!
@@ -179,7 +179,7 @@ private theorem inv_size {m d l : ℕ} (hm : m ≤ I.n) (hd : d + 16 * Nat.size 
   · simp only [Nat.size_zero, mul_zero, add_zero] at hd hl
     simp only [step, headerState, init, ite_true]
     exact ⟨by constructor <;> bound_tac, rfl, rfl, rfl, hd, hl⟩
-  · have hsz := size_div_two_add_one hm₀.ne'
+  · have hsz := Nat.size_div_two_add_one hm₀.ne'
     simp only [step, headerState, init, hm₀.ne', ite_false]
     refine ⟨by constructor <;> bound_tac, rfl, ?_, ?_⟩ <;> dsimp only <;> omega
 

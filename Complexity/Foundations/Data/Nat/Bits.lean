@@ -10,8 +10,8 @@ module
 public import Complexity.Init
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Data.Nat.Bits
+public import Mathlib.Data.Nat.Size
 import Mathlib.Data.List.OfFn
-import Mathlib.Data.Nat.Size
 
 /-!
 # Recovering a natural number from its binary digits
@@ -24,6 +24,7 @@ with initial value zero reconstructs the original number.
 * `Nat.foldr_bit_bits`: folding `Nat.bit` over the binary representation of `n` gives `n`.
 * `Nat.foldr_bit_lt`, `Nat.foldr_bit_testBit`: fixed-width little-endian reconstruction.
 * `Nat.foldr_bit_ofFn`: reconstruction is the sum of the digits' binary place values.
+* `Nat.size_div_two_add_one`: halving a positive number removes one binary digit.
 -/
 
 @[expose] public section
@@ -71,3 +72,11 @@ theorem Nat.foldr_bit_testBit {n K : ℕ} (h : n.size ≤ K) :
     rw [List.range_succ_eq_map, List.map_cons, List.map_map, List.foldr_cons]
     have hmap : n.testBit ∘ Nat.succ = (n / 2).testBit := funext fun i => Nat.testBit_succ n i
     rw [hmap, ih hn, ← Nat.shiftRight_one, Nat.bit_testBit_zero_shiftRight_one]
+
+/-- Halving a positive number removes one binary digit. -/
+theorem Nat.size_div_two_add_one {n : ℕ} (hn : n ≠ 0) : Nat.size (n / 2) + 1 = Nat.size n := by
+  have hpos := Nat.size_pos.2 (Nat.pos_of_ne_zero hn)
+  rw [← Nat.size_eq_bits_len, ← Nat.size_eq_bits_len, ← Nat.div2_val, Nat.div2_bits_eq_tail,
+    List.length_tail]
+  rw [← Nat.size_eq_bits_len] at hpos
+  omega

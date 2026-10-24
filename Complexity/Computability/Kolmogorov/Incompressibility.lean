@@ -22,8 +22,6 @@ of length `n` have complexity below `n - c` [Li and Vitányi, Chapter 2][LiVitan
 
 ## Main results
 
-* `Cslib.Kolmogorov.encard_setOf_length_lt_add_one`: there are `2 ^ n - 1` binary strings of
-  length below `n`, using `Cslib.BitString.encard_setOf_length_eq` for each exact length.
 * `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_ecomplexity_lt`,
   `Cslib.Kolmogorov.DescriptionMethod.encard_setOf_etimeBoundedComplexity_lt`: fewer than `2 ^ r`
   objects have (time-bounded) complexity below `r`.
@@ -48,24 +46,6 @@ of length `n` have complexity below `n - c` [Li and Vitányi, Chapter 2][LiVitan
 
 namespace Cslib.Kolmogorov
 
-/-! ### Counting binary strings -/
-
-/-- There are `2 ^ n - 1` binary strings of length below `n`. -/
-theorem encard_setOf_length_lt_add_one (n : ℕ) :
-    {p : List Bool | p.length < n}.encard + 1 = 2 ^ n := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    have hunion : {p : List Bool | p.length < n + 1} =
-        {p | p.length < n} ∪ {p | p.length = n} := by
-      ext p
-      simp only [Set.mem_ofPred_eq, Set.mem_union]
-      omega
-    have hdisj : Disjoint {p : List Bool | p.length < n} {p | p.length = n} :=
-      Set.disjoint_left.mpr fun _ hlt heq => Nat.ne_of_lt hlt heq
-    rw [hunion, Set.encard_union_eq hdisj, add_right_comm, ih, BitString.encard_setOf_length_eq,
-      pow_succ, mul_two]
-
 namespace DescriptionMethod
 
 variable {α : Type*} (M : DescriptionMethod α)
@@ -85,8 +65,10 @@ theorem encard_setOf_ecomplexity_lt (r : ℕ) : {x | M.ecomplexity x < r}.encard
     Set.encard_le_encard_of_injOn (fun _ hx => (hf hx).1)
       fun _ hx _ hy hxy => (hf hx).2.unique (hxy ▸ (hf hy).2)
   have htop : {p : List Bool | p.length < r}.encard ≠ ⊤ :=
-    ne_top_of_le_ne_top (by simp) (le_self_add.trans_eq (encard_setOf_length_lt_add_one r))
-  rw [← ENat.add_one_le_iff (ne_top_of_le_ne_top htop hle), ← encard_setOf_length_lt_add_one r]
+    ne_top_of_le_ne_top (by simp)
+      (le_self_add.trans_eq (BitString.encard_setOf_length_lt_add_one r))
+  rw [← ENat.add_one_le_iff (ne_top_of_le_ne_top htop hle),
+    ← BitString.encard_setOf_length_lt_add_one r]
   exact add_le_add_left hle 1
 
 /-- Fewer than `2 ^ r` objects have time-bounded complexity below `r`, for every time bound. -/

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.PCP.RegularConstraintGraph
 public import Complexity.Foundations.Combinatorics.Expander.Mixing
+import Complexity.Foundations.Data.Finset.Quantile
 
 /-!
 # Degree reduction
@@ -69,22 +70,6 @@ in Dinur's analysis.
 @[expose] public section
 
 open Finset
-
-/-- **Plurality**: some value of a function on a finite type is taken at least as often as any
-other. -/
-private theorem Fintype.exists_forall_card_filter_le_card_filter {ι α : Type*} [Fintype ι]
-    [Nonempty α]
-    [DecidableEq α] (f : ι → α) : ∃ a, ∀ b, #{i | f i = b} ≤ #{i | f i = a} := by
-  rcases isEmpty_or_nonempty ι with h | ⟨⟨i₀⟩⟩
-  · exact ⟨Classical.arbitrary α, fun b ↦ by simp [univ_eq_empty]⟩
-  obtain ⟨i, -, hi⟩ := univ.exists_max_image (fun i ↦ #{j | f j = f i}) ⟨i₀, mem_univ _⟩
-  refine ⟨f i, fun b ↦ ?_⟩
-  by_cases hb : ∃ j, f j = b
-  · obtain ⟨j, rfl⟩ := hb
-    exact hi j (mem_univ _)
-  · simp only [not_exists] at hb
-    rw [filter_false_of_mem fun j _ ↦ hb j, Finset.card_empty]
-    exact Nat.zero_le _
 
 namespace Cslib.PCP
 

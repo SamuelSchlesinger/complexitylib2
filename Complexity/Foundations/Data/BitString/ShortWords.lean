@@ -31,6 +31,8 @@ leaves some word of length `n` unused.
 ## Main results
 
 * `Cslib.BitString.encard_setOf_length_eq`: there are `2 ^ n` words of length `n`.
+* `Cslib.BitString.encard_setOf_length_lt_add_one`: there are `2 ^ n - 1` words of length below
+  `n`.
 * `Cslib.BitString.exists_length_eq_notMem`: fewer than `2 ^ n` words leave a word of length `n`
   unused.
 * `Cslib.BitString.mem_shortWords`: membership is the length bound.
@@ -49,6 +51,22 @@ theorem encard_setOf_length_eq (n : ℕ) : {p : List Bool | p.length = n}.encard
   change ENat.card (List.Vector Bool n) = _
   rw [ENat.card_eq_coe_fintype_card, card_vector]
   simp
+
+/-- There are `2 ^ n - 1` binary strings of length below `n`. -/
+theorem encard_setOf_length_lt_add_one (n : ℕ) :
+    {p : List Bool | p.length < n}.encard + 1 = 2 ^ n := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    have hunion : {p : List Bool | p.length < n + 1} =
+        {p | p.length < n} ∪ {p | p.length = n} := by
+      ext p
+      simp only [Set.mem_ofPred_eq, Set.mem_union]
+      omega
+    have hdisj : Disjoint {p : List Bool | p.length < n} {p | p.length = n} :=
+      Set.disjoint_left.mpr fun _ hlt heq => Nat.ne_of_lt hlt heq
+    rw [hunion, Set.encard_union_eq hdisj, add_right_comm, ih, encard_setOf_length_eq,
+      pow_succ, mul_two]
 
 /-- Fewer than `2 ^ n` words leave a word of length `n` unused. -/
 theorem exists_length_eq_notMem (Q : List (List Bool)) (n : ℕ) (hQ : Q.length < 2 ^ n) :
