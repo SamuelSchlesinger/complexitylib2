@@ -338,6 +338,7 @@ import ComplexityTests.PPTTactic
 import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
+import ComplexityTests.PartialMCSP
 import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts

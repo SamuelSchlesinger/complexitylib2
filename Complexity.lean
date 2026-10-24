@@ -739,6 +739,7 @@ public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.FineGrained.Exponents
 public import Complexity.Computability.Complexity.FineGrained.GraphProblems
 public import Complexity.Computability.Complexity.FineGrained.OrthogonalVectors
+public import Complexity.Computability.Complexity.FineGrained.PermutationIndependentSet
 public import Complexity.Computability.Complexity.FineGrained.Reduction
 public import Complexity.Computability.Complexity.FineGrained.Sparsification
 public import Complexity.Computability.Complexity.HardnessEncoding.PolyTime
@@ -840,6 +841,8 @@ public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.NP
+public import Complexity.Computability.MCSP.Partial
+public import Complexity.Computability.MCSP.PartialNP
 public import Complexity.Computability.MCSP.Shannon
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Computability.Machines.ReadMachine.Basic
