@@ -103,7 +103,7 @@ section Finite
 variable [Fintype I]
 
 /-- Flipping `x` on the set of coordinates where `x` and `y` differ yields `y`. -/
-theorem flip_differences (x y : I → Bool) :
+private theorem flip_differences (x y : I → Bool) :
     flip x (Finset.univ.filter fun i => x i ≠ y i) = y := by
   funext i
   cases hx : x i <;> cases hy : y i <;> simp [flip_apply, hx, hy]
@@ -230,7 +230,7 @@ omit [Fintype I] in
 open scoped Classical in
 /-- Over a finite index type, a function invariant under every single-coordinate flip
 is constant. -/
-theorem eq_of_singleton_invariant [Finite I] (f : (I → Bool) → Bool)
+private theorem eq_of_singleton_invariant [Finite I] (f : (I → Bool) → Bool)
     (h : ∀ x i, f (flip x {i}) = f x) (x y : I → Bool) : f x = f y := by
   have := Fintype.ofFinite I
   have hflip (B : Finset I) : f (flip x B) = f x := by

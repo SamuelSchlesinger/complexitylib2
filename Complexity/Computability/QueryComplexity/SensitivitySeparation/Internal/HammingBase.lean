@@ -56,7 +56,7 @@ variable {I C : Type} [Fintype I]
 
 open scoped Classical in
 /-- Flipping one coordinate yields an input at Hamming distance `1` from the original. -/
-theorem hammingDist_flip_self (x : I → Bool) (i : I) :
+private theorem hammingDist_flip_self (x : I → Bool) (i : I) :
     hammingDist x (flip x {i}) = 1 := by
   have h : (Finset.univ.filter fun j => x j ≠ flip x {i} j) = {i} := by
     ext j
@@ -69,7 +69,7 @@ theorem hammingDist_flip_self (x : I → Bool) (i : I) :
 
 /-- A one-bit flip decreases the Hamming distance to any `z` by at most one:
 `hammingDist x z ≤ hammingDist (flip x {i}) z + 1`. -/
-theorem hammingDist_le_flip_add_one (x z : I → Bool) (i : I) :
+private theorem hammingDist_le_flip_add_one (x z : I → Bool) (i : I) :
     hammingDist x z ≤ hammingDist (flip x {i}) z + 1 := by
   have h := hammingDist_triangle x (flip x {i}) z
   rw [hammingDist_flip_self] at h
@@ -77,7 +77,7 @@ theorem hammingDist_le_flip_add_one (x z : I → Bool) (i : I) :
 
 /-- A one-bit flip increases the Hamming distance to any `z` by at most one:
 `hammingDist (flip x {i}) z ≤ hammingDist x z + 1`. -/
-theorem hammingDist_flip_le_add_one (x z : I → Bool) (i : I) :
+private theorem hammingDist_flip_le_add_one (x z : I → Bool) (i : I) :
     hammingDist (flip x {i}) z ≤ hammingDist x z + 1 := by
   have h := hammingDist_triangle (flip x {i}) x z
   rw [hammingDist_comm (flip x {i}) x, hammingDist_flip_self] at h
@@ -121,7 +121,7 @@ theorem ballPredicate_nested [Fintype C] (centers : C → I → Bool)
 
 /-- If `x` is rejected at radius `R` but `flip x {i}` is accepted, then some center is at
 Hamming distance exactly `R + 1` from `x` and differs from `x` at coordinate `i`. -/
-theorem ballPredicate_zero_flip [Fintype C] (centers : C → I → Bool) (R : ℕ)
+private theorem ballPredicate_zero_flip [Fintype C] (centers : C → I → Bool) (R : ℕ)
     (x : I → Bool) (i : I) (hx : ballPredicate centers R x = false)
     (hi : ballPredicate centers R (flip x {i}) = true) :
     ∃ c, hammingDist x (centers c) = R + 1 ∧ x i ≠ centers c i := by

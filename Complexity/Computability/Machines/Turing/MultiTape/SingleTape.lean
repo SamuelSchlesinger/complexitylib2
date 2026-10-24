@@ -151,7 +151,7 @@ variable [Inhabited Symbol] [Fintype Symbol]
 
 /-- Phase 2 machine: executes the transitions of `tm : SingleTapeTM Symbol` on work tape `0`,
 leaving the input head and output tape untouched. -/
-noncomputable def runOnWork (tm : SingleTapeTM Symbol) : MultiTapeTM 1 Symbol tm.State :=
+def runOnWork (tm : SingleTapeTM Symbol) : MultiTapeTM 1 Symbol tm.State :=
   ofTr tm.q₀ fun q _ work =>
     let res := tm.tr q (work 0)
     { inputTape := .zero
@@ -224,7 +224,7 @@ end RunOnWork
 
 /-- Phase 3 machine: walks right along work tape `0`, emitting each symbol to the output tape, and
 halts on the first blank cell. -/
-noncomputable def emitWork (Symbol : Type*) : MultiTapeTM 1 Symbol Unit :=
+def emitWork (Symbol : Type*) : MultiTapeTM 1 Symbol Unit :=
   ofTr () fun _ _ work =>
     match work 0 with
     | some a => ⟨0, fun _ => (none, 1), some a, some ()⟩

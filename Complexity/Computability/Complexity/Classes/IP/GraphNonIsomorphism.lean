@@ -95,7 +95,8 @@ theorem keyRank_lt (k : Fin n → ℕ) (i : Fin n) : keyRank k i < n := by
         simp
     _ = n := by simp
 
-theorem keyRank_lt_keyRank (k : Fin n → ℕ) {i j : Fin n} (h : k i < k j ∨ (k i = k j ∧ i < j)) :
+private theorem keyRank_lt_keyRank (k : Fin n → ℕ) {i j : Fin n}
+    (h : k i < k j ∨ (k i = k j ∧ i < j)) :
     keyRank k i < keyRank k j := by
   unfold keyRank
   apply Finset.card_lt_card
@@ -123,7 +124,7 @@ noncomputable def rankPerm (k : Fin n → ℕ) : Equiv.Perm (Fin n) :=
   rfl
 
 /-- With distinct keys, permuting the positions permutes the ranks. -/
-theorem keyRank_comp {k : Fin n → ℕ} (hk : Function.Injective k) (σ : Equiv.Perm (Fin n))
+private theorem keyRank_comp {k : Fin n → ℕ} (hk : Function.Injective k) (σ : Equiv.Perm (Fin n))
     (i : Fin n) : keyRank (k ∘ σ) i = keyRank k (σ i) := by
   have hsimp (k : Fin n → ℕ) (hk : Function.Injective k) (i : Fin n) :
       keyRank k i = (Finset.univ.filter fun j => k j < k i).card := by
@@ -141,7 +142,7 @@ theorem keyRank_comp {k : Fin n → ℕ} (hk : Function.Injective k) (σ : Equiv
   intro j hj
   exact ⟨σ.symm j, by simpa using hj, by simp⟩
 
-theorem rankPerm_comp {k : Fin n → ℕ} (hk : Function.Injective k) (σ : Equiv.Perm (Fin n)) :
+private theorem rankPerm_comp {k : Fin n → ℕ} (hk : Function.Injective k) (σ : Equiv.Perm (Fin n)) :
     rankPerm (k ∘ σ) = σ.trans (rankPerm k) := by
   ext i
   simp [keyRank_comp hk]
@@ -153,7 +154,7 @@ noncomputable def relabelFin (A : Fin n → Fin n → Bool) (k : Fin n → ℕ) 
   List.ofFn fun t : Fin (n * n) =>
     A ((rankPerm k).symm (finProdFinEquiv.symm t).1) ((rankPerm k).symm (finProdFinEquiv.symm t).2)
 
-theorem relabelFin_eq_flatten (A : Fin n → Fin n → Bool) (k : Fin n → ℕ) :
+private theorem relabelFin_eq_flatten (A : Fin n → Fin n → Bool) (k : Fin n → ℕ) :
     relabelFin A k = (List.ofFn fun r : Fin n => List.ofFn fun s : Fin n =>
       A ((rankPerm k).symm r) ((rankPerm k).symm s)).flatten := by
   rw [relabelFin, List.ofFn_mul]
@@ -193,7 +194,7 @@ theorem exists_equiv_of_relabelFin_eq {n' : ℕ} {A : Fin n → Fin n → Bool}
 /-! ### Computing relabelings -/
 
 /-- The key of position `i` below `n`; missing entries read as `0`. -/
-def keyAt (n : ℕ) (keys : List ℕ) (i : Fin n) : ℕ := keys.getD i 0
+private def keyAt (n : ℕ) (keys : List ℕ) (i : Fin n) : ℕ := keys.getD i 0
 
 /-- The rank of position `i` among the positions below `n`, ordered by the entries of `keys`
 (missing entries read as `0`), ties broken by position. -/
@@ -211,12 +212,12 @@ def relabel (G : Graph) (keys : List ℕ) : List Bool :=
   (orderOf G.distinctVertices.length keys).flatMap fun u =>
     (orderOf G.distinctVertices.length keys).map fun v => G.adjIndex u v
 
-theorem rankOf_eq (n : ℕ) (keys : List ℕ) (i : Fin n) :
+private theorem rankOf_eq (n : ℕ) (keys : List ℕ) (i : Fin n) :
     rankOf n keys i = keyRank (keyAt n keys) i := by
   rw [rankOf, List.countP_range_eq_card_filter, keyRank]
   congr 1
 
-theorem filter_rankOf_eq (n : ℕ) (keys : List ℕ) (r : Fin n) :
+private theorem filter_rankOf_eq (n : ℕ) (keys : List ℕ) (r : Fin n) :
     (List.range n).filter (fun i => decide (rankOf n keys i = r)) =
       [((rankPerm (keyAt n keys)).symm r : ℕ)] := by
   rw [List.filter_congr (q := fun i => decide (i = ((rankPerm (keyAt n keys)).symm r : ℕ))),
@@ -227,7 +228,7 @@ theorem filter_rankOf_eq (n : ℕ) (keys : List ℕ) (r : Fin n) :
   rw [rankOf_eq n keys ⟨i, hi⟩, ← rankPerm_apply, decide_eq_decide]
   rw [← Fin.ext_iff, ← Equiv.eq_symm_apply, Fin.ext_iff]
 
-theorem orderOf_eq (n : ℕ) (keys : List ℕ) :
+private theorem orderOf_eq (n : ℕ) (keys : List ℕ) :
     orderOf n keys = List.ofFn fun r : Fin n => ((rankPerm (keyAt n keys)).symm r : ℕ) := by
   apply List.ext_getElem (by simp [orderOf])
   intro r h1 h2
@@ -238,9 +239,9 @@ theorem orderOf_eq (n : ℕ) (keys : List ℕ) :
   rfl
 
 /-- The adjacency matrix of `G` on the positions of its distinct vertices. -/
-def adjFin (G : Graph) (i j : Fin G.distinctVertices.length) : Bool := G.adjIndex i j
+private def adjFin (G : Graph) (i j : Fin G.distinctVertices.length) : Bool := G.adjIndex i j
 
-theorem relabel_eq (G : Graph) (keys : List ℕ) :
+private theorem relabel_eq (G : Graph) (keys : List ℕ) :
     relabel G keys = relabelFin (adjFin G) (keyAt G.distinctVertices.length keys) := by
   rw [relabel, orderOf_eq, relabelFin_eq_flatten, List.flatMap_def, List.map_ofFn]
   congr 1
@@ -311,7 +312,7 @@ noncomputable def relabelMessage (G : Graph) : ProbComp (List Bool) :=
 noncomputable def relabelDist (n : ℕ) (A : Fin n → Fin n → Bool) : PMF (List Bool) :=
   (PMF.uniformOfFintype (Fin n → BitString (keyWidth n))).map fun R => relabelFin A (keyValue ∘ R)
 
-theorem eval_relabelMessage (G : Graph) :
+private theorem eval_relabelMessage (G : Graph) :
     ProbComp.eval (relabelMessage G) = relabelDist G.distinctVertices.length (adjFin G) := by
   set n := G.distinctVertices.length
   rw [relabelMessage, ProbComp.eval_map, BitString.eval_sampleList,
@@ -380,7 +381,7 @@ private theorem card_filter_not_injective_mul_le (n : ℕ) (β : Type*) [Fintype
 
 open Classical in
 /-- Random keys collide with probability at most `1 / 16`. -/
-theorem card_filter_not_injective_div_le (n : ℕ) :
+private theorem card_filter_not_injective_div_le (n : ℕ) :
     ((Finset.univ.filter fun R : Fin n → BitString (keyWidth n) =>
       ¬ Function.Injective R).card : ENNReal) /
       Fintype.card (Fin n → BitString (keyWidth n)) ≤ 1 / 16 := by
@@ -465,7 +466,7 @@ theorem tsum_relabelDist_le {n n' : ℕ} {A : Fin n → Fin n → Bool} {A' : Fi
   · exact add_le_add le_rfl (card_filter_not_injective_div_le n)
 
 /-- Equal relabelings come from isomorphic adjacency matrices. -/
-theorem exists_equiv_of_mem_support_relabelDist {n n' : ℕ} {A : Fin n → Fin n → Bool}
+private theorem exists_equiv_of_mem_support_relabelDist {n n' : ℕ} {A : Fin n → Fin n → Bool}
     {A' : Fin n' → Fin n' → Bool} {m : List Bool} (hm : m ∈ (relabelDist n A).support)
     (hm' : m ∈ (relabelDist n' A').support) :
     ∃ σ : Fin n ≃ Fin n', ∀ i j, A' (σ i) (σ j) = A i j := by
@@ -492,7 +493,7 @@ noncomputable def verifier (x : Graph × Graph) : WordOracleComp Unit Bool :=
 /-- The honest prover: name the graph of which the message is a possible relabeling. -/
 noncomputable def prover (x : Graph × Graph) : Prover Unit := guessingProver (message x)
 
-theorem eval_message (x : Graph × Graph) (b : Bool) : ProbComp.eval (message x b) =
+private theorem eval_message (x : Graph × Graph) (b : Bool) : ProbComp.eval (message x b) =
     relabelDist (if b then x.2 else x.1).distinctVertices.length
       (adjFin (if b then x.2 else x.1)) := eval_relabelMessage _
 
@@ -513,7 +514,7 @@ theorem acceptProb_round_le {x : Graph × Graph} (hx : x ∈ GraphIsomorphism) (
 
 /-- **Completeness of one round.** On non-isomorphic graphs the honest prover always names the
 picked graph. -/
-theorem acceptProb_round_prover {x : Graph × Graph} (hx : x ∈ GraphNonIsomorphism) :
+private theorem acceptProb_round_prover {x : Graph × Graph} (hx : x ∈ GraphNonIsomorphism) :
     acceptProb (round x) (prover x) = 1 := by
   refine acceptProb_guessingProver fun m hm hm' => hx ?_
   simp only [eval_message] at hm hm'
@@ -543,7 +544,7 @@ theorem isInteractiveProof_verifier :
   sound _ hx := acceptProb_verifier_le (not_not.1 hx)
 
 /-- Relabeling a computed graph by random keys is strict PPT. -/
-theorem isPPTOn_relabelMessage {γ : Type} {input : γ ↪ List Bool} {G : γ → Graph}
+private theorem isPPTOn_relabelMessage {γ : Type} {input : γ ↪ List Bool} {G : γ → Graph}
     (hG : ComputableTidilyInPolyTime G input encGraph) :
     IsPPTOn input encBits (fun x => relabelMessage (G x)) := by
   have hn : ComputableTidilyInPolyTime (fun x => (G x).distinctVertices.length) input encUnary :=

@@ -195,12 +195,11 @@ theorem bernoulliAverage_few_light_patterns_density
 
 The marginal of a probability mass function on the cube sums its masses over the completions of a
 pattern on the selected coordinates. It is the marginal `coordinateMarginal` of the density
-relative to the uniform distribution, scaled by the number of patterns
-(`coordinateMarginal_normalize`). -/
+relative to the uniform distribution, scaled by the number of patterns. -/
 
 /-- Sum of the masses of all completions of a coordinate pattern. For a
 nonnegative mass function summing to one, this is the probability of the pattern. -/
-noncomputable def coordinateMass (mass : (ι → Bool) → ℝ) (selected : ι → Bool)
+def coordinateMass (mass : (ι → Bool) → ℝ) (selected : ι → Bool)
     (pattern : {i // selected i = true} → Bool) : ℝ :=
   ∑ rest : {i // selected i ≠ true} → Bool,
     mass (fun i => if h : selected i = true then pattern ⟨i, h⟩ else rest ⟨i, h⟩)
@@ -228,7 +227,7 @@ theorem coordinateMass_eq_mul_coordinateMarginal (mass : (ι → Bool) → ℝ) 
   field_simp
 
 /-- Normalizing the input mass by `2^n` normalizes each marginal by `2^|R|`. -/
-theorem coordinateMarginal_normalize (mass : (ι → Bool) → ℝ) (s : ι → Bool)
+private theorem coordinateMarginal_normalize (mass : (ι → Bool) → ℝ) (s : ι → Bool)
     (z : {i // s i = true} → Bool) :
     coordinateMarginal (fun x => (2 : ℝ) ^ Fintype.card ι * mass x) s z =
       (2 : ℝ) ^ Fintype.card {i // s i = true} * coordinateMass mass s z := by

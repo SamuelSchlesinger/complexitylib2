@@ -141,47 +141,47 @@ theorem noInstance_notMem : noInstance ∉ VertexCover := by
   simp
 
 /-- The neighbours of `v` among the distinct declared vertices. -/
-def neighbors (G : Graph) (v : ℕ) : Finset ℕ :=
+private def neighbors (G : Graph) (v : ℕ) : Finset ℕ :=
   (G.distinctVertices.filter (G.adjBool v)).toFinset
 
-theorem mem_neighbors {G : Graph} {u v : ℕ} :
+private theorem mem_neighbors {G : Graph} {u v : ℕ} :
     u ∈ neighbors G v ↔ u ∈ G.1 ∧ G.toSimpleGraph.Adj v u := by
   simp [neighbors, Graph.mem_distinctVertices]
 
-theorem card_neighbors (G : Graph) (v : ℕ) : (neighbors G v).card = degree G v := by
+private theorem card_neighbors (G : Graph) (v : ℕ) : (neighbors G v).card = degree G v := by
   rw [neighbors, List.toFinset_card_of_nodup ((Graph.nodup_distinctVertices G).filter _), degree,
     List.countP_eq_length_filter]
 
-theorem degree_le_card (G : Graph) (v : ℕ) : degree G v ≤ G.1.toFinset.card :=
+private theorem degree_le_card (G : Graph) (v : ℕ) : degree G v ≤ G.1.toFinset.card :=
   (List.countP_le_length).trans (Graph.length_distinctVertices G).le
 
 variable (x : Graph × ℕ)
 
-theorem mem_high {v : ℕ} : v ∈ high x ↔ v ∈ x.1.1 ∧ isHigh x v = true := by
+private theorem mem_high {v : ℕ} : v ∈ high x ↔ v ∈ x.1.1 ∧ isHigh x v = true := by
   simp [high, Graph.mem_distinctVertices]
 
-theorem mem_low {v : ℕ} : v ∈ low x ↔ v ∈ x.1.1 ∧ isHigh x v = false := by
+private theorem mem_low {v : ℕ} : v ∈ low x ↔ v ∈ x.1.1 ∧ isHigh x v = false := by
   simp [low, Graph.mem_distinctVertices]
 
-theorem mem_active {v : ℕ} :
+private theorem mem_active {v : ℕ} :
     v ∈ active x ↔ v ∈ low x ∧ ∃ u ∈ low x, x.1.toSimpleGraph.Adj v u := by
   simp [active, isActive]
 
-theorem nodup_high : (high x).Nodup := (Graph.nodup_distinctVertices _).filter _
+private theorem nodup_high : (high x).Nodup := (Graph.nodup_distinctVertices _).filter _
 
-theorem nodup_low : (low x).Nodup := (Graph.nodup_distinctVertices _).filter _
+private theorem nodup_low : (low x).Nodup := (Graph.nodup_distinctVertices _).filter _
 
-theorem nodup_active : (active x).Nodup := (nodup_low x).filter _
+private theorem nodup_active : (active x).Nodup := (nodup_low x).filter _
 
-theorem length_active_le_length_low : (active x).length ≤ (low x).length :=
+private theorem length_active_le_length_low : (active x).length ≤ (low x).length :=
   List.length_filter_le _ _
 
-theorem length_high_add_length_low :
+private theorem length_high_add_length_low :
     (high x).length + (low x).length = x.1.1.toFinset.card := by
   rw [← Graph.length_distinctVertices]
   exact (List.length_eq_length_filter_add _).symm
 
-theorem length_active_le_numVertices : (active x).length ≤ numVertices x :=
+private theorem length_active_le_numVertices : (active x).length ≤ numVertices x :=
   le_min (length_active_le_length_low x) (Nat.le_add_right _ _)
 
 variable {x}
@@ -201,7 +201,7 @@ theorem mem_of_isHigh {S : Finset ℕ}
   simp only [isHigh, decide_eq_true_eq, cap_eq] at hhigh
   omega
 
-theorem length_high_le_card {S : Finset ℕ}
+private theorem length_high_le_card {S : Finset ℕ}
     (hS : ∀ u ∈ x.1.1, ∀ v ∈ x.1.1, x.1.toSimpleGraph.Adj u v → u ∈ S ∨ v ∈ S)
     (hcard : S.card ≤ x.2) : (high x).length ≤ S.card := by
   rw [← List.toFinset_card_of_nodup (nodup_high x)]
@@ -239,7 +239,7 @@ theorem length_active_le {S : Finset ℕ}
     _ ≤ x.2 * (x.2 + 1) := by nlinarith
 
 /-- Every instance of `VertexCover` passes the tests of the kernel. -/
-theorem accept_of_mem (hx : x ∈ VertexCover) : accept x = true := by
+private theorem accept_of_mem (hx : x ∈ VertexCover) : accept x = true := by
   obtain ⟨G, k⟩ := x
   obtain ⟨hk, S, -, hS, hcard⟩ := mem_VertexCover_iff_exists_card_le.1 hx
   have hcap : cap (G, k) = k := by rw [cap_eq]; exact min_eq_right hk
@@ -248,7 +248,8 @@ theorem accept_of_mem (hx : x ∈ VertexCover) : accept x = true := by
   simp only [accept, hcap, Bool.and_eq_true, decide_eq_true_eq, true_and]
   exact ⟨h₁.trans hcard, h₂⟩
 
-theorem mem_edges {i j : ℕ} : (i, j) ∈ edges x ↔ i < (active x).length ∧ j < (active x).length ∧
+private theorem mem_edges {i j : ℕ} : (i, j) ∈ edges x ↔ i < (active x).length ∧ j <
+    (active x).length ∧
     x.1.toSimpleGraph.Adj ((active x).getD i 0) ((active x).getD j 0) := by
   simp only [edges, List.mem_flatMap, List.mem_range, List.mem_map, List.mem_filter,
     Graph.adjBool_eq_true_iff, Prod.mk.injEq]
@@ -258,7 +259,7 @@ theorem mem_edges {i j : ℕ} : (i, j) ∈ edges x ↔ i < (active x).length ∧
   · rintro ⟨hi, hj, hadj⟩
     exact ⟨i, hi, j, ⟨hj, hadj⟩, rfl, rfl⟩
 
-theorem graph_adj {i j : ℕ} : (graph x).toSimpleGraph.Adj i j ↔ i ≠ j ∧
+private theorem graph_adj {i j : ℕ} : (graph x).toSimpleGraph.Adj i j ↔ i ≠ j ∧
     ((i, j) ∈ edges x ∨ (j, i) ∈ edges x) := by
   simp [graph, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
 
@@ -372,9 +373,10 @@ namespace VertexCover.Buss
 
 variable (x : Graph × ℕ)
 
-theorem param_le_cap : param x ≤ cap x := Nat.sub_le _ _
+private theorem param_le_cap : param x ≤ cap x := Nat.sub_le _ _
 
-theorem numVertices_le_of_accept (h : accept x = true) : numVertices x ≤ x.2 * (x.2 + 2) := by
+private theorem numVertices_le_of_accept (h : accept x = true) : numVertices x ≤ x.2 *
+    (x.2 + 2) := by
   simp only [accept, Bool.and_eq_true, decide_eq_true_eq] at h
   obtain ⟨⟨hc, -⟩, ha⟩ := h
   have h₁ := param_le_cap x
@@ -382,7 +384,7 @@ theorem numVertices_le_of_accept (h : accept x = true) : numVertices x ≤ x.2 *
   rw [hc] at h₁
   nlinarith
 
-theorem length_edges_le : (edges x).length ≤ (active x).length * (active x).length := by
+private theorem length_edges_le : (edges x).length ≤ (active x).length * (active x).length := by
   rw [edges, List.length_flatMap]
   refine (List.sum_le_length_nsmul _ (active x).length fun n hn => ?_).trans ?_
   · obtain ⟨i, -, rfl⟩ := List.mem_map.1 hn
@@ -390,7 +392,7 @@ theorem length_edges_le : (edges x).length ≤ (active x).length * (active x).le
     exact (List.length_filter_le _ _).trans (List.length_range).le
   · simp
 
-theorem length_edges_le_of_accept (h : accept x = true) :
+private theorem length_edges_le_of_accept (h : accept x = true) :
     (edges x).length ≤ (x.2 * (x.2 + 1)) * (x.2 * (x.2 + 1)) := by
   simp only [accept, Bool.and_eq_true, decide_eq_true_eq] at h
   obtain ⟨⟨hc, -⟩, ha⟩ := h
@@ -416,7 +418,7 @@ private theorem size_arith {k K : ℕ} (hK : K ≤ k * (k + 2)) :
   omega
 
 /-- The encoded kernel has length at most `40 (k + 1) ^ 6`. -/
-theorem length_encode_le_of_accept (h : accept x = true) :
+private theorem length_encode_le_of_accept (h : accept x = true) :
     (encPair encGraph encNat (graph x, param x)).length ≤ 40 * (x.2 + 1) ^ 6 := by
   set K := x.2 * (x.2 + 2)
   have hV : numVertices x ≤ K := numVertices_le_of_accept x h
@@ -618,7 +620,7 @@ theorem computableTidilyInPolyTime_bussKernel :
     (ComputableTidilyInPolyTime.const _)
 
 /-- Buss's kernel has target at most `k`, or `1`. -/
-theorem bussKernel_snd_le (x : Graph × ℕ) : (bussKernel x).2 ≤ max x.2 1 := by
+private theorem bussKernel_snd_le (x : Graph × ℕ) : (bussKernel x).2 ≤ max x.2 1 := by
   unfold bussKernel
   split_ifs with h
   · exact le_max_of_le_left ((param_le_cap x).trans (cap_le_snd x))

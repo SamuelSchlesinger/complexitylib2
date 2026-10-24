@@ -74,22 +74,22 @@ namespace Determined
 
 variable {n L T : ℕ}
 
-theorem cert {j : ℕ} (hj : j < L) : Determined (State := State) (k := k) n L T (.cert j) :=
+private theorem cert {j : ℕ} (hj : j < L) : Determined (State := State) (k := k) n L T (.cert j) :=
   Or.inl ⟨j, hj, rfl⟩
 
-theorem holds_basic {t : ℕ} (ht : t ≤ T) {φ : Feature k State} (hφ : φ ∈ basic n T) :
+private theorem holds_basic {t : ℕ} (ht : t ≤ T) {φ : Feature k State} (hφ : φ ∈ basic n T) :
     Determined n L T (.holds t φ) :=
   Or.inr (Or.inl ⟨t, ht, φ, hφ, rfl⟩)
 
-theorem holds_read {t : ℕ} (ht : t < T) (i : Fin k) (s : Option Bool) :
+private theorem holds_read {t : ℕ} (ht : t < T) (i : Fin k) (s : Option Bool) :
     Determined (State := State) n L T (.holds t (.read i s)) :=
   Or.inr (Or.inr ⟨t, ht, Or.inl ⟨i, s, rfl⟩⟩)
 
-theorem holds_inRead {t : ℕ} (ht : t < T) (s : Option Bool) :
+private theorem holds_inRead {t : ℕ} (ht : t < T) (s : Option Bool) :
     Determined (State := State) (k := k) n L T (.holds t (.inRead s)) :=
   Or.inr (Or.inr ⟨t, ht, Or.inr (Or.inl ⟨s, rfl⟩)⟩)
 
-theorem holds_sit {t : ℕ} (ht : t < T) (y : Situation k State) :
+private theorem holds_sit {t : ℕ} (ht : t < T) (y : Situation k State) :
     Determined n L T (.holds t (.sit y)) :=
   Or.inr (Or.inr ⟨t, ht, Or.inr (Or.inr ⟨y, rfl⟩)⟩)
 
@@ -241,7 +241,7 @@ theorem determined_of_mem_vars_tableau {v : Var k State} (hv : v ∈ (tableau tm
   · exact determined_of_mem_acceptClauses hc hl
 
 /-- When the tableau unrolls at least one step, it mentions every certificate bit. -/
-theorem cert_mem_vars_tableau (hT : 0 < T) {j : ℕ} (hj : j < L) :
+private theorem cert_mem_vars_tableau (hT : 0 < T) {j : ℕ} (hj : j < L) :
     Var.cert j ∈ (tableau tm u L T).vars := by
   refine CNF.mem_vars.2 ⟨Clause.impLits [(.holds 0 (.inPos (u.length + 1 + j)), true),
     (.cert j, true)] (.holds 0 (.inRead (some true))), ?_, false, ?_⟩
@@ -313,7 +313,7 @@ theorem eq_runAssignment_of_eval_tableau (h : (tableau tm u L T).eval σ = true)
 
 /-- Two satisfying assignments with the same certificate agree on the variables of the
 tableau. -/
-theorem eq_of_eval_tableau_of_certWord_eq {τ : Var k State → Bool}
+private theorem eq_of_eval_tableau_of_certWord_eq {τ : Var k State → Bool}
     (hσ : (tableau tm u L T).eval σ = true) (hτ : (tableau tm u L T).eval τ = true)
     (hc : certWord σ L = certWord τ L) {v : Var k State} (hv : v ∈ (tableau tm u L T).vars) :
     σ v = τ v := by
@@ -321,7 +321,7 @@ theorem eq_of_eval_tableau_of_certWord_eq {τ : Var k State → Bool}
   rw [eq_runAssignment_of_eval_tableau hσ hd, eq_runAssignment_of_eval_tableau hτ hd, hc]
 
 /-- A tableau unrolled for no step is unsatisfiable: the initial configuration is running. -/
-theorem eval_tableau_zero : (tableau tm u L 0).eval σ = false := by
+private theorem eval_tableau_zero : (tableau tm u L 0).eval σ = false := by
   by_contra h
   have hz := (exists_eval_tableau_iff (tm := tm) (u := u) (T := 0) (z := certWord σ L)).1
     ⟨σ, by rw [length_certWord], by rw [length_certWord]; simpa using h⟩

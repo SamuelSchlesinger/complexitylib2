@@ -203,7 +203,7 @@ variable (g : Graph C) (eval : C → α → α → Bool) (fallback : C)
 
 include hrotate in
 /-- Every computed destination agrees with the existing mathematical degree reduction. -/
-theorem dst_degreeReduceEdge (p : (Fin g.edges.length × Bool) × (Unit ⊕ D)) :
+private theorem dst_degreeReduceEdge (p : (Fin g.edges.length × Bool) × (Unit ⊕ D)) :
     (g.degreeReduceEdge fallback rotate (numberDart p)).dst =
       let next := ((g.toGraph eval).degreeReduce
         (g.cloudFamily eval fallback family)).graph.neighbor
@@ -216,7 +216,7 @@ theorem dst_degreeReduceEdge (p : (Fin g.edges.length × Bool) × (Unit ⊕ D)) 
         ((g.toGraph eval).endpoint (i, b)) ⟨(i, b), rfl⟩ d)
 
 /-- Original constraints retain their orientation, while cloud-links are equality constraints. -/
-theorem rel_degreeReduceEdge [DecidableEq α]
+private theorem rel_degreeReduceEdge [DecidableEq α]
     (p : (Fin g.edges.length × Bool) × (Unit ⊕ D)) (a b : α) :
     degreeReduceEval eval
       (g.degreeReduceEdge fallback rotate (numberDart p)).constraint a b = true ↔

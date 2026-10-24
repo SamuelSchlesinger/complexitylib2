@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Logics.Propositional.ProofSystem
+import Complexity.Computability.Complexity.ProofSystem
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 
 /-!

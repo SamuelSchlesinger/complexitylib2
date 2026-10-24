@@ -85,7 +85,7 @@ theorem admissible_id : (id L).Admissible :=
 
 variable (L) in
 /-- The identity interpretation defines the canonical numerics directly. -/
-noncomputable def Certificate.id : (DomainInterpretation.id L).Certificate where
+def Certificate.id : (DomainInterpretation.id L).Certificate where
   le := Ordered.le L (.var (0, 0)) (.var (1, 0))
   bit := Ordered.bit L (.var (0, 0)) (.var (1, 0))
   const c := Term.equal (.var 0)

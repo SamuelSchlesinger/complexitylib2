@@ -118,7 +118,8 @@ def relabel (e : State ≃ State') (machine : MultiTapePTM k Symbol State Oracle
 variable [DecidableEq Oracle]
 
 /-- Relabelling commutes with the run program, for every coin and request program. -/
-theorem runConfigFrom_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query} (e : State ≃ State')
+private theorem runConfigFrom_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query}
+    (e : State ≃ State')
     (machine : MultiTapePTM k Symbol State Oracle) (coin : OracleComp spec Bool)
     (query : Oracle → List Symbol → OracleComp spec (List Symbol)) (fuel : ℕ)
     (cfg : Config k Symbol State Oracle input) :
@@ -143,7 +144,7 @@ theorem runFrom_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query} (e : Sta
   simp only [runFrom, runConfigFrom_relabel, Functor.map_map, Config.mapState_tapes_output]
 
 /-- Relabelling preserves the output program of every run from the initial configuration. -/
-theorem run_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query} (e : State ≃ State')
+private theorem run_relabel {Query : Type} {spec : OracleSpec.{0, 0} Query} (e : State ≃ State')
     (machine : MultiTapePTM k Symbol State Oracle) (coin : OracleComp spec Bool)
     (query : Oracle → List Symbol → OracleComp spec (List Symbol)) (fuel : ℕ)
     (input : List Symbol) :
@@ -220,7 +221,8 @@ variable {Operation α β : Type} [DecidableEq Operation] {input : α ↪ List B
 omit [DecidableEq Operation] in
 /-- A deterministic program against a deterministic oracle returns a point mass and keeps the
 oracle's state. -/
-theorem run_interpret_interpret_query {σ : Type} (answer : Operation × List Bool → List Bool)
+private theorem run_interpret_interpret_query {σ : Type}
+    (answer : Operation × List Bool → List Bool)
     (program : WordQueryComp Operation β) (s : σ) :
     (OracleComp.interpret (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
         (fun q s => PMF.pure (answer q, s)))

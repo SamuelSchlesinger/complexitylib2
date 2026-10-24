@@ -306,7 +306,7 @@ theorem lineListDecode_eq (g p : (Fin m → F) → F) (d D : ℕ) {x z : Fin m �
 /-- **Few bad hint positions on a good line.** If the line `t ↦ x + t • v` has more than `D`
 points where `g` agrees with the Reed–Muller codeword `p`, then Sudan decoding with the hint
 `p (x + τ • v)` at `τ` returns `p x` for all but at most `D - d` positions `τ`. -/
-theorem card_hintDecode_line_ne_le {d D : ℕ} (hd : 1 ≤ d)
+private theorem card_hintDecode_line_ne_le {d D : ℕ} (hd : 1 ≤ d)
     (hn : Fintype.card F < #(Sudan.monomials d D)) (hDq : D < Fintype.card F)
     {p : (Fin m → F) → F} (hp : p ∈ reedMuller F m d) (g : (Fin m → F) → F) (x v : Fin m → F)
     (hagree : D < lineAgree {y | g y = p y} x v) :
@@ -324,7 +324,7 @@ theorem card_hintDecode_line_ne_le {d D : ℕ} (hd : 1 ≤ d)
   exact h
 
 /-- The normalized directions: those whose first nonzero entry is `1`. -/
-private noncomputable def normDirs (m : ℕ) (F : Type*) [Field F] [Fintype F] [DecidableEq F] :
+private def normDirs (m : ℕ) (F : Type*) [Field F] [Fintype F] [DecidableEq F] :
     Finset (Fin m → F) := univ.filter fun v => firstNonzero v = 1
 
 /-- There are at most `(Q - 1) / (q - 1)` normalized directions. -/

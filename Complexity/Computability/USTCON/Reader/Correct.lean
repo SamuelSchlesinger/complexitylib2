@@ -247,7 +247,7 @@ private theorem reingoldEvalStep_of_frames_eq_nil {V : Type*} (base' : V × Labe
 variable (I) in
 /-- The step of the slot graph of the instance on pairs of numbers, reading the adjacency matrix
 from the encoding. -/
-private noncomputable def inputRot (p : (ℕ × ℕ) × Label) : (ℕ × ℕ) × Label :=
+private def inputRot (p : (ℕ × ℕ) × Label) : (ℕ × ℕ) × Label :=
   slotRotN I.n p.1 p.2 (I.encode.getD (I.n + I.s + I.t + 3 + (p.1.1 * I.n + p.1.2)) false)
 
 /-- The step of the slot graph read from the encoding is the rotation map of the regular rotation

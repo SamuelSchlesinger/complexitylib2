@@ -136,7 +136,7 @@ theorem replicate_failure_pow {α : Type} (source : ProbComp α) (good : α → 
 
 /-- An invalid threshold decision requires the empirical rate to miss the true probability
 by at least the permitted tolerance. Both answers are valid inside the overlap interval. -/
-theorem testProbabilityLT_error_le_deviation (count numerator denominator : ℕ)
+private theorem testProbabilityLT_error_le_deviation (count numerator denominator : ℕ)
     (hcount : 0 < count) (hdenominator : 0 < denominator) (program : ProbComp Bool) (ε : ℝ) :
     ((eval (OracleComp.testProbabilityLT count numerator denominator program)).toOuterMeasure
       {below | ¬ if below then (eval program true).toReal ≤ numerator / denominator + ε

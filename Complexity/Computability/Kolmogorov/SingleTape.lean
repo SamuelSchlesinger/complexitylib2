@@ -140,7 +140,7 @@ noncomputable def ofTM1 {Λ σ : Type} [Inhabited Λ] [Inhabited σ] [Fintype σ
 /-- Every single-tape description method `ofSingleTapeTM tm` is simulated by the 1-work-tape
 multi-tape description method `ofMultiTapeTM (MultiTapeTM.ofSingleTapeTM tm)` with zero program
 overhead (`compile := id`) and linear time overhead `3 * |p| + 2 * t + 6`. -/
-noncomputable def singleTapeSimulation (tm : SingleTapeTM Bool) :
+def singleTapeSimulation (tm : SingleTapeTM Bool) :
     Simulation (ofSingleTapeTM tm) (ofMultiTapeTM (MultiTapeTM.ofSingleTapeTM tm)) 0
       fun n t => 3 * n + 2 * t + 6 where
   compile := id
@@ -169,7 +169,7 @@ theorem etimeBoundedComplexity_ofMultiTapeTM_ofSingleTapeTM_le
 
 /-- Every `TM0` description method `ofTM0 M S hs` is simulated by a 1-work-tape `MultiTapeTM` with
 zero program overhead and linear time overhead `3 * |p| + 2 * t + 6`. -/
-noncomputable def tm0Simulation {Λ : Type} [Inhabited Λ] [DecidableEq Λ]
+def tm0Simulation {Λ : Type} [Inhabited Λ] [DecidableEq Λ]
     (M : TM0.Machine (Option Bool) Λ) (S : Finset Λ) (hs : TM0.Supports M S) :
     Simulation (ofTM0 M S hs)
       (ofMultiTapeTM (MultiTapeTM.ofSingleTapeTM (SingleTapeTM.ofTM0 M S hs))) 0

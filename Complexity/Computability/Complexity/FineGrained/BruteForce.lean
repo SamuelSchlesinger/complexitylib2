@@ -84,7 +84,7 @@ assignment to try, and whether a satisfying assignment was found. -/
 abbrev State : Type := (CNF ℕ × List ℕ) × (ℕ × Bool)
 
 /-- States encoded as framed tuples. -/
-abbrev encState : State ↪ List Bool :=
+private abbrev encState : State ↪ List Bool :=
   encPair (encPair encCNF (encList encNat)) (encPair encNat encBool)
 
 /-- Try the next numbered assignment. -/
@@ -98,7 +98,7 @@ def init (φ : CNF ℕ) : State := ((φ, ThreeSAT.distinctVars φ), (0, false))
 variables of the formula. -/
 def search (φ : CNF ℕ) : Bool := (step^[2 ^ (ThreeSAT.distinctVars φ).length] (init φ)).2.2
 
-theorem iterate_step_init (φ : CNF ℕ) (k : ℕ) :
+private theorem iterate_step_init (φ : CNF ℕ) (k : ℕ) :
     step^[k] (init φ) = ((φ, ThreeSAT.distinctVars φ),
       (k, (List.range k).any fun i => φ.eval (bitsAssignment (ThreeSAT.distinctVars φ) i))) := by
   induction k with
@@ -117,7 +117,8 @@ theorem search_eq_true_iff (φ : CNF ℕ) : search φ = true ↔ φ ∈ SAT := b
 
 open ComputableTidilyInPolyTime in
 /-- A step of exhaustive search is polynomial-time. -/
-theorem computableTidilyInPolyTime_step : ComputableTidilyInPolyTime step encState encState := by
+private theorem computableTidilyInPolyTime_step
+    : ComputableTidilyInPolyTime step encState encState := by
   have h : ComputableTidilyInPolyTime (fun s : State => s.1.1.eval (bitsAssignment s.1.2 s.2.1))
       encState encBool :=
     computableTidilyInPolyTime_eval_bitsAssignment.comp
@@ -128,13 +129,14 @@ theorem computableTidilyInPolyTime_step : ComputableTidilyInPolyTime step encSta
 
 open ComputableTidilyInPolyTime in
 /-- The initial state is computed in polynomial time. -/
-theorem computableTidilyInPolyTime_init : ComputableTidilyInPolyTime init encCNF encState := by
+private theorem computableTidilyInPolyTime_init
+    : ComputableTidilyInPolyTime init encCNF encState := by
   unfold init
   fun_prop
 
 open ComputableTidilyInPolyTime in
 /-- The number `2 ^ n` of rounds is computed in binary in polynomial time. -/
-theorem computableTidilyInPolyTime_count :
+private theorem computableTidilyInPolyTime_count :
     ComputableTidilyInPolyTime (fun φ => 2 ^ (ThreeSAT.distinctVars φ).length) encCNF encNat := by
   fun_prop
 

@@ -458,7 +458,7 @@ theorem exists_runFrom_test {q : ℕ} :
       simp [ReadMachine.next, machine, step, show d < q by omega, hmod]
 
 /-- The least prime `p ≥ 2ℓ + 2`. -/
-noncomputable def primeFor (ℓ : ℕ) : ℕ :=
+def primeFor (ℓ : ℕ) : ℕ :=
   Nat.find (Nat.exists_infinite_primes (2 * ℓ + 2))
 
 theorem primeFor_prime (ℓ : ℕ) : (primeFor ℓ).Prime :=

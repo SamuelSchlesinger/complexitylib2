@@ -113,7 +113,7 @@ theorem paths_mapQueries {κ : Type*} (f : ι → κ) (t : DecisionTree ι β) :
 /-- Score of a root-to-leaf path `p` in `t` at depth budget `d` with base `B` and real query
 margins `q : ι → ℝ`, summing `B ^ (d - 1 - depth) * q i` over nodes along `p` where `p`
 takes the `true` branch. -/
-noncomputable def leafScore (B : ℝ) : ℕ → (ι → ℝ) → DecisionTree ι β → List Bool → ℝ
+def leafScore (B : ℝ) : ℕ → (ι → ℝ) → DecisionTree ι β → List Bool → ℝ
   | _, _, .leaf _, _ => 0
   | _, _, .node _ _ _, [] => 0
   | d, q, .node _ left _, false :: p => leafScore B (d - 1) q left p

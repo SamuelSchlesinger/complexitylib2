@@ -60,7 +60,7 @@ def checks (coeff : ((Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2) →
 
 /-- On the shared product coins, the original tester passes precisely when all padded checks pass.
 This coupling is used only in the proof; the selected tester reads just one check. -/
-theorem passes_iff_forall_checks (C : α → α → Prop) (π : Pos α → Bool) (ω : Rand α) :
+private theorem passes_iff_forall_checks (C : α → α → Prop) (π : Pos α → Bool) (ω : Rand α) :
     (hadamardTester C).Passes π ω ↔
       ∀ i, (checks (equationCoeff C) i).Passes π ω := by
   simp [checks, hadamardTester, Fin.forall_fin_succ]

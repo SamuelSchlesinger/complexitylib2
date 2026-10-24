@@ -91,7 +91,7 @@ open Cslib.Logic.PL Turing.MultiTapeTM
 
 namespace ThreeSAT
 
-theorem mem_vars_of_mem_distinctVars {φ : CNF ℕ} {v : ℕ} (hv : v ∈ distinctVars φ) :
+private theorem mem_vars_of_mem_distinctVars {φ : CNF ℕ} {v : ℕ} (hv : v ∈ distinctVars φ) :
     v ∈ φ.vars := by
   simp only [distinctVars, List.mem_map, List.mem_filter, Prod.exists, exists_and_right,
     exists_eq_right] at hv

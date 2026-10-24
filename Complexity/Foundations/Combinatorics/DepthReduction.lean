@@ -28,7 +28,7 @@ removing some `r / k` of the edges leaves edges with a grading with `2 ^ (k - r)
 An edge `(u, v)` is in *class* `b` when the levels of `u` and `v` first differ, from the top, at
 bit `b` (`InClass`). Each edge is in at most one class, so among `k` classes one has at most `1 / k`
 of the edges; deleting bit `b` from every level grades all edges outside class `b` with half the
-levels (`IsGrading.exists_sdiff_one`). Repeating `r` times removes at most `r / k` of the edges.
+levels. Repeating `r` times removes at most `r / k` of the edges.
 
 ## Main definitions
 
@@ -124,7 +124,7 @@ private theorem deleteBit_lt {b k a : ℕ} (hb : b ≤ k) (ha : a < 2 ^ (k + 1))
 
 /-- **One round of depth reduction**: removing at most `1 / (k + 1)` of the edges halves the
 levels. -/
-theorem exists_sdiff_one [DecidableEq V] {k : ℕ} (hg : IsGrading E (2 ^ (k + 1)) g) :
+private theorem exists_sdiff_one [DecidableEq V] {k : ℕ} (hg : IsGrading E (2 ^ (k + 1)) g) :
     ∃ F ⊆ E, (k + 1) * #F ≤ #E ∧ ∃ g' : V → ℕ, IsGrading (E \ F) (2 ^ k) g' := by
   -- the classes of edges, one for each bit
   set C : ℕ → Finset (V × V) := fun b => {e ∈ E | InClass b (g e.1) (g e.2)}

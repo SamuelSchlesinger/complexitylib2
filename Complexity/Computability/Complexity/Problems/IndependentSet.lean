@@ -272,12 +272,12 @@ theorem Occurrence.Conflict.symm {o o' : Occurrence} (h : o.Conflict o') : o'.Co
   · exact Or.inl ⟨h₁.symm, h₂.symm⟩
   · exact Or.inr ⟨h₁.symm, h₂.symm⟩
 
-theorem Occurrence.Conflict.ne {o o' : Occurrence} (h : o.Conflict o') : o ≠ o' := by
+private theorem Occurrence.Conflict.ne {o o' : Occurrence} (h : o.Conflict o') : o ≠ o' := by
   rintro rfl
   rcases h with ⟨-, h⟩ | ⟨-, h⟩ <;> exact h rfl
 
 /-- An occurrence is determined by its vertex. -/
-theorem vertex_injOn {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ occurrences φ)
+private theorem vertex_injOn {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ occurrences φ)
     (ho' : o' ∈ occurrences φ) (h : o.vertex = o'.vertex) : o = o' := by
   obtain ⟨i, j, l⟩ := o
   obtain ⟨i', j', l'⟩ := o'

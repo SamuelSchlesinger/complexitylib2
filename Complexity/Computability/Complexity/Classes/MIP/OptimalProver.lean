@@ -105,7 +105,8 @@ local notation "handler" o =>
   ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n)) o
 
 /-- An instruction with a fixed coin makes the requests of `coinStep`. -/
-theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Control Oracle) (b : Bool)
+private theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Control Oracle)
+    (b : Bool)
     (s : S) :
     (OracleComp.interpret (handler oracle) (M.finiteStep (fun choices => choices <$> pure b)
       (fun op w => List.take t <$> ProbOracleComp.query (op, w)) cfg)).run s =
@@ -122,7 +123,8 @@ theorem run_interpret_finiteStep_pure (t : ℕ) (cfg : FiniteConfig k Bool Contr
         OracleComp.interpret_query, OracleComp.interpret_pure]
 
 /-- Instructions with fixed coins make the requests of `coinStep`. -/
-theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool) (cfg : FiniteConfig k Bool Control Oracle)
+private theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool)
+    (cfg : FiniteConfig k Bool Control Oracle)
     (s : S) :
     (OracleComp.interpret (handler oracle) (r.foldlM (fun cfg b => M.finiteStep
       (fun choices => choices <$> pure b)
@@ -135,7 +137,7 @@ theorem run_interpret_foldlM_pure (t : ℕ) (r : List Bool) (cfg : FiniteConfig 
       run_interpret_finiteStep_pure, ih]
 
 /-- An instruction drawing a fair coin averages the instructions with fixed coins. -/
-theorem run_interpret_finiteStep_sample
+private theorem run_interpret_finiteStep_sample
     (query : Oracle → List Bool →
       ProbOracleComp (fun _ : Oracle × List Bool => List Bool) (List Bool))
     (cfg : FiniteConfig k Bool Control Oracle) (s : S) :
@@ -156,7 +158,7 @@ theorem run_interpret_finiteStep_sample
     rfl
 
 /-- A clocked loop drawing fair coins averages the loops with fixed coins. -/
-theorem run_interpret_iterate_eq_coins
+private theorem run_interpret_iterate_eq_coins
     (query : Oracle → List Bool →
       ProbOracleComp (fun _ : Oracle × List Bool => List Bool) (List Bool))
     (n : ℕ) (cfg : FiniteConfig k Bool Control Oracle) (s : S) :
@@ -179,7 +181,7 @@ theorem run_interpret_iterate_eq_coins
     exact PMF.bind_comm _ _ _
 
 /-- **The multi-channel run averages the programs of fixed coins** against every stateful oracle. -/
-theorem run_interpret_runOracle_eq_coins (t : ℕ) (x : List Bool) (s : S) :
+private theorem run_interpret_runOracle_eq_coins (t : ℕ) (x : List Bool) (s : S) :
     (OracleComp.interpret (handler oracle) (M.runOracle t x)).run s =
       (BitString.uniformList t).bind fun r =>
         (OracleComp.interpret oracle ((fun cfg => cfg.tapes.output) <$>
@@ -284,7 +286,7 @@ variable [DecidableEq Oracle] (M : MultiTapePTM k Bool Control Oracle)
 /-- Every configuration reachable by `coinStep M t cfg b` from a configuration with query buffers
 of length at most `i` has query buffers of length at most `i + 1`, and `coinStep M t cfg b` is a
 1-query bounded program when `i ≤ t`. -/
-theorem isBoundedComp_coinStep_bind {t i n : ℕ} {cfg : FiniteConfig k Bool Control Oracle}
+private theorem isBoundedComp_coinStep_bind {t i n : ℕ} {cfg : FiniteConfig k Bool Control Oracle}
     (hbuf : ∀ op, (cfg.channels op).1.length ≤ i) (hit : i ≤ t) (b : Bool)
     {cont : FiniteConfig k Bool Control Oracle → WordQueryComp Oracle α}
     (hcont : ∀ cfg', (∀ op, (cfg'.channels op).1.length ≤ i + 1) → IsBoundedComp t n (cont cfg')) :
@@ -316,7 +318,7 @@ theorem isBoundedComp_coinStep_bind {t i n : ℕ} {cfg : FiniteConfig k Bool Con
       · simpa [FiniteConfig.receive, heq] using (hbuf op').trans (Nat.le_succ i)
 
 /-- Folding `coinStep M t` over a list of coins `r` produces a bounded query program. -/
-theorem isBoundedComp_foldlM_coinStep (t : ℕ) (r : List Bool) :
+private theorem isBoundedComp_foldlM_coinStep (t : ℕ) (r : List Bool) :
     ∀ (i : ℕ) (cfg : FiniteConfig k Bool Control Oracle),
       (∀ op, (cfg.channels op).1.length ≤ i) → i + r.length ≤ t →
       IsBoundedComp t r.length (r.foldlM (coinStep M t) cfg) := by
@@ -333,7 +335,7 @@ theorem isBoundedComp_foldlM_coinStep (t : ℕ) (r : List Bool) :
 
 /-- `coinProgram M t x r` is a `t`-bounded query program of depth `r.length` whenever
 `r.length ≤ t`. -/
-theorem isBoundedComp_coinProgram (t : ℕ) (x r : List Bool) (hr : r.length ≤ t) :
+private theorem isBoundedComp_coinProgram (t : ℕ) (x r : List Bool) (hr : r.length ≤ t) :
     IsBoundedComp t r.length (coinProgram M t x r) := by
   unfold coinProgram
   refine IsBoundedComp.map _ (isBoundedComp_foldlM_coinStep M t r 0
@@ -379,14 +381,14 @@ def TreeStrategy.step : {d : ℕ} → TreeStrategy d → List Bool → List Bool
     | none => ([], ⟨0, PUnit.unit⟩)
 
 /-- Turn an initial `(depth, TreeStrategy)` pair into a `DetProver`. -/
-abbrev TreeStrategy.toDetProver (initTree : Sigma TreeStrategy) : DetProver where
+private abbrev TreeStrategy.toDetProver (initTree : Sigma TreeStrategy) : DetProver where
   State := Sigma TreeStrategy
   init := initTree
   respond m s := s.2.step m
 
 /-- Universal `Prover Unit` for tree strategies with initial state `⟨0, PUnit.unit⟩`; its `.respond`
 operation depends only on the runtime `Sigma TreeStrategy` state. -/
-noncomputable abbrev treeProver : Prover Unit :=
+private noncomputable abbrev treeProver : Prover Unit :=
   (TreeStrategy.toDetProver ⟨0, PUnit.unit⟩).toProver
 
 /-- Presample a depth-`d` `TreeStrategy` from a stateful randomized prover `Q : Prover Unit`
@@ -429,7 +431,7 @@ private theorem mapM_lookup_eq [BEq α] [LawfulBEq α] (f : α → PMF β) (quer
 /-- Stepping a presampled tree of depth `d + 1` on `m ∈ queries` has the exact same distribution
 as running `Q.respond ((), m)` once, truncating the reply to `L` bits, and presampling a depth-`d`
 continuation tree from the resulting prover state. -/
-theorem presampleTree_step (Q : Prover Unit) (L : ℕ) (queries : List (List Bool)) (d : ℕ)
+private theorem presampleTree_step (Q : Prover Unit) (L : ℕ) (queries : List (List Bool)) (d : ℕ)
     (s : Q.State) {m : List Bool} (hm : m ∈ queries) :
     (presampleTree Q L queries (d + 1) s).map (fun t => t.step m) =
       ((Q.respond ((), m)).run s).bind fun ys =>

@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Parity
+public import Cslib.Foundations.Data.BitString
+public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Data.Fintype.Sum
 public import Mathlib.Data.Nat.Choose.Basic
@@ -48,8 +49,7 @@ function is *symmetric* when it depends only on the weight of its input
 * `Cslib.strictMajority_not`: strict majority of the negated bits is the negation of majority.
 * `Cslib.BitString.strictMajorityOn`: strict majority on a finite set of voting indices.
 * `Cslib.le_card_ne_of_strictMajority_ne`: a wrong majority requires at least half wrong votes.
-* `Cslib.isSymmetric_threshold`, `Cslib.isSymmetric_parity`: threshold functions and parity are
-  symmetric.
+* `Cslib.isSymmetric_threshold`: threshold functions are symmetric.
 
 ## References
 
@@ -353,14 +353,5 @@ theorem isSymmetric_majority : (majority n).IsSymmetric :=
 
 theorem isSymmetric_strictMajority : (strictMajority n).IsSymmetric :=
   isSymmetric_threshold _
-
-/-- Parity is the parity of the weight. -/
-theorem parity_eq_decide_weight (x : BitString n) : parity n x = decide (weight x % 2 = 1) :=
-  rfl
-
-/-- Parity is symmetric. -/
-theorem isSymmetric_parity : (parity n).IsSymmetric := fun x y h => by
-  simp only [weight] at h
-  simp only [parity, parityOn, h]
 
 end Cslib

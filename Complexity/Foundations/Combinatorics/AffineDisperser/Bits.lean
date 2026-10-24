@@ -10,7 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser
 public import Cslib.Foundations.Data.BitString
-public import Complexity.Foundations.BooleanAnalysis.LowDegree
+public import Complexity.Foundations.Data.BitString.Sign
 public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 public import Mathlib.LinearAlgebra.Basis.Defs

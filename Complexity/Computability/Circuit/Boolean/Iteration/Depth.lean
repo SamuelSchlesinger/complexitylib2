@@ -65,7 +65,7 @@ variable {n M : ℕ}
 
 /-- The first time up to `K` at which the orbit of `x` agrees with the orbit of its cycle
 projection, in `n + 2` bits. -/
-noncomputable def shortDepth (f : BitString n → BitString n) (K : ℕ) (x : BitString n) :
+def shortDepth (f : BitString n → BitString n) (K : ℕ) (x : BitString n) :
     BitVec (n + 2) :=
   firstIndex fun j : Fin (K + 1) => decide (f^[j.val] x = f^[j.val] (cycleProjection f x))
 

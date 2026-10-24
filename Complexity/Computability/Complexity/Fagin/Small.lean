@@ -95,7 +95,7 @@ def encodeOfOne (s : Fin v.count → Bool) : EncodedStructure :=
   (1, List.ofFn fun i : Fin v.count => [s i])
 
 open scoped Classical in
-theorem relTable_eq_of_equiv_fin_zero {N : Type} [L.Structure N] (e : N ≃ Fin 0)
+private theorem relTable_eq_of_equiv_fin_zero {N : Type} [L.Structure N] (e : N ≃ Fin 0)
     (r : Σ n, L.Relations n) :
     Vocabulary.relTable N e r =
       if r.1 = 0 then [decide (N ⊨ nullaryRelSentence r)] else [] := by
@@ -110,13 +110,13 @@ theorem relTable_eq_of_equiv_fin_zero {N : Type} [L.Structure N] (e : N ≃ Fin 
   · simp [Vocabulary.relTable]
 
 open scoped Classical in
-theorem encode_eq_encodeOfZero {N : Type} [L.Structure N] (e : N ≃ Fin 0) :
+private theorem encode_eq_encodeOfZero {N : Type} [L.Structure N] (e : N ≃ Fin 0) :
     v.encode N e = v.encodeOfZero (fun i => decide (N ⊨ v.nullarySymbolSentence i)) := by
   refine Prod.ext rfl (congrArg List.ofFn (funext fun i => ?_))
   exact relTable_eq_of_equiv_fin_zero e (v.symbol i)
 
 open scoped Classical in
-theorem relTable_eq_of_equiv_fin_one {N : Type} [L.Structure N] (e : N ≃ Fin 1)
+private theorem relTable_eq_of_equiv_fin_one {N : Type} [L.Structure N] (e : N ≃ Fin 1)
     (r : Σ n, L.Relations n) :
     Vocabulary.relTable N e r = [decide (N ⊨ constTupleRelSentence r)] := by
   refine List.ext_getElem (by simp [Vocabulary.relTable]) fun j hj₁ hj₂ => ?_
@@ -140,7 +140,7 @@ theorem relTable_eq_of_equiv_fin_one {N : Type} [L.Structure N] (e : N ≃ Fin 1
     exact h (e.symm 0)
 
 open scoped Classical in
-theorem encode_eq_encodeOfOne {N : Type} [L.Structure N] (e : N ≃ Fin 1) :
+private theorem encode_eq_encodeOfOne {N : Type} [L.Structure N] (e : N ≃ Fin 1) :
     v.encode N e = v.encodeOfOne (fun i => decide (N ⊨ v.constTupleSentence i)) := by
   refine Prod.ext rfl (congrArg List.ofFn (funext fun i => ?_))
   exact relTable_eq_of_equiv_fin_one e (v.symbol i)
@@ -154,7 +154,8 @@ variable [L.IsRelational] (v : Vocabulary L)
 include v in
 /-- For any isomorphism-closed class `K` over a finite relational vocabulary, the restriction of
 `K` to empty structures (`Nat.card M = 0`) is first-order definable. -/
-theorem Definable.inter_card_eq_zero {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K) :
+private theorem Definable.inter_card_eq_zero {K : Set (Bundled.{0} L.Structure)}
+    (hK : IsoClosed K) :
     Definable {M : Bundled.{0} L.Structure | M ∈ K ∧ Nat.card M = 0} := by
   refine ⟨cardEqSentence L 0 ⊓ truthTableSentence v.nullarySymbolSentence
     (fun s => v.decoded (v.encodeOfZero s) ∈ K), fun M _ => ?_⟩
@@ -176,7 +177,7 @@ theorem Definable.inter_card_eq_zero {K : Set (Bundled.{0} L.Structure)} (hK : I
 include v in
 /-- For any isomorphism-closed class `K` over a finite relational vocabulary, the restriction of
 `K` to singleton structures (`Nat.card M = 1`) is first-order definable. -/
-theorem Definable.inter_card_eq_one {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K) :
+private theorem Definable.inter_card_eq_one {K : Set (Bundled.{0} L.Structure)} (hK : IsoClosed K) :
     Definable {M : Bundled.{0} L.Structure | M ∈ K ∧ Nat.card M = 1} := by
   refine ⟨cardEqSentence L 1 ⊓ truthTableSentence v.constTupleSentence
     (fun s => v.decoded (v.encodeOfOne s) ∈ K), fun M _ => ?_⟩

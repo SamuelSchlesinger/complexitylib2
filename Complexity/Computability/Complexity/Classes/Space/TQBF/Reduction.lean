@@ -83,7 +83,7 @@ the first `w` bits, then the target block. -/
 def certVar (w j : ℕ) : ℕ := if j < w then blockVar 0 0 j else blockVar 1 0 (j - w)
 
 /-- The certificate variables read the words held by the source and target blocks of level `0`. -/
-theorem map_certVar (σ : ℕ → Bool) (w : ℕ) :
+private theorem map_certVar (σ : ℕ → Bool) (w : ℕ) :
     (List.range (2 * w)).map (fun j => σ (certVar w j)) = block σ w 0 0 ++ block σ w 1 0 := by
   have hlen : ((List.range (2 * w)).map fun j => σ (certVar w j)).length =
       (block σ w 0 0 ++ block σ w 1 0).length := by
@@ -115,7 +115,7 @@ noncomputable def baseFormula (tab : CNF (CookLevin.Var k State)) (w : ℕ) : QB
   QBF.exs (baseVars tab w) (.and (certLinks k State w) (QBF.ofCNF (tab.relabel tabVar)))
 
 /-- Block variables are not quantified in the formula of level `0`. -/
-theorem certVar_notMem_baseVars (tab : CNF (CookLevin.Var k State)) (w j : ℕ) :
+private theorem certVar_notMem_baseVars (tab : CNF (CookLevin.Var k State)) (w j : ℕ) :
     certVar w j ∉ baseVars tab w := by
   have h : certVar w j % 2 = 0 := by unfold certVar; split_ifs <;> exact blockVar_mod_two ..
   simp only [baseVars, List.mem_append, List.mem_map, not_or, not_exists, not_and]

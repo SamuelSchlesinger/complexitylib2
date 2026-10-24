@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Basic
+public import Cslib.Foundations.Data.BitString
+public import Mathlib.Algebra.Ring.BooleanRing
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Algebra.Group.Hom.Defs
 public import Mathlib.Data.Finset.Card
@@ -19,7 +20,6 @@ public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Logic.Function.Const
 public import Mathlib.Logic.Function.DependsOn
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Algebra.Ring.BooleanRing
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.GroupTheory.Index
 
@@ -34,7 +34,7 @@ In the Boolean ring `Bool`, where `a + b = (a ^^ b)`, the parity on `s` is the s
 `s` (`parityOn_eq_sum`), so it splits over disjoint unions (`parityOn_union`), the parity on a
 symmetric difference is the exclusive or of the parities (`parityOn_symmDiff`), and it is additive
 for the coordinatewise sum of bit strings (`parityOn_add`, bundled as `parityOnAddMonoidHom`). Bit
-strings are added with `+`, under which each is its own negative (`BitString.add_self`), and
+strings are added with `+`, under which each is its own negative (`BooleanRing.add_self`), and
 single bits with `^^`. Flipping one of the bits negates the parity (`parityOn_update_not`), so
 the parity of a nonempty set of bits is not constant and depends on each of them; being additive,
 it then takes each value on exactly half of the inputs (`card_filter_parityOn_eq`).

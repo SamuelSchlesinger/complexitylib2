@@ -55,7 +55,7 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime Cslib.AffineDisperser
 /-! ### Field arithmetic -/
 
 /-- The multiplication table of the power basis, from the coefficient list of the modulus. -/
-theorem computableTidilyInPolyTime_powerMulTable :
+private theorem computableTidilyInPolyTime_powerMulTable :
     ComputableTidilyInPolyTime powerMulTable encBits encTable := by
   unfold powerMulTable
   have := computableTidilyInPolyTime_powerTable
@@ -84,7 +84,7 @@ private def lagrangeStep (par : (List (List (List Bool)) × ℕ) × (List Bool �
 
 /-- **The Lagrange numerator is polynomial-time**, uniformly in the table, the width, the nodes,
 the node and the point: a fold over the nodes whose states are field elements. -/
-theorem computableTidilyInPolyTime_lagrangeNum : ComputableTidilyInPolyTime
+private theorem computableTidilyInPolyTime_lagrangeNum : ComputableTidilyInPolyTime
     (fun p : ((List (List (List Bool)) × ℕ) × List (List Bool)) × (List Bool × List Bool) =>
       lagrangeNum p.1.1.1 p.1.1.2 p.1.2 p.2.1 p.2.2)
     (encPair (encPair (encPair encTable encUnary) (encList encBits)) (encPair encBits encBits))

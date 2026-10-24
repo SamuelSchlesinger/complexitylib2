@@ -170,7 +170,7 @@ example : toExactThreeSAT [[(0, true)], [(1, false), (2, true)]] =
 example : toExactThreeSAT [[(0, true)], [(0, false)]] ∉ ExactThreeSAT := by
   rw [mem_ExactThreeSAT_toExactThreeSAT_iff]
   rintro ⟨-, σ, h⟩
-  cases hσ : σ 0 <;> simp [CNF.eval, Clause.eval, Literal.eval, hσ] at h
+  cases hσ : σ 0 <;> simp [hσ] at h
 
 /-! ### Axiom guards -/
 

@@ -69,7 +69,7 @@ variable [L''.IsRelational]
 
 /-- Successive canonical interpretations and the flattened composite are isomorphic as full
 ordered structures. The map preserves the natural index of every element. -/
-noncomputable def compEquiv (hk : 0 < k) (hl : 0 < l) :
+def compEquiv (hk : 0 < k) (hl : 0 < l) :
     letI := I.inputStructure (n := n)
     letI : Fact (2 ≤ n ^ k) := ⟨two_le_pow (n := n) hk⟩
     letI := J.inputStructure (n := n ^ k)

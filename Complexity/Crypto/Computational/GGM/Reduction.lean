@@ -48,7 +48,7 @@ open Probability Turing.MultiTapeTM
 
 /-- Run the expansion game using a saved list, consuming one entry at each adversary call.
 Truncation and the empty fallback make the test total on every challenge list. -/
-noncomputable def sampleGame (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
+def sampleGame (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
     (n depth : ℕ) (values : List (List Bool)) : ProbComp Bool :=
   Prod.fst <$> (OracleComp.interpret
     (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))

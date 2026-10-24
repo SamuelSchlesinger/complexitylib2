@@ -42,6 +42,12 @@ are neighbours (see `Parity/DepthThree.lean`).
 * `Cslib.Logic.PL.ClauseSet.card_compl_isolatedDirections_le`: few non-isolated directions.
 * `Cslib.Logic.PL.ClauseSet.card_solutions_le_of_neighbors`: the bound in bounded degree.
 * `Cslib.Logic.PL.ClauseSet.card_solutions_le_of_not_containsSubcube`: the bound.
+
+## References
+
+* [R. Paturi, P. Pudlák, F. Zane, *Satisfiability coding lemma*][PaturiPudlakZane1999]
+* [R. Impagliazzo, R. Paturi, F. Zane, *Which problems have strongly exponential
+  complexity?*][ImpagliazzoPaturiZane2001]
 -/
 
 @[expose] public section

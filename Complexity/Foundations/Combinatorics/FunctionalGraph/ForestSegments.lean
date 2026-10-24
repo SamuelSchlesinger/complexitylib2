@@ -190,7 +190,7 @@ theorem forest_hull_partition {L : ℕ} (hL : 0 < L)
   exact visit t a (subset_forestMarks f H ha) ht
 
 /-- A matched interior can be traced backwards as far as its lower endpoint. -/
-theorem forest_backtrack_interior {a y : α} {d i j : ℕ}
+private theorem forest_backtrack_interior {a y : α} {d i j : ℕ}
     (ha : IsForestEdge f H a d) (hy : y ∈ checkpointHull f H)
     (hi : i < d) (hji : j ≤ i) (hj : j < transientDepth f y)
     (he : f^[i] a = f^[j] y) : f^[i - j] a = y := by

@@ -216,7 +216,7 @@ theorem exists_queryBounds_of_mem_IP {A : Set α} (h : A ∈ IP enc) :
 /-- The one-message interactive proof of a problem with verifier `V` and certificate length
 `p`: ask the prover for a certificate, read the first `p (enc a).length` bits of its reply, and
 run `V` on them when there are that many. -/
-noncomputable def npVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Bool → Bool)
+def npVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Bool → Bool)
     (a : α) : WordOracleComp Unit Bool :=
   (fun w => decide (w.length = p.eval (enc a).length) && V (a, w)) <$>
     (List.take (p.eval (enc a).length) <$> ProbOracleComp.query ((), []))

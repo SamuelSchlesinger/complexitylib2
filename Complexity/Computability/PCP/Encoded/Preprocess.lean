@@ -250,7 +250,7 @@ variable (g : Graph C) (eval : C → α → α → Bool) (fallback truth : C)
 
 include hrotate in
 /-- A numerical realization of rotations only emits endpoints among the declared vertices. -/
-theorem endpoints_rotationEdges (labels : List D) (vertices : ℕ)
+private theorem endpoints_rotationEdges (labels : List D) (vertices : ℕ)
     (p : ℕ × ℕ) (hp : p ∈ rotationEdges rotate labels vertices) :
     p.1 < vertices ∧ p.2 < vertices := by
   obtain ⟨v, hv, hp⟩ := List.mem_flatMap.mp hp

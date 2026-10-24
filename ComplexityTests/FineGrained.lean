@@ -42,7 +42,7 @@ example : φ₁ ∈ KSAT 2 := ⟨by decide, fun _ => true, rfl⟩
 example : φ₁ ∉ KSAT 1 := fun h => absurd (h.1 _ List.mem_cons_self) (by decide)
 
 example : φ₂ ∉ KSAT 3 := fun ⟨_, σ, hσ⟩ => by
-  cases h : σ 0 <;> simp [φ₂, CNF.eval, Clause.eval, Literal.eval, h] at hσ
+  cases h : σ 0 <;> simp [φ₂, h] at hσ
 
 example : KSAT 3 = ThreeSAT := KSAT_three
 

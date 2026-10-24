@@ -315,7 +315,9 @@ theorem PseudorandomGenerator.exists_zeroKnowledgeProof_of_mem_NP
 
 /-- **Goldreich–Micali–Wigderson theorem (from a one-way function).** If a one-way function exists,
 then every language `A ∈ NP enc` has a computational zero-knowledge interactive proof system
-[Goldreich, Micali, and Wigderson][GoldreichMicaliWigderson1991]. -/
+[Goldreich, Micali, and Wigderson][GoldreichMicaliWigderson1991], in the uniform-family sense of
+`ZeroKnowledgeProof.zero_knowledge`: instances, witnesses and auxiliary inputs range over
+polynomial-time-generable families rather than arbitrary ones. -/
 theorem OneWay.exists_zeroKnowledgeProof_of_mem_NP
     {α : Type} {enc : α ↪ List Bool} {A : Set α}
     {f : List Bool → List Bool} (hf : OneWay f) (hA : A ∈ NP enc) :

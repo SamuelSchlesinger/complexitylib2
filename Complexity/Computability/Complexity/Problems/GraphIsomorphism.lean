@@ -74,7 +74,7 @@ theorem vertexEquiv_apply (G : Graph) (i : Fin G.distinctVertices.length) :
     (G.vertexEquiv i : ℕ) = G.distinctVertices.getD i 0 := by
   simp [vertexEquiv, List.Nodup.getEquiv, List.getD_eq_getElem?_getD]
 
-theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length) :
+private theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length) :
     G.induced.Adj (G.vertexEquiv i) (G.vertexEquiv j) ↔ G.adjIndex i j = true := by
   rw [induced, SimpleGraph.induce_adj, adjIndex, adjBool_eq_true_iff, vertexEquiv_apply,
     vertexEquiv_apply]

@@ -91,7 +91,7 @@ theorem isVerifier : IsVerifier (encCircuit 1) Polynomial.X verifier CircuitSAT 
   rw [List.getD_append _ _ _ _ (by simp), List.getD_eq_getElem _ _ (by simp), List.getElem_ofFn]
 
 /-- The verifier evaluates the code of the circuit on the first bits of the certificate. -/
-theorem verifier_eq_evalOutput (p : (Σ n, Circuit signature n 1) × List Bool) :
+private theorem verifier_eq_evalOutput (p : (Σ n, Circuit signature n 1) × List Bool) :
     verifier p = evalOutput ((List.range p.1.1).map fun i => p.2.getD i false) p.1.2.code.1
       (p.1.2.code.2.headD 0) := by
   have h : List.ofFn (fun i : Fin p.1.1 => p.2.getD i false) =
@@ -153,12 +153,12 @@ def circuitGates (φ : CNF ℕ) : List (Op × List ℕ) :=
 def circuitCode (φ : CNF ℕ) : List (Op × List ℕ) × List ℕ :=
   (circuitGates φ, [φ.vars.length + 3 * (circuitSteps φ).length + 2])
 
-theorem length_circuitBlock (p i : ℕ) (b e : Bool) : (circuitBlock p i b e).length = 3 := by
+private theorem length_circuitBlock (p i : ℕ) (b e : Bool) : (circuitBlock p i b e).length = 3 := by
   unfold circuitBlock
   split <;> rfl
 
 /-- The circuit of a formula has three gates for each instruction, and three more. -/
-theorem length_circuitGates (φ : CNF ℕ) :
+private theorem length_circuitGates (φ : CNF ℕ) :
     (circuitGates φ).length = 3 * (circuitSteps φ).length + 3 := by
   rw [circuitGates, List.length_append, List.length_flatMap]
   simp only [length_circuitBlock, List.map_const', List.sum_replicate, List.length_zipIdx,
@@ -166,7 +166,7 @@ theorem length_circuitGates (φ : CNF ℕ) :
   simp only [List.length_cons, List.length_nil]
   omega
 
-theorem isCodeFrom_circuitBlock {n k i : ℕ} (b e : Bool) (hi : e = false → i < n) :
+private theorem isCodeFrom_circuitBlock {n k i : ℕ} (b e : Bool) (hi : e = false → i < n) :
     Program.IsCodeFrom signature n (3 * k + 3) (circuitBlock (n + 3 * k) i b e) := by
   cases e
   · have hi := hi rfl
@@ -179,7 +179,7 @@ theorem isCodeFrom_circuitBlock {n k i : ℕ} (b e : Bool) (hi : e = false → i
       (intro _ h; simp only [List.mem_cons, List.not_mem_nil, or_false] at h;
         rcases h with rfl | rfl <;> omega)
 
-theorem isCodeFrom_circuitBlocks (φ : CNF ℕ) (steps : List (Literal ℕ × Bool)) (k : ℕ)
+private theorem isCodeFrom_circuitBlocks (φ : CNF ℕ) (steps : List (Literal ℕ × Bool)) (k : ℕ)
     (h : ∀ s ∈ steps, s.2 = false → s.1.1 ∈ φ.vars) :
     Program.IsCodeFrom signature φ.vars.length (3 * k + 3) ((steps.zipIdx k).flatMap fun s =>
       circuitBlock (φ.vars.length + 3 * s.2) (φ.vars.idxOf s.1.1.1) s.1.1.2 s.1.2) := by
@@ -194,7 +194,7 @@ theorem isCodeFrom_circuitBlocks (φ : CNF ℕ) (steps : List (Literal ℕ × Bo
     split_ifs <;> simpa [Nat.mul_add, Nat.add_assoc] using this
 
 /-- Every literal instruction reads a variable of the formula. -/
-theorem mem_vars_of_mem_circuitSteps {φ : CNF ℕ} {s : Literal ℕ × Bool}
+private theorem mem_vars_of_mem_circuitSteps {φ : CNF ℕ} {s : Literal ℕ × Bool}
     (hs : s ∈ circuitSteps φ) (he : s.2 = false) : s.1.1 ∈ φ.vars := by
   obtain ⟨c, hc, hs⟩ := List.mem_flatMap.1 hs
   rcases List.mem_append.1 hs with hs | hs
@@ -219,7 +219,7 @@ theorem isSome_ofCode_circuitCode (φ : CNF ℕ) :
 def toCircuit (φ : CNF ℕ) : Σ n, Circuit signature n 1 :=
   ⟨φ.vars.length, (Circuit.ofCode _ 1 (circuitCode φ)).get (isSome_ofCode_circuitCode φ)⟩
 
-theorem code_toCircuit (φ : CNF ℕ) : (toCircuit φ).2.code = circuitCode φ :=
+private theorem code_toCircuit (φ : CNF ℕ) : (toCircuit φ).2.code = circuitCode φ :=
   Circuit.code_of_ofCode_eq_some (Option.some_get _).symm
 
 /-! ### Correctness of the circuit of a formula -/
@@ -278,7 +278,7 @@ private theorem evalCode_flatMap (φ : CNF ℕ) (x : List Bool) (hx : x.length =
       cases e
       · have h := hread rfl
         rw [List.getD_eq_getElem?_getD] at h
-        simp [circuitState, Literal.eval, h]
+        simp [circuitState, h]
       · simp [circuitState]
     · rw [show φ.vars.length + 3 * (k + 1) + 2 = V.length + 2 by omega,
         List.getD_append_right _ _ _ _ (by omega), Nat.add_sub_cancel_left, h₁, h₂]
@@ -346,14 +346,15 @@ theorem toCircuit_mem_CircuitSAT_iff (φ : CNF ℕ) : toCircuit φ ∈ CircuitSA
 open ComputableTidilyInPolyTime
 
 /-- Listing the instructions of the circuit of a formula is polynomial-time. -/
-theorem computableTidilyInPolyTime_circuitSteps : ComputableTidilyInPolyTime circuitSteps encCNF
+private theorem computableTidilyInPolyTime_circuitSteps
+    : ComputableTidilyInPolyTime circuitSteps encCNF
     (encList (encPair (encPair encNat encBool) encBool)) := by
   unfold circuitSteps encCNF
   fun_prop
 
 /-- Writing the block of an instruction is polynomial-time, from the position `p` and the input
 `i` in unary; the gates use their binary numbers. -/
-theorem computableTidilyInPolyTime_circuitBlock :
+private theorem computableTidilyInPolyTime_circuitBlock :
     ComputableTidilyInPolyTime
       (fun q : ((ℕ × ℕ) × Bool) × Bool => circuitBlock q.1.1.1 q.1.1.2 q.1.2 q.2)
       (encPair (encPair (encPair encUnary encUnary) encBool) encBool) (encList encGate) := by
@@ -383,7 +384,7 @@ theorem computableTidilyInPolyTime_circuitBlock :
         (cons' (hgate .and (cons' (hp 2) (cons' (hp 2) (hnil _)))) (hnil _)))
 
 /-- Writing the gates of the circuit of a formula is polynomial-time. -/
-theorem computableTidilyInPolyTime_circuitGates :
+private theorem computableTidilyInPolyTime_circuitGates :
     ComputableTidilyInPolyTime circuitGates encCNF (encList encGate) := by
   have hsteps := computableTidilyInPolyTime_circuitSteps
   have hvars := SAT.computableTidilyInPolyTime_vars
@@ -398,7 +399,7 @@ theorem computableTidilyInPolyTime_circuitGates :
 
 /-- Building the circuit of a formula is polynomial-time, from the encoding `encCNF` of formulas
 to the binary encoding `encCircuit 1` of circuits. -/
-theorem computableTidilyInPolyTime_toCircuit :
+private theorem computableTidilyInPolyTime_toCircuit :
     ComputableTidilyInPolyTime toCircuit encCNF (encCircuit 1) := by
   have hg := computableTidilyInPolyTime_circuitGates
   have hs := computableTidilyInPolyTime_circuitSteps

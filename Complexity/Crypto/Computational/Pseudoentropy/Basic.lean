@@ -58,7 +58,7 @@ open Probability Filter Turing.MultiTapeTM
 local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
 
 /-- Predict the hidden bit from the public component of a sampled pair. -/
-noncomputable def predictionGame (sample : ℕ → ProbComp (List Bool × Bool))
+def predictionGame (sample : ℕ → ProbComp (List Bool × Bool))
     (adversary : Distinguisher) (n : ℕ) : ProbComp Bool := do
   let pair ← sample n
   let guess ← adversary n pair.1

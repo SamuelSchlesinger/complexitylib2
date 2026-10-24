@@ -206,7 +206,7 @@ theorem two_mul_card_dotProduct_eq_true_add [DecidableEq ι] (x : ι → Bool) :
 
 /-- The inner product is `true` on `2 ^ (k - 1) (2 ^ k - 1)` pairs of `k`-bit strings, in the form
 `2 c + 2 ^ k = 2 ^ k 2 ^ k`. -/
-theorem two_mul_card_dotProduct_eq_true_add_two_pow [DecidableEq ι] :
+private theorem two_mul_card_dotProduct_eq_true_add_two_pow [DecidableEq ι] :
     2 * #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} + 2 ^ Fintype.card ι =
       2 ^ Fintype.card ι * 2 ^ Fintype.card ι := by
   have hrow : #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} =

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.TM2.PolySpace
-public import Complexity.Computability.Complexity.Classes.Inclusions
+public import Complexity.Computability.Complexity.Classes.Space.Closure
 
 /-!
 # Polynomial-space Mathlib stack machines decide problems in PSPACE

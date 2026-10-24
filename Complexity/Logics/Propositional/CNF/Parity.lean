@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Logics.Propositional.CNF
+public import Mathlib.Data.Finset.Powerset
 
 /-!
 # Parity constraints in conjunctive normal form

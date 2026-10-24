@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Computability.Circuit.Boolean.XorLemma
 
 /-! Impagliazzo's hard-core lemma and Yao's XOR lemma: a concrete hard-core measure, the

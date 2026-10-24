@@ -41,7 +41,6 @@ Two runs reject a member with probability at most `1 / 4`, so `RP ⊆ BPP`.
 * `Cslib.Complexity.DecidesWithOneSidedError`: the one-sided error condition.
 * `Cslib.Complexity.RP`, `Cslib.Complexity.coRP`.
 * `Cslib.Complexity.DecidesWithOneSidedErrorExponent`: one-sided error at most `2 ^ (-q(n))`.
-* `Cslib.Complexity.repeatAny`: the disjunction of `q(n)` independent runs.
 
 ## Main results
 

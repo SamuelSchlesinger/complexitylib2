@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.HardCore
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Parity
+import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Computability.Circuit.Boolean.Substitution
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Group.Finset

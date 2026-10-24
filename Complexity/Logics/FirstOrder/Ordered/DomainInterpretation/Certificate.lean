@@ -86,7 +86,7 @@ variable {I : DomainInterpretation L L' k} (C : I.Certificate)
 
 /-- The relational interpretation of the ordered target language: the domain and relations of
 `I`, with the certificate's order and `BIT`. -/
-noncomputable def toInterpretation :
+def toInterpretation :
     Interpretation (language L) (relationalLanguage L') (Fin k) where
   domain := I.domain
   rel

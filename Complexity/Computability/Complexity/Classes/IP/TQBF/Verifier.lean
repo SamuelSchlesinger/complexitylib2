@@ -87,14 +87,14 @@ noncomputable abbrev encArithToken : ArithQBF.Kind × ℕ ↪ List Bool :=
   encPair (encFinite ArithQBF.Kind) encNat
 
 /-- Points as lists of pairs of a variable, in binary, and a value, in unary. -/
-noncomputable abbrev encPt : List (ℕ × ℕ) ↪ List Bool := encList (encPair encNat encUnary)
+abbrev encPt : List (ℕ × ℕ) ↪ List Bool := encList (encPair encNat encUnary)
 
 /-- The parameters of the machine: the variables `xs` linearized after every quantifier, the
 modulus less one, so that the modulus is positive, and the degree bound `D` of every round. -/
 abbrev Params := List ℕ × ℕ × ℕ
 
 /-- The encoding of the parameters, the numbers in unary. -/
-noncomputable abbrev encParams : Params ↪ List Bool :=
+abbrev encParams : Params ↪ List Bool :=
   encPair (encList encNat) (encPair encUnary encUnary)
 
 /-- The input of the loop: the parameters and the tokens of the arithmetic formula. -/
@@ -108,7 +108,7 @@ noncomputable abbrev encLoopInput : LoopInput ↪ List Bool :=
 abbrev Claim := List (ℕ × ℕ) × ℕ
 
 /-- The encoding of a claim, its value in unary. -/
-noncomputable abbrev encClaim : Claim ↪ List Bool := encPair encPt encUnary
+abbrev encClaim : Claim ↪ List Bool := encPair encPt encUnary
 
 /-- A state of the machine: the remaining tokens, the stack of pending claims, and whether every
 check so far passed. -/

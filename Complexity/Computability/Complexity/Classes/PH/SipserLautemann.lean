@@ -356,7 +356,7 @@ theorem verifier_polyTime {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α 
 
 /-- On a combined certificate `u ++ r` with `u.length = witnessLen m`, `trialSeed` reconstructs
 the `j`-th block of the shifted seed `listToSeed m r + listToShifts m u i`. -/
-theorem trialSeed_append {m : ℕ} {u r : List Bool} (hu : u.length = witnessLen m)
+private theorem trialSeed_append {m : ℕ} {u r : List Bool} (hu : u.length = witnessLen m)
     (i : Fin (shifts m)) (j : Fin (runs m)) :
     trialSeed m (u ++ r) i.1 j.1 = List.ofFn ((listToSeed m r + listToShifts m u i) j) := by
   apply List.ext_getElem (by simp [trialSeed])

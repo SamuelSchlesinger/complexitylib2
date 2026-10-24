@@ -89,12 +89,12 @@ def CyclicCircuit.step [Preorder U] (c : CyclicCircuit σ n m)
     | gate j => exact h j
 
 /-- The least solution of the gate equations in a complete lattice. -/
-noncomputable def CyclicCircuit.evalGates [CompleteLattice U] (c : CyclicCircuit σ n m)
+def CyclicCircuit.evalGates [CompleteLattice U] (c : CyclicCircuit σ n m)
     (I : Interpretation σ U) (hI : ∀ op, Monotone (I op)) (input : Fin n → U) :
     Fin c.size → U := (c.step I hI input).lfp
 
 /-- Read all designated outputs at the least solution. -/
-noncomputable def CyclicCircuit.eval [CompleteLattice U] (c : CyclicCircuit σ n m)
+def CyclicCircuit.eval [CompleteLattice U] (c : CyclicCircuit σ n m)
     (I : Interpretation σ U) (hI : ∀ op, Monotone (I op)) (input : Fin n → U) :
     Fin m → U := Wire.elim input (c.evalGates I hI input) ∘ c.outputs
 

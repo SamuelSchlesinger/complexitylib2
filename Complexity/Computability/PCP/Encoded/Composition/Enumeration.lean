@@ -22,8 +22,8 @@ not a claim of practical runtime at arbitrary fixed alphabets.
 
 ## Main definitions
 
-* `Cslib.PCP.HadamardTester.Rand.finEnum`, `Cslib.PCP.Encoded.Graph.ComposeSlot.finEnum`:
-  reusable constructive coin enumeration and slot numbering.
+* `Cslib.PCP.Encoded.Graph.ComposeSlot.finEnum`: constructive slot numbering, used with the coin
+  enumeration of `Complexity.Computability.PCP.Encoded.AssignmentTester.Enumeration`.
 * `Cslib.PCP.Encoded.Graph.composeEnumerated`: tabulated composition with complete enumerations.
 
 ## Main results

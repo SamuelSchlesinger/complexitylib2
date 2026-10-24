@@ -79,7 +79,7 @@ theorem exists_maskSelect_eq {s l : List α} (h : s <+ l) :
     exact ⟨true :: w, by simp [hw], by simp [maskSelect_cons, hs]⟩
 
 /-- Unselected positions beyond the list do not change the selection. -/
-theorem maskSelect_append_replicate_false (l : List α) (w : List Bool) (k : ℕ) :
+private theorem maskSelect_append_replicate_false (l : List α) (w : List Bool) (k : ℕ) :
     maskSelect l (w ++ List.replicate k false) = maskSelect l w := by
   unfold maskSelect
   congr 2

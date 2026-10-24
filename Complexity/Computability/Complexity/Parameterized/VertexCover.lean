@@ -99,7 +99,7 @@ def branchStep (G : Graph) (C : List ℕ) (b : Bool) : List ℕ :=
 def foldBranch (G : Graph) (bs : List Bool) : List ℕ :=
   bs.foldl (branchStep G) []
 
-theorem foldBranch_append_singleton (G : Graph) (bs : List Bool) (b : Bool) :
+private theorem foldBranch_append_singleton (G : Graph) (bs : List Bool) (b : Bool) :
     foldBranch G (bs ++ [b]) = branchStep G (foldBranch G bs) b := by
   simp [foldBranch]
 
@@ -144,7 +144,7 @@ private theorem headD_mem_uncoveredEdges {G : Graph} {C : List ℕ}
   | nil => simp [hle] at h
   | cons e es => simp
 
-theorem mem_of_mem_branchStep {G : Graph} {C : List ℕ} {b : Bool} (hC : ∀ v ∈ C, v ∈ G.1) :
+private theorem mem_of_mem_branchStep {G : Graph} {C : List ℕ} {b : Bool} (hC : ∀ v ∈ C, v ∈ G.1) :
     ∀ v ∈ branchStep G C b, v ∈ G.1 := by
   unfold branchStep
   cases h : isCover G C
@@ -156,13 +156,13 @@ theorem mem_of_mem_branchStep {G : Graph} {C : List ℕ} {b : Bool} (hC : ∀ v 
     · exact hC v hv
   · simpa using hC
 
-theorem length_branchStep_le (G : Graph) (C : List ℕ) (b : Bool) :
+private theorem length_branchStep_le (G : Graph) (C : List ℕ) (b : Bool) :
     (branchStep G C b).length ≤ C.length + 1 := by
   unfold branchStep
   split_ifs <;> simp
 
 /-- Every vertex added along a search-tree path is a declared vertex of `G`. -/
-theorem mem_of_mem_foldBranch (G : Graph) (bs : List Bool) :
+private theorem mem_of_mem_foldBranch (G : Graph) (bs : List Bool) :
     ∀ v ∈ foldBranch G bs, v ∈ G.1 := by
   induction bs using List.reverseRecOn with
   | nil => simp [foldBranch]
@@ -171,7 +171,7 @@ theorem mem_of_mem_foldBranch (G : Graph) (bs : List Bool) :
     exact mem_of_mem_branchStep ih
 
 /-- A search-tree path of length `|bs|` picks at most `|bs|` vertices. -/
-theorem length_foldBranch_le (G : Graph) (bs : List Bool) :
+private theorem length_foldBranch_le (G : Graph) (bs : List Bool) :
     (foldBranch G bs).length ≤ bs.length := by
   induction bs using List.reverseRecOn with
   | nil => simp [foldBranch]
@@ -228,7 +228,7 @@ private theorem exists_foldBranch_subset (G : Graph) {S : Finset ℕ}
 
 /-- If `G` has a vertex cover of at most `m` vertices, some branching word `bs` of length `m`
 produces a cover. -/
-theorem exists_isCover_foldBranch {G : Graph} {S : Finset ℕ}
+private theorem exists_isCover_foldBranch {G : Graph} {S : Finset ℕ}
     (hS : ∀ u ∈ G.1, ∀ v ∈ G.1, G.toSimpleGraph.Adj u v → u ∈ S ∨ v ∈ S) {m : ℕ}
     (hm : S.card ≤ m) :
     ∃ bs : List Bool, bs.length = m ∧ isCover G (foldBranch G bs) = true := by
@@ -280,7 +280,7 @@ def cap (x : Graph × ℕ) : ℕ :=
 theorem cap_eq (x : Graph × ℕ) : cap x = min x.1.1.toFinset.card x.2 := by
   rw [cap, Graph.length_distinctVertices]
 
-theorem cap_le_length (x : Graph × ℕ) : cap x ≤ (encGraph x.1).length :=
+private theorem cap_le_length (x : Graph × ℕ) : cap x ≤ (encGraph x.1).length :=
   (Nat.min_le_left _ _).trans x.1.length_distinctVertices_le
 
 theorem cap_le_snd (x : Graph × ℕ) : cap x ≤ x.2 :=
@@ -291,7 +291,7 @@ in unary, the number of the next root-to-leaf path to try, and whether a cover h
 abbrev State : Type := ((Graph × ℕ) × ℕ) × (ℕ × Bool)
 
 /-- States encoded as framed tuples, with the capped depth in unary. -/
-abbrev encState : State ↪ List Bool :=
+private abbrev encState : State ↪ List Bool :=
   encPair (encPair (encPair encGraph encNat) encUnary) (encPair encNat encBool)
 
 /-- Try the next numbered path in the bounded search tree. -/
@@ -311,7 +311,7 @@ length `cap x` and check that `k ≤ |V|` (`cap x = k`). -/
 def search (x : Graph × ℕ) : Bool :=
   finish (step^[2 ^ cap x] (init x))
 
-theorem iterate_step_init (x : Graph × ℕ) (j : ℕ) :
+private theorem iterate_step_init (x : Graph × ℕ) (j : ℕ) :
     step^[j] (init x) = ((x, cap x),
       (j, (List.range j).any fun i =>
         isCover x.1 (foldBranch x.1 ((List.range (cap x)).map i.testBit)))) := by
@@ -441,7 +441,7 @@ private theorem length_encList_branchStep_le (G : Graph) (C : List ℕ) (b : Boo
 
 open ComputableTidilyInPolyTime in
 /-- Computing the `m` branching bits of path `i` is polynomial-time. -/
-theorem computableTidilyInPolyTime_branchBits :
+private theorem computableTidilyInPolyTime_branchBits :
     ComputableTidilyInPolyTime (fun s : State => (List.range s.1.2).map s.2.1.testBit)
       encState (encList encBool) := by
   have heq : (fun s : State => (List.range s.1.2).map s.2.1.testBit) =
@@ -458,7 +458,7 @@ theorem computableTidilyInPolyTime_branchBits :
 
 open ComputableTidilyInPolyTime in
 /-- Following a root-to-leaf path in the bounded search tree is polynomial-time. -/
-theorem computableTidilyInPolyTime_foldBranch :
+private theorem computableTidilyInPolyTime_foldBranch :
     ComputableTidilyInPolyTime
       (fun s : State => foldBranch s.1.1.1 ((List.range s.1.2).map s.2.1.testBit))
       encState (encList encNat) := by
@@ -472,7 +472,8 @@ theorem computableTidilyInPolyTime_foldBranch :
 
 open ComputableTidilyInPolyTime in
 /-- One step of the search iteration is polynomial-time. -/
-theorem computableTidilyInPolyTime_step : ComputableTidilyInPolyTime step encState encState := by
+private theorem computableTidilyInPolyTime_step
+    : ComputableTidilyInPolyTime step encState encState := by
   have hcov : ComputableTidilyInPolyTime
       (fun s : State => isCover s.1.1.1 (foldBranch s.1.1.1 ((List.range s.1.2).map s.2.1.testBit)))
       encState encBool :=
@@ -489,20 +490,20 @@ theorem computableTidilyInPolyTime_step : ComputableTidilyInPolyTime step encSta
 
 open ComputableTidilyInPolyTime in
 /-- The initial state of the search is computed in polynomial time. -/
-theorem computableTidilyInPolyTime_init :
+private theorem computableTidilyInPolyTime_init :
     ComputableTidilyInPolyTime init (encPair encGraph encNat) encState := by
   unfold init
   fun_prop
 
 open ComputableTidilyInPolyTime in
 /-- The number `2 ^ cap x` of paths is computed in binary in polynomial time. -/
-theorem computableTidilyInPolyTime_count :
+private theorem computableTidilyInPolyTime_count :
     ComputableTidilyInPolyTime (fun x => 2 ^ cap x) (encPair encGraph encNat) encNat := by
   fun_prop
 
 open ComputableTidilyInPolyTime in
 /-- Extracting the final answer from the search state is polynomial-time. -/
-theorem computableTidilyInPolyTime_finish :
+private theorem computableTidilyInPolyTime_finish :
     ComputableTidilyInPolyTime finish encState encBool := by
   unfold finish
   exact bool_and'

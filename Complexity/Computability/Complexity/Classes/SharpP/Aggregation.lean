@@ -81,7 +81,7 @@ namespace SignedProduct
 abbrev State := Bool × Bool
 
 /-- Difference of the two acceptance flags. -/
-def sign (s : State) : ℤ := (if s.1 then 1 else 0) - (if s.2 then 1 else 0)
+private def sign (s : State) : ℤ := (if s.1 then 1 else 0) - (if s.2 then 1 else 0)
 
 /-- Multiplication of signed Boolean flags; overlap cancels in their difference. -/
 def mul (s t : State) : State :=
@@ -107,7 +107,7 @@ def verifier (r k : α → ℕ) (V W : α × List Bool → Bool) (b : Bool)
   if b then s.2 else s.1
 
 /-- The two product verifiers run in polynomial time for unary row count and width. -/
-theorem polyTime_verifier {r k : α → ℕ} {V W : α × List Bool → Bool}
+private theorem polyTime_verifier {r k : α → ℕ} {V W : α × List Bool → Bool}
     (hr : ComputableTidilyInPolyTime r enc encUnary)
     (hk : ComputableTidilyInPolyTime k enc encUnary)
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)

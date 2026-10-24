@@ -136,7 +136,7 @@ lemma ofList_append_replicate_none (l : List (Option Symbol)) (n : ℕ) :
     ofList (l.map some) = mapSome l := by
   exact ofList_toList (mapSome l)
 
-lemma listBlank_mk_cons_toList (a : Option Symbol) (tape : StackTape Symbol) :
+private lemma listBlank_mk_cons_toList (a : Option Symbol) (tape : StackTape Symbol) :
     _root_.Turing.ListBlank.mk (cons a tape).toList =
       _root_.Turing.ListBlank.cons a (_root_.Turing.ListBlank.mk tape.toList) := by
   cases a with
@@ -210,14 +210,6 @@ def equivListBlank : StackTape Symbol ≃ _root_.Turing.ListBlank (Option Symbol
 
 @[simp] lemma equivListBlank_mapSome (l : List Symbol) :
     equivListBlank (mapSome l) = _root_.Turing.ListBlank.mk (l.map some) := rfl
-
-lemma read_cons_zero (a : Option Symbol) (tape : StackTape Symbol) :
-    (cons a tape).read 0 = a := by
-  simp [read]
-
-lemma read_cons_succ (a : Option Symbol) (tape : StackTape Symbol) (n : ℕ) :
-    (cons a tape).read (n + 1) = tape.read n := by
-  simp [read]
 
 @[simp] lemma nth_equivListBlank (tape : StackTape Symbol) (n : ℕ) :
     (equivListBlank tape).nth n = tape.read n := by

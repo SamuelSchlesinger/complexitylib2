@@ -75,7 +75,7 @@ theorem encInstance_apply (x : Instance) :
   rfl
 
 /-- The table of an instance is no longer than its encoding. -/
-theorem two_pow_le_length_encInstance (x : Instance) :
+private theorem two_pow_le_length_encInstance (x : Instance) :
     2 ^ x.arity ≤ (encInstance x).length := by
   rw [encInstance_apply, length_encPair, encBits_apply, List.length_ofFn]
   omega
@@ -122,7 +122,7 @@ theorem tableValue_ofFn (x : Instance) (y : BitString x.arity) :
 /-- The polynomial bounding the length of certificates. -/
 noncomputable def certPolynomial : Polynomial ℕ := 40 * (Polynomial.X + 1) ^ 4
 
-theorem certLength_le (x : Instance) :
+private theorem certLength_le (x : Instance) :
     certLength x.arity (budget x.arity x.threshold) ≤
       certPolynomial.eval (encInstance x).length := by
   set L := (encInstance x).length

@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomial
 public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Explicit
+import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.List.GetD
 
 /-!
@@ -84,7 +85,7 @@ def monomialTable (ms : List ℕ) (R : List (List (List Bool))) : List (List (Li
     (List.range ms.prod).map fun v => monomialBit ms R u w v
 
 /-- The mixed-radix digits are the components of `finPiFinEquiv.symm`. -/
-theorem mixedDigit_eq (ms : List ℕ) (u : Fin (∏ i, ms.get i)) (i : Fin ms.length) :
+private theorem mixedDigit_eq (ms : List ℕ) (u : Fin (∏ i, ms.get i)) (i : Fin ms.length) :
     mixedDigit ms u i = (finPiFinEquiv.symm u i : ℕ) := by
   have hprod : ∏ j : Fin i, ms.get (Fin.castLE i.is_lt.le j) = (ms.take i).prod := by
     rw [← List.prod_ofFn]
@@ -109,7 +110,7 @@ private theorem bitEquiv_symm_all (k : ℕ) (p : ℕ → Bool) :
     rw [Bool.not_eq_true] at hpi
     simp [hpi]
 
-theorem tableEntry_monomialTable {ms : List ℕ} {R : List (List (List Bool))} {u w : ℕ}
+private theorem tableEntry_monomialTable {ms : List ℕ} {R : List (List (List Bool))} {u w : ℕ}
     (hu : u < ms.prod) (hw : w < ms.prod) :
     tableEntry (monomialTable ms R) u w = (List.range ms.prod).map (monomialBit ms R u w) := by
   simp [tableEntry, monomialTable, List.getD_eq_getElem?_getD, hu, hw]
@@ -190,13 +191,14 @@ theorem aeval_binaryRoot_degreePrime (N : ℕ) (j : Fin (degreePrimes N).length)
   exact minpoly.aeval _ _
 
 /-- The basis of the explicit disperser is the monomial basis in the roots `binaryRoot`. -/
-theorem explicitBasis_eq_rootBasis (N : ℕ) :
+private theorem explicitBasis_eq_rootBasis (N : ℕ) :
     explicitBasis N = rootBasis N (fun j => binaryRoot (degreePrime N j) (fieldDegree N))
       (aeval_binaryRoot_degreePrime N) :=
   rfl
 
 /-- The explicit table is the multiplication table of the monomial basis in any roots. -/
-theorem isMulTable_explicitTable (N : ℕ) (α : (j : Fin (degreePrimes N).length) → ExplicitField N)
+private theorem isMulTable_explicitTable (N : ℕ)
+    (α : (j : Fin (degreePrimes N).length) → ExplicitField N)
     (hα : ∀ j, aeval (α j) (leastIrreducible (degreePrime N j)) = 0) :
     IsMulTable ((rootBasis N α hα).reindex finPiFinEquiv) (explicitTable N) := by
   refine isMulTable_monomialTable _ _ _ _ _ fun i e he => ?_
@@ -228,7 +230,7 @@ theorem isMulTable_explicitTable (N : ℕ) (α : (j : Fin (degreePrimes N).lengt
 
 omit [FiniteDimensional (ZMod 2) F] in
 /-- Reindexing the basis and the reading positions together does not change `traceSymBits`. -/
-theorem traceSymBits_reindex {ι ι' : Type*} [Fintype ι] [Fintype ι'] {r t N : ℕ} (μ : F)
+private theorem traceSymBits_reindex {ι ι' : Type*} [Fintype ι] [Fintype ι'] {r t N : ℕ} (μ : F)
     (b : Basis ι (ZMod 2) F) (e : ι ≃ ι') (pos : Fin r × ι' → Fin N) (x : BitString N) :
     traceSymBits μ r t (b.reindex e) pos x =
       traceSymBits μ r t b (fun q => pos (q.1, e q.2)) x := by
@@ -241,7 +243,7 @@ theorem traceSymBits_reindex {ι ι' : Type*} [Fintype ι] [Fintype ι'] {r t N 
 /-- The coordinate computation with the explicit table is `traceSymBits` in the monomial basis in
 any roots `α` of the least-code irreducible polynomials, read on the first `N` bits of `x` (missing
 bits are zero). -/
-theorem traceSymCoords_explicitTable_eq_traceSymBits (N : ℕ)
+private theorem traceSymCoords_explicitTable_eq_traceSymBits (N : ℕ)
     (α : (j : Fin (degreePrimes N).length) → ExplicitField N)
     (hα : ∀ j, aeval (α j) (leastIrreducible (degreePrime N j)) = 0) (x : List Bool) :
     traceSymCoords (explicitTable N) (numBlocks N) (symDegree N) x =

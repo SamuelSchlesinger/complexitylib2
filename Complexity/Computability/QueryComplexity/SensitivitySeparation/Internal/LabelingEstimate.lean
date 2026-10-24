@@ -39,7 +39,7 @@ namespace Cslib.QueryComplexity.SensitivitySeparation
 namespace Internal
 
 /-- If `3 ≤ M` and `M ≤ r ^ 2`, then `(2 * M ^ 2 + 1) ^ 16 * M ^ 20 ≤ 3 ^ 16 * r ^ 104`. -/
-theorem labeling_union_bound_numerator {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r ^ 2) :
+private theorem labeling_union_bound_numerator {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r ^ 2) :
     (2 * M ^ 2 + 1) ^ 16 * M ^ 20 ≤ 3 ^ 16 * r ^ 104 := by
   have hk : 2 * M ^ 2 + 1 ≤ 3 * M ^ 2 := by nlinarith
   have hp : M ^ 52 ≤ r ^ 104 := by
@@ -53,7 +53,7 @@ theorem labeling_union_bound_numerator {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r
     _ ≤ 3 ^ 16 * r ^ 104 := Nat.mul_le_mul_left _ hp
 
 /-- For `3 ≤ M`, `3 ^ 16 < M ^ 20`. -/
-theorem labeling_union_bound_constant {M : ℕ} (hM : 3 ≤ M) :
+private theorem labeling_union_bound_constant {M : ℕ} (hM : 3 ≤ M) :
     3 ^ 16 < M ^ 20 := by
   calc
     3 ^ 16 ≤ M ^ 16 := Nat.pow_le_pow_left hM 16
@@ -88,7 +88,7 @@ theorem labeling_union_bound_real {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r ^ 2)
     exact_mod_cast labeling_union_bound_constant hM
 
 /-- For `0 < M`, `(3 * M ^ 2) ^ 16 / (Real.sqrt M) ^ 104 = 3 ^ 16 / M ^ 20`. -/
-theorem labeling_sqrt_expression {M : ℕ} (hM : 0 < M) :
+private theorem labeling_sqrt_expression {M : ℕ} (hM : 0 < M) :
     (3 * (M : ℝ) ^ 2) ^ 16 / (Real.sqrt M) ^ 104 = 3 ^ 16 / (M : ℝ) ^ 20 := by
   have hp : (0 : ℝ) < M := by exact_mod_cast hM
   have hd : (Real.sqrt M) ^ 104 = (M : ℝ) ^ 52 := by

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.Correctness
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decryption
+import Mathlib.Algebra.BigOperators.Fin
 import Complexity.Foundations.Data.List.Basic
 import Complexity.Foundations.Data.Nat.Bits
 

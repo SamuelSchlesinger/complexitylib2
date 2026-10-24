@@ -36,7 +36,7 @@ machine's clock also bounds their number and length
 
 The classes relativize `P` and `NP` by this one substitution: `PWithOracle A enc` and
 `NPWithOracle A enc` are `Cslib.Complexity.P` and `Cslib.Complexity.NP` with
-`ComputableTidilyInPolyTime` replaced by `ComputableInPolyTimeWithOracle A`. Hence `NPWithOracle`
+`ComputableInPolyTime` replaced by `ComputableInPolyTimeWithOracle A`. Hence `NPWithOracle`
 uses verifiers with an oracle and certificates of exactly polynomial length.
 
 For a deterministic program and an answer function, `OracleComp.queriesWith` lists the requests
@@ -95,7 +95,7 @@ def queriesWith (answer : (q : ι) → spec q) : OracleComp spec α → List ι
 
 /-- A sequence makes the requests of its first part, then those of the continuation selected by
 the first result. -/
-theorem queriesWith_bind (answer : (q : ι) → spec q) (program : OracleComp spec α)
+private theorem queriesWith_bind (answer : (q : ι) → spec q) (program : OracleComp spec α)
     (next : α → OracleComp spec β) :
     queriesWith answer (program >>= next) = queriesWith answer program ++
       queriesWith answer (next (interpret (m := Id) answer program)) := by

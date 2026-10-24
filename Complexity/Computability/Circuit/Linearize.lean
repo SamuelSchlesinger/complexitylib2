@@ -97,7 +97,7 @@ variable {σ : Signature} [CommRing F] (P : (o : σ.Op) → MvPolynomial (Fin (�
 /-- The interpretation over an `F`-algebra `R` in which each operation `o` substitutes its
 arguments into the polynomial `P o`. Every polynomial interpretation over `F` is of this form
 (`Cslib.Circuits.Interpretation.IsPolynomial`). -/
-noncomputable def polynomialInterpretation (R : Type*) [CommRing R] [Algebra F R] :
+def polynomialInterpretation (R : Type*) [CommRing R] [Algebra F R] :
     Interpretation σ R :=
   fun o x => aeval x (P o)
 

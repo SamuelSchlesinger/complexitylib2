@@ -34,14 +34,11 @@ is `Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent`.
 ## Main definitions
 
 * `Cslib.Complexity.DecidesWithErrorExponent`: error at most `2 ^ (-q(n))`.
-* `Cslib.Complexity.repeatMajority`: the strict majority of `2 r(n)` independent runs.
 
 ## Main results
 
 * `Cslib.Complexity.DecidesWithBoundedError.repeatMajority`: `12 q(n)` majority votes reduce the
   error to `2 ^ (-q(n))`.
-* `Cslib.Complexity.computableTidilyInPolyTime_repeatMajority`: majority votes take polynomial
-  time.
 * `Cslib.Complexity.DecidesWithErrorExponent.decidesWithBoundedError`: error at most
   `2 ^ (-q(n)) ≤ 1 / 4` is bounded error.
 * `Cslib.Complexity.mem_BPP_iff_forall_decidesWithErrorExponent`: error reduction for `BPP`.

@@ -222,7 +222,7 @@ theorem length_selectDistinct_replicate (l : List γ) :
 
 /-- The entries of `l` selected by the mask of a set `S` of entries of `l`, followed by any bits,
 are the elements of `S`. -/
-theorem toFinset_selectDistinct_map_append {l : List γ} {S : Finset γ} (hS : ∀ v ∈ S, v ∈ l)
+private theorem toFinset_selectDistinct_map_append {l : List γ} {S : Finset γ} (hS : ∀ v ∈ S, v ∈ l)
     (u : List Bool) : (selectDistinct l (l.map (fun v => decide (v ∈ S)) ++ u)).toFinset = S := by
   have hget : ∀ v ∈ l,
       (l.map (fun v => decide (v ∈ S)) ++ u).getD (l.idxOf v) false = decide (v ∈ S) := by

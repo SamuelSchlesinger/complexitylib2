@@ -63,7 +63,7 @@ variable {α : Type}
 
 /-- A verifier augmented with an explicit check that the certificate has the prescribed length
 `p.eval (enc a).length`. -/
-noncomputable def strictVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ)
+def strictVerifier (enc : α ↪ List Bool) (p : Polynomial ℕ)
     (V : α × List Bool → Bool) (x : α × List Bool) : Bool :=
   (x.2.length == p.eval (enc x.1).length) && V x
 

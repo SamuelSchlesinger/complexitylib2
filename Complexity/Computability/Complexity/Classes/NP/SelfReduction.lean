@@ -90,7 +90,7 @@ theorem queryBound_mono : Monotone queryBound := fun _ _ h => by
 
 /-! ### Correctness -/
 
-theorem map_fst_foldl_selfReduceStep (D : CNF ℕ → Bool) (φ : CNF ℕ) (l : List ℕ)
+private theorem map_fst_foldl_selfReduceStep (D : CNF ℕ → Bool) (φ : CNF ℕ) (l : List ℕ)
     (answers : List (Literal ℕ)) :
     (l.foldl (selfReduceStep D φ) answers).map Prod.fst = answers.map Prod.fst ++ l := by
   induction l generalizing answers with
@@ -98,7 +98,7 @@ theorem map_fst_foldl_selfReduceStep (D : CNF ℕ → Bool) (φ : CNF ℕ) (l : 
   | cons v l ih => simp [ih, selfReduceStep]
 
 /-- The self-reduction fixes the literal occurrences in order. -/
-theorem map_fst_selfReduce (D : CNF ℕ → Bool) (φ : CNF ℕ) :
+private theorem map_fst_selfReduce (D : CNF ℕ → Bool) (φ : CNF ℕ) :
     (selfReduce D φ).map Prod.fst = φ.vars := by
   rw [selfReduce, map_fst_foldl_selfReduceStep, List.map_nil, List.nil_append]
 
@@ -106,16 +106,16 @@ theorem length_search (D : CNF ℕ → Bool) (φ : CNF ℕ) : (search D φ).leng
   rw [search, List.length_map, ← map_fst_selfReduce D φ, List.length_map]
 
 /-- A formula with unit clauses holds exactly when the formula holds and the literals do. -/
-theorem eval_append_units (σ : ℕ → Bool) (φ : CNF ℕ) (answers : List (Literal ℕ)) :
+private theorem eval_append_units (σ : ℕ → Bool) (φ : CNF ℕ) (answers : List (Literal ℕ)) :
     (φ ++ units answers).eval σ = true ↔ φ.eval σ = true ∧ ∀ l ∈ answers, σ l.1 = l.2 := by
   simp [units, CNF.eval_eq_true_iff, Clause.eval_eq_true_iff, or_imp, forall_and]
 
-theorem length_encCNF_append (φ ψ : CNF ℕ) :
+private theorem length_encCNF_append (φ ψ : CNF ℕ) :
     (encCNF (φ ++ ψ)).length = (encCNF φ).length + (encCNF ψ).length := by
   simp [encCNF]
 
 /-- A variable of a formula takes fewer bits than the formula. -/
-theorem length_encNat_le_of_mem_vars {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
+private theorem length_encNat_le_of_mem_vars {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.vars) :
     (encNat v).length ≤ (encCNF φ).length := by
   obtain ⟨l, hl, rfl⟩ := List.mem_map.1 hv
   obtain ⟨c, hc, hl⟩ := List.mem_flatten.1 hl
@@ -125,7 +125,7 @@ theorem length_encNat_le_of_mem_vars {φ : CNF ℕ} {v : ℕ} (hv : v ∈ φ.var
 
 /-- The unit clause of a literal on `v` takes `8 b + 11` bits, where `b` is the length of the
 binary digits of `v`. -/
-theorem length_encCNF_unit (l : Literal ℕ) :
+private theorem length_encCNF_unit (l : Literal ℕ) :
     (encCNF [[l]]).length = 8 * (encNat l.1).length + 11 := by
   simp only [encCNF, encList_cons, encList_nil, List.append_nil, length_frame, length_encPair,
     encBool_apply, List.length_singleton]
@@ -133,14 +133,14 @@ theorem length_encCNF_unit (l : Literal ℕ) :
 
 /-- The unit clause of a literal on a variable of `φ` takes at most `8 L + 11` bits, where `L`
 is the length of `φ`. -/
-theorem length_encCNF_unit_le {φ : CNF ℕ} {l : Literal ℕ} (hl : l.1 ∈ φ.vars) :
+private theorem length_encCNF_unit_le {φ : CNF ℕ} {l : Literal ℕ} (hl : l.1 ∈ φ.vars) :
     (encCNF [[l]]).length ≤ 8 * (encCNF φ).length + 11 := by
   have := length_encNat_le_of_mem_vars hl
   rw [length_encCNF_unit]
   omega
 
 /-- The formulas that the self-reduction asks about are no longer than `queryBound`. -/
-theorem length_query_le {φ : CNF ℕ} {answers : List (Literal ℕ)}
+private theorem length_query_le {φ : CNF ℕ} {answers : List (Literal ℕ)}
     (hanswers : ∀ l ∈ answers, l.1 ∈ φ.vars) (hlen : answers.length ≤ φ.vars.length) {v : ℕ}
     (hv : v ∈ φ.vars) :
     (encCNF (φ ++ units answers ++ [[(v, true)]])).length ≤ queryBound (encCNF φ).length := by
@@ -165,7 +165,7 @@ theorem length_query_le {φ : CNF ℕ} {answers : List (Literal ℕ)}
 
 /-- With answers correct on the queries, the self-reduction keeps a satisfiable formula
 satisfiable. -/
-theorem satisfiable_foldl_selfReduceStep {D : CNF ℕ → Bool} {φ : CNF ℕ}
+private theorem satisfiable_foldl_selfReduceStep {D : CNF ℕ → Bool} {φ : CNF ℕ}
     (hD : ∀ ψ, (encCNF ψ).length ≤ queryBound (encCNF φ).length → (D ψ = true ↔ ψ ∈ SAT))
     (l : List ℕ) (hl : ∀ v ∈ l, v ∈ φ.vars) (answers : List (Literal ℕ))
     (hanswers : ∀ a ∈ answers, a.1 ∈ φ.vars) (hlen : answers.length + l.length ≤ φ.vars.length)

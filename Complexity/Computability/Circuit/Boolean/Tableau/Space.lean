@@ -67,7 +67,7 @@ private noncomputable def Loc.lidx : Loc k State → ℕ
 
 variable (k State) in
 /-- The start of a region within a block. -/
-private noncomputable def regionStart (T : ℕ) (i : Fin 4) : ℕ :=
+private def regionStart (T : ℕ) (i : Fin 4) : ℕ :=
   if i = 0 then 0 else if i = 1 then globStart k T else if i = 2 then gfStart k State T
   else colStart k State T
 

@@ -50,7 +50,7 @@ open Finset BitString
 variable {p : ℕ} [hp : Fact p.Prime] {n : ℕ}
 
 /-- `2` is invertible in `ZMod p` for an odd prime `p`. -/
-@[instance_reducible] noncomputable def invertibleTwo (hp2 : p ≠ 2) : Invertible (2 : ZMod p) :=
+@[instance_reducible] def invertibleTwo (hp2 : p ≠ 2) : Invertible (2 : ZMod p) :=
   invertibleOfNonzero fun h => hp2 <| (Nat.prime_dvd_prime_iff_eq hp.out Nat.prime_two).1
     ((ZMod.natCast_eq_zero_iff 2 p).1 (by exact_mod_cast h))
 

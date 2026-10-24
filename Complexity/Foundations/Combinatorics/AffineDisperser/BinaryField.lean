@@ -135,14 +135,14 @@ noncomputable def leastIrreducible (p : ℕ) : (ZMod 2)[X] :=
     polyOfCode (Nat.find h)
   else X
 
-theorem exists_code_irreducible {p : ℕ} (hp : p ≠ 0) :
+private theorem exists_code_irreducible {p : ℕ} (hp : p ≠ 0) :
     ∃ m, Irreducible (polyOfCode m) ∧ (polyOfCode m).natDegree = p := by
   obtain ⟨g, hg, hgp⟩ := exists_irreducible_natDegree_eq hp
   obtain ⟨m, rfl⟩ := polyOfCode_surjective g
   exact ⟨m, hg, hgp⟩
 
 open Classical in
-theorem leastIrreducible_eq {p : ℕ} (hp : p ≠ 0) :
+private theorem leastIrreducible_eq {p : ℕ} (hp : p ≠ 0) :
     leastIrreducible p = polyOfCode (Nat.find (exists_code_irreducible hp)) := by
   rw [leastIrreducible, dite_eq_left (exists_code_irreducible hp)]
 

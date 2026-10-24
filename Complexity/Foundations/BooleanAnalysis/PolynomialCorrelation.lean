@@ -14,6 +14,7 @@ public import Complexity.Foundations.Data.BitString.Weight
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Data.ZMod.Defs
 public import Mathlib.Logic.Equiv.Fin.Basic
+import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Foundations.Combinatorics.CentralBinomial
 import Mathlib.Algebra.CharP.Two
 import Mathlib.Algebra.Field.ZMod

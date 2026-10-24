@@ -47,7 +47,7 @@ namespace Graph
 variable {V : Type*} [Fintype V]
 
 /-- All rows, then all columns, of the complete bipartite ambient space. -/
-noncomputable def sources : Fin (Fintype.card V + Fintype.card V) → Set (V × V) :=
+def sources : Fin (Fintype.card V + Fintype.card V) → Set (V × V) :=
   Fin.addCases (fun i => {x | x.1 = (Fintype.equivFin V).symm i})
     (fun i => {x | x.2 = (Fintype.equivFin V).symm i})
 

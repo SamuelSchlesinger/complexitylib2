@@ -82,7 +82,7 @@ theorem expect_mul_noiseOp_mul (ρ σ : ℝ) (f g : (ι → Bool) → ℝ) :
   rw [← noiseOp_noiseOp, expect_mul_noiseOp_comm]
 
 /-- The expectation of `f` against `T_{ρ σ} g` is at most `‖T_ρ f‖_2 ‖T_σ g‖_2`. -/
-theorem expect_mul_noiseOp_mul_le (ρ σ : ℝ) (f g : (ι → Bool) → ℝ) :
+private theorem expect_mul_noiseOp_mul_le (ρ σ : ℝ) (f g : (ι → Bool) → ℝ) :
     𝔼 x, f x * noiseOp (ρ * σ) g x ≤ lpNorm 2 (noiseOp ρ f) * lpNorm 2 (noiseOp σ g) := by
   rw [expect_mul_noiseOp_mul, lpNorm_two, lpNorm_two]
   exact Real.expect_mul_le_sqrt_mul_sqrt _ _ _

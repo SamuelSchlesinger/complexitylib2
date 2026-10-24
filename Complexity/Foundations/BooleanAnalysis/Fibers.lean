@@ -159,7 +159,7 @@ theorem uniformDeficit_le_iff {ι : Type*} [Fintype ι] {X : Finset (ι → Bool
 
 /-- A uniform deficit bound implies the light-patterns lemma's pointwise
 probability-mass hypothesis. -/
-theorem uniformMass_le_rpow {ι : Type*} [Fintype ι]
+private theorem uniformMass_le_rpow {ι : Type*} [Fintype ι]
     {X : Finset (ι → Bool)} (hX : X.Nonempty) {k : ℝ} (hdef : uniformDeficit X ≤ k)
     (x : ι → Bool) : uniformMass X x ≤ (2 : ℝ) ^ (k - Fintype.card ι) := by
   calc
@@ -500,7 +500,7 @@ private theorem sum_mul_log_ge {β : Type*} [Fintype β] [Nonempty β] {m : β �
 
 /-- The logarithm of the size of the fiber of a uniform point of `X` under a map to `β` is on
 average at least `log |X| - log |β|`. -/
-theorem expect_log_card_fiber {α β : Type*} [Fintype β] [Nonempty β] [DecidableEq β]
+private theorem expect_log_card_fiber {α β : Type*} [Fintype β] [Nonempty β] [DecidableEq β]
     (X : Finset α) (hX : X.Nonempty) (g : α → β) :
     Real.log X.card - Real.log (Fintype.card β) ≤
       𝔼 x ∈ X, Real.log (X.filter (fun y => g y = g x)).card := by

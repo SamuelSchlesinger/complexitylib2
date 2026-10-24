@@ -56,7 +56,7 @@ variable {α : Type u} [Finite α] (f : α → α)
 
 omit [Finite α] in
 /-- Periodic points reached at different times along one orbit have the same minimal period. -/
-theorem minimalPeriod_eq_of_periodic_iterates (x : α) {a b : ℕ}
+private theorem minimalPeriod_eq_of_periodic_iterates (x : α) {a b : ℕ}
     (ha : f^[a] x ∈ periodicPts f) (hb : f^[b] x ∈ periodicPts f) :
     minimalPeriod f (f^[a] x) = minimalPeriod f (f^[b] x) := by
   rcases le_total a b with h | h

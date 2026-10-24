@@ -51,12 +51,12 @@ theorem flip_eq_flipOn {I : Type} [DecidableEq I] (x : I → Bool) (B : Finset I
   exact Subsingleton.elim _ _
 
 /-- On `Fin n`, the internal flip is CSLib's `BitString.flipBlock`. -/
-theorem flip_eq_flipBlock (x : BitString n) (B : Finset (Fin n)) :
+private theorem flip_eq_flipBlock (x : BitString n) (B : Finset (Fin n)) :
     flip x B = BitString.flipBlock B x :=
   flip_eq_flipOn x B
 
 /-- On `Fin n`, the internal pointwise sensitivity is `BitString.sensitivityAt`. -/
-theorem sensitivityAt_eq_bitString_sensitivityAt (f : BooleanFunction n) (x : BitString n) :
+private theorem sensitivityAt_eq_bitString_sensitivityAt (f : BooleanFunction n) (x : BitString n) :
     sensitivityAt f x = BitString.sensitivityAt f x := by
   unfold sensitivityAt BitString.sensitivityAt BitString.sensitiveCoords
   congr 1

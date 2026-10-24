@@ -61,7 +61,7 @@ theorem recursiveChild_flip_other {k r : ℕ} {I : Type}
 /-- If `x` and `y` give the same target values on all children of row `i` and the same gate values
 on the children `(j, label i j)` for all out-neighbours `j` of `i`, then the clause of row `i` takes
 the same value at `x` and `y`. -/
-theorem rowClause_eq_of_conditions {k r h : ℕ} {I : Type} (T : Tournament k)
+private theorem rowClause_eq_of_conditions {k r h : ℕ} {I : Type} (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x y : ((Fin k × Fin r) × I) → Bool) (i : Fin k)
     (ht : ∀ c, F (Fin.last h) (recursiveChild x i c) =

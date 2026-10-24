@@ -358,11 +358,11 @@ The Lean definitions and statements are the source of truth; PDFs are generated 
 proof bodies omitted. There is no separately maintained paper/TeX index.
 
 Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
-endpoint with conventional, inspectable semantics, satisfiable hypotheses, explicit models and
-encodings, and honest quantitative bounds. Partial constructions, conditional substitutes for a
-standard theorem, bounded experiments and helper APIs do not become headlines by acquiring an
-abstract. Prefer a small coherent selection. Preserve Samuel's editorial choices and source credit;
-keep outstanding endpoints in `ROADMAP.md`.
+endpoint with conventional, inspectable semantics, hypotheses that are satisfiable or are standard
+open assumptions stated as such, explicit models and encodings, and honest quantitative bounds.
+Partial constructions, conditional substitutes for a standard theorem, bounded experiments and
+helper APIs do not become headlines by acquiring an abstract. Prefer a small coherent selection.
+Preserve Samuel's editorial choices and source credit; keep outstanding endpoints in `ROADMAP.md`.
 
 Before opening or updating **every AI-authored PR**, assess the selected abstracts against the
 final Lean changes. Update affected statements, definitions, scope notes and catalogue entries.

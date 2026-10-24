@@ -102,7 +102,7 @@ private def dpllTree : DecisionTree ℕ (Clause ℕ) :=
   .node 0 (.leaf [(0, true)]) (.node 0 (.leaf [(0, true)]) (.leaf [(0, false)]))
 
 private theorem findsFalsifiedClause_dpllTree : dpllTree.FindsFalsifiedClause ψ := fun σ => by
-  cases h : σ 0 <;> simp [dpllTree, DecisionTree.eval, h, ψ, Clause.eval, Literal.eval]
+  cases h : σ 0 <;> simp [dpllTree, DecisionTree.eval, h, ψ]
 
 example : ∃ d : ψ.Derivation [], d.size + 1 ≤ 6 :=
   findsFalsifiedClause_dpllTree.exists_derivation

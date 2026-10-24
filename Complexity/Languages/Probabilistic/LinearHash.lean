@@ -77,7 +77,7 @@ theorem eval_extract_bind {n m : ℕ} (source : PMF (BitString n)) :
     wordHash_eq_ofFn, ofList_ofFn, blocksEquiv_apply]
 
 /-- The word extractor's exact finite law on one fixed-width input. -/
-theorem eval_extract_ofFn {n m : ℕ} (input : BitString n) :
+private theorem eval_extract_ofFn {n m : ℕ} (input : BitString n) :
     ProbComp.eval (extract m (List.ofFn input)) =
       (PMF.uniformOfFintype (BitString (m * n))).map
         (fun seed => List.ofFn seed ++

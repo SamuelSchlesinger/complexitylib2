@@ -109,7 +109,7 @@ section Symmetrization
 variable {𝕜 : Type*} [Field 𝕜] [CharZero 𝕜] {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- The average of `f` over the inputs of weight `k`. -/
-noncomputable def layerAverage (f : (ι → Bool) → 𝕜) (k : ℕ) : 𝕜 :=
+def layerAverage (f : (ι → Bool) → 𝕜) (k : ℕ) : 𝕜 :=
   𝔼 x ∈ {x : ι → Bool | weight x = k}, f x
 
 /-- The inputs of weight `k` on which the monomial of `S` is `1` correspond to the `k`-sets of

@@ -253,7 +253,7 @@ private theorem labelOfNat_eq (w : ℕ) :
 
 /-- **The label of a digit** is computed by a finite-state fold over the binary digits of `w`,
 within work space linear in their number. -/
-theorem labelOfNat_inSpace :
+private theorem labelOfNat_inSpace :
     ComputableTidilyInSpace labelOfNat encNat encLab fun w => (encNat w).length := by
   have hfold := of_inO (ComputableTidilyInO.foldl_bits_finite
     (encFinite (ZMod numLabels × ZMod numLabels)) modStep (0, 1))
@@ -468,7 +468,8 @@ private theorem stepT_inSpace : ComputableTidilyInSpace stepT encStepIn (encPair
 noncomputable def stateBudget (q : State) : ℕ :=
   stepBudget (q.toTuple, false)
 
-theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget (x, false) := by
+private theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget
+    (x, false) := by
   cases b <;> simp [stepBudget, encBool_apply]
 
 theorem halt_inSpace : ComputableTidilyInSpace machine.halt encState encBool stateBudget :=

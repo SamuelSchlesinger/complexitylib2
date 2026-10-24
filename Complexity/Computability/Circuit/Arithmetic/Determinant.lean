@@ -142,7 +142,7 @@ section Synthesis
 variable {n : ℕ}
 
 /-- The matrix whose entries are the coordinates of a point, in row-major order. -/
-private noncomputable abbrev entries (x : Fin (n * n) → MvPolynomial (Fin (n * n)) K) :
+private abbrev entries (x : Fin (n * n) → MvPolynomial (Fin (n * n)) K) :
     Matrix (Fin n) (Fin n) (MvPolynomial (Fin (n * n)) K) :=
   Matrix.of fun i j => x (finProdFinEquiv (i, j))
 

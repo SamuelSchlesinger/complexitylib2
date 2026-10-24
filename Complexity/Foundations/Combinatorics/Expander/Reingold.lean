@@ -134,7 +134,7 @@ theorem Hom.reingold_apply {V W : Type u} {G : RotationMap V B} {G' : RotationMa
 section Projection
 
 /-- Every edge of `G_ℓ` joins two vertices over vertices of `G` reachable from each other. -/
-theorem reachable_root_neighbor_reingold {V : Type u} (G : RotationMap V B) :
+private theorem reachable_root_neighbor_reingold {V : Type u} (G : RotationMap V B) :
     ∀ (ℓ : ℕ) (x : ReingoldVertex V B ℓ) (i : B),
       G.toSimpleGraph.Reachable x.root ((reingold H e G ℓ).neighbor x i).root
   | 0, x, i => G.reachable_neighbor x i
