@@ -137,9 +137,10 @@ private theorem stateBit_poly : ComputableInPolyTime stateBit encBits encBool :=
     (hct.prod (ComputableTidilyInPolyTime.const 2))
   unfold stateBit
   simpa only [Function.comp_def] using
-    ComputableTidilyInPolyTime.bool_xor.comp (hfirst.prod hnonce)
+    ComputableInPolyTime.of_tidy (ComputableTidilyInPolyTime.bool_xor.comp (hfirst.prod hnonce))
 
 private theorem adversary_ppt : adversary.IsPPT := by
+  have hstate := stateBit_poly.tidy
   constructor <;> dsimp only [adversary] <;> ppt
 
 -- Both stages charge the full artifact and saved word. A nonconstant family is still uniform.
