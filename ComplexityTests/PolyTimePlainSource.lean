@@ -136,7 +136,8 @@ example : ComputableInPolyTime (aliasRoutine rawOnlyReverseProbe) encBits encBit
 example : ComputableInPolyTime (aliasRoutine rawOnlyReverseProbe) encBits encBits := by
   fun_prop
 
-/-- A distinct opaque result makes implication consumption, rather than fact conversion, decisive. -/
+/-- A distinct opaque result makes implication consumption, rather than fact conversion,
+decisive. -/
 @[irreducible] def localImplicationResult (word : List Bool) : List Bool := word
 
 -- Without the raw fact, a local implication cannot launch global raw search. Ordinary
@@ -209,7 +210,8 @@ example (routine : ℕ → List Bool → List Bool)
 
 /-- The explicit conditional API is valid, but cannot initiate raw search in plain automation. -/
 @[program_certificate h]
-theorem namedConditional_plain (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits) :
+theorem namedConditional_plain
+    (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits) :
     ComputableInPolyTime namedConditionalResult encBits encBits := by
   unfold namedConditionalResult
   exact .of_tidy h
