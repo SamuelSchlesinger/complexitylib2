@@ -978,4 +978,14 @@ theorem mapWithInput {α : Type}
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput α β γ encA encB encIn f
       list hlist.tidy hf.tidy)
 
+/-- Drop a computed unary number of bits from a computed raw word. Counts beyond the word
+length return the empty word, with no promise on the count or input. -/
+@[fun_prop]
+theorem bitsDropWithInput {α : Type} {input : α ↪ List Bool}
+    {list : α → List Bool} {count : α → ℕ}
+    (hlist : ComputableInPolyTime list input encBits)
+    (hcount : ComputableInPolyTime count input encUnary) :
+    ComputableInPolyTime (fun a => (list a).drop (count a)) input encBits :=
+  .of_tidy (ComputableTidilyInPolyTime.bitsDropWithInput hlist.tidy hcount.tidy)
+
 end Turing.MultiTapeTM.ComputableInPolyTime
