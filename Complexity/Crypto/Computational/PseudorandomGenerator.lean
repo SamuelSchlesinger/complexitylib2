@@ -217,9 +217,10 @@ theorem PRG.polyTime_length
     (hg : ComputableTidilyInPolyTime generator encBits encBits)
     (hlen : ∀ word, (generator word).length = length word.length) :
     ComputableTidilyInPolyTime length encUnary encUnary := by
-  have hc : ComputableTidilyInPolyTime
+  have hgplain := ComputableInPolyTime.of_tidy hg
+  have hc : ComputableInPolyTime
       (fun n => (generator (List.replicate n false)).length) encUnary encUnary := by fun_prop
-  simpa only [hlen, List.length_replicate] using hc
+  simpa only [hlen, List.length_replicate] using hc.tidy
 
 /-- A secure generator has an efficient unary expansion-length routine. -/
 @[fun_prop]

@@ -58,7 +58,7 @@ theorem GGM.pseudorandomFunction_of_indistinguishable {generator : List Bool →
   intro adversary hadversary
   obtain ⟨c, d, hqueries⟩ := hadversary.query_bounds
   let count := fun n => c * (n + 2) ^ d
-  have hcount : ComputableTidilyInPolyTime count encUnary encUnary := by
+  have hcount : ComputableInPolyTime count encUnary encUnary := by
     unfold count
     polytime
   have hreduce := hsecure (reduction generator adversary count)

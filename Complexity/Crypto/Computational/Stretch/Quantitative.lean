@@ -133,10 +133,14 @@ theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
     (hword : ComputableTidilyInPolyTime word input encBits) :
     ComputableTidilyInPolyTime (fun a => iterate (generator a) (seedBits a) (count a) (word a))
       input encBits := by
-  obtain ⟨c, d, hlength⟩ := hgenerator.polyBounded_length.exists_le
+  have hgeneratorPlain := ComputableInPolyTime.of_tidy hgenerator
+  have hseedBitsPlain := ComputableInPolyTime.of_tidy hseedBits
+  have hcountPlain := ComputableInPolyTime.of_tidy hcount
+  have hwordPlain := ComputableInPolyTime.of_tidy hword
+  obtain ⟨c, d, hlength⟩ := hgeneratorPlain.polyBounded_length.exists_le
   have hpoly : PolyBounded (fun a => (input a).length)
       (fun a => c * (2 * (input a).length + seedBits a + 2) ^ d) :=
-    ComputableTidilyInPolyTime.polyBounded (by fun_prop)
+    ComputableInPolyTime.polyBounded (by fun_prop)
   have hgrowth (a : α) (state : List Bool) :
       (generator a (state.take (seedBits a)) ++ state.drop (seedBits a)).length ≤
         state.length + c * (2 * (input a).length + seedBits a + 2) ^ d := by
@@ -147,6 +151,7 @@ theorem polyTime_iterate {α : Type} {input : α ↪ List Bool}
       h.trans (Nat.mul_le_mul_left c (Nat.pow_le_pow_left (by lia) d))
     simp only [List.length_append, List.length_drop]
     lia
+  apply ComputableInPolyTime.tidy
   unfold iterate step
   polytime
 
@@ -157,8 +162,11 @@ theorem polyTime_stretch {generator : List Bool → List Bool} {count : ℕ → 
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
     (hcount : ComputableTidilyInPolyTime count encUnary encUnary) :
     ComputableTidilyInPolyTime (stretch generator count) encBits encBits := by
+  have hgeneratorPlain := ComputableInPolyTime.of_tidy hgenerator
+  have hcountPlain := ComputableInPolyTime.of_tidy hcount
   unfold stretch
-  polytime
+  apply polyTime_iterate
+  all_goals exact ComputableInPolyTime.tidy (by fun_prop)
 
 /-! ### Quantitative cumulative-time and workspace certificates -/
 
@@ -534,11 +542,11 @@ theorem polyTime_stretch_of_length_eq {generator : List Bool → List Bool} {cou
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
     (hcount : ComputableTidilyInPolyTime count encUnary encUnary) :
     ComputableTidilyInPolyTime (stretch generator count) encBits encBits := by
-  obtain ⟨clG, dlG, hclG⟩ := hgenerator.polyBounded_length.exists_le
+  obtain ⟨clG, dlG, hclG⟩ := (ComputableInPolyTime.of_tidy hgenerator).polyBounded_length.exists_le
   obtain ⟨tG, sG, htG, hsG, hgen_ts⟩ := hgenerator
   obtain ⟨ctG, dtG, hctG⟩ := htG.exists_le
   obtain ⟨csG, dsG, hcsG⟩ := hsG.exists_le
-  obtain ⟨clC, dlC, hclC⟩ := hcount.polyBounded_length.exists_le
+  obtain ⟨clC, dlC, hclC⟩ := (ComputableInPolyTime.of_tidy hcount).polyBounded_length.exists_le
   obtain ⟨tC, sC, htC, hsC, hcount_ts⟩ := hcount
   obtain ⟨ctC, dtC, hctC⟩ := htC.exists_le
   obtain ⟨csC, dsC, hcsC⟩ := hsC.exists_le
@@ -548,7 +556,8 @@ theorem polyTime_stretch_of_length_eq {generator : List Bool → List Bool} {cou
   have hcount_deg : ComputableTidilyInDegree count encUnary encUnary (max dtC dsC) dlC :=
     ⟨⟨tC, sC, DegreeBounded.mono_deg ⟨ctC, hctC⟩ (le_max_left _ _),
       DegreeBounded.mono_deg ⟨csC, hcsC⟩ (le_max_right _ _), hcount_ts⟩, ⟨clC, hclC⟩⟩
-  exact (computableTidilyInDegree_stretch hlen hgen_deg hcount_deg).computableTidilyInPolyTime
+  exact (Internal.forgetDegree
+    (computableTidilyInDegree_stretch hlen hgen_deg hcount_deg)).computableInPolyTime.tidy
 
 /-- **Quantitative streaming certificate for `forwardIterate` with a captured parameter.** On input
 `((a, seed), count)` encoded with `encPair (encPair encParam encBits) encUnary`, the streaming state

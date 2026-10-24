@@ -155,10 +155,10 @@ theorem isPPTOn_frontierOracle {α : Type} {input : α ↪ List Bool}
     {generator : List Bool → List Bool} {parameter depth : α → ℕ}
     {query : α → List Bool} {cache : α → Cache}
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
-    (hparameter : ComputableTidilyInPolyTime parameter input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary)
-    (hquery : ComputableTidilyInPolyTime query input encBits)
-    (hcache : ComputableTidilyInPolyTime cache input cacheEncoding) :
+    (hparameter : ComputableInPolyTime parameter input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary)
+    (hquery : ComputableInPolyTime query input encBits)
+    (hcache : ComputableInPolyTime cache input cacheEncoding) :
     IsPPTOn input (encPair encBits cacheEncoding)
       (fun a => frontierOracle generator (parameter a) (depth a) (query a) (cache a)) := by
   have heval := computableInPolyTime_eval (.of_tidy hgenerator)
@@ -186,6 +186,6 @@ theorem isPPTOn_hybridGame {generator : List Bool → List Bool}
     obtain ⟨hcache', hreply, hgrowth⟩ :=
       frontierOracle_bounds generator pair.1 pair.2 request.2 cache hcache result hresult
     exact ⟨hcache', by lia, by lia⟩
-  exact hrun.map (ComputableTidilyInPolyTime.fst _ _)
+  exact hrun.map (ComputableInPolyTime.fst _ _)
 
 end Cslib.Crypto.GGM
