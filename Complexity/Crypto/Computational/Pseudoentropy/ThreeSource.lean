@@ -313,29 +313,6 @@ structure Efficient (candidates bound inverseSlack densityBound : ℕ → ℕ)
     (fun input => numerator input.1 input.2) (encPair encUnary encUnary) encUnary
   density_isPolyTime : ComputableInPolyTime densityBound encUnary encUnary
 
-/-- Recover the tidy presentation for proofs without changing the security contract. -/
-theorem efficient_iff_tidy {candidates bound inverseSlack densityBound : ℕ → ℕ}
-    {observationBits labelBits remainingBits numerator : ℕ → ℕ → ℕ} :
-    Efficient candidates bound inverseSlack densityBound observationBits labelBits
-      remainingBits numerator ↔
-    (ComputableTidilyInPolyTime candidates encUnary encUnary) ∧
-    (ComputableTidilyInPolyTime bound encUnary encUnary) ∧
-    (ComputableTidilyInPolyTime
-    (fun input => observationBits input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
-    (ComputableTidilyInPolyTime
-    (fun input => labelBits input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
-    (ComputableTidilyInPolyTime
-    (fun input => remainingBits input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
-    (ComputableTidilyInPolyTime inverseSlack encUnary encUnary) ∧
-    (ComputableTidilyInPolyTime
-    (fun input => numerator input.1 input.2) (encPair encUnary encUnary) encUnary) ∧
-    (ComputableTidilyInPolyTime densityBound encUnary encUnary) :=
-  ⟨fun h => ⟨h.candidates_isPolyTime.tidy, h.bound_isPolyTime.tidy,
-      h.observation_isPolyTime.tidy, h.label_isPolyTime.tidy, h.remaining_isPolyTime.tidy,
-      h.slack_isPolyTime.tidy, h.numerator_isPolyTime.tidy, h.density_isPolyTime.tidy⟩,
-    fun ⟨h0, h1, h2, h3, h4, h5, h6, h7⟩ => ⟨.of_tidy h0, .of_tidy h1, .of_tidy h2, .of_tidy
-      h3, .of_tidy h4, .of_tidy h5, .of_tidy h6, .of_tidy h7⟩⟩
-
 open Probability.PMF Filter in
 /-- Indexed label extraction remains secure when the test computes the observation hash and
 supplies the independent third component. Only the proof uses the chosen valid index. -/
@@ -368,8 +345,14 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
         (observationBits n (choose n))
         (labelBits n (choose n)) (remainingBits n (choose n)) (Prod.fst <$> pair.sample n) >>=
           adversary n (choose n)))) := by
-  obtain ⟨hcandidates, hbound, hobservation, hlabel, hremaining, hslack, hnumerator, hdensity⟩ :=
-    efficient_iff_tidy.mp efficient
+  have hcandidates := efficient.candidates_isPolyTime.tidy
+  have hbound := efficient.bound_isPolyTime.tidy
+  have hobservation := efficient.observation_isPolyTime.tidy
+  have hlabel := efficient.label_isPolyTime.tidy
+  have hremaining := efficient.remaining_isPolyTime.tidy
+  have hslack := efficient.slack_isPolyTime.tidy
+  have hnumerator := efficient.numerator_isPolyTime.tidy
+  have hdensity := efficient.density_isPolyTime.tidy
   let count := fun n => ExtractionSchedule.count n (saved.length n) (inverseSlack n)
   have hlength := saved.length_isPolyTime.tidy
   have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=

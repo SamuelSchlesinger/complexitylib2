@@ -385,6 +385,12 @@ theorem computableTidilyInPolyTime_verifyCommitments {α : Type} {input : α ↪
       (fun a => verifyCommitments generator (s a) (m a) (φ a) (r a) (flags a)
         (commitReply a) (openedBits a) (openSeedsFlat a))
       input encBool := by
+  have hnaor : ComputableTidilyInPolyTime
+      (fun p : α × ℕ => naorCommit generator (BitString.listRow (m p.1) 0 (r p.1))
+        ((openedBits p.1).getD p.2 false) (BitString.listRow (s p.1) p.2 (openSeedsFlat p.1)))
+      (encPair input encUnary) encBits := by
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_naorCommit (.of_tidy hg) <;> exact .of_tidy (by fun_prop)
   dsimp only [verifyCommitments]
   fun_prop
 
