@@ -1617,6 +1617,7 @@ public import Complexity.Foundations.Data.BiTape
 public import Complexity.Foundations.Data.BitString.AffineDisperser
 public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
+public import Complexity.Foundations.Data.BitString.Binary
 public import Complexity.Foundations.Data.BitString.Block
 public import Complexity.Foundations.Data.BitString.Broadcast
 public import Complexity.Foundations.Data.BitString.Counter

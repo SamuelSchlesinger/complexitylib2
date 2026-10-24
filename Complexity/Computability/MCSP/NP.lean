@@ -18,6 +18,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
+import Complexity.Foundations.Data.BitString.Binary
 import Mathlib.Data.List.GetD
 
 /-!
@@ -98,25 +99,13 @@ def verifier (p : Instance × List Bool) : Bool :=
 
 /-! ### Correctness -/
 
-/-- Reading the bits of an input, least significant first, gives its number in the order of
-`BitString.equivFin`. -/
-private theorem binaryValue_reverse_ofFn {n : ℕ} (y : BitString n) :
-    BitString.binaryValue (List.ofFn y).reverse = BitString.equivFin n y := by
-  induction n with
-  | zero => rfl
-  | succ n ih =>
-    rw [List.ofFn_succ, List.reverse_cons, BitString.binaryValue_snoc, ih fun i => y i.succ]
-    have h := BitString.val_equivFin_cons (y 0) (Fin.tail y)
-    rw [Fin.cons_self_tail] at h
-    rw [h, Nat.add_comm]
-    rfl
-
 /-- The verifier reads the function of an instance from its truth table. -/
 theorem tableValue_ofFn (x : Instance) (y : BitString x.arity) :
     tableValue (List.ofFn x.table) (List.ofFn y) = x.function y := by
   have hlt := (BitString.equivFin x.arity y).isLt
-  rw [tableValue, BitString.boundedBinaryValue_eq, binaryValue_reverse_ofFn, List.length_ofFn,
-    Nat.min_eq_right hlt.le, List.getD_eq_getElem _ _ (by simp), List.getElem_ofFn]
+  rw [tableValue, BitString.boundedBinaryValue_eq, BitString.binaryValue_reverse_ofFn,
+    List.length_ofFn, Nat.min_eq_right hlt.le, List.getD_eq_getElem _ _ (by simp),
+    List.getElem_ofFn]
   rfl
 
 /-- The polynomial bounding the length of certificates. -/

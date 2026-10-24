@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.Data.BitString.Basic
+import Complexity.Foundations.Data.BitString.Binary
 import Complexity.Foundations.Data.BitString.Block
 import Complexity.Foundations.Data.BitString.Counter
 import Complexity.Foundations.Data.BitString.Enumeration
@@ -41,6 +42,22 @@ example : binaryValue [true, true, false] = 6 := by decide
 
 -- `lowBits` writes a value least significant bit first, padded to the requested width.
 example : lowBits 4 6 = [false, true, true, false] := by decide
+
+-- Numeral bridges between `equivFin`, `lsbValue`, `binaryValue`, `Nat.ofBits` and `Nat.testBit`.
+example : lsbValue [true, false, true] = [true, false, true].foldr Nat.bit 0 :=
+  lsbValue_eq_foldr_bit [true, false, true]
+
+example : lsbValue (List.ofFn ![true, false, true]) = equivFin 3 ![true, false, true] :=
+  lsbValue_ofFn ![true, false, true]
+
+example : (equivFin 3 ![true, false, true] : ℕ) = Nat.ofBits ![true, false, true] :=
+  val_equivFin_eq_ofBits ![true, false, true]
+
+example : (equivFin 3).symm 5 2 = (5 : ℕ).testBit 2 :=
+  equivFin_symm_apply 5 2
+
+example : binaryValue (List.ofFn ![true, false, true]).reverse = equivFin 3 ![true, false, true] :=
+  binaryValue_reverse_ofFn ![true, false, true]
 
 -- There are `2 ^ n` words of `n` bits.
 example : Fintype.card (BitString 5) = 32 := by rw [BitString.card]; rfl

@@ -63,14 +63,6 @@ theorem PP_subset_PSPACE : PP enc ⊆ PSPACE enc := by
           (SharpP.computableTidilyInPolySpace hf)))
   exact mem_PSPACE_of_computableTidilyInPolySpace htest fun a => by simpa using hA a
 
-private theorem ofBits_eq_lsbValue (w : List Bool) : ofBits w = BitString.lsbValue w := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    change Nat.bit b (ofBits w) = b.toNat + 2 * BitString.lsbValue w
-    rw [ih]
-    cases b <;> simp [Nat.bit, Nat.add_comm]
-
 /-- Testing whether a fixed modulus divides a #P count is in polynomial space. A quotient has
 at most one more bit than the verifier's certificate length, even for moduli zero and one. -/
 theorem coModP_subset_PSPACE (k : ℕ) : coModP k enc ⊆ PSPACE enc := by
@@ -110,7 +102,7 @@ theorem coModP_subset_PSPACE (k : ℕ) : coModP k enc ⊆ PSPACE enc := by
         (Nat.pow_lt_pow_right (by norm_num) (by lia)))
     obtain ⟨hv, hl⟩ := BitString.iterate_increment _ _ hlt
     refine ⟨_, hl, ?_⟩
-    rw [ofBits_eq_lsbValue, hv]
+    rw [ofBits, ← BitString.lsbValue_eq_foldr_bit, hv]
     exact (Nat.mul_div_cancel' (Nat.dvd_of_mod_eq_zero hdiv)).symm
   · rintro ⟨w, _, hw⟩
     exact Nat.mod_eq_zero_of_dvd ⟨ofBits w, hw⟩

@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
 public import Mathlib.Data.Nat.Basic
+public import Mathlib.Data.Nat.Bits
 
 /-!
 # A binary counter
@@ -33,6 +34,7 @@ their candidates in this way, storing only the current one.
 * `Cslib.BitString.lsbValue_injective`: words of the same length are determined by their values.
 * `Cslib.BitString.iterate_increment`, `Cslib.BitString.iterate_increment_lsbValue`: counting from
   zero enumerates the words of a length.
+* `Cslib.BitString.lsbValue_eq_foldr_bit`: `lsbValue` is a right fold of `Nat.bit`.
 -/
 
 @[expose] public section
@@ -145,5 +147,11 @@ theorem iterate_increment_lsbValue (u : List Bool) :
     increment^[lsbValue u] (List.replicate u.length false) = u :=
   let h := iterate_increment u.length (lsbValue u) (lsbValue_lt u)
   lsbValue_injective h.2 h.1
+
+/-- `lsbValue` is a right fold of `Nat.bit`. -/
+theorem lsbValue_eq_foldr_bit (w : List Bool) : lsbValue w = w.foldr Nat.bit 0 := by
+  induction w with
+  | nil => rfl
+  | cons b w ih => rw [lsbValue, List.foldr_cons, ← ih, Nat.bit_val, Nat.add_comm]
 
 end Cslib.BitString
