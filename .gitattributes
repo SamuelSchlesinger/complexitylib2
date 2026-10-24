@@ -1,0 +1,7 @@
+# Generated root import aggregators are sorted lists of one-line imports.
+# Union merge avoids spurious 3-line context conflicts when concurrent PRs add
+# imports in the same alphabetical neighborhood; `lake exe mk_all --check` in
+# merge-queue CI still enforces canonical sort order.
+Complexity.lean merge=union
+ComplexityTests.lean merge=union
+abstracts/ComplexityAbstracts.lean merge=union

@@ -128,7 +128,12 @@ tooling.
 - Check affected `ROADMAP.md`, `abstracts/catalogue.json`, `UPSTREAM.md` and other documentation.
   Preserve source credit and the distinction between a completed milestone and its open objective.
 - Merge only with maintainer authority, required validation and independent review of the current
-  revision. Close completed issues and link any remaining work.
+  revision. Shepherding approved PRs through the merge queue and keeping the queue moving is a
+  coordinator responsibility: do not treat a PR as done when it is merely queued. Monitor queued
+  batches until they land on `main`, rebase or re-queue PRs ejected by conflicts or transient
+  failures, sequence broad tree-wide refactors so they do not stall smaller PRs behind cold cache
+  rebuilds, and diagnose and fix merge-queue or CI bottlenecks when the queue jams. Close
+  completed issues and link any remaining work once the change lands.
 - For your own implementation, follow the worker rules and obtain another coordinator's review.
   Changing roles or delegating authorship never makes an author eligible to approve their work.
 
