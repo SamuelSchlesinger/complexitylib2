@@ -17,7 +17,7 @@ public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
 import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
-import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Basic
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
@@ -446,8 +446,9 @@ end Turing.MultiTapeTM.Internal
 namespace Turing.MultiTapeTM.Internal
 
 /-- Normalization preserves both cost degree `d` and the independent encoded-output degree `e`,
-including degree zero. This is a private machine witness, not a public tidy certificate. -/
-private theorem normalizeDegree {α β : Type*} {f : α → β}
+including degree zero. This raw construction operation has no automatic proof-search
+registration. -/
+public theorem normalizeDegree {α β : Type*} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {d e : ℕ}
     (h : ComputableInDegree f encIn encOut d e) :
     (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
@@ -459,8 +460,9 @@ private theorem normalizeDegree {α β : Type*} {f : α → β}
   exact ⟨⟨_, _, ((ht.smul 2).add (hs.smul 3)).add_const c,
     (hs.add_const 1).smul c, hc⟩, ho⟩
 
-/-- Forget a normalized degree witness while preserving its output-growth certificate. -/
-private theorem forgetDegree {α β : Type*} {f : α → β}
+/-- Forget a normalized degree witness while preserving its output-growth certificate.
+This raw construction operation has no automatic proof-search registration. -/
+public theorem forgetDegree {α β : Type*} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {d e : ℕ}
     (h : (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
       DegreeBounded (fun a => (encIn a).length) s d ∧
@@ -470,8 +472,9 @@ private theorem forgetDegree {α β : Type*} {f : α → β}
   obtain ⟨⟨t, s, ht, hs, h⟩, ho⟩ := h
   exact ⟨⟨t, s, ht, hs, h.computableInTimeAndSpace⟩, ho⟩
 
-/-- Normalize a common linear bound, absorbing cleanup in an explicit constant. -/
-private theorem normalizeLinear {α β : Type*} {f : α → β}
+/-- Normalize a common linear bound, absorbing cleanup in an explicit constant.
+This raw construction operation has no automatic proof-search registration. -/
+public theorem normalizeLinear {α β : Type*} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
     (h : ComputableInLinearTimeAndSpace f encIn encOut) :
     ∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
