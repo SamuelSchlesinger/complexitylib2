@@ -1239,6 +1239,17 @@ Jukna coverage below is an additional target beyond the V1 port:
   Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
   and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
   approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.
+* **Diffie–Hellman assumptions and ElGamal encryption (#640, track C, #873).** Boneh–Shoup
+  Sections 10.4–10.6 and 11.4. Over a `PrimeOrderGroupFamily`,
+  [Computational and Decisional Diffie–Hellman](Complexity/Crypto/Computational/DiffieHellman.lean)
+  (`cdhGame`, `CDH`, `ddhRealGame`, `ddhIdealGame`, `DDH`) are formalized with the reductions
+  `DiscreteLog ≤ CDH ≤ DDH` (`CDH.discreteLog`, `DDH.cdh`, `DDH.discreteLog`) and worst-case-to-average-case
+  random self-reducibility of DDH (`ddhRerandomizeLaw_real`, `ddhRerandomizeLaw_ideal`).
+  [ElGamal public-key encryption](Complexity/Crypto/Computational/ElGamal.lean) (`elGamalEncrypt`,
+  `elGamalDecrypt`, polynomial-time encoded decryption `decodeElGamal`, and bit encryption
+  `elGamalCPAGame`) is proved IND-CPA secure under DDH (`advantage_elGamalCPAGame_le`,
+  `DDH.elGamalINDCPA`, Boneh–Shoup Theorem 11.1). Open: hashed ElGamal, Cramer–Shoup CCA
+  security, and Pedersen commitments over `PrimeOrderGroupFamily`.
 * **Lattice identification and signatures (#640, track B).** The short-integer-solution
   hypothesis, exact box rejection sampling and Lyubashevsky identification are in review (#660).
   Open: Fiat–Shamir with aborts and signatures from SIS [Lyubashevsky 2009, 2012]; efficiency
