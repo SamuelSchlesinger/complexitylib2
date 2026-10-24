@@ -384,7 +384,8 @@ the PR. Do not imply human editorial approval.
 
 `scripts/build_abstracts.py` generates individual PDFs, a combined catalogue and provenance with
 source digests and exact declaration links. The **Formal abstract PDFs** workflow uploads review
-artifacts and publishes main builds as `formal-abstracts` release assets. When abstracts or rendering
+and main artifacts, and the **API documentation** workflow publishes main builds under
+`https://www.cslib.io/complexitylib/abstracts/`. When abstracts or rendering
 change, inspect affected rendered pages and declaration links before integration; record the
 artifact/run and revisions. If abstracts and rendering are unaffected, record no impact; no new
 PDF review is needed. Local generation is supported. Generated TeX, PDFs and auxiliary products

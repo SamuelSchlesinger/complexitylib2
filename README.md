@@ -38,7 +38,7 @@ points to the other proved problems and their reduction maps. The checked exampl
 claims with plain `ComputableInPolyTime`.
 
 The [selected formal abstracts](abstracts/README.md) present a small set of major results with
-inspectable definitions and checked Lean statements. The [combined PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/catalogue.pdf)
+inspectable definitions and checked Lean statements. The [combined PDF](https://www.cslib.io/complexitylib/abstracts/catalogue.pdf)
 and individual PDFs are generated from those sources. Each states its model and limitations;
 the selection is not an exhaustive API reference.
 

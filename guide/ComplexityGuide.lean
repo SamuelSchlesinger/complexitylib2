@@ -39,7 +39,7 @@ around.
 [api]: https://www.cslib.io/complexitylib/
 [start]: https://github.com/cslib-community/complexitylib#start-here
 [abstracts]: https://github.com/cslib-community/complexitylib/blob/main/abstracts/README.md
-[pdfs]: https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/catalogue.pdf
+[pdfs]: https://www.cslib.io/complexitylib/abstracts/catalogue.pdf
 [roadmap]: https://github.com/cslib-community/complexitylib/blob/main/ROADMAP.md
 [contributing]: https://github.com/cslib-community/complexitylib/blob/main/CONTRIBUTING.md
 

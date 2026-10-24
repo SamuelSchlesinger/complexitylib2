@@ -33,7 +33,7 @@ second samples (`bind_sigma_apply`).
 
 ## References
 
-Adapted in part from `Probability/PMF.lean` on the cslib `crypto` branch at
+Adapted in part from Probability/PMF.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
