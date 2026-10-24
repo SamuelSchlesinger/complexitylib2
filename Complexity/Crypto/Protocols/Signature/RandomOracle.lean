@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Control.Monad.Memoize
 public import Complexity.Languages.Probabilistic.Basic
+public import Complexity.Languages.Probabilistic.QueryCount
 public import Cslib.Probability.PMF
 import Complexity.Probability.PMF
 
@@ -26,16 +27,27 @@ The existential-unforgeability experiment (`eufCmaGame`, [BonehShoup2023], Attac
 its random-oracle version) gives a forger the public key and oracle access to the signer and to
 `H`; the forger wins with a valid signature on a message it never asked to have signed. A
 `Forger` has explicit coins, drawn first, and is otherwise a deterministic `OracleComp` program;
-this is the form in which a forger can be rerun on the same coins, as forking needs.
+this is the form in which a forger can be rerun on the same coins, as forking needs. Its signing
+and hash calls are counted separately (`Forger.CallBounded`), as security bounds depend on them
+differently.
 
 These are exact probability laws for one scheme and one forger, with no efficiency claim. The
 oracle interface is the library's `OracleComp`; it is meant to be re-expressed in the shared
 interactive-protocol core of #643 once that core exists.
 
+This interface is separate from the computational `Cslib.Crypto.SignatureScheme`, which packages
+word encodings, strict PPT certificates and verification without an oracle. Here the key and
+signing coins are arbitrary typed laws, and signing and verification share the hash oracle. A
+computational statement about a scheme of this form needs encodings, an efficient realization of
+the oracle and resource certificates on top of the exact bound; the two notions are not competing
+computational interfaces.
+
 ## Main definitions
 
 * `Cslib.Crypto.Protocols.ROMSignature.Scheme`: key generation, signing and verification.
 * `Cslib.Crypto.Protocols.ROMSignature.Forger`: a forger with explicit coins.
+* `Cslib.Crypto.Protocols.ROMSignature.Forger.CallBounded`: bounds on a forger's signing and hash
+  calls.
 * `Cslib.Crypto.Protocols.ROMSignature.oracle`: the lazily sampled uniform random oracle.
 * `Cslib.Crypto.Protocols.ROMSignature.eufCmaGame`: the random-oracle EUF-CMA experiment.
 * `Cslib.Crypto.Protocols.ROMSignature.Scheme.Correct`: honest signatures verify.
@@ -82,7 +94,32 @@ structure Forger (PK M Sig Query Digest : Type) where
   /-- Forge, calling the signer and the oracle. -/
   forge : PK → Coins → OracleComp (ForgerSpec M Query Sig Digest) (M × Sig)
 
-variable {PK SK M Sig Query Digest : Type} [DecidableEq Query] [Fintype Digest] [Nonempty Digest]
+variable {PK SK M Sig Query Digest : Type}
+
+/-- A forger's call costs one when it is a signing call. -/
+def signingCost : M ⊕ Query → ℕ
+  | .inl _ => 1
+  | .inr _ => 0
+
+/-- A forger's call costs one when it is a hash call. -/
+def hashCost : M ⊕ Query → ℕ
+  | .inl _ => 0
+  | .inr _ => 1
+
+/-- The forger makes at most `signs` signing calls and at most `hashes` hash calls on every path,
+for every public key and every choice of its coins. -/
+def Forger.CallBounded (A : Forger PK M Sig Query Digest) (signs hashes : ℕ) : Prop :=
+  ∀ pk coins, IsCostBounded signingCost (A.forge pk coins) signs ∧
+    IsCostBounded hashCost (A.forge pk coins) hashes
+
+/-- A forger making at most `signs` signing and `hashes` hash calls makes at most
+`signs + hashes` calls. -/
+theorem Forger.CallBounded.isQueryBounded {A : Forger PK M Sig Query Digest} {signs hashes : ℕ}
+    (h : A.CallBounded signs hashes) (pk : PK) (coins : A.Coins) :
+    IsQueryBounded (A.forge pk coins) (signs + hashes) :=
+  ((h pk coins).1.add (h pk coins).2).of_le fun q => by cases q <;> simp [signingCost, hashCost]
+
+variable [DecidableEq Query] [Fintype Digest] [Nonempty Digest]
 
 variable (Digest) in
 /-- The random oracle: a uniform digest for each new point, remembered thereafter. -/

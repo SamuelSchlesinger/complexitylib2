@@ -24,24 +24,24 @@ challenge `c := H(m, t)` and responds with `z`; the signature `(t, z)` verifies 
 `(t, H(m, t), z)` is an accepting conversation.
 
 Honest signatures verify (`fiatShamir_correct`). With special soundness, special HVZK and
-`δ`-unpredictable commitments ([BonehShoup2023], Definition 19.7), a forger making at most `Q`
-signing and hash calls in total wins the random-oracle EUF-CMA experiment with probability `ε`
+`δ`-unpredictable commitments ([BonehShoup2023], Definition 19.7), a forger making at most `Qs`
+signing calls and `Qro` hash calls wins the random-oracle EUF-CMA experiment with probability `ε`
 bounded by
 
-`ε ≤ C(Q, 2) · δ + (Q + 1) / N + √((Q + 1) · ε')`,
+`ε ≤ Qs · (Qs + Qro) · δ + (Qro + 1) / N + √((Qro + 1) · ε')`,
 
 where `N` is the number of challenges and `ε'` the success probability of an explicit adversary
-in the one-way game for the key generator (`succProbability_eufCmaGame_le`), as in
-[BonehShoup2023], Equation 19.21, which has `Q_s (Q_s + Q_ro + 1) · δ` in place of
-`C(Q, 2) · δ` and `Q_ro` in place of `Q`, for `Q_s` signing and `Q_ro` hash calls.
+in the one-way game for the key generator (`succProbability_eufCmaGame_le`). This is
+[BonehShoup2023], Equation 19.21, with `Qs · (Qs + Qro) · δ` in place of the slightly larger
+`Qs · (Qs + Qro + 1) · δ`.
 
 The proof follows [BonehShoup2023], Theorems 19.7 and 19.16, with the general forking lemma of
 [BellareNeven2006] in place of the reduction through impersonation:
 
 1. The signer is replaced by one that programs the oracle at `(m, t)` with a fresh challenge.
    The two agree until the signer's commitment hits a point already in the oracle's table, which
-   has probability at most `C(Q, 2) · δ` (the difference lemma,
-   `OracleComp.IdenticalUntilBad.bind_apply_le`).
+   has probability at most `Qs · (Qs + Qro) · δ` (the difference lemma,
+   `OracleComp.IdenticalUntilBad.bind_apply_le`, and `OracleComp.toOuterMeasure_bad_le`).
 2. Special HVZK replaces the programming signer by the simulator, which needs no witness.
 3. The simulated transcripts are drawn in advance, one per call
    (`OracleComp.IsQueryBounded.run_interpret_withSampleList`).
@@ -199,13 +199,14 @@ noncomputable def coins (simulate : Y → C → PMF (T × Z)) (A : Forger Y M (T
 
 variable [DecidableEq C]
 
-/-- **The one-way adversary** built from a forger: fork the forking program, with the `Q + 1`
+/-- **The one-way adversary** built from a forger making at most `Qs` signing and `Qro` hash
+calls: draw one simulated transcript per call, fork the forking program with the `Qro + 1`
 answers of its hash oracle, and extract a witness from the two forgeries. -/
 noncomputable def reduction [Nonempty X] (P : SigmaProtocol X Y T C Z)
     (simulate : Y → C → PMF (T × Z)) (extract : Y → T → C → Z → C → Z → X)
-    (A : Forger Y M (T × Z) (M × T) C) (Q : ℕ) (y : Y) : PMF X :=
-  (Forking.fork (coins simulate A Q y)
-    (forkingAlgorithm (Classical.arbitrary C) (Q + 1) (forkingProgram P A))).map fun result =>
+    (A : Forger Y M (T × Z) (M × T) C) (Qs Qro : ℕ) (y : Y) : PMF X :=
+  (Forking.fork (coins simulate A (Qs + Qro) y)
+    (forkingAlgorithm (Classical.arbitrary C) (Qro + 1) (forkingProgram P A))).map fun result =>
       match result with
       | none => Classical.arbitrary X
       | some (_, out, out') =>
@@ -364,21 +365,22 @@ private theorem toOuterMeasure_lookup_le (P : SigmaProtocol X Y T C Z) (key : X 
           ring
 
 open scoped ENNReal in
-/-- With `δ`-unpredictable commitments, the flag of a forger making at most `Q` calls is raised
-with probability at most `C(Q, 2) · δ`. -/
+/-- With `δ`-unpredictable commitments, the flag of a forger making at most `Qs` signing calls
+and `Q` calls in all is raised with probability at most `Qs · Q · δ`: each signing call hits one of
+the at most `Q` points of the table with probability at most `Q · δ`. -/
 private theorem toOuterMeasure_flag_le (P : SigmaProtocol X Y T C Z) (key : X × Y)
     {δ : ℝ≥0∞} (hcommit : ∀ t, (P.commit key.1 key.2).map Prod.fst t ≤ δ) {α : Type}
-    {program : OracleComp (ForgerSpec M (M × T) (T × Z) C) α} {Q : ℕ}
-    (hQ : IsQueryBounded program Q) :
+    {program : OracleComp (ForgerSpec M (M × T) (T × Z) C) α} {Qs Q : ℕ}
+    (hQs : IsCostBounded signingCost program Qs) (hQ : IsQueryBounded program Q) :
     ((interpret (realHandler P key) program).run (([], []), false)).toOuterMeasure
-      {x | x.2.2 = true} ≤ Q.choose 2 * δ := by
+      {x | x.2.2 = true} ≤ Qs * (Q * δ) := by
   have h := toOuterMeasure_bad_le (handler := realHandler P key) (bad := fun st => st.2 = true)
-    (fun st => st.1.1.length * δ) δ ?_ ?_ hQ (s := (([], []), false)) (by simp)
+    signingCost (fun st => st.1.1.length * δ) δ ?_ ?_ hQ hQs (s := (([], []), false)) (by simp)
   · simpa using h
   · intro q st hst
     cases q with
     | inl m =>
-      rw [realHandler, PMF.toOuterMeasure_bind_apply]
+      rw [signingCost, Nat.cast_one, one_mul, realHandler, PMF.toOuterMeasure_bind_apply]
       calc ∑' ts, (P.commit key.1 key.2) ts *
             ((oracle C (m, ts.1) st.1.1).map fun r => ((ts.1, P.respond key.1 key.2 ts.2 r.1),
               ((r.2, m :: st.1.2), st.2 || (st.1.1.lookup (m, ts.1)).isSome))).toOuterMeasure
@@ -712,13 +714,14 @@ private theorem runWithAnswers_forkingProgram (P : SigmaProtocol X Y T C Z)
         rw [hcount, List.getD_eq_getElem?_getD, List.headD_eq_head?_getD, List.head?_drop]
 
 omit [Fintype C] in
-/-- The forking program asks at most one query per call of the forger, and one more to check the
-forgery. -/
+/-- The forking program asks at most one query per hash call of the forger, and one more to check
+the forgery. -/
 private theorem isQueryBounded_forkingProgram (P : SigmaProtocol X Y T C Z)
-    (A : Forger Y M (T × Z) (M × T) C) {Q : ℕ} (hQ : ∀ y s, IsQueryBounded (A.forge y s) Q)
-    (s : Y × A.Coins × List (T × C × Z)) : IsQueryBounded (forkingProgram P A s) (Q + 1) := by
+    (A : Forger Y M (T × Z) (M × T) C) {Qro : ℕ}
+    (hQro : ∀ y s, IsCostBounded hashCost (A.forge y s) Qro)
+    (s : Y × A.Coins × List (T × C × Z)) : IsQueryBounded (forkingProgram P A s) (Qro + 1) := by
   have hhandler (q : M ⊕ (M × T)) (st : ReductionState M T C Z) :
-      IsQueryBounded ((reductionHandler q).run st) 1 := by
+      IsQueryBounded ((reductionHandler q).run st) (hashCost q) := by
     cases q with
     | inl m =>
       rw [run_reductionHandler_inl]
@@ -731,9 +734,7 @@ private theorem isQueryBounded_forkingProgram (P : SigmaProtocol X Y T C Z)
       | none =>
         rw [run_reductionHandler_inr_none hl]
         exact .liftBind _ _ 0 fun _ => .pure _ 0
-  have hforge := (hQ s.1 s.2.1).run_interpret hhandler ⟨[], [], 0, s.2.2⟩
-  rw [Nat.mul_one] at hforge
-  refine hforge.bind fun forged => ?_
+  refine ((hQro s.1 s.2.1).run_interpret hhandler ⟨[], [], 0, s.2.2⟩).bind fun forged => ?_
   cases hl : forged.2.table.lookup (forged.1.1, forged.1.2.1) with
   | some e =>
     rw [finish_of_some hl]
@@ -745,12 +746,13 @@ private theorem isQueryBounded_forkingProgram (P : SigmaProtocol X Y T C Z)
 /-- With its oracle answered uniformly, the forking program wins at most as often as it validly
 names a query. -/
 private theorem map_run_le_accept (P : SigmaProtocol X Y T C Z)
-    (A : Forger Y M (T × Z) (M × T) C) {Q : ℕ} (hQ : ∀ y s, IsQueryBounded (A.forge y s) Q)
+    (A : Forger Y M (T × Z) (M × T) C) {Qro : ℕ}
+    (hQro : ∀ y s, IsCostBounded hashCost (A.forge y s) Qro)
     (s : Y × A.Coins × List (T × C × Z)) :
     ((interpret countingUniform (forkingProgram P A s)).run 0).map (fun run => run.1.2.1) true ≤
       ((interpret countingUniform (forkingProgram P A s)).run 0).bind
-        (fun run => PMF.pure (validIndex (Q + 1) run.2 run.1.1).isSome) true := by
-  have hbound := isQueryBounded_forkingProgram P A hQ s
+        (fun run => PMF.pure (validIndex (Qro + 1) run.2 run.1.1).isSome) true := by
+  have hbound := isQueryBounded_forkingProgram P A hQro s
   rw [run_interpret_countingUniform_eq (Classical.arbitrary C) _
     (hbound.hasQueryBounds (size := fun _ => 0) (maxSize := 0) fun _ => le_rfl)]
   simp only [← PMF.bind_pure_comp, PMF.bind_bind, PMF.pure_bind, Function.comp_def]
@@ -762,7 +764,7 @@ private theorem map_run_le_accept (P : SigmaProtocol X Y T C Z)
     have hlt : j < (runWithAnswers (Classical.arbitrary C) (forkingProgram P A s)
         (List.ofFn h)).2.length := (List.getElem?_eq_some_iff.mp (hnamed j hj).1).1
     have hle := hbound.length_runWithAnswers_le (Classical.arbitrary C) (List.ofFn h)
-    have hvalid : (validIndex (Q + 1) (0 + (runWithAnswers (Classical.arbitrary C)
+    have hvalid : (validIndex (Qro + 1) (0 + (runWithAnswers (Classical.arbitrary C)
         (forkingProgram P A s) (List.ofFn h)).2.length) (runWithAnswers (Classical.arbitrary C)
           (forkingProgram P A s) (List.ofFn h)).1.1).isSome = true := by
       rw [hj, zero_add]
@@ -788,15 +790,15 @@ special soundness turns them into a witness. -/
 private theorem fork_le_oneWayGame [Nonempty X] {P : SigmaProtocol X Y T C Z}
     {keyGen : PMF (X × Y)} {R : X → Y → Prop} [∀ x y, Decidable (R x y)]
     {extract : Y → T → C → Z → C → Z → X} (hsound : P.SpecialSoundOn keyGen R extract)
-    (simulate : Y → C → PMF (T × Z)) (A : Forger Y M (T × Z) (M × T) C) (Q : ℕ) :
-    (Forking.fork (keyGen.bind fun key => coins simulate A Q key.2)
-        (forkingAlgorithm (Classical.arbitrary C) (Q + 1) (forkingProgram P A))).map
+    (simulate : Y → C → PMF (T × Z)) (A : Forger Y M (T × Z) (M × T) C) (Qs Qro : ℕ) :
+    (Forking.fork (keyGen.bind fun key => coins simulate A (Qs + Qro) key.2)
+        (forkingAlgorithm (Classical.arbitrary C) (Qro + 1) (forkingProgram P A))).map
           Option.isSome true ≤
-      oneWayGame keyGen R (reduction P simulate extract A Q) true := by
-  have hfork : Forking.fork (keyGen.bind fun key => coins simulate A Q key.2)
-      (forkingAlgorithm (Classical.arbitrary C) (Q + 1) (forkingProgram P A)) =
-      keyGen.bind fun key => Forking.fork (coins simulate A Q key.2)
-        (forkingAlgorithm (Classical.arbitrary C) (Q + 1) (forkingProgram P A)) := by
+      oneWayGame keyGen R (reduction P simulate extract A Qs Qro) true := by
+  have hfork : Forking.fork (keyGen.bind fun key => coins simulate A (Qs + Qro) key.2)
+      (forkingAlgorithm (Classical.arbitrary C) (Qro + 1) (forkingProgram P A)) =
+      keyGen.bind fun key => Forking.fork (coins simulate A (Qs + Qro) key.2)
+        (forkingAlgorithm (Classical.arbitrary C) (Qro + 1) (forkingProgram P A)) := by
     simp only [Forking.fork, PMF.monad_bind_eq_bind, PMF.bind_bind]
   rw [hfork, PMF.map_bind]
   simp only [oneWayGame, reduction, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.bind_map]
@@ -838,28 +840,30 @@ private theorem bind_apply_le_add {α β : Type} {μ : PMF α} {f g : α → PMF
 
 omit [DecidableEq C] in
 /-- **The game hops** for one key and one choice of the forger's coins: the experiment wins at
-most as often as the forking program, with presampled transcripts, plus `C(Q, 2) · δ`. -/
+most as often as the forking program, with presampled transcripts, plus `Qs · (Qs + Qro) · δ`. -/
 private theorem run_bind_finishGame_le {P : SigmaProtocol X Y T C Z} {keyGen : PMF (X × Y)}
     {R : X → Y → Prop} {simulate : Y → C → PMF (T × Z)} (hzk : P.SpecialHVZK R simulate)
     {key : X × Y} (hkey : R key.1 key.2) {δ : ENNReal}
     (hcommit : ∀ t, (P.commit key.1 key.2).map Prod.fst t ≤ δ)
-    (A : Forger Y M (T × Z) (M × T) C) {Q : ℕ} (hQ : ∀ y s, IsQueryBounded (A.forge y s) Q)
+    (A : Forger Y M (T × Z) (M × T) C) {Qs Qro : ℕ} (hA : A.CallBounded Qs Qro)
     (c : A.Coins) :
     ((interpret (handler (fiatShamir P keyGen) key) (A.forge key.2 c)).run ([], [])).bind
         (finishGame P key.2) true ≤
-      ((PMF.iid (simulateConversation simulate key.2) Q).map List.ofFn).bind (fun trs =>
+      ((PMF.iid (simulateConversation simulate key.2) (Qs + Qro)).map List.ofFn).bind (fun trs =>
         ((interpret countingUniform (forkingProgram P A (key.2, c, trs))).run 0).map
-          fun run => run.1.2.1) true + Q.choose 2 * δ := by
+          fun run => run.1.2.1) true + (Qs * (Qs + Qro) : ℕ) * δ := by
   have h0 := run_interpret_map_state (realHandler P key) (handler (fiatShamir P keyGen) key)
     Prod.fst (realHandler_map P keyGen key) (A.forge key.2 c) (([], []), false)
   have h1 := run_interpret_map_state (programHandler P key)
     (fun q st => (simulateConversation simulate key.2).bind fun v => simulatedHandler v q st)
     Prod.fst (programHandler_map hzk hkey) (A.forge key.2 c) (([], []), false)
-  have h2 := (hQ key.2 c).run_interpret_withSampleList (simulateConversation simulate key.2)
-    (Classical.arbitrary _) simulatedHandler ([], [])
+  have h2 := (hA.isQueryBounded key.2 c).run_interpret_withSampleList
+    (simulateConversation simulate key.2) (Classical.arbitrary _) simulatedHandler ([], [])
+  have hflag := toOuterMeasure_flag_le P key hcommit (hA key.2 c).1 (hA.isQueryBounded key.2 c)
+  rw [show (Qs : ENNReal) * ((Qs + Qro : ℕ) * δ) = (Qs * (Qs + Qro) : ℕ) * δ by
+    push_cast; ring] at hflag
   rw [← h0, PMF.bind_map]
-  refine ((identicalUntilBad P key).bind_apply_le _ _ _ _).trans
-    (add_le_add (le_of_eq ?_) (toOuterMeasure_flag_le P key hcommit (hQ key.2 c)))
+  refine ((identicalUntilBad P key).bind_apply_le _ _ _ _).trans (add_le_add (le_of_eq ?_) hflag)
   rw [← PMF.bind_map, h1, ← h2, PMF.bind_bind]
   refine congrArg (fun p : PMF Bool => p true) (congrArg (PMF.bind _) (funext fun trs => ?_))
   rw [PMF.bind_map, map_run_forkingProgram]
@@ -872,10 +876,11 @@ open scoped NNReal in
 /-- **Security of Fiat–Shamir signatures** ([BonehShoup2023], Theorem 19.16 with Equation 19.21,
 via [BellareNeven2006], Lemma 1). Let the Sigma protocol be special sound on the generated keys
 with extractor `extract`, special HVZK with simulator `simulate`, and have `δ`-unpredictable
-commitments, and let the key generator produce pairs in the relation. A forger making at most `Q`
-signing and hash calls in total wins the random-oracle EUF-CMA experiment with probability at
-most `C(Q, 2) · δ + (Q + 1) / N + √((Q + 1) · ε')`, where `N` is the number of challenges and `ε'`
-is the probability that the reduction outputs a witness for a generated statement. -/
+commitments, and let the key generator produce pairs in the relation. A forger making at most `Qs`
+signing calls and `Qro` hash calls wins the random-oracle EUF-CMA experiment with probability at
+most `Qs · (Qs + Qro) · δ + (Qro + 1) / N + √((Qro + 1) · ε')`, where `N` is the number of
+challenges and `ε'` is the probability that the reduction outputs a witness for a generated
+statement. -/
 theorem succProbability_eufCmaGame_le [Nonempty X] [Nonempty T] [Nonempty Z] [DecidableEq C]
     {P : SigmaProtocol X Y T C Z} {keyGen : PMF (X × Y)} {R : X → Y → Prop}
     [∀ x y, Decidable (R x y)] {extract : Y → T → C → Z → C → Z → X}
@@ -883,51 +888,53 @@ theorem succProbability_eufCmaGame_le [Nonempty X] [Nonempty T] [Nonempty Z] [De
     (hkey : ∀ key ∈ keyGen.support, R key.1 key.2) (hsound : P.SpecialSoundOn keyGen R extract)
     (hzk : P.SpecialHVZK R simulate)
     (hcommit : ∀ key ∈ keyGen.support, ∀ t, (P.commit key.1 key.2).map Prod.fst t ≤ δ)
-    (A : Forger Y M (T × Z) (M × T) C) {Q : ℕ}
-    (hQ : ∀ y s, IsQueryBounded (A.forge y s) Q) :
+    (A : Forger Y M (T × Z) (M × T) C) {Qs Qro : ℕ} (hA : A.CallBounded Qs Qro) :
     (Game.succProbability (eufCmaGame (fiatShamir P keyGen) A) : ℝ) ≤
-      Q.choose 2 * δ + (Q + 1) / Fintype.card C +
-        √((Q + 1) * Game.succProbability
-          (oneWayGame keyGen R (reduction P simulate extract A Q))) := by
+      Qs * (Qs + Qro) * δ + (Qro + 1) / Fintype.card C +
+        √((Qro + 1) * Game.succProbability
+          (oneWayGame keyGen R (reduction P simulate extract A Qs Qro))) := by
   classical
-  set first := keyGen.bind fun key => coins simulate A Q key.2 with hfirst
-  have hA : eufCmaGame (fiatShamir P keyGen) A true ≤
+  set first := keyGen.bind fun key => coins simulate A (Qs + Qro) key.2 with hfirst
+  have hA' : eufCmaGame (fiatShamir P keyGen) A true ≤
       first.bind (fun s => ((interpret countingUniform (forkingProgram P A s)).run 0).map
-        fun run => run.1.2.1) true + Q.choose 2 * (δ : ENNReal) := by
+        fun run => run.1.2.1) true + (Qs * (Qs + Qro) : ℕ) * (δ : ENNReal) := by
     rw [eufCmaGame_fiatShamir, hfirst]
     simp only [coins, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.bind_bind,
       PMF.pure_bind]
     refine bind_apply_le_add fun key hkey' => bind_apply_le_add fun c _ => ?_
-    exact run_bind_finishGame_le hzk (hkey key hkey') (hcommit key hkey') A hQ c
+    exact run_bind_finishGame_le hzk (hkey key hkey') (hcommit key hkey') A hA c
+  have hQro (y : Y) (s : A.Coins) : IsCostBounded hashCost (A.forge y s) Qro := (hA y s).2
   have hB : first.bind (fun s => ((interpret countingUniform (forkingProgram P A s)).run 0).map
         fun run => run.1.2.1) true ≤
       first.bind (fun s => ((interpret countingUniform (forkingProgram P A s)).run 0).bind
-        fun run => PMF.pure (validIndex (Q + 1) run.2 run.1.1).isSome) true :=
-    Probability.PMF.bind_apply_mono_on_support _ _ fun s _ => map_run_le_accept P A hQ s
+        fun run => PMF.pure (validIndex (Qro + 1) run.2 run.1.1).isSome) true :=
+    Probability.PMF.bind_apply_mono_on_support _ _ fun s _ => map_run_le_accept P A hQro s
   have hC := le_add_sqrt_fork first (forkingProgram P A) (Classical.arbitrary C)
-    (fun s => (isQueryBounded_forkingProgram P A hQ s).hasQueryBounds (size := fun _ => 0)
+    (fun s => (isQueryBounded_forkingProgram P A hQro s).hasQueryBounds (size := fun _ => 0)
       (maxSize := 0) fun _ => le_rfl)
-  have hD := fork_le_oneWayGame (P := P) hsound simulate A Q
+  have hD := fork_le_oneWayGame (P := P) hsound simulate A Qs Qro
   simp only [PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure] at hC
   simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
-  have hK : (Q.choose 2 * (δ : ENNReal)).toReal = Q.choose 2 * δ := by
+  have hK : (((Qs * (Qs + Qro) : ℕ) : ENNReal) * δ).toReal = Qs * (Qs + Qro) * δ := by
     rw [ENNReal.toReal_mul, ENNReal.toReal_natCast, ENNReal.coe_toReal]
+    push_cast
+    ring
   calc (eufCmaGame (fiatShamir P keyGen) A true).toReal
       ≤ (first.bind (fun s => ((interpret countingUniform (forkingProgram P A s)).run 0).bind
-          fun run => PMF.pure (validIndex (Q + 1) run.2 run.1.1).isSome) true).toReal +
-          Q.choose 2 * δ := by
+          fun run => PMF.pure (validIndex (Qro + 1) run.2 run.1.1).isSome) true).toReal +
+          Qs * (Qs + Qro) * δ := by
         rw [← hK, ← ENNReal.toReal_add (PMF.apply_ne_top _ _)
           (ENNReal.mul_ne_top (ENNReal.natCast_ne_top _) ENNReal.coe_ne_top)]
         exact ENNReal.toReal_mono (ENNReal.add_ne_top.mpr ⟨PMF.apply_ne_top _ _,
           ENNReal.mul_ne_top (ENNReal.natCast_ne_top _) ENNReal.coe_ne_top⟩)
-          (hA.trans (add_le_add hB le_rfl))
-    _ ≤ ((Q + 1 : ℕ) / Fintype.card C + √((Q + 1 : ℕ) * ((Forking.fork first
-          (forkingAlgorithm (Classical.arbitrary C) (Q + 1) (forkingProgram P A))).map
-            Option.isSome true).toReal)) + Q.choose 2 * δ := add_le_add hC le_rfl
+          (hA'.trans (add_le_add hB le_rfl))
+    _ ≤ ((Qro + 1 : ℕ) / Fintype.card C + √((Qro + 1 : ℕ) * ((Forking.fork first
+          (forkingAlgorithm (Classical.arbitrary C) (Qro + 1) (forkingProgram P A))).map
+            Option.isSome true).toReal)) + Qs * (Qs + Qro) * δ := add_le_add hC le_rfl
     _ ≤ _ := by
         push_cast
         have hsqrt := Real.sqrt_le_sqrt (mul_le_mul_of_nonneg_left
-          (ENNReal.toReal_mono (PMF.apply_ne_top _ _) hD) (by positivity : (0 : ℝ) ≤ Q + 1))
+          (ENNReal.toReal_mono (PMF.apply_ne_top _ _) hD) (by positivity : (0 : ℝ) ≤ Qro + 1))
         linarith
 
 end Cslib.Crypto.Protocols.SigmaProtocol

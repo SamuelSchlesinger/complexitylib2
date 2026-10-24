@@ -1194,7 +1194,8 @@ Jukna coverage below is an additional target beyond the V1 port:
   presampled answers. [Fiat–Shamir signatures](Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean)
   in the [random-oracle model](Complexity/Crypto/Protocols/Signature/RandomOracle.lean) are
   correct and, exactly, EUF-CMA secure with the bound
-  `C(Q, 2) · δ + (Q + 1)/N + √((Q + 1) · ε')` of Theorem 19.16 and Equation 19.21, by the
+  `Qs · (Qs + Qro) · δ + (Qro + 1)/N + √((Qro + 1) · ε')` of Theorem 19.16 and Equation 19.21,
+  by the
   [difference lemma](Complexity/Languages/Probabilistic/UntilBad.lean), presampling and forking.
   Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
   and security against eavesdropping in the strict-PPT model, where simulating transcripts needs

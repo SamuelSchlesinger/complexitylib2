@@ -1464,6 +1464,7 @@ public import Complexity.Crypto.Computational.ZeroKnowledge
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Crypto.Game.Statistical
+public import Complexity.Crypto.Game.UntilBad
 public import Complexity.Crypto.Negligible
 public import Complexity.Crypto.Negligible.Basic
 public import Complexity.Crypto.Negligible.Dyadic

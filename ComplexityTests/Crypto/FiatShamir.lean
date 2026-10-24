@@ -100,22 +100,22 @@ theorem succProbability_knower : Game.succProbability (eufCmaGame scheme knower)
   simp only [hverify]
   simp
 
-/-- The knowing forger makes one call. -/
-theorem knower_isQueryBounded (u r : ZMod 11) : OracleComp.IsQueryBounded (knower.forge u r) 1 :=
-  .liftBind _ _ 0 fun _ => .pure _ 0
+/-- The knowing forger makes no signing call and one hash call. -/
+theorem knower_callBounded : knower.CallBounded 0 1 :=
+  fun _ _ => ⟨.liftBind _ _ 0 fun _ => .pure _ 0, .liftBind _ _ 0 fun _ => .pure _ 0⟩
 
 /-- The reduction built from the knowing forger computes a discrete logarithm with probability at
-least `81 / 242`: the security bound reads `1 ≤ 0 + 2 / 11 + √(2 · ε')`. -/
+least `81 / 242`: the security bound, with no signing call and one hash call, reads
+`1 ≤ 0 + 2 / 11 + √(2 · ε')`. -/
 example : (81 / 242 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (2 : ZMod 11))
     (fun α u => α • (2 : ZMod 11) = u)
     (FiatShamir.reduction (schnorr ι (2 : ZMod 11))
       (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)
-      (linearExtract ι) knower 1)) := by
+      (linearExtract ι) knower 0 1)) := by
   have h := succProbability_eufCmaGame_le (δ := 11⁻¹)
     (fun _ h => mem_support_schnorrKeyGen h)
     ((schnorr_specialSoundness (ι := ι) (g := (2 : ZMod 11))).specialSoundOn (schnorrKeyGen 2))
-    schnorr_specialHVZK (fun key _ t => commit_unpredictable key t) knower
-    knower_isQueryBounded
+    schnorr_specialHVZK (fun key _ t => commit_unpredictable key t) knower knower_callBounded
   have hknower : Game.succProbability (eufCmaGame (fiatShamir (M := Bool)
       (schnorr ι (2 : ZMod 11)) (schnorrKeyGen 2)) knower) = 1 := succProbability_knower
   rw [hknower, ZMod.card] at h
@@ -123,10 +123,10 @@ example : (81 / 242 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (
     (fun α u => α • (2 : ZMod 11) = u)
     (FiatShamir.reduction (schnorr ι (2 : ZMod 11))
       (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)
-      (linearExtract ι) knower 1)) : ℝ) with hε
+      (linearExtract ι) knower 0 1)) : ℝ) with hε
   have hε0 : 0 ≤ ε := NNReal.coe_nonneg _
-  have hchoose : ((Nat.choose 1 2 : ℕ) : ℝ) = 0 := by norm_num
-  rw [hchoose, zero_mul, zero_add, Nat.cast_one, show (1 : ℝ) + 1 = 2 by norm_num] at h
+  simp only [Nat.cast_zero, zero_mul, zero_add, Nat.cast_one,
+    show (1 : ℝ) + 1 = 2 by norm_num] at h
   have hsqrt : (9 / 11 : ℝ) ≤ √(2 * ε) := by
     simp only [NNReal.coe_one, Nat.cast_ofNat] at h
     linarith
