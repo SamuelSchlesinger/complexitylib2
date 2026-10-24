@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
-public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.MCSP.Basic
 public import Complexity.Computability.MCSP.Succinct
 
@@ -19,23 +18,20 @@ The *Partial Minimum Circuit Size Problem* (`MCSP*` or `PartialMCSP`) asks, give
 of a partial Boolean function $f^* : \{0, 1\}^n \to \{0, 1, *\}$ on `arity = n` inputs and a size
 threshold `s`, whether there exists a total Boolean function $f : \{0, 1\}^n \to \{0, 1\}$ that
 extends $f^*$ (agreeing with $f^*$ on every input where $f^*(x) \ne *$) and has a circuit of size
-at most `s` [Ilango2020FOCS, Section 2.2; Hirahara2022, Definition 8.4].
+at most `s` [Ilango2020FOCS, Section II.B; ECCC TR20-183, Section 2.2; Hirahara2022, ECCC TR22-119,
+Definition 8.4, p. 30].
 
 In `PartialMCSP.Instance`, the truth table has $2^n$ entries in `Option Bool`, where `some b`
 requires the circuit to output `b` and `none` represents the "don't care" symbol `*` (also written
-`?` in [Hirahara2022]).
+`?` in [Hirahara2022, ECCC TR22-119, Definition 8.4]).
 
 Following Decision D5 on issue #798, `Cslib.PartialMCSP` uses the standard De Morgan all-gates size
 measure `Circuit.size` (`complexityOn interpretation x.definedInputs (single x.completion)`),
 matching `Cslib.MCSP` and `Cslib.SuccinctMCSP`. We also define `Cslib.PartialMCSP.BinaryGate` using
-the AND/OR-only gate count `c.program.cost binaryCost` from [Ilango2020FOCS, Section 2.2] (where NOT
-and constant gates are free), and prove the fan-in and threshold-$n-1$ bridge theorems relating the
-two measures:
-* Every De Morgan circuit `c : Circuit signature n m` depends on at most
-  `m + c.program.cost binaryCost` inputs (`Circuit.card_inputSupport_le_cost_binaryCost`), because
-  only binary AND and OR gates increase the number of supporting inputs in the backward cone.
-* A program has `p.cost binaryCost = g` if and only if every gate is a binary AND or OR gate
-  (`Program.cost_binaryCost_eq_iff_forall_isBinary`).
+the AND/OR-only gate count `c.program.cost binaryCost` from [Ilango2020FOCS, Section II.B and
+Section III.B, p. 427; ECCC TR20-183, Section 2.2] (where NOT and constant gates are free), and
+prove the threshold-$n-1$ bridge theorems relating the two measures using the binary-cost support
+bounds in `Complexity.Computability.Circuit.Boolean.BinaryCost`:
 * Every yes-instance of `PartialMCSP` is a yes-instance of `PartialMCSP.BinaryGate`
   (`PartialMCSP.mem_binaryGate_of_mem`).
 * When all `n` input coordinates are essential for the partial function, no circuit with fewer than
@@ -60,10 +56,6 @@ reduction from `MCSP` to `PartialMCSP` are in `Complexity.Computability.MCSP.Par
 
 ## Main results
 
-* `Cslib.Circuits.Circuit.card_inputSupport_le_cost_binaryCost`: a De Morgan circuit with `m`
-  outputs depends on at most `m + c.program.cost binaryCost` inputs.
-* `Cslib.Circuits.Program.cost_binaryCost_eq_iff_forall_isBinary`: `p.cost binaryCost = g` iff every
-  line of `p` is an AND or OR gate.
 * `Cslib.PartialMCSP.mem_iff_exists_circuit`, `Cslib.PartialMCSP.mem_iff_exists_total_extension`:
   characterizations of `PartialMCSP` via circuits and via total function extensions.
 * `Cslib.PartialMCSP.mem_binaryGate_of_mem`,
@@ -87,193 +79,14 @@ namespace Cslib
 
 open Circuits Circuits.Boolean
 
-namespace Circuits
-
-variable {n m g : ℕ}
-
-/-- Every operation in the De Morgan basis has arity at most `1 + binaryCost op`: constants have
-arity `0`, negations have arity `1`, and binary AND/OR gates have arity `2 = 1 + 1`. -/
-theorem Boolean.arity_le_one_add_binaryCost (op : Boolean.Op) :
-    Boolean.signature.Arity op ≤ 1 + Boolean.binaryCost op := by
-  cases op <;> simp [Boolean.binaryCost]
-
-private theorem wire_castSucc_injective' :
-    Function.Injective (Wire.castSucc : Wire n g → Wire n (g + 1)) := by
-  intro a b h
-  cases a <;> cases b <;> simp_all [Wire.castSucc]
-
-/-- In a De Morgan program, the number of inputs supporting a frontier of wires is at most the size
-of the frontier plus the number of binary (AND/OR) gates in the program. -/
-theorem Program.card_biUnion_wireSupport_le_cost_binaryCost
-    (p : Program signature n g) (frontier : Finset (Wire n g)) :
-    (frontier.biUnion p.wireSupport).card ≤ frontier.card + p.cost binaryCost := by
-  induction p with
-  | empty =>
-    simp only [Program.cost_empty, Nat.add_zero]
-    have hsub : frontier.biUnion (Program.empty (σ := signature)).wireSupport ⊆
-        Finset.univ.filter fun i : Fin n => Wire.input i ∈ frontier := by
-      intro i hi
-      rw [Finset.mem_biUnion] at hi
-      obtain ⟨w, hw, hi⟩ := hi
-      cases w with
-      | input j =>
-        simp only [Program.wireSupport_input, Finset.mem_singleton] at hi
-        subst hi
-        exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hw⟩
-      | gate j => exact j.elim0
-    refine (Finset.card_le_card hsub).trans ?_
-    apply Finset.card_le_card_of_injOn Wire.input
-    · intro i hi
-      simpa using hi
-    · intro a _ b _ h
-      cases h
-      rfl
-  | @gate g p line ih =>
-    let prior := Finset.univ.filter fun w : Wire n g => w.castSucc ∈ frontier
-    let lineInputs := Finset.univ.image line.wires
-    let opened :=
-      if Wire.gate (Fin.last g) ∈ frontier then prior ∪ lineInputs else prior
-    have hsub : frontier.biUnion (p.gate line).wireSupport ⊆ opened.biUnion p.wireSupport := by
-      intro i hi
-      rw [Finset.mem_biUnion] at hi ⊢
-      obtain ⟨w, hw, hi⟩ := hi
-      revert hw hi
-      induction w using Wire.lastCases with
-      | last =>
-        intro hlast hi
-        rw [Program.wireSupport_gate_last] at hi
-        obtain ⟨arg, hi⟩ := Line.mem_inputSupport.mp hi
-        exact ⟨line.wires arg, by simp [opened, lineInputs, hlast], hi⟩
-      | castSucc w =>
-        intro hw hi
-        rw [Program.wireSupport_gate_castSucc] at hi
-        refine ⟨w, ?_, hi⟩
-        by_cases hlast : Wire.gate (Fin.last g) ∈ frontier <;>
-          simp [opened, hlast, prior, hw]
-    have hline : lineInputs.card ≤ 1 + binaryCost line.op := by
-      calc lineInputs.card ≤ (Finset.univ : Finset (Fin (signature.Arity line.op))).card :=
-            Finset.card_image_le
-        _ = signature.Arity line.op := by simp
-        _ ≤ 1 + binaryCost line.op := Boolean.arity_le_one_add_binaryCost line.op
-    have hopened : opened.card ≤ frontier.card + binaryCost line.op := by
-      by_cases hlast : Wire.gate (Fin.last g) ∈ frontier
-      · have hprior : prior.card ≤ (frontier.erase (Wire.gate (Fin.last g))).card := by
-          apply Finset.card_le_card_of_injOn Wire.castSucc
-          · intro w hw
-            change Wire.castSucc w ∈ frontier.erase (Wire.gate (Fin.last g))
-            rw [Finset.mem_erase]
-            refine ⟨?_, by simpa [prior] using hw⟩
-            cases w with
-            | input _ => simp
-            | gate _ => simp [Fin.castSucc_ne_last]
-          · exact wire_castSucc_injective'.injOn
-        have herase := Finset.card_erase_of_mem hlast
-        have hpos : 1 ≤ frontier.card := Finset.one_le_card.mpr ⟨_, hlast⟩
-        have hopened_eq : opened = prior ∪ lineInputs := by simp [opened, hlast]
-        rw [hopened_eq]
-        calc (prior ∪ lineInputs).card ≤ prior.card + lineInputs.card :=
-              Finset.card_union_le _ _
-          _ ≤ (frontier.erase (Wire.gate (Fin.last g))).card + (1 + binaryCost line.op) :=
-              Nat.add_le_add hprior hline
-          _ = frontier.card - 1 + (1 + binaryCost line.op) := by rw [herase]
-          _ = frontier.card + binaryCost line.op := by omega
-      · have hprior : prior.card ≤ frontier.card := by
-          apply Finset.card_le_card_of_injOn Wire.castSucc
-          · intro w hw
-            simpa [prior] using hw
-          · exact wire_castSucc_injective'.injOn
-        have hopened_eq : opened = prior := by simp [opened, hlast]
-        rw [hopened_eq]
-        omega
-    calc (frontier.biUnion (p.gate line).wireSupport).card
-        ≤ (opened.biUnion p.wireSupport).card := Finset.card_le_card hsub
-      _ ≤ opened.card + p.cost binaryCost := ih opened
-      _ ≤ frontier.card + binaryCost line.op + p.cost binaryCost :=
-          Nat.add_le_add_right hopened _
-      _ = frontier.card + (p.gate line).cost binaryCost := by
-          rw [Program.cost_gate]
-          omega
-
-/-- A De Morgan circuit with `m` outputs has at most `m + c.program.cost binaryCost` supporting
-inputs, since only binary AND and OR gates increase the number of reachable inputs. -/
-theorem Circuit.card_inputSupport_le_cost_binaryCost (c : Circuit signature n m) :
-    c.inputSupport.card ≤ m + c.program.cost binaryCost := by
-  have hsub : c.inputSupport ⊆ (Finset.univ.image c.outputs).biUnion c.program.wireSupport := by
-    intro i hi
-    rw [Circuit.mem_inputSupport] at hi
-    obtain ⟨o, ho⟩ := hi
-    exact Finset.mem_biUnion.mpr ⟨c.outputs o, Finset.mem_image_of_mem _ (Finset.mem_univ o), ho⟩
-  have hfront : (Finset.univ.image c.outputs).card ≤ m := by
-    simpa using (Finset.card_image_le :
-      (Finset.univ.image c.outputs).card ≤ (Finset.univ : Finset (Fin m)).card)
-  calc c.inputSupport.card
-      ≤ ((Finset.univ.image c.outputs).biUnion c.program.wireSupport).card :=
-        Finset.card_le_card hsub
-    _ ≤ (Finset.univ.image c.outputs).card + c.program.cost binaryCost :=
-        c.program.card_biUnion_wireSupport_le_cost_binaryCost _
-    _ ≤ m + c.program.cost binaryCost := Nat.add_le_add_right hfront _
-
-/-- If a De Morgan circuit computes `target` and every coordinate in `selected` is essential to
-`target`, then `selected.card ≤ m + c.program.cost binaryCost`. -/
-theorem Circuit.essential_le_cost_binaryCost (c : Circuit signature n m)
-    {target : (Fin n → Bool) → Fin m → Bool} {selected : Finset (Fin n)}
-    (hc : c.Computes interpretation target) (h : ∀ k ∈ selected, EssentialAt target k) :
-    selected.card ≤ m + c.program.cost binaryCost :=
-  (Finset.card_le_card fun k hk => (h k hk).mem_support hc.dependsOn).trans
-    c.card_inputSupport_le_cost_binaryCost
-
-/-- A De Morgan program has `binaryCost` equal to its gate count `g` if and only if every gate in
-the program is a binary AND or OR gate. -/
-theorem Program.cost_binaryCost_eq_iff_forall_isBinary {p : Program signature n g} :
-    p.cost binaryCost = g ↔ ∀ k : Fin g, (p.lines k).op.IsBinary := by
-  induction p with
-  | empty =>
-    simp only [Program.cost_empty, true_iff]
-    exact fun k => k.elim0
-  | @gate g p line ih =>
-    rw [Program.cost_gate]
-    have hp := p.cost_binaryCost_le
-    have hline := binaryCost_le_one line.op
-    constructor
-    · intro h k
-      have hp_eq : p.cost binaryCost = g := by omega
-      have hline_eq : binaryCost line.op = 1 := by omega
-      refine Fin.lastCases ?_ (fun j => ?_) k
-      · rw [Program.lines_gate_last, Line.mapWires_op]
-        rw [binaryCost_eq_ite] at hline_eq
-        split_ifs at hline_eq with hb
-        exact hb
-      · rw [Program.lines_gate_castSucc, Line.mapWires_op]
-        exact ih.mp hp_eq j
-    · intro h
-      have hp_eq : p.cost binaryCost = g := ih.mpr fun j => by
-        simpa [Program.lines_gate_castSucc, Line.mapWires_op] using h j.castSucc
-      have hbin : line.op.IsBinary := by
-        simpa [Program.lines_gate_last, Line.mapWires_op] using h (Fin.last g)
-      have hline_eq : binaryCost line.op = 1 := by
-        simp [binaryCost_eq_ite, hbin]
-      omega
-
-/-- In a one-output De Morgan circuit whose input support has size at least `n`, if `c.size + 1 ≤ n`
-then `c` has size `n - 1`, binary cost `n - 1`, and every gate of `c` is a binary AND or OR gate. -/
-theorem Circuit.cost_binaryCost_eq_size_of_size_le {c : Circuit signature n 1}
-    (hsupp : n ≤ c.inputSupport.card) (hsize : c.size + 1 ≤ n) :
-    c.program.cost binaryCost = c.size ∧ c.size = n - 1 ∧
-      ∀ k : Fin c.size, (c.program.lines k).op.IsBinary := by
-  have hbin := c.card_inputSupport_le_cost_binaryCost
-  have hle := c.program.cost_binaryCost_le
-  have hcost_eq : c.program.cost binaryCost = c.size := by omega
-  exact ⟨hcost_eq, by omega, Program.cost_binaryCost_eq_iff_forall_isBinary.mp hcost_eq⟩
-
-end Circuits
-
 namespace PartialMCSP
 
 variable {n s t : ℕ}
 
 /-- An instance of the Partial Minimum Circuit Size Problem (`MCSP*`): the truth table of a partial
 Boolean function on `arity` inputs (`none` for `*` / don't-care, `some b` for a required output `b`)
-and a circuit-size threshold [Ilango2020FOCS, Section 2.2; Hirahara2022, Definition 8.4]. -/
+and a circuit-size threshold [Ilango2020FOCS, Section II.B; ECCC TR20-183, Section 2.2;
+Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30]. -/
 structure Instance where
   /-- The number of input variables of the partial Boolean function. -/
   arity : ℕ
@@ -311,7 +124,8 @@ def Instance.completion (x : Instance) (y : BitString x.arity) : Bool :=
   (x.partialFunction y).getD false
 
 /-- A total Boolean function `f` agrees with (extends) the partial truth table of `x` when `f y = b`
-for every input `y` where `x.partialFunction y = some b` [Ilango2020FOCS, Section 2.2]. -/
+for every input `y` where `x.partialFunction y = some b` [Ilango2020FOCS, Section II.B;
+ECCC TR20-183, Section 2.2]. -/
 def Instance.AgreesWith (x : Instance) (f : BooleanFunction x.arity) : Prop :=
   ∀ y b, x.partialFunction y = some b → f y = b
 
@@ -357,9 +171,10 @@ end PartialMCSP
 
 open PartialMCSP
 
-/-- **The Partial Minimum Circuit Size Problem (`MCSP*`)** [Ilango2020FOCS, Section 2.2;
-Hirahara2022, Definition 8.4]: the partial-function instances that can be computed on their defined
-inputs by a De Morgan circuit with at most `threshold` gates (Decision D5). -/
+/-- **The Partial Minimum Circuit Size Problem (`MCSP*`)** [Ilango2020FOCS, Section II.B;
+ECCC TR20-183, Section 2.2; Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30]: the
+partial-function instances that can be computed on their defined inputs by a De Morgan circuit with
+at most `threshold` gates (Decision D5). -/
 def PartialMCSP : Set PartialMCSP.Instance :=
   {x | complexityOn interpretation x.definedInputs (single x.completion) ≤ x.threshold}
 
@@ -368,8 +183,9 @@ namespace PartialMCSP
 variable {n s t : ℕ}
 
 /-- **The Partial Minimum Circuit Size Problem under the binary-gate cost measure**
-[Ilango2020FOCS, Section 2.2]: the partial-function instances for which some De Morgan circuit
-using at most `threshold` binary (AND/OR) gates agrees with the partial truth table. -/
+[Ilango2020FOCS, Section II.B and Section III.B, p. 427; ECCC TR20-183, Section 2.2]: the
+partial-function instances for which some De Morgan circuit using at most `threshold` binary
+(AND/OR) gates agrees with the partial truth table. -/
 def BinaryGate : Set Instance :=
   {x | ∃ c : Circuit signature x.arity 1,
     c.program.cost binaryCost ≤ x.threshold ∧
@@ -400,9 +216,10 @@ theorem mem_iff_exists_circuit_table {x : Instance} :
   rw [mem_iff_exists_circuit]
   exact exists_congr fun c => and_congr_right fun _ => Instance.agreesWith_iff_table
 
-/-- **Total-extension characterization of `PartialMCSP`** [Ilango2020FOCS, Section 2.2]: an instance
-is in `PartialMCSP` if and only if some total Boolean function `f` agrees with `x` on all non-`*`
-entries and has circuit complexity at most `x.threshold`. -/
+/-- **Total-extension characterization of `PartialMCSP`** [Ilango2020FOCS, Section II.B;
+ECCC TR20-183, Section 2.2]: an instance is in `PartialMCSP` if and only if some total Boolean
+function `f` agrees with `x` on all non-`*` entries and has circuit complexity at most
+`x.threshold`. -/
 theorem mem_iff_exists_total_extension {x : Instance} :
     x ∈ PartialMCSP ↔ ∃ f : BooleanFunction x.arity,
       x.AgreesWith f ∧ complexity interpretation (single f) ≤ x.threshold := by
@@ -558,8 +375,9 @@ theorem mem_iff_exists_all_isBinary_of_threshold_eq_arity_sub_one {x : Instance}
 
 /-- If every binary-gate circuit for `x` of cost at most `x.threshold` can be replaced by a
 NOT-free, constant-free circuit of no greater binary cost (for example, in monotone reductions such
-as [Ilango2020FOCS, Theorem 3] where yes-instances have read-once monotone formulas of size `n - 1`
-and no-instances require at least `n` binary gates), then `x ∈ PartialMCSP ↔ x ∈ BinaryGate`. -/
+as [Ilango2020FOCS, Theorem I.3; ECCC TR20-183, Theorem 3] where yes-instances have read-once
+monotone formulas of size `n - 1` and no-instances require at least `n` binary gates), then
+`x ∈ PartialMCSP ↔ x ∈ BinaryGate`. -/
 theorem mem_iff_mem_binaryGate_of_all_isBinary {x : Instance}
     (h : x ∈ BinaryGate → ∃ c : Circuit signature x.arity 1,
       (∀ k : Fin c.size, (c.program.lines k).op.IsBinary) ∧

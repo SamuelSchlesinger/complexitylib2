@@ -27,17 +27,18 @@ import Mathlib.Data.Nat.Bitwise
 This module defines the `$2n \times 2n$ Bipartite Permutation Independent Set` problem and proves
 the Lokshtanov–Marx–Saurabh lower bound under the Exponential Time Hypothesis (`ETH`): the problem
 cannot be decided in time $2^{o(n \log n)}$ [LokshtanovMarxSaurabh2018, Theorem 2.11], as used in
-Ilango's reduction to partial-function MCSP [Ilango2020FOCS, Theorem 10].
+Ilango's reduction to partial-function MCSP [Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183,
+Section 3, Theorem 10, p. 20].
 
 ## Formulations and faithfulness
 
 Two equivalent presentations appear in the literature:
 
-1. **Ilango's directed pair formulation** [Ilango2020FOCS, Section 2.3, Theorem 10]: an instance
-   `G : BipartitePermutationGraph` consists of a parameter $n = G.1$ and a list $G.2$ of directed
-   edges $((u_1, u_2), (v_1, v_2))$ on $[n] \times [n]$. It is a yes-instance
-   (`G ∈ BipartitePermutationIndependentSet`) when there exist two permutations
-   $\pi_1, \pi_2 \in S_n$ (`Equiv.Perm (Fin G.1)`) such that for no edge
+1. **Ilango's directed pair formulation** [Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183,
+   Section 3, Theorem 10, p. 20]: an instance `G : BipartitePermutationGraph` consists of a
+   parameter $n = G.1$ and a list $G.2$ of directed edges $((u_1, u_2), (v_1, v_2))$ on
+   $[n] \times [n]$. It is a yes-instance (`G ∈ BipartitePermutationIndependentSet`) when there
+   exist two permutations $\pi_1, \pi_2 \in S_n$ (`Equiv.Perm (Fin G.1)`) such that for no edge
    $((u_1, u_2), (v_1, v_2)) \in G.2$ do we simultaneously have $\pi_1(u_1) = u_2$ and
    $\pi_2(v_1) = v_2$ (`BipartitePermutationGraph.Satisfies`).
 2. **Lokshtanov–Marx–Saurabh's undirected bipartite permutation formulation**
@@ -53,14 +54,16 @@ formulations define the exact same language.
 
 ## Proof of the ETH lower bound
 
-Following Lokshtanov, Marx, and Saurabh [LokshtanovMarxSaurabh2018, Theorem 2.11], we reduce
-`ThreeColoring` on $N$-vertex graphs (which has no $2^{o(N)}$-time algorithm under `ETH` by
+To prove [LokshtanovMarxSaurabh2018, Theorem 2.11], this library gives a direct Turing reduction
+from `ThreeColoring` on $N$-vertex graphs (which has no $2^{o(N)}$-time algorithm under `ETH` by
 `ETH.not_decidableInSubexpTime_ThreeColoring_vertices`) to subexponentially many instances of
 `BipartitePermutationIndependentSet` of parameter $n = \Theta(N / \log N)$, for which
-$n \log_2 n = O(N)$:
+$n \log_2 n \le 10 N + 5$ (`numBlocks_mul_log_le`), using a library proof based on monotone
+threshold enumeration (`Tuple.sort` and `Tuple.lt_card_le_iff_apply_le_of_monotone`):
 
 * Partition the $N$ vertices into $n = \lfloor N / b \rfloor + 1$ blocks of size
-  $b = \lfloor (\log_2 N) / 4 \rfloor + 1$.
+  $b = \lfloor (\log_2 N) / 4 \rfloor + 1$, so that $n \log_2 n \le 10 N + 5$
+  (`numBlocks_mul_log_le`).
 * A 3-coloring of a block is encoded by $2b$ bits as a number below $B = 2^{2b} = 4^b$, so a
   3-coloring of the graph induces a tuple $a : \mathrm{Fin}\, n \to \mathrm{Fin}\, B$.
 * By `Tuple.sort`, any tuple $a : \mathrm{Fin}\, n \to \mathrm{Fin}\, B$ factors as
@@ -94,8 +97,9 @@ $n \log_2 n = O(N)$:
 * `Cslib.Complexity.ETH.not_decidableInSubexpTime_ThreeColoring_vertices`: under `ETH`,
   `ThreeColoring` is not decidable in time $2^{o(|V|)}$.
 * `Cslib.Complexity.ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet`: under `ETH`,
-  `BipartitePermutationIndependentSet` is not decidable in time $2^{o(n \log n)}$ (Ilango
-  Theorem 10 / Lokshtanov–Marx–Saurabh Theorem 2.11).
+  `BipartitePermutationIndependentSet` is not decidable in time $2^{o(n \log n)}$
+  ([LokshtanovMarxSaurabh2018, Theorem 2.11]; [Ilango2020FOCS, Section III.B, p. 427; ECCC
+  TR20-183, Section 3, Theorem 10, p. 20]).
 * `Cslib.Complexity.ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_binary`,
   `Cslib.Complexity.ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_clog`,
   `Cslib.Complexity.ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_two_mul`:
@@ -121,12 +125,14 @@ open Cslib.Logic.PL Turing.MultiTapeTM ComputableTidilyInPolyTime
 /-! ### Problem definitions and equivalence of formulations -/
 
 /-- An instance of `$2n \times 2n$ Bipartite Permutation Independent Set`
-[Ilango2020FOCS, Section 2.3]: a parameter $n$ together with a list of directed edges
-$((u_1, u_2), (v_1, v_2))$ between vertex pairs in $[n] \times [n]$. -/
+[Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183, Section 3, Theorem 10, p. 20]: a parameter
+$n$ together with a list of directed edges $((u_1, u_2), (v_1, v_2))$ between vertex pairs in
+$[n] \times [n]$. -/
 abbrev BipartitePermutationGraph : Type := ℕ × List ((ℕ × ℕ) × (ℕ × ℕ))
 
 /-- Unary encoding of a `BipartitePermutationGraph`, matching Ilango's presentation in which the
-graph has $O(n^2)$ vertices and coordinates are bounded by $n$ [Ilango2020FOCS, Section 2.3]. -/
+graph has $O(n^2)$ vertices and coordinates are bounded by $n$
+[Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183, Section 3, p. 20]. -/
 def encBipartitePermutationGraph : BipartitePermutationGraph ↪ List Bool :=
   encPair encUnary (encList (encPair (encPair encUnary encUnary) (encPair encUnary encUnary)))
 
@@ -136,9 +142,10 @@ def encBipartitePermutationGraphBinary : BipartitePermutationGraph ↪ List Bool
 
 namespace BipartitePermutationGraph
 
-/-- **Ilango's directed satisfaction predicate** [Ilango2020FOCS, Section 2.3, Theorem 10]: two
-permutations $\pi_1, \pi_2 \in S_n$ satisfy $G$ when for no edge $((u_1, u_2), (v_1, v_2)) \in G.2$
-with coordinates below $n = G.1$ do we have both $\pi_1(u_1) = u_2$ and $\pi_2(v_1) = v_2$. -/
+/-- **Ilango's directed satisfaction predicate** [Ilango2020FOCS, Section III.B, p. 427; ECCC
+TR20-183, Section 3, Theorem 10, p. 20]: two permutations $\pi_1, \pi_2 \in S_n$ satisfy $G$ when
+for no edge $((u_1, u_2), (v_1, v_2)) \in G.2$ with coordinates below $n = G.1$ do we have both
+$\pi_1(u_1) = u_2$ and $\pi_2(v_1) = v_2$. -/
 def Satisfies (G : BipartitePermutationGraph) (π₁ π₂ : Equiv.Perm (Fin G.1)) : Prop :=
   ∀ e ∈ G.2, ∀ (hu₁ : e.1.1 < G.1) (hu₂ : e.1.2 < G.1) (hv₁ : e.2.1 < G.1) (hv₂ : e.2.2 < G.1),
     π₁ ⟨e.1.1, hu₁⟩ = ⟨e.1.2, hu₂⟩ → π₂ ⟨e.2.1, hv₁⟩ ≠ ⟨e.2.2, hv₂⟩
@@ -308,7 +315,8 @@ theorem exists_satisfies_iff_exists_satisfiesUndirected (G : BipartitePermutatio
 end BipartitePermutationGraph
 
 /-- **$2n \times 2n$ Bipartite Permutation Independent Set**
-[Ilango2020FOCS, Section 2.3, Theorem 10] [LokshtanovMarxSaurabh2018, Section 2.2, Theorem 2.11]:
+[Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183, Section 3, Theorem 10, p. 20]
+[LokshtanovMarxSaurabh2018, Section 2.2, Theorem 2.11]:
 the set of instances $G = (n, E)$ admitting permutations $\pi_1, \pi_2 \in S_n$ that avoid all
 conflict edges in $E$. -/
 def BipartitePermutationIndependentSet : Set BipartitePermutationGraph :=
@@ -1476,7 +1484,8 @@ theorem DecidableInSubexpTime.threeColoring_of_bipartitePermutationIndependentSe
   linarith
 
 /-- **Lokshtanov–Marx–Saurabh ETH Lower Bound for $2n \times 2n$ Bipartite Permutation Independent
-Set** [LokshtanovMarxSaurabh2018, Theorem 2.11] [Ilango2020FOCS, Theorem 10]: under `ETH`,
+Set** [LokshtanovMarxSaurabh2018, Theorem 2.11] [Ilango2020FOCS, Section III.B, p. 427; ECCC
+TR20-183, Section 3, Theorem 10, p. 20]: under `ETH`,
 `BipartitePermutationIndependentSet` is not decidable within time $2^{o(n \log n)}$, i.e., for some
 $\delta > 0$, no algorithm decides `BipartitePermutationIndependentSet` within time
 $2^{\delta n \log_2 n}$ times a polynomial in the length of the encoded instance. -/
@@ -1487,7 +1496,8 @@ theorem ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet (h : ET
     hsub.threeColoring_of_bipartitePermutationIndependentSet
 
 /-- **Binary-encoded variant of the Lokshtanov–Marx–Saurabh ETH lower bound**
-[LokshtanovMarxSaurabh2018, Theorem 2.11] [Ilango2020FOCS, Theorem 10]: under `ETH`,
+[LokshtanovMarxSaurabh2018, Theorem 2.11] [Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183,
+Section 3, Theorem 10, p. 20]: under `ETH`,
 `BipartitePermutationIndependentSet` is not decidable in time $2^{o(n \log n)}$ under binary
 coordinate encoding. -/
 theorem ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_binary (h : ETH) :
@@ -1499,7 +1509,8 @@ theorem ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_binary 
     (fun _ => Iff.rfl) (c := 1) fun G => by dsimp only [id]; omega
 
 /-- **Ceiling-logarithm variant of the Lokshtanov–Marx–Saurabh ETH lower bound**
-[LokshtanovMarxSaurabh2018, Theorem 2.11] [Ilango2020FOCS, Theorem 10]: under `ETH`,
+[LokshtanovMarxSaurabh2018, Theorem 2.11] [Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183,
+Section 3, Theorem 10, p. 20]: under `ETH`,
 `BipartitePermutationIndependentSet` is not decidable in time $2^{o(n \lceil \log_2 n \rceil)}$. -/
 theorem ETH.not_decidableInSubexpTime_BipartitePermutationIndependentSet_clog (h : ETH) :
     ¬DecidableInSubexpTime BipartitePermutationIndependentSet encBipartitePermutationGraph

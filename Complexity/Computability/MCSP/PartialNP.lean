@@ -27,10 +27,10 @@ We define standard string encodings for instances of the Partial Minimum Circuit
 (`Cslib.PartialMCSP.Instance`) and prove that `PartialMCSP` belongs to `NP` under both encodings:
 * `Cslib.PartialMCSP.enc`: encodes the $2^n$-entry truth table over `Option Bool` using
   `encList (encOption encBool)` followed by the threshold in unary (`encUnary`), matching
-  [Hirahara2022, Definition 8.4] and Issue #798 comment 3.
+  [Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30] and Issue #798 comment 3.
 * `Cslib.PartialMCSP.encBinary`: encodes the $2^n$-entry truth table over `Option Bool` using
   `encList (encOption encBool)` followed by the threshold in binary (`encNat`), matching
-  `Cslib.MCSP.encInstance` and [Ilango2020FOCS, Section 2.2].
+  `Cslib.MCSP.encInstance` and [Ilango2020FOCS, Section II.B; ECCC TR20-183, Section 2.2].
 
 A certificate for `PartialMCSP` is a circuit with at most `MCSP.budget n s` gates, in the format
 of `Cslib.Circuits.Boolean.readCertificate`, since any partial truth table on `n` variables can be
@@ -78,7 +78,7 @@ namespace Cslib.PartialMCSP
 open Circuits Circuits.Boolean Turing.MultiTapeTM Complexity
 
 /-- Instances of `PartialMCSP` encoded by the framed list of `Option Bool` truth-table entries
-followed by the threshold in unary [Hirahara2022, Definition 8.4]. -/
+followed by the threshold in unary [Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30]. -/
 def enc : Instance ↪ List Bool :=
   ⟨fun x => encPair (encList (encOption encBool)) encUnary (List.ofFn x.table, x.threshold), by
     rintro ⟨n, T, s⟩ ⟨n', T', s'⟩ h
@@ -94,7 +94,7 @@ theorem enc_apply (x : Instance) :
   rfl
 
 /-- Instances of `PartialMCSP` encoded by the framed list of `Option Bool` truth-table entries
-followed by the threshold in binary [Ilango2020FOCS, Section 2.2]. -/
+followed by the threshold in binary [Ilango2020FOCS, Section II.B; ECCC TR20-183, Section 2.2]. -/
 def encBinary : Instance ↪ List Bool :=
   ⟨fun x => encPair (encList (encOption encBool)) encNat (List.ofFn x.table, x.threshold), by
     rintro ⟨n, T, s⟩ ⟨n', T', s'⟩ h
@@ -404,12 +404,12 @@ theorem computableInPolyTime_verifier :
   .of_tidy computableTidilyInPolyTime_verifier
 
 /-- **`PartialMCSP` is in `NP`** under `PartialMCSP.enc` (framed `Option Bool` truth table and
-unary threshold) [Hirahara2022, Definition 8.4]. -/
+unary threshold) [Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30]. -/
 theorem mem_NP : PartialMCSP ∈ NP enc :=
   ⟨MCSP.certPolynomial, verifier, computableInPolyTime_verifier, isVerifier⟩
 
 /-- **`PartialMCSP` is in `NP`** under `PartialMCSP.encBinary` (framed `Option Bool` truth table
-and binary threshold) [Ilango2020FOCS, Section 2.2]. -/
+and binary threshold) [Ilango2020FOCS, Section II.B; ECCC TR20-183, Section 2.2]. -/
 theorem mem_NP_encBinary : PartialMCSP ∈ NP encBinary :=
   ⟨MCSP.certPolynomial, verifier, computableInPolyTime_verifier_encBinary, isVerifier_encBinary⟩
 
