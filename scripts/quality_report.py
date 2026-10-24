@@ -369,7 +369,11 @@ def output_differences(build_dir: Path, reference: Path) -> list[str]:
     """Report inputs that are missing, extra or different in `build_dir` compared to
     `reference`, as paths relative to them."""
     def inputs(directory: Path) -> set[Path]:
-        return {p.relative_to(directory) for root in ROOTS for p in (directory / root).rglob("*")
+        # The roots' own outputs (`Complexity.ilean`, …) sit beside their directories, and the
+        # report takes its module inventory from their imports.
+        files = [p for root in ROOTS
+                 for p in [*(directory / root).rglob("*"), *directory.glob(f"{root}.*")]]
+        return {p.relative_to(directory) for p in files
                 if p.name.endswith(REPORT_INPUTS) and p.is_file()}
     ours, theirs = inputs(build_dir), inputs(reference)
     changed = {p for p in ours & theirs
