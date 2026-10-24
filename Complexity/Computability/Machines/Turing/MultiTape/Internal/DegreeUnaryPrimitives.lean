@@ -9,6 +9,9 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Unary
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.UnaryMachines
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.WordPredicates
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeComposition
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Primitives
 
 /-!
 # Direct unary degree primitives
@@ -69,6 +72,29 @@ theorem unary_pred : ComputableInDegree (· - 1) encUnary encUnary 1 1 := by
     rw [show predT.q₀ = false from rfl, predT_run]
     cases n <;> simp [List.replicate_succ]
   simpa only [heq] using predT.computesInTimeAndSpace_toTM (encUnary n)
+
+/-- The unary zero test preserves the original linear cost and output-degree contract. -/
+theorem unary_isZero :
+    ComputableInDegree (fun n => decide (n = 0)) encUnary encBool 1 1 := by
+  have hn : ComputableInDegree (fun n => decide (n ≠ 0)) encUnary encBool 1 0 := by
+    refine ⟨⟨fun n => 2 * (encUnary n).length + 3, fun _ => 0,
+      ⟨3, fun _ => by simp only [pow_one]; omega⟩, DegreeBounded.const 0,
+      0, _, inferInstance, Internal.WordPredicates.nonemptyT.toTM, fun n => ?_⟩,
+      ⟨1, fun n => by simp⟩⟩
+    have heq : encBool (decide (n ≠ 0)) = Internal.WordPredicates.nonemptyT.run
+        Internal.WordPredicates.nonemptyT.q₀ (encUnary n) := by
+      cases n with
+      | zero => rfl
+      | succ n =>
+        change [true] = [true] ++ Internal.WordPredicates.nonemptyT.run true
+          (List.replicate n true)
+        rw [Internal.WordPredicates.nonemptyT_run_true, List.append_nil]
+    simpa only [heq] using
+      Internal.WordPredicates.nonemptyT.computesInTimeAndSpace_toTM (encUnary n)
+  have hnot := (of_finite (encIn := encBool) (encMid := encBool) Bool.not).comp hn
+  have hz : ComputableInDegree (fun n => decide (n = 0)) encUnary encBool 1 0 := by
+    convert hnot using 1 <;> simp
+  exact ⟨hz.1, hz.2.mono_deg (by decide)⟩
 
 end ComputableInDegree
 end Turing.MultiTapeTM
