@@ -394,10 +394,13 @@ theorem primrec_step :
       match p.1.table.find? (·.1 = p.2.2.key p.2.1 q) with
       | none => ({ p.2.2 with state := none }, none)
       | some e => (e.2.apply p.2.1 p.2.2, e.2.output) := by
+    -- Explicit composition inputs avoid unfolding the transition functions during inference.
     have hkey : Primrec fun pq : (Desc × List ℕ × SCfg) × ℕ =>
         pq.1.2.2.key pq.1.2.1 pq.2 :=
-      primrec_scfg_key.comp (Primrec.pair (hc.comp Primrec.fst)
-        (Primrec.pair (hx.comp Primrec.fst) Primrec.snd))
+      primrec_scfg_key.comp
+        (g := fun pq : (Desc × List ℕ × SCfg) × ℕ => (pq.1.2.2, pq.1.2.1, pq.2))
+        (Primrec.pair (hc.comp Primrec.fst)
+          (Primrec.pair (hx.comp Primrec.fst) Primrec.snd))
     have hfind : Primrec fun pq : (Desc × List ℕ × SCfg) × ℕ =>
         pq.1.1.table.find? (·.1 = pq.1.2.2.key pq.1.2.1 pq.2) :=
       primrec_find_table.comp (primrec_desc_table.comp (hd.comp Primrec.fst)) hkey
@@ -411,9 +414,12 @@ theorem primrec_step :
     have hfound : Primrec₂ fun (pq : (Desc × List ℕ × SCfg) × ℕ) (e : Key × Act) =>
         (e.2.apply pq.1.2.1 pq.1.2.2, e.2.output) :=
       Primrec₂.mk <| Primrec.pair
-        (primrec_act_apply.comp (Primrec.pair (Primrec.snd.comp Primrec.snd)
-          (Primrec.pair (hx.comp (Primrec.fst.comp Primrec.fst))
-            (hc.comp (Primrec.fst.comp Primrec.fst)))))
+        (primrec_act_apply.comp
+          (g := fun q : ((Desc × List ℕ × SCfg) × ℕ) × (Key × Act) =>
+            (q.2.2, q.1.1.2.1, q.1.1.2.2))
+          (Primrec.pair (Primrec.snd.comp Primrec.snd)
+            (Primrec.pair (hx.comp (Primrec.fst.comp Primrec.fst))
+              (hc.comp (Primrec.fst.comp Primrec.fst)))))
         (primrec_act_output.comp (Primrec.snd.comp Primrec.snd))
     exact Primrec₂.mk <| (Primrec.option_casesOn hfind hnotFound hfound).of_eq fun ⟨p, q⟩ => by
       cases p.1.table.find? (·.1 = p.2.2.key p.2.1 q) <;> rfl
@@ -426,8 +432,10 @@ theorem primrec_stepOut :
     Primrec fun p : (Desc × List ℕ) × (SCfg × List ℕ) => stepOut p.1.1 p.1.2 p.2 := by
   have hst : Primrec fun p : (Desc × List ℕ) × (SCfg × List ℕ) =>
       step p.1.1 p.1.2 p.2.1 :=
-    primrec_step.comp (Primrec.pair (Primrec.fst.comp Primrec.fst)
-      (Primrec.pair (Primrec.snd.comp Primrec.fst) (Primrec.fst.comp Primrec.snd)))
+    primrec_step.comp
+      (g := fun p : (Desc × List ℕ) × (SCfg × List ℕ) => (p.1.1, p.1.2, p.2.1))
+      (Primrec.pair (Primrec.fst.comp Primrec.fst)
+        (Primrec.pair (Primrec.snd.comp Primrec.fst) (Primrec.fst.comp Primrec.snd)))
   have htoList : Primrec fun o : Option ℕ => o.toList :=
     (Primrec.option_casesOn .id (Primrec.const [])
       (Primrec.list_cons.comp Primrec.snd (Primrec.const [])).to₂).of_eq fun o => by
@@ -505,8 +513,9 @@ theorem Desc.runFor_mono (d : Desc) (x : List ℕ) {t₁ t₂ : ℕ} (ht : t₁ 
 theorem Desc.primrec_runFor :
     Primrec₂ fun (dx : Desc × List ℕ) (t : ℕ) => dx.1.runFor dx.2 t := by
   have hsim : Primrec fun p : (Desc × List ℕ) × ℕ => simulate p.1.1 p.1.2 p.2 :=
-    primrec_simulate.comp (Primrec.pair (Primrec.fst.comp Primrec.fst)
-      (Primrec.pair (Primrec.snd.comp Primrec.fst) Primrec.snd))
+    primrec_simulate.comp (g := fun p : (Desc × List ℕ) × ℕ => (p.1.1, p.1.2, p.2))
+      (Primrec.pair (Primrec.fst.comp Primrec.fst)
+        (Primrec.pair (Primrec.snd.comp Primrec.fst) Primrec.snd))
   exact Primrec₂.mk <| (Primrec.cond (Primrec.snd.comp hsim)
     (Primrec.option_some.comp (Primrec.fst.comp hsim))
     (Primrec.const none)).of_eq fun ⟨⟨d, x⟩, t⟩ => by
@@ -613,8 +622,9 @@ theorem primrec_runFor : Primrec₂ tm.runFor := by
   have hmapIn : Primrec fun x : List Bool => x.map eBit :=
     Primrec.list_map .id (heBit.comp Primrec.snd).to₂
   have hsim : Primrec fun p : List Bool × ℕ => simulate d (p.1.map eBit) p.2 :=
-    primrec_simulate.comp (Primrec.pair (Primrec.const d)
-      (Primrec.pair (hmapIn.comp Primrec.fst) Primrec.snd))
+    primrec_simulate.comp (g := fun p : List Bool × ℕ => (d, p.1.map eBit, p.2))
+      (Primrec.pair (Primrec.const d)
+        (Primrec.pair (hmapIn.comp Primrec.fst) Primrec.snd))
   have hneZero : Primrec fun n : ℕ => n != 0 :=
     (Primrec.not.comp ((Primrec.eq.comp .id (Primrec.const 0)).decide)).of_eq fun n => by
       cases n <;> rfl
