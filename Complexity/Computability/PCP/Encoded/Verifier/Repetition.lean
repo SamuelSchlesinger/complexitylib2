@@ -139,7 +139,9 @@ theorem polyTime_repeatedEdgeVerifier (width repeats : ℕ) (decode : (Fin width
       (encPair enc (encPair alphabet alphabet)) encBool) :
     (repeatedEdgeVerifier width repeats decode eval).PolyTime (encoding enc) := by
   obtain ⟨_, hqueries, hverdict⟩ := polyTime_edgeVerifier width decode heval
-  refine ⟨?_, ?_, ?_⟩
+  have hqueries := hqueries.tidy
+  have hverdict := hverdict.tidy
+  refine ⟨.of_tidy ?_, .of_tidy ?_, .of_tidy ?_⟩
   · apply ComputableTidilyInPolyTime.unary_to_binary.comp
     change ComputableTidilyInPolyTime (fun g : Graph C => repeats * Nat.clog 2 g.edges.length)
       (encoding enc) encUnary

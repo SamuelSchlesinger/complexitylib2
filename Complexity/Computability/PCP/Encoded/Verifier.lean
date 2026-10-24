@@ -231,7 +231,7 @@ theorem polyTime_edgeVerifier (width : ℕ) (decode : (Fin width → Bool) → �
     (heval : ComputableTidilyInPolyTime (fun p : C × α × α => eval p.1 p.2.1 p.2.2)
       (encPair enc (encPair alphabet alphabet)) encBool) :
     (edgeVerifier width decode eval).PolyTime (encoding enc) := by
-  refine ⟨?_, ?_, ?_⟩
+  refine ⟨.of_tidy ?_, .of_tidy ?_, .of_tidy ?_⟩
   · exact ComputableTidilyInPolyTime.unary_to_binary.comp (by
       change ComputableTidilyInPolyTime (fun g : Graph C => Nat.clog 2 g.edges.length)
         (encoding enc) encUnary
