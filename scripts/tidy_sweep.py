@@ -1354,15 +1354,17 @@ class Planner:
 
         def exists(name: str) -> bool:
             return name in self.known or name in privates
-        if written.startswith("_root_."):
-            return {written[len("_root_."):]} if exists(written[len("_root_."):]) else set()
-        scope = src.scopes.at(offset)
-        out = {h for p in src.scopes.prefixes(offset)
-               for h in [p + "." + written if p else written] if exists(h)}
-        first = written.split(".")[0]
-        if first in self.local_names(module, src, offset) or first in scope.variables \
-                or first in scope.aliases:
-            out.add("<local>")
+        if written.startswith("_root_."):  # absolute, but a token may still capture it
+            name = written[len("_root_."):]
+            out = {name} if exists(name) else set()
+        else:
+            scope = src.scopes.at(offset)
+            out = {h for p in src.scopes.prefixes(offset)
+                   for h in [p + "." + written if p else written] if exists(h)}
+            first = written.split(".")[0]
+            if first in self.local_names(module, src, offset) or first in scope.variables \
+                    or first in scope.aliases:
+                out.add("<local>")
         if token_capture(written, following, self.tokens) \
                 or token_capture(written, following, src.scopes.tokens):
             out.add("<token>")
@@ -1378,6 +1380,12 @@ class Planner:
         first = written.split(".")[0]
         return any(o.namespace + "." + written == target and first not in o.hiding
                    and (o.only is None or written in o.only) for o in src.scopes.at(offset).opens)
+
+    def bridge_spellings_captured(self, src: SourceFile) -> bool:
+        """Whether a token could capture the fixed spellings the rewrite inserts, the field
+        `.tidy` and the leading-dot `.of_tidy` of the plain predicates."""
+        return any(token_capture(word, " ", tokens) for word in ("tidy", "of_tidy")
+                   for tokens in (self.tokens, src.scopes.tokens))
 
     def write_name(self, module: str, src: SourceFile, offset: int, target: str,
                    first: str | None = None, following: str = "") -> str | None:
@@ -1691,6 +1699,8 @@ class Planner:
             problems.append("termination or `where` clauses")
         if self.hidden_tidy(entry.name, src, dt, sig_refs):
             problems.append("tidy hypothesis from a `variable` command or notation")
+        if self.bridge_spellings_captured(src):
+            problems.append("a notation token captures `.tidy` or `.of_tidy`")
         if problems:
             return None, problems
         iffs = [self.write_name(self.model.decls[entry.name]["module"], src, dt.assign, n.iff)
@@ -1755,6 +1765,8 @@ class Planner:
         sg = self.model.constants.get(old, {}).get("sg")
         if not sg:
             return "", []
+        if self.bridge_spellings_captured(src):
+            return "a notation token captures `.tidy` or `.of_tidy`", []
         binders, conclusion = sg
         mask = src.mask
         opener = enclosing_opener(mask, start)

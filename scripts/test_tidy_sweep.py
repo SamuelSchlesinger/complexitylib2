@@ -485,6 +485,30 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=2), "N.bar")
         self.assertEqual(t.notation_tokens(text, masks(text)[1]), {"bar"})
 
+    def test_rooted_names_are_checked_for_tokens_too(self) -> None:
+        """Review 5636889827: tokens for `bar`, `N.bar` and `_root_.N.bar` capture every
+        spelling of `N.bar`, so the rewrite must be deferred, not written as `_root_.N.bar`."""
+        text = ('namespace N\ndef foo : Nat := 1\ndef bar : Nat := 2\nend N\nopen N\n'
+                'local notation "bar" => (3 : Nat)\nlocal notation "N.bar" => (4 : Nat)\n'
+                'local notation "_root_.N.bar" => (5 : Nat)\ndef before : Nat := foo\n')
+        self.assertIsNone(self.written(text, "foo", "N.foo", "N.bar", nth=1))
+        # Without the rooted token, the rooted spelling is the safe one.
+        text = text.replace('local notation "_root_.N.bar" => (5 : Nat)\n', "")
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=1), "_root_.N.bar")
+
+    def test_inserted_bridge_spellings_are_checked(self) -> None:
+        p, src = fake_planner("def d : Nat := foo\n", {}, tokens={"of_tidy"})
+        self.assertTrue(p.bridge_spellings_captured(src))
+        p, src = fake_planner("def d : Nat := foo\n", {})
+        self.assertFalse(p.bridge_spellings_captured(src))
+        # A conversion site in such a file stays unchanged and blocks its declaration.
+        text = "  exact X enc hc"
+        p, src = fake_planner(text, {"X": {"m": "M", "sg": [[[0, 0], [0, 1]], 1],
+                                           "tidy": [POLY]}}, known={"Y"}, tokens={"tidy"})
+        p.renames = {"X": "Y"}
+        self.assertFalse(p.convert(src.path, "M", 8, 9, "X", None, "tidy"))
+        self.assertIn("captures", p.blockers["X"][0])
+
     def test_imported_notation(self) -> None:
         """Reply 4365874664: `notation "bar" => (3 : Nat)` in a dependency."""
         text = "open N\ndef before : Nat := foo\ndef after : Nat := foo\n"
