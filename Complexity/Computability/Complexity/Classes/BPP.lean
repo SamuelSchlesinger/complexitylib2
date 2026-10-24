@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
@@ -44,6 +45,7 @@ The probability is written as a count over the random strings, which are functio
   with bounded error.
 * `Cslib.Complexity.compl_mem_BPP`, `Cslib.Complexity.BPP_eq_preimage_compl_BPP`: `BPP` is closed
   under complement.
+* `Cslib.Complexity.P_subset_BPP`: a decider is a bounded-error verifier ignoring its random string.
 
 ## References
 
@@ -110,5 +112,15 @@ theorem BPP_eq_preimage_compl_BPP (enc : α ↪ List Bool) : BPP enc = compl ⁻
   ext A
   refine ⟨compl_mem_BPP, fun hA => ?_⟩
   simpa using compl_mem_BPP hA
+
+/-- **`P ⊆ BPP`**: a decider is a bounded-error verifier ignoring its random string, of length
+`0`. -/
+theorem P_subset_BPP {enc : α ↪ List Bool} : P enc ⊆ BPP enc := by
+  rintro A ⟨f, hf, hA⟩
+  refine ⟨0, fun x => f x.1, hf.comp (.fst enc encBits),
+    fun a => ⟨fun ha => ?_, fun ha => ?_⟩⟩
+  · simp [(hA a).mp ha]
+  · have : f a = false := by simpa [hA a] using ha
+    simp [this]
 
 end Cslib.Complexity

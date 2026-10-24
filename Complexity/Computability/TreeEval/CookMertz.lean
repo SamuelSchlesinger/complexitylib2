@@ -104,7 +104,7 @@ private theorem add_two_ne_add_one (t : Fin 3) : t + 2 ≠ t + 1 := by revert t;
 
 /-- A round, when both subtree procedures meet their specification, changes only the target
 register, subtracting `c` times the gate's extension at the masked children's values. -/
-theorem gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
+private theorem gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
     (hl : ∀ c t S, pl c t S = Function.update S t (S t + c • vl))
     (hr : ∀ c t S, pr c t S = Function.update S t (S t + c • vr))
     (f : Gate ℓ) (c : K) (t : Fin 3) (u : Kˣ)
@@ -130,7 +130,7 @@ theorem gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl v
 
 /-- The rounds for all units in `us` change only the target register, subtracting `c` times
 the sum of the gate's extension at the masked children's values. -/
-theorem foldl_gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
+private theorem foldl_gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
     (hl : ∀ c t S, pl c t S = Function.update S t (S t + c • vl))
     (hr : ∀ c t S, pr c t S = Function.update S t (S t + c • vr))
     (f : Gate ℓ) (c : K) (t : Fin 3) (us : List Kˣ)

@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.PCP.Approximation
+public import Complexity.Computability.Complexity.Classes.Promise.Reduction
 public import Complexity.Computability.PCP.Encoded.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pi

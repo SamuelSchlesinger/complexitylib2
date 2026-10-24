@@ -127,7 +127,7 @@ theorem two_mul_card_small_le (n : ℕ) :
 
 /-- Subsets of size between `n / 2` and `n / 2 + t` number at most
 `(t + 1) · C(n, ⌊n/2⌋)`. -/
-theorem card_middle_le (n t : ℕ) :
+private theorem card_middle_le (n t : ℕ) :
     (univ.filter fun S : Finset (Fin n) =>
       n ≤ 2 * S.card ∧ S.card ≤ n / 2 + t).card ≤ (t + 1) * n.choose (n / 2) := by
   classical

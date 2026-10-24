@@ -35,7 +35,9 @@ map the satisfiable constraint graphs to one without edges and the others to a s
 edge. The interest of an amplifier lies in its construction: Dinur's round
 (`Cslib.PCP.Dinur.amplifier`) transforms a constraint graph locally, and can be carried out in
 polynomial time given explicit expanders [Dinur, Theorem 4.1][Dinur2005]. This file is only about
-the consequences of the interface; running times are not formalized here.
+the consequences of the interface. Running times are formalized for the executable pipeline
+`Cslib.PCP.Encoded.gapGraph`, whose rounds are iterated in
+`Complexity.Computability.PCP.Encoded.Amplification.Iteration`.
 
 ## Main definitions
 

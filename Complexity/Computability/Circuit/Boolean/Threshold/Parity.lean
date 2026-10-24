@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.Threshold
 public import Complexity.Computability.Circuit.Simulation
+public import Complexity.Foundations.Data.BitString.Parity.Weight
 import Mathlib.Algebra.BigOperators.Fin
 
 /-!

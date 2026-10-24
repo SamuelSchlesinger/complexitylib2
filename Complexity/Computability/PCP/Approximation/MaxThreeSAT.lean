@@ -78,7 +78,7 @@ namespace CNF
 variable (φ : CNF V)
 
 /-- The proportions of falsified clauses are bounded below, by zero. -/
-theorem bddBelow_range_countUnsat_div :
+private theorem bddBelow_range_countUnsat_div :
     BddBelow (Set.range fun σ : V → Bool => (φ.countUnsat σ : ℝ) / φ.length) :=
   ⟨0, Set.forall_mem_range.2 fun _ => by positivity⟩
 
@@ -135,7 +135,8 @@ end CNF
 /-! ### Splitting clauses -/
 
 /-- The chain for a clause `carry :: rest` has `rest.length - 1` clauses, and at least one. -/
-theorem Clause.length_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Literal W) (rest : Clause W) :
+private theorem Clause.length_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Literal W)
+    (rest : Clause W) :
     (Clause.splitAux fresh j carry rest).length = max 1 (rest.length - 1) := by
   induction j, carry, rest using Clause.splitAux.induct fresh with
   | case1 j carry b c d rest ih =>
@@ -150,7 +151,7 @@ theorem Clause.length_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Literal W)
     · exact hrest
 
 /-- Splitting a clause of width `w` gives `w - 2` clauses, and at least one. -/
-theorem Clause.length_split3 (fresh : ℕ → W) (j : ℕ) (c : Clause W) :
+private theorem Clause.length_split3 (fresh : ℕ → W) (j : ℕ) (c : Clause W) :
     (Clause.split3 fresh j c).length = max 1 (c.length - 2) := by
   cases c with
   | nil => rfl
@@ -251,7 +252,8 @@ theorem eval_excludeClause_eq_true_iff (τ : ℕ → Bool) (u v : ℕ) (p : α �
     exacts [⟨_, Or.inl ⟨i, rfl⟩, hi⟩, ⟨_, Or.inr ⟨i, rfl⟩, hi⟩]
 
 /-- Every clause of `toCNF` has width `2 k`. -/
-theorem length_of_mem_toCNF {g : Graph (α → α → Bool)} {c : Clause ℕ} (hc : c ∈ toCNF e pairs g) :
+private theorem length_of_mem_toCNF {g : Graph (α → α → Bool)} {c : Clause ℕ}
+    (hc : c ∈ toCNF e pairs g) :
     c.length = 2 * k := by
   obtain ⟨d, -, hc⟩ := List.mem_flatMap.1 hc
   obtain ⟨p, -, rfl⟩ := List.mem_map.1 hc
@@ -259,7 +261,7 @@ theorem length_of_mem_toCNF {g : Graph (α → α → Bool)} {c : Clause ℕ} (h
   omega
 
 /-- Each edge produces at most `pairs.length` clauses. -/
-theorem length_toCNF_le (g : Graph (α → α → Bool)) :
+private theorem length_toCNF_le (g : Graph (α → α → Bool)) :
     (toCNF e pairs g).length ≤ g.edges.length * pairs.length := by
   rw [toCNF, List.length_flatMap]
   refine (List.sum_le_length_nsmul _ pairs.length fun n hn => ?_).trans (by simp)
@@ -300,7 +302,7 @@ private theorem card_filter_get_eq_countP {β : Type*} (p : β → Bool) (l : Li
     congr
 
 /-- The violated edges of a constraint graph, counted along its edge list. -/
-theorem card_unsatEdges_toGraph (g : Graph (α → α → Bool)) (σ : ℕ → α) :
+private theorem card_unsatEdges_toGraph (g : Graph (α → α → Bool)) (σ : ℕ → α) :
     #((g.toGraph id).unsatEdges σ) = g.edges.countP fun d => !d.constraint (σ d.src) (σ d.dst) := by
   rw [← card_filter_get_eq_countP]
   congr 1
@@ -310,7 +312,7 @@ theorem card_unsatEdges_toGraph (g : Graph (α → α → Bool)) (σ : ℕ → �
 /-- **Every violated edge leaves a falsified clause**: an assignment falsifies at least as many
 clauses of the formula as the labelling it writes violates edges, when `pairs` lists all pairs of
 labels. -/
-theorem card_unsatEdges_le_countUnsat (hpairs : ∀ p, p ∈ pairs) (g : Graph (α → α → Bool))
+private theorem card_unsatEdges_le_countUnsat (hpairs : ∀ p, p ∈ pairs) (g : Graph (α → α → Bool))
     (τ : ℕ → Bool) :
     #((g.toGraph id).unsatEdges (readLabel e τ)) ≤ (toCNF e pairs g).countUnsat τ := by
   rw [card_unsatEdges_toGraph, CNF.countUnsat, toCNF, List.countP_flatMap]
@@ -322,7 +324,7 @@ theorem card_unsatEdges_le_countUnsat (hpairs : ∀ p, p ∈ pairs) (g : Graph (
 
 /-- Splitting the clauses of `toCNF`, all of width `2 k`, gives `2 k - 2` clauses for each, and at
 least one. -/
-theorem length_toThreeSAT_toCNF (g : Graph (α → α → Bool)) :
+private theorem length_toThreeSAT_toCNF (g : Graph (α → α → Bool)) :
     (toThreeSAT (toCNF e pairs g)).length = (toCNF e pairs g).length * max 1 (2 * k - 2) := by
   rw [toThreeSAT, CNF.relabel, List.length_map, CNF.length_to3CNF,
     List.map_congr_left fun c hc => by rw [length_of_mem_toCNF e pairs hc], List.map_const',

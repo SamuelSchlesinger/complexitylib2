@@ -145,7 +145,7 @@ theorem take_congr {m m' : ℕ} (h : m = m') (hm : m ≤ T) (hm' : m' ≤ T) (k 
   rfl
 
 /-- There are `∑ ℓ ≤ T, |D| ^ ℓ` walks of length at most `T` from a vertex. -/
-theorem card_eq [Fintype D] :
+private theorem card_eq [Fintype D] :
     Fintype.card (WalkLabels D T) = ∑ ℓ ∈ range (T + 1), Fintype.card D ^ ℓ := by
   rw [Fintype.card_sigma, ← Fin.sum_univ_eq_sum_range]
   simp
@@ -235,7 +235,7 @@ theorem rel_truthful_iff (σ : V → α) (p : V × (Fin T → D) × (Fin T → F
 
 variable {R T q} in
 /-- The truthful opinions of a labelling satisfying `R` satisfy the powered constraint graph. -/
-theorem satisfies_power_truthful {σ : V → α} (hσ : ∀ d, R.toConstraintGraph.Satisfies σ d)
+private theorem satisfies_power_truthful {σ : V → α} (hσ : ∀ d, R.toConstraintGraph.Satisfies σ d)
     (p : V × (Fin T → D) × (Fin T → Fin q)) :
     (R.power T q).toConstraintGraph.Satisfies (R.truthful T σ) p :=
   satisfies_power_iff.2 fun _ hi ↦ (R.rel_truthful_iff T q σ p hi).2 (hσ _)
@@ -363,7 +363,7 @@ open Classical in
 /-- **Killed at a given step, a killed walk reports like a uniformly random walk**: a killed walk
 from `v` is killed at its step `ℓ < T` and reports `σ v` about `v` with probability
 `(1 - 1 / q) ^ ℓ / q` times the proportion of the walks of length `ℓ` from `v` that do. -/
-theorem expect_killTime_eq_and_report_eq [Nonempty D] (A : V → WalkLabels D T → α)
+private theorem expect_killTime_eq_and_report_eq [Nonempty D] (A : V → WalkLabels D T → α)
     (σ : V → α) (v : V) {ℓ : ℕ} (hℓ : ℓ < T) :
     𝔼 x : (Fin T → D) × (Fin T → Fin q),
         (if killTime x.2 = ℓ ∧
@@ -391,7 +391,8 @@ noncomputable def decode (A : V → WalkLabels D T → α) (v : V) : α :=
 open Classical in
 /-- **Plurality**: the decoded label of `v` is reported about `v` by the far ends of a proportion
 at least `1 / |α|` of the killed walks from `v`. -/
-theorem inv_card_le_expect_report_eq_decode [Nonempty D] (A : V → WalkLabels D T → α) (v : V) :
+private theorem inv_card_le_expect_report_eq_decode [Nonempty D] (A : V → WalkLabels D T → α)
+    (v : V) :
     (Fintype.card α : ℝ)⁻¹ ≤ 𝔼 x : (Fin T → D) × (Fin T → Fin q),
       if R.report T A (killTime_le x.2) (v, Fin.take _ (killTime_le x.2) x.1) =
         R.decode T q A v then 1 else 0 := by

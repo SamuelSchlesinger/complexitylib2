@@ -55,7 +55,7 @@ theorem map_fst_apply (joint : PMF (α × β)) (a : α) :
     simp [Ne.symm hx]
 
 /-- Each joint mass is at most the corresponding marginal mass. -/
-theorem apply_le_map_fst (joint : PMF (α × β)) (a : α) (b : β) :
+private theorem apply_le_map_fst (joint : PMF (α × β)) (a : α) (b : β) :
     joint (a, b) ≤ (joint.map Prod.fst) a :=
   le_map_apply joint Prod.fst (a, b)
 

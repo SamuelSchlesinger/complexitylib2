@@ -132,7 +132,7 @@ theorem updates_of_notMem {σ : V → Bool} {vs : List V} {x : V} (hx : x ∉ vs
       rw [updates, ih hx.2, Function.update_of_ne hx.1]
 
 /-- Updating distinct variables by as many values sets them to these values. -/
-theorem map_updates {σ : V → Bool} {vs : List V} (hvs : vs.Nodup) {bs : List Bool}
+private theorem map_updates {σ : V → Bool} {vs : List V} (hvs : vs.Nodup) {bs : List Bool}
     (hlen : bs.length = vs.length) : vs.map (updates σ vs bs) = bs := by
   induction vs generalizing σ bs with
   | nil => exact (List.length_eq_zero_iff.mp hlen).symm
@@ -233,7 +233,7 @@ blocks of level `0`. -/
 def gamePairs (w : ℕ) : List (ℕ × ℕ) :=
   (List.range w).map fun i => (certVar w (2 * i), certVar w (2 * i + 1))
 
-theorem length_gamePairs (w : ℕ) : (gamePairs w).length = w := by
+private theorem length_gamePairs (w : ℕ) : (gamePairs w).length = w := by
   simp [gamePairs]
 
 /-- The variables of the moves are those of the blocks of level `0`. -/
@@ -336,7 +336,7 @@ theorem gameReduce_mem_TQBF_iff {V : α × List Bool → Bool} {kV : ℕ} {State
 def roundTokens (w i : ℕ) : List (QBF.Kind × ℕ) :=
   [(.ex, certVar w (2 * i))] ++ [(.all, certVar w (2 * i + 1))]
 
-theorem tokens_gameFormula {k : ℕ} {State : Type} [Fintype State]
+private theorem tokens_gameFormula {k : ℕ} {State : Type} [Fintype State]
     (tab : CNF (CookLevin.Var k State)) (w : ℕ) :
     (gameFormula tab w).tokens = (List.range w).flatMap (roundTokens w) ++
       (baseFormula tab w).tokens := by
@@ -396,7 +396,7 @@ variable {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × Li
   {A : Set α}
 
 /-- **Games with a polynomial-time winning condition reduce to `TQBF`.** -/
-theorem IsGameVerifier.polyTimeReducible
+private theorem IsGameVerifier.polyTimeReducible
     (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
     (h : IsGameVerifier enc p V A) : PolyTimeReducible enc encQBF A TQBF := by
   obtain ⟨tV, sV, htV, -, kV, StateV, hfiniteV, tmV, htmV⟩ := hV

@@ -102,7 +102,7 @@ private theorem sum_pairs (x y : ℕ) :
 /-- The weighted contribution of all columns strictly below `k`. -/
 def mulPrefix (x y k : ℕ) : ℕ := ∑ j ∈ range k, mulColumn x y j * 2 ^ j
 
-theorem mulPrefix_succ (x y k : ℕ) :
+private theorem mulPrefix_succ (x y k : ℕ) :
     mulPrefix x y (k + 1) = mulPrefix x y k + mulColumn x y k * 2 ^ k := sum_range_succ _ _
 
 private theorem mulPrefix_eq_filter (x y k : ℕ) :
@@ -126,7 +126,7 @@ private theorem mulPrefix_eq_filter (x y k : ℕ) :
     _ = _ := sum_fiberwise_of_maps_to (fun p hp => mem_range.mpr (mem_filter.mp hp).2) _
 
 /-- Omitting higher columns preserves all lower product bits. -/
-theorem mulPrefix_mod (x y k : ℕ) : mulPrefix x y k % 2 ^ k = x * y % 2 ^ k := by
+private theorem mulPrefix_mod (x y k : ℕ) : mulPrefix x y k % 2 ^ k = x * y % 2 ^ k := by
   rw [mulPrefix_eq_filter, sum_filter, ← sum_pairs]
   conv_lhs => rw [sum_nat_mod]
   conv_rhs => rw [sum_nat_mod]
@@ -139,7 +139,7 @@ theorem mulPrefix_mod (x y k : ℕ) : mulPrefix x y k % 2 ^ k = x * y % 2 ^ k :=
     exact (Nat.mod_eq_zero_of_dvd (Nat.pow_dvd_pow 2 (by lia))).symm
 
 /-- Once both inputs' bit widths are covered, the weighted columns give the whole product. -/
-theorem mulPrefix_eq_mul {x y w k : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
+private theorem mulPrefix_eq_mul {x y w k : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
     (hk : 2 * w ≤ k) : mulPrefix x y k = x * y := by
   rw [mulPrefix_eq_filter]
   have hp : (pairs x y).filter (fun p => p.1 + p.2 < k) = pairs x y := by
@@ -158,7 +158,7 @@ def mulCarry (x y k : ℕ) : ℕ := mulPrefix x y k / 2 ^ k
 
 @[simp] theorem mulCarry_zero (x y : ℕ) : mulCarry x y 0 = 0 := by simp [mulCarry, mulPrefix]
 
-theorem mulCarry_succ (x y k : ℕ) :
+private theorem mulCarry_succ (x y k : ℕ) :
     mulCarry x y (k + 1) = (mulCarry x y k + mulColumn x y k) / 2 := by
   simp only [mulCarry, mulPrefix_succ, pow_succ, ← Nat.div_div_eq_div_mul,
     Nat.add_mul_div_right _ _ (Nat.two_pow_pos k)]
@@ -202,7 +202,7 @@ theorem mulCarry_eq_zero {x y w k : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
     _ ≤ 2 ^ k := Nat.pow_le_pow_right (by decide) hk
 
 /-- Exact carry equations propagate the weighted-prefix invariant through a block. -/
-theorem mulPrefix_eq_of_carries {x y z j s : ℕ} (c : ℕ → ℕ)
+private theorem mulPrefix_eq_of_carries {x y z j s : ℕ} (c : ℕ → ℕ)
     (hstart : mulPrefix x y j = z % 2 ^ j + c 0 * 2 ^ j)
     (hstep : ∀ t < s, c t + mulColumn x y (j + t) =
       (z.testBit (j + t)).toNat + 2 * c (t + 1)) :

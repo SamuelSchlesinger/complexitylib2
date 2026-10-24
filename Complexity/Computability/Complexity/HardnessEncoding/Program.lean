@@ -171,17 +171,17 @@ theorem isMulTable_fieldTable {w : ℕ} (hw : w ≠ 0) : IsMulTable (𝔅 hw) (f
 variable {w : ℕ}
 
 /-- The element with given coordinates in the power basis is the element with these bits. -/
-theorem fieldOfBits_basis (hw : w ≠ 0) (a : List Bool) :
+private theorem fieldOfBits_basis (hw : w ≠ 0) (a : List Bool) :
     fieldOfBits (𝔅 hw) a = (BinaryField.equivBits hw).symm fun j => a.getD j false := by
   rw [fieldOfBits, BinaryField.equivBits_symm_apply]
 
 /-- The bits of the element with given coordinates. -/
-theorem equivBits_fieldOfBits (hw : w ≠ 0) (a : List Bool) (j : Fin w) :
+private theorem equivBits_fieldOfBits (hw : w ≠ 0) (a : List Bool) (j : Fin w) :
     BinaryField.equivBits hw (fieldOfBits (𝔅 hw) a) j = a.getD j false := by
   rw [BinaryField.equivBits_apply, repr_fieldOfBits, RingEquiv.apply_symm_apply]
 
 /-- The coordinates `[true]` are those of `1`. -/
-theorem fieldOfBits_one (hw : w ≠ 0) : fieldOfBits (𝔅 hw) [true] = 1 := by
+private theorem fieldOfBits_one (hw : w ≠ 0) : fieldOfBits (𝔅 hw) [true] = 1 := by
   rw [fieldOfBits, Fintype.sum_eq_single ⟨0, Nat.pos_of_ne_zero hw⟩]
   · simp [BinaryField.basis_apply, bitEquiv_symm_true]
   · intro u hu
@@ -190,13 +190,13 @@ theorem fieldOfBits_one (hw : w ≠ 0) : fieldOfBits (𝔅 hw) [true] = 1 := by
     simp [hk, bitEquiv_symm_false]
 
 /-- Addition in coordinates: `listXor w [a, b]` has the sum of the coordinates. -/
-theorem fieldOfBits_listXor_pair (hw : w ≠ 0) (a b : List Bool) :
+private theorem fieldOfBits_listXor_pair (hw : w ≠ 0) (a b : List Bool) :
     fieldOfBits (𝔅 hw) (listXor w [a, b]) = fieldOfBits (𝔅 hw) a + fieldOfBits (𝔅 hw) b := by
   rw [fieldOfBits_listXor]
   simp
 
 /-- In a field of `2 ^ w` elements, `w ≥ 2`, the inverse is the power `2 ^ w - 2`. -/
-theorem fieldOfBits_fieldInv (hw : 2 ≤ w) (a : List Bool) :
+private theorem fieldOfBits_fieldInv (hw : 2 ≤ w) (a : List Bool) :
     fieldOfBits (𝔅 (by omega : w ≠ 0)) (fieldInv (fieldTable w) w a) =
       (fieldOfBits (𝔅 (by omega : w ≠ 0)) a)⁻¹ := by
   have hw0 : w ≠ 0 := by omega
@@ -229,7 +229,7 @@ theorem fieldOfBits_fieldInv (hw : 2 ≤ w) (a : List Bool) :
 /-! ### Correctness -/
 
 /-- The embedded bit string is the element with its bits as coordinates. -/
-theorem embed_eq_fieldOfBits (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a : BitString b) :
+private theorem embed_eq_fieldOfBits (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a : BitString b) :
     BinaryField.embed hw hbw a = fieldOfBits (𝔅 hw) (List.ofFn a) := by
   rw [BinaryField.embed_apply, fieldOfBits_basis]
   congr 1
@@ -246,7 +246,7 @@ theorem fieldOfBits_ofFn (hw : w ≠ 0) (v : BitString w) :
   simp [List.getD_eq_getElem?_getD]
 
 /-- The numerator of a Lagrange basis polynomial: the product of `t - a'` over the other nodes. -/
-theorem fieldOfBits_lagrangeNum (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a : BitString b)
+private theorem fieldOfBits_lagrangeNum (hw : w ≠ 0) {b : ℕ} (hbw : b ≤ w) (a : BitString b)
     (t : List Bool) :
     fieldOfBits (𝔅 hw) (lagrangeNum (fieldTable w) w (BitString.enumList b) (List.ofFn a) t) =
       ∏ a' ∈ univ.erase a, (fieldOfBits (𝔅 hw) t - BinaryField.embed hw hbw a') := by
@@ -280,7 +280,7 @@ theorem fieldOfBits_lagrangeVal (hw : 2 ≤ w) {b : ℕ} (hbw : b ≤ w) (a : Bi
 
 /-- **A term of the extension**: `termVal` computes the product over the blocks of `z` of the
 Lagrange basis polynomials at the coordinates of the point. -/
-theorem fieldOfBits_termVal (hw : 2 ≤ w) {M b : ℕ} (hbw : b ≤ w) (xs : List (List Bool))
+private theorem fieldOfBits_termVal (hw : 2 ≤ w) {M b : ℕ} (hbw : b ≤ w) (xs : List (List Bool))
     (z : BitString (M * b)) :
     fieldOfBits (𝔅 (by omega : w ≠ 0))
         (termVal (fieldTable w) w b M (BitString.enumList b) xs (List.ofFn z)) =

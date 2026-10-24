@@ -48,13 +48,13 @@ open Cslib.Probability
 variable {V : Type*} [Fintype V]
 
 /-- Pair each row with the columns neighboring that row, restricted to the graph complement. -/
-noncomputable def rowPairs (graph : Set (V × V)) :
+def rowPairs (graph : Set (V × V)) :
     Fin (Fintype.card V) → Set ↥(graphᶜ) × Set ↥(graphᶜ) :=
   fun i => (Subtype.val ⁻¹' sources (Fin.castAdd (Fintype.card V) i),
     {x | ((Fintype.equivFin V).symm i, x.val.2) ∈ graph})
 
 /-- Every bipartite graph has a cover with one pair per row. -/
-noncomputable def rowCover (graph : Set (V × V)) : PairCover graph sources :=
+def rowCover (graph : Set (V × V)) : PairCover graph sources :=
   PairCover.ofDerivesEmpty (List.ofFn (rowPairs graph)) (fun point hp => by
     let i := Fintype.equivFin V point.1
     have hr : PairDerivation graph sources (List.ofFn (rowPairs graph)) point

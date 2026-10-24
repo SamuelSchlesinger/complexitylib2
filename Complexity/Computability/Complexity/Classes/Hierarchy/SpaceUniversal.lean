@@ -132,14 +132,14 @@ public theorem budgetStep_iterate (i : ℕ) : ∃ j ≤ i,
     · exact ⟨j, by omega, rfl, hb⟩
 
 /-- The run within the budget keeps at most two symbols of the output. -/
-public lemma length_budgetStep_iterate_le (i : ℕ) :
+private lemma length_budgetStep_iterate_le (i : ℕ) :
     ((budgetStep d x b)^[i] (init d, [])).2.length ≤ 2 := by
   obtain ⟨j, -, heq, -⟩ := budgetStep_iterate d x b i
   rw [heq, List.length_take]
   exact min_le_left _ _
 
 /-- The symbols of the output kept by the run within the budget are numbers of the description. -/
-public lemma le_of_mem_budgetStep_iterate (i : ℕ) {o : ℕ}
+private lemma le_of_mem_budgetStep_iterate (i : ℕ) {o : ℕ}
     (ho : o ∈ ((budgetStep d x b)^[i] (init d, [])).2) : o ≤ descLen d := by
   obtain ⟨j, -, heq, -⟩ := budgetStep_iterate d x b i
   rw [heq] at ho
@@ -147,7 +147,7 @@ public lemma le_of_mem_budgetStep_iterate (i : ℕ) {o : ℕ}
 
 /-- **Within the budget**, the run is the run of the simulation, with the first two symbols of its
 output. -/
-public theorem budgetStep_iterate_of_le {t : ℕ}
+private theorem budgetStep_iterate_of_le {t : ℕ}
     (hb : ∀ j < t, (eCfg (run d x (j + 1))).length ≤ b) :
     (budgetStep d x b)^[t] (init d, []) = (run d x t, (simulate d x t).1.take 2) := by
   induction t with
@@ -192,28 +192,28 @@ public theorem budgetedUniversal_desc {k : ℕ} {Symbol S : Type} [Fintype S] [F
 public abbrev SSt := St × ℕ × List ℕ
 
 /-- The encoding of the states of the fold within a budget, with the budget in unary. -/
-public abbrev eSSt : SSt ↪ List Bool := encPair eSt (encPair encUnary (encList encUnary))
+private abbrev eSSt : SSt ↪ List Bool := encPair eSt (encPair encUnary (encList encUnary))
 
 /-- The initial state: the initial state of the in-place fold, the budget and no output. -/
-@[expose] public def foldInitS (i : Desc × List ℕ × ℕ × ℕ) : SSt :=
+private def foldInitS (i : Desc × List ℕ × ℕ × ℕ) : SSt :=
   (foldInit (i.1, i.2.1, i.2.2.1), i.2.2.2, [])
 
 /-- A round: one event of the countdown, as in the in-place fold. -/
-@[expose] public def foldNextS (p : SSt × Bool) : SSt := (foldNext (p.1.1, p.2), p.1.2)
+private def foldNextS (p : SSt × Bool) : SSt := (foldNext (p.1.1, p.2), p.1.2)
 
 /-- The end of a pass within the budget: the step of the in-place fold if the configuration it
 reaches is encoded within the budget, keeping the first two symbols of the output; otherwise the
 configuration stays, one step less is left and the countdown is reset to the input head. -/
-@[expose] public def foldEndS (s : SSt) : SSt :=
+private def foldEndS (s : SSt) : SSt :=
   if (eCfg (stepAt s.1).1).length ≤ s.2.1 then
     (foldEnd s.1, s.2.1, (s.2.2 ++ (stepAt s.1).2.toList).take 2)
   else (((s.1.1.1, s.1.1.2), (s.1.2.1 - 1, s.1.1.2.inputPos, 0)), s.2)
 
 /-- Whether another pass follows. -/
-@[expose] public def foldContS (s : SSt) : Bool := foldCont s.1
+private def foldContS (s : SSt) : Bool := foldCont s.1
 
 /-- The result: the first two symbols of the output, and whether the machine has halted. -/
-@[expose] public def foldFinishS (s : SSt) : List ℕ × Bool := (s.2.2, s.1.1.2.state.isNone)
+private def foldFinishS (s : SSt) : List ℕ × Bool := (s.2.2, s.1.1.2.state.isNone)
 
 lemma streamState_foldNextS (s : SSt) (l : List Bool) (j : ℕ) :
     streamState s foldNextS l j = ((s.1.1, (s.1.2.1, (l.take j).foldl scan s.1.2.2)), s.2) :=
@@ -228,7 +228,7 @@ lemma stepAt_scan' (c : SCfg) (r : ℕ) :
 
 /-- **The passes within the budget** follow the run within the budget, as long as steps are
 left. -/
-public theorem passState_foldS (t i : ℕ) :
+private theorem passState_foldS (t i : ℕ) :
     passState (foldInitS (d, x, t, b)) foldNextS foldEndS (events x) i =
       (((d, ((budgetStep d x b)^[min i t] (init d, [])).1),
         (t - i, ((budgetStep d x b)^[min i t] (init d, [])).1.inputPos, 0)), b,
@@ -282,7 +282,7 @@ lemma inTr_run_symbol (n : ℕ) (v : List Bool) :
     simp [tok, List.replicate_succ]
 
 /-- The events of the encoded input of `budgetedUniversal` are the events of the symbols of `x`. -/
-public theorem events_eInS (t : ℕ) : inTr.events (eInS (d, x, t, b)) = events x := by
+private theorem events_eInS (t : ℕ) : inTr.events (eInS (d, x, t, b)) = events x := by
   have hx : ∀ v, inTr.run .marker (doubled (encList encUnary x) ++ v) =
       ((inTr.run .marker v).1, events x ++ (inTr.run .marker v).2) := by
     intro v
@@ -400,7 +400,7 @@ binary, the largest symbol of the input, the budget in unary and two symbols of 
       i.2.1.foldr max 0))) + 1 + (2 * i.2.2.2 + 1 + 2 * (2 * descLen i.1 + 1))
 
 /-- **The size of the states** of the fold within the budget. -/
-public lemma length_eSSt_le (t i j : ℕ) :
+private lemma length_eSSt_le (t i j : ℕ) :
     (eSSt (streamState (passState (foldInitS (d, x, t, b)) foldNextS foldEndS (events x) i)
       foldNextS (events x) j)).length ≤ budgetSpace (d, x, t, b) := by
   rw [passState_foldS, streamState_foldNextS]
@@ -464,7 +464,7 @@ lemma keepTwo_deg : ComputableTidilyInDegree
   exact (take_two_deg.comp happ).mono
 
 /-- The initial state, in the space of the description, the number of steps and the budget. -/
-public lemma foldInitS_inO : ComputableTidilyInO foldInitS eInS eSSt
+private lemma foldInitS_inO : ComputableTidilyInO foldInitS eInS eSSt
     (fun i => (eInS i).length +
       ((encPair eDesc (encPair encNat encUnary) (i.1, i.2.2)).length + 1) ^ 2)
     fun i => (encPair eDesc (encPair encNat encUnary) (i.1, i.2.2)).length + 1 := by
@@ -485,7 +485,7 @@ public lemma foldInitS_inO : ComputableTidilyInO foldInitS eInS eSSt
     nlinarith
 
 /-- A round of the countdown. -/
-public lemma foldNextS_inO : ComputableTidilyInO foldNextS (encPair eSSt encBool) eSSt
+private lemma foldNextS_inO : ComputableTidilyInO foldNextS (encPair eSSt encBool) eSSt
     (fun p => ((encPair eSSt encBool p).length + 1) ^ 2)
     fun p => (encPair eSSt encBool p).length + 1 := by
   have h₁ := fst eSSt encBool
@@ -498,7 +498,7 @@ public lemma foldNextS_inO : ComputableTidilyInO foldNextS (encPair eSSt encBool
     nlinarith
 
 /-- Whether another pass follows. -/
-public lemma foldContS_inO : ComputableTidilyInO foldContS eSSt encBool
+private lemma foldContS_inO : ComputableTidilyInO foldContS eSSt encBool
     (fun s => ((eSSt s).length + 1) ^ 3) fun s => (eSSt s).length + 1 := by
   have h := foldCont_inO.comp (fst eSt (encPair encUnary (encList encUnary)))
   refine (h.of_enc_eq (g := foldContS) fun s => rfl).mono 2 (fun s => ?_) fun s => ?_
@@ -511,7 +511,7 @@ public lemma foldContS_inO : ComputableTidilyInO foldContS eSSt encBool
     omega
 
 /-- The result: the first two symbols of the output, and whether the machine has halted. -/
-public lemma foldFinishS_inO : ComputableTidilyInO foldFinishS eSSt eOut
+private lemma foldFinishS_inO : ComputableTidilyInO foldFinishS eSSt eOut
     (fun s => ((eSSt s).length + 1) ^ 3) fun s => (eSSt s).length + 1 := by
   have h₁ := fst eSt (encPair encUnary (encList encUnary))
   have h₂ := snd eSt (encPair encUnary (encList encUnary))
@@ -584,7 +584,7 @@ lemma budgetTest_inO : ComputableTidilyInO
 
 /-- The end of a pass within the budget: the step of the in-place fold, the budget test on the
 length of the configuration it reaches, and either branch. -/
-public lemma foldEndS_inO : ComputableTidilyInO foldEndS eSSt eSSt
+private lemma foldEndS_inO : ComputableTidilyInO foldEndS eSSt eSSt
     (fun s => ((eSSt s).length + 1) ^ 3) fun s => (eSSt s).length + 1 := by
   have h₁ := fst eSt (encPair encUnary (encList encUnary))
   have h₂ := snd eSt (encPair encUnary (encList encUnary))
@@ -761,7 +761,7 @@ public theorem computableTidilyInTimeAndSpace_budgetedUniversal : ∃ c,
 
 /-- The initial configuration is encoded within `11 * descLen d + 6` bits: the initial state, the
 input head at `1` and blank work tapes. -/
-public lemma length_eCfg_init_le : (eCfg (init d)).length ≤ 11 * descLen d + 6 := by
+private lemma length_eCfg_init_le : (eCfg (init d)).length ≤ 11 * descLen d + 6 := by
   have hq : d.q₀ ≤ descLen d := by
     simp only [descLen, eDesc_apply, length_encPair, encUnary_apply, List.length_replicate]; omega
   have hk : d.tapes ≤ descLen d := by

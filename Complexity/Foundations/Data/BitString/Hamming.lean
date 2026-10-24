@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.Weight
+public import Complexity.Foundations.Data.BitString.Parity
 
 /-!
 # The Hamming geometry of the Boolean cube

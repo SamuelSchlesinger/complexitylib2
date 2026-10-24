@@ -79,7 +79,7 @@ private theorem eq_zero_or_eq_one [Fintype α] {f : α → ℝ} (hf : ∀ a, 0 �
   · exact Or.inr (le_antisymm (hf a).2 (not_lt.mp fun h' => ha ⟨h, h'⟩))
 
 /-- Move `min (1 - f x) (f y)` units of weight from `y` to `x`. -/
-private noncomputable def transfer [DecidableEq α] (f : α → ℝ) (x y a : α) : ℝ :=
+private def transfer [DecidableEq α] (f : α → ℝ) (x y a : α) : ℝ :=
   f a + min (1 - f x) (f y) * ((if a = x then 1 else 0) - (if a = y then 1 else 0))
 
 private theorem transfer_apply_left [DecidableEq α] (f : α → ℝ) {x y : α} (hxy : x ≠ y) :

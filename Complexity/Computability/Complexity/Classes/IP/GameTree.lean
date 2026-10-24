@@ -131,7 +131,8 @@ private theorem min_cap_add (a b : ℕ) : min cap (min cap a + b) = min cap (a +
   lia
 
 /-- A value returned into the empty stack is a fixed point. -/
-theorem step_nil_some (v : ℕ) : step D cap first next last leaf ([], some v) = ([], some v) := rfl
+private theorem step_nil_some (v : ℕ) : step D cap first next last leaf ([], some v) =
+    ([], some v) := rfl
 
 section Correctness
 
@@ -258,7 +259,7 @@ structure Good (P : X → Prop) (state : List (Frame X) × Option ℕ) : Prop wh
   value : ∀ v ∈ state.2, v ≤ cap
 
 /-- A step preserves the invariant. -/
-theorem Good.step {P : X → Prop} (hfirst : P first) (hnext : ∀ x, P x → P (next x))
+private theorem Good.step {P : X → Prop} (hfirst : P first) (hnext : ∀ x, P x → P (next x))
     {state : List (Frame X) × Option ℕ} (h : Good D cap P state) :
     Good D cap P (step D cap first next last leaf state) := by
   obtain ⟨st, _ | v⟩ := state

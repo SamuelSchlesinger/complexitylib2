@@ -154,7 +154,7 @@ theorem length_constraintTable_le [Fintype α] (table : α → α → Bool) :
 
 /-- Bounded growth per descriptor gives bounded total encoded growth. Both the inner edge
 encoding and the outer list framing are charged. -/
-theorem length_encoding_mapConstraints_le (g : Graph C) (f : C → C') (bound : ℕ)
+private theorem length_encoding_mapConstraints_le (g : Graph C) (f : C → C') (bound : ℕ)
     (hf : ∀ c, (enc' (f c)).length ≤ (enc c).length + bound) :
     (encoding enc' (g.mapConstraints f)).length ≤
       (encoding enc g).length + 2 * g.edges.length * bound := by

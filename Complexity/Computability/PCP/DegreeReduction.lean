@@ -72,7 +72,8 @@ open Finset
 
 /-- **Plurality**: some value of a function on a finite type is taken at least as often as any
 other. -/
-theorem Fintype.exists_forall_card_filter_le_card_filter {ι α : Type*} [Fintype ι] [Nonempty α]
+private theorem Fintype.exists_forall_card_filter_le_card_filter {ι α : Type*} [Fintype ι]
+    [Nonempty α]
     [DecidableEq α] (f : ι → α) : ∃ a, ∀ b, #{i | f i = b} ≤ #{i | f i = a} := by
   rcases isEmpty_or_nonempty ι with h | ⟨⟨i₀⟩⟩
   · exact ⟨Classical.arbitrary α, fun b ↦ by simp [univ_eq_empty]⟩
@@ -132,7 +133,7 @@ variable {G} (H : ∀ v, RotationMap (G.Cloud v) D)
 
 /-- The neighbors of a half-edge in the cloud graph are its neighbors in the multigraph on its
 cloud. -/
-theorem neighbor_cloudGraph {v : V} (x : G.Cloud v) (i : D) :
+private theorem neighbor_cloudGraph {v : V} (x : G.Cloud v) (i : D) :
     (G.cloudGraph H).neighbor x.1 i = ((H v).neighbor x i).1 := by
   obtain ⟨x, rfl⟩ := x
   rfl
@@ -177,26 +178,26 @@ theorem graph_degreeReduce : (G.degreeReduce H).graph = halfEdgeGraph.union (G.c
 
 /-- The edge-links at both halves of an edge carry its constraint, read from its first end to its
 second one. -/
-theorem satisfies_degreeReduce_inl {A : E × Bool → α} {p : E × Bool} {i : Unit} :
+private theorem satisfies_degreeReduce_inl {A : E × Bool → α} {p : E × Bool} {i : Unit} :
     (G.degreeReduce H).toConstraintGraph.Satisfies A (p, .inl i) ↔
       G.rel p.1 (A (p.1, false)) (A (p.1, true)) := by
   obtain ⟨e, _ | _⟩ := p <;> rfl
 
 /-- The cloud-links carry equality constraints. -/
-theorem satisfies_degreeReduce_inr {A : E × Bool → α} {p : E × Bool} {i : D} :
+private theorem satisfies_degreeReduce_inr {A : E × Bool → α} {p : E × Bool} {i : D} :
     (G.degreeReduce H).toConstraintGraph.Satisfies A (p, .inr i) ↔
       A p = A ((G.cloudGraph H).neighbor p i) := by
   obtain ⟨e, _ | _⟩ := p <;> rfl
 
 /-- The labelling of the half-edges by the labels of their vertices satisfies the edge-links of an
 edge exactly when the labelling of the vertices satisfies the edge. -/
-theorem satisfies_degreeReduce_comp_endpoint_inl {σ : V → α} {p : E × Bool} {i : Unit} :
+private theorem satisfies_degreeReduce_comp_endpoint_inl {σ : V → α} {p : E × Bool} {i : Unit} :
     (G.degreeReduce H).toConstraintGraph.Satisfies (σ ∘ G.endpoint) (p, .inl i) ↔
       G.Satisfies σ p.1 :=
   satisfies_degreeReduce_inl H
 
 /-- The labelling of the half-edges by the labels of their vertices satisfies the cloud-links. -/
-theorem satisfies_degreeReduce_comp_endpoint_inr (σ : V → α) (p : E × Bool) (i : D) :
+private theorem satisfies_degreeReduce_comp_endpoint_inr (σ : V → α) (p : E × Bool) (i : D) :
     (G.degreeReduce H).toConstraintGraph.Satisfies (σ ∘ G.endpoint) (p, .inr i) := by
   rw [satisfies_degreeReduce_inr, Function.comp_apply, Function.comp_apply,
     endpoint_neighbor_cloudGraph]
@@ -216,14 +217,14 @@ section Count
 variable [Fintype E] [Fintype D]
 
 /-- The degree-reduced constraint graph has `2 (1 + |D|) |E|` darts. -/
-theorem card_darts_degreeReduce :
+private theorem card_darts_degreeReduce :
     Fintype.card ((E × Bool) × (Unit ⊕ D)) = 2 * (1 + Fintype.card D) * Fintype.card E := by
   simp only [Fintype.card_prod, Fintype.card_bool, Fintype.card_sum, Fintype.card_unit]
   ring
 
 /-- The labelling of the half-edges by the labels of their vertices violates only the edge-links
 of the edges violated by the labelling of the vertices. -/
-theorem card_unsatEdges_degreeReduce_comp_endpoint_le (σ : V → α) :
+private theorem card_unsatEdges_degreeReduce_comp_endpoint_le (σ : V → α) :
     #((G.degreeReduce H).toConstraintGraph.unsatEdges (σ ∘ G.endpoint)) ≤
       2 * #(G.unsatEdges σ) := by
   classical
@@ -267,7 +268,8 @@ theorem one_add_card_mul_unsatVal_degreeReduce_le [Nonempty α] :
 /-- **The edge charge**: an edge violated by a labelling `σ` of the vertices either has a
 half-edge whose label under `A` differs from that of its vertex, or its edge-links are violated by
 `A`. -/
-theorem card_unsatEdges_le_card_filter_isLeft_add [DecidableEq α] (A : E × Bool → α) (σ : V → α) :
+private theorem card_unsatEdges_le_card_filter_isLeft_add [DecidableEq α] (A : E × Bool → α)
+    (σ : V → α) :
     #(G.unsatEdges σ) ≤ #{q ∈ (G.degreeReduce H).toConstraintGraph.unsatEdges A | q.2.isLeft} +
       #{p | A p ≠ σ (G.endpoint p)} := by
   classical
@@ -292,7 +294,8 @@ section Soundness
 variable [Fintype E] [DecidableEq V] [Fintype D]
 
 /-- **Plurality**: some label is taken by at least as many half-edges of a cloud as any other. -/
-theorem exists_forall_card_filter_le_card_filter [Nonempty α] [DecidableEq α] (A : E × Bool → α)
+private theorem exists_forall_card_filter_le_card_filter [Nonempty α] [DecidableEq α]
+    (A : E × Bool → α)
     (v : V) :
     ∃ a : α, ∀ b, #{x : G.Cloud v | A x.1 = b} ≤ #{x : G.Cloud v | A x.1 = a} :=
   Fintype.exists_forall_card_filter_le_card_filter fun x : G.Cloud v ↦ A x.1
@@ -303,7 +306,7 @@ variable {μ : ℝ}
 `σ v` is a most frequent label of the cloud of every vertex `v`, then the cloud-links violated by
 `A` number at least `(1 - μ) |D|` times the half-edges whose label differs from that of their
 vertex. -/
-theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
+private theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
     (hH : ∀ v, (H v).spectralExpansion ≤ μ) (A : E × Bool → α) (σ : V → α)
     (hσ : ∀ v b, #{x : G.Cloud v | A x.1 = b} ≤ #{x : G.Cloud v | A x.1 = σ v}) :
     (1 - μ) * Fintype.card D * #{p | A p ≠ σ (G.endpoint p)} ≤
@@ -368,7 +371,7 @@ theorem mul_card_filter_ne_le_card_filter_isRight [DecidableEq α]
 clouds have spectral expansion at most `μ`, every labelling of the half-edges violates a proportion
 of the darts at least `min 1 ((1 - μ) |D|) / (2 (1 + |D|))` times the value of `G`, whatever the
 alphabet. -/
-theorem le_unsatFrac_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpansion ≤ μ)
+private theorem le_unsatFrac_degreeReduce [Nonempty α] (hH : ∀ v, (H v).spectralExpansion ≤ μ)
     (A : E × Bool → α) :
     min 1 ((1 - μ) * Fintype.card D) / (2 * (1 + Fintype.card D)) * G.unsatVal ≤
       (G.degreeReduce H).toConstraintGraph.unsatFrac A := by

@@ -67,7 +67,7 @@ theorem binaryExtension_zero {g v : ℕ} (h : BinaryExtension 0 g v) : g = v := 
   rfl
 
 /-- The selected count includes every reachable vertex of the processed prefix. -/
-noncomputable def FullPrefix (N : ℕ) (edge : ℕ → ℕ → Bool) (source : ℕ) (s : State) : Prop :=
+def FullPrefix (N : ℕ) (edge : ℕ → ℕ → Bool) (source : ℕ) (s : State) : Prop :=
   s.selected = ((roundSet N edge source s.round).filter (· < s.candidate)).card
 
 private theorem filter_below_succ (S : Finset ℕ) (u : ℕ) :

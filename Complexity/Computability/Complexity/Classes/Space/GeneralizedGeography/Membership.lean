@@ -89,7 +89,7 @@ theorem length_moverBits (B : ℕ) (first : Bool) (z : List Bool) :
     (moverBits B first z).length = B := by
   simp [moverBits]
 
-theorem moverBits_cons_cons (B : ℕ) (first b c : Bool) (z : List Bool) :
+private theorem moverBits_cons_cons (B : ℕ) (first b c : Bool) (z : List Bool) :
     moverBits (B + 1) first (b :: c :: z) = (if first then b else c) :: moverBits B first z := by
   simp only [moverBits, List.range_succ_eq_map, List.map_cons, List.map_map]
   congr 1
@@ -100,7 +100,7 @@ theorem moverBits_cons_cons (B : ℕ) (first b c : Bool) (z : List Bool) :
       ring, List.getD_cons_succ, List.getD_cons_succ]
 
 /-- Only the first block is read. -/
-theorem moverBits_take (B : ℕ) (first : Bool) (z : List Bool) :
+private theorem moverBits_take (B : ℕ) (first : Bool) (z : List Bool) :
     moverBits B first (z.take (2 * B)) = moverBits B first z := by
   refine List.map_congr_left fun j hj => ?_
   rw [List.mem_range] at hj
@@ -180,14 +180,14 @@ theorem alternation_moverBits_false {ns : List ℕ} :
 def choice (bits : List Bool) : ℕ := bits.idxOf true
 
 /-- The bits naming the arc of index `i` among `B`. -/
-def indicator (B i : ℕ) : List Bool :=
+private def indicator (B i : ℕ) : List Bool :=
   List.replicate i false ++ true :: List.replicate (B - i - 1) false
 
-theorem length_indicator {B i : ℕ} (h : i < B) : (indicator B i).length = B := by
+private theorem length_indicator {B i : ℕ} (h : i < B) : (indicator B i).length = B := by
   simp only [indicator, List.length_append, List.length_replicate, List.length_cons]
   omega
 
-theorem choice_indicator (B i : ℕ) : choice (indicator B i) = i := by
+private theorem choice_indicator (B i : ℕ) : choice (indicator B i) = i := by
   rw [choice, indicator, List.idxOf_append_of_notMem (by simp), List.idxOf_cons_self]
   simp
 
@@ -200,7 +200,7 @@ def legal (G : Graph) (vis : List ℕ) (v i : ℕ) : Bool :=
   decide (i < G.2.length) && decide ((arc G i).1 = v) && decide ((arc G i).2 ∈ G.1) &&
     !decide ((arc G i).2 ∈ vis)
 
-theorem arc_eq {G : Graph} {i : ℕ} (hi : i < G.2.length) : arc G i = G.2[i] :=
+private theorem arc_eq {G : Graph} {i : ℕ} (hi : i < G.2.length) : arc G i = G.2[i] :=
   List.getD_eq_getElem _ _ hi
 
 theorem legal_eq_true_iff {G : Graph} {vis : List ℕ} {v i : ℕ} :
@@ -274,7 +274,7 @@ def step (G : Graph) (B : ℕ) (st : Play) (block : List Bool) : Play :=
 def blocks (B R : ℕ) (z : List Bool) : List (List Bool) :=
   (List.range R).map fun r => (z.drop (2 * B * r)).take (2 * B)
 
-theorem blocks_succ (B R : ℕ) (z : List Bool) :
+private theorem blocks_succ (B R : ℕ) (z : List Bool) :
     blocks B (R + 1) z = z.take (2 * B) :: blocks B R (z.drop (2 * B)) := by
   simp only [blocks, List.range_succ_eq_map, List.map_cons, List.map_map, Nat.mul_zero,
     List.drop_zero]
@@ -285,7 +285,7 @@ theorem blocks_succ (B R : ℕ) (z : List Bool) :
   ring
 
 /-- The blocks only read their moves. -/
-theorem blocks_take (B R : ℕ) (z : List Bool) :
+private theorem blocks_take (B R : ℕ) (z : List Bool) :
     blocks B R (z.take (2 * B * R)) = blocks B R z := by
   refine List.map_congr_left fun r hr => ?_
   rw [List.mem_range] at hr
@@ -297,7 +297,7 @@ theorem blocks_take (B R : ℕ) (z : List Bool) :
   omega
 
 /-- A play that is over stays over. -/
-theorem foldl_step_some (G : Graph) (B : ℕ) (b : Bool) (rest : Bool × List ℕ × ℕ) :
+private theorem foldl_step_some (G : Graph) (B : ℕ) (b : Bool) (rest : Bool × List ℕ × ℕ) :
     ∀ bs : List (List Bool), bs.foldl (step G B) (some b, rest) = (some b, rest)
   | [] => rfl
   | _ :: bs => by
@@ -389,7 +389,7 @@ def verifier (x : (Graph × ℕ) × List Bool) : Bool :=
 
 /-- The arcs and the declared vertex entries of a graph are no more than the length of the encoded
 instance. -/
-theorem length_le_length_encode (x : Graph × ℕ) :
+private theorem length_le_length_encode (x : Graph × ℕ) :
     x.1.2.length ≤ (encPair encGraph encNat x).length ∧
       x.1.1.length ≤ (encPair encGraph encNat x).length := by
   have h₁ := length_le_length_encList (encPair encNat encNat) x.1.2
@@ -444,7 +444,7 @@ theorem computableTidilyInPolyTime_moverBits {B : γ → ℕ} {first : γ → Bo
   fun_prop
 
 /-- A move is polynomial-time. -/
-theorem computableTidilyInPolyTime_next :
+private theorem computableTidilyInPolyTime_next :
     ComputableTidilyInPolyTime
       (fun p : (Graph × Play) × List Bool => next p.1.1 p.1.2.2.1 p.1.2.2.2.1 p.1.2.2.2.2 p.2)
       (encPair (encPair encGraph encPlay) (encList encBool)) encPlay := by
@@ -490,7 +490,7 @@ theorem computableTidilyInPolyTime_next :
     (((optionSome encBool).comp (bool_not.comp hfirst)).prod (hfirst.prod (hvis.prod hv)))
 
 /-- A target of an arc is no longer in binary than the encoded graph. -/
-theorem length_encNat_le_of_mem {G : Graph} {e : ℕ × ℕ} (he : e ∈ G.2) :
+private theorem length_encNat_le_of_mem {G : Graph} {e : ℕ × ℕ} (he : e ∈ G.2) :
     (encNat e.2).length ≤ (encGraph G).length := by
   have h₁ := sum_length_le_length_encList (encPair encNat encNat) G.2
   have h₂ := List.le_sum_of_mem (List.mem_map_of_mem (f := fun a =>

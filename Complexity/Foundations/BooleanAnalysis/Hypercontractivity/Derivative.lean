@@ -13,10 +13,10 @@ public import Complexity.Foundations.BooleanAnalysis.Influence
 /-!
 # `L^p` norms of derivatives of Boolean functions
 
-The derivative of a Boolean function read as signs takes the values `0` and `±1`
-(`BitString.abs_derivative_signVal_rpow`), so its `L^p` norm is the `p`-th root of the influence
-(`BitString.lpNorm_derivative_signVal`) [O'Donnell, Section 9.6][ODonnell2014]. This is how the
-Kahn–Kalai–Linial theorem feeds influences into hypercontractivity.
+The derivative of a Boolean function read as signs takes the values `0` and `±1`, so its `L^p`
+norm is the `p`-th root of the influence (`BitString.lpNorm_derivative_signVal`)
+[O'Donnell, Section 9.6][ODonnell2014]. This is how the Kahn–Kalai–Linial theorem feeds
+influences into hypercontractivity.
 
 ## Main results
 
@@ -39,7 +39,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 omit [Fintype ι] in
 /-- A power of the absolute value of the derivative of a Boolean function, read as signs, is the
 absolute value: the derivative takes the values `0` and `±1`. -/
-theorem abs_derivative_signVal_rpow (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) {p : ℝ}
+private theorem abs_derivative_signVal_rpow (f : (ι → Bool) → Bool) (i : ι) (x : ι → Bool) {p : ℝ}
     (hp : p ≠ 0) :
     |derivative i (fun x => signVal (f x)) x| ^ p = |derivative i (fun x => signVal (f x)) x| := by
   simp only [derivative]

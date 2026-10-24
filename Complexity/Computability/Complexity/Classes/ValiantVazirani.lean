@@ -30,7 +30,7 @@ The randomized isolation reduction `ValiantVazirani.reduce` and its amplificatio
 ## The class form
 
 `RPWithOracle A enc` is `RP` relative to the oracle language `A`: `Cslib.Complexity.RP` with
-`ComputableTidilyInPolyTime` replaced by `Cslib.Complexity.ComputableInPolyTimeWithOracle A`, as
+`ComputableInPolyTime` replaced by `Cslib.Complexity.ComputableInPolyTimeWithOracle A`, as
 `PWithOracle` relativizes `P`. For an oracle that is a promise problem, `RPWithPromiseOracle Q encQ
 enc` asks for one algorithm that is correct against every language solving `Q`, whose answers
 outside the promise are arbitrary. Every problem in `NP` lies in `RP` relative to `PromiseUSAT`
@@ -75,8 +75,8 @@ variable {α β : Type}
 /-! ### Randomized polynomial time relative to an oracle -/
 
 /-- The problems decided with one-sided error by polynomial-time machines with oracle `A` reading
-polynomially long random strings: `Cslib.Complexity.RP` with `ComputableTidilyInPolyTime`
-replaced by `ComputableInPolyTimeWithOracle A`, as `PWithOracle` relativizes `P`. -/
+polynomially long random strings: `Cslib.Complexity.RP` with `ComputableInPolyTime` replaced by
+`ComputableInPolyTimeWithOracle A`, as `PWithOracle` relativizes `P`. -/
 def RPWithOracle (A : Set (List Bool)) (enc : α ↪ List Bool) : Set (Set α) :=
   {L | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTimeWithOracle A V (encPair enc encBits) encBool ∧
@@ -153,7 +153,7 @@ private theorem interpret_queryAnyStep (s : List (List Bool) × Bool) :
 
 /-- **Asking every word is strict oracle PPT**: each step copies one word onto the query buffer
 and reads one reply bit, and the list shrinks. -/
-theorem isOraclePPTOn_queryAny :
+private theorem isOraclePPTOn_queryAny :
     IsOraclePPTOn (encList encBits) encBool
       (fun words => OracleComp.interpret ProbOracleComp.query (queryAny words)) := by
   simp only [queryAny, OracleComp.interpret_map, OracleComp.interpret_iterate]

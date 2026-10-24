@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.AtLeast
 public import Complexity.Computability.Circuit.Boolean.Synthesis
 public import Mathlib.Basic.Real.Basic
+import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Potential
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -139,7 +140,7 @@ private theorem sum_ite_eq {j : ℕ} (v : Fin j → Bool) (b : Bool) :
 /-- The margins of the boosting loop when each round's predictor is chosen by `next` from the
 current margins: the margin of `x` after `j` rounds is the number of the first `j` predictors
 that agree with `f` on `x` minus the number that do not. -/
-private noncomputable def margin (next : (BitString n → ℝ) → BooleanFunction n) :
+private def margin (next : (BitString n → ℝ) → BooleanFunction n) :
     ℕ → BitString n → ℝ
   | 0 => 0
   | j + 1 => fun x => margin next j x + vote f (next (margin next j)) x

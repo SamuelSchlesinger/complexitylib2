@@ -52,7 +52,7 @@ variable {L L' : Language} [L.IsRelational] [L'.IsRelational]
 
 /-- Decode a source-only encoding as a canonically ordered structure, when it is well formed and
 has at least two elements. -/
-noncomputable def decode? (v : Vocabulary L) (a : EncodedStructure) : Option (Structure L) :=
+def decode? (v : Vocabulary L) (a : EncodedStructure) : Option (Structure L) :=
   if h : v.WellFormed a ∧ 2 ≤ a.1 then some (decoded v a h.2) else none
 
 theorem decode?_of_admissible (v : Vocabulary L) {a : EncodedStructure} (ha : v.WellFormed a)

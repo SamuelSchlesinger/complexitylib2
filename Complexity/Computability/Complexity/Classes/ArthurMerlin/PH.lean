@@ -103,7 +103,8 @@ theorem computableTidilyInPolyTime_sigmaTwoVerifier {W : α × List Bool → Boo
 
 /-- On a proof followed by the shifts and then a random string `r`, the `Σ₂` verifier accepts iff
 `W` accepts the proof with `r` xor some shift. -/
-theorem sigmaTwoVerifier_append_ofFn {q k p : Polynomial ℕ} {W : α × List Bool → Bool} {a : α}
+private theorem sigmaTwoVerifier_append_ofFn {q k p : Polynomial ℕ} {W : α × List Bool → Bool}
+    {a : α}
     {w : List Bool}
     (hw : w.length = q.eval (enc a).length + k.eval (enc a).length * p.eval (enc a).length)
     (r : BitString (p.eval (enc a).length)) :
@@ -193,7 +194,7 @@ theorem computableTidilyInPolyTime_piTwoVerifier {W : α × List Bool → Bool}
 /-- On the shifts followed by any word `v`, the `Π₂` verifier accepts iff `W` accepts, for each
 shift, the first `p(n)` bits of `v` xor the shift with the corresponding reply read from the rest
 of `v`. -/
-theorem piTwoVerifier_append {k p q : Polynomial ℕ} {W : α × List Bool → Bool} {a : α}
+private theorem piTwoVerifier_append {k p q : Polynomial ℕ} {W : α × List Bool → Bool} {a : α}
     {u : List Bool} (hu : u.length = k.eval (enc a).length * p.eval (enc a).length)
     (v : List Bool) :
     piTwoVerifier enc k p q W (a, u ++ v) = true ↔

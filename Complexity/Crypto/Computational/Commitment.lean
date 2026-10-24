@@ -898,7 +898,7 @@ theorem BitCommitmentScheme.computational_hiding_tidy (h : BitCommitmentScheme) 
 
 /-- **Naor's bit commitment scheme** built from any pseudorandom generator with stretch at least
 `3 * n` [Naor1991]. -/
-noncomputable def PseudorandomGenerator.naorBitCommitment
+def PseudorandomGenerator.naorBitCommitment
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
     (hstretch : ∀ n, 3 * n ≤ length n) :
@@ -922,7 +922,9 @@ noncomputable def PseudorandomGenerator.naorBitCommitment
   computational_hiding _ _ _ hr hb₀ hb₁ := hG.naorCommit_hiding hr.tidy hb₀.tidy hb₁.tidy
 
 /-- **Existence of bit commitments from one-way functions** [Naor1991]: if a one-way function
-exists, then there exists a statistically binding, computationally hiding bit commitment scheme. -/
+exists, then there exists a statistically binding, computationally hiding bit commitment scheme.
+Hiding is in the sense of `BitCommitmentScheme.computational_hiding`: against deterministic
+polynomial-time families of receiver strings, not a stateful randomized malicious receiver. -/
 theorem OneWay.exists_bitCommitmentScheme {f : List Bool → List Bool} (hf : OneWay f) :
     Nonempty BitCommitmentScheme := by
   obtain ⟨generator, hG⟩ := hf.exists_pseudorandomGenerator_three_mul

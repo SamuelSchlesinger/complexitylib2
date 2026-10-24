@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Mathlib.Order.Filter.AtTopBot.Defs
 public import Mathlib.SetTheory.Cardinal.Finite
+import Mathlib.Algebra.BigOperators.Fin
 import Complexity.Computability.Circuit.Boolean.Hastad
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential

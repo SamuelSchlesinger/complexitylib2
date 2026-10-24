@@ -176,7 +176,7 @@ def kernelVec (A : Matrix (Fin r) (Fin n) F) : Fin n → F :=
 
 /-- The family `N` spans exactly the vectors killed by the rows in `R`: each member is killed by
 every row of `R`, and every vector killed by all of them is a combination of the members. -/
-structure SpansKernel (R : Set (Fin n → F)) (N : Fin n → Fin n → F) : Prop where
+private structure SpansKernel (R : Set (Fin n → F)) (N : Fin n → Fin n → F) : Prop where
   /-- Every member of the family is killed by every row. -/
   dotProduct_eq_zero : ∀ a ∈ R, ∀ i, a ⬝ᵥ N i = 0
   /-- Every vector killed by all rows is a combination of the members. -/
@@ -184,7 +184,7 @@ structure SpansKernel (R : Set (Fin n → F)) (N : Fin n → Fin n → F) : Prop
 
 omit [DecidableEq F] in
 /-- The unit vectors span the kernel of the empty set of rows. -/
-theorem spansKernel_single : SpansKernel (∅ : Set (Fin n → F)) fun i => Pi.single i 1 where
+private theorem spansKernel_single : SpansKernel (∅ : Set (Fin n → F)) fun i => Pi.single i 1 where
   dotProduct_eq_zero := by simp
   exists_eq_sum v _ := ⟨v, by
     funext l
@@ -199,7 +199,7 @@ private theorem rowValues_eq_zero_of_pivot (a : Fin n → F) (N : Fin n → Fin 
 
 /-- **One elimination step is correct.** If `N` spans the kernel of the rows `R`, then
 `kernelStep a N` spans the kernel of the rows `R` and `a`. -/
-theorem SpansKernel.kernelStep {R : Set (Fin n → F)} {N : Fin n → Fin n → F}
+private theorem SpansKernel.kernelStep {R : Set (Fin n → F)} {N : Fin n → Fin n → F}
     (hN : SpansKernel R N) (a : Fin n → F) :
     SpansKernel (insert a R) (Cslib.LinearAlgebra.kernelStep a N) where
   dotProduct_eq_zero a' ha' i := by
@@ -226,7 +226,7 @@ theorem SpansKernel.kernelStep {R : Set (Fin n → F)} {N : Fin n → Fin n → 
     rw [this, zero_smul, sub_zero]
 
 /-- After processing the first `k` rows, the family spans their common kernel. -/
-theorem spansKernel_kernelBasisUpTo (A : Matrix (Fin r) (Fin n) F) (k : ℕ) :
+private theorem spansKernel_kernelBasisUpTo (A : Matrix (Fin r) (Fin n) F) (k : ℕ) :
     SpansKernel {a | ∃ l : Fin r, (l : ℕ) < k ∧ a = A l} (kernelBasisUpTo A k) := by
   induction k with
   | zero =>
@@ -259,7 +259,7 @@ theorem spansKernel_kernelBasisUpTo (A : Matrix (Fin r) (Fin n) F) (k : ℕ) :
         exact ⟨l, by omega, rfl⟩
 
 /-- The final family spans the kernel of `A`. -/
-theorem spansKernel_kernelBasis (A : Matrix (Fin r) (Fin n) F) :
+private theorem spansKernel_kernelBasis (A : Matrix (Fin r) (Fin n) F) :
     SpansKernel (Set.range A) (kernelBasis A) := by
   have hset : {a | ∃ l : Fin r, (l : ℕ) < r ∧ a = A l} = Set.range A :=
     Set.ext fun a => ⟨fun ⟨l, _, hl⟩ => ⟨l, hl.symm⟩, fun ⟨l, hl⟩ => ⟨l, l.2, hl.symm⟩⟩

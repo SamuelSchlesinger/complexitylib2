@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.SharpP.Space
 public import Complexity.Computability.Complexity.Classes.ModP
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
-public import Complexity.Computability.Complexity.Classes.Inclusions
+public import Complexity.Computability.Complexity.Classes.Space.Closure
 public import Complexity.Computability.Complexity.Classes.Oracle.Space
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

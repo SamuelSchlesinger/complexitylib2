@@ -124,7 +124,7 @@ noncomputable def decodeLabel (T : (α → Bool) → Bool) : α :=
 
 /-- **Unique decoding**: a table within relative distance `1/4` of the long code of a label decodes
 to that label. -/
-theorem decodeLabel_eq {T : (α → Bool) → Bool} {a : α}
+private theorem decodeLabel_eq {T : (α → Bool) → Bool} {a : α}
     (h : (hammingDist T (longCode a) : ℝ) / 2 ^ Fintype.card α < 1 / 4) :
     decodeLabel T = a := by
   have hex : ∃ a : α, (hammingDist T (longCode a) : ℝ) / 2 ^ Fintype.card α < 1 / 4 := ⟨a, h⟩

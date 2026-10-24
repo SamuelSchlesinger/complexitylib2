@@ -340,7 +340,7 @@ theorem sweep_empty_eq_eval (val : Fin g → Bool) (x : Fin n → Bool) (z : Fin
 
 /-- Construct a `StrictMarginProgram` from a `Program signature n g` whose gates satisfy the unit
 margin condition. -/
-noncomputable def ofProgram (p : Program signature n g)
+def ofProgram (p : Program signature n g)
     (hmargin : ∀ (x : Fin n → Bool) (z : Fin g → Bool) (i : Fin g),
       1 ≤ |(∑ a : Fin n, WeightedThreshold.inputWeight p i a * (x a).toNat) +
         (∑ j : Fin g, WeightedThreshold.gateWeight p i j * (z j).toNat) -
@@ -485,7 +485,7 @@ theorem existsUnique_ilpValid {M : Fin g → ℝ} {x : Fin n → Bool}
 /-! ### Section 11: Backwards priorities, quadratic Boolean energy, and unique sinks -/
 
 /-- Backwards positive priority `λ_i = 1 + ∑_{j > i} λ_j |b_{j, i}|`. -/
-noncomputable def priority (i : Fin g) : ℝ :=
+def priority (i : Fin g) : ℝ :=
   1 + ∑ j ∈ univ.attach,
     if _ : i < j.1 then priority j.1 * |P.gateWeight j.1 i| else 0
 termination_by g - 1 - i.val
@@ -593,7 +593,7 @@ theorem priority_le_pow {W : ℝ} (hW0 : 0 ≤ W)
     exact add_le_add_right (hsum.trans hinj) 1
 
 /-- Quadratic Boolean energy `E_x(z) = - ∑ i, λ_i z_i Q_i(x, z)` (equation (26)). -/
-noncomputable def energy (x : Fin n → Bool) (z : Fin g → Bool) : ℝ :=
+def energy (x : Fin n → Bool) (z : Fin g → Bool) : ℝ :=
   - ∑ i : Fin g, P.priority i * (z i).toNat * P.score x z i
 
 private theorem internalSum_update_true_sub_false (z : Fin g → Bool) (j i : Fin g) :

@@ -76,7 +76,7 @@ theorem repr_fieldOfBits (B : Basis (Fin n) (ZMod 2) F) (a : List Bool) (u : Fin
 theorem fieldOfBits_nil (B : Basis (Fin n) (ZMod 2) F) : fieldOfBits B [] = 0 := by
   simp [fieldOfBits]
 
-theorem bitEquiv_symm_foldl_xor (l : List Bool) :
+private theorem bitEquiv_symm_foldl_xor (l : List Bool) :
     bitEquiv.symm (l.foldl xor false) = (l.map bitEquiv.symm).sum := by
   rw [← map_list_sum]
   congr 1
@@ -287,7 +287,7 @@ private theorem getD_take_drop (x : List Bool) {n u : ℕ} (hu : u < n) (i : ℕ
   rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_take_of_lt hu,
     List.getElem?_drop]
 
-theorem readField_blockPos (B : Basis (Fin n) (ZMod 2) F) {r N : ℕ} (h : r * n ≤ N)
+private theorem readField_blockPos (B : Basis (Fin n) (ZMod 2) F) {r N : ℕ} (h : r * n ≤ N)
     (x : List Bool) (i : Fin r) :
     readField B (blockPos h) (ofList N x) i = fieldOfBits B ((x.drop (n * i)).take n) := by
   refine Finset.sum_congr rfl fun u _ => ?_

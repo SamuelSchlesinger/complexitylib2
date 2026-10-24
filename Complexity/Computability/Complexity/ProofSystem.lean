@@ -68,7 +68,6 @@ that instance when the verifier and certificate-length checks pass, and a fixed 
   exactly when a `coNP`-complete set has a polynomially bounded proof system.
 * `Cslib.Complexity.ProofSystem.NP_eq_coNP_iff_exists_polynomiallyBounded`: `NP = coNP` exactly
   when `UNSAT` has a polynomially bounded proof system [CookReckhow1979].
-* `Cslib.Complexity.NP_eq_coNP_iff_coNP_subset_NP`: `NP = coNP` exactly when `coNP ⊆ NP`.
 
 ## References
 
@@ -84,16 +83,6 @@ namespace Cslib.Complexity
 open Turing.MultiTapeTM Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 variable {α : Type} {enc : α ↪ List Bool} {L : Set α}
-
-/-- `NP = coNP`, for problems with every encoding of their instances, exactly when `coNP ⊆ NP`
-for all of them. -/
-theorem NP_eq_coNP_iff_coNP_subset_NP :
-    (∀ {γ : Type} (encC : γ ↪ List Bool), NP encC = coNP encC) ↔
-      ∀ {γ : Type} (encC : γ ↪ List Bool), coNP encC ⊆ NP encC := by
-  refine ⟨fun h _ encC => (h encC).ge, fun h _ encC => ?_⟩
-  refine Set.Subset.antisymm (fun A hA => ?_) (h encC)
-  rw [mem_coNP]
-  exact h encC (by rwa [mem_coNP, compl_compl])
 
 /-- A **proof system** for `L` [CookReckhow1979]: a function, computable in polynomial time, from
 words onto `L`. A word `π` is a proof of `P π`; every word proves a member of `L`, and every member

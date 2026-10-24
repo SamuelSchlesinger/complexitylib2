@@ -250,7 +250,7 @@ noncomputable def atomsOf (e : M ≃ Fin n) : Atom L n → Bool :=
   fun a => decide (Structure.RelMap a.1.2 (e.symm ∘ a.2))
 
 /-- An enumeration of `M` is an isomorphism onto the structure with the atomic facts of `M`. -/
-noncomputable def equivModel (e : M ≃ Fin n) : M ≃[L] Model (atomsOf (L := L) e) where
+def equivModel (e : M ≃ Fin n) : M ≃[L] Model (atomsOf (L := L) e) where
   toEquiv := e
   map_fun' f := isEmptyElim f
   map_rel' R t := by

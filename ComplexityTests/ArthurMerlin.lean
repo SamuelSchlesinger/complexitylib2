@@ -8,7 +8,7 @@ import Complexity.Computability.Complexity.Classes.ArthurMerlin.Collapse
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.GraphNonIsomorphism
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.PH
 import Complexity.Computability.Complexity.Classes.ArthurMerlin.SetLowerBound
-import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.BPP
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List

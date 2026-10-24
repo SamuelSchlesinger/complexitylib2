@@ -362,7 +362,7 @@ theorem realize_toInterpretation_rel_of_nontrivial [Nontrivial M] {n : ℕ}
 
 /-- On a structure with at most one element, the compiled interpretation is the interpretation
 `S`. -/
-noncomputable def subsingletonEquiv [L'.IsRelational] [Subsingleton M] :
+def subsingletonEquiv [L'.IsRelational] [Subsingleton M] :
     (I.toInterpretation S).Model M ≃[L'] S.Model M where
   toFun c := ⟨fun _ => c.1 p, (realize_toInterpretation_domain_of_subsingleton S c.1).1 c.2⟩
   invFun x := ⟨fun _ => x.1 (), (realize_toInterpretation_domain_of_subsingleton S _).2 <| by

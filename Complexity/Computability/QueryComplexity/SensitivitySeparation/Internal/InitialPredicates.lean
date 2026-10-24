@@ -65,7 +65,7 @@ def baseBlock {M L : ℕ} (j : Fin M) : Finset (Fin M × Fin L) :=
   simp [baseBlock]
 
 /-- Each row `baseBlock j` of `Fin M × Fin L` has exactly `L` coordinates. -/
-theorem baseBlock_card {M L : ℕ} (j : Fin M) : (baseBlock (L := L) j).card = L := by
+private theorem baseBlock_card {M L : ℕ} (j : Fin M) : (baseBlock (L := L) j).card = L := by
   have h : (baseBlock (L := L) j).card = (Finset.univ : Finset (Fin L)).card := by
     apply Finset.card_bij (fun p _ => p.2)
     · intro p _
@@ -92,14 +92,14 @@ theorem baseBlock_disjoint {M L : ℕ} :
   exact hij (hi.symm.trans hj)
 
 /-- Flipping row `j` of the all-`false` input yields `blockCenter j`. -/
-theorem flip_zero_baseBlock {M L : ℕ} (j : Fin M) :
+private theorem flip_zero_baseBlock {M L : ℕ} (j : Fin M) :
     flip (fun _ : Fin M × Fin L => false) (baseBlock j) = blockCenter j := by
   ext p
   simp [flip_apply, blockCenter]
 
 /-- Each row center `blockCenter j` is at Hamming distance `L` from the all-`false`
 input. -/
-theorem hammingDist_zero_blockCenter {M L : ℕ} (j : Fin M) :
+private theorem hammingDist_zero_blockCenter {M L : ℕ} (j : Fin M) :
     hammingDist (fun _ : Fin M × Fin L => false) (blockCenter j) = L := by
   have hs : (Finset.univ.filter fun p : Fin M × Fin L => false ≠ blockCenter j p) =
       baseBlock j := by
@@ -108,7 +108,7 @@ theorem hammingDist_zero_blockCenter {M L : ℕ} (j : Fin M) :
   rw [hammingDist, hs, baseBlock_card]
 
 /-- Distinct row centers are at Hamming distance `2 * L`. -/
-theorem hammingDist_blockCenter {M L : ℕ} (i j : Fin M) (hij : i ≠ j) :
+private theorem hammingDist_blockCenter {M L : ℕ} (i j : Fin M) (hij : i ≠ j) :
     hammingDist (blockCenter (L := L) i) (blockCenter j) = 2 * L := by
   have hs : (Finset.univ.filter fun p : Fin M × Fin L =>
       blockCenter i p ≠ blockCenter j p) =

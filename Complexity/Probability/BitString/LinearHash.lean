@@ -94,7 +94,7 @@ theorem isTwoUniversal (n m : ℕ) :
     ENNReal.toReal_inv, ENNReal.toReal_natCast] using h.le
 
 /-- Any initial block of a uniform matrix is itself uniform. Unused rows may remain public. -/
-theorem uniform_prefix {n m count : ℕ} (h : m ≤ count) :
+private theorem uniform_prefix {n m count : ℕ} (h : m ≤ count) :
     (PMF.uniformOfFintype (Fin count → BitString n)).map
         (fun rows => rows ∘ Fin.castLE h) =
       PMF.uniformOfFintype (Fin m → BitString n) := by

@@ -49,12 +49,6 @@ namespace Cslib.BitString
 
 open Finset
 
-/-- The sign `(-1) ^ b` of a bit, as a polynomial in the bit: `1 - 2 b`. -/
-theorem neg_one_pow_toNat_eq_one_sub_two_mul_bitVal {R : Type*} [CommRing R] (b : Bool) :
-    (-1 : R) ^ b.toNat = 1 - 2 * bitVal R b := by
-  cases b <;> simp only [Bool.toNat_false, Bool.toNat_true, pow_zero, pow_one, bitVal_false,
-    bitVal_true] <;> ring
-
 variable {F : Type*} [Field F] {ι : Type*}
 
 variable (F ι) in

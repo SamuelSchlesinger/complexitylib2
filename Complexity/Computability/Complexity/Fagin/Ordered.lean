@@ -61,7 +61,7 @@ theorem Definable.esoDefinable {L : Language.{u, v}} {K : Query L} (hK : Definab
 
 /-- The existing fixed-sentence encoding is exactly the new arbitrary-query encoding applied
 to the class defined by that sentence. Its size and shape rejection behavior is unchanged. -/
-theorem encodedLanguage_sentence {L : Language} [L.IsRelational] (v : Vocabulary L)
+private theorem encodedLanguage_sentence {L : Language} [L.IsRelational] (v : Vocabulary L)
     (φ : (language L).Sentence) :
     Query.encodedLanguage {M : Ordered.Structure L | φ.Realize M} v =
       queryLanguage v φ := rfl
@@ -76,7 +76,7 @@ theorem Definable.encodedLanguage_mem_NP {L : Language} [L.IsRelational] (v : Vo
 
 /-- The one-dimensional interpretation retaining the input relations and reading strict order
 from canonical non-strict order. -/
-def strictOrderInterpretation (L : Language.{u, v}) :
+private def strictOrderInterpretation (L : Language.{u, v}) :
     FO.Interpretation (language L) (L.sum ESO.orderLanguage) Unit where
   domain := ⊤
   rel := fun {n} r => match r with
@@ -88,7 +88,7 @@ def strictOrderInterpretation (L : Language.{u, v}) :
         fun i => .var (if i = 0 then 1 else 0, ()))
 
 /-- The canonical strict-order structure interpreted above is the original ordered universe. -/
-def strictOrderEquiv {L : Language.{u, v}} [L.IsRelational] (M : Ordered.Structure L) :
+private def strictOrderEquiv {L : Language.{u, v}} [L.IsRelational] (M : Ordered.Structure L) :
     letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2)
       (ESO.orderRelOfEquiv (Equiv.refl M));
     (strictOrderInterpretation L).Model M ≃[L.sum ESO.orderLanguage] M := by
@@ -112,7 +112,7 @@ def strictOrderEquiv {L : Language.{u, v}} [L.IsRelational] (M : Ordered.Structu
 
 /-- Pulling a strict-order ESO sentence into the public ordered language preserves its truth
 on the fixed canonical order. -/
-theorem realize_onESOSentence_strictOrder {L : Language.{u, v}} [L.IsRelational]
+private theorem realize_onESOSentence_strictOrder {L : Language.{u, v}} [L.IsRelational]
     (M : Ordered.Structure L) (Φ : ESO.Sentence (L.sum ESO.orderLanguage)) :
     ((strictOrderInterpretation L).onESOSentence Φ).Realize M ↔
       letI := ESO.varLanguage.structure (arity := fun _ : Unit => 2)

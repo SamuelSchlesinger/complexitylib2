@@ -102,7 +102,7 @@ theorem railBitString_eq_append_literals (x : BitString n) (k : Fin (2 * n + 1))
 
 /-- A monotone circuit producing the dual-rail inputs from the literals, using a single constant
 gate and no conjunction. -/
-noncomputable def literalsRailCircuit (n : ℕ) : Circuit signature (n + n) (2 * n + 1) :=
+def literalsRailCircuit (n : ℕ) : Circuit signature (n + n) (2 * n + 1) :=
   (Circuit.wiring _ railSelect).comp
     ((Circuit.wiring _ id).append (const true : Formula _ (n + n)).toCircuit)
 

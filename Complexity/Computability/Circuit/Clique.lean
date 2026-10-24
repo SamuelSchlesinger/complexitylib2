@@ -60,7 +60,7 @@ theorem edgeCount_eq_choose (n : ℕ) : edgeCount n = n.choose 2 := by
 noncomputable def edgeEquiv (n : ℕ) : Edge n ≃ Fin (edgeCount n) := Fintype.equivFin _
 
 /-- The graph of an input: its edges are the possible edges set to `true`. -/
-noncomputable def graph (x : Fin (edgeCount n) → Bool) : SimpleGraph (Fin n) :=
+def graph (x : Fin (edgeCount n) → Bool) : SimpleGraph (Fin n) :=
   SimpleGraph.fromEdgeSet {e | ∃ h : ¬e.IsDiag, x (edgeEquiv n ⟨e, h⟩) = true}
 
 /-- The input `x` contains all edges between the vertices of `s`. -/

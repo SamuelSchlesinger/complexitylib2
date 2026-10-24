@@ -75,7 +75,7 @@ structure ActivationOp where
 abbrev activationSignature : Signature := ⟨ActivationOp, ActivationOp.arity⟩
 
 /-- A gate applies its scalar activation to its weighted sum. -/
-noncomputable def activationInterpretation : Interpretation activationSignature Bool :=
+def activationInterpretation : Interpretation activationSignature Bool :=
   fun op x => op.activate (∑ a, op.weight a * (x a).toNat)
 
 /-- A threshold gate is the activation `t ↦ decide (threshold ≤ t)`. -/

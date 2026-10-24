@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.BooleanAnalysis.Fourier
+import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Tactic.Ring
 

@@ -145,7 +145,7 @@ theorem eq_of_covering {r : ℕ} (k : Fin r → ℕ) (hk : StrictAnti k) (hk0 : 
 
 /-- **Averaging**: some `t`-element subset `I` of `S` carries at least a `t / |S|` share of
 `∑_{i ∈ S} d i`. -/
-theorem exists_subset_card_eq_mul_sum_le {ι : Type*} (S : Finset ι) (d : ι → ℕ)
+private theorem exists_subset_card_eq_mul_sum_le {ι : Type*} (S : Finset ι) (d : ι → ℕ)
     {t : ℕ} (ht : t ≤ S.card) :
     ∃ I ⊆ S, I.card = t ∧ t * ∑ i ∈ S, d i ≤ S.card * ∑ i ∈ I, d i := by
   classical

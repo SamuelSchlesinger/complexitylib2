@@ -91,7 +91,7 @@ structure Layout where
   arity_le : ∀ i, Φ.arity i ≤ degree
 
 /-- Every sentence has a layout, numbering its finitely many relation variables. -/
-noncomputable def Layout.ofFinite : Layout Φ where
+private noncomputable def Layout.ofFinite : Layout Φ where
   blocks := Nat.card Φ.Var
   block := (Finite.equivFin Φ.Var).toEmbedding
   degree := ⨆ i, Φ.arity i
@@ -116,7 +116,7 @@ for an input of encoded length `N`. -/
 def position (N : ℕ) (i : Φ.Var) (idx : ℕ) : ℕ :=
   ℓ.block i * N ^ ℓ.degree + idx
 
-theorem position_lt (N : ℕ) (i : Φ.Var) {idx : ℕ} (h : idx < N ^ ℓ.degree) :
+private theorem position_lt (N : ℕ) (i : Φ.Var) {idx : ℕ} (h : idx < N ^ ℓ.degree) :
     ℓ.position N i idx < ℓ.blocks * N ^ ℓ.degree := by
   unfold position
   calc ℓ.block i * N ^ ℓ.degree + idx < (ℓ.block i + 1) * N ^ ℓ.degree := by
@@ -140,7 +140,7 @@ theorem position_injective (N : ℕ) {i j : Φ.Var} {idx idx' : ℕ} (h : idx < 
 
 /-- The number of tuples of the arity of a relation variable is at most the block size, for inputs
 of cardinality at most `N`. -/
-theorem pow_arity_le {n N : ℕ} (hn : n ≤ N) (hN : 0 < N) (i : Φ.Var) :
+private theorem pow_arity_le {n N : ℕ} (hn : n ≤ N) (hN : 0 < N) (i : Φ.Var) :
     n ^ Φ.arity i ≤ N ^ ℓ.degree :=
   (Nat.pow_le_pow_left hn _).trans (Nat.pow_le_pow_right hN (ℓ.arity_le i))
 
@@ -152,17 +152,18 @@ def certRel (n N : ℕ) (w : List Bool) (i : Φ.Var) : Set (Fin (Φ.arity i) →
 open scoped Classical in
 /-- The certificate encoding relations `R` on `Fin n`, for inputs of encoded length `N`: the bit
 at the position of a tuple is its membership in the relation, and the other bits are clear. -/
-noncomputable def certificate (n N : ℕ) (R : ∀ i, Set (Fin (Φ.arity i) → Fin n)) : List Bool :=
+private noncomputable def certificate (n N : ℕ) (R : ∀ i, Set (Fin (Φ.arity i) → Fin n))
+    : List Bool :=
   (List.range (ℓ.blocks * N ^ ℓ.degree)).map fun pos =>
     decide (∃ (i : Φ.Var) (x : Fin (Φ.arity i) → Fin n),
       pos = ℓ.position N i (tupleIndex x) ∧ x ∈ R i)
 
-theorem length_certificate (n N : ℕ) (R : ∀ i, Set (Fin (Φ.arity i) → Fin n)) :
+private theorem length_certificate (n N : ℕ) (R : ∀ i, Set (Fin (Φ.arity i) → Fin n)) :
     (ℓ.certificate n N R).length = ℓ.blocks * N ^ ℓ.degree := by
   simp [certificate]
 
 /-- Reading the certificate of `R` gives back `R`, when every tuple has a bit. -/
-theorem certRel_certificate {n N : ℕ} (hn : n ≤ N) (hN : 0 < N)
+private theorem certRel_certificate {n N : ℕ} (hn : n ≤ N) (hN : 0 < N)
     (R : ∀ i, Set (Fin (Φ.arity i) → Fin n)) : ℓ.certRel n N (ℓ.certificate n N R) = R := by
   funext i
   ext x
@@ -235,7 +236,7 @@ section Correctness
 
 variable {v} {a : EncodedStructure} {N : ℕ} {w : List Bool}
 
-theorem termValue_ofFn {k : ℕ} (xs : Fin k → Fin a.1)
+private theorem termValue_ofFn {k : ℕ} (xs : Fin k → Fin a.1)
     (t : (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)) :
     termValue (Φ := Φ) (List.ofFn fun j => (xs j : ℕ)) t =
       Fin.val (Sum.elim (default : Empty → Fin a.1) xs (FO.termVar t)) := by
@@ -244,7 +245,7 @@ theorem termValue_ofFn {k : ℕ} (xs : Fin k → Fin a.1)
   · exact e.elim
   · simp [varPos]
 
-theorem termsIndex_ofFn {k : ℕ} (xs : Fin k → Fin a.1) :
+private theorem termsIndex_ofFn {k : ℕ} (xs : Fin k → Fin a.1) :
     ∀ {l : ℕ} (ts : Fin l → (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)),
       termsIndex (Φ := Φ) a.1 (List.ofFn fun j => (xs j : ℕ)) ts =
         tupleIndex fun j => Sum.elim (default : Empty → Fin a.1) xs (FO.termVar (ts j))
@@ -265,7 +266,7 @@ theorem relBit_eq_true_iff {l : ℕ} (R : (L.sum (varLanguage Φ.arity)).Relatio
   · change _ ↔ y ∘ Fin.cast r.2 ∈ ℓ.certRel a.1 N w r.1
     simp only [certRel, Set.mem_ofPred_eq, relBit, tupleIndex_comp_cast]
 
-theorem ofFn_val_snoc {k : ℕ} (xs : Fin k → Fin a.1) (x : Fin a.1) :
+private theorem ofFn_val_snoc {k : ℕ} (xs : Fin k → Fin a.1) (x : Fin a.1) :
     (List.ofFn fun j => ((Fin.snoc xs x : Fin (k + 1) → Fin a.1) j : ℕ)) =
       (List.ofFn fun j => (xs j : ℕ)) ++ [(x : ℕ)] := by
   rw [List.ofFn_succ', List.concat_eq_append]
@@ -377,7 +378,7 @@ theorem _root_.Cslib.Logic.Vocabulary.computableTidilyInPolyTime_table (r : Σ n
     (const (encMid := encUnary) (v.index r)))
 
 /-- The cardinality of the input, in unary. -/
-theorem computableTidilyInPolyTime_card {a : γ → EncodedStructure}
+private theorem computableTidilyInPolyTime_card {a : γ → EncodedStructure}
     (ha : ComputableTidilyInPolyTime a encIn encStructure) :
     ComputableTidilyInPolyTime (fun x => (a x).1) encIn encUnary :=
   (fst encUnary (encList encBits)).comp ha

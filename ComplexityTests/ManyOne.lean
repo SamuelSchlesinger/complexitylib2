@@ -9,7 +9,7 @@ import Complexity.Computability.Complexity.Classes.SharpP.Completeness
 import Complexity.Computability.Complexity.Classes.TFNP
 import Complexity.Computability.Complexity.Parameterized
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import Complexity.Computability.PCP.Approximation
+import Complexity.Computability.Complexity.Classes.Promise.Reduction
 
 /-! Many-one reductions by a class of maps: polynomial-time and logspace reducibility, hardness and
 completeness still unfold to their `∃` and `∀` forms, uses of the generic hardness lemmas, and axiom

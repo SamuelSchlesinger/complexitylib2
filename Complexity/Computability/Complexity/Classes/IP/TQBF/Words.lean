@@ -224,7 +224,7 @@ theorem lt_of_mem_decodeReply [NeZero p] {D : ℕ} {word : List Bool} {a : ℕ}
   obtain ⟨row, -, rfl⟩ := List.mem_map.1 ha
   exact Nat.mod_lt _ (NeZero.pos p)
 
-theorem lt_two_pow_width {a : ℕ} (hp : a < p) : a < 2 ^ width p :=
+private theorem lt_two_pow_width {a : ℕ} (hp : a < p) : a < 2 ^ width p :=
   hp.trans (Nat.lt_pow_succ_log_self (by norm_num) p)
 
 /-- The rows of the honest encoding of `l` are the bits of its elements. -/

@@ -92,7 +92,7 @@ theorem weightedWalk_succ (t : ℕ) (h : ℕ → V → ℝ) :
   rfl
 
 /-- The weighted walk at `v` carries the weight `h 0 v` of its start. -/
-theorem weightedWalk_eq_mul (t : ℕ) (h : ℕ → V → ℝ) (v : V) :
+private theorem weightedWalk_eq_mul (t : ℕ) (h : ℕ → V → ℝ) (v : V) :
     ∃ c, G.weightedWalk t h v = h 0 v * c := by
   cases t with
   | zero => exact ⟨1, (mul_one _).symm⟩

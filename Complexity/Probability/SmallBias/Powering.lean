@@ -74,14 +74,14 @@ variable (bits : F ≃+ BitString m) {n : ℕ}
 omit [Fintype F] in
 /-- The character of `S` at a point of the powering space is the sign of the inner product of
 `bits (∑_{i ∈ S} x ^ i)` with `bits y`. -/
-theorem chi_powering (S : Finset (Fin n)) (s : F × F) :
+private theorem chi_powering (S : Finset (Fin n)) (s : F × F) :
     chi ℝ S (powering bits n s) = signVal (bits (∑ i ∈ S, s.1 ^ (i : ℕ)) ⬝ᵥ bits s.2) := by
   rw [chi_eq_signVal_parityOn, parityOn_eq_sum, map_sum, sum_dotProduct]
   rfl
 
 /-- The inner product of `bits a` with the bits of a uniformly random field element is unbiased
 unless `a = 0`. -/
-theorem expect_signVal_dotProduct [DecidableEq F] (a : F) :
+private theorem expect_signVal_dotProduct [DecidableEq F] (a : F) :
     𝔼 y, signVal (bits a ⬝ᵥ bits y) = if a = 0 then 1 else 0 := by
   rw [Fintype.expect_equiv bits.toEquiv (fun y => signVal (bits a ⬝ᵥ bits y))
     (fun v => signVal (bits a ⬝ᵥ v)) fun _ => rfl]
@@ -102,7 +102,8 @@ theorem bias_powering [DecidableEq F] (S : Finset (Fin n)) :
 
 /-- A nonempty sum of distinct powers `x ^ i`, `i < n`, vanishes at fewer than `n` points of a
 field. -/
-theorem card_filter_sum_pow_eq_zero_le [DecidableEq F] {S : Finset (Fin n)} (hS : S.Nonempty) :
+private theorem card_filter_sum_pow_eq_zero_le [DecidableEq F] {S : Finset (Fin n)}
+    (hS : S.Nonempty) :
     #{x : F | ∑ i ∈ S, x ^ (i : ℕ) = 0} ≤ n - 1 := by
   classical
   set P : Polynomial F := ∑ i ∈ S, Polynomial.X ^ (i : ℕ)

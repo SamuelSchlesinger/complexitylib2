@@ -105,6 +105,7 @@ import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
 import ComplexityTests.Crypto.MerkleDamgard
+import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
 import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature

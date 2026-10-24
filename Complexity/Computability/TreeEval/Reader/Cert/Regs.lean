@@ -69,12 +69,12 @@ theorem set_inSpace {R : α → Regs} {t : α → Fin 3} {l : α → List ℕ}
   generalize t x = r
   fin_cases r <;> rfl
 
-theorem length_mulMod_le (p a v : ℕ) :
+private theorem length_mulMod_le (p a v : ℕ) :
     (encNat (mulMod p a v)).length ≤ (encNat p).length + (encNat a).length + (encNat v).length :=
   (ComputableTidilyInO.length_encNat_mono (Nat.mod_le _ _)).trans
     ((length_encNat_mul_le a v).trans (by omega))
 
-theorem length_encList_map_mulMod_le (p a : ℕ) (l : List ℕ) :
+private theorem length_encList_map_mulMod_le (p a : ℕ) (l : List ℕ) :
     (encList encNat (l.map (mulMod p a))).length ≤
       (encList encNat l).length + l.length * (2 * ((encNat p).length + (encNat a).length)) := by
   induction l with
@@ -153,11 +153,11 @@ theorem modifyAt_inSpace {l : α → List ℕ} {i p c : α → ℕ}
   nlinarith
 
 /-- A step of subtracting `c` times the sums `acc` from a register, on `((p, c, acc), i, out)`. -/
-def subStep (s : (ℕ × ℕ × List ℕ) × ℕ × List ℕ) (v : ℕ) : (ℕ × ℕ × List ℕ) × ℕ × List ℕ :=
+private def subStep (s : (ℕ × ℕ × List ℕ) × ℕ × List ℕ) (v : ℕ) : (ℕ × ℕ × List ℕ) × ℕ × List ℕ :=
   (s.1, s.2.1 + 1, s.2.2 ++ [addMod s.1.1 v (negMod s.1.1 (mulMod s.1.1 s.1.2.1
     (s.1.2.2.getD s.2.1 0)))])
 
-theorem foldl_subStep (p c : ℕ) (acc l : List ℕ) (j : ℕ) (out : List ℕ) :
+private theorem foldl_subStep (p c : ℕ) (acc l : List ℕ) (j : ℕ) (out : List ℕ) :
     l.foldl subStep ((p, c, acc), j, out) = ((p, c, acc), j + l.length, out ++ l.mapIdx fun i v =>
       addMod p v (negMod p (mulMod p c (acc.getD (j + i) 0)))) := by
   induction l generalizing j out with
@@ -171,7 +171,7 @@ theorem foldl_subStep (p c : ℕ) (acc l : List ℕ) (j : ℕ) (out : List ℕ) 
       Prod.mk.injEq, true_and, and_true]
     omega
 
-theorem subtractSums_eq (p c : ℕ) (t : Fin 3) (acc : List ℕ) (R : Regs) :
+private theorem subtractSums_eq (p c : ℕ) (t : Fin 3) (acc : List ℕ) (R : Regs) :
     subtractSums p c t acc R = R.set t (((R.get t).foldl subStep ((p, c, acc), 0, [])).2.2) := by
   rw [foldl_subStep, subtractSums]
   congr 1
@@ -180,13 +180,14 @@ theorem subtractSums_eq (p c : ℕ) (t : Fin 3) (acc : List ℕ) (R : Regs) :
   simp [List.getElem_mapIdx, List.getD_eq_getElem?_getD, hi]
 
 /-- The encoding of the parameters `(p, c, acc)` of `subStep`. -/
-abbrev encSubPar : ℕ × ℕ × List ℕ ↪ List Bool := encPair encNat (encPair encNat (encList encNat))
+private abbrev encSubPar : ℕ × ℕ × List ℕ ↪ List Bool := encPair encNat
+    (encPair encNat (encList encNat))
 
 /-- The encoding of the states of `subStep`. -/
-abbrev encSubState : (ℕ × ℕ × List ℕ) × ℕ × List ℕ ↪ List Bool :=
+private abbrev encSubState : (ℕ × ℕ × List ℕ) × ℕ × List ℕ ↪ List Bool :=
   encPair encSubPar (encPair encNat (encList encNat))
 
-theorem length_subElem_le (p c v a : ℕ) :
+private theorem length_subElem_le (p c v a : ℕ) :
     (encNat (addMod p v (negMod p (mulMod p c a)))).length ≤ (encNat p).length + (encNat v).length
     := by
   rcases Nat.eq_zero_or_pos p with rfl | hp
@@ -194,7 +195,7 @@ theorem length_subElem_le (p c v a : ℕ) :
   · have := ComputableTidilyInO.length_encNat_mono (Nat.mod_lt (v + negMod p (mulMod p c a)) hp).le
     simp only [addMod]; omega
 
-theorem subStep_inSpace :
+private theorem subStep_inSpace :
     ComputableTidilyInSpace (fun q : ((ℕ × ℕ × List ℕ) × ℕ × List ℕ) × ℕ => subStep q.1 q.2)
       (encPair encSubState encNat) encSubState
       fun q => 64 * ((encPair encSubState encNat q).length + 1) := by
@@ -220,7 +221,7 @@ theorem subStep_inSpace :
   have hsucc := budget_comp_lin natSucc linear_succ hj
   exact budget_prod hpar (budget_prod hsucc happ)
 
-theorem length_encList_mapIdx_le (l : List ℕ) (f : ℕ → ℕ → ℕ) (P : ℕ)
+private theorem length_encList_mapIdx_le (l : List ℕ) (f : ℕ → ℕ → ℕ) (P : ℕ)
     (hf : ∀ i v, (encNat (f i v)).length ≤ P + (encNat v).length) :
     (encList encNat (l.mapIdx f)).length ≤ (encList encNat l).length + l.length * (2 * P) := by
   induction l generalizing f with
@@ -233,7 +234,7 @@ theorem length_encList_mapIdx_le (l : List ℕ) (f : ℕ → ℕ → ℕ) (P : �
     nlinarith
 
 /-- **The register with `c` times the sums subtracted**, from `((p, c, acc), r)`. -/
-theorem subtractList_inSpace :
+private theorem subtractList_inSpace :
     ComputableTidilyInSpace
       (fun q : (ℕ × ℕ × List ℕ) × List ℕ => (q.2.foldl subStep (q.1, 0, [])).2.2)
       (encPair encSubPar (encList encNat)) (encList encNat)

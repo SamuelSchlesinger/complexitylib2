@@ -346,7 +346,7 @@ theorem length_encStructurePrefix {a : EncodedStructure} {m : ℕ} (hm : m ≤ a
   rw [encStructurePrefix, htake, List.length_append, length_frame, length_flatMap_frame,
     tableStart, encUnary_apply, List.length_replicate]
 
-theorem length_encStructurePrefix_le (a : EncodedStructure) {m : ℕ} (hm : m ≤ v.count) :
+private theorem length_encStructurePrefix_le (a : EncodedStructure) {m : ℕ} (hm : m ≤ v.count) :
     (v.encStructurePrefix a m).length ≤ (v.encStructurePrefix a v.count).length := by
   simp only [encStructurePrefix, List.length_append]
   exact Nat.add_le_add_left (((List.take_sublist_take_left hm).flatMap frame).length_le) _

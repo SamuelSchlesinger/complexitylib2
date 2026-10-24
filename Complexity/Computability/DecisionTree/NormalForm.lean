@@ -94,7 +94,7 @@ private theorem eval_lookup {p : Term ι} {i : ι} {b : Bool} (h : p.lookup i = 
     by_cases hji : i = j
     · subst hji
       simp only [BEq.rfl, Option.some.injEq] at h
-      simpa [Literal.eval, h] using hx.1
+      simpa [h] using hx.1
     · have hne : (i == j) = false := by simpa using hji
       rw [hne] at h
       exact ih h hx.2

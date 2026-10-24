@@ -68,7 +68,7 @@ private theorem solvedBy_of_computes (hC : ∀ n, (C n).Computes interpretation 
     Bool.eq_false_iff.2 fun h => Set.disjoint_right.1 hno hw ((eval_eq_true_iff hC w).1 h)⟩
 
 /-- The language accepted by a family of circuits with one output. -/
-private noncomputable def familyLanguage (C : ∀ n, Circuit signature n 1) : Language Bool :=
+private def familyLanguage (C : ∀ n, Circuit signature n 1) : Language Bool :=
   Language.ofSlices fun n x => (C n).eval interpretation x 0
 
 private theorem computes_familyLanguage (n : ℕ) :

@@ -11,6 +11,7 @@ public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.MapLines
 public import Complexity.Computability.Circuit.SimulationDepth
+import Mathlib.Algebra.BigOperators.Fin
 import Complexity.Computability.Circuit.Program
 import Complexity.Computability.Circuit.Simulation
 import Complexity.Foundations.Data.Nat.PolynomialBound.Log

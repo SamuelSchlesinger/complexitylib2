@@ -116,7 +116,7 @@ theorem card_toFinset_vertices_toIndependentSet {φ : CNF ℕ} (h3 : ∀ c ∈ �
     (Nat.pair_eq_pair.1 h).2, Finset.card_product, Finset.card_range, Finset.card_range,
     Nat.mul_comm]
 
-theorem toIndependentSet_snd (φ : CNF ℕ) : (toIndependentSet φ).2 = φ.length :=
+private theorem toIndependentSet_snd (φ : CNF ℕ) : (toIndependentSet φ).2 = φ.length :=
   rfl
 
 /-- **The independence number of Karp's graph is at most the largest number of clauses an

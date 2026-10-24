@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP.Derandomization
 public import Complexity.Computability.Complexity.HardnessEncoding.PolyTime
-import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.BPP
 
 /-!
 # `P = BPP` from exponential worst-case circuit lower bounds

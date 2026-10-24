@@ -71,13 +71,13 @@ def bodyLength (ℓ : ℕ) : ℕ → ℕ
   | d + 1 => tableLength ℓ + 2 * bodyLength ℓ d
 
 /-- A gate table on `ℓ ≥ 1` bits has at least `2 ^ ℓ` bits. -/
-theorem two_pow_le_tableLength {ℓ : ℕ} (hℓ : 1 ≤ ℓ) : 2 ^ ℓ ≤ tableLength ℓ :=
+private theorem two_pow_le_tableLength {ℓ : ℕ} (hℓ : 1 ≤ ℓ) : 2 ^ ℓ ≤ tableLength ℓ :=
   calc 2 ^ ℓ ≤ 4 ^ ℓ := Nat.pow_le_pow_left (by decide) ℓ
     _ = 4 ^ ℓ * 1 := (Nat.mul_one _).symm
     _ ≤ 4 ^ ℓ * ℓ := Nat.mul_le_mul_left _ hℓ
 
 /-- The body of a height-`H` tree has at least `2 ^ H * ℓ` bits from its leaves alone. -/
-theorem two_pow_mul_le_bodyLength (ℓ H : ℕ) : 2 ^ H * ℓ ≤ bodyLength ℓ H := by
+private theorem two_pow_mul_le_bodyLength (ℓ H : ℕ) : 2 ^ H * ℓ ≤ bodyLength ℓ H := by
   induction H with
   | zero => simp [bodyLength]
   | succ d ih => simp only [bodyLength, Nat.pow_succ', Nat.mul_assoc]; omega

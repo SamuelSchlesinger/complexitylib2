@@ -40,13 +40,11 @@ containing `i` (`BitString.mul_noiseStability_derivative`,
 
   `∑_{S ∋ i} 3 ^ (-|S|) F̂(S) ^ 2 = 1/3 · Stab_{1/3}[Dᵢ F] ≤ 1/3 · Infᵢ[F] ^ (3/2)`.
 
-The variance is `∑ᵢ ∑_{S ∋ i} F̂(S) ^ 2 / |S|`
-(`BitString.sum_sum_filter_mem_fourierCoeff_sq_div_card`). For `A > 1` and every `m ≥ 1`,
+The variance is `∑ᵢ ∑_{S ∋ i} F̂(S) ^ 2 / |S|`. For `A > 1` and every `m ≥ 1`,
 `1 / m ≤ log 3 / log A + A 3 ^ (-m)`, according as `3 ^ m ≥ A` or not, so the weight on the sets
-containing `i` is at most `log 3 / log A · Infᵢ[F] + A / 3 · Infᵢ[F] ^ (3/2)`
-(`BitString.sum_filter_mem_fourierCoeff_sq_div_card_le`). If `Infᵢ[F] ≤ δ < 1`, the choice
-`A = δ ^ (-1/4)` and the bound `δ ^ (1/4) log (1 / δ) < 4` turn this into
-`6 Infᵢ[F] / log (1 / δ)` (`BitString.sum_filter_mem_fourierCoeff_sq_div_card_mul_log_le`).
+containing `i` is at most `log 3 / log A · Infᵢ[F] + A / 3 · Infᵢ[F] ^ (3/2)`. If
+`Infᵢ[F] ≤ δ < 1`, the choice `A = δ ^ (-1/4)` and the bound `δ ^ (1/4) log (1 / δ) < 4` turn
+this into `6 Infᵢ[F] / log (1 / δ)`.
 Summing over `i` with a common `δ` gives the Kahn–Kalai–Linial bound, and taking `δ = Infᵢ[F]`
 gives Talagrand's inequality.
 
@@ -102,7 +100,7 @@ theorem sum_filter_mem_one_third_pow_mul_fourierCoeff_sq_le (f : (ι → Bool) �
 
 /-- The variance is the sum over the coordinates `i` of `∑_{S ∋ i} f̂(S) ^ 2 / |S|`: each
 nonempty set shares its weight equally among its elements. -/
-theorem sum_sum_filter_mem_fourierCoeff_sq_div_card (f : (ι → Bool) → ℝ) :
+private theorem sum_sum_filter_mem_fourierCoeff_sq_div_card (f : (ι → Bool) → ℝ) :
     ∑ i, ∑ S with i ∈ S, fourierCoeff f S ^ 2 / #S = 𝔼 x, (f x - 𝔼 y, f y) ^ 2 := by
   rw [expect_sub_expect_sq_eq_sum_fourierCoeff_sq]
   simp only [sum_filter]
@@ -114,7 +112,7 @@ theorem sum_sum_filter_mem_fourierCoeff_sq_div_card (f : (ι → Bool) → ℝ) 
   · simp [not_not.1 hS]
 
 /-- The weight `∑_{S ∋ i} f̂(S) ^ 2 / |S|` is at most the influence of `i`. -/
-theorem sum_filter_mem_fourierCoeff_sq_div_card_le_influence (f : (ι → Bool) → ℝ) (i : ι) :
+private theorem sum_filter_mem_fourierCoeff_sq_div_card_le_influence (f : (ι → Bool) → ℝ) (i : ι) :
     ∑ S with i ∈ S, fourierCoeff f S ^ 2 / #S ≤ influence i f := by
   rw [influence_eq_sum_fourierCoeff_sq]
   refine sum_le_sum fun S hS => div_le_self (sq_nonneg _) ?_
@@ -154,7 +152,7 @@ private theorem inv_le_log_div_log_add {A : ℝ} (hA : 1 < A) {m : ℕ} (hm : 1 
 
 /-- **The weight on the sets containing a coordinate**: for a Boolean function read as signs and
 every `A > 1`, `∑_{S ∋ i} F̂(S) ^ 2 / |S| ≤ log 3 / log A · Infᵢ[F] + A / 3 · Infᵢ[F] ^ (3/2)`. -/
-theorem sum_filter_mem_fourierCoeff_sq_div_card_le (f : (ι → Bool) → Bool) (i : ι) {A : ℝ}
+private theorem sum_filter_mem_fourierCoeff_sq_div_card_le (f : (ι → Bool) → Bool) (i : ι) {A : ℝ}
     (hA : 1 < A) :
     ∑ S with i ∈ S, fourierCoeff (fun x => signVal (f x)) S ^ 2 / #S ≤
       log 3 / log A * influence i (fun x => signVal (f x)) +
@@ -204,7 +202,7 @@ private theorem sqrt_sqrt_mul_log_inv_lt {x : ℝ} (hx : 0 < x) (hx' : x ≤ 1) 
 `Infᵢ[F] ≤ δ`, then `∑_{S ∋ i} F̂(S) ^ 2 / |S| · log (1 / δ) ≤ 6 Infᵢ[F]`. For `δ < 1` this is
 `∑_{S ∋ i} F̂(S) ^ 2 / |S| ≤ 6 Infᵢ[F] / log (1 / δ)`; for `δ ≥ 1` the left side is at most
 zero. -/
-theorem sum_filter_mem_fourierCoeff_sq_div_card_mul_log_le (f : (ι → Bool) → Bool) (i : ι)
+private theorem sum_filter_mem_fourierCoeff_sq_div_card_mul_log_le (f : (ι → Bool) → Bool) (i : ι)
     {δ : ℝ} (hδ : influence i (fun x => signVal (f x)) ≤ δ) :
     (∑ S with i ∈ S, fourierCoeff (fun x => signVal (f x)) S ^ 2 / #S) * log δ⁻¹ ≤
       6 * influence i (fun x => signVal (f x)) := by

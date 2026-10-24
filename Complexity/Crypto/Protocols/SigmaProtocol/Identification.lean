@@ -29,10 +29,11 @@ verification key (`directAttack`, Attack Game 18.1); in an eavesdropping attack 
 honest conversations (`eavesdropAttack`, Attack Game 18.2). `oneWayGame` is the one-way key
 generation experiment (Attack Game 19.2).
 
-* **Extraction** (Theorem 19.14). If the protocol has special soundness with extractor
-  `extract`, rewinding an impersonator with direct-attack success probability `ε` recovers a
-  witness for the key with probability at least `ε ^ 2 - ε / N`, where `N` is the number of
-  challenges; consequently `ε ≤ 1 / N + √ε'`. No assumption on the key generator is needed.
+* **Extraction** (Theorem 19.14). If `extract` is a witness extractor for the statements the key
+  generator produces (`SpecialSoundOn`, implied by `SpecialSoundness`), rewinding an impersonator
+  with direct-attack success probability `ε` recovers a witness for the key with probability at
+  least `ε ^ 2 - ε / N`, where `N` is the number of challenges; consequently `ε ≤ 1 / N + √ε'`.
+  The generated pairs need not be in the relation.
 * **Simulation** (Theorems 19.3 and 19.15). If the protocol is special HVZK, an eavesdropper
   succeeds with exactly the probability of the direct impersonator that simulates the
   conversations itself, provided the key generator only outputs pairs in the relation.
@@ -50,6 +51,7 @@ although `SigmaProtocol` itself is universe-polymorphic.
 * `SigmaProtocol.Impersonator`: a two-stage prover strategy.
 * `SigmaProtocol.directAttack`, `SigmaProtocol.eavesdropAttack`: impersonation experiments.
 * `SigmaProtocol.oneWayGame`: recover a witness for a generated statement.
+* `SigmaProtocol.SpecialSoundOn`: special soundness for the statements of a key generator.
 * `SigmaProtocol.Impersonator.rewind`: the rewinding witness extractor.
 * `SigmaProtocol.simulateConversation`, `SigmaProtocol.Impersonator.withSimulatedViews`: replace
   eavesdropped conversations by simulated ones.
@@ -153,16 +155,30 @@ private theorem directAttack_eq_once (P : SigmaProtocol X Y T C Z) (keyGen : PMF
 variable {P : SigmaProtocol X Y T C Z} {R : X → Y → Prop}
   [∀ x y, Decidable (R x y)] {extract : Y → T → C → Z → C → Z → X}
 
+/-- Special soundness for the statements a key generator can produce: from two accepting
+conversations with a common commitment and distinct challenges for such a statement, `extract`
+computes a witness. It follows from `SpecialSoundness`, and suffices for extraction. -/
+def SpecialSoundOn (P : SigmaProtocol X Y T C Z) (keyGen : PMF (X × Y)) (R : X → Y → Prop)
+    (extract : Y → T → C → Z → C → Z → X) : Prop :=
+  ∀ key ∈ keyGen.support, ∀ t c z c' z', c ≠ c' → P.Accepts key.2 t c z →
+    P.Accepts key.2 t c' z' → R (extract key.2 t c z c' z') key.2
+
+omit [Fintype C] [Nonempty C] [∀ x y, Decidable (R x y)] in
+/-- Special soundness gives special soundness for every key generator. -/
+theorem SpecialSoundness.specialSoundOn (hP : P.SpecialSoundness R extract)
+    (keyGen : PMF (X × Y)) : P.SpecialSoundOn keyGen R extract :=
+  fun key _ => hP key.2
+
 /-- Two accepting runs with distinct challenges lead the rewinding extractor to a witness. -/
-private theorem twice_le_oneWayGame [DecidableEq C] (hP : P.SpecialSoundness R extract)
-    (keyGen : PMF (X × Y)) (A : Impersonator Y T C Z) :
+private theorem twice_le_oneWayGame [DecidableEq C] {keyGen : PMF (X × Y)}
+    (hP : P.SpecialSoundOn keyGen R extract) (A : Impersonator Y T C Z) :
     Rewinding.twice (directFirst keyGen A) (fun s c => A.respond s.2.2 c)
         (fun s c z => P.verify s.1 s.2.1 c z) true ≤
       oneWayGame keyGen R (A.rewind extract) true := by
   simp only [Rewinding.twice, oneWayGame, Impersonator.rewind, directFirst,
     Probability.PMF.monad_bind_eq_bind, Probability.PMF.monad_pure_eq_pure, PMF.bind_bind,
     PMF.pure_bind]
-  refine Probability.PMF.bind_apply_mono_on_support _ _ fun key _ => ?_
+  refine Probability.PMF.bind_apply_mono_on_support _ _ fun key hkey => ?_
   refine Probability.PMF.bind_apply_mono_on_support _ _ fun ts _ => ?_
   refine Probability.PMF.bind_apply_mono_on_support _ _ fun c _ => ?_
   refine Probability.PMF.bind_apply_mono_on_support _ _ fun c' _ => ?_
@@ -170,17 +186,17 @@ private theorem twice_le_oneWayGame [DecidableEq C] (hP : P.SpecialSoundness R e
   refine Probability.PMF.bind_apply_mono_on_support _ _ fun z' _ => ?_
   by_cases hwin : (P.verify key.2 ts.1 c z && P.verify key.2 ts.1 c' z' && c != c') = true
   · simp only [Bool.and_eq_true, bne_iff_ne] at hwin
-    have hR := hP key.2 ts.1 c z c' z' hwin.2 hwin.1.1 hwin.1.2
+    have hR := hP key hkey ts.1 c z c' z' hwin.2 hwin.1.1 hwin.1.2
     calc _ ≤ 1 := PMF.coe_le_one _ _
       _ = _ := by simp [hR]
   · simp [Bool.eq_false_iff.mpr hwin]
 
 /-- **Extraction from an impersonator** ([BonehShoup2023], Theorem 19.14, Equation 19.17): with
-special soundness, the rewinding extractor recovers a witness with probability at least
-`ε ^ 2 - ε / N`, where `ε` is the direct-attack success probability and `N` the number of
-challenges. -/
-theorem sq_sub_le_oneWayGame_rewind (hP : P.SpecialSoundness R extract) (keyGen : PMF (X × Y))
-    (A : Impersonator Y T C Z) :
+special soundness on the generated statements, the rewinding extractor recovers a witness with
+probability at least `ε ^ 2 - ε / N`, where `ε` is the direct-attack success probability and `N`
+the number of challenges. -/
+theorem sq_sub_le_oneWayGame_rewind {keyGen : PMF (X × Y)}
+    (hP : P.SpecialSoundOn keyGen R extract) (A : Impersonator Y T C Z) :
     (Game.succProbability (P.directAttack keyGen A) : ℝ) ^ 2 -
         Game.succProbability (P.directAttack keyGen A) / Fintype.card C ≤
       Game.succProbability (oneWayGame keyGen R (A.rewind extract)) := by
@@ -188,20 +204,21 @@ theorem sq_sub_le_oneWayGame_rewind (hP : P.SpecialSoundness R extract) (keyGen 
   simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
   rw [directAttack_eq_once]
   exact (Rewinding.sq_sub_le_twice _ _ _).trans
-    (ENNReal.toReal_mono (PMF.apply_ne_top _ _) (twice_le_oneWayGame hP keyGen A))
+    (ENNReal.toReal_mono (PMF.apply_ne_top _ _) (twice_le_oneWayGame hP A))
 
 /-- **Security against direct attacks** ([BonehShoup2023], Theorem 19.14, Equation 19.18): with
-special soundness, the direct-attack success probability is at most `1 / N + √ε'`, where `ε'` is
-the success probability of the rewinding extractor in the one-way game. -/
-theorem succProbability_directAttack_le (hP : P.SpecialSoundness R extract)
-    (keyGen : PMF (X × Y)) (A : Impersonator Y T C Z) :
+special soundness on the generated statements, the direct-attack success probability is at most
+`1 / N + √ε'`, where `ε'` is the success probability of the rewinding extractor in the one-way
+game. -/
+theorem succProbability_directAttack_le {keyGen : PMF (X × Y)}
+    (hP : P.SpecialSoundOn keyGen R extract) (A : Impersonator Y T C Z) :
     (Game.succProbability (P.directAttack keyGen A) : ℝ) ≤
       1 / Fintype.card C + √(Game.succProbability (oneWayGame keyGen R (A.rewind extract))) := by
   classical
   simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
   rw [directAttack_eq_once]
   exact (Rewinding.le_inv_add_sqrt_twice _ _ _).trans (add_le_add le_rfl (Real.sqrt_le_sqrt
-    (ENNReal.toReal_mono (PMF.apply_ne_top _ _) (twice_le_oneWayGame hP keyGen A))))
+    (ENNReal.toReal_mono (PMF.apply_ne_top _ _) (twice_le_oneWayGame hP A))))
 
 /-! ### Eavesdropping by simulation -/
 
@@ -250,6 +267,6 @@ theorem succProbability_eavesdropAttack_le {simulate : Y → C → PMF (T × Z)}
       1 / Fintype.card C + √(Game.succProbability
         (oneWayGame keyGen R ((A.withSimulatedViews simulate).rewind extract))) := by
   rw [eavesdropAttack_eq_directAttack hzk hkey]
-  exact succProbability_directAttack_le hsound keyGen _
+  exact succProbability_directAttack_le (hsound.specialSoundOn keyGen) _
 
 end Cslib.Crypto.Protocols.SigmaProtocol

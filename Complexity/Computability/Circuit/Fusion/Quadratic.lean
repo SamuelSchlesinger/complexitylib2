@@ -169,7 +169,7 @@ noncomputable def roundCircuit : Circuit Monotone.signature
     (updateCircuit target input pairs)
 
 /-- The initial state has the supplied inputs and empty pair coordinates. -/
-noncomputable def initialCircuit : Circuit Monotone.signature n (n + (pairs.length + 1)) :=
+def initialCircuit : Circuit Monotone.signature n (n + (pairs.length + 1)) :=
   (Circuit.id Monotone.signature n).append
     (Circuit.pi (fun _ : Fin (pairs.length + 1) =>
       (Monotone.const false : Formula Monotone.signature n).toCircuit))

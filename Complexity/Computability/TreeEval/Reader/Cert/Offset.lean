@@ -32,7 +32,7 @@ namespace Reader
 
 open Turing MultiTapeTM ComputableTidilyInSpace Iter
 
-theorem bodyLength_add_tableLength_le (ℓ d : ℕ) :
+private theorem bodyLength_add_tableLength_le (ℓ d : ℕ) :
     bodyLength ℓ d + tableLength ℓ ≤ 2 ^ d * (ℓ + tableLength ℓ) := by
   induction d with
   | zero => simp [bodyLength]
@@ -70,7 +70,7 @@ theorem foldl_cons_dir (st : List Frame) (acc : List Bool) :
   | nil => rfl
   | cons fr st ih => simp [ih]
 
-theorem pathOffset_le_bodyLength (ℓ : ℕ) (P : List Bool) :
+private theorem pathOffset_le_bodyLength (ℓ : ℕ) (P : List Bool) :
     ∀ d, pathOffset ℓ d P ≤ bodyLength ℓ d := by
   induction P with
   | nil => intro d; simp [pathOffset]
@@ -85,7 +85,7 @@ theorem pathOffset_le_bodyLength (ℓ : ℕ) (P : List Bool) :
 /-! ### Certificates -/
 
 
-theorem length_encNat_pow_four (k : ℕ) : (encNat (4 ^ k)).length ≤ 2 * k + 1 := by
+private theorem length_encNat_pow_four (k : ℕ) : (encNat (4 ^ k)).length ≤ 2 * k + 1 := by
   have h : 4 ^ k = 2 ^ (2 * k) := by rw [pow_mul]; norm_num
   rw [length_encNat_eq_size]
   refine Nat.size_le.mpr ?_
@@ -98,7 +98,7 @@ theorem length_tableLength_le (ℓ : ℕ) : (encNat (tableLength ℓ)).length �
   have h₃ := length_encNat_le_self ℓ
   rw [tableLength]; omega
 
-theorem iterate_mul_four (k : ℕ) : (fun x => x * 4)^[k] 1 = 4 ^ k := by
+private theorem iterate_mul_four (k : ℕ) : (fun x => x * 4)^[k] 1 = 4 ^ k := by
   induction k with
   | zero => rfl
   | succ k ih => rw [Function.iterate_succ_apply', ih, pow_succ]
@@ -124,11 +124,12 @@ theorem tableLength_inSpace :
     (hid.weaken hl'))).of_enc_eq fun ℓ => by rw [iterate_mul_four]; rfl
   have := length_encNat_le_self ℓ; omega
 
-theorem length_encNat_two_pow (k : ℕ) : (encNat (2 ^ k)).length ≤ k + 1 := by
+private theorem length_encNat_two_pow (k : ℕ) : (encNat (2 ^ k)).length ≤ k + 1 := by
   rw [length_encNat_eq_size]
   exact Nat.size_le.mpr (Nat.pow_lt_pow_right (by norm_num) (by omega))
 
-theorem length_bodyLength_le (ℓ k : ℕ) : (encNat (bodyLength ℓ k)).length ≤ k + 4 * ℓ + 4 := by
+private theorem length_bodyLength_le (ℓ k : ℕ) :
+    (encNat (bodyLength ℓ k)).length ≤ k + 4 * ℓ + 4 := by
   have h₁ := ComputableTidilyInO.length_encNat_mono
     ((Nat.le_add_right _ _).trans (bodyLength_add_tableLength_le ℓ k))
   have h₂ := length_encNat_mul_le (2 ^ k) (ℓ + tableLength ℓ)
@@ -139,16 +140,16 @@ theorem length_bodyLength_le (ℓ k : ℕ) : (encNat (bodyLength ℓ k)).length 
   omega
 
 /-- A step of the lengths of bodies, on `(G, b)`. -/
-def bodyStep (q : ℕ × ℕ) : ℕ × ℕ := (q.1, q.1 + 2 * q.2)
+private def bodyStep (q : ℕ × ℕ) : ℕ × ℕ := (q.1, q.1 + 2 * q.2)
 
-theorem iterate_bodyStep (ℓ k : ℕ) :
+private theorem iterate_bodyStep (ℓ k : ℕ) :
     bodyStep^[k] (tableLength ℓ, ℓ) = (tableLength ℓ, bodyLength ℓ k) := by
   induction k with
   | zero => rfl
   | succ k ih => rw [Function.iterate_succ_apply', ih]; rfl
 
 /-- **The length of the body of a subtree**, `bodyLength ℓ e` from `(ℓ, e)`. -/
-theorem bodyLength_inSpace :
+private theorem bodyLength_inSpace :
     ComputableTidilyInSpace (fun q : ℕ × ℕ => bodyLength q.1 q.2) (encPair encNat encNat) encNat
       fun q => 65536 * (q.1 + q.2 + 1) := by
   have hl : (fun q => (encPair encNat encNat q).length) ≼ fun q => 4096 * (q.1 + q.2 + 1) :=
@@ -206,7 +207,8 @@ theorem round_inSpace :
 
 /-! ### The offset of the node at the path of a stack -/
 
-theorem three_mul_length_le (st : List Frame) : 3 * st.length ≤ (encList encFrame st).length := by
+private theorem three_mul_length_le (st : List Frame) : 3 * st.length ≤
+    (encList encFrame st).length := by
   induction st with
   | nil => simp
   | cons fr st ih =>
@@ -215,7 +217,8 @@ theorem three_mul_length_le (st : List Frame) : 3 * st.length ≤ (encList encFr
     simp only [List.length_cons, List.map_cons, List.sum_cons]
     omega
 
-theorem length_encList_bools (l : List Bool) : (encList encBool l).length = 3 * l.length := by
+private theorem length_encList_bools (l : List Bool) :
+    (encList encBool l).length = 3 * l.length := by
   induction l with
   | nil => rfl
   | cons b l ih => rw [length_encList] at ih ⊢; simp; ring
@@ -259,15 +262,15 @@ theorem dirs_inSpace :
   exact h.mono_le fun st => by omega
 
 /-- A step of the offset along a path, with the value length in the state. -/
-def pathStep' (q : ℕ × ℕ × ℕ) (b : Bool) : ℕ × ℕ × ℕ := (q.1, pathStep q.1 q.2 b)
+private def pathStep' (q : ℕ × ℕ × ℕ) (b : Bool) : ℕ × ℕ × ℕ := (q.1, pathStep q.1 q.2 b)
 
-theorem foldl_pathStep' (ℓ : ℕ) (P : List Bool) (s : ℕ × ℕ) :
+private theorem foldl_pathStep' (ℓ : ℕ) (P : List Bool) (s : ℕ × ℕ) :
     P.foldl pathStep' (ℓ, s) = (ℓ, P.foldl (pathStep ℓ) s) := by
   induction P generalizing s with
   | nil => rfl
   | cons b P ih => rw [List.foldl_cons, List.foldl_cons, pathStep', ih]
 
-theorem pathStep'_inSpace :
+private theorem pathStep'_inSpace :
     ComputableTidilyInSpace (fun q : (ℕ × ℕ × ℕ) × Bool => pathStep' q.1 q.2)
       (encPair encNat3 encBool) encNat3
       fun q => 2 ^ 20 * (q.1.1 + q.1.2.1 + (encPair encNat3 encBool q).length + 1) := by
@@ -291,7 +294,7 @@ theorem pathStep'_inSpace :
   simp only [pathStep', pathStep]
   by_cases h : q.1.2.1 = 0 <;> simp [h]
 
-theorem length_pathOffset_le (ℓ d : ℕ) (P : List Bool) :
+private theorem length_pathOffset_le (ℓ d : ℕ) (P : List Bool) :
     (encNat (pathOffset ℓ d P)).length ≤ d + 4 * ℓ + 4 :=
   (ComputableTidilyInO.length_encNat_mono (pathOffset_le_bodyLength ℓ P d)).trans
     (length_bodyLength_le ℓ d)

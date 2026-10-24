@@ -110,7 +110,7 @@ theorem congr (h : IsRandomParityRep enc ℓ e ρ ζ W P)
     rwa [hPQ a u hu])).trans (h a u hu)
 
 /-- A verifier right on every random string represents `P` with every error. -/
-theorem of_forall
+private theorem of_forall
     (h : ∀ (a : α) (u : List Bool), u.length = ℓ.eval (enc a).length →
       ∀ r : Fin (ρ.eval (enc a).length) → Bool,
         Odd (acceptCount (fun x => W (x.1, u ++ List.ofFn r ++ x.2)) a (ζ.eval (enc a).length)) ↔
@@ -142,7 +142,8 @@ def notVerifier (enc : α ↪ List Bool) (ℓ ρ : Polynomial ℕ) (W : α × Li
       y.2))
     (x.1, x.2.drop (ℓ.eval (enc x.1).length + ρ.eval (enc x.1).length))
 
-theorem computableTidilyInPolyTime_notVerifier (ℓ ρ : Polynomial ℕ) {W : α × List Bool → Bool}
+private theorem computableTidilyInPolyTime_notVerifier (ℓ ρ : Polynomial ℕ)
+    {W : α × List Bool → Bool}
     (hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool) :
     ComputableTidilyInPolyTime (notVerifier enc ℓ ρ W) (encPair enc encBits) encBool := by
   unfold notVerifier succVerifier
@@ -240,7 +241,7 @@ theorem computableTidilyInPolyTime_trialsVerifier {W : α × List Bool → Bool}
   unfold trialsVerifier
   fun_prop
 
-theorem computableTidilyInPolyTime_existsVerifier (ℓ m ρ ζ e : Polynomial ℕ)
+private theorem computableTidilyInPolyTime_existsVerifier (ℓ m ρ ζ e : Polynomial ℕ)
     {W : α × List Bool → Bool} (hW : ComputableTidilyInPolyTime W (encPair enc encBits) encBool) :
     ComputableTidilyInPolyTime (existsVerifier enc ℓ m ρ ζ e W) (encPair enc encBits) encBool := by
   unfold existsVerifier
@@ -248,7 +249,7 @@ theorem computableTidilyInPolyTime_existsVerifier (ℓ m ρ ζ e : Polynomial �
 
 /-- One trial accepts, with the strings `w` passing the test as prefixes, the witnesses of `W`
 after `u ++ w ++ r`. -/
-theorem acceptCount_trialVerifier (W : α × List Bool → Bool) (a : α) (u r seed : List Bool)
+private theorem acceptCount_trialVerifier (W : α × List Bool → Bool) (a : α) (u r seed : List Bool)
     (M Z level : ℕ) :
     acceptCount (fun x => trialVerifier W a u r M level seed x.2) a (M + Z) =
       ∑ x : Fin M → Bool with hashesToZero level seed (List.ofFn x) = true,
@@ -268,7 +269,7 @@ theorem acceptCount_trialVerifier (W : α × List Bool → Bool) (a : α) (u r s
     simp [acceptCount, htrial, hx]
 
 /-- All trials accept the product over the trials of one more than the count of one trial. -/
-theorem acceptCount_trialsVerifier (W : α × List Bool → Bool) (a : α) (u r : List Bool)
+private theorem acceptCount_trialsVerifier (W : α × List Bool → Bool) (a : α) (u r : List Bool)
     (M Z T B : ℕ) (σ : Fin (T * B) → Bool) :
     acceptCount (fun x => trialsVerifier W a u r (List.ofFn σ) M Z T B x.2) a (T * (M + Z + 1)) =
       ∏ j : Fin T, (∑ x : Fin M → Bool with hashesToZero (j % (M + 3))
@@ -288,7 +289,7 @@ theorem acceptCount_trialsVerifier (W : α × List Bool → Bool) (a : α) (u r 
 
 /-- The verifier of the existential quantifier on `u ++ (r ++ σ) ++ w` reads the prefix `u`, the
 inner random string `r` and the seeds `σ`, and runs `succTest` of all trials on `w`. -/
-theorem existsVerifier_append (ℓ m ρ ζ e : Polynomial ℕ) (W : α × List Bool → Bool) (a : α)
+private theorem existsVerifier_append (ℓ m ρ ζ e : Polynomial ℕ) (W : α × List Bool → Bool) (a : α)
     (u r σ w : List Bool) (hu : u.length = ℓ.eval (enc a).length)
     (hr : r.length = ρ.eval (enc a).length)
     (hσ : σ.length = 4 * (e.eval (enc a).length + 1) * (m.eval (enc a).length + 3) *
@@ -410,7 +411,7 @@ theorem exists_isRandomParityRep_alternation {V : α × List Bool → Bool}
       simp only [List.map_cons, alternation_true_cons, List.append_assoc]
 
 /-- Padding the witnesses of length `Z` to length `N ≥ Z` with `false`s keeps their number. -/
-theorem acceptCount_padWitness (W : α × List Bool → Bool) (a : α) (r : List Bool) {Z N : ℕ}
+private theorem acceptCount_padWitness (W : α × List Bool → Bool) (a : α) (r : List Bool) {Z N : ℕ}
     (hZN : Z ≤ N) :
     acceptCount (fun x : (α × List Bool) × List Bool =>
         W (x.1.1, x.1.2 ++ x.2.take Z) && !(x.2.drop Z).any fun b => b) (a, r) N =

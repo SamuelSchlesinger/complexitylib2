@@ -120,7 +120,7 @@ theorem forest_anchor_contains {y a : α} (hy : y ∈ checkpointHull f H)
 
 omit [Finite α] in
 /-- A target beyond a prefix remains reachable from every state in that prefix. -/
-theorem reaches_from_prefix {x y h : α} (hr : ∃ t, f^[t] x = y)
+private theorem reaches_from_prefix {x y h : α} (hr : ∃ t, f^[t] x = y)
     (hfar : ∀ i ≤ 2 * L, f^[i] x ≠ y) (hp : ∃ d ≤ 2 * L, f^[d] x = h) :
     ∃ t, f^[t] h = y := by
   obtain ⟨t, ht⟩ := hr

@@ -356,7 +356,7 @@ theorem add_blockRank_le_cutRank_add_transpose [Finite ι]
   omega
 
 /-- Two injective maps with disjoint ranges pull back at most `|V|` elements of `V`. -/
-theorem ncard_preimage_add_ncard_preimage_le [Finite ι] {f : κ → ι} {g : κ' → ι}
+private theorem ncard_preimage_add_ncard_preimage_le [Finite ι] {f : κ → ι} {g : κ' → ι}
     (hf : Function.Injective f) (hg : Function.Injective g) (hfg : Disjoint (range f) (range g))
     (V : Set ι) : (f ⁻¹' V).ncard + (g ⁻¹' V).ncard ≤ V.ncard := by
   rw [← ncard_image_of_injective _ hf, ← ncard_image_of_injective _ hg,

@@ -66,8 +66,8 @@ section Cast
     ((chi p b x : ℕ) : ZMod p) = if b then (x : ZMod p) else 1 - x := by
   cases b <;> simp [chi, sub_eq_add_neg]
 
-theorem mulMod_lt (hp : 0 < p) (a b : ℕ) : mulMod p a b < p := Nat.mod_lt _ hp
-theorem addMod_lt (hp : 0 < p) (a b : ℕ) : addMod p a b < p := Nat.mod_lt _ hp
+private theorem mulMod_lt (hp : 0 < p) (a b : ℕ) : mulMod p a b < p := Nat.mod_lt _ hp
+private theorem addMod_lt (hp : 0 < p) (a b : ℕ) : addMod p a b < p := Nat.mod_lt _ hp
 
 variable [Fact p.Prime]
 
@@ -78,7 +78,7 @@ variable [Fact p.Prime]
     simp [sgnVal, Iter.sgn, Nat.cast_sub this.le]
 
 /-- Fermat: a nonzero residue to the power `p - 2` is its inverse. -/
-theorem pow_sub_two_eq_inv {a : ZMod p} (ha : a ≠ 0) : a ^ (p - 2) = a⁻¹ := by
+private theorem pow_sub_two_eq_inv {a : ZMod p} (ha : a ≠ 0) : a ^ (p - 2) = a⁻¹ := by
   have hp := (Fact.out : p.Prime).two_le
   refine eq_inv_of_mul_eq_one_left ?_
   rw [← pow_succ, show p - 2 + 1 = p - 1 by omega, ZMod.pow_card_sub_one_eq_one ha]
@@ -107,11 +107,11 @@ def Regs.WF (p ℓ : ℕ) (R : Regs) : Prop :=
 @[simp] theorem Regs.get_set_self (R : Regs) (r : Fin 3) (l : List ℕ) : (R.set r l).get r = l := by
   fin_cases r <;> rfl
 
-theorem Regs.get_set_of_ne (R : Regs) {r r' : Fin 3} (h : r' ≠ r) (l : List ℕ) :
+private theorem Regs.get_set_of_ne (R : Regs) {r r' : Fin 3} (h : r' ≠ r) (l : List ℕ) :
     (R.set r l).get r' = R.get r' := by
   fin_cases r <;> fin_cases r' <;> first | rfl | exact absurd rfl h
 
-theorem Regs.get_set (R : Regs) (r r' : Fin 3) (l : List ℕ) :
+private theorem Regs.get_set (R : Regs) (r r' : Fin 3) (l : List ℕ) :
     (R.set r l).get r' = if r' = r then l else R.get r' := by
   split_ifs with h
   · subst h; exact R.get_set_self _ _
@@ -120,7 +120,7 @@ theorem Regs.get_set (R : Regs) (r r' : Fin 3) (l : List ℕ) :
 variable {ℓ : ℕ}
 
 omit [Fact p.Prime] in
-theorem Regs.WF.set {R : Regs} (hR : R.WF p ℓ) {t : Fin 3} {l : List ℕ} (hl : l.length = ℓ)
+private theorem Regs.WF.set {R : Regs} (hR : R.WF p ℓ) {t : Fin 3} {l : List ℕ} (hl : l.length = ℓ)
     (hv : ∀ v ∈ l, v < p) : (R.set t l).WF p ℓ := by
   intro r
   rw [Regs.get_set]
@@ -196,7 +196,7 @@ theorem toState_subtractSums (R : Regs) (c : ℕ) (t : Fin 3) (acc : List ℕ)
 
 /-! ### Weights and the multilinear extension -/
 
-theorem cast_foldl_mulMod (F : ℕ → ℕ) (n : ℕ) :
+private theorem cast_foldl_mulMod (F : ℕ → ℕ) (n : ℕ) :
     (((List.range n).foldl (fun a j => mulMod p a (F j)) (1 % p) : ℕ) : ZMod p) =
       ∏ j ∈ Finset.range n, (F j : ZMod p) := by
   induction n with
@@ -243,7 +243,7 @@ omit [Fact p.Prime] in
 theorem four_pow_eq (ℓ : ℕ) : 4 ^ ℓ = 2 ^ (ℓ + ℓ) := by rw [← two_mul, pow_mul]; norm_num
 
 /-- The indices `k < 4^ℓ`, read as the low and high bits, enumerate the inputs of a gate. -/
-theorem sum_cube {M : Type*} [AddCommMonoid M] (G : (Fin ℓ ⊕ Fin ℓ → Bool) → M) :
+private theorem sum_cube {M : Type*} [AddCommMonoid M] (G : (Fin ℓ ⊕ Fin ℓ → Bool) → M) :
     ∑ a, G a = ∑ k ∈ Finset.range (4 ^ ℓ), G (Sum.elim (lowBits ℓ k) (highBits ℓ k)) := by
   rw [← (cubeEquiv ℓ).symm.sum_comp, four_pow_eq,
     ← Fin.sum_univ_eq_sum_range (fun k => G (Sum.elim (lowBits ℓ k) (highBits ℓ k)))]

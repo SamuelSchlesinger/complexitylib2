@@ -51,7 +51,7 @@ namespace Cslib.Crypto.GGM
 open Probability Turing.MultiTapeTM
 
 /-- Cache a sampled expansion at each parent prefix and follow its selected child. -/
-noncomputable def expansionOracle (generator : List Bool → List Bool)
+def expansionOracle (generator : List Bool → List Bool)
     (sample : ProbComp (List Bool)) (n depth : ℕ) (query : List Bool) :
     StateT Cache ProbComp (List Bool) := fun cache =>
   if query.length = n then do
@@ -62,7 +62,7 @@ noncomputable def expansionOracle (generator : List Bool → List Bool)
   else pure ([], cache)
 
 /-- Run the adversary using sampled, cached expansions at the selected level. -/
-noncomputable def expansionGame (generator : List Bool → List Bool)
+def expansionGame (generator : List Bool → List Bool)
     (sample : ProbComp (List Bool)) (adversary : OracleDistinguisher) (n depth : ℕ) :
     ProbComp Bool :=
   Prod.fst <$> (OracleComp.interpret

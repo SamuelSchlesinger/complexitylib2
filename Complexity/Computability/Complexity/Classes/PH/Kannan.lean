@@ -119,33 +119,34 @@ def arity (k n : ℕ) : ℕ := (k + 3) * (Nat.log 2 (n + 1) + 1)
 /-- The number of gates that the hard functions at input length `n` exceed. -/
 def threshold (k n : ℕ) : ℕ := (n + 1) ^ (k + 1)
 
-theorem two_pow_arity (k n : ℕ) : 2 ^ arity k n = (2 ^ (Nat.log 2 (n + 1) + 1)) ^ (k + 3) := by
+private theorem two_pow_arity (k n : ℕ) : 2 ^ arity k n = (2 ^ (Nat.log 2 (n + 1) + 1)) ^
+    (k + 3) := by
   rw [arity, Nat.mul_comm, pow_mul]
 
-theorem two_pow_arity_le (k n : ℕ) : 2 ^ arity k n ≤ 2 ^ (k + 3) * (n + 1) ^ (k + 3) := by
+private theorem two_pow_arity_le (k n : ℕ) : 2 ^ arity k n ≤ 2 ^ (k + 3) * (n + 1) ^ (k + 3) := by
   rw [two_pow_arity, ← Nat.mul_pow, pow_succ 2 (Nat.log 2 (n + 1)), Nat.mul_comm _ 2]
   exact Nat.pow_le_pow_left (Nat.mul_le_mul_left 2 (Nat.pow_log_le_self 2 (Nat.succ_ne_zero n))) _
 
-theorem lt_two_pow_arity (k n : ℕ) : (n + 1) ^ (k + 3) < 2 ^ arity k n := by
+private theorem lt_two_pow_arity (k n : ℕ) : (n + 1) ^ (k + 3) < 2 ^ arity k n := by
   rw [two_pow_arity]
   exact Nat.pow_lt_pow_left (Nat.lt_pow_succ_log_self (by norm_num) _) (by omega)
 
-theorem arity_le (k n : ℕ) : arity k n ≤ (k + 3) * (n + 1) :=
+private theorem arity_le (k n : ℕ) : arity k n ≤ (k + 3) * (n + 1) :=
   Nat.mul_le_mul_left _ (Nat.succ_le_of_lt (Nat.log_lt_self 2 (Nat.succ_ne_zero n)))
 
 /-- The hard functions have enough inputs for `2 ^ m / m` to exceed the threshold. -/
-theorem threshold_mul_arity_lt {k n : ℕ} (hn : k + 3 ≤ n + 1) :
+private theorem threshold_mul_arity_lt {k n : ℕ} (hn : k + 3 ≤ n + 1) :
     threshold k n * arity k n < 2 ^ arity k n := by
   refine lt_of_le_of_lt ?_ (lt_two_pow_arity k n)
   calc threshold k n * arity k n ≤ (n + 1) ^ (k + 1) * ((n + 1) * (n + 1)) :=
         Nat.mul_le_mul_left _ ((arity_le k n).trans (Nat.mul_le_mul_right _ hn))
     _ = (n + 1) ^ (k + 3) := by ring
 
-theorem le_arity (k n : ℕ) : Nat.log 2 (n + 1) + 1 ≤ arity k n :=
+private theorem le_arity (k n : ℕ) : Nat.log 2 (n + 1) + 1 ≤ arity k n :=
   Nat.le_mul_of_pos_left _ (by omega)
 
 /-- The hard functions eventually have no more inputs than the instance. -/
-theorem eventually_arity_le (k : ℕ) : ∀ᶠ n in atTop, arity k n ≤ n := by
+private theorem eventually_arity_le (k : ℕ) : ∀ᶠ n in atTop, arity k n ≤ n := by
   filter_upwards [Nat.eventually_mul_log_le (2 * (k + 3)) one_lt_two, eventually_ge_atTop 4]
     with n hn h4
   have hlog : Nat.log 2 (n + 1) ≤ Nat.log 2 n + 1 := by
@@ -157,7 +158,7 @@ theorem eventually_arity_le (k : ℕ) : ∀ᶠ n in atTop, arity k n ≤ n := by
     _ ≤ n := hn
 
 /-- The hard functions eventually have at least `N` inputs. -/
-theorem eventually_le_arity (k N : ℕ) : ∀ᶠ n in atTop, N ≤ arity k n := by
+private theorem eventually_le_arity (k N : ℕ) : ∀ᶠ n in atTop, N ≤ arity k n := by
   filter_upwards [eventually_ge_atTop (2 ^ N)] with n hn
   have : N ≤ Nat.log 2 (n + 1) := (Nat.le_log_iff_pow_le (by norm_num) (by omega)).2 (by omega)
   exact this.trans ((Nat.le_succ _).trans (le_arity k n))
@@ -204,7 +205,7 @@ theorem exists_isFirstHard {k n : ℕ} (h : ∃ T, IsHard k n T) : ∃ T, IsFirs
   exact ⟨T, hT, fun T' hT' => hv ▸ Nat.find_min' hex ⟨T', hT', rfl⟩⟩
 
 /-- The truth table of a function, as a list, is read back as the function. -/
-theorem tableFunction_ofFn_truthTable (m : ℕ) (f : BooleanFunction m) :
+private theorem tableFunction_ofFn_truthTable (m : ℕ) (f : BooleanFunction m) :
     tableFunction m (List.ofFn (MCSP.truthTable m f)) = f := by
   funext y
   exact (MCSP.tableValue_ofFn ⟨m, MCSP.truthTable m f, 0⟩ y).trans
@@ -228,7 +229,8 @@ theorem eventually_exists_isHard (k : ℕ) : ∀ᶠ n in atTop, ∃ T, IsHard k 
 
 /-- The slice of Kannan's language is the function of the first hard truth table on the first
 `arity k n` bits. -/
-theorem slice_language {k n : ℕ} {T : List Bool} (hT : IsFirstHard k n T) (x : Fin n → Bool) :
+private theorem slice_language {k n : ℕ} {T : List Bool} (hT : IsFirstHard k n T)
+    (x : Fin n → Bool) :
     (language k).slice n x = MCSP.tableValue T ((List.ofFn x).take (arity k n)) := by
   rw [Bool.eq_iff_iff, Language.slice_eq_true_iff]
   change (∃ T', IsFirstHard k (List.ofFn x).length T' ∧ _) ↔ _
@@ -236,10 +238,10 @@ theorem slice_language {k n : ℕ} {T : List Bool} (hT : IsFirstHard k n T) (x :
   exact ⟨fun ⟨T', hT', h⟩ => hT.unique hT' ▸ h, fun h => ⟨T, hT, h⟩⟩
 
 /-- Feeding the first `m ≤ n` inputs from `m` variables and the others with `false`. -/
-def restriction (m n : ℕ) (j : Fin n) : Fin m ⊕ Bool :=
+private def restriction (m n : ℕ) (j : Fin n) : Fin m ⊕ Bool :=
   if h : j.val < m then .inl ⟨j.val, h⟩ else .inr false
 
-theorem take_ofFn_substitute_restriction {m n : ℕ} (h : m ≤ n) (y : Fin m → Bool) :
+private theorem take_ofFn_substitute_restriction {m n : ℕ} (h : m ≤ n) (y : Fin m → Bool) :
     (List.ofFn (substitute (restriction m n) y)).take m = List.ofFn y := by
   refine List.ext_getElem (by simp [h]) fun i h₁ h₂ => ?_
   simp only [List.length_ofFn] at h₂
@@ -247,7 +249,7 @@ theorem take_ofFn_substitute_restriction {m n : ℕ} (h : m ≤ n) (y : Fin m �
 
 /-- The slices of Kannan's language need more than `threshold k n - 2` gates where a hard truth
 table exists on at most `n` inputs. -/
-theorem threshold_lt_complexity_slice {k n : ℕ} {T : List Bool} (hT : IsFirstHard k n T)
+private theorem threshold_lt_complexity_slice {k n : ℕ} {T : List Bool} (hT : IsFirstHard k n T)
     (hm : arity k n ≤ n) :
     threshold k n < complexity interpretation (single ((language k).slice n)) + 2 := by
   refine hT.1.2.trans_le (le_of_eq_of_le ?_
@@ -274,15 +276,15 @@ theorem language_notMem_SIZE (k c : ℕ) : language k ∉ SIZE fun n => c * (n +
 /-! ### Truth tables in MCSP -/
 
 /-- The MCSP instance of a truth table of length `2 ^ m`. -/
-def tableInstance (m s : ℕ) (T : List Bool) (hT : T.length = 2 ^ m) : MCSP.Instance :=
+private def tableInstance (m s : ℕ) (T : List Bool) (hT : T.length = 2 ^ m) : MCSP.Instance :=
   ⟨m, fun i => T[i.val]'(by rw [hT]; exact i.isLt), s⟩
 
-theorem ofFn_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
+private theorem ofFn_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
     List.ofFn (tableInstance m s T hT).table = T := by
   change List.ofFn (fun i : Fin (2 ^ m) => T[i.val]'(by rw [hT]; exact i.isLt)) = T
   exact List.ext_getElem (by simp [hT]) fun _ _ _ => by simp
 
-theorem function_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
+private theorem function_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
     (tableInstance m s T hT).function = tableFunction m T := by
   funext y
   rw [← MCSP.tableValue_ofFn, ofFn_tableInstance]
@@ -290,7 +292,7 @@ theorem function_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ 
 
 /-- An accepted certificate for a truth table of length `2 ^ m` bounds the complexity of its
 function. -/
-theorem complexity_le_of_tableVerifier {m s : ℕ} {T c : List Bool} (hT : T.length = 2 ^ m)
+private theorem complexity_le_of_tableVerifier {m s : ℕ} {T c : List Bool} (hT : T.length = 2 ^ m)
     (h : MCSP.tableVerifier ((T, s), c) = true) :
     complexity interpretation (single (tableFunction m T)) ≤ s := by
   have := MCSP.mem_of_verifier_eq_true (x := tableInstance m s T hT) (w := c)
@@ -299,7 +301,7 @@ theorem complexity_le_of_tableVerifier {m s : ℕ} {T c : List Bool} (hT : T.len
 
 /-- A truth table of length `2 ^ m` whose function has at most `s` gates has a certificate of
 length `certLength m (MCSP.budget m s)`, accepted whatever bits follow it. -/
-theorem exists_tableVerifier_append {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m)
+private theorem exists_tableVerifier_append {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m)
     (h : complexity interpretation (single (tableFunction m T)) ≤ s) :
     ∃ u : List Bool, u.length = certLength m (MCSP.budget m s) ∧
       ∀ extra, MCSP.tableVerifier ((T, s), u ++ extra) = true := by
@@ -317,7 +319,7 @@ def tableBound (k n : ℕ) : ℕ := 2 ^ (k + 3) * (n + 1) ^ (k + 3)
 /-- The length of the blocks holding circuits. -/
 def certBound (k n : ℕ) : ℕ := certLength ((k + 3) * (n + 1)) ((n + 1) ^ (k + 1))
 
-theorem certLength_le_certBound (k n : ℕ) :
+private theorem certLength_le_certBound (k n : ℕ) :
     certLength (arity k n) (MCSP.budget (arity k n) (threshold k n)) ≤ certBound k n := by
   have hm := arity_le k n
   have hs : MCSP.budget (arity k n) (threshold k n) ≤ (n + 1) ^ (k + 1) := Nat.min_le_left _ _
@@ -343,7 +345,7 @@ def verifier (k : ℕ) (p : List Bool × List Bool) : Bool :=
         p.2.drop (2 * tableBound k p.1.length + certBound k p.1.length)))) &&
     MCSP.tableValue (table k p.1.length p.2) (p.1.take (arity k p.1.length))
 
-theorem verifier_append {k : ℕ} (x : List Bool) {w₁ w₂ : List Bool}
+private theorem verifier_append {k : ℕ} (x : List Bool) {w₁ w₂ : List Bool}
     (h₁ : w₁.length = tableBound k x.length)
     (h₂ : w₂.length = tableBound k x.length + certBound k x.length) (w₃ : List Bool) :
     verifier k (x, w₁ ++ (w₂ ++ w₃)) =
@@ -369,11 +371,12 @@ theorem verifier_append {k : ℕ} (x : List Bool) {w₁ w₂ : List Bool}
     exact List.drop_left' (by rw [List.length_append, h₁, h₂]; ring)
   simp only [verifier, hw₁, hw₂, hc, hc']
 
-theorem length_table {k n : ℕ} {w : List Bool} (hw : 2 ^ arity k n ≤ w.length) :
+private theorem length_table {k n : ℕ} {w : List Bool} (hw : 2 ^ arity k n ≤ w.length) :
     (table k n w).length = 2 ^ arity k n := by
   rw [table, List.length_take, Nat.min_eq_left hw]
 
-theorem table_append {k n : ℕ} {T : List Bool} (hT : T.length = 2 ^ arity k n) (w : List Bool) :
+private theorem table_append {k n : ℕ} {T : List Bool} (hT : T.length = 2 ^ arity k n)
+    (w : List Bool) :
     table k n (T ++ w) = T := by
   rw [table, ← hT, List.take_left]
 
@@ -394,7 +397,7 @@ noncomputable def certPoly (k : ℕ) : Polynomial ℕ :=
   simp [certPoly, certBound, certLength]
 
 /-- The verifier verifies Kannan's language through three alternating blocks of certificates. -/
-theorem isAlternatingVerifier_verifier (k : ℕ) :
+private theorem isAlternatingVerifier_verifier (k : ℕ) :
     IsAlternatingVerifier encBits true [tablePoly k, tablePoly k + certPoly k, certPoly k]
       (verifier k) (language k) := by
   intro x
@@ -488,13 +491,13 @@ theorem ofBits_reverse (w : List Bool) : ofBits w.reverse = BitString.binaryValu
 
 open ComputableTidilyInPolyTime in
 /-- The binary value of a word is polynomial-time, in binary. -/
-theorem computableTidilyInPolyTime_binaryValue :
+private theorem computableTidilyInPolyTime_binaryValue :
     ComputableTidilyInPolyTime BitString.binaryValue encBits encNat :=
   bitsBinaryValue
 
 open ComputableTidilyInPolyTime in
 /-- The verifier for Kannan's language is polynomial-time. -/
-theorem computableTidilyInPolyTime_verifier (k : ℕ) :
+private theorem computableTidilyInPolyTime_verifier (k : ℕ) :
     ComputableTidilyInPolyTime (verifier k) (encPair encBits encBits) encBool := by
   have hn : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => p.1.length)
       (encPair encBits encBits) encUnary :=

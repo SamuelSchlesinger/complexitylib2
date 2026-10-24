@@ -71,7 +71,7 @@ theorem iter_add (a c : ℕ) (u : α) : iter σ (a + c) u = (iter σ a u).bind (
     rw [ih]
     cases iter σ a u <;> rfl
 
-theorem iter_add_of_eq {a : ℕ} {u w : α} (h : iter σ a u = some w) (c : ℕ) :
+private theorem iter_add_of_eq {a : ℕ} {u w : α} (h : iter σ a u = some w) (c : ℕ) :
     iter σ (a + c) u = iter σ c w := by
   rw [iter_add, h]
   rfl
@@ -136,10 +136,10 @@ theorem packing_card_le_cover {r : α → ℕ} {S H : Finset α}
   exact hP.2 p hp q hq hne (g p) (hgM p hp) (he ▸ hgM q hq)
 
 /-- `w` lies strictly before `v` along a directed path. -/
-def Before (w v : α) : Prop :=
+private def Before (w v : α) : Prop :=
   ∃ k, 0 < k ∧ iter σ k w = some v
 
-theorem before_wellFounded [Finite α] (hac : Acyclic σ) : WellFounded (Before σ) := by
+private theorem before_wellFounded [Finite α] (hac : Acyclic σ) : WellFounded (Before σ) := by
   have : IsTrans α (Before σ) := ⟨fun a b c ⟨k, hk, hab⟩ ⟨l, hl, hbc⟩ =>
     ⟨k + l, by omega, by rw [iter_add_of_eq σ hab]; exact hbc⟩⟩
   have : Std.Irrefl (Before σ) := ⟨fun a ⟨k, hk, h⟩ => hac a k hk h⟩
@@ -147,7 +147,7 @@ theorem before_wellFounded [Finite α] (hac : Acyclic σ) : WellFounded (Before 
 
 /-- If a path `q` ending at `w` and a path `W` ending at `v` share a vertex `u`, then either `v`
 belongs to `q` or `w` lies strictly before `v`. -/
-theorem shared_vertex {q W : FPath α} {u v w : α} (hqw : q.End (σ := σ) w)
+private theorem shared_vertex {q W : FPath α} {u v w : α} (hqw : q.End (σ := σ) w)
     (hWv : W.End (σ := σ) v) (hqu : q.Mem (σ := σ) u) (hWu : W.Mem (σ := σ) u) :
     q.Mem (σ := σ) v ∨ Before σ w v := by
   obtain ⟨a, ha, hau⟩ := hqu

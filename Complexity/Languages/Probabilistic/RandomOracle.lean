@@ -119,7 +119,7 @@ theorem memoize_invariant [LawfulBEq Query] (distribution : Query → PMF Value)
 
 /-- Each memoized call adds at most one entry. Every new entry records an actual query and an
 answer in its sampling distribution's support. Repeated calls still appear in the transcript. -/
-theorem run_interpret_memoize_transcript (distribution : Query → PMF Value)
+private theorem run_interpret_memoize_transcript (distribution : Query → PMF Value)
     (program : OracleComp (fun _ : Query => Value) α) (cache cache' : List (Query × Value))
     (result : α) (transcript : OracleComp.Transcript (fun _ : Query => Value))
     (h : (result, cache', transcript) ∈ ((OracleComp.interpret

@@ -97,7 +97,7 @@ theorem compose_zero (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
 /-- If `g` rejects the all-false input and flipping the block `D` changes its value there, then
 flipping the product block `C ×ˢ D` in the all-false input of `compose f g` gives the value of `f`
 on the all-false input with `C` flipped. -/
-theorem compose_flip_product_zero (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
+private theorem compose_flip_product_zero (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
     (C : Finset I) (D : Finset J) (hg : g (fun _ => false) = false)
     (hD : g (flip (fun _ => false) D) ≠ g (fun _ => false)) :
     compose f g (flip (fun _ => false) (C ×ˢ D)) = f (flip (fun _ => false) C) := by

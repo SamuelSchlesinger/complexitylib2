@@ -60,11 +60,6 @@ theorem lowBits_eq_ofFn (width value : ℕ) :
   intro i hi hi'
   simp [lowBits]
 
-/-- Low-order-first reconstruction is exact for values fitting in the declared width. -/
-theorem foldr_lowBits {width value : ℕ} (h : value < 2 ^ width) :
-    (lowBits width value).foldr Nat.bit 0 = value :=
-  Nat.foldr_bit_testBit (Nat.size_le.2 h)
-
 /-- The natural number represented by a word, most significant bit first. -/
 def binaryValue (word : List Bool) : ℕ :=
   word.foldl (fun value bit => 2 * value + bit.toNat) 0

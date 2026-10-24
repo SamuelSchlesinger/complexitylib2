@@ -310,7 +310,7 @@ def verifier (enc : α ↪ List Bool) (p q : Polynomial ℕ) (V : α × List Boo
     (step fun c => V (x.1, c)) init)
 
 /-- The encoding of the states of a scan. -/
-abbrev encState : State ↪ List Bool :=
+private abbrev encState : State ↪ List Bool :=
   encPair encBool (encPair encBool (encPair encBool (encPair encBool encBits)))
 
 /-- A slot grows the encoded state by at most its length. -/

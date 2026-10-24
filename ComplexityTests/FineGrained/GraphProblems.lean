@@ -56,7 +56,7 @@ example : SAT.toSparseIndependentSet φ₁ ∈ IndependentSet :=
 
 example : SAT.toSparseIndependentSet φ₂ ∉ IndependentSet := fun h => by
   obtain ⟨σ, hσ⟩ := (SAT.toSparseIndependentSet_mem_iff φ₂).1 h
-  cases h : σ 0 <;> simp [φ₂, CNF.eval, Clause.eval, Literal.eval, h] at hσ
+  cases h : σ 0 <;> simp [φ₂, h] at hσ
 
 /-- The formula with no clauses asks for the empty independent set; the empty clause has no
 vertex to choose. -/
@@ -85,7 +85,7 @@ example : SAT.toSparseDirHamPath φ₁ ∈ DirHamPath :=
 
 example : SAT.toSparseDirHamPath φ₂ ∉ DirHamPath := fun h => by
   obtain ⟨σ, hσ⟩ := (SAT.toSparseDirHamPath_mem_iff φ₂).1 h
-  cases h : σ 0 <;> simp [φ₂, CNF.eval, Clause.eval, Literal.eval, h] at hσ
+  cases h : σ 0 <;> simp [φ₂, h] at hσ
 
 example : SAT.toSparseDirHamCycle φ₁ ∈ DirHamCycle :=
   (SAT.toSparseDirHamCycle_mem_iff φ₁).2 ⟨fun _ => true, by decide⟩
@@ -95,7 +95,7 @@ example : SAT.toSparseHamCycle φ₁ ∈ HamCycle :=
 
 example : SAT.toSparseHamCycle φ₂ ∉ HamCycle := fun h => by
   obtain ⟨σ, hσ⟩ := (SAT.toSparseHamCycle_mem_iff φ₂).1 h
-  cases h : σ 0 <;> simp [φ₂, CNF.eval, Clause.eval, Literal.eval, h] at hσ
+  cases h : σ 0 <;> simp [φ₂, h] at hσ
 
 /-- The formula with no clauses gives the graph of a single top, which a path visits without arcs;
 the empty clause gives a clause node that no detour reaches. -/

@@ -76,11 +76,6 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-! ### The Hamming distance and the Fourier coefficients -/
 
-/-- The squared difference of two signs is two minus twice their product. -/
-theorem sq_signVal_sub_signVal (a b : Bool) :
-    (signVal a - signVal b) ^ 2 = 2 - 2 * (signVal a * signVal b) := by
-  cases a <;> cases b <;> norm_num
-
 /-- The mean squared difference of two Boolean functions read as signs is four times their
 relative Hamming distance. -/
 theorem expect_sq_signVal_sub_signVal (f g : (ι → Bool) → Bool) :

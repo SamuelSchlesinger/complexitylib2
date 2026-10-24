@@ -83,19 +83,19 @@ def word (j : ℕ) : List Bool := (j + 1).bits.dropLast
 `true`. -/
 def index (w : List Bool) : ℕ := w.foldr Nat.bit 1 - 1
 
-theorem foldr_bit_one_ne_zero (w : List Bool) : w.foldr Nat.bit 1 ≠ 0 := by
+private theorem foldr_bit_one_ne_zero (w : List Bool) : w.foldr Nat.bit 1 ≠ 0 := by
   induction w with
   | nil => simp
   | cons b w ih => exact Nat.bit_ne_zero b ih
 
-theorem bits_foldr_bit_one (w : List Bool) : (w.foldr Nat.bit 1).bits = w ++ [true] := by
+private theorem bits_foldr_bit_one (w : List Bool) : (w.foldr Nat.bit 1).bits = w ++ [true] := by
   induction w with
   | nil => simp
   | cons b w ih =>
     rw [List.foldr_cons, Nat.bits_append_bit _ _ fun h => absurd h (foldr_bit_one_ne_zero w), ih,
       List.cons_append]
 
-theorem foldr_bit_one_lt (w : List Bool) : w.foldr Nat.bit 1 < 2 ^ (w.length + 1) := by
+private theorem foldr_bit_one_lt (w : List Bool) : w.foldr Nat.bit 1 < 2 ^ (w.length + 1) := by
   induction w with
   | nil => simp
   | cons b w ih =>
@@ -120,7 +120,7 @@ theorem two_pow_length_word_le (j : ℕ) : 2 ^ (word j).length ≤ j + 1 := by
   rw [word, List.length_dropLast, Nat.size_eq_bits_len]
   exact Nat.lt_size.mp (Nat.sub_lt (Nat.size_pos.mpr (Nat.succ_pos j)) Nat.one_pos)
 
-theorem length_word_lt (j : ℕ) : (word j).length < j + 1 :=
+private theorem length_word_lt (j : ℕ) : (word j).length < j + 1 :=
   (Nat.lt_two_pow_self).trans_le (two_pow_length_word_le j)
 
 /-! ### Padding -/
@@ -138,7 +138,7 @@ theorem length_pad (u : List Bool) (k : ℕ) : (pad u k).length = u.length + 1 +
   simp only [pad, List.length_append, List.length_cons, List.length_replicate]
   omega
 
-theorem idxOf_false_replicate_append (k : ℕ) (l : List Bool) :
+private theorem idxOf_false_replicate_append (k : ℕ) (l : List Bool) :
     (List.replicate k true ++ false :: l).idxOf false = k := by
   induction k with
   | zero => simp
@@ -157,7 +157,7 @@ theorem pad_inj {u u' : List Bool} {k k' : ℕ} : pad u k = pad u' k' ↔ u = u'
   ⟨fun h => by simpa using congrArg unpad h, fun ⟨hu, hk⟩ => hu ▸ hk ▸ rfl⟩
 
 /-- A word with a `false` is a run of `true`s up to its first `false`, and what follows. -/
-theorem eq_replicate_idxOf_false {l : List Bool} (hl : false ∈ l) :
+private theorem eq_replicate_idxOf_false {l : List Bool} (hl : false ∈ l) :
     l = List.replicate (l.idxOf false) true ++ false :: l.drop (l.idxOf false + 1) := by
   induction l with
   | nil => simp at hl

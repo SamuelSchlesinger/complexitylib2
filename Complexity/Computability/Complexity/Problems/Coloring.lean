@@ -249,7 +249,7 @@ def toThreeColoring (φ : CNF ℕ) : Graph :=
 /-! ### Correctness of the reduction -/
 
 /-- No edge of the gadget graph is a self-loop. -/
-theorem ne_of_mem_coloringEdges {φ : CNF ℕ} {e : ℕ × ℕ} (he : e ∈ coloringEdges φ) :
+private theorem ne_of_mem_coloringEdges {φ : CNF ℕ} {e : ℕ × ℕ} (he : e ∈ coloringEdges φ) :
     e.1 ≠ e.2 := by
   simp only [coloringEdges, clauseEdges, stageEdges, variableEdges, List.mem_append,
     List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at he

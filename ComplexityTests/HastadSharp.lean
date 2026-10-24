@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Foundations.Data.BitString.Parity.Weight
 import Complexity.Computability.Circuit.Boolean.Hastad.Sharp
 import Complexity.Computability.Circuit.Boolean.FirstOrder.Parity
 import Complexity.Computability.Circuit.Boolean.ShallowSymmetric
