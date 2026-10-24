@@ -11,6 +11,7 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Basic
 public import Complexity.Crypto.Computational.Homomorphic.Evaluation.PolyTime
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 public import Complexity.Computability.Circuit.Boolean.DepthTime.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Probabilistic.PPT.Capture
 
 /-!
@@ -85,7 +86,7 @@ theorem isPPTOn_encrypt {bit : α → Bool}
     (hpk : ComputableTidilyInPolyTime pk input encBits)
     (hbit : ComputableTidilyInPolyTime bit input encBool) :
     IsPPTOn input encBits (fun a => encrypt E (n a) (pk a) (bit a)) := by
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   exact hencrypt.preprocess (hn.prod (hpublic.fst'.prod hbit))
 
 variable {secretWidth ciphertextWidth : ℕ → ℕ}
@@ -144,7 +145,7 @@ theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
     (hc : ComputableTidilyInPolyTime c input (Boolean.encCircuit 1))
     (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits)) :
     IsPPTOn input encBits (fun a => evaluate D (n a) (pk a) (c a) (inputs a)) := by
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   have hview : ComputableTidilyInPolyTime
       (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl

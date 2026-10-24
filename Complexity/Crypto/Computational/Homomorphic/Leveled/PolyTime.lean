@@ -12,6 +12,7 @@ public import Complexity.Crypto.Computational.Homomorphic.KeyChain.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Evaluation.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Layered.Padding.PolyTime
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Probabilistic.PPT.Capture
 
 /-!
@@ -92,7 +93,7 @@ theorem isPPTOn_encrypt {bit : α → Bool}
     (hpk : ComputableTidilyInPolyTime pk input encBits)
     (hbit : ComputableTidilyInPolyTime bit input encBool) :
     IsPPTOn input encBits (fun a => encrypt E (n a) (pk a) (bit a)) := by
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   have hfirst := (ComputableTidilyInPolyTime.listGetD (encA := encBits) []).comp
     (hpublic.fst'.prod (ComputableTidilyInPolyTime.const 0))
   exact (hencrypt.preprocess (hn.prod (hfirst.prod hbit))).map (by fun_prop)
@@ -112,7 +113,7 @@ theorem computableTidilyInPolyTime_decrypt
     (hc : ComputableTidilyInPolyTime ciphertext input encBits) :
     ComputableTidilyInPolyTime (fun a => decrypt D (n a) (sk a) (ciphertext a))
       input encBool := by
-  have hendpoints := secretKeyDecoder.computableTidilyInPolyTime.comp hsk
+  have hendpoints := secretKeyDecoder.computableInPolyTime.tidy.comp hsk
   have hhead := (ComputableTidilyInPolyTime.headD (encA := encBool) false).comp hc
   have hsecret := hhead.cond hendpoints.snd' hendpoints.fst'
   exact Boolean.computableTidilyInPolyTime_evalCircuit (hD.comp hn)
@@ -161,7 +162,7 @@ theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
     (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits)) :
     IsPPTOn input encBits
       (fun a => evaluate D (n a) (budget a) (pk a) (c a) (inputs a)) := by
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   have hview : ComputableTidilyInPolyTime
       (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
