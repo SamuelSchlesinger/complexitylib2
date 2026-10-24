@@ -911,6 +911,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Reachability
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PlainDirect.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PlainDirect.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
