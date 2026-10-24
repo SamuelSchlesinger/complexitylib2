@@ -8,9 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.Reachability.Reingold
+public import Complexity.Algorithms.Reachability.ReingoldEval
 public import Complexity.Computability.Complexity.Problems.USTCON
 public import Complexity.Computability.Machines.ReadMachine.Basic
-public import Complexity.Foundations.Combinatorics.Expander.ReingoldEval
 
 /-!
 # A read machine for undirected connectivity

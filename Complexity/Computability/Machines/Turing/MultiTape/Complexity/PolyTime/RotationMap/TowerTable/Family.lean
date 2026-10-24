@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.TowerTable
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.TowerTable
 public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
 import Mathlib.Tactic.NormNum.Prime
 

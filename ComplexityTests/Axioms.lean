@@ -7129,13 +7129,6 @@ info: 'Cslib.RotationMap.TowerTable.valid_iterate' depends on axioms:
 #print axioms Cslib.RotationMap.TowerTable.valid_iterate
 
 /--
-info: 'Cslib.RotationMap.TowerTable.numberedIndex_eq' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.TowerTable.numberedIndex_eq
-
-/--
 info: 'Cslib.RotationMap.TowerTable.lookup_iterate_numbered' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

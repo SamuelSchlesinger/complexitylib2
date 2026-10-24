@@ -27,8 +27,6 @@ in `Computability/Machines/Turing/MultiTape/Complexity/PolyTime/RotationMap/Towe
 * `Cslib.RotationMap.TowerTable.nextRow`: a row of the next square-and-zig-zag level.
 * `Cslib.RotationMap.TowerTable.next`: construct the next square-and-zig-zag level.
 * `Cslib.RotationMap.TowerTable.build`: build the first level large enough for a requested size.
-* `Cslib.RotationMap.TowerTable.numberedIndex`: the arithmetic numbering of the vertices of the
-  zig-zag tower.
 
 ## Main results
 
@@ -171,25 +169,6 @@ private theorem lookup_next (H : RotationMap (Fin b) D)
     (next H e hb table).lookup vertex label = nextRow H e hb table vertex label := by
   simp [lookup, next, hv]
 
-/-- Number a structured tower vertex with the supplied fixed base numbering. -/
-def numberedIndex {B : Type*} (numbering : B ≃ Fin b) :
-    (level : ℕ) → ZigzagTowerVertex B level → ℕ
-  | 0, vertex => (numbering vertex).val
-  | level + 1, vertex => numberedIndex numbering level vertex.1 * b + (numbering vertex.2).val
-
-/-- Arithmetic indexing agrees with the existing recursive equivalence. -/
-theorem numberedIndex_eq {B : Type*} (numbering : B ≃ Fin b) (level : ℕ)
-    (vertex : ZigzagTowerVertex B level) :
-    numberedIndex numbering level vertex =
-      (ZigzagTowerVertex.equivFin numbering level vertex).val := by
-  induction level with
-  | zero => rfl
-  | succ level ih =>
-    change numberedIndex numbering level vertex.1 * b + (numbering vertex.2).val =
-      (numbering vertex.2).val + b * (ZigzagTowerVertex.equivFin numbering level vertex.1).val
-    rw [ih]
-    ring
-
 private theorem reindex_rotation {B : Type*} (H : RotationMap B D) (numbering : B ≃ Fin b)
     (p : Fin b × D) : (H.reindex numbering).rot p =
       (numbering (H.rot (numbering.symm p.1, p.2)).1,
@@ -200,8 +179,10 @@ theorem lookup_iterate_numbered {B : Type*} (H : RotationMap B D)
     (e : B ≃ (Fin 2 → D × D)) (numbering : B ≃ Fin b) (hb : 0 < b)
     (level : ℕ) (vertex : ZigzagTowerVertex B level) (label : D × D) :
     ((next (H.reindex numbering) (numbering.symm.trans e) hb)^[level]
-      (initial (H.reindex numbering))).lookup (numberedIndex numbering level vertex) label =
-      (numberedIndex numbering level ((zigzagTower H e level).rot (vertex, label)).1,
+      (initial (H.reindex numbering))).lookup
+        (ZigzagTowerVertex.equivFin numbering level vertex).val label =
+      ((ZigzagTowerVertex.equivFin numbering level
+          ((zigzagTower H e level).rot (vertex, label)).1).val,
         ((zigzagTower H e level).rot (vertex, label)).2) := by
   induction level generalizing label with
   | zero =>
@@ -214,24 +195,30 @@ theorem lookup_iterate_numbered {B : Type*} (H : RotationMap B D)
   | succ level ih =>
     rcases vertex with ⟨vertex, cloud⟩
     rcases label with ⟨first, second⟩
-    have hindex : numberedIndex numbering (level + 1) (vertex, cloud) <
+    have hstep (u : ZigzagTowerVertex B level) (c : B) :
+        (ZigzagTowerVertex.equivFin numbering (level + 1) (u, c)).val =
+          (ZigzagTowerVertex.equivFin numbering level u).val * b + (numbering c).val := by
+      change (numbering c).val + b * (ZigzagTowerVertex.equivFin numbering level u).val = _
+      ring
+    have hindex : (ZigzagTowerVertex.equivFin numbering (level + 1) (vertex, cloud)).val <
         ((next (H.reindex numbering) (numbering.symm.trans e) hb)^[level]
           (initial (H.reindex numbering))).length * b := by
       rw [length_iterate, ← pow_succ]
-      exact (numberedIndex_eq numbering (level + 1) (vertex, cloud)).trans_lt
-        (ZigzagTowerVertex.equivFin numbering (level + 1) (vertex, cloud)).isLt
-    rw [Function.iterate_succ_apply', lookup_next _ _ _ _ hindex]
-    have hmod : (numberedIndex numbering level vertex * b + (numbering cloud).val) % b =
-        (numbering cloud).val := by
+      exact (ZigzagTowerVertex.equivFin numbering (level + 1) (vertex, cloud)).isLt
+    rw [Function.iterate_succ_apply', lookup_next _ _ _ _ hindex, hstep]
+    have hmod :
+        ((ZigzagTowerVertex.equivFin numbering level vertex).val * b + (numbering cloud).val) % b =
+          (numbering cloud).val := by
       simp [Nat.add_mod, Nat.mod_eq_of_lt (numbering cloud).isLt]
-    have hdiv : (numberedIndex numbering level vertex * b + (numbering cloud).val) / b =
-        numberedIndex numbering level vertex := by
-      rw [Nat.mul_comm (numberedIndex numbering level vertex), Nat.mul_add_div hb,
-        Nat.div_eq_of_lt (numbering cloud).isLt, Nat.add_zero]
-    simp only [nextRow, numberedIndex, hmod, hdiv, reindex_rotation, Equiv.trans_apply, Fin.eta,
+    have hdiv :
+        ((ZigzagTowerVertex.equivFin numbering level vertex).val * b + (numbering cloud).val) / b =
+          (ZigzagTowerVertex.equivFin numbering level vertex).val := by
+      rw [Nat.mul_comm (ZigzagTowerVertex.equivFin numbering level vertex).val,
+        Nat.mul_add_div hb, Nat.div_eq_of_lt (numbering cloud).isLt, Nat.add_zero]
+    simp only [nextRow, hmod, hdiv, reindex_rotation, Equiv.trans_apply, Fin.eta,
       Equiv.symm_apply_apply, Equiv.symm_trans_apply, Equiv.apply_symm_apply]
     rw [ih, ih]
-    simp only [zigzagTower_succ, zigzag, zigzagRot, square_relabel_rotation]
+    simp only [zigzagTower_succ, zigzag, zigzagRot, square_relabel_rotation, hstep]
 
 /-- The selected complete table has the exact cardinality used by the tower family. -/
 theorem length_build (H : RotationMap (Fin b) D) (e : Fin b ≃ (Fin 2 → D × D))
@@ -247,7 +234,7 @@ theorem lookup_build {B : Type*} (H : RotationMap B D) (e : B ≃ (Fin 2 → D �
       let target := ((zigzagTower H e (Nat.clog b size - 1)).reindex
         (ZigzagTowerVertex.equivFin numbering (Nat.clog b size - 1))).rot (vertex, label)
       (target.1.val, target.2) := by
-  simpa only [build, numberedIndex_eq, Equiv.apply_symm_apply, reindex_rotation] using
+  simpa only [build, Equiv.apply_symm_apply, reindex_rotation] using
     lookup_iterate_numbered H e numbering hb (Nat.clog b size - 1)
       ((ZigzagTowerVertex.equivFin numbering (Nat.clog b size - 1)).symm vertex) label
 

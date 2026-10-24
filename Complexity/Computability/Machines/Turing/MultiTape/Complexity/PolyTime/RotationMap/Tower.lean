@@ -7,7 +7,7 @@ Authors: Bolton Bailey, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Combinatorics.Expander.TowerTable
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.TowerTable
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Fin
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
