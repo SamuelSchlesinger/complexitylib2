@@ -951,6 +951,12 @@ theorem headD {α : Type}
   encL encA :=
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.headD α encA encL _inst3 fallback)
 
+/-- Length of a framed list, for any element encoding, with a unary result. -/
+@[fun_prop]
+theorem length_list {α : Type} (enc : α ↪ List Bool) :
+    ComputableInPolyTime (fun l : List α => l.length) (encList enc) encUnary :=
+  .of_tidy (ComputableTidilyInPolyTime.length_list enc)
+
 /-- Length of a raw bit string. -/
 @[fun_prop]
 theorem length_bits :
@@ -987,5 +993,12 @@ theorem bitsDropWithInput {α : Type} {input : α ↪ List Bool}
     (hcount : ComputableInPolyTime count input encUnary) :
     ComputableInPolyTime (fun a => (list a).drop (count a)) input encBits :=
   .of_tidy (ComputableTidilyInPolyTime.bitsDropWithInput hlist.tidy hcount.tidy)
+
+/-- Length of a computed raw word, fixing the intermediate encoding for proof search. -/
+@[fun_prop]
+theorem length_bits_comp {α : Type} {input : α ↪ List Bool} {word : α → List Bool}
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => (word a).length) input encUnary :=
+  length_bits.comp hword
 
 end Turing.MultiTapeTM.ComputableInPolyTime

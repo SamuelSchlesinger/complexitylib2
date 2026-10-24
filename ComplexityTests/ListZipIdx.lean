@@ -27,4 +27,20 @@ example {α Input : Type} (enc : α ↪ List Bool) (input : Input ↪ List Bool)
   fail_if_success (clear hlist; fun_prop)
   polytime
 
+-- Framing supplies the length; no element decoder or computational hypothesis is needed.
+example {α : Type} (enc : α ↪ List Bool) :
+    ComputableInPolyTime (fun list : List α => list.length) (encList enc) encUnary := by
+  fun_prop
+
+example (empty : Empty ↪ List Bool) :
+    ComputableInPolyTime (fun list : List Empty => list.length) (encList empty) encUnary := by
+  fun_prop
+
+-- The list may be computed from the complete caller context.
+example {α Input : Type} (enc : α ↪ List Bool) (input : Input ↪ List Bool)
+    (list : Input → List α) (hlist : ComputableInPolyTime list input (encList enc)) :
+    ComputableInPolyTime (fun x => (list x).length) input encUnary := by
+  fail_if_success (clear hlist; fun_prop)
+  fun_prop
+
 end ComplexityTests.ListZipIdx
