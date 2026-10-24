@@ -97,19 +97,6 @@ structure SeedRealization (pair : SamplablePair) where
   distribution : ∀ n, (BitString.uniformList (length n)).map (evaluate n) =
     (pair.joint n).map (fun output => (pair.encode n output.1, output.2))
 
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem SeedRealization.length_isPolyTime_tidy {pair : SamplablePair}
-    (h : SeedRealization pair) :
-    ComputableTidilyInPolyTime h.length encUnary encUnary := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.length_isPolyTime
-
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem SeedRealization.efficient_tidy {pair : SamplablePair}
-    (h : SeedRealization pair) :
-    ComputableTidilyInPolyTime (fun input : ℕ × List Bool => h.evaluate input.1 input.2)
-    (encPair encUnary encBits) (encPair encBits encBool) := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.efficient
-
 /-- A strict PPT sampler supplies an efficient uniform-seed realization with no additional
 computability or sampling assumption. -/
 theorem exists_seedRealization (pair : SamplablePair) : Nonempty (SeedRealization pair) := by

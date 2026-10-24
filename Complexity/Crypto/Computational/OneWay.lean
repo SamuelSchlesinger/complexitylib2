@@ -91,15 +91,6 @@ structure OneWay (f : List Bool → List Bool) : Prop where
   secure : Game.Indistinguishable (fun adversary n => ProbComp.eval (inversionGame f adversary n))
     (fun _ _ => PMF.pure false) (IsPPT encBits)
 
-/-- Recover the tidy presentation for proofs without changing the security contract. -/
-theorem oneWay_iff_tidy {f : List Bool → List Bool} :
-    OneWay f ↔
-    (ComputableTidilyInPolyTime f encBits encBits) ∧
-    (Game.Indistinguishable (fun adversary n => ProbComp.eval (inversionGame f adversary n))
-    (fun _ _ => PMF.pure false) (IsPPT encBits)) :=
-  ⟨fun h => ⟨h.polyTime.tidy, h.secure⟩,
-    fun ⟨h0, h1⟩ => ⟨.of_tidy h0, h1⟩⟩
-
 /-- The shared game definition gives the usual negligible inversion probability. -/
 theorem OneWay.inversion_negligible {f : List Bool → List Bool} (h : OneWay f)
     (adversary : Inverter) (hPPT : IsPPT encBits adversary) :

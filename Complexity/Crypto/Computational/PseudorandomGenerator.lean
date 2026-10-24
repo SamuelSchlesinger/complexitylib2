@@ -182,16 +182,6 @@ structure PseudorandomGenerator (generator : List Bool → List Bool) (length : 
   /-- The finite family is secure against uniformly realizable PPT tests. -/
   secure : (PRG.wordFamily generator length).Secure IsPPTBitStringTest
 
-/-- Recover the tidy presentation for proofs without changing the security contract. -/
-theorem pseudorandomGenerator_iff_tidy {generator : List Bool → List Bool} {length : ℕ → ℕ} :
-    PseudorandomGenerator generator length ↔
-    (ComputableTidilyInPolyTime generator encBits encBits) ∧
-    (∀ word, (generator word).length = length word.length) ∧
-    (∀ n, n < length n) ∧
-    ((PRG.wordFamily generator length).Secure IsPPTBitStringTest) :=
-  ⟨fun h => ⟨h.polyTime.tidy, h.length_eq, h.stretch, h.secure⟩,
-    fun ⟨h0, h1, h2, h3⟩ => ⟨.of_tidy h0, h1, h2, h3⟩⟩
-
 /-- Establish a uniform PRG with an ordinary word-ensemble security argument. -/
 theorem PseudorandomGenerator.of_indistinguishable
     {generator : List Bool → List Bool} {length : ℕ → ℕ}

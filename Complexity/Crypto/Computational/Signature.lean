@@ -106,13 +106,6 @@ structure SignatureScheme where
     ∀ sig, sig ∈ (ProbComp.eval (sign keys.2 msg)).support →
     verify keys.1 msg sig = true
 
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem SignatureScheme.verify_polyTime_tidy (h : SignatureScheme) :
-    ComputableTidilyInPolyTime
-    (fun p : List Bool × List Bool × List Bool => h.verify p.1 p.2.1 p.2.2)
-    (encPair encBits (encPair encBits encBits)) encBool := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.verify_polyTime
-
 namespace SignatureScheme
 
 attribute [program_certificate] keyGen_ppt sign_ppt verify_polyTime
