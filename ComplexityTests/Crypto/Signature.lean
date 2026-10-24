@@ -46,7 +46,7 @@ example {f : List Bool → List Bool} (hf : ComputableInPolyTime f encBits encBi
 
 example {f : List Bool → List Bool} (hf : ComputableInPolyTime f encBits encBits)
     {adversary : Forger} (ha : IsOraclePPT (encPair encBits encBits) adversary) :
-    IsPPT encBits (lamportInverter f hf adversary) := isPPT_lamportInverter hf.tidy ha
+    IsPPT encBits (lamportInverter f hf adversary) := isPPT_lamportInverter hf ha
 
 -- Each message bit selects the corresponding secret from its pair.
 example : lamportSign (encList encBits

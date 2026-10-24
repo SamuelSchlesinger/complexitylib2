@@ -239,16 +239,18 @@ example : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
     (fun p => Leveled.encrypt tagged p.1 p.2.1 p.2.2) := by
   apply Leveled.isPPTOn_encrypt encrypt_ppt <;> fun_prop
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × List Bool × List Bool => Leveled.decrypt decryptionCircuits p.1 p.2.1 p.2.2)
     (encPair encUnary (encPair encBits encBits)) encBool := by
-  apply Leveled.computableInPolyTime_decrypt decryptionCircuits circuits_poly <;> fun_prop
+  apply Leveled.computableInPolyTime_decrypt decryptionCircuits (.of_tidy circuits_poly) <;>
+    fun_prop
 
 example : IsPPTOn
     (encPair encUnary (encPair encUnary
       (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))) encBits
     (fun p => Leveled.evaluate decryptionCircuits p.1 p.2.1 p.2.2.1 p.2.2.2.1 p.2.2.2.2) := by
-  apply Leveled.isPPTOn_evaluate encrypt_ppt decryptionCircuits circuits_poly evaluate_ppt
+  apply Leveled.isPPTOn_evaluate encrypt_ppt decryptionCircuits (.of_tidy circuits_poly)
+    evaluate_ppt
   all_goals fun_prop
 
 -- A nonconstant budget family instantiates the actual Scheme fields with one uniform clock.
@@ -261,12 +263,13 @@ example : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))) encBits
     (fun p => (Leveled.scheme decryptionCircuits (fun n => n + 1)).evaluate
       p.1 p.2.1 p.2.2.1 p.2.2.2) := by
-  exact Leveled.isPPTOn_scheme_evaluate encrypt_ppt decryptionCircuits circuits_poly evaluate_ppt
+  exact Leveled.isPPTOn_scheme_evaluate encrypt_ppt decryptionCircuits (.of_tidy circuits_poly)
+    evaluate_ppt
     (fun n => n + 1) (by fun_prop)
 
 -- The same generated decryption circuits supply the compact widths' polynomial bounds.
 example : PolynomiallyBounded (fun _ : ℕ => 4) ∧ PolynomiallyBounded (fun _ : ℕ => 3) :=
-  Leveled.polynomiallyBounded_widths decryptionCircuits circuits_poly
+  Leveled.polynomiallyBounded_widths decryptionCircuits (.of_tidy circuits_poly)
 
 /--
 info: 'Cslib.Crypto.Homomorphic.Leveled.correct' depends on axioms:
@@ -290,8 +293,9 @@ info: 'Cslib.Crypto.Homomorphic.Leveled.isPPTOn_keyGen' depends on axioms:
 #print axioms Leveled.isPPTOn_keyGen
 
 /--
-info: 'Cslib.Crypto.Homomorphic.Leveled.computableTidilyInPolyTime_decrypt' depends on axioms:
-[propext, Classical.choice, Quot.sound]
+info: 'Cslib.Crypto.Homomorphic.Leveled.computableInPolyTime_decrypt' depends on axioms: [propext,
+  Classical.choice,
+  Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Leveled.computableInPolyTime_decrypt
