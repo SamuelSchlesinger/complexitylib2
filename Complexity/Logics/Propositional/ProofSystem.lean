@@ -17,7 +17,7 @@ import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain.Calculus
 
 /-!
 # Proof systems
@@ -236,16 +236,15 @@ def ofVerifier (D : Decoder enc) (hV : ComputableInPolyTime V (encPair enc encBi
     (hVL : IsVerifier enc p V L) {a₀ : α} (ha₀ : a₀ ∈ L) : ProofSystem enc L where
   toFun π := if verifierAccepts D p V π then verifierInstance D π else a₀
   computable := by
-    obtain ⟨_, _, hD⟩ := D.computable
-    have hi : ComputableTidilyInPolyTime (verifierInstance D) encBits enc :=
-      hD.computableTidilyInPolyTime.comp .unframe
-    have hlen : ComputableTidilyInPolyTime
+    have hi : ComputableInPolyTime (verifierInstance D) encBits enc :=
+      D.computableInPolyTime.comp .unframe
+    have hlen : ComputableInPolyTime
         (fun π => p.eval (enc (verifierInstance D π)).length) encBits encUnary :=
-      (unary_eval p).comp ((encoding_length enc).comp hi)
-    have hacc : ComputableTidilyInPolyTime (verifierAccepts D p V) encBits encBool :=
-      .bool_and' (hV.tidy.comp (hi.prod .dropFrame))
-        (.decide_eq' (length_bits.comp .dropFrame) hlen)
-    exact (hacc.cond hi (.const a₀)).computableInPolyTime
+      (ComputableInPolyTime.unary_eval p).comp ((ComputableInPolyTime.encoding_length enc).comp hi)
+    have hacc : ComputableInPolyTime (verifierAccepts D p V) encBits encBool :=
+      .bool_and' (hV.comp' (hi.prod .dropFrame))
+        (.decide_eq' (ComputableInPolyTime.length_bits.comp .dropFrame) hlen)
+    exact .cond hacc hi (.const a₀)
   range_eq := by
     refine Set.Subset.antisymm ?_ fun a ha => ?_
     · rintro _ ⟨π, rfl⟩
