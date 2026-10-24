@@ -40,9 +40,9 @@ statements; the tidy notion is a proof device. Proofs switch between them with
 The closure rules of the plain notion are proved through the tidy calculus and registered with
 `fun_prop`, together with the transition from tidy to plain computability. `fun_prop` decomposes a
 plain goal with the plain closure rules and proves the remaining atoms from plain hypotheses or,
-through the transition, from tidy certificates. A tidy certificate stated for a whole composite,
-such as the `…WithInput` scans, is not reached this way; use `polytime`, or `.of_tidy` around a
-tidy `fun_prop` proof.
+through the transition, from tidy certificates. Ordinary plain rules for captured scans and list
+operations are supplied by `PolyTime.List` and `PolyTime.BitString`. If a routine has only a tidy
+construction certificate, its proof can switch explicitly with `.of_tidy`.
 
 ## Mixing plain hypotheses with tidy certificates
 
