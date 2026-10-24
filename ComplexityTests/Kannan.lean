@@ -40,7 +40,7 @@ example : Kannan.table 0 0 (List.replicate 10 true) = List.replicate 8 true := b
 example : BitString.binaryValue [true, false, true] = 5 := by decide
 example {u v : List Bool} (hlen : u.length = v.length)
     (h : BitString.binaryValue u = BitString.binaryValue v) : u = v :=
-  Kannan.binaryValue_injective hlen h
+  BitString.binaryValue_injective_of_length_eq hlen h
 
 /-! ### The `Σ₃` verifier -/
 
