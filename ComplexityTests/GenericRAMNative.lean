@@ -24,24 +24,24 @@ composition and automation, and distinct fault paths in checked scalar/instructi
 namespace ComplexityTests.GenericRAMNative
 
 open Cslib.GenericRAM Turing.MultiTapeTM
-open Turing.MultiTapeTM.ComputableTidilyInPolyTime
+open Turing.MultiTapeTM.ComputableInPolyTime
 open BoundedNat
 
 -- The bundle exists for an infinite runtime input domain, with every field polynomial.
 /-- The complete scalar bundle has a concrete native implementation. -/
 theorem nativePrimitives_nonempty : Nonempty (model.NativePrimitives encoding) := ⟨nativePrimitives⟩
 example (c : ℕ) : (nativePrimitives.constant c).IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial (constant_polyTime c)
+  NativeCertificate.ofPolyTime_isPolynomial (.of_tidy (constant_polyTime c))
 example (op : model.operations.Op) : (nativePrimitives.operation op).IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial (operation_polyTime op)
+  NativeCertificate.ofPolyTime_isPolynomial (.of_tidy (operation_polyTime op))
 example (t : model.tests.Op) : (nativePrimitives.test t).IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial (test_polyTime t)
+  NativeCertificate.ofPolyTime_isPolynomial (.of_tidy (test_polyTime t))
 example : nativePrimitives.address.IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial address_polyTime
+  NativeCertificate.ofPolyTime_isPolynomial (.of_tidy address_polyTime)
 example : nativePrimitives.validMove.IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial validMove_polyTime
+  NativeCertificate.ofPolyTime_isPolynomial (.of_tidy validMove_polyTime)
 example : nativePrimitives.validPC.IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial validPC_polyTime
+  NativeCertificate.ofPolyTime_isPolynomial (.of_tidy validPC_polyTime)
 
 -- Pure native computability suffices for arbitrary-bound certification.
 example {α β : Type} (f : α → β) (ei : α ↪ List Bool) (eo : β ↪ List Bool)
@@ -65,7 +65,7 @@ example (p : ℕ × ℕ) : addressAccepted.time p =
 example : addressAccepted.IsPolynomial :=
   present.comp_isPolynomial nativePrimitives.address
     (NativeCertificate.ofPolyTime_isPolynomial (optionIsSome (of_eq fun _ => rfl)))
-    (NativeCertificate.ofPolyTime_isPolynomial address_polyTime)
+    (NativeCertificate.ofPolyTime_isPolynomial (.of_tidy address_polyTime))
 example : IsComputable (fun p => (model.address p.1 p.2).isSome)
     (encPair encNat encNat) encBool := addressAccepted.isComputable
 
@@ -74,7 +74,9 @@ example : IsComputable (fun p => (model.address p.1 p.2).isSome)
 example : ComputableTidilyInPolyTime (model.checkedOp ())
     (encPair encNat (encPi encNat)) (encOption encNat) := by polytime
 example : ComputableTidilyInPolyTime
-    (fun k => (model.checkedConstant 7 k).getD 0) encNat encNat := by polytime
+    (fun k => (model.checkedConstant 7 k).getD 0) encNat encNat := by
+  apply ComputableInPolyTime.tidy
+  polytime
 example : ComputableInPolyTime
     (Cslib.WordRAM.Basis.standard.genericModel.checkedOp (.bin .add))
     (encPair encUnary (encPi encNat)) (encOption encNat) := by polytime
@@ -209,7 +211,7 @@ example : exactWord.checkedOp (.bin .mod) (2, ![3, 2]) = some 1 := by decide
 
 -- Complete native primitive bundles for standard, additive, arithmetic, and exact bases.
 example : Cslib.WordRAM.checkedAddCertificate.IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial Cslib.WordRAM.checkedAdd_polyTime.tidy
+  NativeCertificate.ofPolyTime_isPolynomial Cslib.WordRAM.checkedAdd_polyTime
 example : Cslib.WordRAM.Basis.standard.nativePrimitives.IsPolynomial :=
   Cslib.WordRAM.Basis.standard.nativePrimitives_isPolynomial
 example : Cslib.WordRAM.Basis.additive.nativePrimitives.IsPolynomial :=
