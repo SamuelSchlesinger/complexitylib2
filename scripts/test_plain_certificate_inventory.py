@@ -32,6 +32,12 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(summary["holdout_pairs_by_role"]["ordinary_plain_rule"],
                          {"tidy:success/plain:failed": 1})
 
+    def test_lookup_errors_fail_closed(self):
+        row = record()
+        row["declaration"]["counterpart_lookup_error"] = "invalid explicit coverage"
+        with self.assertRaisesRegex(ValueError, "counterpart lookup failed"):
+            runner.validate_rows([{"inventory_total": 1, "limit": 0}, row])
+
     def test_all_libraries_and_custom_srcdir(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -144,6 +150,7 @@ theorem ordinaryDuplicate {α : Type} (f : α → α) : OrdinaryProperty f := or
 theorem ordinaryStronger {α : Type u} (f : α → α) : OrdinaryProperty f := True.intro
 theorem ordinaryWrong {α : Type} (f : α → α) (_h : False) : OrdinaryProperty f := True.intro
 theorem specificSource : OrdinaryProperty (id : ℕ → ℕ) := True.intro
+theorem checkedCoverageSpecific : OrdinaryProperty (id : ℕ → ℕ) := ordinaryStronger id
 abbrev OrdinaryAlias {α : Type u} (f : α → α) : Prop := OrdinaryProperty f
 theorem aliasTwin {α : Type} (f : α → α) : OrdinaryAlias f := ordinarySource f
 attribute [aesop safe apply] isolated_source
@@ -164,6 +171,11 @@ run_meta do
   let specific := (← getConstInfo `specificSource).type
   unless (← findCounterparts index specific).isEmpty do
     throwError "generic rule was misclassified as counterpart of a particular primitive"
+  let covered ← coverageCounterparts #[`checkedCoverageSpecific] specific
+  unless covered == #[(`ordinaryStronger, `checkedCoverageSpecific)] do
+    throwError "explicit checked coverage did not verify the direct canonical reference: {covered}"
+  unless (← coverageCounterparts #[] specific).isEmpty do
+    throwError "manual stronger canonical identity must require explicit coverage provenance"
   unless (← findCounterparts {} target).isEmpty do
     throwError "absent ordinary counterpart must remain explicit"
   let reverse : Std.HashMap Name (List Name) := ({} : Std.HashMap Name (List Name)).insert `ordinaryTwin [`indirectTwin]
@@ -292,12 +304,15 @@ run_meta do
                        ("TidyInventoryProperty", "HiddenProperty")) >= 2 for r in local)
         selection, selected = tmp / "selection.json", tmp / "selected.jsonl"
         selection.write_text(json.dumps(["isolated_source"]))
+        coverage_file = tmp / "coverage.json"
+        coverage_file.write_text(json.dumps(["checkedCoverageSpecific"]))
         subprocess.run([lean, "--run", str(root / runner.RUNNER), str(modules),
-                        str(selected), "20000", "0", str(selection)], cwd=root, env=env, check=True)
+                        str(selected), "20000", "0", str(selection), str(coverage_file)], cwd=root, env=env, check=True)
         selected_rows = [json.loads(line) for line in selected.read_text().splitlines()]
         selected_summary = runner.validate_rows(selected_rows)
         assert selected_summary["selection_complete"] and not selected_summary["inventory_complete"]
         assert len(selected_rows) == 2
+        assert selected_rows[0]["coverage_declarations"] == ["checkedCoverageSpecific"]
         print("Native probes passed: ordinary declaration/type/provenance lookup, duplicate/stronger/absent twins, public tidy boundary, contextual DAG memo, dense fan-in/closure, actual-module owners, four databases, private/local/alias capture")
 
 

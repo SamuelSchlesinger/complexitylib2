@@ -187,6 +187,52 @@ def exclude (env : Environment) (bad : Std.HashSet Name) : Environment := Id.run
   let env := transitionTheoremsExt.modifyState env (filterGeneral bad)
   return morTheoremsExt.modifyState env (filterGeneral bad)
 
+/-- Kernel-check direct canonical application to the narrowed statement. Only explicit coverage
+provenance may use this check without complete statement identity. -/
+def canonicalSubsumes (name : Name) (type : Expr) : MetaM Bool := do
+  let saved ← saveState
+  try
+    let success ← forallTelescopeReducing type fun xs body => do
+      let goal ← mkFreshExprMVar body
+      let goals ← goal.mvarId!.applyConst name
+      for goal in goals do goal.assumption
+      let proof ← instantiateMVars goal
+      if proof.hasExprMVar then return false
+      let proof ← mkLambdaFVars xs proof
+      checkWithKernel proof
+      return ← isDefEq (← inferType proof) type
+    saved.restore
+    return success
+  catch _ =>
+    saved.restore
+    return false
+
+/-- The direct proof head, without guessing among arbitrary proof leaves. -/
+partial def directProofHead : Expr → Option Name
+  | .lam _ _ body _ => directProofHead body
+  | .letE _ _ value body _ => directProofHead (body.instantiate1 value)
+  | .mdata _ body => directProofHead body
+  | body => body.getAppFn.constName?
+
+/-- Explicitly requested checked examples provide evidence for the few broader manual canonical
+rules. Each example must match the complete narrowed statement, name its canonical as the direct
+proof head, and pass a second kernel subsumption check. No source/canonical name map is stored. -/
+def coverageCounterparts (coverage : Array Name) (type : Expr) :
+    MetaM (Array (Name × Name)) := do
+  let mut found := #[]
+  for exampleName in coverage do
+    unless ← counterpartFits exampleName type do continue
+    let some proof := (← getConstInfo exampleName).value? true
+      | throwError "coverage example lacks a proof body: {exampleName}"
+    let some canonical := directProofHead proof
+      | throwError "coverage example lacks a direct canonical proof head: {exampleName}"
+    unless (tidyNames (← getConstInfo canonical).type).isEmpty do
+      throwError "coverage canonical still has a tidy type: {canonical}"
+    unless ← canonicalSubsumes canonical type do
+      throwError "coverage canonical does not kernel-subsume the narrowed statement: {canonical}"
+    found := found.push (canonical, exampleName)
+  return found
+
 /-- Imported global registrations only: local and scoped construction rules are not public. -/
 def globalEntries {α σ : Type} (ext : SimpleScopedEnvExtension α σ) : CoreM (Array α) := do
   let state := ext.ext.toEnvExtension.getState (← getEnv)
@@ -343,13 +389,21 @@ def search (env : Environment) (type : Expr) (budget : Nat) (forbidden : Std.Has
 
 /-- Inspect a declaration without invoking its own proof as the benchmark. -/
 def describe (aliases : Std.HashSet Name) (index : CounterpartIndex)
-    (candidate : Candidate) : MetaM (Expr × Json × Array Name) := do
+    (coverage : Array Name) (candidate : Candidate) : MetaM (Expr × Json × Array Name) := do
   let name := candidate.owner
   let type := candidate.target
   let heads := tidyNames (expandAliases (← getEnv) aliases type)
-  let counterparts ← if candidate.localPath.isSome then pure #[] else do
-    try findCounterparts index (← plainType (expandAliases (← getEnv) aliases type)) (some name)
-    catch _ => pure #[]
+  let plain? ← try pure (some (← plainType (expandAliases (← getEnv) aliases type)))
+    catch _ => pure none
+  let (ordinary, covered, lookupError) : Array Name × Array (Name × Name) × Option String ←
+    if candidate.localPath.isSome || plain?.isNone then pure (#[], #[], none) else do
+      try
+        let plain := plain?.get!
+        let ordinary ← findCounterparts index plain (some name)
+        let covered ← coverageCounterparts coverage plain
+        pure (ordinary, covered, none)
+      catch error => pure (#[], #[], some (← error.toMessageData.toString))
+  let counterparts := (Std.HashSet.ofArray (ordinary ++ covered.map (·.1))).toArray.qsort Name.lt
   let prop ← isProp type
   let env ← getEnv
   let module := env.getModuleIdxFor? name |>.map fun i => env.header.moduleNames[i.toNat]!
@@ -359,10 +413,15 @@ def describe (aliases : Std.HashSet Name) (index : CounterpartIndex)
     ("private", toJson (isPrivateName name)), ("proposition", toJson prop),
     ("type", toJson (toString (← ppExpr type))),
     ("counterparts", toJson (counterparts.map Name.toString)),
+    ("counterpart_lookup_error", toJson lookupError),
     ("counterpart_ambiguity", toJson (decide (counterparts.size > 1))),
+    ("coverage_derived_manual_stronger", toJson (covered.map fun (canonical, exampleName) =>
+      (canonical.toString, exampleName.toString))),
     ("counterpart_evidence", Json.arr (counterparts.map fun target => Json.mkObj [
       ("name", toJson target.toString),
-      ("matching", toJson "whole-statement kernel matching or provenance-gated direct subsumption; no search"),
+      ("matching", toJson (if covered.any (·.1 == target) then
+        "coverage-derived/manual stronger; checked example and kernel subsumption; no search" else
+        "whole-statement kernel matching or provenance-gated direct subsumption; no search")),
       ("direct_original_proof_reference", toJson (((env.find? target).bind (·.value? true)).any
         fun value => (constants value).contains name)),
       ("source_module", toJson (env.getModuleIdxFor? target |>.map fun idx =>
@@ -371,10 +430,11 @@ def describe (aliases : Std.HashSet Name) (index : CounterpartIndex)
 
 /-- Inventory all project declarations, not only attributes or hand-picked public examples. -/
 unsafe def main (args : List String) : IO UInt32 := do
-  let (moduleFile, outputFile, budgetText, limitText, selectionFile) ← match args with
-    | [a, b, c, d] => pure (a, b, c, d, none)
-    | [a, b, c, d, e] => pure (a, b, c, d, some e)
-    | _ => throw <| IO.userError "expected MODULES OUTPUT HEARTBEAT_BUDGET LIMIT [SELECTION_JSON]"
+  let (moduleFile, outputFile, budgetText, limitText, selectionFile, coverageFile) ← match args with
+    | [a, b, c, d] => pure (a, b, c, d, none, none)
+    | [a, b, c, d, e] => pure (a, b, c, d, some e, none)
+    | [a, b, c, d, e, f] => pure (a, b, c, d, if e.isEmpty then none else some e, some f)
+    | _ => throw <| IO.userError "expected MODULES OUTPUT HEARTBEAT_BUDGET LIMIT [SELECTION_JSON [COVERAGE_DECLARATIONS_JSON]]"
   let selection ← match selectionFile with
     | none => pure none
     | some file => do
@@ -387,6 +447,15 @@ unsafe def main (args : List String) : IO UInt32 := do
         if (Std.HashSet.ofArray names).size != names.size then
           throw <| IO.userError "duplicate explicit selection names"
         pure (some names)
+  let coverage : Array Name ← match coverageFile with
+    | none => pure #[]
+    | some file =>
+      match (Json.parse (← IO.FS.readFile file)).bind (fromJson? (α := Array String)) with
+      | .ok names =>
+        if (Std.HashSet.ofArray names).size != names.size then
+          throw <| IO.userError "duplicate coverage declaration names"
+        pure (names.map String.toName)
+      | .error message => throw <| IO.userError message
   let budget := budgetText.toNat?.getD 200000
   let limit := limitText.toNat?.getD 0
   initSearchPath (← findSysroot)
@@ -397,6 +466,12 @@ unsafe def main (args : List String) : IO UInt32 := do
   let env ← importModules imports {} (loadExts := true)
   IO.eprintln s!"inventory: imported {mods.size} modules with private declarations"
   let moduleSet : Std.HashSet Name := .ofArray mods
+  for name in coverage do
+    let some ci := env.find? name | throw <| IO.userError s!"missing coverage example: {name}"
+    unless ci.value? true |>.isSome do throw <| IO.userError s!"coverage proof unavailable: {name}"
+    let some idx := env.getModuleIdxFor? name | throw <| IO.userError s!"coverage module unknown: {name}"
+    unless moduleSet.contains env.header.moduleNames[idx.toNat]! do
+      throw <| IO.userError s!"coverage example not in source inventory: {name}"
   let (boundary, _) ← Lean.Core.CoreM.toIO registrationBoundary
     { fileName := "public-registration-boundary", fileMap := default } { env }
   let aliases := aliasNames env
@@ -429,11 +504,12 @@ unsafe def main (args : List String) : IO UInt32 := do
     ("selected_total", toJson candidates.size), ("selection", toJson selection),
     ("module_count", toJson mods.size), ("limit", toJson limit),
     ("heartbeat_budget", toJson budget), ("registration_boundary", boundary),
+    ("coverage_declarations", toJson (coverage.map Name.toString)),
     ("counterpart_lookup", toJson "ordinary elaborated declarations; whole-statement kernel matching or proof-provenance subsumption; all compatible targets excluded")]).compress
   let mut count := 0
   for candidate in candidates do
     if limit != 0 && count >= limit then break
-    let ((type, info, counterparts), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe aliases index candidate))
+    let ((type, info, counterparts), _) ← Lean.Core.CoreM.toIO (Lean.Meta.MetaM.run' (describe aliases index coverage candidate))
       { fileName := "certificate-inventory", fileMap := default } { env }
     let seeds := #[candidate.owner] ++ counterparts
     let forbidden := closure reverse seeds

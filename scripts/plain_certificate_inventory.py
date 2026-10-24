@@ -94,6 +94,9 @@ def validate_rows(rows: list[dict]) -> dict:
     pairs = Counter()
     registration_pairs = Counter()
     for row in records:
+        if row["declaration"].get("counterpart_lookup_error"):
+            raise ValueError(f"counterpart lookup failed: {row['declaration']['name']}: "
+                             f"{row['declaration']['counterpart_lookup_error']}")
         status = row["status"]
         if status not in {"compared", "unsupported_tidy", "transform_error", "non_proposition"}:
             raise ValueError(f"unknown status {status}")
@@ -147,6 +150,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--extra-import", action="append", default=[],
                         help="ordinary plain-rule module; built outputs must already be current")
+    parser.add_argument("--coverage-declaration", action="append", default=[],
+                        help="explicit checked example providing canonical-rule coverage provenance")
     parser.add_argument("--only-names", type=Path,
                         help="JSON list of exact original identities for a disclosed delta check")
     parser.add_argument("--heartbeats", type=int, default=200000)
@@ -154,6 +159,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.limit < 0 or args.heartbeats <= 0:
         parser.error("limit must be nonnegative and heartbeat budget positive")
+    if len(set(args.coverage_declaration)) != len(args.coverage_declaration):
+        parser.error("duplicate coverage declarations")
     selection = None
     if args.only_names:
         selection = json.loads(args.only_names.read_text())
@@ -175,7 +182,7 @@ def main() -> int:
                                              text=True).strip(),
         "dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),
         "sources_sha256": identities, "extra_imports": args.extra_import,
-        "selection": selection,
+        "selection": selection, "coverage_declarations": args.coverage_declaration,
         "pairing": "ordinary elaborated statements and kernel-checked compatibility; no inferred name rewrite",
         "scope": "all elaborated declarations and captured local certificates in the three libraries",
         "local_inventory_unit": "unique stored expression per owner/binder/source context; repeated DAG use is not a new certificate",
@@ -199,7 +206,12 @@ def main() -> int:
         module_file.write_text("\n".join(sorted(set(sources) | set(args.extra_import))) + "\n")
         command = ["lake", "env", "lean", "--run", RUNNER, str(module_file),
                    str(raw_file.resolve()), str(args.heartbeats), str(args.limit)]
-        if args.only_names:
+        if args.coverage_declaration:
+            coverage_file = Path(td) / "coverage-declarations.json"
+            coverage_file.write_text(json.dumps(args.coverage_declaration))
+            command.extend([str(args.only_names.resolve()) if args.only_names else "",
+                            str(coverage_file)])
+        elif args.only_names:
             command.append(str(args.only_names.resolve()))
         process = subprocess.run(command, cwd=ROOT, check=False)
     rows, errors = [], []
