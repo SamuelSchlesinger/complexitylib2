@@ -9,6 +9,8 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Division and remainder of unary counters
@@ -88,3 +90,19 @@ theorem unary_div_const (divisor : ℕ) :
   unary_div.comp (id'.prod (const divisor))
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Division of two unary counters, including divisor zero. -/
+@[fun_prop]
+theorem unary_div : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 / p.2)
+    (encPair encUnary encUnary) encUnary :=
+  .of_tidy ComputableTidilyInPolyTime.unary_div
+
+/-- Remainder of two unary counters, including divisor zero. -/
+@[fun_prop]
+theorem unary_mod : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 % p.2)
+    (encPair encUnary encUnary) encUnary :=
+  .of_tidy ComputableTidilyInPolyTime.unary_mod
+
+end Turing.MultiTapeTM.ComputableInPolyTime
