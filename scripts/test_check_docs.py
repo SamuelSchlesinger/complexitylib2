@@ -47,6 +47,29 @@ class CheckOutputTests(unittest.TestCase):
             self.index["declarations"][name] = {"docLink": "./Complexity/Current.html#" + name}
         self.write(self.page("Complexity.Current"), "\n".join(
             f'<div id="{name}"></div>' for name in self.index["declarations"]))
+        self.published_index = None
+        pub_patch = patch.object(
+            check_docs, "fetch_published_external_index", side_effect=self.default_published_index
+        )
+        pub_patch.start()
+        self.addCleanup(pub_patch.stop)
+
+    def default_published_index(self):
+        if self.published_index is not None:
+            return self.published_index
+        declarations = dict(self.index.get("declarations", {}))
+        for module in self.index.get("modules", {}):
+            if module.split(".", 1)[0] in check_docs.LOCAL_DOC_ROOTS:
+                continue
+            page = self.page(module)
+            if page.is_file():
+                rel = module.replace(".", "/") + ".html"
+                for anchor in check_docs.page_anchors(page):
+                    declarations.setdefault(anchor, {"docLink": f"./{rel}#{anchor}"})
+        return {
+            "modules": dict(self.index.get("modules", {})),
+            "declarations": declarations,
+        }
 
     def write(self, path, text=""):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -235,16 +258,18 @@ class CheckOutputTests(unittest.TestCase):
         )
         self.check()
 
-    def test_trim_prunes_unimported_core_and_filters_index(self):
+    def test_trim_externalizes_dependencies_and_filters_index(self):
         self.index["modules"]["Init.Prelude"] = {"importedBy": ["Complexity.Current"], "url": "./Init/Prelude.html"}
         self.index["modules"]["Lean"] = {"importedBy": [], "url": "./Lean.html"}
         self.index["modules"]["Std.Linked"] = {"importedBy": [], "url": "./Std/Linked.html"}
         self.index["modules"]["Std.LinkedElsewhere"] = {"importedBy": [], "url": "./Std/LinkedElsewhere.html"}
         self.index["modules"]["Std.FromCslib"] = {"importedBy": [], "url": "./Std/FromCslib.html"}
+        self.index["modules"]["Mathlib.Data.List"] = {"importedBy": ["Complexity.Current"], "url": "./Mathlib/Data/List.html"}
         self.index["modules"]["Lake.Unused"] = {"importedBy": [], "url": "./Lake/Unused.html"}
         self.index["modules"]["Lean.Unused"] = {"importedBy": ["Lake.Unused", "Lean"], "url": "./Lean/Unused.html"}
         self.index["modules"]["Cslib.Base"] = {"importedBy": ["Complexity.Current"], "url": "./Cslib/Base.html"}
         self.index["declarations"]["Nat"] = {"docLink": "./Init/Prelude.html#Nat", "kind": "inductive"}
+        self.index["declarations"]["List.map"] = {"docLink": "./Mathlib/Data/List.html#List.map", "kind": "def"}
         self.index["declarations"]["Cslib.Base.foo"] = {"docLink": "./Cslib/Base.html#Cslib.Base.foo", "kind": "def"}
         self.index["instances"] = {
             "Inhabited": ["Nat", "Cslib.Base.foo"],
@@ -255,10 +280,10 @@ class CheckOutputTests(unittest.TestCase):
             "Nat": ["Nat"],
         }
         for mod in ("Std.LinkedElsewhere", "Std.FromCslib", "Lake.Unused", "Lean.Unused"):
-            self.write(self.page(mod), "<div>core</div>")
+            self.write(self.page(mod), f'<div id="{mod}">core</div>')
         self.write(
             self.page("Init.Prelude"),
-            '<code>import <a href=".././Lean.html">Lean</a></code>',
+            '<div id="Nat"></div><code>import <a href=".././Lean.html">Lean</a></code>',
         )
         self.write(
             self.page("Lean"),
@@ -269,7 +294,11 @@ class CheckOutputTests(unittest.TestCase):
         )
         self.write(
             self.page("Std.Linked"),
-            '<a href="./LinkedElsewhere.html#Std.LinkedElsewhere">transitive core</a>',
+            '<div id="Std.Linked"></div><a href="./LinkedElsewhere.html#Std.LinkedElsewhere">transitive core</a>',
+        )
+        self.write(
+            self.page("Mathlib.Data.List"),
+            '<div id="List.map"></div>',
         )
         self.write(
             self.page("Cslib.Base"),
@@ -278,11 +307,15 @@ class CheckOutputTests(unittest.TestCase):
         )
         self.write(
             self.page("Complexity"),
-            '<a href="./Std/Linked.html#Std.Linked">linked core</a>',
+            '<a href="./Std/Linked.html#Std.Linked">linked core</a> '
+            '<a href="./Mathlib/Data/List.html#List.map">mathlib decl</a> '
+            '<a href="./Init/Prelude.html#Eq.rec">kernel recursor</a>',
         )
         self.write(
             self.docs / "navbar.html",
             '<div class="nav_link"><a href="./">index</a></div>'
+            '<details class="nav_sect" data-path="./Complexity.html"><summary>Complexity (<a href="./Complexity.html">file</a>)</summary>'
+            '<div class="nav_link"><a href="./Complexity/Current.html">Current</a></div></details>'
             '<details class="nav_sect" data-path="./Init.html"><summary>Init</summary>'
             '<div class="nav_link"><a href="./Init/Prelude.html">Prelude</a></div></details>'
             '<details class="nav_sect" data-path="./Lake.html"><summary>Lake (<a href="./Lake/Unused.html">file</a>)</summary>'
@@ -294,33 +327,286 @@ class CheckOutputTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             check_docs.check_output()
 
-        self.assertTrue(self.page("Init.Prelude").is_file())
-        self.assertTrue(self.page("Lean").is_file())
-        self.assertTrue(self.page("Std.Linked").is_file())
-        self.assertTrue(self.page("Std.LinkedElsewhere").is_file())
-        self.assertTrue(self.page("Std.FromCslib").is_file())
-        self.assertFalse(self.page("Lake.Unused").exists())
-        self.assertFalse(self.page("Lean.Unused").exists())
+        for ext_mod in ("Init.Prelude", "Lean", "Std.Linked", "Std.LinkedElsewhere",
+                        "Std.FromCslib", "Mathlib.Data.List", "Lake.Unused", "Lean.Unused"):
+            self.assertFalse(self.page(ext_mod).exists(), ext_mod)
+        self.assertTrue(self.page("Complexity").is_file())
+        self.assertTrue(self.page("Cslib.Base").is_file())
         self.assertEqual(
             self.page("Cslib.Base").read_text(),
-            '<code><a href=".././Std/FromCslib.html">Std/FromCslib.lean</a></code> '
+            f'<code><a href="{check_docs.MATHLIB_DOCS_URL}Std/FromCslib.html">Std/FromCslib.lean</a></code> '
             '<code>Cslib/Unimported.lean</code>',
         )
-        self.assertNotIn("Lean/Unused.html", self.page("Lean").read_text())
-        self.assertIn("Init/Prelude.html", self.page("Lean").read_text())
+        self.assertEqual(
+            self.page("Complexity").read_text(),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Std/Linked.html#Std.Linked">linked core</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html#List.map">mathlib decl</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Init/Prelude.html#Eq.rec">kernel recursor</a>',
+        )
         trimmed = json.loads((self.docs / "declarations/declaration-data.bmp").read_text())
-        self.assertNotIn("Lake.Unused", trimmed["modules"])
-        self.assertNotIn("Lean.Unused", trimmed["modules"])
-        self.assertIn("Init.Prelude", trimmed["modules"])
-        self.assertIn("Lean", trimmed["modules"])
-        self.assertIn("Std.Linked", trimmed["modules"])
-        self.assertIn("Std.LinkedElsewhere", trimmed["modules"])
-        self.assertIn("Std.FromCslib", trimmed["modules"])
+        self.assertEqual(set(trimmed["modules"]), {"Complexity", "Complexity.Current", "Cslib.Base"})
         self.assertNotIn("Nat", trimmed["declarations"])
+        self.assertNotIn("List.map", trimmed["declarations"])
         self.assertIn("Cslib.Base.foo", trimmed["declarations"])
         self.assertEqual(trimmed["instances"], {"Inhabited": ["Cslib.Base.foo"]})
         self.assertEqual(trimmed["instancesFor"], {"Unit": ["Cslib.Base.foo"]})
-        self.assertNotIn("Lake/Unused.html", (self.docs / "navbar.html").read_text())
+        navbar = (self.docs / "navbar.html").read_text()
+        self.assertNotIn("Init/Prelude.html", navbar)
+        self.assertNotIn("Lake/Unused.html", navbar)
+        self.assertIn("Complexity/Current.html", navbar)
+
+        # Repeated trimming on an already-trimmed tree is idempotent.
+        check_docs.trim_output()
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_output()
+
+    def test_trim_rejects_broken_dependency_page_or_anchor(self):
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+        self.write(self.page("Complexity"), '<a href="./Init/Missing.html">unindexed page</a>')
+        with self.assertRaises(ValueError) as error:
+            check_docs.trim_output()
+        self.assertEqual(
+            str(error.exception),
+            "Broken dependency link in Complexity.html: Init/Missing.html",
+        )
+
+        self.index["modules"]["Mathlib.Data.List"] = {
+            "importedBy": ["Complexity.Current"], "url": "./Mathlib/Data/List.html",
+        }
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+        self.write(self.page("Complexity"), '<a href="./Mathlib/Data/List.html#List.map">missing page</a>')
+        with self.assertRaises(ValueError) as error:
+            check_docs.trim_output()
+        self.assertEqual(
+            str(error.exception),
+            "Broken dependency link in Complexity.html: Mathlib/Data/List.html",
+        )
+
+        self.write(self.page("Mathlib.Data.List"), '<div id="List.filter"></div>')
+        self.write(self.page("Complexity"), '<a href="./Mathlib/Data/List.html#List.renamed">missing anchor</a>')
+        with self.assertRaises(ValueError) as error:
+            check_docs.trim_output()
+        self.assertEqual(
+            str(error.exception),
+            "Broken dependency anchor in Complexity.html: Mathlib/Data/List.html#List.renamed",
+        )
+
+    def test_check_output_rejects_broken_external_dependency_link_or_anchor(self):
+        (self.docs.parent / check_docs.EXTERNAL_TARGETS_FILE).write_text(json.dumps({
+            "source": "published",
+            "pages": ["Mathlib/Data/List.html"],
+            "anchors": {"Mathlib/Data/List.html": ["List.map"]},
+        }))
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Gone.html">gone</a>',
+        )
+        self.assert_failure("Broken external dependency link in Complexity.html: Mathlib/Gone.html")
+
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Complexity/Current.html">local as mathlib</a>',
+        )
+        self.assert_failure(
+            "Broken external dependency link in Complexity.html: Complexity/Current.html"
+        )
+
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html#List.renamed">renamed</a>',
+        )
+        self.assert_failure(
+            "Broken external dependency anchor in Complexity.html: Mathlib/Data/List.html#List.renamed"
+        )
+
+    def test_legacy_local_only_external_targets_manifest_is_upgraded_or_rejected(self):
+        legacy_manifest = self.docs.parent / check_docs.EXTERNAL_TARGETS_FILE
+        legacy_manifest.write_text(json.dumps({
+            "pages": [
+                "Mathlib/LinearAlgebra/Matrix/Defs.html",
+                "Mathlib/Tactic/TautoSet.html",
+            ],
+            "anchors": {
+                "Mathlib/LinearAlgebra/Matrix/Defs.html": ["Matrix.ofArray"],
+                "Mathlib/Tactic/TautoSet.html": ["Mathlib.Tactic.TautoSet.specialize_all"],
+            },
+        }))
+        self.published_index = {
+            "modules": {
+                "Mathlib.LinearAlgebra.Matrix.Defs": {},
+                "Mathlib.LinearAlgebra.Matrix.Array": {},
+                "Mathlib.Tactic.TautoSet": {},
+            },
+            "declarations": {
+                "Matrix.ofArray": {
+                    "docLink": "./Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray",
+                },
+            },
+        }
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray">ofArray</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all">specialize_all</a>',
+        )
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+
+        # Running check_output directly on an old-trimmed tree does not trust the legacy manifest.
+        with patch.object(
+            check_docs, "fetch_published_external_index", wraps=self.default_published_index
+        ) as fetch_mock:
+            self.assert_failure(
+                "Broken external dependency anchor in Complexity.html: "
+                "Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray"
+            )
+            self.assertEqual(fetch_mock.call_count, 1)
+
+        # Running trim_output then check_output on an old-trimmed tree fetches the published
+        # index, remaps/repairs the links, and upgrades the manifest to source="published".
+        with patch.object(
+            check_docs, "fetch_published_external_index", wraps=self.default_published_index
+        ) as fetch_mock:
+            check_docs.trim_output()
+            with redirect_stdout(io.StringIO()):
+                check_docs.check_output()
+            self.assertEqual(fetch_mock.call_count, 1)
+
+        upgraded = json.loads(legacy_manifest.read_text())
+        self.assertEqual(upgraded.get("source"), "published")
+        self.assertEqual(
+            self.page("Complexity").read_text(),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray">ofArray</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html">specialize_all</a>',
+        )
+
+    def test_trim_remaps_moved_and_falls_back_for_omitted_published_declarations(self):
+        self.index["modules"]["Mathlib.LinearAlgebra.Matrix.Defs"] = {
+            "importedBy": ["Complexity.Current"],
+            "url": "./Mathlib/LinearAlgebra/Matrix/Defs.html",
+        }
+        self.index["modules"]["Mathlib.Tactic.TautoSet"] = {
+            "importedBy": ["Complexity.Current"],
+            "url": "./Mathlib/Tactic/TautoSet.html",
+        }
+        self.index["declarations"]["Matrix.ofArray"] = {
+            "docLink": "./Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray",
+            "kind": "def",
+        }
+        self.index["declarations"]["Mathlib.Tactic.TautoSet.specialize_all"] = {
+            "docLink": "./Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all",
+            "kind": "def",
+        }
+        self.write(
+            self.page("Mathlib.LinearAlgebra.Matrix.Defs"),
+            '<div id="Matrix.ofArray"></div>',
+        )
+        self.write(
+            self.page("Mathlib.Tactic.TautoSet"),
+            '<div id="Mathlib.Tactic.TautoSet.specialize_all"></div>',
+        )
+        self.published_index = {
+            "modules": {
+                "Mathlib.LinearAlgebra.Matrix.Defs": {},
+                "Mathlib.LinearAlgebra.Matrix.Array": {},
+                "Mathlib.Tactic.TautoSet": {},
+            },
+            "declarations": {
+                "Matrix.ofArray": {
+                    "docLink": "./Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray",
+                },
+            },
+        }
+        self.write(
+            self.page("Complexity"),
+            '<a href="./Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray">ofArray</a> '
+            '<a href="./Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all">specialize_all</a>',
+        )
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+
+        check_docs.trim_output()
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_output()
+
+        self.assertEqual(
+            self.page("Complexity").read_text(),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray">ofArray</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html">specialize_all</a>',
+        )
+
+    def test_check_output_rejects_local_only_or_unremapped_published_anchor(self):
+        self.index["modules"]["Mathlib.LinearAlgebra.Matrix.Defs"] = {}
+        self.index["modules"]["Mathlib.Tactic.TautoSet"] = {}
+        self.write(
+            self.page("Mathlib.LinearAlgebra.Matrix.Defs"),
+            '<div id="Matrix.ofArray"></div>',
+        )
+        self.write(
+            self.page("Mathlib.Tactic.TautoSet"),
+            '<div id="Mathlib.Tactic.TautoSet.specialize_all"></div>',
+        )
+        self.write(self.module_data("Mathlib.LinearAlgebra.Matrix.Defs"), "{}")
+        self.write(self.module_data("Mathlib.Tactic.TautoSet"), "{}")
+        self.published_index = {
+            "modules": {
+                "Mathlib.LinearAlgebra.Matrix.Defs": {},
+                "Mathlib.LinearAlgebra.Matrix.Array": {},
+                "Mathlib.Tactic.TautoSet": {},
+            },
+            "declarations": {
+                "Matrix.ofArray": {
+                    "docLink": "./Mathlib/LinearAlgebra/Matrix/Array.html#Matrix.ofArray",
+                },
+            },
+        }
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray">stale moved</a>',
+        )
+        self.assert_failure(
+            "Broken external dependency anchor in Complexity.html: "
+            "Mathlib/LinearAlgebra/Matrix/Defs.html#Matrix.ofArray"
+        )
+
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all">omitted</a>',
+        )
+        self.assert_failure(
+            "Broken external dependency anchor in Complexity.html: "
+            "Mathlib/Tactic/TautoSet.html#Mathlib.Tactic.TautoSet.specialize_all"
+        )
+
+    def test_url_query_preservation_and_api_docs_dependency_normalization(self):
+        self.index["modules"]["Mathlib.Data.List"] = {
+            "importedBy": ["Complexity.Current"], "url": "./Mathlib/Data/List.html",
+        }
+        self.index["declarations"]["List.map"] = {
+            "docLink": "./Mathlib/Data/List.html#List.map", "kind": "def",
+        }
+        self.write(self.page("Mathlib.Data.List"), '<div id="List.map"></div>')
+        self.write(
+            self.page("Complexity"),
+            '<a href="./Mathlib/Data/List.html?foo=1#List.map">rel query</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?bar=2#List.map">abs mathlib query</a> '
+            f'<a href="{check_docs.API_DOCS_URL}Mathlib/Data/List.html?baz=3#List.map">api docs dep</a>',
+        )
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+
+        check_docs.trim_output()
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_output()
+
+        self.assertEqual(
+            self.page("Complexity").read_text(),
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?foo=1#List.map">rel query</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?bar=2#List.map">abs mathlib query</a> '
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/List.html?baz=3#List.map">api docs dep</a>',
+        )
+
+        self.write(
+            self.page("Complexity"),
+            f'<a href="{check_docs.API_DOCS_URL}Mathlib/Data/List.html">unrewritten api docs dep</a>',
+        )
+        self.assert_failure("Broken internal link in Complexity.html: Mathlib/Data/List.html")
 
 
 class CheckGuideLinksTests(unittest.TestCase):
@@ -341,6 +627,9 @@ class CheckGuideLinksTests(unittest.TestCase):
             '<div class="decl" id="Cslib.Complexity.NPComplete"></div>'
             '<div class="decl" id="Cslib.«term_&lt;=p_»"></div>')
         self.guide.mkdir(parents=True)
+        pub_patch = patch.object(check_docs, "fetch_published_external_index", return_value=None)
+        pub_patch.start()
+        self.addCleanup(pub_patch.stop)
 
     def link(self, target):
         return f'<a href="{check_docs.API_DOCS_URL}{target}">x</a>'
@@ -378,6 +667,38 @@ class CheckGuideLinksTests(unittest.TestCase):
         self.assert_failure(
             f"Guide links to a missing documentation anchor: {self.page}#Cslib.Complexity.NP",
             f"{self.page}#Cslib.Complexity.NP")
+
+    def test_external_mathlib_links_and_anchors(self):
+        (self.docs.parent / check_docs.EXTERNAL_TARGETS_FILE).write_text(json.dumps({
+            "source": "published",
+            "pages": ["Mathlib/Data/Finset/Defs.html"],
+            "anchors": {"Mathlib/Data/Finset/Defs.html": ["Finset"]},
+        }))
+        (self.guide / "index.html").write_text(
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/Finset/Defs.html#Finset">Finset</a>'
+        )
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_guide_links()
+
+        (self.guide / "index.html").write_text(
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Gone.html#Finset">Gone</a>'
+        )
+        with self.assertRaises(ValueError) as error:
+            check_docs.check_guide_links()
+        self.assertEqual(
+            str(error.exception),
+            "Guide links to a missing documentation page: Mathlib/Gone.html",
+        )
+
+        (self.guide / "index.html").write_text(
+            f'<a href="{check_docs.MATHLIB_DOCS_URL}Mathlib/Data/Finset/Defs.html#Finset.Renamed">Renamed</a>'
+        )
+        with self.assertRaises(ValueError) as error:
+            check_docs.check_guide_links()
+        self.assertEqual(
+            str(error.exception),
+            "Guide links to a missing documentation anchor: Mathlib/Data/Finset/Defs.html#Finset.Renamed",
+        )
 
     def test_missing_guide(self):
         (self.guide).rmdir()

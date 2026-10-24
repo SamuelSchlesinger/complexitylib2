@@ -23,8 +23,11 @@ namespace ComplexityGuide.ApiDocs
 
 open Lean Verso Code Genre Manual
 
-/-- The published API documentation. -/
+/-- The published API documentation for `Complexity` and `Cslib`. -/
 def defaultRoot : String := "https://www.cslib.io/complexitylib/"
+
+/-- The published external API documentation for `Mathlib` and Lean core dependencies. -/
+def mathlibRoot : String := "https://leanprover-community.github.io/mathlib4_docs/"
 
 /-- The modules imported in `env` that the API documentation has pages for: the library's modules,
 everything they import, and the modules of Lean itself. -/
@@ -49,16 +52,18 @@ def importEnv (module : Name) : IO Environment := do
   importModules #[{ module }] {} (loadExts := false)
 
 /-- Links each documented constant in highlighted code to its API documentation entry under
-`root`, using doc-gen4's page and anchor scheme. -/
-def linkTargets (env : Environment) (root : String := defaultRoot) :
-    LinkTargets Manual.TraverseContext :=
+`root` (for `Complexity` and `Cslib` modules) or `depRoot` (for `Mathlib` and Lean core modules),
+using doc-gen4's page and anchor scheme. -/
+def linkTargets (env : Environment) (root : String := defaultRoot)
+    (depRoot : String := mathlibRoot) : LinkTargets Manual.TraverseContext :=
   let documented := documentedModules env
   { const := fun name _ => Id.run do
       let some idx := env.getModuleIdxFor? name | return #[]
       let some mod := env.header.moduleNames[idx.toNat]? | return #[]
       unless documented.contains mod do return #[]
+      let base := if [`Complexity, `Cslib].contains mod.getRoot then root else depRoot
       let page := "/".intercalate (mod.components.map (·.toString (escape := false)))
       return #[{ shortDescription := "API", description := s!"API documentation for {name}",
-                 href := s!"{root}{page}.html#{name}" }] }
+                 href := s!"{base}{page}.html#{name}" }] }
 
 end ComplexityGuide.ApiDocs
