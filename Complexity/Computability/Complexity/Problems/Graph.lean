@@ -9,10 +9,13 @@ module
 
 public import Complexity.Computability.Complexity.Classes.NP.Witness
 public import Mathlib.Combinatorics.SimpleGraph.Basic
+public import Mathlib.Combinatorics.SimpleGraph.Maps
+public import Mathlib.Data.Fintype.Sets
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # Graphs given by vertex and edge lists
@@ -21,7 +24,8 @@ The graph problems (`IndependentSet`, `Clique`, `VertexCover`, `KColoring`, the 
 problems, `GraphIsomorphism`, …) take a graph (`Cslib.Complexity.Graph`) as a list of declared
 vertices, possibly with repetitions, and a list of edges, encoded in binary
 (`Cslib.Complexity.encGraph`). Its mathematical reading is a Mathlib simple graph on `ℕ`
-(`Cslib.Complexity.Graph.toSimpleGraph`): two distinct vertices are adjacent when an edge joins
+(`Cslib.Complexity.Graph.toSimpleGraph`), or the simple graph induced on the subtype of declared
+vertices (`Cslib.Complexity.Graph.induced`): two distinct vertices are adjacent when an edge joins
 them in either direction.
 
 This module holds the tools these problems share:
@@ -31,23 +35,26 @@ This module holds the tools these problems share:
   verified by selecting distinct declared vertices with a certificate mask
   (`Cslib.Complexity.Graph.verifySubset`, an instance of `Cslib.Complexity.subsetVerifier`);
 * the distinct declared vertices (`Cslib.Complexity.Graph.distinctVertices`) are listed in
-  polynomial time by selecting every first occurrence (`Cslib.Complexity.selectDistinct`);
+  polynomial time by selecting every first occurrence (`Cslib.Complexity.selectDistinct`), and
+  their positions enumerate the declared vertices (`Cslib.Complexity.Graph.vertexEquiv`);
 * explicit verifiers with fixed certificate lengths write numbers in unary blocks of a certificate
   (`Cslib.Complexity.unaryBlocks`): each number, at most `m`, gets its own block of `m` bits, and
   it is read back by counting the set bits of its block (`Cslib.Complexity.countP_unaryBlocks`).
 
 ## Main definitions
 
-* `Cslib.Complexity.Graph`, `Cslib.Complexity.encGraph`, `Cslib.Complexity.Graph.toSimpleGraph`.
+* `Cslib.Complexity.Graph`, `Cslib.Complexity.encGraph`, `Cslib.Complexity.Graph.toSimpleGraph`,
+  `Cslib.Complexity.Graph.induced`.
 * `Cslib.Complexity.Graph.adjBool`: executable adjacency.
 * `Cslib.Complexity.Graph.verifySubset`: the verifier of a vertex subset problem.
-* `Cslib.Complexity.Graph.distinctVertices`: the declared vertices without repetitions.
+* `Cslib.Complexity.Graph.distinctVertices`, `Cslib.Complexity.Graph.vertexEquiv`: the declared
+  vertices without repetitions and their enumeration by positions.
 * `Cslib.Complexity.unaryBlocks`: numbers written in unary blocks of a certificate.
 
 ## Main results
 
-* `Cslib.Complexity.Graph.toSimpleGraph_adj`, `Cslib.Complexity.Graph.adjBool_eq_true_iff`:
-  adjacency.
+* `Cslib.Complexity.Graph.toSimpleGraph_adj`, `Cslib.Complexity.Graph.induced_adj`,
+  `Cslib.Complexity.Graph.adjBool_eq_true_iff`: adjacency.
 * `Cslib.Complexity.Graph.isVerifier_verifySubset`,
   `Cslib.Complexity.Graph.computableTidilyInPolyTime_verifySubset`: the subset verifier is a
   polynomial-time verifier.
@@ -85,7 +92,71 @@ theorem Graph.toSimpleGraph_adj {G : Graph} {u v : ℕ} :
     G.toSimpleGraph.Adj u v ↔ u ≠ v ∧ ((u, v) ∈ G.2 ∨ (v, u) ∈ G.2) :=
   SimpleGraph.fromRel_adj _ _ _
 
+/-- The simple graph induced by `G` on its declared vertices. -/
+def Graph.induced (G : Graph) : SimpleGraph {v // v ∈ G.1} :=
+  G.toSimpleGraph.induce {v | v ∈ G.1}
+
+@[simp]
+theorem Graph.induced_adj {G : Graph} {u v : {v // v ∈ G.1}} :
+    G.induced.Adj u v ↔ G.toSimpleGraph.Adj u v :=
+  Iff.rfl
+
 namespace Graph
+
+/-! ### Declared vertices -/
+
+/-- A graph has no more declared vertices than the length of its encoding. -/
+theorem length_vertices_le_encGraph (G : Graph) : G.1.length ≤ (encGraph G).length := by
+  calc G.1.length ≤ (encList encNat G.1).length := length_le_length_encList encNat G.1
+    _ ≤ (encGraph G).length := by
+        simp only [encGraph, length_encPair]
+        omega
+
+/-- The declared vertices of `G` without repetitions, in the order of their first occurrences. -/
+def distinctVertices (G : Graph) : List ℕ := selectDistinct G.1 (List.replicate G.1.length true)
+
+/-- The distinct declared vertices are the declared vertices. -/
+theorem mem_distinctVertices {G : Graph} {v : ℕ} : v ∈ G.distinctVertices ↔ v ∈ G.1 :=
+  mem_selectDistinct_replicate
+
+/-- The distinct declared vertices are listed without repetitions. -/
+theorem nodup_distinctVertices (G : Graph) : G.distinctVertices.Nodup := nodup_selectDistinct _ _
+
+/-- The distinct declared vertices are as many as the elements of the vertex list. -/
+theorem length_distinctVertices (G : Graph) : G.distinctVertices.length = G.1.toFinset.card :=
+  length_selectDistinct_replicate G.1
+
+/-- A graph has no more distinct vertices than the length of its encoding. -/
+theorem length_distinctVertices_le (G : Graph) :
+    G.distinctVertices.length ≤ (encGraph G).length := by
+  rw [length_distinctVertices]
+  exact G.1.toFinset_card_le.trans G.length_vertices_le_encGraph
+
+/-- Positions in `G.distinctVertices` enumerate the declared vertices. -/
+def vertexEquiv (G : Graph) : Fin G.distinctVertices.length ≃ {v // v ∈ G.1} :=
+  (G.nodup_distinctVertices.getEquiv _).trans
+    (Equiv.subtypeEquivRight fun _ => mem_distinctVertices)
+
+theorem vertexEquiv_apply (G : Graph) (i : Fin G.distinctVertices.length) :
+    (G.vertexEquiv i : ℕ) = G.distinctVertices.getD i 0 := by
+  simp [vertexEquiv, List.Nodup.getEquiv, List.getD_eq_getElem?_getD]
+
+@[simp]
+theorem card_vertexSubtype (G : Graph) :
+    Fintype.card {v // v ∈ G.1} = G.1.toFinset.card := by
+  rw [← Fintype.card_of_bijective G.vertexEquiv.bijective, Fintype.card_fin,
+    length_distinctVertices]
+
+theorem natCard_vertexSubtype (G : Graph) :
+    Nat.card {v // v ∈ G.1} = G.1.toFinset.card := by
+  rw [Nat.card_eq_fintype_card, card_vertexSubtype]
+
+/-- Listing the distinct vertices is polynomial-time. -/
+@[fun_prop]
+theorem computableTidilyInPolyTime_distinctVertices :
+    ComputableTidilyInPolyTime distinctVertices encGraph (encList encNat) := by
+  unfold distinctVertices encGraph
+  fun_prop
 
 /-! ### Subset verification on encoded graphs -/
 
@@ -113,28 +184,6 @@ theorem computableTidilyInPolyTime_adjBool :
   unfold adjBool encGraph
   fun_prop
 
-/-- Select distinct declared vertices from `V` using the certificate mask `w`: position `i` of `V`
-is kept when bit `i` of `w` is `true` and `i` is the first occurrence of that vertex in `V`. This is
-`Cslib.Complexity.selectDistinct` on vertex lists (`selectVertices_eq_selectDistinct`). -/
-def selectVertices (V : List ℕ) (w : List Bool) : List ℕ :=
-  (V.zipIdx.filter fun p => w.getD p.2 false && decide (V.idxOf p.1 = p.2)).map Prod.fst
-
-theorem selectVertices_eq_selectDistinct : selectVertices = selectDistinct := rfl
-
-theorem mem_selectVertices {V : List ℕ} {w : List Bool} {v : ℕ} :
-    v ∈ selectVertices V w ↔ v ∈ V ∧ w.getD (V.idxOf v) false = true :=
-  mem_selectDistinct
-
-theorem nodup_selectVertices (V : List ℕ) (w : List Bool) : (selectVertices V w).Nodup :=
-  nodup_selectDistinct V w
-
-/-- Selecting distinct declared vertices from a certificate mask is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_selectVertices :
-    ComputableTidilyInPolyTime (fun p : List ℕ × List Bool => selectVertices p.1 p.2)
-      (encPair (encList encNat) encBits) (encList encNat) :=
-  computableTidilyInPolyTime_selectDistinct encNat
-
 /-- Verify a cardinality-`m` vertex subset problem with pairwise relation `rel`: select distinct
 declared vertices from `G.1` by the certificate mask, compare the selected count with `m` in
 binary, and test `rel` on all distinct selected pairs. -/
@@ -142,25 +191,49 @@ def verifySubset (rel : Graph → ℕ → ℕ → Bool) : (Graph × ℕ) × List
   subsetVerifier (fun x => x.1.1) fun y =>
     decide (y.2.length = y.1.2) && y.2.all fun u => y.2.all fun v => decide (u = v) || rel y.1.1 u v
 
-/-- A graph has no more declared vertices than the length of its encoded instance. -/
-theorem length_vertices_le (x : Graph × ℕ) :
-    x.1.1.length ≤ (encPair encGraph encNat x).length := by
-  calc x.1.1.length
-      ≤ (encList encNat x.1.1).length := length_le_length_encList encNat x.1.1
-    _ ≤ (encGraph x.1).length := by
-        simp only [encGraph, length_encPair]
-        omega
-    _ ≤ (encPair encGraph encNat x).length := by
-        simp only [length_encPair]
-        omega
+/-- A finite subset of declared vertices with a pairwise property corresponds to a finite subset of
+`ℕ` contained in `G.1` with the same pairwise property and cardinality. -/
+theorem exists_subtype_pairwise_iff {G : Graph} {P : ℕ → ℕ → Prop} {m : ℕ} :
+    (∃ S : Finset {v // v ∈ G.1},
+        (S : Set {v // v ∈ G.1}).Pairwise (fun u v => P u v) ∧ S.card = m) ↔
+      ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ G.1) ∧ (S : Set ℕ).Pairwise P ∧ S.card = m := by
+  constructor
+  · rintro ⟨S, hS, rfl⟩
+    refine ⟨S.map (.subtype _),
+      fun v hv => by obtain ⟨u, _, rfl⟩ := Finset.mem_map.1 hv; exact u.2,
+      ?_, Finset.card_map _⟩
+    intro u hu v hv huv
+    rw [Finset.mem_coe, Finset.mem_map] at hu hv
+    obtain ⟨u, hu, rfl⟩ := hu
+    obtain ⟨v, hv, rfl⟩ := hv
+    exact hS hu hv (Subtype.coe_ne_coe.1 huv)
+  · rintro ⟨S, hSV, hS, rfl⟩
+    have hmap : (S.subtype (· ∈ G.1)).map (.subtype _) = S :=
+      (Finset.subtype_map _).trans (Finset.filter_eq_self.mpr hSV)
+    refine ⟨S.subtype (· ∈ G.1), ?_, by rw [← Finset.card_map (.subtype _), hmap]⟩
+    intro u hu v hv huv
+    rw [Finset.mem_coe, Finset.mem_subtype] at hu hv
+    exact hS hu hv (Subtype.ext_iff.not.1 huv)
 
 /-- `verifySubset` is a polynomial-length verifier for any graph subset problem whose pairwise
 relation agrees with `rel` on distinct vertices. -/
 theorem isVerifier_verifySubset {rel : Graph → ℕ → ℕ → Bool} {P : Graph → ℕ → ℕ → Prop}
     (hrel : ∀ G u v, u ≠ v → (rel G u v = true ↔ P G u v)) :
     IsVerifier (encPair encGraph encNat) Polynomial.X (verifySubset rel)
-      {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧ (S : Set ℕ).Pairwise (P x.1) ∧ S.card = x.2} := by
-  refine isVerifier_subsetVerifier (fun x => by simpa using length_vertices_le x)
+      {x | ∃ S : Finset {v // v ∈ x.1.1},
+        (S : Set {v // v ∈ x.1.1}).Pairwise (fun u v => P x.1 u v) ∧ S.card = x.2} := by
+  have hset :
+      {x : Graph × ℕ | ∃ S : Finset {v // v ∈ x.1.1},
+        (S : Set {v // v ∈ x.1.1}).Pairwise (fun u v => P x.1 u v) ∧ S.card = x.2} =
+      {x : Graph × ℕ | ∃ S : Finset ℕ,
+        (∀ v ∈ S, v ∈ x.1.1) ∧ (S : Set ℕ).Pairwise (P x.1) ∧ S.card = x.2} :=
+    Set.ext fun _ => exists_subtype_pairwise_iff
+  rw [hset]
+  refine isVerifier_subsetVerifier
+    (fun x => by
+      have := x.1.length_vertices_le_encGraph
+      simp only [Polynomial.eval_X, length_encPair]
+      omega)
     fun x l hl _ => ?_
   simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.or_eq_true,
     List.toFinset_card_of_nodup hl, List.coe_toFinset]
@@ -196,46 +269,6 @@ theorem computableTidilyInPolyTime_verifySubset {rel : Graph → ℕ → ℕ →
         (encPair (encPair (encPair (encPair encGraph encNat) (encList encNat)) encNat) encNat)
         (encPair (encPair encGraph encNat) encNat) := by fun_prop
     exact bool_or' (by fun_prop) (hrel.comp hproj)
-
-end Graph
-
-namespace Graph
-
-/-! ### Declared vertices -/
-
-/-- A graph has no more declared vertices than the length of its encoding. -/
-theorem length_vertices_le_encGraph (G : Graph) : G.1.length ≤ (encGraph G).length := by
-  calc G.1.length ≤ (encList encNat G.1).length := length_le_length_encList encNat G.1
-    _ ≤ (encGraph G).length := by
-        simp only [encGraph, length_encPair]
-        omega
-
-/-- The declared vertices of `G` without repetitions, in the order of their first occurrences. -/
-def distinctVertices (G : Graph) : List ℕ := selectDistinct G.1 (List.replicate G.1.length true)
-
-/-- The distinct declared vertices are the declared vertices. -/
-theorem mem_distinctVertices {G : Graph} {v : ℕ} : v ∈ G.distinctVertices ↔ v ∈ G.1 :=
-  mem_selectDistinct_replicate
-
-/-- The distinct declared vertices are listed without repetitions. -/
-theorem nodup_distinctVertices (G : Graph) : G.distinctVertices.Nodup := nodup_selectDistinct _ _
-
-/-- The distinct declared vertices are as many as the elements of the vertex list. -/
-theorem length_distinctVertices (G : Graph) : G.distinctVertices.length = G.1.toFinset.card :=
-  length_selectDistinct_replicate G.1
-
-/-- A graph has no more distinct vertices than the length of its encoding. -/
-theorem length_distinctVertices_le (G : Graph) :
-    G.distinctVertices.length ≤ (encGraph G).length := by
-  rw [length_distinctVertices]
-  exact G.1.toFinset_card_le.trans G.length_vertices_le_encGraph
-
-/-- Listing the distinct vertices is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_distinctVertices :
-    ComputableTidilyInPolyTime distinctVertices encGraph (encList encNat) := by
-  unfold distinctVertices encGraph
-  fun_prop
 
 end Graph
 

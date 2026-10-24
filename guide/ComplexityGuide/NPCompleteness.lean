@@ -285,8 +285,8 @@ An instance is a graph and a target size. The graph has a clique of that size wh
 its declared vertices is pairwise adjacent and has exactly that many elements:
 
 ```lean
-example : Clique = {x | ∃ S : Finset ℕ,
-    (∀ v ∈ S, v ∈ x.1.1) ∧ x.1.toSimpleGraph.IsNClique x.2 S} :=
+example : Clique = {x | ∃ S : Finset {v // v ∈ x.1.1},
+    x.1.induced.IsNClique x.2 S} :=
   rfl
 ```
 
@@ -308,8 +308,9 @@ example : IsVerifier (encPair encGraph encNat) Polynomial.X
     (P := fun G u v => G.toSimpleGraph.Adj u v)
     (fun G u v _ => by rw [Graph.adjBool_eq_true_iff])
   intro x
-  simpa only [Clique, Set.mem_ofPred_eq, SimpleGraph.isNClique_iff,
-    SimpleGraph.IsClique, Clique.verifier] using h x
+  simp only [Clique, Set.mem_ofPred_eq, SimpleGraph.isNClique_iff,
+    SimpleGraph.IsClique, Clique.verifier]
+  exact h x
 ```
 
 The certificate length is `Polynomial.X`, one bit per bit of the encoded instance, which is at

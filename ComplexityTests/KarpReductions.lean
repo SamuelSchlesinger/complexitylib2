@@ -99,10 +99,10 @@ example : Clique.verifier ((([], []), 1), [true]) = false := rfl
 example : IndependentSet.verifier ((([0, 1], []), 2 ^ 100), [true, true]) = false := by decide
 example : Clique.verifier ((([0, 1], [(0, 1)]), 2 ^ 100), [true, true]) = false := by decide
 
--- Duplicate vertices in `G.1` are deduplicated at their first occurrence by `selectVertices`,
+-- Duplicate vertices in `G.1` are deduplicated at their first occurrence by `selectDistinct`,
 -- so selecting two copies of vertex `0` cannot forge an independent set or clique of size 2.
-example : Graph.selectVertices [0, 0, 1] [true, true, false] = [0] := rfl
-example : Graph.selectVertices [0, 0, 1] [true, false, true] = [0, 1] := rfl
+example : selectDistinct [0, 0, 1] [true, true, false] = [0] := rfl
+example : selectDistinct [0, 0, 1] [true, false, true] = [0, 1] := rfl
 example : IndependentSet.verifier ((([0, 0, 1], []), 2), [true, true, false]) = false := rfl
 example : IndependentSet.verifier ((([0, 0, 1], []), 2), [true, false, true]) = true := rfl
 
