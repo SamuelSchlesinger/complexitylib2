@@ -455,10 +455,10 @@ theorem wordDoubleProgram_executes (x : ℕ) :
   obtain ⟨m, hm, hex⟩ := FiniteState.executes_of_run_eq_inr (wordDoubleProgram_run x)
   exact ⟨m, hm, Cslib.WordRAM.executes_toGeneric_iff.mp hex⟩
 
-/-- Whole-run `ComputableTidilyInO` bound transported from `wordDoubleProgram` via
+/-- Whole-run `ComputableInO` bound transported from `wordDoubleProgram` via
 `Cslib.WordRAM.transport_inO` and `Basis.standard.nativePrimitives`. -/
 theorem wordDouble_inO :
-    ComputableTidilyInO (fun x : ℕ => x + x) encNat encNat
+    Turing.MultiTapeTM.ComputableInO (fun x : ℕ => x + x) encNat encNat
       (fun x => wordDoubleStepsCert.time x +
         (wordDoubleWidthCert.time x + wordDoubleInitCert.time x) +
         FiniteState.runTime Cslib.WordRAM.Basis.standard.encoding

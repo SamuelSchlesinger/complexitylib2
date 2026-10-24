@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.WordRAM.Generic
 public import Complexity.Computability.GenericRAM.Simulation.Run
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
@@ -395,7 +396,7 @@ def transportCertificate (enc : B.genericModel.Encoding) (N : B.genericModel.Nat
     rw [hden a]
     exact ⟨m, hm, executes_toGeneric_iff.mpr hex⟩
 
-/-- Parameterized `ComputableTidilyInO` transport theorem from `WordRAM.Executes`. -/
+/-- Parameterized `ComputableInO` transport theorem from `WordRAM.Executes`. -/
 theorem transport_inO (enc : B.genericModel.Encoding) (N : B.genericModel.NativePrimitives enc)
     (p : Program B r) {f : α → ℕ} {cfg : α → ℕ}
     {initState : α → FiniteState B.genericModel r} {u : α → State r} {steps : α → ℕ}
@@ -404,12 +405,12 @@ theorem transport_inO (enc : B.genericModel.Encoding) (N : B.genericModel.Native
     (cInit : NativeCertificate initState ei (FiniteState.encoding enc))
     (hden : ∀ a, (initState a).denote = (u a).toGeneric B)
     (hExec : ∀ a, ∃ m ≤ steps a, Executes (cfg a) p (u a) (f a) m) :
-    ComputableTidilyInO f ei enc.value
+    Turing.MultiTapeTM.ComputableInO f ei enc.value
       (fun a => cSteps.time a + (cCfg.time a + cInit.time a) +
         FiniteState.runTime enc N p.toGeneric (steps a, (cfg a, initState a)))
       (fun a => cSteps.space a + (cCfg.space a + cInit.space a) +
         FiniteState.runSpace enc N p.toGeneric (steps a, (cfg a, initState a))) :=
-  (transportCertificate enc N p cSteps cCfg cInit hden hExec).computes
+  .of_tidy (transportCertificate enc N p cSteps cCfg cInit hden hExec).computes
 
 /-- Automatic `ComputableInPolyTime` transport corollary from `WordRAM.Executes`. -/
 theorem transport_polyTime (enc : B.genericModel.Encoding)
