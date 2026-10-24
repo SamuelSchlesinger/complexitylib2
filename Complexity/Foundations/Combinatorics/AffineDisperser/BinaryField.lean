@@ -62,6 +62,7 @@ noncomputable def polyOfCode (m : ℕ) : (ZMod 2)[X] :=
   if m = 0 then 0 else C (m : ZMod 2) + X * polyOfCode (m / 2)
 decreasing_by omega
 
+/-- The code `0` gives the zero polynomial. -/
 @[simp]
 theorem polyOfCode_zero : polyOfCode 0 = 0 := by
   rw [polyOfCode, ite_eq_left rfl]
@@ -99,6 +100,7 @@ theorem polyOfCode_ne_zero_and_natDegree {m : ℕ} (hm : m ≠ 0) :
       rw [h0, natDegree_zero, Nat.log_of_one_lt_of_le one_lt_two h] at hd
       omega
 
+/-- The code `m ≠ 0` gives a polynomial of degree `⌊log₂ m⌋`. -/
 theorem natDegree_polyOfCode {m : ℕ} (hm : m ≠ 0) : (polyOfCode m).natDegree = Nat.log 2 m :=
   (polyOfCode_ne_zero_and_natDegree hm).2
 
@@ -146,11 +148,13 @@ private theorem leastIrreducible_eq {p : ℕ} (hp : p ≠ 0) :
     leastIrreducible p = polyOfCode (Nat.find (exists_code_irreducible hp)) := by
   rw [leastIrreducible, dite_eq_left (exists_code_irreducible hp)]
 
+/-- For `p ≠ 0`, `leastIrreducible p` is irreducible. -/
 theorem irreducible_leastIrreducible {p : ℕ} (hp : p ≠ 0) : Irreducible (leastIrreducible p) := by
   classical
   rw [leastIrreducible_eq hp]
   exact (Nat.find_spec (exists_code_irreducible hp)).1
 
+/-- For `p ≠ 0`, `leastIrreducible p` has degree `p`. -/
 theorem natDegree_leastIrreducible {p : ℕ} (hp : p ≠ 0) : (leastIrreducible p).natDegree = p := by
   classical
   rw [leastIrreducible_eq hp]
@@ -198,6 +202,8 @@ on the choice (`Cslib.AffineDisperser.traceSymBits_rootBasis_eq_explicitDisperse
 noncomputable def binaryRoot (p n : ℕ) : GaloisField 2 n :=
   if h : ∃ α : GaloisField 2 n, aeval α (leastIrreducible p) = 0 then h.choose else 0
 
+/-- When `p ∣ n` and `p, n ≠ 0`, the minimal polynomial of `binaryRoot p n` over `𝔽₂` is
+`leastIrreducible p`. -/
 theorem minpoly_binaryRoot {p n : ℕ} (hp : p ≠ 0) (hn : n ≠ 0) (hpn : p ∣ n) :
     minpoly (ZMod 2) (binaryRoot p n) = leastIrreducible p := by
   have h := exists_aeval_leastIrreducible_eq_zero hp hn hpn
@@ -220,6 +226,8 @@ noncomputable def compositeBasis (m : ι → ℕ) (hm : ∀ i, (m i).Prime)
       rw [minpoly_binaryRoot (hm i).ne_zero hn (Finset.dvd_prod_of_mem m (Finset.mem_univ i)),
         natDegree_leastIrreducible (hm i).ne_zero]
 
+/-- The basis vector of `compositeBasis` at exponents `J` is the monomial `∏ᵢ αᵢ ^ Jᵢ` in the roots
+`αᵢ = binaryRoot mᵢ (∏ᵢ mᵢ)`. -/
 theorem compositeBasis_apply (m : ι → ℕ) (hm : ∀ i, (m i).Prime) (hinj : Function.Injective m)
     (J : (i : ι) → Fin (m i)) :
     compositeBasis m hm hinj J = ∏ i, binaryRoot (m i) (∏ i, m i) ^ (J i : ℕ) := by

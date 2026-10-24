@@ -59,9 +59,11 @@ decreasing_by
 
 variable {op : α → α → α} {e : α} {f : β → α}
 
+/-- The balanced fold of the empty list is `e`. -/
 @[simp] theorem balancedFold_nil : ([] : List β).balancedFold op e f = e := by
   rw [balancedFold]
 
+/-- The balanced fold of a singleton `[b]` is `f b`. -/
 @[simp] theorem balancedFold_singleton (b : β) : [b].balancedFold op e f = f b := by
   rw [balancedFold]
 

@@ -50,11 +50,13 @@ def recordKey (r : BitString (k + p)) : BitString k :=
 def keyedMinFn (r s : BitString (k + p)) : BitString (k + p) :=
   if BitString.equivFin k (recordKey r) ≤ BitString.equivFin k (recordKey s) then r else s
 
+/-- The selected record is one of the two inputs. -/
 theorem keyedMinFn_eq_or_eq (r s : BitString (k + p)) :
     keyedMinFn r s = r ∨ keyedMinFn r s = s := by
   unfold keyedMinFn
   split_ifs <;> simp
 
+/-- The key of the selected record is at most the key of the first record. -/
 theorem equivFin_recordKey_keyedMinFn_le_left (r s : BitString (k + p)) :
     BitString.equivFin k (recordKey (keyedMinFn r s)) ≤ BitString.equivFin k (recordKey r) := by
   unfold keyedMinFn
@@ -62,6 +64,7 @@ theorem equivFin_recordKey_keyedMinFn_le_left (r s : BitString (k + p)) :
   · exact le_rfl
   · exact (not_le.1 h).le
 
+/-- The key of the selected record is at most the key of the second record. -/
 theorem equivFin_recordKey_keyedMinFn_le_right (r s : BitString (k + p)) :
     BitString.equivFin k (recordKey (keyedMinFn r s)) ≤ BitString.equivFin k (recordKey s) := by
   unfold keyedMinFn
@@ -74,6 +77,7 @@ theorem equivFin_recordKey_keyedMinFn_le_right (r s : BitString (k + p)) :
 def packRecords {r : ℕ} (records : Fin m → BitString r) : BitString (m * r) :=
   fun t => records (finProdFinEquiv.symm t).1 (finProdFinEquiv.symm t).2
 
+/-- Reading block `i` of the packed records recovers record `i`. -/
 theorem packRecords_comp {r : ℕ} (records : Fin m → BitString r) (i : Fin m) :
     packRecords records ∘ (fun j => finProdFinEquiv (i, j)) = records i := by
   funext j

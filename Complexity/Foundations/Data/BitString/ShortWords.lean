@@ -67,10 +67,12 @@ theorem exists_length_eq_notMem (Q : List (List Bool)) (n : ℕ) (hQ : Q.length 
 noncomputable def shortWords (L : ℕ) : Finset (List Bool) :=
   (List.finite_length_le Bool L).toFinset
 
+/-- A word lies in `shortWords L` exactly when its length is at most `L`. -/
 @[simp]
 theorem mem_shortWords {L : ℕ} {w : List Bool} : w ∈ shortWords L ↔ w.length ≤ L := by
   simp [shortWords]
 
+/-- The empty word lies in `shortWords L`. -/
 theorem nil_mem_shortWords (L : ℕ) : [] ∈ shortWords L := by simp
 
 /-- The binary words of length at most `L` are the words `List.ofFn r` for `r : Fin m → Bool` and

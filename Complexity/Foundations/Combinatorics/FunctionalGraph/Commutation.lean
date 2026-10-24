@@ -60,6 +60,7 @@ open scoped Classical in
 noncomputable def disagreement [Fintype α] (f g : α → α) : Finset α :=
   Finset.univ.filter fun x => f x ≠ g x
 
+/-- A state lies in the disagreement set exactly when `f` and `g` differ there. -/
 @[simp] theorem mem_disagreement [Fintype α] (f g : α → α) (x : α) :
     x ∈ disagreement f g ↔ f x ≠ g x := by
   classical

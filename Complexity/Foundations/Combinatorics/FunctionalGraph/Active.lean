@@ -53,6 +53,8 @@ noncomputable def activeVertices (L : ℕ) : Finset α :=
   Finset.univ.filter fun x => L ≤ transientDepth f x ∨
     x ∈ periodicPts f ∧ L ≤ cycleLength f x
 
+/-- A state is active exactly when its transient depth is at least `L` or it is periodic with
+cycle length at least `L`. -/
 theorem mem_activeVertices (L : ℕ) (x : α) :
     x ∈ activeVertices f L ↔
       L ≤ transientDepth f x ∨ x ∈ periodicPts f ∧ L ≤ cycleLength f x := by

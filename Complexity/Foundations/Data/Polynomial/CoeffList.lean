@@ -43,8 +43,10 @@ variable {R : Type*} [Semiring R]
 by Horner's rule. -/
 def evalCoeffList (z : R) (l : List R) : R := l.foldr (fun a acc => a + z * acc) 0
 
+/-- The empty coefficient list evaluates to `0`. -/
 @[simp] theorem evalCoeffList_nil (z : R) : evalCoeffList z [] = 0 := rfl
 
+/-- Horner's step: `a :: l` evaluates to `a + z * evalCoeffList z l`. -/
 @[simp] theorem evalCoeffList_cons (z a : R) (l : List R) :
     evalCoeffList z (a :: l) = a + z * evalCoeffList z l := rfl
 
@@ -65,6 +67,7 @@ theorem natDegree_ofCoeffList_le (l : List R) : (ofCoeffList l).natDegree ≤ l.
 /-- The coefficients of `X ^ 0`, …, `X ^ (n - 1)` of a polynomial, in this order. -/
 def coeffsBelow (P : R[X]) (n : ℕ) : List R := (List.range n).map P.coeff
 
+/-- `coeffsBelow P n` has length `n`. -/
 @[simp] theorem length_coeffsBelow (P : R[X]) (n : ℕ) : (P.coeffsBelow n).length = n := by
   simp only [coeffsBelow, List.length_map, List.length_range]
 

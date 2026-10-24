@@ -67,6 +67,7 @@ def IsDensityLimit (Y : Finset (ι → Bool)) (p k : ℝ) (x : ι → Bool) : Pr
   3 / 4 ≤ bernoulliAverage p
     (fun P => if (2 : ℝ) ^ (-k) ≤ coordinateDensity Y P x then (1 : ℝ) else 0)
 
+/-- Being a density limit of `Y` is decidable, classically, as a real inequality. -/
 noncomputable instance (Y : Finset (ι → Bool)) (p k : ℝ) :
     DecidablePred (IsDensityLimit Y p k) :=
   fun _ => Real.decidableLE _ _

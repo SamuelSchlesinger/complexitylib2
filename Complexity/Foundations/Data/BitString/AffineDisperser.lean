@@ -42,6 +42,7 @@ at most `2 · 2 ^ (2 ^ n - 2 ^ d)` functions are constant on the image of each i
 
 * `Cslib.BitString.IsAffine`: affine maps over `𝔽₂`.
 * `Cslib.BitString.IsAffineDisperser`: affine dispersers.
+* `Cslib.BitString.zeroExtend`: extension of a bit string by zeros to a longer length.
 
 ## Main results
 
@@ -65,10 +66,13 @@ namespace Cslib.BitString
 def IsAffine {α β : Type*} [Add α] [Add β] (g : α → β) : Prop :=
   ∀ x y z, g (x + y + z) = g x + g y + g z
 
+/-- The composition of affine maps is affine. -/
 theorem IsAffine.comp {α β γ : Type*} [Add α] [Add β] [Add γ] {g : β → γ} {h : α → β}
     (hg : IsAffine g) (hh : IsAffine h) : IsAffine (g ∘ h) := fun x y z => by
   simp only [Function.comp_apply, hh x y z, hg (h x) (h y) (h z)]
 
+/-- Constant maps into a group in which every element is its own negative (`b + b = 0`) are
+affine. -/
 theorem isAffine_const {α β : Type*} [Add α] [AddGroup β] (h : ∀ b : β, b + b = 0) (c : β) :
     IsAffine (fun _ : α => c) := fun _ _ _ => by rw [h, zero_add]
 
@@ -82,12 +86,14 @@ def IsAffineDisperser {n : ℕ} (f : BitString n → Bool) (d : ℕ) : Prop :=
 def zeroExtend {d d' : ℕ} (x : BitString d) : BitString d' :=
   fun i => if h : i.val < d then x ⟨i.val, h⟩ else false
 
+/-- Extension by zeros is affine. -/
 theorem isAffine_zeroExtend {d d' : ℕ} : IsAffine (zeroExtend (d := d) (d' := d')) := by
   intro x y z
   funext i
   simp only [zeroExtend, Pi.add_apply]
   split_ifs <;> rfl
 
+/-- Extension by zeros from `BitString d` to `BitString d'` is injective when `d ≤ d'`. -/
 theorem zeroExtend_injective {d d' : ℕ} (h : d ≤ d') :
     Function.Injective (zeroExtend (d := d) (d' := d')) := by
   intro x y hxy

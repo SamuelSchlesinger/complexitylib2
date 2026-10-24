@@ -98,6 +98,7 @@ of the signs `(-1) ^ xᵢ` over `S`, the sign of the parity of the bits in `S`
 def chi (S : Finset ι) (x : ι → Bool) : R :=
   ∏ i ∈ S, (-1) ^ (x i).toNat
 
+/-- The character of the empty set is the constant `1`. -/
 @[simp] theorem chi_empty (x : ι → Bool) : chi R ∅ x = 1 :=
   prod_empty
 
@@ -110,6 +111,7 @@ def chiChar (S : Finset ι) : AddChar (ι → Bool) R where
   map_add_eq_mul' x y := by
     simp only [chi, Pi.add_apply, Bool.add_eq_xor, neg_one_pow_toNat_xor, prod_mul_distrib]
 
+/-- The additive character `chiChar R S` is the character `chi R S` as a function. -/
 @[simp] theorem coe_chiChar (S : Finset ι) : ⇑(chiChar R S) = chi R S :=
   rfl
 
@@ -118,6 +120,7 @@ coordinatewise exclusive or, is the product of their characters. -/
 theorem chi_add (S : Finset ι) (x y : ι → Bool) : chi R S (x + y) = chi R S x * chi R S y :=
   (chiChar R S).map_add_eq_mul x y
 
+/-- Every character is `1` at the all-`false` bit string. -/
 @[simp] theorem chi_zero (S : Finset ι) : chi R S 0 = 1 :=
   (chiChar R S).map_zero_eq_one
 
@@ -320,6 +323,7 @@ noncomputable def fourierCoeffₗ (S : Finset ι) : ((ι → Bool) → ℝ) →�
   map_add' f g := fourierCoeff_add f g S
   map_smul' c f := fourierCoeff_const_mul c f S
 
+/-- The linear map `fourierCoeffₗ S` sends `f` to its Fourier coefficient on `S`. -/
 @[simp] theorem fourierCoeffₗ_apply (S : Finset ι) (f : (ι → Bool) → ℝ) :
     fourierCoeffₗ S f = fourierCoeff f S :=
   rfl
@@ -334,10 +338,12 @@ noncomputable def fourierTransform : ((ι → Bool) → ℝ) ≃ₗ[ℝ] (Finset
   left_inv f := funext (sum_fourierCoeff_mul_chi f)
   right_inv c := funext (fourierCoeff_sum_mul_chi c)
 
+/-- The Fourier transform sends a function to its Fourier coefficients. -/
 @[simp] theorem fourierTransform_apply (f : (ι → Bool) → ℝ) :
     fourierTransform f = fourierCoeff f :=
   rfl
 
+/-- The inverse Fourier transform sends weights `c` to the combination `∑ S, c S * χ_S`. -/
 @[simp] theorem fourierTransform_symm_apply (c : Finset ι → ℝ) (x : ι → Bool) :
     fourierTransform.symm c x = ∑ S, c S * chi ℝ S x :=
   rfl

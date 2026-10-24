@@ -68,10 +68,12 @@ def edges : Finset (Sym2 (V × D)) :=
 def edgeEnds (e : G.edges) : Sym2 V :=
   e.1.map Prod.fst
 
+/-- Every dart `p` gives the edge `{p, G.rot p}` of `G`. -/
 theorem mk_mem_edges (p : V × D) : s(p, G.rot p) ∈ G.edges :=
   mem_image_of_mem _ (mem_univ p)
 
 variable {G} in
+/-- Every edge of `G` is `{p, G.rot p}` for some dart `p`. -/
 theorem exists_eq_of_mem_edges {e : Sym2 (V × D)} (he : e ∈ G.edges) :
     ∃ p, s(p, G.rot p) = e := by
   simpa [edges] using he

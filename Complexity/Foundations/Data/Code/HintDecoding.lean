@@ -38,7 +38,9 @@ points (`Cslib.Code.card_hintDecode_ne_le`).
 ## Main definitions
 
 * `Cslib.Code.coeffWeight`: the weights extracting a coefficient from the values on all of `F`.
+* `Cslib.Code.henselCoeff`: the coefficient chosen by one Newton step.
 * `Cslib.Code.henselTrunc`: the Newton iteration from a hint.
+* `Cslib.Code.henselSeq`: the coefficients chosen by the Newton iteration.
 * `Cslib.Code.henselValue`: the value at `0` of the lifted root.
 * `Cslib.Code.hintDecode`: Sudan decoding with a hint.
 

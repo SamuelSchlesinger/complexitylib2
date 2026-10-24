@@ -70,6 +70,7 @@ last entry `a (m + n - 2)` is the bottom left corner [Katz and Lindell, Exercise
 def toeplitz (a : Fin (m + n - 1) → α) : Matrix (Fin m) (Fin n) α :=
   of fun i j => a ⟨i + (n - 1 - j), by omega⟩
 
+/-- The entry of `toeplitz a` in row `i` and column `j` is `a (i + (n - 1 - j))`. -/
 @[simp]
 theorem toeplitz_apply (a : Fin (m + n - 1) → α) (i : Fin m) (j : Fin n) :
     toeplitz a i j = a ⟨i + (n - 1 - j), by omega⟩ :=
@@ -111,21 +112,26 @@ theorem exists_toeplitz_eq_iff (hm : m ≠ 0) (hn : n ≠ 0) {A : Matrix (Fin m)
     · exact hA _ _ _ _ (by simp only; omega)
     · exact hA _ _ _ _ (by simp only; omega)
 
+/-- The Toeplitz matrix with zero diagonals is zero. -/
 @[simp]
 theorem toeplitz_zero [Zero α] : toeplitz (0 : Fin (m + n - 1) → α) = 0 :=
   ext fun _ _ => rfl
 
+/-- `toeplitz` sends sums of diagonals to sums of matrices. -/
 theorem toeplitz_add [Add α] (a b : Fin (m + n - 1) → α) :
     toeplitz (a + b) = toeplitz a + toeplitz b :=
   ext fun _ _ => rfl
 
+/-- `toeplitz` commutes with negation. -/
 theorem toeplitz_neg [Neg α] (a : Fin (m + n - 1) → α) : toeplitz (-a) = -toeplitz a :=
   ext fun _ _ => rfl
 
+/-- `toeplitz` sends differences of diagonals to differences of matrices. -/
 theorem toeplitz_sub [Sub α] (a b : Fin (m + n - 1) → α) :
     toeplitz (a - b) = toeplitz a - toeplitz b :=
   ext fun _ _ => rfl
 
+/-- `toeplitz` commutes with scalar multiplication. -/
 theorem toeplitz_smul {R : Type*} [SMul R α] (c : R) (a : Fin (m + n - 1) → α) :
     toeplitz (c • a) = c • toeplitz a :=
   ext fun _ _ => rfl

@@ -67,6 +67,7 @@ theorem chi_mem_lowDegree (S : Finset ι) : chi F S ∈ lowDegree F ι #S := by
       simpa [two_mul] using Submodule.add_mem _ (bitVal_mem_lowDegree (R := F) i)
         (bitVal_mem_lowDegree (R := F) i))
 
+/-- The span of the characters of at most `H` coordinates grows with `H`. -/
 theorem signSpan_mono {H K : ℕ} (hHK : H ≤ K) : signSpan F ι H ≤ signSpan F ι K :=
   Submodule.span_mono (Set.image_mono fun _ hS => le_trans hS hHK)
 
@@ -91,6 +92,8 @@ theorem monomial_mem_signSpan [Invertible (2 : F)] (S : Finset ι) :
   exact Submodule.sum_mem _ fun T hT => Submodule.smul_mem _ _
     (Submodule.subset_span ⟨T, Finset.card_le_card (Finset.mem_powerset.mp hT), rfl⟩)
 
+/-- When `2` is invertible in `F`, every function of degree at most `H` lies in the span of the
+characters of at most `H` coordinates. -/
 theorem lowDegree_le_signSpan [Invertible (2 : F)] (H : ℕ) :
     lowDegree F ι H ≤ signSpan F ι H := by
   rw [lowDegree, Submodule.span_le]

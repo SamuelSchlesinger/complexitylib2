@@ -106,6 +106,7 @@ encoding of the unit vector of `a` (`longCode_eq_hadamardCode`). -/
 def longCode (a : ι) : (ι → Bool) → Bool :=
   Function.eval a
 
+/-- The long code of `a` reads the bit of `r` at `a`. -/
 @[simp]
 theorem longCode_apply (a : ι) (r : ι → Bool) : longCode a r = r a :=
   rfl
@@ -167,6 +168,7 @@ the Boolean ring `Bool`, the inner product of `x` and `a` modulo two
 def hadamardCode (x : ι → Bool) : (ι → Bool) → Bool :=
   fun a => x ⬝ᵥ a
 
+/-- The Hadamard codeword of `x` at `a` is the dot product `x ⬝ᵥ a`. -/
 theorem hadamardCode_apply (x a : ι → Bool) : hadamardCode x a = x ⬝ᵥ a :=
   rfl
 

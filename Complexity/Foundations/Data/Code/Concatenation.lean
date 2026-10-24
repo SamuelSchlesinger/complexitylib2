@@ -55,6 +55,7 @@ variable {ι κ A B : Type*}
 def concat (inner : A → κ → B) (c : ι → A) : ι × κ → B :=
   fun x => inner (c x.1) x.2
 
+/-- The concatenated word at `(i, j)` is the letter at `j` of the inner codeword of `c i`. -/
 @[simp]
 theorem concat_apply (inner : A → κ → B) (c : ι → A) (i : ι) (j : κ) :
     concat inner c (i, j) = inner (c i) j :=

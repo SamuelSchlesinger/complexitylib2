@@ -77,6 +77,7 @@ def pointEquiv [Add K] (bits : K ≃+ BitString b) : (Fin ℓ → K) ≃ BitStri
     funext x
     simp only [pointBits, AddEquiv.apply_symm_apply, Prod.mk.eta, Equiv.apply_symm_apply]
 
+/-- `pointEquiv bits` sends a point to its bits `pointBits bits`. -/
 @[simp] theorem pointEquiv_apply [Add K] (bits : K ≃+ BitString b) (u : Fin ℓ → K) :
     pointEquiv bits u = pointBits bits u :=
   rfl

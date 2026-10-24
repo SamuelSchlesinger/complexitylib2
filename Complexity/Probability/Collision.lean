@@ -54,6 +54,7 @@ noncomputable def collisionProbability (p : PMF α) : ℝ := ∑' a, (p a).toRea
 theorem collisionProbability_eq_sum [Fintype α] (p : PMF α) :
     collisionProbability p = ∑ a, (p a).toReal ^ 2 := tsum_fintype _
 
+/-- The collision probability is nonnegative. -/
 theorem collisionProbability_nonneg (p : PMF α) : 0 ≤ collisionProbability p :=
   tsum_nonneg (fun _ => sq_nonneg _)
 

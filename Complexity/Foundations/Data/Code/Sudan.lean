@@ -96,6 +96,7 @@ degree `a + w * b` at most `D`. For `w ≥ 1` the bound `b ≤ D` holds for all 
 def monomials (w D : ℕ) : Finset (ℕ × ℕ) :=
   {ab ∈ range (D + 1) ×ˢ range (D + 1) | ab.1 + w * ab.2 ≤ D}
 
+/-- `(a, b)` is in `monomials w D` exactly when `a ≤ D`, `b ≤ D` and `a + w * b ≤ D`. -/
 theorem mem_monomials {w D : ℕ} {ab : ℕ × ℕ} :
     ab ∈ monomials w D ↔ ab.1 ≤ D ∧ ab.2 ≤ D ∧ ab.1 + w * ab.2 ≤ D := by
   simp only [monomials, mem_filter, mem_product, mem_range, Nat.lt_succ_iff, and_assoc]

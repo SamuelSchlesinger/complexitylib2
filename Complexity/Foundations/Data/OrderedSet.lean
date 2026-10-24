@@ -46,12 +46,14 @@ def LeastResult (s : Finset α) : Option α → Prop
 def least (s : Finset α) : Option α :=
   if h : s.Nonempty then some (s.min' h) else none
 
+/-- `least s` satisfies the optional-minimum contract for `s`. -/
 theorem least_spec (s : Finset α) : LeastResult s (least s) := by
   unfold least
   split <;> rename_i h
   · exact ⟨Finset.min'_mem s h, fun b hb => Finset.min'_le s b hb⟩
   · exact Finset.not_nonempty_iff_eq_empty.mp h
 
+/-- Every result satisfying the optional-minimum contract for `s` is `least s`. -/
 theorem LeastResult.eq_least {s : Finset α} {a : Option α} (h : LeastResult s a) :
     a = least s := by
   have hs := least_spec s

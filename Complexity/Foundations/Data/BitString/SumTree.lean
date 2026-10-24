@@ -25,6 +25,8 @@ in fewer than four times the number of leaves. Their addresses use only shifts a
 
 * `Cslib.BitString.sumTree`: the sum at a node of the balanced tree.
 * `Cslib.BitString.sumTreeAddress`: a bit-plane address within the packed tree.
+* `Cslib.BitString.sumTreeBits`: the packed bit planes of the tree, read by address.
+* `Cslib.BitString.sumTreeWords`: the packed bit planes stored in eight words of `h` bits.
 
 ## Main results
 

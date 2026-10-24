@@ -63,6 +63,8 @@ noncomputable def catalecticant (rows : m → σ →₀ ℕ) (columns : n → σ
     change (a • p).coeff _ / _ = a * (p.coeff _ / _)
     simp [smul_eq_mul, mul_div_assoc]
 
+/-- The entry of the catalecticant of `p` at `(i, j)` is the coefficient of `p` at the exponent
+`rows i + columns j`, divided by the multinomial coefficient of that exponent. -/
 @[simp] theorem catalecticant_apply (rows : m → σ →₀ ℕ) (columns : n → σ →₀ ℕ)
     (p : MvPolynomial σ K) (i : m) (j : n) :
     catalecticant rows columns p i j =

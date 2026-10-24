@@ -30,6 +30,9 @@ set and the maximum disjoint packing have equal size (`forest_duality`).
 
 * `Cslib.FunctionalGraph.ForestDuality.iter`: partial iteration of `σ : α → Option α`.
 * `Cslib.FunctionalGraph.ForestDuality.FPath`: a directed path given by start vertex and length.
+* `Cslib.FunctionalGraph.ForestDuality.FPath.Mem`: a vertex lies on a path.
+* `Cslib.FunctionalGraph.ForestDuality.FPath.End`: a path is nonempty and ends at a vertex.
+* `Cslib.FunctionalGraph.ForestDuality.FPath.Within`: every vertex of a path lies in `S`.
 * `Cslib.FunctionalGraph.ForestDuality.Covers`: a vertex set hitting all required paths in `S`.
 * `Cslib.FunctionalGraph.ForestDuality.Packing`: a pairwise vertex-disjoint family of required
   paths in `S`.
@@ -61,6 +64,7 @@ def iter : ℕ → α → Option α
   | 0, u => some u
   | k + 1, u => (iter k u).bind σ
 
+/-- Iterating `a + c` times is iterating `a` times and then, if defined, `c` more times. -/
 theorem iter_add (a c : ℕ) (u : α) : iter σ (a + c) u = (iter σ a u).bind (iter σ c) := by
   induction c with
   | zero =>
