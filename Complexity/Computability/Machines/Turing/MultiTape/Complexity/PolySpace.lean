@@ -11,7 +11,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Bina
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Foundations.Data.BitString.Counter
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 
 /-!
@@ -22,9 +21,9 @@ encoded input length, with no time bound. Composition and binary-counted iterati
 that contract; the count may be exponentially large while every encoded state stays bounded.
 Finite state and alphabet choices are uniform across the inputs of each certificate.
 
-The old raw `ComputableTidilyInPolySpace` predicate below remains an explicit staged dependency
-for the central S1 internalization. Public provider operations here use the plain predicate;
-proofs use one shared raw witness normalization, retaining its encoded-output bound.
+The closure proofs use the realizing plain machine directly. Their witness repackaging retains
+the independent time bound and charges both workspace and the complete encoded output to a
+common polynomial; no cleanup normalization is needed.
 
 ## Main results
 
@@ -38,27 +37,27 @@ proofs use one shared raw witness normalization, retaining its encoded-output bo
 
 namespace Turing.MultiTapeTM
 
--- Staged raw predicate: central internalization is owned by the S1 integration, not this batch.
-
-
-private theorem rawPolySpace {α β : Type} {f : α → β}
+/-- Express a polynomial-space witness with an explicit output-charged space bound. -/
+private theorem polySpaceWitness {α β : Type} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
     (h : ComputableInPolySpace f encIn encOut) :
-    ComputableTidilyInPolySpace f encIn encOut := by
-  obtain ⟨t, s, hs, h, hl⟩ := Internal.normalizePolySpace h
-  exact ⟨t, fun a => s (encIn a).length, .of_polynomiallyBounded _ hs, 1,
-    h.mono (fun _ => by simp) (fun _ => by simp), fun a => (hl a).trans (by simp)⟩
+    ∃ T S, PolyBounded (fun a => (encIn a).length) S ∧ ComputableInO f encIn encOut T S := by
+  obtain ⟨t, s, hs, h, hl⟩ := h
+  exact ⟨t, fun a => s (encIn a).length, .of_polynomiallyBounded _ hs,
+    ComputableInO.of_bounds h 1 (fun _ => by simp) (fun _ => by simp)
+      (fun a => (hl a).trans (by simp))⟩
 
--- The existing thin witness repackaging, moved from the legacy Plain module without a new model.
-private theorem plainPolySpace {α β : Type} {f : α → β}
+/-- Repackage one plain realizing machine, retaining its workspace and output polynomial. -/
+private theorem ofPolySpaceWitness {α β : Type} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
-    (h : ComputableTidilyInPolySpace f encIn encOut) :
+    (h : ∃ T S, PolyBounded (fun a => (encIn a).length) S ∧
+      ComputableInO f encIn encOut T S) :
     ComputableInPolySpace f encIn encOut := by
   obtain ⟨T, S, ⟨b, hb, hS⟩, c, hc, hl⟩ := h
   have hcS (a : α) : c * (S a + 1) ≤ c * (b (encIn a).length + 1) :=
     Nat.mul_le_mul_left c (Nat.add_le_add_right (hS a) 1)
   exact ⟨_, fun n => c * (b n + 1), by fun_prop,
-    hc.computableInTimeAndSpace.mono (fun _ => le_rfl) hcS, fun a => (hl a).trans (hcS a)⟩
+    hc.mono (fun _ => le_rfl) hcS, fun a => (hl a).trans (hcS a)⟩
 
 attribute [fun_prop] ComputableInPolySpace
 
@@ -87,9 +86,9 @@ theorem comp {f : β → γ} {g : α → β} {encOut : γ ↪ List Bool}
     (hf : ComputableInPolySpace f encMid encOut) (hg : ComputableInPolySpace g encIn encMid) :
     ComputableInPolySpace (fun a => f (g a)) encIn encOut := by
   have hlen := hg.polyBounded_length
-  obtain ⟨Tf, Sf, hSf, hf'⟩ := rawPolySpace hf
-  obtain ⟨Tg, Sg, hSg, hg'⟩ := rawPolySpace hg
-  exact plainPolySpace ⟨_, _, hSg.add (hSf.comp hlen), hf'.comp hg'⟩
+  obtain ⟨Tf, Sf, hSf, hf'⟩ := polySpaceWitness hf
+  obtain ⟨Tg, Sg, hSg, hg'⟩ := polySpaceWitness hg
+  exact ofPolySpaceWitness ⟨_, _, hSg.add (hSf.comp hlen), hf'.comp hg'⟩
 
 /-- The identity. -/
 @[fun_prop]
@@ -101,19 +100,19 @@ theorem id' : ComputableInPolySpace (fun a : α => a) encIn encIn :=
 theorem prod {g : α → δ} (hf : ComputableInPolySpace f encIn encOut)
     (hg : ComputableInPolySpace g encIn encD) :
     ComputableInPolySpace (fun a => (f a, g a)) encIn (encPair encOut encD) := by
-  obtain ⟨Tf, Sf, hSf, hf⟩ := rawPolySpace hf
-  obtain ⟨Tg, Sg, hSg, hg⟩ := rawPolySpace hg
-  exact plainPolySpace ⟨_, _, hSf.add hSg, hf.prod hg⟩
+  obtain ⟨Tf, Sf, hSf, hf⟩ := polySpaceWitness hf
+  obtain ⟨Tg, Sg, hSg, hg⟩ := polySpaceWitness hg
+  exact ofPolySpaceWitness ⟨_, _, hSf.add hSg, hf.prod hg⟩
 
 /-- A case distinction charges the guard and the selected encoded result. -/
 @[fun_prop]
 theorem ite {c : α → Bool} {g : α → β} (hc : ComputableInPolySpace c encIn encBool)
     (hf : ComputableInPolySpace f encIn encOut) (hg : ComputableInPolySpace g encIn encOut) :
     ComputableInPolySpace (fun a => if c a then f a else g a) encIn encOut := by
-  obtain ⟨Tc, Sc, hSc, hc⟩ := rawPolySpace hc
-  obtain ⟨Tf, Sf, hSf, hf⟩ := rawPolySpace hf
-  obtain ⟨Tg, Sg, hSg, hg⟩ := rawPolySpace hg
-  apply plainPolySpace
+  obtain ⟨Tc, Sc, hSc, hc⟩ := polySpaceWitness hc
+  obtain ⟨Tf, Sf, hSf, hf⟩ := polySpaceWitness hf
+  obtain ⟨Tg, Sg, hSg, hg⟩ := polySpaceWitness hg
+  apply ofPolySpaceWitness
   refine ⟨_, _, (hSc.add (hSf.add hSg)).mono fun a => ?_, hc.ite hf hg⟩
   split_ifs <;> lia
 
@@ -133,11 +132,10 @@ theorem iterate [Inhabited β] {n : α → ℕ} {init : α → β} {step : β �
     (hstate : ∀ a, ∀ k ≤ n a, (encOut (step^[k] (init a))).length ≤ B a) :
     ComputableInPolySpace (fun a => step^[n a] (init a)) encIn encOut := by
   obtain ⟨dn, _, hn'⟩ := hn.exists_degree
-  have hn' : ComputableInDegree _ _ _ _ _ := Internal.normalizeDegree hn'
-  obtain ⟨Ti, Si, hSi, hinit⟩ := rawPolySpace hinit
-  obtain ⟨Ts, Ss, hSs, hstep⟩ := rawPolySpace hstep
+  obtain ⟨Ti, Si, hSi, hinit⟩ := polySpaceWitness hinit
+  obtain ⟨Ts, Ss, hSs, hstep⟩ := polySpaceWitness hstep
   obtain ⟨cs, ds, hSs⟩ := hSs.exists_le
-  have hit := ComputableTidilyInO.iterate hn'.inO hinit hstep
+  have hit := ComputableInO.iterate hn'.inO hinit hstep
     (R := fun a => (Finset.range (n a + 1)).sup fun k => Ts (step^[k] (init a)))
     (Q := fun a => cs * (B a + 1) ^ ds) (B := B)
     (fun a k hk => Finset.le_sup (f := fun k => Ts (step^[k] (init a)))
@@ -145,7 +143,7 @@ theorem iterate [Inhabited β] {n : α → ℕ} {init : α → β} {step : β �
     (fun a k hk => (hSs _).trans (Nat.mul_le_mul_left cs
       (Nat.pow_le_pow_left (Nat.add_le_add_right (hstate a k hk) 1) ds)))
     hstate
-  apply plainPolySpace
+  apply ofPolySpaceWitness
   refine ⟨_, _, ?_, hit⟩
   have hQ : PolyBounded (fun a => (encIn a).length) fun a => cs * (B a + 1) ^ ds :=
     PolyBounded.comp (size' := id) (v := fun m => cs * (m + 1) ^ ds)

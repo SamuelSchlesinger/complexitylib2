@@ -27,7 +27,7 @@ the count itself need not be polynomially bounded.
 
 Adapted from the lean-canny contributors' `Computation/TidyBoundedFold.lean` at
 [`2a50a2ee`](https://github.com/SamuelSchlesinger/lean-canny/blob/2a50a2ee00ae0699cc3f0c2bff5100c4687d2d8e/LeanCanny/Computation/TidyBoundedFold.lean).
-The port uses the standard `Nat.fold` and the existing tidy space calculus, with no separate
+The port uses the standard `Nat.fold` and the existing plain space calculus, with no separate
 machine or computability predicate.
 -/
 
@@ -75,7 +75,7 @@ theorem natFold [Inhabited α] [Inhabited β]
       ((PolyBounded.const 2).mul hcount.polyBounded_length)).add hbound).add (PolyBounded.const 2)
   have hrun := iterate hcount hstart hadvance hsize (fun x k hk => by
     rw [iterate_advance]
-    have hi := ComputableTidilyInO.length_encNat_mono hk
+    have hi := ComputableInO.length_encNat_mono hk
     have ha := hstates x k hk
     simp only [length_encPair]
     omega)

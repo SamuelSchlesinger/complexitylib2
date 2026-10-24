@@ -594,27 +594,6 @@ private theorem normalizeBigO {α β : Type*} {f : α → β}
         nlinarith [Nat.zero_le (d * S a)]
       _ ≤ (A + B) * (S a + 1) := Nat.mul_le_mul_right _ (Nat.le_add_left _ _)
 
-/-- Normalize a polynomial-space witness, retaining a shared polynomial bound for work space
-and encoded output. The running time remains unrestricted. This is raw proof construction. -/
-public theorem normalizePolySpace {α β : Type*} {f : α → β}
-    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
-    (h : ComputableInPolySpace f encIn encOut) :
-    ∃ (t : α → ℕ) (s : ℕ → ℕ), Cslib.PolynomiallyBounded s ∧
-      ComputableTidilyInTimeAndSpace f encIn encOut t (fun a => s (encIn a).length) ∧
-      ∀ a, (encOut (f a)).length ≤ s (encIn a).length := by
-  obtain ⟨t, s, hs, h, hl⟩ := h
-  obtain ⟨c, hc⟩ := h.exists_computableTidilyInTimeAndSpace
-  refine ⟨fun a => 2 * t a + 3 * s (encIn a).length + c,
-    fun n => (c + 1) * (s n + 1),
-    Cslib.PolynomiallyBounded.mul (.const _) (hs.add (.const 1)), hc.mono ?_ ?_, ?_⟩
-  · intro a
-    exact le_rfl
-  · intro a
-    dsimp only
-    exact Nat.mul_le_mul_right _ (Nat.le_succ c)
-  · intro a
-    exact (hl a).trans (by nlinarith [Nat.zero_le (c * (s (encIn a).length + 1))])
-
 /-- Forget a normalized witness at the same independent bounds. -/
 private theorem forgetBigO {α β : Type*} {f : α → β}
     {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {T S : α → ℕ}
