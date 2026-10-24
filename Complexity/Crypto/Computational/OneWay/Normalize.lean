@@ -57,10 +57,10 @@ def normalize (f : List Bool → List Bool) (bound : ℕ → ℕ) (input : List 
 
 /-- Output normalization preserves deterministic polynomial time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_normalize {f : List Bool → List Bool}
-    (hf : ComputableTidilyInPolyTime f encBits encBits) {bound : ℕ → ℕ}
-    (hbound : ComputableTidilyInPolyTime bound encUnary encUnary) :
-    ComputableTidilyInPolyTime (normalize f bound) encBits encBits := by
+theorem computableInPolyTime_normalize {f : List Bool → List Bool}
+    (hf : ComputableInPolyTime f encBits encBits) {bound : ℕ → ℕ}
+    (hbound : ComputableInPolyTime bound encUnary encUnary) :
+    ComputableInPolyTime (normalize f bound) encBits encBits := by
   unfold normalize
   fun_prop
 
@@ -88,11 +88,12 @@ end OneWayNormalization
 
 /-- Self-delimiting output padding preserves one-wayness against uniform strict PPT inverters. -/
 theorem OneWay.normalize {f : List Bool → List Bool} (hf : OneWay f) (bound : ℕ → ℕ)
-    (hbound : ComputableTidilyInPolyTime bound encUnary encUnary) :
+    (hbound : ComputableInPolyTime bound encUnary encUnary) :
     OneWay (OneWayNormalization.normalize f bound) := by
+  have hbound := hbound.tidy
   apply OneWay.of_inversion_negligible
     (.of_tidy <|
-      OneWayNormalization.computableTidilyInPolyTime_normalize hf.polyTime.tidy hbound)
+      (OneWayNormalization.computableInPolyTime_normalize hf.polyTime (.of_tidy hbound)).tidy)
   intro adversary hPPT
   have hreduce : IsPPT encBits (fun n image =>
       adversary n (BitString.padWord (bound n) image)) := by ppt
@@ -111,7 +112,7 @@ theorem OneWay.exists_fixedOutputLength {f : List Bool → List Bool} (hf : OneW
     unfold bound
     fun_prop
   refine ⟨OneWayNormalization.normalize f bound, fun n => 2 * bound n + 1,
-    hf.normalize bound hbound, ?_, by fun_prop⟩
+    hf.normalize bound (.of_tidy hbound), ?_, by fun_prop⟩
   intro input
   exact BitString.length_padWord (hsize input)
 

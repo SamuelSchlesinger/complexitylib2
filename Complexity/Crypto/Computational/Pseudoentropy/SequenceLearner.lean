@@ -66,12 +66,12 @@ def parameters (confidence numerator densityBound inverseGap codeBound : ℕ) : 
 @[program_certificate]
 theorem isPolyTime_parameters {α : Type} {input : α ↪ List Bool}
     {confidence numerator densityBound inverseGap codeBound : α → ℕ}
-    (hconfidence : ComputableTidilyInPolyTime confidence input encUnary)
-    (hnumerator : ComputableTidilyInPolyTime numerator input encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound input encUnary)
-    (hgap : ComputableTidilyInPolyTime inverseGap input encUnary)
-    (hbound : ComputableTidilyInPolyTime codeBound input encUnary) :
-    ComputableTidilyInPolyTime (fun a =>
+    (hconfidence : ComputableInPolyTime confidence input encUnary)
+    (hnumerator : ComputableInPolyTime numerator input encUnary)
+    (hdensity : ComputableInPolyTime densityBound input encUnary)
+    (hgap : ComputableInPolyTime inverseGap input encUnary)
+    (hbound : ComputableInPolyTime codeBound input encUnary) :
+    ComputableInPolyTime (fun a =>
       parameters (confidence a) (numerator a) (densityBound a) (inverseGap a) (codeBound a))
       input Parameters.encoding := by
   unfold parameters
@@ -139,11 +139,11 @@ variable {α : Type} {input : α ↪ List Bool} {evaluate : List Bool → List B
 
 /-- Masks compose the efficient evaluator with the stored state and a labeled sample. -/
 theorem isPPTOn_mask {sample : α → List Bool × Bool}
-    (hevaluate : ComputableTidilyInPolyTime (fun pair => evaluate pair.1 pair.2)
+    (hevaluate : ComputableInPolyTime (fun pair => evaluate pair.1 pair.2)
       (encPair encBits encBits) encBool)
-    (hparams : ComputableTidilyInPolyTime params input Parameters.encoding)
-    (hstate : ComputableTidilyInPolyTime state input State.encoding)
-    (hsample : ComputableTidilyInPolyTime sample input (encPair encBits encBool)) :
+    (hparams : ComputableInPolyTime params input Parameters.encoding)
+    (hstate : ComputableInPolyTime state input State.encoding)
+    (hsample : ComputableInPolyTime sample input (encPair encBits encBool)) :
     IsPPTOn input encBool (fun a => mask evaluate (params a) (state a) (sample a)) := by
   unfold mask
   fun_prop
@@ -153,14 +153,14 @@ attribute [program_certificate] isPPTOn_mask
 /-- Drawing descriptions is strict PPT even on executions with inaccurate guards or learners. -/
 theorem isPPTOn_candidates {source : α → ProbComp (List Bool × Bool)} {base : α → List Bool}
     {count width : α → ℕ} (c d : ℕ)
-    (hevaluate : ComputableTidilyInPolyTime (fun pair => evaluate pair.1 pair.2)
+    (hevaluate : ComputableInPolyTime (fun pair => evaluate pair.1 pair.2)
       (encPair encBits encBits) encBool)
     (hsource : IsPPTOn input (encPair encBits encBool) source)
-    (hbase : ComputableTidilyInPolyTime base input encBits)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hparams : ComputableTidilyInPolyTime params input Parameters.encoding)
-    (hstate : ComputableTidilyInPolyTime state input State.encoding) :
+    (hbase : ComputableInPolyTime base input encBits)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hparams : ComputableInPolyTime params input Parameters.encoding)
+    (hstate : ComputableInPolyTime state input State.encoding) :
     IsPPTOn input encBits (fun a =>
       candidates evaluate (source a) (base a) (count a) c d (width a) (params a) (state a)) := by
   unfold candidates
@@ -171,15 +171,15 @@ attribute [program_certificate] isPPTOn_candidates
 /-- The adaptive sequence learner is strict PPT in the complete stored state and source input. -/
 theorem isPPTOn_learn {source : α → ProbComp (List Bool × Bool)} {base : α → List Bool}
     {count width inverseGap : α → ℕ} (c d : ℕ)
-    (hevaluate : ComputableTidilyInPolyTime (fun pair => evaluate pair.1 pair.2)
+    (hevaluate : ComputableInPolyTime (fun pair => evaluate pair.1 pair.2)
       (encPair encBits encBits) encBool)
     (hsource : IsPPTOn input (encPair encBits encBool) source)
-    (hbase : ComputableTidilyInPolyTime base input encBits)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hgap : ComputableTidilyInPolyTime inverseGap input encUnary)
-    (hparams : ComputableTidilyInPolyTime params input Parameters.encoding)
-    (hstate : ComputableTidilyInPolyTime state input State.encoding) :
+    (hbase : ComputableInPolyTime base input encBits)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hgap : ComputableInPolyTime inverseGap input encUnary)
+    (hparams : ComputableInPolyTime params input Parameters.encoding)
+    (hstate : ComputableInPolyTime state input State.encoding) :
     IsPPTOn input encBits (fun a =>
       learn evaluate (source a) (base a) (count a) c d (width a) (inverseGap a)
         (params a) (state a)) := by
@@ -193,15 +193,15 @@ source and evaluator certificates and polynomial-time numerical parameters, not 
 theorem isPPTOn_predict {source : α → ProbComp (List Bool × Bool)}
     {base observation : α → List Bool}
     {count width inverseGap : α → ℕ} (c d : ℕ)
-    (hevaluate : ComputableTidilyInPolyTime (fun pair => evaluate pair.1 pair.2)
+    (hevaluate : ComputableInPolyTime (fun pair => evaluate pair.1 pair.2)
       (encPair encBits encBits) encBool)
     (hsource : IsPPTOn input (encPair encBits encBool) source)
-    (hbase : ComputableTidilyInPolyTime base input encBits)
-    (hobservation : ComputableTidilyInPolyTime observation input encBits)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hgap : ComputableTidilyInPolyTime inverseGap input encUnary)
-    (hparams : ComputableTidilyInPolyTime params input Parameters.encoding) :
+    (hbase : ComputableInPolyTime base input encBits)
+    (hobservation : ComputableInPolyTime observation input encBits)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hgap : ComputableInPolyTime inverseGap input encUnary)
+    (hparams : ComputableInPolyTime params input Parameters.encoding) :
     IsPPTOn input encBool (fun a =>
       predict evaluate (source a) (base a) (count a) c d (width a) (inverseGap a)
         (params a) (observation a)) := by

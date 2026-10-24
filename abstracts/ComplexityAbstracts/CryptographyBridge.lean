@@ -151,7 +151,7 @@ theorem generator_iff {g : List Bool → List Bool} {length : ℕ → ℕ} :
     PseudorandomGenerator g length ↔ Crypto.PseudorandomGenerator g length := by
   constructor
   · rintro ⟨hg, hlength, hstretch, hsecure⟩
-    exact Crypto.PseudorandomGenerator.of_indistinguishable (polyTime_iff.mp hg) hlength
+    exact Crypto.PseudorandomGenerator.of_indistinguishable (.of_tidy (polyTime_iff.mp hg)) hlength
       hstretch (indistinguishable_iff.mp hsecure)
   · intro hg
     exact ⟨polyTime_iff.mpr hg.polyTime.tidy, hg.length_eq, hg.stretch,

@@ -168,10 +168,12 @@ theorem PseudorandomGenerator.naorCommit_indistinguishable_uniform
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
     {r : ℕ → List Bool} {b : ℕ → Bool}
-    (hr : ComputableTidilyInPolyTime r encUnary encBits)
-    (hb : ComputableTidilyInPolyTime b encUnary encBool) :
+    (hr : ComputableInPolyTime r encUnary encBits)
+    (hb : ComputableInPolyTime b encUnary encBool) :
     ComputationallyIndistinguishable (naorCommitEnsemble generator r b)
       (fun n => BitString.uniformList (length n)) := by
+  have hr := hr.tidy
+  have hb := hb.tidy
   have hmap : ComputableTidilyInPolyTime
       (fun p : ℕ × List Bool => naorCommit id (r p.1) (b p.1) p.2)
       (encPair encUnary encBits) encBits := by
@@ -191,9 +193,9 @@ theorem PseudorandomGenerator.naorCommit_hiding
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
     {r : ℕ → List Bool} {b₀ b₁ : ℕ → Bool}
-    (hr : ComputableTidilyInPolyTime r encUnary encBits)
-    (hb₀ : ComputableTidilyInPolyTime b₀ encUnary encBool)
-    (hb₁ : ComputableTidilyInPolyTime b₁ encUnary encBool) :
+    (hr : ComputableInPolyTime r encUnary encBits)
+    (hb₀ : ComputableInPolyTime b₀ encUnary encBool)
+    (hb₁ : ComputableInPolyTime b₁ encUnary encBool) :
     ComputationallyIndistinguishable
       (naorCommitEnsemble generator r b₀)
       (naorCommitEnsemble generator r b₁) :=
@@ -637,18 +639,25 @@ def naorCommitAt (generator : List Bool → List Bool) (r : List Bool)
     naorCommitAt generator r false b seed pad = naorCommit id r b pad := rfl
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_naorCommitAt {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_naorCommitAt {α : Type} {input : α ↪ List Bool}
     {generator : List Bool → List Bool} {r : α → List Bool} {openFlag b : α → Bool}
     {seed pad : α → List Bool}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
-    (hr : ComputableTidilyInPolyTime r input encBits)
-    (hopen : ComputableTidilyInPolyTime openFlag input encBool)
-    (hb : ComputableTidilyInPolyTime b input encBool)
-    (hseed : ComputableTidilyInPolyTime seed input encBits)
-    (hpad : ComputableTidilyInPolyTime pad input encBits) :
-    ComputableTidilyInPolyTime
+    (hg : ComputableInPolyTime generator encBits encBits)
+    (hr : ComputableInPolyTime r input encBits)
+    (hopen : ComputableInPolyTime openFlag input encBool)
+    (hb : ComputableInPolyTime b input encBool)
+    (hseed : ComputableInPolyTime seed input encBits)
+    (hpad : ComputableInPolyTime pad input encBits) :
+    ComputableInPolyTime
       (fun a => naorCommitAt generator (r a) (openFlag a) (b a) (seed a) (pad a))
       input encBits := by
+  have hg := hg.tidy
+  have hr := hr.tidy
+  have hopen := hopen.tidy
+  have hb := hb.tidy
+  have hseed := hseed.tidy
+  have hpad := hpad.tidy
+  refine .of_tidy ?_
   have hopened := (computableInPolyTime_naorCommit
     (.of_tidy hg) (.of_tidy hr) (.of_tidy hb) (.of_tidy hseed)).tidy
   have hclosed := (computableInPolyTime_naorCommit
@@ -703,11 +712,11 @@ theorem naorMaskBits_eq_map (openFlags bits : List Bool) :
   simpa [List.getD, List.getElem?_eq_getElem hi] using h
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_naorMaskBits {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_naorMaskBits {α : Type} {input : α ↪ List Bool}
     {openFlags bits : α → List Bool}
-    (hopen : ComputableTidilyInPolyTime openFlags input encBits)
-    (hbits : ComputableTidilyInPolyTime bits input encBits) :
-    ComputableTidilyInPolyTime (fun a => naorMaskBits (openFlags a) (bits a))
+    (hopen : ComputableInPolyTime openFlags input encBits)
+    (hbits : ComputableInPolyTime bits input encBits) :
+    ComputableInPolyTime (fun a => naorMaskBits (openFlags a) (bits a))
       input encBits := by
   have h : (fun a => naorMaskBits (openFlags a) (bits a)) =
       fun a => (List.range (bits a).length).map
@@ -769,16 +778,16 @@ theorem naorCommitSplit_eq_map (generator : List Bool → List Bool) (r : List B
   simpa [List.getD, List.getElem?_eq_getElem hi] using h
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_naorCommitSplit {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_naorCommitSplit {α : Type} {input : α ↪ List Bool}
     {generator : List Bool → List Bool} {r openFlags bits : α → List Bool}
     {seeds pads : α → List (List Bool)}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
-    (hr : ComputableTidilyInPolyTime r input encBits)
-    (hopen : ComputableTidilyInPolyTime openFlags input encBits)
-    (hbits : ComputableTidilyInPolyTime bits input encBits)
-    (hseeds : ComputableTidilyInPolyTime seeds input (encList encBits))
-    (hpads : ComputableTidilyInPolyTime pads input (encList encBits)) :
-    ComputableTidilyInPolyTime
+    (hg : ComputableInPolyTime generator encBits encBits)
+    (hr : ComputableInPolyTime r input encBits)
+    (hopen : ComputableInPolyTime openFlags input encBits)
+    (hbits : ComputableInPolyTime bits input encBits)
+    (hseeds : ComputableInPolyTime seeds input (encList encBits))
+    (hpads : ComputableInPolyTime pads input (encList encBits)) :
+    ComputableInPolyTime
       (fun a => naorCommitSplit generator (r a) (openFlags a) (bits a) (seeds a) (pads a))
       input (encList encBits) := by
   have h : (fun a => naorCommitSplit generator (r a) (openFlags a) (bits a) (seeds a) (pads a)) =
@@ -944,13 +953,13 @@ theorem naorSelectSeeds_eq_map (s : ℕ) (openFlags bits : List Bool)
   simp only [naorSelectSeeds_eq_map, length_naorMaskBits]
 
 @[fun_prop]
-theorem computableTidilyInPolyTime_naorSelectSeeds {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_naorSelectSeeds {α : Type} {input : α ↪ List Bool}
     {s : α → ℕ} {openFlags bits : α → List Bool} {seeds : α → List (List Bool)}
-    (hs : ComputableTidilyInPolyTime s input encUnary)
-    (hopen : ComputableTidilyInPolyTime openFlags input encBits)
-    (hbits : ComputableTidilyInPolyTime bits input encBits)
-    (hseeds : ComputableTidilyInPolyTime seeds input (encList encBits)) :
-    ComputableTidilyInPolyTime
+    (hs : ComputableInPolyTime s input encUnary)
+    (hopen : ComputableInPolyTime openFlags input encBits)
+    (hbits : ComputableInPolyTime bits input encBits)
+    (hseeds : ComputableInPolyTime seeds input (encList encBits)) :
+    ComputableInPolyTime
       (fun a => naorSelectSeeds (s a) (openFlags a) (bits a) (seeds a))
       input (encList encBits) := by
   have h : (fun a => naorSelectSeeds (s a) (openFlags a) (bits a) (seeds a)) =
@@ -1177,8 +1186,8 @@ def PseudorandomGenerator.naorBitCommitment
   commitLength := length
   commit := naorCommit generator
   verify := naorVerify generator
-  polyTime_challengeLength := .of_tidy (PRG.polyTime_length hG.polyTime.tidy hG.length_eq)
-  polyTime_commitLength := .of_tidy (PRG.polyTime_length hG.polyTime.tidy hG.length_eq)
+  polyTime_challengeLength := (PRG.polyTime_length hG.polyTime hG.length_eq)
+  polyTime_commitLength := (PRG.polyTime_length hG.polyTime hG.length_eq)
   polyTime_commit := by
     have hg := hG.polyTime.tidy
     fun_prop

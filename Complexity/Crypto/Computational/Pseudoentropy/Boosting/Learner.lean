@@ -361,7 +361,7 @@ attribute [program_certificate] isPPTOn_randomSign
 theorem isPPTOn_signedTest {Param : Type} {input : Param ↪ List Bool}
     {test : Param → List Bool → ProbComp Bool} {code : Param → List Bool}
     (htest : IsPPTOn (encPair input encBits) encBool
-      (fun pair => test pair.1 pair.2)) (hcode : ComputableTidilyInPolyTime code input encBits) :
+      (fun pair => test pair.1 pair.2)) (hcode : ComputableInPolyTime code input encBits) :
     IsPPTOn input encBool (fun a => signedTest (test a) (code a)) := by
   unfold signedTest
   ppt
@@ -372,9 +372,9 @@ attribute [program_certificate] isPPTOn_signedTest
 time on every description, including malformed or truncated ones. -/
 @[fun_prop]
 theorem isPolyTime_signedPredict {input : α ↪ List Bool} {predict : List Bool → α → Bool}
-    (hpredict : ComputableTidilyInPolyTime (fun pair => predict pair.1 pair.2)
+    (hpredict : ComputableInPolyTime (fun pair => predict pair.1 pair.2)
       (encPair encBits input) encBool) :
-    ComputableTidilyInPolyTime (fun pair => signedPredict predict pair.1 pair.2)
+    ComputableInPolyTime (fun pair => signedPredict predict pair.1 pair.2)
       (encPair encBits input) encBool := by
   unfold signedPredict
   fun_prop
@@ -386,8 +386,8 @@ theorem isPPTOn_learn {Param : Type} {input : Param ↪ List Bool}
     (hcandidates : IsPPTOn input encBits candidates)
     (htest : IsPPTOn (encPair input encBits) encBool
       (fun pair => test pair.1 pair.2))
-    (hconfidence : ComputableTidilyInPolyTime confidence input encUnary)
-    (hgap : ComputableTidilyInPolyTime inverseGap input encUnary) :
+    (hconfidence : ComputableInPolyTime confidence input encUnary)
+    (hgap : ComputableInPolyTime inverseGap input encUnary) :
     IsPPTOn input encBits (fun a =>
       learn (candidates a) (test a) (confidence a) (inverseGap a)) := by
   unfold learn

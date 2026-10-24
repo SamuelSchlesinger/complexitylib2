@@ -97,8 +97,8 @@ theorem HardCore.of_unpredictable {f : List Bool → List Bool} {predicate : Lis
 /-- The prediction experiment is a uniform PPT program when its ingredients are efficient. -/
 @[program_certificate]
 theorem isPPTOn_predictionGame {f : List Bool → List Bool} {predicate : List Bool → Bool}
-    {adversary : Distinguisher} (hf : ComputableTidilyInPolyTime f encBits encBits)
-    (hp : ComputableTidilyInPolyTime predicate encBits encBool) (ha : IsPPT encBool adversary) :
+    {adversary : Distinguisher} (hf : ComputableInPolyTime f encBits encBits)
+    (hp : ComputableInPolyTime predicate encBits encBool) (ha : IsPPT encBool adversary) :
     IsPPTOn encUnary encBool (predictionGame f predicate adversary) := by
   unfold predictionGame
   ppt
@@ -221,12 +221,13 @@ theorem HardCore.indistinguishable_of_uniform {f : List Bool → List Bool}
 /-- An efficient length-preserving function that preserves uniform seeds gives a one-bit PRG
 when extended by a hard-core predicate. The later predicate construction uses one-wayness. -/
 theorem HardCore.pseudorandomGenerator {f : List Bool → List Bool} {predicate : List Bool → Bool}
-    (h : HardCore f predicate) (hf : ComputableTidilyInPolyTime f encBits encBits)
+    (h : HardCore f predicate) (hf : ComputableInPolyTime f encBits encBits)
     (hlen : ∀ word, (f word).length = word.length)
     (huniform : ∀ n, (BitString.uniformList n).map f = BitString.uniformList n) :
     PseudorandomGenerator (fun seed => f seed ++ [predicate seed]) (fun n => n + 1) := by
+  have hf := hf.tidy
   have hp := h.polyTime.tidy
-  refine PseudorandomGenerator.of_indistinguishable (by fun_prop) ?_ Nat.lt_succ_self
+  refine PseudorandomGenerator.of_indistinguishable (.of_tidy (by fun_prop)) ?_ Nat.lt_succ_self
     (h.indistinguishable_of_uniform huniform)
   intro seed
   simp [hlen]
@@ -235,6 +236,6 @@ theorem HardCore.pseudorandomGenerator {f : List Bool → List Bool} {predicate 
 theorem OneWayPermutation.pseudorandomGenerator_of_hardCore {f : List Bool → List Bool}
     {predicate : List Bool → Bool} (hf : OneWayPermutation f) (h : HardCore f predicate) :
     PseudorandomGenerator (fun seed => f seed ++ [predicate seed]) (fun n => n + 1) :=
-  h.pseudorandomGenerator hf.oneWay.polyTime.tidy hf.length_eq hf.uniformList_map
+  h.pseudorandomGenerator hf.oneWay.polyTime hf.length_eq hf.uniformList_map
 
 end Cslib.Crypto

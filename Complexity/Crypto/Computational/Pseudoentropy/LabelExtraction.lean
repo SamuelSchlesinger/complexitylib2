@@ -115,8 +115,8 @@ theorem HasGap.indexed_extracted_advantage_negligible {pair : SamplablePair} {ga
     polytime
   have hgap (n : ℕ) : 0 < inverseGap n := by
     exact Nat.mul_pos (dyadicSize_pos _) (Nat.pow_pos (by lia))
-  have hmasks := hpair.eventually_exists_indexed_mask reduced htest hcandidates hcount
-    hnumerator hdensity hinverseGap hgap
+  have hmasks := hpair.eventually_exists_indexed_mask reduced htest (.of_tidy hcandidates) (.of_tidy hcount)
+    (.of_tidy hnumerator) (.of_tidy hdensity) (.of_tidy hinverseGap) hgap
   have hbound : PolynomiallyBounded
       (fun n => 2 * inverseGap n * dyadicSize (densityBound n)) := by
     have := hinverseGap.polynomiallyBounded
@@ -175,12 +175,12 @@ theorem HasGap.extract_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ}
       (encList (encPair encBits encBool))) encBool
         (fun input => extractLabels (seed input.1.1 input.1.2) (hash input.1.1 input.1.2)
           input.2 >>= test input.1.1 input.1.2))
-    (hcandidates : ComputableTidilyInPolyTime candidates encUnary encUnary)
-    (hslack : ComputableTidilyInPolyTime inverseSlack encUnary encUnary)
+    (hcandidates : ComputableInPolyTime candidates encUnary encUnary)
+    (hslack : ComputableInPolyTime inverseSlack encUnary encUnary)
     {numerator : ℕ → ℕ → ℕ} {densityBound : ℕ → ℕ}
-    (hnumerator : ComputableTidilyInPolyTime (fun input => numerator input.1 input.2)
+    (hnumerator : ComputableInPolyTime (fun input => numerator input.1 input.2)
       (encPair encUnary encUnary) encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
+    (hdensity : ComputableInPolyTime densityBound encUnary encUnary)
     (hchoose : ∀ᶠ n in atTop, choose n < candidates n)
     (hvalid : ∀ᶠ n in atTop, 0 < numerator n (choose n) ∧
       numerator n (choose n) ≤ dyadicSize (densityBound n) ∧
@@ -206,10 +206,14 @@ theorem HasGap.extract_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ}
           (ExtractionSchedule.count n (realization.length n) (inverseSlack n))
           (seed n (choose n))).bind
             (fun output => ProbComp.eval (test n (choose n) output)))) := by
+  have hcandidates := hcandidates.tidy
+  have hslack := hslack.tidy
+  have hnumerator := hnumerator.tidy
+  have hdensity := hdensity.tidy
   apply hpair.indexed_extracted_advantage_negligible realization choose seed hash test htest
     hcandidates
-    (ExtractionSchedule.isPolyTime_count (by fun_prop)
-      realization.length_isPolyTime.tidy hslack) hnumerator hdensity hchoose hvalid hhash
+    (ExtractionSchedule.isPolyTime_count (.of_tidy (by fun_prop))
+      realization.length_isPolyTime (.of_tidy hslack)).tidy hnumerator hdensity hchoose hvalid hhash
     (slack := fun n => ExtractionSchedule.slack n (realization.length n) (inverseSlack n))
     (fun _ => Nat.cast_nonneg _)
   apply negligible_of_eventually_le ExtractionSchedule.error_negligible

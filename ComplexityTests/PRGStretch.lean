@@ -231,8 +231,8 @@ example (count : ℕ → ℕ) (hcount : ComputableTidilyInDegree count encUnary 
 -- Recover `ComputableTidilyInPolyTime` directly from the quantitative stretch theorem.
 example : ComputableTidilyInPolyTime
     (PRGStretch.stretch expand (fun n => n * n + 1)) encBits encBits :=
-  PRGStretch.polyTime_stretch_of_length_eq length_expand
-    (by unfold expand; fun_prop) (by fun_prop)
+  (PRGStretch.polyTime_stretch_of_length_eq length_expand
+    (.of_tidy (by unfold expand; fun_prop)) (.of_tidy (by fun_prop))).tidy
 
 -- Quantitative captured-parameter certificate for `PRGStretch.iterate`.
 example : ∃ (tGen : Bool × List Bool → ℕ) (csG c : ℕ),

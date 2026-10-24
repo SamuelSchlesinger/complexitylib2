@@ -144,10 +144,10 @@ private theorem adversary_ppt : adversary.IsPPT := by
 
 -- Both stages charge the full artifact and saved word. A nonconstant family is still uniform.
 example : (zeroLinkAdversary fixture (fun _ => 0) adversary).IsPPT :=
-  isPPT_zeroLinkAdversary encrypt_ppt adversary_ppt keyGen_ppt (by fun_prop)
+  isPPT_zeroLinkAdversary encrypt_ppt adversary_ppt keyGen_ppt (.of_tidy (by fun_prop))
 
 example : (zeroLinkAdversary fixture (fun n => n + 2) adversary).IsPPT :=
-  isPPT_zeroLinkAdversary encrypt_ppt adversary_ppt keyGen_ppt (by fun_prop)
+  isPPT_zeroLinkAdversary encrypt_ppt adversary_ppt keyGen_ppt (.of_tidy (by fun_prop))
 
 example (bit : Bool) : IsPPTOn (encPair encUnary encPublicKey) encBool
     (fun p => publicKeyGame fixture adversary bit p.1 p.2) :=

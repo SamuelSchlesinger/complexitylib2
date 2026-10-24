@@ -31,6 +31,7 @@ example {α : Type} (input : α ↪ List Bool) (N C : α → ℕ)
 
 example (offset : ℕ) : IsPPTOn encUnary encUnary (fun n => pure (n + offset)) := by fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- This is a direct client of the existing GGM evaluator certificate, with no new machine table.
 example {generator : List Bool → List Bool}
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits) :

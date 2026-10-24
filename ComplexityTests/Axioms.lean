@@ -4445,10 +4445,10 @@ info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses' depe
 #print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_oneHotClauses
 
 /--
-info: 'Cslib.Crypto.GGM.computableTidilyInPolyTime_eval' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Crypto.GGM.computableInPolyTime_eval' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.GGM.computableTidilyInPolyTime_eval
+#print axioms Cslib.Crypto.GGM.computableInPolyTime_eval
 
 /--
 info: 'Cslib.OracleComp.run_interpret_simulation_of_invariant' depends on axioms: [propext, Classical.choice, Quot.sound]

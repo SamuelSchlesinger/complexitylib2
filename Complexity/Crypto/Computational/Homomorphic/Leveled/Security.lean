@@ -70,7 +70,7 @@ theorem publicKey_indistinguishable_zero :
     hadversary.preprocess (by fun_prop) hpublic
   have hdepth : ComputableTidilyInPolyTime (fun n => 2 * budget n) encUnary encUnary := by
     fun_prop
-  have h := Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth hdepth
+  have h := Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth (.of_tidy hdepth)
     (test := fun n artifact => adversary n (encPublicKey artifact)) htest
   simpa only [eval_keyGen_public, distinguishingGame, PMF.monad_bind_eq_bind, PMF.bind_map,
     Function.comp_def,
@@ -94,14 +94,14 @@ theorem indCPA_keyGen :
       (zero bit) Encryption.Adversary.IsPPT := by
     intro adversary hadversary
     simpa only [eval_game_keyGen] using
-      Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth hdepth
+      Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth (.of_tidy hdepth)
         (isPPTOn_publicKeyGame hencrypt hadversary bit)
   have hzero : Game.Indistinguishable (zero false) (zero true) Encryption.Adversary.IsPPT := by
     intro adversary hadversary
     have heq (bit : Bool) (n : ℕ) :=
       eval_zeroLinkAdversary E depth adversary bit n (width n) (hwidth n)
     simpa only [heq] using hsecure (zeroLinkAdversary E depth adversary)
-      (isPPT_zeroLinkAdversary hencrypt hadversary hkeyGen hdepth)
+      (isPPT_zeroLinkAdversary hencrypt hadversary hkeyGen (.of_tidy hdepth))
   exact (hhop false).trans (hzero.trans (hhop true).symm)
 
 /-- The actual depth-budgeted scheme is IND-CPA secure. The decryption circuit family identifies

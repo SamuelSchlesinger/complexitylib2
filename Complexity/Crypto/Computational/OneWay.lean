@@ -71,7 +71,7 @@ noncomputable def inversionGame (f : List Bool → List Bool) (adversary : Inver
 /-- Run the complete inversion experiment on its unary parameter. -/
 @[program_certificate]
 theorem isPPTOn_inversionGame {f : List Bool → List Bool} {adversary : Inverter}
-    (hf : ComputableTidilyInPolyTime f encBits encBits) (ha : IsPPT encBits adversary) :
+    (hf : ComputableInPolyTime f encBits encBits) (ha : IsPPT encBits adversary) :
     IsPPTOn encUnary encBool (inversionGame f adversary) := by
   unfold inversionGame
   ppt
@@ -79,7 +79,7 @@ theorem isPPTOn_inversionGame {f : List Bool → List Bool} {adversary : Inverte
 /-- The inversion experiment is uniformly PPT, independently of the unused auxiliary input. -/
 @[program_certificate]
 theorem isPPT_inversionGame {f : List Bool → List Bool} {adversary : Inverter}
-    (hf : ComputableTidilyInPolyTime f encBits encBits) (ha : IsPPT encBits adversary) :
+    (hf : ComputableInPolyTime f encBits encBits) (ha : IsPPT encBits adversary) :
     IsPPT encBool (fun n _ => inversionGame f adversary n) := by ppt
 
 /-- One plain polynomial-time algorithm evaluates the function. Every uniform strict PPT inverter

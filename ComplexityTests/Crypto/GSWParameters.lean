@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Crypto.Computational.Homomorphic.GSW.Parameters
 import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling
 import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 GSW parameter regressions connect the growing family to actual sampled keys, encryption and NAND,
@@ -29,6 +30,7 @@ example : Parameters.width 1 = 24 ∧ Parameters.samples 1 = 74 ∧
     Parameters.width 2 = 32 ∧ Parameters.samples 2 = 132 := by
   decide +kernel
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Every unary-output native premise is instantiated by the same family, including the modulus.
 example : ComputableTidilyInPolyTime
     (fun security => (Parameters.dimension security, Parameters.noise security,
@@ -147,12 +149,12 @@ example {State : ℕ → Type}
 #print axioms Cslib.Crypto.Homomorphic.GSW.Parameters.nand_margin
 
 /--
-info: 'Cslib.Crypto.Homomorphic.GSW.Parameters.computableTidilyInPolyTime_modulus' depends on axioms: [propext,
+info: 'Cslib.Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_modulus' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Crypto.Homomorphic.GSW.Parameters.computableTidilyInPolyTime_modulus
+#print axioms Cslib.Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_modulus
 
 /--
 info: 'Cslib.Crypto.Homomorphic.GSW.Parameters.negligible_statistical_error' depends on axioms: [propext,

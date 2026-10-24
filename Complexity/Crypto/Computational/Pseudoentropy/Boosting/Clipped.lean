@@ -154,9 +154,9 @@ theorem eval_clippedPredict_wrong (bound numerator : ℕ) (votes : List Bool) (t
 /-- Efficient parameters and votes give a strict PPT predictor through ordinary combinators. -/
 theorem isPPTOn_clippedPredict {α : Type} {input : α ↪ List Bool}
     {bound numerator : α → ℕ} {votes : α → List Bool}
-    (hbound : ComputableTidilyInPolyTime bound input encUnary)
-    (hnumerator : ComputableTidilyInPolyTime numerator input encUnary)
-    (hvotes : ComputableTidilyInPolyTime votes input encBits) :
+    (hbound : ComputableInPolyTime bound input encUnary)
+    (hnumerator : ComputableInPolyTime numerator input encUnary)
+    (hvotes : ComputableInPolyTime votes input encBits) :
     IsPPTOn input encBool (fun a => clippedPredict (bound a) (numerator a) (votes a)) := by
   unfold clippedPredict
   ppt
