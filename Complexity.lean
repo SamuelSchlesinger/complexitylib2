@@ -1539,6 +1539,7 @@ public import Complexity.Foundations.BooleanAnalysis.HarmonicMean
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Derivative
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
+public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNormMeasure
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Tensorization
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.TwoPoint
 public import Complexity.Foundations.BooleanAnalysis.Hypercube

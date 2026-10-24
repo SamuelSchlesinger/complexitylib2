@@ -88,8 +88,7 @@ private theorem expect_mul_noiseOp_le_of_isEmpty [IsEmpty ι] {p q ρ : ℝ} (hp
 
 /-- **The induction step**: two-function inequalities on the cubes over `ι` and over `κ` give
 the inequality on the cube over `ι ⊕ κ`. -/
-private theorem expect_mul_noiseOp_le_sum {p q ρ : ℝ} (hp : p ≠ 0) (hq : q ≠ 0) (hρ : -1 ≤ ρ)
-    (hρ' : ρ ≤ 1)
+private theorem expect_mul_noiseOp_le_sum {p q ρ : ℝ} (hρ : -1 ≤ ρ) (hρ' : ρ ≤ 1)
     (hι : ∀ f g : (ι → Bool) → ℝ, 𝔼 x, f x * noiseOp ρ g x ≤ lpNorm p f * lpNorm q g)
     (hκ : ∀ f g : (κ → Bool) → ℝ, 𝔼 x, f x * noiseOp ρ g x ≤ lpNorm p f * lpNorm q g)
     (f g : (ι ⊕ κ → Bool) → ℝ) : 𝔼 x, f x * noiseOp ρ g x ≤ lpNorm p f * lpNorm q g := by
@@ -115,7 +114,7 @@ private theorem expect_mul_noiseOp_le_sum {p q ρ : ℝ} (hp : p ≠ 0) (hq : q 
         simp only [noiseOp, bernoulliAverage_const_mul]
     _ ≤ lpNorm p F * lpNorm q G := hι F G
     _ = lpNorm p f * lpNorm q g := by
-        rw [lpNorm_sumElim hp f, lpNorm_sumElim hq g]
+        rw [lpNorm_sumElim p f, lpNorm_sumElim q g]
 
 /-- **The Two-Function Hypercontractivity Induction Theorem**: if the two-function inequality
 `𝔼_x f x · T_ρ g x ≤ ‖f‖_p ‖g‖_q` holds for all functions of a single bit, then it holds for all
@@ -132,7 +131,7 @@ theorem expect_mul_noiseOp_le_of_unit {p q ρ : ℝ} (hp : p ≠ 0) (hq : q ≠ 
     | succ n ih =>
       exact expect_mul_noiseOp_le_of_equiv
         ((Equiv.sumCongr (Equiv.refl _) finOneEquiv.symm).trans finSumFinEquiv)
-        (expect_mul_noiseOp_le_sum hp hq (by linarith) hρ' ih h) f g
+        (expect_mul_noiseOp_le_sum (by linarith) hρ' ih h) f g
   exact expect_mul_noiseOp_le_of_equiv (Fintype.equivFin ι).symm (hfin _) f g
 
 end Cslib.BitString

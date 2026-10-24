@@ -7,7 +7,6 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate (addition to `Cslib/Foundations/Data/BitString.lean`)
 
-public import Cslib.Computability.QueryComplexity.Defs
 public import Cslib.Foundations.Data.BitString
 public import Mathlib.Data.Finset.Piecewise
 public import Mathlib.Data.Fintype.Pi
@@ -20,7 +19,6 @@ one bit is `Function.update x i (!x i)` (`BitString.flipOn_singleton`), and flip
 same positions changes nothing (`BitString.flipOn_flipOn`). Flips are the moves of sensitivity and
 block sensitivity, and they span the subcubes of the Boolean cube.
 
-On `Fin n`, `flipOn` is definitionally equal to CSLib's `BitString.flipBlock`.
 Sensitivity and certificate measures use CSLib's `Computability.QueryComplexity.Measures`.
 
 An input `x` of a Boolean function `g` is *isolated* when flipping any one of its bits changes the
@@ -34,7 +32,7 @@ each isolated true input, and parity has only isolated inputs.
 
 ## Main results
 
-* `Cslib.BitString.flipOn_eq_flipBlock`: on `Fin n`, `flipOn` is CSLib's `flipBlock`.
+* `Cslib.BitString.flipOn_apply`: coordinatewise evaluation of `flipOn`.
 * `Cslib.BitString.flipOn_singleton`: flipping one bit.
 * `Cslib.BitString.flipOn_flipOn`, `Cslib.BitString.flipOn_involutive`: flipping is an involution.
 
@@ -58,11 +56,6 @@ def flipOn (T : Finset ι) (x : ι → Bool) : ι → Bool :=
 /-- Coordinatewise, `flipOn T x` negates the bits in `T` and keeps the others. -/
 theorem flipOn_apply (T : Finset ι) (x : ι → Bool) (i : ι) :
     flipOn T x i = if i ∈ T then !x i else x i :=
-  rfl
-
-/-- On `Fin n`, `flipOn` is CSLib's `flipBlock`. -/
-theorem flipOn_eq_flipBlock {n : ℕ} (T : Finset (Fin n)) (x : BitString n) :
-    flipOn T x = flipBlock T x :=
   rfl
 
 /-- `flipOn T x` is `x` with its bits at the positions in `T` replaced by their negations. -/

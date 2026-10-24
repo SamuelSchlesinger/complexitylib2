@@ -13,8 +13,11 @@ public import Complexity.Probability.PMF
 # Uniform distributions and resampling
 
 Every value of a nonempty finite type has positive uniform mass (`mem_support_uniformOfFintype`),
-and the uniform probability of an event is the fraction of its members
-(`toOuterMeasure_uniformOfFintype`, `toOuterMeasure_uniformOfFintype_toReal`).
+and the uniform probability or measure of an event under `uniformOfFinset` or `uniformOfFintype` is
+the fraction of members in the event (`toOuterMeasure_uniformOfFinset`,
+`toOuterMeasure_uniformOfFinset_toReal`, `toMeasure_uniformOfFinset`,
+`toOuterMeasure_uniformOfFintype`, `toOuterMeasure_uniformOfFintype_toReal`,
+`toMeasure_uniformOfFintype`).
 
 Draw `a` uniformly from `α` and, independently, `b` uniformly from `β`. For any equivalence
 `e : α × β ≃ γ × δ`, the pair `e (a, b)` is uniform on `γ × δ`, so its first component is uniform

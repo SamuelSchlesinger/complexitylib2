@@ -8,16 +8,12 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Cslib.Probability.PMF
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Data.Fintype.Pi
-public import Mathlib.MeasureTheory.Function.LpSeminorm.Defs
 import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Logic.Equiv.Fintype
-import Mathlib.MeasureTheory.Function.LpSeminorm.Basic
-import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 
 /-!
 # `L^p` norms on finite types and the Boolean cube
@@ -25,9 +21,9 @@ import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 The *`L^p` norm* of a real function `f` on a finite type `α`, for the uniform distribution,
 is `‖f‖_p = (𝔼_x |f x| ^ p) ^ (1 / p)` (`BitString.lpNorm`) [O'Donnell, Section 1.3][ODonnell2014].
 Its `p`-th power is the `p`-th absolute moment (`BitString.lpNorm_rpow`), and `‖f‖_2` is the square
-root of the second moment (`BitString.lpNorm_two`). On a nonempty finite type with measurable
-singletons and `0 < p`, it agrees with Mathlib's `MeasureTheory.lpNorm` for the uniform probability
-measure (`BitString.lpNorm_eq_measureTheory_lpNorm`).
+root of the second moment (`BitString.lpNorm_two`). See
+`Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNormMeasure` for its agreement with
+Mathlib's `MeasureTheory.lpNorm`.
 
 The norm is invariant under equivalences (`BitString.lpNorm_equiv`) and on a product `α × β` it is
 the iterated norm (`BitString.lpNorm_prod`). In particular, on the Boolean cube `ι → Bool` it does
@@ -49,8 +45,6 @@ value (`BitString.lpNorm_subsingleton`, `BitString.lpNorm_of_isEmpty`).
   iterated norm on a product.
 * `Cslib.BitString.lpNorm_sumElim`: the norm over a disjoint union of coordinates is the
   iterated norm.
-* `Cslib.BitString.lpNorm_eq_measureTheory_lpNorm`: agreement with `MeasureTheory.lpNorm` for the
-  uniform measure.
 
 ## References
 
@@ -62,7 +56,7 @@ value (`BitString.lpNorm_subsingleton`, `BitString.lpNorm_of_isEmpty`).
 namespace Cslib.BitString
 
 open Finset
-open scoped BigOperators ENNReal
+open scoped BigOperators
 
 variable {α β : Type*} [Fintype α] [Fintype β]
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
@@ -105,12 +99,14 @@ theorem lpNorm_equiv (e : α ≃ β) (p : ℝ) (f : β → ℝ) :
 
 /-- **The `L^p` norm on a product is the iterated norm**: the norm over `α` of the norms over
 `β`. -/
-theorem lpNorm_prod {p : ℝ} (hp : p ≠ 0) (f : α × β → ℝ) :
+theorem lpNorm_prod (p : ℝ) (f : α × β → ℝ) :
     lpNorm p f = lpNorm p fun a => lpNorm p fun b => f (a, b) := by
-  rw [lpNorm, Fintype.expect_prod_type, lpNorm]
-  congr 1
-  refine expect_congr rfl fun a _ => ?_
-  rw [abs_of_nonneg (lpNorm_nonneg _ _), lpNorm_rpow hp]
+  by_cases hp : p = 0
+  · simp [lpNorm, hp]
+  · rw [lpNorm, Fintype.expect_prod_type, lpNorm]
+    congr 1
+    refine expect_congr rfl fun a _ => ?_
+    rw [abs_of_nonneg (lpNorm_nonneg _ _), lpNorm_rpow hp]
 
 /-- On a type with at most one element, the `L^p` norm at a point is the absolute value. -/
 theorem lpNorm_subsingleton [Subsingleton α] {p : ℝ} (hp : p ≠ 0) (f : α → ℝ) (x : α) :
@@ -129,43 +125,14 @@ theorem lpNorm_comp_arrowCongr (e : ι ≃ κ) (p : ℝ) (f : (κ → Bool) → 
 
 /-- **The `L^p` norm over a disjoint union of coordinates is the iterated norm**: the norm over
 the bits in `ι` of the norms over the bits in `κ`. -/
-theorem lpNorm_sumElim {p : ℝ} (hp : p ≠ 0) (f : (ι ⊕ κ → Bool) → ℝ) :
+theorem lpNorm_sumElim (p : ℝ) (f : (ι ⊕ κ → Bool) → ℝ) :
     lpNorm p f = lpNorm p fun x₁ => lpNorm p fun x₂ => f (Sum.elim x₁ x₂) := by
-  rw [← lpNorm_equiv (Equiv.sumArrowEquivProdArrow ι κ Bool).symm p f, lpNorm_prod hp]
+  rw [← lpNorm_equiv (Equiv.sumArrowEquivProdArrow ι κ Bool).symm p f, lpNorm_prod]
   rfl
 
 /-- On the cube over no coordinates, a single point, the `L^p` norm is the absolute value. -/
 theorem lpNorm_of_isEmpty [IsEmpty ι] {p : ℝ} (hp : p ≠ 0) (f : (ι → Bool) → ℝ)
     (x : ι → Bool) : lpNorm p f = |f x| :=
   lpNorm_subsingleton hp f x
-
-/-! ### Bridge to Mathlib's `MeasureTheory.lpNorm` -/
-
-/-- For `0 < p` on a nonempty finite type with measurable singletons, `lpNorm p f` is Mathlib's
-`MeasureTheory.lpNorm` with respect to the uniform measure `(PMF.uniformOfFintype α).toMeasure`. -/
-theorem lpNorm_eq_measureTheory_lpNorm [Nonempty α] [MeasurableSpace α]
-    [MeasurableSingletonClass α] {p : ℝ} (hp : 0 < p) (f : α → ℝ) :
-    lpNorm p f =
-      MeasureTheory.lpNorm f (ENNReal.ofReal p) (Probability.PMF.uniformOfFintype α).toMeasure := by
-  have hp0 : ENNReal.ofReal p ≠ 0 := (ENNReal.ofReal_pos.mpr hp).ne'
-  have hf : MeasureTheory.AEStronglyMeasurable f (Probability.PMF.uniformOfFintype α).toMeasure :=
-    MeasureTheory.AEStronglyMeasurable.of_discrete
-  rw [MeasureTheory.lpNorm,
-    MeasureTheory.eLpNorm_eq_lintegral_rpow_enorm_toReal hp0 ENNReal.ofReal_ne_top hf,
-    ENNReal.toReal_ofReal hp.le, one_div, ← ENNReal.toReal_rpow, MeasureTheory.lintegral_fintype,
-    lpNorm]
-  congr 1
-  have hcard : (Fintype.card α : ℝ≥0∞)⁻¹ ≠ ⊤ :=
-    ENNReal.inv_ne_top.mpr (Nat.cast_ne_zero.mpr Fintype.card_ne_zero)
-  have hsing (x : α) :
-      (Probability.PMF.uniformOfFintype α).toMeasure {x} = (Fintype.card α : ℝ≥0∞)⁻¹ := by
-    rw [PMF.toMeasure_apply_singleton _ x (measurableSet_singleton x),
-      Probability.PMF.uniformOfFintype_apply]
-  simp_rw [hsing]
-  rw [ENNReal.toReal_sum fun x _ =>
-    ENNReal.mul_ne_top (ENNReal.rpow_ne_top_of_nonneg hp.le enorm_ne_top) hcard]
-  simp only [ENNReal.toReal_mul, ← ENNReal.toReal_rpow, toReal_enorm, Real.norm_eq_abs,
-    ENNReal.toReal_inv, ENNReal.toReal_natCast, Fintype.expect_eq_sum_div_card, div_eq_mul_inv,
-    Finset.sum_mul]
 
 end Cslib.BitString

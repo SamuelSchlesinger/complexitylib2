@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.BooleanAnalysis.Bonami
+import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNormMeasure
 
 /-! Instances, non-vacuity witnesses and axiom guards for hypercontractivity and the Bonami
 Lemma. -/
@@ -95,7 +96,12 @@ example : 𝔼 x : Fin 1 → Bool, noiseOp (√3)⁻¹ (chi ℝ {0}) x ^ 4 ≤
   expect_noiseOp_pow_four_le _
 
 -- `lpNorm` on any finite type agrees with Mathlib's `MeasureTheory.lpNorm` for the uniform
--- measure.
+-- measure (`ProbabilityTheory.uniformOn Set.univ` and `uniformOfFintype.toMeasure`).
+example (f : (ι → Bool) → ℝ) :
+    lpNorm 2 f = MeasureTheory.lpNorm f (ENNReal.ofReal 2)
+      (ProbabilityTheory.uniformOn (Set.univ : Set (ι → Bool))) :=
+  lpNorm_eq_measureTheory_lpNorm_uniformOn two_pos f
+
 example (f : (ι → Bool) → ℝ) :
     lpNorm 2 f = MeasureTheory.lpNorm f (ENNReal.ofReal 2)
       (Probability.PMF.uniformOfFintype (ι → Bool)).toMeasure :=
@@ -118,6 +124,12 @@ info: 'Cslib.BitString.lpNorm_subsingleton' depends on axioms: [propext, Classic
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.lpNorm_subsingleton
+
+/--
+info: 'Cslib.BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn
 
 /--
 info: 'Cslib.BitString.lpNorm_eq_measureTheory_lpNorm' depends on axioms: [propext, Classical.choice, Quot.sound]

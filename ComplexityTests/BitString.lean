@@ -109,21 +109,15 @@ example : (enum 3).length = 8 := by decide
 
 example : (enumList 2).Nodup := by decide
 
--- `flipOn` agrees with `flipBlock` on `BitString n`.
-example (S : Finset (Fin 3)) (x : BitString 3) : flipOn S x = flipBlock S x :=
-  flipOn_eq_flipBlock S x
+-- `flipOn` negates the bits at the selected positions and keeps the others.
+example : flipOn ({0, 2} : Finset (Fin 3)) ![true, false, false] 2 = true := by
+  rw [flipOn_apply]
+  decide
 
 /--
 info: 'Cslib.BitString.flipOn_apply' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.BitString.flipOn_apply
-
-/--
-info: 'Cslib.BitString.flipOn_eq_flipBlock' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.BitString.flipOn_eq_flipBlock
 
 end ComplexityTests.BitString
