@@ -88,26 +88,56 @@ structure Candidate where
   target : Expr
   localPath : Option String := none
 
-/-- Close local `have`/`let` certificate types over their actual enclosing parameters and lets.
-No source-text heuristic is used and no binder or growth hypothesis is discarded. -/
-partial def localCertificates (normalize : Expr → Expr) (owner : Name) (e : Expr) (path : String := "body")
-    (close : Expr → Expr := id) : Array Candidate := Id.run do
+/-- Contextual memo state is fresh for each owner declaration. Structural equality preserves
+binder names and annotations, unlike ordinary expression alpha-equivalence. -/
+structure LocalWalkState where
+  seen : Std.HashSet (ExprStructEq × Nat) := {}
+  nextContext : Nat := 1
+  visits : Nat := 0
+
+private def freshContext : StateM LocalWalkState Nat := do
+  let state ← get
+  set { state with nextContext := state.nextContext + 1 }
+  return state.nextContext
+
+/-- Visit each shared node once per binder/source context, retaining captured hypotheses. -/
+partial def walkLocal (normalize : Expr → Expr) (owner : Name) (e : Expr) (context : Nat)
+    (path : String) (close : Expr → Expr) : StateM LocalWalkState (Array Candidate) := do
+  let key := (ExprStructEq.mk e, context)
+  if (← get).seen.contains key then return #[]
+  modify fun state => { state with seen := state.seen.insert key, visits := state.visits + 1 }
   match e with
   | .lam n ty body bi =>
-    return localCertificates normalize owner body (path ++ ".lambda") fun goal =>
+    let child ← freshContext
+    walkLocal normalize owner body child (path ++ ".lambda") fun goal =>
       close (.forallE n ty goal bi)
   | .letE n ty value body nondep =>
     let here := if (tidyNames (normalize ty)).isEmpty then #[] else
       #[{ owner, target := close ty, localPath := some (path ++ "." ++ n.toString) }]
-    let values := localCertificates normalize owner value (path ++ ".value") close
-    let bodies := localCertificates normalize owner body (path ++ ".let") fun goal =>
+    let valueContext ← freshContext
+    let values ← walkLocal normalize owner value valueContext (path ++ ".value") close
+    let bodyContext ← freshContext
+    let bodies ← walkLocal normalize owner body bodyContext (path ++ ".let") fun goal =>
       close (.letE n ty value goal nondep)
     return here ++ values ++ bodies
   | .app f a =>
-    return localCertificates normalize owner f (path ++ ".function") close ++
-      localCertificates normalize owner a (path ++ ".argument") close
-  | .mdata _ body | .proj _ _ body => return localCertificates normalize owner body path close
+    let fs ← walkLocal normalize owner f context (path ++ ".function") close
+    let args ← walkLocal normalize owner a context (path ++ ".argument") close
+    return fs ++ args
+  | .mdata _ body =>
+    let sourceContext ← freshContext
+    walkLocal normalize owner body sourceContext path close
+  | .proj _ _ body => walkLocal normalize owner body context path close
   | _ => return #[]
+
+/-- Local certificates plus a deterministic unique-contextual-node visit count for regressions. -/
+def localCertificatesWithStats (normalize : Expr → Expr) (owner : Name) (e : Expr) :
+    Array Candidate × LocalWalkState :=
+  (walkLocal normalize owner e 0 "body" id).run {}
+
+/-- Close every unique local certificate over its actual enclosing parameters and lets. -/
+def localCertificates (normalize : Expr → Expr) (owner : Name) (e : Expr) : Array Candidate :=
+  (localCertificatesWithStats normalize owner e).1
 
 /-- Reverse proof/body dependencies of project declarations. Imported upstream declarations cannot
 refer to project certificates. Type dependencies count too, conservatively. -/
@@ -197,12 +227,15 @@ unsafe def main (args : List String) : IO UInt32 := do
   let imports := mods.map fun n => ({ module := n, importAll := true } : Import)
   enableInitializersExecution
   let env ← importModules imports {} (loadExts := true)
+  IO.eprintln s!"inventory: imported {mods.size} modules with private declarations"
   let moduleSet : Std.HashSet Name := .ofArray mods
   let (pairs, _) ← Lean.Core.CoreM.toIO Cslib.Tactic.PlainMirror.mirrorPairs
     { fileName := "mirror-registry", fileMap := default } { env }
   let aliases := aliasNames env
+  IO.eprintln s!"inventory: indexed {aliases.size} reducible tidy aliases"
   let normalize := expandAliases env aliases
   let reverse := reverseDependencies env moduleSet
+  IO.eprintln s!"inventory: indexed {reverse.size} reverse dependency targets"
   let mut candidates : Array Candidate := #[]
   for (name, ci) in env.constants.toList do
     let some idx := env.getModuleIdxFor? name | continue
@@ -213,6 +246,7 @@ unsafe def main (args : List String) : IO UInt32 := do
       candidates := candidates ++ localCertificates normalize name value
   candidates := candidates.qsort fun a b =>
     Name.quickLt a.owner b.owner || (a.owner == b.owner && decide (a.localPath.getD "" < b.localPath.getD ""))
+  IO.eprintln s!"inventory: discovered {candidates.size} original/local/generated statements"
   let handle ← IO.FS.Handle.mk outputFile .write
   handle.putStrLn (Json.mkObj [("inventory_total", toJson candidates.size),
     ("module_count", toJson mods.size), ("limit", toJson limit),

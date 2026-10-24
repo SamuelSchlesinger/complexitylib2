@@ -150,7 +150,8 @@ def main() -> int:
         "dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),
         "sources_sha256": identities, "extra_imports": args.extra_import,
         "pairing": "exact PlainMirror registry lookup; no inferred name rewrite",
-        "scope": "all elaborated declarations in the three libraries mentioning tidy notions",
+        "scope": "all elaborated declarations and captured local certificates in the three libraries",
+        "local_inventory_unit": "unique stored expression per owner/binder/source context; repeated DAG use is not a new certificate",
         "limitations": [
             "Registered-rule probes test indexing/transport, not independent synthesis.",
             "A deliberately held-out isolated primitive need not be structurally synthesizable.",
