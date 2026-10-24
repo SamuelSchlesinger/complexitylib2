@@ -28,7 +28,7 @@ whose rank differs from that of `H` by at most one and which has a zero row, has
 By the rank bound, a protocol computing the inner product has at least `2 ^ |ι| - 1` leaves
 labelled `true` (`two_pow_sub_one_le_card_true_leaves_of_run_eq_dotProduct`). The area bound
 `|A| |B| ≤ 2 ^ |ι|` for rectangles on which the inner product is constant, from which
-`two_pow_lt_leaves_of_run_eq_dotProduct` follows, gives only about half as many.
+`two_pow_lt_leafCount_of_run_eq_dotProduct` follows, gives only about half as many.
 
 ## Main results
 

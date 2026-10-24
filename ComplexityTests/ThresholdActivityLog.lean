@@ -85,21 +85,21 @@ private abbrev andCircuit : Circuit signature 2 1 :=
 
 private theorem andCircuit_computes (x y : Fin 1 → Bool) :
     andCircuit.eval interpretation
-      (inputOfSplit (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm x y) 0 = hadamardCode x y := by
+      (inputOfSplit (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm x y) 0 = x ⬝ᵥ y := by
   change (Program.empty.gate _).eval interpretation _ (Fin.last 0) = _
   rw [Program.eval_gate_last]
   cases hx : x 0 <;> cases hy : y 0 <;>
     dsimp only [Line.eval, interpretation, Function.comp_apply, Wire.elim] <;>
     norm_num [Fin.sum_univ_two, inputOfSplit, finSumFinEquiv, Fin.addCases,
-      hadamardCode_apply, dotProduct, Bool.mul_eq_and, hx, hy]
+      dotProduct, Bool.mul_eq_and, hx, hy]
 
 private theorem andProgram_computes (x y : Fin 1 → Bool) :
     andCircuit.program.eval interpretation
-      (inputOfSplit (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm x y) 0 = hadamardCode x y :=
+      (inputOfSplit (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm x y) 0 = x ⬝ᵥ y :=
   andCircuit_computes x y
 
 example : inputActivity andCircuit.program = 1 ∧ (inputGates andCircuit.program).card = 1 := by
-  have hpos := inputActivity_pos_of_hadamardCode andCircuit.program
+  have hpos := inputActivity_pos_of_dotProduct andCircuit.program
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm (fun z => z 0) (by decide)
     andProgram_computes
   have hle := inputActivity_le_card andCircuit.program
@@ -110,18 +110,18 @@ example : inputActivity andCircuit.program = 1 ∧ (inputGates andCircuit.progra
 example : (1 : ℝ) / 2 ≤ inputActivity andCircuit.program *
     Real.logb 2 (Real.exp 1 * (inputGates andCircuit.program).card /
       inputActivity andCircuit.program) := by
-  simpa using le_inputActivity_mul_logb_of_circuit_hadamardCode andCircuit
+  simpa using le_inputActivity_mul_logb_of_circuit_dotProduct andCircuit
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm ⟨0, rfl⟩ andCircuit_computes
 
 example : inputActivity andCircuit.program / Real.exp 1 *
     (2 : ℝ) ^ ((1 : ℝ) / (2 * inputActivity andCircuit.program)) ≤
       (inputGates andCircuit.program).card := by
-  simpa using inputActivity_mul_rpow_le_card_of_circuit_hadamardCode andCircuit
+  simpa using inputActivity_mul_rpow_le_card_of_circuit_dotProduct andCircuit
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm ⟨0, rfl⟩ andCircuit_computes
 
 -- This native example has maximum total activity equal to its full gate count.
 example : gateActivity andCircuit.program = 1 := by
-  have hpos := inputActivity_pos_of_hadamardCode andCircuit.program
+  have hpos := inputActivity_pos_of_dotProduct andCircuit.program
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm (fun z => z 0) (by decide)
     andProgram_computes
   have hle := inputActivity_le_gateActivity andCircuit.program
@@ -130,39 +130,39 @@ example : gateActivity andCircuit.program = 1 := by
 
 example : (1 : ℝ) / 2 ≤ gateActivity andCircuit.program *
     Real.logb 2 (Real.exp 1 * andCircuit.size / gateActivity andCircuit.program) := by
-  simpa using le_gateActivity_mul_logb_of_circuit_hadamardCode andCircuit
+  simpa using le_gateActivity_mul_logb_of_circuit_dotProduct andCircuit
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm ⟨0, rfl⟩ andCircuit_computes
 
 example : gateActivity andCircuit.program / Real.exp 1 *
     (2 : ℝ) ^ ((1 : ℝ) / (2 * gateActivity andCircuit.program)) ≤ andCircuit.size := by
-  simpa using gateActivity_mul_rpow_le_of_circuit_hadamardCode andCircuit
+  simpa using gateActivity_mul_rpow_le_of_circuit_dotProduct andCircuit
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm ⟨0, rfl⟩ andCircuit_computes
 
 -- Zero coordinates and zero gates really attain the zero-activity boundary.
 example : (0 : ℝ) / 2 ≤ inputActivity (Program.empty : Program signature 0 0) *
     Real.logb 2 (Real.exp 1 * (inputGates (Program.empty : Program signature 0 0)).card /
       inputActivity (Program.empty : Program signature 0 0)) := by
-  simpa using le_inputActivity_mul_logb_of_hadamardCode (Program.empty : Program signature 0 0)
+  simpa using le_inputActivity_mul_logb_of_dotProduct (Program.empty : Program signature 0 0)
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
     (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example : (0 : ℝ) / 2 ≤ gateActivity (Program.empty : Program signature 0 0) *
     Real.logb 2 (Real.exp 1 * 0 / gateActivity (Program.empty : Program signature 0 0)) := by
   simpa only [Fintype.card_fin, Nat.cast_zero] using
-    le_gateActivity_mul_logb_of_hadamardCode (Program.empty : Program signature 0 0)
+    le_gateActivity_mul_logb_of_dotProduct (Program.empty : Program signature 0 0)
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
     (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example : gateActivity (Program.empty : Program signature 0 0) / Real.exp 1 *
     (2 : ℝ) ^ ((0 : ℝ) / (2 * gateActivity (Program.empty : Program signature 0 0))) ≤ 0 := by
   simpa only [Fintype.card_fin, Nat.cast_zero] using
-    gateActivity_mul_rpow_le_of_hadamardCode (Program.empty : Program signature 0 0)
+    gateActivity_mul_rpow_le_of_dotProduct (Program.empty : Program signature 0 0)
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
     (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example {n g : ℕ} {ι : Type u} [Fintype ι] (p : Program signature n g)
     (split : Fin n ≃ ι ⊕ ι) (readout : (Fin g → Bool) → Bool)
-    (h : ∀ x y, readout (p.eval interpretation (inputOfSplit split x y)) = hadamardCode x y) :
+    (h : ∀ x y, readout (p.eval interpretation (inputOfSplit split x y)) = x ⬝ᵥ y) :
     (Fintype.card ι : ℝ) / 2 ≤
       inputActivity p * Real.logb 2 (Real.exp 1 * (inputGates p).card / inputActivity p) :=
-  le_inputActivity_mul_logb_of_hadamardCode p split readout h
+  le_inputActivity_mul_logb_of_dotProduct p split readout h
