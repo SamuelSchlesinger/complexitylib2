@@ -23,9 +23,9 @@ iterates a function within the space of a round, plus the length of the counter.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInO.natSucc`, `.natPred`, `.natIsZero`: the successor, the
+* `Turing.MultiTapeTM.ComputableInO.natSucc`, `.natPred`, `.natIsZero`: the successor, the
   predecessor and the zero test in binary.
-* `Turing.MultiTapeTM.ComputableTidilyInO.iterate`: iterating a function a number of times given in
+* `Turing.MultiTapeTM.ComputableInO.iterate`: iterating a function a number of times given in
   binary, within the space of a round and logarithmic space for the counter.
 -/
 
@@ -133,10 +133,10 @@ end NatPred
 
 section Rounds
 
-open ComputableTidilyInDegree NatPred
+open ComputableInDegree NatPred
 
 lemma decrStep_deg :
-    ComputableTidilyInDegree (fun p : (Bool × List Bool) × Bool => decrStep p.1 p.2)
+    ComputableInDegree (fun p : (Bool × List Bool) × Bool => decrStep p.1 p.2)
     (encPair (encPair encBool encBits) encBool) (encPair encBool encBits) 1 1 := by
   have hacc := fst (encPair encBool encBits) encBool
   have hb := snd (encPair encBool encBits) encBool
@@ -148,7 +148,7 @@ lemma decrStep_deg :
   exact (hbor.prod (hacc.snd'.append hdig (encOut := encBits) fun _ => rfl)).mono
 
 lemma normStep_deg :
-    ComputableTidilyInDegree (fun p : (Option Bool × List Bool) × Bool => normStep p.1 p.2)
+    ComputableInDegree (fun p : (Option Bool × List Bool) × Bool => normStep p.1 p.2)
       (encPair (encPair (encOption encBool) encBits) encBool)
       (encPair (encOption encBool) encBits) 1 1 := by
   have hacc := fst (encPair (encOption encBool) encBits) encBool
@@ -159,7 +159,7 @@ lemma normStep_deg :
     (hacc.snd'.append hpend (encOut := encBits) fun _ => rfl)).mono
 
 lemma normFinish_deg :
-    ComputableTidilyInDegree normFinish (encPair (encOption encBool) encBits) encBits 1 1 := by
+    ComputableInDegree normFinish (encPair (encOption encBool) encBits) encBits 1 1 := by
   have hp := fst (encOption encBool) encBits
   have hds := snd (encOption encBool) encBits
   have htest := (of_finite (encIn := encOption encBool) (encMid := encBool)
@@ -172,7 +172,7 @@ lemma normFinish_deg :
 
 end Rounds
 
-namespace ComputableTidilyInO
+namespace ComputableInO
 
 open NatPred
 
@@ -182,10 +182,10 @@ variable {α : Type} {encIn : α ↪ List Bool}
 linear in the number of digits. -/
 lemma foldl_bits {β : Type} {encB : β ↪ List Bool} {init : β} {step : β → Bool → β}
     {e : ℕ}
-    (hstep : ComputableTidilyInDegree (fun p : β × Bool => step p.1 p.2)
+    (hstep : ComputableInDegree (fun p : β × Bool => step p.1 p.2)
       (encPair encB encBool) encB 1 e) (b : ℕ)
     (hb : ∀ (l : List Bool) i, (encB ((l.take i).foldl step init)).length ≤ l.length + b) :
-    ComputableTidilyInO (fun l : List Bool => l.foldl step init) encBits encB
+    ComputableInO (fun l : List Bool => l.foldl step init) encBits encB
       (fun l => (l.length + 1) ^ 2) fun l => l.length + 1 := by
   refine (foldl (encA := encBool) (encL := encBits) (of_linear (.of_eq fun _ => rfl)) (const init)
     hstep.inO_one (R := fun l => 2 * l.length + 2 * b + 4)
@@ -204,19 +204,20 @@ lemma length_incr_le (c : Bool) (l : List Bool) : (NatSucc.incr c l).length ≤ 
 
 /-- The successor in binary. -/
 public theorem natSucc :
-    ComputableTidilyInO (· + 1) encNat encNat (fun n => ((encNat n).length + 1) ^ 2)
+    ComputableInO (· + 1) encNat encNat (fun n => ((encNat n).length + 1) ^ 2)
       fun n => (encNat n).length + 1 := by
   obtain ⟨c, h⟩ := computableTidilyInTimeAndSpace_succ
-  refine of_bounds h (c + 2) (fun n => by nlinarith) (fun n => by nlinarith) fun n => ?_
+  refine of_bounds h.computableInTimeAndSpace (c + 2)
+    (fun n => by nlinarith) (fun n => by nlinarith) fun n => ?_
   have := length_incr_le true n.bits
   simp only [encNat_apply, NatSucc.bits_succ] at this ⊢
   nlinarith
 
 /-- The predecessor in binary, `0 - 1 = 0`. -/
 public theorem natPred :
-    ComputableTidilyInO (· - 1) encNat encNat (fun n => ((encNat n).length + 1) ^ 2)
+    ComputableInO (· - 1) encNat encNat (fun n => ((encNat n).length + 1) ^ 2)
       fun n => (encNat n).length + 1 := by
-  have hbits : ComputableTidilyInO (fun n : ℕ => n.bits) encNat encBits
+  have hbits : ComputableInO (fun n : ℕ => n.bits) encNat encBits
       (fun n => (encNat n).length) fun n => (encNat n).length :=
     of_linear (.of_eq fun _ => rfl)
   have hlen (l : List Bool) : ((l.foldl decrStep (true, [])).2).length = l.length := by
@@ -245,7 +246,7 @@ public theorem natPred :
 
 /-- The zero test in binary. -/
 public theorem natIsZero :
-    ComputableTidilyInO (fun n => decide (n = 0)) encNat encBool (fun n => (encNat n).length)
+    ComputableInO (fun n => decide (n = 0)) encNat encBool (fun n => (encNat n).length)
       fun n => (encNat n).length :=
   of_linear (.of_isEmpty fun n => by
     rcases Nat.eq_zero_or_pos n with rfl | hn
@@ -299,19 +300,19 @@ public lemma length_encNat_add_le (n i : ℕ) : (encNat (n + i)).length ≤ (enc
 
 /-- A round of the counted iteration. -/
 lemma countStep_inO {step : β → β} {Ts Ss : β → ℕ}
-    (hstep : ComputableTidilyInO step encB encB Ts Ss) :
-    ComputableTidilyInO (countStep step) (encOption (encPair encNat encB))
+    (hstep : ComputableInO step encB encB Ts Ss) :
+    ComputableInO (countStep step) (encOption (encPair encNat encB))
       (encOption (encPair encNat encB))
       (fun o => (encOption (encPair encNat encB) o).length +
         ((encNat (o.getD default).1).length + 1) ^ 2 + Ts (o.getD default).2)
       fun o => (encOption (encPair encNat encB) o).length + Ss (o.getD default).2 := by
-  have hget := (ComputableTidilyInDegree.getD (enc₁ := encPair encNat encB)
+  have hget := (ComputableInDegree.getD (enc₁ := encPair encNat encB)
     (enc := encOption (encPair encNat encB)) default).inO_one
-  have hcond := (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+  have hcond := (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encBool) fun q : Bool × Bool => q.1 && !q.2).inO_one.comp_linear
-    ((ComputableTidilyInDegree.isSome (encPair encNat encB)).inO_one.prod
+    ((ComputableInDegree.isSome (encPair encNat encB)).inO_one.prod
       (natIsZero.comp_linear hget.fst'))
-  have hnext := (ComputableTidilyInDegree.optionSome (enc₁ := encPair encNat encB)
+  have hnext := (ComputableInDegree.optionSome (enc₁ := encPair encNat encB)
     (enc := encOption (encPair encNat encB))).inO_one.comp_linear
     ((natPred.comp hget.fst').prod (hstep.comp hget.snd'))
   refine ((hcond.ite hnext (const none)).mono 8 (fun o => ?_) fun o => ?_).of_enc_eq
@@ -345,17 +346,17 @@ round, and the space of the counter and of the start, plus `Q x`, `B x` and the 
 counter. -/
 public theorem iterate {n : γ → ℕ} {init : γ → β} {step : β → β}
     {Tn Ti Sn Si R Q B : γ → ℕ} {Ts Ss : β → ℕ}
-    (hn : ComputableTidilyInO n encIn encNat Tn Sn)
-    (hinit : ComputableTidilyInO init encIn encB Ti Si)
-    (hstep : ComputableTidilyInO step encB encB Ts Ss)
+    (hn : ComputableInO n encIn encNat Tn Sn)
+    (hinit : ComputableInO init encIn encB Ti Si)
+    (hstep : ComputableInO step encB encB Ts Ss)
     (hround : ∀ x, ∀ k ≤ n x, Ts (step^[k] (init x)) ≤ R x)
     (hspace : ∀ x, ∀ k ≤ n x, Ss (step^[k] (init x)) ≤ Q x)
     (hstate : ∀ x, ∀ k ≤ n x, (encB (step^[k] (init x))).length ≤ B x) :
-    ComputableTidilyInO (fun x => step^[n x] (init x)) encIn encB
+    ComputableInO (fun x => step^[n x] (init x)) encIn encB
       (fun x => Tn x + Ti x + (n x + 1) * (R x + B x + ((encNat (n x)).length + 1) ^ 2))
       fun x => Sn x + Si x + Q x + B x + (encNat (n x)).length := by
   -- the iteration on `Option (ℕ × β)`, until the counter is exhausted
-  obtain ⟨c, hf, -⟩ := countStep_inO (Ts := Ts) (Ss := Ss) hstep
+  obtain ⟨c, hf, -⟩ := Internal.normalizeO (countStep_inO (Ts := Ts) (Ss := Ss) hstep)
   have hr (o : Option (ℕ × β)) :
       IsLeast {m | encOption (encPair encNat encB) ((countStep step)^[m + 1] o) = []}
         ((o.map Prod.fst).getD 0) := by
@@ -371,9 +372,9 @@ public theorem iterate {n : γ → ℕ} {init : γ → β} {step : β → β}
         simp at hm
   obtain ⟨d, hit⟩ := hf.iterateWhile hr
   -- the start, and its iterates
-  have hstart := (ComputableTidilyInDegree.optionSome (enc₁ := encPair encNat encB)
+  have hstart := (ComputableInDegree.optionSome (enc₁ := encPair encNat encB)
     (enc := encOption (encPair encNat encB))).inO_one.comp_linear (hn.prod hinit)
-  obtain ⟨c₀, h₀, l₀⟩ := hstart
+  obtain ⟨c₀, h₀, l₀⟩ := Internal.normalizeO hstart
   -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
   obtain ⟨c₁, h⟩ := hit.comp_linear h₀
   have hiter (x : γ) {k : ℕ} (hk : k ≤ n x) :
@@ -423,11 +424,12 @@ public theorem iterate {n : γ → ℕ} {init : γ → β} {step : β → β}
       (encOption (encPair encNat encB) ((countStep step)^[k] (some (n x, init x)))).length) ≤
       2 * (encNat (n x)).length + B x + 2 :=
     Finset.sup_le fun k hk => hlen x (Finset.mem_Iic.mp hk)
-  have hO : ComputableTidilyInO (fun x => (countStep step)^[n x] (some (n x, init x))) encIn
+  have hO : ComputableInO (fun x => (countStep step)^[n x] (some (n x, init x))) encIn
       (encOption (encPair encNat encB))
       (fun x => Tn x + Ti x + (n x + 1) * (R x + B x + ((encNat (n x)).length + 1) ^ 2))
       fun x => Sn x + Si x + Q x + B x + (encNat (n x)).length := by
-    refine of_bounds h (c₀ + c₁ * (c₀ + 1) + 8 * (c + d + 1) + 4 * d * (c + 1)) (fun x => ?_)
+    refine of_bounds h.computableInTimeAndSpace
+      (c₀ + c₁ * (c₀ + 1) + 8 * (c + d + 1) + 4 * d * (c + 1)) (fun x => ?_)
       (fun x => ?_)
       (fun x => ?_)
     · simp only [Function.comp_apply, Option.map_some, Option.getD_some]
@@ -469,13 +471,13 @@ public theorem iterate {n : γ → ℕ} {init : γ → β} {step : β → β}
     · refine (hlen x le_rfl).trans ((show 2 * (encNat (n x)).length + B x + 2 ≤
         2 * (Sn x + Si x + Q x + B x + (encNat (n x)).length + 1) by omega).trans
         (Nat.mul_le_mul_right _ (by omega)))
-  refine (((ComputableTidilyInDegree.getD (enc₁ := encPair encNat encB)
+  refine (((ComputableInDegree.getD (enc₁ := encPair encNat encB)
     (enc := encOption (encPair encNat encB))
     default).inO_one.comp_linear hO).snd').of_enc_eq fun x => ?_
   simp only [Function.comp_apply, hiter x le_rfl, Option.getD_some]
 
 end Iterate
 
-end ComputableTidilyInO
+end ComputableInO
 
 end Turing.MultiTapeTM

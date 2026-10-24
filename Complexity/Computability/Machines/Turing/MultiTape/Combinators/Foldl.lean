@@ -36,6 +36,23 @@ namespace Turing.MultiTapeTM
 
 universe u
 
+/-- Assemble a tidy pair from two tidy computations through the plain encoding interface.
+The time and work-space budgets remain independent, up to one existential constant; only the
+encoded pair is charged to the resulting space. No encoded-length premise is added to either
+input computation. This raw construction theorem has no automatic registration. -/
+public theorem ComputableTidilyInTimeAndSpace.pair {α β γ : Type u}
+    {encIn : α ↪ List Bool} {enc₁ : β ↪ List Bool} {enc₂ : γ ↪ List Bool}
+    {enc : β × γ ↪ List Bool} [PairEncoding enc₁ enc₂ enc]
+    {f : α → β} {g : α → γ} {t₁ s₁ t₂ s₂ : α → ℕ}
+    (hf : ComputableTidilyInTimeAndSpace f encIn enc₁ t₁ s₁)
+    (hg : ComputableTidilyInTimeAndSpace g encIn enc₂ t₂ s₂) :
+    ∃ c, ComputableTidilyInTimeAndSpace (fun a => (f a, g a)) encIn enc
+      (fun a => c * (t₁ a + t₂ a + 1))
+      (fun a => c * (s₁ a + s₂ a + (enc (f a, g a)).length + 1)) := by
+  obtain ⟨c, h⟩ := PairEncoding.pair_mono (enc := enc)
+    hf.computableInTimeAndSpace hg.computableInTimeAndSpace
+  exact Internal.normalizeBigO ⟨c, h⟩
+
 namespace Foldl
 
 section BigO
@@ -88,8 +105,8 @@ lemma BigO.pair {α α₁ α₂ : Type u} {encIn : α ↪ List Bool} {t s : α �
     BigO (fun a => (f₁ a, f₂ a)) encIn enc t (fun a => s a + (enc (f₁ a, f₂ a)).length) := by
   obtain ⟨c₁, h₁⟩ := h₁
   obtain ⟨c₂, h₂⟩ := h₂
-  obtain ⟨c, hc⟩ := hP.pair_mono h₁.computableInTimeAndSpace h₂.computableInTimeAndSpace
-  obtain ⟨c, hc⟩ := Internal.normalizeBigO ⟨c, hc⟩
+  let _ : PairEncoding enc₁ enc₂ enc := hP
+  obtain ⟨c, hc⟩ := ComputableTidilyInTimeAndSpace.pair (enc := enc) h₁ h₂
   refine ⟨c * (c₁ + c₂ + 1), hc.mono (fun a => ?_) (fun a => ?_)⟩ <;>
   · ring_nf
     omega

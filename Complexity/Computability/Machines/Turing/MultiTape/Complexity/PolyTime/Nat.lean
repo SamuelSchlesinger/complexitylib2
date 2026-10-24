@@ -14,6 +14,7 @@ public import Mathlib.Data.Nat.Pairing
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Mathlib.Data.Nat.Size
 
 /-!
@@ -26,19 +27,19 @@ operations support polynomially bounded counters and list enumeration in reducti
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.indexed_polynomial_bound`: a uniform polynomial
+* `Turing.MultiTapeTM.ComputableInPolyTime.indexed_polynomial_bound`: a uniform polynomial
   bound over a polynomially bounded range of indices, without computing the selected index.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_add`, `.unary_sub`, `.unary_mul`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_add`, `.unary_sub`, `.unary_mul`:
   arithmetic on unary naturals.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_min`, `.unary_max`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_min`, `.unary_max`:
   the smaller and larger of two unary naturals.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le`, `.unary_lt`, `.unary_pair`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_le`, `.unary_lt`, `.unary_pair`:
   comparisons and the natural-number pairing function.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_le'`, `.unary_lt'`: comparisons of computed
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_le'`, `.unary_lt'`: comparisons of computed
   operands with the intermediate unary encodings fixed for automation.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow`, `.unary_eval`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_pow`, `.unary_eval`:
   evaluation of a fixed power or polynomial, with input and output in unary.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_to_binary`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_to_binary`:
   conversion from unary to the binary encoding `encNat`.
 
 ## References
@@ -51,14 +52,14 @@ The indexed bound is adapted from Cslib/Computability/Probabilistic/Encoding.lea
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- Interpret one Boolean as a unary zero or one. -/
 @[fun_prop]
-theorem bool_toUnary : ComputableTidilyInPolyTime Bool.toNat encBool encUnary := of_finite _
+theorem bool_toUnary : ComputableInPolyTime Bool.toNat encBool encUnary := of_finite _
 
 /-- A unary-output polynomial-time function is polynomially bounded in its unary input. -/
-theorem polynomiallyBounded {f : ℕ → ℕ} (hf : ComputableTidilyInPolyTime f encUnary encUnary) :
+theorem polynomiallyBounded {f : ℕ → ℕ} (hf : ComputableInPolyTime f encUnary encUnary) :
     Cslib.PolynomiallyBounded f :=
   (show PolyBounded (fun n : ℕ => n) f by
     simpa only [encUnary_apply, List.length_replicate] using hf.polyBounded).polynomiallyBounded
@@ -66,7 +67,7 @@ theorem polynomiallyBounded {f : ℕ → ℕ} (hf : ComputableTidilyInPolyTime f
 /-- Efficient unary values share a polynomial bound over a polynomially bounded range of
 indices. Selecting an index does not require a computable choice. -/
 theorem indexed_polynomial_bound {f : ℕ → ℕ → ℕ} {count : ℕ → ℕ}
-    (hf : ComputableTidilyInPolyTime (fun input => f input.1 input.2)
+    (hf : ComputableInPolyTime (fun input => f input.1 input.2)
       (encPair encUnary encUnary) encUnary)
     (hcount : Cslib.PolynomiallyBounded count) :
     ∃ c d : ℕ, ∀ n i, i < count n → f n i ≤ c * (n + 1) ^ d := by
@@ -80,26 +81,26 @@ theorem indexed_polynomial_bound {f : ℕ → ℕ → ℕ} {count : ℕ → ℕ}
 
 /-- Addition of unary naturals, by concatenating their encodings. -/
 @[fun_prop]
-theorem unary_add : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
+theorem unary_add : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
     (encPair encUnary encUnary) encUnary :=
   (fst encUnary encUnary).append (snd encUnary encUnary)
     (fun _ => by simp only [encUnary_apply, List.replicate_add])
 
 /-- Truncated subtraction of unary naturals. -/
 @[fun_prop]
-theorem unary_sub : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 - p.2)
+theorem unary_sub : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 - p.2)
     (encPair encUnary encUnary) encUnary :=
-  ComputableTidilyInDegree.unary_sub.computableTidilyInPolyTime
+  (ComputableInDegree.unary_sub).computableInPolyTime
 
 /-- Multiplication of unary naturals, by repeated addition. -/
 @[fun_prop]
-theorem unary_mul : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
+theorem unary_mul : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
     (encPair encUnary encUnary) encUnary := by
   have hq := fst (encPair encUnary encUnary) encBool
   have h := foldlWith_of_bounded_growth (encA := encBool) (encL := encBits) (encB := encUnary)
     (par := fun p : ℕ × ℕ => p.1) (list := fun p => List.replicate p.2 true)
     (step := fun a n _ => n + a) (fst encUnary encUnary)
-    ((of_eq (encIn := encUnary) (encMid := encBits) fun _ => rfl).comp (snd encUnary encUnary))
+    ((of_eq (encIn := encUnary) (encOut := encBits) fun _ => rfl).comp (snd encUnary encUnary))
     (const 0) (unary_add.comp (hq.snd'.prod hq.fst'))
     (growth := Prod.fst) (fst encUnary encUnary).polyBounded
     (by intros; simp)
@@ -107,15 +108,15 @@ theorem unary_mul : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
 
 /-- Take the smaller of two unary naturals. -/
 @[fun_prop]
-theorem unary_min : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
+theorem unary_min : ComputableInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
     (encPair encUnary encUnary) encUnary :=
-  ComputableTidilyInDegree.unary_min.computableTidilyInPolyTime
+  (ComputableInDegree.unary_min).computableInPolyTime
 
 /-- Take the larger of two unary naturals. -/
 @[fun_prop]
-theorem unary_max : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => max p.1 p.2)
+theorem unary_max : ComputableInPolyTime (fun p : ℕ × ℕ => max p.1 p.2)
     (encPair encUnary encUnary) encUnary := by
-  have h : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + (p.2 - p.1))
+  have h : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + (p.2 - p.1))
       (encPair encUnary encUnary) encUnary := by fun_prop
   convert h using 1
   funext p
@@ -123,14 +124,15 @@ theorem unary_max : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => max p.1 p.
 
 /-- Compare unary naturals. -/
 @[fun_prop]
-theorem unary_le : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))
+theorem unary_le : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 ≤ p.2))
     (encPair encUnary encUnary) encBool := by
   simpa only [Function.comp_def, Nat.sub_eq_zero_iff_le] using
-    ComputableTidilyInDegree.unary_isZero.computableTidilyInPolyTime.comp unary_sub
+    (ComputableInDegree.unary_isZero).computableInPolyTime.comp
+      unary_sub
 
 /-- Strict comparison of unary naturals. -/
 @[fun_prop]
-theorem unary_lt : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.2))
+theorem unary_lt : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.2))
     (encPair encUnary encUnary) encBool := by
   simpa only [Function.comp_def, ← decide_not, Nat.not_le] using bool_not.comp
     (unary_le.comp ((snd encUnary encUnary).prod (fst encUnary encUnary)))
@@ -138,48 +140,48 @@ theorem unary_lt : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (p.1
 /-- Compare computed unary values, fixing their intermediate encodings before proof search. -/
 @[fun_prop]
 theorem unary_le' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
-    (hleft : ComputableTidilyInPolyTime left input encUnary)
-    (hright : ComputableTidilyInPolyTime right input encUnary) :
-    ComputableTidilyInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encUnary) :
+    ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
   unary_le.comp (hleft.prod hright)
 
 /-- Strictly compare computed unary values, with both operand encodings fixed. -/
 @[fun_prop]
 theorem unary_lt' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
-    (hleft : ComputableTidilyInPolyTime left input encUnary)
-    (hright : ComputableTidilyInPolyTime right input encUnary) :
-    ComputableTidilyInPolyTime (fun a => decide (left a < right a)) input encBool :=
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encUnary) :
+    ComputableInPolyTime (fun a => decide (left a < right a)) input encBool :=
   unary_lt.comp (hleft.prod hright)
 
 /-- Equality of computed unary counters, fixing the intermediate encoding for proof search. -/
 @[fun_prop]
 theorem unary_beq {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
-    (hleft : ComputableTidilyInPolyTime left input encUnary)
-    (hright : ComputableTidilyInPolyTime right input encUnary) :
-    ComputableTidilyInPolyTime (fun a => left a == right a) input encBool :=
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encUnary) :
+    ComputableInPolyTime (fun a => left a == right a) input encBool :=
   hleft.beq hright
 
 /-- The natural-number pairing function, with both arguments and the result in unary. -/
 @[fun_prop]
-theorem unary_pair : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Nat.pair p.1 p.2)
+theorem unary_pair : ComputableInPolyTime (fun p : ℕ × ℕ => Nat.pair p.1 p.2)
     (encPair encUnary encUnary) encUnary := by
-  have hleft : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.2 * p.2 + p.1)
+  have hleft : ComputableInPolyTime (fun p : ℕ × ℕ => p.2 * p.2 + p.1)
       (encPair encUnary encUnary) encUnary := by fun_prop
-  have hright : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 * p.1 + p.1 + p.2)
+  have hright : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 * p.1 + p.1 + p.2)
       (encPair encUnary encUnary) encUnary := by fun_prop
   simpa [Nat.pair] using unary_lt.ite' hleft hright
 
 /-- A fixed power of a unary natural. -/
 @[fun_prop]
-theorem unary_pow (d : ℕ) : ComputableTidilyInPolyTime (fun n : ℕ => n ^ d)
+theorem unary_pow (d : ℕ) : ComputableInPolyTime (fun n : ℕ => n ^ d)
     encUnary encUnary := by
   induction d with
-  | zero => simpa using (const (encIn := encUnary) (encMid := encUnary) 1)
+  | zero => simpa using (const (encIn := encUnary) (encOut := encUnary) 1)
   | succ d ih => simpa only [pow_succ, Function.comp_def] using unary_mul.comp (ih.prod id')
 
 /-- Evaluate a fixed polynomial on unary naturals, with its result also in unary. -/
 @[fun_prop]
-theorem unary_eval (p : Polynomial ℕ) : ComputableTidilyInPolyTime p.eval encUnary encUnary := by
+theorem unary_eval (p : Polynomial ℕ) : ComputableInPolyTime p.eval encUnary encUnary := by
   induction p using Polynomial.induction_on' with
   | add p q hp hq =>
     simpa only [Polynomial.eval_add, Function.comp_def] using unary_add.comp (hp.prod hq)
@@ -189,60 +191,16 @@ theorem unary_eval (p : Polynomial ℕ) : ComputableTidilyInPolyTime p.eval encU
 
 /-- Convert a unary natural to its binary encoding by incrementing a binary counter. -/
 @[fun_prop]
-theorem unary_to_binary : ComputableTidilyInPolyTime (fun n : ℕ => n) encUnary encNat := by
+theorem unary_to_binary : ComputableInPolyTime (fun n : ℕ => n) encUnary encNat := by
   have hsize (n : ℕ) : (encNat n).length ≤ n := by
     rw [encNat_apply, Nat.size_eq_bits_len]
     exact Nat.size_le.mpr Nat.lt_two_pow_self
   have h := foldl' (encA := encBool) (encL := encBits) (list := fun n => List.replicate n true)
     (step := fun n _ => n + 1)
-    (of_eq (encIn := encUnary) (encMid := encBits) fun _ => rfl) (const 0)
-    (computableTidilyInPolyTime_succ.comp (fst encNat encBool))
+    (of_eq (encIn := encUnary) (encOut := encBits) fun _ => rfl) (const 0)
+    (computableInPolyTime_succ.comp (fst encNat encBool))
     (B := fun n => (encUnary n).length) .self (fun n i _ => by
       simpa [List.foldl_const] using (hsize (min i n)).trans (Nat.min_le_right i n))
   simpa [List.foldl_const] using h
-
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
-
-/-! ### Plain polynomial-time automation -/
-
-namespace Turing.MultiTapeTM.ComputableInPolyTime
-
-/-- Addition of unary naturals, by concatenating their encodings. -/
-@[fun_prop]
-theorem unary_add :
-    ComputableInPolyTime (fun (p : ℕ × ℕ) => p.1 + p.2)
-  (encPair encUnary encUnary)
-  encUnary :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_add
-
-/-- Evaluate a fixed polynomial on unary naturals, with its result also in unary. -/
-@[fun_prop]
-theorem unary_eval (p : Polynomial ℕ) :
-    ComputableInPolyTime (fun (x : ℕ) => Polynomial.eval x p)
-  encUnary encUnary :=
-  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_eval p)
-
-/-- Multiplication of unary naturals, by repeated addition. -/
-@[fun_prop]
-theorem unary_mul :
-    ComputableInPolyTime (fun (p : ℕ × ℕ) => p.1 * p.2)
-  (encPair encUnary encUnary)
-  encUnary :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_mul
-
-/-- A fixed power of a unary natural. -/
-@[fun_prop]
-theorem unary_pow (d : ℕ) :
-    ComputableInPolyTime (fun (n : ℕ) => n ^ d)
-  encUnary encUnary :=
-  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow d)
-
-/-- Truncated subtraction of unary naturals. -/
-@[fun_prop]
-theorem unary_sub :
-    ComputableInPolyTime (fun (p : ℕ × ℕ) => p.1 - p.2)
-  (encPair encUnary encUnary)
-  encUnary :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_sub
 
 end Turing.MultiTapeTM.ComputableInPolyTime

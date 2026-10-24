@@ -21,7 +21,7 @@ encodings. This suits space-bounded algorithms, where only the work space matter
 
 * `Turing.MultiTapeTM.length_encNat_add_le_add`, `.length_encNat_mul_le`: the lengths of sums
   and products.
-* `Turing.MultiTapeTM.ComputableTidilyInO.natAdd`: addition.
+* `Turing.MultiTapeTM.ComputableInO.natAdd`: addition.
 -/
 
 @[expose] public section
@@ -55,13 +55,13 @@ theorem length_encNat_mul_le (a b : ℕ) :
   rw [pow_add]
   exact Nat.mul_lt_mul'' (Nat.lt_size_self a) (Nat.lt_size_self b)
 
-namespace ComputableTidilyInO
+namespace ComputableInO
 
 theorem iterate_succ_eq (k n : ℕ) : (· + 1)^[k] n = n + k := by simp
 
 /-- **Addition in binary**, within linear work space. -/
 public theorem natAdd :
-    ComputableTidilyInO (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat
+    ComputableInO (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat
       (fun p => (p.2 + 1) * ((encPair encNat encNat p).length + 2) ^ 2)
       fun p => (encPair encNat encNat p).length + 1 := by
   have hle (p : ℕ × ℕ) (k : ℕ) (hk : k ≤ p.2) :
@@ -82,6 +82,6 @@ public theorem natAdd :
   · simp only [length_encPair]
     omega
 
-end ComputableTidilyInO
+end ComputableInO
 
 end Turing.MultiTapeTM
