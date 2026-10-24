@@ -57,6 +57,24 @@ example (B : ℕ) : pack B (fun i : Fin 0 => i.elim0) = 0 := by simp [pack]
 example : pack 1 (fun i : Fin 0 => i.elim0) < 1 ^ 0 :=
   pack_lt (by decide) (fun i => i.elim0)
 
+-- `finFunctionFinEquiv` order and high-zero prefix lemmas.
+example (x : Fin 2 → Fin 3) :
+    (finFunctionFinEquiv x : ℕ) =
+      finFunctionFinEquiv (x ∘ Fin.castSucc) + (x (Fin.last 1) : ℕ) * 3 ^ 1 :=
+  finFunctionFinEquiv_snoc x
+
+example :
+    (finFunctionFinEquiv (![1, 0] : Fin 2 → Fin 3) : ℕ) =
+      finFunctionFinEquiv (fun j : Fin 1 => (![1, 0] : Fin 2 → Fin 3) (Fin.castLE (by decide) j)) :=
+  finFunctionFinEquiv_eq_of_high_zero (by decide) (by decide)
+
+example : (finFunctionFinEquiv (![2, 0] : Fin 2 → Fin 3) : ℕ) < 3 ^ 1 :=
+  (finFunctionFinEquiv_lt_pow_iff (by decide : 1 ≤ 2) ![2, 0]).2 (by decide)
+
+example : finFunctionFinEquiv (![2, 0] : Fin 2 → Fin 3) < finFunctionFinEquiv ![0, 1] :=
+  (finFunctionFinEquiv_lt_iff ![2, 0] ![0, 1]).2
+    ⟨1, by decide, fun j hj => absurd (Fin.le_last j) (not_le_of_gt hj)⟩
+
 /--
 info: 'Cslib.Radix.component_pack' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/

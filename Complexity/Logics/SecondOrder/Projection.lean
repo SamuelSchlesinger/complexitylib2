@@ -183,9 +183,7 @@ def ltSym : orderLanguage.Relations 2 :=
 /-- The first-order sentence over `orderLanguage` asserting that `ltSym` is a strict linear order
 (irreflexive, transitive, and trichotomous). -/
 def isStrictLinearOrderSentence : orderLanguage.Sentence :=
-  (∀' ∼(ltSym.boundedFormula₂ &0 &0)) ⊓
-    (∀' ∀' ∀' ((ltSym.boundedFormula₂ &0 &1 ⊓ ltSym.boundedFormula₂ &1 &2) ⟹
-      ltSym.boundedFormula₂ &0 &2)) ⊓
+  ltSym.irreflexive ⊓ ltSym.transitive ⊓
     (∀' ∀' (ltSym.boundedFormula₂ &0 &1 ⊔ (&0 =' &1 ⊔ ltSym.boundedFormula₂ &1 &0)))
 
 /-- The binary relation on `N` induced by a numbering `e : N ≃ Fin n`: `x 0` precedes `x 1` when
@@ -207,8 +205,10 @@ theorem realize_isStrictLinearOrderSentence_iff_irrefl_trans_trichotomous {N : T
         ∀ a b c : N, ![a, b] ∈ R () ∧ ![b, c] ∈ R () → ![a, c] ∈ R ()) ∧
       ∀ a b : N, ![a, b] ∈ R () ∨ a = b ∨ ![b, a] ∈ R () := by
   let _ := varLanguage.structure (arity := fun _ : Unit => 2) R
-  simp [isStrictLinearOrderSentence, FirstOrder.Language.Sentence.Realize, Formula.Realize,
-    relMap_ltSym, Fin.snoc]
+  rw [isStrictLinearOrderSentence, FirstOrder.Language.Sentence.realize_inf,
+    FirstOrder.Language.Sentence.realize_inf, Relations.realize_irreflexive,
+    Relations.realize_transitive, irrefl_def, isTrans_def]
+  simp [and_imp, FirstOrder.Language.Sentence.Realize, Formula.Realize, relMap_ltSym, Fin.snoc]
 
 /-- Every numbering `e : N ≃ Fin n` induces a strict linear order satisfying
 `isStrictLinearOrderSentence`. -/
