@@ -50,7 +50,7 @@ example : (proof 1 P).Complete World.plain (rel P 0) Accept 0 :=
 
 /-- Sumcheck with the final check is sound with error `1 / 3` on this instance. -/
 example :
-    (proof 1 P).verifier.Sound (oP := emptySpec) World.plain (language (rel P 0)) Set.univ
+    (proof 1 P).verifier.Sound (oP := OracleSpec.empty) World.plain (language (rel P 0)) Set.univ
       (1 / 3) := by
   simpa using proof_sound 1 P degreeOf_P_le
 

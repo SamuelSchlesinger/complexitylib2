@@ -100,20 +100,23 @@ abbrev accepts (c : F) (g : Polynomial F) : Prop := g.natDegree ≤ d ∧ g.eval
 /-- Round `i` of sumcheck: on the claim `(r, c)` and the challenge `z`, the new claim is
 `(Fin.snoc r z, g.eval z)` for the prover's polynomial `g`. -/
 noncomputable def round (i : ℕ) :
-    Reduction emptySpec emptySpec (roundSpec F) (Claim F i) Unit (Claim F (i + 1)) Unit where
+    Reduction OracleSpec.empty OracleSpec.empty (roundSpec F) (Claim F i) Unit (Claim F (i + 1))
+      Unit where
   prover x _ :=
     let g := roundPoly P x.1
-    pure (show ProbOracleComp emptySpec (Polynomial F × (F → ProbOracleComp emptySpec _)) from
+    pure (show ProbOracleComp OracleSpec.empty
+        (Polynomial F × (F → ProbOracleComp OracleSpec.empty _)) from
       pure (g, fun z => pure ((Fin.snoc x.1 z, g.eval z), ())))
   verifier :=
     { samplers := (ProbComp.uniform F, ())
       decide := fun x c => do
-        let g ← OracleComp.query (spec := emptySpec ⊕ₒ msgSpec (roundSpec F)) (.inr (.inl ()))
+        let g ← OracleComp.query (spec := OracleSpec.empty ⊕ₒ msgSpec (roundSpec F))
+          (.inr (.inl ()))
         return if accepts d x.2 g then some (Fin.snoc x.1 c.1, g.eval c.1) else none }
 
 /-- The final check: evaluate `P` at the claimed point, without interaction. -/
 noncomputable def finalCheck :
-    Reduction emptySpec emptySpec [] (Claim F n) Unit Unit Unit where
+    Reduction OracleSpec.empty OracleSpec.empty [] (Claim F n) Unit Unit Unit where
   prover _ _ := pure ((), ())
   verifier :=
     { samplers := ()
@@ -122,8 +125,8 @@ noncomputable def finalCheck :
 /-- **Sumcheck followed by the final check**: a proof system for the claim `∑_{b ∈ {0,1}ⁿ} P b = c`
 (`rel P 0`). -/
 noncomputable def proof :
-    Reduction emptySpec emptySpec (iterSpec (fun _ => roundSpec F) n ++ []) (Claim F 0) Unit
-      Unit Unit :=
+    Reduction OracleSpec.empty OracleSpec.empty (iterSpec (fun _ => roundSpec F) n ++ [])
+      (Claim F 0) Unit Unit Unit :=
   (Reduction.iterate (s := fun _ => roundSpec F) (S := Claim F) (W := fun _ => Unit)
     (round d P) n).append (finalCheck P)
 
@@ -318,7 +321,7 @@ theorem proof_complete (hP : ∀ j, P.degreeOf j ≤ d) :
 /-- **Soundness of sumcheck with the final check**: a false claim is accepted with probability at
 most `n * (d / |F|)`. -/
 theorem proof_sound (hP : ∀ j, P.degreeOf j ≤ d) :
-    (proof d P).verifier.Sound (oP := emptySpec) World.plain (language (rel P 0)) Set.univ
+    (proof d P).verifier.Sound (oP := OracleSpec.empty) World.plain (language (rel P 0)) Set.univ
       (n * ((d : ℝ≥0∞) / Fintype.card F)) := by
   have h := ((Verifier.RbrSound.iterate (R := round d P) (L := fun i => language (rel P i)) n
     fun i hi => round_rbrSound d P hP hi).append (finalCheck_rbrSound P)).sound
