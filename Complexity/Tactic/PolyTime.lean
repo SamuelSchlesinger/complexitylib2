@@ -256,12 +256,19 @@ private meta def rawTransitionPremise (type : Expr) : MetaM Bool := do
       return .continue (some reduced))
   return (← inspect.run false).2
 
+open Lean in
+private meta initialize rawPremiseCache : EnvExtension (Std.HashMap Name Bool) ←
+  registerEnvExtension (pure {}) (asyncMode := .local)
+
 open Lean Meta in
 /-- Inspect a registered rule's hypotheses, including reducible proposition aliases. -/
 private meta def hasRawPremise (name : Name) : MetaM Bool := do
+  if let some result := (rawPremiseCache.getState (← getEnv)).get? name then return result
   let some info := (← getEnv).find? name | return true
   forallTelescope info.type fun xs _ => do
-    xs.anyM fun x => do rawTransitionPremise (← inferType x)
+    xs.anyM fun x => do
+      let premise ← inferType x
+      if ← isProp premise then rawTransitionPremise premise else pure false
 
 open Lean in
 /-- Modify only the search's environment copy, including during asynchronous proof elaboration.
@@ -317,6 +324,27 @@ private meta def plainGeneralTheorems (thms : GeneralTheorems) : MetaM GeneralTh
       { node with
         values := node.values.filter fun rule => !blocked.contains rule.thmName
         pending := node.pending.filter fun entry => !blocked.contains entry.2.thmName } } }
+
+open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
+/-- Classify global rules once for this tactic invocation. Aesop alternatives reuse these
+immutable answers; each backend still receives fresh rule tables and dynamic local evidence. -/
+meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := do
+  let env ← getEnv
+  let mut names : Std.HashSet Name := {}
+  for (_, properties) in (functionTheoremsExt.getState env).theorems do
+    for (_, rules) in properties do
+      for rule in rules do
+        if let .decl name := rule.thmOrigin then names := names.insert name
+  for (_, rules) in (lambdaTheoremsExt.getState env).theorems do
+    for rule in rules do names := names.insert rule.thmName
+  for rules in #[morTheoremsExt.getState env, transitionTheoremsExt.getState env] do
+    for node in rules.theorems.tries do
+      for rule in node.values do names := names.insert rule.thmName
+      for (_, rule) in node.pending do names := names.insert rule.thmName
+  let mut cache : Std.HashMap Name Bool := {}
+  for name in names do cache := cache.insert name (← hasRawPremise name)
+  -- The cache is confined to this `withEnv`; unrelated tactics and later declarations see none.
+  withEnv (rawPremiseCache.setState env cache) action
 
 open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
 /-- Shared compositional backend with a fresh alias-aware transition boundary. The standard
@@ -554,8 +582,9 @@ private meta def polytimeIterateAlternative : Lean.Elab.Tactic.TacticM Unit :=
 /-- Prove a polynomial-time certificate from known routines and controlled loop rules. -/
 -- Unfold only reducible aliases when comparing assumptions. Ordinary program definitions may
 -- contain large fixed enumerations; their named certificates should be tried before unfolding.
-macro "polytime" : tactic => `(tactic| solve |
-  aesop (config := { terminal := true, assumptionTransparency := .reducible })
-    (rule_sets := [PolyTime]))
+elab "polytime" : tactic => Internal.withPlainRuleCache do
+  Lean.Elab.Tactic.evalTactic (← `(tactic| solve |
+    aesop (config := { terminal := true, assumptionTransparency := .reducible })
+      (rule_sets := [PolyTime])))
 
 end Cslib.Tactic.PolyTime
