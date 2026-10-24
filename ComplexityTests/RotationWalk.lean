@@ -109,8 +109,9 @@ example : ComputableTidilyInPolyTime
 
 example : ComputableTidilyInPolyTime (RotationMap.killedPowRotWithInput rotate 3 2)
     (encPair encUnary (encPair (encPair encUnary encBool)
-      (encPair (encPi encBool) (encPi (encFinite (Fin 2))))))
-    (encPair (encPair encUnary encBool) (encPair (encPi encBool) (encPi (encFinite (Fin 2))))) := by
+      (encPair (encPi encBool) (encPi (encFinEnum (Fin 2))))))
+    (encPair (encPair encUnary encBool)
+      (encPair (encPi encBool) (encPi (encFinEnum (Fin 2))))) := by
   have := polytime_rotation
   fun_prop
 

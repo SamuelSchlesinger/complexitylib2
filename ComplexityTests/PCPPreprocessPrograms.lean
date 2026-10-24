@@ -85,8 +85,8 @@ example : ComputableTidilyInPolyTime
     (fun p : Graph Bool × ((ℕ × Bool) × Graph.PreprocessLabel Bool) =>
       p.1.preprocessRotation false rotateReflection p.2)
     (encPair (Graph.encoding encBool)
-      (encPair (encPair encUnary encBool) (encFinite (Graph.PreprocessLabel Bool))))
-    (encPair (encPair encUnary encBool) (encFinite (Graph.PreprocessLabel Bool))) := by
+      (encPair (encPair encUnary encBool) (encFinEnum (Graph.PreprocessLabel Bool))))
+    (encPair (encPair encUnary encBool) (encFinEnum (Graph.PreprocessLabel Bool))) := by
   have h := isPolyTime_rotateReflection
   fun_prop
 
@@ -94,7 +94,7 @@ example : ComputableTidilyInPolyTime
     (fun g : Graph Bool => g.preprocessRotation false rotateReflection ((g.edges.length, false),
       cloud false))
     (Graph.encoding encBool)
-    (encPair (encPair encUnary encBool) (encFinite (Graph.PreprocessLabel Bool))) := by
+    (encPair (encPair encUnary encBool) (encFinEnum (Graph.PreprocessLabel Bool))) := by
   have h := isPolyTime_rotateReflection
   fun_prop
 
@@ -103,8 +103,8 @@ example (T : ℕ) : ComputableTidilyInPolyTime
       (fun p : Graph Bool × ((ℕ × Bool) × Graph.PreprocessLabel Bool) =>
         p.1.preprocessRotation false rotateReflection p.2) T)
     (encPair (Graph.encoding encBool)
-      (encPair (encPair encUnary encBool) (encPi (encFinite (Graph.PreprocessLabel Bool)))))
-    (encPair (encPair encUnary encBool) (encPi (encFinite (Graph.PreprocessLabel Bool)))) := by
+      (encPair (encPair encUnary encBool) (encPi (encFinEnum (Graph.PreprocessLabel Bool)))))
+    (encPair (encPair encUnary encBool) (encPi (encFinEnum (Graph.PreprocessLabel Bool)))) := by
   have h := isPolyTime_rotateReflection
   fun_prop
 

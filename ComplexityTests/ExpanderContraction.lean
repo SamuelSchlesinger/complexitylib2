@@ -54,16 +54,16 @@ example : Function.IsPartialInv (RotationMap.finSlotEncode (by decide : 0 ≤ 0 
 
 -- Actual finite witnesses for the complete contraction certificate.
 example : ComputableTidilyInPolyTime threeVertices.rot
-    (encPair (encFinite (Fin 3)) (encPair (encFinite (Fin 2)) (encFinite (Fin 5))))
-    (encPair (encFinite (Fin 3)) (encPair (encFinite (Fin 2)) (encFinite (Fin 5)))) := by
+    (encPair (encFinEnum (Fin 3)) (encPair (encFinEnum (Fin 2)) (encFinEnum (Fin 5))))
+    (encPair (encFinEnum (Fin 3)) (encPair (encFinEnum (Fin 2)) (encFinEnum (Fin 5)))) := by
   have he : ComputableTidilyInPolyTime (RotationMap.finSlotEncode (by decide : 5 ≤ 2 * 3))
-      (encFinite (Fin 5)) (encPair (encFinite (Fin 3)) (encFinite (Fin 2))) := .of_finite _
+      (encFinEnum (Fin 5)) (encPair (encFinEnum (Fin 3)) (encFinEnum (Fin 2))) := .of_finite _
   have hd : ComputableTidilyInPolyTime (RotationMap.finSlotDecode (m := 5))
-      (encPair (encFinite (Fin 3)) (encFinite (Fin 2)))
-      (encOption (encFinite (Fin 5))) := .of_finite _
+      (encPair (encFinEnum (Fin 3)) (encFinEnum (Fin 2)))
+      (encOption (encFinEnum (Fin 5))) := .of_finite _
   have hg : ComputableTidilyInPolyTime completeFive.rot
-      (encPair (encFinite (Fin 5)) (encFinite (Fin 5)))
-      (encPair (encFinite (Fin 5)) (encFinite (Fin 5))) := .of_finite _
+      (encPair (encFinEnum (Fin 5)) (encFinEnum (Fin 5)))
+      (encPair (encFinEnum (Fin 5)) (encFinEnum (Fin 5))) := .of_finite _
   fun_prop [threeVertices, RotationMap.contractFin]
 
 example {V W I D : Type} (G : RotationMap V D) (encode : V → W × I)
@@ -111,7 +111,7 @@ example : ComputableTidilyInPolyTime
 
 example : ComputableTidilyInPolyTime
     (fun p : Option (Fin 0) × List Bool => p.1.elim p.2 (fun v => Fin.elim0 v))
-    (encPair (encOption (encFinite (Fin 0))) encBits) encBits := by
+    (encPair (encOption (encFinEnum (Fin 0))) encBits) encBits := by
   apply ComputableTidilyInPolyTime.optionElimWithInput
   · fun_prop
   · fun_prop

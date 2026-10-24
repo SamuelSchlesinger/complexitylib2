@@ -30,8 +30,8 @@ private theorem rotateReflection_eq (n : ℕ) (v : Fin n) (d : Unit) :
 
 private theorem isPolyTime_rotateReflection :
     ComputableTidilyInPolyTime rotateReflection
-      (encPair encUnary (encPair encUnary (encFinite Unit)))
-      (encPair encUnary (encFinite Unit)) := by
+      (encPair encUnary (encPair encUnary (encFinEnum Unit)))
+      (encPair encUnary (encFinEnum Unit)) := by
   unfold rotateReflection
   fun_prop
 
@@ -155,8 +155,8 @@ example {Input : Type} {input : Input ↪ List Bool} {graph : Input → Graph Bo
     (hgraph : ComputableTidilyInPolyTime graph input (Graph.encoding encBool))
     (rotate : ℕ × (ℕ × Unit) → ℕ × Unit)
     (hr : ComputableTidilyInPolyTime rotate
-      (encPair encUnary (encPair encUnary (encFinite Unit)))
-      (encPair encUnary (encFinite Unit))) :
+      (encPair encUnary (encPair encUnary (encFinEnum Unit)))
+      (encPair encUnary (encFinEnum Unit))) :
     ComputableTidilyInPolyTime (fun x =>
       let g := graph x
       g.powerPreprocess evalConstraint false rotate 1 2 walks)
@@ -184,8 +184,8 @@ example {Input : Type} {input : Input ↪ List Bool} {graph : Input → Graph Bo
     (hgraph : ComputableTidilyInPolyTime graph input (Graph.encoding encBool))
     (rotate : ℕ × (ℕ × Fin 16) → ℕ × Fin 16)
     (hr : ComputableTidilyInPolyTime rotate
-      (encPair encUnary (encPair encUnary (encFinite (Fin 16))))
-      (encPair encUnary (encFinite (Fin 16)))) :
+      (encPair encUnary (encPair encUnary (encFinEnum (Fin 16))))
+      (encPair encUnary (encFinEnum (Fin 16)))) :
     ComputableTidilyInPolyTime (fun x =>
       let powered := (graph x).powerPreprocess unitEval false rotate 4 2
         [(fun _ => .inr (), fun _ => 0)]
@@ -193,7 +193,7 @@ example {Input : Type} {input : Input ↪ List Bool} {graph : Input → Graph Bo
       input (Graph.encoding (encPi (encPi encBool))) := by
   have he : ComputableTidilyInPolyTime
       (fun p : Bool × (Unit × Unit) => unitEval p.1 p.2.1 p.2.2)
-      (encPair encBool (encPair (encFinite Unit) (encFinite Unit))) encBool := by
+      (encPair encBool (encPair (encFinEnum Unit) (encFinEnum Unit))) encBool := by
     unfold unitEval
     fun_prop
   fun_prop
@@ -204,8 +204,8 @@ example {Input : Type} {input : Input ↪ List Bool} {graph : Input → Graph Bo
     (hgraph : ComputableTidilyInPolyTime graph input (Graph.encoding encBool))
     (rotate : ℕ × (ℕ × Fin 16) → ℕ × Fin 16)
     (hr : ComputableTidilyInPolyTime rotate
-      (encPair encUnary (encPair encUnary (encFinite (Fin 16))))
-      (encPair encUnary (encFinite (Fin 16))))
+      (encPair encUnary (encPair encUnary (encFinEnum (Fin 16))))
+      (encPair encUnary (encFinEnum (Fin 16))))
     (output : (Graph.PowerAlphabet (Fin 16) Unit 4 → Graph.PowerAlphabet (Fin 16) Unit 4 → Bool) ↪
       List Bool) :
     ComputableTidilyInPolyTime
@@ -214,7 +214,7 @@ example {Input : Type} {input : Input ↪ List Bool} {graph : Input → Graph Bo
       input (Graph.encoding output) := by
   have he : ComputableTidilyInPolyTime
       (fun p : Bool × (Unit × Unit) => unitEval p.1 p.2.1 p.2.2)
-      (encPair encBool (encPair (encFinite Unit) (encFinite Unit))) encBool := by
+      (encPair encBool (encPair (encFinEnum Unit) (encFinEnum Unit))) encBool := by
     unfold unitEval
     fun_prop
   fail_if_success (clear hgraph; polytime)
@@ -248,7 +248,7 @@ example : ComputableTidilyInPolyTime selectedPartialRound (Graph.encoding encBoo
   have hr := isPolyTime_rotateReflection
   have he : ComputableTidilyInPolyTime
       (fun p : Bool × (Unit × Unit) => unitEval p.1 p.2.1 p.2.2)
-      (encPair encBool (encPair (encFinite Unit) (encFinite Unit))) encBool := by
+      (encPair encBool (encPair (encFinEnum Unit) (encFinEnum Unit))) encBool := by
     unfold unitEval
     fun_prop
   unfold selectedPartialRound Graph.amplify
@@ -301,7 +301,7 @@ example : ComputableTidilyInPolyTime completeRound (Graph.encoding encBool)
   have hr := RotationMap.polytime_arithmeticExpanderRotate (encFinite ArithmeticLabel)
   have he : ComputableTidilyInPolyTime
       (fun p : Bool × (Unit × Unit) => unitEval p.1 p.2.1 p.2.2)
-      (encPair encBool (encPair (encFinite Unit) (encFinite Unit))) encBool := by
+      (encPair encBool (encPair (encFinEnum Unit) (encFinEnum Unit))) encBool := by
     unfold unitEval
     fun_prop
   unfold completeRound
@@ -317,7 +317,7 @@ example {Input : Type} (input : Input ↪ List Bool) (graph : Input → Graph Bo
   have hr := RotationMap.polytime_arithmeticExpanderRotate (encFinite ArithmeticLabel)
   have he : ComputableTidilyInPolyTime
       (fun p : Bool × (Unit × Unit) => unitEval p.1 p.2.1 p.2.2)
-      (encPair encBool (encPair (encFinite Unit) (encFinite Unit))) encBool := by
+      (encPair encBool (encPair (encFinEnum Unit) (encFinEnum Unit))) encBool := by
     unfold unitEval
     fun_prop
   polytime

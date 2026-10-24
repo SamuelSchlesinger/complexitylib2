@@ -60,7 +60,7 @@ private theorem length_lt_primeFor {ℓ v : ℕ} (hv : v ≤ primeFor ℓ) : (en
 private theorem length_encFrame_le {fr : Frame} {P : ℕ} (h : (encNat fr.round).length ≤ P) :
     (encFrame fr).length ≤ 2 * P + 25 := by
   rw [encFrame_apply, length_encPair]
-  have := length_encFinite_lt (Frame.equiv fr).2
+  have := length_encFinEnum_lt (Frame.equiv fr).2
   simp only [Nat.card_eq_fintype_card, Fintype.card_prod, Fintype.card_fin, Fintype.card_bool]
     at this
   simp only [Frame.equiv, Equiv.coe_fn_mk] at this ⊢
@@ -73,14 +73,14 @@ private theorem length_encList_frames_le {st : List Frame} {P : ℕ}
     (by ring)
 
 private theorem length_encMode_lt (m : Mode) : (encMode m).length < 7 := by
-  have := length_encFinite_lt m
+  have := length_encFinEnum_lt m
   have hc : Nat.card Mode = 7 := by
     rw [Nat.card_congr Mode.equiv]; simp
   rw [hc] at this
   exact this
 
-private theorem length_encTag_lt (t : Fin 7) : (encFinite (Fin 7) t).length < 7 := by
-  simpa using length_encFinite_lt t
+private theorem length_encTag_lt (t : Fin 7) : (encFinEnum (Fin 7) t).length < 7 := by
+  simpa using length_encFinEnum_lt t
 
 /-- The bounds on the components of a state that satisfies the invariant. -/
 structure Bounds (ℓ H : ℕ) (s : State) : Prop where

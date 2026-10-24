@@ -19,9 +19,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 
 The states of `Cslib.USTCON.Reader.machine` are encoded through tuples of the control, numbers in
 binary, and lists of labels and frames, every label and frame by its rank among the finitely many
-(`Turing.MultiTapeTM.encFinite`). The machines simulating the read machine keep the encoded state on
-their work tapes, so its length bounds their work space, up to a constant factor and the position
-of the input head.
+(`Turing.MultiTapeTM.encFinEnum`). The machines simulating the read machine keep the encoded state
+on their work tapes, so its length bounds their work space, up to a constant factor and the
+position of the input head.
 
 ## Main definitions
 
@@ -42,6 +42,18 @@ open Turing MultiTapeTM Cslib.RotationMap Cslib.Reachability.Reingold
 instance : Fintype Ctl where
   elems := {.hdrN, .hdrS, .hdrT, .size, .start, .fill, .next, .eval, .check, .done}
   complete x := by cases x <;> simp
+
+instance : FinEnum Ctl :=
+  FinEnum.ofList [.hdrN, .hdrS, .hdrT, .size, .start, .fill, .next, .eval, .check, .done]
+    fun x => by cases x <;> decide
+
+instance : FinEnum ReingoldPc :=
+  FinEnum.ofList [.zig₀, .call₀, .zag₀, .zig₁, .call₁, .zag₁, .finish]
+    fun x => by cases x <;> decide
+
+/-- Concrete enumeration of a positive modular ring. -/
+instance instFinEnumZMod (n : ℕ) [NeZero n] : FinEnum (ZMod n) :=
+  FinEnum.ofEquiv (Fin n) (ZMod.finEquiv n).toEquiv.symm
 
 /-- The states as tuples: the control and the header counter, the parameters of the instance and of
 Reingold's graph, and the counters of the walks with the state of the evaluation. -/
@@ -68,32 +80,32 @@ theorem State.toTuple_ofTuple (x : Tuple) : (State.ofTuple x).toTuple = x :=
   rfl
 
 /-- Labels, by their ranks. -/
-noncomputable def encLab : Label ↪ List Bool :=
-  encFinite Label
+def encLab : Label ↪ List Bool :=
+  encFinEnum Label
 
 /-- Frames, by their ranks. -/
-noncomputable def encFrame : ReingoldPc × Label ↪ List Bool :=
-  encFinite (ReingoldPc × Label)
+def encFrame : ReingoldPc × Label ↪ List Bool :=
+  encFinEnum (ReingoldPc × Label)
 
 /-- Three numbers. -/
 abbrev encNat3 : ℕ × ℕ × ℕ ↪ List Bool :=
   encPair encNat (encPair encNat encNat)
 
 /-- The state of the evaluation: the slot, the labels and the frames. -/
-noncomputable abbrev encEval : (ℕ × ℕ) × List Label × List (ReingoldPc × Label) ↪ List Bool :=
+abbrev encEval : (ℕ × ℕ) × List Label × List (ReingoldPc × Label) ↪ List Bool :=
   encPair (encPair encNat encNat) (encPair (encList encLab) (encList encFrame))
 
 /-- The control, by its rank. -/
-noncomputable def encCtl : Ctl ↪ List Bool :=
-  encFinite Ctl
+def encCtl : Ctl ↪ List Bool :=
+  encFinEnum Ctl
 
 /-- The encoding of tuples. -/
-noncomputable abbrev encTuple : Tuple ↪ List Bool :=
+abbrev encTuple : Tuple ↪ List Bool :=
   encPair (encPair encCtl encNat)
     (encPair (encPair encNat3 (encPair encNat encNat)) (encPair encNat3 encEval))
 
 /-- The encoding of the states, through their tuples. -/
-noncomputable def encState : State ↪ List Bool :=
+def encState : State ↪ List Bool :=
   ⟨fun q ↦ encTuple q.toTuple, fun q q' h ↦ by
     rw [← State.ofTuple_toTuple q, ← State.ofTuple_toTuple q', encTuple.injective h]⟩
 

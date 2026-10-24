@@ -18,7 +18,7 @@ namespace ComplexityTests.PCPExpander
 
 example : ComputableTidilyInPolyTime
     (fun index : ℕ => (⟨index % 1, Nat.mod_lt _ (by decide)⟩ : Fin 1))
-    encUnary (encFinite (Fin 1)) :=
+    encUnary (encFinEnum (Fin 1)) :=
   ComputableTidilyInPolyTime.unary_finMod (by decide) _
 
 -- The fixed finite output may use binary indices instead of the finite-rank encoding.
@@ -38,14 +38,14 @@ private def coordinates : Fin 16 ≃ (Fin 2 → Fin 2 × Fin 2) :=
         (finTwoArrowEquiv (Fin 2 × Fin 2)).symm)
 
 example : ComputableTidilyInPolyTime (TowerTable.build base coordinates (by decide))
-    encUnary (TowerTable.encoding (encFinite (Fin 2))) :=
+    encUnary (TowerTable.encoding (encFinEnum (Fin 2))) :=
   TowerTable.polytime_build base coordinates (by decide) _
 
 -- Equivalent call spellings and captured inputs use the same uniform certificate.
 example : ComputableTidilyInPolyTime
     (fun p : Bool × ℕ => TowerTable.build base coordinates (by decide) (p.2 + 1))
-    (encPair encBool encUnary) (TowerTable.encoding (encFinite (Fin 2))) := by
-  have h := TowerTable.polytime_build base coordinates (by decide) (encFinite (Fin 2))
+    (encPair encBool encUnary) (TowerTable.encoding (encFinEnum (Fin 2))) := by
+  have h := TowerTable.polytime_build base coordinates (by decide) (encFinEnum (Fin 2))
   polytime
 
 example : (TowerTable.build base coordinates (by decide) 0).length = 16 := by decide
@@ -75,8 +75,8 @@ example (size : ℕ) (vertex : Fin (16 ^ (Nat.clog 16 size - 1 + 1))) (label : F
 
 example : ComputableTidilyInPolyTime (TowerTable.rotateFamily base coordinates (by decide))
     (encPair encUnary (encPair encUnary
-      (encFinite ((Fin 16 × (Fin 2 × Fin 2)) ⊕ (Fin 16 × (Fin 2 × Fin 2))))))
-    (encPair encUnary (encFinite ((Fin 16 × (Fin 2 × Fin 2)) ⊕
+      (encFinEnum ((Fin 16 × (Fin 2 × Fin 2)) ⊕ (Fin 16 × (Fin 2 × Fin 2))))))
+    (encPair encUnary (encFinEnum ((Fin 16 × (Fin 2 × Fin 2)) ⊕
       (Fin 16 × (Fin 2 × Fin 2))))) :=
   TowerTable.polytime_rotateFamily base coordinates (by decide) _
 

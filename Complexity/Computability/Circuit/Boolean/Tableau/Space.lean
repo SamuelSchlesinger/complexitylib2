@@ -204,9 +204,16 @@ theorem blockSize_inSpace :
   budget_natAdd (colStart_inSpace (k := k) (State := State) hT hin)
     (budget_natMul (numCols_inSpace hT hin) (budget_const _ hin))
 
+instance : FinEnum ColSel :=
+  FinEnum.ofList [.same, .prev, .next, .last] fun x => by cases x <;> decide
+
+instance : FinEnum Guard :=
+  FinEnum.ofList [.always, .pos, .ltLast, .inRange, .outRange, .isZero, .isEnd, .leEnd]
+    fun x => by cases x <;> decide
+
 omit [DecidableEq State] in
 private theorem regionStart_inSpace {i : α → Fin 4}
-    (hi : ComputableTidilyInSpace i encIn (encFinite (Fin 4)) Bs) :
+    (hi : ComputableTidilyInSpace i encIn (encFinEnum (Fin 4)) Bs) :
     ComputableTidilyInSpace (fun x => regionStart k State (T x) (i x)) encIn encNat Bs := by
   have h₀ := budget_finite (encC := encBool) (fun j : Fin 4 => decide (j = 0)) hi
   have h₁ := budget_finite (encC := encBool) (fun j : Fin 4 => decide (j = 1)) hi
@@ -248,7 +255,7 @@ private theorem resolve_inSpace {r : α → Ref k State}
   have hinp := budget_ite hinpc (budget_natSub hc (budget_const 1 hin)) hn
   -- the guard
   have hg := budget_finite (encC := encBool) Guard.ofTests
-    (budget_prod (budget_finite (encC := encFinite Guard) Ref.guardOf hr)
+    (budget_prod (budget_finite (encC := encFinEnum Guard) Ref.guardOf hr)
       (budget_prod hc0 (budget_prod hcT (budget_prod hcn (budget_prod hcz
         (budget_prod hce hcn2))))))
   -- the position
@@ -256,8 +263,8 @@ private theorem resolve_inSpace {r : α → Ref k State}
   have hprev := budget_finite (encC := encBool) Ref.prevOf hr
   have ht' := budget_ite hprev (budget_natSub ht (budget_const 1 hin)) ht
   have hreg := regionStart_inSpace (k := k) (State := State) hT hin
-    (budget_finite (encC := encFinite (Fin 4)) Loc.region hloc)
-  have hcs := budget_finite (encC := encFinite ColSel) Ref.csOf hr
+    (budget_finite (encC := encFinEnum (Fin 4)) Loc.region hloc)
+  have hcs := budget_finite (encC := encFinEnum ColSel) Ref.csOf hr
   have hcs₀ := budget_finite (encC := encBool) (fun cs : ColSel => decide (cs = .same)) hcs
   have hcs₁ := budget_finite (encC := encBool) (fun cs : ColSel => decide (cs = .prev)) hcs
   have hcs₂ := budget_finite (encC := encBool) (fun cs : ColSel => decide (cs = .next)) hcs

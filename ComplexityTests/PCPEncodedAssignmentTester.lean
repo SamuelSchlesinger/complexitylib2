@@ -82,8 +82,8 @@ example {α : Type} [Fintype α] [DecidableEq α] (constraint : α → α → Bo
 example : ComputableTidilyInPolyTime
     (fun p : (Bool → Bool → Bool) × Rand Bool × Query =>
       Encoded.HadamardTester.query p.1 p.2.1 p.2.2)
-    (encPair (encPi (encPi encBool)) (encPair (encFinite (Rand Bool)) (encFinite Query)))
-    (encFinite (Pos Bool)) := by fun_prop
+    (encPair (encPi (encPi encBool)) (encPair (encFinite (Rand Bool)) (encFinEnum Query)))
+    (encFinEnum (Pos Bool)) := by fun_prop
 
 example : ComputableTidilyInPolyTime
     (fun p : (Bool → Bool → Bool) × Rand Bool × (Query → Bool) =>
@@ -95,7 +95,7 @@ example : ComputableTidilyInPolyTime
 example : ComputableTidilyInPolyTime
     (fun p : List Bool × Rand Bool × Query => Encoded.HadamardTester.query
       (fun a b => p.1.getD (a.toNat + 2 * b.toNat) false) p.2.1 p.2.2)
-    (encPair encBits (encPair (encFinite (Rand Bool)) (encFinite Query)))
-    (encFinite (Pos Bool)) := by polytime
+    (encPair encBits (encPair (encFinite (Rand Bool)) (encFinEnum Query)))
+    (encFinEnum (Pos Bool)) := by polytime
 
 end ComplexityTests.PCPEncodedTester

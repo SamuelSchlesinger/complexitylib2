@@ -95,11 +95,11 @@ variable [Finite Control] [DecidableEq External] [Finite External]
 /-- A handler certified as strict oracle PPT makes one complete interpreter step strict oracle
 PPT. Only the selected transition runs, so a non-query step makes no external call. -/
 theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
-    {stateEncoding : State ↪ List Bool}
+    {operationEncoding : Operation ↪ List Bool} {stateEncoding : State ↪ List Bool}
     (machine : MultiTapePTM k Bool Control Operation)
     {handler : α → Operation × List Bool → State → WordOracleComp External (List Bool × State)}
     (hhandler : IsOraclePPTOn
-      (encPair input (encPair (encPair (encFinite Operation) encBits) stateEncoding))
+      (encPair input (encPair (encPair operationEncoding encBits) stateEncoding))
       (encPair encBits stateEncoding) (fun pair => handler pair.1 pair.2.1 pair.2.2)) :
     IsOraclePPTOn (encPair input (encPair encFiniteConfig stateEncoding))
       (encPair encFiniteConfig stateEncoding)
@@ -127,8 +127,8 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
         (tag := fun pair : (α × (FiniteConfig k Bool Control Operation × State)) × Bool =>
           (pair.1.2.1.tapes.inputSymbol, pair.1.2.1.tapes.workTapeSymbols,
             pair.1.2.1.answerSymbols, pair.2))
-        (tagEncoding := encPair (encFinite (Option Bool))
-          (encPair (encFinite (Fin k → Option Bool))
+        (tagEncoding := encPair (encFinEnum (Option Bool))
+          (encPair (encFinEnum (Fin k → Option Bool))
             (encPair (encFinite (Operation → Option Bool)) encBool)))
         (branch := fun symbols (pair : (α × (FiniteConfig k Bool Control Operation × State)) ×
             Bool) =>
@@ -151,13 +151,14 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
 over every possible handler result under every external oracle, bounds reply length and
 private-state growth; the loop certificate charges all interpreter storage. -/
 theorem isOraclePPTOn_run [Finite Operation] {input : α ↪ List Bool}
-    {stateEncoding : State ↪ List Bool} (machine : MultiTapePTM k Bool Control Operation)
+    {operationEncoding : Operation ↪ List Bool} {stateEncoding : State ↪ List Bool}
+    (machine : MultiTapePTM k Bool Control Operation)
     {word : α → List Bool} {count : α → ℕ}
     {handler : α → Operation × List Bool → State → WordOracleComp External (List Bool × State)}
     {initial : α → State} (hword : ComputableTidilyInPolyTime word input encBits)
     (hcount : ComputableTidilyInPolyTime count input encUnary)
     (hhandler : IsOraclePPTOn
-      (encPair input (encPair (encPair (encFinite Operation) encBits) stateEncoding))
+      (encPair input (encPair (encPair operationEncoding encBits) stateEncoding))
       (encPair encBits stateEncoding) (fun pair => handler pair.1 pair.2.1 pair.2.2))
     (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
     (invariant : α → State → Prop) (hinit : ∀ a, invariant a (initial a))

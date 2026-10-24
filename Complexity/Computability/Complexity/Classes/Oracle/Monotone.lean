@@ -60,8 +60,8 @@ theorem ComputableInPolyTimeWithOracle.of_polyTimeReducible {A B : Set (List Boo
   refine ⟨fun a => OracleComp.interpret G (program a), ?_, fun a => ?_⟩
   · -- substitute the handler answering requests to `A` through `B`
     have hhandler : IsOraclePPTOn
-        (encPair input (encPair (encPair (encFinite Unit) encBits) (encFinite Unit)))
-        (encPair encBits (encFinite Unit))
+        (encPair input (encPair (encPair (encFinEnum Unit) encBits) (encFinEnum Unit)))
+        (encPair encBits (encFinEnum Unit))
         (fun pair : α × (Unit × List Bool) × Unit =>
           (fun r => (r, ())) <$> (List.take 1 <$> ProbOracleComp.query
             (spec := fun _ : Unit × List Bool => List Bool) ((), g pair.2.1.2))) :=
@@ -78,7 +78,7 @@ theorem ComputableInPolyTimeWithOracle.of_polyTimeReducible {A B : Set (List Boo
         obtain ⟨r, hr, rfl⟩ := ProbOracleComp.mem_support_map hresult
         obtain ⟨r', -, rfl⟩ := ProbOracleComp.mem_support_map hr
         exact ⟨trivial, List.length_take_le _ _, Nat.le_add_right _ _⟩)
-    refine (hsub.map (ComputableTidilyInPolyTime.fst output (encFinite Unit))).congr
+    refine (hsub.map (ComputableTidilyInPolyTime.fst output (encFinEnum Unit))).congr
       fun a State oracle s => ?_
     congr 2
     rw [OracleComp.interpret_interpret, OracleComp.interpret_interpret]

@@ -193,8 +193,8 @@ variable [Finite Control] [Fintype Operation]
 omit [DecidableEq Operation] in
 private theorem observe_pt : ComputableTidilyInPolyTime
     (observe (k := k) (Control := Control) (Operation := Operation)) encFiniteConfig
-    (encPair (encFinite (Option Control)) (encPair (encFinite (Option Bool))
-      (encPair (encFinite (Fin k → Option Bool)) (encFinite (Operation → Option Bool))))) := by
+    (encPair (encFinite (Option Control)) (encPair (encFinEnum (Option Bool))
+      (encPair (encFinEnum (Fin k → Option Bool)) (encFinite (Operation → Option Bool))))) := by
   unfold observe
   fun_prop
 

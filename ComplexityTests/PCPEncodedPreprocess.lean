@@ -32,8 +32,8 @@ private theorem rotateReflection_eq (n : ℕ) (v : Fin n) (d : Unit) :
 
 private theorem isPolyTime_rotateReflection :
     ComputableTidilyInPolyTime rotateReflection
-      (encPair encUnary (encPair encUnary (encFinite Unit)))
-      (encPair encUnary (encFinite Unit)) := by
+      (encPair encUnary (encPair encUnary (encFinEnum Unit)))
+      (encPair encUnary (encFinEnum Unit)) := by
   unfold rotateReflection
   polytime
 

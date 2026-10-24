@@ -152,7 +152,7 @@ edge lists, with constraint tables listing ranks of labels. The constraint graph
 bipartite. This is a conjecture, stated and not assumed. -/
 def UniqueGamesConjecture : Prop :=
   ∀ ε δ : ℝ, 0 < ε → 0 < δ → δ < 1 - ε → ∃ L : ℕ,
-    PromiseProblem.NPHard (Graph.encoding (encPi (encFinite (Fin L))))
+    PromiseProblem.NPHard (Graph.encoding (encPi (encFinEnum (Fin L))))
       (GapUniqueGames (Fin L) (1 - ε) δ)
 
 /-- Under the Unique Games Conjecture, for every `ε, δ > 0` with `δ < 1 - ε` there is a number `L`
@@ -160,7 +160,7 @@ of labels such that every weaker gap problem on `Fin L`, with completeness at mo
 soundness at least `δ`, is NP-hard. -/
 theorem UniqueGamesConjecture.npHard_of_le (h : UniqueGamesConjecture) {ε δ : ℝ} (hε : 0 < ε)
     (hδ : 0 < δ) (hεδ : δ < 1 - ε) : ∃ L : ℕ, ∀ c s : ℝ, c ≤ 1 - ε → δ ≤ s → s < c →
-      PromiseProblem.NPHard (Graph.encoding (encPi (encFinite (Fin L))))
+      PromiseProblem.NPHard (Graph.encoding (encPi (encFinEnum (Fin L))))
         (GapUniqueGames (Fin L) c s) := by
   obtain ⟨L, hL⟩ := h ε δ hε hδ hεδ
   exact ⟨L, fun c s hc hs hsc => hL.mono (GapUniqueGames_mono hc hs hsc).1

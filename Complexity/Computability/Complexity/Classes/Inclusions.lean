@@ -178,14 +178,14 @@ theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
       ((ComputableTidilyInPolyTime.const 2).prod hwidth)).prod (ComputableTidilyInPolyTime.const 2))
   have hedge : ComputableTidilyInPolyTime
       (fun q : Unit × List Bool × List Bool => (fun _ => ntm.codeEdge) q.1 q.2.1 q.2.2)
-      (encPair (encFinite Unit) (encPair encBits encBits)) encBool :=
+      (encPair (encFinEnum Unit) (encPair encBits encBits)) encBool :=
     ntm.computableTidilyInPolyTime_codeEdge ((ComputableTidilyInPolyTime.fst _ _).comp (.snd _ _))
       ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _))
   have hin : ComputableTidilyInPolyTime
       (fun a => ((), 2 * ntm.codeWidth c d (enc a) + 2, 2 * ntm.codeWidth c d (enc a) + 2,
         MultiTapeNTM.viewCode (ntm.codeWidth c d (enc a)) (ntm.initView (enc a)),
         MultiTapeNTM.acceptCode (ntm.codeWidth c d (enc a)))) enc
-      (Cslib.Reachability.encArgs (encFinite Unit)) :=
+      (Cslib.Reachability.encArgs (encFinEnum Unit)) :=
     (ComputableTidilyInPolyTime.const ()).prod (hcodes.prod (hcodes.prod
       ((MultiTapeNTM.computableTidilyInPolyTime_viewCode_initView hwidth (.encode enc)).prod
         (MultiTapeNTM.computableTidilyInPolyTime_acceptCode hwidth))))
@@ -193,7 +193,7 @@ theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
   obtain ⟨ti, si, hti, -, hi⟩ := hin
   have hedgeO : ComputableTidilyInO _ _ encBool te se :=
     ⟨1, he.mono (fun _ => by omega) fun _ => by omega, fun _ => by simp⟩
-  have hinO : ComputableTidilyInO _ enc (Cslib.Reachability.encArgs (encFinite Unit)) ti
+  have hinO : ComputableTidilyInO _ enc (Cslib.Reachability.encArgs (encFinEnum Unit)) ti
       fun a => ti a + si a :=
     ⟨1, hi.mono (fun _ => by omega) fun _ => by dsimp only; omega, fun a => by
       have := hi.length_le a
@@ -206,7 +206,7 @@ theorem PSPACE_subset_EXP : PSPACE enc ⊆ EXP enc := by
   obtain ⟨cW, dW, hW⟩ := hwidth.polyBounded_length.exists_le
   obtain ⟨cT, dT, hT⟩ := hti.exists_le
   obtain ⟨cE, dE, hE⟩ := hte.exists_le
-  set L := (encFinite Unit ()).length
+  set L := (encFinEnum Unit ()).length
   have hedgeMax (w : ℕ) : Cslib.Reachability.edgeMax te () w ≤ cE * (2 * L + 3 * w + 3) ^ dE :=
     listMax_le fun u hu => listMax_le fun v hv => by
       refine (hE _).trans (Nat.mul_le_mul_left cE (Nat.pow_le_pow_left ?_ dE))

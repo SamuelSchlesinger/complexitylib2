@@ -84,7 +84,7 @@ theorem isPolyTime_clauseHolds :
     ComputableTidilyInPolyTime (fun p : Clause ℕ × (Fin 3 → Bool) => clauseHolds p.1 p.2)
       (encPair (encList (encPair encUnary encBool)) (encPi encBool)) encBool := by
   unfold clauseHolds
-  apply anyWithInput (encA := encFinite (Fin 3)) (by fun_prop)
+  apply anyWithInput (encA := encFinEnum (Fin 3)) (by fun_prop)
   apply finite_cases (branch := fun (i : Fin 3) (p : (Clause ℕ × (Fin 3 → Bool)) × Fin 3) =>
     p.1.1[i.val]?.elim false (fun l => p.1.2 i == l.2)) (snd _ _)
   intro i
@@ -95,21 +95,21 @@ theorem isPolyTime_clauseHolds :
 theorem isPolyTime_cnfEdge :
     ComputableTidilyInPolyTime (fun p : CNF ℕ × (ℕ × Fin 3) => cnfEdge p.1 p.2)
       (encPair (encList (encList (encPair encUnary encBool)))
-        (encPair encUnary (encFinite (Fin 3))))
+        (encPair encUnary (encFinEnum (Fin 3))))
       (Edge.encoding (encPi (encPi encBool))) := by
   have hindex : ComputableTidilyInPolyTime (Fin.val (n := 3))
-      (encFinite (Fin 3)) encUnary := .of_finite _
+      (encFinEnum (Fin 3)) encUnary := .of_finite _
   have hclause : ComputableTidilyInPolyTime
       (fun p : CNF ℕ × (ℕ × Fin 3) => p.1.getD p.2.1 [])
       (encPair (encList (encList (encPair encUnary encBool)))
-        (encPair encUnary (encFinite (Fin 3)))) (encList (encPair encUnary encBool)) := by
+        (encPair encUnary (encFinEnum (Fin 3)))) (encList (encPair encUnary encBool)) := by
     fun_prop
   have hliteral := ComputableTidilyInPolyTime.getElem? (encA := encPair encUnary encBool)
     hclause (hindex.comp ((snd _ _).snd'))
   unfold cnfEdge
   apply Edge.isPolyTime_mk (by fun_prop) (by fun_prop)
   refine pi fun a => pi fun b => ?_
-  have ha : ComputableTidilyInPolyTime a (encFinite (Fin 3)) encBool := .of_finite _
+  have ha : ComputableTidilyInPolyTime a (encFinEnum (Fin 3)) encBool := .of_finite _
   fun_prop
 
 /-- Constructing all edges and copying their constraints is polynomial-time. -/
@@ -121,7 +121,7 @@ theorem isPolyTime_ofCNF :
   have hdarts : ComputableTidilyInPolyTime
       (fun p : ℕ × CNF ℕ => (List.range p.2.length).product (List.finRange 3))
       (encPair encUnary (encList (encList (encPair encUnary encBool))))
-      (encList (encPair encUnary (encFinite (Fin 3)))) := by
+      (encList (encPair encUnary (encFinEnum (Fin 3)))) := by
     unfold List.product
     fun_prop
   unfold ofCNF

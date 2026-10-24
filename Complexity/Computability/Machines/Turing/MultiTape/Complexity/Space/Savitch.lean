@@ -123,14 +123,14 @@ theorem exists_polyBounded_space_savitchDecide {α : Type} (enc : α ↪ List Bo
     by fun_prop
   have hedge : ComputableTidilyInPolyTime
       (fun q : Unit × List Bool × List Bool => (fun _ => ntm.codeEdge) q.1 q.2.1 q.2.2)
-      (encPair (encFinite Unit) (encPair encBits encBits)) encBool :=
+      (encPair (encFinEnum Unit) (encPair encBits encBits)) encBool :=
     ntm.computableTidilyInPolyTime_codeEdge ((ComputableTidilyInPolyTime.fst _ _).comp (.snd _ _))
       ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _))
   have hin : ComputableTidilyInPolyTime
       (fun a => ((), 2 * ntm.codeWidth c d (enc a) + 2, 2 * ntm.codeWidth c d (enc a) + 2,
         viewCode (ntm.codeWidth c d (enc a)) (ntm.initView (enc a)),
         acceptCode (ntm.codeWidth c d (enc a)))) enc
-      (Cslib.Reachability.encArgs (encFinite Unit)) :=
+      (Cslib.Reachability.encArgs (encFinEnum Unit)) :=
     (ComputableTidilyInPolyTime.const ()).prod (hcodes.prod (hcodes.prod
       ((computableTidilyInPolyTime_viewCode_initView hwidth (.encode enc)).prod
         (computableTidilyInPolyTime_acceptCode hwidth))))

@@ -53,17 +53,18 @@ handler's final state and every external oracle's state. The efficiently compute
 bounds each reply and the added encoded state; one invariant must hold for every possible handler
 result under every external oracle. External replies to the handler need no length bound. -/
 theorem IsOraclePPTOn.run_interpret_preprocess_open
-    {Operation External α β Caller State : Type} [DecidableEq Operation] [Finite Operation]
+    {Operation External α β Caller State : Type} [DecidableEq Operation]
     [DecidableEq External] [Finite External]
     {source : α ↪ List Bool} {input : Caller ↪ List Bool} {output : β ↪ List Bool}
-    {stateEncoding : State ↪ List Bool} {program : α → WordOracleComp Operation β}
+    {operationEncoding : Operation ↪ List Bool} {stateEncoding : State ↪ List Bool}
+    {program : α → WordOracleComp Operation β}
     {handler : Caller → Operation × List Bool → State →
       WordOracleComp External (List Bool × State)}
     {prepare : Caller → α} {initial : Caller → State} {resources : Caller → List Bool → ℕ}
     (hprogram : IsOraclePPTOn source output program)
     (hprepare : ComputableTidilyInPolyTime prepare input source)
     (hhandler : IsOraclePPTOn
-      (encPair input (encPair (encPair (encFinite Operation) encBits) stateEncoding))
+      (encPair input (encPair (encPair operationEncoding encBits) stateEncoding))
       (encPair encBits stateEncoding) (fun pair => handler pair.1 pair.2.1 pair.2.2))
     (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
@@ -87,7 +88,8 @@ theorem IsOraclePPTOn.run_interpret_preprocess_open
     simp only [encUnary_apply, List.length_replicate, length_encPair, encBits_apply] at h
     exact h.trans (Nat.mul_le_mul_left resourceCoeff
       (Nat.pow_le_pow_left (by lia) resourceDegree))
-  obtain ⟨_, k, Control, hfinite, machine, c, d, hrealize⟩ := hprogram
+  obtain ⟨hfiniteOp, k, Control, hfinite, machine, c, d, hrealize⟩ := hprogram
+  let _ := hfiniteOp
   let _ := hfinite
   have hword : ComputableTidilyInPolyTime (fun a => source (prepare a)) input encBits :=
     hprepare.of_enc_eq (fun _ => rfl)
@@ -131,8 +133,8 @@ theorem IsOraclePPTOn.interpret_bitQueries
       (OracleComp.interpret (fun q : Unit × List Bool =>
         List.take 1 <$> OracleComp.query ((), request q.2)) (program a))) := by
   have hhandler : IsOraclePPTOn
-      (encPair input (encPair (encPair (encFinite Unit) encBits) (encFinite Unit)))
-      (encPair encBits (encFinite Unit))
+      (encPair input (encPair (encPair (encFinEnum Unit) encBits) (encFinEnum Unit)))
+      (encPair encBits (encFinEnum Unit))
       (fun pair : α × (Unit × List Bool) × Unit =>
         (fun r => (r, ())) <$> (List.take 1 <$> ProbOracleComp.query
           (spec := fun _ : Unit × List Bool => List Bool) ((), request pair.2.1.2))) :=
@@ -149,7 +151,7 @@ theorem IsOraclePPTOn.interpret_bitQueries
       obtain ⟨r, hr, rfl⟩ := ProbOracleComp.mem_support_map hresult
       obtain ⟨r', -, rfl⟩ := ProbOracleComp.mem_support_map hr
       exact ⟨trivial, List.length_take_le _ _, Nat.le_add_right _ _⟩)
-  refine (hsub.map (ComputableTidilyInPolyTime.fst output (encFinite Unit))).congr
+  refine (hsub.map (ComputableTidilyInPolyTime.fst output (encFinEnum Unit))).congr
     fun a State oracle s => ?_
   congr 2
   rw [OracleComp.interpret_interpret, OracleComp.interpret_interpret]

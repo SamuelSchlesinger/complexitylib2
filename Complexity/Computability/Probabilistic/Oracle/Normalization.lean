@@ -98,8 +98,8 @@ theorem IsTidyOraclePPTOn.finiteStep [Fintype Operation] [Finite Control]
       (tag := fun pair : (ℕ × FiniteConfig k Bool Control Operation) × Bool =>
         (pair.1.2.tapes.inputSymbol, pair.1.2.tapes.workTapeSymbols,
           pair.1.2.answerSymbols, pair.2))
-      (tagEncoding := encPair (encFinite (Option Bool))
-        (encPair (encFinite (Fin k → Option Bool))
+      (tagEncoding := encPair (encFinEnum (Option Bool))
+        (encPair (encFinEnum (Fin k → Option Bool))
           (encPair (encFinite (Operation → Option Bool)) encBool)))
       (branch := fun symbols (pair : (ℕ × FiniteConfig k Bool Control Operation) × Bool) =>
         match machine.tr control symbols.1 symbols.2.1 symbols.2.2.1 symbols.2.2.2 with

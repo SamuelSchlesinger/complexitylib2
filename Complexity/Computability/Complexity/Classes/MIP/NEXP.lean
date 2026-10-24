@@ -296,8 +296,8 @@ theorem computableTidilyInPolyTime_instruction :
       (fun q : MultiTapeMachine.FiniteConfig k Bool Control (Fin p) × Bool =>
         (q.1.tapes.state, q.1.tapes.inputSymbol, q.1.tapes.workTapeSymbols, q.1.answerSymbols, q.2))
       (encPair encFiniteConfig encBool)
-      (encPair (encFinite (Option Control)) (encPair (encFinite (Option Bool))
-        (encPair (encFinite (Fin k → Option Bool)) (encPair (encFinite (Fin p → Option Bool))
+      (encPair (encFinite (Option Control)) (encPair (encFinEnum (Option Bool))
+        (encPair (encFinEnum (Fin k → Option Bool)) (encPair (encFinite (Fin p → Option Bool))
           encBool)))) := by
     fun_prop
   exact ((of_finite fun obs : Option Control × Option Bool × (Fin k → Option Bool) ×

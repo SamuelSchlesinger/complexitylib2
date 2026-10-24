@@ -91,7 +91,7 @@ private theorem addrT_inSpace :
 /-! ### On states -/
 
 /-- **The space budget of a state.** -/
-noncomputable def stateBudget (s : State) : ℕ := stepBudget (s.toTuple, false)
+def stateBudget (s : State) : ℕ := stepBudget (s.toTuple, false)
 
 private theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget
     (x, false) := by

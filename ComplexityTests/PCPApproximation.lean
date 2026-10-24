@@ -174,7 +174,7 @@ example {c s : ℝ} (hc : c ≤ 1) :
 
 /-- The conjecture is a proposition; nothing assumes it. -/
 example : UniqueGamesConjecture → ∃ L : ℕ, PromiseProblem.NPHard
-    (Graph.encoding (encPi (encFinite (Fin L)))) (GapUniqueGames (Fin L) (1 / 2) (1 / 4)) :=
+    (Graph.encoding (encPi (encFinEnum (Fin L)))) (GapUniqueGames (Fin L) (1 / 2) (1 / 4)) :=
   fun h => (h (1 / 2) (1 / 4) (by norm_num) (by norm_num) (by norm_num)).imp fun _ hL => by
     norm_num at hL ⊢
     exact hL
