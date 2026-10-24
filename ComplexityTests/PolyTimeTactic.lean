@@ -462,4 +462,17 @@ example : ComputableInPolyTime
     (encList (encPair encNat encNat)) := by
   polytime
 
+-- Binary list length is reached from `Complexity.Tactic.PolyTime`.
+example : ComputableInPolyTime (fun l : List ℕ => l.length)
+    (encList encNat) encNat := by
+  polytime
+
+example : ComputableInPolyTime (fun l : List ℕ => l.length)
+    (encList encNat) encNat := by
+  fun_prop
+
+example : ComputableInPolyTime (fun p : List ℕ × ℕ => p.1.length)
+    (encPair (encList encNat) encNat) encNat := by
+  fun_prop
+
 end ComplexityTests.PolyTimeTactic

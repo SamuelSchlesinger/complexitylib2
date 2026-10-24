@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Mathlib.Combinatorics.SimpleGraph.VertexCover
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -230,7 +231,8 @@ theorem computableTidilyInPolyTime_verifier :
   have hadj := Graph.computableTidilyInPolyTime_adjBool.comp hproj
   refine computableTidilyInPolyTime_subsetVerifier (encγ := encNat) (by unfold encGraph; fun_prop)
     (bool_and' ?_ (allWithInput hV (allWithInput (hV.comp (fst _ _)) ?_)))
-  · exact (unary_to_binary.comp ((length_list encNat).comp (snd _ _))).decide_eq' (by fun_prop)
+  · exact (((ComputableInPolyTime.length_list_binary encNat).tidy.comp (snd _ _)).decide_eq'
+      (by fun_prop))
   · fun_prop
 
 /-- `VertexCover` belongs to `NP`. -/

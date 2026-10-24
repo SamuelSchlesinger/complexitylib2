@@ -19,6 +19,7 @@ import Complexity.Computability.Complexity.Classes.IP.Simulation
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -806,7 +807,7 @@ theorem computableTidilyInPolyTime_checkCert (c d : ℕ) :
     have hlen : ComputableTidilyInPolyTime
         (fun q : List Bool × Cert => q.2.length)
         (encPair encBits encCert) encNat :=
-      unary_to_binary.comp ((length_list encCertEntry).comp (snd encBits encCert))
+      (ComputableInPolyTime.length_list_binary encCertEntry).tidy.comp (snd encBits encCert)
     exact binary_lt' hpow (binary_mul' (const 2) hlen)
   exact bool_and' (bool_and' (bool_and' h1 h2) h3) h4
 

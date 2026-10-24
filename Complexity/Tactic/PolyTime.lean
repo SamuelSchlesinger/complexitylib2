@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

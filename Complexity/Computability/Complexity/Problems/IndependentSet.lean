@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Reduction
 public import Mathlib.Combinatorics.SimpleGraph.Clique
 import Complexity.Computability.Complexity.CookLevin.Completeness
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -329,7 +330,7 @@ theorem Occurrence.computableTidilyInPolyTime_conflict :
 theorem computableTidilyInPolyTime_toIndependentSet :
     ComputableTidilyInPolyTime toIndependentSet encCNF (encPair encGraph encNat) := by
   have hlen : ComputableTidilyInPolyTime (fun φ : CNF ℕ => φ.length) encCNF encNat :=
-    unary_to_binary.comp (length_list _)
+    (ComputableInPolyTime.length_list_binary _).tidy
   unfold toIndependentSet encGraph
   fun_prop
 
