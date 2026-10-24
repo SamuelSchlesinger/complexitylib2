@@ -29,8 +29,11 @@ existing developments, source credit and saved branches remain available for a f
    polynomial-time verifiers with auxiliary input.
    - *Partial:* [Commitment](Complexity/Crypto/Computational/Commitment.lean) proves Naor's
      two-message bit commitment scheme (`naorCommit`, `naorBitCommitment`,
-     `OneWay.exists_bitCommitmentScheme`) with statistical binding and computational hiding over
-     deterministic polynomial-time receiver-string and bit families, and
+     `OneWay.exists_bitCommitmentScheme`) with statistical binding and computational hiding against
+     randomized stateful PPT receivers (`CommitmentReceiver`, `commitmentHidingGame`,
+     `StatefulHiding`, `PseudorandomGenerator.naorStatefulHiding`, with
+     `StatefulHiding.computational_hiding` bridging to deterministic polynomial-time receiver-string
+     and bit families), and
      [ZeroKnowledge](Complexity/Crypto/Computational/ZeroKnowledge.lean)
      ([GMW/Protocol](Complexity/Crypto/Computational/GMW/Protocol.lean),
      [GMW/Soundness](Complexity/Crypto/Computational/GMW/Soundness.lean),
@@ -56,8 +59,7 @@ existing developments, source credit and saved branches remain available for a f
      pad-replacement proof does not require the separate Naor commitment-hiding theorem.
    - *Open (this priority):* zero knowledge in Goldreich's sense (Def. 4.3.10), for every
      `x ∈ L` with arbitrary auxiliary input `z` against probabilistic polynomial-time verifiers;
-     hiding against randomized receivers whose state is passed to the distinguisher; witness-level
-     Levin reductions; and sequential soundness amplification to negligible error.
+     witness-level Levin reductions; and sequential soundness amplification to negligible error.
      The full auxiliary-input convention still needs a formal security-premise/clock bridge:
      polynomial time in total encoded input, used in #427, differs from a clock independent
      of an unbounded auxiliary word. The pointwise milestone does not complete this objective.
