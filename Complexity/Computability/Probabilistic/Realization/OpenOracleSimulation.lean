@@ -93,7 +93,6 @@ theorem step_eq_run_interpret (machine : MultiTapePTM k Bool Control Operation)
 
 variable [Finite Control] [DecidableEq External] [Finite External]
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- A handler certified as strict oracle PPT makes one complete interpreter step strict oracle
 PPT. Only the selected transition runs, so a non-query step makes no external call. -/
 theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
@@ -119,7 +118,7 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
       | .query channel next => do
         let (answer, state) ← handler pair.1 (channel, (pair.2.1.channels channel).1) pair.2.2
         return (pair.2.1.receive channel next answer, state))
-  · exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
+  · fun_prop
   · intro control
     cases control with
     | none => fun_prop
@@ -149,7 +148,6 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
           · fun_prop
           · fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- A bounded native run with an open stateful handler is strict oracle PPT. A local invariant,
 over every possible handler result under every external oracle, bounds reply length and
 private-state growth; the loop certificate charges all interpreter storage. -/
@@ -194,10 +192,11 @@ theorem isOraclePPTOn_run [Finite Operation] {input : α ↪ List Bool}
       resources ((input a).length + word.length) ≤ budget a :=
     (hresourceSize _).trans (Nat.mul_le_mul_left cr (Nat.pow_le_pow_left
       (by lia) dr))
-  have hstart : ComputableTidilyInPolyTime start input (encPair encFiniteConfig stateEncoding) := by
+  have hstart : ComputableInPolyTime start input (encPair encFiniteConfig stateEncoding) := by
     dsimp only [start]
     fun_prop
-  have hloop := (IsOraclePPTOn.iterateWith_spec hcount hstart (isOraclePPTOn_step machine hhandler)
+  have hloop := (IsOraclePPTOn.iterateWith_spec (.of_tidy hcount) hstart
+    (isOraclePPTOn_step machine hhandler)
     loopInvariant (fun a => ⟨FiniteConfig.spaceBound_init _ _ _, hinit a, by simp [start]⟩)
     (by
       rintro a i ⟨cfg, state⟩ hi ⟨hcfg, hs, hsize⟩ next hnext
@@ -235,7 +234,7 @@ theorem isOraclePPTOn_run [Finite Operation] {input : α ↪ List Bool}
       simp only [length_encPair]
       dsimp only at hstate ⊢
       nlinarith)).1
-  have hproject : ComputableTidilyInPolyTime
+  have hproject : ComputableInPolyTime
       (fun pair : FiniteConfig k Bool Control Operation × State =>
         (pair.1.tapes.output, pair.2))
       (encPair encFiniteConfig stateEncoding) (encPair encBits stateEncoding) := by fun_prop
