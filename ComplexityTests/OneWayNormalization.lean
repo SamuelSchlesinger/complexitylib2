@@ -46,6 +46,7 @@ example : ComputableTidilyInPolyTime
 -- A function with genuinely variable output length acquires an output width depending only on n.
 private def keepTrue (word : List Bool) : List Bool := word.filter id
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime (OneWayNormalization.normalize keepTrue id)
     encBits encBits := by
   fun_prop [keepTrue]

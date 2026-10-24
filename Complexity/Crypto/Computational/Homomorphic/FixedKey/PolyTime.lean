@@ -58,8 +58,9 @@ include hkeyGen hencrypt in
 The key generator has no circuit-size or depth parameter. -/
 @[fun_prop]
 theorem isPPTOn_keyGen
-    (hn : ComputableTidilyInPolyTime n input encUnary) :
+    (hn : ComputableInPolyTime n input encUnary) :
     IsPPTOn input (encPair encBits encBits) (fun a => keyGen E (n a)) := by
+  have hn := hn.tidy
   apply (hkeyGen.preprocess hn).bind_with
   have hbits := Scheme.isPPTOn_encryptBits hencrypt
     (show ComputableTidilyInPolyTime
@@ -183,7 +184,7 @@ include hkeyGen hencrypt in
 @[fun_prop]
 theorem isPPTOn_scheme_keyGen :
     IsPPTOn encUnary (encPair encBits encBits) (scheme D).keyGen :=
-  isPPTOn_keyGen hkeyGen hencrypt (by fun_prop)
+  isPPTOn_keyGen hkeyGen hencrypt (.of_tidy (by fun_prop))
 
 include hencrypt in
 /-- The constructed scheme's actual encryption algorithm is strict PPT. -/

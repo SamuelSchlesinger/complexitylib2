@@ -122,13 +122,15 @@ theorem HasGap.eventually_indexed_error_ge {pair : SamplablePair} {gap : ℕ →
       (encPair (encPair encUnary encUnary) encBits) encBool
       (fun x => predict x.1.1 x.1.2 x.2))
     {count inverseTolerance : ℕ → ℕ}
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
-    (htolerance : ComputableTidilyInPolyTime inverseTolerance encUnary encUnary)
+    (hcount : ComputableInPolyTime count encUnary encUnary)
+    (htolerance : ComputableInPolyTime inverseTolerance encUnary encUnary)
     (hpos : ∀ n, 0 < inverseTolerance n) :
     ∀ᶠ n in atTop, ∀ i < count n,
       (PMF.conditionalEntropy (pair.joint n) + gap n) / 2 ≤
         (ProbComp.eval (predictionGame pair.sample (fun n => predict n i) n) false).toReal +
           1 / inverseTolerance n := by
+  have hcount := hcount.tidy
+  have htolerance := htolerance.tidy
   have hsource := pair.efficient
   have hefficient : IsPPT encBool (fun n => selectPredictor (count n)
       ((n + 1) * (4 * inverseTolerance n) ^ 2) (pair.sample n) (predict n)) := by

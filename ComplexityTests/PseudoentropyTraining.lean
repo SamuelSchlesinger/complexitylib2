@@ -107,6 +107,7 @@ example : IsPPTOn (encList encBool) encBool (fun word =>
     OracleComp.sampleBest (word.length + 1) (word.length + 1) (pure true)
       (fun candidate => pure (candidate == listStrictMajority word)) false) := by ppt
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Training and prediction compose directly, including computation of the final precision.
 example : IsPPTOn encBits encBool (fun word => do
     let params : Parameters := ⟨word.length + 1, 0, 0, 0, word.length⟩
@@ -115,6 +116,7 @@ example : IsPPTOn encBits encBool (fun word => do
     predict (fun code observation => listStrictMajority (code ++ observation))
       params.predictionGridBound model word) := by ppt
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : IsPPTOn (encList encBool) (encPair State.encoding encUnary) (fun word =>
     train (fun code observation => listStrictMajority (code ++ observation)) (pure (word, true))
       (fun state => pure (word.take (state.threshold + 1)))

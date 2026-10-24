@@ -109,15 +109,18 @@ example : ComputableTidilyInPolyTime
     (fun votes : List Bool => listNonpositiveMargin votes (listStrictMajority votes))
     (encList encBool) encBool := by polytime
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun votes : List Bool => weightNumerator (votes.length + 1) 1 0 votes true)
     encBits encUnary := by polytime
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- The same expression with a framed list encoding.
 example : ComputableTidilyInPolyTime
     (fun votes : List Bool => weightNumerator (votes.length + 1) 1 0 votes true)
     (encList encBool) encUnary := by polytime
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime (fun input : ℕ × List Bool =>
     let votes := input.2
     weightNumerator (input.1 + 1) 1 0 votes (listStrictMajority votes))
@@ -129,6 +132,7 @@ example : IsPPTOn (encPair encUnary encBits) encBool (fun input : ℕ × List Bo
 example : IsPPTOn (encPair encUnary (encList encBool)) encBool (fun input : ℕ × List Bool =>
     sampleWeight input.1 1 0 input.2 (listStrictMajority input.2)) := by ppt
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : IsPPTOn (encPair encUnary encBits) encBool (fun input : ℕ × List Bool => do
     let votes := input.2
     let numerator := weightNumerator (dyadicSize input.1) 1 0 votes (listStrictMajority votes)

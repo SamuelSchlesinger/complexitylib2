@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Tactic.PolyTime
 
 /-!
@@ -153,9 +154,9 @@ attribute [program_certificate] polyTime_iterate
 
 /-- Any efficiently computed iteration count gives an efficient generator. -/
 theorem polyTime_stretch {generator : List Bool → List Bool} {count : ℕ → ℕ}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary) :
-    ComputableTidilyInPolyTime (stretch generator count) encBits encBits := by
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
+    (hcount : ComputableInPolyTime count encUnary encUnary) :
+    ComputableInPolyTime (stretch generator count) encBits encBits := by
   unfold stretch
   polytime
 
@@ -530,9 +531,12 @@ quantitative streaming theorem `computableTidilyInTimeAndSpace_stretch` (via
 `computableTidilyInDegree_stretch`). -/
 theorem polyTime_stretch_of_length_eq {generator : List Bool → List Bool} {count : ℕ → ℕ}
     (hlen : ∀ s, (generator s).length = s.length + 1)
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary) :
-    ComputableTidilyInPolyTime (stretch generator count) encBits encBits := by
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
+    (hcount : ComputableInPolyTime count encUnary encUnary) :
+    ComputableInPolyTime (stretch generator count) encBits encBits := by
+  have hgenerator := hgenerator.tidy
+  have hcount := hcount.tidy
+  refine .of_tidy ?_
   obtain ⟨clG, dlG, hclG⟩ := hgenerator.polyBounded_length.exists_le
   obtain ⟨tG, sG, htG, hsG, hgen_ts⟩ := hgenerator
   obtain ⟨ctG, dtG, hctG⟩ := htG.exists_le

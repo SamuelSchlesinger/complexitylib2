@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Encryption.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Tactic.PPT
 
@@ -46,8 +47,8 @@ theorem isPPTOn_game {keyGen : ℕ → ProbComp (List Bool × List Bool)}
       (fun p => encrypt p.1 p.2.1 p.2.2))
     {adversary : Adversary} (hadversary : adversary.IsPPT)
     {α : Type} {input : α ↪ List Bool} {n : α → ℕ} {bit : α → Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbit : ComputableTidilyInPolyTime bit input encBool) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbit : ComputableInPolyTime bit input encBool) :
     IsPPTOn input encBool (fun a => game keyGen encrypt adversary (bit a) (n a)) := by
   have hchoose := hadversary.choose
   have hguess := hadversary.guess

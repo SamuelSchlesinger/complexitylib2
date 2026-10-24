@@ -198,9 +198,10 @@ include hkeyGen hencrypt in
 /-- Substitute an efficiently computed unary depth budget into the constructed key generator. -/
 @[fun_prop]
 theorem isPPTOn_scheme_keyGen (budget : ℕ → ℕ)
-    (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary) :
-    IsPPTOn encUnary (encPair encBits encBits) (scheme D budget).keyGen :=
-  isPPTOn_keyGen hkeyGen hencrypt (by fun_prop) hbudget
+    (hbudget : ComputableInPolyTime budget encUnary encUnary) :
+    IsPPTOn encUnary (encPair encBits encBits) (scheme D budget).keyGen := by
+  have hbudget := hbudget.tidy
+  exact isPPTOn_keyGen hkeyGen hencrypt (by fun_prop) hbudget
 
 include hencrypt in
 /-- The constructed scheme's encryption certificate does not depend on computing its budget. -/

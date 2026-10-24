@@ -12,6 +12,7 @@ public import Complexity.Crypto.Computational.Homomorphic.Circuit.PolyTime
 public import Complexity.Computability.Probabilistic.Traverse
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Uniform polynomial-time homomorphic refresh
@@ -115,7 +116,7 @@ theorem isPPTOn_refreshNand
   apply hsecond'.bind_with
   have hparameter := hn.comp
     ((ComputableTidilyInPolyTime.fst (encPair input (encList encBits)) (encList encBits)).fst')
-  have haug := (computableTidilyInPolyTime_augmentNand.comp hD).comp hparameter
+  have haug := (computableInPolyTime_augmentNand.tidy.comp hD).comp hparameter
   exact hevaluate.preprocess (show ComputableTidilyInPolyTime
     (fun p : (α × List (List Bool)) × List (List Bool) =>
       (n p.1.1, pk p.1.1, ⟨_, augmentNand (D.circuit (n p.1.1))⟩,

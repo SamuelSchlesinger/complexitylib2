@@ -190,17 +190,17 @@ example : ComputableTidilyInPolyTime
     (fun p : (ℕ × ℕ) × List Bool => EntropyGrid.amplifiedGenerate p.1.1 (p.1.1 + 1)
       0 2 (p.1.1 + 4) p.1.2 (fun bits => ([], bits.headD false)) p.2)
     (encPair (encPair encUnary encUnary) encBits) encBits :=
-  EntropyGrid.isPolyTime_amplifiedGenerate paddedSeed
+  (EntropyGrid.isPolyTime_amplifiedGenerate paddedSeed
     (observationBound := fun _ => 0) (densityBound := fun _ => 2) (common := fun n => n + 4)
-    (by fun_prop) (by fun_prop) (by fun_prop)
+    (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy
 
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × List Bool => EntropyGrid.combinedGenerate p.1 (p.1 + 1)
       0 2 (p.1 + 4) (fun bits => ([], bits.headD false)) p.2)
     (encPair encUnary encBits) encBits :=
-  EntropyGrid.isPolyTime_combinedGenerate paddedSeed
+  (EntropyGrid.isPolyTime_combinedGenerate paddedSeed
     (observationBound := fun _ => 0) (densityBound := fun _ => 2) (common := fun n => n + 4)
-    (by fun_prop) (by fun_prop) (by fun_prop)
+    (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy
 
 -- Output width is fixed even for malformed seeds; security uses the declared uniform seed law.
 example (n : ℕ) (seed : List Bool) :

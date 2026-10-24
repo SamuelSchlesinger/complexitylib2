@@ -61,8 +61,8 @@ noncomputable def selectSlope (confidence inverseTolerance precision : ℕ)
 /-- A certified training sampler and efficient parameters give a strict PPT correctness trial. -/
 theorem isPPTOn_clippedTrial {α : Type} {input : α ↪ List Bool}
     {precision numerator : α → ℕ} {source : α → ProbComp (List Bool × Bool)}
-    (hprecision : ComputableTidilyInPolyTime precision input encUnary)
-    (hnumerator : ComputableTidilyInPolyTime numerator input encUnary)
+    (hprecision : ComputableInPolyTime precision input encUnary)
+    (hnumerator : ComputableInPolyTime numerator input encUnary)
     (hsource : IsPPTOn input (encPair encBits encBool) source) :
     IsPPTOn input encBool (fun a => clippedTrial (precision a) (numerator a) (source a)) := by
   unfold clippedTrial
@@ -73,9 +73,9 @@ attribute [program_certificate] isPPTOn_clippedTrial
 /-- Selecting a clipped predictor is uniformly strict PPT, including the complete grid search. -/
 theorem isPPTOn_selectSlope {α : Type} {input : α ↪ List Bool}
     {confidence inverseTolerance precision : α → ℕ} {source : α → ProbComp (List Bool × Bool)}
-    (hconfidence : ComputableTidilyInPolyTime confidence input encUnary)
-    (htolerance : ComputableTidilyInPolyTime inverseTolerance input encUnary)
-    (hprecision : ComputableTidilyInPolyTime precision input encUnary)
+    (hconfidence : ComputableInPolyTime confidence input encUnary)
+    (htolerance : ComputableInPolyTime inverseTolerance input encUnary)
+    (hprecision : ComputableInPolyTime precision input encUnary)
     (hsource : IsPPTOn input (encPair encBits encBool) source) :
     IsPPTOn input encUnary (fun a =>
       selectSlope (confidence a) (inverseTolerance a) (precision a) (source a)) := by
@@ -98,8 +98,8 @@ def predictionGridBound (params : Parameters) : ℕ :=
 @[program_certificate]
 theorem isPolyTime_predictionInverseTolerance {α : Type} {input : α ↪ List Bool}
     {params : α → Parameters}
-    (hparams : ComputableTidilyInPolyTime params input encoding) :
-    ComputableTidilyInPolyTime (fun a => (params a).predictionInverseTolerance) input encUnary := by
+    (hparams : ComputableInPolyTime params input encoding) :
+    ComputableInPolyTime (fun a => (params a).predictionInverseTolerance) input encUnary := by
   unfold predictionInverseTolerance inverseRate denominator
   fun_prop
 
@@ -107,8 +107,8 @@ theorem isPolyTime_predictionInverseTolerance {α : Type} {input : α ↪ List B
 @[program_certificate]
 theorem isPolyTime_predictionGridBound {α : Type} {input : α ↪ List Bool}
     {params : α → Parameters}
-    (hparams : ComputableTidilyInPolyTime params input encoding) :
-    ComputableTidilyInPolyTime (fun a => (params a).predictionGridBound) input encUnary := by
+    (hparams : ComputableInPolyTime params input encoding) :
+    ComputableInPolyTime (fun a => (params a).predictionGridBound) input encUnary := by
   unfold predictionGridBound clock inverseRate denominator
   fun_prop
 
