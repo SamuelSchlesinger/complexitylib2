@@ -16,6 +16,9 @@ public import Cslib.Foundations.Data.Fin.Tuple
 public import Mathlib.Basic.Finite.Sum
 public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
+import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Basic
+import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Fintype.Option
@@ -412,3 +415,28 @@ theorem ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace {α β : 
   exact Nat.add_le_add this (by generalize 4 * k * k = m; omega)
 
 end Turing.MultiTapeTM
+
+namespace Turing.MultiTapeTM.Internal
+
+/-- Private machine witnesses for plain polynomial time, independent of the topic calculus. -/
+private theorem normalizePolyTime {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
+    (h : ComputableInPolyTime f encIn encOut) :
+    ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
+      ComputableTidilyInTimeAndSpace f encIn encOut
+        (fun a => t (encIn a).length) (fun a => s (encIn a).length) := by
+  obtain ⟨t, s, ht, hs, h⟩ := h
+  obtain ⟨c, h⟩ := h.exists_computableTidilyInTimeAndSpace
+  exact ⟨fun n => 2 * t n + 3 * s n + c, fun n => c * (s n + 1),
+    by fun_prop, by fun_prop, h⟩
+
+/-- Forget a normalized machine without changing its polynomial bounds. -/
+private theorem forgetPolyTime {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {t s : ℕ → ℕ}
+    (ht : Cslib.PolynomiallyBounded t) (hs : Cslib.PolynomiallyBounded s)
+    (h : ComputableTidilyInTimeAndSpace f encIn encOut
+      (fun a => t (encIn a).length) (fun a => s (encIn a).length)) :
+    ComputableInPolyTime f encIn encOut :=
+  ⟨t, s, ht, hs, h.computableInTimeAndSpace⟩
+
+end Turing.MultiTapeTM.Internal
