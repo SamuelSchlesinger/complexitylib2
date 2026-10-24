@@ -168,17 +168,14 @@ example {f : α → List ℕ} (hf : ComputableTidilyInPolyTime f enc (encList en
 example {f : α → ℕ × Bool} (hf : ComputableTidilyInPolyTime f enc (encPair encNat encBool)) :
     ComputableInPolyTime (fun a => !(f a).2) enc encBool := by fun_prop
 
-/-- Limitation: `fun_prop` decomposes a plain goal before trying tidy certificates, so a tidy
-certificate for the whole composite, here
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsAnyWithInput`, is not reached. `polytime`
-reaches it, and so does `.of_tidy` around a tidy `fun_prop` proof. -/
+/-- Mirrored plain closure rules reach captured Boolean scans directly, even when the supplied
+routine hypotheses are tidy certificates. -/
 example {list : α → List Bool} {test : α → Bool → Bool}
     (hlist : ComputableTidilyInPolyTime list enc encBits)
     (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2) (encPair enc encBool)
       encBool) :
     ComputableInPolyTime (fun a => (list a).any (test a)) enc encBool := by
-  fail_if_success fun_prop
-  exact .of_tidy (by fun_prop)
+  fun_prop
 
 example {list : α → List Bool} {test : α → Bool → Bool}
     (hlist : ComputableTidilyInPolyTime list enc encBits)

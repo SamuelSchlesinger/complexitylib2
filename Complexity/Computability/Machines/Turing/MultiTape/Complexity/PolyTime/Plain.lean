@@ -37,37 +37,32 @@ The plain notion, `Turing.MultiTapeTM.ComputableInPolyTime`, is the one for defi
 statements; the tidy notion is a proof device. Proofs switch between them with
 `Turing.MultiTapeTM.ComputableInPolyTime.tidy` and
 `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy`.
-The closure rules of the plain notion are proved through the tidy calculus and registered with
-`fun_prop`, together with the transition from tidy to plain computability. `fun_prop` decomposes a
-plain goal with the plain closure rules and proves the remaining atoms from plain hypotheses or,
-through the transition, from tidy certificates. A tidy certificate stated for a whole composite,
-such as the `…WithInput` scans, is not reached this way; use `polytime`, or `.of_tidy` around a
-tidy `fun_prop` proof.
+The basic plain closure rules below are proved through the internal tidy calculus. Plain
+structural and primitive counterparts are derived mechanically in `PolyTime.Plain.Calculus`,
+which is imported by `Complexity.Tactic.PolyTime`. With that entry point, `fun_prop` uses plain
+hypotheses directly, including captured list callbacks.
+The transition from tidy to plain also accepts existing internal certificates as proof inputs.
 
-## Mixing plain hypotheses with tidy certificates
+## Plain statements and internal machine proofs
 
-There is deliberately no `fun_prop` transition from plain to tidy: registering it together with
-the reverse transition would create a search cycle. In particular, a tidy goal such as
-`ComputableTidilyInPolyTime (fun a => [f a]) enc (encList encIntBin)` cannot use a plain certificate
-for `f` directly. This occurs when constructing singleton target lists in `WPP/Robustness.lean`
-and `WPP/TwoSided.lean`. Unbounded `fun_prop` can exhaust its heartbeat budget while looking for
-another certificate. Restate the needed hypothesis with `have hf := hf.tidy` before `fun_prop`,
-or use `polytime` from `Complexity.Tactic.PolyTime`, which prepares plain hypotheses for tidy
-search. When trying composition speculatively, use
-`fun_prop (config := { maxSteps := 32 })` to bound that attempt, then supply a certificate or
-switch tactics. This is a search budget, not a guarantee that every unsuccessful search is cheap.
+Write user-facing goals with `ComputableInPolyTime`. For example, a plain certificate for `f`
+directly proves the plain singleton target `fun a => [f a]`. Inside a machine-construction proof
+that needs a tidy result, prepare the required hypothesis with `have hf := hf.tidy` before
+`fun_prop`, or use `polytime`. Keeping that conversion explicit in the internal proof avoids a
+search cycle with the tidy-to-plain transition.
 
 `selectVerifier`, `andVerifier` and `orVerifier` have plain `fun_prop` rules in
-`Classes/SharpP/Combinators.lean`, so plain verifier hypotheses need no manual `.tidy` conversion
-for a plain goal. Their tidy rules remain available for proofs using the tidy calculus.
+`Classes/SharpP/Combinators.lean`, so plain verifier hypotheses need no manual conversion for a
+plain goal. The named-routine registry also preserves eager premise ordering for composite scans,
+folds and iterations. `polytime` provides controlled search when intermediate encodings or state
+growth premises need to be resolved first.
 
-For a tidy certificate covering a whole composite whose intermediate encoding is difficult to
-infer, prefer `polytime`, or convert the hypotheses with `.tidy` and use
-`.of_tidy (by fun_prop)`. Two representative cases are the binary threshold
+Two representative mixed-encoding clients are the binary threshold
 `fun a => 3 * (k a * 2 ^ q.eval (enc a).length)` in `inter_mem_SBP_of_mem_BPP` (where `k` uses
 `encNat`, while the exponent uses `encUnary`), and the input-dependent `sharpTest` verifier in
-`Classes/Toda.lean`. `polytime` proves both directly from plain hypotheses. The mixed-encoding
-examples and the bounded singleton failure are checked in `ComplexityTests/PolyTimeMixes.lean`.
+`Classes/Toda.lean`. `polytime` proves both directly from plain hypotheses. These clients, direct
+plain singleton synthesis and the explicit internal conversion are checked in
+`ComplexityTests/PolyTimeMixes.lean`.
 
 Upstream `Turing.MultiTapeTM.DecidableInTimeAndSpace` decides a problem through its Boolean
 indicator. `Turing.MultiTapeTM.decidableInTimeAndSpace_iff` restates it for any Boolean function
@@ -309,8 +304,10 @@ theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β�
     ComputableInPolyTime (fun p : β₁ × β₂ => p.2) (encPair enc₁ enc₂) enc₂ :=
   .of_tidy (ComputableTidilyInPolyTime.snd enc₁ enc₂)
 
+-- Keep this explicit application rule unregistered: it can fix a component's output encoding
+-- before discovering the source pair encoding. Primitive and encoding-aware projection rules
+-- provide the automatic routes; later migrations must preserve this registration choice.
 /-- Project the first component of a pair-valued function computable in polynomial time. -/
-@[fun_prop]
 theorem fst' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
     ComputableInPolyTime (fun x => (f x).1) encIn enc₁ :=

@@ -740,6 +740,7 @@ public import Complexity.Computability.Complexity.HardnessEncoding.PolyTime
 public import Complexity.Computability.Complexity.HardnessEncoding.Program
 public import Complexity.Computability.Complexity.Parameterized
 public import Complexity.Computability.Complexity.Parameterized.Kernelization
+public import Complexity.Computability.Complexity.Parameterized.PlainCalculus
 public import Complexity.Computability.Complexity.Parameterized.VertexCover
 public import Complexity.Computability.Complexity.Parameterized.VertexCover.BussKernel
 public import Complexity.Computability.Complexity.Problems.CircuitSAT
@@ -894,6 +895,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Reachability
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Plain.Calculus
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
@@ -925,6 +927,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain.Calculus
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Family
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Tower

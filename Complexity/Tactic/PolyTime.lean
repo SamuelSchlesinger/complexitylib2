@@ -16,6 +16,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain.Calculus
 public import Complexity.Tactic.PolyTime.Init
 
 /-!
@@ -23,10 +24,11 @@ public import Complexity.Tactic.PolyTime.Init
 
 Adapted from the cslib `crypto` branch: named certificates are tried before their implementations
 are unfolded. `fun_prop` handles composition; Aesop chooses loop rules and uses local growth
-contracts. Every rule proves the tidy machine predicate, with fixed machines and polynomial
-bounds across all encoded inputs. A plain `Turing.MultiTapeTM.ComputableInPolyTime` goal is
-reduced to the tidy predicate, and plain hypotheses are restated tidily, so plain statements use
-the same search. Unknown algorithms still require certificates.
+contracts. Plain structural and primitive certificates are transported mechanically from the
+internal tidy calculus, retaining their resource premises and registrations. Loop construction can
+also enter that internal calculus without changing the plain public statement. All certificates
+use fixed machines and polynomial bounds across encoded inputs. Unknown algorithms still require
+certificates.
 
 ## Main definitions
 
@@ -53,6 +55,7 @@ attribute [aesop safe forward (rule_sets := [PolyTime])] ComputableInPolyTime.ti
 -- certify a uniform family whose input type grows with a runtime parameter.
 attribute [aesop safe apply (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.of_finite
+  ComputableInPolyTime.of_finite
 
 -- Boolean scans hide the element encoding in their result. Resolve the list certificate before
 -- searching for a joint callback certificate, including when the callback captures local values.
@@ -60,19 +63,29 @@ attribute [program_certificate hlist]
   ComputableTidilyInPolyTime.anyWithInput ComputableTidilyInPolyTime.allWithInput
   ComputableTidilyInPolyTime.mapToBitsWithInput
   ComputableTidilyInPolyTime.bitsFoldlWithInput
+  ComputableInPolyTime.anyWithInput
+  ComputableInPolyTime.allWithInput
+  ComputableInPolyTime.mapToBitsWithInput
+  ComputableInPolyTime.bitsFoldlWithInput
 attribute [program_certificate] ComputableTidilyInPolyTime.bitsStrictMajorityWithInput
+  ComputableInPolyTime.bitsStrictMajorityWithInput
 
 -- Expose inner table and loop obligations to Aesop when composition alone cannot finish them.
 attribute [program_certificate hvalues] ComputableTidilyInPolyTime.pi_update'
+  ComputableInPolyTime.pi_update'
 attribute [program_certificate]
   ComputableTidilyInPolyTime.bitsReverseWithInput ComputableTidilyInPolyTime.listReverseWithInput
+  ComputableInPolyTime.bitsReverseWithInput
+  ComputableInPolyTime.listReverseWithInput
 
 -- Require the growth contract before exploring encodings on alternative computation branches.
 -- Each contract keeps the evidence that must agree on a bound or an encoding in one search.
 attribute [program_certificate hbound hcompute]
   ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
+  ComputableInPolyTime.foldlWithInput_of_bounded_growth
 attribute [program_certificate hbound]
   ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth
+  ComputableInPolyTime.iterateWithInput_of_bounded_growth
 
 open Lean Meta Elab Tactic in
 /-- Synthesize a list interface once the list and element encodings are determined. -/
@@ -89,6 +102,7 @@ private meta def polytimeListInstance : TacticM Unit := withMainContext do
 -- be registered as a `fun_prop` theorem, so Aesop supplies this closure step.
 attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.pi_apply'
+  ComputableInPolyTime.pi_apply'
 
 /-- Expose local routine certificates and their argument obligations as search alternatives. -/
 -- Equal priority lets argument goals run before expensive alternatives at the parent goal.
@@ -241,6 +255,8 @@ attribute [aesop norm simp (rule_sets := [PolyTime])] forall_and
 attribute [aesop unsafe 80% apply (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.fstWithEncoding
   ComputableTidilyInPolyTime.sndWithEncoding
+  ComputableInPolyTime.fstWithEncoding
+  ComputableInPolyTime.sndWithEncoding
 
 -- Keep inexpensive structural successes and failures when no local certificate competes.
 -- Aesop postpones safe rules that assign encoding metavariables. Complementary guards avoid
@@ -285,3 +301,4 @@ macro "polytime" : tactic => `(tactic| solve |
     (rule_sets := [PolyTime]))
 
 end Cslib.Tactic.PolyTime
+
