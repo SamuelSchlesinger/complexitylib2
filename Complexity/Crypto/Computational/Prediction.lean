@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Basic
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Probability.PMF
 import Complexity.Tactic.PPT
 
@@ -18,8 +19,8 @@ The predictor supplies a trial bit to a test and returns that bit on acceptance,
 on rejection. Averaging over an independent fair trial turns the test's signed distinguishing gap
 into prediction bias. The hidden bit is not an input to the predictor.
 
-`Pr[p]` below is local notation for the existing game's success probability, coerced to the reals
-to express signed differences. It introduces no additional probability or security definition.
+`Pr[p]` is the scoped notation of `Cslib.Probability` for the probability, in the reals, that `p`
+returns `true`, so gaps and biases are signed differences.
 
 ## Main definitions
 
@@ -48,8 +49,6 @@ namespace Cslib.Crypto
 
 open Probability Turing.MultiTapeTM
 
-local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
-
 /-- Predict a trial bit on acceptance and its complement on rejection. -/
 def trialPredictor (test : Bool → ProbComp Bool) (trial : Bool) : ProbComp Bool :=
   (fun accept => if accept then trial else !trial) <$> test trial
@@ -68,14 +67,12 @@ theorem trialPredictor_gap (test : Bool → ProbComp Bool) (truth : Bool) :
   | false =>
     simp only [trialPredictor, Bool.not_false, Bool.not_true, beq_false,
       Functor.map_map, Bool.ite_true_right, Bool.ite_false_right, Bool.decide_eq_true,
-      Bool.or_false, Bool.and_true, Bool.not_not, id_map',
-      Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, ProbComp.probability_not]
+      Bool.or_false, Bool.and_true, Bool.not_not, id_map', ProbComp.probability_not]
     ring
   | true =>
     simp only [beq_true, trialPredictor, Bool.not_false, Bool.ite_true_right,
       Bool.decide_eq_true, Bool.or_false, Functor.map_map, Bool.not_true, Bool.ite_false_right,
-      Bool.and_true, id_map',
-      Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
+      Bool.and_true, id_map']
     rw [show (fun accept => !accept) = Bool.not from rfl, ProbComp.probability_not]
     ring
 
@@ -84,11 +81,9 @@ theorem probability_bitPredictor (test : Bool → ProbComp Bool) (truth : Bool) 
     Pr[(fun guess => guess == truth) <$> bitPredictor test] =
       (Pr[(fun guess => guess == truth) <$> trialPredictor test false] +
         Pr[(fun guess => guess == truth) <$> trialPredictor test true]) / 2 := by
-  change (ProbComp.eval _ true).toReal = _
   simp only [bitPredictor, map_bind, ProbComp.eval_bind, ProbComp.eval_uniform,
     PMF.bind_apply_toReal]
-  norm_num [Fintype.sum_bool, PMF.uniformOfFintype_apply, Game.succProbability, ENNReal.toReal,
-    ENNReal.toNNReal_ofNat]
+  norm_num [Fintype.sum_bool, PMF.uniformOfFintype_apply]
   ring
 
 /-- The randomized predictor's bias equals the gap between the real label and a fair label. -/
@@ -130,20 +125,18 @@ theorem probability_calibratedTest (real ideal challenge : ProbComp Bool) :
   let direction := bitPredictor (fun trial => if trial then real else ideal)
   have htotal := PMF.toReal_true_add_toReal_false (ProbComp.eval direction)
   have hbias := bitPredictor_bias (fun trial => if trial then real else ideal) true
-  simp only [beq_true, id_map', ite_true, Bool.false_eq_true, ite_false,
-    Game.succProbability, ENNReal.coe_toNNReal_eq_toReal] at hbias
-  simp only [calibratedTest, Game.coe_succProbability_eval_bind, Fintype.sum_bool, beq_false,
-    beq_true, id_map']
-  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, ProbComp.probability_not]
-  linear_combination (1 - (ProbComp.eval challenge true).toReal) * htotal +
-    (2 * (ProbComp.eval challenge true).toReal - 1) * hbias
+  simp only [beq_true, id_map', ite_true, Bool.false_eq_true, ite_false] at hbias
+  simp only [calibratedTest, ProbComp.probability_bind, Fintype.sum_bool, beq_false,
+    beq_true, id_map', ProbComp.probability_not]
+  linear_combination (1 - Pr[challenge]) * htotal +
+    (2 * Pr[challenge] - 1) * hbias
 
 /-- The same calibration on both sides turns a possibly negative gap into its square. -/
 theorem calibratedTest_gap (real ideal : ProbComp Bool) :
     Pr[calibratedTest real ideal real] -
       Pr[calibratedTest real ideal ideal] =
       (Game.advantage (ProbComp.eval real) (ProbComp.eval ideal) : ℝ) ^ 2 := by
-  simp only [probability_calibratedTest, Game.coe_advantage, sq_abs]
+  simp only [probability_calibratedTest, Game.coe_advantage, Game.coe_succProbability, sq_abs]
   ring
 
 /-- Calibration is an ordinary PPT composition of its three supplied experiments. -/

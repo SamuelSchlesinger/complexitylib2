@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
 public import Complexity.Crypto.Computational.Pseudoentropy.Masking
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Crypto.Computational.Pseudoentropy.Selection
 import Complexity.Crypto.Computational.Pseudoentropy.SequenceLearner
 import Complexity.Tactic.PPT
@@ -49,8 +50,6 @@ Adapted from the cslib `crypto` branch at
 namespace Cslib.Crypto.Pseudoentropy.SamplablePair
 
 open Probability Probability.PMF BitString Boosting Filter Turing.MultiTapeTM
-
-local notation "Pr[" p "]" => ENNReal.toReal (ProbComp.eval p true)
 
 /-- All tests in a uniformly efficient polynomial-size family eventually admit dense soft masks
 with small distinguishing gap whenever their density is valid. The common eventual threshold
@@ -183,8 +182,7 @@ theorem HasGap.eventually_exists_indexed_mask {pair : SamplablePair} {gap : ℕ 
       (fun value => pair.encode n value.1) Prod.snd (count n) (width n) (params n i) state
         (pair.encode n value.1)
         (hsize' n value (by simpa only [pair.eval_latentSample] using hvalue)))
-    (by simpa only [source, pair.eval_latentSample, Game.coe_advantage, Game.succProbability,
-      ENNReal.coe_toNNReal_eq_toReal]
+    (by simpa only [source, pair.eval_latentSample, Game.coe_advantage, Game.coe_succProbability]
       using hdistinguish)
   have hlaw : ProbComp.eval (predictionGame pair.sample (fun n => adversary n i) n) =
       ProbComp.eval (do

@@ -111,7 +111,7 @@ theorem advantage_eq (bound : ℕ) (real ideal : ProbComp (List Bool))
   apply NNReal.eq
   rw [Game.coe_advantage, eval_bind_test, eval_bind_test]
   simp only [PMF.monad_bind_eq_bind, Game.succProbability_uniform,
-    NNReal.coe_div, NNReal.coe_sum, NNReal.coe_pow, NNReal.coe_natCast,
+    NNReal.coe_div, NNReal.coe_sum, NNReal.coe_pow, NNReal.coe_natCast, Game.coe_succProbability,
     Fintype.card_fin, ← sub_div, ← Finset.sum_sub_distrib, hgap]
   exact abs_of_nonneg (div_nonneg (Finset.sum_nonneg (fun _ _ => sq_nonneg _))
     (Nat.cast_nonneg _))

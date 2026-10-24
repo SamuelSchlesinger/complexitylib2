@@ -233,5 +233,11 @@ theorem Indistinguishable.of_reduction {SourceAdversary TargetAdversary : Type*}
   have hsource := h _ (hadmissible adversary ha)
   exact negligible_of_le (by fun_prop (disch := assumption)) hbound
 
+-- upstream: candidate
+
+/-- As a real number, the success probability is the real-valued probability of `true`. -/
+@[simp] theorem coe_succProbability (game : Game) :
+    (succProbability game : ℝ) = (game true).toReal := rfl
+
 end Game
 end Cslib.Crypto

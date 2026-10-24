@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.Pseudoentropy.Masking
 public import Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Learner
+import Complexity.Languages.Probabilistic.Notation
 
 /-!
 # From sequence distinguishers to a learned predictor
@@ -46,8 +47,6 @@ namespace Cslib.Crypto.Pseudoentropy
 
 open Probability Probability.PMF BitString Boosting
 
-local notation "Pr[" p "]" => ENNReal.toReal (ProbComp.eval p true)
-
 variable {α β : Type}
 
 /-- The complete sequence gap is the dyadic coordinate count times the average weighted
@@ -80,9 +79,7 @@ theorem maskedSequence_validation_gap [Finite α]
         candidates >>= fun code => pure (predict code (observe value) == truth value))] :=
     congrArg (fun law : PMF Bool => (law true).toReal)
       (eval_weightedTrial_bind candidates source mask _)
-  have hgap := maskedSequence_prediction_gap source observe truth mask count test
-  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal] at hgap
-  rw [hgap, hvalidation, weightedTrial_probability]
+  rw [maskedSequence_prediction_gap, hvalidation, weightedTrial_probability]
   simp only [add_sub_cancel_left]
   congr 1
   apply Finset.sum_congr rfl
@@ -167,7 +164,6 @@ theorem extractedSequence_learn_error_pow {Seed Output : Type} [Fintype α]
   have h := extractLabels_sequence_gap ((fun value => (observe value, truth value)) <$> source)
     (maskedSample source observe truth mask) count seed hash test ideal hclose
   have hgap' := (le_sub_iff_add_le.mpr hdistinguish).trans h
-  simpa only [Game.coe_advantage, Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
-    using hgap'
+  simpa only [Game.coe_advantage, Game.coe_succProbability] using hgap'
 
 end Cslib.Crypto.Pseudoentropy

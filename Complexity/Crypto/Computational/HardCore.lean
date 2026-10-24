@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.PseudorandomGenerator
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Tactic.PPT
 
 /-!
@@ -24,7 +25,8 @@ to be one-way or injective.
 The reduction appends a fixed trial bit to the image, runs a distinguisher, and predicts the trial
 on acceptance or its complement on rejection. The distinguishing gap is the average of the signed
 biases of the two fixed predictors. Both are single uniform programs, with no choice depending on
-the security parameter. `Pr[p]` abbreviates the existing game's success probability in the reals.
+the security parameter. `Pr[p]` is the probability, in the reals, that the program `p` returns
+`true` (the scoped notation of `Cslib.Probability`).
 
 Appending a hard-core predicate to an efficient length-preserving permutation gives a one-bit PRG
 in the existing finite-family security API. This is conditional on the hard-core predicate;
@@ -57,11 +59,6 @@ namespace Cslib.Crypto
 
 open Probability Turing.MultiTapeTM
 open scoped NNReal
-
-local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
-
-private theorem coe_probability (game : Game) :
-    (Game.succProbability game : ℝ) = (game true).toReal := rfl
 
 /-- Predict a predicate of a uniform seed, given only its image and the security parameter. -/
 noncomputable def predictionGame (f : List Bool → List Bool) (predicate : List Bool → Bool)
@@ -138,7 +135,7 @@ private theorem real_probability (f : List Bool → List Bool) (predicate : List
     Pr[prgRealGame (fun seed => f seed ++ [predicate seed]) adversary n] =
       ∑ bits : BitString n, ((PMF.uniformOfFintype (BitString n)) bits).toReal *
         Pr[adversary n (f (List.ofFn bits) ++ [predicate (List.ofFn bits)])] := by
-  simp only [coe_probability, eval_prgRealGame, distinguishingGame, PMF.monad_bind_eq_bind,
+  simp only [eval_prgRealGame, distinguishingGame, PMF.monad_bind_eq_bind,
     generatorEnsemble,
     BitString.uniformList, PMF.bind_map, Function.comp_def, PMF.map_comp, PMF.bind_apply_toReal]
 
@@ -148,7 +145,7 @@ private theorem ideal_probability (f : List Bool → List Bool) (adversary : Dis
       ∑ bits : BitString n, ((PMF.uniformOfFintype (BitString n)) bits).toReal *
         ((Pr[adversary n (f (List.ofFn bits) ++ [false])] +
           Pr[adversary n (f (List.ofFn bits) ++ [true])]) / 2) := by
-  simp only [coe_probability, distinguishingGame, hardCoreIdeal, PMF.monad_bind_eq_bind,
+  simp only [Game.coe_succProbability, distinguishingGame, hardCoreIdeal, PMF.monad_bind_eq_bind,
     BitString.uniformList,
     PMF.bind_map, PMF.bind_bind, Function.comp_def, PMF.bind_apply_toReal]
   apply Finset.sum_congr rfl
@@ -162,7 +159,7 @@ private theorem prediction_probability (f : List Bool → List Bool) (predicate 
       ∑ bits : BitString n, ((PMF.uniformOfFintype (BitString n)) bits).toReal *
         Pr[(fun guess => guess == predicate (List.ofFn bits)) <$> adversary n (f (List.ofFn bits))]
       := by
-  simp only [coe_probability, predictionGame, ProbComp.eval_bind, BitString.eval_sampleList,
+  simp only [predictionGame, ProbComp.eval_bind, BitString.eval_sampleList,
     BitString.uniformList, PMF.bind_map, Function.comp_def, ProbComp.eval_map, ProbComp.eval_pure]
   rw [PMF.bind_apply_toReal]
   rfl
@@ -194,7 +191,8 @@ theorem hardCore_advantage_le (f : List Bool → List Bool) (predicate : List Bo
   apply NNReal.coe_le_coe.mp
   rw [Game.coe_advantage, NNReal.coe_div, NNReal.coe_add, NNReal.coe_ofNat,
     predictionAdvantage, predictionAdvantage, Game.coe_guessingAdvantage,
-    Game.coe_guessingAdvantage, hardCore_gap]
+    Game.coe_guessingAdvantage,
+    Game.coe_succProbability (ProbComp.eval (prgRealGame _ adversary n)), hardCore_gap]
   let left := Pr[predictionGame f predicate (hardCorePredictor adversary false) n]
   let right := Pr[predictionGame f predicate (hardCorePredictor adversary true) n]
   change |(left + right - 1) / 2| ≤ (|left - 1 / 2| + |right - 1 / 2|) / 2

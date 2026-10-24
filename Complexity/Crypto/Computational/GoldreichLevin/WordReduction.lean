@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Crypto.Computational.OneWay
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Computability.Probabilistic.CoinTape
 import Complexity.Tactic.PPT
 
@@ -52,8 +53,6 @@ at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed saved seeds and the t
 namespace Cslib.Crypto.GoldreichLevin
 
 open Probability BitString Turing.MultiTapeTM
-
-local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
 
 /-- The saved tape covers the unary parameter, the whole image and an `n`-bit query. -/
 def coinBudget (c d n imageLength : ℕ) : ℕ := c * (3 * n + imageLength + 2) ^ d
@@ -183,7 +182,7 @@ theorem word_prediction_advantage_le (f : List Bool → List Bool) (adversary : 
     |Pr[parityPredictionGame f adversary n] - 1 / 2| ≤
       1 / (precision degree n : ℝ) +
         8 * Pr[inversionGame f (wordInverter f evaluate c d degree) n] := by
-  simp only [Game.succProbability, eval_parityPredictionGame f adversary evaluate c d hrealize,
+  simp only [eval_parityPredictionGame f adversary evaluate c d hrealize,
     eval_wordInversionGame f]
   exact invertSigned_advantage_le _ _ _ _ (precision_pos degree n)
 
