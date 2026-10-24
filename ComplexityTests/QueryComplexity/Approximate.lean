@@ -5,8 +5,8 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.QueryComplexity.ApproximateDegree.Or
-import Complexity.Computability.QueryComplexity.Symmetrization
 import Complexity.Foundations.Analysis.MarkovInequality
+import Complexity.Foundations.BooleanAnalysis.Symmetrization
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.RootsExtrema
 
 /-! Markov's inequality and its discrete forms, Minsky–Papert symmetrization, approximate degree
