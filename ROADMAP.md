@@ -1196,7 +1196,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   correct and, exactly, EUF-CMA secure with the bound
   `Qs · (Qs + Qro) · δ + (Qro + 1)/N + √((Qro + 1) · ε')` of Theorem 19.16 and Equation 19.21,
   by the
-  [difference lemma](Complexity/Languages/Probabilistic/UntilBad.lean), presampling and forking.
+  [difference lemma](Complexity/Languages/Probabilistic/UntilBad.lean), presampling and forking;
+  [Schnorr signatures](Complexity/Crypto/Protocols/SigmaProtocol/SchnorrSignature.lean) have
+  `1/q`-unpredictable commitments and the exact bound with `δ = 1/q`.
   Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
   and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
   approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.

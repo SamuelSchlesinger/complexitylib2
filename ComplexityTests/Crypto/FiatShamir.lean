@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
+import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 import Complexity.Probability.PMF
 import Mathlib.Tactic.LinearCombination
 import Mathlib.Tactic.NormNum.Prime
@@ -14,10 +15,10 @@ import Mathlib.Tactic.NormNum.Prime
 # Tests for Fiat–Shamir signatures
 
 Schnorr signatures in `ZMod 11`, with base `2`, are Fiat–Shamir signatures from Schnorr's
-protocol: honest signatures verify, and the commitments are `1 / 11`-unpredictable. Discrete
-logarithms are easy here: a forger that computes the witness and signs a message honestly, with
-one hash call, always wins, so the security theorem makes the reduction compute discrete
-logarithms with probability at least `81 / 242`.
+protocol, and honest signatures verify. Discrete logarithms are easy here: a forger that computes
+the witness and signs a message honestly, with one hash call, always wins, so the security
+theorem for Schnorr signatures makes the reduction compute discrete logarithms with probability
+at least `81 / 242`.
 -/
 
 namespace ComplexityTests.Crypto.FiatShamir
@@ -37,18 +38,6 @@ noncomputable abbrev scheme :=
 /-- Honest Schnorr signatures verify. -/
 example : scheme.Correct :=
   fiatShamir_correct schnorr_complete fun _ h => mem_support_schnorrKeyGen h
-
-/-- Schnorr commitments in `ZMod 11` with base `2` are `1 / 11`-unpredictable: the commitment
-`r • 2` of a uniform `r` is uniform. -/
-theorem commit_unpredictable (key : ZMod 11 × ZMod 11) (t : ZMod 11) :
-    ((schnorr ι (2 : ZMod 11)).commit key.1 key.2).map Prod.fst t ≤ ((11 : ℝ≥0)⁻¹ : ℝ≥0) := by
-  have h2 : (2 : ZMod 11) ≠ 0 := by decide
-  have hmap : ((schnorr ι (2 : ZMod 11)).commit key.1 key.2).map Prod.fst =
-      (PMF.uniformOfFintype (ZMod 11)).map (Equiv.mulRight₀ (2 : ZMod 11) h2) := by
-    simp only [schnorr, linear, PMF.map_comp]
-    rfl
-  rw [hmap, PMF.uniformOfFintype_map_equiv, PMF.uniformOfFintype_apply, ZMod.card]
-  simp
 
 /-- The forger that computes the witness `6 • u` of `u` and signs `true` honestly, with one hash
 call. -/
@@ -112,10 +101,8 @@ example : (81 / 242 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (
     (FiatShamir.reduction (schnorr ι (2 : ZMod 11))
       (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)
       (linearExtract ι) knower 0 1)) := by
-  have h := succProbability_eufCmaGame_le (δ := 11⁻¹)
-    (fun _ h => mem_support_schnorrKeyGen h)
-    ((schnorr_specialSoundness (ι := ι) (g := (2 : ZMod 11))).specialSoundOn (schnorrKeyGen 2))
-    schnorr_specialHVZK (fun key _ t => commit_unpredictable key t) knower knower_callBounded
+  have h := schnorr_succProbability_eufCmaGame_le (ι := ι) (g := (2 : ZMod 11)) (by decide)
+    knower knower_callBounded
   have hknower : Game.succProbability (eufCmaGame (fiatShamir (M := Bool)
       (schnorr ι (2 : ZMod 11)) (schnorrKeyGen 2)) knower) = 1 := succProbability_knower
   rw [hknower, ZMod.card] at h
@@ -125,7 +112,7 @@ example : (81 / 242 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (
       (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)
       (linearExtract ι) knower 0 1)) : ℝ) with hε
   have hε0 : 0 ≤ ε := NNReal.coe_nonneg _
-  simp only [Nat.cast_zero, zero_mul, zero_add, Nat.cast_one,
+  simp only [Nat.cast_zero, zero_mul, zero_div, zero_add, Nat.cast_one,
     show (1 : ℝ) + 1 = 2 by norm_num] at h
   have hsqrt : (9 / 11 : ℝ) ≤ √(2 * ε) := by
     simp only [NNReal.coe_one, Nat.cast_ofNat] at h
@@ -141,6 +128,13 @@ info: 'Cslib.Crypto.Protocols.SigmaProtocol.succProbability_eufCmaGame_le' depen
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms succProbability_eufCmaGame_le
+
+/--
+info: 'Cslib.Crypto.Protocols.SigmaProtocol.schnorr_succProbability_eufCmaGame_le' depends on
+axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms schnorr_succProbability_eufCmaGame_le
 
 /--
 info: 'Cslib.Crypto.Protocols.SigmaProtocol.fiatShamir_correct' depends on axioms:
