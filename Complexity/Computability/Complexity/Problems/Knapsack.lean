@@ -16,11 +16,12 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 
 `Knapsack` is the decision version of the 0-1 knapsack problem: given items, each with a weight
 and a value, a capacity and a goal, some sub-multiset of the items has total weight at most the
-capacity and total value at least the goal [Karp1972]. All numbers are encoded in binary
+capacity and total value at least the goal [GareyJohnson1979]. All numbers are encoded in binary
 (`encNat`); the verifier compares the sums in binary (`ComputableTidilyInPolyTime.binary_le`).
 
 Giving every number of a subset sum instance equal weight and value, and taking the target as
-both capacity and goal, reduces `SubsetSum` to `Knapsack`.
+both capacity and goal, reduces `SubsetSum` to `Knapsack`. Karp's KNAPSACK [Karp1972] is the
+subset sum form of the problem.
 
 ## Main definitions
 

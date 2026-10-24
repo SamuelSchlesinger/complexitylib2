@@ -21,7 +21,7 @@ import Complexity.Logics.Propositional.CNF.PolyTime
 
 `SubsetSum` is the set of pairs `(a, t)` of a list `a` of natural numbers, possibly with
 repetitions, and a target `t` such that some sub-multiset of `a` sums to `t` [Sipser, Section
-7.4][Sipser2013]. All numbers are encoded in binary (`Turing.MultiTapeTM.encNat`, digits least
+7.3][Sipser2013]. All numbers are encoded in binary (`Turing.MultiTapeTM.encNat`, digits least
 significant first); the `NP`-hardness proved here is for this encoding and is not strong
 `NP`-hardness. A certificate is a mask selecting entries of `a` (`Cslib.Complexity.maskSelect`),
 and the verifier adds the selected numbers in binary.
